@@ -38,3 +38,42 @@ F1: floodMessage@X(X,X) :- flood_event@X(X,E)
 F2: floodMessage@Y(Y,Z) :- floodMessage@X(X,Z), link@X(X,Y)
 F3: membership@X(X,Y) :- floodMessage@X(X,Y)
 
+
+
+
+
+
+
+
+
+
+/** Narada */
+
+/** Discovery records are Narada members I chose to probe for inclusion
+in my neighbor list. They expire after a few ping iterations. */
+materialize(discovery, 2, MINPING * 4, infinity).
+
+
+/** Periodically, pick a random member who is not a neighbor and check
+it */
+
+rule N1 discovery@NI(NI, PI) :- periodic@NI(NI, E, NARADADISCOVERY),
+	member@NI(NI, PI), not neighbor@NI(NI, PI),
+	f_coinFlip(NARADADISCOVERYPROB).
+
+rule N1a pingReg@NI(NI, PI, T) :- discovery@NI(NI, PI), T=MINPING.
+
+/** Also check my neighbors */
+rule N2 pingReg@NI(NI, PI, T) :- neighbor@NI(NI, PI), T=NARADAPING.
+
+
+/** Live neighbors are refreshed */
+rule N3 neighbor@NI(NI, PI) :- latency@NI(NI, PI, T), addUtility@NI(NI,
+	PI, T), neighbor@NI(NI, PI).
+
+rule N4 neighbor@NI(NI, PI) :- latency@NI(NI, PI, T), discovery@NI(NI,
+	PI).
+
+rule N5 delete<neighbor@NI(NI, PI)> :- latency@NI(NI, PI, L),
+	neighbor@NI(NI, PI), delUtility@NI(NI, PI, L).
+

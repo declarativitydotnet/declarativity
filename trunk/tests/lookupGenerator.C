@@ -38,12 +38,14 @@ struct LookupGenerator : public FunctorSource::Generator
 {
   LookupGenerator(str host,
                   int firstPort,
-                  int ports)
+                  int ports,
+                  str eventPrefix)
     : _h(host),
       _f(firstPort),
       _p(ports),
       _current(0),
-      _e(0)
+      _e(0),
+      _prefix(eventPrefix)
   {};
   
   TupleRef operator()() {
@@ -64,7 +66,7 @@ struct LookupGenerator : public FunctorSource::Generator
     tuple->append(Val_ID::mk(key));
 
     tuple->append(Val_Str::mk(node));		// WHere the answer is returned
-    tuple->append(Val_Str::mk(strbuf() << _e)); 	// the event ID
+    tuple->append(Val_Str::mk(strbuf() << _prefix << ":" << _e )); // the event ID
     tuple->freeze();
     _e++;
     _current = (_current + 1) % _p;
@@ -76,6 +78,7 @@ struct LookupGenerator : public FunctorSource::Generator
   int _p;
   int _current;
   uint64_t _e;
+  str _prefix;
 };
 
 void issue_lookup(LoggerI::Level level, ptr<LookupGenerator> lookup,
@@ -128,8 +131,8 @@ void issue_lookup(LoggerI::Level level, ptr<LookupGenerator> lookup,
 int main(int argc, char **argv)
 {
   LoggerI::Level level = LoggerI::ALL;
-  if (argc < 8) {
-    std::cout << "Usage: lookupGenerator logLevel seed host firstPort ports delay times \n";
+  if (argc < 9) {
+    std::cout << "Usage: lookupGenerator logLevel seed host firstPort ports delay times eventPrefix \n";
     exit(0);
   }
 
@@ -139,7 +142,8 @@ int main(int argc, char **argv)
   srandom(seed);
   issue_lookup(level, New refcounted<LookupGenerator>(argv[3],
                                                       atoi(argv[4]),
-                                                      atoi(argv[5])),
+                                                      atoi(argv[5]),
+                                                      argv[8]),
                atof(argv[6]),
                atoi(argv[7]));
 

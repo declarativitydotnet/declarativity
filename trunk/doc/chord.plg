@@ -207,49 +207,34 @@ rule S7 predecessor@NI(NI,P,PI) :-
 	predecessor@NI(NI,P1,PI1),
 	((PI1 == "") || (P in (P1, N))).
 
-/** 
 
-1.4 Failure Detection
----------------------
 
-Periodically detect failures in predecessor and successors, and then
-invalidate them by setting their expiration time. Failure detection is
-based on pings in our example. The smaller the TTL, the more accurate
-failures are detected. 
 
-Set of pingNodes. Each have TTL and next scheduled ping. So periodically
-scan the list for nodes to ping. The result of pings is in the
-pingResult tuple, which has RTT set to -1 if timeout. 
 
-P1: ping(X,Y) :- checkPing(X), pingNodes(X,Y), (lastPingTime(X,Y,T)
-P2: ping(X,Y) :- checkPing(X), pingNodes(X,Y), lastPingTime(X,Y,T),
-f_currentTime() > T + ping.TTL 
-P3: lastPingTime(X,Y,T) :- ping(X,Y), T=f_currentTime()
-P4: checkPing(X), period=ping_interval
+/* Connectivity monitoring */
 
-Check Predecessor
-CP1: pingNodes(NI,SI) :- predecessor(NI,S,SI)
-CP2: predecesssor(NI,S,SI) :- pingResult(NI,SI,RTT),
-predecessor(NI,S,SI), ET=(f_currentTime() + predecessor.TTL), RTT>=0 
-CP3: predecessor(NI,null,null) :- pingResult(NI,SI,RTT),
-predecessor(NI,S,SI), RTT<0 
+#include ping.plg
 
-PingNodes tuples will result in ping element performing periodic pings,
-every TTL.. This ping element will do a ping, and then generate a
-pingResult either after timeout or when the ping reply comes back. If
-pingResult is successful, increase TTL, otherwise, set TTL to a negative
-number to be purged by the vacumm cleaner. Ping and pingResult have TTLs
-of 0. 
 
-Check Successor
-CP1: pingNodes(NI,SI) :- successor(NI,S,SI)
+/** successors should be pinged every SUCCESSORPING */
 
-Repeat the same for sucessors. If not alive, set ET=-1 or field values
-to null. For those already not alive, do not bother to probe. May check
-only the closest successor (need to keep the first live successor), and
-do the regular exchanges for the others. 
+rule CS1 pingReg@NI(NI,SI,SUCCESSORPING) :- successor@NI(NI,S,SI).
 
-Check Fingers?
-Called at higher frequency compared to fix fingers. If not alive, set ET=-1.
 
-*/
+
+/** Fingers should be pinged every FINGERPING */
+
+rule CF1 pingReg@NI(NI,FI,FINGERPING) :- finger@NI(NI,I,B,BI).
+
+
+
+
+/** A successor for which a new latency event arrives (regardless of the
+actual latency) is refreshed */
+rule CS2 successor@NI(NI, S, SI) :- successor@NI(NI, S, SI),
+	latency@NI(NI, SI, L).
+
+rule CF2 finger@NI(NI, I, B, BI) :- finger@NI(NI, I, B, BI),
+	latency@NI(NI, BI, L).
+
+

@@ -66,6 +66,8 @@
 
 static const int SUCCESSORSIZE = 4;
 static const double FINGERTTL = 10;
+static const int SUCCEXPIRATION = 2;
+static const int SUCCREFRESH = 1;
 static const int FINGERSIZE = ID::WORDS * 32;
 static const int QUEUE_LENGTH = 1000;
 
@@ -2544,12 +2546,14 @@ void createNode(str myAddress,
     New refcounted< Table >(strbuf("bestSuccessorTable"), 1);
   bestSuccessorTable->add_unique_index(1);
   
+  timespec* successorExpiration = New timespec;
+  successorExpiration->tv_sec = SUCCEXPIRATION;
+  successorExpiration->tv_nsec = 0;
   TableRef successorTable =
-    New refcounted< Table >(strbuf("successorTable"), 100); // let the
-                                                            // replacement
-                                                            // policy
-                                                            // deal with
-                                                            // evictions
+    New refcounted< Table >(strbuf("successorTable"), 100,
+                            successorExpiration); // let the replacement
+                                                  // policy deal with
+                                                  // evictions
   successorTable->add_multiple_index(1);
   successorTable->add_unique_index(2);
 

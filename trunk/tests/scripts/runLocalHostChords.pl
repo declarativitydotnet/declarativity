@@ -81,7 +81,7 @@ if (defined $opt_R) {
 # Start the first gateway
 my $firstGateway = "$remoteHost:$firstPort";
 my $firstLog = "$firstGateway.log";
-my $nextSeed = 0;
+my $nextSeed = $opt_s;
 my $firstLine = "tests/runChord 0 $opt_l $nextSeed $firstGateway $opt_D >& $firstLog &";
 if (!defined $opt_g) {
     print "$firstLine\n";
