@@ -170,7 +170,7 @@ Pel_VM::Error Pel_VM::execute_instruction( u_int32_t inst, TupleRef data)
   u_int32_t op = inst & 0xFFFF;
   if (op > NUM_OPCODES) {
     error = PE_BAD_OPCODE;
-  } else if (st.size() < jump_table[op].arity) {
+  } else if (st.size() < (uint) jump_table[op].arity) {
     error = PE_STACK_UNDERFLOW;
   } else {
     // This is a somewhat esoteric bit of C++.  Believe it or not,
@@ -207,12 +207,12 @@ DEF_OP(DUP) {
   st.push(st.top()); 
 }
 DEF_OP(PUSH_CONST) { 
-  int ndx = (inst >> 16);
+  uint ndx = (inst >> 16);
   if (ndx > prg->const_pool.size() ) { error = PE_BAD_CONSTANT; return; }
   st.push(prg->const_pool[ndx]);
 }
 DEF_OP(PUSH_FIELD) { 
-  int ndx = (inst >> 16);
+  uint ndx = (inst >> 16);
   if (ndx > operand->size() ) { error = PE_BAD_FIELD; return; }
   st.push((*operand)[ndx]);
 }
@@ -314,7 +314,7 @@ DEF_OP(STR_UPPER) {
   tmp_str[1] = '\0';
   strbuf sb;
   str s = pop_string();
-  for(int i=0; i < s.len(); i++) {
+  for(uint i=0; i < s.len(); i++) {
     tmp_str[0] = toupper(s[i]);
     sb.cat(tmp_str);
   }
@@ -326,7 +326,7 @@ DEF_OP(STR_LOWER) {
   tmp_str[1] = '\0';
   strbuf sb;
   str s = pop_string();
-  for(int i=0; i < s.len(); i++) {
+  for(uint i=0; i < s.len(); i++) {
     tmp_str[0] = tolower(s[i]);
     sb.cat(tmp_str);
   }
