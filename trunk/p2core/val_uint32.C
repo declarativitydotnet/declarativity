@@ -61,6 +61,14 @@ uint32_t Val_UInt32::cast(ValueRef v) {
   }
 }
 
+bool Val_UInt32::equals(ValueRef other) const
+{
+  if (other->typeCode() != Value::UINT32) {
+    return false;
+  }
+  return cast(other) == i;
+}
+
 /*
  * End of file
  */

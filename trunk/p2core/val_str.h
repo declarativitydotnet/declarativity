@@ -38,6 +38,9 @@ public:
   // Factory
   static ValueRef mk(str s) { return New refcounted<Val_Str>(s); };
 
+  // Strict comparison
+  bool equals(ValueRef) const;
+
   // Casting
   static str cast(ValueRef v) { return v->toString(); };
   

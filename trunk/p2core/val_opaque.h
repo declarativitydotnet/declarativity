@@ -39,6 +39,9 @@ public:
   static ValueRef mk(ref<suio> uio) {
     return New refcounted<Val_Opaque>(uio); };
 
+  // Strict comparison
+  bool equals(ValueRef) const;
+
   // Casting
   static ref<suio> cast(ValueRef v);
   

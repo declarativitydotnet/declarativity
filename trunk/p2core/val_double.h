@@ -37,6 +37,9 @@ public:
   // Factory
   static ValueRef mk(double d) { return New refcounted<Val_Double>(d); };
 
+  // Strict comparison
+  bool equals(ValueRef) const;
+
   // Casting
   static double cast(ValueRef v);
   

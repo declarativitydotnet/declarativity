@@ -37,6 +37,9 @@ public:
   // Factory
   static ValueRef mk(int32_t i) { return New refcounted<Val_Int32>(i); };
 
+  // Strict comparison
+  bool equals(ValueRef) const;
+
   // Casting
   static int32_t cast(ValueRef v);
   

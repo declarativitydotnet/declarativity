@@ -32,6 +32,11 @@ ValueRef Val_Null::xdr_unmarshal( XDR *x )
   return singleton;
 }
 
+bool Val_Null::equals(ValueRef other) const
+{
+  return (other->typeCode() != Value::NULLV);
+}
+
 //
 // Casting: more for completeness than anything else...
 // 

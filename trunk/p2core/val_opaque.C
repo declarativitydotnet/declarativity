@@ -46,6 +46,14 @@ ref<suio> Val_Opaque::cast(ValueRef v)
   }
 }
   
+bool Val_Opaque::equals(ValueRef other) const
+{
+  if (other->typeCode() != Value::OPAQUE) {
+    return false;
+  }
+  return cast(other) == u;
+}
+
 /* 
  * End of file
  */

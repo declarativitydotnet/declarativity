@@ -37,6 +37,9 @@ public:
   // Factory
   static ValueRef mk(uint64_t i) { return New refcounted<Val_UInt64>(i); };
 
+  // Strict comparison
+  bool equals(ValueRef) const;
+
   // Casting
   static uint64_t cast(ValueRef v);
   

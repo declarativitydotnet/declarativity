@@ -61,6 +61,14 @@ int64_t Val_Int64::cast(ValueRef v) {
   }
 }
 
+bool Val_Int64::equals(ValueRef other) const
+{
+  if (other->typeCode() != Value::INT64) {
+    return false;
+  }
+  return cast(other) == i;
+}
+
 /*
  * End of file
  */

@@ -23,13 +23,8 @@ ELEMENTS
  - Element to demultiplex a (query, tuple list) into a set of tuples
    to be pushed to different dataflow arguments. 
 
- - Tuple transform element: tuple comes in, expression is evaluated to
-   a new tuple, tuple is emitted.  push-push or pull-pull.
-
  - Tuple filter element: tuple expression is evaluated to boolean
    which lets tuple through or not.  push-push or pull-pull. 
-
- - Element to marshal tuples into a packet 
 
 OTHER OBJECTS / FACILTIES
  

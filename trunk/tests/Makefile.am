@@ -20,6 +20,7 @@ bin_PROGRAMS 	= 	values \
 			basicelements \
 			basicElementPlumbing \
 			scheduling \
+			demultiplex \
 			net \
 			logger \
 			csv
@@ -49,6 +50,12 @@ basicElementPlumbing_LDADD = \
 
 scheduling_SOURCES = scheduling.C
 scheduling_LDADD = \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+demultiplex_SOURCES = demultiplex.C
+demultiplex_LDADD = \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@

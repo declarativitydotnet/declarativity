@@ -34,6 +34,9 @@ public:
   // Factory
   static ValueRef mk() { return singleton; };
 
+  // Strict comparison
+  bool equals(ValueRef) const;
+
   // Casting: more for completeness than anything else...
   static void cast(ValueRef v);
   

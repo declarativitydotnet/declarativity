@@ -54,6 +54,9 @@ public:
   virtual str toString() const =0;
   str toTypeString() { return strbuf() << typeName() << ":" << toString();};
 
+  // Strict equality
+  virtual bool equals( ValueRef other ) const = 0;
+
   // Thrown when an invalid type conversion is attempted. 
   struct TypeError { 
     TypeCode	realType;

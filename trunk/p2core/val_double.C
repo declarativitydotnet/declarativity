@@ -72,6 +72,14 @@ double Val_Double::cast(ValueRef v)
   }
 }
 
+bool Val_Double::equals(ValueRef other) const
+{
+  if (other->typeCode() != Value::DOUBLE) {
+    return false;
+  }
+  return cast(other) == d;
+}
+
 /*
  * End of file
  */
