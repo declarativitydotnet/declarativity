@@ -271,17 +271,17 @@ DEF_OP(IFPOP_TUPLE) {
 //
 DEF_OP(NOT) {
   u_int64_t v = pop_unsigned();
-  st.push(Val_UInt64::mk(!v));
+  st.push(Val_Int32::mk(!v));
 }
 DEF_OP(AND) {
   u_int64_t v1 = pop_unsigned();
   u_int64_t v2 = pop_unsigned();
-  st.push(Val_UInt64::mk(v1 && v2));
+  st.push(Val_Int32::mk(v1 && v2));
 }
 DEF_OP(OR) {
   u_int64_t v1 = pop_unsigned();
   u_int64_t v2 = pop_unsigned();
-  st.push(Val_UInt64::mk(v1 || v2));
+  st.push(Val_Int32::mk(v1 || v2));
 }
 
 //
@@ -399,6 +399,11 @@ DEF_OP(STR_MATCH) {
   re.match(pop_string());
   st.push(Val_Int32::mk(re.success()));
 }
+DEF_OP(STR_CONV) {
+  ValueRef t = st.top(); st.pop();
+  st.push(Val_Str::mk(t->toString()));
+}
+
 //
 // Integer arithmetic operations
 //
@@ -431,19 +436,19 @@ DEF_OP(INT_ABS) {
   st.push(Val_Int64::mk(llabs(pop_signed())));
 }
 DEF_OP(INT_EQ) {
-  st.push(Val_Int64::mk(pop_signed() == pop_signed()));
+  st.push(Val_Int32::mk(pop_signed() == pop_signed()));
 }
 DEF_OP(INT_LT) { 
-  st.push(Val_Int64::mk(pop_signed() > pop_signed())); 
+  st.push(Val_Int32::mk(pop_signed() > pop_signed())); 
 }
 DEF_OP(INT_LTE) { 
-  st.push(Val_Int64::mk(pop_signed() >= pop_signed())); 
+  st.push(Val_Int32::mk(pop_signed() >= pop_signed())); 
 }
 DEF_OP(INT_GT) { 
-  st.push(Val_Int64::mk(pop_signed() < pop_signed())); 
+  st.push(Val_Int32::mk(pop_signed() < pop_signed())); 
 }
 DEF_OP(INT_GTE) { 
-  st.push(Val_Int64::mk(pop_signed() <= pop_signed())); 
+  st.push(Val_Int32::mk(pop_signed() <= pop_signed())); 
 }
 
 

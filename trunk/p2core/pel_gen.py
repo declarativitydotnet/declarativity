@@ -59,6 +59,7 @@ for op, ar, va, desc in [
   ("lower",1,	"STR_LOWER",    "Convert string to lower case"),
   ("substr",3,	"STR_SUBSTR",   "Extract substring"),
   ("match",2,	"STR_MATCH",    "Perl regular expression matching"),
+  ("tostr",1,   "STR_CONV",     "Convert to a string (not ->s)")
   ]:  emit_opcode(op, ar, va, desc)
 
 for op, ar, va, desc in [

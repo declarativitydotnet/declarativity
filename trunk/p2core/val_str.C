@@ -13,6 +13,7 @@
  */
 
 #include "val_str.h"
+#include "val_double.h"
 
 #include <arpc.h>
 
@@ -39,6 +40,20 @@ bool Val_Str::equals(ValueRef other) const
     return false;
   }
   return cast(other) == s;
+}
+
+//
+// Casting: we special-case doubles...
+//
+str Val_Str::cast(ValueRef v)
+{
+  if (v->typeCode() == Value::DOUBLE ) {
+    char dbuf[100];
+    sprintf(dbuf,"%a",Val_Double::cast(v));
+    return strbuf() << dbuf;
+  } else {
+    return v->toString();
+  }
 }
 
 /* 

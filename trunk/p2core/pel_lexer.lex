@@ -159,7 +159,7 @@ HEXDIGIT	[0-9a-fA-F]
   add_const_str(b);
 }
 
-null { 
+null|NULL { 
   add_const(Val_Null::mk());
 }
 

@@ -473,13 +473,13 @@ int main(int argc, char **argv)
   TEST_CAST_T( UInt64, 1000, "1000" );
   TEST_CAST_T( UInt64, ULONG_LONG_MAX, "18446744073709551615" );
 
-  TEST_CAST_T( Double, 0, "0" );
-  TEST_CAST_T( Double, 1.0, "1" );
-  TEST_CAST_T( Double, -1.0, "-1" );
-  TEST_CAST_T( Double, -1.79769E+308,  "-1.79769e+308" );
-  TEST_CAST_T( Double, 1.79769E+308, "1.79769e+308" );
-  TEST_CAST_T( Double, 2.225E-307, "2.225e-307" );
-  TEST_CAST_T( Double, -2.225E-307, "-2.225e-307" );
+  TEST_CAST_T( Double, 0, "0x0p+0" );
+  TEST_CAST_T( Double, 1.0, "0x1p+0" );
+  TEST_CAST_T( Double, -1.0, "-0x1p+0" );
+  TEST_CAST_T( Double, -1.79769E+308,  "-0x1.ffffc57ca82aep+1023" );
+  TEST_CAST_T( Double, 1.79769E+308, "0x1.ffffc57ca82aep+1023" );
+  TEST_CAST_T( Double, 2.225E-307, "0x1.3ffd47e080f89p-1019" );
+  TEST_CAST_T( Double, -2.225E-307, "-0x1.3ffd47e080f89p-1019" );
   
   TEST_CAST_T( Str, "", "" );
   TEST_CAST_T( Str, "0", "0" );

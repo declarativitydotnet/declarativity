@@ -27,6 +27,10 @@ ELEMENTS
    which lets tuple through or not.  push-push or pull-pull. 
 
 OTHER OBJECTS / FACILTIES
+
+ - Casting a double to a string should format the double for human
+   consumption.  Calling "toString" on a double should format it
+   precisely for comparison purposes.
  
  - IP address concrete value type
 

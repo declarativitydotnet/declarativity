@@ -42,7 +42,7 @@ public:
   bool equals(ValueRef) const;
 
   // Casting
-  static str cast(ValueRef v) { return v->toString(); };
+  static str cast(ValueRef v);
   
 private:
   str s;

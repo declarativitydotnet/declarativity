@@ -24,6 +24,9 @@
 //
 // String conversion. 
 // Yuck.  IF we convert libasync to the STL this will be easier.
+// Note: toString converts to an _exact_ representation of the double
+// (i.e. in binary), rather than the more human-familiar decimal
+// version, which is what you get if you cast it to a string. 
 //
 str Val_Double::toString() const
 {
