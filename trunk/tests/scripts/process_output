@@ -161,17 +161,17 @@ def eval_lookups(lookups, results):
     thops = []
 
     itotal = 0
-    for i in i_hop_lookup.values(): total += float(i_hop_lookup[i])
-    ihops = i_hop_lookup.keys()
+    for i in i_hop_counts.values(): total += float(i_hop_counts[i])
+    ihops = i_hop_counts.keys()
     ihops.sort()
     for h in ihops:        
         if not h in thops: thops += h
-        print >> ilookups, "%d %f %d" % (h, float(i_hop_lookup[h]), itotal)
+        print >> ilookups, "%d %f %d" % (h, float(i_hop_counts[h]), itotal)
     ilookups.close()
 
     etotal = 0
-    for e in e_hop_lookup.values(): total += float(e_hop_lookup[e])
-    ehops = e_hop_lookup.keys()
+    for e in e_hop_counts.values(): total += float(e_hop_counts[e])
+    ehops = e_hop_counts.keys()
     ehops.sort()
     for h in ehops:        
         if not h in thops: thops += h
@@ -181,8 +181,8 @@ def eval_lookups(lookups, results):
     thops.sort()
     for h in thops:        
         ih = eh = 0
-        if i_hop_lookup.has_key(h): ih += float(i_hop_lookup[h])
-        if e_hop_lookup.has_key(h): eh += float(e_hop_lookup[h])
+        if i_hop_counts.has_key(h): ih += float(i_hop_counts[h])
+        if e_hop_counts.has_key(h): eh += float(e_hop_counts[h])
         print >> tlookups, "%d %f %d" % (h, (ih + eh), (itotal + etotal))
     tlookups.close()
 
