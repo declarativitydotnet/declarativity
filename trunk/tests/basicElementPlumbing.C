@@ -127,6 +127,77 @@ void testCheckHookupElements(MasterRef master)
 }
 
 
+/** Test the portion of router initialization that checks for port
+    number range correctness. */
+void testCheckHookupRange(MasterRef master)
+{
+  std::cout << "CHECK ELEMENT HOOKUP RANGE\n";
+
+  TupleRef t = create_tuple(1);
+  ref< vec< TupleRef > > tupleRefBuffer =
+    New refcounted< vec< TupleRef > >();
+  tupleRefBuffer->push_back(t);
+  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
+  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+
+  ref< vec< ElementRef > > elements = New refcounted< vec< ElementRef > >();
+  elements->push_back(memoryPull);
+  elements->push_back(pullPrint);
+
+  // Bad from port
+
+  Router::HookupRef hookup =
+    New refcounted< Router::Hookup >(memoryPull, 1,
+                                     pullPrint, 0);
+  ref < vec< Router::HookupRef > > hookups =
+    New refcounted< vec< Router::HookupRef > >();
+  hookups->push_back(hookup);
+
+  Router::ConfigurationRef configuration =
+    New refcounted< Router::Configuration >(elements, hookups);
+
+  RouterRef router = New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+    std::cerr << "** Failed to catch incorrect from port\n";
+  } else {
+    std::cout << "Caught incorrect from port\n";
+  }
+
+  hookups->clear();
+  hookup = New refcounted< Router::Hookup >(memoryPull, 0,
+                                            pullPrint, 1);
+  hookups->push_back(hookup);
+  router = New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+    std::cerr << "** Failed to catch incorrect to port\n";
+  } else {
+    std::cout << "Correctly caught incorrect to port\n";
+  }
+
+  hookups->clear();
+  hookup = New refcounted< Router::Hookup >(memoryPull, 2,
+                                            pullPrint, 3);
+  hookups->push_back(hookup);
+  router = New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+    std::cerr << "** Failed to catch incorrect from/to ports\n";
+  } else {
+    std::cout << "Correctly caught incorrect from/to ports\n";
+  }
+
+  hookups->clear();
+  hookup = New refcounted< Router::Hookup >(pullPrint, 0,
+                                            memoryPull, 0);
+  hookups->push_back(hookup);
+  router = New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+    std::cerr << "** Failed to catch portless hookup\n";
+  } else {
+    std::cout << "Correctly caught portless hookup\n";
+  }
+}
+
+
 int main(int argc, char **argv)
 {
   std::cout << "BASIC ELEMENT PLUMBING\n";
@@ -135,6 +206,7 @@ int main(int argc, char **argv)
   MasterRef master = New refcounted< Master >();
 
   testCheckHookupElements(master);
+  testCheckHookupRange(master);
 
   return 0;
 }
