@@ -92,4 +92,6 @@ public:
 
 };
 
+typedef ref<Tuple> TupleRef;
+
 #endif /* __TUPLE_H_ */
