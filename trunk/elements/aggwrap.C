@@ -14,8 +14,9 @@
 #include "val_int32.h"
 
 Aggwrap::Aggwrap(str aggfn, int aggfield)
-  : Element(str("Agg"), 2, 2),
+  : Element(strbuf() << "Aggwrap<" << aggfn << ">", 2, 2),
     _aggfn(aggfn), _aggfield(aggfield),
+    inner_accepting(true),
     ext_in_cb(cbv_null), 
     ext_out_cb(cbv_null)
 {
@@ -42,6 +43,7 @@ int Aggwrap::push(int port, TupleRef t, cbv cb)
     ext_in_cb = cb;
     switch(aggState) {
     case 0:  // Waiting
+      TRC("Got a tuple from outside!");
       assert(inner_accepting);
       agg_init();
       inner_accepting = output(1)->push(t, wrap(this, &Aggwrap::int_push_cb));
@@ -140,14 +142,8 @@ void Aggwrap::comp_cb(int jnum)
   }
   
   if (curJoin >= numJoins - 1) {
-    TRC("Our work here is done.  Ship it out");
     // Presumably, we're now done.
     agg_finalize();
-    aggState = 2;
-    output(0)->push(aggResult, cbv_null);
-    if (ext_out_cb) { 
-      ext_out_cb();
-    }
   }
 }
 
@@ -156,6 +152,7 @@ void Aggwrap::comp_cb(int jnum)
 //
 cbv Aggwrap::get_comp_cb()
 {
+  TRC("Joins so far: " << numJoins+1);
   return wrap(this,&Aggwrap::comp_cb,numJoins++);
 }
 
@@ -198,7 +195,14 @@ void Aggwrap::agg_finalize() {
     aggResult->append(Val_Int32::mk(count));
     aggResult->freeze();
   }
+  if (aggResult) {
+    TRC("Pushing tuple");
+    output(0)->push(aggResult, cbv_null);
+    if (ext_out_cb) { 
+      ext_out_cb();
+    }
+  } else {
+    TRC("Alas, nothing to push");
+  }
+  aggState = 0;
 }
-
-
-

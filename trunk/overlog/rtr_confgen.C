@@ -10,6 +10,7 @@
  */
 
 #include "rtr_confgen.h"
+#define TRACE_OFF
 #include "trace.h"
 const str Rtr_ConfGen::SEL_PRE("select_");
 const str Rtr_ConfGen::AGG_PRE("agg_");
@@ -147,7 +148,7 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
   _pendingReceiverSpec = NULL;
   // Do we need an aggregation element to wrap around this?
   if (r->aggField >= 0) {
-    agg_el = New refcounted<Aggwrap>("aggregateWrapper", r->aggField );
+    agg_el = New refcounted<Aggwrap>(r->aggFn, r->aggField );
   }
   
   ElementSpecRef last_el = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlotProcessFunctor"));
@@ -188,8 +189,7 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
   }
   
   if (r->deleteFlag == true) {
-    std::cout << "Delete " << fn->name << " for rule " << 
-      r->toString() << "\n";
+    TRC("Delete " << fn->name << " for rule " << r->toString() << "\n");
     // And send it for deletion. Assume deletion happens here. FIXME in future.
     TableRef tableToDelete = getTableByName(nodeID, fn->name);
     OL_Context::TableInfo* ti = _ctxt->getTableInfos()->find(fn->name)->second;
@@ -303,7 +303,8 @@ void Rtr_ConfGen::genReceiveElements(ref< Udp> udp, str nodeID)
     int numElementsToReceive = ri._receivers.size(); // figure out the number of receivers
     str tableName = ri._name;
 
-    std::cout << "Demuxing " << tableName << " for " << numElementsToReceive << " elements\n";
+    TRC("Demuxing " << tableName << " for " 
+	<< numElementsToReceive << " elements\n" );
 
     // DupElim -> DemuxS -> Insert -> Duplicator -> Fork
 
@@ -572,8 +573,8 @@ Rtr_ConfGen::genSelectionElements(OL_Context::Rule* curRule,
     selectionPel << "$" << k << " pop ";
   }
 
-  std::cout << "Gen selection functions for " << str(selectionPel) 
-	    << " " << curRule->ruleID << " " << probeNames->toString() << "\n";
+  TRC("Gen selection functions for " << str(selectionPel) 
+      << " " << curRule->ruleID << " " << probeNames->toString() << "\n");
  
   ElementSpecRef selection =
     _conf->addElement(New refcounted< PelTransform >(strbuf("Selection:") 
@@ -606,7 +607,7 @@ Rtr_ConfGen::genAllSelectionElements(OL_Context::Rule* curRule,
     OL_Context::Term nextTerm = curRule->terms.at(j);
     str termName = nextTerm.fn->name;
     if (isSelection(nextTerm)) {
-      std::cout << "Selection term " << termName << " " << curRule->ruleID << "\n";
+      TRC("Selection term " << termName << " " << curRule->ruleID << "\n");
       lastSelectionSpecRef = genSelectionElements(curRule, nextTerm, 
 						       nodeID, curNamesTracker, 
 						       lastSelectionSpecRef, j); 
@@ -655,7 +656,7 @@ Rtr_ConfGen::genAssignmentElements(OL_Context::Rule* curRule,
       // table size keyword
       str tableName = substr(curTerm.argNames.at(k), TABLESIZE.len()+1, 
 			     curTerm.argNames.at(k).len()-TABLESIZE.len()-1);
-      std::cout << tableName << "\n";
+      TRC(tableName << "\n");
       if (_ctxt->getTableInfos()->find(tableName) == _ctxt->getTableInfos()->end()) {
 	fail = true;
 	std::cerr << tableName << " cannot be found " << curRule->ruleID << "\n";
@@ -687,8 +688,8 @@ Rtr_ConfGen::genAssignmentElements(OL_Context::Rule* curRule,
   //}
   curNamesTracker->fieldNames.push_back(curTerm.argNames.at(0));
   
-  std::cout << "Gen assignments for " << termName << " " << curRule->ruleID << 
-    " " << str(pelStr) << " " << curNamesTracker->toString() << "\n";
+  TRC("Gen assignments for " << termName << " " << curRule->ruleID << 
+      " " << str(pelStr) << " " << curNamesTracker->toString() << "\n");
   
   ElementSpecRef assignment =
     _conf->addElement(New refcounted< PelTransform >(strbuf("Assignment:") 
@@ -795,10 +796,10 @@ Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 
   /*
   for (uint k = 0; k < rightJoinKeys.size(); k++) {
-    std::cout << "Right join keys " << rightJoinKeys.at(k) << " " << baseTableNames->toString() << "\n";
+  TRC("Right join keys " << rightJoinKeys.at(k) << " " << baseTableNames->toString() << "\n");
   }
   for (uint k = 0; k < leftJoinKeys.size(); k++) {
-    std::cout << "Left join keys " << leftJoinKeys.at(k) << " " << probeNames->toString() << "\n";
+  TRC("Left join keys " << leftJoinKeys.at(k) << " " << probeNames->toString() << "\n");
     }*/
 
   if (leftJoinKeys.size() == 0 || rightJoinKeys.size() == 0) {
@@ -824,8 +825,9 @@ Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
       _conf->addElement(New refcounted< UniqueLookup >(strbuf("UniqueLookup:") << curRule->ruleID << ":" << joinOrder 
 						       << ":" << nodeID, probeTable,
 						       leftJoinKey, rightJoinKey, comp_cb));
-    std::cout << "Unique lookup " << curRule->ruleID << " " << eventTerm.fn->name << " " << baseTerm.fn->name << " " 
-	      << leftJoinKey << " " << rightJoinKey << "\n";
+    TRC( "Unique lookup " << curRule->ruleID << " " 
+	 << eventTerm.fn->name << " " << baseTerm.fn->name << " " 
+	 << leftJoinKey << " " << rightJoinKey << "\n");
     
   } else {
     last_el =
@@ -834,9 +836,9 @@ Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 						     leftJoinKey, rightJoinKey, comp_cb));
     
     addMultTableIndex(probeTable, rightJoinKey, nodeID);
-    std::cout << "Mult lookup " << curRule->ruleID << " " << 
-     eventTerm.fn->name << " " << baseTerm.fn->name << " " 
-	      << leftJoinKey << " " << rightJoinKey << "\n";
+    TRC( "Mult lookup " << curRule->ruleID << " " << 
+	 eventTerm.fn->name << " " << baseTerm.fn->name << " " 
+	 << leftJoinKey << " " << rightJoinKey << "\n");
   }
   
   ElementSpecRef noNull = _conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << curRule->ruleID << ":" 
@@ -845,9 +847,9 @@ Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
   hookUp(last_el, 0, noNull, 0);
 
   int numFieldsProbe = probeNames->fieldNames.size();
-  std::cout << "Probe before merge " << probeNames->toString() << "\n";
+  TRC("Probe before merge " << probeNames->toString() << "\n");
   probeNames->mergeWith(baseTerm.argNames); 
-  std::cout << "Probe after merge " << probeNames->toString() << "\n";
+  TRC("Probe after merge " << probeNames->toString() << "\n");
 
   if (_pendingRegisterReceiver) {
     // connecting to udp receiver later
@@ -866,7 +868,7 @@ Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 
   // in case there are other join keys, we have to compare them using selections since we can join only 1 field
   // since we don't know the types, do a string compare
-  std::cout << "Number of join selections " << leftJoinKeys.size()-1 << "\n";
+  TRC("Number of join selections " << leftJoinKeys.size()-1 << "\n");
   for (uint k = 1; k < leftJoinKeys.size(); k++) {
     int leftField = leftJoinKeys.at(k);
     int rightField = rightJoinKeys.at(k);
@@ -874,7 +876,7 @@ Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
     selectionPel << "$0 " << (leftField+1) << " field " << " $1 " << rightField+1 
 		 << " field ==s not ifstop $0 pop $1 pop";
 
-    std::cout << "Join selections " << str(selectionPel) << "\n";
+    TRC("Join selections " << str(selectionPel) << "\n");
     ElementSpecRef joinSelections =
       _conf->addElement(New refcounted< PelTransform >(strbuf("JoinSelections:") << curRule->ruleID << ":" 
 						       << joinOrder << ":" << k << ":" << nodeID, 
@@ -899,7 +901,7 @@ Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
   for (uint k = 0; k < baseTerm.argNames.size(); k++) {
     bool joinKey = false;
     for (uint j = 0; j < rightJoinKeys.size(); j++) {
-      //std::cout << k << " " << rightJoinKeys.at(j) << "\n";
+      //TRC( k << " " << rightJoinKeys.at(j) << "\n");
       if (k == (uint) rightJoinKeys.at(j)) { // add one for table name
 	joinKey = true;
 	break;
@@ -911,7 +913,7 @@ Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
   }
 
   str pelProjectStr(pelProject);
-  //std::cout << "Pel transform " << pelProjectStr << "\n";
+  //TRC("Pel transform " << pelProjectStr << "\n");
   ElementSpecRef transS =
     _conf->addElement(New refcounted< PelTransform >(strbuf("JoinPelTransform:") << curRule->ruleID << ":" 
 						     << joinOrder << ":" << nodeID, 
@@ -1001,7 +1003,8 @@ Rtr_ConfGen::genJoinElements(OL_Context::Functor* curFunctor,
   namesTracker->initialize(eventTerm.argNames, eventTerm.argNames.size());  
   for (uint k = 0; k < baseTerms.size(); k++) {    
     if (baseTerms.at(k).fn->name == eventTerm.fn->name) { continue; }
-    std::cout << "Probing " << eventTerm.fn->name << " " << baseTerms.at(k).fn->name << "\n";
+    TRC("Probing " << eventTerm.fn->name << " " 
+	<< baseTerms.at(k).fn->name << "\n");
     cbv comp_cb = cbv_null;
     if (agg_el) {
       comp_cb = agg_el->get_comp_cb();
@@ -1009,7 +1012,7 @@ Rtr_ConfGen::genJoinElements(OL_Context::Functor* curFunctor,
     last_el = genProbeElements(curRule, eventTerm, baseTerms.at(k), 
 			       nodeID, namesTracker, 
 			       last_el, k, comp_cb);
-    //std::cout << "Cur namesTracker " << namesTracker->toString() << "\n";
+    // TRC("Cur namesTracker " << namesTracker->toString() << "\n");
     // are there any more probes? If so, we have to change from pull to push
     //if (k != (baseTerms.size() - 1)) {
       ElementSpecRef pullPush =
@@ -1032,9 +1035,9 @@ void Rtr_ConfGen::addMultTableIndex(TableRef table, int fn, str nodeID)
     // not there yet
     table->add_multiple_index(fn);
     _multTableIndices.insert(std::make_pair(str(uniqStr), str(uniqStr)));
-    std::cout << "Mult index already added " << str(uniqStr) << "\n";
+    TRC("Mult index already added " << str(uniqStr) << "\n");
   } else {
-    std::cerr << "Mult index already exists " << str(uniqStr) << "\n";
+    TRC("Mult index already exists " << str(uniqStr) << "\n");
   }
 }
 
@@ -1271,7 +1274,7 @@ void Rtr_ConfGen::createTables(str nodeID)
       std::vector<int> primaryKeys = tableInfo->primaryKeys;
       for (uint k = 0; k < primaryKeys.size(); k++) {
 	newTable->add_unique_index(primaryKeys.at(k));
-	std::cout << "Add unique index " << newTableName << " " << primaryKeys.at(k) << "\n";
+	TRC("Add unique index " << newTableName << " " << primaryKeys.at(k) << "\n");
       }
 
       //newTable->add_multiple_index(1); 

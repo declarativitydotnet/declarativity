@@ -604,11 +604,13 @@ goto find_rule; \
 #define CCOMMENT 1
 #define CSTRING 2
 
+#ifndef YY_NO_UNISTD_H
 /* Special case for "unistd.h", since it is non-ANSI. We include it way
  * down here because we want the user's section 1 to have been scanned first.
  * The user has a chance to override it with an option.
  */
 #include <unistd.h>
+#endif
 
 #ifndef YY_EXTRA_TYPE
 #define YY_EXTRA_TYPE void *
@@ -704,7 +706,7 @@ YY_DECL
 #line 76 "ol_lexer.lex"
 
 
-#line 708 "ol_lexer.C"
+#line 710 "ol_lexer.C"
 
 	if ( (yy_init) )
 		{
@@ -1031,7 +1033,7 @@ YY_RULE_SETUP
 #line 173 "ol_lexer.lex"
 ECHO;
 	YY_BREAK
-#line 1035 "ol_lexer.C"
+#line 1037 "ol_lexer.C"
 			case YY_STATE_EOF(CCOMMENT):
 			case YY_STATE_EOF(CSTRING):
 				yyterminate();
@@ -1626,6 +1628,8 @@ int yyFlexLexer::yy_get_next_buffer()
 	OLBasefree((void *) b  );
 }
 
+extern "C" int isatty (int );
+
 /* Initializes or reinitializes a buffer.
  * This function is sometimes called more than once on the same buffer,
  * such as during a yyrestart() or at EOF.
@@ -1894,6 +1898,7 @@ void OLBasefree (void * ptr )
 #undef yy_set_bol
 #undef yy_new_buffer
 #undef yy_set_interactive
+#undef yytext_ptr
 #undef YY_DO_BEFORE_ACTION
 
 #ifdef YY_DECL_IS_OURS
