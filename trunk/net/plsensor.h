@@ -13,6 +13,7 @@
 #ifndef __PLSENSOR_H__
 #define __PLSENSOR_H__
 
+#include "config.h"
 #include "element.h"
 #include <async.h>
 #include <rxx.h>
@@ -28,6 +29,20 @@ public:
   PlSensor(u_int16_t sensor_port, str sensor_path, uint32_t reconnect_delay);
 
 private:
+
+  //
+  // Different versions of libasync have different names for a TCP
+  // connection-in-progress handle...
+  //
+#ifdef HAVE_TCPCONN_T_P
+  typedef tcpconn_t conn_t;
+#else
+#ifdef HAVE_TCPCONNECT_T_P
+  typedef tcpconnect_t conn_t;
+#else
+#error No TCP connection type from libasync!
+#endif
+#endif
 
   void enter_connecting();
   void error_cleanup(uint32_t errnum, str errmsg);
@@ -55,7 +70,7 @@ private:
   u_int16_t	port;
   str		path;
   int		sd; 
-  tcpconnect_t *tc;
+  conn_t	*tc;
   rxx		req_re;
   strbuf       *hdrs;
   in_addr	localaddr;
