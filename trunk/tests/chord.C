@@ -837,7 +837,6 @@ void ruleF3(str name,
                                                     1, // Match fixFinger.NI
                                                     1 // with nextFingerFix.NI
                                                     ));
-  ElementSpecRef p = conf->addElement(New refcounted< PrintTime >(strbuf("JoinFingerFix:") << name));
   ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
 
   // Link it to the evictSuccessor coming in. Pushes match already
@@ -852,8 +851,7 @@ void ruleF3(str name,
                                                      $0 1 field pop /* output fixFinger.NI */ \
                                                      rand pop /* output random */ \
                                                      $1 2 field pop /* output nextFingerFix.I */"));
-  conf->hookUp(join1S, 0, p, 0);
-  conf->hookUp(p, 0, noNullS, 0);
+  conf->hookUp(join1S, 0, noNullS, 0);
   conf->hookUp(noNullS, 0, makeRes1S, 0);
   
 
@@ -1068,9 +1066,9 @@ void ruleF8(str name,
   // eagerFinger(NI, I, B, BI)
   ElementSpecRef selectS =
     conf->addElement(New refcounted< PelTransform >(strbuf("select:") << name,
-                                                    strbuf("$2 /* I */")
+                                                    strbuf("$2 /* I */ ")
                                                     << fingerSize <<
-                                                    "1 -i /* I fingerSize-1 */\
+                                                    " 1 -i /* I fingerSize-1 */\
                                                      ==i /* I==?fingerSize-1 */\
                                                      $1 $4 /* I==?fingerSize-1 NI BI */\
                                                      ==s /* I==?fingerSize-1 NI==?BI */\
