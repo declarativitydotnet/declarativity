@@ -20,7 +20,7 @@ TuplePtr TupleSeq::Package::simple_action(TupleRef p)
 {
   TupleRef n = Tuple::mk();
 
-  n->append(Val_UInt64::mk(seq_++));
+  n->append(Val_UInt64::mk(MAKE_SEQ(seq_++, 0)));
   n->append(p);
   n->freeze();
 
@@ -28,7 +28,7 @@ TuplePtr TupleSeq::Package::simple_action(TupleRef p)
 }
 
 TupleSeq::Unpackage::Unpackage(str name) 
-  : Element(name, 1,1)
+  : Element(name, 1, 1)
 {
 }
 
@@ -42,14 +42,4 @@ TuplePtr TupleSeq::Unpackage::simple_action(TupleRef p)
   }
 
   return t;
-}
-
-////////////////////////////////////////////////////////////////////
-//
-// The main object itself
-//
-TupleSeq::TupleSeq(str name, u_int64_t start_seq) 
-  : pack_(New refcounted< TupleSeq::Package >(name, start_seq)),
-    unpack_(New refcounted< TupleSeq::Unpackage >(name))
-{
 }

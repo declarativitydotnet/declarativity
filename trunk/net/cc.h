@@ -51,10 +51,10 @@ public:
   public:
     Rx(const CC&, double, double);
     const char *class_name() const		{ return "CC::Rx";};
-    const char *processing() const		{ return "hh/l"; };
-    const char *flow_code() const		{ return "/-"; };
+    const char *processing() const		{ return "a/al"; };
+    const char *flow_code() const		{ return "x/x-"; };
 
-    TuplePtr simple_tuple(TupleRef p);		// Ack on output1 before passing to output0.
+    TuplePtr simple_action(TupleRef p);         // Ack on output1 before passing to output0.
 
     TuplePtr pull(int port, cbv cb);		// Pull next acknowledgement from ack_q
 
@@ -86,14 +86,14 @@ public:
     Tx(const CC&, double, double);
     const char *class_name() const		{ return "CC::Tx";};
     const char *processing() const		{ return "hh/l"; };
-    const char *flow_code() const		{ return "-/"; };
+    const char *flow_code() const		{ return "--/-"; };
 
     int push(int port, TupleRef tp, cbv cb);	// Incoming, either add to send_q or ack
     TuplePtr pull(int port, cbv cb);		// Rate limited output tuple stream
 
   private:
-    cbv _element_cb; 				// Callback for element push
-    cbv _send_cb; 				// Callback for send. Pulls from send_q.
+    cbv _input_cb; 				// Callback for element push
+    cbv _output_cb; 				// Callback for send. Pulls from send_q.
 
     void timeout_cb(otuple_ref otr);		// Callback for to retry sending a tuple
     REMOVABLE_INLINE void add_rtt_meas(long m);	// Update sa, sv, and rto based on m
@@ -127,6 +127,8 @@ public:
 
   // Get sequence number field
   int get_seq_field() const { return seq_field_; }
+
+  REMOVABLE_INLINE uint64_t now_ms() const;
 
   // Accessing the individual elements
   ref< CC::Rx > get_rx() { return rx_; };

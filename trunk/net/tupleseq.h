@@ -13,12 +13,16 @@
 #include "element.h"
 #include "val_uint64.h"
 
+#define MAKE_SEQ(s, o) (((s) << 4) | ((o) & 0xF))
+#define SEQ_NUM(n)     ((n) >> 4)
+#define OFFSET(n)      ((int)((n) & 0xF))
+
 class TupleSeq {
 public:
 
   class Package : public Element {
   public:
-    Package(str name, u_int64_t start_seq);
+    Package(str name="TupleSeq::Pack", u_int64_t start_seq=0);
     const char *class_name() const	{ return "TupleSeq::Package";};
     const char *processing() const	{ return "a/a"; };
     const char *flow_code() const	{ return "x/x"; };
@@ -31,7 +35,7 @@ public:
 
   class Unpackage : public Element {
   public:
-    Unpackage(str name);
+    Unpackage(str name="TupleSeq::Unpack");
     const char *class_name() const	{ return "TupleSeq::Unpackage";};
     const char *processing() const	{ return "a/a"; };
     const char *flow_code() const	{ return "x/x"; };
@@ -39,19 +43,7 @@ public:
     TuplePtr simple_action(TupleRef p);	// Removes sequence num from tuple stream. 
   };
 
-  //
-  // Now the TupleSeq object itself.
-  //
-  TupleSeq(str name="TupleSeq", u_int64_t start_seq=0);
-
-  // Accessing the individual elements
-  ref< TupleSeq::Package >   get_package()   { return pack_; };
-  ref< TupleSeq::Unpackage > get_unpackage() { return unpack_; };
-
 private:
-  // Elements 
-  ref< Package >   pack_;
-  ref< Unpackage > unpack_;
 };
 
 #endif /* __TupleSeq_H_ */

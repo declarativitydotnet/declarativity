@@ -18,7 +18,9 @@ libp2net_la_SOURCES = \
 	plsensor.C \
 	udp.C \
 	tupleseq.C \
-	cc.C
+	cc.C \
+	frag.C \
+	defrag.C
 
 INCLUDES = @SFS_INC@ -I../p2core
 
