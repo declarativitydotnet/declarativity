@@ -3,9 +3,9 @@
 
 The base tuples:
 node(currentNodeIP, currentNodeID), TTL=infinity, size=1
-finger(currentNodeIP, targetID, bestID, bestIP, expirationTime), size=n,
+finger(currentNodeIP, targetID, bestID, bestIP), size=n,
 where n=2^m
-successor(currentNodeIP, successorID, successorIP, expirationTime),
+successor(currentNodeIP, successorID, successorID),
 size=n, where n=2^m
 predecessor(currentNodeIP,  predecessorID, predecessorIP), TTL=infinity, size=1
 
@@ -30,8 +30,10 @@ TTL - Default duration of a tuple within table. If TTL=0, messages flow
 through the dataflow engine and are not materialized at any point.
 Typically, event tuples have TTL of 0. If TTL=infinity, tuples never
 expire. If TTL is above 0 but less than infinite, then each tuple needs
-to have an expirationTime field. A vacuum cleaner periodically purges
-tuples with the expiration time less than the current time.  
+to have an implicit (hidden) expirationTime field. A vacuum cleaner periodically purges
+tuples with the expiration time less than the current time.   Each tuple
+also has an implicit active field, which is initialized to true, but set
+to false when delete<tuple> is invoked.
 
 
 1.1 Route Selection Rules
@@ -67,31 +69,23 @@ to return a random value will result in a random routing policy.
 ----------------------------
 
 Best Successor:
+
 SU1: bestSuccessorID@NI(NI,min<D>) :- node@NI(NI,N), successor@NI(NI,S,SI),
 D=f_dist(S,N) 
-SU2: bestSuccessor@NI(NI,S,SI,ET) :- node@NI(NI,N), bestSuccessorID@NI(NI,D),
-successor@NI(NI,S,SI,ET), D=f_dist(S,N), ET>f_currentTime() 
+SU2: bestSuccessor@NI(NI,S,SI) :- node@NI(NI,N), bestSuccessorID@NI(NI,D),
+successor@NI(NI,S,SI), D=f_dist(S,N)
 
 Successor replacement policy:
-SR1: bestKSuccessorID@NI(NI,min-k<D,successor.size>) :- node@NI(NI,N),
-successor@NI(NI,S,SI,ET), ET>f_currentTime(), D=f_dist(S,N)
-SR2: successor@NI(NI,S,SI,ET) :- node@NI(NI,N), successor@NI(NI,S,SI,ET),
-bestKSuccessorID@NI(NI,S1), f_dist(S,N)>S1, ET = -1 
+SR1: evictSuccessor(NI) :- successorCount(NI,C), C>successor.size
+SR2: delete<successor(NI,S,SI)> :- successor(NI,S,SI),
+evictSuccessor(NI), maxSuccessor(NI,S,SI)
+SR3: maxSuccessorDistance(NI,max<D>) :- successor(NI,S,SI), node(NI,N), D = f_dist(N,S)
+SR4: maxSuccessor(NI,S,SI) :- successor(NI,S,SI),
+maxSuccessorDistance(NI,D), D=f_dist(N,S) 
 
-The current bestSuccessor is the successor with the lowest ID (SU1). SR1
-and SR2 is used to decide if a successor is to be purged (by setting ET
-to -1 or having an 'active' flag as one of the fields). Only the r
-closest successors are kept. SU1-2 and SR1-2 are invoked whenever a new
-successor is added or updated. It is best if we can do the replacements
-at the tables level.  
- 
-If there is only one successor, the rules SU1-2 and SR1-2 are not
-needed, and we just need a rule that sets the first finger entry to be
-the successor. 
 
 Fingers: 
-F1: finger@NI(NI,K,B,BI,ET) :- fix_finger@NI(NI,E),
-lookupResults@NI(NI,K,B,BI,E), ET=(f_currentTime()+finger.TTL) 
+F1: finger@NI(NI,K,B,BI) :- fix_finger@NI(NI,E), lookupResults@NI(NI,K,B,BI,E)
 F2: lookup@NI(NI,K,NI,E) :- fix_finger@NI(NI,E), fingerIndex@NI(NI, I),
 K=[(NI+2I) mod 2^m] 
 F3: fingerIndex@NI(NI, I) :- fix_finger@NI(NI,E), fingerIndex@NI(NI, I1),
@@ -110,8 +104,7 @@ accurate the fingers will be. Set to half of finger TTL.
 
 Join:
 J1: lookup@NI(NI,N,NI,E) :- node@NI(NI,N), join@NI(NI,N,E)
-J2: successor@NI(NI,S,SI,ET) :- join@NI(NI,N,E), lookupResults@NI(NI,K,S,SI,E),
-ET=(f_currentTime() + successor.TTL) 
+J2: successor@NI(NI,S,SI) :- join@NI(NI,N,E), lookupResults@NI(NI,K,S,SI,E)
 J3: predecessor@NI(NI,null,null)
 
 The tuple join(ni,n,e) is added as input for node ni to join n. A lookup
@@ -122,20 +115,20 @@ itself.
 Stabilization:
 
 Update successor:
-S1: stabilizeRequest@SI(SI,NI,E) :- stabilize@N1(N1,E), bestSuccessor@N1(N1,S,SI,ET)
+S1: stabilizeRequest@SI(SI,NI,E) :- stabilize@N1(N1,E), bestSuccessor@N1(N1,S,SI)
 S2: sendPredecessor@NI(NI,P,PI,E) :- stabilizeRequest@NI(NI,PI1,E),
 predecessor@NI(NI,P,PI), P != null 
-S3: successor@NI(NI,P,PI,ET) :- node(NI,N), sendPredecessor@NI(NI,P,PI,E),
-bestSuccessor@NI(NI,S,SI,ET), P in (N,S), ET=(f_currentTime()+successor.TTL) 
+S3: successor@NI(NI,P,PI) :- node(NI,N), sendPredecessor@NI(NI,P,PI,E),
+bestSuccessor@NI(NI,S,SI), P in (N,S)
 
 Get successor list:
-S4: sendSuccessors@NI(NI,S,SI) :- stabilize@NI(NI,PI,E), successor@NI(NI,S,SI)
-S5: successor@NI(NI,S,SI,ET) :- sendSuccessors@NI(NI,S,SI),
-ET=(f_currentTime()+successor.TTL) 
+S4: sendSuccessors@NI(NI,S,SI) :- stabilize@NI(NI,PI,E),
+successor@NI(NI,S,SI), f_coinFlip()
+S5: successor@NI(NI,S,SI) :- sendSuccessors@NI(NI,S,SI)
 
 Update predecessor:
 S6: notifyPredecessor@SI(SI,N,NI,E) :- notify@NI(NI,E), node@NI(NI,N),
-successor@NI(NI,S,SI,ET) 
+successor@NI(NI,S,SI) 
 S7: predecessor@NI(NI,P,PI) :- node@NI(NI,N), notifyPredessor@NI(NI,P,PI,E),
 predecessor@NI(NI,P1,PI1), (P1 == null || (P1<P<N)) 
 
@@ -148,7 +141,8 @@ used to notify a successor node about the current predecessor, and
 update if necessary. If there is only a single successor, we do not need
 S4 and S5. 
 
-We can modify S4 and S5 to only exchange with random neighbors.
+We can modify S4 and S5 to only exchange with random neighbors using the
+f_coinFlip() above.
 
 SendSucessors, stabilizeRequest, stabilize, notify, notifyPredecessor
 are all event tuples with TTL=0. 
@@ -174,28 +168,25 @@ P3: checkPing(X), period=ping_interval
 Check Predecessor
 CP1: pingNodes@NI(NI,SI) :- predecessor@NI(NI,S,SI)
 CP2: predecesssor@NI(NI,S,SI) :- pingResult@NI(NI,SI,RTT),
-predecessor@NI(NI,S,SI), ET=(f_currentTime() + predecessor.TTL), RTT>=0 
-CP3: predecessor@NI(NI,null,null) :- pingResult@NI(NI,SI,RTT),
+predecessor@NI(NI,S,SI), RTT>=0 
+CP3: predecessor@NI(NI,null, null) :- pingResult@NI(NI,SI,RTT),
 predecessor@NI(NI,S,SI), RTT<0 
 
 PingNodes tuples will result in ping element performing periodic pings,
 every TTL.. This ping element will do a ping, and then generate a
 pingResult either after timeout or when the ping reply comes back. If
-pingResult is successful, increase TTL, otherwise, set TTL to a negative
-number to be purged by the vacumm cleaner. Ping and pingResult have TTLs
+pingResult is successful, increase TTL, otherwise, either delete, or in
+CP3, set fields to null for predecessor. Ping and pingResult have TTLs
 of 0. 
 
 Check Successor
 CP1: pingNodes@NI(NI,SI) :- successor@NI(NI,S,SI)
 
-Repeat the same for sucessors. If not alive, set ET=-1 or field values
-to null. For those already not alive, do not bother to probe. May check
-only the closest successor (need to keep the first live successor), and
-do the regular exchanges for the others. 
+Repeat the same for sucessors simply by running CP1 which adds to
+pingNodes. If not alive, use the <delete> command.
 
 Check Fingers?
-Called at higher frequency compared to fix fingers. If not alive, set ET=-1.
-
+Called at higher frequency compared to fix fingers. If not alive, delete.
 
 
 
