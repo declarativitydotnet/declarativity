@@ -2,6 +2,8 @@
 #ifndef __ROUTERTHREAD_H__
 #define __ROUTERTHREAD_H__
 #include <inlines.h>
+#include <sync.h>
+#include <vector.h>
 
 #define CLICK_DEBUG_SCHEDULING 0
 

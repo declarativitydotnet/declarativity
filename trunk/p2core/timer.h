@@ -69,8 +69,12 @@ class Timer {
   
  private:
   
+  /** Pointer to previous timer in the scheduler */
   Timer *_prev;
+
+  /** Pointer to next timer in the scheduler */
   Timer *_next;
+
   timeval _expiry;
   TimerHook _hook;
   void *_thunk;
@@ -84,7 +88,6 @@ class Timer {
   void unmake_list();
 
   friend class Master;
-  
 };
 
 #endif

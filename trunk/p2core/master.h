@@ -1,7 +1,7 @@
 // -*- c-basic-offset: 2; related-file-name: "master.C" -*-
 #ifndef __MASTER_H__
 #define __MASTER_H__
-#include <click/vector.hh>
+#include <vector.h>
 #include <timer.h>
 #include <task.h>
 #include <sync.h>

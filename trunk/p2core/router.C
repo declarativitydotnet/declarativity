@@ -1,4 +1,3 @@
-#if 0
 // -*- c-basic-offset: 2; related-file-name: "router.h" -*-
 /*
  * @(#)$Id$
@@ -30,98 +29,90 @@
 
 #include <router.h>
 
-#include <click/config.h>
-#include <click/routerthread.hh>
-#include <click/bitvector.hh>
-#include <click/error.hh>
-#include <click/straccum.hh>
-#include <click/elemfilter.hh>
-#include <click/confparse.hh>
-#include <click/timer.hh>
-#include <click/master.hh>
-#include <click/notifier.hh>
-#include <click/bighashmap_arena.hh>
+#include <routerthread.hh>
+#include <bitvector.hh>
+#include <error.hh>
+#include <straccum.hh>
+#include <elemfilter.hh>
+#include <confparse.hh>
+#include <timer.hh>
+#include <master.hh>
+#include <notifier.hh>
 #include <click/standard/errorelement.hh>
 #include <click/standard/threadsched.hh>
 #include <stdarg.h>
-#ifdef CLICK_USERLEVEL
-# include <unistd.h>
-#endif
-
-CLICK_DECLS
+#include <unistd.h>
 
 static Router::Handler *globalh;
 static int nglobalh;
 static int globalh_cap;
 
 Router::Router(const String &configuration, Master *m)
-    : _master(m), _state(ROUTER_NEW),
-      _allow_star_handler(true), _running(RUNNING_INACTIVE),
-      _handlers(0), _nhandlers(-1), _handlers_cap(0), _root_element(0),
-      _configuration(configuration),
-      _notifier_signals(0), _n_notifier_signals(0),
-      _arena_factory(new HashMap_ArenaFactory),
-      _hotswap_router(0), _thread_sched(0), _next_router(0)
+  : _master(m),
+    _state(ROUTER_NEW),
+    _allow_star_handler(true),
+    _running(RUNNING_INACTIVE),
+    _handlers(0),
+    _nhandlers(-1),
+    _handlers_cap(0),
+    _root_element(0),
+    _configuration(configuration),
+    _notifier_signals(0),
+    _n_notifier_signals(0),
+    _thread_sched(0),
+    _next_router(0)
 {
-    _refcount = 0;
-    _runcount = 0;
+  _refcount = 0;
+  _runcount = 0;
   
-    _root_element = new ErrorElement;
-    _root_element->attach_router(this, -1);
+  _root_element = new ErrorElement;
+  _root_element->attach_router(this, -1);
 
-    _master->use();
+  _master->use();
 }
 
 Router::~Router()
 {
-    if (_refcount > 0)
-	click_chatter("deleting router while ref count > 0");
+  if (_refcount > 0)
+    click_chatter("deleting router while ref count > 0");
 
-    // unuse the hotswap router
-    if (_hotswap_router)
-	_hotswap_router->unuse();
+  // Clean up elements in reverse configuration order
+  if (_state == ROUTER_LIVE) {
+    // Unschedule tasks and timers
+    _master->remove_router(this);
+    for (int ord = _elements.size() - 1; ord >= 0; ord--)
+      _elements[ _element_configure_order[ord] ]->cleanup(Element::CLEANUP_ROUTER_INITIALIZED);
+  } else if (_state != ROUTER_DEAD) {
+    assert(_element_configure_order.size() == 0 && _state <= ROUTER_PRECONFIGURE);
+    for (int i = _elements.size() - 1; i >= 0; i--)
+      _elements[i]->cleanup(Element::CLEANUP_NO_ROUTER);
+  }
   
-    // Delete the ArenaFactory, which detaches the Arenas
-    delete _arena_factory;
-
-    // Clean up elements in reverse configuration order
-    if (_state == ROUTER_LIVE) {
-	// Unschedule tasks and timers
-	_master->remove_router(this);
-	for (int ord = _elements.size() - 1; ord >= 0; ord--)
-	    _elements[ _element_configure_order[ord] ]->cleanup(Element::CLEANUP_ROUTER_INITIALIZED);
-    } else if (_state != ROUTER_DEAD) {
-	assert(_element_configure_order.size() == 0 && _state <= ROUTER_PRECONFIGURE);
-	for (int i = _elements.size() - 1; i >= 0; i--)
-	    _elements[i]->cleanup(Element::CLEANUP_NO_ROUTER);
-    }
+  // Delete elements in reverse configuration order
+  if (_element_configure_order.size())
+    for (int ord = _elements.size() - 1; ord >= 0; ord--)
+      delete _elements[ _element_configure_order[ord] ];
+  else
+    for (int i = 0; i < _elements.size(); i++)
+      delete _elements[i];
   
-    // Delete elements in reverse configuration order
-    if (_element_configure_order.size())
-	for (int ord = _elements.size() - 1; ord >= 0; ord--)
-	    delete _elements[ _element_configure_order[ord] ];
-    else
-	for (int i = 0; i < _elements.size(); i++)
-	    delete _elements[i];
-  
-    delete _root_element;
-    delete[] _handlers;
-    delete[] _notifier_signals;
-    _master->unuse();
+  delete _root_element;
+  delete[] _handlers;
+  delete[] _notifier_signals;
+  _master->unuse();
 }
 
 void
 Router::unuse()
 {
-    if (_refcount.dec_and_test())
-	delete this;
+  if (_refcount.dec_and_test())
+    delete this;
 }
 
 
 // ACCESS
 
-Element *
-Router::find(const String &name, String prefix, ErrorHandler *errh) const
+Element * Router::find(const String &name, String prefix, ErrorHandler *errh) const
 {
   while (1) {
     int got = -1;
@@ -148,100 +139,94 @@ Router::find(const String &name, String prefix, ErrorHandler *errh) const
   return 0;
 }
 
-Element *
-Router::find(const String &name, Element *context, ErrorHandler *errh) const
+Element * Router::find(const String &name, Element *context, ErrorHandler *errh) const
 {
   String prefix = ename(context->eindex());
   int slash = prefix.find_right('/');
   return find(name, (slash >= 0 ? prefix.substring(0, slash + 1) : String()), errh);
 }
 
-Element *
-Router::element(const Router *r, int ei)
+Element * Router::element(const Router *r, int ei)
 {
-    if (r && ei >= 0 && ei < r->nelements())
-	return r->_elements[ei];
-    else if (r && ei == -1)
-	return r->root_element();
-    else
-	return 0;
+  if (r && ei >= 0 && ei < r->nelements())
+    return r->_elements[ei];
+  else if (r && ei == -1)
+    return r->root_element();
+  else
+    return 0;
 }
 
-const String &
-Router::ename(int ei) const
+const String & Router::ename(int ei) const
 {
-    if (ei < 0 || ei >= nelements())
-	return String::null_string();
-    else
-	return _element_names[ei];
+  if (ei < 0 || ei >= nelements())
+    return String::null_string();
+  else
+    return _element_names[ei];
 }
 
-const String &
-Router::default_configuration_string(int ei) const
+const String & Router::default_configuration_string(int ei) const
 {
-    if (ei < 0 || ei >= nelements())
-	return String::null_string();
-    else
-	return _element_configurations[ei];
+  if (ei < 0 || ei >= nelements())
+    return String::null_string();
+  else
+    return _element_configurations[ei];
 }
 
-void
-Router::set_default_configuration_string(int ei, const String &s)
+void Router::set_default_configuration_string(int ei, const String &s)
 {
-    if (ei >= 0 && ei < nelements())
-	_element_configurations[ei] = s;
+  if (ei >= 0 && ei < nelements())
+    _element_configurations[ei] = s;
 }
 
-const String &
-Router::elandmark(int ei) const
+const String & Router::elandmark(int ei) const
 {
-    if (ei < 0 || ei >= nelements())
-	return String::null_string();
-    else
-	return _element_landmarks[ei];
+  if (ei < 0 || ei >= nelements())
+    return String::null_string();
+  else
+    return _element_landmarks[ei];
 }
 
 
 // CREATION 
 
-int
-Router::add_element(Element *e, const String &ename, const String &conf,
-		    const String &landmark)
+int Router::add_element(Element *e, const String &ename,
+                        const String &conf,
+                        const String &landmark)
 {
-    // router now owns the element
-    if (_state != ROUTER_NEW || !e)
-	return -1;
-    _elements.push_back(e);
-    _element_names.push_back(ename);
-    _element_landmarks.push_back(landmark);
-    _element_configurations.push_back(conf);
-    int i = _elements.size() - 1;
-    e->attach_router(this, i);
-    return i;
+  // router now owns the element
+  if (_state != ROUTER_NEW || !e)
+    return -1;
+  _elements.push_back(e);
+  _element_names.push_back(ename);
+  _element_landmarks.push_back(landmark);
+  _element_configurations.push_back(conf);
+  int i = _elements.size() - 1;
+  e->attach_router(this, i);
+  return i;
 }
 
 int
 Router::add_connection(int from_idx, int from_port, int to_idx, int to_port)
 {
-    assert(from_idx >= 0 && from_port >= 0 && to_idx >= 0 && to_port >= 0);
-    if (_state != ROUTER_NEW)
-	return -1;
-    Hookup hfrom(from_idx, from_port);
-    Hookup hto(to_idx, to_port);
-    // only add new connections
-    for (int i = 0; i < _hookup_from.size(); i++)
-	if (_hookup_from[i] == hfrom && _hookup_to[i] == hto)
-	    return 0;
-    _hookup_from.push_back(hfrom);
-    _hookup_to.push_back(hto);
-    return 0;
+  assert(from_idx >= 0 && from_port >= 0 && to_idx >= 0 && to_port >= 0);
+  if (_state != ROUTER_NEW)
+    return -1;
+  Hookup hfrom(from_idx, from_port);
+  Hookup hto(to_idx, to_port);
+  // only add new connections
+  for (int i = 0; i < _hookup_from.size(); i++)
+    if (_hookup_from[i] == hfrom && _hookup_to[i] == hto)
+      return 0;
+  _hookup_from.push_back(hfrom);
+  _hookup_to.push_back(hto);
+  return 0;
 }
 
 void
 Router::add_requirement(const String &r)
 {
-    assert(cp_is_word(r));
-    _requirements.push_back(r);
+  assert(cp_is_word(r));
+  _requirements.push_back(r);
 }
 
 
@@ -250,20 +235,20 @@ Router::add_requirement(const String &r)
 void
 Router::remove_hookup(int c)
 {
-    _hookup_from[c] = _hookup_from.back();
-    _hookup_from.pop_back();
-    _hookup_to[c] = _hookup_to.back();
-    _hookup_to.pop_back();
+  _hookup_from[c] = _hookup_from.back();
+  _hookup_from.pop_back();
+  _hookup_to[c] = _hookup_to.back();
+  _hookup_to.pop_back();
 }
 
 void
 Router::hookup_error(const Hookup &h, bool is_from, const char *message,
 		     ErrorHandler *errh)
 {
-    bool is_output = is_from;
-    const char *kind = (is_output ? "output" : "input");
-    element_lerror(errh, _elements[h.idx], message,
-		   _elements[h.idx], kind, h.port);
+  bool is_output = is_from;
+  const char *kind = (is_output ? "output" : "input");
+  element_lerror(errh, _elements[h.idx], message,
+                 _elements[h.idx], kind, h.port);
 }
 
 int
@@ -403,37 +388,37 @@ Router::make_pidxes()
   }
 }
 
-inline int
+REMOVABLE_INLINE int
 Router::input_pidx(const Hookup &h) const
 {
   return _input_pidx[h.idx] + h.port;
 }
 
-inline int
+REMOVABLE_INLINE int
 Router::input_pidx_element(int pidx) const
 {
   return _input_eidx[pidx];
 }
 
-inline int
+REMOVABLE_INLINE int
 Router::input_pidx_port(int pidx) const
 {
   return pidx - _input_pidx[_input_eidx[pidx]];
 }
 
-inline int
+REMOVABLE_INLINE int
 Router::output_pidx(const Hookup &h) const
 {
   return _output_pidx[h.idx] + h.port;
 }
 
-inline int
+REMOVABLE_INLINE int
 Router::output_pidx_element(int pidx) const
 {
   return _output_eidx[pidx];
 }
 
-inline int
+REMOVABLE_INLINE int
 Router::output_pidx_port(int pidx) const
 {
   return pidx - _output_pidx[_output_eidx[pidx]];
@@ -517,15 +502,15 @@ Router::check_push_and_pull(ErrorHandler *errh)
       
       switch (pt) {
 	
-       case Element::VAGNOSTIC:
+      case Element::VAGNOSTIC:
 	if (pf != Element::VAGNOSTIC) {
 	  input_pers[offt] = pf;
 	  changed = true;
 	}
 	break;
 	
-       case Element::VPUSH:
-       case Element::VPULL:
+      case Element::VPUSH:
+      case Element::VPULL:
 	if (pf == Element::VAGNOSTIC) {
 	  output_pers[offf] = pt;
 	  changed = true;
@@ -584,25 +569,25 @@ Router::set_connections()
 void
 Router::set_runcount(int x)
 {
-    _master->_runcount_lock.acquire();
-    _runcount = x;
-    if (_runcount < _master->_runcount) {
-	_master->_runcount = _runcount;
-	// ensure that at least one thread is awake to handle the stop event
-	if (_master->_runcount <= 0)
-	    _master->_threads[1]->unsleep();
-    }
-    _master->_runcount_lock.release();
+  _master->_runcount_lock.acquire();
+  _runcount = x;
+  if (_runcount < _master->_runcount) {
+    _master->_runcount = _runcount;
+    // ensure that at least one thread is awake to handle the stop event
+    if (_master->_runcount <= 0)
+      _master->_threads[1]->unsleep();
+  }
+  _master->_runcount_lock.release();
 }
 
 void
 Router::adjust_runcount(int delta)
 {
-    _master->_runcount_lock.acquire();
-    _runcount += delta;
-    if (_runcount < _master->_runcount)
-	_master->_runcount = _runcount;
-    _master->_runcount_lock.release();
+  _master->_runcount_lock.acquire();
+  _runcount += delta;
+  if (_runcount < _master->_runcount)
+    _master->_runcount = _runcount;
+  _master->_runcount_lock.release();
 }
 
 
@@ -661,29 +646,29 @@ Router::downstream_elements(Element *first_element, int first_output,
 			    ElementFilter *stop_filter,
 			    Vector<Element *> &results)
 {
-    Bitvector bv;
-    if (downstream_inputs(first_element, first_output, stop_filter, bv) < 0)
-	return -1;
-    int last_input_eidx = -1;
-    for (int i = 0; i < ninput_pidx(); i++)
-	if (bv[i] && _input_eidx[i] != last_input_eidx) {
-	    last_input_eidx = _input_eidx[i];
-	    results.push_back(_elements[last_input_eidx]);
-	}
-    return 0;
+  Bitvector bv;
+  if (downstream_inputs(first_element, first_output, stop_filter, bv) < 0)
+    return -1;
+  int last_input_eidx = -1;
+  for (int i = 0; i < ninput_pidx(); i++)
+    if (bv[i] && _input_eidx[i] != last_input_eidx) {
+      last_input_eidx = _input_eidx[i];
+      results.push_back(_elements[last_input_eidx]);
+    }
+  return 0;
 }
 
 int
 Router::downstream_elements(Element *first_element, int first_output,
 			    Vector<Element *> &results)
 {
-    return downstream_elements(first_element, first_output, 0, results);
+  return downstream_elements(first_element, first_output, 0, results);
 }
 
 int
 Router::downstream_elements(Element *first_element, Vector<Element *> &results)
 {
-    return downstream_elements(first_element, -1, 0, results);
+  return downstream_elements(first_element, -1, 0, results);
 }
 
 int
@@ -739,29 +724,29 @@ Router::upstream_elements(Element *first_element, int first_input,
 			  ElementFilter *stop_filter,
 			  Vector<Element *> &results)
 {
-    Bitvector bv;
-    if (upstream_outputs(first_element, first_input, stop_filter, bv) < 0)
-	return -1;
-    int last_output_eidx = -1;
-    for (int i = 0; i < noutput_pidx(); i++)
-	if (bv[i] && _output_eidx[i] != last_output_eidx) {
-	    last_output_eidx = _output_eidx[i];
-	    results.push_back(_elements[last_output_eidx]);
-	}
-    return 0;
+  Bitvector bv;
+  if (upstream_outputs(first_element, first_input, stop_filter, bv) < 0)
+    return -1;
+  int last_output_eidx = -1;
+  for (int i = 0; i < noutput_pidx(); i++)
+    if (bv[i] && _output_eidx[i] != last_output_eidx) {
+      last_output_eidx = _output_eidx[i];
+      results.push_back(_elements[last_output_eidx]);
+    }
+  return 0;
 }
 
 int
 Router::upstream_elements(Element *first_element, int first_input,
 			  Vector<Element *> &results)
 {
-    return upstream_elements(first_element, first_input, 0, results);
+  return upstream_elements(first_element, first_input, 0, results);
 }
 
 int
 Router::upstream_elements(Element *first_element, Vector<Element *> &results)
 {
-    return upstream_elements(first_element, -1, 0, results);
+  return upstream_elements(first_element, -1, 0, results);
 }
 
 
@@ -770,217 +755,186 @@ Router::upstream_elements(Element *first_element, Vector<Element *> &results)
 String
 Router::context_message(int element_no, const char *message) const
 {
-    Element *e = _elements[element_no];
-    StringAccum sa;
-    if (e->landmark())
-	sa << e->landmark() << ": ";
-    sa << message << " '" << e->declaration() << "':";
-    return sa.take_string();
+  Element *e = _elements[element_no];
+  StringAccum sa;
+  if (e->landmark())
+    sa << e->landmark() << ": ";
+  sa << message << " '" << e->declaration() << "':";
+  return sa.take_string();
 }
 
 static const Vector<int> *configure_order_phase;
 
 extern "C" {
-static int
-configure_order_compar(const void *athunk, const void *bthunk)
-{
+  static int
+  configure_order_compar(const void *athunk, const void *bthunk)
+  {
     const int *a = (const int *)athunk, *b = (const int *)bthunk;
     return (*configure_order_phase)[*a] - (*configure_order_phase)[*b];
-}
+  }
 }
 
 void
 Router::initialize_handlers(bool defaults, bool specifics)
 {
-    _ehandler_first_by_element.assign(nelements(), -1);
-    _ehandler_to_handler.clear();
-    _ehandler_next.clear();
-    _allow_star_handler = true;
+  _ehandler_first_by_element.assign(nelements(), -1);
+  _ehandler_to_handler.clear();
+  _ehandler_next.clear();
+  _allow_star_handler = true;
 
-    _handler_first_by_name.clear();
+  _handler_first_by_name.clear();
 
-    _nhandlers = (defaults || specifics ? 0 : -1);
+  _nhandlers = (defaults || specifics ? 0 : -1);
 
-    if (defaults)
-	for (int i = 0; i < _elements.size(); i++)
-	    _elements[i]->add_default_handlers(specifics);
+  if (defaults)
+    for (int i = 0; i < _elements.size(); i++)
+      _elements[i]->add_default_handlers(specifics);
 
-    if (specifics)
-	for (int i = 0; i < _elements.size(); i++)
-	    _elements[i]->add_handlers();
+  if (specifics)
+    for (int i = 0; i < _elements.size(); i++)
+      _elements[i]->add_handlers();
 }
 
 int
 Router::initialize(ErrorHandler *errh)
 {
-    if (_state != ROUTER_NEW)
-	return errh->error("second attempt to initialize router");
-    _state = ROUTER_PRECONFIGURE;
+  if (_state != ROUTER_NEW)
+    return errh->error("second attempt to initialize router");
+  _state = ROUTER_PRECONFIGURE;
 
-    // initialize handlers to empty
-    initialize_handlers(false, false);
+  // initialize handlers to empty
+  initialize_handlers(false, false);
   
-    // clear attachments
-    _attachment_names.clear();
-    _attachments.clear();
+  // clear attachments
+  _attachment_names.clear();
+  _attachments.clear();
   
-    if (check_hookup_elements(errh) < 0)
-	return -1;
+  if (check_hookup_elements(errh) < 0)
+    return -1;
   
-    _runcount = 1;
-    _master->register_router(this);
+  _runcount = 1;
+  _master->register_router(this);
 
-    // set up configuration order
-    _element_configure_order.assign(nelements(), 0);
-    if (_element_configure_order.size()) {
-	Vector<int> configure_phase(nelements(), 0);
-	configure_order_phase = &configure_phase;
-	for (int i = 0; i < _elements.size(); i++) {
-	    configure_phase[i] = _elements[i]->configure_phase();
-	    _element_configure_order[i] = i;
-	}
-	click_qsort(&_element_configure_order[0], _element_configure_order.size(), sizeof(int), configure_order_compar);
+  // set up configuration order
+  _element_configure_order.assign(nelements(), 0);
+  if (_element_configure_order.size()) {
+    Vector<int> configure_phase(nelements(), 0);
+    configure_order_phase = &configure_phase;
+    for (int i = 0; i < _elements.size(); i++) {
+      configure_phase[i] = _elements[i]->configure_phase();
+      _element_configure_order[i] = i;
     }
+    click_qsort(&_element_configure_order[0], _element_configure_order.size(), sizeof(int), configure_order_compar);
+  }
 
-    // notify elements of hookup range
-    notify_hookup_range();
+  // notify elements of hookup range
+  notify_hookup_range();
 
-    // Configure all elements in configure order. Remember the ones that failed
-    Bitvector element_ok(nelements(), true);
-    bool all_ok = true;
-    Element::CleanupStage failure_stage = Element::CLEANUP_CONFIGURE_FAILED;
-    Element::CleanupStage success_stage = Element::CLEANUP_CONFIGURED;
-    Vector<String> conf;
+  // Configure all elements in configure order. Remember the ones that failed
+  Bitvector element_ok(nelements(), true);
+  bool all_ok = true;
+  Element::CleanupStage failure_stage = Element::CLEANUP_CONFIGURE_FAILED;
+  Element::CleanupStage success_stage = Element::CLEANUP_CONFIGURED;
+  Vector<String> conf;
 #if CLICK_DMALLOC
-    char dmalloc_buf[12];
+  char dmalloc_buf[12];
 #endif
+  for (int ord = 0; ord < _elements.size(); ord++) {
+    int i = _element_configure_order[ord];
+#if CLICK_DMALLOC
+    sprintf(dmalloc_buf, "c%d  ", i);
+    CLICK_DMALLOC_REG(dmalloc_buf);
+#endif
+    ContextErrorHandler cerrh
+      (errh, context_message(i, "While configuring"));
+    int before = cerrh.nerrors();
+    conf.clear();
+    cp_argvec(_element_configurations[i], conf);
+    if (_elements[i]->configure(conf, &cerrh) < 0) {
+      element_ok[i] = all_ok = false;
+      if (cerrh.nerrors() == before)
+        cerrh.error("unspecified error");
+    }
+  }
+
+#if CLICK_DMALLOC
+  CLICK_DMALLOC_REG("iHoo");
+#endif
+  
+  int before = errh->nerrors();
+  check_hookup_range(errh);
+  make_pidxes();
+  check_push_and_pull(errh);
+  check_hookup_completeness(errh);
+  set_connections();
+  _state = ROUTER_PREINITIALIZE;
+  if (before != errh->nerrors())
+    all_ok = false;
+
+  // Initialize elements if OK so far.
+  if (all_ok) {
+    failure_stage = Element::CLEANUP_INITIALIZE_FAILED;
+    success_stage = Element::CLEANUP_INITIALIZED;
+    initialize_handlers(true, true);
     for (int ord = 0; ord < _elements.size(); ord++) {
-	int i = _element_configure_order[ord];
+      int i = _element_configure_order[ord];
+      assert(element_ok[i]);
 #if CLICK_DMALLOC
-	sprintf(dmalloc_buf, "c%d  ", i);
-	CLICK_DMALLOC_REG(dmalloc_buf);
+      sprintf(dmalloc_buf, "i%d  ", i);
+      CLICK_DMALLOC_REG(dmalloc_buf);
 #endif
-	ContextErrorHandler cerrh
-	    (errh, context_message(i, "While configuring"));
-	int before = cerrh.nerrors();
-	conf.clear();
-	cp_argvec(_element_configurations[i], conf);
-	if (_elements[i]->configure(conf, &cerrh) < 0) {
-	    element_ok[i] = all_ok = false;
-	    if (cerrh.nerrors() == before)
-		cerrh.error("unspecified error");
-	}
+      ContextErrorHandler cerrh
+        (errh, context_message(i, "While initializing"));
+      int before = cerrh.nerrors();
+      if (_elements[i]->initialize(&cerrh) < 0) {
+        element_ok[i] = all_ok = false;
+        // don't report 'unspecified error' for ErrorElements:
+        // keep error messages clean
+        if (cerrh.nerrors() == before && !_elements[i]->cast("Error"))
+          cerrh.error("unspecified error");
+      }
     }
+  }
 
 #if CLICK_DMALLOC
-    CLICK_DMALLOC_REG("iHoo");
+  CLICK_DMALLOC_REG("iXXX");
 #endif
   
-    int before = errh->nerrors();
-    check_hookup_range(errh);
-    make_pidxes();
-    check_push_and_pull(errh);
-    check_hookup_completeness(errh);
-    set_connections();
-    _state = ROUTER_PREINITIALIZE;
-    if (before != errh->nerrors())
-	all_ok = false;
+  // If there were errors, uninitialize any elements that we initialized
+  // successfully and return -1 (error). Otherwise, we're all set!
+  if (all_ok) {
+    _state = ROUTER_LIVE;
+    return 0;
+  } else {
+    _state = ROUTER_DEAD;
+    errh->verror_text(ErrorHandler::ERR_CONTEXT_ERROR, "", "Router could not be initialized!");
+    
+    // Unschedule tasks and timers
+    master()->remove_router(this);
 
-    // Initialize elements if OK so far.
-    if (all_ok) {
-	failure_stage = Element::CLEANUP_INITIALIZE_FAILED;
-	success_stage = Element::CLEANUP_INITIALIZED;
-	initialize_handlers(true, true);
-	for (int ord = 0; ord < _elements.size(); ord++) {
-	    int i = _element_configure_order[ord];
-	    assert(element_ok[i]);
-#if CLICK_DMALLOC
-	    sprintf(dmalloc_buf, "i%d  ", i);
-	    CLICK_DMALLOC_REG(dmalloc_buf);
-#endif
-	    ContextErrorHandler cerrh
-		(errh, context_message(i, "While initializing"));
-	    int before = cerrh.nerrors();
-	    if (_elements[i]->initialize(&cerrh) < 0) {
-		element_ok[i] = all_ok = false;
-		// don't report 'unspecified error' for ErrorElements:
-		// keep error messages clean
-		if (cerrh.nerrors() == before && !_elements[i]->cast("Error"))
-		    cerrh.error("unspecified error");
-	    }
-	}
+    // Clean up elements
+    for (int ord = _elements.size() - 1; ord >= 0; ord--) {
+      int i = _element_configure_order[ord];
+      _elements[i]->cleanup(element_ok[i] ? success_stage : failure_stage);
     }
-
-#if CLICK_DMALLOC
-    CLICK_DMALLOC_REG("iXXX");
-#endif
-  
-    // If there were errors, uninitialize any elements that we initialized
-    // successfully and return -1 (error). Otherwise, we're all set!
-    if (all_ok) {
-	_state = ROUTER_LIVE;
-	return 0;
-    } else {
-	_state = ROUTER_DEAD;
-	errh->verror_text(ErrorHandler::ERR_CONTEXT_ERROR, "", "Router could not be initialized!");
     
-	// Unschedule tasks and timers
-	master()->remove_router(this);
-
-	// Clean up elements
-	for (int ord = _elements.size() - 1; ord >= 0; ord--) {
-	    int i = _element_configure_order[ord];
-	    _elements[i]->cleanup(element_ok[i] ? success_stage : failure_stage);
-	}
+    // Remove element-specific handlers
+    initialize_handlers(true, false);
     
-	// Remove element-specific handlers
-	initialize_handlers(true, false);
-    
-	_runcount = 0;
-	return -1;
-    }
+    _runcount = 0;
+    return -1;
+  }
 }
 
 void
 Router::activate(bool foreground, ErrorHandler *errh)
 {
-    if (_state != ROUTER_LIVE || _running != RUNNING_PAUSED)
-	return;
+  if (_state != ROUTER_LIVE || _running != RUNNING_PAUSED)
+    return;
   
-    // Take state if appropriate
-    if (_hotswap_router && _hotswap_router->_state == ROUTER_LIVE) {
-	// Unschedule tasks and timers
-	master()->remove_router(_hotswap_router);
-      
-	for (int i = 0; i < _elements.size(); i++) {
-	    Element *e = _elements[i];
-	    if (Element *other = e->hotswap_element()) {
-		ContextErrorHandler cerrh
-		    (errh, context_message(i, "While hot-swapping state into"));
-		e->take_state(other, &cerrh);
-	    }
-	}
-    }
-    if (_hotswap_router) {
-	_hotswap_router->unuse();
-	_hotswap_router = 0;
-    }
-
-    // Activate router
-    master()->run_router(this, foreground);
-    // sets _running to RUNNING_BACKGROUND or RUNNING_ACTIVE
-}
-
-
-// steal state
-
-void
-Router::set_hotswap_router(Router *r)
-{
-    assert(_state == ROUTER_NEW && !_hotswap_router && (!r || r->initialized()));
-    _hotswap_router = r;
-    if (_hotswap_router)
-	_hotswap_router->use();
+  // Activate router
+  master()->run_router(this, foreground);
+  // sets _running to RUNNING_BACKGROUND or RUNNING_ACTIVE
 }
 
 
@@ -989,16 +943,16 @@ Router::set_hotswap_router(Router *r)
 String
 Router::Handler::unparse_name(Element *e, const String &hname)
 {
-    if (e && e != e->router()->root_element())
-	return e->id() + "." + hname;
-    else
-	return hname;
+  if (e && e != e->router()->root_element())
+    return e->id() + "." + hname;
+  else
+    return hname;
 }
 
 String
 Router::Handler::unparse_name(Element *e) const
 {
-    return unparse_name(e, _name);
+  return unparse_name(e, _name);
 }
 
 
@@ -1043,13 +997,13 @@ Router::find_ehandler(int eindex, const String &name) const
   return eh;
 }
 
-inline Router::Handler
+REMOVABLE_INLINE Router::Handler
 Router::fetch_handler(const Element *e, const String &name)
 {
-    if (const Handler *h = handler(e, name))
-	return *h;
-    else
-	return Handler(name);
+  if (const Handler *h = handler(e, name))
+    return *h;
+  else
+    return Handler(name);
 }
 
 void
@@ -1159,13 +1113,13 @@ Router::store_global_handler(const Handler &h)
   nglobalh++;
 }
 
-inline void
+REMOVABLE_INLINE void
 Router::store_handler(const Element *e, const Handler &to_store)
 {
-    if (e)
-	e->router()->store_local_handler(e->eindex(), to_store);
-    else
-	store_global_handler(to_store);
+  if (e)
+    e->router()->store_local_handler(e->eindex(), to_store);
+  else
+    store_global_handler(to_store);
 }
 
 
@@ -1174,62 +1128,62 @@ Router::store_handler(const Element *e, const Handler &to_store)
 const Router::Handler *
 Router::handler(const Router *r, int hi)
 {
-    if (r && hi >= 0 && hi < r->_nhandlers)
-	return &r->_handlers[hi];
-    else if (hi >= FIRST_GLOBAL_HANDLER && hi < FIRST_GLOBAL_HANDLER + nglobalh)
-	return &globalh[hi - FIRST_GLOBAL_HANDLER];
-    else
-	return 0;
+  if (r && hi >= 0 && hi < r->_nhandlers)
+    return &r->_handlers[hi];
+  else if (hi >= FIRST_GLOBAL_HANDLER && hi < FIRST_GLOBAL_HANDLER + nglobalh)
+    return &globalh[hi - FIRST_GLOBAL_HANDLER];
+  else
+    return 0;
 }
 
 const Router::Handler *
 Router::handler(const Element *e, const String &hname)
 {
-    if (e && e != e->router()->_root_element) {
-	const Router *r = e->router();
-	int eh = r->find_ehandler(e->eindex(), hname);
-	if (eh >= 0)
-	    return &r->_handlers[r->_ehandler_to_handler[eh]];
-    } else {			// global handler
-	for (int i = 0; i < nglobalh; i++)
-	    if (globalh[i]._name == hname)
-		return &globalh[i];
-    }
-    return 0;
+  if (e && e != e->router()->_root_element) {
+    const Router *r = e->router();
+    int eh = r->find_ehandler(e->eindex(), hname);
+    if (eh >= 0)
+      return &r->_handlers[r->_ehandler_to_handler[eh]];
+  } else {			// global handler
+    for (int i = 0; i < nglobalh; i++)
+      if (globalh[i]._name == hname)
+        return &globalh[i];
+  }
+  return 0;
 }
 
 int
 Router::hindex(const Element *e, const String &hname)
 {
-    if (e && e != e->router()->_root_element) {
-	const Router *r = e->router();
-	int eh = r->find_ehandler(e->eindex(), hname);
-	if (eh >= 0)
-	    return r->_ehandler_to_handler[eh];
-    } else {			// global handler
-	for (int i = 0; i < nglobalh; i++)
-	    if (globalh[i]._name == hname)
-		return FIRST_GLOBAL_HANDLER + i;
-    }
-    return -1;
+  if (e && e != e->router()->_root_element) {
+    const Router *r = e->router();
+    int eh = r->find_ehandler(e->eindex(), hname);
+    if (eh >= 0)
+      return r->_ehandler_to_handler[eh];
+  } else {			// global handler
+    for (int i = 0; i < nglobalh; i++)
+      if (globalh[i]._name == hname)
+        return FIRST_GLOBAL_HANDLER + i;
+  }
+  return -1;
 }
 
 void
 Router::element_hindexes(const Element *e, Vector<int> &handlers)
 {
-    if (e && e != e->router()->_root_element) {
-	const Router *r = e->router();
-	for (int eh = r->_ehandler_first_by_element[e->eindex()];
-	     eh >= 0;
-	     eh = r->_ehandler_next[eh]) {
-	    int h = r->_ehandler_to_handler[eh];
-	    if (h >= 0)
-		handlers.push_back(h);
-	}
-    } else {
-	for (int i = 0; i < nglobal_handlers(); i++)
-	    handlers.push_back(FIRST_GLOBAL_HANDLER + i);
+  if (e && e != e->router()->_root_element) {
+    const Router *r = e->router();
+    for (int eh = r->_ehandler_first_by_element[e->eindex()];
+         eh >= 0;
+         eh = r->_ehandler_next[eh]) {
+      int h = r->_ehandler_to_handler[eh];
+      if (h >= 0)
+        handlers.push_back(h);
     }
+  } else {
+    for (int i = 0; i < nglobal_handlers(); i++)
+      handlers.push_back(FIRST_GLOBAL_HANDLER + i);
+  }
 }
 
 
@@ -1239,33 +1193,33 @@ void
 Router::add_read_handler(const Element *e, const String &name,
 			 ReadHandler read, void *thunk)
 {
-    Handler to_add = fetch_handler(e, name);
-    to_add._read = read;
-    to_add._read_thunk = thunk;
-    store_handler(e, to_add);
+  Handler to_add = fetch_handler(e, name);
+  to_add._read = read;
+  to_add._read_thunk = thunk;
+  store_handler(e, to_add);
 }
 
 void
 Router::add_write_handler(const Element *e, const String &name,
 			  WriteHandler write, void *thunk)
 {
-    Handler to_add = fetch_handler(e, name);
-    to_add._write = write;
-    to_add._write_thunk = thunk;
-    store_handler(e, to_add);
+  Handler to_add = fetch_handler(e, name);
+  to_add._write = write;
+  to_add._write_thunk = thunk;
+  store_handler(e, to_add);
 }
 
 int
 Router::change_handler_flags(const Element *e, const String &name,
 			     uint32_t clear_flags, uint32_t set_flags)
 {
-    Handler to_add = fetch_handler(e, name);
-    if (to_add._use_count > 0) {	// only modify existing handlers
-	to_add._flags = (to_add._flags & ~clear_flags) | set_flags;
-	store_handler(e, to_add);
-	return 0;
-    } else
-	return -1;
+  Handler to_add = fetch_handler(e, name);
+  if (to_add._use_count > 0) {	// only modify existing handlers
+    to_add._flags = (to_add._flags & ~clear_flags) | set_flags;
+    store_handler(e, to_add);
+    return 0;
+  } else
+    return -1;
 }
 
 
@@ -1274,7 +1228,7 @@ Router::change_handler_flags(const Element *e, const String &name,
 int
 Router::nglobal_handlers()
 {
-    return nglobalh;
+  return nglobalh;
 }
 
 
@@ -1283,88 +1237,83 @@ Router::nglobal_handlers()
 void *
 Router::attachment(const String &name) const
 {
-    for (int i = 0; i < _attachments.size(); i++)
-	if (_attachment_names[i] == name)
-	    return _attachments[i];
-    return 0;
+  for (int i = 0; i < _attachments.size(); i++)
+    if (_attachment_names[i] == name)
+      return _attachments[i];
+  return 0;
 }
 
 void *&
 Router::force_attachment(const String &name)
 {
-    for (int i = 0; i < _attachments.size(); i++)
-	if (_attachment_names[i] == name)
-	    return _attachments[i];
-    _attachment_names.push_back(name);
-    _attachments.push_back(0);
-    return _attachments.back();
+  for (int i = 0; i < _attachments.size(); i++)
+    if (_attachment_names[i] == name)
+      return _attachments[i];
+  _attachment_names.push_back(name);
+  _attachments.push_back(0);
+  return _attachments.back();
 }
 
 void *
 Router::set_attachment(const String &name, void *value)
 {
-    for (int i = 0; i < _attachments.size(); i++)
-	if (_attachment_names[i] == name) {
-	    void *v = _attachments[i];
-	    _attachments[i] = value;
-	    return v;
-	}
-    _attachment_names.push_back(name);
-    _attachments.push_back(value);
-    return 0;
+  for (int i = 0; i < _attachments.size(); i++)
+    if (_attachment_names[i] == name) {
+      void *v = _attachments[i];
+      _attachments[i] = value;
+      return v;
+    }
+  _attachment_names.push_back(name);
+  _attachments.push_back(value);
+  return 0;
 }
 
 ErrorHandler *
 Router::chatter_channel(const String &name) const
 {
-    if (!name || name == "default")
-	return ErrorHandler::default_handler();
-    else if (void *v = attachment("ChatterChannel." + name))
-	return (ErrorHandler *)v;
-    else
-	return ErrorHandler::silent_handler();
+  if (!name || name == "default")
+    return ErrorHandler::default_handler();
+  else if (void *v = attachment("ChatterChannel." + name))
+    return (ErrorHandler *)v;
+  else
+    return ErrorHandler::silent_handler();
 }
 
-int
-Router::new_notifier_signal(NotifierSignal &signal)
+int Router::new_notifier_signal(NotifierSignal &signal)
 {
-    if (!_notifier_signals)
-	_notifier_signals = new atomic_uint32_t[NOTIFIER_SIGNALS_CAPACITY / 32];
-    if (_n_notifier_signals >= NOTIFIER_SIGNALS_CAPACITY)
-	return -1;
-    else {
-	signal = NotifierSignal(&_notifier_signals[_n_notifier_signals / 32], 1 << (_n_notifier_signals % 32));
-	signal.set_active(true);
-	_n_notifier_signals++;
-	return 0;
-    }
-}
-
-int
-ThreadSched::initial_thread_preference(Task *, bool)
-{
+  if (!_notifier_signals)
+    _notifier_signals = new atomic_uint32_t[NOTIFIER_SIGNALS_CAPACITY / 32];
+  if (_n_notifier_signals >= NOTIFIER_SIGNALS_CAPACITY)
+    return -1;
+  else {
+    signal = NotifierSignal(&_notifier_signals[_n_notifier_signals / 32], 1 << (_n_notifier_signals % 32));
+    signal.set_active(true);
+    _n_notifier_signals++;
     return 0;
+  }
+}
+
+int ThreadSched::initial_thread_preference(Task *, bool)
+{
+  return 0;
 }
 
 
 // PRINTING
 
-void
-Router::unparse_requirements(StringAccum &sa, const String &indent) const
+void Router::unparse_requirements(StringAccum &sa, const String &indent) const
 {
-    // requirements
-    if (_requirements.size())
-	sa << indent << "require(" << cp_unargvec(_requirements) << ");\n\n";
+  // requirements
+  if (_requirements.size())
+    sa << indent << "require(" << cp_unargvec(_requirements) << ");\n\n";
 }
 
-void
-Router::unparse_classes(StringAccum &, const String &) const
+void Router::unparse_classes(StringAccum &, const String &) const
 {
-    // there are never any compound element classes here
+  // there are never any compound element classes here
 }
 
-void
-Router::unparse_declarations(StringAccum &sa, const String &indent) const
+void Router::unparse_declarations(StringAccum &sa, const String &indent) const
 {  
   // element classes
   Vector<String> conf;
@@ -1380,8 +1329,7 @@ Router::unparse_declarations(StringAccum &sa, const String &indent) const
     sa << "\n";
 }
 
-void
-Router::unparse_connections(StringAccum &sa, const String &indent) const
+void Router::unparse_connections(StringAccum &sa, const String &indent) const
 {  
   int nhookup = _hookup_from.size();
   Vector<int> next(nhookup, -1);
@@ -1438,17 +1386,15 @@ Router::unparse_connections(StringAccum &sa, const String &indent) const
   }
 }
 
-void
-Router::unparse(StringAccum &sa, const String &indent) const
+void Router::unparse(StringAccum &sa, const String &indent) const
 {
-    unparse_requirements(sa, indent);
-    unparse_classes(sa, indent);
-    unparse_declarations(sa, indent);
-    unparse_connections(sa, indent);
+  unparse_requirements(sa, indent);
+  unparse_classes(sa, indent);
+  unparse_declarations(sa, indent);
+  unparse_connections(sa, indent);
 }
 
-String
-Router::element_ports_string(int ei) const
+String Router::element_ports_string(int ei) const
 {
   if (ei < 0 || ei >= nelements())
     return String();
@@ -1526,91 +1472,165 @@ Router::element_ports_string(int ei) const
 
 enum { GH_VERSION, GH_CONFIG, GH_FLATCONFIG, GH_LIST, GH_REQUIREMENTS };
 
-String
-Router::router_read_handler(Element *e, void *thunk)
+String Router::router_read_handler(Element *e, void *thunk)
 {
-    Router *r = (e ? e->router() : 0);
-    switch (reinterpret_cast<intptr_t>(thunk)) {
+  Router *r = (e ? e->router() : 0);
+  switch (reinterpret_cast<intptr_t>(thunk)) {
 
-      case GH_VERSION:
-	return String(CLICK_VERSION "\n");
+  case GH_VERSION:
+    return String(CLICK_VERSION "\n");
     
-      case GH_CONFIG:
-	if (r)
-	    return r->configuration_string();
-	break;
+  case GH_CONFIG:
+    if (r)
+      return r->configuration_string();
+    break;
 
-      case GH_FLATCONFIG:
-	if (r) {
-	    StringAccum sa;
-	    r->unparse(sa);
-	    return sa.take_string();
-	}
-	break;
-
-      case GH_LIST:
-	if (r) {
-	    StringAccum sa;
-	    sa << r->nelements() << "\n";
-	    for (int i = 0; i < r->nelements(); i++)
-		sa << r->_element_names[i] << "\n";
-	    return sa.take_string();
-	}
-	break;
-
-      case GH_REQUIREMENTS:
-	if (r) {
-	    StringAccum sa;
-	    for (int i = 0; i < r->_requirements.size(); i++)
-		sa << r->_requirements[i] << "\n";
-	    return sa.take_string();
-	}
-	break;
-
-      default:
-	return "<error>\n";
-    
+  case GH_FLATCONFIG:
+    if (r) {
+      StringAccum sa;
+      r->unparse(sa);
+      return sa.take_string();
     }
-    return String();
+    break;
+
+  case GH_LIST:
+    if (r) {
+      StringAccum sa;
+      sa << r->nelements() << "\n";
+      for (int i = 0; i < r->nelements(); i++)
+        sa << r->_element_names[i] << "\n";
+      return sa.take_string();
+    }
+    break;
+
+  case GH_REQUIREMENTS:
+    if (r) {
+      StringAccum sa;
+      for (int i = 0; i < r->_requirements.size(); i++)
+        sa << r->_requirements[i] << "\n";
+      return sa.take_string();
+    }
+    break;
+
+  default:
+    return "<error>\n";
+    
+  }
+  return String();
 }
 
-static int
-stop_global_handler(const String &s, Element *e, void *, ErrorHandler *errh)
+static int stop_global_handler(const String &s,
+                               Element *e,
+                               void *,
+                               ErrorHandler *errh)
 {
-    if (e) {
-	int n = 1;
-	(void) cp_integer(cp_uncomment(s), &n);
-	e->router()->adjust_runcount(-n);
-    } else
-	errh->message("no router to stop");
-    return 0;
+  if (e) {
+    int n = 1;
+    (void) cp_integer(cp_uncomment(s), &n);
+    e->router()->adjust_runcount(-n);
+  } else
+    errh->message("no router to stop");
+  return 0;
 }
 
-void
-Router::static_initialize()
+void Router::static_initialize()
 {
-    if (!nglobalh) {
-	add_read_handler(0, "version", router_read_handler, (void *)GH_VERSION);
-	add_read_handler(0, "config", router_read_handler, (void *)GH_CONFIG);
-	add_read_handler(0, "flatconfig", router_read_handler, (void *)GH_FLATCONFIG);
-	add_read_handler(0, "list", router_read_handler, (void *)GH_LIST);
-	add_read_handler(0, "requirements", router_read_handler, (void *)GH_REQUIREMENTS);
-	add_write_handler(0, "stop", stop_global_handler, 0);
-    }
+  if (!nglobalh) {
+    add_read_handler(0, "version", router_read_handler, (void *)GH_VERSION);
+    add_read_handler(0, "config", router_read_handler, (void *)GH_CONFIG);
+    add_read_handler(0, "flatconfig", router_read_handler, (void *)GH_FLATCONFIG);
+    add_read_handler(0, "list", router_read_handler, (void *)GH_LIST);
+    add_read_handler(0, "requirements", router_read_handler, (void *)GH_REQUIREMENTS);
+    add_write_handler(0, "stop", stop_global_handler, 0);
+  }
 }
 
 void
 Router::static_cleanup()
 {
-    delete[] globalh;
-    globalh = 0;
-    nglobalh = globalh_cap = 0;
+  delete[] globalh;
+  globalh = 0;
+  nglobalh = globalh_cap = 0;
 }
 
 
-#if CLICK_USERLEVEL
+
+REMOVABLE_INLINE bool
+operator==(const Router::Hookup &a, const Router::Hookup &b)
+{
+  return a.idx == b.idx && a.port == b.port;
+}
+
+REMOVABLE_INLINE bool
+operator!=(const Router::Hookup &a, const Router::Hookup &b)
+{
+  return a.idx != b.idx || a.port != b.port;
+}
+
+REMOVABLE_INLINE Element *
+Router::find(const String &name, ErrorHandler *errh) const
+{
+  return find(name, "", errh);
+}
+
+REMOVABLE_INLINE const Router::Handler *
+Router::handler(const Element *e, int hi)
+{
+  return handler(e ? e->router() : 0, hi);
+}
+
+REMOVABLE_INLINE const Router::Handler *
+Router::handler(int hi) const
+{
+  return handler(this, hi);
+}
+
+REMOVABLE_INLINE
+Router::Handler::Handler()
+  : _read(0), _read_thunk(0), _write(0), _write_thunk(0),
+     _flags(0), _use_count(0), _next_by_name(-1)
+{
+}
+
+REMOVABLE_INLINE Router::Handler::Handler(const String &name)
+  : _name(name),
+    _read(0),
+    _read_thunk(0),
+    _write(0),
+    _write_thunk(0),
+    _flags(0),
+    _use_count(0),
+    _next_by_name(-1)
+{
+}
+
+REMOVABLE_INLINE String Router::Handler::call_read(Element *e) const
+{
+  return _read(e, _read_thunk);
+}
+
+REMOVABLE_INLINE int Router::Handler::call_write(const String &s,
+                                                 Element *e,
+                                                 ErrorHandler *errh) const
+{
+  return _write(s, e, _write_thunk, errh);
+}
+
+REMOVABLE_INLINE bool Router::Handler::compatible(const Handler &h) const
+{
+  return (_read == h._read && _read_thunk == h._read_thunk
+          && _write == h._write && _write_thunk == h._write_thunk
+          && _flags == h._flags);
+}
+
+REMOVABLE_INLINE int Router::initial_thread_preference(Task *t,
+                                                       bool scheduled) const
+{
+  if (!_thread_sched)
+    return ThreadSched::THREAD_PREFERENCE_UNKNOWN;
+  else
+    return _thread_sched->initial_thread_preference(t, scheduled);
+}
+
 // Vector template instance
 # include <click/vector.cc>
-#endif
-CLICK_ENDDECLS
-#endif

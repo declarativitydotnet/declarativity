@@ -29,9 +29,7 @@
 #include <master.h>
 #include <element.h>
 #include <router.h>
-#ifdef CLICK_USERLEVEL
-# include <unistd.h>
-#endif
+#include <unistd.h>
 
 #if CLICK_USERLEVEL && !HAVE_POLL_H
 enum { POLLIN = Element::SELECT_READ, POLLOUT = Element::SELECT_WRITE };
@@ -659,8 +657,7 @@ Master::initialize_ns(simclick_sim siminst, simclick_click clickinst)
 #if CLICK_DEBUG_MASTER
 #include <click/straccum.hh>
 
-String
-Master::info() const
+String Master::info() const
 {
     StringAccum sa;
     sa << "paused:\t" << _master_paused << '\n';
