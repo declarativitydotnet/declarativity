@@ -152,6 +152,10 @@ private:
       error checking at this point.  */
   void set_connections();
 
+  /** Convenience function for adding a created (but not initialized)
+      element into the router. */
+  void add_element(ElementRef);
+
   friend class Master;
   friend class Task;
 };
