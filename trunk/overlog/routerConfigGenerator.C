@@ -34,15 +34,21 @@ RouterConfigGenerator::RouterConfigGenerator(OL_Context* ctxt, Router::Configura
   pelFunctions.insert(std::make_pair(SEL_PRE << "neS", "==s not"));
   pelFunctions.insert(std::make_pair(SEL_PRE << "eqS", "==s"));
   pelFunctions.insert(std::make_pair(SEL_PRE << "geI", ">=i"));
-  pelFunctions.insert(std::make_pair(SEL_PRE << "gtI", ">=i"));
+  pelFunctions.insert(std::make_pair(SEL_PRE << "gtI", ">i"));
   pelFunctions.insert(std::make_pair(SEL_PRE << "eqI", "==i"));
   pelFunctions.insert(std::make_pair(SEL_PRE << "rangeID1", "()id"));
   pelFunctions.insert(std::make_pair(SEL_PRE << "rangeID2", "[]id"));
   pelFunctions.insert(std::make_pair(SEL_PRE << "rangeID3", "(]id"));
   pelFunctions.insert(std::make_pair(SEL_PRE << "rangeID4", "[)id"));
   pelFunctions.insert(std::make_pair(ASSIGN_PRE << "minusI", "-i"));
+  pelFunctions.insert(std::make_pair(ASSIGN_PRE << "addID", "+id"));
+  pelFunctions.insert(std::make_pair(ASSIGN_PRE << "addI", "+i"));
   pelFunctions.insert(std::make_pair(ASSIGN_PRE << "distID", "distance"));
-
+  pelFunctions.insert(std::make_pair(ASSIGN_PRE << "random", "rand"));
+  pelFunctions.insert(std::make_pair(ASSIGN_PRE << "idOne", "1 ->u32 ->id"));
+  pelFunctions.insert(std::make_pair(ASSIGN_PRE << "leftShiftID", "<<id"));
+  pelFunctions.insert(std::make_pair(ASSIGN_PRE << "varAssign", ""));
+  pelFunctions.insert(std::make_pair(ASSIGN_PRE << "modI", "%"));
 
   _pendingRegisterReceiver = false;
 }
@@ -93,6 +99,16 @@ bool RouterConfigGenerator::hasSingleAggTerm(OL_Context::Rule* currentRule)
   return (numAggs == 1);
 }
 
+bool RouterConfigGenerator::hasPeriodicTerm(OL_Context::Rule* currentRule)
+{
+  for (uint k = 0; k < currentRule->terms.size(); k++) {
+    if (currentRule->terms.at(k).fn->name == "periodic") {
+      return true;
+    }
+  }
+  return false;
+}
+
 void RouterConfigGenerator::processFunctor(OL_Context::Functor* currentFunctor, str nodeID)
 {
   // The current translation proceeds as follows. 
@@ -127,6 +143,12 @@ void RouterConfigGenerator::processFunctor(OL_Context::Functor* currentFunctor, 
       continue;
     }
 
+    // another special case for event generation
+    if (hasPeriodicTerm(nextRule)) {
+      mostRecentElement = generateFunctorSource(currentFunctor, nextRule, nodeID);
+      goto sendData;
+    }
+
     if (joinKeys->size() == 0) {
       // if there are no possible unifications, we process only the first term
       generateSingleTermElement(currentFunctor, nextRule, 
@@ -143,31 +165,58 @@ void RouterConfigGenerator::processFunctor(OL_Context::Functor* currentFunctor, 
       _currentType = "h";      
     }
     
-    delete joinKeys;
-
     // do any selections. 
     mostRecentElement = generateAllSelectionElements(nextRule, nodeID, currentNamesTracker, mostRecentElement);
 
     mostRecentElement = generateAllAssignmentElements(nextRule, nodeID, currentNamesTracker, mostRecentElement);
 
+
     // do the necessary projections based on the head
     mostRecentElement = generateProjectHeadElements(currentFunctor, nextRule, nodeID, 
 						    currentNamesTracker, mostRecentElement);    
-    
-    // send it!
-    mostRecentElement = generateSendMarshalElements(nextRule, nodeID, 
-						    currentFunctor->arity, mostRecentElement);
 
-    // not done yet, we also need to register a table receiver for the head
-    str headTableName = currentFunctor->name;
-    registerReceiverTable(headTableName);
-    // link that to a discard. If there are other flows that need it, they will
-    // get the tuples via another fork in the duplicator.
-    ElementSpecRef sinkS = _conf->addElement(New refcounted< Discard >("discard"));    
-    registerReceiver(headTableName, sinkS);
+  sendData:    
+    if (nextRule->deleteFlag == true) {
+      std::cout << "Delete " << currentFunctor->name << " for rule " << 
+	nextRule->toString() << "\n";
+      // And send it for deletion. Assume deletion happens here. FIXME in future.
+      TableRef tableToDelete = getTableByName(nodeID, currentFunctor->name);
+      OL_Context::TableInfo* ti = _ctxt->getTableInfos()->find(currentFunctor->name)->second;
 
+      /*ElementSpecRef pullPushDelete =
+	_conf->addElement(New refcounted< TimedPullPush >(strbuf("PullPushDelete:") << nextRule->ruleID,
+							 0));
+      */ 
+      mostRecentElement = generatePrintElement(strbuf("PrintBeforeDelete:") << nextRule->ruleID << nodeID, 
+					       mostRecentElement);
+      ElementSpecRef deleteElement =
+	_conf->addElement(New refcounted< Delete >(strbuf("Delete:") << nextRule->ruleID << nodeID,
+						   tableToDelete, 
+						   ti->primaryKeys.at(0), 						   
+						   ti->primaryKeys.at(0)));
+
+      // Link the two joins together
+      hookUp(mostRecentElement, 0, deleteElement, 0);
+      //hookUp(pullPushDelete, 0, deleteElement, 0);
+      delete joinKeys;
+      delete currentNamesTracker;
+      continue;
+    } else {
+      // send it!
+      mostRecentElement = generateSendMarshalElements(nextRule, nodeID, 
+						      currentFunctor->arity, mostRecentElement);     
+      // send back
+      // not done yet, we also need to register a table receiver for the head
+      str headTableName = currentFunctor->name;
+      registerReceiverTable(headTableName);
+      // link that to a discard. If there are other flows that need it, they will
+      // get the tuples via another fork in the duplicator.
+      ElementSpecRef sinkS = _conf->addElement(New refcounted< Discard >("discard"));    
+      registerReceiver(headTableName, sinkS);
+    }
 
     // do the selections
+    delete joinKeys;
     delete currentNamesTracker;
 
 
@@ -209,7 +258,7 @@ void RouterConfigGenerator::generateReceiveElements(ref< Udp> udp, str nodeID)
  
   ElementSpecRef mostRecentElement = generatePrintElement(strbuf("PrintReceivedBeforeDemux:") << nodeID, unBoxS);
   mostRecentElement = generateDupElimElement(strbuf("ReceiveDupElim:") << nodeID, mostRecentElement); 
-  mostRecentElement = generatePrintElement(strbuf("PrintReceivedAfterDupElim:") << nodeID, mostRecentElement);  
+  //mostRecentElement = generatePrintElement(strbuf("PrintReceivedAfterDupElim:") << nodeID, mostRecentElement);  
 
   hookUp(mostRecentElement, 0, demuxS, 0);
 
@@ -294,6 +343,34 @@ void RouterConfigGenerator::generateSendElements(ref< Udp> udp, str nodeID)
   }
 }
 
+ElementSpecRef 
+RouterConfigGenerator::generateFunctorSource(OL_Context::Functor* functor, OL_Context::Rule* rule, str nodeID)
+{
+ // My fix finger tuple
+  TupleRef functorTuple = Tuple::mk();
+  functorTuple->append(Val_Str::mk(functor->name));
+  functorTuple->append(Val_Str::mk(nodeID)); // address for marshalling
+  functorTuple->append(Val_Str::mk(nodeID)); 
+  functorTuple->freeze();
+
+  ElementSpecRef source =
+    _conf->addElement(New refcounted< TupleSource >(str("FunctorSource:") << rule->ruleID << nodeID,
+                                                   functorTuple));
+  
+  ElementSpecRef mostRecentElement = generatePrintElement(strbuf("PrintFunctorSource:") << 
+							  rule->ruleID << ":" << nodeID, source);
+  str firstVar = rule->terms.at(0).argNames.at(0);
+  // The timed pusher
+  ElementSpecRef pushFunctor =
+    _conf->addElement(New refcounted< TimedPullPush >(strbuf("FunctorPush:") << rule->ruleID << ":" << nodeID,
+						      atoi(firstVar.cstr())));
+
+  //hookUp(source, 0, mostRecentElement, 0);
+  hookUp(mostRecentElement, 0, pushFunctor, 0);
+
+  return pushFunctor;
+
+}
 
 // create a send element where the first field after table name is the address. Drop that field
 ElementSpecRef 
@@ -537,20 +614,33 @@ RouterConfigGenerator::generateAssignmentElements(OL_Context::Rule* currentRule,
     // we cannot assign
     return connectingElement; 
   }
-
+  
+  //if (substr(termName, ASSIGN_PRE.len(), 
+  //if (substr(termName, ASSIGN_PRE.len(), termName.len()-ASSIGN_PRE.len()) == "varAssign") {
+    //int pos = currentNamesTracker->fieldPosition(currentTerm.argNames.at(1));
+    //pelStr << "$" << pos << " pop";
+  //} else {
   pelStr << pelExpression << " pop";
+  //}
   currentNamesTracker->fieldNames.push_back(currentTerm.argNames.at(0));
   
-  //std::cout << "Generate assignments for " << str(pelStr) 
-  //	    << " " << currentNamesTracker->toString() << "\n";
+  std::cout << "Generate assignments for " << termName << " " << currentRule->ruleID << 
+    " " << str(pelStr) << " " << currentNamesTracker->toString() << "\n";
   
   ElementSpecRef assignment =
     _conf->addElement(New refcounted< PelTransform >(strbuf("Assignment:") 
 						     << currentRule->ruleID << ":" 
 						     << assignmentID << ":" << nodeID, 
 						     str(pelStr)));
-  
-  hookUp(connectingElement, 0, assignment, 0);      
+
+ if (_pendingRegisterReceiver) {
+    registerReceiver(_pendingReceiverTable, assignment);
+    _pendingRegisterReceiver = false;
+  } else {
+    // connecting now
+    hookUp(connectingElement, 0, assignment, 0);
+  }
+
   connectingElement = generatePrintElement(strbuf("PrintAfterAssignment:") 
 					   << currentRule->ruleID << ":" 
 					   << assignmentID << ":" << nodeID, assignment);
@@ -593,7 +683,9 @@ RouterConfigGenerator::generateProjectHeadElements(OL_Context::Functor* currentF
   }
   
   strbuf pelTransformStrbuf("\"" << currentFunctor->name << "\" pop");
-  pelTransformStrbuf << " $" << addressField << " pop";
+  if (currentRule->deleteFlag == false) {
+    pelTransformStrbuf << " $" << addressField << " pop"; // we are not deleting
+  }
   for (unsigned int k = 0; k < indices.size(); k++) {
     pelTransformStrbuf << " $" << indices.at(k) << " pop";
   }
@@ -629,23 +721,30 @@ RouterConfigGenerator::generateProbeElements(OL_Context::Rule* currentRule,
 					     ElementSpecRef priorElement,
 					     int joinOrder)
 {
+  // probe the right hand side
   // Here's where the join happens 
   ElementSpecRef mostRecentElement = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlotProbeElements"));
   FieldNamesTracker* baseTableNames = New FieldNamesTracker(baseTerm.argNames, baseTerm.argNames.size());
-  std::vector<int> leftJoinKeys = baseTableNames->matchingJoinKeys(eventTerm.argNames);
+  std::vector<int> leftJoinKeys = baseTableNames->matchingJoinKeys(probeNames->fieldNames);
   std::vector<int> rightJoinKeys =  probeNames->matchingJoinKeys(baseTerm.argNames);
+
+  /*
+  for (uint k = 0; k < rightJoinKeys.size(); k++) {
+    std::cout << "Right join keys " << rightJoinKeys.at(k) << " " << baseTableNames->toString() << "\n";
+  }
+  for (uint k = 0; k < leftJoinKeys.size(); k++) {
+    std::cout << "Left join keys " << leftJoinKeys.at(k) << " " << probeNames->toString() << "\n";
+    }*/
 
   if (leftJoinKeys.size() == 0 || rightJoinKeys.size() == 0) {
     std::cerr << "No matching join keys " << eventTerm.fn->name << " " << 
       baseTerm.fn->name << " " << currentRule->ruleID << "\n";
   }
 
+  // add one to offset for table name
   int leftJoinKey = leftJoinKeys.at(0) + 1;
   int rightJoinKey = rightJoinKeys.at(0) + 1;
 
-  /*std::cout << "Join " << currentRule->ruleID << " " << 
-    baseTableNames->toString() << " " << probeNames->toString() << " " 
-    << leftJoinKeys.size() << " " << rightJoinKeys.size() << "\n";*/
   TableRef probeTable = getTableByName(nodeID, baseTerm.fn->name);
 
   // first, figure out which are the matching keys on the probed table
@@ -660,14 +759,19 @@ RouterConfigGenerator::generateProbeElements(OL_Context::Rule* currentRule,
       _conf->addElement(New refcounted< UniqueLookup >(strbuf("UniqueLookup:") << currentRule->ruleID << ":" << joinOrder 
 						       << ":" << nodeID, probeTable,
 						       leftJoinKey, rightJoinKey));
+    std::cout << "Unique lookup " << currentRule->ruleID << " " << eventTerm.fn->name << " " << baseTerm.fn->name << " " 
+	      << leftJoinKey << " " << rightJoinKey << "\n";
+
   } else {
     mostRecentElement =
       _conf->addElement(New refcounted< MultLookup >(strbuf("MultLookup:") << currentRule->ruleID << ":" << joinOrder 
 						     << ":" << nodeID, probeTable,
 						     leftJoinKey, rightJoinKey));
     
-    //probeTable->add_multiple_index(rightJoinKey, nodeID);
     addMultTableIndex(probeTable, rightJoinKey, nodeID);
+    std::cout << "Mult lookup " << currentRule->ruleID << " " << 
+     eventTerm.fn->name << " " << baseTerm.fn->name << " " 
+	      << leftJoinKey << " " << rightJoinKey << "\n";
   }
   
   ElementSpecRef noNull = _conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << currentRule->ruleID << ":" 
@@ -676,9 +780,9 @@ RouterConfigGenerator::generateProbeElements(OL_Context::Rule* currentRule,
   hookUp(mostRecentElement, 0, noNull, 0);
 
   int numFieldsProbe = probeNames->fieldNames.size();
-  probeNames->mergeWith(baseTerm.argNames); // only merge one
-
-  //std::cout << "Join " << probeNames->toString() << "\n";
+  std::cout << "Probe before merge " << probeNames->toString() << "\n";
+  probeNames->mergeWith(baseTerm.argNames); 
+  std::cout << "Probe after merge " << probeNames->toString() << "\n";
 
   if (_pendingRegisterReceiver) {
     // connecting to udp receiver later
@@ -697,6 +801,7 @@ RouterConfigGenerator::generateProbeElements(OL_Context::Rule* currentRule,
 
   // in case there are other join keys, we have to compare them using selections since we can join only 1 field
   // since we don't know the types, do a string compare
+  std::cout << "Number of join selections " << leftJoinKeys.size()-1 << "\n";
   for (uint k = 1; k < leftJoinKeys.size(); k++) {
     int leftField = leftJoinKeys.at(k);
     int rightField = rightJoinKeys.at(k);
@@ -704,7 +809,7 @@ RouterConfigGenerator::generateProbeElements(OL_Context::Rule* currentRule,
     selectionPel << "$0 " << (leftField+1) << " field " << " $1 " << rightField+1 
 		 << " field ==s not ifstop $0 pop $1 pop";
 
-    //std::cout << "Join selections " << str(selectionPel) << "\n";
+    std::cout << "Join selections " << str(selectionPel) << "\n";
     ElementSpecRef joinSelections =
       _conf->addElement(New refcounted< PelTransform >(strbuf("JoinSelections:") << currentRule->ruleID << ":" 
 						       << joinOrder << ":" << k << ":" << nodeID, 
@@ -925,10 +1030,9 @@ RouterConfigGenerator::generateSingleAggregateElements(OL_Context::Functor* curr
   
   // get the table, create the index
   TableRef aggTable = getTableByName(nodeID, baseTerm.fn->name);
-  std::cout << "Obtain base term " << baseTerm.fn->name << " " << aggTerm.fn->name << " " 
-	    << groupByFields.at(0) << " " << aggField << " " << " for aggregation \n";
+  /*std::cout << "Obtain base term " << baseTerm.fn->name << " " << aggTerm.fn->name << " " 
+    << groupByFields.at(0) << " " << aggField << " " << " for aggregation \n";*/
   
-
   addMultTableIndex(aggTable, groupByFields.at(0), nodeID);
   
   Table::MultAggregate tableAgg 
@@ -952,7 +1056,7 @@ RouterConfigGenerator::generateSingleAggregateElements(OL_Context::Functor* curr
   for (uint k = 0; k < newFieldNamesTracker->fieldNames.size(); k++) {
     pelTransformStr << " $" << k << " pop";
   }
-  std::cout << "Pel Transform str " << str(pelTransformStr) << "\n";
+  //std::cout << "Pel Transform str " << str(pelTransformStr) << "\n";
   // apply PEL to add a table name
   ElementSpecRef addTableName =
     _conf->addElement(New refcounted< PelTransform >(strbuf("Aggregation:") 
@@ -973,7 +1077,18 @@ RouterConfigGenerator::generateSingleAggregateElements(OL_Context::Functor* curr
 								  timedPullPush);
   ElementSpecRef mostRecentElement = generateSendMarshalElements(currentRule, nodeID, 
 								 currentFunctor->arity, projectHeadElement);
+
   _udpPushSenders.push_back(mostRecentElement);
+
+  // FIXME: Selections, assignments, better integration with the rest
+
+  // not done yet, we also need to register a table receiver for the head
+  str headTableName = currentFunctor->name;
+  registerReceiverTable(headTableName);
+  // link that to a discard. If there are other flows that need it, they will
+  // get the tuples via another fork in the duplicator.
+  ElementSpecRef sinkS = _conf->addElement(New refcounted< Discard >("discard"));    
+  registerReceiver(headTableName, sinkS);
 }
 
 
@@ -1218,7 +1333,7 @@ void RouterConfigGenerator::FieldNamesTracker::initialize(std::vector<str> argNa
 
 std::vector<int> RouterConfigGenerator::FieldNamesTracker::matchingJoinKeys(std::vector<str> otherArgNames)
 {
-  // figure out the matching on my side. Assuming that
+  // figure out the matching on other side. Assuming that
   // there is only one matching key for now
   std::vector<int> toRet;
   for (unsigned int k = 0; k < otherArgNames.size(); k++) {
@@ -1272,5 +1387,3 @@ str RouterConfigGenerator::FieldNamesTracker::toString()
   }
   return toRet << ">";
 }
-
-

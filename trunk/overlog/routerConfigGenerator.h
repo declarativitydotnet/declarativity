@@ -64,7 +64,8 @@
 #include "roundRobin.h"
 #include "noNullField.h"
 #include "functorSource.h"
-
+#include "delete.h"
+#include "tupleSource.h"
 
 class RouterConfigGenerator {
   // takes as input the udp send / receive, the router config, accept each other code or not
@@ -180,6 +181,7 @@ private:
   void registerReceiver(str tableName, ElementSpecRef elementSpecRef);
   ElementSpecRef generateSendMarshalElements(OL_Context::Rule* rule, str nodeID, 
 					     int arity, ElementSpecRef toSend);
+  ElementSpecRef generateFunctorSource(OL_Context::Functor* functor, OL_Context::Rule* rule, str nodeID);
 
   // Helper functions
   void hookUp(ElementSpecRef firstElement, int firstPort,
@@ -191,6 +193,7 @@ private:
   bool isAssignment(OL_Context::Term term);
   bool isAggregation(OL_Context::Term term);
   bool hasSingleAggTerm(OL_Context::Rule* rule);
+  bool hasPeriodicTerm(OL_Context::Rule* currentRule);
 
   // convince placeholder to figure out the current fields in a tuple in flight
   class FieldNamesTracker {
