@@ -10,7 +10,10 @@
 #include <functional>
 #include <hash_set.h>
 #include <assert.h>
+#include <stdint.h>
 
+
+class IdTable;
 /** --------------------------------------------------------------
  *  @CLASS: Id
  *  @DESCRIPTION: Represents 160-bit key value, provides functions
@@ -25,9 +28,6 @@ class Id /* : private virtual refcounted */ {
     Id (IdTable *);
     Id (const uint32_t * num, IdTable *);
     Id (const std::string&, IdTable *);
-
-    // remove @Id from @IdTable
-    inline void finalize ();
 
     static std::bitset<160> toBitWord (uint32_t num);
     static std::string toHexWord (uint32_t num);

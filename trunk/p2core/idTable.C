@@ -4,7 +4,7 @@
 // @Author: Vik Singh
 // @Date: 12/30/2004
 
-// @CLASS: Id
+// CLASS Id
 
 Id::Id (IdTable * table) { this->table = table; }
 
@@ -16,10 +16,6 @@ Id::Id (const uint32_t * num, IdTable * table) {
 
 Id::Id (const std::string& idString, IdTable * table) {
   this->table = table;
-}
-
-void Id::finalize () {
-  table->remove (this);
 }
 
 std::bitset<160> Id::toBitWord (uint32_t num) {
@@ -80,7 +76,7 @@ uint32_t Id::getWord (const int index) const {
   return key[index];
 }
 
-// CLASS: IdTable
+// CLASS IdTable
 
 IdTable::IdTable () { maxSize = 0; }
 
