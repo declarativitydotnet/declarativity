@@ -27,7 +27,7 @@ TimedSource::TimedSource(double seconds)
   assert(seconds > 0);
   _seconds = (uint) floor(seconds);
   seconds -= _seconds;
-  _nseconds = (uint) (seconds * 1000000);
+  _nseconds = (uint) (seconds * 1000000000);
 }
     
 int TimedSource::initialize()

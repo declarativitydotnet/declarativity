@@ -35,7 +35,7 @@ void testSinglePuller()
 {
   std::cout << "\nCHECK SIMPLE PULLER\n";
 
-  ref< TimedSource > timedSource = New refcounted< TimedSource >(2);
+  ref< TimedSource > timedSource = New refcounted< TimedSource >(0.8);
   ref< PullPrint > pullPrint = New refcounted< PullPrint >();
   ElementSpecRef timedSourceSpec = New refcounted< ElementSpec >(timedSource);
   ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
