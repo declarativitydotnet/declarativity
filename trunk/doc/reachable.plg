@@ -13,8 +13,9 @@ rule R1 reachable@X(X,Y) :- neighbor@X(X,Y).
 
 rule R2 reachable@X(X,Y) :- neighbor@Z(Z,X), 
 	                  reachable@Z(Z,Y),
-	                  f_ne(X,Y). 
+	                  select_neS(X,Y). 
 
+/*rule r3 reach@X(X,Y) :- reachable@X(X,Y).*/
 
 
 
