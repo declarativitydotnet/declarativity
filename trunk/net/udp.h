@@ -15,6 +15,18 @@
 
 #include "element.h"
 
+//
+// The Udp::Rx element emits 2-tuples:
+//   1) A string containing the received packet payload
+//   2) A string consisting of a struct sockaddr representing where
+//     the packet came from.   
+// In addition, the element has a second push output which sends
+// tuples consisting of a single integer representing the errno if
+// there is a receive error. 
+// 
+// Udp::Tx elements are pull-input and take 2-tuples as above.  They
+// also have a single push-output for errors as above. 
+//
 
 class Udp { 
 public:
@@ -26,7 +38,7 @@ public:
   public:
     Rx(const Udp &udp);
     const char *class_name() const		{ return "Udp::Rx";};
-    const char *processing() const		{ return "/h"; };
+    const char *processing() const		{ return "/hh"; };
     const char *flow_code() const		{ return "/-"; };
   private:
     void socket_cb(); // Callback for socket activity
@@ -77,6 +89,5 @@ private:
   ref< Rx > rx;
   ref< Tx > tx;
 };
-
 
 #endif /* __UDP_H_ */

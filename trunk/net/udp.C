@@ -144,4 +144,5 @@ Udp::Udp(u_int16_t port, u_int32_t addr)
 {
   sd = inetsocket(SOCK_DGRAM, port, addr);
   make_async(sd);
+  close_on_exec(sd);
 }
