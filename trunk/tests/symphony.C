@@ -251,23 +251,23 @@ void ruleSymphonyL2(str name,
 
 
 
-/** rule L3 lookup@BI(max<BI>,K,R,E) :-
-    bestLookupDistance@NI(NI,K,R,E,D), finger@NI(NI,I,B,BI),
+/** rule L3 symLookup@BI(max<BI>,K,R,E) :-
+    bestSymLookupDistance@NI(NI,K,R,E,D), symFinger@NI(NI,I,B,BI),
     D=f_dist(B,K), node@NI(NI, N), B in (N, K).*/
 void ruleSymphonyL3(str name,
             Router::ConfigurationRef conf,
             TableRef nodeTable,
-            TableRef fingerTable,
+            TableRef symFingerTable,
             ElementSpecRef pushBLDIn,
             int pushBLDInPort,
-            ElementSpecRef pullLookupOut,
-            int pullLookupOutPort)
+            ElementSpecRef pullSymLookupOut,
+            int pullSymLookupOutPort)
 {
   // Join with node
   ElementSpecRef matchBLDIntoNodeS =
     conf->addElement(New refcounted< UniqueLookup >(strbuf("BLDInNode:") << name,
                                                     nodeTable,
-                                                    1, // Match lookup.NI
+                                                    1, // Match symLookup.NI
                                                     1 // with node.NI
                                                     ));
   // Link it to the BLD coming in. Pushes match already
@@ -290,44 +290,44 @@ void ruleSymphonyL3(str name,
   conf->hookUp(noNull2S, 0, makeRes1S, 0);
   
 
-  // Select out the min-BI for all the fingers that satisfy
-  // (finger.B in (res1.N, res1.K)) and (res1.D == distance(finger.B,
-  // res1.K)-1) and (res1.NI == finger.NI)
+  // Select out the min-BI for all the symFingers that satisfy
+  // (symFinger.B in (res1.N, res1.K)) and (res1.D == distance(symFinger.B,
+  // res1.K)-1) and (res1.NI == symFinger.NI)
   // from <Res1 NI K R E D N> input joined with
-  // <Finger NI I B BI>>
+  // <SymFinger NI I B BI>>
   ElementSpecRef aggregateS =
     conf->addElement(New refcounted< PelScan >(str("tieBreaker:") << name,
-                                               fingerTable, 1,
+                                               symFingerTable, 1,
                                                str("$1 /* res1.NI */ \
                                                     $5 /* NI res1.D */\
                                                     $2 /* NI D res1.K */ \
                                                     $6 /* NI D K res1.N */ \
                                                     0 /* NI D K N found?*/ \
                                                     \"\" /* NI D K N found? maxString */"),
-                                               str("$3 /* finger.B */\
+                                               str("$3 /* symFinger.B */\
                                                     3 peek /* B res1.N */\
                                                     5 peek /* B N res1.K */\
                                                     ()id /* B in (N,K) */\
-                                                    $3 /* B in (N,K) finger.B */\
+                                                    $3 /* B in (N,K) symFinger.B */\
                                                     5 peek /* B in (N,K) B res1.K */\
                                                     distance --id /* B in (N,K) dist(B,K) */\
                                                     6 peek /* B in (N,K) dist(B,K) res1.D */\
                                                     ==id /* B in (N,K) (dist==D) */\
                                                     and /* [B in (N,K) and (dist==D)] */\
                                                     6 peek /* [first and] res1.NI */\
-                                                    $1 /* [first and] res1.NI finger.NI */\
+                                                    $1 /* [first and] res1.NI symFinger.NI */\
                                                     ==s and /* select clause */\
                                                     not ifstop /* done with select */\
                                                     swap drop 1 swap /* replace found? with true in state */\
-                                                    $4 dup /* finger.BI finger.BI */\
-                                                    2 peek /* finger.BI finger.BI oldMax */\
-                                                    >s /* finger.BI (finger.BI>oldMax?) */\
-                                                    swap /* (BI>oldMax?) finger.BI */ \
+                                                    $4 dup /* symFinger.BI symFinger.BI */\
+                                                    2 peek /* symFinger.BI symFinger.BI oldMax */\
+                                                    >s /* symFinger.BI (symFinger.BI>oldMax?) */\
+                                                    swap /* (BI>oldMax?) symFinger.BI */ \
                                                     2 peek ifelse /* ((new>old) ? new : old) */ \
                                                     swap /* swap newMax in state where oldMax was */ \
                                                     drop /* only state remains */"),
                                                str("swap not ifstop /* return nothing if none found */\
-                                                    \"lookup\" pop\
+                                                    \"symLookup\" pop\
                                                     pop /* output maxBI */\
                                                     $2 pop /* output K */\
                                                     $3 pop /* output R */\
@@ -350,7 +350,7 @@ void ruleSymphonyL3(str name,
 
   
   conf->hookUp(aggregateS, 0, noNullS, 0);
-  conf->hookUp(noNullS, 0, pullLookupOut, pullLookupOutPort);
+  conf->hookUp(noNullS, 0, pullSymLookupOut, pullSymLookupOutPort);
 }
 
 
