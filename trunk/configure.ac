@@ -70,10 +70,23 @@ P2_SFSLIB
 AC_HEADER_STDC
 P2_SFSINC
 
+AC_LANG_PUSH(C++)
+CPPFLAGS="$SFS_INC"
+AC_CHECK_TYPES([tcpconn_t *, tcpconnect_t *],[],[],[#include <async.h>])
+AC_LANG_POP(C++)
+
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
+
+# Python!
+# AZ_PYTHON_DEFAULT( )
+AZ_PYTHON_ENABLE( )             # Optional
+AZ_PYTHON_WITH( )               # Optional
+AZ_PYTHON_PATH( )               # or AZ_PYTHON_INSIST( )
+# if $PYTHON is not defined, then the following do nothing.
+AZ_PYTHON_VERSION_ENSURE( [2.2] )
 
 # Checks for library functions.
 AC_FUNC_FORK
