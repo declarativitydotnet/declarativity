@@ -57,7 +57,7 @@ public:
       (e.g., because the lock could not be acquired) */
   void process_pending(RouterThread *);
 
-  REMOVABLE_INLINE RouterThread * thread() const;
+  REMOVABLE_INLINE RouterThreadPtr thread() const;
 
   /** Are we still running? */
   bool running() const {return true;}
@@ -68,7 +68,7 @@ public:
 private:
   
   /** The main router thread */
-  RouterThread * _thread;
+  RouterThreadPtr _thread;
 
   /** The main synchronization lock.  Currently a no-op (as per
       user-level Click). */
