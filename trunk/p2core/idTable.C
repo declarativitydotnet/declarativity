@@ -2,7 +2,7 @@
 #include "idTable.h"
 
 // @Author: Vik Singh
-// @Date: 12/30/2004
+// @Date: 1/19/2004
 
 
 /** --------------------------------------------------------------
@@ -151,9 +151,8 @@ ref<Id> IdTable::storeId (ref<Id> idKey) {
 void IdTable::add (IdHash * id) {
   memTable.insert (id);
   numOfInserts += 1;
-  if (numOfInserts > threshold) {
-    /* Decr recent @Id's */
-  }
+  if (numOfInserts > threshold)
+    gc ();
 }
 
 void IdTable::gc () {
