@@ -11,8 +11,10 @@ class Task;
 
 class Router;
 typedef ref< Router > RouterRef;
+typedef ptr< Router > RouterPtr;
 
 class RouterThread;
+typedef ptr< RouterThread > RouterThreadPtr;
 class TaskList;
 class Master;
 class Router;
@@ -22,7 +24,7 @@ class Task {
   /** Create a task shell */
   REMOVABLE_INLINE Task();
 
-  ~Task();
+  virtual ~Task();
 
   bool initialized() const		{ return _router != 0; }
 
@@ -32,11 +34,11 @@ class Task {
 
   Task *scheduled_prev() const		{ return _prev; }
 
-  RouterThread *scheduled_list() const	{ return _thread; }
+  RouterThreadPtr scheduled_list() const{ return _thread; }
 
   Master *master() const;
  
-  void initialize(Router *, bool);
+  void initialize(RouterRef, bool);
   
   void cleanup();
 
@@ -59,11 +61,6 @@ class Task {
 
  private:
 
-  /* if gcc keeps this ordering, we may get some cache locality on a 16
-   * or 32 byte cache line: the first three fields are used in list
-   * traversal */
-  //bool _name;
-
   /** My previous task in the task list */
   Task *_prev;
 
@@ -71,10 +68,10 @@ class Task {
   Task *_next;
 
   // The thread I'm running on
-  RouterThread *_thread;
+  RouterThreadPtr _thread;
 
   // The router I'm running on
-  Router * _router;
+  RouterPtr _router;
 
   enum { RESCHEDULE = 1 };
   
