@@ -39,6 +39,12 @@
 class Master;
 typedef ref< Master > MasterRef;
 
+/** A handy dandy type for router references */
+class Router;
+typedef ref< Router > RouterRef;
+typedef ptr< Router > RouterPtr;
+
+
 class Router {
 public:
   
@@ -89,7 +95,7 @@ public:
   // INITIALIZATION
   
   /** Initialize the engine from the configuration */
-  int initialize();
+  int initialize(RouterRef);
 
   /** Start the router */
   void activate();
@@ -154,14 +160,10 @@ private:
 
   /** Convenience function for adding a created (but not initialized)
       element into the router. */
-  void add_element(ElementRef);
+  void add_element(RouterRef, ElementRef);
 
   friend class Master;
   friend class Task;
 };
-
-/** A handy dandy type for router references */
-typedef ref< Router > RouterRef;
-typedef ptr< Router > RouterPtr;
 
 #endif
