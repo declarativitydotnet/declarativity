@@ -1,0 +1,40 @@
+
+
+link@X(X,Y) exists if Y is selected as a neighbor of X.
+membership@X(X,Y) exists if Y is in the same network as X.
+
+
+Mesh formation
+--------------
+
+R1: pendingRequest@X(X,Y,E,T) :- membership@X(X,Y), probeEvent@X
+(X,E), f_coinFlip(), not link@X(X,Y), T=currentTime
+
+R2: probeRequest@X(Y,X,E) :- pendingRequest@X(X,Y,E,T)
+
+R3: probeReply@Y(Y,X,E) :- probeRequest@X(X,Y,E)
+
+R4: probeResult@X(X,Y,T) :- pendingRequest@X(X,Y,E,T1), probeReply@X
+(X,Y,E), T= currentTime-T1
+
+
+Eviction policy:
+
+R5: link@X(X,Y) :- probeResult@X(X,Y,T), f_addUtility(X,Y,T) > 
+add_threshold
+
+R6: delete<link@X(X,Y)> :- probeResult@X(X,Y,T), f_deleteUtility
+(X,Y,T) > delete_threshold
+
+
+
+Membership
+----------
+How can we populate this membership table? 
+Method 1: all-pairs reachability. 
+Method 2: Broadcast your presence/departure:
+
+F1: floodMessage@X(X,X) :- flood_event@X(X,E)
+F2: floodMessage@Y(Y,Z) :- floodMessage@X(X,Z), link@X(X,Y)
+F3: membership@X(X,Y) :- floodMessage@X(X,Y)
+
