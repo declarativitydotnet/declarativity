@@ -13,19 +13,27 @@
  *
  */
 
-#include "ol_lexer.h"
-#include "ol_context.h"
-
-extern int ol_parser_debug;
+#include <async.h>
+#include <arpc.h>
 #include <iostream>
 #include <fstream>
+
+#include "ol_lexer.h"
+#include "ol_context.h"
+#include "routerConfigGenerator.h"
+#include "udp.h"
+
+extern int ol_parser_debug;
 
 int main(int argc, char **argv)
 {
   std::cout << "OVERLOG\n";
 
-  OL_Context ctxt;
   
+  ref< OL_Context > ctxt = New refcounted< OL_Context>();
+
+  strbuf filename;
+
   for( int i=1; i<argc; i++) { 
     str arg(argv[i]);
     
@@ -38,12 +46,35 @@ int main(int argc, char **argv)
 		<< "\t- : read from stdin\n";
       exit(0);
     } else if (arg == "-") {
-      ctxt.parse_stream(&std::cin);
-    } else {
-      std::ifstream istr(argv[i]);
-      ctxt.parse_stream(&istr);
+      ctxt->parse_stream(&std::cin);
+    } else {      
+      filename << argv[i];
+      str file(filename);
+      std::ifstream istr(file);
+      ctxt->parse_stream(&istr);
     }
   }
+
+  std::cout << "Finish parsing (functors / tableInfos) " << ctxt->getFunctors()->size() 
+	    << " " << ctxt->getTableInfos()->size() << "\n";
+
+  // test a configuration of a router
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  RouterConfigGenerator routerConfigGenerator(ctxt, conf, true, true, filename);
+  routerConfigGenerator.createTables("localhost");
+
+  ref< Udp > udp = New refcounted< Udp >("Udp", 10000);
+  routerConfigGenerator.configureRouter(udp, "localhost");
+
+  LoggerI::Level level = LoggerI::NONE;
+  RouterRef router = New refcounted< Router >(conf, level);
+  if (router->initialize(router) == 0) {
+    std::cout << "Correctly initialized network of reachability flows.\n";
+  } else {
+    std::cout << "** Failed to initialize correct spec\n";
+  }
+
+
   return 0;
 }
 
