@@ -1,3 +1,17 @@
+########################################################################
+#
+#  @(#)$Id$
+#
+# Copyright (c) 2005 Intel Corporation. All rights reserved.
+#
+# This file is distributed under the terms in the attached INTEL-LICENSE file.
+# If you do not find these files, copies can be found by writing to:
+# Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+# Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+#
+# DESCRIPTION: Makefile for the P2 tests
+#
+
 $(PROGRAMS): $(LDEPS)
 
 bin_PROGRAMS 	= 	tuples \
@@ -6,7 +20,8 @@ bin_PROGRAMS 	= 	tuples \
 			basicElementPlumbing \
 			scheduling \
 			test_timecb \
-			net
+			net \
+			logger
 
 tuples_SOURCES	= tuples.C
 tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
@@ -14,6 +29,11 @@ tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
 
 pel_SOURCES	= pel.C
 pel_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+logger_SOURCES  = logger.C
+logger_LDADD = $(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 basicElementPlumbing_SOURCES = basicElementPlumbing.C
@@ -26,14 +46,13 @@ scheduling_SOURCES = scheduling.C
 scheduling_LDADD = \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/net/.libs/libp2net.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 net_SOURCES = net.C
 net_LDADD = \
+	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/net/.libs/libp2net.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 basicelements_SOURCES	= basicelements.C

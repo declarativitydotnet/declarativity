@@ -146,14 +146,6 @@ class Element {
   /** Attach me to a router */
   void attach_router(RouterRef r)		{ _router = r; }
 
-
-
-
-
-
-
-
-
   /** A nested class encapsulating connection stubs into and out of an
       element. */
   class Port { 

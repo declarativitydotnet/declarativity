@@ -25,6 +25,7 @@ public:
   TuplePtr pull(int port, cbv);
   const char *class_name() const		{ return "Slot";}
   const char *processing() const		{ return PUSH_TO_PULL; }
+  const char *flow_code() const			{ return "x/x"; }
 
 private:
   TuplePtr _t;

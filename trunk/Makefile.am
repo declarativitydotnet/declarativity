@@ -47,4 +47,4 @@
 # 
 #
 
-SUBDIRS=net p2core elements tests phid
+SUBDIRS=p2core elements net tests phid

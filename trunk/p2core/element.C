@@ -188,26 +188,6 @@ TuplePtr Element::simple_action(TupleRef p)
   return p;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 REMOVABLE_INLINE const Element::PortRef Element::input(int i) const
 {
   assert(i >= 0 && i < ninputs());
