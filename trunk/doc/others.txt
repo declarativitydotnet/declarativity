@@ -1,4 +1,5 @@
 2.0 DHT Aggregation/Multicast Tree
+----------------------------------
 
 Send a join request based on a DHT key. Along the way, lookup requests
 are used to set up the forwarding state in the reverse direction along
@@ -25,6 +26,8 @@ bestSuccessor(NI,S,SI), N<K<=S
 
 
 3.0 Pastry
+----------
+
 Routing table = Finger
 Successors = Leaf Set
 Change lookup rules.
@@ -34,6 +37,7 @@ Is the above enough?
 
 
 4.0 Gossip Network
+------------------
 
 Base tuples: 
 link(X,Y)
@@ -59,12 +63,17 @@ PL1: pullRequest(Y, X, mid) :- (message(X,mid,msg), startPull(X,mid), reachable(
 PL2: message(Y,mid,msg) :- pullRequest(X,Y,mid),  message(X,mid,msg)
 PL3: startPull(n, mid), period=t, start=s, end=e
 
-R1 and R2 will be issued from one node for all nodes to figure out all other nodes.. After time lag, each node starts random push for X seconds. Then switch to random pull mid-way.
+R1 and R2 will be issued from one node for all nodes to figure out all
+other nodes.. After time lag, each node starts random push for X
+seconds. Then switch to random pull mid-way. 
 
-Do the same for pull, but start after a time lag. Each pull event will invoke a pull request and a message is returned if present.
+Do the same for pull, but start after a time lag. Each pull event will
+invoke a pull request and a message is returned if present. 
 
 
 
 5.0 Multicast Overlay
-SIGCOMM example for single-source multicast. First, compute the best paths, then set up the state of the multicast tree.
+---------------------
+SIGCOMM example for single-source multicast. First, compute the best
+paths, then set up the state of the multicast tree. 
 
