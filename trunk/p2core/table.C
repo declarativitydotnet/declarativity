@@ -60,6 +60,8 @@ Table::~Table()
       delete mul_indices[i];
     }
   }
+
+  // The the expiration
 }
 
 //
@@ -321,13 +323,22 @@ void Table::garbage_collect()
     clock_gettime(CLOCK_REALTIME, &now);
     
     timespec expiry_time = now - max_lifetime;
-    Entry * back = els.back();
-    while( back->ts < (now-max_lifetime) ) {
-      remove_from_indices(back);
-      remove_from_aggregates(back->t);
-      els.pop_back();
-      delete back;
-      back = els.back();
+    while (els.size() > 0) {
+      Entry * back = els.back();
+
+      // is the last one to be dumped?
+      if (back->ts < (now-max_lifetime)) {
+        // Kick it.
+        remove_from_indices(back);
+        remove_from_aggregates(back->t);
+        els.pop_back();
+        delete back;
+        back = els.back();
+      } else {
+        // If the last one is not to be dumped, none will be.  Get out
+        // of the while loop.
+        break;
+      }
     }
   } 
   // Trim the size of the table

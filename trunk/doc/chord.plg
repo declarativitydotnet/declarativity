@@ -159,7 +159,7 @@ rule S0 stabilizeEvent@NI(ni) :-
 	periodic@NI(TTL * 0.5).
 
 rule S0a stabilize@NI(NI, E) :-
-	stabilizeEvent@NI(NITTL * 0.5), E=f_rand(), NI=ni.
+	stabilizeEvent@NI(NI, TTL * 0.5), E=f_rand(), NI=ni.
 
 rule S0b stabilizeRecord@NI(NI, E) :-
 	stabilize@NI(NI, E).
