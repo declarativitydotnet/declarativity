@@ -677,7 +677,8 @@ static const CompilerTest ctests[] = {
 static const size_t num_ctests = sizeof(ctests) / sizeof(CompilerTest);
 
 
-
+#if 0
+// Not used
 static double time_fn(cbv cb) 
 {
   timespec before_ts;
@@ -698,7 +699,7 @@ static double time_fn(cbv cb)
   std::cout << after_ts.tv_sec << " secs " << (after_ts.tv_nsec/1000) << " usecs)\n";
   return elapsed;
 }
-
+#endif
 
 void vm_test(Pel_VM &vm, TupleRef tpl, int i) {
   const ValTest *t = &vtests[i];
@@ -756,7 +757,7 @@ void vm_test(Pel_VM &vm, TupleRef tpl, int i) {
 int main(int argc, char **argv)
 {
   std::cout << "PEL\n";
-  int i;
+  uint i;
 
   //
   // Test the compiler
@@ -765,10 +766,10 @@ int main(int argc, char **argv)
     const CompilerTest *t = &ctests[i];
     std::cout << "Compiling: " << t->src << "\n";
     Pel_Program *prog = Pel_Lexer::compile( t->src);
-    if (prog->ops.size() != t->num_opcodes) {
+    if (prog->ops.size() != (uint) t->num_opcodes) {
       std::cerr << "** Bad # opcodes for '" << t->src << "'; " << prog->ops.size() << " instead of expected " << t->num_opcodes << "\n";
     }
-    if (prog->const_pool.size() != t->num_consts) {
+    if (prog->const_pool.size() != (uint) t->num_consts) {
       std::cerr << "** Bad # consts for '" << t->src << "'; " << prog->const_pool.size() << " instead of expected " << t->num_consts << "\n";
     }
     str dec = Pel_Lexer::decompile(*prog);
