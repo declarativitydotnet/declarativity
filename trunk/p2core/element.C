@@ -155,19 +155,16 @@ Element::ports_frozen() const
 void
 Element::initialize_ports(const int *in_v, const int *out_v)
 {
-  // always initialize _ports0[0] so set_nports will know whether to quit
-  if (_inputs != _ports0 && _outputs != _ports0)
-    _ports0[0] = Port(this, 0, -1);
-  
+  // Only PULL inputs are connectable
   for (int i = 0; i < ninputs(); i++) {
     // allowed iff in_v[i] == VPULL
-    int port = (in_v[i] == VPULL ? 0 : -1);
+    int port = (in_v[i] == VPULL ? 0 : NOT_CONNECTABLE);
     _inputs[i] = Port(this, 0, port);
   }
   
   for (int o = 0; o < noutputs(); o++) {
     // allowed iff out_v[o] != VPULL
-    int port = (out_v[o] == VPULL ? -1 : 0);
+    int port = (out_v[o] == VPULL ? NOT_CONNECTABLE : 0);
     _outputs[o] = Port(this, 0, port);
   }
 }
@@ -275,61 +272,27 @@ TupleRef Element::simple_action(TupleRef p)
   return p;
 }
 
-REMOVABLE_INLINE int Element::Port::push(TupleRef p, cbv cb) const
-{
-  assert(_e);
-#if P2_STATS >= 1
-  _tuples++;
-#endif
-  int returnValue;
-#if P2_STATS >= 2
-  _e->input(_port)._tuples++;
-  uint64_t c0 = click_get_cycles();
-  returnValue = _e->push(_port, p, cb);
-  uint64_t c1 = click_get_cycles();
-  uint64_t x = c1 - c0;
-  _e->_calls += 1;
-  _e->_self_cycles += x;
-  _owner->_child_cycles += x;
-#else
-  returnValue = _e->push(_port, p, cb);
-#endif
-  return returnValue;
-}
 
-REMOVABLE_INLINE TuplePtr Element::Port::pull(cbv cb) const
-{
-  assert(_e);
-#if P2_STATS >= 2
-  _e->output(_port)._tuples++;
-  uint64_t c0 = click_get_cycles();
-  TuplePtr p = _e->pull(_port, cb);
-  uint64_t c1 = click_get_cycles();
-  uint64_t x = c1 - c0;
-  _e->_calls += 1;
-  _e->_self_cycles += x;
-  _owner->_child_cycles += x;
-#else
-  TuplePtr p = _e->pull(_port, cb);
-#endif
-#if P2_STATS >= 1
-  if (p) _tuples++;
-#endif
-  return p;
-}
 
-REMOVABLE_INLINE void
-Element::checked_output_push(int o, TupleRef p, cbv cb) const
-{
-  if ((unsigned)o < (unsigned)noutputs()) {
-    _outputs[o].push(p, cb);
-    } else {
-    // p->kill();
-    }
-}
 
-REMOVABLE_INLINE const Element::Port &
-Element::input(int i) const
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+REMOVABLE_INLINE const Element::Port & Element::input(int i) const
 {
   assert(i >= 0 && i < ninputs());
   return _inputs[i];
@@ -366,14 +329,75 @@ Element::input_is_push(int i) const
   return i >= 0 && i < ninputs() && !_inputs[i].allowed();
 }
 
+////////////////////////////////////////////////////////////
+// Element::Port
+
+
+REMOVABLE_INLINE int Element::Port::push(TupleRef p, cbv cb) const
+{
+  // If I am not connected, I shouldn't be pushed.
+  assert(_e);
+#if P2_STATS >= 1
+  _tuples++;
+#endif
+
+  int returnValue;
+#if P2_STATS >= 2
+  _e->input(_port)._tuples++;
+  uint64_t c0 = click_get_cycles();
+#endif // P2_STATS >= 2
+
+  returnValue = _e->push(_port, p, cb);
+
+#if P2_STATS >= 2
+  uint64_t c1 = click_get_cycles();
+  uint64_t x = c1 - c0;
+  _e->_calls += 1;
+  _e->_self_cycles += x;
+  _owner->_child_cycles += x;
+#endif
+
+  return returnValue;
+}
+
+REMOVABLE_INLINE TuplePtr Element::Port::pull(cbv cb) const
+{
+  // If I am not connected, I shouldn't be pulled.
+  assert(_e);
+#if P2_STATS >= 2
+  _e->output(_port)._tuples++;
+  uint64_t c0 = click_get_cycles();
+#endif
+
+  TuplePtr p = _e->pull(_port, cb);
+
+#if P2_STATS >= 2
+  uint64_t c1 = click_get_cycles();
+  uint64_t x = c1 - c0;
+  _e->_calls += 1;
+  _e->_self_cycles += x;
+  _owner->_child_cycles += x;
+#endif
+
+#if P2_STATS >= 1
+  if (p) _tuples++;
+#endif
+
+  return p;
+}
+
+/** Construct a detached free port */
 REMOVABLE_INLINE Element::Port::Port() :
   _e(0),
-  _port(-2),
+  _port(NOT_INITIALIZED),
   _cb(cbv_null)
   PORT_CTOR_INIT(0)
 { }
 
-REMOVABLE_INLINE Element::Port::Port(Element *owner, Element *e, int p)
+/** Construct an attached port */
+REMOVABLE_INLINE Element::Port::Port(Element *owner,
+                                     Element *e,
+                                     int p)
   : _e(e),
     _port(p),
     _cb(cbv_null)

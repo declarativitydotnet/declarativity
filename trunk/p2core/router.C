@@ -23,7 +23,47 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: The tuple router class providing support for element plumbing.
+ * DESCRIPTION: The tuple router class providing support for element
+ * plumbing.
+ * 
+ * Click machinery works as follows:
+ *
+ *  Lexer finds all distinct elements and their interconnections
+ *
+ *  For every found element, a default constructor is called and the
+ *  element is added into the router (as a singleton object)
+ *
+ *  For every found connection, the router adds a connection spec
+ *  (called a "hookup") from the source element to the destination
+ *  element to a queue of new connections to be created.
+ *
+ *  The router is "initialized."
+ *
+ *    The queued hookups are checked for sanity (they connect existing
+ *    elements and existing port numbers).  Incorrect hookups are
+ *    dropped. Any errors in the hookups cause the initialization to
+ *    fail.
+ *
+ *    Elements are sorted by the order in which they wish to be
+ *    configured (from 4 distinct phases).  Then they are notified about
+ *    when they should expect to be configured and how many of their
+ *    ports have clients (i.e., other elements connecting to them).
+ *   
+ *    In sorted order, every element is configured with its
+ *    configuration data (arguments, parameters, etc.).  If any of the
+ *    elements failed its configuration, the initialization stops.
+ *
+ *    After element configuration, all hookups are checked again to
+ *    ensure that port numbers used are consistent with the fully
+ *    configured elements.
+ *
+ *    Next, hookups are checked for semantic correctness in terms of
+ *    push/pull personality.  According to connectivity, agnostic elements
+ *    are assigned a personality, e.g., if a push output port is
+ *    connected to an agnostic input port, then the input port is
+ *    instantiated as a push port.  The ports are created and
+ *    initialized, making appropriate ports not connectable (i.e., pull
+ *    outputs or push inputs).
  */
 
 

@@ -138,7 +138,9 @@ class Element {
 
     Port();
 
-    Port(Element *, Element *, int);
+    Port(Element * owner,
+         Element * correspondent,
+         int correspondentPortNumber);
     
     operator bool() const		{ return _e != 0; }
     bool allowed() const		{ return _port >= 0; }
@@ -148,8 +150,8 @@ class Element {
     Element *element() const		{ return _e; }
     
     /* The port number error values */
-    enum PortErrors { NOT_CONNECTABLE = -2,
-                      NOT_INITIALIZED = -1 };
+    enum PortErrors { NOT_CONNECTABLE = -1,
+                      NOT_INITIALIZED = -2 };
 
 
     /** The port number at which I am connected at the destination
