@@ -848,6 +848,7 @@ int main(int argc, char **argv)
   testCheckPushPull();
   testDuplicates();
 
+  std::cout << "\nBASIC ELEMENT PLUMBING END\n";
   return 0;
 }
   

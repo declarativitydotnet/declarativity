@@ -28,11 +28,13 @@
 #include "router.h"
 #include "master.h"
 #include "timedSource.h"
-#include "project.h"
 #include "udp.h"
 #include "discard.h"
 #include "pelTransform.h"
 #include "logger.h"
+#include "marshal.h"
+#include "unmarshal.h"
+#include "hexdump.h"
 
 /** Test that a puller runs and stops during inaction. */
 void testSinglePuller()
@@ -83,14 +85,24 @@ void testChainPuller()
   ref< TimedSource > timedSource = New refcounted< TimedSource >(0.25);
   ref< Print > print = New refcounted< Print >("Before");
   //  ref< PelTransform > project = New refcounted< PelTransform >("$1 $2 +i pop");
-  ref< PelTransform > project = New refcounted< PelTransform >("$8 pop");
-  ref< Print > print2 = New refcounted< Print >("After");
+  //  ref< PelTransform > project = New refcounted< PelTransform >("$8 pop");
+  ref< Marshal > marshal = New refcounted< Marshal >();
+  ref< Marshal > marshal2 = New refcounted< Marshal >();
+  ref< Unmarshal > unmarshal = New refcounted< Unmarshal >();
+  ref< Print > print2 = New refcounted< Print >("Marshalled");
+  ref< Hexdump > hex = New refcounted< Hexdump >();
+  ref< Print > print3 = New refcounted< Print >("HexDumped");
   ref< PullPrint > pullPrint = New refcounted< PullPrint >();
 
   ElementSpecRef timedSourceSpec = New refcounted< ElementSpec >(timedSource);
   ElementSpecRef printSpec = New refcounted< ElementSpec >(print);
-  ElementSpecRef projectSpec = New refcounted< ElementSpec >(project);
+  //  ElementSpecRef projectSpec = New refcounted< ElementSpec >(project);
+  ElementSpecRef marshalSpec = New refcounted< ElementSpec >(marshal);
+  ElementSpecRef marshalSpec2 = New refcounted< ElementSpec >(marshal2);
+  ElementSpecRef hexSpec = New refcounted< ElementSpec >(hex);
+  ElementSpecRef unmarshalSpec = New refcounted< ElementSpec >(unmarshal);
   ElementSpecRef printSpec2 = New refcounted< ElementSpec >(print2);
+  ElementSpecRef printSpec3 = New refcounted< ElementSpec >(print3);
   ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
 
   // Logger data flow
@@ -107,7 +119,12 @@ void testChainPuller()
   elements->push_back(timedSourceSpec);
   elements->push_back(printSpec);
   elements->push_back(printSpec2);
-  elements->push_back(projectSpec);
+  elements->push_back(printSpec3);
+  //elements->push_back(projectSpec);
+  elements->push_back(marshalSpec);
+  //elements->push_back(marshalSpec2);
+  elements->push_back(unmarshalSpec);
+  //elements->push_back(hexSpec);
   elements->push_back(pullPrintSpec);
 
   elements->push_back(loggerSpec);
@@ -123,12 +140,18 @@ void testChainPuller()
                                             printSpec, 0);
   hookups->push_back(hookup);
   hookup = New refcounted< Router::Hookup >(printSpec, 0,
-                                            projectSpec, 0);
+                                            marshalSpec, 0);
   hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(projectSpec, 0,
+  hookup = New refcounted< Router::Hookup >(marshalSpec, 0,
                                             printSpec2, 0);
   hookups->push_back(hookup);
   hookup = New refcounted< Router::Hookup >(printSpec2, 0,
+                                            unmarshalSpec, 0);
+  hookups->push_back(hookup);
+  hookup = New refcounted< Router::Hookup >(unmarshalSpec, 0,
+                                            printSpec3, 0);
+  hookups->push_back(hookup);
+  hookup = New refcounted< Router::Hookup >(printSpec3, 0,
                                             pullPrintSpec, 0);
   hookups->push_back(hookup);
 
@@ -156,6 +179,7 @@ void testChainPuller()
 
   // Activate the router
   router->activate();
+  router->logger(logger);
 
   // Run the router
   amain();

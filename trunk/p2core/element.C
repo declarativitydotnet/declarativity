@@ -53,6 +53,8 @@ const char * const Element::PULL_TO_PUSH = "l/h";
 // A basic flow code
 const char * const Element::COMPLETE_FLOW = "x/x";
 
+// For use in default-logger sequencing
+uint64_t Element::seq=0;
 
 int Element::nelements_allocated = 0;
 int Element::elementCounter = 0;
@@ -66,20 +68,22 @@ int Element::elementCounter = 0;
 Element::Element() :
   ELEMENT_CTOR_STATS
   _ninputs(0),
-  _noutputs(0)
+  _noutputs(0),
+  _ID(elementCounter++),
+  _IDstr(strbuf() << _ID)
 {
   nelements_allocated++;
-  _ID = elementCounter++;
 }
 
 Element::Element(int ninputs, int noutputs) :
   ELEMENT_CTOR_STATS
   _ninputs(0),
-  _noutputs(0)
+  _noutputs(0),
+  _ID(elementCounter++),
+  _IDstr(strbuf() << _ID)
 {
   set_nports(ninputs, noutputs);
   nelements_allocated++;
-  _ID = elementCounter++;
 }
 
 Element::~Element()
@@ -314,6 +318,13 @@ bool Element::run_timer()
 }
 
 
+REMOVABLE_INLINE void Element::log(LoggerI::Level severity,
+                                   int errnum,
+                                   str explanation)
+{
+  log(_IDstr, severity, errnum, explanation);
+}
+
 REMOVABLE_INLINE void Element::log(str instanceName,
                                    LoggerI::Level severity,
                                    int errnum,
@@ -327,12 +338,31 @@ REMOVABLE_INLINE void Element::log(str instanceName,
            errnum,
            explanation); 
   } else {
-    warn << "PRE-init LOGGER:" <<
-      class_name() << "/" <<
-      instanceName << "/" <<
-      severity << "/" <<
-      errnum << "/" <<
-      explanation << "\n";
+    timespec now_ts;
+    double   now;
+    
+    if (clock_gettime(CLOCK_REALTIME,&now_ts)) {
+      fatal << "clock_gettime:" << strerror(errno) << "\n";
+    }
+    now = now_ts.tv_sec + (1.0 / 1000 / 1000 / 1000 * now_ts.tv_nsec);
+    
+    TupleRef t = Tuple::mk();
+    t->append(New refcounted<TupleField>(now));
+    t->append(New refcounted<TupleField>(seq++));
+    t->append(New refcounted<TupleField>(class_name()));
+    t->append(New refcounted<TupleField>(instanceName));
+    t->append(New refcounted<TupleField>(severity));
+    t->append(New refcounted<TupleField>(errnum));
+    t->append(New refcounted<TupleField>(explanation));
+    t->freeze();
+    warn << "PRE-init LOGGER: " << t->toString() << "\n";
+
+//     warn << "PRE-init LOGGER:" <<
+//       class_name() << "/" <<
+//       instanceName << "/" <<
+//       severity << "/" <<
+//       errnum << "/" <<
+//       explanation << "\n";
   }
 }
                             

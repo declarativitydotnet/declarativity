@@ -378,7 +378,8 @@ Router::Router(ConfigurationRef c,
   : _master(m),
     _elements(New refcounted< vec< ElementRef > >()),
     _state(ROUTER_NEW),
-    _configuration(c)
+    _configuration(c),
+    _logger(0)
 {
 }
 
@@ -561,7 +562,12 @@ void Router::activate()
 
 REMOVABLE_INLINE LoggerI * Router::logger(LoggerI * newLogger)
 {
-  LoggerI * l = _logger;
-  _logger = newLogger;
-  return l;
+  if (_state != ROUTER_LIVE) {
+    warn << "Cannot install a new logger before the router is live\n";
+    return 0;
+  } else {
+    LoggerI * l = _logger;
+    _logger = newLogger;
+    return l;
+  }
 }

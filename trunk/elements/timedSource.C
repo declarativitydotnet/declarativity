@@ -16,7 +16,7 @@
 #include <timedSource.h>
 #include <element.h>
 #include <async.h>
-#include <iostream>
+#include <math.h>
 
 TimedSource::TimedSource(double seconds)
   : Element(0, 1),
@@ -32,7 +32,7 @@ TimedSource::TimedSource(double seconds)
     
 int TimedSource::initialize()
 {
-  std::cerr << "TIMEDSOURCE/init\n";
+  log(LoggerI::INFO, 0, "initialize: TIMEDSOURCE/init");
   // Schedule my timer
   _timeCallback = delaycb(_seconds,
                           _nseconds, _runTimerCB);
@@ -47,7 +47,7 @@ void TimedSource::runTimer()
   _timeCallback = 0;
 
   if (!_tuple) {
-    std::cerr << "TIMEDSOURCE/timer: Creating new tuple\n";
+    log(LoggerI::INFO, 0, "runTimer: Creating new tuple/init");
 
     // Create a new one
     _tuple = Tuple::mk();
@@ -73,7 +73,7 @@ void TimedSource::runTimer()
                             _nseconds,
                             _runTimerCB);
   } else {
-    std::cerr << "TIMEDSOURCE/timer: Can't create new tuple. Sleeping\n";
+    log(LoggerI::INFO, 0, "runTimer: Can't create new tuple. Sleeping");
     // Current one hasn't been used. Skip this round and don't
     // reschedule
   }
@@ -87,7 +87,7 @@ TuplePtr TimedSource::pull(int port,
 
   // Do we have a tuple handy?
   if (_tuple) {
-    std::cerr << "TIMEDSOURCE/Pull: tuple ready\n";
+    log(LoggerI::INFO, 0, "pull: tuple ready");
     // Give it
     TupleRef t = _tuple;
     _tuple = 0;
@@ -103,9 +103,9 @@ TuplePtr TimedSource::pull(int port,
   } else {
     // If I already have a callback waiting, throw a warning sign and do
     // nothing
-    std::cerr << "TIMEDSOURCE/Pull: tuple not ready\n";
+    log(LoggerI::INFO, 0, "pull: tuple not ready");
     if (_callBack != 0) {
-      std::cerr << "TIMEDSOURCE/Pull: Pull received while callback is registered\n";
+      log(LoggerI::WARN, 0, "pull: Received while callback is registered");
     } else {
       // Keep the callback and respond with a null tuple
       _callBack = cb;

@@ -143,10 +143,19 @@ class Element {
   virtual const char *flags() const;
 
   // LOGGING facilities
+
+  /** Log something to the default element logger */
   REMOVABLE_INLINE void log(str instanceName,
                             LoggerI::Level severity,
                             int errnum,
                             str explanation);
+
+  /** Call the log method without an instance name.  Use the element ID
+      instead. */
+  REMOVABLE_INLINE void log(LoggerI::Level severity,
+                            int errnum,
+                            str explanation);
+  
 
   // METHODS USED BY `ROUTER'
   
@@ -259,11 +268,17 @@ class Element {
   /** My ID */
   long _ID;
 
+  /** My ID in text */
+  str _IDstr;
+
   Element(const Element &);
   Element &operator=(const Element &);
   
   /** Set my ports before I'm initialized */
   void set_nports(int, int);
+
+  /** For my default logger's sequencing */
+  static uint64_t seq;
 };
 
 

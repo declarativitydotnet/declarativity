@@ -21,10 +21,12 @@ libp2elements_la_SOURCES = \
 	memoryPull.C \
 	print.C \
 	timedSource.C \
-	project.C \
 	logger.C \
 	discard.C \
-	pelTransform.C
+	pelTransform.C \
+	marshal.C \
+	hexdump.C \
+	unmarshal.C
 
 INCLUDES = @SFS_INC@ -I../p2core
 

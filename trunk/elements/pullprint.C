@@ -31,7 +31,7 @@ void PullPrint::wakeup()
   // Schedule myself.  This is only called from someone's callback so
   // it's OK to invoke fast reschedule.
 
-  std::cerr << "PULLPRINT/wakeup: pull print waking up\n";
+  log(LoggerI::INFO, 0, "wakeup: pull print waking up");
   assert(!_scheduled && (_run == 0));
   _run = delaycb(0, 0, _run_cb);
   _scheduled = true;
@@ -40,7 +40,7 @@ void PullPrint::wakeup()
 int PullPrint::initialize()
 {
   // Schedule my task to run
-  std::cerr << "PULLPRINT/init\n";
+  log(LoggerI::INFO, 0, "init");
   assert(!_scheduled && (_run == 0));
   _run = delaycb(0, 0, _run_cb);
   _scheduled = true;
@@ -55,7 +55,7 @@ void PullPrint::run()
 
   // Pull and print.  If pull fails, don't schedule yourself.  If pull
   // succeeds, schedule yourself again.
-  std::cerr << "PULLPRINT/run\n";
+  log(LoggerI::INFO, 0, "run");
   TuplePtr t = input(0)->pull(_wakeup_cb);
   if (t != NULL) {
     // Print tuple
@@ -64,7 +64,7 @@ void PullPrint::run()
     // Keep running. Don't remove it.
     _run = delaycb(0, 0, _run_cb);
   } else {
-    std::cerr << "PULLPRINT/run: pull failed, sleeping.\n";
+    log(LoggerI::INFO, 0, "run: pull failed, sleeping.");
     // Didn't get anything
     
     _run = 0;
