@@ -42,7 +42,7 @@ private:
   std::stack<TupleFieldRef> st;
   const Pel_Program	*prg;
   Error		 error;
-  int		 pc;
+  uint		 pc;
   TuplePtr	 result;
   TuplePtr	 operand;
 
