@@ -4,16 +4,22 @@
 // @Author: Vik Singh
 // @Date: 12/30/2004
 
-//// @CLASS Id
 
-Id::Id (const u_int32_t * num) {
+/** --------------------------------------------------------------
+ *  @CLASS: Id -- 160 bit id representation with conversion op's
+ *  -------------------------------------------------------------- */
+
+ref<Id> Id::mkIdRef (const u_int32_t * num) {
+  ref<Id> result = New refcounted<Id> ();
   for (int i = 0; i < 5; i += 1)
-    key[i] = *(num + i);
-  hashCode = getHash ();
+    result->key[i] = *(num + i);
+  return result;
 }
 
-Id::Id (const std::string& idString) {
-  hashCode = 0;
+// NEED TO IMPLEMENT
+ref<Id> Id::mkIdRef (const std::string& idString) {
+  ref<Id> result = New refcounted<Id> ();
+  return result;
 }
 
 std::bitset<160> Id::toBitWord (u_int32_t num) {
@@ -74,32 +80,44 @@ u_int32_t Id::getWord (const int index) const {
   return key[index];
 }
 
-//// @CLASS IdTable
+/** --------------------------------------------------------------
+ *  @STRUCT: IdHash - wraps up ref<Id> and hashing attributes
+ *  -------------------------------------------------------------- */
 
-void IdTable::initialize_gc (const size_t num, const size_t thresh) {
-  maxSize = num;
+IdHash::IdHash (ref<Id> idPtr, IdTable * table)
+  : id (New refcounted<Id> ()) {
+  id = idPtr;
+  this->table = table;
+  hashCode = idPtr->getHash ();
+}
+
+void IdHash::idRemove () {
+  table->remove (this);
+}
+
+/** --------------------------------------------------------------
+ *  @CLASS: IdTable - memoizes @IdHash or id representations
+ *  -------------------------------------------------------------- */
+
+void IdTable::initialize_gc (const size_t thresh = 30) {
   threshold = thresh;
 }
 
 // ref<Id> create (const XDR * xdr); look at tuple.C
 
-Id * IdTable::create (const std::string& idString) {
-  Id * result = New Id (idString); // add the string
+ref<Id> IdTable::create (const std::string& idString) {
+  ref<Id> result = Id::mkIdRef (idString);
   return storeId (result);
 }
 
-#if IDTBL_TEST == 1
-Id * IdTable::create (const u_int32_t * random) {
-  Id * result = New Id (random);
+ref<Id> IdTable::create (const u_int32_t * random) {
+  ref<Id> result = Id::mkIdRef (random);
   return storeId (result);
 }
-#endif
 
-Id * IdTable::create () {
-  u_int32_t random[5];
-  for (int i = 0; i < 5; i += 1)
-    random[i] = random::uint32t_urand ();
-  Id * result = New Id (random);
+ref<Id> IdTable::create () {
+  u_int32_t random[] = { 0, 0, 0, 0, 0 };
+  ref<Id> result = Id::mkIdRef (random);
   return storeId (result);
 }
 
@@ -107,46 +125,35 @@ size_t IdTable::size () const {
   return memTable.size ();
 }
 
-void IdTable::remove (Id * idPtr) {
-  memTable.remove (idPtr);
+// NEED TO IMPLEMENT
+void IdTable::remove (IdHash * id) {
+  memTable.remove (id);
 }
 
 void IdTable::clear () {
   memTable.clear ();
 }
 
-Id * IdTable::storeId (Id * idKey) {
-  Id * result = memTable[idKey->hashCode];
+ref<Id> IdTable::storeId (ref<Id> idKey) {
+  IdHash * result = memTable[idKey->getHash ()];
   if (result) {
     delete idKey;
-    return result;
+    return result->id;
   }
   else {
-    add (idKey);
+    IdHash * idWrapper = New IdHash (idKey, this);
+    idKey->hashWrapper = idWrapper;
+    add (idWrapper);
     return idKey;
   }
-  /*
-  std::map< ref<Id>, int, IdComparator >::iterator
-    idFound = memTable.find (idKey);
-  if (idFound != memTable.end ()) {
-    delete idKey;
-    return idFound->first;
-  }
-  else {
-    add (idKey);
-    return idKey;
-  }
-  */
 }
 
-void IdTable::add (Id * idKey) {
-  memTable.insert (idKey);
-  /*
-  memTable.insert (std::pair< ref<Id>, int > (idKey, 0));
-  */
-  if (maxSize == 0) return;
-  else if (memTable.size () > maxSize)
-    gc ();
+void IdTable::add (IdHash * id) {
+  memTable.insert (id);
+  numOfInserts += 1;
+  if (numOfInserts > threshold) {
+    /* Decr recent @Id's */
+  }
 }
 
 void IdTable::gc () {
