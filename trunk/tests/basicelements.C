@@ -47,11 +47,11 @@ static double time_fn(cbv cb)
 
 static TupleRef create_tuple_1() {
   TupleRef t = New refcounted<Tuple>;
-  t->append(*New TupleField());
-  t->append(*New TupleField((int32_t)-32));
-  t->append(*New TupleField((uint64_t)64));
-  t->append(*New TupleField(0.012345));
-  t->append(*New TupleField("This is a string"));
+  t->append(New refcounted<TupleField>());
+  t->append(New refcounted<TupleField>((int32_t)-32));
+  t->append(New refcounted<TupleField>((uint64_t)64));
+  t->append(New refcounted<TupleField>(0.012345));
+  t->append(New refcounted<TupleField>("This is a string"));
   t->freeze();
   return t;
 }

@@ -109,9 +109,9 @@ void TupleField::xdr_marshal( XDR *x )
 // 
 // Deserialize a Tuple Field from an XDR buffer
 //
-TupleField *TupleField::xdr_unmarshal( XDR *x )
+TupleFieldRef TupleField::xdr_unmarshal( XDR *x )
 {
-  TupleField *tf = New TupleField();
+  TupleFieldRef tf = New refcounted<TupleField>();
   xdr_u_int32_t( x, &(tf->t) );
   if ( tf->t >= INVALID ) {
     throw TypeError();
@@ -139,23 +139,23 @@ void Tuple::xdr_marshal( XDR *x )
   xdr_u_int32_t(x, &sz );
   // Marshal the fields
   for(size_t i=0; i < fields.size(); i++) {
-    fields[i].xdr_marshal(x);
+    fields[i]->xdr_marshal(x);
   };
 }
 
 //
 // Deserialize a Tuple from an XDR
 //
-Tuple *Tuple::xdr_unmarshal( XDR *x ) 
+ref<Tuple> Tuple::xdr_unmarshal( XDR *x ) 
 {
-  Tuple *t = New Tuple();
+  TupleRef t = Tuple::mk();
   assert(sizeof(size_t) == sizeof(u_int32_t));
   // Tuple size overall
   size_t sz;
   xdr_u_int32_t(x, &sz );
   // Marshal the fields
   for(size_t i=0; i < sz; i++) {
-    t->append(*TupleField::xdr_unmarshal(x));
+    t->append(TupleField::xdr_unmarshal(x));
   }
   return t;
 }
@@ -169,7 +169,7 @@ str Tuple::toString() const
 
   sb << "<";
   for(size_t i=0; i < fields.size(); i++) {
-    sb << fields[i].toString();
+    sb << fields[i]->toString();
     if (i != fields.size() - 1) {
       sb << ", ";
     }

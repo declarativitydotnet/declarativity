@@ -28,15 +28,15 @@
 #include "master.h"
 
 TupleRef create_tuple(int i) {
-  TupleRef t = New refcounted< Tuple >;
-  t->append(*New TupleField());
-  t->append(*New TupleField((int32_t)i));
-  t->append(*New TupleField((uint64_t)i));
-  t->append(*New TupleField(i));
+  TupleRef t = Tuple::mk();
+  t->append(New refcounted<TupleField>());
+  t->append(New refcounted<TupleField>((int32_t)i));
+  t->append(New refcounted<TupleField>((uint64_t)i));
+  t->append(New refcounted<TupleField>(i));
   strbuf myStringBuf;
   myStringBuf << "This is string '" << i << "'";
   str myString = myStringBuf;
-  t->append(*New TupleField(myString));
+  t->append(New refcounted<TupleField>(myString));
   t->freeze();
   std::cout << "Created tuple " << (t->toString()) << "\n";
   return t;

@@ -1,0 +1,65 @@
+/*
+ * @(#)$Id$
+ *
+ * Copyright (c) 2005 Intel Corporation. All rights reserved.
+ *
+ * This file is distributed under the terms in the attached INTEL-LICENSE file.
+ * If you do not find these files, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * 
+ * DESCRIPTION:
+ *
+ */
+
+#ifndef __PEL_LEXER_H__
+#define __PEL_LEXER_H__
+
+#include <async.h>
+#include <sstream>
+#include "pel_program.h"
+#include "pel_vm.h"
+
+#ifndef yyFlexLexer
+#define yyFlexLexer PelBaseFlexLexer
+#include <FlexLexer.h>
+#endif
+
+class Pel_Lexer : public PelBaseFlexLexer {
+
+private:
+
+  struct opcode_token {
+    const char *name;
+    u_int32_t	code;
+  };
+  static opcode_token tokens[];
+  static const size_t num_tokens;
+
+  YY_BUFFER_STATE bufstate;
+  std::istringstream strb;
+
+  Pel_Program *result;
+
+  virtual int yylex();
+
+  void add_const_int(int v) { add_const(New refcounted<TupleField>(v));};
+  void add_const_int(long long v) { add_const(New refcounted<TupleField>(v));};
+  void add_const_str(str s) { add_const(New refcounted<TupleField>(s));};
+  void add_const_dbl(double d) { add_const(New refcounted<TupleField>(d));};
+  void add_const(TupleFieldRef f);
+  void add_tuple_load(int f);
+  void add_opcode(u_int32_t op);
+  void log_error(const char *errstr);
+
+  Pel_Lexer(const char *prog);
+  virtual ~Pel_Lexer() { yy_delete_buffer(bufstate); };
+
+public:
+  
+  static Pel_Program *compile(const char *prog);
+  static const char *opcode_mnemonic(u_int32_t opcode);
+
+};
+
+#endif /* __PEL_LEXER_H_ */

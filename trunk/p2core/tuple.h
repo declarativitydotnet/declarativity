@@ -15,6 +15,8 @@
 #ifndef __TUPLE_H__
 #define __TUPLE_H__
 
+#include <vector>
+
 #include <assert.h>
 #include <async.h>
 #include <arpc.h>
@@ -25,6 +27,10 @@
           if (TE != t) { throw TupleField::TypeError(); } \
 	return TN; \
 	}
+
+class TupleField;
+typedef ref<TupleField> TupleFieldRef;
+typedef ptr<TupleField> TupleFieldPtr;
 
 class TupleField {
 
@@ -67,37 +73,39 @@ public:
   CAST(double,   d,   DOUBLE );
   
   void xdr_marshal( XDR *x );
-  static TupleField *xdr_unmarshal( XDR *x );
+  static TupleFieldRef xdr_unmarshal( XDR *x );
   
 };
 #undef CAST  
 
+class Tuple;
+typedef ref<Tuple> TupleRef;
+typedef ptr<Tuple> TuplePtr;
+
 class Tuple {
 
 private:
-  vec<TupleField> fields;
+  std::vector<TupleFieldRef> fields;
   bool		frozen;
 
 public:
 
   Tuple() : fields(), frozen(false) {};
+  static TupleRef mk() { return New refcounted<Tuple>(); };
 
-  void append(TupleField &tf) { assert(!frozen); fields.push_back(tf); };
+  void append(TupleFieldRef tf) { assert(!frozen); fields.push_back(tf); };
   void freeze() { frozen = true; };
 
   size_t size() const { return fields.size(); };
 
-  TupleField &operator[] (ptrdiff_t i) { return fields[i]; };
-  const TupleField &operator[] (ptrdiff_t i) const { return fields[i]; };
+  TupleFieldRef operator[] (ptrdiff_t i) { return fields[i]; };
+  const TupleFieldRef operator[] (ptrdiff_t i) const { return fields[i]; };
 
   void xdr_marshal( XDR *uio );
-  static Tuple *xdr_unmarshal( XDR *uio );
+  static TupleRef xdr_unmarshal( XDR *uio );
 
   str toString() const;
 
 };
-
-typedef ref<Tuple> TupleRef;
-typedef ptr<Tuple> TuplePtr;
 
 #endif /* __TUPLE_H_ */

@@ -47,5 +47,6 @@
 # 
 #
 
-SUBDIRS=p2core elements tests
+SUBDIRS=p2core elements tests phid
+
 

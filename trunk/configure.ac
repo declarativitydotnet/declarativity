@@ -55,14 +55,10 @@ AC_CONFIG_SRCDIR(p2core/element.h)
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE(p2,0.4)
 
-# Checks for programs
-AC_PROG_CXX
-
-# Checks for header files
-
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
+AC_PROG_LEX
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_LIBTOOL
@@ -84,5 +80,5 @@ AC_FUNC_FORK
 AC_FUNC_STRFTIME
 AC_CHECK_FUNCS([dup2 strchr strerror strstr])
 
-AC_CONFIG_FILES([Makefile p2core/Makefile elements/Makefile tests/Makefile])
+AC_CONFIG_FILES([Makefile p2core/Makefile elements/Makefile tests/Makefile phid/Makefile])
 AC_OUTPUT

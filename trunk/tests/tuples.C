@@ -85,18 +85,18 @@ static void create_lots_of_fields() {
  61207374 // 
  72696e67 //
 */
-static Tuple *create_tuple_1() {
-  Tuple *t = New Tuple();
-  t->append(*New TupleField());
-  t->append(*New TupleField((int32_t)-32));
-  t->append(*New TupleField((uint64_t)64));
-  t->append(*New TupleField(0.012345));
-  t->append(*New TupleField("This is a string"));
+static TupleRef create_tuple_1() {
+  TupleRef t = New refcounted<Tuple>();
+  t->append(New refcounted<TupleField>());
+  t->append(New refcounted<TupleField>((int32_t)-32));
+  t->append(New refcounted<TupleField>((uint64_t)64));
+  t->append(New refcounted<TupleField>(0.012345));
+  t->append(New refcounted<TupleField>("This is a string"));
   t->freeze();
   return t;
 }
 
-static Tuple *ta[TUPLE_TST_SZ];
+static TuplePtr ta[TUPLE_TST_SZ];
 
 static void create_lots_of_tuples() {
   for( int i=0; i<TUPLE_TST_SZ; i++) {
@@ -177,18 +177,12 @@ int main(int argc, char **argv)
   // Now try unmarshalling said tuple...
   std::cout << "Unmarshalling... ";
   xdrmem xd(buf,sz);
-  Tuple *t = Tuple::xdr_unmarshal(&xd);
+  TupleRef t = Tuple::xdr_unmarshal(&xd);
   std::cout << "read " << t->size() << " fields.\n";
 
   std::cout << "Marshalling " << MARSHAL_NUM_UIOS << " of " << MARSHAL_CHUNK_SZ << " tuples each: ";
   el = time_fn(wrap(marshal_lots_of_tuples));
   std::cout << " (rate=" << (el / MARSHAL_NUM_UIOS / MARSHAL_CHUNK_SZ * 1000 * 1000) << " usec/tuple)\n";
-
-  // Now try freeing up all those unmarshalled tuples...
-  std::cout << "Freeing up original tuples...\n";
-  for(int i=0; i<TUPLE_TST_SZ; i++) {
-    delete ta[i];
-  }
 
   std::cout << "Unmarshalling " << MARSHAL_NUM_UIOS << " of " << MARSHAL_CHUNK_SZ << " tuples each: ";
   el = time_fn(wrap(unmarshal_lots_of_tuples));
