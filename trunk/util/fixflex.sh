@@ -21,5 +21,6 @@ echo "Couldn't find a reasonable flex; fixing things up..."
 IN_FILE="$3"
 OUT_FILE=`echo $IN_FILE | sed 's/.lex\$/.C/'`
 cp -v $OUT_FILE.works $OUT_FILE" &&
+cp -v FlexLexer.h.works FlexLexer.h
 touch $OUT_FILE
 
