@@ -60,11 +60,49 @@ void testLogger()
   }
 }
 
+/** Test the Logger using print and discard. */
+void testLoggerWithPrint()
+{
+  std::cout << "\nCHECK LOGGER with PRINT and DISCARD\n";
+
+  ref<Logger> log = New refcounted<Logger>();
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+
+  ElementSpecRef logSpec = conf->addElement(log);
+  ElementSpecRef printSpec = conf->addElement(New refcounted<Print>("Logger"));
+  ElementSpecRef discardSpec = conf->addElement(New refcounted<Discard>());
+  conf->hookUp(logSpec,0,printSpec,0);
+  conf->hookUp(printSpec,0,discardSpec,0);
+
+  MasterRef master = New refcounted< Master >();
+  RouterRef router =
+    New refcounted< Router >(conf, master);
+  if (router->initialize(router) == 0) {
+    std::cout << "Correctly initialized spec.\n";
+  } else {
+    std::cout << "** Failed to initialize correct spec\n";
+  }
+
+  // Activate the router
+  router->activate();
+
+  std::cout << "Router activated, captain.\n";
+
+  for( int i=0; i<5; i++) {
+    log->log( "test class",
+	      "test instance",
+	      Logger::WARN,
+	      i, 
+	      "Test message");
+  }
+}
+
 int main(int argc, char **argv)
 {
   std::cout << "\nLOGGER\n";
 
   testLogger();
+  testLoggerWithPrint();
 
   return 0;
 }

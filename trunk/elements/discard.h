@@ -21,7 +21,7 @@ public:
   Discard();
 
   const char *class_name() const		{ return "Discard";}
-  const char *processing() const		{ return "l/"; }
+  const char *processing() const		{ return "h/"; }
   const char *flow_code() const			{ return "-/"; }
 
   /** Overridden since I have no outputs */

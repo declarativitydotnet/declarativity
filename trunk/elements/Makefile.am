@@ -22,7 +22,8 @@ libp2elements_la_SOURCES = \
 	timedSource.C \
 	project.C \
 	logger.C \
-	discard.C
+	discard.C \
+	pelTransform.C
 
 INCLUDES = @SFS_INC@ -I../p2core
 

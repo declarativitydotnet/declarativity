@@ -31,6 +31,7 @@
 #include "project.h"
 #include "udp.h"
 #include "discard.h"
+#include "pelTransform.h"
 
 /** Test that a puller runs and stops during inaction. */
 void testSinglePuller()
@@ -80,7 +81,7 @@ void testChainPuller()
 
   ref< TimedSource > timedSource = New refcounted< TimedSource >(0.25);
   ref< Print > print = New refcounted< Print >("Before");
-  ref< Project > project = New refcounted< Project >((1 << 2) | 1);
+  ref< PelTransform > project = New refcounted< PelTransform >("$1 $2 +i pop");
   ref< Print > print2 = New refcounted< Print >("After");
   ref< PullPrint > pullPrint = New refcounted< PullPrint >();
 

@@ -178,9 +178,20 @@ int Element::push(int port, TupleRef p, cbv cb)
 
 TuplePtr Element::pull(int port, cbv cb)
 {
-  TuplePtr p = input(0)->pull(cb);
-  if (p) p = simple_action(p);
-  return p;
+  while (1) {
+    TuplePtr p = input(0)->pull(cb);
+    if (p) {
+      TuplePtr result = simple_action(p);
+      if (result != 0) {
+        return result;
+      } else {
+        // This input yielded no result. Try again.
+      }
+    } else {
+      // Didn't get any tuples from my input. Fail.
+      return 0;
+    }
+  }
 }
 
 TuplePtr Element::simple_action(TupleRef p)
