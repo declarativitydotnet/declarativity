@@ -44,7 +44,7 @@ TupleRef create_tuple(int i) {
 
 /** Test the portion of router initialization that checks for sanity of
     element hookups and lists */
-void testCheckHookupElements(MasterRef master)
+void testCheckHookupElements()
 {
   std::cout << "\nCHECK ELEMENT HOOKUP\n";
 
@@ -78,6 +78,7 @@ void testCheckHookupElements(MasterRef master)
   Router::ConfigurationRef configuration =
     New refcounted< Router::Configuration >(elements, hookups);
 
+  MasterRef master = New refcounted< Master >();
   RouterRef router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch hookup reference to unknown to element\n";
@@ -87,6 +88,7 @@ void testCheckHookupElements(MasterRef master)
 
   elements->clear();
   elements->push_back(memoryPullSpec);
+  master = New refcounted< Master >();
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch hookup reference to unknown from element\n";
@@ -100,6 +102,7 @@ void testCheckHookupElements(MasterRef master)
   elements->push_back(memoryPullSpec);
   elements->push_back(pullPrintSpec);
 
+  master = New refcounted< Master >();
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() != 0) {
     std::cerr << "** Failed to initialize correct configuration\n";
@@ -111,6 +114,7 @@ void testCheckHookupElements(MasterRef master)
   hookup = New refcounted< Router::Hookup >(memoryPullSpec, -4,
                                             pullPrintSpec, 0);
   hookups->push_back(hookup);
+  master = New refcounted< Master >();
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch negative from port\n";
@@ -123,6 +127,7 @@ void testCheckHookupElements(MasterRef master)
   hookups->clear();
   hookups->push_back(hookup);
 
+  master = New refcounted< Master >();
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch negative to port\n";
@@ -134,7 +139,7 @@ void testCheckHookupElements(MasterRef master)
 
 /** Test the portion of router initialization that checks for port
     number range correctness. */
-void testCheckHookupRange(MasterRef master)
+void testCheckHookupRange()
 {
   std::cout << "\nCHECK ELEMENT HOOKUP RANGE\n";
 
@@ -163,6 +168,7 @@ void testCheckHookupRange(MasterRef master)
   Router::ConfigurationRef configuration =
     New refcounted< Router::Configuration >(elements, hookups);
 
+  MasterRef master = New refcounted< Master >();
   RouterRef router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch incorrect from port\n";
@@ -174,6 +180,7 @@ void testCheckHookupRange(MasterRef master)
   hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
                                             pullPrintSpec, 1);
   hookups->push_back(hookup);
+  master = New refcounted< Master >();
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch incorrect to port\n";
@@ -185,6 +192,7 @@ void testCheckHookupRange(MasterRef master)
   hookup = New refcounted< Router::Hookup >(memoryPullSpec, 2,
                                             pullPrintSpec, 3);
   hookups->push_back(hookup);
+  master = New refcounted< Master >();
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch incorrect from/to ports\n";
@@ -196,6 +204,7 @@ void testCheckHookupRange(MasterRef master)
   hookup = New refcounted< Router::Hookup >(pullPrintSpec, 0,
                                             memoryPullSpec, 0);
   hookups->push_back(hookup);
+  master = New refcounted< Master >();
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch portless hookup\n";
@@ -207,7 +216,7 @@ void testCheckHookupRange(MasterRef master)
 
 /** Test the portion of router initialization that checks semantic
     consistency. */
-void testCheckPushPull(MasterRef master)
+void testCheckPushPull()
 {
   std::cout << "\nCHECK ELEMENT PUSH and PULL\n";
 
@@ -244,6 +253,7 @@ void testCheckPushPull(MasterRef master)
   Router::ConfigurationRef configuration =
     New refcounted< Router::Configuration >(elements, hookups);
 
+  MasterRef master = New refcounted< Master >();
   RouterRef router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch pull output hooked up with push input\n";
@@ -260,6 +270,7 @@ void testCheckPushPull(MasterRef master)
                                             pushPrintSpec, 0);
   hookups->push_back(hookup);
 
+  master = New refcounted< Master >();
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch incorrect pull-push hookup via a/a element\n";
@@ -280,6 +291,7 @@ void testCheckPushPull(MasterRef master)
                                             pushPrintSpec, 0);
   hookups->push_back(hookup);
 
+  master = New refcounted< Master >();
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch incorrect pull-push hookup via multiple a/a elements\n";
@@ -305,6 +317,7 @@ void testCheckPushPull(MasterRef master)
                                             pullPrintSpec, 0);
   hookups->push_back(hookup);
 
+  master = New refcounted< Master >();
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "Correct allowed pull-pull hookup via multiple a/a elements\n";
@@ -315,7 +328,7 @@ void testCheckPushPull(MasterRef master)
 
 /** Test the portion of router initialization that checks
     duplicate/unused ports */
-void testDuplicates(MasterRef master)
+void testDuplicates()
 {
   std::cout << "\nCHECK PORT REUSE / NON-USE\n";
 
@@ -359,6 +372,7 @@ void testDuplicates(MasterRef master)
 
   Router::ConfigurationRef configuration =
     New refcounted< Router::Configuration >(elements, hookups);
+  MasterRef master = New refcounted< Master >();
   RouterRef router =
     New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
@@ -393,6 +407,7 @@ void testDuplicates(MasterRef master)
                                             pullPrintSpec, 0);
   hookups->push_back(hookup);
 
+  master = New refcounted< Master >();
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "** Incorrectly allowed port reuse\n";
@@ -423,6 +438,7 @@ void testDuplicates(MasterRef master)
                                             pullPrintSpec, 0);
   hookups->push_back(hookup);
 
+  master = New refcounted< Master >();
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "Correctly allowed all used ports\n";
@@ -433,7 +449,7 @@ void testDuplicates(MasterRef master)
 
 
 /** Test a simple source-sink configuration */
-void testRun(MasterRef master)
+void testRun()
 {
   std::cout << "\nCHECK SOURCE-SINK EXAMPLE\n";
 
@@ -462,6 +478,7 @@ void testRun(MasterRef master)
 
   Router::ConfigurationRef configuration =
     New refcounted< Router::Configuration >(elements, hookups);
+  MasterRef master = New refcounted< Master >();
   RouterRef router =
     New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
@@ -481,14 +498,11 @@ int main(int argc, char **argv)
 {
   std::cout << "\nBASIC ELEMENT PLUMBING\n";
 
-  // Common master
-  MasterRef master = New refcounted< Master >();
-
-  testCheckHookupElements(master);
-  testCheckHookupRange(master);
-  testCheckPushPull(master);
-  testDuplicates(master);
-  testRun(master);
+  testCheckHookupElements();
+  testCheckHookupRange();
+  testCheckPushPull();
+  testDuplicates();
+  testRun();
 
   return 0;
 }
