@@ -55,6 +55,7 @@ if __name__ == "__main__":
 
     while 1:
         for v in range(vantages):
+            print "VANTAGE: ", v
             if len(ips) == 1: run_lookup(args[0], seed, "%s:%s" % (ips[0], int(port)+int(v)), args[1]+"/lookups.log")
             else: run_lookup(args[0], seed, "%s:%s" % (ips[v], port), args[1]+"/lookups.log")
         seed += 1

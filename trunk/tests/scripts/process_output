@@ -42,7 +42,7 @@ def process_node(out_f, lookups, results):
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
                                  ([a-f0-9]+),\s*                               # Lookup key 
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Destination IP address
-                                 ([0-9]+)\s*                                   # Event ID
+                                 ([0-9\.\:]+)\s*                               # Event ID
                              \>\]$\n""", re.VERBOSE)
 
     matchresults = re.compile(r"""^Print\[.*\],\s*
@@ -53,7 +53,7 @@ def process_node(out_f, lookups, results):
                                  ([a-f0-9]+),\s*                               # key 
                                  ([a-f0-9]+),\s*                               # key 
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Destination IP address
-                                 ([0-9]+)\s*                                   # Event ID
+                                 ([0-9\.\:]+)\s*                               # Event ID
                              \>\]$\n""", re.VERBOSE)
 
     matchbandwidth = re.compile(r"""^Print\[Out\:\[.*\],\s*

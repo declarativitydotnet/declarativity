@@ -98,5 +98,6 @@ if __name__ == "__main__":
                 p, s = os.wait() 
                 print >> log, "PID DONE: ", p
                 pids.remove(p)
+            time.sleep(5)
 
 
