@@ -32,9 +32,8 @@ bin_PROGRAMS 	= 	values \
 			csv \
 			testQueue \
 			agg \
-			pingpong
-
-
+			pingpong \
+			reachDatalog
 
 
 values_SOURCES	= values.C
@@ -84,6 +83,14 @@ join_LDADD = \
 
 reachability_SOURCES = reachability.C
 reachability_LDADD = \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+reachDatalog_SOURCES = reachDatalog.C
+reachDatalog_LDADD = \
+	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
@@ -142,6 +149,8 @@ pingpong_LDADD = \
 overlog_SOURCES	= overlog.C
 overlog_LDADD = \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 

@@ -126,12 +126,15 @@ WHITESPACE	[ \t\r\n]+
 
 <INITIAL>materialize { return OL_MAT; }
 <INITIAL>materialise { return OL_MAT; }
+<INITIAL>rule { return OL_RULE; }
+<INITIAL>event { return OL_EVENT; }
 <INITIAL>"@" { return OL_AT; }
 <INITIAL>"," { return OL_COMMA; }
 <INITIAL>"(" { return OL_LPAR; }
 <INITIAL>")" { return OL_RPAR; }
 <INITIAL>"." { return OL_DOT; }
 <INITIAL>":-" { return OL_IF; }
+<INITIAL>"period=" { return OL_PERIOD; }
 
 <INITIAL>[A-Z]{ALNUM}* { 
   lvalp->v = New Parse_Val(Val_Str::mk(yytext)); 

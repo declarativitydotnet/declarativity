@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 2; related-file-name: "ol_context.h" -*-
 /*
  * @(#)$Id$
  *
@@ -68,16 +69,18 @@ str OL_Context::Rule::toString()
       r << "@" << args.at(t->location);
     }
     r << "( ";
-    for(std::vector<Arg>::iterator a=t->args.begin(); a!=t->args.end(); a++) {
-      if (a->var >= 0) {
-	r << args.at(a->var);
-      } else {
-	r << a->val->toString();
-      }
-      r << " ";
+
+    for (unsigned int k = 0; k < t->argNames.size(); k++) {
+      r << t->argNames.at(k) << " ";
     }
     r << "), ";
   }
+
+  /*for (unsigned int k = 0; k < args.size(); k++) {
+    str nextStr = args.at(k);
+    r << nextStr << ",";
+    }*/
+
   return r;
 }
 
@@ -92,7 +95,7 @@ str OL_Context::Rule::toString()
 // all variable references at this point and convert them to
 // positional arguments. 
 // 
-void OL_Context::add_rule( Parse_Term *lhs, Parse_TermList *rhs) 
+void OL_Context::add_rule( Parse_Expr *e, Parse_Term *lhs, Parse_TermList *rhs) 
 {
   TRC_FN;
   // Get hold of the functor (rule head) for this new rule.  This
@@ -101,14 +104,15 @@ void OL_Context::add_rule( Parse_Term *lhs, Parse_TermList *rhs)
   // convert all bound values to extra "eq" terms in the body down
   // below. 
 
-  TRC("Functor " << lhs->fn->name << "@" << lhs->fn->loc );
-  Functor *fn = retrieve_functor( lhs->fn->name, lhs->args->size(),
+  //std::cout << "Add rule for functor " << lhs->fn->name << "@" << lhs->fn->loc << "\n";
+  Functor *fn = retrieve_functor( lhs->fn->name, lhs->args->size(), lhs->fn->loc,
 				  true, true );
   assert(fn != NULL);
   int fict_varnum = 1;	// Counter for inventing anonymous variables. 
 
   // Create a new rule and register it. 
   Rule *r = New Rule();
+  r->ruleID = e->val->toString();
   fn->rules.push_back(r);
 
   // Next, we canonicalize all the args in the rule head.  We build up
@@ -128,7 +132,7 @@ void OL_Context::add_rule( Parse_Term *lhs, Parse_TermList *rhs)
 	// "eq" term to the front of the term list. 
 	Term t;
 	int new_arg = r->add_arg( strbuf() << "$" << fict_varnum++ );
-	t.fn = retrieve_functor( "eq", 2, true, false );
+	t.fn = retrieve_functor( "eq", 2, "-1", true, false );
 	t.location = -1;
 	t.args.push_back(Arg(r->find_arg((*i)->val->toString())));
 	t.args.push_back(Arg(new_arg));
@@ -144,7 +148,7 @@ void OL_Context::add_rule( Parse_Term *lhs, Parse_TermList *rhs)
       // appears in this clause. 
       Term t;
       int new_arg = r->add_arg( strbuf() << "$" << fict_varnum++ );
-      t.fn = retrieve_functor( "eq", 2, true, false );
+      t.fn = retrieve_functor( "eq", 2, "-1", true, false );
       t.location = -1;
       t.args.push_back(Arg(new_arg));
       t.args.push_back(Arg((*i)->val));
@@ -158,7 +162,7 @@ void OL_Context::add_rule( Parse_Term *lhs, Parse_TermList *rhs)
   // variables we encounter to indices. 
   for( Parse_TermList::iterator j=rhs->begin(); j != rhs->end(); j++ ) {
     Term t;
-    t.fn = retrieve_functor( (*j)->fn->name, (*j)->args->size(), true, false );
+    t.fn = retrieve_functor( (*j)->fn->name, (*j)->args->size(), (*j)->fn->loc, true, false );
     if ((*j)->fn->loc == "") {
       t.location = -1;
     } else {
@@ -178,32 +182,43 @@ void OL_Context::add_rule( Parse_Term *lhs, Parse_TermList *rhs)
 	break;
       }
     }
+
+    // generate the arg names for the term
+    for (unsigned int k = 0; k < t.args.size(); k++) {      
+      int pos = t.args.at(k).var;
+      if (pos == -1) {
+	t.argNames.push_back(t.args.at(k).val->toString());
+      } else {
+	t.argNames.push_back(r->args.at(pos));
+      }
+    }
+
     r->terms.push_back(t);
   }
+
+  std::cout << "New rule for functor " << lhs->fn->name << "@" << lhs->fn->loc << r->toString() << "\n";
   
   delete lhs;
   delete rhs;
-
-  DBG(" New rule: " << r->toString());
 }
 
 //
 // Look up a functor by its name and arity, creating it if necessary.
 //
-OL_Context::Functor *OL_Context::retrieve_functor( str name, int arity, 
-						     bool create,
-						     bool define )
+OL_Context::Functor *OL_Context::retrieve_functor( str name, int arity, str loc,
+						   bool create,
+						   bool define )
 {
   //TRC_FN;
-  str key = OL_Context::Functor::calc_key(name, arity);
-  FunctorMap::iterator fni = functors.find(key);
-  if (fni == functors.end() ) {
+  str key = OL_Context::Functor::calc_key(name, arity, loc);
+  FunctorMap::iterator fni = functors->find(key);
+  if (fni == functors->end() ) {
     if (create == false) {
       return NULL;
     } else {
-      OL_Context::Functor *fn = New Functor(name, arity);
+      OL_Context::Functor *fn = New Functor(name, arity, loc);
       fn->defined = define;
-      functors.insert(std::make_pair(key, fn));
+      functors->insert(std::make_pair(key, fn));
       return fn;
     }
   } else {
@@ -218,7 +233,7 @@ str OL_Context::toString()
 {
   strbuf r;
   
-  for( FunctorMap::iterator f=functors.begin(); f != functors.end(); f++) {
+  for( FunctorMap::iterator f=functors->begin(); f != functors->end(); f++) {
     r << f->first << " :- \n";
     for( std::vector<Rule *>::iterator ri = f->second->rules.begin();
 	 ri != f->second->rules.end(); 
@@ -231,6 +246,14 @@ str OL_Context::toString()
 OL_Context::OL_Context()
   : lexer(NULL)
 {
+  functors = New FunctorMap();
+  tableInfoMap = New TableInfoMap();
+}
+
+OL_Context::~OL_Context()
+{
+  delete functors;
+  delete tableInfoMap;
 }
 
 void OL_Context::parse_string(const char *prog)
@@ -260,54 +283,65 @@ void OL_Context::error(str msg)
 // 
 void OL_Context::materialize( Parse_ExprList *l)
 {
-  str tblname;
-  int arity;
-  int timeout;
-  int size;
-
-  if (l->size() != 4) {
+  TableInfo *tableInfo = new TableInfo();
+  
+  if (l->size() != 5) {
     error("bad number of arguments to materialize");
     goto mat_error;
   }
 
+  // tablename
   if (l->at(0)->t != Parse_Expr::VAL ) {
     error("bad table name for materialization");
     goto mat_error;
   }
-  tblname = l->at(0)->val->toString();
+  tableInfo->tableName = l->at(0)->val->toString();
   
-  arity = Val_UInt32::cast(l->at(1)->val);
-  if ( arity < 1 ) { 
+  // arity
+  tableInfo->arity = Val_UInt32::cast(l->at(1)->val);
+  if ( tableInfo->arity < 1 ) { 
     error("bad arity for materialized table");
     goto mat_error;
   }
   
+  // timeout
   if (l->at(2)->val->toString() == "infinity") {
-    timeout = -1; 
+    tableInfo->timeout = -1; 
   } else {
-    timeout = Val_UInt32::cast(l->at(2)->val);
+    tableInfo->timeout = Val_UInt32::cast(l->at(2)->val);
   }
-  if (timeout == 0) {
+  if (tableInfo->timeout == 0) {
     error("bad timeout for materialized table");
     goto mat_error;
   }
 
+  // size
   if (l->at(3)->val->toString() == "infinity") {
-    size = -1; 
+    tableInfo->size = -1; 
   } else {
-    size = Val_UInt32::cast(l->at(3)->val);
+    tableInfo->size = Val_UInt32::cast(l->at(3)->val);
   }
-  if (size == 0) {
+  if (tableInfo->size == 0) {
     error("bad size for materialized table");
     goto mat_error;
   }
+
+  // eventFlag
+  if (l->at(4)->val->toString() == "0") {
+    tableInfo->eventFlag = false;
+  } else {
+    tableInfo->eventFlag = true;
+  }
+
+  tableInfoMap->insert(std::make_pair(tableInfo->tableName, tableInfo));
   
-  DBG( "Materialize " << tblname << "/" << arity 
-       << ", timeout " << timeout << ", size " << size );
-    
+  DBG( "Materialize " << tableInfo->tableName << "/" << tableInfo->arity 
+       << ", timeout " << tableInfo->timeout << ", size " << tableInfo->size << ". eventFlag " << tableInfo->eventFlag);
+
  mat_error:
   delete l;
 }
+
 
 //
 // Adding a fact
@@ -317,10 +351,10 @@ void OL_Context::add_fact( Parse_Term *t)
   TupleRef tpl = Tuple::mk();
   str tblname;
 
-  if (t->fn->loc != "") {
+  /*if (t->fn->loc != "") {
     error("Location not allowed in fact declarations");
     goto fact_error;
-  }
+    }*/
   tblname = t->fn->name;
 
   for(Parse_ExprList::iterator i = t->args->begin(); i != t->args->end(); i++){
@@ -338,3 +372,11 @@ void OL_Context::add_fact( Parse_Term *t)
  fact_error:
   delete t;
 }
+
+void OL_Context::add_event( Parse_Term *t)
+{
+}
+
+OL_Context::FunctorMap* OL_Context::getFunctors() { return functors; }
+
+OL_Context::TableInfoMap* OL_Context::getTableInfos() { return tableInfoMap; } 

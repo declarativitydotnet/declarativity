@@ -40,6 +40,9 @@
 %token OL_LPAR
 %token OL_RPAR
 %token OL_MAT
+%token OL_RULE
+%token OL_EVENT
+%token OL_PERIOD
 %start program
 %file-prefix="ol_parser"
 %name-prefix="ol_parser_"
@@ -54,7 +57,7 @@
   Parse_Val		*v;
 }
 %type<u_termlist> termlist;
-%type<u_exprlist> exprlist termbody;
+%type<u_exprlist> exprlist termbody; 
 %type<u_term> term;
 %type<u_expr> expr;
 %type<u_functorname> functorname;
@@ -66,16 +69,19 @@ program:	OL_EOF { YYACCEPT; }
 clauselist:	clause 
 		| clause clauselist;
 
-clause:		rule 
+clause:		OL_RULE rule 
 		| fact 
-		| materialize
+                | materialize
+                | event
 		;
 
 materialize:	OL_MAT termbody OL_DOT { ctxt->materialize($2); };
 
 fact:		term OL_DOT { ctxt->add_fact($1); } ;
 
-rule:		term OL_IF termlist OL_DOT { ctxt->add_rule($1, $3); } ;
+rule:	        OL_ATOM term OL_IF termlist OL_DOT { ctxt->add_rule(New Parse_Expr($1), $2, $4); } ;
+
+event:          OL_EVENT term OL_DOT { ctxt->add_event($2); } ;
 
 termlist:	term { $$ = New Parse_TermList(); $$->push_front($1); }
 		| term OL_COMMA termlist { $3->push_front($1); $$=$3; } ;

@@ -16,9 +16,10 @@ lib_LTLIBRARIES = liboverlog.la
 liboverlog_la_SOURCES = \
 	ol_lexer.C \
 	ol_parser.C \
-	ol_context.C 
+	ol_context.C \
+	routerConfigGenerator.C
 
-INCLUDES = @SFS_INC@ -I../p2core
+INCLUDES = @SFS_INC@ -I../p2core -I../elements -I../net
 
 CLEANFILES = core *.core *~ *.gen.h *.gen.txt ol_lexer.C \
 	ol_parser.output ol_parser.C ol_parser.tab.h ol_parser.tab.c

@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 2; related-file-name: "ol_context.C" -*-
 /*
  * @(#)$Id$
  *
@@ -42,9 +43,11 @@ public:
 				// positional list of the owning
 				// Rule. 
     std::vector<Arg> args;	// functor->arity args. 
+    std::vector<str> argNames;	// functor->arity args. 
   };
 
   struct Rule {
+    str ruleID;
     std::vector<str> args; // List of free variables in the rule.
     std::vector<Term> terms; // List of terms.
 
@@ -52,22 +55,34 @@ public:
     int add_arg(str varname);  // Add a new var and return its position
     int find_arg(str varname); // Look up a var and ret. pos or -1
   };
+
+
+  /* The meta-data of the table */
+  struct TableInfo {
+    str tableName;
+    int arity;
+    int timeout;
+    int size;
+    bool eventFlag; // is it used as an event tuple
+  };
   
   struct Functor {
     str name;		// The name of the functor or table
     u_int arity;	// The arity
     bool defined;	// Has it been defined yet?
     std::vector<Rule *> rules;	// List of associated rules
-    
-    Functor(str n, u_int a) : name(n), arity(a) {};
-    static str calc_key(str name, u_int arity) {
-      return strbuf() << name << "/" << arity;
+    str loc;
+
+    Functor(str n, u_int a, str l) : name(n), arity(a), loc(l) {};
+    static str calc_key(str name, u_int arity, str loc) {
+      return strbuf() << name << "/" << arity << "/" << loc;
     };
-    str key() const { return calc_key(name, arity); }
+    str key() const { return calc_key(name, arity, loc); }
   };
 
   /*******************************************************************/
   OL_Context();
+  ~OL_Context();
 
   //
   // Parsing programs
@@ -84,12 +99,14 @@ public:
 
   //
   // Add a new rule to the system
-  void add_rule( Parse_Term *lhs, Parse_TermList *rhs );
+  void add_rule( Parse_Expr *e, Parse_Term *lhs, Parse_TermList *rhs );
 
   // Materialize a table
   void materialize( Parse_ExprList *l);
 
   void add_fact( Parse_Term *t);
+
+  void add_event( Parse_Term *t);
 
   void error(str msg);
 
@@ -97,16 +114,21 @@ public:
 
   str OL_Context::toString();
   
-private:
-  
   typedef std::map<str, OL_Context::Functor *> FunctorMap;
-  FunctorMap functors;
+  typedef std::map<str, OL_Context::TableInfo *> TableInfoMap;
 
-  Functor *retrieve_functor( str name, int arity, 
-					  bool create=false,
-					  bool define=false );
-  
-  
+private:
+  FunctorMap* functors;
+  TableInfoMap* tableInfoMap;
+
+  Functor *retrieve_functor( str name, int arity, str loc,
+			     bool create=false,
+			     bool define=false );
+ 
+public: 
+  FunctorMap* getFunctors();
+  TableInfoMap* getTableInfos();
+   
 };
 
 extern int ol_parser_parse( OL_Context *env );
