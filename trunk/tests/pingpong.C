@@ -42,7 +42,7 @@
 #include "val_str.h"
 #include "val_uint64.h"
 #include "demux.h"
-#include "mux.h"
+#include "roundRobin.h"
 #include "marshalField.h"
 #include "unmarshalField.h"
 #include "store.h"
@@ -112,7 +112,7 @@ void testPingPong(int mode, str targetHost, LoggerI::Level level)
 
   ElementSpecRef slotTxS = conf->addElement(New refcounted< Slot >("slotTx"));
   ElementSpecRef udpTxS = conf->addElement(udpOut.get_tx());
-  ElementSpecRef muxS = conf->addElement(New refcounted< Mux >("mux", 2));
+  ElementSpecRef muxS = conf->addElement(New refcounted< RoundRobin >("roundRobin", 2));
   
   conf->hookUp(scanS, 0, scanPrintS, 0);
   conf->hookUp(scanPrintS, 0, timedPullPushS, 0);

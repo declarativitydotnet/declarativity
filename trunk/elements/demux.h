@@ -7,13 +7,14 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: A demultiplexing element.  It checks tuples' first field
- * for equality with the registered key for its outputs and routes
- * tuples accordingly, including the demux key.  It pushes back its
- * input only if all of its outputs are backed up (the
+ * DESCRIPTION: A demultiplexing element.  It checks tuples' input field
+ * (the first by default) for equality with the registered key for its
+ * outputs and routes tuples accordingly, including the demux key.  It
+ * pushes back its input only if all of its outputs are backed up (the
  * block-all-block-all policy).  If two or more demux keys are equal,
  * only the first receives a tuple; for duplication an explicit
- * duplicator element should be used.
+ * duplicator element should be used.  The element contains one extra
+ * output for the "else" case, i.e., for input that matches no key.
  */
 
 #ifndef __DEMUX_H__
@@ -25,17 +26,17 @@
 class Demux : public Element { 
 public:
   
-  Demux(str,
-        ref< vec< ValueRef > >);
+  Demux(str, ref< vec< ValueRef > >, unsigned f = 0);
 
   int push(int port, TupleRef t, cbv cb);
 
   const char *class_name() const		{ return "Demux";}
   const char *processing() const		{ return "h/h"; }
-  const char *flow_code() const			{ return "x/x"; }
+  const char *flow_code() const			{ return "-/-"; }
 
   /** A tuple may be dropped without notification if it resolves to an
-      output that's held back. */
+      output that's held back.  Push back only if all outputs have
+      pushed back. */
   int push(TupleRef p, cbv cb) const;
 
 private:
@@ -53,6 +54,9 @@ private:
 
   /** My block callback function for a given output */
   void unblock(int output);
+
+  /** The input field on which I perform the demultiplexing */
+  unsigned _inputFieldNo;
 };
 
 

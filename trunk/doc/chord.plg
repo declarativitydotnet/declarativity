@@ -6,7 +6,7 @@
 /* The base tuples */
 materialise(node, 2, infinity, 1).
 materialise(finger, 4, infinity, 16).
-materialise(sucessor, 3, infinity, 16).
+materialise(successor, 3, infinity, 16).
 materialise(predecessor, 3, infinity, 1).
 materialise(bestSuccessor, 3, infinity, 1).
 materialize(nextFingerFix, 2, infinity, 1).
@@ -37,7 +37,7 @@ rule L3 lookup@BI(BI,K,R,E) :-
 
 
 
-/* Neighbor Selection Rules */
+/* Neighbor Selection */
 
 rule SU1 bestSuccessorDist@NI(NI,min<D>) :-
 	node@NI(NI,N),

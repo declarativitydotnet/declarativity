@@ -10,94 +10,118 @@
  */
 
 #include "mux.h"
+#include "async.h"
 
 Mux::Mux(str name,
          int noInputs)
   : Element(name, noInputs, 1),
-    _pull_cb(cbv_null),
-    _block_flags(),
-    _block_flag_count(0),
-    _nextInput(0)               // start with input 0
+    _blocked(false),
+    _pushCallbacks(),
+    _inputTuples(),
+    _catchUp(wrap(this, &Mux::catchUp)),
+    _timeCallback(NULL),
+    _callback(wrap(this, &Mux::callback))
 {
-  // Clean out the block flags
-  _block_flags.zsetsize(ninputs());
-}
-
-void Mux::unblock(int input)
-{
-  assert((input >= 0) &&
-         (input <= ninputs()));
-  
-  // Unset a blocked input
-  if (_block_flags[input]) {
-    _block_flags[input] = false;
-    _block_flag_count--;
-    assert(_block_flag_count >= 0);
-  }
-
-  // If I have a pull callback, call it and remove it
-  if (_pull_cb != cbv_null) {
-    _pull_cb();
-    _pull_cb = cbv_null;
-  }
-}
-
-TuplePtr Mux::pull(int port, cbv cb)
-{
-  assert(port == 0);
-
-  // Can I give more?
-  if (_block_flag_count == ninputs()) {
-    // Refuse it and hold on to the callback if I don't have it already
-    if (_pull_cb == cbv_null) {
-      _pull_cb = cb;
-    }
-    log(LoggerI::WARN, -1, "pull: Underrun");
-    return 0;
-  }
-
-  // By now, I'd better have no callbacks stored.
-  assert(_pull_cb == cbv_null);
-
-  // Fetch the next unblocked input
   for (int i = 0;
        i < ninputs();
        i++) {
-    int currentInput = (_nextInput + i) % ninputs();
+    _pushCallbacks.push_back(cbv_null);
+    _inputTuples.push_back(NULL);
+  }
+}
 
-    // Is this input blocked?
-    if (_block_flags[currentInput]) {
-      // Oops, can't get this guy. Try again
-    } else {
-      // Okey dokey, this input is unblocked.  Fetch the result
-      TuplePtr p = input(currentInput)->
-        pull(wrap(this, &Mux::unblock, currentInput));
-      if (p == NULL) {
-        // This input just blocked
-        _block_flags[currentInput] = true;
-        _block_flag_count++;
+void Mux::callback()
+{
+  // Wake up immediately after and push out all pending tuples.  Remain
+  // blocked however.
+  assert(_timeCallback == NULL);
+  _timeCallback = delaycb(0, 0, _catchUp);
+}
 
-        // Did we just run out of unblocked inputs?
-        if (_block_flag_count == ninputs()) {
-          // No more inputs to try.  Fail to return and block output
-          _nextInput = (currentInput++) % ninputs();
-          _pull_cb = cb;
+void Mux::catchUp()
+{
+  assert(_blocked);
+  assert(_timeCallback != NULL);
+  _timeCallback = NULL;
 
-          return 0;
-        } else {
-          // No, we still have inputs to try. Keep going around the loop
-        }
+  // Go through all pending tuples XXX we always begin from input 0, so
+  // we could potentially have starvation
+  for (int i = 0;
+       i < ninputs();
+       i++) {
+    if (_inputTuples[i] != NULL) {
+      // Found one.  Push it out
+      assert(_pushCallbacks[i] != cbv_null);
+      int result = output(0)->push(_inputTuples[i], _callback);
+
+      // Did my output block again?
+      if (result == 0) {
+        // Oh well, don't try to wake up the pusher.
+        return;
       } else {
-        // Got an input tuple.  Just keep state and return this tuple
-        _nextInput = (currentInput++) % ninputs();
-        return p;
+        // Ah, we got this one out, phew...
+        _inputTuples[i] = NULL;
       }
     }
   }
 
-  // We should never reach this point
-  assert(false);
+  // Wunderbar, we have gotten rid of all of our pending tuples.  Go
+  // through and wake up everybody
+  for (int i = 0;
+       i < ninputs();
+       i++) {
+    if (_pushCallbacks[i] != cbv_null) {
+      // Found one.  Wake it up
+      _pushCallbacks[i]();
+      _pushCallbacks[i] = cbv_null;
+    }
+  }
 
-  return 0;
+  // Finally, we can now unblock
+  _blocked = false;
 }
 
+
+int Mux::push(int port, TupleRef p, cbv cb)
+{
+  assert((port >= 0) && (port < ninputs()));
+
+  // Is my output blocked?
+  if (_blocked) {
+    // Yup.  Is this input's buffer full?
+    if (_inputTuples[port] == NULL) {
+      // We have room.  We'd better not have a callback for that input
+      assert(_pushCallbacks[port] == cbv_null);
+
+      // Take it
+      _inputTuples[port] = p;
+      _pushCallbacks[port] = cb;
+      return 0;
+    } else {
+      // We'd better have a callback
+      assert(_pushCallbacks[port] != cbv_null);
+
+      // We have already received a buffered tuple from that input.  Bad
+      // input!
+      log(LoggerI::WARN, -1, strbuf("pull: Overrun on port ") << port);
+      return 0;
+    }
+  } else {
+    // I can forward this
+    assert((_pushCallbacks[port] == cbv_null) &&
+           (_inputTuples[port] == NULL));
+
+    int result = output(0)->push(p, _callback);
+
+    // Did my output block?
+    if (result == 0) {
+      _blocked = true;
+      // Oh well, store the pusher's callback and push it back
+      _pushCallbacks[port] = cb;
+      return 0;
+    } else {
+      // No problem, my output wants more.
+      return 1;
+    }
+  }
+}

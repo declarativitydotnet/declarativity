@@ -220,6 +220,9 @@ Router::ConfigurationRef UdpCC_sink(Udp *udp_out, Udp *udp_in, CC *cc, ref< suio
 void testUdpCC(bool source, str dest, int p)
 {
   struct hostent *host_src  = gethostbyname(dest);
+  if (host_src == 0) {
+    fatal << "Couldn't resolve destination " << dest << "\n";
+  }
   str ipAddr = inet_ntoa(*((struct in_addr *)host_src->h_addr));
 
   std::cout << "\nCHECK UDP " << dest << " -> " << ipAddr << std::endl;

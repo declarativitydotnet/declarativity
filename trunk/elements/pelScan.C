@@ -29,7 +29,6 @@ PelScan::PelScan(str name,
     _cleanup(Pel_Lexer::compile(cleanup)),
     _vm()
 {
-  warn << "PELScan\n";
 }
 
 PelScan::~PelScan()

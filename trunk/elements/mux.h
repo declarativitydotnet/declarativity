@@ -7,48 +7,57 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: A round-robin multiplexing pull element.  Whenever a
- * pull is requested, each of its inputs is pulled in order, unless it
- * is blocked.  If all inputs are blocked then the output is blocked as
- * well.
+ * DESCRIPTION: A multiplexing push element.  A push in any of the
+ * inputs results in push at the single output.  If the output is
+ * blocked, all inputs are blocked.  The element queues one tuple per
+ * input since in P2, elements don't offer unsolicited blockage info.
+ * In other words, if input 0 causes a block on the mux element, input 1
+ * has no way to find out other than failing to push something.
  */
 
 #ifndef __MUX_H__
 #define __MUX_H__
 
 #include "element.h"
-#include "bitvec.h"
+#include <async.h>
+#include <vector>
 
 class Mux : public Element { 
 public:
   
   Mux(str, int);
-
-  TuplePtr pull(int port, cbv cb);
+  ~Mux() {}
 
   const char *class_name() const		{ return "Mux";}
-  const char *processing() const		{ return "l/l"; }
-  const char *flow_code() const			{ return "x/x"; }
+  const char *processing() const		{ return "h/h"; }
+  const char *flow_code() const			{ return "-/-"; }
 
-  /** A tuple may be dropped without notification if it resolves to an
-      output that's held back. */
-  int push(TupleRef p, cbv cb) const;
+  int push(int, TupleRef, cbv);
+
+  /** My callback method */
+  void callback();
+
+  /** My catch up method, to handle callbacks off the callback thread */
+  void catchUp();
 
 private:
-  /** The callback for my outputs */
-  cbv	_pull_cb;
+  /** Is my output blocked? */
+  bool _blocked;
 
-  /** My block flags, one per input port */
-  bitvec _block_flags;
+  /** My input callback vector */
+  std::vector< cbv > _pushCallbacks;
 
-  /** My block flag count. */
-  int _block_flag_count;
+  /** My input buffer, one tuple per input. */
+  std::vector< TuplePtr > _inputTuples;
 
-  /** My current input pointer */
-  int _nextInput;
+  /** My catch-up callback */
+  cbv _catchUp;
 
-  /** My block callback function for a given input */
-  void unblock(int input);
+  /** My time callback */
+  timecb_t * _timeCallback;
+
+  /** My own output callback */
+  cbv _callback;
 };
 
 

@@ -12,6 +12,7 @@
 #include <async.h>
 #include <arpc.h>
 #include "routerConfigGenerator.h"
+#include "roundRobin.h"
 
 RouterConfigGenerator::RouterConfigGenerator(OL_Context* ctxt, Router::ConfigurationRef conf, 
 					     bool dups, bool debug, str filename):_conf(conf)
@@ -127,8 +128,11 @@ void RouterConfigGenerator::generateReceiveElements(ref< Udp> udp, str nodeID)
   // receivers are connected to elements with push input ports for now
   for (unsigned int k = 0; k < _udpReceivers.size(); k++) {
     ElementSpecRef nextElementSpec = _udpReceivers.at(k);
-    hookUp(demuxS, 0, nextElementSpec, 0);
+    hookUp(demuxS, k, nextElementSpec, 0);
   }
+
+  ElementSpecRef sinkS = _conf->addElement(New refcounted< Discard >("discard"));
+  hookUp(demuxS, _udpReceivers.size(), sinkS, 0);
 }
 
 void RouterConfigGenerator::generateSendElements(ref< Udp> udp, str nodeID)
@@ -137,7 +141,7 @@ void RouterConfigGenerator::generateSendElements(ref< Udp> udp, str nodeID)
 
   // prepare to send. Assume all tuples send by first tuple
   ElementSpecRef muxS =
-    _conf->addElement(New refcounted< Mux >("sendMux:" << nodeID, _udpPushSenders.size() + _udpPullSenders.size()));
+    _conf->addElement(New refcounted< RoundRobin >("sendMux:" << nodeID, _udpPushSenders.size() + _udpPullSenders.size()));
 
   hookUp(muxS, 0, udpSend, 0);
   

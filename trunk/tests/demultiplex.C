@@ -64,6 +64,11 @@ void testStaticDemux()
   ElementSpecRef sinkOddS = conf->addElement(New refcounted< Discard >("discardOdd"));
   conf->hookUp(sinkPrintOddS, 0, sinkOddS, 0);
 
+  // The other destination dataflow
+  ElementSpecRef sinkPrintOtherS = conf->addElement(New refcounted< Print >("OtherSink"));
+  ElementSpecRef sinkOtherS = conf->addElement(New refcounted< Discard >("discardOther"));
+  conf->hookUp(sinkPrintOtherS, 0, sinkOtherS, 0);
+
   // The demultiplexer
   ref< vec< ValueRef > > demuxKeys = New refcounted< vec< ValueRef > >;
   demuxKeys->push_back(New refcounted< Val_Int32 >(0));
@@ -73,6 +78,7 @@ void testStaticDemux()
   conf->hookUp(prefixedPrintS, 0, demuxS, 0);
   conf->hookUp(demuxS, 0, sinkPrintEvenS, 0);
   conf->hookUp(demuxS, 1, sinkPrintOddS, 0);
+  conf->hookUp(demuxS, 2, sinkPrintOtherS, 0);
   
   
   RouterRef router = New refcounted< Router >(conf);

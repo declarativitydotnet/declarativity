@@ -31,6 +31,7 @@ libp2elements_la_SOURCES = \
 	route.C \
 	demux.C \
 	mux.C \
+	roundRobin.C \
 	duplicate.C \
 	dupElim.C \
 	filter.C \

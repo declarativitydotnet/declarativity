@@ -230,9 +230,13 @@ int Router::check_push_and_pull()
           // If to port is pull, we're not OK
           std::cerr << "Hookup from PUSH["
                     << fromElement->toString()
-                    << "] to PULL["
+                    << "] port "
+                    << fromPort
+                    << " to PULL["
                     << toElement->toString()
-                    << "] found\n";
+                    << "] port "
+                    << toPort
+                    << " found\n";
           errors++;
           break;
           
@@ -242,6 +246,9 @@ int Router::check_push_and_pull()
           ElementSpec::UnificationResult result =
             toElement->unifyInput(toPort);
           if (result == ElementSpec::CONFLICT) {
+            std::cerr << "PUSH unification failed for element "
+                      << toElement->toString()
+                      << "\n";
             errors++;
           };
           progress = true;
@@ -256,9 +263,13 @@ int Router::check_push_and_pull()
           // If to port is push, we're not Ok
           std::cerr << "Hookup from PULL["
                     << fromElement->toString()
-                    << "] to PUSH["
+                    << "] port "
+                    << fromPort
+                    << " to PUSH["
                     << toElement->toString()
-                    << "] found\n";
+                    << "] port "
+                    << toPort
+                    << " found\n";
           errors++;
           break;
           
@@ -272,6 +283,9 @@ int Router::check_push_and_pull()
           ElementSpec::UnificationResult result =
             toElement->unifyInput(toPort);
           if (result == ElementSpec::CONFLICT) {
+            std::cerr << "PULL unification failed for element "
+                      << toElement->toString()
+                      << "\n";
             errors++;
           };
           progress = true;
@@ -287,6 +301,9 @@ int Router::check_push_and_pull()
           fromElement->output(fromPort)->personality(Element::PUSH);
           result = fromElement->unifyOutput(fromPort);
           if (result == ElementSpec::CONFLICT) {
+            std::cerr << "PUSH unification failed for element "
+                      << fromElement->toString()
+                      << "\n";
             errors++;
           };
           progress = true;
@@ -297,6 +314,9 @@ int Router::check_push_and_pull()
           fromElement->output(fromPort)->personality(Element::PULL);
           result = fromElement->unifyOutput(fromPort);
           if (result == ElementSpec::CONFLICT) {
+            std::cerr << "PULL unification failed for element "
+                      << fromElement->toString()
+                      << "\n";
             errors++;
           };
           progress = true;
@@ -306,6 +326,15 @@ int Router::check_push_and_pull()
           // If to port is agnostic, we're ok
           break;
         }
+        break;
+
+      default:
+        std::cerr << "Invalid personality for from element "
+                  << fromElement->toString()
+                  << " and port "
+                  << fromPort
+                  << "\n";
+        errors++;
       }
     }
     

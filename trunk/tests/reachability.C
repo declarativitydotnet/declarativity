@@ -35,7 +35,7 @@
 #include "udp.h"
 #include "marshalField.h"
 #include "unmarshalField.h"
-#include "mux.h"
+#include "roundRobin.h"
 #include "strToSockaddr.h"
 #include "slot.h"
 #include "timedPullSink.h"
@@ -174,7 +174,7 @@ void makeForwarder(Router::ConfigurationRef conf,
                    TableRef reachTable)
 {
   ElementSpecRef muxS =
-    conf->addElement(New refcounted< Mux >(strbuf("RR:").cat(name), 2));
+    conf->addElement(New refcounted< RoundRobin >(strbuf("RR:").cat(name), 2));
   // ElementSpecRef muxPrintS =
   //   conf->addElement(New refcounted< Print >(strbuf("Mux:") << name));
 
@@ -428,7 +428,7 @@ void testTransmit(LoggerI::Level level)
     conf->addElement(udp->get_tx());
 
   ElementSpecRef muxS =
-    conf->addElement(New refcounted< Mux >(strbuf("RR:").cat(names[0]), 2));
+    conf->addElement(New refcounted< RoundRobin >(strbuf("RR:").cat(names[0]), 2));
   ElementSpecRef tsSourceS =
     conf->addElement(New refcounted< TimestampSource >("TSSource"));
   ElementSpecRef fakeSlotS =

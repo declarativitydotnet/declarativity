@@ -124,8 +124,8 @@ void ElementSpec::initializePorts()
        i < noutputs;
        i++) {
     // Is this the end of the input descriptors?
-    pStop = (personalityPointer == 0);
-    fStop = (flowPointer == 0);
+    pStop = (*personalityPointer == 0);
+    fStop = (*flowPointer == 0);
 
     // Should I change the current personality?
     if (!pStop) {
@@ -189,6 +189,7 @@ ElementSpec::Port::Port(Element::Processing personality)
   : _processing(personality),
     _uniGroup(0)
 {
+  assert(ElementSpec::processingCodeString(_processing)[0] != 'I');
 }
  
 Element::Processing ElementSpec::Port::personality() const
@@ -199,6 +200,7 @@ Element::Processing ElementSpec::Port::personality() const
 void ElementSpec::Port::personality(Element::Processing p)
 {
   _processing = p;
+  assert(ElementSpec::processingCodeString(_processing)[0] != 'I');
 }
 
 

@@ -12,12 +12,14 @@
 #include "demux.h"
 
 Demux::Demux(str name,
-             ref< vec< ValueRef > > demuxKeys)
-  : Element(name, 1, demuxKeys->size()),
+             ref< vec< ValueRef > > demuxKeys,
+             unsigned inputFieldNo)
+  : Element(name, 1, demuxKeys->size() + 1),
     _push_cb(cbv_null),
     _demuxKeys(demuxKeys),
     _block_flags(),
-    _block_flag_count(0)
+    _block_flag_count(0),
+    _inputFieldNo(inputFieldNo)
 {
   // Clean out the block flags
   _block_flags.zsetsize(noutputs());
@@ -30,6 +32,8 @@ void Demux::unblock(int output)
   
   // Unset a blocked output
   if (_block_flags[output]) {
+    log(LoggerI::INFO, -1, "unblock");
+
     _block_flags[output] = false;
     _block_flag_count--;
     assert(_block_flag_count >= 0);
@@ -37,6 +41,7 @@ void Demux::unblock(int output)
 
   // If I have a push callback, call it and remove it
   if (_push_cb != cbv_null) {
+    log(LoggerI::INFO, -1, "unblock: propagating aggregate unblock");
     _push_cb();
     _push_cb = cbv_null;
   }
@@ -53,19 +58,21 @@ int Demux::push(int port, TupleRef p, cbv cb)
     // Drop it and hold on to the callback if I don't have it already
     if (_push_cb == cbv_null) {
       _push_cb = cb;
+    } else {
+      log(LoggerI::WARN, -1, "push: Callback overrun");
     }
     log(LoggerI::WARN, -1, "push: Overrun");
     return 0;
   }
 
   // Extract the first field of the tuple
-  ValueRef first = (*p)[0];
+  ValueRef first = (*p)[_inputFieldNo];
 
   // XXX Slow version for now.  Use a hash table eventually
 
   // Which of the demux keys does it match?
   for (int i = 0;
-       i < noutputs();
+       i < noutputs() - 1;
        i++) {
     ValueRef key = (*_demuxKeys)[i];
 
@@ -76,7 +83,11 @@ int Demux::push(int port, TupleRef p, cbv cb)
         // No can do. Drop the tuple and return 0 if all outputs are
         // blocked
         log(LoggerI::WARN, -1, "push: Matched blocked output");
-        return (_block_flag_count == noutputs());
+
+        // Of course, our input is not blocked, or we wouldn't be here,
+        // yes?
+        assert(_block_flag_count < noutputs());
+        return 1;
       } else {
         // Send it with the appropriate callback
         int result = output(i)->push(p, wrap(this, &Demux::unblock, i));
@@ -87,7 +98,16 @@ int Demux::push(int port, TupleRef p, cbv cb)
           _block_flags[i] = true;
           _block_flag_count++;
 
-          return (_block_flag_count == noutputs());
+          // If I just blocked all of my outputs, push back my input
+          if (_block_flag_count == noutputs()) {
+            assert(_push_cb == cbv_null);
+            _push_cb = cb;
+            log(LoggerI::WARN, -1, "push: Blocking input");
+            return 0;
+          } else {
+            // I can still take more
+            return 1;
+          }
         } else {
           // Not all outputs are blocked so I can keep on truckin'
           return 1;
@@ -96,8 +116,42 @@ int Demux::push(int port, TupleRef p, cbv cb)
     }
   }
 
-  // Didn't find any takers.  Just drop the tuple but keep taking more
-  log(LoggerI::WARN, -1, "push: Couldn't match tuple to output");
-  return 1;
+
+  // The input matched none of the keys.  Send it to the default output
+  // (the last)
+  if (_block_flags[noutputs() - 1]) {
+    // No can do. Drop the tuple and return 0 if all outputs are
+    // blocked
+    log(LoggerI::WARN, -1, "push: Default output blocked");
+    
+    // Of course, our input is not blocked, or we wouldn't be here,
+    // yes?
+    assert(_block_flag_count < noutputs());
+    return 1;
+  } else {
+    // Send it with the appropriate callback
+    int result = output(noutputs() - 1)->push(p, wrap(this, &Demux::unblock, noutputs() - 1));
+    
+    // If it can take no more
+    if (result == 0) {
+      // update the flags
+      _block_flags[noutputs() - 1] = true;
+      _block_flag_count++;
+      
+      // If I just blocked all of my outputs, push back my input
+      if (_block_flag_count == noutputs()) {
+        assert(_push_cb == cbv_null);
+        _push_cb = cb;
+        log(LoggerI::WARN, -1, "push: Blocking input");
+        return 0;
+      } else {
+        // I can still take more
+        return 1;
+      }
+    } else {
+      // Not all outputs are blocked so I can keep on truckin'
+      return 1;
+    }
+  }
 }
 
