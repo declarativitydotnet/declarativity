@@ -25,6 +25,7 @@
 #include "timedPushSource.h"
 #include "timedPullSink.h"
 #include "router.h"
+#include "slot.h"
 /*#include "val_null.h"
 #include "val_str.h"
 #include "val_int32.h"
@@ -45,9 +46,9 @@ void testQueue()
 
     ElementSpecRef timedPushSourceSpec = conf->addElement(new refcounted<TimedPushSource>("source", 1));
     ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
-    ElementSpecRef queueSpec = conf->addElement(New refcounted<Queue>("queue", 5));
+    ElementSpecRef queueSpec = conf->addElement(New refcounted< Queue >("queue", 5));
     ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
-    ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >("sink", 3));
+    ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >("sink", 2));
 
     conf->hookUp(timedPushSourceSpec, 0, sourcePrintS ,0);
     conf->hookUp(sourcePrintS, 0, queueSpec, 0);

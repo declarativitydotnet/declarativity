@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 2; related-file-name: "element.C" -*-
 /*
  * @(#)$Id$
  * 
@@ -37,6 +38,7 @@ GroupBy::GroupBy(str name, str newTableName, std::vector<int> primaryFields, std
   _seconds = (uint) floor(seconds);
   seconds -= _seconds;
   _nseconds = (uint) (seconds * 1000000000);
+  _numAdded = 0;
 
   assert(_aggregateSelections == false || (aggregateSelections == true && aggFields.size() == 1));
 }
@@ -59,7 +61,7 @@ int GroupBy::initialize()
 str GroupBy::getFieldStr(std::vector<int> fields, TupleRef p)
 {
   strbuf fieldStr;
-  for (int k = 0; k < fields.size(); k++) {
+  for (unsigned int k = 0; k < fields.size(); k++) {
     ValuePtr key = (*p)[fields[k]];
     fieldStr << key->toString();
     if (k != (fields.size() - 1)) {
@@ -74,6 +76,8 @@ void GroupBy::recomputeAllAggs()
 
   _aggValues.clear();
 
+  if (_numAdded == 0) { return; }
+
   // go through all tuples we have seen so far and recompute aggregates stored in aggValues
   // next time, enumerate the store itself
   for (_multiIterator = _tuples.begin(); _multiIterator != _tuples.end(); _multiIterator++) {
@@ -84,7 +88,7 @@ void GroupBy::recomputeAllAggs()
     // the initial fields
     TupleRef newAggTuple = Tuple::mk();
     newAggTuple->append(Val_Str::mk(_newTableName));
-    for (int k = 0; k < _groupByFields.size(); k++) {
+    for (unsigned int k = 0; k < _groupByFields.size(); k++) {
       newAggTuple->append((*nextTuple)[_groupByFields[k]]);
     }
 
@@ -93,7 +97,7 @@ void GroupBy::recomputeAllAggs()
       TupleRef currentAgg = _iterator->second;
  
       // check which fields contribute to the "best agg"
-      for (int k = 0; k < _aggFields.size(); k++) {
+      for (unsigned int k = 0; k < _aggFields.size(); k++) {
 	ValueRef origVal = (*currentAgg)[k + 1 + _groupByFields.size()];
 	ValueRef newVal = (*nextTuple)[_aggFields[k]];
 
@@ -116,11 +120,12 @@ void GroupBy::recomputeAllAggs()
       }    
     } else {
       // the first time we see a tuple for this group
-      for (int k = 0; k < _aggFields.size(); k++) {
+      for (unsigned int k = 0; k < _aggFields.size(); k++) {
 	newAggTuple->append((*nextTuple)[_aggFields[k]]);
       }      
       changed = true;
     }
+    newAggTuple->freeze();
     _aggValues.erase(groupByStr);
     _aggValues.insert(std::make_pair(groupByStr, newAggTuple));      
 
@@ -129,6 +134,7 @@ void GroupBy::recomputeAllAggs()
       _bestTuples.insert(std::make_pair(groupByStr, nextTuple));
     } 
   }
+  _numAdded = 0;
 }
 
 
@@ -146,6 +152,7 @@ int GroupBy::push(int port, TupleRef p, cbv cb)
     }
   }
   _tuples.insert(std::make_pair(groupByStr, p)); // store the tuple
+  _numAdded += 1;
   return 1;
 }
 
@@ -180,14 +187,14 @@ void GroupBy::runTimer()
       result = output(0)->push(_bestTuples.find(groupByStr)->second, _wakeupCB);
     }
 
+    _lastSentTuples.erase(groupByStr);
+    _lastSentTuples.insert(std::make_pair(groupByStr, t)); 
+
     if (result == 0) {
       // We have been pushed back.  Don't reschedule wakeup
       log(LoggerI::INFO, 0, "runTimer: sleeping");
       return;
-    } else {
-      _lastSentTuples.erase(groupByStr);
-      _lastSentTuples.insert(std::make_pair(groupByStr, t)); 
-    }
+    } 
   }
 
   // Reschedule me into the future

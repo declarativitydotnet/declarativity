@@ -28,7 +28,9 @@ bin_PROGRAMS 	= 	values \
 			logger \
 			csv \
 			testQueue \
-			agg
+			agg \
+			pingpong 
+
 
 
 values_SOURCES	= values.C
@@ -114,6 +116,12 @@ csv_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
+pingpong_SOURCES	= pingpong.C
+pingpong_LDADD = \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 CLEANFILES = core *.core *~
 EXTRA_DIST = .cvsignore

@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 2; related-file-name: "element.C" -*-
 /*
  * @(#)$Id$
  * 
@@ -99,6 +100,8 @@ private:
   void runTimer();
 
   bool _aggregateSelections;
+
+  int _numAdded;
 };
 
 

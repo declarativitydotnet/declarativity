@@ -39,7 +39,7 @@ void agg()
 
     Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
 
-    ElementSpecRef randomPushSourceSpec = conf->addElement(new refcounted<RandomPushSource>("randSource", 1, 0, 5));
+    ElementSpecRef randomPushSourceSpec = conf->addElement(new refcounted<RandomPushSource>("randSource", 3, 0, 5));
     ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
     
     std::vector<int> primaryFields; primaryFields.push_back(1); primaryFields.push_back(2);
@@ -49,7 +49,7 @@ void agg()
 
     ElementSpecRef groupBySpec = conf->addElement(New refcounted<GroupBy>("groupBy", "testAgg", primaryFields, 
 									  groupByFields, aggFields, aggTypes, 
-									  5, false)); 
+									  1, false)); 
 
     ElementSpecRef queueSpec = conf->addElement(New refcounted<Queue>("queue", 10));
     ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));

@@ -18,7 +18,7 @@
 class Queue : public Element { 
 public:
 
-  Queue(str name, int queueSize);
+  Queue(str name, unsigned int queueSize);
 
   ~Queue();
   
@@ -33,7 +33,7 @@ public:
 
 private:
   cbv _pullCB, _pushCB;
-  int _size;
+  unsigned int _size;
   /** The tuple ref array from which I pull */
   std::queue<TupleRef> _q;
 };

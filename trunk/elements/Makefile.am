@@ -40,7 +40,9 @@ libp2elements_la_SOURCES = \
 	strToSockaddr.C \
 	queue.C \
 	groupby.C \
-	randomPushSource.C
+	randomPushSource.C \
+	ping.C \
+	pong.C 
 
 INCLUDES = @SFS_INC@ -I../p2core
 

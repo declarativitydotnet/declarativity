@@ -14,7 +14,7 @@
 #include "tuple.h"
 #include<iostream>
 
-Queue::Queue(str name, int queueSize)
+Queue::Queue(str name, unsigned int queueSize)
   : Element(name, 1, 1), _pullCB(cbv_null), _pushCB(cbv_null)
 {
   _size = queueSize;
