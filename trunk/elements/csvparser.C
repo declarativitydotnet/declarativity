@@ -17,24 +17,35 @@
 
 #include "csvparser.h"
 
-
+#define TRACE_OFF
 #include "trace.h"
 
+//
+// What are these queue parameters then?  Well...
+//
+//  - push-in will be disabled if there are more than MAX_Q_SIZE
+//    tuples in the output queue. 
+//  - push-in will be reenabled when there are less than MIN_Q_SIZE
+//    tuples in the output queue. 
+//
 const size_t CSVParser::MIN_Q_SIZE = 100;
-  
-CSVParser::CSVParser() : Element(1,1), 
-			 _push_cb(cbv_null), 
-			 _pull_cb(cbv_null),
-                         _re_line("^([^\\r\\n]*)\\r?\\n"),
-			 _re_comm("(^$|#.*)"),
-			 _re_qstr("\\s*\\\"(([^\\n\\\"]*(\\\\(.|\\n))?)+)\\\"\\s*(,|$)"),
-			 _re_tokn("\\s*([^,\\s\"\']+)\\s*(,|$)"),
-			 _acc(""),
-			 _tout(Tuple::mk())
+const size_t CSVParser::MAX_Q_SIZE = 100;
+
+// 
+// Constructor. 
+//  
+CSVParser::CSVParser() 
+  : Element(1,1), 
+    _push_cb(cbv_null), 
+    _push_blocked(false), 
+    _pull_cb(cbv_null),
+    _re_line("^([^\\r\\n]*)\\r?\\n"),
+    _re_comm("(^$|#.*)"),
+    _re_qstr("^\\s*\\\"(([^\\n\\\"]*(\\\\(.|\\n))?)+)\\\"\\s*(,|$)"),
+    _re_tokn("^\\s*([^,\\s\"\']+)\\s*(,|$)"),
+    _acc("")
 {
-
 }  
-
 
 //
 // Pull a tuple from the parser
@@ -46,7 +57,7 @@ TuplePtr CSVParser::pull(int port, cbv cb)
   _pull_cb = cb;
 
   // Do we have a tuple to give back?
-    if (_q.empty()) {
+  if (_q.empty()) {
     p = NULL;
   } else {
     p = _q.back();
@@ -83,14 +94,23 @@ int CSVParser::push(int port, TupleRef t, cbv cb)
     newacc << _acc;
     newacc << tf;
     _acc = newacc;
-    parse();
+    while(try_to_parse_line());
+  }
+  if (_push_blocked) {
+    DBG("Error: push after push has been blocked.");
+    return 0;
+  } else if ( _q.size() > MAX_Q_SIZE ) {
+    _push_blocked = true;
+    return 0;
+  } else {
+    return 1;
   }
 }
 
 //
 // The actual lexer.
 //
-void CSVParser::parse()
+int CSVParser::try_to_parse_line()
 {
   TRC_FN;
   // Do we have a complete line in the buffer?
@@ -102,9 +122,10 @@ void CSVParser::parse()
     _acc = substr(_acc,m[0].len());
     if (_re_comm.match(line)) {
       TRC("Comment: discarding.");
-      return;
+      return 1;
     }
     while( line.len() > 0) {
+      TRC("Remaining line is <" << line << ">");
       { 
 	rxx::matchresult m = _re_qstr.search(line);
 	if (m) {
@@ -126,9 +147,16 @@ void CSVParser::parse()
       TRC("Don't understand string <" << line << ">");
       line = "";
     }
-    TRC("OUTPUT TUPLE: " << t->toString());
+    // Push the tuple we have
     _q.push(t);
+    // Restart pulls if we need to
+    if (_pull_cb) {
+      _pull_cb();
+      _pull_cb = cbv_null;
+    }
+    return 1;
   } else {
-    TRC("_acc doesn't yet make a line <" << _acc << ">");
+    TRC("Don't yet have a whole line <" << _acc << ">");
+    return 0;
   }
 }

@@ -14,7 +14,6 @@
 
 lib_LTLIBRARIES = libp2elements.la
 libp2elements_la_SOURCES = \
-	csvparser.C \
 	slot.C \
 	pushprint.C \
 	pullprint.C \
@@ -26,6 +25,7 @@ libp2elements_la_SOURCES = \
 	pelTransform.C \
 	marshal.C \
 	hexdump.C \
+	csvparser.C \
 	unmarshal.C
 
 INCLUDES = @SFS_INC@ -I../p2core

@@ -42,6 +42,7 @@ public:
 #endif /* TRACE_OFF */
 
 #ifndef DEBUG_OFF
+#include <iostream>
 #define DBG(_x) std::cerr << "db " << __PRETTY_FUNCTION__ << ":\n\t" << _x << "\n"
 #else
 #define DBG(_x) 

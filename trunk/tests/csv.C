@@ -21,33 +21,67 @@
 
 #include "csvparser.h"
 
-const char *input[] = {
-  "# Comment\r\n",
-  "\r\n",
-  "1,2,3\r\n",
-  "\"This is half of a line. ... ",
-  "and this is the other half\"\n",
-  "Another,line",
-  "\r\n",
-  NULL
+struct csv_test {
+  char *in;
+  char *out;
 };
+
+char *null_str = "__null_tuple";
+
+const csv_test tests[] = {
+  { "# Comment\r\n",	    null_str },
+  { "\r\n",		    null_str },
+  { "1,2,3\r\n",	    "<1, 2, 3>" },
+  { " One, ",		    null_str },
+  { " \"Two\" , ",	    null_str },
+  { "Three,Four,Five\r\n",  "<One, Two, Three, Four, Five>"},
+
+  { "\r\n",		    null_str }
+};
+
+#if 0
+{ "This is half of a line. ... "
+    "and this is the other half\"\n"
+    "Another,line"
+    "\r\n"
+    NULL
+    };
+#endif 
 
 int main(int argc, char **argv)
 {
   std::cout << "\nCSV\n";
   
   CSVParser cp;
-
-  for(int i=0; input[i] != NULL; i++) {
+  
+  
+  for(int i=0; i < (sizeof(tests) / sizeof(csv_test)); i++) {
     TupleRef t = Tuple::mk();
-    t->append(New refcounted<TupleField>(str(input[i]))); 
+    t->append(New refcounted<TupleField>(str(tests[i].in))); 
     t->freeze();
-    std::cout << "Tuple: <" << t->toString() << ">\n";
     cp.push(0,t,cbv_null);
+    TuplePtr t_out = cp.pull(0,cbv_null);
+    if (t_out != NULL) {
+      // got a tuple
+      std::cout << "Expected " << tests[i].out 
+		<< ", got " << t_out->toString() << "\n";
+      if (t_out->toString() != tests[i].out) {
+	std::cerr << "** Unexpected tuple out: expected "
+		  << tests[i].out << " and got "
+		  << t_out->toString()
+		  << "\n";
+      }
+    } else {
+      // didn't get a tuple
+      if ( tests[i].out != null_str) {
+	std::cerr << "** Expected tuple " << tests[i].out 
+		  << " but got none instead.\n";
+      } 
+    }
     std::cout.flush();
   }
 
-  std::cout << "\nDone\n";
+  std::cout << "Done\n";
 
   return 0;
 }

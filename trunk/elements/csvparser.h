@@ -35,16 +35,16 @@ public:
   const char *flow_code() const			{ return "x/x"; }
 
 private:
-  void parse();
-
-
-  static const size_t MIN_Q_SIZE;
+  int try_to_parse_line();
+  
+  static const size_t MIN_Q_SIZE;	// See csvparser.C...
+  static const size_t MAX_Q_SIZE;
 
   std::queue<TupleRef> _q;
-  bool _push_blocked;
 
   // Dataflow synchronization callbacks
   cbv	_push_cb;
+  bool  _push_blocked;
   cbv	_pull_cb;
   
   // Regular expressions for matching the input
@@ -55,8 +55,6 @@ private:
 
   // The current string accumulator
   str	_acc;
-  // The current tuple accumulator
-  TupleRef _tout;
 };
 
 
