@@ -242,9 +242,8 @@ if __name__ == "__main__":
     global resultsHash
 
     resultsHash = {}
-    bytes = {"startJoin" : 10, "lookup" : 10, "lookupResults" : 10, "stablize" : 10, "stabilizeRequest" : 10,
-             "stablizeRecord" : 10, "notify" : 10, "notifyPredecessor" : 10, "sendPredecessor" : 10, 
-             "fixFinger" : 10, "fingerLookup" : 10}
+    bytes = {"startJoin" : 136, "lookup" : 132, "lookupResults" : 164, "stabilizeRequest" : 136,
+             "notifyPredecessor" : 108, "sendPredecessor" : 140}
 
     try:
         flags, args = parse_cmdline(sys.argv)
