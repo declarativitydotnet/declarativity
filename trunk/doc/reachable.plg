@@ -9,9 +9,9 @@ materialize(reach,2,infinity,infinity).
 
 /* Rules */
 
-rule r1 reachable@X(X,Y) :- neighbor@X(X,Y).
+rule R1 reachable@X(X,Y) :- neighbor@X(X,Y).
 
-rule r2 reachable@X(X,Y) :- neighbor@Z(Z,X), 
+rule R2 reachable@X(X,Y) :- neighbor@Z(Z,X), 
 	                  reachable@Z(Z,Y),
 	                  f_ne(X,Y). 
 
