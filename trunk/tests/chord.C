@@ -64,8 +64,8 @@
 
 
 static const int SUCCESSORSIZE = 4;
-static const double FINGERTTL = 5.0;
-static const int FINGERSIZE = ID::WORDS * 4;
+static const double FINGERTTL = 1.0;
+static const int FINGERSIZE = ID::WORDS * 32;
 
 
 /**
