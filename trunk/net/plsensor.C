@@ -39,10 +39,11 @@
 // element will attempt to reconnect to the server after waiting for
 // reconnect_delay seconds. 
 //
-PlSensor::PlSensor(u_int16_t sensor_port, 
+PlSensor::PlSensor(str name,
+                   u_int16_t sensor_port, 
 		   str sensor_path, 
-		   uint32_t reconnect_delay )
-  : Element(0,1),
+		   uint32_t reconnect_delay)
+  : Element(name, 0,1),
     port(sensor_port), 
     path(sensor_path), 
     sd(-1),

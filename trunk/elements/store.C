@@ -9,33 +9,52 @@
  * 
  */
 
+#include <utility>
 #include "store.h"
+#include "val_null.h"
 
-Store::Store(unsigned fieldNo)
-  : _fieldNo(fieldNo),
-    _comparator(fieldNo),
-    _table(_comparator)
+Store::Store(str name,
+             unsigned fieldNo)
+  : _name(name),
+    _fieldNo(fieldNo),
+    _table()
 {
 }
 
 
-Store::Insert::Insert(std::multiset< TupleRef > * table)
-  : Element(1, 0),
-    _table(table)
+Store::Insert::Insert(str name,
+                      std::multimap< ValueRef, TupleRef, Store::tupleRefCompare > * table,
+                      unsigned fieldNo)
+  : Element(name, 1, 1),
+    _table(table),
+    _fieldNo(fieldNo)
 {
 }
 
-Store::Lookup::Lookup(std::multiset< TupleRef > * table)
-  : Element(1, 1),
-    _table(table)
+Store::Lookup::Lookup(str name,
+                      std::multimap< ValueRef, TupleRef, Store::tupleRefCompare > * table)
+  : Element(name, 1, 1),
+    _table(table),
+    _pushCallback(cbv_null),
+    _pullCallback(cbv_null)
 {
 }
 
-int Store::Insert::push(int port, TupleRef p, cbv cb)
+TuplePtr Store::Insert::simple_action(TupleRef p)
 {
-  _table->insert(p);
-  warn << "Set has " << _table->size() << " elements\n";
-  return 1;
+  // Fetch the key field
+  ValuePtr key = (*p)[_fieldNo];
+  if (key == NULL) {
+    // No key field? WTF?
+    log(LoggerI::WARN, 0, "push: tuple without key field received");
+    return 0;
+  } else {
+    // Groovy.  Insert it
+    _table->insert(std::make_pair(key, p));
+    
+    log(LoggerI::INFO, 0, "push: accepted tuple");
+    return p;
+  }
 }
 
 int Store::Lookup::push(int port, TupleRef t, cbv cb)
@@ -43,7 +62,46 @@ int Store::Lookup::push(int port, TupleRef t, cbv cb)
   // Is this the right port?
   assert(port == 0);
 
-  return 1;
+  // Do I have a lookup pending?
+  if (_key == NULL) {
+    // No pending lookup.  Take it in
+    assert(_pushCallback == cbv_null);
+
+    // Fetch the first field
+    _key = (*t)[0];
+    if (_key == NULL) {
+      // No first field? WTF?
+      log(LoggerI::WARN, 0, "push: tuple without first field received");
+
+      // Didn't work out.  Ask for more.
+      return 1;
+    } else {
+      // Groovy.  Signal puller that we're ready to give results
+      strbuf logLine("push: accepted lookup of key ");
+      logLine.cat(_key->toString());
+      log(LoggerI::INFO, 0, logLine);
+      
+      // Unblock the puller if one is waiting
+      if (_pullCallback != cbv_null) {
+        log(LoggerI::INFO, 0, "push: wakeup puller");
+        _pullCallback();
+        _pullCallback = cbv_null;
+      }
+
+      // Start the iterator
+      _iterator = _table->lower_bound(_key);
+      
+      // And stop the pusher since we have to wait until the iterator is
+      // flushed
+      _pushCallback = cb;
+      return 0;
+    }
+  } else {
+    // I'm psarry. I can't help ya.
+    assert(_pushCallback != cbv_null);
+    log(LoggerI::WARN, 0, "push: lookup overrun");
+    return 0;
+  }
 }
 
 TuplePtr Store::Lookup::pull(int port, cbv cb) 
@@ -51,5 +109,68 @@ TuplePtr Store::Lookup::pull(int port, cbv cb)
   // Is this the right port?
   assert(port == 0);
 
-  return 0;
+  // Do I have a pending lookup?
+  if (_key == NULL) {
+    // Nope, no pending lookup.  Deal with underruns.
+
+    if (_pullCallback == cbv_null) {
+      // Accept the callback
+      log(LoggerI::INFO, 0, "pull: raincheck");
+      _pullCallback = cb;
+    } else {
+      // I already have a pull callback
+      log(LoggerI::INFO, 0, "pull: callback underrun");
+    }
+    return 0;
+  } else {
+    TuplePtr t;
+    std::multimap< ValueRef, TupleRef >::iterator theEnd = _table->upper_bound(_key);
+
+    // Is the iterator at its end?  This should only happen if a lookup
+    // returned no results at all.
+    if (_iterator == theEnd) {
+      // Empty search. Don't try to dereference the iterator.  Just
+      // set it to the empty tuple, to be tagged later
+      t = Tuple::EMPTY;
+    } else {
+      // This lookup has at least one result.  Fetch a result tuple
+      t = _iterator->second;
+      _iterator++;
+    }
+    TupleRef theT = t;
+
+    // Now, are we done with this search?  XXX For cleanliness, the same
+    // condition as above is repeated.  Hopefully the compiler can
+    // optimize this
+    if (_iterator == theEnd) {
+      strbuf logLine("pull: Finished search on ");
+      logLine.cat(_key->toString());
+      log(LoggerI::INFO, 0, logLine);
+
+      // Make a thawed tuple to be tagged
+      TupleRef newTuple = Tuple::mk();
+      newTuple->append(theT);
+      newTuple->tag(Store::END_OF_SEARCH, Val_Null::mk());
+      newTuple->freeze();
+
+      // Clean the lookup state
+      _key = NULL;
+
+      // Wake up any pusher
+      if (_pushCallback != cbv_null) {
+        log(LoggerI::INFO, 0, "pull: wakeup pusher");
+        _pushCallback();
+        _pushCallback = cbv_null;
+      }
+      return newTuple;
+    } else {
+      // More results to be had.  Just return this
+      return theT;
+    }
+  }
 }
+
+/** The END_OF_SEARCH tag */
+str Store::END_OF_SEARCH = "Store:END_OF_SEARCH";
+
+

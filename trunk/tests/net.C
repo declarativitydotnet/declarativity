@@ -40,8 +40,8 @@ void testUdpTx()
   std::cout << "\nCHECK UDP Transmit\n";
 
   // The udp objects
-  Udp udpOut(9999);
-  Udp udpIn(10000);
+  Udp udpOut("9999", 9999);
+  Udp udpIn("10000", 10000);
 
   // The destination address
   str destinationAddr = "127.0.0.1";
@@ -57,14 +57,19 @@ void testUdpTx()
   // The sending data flow
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(.5));
-  ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
-  ElementSpecRef marshalS = conf->addElement(New refcounted< Marshal >());
-  ElementSpecRef marshalPrintS = conf->addElement(New refcounted< Print >("Marshalled"));
-  ElementSpecRef routeS = conf->addElement(New refcounted< Route >(addressUio));
+  ElementSpecRef sourceS =
+    conf->addElement(New refcounted< TimedPushSource >("source", .5));
+  ElementSpecRef sourcePrintS =
+    conf->addElement(New refcounted< Print >("AfterSource"));
+  ElementSpecRef marshalS =
+    conf->addElement(New refcounted< Marshal >("marshal"));
+  ElementSpecRef marshalPrintS =
+    conf->addElement(New refcounted< Print >("Marshalled"));
+  ElementSpecRef routeS =
+    conf->addElement(New refcounted< Route >("router", addressUio));
   ElementSpecRef routePrintS = conf->addElement(New refcounted< Print >("Routed"));
   ElementSpecRef udpTxS = conf->addElement(udpOut.get_tx());
-  ElementSpecRef slotTxS = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef slotTxS = conf->addElement(New refcounted< Slot >("slotTx"));
 
   conf->hookUp(sourceS, 0, sourcePrintS, 0);
   conf->hookUp(sourcePrintS, 0, marshalS, 0);
@@ -79,12 +84,15 @@ void testUdpTx()
   // The receiving data flow
   ElementSpecRef udpRxS = conf->addElement(udpIn.get_rx());
   ElementSpecRef rxPrintS = conf->addElement(New refcounted< Print >("Received"));
-  ElementSpecRef unrouteS = conf->addElement(New refcounted< PelTransform >("$1 pop"));
+  ElementSpecRef unrouteS =
+    conf->addElement(New refcounted< PelTransform >("unRoute", "$1 pop"));
   ElementSpecRef unroutePrintS = conf->addElement(New refcounted< Print >("DropAddress"));
-  ElementSpecRef unmarshalS = conf->addElement(New refcounted< Unmarshal >());
+  ElementSpecRef unmarshalS =
+    conf->addElement(New refcounted< Unmarshal >("unmarshal"));
   ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
-  ElementSpecRef slotRxS = conf->addElement(New refcounted< Slot >());
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  ElementSpecRef slotRxS = conf->addElement(New refcounted< Slot >("slotRx"));
+  ElementSpecRef sinkS =
+    conf->addElement(New refcounted< TimedPullSink >("sink", 0));
   conf->hookUp(udpRxS, 0, rxPrintS, 0);
   conf->hookUp(rxPrintS, 0, unrouteS, 0);
   conf->hookUp(unrouteS, 0, unroutePrintS, 0);

@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 {
   std::cout << "\nCSV\n";
   
-  CSVParser cp;
+  CSVParser cp("CSV");
   
   
   for(unsigned i=0; i < (sizeof(tests) / sizeof(csv_test)); i++) {

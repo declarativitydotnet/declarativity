@@ -25,7 +25,8 @@
 class Demux : public Element { 
 public:
   
-  Demux(ref< vec< ValueRef > >);
+  Demux(str,
+        ref< vec< ValueRef > >);
 
   int push(int port, TupleRef t, cbv cb);
 

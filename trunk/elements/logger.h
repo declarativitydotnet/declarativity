@@ -23,9 +23,7 @@
 class Logger : public Element,
                public LoggerI { 
 public:
-  
-  // Initialized with the interval between tuple generation events.
-  Logger();
+  Logger(str);
   
   const char *class_name() const		{ return "Logger"; }
   const char *flow_code() const			{ return "/-"; }

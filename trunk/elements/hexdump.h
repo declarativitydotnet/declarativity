@@ -18,7 +18,7 @@
 
 class Hexdump : public Element { 
 public:
-  Hexdump();
+  Hexdump(str);
 
   ~Hexdump();
   

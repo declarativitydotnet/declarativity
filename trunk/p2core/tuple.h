@@ -16,6 +16,8 @@
 #define __TUPLE_H__
 
 #include <vector>
+#include <map>
+#include <utility>
 
 #include <assert.h>
 #include <async.h>
@@ -30,15 +32,38 @@ typedef ptr<Tuple> TuplePtr;
 class Tuple {
 
 private:
-  std::vector<ValueRef> fields;
+  std::vector< ValueRef > fields;
   bool		frozen;
+
+  /** A sorted map of tag names to optional tag values.  Only
+      initialized if there is at least one tag.  Only a single tag of
+      each type is allowed; for multi-value tags, store a vector as the
+      value. */
+  std::map< str, ValueRef > * _tags;
 
 public:
 
-  Tuple() : fields(), frozen(false) {};
+  Tuple() : fields(), frozen(false), _tags(0) {};
+  ~Tuple();
+
   static TupleRef mk() { return New refcounted<Tuple>(); };
 
   void append(ValueRef tf) { assert(!frozen); fields.push_back(tf); };
+
+  /** Append all the fields of the given tuple to the end of this tuple
+  */
+  void append(TupleRef t);
+
+  /** Attach a named tag to the tuple. The tuple must not be frozen. To
+      store a tag with no value use Val_Null::mk() to return the
+      (single, static, constant) NULL P2 value, which is different from
+      plain old NULL. */
+  void tag(str, ValueRef);
+
+  /** Lookup a name tag in the tuple.  If not found, null is returned.
+      If found, a real ValueRef is returned. */
+  ValuePtr tag(str);
+
   void freeze() { frozen = true; };
 
   size_t size() const { return fields.size(); };
@@ -53,6 +78,21 @@ public:
 
   /** Strict comparison, one field at a time. */
   int compareTo(TupleRef) const;
+
+  /** The empty untagged tuple. */
+  static TupleRef EMPTY;
+
+  /** The empty static initializer class */
+  class EmptyInitializer {
+  public:
+    EmptyInitializer() {
+      EMPTY->freeze();
+    }
+  };
+
+private:
+  /** And the empty initializer object */
+  static EmptyInitializer _theEmptyInitializer;
 };
 
 #endif /* __TUPLE_H_ */

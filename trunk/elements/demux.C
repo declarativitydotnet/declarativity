@@ -11,8 +11,9 @@
 
 #include "demux.h"
 
-Demux::Demux(ref< vec< ValueRef > > demuxKeys)
-  : Element(1, demuxKeys->size()),
+Demux::Demux(str name,
+             ref< vec< ValueRef > > demuxKeys)
+  : Element(name, 1, demuxKeys->size()),
     _push_cb(cbv_null),
     _demuxKeys(demuxKeys),
     _block_flags(),

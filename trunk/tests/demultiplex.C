@@ -39,13 +39,15 @@ void testStaticDemux()
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
 
   // The source dataflow
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(1));
+  ElementSpecRef sourceS = conf->addElement(New refcounted<
+                                            TimedPushSource >("source", 1));
   ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
   ElementSpecRef transS =       // If the seconds end in 0, produce a
                                 // tuple.  Prefix the tuple with a 0 or
                                 // 1 based on whether the number of
                                 // seconds was odd or even
-    conf->addElement(New refcounted< PelTransform >("$1 10 % dup $1 2 % ->i32 ifpop ifpoptuple"));
+    conf->addElement(New refcounted< PelTransform >("trans", 
+                                                    "$1 10 % dup $1 2 % ->i32 ifpop ifpoptuple"));
   ElementSpecRef prefixedPrintS = conf->addElement(New refcounted< Print >("Prefixed"));
   conf->hookUp(sourceS, 0, sourcePrintS, 0);
   conf->hookUp(sourcePrintS, 0, transS, 0);
@@ -54,19 +56,20 @@ void testStaticDemux()
 
   // The even destination dataflow
   ElementSpecRef sinkPrintEvenS = conf->addElement(New refcounted< Print >("EvenSink"));
-  ElementSpecRef sinkEvenS = conf->addElement(New refcounted< Discard >());
+  ElementSpecRef sinkEvenS = conf->addElement(New refcounted< Discard >("discardEven"));
   conf->hookUp(sinkPrintEvenS, 0, sinkEvenS, 0);
 
   // The odd destination dataflow
   ElementSpecRef sinkPrintOddS = conf->addElement(New refcounted< Print >("OddSink"));
-  ElementSpecRef sinkOddS = conf->addElement(New refcounted< Discard >());
+  ElementSpecRef sinkOddS = conf->addElement(New refcounted< Discard >("discardOdd"));
   conf->hookUp(sinkPrintOddS, 0, sinkOddS, 0);
 
   // The demultiplexer
   ref< vec< ValueRef > > demuxKeys = New refcounted< vec< ValueRef > >;
   demuxKeys->push_back(New refcounted< Val_Int32 >(0));
   demuxKeys->push_back(New refcounted< Val_Int32 >(1));
-  ElementSpecRef demuxS = conf->addElement(New refcounted< Demux >(demuxKeys));
+  ElementSpecRef demuxS = conf->addElement(New refcounted< Demux
+                                           >("demux", demuxKeys));
   conf->hookUp(prefixedPrintS, 0, demuxS, 0);
   conf->hookUp(demuxS, 0, sinkPrintEvenS, 0);
   conf->hookUp(demuxS, 1, sinkPrintOddS, 0);

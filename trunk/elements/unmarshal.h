@@ -19,7 +19,7 @@
 
 class Unmarshal : public Element { 
 public:
-  Unmarshal();
+  Unmarshal(str);
 
   ~Unmarshal();
   

@@ -12,8 +12,8 @@
 #include "filter.h"
 #include "val_int32.h"
 
-Filter::Filter(unsigned filterNo)
-  : Element(1, 1),
+Filter::Filter(str name, unsigned filterNo)
+  : Element(name, 1, 1),
     _filterNo(filterNo)
 {
 }

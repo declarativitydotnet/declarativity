@@ -38,13 +38,13 @@ int main(int argc, char **argv)
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
   ElementSpecRef pl =
-    conf->addElement(New refcounted<PlSensor>(port, path, 30));
+    conf->addElement(New refcounted<PlSensor>("PLSensor", port, path, 30));
   ElementSpecRef csv =
-    conf->addElement(New refcounted<CSVParser>());
+    conf->addElement(New refcounted<CSVParser>("CSVParser"));
   ElementSpecRef print =
     conf->addElement(New refcounted<Print>("Printer"));
   ElementSpecRef sink =
-    conf->addElement(New refcounted<TimedPullSink>(0));
+    conf->addElement(New refcounted<TimedPullSink>("sink", 0));
   conf->hookUp(pl,0,csv,0);
   conf->hookUp(csv,0,print,0);
   conf->hookUp(print,0, sink, 0);

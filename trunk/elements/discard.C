@@ -12,8 +12,8 @@
 
 #include "discard.h"
 
-Discard::Discard() : 
-  Element(1,0)
+Discard::Discard(str name) :
+  Element(name, 1,0)
 {
 }
 

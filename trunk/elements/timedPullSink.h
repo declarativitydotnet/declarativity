@@ -23,7 +23,8 @@ class TimedPullSink : public Element {
  public:
   
   /** Initialized with the interval between tuple pull events. */
-  TimedPullSink(double seconds);
+  TimedPullSink(str name,
+                double seconds);
 
   const char *class_name() const		{ return "TimedPullSink"; }
   const char *flow_code() const			{ return "-/"; }

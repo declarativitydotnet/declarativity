@@ -12,7 +12,7 @@
 #include "print.h"
 
 Print::Print(str prefix)
-  : Element(1, 1),
+  : Element(prefix, 1, 1),
     _prefix(prefix)
 {
 }

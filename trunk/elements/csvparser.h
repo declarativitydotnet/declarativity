@@ -25,7 +25,7 @@
 class CSVParser : public Element { 
 public:
 
-  CSVParser();
+  CSVParser(str);
 
   int push(int port, TupleRef t, cbv cb);
   TuplePtr pull(int port, cbv);

@@ -95,3 +95,66 @@ int Tuple::compareTo(TupleRef other) const
     return 1;
   }
 }
+
+
+void Tuple::tag(str key,
+                ValueRef value)
+{
+  assert(!frozen);
+
+  // Is the tag map created?
+  if (_tags == 0) {
+    // Create it
+    _tags = New std::map< str, ValueRef >();
+
+    // We'd better still have memory for this
+    assert(_tags != 0);
+  }
+
+  _tags->insert(std::make_pair(key, value));
+}
+
+ValuePtr Tuple::tag(str key)
+{
+  // Do we have a tag map?
+  if (_tags == 0) {
+    // Nope, just say no
+    return NULL;
+  } else {
+    // Find the pair for that map
+    std::map< str, ValueRef >::iterator result = _tags->find(key);
+
+    // Did we get it?
+    if (result == _tags->end()) {
+      // Nope, no such tag
+      return NULL;
+    } else {
+      return result->second;
+    }
+  }
+}
+
+TupleRef Tuple::EMPTY = Tuple::mk();
+
+// Create an empty initializer object so that the EMPTY tuple is fully
+// initialized.
+Tuple::EmptyInitializer _theEmptyInitializer;
+
+void Tuple::append(TupleRef tf)
+{
+  assert(!frozen);
+
+  // Copy fields
+  for (size_t i = 0;
+       i < tf->size();
+       i++) {
+    append((*tf)[i]);
+  }
+};
+
+Tuple::~Tuple()
+{
+  if (_tags) {
+    delete _tags;
+  }
+}

@@ -11,8 +11,8 @@
 
 #include "duplicate.h"
 
-Duplicate::Duplicate(int outputs)
-  : Element(1, outputs),
+Duplicate::Duplicate(str name, int outputs)
+  : Element(name, 1, outputs),
     _push_cb(cbv_null),
     _block_flags(),
     _block_flag_count(0)
@@ -28,6 +28,8 @@ void Duplicate::unblock(int output)
   
   // Unset a blocked output
   if (_block_flags[output]) {
+    log(LoggerI::INFO, -1, "unblock");
+
     _block_flags[output] = false;
     _block_flag_count--;
     assert(_block_flag_count >= 0);
@@ -35,6 +37,7 @@ void Duplicate::unblock(int output)
 
   // If I have a push callback, call it and remove it
   if (_push_cb != cbv_null) {
+    log(LoggerI::INFO, -1, "unblock: propagating aggregate unblock");
     _push_cb();
     _push_cb = cbv_null;
   }
@@ -51,6 +54,8 @@ int Duplicate::push(int port, TupleRef p, cbv cb)
     // Drop it and hold on to the callback if I don't have it already
     if (_push_cb == cbv_null) {
       _push_cb = cb;
+    } else {
+      log(LoggerI::WARN, -1, "push: Callback overrun");
     }
     log(LoggerI::WARN, -1, "push: Overrun");
     return 0;
@@ -77,8 +82,14 @@ int Duplicate::push(int port, TupleRef p, cbv cb)
     }
   }
 
-  // Only take more input if there are still outputs that are not
-  // blocked.
-  return (_block_flag_count < noutputs());
+  // If I just blocked all of my outputs, push back my input
+  if (_block_flag_count == noutputs()) {
+    assert(_push_cb == cbv_null);
+    _push_cb = cb;
+    log(LoggerI::WARN, -1, "push: Blocking input");
+    return 0;
+  } else {
+    return 1;
+  }
 }
 

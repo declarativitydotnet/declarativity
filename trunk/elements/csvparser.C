@@ -35,8 +35,8 @@ const size_t CSVParser::MAX_Q_SIZE = 100;
 // 
 // Constructor. 
 //  
-CSVParser::CSVParser() 
-  : Element(1,1), 
+CSVParser::CSVParser(str name) 
+  : Element(name, 1,1), 
     _push_cb(cbv_null), 
     _push_blocked(false), 
     _pull_cb(cbv_null),

@@ -32,6 +32,12 @@
 #include "filter.h"
 #include "store.h"
 #include "timedPullSink.h"
+#include "joiner.h"
+
+void killJoin()
+{
+  exit(0);
+}
 
 /** Static join test.  Create random tuples, split them into two
     transformation flows, each dropping different tuples, and
@@ -44,15 +50,17 @@ void testSimpleJoin()
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
 
   // The source dataflow.  Produce random tuples.
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(1));
+  ElementSpecRef sourceS =
+    conf->addElement(New refcounted< TimedPushSource >("source", 1));
   ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
-  ElementSpecRef dupS = conf->addElement(New refcounted< Duplicate >(2));
+  ElementSpecRef dupS =
+    conf->addElement(New refcounted< Duplicate >("sourceDup", 2));
   conf->hookUp(sourceS, 0, sourcePrintS, 0);
   conf->hookUp(sourcePrintS, 0, dupS, 0);
 
 
   // The rehash factories
-  Store storeA(2);
+  Store storeA("ATuples", 1);
   //  Store storeB;
 
 
@@ -60,44 +68,75 @@ void testSimpleJoin()
   // The A transformation dataflow.  Drop tuples with seconds ending in
   // 7.  Prepend the table name "A"
   ElementSpecRef transAS =
-    conf->addElement(New refcounted< PelTransform >("\"A\" pop /* This is an A tuple */ \
+    conf->addElement(New refcounted< PelTransform >("sourceTransform",
+                                                    "\"A\" pop /* This is an A tuple */ \
                                                      $1 5 % dup 2 ==i not pop /* This determines keep or drop */ \
                                                      pop /* This pops the join key */ \
 						     $2 1000 /i 3 % pop /* And a non-join key */ "));
-  ElementSpecRef filterAS = conf->addElement(New refcounted< Filter >(1));
-  ElementSpecRef dupElimAS = conf->addElement(New refcounted< DupElim >());
-  ElementSpecRef transAPrintS = conf->addElement(New refcounted< Print >("ATuples"));
-  ElementSpecRef splitAS = conf->addElement(New refcounted< Duplicate >(2));
+  ElementSpecRef filterAS =
+    conf->addElement(New refcounted< Filter >("filterA", 1));
+  ElementSpecRef filterDropAS =
+    conf->addElement(New refcounted< PelTransform >("filterDropA", "$0 pop $2 pop $3 pop"));
+  ElementSpecRef dupElimAS = conf->addElement(New refcounted< DupElim >("DupElimA"));
+  ElementSpecRef transAPrintS =
+    conf->addElement(New refcounted< Print >("ATuples"));
   ElementSpecRef rehashAS = conf->addElement(storeA.mkInsert());
-  ElementSpecRef sinkAS = conf->addElement(New refcounted< Discard >());
+  ElementSpecRef sinkAS =
+    conf->addElement(New refcounted< Discard >("discardA"));
   conf->hookUp(dupS, 0, transAS, 0);
   conf->hookUp(transAS, 0, filterAS, 0);
-  conf->hookUp(filterAS, 0, dupElimAS, 0);
-  conf->hookUp(dupElimAS, 0, splitAS, 0);
-  conf->hookUp(splitAS, 0, transAPrintS, 0);
-  conf->hookUp(transAPrintS, 0, sinkAS, 0);
-  conf->hookUp(splitAS, 1, rehashAS, 0);
+  conf->hookUp(filterAS, 0, filterDropAS, 0);
+  conf->hookUp(filterDropAS, 0, dupElimAS, 0);
+  conf->hookUp(dupElimAS, 0, transAPrintS, 0);
+  conf->hookUp(transAPrintS, 0, rehashAS, 0);
+  conf->hookUp(rehashAS, 0, sinkAS, 0);
+
 
   // The B transformation dataflow.  Drop tuples with seconds ending in
   // 3.  Prepend the table name "B"
   ElementSpecRef transBS =
-    conf->addElement(New refcounted< PelTransform >("\"B\" pop /* This is a B tuple */ \
+    conf->addElement(New refcounted< PelTransform >("transB", 
+                                                    "\"B\" pop /* This is a B tuple */ \
                                                      $1 5 % dup 3 ==i not pop /* Keep or drop? */ \
                                                      pop /* Result */ \
                                                      $2 1000 /i 3 % ->str \"z\" strcat pop /* non-join key */"));
-  ElementSpecRef filterBS = conf->addElement(New refcounted< Filter >(1));
-  ElementSpecRef dupElimBS = conf->addElement(New refcounted< DupElim >());
+  ElementSpecRef filterBS =
+    conf->addElement(New refcounted< Filter >("filterB", 1));
+  ElementSpecRef filterDropBS =
+    conf->addElement(New refcounted< PelTransform >("filterDropB", "$0 pop $2 pop $3 pop"));
+  ElementSpecRef dupElimBS = conf->addElement(New refcounted< DupElim >("dupElimB"));
   ElementSpecRef transBPrintS = conf->addElement(New refcounted< Print >("BTuples"));
+  ElementSpecRef keyMakerBS =
+    conf->addElement(New refcounted< PelTransform >("keyMakerB", "$1 pop"));
   ElementSpecRef lookupBS = conf->addElement(storeA.mkLookup());
-  ElementSpecRef lookupBPrintS = conf->addElement(New refcounted< Print >("BLookupInA"));
-  ElementSpecRef sinkBS = conf->addElement(New refcounted< TimedPullSink >(0));
+  ElementSpecRef lookupBPrintS =
+    conf->addElement(New refcounted< Print >("LookupBInA"));
+  ElementSpecRef splitBS =
+    conf->addElement(New refcounted< Duplicate >("splitB", 2));
   conf->hookUp(dupS, 1, transBS, 0);
   conf->hookUp(transBS, 0, filterBS, 0);
-  conf->hookUp(filterBS, 0, dupElimBS, 0);
+  conf->hookUp(filterBS, 0, filterDropBS, 0);
+  conf->hookUp(filterDropBS, 0, dupElimBS, 0);
   conf->hookUp(dupElimBS, 0, transBPrintS, 0);
-  conf->hookUp(transBPrintS, 0, lookupBS, 0);
+  conf->hookUp(transBPrintS, 0, splitBS, 0);
+  conf->hookUp(splitBS, 0, keyMakerBS, 0);
+  conf->hookUp(keyMakerBS, 0, lookupBS, 0);
   conf->hookUp(lookupBS, 0, lookupBPrintS, 0);
-  conf->hookUp(lookupBPrintS, 0, sinkBS, 0);
+
+
+
+
+
+
+  // The joining dataflow
+  ElementSpecRef joinerBS = conf->addElement(New refcounted< Joiner >("joinerB"));
+  ElementSpecRef joinerBPrintS = conf->addElement(New refcounted< Print >("BJoinWithA"));
+  ElementSpecRef sinkBS =
+    conf->addElement(New refcounted< TimedPullSink >("sinkB", 0));
+  conf->hookUp(lookupBPrintS, 0, joinerBS, 0);
+  conf->hookUp(splitBS, 1, joinerBS, 1);
+  conf->hookUp(joinerBS, 0, joinerBPrintS, 0);
+  conf->hookUp(joinerBPrintS, 0, sinkBS, 0);
 
 
 
@@ -112,6 +151,9 @@ void testSimpleJoin()
 
   // Activate the router
   router->activate();
+
+  // Schedule kill
+  //delaycb(10, 0, wrap(&killJoin));
 
   // Run the router
   amain();

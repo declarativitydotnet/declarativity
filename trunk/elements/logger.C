@@ -28,7 +28,7 @@ uint64_t Logger::seq=0;
 // 
 // Not much of a constructor
 //
-Logger::Logger() : Element(0, 1) { }
+Logger::Logger(str name) : Element(name, 0, 1) { }
 
 void Logger::log( str classname, 
 		  str instancename,

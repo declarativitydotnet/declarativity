@@ -26,7 +26,8 @@ class PlSensor : public Element {
 
 public:
 
-  PlSensor(u_int16_t sensor_port, str sensor_path, uint32_t reconnect_delay);
+  PlSensor(str,
+           u_int16_t sensor_port, str sensor_path, uint32_t reconnect_delay);
 
 private:
 

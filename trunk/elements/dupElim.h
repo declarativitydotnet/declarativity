@@ -19,7 +19,7 @@
 
 class DupElim : public Element { 
 public:
-  DupElim();
+  DupElim(str);
 
   /** Overridden to perform the tranformation. */
   TuplePtr simple_action(TupleRef p);

@@ -36,7 +36,7 @@ public:
   //
   class Rx : public Element {
   public:
-    Rx(const Udp &udp);
+    Rx(str, const Udp &udp);
     const char *class_name() const		{ return "Udp::Rx";};
     const char *processing() const		{ return "/h"; };
     const char *flow_code() const		{ return "/-"; };
@@ -61,7 +61,7 @@ public:
   //
   class Tx : public Element {
   public:
-    Tx(const Udp &udp);
+    Tx(str, const Udp &udp);
     const char *class_name() const		{ return "Udp::Tx";};
     const char *processing() const		{ return "l/"; };
     const char *flow_code() const		{ return "-/"; };
@@ -83,7 +83,7 @@ public:
   //
   // Now the Udp object itself.
   //
-  Udp(u_int16_t port=0, u_int32_t addr = INADDR_ANY);
+  Udp(str, u_int16_t port=0, u_int32_t addr = INADDR_ANY);
 
   // Accessing the individual elements
   ref< Udp::Rx > get_rx() { return rx; };
@@ -92,6 +92,9 @@ public:
 private:
   // Socket
   int sd; 
+
+  // My name
+  str _name;
 
   // Elements 
   ref< Rx > rx;

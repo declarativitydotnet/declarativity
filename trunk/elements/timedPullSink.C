@@ -14,8 +14,9 @@
 #include <async.h>
 #include <math.h>
 
-TimedPullSink::TimedPullSink(double seconds)
-  : Element(1, 0),
+TimedPullSink::TimedPullSink(str name,
+                             double seconds)
+  : Element(name, 1, 0),
     _wakeupCB(wrap(this, &TimedPullSink::wakeup)),
     _runTimerCB(wrap(this, &TimedPullSink::runTimer))
 {

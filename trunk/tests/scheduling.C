@@ -35,12 +35,15 @@ void testFastSourcePush()
   std::cout << "\nCHECK FAST SOURCE PUSH\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0.2));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(1));
-  ElementSpecRef slotS = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef sourceS = conf->addElement(New refcounted<
+                                            TimedPushSource >("source", 0.2));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
+                                          >("sink", 1));
+  ElementSpecRef slotS = conf->addElement(New refcounted< Slot >("slot"));
   ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
   ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
-  ElementSpecRef transS = conf->addElement(New refcounted< PelTransform >("$1 10 % ifpoptuple"));
+  ElementSpecRef transS = conf->addElement(New refcounted< PelTransform
+                                           >("trans", "$1 10 % ifpoptuple"));
 
   conf->hookUp(sourceS, 0, sourcePrintS, 0);
   conf->hookUp(sourcePrintS, 0, transS, 0);
@@ -68,12 +71,15 @@ void testFastSinkPush()
   std::cout << "\nCHECK FAST SINK PUSH\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(1));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(.2));
-  ElementSpecRef slotS = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef sourceS = conf->addElement(New refcounted<
+                                            TimedPushSource >("source", 1));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
+                                          >("sink", .2));
+  ElementSpecRef slotS = conf->addElement(New refcounted< Slot >("slot"));
   ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
   ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
-  ElementSpecRef transS = conf->addElement(New refcounted< PelTransform >("$1 10 % ifpoptuple"));
+  ElementSpecRef transS = conf->addElement(New refcounted< PelTransform
+                                           >("trans", "$1 10 % ifpoptuple"));
 
   conf->hookUp(sourceS, 0, sourcePrintS, 0);
   conf->hookUp(sourcePrintS, 0, transS, 0);
@@ -101,12 +107,15 @@ void testFastSinkPull()
   std::cout << "\nCHECK FAST SINK PULL\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(1));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(.2));
-  ElementSpecRef slotS = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef sourceS = conf->addElement(New refcounted<
+                                            TimedPushSource >("source", 1));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
+                                          >("sink", .2));
+  ElementSpecRef slotS = conf->addElement(New refcounted< Slot >("slot"));
   ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
   ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
-  ElementSpecRef transS = conf->addElement(New refcounted< PelTransform >("$1 10 % ifpoptuple"));
+  ElementSpecRef transS = conf->addElement(New refcounted< PelTransform
+                                           >("trans", "$1 10 % ifpoptuple"));
 
   conf->hookUp(sourceS, 0, sourcePrintS, 0);
   conf->hookUp(sourcePrintS, 0, slotS, 0);
@@ -134,12 +143,15 @@ void testFastSourcePull()
   std::cout << "\nCHECK FAST SOURCE PULL\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(.2));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(1));
-  ElementSpecRef slotS = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef sourceS = conf->addElement(New refcounted<
+                                            TimedPushSource >("source", .2));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
+                                          >("sink", 1));
+  ElementSpecRef slotS = conf->addElement(New refcounted< Slot >("slot"));
   ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
   ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
-  ElementSpecRef transS = conf->addElement(New refcounted< PelTransform >("$1 10 % ifpoptuple"));
+  ElementSpecRef transS = conf->addElement(New refcounted< PelTransform
+                                           >("trans", "$1 10 % ifpoptuple"));
 
   conf->hookUp(sourceS, 0, sourcePrintS, 0);
   conf->hookUp(sourcePrintS, 0, slotS, 0);

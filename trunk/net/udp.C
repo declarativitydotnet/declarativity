@@ -26,8 +26,8 @@
 //
 // Receive element
 //
-Udp::Rx::Rx(const Udp &udp) 
-  : Element(0, 1),
+Udp::Rx::Rx(str name, const Udp &udp) 
+  : Element(name, 0, 1),
     u(&udp),
     push_pending(true) 
 {
@@ -90,8 +90,8 @@ int Udp::Rx::initialize()
 //
 // Transmit element
 //
-Udp::Tx::Tx(const Udp &udp) 
-  : Element(1, 0),
+Udp::Tx::Tx(str name, const Udp &udp) 
+  : Element(name, 1, 0),
     u(&udp),
     pull_pending(true)
 {
@@ -163,9 +163,11 @@ int Udp::Tx::initialize()
 //
 // The main object itself
 //
-Udp::Udp(u_int16_t port, u_int32_t addr) 
-  : rx(New refcounted< Udp::Rx >(*this)),
-    tx(New refcounted< Udp::Tx >(*this))
+Udp::Udp(str name,
+         u_int16_t port, u_int32_t addr) 
+  : _name(name),
+    rx(New refcounted< Udp::Rx >(_name, *this)),
+    tx(New refcounted< Udp::Tx >(_name, *this))
 {
   sd = inetsocket(SOCK_DGRAM, port, addr);
   make_async(sd);

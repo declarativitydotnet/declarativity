@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 
   std::cout << "BASICELEMENTS\n";
 
-  Slot *s = New Slot();
+  Slot *s = New Slot("slot");
   for(int i=0; i<5; i++) {
     TuplePtr tp = s->pull(0,wrap(slot_pull_cb));
     if (tp == NULL) {

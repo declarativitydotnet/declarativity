@@ -23,7 +23,7 @@ class TimedPushSource : public Element {
  public:
   
   /** Initialized with the interval between tuple generation events. */
-  TimedPushSource(double seconds);
+  TimedPushSource(str name, double seconds);
 
   const char *class_name() const		{ return "TimedPushSource"; }
   const char *flow_code() const			{ return "/-"; }

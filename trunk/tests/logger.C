@@ -34,11 +34,11 @@ void testLogger()
 {
   std::cout << "\nCHECK LOGGER\n";
 
-  ref<Logger> log = New refcounted<Logger>();
+  ref<Logger> log = New refcounted<Logger>("theLogger");
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
   ElementSpecRef logSpec = conf->addElement(log);
   ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< Discard >());
+  ElementSpecRef sinkS = conf->addElement(New refcounted< Discard >("sink"));
   conf->hookUp(logSpec, 0, sinkPrintS, 0);
   conf->hookUp(sinkPrintS, 0, sinkS, 0);
 

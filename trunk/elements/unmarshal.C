@@ -13,8 +13,8 @@
 
 #include "val_opaque.h"
 
-Unmarshal::Unmarshal()
-  : Element(1, 1)
+Unmarshal::Unmarshal(str name)
+  : Element(name, 1, 1)
 {
 }
 

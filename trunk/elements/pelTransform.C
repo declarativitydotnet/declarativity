@@ -12,8 +12,8 @@
 #include "pelTransform.h"
 #include "pel_lexer.h"
 
-PelTransform::PelTransform(str pelCode)
-  : Element(1, 1)
+PelTransform::PelTransform(str name, str pelCode)
+  : Element(name, 1, 1)
 {
   _program = Pel_Lexer::compile(pelCode);
 }

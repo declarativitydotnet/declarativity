@@ -13,8 +13,8 @@
 
 #include "val_str.h"
 
-Hexdump::Hexdump()
-  : Element(1, 1)
+Hexdump::Hexdump(str name)
+  : Element(name, 1, 1)
 {
 }
 

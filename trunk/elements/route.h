@@ -20,7 +20,8 @@
 
 class Route : public Element { 
 public:
-  Route(ref< suio > destinationUio);
+  Route(str,
+        ref< suio > destinationUio);
 
   ~Route();
   

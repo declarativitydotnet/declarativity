@@ -11,8 +11,8 @@
 
 #include "slot.h"
 
-Slot::Slot()
-  : Element(1, 1),
+Slot::Slot(str name)
+  : Element(name, 1, 1),
     _t(NULL),
     _push_cb(cbv_null),
     _pull_cb(cbv_null)

@@ -30,7 +30,8 @@ libp2elements_la_SOURCES = \
 	duplicate.C \
 	dupElim.C \
 	filter.C \
-	store.C
+	store.C \
+	joiner.C
 
 INCLUDES = @SFS_INC@ -I../p2core
 

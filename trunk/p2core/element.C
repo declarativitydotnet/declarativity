@@ -70,21 +70,23 @@ int Element::elementCounter = 0;
 # define ELEMENT_CTOR_STATS
 #endif
 
-Element::Element() :
+Element::Element(str instanceName) :
   ELEMENT_CTOR_STATS
   _ninputs(0),
   _noutputs(0),
   _ID(elementCounter++),
+  _name(instanceName),
   _IDstr(strbuf() << _ID)
 {
   nelements_allocated++;
 }
 
-Element::Element(int ninputs, int noutputs) :
+Element::Element(str instanceName, int ninputs, int noutputs) :
   ELEMENT_CTOR_STATS
   _ninputs(0),
   _noutputs(0),
   _ID(elementCounter++),
+  _name(instanceName),
   _IDstr(strbuf() << _ID)
 {
   set_nports(ninputs, noutputs);
@@ -338,7 +340,10 @@ REMOVABLE_INLINE void Element::log(LoggerI::Level severity,
                                    int errnum,
                                    str explanation)
 {
-  log(_IDstr, severity, errnum, explanation);
+  strbuf n(_name);
+  n.cat(":");
+  n.cat(_IDstr);
+  log(n, severity, errnum, explanation);
 }
 
 REMOVABLE_INLINE void Element::log(str instanceName,

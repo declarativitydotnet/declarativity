@@ -11,8 +11,8 @@
 
 #include "dupElim.h"
 
-DupElim::DupElim()
-  : Element(1, 1)
+DupElim::DupElim(str name)
+  : Element(name, 1, 1)
 {
 }
 

@@ -22,7 +22,7 @@
 class Duplicate : public Element { 
 public:
   
-  Duplicate(int);
+  Duplicate(str, int);
 
   int push(int port, TupleRef t, cbv cb);
 

@@ -18,7 +18,7 @@
 class Discard : public Element { 
 public:
   
-  Discard();
+  Discard(str);
 
   const char *class_name() const		{ return "Discard";}
   const char *processing() const		{ return "h/"; }

@@ -84,8 +84,8 @@ public:
 
   class Port;
   
-  Element();
-  Element(int ninputs, int noutputs);
+  Element(str instanceName);
+  Element(str instanceName, int ninputs, int noutputs);
   virtual ~Element();
   static int nelements_allocated;
   static int elementCounter;
@@ -272,6 +272,9 @@ public:
 
   /** For my default logger's sequencing */
   static uint64_t seq;
+
+  /** My instance name */
+  str _name;
 
 protected:
 

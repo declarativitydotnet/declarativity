@@ -69,8 +69,10 @@ void testCheckHookupElements_NonExistentToElement()
   std::cout << "[Testing non-existent TO element in hookup]\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
-  ElementSpecRef sinkS = New refcounted< ElementSpec >(New refcounted< TimedPullSink >(0));
+  ElementSpecRef sourceS =
+    conf->addElement(New refcounted< TimedPushSource >("source", 0));
+  ElementSpecRef sinkS =
+    New refcounted< ElementSpec >(New refcounted< TimedPullSink >("sink", 0));
   conf->hookUp(sourceS, 0, sinkS, 0);
   
   RouterRef router = New refcounted< Router >(conf);
@@ -88,8 +90,10 @@ void testCheckHookupElements_NonExistentFromElement()
   std::cout << "\n[Non existent FROM element]\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = New refcounted< ElementSpec >(New refcounted< TimedPushSource >(0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  ElementSpecRef sourceS = New refcounted< ElementSpec >(New refcounted<
+                                                         TimedPushSource >("source", 0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
+                                          >("sink", 0));
   conf->hookUp(sourceS, 0, sinkS, 0);
   
   RouterRef router = New refcounted< Router >(conf);
@@ -107,8 +111,10 @@ void testCheckHookupElements_NegativeFromPort()
   std::cout << "\n[Negative From Port]\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  ElementSpecRef sourceS = conf->addElement(New refcounted<
+                                            TimedPushSource >("source", 0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
+                                          >("sink", 0));
   conf->hookUp(sourceS, -1, sinkS, 0);
   
   RouterRef router = New refcounted< Router >(conf);
@@ -126,8 +132,10 @@ void testCheckHookupElements_NegativeToPort()
   std::cout << "\n[Negative to port]\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  ElementSpecRef sourceS = conf->addElement(New refcounted<
+                                            TimedPushSource >("source", 0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
+                                          >("sink", 0));
   conf->hookUp(sourceS, 0, sinkS, -1);
   
   RouterRef router = New refcounted< Router >(conf);
@@ -180,8 +188,10 @@ void testCheckHookupRange_IncorrectFromPort()
   std::cout << "\n[Incorrect From Port]\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  ElementSpecRef sourceS =
+    conf->addElement(New refcounted< TimedPushSource >("source", 0));
+  ElementSpecRef sinkS =
+    conf->addElement(New refcounted< TimedPullSink >("sink", 0));
   conf->hookUp(sourceS, 1, sinkS, 0);
   
   RouterRef router = New refcounted< Router >(conf);
@@ -198,8 +208,10 @@ void testCheckHookupRange_IncorrectToPort()
   std::cout << "\n[Incorrect To Port]\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  ElementSpecRef sourceS =
+    conf->addElement(New refcounted< TimedPushSource >("source", 0));
+  ElementSpecRef sinkS =
+    conf->addElement(New refcounted< TimedPullSink >("sink", 0));
   conf->hookUp(sourceS, 0, sinkS, 1);
   
   RouterRef router = New refcounted< Router >(conf);
@@ -216,8 +228,10 @@ void testCheckHookupRange_IncorrectPorts()
   std::cout << "\n[Incorrect Ports (Both)]\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  ElementSpecRef sourceS =
+    conf->addElement(New refcounted< TimedPushSource >("source", 0));
+  ElementSpecRef sinkS =
+    conf->addElement(New refcounted< TimedPullSink >("sink", 0));
   conf->hookUp(sourceS, 1, sinkS, 1);
   
   RouterRef router = New refcounted< Router >(conf);
@@ -235,8 +249,10 @@ void testCheckHookupRange_Portless()
   std::cout << "\n[Portless Hookup]\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  ElementSpecRef sourceS =
+    conf->addElement(New refcounted< TimedPushSource >("source", 0));
+  ElementSpecRef sinkS =
+    conf->addElement(New refcounted< TimedPullSink >("sink", 0));
   conf->hookUp(sinkS, 1, sourceS, 1);
   
   RouterRef router = New refcounted< Router >(conf);
@@ -294,10 +310,12 @@ void testCheckPushPull_PullToPush()
   std::cout << "\n[Pull to Push]\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
-  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >());
-  ElementSpecRef slot2S = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef sourceS = conf->addElement(New refcounted<
+                                            TimedPushSource >("source", 0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
+                                          >("sink", 0));
+  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >("slot1"));
+  ElementSpecRef slot2S = conf->addElement(New refcounted< Slot >("slot2"));
   conf->hookUp(sourceS, 0, slot1S, 0);
   conf->hookUp(slot1S, 0, slot2S, 0);
   conf->hookUp(slot2S, 0, sinkS, 0);
@@ -316,10 +334,12 @@ void testCheckPushPull_PullToPushHop()
   std::cout << "\n[Pull to Push with hop]\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
-  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >());
-  ElementSpecRef slot2S = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef sourceS = conf->addElement(New refcounted<
+                                            TimedPushSource >("source", 0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
+                                          >("sink", 0));
+  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >("slot1"));
+  ElementSpecRef slot2S = conf->addElement(New refcounted< Slot >("slot2"));
   ElementSpecRef printS = conf->addElement(New refcounted< Print >("Printer"));
 
   conf->hookUp(sourceS, 0, slot1S, 0);
@@ -341,10 +361,12 @@ void testCheckPushPull_PullToPushMultiHop()
   std::cout << "\n[Pull to Push multi hop]\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
-  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >());
-  ElementSpecRef slot2S = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef sourceS = conf->addElement(New refcounted<
+                                            TimedPushSource >("source", 0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
+                                          >("sink", 0));
+  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >("slot1"));
+  ElementSpecRef slot2S = conf->addElement(New refcounted< Slot >("slot2"));
   ElementSpecRef printS = conf->addElement(New refcounted< Print >("Printer"));
   ElementSpecRef print2S = conf->addElement(New refcounted< Print >("Printer Two"));
 
@@ -368,9 +390,11 @@ void testCheckPushPull_PullToPullMultiHop()
   std::cout << "\n[Pull to pull multi hop]\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
-  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef sourceS = conf->addElement(New refcounted<
+                                            TimedPushSource >("source", 0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
+                                          >("sink", 0));
+  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >("slot"));
   ElementSpecRef printS = conf->addElement(New refcounted< Print >("Printer"));
   ElementSpecRef print2S = conf->addElement(New refcounted< Print >("Printer Two"));
 
@@ -428,9 +452,11 @@ void testDuplicates_UnusedPort()
   std::cout << "\n[Unused Port]\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
-  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef sourceS =
+    conf->addElement(New refcounted< TimedPushSource >("source", 0));
+  ElementSpecRef sinkS =
+    conf->addElement(New refcounted< TimedPullSink >("sink", 0));
+  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >("slot"));
   ElementSpecRef printS = conf->addElement(New refcounted< Print >("Printer"));
   ElementSpecRef print2S = conf->addElement(New refcounted< Print >("Printer Two"));
 
@@ -453,9 +479,11 @@ void testDuplicates_ReusedPort()
   std::cout << "\n[Reused Port]\n";
  
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
-  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef sourceS =
+    conf->addElement(New refcounted< TimedPushSource >("source", 0));
+  ElementSpecRef sinkS =
+    conf->addElement(New refcounted< TimedPullSink >("sink", 0));
+  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >("slot"));
   ElementSpecRef printS = conf->addElement(New refcounted< Print >("Printer"));
   ElementSpecRef print2S = conf->addElement(New refcounted< Print >("Printer Two"));
 

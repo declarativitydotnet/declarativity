@@ -15,32 +15,60 @@
 #define __STORE_H__
 
 #include "element.h"
-#include <set>
+#include <map>
+#include "val_opaque.h"
 
 class Store {
+
+private:
+  /** My name */
+  str _name;
+
+  /** The primary key of the stored tuples */
+  unsigned _fieldNo;
+
+  /** My tupleref comparison functor type for the set. */
+  struct tupleRefCompare : public std::less< ValueRef >
+  {
+    bool operator()(const ValueRef first,
+                    const ValueRef second) const
+    {
+      return first->compareTo(second) < 0;
+    }
+  };
+  
+  /** My storage set */
+  std::multimap< ValueRef, TupleRef, tupleRefCompare > _table;
+
 
  public:
 
   /** The constructor taking the field number of the primary key */
-  Store(unsigned);
+  Store(str, unsigned);
 
   /** The insert element.  It has only a single push input on which
       tuples to be inserted into the store are sent.  XXX For now all
       stores succeed. */
   class Insert : public Element {
   public:
-    Insert(std::multiset< TupleRef > * table);
+    Insert(str name,
+           std::multimap< ValueRef, TupleRef, Store::tupleRefCompare > * table,
+           unsigned fieldNo);
 
     const char *class_name() const		{ return "Store::Insert";}
-    const char *processing() const		{ return "h/"; }
-    const char *flow_code() const		{ return "-/"; }
+    const char *processing() const		{ return "a/a"; }
+    const char *flow_code() const		{ return "x/x"; }
 
-    /** Overridden since I have no outputs */
-    int push(int port, TupleRef, cbv cb);
+    /** Overridden to perform the insertion operation on passing
+        tuples. */
+    TuplePtr simple_action(TupleRef p);
 
   private:
     /** My parent's table */
-    std::multiset< TupleRef > * _table;
+    std::multimap< ValueRef, TupleRef, Store::tupleRefCompare > * _table;
+
+    /** The field number of the key */
+    unsigned _fieldNo;
   };
   
   
@@ -51,7 +79,8 @@ class Store {
       iterator for output tuples.  */
   class Lookup : public Element {
   public:
-    Lookup(std::multiset< TupleRef > * table);
+    Lookup(str name,
+           std::multimap< ValueRef, TupleRef, tupleRefCompare > * table);
 
     const char *class_name() const		{ return "Store::Lookup";}
     const char *processing() const		{ return "h/l"; }
@@ -65,42 +94,38 @@ class Store {
 
   private:
     /** My parent's table */
-    std::multiset< TupleRef > * _table;
+    std::multimap< ValueRef, TupleRef, Store::tupleRefCompare > * _table;
+    
+    /** My pusher's callback */
+    cbv _pushCallback;
+
+    /** My puller's callback */
+    cbv _pullCallback;
+
+    /** My current lookup key */
+    ValuePtr _key;
+
+    /** My current iterator */
+    std::multimap< ValueRef, TupleRef >::iterator _iterator;
   };
   
   
   /** Create a lookup element */
-  ref< Lookup > mkLookup()			{ return New refcounted< Lookup >(&_table); }
+  ref< Lookup > mkLookup() {
+    strbuf lName(_name);
+    lName.cat(":Lookup");
+    return New refcounted< Lookup >(lName, &_table);
+  }
   
   /** Create an insert element */
-  ref< Insert > mkInsert()			{ return New refcounted< Insert >(&_table); }
-  
-private:
-  /** The primary key of the stored tuples */
-  unsigned _fieldNo;
+  ref< Insert > mkInsert() {
+    strbuf iName(_name);
+    iName.cat(":Insert");
+    return New refcounted< Insert >(iName, &_table, _fieldNo);
+  }
 
-  /** My tupleref comparison functor type for the set. */
-  struct tupleRefCompare : std::less< TupleRef >
-  {
-  private:
-    /** The field number to compare against. */
-    unsigned _fieldNo;
-  public:
-    /** Constructor to set the field number */
-    tupleRefCompare(unsigned fieldNo) : _fieldNo(fieldNo) {}
-    
-    bool operator()(const TupleRef first,
-                    const TupleRef second) const
-    {
-      return (*first)[_fieldNo]->compareTo((*second)[_fieldNo]) < 0;
-    }
-  };
-
-  /** My comparison functor */
-  tupleRefCompare _comparator;
-
-  /** My storage set */
-  std::multiset< TupleRef > _table;
+  /** The END_OF_SEARCH tuple tag. */
+  static str END_OF_SEARCH;
 };
 
 

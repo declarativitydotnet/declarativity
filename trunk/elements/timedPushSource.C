@@ -17,8 +17,9 @@
 #include "val_str.h"
 #include "val_uint64.h"
 
-TimedPushSource::TimedPushSource(double seconds)
-  : Element(0, 1),
+TimedPushSource::TimedPushSource(str name,
+                                 double seconds)
+  : Element(name, 0, 1),
     _wakeupCB(wrap(this, &TimedPushSource::wakeup)),
     _runTimerCB(wrap(this, &TimedPushSource::runTimer))
 {

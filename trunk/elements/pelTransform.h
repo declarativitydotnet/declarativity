@@ -20,7 +20,7 @@
 class PelTransform : public Element { 
 public:
 
-  PelTransform(str pelCode);
+  PelTransform(str, str);
 
   ~PelTransform();
   

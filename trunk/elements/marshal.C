@@ -14,8 +14,8 @@
 #include "val_opaque.h"
 #include "xdr_suio.h"
 
-Marshal::Marshal()
-  : Element(1, 1)
+Marshal::Marshal(str name)
+  : Element(name, 1, 1)
 {
 }
 

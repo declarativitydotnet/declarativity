@@ -12,8 +12,8 @@
 #include "route.h"
 #include "val_opaque.h"
 
-Route::Route(ref<suio> destinationUio)
-  : Element(1, 1),
+Route::Route(str name, ref<suio> destinationUio)
+  : Element(name, 1, 1),
     _destination(Val_Opaque::mk(destinationUio))
 {
   if (destinationUio->resid() == 0) {
@@ -32,14 +32,15 @@ Route::~Route()
 TuplePtr Route::simple_action(TupleRef p)
 {
   // Get first tuple field
-  ValuePtr first = (*p)[0];
-  if (first == 0) {
+  ValuePtr firstP = (*p)[0];
+  if (firstP == 0) {
     // No such field
     log(LoggerI::WARN,
         -1,
         "Input tuple has no first field");
     return 0;
   }
+  ValueRef first = firstP;
 
   // Is it a string?
   if (first->typeCode() != Value::OPAQUE) {
