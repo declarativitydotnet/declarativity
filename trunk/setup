@@ -11,7 +11,7 @@
 # checked sfs out of a CVS repository, or else somehow badly mangled
 # the Makefile.
 
-if test ! -f configure.in; then
+if test ! -f configure.ac; then
 	echo Must run this from source directory >&2
 	exit 1
 fi
@@ -50,7 +50,7 @@ set -x
 chmod +x setup
 aclocal
 autoheader
-automake --add-missing
+automake --add-missing --foreign --copy
 autoconf
 set +x
 

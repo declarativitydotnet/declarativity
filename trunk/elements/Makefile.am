@@ -1,18 +1,13 @@
 
 
-sfslib_LTLIBRARIES = libp2elements.la
-LIBP2ELEMENTS = libp2elements.la
+lib_LTLIBRARIES = libp2elements.la
 libp2elements_la_SOURCES = \
 	slot.C \
 	pushprint.C \
 	pullprint.C \
 	memoryPull.C
 
-sfslib_HEADERS = \
-	slot.h \
-	pushprint.h \
-	pullprint.h \
-	memoryPull.h
+INCLUDES = @SFS_INC@ -I../p2core
 
 CLEANFILES = core *.core *~
 EXTRA_DIST = .cvsignore
