@@ -72,8 +72,7 @@ if __name__ == "__main__":
     for node in range(int(flags["num_nodes"])):
         try:
             os.remove(args[1]+"/chord_node" + str(node) + ".out")
-        except: 
-            print >> log, sys.exc_info()[:2]
+        except: pass 
 
     seeds      = [int(flags["seed"]) + x for x in range(int(flags["num_nodes"]))]
     pids       = []
@@ -94,6 +93,7 @@ if __name__ == "__main__":
                 threading.Timer(flags["session"], (lambda: map(reaper, pids))).start()
 
             while pids:
+                log.flush()
                 p, s = os.wait() 
                 print >> log, "PID DONE: ", p
                 pids.remove(p)

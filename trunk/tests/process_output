@@ -1,0 +1,81 @@
+#!/usr/bin/env python2
+# -*- Mode: python -*-
+#
+# DESCRIPTION: Setup and run n chord nodes.
+#
+#
+import getopt
+import os
+import sys
+import re
+
+def print_usage():
+    print
+    print "Usage: run_node -n <num_nodes> output_dir"
+    print
+
+def parse_cmdline(argv): 
+    shortopts = "n:"
+    flags = {"num_nodes" : 0}
+    opts, args = getopt.getopt(argv[1:], shortopts)
+    for o, v in opts:
+        if   o == "-n": flags["num_nodes"]  = int(v)
+        else:
+            print_usage()
+            exit(3)
+    return flags, args
+
+def parse_node_lookups(out_f):
+    lookups  = {}
+    results = {}
+    matchlookup = re.compile(r"""^.*\[\<lookup,\s*                             # token
+                                 ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
+                                 ([a-f0-9]+),\s*                               # Lookup key 
+                                 ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Destination IP address
+                                 ([0-9]+)\s*                                   # Event ID
+                             \>\]$\n""", re.VERBOSE)
+
+    for line in out_f: 
+        if matchlookup.match(line):
+            lookup = [x for x in matchlookup.split(line) if x]
+            lookups[lookup[-1]] = lookup[:-1]
+
+    matchresults = re.compile(r"""^.*\[\<lookupResults,\s*                     # token
+                                 ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
+                                 ([a-f0-9]+),\s*                               # key 
+                                 ([a-f0-9]+),\s*                               # key 
+                                 ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Destination IP address
+                                 ([0-9]+)\s*                                   # Event ID
+                             \>\]$\n""", re.VERBOSE)
+
+
+    for line in out_f: 
+        if matchresults.match(line):
+            result = [x for x in matchresults.split(line) if x]
+            results[result[-1]] = result[:-1]
+
+    return lookups, results
+
+if __name__ == "__main__":
+    try:
+        flags, args = parse_cmdline(sys.argv)
+    except:
+        print_usage()
+        sys.exit(3)
+    if len(args) < 1:
+        print_usage()        
+        sys.exit(3)
+
+    host_info = {}
+    for root, dirs, files in os.walk(args[0]):
+	for host in dirs:
+           for n in range(flags["num_nodes"]): 
+               nodeid = int(host) + (int(host)*n)
+               fname = os.path.join(root, host, "chord_node%d.out" % (n))
+               if not os.path.exists(fname): break
+               fh = open(fname, "r")
+
+               host_info[nodeid] = parse_node_lookups(fh)
+
+               fh.close()
+
