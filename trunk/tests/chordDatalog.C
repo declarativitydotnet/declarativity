@@ -37,7 +37,7 @@
 
 /*static const int SUCCESSORSIZE = 16;*/
 
-
+bool DEBUG = false;
 
 
 
@@ -105,8 +105,8 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref< RouterConfigGenerator> rou
     str address = "-";
     tuple->append(Val_Str::mk(address));
     tuple->freeze();
-    fingerTable->insert(tuple);
-    std::cout << tuple->toString() << "\n";
+    //fingerTable->insert(tuple);
+    //std::cout << tuple->toString() << "\n";
   }
   
 
@@ -215,7 +215,8 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref< RouterConfigGenerator> rou
  }*/
 
 
-void initiateJoinRequest(ref< Udp> udp,  ref< Router::Configuration > conf, str localAddress)
+void initiateJoinRequest(ref< RouterConfigGenerator > routerConfigGenerator, ref< Router::Configuration > conf, 
+			 str localAddress, double delay)
 {
 
  // My next finger fix tuple
@@ -231,52 +232,58 @@ void initiateJoinRequest(ref< Udp> udp,  ref< Router::Configuration > conf, str 
   // The once pusher
   ElementSpecRef onceS =
     conf->addElement(New refcounted< TimedPullPush >(strbuf("JoinEventPush:") << localAddress,
-                                                     0, // run immediately
+                                                     delay, // run immediately
                                                      1 // run once
                                                      ));
 
   // And a slot from which to pull
-  ElementSpecRef slotS =
+  /*ElementSpecRef slotS =
     conf->addElement(New refcounted< Slot >(strbuf("JoinEventSlot:") << localAddress));
-  
+  */ 
   ElementSpecRef encap = conf->addElement(New refcounted< PelTransform >("Encap",
 									 "$1 pop \
                                                      $0 ->t $1 append pop")); // the rest
   ElementSpecRef marshal = conf->addElement(New refcounted< MarshalField >("MarshalField", 1));
   ElementSpecRef route   = conf->addElement(New refcounted< StrToSockaddr >(strbuf("Route"), 0));
   
-  ElementSpecRef udpTx = conf->addElement(udp->get_tx());
+  
+  //ElementSpecRef udpTx = conf->addElement(udp->get_tx());
 
   // Link everything
   conf->hookUp(sourceS, 0, onceS, 0);
-  conf->hookUp(onceS, 0, slotS, 0);
-  conf->hookUp(slotS, 0, encap, 0);
+  conf->hookUp(onceS, 0, encap, 0);
+  //conf->hookUp(slotS, 0, encap, 0);
   conf->hookUp(encap, 0, marshal, 0);
   conf->hookUp(marshal, 0, route, 0);
-  conf->hookUp(route, 0, udpTx, 0);
+  //conf->hookUp(route, 0, udpTx, 0);
 
+  routerConfigGenerator->registerUDPPushSenders(route);
 }
 
 /** Test lookups. */
 void startChordInDatalog(LoggerI::Level level, ref< OL_Context> ctxt, 
-			 str datalogFile, str localAddress, str landmarkAddress)
+			 str datalogFile, str localAddress, 
+			 str landmarkAddress, int port, double delay)
 {
   // create dataflow for translated chord lookup rules
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ref< RouterConfigGenerator > routerConfigGenerator = New refcounted< RouterConfigGenerator >(ctxt, conf, 
-											       false, false, datalogFile);
+  ref< RouterConfigGenerator > routerConfigGenerator = 
+    New refcounted< RouterConfigGenerator >(ctxt, conf, 
+					    false, DEBUG, 
+					    datalogFile);
 
   routerConfigGenerator->createTables(localAddress);
 
-  ref< Udp > udp = New refcounted< Udp > (localAddress, 10000);
-  ref< Udp > bootstrapUdp = New refcounted< Udp > ("Bootstrap", 9999);
+  ref< Udp > udp = New refcounted< Udp > (localAddress, port);
+  //ref< Udp > bootstrapUdp = New refcounted< Udp > ("Bootstrap", 9999);
+  routerConfigGenerator->clear();
+  initializeBaseTables(ctxt, routerConfigGenerator, localAddress);
+  initiateJoinRequest(routerConfigGenerator, conf, localAddress, delay);
   routerConfigGenerator->configureRouter(udp, localAddress);
 
    
   // populate the finger entries
-  initializeBaseTables(ctxt, routerConfigGenerator, localAddress);
   //sendSuccessorStream(bootstrapUdp, conf, localAddress);
-  initiateJoinRequest(bootstrapUdp, conf, localAddress);
 
   TableRef landmarkNodeTable = routerConfigGenerator->getTableByName(localAddress, "landmarkNode");  
   TupleRef landmark = Tuple::mk();
