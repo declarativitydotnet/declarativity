@@ -100,7 +100,6 @@ HEXDIGIT	[0-9a-fA-F]
 
 '\\.'	{
   // An escaped character literal
-  u_int32_t v;
   switch (yytext[2]) {
   case 'n': add_const_int('\n'); break;
   case 'r': add_const_int('\r'); break;
@@ -172,7 +171,7 @@ null {
 
 [^[:space:]]* {
   // Anything else we lookup in the mnemonic list
-  int i;
+  uint i;
   for (i = 0; i < num_tokens; i++) {
     if (strcmp(yytext, tokens[i].name) == 0) {
       add_opcode(tokens[i].code);
