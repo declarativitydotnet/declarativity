@@ -49,8 +49,11 @@ class Element {
   // Port types.  These are the constituent characters of the
   // "processing" signature of the element. 
   static const char * const AGNOSTIC, * const PUSH, * const PULL;
+
   // Two shorthand processing signatures.  
   static const char * const PUSH_TO_PULL, * const PULL_TO_PUSH;
+
+  // The three processing types
   enum Processing { VAGNOSTIC, VPUSH, VPULL };
 
   class Port;
@@ -80,6 +83,10 @@ class Element {
   // CHARACTERISTICS
   virtual const char *class_name() const = 0;
 
+  /** Return the router that contains me */
+  Router *router() const			{ return _router; }
+
+
   // INPUTS AND OUTPUTS
   int ninputs() const				{ return _ninputs; }
   int noutputs() const				{ return _noutputs; }
@@ -89,6 +96,11 @@ class Element {
   void add_output()				{ set_noutputs(noutputs()+1); }
   bool ports_frozen() const;
 
+  /** Initialize the ports given the port personalities in the arguments
+      list.  These are the same as those personalities set by the
+      element itself, with some agnostic ports instantiated to one of
+      the other personalities according to the element to which it
+      connects */
   void initialize_ports(const int *in_v, const int *out_v);
   int connect_input(int i, Element *f, int port);
   int connect_output(int o, Element *f, int port);
@@ -101,27 +113,64 @@ class Element {
   bool output_is_push(int) const;
   bool output_is_pull(int) const;
   
-  void checked_output_push(int port, TupleRef t, cbv cb) const;
-
   // PROCESSING, FLOW, AND FLAGS
   virtual const char *processing() const;
   virtual const char *flow_code() const;
   virtual const char *flags() const;
   
+  // METHODS USED BY `ROUTER'
+
+  /** Attach me to a router */
+  void attach_router(Router *r)		{ _router = r; }
+  
+
+
+
+
+
+
+
+
+  /** A nested class encapsulating connection stubs into and out of an
+      element. */
   class Port { 
   public:
 
     Port();
+
     Port(Element *, Element *, int);
     
     operator bool() const		{ return _e != 0; }
     bool allowed() const		{ return _port >= 0; }
     bool initialized() const		{ return _port >= -1; }
     
+
     Element *element() const		{ return _e; }
+    
+    /* The port number error values */
+    enum PortErrors { NOT_CONNECTABLE = -2,
+                      NOT_INITIALIZED = -1 };
+
+
+    /** The port number at which I am connected at the destination
+        element.  If I am not a connectable port (i.e., a pull output
+        port or a push input port) then this is NOT_CONNECTABLE.
+        Uninitialized ports have this value set to NOT_INITIALIZED. */
     int port() const			{ return _port; }
     
+
+    // PORT ACTIVITY
+
+    /** If push returns '1', it's OK to send more tuples, and the
+        callback has not been registered.  If '0', it's NOT OK to send
+        more tuples, and the callback will be invoked as soon as it
+        is.  */
     int push(TupleRef p, cbv cb) const;
+
+    /** If pull returns a Tuple, the callback has not been registered
+        and there _might_ be another Tuple available.  If it returns
+        null, there wasn't another Tuple, and the callback will be
+        invoked when there is another one. */
     TuplePtr pull(cbv cb) const;
 
 #if P2_STATS >= 1
@@ -130,8 +179,16 @@ class Element {
 
    private:
     
-    Element *_e;                        // To whom am I connecting?
+    /** With whom am I connecting my owner element? */
+    Element *_e;
+
+    /** The port number at which I am connected at the destination
+        element.  If I am not a connectable port (i.e., a pull output
+        port or a push input port) then this is NOT_CONNECTABLE.
+        Uninitialized ports have this value set to NOT_INITIALIZED. */
     int _port;
+
+    /** My callback */
     cbv _cb;
     
 #if P2_STATS >= 1
@@ -140,28 +197,40 @@ class Element {
 #if P2_STATS >= 2
     Element *_owner;			// Whose input or output are we?
 #endif
-    
   };
+
+
+
+
+
+
+
+
+
+
 
  private:
 
-  enum { INLINE_PORTS = 4 };
+  /** My router */
+  Router *_router;
 
   /** My input ports */
   Port *_inputs;
 
   /** My output ports */
   Port *_outputs;
-  Port _ports0[INLINE_PORTS];
 
+  /** How many inputs do I have? */
   int _ninputs;
+
+  /** How many outputs do I have? */
   int _noutputs;
 
   Element(const Element &);
   Element &operator=(const Element &);
   
+  /** Set my ports before I'm initialized */
   void set_nports(int, int);
-  
 };
 
 
