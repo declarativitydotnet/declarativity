@@ -142,6 +142,7 @@ int GroupBy::push(int port, TupleRef p, cbv cb)
   // compute new agg. Check if new tuple has changed the 
   // agg value. If so, add it to pending
   computeAgg(groupByStr, p);
+  return 1;
 }
 
 void GroupBy::dumpTuples(str str)
