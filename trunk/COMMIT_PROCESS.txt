@@ -1,106 +1,218 @@
-INTERIM PROCESS
+CODE COMMITMENT BEST KNOWN METHOD
+
+We will use branches to allow developers to try out and test their own
+changes in a separate repository with intermediate backed up
+checkpoints.  The main CVS trunk WILL ALWAYS BE GUARANTEED TO COMPILE.
+
+CVS basically keeps track of diffs from version to version.  When one
+wishes to bring changes from one branch to another (or to the trunk),
+one must specify first and last version from the source trunk.
 
 
-Starting on a new task from the trunk of the code:
 
-- Check out the latest, trunk of the code base
+Trunk ---------Y--------------W-------------T
+               ||\            \  /   / /   /
+               || ----\  /-----\-   / /   / 
+               ||      -/---\/--\--/ /   /   
+               ||/------    /\   \  /   /
+Branch --------X------------Z-----U----V
 
-  - If you have a working directory
-  
-    # cd <working directory>
+
+Here's what the general scenario will look like.  A hypothetical
+researcher (let's call him Petros M.) takes on a task to implement a new
+widget, working on his personal branch, currently at version X, which is
+identical in content to the main trunk (at version Y).  Our researcher
+finishes his implementation of the new widget within his own personal
+branch, at which time his personal branch is at version Z.  However, in
+the meantime, a hypothetical evil developer (let's call him Mothy R.)
+has made changes into the main trunk, bringing the main trunk to version
+W.
+
+First, Petros M. must merge the changes from the main trunk to his
+branch, to fix any conflicts or other issues that may have arisen.  To
+do that, Petros M. must merge into his personal branch changes that
+occurred between versions Y and W.  With those changes applied (but no
+other changes except for CVS conflict resolutions), Petros M.  commits a
+new version of his branch, named U.
+
+Now Petros M. checks that everything compiles, tests run successfully on
+his own machine and on grouchy, making any appropriate bug fixes he
+might discover. He commits all those additional fixes, bringing his
+personal branch to version V.
+
+Now Petros M. must bring the trunk up to date with his branch.  He does
+that by switching to the trunk (which had better still be in version W),
+applying his changes from X to Z and then the bug fixes from from U to
+V. At this point, Petros M. is ready to commit a new trunk version T,
+which should be synchronized with his branch version now.
+
+If when Petros M. is ready to bring in the changes from his branch into
+the trunk, the trunk has moved along from version W, then Petros M. must
+repeat the earlier process, or ask people to stop making changes to the
+trunk (at times of high contention).  Another option is for Petros to
+only keep working on his branch, bringing occasionally changes from the
+main trunk in, but only commit back to the main trunk once in a while.
+Your mileage may vary.
+
+
+
+
+
+
+How do I create a branch for myself?
+
+  - The branch name is <your name>Working.  For example, Petros M's branch name
+    is PetrosWorking
+
+  - Update the working CVS directory to the latest version of the
+    repository
+    # cd <working dir>
     # cvs update -dPA
-
-    The "A" option ensures you are working on the main trunk
-    The d option ensures you do a recursive update
-    The P option truncates empty directories
-
-  - If you do not have a working directory
-
-    # cd <base directory>
-    # cvs -d <your username>@blsshsvr.berkeley.intel-research.net:/projects/cvs/ checkout phi/phi
-
-- Create a branch for yourself
-
-  - The branch name is <your name>-<4 digit year>-<2 digit month>-<2
-    digit day>-<counter>.  For example, the first branch Petros creates
-    on 2/1/2005 will be named Petros-2005-02-01-1
 
   - Create the branch
 
     # cvs tag -b <branch name>
 
-  - Update your working directory to be in that branch
 
-    # cvs update -dP -r <branch name>
+How do I update my working directory to contain my branch?
+
+    # cd <working dir>
+    # cvs update -dPr <branch name>
+
+How do I update my working directory to contain the main trunk?
+
+    # cd <working dir>
+    # cvs update -dPA
+
+How do I "name" a version of my branch or of the trunk?
+
+  - In CVS, we name snapshots of the repository using tags.
+
+    # cd <working dir>
+
+  - Then update the working dir to be in whatever snapshot you want to
+    name (see above)
+
+  - Then tag it with name <tag name>
+
+    # cvs tag <tag name>
+
+How do I move a tag from an older snapshot to a different one?
+
+    # cvs tag -F <tag name>
+
+How do I merge changes from another branch/trunk to my current one?
+
+    # cvs update -dP -kk -j <first changed version> -j <last changed version>
+
+Useful nomenclature
+
+  - Some names for tags make sense.  Here's what I have found useful.
+    Feel free to pick other names, as long as they don't conflict with
+    somebody else's. In the example above, Petros M. would use the following
+    branch names
+     - X: PetrosWorking-branch-synced
+     - Y: PetrosWorking-trunk-synced
+     - Z: PetrosWorking-branch-new
+     - W: PetrosWorking-trunk-new
+     - U: PetrosWorking-branch-merged
+     - V: PetrosWorking-branch-merged-end
+     
+  - At the end of the process, Petros M. would move the
+    PetrosWorking-trunk-synced tag to version T, and the
+    PetrosWorking-branch-synced tag to version V.
 
 
-- Work on your branch.
+Full example
 
-  - To look at the latest version of this branch (the "tip") on another
-    machine, remember to use "-r <branch name>" when cvs updating.
 
-  - You can commit your intermediate changes to your branch as usual
-    with "cvs commit".  Make sure, however, that you are committing into
-    your branch, i.e., you run commit within a working directory that
-    you have previously set to your branch through cvs update -j
-    <branch>.
+  - We're starting with the branch and trunk being synced, as X and Y
+    above.
 
-- Test your branch
+  - Petros sets his working dir to his branch
 
-  - When you're reasonably certain what you were doing is done, go to
-    grouchy, check out your branch (as described above), configure it to
-    work with the local sfs build (see README file).  If it compiles,
-    then you're ready to start the merger process
+    # cvs update -dPr PetrosWorking
 
-- Merge your branch into a trunk working copy
+  - Petros does some work
 
-  - After everything in your branch is committed, change your working
-    copy to the trunk
+    # doDeDoDeDum
+    # gcc blah
+    # cvs commit
+    # sed flooflu
+    # cvs remove floop.C
+    # cvs add flong.h
+
+  - Petros is ready to merge with the trunk
+
+    # cvs tag -F PetrosWorking-branch-new
+    
+  - Petros tags the current state of the trunk
+
+    # cvs update -dPA
+    # cvs tag -F PetrosWorking-trunk-new
+
+  - Petros now merges changes from the trunk to his branch
+
+    # cvs update -dPr PetrosWorking
+    # cvs update -dP -kk -j PetrosWorking-trunk-synced -j PetrosWorking-trunk-new
+
+  - Petros resolves any CVS conflicts, but does not fix code
+
+    # vi conflicted.C
+
+  - Petros tags the merged but potentially buggy version of his trunk
+
+    # cvs tag -F PetrosWorking-branch-merged
+
+  - Petros compiles, checks tests, fixes code
+
+    # tests/runme
+    # <pull hair>
+    # vi conflicted.C
+    # cvs commit
+    # gcc
+    # cvs commit
+
+  - Now that everything works, including on grouchy, Petros tags this as
+    the end of the merger fixes
+
+    # cvs tag -f PetrosWorking-branch-merged-end
+
+  - Now is the time to bring all these changes to the main trunk
 
     # cvs update -dPA
 
-  - Now merge your branch into your trunk working copy
+  - Is the main trunk still in version PetrosWorking-trunk-new?
 
-    # cvs update -kk -dP -j <branch>
+    # cvs diff -kk -r PetrosWorking-trunk-new
 
-    The -kk option says "do not substitute CVS variables"
+    - If there are diffs, then new things have happened.  Petros must
+      bring the additional trunk changes from PetrosWorking-trunk-new to
+      the current snapshot back to his branch as above.
 
-  - Some files might claim to have a conflict
+  - Since the trunk is where it should be, Petros can apply the changes
+    made in his branch to the trunk
 
-    In the log, there will be a message to the effect
-       "rcsmerge: warning: conflicts during merge"
-    under the conflicted file.  Go into your conflicted files and find
-    all conflicts.  They are enclosed in ">>>>", "====", "<<<<<" marks,
-    as usual with CVS.
+    # cvs update -dP -kk -j PetrosWorking-branch-synced -j PetrosWorking-branch-new
+    # cvs update -dP -kk -j PetrosWorking-branch-merged -j PetrosWorking-branch-merged-end
+    
+  - Check that things work fine (as they should since they did work on
+    the branch)
 
+    # make
+    # tests/...
 
-    You can also find those files by doing a normal cvs update.  In the
-    log, files with conflicts will have a "C" in front of them. For
-    example:
-	C README
+  - He commits a new trunk version and send email to the list
 
+    # cvs commit
+    # mail p2devel@yahoogroups.com 
 
-    Once you have resolved conflicts, test again that your changes,
-    merged with the trunk, compile on grouchy, and that the tests
-    run. Then you can commit your fixes to the main trunk as usual
-    (with cvs commit).
+  - He resets the synced tags
 
-
-    DO NOT UNDER ANY CIRCUMSTANCES COMMIT FILES WITH CONFLICTS IN THEM!!!!
-    Before you commit, do one last "cvs update." Make sure no files has
-    a "C" before it in the log.
-
-
-- At this point, MAKE A NEW BRANCH WITH EVERY NEW TASK YOU UNDERTAKE,
-  that is, do not attempt to continue changes in a branch that you have
-  already merged in.  The reason for this is it is not clear how cleanly
-  to back-port changes that have occurred in the main trunk INTO your branch
-  before you continue work with it.  The CVS machinery and documentation
-  avoids discussing that issue.  The problem is that if you merge
-  changes from the trunk into your branch.
+    # cvs tag -F PetrosWorking-trunk-synced
+    # cvs update -dPr PetrosWorking
+    # cvs tag -F PetrosWorking-branch-synced
 
 
-
-
-
-- Tentative structure
+  - Repeat ad infinitum
+    
