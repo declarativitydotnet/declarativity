@@ -421,7 +421,6 @@ RouterConfigGenerator::generateAllSelectionElements(OL_Context::Rule* currentRul
   for (unsigned int j = 0; j < currentRule->terms.size(); j++) {
     OL_Context::Term nextTerm = currentRule->terms.at(j);
     str termName = nextTerm.fn->name;
-    PelFunctionMap::iterator _iterator = pelFunctions.find(termName);
     if (isSelection(nextTerm)) {
       std::cout << "Selection term " << termName << " " << currentRule->ruleID << "\n";
       lastSelectionSpecRef = generateSelectionElements(currentRule, nextTerm, 
