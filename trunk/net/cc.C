@@ -148,8 +148,11 @@ int CC::Tx::push(int port, TupleRef tp, cbv cb)
 
     OTupleIndex::iterator iter = ot_map_.find(seq);
     if (iter != ot_map_.end()) { 
+      long delay = cc_->now_ms() - (iter->second)->tt_ms_;
+
       timecb_remove((iter->second)->tcb_);
-      add_rtt_meas((cc_->now_ms() - (iter->second)->tt_ms_));
+      if (delay > 0) add_rtt_meas(delay);
+
       ot_map_.erase(iter);
       if (current_window() < max_window() && _input_cb != cbv_null) {
         (*_input_cb)();
@@ -215,7 +218,7 @@ void CC::Tx::timeout_cb(otuple_ref otr)
 {
   SeqNum seq = Val_UInt64::cast((*otr->tp_)[cc_->get_seq_field()]);	// Sequence number
   strbuf sb;
-  sb << "Packet seq(" << seq << ") timeout after " << (cc_->now_ms() - otr->tt_ms_) << "ms";
+  sb << "TIMEOUT: Packet seq(" << seq << ") timeout after " << (cc_->now_ms() - otr->tt_ms_) << "ms";
   log(LoggerI::WARN, 0, sb); 
 
   if (otr->wnd_ == true) {
@@ -239,6 +242,7 @@ void CC::Tx::timeout_cb(otuple_ref otr)
 REMOVABLE_INLINE void CC::Tx::add_rtt_meas(long m)
 {
   long orig_m = m;
+  assert(m > 0);
 
   if (sa_ == -1) {
     // After the first measurement, set the timeout to four
@@ -275,12 +279,13 @@ REMOVABLE_INLINE void CC::Tx::add_rtt_meas(long m)
 
   if (cwnd_ > max_wnd_)
     cwnd_ = max_wnd_;
+
+  // std::cout << "CWND(" << cwnd_ << ") MAX_WND(" << max_wnd_ << ") SSTHRESH(" << ssthresh_ << ")\n";
 }
 
 
-REMOVABLE_INLINE void CC::Tx::timeout() {
-  assert (rto_ > 0.);
-
+REMOVABLE_INLINE void CC::Tx::timeout() 
+{
   rto_ <<= 1;
 
   // Don't backoff past 1 second.
@@ -292,7 +297,7 @@ REMOVABLE_INLINE void CC::Tx::timeout() {
 
   strbuf msg;
   msg << "CONGESTION ADJUST: RTO = " << long(rto_) << " | SSTHRESH = " << long(ssthresh_) \
-      << " | CWND = " << long(cwnd_) << "";
+      << " | CWND = " << long(cwnd_);
   log(LoggerI::WARN, 0, msg); 
 }
 
