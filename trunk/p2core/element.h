@@ -44,6 +44,9 @@
 #include "tuple.h"
 
 class Router;
+typedef ref< Router > RouterRef;
+typedef ptr< Router > RouterPtr;
+
 
 class Element { 
  public:
@@ -111,7 +114,7 @@ class Element {
   int ID() const				{ return _ID; }
 
   /** Return the router that contains me */
-  Router *router() const			{ return _router; }
+  RouterPtr router() const			{ return _router; }
 
 
   // INPUTS AND OUTPUTS
@@ -128,9 +131,6 @@ class Element {
   int connect_output(int o, Element *f, int port);
   virtual int initialize();
   
-  const Port &input(int) const;
-  const Port &output(int) const;
-
   // PROCESSING, FLOW, AND FLAGS
   virtual const char *processing() const;
   virtual const char *flow_code() const;
@@ -139,7 +139,7 @@ class Element {
   // METHODS USED BY `ROUTER'
   
   /** Attach me to a router */
-  void attach_router(Router *r)		{ _router = r; }
+  void attach_router(RouterRef r)		{ _router = r; }
 
 
 
@@ -219,8 +219,15 @@ class Element {
 #endif
   };
 
+  typedef ptr< Port > PortPtr;
+  typedef ref< Port > PortRef;
+  typedef vec< PortPtr > PortVec;
 
 
+
+
+  const PortRef input(int) const;
+  const PortRef output(int) const;
 
 
 
@@ -232,13 +239,13 @@ class Element {
  private:
 
   /** My router */
-  Router *_router;
+  RouterPtr _router;
 
   /** My input ports */
-  Port *_inputs;
+  PortVec _inputs;
 
   /** My output ports */
-  Port *_outputs;
+  PortVec _outputs;
 
   /** How many inputs do I have? */
   int _ninputs;
