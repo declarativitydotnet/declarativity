@@ -15,6 +15,16 @@
 #include "tuple.h"
 #include <assert.h>
 
+
+//
+// XDR function for null values.  Not a lot to say really.
+//
+static bool_t xdr_null_t(XDR *x, void *p)
+{
+  // Nothing to marshal..
+  return true;
+}
+
 //
 // Tuple field information: how big?  What's it called?  How do you
 // marshal it? 
@@ -26,6 +36,7 @@ struct tinfo {
   xdrproc_t xdrproc;
 };
 static const tinfo tinfos[] = {
+  { 0, "null", xdr_null_t },
   { sizeof(int32_t), "int32_t", xdr_int32_t },
   { sizeof(u_int32_t), "u_int32_t", xdr_u_int32_t },
   { sizeof(int64_t), "int64_t", xdr_int64_t },
@@ -55,7 +66,7 @@ void TupleField::xdr_marshal( XDR *x )
   xdr_u_int32_t( x, &t );
   if ( t >= INVALID ) {
     fatal << "TupleField::xdr_marshal: bad type code of " << t << "\n";
-  } else if ( t == S ) {
+  } else if ( t == STRING ) {
     rpc_str<RPC_INFINITY> rs(s);
     rpc_traverse(x,rs);
   } else {
@@ -72,7 +83,7 @@ TupleField *TupleField::xdr_unmarshal( XDR *x )
   xdr_u_int32_t( x, &(tf->t) );
   if ( tf->t >= INVALID ) {
     throw TypeError();
-  } else if ( tf->t == S ) {
+  } else if ( tf->t == STRING ) {
     // Note that this looks like a yucky double copy, but at least the
     // string data itself isn't copied (since rpc_str <: str). 
     rpc_str<RPC_INFINITY> rs;

@@ -54,10 +54,10 @@ static double time_fn(cbv cb)
   return elapsed;
 }
 
-const int FIELD_TST_SZ=1000000;
-const int TUPLE_TST_SZ=1000000;
+const int FIELD_TST_SZ=500000;
+const int TUPLE_TST_SZ=500000;
 const int MARSHAL_CHUNK_SZ=100;
-const int MARSHAL_NUM_UIOS=10000;
+const int MARSHAL_NUM_UIOS=5000;
 
 
 static void create_lots_of_fields() {
@@ -68,16 +68,17 @@ static void create_lots_of_fields() {
 }
 
 /* What hex dump of the next tuple in XDR should look like... 
- 00000004 // Tuple has 4 fields
- 00000000 // Type code = 0 (int32)
+ 00000004 // Tuple has 5 fields
+ 00000000 // Null (type code = 0)
+ 00000001 // Type code = 1 (int32)
  ffffffe0 // -32
- 00000003 // Type code = 3 (uint64)
+ 00000004 // Type code = 4 (uint64)
  00000000 // 0x0000000000000040 (64)
  00000040 // 
- 00000005 // Type code = 5 (double)
+ 00000005 // Type code = 6 (double)
  3f894855 
  da272863
- 00000004 // Type code = 4 (string)
+ 00000004 // Type code = 5 (string)
  00000010 // Length = 0x10 (16)
  54686973 // String...
  20697320 //
@@ -86,14 +87,14 @@ static void create_lots_of_fields() {
 */
 static Tuple *create_tuple_1() {
   Tuple *t = New Tuple();
-  
+  t->append(*New TupleField());
   t->append(*New TupleField((int32_t)-32));
   t->append(*New TupleField((uint64_t)64));
   t->append(*New TupleField(0.012345));
   t->append(*New TupleField("This is a string"));
   t->finalize();
   return t;
-} 
+}
 
 static Tuple *ta[TUPLE_TST_SZ];
 
@@ -134,12 +135,12 @@ int main(int argc, char **argv)
   std::cout << "sizeof(TupleField)=" << sizeof(TupleField) << "\n";
   std::cout << "sizeof(size_t)=" << sizeof(size_t) << "\n";
 
-  TEST_TYPING(int32_t, I32, i32, -123456);
-  TEST_TYPING(uint32_t,UI32, ui32, 123456);
-  TEST_TYPING(int64_t, I64, i64, -123456);
-  TEST_TYPING(uint64_t, UI64, ui64, 123456);
-  TEST_TYPING(double, D, d, 1.23456);
-  TEST_TYPING(str, S, s, "Hello world");
+  TEST_TYPING(int32_t, INT32, i32, -123456);
+  TEST_TYPING(uint32_t,UINT32, ui32, 123456);
+  TEST_TYPING(int64_t, INT64, i64, -123456);
+  TEST_TYPING(uint64_t, UINT64, ui64, 123456);
+  TEST_TYPING(double, DOUBLE, d, 1.23456);
+  TEST_TYPING(str, STRING, s, "Hello world");
 
   std::cout << "Creating " << FIELD_TST_SZ << " fields: ";
   time_fn(wrap(create_lots_of_fields));

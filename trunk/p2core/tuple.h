@@ -29,7 +29,7 @@ class TupleField {
 
 public:  
   // Concrete types
-  enum Type { I32=0, UI32, I64, UI64, S, D, INVALID };
+  enum Type { NULLV=0, INT32, UINT32, INT64, UINT64, STRING, DOUBLE, INVALID };
   
   struct TypeError {} ;
 
@@ -44,25 +44,24 @@ protected:
   };
   str		s;
 
-  TupleField() : t(INVALID) {};
-
 public:
-  
-  TupleField( int32_t i ) : t(I32), i32(i) {};
-  TupleField( uint32_t i ) : t(UI32), ui32(i) {};
-  TupleField( int64_t i ) : t(I64), i64(i) {};
-  TupleField( uint64_t i ) : t(UI64), ui64(i) {};
-  TupleField( str st ) : t(S), s(st) {};
-  TupleField( double f ) : t(D), d(f) {};
+
+  TupleField() : t(NULLV) {};
+  TupleField( int32_t i ) : t(INT32), i32(i) {};
+  TupleField( uint32_t i ) : t(UINT32), ui32(i) {};
+  TupleField( int64_t i ) : t(INT64), i64(i) {};
+  TupleField( uint64_t i ) : t(UINT64), ui64(i) {};
+  TupleField( str st ) : t(STRING), s(st) {};
+  TupleField( double f ) : t(DOUBLE), d(f) {};
   
   Type get_type() const { return t; };
 
-  CAST(int32_t,  i32, I32);
-  CAST(u_int32_t,ui32,UI32);
-  CAST(int64_t,  i64, I64);
-  CAST(u_int64_t,ui64,UI64);
-  CAST(str,      s,   S);
-  CAST(double,   d,   D );
+  CAST(int32_t,  i32, INT32);
+  CAST(u_int32_t,ui32,UINT32);
+  CAST(int64_t,  i64, INT64);
+  CAST(u_int64_t,ui64,UINT64);
+  CAST(str,      s,   STRING);
+  CAST(double,   d,   DOUBLE );
   
   void xdr_marshal( XDR *x );
   static TupleField *xdr_unmarshal( XDR *x );
@@ -78,7 +77,7 @@ private:
 
 public:
 
-  Tuple() : fields() {};
+  Tuple() : fields(), finalized(false) {};
 
   void append(TupleField &tf) { assert(!finalized); fields.push_back(tf); };
   void finalize() { finalized = true; };
