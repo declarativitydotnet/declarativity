@@ -54,8 +54,12 @@ public:
   virtual str toString() const =0;
   str toTypeString() { return strbuf() << typeName() << ":" << toString();};
 
-  // Strict equality
-  virtual bool equals( ValueRef other ) const = 0;
+  /** Strict equality */
+  REMOVABLE_INLINE bool equals( ValueRef other ) const { return compareTo(other) == 0; }
+
+  /** Am I less than, equal or greater than the other value?  -1 means
+      less, 0 means equal, +1 means greater. */
+  virtual int compareTo( ValueRef other ) const = 0;
 
   // Thrown when an invalid type conversion is attempted. 
   struct TypeError { 

@@ -40,7 +40,7 @@ public:
     return New refcounted<Val_Opaque>(uio); };
 
   // Strict comparison
-  bool equals(ValueRef) const;
+  int compareTo(ValueRef) const;
 
   // Casting
   static ref<suio> cast(ValueRef v);

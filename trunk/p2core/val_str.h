@@ -39,7 +39,7 @@ public:
   static ValueRef mk(str s) { return New refcounted<Val_Str>(s); };
 
   // Strict comparison
-  bool equals(ValueRef) const;
+  int compareTo(ValueRef) const;
 
   // Casting
   static str cast(ValueRef v);

@@ -66,3 +66,32 @@ str Tuple::toString() const
   return str(sb);
 }
 
+
+/** Compare this tuple to another.  If we have different numbers of
+    fields, compare the field counts.  If we have the same numbers of
+    fields, compare individual fields from first onwards. */
+int Tuple::compareTo(TupleRef other) const
+{
+  if (size() == other->size()) {
+    for (size_t i = 0;
+         i < size();
+         i++) {
+      ValueRef mine = fields[i];
+      ValueRef its = (*other)[i];
+      int result = mine->compareTo(its);
+      if (result != 0) {
+        // Found a field position for which we are different.  Return
+        // the difference.
+        return result;
+      }
+    }
+
+    // All fields are equal.
+    return 0;
+
+  } else if (size() < other->size()) {
+    return -1;
+  } else {
+    return 1;
+  }
+}

@@ -38,7 +38,7 @@ public:
   static ValueRef mk(double d) { return New refcounted<Val_Double>(d); };
 
   // Strict comparison
-  bool equals(ValueRef) const;
+  int compareTo(ValueRef) const;
 
   // Casting
   static double cast(ValueRef v);

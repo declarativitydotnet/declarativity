@@ -46,12 +46,19 @@ ref<suio> Val_Opaque::cast(ValueRef v)
   }
 }
   
-bool Val_Opaque::equals(ValueRef other) const
+int Val_Opaque::compareTo(ValueRef other) const
 {
   if (other->typeCode() != Value::OPAQUE) {
-    return false;
+    if (Value::OPAQUE < other->typeCode()) {
+      return -1;
+    } else if (Value::OPAQUE > other->typeCode()) {
+      return 1;
+    }
   }
-  return cast(other) == u;
+  warn << "Comparing opaques. Not implemented yet!!!\n";
+  exit(-1);
+  //  return cmp(u, cast(other));
+  return -1;
 }
 
 /* 

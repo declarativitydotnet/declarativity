@@ -250,7 +250,11 @@ int Router::check_push_and_pull()
         switch (toElement->input(toPort)->personality()) {
         case Element::PUSH:
           // If to port is push, we're not Ok
-          std::cerr << "Hookup from PULL to PUSH found\n";
+          std::cerr << "Hookup from PULL["
+                    << fromElement->toString()
+                    << "] to PUSH["
+                    << toElement->toString()
+                    << "] found\n";
           errors++;
           break;
           

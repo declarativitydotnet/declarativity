@@ -27,7 +27,10 @@ libp2elements_la_SOURCES = \
 	unmarshal.C \
 	route.C \
 	demux.C \
-	duplicate.C
+	duplicate.C \
+	dupElim.C \
+	filter.C \
+	store.C
 
 INCLUDES = @SFS_INC@ -I../p2core
 

@@ -61,12 +61,22 @@ uint32_t Val_UInt32::cast(ValueRef v) {
   }
 }
 
-bool Val_UInt32::equals(ValueRef other) const
+int Val_UInt32::compareTo(ValueRef other) const
 {
   if (other->typeCode() != Value::UINT32) {
-    return false;
+    if (Value::UINT32 < other->typeCode()) {
+      return -1;
+    } else if (Value::UINT32 > other->typeCode()) {
+      return 1;
+    }
   }
-  return cast(other) == i;
+  if (i < cast(other)) {
+    return -1;
+  } else if (i > cast(other)) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 /*

@@ -50,6 +50,9 @@ public:
   static TupleRef xdr_unmarshal( XDR *uio );
 
   str toString() const;
+
+  /** Strict comparison, one field at a time. */
+  int compareTo(TupleRef) const;
 };
 
 #endif /* __TUPLE_H_ */

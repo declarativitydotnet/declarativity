@@ -35,7 +35,7 @@ public:
   static ValueRef mk() { return singleton; };
 
   // Strict comparison
-  bool equals(ValueRef) const;
+  int compareTo(ValueRef) const;
 
   // Casting: more for completeness than anything else...
   static void cast(ValueRef v);

@@ -28,6 +28,10 @@
 #include "discard.h"
 #include "pelTransform.h"
 #include "duplicate.h"
+#include "dupElim.h"
+#include "filter.h"
+#include "store.h"
+#include "timedPullSink.h"
 
 /** Static join test.  Create random tuples, split them into two
     transformation flows, each dropping different tuples, and
@@ -47,27 +51,56 @@ void testSimpleJoin()
   conf->hookUp(sourcePrintS, 0, dupS, 0);
 
 
+  // The rehash factories
+  Store storeA(2);
+  //  Store storeB;
+
+
+
   // The A transformation dataflow.  Drop tuples with seconds ending in
   // 7.  Prepend the table name "A"
   ElementSpecRef transAS =
-    conf->addElement(New refcounted< PelTransform >("\"A\" pop \
-                                                     $1 10 % 7 ==i not ifpoptuple"));
+    conf->addElement(New refcounted< PelTransform >("\"A\" pop /* This is an A tuple */ \
+                                                     $1 5 % dup 2 ==i not pop /* This determines keep or drop */ \
+                                                     pop /* This pops the join key */ \
+						     $2 1000 /i 3 % pop /* And a non-join key */ "));
+  ElementSpecRef filterAS = conf->addElement(New refcounted< Filter >(1));
+  ElementSpecRef dupElimAS = conf->addElement(New refcounted< DupElim >());
   ElementSpecRef transAPrintS = conf->addElement(New refcounted< Print >("ATuples"));
+  ElementSpecRef splitAS = conf->addElement(New refcounted< Duplicate >(2));
+  ElementSpecRef rehashAS = conf->addElement(storeA.mkInsert());
   ElementSpecRef sinkAS = conf->addElement(New refcounted< Discard >());
   conf->hookUp(dupS, 0, transAS, 0);
-  conf->hookUp(transAS, 0, transAPrintS, 0);
+  conf->hookUp(transAS, 0, filterAS, 0);
+  conf->hookUp(filterAS, 0, dupElimAS, 0);
+  conf->hookUp(dupElimAS, 0, splitAS, 0);
+  conf->hookUp(splitAS, 0, transAPrintS, 0);
   conf->hookUp(transAPrintS, 0, sinkAS, 0);
+  conf->hookUp(splitAS, 1, rehashAS, 0);
 
   // The B transformation dataflow.  Drop tuples with seconds ending in
   // 3.  Prepend the table name "B"
   ElementSpecRef transBS =
-    conf->addElement(New refcounted< PelTransform >("\"B\" pop \
-                                                     $1 10 % 3 ==i not ifpoptuple"));
+    conf->addElement(New refcounted< PelTransform >("\"B\" pop /* This is a B tuple */ \
+                                                     $1 5 % dup 3 ==i not pop /* Keep or drop? */ \
+                                                     pop /* Result */ \
+                                                     $2 1000 /i 3 % ->str \"z\" strcat pop /* non-join key */"));
+  ElementSpecRef filterBS = conf->addElement(New refcounted< Filter >(1));
+  ElementSpecRef dupElimBS = conf->addElement(New refcounted< DupElim >());
   ElementSpecRef transBPrintS = conf->addElement(New refcounted< Print >("BTuples"));
-  ElementSpecRef sinkBS = conf->addElement(New refcounted< Discard >());
+  ElementSpecRef lookupBS = conf->addElement(storeA.mkLookup());
+  ElementSpecRef lookupBPrintS = conf->addElement(New refcounted< Print >("BLookupInA"));
+  ElementSpecRef sinkBS = conf->addElement(New refcounted< TimedPullSink >(0));
   conf->hookUp(dupS, 1, transBS, 0);
-  conf->hookUp(transBS, 0, transBPrintS, 0);
-  conf->hookUp(transBPrintS, 0, sinkBS, 0);
+  conf->hookUp(transBS, 0, filterBS, 0);
+  conf->hookUp(filterBS, 0, dupElimBS, 0);
+  conf->hookUp(dupElimBS, 0, transBPrintS, 0);
+  conf->hookUp(transBPrintS, 0, lookupBS, 0);
+  conf->hookUp(lookupBS, 0, lookupBPrintS, 0);
+  conf->hookUp(lookupBPrintS, 0, sinkBS, 0);
+
+
+
 
   RouterRef router = New refcounted< Router >(conf);
   if (router->initialize(router) == 0) {

@@ -75,12 +75,22 @@ double Val_Double::cast(ValueRef v)
   }
 }
 
-bool Val_Double::equals(ValueRef other) const
+int Val_Double::compareTo(ValueRef other) const
 {
   if (other->typeCode() != Value::DOUBLE) {
-    return false;
+    if (Value::DOUBLE < other->typeCode()) {
+      return -1;
+    } else if (Value::DOUBLE > other->typeCode()) {
+      return 1;
+    }
   }
-  return cast(other) == d;
+  if (d < cast(other)) {
+    return -1;
+  } else if (d > cast(other)) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 /*

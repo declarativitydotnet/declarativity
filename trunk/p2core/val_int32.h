@@ -38,10 +38,13 @@ public:
   static ValueRef mk(int32_t i) { return New refcounted<Val_Int32>(i); };
 
   // Strict comparison
-  bool equals(ValueRef) const;
+  int compareTo(ValueRef) const;
 
   // Casting
   static int32_t cast(ValueRef v);
+
+  // The ZERO
+  static ValueRef ZERO;
   
 private:
   int32_t i;

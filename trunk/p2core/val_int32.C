@@ -61,13 +61,27 @@ int32_t Val_Int32::cast(ValueRef v) {
   }
 }
 
-bool Val_Int32::equals(ValueRef other) const
+int Val_Int32::compareTo(ValueRef other) const
 {
   if (other->typeCode() != Value::INT32) {
-    return false;
+    if (Value::INT32 < other->typeCode()) {
+      return -1;
+    } else if (Value::INT32 > other->typeCode()) {
+      return 1;
+    }
   }
-  return cast(other) == i;
+  if (i < cast(other)) {
+    return -1;
+  } else if (i > cast(other)) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
+
+/** Define the ZERO constant */
+ValueRef Val_Int32::ZERO = Val_Int32::mk(0);
+
 
 /*
  * End of file

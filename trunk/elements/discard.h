@@ -26,8 +26,6 @@ public:
 
   /** Overridden since I have no outputs */
   int push(int port, TupleRef, cbv cb);
-
-private:
 };
 
 

@@ -61,12 +61,22 @@ uint64_t Val_UInt64::cast(ValueRef v) {
   }
 }
 
-bool Val_UInt64::equals(ValueRef other) const
+int Val_UInt64::compareTo(ValueRef other) const
 {
   if (other->typeCode() != Value::UINT64) {
-    return false;
+    if (Value::UINT64 < other->typeCode()) {
+      return -1;
+    } else if (Value::UINT64 > other->typeCode()) {
+      return 1;
+    }
   }
-  return cast(other) == i;
+  if (i < cast(other)) {
+    return -1;
+  } else if (i > cast(other)) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 /*

@@ -34,12 +34,12 @@ ValueRef Val_Str::xdr_unmarshal( XDR *x )
   return mk(rs);
 }
   
-bool Val_Str::equals(ValueRef other) const
+int Val_Str::compareTo(ValueRef other) const
 {
   if (other->typeCode() != Value::STR) {
     return false;
   }
-  return cast(other) == s;
+  return s.cmp(cast(other));
 }
 
 //
