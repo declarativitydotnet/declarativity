@@ -67,11 +67,14 @@
 static const int SUCCESSORSIZE = 4;
 static const int FINGERSIZE = ID::WORDS * 32;
 static const int QUEUE_LENGTH = 1000;
+//#define __P2__WITH_CHURN__
 #ifdef __P2__WITH_CHURN__
+//#warning WITH CHURN
 static const int FINGERTTL = 4;
 static const int SUCCEXPIRATION = FINGERTTL * 2;
 static const int FINGEREXPIRATION = FINGERTTL * 2;
 #else
+//#warning WITHOUT CHURN
 static const int FINGERTTL = 10;
 #endif
 
