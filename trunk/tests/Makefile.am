@@ -35,8 +35,8 @@ bin_PROGRAMS 	= 	values \
 			testQueue \
 			agg \
 			pingpong \
-			reachDatalog \
-			chordDatalog
+			reachDatalog 
+
 
 
 values_SOURCES	= values.C
@@ -101,6 +101,7 @@ reachDatalog_LDADD = \
 
 runChord_SOURCES = runChord.C
 runChord_LDADD = \
+	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
@@ -108,6 +109,7 @@ runChord_LDADD = \
 
 runManyChords_SOURCES = runManyChords.C
 runManyChords_LDADD = \
+	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
@@ -120,13 +122,13 @@ simple_lookup_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
-chordDatalog_SOURCES = chordDatalog.C
-chordDatalog_LDADD = \
-	$(top_builddir)/overlog/.libs/liboverlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	@SFS_LIBASYNC@ @SFS_LIBARPC@
+#chordDatalog_SOURCES = chordDatalog.C
+#chordDatalog_LDADD = \
+#	$(top_builddir)/overlog/.libs/liboverlog.a \
+#	$(top_builddir)/net/.libs/libp2net.a \
+#	$(top_builddir)/elements/.libs/libp2elements.a \
+#	$(top_builddir)/p2core/.libs/libp2core.a \
+#	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 IDs_SOURCES = IDs.C
 IDs_LDADD = \

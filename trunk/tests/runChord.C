@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 2; related-file-name: "" -*-
 /*
  * @(#)$Id$
  *
@@ -58,12 +59,17 @@
 #include "queue.h"
 #include "noNull.h"
 #include "noNullField.h"
+#include "ol_lexer.h"
+#include "ol_context.h"
+#include "routerConfigGenerator.h"
+#include "udp.h"
+
+
+extern int ol_parser_debug;
 
 
 #include "chord.C"
-
-
-
+#include "chordDatalog.C"
 
 
 
@@ -99,23 +105,46 @@ void testNetworked(LoggerI::Level level,
 }
 
 
+void testNetworkedDatalog(LoggerI::Level level,
+			  str myAddress,
+			  int port,    // extracted from myAddress for convenience
+			  str landmarkAddress, str filename)
+{
+  ref< OL_Context > ctxt = New refcounted< OL_Context>();
+  std::ifstream istr(filename);
+  ctxt->parse_stream(&istr);
+   
+  startChordInDatalog(level, ctxt, filename, myAddress, landmarkAddress);
+}
+
+
 
 
 
 int main(int argc, char **argv)
 {
-  if (argc < 4) {
-    fatal << "Usage:\n\t runChord <loggingLevel> <seed> <myipaddr:port> [<landmark_ipaddr:port>]\n";
+  if (argc < 5) {
+    fatal << "Usage:\n\t runChord <datalogFile> <loggingLevel> <seed> <myipaddr:port> [<landmark_ipaddr:port>]\n";
   }
 
-  str levelName(argv[1]);
+  str datalogFile(argv[1]);
+  bool runDatalogVersion = false;
+  if (datalogFile == "0") {
+      std::cout << "Manual translated chord\n";
+  } else {
+      runDatalogVersion = true;
+      std::cout << "Running from translated file " << datalogFile << "\n";
+  }
+
+  str levelName(argv[2]);
   LoggerI::Level level = LoggerI::levelFromName[levelName];
 
-  int seed = atoi(argv[2]);
+  int seed = atoi(argv[3]);
   srand(seed);
-  str myAddress(argv[3]);
+  str myAddress(argv[4]);
   
-  const char * theString = argv[3];
+  const char * theString = argv[4];
+  std::cout << theString << "\n";
   char * theColon = strchr(theString, ':');
   if (theColon == NULL) {
     // Couldn't find the correct format
@@ -125,310 +154,28 @@ int main(int argc, char **argv)
   str thePort(theColon + 1);
   int port = atoi(thePort);
 
-  if (argc > 4) {
-    str landmark(argv[4]);
+  if (runDatalogVersion) {
+    if (argc > 5) {
+      str landmark(argv[5]);
+      testNetworkedDatalog(level,
+			   myAddress,
+			   port,
+			   landmark, 
+			   datalogFile);
+    } else {
+      testNetworkedDatalog(level,
+			   myAddress,
+			   port,
+			   str("0"),
+			   datalogFile);
+    }
+    return 0;
+  }
+
+  if (argc > 5) {
+    str landmark(argv[5]);
     testNetworked(level,
                   myAddress,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                   port,
                   landmark);
   } else {
