@@ -60,7 +60,7 @@ double Val_Double::cast(ValueRef v)
   case Value::NULLV:
     return 0;
   case Value::STR:
-    return atof(Val_Str::cast(v).cstr());
+    return strtod(Val_Str::cast(v).cstr(),NULL);
   default:
     throw Value::TypeError(v->typeCode(), Value::DOUBLE );
   }

@@ -49,7 +49,7 @@ int64_t Val_Int64::cast(ValueRef v) {
   case Value::NULLV:
     return 0;
   case Value::STR:
-    return atoll(Val_Str::cast(v).cstr());
+    return strtoll(Val_Str::cast(v).cstr(),NULL,0);
   default:
     throw Value::TypeError(v->typeCode(), Value::INT64 );
   }

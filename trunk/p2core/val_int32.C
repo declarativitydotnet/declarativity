@@ -49,7 +49,7 @@ int32_t Val_Int32::cast(ValueRef v) {
   case Value::NULLV:
     return 0;
   case Value::STR:
-    return atoi(Val_Str::cast(v).cstr());
+    return strtol(Val_Str::cast(v).cstr(), NULL, 0);
   default:
     throw Value::TypeError(v->typeCode(), Value::INT32 );
   }

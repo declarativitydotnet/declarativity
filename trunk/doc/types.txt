@@ -1,16 +1,64 @@
+The P2 Concrete Type System
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The basic value in P2 is a discriminated union of concrete types:
+1. Types
+~~~~~~~~
 
-   null
-   int32
-   uint32
-   int64
-   uint64
-   double
-   string
+Here are the types currently supported:
 
-What are the rules for calculations on these types?  
+int32, uint32, int64, uint64, double: Mostly equivalent to their C++
+types.  Expect all of these types to be convertable between themsevles
+according to C++ type conversion conventions. 
 
+null: Unique value.  Casting to a numeric type (above) yields 0.
+Nothing can be cast to null.  
+
+string: A character string.  Doesn't handle embedded nulls at
+present.  Strings can be cast to numeric types, which will result in
+calls to the standard C++ library parsing functions.  Any type can be
+cast to a string; this is equivalent to call its toString() function. 
+
+Here are the basic type conversions possible.  "num." refers to any
+numeric type. 
+
+   From:|
+To:   \	| null	| num.	| str	| opaque|
+-------------------------------------------------------------
+null	| Y        N       Y       N 
+num.	| Y        Y       Y       N
+str	| Y        Y       Y       N
+opaque	| N        N       Y       Y
+
+
+2. Representation
+~~~~~~~~~~~~~~~~~
+For each P2 value type (Val_<type>), there is a corresponding "rep"
+type, i.e. C++ type which represents it.  Every P2 Value class has a
+"factory" static method, "mk()", which creates a new value from an
+instance of the rep class. For instance:
+
+  ValueRef v = Val_Double::mk( 1.2 );
+
+This is the approved method of creating Value's (actually,
+ValueRefs).  Avoid calling constructors explicitly, as the latter is
+(a) more wordy, and (b) makes memoization harder. 
+
+To convert a P2 value back into a rep, use the static "cast" method of
+some subclass.  This will perform type conversion as allowed above, or
+throw a "Value::TypeError" exception.  E.g.
+
+  double d = Val_Double::cast(v);
+  uint32_t i = Val_UInt32::cast(v);
+
+In addition, every Value supports a "toString()" method. 
+v.toString() is exactly equivalent to Val_Str::cast(v). 
+
+Each Value subtype has a unique "typecode", given as an enumeration in
+Value.h.  This is assumed unique across the network.  There is also a
+string representation of each typecode. 
+
+PEL Calculation Rules:
+~~~~~~~~~~~~~~~~~~~~~~
 Let's start with integers:
 
 We simplify by saying that all integer calculations are performed in
@@ -34,4 +82,3 @@ int32 -> uint64:  sign extend; cast.
 uint32 -> int64:  cast (zero fill)
 uint32 -> uint64: cast (zero fill)
 int64 -> uint64:  cast
-

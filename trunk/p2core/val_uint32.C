@@ -39,7 +39,7 @@ uint32_t Val_UInt32::cast(ValueRef v) {
   case Value::UINT32:
     return (static_cast<Val_UInt32 *>(vp))->i;
   case Value::INT32:
-    return (uint32_t)(Val_UInt32::cast(v));
+    return (uint32_t)(Val_Int32::cast(v));
   case Value::INT64:
     return (uint32_t)(Val_Int64::cast(v));
   case Value::UINT64:
@@ -49,7 +49,7 @@ uint32_t Val_UInt32::cast(ValueRef v) {
   case Value::NULLV:
     return 0;
   case Value::STR:
-    return strtoul(Val_Str::cast(v).cstr(), (char **)NULL, 10);
+    return strtoul(Val_Str::cast(v).cstr(), (char **)NULL, 0);
   default:
     throw Value::TypeError(v->typeCode(), Value::UINT32 );
   }

@@ -34,8 +34,7 @@ public:
   static ValueRef mk() { return singleton; };
 
   // Casting: more for completeness than anything else...
-  static void cast(ValueRef v) { 
-    throw Value::TypeError(v->typeCode(), Value::NULLV); };
+  static void cast(ValueRef v);
   
 private:
   static ValueRef singleton;

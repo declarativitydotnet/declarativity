@@ -14,6 +14,7 @@
 
 #include "val_opaque.h"
 
+#include "val_str.h"
 #include <arpc.h>
 
 //
@@ -33,6 +34,13 @@ ref<suio> Val_Opaque::cast(ValueRef v)
   switch (v->typeCode()) {
   case Value::OPAQUE:
     return (static_cast<Val_Opaque *>(vp))->u;
+  case Value::STR:
+    {
+      ref<suio> u = New refcounted<suio>();
+      str s = Val_Str::cast(v);
+      u->copy(s.cstr(),s.len());
+      return u;
+    }
   default:
     throw Value::TypeError(v->typeCode(), Value::OPAQUE );
   }

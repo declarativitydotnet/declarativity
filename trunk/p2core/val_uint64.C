@@ -49,7 +49,7 @@ uint64_t Val_UInt64::cast(ValueRef v) {
   case Value::NULLV:
     return 0;
   case Value::STR:
-    return strtoull(Val_Str::cast(v).cstr(),(char **)NULL, 10);
+    return strtoull(Val_Str::cast(v).cstr(),(char **)NULL, 0);
   default:
     throw Value::TypeError(v->typeCode(), Value::UINT64 );
   }

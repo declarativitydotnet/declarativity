@@ -27,3 +27,14 @@ void Val_Null::xdr_marshal( XDR *x )
 {
   return;
 }
+
+//
+// Casting: more for completeness than anything else...
+// 
+void Val_Null::cast(ValueRef v) { 
+  if (v->typeCode() != Value::NULLV) {
+    throw Value::TypeError(v->typeCode(), Value::NULLV);
+  };
+}
+
+
