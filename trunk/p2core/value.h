@@ -42,7 +42,8 @@ public:
     UINT32,
     INT64,
     UINT64,
-    DOUBLE
+    DOUBLE,
+    OPAQUE
   };
   
   // The type name

@@ -171,7 +171,7 @@ null {
 
 [^[:space:]]* {
   // Anything else we lookup in the mnemonic list
-  uint i;
+  unsigned int i;
   for (i = 0; i < num_tokens; i++) {
     if (strcmp(yytext, tokens[i].name) == 0) {
       add_opcode(tokens[i].code);
