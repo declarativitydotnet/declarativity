@@ -24,6 +24,8 @@
 #include "pushprint.h"
 #include "slot.h"
 
+#if 0
+// Unused
 static double time_fn(cbv cb) 
 {
   timespec before_ts;
@@ -44,6 +46,7 @@ static double time_fn(cbv cb)
   std::cout << after_ts.tv_sec << " secs " << (after_ts.tv_nsec/1000) << " usecs)\n";
   return elapsed;
 }
+#endif
 
 static TupleRef create_tuple_1() {
   TupleRef t = New refcounted<Tuple>;
