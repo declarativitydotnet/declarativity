@@ -373,8 +373,8 @@ int Router::check_hookup_range()
 }
 
 
-Router::Router(ref<Configuration> c,
-               ref<Master> m)
+Router::Router(ConfigurationRef c,
+               MasterRef m)
   : _master(m),
     _elements(New refcounted< vec< ElementRef > >()),
     _state(ROUTER_NEW),
@@ -445,12 +445,22 @@ int Router::initialize()
        i < _configuration->elements->size();
        i++) {
     ElementRef theElement = (*_configuration->elements)[i]->element();
-    _elements->push_back(theElement);
+    add_element(theElement);
+
+    // Initialize the element
+    theElement->initialize();
   }
   _configuration = 0;
   _state = ROUTER_LIVE;
   
   return 0;
+}
+
+void Router::add_element(ElementRef e)
+{
+  // router now owns the element
+  _elements->push_back(e);
+  e->attach_router(this);
 }
 
 
