@@ -8,7 +8,7 @@
 
 Id::Id (IdTable * table) { this->table = table; }
 
-Id::Id (const uint32_t * num, IdTable * table) {
+Id::Id (const u_int32_t * num, IdTable * table) {
   for (int i = 0; i < 5; i += 1)
     key[i] = *(num + i);
   this->table = table;
@@ -18,7 +18,7 @@ Id::Id (const std::string& idString, IdTable * table) {
   this->table = table;
 }
 
-std::bitset<160> Id::toBitWord (uint32_t num) {
+std::bitset<160> Id::toBitWord (u_int32_t num) {
   return std::bitset<160> (num);
   /* std::bitset<160> result;
     for (int i = 0; i < 32 && num >= 1; i += 1) {
@@ -29,7 +29,7 @@ std::bitset<160> Id::toBitWord (uint32_t num) {
   return result; */
 }
 
-std::string Id::toHexWord (uint32_t num) {
+std::string Id::toHexWord (u_int32_t num) {
   const std::string HEX_DIGITS = "0123456789ABCDEF";
   char result[] = {'0','0','0','0','0','0','0','0','\0'};
   int remainder;
@@ -71,7 +71,7 @@ size_t Id::hashCode () const {
   return result;
 }
 
-uint32_t Id::getWord (const int index) const {
+u_int32_t Id::getWord (const int index) const {
   assert (index >= 0 && index < 5);
   return key[index];
 }
@@ -99,7 +99,7 @@ const Id * IdTable::create (const std::string& idString) {
   return storeId (result);
 }
 
-const Id * IdTable::create (const uint32_t * random) {
+const Id * IdTable::create (const u_int32_t * random) {
   Id * result = new Id (random, this); // use New ref<Id> (random);
   return storeId (result);
 }
@@ -122,11 +122,11 @@ void IdTable::clear () {
 }
 
 const Id * IdTable::storeId (const Id * idKey) {
-  hash_set<const Id *, IdHashCode, IdComparator>::iterator
+  std::map<const Id *, int, IdComparator>::iterator
     idFound = idSet.find (idKey);
   if (idFound != idSet.end ()) {
     delete idKey;
-    return *idFound;
+    return idFound->first;
   }
   else {
     add (idKey);
@@ -135,7 +135,7 @@ const Id * IdTable::storeId (const Id * idKey) {
 }
 
 void IdTable::add (const Id * idKey) {
-  idSet.insert (idKey);
+  idSet.insert (std::pair<const Id *, int> (idKey, 0));
   if (maxSize == 0) return;
   else if (idSet.size () > maxSize)
     gc ();
@@ -155,7 +155,7 @@ void IdTable::gc () {
    * within this set order @Id's by time of last use
    *
    */
-  hash_set<const Id *, IdHashCode, IdComparator>::iterator items =
+  std::map<const Id *, int, IdComparator>::iterator items =
     idSet.begin ();
   while (items != idSet.end ()) {
   }
