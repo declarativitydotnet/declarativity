@@ -32,7 +32,7 @@ class MemoryPull : public Element {
   struct MemoryPullError {};
   
   const char *class_name() const		{ return "MemoryPull"; }
-  const char *flow_code() const			{ return "/x"; }
+  const char *flow_code() const			{ return "/-"; }
   const char *processing() const		{ return "/l"; }
 
   /** Overridden because we have no input ports, whereas the default
