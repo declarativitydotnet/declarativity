@@ -6,7 +6,7 @@ materialize(reachable,2,infinity,infinity,1).
 
 rule r1 reachable@X(X,Y) :- neighbor@X(X,Y).
 
-rule r2 reachable@X(X,Y) :- neighbor@X(Z,X), 
+rule r2 reachable@X(X,Y) :- neighbor@Z(Z,X), 
 	                  reachable@Z(Z,Y),
 	                  ne(X,Y). 
 
