@@ -6,14 +6,14 @@
 
 //// @CLASS Id
 
-Id::Id () { }
-
 Id::Id (const u_int32_t * num) {
   for (int i = 0; i < 5; i += 1)
     key[i] = *(num + i);
+  hashCode = getHash ();
 }
 
 Id::Id (const std::string& idString) {
+  hashCode = 0;
 }
 
 std::bitset<160> Id::toBitWord (u_int32_t num) {
@@ -62,7 +62,7 @@ std::string Id::toHexString () const {
   return std::string (result);
 }
 
-size_t Id::hashCode () const {
+size_t Id::getHash () const {
   size_t result = 0;
   for (int i = 0; i < 5; i += 1)
     result ^= key[i];
@@ -81,20 +81,24 @@ void IdTable::initialize_gc (const size_t num, const size_t thresh) {
   threshold = thresh;
 }
 
-// const Id * create (const XDR * xdr);
+// ref<Id> create (const XDR * xdr); look at tuple.C
 
-ref<Id> IdTable::create (const std::string& idString) {
-  ref<Id> result = New refcounted<Id> (); // use New ref<Id> (idString);
+Id * IdTable::create (const std::string& idString) {
+  // ref<Id> result = New refcounted<Id> (idString); // add the string
+  Id * result = New Id (idString);
   return storeId (result);
 }
 
-ref<Id> IdTable::create (const u_int32_t * random) {
-  ref<Id> result = New refcounted<Id> (random); // use New ref<Id> (random);
+Id * IdTable::create (const u_int32_t * random) {
+  // ref<Id> result = New refcounted<Id> (random);
+  Id * result = New Id (random);
   return storeId (result);
 }
 
-ref<Id> IdTable::create () {
-  ref<Id> result = New refcounted<Id> (); // auto gen with dev/urandom
+Id * IdTable::create () {
+  u_int32_t random[] = { 0, 0, 0, 0, 0 };
+  // ref<Id> result = New refcounted<Id> (random); // use dev/urandom
+  Id * result = New Id (random);
   return storeId (result);
 }
 
@@ -102,15 +106,25 @@ size_t IdTable::size () const {
   return memTable.size ();
 }
 
-void IdTable::remove (ref<Id> idPtr) {
-  memTable.erase (idPtr);
+void IdTable::remove (Id * idPtr) {
+  memTable.remove (idPtr);
 }
 
 void IdTable::clear () {
   memTable.clear ();
 }
 
-ref<Id> IdTable::storeId (ref<Id> idKey) {
+Id * IdTable::storeId (Id * idKey) {
+  Id * result = memTable[idKey->hashCode];
+  if (result) {
+    delete idKey;
+    return result;
+  }
+  else {
+    add (idKey);
+    return idKey;
+  }
+  /*
   std::map< ref<Id>, int, IdComparator >::iterator
     idFound = memTable.find (idKey);
   if (idFound != memTable.end ()) {
@@ -121,38 +135,38 @@ ref<Id> IdTable::storeId (ref<Id> idKey) {
     add (idKey);
     return idKey;
   }
+  */
 }
 
-void IdTable::add (ref<Id> idKey) {
+void IdTable::add (Id * idKey) {
+  memTable.insert (idKey);
+  /*
   memTable.insert (std::pair< ref<Id>, int > (idKey, 0));
-  if (maxSize == -1) return;
+  */
+  if (maxSize == 0) return;
   else if (memTable.size () > maxSize)
     gc ();
 }
 
 void IdTable::gc () {
-  assert (!memTable.empty ());
+  /*
   const size_t HALF = size () / 2;
   if (threshold > HALF || threshold == 0)
     threshold = (size_t) (HALF * .20);
-
-  /*
   struct IdRefCompare {
-    bool operator () (std::pair< ref<Id>, int > &  x,
-	              std::pair< ref<Id>, int > & y) const {
-      return (x.first->refcount_getcnt () <
-	      y.first->refcount_getcnt ());
+    bool operator () (ref<Id>  x, ref<Id> y) const {
+      return (x->refcount_getcnt () <
+	      y->refcount_getcnt ());
     }
   };
 
   std::sort (memTable.begin (), memTable.end (), IdRefCompare);
 
   std::map< ref<Id>, int, IdComparator >::iterator item =
-    memTable.end ();
+    memTable.begin ();
 
-  for (int i = 0; i < threshold; i += 1, i += 1, item -= 1)
-    remove (item);
+  for (int i = 0; i < threshold; i += 1, item += 1)
+    remove (item->first);
   */
-
 }
 
