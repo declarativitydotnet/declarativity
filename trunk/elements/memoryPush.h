@@ -33,7 +33,7 @@ class MemoryPush : public Element {
   struct MemoryPushError {};
   
   const char *class_name() const		{ return "MemoryPush"; }
-  const char *flow_code() const			{ return "/x"; }
+  const char *flow_code() const			{ return "/-"; }
   const char *processing() const		{ return "/l"; }
 
   /** Overridden because we have no input ports, whereas the default

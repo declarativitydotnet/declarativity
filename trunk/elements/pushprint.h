@@ -24,7 +24,7 @@ public:
   int push(int port, TupleRef t, cbv cb);
   const char *class_name() const		{ return "PushPrint";}
   const char *processing() const		{ return "h/"; }
-  const char *flow_code() const			{ return "/"; }
+  const char *flow_code() const			{ return "-/"; }
   
 };
 

@@ -23,7 +23,7 @@ public:
 
   const char *class_name() const		{ return "PullPrint";}
   const char *processing() const		{ return "l/"; }
-  const char *flow_code() const			{ return "/"; }
+  const char *flow_code() const			{ return "-/"; }
 
   /** Place the element task into the running queue.  It should be
       pulling as long as there's something to pull */
