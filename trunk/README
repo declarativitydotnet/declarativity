@@ -1,0 +1,11 @@
+$Id$
+
+To build the source, run configure and point it at your SFS
+installation (e.g., /shared/projects/phi/sfs).
+
+   # configure --with-sfs=/shared/projects/phi/sfs
+  
+Then compile: 
+
+   # make
+
