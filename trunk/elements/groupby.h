@@ -1,4 +1,3 @@
-// -*- c-basic-offset: 2; related-file-name: "print.C" -*-
 /*
  * @(#)$Id$
  * 
@@ -49,7 +48,6 @@ private:
   void recomputeAllAggs();
   void dumpTuples(str str);
   void dumpAggs(str str);
-  //void insertPendingTuple(str groupKey, TupleRef aggTuple, TupleRef actualTuple);
 
   typedef std::multimap<str, TupleRef> TupleMultiMap;
   typedef std::map<str, TupleRef> TupleMap;
