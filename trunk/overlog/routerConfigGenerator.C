@@ -46,10 +46,12 @@ RouterConfigGenerator::RouterConfigGenerator(OL_Context* ctxt, Router::Configura
   pelFunctions.insert(std::make_pair(ASSIGN_PRE << "distID", "distance"));
   pelFunctions.insert(std::make_pair(ASSIGN_PRE << "random", "rand"));
   pelFunctions.insert(std::make_pair(ASSIGN_PRE << "idOne", "1 ->u32 ->id"));
+  pelFunctions.insert(std::make_pair(ASSIGN_PRE << "iZero", "0"));
   pelFunctions.insert(std::make_pair(ASSIGN_PRE << "leftShiftID", "<<id"));
   pelFunctions.insert(std::make_pair(ASSIGN_PRE << "varAssign", ""));
   pelFunctions.insert(std::make_pair(ASSIGN_PRE << "modI", "%"));
   pelFunctions.insert(std::make_pair(ASSIGN_PRE << "rangeID3", "(]id"));
+  pelFunctions.insert(std::make_pair(ASSIGN_PRE << "concatS", "strcat"));
 
   _pendingRegisterReceiver = false;
 }
