@@ -264,10 +264,11 @@ static const ValTest vtests[] = {
   { _string,Pel_VM::PE_SUCCESS,		"aA",	"\"a\" \"A\" strcat" },
   { _string,Pel_VM::PE_SUCCESS,		"AAAAAA", "\"AAA\" \"AAA\" strcat" },
   // strlen (string length)
-  { _uint32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"strlen" },
+  { _uint32,Pel_VM::PE_STACK_UNDERFLOW, "",	"strlen" },
   { _uint32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 strlen" },
   { _uint32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 strlen" },
   { _uint32,Pel_VM::PE_SUCCESS,		"1",	"\"A\" strlen" },
+  { _uint32,Pel_VM::PE_SUCCESS,		"1",	"\"1\" strlen" },
   { _uint32,Pel_VM::PE_SUCCESS,		"0",	"\"\" strlen" },
   { _uint32,Pel_VM::PE_SUCCESS,		"1",	"\"\\0\" strlen" },
   { _uint32,Pel_VM::PE_SUCCESS,		"5",	"\"Hello\" strlen" },
@@ -290,7 +291,355 @@ static const ValTest vtests[] = {
   { _string,Pel_VM::PE_SUCCESS,		"",	"\"\" lower" },
   { _string,Pel_VM::PE_SUCCESS,		"hello", "\"Hello\" lower" },
   { _string,Pel_VM::PE_SUCCESS,		"string\nwith\rcontrols","\"String\\nwith\\rcontrols\" lower" },
-
+  // substr (extract substring)
+  { _string,Pel_VM::PE_STACK_UNDERFLOW, "",	"substr" },
+  { _string,Pel_VM::PE_STACK_UNDERFLOW, "",	"\"A\" substr" },
+  { _string,Pel_VM::PE_STACK_UNDERFLOW, "",	"\"A\" 1 substr" },
+  { _string,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1 1 substr" },
+  { _string,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 1 substr" },
+  { _string,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"abcdefg\" 1.0 1 substr" },
+  { _string,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"abcdefg\" 1 1.0 substr" },
+  { _string,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"abcdefg\" \"a\" 1 substr" },
+  { _string,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"abcdefg\" 1 \"a\" substr" },
+  { _string,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"abcdefg\" 1 null substr" },
+  { _string,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"abcdefg\" null 1 substr" },
+  { _string,Pel_VM::PE_TYPE_CONVERSION,	"",	"null 1 1 substr" },
+  { _string,Pel_VM::PE_SUCCESS,		"abc",	"\"abcdefg\" 0 3 substr" },
+  { _string,Pel_VM::PE_SUCCESS,		"bcde","\"abcdefg\" 1 4 substr" },
+  { _string,Pel_VM::PE_SUCCESS,		"abcdefg","\"abcdefg\" 0 7 substr" },
+  { _string,Pel_VM::PE_SUCCESS,		"fg",	"\"abcdefg\" 5 8 substr" },
+  { _string,Pel_VM::PE_SUCCESS,		"",	"\"abcdefg\" 0 0 substr" },
+  { _string,Pel_VM::PE_SUCCESS,		"",	"\"abcdefg\" 4 0 substr" },
+  { _string,Pel_VM::PE_SUCCESS,		"",	"\"abcdefg\" 10 0 substr" },
+  { _string,Pel_VM::PE_SUCCESS,		"",	"\"abcdefg\" 10 3 substr" },
+  // match (Perl regular expression matching: not much testing here
+  // yet :-( )
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"match" },
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"\"A\" match" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,  "",	"\"A\" 1 match" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION, 	"",	"1 1 match" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION, 	"",	"1.0 1 match" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION, 	"",	"\"abcdefg\" 1.0 match" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION, 	"",	"\"abcdefg\" 1 match" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION, 	"",	"\"abcdefg\" null match" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION, 	"",	"null \"A\" match" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"\"abcd\" \"abcd\" match" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"\"abcd\" \"ab.*\" match" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"\"abcd\" \".*cd\" match" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"\"abcd\" \"ab\" match" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"\"abcd\" \"cd\" match" },
+  // hash (hashing a string to 32 bits)
+  { _uint32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"hash" },
+  { _uint32,Pel_VM::PE_SUCCESS,		"0xAED0B875","1 hash" },
+  { _uint32,Pel_VM::PE_SUCCESS,		"0x615D13BA","1.0 hash" },
+  { _uint32,Pel_VM::PE_SUCCESS,		"0xE2A0E8FE","null hash" },
+  { _uint32,Pel_VM::PE_SUCCESS,		"0xBCF5098A","\"A\" hash" },
+  { _uint32,Pel_VM::PE_SUCCESS,		"0x81D8E12B","\"\" hash" },
+  { _uint32,Pel_VM::PE_SUCCESS,		"0x87364106","\"Hello, world!\" hash" },
+  // negi (integer unary negation)
+  { _int64,Pel_VM::PE_STACK_UNDERFLOW, "",	"negi" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION, "",	"\"A\" negi" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 negi" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"null negi" },
+  { _int64,Pel_VM::PE_SUCCESS,		"-1",	"1 negi" },
+  { _int64,Pel_VM::PE_SUCCESS,		"1",	"-1 negi" },
+  { _int64,Pel_VM::PE_SUCCESS,		"-2000","2000 negi" },
+  { _int64,Pel_VM::PE_SUCCESS,		"2000", "-2000 negi" },
+  { _int64,Pel_VM::PE_SUCCESS,		"0",	"0 negi" },
+  // +i (integer addition)
+  { _int64,Pel_VM::PE_STACK_UNDERFLOW,  "",	"+i" },
+  { _int64,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 +i" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" +i" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 +i" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 +i" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 +i" },
+  { _int64,Pel_VM::PE_SUCCESS,		"3",	"1 2 +i" },
+  { _int64,Pel_VM::PE_SUCCESS,		"0",	"1 -1 +i" },
+  { _int64,Pel_VM::PE_SUCCESS,		"0x100000000","0xffffffff 1 +i" },
+  { _int64,Pel_VM::PE_SUCCESS,		"-2",	"0xffffffffffffffffU -1 +i" },
+  // -i (integer subtraction)
+  { _int64,Pel_VM::PE_STACK_UNDERFLOW,  "",	"-i" },
+  { _int64,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 -i" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" -i" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 -i" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 -i" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 -i" },
+  { _int64,Pel_VM::PE_SUCCESS,		"-1",	"1 2 -i" },
+  { _int64,Pel_VM::PE_SUCCESS,		"2",	"1 -1 -i" },
+  { _int64,Pel_VM::PE_SUCCESS,		"0",	"0xffffffffffffffffU -1 -i" },
+  // *i (integer multiplication)
+  { _int64,Pel_VM::PE_STACK_UNDERFLOW,  "",	"*i" },
+  { _int64,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 *i" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" *i" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 *i" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 *i" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 *i" },
+  { _int64,Pel_VM::PE_SUCCESS,		"2",	"1 2 *i" },
+  { _int64,Pel_VM::PE_SUCCESS,		"1",	"-1 -1 *i" },
+  { _int64,Pel_VM::PE_SUCCESS,		"-2",	"0xffffffffffffffffU 2 *i" },
+  // /i (integer division)
+  { _int64,Pel_VM::PE_STACK_UNDERFLOW,  "",	"/i" },
+  { _int64,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 /i" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" /i" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 /i" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 /i" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 /i" },
+  { _int64,Pel_VM::PE_DIVIDE_BY_ZERO,	"",	"2 0 /i" },
+  { _int64,Pel_VM::PE_SUCCESS,		"4",	"8 2 /i" },
+  { _int64,Pel_VM::PE_SUCCESS,		"5",	"11 2 /i" },
+  { _int64,Pel_VM::PE_SUCCESS,		"0",	"0 30 /i" },
+  { _int64,Pel_VM::PE_SUCCESS,		"0",	"0xffffffffffffffffU 3 /i" },
+  // ==i (integer equal)
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"==i" },
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 ==i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" ==i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 ==i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 ==i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 ==i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"1 2 ==i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"1 1 ==i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"0xffffffffffffffffU -1 ==i" },
+  // >i (integer greater-than)
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	">i" },
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 >i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" >i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 >i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 >i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 >i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"1 2 >i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"2 1 >i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"1 1 >i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"-1 -2 >i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"-2 -1 >i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"0xffffffffffffffffU 2 >i" },
+  // >=i (integer greater-than-or-equal)
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	">=i" },
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 >=i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" >=i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 >=i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 >=i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 >=i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"1 2 >=i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"2 1 >=i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"1 1 >=i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"-1 -2 >=i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"-2 -1 >=i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"0xffffffffffffffffU 2 >=i" },
+  // <i (integer less-than)
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"<i" },
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 <i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" <i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 <i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 <i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 <i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"1 2 <i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"2 1 <i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"1 1 <i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"-1 -2 <i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"-2 -1 <i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"0xffffffffffffffffU 2 <i" },
+  // <=i (integer less-than-or-equal)
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"<=i" },
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 <=i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" <=i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 <=i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 <=i" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 <=i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"1 2 <=i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"2 1 <=i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"1 1 <=i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"-1 -2 <=i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"-2 -1 <=i" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"0xffffffffffffffffU 2 <=i" },
+  // negf (floating-point unary negation)
+  { _double,Pel_VM::PE_STACK_UNDERFLOW, "",	"negf" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION, "",	"\"A\" negf" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 negf" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"null negf" },
+  { _double,Pel_VM::PE_SUCCESS,		"-1",	"1.0 negf" },
+  { _double,Pel_VM::PE_SUCCESS,		"1",	"-1.0 negf" },
+  { _double,Pel_VM::PE_SUCCESS,		"-2000.5","2000.5 negf" },
+  { _double,Pel_VM::PE_SUCCESS,		"2000.5", "-2000.5 negf" },
+  { _double,Pel_VM::PE_SUCCESS,		"0",	"0.0 negf" },
+  // +f (floating-point addition)
+  { _double,Pel_VM::PE_STACK_UNDERFLOW,  "",	"+f" },
+  { _double,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 +f" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" +f" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 +f" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 +f" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 +f" },
+  { _double,Pel_VM::PE_SUCCESS,		"3.0",	"1.0 2.0 +f" },
+  { _double,Pel_VM::PE_SUCCESS,		"0",	"1.5 -1.5 +f" },
+  { _double,Pel_VM::PE_SUCCESS,		"10000.00005",	"10000.0 0.00005 +f" },
+  // -f (floating-point subtraction)
+  { _double,Pel_VM::PE_STACK_UNDERFLOW,  "",	"-f" },
+  { _double,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 -f" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" -f" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 -f" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 -f" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 -f" },
+  { _double,Pel_VM::PE_SUCCESS,		"-1.0",	"1.0 2.0 -f" },
+  { _double,Pel_VM::PE_SUCCESS,		"3",	"1.5 -1.5 -f" },
+  { _double,Pel_VM::PE_SUCCESS,		"9999.99995",	"10000.0 0.00005 -f" },
+  // *f (floating-point multiplication)
+  { _double,Pel_VM::PE_STACK_UNDERFLOW,  "",	"*f" },
+  { _double,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 *f" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" *f" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 *f" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 *f" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 *f" },
+  { _double,Pel_VM::PE_SUCCESS,		"2",	"1.0 2.0 *f" },
+  { _double,Pel_VM::PE_SUCCESS,		"1",	"-1.0 -1.0 *f" },
+  { _double,Pel_VM::PE_SUCCESS,		"6.5",	"13.0 0.5 *f" },
+  { _double,Pel_VM::PE_SUCCESS,		"0",	"-1.4553 0.0 *f" },
+  // /f (floating-point division)
+  { _double,Pel_VM::PE_STACK_UNDERFLOW,  "",	"/f" },
+  { _double,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 /f" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" /f" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 /f" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 /f" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 /f" },
+  { _double,Pel_VM::PE_SUCCESS,		"inf",	"2.0 0.0 /f" },
+  { _double,Pel_VM::PE_SUCCESS,		"4",	"8.0 2.0 /f" },
+  { _double,Pel_VM::PE_SUCCESS,		"5.5",	"11.0 2.0 /f" },
+  { _double,Pel_VM::PE_SUCCESS,		"0",	"0.0 30.0 /f" },
+  // ==f (floating-point equal)
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"==f" },
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 ==f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" ==f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 ==f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 ==f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 ==f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"1.0 2.0 ==f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"1.0 1.0 ==f" },
+  // >f (floating-point greater-than)
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	">f" },
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 >f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" >f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 >f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 >f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 >f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"1.0 2.0 >f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"2.0 1.1 >f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"1.2 1.2 >f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"-1.34 -2.45 >f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"-2.78 -1.003  >f" },
+  // >=f (floating-point greater-than-or-equal)
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	">=f" },
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 >=f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" >=f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 >=f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 >=f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 >=f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"1.0 2.0 >=f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"2.0 1.1 >=f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"1.2 1.2 >=f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"-1.34 -2.45 >=f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"-2.78 -1.003  >=f" },
+  // <f (floating-point less-than)
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"<f" },
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 <f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" <f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 <f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 <f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 <f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"1.0 2.0 <f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"2.0 1.1 <f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"1.2 1.2 <f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"-1.34 -2.45 <f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"-2.78 -1.003  <f" },
+  // <=f (floating-point less-than-or-equal)
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"<=f" },
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW,  "",	"1 <=f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 \"Hello\" <=f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"\"Hello\"  1 <=f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 1 <=f" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 1.0 <=f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"1.0 2.0 <=f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"2.0 1.1 <=f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"1.2 1.2 <=f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"-1.34 -2.45 <=f" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"-2.78 -1.003  <=f" },
+  // abs
+  { _int64,Pel_VM::PE_STACK_UNDERFLOW, "",	"abs" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION, "",	"\"A\" abs" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"1.0 abs" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"null abs" },
+  { _int64,Pel_VM::PE_SUCCESS,		"1",	"1 abs" },
+  { _int64,Pel_VM::PE_SUCCESS,		"1",	"-1 abs" },
+  { _int64,Pel_VM::PE_SUCCESS,		"2000",	"2000 abs" },
+  { _int64,Pel_VM::PE_SUCCESS,		"2000",	"-2000 abs" },
+  { _int64,Pel_VM::PE_SUCCESS,		"0",	"0 abs" },
+  // floor
+  { _double,Pel_VM::PE_STACK_UNDERFLOW, "",	"floor" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION, "",	"\"A\" floor" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 floor" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"null floor" },
+  { _double,Pel_VM::PE_SUCCESS,		"1",	"1.0 floor" },
+  { _double,Pel_VM::PE_SUCCESS,		"-1",	"-1.0 floor" },
+  { _double,Pel_VM::PE_SUCCESS,		"1",	" 1.5 floor" },
+  { _double,Pel_VM::PE_SUCCESS,		"-2",	"-1.5 floor" },
+  { _double,Pel_VM::PE_SUCCESS,		"0",	"0.0 floor" },
+  // ceil
+  { _double,Pel_VM::PE_STACK_UNDERFLOW, "",	"ceil" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION, "",	"\"A\" ceil" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"1 ceil" },
+  { _double,Pel_VM::PE_TYPE_CONVERSION,	"",	"null ceil" },
+  { _double,Pel_VM::PE_SUCCESS,		"1",	"1.0 ceil" },
+  { _double,Pel_VM::PE_SUCCESS,		"-1",	"-1.0 ceil" },
+  { _double,Pel_VM::PE_SUCCESS,		"2",	" 1.5 ceil" },
+  { _double,Pel_VM::PE_SUCCESS,		"-1",	"-1.5 ceil" },
+  { _double,Pel_VM::PE_SUCCESS,		"0",	"0.0 ceil" },
+  // ->i32
+  { _int32,Pel_VM::PE_STACK_UNDERFLOW, "",	"->i32" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"1 ->i32" },
+  { _int32,Pel_VM::PE_SUCCESS,		"-1",	"-1 ->i32" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1316134911","9999999999999 ->i32"},
+  { _int32,Pel_VM::PE_SUCCESS,		"1316134911","9999999999999 ->i32"},
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"1.0 ->i32" },
+  { _int32,Pel_VM::PE_SUCCESS,		"1",	"\"1\" ->i32" },
+  { _int32,Pel_VM::PE_SUCCESS,		"0",	"1 not ->i32" },
+  { _int32,Pel_VM::PE_TYPE_CONVERSION,	"",	"null ->i32" },
+  // ->u32
+  { _uint32,Pel_VM::PE_STACK_UNDERFLOW, "",	"->u32" },
+  { _uint32,Pel_VM::PE_SUCCESS,		"1",	"1 ->u32" },
+  { _uint32,Pel_VM::PE_SUCCESS,		"0xffffffffUL","-1 ->u32" },
+  { _uint32,Pel_VM::PE_SUCCESS,		"1316134911","9999999999999 ->u32"},
+  { _uint32,Pel_VM::PE_SUCCESS,		"1316134911","9999999999999 ->u32"},
+  { _uint32,Pel_VM::PE_SUCCESS,		"1",	"1.0 ->u32" },
+  { _uint32,Pel_VM::PE_SUCCESS,		"1",	"\"1\" ->u32" },
+  { _uint32,Pel_VM::PE_SUCCESS,		"0",	"1 not ->u32" },
+  { _uint32,Pel_VM::PE_TYPE_CONVERSION,	"",	"null ->u32" },
+  // ->i64
+  { _int64,Pel_VM::PE_STACK_UNDERFLOW, "",	"->i64" },
+  { _int64,Pel_VM::PE_SUCCESS,		"1",	"1 ->i64" },
+  { _int64,Pel_VM::PE_SUCCESS,		"-1",	"-1 ->i64" },
+  { _int64,Pel_VM::PE_SUCCESS,		"9999999999999","9999999999999 ->i64"},
+  { _int64,Pel_VM::PE_SUCCESS,		"9999999999999","9999999999999 ->i64"},
+  { _int64,Pel_VM::PE_SUCCESS,		"1",	"1.0 ->i64" },
+  { _int64,Pel_VM::PE_SUCCESS,		"1",	"\"1\" ->i64" },
+  { _int64,Pel_VM::PE_SUCCESS,		"0",	"1 not ->i64" },
+  { _int64,Pel_VM::PE_TYPE_CONVERSION,	"",	"null ->i64" },
+  // ->u64
+  { _uint64,Pel_VM::PE_STACK_UNDERFLOW, "",	"->u64" },
+  { _uint64,Pel_VM::PE_SUCCESS,		"1",	"1 ->u64" },
+  { _uint64,Pel_VM::PE_SUCCESS,		"0xffffffffffffffffULL","-1 ->u64" },
+  { _uint64,Pel_VM::PE_SUCCESS,		"9999999999999","9999999999999 ->u64"},
+  { _uint64,Pel_VM::PE_SUCCESS,		"9999999999999","9999999999999 ->u64"},
+  { _uint64,Pel_VM::PE_SUCCESS,		"1",	"1.0 ->u64" },
+  { _uint64,Pel_VM::PE_SUCCESS,		"1",	"\"1\" ->u64" },
+  { _uint64,Pel_VM::PE_SUCCESS,		"0",	"1 not ->u64" },
+  { _uint64,Pel_VM::PE_TYPE_CONVERSION,	"",	"null ->u64" },
+  // ->str
+  { _string,Pel_VM::PE_STACK_UNDERFLOW, "",	"->str" },
+  { _string,Pel_VM::PE_SUCCESS,		"1",	"1 ->str" },
+  { _string,Pel_VM::PE_SUCCESS,		"-1",	"-1 ->str" },
+  { _string,Pel_VM::PE_SUCCESS,		"9999999999999","9999999999999 ->str"},
+  { _string,Pel_VM::PE_SUCCESS,		"9999999999999","9999999999999 ->str"},
+  { _string,Pel_VM::PE_SUCCESS,		"1",	"1.0 ->str" },
+  { _string,Pel_VM::PE_SUCCESS,		"1",	"\"1\" ->str" },
+ { _string,Pel_VM::PE_SUCCESS,		"0",	"1 not ->str" },
+  { _string,Pel_VM::PE_SUCCESS,		"null",	"null ->str" },
   // ->dbl
   { _double,Pel_VM::PE_STACK_UNDERFLOW, "",	"->dbl" },
   { _double,Pel_VM::PE_SUCCESS,		"1",	"1 ->dbl" },
@@ -350,6 +699,60 @@ static double time_fn(cbv cb)
   return elapsed;
 }
 
+
+void vm_test(Pel_VM &vm, TupleRef tpl, int i) {
+  const ValTest *t = &vtests[i];
+  std::cout << "Running: " << t->src << "\n";
+  
+  Pel_Program *prog = Pel_Lexer::compile( t->src);
+  Pel_VM::Error e = vm.execute(*prog, tpl);
+  if ( e != t->err ) {
+    const char *x = Pel_VM::strerror(t->err);
+    const char *r = Pel_VM::strerror(e);
+    std::cerr << "** Bad error for '" << t->src << "'; '" 
+	      << r << "'(" << e << ") instead of expected '" << x << "'\n";
+  }
+  if ( t->err != Pel_VM::PE_SUCCESS || e != Pel_VM::PE_SUCCESS) {
+    return;
+  }
+  
+  TupleFieldRef top = vm.result_val();
+  if ( top->get_type() != t->t ) {
+    std::cerr << "** Bad result type for '" << t->src << "'; '" 
+	      << TupleField::typeName(top->get_type()) 
+	      << "' instead of expected '" 
+	      << TupleField::typeName(t->t) << "'\n";
+    return;
+  }
+  
+  int eq;
+  switch (t->t) {
+  case _nullv:
+    eq = 1; break;
+  case _int32: 
+    eq = (strtol(t->val,NULL,0)==top->as_i32()); break;
+  case _uint32:  
+    eq = (strtoul(t->val,NULL,0)==top->as_ui32()); break;
+  case _int64: 
+    eq = (strtoll(t->val,NULL,0)==top->as_i64()); break;
+  case _uint64:  
+    eq = (strtoull(t->val,NULL,0)==top->as_ui64()); break;
+  case _double:
+    eq = (strtod(t->val,NULL)==top->as_d()); break;
+  case _string:
+    eq = (top->as_s() == t->val ); break;
+  default:
+    std::cerr << "** Unknown type " << t->t << "\n";
+    eq = 1;
+  }
+  if (!eq) { 
+    std::cerr << "** Bad result value for '" 
+	      << t->src << "'; " << top->toTypeString() 
+	      << " instead of expected " 
+	      << t->val << "\n";
+  }
+}
+
 int main(int argc, char **argv)
 {
   std::cout << "PEL\n";
@@ -381,60 +784,12 @@ int main(int argc, char **argv)
   Pel_VM vm;
   TupleRef tpl = Tuple::mk();
   for(i = 0; i < num_vtests; i++) {
-    const ValTest *t = &vtests[i];
-    std::cout << "Running: " << t->src << "\n";
-    
-    Pel_Program *prog = Pel_Lexer::compile( t->src);
-    Pel_VM::Error e = vm.execute(*prog, tpl);
-    if ( e != t->err ) {
-      const char *x = Pel_VM::strerror(t->err);
-      const char *r = Pel_VM::strerror(e);
-      std::cerr << "** Bad error for '" << t->src << "'; '" 
-		<< r << "'(" << e << ") instead of expected '" << x << "'\n";
-    }
-    if ( t->err != Pel_VM::PE_SUCCESS || e != Pel_VM::PE_SUCCESS) {
-      continue;
-    }
-
-    TupleFieldRef top = vm.result_val();
-    if ( top->get_type() != t->t ) {
-      std::cerr << "** Bad result type for '" << t->src << "'; '" 
-		<< TupleField::typeName(top->get_type()) 
-		<< "' instead of expected '" 
-		<< TupleField::typeName(t->t) << "'\n";
-      continue;
-    }
-    
-    int eq;
-    switch (t->t) {
-    case _nullv:
-      eq = 1; break;
-    case _int32: 
-      eq = (strtol(t->val,NULL,0)==top->as_i32()); break;
-    case _uint32:  
-      eq = (strtoul(t->val,NULL,0)==top->as_ui32()); break;
-    case _int64: 
-      eq = (strtoll(t->val,NULL,0)==top->as_i64()); break;
-    case _uint64:  
-      eq = (strtoull(t->val,NULL,0)==top->as_ui64()); break;
-    case _double:
-      eq = (strtod(t->val,NULL)==top->as_d()); break;
-    case _string:
-      eq = (top->as_s() == t->val ); break;
-    default:
-      std::cerr << "** Unknown type " << t->t << "\n";
-      eq = 1;
-    }
-    if (!eq) { 
-      std::cerr << "** Bad result value for '" 
-		<< t->src << "'; " << top->toTypeString() 
-		<< " instead of expected " 
-		<< t->val << "\n";
-    }
+    vm_test(vm, tpl, i);
+    std::cout.flush();
+    std::cerr.flush();
   }
   return 0;
 }
-  
 
 /*
  * End of file 

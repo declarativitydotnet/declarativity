@@ -1857,7 +1857,11 @@ str Pel_Lexer::decompile(Pel_Program &prog)
       sb << "$" << opn << " ";
     } else if ( opc == Pel_VM::OP_PUSH_CONST ) {
       if ( opn < prog.const_pool.size() ) {
-	sb << prog.const_pool[opn]->toString() << " ";
+	if (prog.const_pool[opn]->get_type() == TupleField::STRING) { 
+	  sb << "\"" << prog.const_pool[opn]->toString() << "\" ";
+	} else {
+	  sb << prog.const_pool[opn]->toString() << " ";
+	}
       } else {
 	sb << "<out-of-range-const-" << opn << "> ";
       }

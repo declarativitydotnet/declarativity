@@ -59,7 +59,7 @@ for op, ar, va, desc in [
   ]:  emit_opcode(op, ar, va, desc)
 
 for op, ar, va, desc in [
-  ("NEG",1,     "NEG",          "negation"),
+  ("neg",1,     "NEG",          "negation"),
   ("+",2,       "PLUS",         "addition"),
   ("-",2,       "MINUS",        "subtraction"),
   ("*",2,       "MUL",          "multiplication"),
@@ -76,14 +76,15 @@ for op, ar, va, desc in [
 for op, ar, va, desc in [
   ("abs",1,     "INT_ABS",      "Absolute value"),
   ("floor",1,   "DBL_FLOOR",    "Next lowest integer"),
-  ("ceil",1,    "DBL_CEIL",     "Next highest integer")
+  ("ceil",1,    "DBL_CEIL",     "Next highest integer"),
+  ("hash",1,	"HASH",         "Generic value hashing")
   ]:
   emit_opcode(op, ar, va, desc)
 
 
 
 for i in [ "i32", "u32", "i64", "u64", "dbl", "str" ]:
-  emit_opcode("->"+i, 1, "CONV_" + i.upper(), "Cast to type "+i)
+  emit_opcode("->"+i, 1, "CONV_" + i.upper(), "Convert to type "+i)
 
 warning="""
 
@@ -120,6 +121,14 @@ f.close()
 f = open("pel_opcode_tokens.gen.h","w+")
 f.write(warning)
 f.write(string.join(map(lambda (n,o,a,v,d): '  {"%s", \tPel_VM::OP_%s}' % (o,v), decls),
+                    ',\n'))
+f.write('\n')
+f.close()
+
+f = open("pel_opcode_descriptions.gen.txt","w+")
+f.write(warning)
+f.write("mnemonic arity\tdescription\n");
+f.write(string.join(map(lambda (n,o,a,v,d): '%s\t%s\t%s' % (o,a,d), decls),
                     ',\n'))
 f.write('\n')
 f.close()

@@ -77,7 +77,7 @@ str TupleField::toString() const
     sprintf(dbuf,"%g",d);
     sb << dbuf; break;
   case STRING:
-    sb << "\"" << s << "\""; break;
+    sb << s; break;
   default:
     sb << "BAD TYPE " << t; break;
   }
@@ -89,7 +89,7 @@ str TupleField::toString() const
 //
 str TupleField::toTypeString() const 
 {
-  return strbuf() << "(" << typeName(t) << ")" << toString();
+  return strbuf() << "(" << typeName(t) << ":" << toString() << ")";
 }
 
 

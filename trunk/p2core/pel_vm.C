@@ -345,7 +345,6 @@ DEF_OP(STR_MATCH) {
   re.match(pop_string());
   st.push(New refcounted<TupleField>(re.success()));
 }
-
 //
 // Integer arithmetic operations
 //
@@ -353,7 +352,7 @@ DEF_OP(INT_NEG) {
   st.push(New refcounted<TupleField>(-pop_signed()));
 }
 DEF_OP(INT_PLUS) {
-  st.push(New refcounted<TupleField>(pop_signed()-pop_signed()));
+  st.push(New refcounted<TupleField>(pop_signed()+pop_signed()));
 }
 DEF_OP(INT_MINUS) {
   // Be careful of undefined evaluation order in C++!
@@ -368,7 +367,11 @@ DEF_OP(INT_DIV) {
   // Be careful of undefined evaluation order in C++!
   int64_t v1 = pop_signed();
   int64_t v2 = pop_signed();
-  st.push(New refcounted<TupleField>(v2 / v1));
+  if (v1) { 
+    st.push(New refcounted<TupleField>(v2 / v1));
+  } else if (error == PE_SUCCESS) {
+    error = PE_DIVIDE_BY_ZERO;
+  }
 }
 DEF_OP(INT_ABS) {
   st.push(New refcounted<TupleField>(llabs(pop_signed())));
@@ -397,7 +400,7 @@ DEF_OP(DBL_NEG) {
   st.push(New refcounted<TupleField>(-pop_double()));
 }
 DEF_OP(DBL_PLUS) {
-  st.push(New refcounted<TupleField>(pop_double()-pop_double()));
+  st.push(New refcounted<TupleField>(pop_double()+pop_double()));
 }
 DEF_OP(DBL_MINUS) {
   // Be careful of undefined evaluation order in C++!
@@ -444,17 +447,17 @@ DEF_OP(CONV_I32) {
   int32_t i;
   switch( t->get_type() ) {
   case TupleField::INT32:
-    i = t->as_i32();
+    i = t->as_i32(); break;
   case TupleField::UINT32:
-    i = t->as_ui32();
+    i = t->as_ui32(); break;
   case TupleField::INT64:
-    i = t->as_i64();
+    i = t->as_i64(); break;
   case TupleField::UINT64:
-    i = t->as_ui64();
+    i = t->as_ui64(); break;
   case TupleField::STRING:
-    i = lrint(atof(t->as_s()));
+    i = lrint(atof(t->as_s())); break;
   case TupleField::DOUBLE:
-    i = lrint(t->as_d());
+    i = lrint(t->as_d()); break;
   default:
     error = PE_TYPE_CONVERSION;
     i = 0;
@@ -466,17 +469,17 @@ DEF_OP(CONV_U32) {
   uint32_t i;
   switch( t->get_type() ) {
   case TupleField::INT32:
-    i = t->as_i32();
+    i = t->as_i32(); break;
   case TupleField::UINT32:
-    i = t->as_ui32();
+    i = t->as_ui32(); break;
   case TupleField::INT64:
-    i = t->as_i64();
+    i = t->as_i64(); break;
   case TupleField::UINT64:
-    i = t->as_ui64();
+    i = t->as_ui64(); break;
   case TupleField::STRING:
-    i = lrint(atof(t->as_s()));
+    i = lrint(atof(t->as_s())); break;
   case TupleField::DOUBLE:
-    i = lrint(t->as_d());
+    i = lrint(t->as_d()); break;
   default:
     error = PE_TYPE_CONVERSION;
     i = 0;
@@ -488,17 +491,17 @@ DEF_OP(CONV_I64) {
   int64_t i;
   switch( t->get_type() ) {
   case TupleField::INT32:
-    i = t->as_i32();
+    i = t->as_i32(); break;
   case TupleField::UINT32:
-    i = t->as_ui32();
+    i = t->as_ui32(); break;
   case TupleField::INT64:
-    i = t->as_i64();
+    i = t->as_i64(); break;
   case TupleField::UINT64:
-    i = t->as_ui64();
+    i = t->as_ui64(); break;
   case TupleField::STRING:
-    i = llrint(atof(t->as_s()));
+    i = llrint(atof(t->as_s())); break;
   case TupleField::DOUBLE:
-    i = llrint(t->as_d());
+    i = llrint(t->as_d()); break;
   default:
     error = PE_TYPE_CONVERSION;
     i = 0;
@@ -510,17 +513,17 @@ DEF_OP(CONV_U64) {
   uint64_t i;
   switch( t->get_type() ) {
   case TupleField::INT32:
-    i = t->as_i32();
+    i = t->as_i32(); break; 
   case TupleField::UINT32:
-    i = t->as_ui32();
+    i = t->as_ui32(); break;
   case TupleField::INT64:
-    i = t->as_i64();
+    i = t->as_i64(); break;
   case TupleField::UINT64:
-    i = t->as_ui64();
+    i = t->as_ui64(); break;
   case TupleField::STRING:
-    i = llrint(atof(t->as_s()));
+    i = llrint(atof(t->as_s())); break;
   case TupleField::DOUBLE:
-    i = llrint(t->as_d());
+    i = llrint(t->as_d()); break;
   default:
     error = PE_TYPE_CONVERSION;
     i = 0;
@@ -553,6 +556,16 @@ DEF_OP(CONV_DBL) {
   }
   st.push(New refcounted<TupleField>(i));
 }
+
+//
+// Hashing - could be a lot faster.  Room for improvement here. 
+//
+DEF_OP(HASH) {
+  uint32_t h = (hash_t)(st.top()->toTypeString());
+  st.pop();
+  st.push(New refcounted<TupleField>(h));
+}
+
 
 /*
  * End of file 
