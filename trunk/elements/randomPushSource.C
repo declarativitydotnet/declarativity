@@ -69,10 +69,10 @@ void RandomPushSource::runTimer()
   int result = output(0)->push(tuple, _wakeupCB);
   if (result == 0) {
     // We have been pushed back.  Don't reschedule wakeup
-    //log(LoggerI::INFO, 0, "runTimer: sleeping");
+    log(LoggerI::INFO, 0, "runTimer: sleeping");
   } else {
     // Reschedule me into the future
-    //log(LoggerI::INFO, 0, "runTimer: rescheduling");
+    log(LoggerI::INFO, 0, "runTimer: rescheduling");
     _timeCallback = delaycb(_seconds,
                             _nseconds,
                             _runTimerCB);
@@ -84,7 +84,7 @@ void RandomPushSource::wakeup()
   // I'd better not be already scheduled
   assert(_timeCallback == 0);
 
-  //log(LoggerI::INFO, 0, "wakeup");
+  log(LoggerI::INFO, 0, "wakeup");
 
   // Okey dokey.  Reschedule me into the future
   _timeCallback = delaycb(_seconds,
