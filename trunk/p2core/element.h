@@ -50,7 +50,7 @@ typedef ptr< Router > RouterPtr;
 
 
 class Element { 
- public:
+public:
   
   // Two shorthand processing signatures.  
   static const char * const PUSH_TO_PULL;
@@ -209,7 +209,8 @@ class Element {
     unsigned ntuples() const		{ return _tuples; }
 #endif
 
-   private:
+
+  private:
     
     /** With whom am I connecting my owner element? */
     Element *_e;
@@ -236,19 +237,8 @@ class Element {
   typedef vec< PortPtr > PortVec;
 
 
-
-
   const PortRef input(int) const;
   const PortRef output(int) const;
-
-
-
-
-
-
-
-
- private:
 
   /** My router */
   RouterPtr _router;
@@ -268,9 +258,6 @@ class Element {
   /** My ID */
   long _ID;
 
-  /** My ID in text */
-  str _IDstr;
-
   Element(const Element &);
   Element &operator=(const Element &);
   
@@ -279,6 +266,12 @@ class Element {
 
   /** For my default logger's sequencing */
   static uint64_t seq;
+
+protected:
+
+  /** My ID in text */
+  str _IDstr;
+
 };
 
 

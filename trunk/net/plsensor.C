@@ -18,7 +18,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#define TRACE_OFF
+//#define TRACE_OFF
 #include "trace.h"
 
 //
@@ -30,7 +30,7 @@
 //  5: The first part of the document body (possibly all of it)
 //
 #define HTTP_RX \
-    "^HTTP/1.\\d+\\s+(\\d\\d\\d)\\s+(.+)\\r\\n((.+\\r\\n)+)\\r\\n((.*\\n)*)"
+    "^HTTP/1.\\d+\\s+(\\d\\d\\d)\\s+(.+)\\r?\\n((.+\\r?\\n)+)\\r?\\n((.*\\n)*)"
 
 //
 // Constructor.  Following errors (or an end of file), the sensor
@@ -66,9 +66,8 @@ PlSensor::PlSensor(u_int16_t sensor_port,
 void PlSensor::error_cleanup(uint32_t errnum, str errmsg) 
 {
   TRC_FN;
-  warn << "PlSensor " << path << ":" << port << " " << errnum << " " << errmsg << "\n";
-  // Generate an error tuple.
-  exit(1);
+  log(LoggerI::WARN, errnum, errmsg);
+  enter_waiting();
 }
 
 //
@@ -79,6 +78,8 @@ void PlSensor::enter_waiting()
 {
   TRC_FN;
   if (sd >= 0) { 
+    fdcb(sd, selread, NULL);
+    fdcb(sd, selwrite, NULL);
     close(sd);
     sd = -1;
   }
@@ -165,8 +166,10 @@ void PlSensor::rx_hdr_cb()
   TRC_FN;
   strbuf rx;
   switch (rx.tosuio()->input(sd)) {
- case 0:
-    error_cleanup(errno, strbuf() << "Server closed connection reading headers:" << strerror(errno));
+  case 0:
+    TRC("Got 0; Read: " << str(*hdrs));
+    TRC("Errno: " << errno );
+    error_cleanup(errno, strbuf() << "Server closed connection reading headers");
     return;
   case -1:
     if (errno != EAGAIN) {

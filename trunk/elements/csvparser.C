@@ -54,14 +54,15 @@ TuplePtr CSVParser::pull(int port, cbv cb)
 {
   assert(port == 0);
   TuplePtr p;
-  _pull_cb = cb;
 
   // Do we have a tuple to give back?
   if (_q.empty()) {
     p = NULL;
+    _pull_cb = cb;
   } else {
     p = _q.back();
     _q.pop();
+    _pull_cb = cbv_null;
   }
 
   // Should we restart pushes?  

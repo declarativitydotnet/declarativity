@@ -20,7 +20,7 @@
 
 class PlSensor : public Element { 
   
-  const char *class_name() const		{ return "Plsensor";};
+  const char *class_name() const		{ return "PlSensor";};
   const char *flow_code() const			{ return "/-"; }
   const char *processing() const		{ return "/h"; }
 

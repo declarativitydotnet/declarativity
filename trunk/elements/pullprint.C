@@ -32,7 +32,7 @@ void PullPrint::wakeup()
   // it's OK to invoke fast reschedule.
 
   log(LoggerI::INFO, 0, "wakeup: pull print waking up");
-  assert(!_scheduled && (_run == 0));
+  assert(_scheduled == false && _run == 0);
   _run = delaycb(0, 0, _run_cb);
   _scheduled = true;
 }
@@ -41,9 +41,7 @@ int PullPrint::initialize()
 {
   // Schedule my task to run
   log(LoggerI::INFO, 0, "init");
-  assert(!_scheduled && (_run == 0));
-  _run = delaycb(0, 0, _run_cb);
-  _scheduled = true;
+  wakeup();
   return 0;
 }
 
@@ -65,8 +63,8 @@ void PullPrint::run()
     _run = delaycb(0, 0, _run_cb);
   } else {
     log(LoggerI::INFO, 0, "run: pull failed, sleeping.");
+
     // Didn't get anything
-    
     _run = 0;
     _scheduled = false;
   }

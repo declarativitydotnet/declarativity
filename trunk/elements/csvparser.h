@@ -32,7 +32,7 @@ public:
 
   const char *class_name() const		{ return "CSVParser";}
   const char *processing() const		{ return PUSH_TO_PULL; }
-  const char *flow_code() const			{ return "x/x"; }
+  const char *flow_code() const			{ return "h/l"; }
 
 private:
   int try_to_parse_line();

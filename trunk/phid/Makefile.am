@@ -14,15 +14,23 @@
 
 $(PROGRAMS): $(LDEPS)
 
+# CXXLD = $(CXX) -all-static
+
 bin_PROGRAMS 	= phid
 noinst_HEADERS	= phid.h
 phid_SOURCES	= phid.C
 phid_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
-	@SFS_LIBASYNC@ @SFS_LIBARPC@
+	$(top_builddir)/net/.libs/libp2net.a \
+	@SFS_LIBARPC@ \
+	@SFS_LIBASYNC@
 
 CLEANFILES = core *.core *~
 EXTRA_DIST = .cvsignore
 
-INCLUDES = @SFS_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements
+INCLUDES = @SFS_INC@ \
+	-I$(top_builddir)/p2core \
+	-I$(top_builddir)/elements \
+	-I$(top_builddir)/net
+
