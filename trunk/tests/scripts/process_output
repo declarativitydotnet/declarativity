@@ -90,7 +90,7 @@ def process_node(out_f, lookups, results):
                 bw_measures.append(bytes[measure[2]]/(ts - start_t))
                 start_t = 0.0
 
-    if not bw_measures: return 0.0, 0.0
+    if not bw_measures: return 0.0, 0.0, 0.0
     norm   = 1.0 / float(len(bw_measures))
     avg_bw = 0.0
     max_bw = 0.0
