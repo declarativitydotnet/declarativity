@@ -102,12 +102,12 @@ bool IdTable::equalByVal (const Id * x, const Id * y) {
 // const Id * create (const XDR * xdr);
 
 const Id * IdTable::create (const std::string& idString) {
-  Id * result = new Id (this); // use New ref<Id> (idString);
+  Id * result = new Id (this); // use New refcounted<Id> (idString);
   return storeId (result);
 }
 
 const Id * IdTable::create (const uint32_t * random) {
-  Id * result = new Id (random, this); // use New ref<Id> (random);
+  Id * result = new Id (random, this); // use New refcounted<Id> (random);
   return storeId (result);
 }
 
