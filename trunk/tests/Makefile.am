@@ -1,9 +1,6 @@
 $(PROGRAMS): $(LDEPS)
 
-bin_PROGRAMS 	= tuples pel basicelements basicElementPlumbing stringmadness
-
-stringmadness_SOURCES	= stringmadness.C
-stringmadness_LDADD = @SFS_LIBASYNC@
+bin_PROGRAMS 	= tuples pel basicelements basicElementPlumbing 
 
 tuples_SOURCES	= tuples.C
 tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
