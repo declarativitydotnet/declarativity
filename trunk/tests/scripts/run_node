@@ -47,8 +47,8 @@ def run_node(chord_exec, seed, ip, p, lm, out):
 
     pid = os.fork()
     if pid == 0:
-        if lm: rv = os.system(r"%s NONE %d %s:%s %s >> %s 2>&1" % (chord_exec, seed, ip, p, lm, out))
-        else:  rv = os.system(r"%s NONE %d %s:%s >> %s 2>&1" % (chord_exec, seed, ip, p, out))
+        if lm: rv = os.system(r"%s 0 NONE %d %s:%s 1 %s >> %s 2>&1" % (chord_exec, seed, ip, p, lm, out))
+        else:  rv = os.system(r"%s 0 NONE %d %s:%s 0 >> %s 2>&1" % (chord_exec, seed, ip, p, out))
         print >> log, "SYSTEM CALL EXIT"
         sys.exit(0)
     return pid
