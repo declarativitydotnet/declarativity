@@ -73,14 +73,26 @@ public:
 
   struct Configuration {
     /** The elements */
-    ref< vec< ElementSpecRef > > elements;
+    vec< ElementSpecRef > elements;
 
     /** The hookups */
-    ref< vec< HookupRef > > hookups;
+    vec< HookupRef > hookups;
 
+    ElementSpecRef addElement(ref<Element> e) {
+      ElementSpecRef r = New refcounted<ElementSpec>(e);
+      elements.push_back(r);
+      return r;
+    }
+    void hookUp(ElementSpecRef src, int src_port,
+		ElementSpecRef dst, int dst_port ) {
+      hookups.push_back(New refcounted<Hookup>(src,src_port, dst,dst_port));
+    }
+
+    Configuration() {};
     Configuration(ref< vec< ElementSpecRef > > e,
                   ref< vec< HookupRef > > h)
-      : elements(e), hookups(h) {};
+      : elements(*e), hookups(*h) {};
+
   };
   typedef ref< Configuration > ConfigurationRef;
   typedef ptr< Configuration > ConfigurationPtr;

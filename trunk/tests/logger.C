@@ -32,35 +32,14 @@ void testLogger()
   std::cout << "\nCHECK LOGGER\n";
 
   ref<Logger> log = New refcounted<Logger>();
-  ElementSpecRef logSpec = New refcounted< ElementSpec >(log);
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef logSpec = conf->addElement(log);
+  ElementSpecRef printSpec = conf->addElement(New refcounted<PushPrint>());
+  conf->hookUp(logSpec,0,printSpec,0);
 
-  ref< PushPrint > print = New refcounted< PushPrint >();
-  ElementSpecRef printSpec = New refcounted< ElementSpec >(print);
-
-  ref< Discard > discard = New refcounted< Discard >();
-  ElementSpecRef discardSpec = New refcounted< ElementSpec >(discard);
-
-  // Create the configuration
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(logSpec);
-  elements->push_back(printSpec);
-  //elements->push_back(discardSpec);
-  
-  Router::HookupPtr hookup;
-  ref < vec< Router::HookupRef > > hookups =
-    New refcounted< vec< Router::HookupRef > >();
-
-  hookups->clear();
-  hookup = New refcounted< Router::Hookup >(logSpec, 0,
-                                            printSpec, 0);
-  hookups->push_back(hookup);
-
-  // Create the router and check it statically
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
   MasterRef master = New refcounted< Master >();
   RouterRef router =
-    New refcounted< Router >(configuration, master);
+    New refcounted< Router >(conf, master);
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized spec.\n";
   } else {

@@ -108,9 +108,9 @@ void Router::set_connections()
 {
   // actually assign ports
   for (uint i = 0;
-       i < _configuration->hookups->size();
+       i < _configuration->hookups.size();
        i++) {
-    HookupRef hookup = (*_configuration->hookups)[i];
+    HookupRef hookup = _configuration->hookups[i];
     ElementSpecRef fromElement = hookup->fromElement;
     ElementSpecRef toElement = hookup->toElement;
     int fromPort = hookup->fromPortNumber;
@@ -132,9 +132,9 @@ int Router::check_hookup_completeness()
   // Check duplicates
   int duplicates = 0;
   for (uint i = 0;
-       i < _configuration->hookups->size();
+       i < _configuration->hookups.size();
        i++) {
-    HookupRef hookup = (*_configuration->hookups)[i];
+    HookupRef hookup = _configuration->hookups[i];
     
     ElementSpecRef fromElement = hookup->fromElement;
     ElementSpecRef toElement = hookup->toElement;
@@ -162,9 +162,9 @@ int Router::check_hookup_completeness()
   // Check unuseds
   int unuseds = 0;
   for (uint i = 0;
-       i < _configuration->elements->size();
+       i < _configuration->elements.size();
        i++) {
-    ElementSpecRef element = (*_configuration->elements)[i];
+    ElementSpecRef element = (_configuration->elements)[i];
     for (int in = 0;
          in < element->element()->ninputs();
          in++) {
@@ -206,9 +206,9 @@ int Router::check_push_and_pull()
     bool progress = false;
 
     for (uint i = 0;
-         i < _configuration->hookups->size();
+         i < _configuration->hookups.size();
          i++) {
-      HookupRef hookup = (*_configuration->hookups)[i];
+      HookupRef hookup = (_configuration->hookups)[i];
       
       ElementSpecRef fromElement = hookup->fromElement;
       ElementSpecRef toElement = hookup->toElement;
@@ -345,9 +345,9 @@ int Router::check_hookup_range()
   // Check each hookup to ensure its port numbers are within range
   int errors = 0;
   for (uint i = 0;
-       i < _configuration->hookups->size();
+       i < _configuration->hookups.size();
        i++) {
-    HookupRef hookup = (*_configuration->hookups)[i];
+    HookupRef hookup = (_configuration->hookups)[i];
     
     if (hookup->fromPortNumber >= hookup->fromElement->
         element()->noutputs()) {
@@ -445,9 +445,9 @@ int Router::initialize(RouterRef myRef)
   // configuration.
   set_connections();
   for (uint i = 0;
-       i < _configuration->elements->size();
+       i < _configuration->elements.size();
        i++) {
-    ElementRef theElement = (*_configuration->elements)[i]->element();
+    ElementRef theElement = (_configuration->elements)[i]->element();
     add_element(myRef,
                 theElement);
 
@@ -473,20 +473,18 @@ int Router::check_hookup_elements()
 {
   // Put all (real not spec) elements in a set to be searchable
   std::set< ElementRef > elementSet;
-  ref< vec< ElementSpecRef > > elements =
-    _configuration->elements;
   for (uint i = 0;
-       i < _configuration->elements->size();
+       i < _configuration->elements.size();
        i++) {
-    elementSet.insert((*_configuration->elements)[i]->element());
+    elementSet.insert((_configuration->elements)[i]->element());
   }
   
   // Check each hookup to ensure it connects valid element references
   int errors = 0;
   for (uint i = 0;
-       i < _configuration->hookups->size();
+       i < _configuration->hookups.size();
        i++) {
-    HookupRef hookup = (*_configuration->hookups)[i];
+    HookupRef hookup = (_configuration->hookups)[i];
     std::set< ElementRef >::iterator found =
       elementSet.find(hookup->fromElement->element());
     if ((found == elementSet.end()) ||

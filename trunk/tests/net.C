@@ -36,43 +36,19 @@ void testUdpReceive()
 {
   std::cout << "\nCHECK UDP receive\n";
 
-  // Create the UDP element
+  Router::ConfigurationRef conf = New refcounted<Router::Configuration>();
   Udp udp(9999);
-  ref< Udp::Rx > rx = udp.get_rx();
-  ElementSpecRef udpRxSpec = New refcounted< ElementSpec >(rx);
 
-  ref< Print > print = New refcounted< Print >("Printer");
-  ElementSpecRef printSpec = New refcounted< ElementSpec >(print);
-
-  ref< Discard > discard = New refcounted< Discard >();
-  ElementSpecRef discardSpec = New refcounted< ElementSpec >(discard);
-
-
-  // Create the configuration
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(udpRxSpec);
-  elements->push_back(printSpec);
-  elements->push_back(discardSpec);
-
-  Router::HookupPtr hookup;
-  ref < vec< Router::HookupRef > > hookups =
-    New refcounted< vec< Router::HookupRef > >();
-
-  hookups->clear();
-  hookup = New refcounted< Router::Hookup >(udpRxSpec, 0,
-                                            printSpec, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(printSpec, 0,
-                                            discardSpec, 0);
-  hookups->push_back(hookup);
-
+  ElementSpecRef udpRxSpec = conf->addElement(udp.get_rx());
+  ElementSpecRef printSpec = conf->addElement(New refcounted<Print>("Printer"));
+  ElementSpecRef discardSpec = conf->addElement(New refcounted<Discard>());
+  conf->hookUp(udpRxSpec,0,printSpec,0);
+  conf->hookUp(printSpec,0,discardSpec,0);
 
   // Create the router and check it statically
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
   MasterRef master = New refcounted< Master >();
   RouterRef router =
-    New refcounted< Router >(configuration, master);
+    New refcounted< Router >(conf, master);
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized timed source to pull print spec.\n";
   } else {
