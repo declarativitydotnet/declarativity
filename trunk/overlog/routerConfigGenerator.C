@@ -10,7 +10,7 @@
  */
 
 //#include <async.h>
-#//include <arpc.h>
+//include <arpc.h>
 #include "routerConfigGenerator.h"
 
 const str RouterConfigGenerator::SEL_PRE("select_");
@@ -27,7 +27,7 @@ RouterConfigGenerator::RouterConfigGenerator(OL_Context* ctxt, Router::Configura
   _debug = debug;
   str outputFile(filename << ".out");
   _output = fopen(outputFile.cstr(), "w");
-
+  
   // initialize some pel functions. Add more later. 
   // Look at Pel Expresssions
   pelFunctions.insert(std::make_pair(SEL_PRE << "neS", "==s not"));
@@ -49,6 +49,7 @@ RouterConfigGenerator::RouterConfigGenerator(OL_Context* ctxt, Router::Configura
   pelFunctions.insert(std::make_pair(ASSIGN_PRE << "leftShiftID", "<<id"));
   pelFunctions.insert(std::make_pair(ASSIGN_PRE << "varAssign", ""));
   pelFunctions.insert(std::make_pair(ASSIGN_PRE << "modI", "%"));
+  pelFunctions.insert(std::make_pair(ASSIGN_PRE << "rangeID3", "(]id"));
 
   _pendingRegisterReceiver = false;
 }
@@ -66,9 +67,6 @@ void RouterConfigGenerator::configureRouter(ref< Udp > udp, str nodeID)
 {
   // first create the tables if they are not created yet.
   // iterate through all the table info
-  _udpReceivers.clear();
-  _udpPullSenders.clear();
-  _udpPushSenders.clear();
   
   // iterate through all the functors (heads, unique by name, arity, location)
   OL_Context::FunctorMap::iterator _iterator;
@@ -85,6 +83,13 @@ void RouterConfigGenerator::configureRouter(ref< Udp > udp, str nodeID)
   if (_udpReceivers.size() > 0) {
     generateReceiveElements(udp, nodeID);
   }
+}
+
+void RouterConfigGenerator::clear()
+{
+  _udpReceivers.clear();
+  _udpPullSenders.clear();
+  _udpPushSenders.clear();
 }
 
 
@@ -264,7 +269,15 @@ void RouterConfigGenerator::generateReceiveElements(ref< Udp> udp, str nodeID)
 					   mostRecentElement);
   //mostRecentElement = generatePrintElement(strbuf("PrintReceivedAfterDupElim:") << nodeID, mostRecentElement);  
 
-  hookUp(mostRecentElement, 0, demuxS, 0);
+  ElementSpecRef bufferQueue = 
+    _conf->addElement(New refcounted< Queue >(strbuf("Queue:") << 
+					      nodeID, 1000));
+  ElementSpecRef pullPush = 
+    _conf->addElement(New refcounted<TimedPullPush>("pullPush", 0));
+
+  hookUp(mostRecentElement, 0, bufferQueue, 0);
+  hookUp(bufferQueue, 0, pullPush, 0);
+  hookUp(pullPush, 0, demuxS, 0);
 
   // connect to all the pending udp receivers. Assume all 
   // receivers are connected to elements with push input ports for now
@@ -277,11 +290,19 @@ void RouterConfigGenerator::generateReceiveElements(ref< Udp> udp, str nodeID)
     std::cout << "Demuxing " << tableName << " for " << numElementsToReceive << " elements\n";
 
     // DupElim -> DemuxS -> Insert -> Duplicator -> Fork
-    
+
+    ElementSpecRef bufferQueue = 
+      _conf->addElement(New refcounted< Queue >(strbuf("Queue:") << 
+						nodeID << ":" << tableName, 1000));
+    ElementSpecRef pullPush = 
+      _conf->addElement(New refcounted<TimedPullPush>("pullPush", 0));
+    hookUp(demuxS, counter++, bufferQueue, 0);
+    hookUp(bufferQueue, 0, pullPush, 0);
+
     // duplicator
-    ElementSpecRef duplicator = _conf->addElement(New refcounted< Duplicate >(strbuf("ReceiveDup:") 
-									      << tableName << ":" << nodeID, 
-									      numElementsToReceive));    
+    ElementSpecRef duplicator = _conf->addElement(New refcounted< DuplicateConservative >(strbuf("ReceiveDup:") 
+											  << tableName << ":" << nodeID, 
+											  numElementsToReceive));    
     // materialize table only if it is declared and has lifetime>0
     OL_Context::TableInfoMap::iterator _iterator = _ctxt->getTableInfos()->find(tableName);
     if (_iterator != _ctxt->getTableInfos()->end() && _iterator->second->timeout != 0) {
@@ -289,21 +310,29 @@ void RouterConfigGenerator::generateReceiveElements(ref< Udp> udp, str nodeID)
 									  tableName << ":" << nodeID,  
 									  getTableByName(nodeID, 
 											 tableName)));
-      hookUp(demuxS, counter++, insertS, 0);
+
+      hookUp(pullPush, 0, insertS, 0);
 
       mostRecentElement = generatePrintWatchElement(strbuf("PrintWatchInsert:") << nodeID, 
 						    insertS);
 
       hookUp(mostRecentElement, 0, duplicator, 0);
     } else {
-      hookUp(demuxS, counter++, duplicator, 0);
+      hookUp(pullPush, 0, duplicator, 0);
     }
 
     // connect the duplicator to elements for this name
     for (uint k = 0; k < ri._receivers.size(); k++) {
       ElementSpecRef nextElementSpec = ri._receivers.at(k);
-      //std::cout << "Hook up with duplicator " << tableName 
-      //<< " " << k << " " << nextElementSpec->toString() << "\n";
+
+      if (_debug) {
+	ElementSpecRef printDuplicator = 
+	  _conf->addElement(New refcounted< PrintTime >(strbuf("PrintAfterDuplicator:"
+							       << tableName << ":" << nodeID)));
+	hookUp(duplicator, k, printDuplicator, 0);
+	hookUp(printDuplicator, 0, nextElementSpec, 0);
+	continue;
+      }
       hookUp(duplicator, k, nextElementSpec, 0);
     }
   }
@@ -312,6 +341,11 @@ void RouterConfigGenerator::generateReceiveElements(ref< Udp> udp, str nodeID)
   hookUp(demuxS, _udpReceivers.size(), sinkS, 0); // if we don't know where this should go
 }
 
+
+void RouterConfigGenerator::registerUDPPushSenders(ElementSpecRef elementSpecRef)
+{
+  _udpPushSenders.push_back(elementSpecRef);
+}
 
 
 void RouterConfigGenerator::generateSendElements(ref< Udp> udp, str nodeID)
@@ -371,7 +405,7 @@ RouterConfigGenerator::generateFunctorSource(OL_Context::Functor* functor, OL_Co
   // The timed pusher
   ElementSpecRef pushFunctor =
     _conf->addElement(New refcounted< TimedPullPush >(strbuf("FunctorPush:") << rule->ruleID << ":" << nodeID,
-						      atoi(firstVar.cstr())));
+						      atof(firstVar.cstr())));
 
   //hookUp(source, 0, mostRecentElement, 0);
   hookUp(mostRecentElement, 0, pushFunctor, 0);
@@ -741,6 +775,7 @@ RouterConfigGenerator::generateProbeElements(OL_Context::Rule* currentRule,
   std::vector<int> leftJoinKeys = baseTableNames->matchingJoinKeys(probeNames->fieldNames);
   std::vector<int> rightJoinKeys =  probeNames->matchingJoinKeys(baseTerm.argNames);
 
+
   /*
   for (uint k = 0; k < rightJoinKeys.size(); k++) {
     std::cout << "Right join keys " << rightJoinKeys.at(k) << " " << baseTableNames->toString() << "\n";
@@ -1056,11 +1091,7 @@ RouterConfigGenerator::generateSingleAggregateElements(OL_Context::Functor* curr
   ElementSpecRef aggElement =
     _conf->addElement(New refcounted< Aggregate >(strbuf("Agg:") << currentRule->ruleID << ":" << nodeID,
 						  tableAgg));
-  
-  ElementSpecRef printAgg = 
-    _conf->addElement(New refcounted< Print >("PrintAgg:" << 
-					      currentRule->ruleID << ":" << nodeID));
- 
+   
   // send back
   newFieldNamesTracker->fieldNames.push_back(aggTerm.argNames.at(0));
 
@@ -1077,14 +1108,18 @@ RouterConfigGenerator::generateSingleAggregateElements(OL_Context::Functor* curr
 						     << nodeID, 
 						     pelTransformStr));
 
+  hookUp(aggElement, 0, addTableName, 0);
+
+  ElementSpecRef nextElement = generatePrintElement("PrintAgg:" << 
+						    currentRule->ruleID << ":" << nodeID, 
+						    addTableName);
+
   ElementSpecRef timedPullPush = 
     _conf->addElement(New refcounted<TimedPullPush>("timedPullPush:" << 
 						    currentRule->ruleID 
-						    << ":" << nodeID, 0));
-  
-  hookUp(aggElement, 0, addTableName, 0);
-  hookUp(addTableName, 0, printAgg, 0);
-  hookUp(printAgg, 0, timedPullPush, 0);
+						    << ":" << nodeID, 0));  
+
+  hookUp(nextElement, 0, timedPullPush, 0);
   ElementSpecRef projectHeadElement = generateProjectHeadElements(currentFunctor, currentRule, 
 								  nodeID, newFieldNamesTracker, 
 								  timedPullPush);
@@ -1250,7 +1285,7 @@ void RouterConfigGenerator::hookUp(ElementSpecRef firstElement, int firstPort,
   fprintf(_output, "  %s %s %d\n", secondElement->toString().cstr(), 
 	  secondElement->element()->_name.cstr(), secondPort);
   fflush(_output);
-
+  
   // in future, if push/pull, have to put a slot in between. So we don't have to check
 
   _conf->hookUp(firstElement, firstPort, secondElement, secondPort);

@@ -68,6 +68,7 @@
 #include "tupleSource.h"
 #include "printWatch.h"
 #include "aggregate.h"
+#include "duplicateConservative.h"
 
 class RouterConfigGenerator {
   // takes as input the udp send / receive, the router config, accept each other code or not
@@ -85,6 +86,11 @@ public:
   TableRef getTableByName(str nodeID, str tableName);
 
   void createTables(str nodeID);
+
+  void clear();
+
+  // allow driver program to push data into dataflow
+  void registerUDPPushSenders(ElementSpecRef elementSpecRef);
   
 private:
   static const str SEL_PRE, AGG_PRE, ASSIGN_PRE, TABLESIZE;
