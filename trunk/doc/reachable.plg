@@ -15,7 +15,6 @@ rule r2 reachable@X(X,Y) :- neighbor@Z(Z,X),
 	                  reachable@Z(Z,Y),
 	                  f_ne(X,Y). 
 
-/*rule r3 reach@X(X,Y) :- reachable@X(X,Y).*/
 
 
 
