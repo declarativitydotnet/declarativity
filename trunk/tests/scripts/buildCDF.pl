@@ -31,6 +31,7 @@ my $latencyCounts = 0;
 
 open INFILE, "<$opt_f" or die "Couldn't open $opt_f";
 while (<INFILE>) {
+	chomp;
     my @line = split / /;
     my $latency = $line[0];
     $latencyCounts++;
