@@ -42,6 +42,7 @@
 
 #include "inlines.h"
 #include "tuple.h"
+#include "loggerI.h"
 
 class Router;
 typedef ref< Router > RouterRef;
@@ -140,7 +141,13 @@ class Element {
   virtual const char *processing() const;
   virtual const char *flow_code() const;
   virtual const char *flags() const;
-  
+
+  // LOGGING facilities
+  REMOVABLE_INLINE void log(str instanceName,
+                            LoggerI::Level severity,
+                            int errnum,
+                            str explanation);
+
   // METHODS USED BY `ROUTER'
   
   /** Attach me to a router */

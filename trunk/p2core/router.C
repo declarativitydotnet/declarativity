@@ -559,3 +559,9 @@ void Router::activate()
 
 
 
+REMOVABLE_INLINE LoggerI * Router::logger(LoggerI * newLogger)
+{
+  LoggerI * l = _logger;
+  _logger = newLogger;
+  return l;
+}

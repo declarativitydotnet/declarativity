@@ -18,11 +18,11 @@
 
 #include <async.h>
 #include <element.h>
+#include <loggerI.h>
 
-class Logger : public Element { 
+class Logger : public Element,
+               public LoggerI { 
 public:
-  
-  enum Level { INFO, WARN, ERROR };
   
   // Initialized with the interval between tuple generation events.
   Logger();
@@ -31,7 +31,7 @@ public:
   const char *flow_code() const			{ return "/-"; }
   const char *processing() const		{ return "/h"; }
   
-  // Create a log tuple
+  /** Override this since it's pure virtual in the interface */
   void log( str classname,
 	    str instancename,
 	    Level severity,

@@ -42,6 +42,8 @@
  */
 
 #include "element.h"
+#include "router.h"
+#include "loggerI.h"
 
 
 // Some basic element types
@@ -186,6 +188,10 @@ TuplePtr Element::pull(int port, cbv cb)
         return result;
       } else {
         // This input yielded no result. Try again.
+        log("",
+            LoggerI::WARN,
+            -1,
+            "Input tuple yielded no output tuple");
       }
     } else {
       // Didn't get any tuples from my input. Fail.
@@ -307,3 +313,26 @@ bool Element::run_timer()
   return false;
 }
 
+
+REMOVABLE_INLINE void Element::log(str instanceName,
+                                   LoggerI::Level severity,
+                                   int errnum,
+                                   str explanation)
+{
+  LoggerI* l = _router->logger();
+  if (l != 0) {
+    l->log(class_name(),
+           instanceName,
+           severity,
+           errnum,
+           explanation); 
+  } else {
+    warn << "PRE-init LOGGER:" <<
+      class_name() << "/" <<
+      instanceName << "/" <<
+      severity << "/" <<
+      errnum << "/" <<
+      explanation << "\n";
+  }
+}
+                            

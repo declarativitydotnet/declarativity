@@ -32,6 +32,7 @@
 #include "udp.h"
 #include "discard.h"
 #include "pelTransform.h"
+#include "logger.h"
 
 /** Test that a puller runs and stops during inaction. */
 void testSinglePuller()
@@ -81,7 +82,8 @@ void testChainPuller()
 
   ref< TimedSource > timedSource = New refcounted< TimedSource >(0.25);
   ref< Print > print = New refcounted< Print >("Before");
-  ref< PelTransform > project = New refcounted< PelTransform >("$1 $2 +i pop");
+  //  ref< PelTransform > project = New refcounted< PelTransform >("$1 $2 +i pop");
+  ref< PelTransform > project = New refcounted< PelTransform >("$8 pop");
   ref< Print > print2 = New refcounted< Print >("After");
   ref< PullPrint > pullPrint = New refcounted< PullPrint >();
 
@@ -91,12 +93,26 @@ void testChainPuller()
   ElementSpecRef printSpec2 = New refcounted< ElementSpec >(print2);
   ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
 
+  // Logger data flow
+  ref< Logger > logger = New refcounted< Logger >();
+  ElementSpecRef loggerSpec = New refcounted< ElementSpec >(logger);
+  ref< Print > logPrinter = New refcounted< Print >("LOGGER");
+  ElementSpecRef logPrinterSpec = New refcounted< ElementSpec >(logPrinter);
+  ref< Discard > discard = New refcounted< Discard >();
+  ElementSpecRef discardSpec = New refcounted< ElementSpec >(discard);
+
+  
+
   ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
   elements->push_back(timedSourceSpec);
   elements->push_back(printSpec);
   elements->push_back(printSpec2);
   elements->push_back(projectSpec);
   elements->push_back(pullPrintSpec);
+
+  elements->push_back(loggerSpec);
+  elements->push_back(logPrinterSpec);
+  elements->push_back(discardSpec);
 
   Router::HookupPtr hookup;
   ref < vec< Router::HookupRef > > hookups =
@@ -116,11 +132,22 @@ void testChainPuller()
                                             pullPrintSpec, 0);
   hookups->push_back(hookup);
 
+
+  hookup = New refcounted< Router::Hookup >(loggerSpec, 0,
+                                            logPrinterSpec, 0);
+  hookups->push_back(hookup);
+  hookup = New refcounted< Router::Hookup >(logPrinterSpec, 0,
+                                            discardSpec, 0);
+  hookups->push_back(hookup);
+
+
+
   Router::ConfigurationRef configuration =
     New refcounted< Router::Configuration >(elements, hookups);
   MasterRef master = New refcounted< Master >();
   RouterRef router =
     New refcounted< Router >(configuration, master);
+  router->logger(logger);
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized timed source to pull print spec.\n";
   } else {

@@ -34,6 +34,7 @@
 #include <elementSpec.h>
 #include <vec.h>
 #include <master.h>
+#include <loggerI.h>
 
 // Put here to resolve cyclical dependencies
 class Master;
@@ -134,6 +135,18 @@ public:
   
   // MASTER scheduler
   MasterRef master() const			{ return _master; }
+
+  // LOGGING infrastructure
+  
+  /** The router-wide logger.  The pointer to the logger should not be
+      cached or used at any time other than immediately after the
+      invocation of this method. */
+  REMOVABLE_INLINE LoggerI * logger()		{ return _logger; }
+
+  /** Install a different logger for this router. This returns a pointer
+      to the previous logger.  If non zero, it is the caller's
+      responsibility to delete that logger if it's on the heap. */
+  REMOVABLE_INLINE LoggerI * logger(LoggerI * newLogger);
   
 private:
   
@@ -176,6 +189,9 @@ private:
 
   friend class Master;
   friend class Task;
+
+  /** My local logger */
+  LoggerI * _logger;
 };
 
 #endif
