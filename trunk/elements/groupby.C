@@ -25,8 +25,8 @@ const int GroupBy::AVG_AGG = 2;
 GroupBy::GroupBy(str name, str newTableName, std::vector<int> primaryFields, std::vector<int> groupByFields, 
 		 std::vector<int> aggFields, std::vector<int> aggTypes, 
 		 double seconds, bool aggregateSelections): Element(name,1,1), 
-							       _wakeupCB(wrap(this, &GroupBy::wakeup)),
-							       _runTimerCB(wrap(this, &GroupBy::runTimer))
+							    _wakeupCB(wrap(this, &GroupBy::wakeup)),
+							    _runTimerCB(wrap(this, &GroupBy::runTimer))
 {
   _primaryFields = primaryFields;
   _groupByFields = groupByFields;
@@ -39,6 +39,7 @@ GroupBy::GroupBy(str name, str newTableName, std::vector<int> primaryFields, std
   seconds -= _seconds;
   _nseconds = (uint) (seconds * 1000000000);
 
+  assert(_aggregateSelections == false || (aggregateSelections == true && aggFields.size() == 1));
 }
 
 GroupBy::~GroupBy()
@@ -71,12 +72,13 @@ str GroupBy::getFieldStr(std::vector<int> fields, TupleRef p)
 
 void GroupBy::recomputeAllAggs()
 {
-  bool changed = false;
 
   _aggValues.clear();
 
   // go through all tuples we have seen so far and recompute aggregates stored in aggValues
+  // next time, enumerate the store itself
   for (_multiIterator = _tuples.begin(); _multiIterator != _tuples.end(); _multiIterator++) {
+    bool changed = false;
     TupleRef nextTuple = _multiIterator->second;    
     str groupByStr = getFieldStr(_groupByFields, nextTuple);    
 
@@ -110,17 +112,23 @@ void GroupBy::recomputeAllAggs()
 	  origVal = newVal;
 	  changed = true;
 	  }
-      }
+	}
 	newAggTuple->append(origVal);
       }    
     } else {
-      // the first time
+      // the first time we see a tuple for this group
       for (int k = 0; k < _aggFields.size(); k++) {
 	newAggTuple->append((*nextTuple)[_aggFields[k]]);
       }      
+      changed = true;
     }
     _aggValues.erase(groupByStr);
     _aggValues.insert(std::make_pair(groupByStr, newAggTuple));      
+
+    if (changed == true) {
+      _bestTuples.erase(groupByStr);
+      _bestTuples.insert(std::make_pair(groupByStr, nextTuple));
+    } 
   }
 }
 
@@ -157,7 +165,7 @@ void GroupBy::runTimer()
     TupleRef t = _iterator->second;
     str groupByStr = getFieldStr(_groupByFields, t);    
 
-    // check whether this tuple has been sent already previously (suppress for monotonic aggs)
+    // check whether this tuple has been sent already previously (suppress to prevent sending redundant)
     TupleMap::iterator previousSent = _lastSentTuples.find(groupByStr);
     if (previousSent != _lastSentTuples.end()) {
       if (previousSent->second->compareTo(t) == 0) {
@@ -165,7 +173,14 @@ void GroupBy::runTimer()
       }
     }
 
-    int result = output(0)->push(t, _wakeupCB);
+    int result = 0;
+    if (_aggregateSelections == false) {
+      result = output(0)->push(t, _wakeupCB);
+    } else {
+      // return the actual tuple itself
+      result = output(0)->push(_bestTuples.find(groupByStr)->second, _wakeupCB);
+    }
+
     if (result == 0) {
       // We have been pushed back.  Don't reschedule wakeup
       log(LoggerI::INFO, 0, "runTimer: sleeping");

@@ -58,7 +58,7 @@ private:
   TupleMultiMap _tuples; 
 
   // agg values, indexed by groupByFields
-  TupleMap _aggValues;
+  TupleMap _aggValues, _bestTuples;
 
   // the field no of the primary fields for tuple
   std::vector<int> _primaryFields; 
