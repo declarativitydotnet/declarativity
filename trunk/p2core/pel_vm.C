@@ -810,6 +810,19 @@ DEF_OP(HASH) {
   stackPush(Val_UInt32::mk(h));
 }
 
+//
+// Extra hacks for Symphony...
+//
+DEF_OP(EXP) {
+  stackPush(Val_Double::mk(exp(pop_double())));
+}
+DEF_OP(LN) {
+  stackPush(Val_Double::mk(log(pop_double())));
+}
+DEF_OP(DRAND48) {
+  stackPush(Val_Double::mk(drand48()));
+}
+
 
 /*
  * End of file 
