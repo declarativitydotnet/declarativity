@@ -4,18 +4,16 @@
 // @Author: Vik Singh
 // @Date: 12/30/2004
 
-// CLASS Id
+//// @CLASS Id
 
-Id::Id (IdTable * table) { this->table = table; }
+Id::Id () { }
 
-Id::Id (const u_int32_t * num, IdTable * table) {
+Id::Id (const u_int32_t * num) {
   for (int i = 0; i < 5; i += 1)
     key[i] = *(num + i);
-  this->table = table;
 }
 
-Id::Id (const std::string& idString, IdTable * table) {
-  this->table = table;
+Id::Id (const std::string& idString) {
 }
 
 std::bitset<160> Id::toBitWord (u_int32_t num) {
@@ -76,55 +74,46 @@ u_int32_t Id::getWord (const int index) const {
   return key[index];
 }
 
-// CLASS IdTable
+//// @CLASS IdTable
 
-IdTable::IdTable () { maxSize = 0; }
-
-void IdTable::initialize_gc (const size_t num) {
+void IdTable::initialize_gc (const size_t num, const size_t thresh) {
   maxSize = num;
-}
-
-bool IdTable::equalByVal (const Id * x, const Id * y) {
-  for (int i = 0; i < 5; i += 1) {
-    if (x->key[i] == y->key[i]) continue;
-    else return false;
-  }
-  return true;
+  threshold = thresh;
 }
 
 // const Id * create (const XDR * xdr);
 
-const Id * IdTable::create (const std::string& idString) {
-  Id * result = new Id (this); // use New ref<Id> (idString);
+ref<Id> IdTable::create (const std::string& idString) {
+  ref<Id> result = New refcounted<Id> (); // use New ref<Id> (idString);
   return storeId (result);
 }
 
-const Id * IdTable::create (const u_int32_t * random) {
-  Id * result = new Id (random, this); // use New ref<Id> (random);
+ref<Id> IdTable::create (const u_int32_t * random) {
+  ref<Id> result = New refcounted<Id> (random); // use New ref<Id> (random);
   return storeId (result);
 }
 
-const Id * IdTable::create () {
-  Id * result = new Id (this); // auto gen with dev/urandom
+ref<Id> IdTable::create () {
+  ref<Id> result = New refcounted<Id> (); // auto gen with dev/urandom
   return storeId (result);
 }
 
 size_t IdTable::size () const {
-  return idSet.size ();
+  return memTable.size ();
 }
 
-void IdTable::remove (const Id * idPtr) {
-  idSet.erase (idPtr);
+void IdTable::remove (ref<Id> idPtr) {
+  memTable.erase (idPtr);
 }
 
 void IdTable::clear () {
-  idSet.clear ();
+  memTable.clear ();
 }
 
-const Id * IdTable::storeId (const Id * idKey) {
-  std::map<const Id *, int, IdComparator>::iterator
-    idFound = idSet.find (idKey);
-  if (idFound != idSet.end ()) {
+ref<Id> IdTable::storeId (ref<Id> idKey) {
+  std::map< ref<Id>, int, IdComparator >::iterator
+    idFound = memTable.find (idKey);
+  if (idFound != memTable.end ()) {
     delete idKey;
     return idFound->first;
   }
@@ -134,30 +123,36 @@ const Id * IdTable::storeId (const Id * idKey) {
   }
 }
 
-void IdTable::add (const Id * idKey) {
-  idSet.insert (std::pair<const Id *, int> (idKey, 0));
-  if (maxSize == 0) return;
-  else if (idSet.size () > maxSize)
+void IdTable::add (ref<Id> idKey) {
+  memTable.insert (std::pair< ref<Id>, int > (idKey, 0));
+  if (maxSize == -1) return;
+  else if (memTable.size () > maxSize)
     gc ();
 }
 
-// ref<Id> 's are deleted automatically from the set when
-// refcount goes to zero - look at Id::finalize ()
 void IdTable::gc () {
-  /**
-   * Get the size of @idSet
-   * divide size by 2
-   * first half = old
-   * second half = recent
-   * fudge factor = desired size, keep collecting until ff
-   * reached
-   * within this set order @Id's by # of references
-   * within this set order @Id's by time of last use
-   *
-   */
-  std::map<const Id *, int, IdComparator>::iterator items =
-    idSet.begin ();
-  while (items != idSet.end ()) {
-  }
+  assert (!memTable.empty ());
+  const size_t HALF = size () / 2;
+  if (threshold > HALF || threshold == 0)
+    threshold = (size_t) (HALF * .20);
+
+  /*
+  struct IdRefCompare {
+    bool operator () (std::pair< ref<Id>, int > &  x,
+	              std::pair< ref<Id>, int > & y) const {
+      return (x.first->refcount_getcnt () <
+	      y.first->refcount_getcnt ());
+    }
+  };
+
+  std::sort (memTable.begin (), memTable.end (), IdRefCompare);
+
+  std::map< ref<Id>, int, IdComparator >::iterator item =
+    memTable.end ();
+
+  for (int i = 0; i < threshold; i += 1, i += 1, item -= 1)
+    remove (item);
+  */
+
 }
 
