@@ -13,10 +13,8 @@ libp2core_la_SOURCES = \
 	thooker.C \
 	telemental.C \
 	pel_lexer.C \
+        idTable.C \
 	pel_vm.C
-
-# \
-#        IdTable.C
 
 INCLUDES = @SFS_INC@
 
