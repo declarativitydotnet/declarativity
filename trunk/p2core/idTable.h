@@ -39,10 +39,10 @@ class Id /* : private virtual refcount */ {
     // key represented as 5 @u_int32_t words
     u_int32_t key[5];
 
-  public:
     Id (const u_int32_t *);
     Id (const std::string&);
 
+  public:
     size_t hashCode;
     std::bitset<160> toBitSet () const;
     std::string toHexString () const;
