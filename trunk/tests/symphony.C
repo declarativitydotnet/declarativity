@@ -357,21 +357,21 @@ void ruleSymphonyL3(str name,
 
 
 /** 
-    rule SU3 finger@NI(NI,0,S,SI) :- bestSuccessor@NI(NI,S,SI).
- */
+    rule SU3 symFinger@NI(NI,0,S,SI) :- bestSuccessor@NI(NI,S,SI).
+*/
 void ruleSymphonySU3(str name,
-             Router::ConfigurationRef conf,
-             ElementSpecRef pushBestSuccessorIn,
-             int pushBestSuccessorInPort,
-             ElementSpecRef pullFingerOut,
-             int pullFingerOutPort)
+                     Router::ConfigurationRef conf,
+                     ElementSpecRef pushBestSuccessorIn,
+                     int pushBestSuccessorInPort,
+                     ElementSpecRef pullSymFingerOut,
+                     int pullSymFingerOutPort)
 {
-  // Project onto finger(NI, 0, B, BI)
+  // Project onto symFinger(NI, 0, B, BI)
   // from
   // bestSuccessor(NI, S, SI)
   ElementSpecRef projectS =
     conf->addElement(New refcounted< PelTransform >(strbuf("project:").cat(name),
-                                                    "\"finger\" pop \
+                                                    "\"symFinger\" pop \
                                                      $1 pop /* out bS.NI */\
                                                      0 pop /* out 0 */\
                                                      $2 pop /* out bS.S */\
@@ -381,7 +381,7 @@ void ruleSymphonySU3(str name,
     conf->addElement(New refcounted< Slot >(strbuf("Slot:") << name));
   conf->hookUp(pushBestSuccessorIn, pushBestSuccessorInPort, projectS, 0);
   conf->hookUp(projectS, 0, slotS, 0);
-  conf->hookUp(slotS, 0, pullFingerOut, pullFingerOutPort);
+  conf->hookUp(slotS, 0, pullSymFingerOut, pullSymFingerOutPort);
 }
 
 
@@ -1156,24 +1156,24 @@ void ruleSymphonyJ7(str name,
 
 void
 connectRulesSymphony(str name,
-             str localAddress,
-             Router::ConfigurationRef conf,
-             TableRef bestSuccessorTable,
-             TableRef fingerLookupTable,
-             TableRef fingerTable,
-             TableRef joinRecordTable,
-             TableRef landmarkNodeTable,
-             TableRef nextFingerFixTable,
-             TableRef nodeTable,
-             TableRef predecessorTable,
-             TableRef stabilizeRecordTable,
-             TableRef successorTable,
-             Table::MultAggregate successorCountAggregate,
-             ElementSpecRef pushTupleIn,
-             int pushTupleInPort,
-             ElementSpecRef pullTupleOut,
-             int pullTupleOutPort,
-             double delay = 0)
+                     str localAddress,
+                     Router::ConfigurationRef conf,
+                     TableRef bestSuccessorTable,
+                     TableRef fingerLookupTable,
+                     TableRef fingerTable,
+                     TableRef joinRecordTable,
+                     TableRef landmarkNodeTable,
+                     TableRef nextFingerFixTable,
+                     TableRef nodeTable,
+                     TableRef predecessorTable,
+                     TableRef stabilizeRecordTable,
+                     TableRef successorTable,
+                     Table::MultAggregate successorCountAggregate,
+                     ElementSpecRef pushTupleIn,
+                     int pushTupleInPort,
+                     ElementSpecRef pullTupleOut,
+                     int pullTupleOutPort,
+                     double delay = 0)
 {
   // My wraparound mux.  On input 0 comes the outside world. On input 1
   // come tuples that have left locally destined for local rules
@@ -1190,8 +1190,8 @@ connectRulesSymphony(str name,
   // The demux element for tuples
   ref< vec< ValueRef > > demuxKeys = New refcounted< vec< ValueRef > >;
   demuxKeys->push_back(New refcounted< Val_Str >(str("successor")));
-  demuxKeys->push_back(New refcounted< Val_Str >(str("lookup")));
-  demuxKeys->push_back(New refcounted< Val_Str >(str("bestLookupDistance")));
+  demuxKeys->push_back(New refcounted< Val_Str >(str("symLookup")));
+  demuxKeys->push_back(New refcounted< Val_Str >(str("bestSymLookupDistance")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("bestSuccessorDist")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("maxSuccessorDist")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("evictSuccessor")));
@@ -1204,7 +1204,7 @@ connectRulesSymphony(str name,
   demuxKeys->push_back(New refcounted< Val_Str >(str("fingerLookup")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("stabilizeRecord")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("fixFinger")));
-  demuxKeys->push_back(New refcounted< Val_Str >(str("lookupResults")));
+  demuxKeys->push_back(New refcounted< Val_Str >(str("symLookupResults")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("join")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("joinEvent")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("joinRecord")));
@@ -1230,19 +1230,19 @@ connectRulesSymphony(str name,
   conf->hookUp(demuxS, nextDemuxOutput++, insertSuccessor, 0);
   conf->hookUp(insertSuccessor, 0, dupSuccessor, 0);
 
-  ElementSpecRef dupLookup = conf->addElement(New refcounted< DuplicateConservative >(strbuf("lookup") << "Dup:" << name, 2));
-  ElementSpecRef qLookup = conf->addElement(New refcounted< Queue >("lookupQueue", SYMQUEUE_LENGTH));
-  ElementSpecRef tPPLookup = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
-  conf->hookUp(demuxS, nextDemuxOutput++, qLookup, 0);
-  conf->hookUp(qLookup, 0, tPPLookup, 0);
-  conf->hookUp(tPPLookup, 0, dupLookup, 0);
+  ElementSpecRef dupSymLookup = conf->addElement(New refcounted< DuplicateConservative >(strbuf("symLookup") << "Dup:" << name, 2));
+  ElementSpecRef qSymLookup = conf->addElement(New refcounted< Queue >("symLookupQueue", SYMQUEUE_LENGTH));
+  ElementSpecRef tPPSymLookup = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qSymLookup, 0);
+  conf->hookUp(qSymLookup, 0, tPPSymLookup, 0);
+  conf->hookUp(tPPSymLookup, 0, dupSymLookup, 0);
 
-  ElementSpecRef dupBestLookupDistance = conf->addElement(New refcounted< DuplicateConservative >(strbuf("bestLookupDistance") << "Dup:" << name, 1));
-  ElementSpecRef qBestLookupDistance = conf->addElement(New refcounted< Queue >("BestLookupDistance", SYMQUEUE_LENGTH));
-  ElementSpecRef tPPBestLookupDistance = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
-  conf->hookUp(demuxS, nextDemuxOutput++, qBestLookupDistance, 0);
-  conf->hookUp(qBestLookupDistance, 0, tPPBestLookupDistance, 0);
-  conf->hookUp(tPPBestLookupDistance, 0, dupBestLookupDistance, 0);
+  ElementSpecRef dupBestSymLookupDistance = conf->addElement(New refcounted< DuplicateConservative >(strbuf("bestSymLookupDistance") << "Dup:" << name, 1));
+  ElementSpecRef qBestSymLookupDistance = conf->addElement(New refcounted< Queue >("BestSymLookupDistance", SYMQUEUE_LENGTH));
+  ElementSpecRef tPPBestSymLookupDistance = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qBestSymLookupDistance, 0);
+  conf->hookUp(qBestSymLookupDistance, 0, tPPBestSymLookupDistance, 0);
+  conf->hookUp(tPPBestSymLookupDistance, 0, dupBestSymLookupDistance, 0);
 
   ElementSpecRef dupBestSuccessorDistance = conf->addElement(New refcounted< DuplicateConservative >(strbuf("bestSuccessorDist") << "Dup:" << name, 1));
   ElementSpecRef qBestSuccessorDistance = conf->addElement(New refcounted< Queue >("BestSuccessorDistanceQueue", SYMQUEUE_LENGTH));
@@ -1322,12 +1322,12 @@ connectRulesSymphony(str name,
   conf->hookUp(qFixFinger, 0, tPPFixFinger, 0);
   conf->hookUp(tPPFixFinger, 0, dupFixFinger, 0);
 
-  ElementSpecRef dupLookupResults = conf->addElement(New refcounted< DuplicateConservative >(strbuf("lookupResults") << "Dup:" << name, 2));
-  ElementSpecRef qLookupResults = conf->addElement(New refcounted< Queue >("LookupResultsQueue", SYMQUEUE_LENGTH));
-  ElementSpecRef tPPLookupResults = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
-  conf->hookUp(demuxS, nextDemuxOutput++, qLookupResults, 0);
-  conf->hookUp(qLookupResults, 0, tPPLookupResults, 0);
-  conf->hookUp(tPPLookupResults, 0, dupLookupResults, 0);
+  ElementSpecRef dupSymLookupResults = conf->addElement(New refcounted< DuplicateConservative >(strbuf("symLookupResults") << "Dup:" << name, 2));
+  ElementSpecRef qSymLookupResults = conf->addElement(New refcounted< Queue >("SymLookupResultsQueue", SYMQUEUE_LENGTH));
+  ElementSpecRef tPPSymLookupResults = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qSymLookupResults, 0);
+  conf->hookUp(qSymLookupResults, 0, tPPSymLookupResults, 0);
+  conf->hookUp(tPPSymLookupResults, 0, dupSymLookupResults, 0);
 
   ElementSpecRef dupJoin = conf->addElement(New refcounted< DuplicateConservative >(strbuf("join") << "Dup:" << name, 3));
   ElementSpecRef qJoin = conf->addElement(New refcounted< Queue >("JoinQueue", SYMQUEUE_LENGTH));
@@ -1458,23 +1458,23 @@ connectRulesSymphony(str name,
 
 
 
-  ruleSymphonyL1(strbuf(name) << ":L1",
+  ruleSymphonyL1(strbuf(name) << ":SymL1",
          conf,
          nodeTable,
          bestSuccessorTable,
-         dupLookup, 0,
+         dupSymLookup, 0,
          roundRobin, roundRobinPortCounter++);
-  ruleSymphonyL2(strbuf(name) << ":L2",
+  ruleSymphonyL2(strbuf(name) << ":SymL2",
          conf,
          nodeTable,
          fingerTable,
-         dupLookup, 1,
+         dupSymLookup, 1,
          roundRobin, roundRobinPortCounter++);
-  ruleSymphonyL3(strbuf(name) << ":L3",
+  ruleSymphonyL3(strbuf(name) << ":SymL3",
          conf,
          nodeTable,
          fingerTable,
-         dupBestLookupDistance, 0,
+         dupBestSymLookupDistance, 0,
          roundRobin, roundRobinPortCounter++);
   ruleSU1(strbuf(name) << ":SU1",
           conf,
@@ -1489,10 +1489,10 @@ connectRulesSymphony(str name,
           bestSuccessorTable,
           dupBestSuccessorDistance, 0,
           roundRobin, roundRobinPortCounter++);
-  ruleSymphonySU3(strbuf(name) << ":SU3",
-          conf,
-          dupBestSuccessor, 0,
-          roundRobin, roundRobinPortCounter++);
+  ruleSymphonySU3(strbuf(name) << ":SymSU3",
+                  conf,
+                  dupBestSuccessor, 0,
+                  roundRobin, roundRobinPortCounter++);
   ruleSR1(strbuf(name) << ":SR1",
           conf,
           successorCountAggregate,
@@ -1513,6 +1513,7 @@ connectRulesSymphony(str name,
           nodeTable,
           successorTable,
           dupMaxSuccessorDist, 0);
+  /**
   ruleSymphonyF1(strbuf(name) << ":F1",
          conf,
          localAddress,
@@ -1556,44 +1557,45 @@ connectRulesSymphony(str name,
          nodeTable,
          dupEagerFinger, 3,
          roundRobin, roundRobinPortCounter++);
+  */
   ruleSymphonyJ1(strbuf(name) << ":J1",
-         conf,
-         dupJoinEvent, 0,
-         roundRobin, roundRobinPortCounter++);
+                 conf,
+                 dupJoinEvent, 0,
+                 roundRobin, roundRobinPortCounter++);
   ruleSymphonyJ1a(strbuf(name) << ":J1a",
-          conf,
-          localAddress,
-          delay,
-          roundRobin, roundRobinPortCounter++);
+                  conf,
+                  localAddress,
+                  delay,
+                  roundRobin, roundRobinPortCounter++);
   ruleSymphonyJ2(strbuf(name) << ":J2",
-         conf,
-         dupJoin, 0,
-         roundRobin, roundRobinPortCounter++);
+                 conf,
+                 dupJoin, 0,
+                 roundRobin, roundRobinPortCounter++);
   ruleSymphonyJ3(strbuf(name) << ":J3",
-         conf,
-         landmarkNodeTable,
-         nodeTable,
-         dupJoin, 1,
-         roundRobin, roundRobinPortCounter++);
+                 conf,
+                 landmarkNodeTable,
+                 nodeTable,
+                 dupJoin, 1,
+                 roundRobin, roundRobinPortCounter++);
   ruleSymphonyJ4(strbuf(name) << ":J4",
-         conf,
-         dupStartJoin, 0,
-         roundRobin, roundRobinPortCounter++);
+                 conf,
+                 dupStartJoin, 0,
+                 roundRobin, roundRobinPortCounter++);
   ruleSymphonyJ5(strbuf(name) << ":J5",
-         conf,
-         joinRecordTable,
-         dupLookupResults, 1,
-         roundRobin, roundRobinPortCounter++);
+                 conf,
+                 joinRecordTable,
+                 dupLookupResults, 1,
+                 roundRobin, roundRobinPortCounter++);
   ruleSymphonyJ6(strbuf(name) << ":J6",
-         conf,
-         localAddress,
-         roundRobin, roundRobinPortCounter++);
+                 conf,
+                 localAddress,
+                 roundRobin, roundRobinPortCounter++);
   ruleSymphonyJ7(strbuf(name) << ":J7",
-         conf,
-         landmarkNodeTable,
-         nodeTable,
-         dupJoin, 2,
-         roundRobin, roundRobinPortCounter++);
+                 conf,
+                 landmarkNodeTable,
+                 nodeTable,
+                 dupJoin, 2,
+                 roundRobin, roundRobinPortCounter++);
   ruleS0(strbuf(name) << ":S0",
          conf,
          localAddress,
