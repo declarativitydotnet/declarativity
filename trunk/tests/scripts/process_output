@@ -329,6 +329,7 @@ if __name__ == "__main__":
     max_max_bw = 0.0
     min_min_bw = sys.maxint
     
+    avg_counter = 0
     for file in files:
         nodeid = nodeid + 1
         if not os.path.exists(file):
@@ -337,16 +338,20 @@ if __name__ == "__main__":
         fh = open(file, "r")
 
         min_bw, avg_bw, max_bw = process_node(fh, lookups, results)
-        print >> node_bw, "%d %f %f %f" % (nodeid, float(min_bw), float(avg_bw), float(max_bw))
+	if avg_bw != 0:
+            print >> node_bw, "%d %f %f %f" % (nodeid, float(min_bw), float(avg_bw), float(max_bw))
 
-        if max_max_bw < max_bw: max_max_bw = max_bw
-        if min_min_bw > min_bw: min_min_bw = min_bw
-        avg_avg_bw += avg_bw
+            if max_max_bw < max_bw: max_max_bw = max_bw
+            if min_min_bw > min_bw: min_min_bw = min_bw
+            avg_avg_bw += avg_bw
+            avg_counter += 1
 
         node_bw.flush()
         fh.close()
-    avg_avg_bw /= float(nodeid)
-    print >> node_bw, "#%d %f %f %f" % (nodeid, float(min_min_bw), float(avg_avg_bw), float(max_max_bw))
+    if avg_counter != 0:
+        avg_avg_bw /= avg_counter
+    else: avg_avg_bw = -1
+    print >> node_bw, "#%d %f %f %f" % (avg_counter, float(min_min_bw), float(avg_avg_bw), float(max_max_bw))
     node_bw.close()
 
     print "SANITY CHECK: counted %d distinct result tuples." % (len(resultsHash.keys()))
