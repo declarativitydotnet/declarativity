@@ -95,6 +95,11 @@ class RouterThread {
     
   friend class Task;
   friend class Master;
+  friend class refcounted< RouterThread >;
 };
+
+typedef ptr< RouterThread > RouterThreadPtr;
+typedef ref< RouterThread > RouterThreadRef;
+
 
 #endif
