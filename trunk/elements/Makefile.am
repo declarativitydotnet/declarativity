@@ -26,7 +26,8 @@ libp2elements_la_SOURCES = \
 	csvparser.C \
 	unmarshal.C \
 	route.C \
-	demux.C
+	demux.C \
+	duplicate.C
 
 INCLUDES = @SFS_INC@ -I../p2core
 

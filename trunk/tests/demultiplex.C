@@ -89,7 +89,7 @@ void testStaticDemux()
 
 int main(int argc, char **argv)
 {
-  std::cout << "\nSCHEDULING\n";
+  std::cout << "\nDEMULTIPLEX\n";
 
   testStaticDemux();
 
