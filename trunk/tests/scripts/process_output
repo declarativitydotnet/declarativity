@@ -298,7 +298,7 @@ if __name__ == "__main__":
         node_bw.flush()
         fh.close()
     avg_avg_bw /= float(nodeid)
-    print >> node_bw, "#%d %f %f %f" % (nodeid, float(min_bw), float(avg_bw), float(max_bw))
+    print >> node_bw, "#%d %f %f %f" % (nodeid, float(min_min_bw), float(avg_avg_bw), float(max_max_bw))
     node_bw.close()
 
     print "SANITY CHECK: counted %d distinct result tuples." % (len(resultsHash.keys()))
