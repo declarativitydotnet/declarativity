@@ -125,8 +125,7 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref< RouterConfigGenerator> rou
     std::cout << "Node: " << tuple->toString() << "\n";
   }
     
-
-
+  
   {  
     TableRef bestSuccessorTable = routerConfigGenerator->getTableByName(LOCAL, "bestSuccessor");
     TupleRef tuple = Tuple::mk();
@@ -145,7 +144,16 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref< RouterConfigGenerator> rou
     
     bestSuccessorTable->insert(tuple);
     std::cout << "BestSuccessor: " << tuple->toString() << "\n";
-  }
+    }
+
+  TableRef nextFingerFixTable = routerConfigGenerator->getTableByName(LOCAL, "nextFingerFix");
+  TupleRef nextFingerFixTuple = Tuple::mk();
+  nextFingerFixTuple->append(Val_Str::mk("nextFingerFix"));
+  nextFingerFixTuple->append(Val_Str::mk(LOCAL));
+  nextFingerFixTuple->append(Val_Int32::mk(0));
+  nextFingerFixTuple->freeze();
+  nextFingerFixTable->insert(nextFingerFixTuple);
+  std::cout << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";
 }
 
 
@@ -202,7 +210,7 @@ void startChord(LoggerI::Level level, ref< OL_Context> ctxt, str datalogFile)
    
   // populate the finger entries
   initializeBaseTables(ctxt, routerConfigGenerator);
-  sendSuccessorStream(bootstrapUdp, conf);
+  //sendSuccessorStream(bootstrapUdp, conf);
 
   
   RouterRef router = New refcounted< Router >(conf, level);
