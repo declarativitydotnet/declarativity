@@ -34,7 +34,7 @@ std::bitset<160> Id::toBitWord (u_int32_t num) {
 }
 
 std::string Id::toHexWord (u_int32_t num) {
-  const std::string HEX_DIGITS = "0123456789ABCDEF";
+  static const std::string HEX_DIGITS = "0123456789ABCDEF";
   char result[] = {'0','0','0','0','0','0','0','0','\0'};
   int remainder;
   for (int i = 0; i < 8 && num >= 1; i += 1) {
@@ -75,7 +75,7 @@ size_t Id::getHash () const {
   return result;
 }
 
-u_int32_t Id::getWord (const int index) const {
+u_int32_t Id::getWord (const u_int index) const {
   assert (index >= 0 && index < 5);
   return key[index];
 }
