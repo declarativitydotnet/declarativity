@@ -65,11 +65,15 @@
 
 
 static const int SUCCESSORSIZE = 4;
+static const int FINGERSIZE = ID::WORDS * 32;
+static const int QUEUE_LENGTH = 1000;
+#ifdef __P2__WITH_CHURN__
 static const int FINGERTTL = 4;
 static const int SUCCEXPIRATION = FINGERTTL * 2;
-static const int FINGERSIZE = ID::WORDS * 32;
 static const int FINGEREXPIRATION = FINGERTTL * 2;
-static const int QUEUE_LENGTH = 1000;
+#else
+static const int FINGERTTL = 10;
+#endif
 
 /**
  *rule L1 lookupResults@R(R,K,S,SI,E) :- node@NI(NI,N),
@@ -2679,11 +2683,16 @@ void createNode(str myAddress,
                 Udp* udp,
                 double delay = 0)
 {
+#ifdef __P2__WITH_CHURN__
   timespec fingerExpiration;
   fingerExpiration.tv_sec = FINGEREXPIRATION;
   fingerExpiration.tv_nsec = 0;
   TableRef fingerTable =
     New refcounted< Table >(strbuf("fingerTable"), FINGERSIZE, &fingerExpiration);
+#else
+  TableRef fingerTable =
+    New refcounted< Table >(strbuf("fingerTable"), FINGERSIZE);
+#endif
   fingerTable->add_unique_index(2);
   fingerTable->add_multiple_index(1);
   
@@ -2715,6 +2724,7 @@ void createNode(str myAddress,
     New refcounted< Table >(strbuf("bestSuccessorTable"), 1);
   bestSuccessorTable->add_unique_index(1);
   
+#ifdef __P2__WITH_CHURN__
   timespec successorExpiration;
   successorExpiration.tv_sec = SUCCEXPIRATION;
   successorExpiration.tv_nsec = 0;
@@ -2724,6 +2734,11 @@ void createNode(str myAddress,
                                                    // replacement policy
                                                    // deal with
                                                    // evictions
+#else
+  TableRef successorTable =
+    New refcounted< Table >(strbuf("successorTable"), 100);
+#endif
+
   successorTable->add_multiple_index(1);
   successorTable->add_unique_index(2);
 
