@@ -14,9 +14,10 @@
 #define __PLSENSOR_H__
 
 #include "element.h"
+#include <async.h>
+#include <rxx.h>
 
-
-class PlSensor { 
+class PlSensor : public Element { 
   
   const char *class_name() const		{ return "Plsensor";};
   const char *processing() const		{ return "/hh"; };
@@ -27,11 +28,26 @@ public:
   PlSensor(u_int16_t sensor_port, str sensor_path, timespec reconnect_delay);
 
 private:
+
+  void enter_connecting();
+  void error_cleanup(uint32_t errnum, str errmsg);
+  void enter_waiting();
+  void wait_cb();
+  void connect_cb(int fd);
+  void write_cb();
+  void rx_hdr_cb();
+  void rx_body_cb();
+  void socket_on() { fdcb(sd, selread, wrap(this,&PlSensor::rx_body_cb)); };
+  void socket_off() { fdcb(sd, selread, NULL); };
+  void element_cb();
+  
+  static const size_t MAX_REQUEST_SIZE = 10000;
   
   // States
   enum State { ST_CONNECTING, 
 	       ST_SENDING, 
-	       ST_RECEIVING, 
+	       ST_RX_HEADERS,
+	       ST_RX_BODY, 
 	       ST_BLOCKED,
 	       ST_WAITING };
   State		state;
@@ -40,7 +56,12 @@ private:
   u_int16_t	port;
   str		path;
   int		sd; 
-  tcpconn_t	tc;
+  tcpconnect_t *tc;
+  rxx		req_re;
+  str		hdrs;
+  in_addr	localaddr;
+  timecb_t     *wait_timecb;
+
 
   // Time between reconnects
   timespec	delay;
