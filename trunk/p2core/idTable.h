@@ -1,25 +1,39 @@
 
 // @Author: Vik Singh
-// @Date: 12/30/2004
+// @Date: 1/19/2004
 
 #ifndef __IDTABLE_H__
 #define __IDTABLE_H__
 
-#define IDTBL_TEST 0
-
 #include <string>
 #include <bitset>
-#include <map>
 #include <utility>
 #include <algorithm>
+
 #include <async.h>
 #include <assert.h>
 #include <ihash.h>
 
-#include "random.h"
-
-
+class Id;
 class IdTable;
+
+/** --------------------------------------------------------------
+ *  @CLASS: IdHash
+ *  @DESCRIPTION: Wraps up a ref counted pointer to @Id, along with
+ *                its ihash_entry and hashcode. @IdHash gets
+ *                stored in the ihash
+ *  -------------------------------------------------------------- */
+struct IdHash {
+  inline void idRemove ();
+  ihash_entry <IdHash> id_hashLink;
+  size_t hashCode;
+
+  IdTable * table;
+
+  ref<Id> id;
+  IdHash (ref<Id> idPtr, IdTable * table);
+};
+
 /** --------------------------------------------------------------
  *  @CLASS: Id
  *  @DESCRIPTION: Represents 160-bit key value, provides functions
@@ -27,38 +41,34 @@ class IdTable;
  *  @NOTE: @IdTable is a FRIEND since it uses the private member
  *         function refcount_getcnt () for garbage collection
  *  -------------------------------------------------------------- */
-class Id /* : private virtual refcount */ {
+class Id : private virtual refcount {
   friend class IdTable;
   private:
-    inline size_t getHash () const;
+    static ref<Id> mkIdRef (const u_int32_t *);
+    static ref<Id> mkIdRef (const std::string&);
+    
     static std::bitset<160> toBitWord (u_int32_t num);
     static std::string toHexWord (u_int32_t num);
-    
-    // void finalize () 	{ delete this; }
+
+    IdHash * hashWrapper;
 
     // key represented as 5 @u_int32_t words
     u_int32_t key[5];
 
-    Id (const u_int32_t *);
-    Id (const std::string&);
-
   public:
-    size_t hashCode;
+    // constructor should be private but that doesn't play
+    // nicely with @refcounted
+    Id () {}
+    inline size_t getHash () const;
     std::bitset<160> toBitSet () const;
     std::string toHexString () const;
     inline u_int32_t getWord (const int) const;
-    ihash_entry <Id> id_hashLink;
+
+    // remove the wrapper @IdHash from the ihash and delete my ptr
+    // check if @finalize needs to be private
+    void finalize () { hashWrapper->idRemove (); delete this; }
 
     // static Id * unmarshal (const XDR *);
-};
-
-/** Function object to quickly compare ID's - since they are
- *  memoized and a @Id bit pattern is stored once in the address
- *  space, it suffices to just check references */
-struct IdComparator {
-  bool operator () (Id * x, Id * y) const {
-    return (x == y);
-  }
 };
 
 /** --------------------------------------------------------------
@@ -69,37 +79,40 @@ struct IdComparator {
  *  -------------------------------------------------------------- */
 class IdTable {
   public:
-    IdTable ()   { maxSize = threshold = 0; }
+    IdTable ()   { threshold = numOfInserts = 0; }
     ~IdTable ()	 { clear ();     }
 
-    inline void initialize_gc (const size_t, const size_t);
+    inline void initialize_gc (const size_t);
     
     // @create: factory functions to create and memoize @Id's.
-    // if the requested @Id already stored, the function returns
-    // the ref<Id> to the existing @Id
-    Id * create (const std::string&);
-    
-    #if IDTBL_TEST == 1
-    Id * create (const u_int32_t *);
-    #endif
+    // if the requested @Id is already stored, the function
+    // returns the ref<Id> to the existing @Id
+    ref<Id> create (const std::string&);
+
+    ref<Id> create (const u_int32_t *);
 
     // create a random @Id using /dev/urandom
-    Id * create ();
+    ref<Id> create ();
 
     // static Id * create (const XDR *);
 
     inline size_t size () const;
-    inline void remove (Id *);
+
+    inline void remove (IdHash *);
     inline void clear ();
 
   private:
-    ihash< size_t, Id, &Id::hashCode, &Id::id_hashLink > memTable;
-    size_t maxSize;
+    ihash< size_t, IdHash, &IdHash::hashCode, &IdHash::id_hashLink >
+      memTable;
     size_t threshold;
+    size_t numOfInserts;
 
     void gc ();
-    Id * storeId (Id *);
-    void add (Id *);
+
+    // @storeId performs memoization
+    ref<Id> storeId (ref<Id>);
+
+    void add (IdHash *);
 };
 
 #endif /** !__IDTABLE_H__ */
