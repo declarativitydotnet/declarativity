@@ -4,21 +4,23 @@
  */
 
 /* The base tuples */
-materialise(node, 2, infinity, 1).
-materialise(finger, 4, infinity, 16).
-materialise(successor, 3, infinity, 16).
-materialise(predecessor, 3, infinity, 1).
-materialise(bestSuccessor, 3, infinity, 1).
+materialize(node, 2, infinity, 1).
+materialize(finger, 4, infinity, 16).
+materialize(successor, 3, infinity, 100).
+materialize(predecessor, 3, infinity, 1).
+materialize(bestSuccessor, 3, infinity, 1).
 materialize(nextFingerFix, 2, infinity, 1).
 materialize(fingerLookup, 3, infinity, 16).
 materialize(stabilize, 2, infinity, 1).
 materialize(notify, 2, infinity, 1).
 materialize(landmarkNode, 2, infinity, 1).
 materialize(joinRecord, 2, infinity, 1).
+materialize(successorNodeDistance, 3, infinity, 100).
 
 primarykeys(node, 1).
 primarykeys(finger, 2).
 primarykeys(successor, 2).
+primarykeys(successorNodeDistance, 2).
 primarykeys(predecessor, 1).
 primarykeys(bestSuccessor, 1).
 primarykeys(nextFingerFix, 1).
@@ -53,7 +55,6 @@ rule L3 lookup@BI(BI,K,R,E) :-
      select_rangeID1(B,N,K).
 
 
-
 rule L4 checkFingers@NI(NI,K,R,E,I2):- 
      node@NI(NI,N),
      checkFingers@NI(NI,K,R,E,I), 
@@ -64,37 +65,49 @@ rule L4 checkFingers@NI(NI,K,R,E,I2):-
 
 
 /* Neighbor Selection */
+
+
+rule SU1 successorNodeDistance@NI(NI,S,SI) :-
+         node@NI(NI,N),
+	 newSuccessor@NI(NI,S,SI),
+	 !select_eqS(N,S),
+	 assign_distID(D,N,S).
+
+rule SU2 newSuccessor@NI(NI,S,SI) :- 
+     successor@NI(NI,S,SI).
+
+
+rule SU3 minSuccessorDist@NI(NI,MD) :-
+        successorNodeDistance@NI(NI,S,D),
+	agg_min(MD,D).
+
+rule SU4 bestSuccessor@NI(NI,S,SI) :-
+	node@NI(NI,N),
+	minSuccessorDist@NI(NI,D),
+	successor@NI(NI,S,SI),
+	successorNodeDistance@NI(NI,S,D).
+
+rule SR1 successorCount@NI(NI,C) :-
+	successor@NI(NI,S,SI),
+	agg_count(C).
+
+rule SR2 maxSuccessorDist@NI(NI,MD) :-
+        successorNodeDistance(NI,S,D),
+	agg_max(MD,D).
+
 /*
-rule SU1 bestSuccessorDist@NI(NI,min<D>) :-
-	node@NI(NI,N),
+rule SR3 delete successor@NI(NI,S,SI) :-
 	successor@NI(NI,S,SI),
-	D=f_dist(N,S)-1.
+	maxSuccessorDist@NI(NI,S,D),
+	successorCount@NI(NI,C), 
+	C>successor.size
 
-rule SU2 bestSuccessor@NI(NI,S,SI) :-
-	node@NI(NI,N),
-	bestSuccessorDist@NI(NI,D),
-	successor@NI(NI,S,SI),
-	D=f_dist(N,S)-1.
+rule SR4 delete successorNodeDistance@NI(NI,S,D) :-
+	maxSuccessorDist@NI(NI,S,D),
+	successorCount@NI(NI,C), 
+	C>successor.size
 
-rule SR1 successorCount(NI,count<>) :-
-	successor(NI,S,SI).
-
-rule SR2 evictSuccessor@NI(NI) :-
-	successorCount@NI(NI,C),
-	C>successor.size.
-
-rule SR3 maxSuccessorDist@NI(NI,max<D>) :-
-	successor@NI(NI,S,SI),
-	node@NI(NI,N),
-	D = f_dist(N,S)-1,
-	evictSuccessor@NI(NI).
-
-rule SR4 delete successor@NI(NI,S,SI) :-
-	successor@NI(NI,S,SI),
-	maxSuccessorDist@NI(NI,D),
-	assign_dist(D,N,S).
-
-rule F1 fixFinger@NI(ni) :-
+event F1 fixFinger@NI(ni) :-
 	periodic@NI(finger.TTL*0.5).
 
 rule F2 nextFingerFix@NI(ni, 0).
@@ -137,11 +150,13 @@ rule J3 startJoin@LI(LI,N,NI,E) :-
 
 rule J4 lookup@LI(LI,N,NI,E) :-
 	startJoin@LI(LI,N,NI,E).
+*/
 
 rule J5 successor@NI(NI,S,SI) :-
 	joinRecord@NI(NI,E),
 	lookupResults@NI(NI,K,S,SI,E).
 
+/*
 rule J6 predecessor@NI(ni,null,"-").
 
 rule J7 successor@NI(NI, N, NI) :-
