@@ -62,6 +62,7 @@ class Task {
   /* if gcc keeps this ordering, we may get some cache locality on a 16
    * or 32 byte cache line: the first three fields are used in list
    * traversal */
+  //bool _name;
 
   /** My previous task in the task list */
   Task *_prev;

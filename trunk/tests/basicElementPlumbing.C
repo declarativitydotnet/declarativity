@@ -42,14 +42,62 @@ TupleRef create_tuple(int i) {
   return t;
 }
 
-/** Test the portion of router initialization that checks for sanity of
-    element hookups and lists */
-void testCheckHookupElements()
-{
-  std::cout << "\nCHECK ELEMENT HOOKUP\n";
 
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////
+// CHECK HOOKUP ELEMENTS
+////////////////////////////////////////////////////////////
+
+/** Hookup referring to non-existent element. */
+void testCheckHookupElements_NonExistentToElement()
+{
   // Create the elements
-  std::cout << "Creating elements\n";
+  std::cout << "[Testing non-existent TO element in hookup]\n";
+
+  TupleRef t = create_tuple(1);
+  ref< vec< TupleRef > > tupleRefBuffer =
+    New refcounted< vec< TupleRef > >();
+  tupleRefBuffer->push_back(t);
+  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
+  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
+
+
+  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
+  elements->push_back(pullPrintSpec);
+
+  Router::HookupRef hookup =
+    New refcounted< Router::Hookup >(memoryPullSpec, 0,
+                                     pullPrintSpec, 0);
+  ref < vec< Router::HookupRef > > hookups =
+    New refcounted< vec< Router::HookupRef > >();
+  hookups->push_back(hookup);
+
+  Router::ConfigurationRef configuration =
+    New refcounted< Router::Configuration >(elements, hookups);
+
+  MasterRef master = New refcounted< Master >();
+  RouterRef router = New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+    std::cerr << "** Failed to catch hookup reference to unknown to element\n";
+  } else {
+    std::cout << "Caught hookup reference to unknown to element\n";
+  }
+}
+
+
+/** Non existent from element */
+void testCheckHookupElements_NonExistentFromElement()
+{
+  std::cout << "\n[Non existent FROM element]\n";
 
   TupleRef t = create_tuple(1);
   ref< vec< TupleRef > > tupleRefBuffer =
@@ -64,7 +112,7 @@ void testCheckHookupElements()
   //////////////////////////////////////////////////////
   // Configuration that references non-existent elements
   ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(pullPrintSpec);
+  elements->push_back(memoryPullSpec);
 
   // Create the hookups
   Router::HookupRef hookup =
@@ -81,54 +129,81 @@ void testCheckHookupElements()
   MasterRef master = New refcounted< Master >();
   RouterRef router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
-    std::cerr << "** Failed to catch hookup reference to unknown to element\n";
-  } else {
-    std::cout << "Caught hookup reference to unknown to element\n";
-  }
-
-  elements->clear();
-  elements->push_back(memoryPullSpec);
-  master = New refcounted< Master >();
-  router = New refcounted< Router >(configuration, master);
-  if (router->initialize() == 0) {
     std::cerr << "** Failed to catch hookup reference to unknown from element\n";
   } else {
     std::cout << "Caught hookup reference to unknown from element\n";
   }
+}
 
 
-  // With the correct configuration
-  elements->clear();
-  elements->push_back(memoryPullSpec);
+/** From port is negative */
+void testCheckHookupElements_NegativeFromPort()
+{
+  std::cout << "\n[Negative From Port]\n";
+
+  TupleRef t = create_tuple(1);
+  ref< vec< TupleRef > > tupleRefBuffer =
+    New refcounted< vec< TupleRef > >();
+  tupleRefBuffer->push_back(t);
+  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
+  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
+
+  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
   elements->push_back(pullPrintSpec);
 
-  master = New refcounted< Master >();
-  router = New refcounted< Router >(configuration, master);
-  if (router->initialize() != 0) {
-    std::cerr << "** Failed to initialize correct configuration\n";
-  } else {
-    std::cout << "Correctly accepted a correct configuration\n";
-  }
-
-  // With some bad port numbers
-  hookup = New refcounted< Router::Hookup >(memoryPullSpec, -4,
-                                            pullPrintSpec, 0);
+  Router::HookupRef hookup = New refcounted< Router::Hookup >(memoryPullSpec, -4,
+                                                              pullPrintSpec, 0);
+  ref < vec< Router::HookupRef > > hookups =
+    New refcounted< vec< Router::HookupRef > >();
   hookups->push_back(hookup);
-  master = New refcounted< Master >();
-  router = New refcounted< Router >(configuration, master);
+
+  Router::ConfigurationRef configuration =
+    New refcounted< Router::Configuration >(elements, hookups);
+
+  MasterRef master = New refcounted< Master >();
+  RouterRef router = New refcounted< Router >(configuration, master);
+
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch negative from port\n";
   } else {
     std::cout << "Correctly caught negative from port\n";
   }
+}
 
-  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
-                                            pullPrintSpec, -4);
-  hookups->clear();
+
+/** To port is negative */
+void testCheckHookupElements_NegativeToPort()
+{
+  std::cout << "\n[Negative to port]\n";
+
+  TupleRef t = create_tuple(1);
+  ref< vec< TupleRef > > tupleRefBuffer =
+    New refcounted< vec< TupleRef > >();
+  tupleRefBuffer->push_back(t);
+  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
+  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
+
+
+  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
+  elements->push_back(pullPrintSpec);
+
+  // Create the hookups
+  Router::HookupRef hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
+                                                              pullPrintSpec, -4);
+  ref < vec< Router::HookupRef > > hookups =
+    New refcounted< vec< Router::HookupRef > >();
   hookups->push_back(hookup);
 
-  master = New refcounted< Master >();
-  router = New refcounted< Router >(configuration, master);
+  Router::ConfigurationRef configuration =
+    New refcounted< Router::Configuration >(elements, hookups);
+
+  MasterRef master = New refcounted< Master >();
+  RouterRef router = New refcounted< Router >(configuration, master);
+
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch negative to port\n";
   } else {
@@ -136,12 +211,82 @@ void testCheckHookupElements()
   }
 }
 
-
-/** Test the portion of router initialization that checks for port
-    number range correctness. */
-void testCheckHookupRange()
+/** Test the portion of router initialization that checks for sanity of
+    element hookups and lists */
+void testCheckHookupElements()
 {
-  std::cout << "\nCHECK ELEMENT HOOKUP RANGE\n";
+  std::cout << "\nCHECK ELEMENT HOOKUP\n";
+
+  testCheckHookupElements_NonExistentToElement();
+  testCheckHookupElements_NonExistentFromElement();
+  testCheckHookupElements_NegativeFromPort();
+  testCheckHookupElements_NegativeToPort();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////
+// CHECK HOOKUP RANGE
+////////////////////////////////////////////////////////////
+
+/** Incorrect from port. */
+void testCheckHookupRange_IncorrectFromPort()
+{
+  std::cout << "\n[Incorrect From Port]\n";
+
+  TupleRef t = create_tuple(1);
+  ref< vec< TupleRef > > tupleRefBuffer =
+    New refcounted< vec< TupleRef > >();
+  tupleRefBuffer->push_back(t);
+  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
+  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
+
+  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
+  elements->push_back(memoryPullSpec);
+  elements->push_back(pullPrintSpec);
+
+  Router::HookupRef hookup =
+    New refcounted< Router::Hookup >(memoryPullSpec, 1,
+                                     pullPrintSpec, 0);
+  ref < vec< Router::HookupRef > > hookups = New refcounted< vec< Router::HookupRef > >();
+  hookups->push_back(hookup);
+
+  Router::ConfigurationRef configuration =
+    New refcounted< Router::Configuration >(elements, hookups);
+
+  MasterRef master = New refcounted< Master >();
+  RouterRef router = New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+    std::cerr << "** Failed to catch incorrect from port\n";
+  } else {
+    std::cout << "Caught incorrect from port\n";
+  }
+}
+
+/** Incorrect to port. */
+void testCheckHookupRange_IncorrectToPort()
+{
+  std::cout << "\n[Incorrect To Port]\n";
 
   TupleRef t = create_tuple(1);
   ref< vec< TupleRef > > tupleRefBuffer =
@@ -158,11 +303,9 @@ void testCheckHookupRange()
 
   // Bad from port
 
-  Router::HookupRef hookup =
-    New refcounted< Router::Hookup >(memoryPullSpec, 1,
-                                     pullPrintSpec, 0);
-  ref < vec< Router::HookupRef > > hookups =
-    New refcounted< vec< Router::HookupRef > >();
+  Router::HookupRef hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
+                                                              pullPrintSpec, 1);
+  ref < vec< Router::HookupRef > > hookups = New refcounted< vec< Router::HookupRef > >();
   hookups->push_back(hookup);
 
   Router::ConfigurationRef configuration =
@@ -170,42 +313,84 @@ void testCheckHookupRange()
 
   MasterRef master = New refcounted< Master >();
   RouterRef router = New refcounted< Router >(configuration, master);
-  if (router->initialize() == 0) {
-    std::cerr << "** Failed to catch incorrect from port\n";
-  } else {
-    std::cout << "Caught incorrect from port\n";
-  }
 
-  hookups->clear();
-  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
-                                            pullPrintSpec, 1);
-  hookups->push_back(hookup);
-  master = New refcounted< Master >();
-  router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch incorrect to port\n";
   } else {
     std::cout << "Correctly caught incorrect to port\n";
   }
+}
 
-  hookups->clear();
-  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 2,
-                                            pullPrintSpec, 3);
+/** Incorrect ports (both). */
+void testCheckHookupRange_IncorrectPorts()
+{
+  std::cout << "\n[Incorrect Ports (Both)]\n";
+
+  TupleRef t = create_tuple(1);
+  ref< vec< TupleRef > > tupleRefBuffer =
+    New refcounted< vec< TupleRef > >();
+  tupleRefBuffer->push_back(t);
+  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
+  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
+
+  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
+  elements->push_back(memoryPullSpec);
+  elements->push_back(pullPrintSpec);
+
+  // Bad from port
+
+  Router::HookupRef hookup = New refcounted< Router::Hookup >(memoryPullSpec, 2,
+                                                              pullPrintSpec, 3);
+  ref < vec< Router::HookupRef > > hookups = New refcounted< vec< Router::HookupRef > >();
   hookups->push_back(hookup);
-  master = New refcounted< Master >();
-  router = New refcounted< Router >(configuration, master);
+
+  Router::ConfigurationRef configuration =
+    New refcounted< Router::Configuration >(elements, hookups);
+
+  MasterRef master = New refcounted< Master >();
+  RouterRef router = New refcounted< Router >(configuration, master);
+
+
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch incorrect from/to ports\n";
   } else {
     std::cout << "Correctly caught incorrect from/to ports\n";
   }
+}
 
-  hookups->clear();
-  hookup = New refcounted< Router::Hookup >(pullPrintSpec, 0,
-                                            memoryPullSpec, 0);
+/** Portless hookup. */
+void testCheckHookupRange_Portless()
+{
+  std::cout << "\n[Portless Hookup]\n";
+
+  TupleRef t = create_tuple(1);
+  ref< vec< TupleRef > > tupleRefBuffer =
+    New refcounted< vec< TupleRef > >();
+  tupleRefBuffer->push_back(t);
+  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
+  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
+
+  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
+  elements->push_back(memoryPullSpec);
+  elements->push_back(pullPrintSpec);
+
+  // Bad from port
+
+  Router::HookupRef hookup = New refcounted< Router::Hookup >(pullPrintSpec, 0,
+                                                              memoryPullSpec, 0);
+  ref < vec< Router::HookupRef > > hookups = New refcounted< vec< Router::HookupRef > >();
   hookups->push_back(hookup);
-  master = New refcounted< Master >();
-  router = New refcounted< Router >(configuration, master);
+
+  Router::ConfigurationRef configuration =
+    New refcounted< Router::Configuration >(elements, hookups);
+
+  MasterRef master = New refcounted< Master >();
+  RouterRef router = New refcounted< Router >(configuration, master);
+
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch portless hookup\n";
   } else {
@@ -213,12 +398,51 @@ void testCheckHookupRange()
   }
 }
 
-
-/** Test the portion of router initialization that checks semantic
-    consistency. */
-void testCheckPushPull()
+/** Test the portion of router initialization that checks for port
+    number range correctness. */
+void testCheckHookupRange()
 {
-  std::cout << "\nCHECK ELEMENT PUSH and PULL\n";
+  std::cout << "\nCHECK ELEMENT HOOKUP RANGE\n";
+
+  testCheckHookupRange_IncorrectFromPort();
+  testCheckHookupRange_IncorrectToPort();
+  testCheckHookupRange_IncorrectPorts();
+  testCheckHookupRange_Portless();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////
+// PUSH and PULL semantics
+////////////////////////////////////////////////////////////
+
+
+
+/** Pull to push. */
+void testCheckPushPull_PullToPush()
+{
+  std::cout << "\n[Pull to Push]\n";
 
   TupleRef t = create_tuple(1);
   ref< vec< TupleRef > > tupleRefBuffer =
@@ -260,29 +484,92 @@ void testCheckPushPull()
   } else {
     std::cout << "Caught incorrect pull-to-push hookup\n";
   }
+}
 
-  // Connect pull to push via a/a
-  hookups->clear();
-  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
-                                            printSpec, 0);
+/** Pull to Push. */
+void testCheckPushPull_PullToPushHop()
+{
+  std::cout << "\n[Pull to Push with hop]\n";
+
+  TupleRef t = create_tuple(1);
+  ref< vec< TupleRef > > tupleRefBuffer =
+    New refcounted< vec< TupleRef > >();
+  tupleRefBuffer->push_back(t);
+  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
+  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+  ref< PushPrint > pushPrint = New refcounted< PushPrint >();
+  ref< Print > print = New refcounted< Print >();
+  ref< Print > print2 = New refcounted< Print >();
+  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
+  ElementSpecRef pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
+  ElementSpecRef printSpec = New refcounted< ElementSpec >(print);
+  ElementSpecRef printSpec2 = New refcounted< ElementSpec >(print2);
+
+  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
+  elements->push_back(memoryPullSpec);
+  elements->push_back(pushPrintSpec);
+  elements->push_back(printSpec);
+  elements->push_back(printSpec2);
+  elements->push_back(pullPrintSpec);
+
+  // Connect pull to push
+  ref < vec< Router::HookupRef > > hookups =
+    New refcounted< vec< Router::HookupRef > >();
+  Router::HookupRef hookup =
+    New refcounted< Router::Hookup >(memoryPullSpec, 0,
+                                     printSpec, 0);
   hookups->push_back(hookup);
   hookup = New refcounted< Router::Hookup >(printSpec, 0,
                                             pushPrintSpec, 0);
   hookups->push_back(hookup);
 
-  master = New refcounted< Master >();
-  router = New refcounted< Router >(configuration, master);
+
+  Router::ConfigurationRef configuration =
+    New refcounted< Router::Configuration >(elements, hookups);
+
+  MasterRef master = New refcounted< Master >();
+  RouterRef router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch incorrect pull-push hookup via a/a element\n";
   } else {
     std::cout << "Correctly caught incorrect transitive pull-push hookup\n";
   }
+}
 
+/** Push to pull, multi hop. */
+void testCheckPushPull_PullToPushMultiHop()
+{
+  std::cout << "\n[Pull to Push multi hop]\n";
 
-  // Connect push to pull via 2 a/a elements
-  hookups->clear();
-  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
-                                            printSpec, 0);
+  TupleRef t = create_tuple(1);
+  ref< vec< TupleRef > > tupleRefBuffer =
+    New refcounted< vec< TupleRef > >();
+  tupleRefBuffer->push_back(t);
+  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
+  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+  ref< PushPrint > pushPrint = New refcounted< PushPrint >();
+  ref< Print > print = New refcounted< Print >();
+  ref< Print > print2 = New refcounted< Print >();
+  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
+  ElementSpecRef pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
+  ElementSpecRef printSpec = New refcounted< ElementSpec >(print);
+  ElementSpecRef printSpec2 = New refcounted< ElementSpec >(print2);
+
+  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
+  elements->push_back(memoryPullSpec);
+  elements->push_back(pushPrintSpec);
+  elements->push_back(printSpec);
+  elements->push_back(printSpec2);
+  elements->push_back(pullPrintSpec);
+
+  // Connect pull to push
+  ref < vec< Router::HookupRef > > hookups =
+    New refcounted< vec< Router::HookupRef > >();
+  Router::HookupRef hookup =
+    New refcounted< Router::Hookup >(memoryPullSpec, 0,
+                                     printSpec, 0);
   hookups->push_back(hookup);
   hookup = New refcounted< Router::Hookup >(printSpec, 0,
                                             printSpec2, 0);
@@ -291,46 +578,119 @@ void testCheckPushPull()
                                             pushPrintSpec, 0);
   hookups->push_back(hookup);
 
-  master = New refcounted< Master >();
-  router = New refcounted< Router >(configuration, master);
+  Router::ConfigurationRef configuration =
+    New refcounted< Router::Configuration >(elements, hookups);
+
+  MasterRef master = New refcounted< Master >();
+  RouterRef router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch incorrect pull-push hookup via multiple a/a elements\n";
   } else {
     std::cout << "Correctly caught incorrect transitive (multi hop) pull-push hookup\n";
   }
+}
 
-  // Connect pull to pull via 2 a/a elements
-  elements->clear();
-  elements->push_back(memoryPullSpec);
-  elements->push_back(printSpec);
-  elements->push_back(printSpec2);
-  elements->push_back(pullPrintSpec);
+/** Pull to pull multi hop (correct). */
+void testCheckPushPull_PullToPullMultiHop()
+{
+  std::cout << "\n[Pull to pull multi hop]\n";
+
+  //  MasterPtr master;
+  //RouterPtr router;
+
   
-  hookups->clear();
-  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
-                                            printSpec, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(printSpec, 0,
-                                            printSpec2, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(printSpec2, 0,
-                                            pullPrintSpec, 0);
-  hookups->push_back(hookup);
+    TupleRef t = create_tuple(1);
+    ref< vec< TupleRef > > tupleRefBuffer =
+      New refcounted< vec< TupleRef > >();
+    
+    tupleRefBuffer->push_back(t);
+    ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
+    ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+    ref< Print > print = New refcounted< Print >();
+    ref< Print > print2 = New refcounted< Print >();
+    
+    ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+    ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
+    ElementSpecRef printSpec = New refcounted< ElementSpec >(print);
+    ElementSpecRef printSpec2 = New refcounted< ElementSpec >(print2);
+    
+    ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
+    
+    elements->push_back(memoryPullSpec);
+    elements->push_back(printSpec);
+    elements->push_back(printSpec2);
+    elements->push_back(pullPrintSpec);
+    
+    // Connect pull to push
+    ref < vec< Router::HookupRef > > hookups =
+      New refcounted< vec< Router::HookupRef > >();
+    Router::HookupRef hookup =
+      New refcounted< Router::Hookup >(memoryPullSpec, 0,
+                                       printSpec, 0);
+    hookups->push_back(hookup);
+    hookup = New refcounted< Router::Hookup >(printSpec, 0,
+                                              printSpec2, 0);
+    hookups->push_back(hookup);
+    hookup = New refcounted< Router::Hookup >(printSpec2, 0,
+                                              pullPrintSpec, 0);
+    hookups->push_back(hookup);
+    
+    
+    Router::ConfigurationRef configuration =
+      New refcounted< Router::Configuration >(elements, hookups);
+    
+MasterRef    master = New refcounted< Master >();
+    RouterRef router = New refcounted< Router >(configuration, master);
+  
 
-  master = New refcounted< Master >();
-  router = New refcounted< Router >(configuration, master);
+  // Now all that remains are the master and router, everything else is
+  // owned by them since they're out of scope
+
   if (router->initialize() == 0) {
-    std::cerr << "Correct allowed pull-pull hookup via multiple a/a elements\n";
+    std::cerr << "Correctly allowed pull-pull hookup via multiple a/a elements\n";
   } else {
     std::cout << "** Caught incorrectly a pull-pull hookup via multiple a/a elements\n";
   }
 }
 
-/** Test the portion of router initialization that checks
-    duplicate/unused ports */
-void testDuplicates()
+/** Test the portion of router initialization that checks semantic
+    consistency. */
+void testCheckPushPull()
 {
-  std::cout << "\nCHECK PORT REUSE / NON-USE\n";
+  std::cout << "\nCHECK ELEMENT PUSH and PULL\n";
+
+  testCheckPushPull_PullToPush();
+  testCheckPushPull_PullToPushHop();
+  testCheckPushPull_PullToPushMultiHop();
+  testCheckPushPull_PullToPullMultiHop();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////
+// Check Duplicates
+////////////////////////////////////////////////////////////
+
+
+
+
+/** Unused port */
+void testDuplicates_UnusedPort()
+{
+  std::cout << "\n[Unused Port]\n";
 
   TupleRef t = create_tuple(1);
   ref< vec< TupleRef > > tupleRefBuffer =
@@ -380,19 +740,39 @@ void testDuplicates()
   } else {
     std::cout << "Correctly caught unused port of an element\n";
   }
+}
 
-  // Connect pull to pull via 2 a/a elements
-  memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
-  pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-  pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
-  printSpec = New refcounted< ElementSpec >(print);
-  printSpec2 = New refcounted< ElementSpec >(print2);
-  elements->clear();
+
+/** Reused port */
+void testDuplicates_ReusedPort()
+{
+  std::cout << "\n[Reused Port]\n";
+
+  TupleRef t = create_tuple(1);
+  ref< vec< TupleRef > > tupleRefBuffer =
+    New refcounted< vec< TupleRef > >();
+  tupleRefBuffer->push_back(t);
+  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
+  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+  ref< PushPrint > pushPrint = New refcounted< PushPrint >();
+  ref< Print > print = New refcounted< Print >();
+  ref< Print > print2 = New refcounted< Print >();
+  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
+  ElementSpecRef pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
+  ElementSpecRef printSpec = New refcounted< ElementSpec >(print);
+  ElementSpecRef printSpec2 = New refcounted< ElementSpec >(print2);
+
+  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
   elements->push_back(memoryPullSpec);
   elements->push_back(printSpec);
   elements->push_back(printSpec2);
   elements->push_back(pullPrintSpec);
-  hookups->clear();
+
+  Router::HookupPtr hookup;
+  ref < vec< Router::HookupRef > > hookups =
+    New refcounted< vec< Router::HookupRef > >();
+
   hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
                                             printSpec, 0);
   hookups->push_back(hookup);
@@ -407,45 +787,55 @@ void testDuplicates()
                                             pullPrintSpec, 0);
   hookups->push_back(hookup);
 
-  master = New refcounted< Master >();
-  router = New refcounted< Router >(configuration, master);
+  Router::ConfigurationRef configuration =
+    New refcounted< Router::Configuration >(elements, hookups);
+  MasterRef master = New refcounted< Master >();
+  RouterRef router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "** Incorrectly allowed port reuse\n";
   } else {
     std::cout << "Correctly caught port reuse\n";
   }
-
-  // Connect pull to pull via 2 a/a elements
-  memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
-  pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-  pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
-  printSpec = New refcounted< ElementSpec >(print);
-  printSpec2 = New refcounted< ElementSpec >(print2);
-  elements->clear();
-  elements->push_back(memoryPullSpec);
-  elements->push_back(printSpec);
-  elements->push_back(printSpec2);
-  elements->push_back(pullPrintSpec);
-  
-  hookups->clear();
-  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
-                                            printSpec, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(printSpec, 0,
-                                            printSpec2, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(printSpec2, 0,
-                                            pullPrintSpec, 0);
-  hookups->push_back(hookup);
-
-  master = New refcounted< Master >();
-  router = New refcounted< Router >(configuration, master);
-  if (router->initialize() == 0) {
-    std::cerr << "Correctly allowed all used ports\n";
-  } else {
-    std::cout << "** Caught incorrectly a configuration without duplication/reuse\n";
-  }
 }
+
+
+
+/** Test the portion of router initialization that checks
+    duplicate/unused ports */
+void testDuplicates()
+{
+  std::cout << "\nCHECK PORT REUSE / NON-USE\n";
+
+  testDuplicates_UnusedPort();
+  testDuplicates_ReusedPort();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /** Test a simple source-sink configuration */
