@@ -77,8 +77,9 @@ void Task::add_pending(int p)
     _pending_next = m->_task_list._pending_next;
     m->_task_list._pending_next = this;
   }
-  if (_pending)
+  if (_pending) {
     _thread->add_pending();
+  }
   m->_task_lock.release();
 }
 
@@ -109,8 +110,9 @@ void Task::make_list()
 
 Task::~Task()
 {
-  if (scheduled() || _pending)
+  if (scheduled() || _pending) {
     cleanup();
+  }
 }
 
 void Task::cleanup()
