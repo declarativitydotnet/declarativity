@@ -64,13 +64,14 @@
 DIGIT           [0-9]
 EXP		[eE][+-]?{DIGIT}+
 DECIM		\.{DIGIT}+
-ALNUM		[_0-9a-zA-Z]
+ALNUM		[_0-9a-zA-Z.]
 HEXDIGIT	[0-9a-fA-F]
 
 VARIABLE	[A-Z]{ALNUM}*
 LOC_VARIABLE	_{
 QATOM		\'[^\']*\'
 WHITESPACE	[ \t\r\n]+
+
 
 %%
 
@@ -126,6 +127,7 @@ WHITESPACE	[ \t\r\n]+
 
 <INITIAL>materialize { return OL_MAT; }
 <INITIAL>materialise { return OL_MAT; }
+<INITIAL>primarykeys { return OL_PK; }
 <INITIAL>rule { return OL_RULE; }
 <INITIAL>event { return OL_EVENT; }
 <INITIAL>"@" { return OL_AT; }
@@ -135,13 +137,14 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>"." { return OL_DOT; }
 <INITIAL>":-" { return OL_IF; }
 <INITIAL>"period=" { return OL_PERIOD; }
+<INITIAL>"delete" { return OL_DEL; }
 
 <INITIAL>[A-Z]{ALNUM}* { 
   lvalp->v = New Parse_Val(Val_Str::mk(yytext)); 
   return OL_VAR; }
 <INITIAL>_ { return OL_DONTCARE; }
 
-<INITIAL>[a-z]?{ALNUM}* { 
+<INITIAL>[!a-z]?{ALNUM}* { 
   lvalp->v = New Parse_Val(Val_Str::mk(yytext)); 
   return OL_ATOM; 
 }

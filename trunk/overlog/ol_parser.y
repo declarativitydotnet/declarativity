@@ -43,6 +43,8 @@
 %token OL_RULE
 %token OL_EVENT
 %token OL_PERIOD
+%token OL_DEL
+%token OL_PK
 %start program
 %file-prefix="ol_parser"
 %name-prefix="ol_parser_"
@@ -73,20 +75,28 @@ clause:		OL_RULE rule
 		| fact 
                 | materialize
                 | event
+                | primaryKeys
 		;
 
 materialize:	OL_MAT termbody OL_DOT { ctxt->materialize($2); };
 
+primaryKeys:	OL_PK termbody OL_DOT { ctxt->primaryKeys($2); };
+
 fact:		term OL_DOT { ctxt->add_fact($1); } ;
 
-rule:	        OL_ATOM term OL_IF termlist OL_DOT { ctxt->add_rule(New Parse_Expr($1), $2, $4); } ;
+rule:	        OL_VAR term OL_IF termlist OL_DOT { 
+                    ctxt->add_rule(New Parse_Expr($1), $2, $4, false); } 
+                | OL_VAR OL_DEL term OL_IF termlist OL_DOT { 
+		    ctxt->add_rule(New Parse_Expr($1), $3, $5, true); } 
+                ;
 
 event:          OL_EVENT term OL_DOT { ctxt->add_event($2); } ;
 
 termlist:	term { $$ = New Parse_TermList(); $$->push_front($1); }
 		| term OL_COMMA termlist { $3->push_front($1); $$=$3; } ;
 
-term:		functorname termbody { $$=New Parse_Term($1, $2); };
+term:		functorname termbody { $$=New Parse_Term($1, $2); }
+                | 
 
 termbody:	OL_LPAR OL_RPAR { 
 			$$=New Parse_ExprList(); }

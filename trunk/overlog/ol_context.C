@@ -95,7 +95,7 @@ str OL_Context::Rule::toString()
 // all variable references at this point and convert them to
 // positional arguments. 
 // 
-void OL_Context::add_rule( Parse_Expr *e, Parse_Term *lhs, Parse_TermList *rhs) 
+void OL_Context::add_rule( Parse_Expr *e, Parse_Term *lhs, Parse_TermList *rhs, bool deleteFlag ) 
 {
   TRC_FN;
   // Get hold of the functor (rule head) for this new rule.  This
@@ -114,6 +114,7 @@ void OL_Context::add_rule( Parse_Expr *e, Parse_Term *lhs, Parse_TermList *rhs)
   Rule *r = New Rule();
   r->ruleID = e->val->toString();
   fn->rules.push_back(r);
+  r->deleteFlag = deleteFlag;
 
   // Next, we canonicalize all the args in the rule head.  We build up
   // a list of argument names - the first 'arity' of these will be the
@@ -132,7 +133,7 @@ void OL_Context::add_rule( Parse_Expr *e, Parse_Term *lhs, Parse_TermList *rhs)
 	// "eq" term to the front of the term list. 
 	Term t;
 	int new_arg = r->add_arg( strbuf() << "$" << fict_varnum++ );
-	t.fn = retrieve_functor( "eq", 2, "-1", true, false );
+	t.fn = retrieve_functor( "assign", 2, "-1", true, false );
 	t.location = -1;
 	t.args.push_back(Arg(r->find_arg((*i)->val->toString())));
 	t.args.push_back(Arg(new_arg));
@@ -148,7 +149,7 @@ void OL_Context::add_rule( Parse_Expr *e, Parse_Term *lhs, Parse_TermList *rhs)
       // appears in this clause. 
       Term t;
       int new_arg = r->add_arg( strbuf() << "$" << fict_varnum++ );
-      t.fn = retrieve_functor( "eq", 2, "-1", true, false );
+      t.fn = retrieve_functor( "assign", 2, "-1", true, false );
       t.location = -1;
       t.args.push_back(Arg(new_arg));
       t.args.push_back(Arg((*i)->val));
@@ -196,7 +197,14 @@ void OL_Context::add_rule( Parse_Expr *e, Parse_Term *lhs, Parse_TermList *rhs)
     r->terms.push_back(t);
   }
 
-  std::cout << "New rule for functor " << lhs->fn->name << "@" << lhs->fn->loc << r->toString() << "\n";
+  strbuf s;
+  s << "( ";
+  for (uint k = 0; k < fn->arity; k++) {
+    s << r->args.at(k) << " ";
+  }
+  s << ")";
+
+  std::cout << "New rule for functor " << lhs->fn->name << "@" << lhs->fn->loc << str(s) << r->toString() << "\n";
   
   delete lhs;
   delete rhs;
@@ -342,6 +350,22 @@ void OL_Context::materialize( Parse_ExprList *l)
   delete l;
 }
 
+void OL_Context::primaryKeys( Parse_ExprList *l)
+{
+  
+  if (l->size() <= 1) {
+    error("bad number of arguments to form primary keys");
+    delete l;
+    return;
+  }
+
+  TableInfoMap::iterator _iterator = tableInfoMap->find(l->at(0)->val->toString());
+  if (_iterator != tableInfoMap->end()) {
+    for (uint k = 0; k < l->size()-1; k++) {
+      _iterator->second->primaryKeys.push_back(atoi(l->at(k+1)->val->toString().cstr()));
+    }
+  }
+}
 
 //
 // Adding a fact

@@ -48,6 +48,7 @@ public:
 
   struct Rule {
     str ruleID;
+    bool deleteFlag;
     std::vector<str> args; // List of free variables in the rule.
     std::vector<Term> terms; // List of terms.
 
@@ -63,7 +64,7 @@ public:
     int arity;
     int timeout;
     int size;
-    //bool eventFlag; // is it used as an event tuple
+    std::vector<int> primaryKeys;
   };
   
   struct Functor {
@@ -99,10 +100,12 @@ public:
 
   //
   // Add a new rule to the system
-  void add_rule( Parse_Expr *e, Parse_Term *lhs, Parse_TermList *rhs );
+  void add_rule( Parse_Expr *e, Parse_Term *lhs, Parse_TermList *rhs, bool deleteFlag );
 
   // Materialize a table
   void materialize( Parse_ExprList *l);
+
+  void primaryKeys( Parse_ExprList *l);
 
   void add_fact( Parse_Term *t);
 

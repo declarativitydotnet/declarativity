@@ -60,7 +60,9 @@
 #include "insert.h"
 #include "scan.h"
 #include "queue.h"
-
+#include "printTime.h"
+#include "roundRobin.h"
+#include "noNullField.h"
 
 class RouterConfigGenerator {
   // takes as input the udp send / receive, the router config, accept each other code or not
@@ -80,10 +82,10 @@ public:
   void createTables(str nodeID);
   
 private:
-  static const str FUNC_PRE;
+  static const str SEL_PRE, AGG_PRE, ASSIGN_PRE, TABLESIZE;
   typedef std::map<str, TableRef> TableMap;
   typedef std::map<str, str> PelFunctionMap;
-  typedef std::multimap<str, ReceiverInfo> ReceiverInfoMap;
+  typedef std::map<str, ReceiverInfo> ReceiverInfoMap;
 
   PelFunctionMap pelFunctions;
   TableMap _tables;
@@ -91,13 +93,15 @@ private:
   bool _dups; // do we care about duplicates in our dataflow? 
   bool _debug; // do we stick debug elements in?
   FILE *_output;
+  Router::ConfigurationRef _conf; 
 
   // counter to determine how many muxers and demuxers are needed
   str _currentType;
   std::vector<ElementSpecRef> _udpPushSenders, _udpPullSenders;
    
   ReceiverInfoMap _udpReceivers; // for demuxing
-  Router::ConfigurationRef _conf; 
+  bool _pendingRegisterReceiver;
+  str _pendingReceiverTable;
 
   // Relational -> P2 elements
   void processFunctor(OL_Context::Functor* currentFunctor, 
@@ -108,21 +112,16 @@ private:
 				    OL_Context::Term term, 
 				    OL_Context::TableInfo* tableInfo, 
 				    str nodeID);
+  
+  ElementSpecRef generateJoinElements(OL_Context::Functor* currentFunctor, 
+				      OL_Context::Rule* currentRule, 
+				      str nodeID,
+				      FieldNamesTracker* namesTracker);
 
-  ElementSpecRef generateSingleTermElement(OL_Context::Functor* currentFunctor, 
-					   OL_Context::Rule* currentRule, 
-					   str nodeID, 
-					   FieldNamesTracker* namesTracker);
-
-  ElementSpecRef generateEventProbeElements(OL_Context::Functor* currentFunctor, 
-					    OL_Context::Rule* currentRule, 
-					    str nodeID,
-					    FieldNamesTracker* namesTracker);
-
-  ElementSpecRef generateJoinElements(OL_Context::Rule* currentRule, 
-				      OL_Context::Term eventTerm, 
-				      OL_Context::Term baseTerm, 
-				      str nodeID, 
+  ElementSpecRef generateProbeElements(OL_Context::Rule* currentRule, 
+				       OL_Context::Term eventTerm, 
+				       OL_Context::Term baseTerm, 
+				       str nodeID, 
 				      FieldNamesTracker* namesTracker, 					    
 				      ElementSpecRef priorElement,
 				      int joinOrder);
@@ -140,22 +139,47 @@ private:
 					     FieldNamesTracker* currentNamesTracker,
 					     ElementSpecRef connectingElement);
 
+  ElementSpecRef generateAllSelectionElements(OL_Context::Rule* currentRule,
+					      str nodeID,
+					      FieldNamesTracker* currentNamesTracker,
+					      ElementSpecRef connectingElement);
+
+  ElementSpecRef generateAllAssignmentElements(OL_Context::Rule* currentRule,
+					       str nodeID,
+					       FieldNamesTracker* currentNamesTracker,
+					       ElementSpecRef connectingElement);
+
+  ElementSpecRef generateAssignmentElements(OL_Context::Rule* currentRule,
+					    OL_Context::Term currentTerm, 
+					    str nodeID,
+					    FieldNamesTracker* currentNamesTracker,
+					    ElementSpecRef connectingElement,
+					    int assignmentID); 
+
+  ElementSpecRef generatePrintElement(str header, ElementSpecRef connectingElement);
+
+  ElementSpecRef generateDupElimElement(str header, ElementSpecRef connectingElement);
+  
+  void generateSingleTermElement(OL_Context::Functor* currentFunctor, 
+				 OL_Context::Rule* currentRule, 
+				 str nodeID, 
+				 FieldNamesTracker* namesTracker);
+    
   // Network elements
   void generateSendElements(ref< Udp> udp, str nodeID);
   void generateReceiveElements(ref< Udp> udp, str nodeID);
+  void registerReceiverTable(str tableName);
+  void registerReceiver(str tableName, ElementSpecRef elementSpecRef);
   ElementSpecRef generateSendMarshalElements(OL_Context::Rule* rule, str nodeID, 
 					     int arity, ElementSpecRef toSend);
-  ElementSpecRef generateReceiveUnmarshalElements(OL_Context::Functor* currentFunctor, 
-						  OL_Context::Rule* currentRule, 
-						  OL_Context::Term curentTerm,
-						  str nodeID);
-  
+
   // Helper functions
   void hookUp(ElementSpecRef firstElement, int firstPort,
 	      ElementSpecRef secondElement, int secondPort);  
   str getRuleStr(OL_Context::Functor* currentFunctor, 
 		 OL_Context::Rule* currentRule);
-  
+  bool RouterConfigGenerator::isSelection(OL_Context::Term term);  
+  bool isAssignment(OL_Context::Term term);
 
   // convince placeholder to figure out the current fields in a tuple in flight
   class FieldNamesTracker {
@@ -165,8 +189,9 @@ private:
     FieldNamesTracker();   
     FieldNamesTracker(std::vector<str> names, int arity);    
     void initialize(std::vector<str> names, int arity);    
-    int matchingJoinKey(std::vector<str> names);    
+    std::vector<int> matchingJoinKeys(std::vector<str> names);    
     void mergeWith(std::vector<str> names);
+    void mergeWith(std::vector<str> names, int numJoinKeys);
     int fieldPosition(str var);
     str toString();
   };
@@ -191,13 +216,14 @@ private:
 		   std::vector<JoinKey>* joinKeys);
 
   struct ReceiverInfo {
-    ElementSpecRef _receiver;
-    int _numFields;
+    std::vector<ElementSpecRef> _receivers;
     str _name;
-    ReceiverInfo(ElementSpecRef receiver, int numFields, str name): _receiver(receiver) {
-      _numFields = numFields;
+    ReceiverInfo(str name) {
       _name = name;
     }      
+    void addReceiver(ElementSpecRef elementSpecRef) { 
+      _receivers.push_back(elementSpecRef);
+    }
   };
 };
 
