@@ -181,7 +181,7 @@ rule S3 successor@NI(NI,P,PI) :-
 	stabilizeRecord@NI(NI, E).
 
 rule S4 sendSuccessors@SI(SI,NI,E) :-
-	stabilizeRecord@NI(NI,E),
+	stabilize@NI(NI,E),
 	successor@NI(NI,S,SI),
 	f_coinFlip().
 
