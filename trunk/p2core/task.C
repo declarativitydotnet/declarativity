@@ -51,11 +51,11 @@ REMOVABLE_INLINE Task::Task()
 
 Master * Task::master() const
 {
-  assert(_thread);
+  assert(_thread != 0);
   return _thread->master();
 }
 
-void Task::initialize(Router* router,
+void Task::initialize(RouterRef router,
                       bool join)
 {
   assert(!initialized() && !scheduled());
@@ -143,7 +143,7 @@ inline void
 Task::lock_tasks()
 {
   while (1) {
-    RouterThread *t = _thread;
+    RouterThreadRef t = _thread;
     t->lock_tasks();
     if (t == _thread)
       return;
@@ -154,7 +154,7 @@ Task::lock_tasks()
 inline bool
 Task::attempt_lock_tasks()
 {
-  RouterThread *t = _thread;
+  RouterThreadRef t = _thread;
   if (t->attempt_lock_tasks()) {
     if (t == _thread)
       return true;
@@ -170,7 +170,7 @@ Task::unschedule()
   // seems more reliable, since some people depend on unschedule() ensuring
   // that the task is not scheduled any more, no way, no how. Possible
   // problem: calling unschedule() from run_task() will hang!
-  if (_thread) {
+  if (_thread != 0) {
     lock_tasks();
     fast_unschedule();
     _pending &= ~RESCHEDULE;
@@ -180,7 +180,7 @@ Task::unschedule()
 
 void Task::true_reschedule()
 {
-  assert(_thread);
+  assert(_thread != 0);
   bool done = false;
   // If I can lock the queue
   if (attempt_lock_tasks()) {
@@ -202,10 +202,10 @@ void Task::strong_unschedule()
 {
   // unschedule() and move to the quiescent thread, so that subsequent
   // reschedule()s won't have any effect
-  if (_thread) {
+  if (_thread != 0) {
     lock_tasks();
     fast_unschedule();
-    RouterThread *old_thread = _thread;
+    RouterThreadRef old_thread = _thread;
     _pending &= ~RESCHEDULE;
     _thread = _router->master()->thread();
     old_thread->unlock_tasks();
@@ -214,10 +214,10 @@ void Task::strong_unschedule()
 
 void Task::strong_reschedule()
 {
-  assert(_thread);
+  assert(_thread != 0);
   lock_tasks();
   fast_unschedule();
-  RouterThread *old_thread = _thread;
+  RouterThreadRef old_thread = _thread;
   _thread = _router->master()->thread();
   add_pending(RESCHEDULE);
   old_thread->unlock_tasks();
@@ -251,7 +251,7 @@ REMOVABLE_INLINE int Task::fast_unschedule()
 
 REMOVABLE_INLINE void Task::fast_reschedule()
 {
-  assert(_thread);
+  assert(_thread != 0);
   if (!scheduled()) {
     _prev = _thread->_taskList._prev;
     _next = &_thread->_taskList;
@@ -262,7 +262,7 @@ REMOVABLE_INLINE void Task::fast_reschedule()
 
 REMOVABLE_INLINE void Task::reschedule()
 {
-  assert(_thread);
+  assert(_thread != 0);
   if (!scheduled())
     true_reschedule();
 }
