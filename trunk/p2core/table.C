@@ -293,7 +293,8 @@ Table::lookupAll(unsigned field, ValueRef key)
   if (ndx) {
     return New refcounted< Table::MultIteratorObj >(ndx, key);
   }
-  return NULL;
+  warn << "Requesting multi lookup in table " << name << " on missing index " << field << "\n";
+  assert(false);
 }
 
 Table::MultScanIterator
@@ -304,7 +305,8 @@ Table::scanAll(unsigned field)
   if (ndx) {
     return New refcounted< Table::MultScanIteratorObj >(ndx);
   }
-  return NULL;
+  warn << "Requesting multi scan in table " << name << " on missing index " << field << "\n";
+  assert(false);
 }
 
 Table::UniqueIterator
@@ -315,7 +317,8 @@ Table::lookup(unsigned field, ValueRef key)
   if (ndx) {
     return New refcounted< Table::UniqueIteratorObj >(ndx, key);
   }
-  return NULL;
+  warn << "Requesting unique lookup in table " << name << " on missing index " << field << "\n";
+  assert(false);
 }
 
 Table::MultIterator

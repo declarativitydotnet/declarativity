@@ -217,7 +217,8 @@ void ElementSpec::Port::uniGroup(UniGroupRef u)
 str ElementSpec::toString() const
 {
   strbuf sb;
-  sb << "<" << _element->class_name() << "(" << _element->ID() << "):";
+  sb << "<" << _element->class_name() << "(" << _element->name()
+     << "/" << _element->ID() << "):";
   int ninputs = _inputs.size();
   if (ninputs > 0) {
     sb << "IN[ " ;

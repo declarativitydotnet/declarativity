@@ -35,7 +35,8 @@ for op, ar, va, desc in [
   ("ifelse",3,  "IFELSE",       "If first arg, then return second, else third"),
   ("ifpop",2,   "IFPOP",        "If first arg, then pop second, else nothing"),
   ("ifpoptuple",1,"IFPOP_TUPLE","If first arg, then pop entire tuple, else nothing"),
-  ("ifstop",2,   "IFSTOP",      "If first arg, then stop execution"),
+  ("ifstop",1,   "IFSTOP",      "If first arg, then stop execution"),
+  ("dumpStack",1,"DUMPSTACK",   "Dump the contents of the stack prefixed by the string arg"),
  
   ("->t", 1,    "T_MKTUPLE",    "Create a tuple out of the argument"),
   ("append", 2, "T_APPEND",     "Append first argument to second tuple"),

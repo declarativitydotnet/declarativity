@@ -125,10 +125,12 @@ ID::distance(IDRef to) const
         (words[i] + carry)) {
       newID->words[i] =
         to->words[i] - words[i] - carry;
-      if ((words[i] + carry) == 0) {
-        carry = 1;
-      } else {
-        carry = 0;
+      if (carry == 1) {
+        if ((words[i] + carry) == 0) {
+          carry = 1;
+        } else {
+          carry = 0;
+        }
       }
     } else {
       newID->words[i] =

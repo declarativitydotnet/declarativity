@@ -19,6 +19,7 @@ bin_PROGRAMS 	= 	values \
 			overlog \
 			tables \
 			pel \
+			IDs \
 			chord \
 			basicelements \
 			basicElementPlumbing \
@@ -92,6 +93,11 @@ chord_SOURCES = chord.C
 chord_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+IDs_SOURCES = IDs.C
+IDs_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 

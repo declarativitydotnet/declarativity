@@ -397,73 +397,8 @@ public:
   static AggregateFunctionMAX AGG_MAX;
 };
 
-template < typename _Index >
-Table::IteratorObj< _Index >::IteratorObj(_Index * index,
-                                          ValueRef key)
-  : _index(index),
-    _key(key),
-    _iter(_index->find(_key))
-{
-}
-
-template < typename _Index >
-Table::ScanIteratorObj< _Index >::ScanIteratorObj(_Index * index)
-  : _index(index),
-    _iter(_index->begin())
-{
-}
-
-template < typename _Index >
-TuplePtr
-Table::IteratorObj< _Index >::next()
-{
-  if (_iter == _index->end()) {
-    // We've run out of elements, period.
-    return NULL;
-  } else {
-    ValueRef foundKey = _iter->first;
-    if (foundKey->compareTo(_key) != 0) {
-      // We've gone past the end of this key
-      return NULL;
-    } else {
-      return (_iter++)->second->t;
-    }
-  }
-}
-
-template < typename _Index >
-TuplePtr
-Table::ScanIteratorObj< _Index >::next()
-{
-  if (_iter == _index->end()) {
-    // We've run out of elements, period.
-    return NULL;
-  } else {
-    return (_iter++)->second->t;
-  }
-}
-
-template < typename _Index >
-bool
-Table::IteratorObj< _Index >::done()
-{
-  return ((_iter == _index->end()) ||
-          (_iter->first->compareTo(_key) != 0));
-}
-
-template < typename _Index >
-bool
-Table::ScanIteratorObj< _Index >::done()
-{
-  return (_iter == _index->end());
-}
-
-template < typename _Index >
-void
-Table::ScanIteratorObj< _Index >::reset()
-{
-  _iter == _index->begin();
-}
+#include "iteratorObj.h"
+#include "scanIteratorObj.h"
 
 
 

@@ -81,6 +81,9 @@ public:
   // Stop execution without error
   void stop();
 
+  /** Dump the stack */
+  void dumpStack(str);
+
   // Execute the program on the tuple. 
   // Return 0 if success, -1 if an error. 
   Error execute(const Pel_Program &prog, const TupleRef data);

@@ -23,7 +23,7 @@
 class LoggerI { 
 public:
   
-  enum Level { ALL = 0, INFO, WARN, ERROR, NONE };
+  enum Level { ALL = 0, WORDY, INFO, WARN, ERROR, NONE };
 
   
   /** Create a log tuple. */
@@ -40,6 +40,7 @@ public:
   public:
     Initializer() {
       levelFromName["ALL"] = ALL;
+      levelFromName["WORDY"] = WORDY;
       levelFromName["INFO"] = INFO;
       levelFromName["WARN"] = WARN;
       levelFromName["ERROR"] = ERROR;
@@ -49,6 +50,7 @@ public:
       levelToName[INFO] = "INFO";
       levelToName[WARN] = "WARN";
       levelToName[ERROR] = "ERROR";
+      levelToName[WORDY] = "WORDY";
       levelToName[NONE] = "NONE";
     }
   };

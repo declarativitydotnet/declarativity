@@ -229,6 +229,17 @@ Pel_VM::Error Pel_VM::execute(const Pel_Program &prog, const TupleRef data)
   return error;
 }
 
+void Pel_VM::dumpStack(str message)
+{
+  
+  // Dump the stack
+  for (std::deque<ValueRef>::iterator i = _st.begin();
+       i != _st.end();
+       i++) {
+    warn << "Stack entry[" << message << "]: " << (*i)->toString() << "\n";
+  }
+}
+
 //
 // Execute a single instruction
 //
@@ -326,7 +337,14 @@ DEF_OP(IFSTOP) {
   int64_t ifVal = pop_unsigned();
   if (ifVal) {
     stop();
+    //    warn << "IF stop of " << ifVal << ".  Stopping!!!\n";
+  } else {
+    //    warn << "IF stop of " << ifVal << ".  Not stopping\n";
   }
+}
+DEF_OP(DUMPSTACK) {
+  str s1 = pop_string();
+  dumpStack(s1);
 }
 DEF_OP(IFPOP_TUPLE) {
   int64_t ifVal = pop_unsigned();
@@ -381,6 +399,7 @@ DEF_OP(T_FIELD) {
 //
 DEF_OP(NOT) {
   u_int64_t v = pop_unsigned();
+  //  warn << "NOT of " << v << " is " << !v << "\n";
   stackPush(Val_Int32::mk(!v));
 }
 DEF_OP(AND) {
@@ -520,18 +539,21 @@ DEF_OP(ID_DIST) {
   // Be careful of undefined evaluation order in C++!
   IDRef v1 = pop_ID();
   IDRef v2 = pop_ID();
+  //warn << "Distance(" << v2->toString() << " to " << v1->toString() << "=" << v2->distance(v1)->toString() << "\n";
   stackPush(Val_ID::mk(v2->distance(v1)));
 }
 DEF_OP(ID_BTWOO) {
   IDRef to = pop_ID();
   IDRef from = pop_ID();
   IDRef key = pop_ID();
+  //  warn << key->toString() << "(" << from->toString() << "," << to->toString() << ") :" << key->betweenOO(from, to) << "\n";
   stackPush(Val_Int32::mk(key->betweenOO(from, to)));
 }
 DEF_OP(ID_BTWOC) {
   IDRef to = pop_ID();
   IDRef from = pop_ID();
   IDRef key = pop_ID();
+  //  warn << key->toString() << "(" << from->toString() << "," << to->toString() << "] :" << key->betweenOC(from, to) << "\n";
   stackPush(Val_Int32::mk(key->betweenOC(from, to)));
 }
 DEF_OP(ID_BTWCO) {
@@ -574,6 +596,7 @@ DEF_OP(STR_GTE) {
 DEF_OP(STR_EQ) { 
   str s1 = pop_string();
   str s2 = pop_string();
+  //  warn << s1 << "==?" << s2 << " is " << (s1==s2) << "\n";
   stackPush(Val_Int32::mk(s2 == s1));
 }
 DEF_OP(STR_CAT) { 

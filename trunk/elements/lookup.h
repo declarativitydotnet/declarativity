@@ -106,6 +106,7 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::Lookup(str name,
     _pullCallback(cbv_null),
     _lookupTuple(NULL),
     _lookupTupleValue(NULL),
+    _key(NULL),
     _iterator(NULL),
     _inputFieldNo(inputKeyField),
     _indexFieldNo(lookupIndexField)
@@ -130,9 +131,9 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::push(int port,
   if (_lookupTuple == NULL) {
     // No pending lookup.  Take it in
     assert(_pushCallback == cbv_null);
-    assert((_key == NULL) && (_lookupTupleValue == NULL));
+    assert((_key == NULL) && (_lookupTupleValue == NULL) && (_iterator == NULL));
 
-    // Fetch the first field
+    // Fetch the search field
     _key = (*t)[_inputFieldNo];
     if (_key == NULL) {
       // No input field? WTF?
@@ -141,6 +142,8 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::push(int port,
       // Didn't work out.  Ask for more.
       return 1;
     } else {
+      log(LoggerI::WORDY, 0, strbuf("push: key is no longer null"));
+
       // Establish the lookup
       _lookupTuple = t;
       _lookupTupleValue = Val_Tuple::mk(t);
@@ -157,6 +160,7 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::push(int port,
 
       // Fetch the iterator
       _iterator = _LookupGenerator::lookup(_table, _indexFieldNo, _key);
+      log(LoggerI::WORDY, 0, strbuf("push: iterator no longer null: ") << (int)(void*)_iterator);
       
       // And stop the pusher since we have to wait until the iterator is
       // flushed one way or another
@@ -167,6 +171,9 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::push(int port,
     // We already have a lookup pending
     assert(_pushCallback != cbv_null);
     assert(_key != NULL);
+    assert(_iterator != NULL);
+    assert(_lookupTuple != NULL);
+    assert(_lookupTupleValue != NULL);
     log(LoggerI::WARN, 0, "push: lookup overrun");
     return 0;
   }
@@ -184,6 +191,7 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::pull(int port,
   if (_key == NULL) {
     // Nope, no pending lookup.  Deal with underruns.
     assert((_lookupTuple == NULL) && (_lookupTupleValue == NULL));
+    assert(_iterator == NULL);
 
     if (_pullCallback == cbv_null) {
       // Accept the callback
@@ -204,7 +212,9 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::pull(int port,
     //     dump << "  [" << ((*it).first)->toString() << ", " << ((*it).second)->toString() << "]\n";
     //   log(LoggerI::INFO, 0, dump);
     // }
-
+    log(LoggerI::WORDY, 0, strbuf("pull: key is ") << _key->toString()
+        << " and iter is " << (int)(void*)_iterator);
+    assert(_iterator != NULL);
 
     // Is the iterator at its end?  This should only happen if a lookup
     // returned no results at all.
@@ -217,6 +227,7 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::pull(int port,
       // This lookup has at least one result.
       t = _iterator->next();
     }
+    log(LoggerI::WORDY, 0, strbuf("pull: A iterator is ") << (int)(void*)_iterator);
     TupleRef theT = t;
 
     // Make an unfrozen result tuple containing first the lookup tuple
@@ -228,14 +239,18 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::pull(int port,
     // Now, are we done with this search?
     if (_iterator->done()) {
       log(LoggerI::INFO, 0, strbuf("pull: Finished search on ") << _key->toString());
+      log(LoggerI::WORDY, 0, strbuf("pull: A iterator is ") << (int)(void*)_iterator);
 
       // Tag the result tuple
       newTuple->tag(Lookup::END_OF_SEARCH, Val_Null::mk());
 
       // Clean the lookup state
       _key = NULL;
+      log(LoggerI::WORDY, 0, strbuf("push: key is now null: ") << (int)(void*)_key);
       _lookupTuple = NULL;
       _lookupTupleValue = NULL;
+      _iterator = NULL;
+      log(LoggerI::WORDY, 0, strbuf("push: iterator now is null"));
 
       // Wake up any pusher
       if (_pushCallback != cbv_null) {

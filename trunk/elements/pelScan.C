@@ -64,7 +64,7 @@ PelScan::push(int port, TupleRef t, cbv cb)
       // Reject the push and warn
       log(LoggerI::ERROR, 0, strbuf("push: startup script: ") <<
           Pel_VM::strerror(e));
-      return 1;
+      _vm.dumpStack(str("startup script"));
     }
 
     // Groovy.  Signal puller that we're ready to give results
@@ -124,6 +124,7 @@ TuplePtr PelScan::pull(int port, cbv cb)
       Pel_VM::Error e = _vm.execute(*_scan, _iterator->next());
       if (e != Pel_VM::PE_SUCCESS) {
         log(LoggerI::ERROR, 0, strbuf("pull: scan script:") << Pel_VM::strerror(e));
+        _vm.dumpStack(str("scan script"));
         return 0;
       }
       
@@ -151,6 +152,7 @@ TuplePtr PelScan::pull(int port, cbv cb)
       if (e != Pel_VM::PE_SUCCESS) {
         log(LoggerI::ERROR, 0, strbuf("pull: cleanup script:") << Pel_VM::strerror(e));
         _scanTuple = NULL;
+        _vm.dumpStack(str("cleanup script"));
         return 0;
       }
       _scanTuple = NULL;

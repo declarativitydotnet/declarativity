@@ -118,6 +118,7 @@ public:
   // CHARACTERISTICS
   virtual const char *class_name() const = 0;
   int ID() const				{ return _ID; }
+  str name() const				{ return _name; }
 
   /** Return the router that contains me */
   RouterPtr router() const			{ return _router; }
