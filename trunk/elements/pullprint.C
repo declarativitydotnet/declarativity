@@ -46,7 +46,7 @@ bool PullPrint::run_task()
 
   // Pull and print.  If pull fails, don't schedule yourself.  If pull
   // succeeds, schedule yourself again.
-  TuplePtr t = input(0).pull(_wakeup_cb);
+  TuplePtr t = input(0)->pull(_wakeup_cb);
   if (t != NULL) {
     // Print tuple
     std::cout << "PullPrint: " << (t->toString()) << "\n";
@@ -64,7 +64,7 @@ bool PullPrint::run_task()
 
 void PullPrint::run()
 {
-  TuplePtr t = input(0).pull(_wakeup_cb);
+  TuplePtr t = input(0)->pull(_wakeup_cb);
   if (t != NULL) {
     // Ensure element is still runnable
     std::cout << "PullPrint: " << (t->toString()) << "\n";
