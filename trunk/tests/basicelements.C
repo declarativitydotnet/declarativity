@@ -20,9 +20,10 @@
 #include <iostream>
 
 #include "tuple.h"
-#include "pushprint.h"
 
-#if 0
+#include "pushprint.h"
+#include "slot.h"
+
 static double time_fn(cbv cb) 
 {
   timespec before_ts;
@@ -43,7 +44,6 @@ static double time_fn(cbv cb)
   std::cout << after_ts.tv_sec << " secs " << (after_ts.tv_nsec/1000) << " usecs)\n";
   return elapsed;
 }
-#endif
 
 static TupleRef create_tuple_1() {
   TupleRef t = New refcounted<Tuple>;
@@ -54,6 +54,15 @@ static TupleRef create_tuple_1() {
   t->append(*New TupleField("This is a string"));
   t->freeze();
   return t;
+}
+
+
+static void slot_pull_cb() {
+  std::cout << "Slot: Pull callback called.\n";
+}
+
+static void slot_push_cb() {
+  std::cout << "Slot: Push callback called.\n";
 }
 
 int main(int argc, char **argv)
@@ -67,6 +76,16 @@ int main(int argc, char **argv)
 
   p->push(0,t,cbv_null);
 
+  Slot *s = New Slot();
+  for(int i=0; i<5; i++) {
+    TuplePtr tp = s->pull(0,wrap(slot_pull_cb));
+    if (tp == NULL) {
+      std::cout << "Null tuple\n";
+    } else {
+      p->push(0,t,cbv_null);
+    }
+    s->push(0,t,wrap(slot_push_cb));
+  }
   return 0;
 }
   

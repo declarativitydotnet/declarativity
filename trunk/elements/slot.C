@@ -38,6 +38,7 @@ int Slot::push(int port, TupleRef t, cbv cb)
   } else {
     warn << "Slot: overrun\n";
   }
+
   return (_t == NULL) ? 1 : 0;
 }
 
@@ -48,6 +49,7 @@ TuplePtr Slot::pull(int port, cbv cb)
   // transitions to ready, hence we invoke the push callback. 
   TuplePtr t = _t;
   _t = NULL;
+  _pull_cb = cb;
   // Do we need to call a callback downstream?
   if (_push_cb) {
     _push_cb();

@@ -19,6 +19,8 @@
 class Slot : public Element { 
 public:
   
+  Slot() : _t(NULL), _push_cb(cbv_null), _pull_cb(cbv_null) {};
+
   int push(int port, TupleRef t, cbv cb);
   TuplePtr pull(int port, cbv);
   const char *class_name() const		{ return "Slot";}
