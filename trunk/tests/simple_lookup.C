@@ -36,7 +36,7 @@
 struct LookupGenerator : public FunctorSource::Generator
 {
   // virtual ~LookupGenerator() {};
-  LookupGenerator(str s, str d) : src_(s), dest_(d), exit_(false) {};
+  LookupGenerator(str s, str d, uint32_t e) : src_(s), dest_(d), event_(e), exit_(false) {};
 
   TupleRef operator()() const {
     if (exit_) exit(0);
@@ -64,13 +64,14 @@ struct LookupGenerator : public FunctorSource::Generator
                                                         // satisfiable
     tuple->append(Val_ID::mk(key));
     tuple->append(Val_Str::mk(dest_));		// WHere the answer is returned
-    tuple->append(Val_UInt32::mk(rand())); 	// the event ID
+    tuple->append(Val_UInt32::mk(event_)); 	// the event ID
     tuple->freeze();
     return tuple;
   }
 
   str src_;
   str dest_;
+  uint32_t event_;
   mutable bool exit_;
 };
 
@@ -97,9 +98,7 @@ void issue_lookup(LoggerI::Level level, ptr<LookupGenerator> lookup)
   conf->hookUp(route, 0, udpTx, 0);
    
   RouterRef router = New refcounted< Router >(conf, level);
-  if (router->initialize(router) == 0) {
-    std::cout << "Correctly initialized network of reachability flows.\n";
-  } else {
+  if (router->initialize(router) != 0) {
     std::cout << "** Failed to initialize correct spec\n";
     return;
   }
@@ -113,25 +112,17 @@ void issue_lookup(LoggerI::Level level, ptr<LookupGenerator> lookup)
 
 int main(int argc, char **argv)
 {
-  std::cout << "\nSIMPLE LOOKUP\n";
-
   LoggerI::Level level = LoggerI::ALL;
   if (argc < 3) {
-    std::cout << "Usage: chord_client [logLevel [seed]] source_ip dest_ip\n";
+    std::cout << "Usage: simple_lookup logLevel seed event source_ip dest_ip\n";
     exit(0);
   }
 
   int seed = 0;
-  switch (argc) {
-    case 5:
-      seed = atoi(argv[2]);
-    case 4:
-      // str levelName(argv[1]);
-      level = LoggerI::levelFromName[str(argv[1])];
-    default:
-      srand(seed);
-      issue_lookup(level, New refcounted<LookupGenerator>(argv[argc-2], argv[argc-1]));
-  }
+  level = LoggerI::levelFromName[str(argv[1])];
+  seed = atoi(argv[2]);
+  srand(seed);
+  issue_lookup(level, New refcounted<LookupGenerator>(argv[4], argv[5], atoi(argv[3])));
 
   return 0;
 }

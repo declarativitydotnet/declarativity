@@ -32,7 +32,8 @@ def parse_cmdline(argv):
     return flags, args
 
 def run_lookup(lookup_exec, seed, node, out):
-    rv = os.system("%s NONE %d %s %s >> %s 2>&1" % (lookup_exec, seed, node, node, out))
+    rv = os.system("%s NONE %d %d %s %s >> %s 2>&1" \
+                    % (lookup_exec, seed, random.random()*sys.maxint, node, node, out))
 
 if __name__ == "__main__":
     try:
@@ -56,8 +57,7 @@ if __name__ == "__main__":
         for v in range(vantages):
             if len(ips) == 1: run_lookup(args[0], seed, "%s:%s" % (ips[0], int(port)+int(v)), args[1]+"/lookups.log")
             else: run_lookup(args[0], seed, "%s:%s" % (ips[v], port), args[1]+"/lookups.log")
-            seed += 1
+        seed += 1
         time.sleep(sleep_time)
-
 
 

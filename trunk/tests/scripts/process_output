@@ -29,9 +29,6 @@ def parse_cmdline(argv):
 def ts2sec(sec, ns):
     return (float(sec) + (float(ns) / 1000000000.0))
 
-def diffts(s1, n1, s2, n2):
-    return float(s1) - float(s2) + (float(n1)/1000000000.0 - float(n2)/1000000000.0)
-
 def process_node(out_f, lookups, results):
     matchlookup = re.compile(r"""^Print\[.*\],\s*
                                  ([0-9]+),\s*                                  # seconds
