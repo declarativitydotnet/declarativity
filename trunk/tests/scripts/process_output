@@ -241,7 +241,7 @@ def eval_simple_lookup(lookups, results):
                cnt += 1
            else:
                if maxsofar < cnt: maxsofar = cnt
-               cnt = 0
+               cnt = 1
                curip = ip 
        if len(responseIPs) == 0:
            print >> out, "LOOKUP(%s): %f " % (key, 0), responseIPs
