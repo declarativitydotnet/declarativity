@@ -18,6 +18,10 @@
 
 class Print : public Element { 
 public:
+
+  Print();
+
+  ~Print();
   
   int push(int port, TupleRef t, cbv cb);
   TuplePtr pull(int port, cbv);
@@ -27,8 +31,6 @@ public:
   const char *flow_code() const			{ return "x/x"; }
 
 private:
-  cbv	_push_cb;
-  cbv	_pull_cb;
   
 };
 

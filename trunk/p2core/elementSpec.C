@@ -99,6 +99,7 @@ void ElementSpec::initializePorts()
       if (u == 0) {
         // Create a new one
         u = New refcounted< UniGroup >;
+        _scratchUniGroups[fCurrent] = u;
       }
       // Add the input into the group
       u->inputs.push_back(i);
@@ -152,6 +153,7 @@ void ElementSpec::initializePorts()
       if (u == 0) {
         // Create a new one
         u = New refcounted< UniGroup >;
+        _scratchUniGroups[fCurrent] = u;
       }
       // Add the input into the group
       u->outputs.push_back(i);
