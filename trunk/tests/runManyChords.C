@@ -8,7 +8,7 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: A chord dataflow.
+ * DESCRIPTION: Many chord dataflows
  *
  */
 
@@ -69,19 +69,32 @@
 
 
 
-/** Created a networked chord flow. If alone, I'm my own successor.  If
-    with landmark, I start with a join. */
+/** Create many chord dataflows joining via the same gateway. */
 void testNetworked(LoggerI::Level level,
-                   str myAddress,
-                   int port,    // extracted from myAddress for convenience
-                   str landmarkAddress)
+                   int nodes)
 {
   // Create the data flow
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  Udp udp(strbuf(myAddress) << ":Udp", port);
 
-  createNode(myAddress, landmarkAddress,
-             conf, &udp);
+
+
+
+  // The first
+  Udp* udp = New Udp("127.0.0.1:10000", 10000);
+  createNode("127.0.0.1:10000", "-",
+             conf, udp);
+
+  int port = 10001;
+  for (int i = 1;
+       i < nodes;
+       i++, port++) {
+    strbuf name = strbuf() << port;
+    udp = New Udp(name, port);
+
+    strbuf myAddress = strbuf(str("127.0.0.1:")) << port;
+    strbuf landmarkAddress = strbuf(str("127.0.0.1:")) << ((port - 1) % 17);
+    createNode(myAddress, landmarkAddress, conf, udp);
+  }
 
   RouterRef router = New refcounted< Router >(conf, level);
   if (router->initialize(router) == 0) {
@@ -104,8 +117,8 @@ void testNetworked(LoggerI::Level level,
 
 int main(int argc, char **argv)
 {
-  if (argc < 4) {
-    fatal << "Usage:\n\t runChord <loggingLevel> <seed> <myipaddr:port> [<landmark_ipaddr:port>]\n";
+  if (argc != 4) {
+    fatal << "Usage:\n\t runManyChord <loggingLevel> <seed> <noNodes>\n";
   }
 
   str levelName(argv[1]);
@@ -113,330 +126,10 @@ int main(int argc, char **argv)
 
   int seed = atoi(argv[2]);
   srand(seed);
-  str myAddress(argv[3]);
-  
-  const char * theString = argv[3];
-  char * theColon = strchr(theString, ':');
-  if (theColon == NULL) {
-    // Couldn't find the correct format
-    fatal << "Usage:\n\trunChord <seed> <myipaddr:port> [<landmark_ipaddr:port>]\n\
-              \tMy address is malformed\n";
-  }
-  str thePort(theColon + 1);
-  int port = atoi(thePort);
 
-  if (argc > 4) {
-    str landmark(argv[4]);
-    testNetworked(level,
-                  myAddress,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  port,
-                  landmark);
-  } else {
-    testNetworked(level,
-                  myAddress,
-                  port,
-                  str("-"));
-  }
+  int noNodes = atoi(argv[3]);
+  testNetworked(level,
+                noNodes);
   return 0;
 }
   

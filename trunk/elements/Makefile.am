@@ -16,6 +16,7 @@ lib_LTLIBRARIES = libp2elements.la
 libp2elements_la_SOURCES = \
 	slot.C \
 	print.C \
+	printTime.C \
 	timedPushSource.C \
 	timestampSource.C \
 	timedPullSink.C \

@@ -20,7 +20,7 @@ bin_PROGRAMS 	= 	values \
 			tables \
 			pel \
 			IDs \
-			chord \
+			runManyChords \
 			runChord \
 			simple_lookup \
 			basicelements \
@@ -98,15 +98,15 @@ reachDatalog_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
-chord_SOURCES = chord.C
-chord_LDADD = \
+runChord_SOURCES = runChord.C
+runChord_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
-runChord_SOURCES = runChord.C
-runChord_LDADD = \
+runManyChords_SOURCES = runManyChords.C
+runManyChords_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \

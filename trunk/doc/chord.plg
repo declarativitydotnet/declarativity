@@ -28,12 +28,12 @@ rule L2 bestLookupDistance@NI(NI,K,R,E,min<D>) :-
 	finger@NI(NI,I,B,BI),
 	node@NI(NI, N),
 	B in (N,K),
-	D=f_dist(B,K).
+	D=f_dist(B,K)-1.
 
 rule L3 lookup@BI(min<BI>,K,R,E) :-
 	bestLookupDistance@NI(NI,K,R,E,D),
 	finger@NI(NI,I,B,BI),
-	D=f_dist(B,K),
+	D=f_dist(B,K)-1,
 	node@NI(NI, N),
 	B in (N, K).
 
@@ -44,13 +44,13 @@ rule L3 lookup@BI(min<BI>,K,R,E) :-
 rule SU1 bestSuccessorDist@NI(NI,min<D>) :-
 	node@NI(NI,N),
 	successor@NI(NI,S,SI),
-	D=f_dist(N,S) .
+	D=f_dist(N,S)-1.
 
 rule SU2 bestSuccessor@NI(NI,S,SI) :-
 	node@NI(NI,N),
 	bestSuccessorDist@NI(NI,D),
 	successor@NI(NI,S,SI),
-	D=f_dist(N,S).
+	D=f_dist(N,S)-1.
 
 rule SR1 successorCount(NI,count<>) :-
 	successor(NI,S,SI).
@@ -62,18 +62,18 @@ rule SR2 evictSuccessor@NI(NI) :-
 rule SR3 maxSuccessorDist@NI(NI,max<D>) :-
 	successor@NI(NI,S,SI),
 	node@NI(NI,N),
-	D = f_dist(N,S),
+	D = f_dist(N,S)-1,
 	evictSuccessor@NI(NI).
 
 rule SR4 delete@NI<successor(NI,S,SI)> :-
 	successor@NI(NI,S,SI),
 	maxSuccessorDist@NI(NI,D),
-	D=f_dist(N,S).
+	D=f_dist(N,S)-1.
 
 rule F1 fixFinger@NI(ni) :-
 	periodic@NI(finger.TTL*0.5).
 
-rule F2 nextFingerFix@NI(ni, 159).
+rule F2 nextFingerFix@NI(ni, 0).
 
 rule F3 fingerLookup@NI(NI, E, I) :-
 	fixFinger@NI(NI),
@@ -92,7 +92,7 @@ rule F5 finger@NI(NI, I, B, BI) :-
 rule F6 nextFingerFix@NI(NI, I) :-
 	fingerLookup@NI(NI, E, I1),
 	lookupResults@NI(NI, K, B, BI, E),
-	I = I1 - 1 mod finger.SIZE.
+	I = I1 + 1 mod finger.SIZE.
 
 
 
@@ -108,7 +108,7 @@ rule J3 startJoin@LI(LI,N,NI,E) :-
 	join@NI(NI,E),
 	node@NI(NI,N),
 	landmarkNode@NI(NI,LI),
-	LI != "".
+	LI != "-".
 
 rule J4 lookup@LI(LI,N,NI,E) :-
 	startJoin@LI(LI,N,NI,E).
@@ -117,13 +117,13 @@ rule J5 successor@NI(NI,S,SI) :-
 	joinRecord@NI(NI,E),
 	lookupResults@NI(NI,K,S,SI,E).
 
-rule J6 predecessor@NI(ni,null,"").
+rule J6 predecessor@NI(ni,null,"-").
 
 rule J7 successor@NI(NI, N, NI) :-
 	landmarkNode@NI(NI, LI),
 	node@NI(NI, N),
 	join@NI(NI, E),
-	LI == "".
+	LI == "-".
 
 
 /* Stabilization */
@@ -144,7 +144,7 @@ rule S1 stabilizeRequest@SI(SI,NI,E) :-
 rule S2 sendPredecessor@PI1(PI1,P,PI,E) :-
 	stabilizeRequest@NI(NI,PI1,E),
 	predecessor@NI(NI,P,PI),
-	PI != null.
+	PI != "-".
 
 rule S3 successor@NI(NI,P,PI) :-
 	node(NI,N),

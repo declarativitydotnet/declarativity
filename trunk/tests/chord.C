@@ -12,6 +12,10 @@
  *
  */
 
+#ifndef __CHORD_H__
+#define __CHORD_H__
+
+
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
@@ -59,92 +63,9 @@
 #include "noNullField.h"
 
 
-
-
-
-
 static const int SUCCESSORSIZE = 16;
-static const double FINGERTTL = 4;
-static const int FINGERSIZE = 12;
-
-
-
-
-
-void killJoin()
-{
-  exit(0);
-}
-
-
-static const uint FINGERS = 16;
-str LOCAL("Local.com");
-str REMOTE("Remote.com");
-str FINGERIP("Finger.com");
-
-struct LookupGenerator : public FunctorSource::Generator
-{
-  virtual ~LookupGenerator() {};
-  TupleRef operator()() const {
-    TupleRef tuple = Tuple::mk();
-    tuple->append(Val_Str::mk("lookup"));
-    str address = str(strbuf() << LOCAL);
-    tuple->append(Val_Str::mk(address));
-
-    uint zerowords = (uint) ((((double) (ID::WORDS + 1)) * rand()) / RAND_MAX);
-    uint32_t words[ID::WORDS];
-    for (uint i = 0;
-         i < zerowords;
-         i++) {
-      words[i] = 0;
-    }
-    for (uint i = zerowords;
-         i < ID::WORDS;
-         i++) {
-      words[i] = rand();
-    }
-    IDRef key = ID::mk(words)->add(ID::mk((uint) 10));  // Adding 10 to
-                                                        // have some
-                                                        // lookups locally
-                                                        // satisfiable
-    tuple->append(Val_ID::mk(key));
-
-    str req = str(strbuf() << REMOTE);
-    tuple->append(Val_Str::mk(req));
-
-    tuple->append(Val_UInt32::mk(rand())); // the event ID
-
-    tuple->freeze();
-
-    return tuple;
-  }
-};
-
-struct LookupGenerator lookupGenerator;
-
-
-struct SuccessorGenerator : public FunctorSource::Generator
-{
-  virtual ~SuccessorGenerator() {};
-  TupleRef operator()() const {
-    
-    TupleRef tuple = Tuple::mk();
-    tuple->append(Val_Str::mk("successor"));
-    
-    str myAddress = str(strbuf() << LOCAL);
-    tuple->append(Val_Str::mk(myAddress));
-    
-    IDRef successor = ID::mk((uint32_t) rand());
-    tuple->append(Val_ID::mk(successor));
-  
-    str succAddress = str(strbuf() << successor->toString() << "IP");
-    tuple->append(Val_Str::mk(succAddress));
-    tuple->freeze();
-    return tuple;
-  }
-};
-
-struct SuccessorGenerator successorGenerator;
+static const double FINGERTTL = 0.2;
+static const int FINGERSIZE = ID::WORDS * 32;
 
 
 /**
@@ -234,7 +155,7 @@ void ruleL1(str name,
 }
 
 /** L2: bestLookupDistance@NI(NI,K,R,E,min<D>) :- lookup@NI(NI,K,R,E),
-    node@NI(NI, N), finger@NI(NI,I,B,BI,ET), B in (N,K), D=f_dist(B,K)
+    node@NI(NI, N), finger@NI(NI,I,B,BI,ET), B in (N,K), D=f_dist(B,K)-1
 */
 void ruleL2(str name,
             Router::ConfigurationRef conf,
@@ -290,7 +211,7 @@ void ruleL2(str name,
                                                     ()id  /* (B in (N,K)) */ \
                                                     not ifstop /* empty */ \
                                                     swap drop 1 swap /* found is now true */\
-                                                    $3 4 peek distance dup /* dist(B,K) twice */ \
+                                                    $3 4 peek distance --id dup /* dist(B,K) twice */ \
                                                     2 peek /* newDist newDist oldDist */ \
                                                     <id /* newDist (newDist<oldMin) */ \
                                                     swap /* (old>new?) newDist */ \
@@ -368,7 +289,7 @@ void ruleL3(str name,
 
   // Select out the min-BI for all the fingers that satisfy
   // (finger.B in (res1.N, res1.K)) and (res1.D == distance(finger.B,
-  // res1.K)) and (res1.NI == finger.NI)
+  // res1.K)-1) and (res1.NI == finger.NI)
   // from <Res1 NI K R E D N> input joined with
   // <Finger NI I B BI>>
   ElementSpecRef aggregateS =
@@ -386,7 +307,7 @@ void ruleL3(str name,
                                                     ()id /* B in (N,K) */\
                                                     $3 /* B in (N,K) finger.B */\
                                                     5 peek /* B in (N,K) B res1.K */\
-                                                    distance /* B in (N,K) dist(B,K) */\
+                                                    distance --id /* B in (N,K) dist(B,K) */\
                                                     6 peek /* B in (N,K) dist(B,K) res1.D */\
                                                     ==id /* B in (N,K) (dist==D) */\
                                                     and /* [B in (N,K) and (dist==D)] */\
@@ -429,35 +350,6 @@ void ruleL3(str name,
   conf->hookUp(noNullS, 0, pullLookupOut, pullLookupOutPort);
 }
 
-/** Put lookup rules together.*/
-void lookupRules(str name,
-                 Router::ConfigurationRef conf,
-                 TableRef nodeTable,
-                 TableRef fingerTable,
-                 TableRef bestSuccessorTable,
-                 ElementSpecRef pushLookupIn,
-                 int pushLookupInPort,
-                 ElementSpecRef pullLookupOut,
-                 int pullLookupOutPort)
-{
-  ElementSpecRef dupS =
-    conf->addElement(New refcounted< Duplicate >(strbuf("LookupDup:") << name, 2));
-  ElementSpecRef muxS =
-    conf->addElement(New refcounted< RoundRobin >(strbuf("LookupRoundRobin:").cat(name), 2));
-  ElementSpecRef l1l2S =
-    conf->addElement(New refcounted< TimedPullPush >("L1-L2", 0));
-  conf->hookUp(pushLookupIn, pushLookupInPort,
-               dupS, 0);
-
-
-  ruleL1(strbuf() << name << "::L1",
-         conf, nodeTable, bestSuccessorTable, dupS, 0, muxS, 0);
-  ruleL2(strbuf() << name << "::L2",
-         conf, nodeTable, fingerTable, dupS, 1, l1l2S, 0);
-  ruleL3(strbuf() << name << "::L3",
-         conf, nodeTable, fingerTable, l1l2S, 0, muxS, 1);
-  conf->hookUp(muxS, 0, pullLookupOut, pullLookupOutPort);
-}
 
 
 
@@ -515,14 +407,14 @@ void ruleSU1(str name,
                                                     ifstop /* empty */ \
                                                     1 peek /* N */ \
                                                     $2  /* N successor.S */ \
-                                                    distance dup /* dist(N,S) twice */ \
+                                                    distance --id dup /* dist(N,S) twice */ \
                                                     2 peek /* newDist newDist oldDist */ \
                                                     <id /* newDist (newDist<oldDist) */ \
                                                     swap /* (newDist<oldDist) newDist */ \
                                                     2 peek ifelse /* ((newDist<oldDist) ? newDist : oldDist) */ \
                                                     swap /* swap newMin in state where oldMin was */ \
                                                     drop /* only state remains */"),
-                                               str("\"bestSuccessorDist\" pop 1 peek /* output NI */\
+                                               str("\"bestSuccessorDist\" pop 2 peek pop /* output NI */\
                                                    pop /* output minDistance */\
                                                    drop drop /* empty the stack */")));
   // Res1 must be pushed to second join
@@ -605,7 +497,7 @@ void ruleSU2(str name,
     conf->addElement(New refcounted< PelTransform >(strbuf("SelectRes1:").cat(name),
                                                     "$0 2 field /* res1.N */\
                                                      $1 2 field /* D successor.S */\
-                                                     distance /* dist(N,S) */\
+                                                     distance --id /* dist(N,S) */\
                                                      $0 3 field /* dist(N,S) res1.D */\
                                                      ==id /* (dist==D) */\
                                                      not ifstop /* drop if not equal */\
@@ -618,7 +510,7 @@ void ruleSU2(str name,
   ElementSpecRef makeBSS =
     conf->addElement(New refcounted< PelTransform >(strbuf("FlattenSuccessor:").cat(name),
                                                     "$1 unbox drop /* replace with BestSuccessor */\
-                                                     \"BestSuccessor\" pop /* new literal */\
+                                                     \"bestSuccessor\" pop /* new literal */\
                                                      pop pop pop /* Remaining fields */"));
   conf->hookUp(selectS, 0, makeBSS, 0);
   conf->hookUp(makeBSS, 0, pullBestSuccessorOut, pullBestSuccessorOutPort);
@@ -735,7 +627,7 @@ void ruleSR3(str name,
                                                     ifstop /* empty */ \
                                                     1 peek /* N */ \
                                                     $2  /* N successor.S */ \
-                                                    distance dup /* dist(N,S) twice */ \
+                                                    distance --id dup /* dist(N,S) twice */ \
                                                     2 peek /* newDist newDist oldDist */ \
                                                     >id /* newDist (newDist>oldDist) */ \
                                                     swap /* (newDist>oldDist) newDist */ \
@@ -820,7 +712,7 @@ void ruleSR4(str name,
     conf->addElement(New refcounted< PelTransform >(strbuf("SelectRes1:").cat(name),
                                                     "$0 2 field /* res1.N */\
                                                      $1 2 field /* D successor.S */\
-                                                     distance /* dist(N,S) */\
+                                                     distance --id /* dist(N,S) */\
                                                      $0 3 field /* dist(N,S) res1.D */\
                                                      ==id /* (dist==D) */\
                                                      not ifstop /* drop if not equal */\
@@ -1209,7 +1101,7 @@ void ruleJ2(str name,
 }
 
 /** rule J3 startJoin@LI(LI,N,NI,E) :- join@NI(NI,E), node@NI(NI,N),
-    landmarkNode@NI(NI,LI).
+    landmarkNode@NI(NI,LI), LI != "".
 */
 void ruleJ3(str name,
             Router::ConfigurationRef conf,
@@ -1258,6 +1150,14 @@ void ruleJ3(str name,
   conf->hookUp(project1S, 0, pushRes1S, 0);
   conf->hookUp(pushRes1S, 0, join2S, 0);
 
+  ElementSpecRef selectS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("select:") << name,
+                                                    "$0 3 field /* res1.LI */\
+                                                     \"-\" ==s ifstop /* select clause */\
+                                                     $0 pop $1 pop /* pass through otherwise */\
+                                                     "));
+
+
   // Produce startJoin(LI,N,NI,E)
   // <res1(NI, E, LI),node(NI, N)>
   ElementSpecRef project2S =
@@ -1269,7 +1169,8 @@ void ruleJ3(str name,
                                                      $0 2 field pop /* out res1.E */\
                                                      "));
   conf->hookUp(join2S, 0, noNull2S, 0);
-  conf->hookUp(noNull2S, 0, project2S, 0);
+  conf->hookUp(noNull2S, 0, selectS, 0);
+  conf->hookUp(selectS, 0, project2S, 0);
 
 
   conf->hookUp(project2S, 0, pullStartJoinOut, pullStartJoinOutPort);
@@ -1367,7 +1268,7 @@ void ruleJ6(str name,
   predecessorTuple->append(Val_Str::mk("predecessor"));
   predecessorTuple->append(Val_Str::mk(localAddress));
   predecessorTuple->append(Val_ID::mk(ID::mk()));
-  predecessorTuple->append(Val_Str::mk("")); // this is "null"
+  predecessorTuple->append(Val_Str::mk(str("-"))); // this is "null"
   predecessorTuple->freeze();
 
   ElementSpecRef sourceS =
@@ -1392,13 +1293,567 @@ void ruleJ6(str name,
 }
 
 
+/** rule J7 successor@NI(NI, NI, N) :- landmarkNode@NI(NI, LI),
+    node@NI(NI, N), LI == "".
+*/
+void ruleJ7(str name,
+            Router::ConfigurationRef conf,
+            TableRef landmarkNodeTable,
+            TableRef nodeTable,
+            ElementSpecRef pushJoinIn,
+            int pushJoinInPort,
+            ElementSpecRef pullSuccessorOut,
+            int pullSuccessorOutPort)
+{
+  // Join join with landmark table
+  ElementSpecRef join1S =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("joinIntoLandmark:") << name,
+                                                    landmarkNodeTable,
+                                                    1, // Match join.NI
+                                                    1 // with landmarkNode.NI
+                                                    ));
+  ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
+
+  conf->hookUp(pushJoinIn, pushJoinInPort, join1S, 0);
+
+  // Produce res1(NI, E, LI)
+  // <join(NI, E),landmarkNode(NI, LI)>
+  ElementSpecRef project1S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("projectRes1:").cat(name),
+                                                    "\"res1\" pop \
+                                                     $0 1 field pop /* out join.NI */\
+                                                     $0 2 field pop /* out join.E */\
+                                                     $1 2 field pop /* out lN.LI */\
+                                                     "));
+  conf->hookUp(join1S, 0, noNullS, 0);
+  conf->hookUp(noNullS, 0, project1S, 0);
+
+
+  // Join res1 with node table
+  ElementSpecRef pushRes1S =
+    conf->addElement(New refcounted< TimedPullPush >(strbuf("PushRes1:") << name, 0));
+  ElementSpecRef join2S =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("res1IntoNode:") << name,
+                                                    nodeTable,
+                                                    1, // Match res1.NI
+                                                    1 // with node.NI
+                                                    ));
+  ElementSpecRef noNull2S = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull2:") << name, 1));
+
+  conf->hookUp(project1S, 0, pushRes1S, 0);
+  conf->hookUp(pushRes1S, 0, join2S, 0);
+
+  ElementSpecRef selectS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("select:") << name,
+                                                    "$0 3 field /* res1.LI */\
+                                                     \"-\" ==s not ifstop /* select clause */\
+                                                     $0 pop $1 pop /* pass through otherwise */\
+                                                     "));
+
+
+  // Produce successor(NI, N, NI)
+  // <res1(NI, E, LI),node(NI, N)>
+  ElementSpecRef project2S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("makeSuccessor:").cat(name),
+                                                    "\"successor\" pop \
+                                                     $0 1 field pop /* out res1.NI */\
+                                                     $1 2 field pop /* out node.N */\
+                                                     $0 1 field pop /* out res1.NI */\
+                                                     "));
+  conf->hookUp(join2S, 0, noNull2S, 0);
+  conf->hookUp(noNull2S, 0, selectS, 0);
+  conf->hookUp(selectS, 0, project2S, 0);
+
+
+  conf->hookUp(project2S, 0, pullSuccessorOut, pullSuccessorOutPort);
+}
+
+
+/** rule S0 stabilize@NI(NI, E) :- periodic@NI(TTL * 0.5), E=f_rand(),
+    NI=ni. */
+void ruleS0(str name,
+            Router::ConfigurationRef conf,
+            str localAddress,
+            double fingerTTL,
+            ElementSpecRef pullStabilizeOut,
+            int pullStabilizeOutPort)
+{
+  // My stabilize tuple
+  TupleRef stabilizeTuple = Tuple::mk();
+  stabilizeTuple->append(Val_Str::mk("stabilizeEvent"));
+  stabilizeTuple->append(Val_Str::mk(localAddress));
+  stabilizeTuple->freeze();
+
+  ElementSpecRef sourceS =
+    conf->addElement(New refcounted< TupleSource >(str("StabilizeSource:") << name,
+                                                   stabilizeTuple));
+  
+  // The timed pusher
+  ElementSpecRef pushS =
+    conf->addElement(New refcounted< TimedPullPush >(strbuf("StabilizePush:") << name,
+                                                     fingerTTL * 0.5));
+  
+  // And a slot from which to pull
+  ElementSpecRef slotS =
+    conf->addElement(New refcounted< Slot >(strbuf("StabilizeSlot:") << name));
+
+  // Link everything
+  conf->hookUp(sourceS, 0, pushS, 0);
+  conf->hookUp(pushS, 0, slotS, 0);
+  conf->hookUp(slotS, 0, pullStabilizeOut, pullStabilizeOutPort);
+}
+
+
+/** rule S0a stabilize@NI(NI, E) :- stabilizeEvent@NI(NITTL * 0.5),
+    E=f_rand(), NI=ni.
+*/
+void ruleS0a(str name,
+             Router::ConfigurationRef conf,
+             ElementSpecRef pushStabilizeEventIn,
+             int pushStabilizeEventInPort,
+             ElementSpecRef pullStabilizeOut,
+             int pullStabilizeOutPort)
+{
+  // Project onto stabilize(NI, E)
+  // from
+  // stabilizeEvent(NI)
+  ElementSpecRef projectS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("project:").cat(name),
+                                                    "\"stabilize\" pop \
+                                                     $1 pop /* out sE.NI */\
+                                                     rand pop /* out random */\
+                                                     "));
+  ElementSpecRef slotS =
+    conf->addElement(New refcounted< Slot >(strbuf("Slot:") << name));
+  conf->hookUp(pushStabilizeEventIn, pushStabilizeEventInPort, projectS, 0);
+  conf->hookUp(projectS, 0, slotS, 0);
+  conf->hookUp(slotS, 0, pullStabilizeOut, pullStabilizeOutPort);
+}
+
+
+/** rule S0b stabilizeRecord@NI(NI, E) :- stabilize@NI(NI, E).
+ */
+void ruleS0b(str name,
+             Router::ConfigurationRef conf,
+             ElementSpecRef pushStabilizeIn,
+             int pushStabilizeInPort,
+             ElementSpecRef pullStabilizeRecordOut,
+             int pullStabilizeRecordOutPort)
+{
+  // Project onto stabilizeRecord(NI, E)
+  // from
+  // stabilize(NI, E)
+  ElementSpecRef projectS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("project:").cat(name),
+                                                    "\"stabilizeRecord\" pop \
+                                                     $1 pop /* out s.NI */\
+                                                     $2 pop /* out s.E */\
+                                                     "));
+  ElementSpecRef slotS =
+    conf->addElement(New refcounted< Slot >(strbuf("Slot:") << name));
+  conf->hookUp(pushStabilizeIn, pushStabilizeInPort, projectS, 0);
+  conf->hookUp(projectS, 0, slotS, 0);
+  conf->hookUp(slotS, 0, pullStabilizeRecordOut, pullStabilizeRecordOutPort);
+}
+
+/**
+   rule S1 stabilizeRequest@SI(SI,NI,E) :- stabilize@NI(NI,E),
+   bestSuccessor@NI(NI,S,SI),
+ */
+void ruleS1(str name,
+            Router::ConfigurationRef conf,
+            TableRef bestSuccessorTable,
+            ElementSpecRef pushStabilizeIn,
+            int pushStabilizeInPort,
+            ElementSpecRef pullStabilizeRequestOut,
+            int pullStabilizeRequestOutPort)
+{
+  // Join with best successor
+  ElementSpecRef joinS =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("StabilizeInBestSuccessor:") << name,
+                                                    bestSuccessorTable,
+                                                    1, // Match stabilize.NI
+                                                    1 // with bestSuccessor.NI
+                                                    ));
+  ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
+  // Link it to the stabilize coming in. Pushes match already
+  conf->hookUp(pushStabilizeIn, pushStabilizeInPort, joinS, 0);
+  conf->hookUp(joinS, 0, noNullS, 0);
 
 
 
+  // Produce result
+  // stabilizeRequest(SI, NI, E) from
+  // stabilize(NI, E), bestSuccesssor(NI,S, SI)
+  ElementSpecRef projectS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("Project:").cat(name),
+                                                    "\"stabilizeRequest\" pop \
+                                                     $1 3 field pop /* SI */\
+                                                     $0 1 field pop /* NI */\
+                                                     $0 2 field pop /* E */\
+                                                     "));
+  conf->hookUp(noNullS, 0, projectS, 0);
+  conf->hookUp(projectS, 0, pullStabilizeRequestOut, pullStabilizeRequestOutPort);
+}
+
+/** 
+    rule S2 sendPredecessor@PI1(PI1,P,PI,E) :-
+    stabilizeRequest@NI(NI,PI1,E), predecessor@NI(NI,P,PI), PI != null.
+*/
+void ruleS2(str name,
+            Router::ConfigurationRef conf,
+            TableRef predecessorTable,
+            ElementSpecRef pushStabilizeRequestIn,
+            int pushStabilizeRequestInPort,
+            ElementSpecRef pullSendPredecessorOut,
+            int pullSendPredecessorOutPort)
+{
+  // StabilizeRequest stabilizeRequest with landmark table
+  ElementSpecRef join1S =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("stabilizeRequestIntoPredecessor:") << name,
+                                                    predecessorTable,
+                                                    1, // Match stabilizeRequest.NI
+                                                    1 // with predecessor.NI
+                                                    ));
+  ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
+
+  conf->hookUp(pushStabilizeRequestIn, pushStabilizeRequestInPort, join1S, 0);
+  conf->hookUp(join1S, 0, noNullS, 0);
 
 
+  // Select predecessor.PI != null
+  // stabilizeRequest(NI, PI1, E),predecessor(NI, P, PI)>
+  ElementSpecRef selectS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("select:") << name,
+                                                    "$1 3 field /* predecessor.PI */\
+                                                     \"-\" ==s ifstop /* select clause */\
+                                                     $0 pop $1 pop /* pass through otherwise */\
+                                                     "));
+  conf->hookUp(noNullS, 0, selectS, 0);
 
 
+  // Now project onto the result
+  // sendPredecessor(PI1, P, PI, E)
+  // from
+  // stabilizeRequest(NI, PI1, E),predecessor(NI, P, PI)>
+  ElementSpecRef project1S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("project:").cat(name),
+                                                    "\"sendPredecessor\" pop \
+                                                     $0 2 field pop /* out stabilizeRequest.PI1 */\
+                                                     $1 2 field pop /* out predecessor.P */\
+                                                     $1 3 field pop /* out predecessor.PI */\
+                                                     $0 3 field pop /* out stabilizeRequest.E */\
+                                                     "));
+  conf->hookUp(selectS, 0, project1S, 0);
+  conf->hookUp(project1S, 0, pullSendPredecessorOut, pullSendPredecessorOutPort);
+}
+
+
+/** 
+    rule S3 successor@NI(NI,P,PI) :- node(NI,N),
+    sendPredecessor@NI(NI,P,PI,E), bestSuccessor@NI(NI,S,SI), P in
+    (N,S), stabilizeRecord@NI(NI, E).
+*/
+void ruleS3(str name,
+            Router::ConfigurationRef conf,
+            TableRef stabilizeRecordTable,
+            TableRef nodeTable,
+            TableRef bestSuccessorTable,
+            ElementSpecRef pushSendPredecessorIn,
+            int pushSendPredecessorInPort,
+            ElementSpecRef pullSuccessorOut,
+            int pullSuccessorOutPort)
+{
+  // SendPredecessor sendPredecessor with landmark table
+  ElementSpecRef join1S =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("sendPredecessorIntoNode:") << name,
+                                                    nodeTable,
+                                                    1, // Match sendPredecessor.NI
+                                                    1 // with node.NI
+                                                    ));
+  ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
+  conf->hookUp(pushSendPredecessorIn, pushSendPredecessorInPort, join1S, 0);
+  conf->hookUp(join1S, 0, noNullS, 0);
+
+  // from
+  // sendPredecessor(NI, P, PI, E), node(NI, N)>
+  ElementSpecRef project1S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("Project:").cat(name),
+                                                    "\"res1\" pop \
+                                                     $0 1 field pop /* out NI */\
+                                                     $0 2 field pop /* out P */\
+                                                     $0 3 field pop /* out PI */\
+                                                     $0 4 field pop /* out E */\
+                                                     $1 2 field pop /* out node.N */\
+                                                     "));
+  conf->hookUp(noNullS, 0, project1S, 0);
+
+  
+  // Now join res1 with stabilize record
+  ElementSpecRef pushRes1S =
+    conf->addElement(New refcounted< TimedPullPush >(strbuf("PushRes1:") << name, 0));
+  ElementSpecRef join2S =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("res1IntoStabilizeRecord:") << name,
+                                                    stabilizeRecordTable,
+                                                    1, // Match res1.NI
+                                                    1 // with stabilizeRecord.NI
+                                                    ));
+  ElementSpecRef noNull2S = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull2:") << name, 1));
+  conf->hookUp(project1S, 0, pushRes1S, 0);
+  conf->hookUp(pushRes1S, 0, join2S, 0);
+  conf->hookUp(join2S, 0, noNull2S, 0);
+  
+  // Select res1.E == stabilizeRecord.E
+  // from
+  // res1(NI, P, PI, E, N), stabilizeRecord(NI, E)
+  ElementSpecRef selectS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("select:") << name,
+                                                    "$0 4 field /* res1.E */\
+                                                     $1 2 field /* res1.E sR.E */\
+                                                     ==i not ifstop /* select clause */\
+                                                     $0 pop $1 pop /* pass through otherwise */\
+                                                     "));
+  conf->hookUp(noNull2S, 0, selectS, 0);
+
+  // Project back to res1.
+  // from
+  // res1()..., stabilizeRecord(...)
+  ElementSpecRef project2S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("Project2:").cat(name),
+                                                    "$0 unboxPop\
+                                                     "));
+  conf->hookUp(selectS, 0, project2S, 0);
+
+
+  // Finally join res1 with bestSuccessorTable
+  ElementSpecRef push2S =
+    conf->addElement(New refcounted< TimedPullPush >(strbuf("Push2:") << name, 0));
+  ElementSpecRef join3S =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("res1IntoBestSuccessor:") << name,
+                                                    bestSuccessorTable,
+                                                    1, // Match res1.NI
+                                                    1 // with bestSuccessor.NI
+                                                    ));
+  ElementSpecRef noNull3S = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull3:") << name, 1));
+  conf->hookUp(project2S, 0, push2S, 0);
+  conf->hookUp(push2S, 0, join3S, 0);
+  conf->hookUp(join3S, 0, noNull3S, 0);
+  
+
+  // Select P in (N, S)
+  // from
+  // res1(NI, P, PI, E, N), bestSuccessor(NI, S, SI)
+  ElementSpecRef select2S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("select2:") << name,
+                                                    "$0 2 field /* P */\
+                                                     $0 5 field /* P N */\
+                                                     $1 2 field /* P N S */\
+                                                     ()id not ifstop /* select clause */\
+                                                     $0 pop $1 pop /* pass through otherwise */\
+                                                     "));
+  conf->hookUp(noNull3S, 0, select2S, 0);
+
+
+  // Finally project onto the result
+  // successor(NI, P, PI)
+  // from
+  // res1(NI, P, PI, E, N), bestSuccessor(NI, S, SI)
+  ElementSpecRef project3S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("project3:").cat(name),
+                                                    "\"successor\" pop \
+                                                     $0 1 field pop /* out NI */\
+                                                     $0 2 field pop /* out P */\
+                                                     $0 3 field pop /* out PI */\
+                                                     "));
+  conf->hookUp(select2S, 0, project3S, 0);
+  conf->hookUp(project3S, 0, pullSuccessorOut, pullSuccessorOutPort);
+}
+
+
+/** rule S6a notify@NI(NI) :- periodic@NI(TTL * 0.5), NI=ni. */
+void ruleS6a(str name,
+             Router::ConfigurationRef conf,
+             str localAddress,
+             double fingerTTL,
+             ElementSpecRef pullNotifyOut,
+             int pullNotifyOutPort)
+{
+  // My notify tuple
+  TupleRef notifyTuple = Tuple::mk();
+  notifyTuple->append(Val_Str::mk("notify"));
+  notifyTuple->append(Val_Str::mk(localAddress));
+  notifyTuple->freeze();
+
+  ElementSpecRef sourceS =
+    conf->addElement(New refcounted< TupleSource >(str("NotifySource:") << name,
+                                                   notifyTuple));
+  
+  // The timed pusher
+  ElementSpecRef pushS =
+    conf->addElement(New refcounted< TimedPullPush >(strbuf("NotifyPush:") << name,
+                                                     fingerTTL * 0.5));
+  
+  // And a slot from which to pull
+  ElementSpecRef slotS =
+    conf->addElement(New refcounted< Slot >(strbuf("NotifySlot:") << name));
+
+  // Link everything
+  conf->hookUp(sourceS, 0, pushS, 0);
+  conf->hookUp(pushS, 0, slotS, 0);
+  conf->hookUp(slotS, 0, pullNotifyOut, pullNotifyOutPort);
+}
+
+
+/** 
+    rule S6 notifyPredecessor@SI(SI,N,NI) :- notify@NI(NI),
+    node@NI(NI,N), successor@NI(NI,S,SI).
+*/
+void ruleS6(str name,
+            Router::ConfigurationRef conf,
+            TableRef nodeTable,
+            TableRef successorTable,
+            ElementSpecRef pushNotifyIn,
+            int pushNotifyInPort,
+            ElementSpecRef pullNotifyPredecessorOut,
+            int pullNotifyPredecessorOutPort)
+{
+  // Join notify with node
+  ElementSpecRef join1S =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("notifyIntoNode:") << name,
+                                                    nodeTable,
+                                                    1, // Match notify.NI
+                                                    1 // with node.NI
+                                                    ));
+  ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
+  conf->hookUp(pushNotifyIn, pushNotifyInPort, join1S, 0);
+  conf->hookUp(join1S, 0, noNullS, 0);
+
+  // Project res1(NI, N)
+  // from
+  // notify(NI), node(NI, N)>
+  ElementSpecRef project1S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("Project:").cat(name),
+                                                    "\"res1\" pop \
+                                                     $0 1 field pop /* out NI */\
+                                                     $1 2 field pop /* out node.N */\
+                                                     "));
+  conf->hookUp(noNullS, 0, project1S, 0);
+
+  
+  // Now join res1 with successor
+  ElementSpecRef push1S =
+    conf->addElement(New refcounted< TimedPullPush >(strbuf("Push1:") << name, 0));
+  ElementSpecRef join2S =
+    conf->addElement(New refcounted< MultLookup >(strbuf("res1IntoSuccessor:") << name,
+                                                    successorTable,
+                                                    1, // Match res1.NI
+                                                    1 // with successor.NI
+                                                    ));
+  ElementSpecRef noNull2S = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull2:") << name, 1));
+  conf->hookUp(project1S, 0, push1S, 0);
+  conf->hookUp(push1S, 0, join2S, 0);
+  conf->hookUp(join2S, 0, noNull2S, 0);
+  
+  // Project to notifyPredecessor(SI, N, NI)
+  // from
+  // res1(NI, N), successor(NI, S, SI)
+  ElementSpecRef project2S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("Project2:").cat(name),
+                                                    "\"notifyPredecessor\" pop \
+                                                     $1 3 field pop /* out SI */\
+                                                     $0 2 field pop /* out N */\
+                                                     $0 1 field pop /* out NI */\
+                                                     "));
+  conf->hookUp(noNull2S, 0, project2S, 0);
+
+  conf->hookUp(project2S, 0, pullNotifyPredecessorOut, pullNotifyPredecessorOutPort);
+}
+
+
+/** 
+    rule S7 predecessor@NI(NI,P,PI) :- node@NI(NI,N),
+    notifyPredecessor@NI(NI,P,PI), predecessor@NI(NI,P1,PI1), ((PI1 ==
+    "") || (P in (P1, N))).
+*/
+void ruleS7(str name,
+            Router::ConfigurationRef conf,
+            TableRef nodeTable,
+            TableRef predecessorTable,
+            ElementSpecRef pushNotifyPredecessorIn,
+            int pushNotifyPredecessorInPort,
+            ElementSpecRef pullPredecessorOut,
+            int pullPredecessorOutPort)
+{
+  // Join notifyPredecessor with table
+  ElementSpecRef join1S =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("notifyPredecessorIntoNode:") << name,
+                                                    nodeTable,
+                                                    1, // Match notifyPredecessor.NI
+                                                    1 // with node.NI
+                                                    ));
+  ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
+  conf->hookUp(pushNotifyPredecessorIn, pushNotifyPredecessorInPort, join1S, 0);
+  conf->hookUp(join1S, 0, noNullS, 0);
+
+  // Project res1(NI, P, PI, N)
+  // from
+  // notifyPredecessor(NI, P, PI), node(NI, N)>
+  ElementSpecRef project1S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("Project:").cat(name),
+                                                    "\"res1\" pop \
+                                                     $0 1 field pop /* out NI */\
+                                                     $0 2 field pop /* out P */\
+                                                     $0 3 field pop /* out PI */\
+                                                     $1 2 field pop /* out node.N */\
+                                                     "));
+  conf->hookUp(noNullS, 0, project1S, 0);
+
+  
+  // Finally join res1 with predecessorTable
+  ElementSpecRef push2S =
+    conf->addElement(New refcounted< TimedPullPush >(strbuf("Push2:") << name, 0));
+  ElementSpecRef join3S =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("res1IntoPredecessor:") << name,
+                                                    predecessorTable,
+                                                    1, // Match res1.NI
+                                                    1 // with predecessor.NI
+                                                    ));
+  ElementSpecRef noNull3S = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull3:") << name, 1));
+  conf->hookUp(project1S, 0, push2S, 0);
+  conf->hookUp(push2S, 0, join3S, 0);
+  conf->hookUp(join3S, 0, noNull3S, 0);
+  
+
+  // Select (PI1 == "" || (P in (P1, N))).
+  // from
+  // res1(NI, P, PI, N), predecessor(NI, P1, PI1)
+  ElementSpecRef select2S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("select2:") << name,
+                                                    "$0 2 field /* P */\
+                                                     $1 2 field /* P P1 */\
+                                                     $0 4 field /* P P1 N */\
+                                                     ()id /* (P in(P1,N)) */\
+                                                     $1 3 field /* (P in(P1,N)) PI1 */\
+                                                     \"-\" ==s or not ifstop /* select clause */\
+                                                     $0 pop $1 pop /* pass through otherwise */\
+                                                     "));
+  conf->hookUp(noNull3S, 0, select2S, 0);
+
+
+  // Finally project onto the result
+  // predecessor(NI, P, PI)
+  // from
+  // res1(NI, P, PI, N), predecessor(NI, S, SI)
+  ElementSpecRef project3S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("project3:").cat(name),
+                                                    "\"predecessor\" pop \
+                                                     $0 1 field pop /* out NI */\
+                                                     $0 2 field pop /* out P */\
+                                                     $0 3 field pop /* out PI */\
+                                                     "));
+  conf->hookUp(select2S, 0, project3S, 0);
+  conf->hookUp(project3S, 0, pullPredecessorOut, pullPredecessorOutPort);
+}
 
 
 
@@ -1413,10 +1868,9 @@ connectRules(str name,
              TableRef joinRecordTable,
              TableRef landmarkNodeTable,
              TableRef nextFingerFixTable,
-             TableRef notifyTable,
              TableRef nodeTable,
              TableRef predecessorTable,
-             TableRef stabilizeTable,
+             TableRef stabilizeRecordTable,
              TableRef successorTable,
              Table::MultAggregate successorCountAggregate,
              ElementSpecRef pushTupleIn,
@@ -1426,8 +1880,10 @@ connectRules(str name,
 {
   // My wraparound mux.  On input 0 comes the outside world. On input 1
   // come tuples that have left locally destined for local rules
-  ElementSpecRef wrapAroundMux = conf->addElement(New refcounted< Mux >(strbuf("WrapAroundMux:") <<(name), 2));
-  conf->hookUp(pushTupleIn, pushTupleInPort, wrapAroundMux, 0);
+  ElementSpecRef wrapAroundMux = conf->addElement(New refcounted< Mux >(strbuf("WA:") <<(name), 2));
+  ElementSpecRef incomingP = conf->addElement(New refcounted< PrintTime >(strbuf("In:") << name));
+  conf->hookUp(pushTupleIn, pushTupleInPort, incomingP, 0);
+  conf->hookUp(incomingP, 0, wrapAroundMux, 0);
 
 
   // The demux element for tuples
@@ -1435,7 +1891,7 @@ connectRules(str name,
   demuxKeys->push_back(New refcounted< Val_Str >(str("successor")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("lookup")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("bestLookupDistance")));
-  demuxKeys->push_back(New refcounted< Val_Str >(str("bestSuccessorDistance")));
+  demuxKeys->push_back(New refcounted< Val_Str >(str("bestSuccessorDist")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("maxSuccessorDist")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("evictSuccessor")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("successorCount")));
@@ -1445,8 +1901,7 @@ connectRules(str name,
   demuxKeys->push_back(New refcounted< Val_Str >(str("bestSuccessor")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("nextFingerFix")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("fingerLookup")));
-  demuxKeys->push_back(New refcounted< Val_Str >(str("stabilize")));
-  demuxKeys->push_back(New refcounted< Val_Str >(str("notify")));
+  demuxKeys->push_back(New refcounted< Val_Str >(str("stabilizeRecord")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("fixFinger")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("lookupResults")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("join")));
@@ -1454,6 +1909,12 @@ connectRules(str name,
   demuxKeys->push_back(New refcounted< Val_Str >(str("joinRecord")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("landmarkNode")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("startJoin")));
+  demuxKeys->push_back(New refcounted< Val_Str >(str("stabilize")));
+  demuxKeys->push_back(New refcounted< Val_Str >(str("stabilizeEvent")));
+  demuxKeys->push_back(New refcounted< Val_Str >(str("stabilizeRequest")));
+  demuxKeys->push_back(New refcounted< Val_Str >(str("sendPredecessor")));
+  demuxKeys->push_back(New refcounted< Val_Str >(str("notify")));
+  demuxKeys->push_back(New refcounted< Val_Str >(str("notifyPredecessor")));
   ElementSpecRef demuxS = conf->addElement(New refcounted< Demux >("demux", demuxKeys));
   conf->hookUp(wrapAroundMux, 0, demuxS, 0);
 
@@ -1471,7 +1932,7 @@ connectRules(str name,
   ElementSpecRef dupBestLookupDistance = conf->addElement(New refcounted< Duplicate >(strbuf("bestLookupDistance") << "Dup:" << name, 1));
   conf->hookUp(demuxS, nextDemuxOutput++, dupBestLookupDistance, 0);
 
-  ElementSpecRef dupBestSuccessorDistance = conf->addElement(New refcounted< Duplicate >(strbuf("bestSuccessorDistance") << "Dup:" << name, 1));
+  ElementSpecRef dupBestSuccessorDistance = conf->addElement(New refcounted< Duplicate >(strbuf("bestSuccessorDist") << "Dup:" << name, 1));
   conf->hookUp(demuxS, nextDemuxOutput++, dupBestSuccessorDistance, 0);
 
   ElementSpecRef dupMaxSuccessorDist = conf->addElement(New refcounted< Duplicate >(strbuf("maxSuccessorDist") << "Dup:" << name, 1));
@@ -1513,15 +1974,10 @@ connectRules(str name,
   conf->hookUp(demuxS, nextDemuxOutput++, insertFingerLookup, 0);
   conf->hookUp(insertFingerLookup, 0, dupFingerLookup, 0);
 
-  ElementSpecRef insertStabilize = conf->addElement(New refcounted< Insert >(strbuf("stabilize") << "Insert:" << name, stabilizeTable));
-  ElementSpecRef discardStabilize = conf->addElement(New refcounted< Discard >(strbuf("stabilize") << "Discard:" << name));
-  conf->hookUp(demuxS, nextDemuxOutput++, insertStabilize, 0);
-  conf->hookUp(insertStabilize, 0, discardStabilize, 0);
-
-  ElementSpecRef insertNotify = conf->addElement(New refcounted< Insert >(strbuf("notify") << "Insert:" << name, notifyTable));
-  ElementSpecRef discardNotify = conf->addElement(New refcounted< Discard >(strbuf("notify") << "Discard:" << name));
-  conf->hookUp(demuxS, nextDemuxOutput++, insertNotify, 0);
-  conf->hookUp(insertNotify, 0, discardNotify, 0);
+  ElementSpecRef insertStabilizeRecord = conf->addElement(New refcounted< Insert >(strbuf("stabilizeRecord") << "Insert:" << name, stabilizeRecordTable));
+  ElementSpecRef discardStabilizeRecord = conf->addElement(New refcounted< Discard >(strbuf("stabilizeRecord") << "Discard:" << name));
+  conf->hookUp(demuxS, nextDemuxOutput++, insertStabilizeRecord, 0);
+  conf->hookUp(insertStabilizeRecord, 0, discardStabilizeRecord, 0);
 
   ElementSpecRef dupFixFinger = conf->addElement(New refcounted< Duplicate >(strbuf("fixFinger") << "Dup:" << name, 1));
   conf->hookUp(demuxS, nextDemuxOutput++, dupFixFinger, 0);
@@ -1529,7 +1985,7 @@ connectRules(str name,
   ElementSpecRef dupLookupResults = conf->addElement(New refcounted< Duplicate >(strbuf("lookupResults") << "Dup:" << name, 3));
   conf->hookUp(demuxS, nextDemuxOutput++, dupLookupResults, 0);
 
-  ElementSpecRef dupJoin = conf->addElement(New refcounted< Duplicate >(strbuf("join") << "Dup:" << name, 2));
+  ElementSpecRef dupJoin = conf->addElement(New refcounted< Duplicate >(strbuf("join") << "Dup:" << name, 3));
   conf->hookUp(demuxS, nextDemuxOutput++, dupJoin, 0);
 
   ElementSpecRef dupJoinEvent = conf->addElement(New refcounted< Duplicate >(strbuf("joinEvent") << "Dup:" << name, 1));
@@ -1548,6 +2004,24 @@ connectRules(str name,
   ElementSpecRef dupStartJoin = conf->addElement(New refcounted< Duplicate >(strbuf("startJoin") << "Dup:" << name, 1));
   conf->hookUp(demuxS, nextDemuxOutput++, dupStartJoin, 0);
 
+  ElementSpecRef dupStabilize = conf->addElement(New refcounted< Duplicate >(strbuf("stabilize") << "Dup:" << name, 2));
+  conf->hookUp(demuxS, nextDemuxOutput++, dupStabilize, 0);
+
+  ElementSpecRef dupStabilizeEvent = conf->addElement(New refcounted< Duplicate >(strbuf("stabilizeEvent") << "Dup:" << name, 1));
+  conf->hookUp(demuxS, nextDemuxOutput++, dupStabilizeEvent, 0);
+
+  ElementSpecRef dupStabilizeRequest = conf->addElement(New refcounted< Duplicate >(strbuf("stabilizeRequest") << "Dup:" << name, 1));
+  conf->hookUp(demuxS, nextDemuxOutput++, dupStabilizeRequest, 0);
+
+  ElementSpecRef dupSendPredecessor = conf->addElement(New refcounted< Duplicate >(strbuf("sendPredecessor") << "Dup:" << name, 1));
+  conf->hookUp(demuxS, nextDemuxOutput++, dupSendPredecessor, 0);
+
+  ElementSpecRef dupNotify = conf->addElement(New refcounted< Duplicate >(strbuf("notify") << "Dup:" << name, 1));
+  conf->hookUp(demuxS, nextDemuxOutput++, dupNotify, 0);
+
+  ElementSpecRef dupNotifyPredecessor = conf->addElement(New refcounted< Duplicate >(strbuf("notifyPredecessor") << "Dup:" << name, 1));
+  conf->hookUp(demuxS, nextDemuxOutput++, dupNotifyPredecessor, 0);
+
 
 
 
@@ -1561,7 +2035,7 @@ connectRules(str name,
 
 
 
-  ElementSpecRef roundRobin = conf->addElement(New refcounted< RoundRobin >(strbuf("RoundRobin:") << name, 21));
+  ElementSpecRef roundRobin = conf->addElement(New refcounted< RoundRobin >(strbuf("RoundRobin:") << name, 31));
   ElementSpecRef wrapAroundPush = conf->addElement(New refcounted< TimedPullPush >(strbuf("WrapAroundPush") << name, 0));
 
   // The wrap around for locally bound tuples
@@ -1569,13 +2043,15 @@ connectRules(str name,
   wrapAroundDemuxKeys->push_back(New refcounted< Val_Str >(localAddress));
   ElementSpecRef wrapAroundDemux = conf->addElement(New refcounted< Demux >("wrapAround", wrapAroundDemuxKeys, 1));
   ElementSpecRef outgoingQueue = conf->addElement(New refcounted< Queue >("outgoingQueue", 1000));
-  ElementSpecRef wrapAroundPrint = conf->addElement(New refcounted< Print >(strbuf("wrapAroundPrint") << name));
+  ElementSpecRef wrapAroundPrint = conf->addElement(New refcounted< PrintTime >(strbuf("Wrap:") << name));
+  ElementSpecRef outgoingP = conf->addElement(New refcounted< PrintTime >(strbuf("Out:") << name));
   conf->hookUp(roundRobin, 0, wrapAroundPush, 0);
   conf->hookUp(wrapAroundPush, 0, wrapAroundDemux, 0);
   conf->hookUp(wrapAroundDemux, 0, wrapAroundPrint, 0);
   conf->hookUp(wrapAroundPrint, 0, wrapAroundMux, 1);
   conf->hookUp(wrapAroundDemux, 1, outgoingQueue, 0);
-  conf->hookUp(outgoingQueue, 0, pullTupleOut, pullTupleOutPort);
+  conf->hookUp(outgoingQueue, 0, outgoingP, 0);
+  conf->hookUp(outgoingP, 0, pullTupleOut, pullTupleOutPort);
 
 
 
@@ -1692,196 +2168,71 @@ connectRules(str name,
          conf,
          localAddress,
          roundRobin, 20);
+  ruleJ7(strbuf(name) << ":J7",
+         conf,
+         landmarkNodeTable,
+         nodeTable,
+         dupJoin, 2,
+         roundRobin, 21);
+  ruleS0(strbuf(name) << ":S0",
+         conf,
+         localAddress,
+         FINGERTTL,
+         roundRobin, 22);
+  ruleS0a(strbuf(name) << ":S0a",
+          conf,
+          dupStabilizeEvent, 0,
+          roundRobin, 23);
+  ruleS0b(strbuf(name) << ":S0b",
+          conf,
+          dupStabilize, 0,
+          roundRobin, 24);
+  ruleS1(strbuf(name) << ":S1",
+         conf,
+         bestSuccessorTable,
+         dupStabilize, 1,
+         roundRobin, 25);
+  ruleS2(strbuf(name) << ":S2",
+         conf,
+         predecessorTable,
+         dupStabilizeRequest, 0,
+         roundRobin, 26);
+  ruleS3(strbuf(name) << ":S3",
+         conf,
+         stabilizeRecordTable,
+         nodeTable,
+         bestSuccessorTable,
+         dupSendPredecessor, 0,
+         roundRobin, 27);
+  ruleS6a(strbuf(name) << ":S6a",
+          conf,
+          localAddress,
+          FINGERTTL,
+          roundRobin, 28);
+  ruleS6(strbuf(name) << ":S6",
+         conf,
+         nodeTable,
+         successorTable,
+         dupNotify, 0,
+         roundRobin, 29);
+  ruleS7(strbuf(name) << ":S7",
+         conf,
+         nodeTable,
+         predecessorTable,
+         dupNotifyPredecessor, 0,
+         roundRobin, 30);
 }
 
+  
 
 
-
-/** Test Chord. */
-void testChord(LoggerI::Level level)
+void createNode(str myAddress,
+                str landmarkAddress,
+                Router::ConfigurationRef conf,
+                Udp* udp)
 {
   TableRef fingerTable =
-    New refcounted< Table >(strbuf("FingerTable"), 100);
-  fingerTable->add_unique_index(2);
-  fingerTable->add_multiple_index(1);
-  
-  IDRef me = ID::mk((uint32_t) 1);
-
-  // Fill up the table with fingers
-  for (uint i = 0;
-       i < FINGERS;
-       i++) {
-    TupleRef tuple = Tuple::mk();
-    tuple->append(Val_Str::mk("Finger"));
-
-    str myAddress = str(strbuf() << LOCAL);
-    tuple->append(Val_Str::mk(myAddress));
-
-    // finger index
-    tuple->append(Val_Int32::mk(i));
-
-    // The ID of the node currently pointed at by this finger
-    IDRef best = ID::mk((uint32_t) 0X200)->shift(10 * i)->add(me)->add(ID::mk((uint32_t) i*10));
-    tuple->append(Val_ID::mk(best));
-
-    // The address of the node currently pointed at by this finger
-    str address = str(strbuf() << FINGERIP << ":" << i);
-    tuple->append(Val_Str::mk(address));
-    tuple->freeze();
-    fingerTable->insert(tuple);
-    warn << tuple->toString() << "\n";
-  }
-  
-
-
-  TableRef nodeTable =
-    New refcounted< Table >(strbuf("NodeTable"), 1);
-  nodeTable->add_unique_index(1);
-  
-
-  {
-    TupleRef tuple = Tuple::mk();
-    tuple->append(Val_Str::mk("Node"));
-    
-    str myAddress = str(strbuf() << LOCAL);
-    tuple->append(Val_Str::mk(myAddress));
-    tuple->append(Val_ID::mk(me));
-    tuple->freeze();
-    nodeTable->insert(tuple);
-  }
-    
-
-  TableRef bestSuccessorTable =
-    New refcounted< Table >(strbuf("BestSuccessorTable"), 1);
-  bestSuccessorTable->add_unique_index(1);
-  
-
-  {
-    TupleRef tuple = Tuple::mk();
-    tuple->append(Val_Str::mk("BestSuccessor"));
-    
-    str myAddress = str(strbuf() << LOCAL);
-    tuple->append(Val_Str::mk(myAddress));
-    
-    IDRef target = ID::mk((uint32_t) 0X200)->add(me);
-    IDRef best = ID::mk()->add(target)->add(ID::mk((uint) 10));
-    tuple->append(Val_ID::mk(best));
-    
-    str address = str(strbuf() << FINGERIP << ":" << 0);
-    tuple->append(Val_Str::mk(address));
-    tuple->freeze();
-
-    bestSuccessorTable->insert(tuple);
-  }
-    
-  TableRef successorTable =
-    New refcounted< Table >(strbuf("SuccessorTable"), 5);
-  successorTable->add_multiple_index(1);
-  successorTable->add_unique_index(2);
-
-  // Create the count aggregate on the unique index
-  std::vector< unsigned > groupBy;
-  groupBy.push_back(1);
-  Table::MultAggregate successorCountAggregate =
-    successorTable->add_mult_groupBy_agg(1, groupBy, 1, &Table::AGG_COUNT);
-
-  // The next finger fix table starts out with a single tuple that never
-  // expires and is only replaced
-  TableRef nextFingerFixTable = New refcounted< Table >(strbuf("nextFingerFix"), 1);
-  nextFingerFixTable->add_unique_index(1);
-
-  /** The finger lookup table.  It is indexed uniquely by its event ID */
-  TableRef fingerLookupTable = New refcounted< Table >(strbuf("fingerLookup"), 3);
-  fingerLookupTable->add_unique_index(2);
-  fingerLookupTable->add_multiple_index(1);
-
-
-  // The remaining tables
-  TableRef predecessorTable = New refcounted< Table >(strbuf("predecessor"), 3);
-  TableRef stabilizeTable = New refcounted< Table >(strbuf("stabilize"), 2);
-  TableRef notifyTable = New refcounted< Table >(strbuf("notify"), 2);
-
-  // The joinRecord table. Singleton
-  TableRef joinRecordTable = New refcounted< Table >(strbuf("joinRecord"), 2);
-  joinRecordTable->add_unique_index(1);
-  
-  // The landmarkNode table. Singleton
-  TableRef landmarkNodeTable = New refcounted< Table >(strbuf("landmarkNode"), 2);
-  landmarkNodeTable->add_unique_index(1);
-  
-  
-
-  // Create the data flow
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-
-
-  ElementSpecRef funkyS =
-    conf->addElement(New refcounted< FunctorSource >(str("Source"),
-                                                     &lookupGenerator));
-  ElementSpecRef lookupPS =
-    conf->addElement(New refcounted< Print >(strbuf("lookup")));
-  ElementSpecRef timedPullPushS =
-    conf->addElement(New refcounted< TimedPullPush >("PullPush", 1, 1));
-  conf->hookUp(funkyS, 0, lookupPS, 0);
-  conf->hookUp(lookupPS, 0, timedPullPushS, 0);
-
-  ElementSpecRef outputPS =
-    conf->addElement(New refcounted< Print >(strbuf("Output")));
-  ElementSpecRef sinkS =
-    conf->addElement(New refcounted< TimedPullSink >("Sink", 0));
-  conf->hookUp(outputPS, 0, sinkS, 0);
-
-
-  connectRules(str("Complete"),
-               LOCAL,
-               conf,
-               bestSuccessorTable,
-               fingerLookupTable,
-               fingerTable,
-               joinRecordTable,
-               landmarkNodeTable,
-               nextFingerFixTable,
-               notifyTable,
-               nodeTable,
-               predecessorTable,
-               stabilizeTable,
-               successorTable,
-               successorCountAggregate,
-               timedPullPushS, 0,
-               outputPS, 0);
-
-  RouterRef router = New refcounted< Router >(conf, level);
-  if (router->initialize(router) == 0) {
-    std::cout << "Correctly initialized network of chord lookup flows.\n";
-  } else {
-    std::cout << "** Failed to initialize correct spec\n";
-    return;
-  }
-
-  // Activate the router
-  router->activate();
-
-  // Schedule kill
-  //delaycb(10, 0, wrap(&killJoin));
-
-  // Run the router
-  amain();
-}
-
-
-
-/** Created a networked chord flow. If alone, I'm my own successor.  If
-    with landmark, I start with a join. */
-void testNetworked(LoggerI::Level level,
-                   str dottedAddress,
-                   int port,
-                   bool alone,
-                   str landmarkAddress)
-{
-  str myAddress = strbuf(dottedAddress) << ":" << port;
-
-  TableRef fingerTable =
-    New refcounted< Table >(strbuf("FingerTable"), 100);
+    New refcounted< Table >(strbuf("fingerTable"), 100);
   fingerTable->add_unique_index(2);
   fingerTable->add_multiple_index(1);
   
@@ -1894,13 +2245,13 @@ void testNetworked(LoggerI::Level level,
   IDRef myKey = ID::mk(random);
 
   TableRef nodeTable =
-    New refcounted< Table >(strbuf("NodeTable"), 1);
+    New refcounted< Table >(strbuf("nodeTable"), 1);
   nodeTable->add_unique_index(1);
   
 
   {
     TupleRef tuple = Tuple::mk();
-    tuple->append(Val_Str::mk("Node"));
+    tuple->append(Val_Str::mk("node"));
     
     tuple->append(Val_Str::mk(myAddress));
     tuple->append(Val_ID::mk(myKey));
@@ -1910,11 +2261,15 @@ void testNetworked(LoggerI::Level level,
     
 
   TableRef bestSuccessorTable =
-    New refcounted< Table >(strbuf("BestSuccessorTable"), 1);
+    New refcounted< Table >(strbuf("bestSuccessorTable"), 1);
   bestSuccessorTable->add_unique_index(1);
   
   TableRef successorTable =
-    New refcounted< Table >(strbuf("SuccessorTable"), 5);
+    New refcounted< Table >(strbuf("successorTable"), 100); // let the
+                                                            // replacement
+                                                            // policy
+                                                            // deal with
+                                                            // evictions
   successorTable->add_multiple_index(1);
   successorTable->add_unique_index(2);
 
@@ -1942,31 +2297,26 @@ void testNetworked(LoggerI::Level level,
   // The joinRecord table. Singleton
   TableRef joinRecordTable = New refcounted< Table >(strbuf("joinRecord"), 2);
   joinRecordTable->add_unique_index(1);
-  
+
+  // The stabilizeRecord table. Singleton.
+  TableRef stabilizeRecordTable = New refcounted< Table >(strbuf("stabilizeRecord"), 2);
+  stabilizeRecordTable->add_unique_index(1);
+
   // The landmarkNode table. Singleton
   TableRef landmarkNodeTable = New refcounted< Table >(strbuf("landmarkNode"), 2);
   landmarkNodeTable->add_unique_index(1);
   
-  // The remaining tables
-  TableRef stabilizeTable = New refcounted< Table >(strbuf("stabilize"), 2);
-  TableRef notifyTable = New refcounted< Table >(strbuf("notify"), 2);
 
 
   
 
   
-
-  // Create the data flow
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-
-
-  Udp udp(strbuf(myAddress) << ":Udp", port);
-
 
   ////////////////////////////////////////////////////////
   // The front end, UDP to rules engine
-  ElementSpecRef udpRxS = conf->addElement(udp.get_rx());
+  ElementSpecRef udpRxS = conf->addElement(udp->get_rx());
   ElementSpecRef unmarshalS = conf->addElement(New refcounted< UnmarshalField >(strbuf("Unmarshal:").cat(myAddress), 1));
+
 
   // Drop the source address and decapsulate
   ElementSpecRef unBoxS = conf->addElement(New refcounted< PelTransform >(strbuf("UnBox:").cat(myAddress),
@@ -1993,7 +2343,7 @@ void testNetworked(LoggerI::Level level,
   // And translate the address into a sockaddr.  This is a hack until
   // we have a consistent view of the UDP interface.
   ElementSpecRef routeS = conf->addElement(New refcounted< StrToSockaddr >(strbuf("Router:").cat(myAddress), 0));
-  ElementSpecRef udpTxS = conf->addElement(udp.get_tx());
+  ElementSpecRef udpTxS = conf->addElement(udp->get_tx());
   
   
   conf->hookUp(encapS, 0, marshalS, 0);
@@ -2002,33 +2352,14 @@ void testNetworked(LoggerI::Level level,
 
 
 
-  // Setup alone vs. joining
-  if (alone) {
-    // I'm my own successor
-    TupleRef tuple = Tuple::mk();
-    tuple->append(Val_Str::mk("successor"));
-    
-    tuple->append(Val_Str::mk(myAddress));
-    
-    tuple->append(Val_ID::mk(myKey));
-    tuple->append(Val_Str::mk(myAddress)); // again
-    tuple->freeze();
-
-
-    successorTable->insert(tuple);
-
-  } else {
-    // I have a landmark node to join to
-
-    TupleRef landmark = Tuple::mk();
-    landmark->append(Val_Str::mk("landmarkNode"));
-    landmark->append(Val_Str::mk(myAddress));
-    landmark->append(Val_Str::mk(landmarkAddress));
-    landmark->freeze();
-    landmarkNodeTable->insert(landmark);
-  }
+  TupleRef landmark = Tuple::mk();
+  landmark->append(Val_Str::mk("landmarkNode"));
+  landmark->append(Val_Str::mk(myAddress));
+  landmark->append(Val_Str::mk(landmarkAddress));
+  landmark->freeze();
+  landmarkNodeTable->insert(landmark);
   
-  connectRules(str("Complete"),
+  connectRules(strbuf("[") << myAddress << str("]"),
                myAddress,
                conf,
                bestSuccessorTable,
@@ -2037,57 +2368,19 @@ void testNetworked(LoggerI::Level level,
                joinRecordTable,
                landmarkNodeTable,
                nextFingerFixTable,
-               notifyTable,
                nodeTable,
                predecessorTable,
-               stabilizeTable,
+               stabilizeRecordTable,
                successorTable,
                successorCountAggregate,
                unBoxS, 0,
                encapS, 0);         // not alone
 
-
-
-  RouterRef router = New refcounted< Router >(conf, level);
-  if (router->initialize(router) == 0) {
-    std::cout << "Correctly initialized network of chord lookup flows.\n";
-  } else {
-    std::cout << "** Failed to initialize correct spec\n";
-    return;
-  }
-
-  // Activate the router
-  router->activate();
-
-  // Run the router
-  amain();
 }
 
 
-
-
-
-int main(int argc, char **argv)
-{
-  std::cout << "\nChord\n";
-
-  LoggerI::Level level = LoggerI::WARN;
-  if (argc > 1) {
-    str levelName(argv[1]);
-    level = LoggerI::levelFromName[levelName];
-  }
-
-  int seed = 0;
-  if (argc > 2) {
-    seed = atoi(argv[2]);
-  }
-  srand(seed);
-
-  testChord(level);
-  return 0;
-}
-  
 
 /*
  * End of file 
  */
+#endif /* __CHORD_H_ */

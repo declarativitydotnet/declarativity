@@ -39,15 +39,13 @@ void Logger::log( str classname,
 {
   if (severity >= router()->loggingLevel) {
     timespec now_ts;
-    double   now;
     
     if (clock_gettime(CLOCK_REALTIME,&now_ts)) {
       fatal << "clock_gettime:" << strerror(errno) << "\n";
     }
-    now = now_ts.tv_sec + (1.0 / 1000 / 1000 / 1000 * now_ts.tv_nsec);
-    
     TupleRef t = Tuple::mk();
-    t->append(Val_Double::mk(now));
+    t->append(Val_UInt64::mk(now_ts.tv_sec));
+    t->append(Val_UInt64::mk(now_ts.tv_nsec));
     t->append(Val_UInt64::mk(seq++));
     t->append(Val_Str::mk(classname));
     t->append(Val_Str::mk(instancename));
