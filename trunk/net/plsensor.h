@@ -38,7 +38,7 @@ private:
   typedef tcpconn_t conn_t;
 #else
 #ifdef HAVE_TCPCONNECT_T_P
-  typedef tcpconnect_t conn_t;
+  typedef tcpconnect_t *conn_t;
 #else
 #error No TCP connection type from libasync!
 #endif
@@ -70,7 +70,7 @@ private:
   u_int16_t	port;
   str		path;
   int		sd; 
-  conn_t	*tc;
+  conn_t        tc;
   rxx		req_re;
   strbuf       *hdrs;
   in_addr	localaddr;
