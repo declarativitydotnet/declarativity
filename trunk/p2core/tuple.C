@@ -46,6 +46,13 @@ static const tinfo tinfos[] = {
   { 0, "invalid", NULL }
 };
 
+//
+// Return the name of a type
+//
+const char *TupleField::typeName(Type t)
+{
+  return (t > INVALID) ? tinfos[INVALID].name : tinfos[t].name;
+}
 
 //
 // Printout a tuple field
@@ -82,31 +89,49 @@ str TupleField::toString() const
 //
 str TupleField::toTypeString() const 
 {
-  strbuf sb;
-  switch (t) {
-  case NULLV:
-    sb << "null"; break;
-  case INT32:
-    sb << "(int32)" << i32; break;
-  case UINT32:
-    sb << "(uint32)" << ui32; break;
-  case INT64:
-    sb << "(int64)" << i64; break;
-  case UINT64:
-    sb << "(uint64)" << ui64; break;
-  case DOUBLE:
-    // Yuck.  IF we convert libasync to the STL this will be easier.
-    char dbuf[100];
-    sprintf(dbuf,"(double)%g",d);
-    sb << dbuf; break;
-  case STRING:
-    sb << "(string)\"" << s << "\""; break;
-  default:
-    sb << "BAD TYPE " << t; break;
-  }
-  return str(sb);
+  return strbuf() << "(" << typeName(t) << ")" << toString();
 }
 
+
+//
+// Convert to an unsigned 64-bit number, for e.g. logical operations.
+//
+bool TupleField::convert_unsigned(uint64_t &val)
+{
+  switch( t ) {
+  case INT32:
+    val = i32; break;
+  case UINT32:
+    val = ui32; break;
+  case INT64:
+    val = i64; break;
+  case UINT64:
+    val = ui64; break;
+  default:
+    val = 0; return false;
+  }
+  return true;
+}
+
+//
+// Convert to a signed 64-bit number, for arithmetic operations.
+//
+bool TupleField::convert_signed(int64_t &val)
+{
+  switch( t ) {
+  case INT32:
+    val = i32; break;
+  case UINT32:
+    val = ui32; break;
+  case INT64:
+    val = i64; break;
+  case UINT64:
+    val = ui64; break;
+  default:
+    val = 0; return false;
+  }
+  return true;
+}
 
 //
 // Why the explicit marshalling code, and not just a type definition

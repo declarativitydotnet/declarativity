@@ -115,9 +115,15 @@ HEXDIGIT	[0-9a-fA-F]
   add_const_int(yytext[1]);
 }
 
+({DIGIT}+|0[xX]{HEXDIGIT}+)U {
+  // Unsigned integer literal (including octal and/or hex
+  uint64_t v = strtoull(yytext,NULL,0);
+  add_const_int(v);
+}
+
 -?({DIGIT}+|0[xX]{HEXDIGIT}+) {
   // Some integer literal (including octal and/or hex
-  long long v = strtoll(yytext,NULL,0);
+  int64_t v = strtoll(yytext,NULL,0);
   add_const_int(v);
 }
 

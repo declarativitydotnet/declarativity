@@ -129,6 +129,47 @@ static void unmarshal_lots_of_tuples()
   }
 }
 
+void test_conv( TupleFieldRef tf, 
+		uint64_t u_val, bool u_ok, 
+		int64_t s_val, bool s_ok )
+{
+  int64_t s_ans;
+  uint64_t u_ans;
+  
+  if (tf->convert_unsigned(u_ans) != u_ok) {
+    if (u_ok) {
+      std::cerr << "** Expected " << tf->toTypeString() 
+		<< " to convert to unsigned, but it didn't\n";
+    } else {
+      std::cerr << "** Didn't expect " << tf->toTypeString() 
+		<< " to convert to unsigned, but it did\n";
+    } 
+  }
+  if (u_val != u_ans) {
+    std::cerr.setf(std::ios_base::hex,std::ios_base::basefield);
+    std::cerr << "** Expected " << tf->toTypeString() 
+	      << " to convert to unsigned as 0x" << u_val
+	      << " but got 0x" << u_ans
+	      << " instead.\n";
+    std::cerr.setf(std::ios_base::dec,std::ios_base::basefield);
+  }
+  if (tf->convert_signed(s_ans) != s_ok) {
+    if (s_ok) {
+      std::cerr << "** Expected " << tf->toTypeString() 
+		<< " to convert to signed, but it didn't\n";
+    } else {
+      std::cerr << "** Didn't expect " << tf->toTypeString() 
+		<< " to convert to signed, but it did\n";
+    } 
+  }
+  if (s_val != s_ans) {
+    std::cerr << "** Expected " << tf->toTypeString() 
+	      << " to convert to unsigned as " << s_val
+	      << " but got " << s_ans
+	      << " instead.\n";
+  }
+}
+
 int main(int argc, char **argv)
 {
   std::cout << "TUPLES\n";
@@ -153,6 +194,24 @@ int main(int argc, char **argv)
     std::cout << "Correctly caught type exception\n";
     // Pass
   }
+
+  std::cout << "Testing type conversions..\n";
+
+  test_conv(New refcounted<TupleField>(0), 0, true, 0, true);
+  test_conv(New refcounted<TupleField>(1), 1, true, 1, true);
+  test_conv(New refcounted<TupleField>(-1), 0xffffffffffffffffULL, true, -1, true);
+  test_conv(New refcounted<TupleField>(-1LL), 0xffffffffffffffffULL, true, -1, true);
+  test_conv(New refcounted<TupleField>(0xffffffffffffffffULL), 0xffffffffffffffffULL, true, -1, true);
+  test_conv(New refcounted<TupleField>(1.0), 0, false, 0, false);
+  test_conv(New refcounted<TupleField>(), 0, false, 0, false);
+  test_conv(New refcounted<TupleField>("Hello"), 0, false, 0, false);
+  test_conv(New refcounted<TupleField>(0xffffffff), 0xffffffffULL, true, 0xffffffffLL, true);
+
+
+  //void test_conv( TupleField &tf, uint64_t u_val, bool u_ok, 
+  //int64_t s_val, bool s_ok )
+
+
 
   // Create a bunch of tuples...
   std::cout << "Creating tuples...\n";

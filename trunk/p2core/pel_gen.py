@@ -27,7 +27,7 @@ def emit_opcode( op, ar, va, desc ):
 for op, ar, va, desc in [
   ("drop",1,    "DROP",         "Discard the top of stack"),
   ("swap",2,	"SWAP",         "Swap top two stack values"),
-  ("dup",2,	"DUP",          "Duplicate the top stack value"),
+  ("dup",1,	"DUP",          "Duplicate the top stack value"),
   ("",0,        "PUSH_CONST",   "Push a constant"),
   ("",0,        "PUSH_FIELD",   "Push a field of the tuple"),
   ("pop",1,     "POP",          "Pop result tuple field"), 

@@ -29,8 +29,10 @@ public:
     PE_SUCCESS=0,
     PE_BAD_CONSTANT,
     PE_BAD_FIELD,
-    PE_STACK_EMPTY,
+    PE_STACK_UNDERFLOW,
     PE_TYPE_CONVERSION,
+    PE_BAD_OPCODE,
+    PE_DIVIDE_BY_ZERO,
     PE_INVALID_ERRNO,
     PE_UNKNOWN // Must be the last error
   };
@@ -38,7 +40,7 @@ public:
 private:
   // Execution state
   std::stack<TupleFieldRef> st;
-  Pel_Program	*prg;
+  const Pel_Program	*prg;
   Error		 error;
   int		 pc;
   TuplePtr	 result;
@@ -48,7 +50,7 @@ private:
 
 #include "pel_opcode_decls.gen.h"
 
-  u_int64_t pop_force_unsigned();
+  uint64_t pop_unsigned();
   int64_t pop_signed();
   str pop_string();
   double pop_double();
@@ -65,13 +67,13 @@ public:
 
   // Execute the program on the tuple. 
   // Return 0 if success, -1 if an error. 
-  Error execute( Pel_Program &prog, TupleRef data);
+  Error execute(const Pel_Program &prog, const TupleRef data);
   
   // Single step an instruction
   Error execute_instruction( u_int32_t inst, TupleRef data);
 
   // Return the result (top of the stack)
-  TupleFieldRef result_val() const;
+  TupleFieldRef result_val();
   
   // Return the current result tuple.
   TupleRef result_tuple();

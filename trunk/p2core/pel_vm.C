@@ -27,7 +27,12 @@ struct JumpTableEnt_t {
 
 const char *Pel_VM::err_msgs[] = {
   "Success",
-  "Type conversion",
+  "Out-of-range constant reference",
+  "Out-of-range field reference",
+  "Stack underflow",
+  "Bad type conversion",
+  "Bad opcode",
+  "Divide by zero",
   "Invalid Errno",
   "Unknown Error"
 };
@@ -44,23 +49,29 @@ Pel_VM::Pel_VM() : st() {
 //
 // Reset the VM
 //
-void Pel_VM::reset() {
+void Pel_VM::reset() 
+{
   while (!st.empty()) {
     st.pop();
   }
 }
 
 //
-// Return a result
+// Return some value. 
 //
-TupleFieldRef Pel_VM::result_val() const {
+TupleFieldRef Pel_VM::result_val()
+{
+  if (st.empty()) {
+    st.push(New refcounted<TupleField>());
+  }
   return st.top();
 }
 
 // 
 // Make a tuple out of the top elements on the stack and return it
 // 
-TupleRef Pel_VM::result_tuple() {
+TupleRef Pel_VM::result_tuple() 
+{
   if (!result) {
     result = Tuple::mk();
   }
@@ -80,22 +91,14 @@ const char *Pel_VM::strerror(Pel_VM::Error e) {
 //
 // Type conversion to an unsigned number with no checkng
 //
-u_int64_t Pel_VM::pop_force_unsigned() 
+uint64_t Pel_VM::pop_unsigned() 
 {
   TupleFieldRef t = st.top(); st.pop();
-  switch( t->get_type() ) {
-  case TupleField::INT32:
-    return t->as_i32();
-  case TupleField::UINT32:
-    return t->as_ui32();
-  case TupleField::INT64:
-    return t->as_i64();
-  case TupleField::UINT64:
-    return t->as_ui64();
-  default:
+  uint64_t v;
+  if ( !t->convert_unsigned(v) ) {
     error = PE_TYPE_CONVERSION;
-    return 0;
   }
+  return v;
 }
 
 //
@@ -104,21 +107,13 @@ u_int64_t Pel_VM::pop_force_unsigned()
 int64_t Pel_VM::pop_signed() 
 {
   TupleFieldRef t = st.top(); st.pop();
-  switch( t->get_type() ) {
-  case TupleField::INT32:
-    return t->as_i32();
-  case TupleField::UINT32:
-    return t->as_ui32();
-  case TupleField::INT64:
-    return t->as_i64();
-  case TupleField::UINT64:
-    return t->as_ui64();
-  default:
+  int64_t v;
+  if ( !t->convert_signed(v) ) {
     error = PE_TYPE_CONVERSION;
-    return 0;
   }
+  return v;
 }
-
+ 
 //
 // Pull a string off the stack
 //  
@@ -147,10 +142,46 @@ double Pel_VM::pop_double()
   }
 }
 
+//
+// Actually execute a program
+//
+Pel_VM::Error Pel_VM::execute(const Pel_Program &prog, const TupleRef data)
+{
+  reset();
+  prg = &prog;
+  error = PE_SUCCESS;
+  pc = 0;
+  result = NULL;
+  operand = data;
+  
+  for(pc=0; pc < prg->ops.size(); pc++) {
+    if (execute_instruction( prg->ops[pc], operand ) != PE_SUCCESS) {
+      return error;
+    }
+  }
+  return error;
+}
 
-
-
-
+//
+// Execute a single instruction
+//
+Pel_VM::Error Pel_VM::execute_instruction( u_int32_t inst, TupleRef data)
+{
+  u_int32_t op = inst & 0xFFFF;
+  if (op > NUM_OPCODES) {
+    error = PE_BAD_OPCODE;
+  } else if (st.size() < jump_table[op].arity) {
+    error = PE_STACK_UNDERFLOW;
+  } else {
+    // This is a somewhat esoteric bit of C++.  Believe it or not,
+    // jump_table[op].fn is a pointer to a member function.
+    // Consequently, "this->*" dereferences it with respect to the
+    // "this" (i.e., the VM we're in), meaning that we can invoke it
+    // as a member. 
+    (this->*(jump_table[op].fn))(inst);
+  }
+  return error;
+}
 
 /***********************************************************************
  *
@@ -172,7 +203,9 @@ DEF_OP(SWAP) {
   st.push(t1); 
   st.push(t2);
 }
-DEF_OP(DUP) { st.push(st.top()); }
+DEF_OP(DUP) { 
+  st.push(st.top()); 
+}
 DEF_OP(PUSH_CONST) { 
   int ndx = (inst >> 16);
   if (ndx > prg->const_pool.size() ) { error = PE_BAD_CONSTANT; return; }
@@ -193,17 +226,17 @@ DEF_OP(POP) {
 // Boolean operations
 //
 DEF_OP(NOT) {
-  u_int64_t v = pop_force_unsigned();
+  u_int64_t v = pop_unsigned();
   st.push(New refcounted<TupleField>(!v));
 }
 DEF_OP(AND) {
-  u_int64_t v1 = pop_force_unsigned();
-  u_int64_t v2 = pop_force_unsigned();
+  u_int64_t v1 = pop_unsigned();
+  u_int64_t v2 = pop_unsigned();
   st.push(New refcounted<TupleField>(v1 && v2));
 }
 DEF_OP(OR) {
-  u_int64_t v1 = pop_force_unsigned();
-  u_int64_t v2 = pop_force_unsigned();
+  u_int64_t v1 = pop_unsigned();
+  u_int64_t v2 = pop_unsigned();
   st.push(New refcounted<TupleField>(v1 || v2));
 }
 
@@ -211,36 +244,40 @@ DEF_OP(OR) {
 // Integer-only arithmetic operations (mostly bitwise)
 //
 DEF_OP(LSR) {
-  u_int64_t v1 = pop_force_unsigned();
-  u_int64_t v2 = pop_force_unsigned();
+  u_int64_t v1 = pop_unsigned();
+  u_int64_t v2 = pop_unsigned();
   st.push(New refcounted<TupleField>(v2 >> v1));
 }
 DEF_OP(ASR) {
-  u_int64_t v1 = pop_force_unsigned();
+  u_int64_t v1 = pop_unsigned();
   int64_t v2 = pop_signed();
   st.push(New refcounted<TupleField>(v2 >> v1));
 }
 DEF_OP(LSL) {
-  u_int64_t v1 = pop_force_unsigned();
-  u_int64_t v2 = pop_force_unsigned();
+  uint64_t v1 = pop_unsigned();
+  uint64_t v2 = pop_unsigned();
   st.push(New refcounted<TupleField>(v2 << v1));
 }
 DEF_OP(BIT_AND) {
-  st.push(New refcounted<TupleField>(pop_force_unsigned() & pop_force_unsigned()));
+  st.push(New refcounted<TupleField>(pop_unsigned() & pop_unsigned()));
 }
 DEF_OP(BIT_OR) {
-  st.push(New refcounted<TupleField>(pop_force_unsigned() | pop_force_unsigned()));
+  st.push(New refcounted<TupleField>(pop_unsigned() | pop_unsigned()));
 }
 DEF_OP(BIT_XOR) {
-  st.push(New refcounted<TupleField>(pop_force_unsigned() ^ pop_force_unsigned()));
+  st.push(New refcounted<TupleField>(pop_unsigned() ^ pop_unsigned()));
 }
 DEF_OP(BIT_NOT) {
-  st.push(New refcounted<TupleField>(~pop_force_unsigned()));
+  st.push(New refcounted<TupleField>(~pop_unsigned()));
 }
 DEF_OP(MOD) {
   int64_t v1 = pop_signed();
   int64_t v2 = pop_signed();
-  st.push(New refcounted<TupleField>(v2 % v1));
+  if (v1) { 
+    st.push(New refcounted<TupleField>(v2 % v1));
+  } else if (error == PE_SUCCESS) {
+    error = PE_DIVIDE_BY_ZERO;
+  }
 }
 
 //
@@ -290,14 +327,14 @@ DEF_OP(STR_LOWER) {
   strbuf sb;
   str s = pop_string();
   for(int i=0; i < s.len(); i++) {
-    tmp_str[0] = toupper(s[i]);
+    tmp_str[0] = tolower(s[i]);
     sb.cat(tmp_str);
   }
   st.push(New refcounted<TupleField>(sb));
 }
 DEF_OP(STR_SUBSTR) {
-  int len = pop_force_unsigned();
-  int pos = pop_force_unsigned();
+  int len = pop_unsigned();
+  int pos = pop_unsigned();
   str s = pop_string();
   st.push(New refcounted<TupleField>(substr(s,pos,len)));
 }
@@ -499,17 +536,17 @@ DEF_OP(CONV_DBL) {
   double i;
   switch( t->get_type() ) {
   case TupleField::INT32:
-    i = t->as_i32();
+    i = t->as_i32(); break;
   case TupleField::UINT32:
-    i = t->as_ui32();
+    i = t->as_ui32(); break;
   case TupleField::INT64:
-    i = t->as_i64();
+    i = t->as_i64(); break;
   case TupleField::UINT64:
-    i = t->as_ui64();
+    i = t->as_ui64(); break;
   case TupleField::STRING:
-    i = atof(t->as_s());
+    i = atof(t->as_s()); break;
   case TupleField::DOUBLE:
-    i = t->as_d();
+    i = t->as_d(); break;
   default:
     error = PE_TYPE_CONVERSION;
     i = 0;

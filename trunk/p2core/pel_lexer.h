@@ -44,7 +44,8 @@ private:
   virtual int yylex();
 
   void add_const_int(int v) { add_const(New refcounted<TupleField>(v));};
-  void add_const_int(long long v) { add_const(New refcounted<TupleField>(v));};
+  void add_const_int(int64_t v) { add_const(New refcounted<TupleField>(v));};
+  void add_const_int(uint64_t v) { add_const(New refcounted<TupleField>(v));};
   void add_const_str(str s) { add_const(New refcounted<TupleField>(s));};
   void add_const_dbl(double d) { add_const(New refcounted<TupleField>(d));};
   void add_const(TupleFieldRef f);

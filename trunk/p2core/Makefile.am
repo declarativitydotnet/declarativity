@@ -32,6 +32,6 @@ pel_opcode_tokens.gen.h: pel_gen.py
 	python pel_gen.py
  
 pel_lexer.C: pel_lexer.lex pel_opcode_tokens.gen.h
-	$(LEX) $(AM_LFLAGS) $(LFLAGS) -o pel_lexer.C -8 pel_lexer.lex
+	$(LEX) $(AM_LFLAGS) $(LFLAGS) -opel_lexer.C -8 pel_lexer.lex
 
 

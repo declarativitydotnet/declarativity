@@ -65,13 +65,24 @@ public:
 
   str toString() const;
   str toTypeString() const ;
-
+  static const char *typeName(Type t); 
+  
+  //
+  // Casts: these are strict type narrowing.  What you probably want
+  // is a type conversion function (see below)
+  //
   CAST(int32_t,  i32, INT32);
   CAST(u_int32_t,ui32,UINT32);
   CAST(int64_t,  i64, INT64);
   CAST(u_int64_t,ui64,UINT64);
   CAST(str,      s,   STRING);
   CAST(double,   d,   DOUBLE );
+
+  //
+  // Type conversion: used for arithmetic 
+  //
+  bool convert_unsigned(uint64_t &val);
+  bool convert_signed(int64_t &val);
 
   void xdr_marshal( XDR *x );
   static TupleFieldRef xdr_unmarshal( XDR *x );
