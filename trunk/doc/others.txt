@@ -1,6 +1,10 @@
 2.0 DHT Aggregation/Multicast Tree
 
-Send a join request based on a DHT key. Along the way, lookup requests are used to set up the forwarding state in the reverse direction along the way. The lookup tuple needs to tag along the previous hop and also the groupID. If performing aggregation, do a lookup request to a root node, and aggregate along the way.
+Send a join request based on a DHT key. Along the way, lookup requests
+are used to set up the forwarding state in the reverse direction along
+the way. The lookup event tuple needs to tag along the previous hop and also
+the groupID. If performing aggregation, do a lookup request to a root
+node, and aggregate along the way. 
 
 Event tuples:
 lookup(currentNodeIP, key, requestNodeIP, previousHop, groupID, eventID) , TTL=0
@@ -13,8 +17,10 @@ M1: lookup(NI,K,R,null,G,E) :- joinGroup(NI,K,G,E)
 M2: forwardState(I,J,K,G) :- lookup(I,K,R,J,G,E)
 M3: joinGroup(ni,k,g,e)
 
-Need to change the base case of the lookup to set up the forwarding state at the root node itself:
-L1: forwardState(SI,NI,K,G) :- node(NI,N), lookup(NI,K,R,P,G,E),  bestSuccessor(NI,S,SI), N<K<=S
+Need to change the base case of the lookup to set up the forwarding
+state at the root node itself: 
+L1: forwardState(SI,NI,K,G) :- node(NI,N), lookup(NI,K,R,P,G,E),
+bestSuccessor(NI,S,SI), N<K<=S 
 
 
 

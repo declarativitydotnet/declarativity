@@ -2,8 +2,10 @@
 
 The base tuples:
 node(currentNodeIP, currentNodeID), TTL=infinity, size=1
-finger(currentNodeIP, targetID, bestID, bestIP, expirationTime), size=log(n)
-successor(currentNodeIP, successorID, successorIP, expirationTime), size=log(n)
+finger(currentNodeIP, targetID, bestID, bestIP, expirationTime), size=n,
+where n=2^m
+successor(currentNodeIP, successorID, successorIP, expirationTime),
+size=n, where n=2^m
 predecessor(currentNodeIP,  predecessorID, predecessorIP), TTL=infinity, size=1
 
 The derived/result tuples:
@@ -59,7 +61,8 @@ to return a random value will result in a random routing policy.
 1.2 Neighbor Selection Rules
 
 Best Successor:
-SU1: bestSuccessorID(NI,min<D>) :- node(NI,N), successor(NI,S,SI,ET), ET>f_currentTime(), D=f_dist(S,N)
+SU1: bestSuccessorID(NI,min<D>) :- node(NI,N), successor(NI,S,SI,ET),
+ET>f_currentTime(), D=f_dist(S,N) 
 SU2: bestSuccessor(NI,S,SI,ET) :- node(NI,N), bestSuccessorID(NI,D),
 successor(NI,S,SI,ET), D=f_dist(S,N), ET>f_currentTime() 
 
@@ -83,8 +86,10 @@ the successor.
 Fingers: 
 F1: finger(NI,K,B,BI,ET) :- fix_finger(NI,E),
 lookupResults(NI,K,B,BI,E), ET=(f_currentTime()+finger.TTL) 
-F2: lookup(NI,K,NI,E) :- fix_finger(NI,E), fingerIndex(NI, I), K=[(NI+2I) mod 2m]
-F3: fingerIndex(NI, I) :- fix_finger(NI,E), fingerIndex(NI, I1), I=([I1+1] mod fingerIndex.size)
+F2: lookup(NI,K,NI,E) :- fix_finger(NI,E), fingerIndex(NI, I),
+K=[(NI+2I) mod 2^m] 
+F3: fingerIndex(NI, I) :- fix_finger(NI,E), fingerIndex(NI, I1),
+I=([I1+1] mod fingerIndex.size) 
 F4: fingerIndex(NI,0)
 F5: fix_finger(ni,e), period=finger.TTL*0.5
 
@@ -112,7 +117,8 @@ Stabilization:
 
 Update successor:
 S1: stabilizeRequest(SI, NI,E) :- stabilize(N1,E), bestSuccessor(N1,S,SI,ET)
-S2: sendPredecessor(NI,P,PI,E) :- stabilizeRequest(NI,PI1,E), predecessor(NI,P,PI), P != null
+S2: sendPredecessor(NI,P,PI,E) :- stabilizeRequest(NI,PI1,E),
+predecessor(NI,P,PI), P != null 
 S3: successor(NI,P,PI,ET) :- node(NI,N), sendPredecessor(NI,P,PI,E),
 bestSuccessor(NI,S,SI,ET), N<P<S, ET=(f_currentTime()+successor.TTL) 
 
@@ -122,7 +128,8 @@ S5: successor(NI,S,SI,ET) :- sendSuccessors(NI,S,SI),
 ET=(f_currentTime()+successor.TTL) 
 
 Update predecessor:
-S6: notifyPredecessor(SI,N,NI,E) :- notify(NI,E), node(NI,N), successor(NI,S,SI,ET)
+S6: notifyPredecessor(SI,N,NI,E) :- notify(NI,E), node(NI,N),
+successor(NI,S,SI,ET) 
 S7: predecessor(NI,P,PI) :- node(NI,N), notifyPredessor(NI,P,PI,E),
 predecessor(NI,P1,PI1), (P1 == null || (P1<P<N)) 
 
@@ -135,7 +142,8 @@ used to notify a successor node about the current predecessor, and
 update if necessary. If there is only a single successor, we do not need
 S4 and S5. 
 
-SendSucessors, stabilizeRequest, stabilize, notify, notifyPredecessor are all event tuples with TTL=0.
+SendSucessors, stabilizeRequest, stabilize, notify, notifyPredecessor
+are all event tuples with TTL=0. 
 
 
 1.4 Failure Detection
@@ -149,7 +157,8 @@ scan the list for nodes to ping. The result of pings is in the
 pingResult tuple, which has RTT set to -1 if timeout. 
 
 P1: ping(X,Y) :- checkPing(X), pingNodes(X,Y), (lastPingTime(X,Y,T)
-P2: ping(X,Y) :- checkPing(X), pingNodes(X,Y), lastPingTime(X,Y,T), f_currentTime() > T + ping.TTL
+P2: ping(X,Y) :- checkPing(X), pingNodes(X,Y), lastPingTime(X,Y,T),
+f_currentTime() > T + ping.TTL 
 P3: lastPingTime(X,Y,T) :- ping(X,Y), T=f_currentTime()
 P4: checkPing(X), period=ping_interval
 
