@@ -47,4 +47,4 @@
 # 
 #
 
-SUBDIRS=p2core elements net tests phid
+SUBDIRS=p2core elements net overlog tests phid 

@@ -29,7 +29,8 @@ bin_PROGRAMS 	= 	values \
 			csv \
 			testQueue \
 			agg \
-			pingpong 
+			pingpong \
+			overlog
 
 
 
@@ -123,9 +124,15 @@ pingpong_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
+overlog_SOURCES	= overlog.C
+overlog_LDADD = \
+	$(top_builddir)/overlog/.libs/liboverlog.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
 CLEANFILES = core *.core *~
 EXTRA_DIST = .cvsignore
-INCLUDES = @SFS_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements -I$(top_builddir)/net
+INCLUDES = @SFS_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements -I$(top_builddir)/net -I$(top_builddir)/overlog
 
 MAINTAINERCLEANFILES = aclocal.m4 install-sh mkinstalldirs \
 	missing configure config.guess config.sub config.h.in \

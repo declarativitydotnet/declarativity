@@ -59,6 +59,7 @@ AM_INIT_AUTOMAKE(p2,0.4)
 AC_PROG_CXX
 AC_PROG_CC
 AM_PROG_LEX
+AC_PROG_YACC
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_LIBTOOL
@@ -93,5 +94,12 @@ AC_FUNC_FORK
 AC_FUNC_STRFTIME
 AC_CHECK_FUNCS([dup2 strchr strerror strstr])
 
-AC_CONFIG_FILES([Makefile p2core/Makefile elements/Makefile net/Makefile tests/Makefile phid/Makefile])
+AC_CONFIG_FILES([
+	Makefile 
+	p2core/Makefile 
+	elements/Makefile 
+	net/Makefile 
+	tests/Makefile 
+	phid/Makefile
+	overlog/Makefile ])
 AC_OUTPUT
