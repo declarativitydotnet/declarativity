@@ -551,7 +551,7 @@ RouterConfigGenerator::generateSingleTermElement(OL_Context::Functor* currentFun
     str tableName = currentTerm.fn->name;
     // skip funcitons
     if (substr(tableName, 0, 2) == FUNC_PRE) { continue; } // skip functions
-    OL_Context::TableInfoMap::iterator _iterator = _ctxt->getTableInfos()->find(tableName); 
+    //OL_Context::TableInfoMap::iterator _iterator = _ctxt->getTableInfos()->find(tableName); 
     //if (_iterator != _ctxt->getTableInfos()->end()) {
       // we will read the info off the first tabler
       /*resultElement = createScanElements(currentFunctor, 
@@ -559,8 +559,8 @@ RouterConfigGenerator::generateSingleTermElement(OL_Context::Functor* currentFun
 					 currentTerm, 
 					 _iterator->second,
 					 nodeID);*/
-      resultElement = generateReceiveUnmarshalElements(currentFunctor, currentRule, currentTerm, nodeID);	
-      break; // break at first opportunity. Assume there is only one term   
+    resultElement = generateReceiveUnmarshalElements(currentFunctor, currentRule, currentTerm, nodeID);	
+    break; // break at first opportunity. Assume there is only one term   
       //} else {
       //resultElement = generateReceiveUnmarshalElements(currentFunctor, 
       //					       currentRule, currentTerm, nodeID);	
