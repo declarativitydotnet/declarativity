@@ -33,7 +33,7 @@ class FunctorSource : public Element {
 
   virtual TuplePtr pull(int port, cbv cb);
 
- private:
+ protected:
   Generator* _generator;
 };
 

@@ -85,32 +85,32 @@ bool
 ID::betweenOO(IDRef from, IDRef to) const
 {
   return (((compareTo(from) > 0) && (compareTo(to) < 0)) ||
-          ((to->compareTo(from) < 0) && (compareTo(from) > 0)) ||
-          ((compareTo(to) < 0) && (to->compareTo(from) < 0)));
+          ((to->compareTo(from) <= 0) && (compareTo(from) > 0)) ||
+          ((compareTo(to) < 0) && (to->compareTo(from) <= 0)));
 }
 
 bool
 ID::betweenOC(IDRef from, IDRef to) const
 {
   return (((compareTo(from) > 0) && (compareTo(to) <= 0)) ||
-          ((to->compareTo(from) < 0) && (compareTo(from) > 0)) ||
-          ((compareTo(to) <= 0) && (to->compareTo(from) < 0)));
+          ((to->compareTo(from) <= 0) && (compareTo(from) > 0)) ||
+          ((compareTo(to) <= 0) && (to->compareTo(from) <= 0)));
 }
 
 bool
 ID::betweenCO(IDRef from, IDRef to) const
 {
   return (((compareTo(from) >= 0) && (compareTo(to) < 0)) ||
-          ((to->compareTo(from) < 0) && (compareTo(from) >= 0)) ||
-          ((compareTo(to) < 0) && (to->compareTo(from) < 0)));
+          ((to->compareTo(from) <= 0) && (compareTo(from) >= 0)) ||
+          ((compareTo(to) < 0) && (to->compareTo(from) <= 0)));
 }
 
 bool
 ID::betweenCC(IDRef from, IDRef to) const
 {
   return (((compareTo(from) >= 0) && (compareTo(to) <= 0)) ||
-          ((to->compareTo(from) < 0) && (compareTo(from) >= 0)) ||
-          ((compareTo(to) <= 0) && (to->compareTo(from) < 0)));
+          ((to->compareTo(from) <= 0) && (compareTo(from) >= 0)) ||
+          ((compareTo(to) <= 0) && (to->compareTo(from) <= 0)));
 }
 
 IDRef
@@ -144,8 +144,11 @@ ID::distance(IDRef to) const
 IDRef
 ID::shift(uint32_t shift) const
 {
-  if ((shift == 0) || (shift >= WORDS * 32)) {
+  if (shift == 0) {
     return ID::mk((uint32_t*) words);
+  }
+  if (shift >= WORDS * 32) {
+    return ID::ZERO;
   }
 
   IDRef newID = ID::mk();
@@ -191,9 +194,11 @@ ID::add(IDRef other) const
   for (int i = (int) WORDS - 1;
        i >= 0;
        i--) {
-    uint64_t temp = words[i] + other->words[i] + carry;
+    uint64_t temp = words[i];
+    temp += other->words[i];
+    temp += carry;
     if (temp > UINT_MAX) {
-      newID->words[i] = temp - UINT_MAX;
+      newID->words[i] = temp & 0xffffffff;
       carry = 1;
     } else {
       newID->words[i] = temp;
@@ -224,4 +229,10 @@ ID::xdr_unmarshal(XDR *x)
   }
   return newID;
 }
+
+IDRef
+ID::ZERO(ID::mk((uint32_t) 0));
+
+IDRef
+ID::ONE(ID::mk((uint32_t) 1));
 

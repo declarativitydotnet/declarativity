@@ -50,7 +50,11 @@ libp2elements_la_SOURCES = \
 	pong.C \
 	pelScan.C \
 	functorSource.C \
+	tupleSource.C \
+	noNull.C \
+	noNullField.C\
 	unboxField.C
+
 
 INCLUDES = @SFS_INC@ -I../p2core
 

@@ -50,7 +50,11 @@ Table::IteratorObj< _Index >::done()
   if (_iter == _index->end()) {
     return true;
   } else {
-    return (_iter->first->compareTo(_key) != 0);
+    if (_iter->first->compareTo(_key) != 0) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }
 

@@ -29,6 +29,12 @@ public:
   /** My number of 4-byte words in this ID.  This could eventually
       become a template parameter, but not for now. */
   static const unsigned WORDS = 5;
+
+  /** ONE */
+  static IDRef ONE;
+
+  /** ZERO */
+  static IDRef ZERO;
   
 private:
   /** My representation of an ID.   */
@@ -86,6 +92,7 @@ public:
   static IDRef mk(uint32_t w[WORDS]) { return New refcounted< ID >(w); }
   static IDRef mk(uint32_t u) { return New refcounted< ID >(u); }
   static IDRef mk(uint64_t u) { return New refcounted< ID >(u); }
+
 };
 
 #endif /* __ID_H_ */

@@ -76,6 +76,42 @@ struct DistTest {
   uint32_t mw4;
 };
 
+#define SHIFTTST(_lword0, _lword1, _lword2, _lword3, _lword4, _rword0, _rword1, _rword2, _rword3, _rword4, _shift) {__LINE__, _lword0, _lword1, _lword2, _lword3, _lword4, _rword0, _rword1, _rword2, _rword3, _rword4, _shift}
+struct ShiftTest {
+  int	line;		// Line number of test
+  uint32_t lw0;
+  uint32_t lw1;
+  uint32_t lw2;
+  uint32_t lw3;
+  uint32_t lw4;
+  uint32_t rw0;
+  uint32_t rw1;
+  uint32_t rw2;
+  uint32_t rw3;
+  uint32_t rw4;
+  uint32_t shift;
+};
+
+#define ADDTEST(_lword0, _lword1, _lword2, _lword3, _lword4, _rword0, _rword1, _rword2, _rword3, _rword4, _mword0, _mword1, _mword2, _mword3, _mword4) {__LINE__, _lword0, _lword1, _lword2, _lword3, _lword4, _rword0, _rword1, _rword2, _rword3, _rword4, _mword0, _mword1, _mword2, _mword3, _mword4}
+struct AddTest {
+  int	line;		// Line number of test
+  uint32_t lw0;
+  uint32_t lw1;
+  uint32_t lw2;
+  uint32_t lw3;
+  uint32_t lw4;
+  uint32_t rw0;
+  uint32_t rw1;
+  uint32_t rw2;
+  uint32_t rw3;
+  uint32_t rw4;
+  uint32_t mw0;
+  uint32_t mw1;
+  uint32_t mw2;
+  uint32_t mw3;
+  uint32_t mw4;
+};
+
 static const CmpTest idCmpTests[] = {
   // Least significant comparisons
   CMPTST(0, 0, 0, 0, 0,            0, 0, 0, 0, 2,          -1),
@@ -148,6 +184,7 @@ static const BetweenTest idBetweenTests[] = {
   BETWEENTEST(0, 0, 0, 0, 2,            0, 0, 0, 0, 0,            0, 0, 0, 0, 2,        false, true, false, true),
 
   BETWEENTEST(0, 0, 0, 0, 10,           0, 0, 0, 0, 1,            0, 0, 0, 0, 523,      true, true, true, true),
+  BETWEENTEST(0, 0, 0, 0, 1,            0, 0, 0, 0, 0,            0, 0, 0, 0, 0,        true, true, true, true),
 
   BETWEENTEST(0, 0, 0, 0, 2,            0, 0, 0, 0, 0,            0, 0, 0, 0, 2,        false, true, false, true)
 };
@@ -165,6 +202,45 @@ static const DistTest idDistTests[] = {
   DISTTEST(0, 0, 0, 0, 0xffffffff,   0, 0, 0, 1, 1,            0, 0, 0, 0, 2)
 };
 static const size_t num_disttests = sizeof(idDistTests) / sizeof(DistTest);
+
+static const ShiftTest idShiftTests[] = {
+  // Least significant comparisons
+  SHIFTTST(0, 0, 0, 0, 0,            0, 0, 0, 0, 0,          0),
+
+  SHIFTTST(0, 0, 0, 0, 0,            0, 0, 0, 0, 0,          1),
+  SHIFTTST(0, 0, 0, 0, 0,            0, 0, 0, 0, 0,        100),
+  SHIFTTST(0, 0, 0, 0, 1,            0, 0, 0, 0, 1,          0),
+  SHIFTTST(0, 0, 0, 0, 1,            0, 0, 0, 1, 0,         32),
+  SHIFTTST(0, 0, 0, 0, 1,            0, 0, 1, 0, 0,         64),
+  SHIFTTST(0, 0, 0, 0, 1,            0, 1, 0, 0, 0,         96),
+  SHIFTTST(0, 0, 0, 0, 1,            1, 0, 0, 0, 0,        128),
+  SHIFTTST(0, 0, 0, 0, 1,            0, 0, 0, 0, 0,        160),
+  SHIFTTST(0, 0, 0, 0, 1,            0, 0, 0, 0, 0,        161),
+
+  SHIFTTST(0, 0, 0, 0, 1,            0, 0, 0, 0, 2,          1),
+  SHIFTTST(0, 0, 0, 0, 1,            0, 0, 0, 0, 4,          2),
+  SHIFTTST(0, 0, 0, 0, 1,            0, 0, 0, 0, 8,          3),
+  SHIFTTST(0, 0, 0, 0, 1,            0, 0, 0, 0, 0x8000,    15),
+  SHIFTTST(0, 0, 0, 0, 1,            0, 0, 0, 0x8000, 0,    47),
+
+  SHIFTTST(0, 0, 0, 0, 0,            0, 0, 0, 0, 0,        100)
+};
+static const size_t num_shiftTests = sizeof(idShiftTests) / sizeof(ShiftTest);
+
+static const AddTest idAddTests[] = {
+  // Least significant comparisons ////////////////////////////////////////////////oo////oc////co////cc
+  ADDTEST(0, 0, 0, 0, 0,            0, 0, 0, 0, 1,            0, 0, 0, 0, 1),
+  ADDTEST(0, 0, 0, 0, 0,            0, 0, 0, 0, 2,            0, 0, 0, 0, 2),
+  ADDTEST(0, 0, 0, 0, 1,            0, 0, 0, 0, 2,            0, 0, 0, 0, 3),
+  ADDTEST(0, 0, 0, 0, 1,            0, 0, 0, 0, 0,            0, 0, 0, 0, 1),
+
+  ADDTEST(0, 0, 0, 0, 0xffffffff,   0, 0, 0, 1, 0,            0, 0, 0, 1, 0xffffffff),
+  ADDTEST(0, 0, 0, 0, 0xffffffff,   0, 0, 0, 0, 1,            0, 0, 0, 1, 0),
+
+  ADDTEST(0, 0, 0, 0, 0xffffffff,   0, 0, 0, 1, 1,            0, 0, 0, 2, 0)
+};
+static const size_t num_addtests = sizeof(idAddTests) / sizeof(AddTest);
+
 
 int main(int argc, char **argv)
 {
@@ -312,6 +388,82 @@ int main(int argc, char **argv)
                 << "Distance of " << leftID->toString()
                 << " to " << rightID->toString()
                 << " should be " << middleID->toString()
+                << " but I got " << resultID->toString()
+                << "\n";
+    }
+  }
+
+
+  for (size_t i = 0;
+       i < num_addtests;
+       i++) {
+    uint32_t middle[5];
+    uint32_t left[5];
+    uint32_t right[5];
+    const AddTest * idTest = &idAddTests[i];
+
+    middle[0] = idTest->mw0;
+    middle[1] = idTest->mw1;
+    middle[2] = idTest->mw2;
+    middle[3] = idTest->mw3;
+    middle[4] = idTest->mw4;
+
+    left[0] = idTest->lw0;
+    left[1] = idTest->lw1;
+    left[2] = idTest->lw2;
+    left[3] = idTest->lw3;
+    left[4] = idTest->lw4;
+
+    right[0] = idTest->rw0;
+    right[1] = idTest->rw1;
+    right[2] = idTest->rw2;
+    right[3] = idTest->rw3;
+    right[4] = idTest->rw4;
+
+    IDRef leftID = ID::mk(left);
+    IDRef rightID = ID::mk(right);
+    IDRef middleID = ID::mk(middle);
+    IDRef resultID = leftID->add(rightID);
+
+    if (middleID->compareTo(resultID) != 0) {
+      std::cerr << "***" << __FILE__ ":" << idTest->line << ": "
+                << "Sum of " << leftID->toString()
+                << " and " << rightID->toString()
+                << " should be " << middleID->toString()
+                << " but I got " << resultID->toString()
+                << "\n";
+    }
+  }
+
+
+  for (size_t i = 0;
+       i < num_shiftTests;
+       i++) {
+    uint32_t left[5];
+    uint32_t right[5];
+    const ShiftTest * idTest = &idShiftTests[i];
+
+    left[0] = idTest->lw0;
+    left[1] = idTest->lw1;
+    left[2] = idTest->lw2;
+    left[3] = idTest->lw3;
+    left[4] = idTest->lw4;
+
+    right[0] = idTest->rw0;
+    right[1] = idTest->rw1;
+    right[2] = idTest->rw2;
+    right[3] = idTest->rw3;
+    right[4] = idTest->rw4;
+
+    IDRef leftID = ID::mk(left);
+    IDRef rightID = ID::mk(right);
+    IDRef resultID = leftID->shift(idTest->shift);
+
+    if (resultID->compareTo(rightID) != 0) {
+      std::cerr << "***" << __FILE__ ":" << idTest->line << ": "
+                << "Shift of " << leftID->toString()
+                << " by " << idTest->shift
+                << " should be " << rightID->toString()
                 << " but I got " << resultID->toString()
                 << "\n";
     }

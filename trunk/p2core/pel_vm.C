@@ -382,6 +382,19 @@ DEF_OP(T_UNBOX) {
     stackPush((*t)[i]);
   }
 }
+DEF_OP(T_UNBOXPOP) {
+  ValueRef tuple = stackTop(); stackPop();
+  TupleRef t = Val_Tuple::cast(tuple);
+  // Now start popping fields from front out
+  if (!result) {
+    result = Tuple::mk();
+  }
+  for (size_t i = 0;
+       i < t->size();
+       i++) {
+    result->append((*t)[i]);
+  }
+}
 DEF_OP(T_FIELD) {
   unsigned field = pop_unsigned();
   ValueRef tuple = stackTop(); stackPop();
@@ -393,6 +406,11 @@ DEF_OP(T_FIELD) {
     stackPush(value);
   }
 }
+DEF_OP(T_SWALLOW) { 
+  ValueRef swallowed = Val_Tuple::mk(operand);
+  stackPush(swallowed);
+}
+
 
 //
 // Boolean operations
@@ -411,6 +429,10 @@ DEF_OP(OR) {
   u_int64_t v1 = pop_unsigned();
   u_int64_t v2 = pop_unsigned();
   stackPush(Val_Int32::mk(v1 || v2));
+}
+DEF_OP(RAND) {
+  int32_t random = rand();
+  stackPush(Val_Int32::mk(random));
 }
 
 //
@@ -529,6 +551,9 @@ DEF_OP(ID_EQ) {
 }
 DEF_OP(ID_PLUS) {
   stackPush(Val_ID::mk(pop_ID()->add(pop_ID())));
+}
+DEF_OP(ID_MINUSMINUS) {
+  stackPush(Val_ID::mk(ID::ONE->distance(pop_ID())));
 }
 DEF_OP(ID_LSL) {
   uint32_t shift = pop_unsigned();

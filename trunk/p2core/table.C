@@ -169,9 +169,14 @@ void Table::insert(TupleRef t)
       i++) {
     UniqueIndex *ndx = uni_indices.at(i);
     if (ndx) {
-      // Replace the existing one if it's there
-      ndx->erase((*e->t)[i]);
-      ndx->insert(std::make_pair((*e->t)[i], e));
+      // Remove any tuple with the same unique key from all indices and
+      // aggregates
+      remove(i, (*t)[i]);
+      
+      // Now store the new tuple.  Make sure it's stored
+      std::pair< UniqueIndex::iterator, bool > result =
+        ndx->insert(std::make_pair((*e->t)[i], e));
+      assert(result.second);
     }
   }
 
@@ -251,7 +256,21 @@ void Table::remove_from_indices(Entry *e)
     UniqueIndex* ndx = uni_indices.at(i);
     ValueRef key = (*e->t)[i];
     if (ndx) {
-      ndx->erase(key);
+      // Removal must be identical to how it happens for multiple
+      // indices, because an entry in the queue might not in fact still
+      // be in this index.  As a result, if the queue contains two
+      // entries with the same primary key (as far as this index is
+      // concerned), and one of them is removed from this unique index,
+      // we must compare not only the keys, but also the entries
+      // themselves.
+      for (UniqueIndex::iterator pos = ndx->find(key); 
+           (pos != ndx->end()) && (pos->first->compareTo(key) == 0); 
+           pos++) {
+        if (pos->second == e) {
+          ndx->erase(pos);
+          break;
+        }
+      }
     }
   }
   for (size_t i = 0;

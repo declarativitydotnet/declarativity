@@ -18,12 +18,17 @@
 #include "val_uint64.h"
 
 TimedPullPush::TimedPullPush(str name,
-                             double seconds)
+                             double seconds,
+                             int tuples)
   : Element(name, 1, 1),
+    _tuples(tuples),
+    _counter(0),
     _unblockPull(wrap(this, &TimedPullPush::pullWakeup)),
     _unblockPush(wrap(this, &TimedPullPush::pushWakeup)),
-    _runTimerCB(wrap(this, &TimedPullPush::runTimer))
+    _runTimerCB(wrap(this, &TimedPullPush::runTimer)),
+    _timeCallback(NULL)
 {
+  assert(_tuples >= 0);
   _seconds = (uint) floor(seconds);
   seconds -= _seconds;
   _nseconds = (uint) (seconds * 1000000000);
@@ -33,9 +38,7 @@ int TimedPullPush::initialize()
 {
   log(LoggerI::INFO, 0, "initialize");
   // Schedule my timer
-  _timeCallback = delaycb(_seconds,
-                          _nseconds, _runTimerCB);
-
+  reschedule();
   return 0;
 }
 
@@ -60,10 +63,7 @@ void TimedPullPush::runTimer()
       log(LoggerI::INFO, 0, "runTimer: push blocked");
     } else {
       // No.  Reschedule me
-      log(LoggerI::INFO, 0, "runTimer: rescheduling");
-      _timeCallback = delaycb(_seconds,
-                              _nseconds,
-                              _runTimerCB);
+      reschedule();
     }
   } else {
     // Didn't get any tuples from my input. Don't reschedule me until my
@@ -74,27 +74,35 @@ void TimedPullPush::runTimer()
 
 void TimedPullPush::pullWakeup()
 {
-  // I'd better not be already scheduled
-  assert(_timeCallback == 0);
-
   log(LoggerI::INFO, 0, "pullWakeup");
 
   // Okey dokey.  Reschedule me into the future
-  _timeCallback = delaycb(_seconds,
-                          _nseconds,
-                          _runTimerCB);
+  reschedule();
 }
 
 void TimedPullPush::pushWakeup()
 {
-  // I'd better not be already scheduled
-  assert(_timeCallback == 0);
-
   log(LoggerI::INFO, 0, "pushWakeup");
 
   // Okey dokey.  Reschedule me into the future
-  _timeCallback = delaycb(_seconds,
-                          _nseconds,
-                          _runTimerCB);
+  reschedule();
 }
 
+void
+TimedPullPush::reschedule()
+{
+  assert(_timeCallback == 0);
+
+  if ((_tuples == 0) ||
+      ((_tuples > 0) && (_counter < _tuples))) {
+    _counter++;
+
+    log(LoggerI::INFO, 0, "reschedule: rescheduling");
+    // Okey dokey.  Reschedule me into the future
+    _timeCallback = delaycb(_seconds,
+                            _nseconds,
+                            _runTimerCB);
+  } else {
+    log(LoggerI::INFO, 0, "reschedule: DONE!");
+  }
+}

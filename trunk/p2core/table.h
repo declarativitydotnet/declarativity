@@ -28,8 +28,9 @@ typedef ptr<Table> TablePtr;
 /*
  OK, what does a table _do_?
 
-1) 0 or more unique field indices.
-2) 0 or more multiple-key field indices.
+0) Exactly one primary index, which may be unique but does not have to 
+1) 0 or more unique field secondary indices.
+2) 0 or more multiple-key field secondary indices.
 3) max table size.
 4) max tuple lifetime.
 

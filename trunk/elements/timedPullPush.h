@@ -8,8 +8,10 @@
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
  * DESCRIPTION: Element that at timed intervals pulls a tuple from its
- * input and pushes it down its output's throat.  When either its output
- * or its input are blocked, it sleeps until both are awake.
+ * input and pushes it down its output's throat.  A fixed number of
+ * tuples can be pulled.  If the fixed number is 0, then no limit in the
+ * number of pulled tuples is imposed. When either its output or its
+ * input are blocked, it sleeps until both are awake.
  */
 
 
@@ -23,7 +25,7 @@ class TimedPullPush : public Element {
  public:
   
   /** Initialized with the interval between forwards. */
-  TimedPullPush(str name, double seconds);
+  TimedPullPush(str name, double seconds, int tuples = 0);
 
   const char *class_name() const		{ return "TimedPullPush"; }
   const char *flow_code() const			{ return "-/-"; }
@@ -39,6 +41,12 @@ class TimedPullPush : public Element {
 
   /** The nsec portion of the interval */
   uint _nseconds;
+
+  /** The number of tuples to pull */
+  int _tuples;
+
+  /** The number of tuples pulled so far */
+  int _counter;
 
   /** My pull wakeup callback */
   cbv _unblockPull;
@@ -57,6 +65,9 @@ class TimedPullPush : public Element {
 
   /** My push wakeup method */
   void pushWakeup();
+
+  /** Reschedule me to run in the future. */
+  void reschedule();
 };
 
 #endif /* __TIMED_PULL_PUSH_H_ */

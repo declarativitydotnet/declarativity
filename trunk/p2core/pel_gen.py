@@ -41,11 +41,14 @@ for op, ar, va, desc in [
   ("->t", 1,    "T_MKTUPLE",    "Create a tuple out of the argument"),
   ("append", 2, "T_APPEND",     "Append first argument to second tuple"),
   ("unbox", 1,  "T_UNBOX",      "Replaces a tuple value with its fields top to bottom"),
+  ("unboxPop",1,"T_UNBOXPOP",   "Pops the fields of the argument tuple value in order"),
   ("field", 2,  "T_FIELD",      "Extracts a field of a tuple value"),
+  ("swallow", 0,"T_SWALLOW",    "Swallows the entire input tuple into a single tuple value in the stack"),
   
   ("not",1, 	"NOT",          "Boolean negation"),
   ("and",2,	"AND",          "Boolean AND"),
   ("or",2,	"OR",           "Boolean inclusive-OR"),
+  ("rand",0,	"RAND",         "A random Int32"),
 
   (">>",2,	"LSR",          "Integer logical shift right"),
   (">>>",2,	"ASR",          "Integer arithmetic shift right"),
@@ -71,6 +74,7 @@ for op, ar, va, desc in [
   (">=id",2,     "ID_GTE",      "ID greater-than-or-eq comparison"),
   ("==id",2,     "ID_EQ",       "ID compare equality"),
   ("+id",2,      "ID_PLUS",     "ID addition"),
+  ("--id",1,      "ID_MINUSMINUS","ID decrementation by 1"),
   ("distance",2, "ID_DIST",     "ID subtraction"),
   ("<<id",2,	 "ID_LSL",      "ID arithmetic shift left"),
   ("()id",3,	 "ID_BTWOO",    "ID interval open-open containment"),

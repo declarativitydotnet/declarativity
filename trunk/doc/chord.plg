@@ -12,7 +12,7 @@ materialise(bestSuccessor, 3, infinity, 1).
 materialize(nextFingerFix, 2, infinity, 1).
 materialize(fingerLookup, 3, infinity, 16).
 materialize(stabilize, 2, infinity, 1).
-materialize(notify, 2, infinity, 1).
+materialize(joinRecord, 2, infinity, 1).
 
 
 /** Lookups */
@@ -26,13 +26,15 @@ rule L1 lookupResults@R(R,K,S,SI,E) :-
 rule L2 bestLookupDistance@NI(NI,K,R,E,min<D>) :-
 	lookup@NI(NI,K,R,E),
 	finger@NI(NI,I,B,BI),
+	node@NI(NI, N),
 	B in (N,K),
 	D=f_dist(B,K).
 
-rule L3 lookup@BI(BI,K,R,E) :-
+rule L3 lookup@BI(min<BI>,K,R,E) :-
 	bestLookupDistance@NI(NI,K,R,E,D),
 	finger@NI(NI,I,B,BI),
 	D=f_dist(B,K),
+	node@NI(NI, N),
 	B in (N, K).
 
 
@@ -71,7 +73,7 @@ rule SR4 delete@NI<successor(NI,S,SI)> :-
 rule F1 fixFinger@NI(ni) :-
 	periodic@NI(finger.TTL*0.5).
 
-rule F2 nextFingerFix@NI(ni, 0).
+rule F2 nextFingerFix@NI(ni, 159).
 
 rule F3 fingerLookup@NI(NI, E, I) :-
 	fixFinger@NI(NI),
@@ -83,53 +85,76 @@ rule F4 lookup@NI(NI, K, NI, E) :-
 	node(NI, N),
 	K = N + 1 << I.
 
-rule F5 finger@NI(NI, K, B, BI) :-
+rule F5 finger@NI(NI, I, B, BI) :-
 	fingerLookup@NI(NI, E, I),
 	lookupResults@NI(NI, K, B, BI, E).
 
 rule F6 nextFingerFix@NI(NI, I) :-
 	fingerLookup@NI(NI, E, I1),
 	lookupResults@NI(NI, K, B, BI, E),
-	I = I1 + 1 mod finger.SIZE.
+	I = I1 - 1 mod finger.SIZE.
 
 
 
 /* Churn Handling */
 
-rule J1 startJoin@LI(LI,N,NI,E) :-
-	join@NI(NI,N,E),
-	landmarkNode@NI(NI,LI).
+rule J1 join@NI(NI,E) :-
+	joinEvent@NI(NI), E=f_rand().
 
-rule J2 lookup@LI(LI,N,NI,E) :-
+rule J2 joinRecord@NI(NI,E) :-
+	join@NI(NI,E).
+
+rule J3 startJoin@LI(LI,N,NI,E) :-
+	join@NI(NI,E),
+	node@NI(NI,N),
+	landmarkNode@NI(NI,LI),
+	LI != "".
+
+rule J4 lookup@LI(LI,N,NI,E) :-
 	startJoin@LI(LI,N,NI,E).
 
-rule J3 successor@NI(NI,S,SI) :-
-	join@NI(NI,N,E),
+rule J5 successor@NI(NI,S,SI) :-
+	joinRecord@NI(NI,E),
 	lookupResults@NI(NI,K,S,SI,E).
 
-rule J4 predecessor@NI(NI,null,null).
+rule J6 predecessor@NI(ni,null,"").
+
+rule J7 successor@NI(NI, N, NI) :-
+	landmarkNode@NI(NI, LI),
+	node@NI(NI, N),
+	join@NI(NI, E),
+	LI == "".
 
 
 /* Stabilization */
 
-rule S1 stabilizeRequest@SI(SI,ni,E) :-
-	stabilize@N1(N1,E),
-	bestSuccessor@N1(N1,S,SI).
+rule S0 stabilizeEvent@NI(ni) :-
+	periodic@NI(TTL * 0.5).
+
+rule S0a stabilize@NI(NI, E) :-
+	stabilizeEvent@NI(NITTL * 0.5), E=f_rand(), NI=ni.
+
+rule S0b stabilizeRecord@NI(NI, E) :-
+	stabilize@NI(NI, E).
+
+rule S1 stabilizeRequest@SI(SI,NI,E) :-
+	stabilize@NI(NI,E),
+	bestSuccessor@NI(NI,S,SI), 
 
 rule S2 sendPredecessor@PI1(PI1,P,PI,E) :-
 	stabilizeRequest@NI(NI,PI1,E),
 	predecessor@NI(NI,P,PI),
-	P != null.
+	PI != null.
 
 rule S3 successor@NI(NI,P,PI) :-
 	node(NI,N),
 	sendPredecessor@NI(NI,P,PI,E),
 	bestSuccessor@NI(NI,S,SI),
 	P in (N,S),
-	stabilize@NI(NI, E).
+	stabilizeRecord@NI(NI, E).
 
 rule S4 sendSuccessors@SI(SI,NI,E) :-
-	stabilize@NI(NI,E),
+	stabilizeRecord@NI(NI,E),
 	successor@NI(NI,S,SI),
 	f_coinFlip().
 
@@ -139,19 +164,21 @@ rule S5 returnSuccessor@PI(PI,S,SI,E) :-
 
 rule S5a successor@NI(NI, S, SI) :-
 	returnSuccessor@NI(NI,S,SI,E),
-	stabilize@NI(NI, E).
+	stabilizeRecord@NI(NI, E).
 
-rule S6 notifyPredecessor@SI(SI,N,NI,E) :-
-	notify@NI(NI,E),
+rule S6a notify@NI(NI) :-
+	periodic@NI(TTL * 0.5), NI=ni.
+
+rule S6 notifyPredecessor@SI(SI,N,NI) :-
+	notify@NI(NI),
 	node@NI(NI,N),
 	successor@NI(NI,S,SI).
 
 rule S7 predecessor@NI(NI,P,PI) :-
 	node@NI(NI,N),
-	notify@NI(NI, E),
-	notifyPredessor@NI(NI,P,PI,E),
+	notifyPredecessor@NI(NI,P,PI),
 	predecessor@NI(NI,P1,PI1),
-	(P1 == null || (P in (P1, N))).
+	((PI1 == "") || (P in (P1, N))).
 
 /** 
 
