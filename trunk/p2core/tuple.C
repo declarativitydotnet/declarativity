@@ -46,6 +46,38 @@ static const tinfo tinfos[] = {
   { 0, "invalid", NULL }
 };
 
+
+//
+// Printout a tuple field
+//
+str TupleField::toString() const 
+{
+  strbuf sb;
+  switch (t) {
+  case NULLV:
+    sb << "NULL"; break;
+  case INT32:
+    sb << "(int32)" << i32; break;
+  case UINT32:
+    sb << "(uint32)" << ui32; break;
+  case INT64:
+    sb << "(int64)" << i64; break;
+  case UINT64:
+    sb << "(uint64)" << ui64; break;
+  case DOUBLE:
+    // Yuck.  IF we convert libasync to the STL this will be easier.
+    char dbuf[100];
+    sprintf(dbuf,"(double)%g",d);
+    sb << dbuf; break;
+  case STRING:
+    sb << "(string)\"" << s << "\""; break;
+  default:
+    sb << "BAD TYPE " << t; break;
+  }
+  return str(sb);
+}
+
+
 //
 // Why the explicit marshalling code, and not just a type definition
 // in RPCC?  Well, it's tedious to do unions in XDR, and there's not a
@@ -98,8 +130,9 @@ TupleField *TupleField::xdr_unmarshal( XDR *x )
 //
 // Serialize a Tuple into an XDR
 //
-void Tuple::xdr_marshal( XDR *x ) {
-  assert(finalized);
+void Tuple::xdr_marshal( XDR *x ) 
+{
+  assert(frozen);
   assert(sizeof(size_t) == sizeof(u_int32_t));
   // Tuple size overall
   size_t sz = fields.size();
@@ -113,7 +146,8 @@ void Tuple::xdr_marshal( XDR *x ) {
 //
 // Deserialize a Tuple from an XDR
 //
-Tuple *Tuple::xdr_unmarshal( XDR *x ) {
+Tuple *Tuple::xdr_unmarshal( XDR *x ) 
+{
   Tuple *t = New Tuple();
   assert(sizeof(size_t) == sizeof(u_int32_t));
   // Tuple size overall
@@ -121,7 +155,26 @@ Tuple *Tuple::xdr_unmarshal( XDR *x ) {
   xdr_u_int32_t(x, &sz );
   // Marshal the fields
   for(size_t i=0; i < sz; i++) {
-    TupleField::xdr_unmarshal(x);
+    t->append(*TupleField::xdr_unmarshal(x));
   }
   return t;
 }
+
+//
+// Format as a string
+//
+str Tuple::toString() const 
+{
+  strbuf sb;
+
+  sb << "<";
+  for(size_t i=0; i < fields.size(); i++) {
+    sb << fields[i].toString();
+    if (i != fields.size() - 1) {
+      sb << ", ";
+    }
+  }
+  sb << ">";
+  return str(sb);
+}
+

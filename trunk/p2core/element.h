@@ -32,6 +32,9 @@
  * let's put stuff back in when we understand why we need it.  That
  * way we'll all develop a better understanding of why Click (and P2)
  * are the way they are. 
+ * 
+ * We've also enhanced to push/pull tuple to allow blocking (something
+ * Click, being a router, doesn't need to bother with). 
  */
 
 #ifndef __ELEMENT_H__
@@ -42,8 +45,11 @@
 class Element { 
 public:
   
-  // Port types
+  // Port types.  These are the constituent characters of the
+  // "processing" signature of the element. 
   static const char * const AGNOSTIC, * const PUSH, * const PULL;
+  // Two shorthand processing signatures.  
+  static const char * const PUSH_TO_PULL, * const PULL_TO_PUSH;
   enum Processing { VAGNOSTIC, VPUSH, VPULL };
 
   class Port;
@@ -53,14 +59,25 @@ public:
   virtual ~Element();
   static int nelements_allocated;
 
+  //
   // RUNTIME
-  virtual void push(int port, TupleRef );
-  virtual TupleRef pull(int port);
+  //
+
+  // If push returns '1', it's OK to send more tuples, and the
+  // callback has not been registered.  If '0', it's NOT OK to send
+  // more tuples, and the callback will be invoked as soon as it is. 
+  virtual int push(int port, TupleRef, cbv cb);
+
+  // If pull returns a Tuple, the callback has not been registered and
+  // there _might_ be another Tuple available.  If it returns null,
+  // there wasn't another Tuple, and the callback will be invoked when
+  // there is another one. 
+  virtual TuplePtr pull(int port, cbv cb);
+
   virtual TupleRef simple_action(TupleRef p);
 
   // CHARACTERISTICS
   virtual const char *class_name() const = 0;
-  void *cast(const char *name);
 
   // INPUTS AND OUTPUTS
   int ninputs() const				{ return _ninputs; }
@@ -83,7 +100,7 @@ public:
   bool output_is_push(int) const;
   bool output_is_pull(int) const;
   
-  void checked_output_push(int, TupleRef ) const;
+  void checked_output_push(int port, TupleRef t, cbv cb) const;
 
   // PROCESSING, FLOW, AND FLAGS
   virtual const char *processing() const;
@@ -103,8 +120,8 @@ public:
     Element *element() const		{ return _e; }
     int port() const			{ return _port; }
     
-    void push(TupleRef p) const;
-    TupleRef pull() const;
+    int push(TupleRef p, cbv cb) const;
+    TuplePtr pull(cbv cb) const;
 
 #if P2_STATS >= 1
     unsigned ntuples() const		{ return _tuples; }
@@ -114,6 +131,7 @@ public:
     
     Element *_e;
     int _port;
+    cbv _cb;
     
 #if P2_STATS >= 1
     mutable unsigned _tuples;		// How many tuples have we moved?
@@ -191,14 +209,15 @@ Element::input_is_push(int i) const
 # endif
 #endif
 
-inline Element::Port::Port() : _e(0), _port(-2) PORT_CTOR_INIT(0) { }
+inline Element::Port::Port() : _e(0), _port(-2), _cb(cbv_null) PORT_CTOR_INIT(0) { }
 
 inline Element::Port::Port(Element *owner, Element *e, int p)
-  : _e(e), _port(p) PORT_CTOR_INIT(owner)
+  : _e(e), _port(p), _cb(cbv_null) PORT_CTOR_INIT(owner)
 {
   (void) owner;
 }
 
+inline int Element::Port::push(TupleRef p, cbv cb) const
 {
   assert(_e);
 #if P2_STATS >= 1

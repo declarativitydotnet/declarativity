@@ -1,4 +1,4 @@
-SUBDIRS		= p2core tests phid
+SUBDIRS		= p2core elements tests phid
 
 CLEANFILES	= core *.core *~
 EXTRA_DIST	= .cvsignore

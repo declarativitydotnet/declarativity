@@ -56,6 +56,8 @@ public:
   
   Type get_type() const { return t; };
 
+  str TupleField::toString() const;
+
   CAST(int32_t,  i32, INT32);
   CAST(u_int32_t,ui32,UINT32);
   CAST(int64_t,  i64, INT64);
@@ -73,14 +75,14 @@ class Tuple {
 
 private:
   vec<TupleField> fields;
-  bool		finalized;
+  bool		frozen;
 
 public:
 
-  Tuple() : fields(), finalized(false) {};
+  Tuple() : fields(), frozen(false) {};
 
-  void append(TupleField &tf) { assert(!finalized); fields.push_back(tf); };
-  void finalize() { finalized = true; };
+  void append(TupleField &tf) { assert(!frozen); fields.push_back(tf); };
+  void freeze() { frozen = true; };
 
   size_t size() const { return fields.size(); };
 
@@ -90,8 +92,11 @@ public:
   void xdr_marshal( XDR *uio );
   static Tuple *xdr_unmarshal( XDR *uio );
 
+  str toString() const;
+
 };
 
 typedef ref<Tuple> TupleRef;
+typedef ptr<Tuple> TuplePtr;
 
 #endif /* __TUPLE_H_ */

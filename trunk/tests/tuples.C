@@ -92,7 +92,7 @@ static Tuple *create_tuple_1() {
   t->append(*New TupleField((uint64_t)64));
   t->append(*New TupleField(0.012345));
   t->append(*New TupleField("This is a string"));
-  t->finalize();
+  t->freeze();
   return t;
 }
 
@@ -194,7 +194,8 @@ int main(int argc, char **argv)
   el = time_fn(wrap(unmarshal_lots_of_tuples));
   std::cout << " (rate=" << (el / MARSHAL_NUM_UIOS / MARSHAL_CHUNK_SZ * 1000 * 1000) << " usec/tuple)\n";
 
-
+  t = create_tuple_1();
+  std::cout << t->toString() << "\n";
 
   return 0;
 }

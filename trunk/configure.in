@@ -53,6 +53,7 @@ fi
 
 AC_OUTPUT(Makefile 
 	  p2core/Makefile
+	  elements/Makefile
 	  tests/Makefile
           phid/Makefile
          )

@@ -1,5 +1,4 @@
 // -*- c-basic-offset: 2; related-file-name: "element.h" -*-
-
 /*
  * @(#)$Id$
  *
