@@ -458,14 +458,16 @@ void testRun(MasterRef master)
   hookups->clear();
   hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
                                             pullPrintSpec, 0);
+  hookups->push_back(hookup);
 
   Router::ConfigurationRef configuration =
     New refcounted< Router::Configuration >(elements, hookups);
   RouterRef router =
     New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
+    std::cout << "Correctly initialized memory pull to pull print spec.\n";
   } else {
-    std::cout << "Correctly caught unused port of an element\n";
+    std::cout << "** Failed to initialize correct spec\n";
   }
 
   // Activate the router
