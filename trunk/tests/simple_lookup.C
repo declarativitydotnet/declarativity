@@ -30,6 +30,8 @@
 #include "strToSockaddr.h"
 #include "slot.h"
 #include "loggerI.h"
+#include "pelTransform.h"
+#include "marshalField.h"
 
 int getLocalName(char *name)
 {
@@ -93,14 +95,18 @@ void issue_lookup(LoggerI::Level level, ptr<LookupGenerator> lookup)
 
   ElementSpecRef func    = conf->addElement(New refcounted< FunctorSource >(str("Source"), lookup));
   ElementSpecRef print   = conf->addElement(New refcounted< Print >(strbuf("lookup")));
-  ElementSpecRef marshal = conf->addElement(New refcounted< Marshal >("Marshal"));
+  ElementSpecRef encap = conf->addElement(New refcounted< PelTransform >("encapRequest",
+									  "$1 pop \
+                                                     $0 ->t $1 append $2 append $3 append pop")); // the rest
+  ElementSpecRef marshal = conf->addElement(New refcounted< MarshalField >("Marshal", 1));
   ElementSpecRef route   = conf->addElement(New refcounted< StrToSockaddr >(strbuf("SimpleLookup"), 0));
   ref< Udp >     udp     = New refcounted< Udp >("Udp");
   ElementSpecRef udpTx   = conf->addElement(udp->get_tx());
 
 
   conf->hookUp(func, 0, print, 0);
-  conf->hookUp(print, 0, marshal, 0);
+  conf->hookUp(print, 0, encap, 0);
+  conf->hookUp(encap, 0, marshal, 0);
   conf->hookUp(marshal, 0, route, 0);
   conf->hookUp(route, 0, udpTx, 0);
    
