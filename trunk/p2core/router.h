@@ -129,6 +129,10 @@ private:
   /** The configuration spec of the router */
   ConfigurationRef _configuration;
 
+  /** Are the configuration hookups refering to existing elements and
+      ports? */
+  int check_hookup_elements();
+
   friend class Master;
   friend class Task;
 };

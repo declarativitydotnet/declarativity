@@ -82,7 +82,57 @@
 
 
 #include <router.h>
-#include <master.h>
+#include <iostream>
+#include <set>
+
+int Router::check_hookup_elements()
+{
+  // Put all elements in a set to be searchable
+  std::set< ElementRef > elementSet;
+  ref< vec< ElementRef > > elements =
+    _configuration->elements;
+  for (uint i = 0;
+       i < _configuration->elements->size();
+       i++) {
+    elementSet.insert((*_configuration->elements)[i]);
+  }
+  
+  // Check each hookup to ensure it connects valid elements references
+  int errors = 0;
+  for (uint i = 0;
+       i < _configuration->hookups->size();
+       i++) {
+    HookupRef hookup = (*_configuration->hookups)[i];
+    if (*elementSet.find(hookup->fromElement) != hookup->fromElement) {
+      // This hookup comes from a non-existing element 
+      std::cerr << "Non-existent from element " << hookup->fromElement << "\n";
+      errors++;
+    }
+    if (*elementSet.find(hookup->toElement) != hookup->toElement) {
+      // This hookup goes to a non-existing element 
+      std::cerr << "Non-existent to element " << hookup->toElement << "\n";
+      errors++;
+    }
+    if (hookup->fromPortNumber < 0) {
+      // Negative port is bad
+      std::cerr << "Bad hookup from port " << hookup->fromPortNumber << "\n";
+      errors++;
+    }
+    if (hookup->toPortNumber < 0) {
+      // Negative port is bad
+      std::cerr << "Bad hookup to port " << hookup->toPortNumber << "\n";
+      errors++;
+    }
+  }
+    
+  if (errors > 0) {
+    // Ooops, there were problems
+    return -1;
+  } else {
+    return 0;
+  }
+}
+
 
 Router::Router(ref<Configuration> c,
                ref<Master> m)
@@ -111,20 +161,19 @@ Router::~Router()
  */
 int Router::initialize()
 {
-#if 0
-  if (_state != ROUTER_NEW)
-    return errh->error("second attempt to initialize router");
+  // Am I already initialized?
+  if (_state != ROUTER_NEW) {
+    std::cerr << "Second attempt to initialize router";
+    return -1;
+  }
   _state = ROUTER_PRECONFIGURE;
 
-  // initialize handlers to empty
-  initialize_handlers(false, false);
-  
-  // clear attachments
-  _attachment_names.clear();
-  _attachments.clear();
-  
-  if (check_hookup_elements(errh) < 0)
+  // Are the hookups pointing to existing elements and ports?
+  if (check_hookup_elements() < 0) {
     return -1;
+  }
+
+#if 0
   
   _runcount = 1;
   _master->register_router(this);
@@ -253,6 +302,26 @@ void Router::activate()
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ACCESS
 
 
@@ -316,37 +385,6 @@ Router::hookup_error(const Hookup &h, bool is_from, const char *message,
   const char *kind = (is_output ? "output" : "input");
   element_lerror(errh, _elements[h.idx], message,
                  _elements[h.idx], kind, h.port);
-}
-
-int
-Router::check_hookup_elements(ErrorHandler *errh)
-{
-  if (!errh) errh = ErrorHandler::default_handler();
-  int before = errh->nerrors();
-  
-  // Check each hookup to ensure it connects valid elements
-  for (int c = 0; c < _hookup_from.size(); c++) {
-    Hookup &hfrom = _hookup_from[c];
-    Hookup &hto = _hookup_to[c];
-    int before = errh->nerrors();
-    
-    if (hfrom.idx < 0 || hfrom.idx >= nelements() || !_elements[hfrom.idx])
-      errh->error("bad element number '%d'", hfrom.idx);
-    if (hto.idx < 0 || hto.idx >= nelements() || !_elements[hto.idx])
-      errh->error("bad element number '%d'", hto.idx);
-    if (hfrom.port < 0)
-      errh->error("bad port number '%d'", hfrom.port);
-    if (hto.port < 0)
-      errh->error("bad port number '%d'", hto.port);
-    
-    // remove the connection if there were errors
-    if (errh->nerrors() != before) {
-      remove_hookup(c);
-      c--;
-    }
-  }
-  
-  return (errh->nerrors() == before ? 0 : -1);
 }
 
 void
