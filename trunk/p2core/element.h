@@ -40,6 +40,7 @@
 #ifndef __ELEMENT_H__
 #define __ELEMENT_H__
 
+#include "inlines.h"
 #include "tuple.h"
 
 class Element { 
@@ -129,7 +130,7 @@ public:
 
    private:
     
-    Element *_e;
+    Element *_e;                        // To whom am I connecting?
     int _port;
     cbv _cb;
     
@@ -146,7 +147,10 @@ public:
 
   enum { INLINE_PORTS = 4 };
 
+  /** My input ports */
   Port *_inputs;
+
+  /** My output ports */
   Port *_outputs;
   Port _ports0[INLINE_PORTS];
 
@@ -161,44 +165,6 @@ public:
 };
 
 
-inline const Element::Port &
-Element::input(int i) const
-{
-  assert(i >= 0 && i < ninputs());
-  return _inputs[i];
-}
-
-inline const Element::Port &
-Element::output(int o) const
-{
-  assert(o >= 0 && o < noutputs());
-  return _outputs[o];
-}
-
-inline bool
-Element::output_is_push(int o) const
-{
-  return o >= 0 && o < noutputs() && _outputs[o].allowed();
-}
-
-inline bool
-Element::output_is_pull(int o) const
-{
-  return o >= 0 && o < noutputs() && !_outputs[o].allowed();
-}
-
-inline bool
-Element::input_is_pull(int i) const
-{
-  return i >= 0 && i < ninputs() && _inputs[i].allowed();
-}
-
-inline bool
-Element::input_is_push(int i) const
-{
-  return i >= 0 && i < ninputs() && !_inputs[i].allowed();
-}
-
 #if P2_STATS >= 2
 # define PORT_CTOR_INIT(o) , _tuples(0), _owner(o)
 #else
@@ -208,64 +174,5 @@ Element::input_is_push(int i) const
 #  define PORT_CTOR_INIT(o)
 # endif
 #endif
-
-inline Element::Port::Port() : _e(0), _port(-2), _cb(cbv_null) PORT_CTOR_INIT(0) { }
-
-inline Element::Port::Port(Element *owner, Element *e, int p)
-  : _e(e), _port(p), _cb(cbv_null) PORT_CTOR_INIT(owner)
-{
-  (void) owner;
-}
-
-inline int Element::Port::push(TupleRef p, cbv cb) const
-{
-  assert(_e);
-#if P2_STATS >= 1
-  _tuples++;
-#endif
-#if P2_STATS >= 2
-  _e->input(_port)._tuples++;
-  uint64_t c0 = click_get_cycles();
-  _e->push(_port, p, cb);
-  uint64_t c1 = click_get_cycles();
-  uint64_t x = c1 - c0;
-  _e->_calls += 1;
-  _e->_self_cycles += x;
-  _owner->_child_cycles += x;
-#else
-  _e->push(_port, p, cb);
-#endif
-}
-
-inline TuplePtr Element::Port::pull(cbv cb) const
-{
-  assert(_e);
-#if P2_STATS >= 2
-  _e->output(_port)._tuples++;
-  uint64_t c0 = click_get_cycles();
-  TuplePtr p = _e->pull(_port, cb);
-  uint64_t c1 = click_get_cycles();
-  uint64_t x = c1 - c0;
-  _e->_calls += 1;
-  _e->_self_cycles += x;
-  _owner->_child_cycles += x;
-#else
-  TuplePtr p = _e->pull(_port, cb);
-#endif
-#if P2_STATS >= 1
-  if (p) _tuples++;
-#endif
-  return p;
-}
-
-inline void
-Element::checked_output_push(int o, TupleRef p, cbv cb) const
-{
-  if ((unsigned)o < (unsigned)noutputs()) {
-    _outputs[o].push(p, cb);
-    } else {
-    // p->kill();
-    }
-}
 
 #endif /* __ELEMENT_H_ */

@@ -51,16 +51,22 @@ int Element::nelements_allocated = 0;
 # define ELEMENT_CTOR_STATS
 #endif
 
-Element::Element()
-  : ELEMENT_CTOR_STATS _inputs(&_ports0[0]), _outputs(&_ports0[0]),
-  _ninputs(0), _noutputs(0)
+Element::Element() :
+  ELEMENT_CTOR_STATS
+  _inputs(&_ports0[0]),
+  _outputs(&_ports0[0]),
+  _ninputs(0),
+  _noutputs(0)
 {
   nelements_allocated++;
 }
 
-Element::Element(int ninputs, int noutputs)
-  : ELEMENT_CTOR_STATS _inputs(&_ports0[0]), _outputs(&_ports0[0]),
-    _ninputs(0), _noutputs(0)
+Element::Element(int ninputs, int noutputs) :
+  ELEMENT_CTOR_STATS
+  _inputs(&_ports0[0]),
+  _outputs(&_ports0[0]),
+  _ninputs(0),
+  _noutputs(0)
 {
   set_nports(ninputs, noutputs);
   nelements_allocated++;

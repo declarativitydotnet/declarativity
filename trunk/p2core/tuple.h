@@ -18,9 +18,10 @@
 #include <assert.h>
 #include <async.h>
 #include <arpc.h>
+#include "inlines.h"
 
 #define CAST(TC,TN,TE) \
-	inline TC as_##TN() { \
+	REMOVABLE_INLINE TC as_##TN() { \
           if (TE != t) { throw TupleField::TypeError(); } \
 	return TN; \
 	}
