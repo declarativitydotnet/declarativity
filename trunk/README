@@ -7,7 +7,7 @@ When you've checked out a fresh repository or modified the autoconf macros, firs
 Then, to build the source, run configure and point it at your SFS
 installation (e.g., /projects/phi/sfs).
 
-   # configure --with-sfs=/projects/phi/sfs
+   # configure --with-sfslib=/projects/phi/sfs/lib --with-sfsinc=/projects/phi/sfs/include
   
 Then compile: 
 
