@@ -49,7 +49,7 @@ public:
    */
   class Rx : public Element {
   public:
-    Rx(const CC&, double, double);
+    Rx(const CC&, double);
     const char *class_name() const		{ return "CC::Rx";};
     const char *processing() const		{ return "a/al"; };
     const char *flow_code() const		{ return "x/x-"; };
@@ -66,10 +66,8 @@ public:
     cbv _ack_cb; 				// Callback to send an ack 
 
     const CC *cc_;
-
-    double max_wnd_;				// Max window size
-    double rwnd_;				// Receiver window size
-
+    double   max_wnd_;				// Max window size
+    double   rwnd_;				// Receiver window size
     std::vector <TuplePtr> ack_q_;		// Output ack queue
   };
   
@@ -92,15 +90,14 @@ public:
     TuplePtr pull(int port, cbv cb);		// Rate limited output tuple stream
 
   private:
-    cbv _input_cb; 				// Callback for element push
-    cbv _output_cb; 				// Callback for send. Pulls from send_q.
-
     void timeout_cb(otuple_ref otr);		// Callback for to retry sending a tuple
     REMOVABLE_INLINE void add_rtt_meas(long m);	// Update sa, sv, and rto based on m
     REMOVABLE_INLINE void timeout();		// Update sa, sv, and rto based on m
     REMOVABLE_INLINE int current_window();	// Returns the current window size
     REMOVABLE_INLINE int max_window();		// Returns the current window size
 
+    cbv _input_cb; 				// Callback for element push
+    cbv _output_cb; 				// Callback for send. Pulls from send_q.
     
     const CC *cc_;
 
@@ -135,11 +132,11 @@ public:
   ref< CC::Tx > get_tx() { return tx_; };
 
 private:
-  int seq_field_;
-
   // Elements 
   ref< Rx > rx_;
   ref< Tx > tx_;
+
+  int seq_field_;
 };
 
 #endif /* __CC_H_ */

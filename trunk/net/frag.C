@@ -14,10 +14,10 @@
 #include "tupleseq.h"
 #include "math.h"
 
-Frag::Frag(str name, unsigned int block_size)
+Frag::Frag(str name, uint32_t block_size)
   : Element(name, 1, 1),
-    block_size_(block_size),
-    _push_cb(cbv_null), _pull_cb(cbv_null)
+    _push_cb(cbv_null), _pull_cb(cbv_null),
+    block_size_(block_size)
 {
 }
 
@@ -105,7 +105,7 @@ void Frag::fragment(TupleRef t)
       puio->rembytes(uio->resid());
 
       TupleRef p = Tuple::mk();
-      p->append(Val_UInt64::mk(MAKE_SEQ(seq, offset)));
+      p->append(Val_UInt64::mk(MAKE_SEQ(seq_num, offset)));
       p->append(Val_Opaque::mk(uio));
       p->tag(NUM_CHUNKS, Val_UInt32::mk(num_chunks));
       fragments_.push_back(p);

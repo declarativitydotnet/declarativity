@@ -23,7 +23,7 @@
 class Frag : public Element { 
 public:
 
-  Frag(str name, unsigned int block_size);
+  Frag(str name, uint32_t block_size);
   const char *class_name() const	{ return "Frag";};
   const char *processing() const	{ return PUSH_TO_PULL; };
   const char *flow_code()  const	{ return "-/-"; };
@@ -33,13 +33,12 @@ public:
   TuplePtr pull(int port, cbv cb);
 
  private:
+  void fragment(TupleRef t);
+
   cbv _push_cb;
   cbv _pull_cb;
 
-  void fragment(TupleRef t);
-
-  unsigned int block_size_;
-  
+  const uint32_t block_size_;
   std::deque <TuplePtr> fragments_;
 };
 

@@ -43,8 +43,8 @@ void otuple::operator()(std::pair<const SeqNum, otuple_ref>& entry)
  * Output 0 (push): Stream of tuples (possibly out of order and with dups).	
  * Output 1 (pull): Acknowledgements of individual tuples.
  */
-CC::Rx::Rx(const CC &cc, double init_wnd, double max_wnd) 
-  : Element("CC::Rx", 1, 2), _ack_cb(cbv_null), cc_(&cc), rwnd_(max_wnd), max_wnd_(max_wnd)
+CC::Rx::Rx(const CC &cc, double max_wnd) 
+  : Element("CC::Rx", 1, 2), _ack_cb(cbv_null), cc_(&cc), max_wnd_(max_wnd), rwnd_(max_wnd)
 {
 }
 
@@ -106,7 +106,7 @@ TuplePtr CC::Rx::pull(int port, cbv cb)
  * Output 0 (pull): Tuple to send with cc info wrapper.
  */
 CC::Tx::Tx(const CC &cc, double init_wnd, double max_wnd) 
-  : Element("CC::Tx", 2, 1), cc_(&cc), _input_cb(cbv_null), _output_cb(cbv_null) 
+  : Element("CC::Tx", 2, 1), _input_cb(cbv_null), _output_cb(cbv_null), cc_(&cc) 
 {
   sa_       = -1;
   sv_       = 0;
@@ -124,15 +124,10 @@ CC::Tx::Tx(const CC &cc, double init_wnd, double max_wnd)
  */
 int CC::Tx::push(int port, TupleRef tp, cbv cb)
 {
-  strbuf sb;
   assert(port < 2);
 
   switch(port) {
   case 0:	// Queue tuple and check window size.
-    sb << "CC::Tx::push current_window(" << current_window() \
-       << "), max_window(" << max_window() << ")";
-    log(LoggerI::INFO, 0, sb); 
-
     send_q_.push_back(tp);
 
     if (_output_cb != cbv_null) {
@@ -141,21 +136,23 @@ int CC::Tx::push(int port, TupleRef tp, cbv cb)
     }
 
     if (current_window() >= max_window()) {
-      log(LoggerI::INFO, 0, "CC::Tx::push current_window >= max_window"); 
+      log(LoggerI::INFO, 0, "CC::Tx::push WINDOW IS FULL"); 
       _input_cb = cb;
       return 0;
     }
     break;
   case 1:	// Acknowledge tuple and update measurements.
     SeqNum seq  = Val_UInt64::cast((*tp)[ACK_SEQ_FIELD]);	// Sequence number
-    double rwnd = Val_Double::cast((*tp)[ACK_RWND_FIELD]);	// Receiver window
+
+    //TODO: Use timestamps to track the latest rwnd value.
+    rwnd_ = Val_Double::cast((*tp)[ACK_RWND_FIELD]);		// Receiver window
 
     log(LoggerI::INFO, 0, "CC::Tx::push receive acknowledgement"); 
 
     OTupleIndex::iterator iter = ot_map_.find(seq);
     if (iter != ot_map_.end()) { 
       timecb_remove((iter->second)->tcb_);
-      add_rtt_meas((iter->second)->tt_ms_);
+      add_rtt_meas((cc_->now_ms() - (iter->second)->tt_ms_));
       ot_map_.erase(iter);
       if (current_window() < max_window() && _input_cb != cbv_null) {
         (*_input_cb)();
@@ -183,8 +180,6 @@ TuplePtr CC::Tx::pull(int port, cbv cb)
   // All retransmit packets go first.
   if (!rtran_q_.empty()) {
     otuple_ref otr = rtran_q_[0];
-    SeqNum     seq = Val_UInt64::cast((*otr->tp_)[cc_->get_seq_field()]);
-
     rtran_q_.erase(rtran_q_.begin());
     otr->tcb_ = delaycb(rto_ / 1000, rto_ * 1000000, wrap(this, &CC::Tx::timeout_cb, otr)); 
 
@@ -217,15 +212,12 @@ TuplePtr CC::Tx::pull(int port, cbv cb)
 void CC::Tx::timeout_cb(otuple_ref otr)
 {
   SeqNum seq = Val_UInt64::cast((*otr->tp_)[cc_->get_seq_field()]);	// Sequence number
-
   strbuf sb;
   sb << "Packet seq(" << seq << ") timeout after " << (cc_->now_ms() - otr->tt_ms_) << "ms";
-  log(LoggerI::INFO, 0, sb); 
-
-  ot_map_.erase(ot_map_.find(seq));				
+  log(LoggerI::WARN, 0, sb); 
 
   if (otr->wnd_ == true) {
-    log(LoggerI::INFO, 0, "Adjusting window size after timeout."); 
+    log(LoggerI::WARN, 0, "Adjusting window size after timeout."); 
 
     timeout(); 							// Update window sizes and enter slow start
     std::for_each(ot_map_.begin(), ot_map_.end(), otuple()); 	// Set all current otuple::wnd_ = false.
@@ -262,8 +254,9 @@ REMOVABLE_INLINE void CC::Tx::add_rtt_meas(long m)
   // Don't backoff past 1 second.
   if (rto_ > MAX_RTO) {
     strbuf sb; 
-    sb << "huge rto: m=" << long(orig_m) << " sa=" << long(sa_) << " sv=" << long(sv_) << " rto=" << long(rto_);
+    sb << "HUGE RTO: m=" << long(orig_m); 
     log(LoggerI::WARN, 1, sb);
+    sb.tosuio()->clear();
 
     rto_ = MAX_RTO;
   }
@@ -291,8 +284,9 @@ REMOVABLE_INLINE void CC::Tx::timeout() {
   cwnd_ = 1.0;
 
   strbuf msg;
-  msg << "CONGESTION ADJUST: RTO = " << long(rto_) << " | SSTHRESH = " << long(ssthresh_) << " | CWND = " << long(cwnd_);
-  log(LoggerI::INFO, 0, msg); 
+  msg << "CONGESTION ADJUST: RTO = " << long(rto_) << " | SSTHRESH = " << long(ssthresh_) \
+      << " | CWND = " << long(cwnd_) << "";
+  log(LoggerI::WARN, 0, msg); 
 }
 
 REMOVABLE_INLINE int CC::Tx::current_window() {
@@ -308,7 +302,7 @@ REMOVABLE_INLINE int CC::Tx::max_window() {
 // The main object itself
 //
 CC::CC(double init_wnd, double max_wnd, int seq_field) 
-  : rx_(New refcounted< CC::Rx >(*this, init_wnd, max_wnd)),
+  : rx_(New refcounted< CC::Rx >(*this, max_wnd)),
     tx_(New refcounted< CC::Tx >(*this, init_wnd, max_wnd)),
     seq_field_(seq_field)
 {
@@ -319,5 +313,6 @@ REMOVABLE_INLINE uint64_t CC::now_ms() const
     struct timeval tv;
     gettimeofday(&tv, NULL);
 
-    return uint64_t ((tv.tv_sec / 1000) + (tv.tv_usec * 1000));	// Time in milliseconds
+    // return uint64_t ((tv.tv_sec + 1000) + (tv.tv_usec / 1000));	// Time in milliseconds
+    return uint64_t (tv.tv_usec / 1000);	// Time in milliseconds
 }

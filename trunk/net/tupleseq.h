@@ -22,7 +22,7 @@ public:
 
   class Package : public Element {
   public:
-    Package(str name="TupleSeq::Pack", u_int64_t start_seq=0);
+    Package(str name="TupleSeq::Pack", u_int64_t start_seq=1);
     const char *class_name() const	{ return "TupleSeq::Package";};
     const char *processing() const	{ return "a/a"; };
     const char *flow_code() const	{ return "x/x"; };
