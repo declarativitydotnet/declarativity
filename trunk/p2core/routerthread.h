@@ -70,6 +70,7 @@ class RouterThread {
  private:
     
   Master *_master;
+
   int _id;
 
   Spinlock _lock;

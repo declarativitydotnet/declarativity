@@ -65,12 +65,58 @@ REMOVABLE_INLINE void click_gettimeofday(struct timeval * tvp)
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Timer::Timer()
   : _prev(0),
     _next(0),
     _router(0)
 {
 }
+
+Timer::~Timer()
+{
+  if (scheduled()) {
+    unschedule();
+  }
+}
+
+void Timer::run()
+{
+  assert(false);
+}
+
+REMOVABLE_INLINE void Timer::initialize(RouterRef router)
+{
+  assert(!initialized());
+  _router = router;
+}
+
+void Timer::unschedule()
+{
+  if (scheduled()) {
+    Master *master = _router->master();
+    master->_timer_lock.acquire();
+    _prev->_next = _next;
+    _next->_prev = _prev;
+    _prev = _next = 0;
+    master->_timer_lock.release();
+  }
+}
+
 
 void Timer::schedule_at(const timeval &when)
 {
@@ -106,51 +152,21 @@ void Timer::schedule_at(const timeval &when)
   master->_timer_lock.release();
 }
 
-void Timer::schedule_after(const timeval &delta)
+REMOVABLE_INLINE void Timer::reschedule_at(const timeval &tv)
 {
-  timeval t;
-  click_gettimeofday(&t);
-  schedule_at(t + delta);
-}
-
-void Timer::reschedule_after_s(uint32_t s)
-{
-  timeval t = _expiry;
-  t.tv_sec += s;
-  schedule_at(t);
-}
-
-void Timer::reschedule_after_ms(uint32_t ms)
-{
-  timeval t = _expiry;
-  timeval interval;
-  interval.tv_sec = ms / 1000;
-  interval.tv_usec = (ms % 1000) * 1000;
-  timeradd(&t, &interval, &t);
-  schedule_at(t);
-}
-
-void Timer::unschedule()
-{
-  if (scheduled()) {
-    Master *master = _router->master();
-    master->_timer_lock.acquire();
-    _prev->_next = _next;
-    _next->_prev = _prev;
-    _prev = _next = 0;
-    master->_timer_lock.release();
-  }
-}
-
-REMOVABLE_INLINE void Timer::initialize(Router *router)
-{
-  assert(!initialized());
-  _router = router;
+  schedule_at(tv);
 }
 
 REMOVABLE_INLINE void Timer::schedule_now()
 {
   schedule_after_ms(0);
+}
+
+void Timer::schedule_after(const timeval &delta)
+{
+  timeval t;
+  click_gettimeofday(&t);
+  schedule_at(t + delta);
 }
 
 REMOVABLE_INLINE void Timer::schedule_after_s(uint32_t s)
@@ -168,9 +184,21 @@ REMOVABLE_INLINE void Timer::reschedule_after(const timeval &delta)
   schedule_at(_expiry + delta);
 }
 
-REMOVABLE_INLINE void Timer::reschedule_at(const timeval &tv)
+void Timer::reschedule_after_s(uint32_t s)
 {
-  schedule_at(tv);
+  timeval t = _expiry;
+  t.tv_sec += s;
+  schedule_at(t);
+}
+
+void Timer::reschedule_after_ms(uint32_t ms)
+{
+  timeval t = _expiry;
+  timeval interval;
+  interval.tv_sec = ms / 1000;
+  interval.tv_usec = (ms % 1000) * 1000;
+  timeradd(&t, &interval, &t);
+  schedule_at(t);
 }
 
 void Timer::make_list()

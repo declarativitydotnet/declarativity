@@ -28,13 +28,14 @@
 #ifndef __TELEMENTAL_H__
 #define __TELEMENTAL_H__
 #include <timer.h>
-
-typedef void (*TimerHook)(Timer *, void *);
+#include <inlines.h>
+#include <element.h>
 
 class TElemental : public Timer {
  public:
   
   TElemental(Element *);
+  virtual ~TElemental();
 
   /** Call the hook with the opaque data. */
   REMOVABLE_INLINE virtual void run();

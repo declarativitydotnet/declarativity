@@ -107,7 +107,7 @@
 void Router::set_connections()
 {
   // actually assign ports
-  for (int i = 0;
+  for (uint i = 0;
        i < _configuration->hookups->size();
        i++) {
     HookupRef hookup = (*_configuration->hookups)[i];
@@ -161,7 +161,7 @@ int Router::check_hookup_completeness()
 
   // Check unuseds
   int unuseds = 0;
-  for (int i = 0;
+  for (uint i = 0;
        i < _configuration->elements->size();
        i++) {
     ElementSpecRef element = (*_configuration->elements)[i];
@@ -444,7 +444,7 @@ int Router::initialize(RouterRef myRef)
   // the elements from the configuration to the router. Trash the
   // configuration.
   set_connections();
-  for (int i = 0;
+  for (uint i = 0;
        i < _configuration->elements->size();
        i++) {
     ElementRef theElement = (*_configuration->elements)[i]->element();

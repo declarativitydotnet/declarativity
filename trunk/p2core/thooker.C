@@ -33,8 +33,8 @@ THooker::THooker(TimerHook hook, void *opaque)
 {
 }
 
-void run()
+void THooker::run()
 {
-  _hook(_opaque);
+  _hook(this, _opaque);
 }
 

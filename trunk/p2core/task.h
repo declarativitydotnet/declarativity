@@ -26,8 +26,12 @@ class Task {
 
   virtual ~Task();
 
-  bool initialized() const		{ return _router != 0; }
+  /** Call whatever it is this task is doing.  Instances of this class
+      should never be run.  They are only used as sentinel elements of
+      task lists. */
+  REMOVABLE_INLINE virtual void run()	 { assert(false); }
 
+  bool initialized() const		{ return _router != 0; }
   bool scheduled() const		{ return _prev != 0; }
 
   Task *scheduled_next() const		{ return _next; }
@@ -53,11 +57,6 @@ class Task {
   void strong_unschedule();
   
   void strong_reschedule();
-
-  /** Call whatever it is this task is doing.  Instances of this class
-      should never be run.  They are only used as sentinel elements of
-      task lists. */
-  REMOVABLE_INLINE virtual void run()	 { assert(false); };
 
  private:
 
@@ -100,8 +99,6 @@ class Task {
   REMOVABLE_INLINE bool attempt_lock_tasks();
 
   void make_list();
-  
-  static bool error_hook(Task *, void *);
   
   friend class RouterThread;
   friend class Master;

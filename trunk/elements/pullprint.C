@@ -37,6 +37,7 @@ int PullPrint::initialize()
 {
   // Schedule my task to run
   _task.initialize(this, true);
+  return 0;
 }
 
 

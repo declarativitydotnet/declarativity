@@ -45,7 +45,7 @@ class THooker : public Timer {
   TimerHook _hook;
 
   /** The opaque data to call the hook function with */
-  void *_opaque;
+  void * _opaque;
 };
 
 #endif

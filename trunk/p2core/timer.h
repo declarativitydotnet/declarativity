@@ -28,10 +28,9 @@
 #ifndef __TIMER_H__
 #define __TIMER_H__
 #include <inlines.h>
-#include <element.h>
 #include <sys/time.h>
-
-
+#include <assert.h>
+#include <async.h>
 
 /** Glue functions for timers */
 REMOVABLE_INLINE struct timeval make_timeval(int sec, int usec);
@@ -41,26 +40,32 @@ REMOVABLE_INLINE void click_gettimeofday(struct timeval * tvp);
 
 
 class Router;
+typedef ref< Router > RouterRef;
+typedef ptr< Router > RouterPtr;
 
 class Timer {
  public:
   
   Timer();
-  virtual ~Timer()			{ if (scheduled()) unschedule(); }
+  virtual ~Timer();
 
-  /** Call whatever it is this task is doing.  Instances of this class
+  /** Call whatever it is this timer is doing.  Instances of this class
       should never be run.  They are only used as sentinel elements of
-      task lists. */
-  REMOVABLE_INLINE virtual void run()	 { assert(false); };
+      timer lists. */
+  REMOVABLE_INLINE virtual void run();
 
   bool initialized() const		{ return _router != 0; }
   bool scheduled() const		{ return _prev != 0; }
   const timeval &expiry() const		{ return _expiry; }
   
-  REMOVABLE_INLINE void initialize(Router *);
+  REMOVABLE_INLINE void initialize(RouterRef);
+
   void cleanup()			{ unschedule(); }
 
+  void unschedule();
+  
   void schedule_at(const timeval &);
+
   REMOVABLE_INLINE void reschedule_at(const timeval &); // synonym
 
   REMOVABLE_INLINE void schedule_now();
@@ -71,8 +76,6 @@ class Timer {
   void reschedule_after_s(uint32_t);
   void reschedule_after_ms(uint32_t);
 
-  void unschedule();
-  
  private:
   
   /** Pointer to previous timer in the scheduler */
@@ -82,7 +85,7 @@ class Timer {
   Timer *_next;
 
   timeval _expiry;
-  Router *_router;
+  RouterPtr _router;
 
   Timer(const Timer &);
   Timer &operator=(const Timer &);

@@ -97,12 +97,6 @@ void Task::add_pending(int p)
 
 
 
-bool Task::error_hook(Task *, void *)
-{
-  assert(0);
-  return false;
-}
-
 void Task::make_list()
 {
   _pending_next = this;

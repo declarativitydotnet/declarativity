@@ -11,6 +11,8 @@ libp2core_la_SOURCES = \
 	master.C \
 	elementSpec.C \
 	elemental.C \
+	thooker.C \
+	telemental.C \
 	pel_lexer.C \
 	pel_vm.C
 

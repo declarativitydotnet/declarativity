@@ -287,7 +287,7 @@ ElementSpec::UnificationResult ElementSpec::unifyInput(int portNumber)
           entireResult = PROGRESS;
         }
       }
-      for (int i = portNumber + 1;
+      for (uint i = portNumber + 1;
            i < u->inputs.size();
            i++) {
         ElementSpec::PortRef otherPort = _inputs[u->inputs[i]];
@@ -300,7 +300,7 @@ ElementSpec::UnificationResult ElementSpec::unifyInput(int portNumber)
       }
 
       // Then the outputs
-      for (int i = 0;
+      for (uint i = 0;
            i < u->outputs.size();
            i++) {
         ElementSpec::PortRef otherPort = _outputs[u->outputs[i]];
@@ -339,7 +339,7 @@ ElementSpec::UnificationResult ElementSpec::unifyOutput(int portNumber)
           entireResult = PROGRESS;
         }
       }
-      for (int i = portNumber + 1;
+      for (uint i = portNumber + 1;
            i < u->outputs.size();
            i++) {
         ElementSpec::PortRef otherPort = _outputs[u->outputs[i]];
@@ -352,7 +352,7 @@ ElementSpec::UnificationResult ElementSpec::unifyOutput(int portNumber)
       }
 
       // Then the inputs
-      for (int i = 0;
+      for (uint i = 0;
            i < u->inputs.size();
            i++) {
         ElementSpec::PortRef otherPort = _inputs[u->inputs[i]];

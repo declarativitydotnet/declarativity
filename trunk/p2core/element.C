@@ -309,3 +309,10 @@ bool Element::run_task()
   return false;
 }
 
+bool Element::run_timer()
+{
+  // This should never be run
+  assert(0);
+  return false;
+}
+

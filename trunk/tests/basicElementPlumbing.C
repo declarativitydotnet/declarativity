@@ -26,6 +26,7 @@
 #include "memoryPull.h"
 #include "router.h"
 #include "master.h"
+#include "timedSource.h"
 
 TupleRef create_tuple(int i) {
   TupleRef t = Tuple::mk();
@@ -847,13 +848,14 @@ void testRun()
   ref< vec< TupleRef > > tupleRefBuffer =
     New refcounted< vec< TupleRef > >();
   tupleRefBuffer->push_back(t);
-  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
+
+  ref< TimedSource > timedSource = New refcounted< TimedSource >(500);
   ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+  ElementSpecRef timedSourceSpec = New refcounted< ElementSpec >(timedSource);
   ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
 
   ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(memoryPullSpec);
+  elements->push_back(timedSourceSpec);
   elements->push_back(pullPrintSpec);
 
   Router::HookupPtr hookup;
@@ -862,7 +864,7 @@ void testRun()
 
   // Connect pull to pull
   hookups->clear();
-  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
+  hookup = New refcounted< Router::Hookup >(timedSourceSpec, 0,
                                             pullPrintSpec, 0);
   hookups->push_back(hookup);
 
@@ -872,7 +874,7 @@ void testRun()
   RouterRef router =
     New refcounted< Router >(configuration, master);
   if (router->initialize(router) == 0) {
-    std::cout << "Correctly initialized memory pull to pull print spec.\n";
+    std::cout << "Correctly initialized timed source to pull print spec.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }

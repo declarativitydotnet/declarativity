@@ -60,7 +60,7 @@ public:
   REMOVABLE_INLINE RouterThreadPtr thread() const;
 
   /** Are we still running? */
-  bool running() const {return true;}
+  bool running() const			{return true;}
 
   /** When should I check for timers next? */
   int timer_delay(struct timeval *);

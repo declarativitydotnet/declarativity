@@ -77,9 +77,9 @@ REMOVABLE_INLINE void RouterThread::run_os()
 
 
 RouterThread::RouterThread(Master *m, int id)
-  : _taskList(),
-    _master(m),
-    _id(id)
+  : _master(m),
+    _id(id),
+    _taskList()
 {
   // Make the task list contain only the sentinel
   _taskList._next = _taskList._prev = &_taskList;

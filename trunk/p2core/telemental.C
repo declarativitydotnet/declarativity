@@ -24,6 +24,7 @@
  * 
  */
 
+#include <inlines.h>
 #include <telemental.h>
 
 TElemental::TElemental(Element * e)
@@ -32,7 +33,11 @@ TElemental::TElemental(Element * e)
 {
 }
 
-void run()
+TElemental::~TElemental()
+{
+}
+
+REMOVABLE_INLINE void TElemental::run()
 {
   _element->run_timer();
 }
