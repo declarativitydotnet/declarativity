@@ -47,7 +47,7 @@ def run_node(chord_exec, seed, ip, p, lm, out):
 
     pid = os.fork()
     if pid == 0:
-        if lm: rv = os.system(r"%s 0 NONE %d %s:%s 1 %s >> %s 2>&1" % (chord_exec, seed, ip, p, lm, out))
+        if lm: rv = os.system(r"%s 0 NONE %d %s:%s 10 %s >> %s 2>&1" % (chord_exec, seed, ip, p, lm, out))
         else:  rv = os.system(r"%s 0 NONE %d %s:%s 0 >> %s 2>&1" % (chord_exec, seed, ip, p, out))
         print >> log, "SYSTEM CALL EXIT"
         sys.exit(0)
@@ -80,6 +80,7 @@ if __name__ == "__main__":
     start_time = time.time()
     nodes      = int(flags["num_nodes"])
     start_port = int(flags["start_port"])
+    firstTime  = True
 
     while 1:
         for portinc in range(100):
@@ -91,7 +92,10 @@ if __name__ == "__main__":
             print >> log, "PIDS: ", pids
             print >> log, "TIME: ", time.time() - start_time
             if flags["session"]: 
-                threading.Timer(flags["session"], (lambda: map(reaper, pids))).start()
+                if firstTime: 
+                    firstTime = False
+                    threading.Timer(5.0 + (random.random() * flags["session"]), (lambda: map(reaper, pids))).start()
+                else: threading.Timer(flags["session"], (lambda: map(reaper, pids))).start()
 
             while pids:
                 log.flush()
