@@ -76,12 +76,12 @@ SU2: bestSuccessor@NI(NI,S,SI) :- node@NI(NI,N), bestSuccessorID@NI(NI,D),
 successor@NI(NI,S,SI), D=f_dist(S,N)
 
 Successor replacement policy:
-SR1: evictSuccessor(NI) :- successorCount(NI,C), C>successor.size
-SR2: delete<successor(NI,S,SI)> :- successor(NI,S,SI),
-evictSuccessor(NI), maxSuccessor(NI,S,SI)
-SR3: maxSuccessorDistance(NI,max<D>) :- successor(NI,S,SI), node(NI,N), D = f_dist(N,S)
-SR4: maxSuccessor(NI,S,SI) :- successor(NI,S,SI),
-maxSuccessorDistance(NI,D), D=f_dist(N,S) 
+SR1: evictSuccessor@NI(NI) :- successorCount@NI(NI,C), C>successor.size
+SR2: delete@NI<successor(NI,S,SI)> :- successor@NI(NI,S,SI),
+evictSuccessor@NI(NI), maxSuccessor@NI(NI,S,SI)
+SR3: maxSuccessorDistance@NI(NI,max<D>) :- successor@NI(NI,S,SI), node@NI(NI,N), D = f_dist(N,S)
+SR4: maxSuccessor@NI(NI,S,SI) :- successor@NI(NI,S,SI),
+maxSuccessorDistance@NI(NI,D), D=f_dist(N,S) 
 
 
 Fingers: 
@@ -152,7 +152,7 @@ are all event tuples with TTL=0.
 ---------------------
 
 Periodically detect failures in predecessor and successors, and then
-invalidate them by setting their expiration time. Failure detection is
+invalidate them. Failure detection is
 based on pings in our example. The smaller the TTL, the more accurate
 failures are detected. 
 
@@ -160,7 +160,7 @@ Set of pingNodes. Each have TTL and next scheduled ping. So periodically
 scan the list for nodes to ping. The result of pings is in the
 pingResult tuple, which has RTT set to -1 if timeout. 
 
-P1: ping@X(X,Y) :- checkPing@X(X), pingNodes@X(X,Y), lastPingTime(X,Y,T),
+P1: ping@X(X,Y) :- checkPing@X(X), pingNodes@X(X,Y), lastPingTime@X(X,Y,T),
 f_currentTime() > T + ping.TTL 
 P2: lastPingTime(X,Y,T) :- ping(X,Y), T=f_currentTime()
 P3: checkPing(X), period=ping_interval
@@ -173,7 +173,8 @@ CP3: predecessor@NI(NI,null, null) :- pingResult@NI(NI,SI,RTT),
 predecessor@NI(NI,S,SI), RTT<0 
 
 PingNodes tuples will result in ping element performing periodic pings,
-every TTL.. This ping element will do a ping, and then generate a
+every TTL. We have a table which keeps the last ping time for each node
+X to ensure we do not ping more than the ping interval. This ping element will do a ping, and then generate a
 pingResult either after timeout or when the ping reply comes back. If
 pingResult is successful, increase TTL, otherwise, either delete, or in
 CP3, set fields to null for predecessor. Ping and pingResult have TTLs
