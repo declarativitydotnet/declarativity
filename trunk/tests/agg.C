@@ -49,7 +49,7 @@ void agg()
 
     ElementSpecRef groupBySpec = conf->addElement(New refcounted<GroupBy>("groupBy", "testAgg", primaryFields, 
 									  groupByFields, aggFields, aggTypes, 
-									  5, true)); 
+									  5, false)); 
 
     ElementSpecRef queueSpec = conf->addElement(New refcounted<Queue>("queue", 10));
     ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
