@@ -158,7 +158,7 @@ int main(int argc, char **argv)
   std::cout << "Creating tuples...\n";
   std::cout << "sizeof(Tuple)=" << sizeof(Tuple) << "\n";
 
-  std::cout << "Creating " << TUPLE_TST_SZ << " fields: ";
+  std::cout << "Creating " << TUPLE_TST_SZ << " tuples: ";
   double el = time_fn(wrap(create_lots_of_tuples));
   std::cout << " (rate=" << (el / TUPLE_TST_SZ * 1000 * 1000) << " usec/tuple)\n";
 
