@@ -141,7 +141,7 @@ int main(int argc, char **argv)
   LoggerI::Level level = LoggerI::levelFromName[levelName];
 
   int seed = atoi(argv[3]);
-  srand(seed);
+  srandom(seed);
   str myAddress(argv[4]);
   
   const char * theString = argv[4];

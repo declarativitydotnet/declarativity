@@ -60,9 +60,9 @@ void RandomPushSource::runTimer()
   clock_gettime(CLOCK_REALTIME, &t);
   
   tuple->append(Val_Str::mk("Random"));
-  tuple->append(Val_Double::mk(rand() % _max));
-  tuple->append(Val_Double::mk(rand() % _max));
-  tuple->append(Val_Double::mk(rand() % _max));
+  tuple->append(Val_Double::mk(random() % _max));
+  tuple->append(Val_Double::mk(random() % _max));
+  tuple->append(Val_Double::mk(random() % _max));
   tuple->freeze();
 
   // Attempt to push it

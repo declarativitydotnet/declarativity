@@ -23,6 +23,7 @@ bin_PROGRAMS 	= 	values \
 			runManyChords \
 			runChord \
 			simple_lookup \
+			lookupGenerator \
 			basicelements \
 			basicElementPlumbing \
 			scheduling \
@@ -114,6 +115,13 @@ runManyChords_LDADD = \
 
 simple_lookup_SOURCES = simple_lookup.C
 simple_lookup_LDADD = \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+lookupGenerator_SOURCES = lookupGenerator.C
+lookupGenerator_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \

@@ -431,8 +431,8 @@ DEF_OP(OR) {
   stackPush(Val_Int32::mk(v1 || v2));
 }
 DEF_OP(RAND) {
-  int32_t random = rand();
-  stackPush(Val_Int32::mk(random));
+  int32_t r = random();
+  stackPush(Val_Int32::mk(r));
 }
 
 //

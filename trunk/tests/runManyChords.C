@@ -127,7 +127,7 @@ int main(int argc, char **argv)
   LoggerI::Level level = LoggerI::levelFromName[levelName];
 
   int seed = atoi(argv[2]);
-  srand(seed);
+  srandom(seed);
 
   int noNodes = atoi(argv[3]);
 

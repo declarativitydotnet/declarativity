@@ -878,7 +878,7 @@ void ruleF3(str name,
     conf->addElement(New refcounted< PelTransform >(strbuf("FlattenFingerLookup:").cat(name),
                                                     "\"fingerLookup\" pop \
                                                      $0 1 field pop /* output fixFinger.NI */ \
-                                                     rand pop /* output random */ \
+                                                     $0 1 field \":\" strcat rand strcat pop /* output NI|rand */ \
                                                      $1 2 field pop /* output nextFingerFix.I */"));
   conf->hookUp(join1S, 0, noNullS, 0);
   conf->hookUp(noNullS, 0, makeRes1S, 0);
@@ -963,7 +963,7 @@ void ruleF5(str name,
     conf->addElement(New refcounted< PelTransform >(strbuf("select:") << name,
                                                     "$0 5 field /* lookupResults.E */\
                                                      $1 2 field /* lR.E fingerLookup.E */\
-                                                     ==i not /* lR.E!=fL.E? */\
+                                                     ==s not /* lR.E!=fL.E? */\
                                                      ifstop /* empty */\
                                                      $0 pop $1 pop /* pass through */\
                                                      "));
@@ -1200,7 +1200,7 @@ void ruleJ1(str name,
     conf->addElement(New refcounted< PelTransform >(strbuf("project:").cat(name),
                                                     "\"join\" pop \
                                                      $1 pop /* out jE.NI */\
-                                                     rand pop /* out random */\
+                                                     $1 \":\" strcat rand strcat pop /* out random E */\
                                                      "));
   ElementSpecRef slotS =
     conf->addElement(New refcounted< Slot >(strbuf("Slot:") << name));
@@ -1405,7 +1405,7 @@ void ruleJ5(str name,
     conf->addElement(New refcounted< PelTransform >(strbuf("select:") << name,
                                                     "$0 5 field /* lookupResults.E */\
                                                      $1 2 field /* lR.E joinRecord.E */\
-                                                     ==i not /* lR.E!=fL.E? */\
+                                                     ==s not /* lR.E!=fL.E? */\
                                                      ifstop /* empty */\
                                                      $0 pop $1 pop /* pass through */\
                                                      "));
@@ -1592,7 +1592,7 @@ void ruleS0a(str name,
     conf->addElement(New refcounted< PelTransform >(strbuf("project:").cat(name),
                                                     "\"stabilize\" pop \
                                                      $1 pop /* out sE.NI */\
-                                                     rand pop /* out random */\
+                                                     $1 \":\" strcat rand strcat pop /* out random */\
                                                      "));
   ElementSpecRef slotS =
     conf->addElement(New refcounted< Slot >(strbuf("Slot:") << name));
@@ -1781,7 +1781,7 @@ void ruleS3(str name,
     conf->addElement(New refcounted< PelTransform >(strbuf("select:") << name,
                                                     "$0 4 field /* res1.E */\
                                                      $1 2 field /* res1.E sR.E */\
-                                                     ==i not ifstop /* select clause */\
+                                                     ==s not ifstop /* select clause */\
                                                      $0 pop $1 pop /* pass through otherwise */\
                                                      "));
   conf->hookUp(noNull2S, 0, selectS, 0);
@@ -2516,13 +2516,13 @@ void createNode(str myAddress,
   fingerTable->add_unique_index(2);
   fingerTable->add_multiple_index(1);
   
-  uint32_t random[ID::WORDS];
+  uint32_t r[ID::WORDS];
   for (uint32_t i = 0;
        i < ID::WORDS;
        i++) {
-    random[i] = rand();
+    r[i] = random();
   }
-  IDRef myKey = ID::mk(random);
+  IDRef myKey = ID::mk(r);
 
   TableRef nodeTable =
     New refcounted< Table >(strbuf("nodeTable"), 1);

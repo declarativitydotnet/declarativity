@@ -32,7 +32,7 @@ public:
 
     virtual ~TupleGenerator() {};
     
-    TupleRef operator()() const {
+    TupleRef operator()() {
       return _tuple;
     }
   };
