@@ -1,12 +1,10 @@
 
-#include "IdTable.h"
+#include "idTable.h"
 
 // @Author: Vik Singh
 // @Date: 12/30/2004
 
 // @CLASS: Id
-
-Id::Id () { }
 
 Id::Id (IdTable * table) { this->table = table; }
 

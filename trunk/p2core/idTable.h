@@ -22,7 +22,7 @@
 class Id /* : private virtual refcounted */ {
   friend class IdTable;
   private:
-    Id (); Id (IdTable *);
+    Id (IdTable *);
     Id (const uint32_t * num, IdTable *);
     Id (const std::string&, IdTable *);
 
@@ -83,20 +83,20 @@ class IdTable {
   public:
     IdTable ();
 
-    inline void initialize_gc (const size_t);
-
     static bool equalByVal (const Id *, const Id *);
+
+    inline void initialize_gc (const size_t);
     
     // @create: factory functions to create and memoize @Id's.
     
     // If the requested Id already stored, the function returns
     // the ref<Id> to the existing Id
-    inline const Id * create (const std::string&);
+    const Id * create (const std::string&);
 
-    inline const Id * create (const uint32_t *);
+    const Id * create (const uint32_t *);
 
     // Create a random @Id using /dev/urandom
-    inline const Id * create ();
+    const Id * create ();
 
     // static Id * create (const XDR *);
 
@@ -111,7 +111,6 @@ class IdTable {
     size_t maxSize;
 
     void gc ();
-
     const Id * storeId (const Id *);
     void add (const Id *);
 };
