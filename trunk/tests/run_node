@@ -21,7 +21,8 @@ def print_usage():
     print "DESC:  If a landmark node exists then a number of slaves can be supplied and assigned ports [0-(num_nodes-1)]."
     print
 
-def parse_cmdline(argv):
+def parse_cmdline(argv): 
+    global log
     shortopts = "n:i:p:l:"
     flags = {"num_nodes" : 1, "seed" : None, "IP" : None, "start_port" : None, "landmark" : None}
     opts, args = getopt.getopt(argv[1:], shortopts)
@@ -31,17 +32,18 @@ def parse_cmdline(argv):
         elif o == "-i": flags["IP"]         = v
         elif o == "-p": flags["start_port"] = v
         elif o == "-l": flags["landmark"]   = v
+    if args[1]: log = open(args[1]+"/setup_node.log", 'a')
     return flags, args
 
 # e.g., runChord <loggingLevel> <seed> <myipaddr:port> [<landmark_ipaddr:port>]\n";
 def run_node(chord_exec, seed, ip, p, lm, out):
-    print "Running %s seed %d on %s:%s using landmark %s and output to %s" % (chord_exec, seed, ip, p, lm, out)
+    print >> log, "RUN: %s, seed = %d, node = %s:%s, landmark = %s, output = %s" % (chord_exec, seed, ip, p, lm, out)
 
-    if lm: rv = os.system("%s WARN %d %s:%s %s >& %s"% (chord_exec, seed, ip, p, lm, out))
-    else:  rv = os.system("%s WARN %d %s:%s >& %s"% (chord_exec, seed, ip, p, out))
+    if lm: rv = os.system("%s WARN %d %s:%s %s >& %s" % (chord_exec, seed, ip, p, lm, out))
+    else:  rv = os.system("%s WARN %d %s:%s >& %s" % (chord_exec, seed, ip, p, out))
 
     if rv: 
-        raise "Error executing node setup" 
+        print >> log, "Error executing node setup" 
         sys.exit(1)
     else: sys.exit(0)
     
@@ -65,7 +67,10 @@ if __name__ == "__main__":
             run_node(args[0], seed, flags["IP"], int(flags["start_port"])+test, flags["landmark"], 
                      args[1]+"/chord_"+flags["IP"]+"_"+str(int(flags["start_port"])+test)+".out")
         else: children += [pid]
+    log.flush()
 
+    print >> log, children
     while children: 
-      pid, status = os.wait()
-      children.remove(pid)
+        pid, status = os.wait()
+        children.remove(pid)
+        print >> log, children
