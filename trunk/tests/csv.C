@@ -55,7 +55,7 @@ int main(int argc, char **argv)
   CSVParser cp;
   
   
-  for(int i=0; i < (sizeof(tests) / sizeof(csv_test)); i++) {
+  for(unsigned i=0; i < (sizeof(tests) / sizeof(csv_test)); i++) {
     TupleRef t = Tuple::mk();
     t->append(New refcounted<TupleField>(str(tests[i].in))); 
     t->freeze();
