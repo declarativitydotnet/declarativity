@@ -62,7 +62,7 @@ class Id : private virtual refcount {
     inline size_t getHash () const;
     std::bitset<160> toBitSet () const;
     std::string toHexString () const;
-    inline u_int32_t getWord (const int) const;
+    inline u_int32_t getWord (const u_int) const;
 
     // remove the wrapper @IdHash from the ihash and delete my ptr
     // check if @finalize needs to be private
