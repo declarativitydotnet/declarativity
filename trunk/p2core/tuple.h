@@ -61,7 +61,7 @@ public:
   TupleField( str st ) : t(STRING), s(st) {};
   TupleField( double f ) : t(DOUBLE), d(f) {};
   
-  Type get_type() const { return t; };
+  REMOVABLE_INLINE Type get_type() const { return t; };
 
   str toString() const;
   str toTypeString() const ;
@@ -72,7 +72,7 @@ public:
   CAST(u_int64_t,ui64,UINT64);
   CAST(str,      s,   STRING);
   CAST(double,   d,   DOUBLE );
-  
+
   void xdr_marshal( XDR *x );
   static TupleFieldRef xdr_unmarshal( XDR *x );
   

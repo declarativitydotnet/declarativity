@@ -20,30 +20,40 @@
 #include <async.h>
 
 #include "tuple.h"
-
-class Pel_Program;
+#include "pel_program.h"
 
 class Pel_VM {
 
-private:
-  std::stack<TupleFieldRef> st;
-  static const char* err_msgs[];
-  TuplePtr result;
+public: 
+  enum Error {
+    PE_SUCCESS=0,
+    PE_BAD_CONSTANT,
+    PE_BAD_FIELD,
+    PE_STACK_EMPTY,
+    PE_TYPE_CONVERSION,
+    PE_INVALID_ERRNO,
+    PE_UNKNOWN // Must be the last error
+  };
 
-  int pop_int();
-  bool top_is_int();
+private:
+  // Execution state
+  std::stack<TupleFieldRef> st;
+  Pel_Program	*prg;
+  Error		 error;
+  int		 pc;
+  TuplePtr	 result;
+  TuplePtr	 operand;
+
+  static const char* err_msgs[];
 
 #include "pel_opcode_decls.gen.h"
 
+  u_int64_t pop_force_unsigned();
+  int64_t pop_signed();
+  str pop_string();
+  double pop_double();
+
 public:
-
-  enum Error {
-    E_SUCCESS=0,
-    E_TYPECONV,
-    E_INVALIDERRNO,
-    E_UNKNOWN // Must be the last error
-  };
-
   Pel_VM();
 
   // 

@@ -19,56 +19,71 @@ import string
 decls=[]
 curop = 0
 
-def emit_opcode( op, va, desc ):
+def emit_opcode( op, ar, va, desc ):
   global curop
-  decls.append((curop, op, va, desc))
+  decls.append((curop, op, ar, va, desc))
   curop += 1
   
-for op, va, desc in [
-  ("swap",	"SWAP",         "Swap top two stack values"),
-  ("dup",	"DUP",          "Duplicate the top stack value"),
-  ("!", 	"NOT",          "Boolean negation"),
-  ("and",	"AND",          "Boolean AND"),
-  ("or",	"OR",           "Boolean inclusive-OR"),
-  ("xor",	"XOR",          "Boolean exclusive-OR"),
-  ("<<",	"LSR",          "Integer logical shift right"),
-  (">>",	"ASL",          "Integer arithmetic shift left"),
-  ("&",         "BITAND",       "Bitwise AND"),
-  ("|",         "BITOR",        "Bitwise inclusive-OR"),
-  ("^",         "BITXOR",       "Bitwise exclusive-OR"),
-  ("~",         "BITNOT",       "1's complement"),
-  ("strcat",	"STRCAT",       "String concatenation"),
-  ("strlen",	"STRLEN",       "String length"),
-  ("upper",	"STRUPPER",     "Convert string to upper case"),
-  ("lower",	"STRLOWER",     "Convert string to lower case"),
-  ("substr",	"SUBSTR",       "Extract substring"),
-  ("match",	"STRMATCH",     "Regular expression matching"),
-  ("like",	"STRLIKE",      "Substring matching (case-sensitive)"),
-  ("ilike",	"STRILIKE",     "Substring matching (case-insensitive)")
-  ]:  emit_opcode(op,va, desc)
+for op, ar, va, desc in [
+  ("drop",1,    "DROP",         "Discard the top of stack"),
+  ("swap",2,	"SWAP",         "Swap top two stack values"),
+  ("dup",2,	"DUP",          "Duplicate the top stack value"),
+  ("",0,        "PUSH_CONST",   "Push a constant"),
+  ("",0,        "PUSH_FIELD",   "Push a field of the tuple"),
+  ("pop",1,     "POP",          "Pop result tuple field"), 
 
-for op, va, desc in [
-  ("+",         "PLUS",         "addition"),
-  ("-",         "MINUS",        "subtraction"),
-  ("*",         "MUL",          "multiplication"),
-  ("/",         "DIV",          "division"),
-  ("%",         "MOD",          "modulus"),
-  ("@",         "ABS",          "absolute value"),
-  ("<",         "LT",           "compare less-than"),
-  (">=",        "GE",           "compare greater-than-or-equal") ]:
-  emit_opcode(op+"i", va+"_INT", "Integer")
-  emit_opcode(op+"f", va+"_DBL", "Double precision")
-  
-emit_opcode("<s", "LT_STR",     "String compare less-than")
-emit_opcode(">=s", "GE_STR",    "String compare greater-than-or-equal")
-emit_opcode("==", "EQ",         "Compare equality")
-emit_opcode("push", "PUSH",     "Push top of stack to result tuple")
+  ("not",1, 	"NOT",          "Boolean negation"),
+  ("and",2,	"AND",          "Boolean AND"),
+  ("or",2,	"OR",           "Boolean inclusive-OR"),
+
+  (">>",2,	"LSR",          "Integer logical shift right"),
+  (">>>",2,	"ASR",          "Integer arithmetic shift right"),
+  ("<<",2,	"LSL",          "Integer arithmetic shift left"),
+  ("&",2,       "BIT_AND",      "Bitwise AND"),
+  ("|",2,       "BIT_OR",       "Bitwise inclusive-OR"),
+  ("^",2,       "BIT_XOR",      "Bitwise exclusive-OR"),
+  ("~",1,       "BIT_NOT",      "1's complement"),
+  ("%",2,       "MOD",          "Integer modulus"),
+
+  ("<s",2,      "STR_LT",       "String less-than comparison"),
+  ("<=s",2,     "STR_LTE",      "String less-than-or-eq comparison"),
+  (">s",2,      "STR_GT",       "String greater-than comparison"),
+  (">=s",2,     "STR_GTE",      "String greater-than-or-eq comparison"),
+  ("==s",2,     "STR_EQ",       "Compare equality"),
+  ("strcat",2,	"STR_CAT",      "String concatenation"),
+  ("strlen",1,	"STR_LEN",      "String length"),
+  ("upper",1,	"STR_UPPER",    "Convert string to upper case"),
+  ("lower",1,	"STR_LOWER",    "Convert string to lower case"),
+  ("substr",3,	"STR_SUBSTR",   "Extract substring"),
+  ("match",2,	"STR_MATCH",    "Perl regular expression matching"),
+  ]:  emit_opcode(op, ar, va, desc)
+
+for op, ar, va, desc in [
+  ("NEG",1,     "NEG",          "negation"),
+  ("+",2,       "PLUS",         "addition"),
+  ("-",2,       "MINUS",        "subtraction"),
+  ("*",2,       "MUL",          "multiplication"),
+  ("/",2,       "DIV",          "division"),
+  ("==",2,      "EQ",           "Compare equality"), 
+  ("<",2,       "LT",           "less-than comparison"),
+  ("<=",2,      "LTE",          "less-than-or-eq comparison"),
+  (">",2,       "GT",           "greater-than comparison"),
+  (">=",2,      "GTE",          "greater-than-or-eq comparison")
+  ]: 
+  emit_opcode(op+"i", ar, "INT_" + va, "Integer " + desc)
+  emit_opcode(op+"f", ar, "DBL_" + va, "Float " + desc)
+
+for op, ar, va, desc in [
+  ("abs",1,     "INT_ABS",      "Absolute value"),
+  ("floor",1,   "DBL_FLOOR",    "Next lowest integer"),
+  ("ceil",1,    "DBL_CEIL",     "Next highest integer")
+  ]:
+  emit_opcode(op, ar, va, desc)
+
+
 
 for i in [ "i32", "u32", "i64", "u64", "dbl", "str" ]:
-  emit_opcode("->"+i, "CAST_" + i.upper(), "Cast to type "+i)
-
-emit_opcode("", "LD_CONST",     "Load from the constant pool")
-emit_opcode("", "LD_FIELD",     "Load from the operand tuple")
+  emit_opcode("->"+i, 1, "CONV_" + i.upper(), "Cast to type "+i)
 
 warning="""
 
@@ -84,27 +99,27 @@ warning="""
 f = open("pel_opcode_decls.gen.h","w+")
 f.write(warning)
 f.write('public:\n')
-map(lambda (n,o,v,d): f.write("  static const u_int32_t OP_%s = %d;\n" % (v, n)),
+map(lambda (n,o,a,v,d): f.write("  static const u_int32_t OP_%s = %d;\n" % (v, n)),
     decls)
 f.write('  static const size_t NUM_OPCODES= %d;\n' % curop)
 
 # f.write('private:\n')
-map(lambda (n,o,v,d): f.write("  int op_%s(u_int32_t inst);\n" % v ),decls)
+map(lambda (n,o,a,v,d): f.write("  void op_%s(u_int32_t inst);\n" % v ),decls)
 f.close()
 
 
 f = open("pel_opcode_defns.gen.h","w+")
 f.write(warning)
 f.write('static JumpTableEnt_t jump_table[] = {\n')
-f.write(string.join(map(lambda (n,o,v,d): '  {"%s", \t&Pel_VM::op_%s}' % (o,v), decls),
+f.write(string.join(map(lambda (n,o,a,v,d): '  {"%s",\t%d, \t&Pel_VM::op_%s}' % (o,a,v), decls),
                     ',\n'))
 f.write('\n};\n')
-f.write('#define DEF_OP(_name) int Pel_VM::op_##_name(u_int32_t inst)\n')
+f.write('#define DEF_OP(_name) void Pel_VM::op_##_name(u_int32_t inst)\n')
 f.close()
 
 f = open("pel_opcode_tokens.gen.h","w+")
 f.write(warning)
-f.write(string.join(map(lambda (n,o,v,d): '  {"%s", \tPel_VM::OP_%s}' % (o,v), decls),
+f.write(string.join(map(lambda (n,o,a,v,d): '  {"%s", \tPel_VM::OP_%s}' % (o,v), decls),
                     ',\n'))
 f.write('\n')
 f.close()

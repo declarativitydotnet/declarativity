@@ -210,7 +210,7 @@ Pel_Lexer::Pel_Lexer(const char *prog)
 //
 void Pel_Lexer::add_const(TupleFieldRef f)
 {
-  result->ops.push_back( (result->const_pool.size() & 0xFFFF) << 16 | Pel_VM::OP_LD_CONST );
+  result->ops.push_back( (result->const_pool.size() & 0xFFFF) << 16 | Pel_VM::OP_PUSH_CONST );
   result->const_pool.append(f);
 }
 
@@ -219,7 +219,7 @@ void Pel_Lexer::add_const(TupleFieldRef f)
 //
 void Pel_Lexer::add_tuple_load(int f)
 {
-  result->ops.push_back( (f & 0xFFFF) << 16 | Pel_VM::OP_LD_FIELD );
+  result->ops.push_back( (f & 0xFFFF) << 16 | Pel_VM::OP_PUSH_FIELD );
 }
 
 //
@@ -258,9 +258,9 @@ str Pel_Lexer::decompile(Pel_Program &prog)
   for(op = prog.ops.begin(); op < prog.ops.end(); op++ ) {
     unsigned opn = (*op) >> 16;
     unsigned opc = (*op) & 0xFFFF;
-    if ( opc == Pel_VM::OP_LD_FIELD ) {
+    if ( opc == Pel_VM::OP_PUSH_FIELD ) {
       sb << "$" << opn << " ";
-    } else if ( opc == Pel_VM::OP_LD_CONST ) {
+    } else if ( opc == Pel_VM::OP_PUSH_CONST ) {
       if ( opn < prog.const_pool.size() ) {
 	sb << prog.const_pool[opn]->toString() << " ";
       } else {

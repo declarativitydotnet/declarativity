@@ -1,13 +1,13 @@
 
 lib_LTLIBRARIES = libp2core.la
 libp2core_la_SOURCES = \
-	pel_lexer.C \
-	pel_vm.C \
 	tuple.C \
 	element.C \
 	router.C \
 	master.C \
-	elementSpec.C
+	elementSpec.C \
+	pel_lexer.C \
+	pel_vm.C
 
 INCLUDES = @SFS_INC@
 

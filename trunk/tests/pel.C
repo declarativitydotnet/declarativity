@@ -54,8 +54,8 @@ static const Test tests[] = {
   { "  ", "", 0, 0 },
   { "1 2 3", "1 2 3 ", 3, 3},
   { "1 1.2 \"String\" swap dup ", "1 1.2 \"String\" swap dup ", 3, 5},
-  { "null\t\n push $2 $4  ->u32", "null push $2 $4 ->u32 ", 1, 5},
-  { "1 2 /* This is a comment */ push push", "1 2 push push ", 2, 4},
+  { "null\t\n pop $2 $4  ->u32", "null pop $2 $4 ->u32 ", 1, 5},
+  { "1 2 /* This is a comment */ pop pop", "1 2 pop pop ", 2, 4},
   { NULL, NULL, 0, 0}
 };
 
