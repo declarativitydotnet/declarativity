@@ -16,7 +16,7 @@ libp2core_la_SOURCES = \
 
 INCLUDES = @SFS_INC@
 
-CLEANFILES = core *.core *~ *.gen.h pel_lexer.C
+CLEANFILES = core *.core *~ *.gen.h *.gen.txt pel_lexer.C
 
 EXTRA_DIST = .cvsignore
 
@@ -29,6 +29,9 @@ pel_opcode_defns.gen.h: pel_gen.py
 	python pel_gen.py
 
 pel_opcode_tokens.gen.h: pel_gen.py
+	python pel_gen.py
+
+pel_opcode_descriptions.gen.txt: pel_gen.py
 	python pel_gen.py
  
 pel_lexer.C: pel_lexer.lex pel_opcode_tokens.gen.h
