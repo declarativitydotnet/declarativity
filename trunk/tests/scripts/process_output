@@ -142,7 +142,7 @@ def eval_lookups(lookups, results):
 
        r_sec = results[event][0]
        r_ns  = results[event][1]
-       latency.append([(ts2sec(r_sec, r_ns) - ts2sec(start_sec, start_ns)), hops])
+       if hops: latency.append([(ts2sec(r_sec, r_ns) - ts2sec(start_sec, start_ns)), hops])
 
        looks = 1.0                                                           # Number of dudes with above hop count.
        if wraps:
