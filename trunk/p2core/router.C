@@ -288,7 +288,7 @@ int Router::initialize()
     return -1;
   }
 #endif
-  return -1;
+  return 0;
 }
 
 

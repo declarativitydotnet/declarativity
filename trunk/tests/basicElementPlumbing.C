@@ -39,14 +39,27 @@ TupleRef create_tuple(int i) {
   return t;
 }
 
-Router::ConfigurationRef createConfiguration(ref< vec< TupleRef > > buffer)
+/** Test the portion of router initialization that checks for sanity of
+    element hookups and lists */
+void testCheckHookupElements(MasterRef master)
 {
+  std::cout << "CHECK ELEMENT HOOKUP\n";
+
   // Create the elements
+  std::cout << "Creating elements\n";
+
+  TupleRef t = create_tuple(1);
+  ref< vec< TupleRef > > tupleRefBuffer =
+    New refcounted< vec< TupleRef > >();
+  tupleRefBuffer->push_back(t);
+  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
   ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(buffer, 1);
+
+
+  //////////////////////////////////////////////////////
+  // Configuration that references non-existent elements
   ref< vec< ElementRef > > elements = New refcounted< vec< ElementRef > >();
   elements->push_back(pullPrint);
-  elements->push_back(memoryPull);
 
   // Create the hookups
   Router::HookupRef hookup =
@@ -56,28 +69,72 @@ Router::ConfigurationRef createConfiguration(ref< vec< TupleRef > > buffer)
     New refcounted< vec< Router::HookupRef > >();
   hookups->push_back(hookup);
 
-  // Create the configuration
+  // Incorrectly referenced elements
   Router::ConfigurationRef configuration =
     New refcounted< Router::Configuration >(elements, hookups);
 
-  return configuration;
+  RouterRef router = New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+    std::cerr << "** Failed to catch hookup reference to unknown to element\n";
+  } else {
+    std::cout << "Caught hookup reference to unknown to element\n";
+  }
+
+  elements->clear();
+  elements->push_back(memoryPull);
+  router = New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+    std::cerr << "** Failed to catch hookup reference to unknown from element\n";
+  } else {
+    std::cout << "Caught hookup reference to unknown from element\n";
+  }
+
+
+  // With the correct configuration
+  elements->clear();
+  elements->push_back(memoryPull);
+  elements->push_back(pullPrint);
+
+  router = New refcounted< Router >(configuration, master);
+  if (router->initialize() != 0) {
+    std::cerr << "** Failed to initialize correct configuration\n";
+  } else {
+    std::cout << "Correctly accepted a correct configuration\n";
+  }
+
+  // With some bad port numbers
+  hookup = New refcounted< Router::Hookup >(memoryPull, -4,
+                                            pullPrint, 0);
+  hookups->push_back(hookup);
+  router = New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+    std::cerr << "** Failed to catch negative from port\n";
+  } else {
+    std::cout << "Correctly caught negative from port\n";
+  }
+
+  hookup = New refcounted< Router::Hookup >(memoryPull, 0,
+                                            pullPrint, -4);
+  hookups->clear();
+  hookups->push_back(hookup);
+
+  router = New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+    std::cerr << "** Failed to catch negative to port\n";
+  } else {
+    std::cout << "Correctly caught negative to port\n";
+  }
 }
+
 
 int main(int argc, char **argv)
 {
-  TupleRef t = create_tuple(1);
-  ref< vec< TupleRef > > tupleRefBuffer =
-    New refcounted< vec< TupleRef > >();
-  tupleRefBuffer->push_back(t);
+  std::cout << "BASIC ELEMENT PLUMBING\n";
 
-  Router::ConfigurationRef configuration =
-    createConfiguration(tupleRefBuffer);
-
+  // Common master
   MasterRef master = New refcounted< Master >();
-  RouterRef router = New refcounted< Router >(configuration, master);
-  router->initialize();
-  router->activate();
-  master->run();
+
+  testCheckHookupElements(master);
 
   return 0;
 }
