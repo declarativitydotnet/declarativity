@@ -156,6 +156,12 @@ public:
                             int errnum,
                             str explanation);
   
+  /** Call the default logger, if the router's logger is unavailable */
+  REMOVABLE_INLINE void logDefault(str instanceName,
+                                   LoggerI::Level severity,
+                                   int errnum,
+                                   str explanation);
+  
 
   // METHODS USED BY `ROUTER'
   

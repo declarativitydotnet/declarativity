@@ -20,13 +20,7 @@
 #include <iostream>
 
 #include "tuple.h"
-#include "pullprint.h"
-#include "pushprint.h"
-#include "print.h"
-#include "memoryPull.h"
 #include "router.h"
-#include "master.h"
-#include "timedSource.h"
 #include "val_null.h"
 #include "val_str.h"
 #include "val_int32.h"
@@ -35,6 +29,11 @@
 #include "val_uint64.h"
 #include "val_double.h"
 #include "val_opaque.h"
+
+#include "print.h"
+#include "timedPushSource.h"
+#include "timedPullSink.h"
+#include "slot.h"
 
 TupleRef create_tuple(int i) {
   TupleRef t = Tuple::mk();
@@ -67,34 +66,14 @@ TupleRef create_tuple(int i) {
 /** Hookup referring to non-existent element. */
 void testCheckHookupElements_NonExistentToElement()
 {
-  // Create the elements
   std::cout << "[Testing non-existent TO element in hookup]\n";
 
-  TupleRef t = create_tuple(1);
-  ref< vec< TupleRef > > tupleRefBuffer =
-    New refcounted< vec< TupleRef > >();
-  tupleRefBuffer->push_back(t);
-  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
-  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
-  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-
-
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(pullPrintSpec);
-
-  Router::HookupRef hookup =
-    New refcounted< Router::Hookup >(memoryPullSpec, 0,
-                                     pullPrintSpec, 0);
-  ref < vec< Router::HookupRef > > hookups =
-    New refcounted< vec< Router::HookupRef > >();
-  hookups->push_back(hookup);
-
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
-
-  MasterRef master = New refcounted< Master >();
-  RouterRef router = New refcounted< Router >(configuration, master);
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
+  ElementSpecRef sinkS = New refcounted< ElementSpec >(New refcounted< TimedPullSink >(0));
+  conf->hookUp(sourceS, 0, sinkS, 0);
+  
+  RouterRef router = New refcounted< Router >(conf);
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch hookup reference to unknown to element\n";
   } else {
@@ -108,35 +87,12 @@ void testCheckHookupElements_NonExistentFromElement()
 {
   std::cout << "\n[Non existent FROM element]\n";
 
-  TupleRef t = create_tuple(1);
-  ref< vec< TupleRef > > tupleRefBuffer =
-    New refcounted< vec< TupleRef > >();
-  tupleRefBuffer->push_back(t);
-  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
-  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
-  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-
-
-  //////////////////////////////////////////////////////
-  // Configuration that references non-existent elements
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(memoryPullSpec);
-
-  // Create the hookups
-  Router::HookupRef hookup =
-    New refcounted< Router::Hookup >(memoryPullSpec, 0,
-                                     pullPrintSpec, 0);
-  ref < vec< Router::HookupRef > > hookups =
-    New refcounted< vec< Router::HookupRef > >();
-  hookups->push_back(hookup);
-
-  // Incorrectly referenced elements
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
-
-  MasterRef master = New refcounted< Master >();
-  RouterRef router = New refcounted< Router >(configuration, master);
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = New refcounted< ElementSpec >(New refcounted< TimedPushSource >(0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  conf->hookUp(sourceS, 0, sinkS, 0);
+  
+  RouterRef router = New refcounted< Router >(conf);
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch hookup reference to unknown from element\n";
   } else {
@@ -150,30 +106,12 @@ void testCheckHookupElements_NegativeFromPort()
 {
   std::cout << "\n[Negative From Port]\n";
 
-  TupleRef t = create_tuple(1);
-  ref< vec< TupleRef > > tupleRefBuffer =
-    New refcounted< vec< TupleRef > >();
-  tupleRefBuffer->push_back(t);
-  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
-  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
-  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(pullPrintSpec);
-
-  Router::HookupRef hookup = New refcounted< Router::Hookup >(memoryPullSpec, -4,
-                                                              pullPrintSpec, 0);
-  ref < vec< Router::HookupRef > > hookups =
-    New refcounted< vec< Router::HookupRef > >();
-  hookups->push_back(hookup);
-
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
-
-  MasterRef master = New refcounted< Master >();
-  RouterRef router = New refcounted< Router >(configuration, master);
-
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  conf->hookUp(sourceS, -1, sinkS, 0);
+  
+  RouterRef router = New refcounted< Router >(conf);
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch negative from port\n";
   } else {
@@ -187,32 +125,12 @@ void testCheckHookupElements_NegativeToPort()
 {
   std::cout << "\n[Negative to port]\n";
 
-  TupleRef t = create_tuple(1);
-  ref< vec< TupleRef > > tupleRefBuffer =
-    New refcounted< vec< TupleRef > >();
-  tupleRefBuffer->push_back(t);
-  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
-  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
-  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-
-
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(pullPrintSpec);
-
-  // Create the hookups
-  Router::HookupRef hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
-                                                              pullPrintSpec, -4);
-  ref < vec< Router::HookupRef > > hookups =
-    New refcounted< vec< Router::HookupRef > >();
-  hookups->push_back(hookup);
-
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
-
-  MasterRef master = New refcounted< Master >();
-  RouterRef router = New refcounted< Router >(configuration, master);
-
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  conf->hookUp(sourceS, 0, sinkS, -1);
+  
+  RouterRef router = New refcounted< Router >(conf);
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch negative to port\n";
   } else {
@@ -261,30 +179,12 @@ void testCheckHookupRange_IncorrectFromPort()
 {
   std::cout << "\n[Incorrect From Port]\n";
 
-  TupleRef t = create_tuple(1);
-  ref< vec< TupleRef > > tupleRefBuffer =
-    New refcounted< vec< TupleRef > >();
-  tupleRefBuffer->push_back(t);
-  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
-  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
-  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(memoryPullSpec);
-  elements->push_back(pullPrintSpec);
-
-  Router::HookupRef hookup =
-    New refcounted< Router::Hookup >(memoryPullSpec, 1,
-                                     pullPrintSpec, 0);
-  ref < vec< Router::HookupRef > > hookups = New refcounted< vec< Router::HookupRef > >();
-  hookups->push_back(hookup);
-
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
-
-  MasterRef master = New refcounted< Master >();
-  RouterRef router = New refcounted< Router >(configuration, master);
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  conf->hookUp(sourceS, 1, sinkS, 0);
+  
+  RouterRef router = New refcounted< Router >(conf);
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch incorrect from port\n";
   } else {
@@ -297,32 +197,12 @@ void testCheckHookupRange_IncorrectToPort()
 {
   std::cout << "\n[Incorrect To Port]\n";
 
-  TupleRef t = create_tuple(1);
-  ref< vec< TupleRef > > tupleRefBuffer =
-    New refcounted< vec< TupleRef > >();
-  tupleRefBuffer->push_back(t);
-  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
-  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
-  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(memoryPullSpec);
-  elements->push_back(pullPrintSpec);
-
-  // Bad from port
-
-  Router::HookupRef hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
-                                                              pullPrintSpec, 1);
-  ref < vec< Router::HookupRef > > hookups = New refcounted< vec< Router::HookupRef > >();
-  hookups->push_back(hookup);
-
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
-
-  MasterRef master = New refcounted< Master >();
-  RouterRef router = New refcounted< Router >(configuration, master);
-
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  conf->hookUp(sourceS, 0, sinkS, 1);
+  
+  RouterRef router = New refcounted< Router >(conf);
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch incorrect to port\n";
   } else {
@@ -335,32 +215,12 @@ void testCheckHookupRange_IncorrectPorts()
 {
   std::cout << "\n[Incorrect Ports (Both)]\n";
 
-  TupleRef t = create_tuple(1);
-  ref< vec< TupleRef > > tupleRefBuffer =
-    New refcounted< vec< TupleRef > >();
-  tupleRefBuffer->push_back(t);
-  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
-  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
-  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(memoryPullSpec);
-  elements->push_back(pullPrintSpec);
-
-  // Bad from port
-
-  Router::HookupRef hookup = New refcounted< Router::Hookup >(memoryPullSpec, 2,
-                                                              pullPrintSpec, 3);
-  ref < vec< Router::HookupRef > > hookups = New refcounted< vec< Router::HookupRef > >();
-  hookups->push_back(hookup);
-
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
-
-  MasterRef master = New refcounted< Master >();
-  RouterRef router = New refcounted< Router >(configuration, master);
-
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  conf->hookUp(sourceS, 1, sinkS, 1);
+  
+  RouterRef router = New refcounted< Router >(conf);
 
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch incorrect from/to ports\n";
@@ -374,32 +234,12 @@ void testCheckHookupRange_Portless()
 {
   std::cout << "\n[Portless Hookup]\n";
 
-  TupleRef t = create_tuple(1);
-  ref< vec< TupleRef > > tupleRefBuffer =
-    New refcounted< vec< TupleRef > >();
-  tupleRefBuffer->push_back(t);
-  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
-  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
-  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(memoryPullSpec);
-  elements->push_back(pullPrintSpec);
-
-  // Bad from port
-
-  Router::HookupRef hookup = New refcounted< Router::Hookup >(pullPrintSpec, 0,
-                                                              memoryPullSpec, 0);
-  ref < vec< Router::HookupRef > > hookups = New refcounted< vec< Router::HookupRef > >();
-  hookups->push_back(hookup);
-
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
-
-  MasterRef master = New refcounted< Master >();
-  RouterRef router = New refcounted< Router >(configuration, master);
-
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  conf->hookUp(sinkS, 1, sourceS, 1);
+  
+  RouterRef router = New refcounted< Router >(conf);
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch portless hookup\n";
   } else {
@@ -453,41 +293,16 @@ void testCheckPushPull_PullToPush()
 {
   std::cout << "\n[Pull to Push]\n";
 
-  TupleRef t = create_tuple(1);
-  ref< vec< TupleRef > > tupleRefBuffer =
-    New refcounted< vec< TupleRef > >();
-  tupleRefBuffer->push_back(t);
-  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
-  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-  ref< PushPrint > pushPrint = New refcounted< PushPrint >();
-  ref< Print > print = New refcounted< Print >("Print");
-  ref< Print > print2 = New refcounted< Print >("Print2");
-  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
-  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-  ElementSpecRef pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
-  ElementSpecRef printSpec = New refcounted< ElementSpec >(print);
-  ElementSpecRef printSpec2 = New refcounted< ElementSpec >(print2);
-
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(memoryPullSpec);
-  elements->push_back(pushPrintSpec);
-  elements->push_back(printSpec);
-  elements->push_back(printSpec2);
-  elements->push_back(pullPrintSpec);
-
-  // Connect pull to push
-  Router::HookupRef hookup =
-    New refcounted< Router::Hookup >(memoryPullSpec, 0,
-                                     pushPrintSpec, 0);
-  ref < vec< Router::HookupRef > > hookups =
-    New refcounted< vec< Router::HookupRef > >();
-  hookups->push_back(hookup);
-
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
-
-  MasterRef master = New refcounted< Master >();
-  RouterRef router = New refcounted< Router >(configuration, master);
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef slot2S = conf->addElement(New refcounted< Slot >());
+  conf->hookUp(sourceS, 0, slot1S, 0);
+  conf->hookUp(slot1S, 0, slot2S, 0);
+  conf->hookUp(slot2S, 0, sinkS, 0);
+  
+  RouterRef router = New refcounted< Router >(conf);
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch pull output hooked up with push input\n";
   } else {
@@ -500,45 +315,19 @@ void testCheckPushPull_PullToPushHop()
 {
   std::cout << "\n[Pull to Push with hop]\n";
 
-  TupleRef t = create_tuple(1);
-  ref< vec< TupleRef > > tupleRefBuffer =
-    New refcounted< vec< TupleRef > >();
-  tupleRefBuffer->push_back(t);
-  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
-  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-  ref< PushPrint > pushPrint = New refcounted< PushPrint >();
-  ref< Print > print = New refcounted< Print >("Print");
-  ref< Print > print2 = New refcounted< Print >("Print2");
-  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
-  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-  ElementSpecRef pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
-  ElementSpecRef printSpec = New refcounted< ElementSpec >(print);
-  ElementSpecRef printSpec2 = New refcounted< ElementSpec >(print2);
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef slot2S = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef printS = conf->addElement(New refcounted< Print >("Printer"));
 
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(memoryPullSpec);
-  elements->push_back(pushPrintSpec);
-  elements->push_back(printSpec);
-  elements->push_back(printSpec2);
-  elements->push_back(pullPrintSpec);
-
-  // Connect pull to push
-  ref < vec< Router::HookupRef > > hookups =
-    New refcounted< vec< Router::HookupRef > >();
-  Router::HookupRef hookup =
-    New refcounted< Router::Hookup >(memoryPullSpec, 0,
-                                     printSpec, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(printSpec, 0,
-                                            pushPrintSpec, 0);
-  hookups->push_back(hookup);
-
-
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
-
-  MasterRef master = New refcounted< Master >();
-  RouterRef router = New refcounted< Router >(configuration, master);
+  conf->hookUp(sourceS, 0, slot1S, 0);
+  conf->hookUp(slot1S, 0, printS, 0);
+  conf->hookUp(printS, 0, slot2S, 0);
+  conf->hookUp(slot2S, 0, sinkS, 0);
+  
+  RouterRef router = New refcounted< Router >(conf);
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch incorrect pull-push hookup via a/a element\n";
   } else {
@@ -551,47 +340,21 @@ void testCheckPushPull_PullToPushMultiHop()
 {
   std::cout << "\n[Pull to Push multi hop]\n";
 
-  TupleRef t = create_tuple(1);
-  ref< vec< TupleRef > > tupleRefBuffer =
-    New refcounted< vec< TupleRef > >();
-  tupleRefBuffer->push_back(t);
-  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
-  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-  ref< PushPrint > pushPrint = New refcounted< PushPrint >();
-  ref< Print > print = New refcounted< Print >("Print");
-  ref< Print > print2 = New refcounted< Print >("Print2");
-  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
-  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-  ElementSpecRef pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
-  ElementSpecRef printSpec = New refcounted< ElementSpec >(print);
-  ElementSpecRef printSpec2 = New refcounted< ElementSpec >(print2);
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef slot2S = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef printS = conf->addElement(New refcounted< Print >("Printer"));
+  ElementSpecRef print2S = conf->addElement(New refcounted< Print >("Printer Two"));
 
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(memoryPullSpec);
-  elements->push_back(pushPrintSpec);
-  elements->push_back(printSpec);
-  elements->push_back(printSpec2);
-  elements->push_back(pullPrintSpec);
-
-  // Connect pull to push
-  ref < vec< Router::HookupRef > > hookups =
-    New refcounted< vec< Router::HookupRef > >();
-  Router::HookupRef hookup =
-    New refcounted< Router::Hookup >(memoryPullSpec, 0,
-                                     printSpec, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(printSpec, 0,
-                                            printSpec2, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(printSpec2, 0,
-                                            pushPrintSpec, 0);
-  hookups->push_back(hookup);
-
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
-
-  MasterRef master = New refcounted< Master >();
-  RouterRef router = New refcounted< Router >(configuration, master);
+  conf->hookUp(sourceS, 0, slot1S, 0);
+  conf->hookUp(slot1S, 0, printS, 0);
+  conf->hookUp(printS, 0, print2S, 0);
+  conf->hookUp(print2S, 0, slot2S, 0);
+  conf->hookUp(slot2S, 0, sinkS, 0);
+  
+  RouterRef router = New refcounted< Router >(conf);
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch incorrect pull-push hookup via multiple a/a elements\n";
   } else {
@@ -604,56 +367,19 @@ void testCheckPushPull_PullToPullMultiHop()
 {
   std::cout << "\n[Pull to pull multi hop]\n";
 
-  //  MasterPtr master;
-  //RouterPtr router;
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef printS = conf->addElement(New refcounted< Print >("Printer"));
+  ElementSpecRef print2S = conf->addElement(New refcounted< Print >("Printer Two"));
 
+  conf->hookUp(sourceS, 0, slot1S, 0);
+  conf->hookUp(slot1S, 0, printS, 0);
+  conf->hookUp(printS, 0, print2S, 0);
+  conf->hookUp(print2S, 0, sinkS, 0);
   
-    TupleRef t = create_tuple(1);
-    ref< vec< TupleRef > > tupleRefBuffer =
-      New refcounted< vec< TupleRef > >();
-    
-    tupleRefBuffer->push_back(t);
-    ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
-    ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-    ref< Print > print = New refcounted< Print >("Print");
-    ref< Print > print2 = New refcounted< Print >("Print2");
-    
-    ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
-    ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-    ElementSpecRef printSpec = New refcounted< ElementSpec >(print);
-    ElementSpecRef printSpec2 = New refcounted< ElementSpec >(print2);
-    
-    ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-    
-    elements->push_back(memoryPullSpec);
-    elements->push_back(printSpec);
-    elements->push_back(printSpec2);
-    elements->push_back(pullPrintSpec);
-    
-    // Connect pull to push
-    ref < vec< Router::HookupRef > > hookups =
-      New refcounted< vec< Router::HookupRef > >();
-    Router::HookupRef hookup =
-      New refcounted< Router::Hookup >(memoryPullSpec, 0,
-                                       printSpec, 0);
-    hookups->push_back(hookup);
-    hookup = New refcounted< Router::Hookup >(printSpec, 0,
-                                              printSpec2, 0);
-    hookups->push_back(hookup);
-    hookup = New refcounted< Router::Hookup >(printSpec2, 0,
-                                              pullPrintSpec, 0);
-    hookups->push_back(hookup);
-    
-    
-    Router::ConfigurationRef configuration =
-      New refcounted< Router::Configuration >(elements, hookups);
-    
-    MasterRef    master = New refcounted< Master >();
-    RouterRef router = New refcounted< Router >(configuration, master);
-  
-
-  // Now all that remains are the master and router, everything else is
-  // owned by them since they're out of scope
+  RouterRef router = New refcounted< Router >(conf);
 
   if (router->initialize(router) == 0) {
     std::cerr << "Correctly allowed pull-pull hookup via multiple a/a elements\n";
@@ -701,49 +427,18 @@ void testDuplicates_UnusedPort()
 {
   std::cout << "\n[Unused Port]\n";
 
-  TupleRef t = create_tuple(1);
-  ref< vec< TupleRef > > tupleRefBuffer =
-    New refcounted< vec< TupleRef > >();
-  tupleRefBuffer->push_back(t);
-  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
-  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-  ref< PushPrint > pushPrint = New refcounted< PushPrint >();
-  ref< Print > print = New refcounted< Print >("Print");
-  ref< Print > print2 = New refcounted< Print >("Print2");
-  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
-  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-  ElementSpecRef pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
-  ElementSpecRef printSpec = New refcounted< ElementSpec >(print);
-  ElementSpecRef printSpec2 = New refcounted< ElementSpec >(print2);
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef printS = conf->addElement(New refcounted< Print >("Printer"));
+  ElementSpecRef print2S = conf->addElement(New refcounted< Print >("Printer Two"));
 
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(memoryPullSpec);
-  elements->push_back(pushPrintSpec);
-  elements->push_back(printSpec);
-  elements->push_back(printSpec2);
-  elements->push_back(pullPrintSpec);
-
-  Router::HookupPtr hookup;
-  ref < vec< Router::HookupRef > > hookups =
-    New refcounted< vec< Router::HookupRef > >();
-
-  // Connect pull to pull via 2 a/a elements
-  hookups->clear();
-  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
-                                            printSpec, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(printSpec, 0,
-                                            printSpec2, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(printSpec2, 0,
-                                            pullPrintSpec, 0);
-  hookups->push_back(hookup);
-
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
-  MasterRef master = New refcounted< Master >();
-  RouterRef router =
-    New refcounted< Router >(configuration, master);
+  conf->hookUp(sourceS, 0, slot1S, 0);
+  conf->hookUp(slot1S, 0, print2S, 0);
+  conf->hookUp(print2S, 0, sinkS, 0);
+  
+  RouterRef router = New refcounted< Router >(conf);
   if (router->initialize(router) == 0) {
     std::cerr << "** Incorrectly allowed unused port of an element\n";
   } else {
@@ -756,50 +451,21 @@ void testDuplicates_UnusedPort()
 void testDuplicates_ReusedPort()
 {
   std::cout << "\n[Reused Port]\n";
+ 
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(0));
+  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef printS = conf->addElement(New refcounted< Print >("Printer"));
+  ElementSpecRef print2S = conf->addElement(New refcounted< Print >("Printer Two"));
 
-  TupleRef t = create_tuple(1);
-  ref< vec< TupleRef > > tupleRefBuffer =
-    New refcounted< vec< TupleRef > >();
-  tupleRefBuffer->push_back(t);
-  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
-  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-  ref< PushPrint > pushPrint = New refcounted< PushPrint >();
-  ref< Print > print = New refcounted< Print >("Print");
-  ref< Print > print2 = New refcounted< Print >("Print2");
-  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
-  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-  ElementSpecRef pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
-  ElementSpecRef printSpec = New refcounted< ElementSpec >(print);
-  ElementSpecRef printSpec2 = New refcounted< ElementSpec >(print2);
+  conf->hookUp(sourceS, 0, slot1S, 0);
+  conf->hookUp(slot1S, 0, print2S, 0);
+  conf->hookUp(print2S, 0, slot1S, 0);
+  conf->hookUp(slot1S, 0, sinkS, 0);
+  
+  RouterRef router = New refcounted< Router >(conf);
 
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(memoryPullSpec);
-  elements->push_back(printSpec);
-  elements->push_back(printSpec2);
-  elements->push_back(pullPrintSpec);
-
-  Router::HookupPtr hookup;
-  ref < vec< Router::HookupRef > > hookups =
-    New refcounted< vec< Router::HookupRef > >();
-
-  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
-                                            printSpec, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(printSpec, 0,
-                                            printSpec2, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(printSpec2, 0,
-                                            pullPrintSpec, 0);
-  hookups->push_back(hookup);
-
-  hookup = New refcounted< Router::Hookup >(printSpec, 0,
-                                            pullPrintSpec, 0);
-  hookups->push_back(hookup);
-
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
-  MasterRef master = New refcounted< Master >();
-  RouterRef router = New refcounted< Router >(configuration, master);
   if (router->initialize(router) == 0) {
     std::cerr << "** Incorrectly allowed port reuse\n";
   } else {

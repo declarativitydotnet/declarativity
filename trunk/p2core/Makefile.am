@@ -15,12 +15,8 @@
 lib_LTLIBRARIES = libp2core.la
 libp2core_la_SOURCES = \
 	element.C \
-	routerthread.C \
-	timer.C \
-	task.C \
 	tuple.C \
 	router.C \
-	master.C \
 	elementSpec.C \
 	pel_lexer.C \
 	pel_vm.C \

@@ -1,4 +1,4 @@
-// -*- c-basic-offset: 2; related-file-name: "element.C" -*-
+// -*- c-basic-offset: 2; related-file-name: "slot.C" -*-
 /*
  * @(#)$Id$
  * 
@@ -19,19 +19,18 @@
 class Slot : public Element { 
 public:
   
-  Slot() : _t(NULL), _push_cb(cbv_null), _pull_cb(cbv_null) {};
+  Slot();
 
   int push(int port, TupleRef t, cbv cb);
   TuplePtr pull(int port, cbv);
   const char *class_name() const		{ return "Slot";}
   const char *processing() const		{ return PUSH_TO_PULL; }
-  const char *flow_code() const			{ return "x/x"; }
+  const char *flow_code() const			{ return "-/-"; }
 
 private:
   TuplePtr _t;
   cbv	_push_cb;
   cbv	_pull_cb;
-  
 };
 
 

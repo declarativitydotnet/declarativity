@@ -33,12 +33,7 @@
 #include <element.h>
 #include <elementSpec.h>
 #include <vec.h>
-#include <master.h>
 #include <loggerI.h>
-
-// Put here to resolve cyclical dependencies
-class Master;
-typedef ref< Master > MasterRef;
 
 /** A handy dandy type for router references */
 class Router;
@@ -100,8 +95,7 @@ public:
 
   /** Create a new router given a configuration of constructed but not
       necessarily configured elements. */
-  Router(ConfigurationRef configuration,
-         MasterRef master);
+  Router(ConfigurationRef configuration);
 
   ~Router();
 
@@ -133,9 +127,6 @@ public:
   int nelements() const				{ return _elements->size(); }
   const ref< vec< ElementRef > > elements() const { return _elements; }
   
-  // MASTER scheduler
-  MasterRef master() const			{ return _master; }
-
   // LOGGING infrastructure
   
   /** The router-wide logger.  The pointer to the logger should not be
@@ -149,9 +140,6 @@ public:
   REMOVABLE_INLINE LoggerI * logger(LoggerI * newLogger);
   
 private:
-  
-  /** The scheduler */
-  MasterRef _master;
   
   ref< vec< ElementRef > > _elements;
   
@@ -186,9 +174,6 @@ private:
   /** Convenience function for adding a created (but not initialized)
       element into the router. */
   void add_element(RouterRef, ElementRef);
-
-  friend class Master;
-  friend class Task;
 
   /** My local logger */
   LoggerI * _logger;

@@ -21,174 +21,151 @@
 #include <iostream>
 
 #include "tuple.h"
-#include "pullprint.h"
-#include "pushprint.h"
-#include "print.h"
-#include "memoryPull.h"
 #include "router.h"
-#include "master.h"
-#include "timedSource.h"
-#include "udp.h"
-#include "discard.h"
+
+#include "print.h"
+#include "timedPushSource.h"
+#include "timedPullSink.h"
 #include "pelTransform.h"
-#include "logger.h"
-#include "marshal.h"
-#include "unmarshal.h"
-#include "hexdump.h"
+#include "slot.h"
 
-
-/** Test that a puller runs and stops during inaction. */
-void testSinglePuller()
+/** Test push chain with fast source. */
+void testFastSourcePush()
 {
-  std::cout << "\nCHECK SIMPLE PULLER\n";
+  std::cout << "\nCHECK FAST SOURCE PUSH\n";
 
-  ref< TimedSource > timedSource = New refcounted< TimedSource >(2);
-  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-  ElementSpecRef timedSourceSpec = New refcounted< ElementSpec >(timedSource);
-  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(0.2));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(1));
+  ElementSpecRef slotS = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
+  ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
+  ElementSpecRef transS = conf->addElement(New refcounted< PelTransform >("$1 10 % ifpoptuple"));
 
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(timedSourceSpec);
-  elements->push_back(pullPrintSpec);
-
-  Router::HookupPtr hookup;
-  ref < vec< Router::HookupRef > > hookups =
-    New refcounted< vec< Router::HookupRef > >();
-
-  hookups->clear();
-  hookup = New refcounted< Router::Hookup >(timedSourceSpec, 0,
-                                            pullPrintSpec, 0);
-  hookups->push_back(hookup);
-
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
-  MasterRef master = New refcounted< Master >();
-  RouterRef router =
-    New refcounted< Router >(configuration, master);
-  if (router->initialize(router) == 0) {
-    std::cout << "Correctly initialized timed source to pull print spec.\n";
-  } else {
-    std::cout << "** Failed to initialize correct spec\n";
-  }
-
-  // Activate the router
-  router->activate();
-
-  // Run the router
-  amain();
-}
-
-/** Test a three-element chain with an agnostic in the middle. */
-void testChainPuller()
-{
-  std::cout << "\nCHECK 3-ELEMENT CHAIN\n";
-
-  ref< TimedSource > timedSource = New refcounted< TimedSource >(0.25);
-  ref< Print > print = New refcounted< Print >("Before");
-  //  ref< PelTransform > project = New refcounted< PelTransform >("$1 $2 +i pop");
-  //  ref< PelTransform > project = New refcounted< PelTransform >("$8 pop");
-  ref< Marshal > marshal = New refcounted< Marshal >();
-  ref< Marshal > marshal2 = New refcounted< Marshal >();
-  ref< Unmarshal > unmarshal = New refcounted< Unmarshal >();
-  ref< Print > print2 = New refcounted< Print >("Marshalled");
-  ref< Hexdump > hex = New refcounted< Hexdump >();
-  ref< Print > print3 = New refcounted< Print >("HexDumped");
-  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-
-  ElementSpecRef timedSourceSpec = New refcounted< ElementSpec >(timedSource);
-  ElementSpecRef printSpec = New refcounted< ElementSpec >(print);
-  //  ElementSpecRef projectSpec = New refcounted< ElementSpec >(project);
-  ElementSpecRef marshalSpec = New refcounted< ElementSpec >(marshal);
-  ElementSpecRef marshalSpec2 = New refcounted< ElementSpec >(marshal2);
-  ElementSpecRef hexSpec = New refcounted< ElementSpec >(hex);
-  ElementSpecRef unmarshalSpec = New refcounted< ElementSpec >(unmarshal);
-  ElementSpecRef printSpec2 = New refcounted< ElementSpec >(print2);
-  ElementSpecRef printSpec3 = New refcounted< ElementSpec >(print3);
-  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-
-  // Logger data flow
-  ref< Logger > logger = New refcounted< Logger >();
-  ElementSpecRef loggerSpec = New refcounted< ElementSpec >(logger);
-  ref< Print > logPrinter = New refcounted< Print >("LOGGER");
-  ElementSpecRef logPrinterSpec = New refcounted< ElementSpec >(logPrinter);
-  ref< Discard > discard = New refcounted< Discard >();
-  ElementSpecRef discardSpec = New refcounted< ElementSpec >(discard);
-
+  conf->hookUp(sourceS, 0, sourcePrintS, 0);
+  conf->hookUp(sourcePrintS, 0, transS, 0);
+  conf->hookUp(transS, 0, slotS, 0);
+  conf->hookUp(slotS, 0, sinkPrintS, 0);
+  conf->hookUp(sinkPrintS, 0, sinkS, 0);
   
-
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(timedSourceSpec);
-  elements->push_back(printSpec);
-  elements->push_back(printSpec2);
-  elements->push_back(printSpec3);
-  //elements->push_back(projectSpec);
-  elements->push_back(marshalSpec);
-  //elements->push_back(marshalSpec2);
-  //elements->push_back(unmarshalSpec);
-  //elements->push_back(hexSpec);
-  elements->push_back(pullPrintSpec);
-
-  elements->push_back(loggerSpec);
-  elements->push_back(logPrinterSpec);
-  elements->push_back(discardSpec);
-
-  Router::HookupPtr hookup;
-  ref < vec< Router::HookupRef > > hookups =
-    New refcounted< vec< Router::HookupRef > >();
-
-  hookups->clear();
-  hookup = New refcounted< Router::Hookup >(timedSourceSpec, 0,
-                                            printSpec, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(printSpec, 0,
-                                            marshalSpec, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(marshalSpec, 0,
-                                            printSpec2, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(printSpec2, 0,
-                                            printSpec3, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(printSpec3, 0,
-                                            pullPrintSpec, 0);
-  hookups->push_back(hookup);
-
-
-  hookup = New refcounted< Router::Hookup >(loggerSpec, 0,
-                                            logPrinterSpec, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(logPrinterSpec, 0,
-                                            discardSpec, 0);
-  hookups->push_back(hookup);
-
-
-
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
-  MasterRef master = New refcounted< Master >();
-  RouterRef router =
-    New refcounted< Router >(configuration, master);
-  router->logger(logger);
+  RouterRef router = New refcounted< Router >(conf);
   if (router->initialize(router) == 0) {
-    std::cout << "Correctly initialized timed source to pull print spec.\n";
+    std::cout << "Correctly initialized fast source push.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
 
   // Activate the router
   router->activate();
-  router->logger(logger);
 
   // Run the router
   amain();
 }
 
+/** Test push chain with fast sink. */
+void testFastSinkPush()
+{
+  std::cout << "\nCHECK FAST SINK PUSH\n";
+
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(1));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(.2));
+  ElementSpecRef slotS = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
+  ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
+  ElementSpecRef transS = conf->addElement(New refcounted< PelTransform >("$1 10 % ifpoptuple"));
+
+  conf->hookUp(sourceS, 0, sourcePrintS, 0);
+  conf->hookUp(sourcePrintS, 0, transS, 0);
+  conf->hookUp(transS, 0, slotS, 0);
+  conf->hookUp(slotS, 0, sinkPrintS, 0);
+  conf->hookUp(sinkPrintS, 0, sinkS, 0);
+  
+  RouterRef router = New refcounted< Router >(conf);
+  if (router->initialize(router) == 0) {
+    std::cout << "Correctly initialized fast sink push.\n";
+  } else {
+    std::cout << "** Failed to initialize correct spec\n";
+  }
+
+  // Activate the router
+  router->activate();
+
+  // Run the router
+  amain();
+}
+
+/** Test push chain with fast sink. */
+void testFastSinkPull()
+{
+  std::cout << "\nCHECK FAST SINK PULL\n";
+
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(1));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(.2));
+  ElementSpecRef slotS = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
+  ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
+  ElementSpecRef transS = conf->addElement(New refcounted< PelTransform >("$1 10 % ifpoptuple"));
+
+  conf->hookUp(sourceS, 0, sourcePrintS, 0);
+  conf->hookUp(sourcePrintS, 0, slotS, 0);
+  conf->hookUp(slotS, 0, transS, 0);
+  conf->hookUp(transS, 0, sinkPrintS, 0);
+  conf->hookUp(sinkPrintS, 0, sinkS, 0);
+  
+  RouterRef router = New refcounted< Router >(conf);
+  if (router->initialize(router) == 0) {
+    std::cout << "Correctly initialized fast sink pull.\n";
+  } else {
+    std::cout << "** Failed to initialize correct spec\n";
+  }
+
+  // Activate the router
+  router->activate();
+
+  // Run the router
+  amain();
+}
+
+/** Test push chain with fast sink. */
+void testFastSourcePull()
+{
+  std::cout << "\nCHECK FAST SOURCE PULL\n";
+
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef sourceS = conf->addElement(New refcounted< TimedPushSource >(.2));
+  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(1));
+  ElementSpecRef slotS = conf->addElement(New refcounted< Slot >());
+  ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
+  ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
+  ElementSpecRef transS = conf->addElement(New refcounted< PelTransform >("$1 10 % ifpoptuple"));
+
+  conf->hookUp(sourceS, 0, sourcePrintS, 0);
+  conf->hookUp(sourcePrintS, 0, slotS, 0);
+  conf->hookUp(slotS, 0, transS, 0);
+  conf->hookUp(transS, 0, sinkPrintS, 0);
+  conf->hookUp(sinkPrintS, 0, sinkS, 0);
+  
+  RouterRef router = New refcounted< Router >(conf);
+  if (router->initialize(router) == 0) {
+    std::cout << "Correctly initialized fast sink pull.\n";
+  } else {
+    std::cout << "** Failed to initialize correct spec\n";
+  }
+
+  // Activate the router
+  router->activate();
+
+  // Run the router
+  amain();
+}
 
 int main(int argc, char **argv)
 {
   std::cout << "\nSCHEDULING\n";
 
-  testChainPuller();
+  testFastSourcePull();
 
   return 0;
 }

@@ -232,6 +232,39 @@ DEF_OP(POP) {
   result->append(st.top());
   st.pop();
 }
+DEF_OP(IFELSE) {
+  ValueRef elseVal = st.top(); st.pop();
+  ValueRef thenVal = st.top(); st.pop();
+  int64_t ifVal = pop_unsigned();
+  if (ifVal) {
+    st.push(thenVal);
+  } else {
+    st.push(elseVal);
+  }
+}
+DEF_OP(IFPOP) {
+  ValueRef thenVal = st.top(); st.pop();
+  int64_t ifVal = pop_unsigned();
+  if (ifVal) {
+    if (!result) {
+      result = Tuple::mk();
+    }
+    result->append(thenVal);
+  }
+}
+DEF_OP(IFPOP_TUPLE) {
+  int64_t ifVal = pop_unsigned();
+  if (ifVal) {
+    if (!result) {
+      result = Tuple::mk();
+    }
+    for (uint i = 0;
+         i < operand->size();
+         i++) {
+      result->append((*operand)[i]);
+    }
+  }
+}
 
 //
 // Boolean operations

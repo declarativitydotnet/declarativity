@@ -167,10 +167,7 @@ Udp::Udp(u_int16_t port, u_int32_t addr)
   : rx(New refcounted< Udp::Rx >(*this)),
     tx(New refcounted< Udp::Tx >(*this))
 {
-  warn << "UDP Init\n";
   sd = inetsocket(SOCK_DGRAM, port, addr);
-  std::cout << "Got descriptor " << sd << " with errno " << strerror(errno) << "\n";
   make_async(sd);
   close_on_exec(sd);
-  warn << "UDPinited\n";
 }

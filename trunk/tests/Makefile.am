@@ -20,7 +20,6 @@ bin_PROGRAMS 	= 	values \
 			basicelements \
 			basicElementPlumbing \
 			scheduling \
-			test_timecb \
 			net \
 			logger \
 			csv
@@ -63,12 +62,6 @@ net_LDADD = \
 
 basicelements_SOURCES	= basicelements.C
 basicelements_LDADD = \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	@SFS_LIBASYNC@ @SFS_LIBARPC@
-
-test_timecb_SOURCES	= test_timecb.C
-test_timecb_LDADD = \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@

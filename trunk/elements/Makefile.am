@@ -15,13 +15,11 @@
 lib_LTLIBRARIES = libp2elements.la
 libp2elements_la_SOURCES = \
 	slot.C \
-	pushprint.C \
-	pullprint.C \
-	memoryPull.C \
 	print.C \
-	timedSource.C \
-	logger.C \
+	timedPushSource.C \
+	timedPullSink.C \
 	discard.C \
+	logger.C \
 	pelTransform.C \
 	marshal.C \
 	hexdump.C \

@@ -373,10 +373,8 @@ int Router::check_hookup_range()
 }
 
 
-Router::Router(ConfigurationRef c,
-               MasterRef m)
-  : _master(m),
-    _elements(New refcounted< vec< ElementRef > >()),
+Router::Router(ConfigurationRef c)
+  : _elements(New refcounted< vec< ElementRef > >()),
     _state(ROUTER_NEW),
     _configuration(c),
     _logger(0)

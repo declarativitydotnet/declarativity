@@ -182,9 +182,21 @@ const char *Element::flags() const
 
 int Element::push(int port, TupleRef p, cbv cb)
 {
-  p = simple_action(p);
-  if (p) return output(0)->push(p,cb);
-  return 1;
+  assert(p != 0);
+
+  // Apply the action
+  TuplePtr result = simple_action(p);
+
+  // Did we get a result?
+  if (result == 0 || result->size() == 0) {
+    // No result
+    log(LoggerI::WARN,
+        -1,
+        "push: Input tuple yielded no output tuple");
+    return 1;
+  } else {
+    return output(0)->push(result, cb);
+  }
 }
 
 TuplePtr Element::pull(int port, cbv cb)
@@ -197,10 +209,9 @@ TuplePtr Element::pull(int port, cbv cb)
         return result;
       } else {
         // This input yielded no result. Try again.
-        log("",
-            LoggerI::WARN,
+        log(LoggerI::WARN,
             -1,
-            "Input tuple yielded no output tuple");
+            "pull: Input tuple yielded no output tuple");
       }
     } else {
       // Didn't get any tuples from my input. Fail.
@@ -335,39 +346,44 @@ REMOVABLE_INLINE void Element::log(str instanceName,
                                    int errnum,
                                    str explanation)
 {
-  LoggerI* l = _router->logger();
-  if (l != 0) {
-    l->log(class_name(),
-           instanceName,
-           severity,
-           errnum,
-           explanation); 
-  } else {
-    timespec now_ts;
-    double   now;
-    
-    if (clock_gettime(CLOCK_REALTIME,&now_ts)) {
-      fatal << "clock_gettime:" << strerror(errno) << "\n";
+  if (_router != 0) {
+    LoggerI* l = _router->logger();
+    if (l != 0) {
+      l->log(class_name(),
+             instanceName,
+             severity,
+             errnum,
+             explanation); 
+    } else {
+      logDefault(instanceName, severity, errnum, explanation);
     }
-    now = now_ts.tv_sec + (1.0 / 1000 / 1000 / 1000 * now_ts.tv_nsec);
-    
-    TupleRef t = Tuple::mk();
-    t->append(Val_Double::mk(now));
-    t->append(Val_UInt64::mk(seq++));
-    t->append(Val_Str::mk(class_name()));
-    t->append(Val_Str::mk(instanceName));
-    t->append(Val_Int32::mk(severity));
-    t->append(Val_Int32::mk(errnum));
-    t->append(Val_Str::mk(explanation));
-    t->freeze();
-    warn << "PRE-init LOGGER: " << t->toString() << "\n";
-
-//     warn << "PRE-init LOGGER:" <<
-//       class_name() << "/" <<
-//       instanceName << "/" <<
-//       severity << "/" <<
-//       errnum << "/" <<
-//       explanation << "\n";
+  } else {
+    logDefault(instanceName, severity, errnum, explanation);
   }
+}
+
+REMOVABLE_INLINE void Element::logDefault(str instanceName,
+                                          LoggerI::Level severity,
+                                          int errnum,
+                                          str explanation)
+{
+  timespec now_ts;
+  double   now;
+  
+  if (clock_gettime(CLOCK_REALTIME,&now_ts)) {
+    fatal << "clock_gettime:" << strerror(errno) << "\n";
+  }
+  now = now_ts.tv_sec + (1.0 / 1000 / 1000 / 1000 * now_ts.tv_nsec);
+  
+  TupleRef t = Tuple::mk();
+  t->append(Val_Double::mk(now));
+  t->append(Val_UInt64::mk(seq++));
+  t->append(Val_Str::mk(class_name()));
+  t->append(Val_Str::mk(instanceName));
+  t->append(Val_Int32::mk(severity));
+  t->append(Val_Int32::mk(errnum));
+  t->append(Val_Str::mk(explanation));
+  t->freeze();
+  warn << "PRE-init LOGGER: " << t->toString() << "\n";
 }
                             

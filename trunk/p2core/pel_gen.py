@@ -30,8 +30,11 @@ for op, ar, va, desc in [
   ("dup",1,	"DUP",          "Duplicate the top stack value"),
   ("",0,        "PUSH_CONST",   "Push a constant"),
   ("",0,        "PUSH_FIELD",   "Push a field of the tuple"),
-  ("pop",1,     "POP",          "Pop result tuple field"), 
-
+  ("pop",1,     "POP",          "Pop result tuple field"),
+  ("ifelse",3,  "IFELSE",       "If first arg, then return second, else third"),
+  ("ifpop",2,   "IFPOP",        "If first arg, then pop second, else nothing"),
+  ("ifpoptuple",1,"IFPOP_TUPLE","If first arg, then pop entire tuple, else nothing"),
+  
   ("not",1, 	"NOT",          "Boolean negation"),
   ("and",2,	"AND",          "Boolean AND"),
   ("or",2,	"OR",           "Boolean inclusive-OR"),

@@ -21,8 +21,8 @@
 
 #include "tuple.h"
 
-#include "pushprint.h"
 #include "slot.h"
+#include "print.h"
 
 #include "val_null.h"
 #include "val_str.h"
@@ -83,18 +83,13 @@ int main(int argc, char **argv)
 
   std::cout << "BASICELEMENTS\n";
 
-  std::cout << "PushPrint\n";
-  PushPrint *p = New PushPrint();
-
-  p->push(0,t,cbv_null);
-
   Slot *s = New Slot();
   for(int i=0; i<5; i++) {
     TuplePtr tp = s->pull(0,wrap(slot_pull_cb));
     if (tp == NULL) {
       std::cout << "Null tuple\n";
     } else {
-      p->push(0,t,cbv_null);
+      std::cout << "Got tuple " << t->toString() << "\n";
     }
     s->push(0,t,wrap(slot_push_cb));
   }

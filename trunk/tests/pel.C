@@ -66,6 +66,21 @@ static const ValTest vtests[] = {
   { _int64, Pel_VM::PE_STACK_UNDERFLOW, "",	"1 dup drop drop drop"},
   { _nullv, Pel_VM::PE_SUCCESS,		"",	"1 dup drop drop"},
   { _int64, Pel_VM::PE_SUCCESS, 	"2",	"2 1 dup drop drop"},
+  // ifelse
+  { _int64, Pel_VM::PE_STACK_UNDERFLOW, "",	"ifelse"},
+  { _int64, Pel_VM::PE_STACK_UNDERFLOW, "",	"1 ifelse"},
+  { _int64, Pel_VM::PE_STACK_UNDERFLOW, "",	"1 2 ifelse"},
+  { _int64, Pel_VM::PE_SUCCESS,		"1",    "3.0 1 2 ifelse"},
+  { _int64, Pel_VM::PE_SUCCESS,		"2",    "0.0 1 2 ifelse"},
+  { _int64, Pel_VM::PE_SUCCESS,		"1",    "\"3.0\" 1 2 ifelse"},
+  { _int64, Pel_VM::PE_SUCCESS,		"2",	"1 2 3 ifelse"},
+  { _int64, Pel_VM::PE_SUCCESS, 	"3",	"0 2 3 ifelse"},
+  // ifpop
+  { _int64, Pel_VM::PE_STACK_UNDERFLOW, "",	"ifpop"},
+  { _int64, Pel_VM::PE_STACK_UNDERFLOW, "",	"1 ifpop"},
+  { _int64, Pel_VM::PE_SUCCESS,		"6",	"6 1 2 ifpop"},
+  // ifpoptuple
+  { _int64, Pel_VM::PE_STACK_UNDERFLOW, "",	"ifpoptuple"},
   // pop XXX more tests here on the resulting tuple!!
   { _nullv, Pel_VM::PE_STACK_UNDERFLOW, "",	"pop" },
   { _int64, Pel_VM::PE_SUCCESS,		"1",	"1 2 pop"},
@@ -680,6 +695,7 @@ static const CompilerTest ctests[] = {
   { "1 2 3", "1 2 3 ", 3, 3},
   { "1 1.2 \"String\" swap dup ", "1 1.2 \"String\" swap dup ", 3, 5},
   { "null\t\n pop $2 $4  ->u32", "null pop $2 $4 ->u32 ", 1, 5},
+  { "1 ifpoptuple", "1 ifpoptuple ", 1, 2},
   { "1 2 /* This is a comment */ pop pop", "1 2 pop pop ", 2, 4}
 };
 static const size_t num_ctests = sizeof(ctests) / sizeof(CompilerTest);

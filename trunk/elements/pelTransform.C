@@ -37,12 +37,11 @@ TuplePtr PelTransform::simple_action(TupleRef p)
 
     // Was there a result tuple?
     TuplePtr result = _vm.result_tuple();
-    if (result == 0) {
-      // No result tuple.  Return nothing
+    if ((result == 0) || (result->size() == 0)) {
+      // No result tuple or empty result tuple.  Return nothing
       return 0;
     } else {
       // This tuple better have at least a single field
-      assert(result->size() > 0);
       return result;
     }
   }

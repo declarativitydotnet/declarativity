@@ -21,8 +21,10 @@
 
 #include "plsensor.h"
 #include "router.h"
+
 #include "csvparser.h"
-#include "pullprint.h"
+#include "print.h"
+#include "timedPullSink.h"
 
 const char *path="/snort/tcpconns";
 const uint16_t port = 12337;
@@ -35,18 +37,20 @@ int main(int argc, char **argv)
   std::cout << "\nPhi daemon started\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef pl = \
+  ElementSpecRef pl =
     conf->addElement(New refcounted<PlSensor>(port, path, 30));
-  ElementSpecRef csv = \
+  ElementSpecRef csv =
     conf->addElement(New refcounted<CSVParser>());
-  ElementSpecRef print = \
-    conf->addElement(New refcounted<PullPrint>());
+  ElementSpecRef print =
+    conf->addElement(New refcounted<Print>("Printer"));
+  ElementSpecRef sink =
+    conf->addElement(New refcounted<TimedPullSink>(0));
   conf->hookUp(pl,0,csv,0);
   conf->hookUp(csv,0,print,0);
+  conf->hookUp(print,0, sink, 0);
 
   // Create the router and check it statically
-  MasterRef master = New refcounted< Master >();
-  RouterRef router = New refcounted< Router >(conf, master);
+  RouterRef router = New refcounted< Router >(conf);
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized configuration.\n";
   } else {
