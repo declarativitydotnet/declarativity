@@ -69,42 +69,42 @@ static const int SYMQUEUE_LENGTH = 1000;
 static const int SYMFINGERTTL = 10;
 
 /**
- *rule L1 lookupResults@R(R,K,S,SI,E) :- node@NI(NI,N),
- *lookup@NI(NI,K,R,E), bestSuccessor@NI(NI,S,SI), K in (N,S].
+ *rule L1 symLookupResults@R(R,K,S,SI,E) :- node@NI(NI,N),
+ *symLookup@NI(NI,K,R,E), bestSuccessor@NI(NI,S,SI), K in (N,S].
  */
 void ruleSymphonyL1(str name,
-            Router::ConfigurationRef conf,
-            TableRef nodeTable,
-            TableRef bestSuccessorTable,
-            ElementSpecRef pushLookupIn,
-            int pushLookupInPort,
-            ElementSpecRef pullLookupResultsOut,
-            int pullLookupResultsOutPort)
+                    Router::ConfigurationRef conf,
+                    TableRef nodeTable,
+                    TableRef bestSuccessorTable,
+                    ElementSpecRef pushSymLookupIn,
+                    int pushSymLookupInPort,
+                    ElementSpecRef pullSymLookupResultsOut,
+                    int pullSymLookupResultsOutPort)
 {
   // Join with node
-  ElementSpecRef matchLookupIntoNodeS =
-    conf->addElement(New refcounted< UniqueLookup >(strbuf("LookupInNode:") << name,
+  ElementSpecRef matchSymLookupIntoNodeS =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("SymLookupInNode:") << name,
                                                     nodeTable,
-                                                    1, // Match lookup.NI
+                                                    1, // Match symLookup.NI
                                                     1, // with node.NI
                                                     cbv_null ));
   ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
-  // Link it to the lookup coming in. Pushes match already
-  conf->hookUp(pushLookupIn, pushLookupInPort, matchLookupIntoNodeS, 0);
+  // Link it to the symLookup coming in. Pushes match already
+  conf->hookUp(pushSymLookupIn, pushSymLookupInPort, matchSymLookupIntoNodeS, 0);
 
 
 
   // Produce intermediate ephemeral result
   // res1(NI, K, R, E, N) from
-  // <<lookup NI K R E><node NI N>>
+  // <<symLookup NI K R E><node NI N>>
   ElementSpecRef makeRes1S =
     conf->addElement(New refcounted< PelTransform >(strbuf("MakeRes1:").cat(name),
                                                     "\"Res1\" pop \
                                                      $0 unbox \
-                                                     drop /* No need for lookup literal */ \
-                                                     pop pop pop pop /* all lookup fields */ \
+                                                     drop /* No need for symLookup literal */ \
+                                                     pop pop pop pop /* all symLookup fields */ \
                                                      $1 2 field pop /* node.N */"));
-  conf->hookUp(matchLookupIntoNodeS, 0, noNullS, 0);
+  conf->hookUp(matchSymLookupIntoNodeS, 0, noNullS, 0);
   conf->hookUp(noNullS, 0, makeRes1S, 0);
   
 
@@ -112,7 +112,7 @@ void ruleSymphonyL1(str name,
 
   // Join with best successor table
   ElementSpecRef matchRes1IntoBestSuccS =
-    conf->addElement(New refcounted< UniqueLookup >(strbuf("LookupInBestSucc:") << name,
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("SymLookupInBestSucc:") << name,
                                                     bestSuccessorTable,
                                                     1, // Match res1.NI
                                                     1, // with bestSuccessor.NI
@@ -141,69 +141,72 @@ void ruleSymphonyL1(str name,
   conf->hookUp(noNull2S, 0, selectS, 0);
   
 
-  // Project to create lookupResults(R, K, S, SI, E)
+  // Project to create symLookupResults(R, K, S, SI, E)
   // from <<res1 NI, K, R, E, N><bestSuccessor NI S SI>>
-  ElementSpecRef makeLookupResultS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("FlattenLookupResult:").cat(name),
-                                                    "\"lookupResults\" pop \
+  ElementSpecRef makeSymLookupResultS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("FlattenSymLookupResult:").cat(name),
+                                                    "\"symLookupResults\" pop \
                                                      $0 3 field pop /* output R */ \
                                                      $0 2 field pop /* output K */ \
                                                      $1 unbox drop drop pop pop /* output S SI */ \
                                                      $0 4 field pop /* output E */"));
-  conf->hookUp(selectS, 0, makeLookupResultS, 0);
-  conf->hookUp(makeLookupResultS, 0, pullLookupResultsOut, pullLookupResultsOutPort);
+  conf->hookUp(selectS, 0, makeSymLookupResultS, 0);
+  conf->hookUp(makeSymLookupResultS, 0, pullSymLookupResultsOut, pullSymLookupResultsOutPort);
 }
 
-/** L2: bestLookupDistance@NI(NI,K,R,E,min<D>) :- lookup@NI(NI,K,R,E),
-    node@NI(NI, N), finger@NI(NI,I,B,BI,ET), B in (N,K), D=f_dist(B,K)-1
+
+
+
+/** L2: bestSymLookupDistance@NI(NI,K,R,E,min<D>) :- symLookup@NI(NI,K,R,E),
+    node@NI(NI, N), symFinger@NI(NI,I,B,BI,ET), B in (N,K), D=f_dist(B,K)-1
 */
 void ruleSymphonyL2(str name,
             Router::ConfigurationRef conf,
             TableRef nodeTable,
-            TableRef fingerTable,
-            ElementSpecRef pushLookupIn,
-            int pushLookupInPort,
-            ElementSpecRef pullLookupDistanceOut,
-            int pullLookupDistanceOutPort)
+            TableRef symFingerTable,
+            ElementSpecRef pushSymLookupIn,
+            int pushSymLookupInPort,
+            ElementSpecRef pullBestSymLookupDistanceOut,
+            int pullBestSymLookupDistanceOutPort)
 {
   // Join with node
-  ElementSpecRef matchLookupIntoNodeS =
-    conf->addElement(New refcounted< UniqueLookup >(strbuf("LookupInNode:") << name,
+  ElementSpecRef matchSymLookupIntoNodeS =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("SymLookupInNode:") << name,
                                                     nodeTable,
-                                                    1, // Match lookup.NI
+                                                    1, // Match symLookup.NI
                                                     1, // with node.NI
                                                     cbv_null ));
-  // Link it to the lookup coming in. Pushes match already
-  conf->hookUp(pushLookupIn, pushLookupInPort, matchLookupIntoNodeS, 0);
+  // Link it to the symLookup coming in. Pushes match already
+  conf->hookUp(pushSymLookupIn, pushSymLookupInPort, matchSymLookupIntoNodeS, 0);
   ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
 
   // Produce intermediate ephemeral result
   // res1(NI, K, R, E, N) from
-  // <<lookup NI K R E><node NI N>>
+  // <<symLookup NI K R E><node NI N>>
   ElementSpecRef makeRes1S =
     conf->addElement(New refcounted< PelTransform >(strbuf("FlattenRes1:").cat(name),
                                                     "\"Res1\" pop \
                                                      $0 unbox \
-                                                     drop /* No need for lookup literal */ \
-                                                     pop pop pop pop /* all lookup fields */ \
+                                                     drop /* No need for symLookup literal */ \
+                                                     pop pop pop pop /* all symLookup fields */ \
                                                      $1 2 field pop /* node.N */"));
-  conf->hookUp(matchLookupIntoNodeS, 0, noNullS, 0);
+  conf->hookUp(matchSymLookupIntoNodeS, 0, noNullS, 0);
   conf->hookUp(noNullS, 0, makeRes1S, 0);
   
 
-  // Run aggregation over finger table with input
+  // Run aggregation over symFinger table with input
   // res1(NI, K, R, E, N) from
-  ElementSpecRef findMinInFingerS =
-    conf->addElement(New refcounted< PelScan >(str("bestLookupDistance:") << name,
-                                               fingerTable, 1,
+  ElementSpecRef findMinInSymFingerS =
+    conf->addElement(New refcounted< PelScan >(str("bestSymLookupDistance:") << name,
+                                               symFingerTable, 1,
                                                str("$1 /* res1.NI */ \
                                                     $2 /* NI res1.K */ \
                                                     $5 /* NI K res1.N */ \
                                                     0 /* NI K res1.N found? */\
                                                     1 ->u32 ->id 0 ->u32 ->id distance /* NI K N found? maxdist */"),
                                                str("4 peek /* NI */ \
-                                                    $1 /* finger.NI */ \
-                                                    ==s not /* res1.NI != finger.NI */ \
+                                                    $1 /* symFinger.NI */ \
+                                                    ==s not /* res1.NI != symFinger.NI */ \
                                                     ifstop /* empty */ \
                                                     $3 /* B */ \
                                                     3 peek /* B N */ \
@@ -219,7 +222,7 @@ void ruleSymphonyL2(str name,
                                                     swap /* swap newMin in state where oldMin was */ \
                                                     drop /* only state remains */"),
                                                str("swap not ifstop\
-                                                    \"bestLookupDistance\" pop \
+                                                    \"bestSymLookupDistance\" pop \
                                                     $1 pop /* output NI */\
                                                     $2 pop /* output K */\
                                                     $3 pop /* output R */\
@@ -236,10 +239,10 @@ void ruleSymphonyL2(str name,
 
   ElementSpecRef noNull2S = conf->addElement(New refcounted< NoNull >(strbuf("NoNull2:") << name));
 
-  conf->hookUp(pushRes1S, 0, findMinInFingerS, 0);
+  conf->hookUp(pushRes1S, 0, findMinInSymFingerS, 0);
 
-  conf->hookUp(findMinInFingerS, 0, noNull2S, 0);
-  conf->hookUp(noNull2S, 0, pullLookupDistanceOut, pullLookupDistanceOutPort);
+  conf->hookUp(findMinInSymFingerS, 0, noNull2S, 0);
+  conf->hookUp(noNull2S, 0, pullBestSymLookupDistanceOut, pullBestSymLookupDistanceOutPort);
 }
 
 
