@@ -23,6 +23,7 @@
 #include "val_uint64.h"
 #include "val_double.h"
 #include "val_opaque.h"
+#include "val_tuple.h"
 
 
 typedef ValueRef (*_unmarshal_fn)( XDR *);
@@ -35,7 +36,8 @@ static _unmarshal_fn jump_tab[] = {
   Val_Int64::xdr_unmarshal,
   Val_UInt64::xdr_unmarshal,
   Val_Double::xdr_unmarshal,
-  Val_Opaque::xdr_unmarshal
+  Val_Opaque::xdr_unmarshal,
+  Val_Tuple::xdr_unmarshal
 };
 
 //
@@ -45,6 +47,7 @@ void Value::xdr_marshal( XDR *x )
 {
   TRC_FN;
   TypeCode tc = typeCode();
+  TRC("TypeCode is " << tc);
   xdr_u_int32_t( x, &tc);
   xdr_marshal_subtype(x);
 }

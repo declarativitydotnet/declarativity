@@ -46,6 +46,9 @@ private:
   /** The constructor taking the field number of the primary key */
   Store(str, unsigned);
 
+  /** Preload table with tuples */
+  void insert(TupleRef);
+
   /** The insert element.  It has only a single push input on which
       tuples to be inserted into the store are sent.  XXX For now all
       stores succeed. */
@@ -110,6 +113,33 @@ private:
   };
   
   
+  /** The scan element.  It has a single pull output.  I continuously
+      iterates over elemenets in the table returning them when pulled.
+      XXX. It does not block.  If the table is empty, it returns empty
+      tuples. When storage is abstracted to the table object, we could
+      interconnect inserts into the table with blocking/unblocking the
+      scan side. */
+  class Scan : public Element {
+  public:
+    Scan(str name,
+         std::multimap< ValueRef, TupleRef, tupleRefCompare > * table);
+
+    const char *class_name() const		{ return "Store::Scan";}
+    const char *processing() const		{ return "/l"; }
+    const char *flow_code() const		{ return "/-"; }
+
+    /** Return a match to the current lookup */
+    TuplePtr pull(int port, cbv cb);
+
+  private:
+    /** My parent's table */
+    std::multimap< ValueRef, TupleRef, Store::tupleRefCompare > * _table;
+    
+    /** My current iterator */
+    std::multimap< ValueRef, TupleRef >::iterator _iterator;
+  };
+
+
   /** Create a lookup element */
   ref< Lookup > mkLookup() {
     strbuf lName(_name);
@@ -122,6 +152,13 @@ private:
     strbuf iName(_name);
     iName.cat(":Insert");
     return New refcounted< Insert >(iName, &_table, _fieldNo);
+  }
+
+  /** Create a scan element */
+  ref< Scan > mkScan() {
+    strbuf iName(_name);
+    iName.cat(":Scan");
+    return New refcounted< Scan >(iName, &_table);
   }
 
   /** The END_OF_SEARCH tuple tag. */

@@ -43,6 +43,7 @@
 #define _uint64 Value::UINT64
 #define _string Value::STR
 #define _double Value::DOUBLE
+#define _tuple Value::TUPLE
 
 #define TST(_type,_err,_val,_src) {__LINE__,Value::_type,Pel_VM::PE_##_err,_val,_src}
 
@@ -677,7 +678,15 @@ static const ValTest vtests[] = {
   TST(DOUBLE, SUCCESS, "1",	"1.0 ->dbl" ),
   TST(DOUBLE, SUCCESS, "1",	"\"1\" ->dbl" ),
   TST(DOUBLE, SUCCESS, "0",	"1 not ->dbl" ),
-  TST(DOUBLE, SUCCESS, "0",	"null ->dbl" )
+  TST(DOUBLE, SUCCESS, "0",	"null ->dbl" ),
+  // ->t
+  TST(TUPLE, STACK_UNDERFLOW, "",	"->t"),
+  TST(TUPLE, SUCCESS, "1",		"0 ->t"),
+  // append
+  TST(TUPLE, STACK_UNDERFLOW, "",	"append"),
+  TST(TUPLE, STACK_UNDERFLOW, "",	"6 append"),
+  TST(TUPLE, SUCCESS, "",		"0 ->t 7 append")
+
 };
 static const size_t num_vtests = sizeof(vtests) / sizeof(ValTest);
 
@@ -772,6 +781,9 @@ void vm_test(Pel_VM &vm, TupleRef tpl, int i) {
     eq = (strtod(t->val,NULL)==Val_Double::cast(top)); break;
   case _string:
     eq = (Val_Str::cast(top) == t->val ); break;
+  case _tuple:
+    // Don't check
+    break;
   default:
     std::cerr << "** Unknown type " << t->t << "\n";
     eq = 1;

@@ -85,11 +85,6 @@ TuplePtr Joiner::pull(int port, cbv cb)
         TuplePtr result = mergeTuples(p);
         if (result != 0) {
           return result;
-        } else {
-          // This input yielded no result. Try again.
-          log(LoggerI::WARN,
-              -1,
-              "pull: Fetched tuple did not match fixed one! Trying again.");
         }
       } else {
         // Didn't get any tuples from my input. Fail.

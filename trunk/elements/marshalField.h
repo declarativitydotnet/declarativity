@@ -1,4 +1,4 @@
-// -*- c-basic-offset: 2; related-file-name: "hexdump.C" -*-
+// -*- c-basic-offset: 2; related-file-name: "marshalField.C" -*-
 /*
  * @(#)$Id$
  * 
@@ -7,34 +7,33 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: Element that dumps in hex the named opaque element of
- * the input tuple.  It just replaces that field in the tuple which it
- * then outputs.
+ * DESCRIPTION: Element that marshals a single field in-place within a
+ * tuple.  The field in question must be of type TUPLE.
  */
 
-#ifndef __HEXDUMP_H__
-#define __HEXDUMP_H__
+#ifndef __MARSHALFIELD_H__
+#define __MARSHALFIELD_H__
 
 #include "element.h"
 
-class Hexdump : public Element { 
+class MarshalField : public Element { 
 public:
-  Hexdump(str, unsigned);
+  MarshalField(str, unsigned);
 
-  ~Hexdump();
+  ~MarshalField();
   
   /** Overridden to perform the projecting. */
   TuplePtr simple_action(TupleRef p);
 
-  const char *class_name() const		{ return "Hexdump";}
+  const char *class_name() const		{ return "MarshalField";}
   const char *processing() const		{ return "a/a"; }
   const char *flow_code() const			{ return "x/x"; }
 
 
 private:
-  /** My field number to hexdump */
+  /** The field number I'm marshalling */
   unsigned _fieldNo;
 };
 
 
-#endif /* __HEXDUMP_H_ */
+#endif /* __MARSHALFIELD_H_ */

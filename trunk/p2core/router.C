@@ -228,7 +228,11 @@ int Router::check_push_and_pull()
           
         case Element::PULL:
           // If to port is pull, we're not OK
-          std::cerr << "Hookup from PUSH to PULL found\n";
+          std::cerr << "Hookup from PUSH["
+                    << fromElement->toString()
+                    << "] to PULL["
+                    << toElement->toString()
+                    << "] found\n";
           errors++;
           break;
           
@@ -377,8 +381,10 @@ int Router::check_hookup_range()
 }
 
 
-Router::Router(ConfigurationRef c)
-  : _elements(New refcounted< vec< ElementRef > >()),
+Router::Router(ConfigurationRef c,
+               LoggerI::Level loggingLevel)
+  : loggingLevel(loggingLevel),
+    _elements(New refcounted< vec< ElementRef > >()),
     _state(ROUTER_NEW),
     _configuration(c),
     _logger(0)

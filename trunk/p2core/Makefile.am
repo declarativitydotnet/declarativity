@@ -30,7 +30,9 @@ libp2core_la_SOURCES = \
 	val_uint64.C \
 	val_double.C \
 	val_opaque.C \
-	table.C
+	val_tuple.C \
+	table.C \
+	loggerI.C
 
 INCLUDES = @SFS_INC@
 

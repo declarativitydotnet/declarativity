@@ -34,6 +34,10 @@ for op, ar, va, desc in [
   ("ifelse",3,  "IFELSE",       "If first arg, then return second, else third"),
   ("ifpop",2,   "IFPOP",        "If first arg, then pop second, else nothing"),
   ("ifpoptuple",1,"IFPOP_TUPLE","If first arg, then pop entire tuple, else nothing"),
+
+  ("->t", 1,    "T_MKTUPLE",    "Create a tuple out of the argument"),
+  ("append", 2, "T_APPEND",     "Append first argument to second tuple"),
+  ("unbox", 1,  "T_UNBOX",      "Replaces a tuple value with its fields top to bottom"),
   
   ("not",1, 	"NOT",          "Boolean negation"),
   ("and",2,	"AND",          "Boolean AND"),

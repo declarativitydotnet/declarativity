@@ -17,16 +17,20 @@ libp2elements_la_SOURCES = \
 	slot.C \
 	print.C \
 	timedPushSource.C \
+	timestampSource.C \
 	timedPullSink.C \
 	discard.C \
 	logger.C \
 	pelTransform.C \
 	marshal.C \
+	marshalField.C \
 	hexdump.C \
 	csvparser.C \
 	unmarshal.C \
+	unmarshalField.C \
 	route.C \
 	demux.C \
+	mux.C \
 	duplicate.C \
 	dupElim.C \
 	filter.C \
@@ -34,7 +38,9 @@ libp2elements_la_SOURCES = \
 	joiner.C \
 	queue.C \
 	groupby.C \
-	randomPushSource.C
+	randomPushSource.C \
+	timedPullPush.C \
+	strToSockaddr.C
 
 INCLUDES = @SFS_INC@ -I../p2core
 

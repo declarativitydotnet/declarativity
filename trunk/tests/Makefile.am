@@ -23,6 +23,7 @@ bin_PROGRAMS 	= 	values \
 			scheduling \
 			demultiplex \
 			join \
+			reachability \
 			net \
 			logger \
 			csv \
@@ -71,6 +72,13 @@ demultiplex_LDADD = \
 
 join_SOURCES = join.C
 join_LDADD = \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+reachability_SOURCES = reachability.C
+reachability_LDADD = \
+	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@

@@ -95,7 +95,8 @@ public:
 
   /** Create a new router given a configuration of constructed but not
       necessarily configured elements. */
-  Router(ConfigurationRef configuration);
+  Router(ConfigurationRef configuration,
+         LoggerI::Level loggingLevel = LoggerI::INFO);
 
   ~Router();
 
@@ -139,6 +140,9 @@ public:
       responsibility to delete that logger if it's on the heap. */
   REMOVABLE_INLINE LoggerI * logger(LoggerI * newLogger);
   
+  /** My logging level */
+  LoggerI::Level loggingLevel;
+
 private:
   
   ref< vec< ElementRef > > _elements;

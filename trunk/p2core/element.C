@@ -340,10 +340,14 @@ REMOVABLE_INLINE void Element::log(LoggerI::Level severity,
                                    int errnum,
                                    str explanation)
 {
-  strbuf n(_name);
-  n.cat(":");
-  n.cat(_IDstr);
-  log(n, severity, errnum, explanation);
+  // Even this is a shortcut, cut off the process here as well, since
+  // creating the instance name is expensive
+  if ((_router && (severity >= _router->loggingLevel)) || (!_router)) {
+    strbuf n(_name);
+    n.cat(":");
+    n.cat(_IDstr);
+    log(n, severity, errnum, explanation);
+  }
 }
 
 REMOVABLE_INLINE void Element::log(str instanceName,
@@ -351,14 +355,19 @@ REMOVABLE_INLINE void Element::log(str instanceName,
                                    int errnum,
                                    str explanation)
 {
+  // Check logging level first
   if (_router != 0) {
-    LoggerI* l = _router->logger();
-    if (l != 0) {
-      l->log(class_name(),
-             instanceName,
-             severity,
-             errnum,
-             explanation); 
+    if (severity >= _router->loggingLevel) {
+      LoggerI* l = _router->logger();
+      if (l != 0) {
+        l->log(class_name(),
+               instanceName,
+               severity,
+               errnum,
+               explanation); 
+      } else {
+        logDefault(instanceName, severity, errnum, explanation);
+      }
     } else {
       logDefault(instanceName, severity, errnum, explanation);
     }

@@ -1,4 +1,4 @@
-// -*- c-basic-offset: 2; related-file-name: "hexdump.C" -*-
+// -*- c-basic-offset: 2; related-file-name: "strToSockaddr.C" -*-
 /*
  * @(#)$Id$
  * 
@@ -7,34 +7,35 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: Element that dumps in hex the named opaque element of
- * the input tuple.  It just replaces that field in the tuple which it
- * then outputs.
+ * DESCRIPTION: Element that translates a string field of the form
+ * "addr:port" into the corresponding sockaddr.
  */
 
-#ifndef __HEXDUMP_H__
-#define __HEXDUMP_H__
+#ifndef __STRTOSOCKADDR_H__
+#define __STRTOSOCKADDR_H__
 
 #include "element.h"
+#include "value.h"
 
-class Hexdump : public Element { 
+class StrToSockaddr : public Element { 
 public:
-  Hexdump(str, unsigned);
+  StrToSockaddr(str,
+                unsigned);
 
-  ~Hexdump();
+  ~StrToSockaddr();
   
   /** Overridden to perform the projecting. */
   TuplePtr simple_action(TupleRef p);
 
-  const char *class_name() const		{ return "Hexdump";}
+  const char *class_name() const		{ return "StrToSockaddr";}
   const char *processing() const		{ return "a/a"; }
   const char *flow_code() const			{ return "x/x"; }
 
 
 private:
-  /** My field number to hexdump */
+  /** The field number to translate */
   unsigned _fieldNo;
 };
 
 
-#endif /* __HEXDUMP_H_ */
+#endif /* __STRTOSOCKADDR_H_ */

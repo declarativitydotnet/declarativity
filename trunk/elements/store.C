@@ -40,6 +40,14 @@ Store::Lookup::Lookup(str name,
 {
 }
 
+Store::Scan::Scan(str name,
+                  std::multimap< ValueRef, TupleRef, Store::tupleRefCompare > * table)
+  : Element(name, 0, 1),
+    _table(table),
+    _iterator(table->end())
+{
+}
+
 TuplePtr Store::Insert::simple_action(TupleRef p)
 {
   // Fetch the key field
@@ -54,6 +62,20 @@ TuplePtr Store::Insert::simple_action(TupleRef p)
     
     log(LoggerI::INFO, 0, "push: accepted tuple");
     return p;
+  }
+}
+
+void Store::insert(TupleRef p)
+{
+  // Fetch the key field
+  ValuePtr key = (*p)[_fieldNo];
+  if (key == NULL) {
+    // No key field? WTF?
+    warn << "Store::insert: tuple without key field received";
+    return;
+  } else {
+    // Groovy.  Insert it
+    _table.insert(std::make_pair(key, p));
   }
 }
 
@@ -126,6 +148,17 @@ TuplePtr Store::Lookup::pull(int port, cbv cb)
     TuplePtr t;
     std::multimap< ValueRef, TupleRef >::iterator theEnd = _table->upper_bound(_key);
 
+    // {
+    //   // Dump the contents
+    //   strbuf dump;
+    //   for (std::multimap< ValueRef, TupleRef >::iterator it = _table->begin();
+    //        it != _table->end();
+    //        ++it)
+    //     dump << "  [" << ((*it).first)->toString() << ", " << ((*it).second)->toString() << "]\n";
+    //   log(LoggerI::INFO, 0, dump);
+    // }
+
+
     // Is the iterator at its end?  This should only happen if a lookup
     // returned no results at all.
     if (_iterator == theEnd) {
@@ -173,4 +206,30 @@ TuplePtr Store::Lookup::pull(int port, cbv cb)
 /** The END_OF_SEARCH tag */
 str Store::END_OF_SEARCH = "Store:END_OF_SEARCH";
 
+TuplePtr Store::Scan::pull(int port, cbv cb) 
+{
+  // Is this the right port?
+  assert(port == 0);
+
+  // Do I have elements?
+  if (_table->size() > 0) {
+    // Yes. Is the iterator at the end?
+    if (_iterator == _table->end()) {
+      // Reset it to the beginning
+      _iterator = _table->begin();
+    }
+
+    // Get the current element
+    TupleRef t = _iterator->second;
+    
+    // And advance the iterator.  Don't reset it; it will be done in the
+    // next iteration
+    _iterator++;
+
+    return t;
+  } else {
+    // No elements.  Just return the empty tuple
+    return Tuple::EMPTY;
+  }
+}
 

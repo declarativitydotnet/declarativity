@@ -24,6 +24,7 @@
 #include "val_str.h"
 #include "val_double.h"
 #include "val_null.h"
+#include "val_tuple.h"
 
 
 typedef void(Pel_VM::*Op_fn_t)(u_int32_t);
@@ -229,8 +230,12 @@ DEF_OP(PUSH_FIELD) {
 }
 DEF_OP(POP) {
   if (!result) { result = Tuple::mk(); }
-  result->append(st.top());
-  st.pop();
+  ValueRef top = st.top(); st.pop();
+  if (top->typeCode() == Value::TUPLE) {
+    // Freeze it before taking it out
+    Val_Tuple::cast(top)->freeze();
+  }
+  result->append(top);
 }
 DEF_OP(IFELSE) {
   ValueRef elseVal = st.top(); st.pop();
@@ -263,6 +268,29 @@ DEF_OP(IFPOP_TUPLE) {
          i++) {
       result->append((*operand)[i]);
     }
+  }
+}
+DEF_OP(T_MKTUPLE) {
+  ValueRef val = st.top(); st.pop();
+  TupleRef t = Tuple::mk();
+  t->append(val);
+  ValueRef tuple = Val_Tuple::mk(t);
+  st.push(tuple);
+}
+DEF_OP(T_APPEND) {
+  ValueRef value = st.top(); st.pop();
+  ValueRef tuple = st.top();
+  TupleRef t = Val_Tuple::cast(tuple);
+  t->append(value);
+}
+DEF_OP(T_UNBOX) {
+  ValueRef tuple = st.top(); st.pop();
+  TupleRef t = Val_Tuple::cast(tuple);
+  // Now start pushing fields from the end forwards
+  for (int i = t->size() - 1;
+       i >= 0;
+       i--) {
+    st.push((*t)[i]);
   }
 }
 

@@ -12,9 +12,12 @@
 #include "hexdump.h"
 
 #include "val_str.h"
+#include "val_opaque.h"
 
-Hexdump::Hexdump(str name)
-  : Element(name, 1, 1)
+Hexdump::Hexdump(str name,
+                 unsigned fieldNo)
+  : Element(name, 1, 1),
+    _fieldNo(fieldNo)
 {
 }
 
@@ -24,40 +27,45 @@ Hexdump::~Hexdump()
 
 TuplePtr Hexdump::simple_action(TupleRef p)
 {
-  // Get first tuple field
-  if (p->size() == 0) {
+  // Get field
+  ValuePtr first = (*p)[_fieldNo];
+  if (first == NULL) {
     // No such field
     log(LoggerI::WARN,
         -1,
-        "Input tuple has no first field");
+        "Input tuple has no requested field");
     return 0;
-  } 
-  ValueRef first = (*p)[0];
+  }
 
-  // Is it a string?
-  if (first->typeCode() != Value::STR) {
-    // Can't hexdump a string
+  // Is it an opaque?
+  if (first->typeCode() != Value::OPAQUE) {
+    // Can't hexdump anything but opaques
     log(LoggerI::WARN,
         -1,
-        "Input tuple's first field is not a string");
+        "Input tuple's field to hexdump is not an opaque");
     return 0;
   }
   
   // Hexdump and return new tuple
-  str firstStr = Val_Str::cast(first);
-  str s = strbuf() << hexdump(firstStr, firstStr.len());
-  TuplePtr hexedTuple = Tuple::mk();
-  if (hexedTuple == 0) {
-    // Couldn't create one. Memory problems?
-    log(LoggerI::WARN,
-        -1,
-        "Couldn't allocate new tuple");
+  ref<suio> u = Val_Opaque::cast(first);
+  char *buf = suio_flatten(u);
+  size_t sz = u->resid();
+  str s = strbuf() << hexdump(buf, sz);
 
-    return 0;
-  } else {
-    // Stick the string into a tuple field and into the tuple
-    hexedTuple->append(Val_Str::mk(s));
-    hexedTuple->freeze();
-    return hexedTuple;
+  // And create the output tuple
+  TupleRef newTuple = Tuple::mk();
+  for (unsigned field = 0;
+       field < _fieldNo;
+       field++) {
+    newTuple->append((*p)[field]);
   }
+  newTuple->append(Val_Str::mk(s));
+  for (unsigned field = _fieldNo + 1;
+       field < p->size();
+       field++) {
+    newTuple->append((*p)[field]);
+  }
+  newTuple->freeze();
+
+  return newTuple;
 }

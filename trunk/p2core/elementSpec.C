@@ -73,9 +73,6 @@ void ElementSpec::initializePorts()
     pStop = (*personalityPointer == '/');
     fStop = (*flowPointer == '/');
 
-    // Better not be at the end of the specs
-    assert(!pStop && !fStop);
-
     // Should I change the current personality?
     if (!pStop) {
       pCurrent = (Element::Processing) *personalityPointer;

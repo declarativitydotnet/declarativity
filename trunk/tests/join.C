@@ -43,7 +43,7 @@ void killJoin()
     transformation flows, each dropping different tuples, and
     constructing the different "table" streams.  Then join them again at
     the join element producing the result. */
-void testSimpleJoin()
+void testSimpleJoin(LoggerI::Level level)
 {
   std::cout << "\nCHECK SIMPLE JOIN\n";
 
@@ -141,7 +141,7 @@ void testSimpleJoin()
 
 
 
-  RouterRef router = New refcounted< Router >(conf);
+  RouterRef router = New refcounted< Router >(conf, level);
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized simple join.\n";
   } else {
@@ -163,7 +163,13 @@ int main(int argc, char **argv)
 {
   std::cout << "\nJOIN\n";
 
-  testSimpleJoin();
+  LoggerI::Level level = LoggerI::ALL;
+  if (argc > 1) {
+    str levelName(argv[1]);
+    level = LoggerI::levelFromName[levelName];
+  }
+
+  testSimpleJoin(level);
 
   return 0;
 }

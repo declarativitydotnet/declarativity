@@ -43,7 +43,8 @@ public:
     INT64,
     UINT64,
     DOUBLE,
-    OPAQUE
+    OPAQUE,
+    TUPLE
   };
   
   // The type name
