@@ -12,8 +12,6 @@
 # DESCRIPTION: Makefile for the P2 net library
 #
 
-CXXFLAGS=-g -O2 -Wall
-
 lib_LTLIBRARIES = libp2net.la
 libp2net_la_SOURCES = \
 	udpsuio.C \

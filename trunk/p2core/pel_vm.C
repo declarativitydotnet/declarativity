@@ -285,19 +285,29 @@ DEF_OP(MOD) {
 // about operand order on the stack!
 //
 DEF_OP(STR_LT) { 
-  st.push(New refcounted<TupleField>(pop_string() > pop_string())); 
+  str s1 = pop_string();
+  str s2 = pop_string();
+  st.push(New refcounted<TupleField>(s2 < s1));
 }
 DEF_OP(STR_LTE) { 
-  st.push(New refcounted<TupleField>(pop_string() >= pop_string())); 
+  str s1 = pop_string();
+  str s2 = pop_string();
+  st.push(New refcounted<TupleField>(s2 <= s1));
 }
 DEF_OP(STR_GT) { 
-  st.push(New refcounted<TupleField>(pop_string() < pop_string())); 
+  str s1 = pop_string();
+  str s2 = pop_string();
+  st.push(New refcounted<TupleField>(s2 > s1));
 }
 DEF_OP(STR_GTE) { 
-  st.push(New refcounted<TupleField>(pop_string() <= pop_string())); 
+  str s1 = pop_string();
+  str s2 = pop_string();
+  st.push(New refcounted<TupleField>(s2 >= s1));
 }
 DEF_OP(STR_EQ) { 
-  st.push(New refcounted<TupleField>(pop_string() == pop_string())); 
+  str s1 = pop_string();
+  str s2 = pop_string();
+  st.push(New refcounted<TupleField>(s2 == s1));
 }
 DEF_OP(STR_CAT) { 
   str s1 = pop_string();
