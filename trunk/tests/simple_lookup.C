@@ -95,6 +95,7 @@ void issue_lookup(LoggerI::Level level, ptr<LookupGenerator> lookup)
 
   ElementSpecRef func    = conf->addElement(New refcounted< FunctorSource >(str("Source"), lookup));
   ElementSpecRef print   = conf->addElement(New refcounted< Print >(strbuf("lookup")));
+		       
   ElementSpecRef encap = conf->addElement(New refcounted< PelTransform >("encapRequest",
 									  "$1 pop \
                                                      $0 ->t $1 append $2 append $3 append $4 append pop")); // the rest
