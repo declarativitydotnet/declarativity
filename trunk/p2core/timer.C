@@ -29,54 +29,45 @@
  */
 
 #include <timer.h>
-#include <element.h>
 #include <router.h>
 #include <master.h>
 #include <routerthread.h>
-#include <task.h>
 
-/*
- * element_hook is a callback that gets called when a Timer,
- * constructed with just an Element instance, expires. 
- * 
- * When used in userlevel or kernel polling mode, timer is maintained by
- * Click, so element_hook is called within Click.
- */
-static void element_hook(Timer *, void *thunk)
+
+REMOVABLE_INLINE struct timeval make_timeval(int sec, int usec)
 {
-  Element *e = (Element *)thunk;
-  e->run_timer();
+  struct timeval tv;
+  tv.tv_sec = sec;
+  tv.tv_usec = usec;
+  return tv;
 }
 
-static void task_hook(Timer *, void *thunk)
+REMOVABLE_INLINE struct timeval & operator+=(struct timeval &a, const struct timeval &b)
 {
-  Task *task = (Task *)thunk;
-  task->reschedule();
+  a.tv_sec += b.tv_sec;
+  a.tv_usec += b.tv_usec;
+  if (a.tv_usec >= 1000000) {
+    a.tv_sec++;
+    a.tv_usec -= 1000000;
+  }
+  return a;
 }
 
-Timer::Timer(TimerHook hook, void *thunk)
+REMOVABLE_INLINE struct timeval operator+(struct timeval a, const struct timeval &b)
+{
+  a += b;
+  return a;
+}
+
+REMOVABLE_INLINE void click_gettimeofday(struct timeval * tvp)
+{
+  gettimeofday(tvp, (struct timezone *)0);
+}
+
+
+Timer::Timer()
   : _prev(0),
     _next(0),
-    _hook(hook),
-    _thunk(thunk),
-    _router(0)
-{
-}
-
-Timer::Timer(Element *e)
-  : _prev(0),
-    _next(0),
-    _hook(element_hook),
-    _thunk(e),
-    _router(0)
-{
-}
-
-Timer::Timer(Task *t)
-  : _prev(0),
-    _next(0),
-    _hook(task_hook),
-    _thunk(t),
     _router(0)
 {
 }
@@ -107,8 +98,9 @@ void Timer::schedule_at(const timeval &when)
   trav->_prev = this;
 
   // if we changed the timeout, wake up the first thread
-  if (head->_next == this)
-    master->_threads[1]->unsleep();
+  if (head->_next == this) {
+    master->_thread->unsleep();
+  }
 
   // done
   master->_timer_lock.release();
@@ -156,11 +148,6 @@ REMOVABLE_INLINE void Timer::initialize(Router *router)
   _router = router;
 }
 
-REMOVABLE_INLINE void Timer::initialize(Element *element)
-{
-  initialize(element->router());
-}
-
 REMOVABLE_INLINE void Timer::schedule_now()
 {
   schedule_after_ms(0);
@@ -184,4 +171,14 @@ REMOVABLE_INLINE void Timer::reschedule_after(const timeval &delta)
 REMOVABLE_INLINE void Timer::reschedule_at(const timeval &tv)
 {
   schedule_at(tv);
+}
+
+void Timer::make_list()
+{
+    _prev = _next = this;
+}
+
+void Timer::unmake_list()
+{
+    _prev = _next = 0;
 }

@@ -1,8 +1,8 @@
-// -*- c-basic-offset: 2;
+// -*- c-basic-offset: 2; related-file-name: "hooker.h" -*-
 /*
  * @(#)$Id$
  *
- * A shell of the Click synchronization primitives by Eddie Kohler
+ * Modified from the Click Task class by Eddie Kohler and Benjie Chen
  * 
  * Copyright (c) 1999-2000 Massachusetts Institute of Technology
  * Copyright (c) 2004 Regents of the University of California
@@ -23,22 +23,29 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: Synchronization primitives.  Mostly no-ops for the
- * user-level runtime.
+ * DESCRIPTION: A special task for calling arbitrary functions (TaskHooks)
  */
-#ifndef __SYNC_H__
-#define __SYNC_H__
 
-/** An empty Spinlock implementation */
-class Spinlock { public:
+#include <hooker.h>
 
-  Spinlock()					{ }
+// - Changes to _thread are protected by _thread->lock.
+// - Changes to _thread_preference are protected by
+//   _router->master()->task_lock.
+// - If _pending is nonzero, then _pending_next is nonnull.
+// - Either _thread_preference == _thread->thread_id(), or
+//   _thread->thread_id() == -1.
 
-  REMOVABLE_INLINE void acquire()		{ }
-  REMOVABLE_INLINE void release()		{ }
-  REMOVABLE_INLINE bool attempt()		{ return true; }
-  REMOVABLE_INLINE bool nested() const		{ return false; }
-  
-};
 
-#endif
+REMOVABLE_INLINE Hooker::Hooker(TaskHook hook, void *opaque)
+  : Task(),
+    _hook(hook),
+    _opaque(opaque)
+{
+  assert(hook != 0);
+}
+
+REMOVABLE_INLINE void Hooker::run()
+{
+  (void) _hook(this, _opaque);
+}
+

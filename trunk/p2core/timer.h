@@ -31,27 +31,33 @@
 #include <element.h>
 #include <sys/time.h>
 
-class Element;
-class Router;
-class Timer;
-class Task;
 
-typedef void (*TimerHook)(Timer *, void *);
+
+/** Glue functions for timers */
+REMOVABLE_INLINE struct timeval make_timeval(int sec, int usec);
+REMOVABLE_INLINE struct timeval & operator+=(struct timeval &a, const struct timeval &b);
+REMOVABLE_INLINE struct timeval operator+(struct timeval a, const struct timeval &b);
+REMOVABLE_INLINE void click_gettimeofday(struct timeval * tvp);
+
+
+class Router;
 
 class Timer {
  public:
   
-  Timer(TimerHook, void *);
-  Timer(Element *);			// call element->run_timer()
-  Timer(Task *);			// call task->reschedule()
+  Timer();
   ~Timer()				{ if (scheduled()) unschedule(); }
+
+  /** Call whatever it is this task is doing.  Instances of this class
+      should never be run.  They are only used as sentinel elements of
+      task lists. */
+  REMOVABLE_INLINE virtual void run()	 { assert(false); };
 
   bool initialized() const		{ return _router != 0; }
   bool scheduled() const		{ return _prev != 0; }
   const timeval &expiry() const		{ return _expiry; }
   
   REMOVABLE_INLINE void initialize(Router *);
-  REMOVABLE_INLINE void initialize(Element *);
   void cleanup()			{ unschedule(); }
 
   void schedule_at(const timeval &);
@@ -76,8 +82,6 @@ class Timer {
   Timer *_next;
 
   timeval _expiry;
-  TimerHook _hook;
-  void *_thunk;
   Router *_router;
 
   Timer(const Timer &);

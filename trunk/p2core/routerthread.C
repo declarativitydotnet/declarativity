@@ -25,6 +25,8 @@
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
  * DESCRIPTION: Router thread class
+ *
+ * The router thread contains a lock for all of its tasks queued up.
  */
 
 #include <router.h>
@@ -32,11 +34,57 @@
 #include <routerthread.h>
 #include <master.h>
 
+void RouterThread::driver()
+{
+  // Counter used for periodic tasks such as timers, OS hooks, etc.
+  int iter = 0;
+  
+  while (_master->running()) {
+    iter++;
+
+    // run occasional tasks: timers, select, etc.
+    if ((iter % _iters_per_os) == 0) {
+      run_os();
+    }
+    if ((iter % _iters_per_timers) == 0) {
+      _master->run_timers();
+    }
+
+    // run task requests (1)
+    if (_pending) {
+      _master->process_pending(this);
+    }
+
+    // run a bunch of tasks
+    run_tasks(_tasks_per_iter);
+  }
+
+  unlock_tasks();
+}
+
+
+REMOVABLE_INLINE void RouterThread::run_os()
+{
+  unlock_tasks();
+
+  _master->run_selects();
+    
+  nice_lock_tasks();
+}
+
+
+
+
 
 RouterThread::RouterThread(Master *m, int id)
-  : Task(Task::error_hook, 0), _master(m), _id(id)
+  : _taskList(),
+    _master(m),
+    _id(id)
 {
-  _prev = _next = _thread = this;
+  // Make the task list contain only the sentinel
+  _taskList._next = _taskList._prev = &_taskList;
+
+  
   _task_lock_waiting = 0;
   _pending = 0;
 
@@ -45,14 +93,6 @@ RouterThread::RouterThread(Master *m, int id)
 
   _iters_per_os = 64;           /* iterations per select(), assuming
                                    user-level runs */
-
-
-#if CLICK_DEBUG_SCHEDULING
-  _thread_state = S_BLOCKED;
-  _driver_epoch = 0;
-  _driver_task_epoch = 0;
-  _task_epoch_first = 0;
-#endif
 }
 
 RouterThread::~RouterThread()
@@ -60,18 +100,8 @@ RouterThread::~RouterThread()
   unschedule_all_tasks();
 }
 
-REMOVABLE_INLINE void
-RouterThread::nice_lock_tasks()
+REMOVABLE_INLINE void RouterThread::nice_lock_tasks()
 {
-#if CLICK_LINUXMODULE
-  // If other people are waiting for the task lock, give them a second to
-  // catch it before we claim it.
-  if (_task_lock_waiting > 0) {
-    unsigned long done_jiffies = click_jiffies() + CLICK_HZ;
-    while (_task_lock_waiting > 0 && click_jiffies() < done_jiffies)
-      /* XXX schedule() instead of spinlock? */;
-  }
-#endif
   lock_tasks();
 }
 
@@ -200,218 +230,23 @@ RouterThread::task_epoch_time(uint32_t epoch) const
 /******************************/
 
 /* Run at most 'ntasks' tasks. */
-REMOVABLE_INLINE void
-RouterThread::run_tasks(int ntasks)
+REMOVABLE_INLINE void RouterThread::run_tasks(int ntasks)
 {
-#if CLICK_DEBUG_SCHEDULING
-  _driver_task_epoch++;
-  click_gettimeofday(&_task_epoch_time[_driver_task_epoch % TASK_EPOCH_BUFSIZ]);
-  if ((_driver_task_epoch % TASK_EPOCH_BUFSIZ) == 0)
-    _task_epoch_first = _driver_task_epoch;
-#endif
-    
   // never run more than 32768 tasks
   if (ntasks > 32768)
     ntasks = 32768;
-
-#if __MTCLICK__
-  // cycle counter for adaptive scheduling among processors
-  uint64_t cycles;
-#endif
-
+  
   Task *t;
-  while ((t = scheduled_next()), t != this && ntasks >= 0) {
-
-#if __MTCLICK__
-    int runs = t->fast_unschedule();
-    if (runs > PROFILE_ELEMENT)
-      cycles = click_get_cycles();
-#else
+  while ((t = scheduled_next()),
+         t != &_taskList && ntasks >= 0) {
+    
     t->fast_unschedule();
-#endif
-
-    t->call_hook();
-
-#if __MTCLICK__
-    if (runs > PROFILE_ELEMENT) {
-      unsigned delta = click_get_cycles() - cycles;
-      t->update_cycles(delta/32 + (t->cycles()*31)/32);
-    }
-#endif
-
+    
+    t->run();
+    
     ntasks--;
   }
 }
-
-#if CLICK_DEBUG_SCHEDULING
-# define SET_STATE(s)		_thread_state = (s)
-#else
-# define SET_STATE(s)		/* nada */
-#endif
-
-REMOVABLE_INLINE void
-RouterThread::run_os()
-{
-#if CLICK_LINUXMODULE
-  // set state to interruptible early to avoid race conditions
-  _sleeper = current;
-  current->state = TASK_INTERRUPTIBLE;
-#endif
-  unlock_tasks();
-
-#if CLICK_USERLEVEL
-  _master->run_selects(!empty());
-#elif !defined(CLICK_GREEDY)
-# if CLICK_LINUXMODULE		/* Linux kernel module */
-  if (!empty()) {		// just schedule others for a second
-    current->state = TASK_RUNNING;
-    SET_STATE(S_PAUSED);
-    schedule();
-  } else {
-    struct timeval wait;
-    if (_id != 0 || !_master->timer_delay(&wait)) {
-      SET_STATE(S_BLOCKED);
-      schedule();
-    } else if (wait.tv_sec > 0 || wait.tv_usec > (1000000 / CLICK_HZ)) {
-      SET_STATE(S_TIMER);
-      (void) schedule_timeout((wait.tv_sec * CLICK_HZ) + (wait.tv_usec * CLICK_HZ / 1000000) - 1);
-    } else {
-      current->state = TASK_RUNNING;
-      SET_STATE(S_PAUSED);
-      schedule();
-    }
-  }
-  SET_STATE(S_RUNNING);
-# else				/* BSD kernel module */
-  extern int click_thread_priority;
-  int s = splhigh();
-  curproc->p_priority = curproc->p_usrpri = click_thread_priority;
-  setrunqueue(curproc);
-  mi_switch();
-  splx(s);
-# endif
-#endif
-    
-  nice_lock_tasks();
-
-#if CLICK_LINUXMODULE
-  // set state to interruptible early to avoid race conditions
-  _sleeper = 0;
-#endif
-}
-
-void
-RouterThread::driver()
-{
-  const volatile int * const runcount = _master->runcount_ptr();
-  int iter = 0;
-
-  nice_lock_tasks();
-    
-#ifdef HAVE_ADAPTIVE_SCHEDULER
-  int restride_iter = 0;
-  struct timeval t_before, restride_t_before, t_now;
-  client_set_tickets(C_CLICK, DRIVER_TOTAL_TICKETS / 2);
-  client_set_tickets(C_KERNEL, DRIVER_TOTAL_TICKETS / 2);
-  _cur_click_share = Task::MAX_UTILIZATION / 2;
-  click_gettimeofday(&restride_t_before);
-#endif
-
-  SET_STATE(S_RUNNING);
-
-#ifndef CLICK_NS
- driver_loop:
-#endif
-
-#if CLICK_DEBUG_SCHEDULING
-  _driver_epoch++;
-#endif
-
-  if (*runcount > 0) {
-    // run occasional tasks: timers, select, etc.
-    iter++;
-	
-#ifndef HAVE_ADAPTIVE_SCHEDULER	/* Adaptive scheduler runs OS itself. */
-    if ((iter % _iters_per_os) == 0)
-      run_os();
-#endif
-
-    if ((iter % _iters_per_timers) == 0) {
-      _master->run_timers();
-#ifdef CLICK_NS
-      // If there's another timer, tell the simulator to make us
-      // run when it's due to go off.
-      struct timeval now, nextdelay, nexttime;
-      if (_master->timer_delay(&nextdelay)) {
-        click_gettimeofday(&now);
-        timeradd(&now, &nextdelay, &nexttime);
-        simclick_sim_schedule(_master->_siminst, _master->_clickinst, &nexttime);
-      }
-#endif
-    }
-  }
-
-  // run task requests (1)
-  if (_pending)
-    _master->process_pending(this);
-
-#ifndef HAVE_ADAPTIVE_SCHEDULER
-  // run a bunch of tasks
-  run_tasks(_tasks_per_iter);
-#else
-  click_gettimeofday(&t_before);
-  int client;
-  if (PASS_GT(_clients[C_KERNEL].pass, _clients[C_CLICK].pass)) {
-    client = C_CLICK;
-    run_tasks(_tasks_per_iter);
-  } else {
-    client = C_KERNEL;
-    run_os();
-  }
-  click_gettimeofday(&t_now);
-  client_update_pass(client, t_before, t_now);
-  check_restride(restride_t_before, t_now, restride_iter);
-#endif
-
-#ifdef CLICK_BSDMODULE
-  // wake up tasks that went to sleep, waiting on packets
-  if (_wakeup_list) {
-    int s = splimp();
-    Task *t;
-    while ((t = _wakeup_list) != 0) {
-      _wakeup_list = t->_next;
-      t->reschedule();
-    }
-    splx(s);
-  }
-#endif
-
-  // run loop again, unless driver is stopped
-  if (*runcount > 0) {
-#ifndef CLICK_NS
-    // Everyone except the NS driver stays in driver() until the driver is
-    // stopped.
-    goto driver_loop;
-#endif
-  } else {
-    unlock_tasks();
-    bool b = _master->check_driver();
-    nice_lock_tasks();
-#ifndef CLICK_NS
-    if (b)
-      goto driver_loop;
-#else
-    (void) b;
-#endif
-  }
-
-  unlock_tasks();
-
-#ifdef HAVE_ADAPTIVE_SCHEDULER
-  _cur_click_share = 0;
-#endif
-}
-
 
 /******************************/
 /* Secondary driver functions */
@@ -420,14 +255,11 @@ RouterThread::driver()
 void
 RouterThread::driver_once()
 {
-  if (!_master->check_driver())
-    return;
-  
   lock_tasks();
   Task *t = scheduled_next();
-  if (t != this) {
+  if (t != &_taskList) {
     t->fast_unschedule();
-    t->call_hook();
+    t->run();
   }
   unlock_tasks();
 }
@@ -437,67 +269,42 @@ RouterThread::unschedule_all_tasks()
 {
   lock_tasks();
   Task *t;
-  while ((t = scheduled_next()), t != this)
+  while ((t = scheduled_next()),
+         t != &_taskList) {
     t->fast_unschedule();
+  }
   unlock_tasks();
 }
 
-#if CLICK_DEBUG_SCHEDULING
-String
-RouterThread::thread_state_name(int ts)
+
+REMOVABLE_INLINE bool RouterThread::empty() const
 {
-  switch (ts) {
-  case S_RUNNING:		return "running";
-  case S_PAUSED:		return "paused";
-  case S_TIMER:		return "timer";
-  case S_BLOCKED:		return "blocked";
-  default:			return String(ts);
-  }
-}
-#endif
-
-
-
-REMOVABLE_INLINE bool
-RouterThread::empty() const
-{
-  return ((const Task *)_next == this) && !_pending;
+  return (_taskList._next == &_taskList) && !_pending;
 }
 
-REMOVABLE_INLINE void
-RouterThread::lock_tasks()
+REMOVABLE_INLINE void RouterThread::lock_tasks()
 {
   _task_lock_waiting++;
   _lock.acquire();
   _task_lock_waiting--;
 }
 
-REMOVABLE_INLINE bool
-RouterThread::attempt_lock_tasks()
+REMOVABLE_INLINE bool RouterThread::attempt_lock_tasks()
 {
   return _lock.attempt();
 }
 
-REMOVABLE_INLINE void
-RouterThread::unlock_tasks()
+REMOVABLE_INLINE void RouterThread::unlock_tasks()
 {
   _lock.release();
 }
 
-REMOVABLE_INLINE void
-RouterThread::unsleep()
+REMOVABLE_INLINE void RouterThread::unsleep()
 {
-#ifdef CLICK_LINUXMODULE
-  if (_sleeper)
-    wake_up_process(_sleeper);
-#endif
 }
 
-REMOVABLE_INLINE void
-RouterThread::add_pending()
+REMOVABLE_INLINE void RouterThread::add_pending()
 {
   _pending++;
   unsleep();
 }
-
-CLICK_ENDDECLS

@@ -78,6 +78,25 @@
  *    their handlers (introspection interfaces) and any element-specific
  *    other initialization.  This is the stage at which "active"
  *    elements place themselves in the run queue.
+ *
+ *
+ * Synchronization machinery:
+ *  
+ *  Each router has a runcount used as a semaphore (it's an integer
+ *  protected by a global lock stored at the master).
+ *
+ *  The master also have a runcount which is the minimum of all router
+ *  runcount values.
+ *
+ *  Correctly initialized routers have runcount of at least
+ *  1. Incorrectly initialized router have non-positive runcounts.
+ *
+ *  A router thread runs continuously, as long as the master runcount
+ *  remains positive.  When a router thread detects that the master
+ *  runcount is no longer positive, it kicks the master to clean up its
+ *  routers. If after the cleanup the master reports there's more
+ *  running to be had by all, the driver method of the router thread
+ *  continues the loop.
  */
 
 
@@ -493,294 +512,38 @@ int Router::check_hookup_elements()
 
 void Router::activate()
 {
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ACCESS
-
-
-// CREATION 
-#if 0
-int Router::add_element(Element *e, const String &ename,
-                        const String &conf,
-                        const String &landmark)
-{
-  // router now owns the element
-  if (_state != ROUTER_NEW || !e)
-    return -1;
-  _elements.push_back(e);
-  _element_names.push_back(ename);
-  _element_landmarks.push_back(landmark);
-  _element_configurations.push_back(conf);
-  int i = _elements.size() - 1;
-  e->attach_router(this, i);
-  return i;
-}
-
-// RUNCOUNT
-
-void
-Router::set_runcount(int x)
-{
-  _master->_runcount_lock.acquire();
-  _runcount = x;
-  if (_runcount < _master->_runcount) {
-    _master->_runcount = _runcount;
-    // ensure that at least one thread is awake to handle the stop event
-    if (_master->_runcount <= 0)
-      _master->_threads[1]->unsleep();
-  }
-  _master->_runcount_lock.release();
-}
-
-void
-Router::adjust_runcount(int delta)
-{
-  _master->_runcount_lock.acquire();
-  _runcount += delta;
-  if (_runcount < _master->_runcount)
-    _master->_runcount = _runcount;
-  _master->_runcount_lock.release();
-}
-
-
-// FLOWS
-
-int
-Router::downstream_inputs(Element *first_element, int first_output,
-			  ElementFilter *stop_filter, Bitvector &results)
-{
-  if (_state < ROUTER_PREINITIALIZE)
-    return -1;
-  make_hookpidxes();
-  int nipidx = ninput_pidx();
-  int nopidx = noutput_pidx();
-  int nhook = _hookpidx_from.size();
-  
-  Bitvector old_results(nipidx, false);
-  results.assign(nipidx, false);
-  Bitvector diff, scratch;
-  
-  Bitvector outputs(nopidx, false);
-  int first_eid = first_element->eindex(this);
-  if (first_eid < 0)
-    return -1;
-  for (int i = 0; i < _elements[first_eid]->noutputs(); i++)
-    if (first_output < 0 || first_output == i)
-      outputs[_output_pidx[first_eid]+i] = true;
-  
-  while (true) {
-    old_results = results;
-    for (int i = 0; i < nhook; i++)
-      if (outputs[_hookpidx_from[i]])
-	results[_hookpidx_to[i]] = true;
-    
-    diff = results - old_results;
-    if (diff.zero())
-      break;
-    
-    outputs.assign(nopidx, false);
-    for (int i = 0; i < nipidx; i++)
-      if (diff[i]) {
-	int ei = _input_eidx[i];
-	int port = input_pidx_port(i);
-	if (!stop_filter || !stop_filter->match_input(_elements[ei], port)) {
-	  _elements[ei]->forward_flow(port, &scratch);
-	  outputs.or_at(scratch, _output_pidx[ei]);
-	}
-      }
-  }
-  
-  return 0;
-}
-
-int
-Router::downstream_elements(Element *first_element, int first_output,
-			    ElementFilter *stop_filter,
-			    Vector<Element *> &results)
-{
-  Bitvector bv;
-  if (downstream_inputs(first_element, first_output, stop_filter, bv) < 0)
-    return -1;
-  int last_input_eidx = -1;
-  for (int i = 0; i < ninput_pidx(); i++)
-    if (bv[i] && _input_eidx[i] != last_input_eidx) {
-      last_input_eidx = _input_eidx[i];
-      results.push_back(_elements[last_input_eidx]);
-    }
-  return 0;
-}
-
-int
-Router::downstream_elements(Element *first_element, int first_output,
-			    Vector<Element *> &results)
-{
-  return downstream_elements(first_element, first_output, 0, results);
-}
-
-int
-Router::downstream_elements(Element *first_element, Vector<Element *> &results)
-{
-  return downstream_elements(first_element, -1, 0, results);
-}
-
-int
-Router::upstream_outputs(Element *first_element, int first_input,
-			 ElementFilter *stop_filter, Bitvector &results)
-{
-  if (_state < ROUTER_PREINITIALIZE)
-    return -1;
-  make_hookpidxes();
-  int nipidx = ninput_pidx();
-  int nopidx = noutput_pidx();
-  int nhook = _hookpidx_from.size();
-  
-  Bitvector old_results(nopidx, false);
-  results.assign(nopidx, false);
-  Bitvector diff, scratch;
-  
-  Bitvector inputs(nipidx, false);
-  int first_eid = first_element->eindex(this);
-  if (first_eid < 0)
-    return -1;
-  for (int i = 0; i < _elements[first_eid]->ninputs(); i++)
-    if (first_input < 0 || first_input == i)
-      inputs[_input_pidx[first_eid]+i] = true;
-  
-  while (true) {
-    old_results = results;
-    for (int i = 0; i < nhook; i++)
-      if (inputs[_hookpidx_to[i]])
-	results[_hookpidx_from[i]] = true;
-    
-    diff = results - old_results;
-    if (diff.zero())
-      break;
-    
-    inputs.assign(nipidx, false);
-    for (int i = 0; i < nopidx; i++)
-      if (diff[i]) {
-	int ei = _output_eidx[i];
-	int port = output_pidx_port(i);
-	if (!stop_filter || !stop_filter->match_output(_elements[ei], port)) {
-	  _elements[ei]->backward_flow(port, &scratch);
-	  inputs.or_at(scratch, _input_pidx[ei]);
-	}
-      }
-  }
-  
-  return 0;
-}
-
-int
-Router::upstream_elements(Element *first_element, int first_input,
-			  ElementFilter *stop_filter,
-			  Vector<Element *> &results)
-{
-  Bitvector bv;
-  if (upstream_outputs(first_element, first_input, stop_filter, bv) < 0)
-    return -1;
-  int last_output_eidx = -1;
-  for (int i = 0; i < noutput_pidx(); i++)
-    if (bv[i] && _output_eidx[i] != last_output_eidx) {
-      last_output_eidx = _output_eidx[i];
-      results.push_back(_elements[last_output_eidx]);
-    }
-  return 0;
-}
-
-int
-Router::upstream_elements(Element *first_element, int first_input,
-			  Vector<Element *> &results)
-{
-  return upstream_elements(first_element, first_input, 0, results);
-}
-
-int
-Router::upstream_elements(Element *first_element, Vector<Element *> &results)
-{
-  return upstream_elements(first_element, -1, 0, results);
-}
-
-
-// INITIALIZATION
-
-String
-Router::context_message(int element_no, const char *message) const
-{
-  Element *e = _elements[element_no];
-  StringAccum sa;
-  if (e->landmark())
-    sa << e->landmark() << ": ";
-  sa << message << " '" << e->declaration() << "':";
-  return sa.take_string();
-}
-
-static const Vector<int> *configure_order_phase;
-
-extern "C" {
-  static int
-  configure_order_compar(const void *athunk, const void *bthunk)
-  {
-    const int *a = (const int *)athunk, *b = (const int *)bthunk;
-    return (*configure_order_phase)[*a] - (*configure_order_phase)[*b];
-  }
-}
-
-void
-Router::initialize_handlers(bool defaults, bool specifics)
-{
-  _ehandler_first_by_element.assign(nelements(), -1);
-  _ehandler_to_handler.clear();
-  _ehandler_next.clear();
-  _allow_star_handler = true;
-
-  _handler_first_by_name.clear();
-
-  _nhandlers = (defaults || specifics ? 0 : -1);
-
-  if (defaults)
-    for (int i = 0; i < _elements.size(); i++)
-      _elements[i]->add_default_handlers(specifics);
-
-  if (specifics)
-    for (int i = 0; i < _elements.size(); i++)
-      _elements[i]->add_handlers();
-}
-
-
-void
-Router::activate(bool foreground, ErrorHandler *errh)
-{
-  if (_state != ROUTER_LIVE || _running != RUNNING_PAUSED)
+  if (_state != ROUTER_LIVE) {
     return;
-  
-  // Activate router
-  master()->run_router(this, foreground);
-  // sets _running to RUNNING_BACKGROUND or RUNNING_ACTIVE
+  }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if 0
 
 
 // HANDLERS

@@ -35,6 +35,10 @@
 #include <vec.h>
 #include <master.h>
 
+// Put here to resolve cyclical dependencies
+class Master;
+typedef ref< Master > MasterRef;
+
 class Router {
 public:
   
@@ -109,22 +113,17 @@ public:
   // ELEMENTS
   int nelements() const				{ return _elements->size(); }
   const ref< vec< ElementRef > > elements() const { return _elements; }
-
+  
   // MASTER scheduler
   MasterRef master() const			{ return _master; }
-  enum { RUNNING_DEAD = -2,
-         RUNNING_INACTIVE = -1,
-         RUNNING_PAUSED = 0,
-         RUNNING_BACKGROUND = 1,
-         RUNNING_ACTIVE = 2 };
   
 private:
-
+  
   /** The scheduler */
   MasterRef _master;
-    
+  
   ref< vec< ElementRef > > _elements;
-
+  
   /** The router state */
   int _state;
 
@@ -159,5 +158,6 @@ private:
 
 /** A handy dandy type for router references */
 typedef ref< Router > RouterRef;
+typedef ptr< Router > RouterPtr;
 
 #endif

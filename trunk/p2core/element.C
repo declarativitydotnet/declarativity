@@ -355,3 +355,15 @@ REMOVABLE_INLINE Element::Port::Port(Element *owner,
   (void) owner;
 }
 
+int Element::initialize()
+{
+  return 0;
+}
+
+bool Element::run_task()
+{
+  // This should never be run
+  assert(0);
+  return false;
+}
+

@@ -1,4 +1,4 @@
-// -*- c-basic-offset: 2; related-file-name: "element.C" -*-
+// -*- c-basic-offset: 2; related-file-name: "memoryPush.C" -*-
 /*
  * @(#)$Id$
  * 
@@ -7,37 +7,38 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: Element which pulls tuples in order from an array of
- * tuple references to its single output.
+ * DESCRIPTION: Element which pushes tuples in order from an array of
+ * tuple references to its single output.  Loosely simplified from
+ * Click's infinite source.
  *
  */
 
-#ifndef __MEMORY_PULL_H__
-#define __MEMORY_PULL_H__
+#ifndef __MEMORY_PUSH_H__
+#define __MEMORY_PUSH_H__
 
 #include <element.h>
 
-class MemoryPull : public Element { 
+class MemoryPush : public Element { 
  public:
   
   /** Initialized with the tuple ref array and size.  Eventually, this
       will be given via a configure method or some such. */
-  MemoryPull(ref< vec< TupleRef > > tupleRefBuffer,
+  MemoryPush(ref< vec< TupleRef > > tupleRefBuffer,
              int bufferSize);
 
   /** Remove the tuple ref array */
-  ~MemoryPull();
+  ~MemoryPush();
   
   /** An error. To be replaced by more general exception machinery. */
-  struct MemoryPullError {};
+  struct MemoryPushError {};
   
-  const char *class_name() const		{ return "MemoryPull"; }
+  const char *class_name() const		{ return "MemoryPush"; }
   const char *flow_code() const			{ return "/x"; }
   const char *processing() const		{ return "/l"; }
 
   /** Overridden because we have no input ports, whereas the default
       processes inputs before returning them.  */
-  TuplePtr pull(int port, cbv cb);
+  int push(int port, TupleRef, cbv cb);
   
  private:
   /** The tuple ref array from which I pull */

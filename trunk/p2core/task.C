@@ -26,10 +26,10 @@
  * DESCRIPTION: A linked list of schedulable entities
  */
 
-#include <task.h>
+#include <master.h>
 #include <router.h>
 #include <routerthread.h>
-#include <master.h>
+#include <task.h>
 
 // - Changes to _thread are protected by _thread->lock.
 // - Changes to _thread_preference are protected by
@@ -37,6 +37,64 @@
 // - If _pending is nonzero, then _pending_next is nonnull.
 // - Either _thread_preference == _thread->thread_id(), or
 //   _thread->thread_id() == -1.
+
+
+REMOVABLE_INLINE Task::Task()
+  : _prev(0),
+    _next(0),
+    _thread(0),
+    _router(0),
+    _pending(0),
+    _pending_next(0)
+{
+}
+
+Master * Task::master() const
+{
+  assert(_thread);
+  return _thread->master();
+}
+
+void Task::initialize(Router* router,
+                      bool join)
+{
+  assert(!initialized() && !scheduled());
+
+  _router = router;
+    
+  _thread = router->master()->thread();
+  
+  if (join)
+    add_pending(RESCHEDULE);
+}
+
+void Task::add_pending(int p)
+{
+  Master *m = _router->master();
+  m->_task_lock.acquire();
+  _pending |= p;
+  if (!_pending_next && _pending) {
+    _pending_next = m->_task_list._pending_next;
+    m->_task_list._pending_next = this;
+  }
+  if (_pending)
+    _thread->add_pending();
+  m->_task_lock.release();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 bool Task::error_hook(Task *, void *)
 {
@@ -46,56 +104,23 @@ bool Task::error_hook(Task *, void *)
 
 void Task::make_list()
 {
-  _hook = error_hook;
   _pending_next = this;
 }
 
 Task::~Task()
 {
-  if ((scheduled() || _pending) && _thread != this)
+  if (scheduled() || _pending)
     cleanup();
 }
 
-Master *
-Task::master() const
-{
-  assert(_thread);
-  return _thread->master();
-}
-
-void
-Task::initialize(Router *router, bool join)
-{
-  assert(!initialized() && !scheduled());
-
-  _router = router;
-    
-  _thread_preference = router->initial_thread_preference(this, join);
-  if (_thread_preference == ThreadSched::THREAD_PREFERENCE_UNKNOWN)
-    _thread_preference = 0;
-  // Master::thread() returns the quiescent thread if its argument is out of
-  // range
-  _thread = router->master()->thread(_thread_preference);
-    
-  if (join)
-    add_pending(RESCHEDULE);
-}
-
-void
-Task::initialize(Element *e, bool join)
-{
-  initialize(e->router(), join);
-}
-
-void
-Task::cleanup()
+void Task::cleanup()
 {
   if (initialized()) {
     strong_unschedule();
 
     if (_pending) {
       Master *m = _router->master();
-      SpinlockIRQ::flags_t flags = m->_task_lock.acquire();
+      m->_task_lock.acquire();
       Task *prev = &m->_task_list;
       for (Task *t = prev->_pending_next; t != &m->_task_list; prev = t, t = t->_pending_next)
         if (t == this) {
@@ -104,7 +129,7 @@ Task::cleanup()
         }
       _pending = 0;
       _pending_next = 0;
-      m->_task_lock.release(flags);
+      m->_task_lock.release();
     }
 	
     _router = 0;
@@ -137,23 +162,6 @@ Task::attempt_lock_tasks()
 }
 
 void
-Task::add_pending(int p)
-{
-  Master *m = _router->master();
-  SpinlockIRQ::flags_t flags = m->_task_lock.acquire();
-  if (_router->_running >= Router::RUNNING_PAUSED) {
-    _pending |= p;
-    if (!_pending_next && _pending) {
-      _pending_next = m->_task_list._pending_next;
-      m->_task_list._pending_next = this;
-    }
-    if (_pending)
-      _thread->add_pending();
-  }
-  m->_task_lock.release(flags);
-}
-
-void
 Task::unschedule()
 {
   // Thanksgiving 2001: unschedule() will always unschedule the task. This
@@ -168,21 +176,22 @@ Task::unschedule()
   }
 }
 
-void
-Task::true_reschedule()
+void Task::true_reschedule()
 {
   assert(_thread);
   bool done = false;
+  // If I can lock the queue
   if (attempt_lock_tasks()) {
-    if (_router->_running >= Router::RUNNING_BACKGROUND) {
-      if (!scheduled()) {
-        fast_schedule();
-        _thread->unsleep();
-      }
-      done = true;
+    if (!scheduled()) {
+      // I've already locked, so call the fast_ version
+      fast_schedule();
+      _thread->unsleep();
     }
+    done = true;
     _thread->unlock_tasks();
   }
+
+  // Wasn't able to lock the queue.  Try later
   if (!done)
     add_pending(RESCHEDULE);
 }
@@ -196,7 +205,7 @@ void Task::strong_unschedule()
     fast_unschedule();
     RouterThread *old_thread = _thread;
     _pending &= ~RESCHEDULE;
-    _thread = _router->master()->thread(-1);
+    _thread = _router->master()->thread();
     old_thread->unlock_tasks();
   }
 }
@@ -207,7 +216,7 @@ void Task::strong_reschedule()
   lock_tasks();
   fast_unschedule();
   RouterThread *old_thread = _thread;
-  _thread = _router->master()->thread(_thread_preference);
+  _thread = _router->master()->thread();
   add_pending(RESCHEDULE);
   old_thread->unlock_tasks();
 }
@@ -228,37 +237,6 @@ void Task::process_pending(RouterThread *thread)
 }
 
 
-REMOVABLE_INLINE Task::Task(TaskHook hook, void *thunk)
-  : _prev(0),
-    _next(0),
-    _hook(hook),
-    _thunk(thunk),
-    _thread(0),
-    _thread_preference(-1),
-    _router(0),
-    _pending(0),
-    _pending_next(0)
-{
-}
-
-REMOVABLE_INLINE Task::Task(Element *e)
-  : _prev(0),
-    _next(0),
-    _hook(0),
-    _thunk(e),
-    _thread(0),
-    _thread_preference(-1),
-    _router(0),
-    _pending(0),
-    _pending_next(0)
-{
-}
-
-REMOVABLE_INLINE Element * Task::element() const
-{ 
-  return _hook ? 0 : reinterpret_cast<Element*>(_thunk); 
-}
-
 REMOVABLE_INLINE int Task::fast_unschedule()
 {
   if (_prev) {
@@ -273,16 +251,11 @@ REMOVABLE_INLINE void Task::fast_reschedule()
 {
   assert(_thread);
   if (!scheduled()) {
-    _prev = _thread->_prev;
-    _next = _thread;
-    _thread->_prev = this;
-    _thread->_next = this;
+    _prev = _thread->_taskList._prev;
+    _next = &_thread->_taskList;
+    _thread->_taskList._prev = this;
+    _thread->_taskList._next = this;
   }
-}
-
-REMOVABLE_INLINE void Task::fast_schedule()
-{
-  fast_reschedule();
 }
 
 REMOVABLE_INLINE void Task::reschedule()
@@ -292,10 +265,8 @@ REMOVABLE_INLINE void Task::reschedule()
     true_reschedule();
 }
 
-REMOVABLE_INLINE void Task::call_hook()
+REMOVABLE_INLINE void Task::fast_schedule()
 {
-  if (!_hook)
-    (void) ((Element *)_thunk)->run_task();
-  else
-    (void) _hook(this, _thunk);
+    fast_reschedule();
 }
+

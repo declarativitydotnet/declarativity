@@ -1,8 +1,7 @@
-// -*- c-basic-offset: 2;
+// -*- c-basic-offset: 2; related-file-name: "timer.h" -*-
 /*
  * @(#)$Id$
- *
- * A shell of the Click synchronization primitives by Eddie Kohler
+ * Modified from the Click portable timers by Eddie Kohler
  * 
  * Copyright (c) 1999-2000 Massachusetts Institute of Technology
  * Copyright (c) 2004 Regents of the University of California
@@ -23,22 +22,23 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: Synchronization primitives.  Mostly no-ops for the
- * user-level runtime.
  */
-#ifndef __SYNC_H__
-#define __SYNC_H__
 
-/** An empty Spinlock implementation */
-class Spinlock { public:
+#include <telemental.h>
 
-  Spinlock()					{ }
+TElemental::TElemental(Element * e)
+  : Timer(),
+    _element(e)
+{
+}
 
-  REMOVABLE_INLINE void acquire()		{ }
-  REMOVABLE_INLINE void release()		{ }
-  REMOVABLE_INLINE bool attempt()		{ return true; }
-  REMOVABLE_INLINE bool nested() const		{ return false; }
-  
-};
+void run()
+{
+  _element->run_timer();
+}
 
-#endif
+REMOVABLE_INLINE void TElemental::initialize(Element *element)
+{
+  Timer::initialize(element->router());
+}
+

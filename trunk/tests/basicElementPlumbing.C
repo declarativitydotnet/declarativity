@@ -432,6 +432,49 @@ void testDuplicates(MasterRef master)
 }
 
 
+/** Test a simple source-sink configuration */
+void testRun(MasterRef master)
+{
+  std::cout << "\nCHECK SOURCE-SINK EXAMPLE\n";
+
+  TupleRef t = create_tuple(1);
+  ref< vec< TupleRef > > tupleRefBuffer =
+    New refcounted< vec< TupleRef > >();
+  tupleRefBuffer->push_back(t);
+  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
+  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
+
+  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
+  elements->push_back(memoryPullSpec);
+  elements->push_back(pullPrintSpec);
+
+  Router::HookupPtr hookup;
+  ref < vec< Router::HookupRef > > hookups =
+    New refcounted< vec< Router::HookupRef > >();
+
+  // Connect pull to pull
+  hookups->clear();
+  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
+                                            pullPrintSpec, 0);
+
+  Router::ConfigurationRef configuration =
+    New refcounted< Router::Configuration >(elements, hookups);
+  RouterRef router =
+    New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+  } else {
+    std::cout << "Correctly caught unused port of an element\n";
+  }
+
+  // Activate the router
+  router->activate();
+
+  // Run the router
+  router->master()->thread()->driver();
+}
+
 int main(int argc, char **argv)
 {
   std::cout << "\nBASIC ELEMENT PLUMBING\n";
@@ -443,6 +486,7 @@ int main(int argc, char **argv)
   testCheckHookupRange(master);
   testCheckPushPull(master);
   testDuplicates(master);
+  testRun(master);
 
   return 0;
 }

@@ -43,6 +43,8 @@
 #include "inlines.h"
 #include "tuple.h"
 
+class Router;
+
 class Element { 
  public:
   
@@ -101,12 +103,14 @@ class Element {
 
   virtual TupleRef simple_action(TupleRef p);
 
+  /** Return true if did useful work */
+  virtual bool run_task();
+
   // CHARACTERISTICS
   virtual const char *class_name() const = 0;
   int ID() const				{ return _ID; }
 
   /** Return the router that contains me */
-  class Router;
   Router *router() const			{ return _router; }
 
 
@@ -119,8 +123,10 @@ class Element {
   void add_output()				{ set_noutputs(noutputs()+1); }
   bool ports_frozen() const;
 
+  // CONFIGURATION
   int connect_input(int i, Element *f, int port);
   int connect_output(int o, Element *f, int port);
+  virtual int initialize();
   
   const Port &input(int) const;
   const Port &output(int) const;

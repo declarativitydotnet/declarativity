@@ -1,8 +1,8 @@
-// -*- c-basic-offset: 2;
+// -*- c-basic-offset: 2; related-file-name: "timer.C" -*-
 /*
  * @(#)$Id$
  *
- * A shell of the Click synchronization primitives by Eddie Kohler
+ * Modified from the Click timer class by Eddie Kohler
  * 
  * Copyright (c) 1999-2000 Massachusetts Institute of Technology
  * Copyright (c) 2004 Regents of the University of California
@@ -23,22 +23,29 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: Synchronization primitives.  Mostly no-ops for the
- * user-level runtime.
+ * DESCRIPTION: A timer that runs a given arbitrary function
  */
-#ifndef __SYNC_H__
-#define __SYNC_H__
+#ifndef __TELEMENTAL_H__
+#define __TELEMENTAL_H__
+#include <timer.h>
 
-/** An empty Spinlock implementation */
-class Spinlock { public:
+typedef void (*TimerHook)(Timer *, void *);
 
-  Spinlock()					{ }
-
-  REMOVABLE_INLINE void acquire()		{ }
-  REMOVABLE_INLINE void release()		{ }
-  REMOVABLE_INLINE bool attempt()		{ return true; }
-  REMOVABLE_INLINE bool nested() const		{ return false; }
+class TElemental : public Timer {
+ public:
   
+  TElemental(Element *);
+
+  /** Call the hook with the opaque data. */
+  REMOVABLE_INLINE virtual void run();
+
+  /** Convenience method for initializing with elements */
+  REMOVABLE_INLINE void initialize(Element *);
+
+ private:
+  
+  /** The element to run */
+  Element* _element;
 };
 
 #endif
