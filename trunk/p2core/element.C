@@ -32,17 +32,25 @@
  * let's put stuff back in when we understand why we need it.  That
  * way we'll all develop a better understanding of why Click (and P2)
  * are the way they are. 
+ *
+ * An element may be in one of two states: CONFIGURATION and RUNNING.
+ * During configuration, the element maintains data about its ports
+ * (including personalities, flow codes, etc.) that faciliate with
+ * static analysis of the big picture of the forwarding engine.  Since
+ * all those data aare not useful once the element is up and running, we
+ * only keep them during configuration and discard them thereafter.
  */
 
 #include "element.h"
 
 
 // Some basic element types
-const char * const Element::AGNOSTIC = "a";
-const char * const Element::PUSH = "h";
-const char * const Element::PULL = "l";
 const char * const Element::PUSH_TO_PULL = "h/l";
 const char * const Element::PULL_TO_PUSH = "l/h";
+
+// A basic flow code
+const char * const Element::COMPLETE_FLOW = "x/x";
+
 
 int Element::nelements_allocated = 0;
 
@@ -170,14 +178,14 @@ int Element::connect_output(int o, Element *f, int port)
 
 // PUSH OR PULL PROCESSING
 
-const char *Element::processing() const
+const char * Element::processing() const
 {
-  return AGNOSTIC;
+  return "a/a";
 }
 
 const char *Element::flow_code() const
 {
-  return "x/x";
+  return COMPLETE_FLOW;
 }
 
 const char *Element::flags() const

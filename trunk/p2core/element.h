@@ -48,13 +48,32 @@ class Element {
   
   // Port types.  These are the constituent characters of the
   // "processing" signature of the element. 
-  static const char * const AGNOSTIC, * const PUSH, * const PULL;
+  static const char AGNOSTIC = 'a';
+  static const char PUSH = 'h';
+  static const char PULL = 'l';
 
   // Two shorthand processing signatures.  
   static const char * const PUSH_TO_PULL, * const PULL_TO_PUSH;
 
-  // The three processing types
-  enum Processing { VAGNOSTIC, VPUSH, VPULL };
+  // The three processing types and the invalid type
+  enum Processing { VAGNOSTIC, VPUSH, VPULL, VINVALID };
+
+  /** The flow specification of the element.  This is a simplified
+      version of that used in Click.  A flow spec has the format
+      x1x2x3.../y1y2y3... mapping a single character to each input port
+      (before the slash) and to each output port (after the slash).  Any
+      matching x's and y's indicate that when the associated (agnostic)
+      port is bound to a personality (push or pull) then all other ports
+      matching the same character will have to be instantiated to the
+      same personality.  For example, if the flow code is ab/ab, then
+      the first input port must have the same personality as the first
+      output port, and the second input port must have the same
+      personality as the second output port.  Similarly, ab/aa means
+      that the first input port and both output ports must have the same
+      personality. Extra characters in a string are ignored.  If there
+      are too few characters in a string, the last character is assumed
+      to repeat for any missing characters. */
+  static const char * const COMPLETE_FLOW;
 
   class Port;
   
@@ -119,8 +138,25 @@ class Element {
   virtual const char *flow_code() const;
   virtual const char *flags() const;
   
-  // METHODS USED BY `ROUTER'
+  REMOVABLE_INLINE static Processing processingCode(const char * code)
+    {
+      switch (*code) {
+      case Element::AGNOSTIC:
+        return Element::VAGNOSTIC;
+    
+      case Element::PUSH:
+        return Element::VPUSH;
+    
+      case Element::PULL:
+        return Element::VPULL;
 
+      default:
+        return Element::VINVALID;
+      }
+    };
+
+  // METHODS USED BY `ROUTER'
+  
   /** Attach me to a router */
   void attach_router(Router *r)		{ _router = r; }
   

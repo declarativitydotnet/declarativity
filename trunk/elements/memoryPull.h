@@ -31,8 +31,9 @@ class MemoryPull : public Element {
   /** An error. To be replaced by more general exception machinery. */
   struct MemoryPullError {};
   
-  const char *class_name() const		{ return "MemoryPull";}
-  const char *processing() const		{ return PULL; }
+  const char *class_name() const		{ return "MemoryPull"; }
+  const char *flow_code() const			{ return "/x"; }
+  const char *processing() const		{ return "/l"; }
 
   /** Overridden because we have no input ports */
   TuplePtr pull(int port, cbv cb);

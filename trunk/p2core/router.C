@@ -94,8 +94,8 @@ int Router::check_push_and_pull()
        i++) {
     HookupRef hookup = (*_configuration->hookups)[i];
     
-    ElementRef fromElement = hookup->fromElement;
-    ElementRef toElement = hookup->toElement;
+    ElementSpecRef fromElement = hookup->fromElement;
+    ElementSpecRef toElement = hookup->toElement;
     int fromPort = hookup->fromPortNumber;
     int toPort = hookup->toPortNumber;
 
@@ -221,16 +221,18 @@ int Router::check_hookup_range()
        i++) {
     HookupRef hookup = (*_configuration->hookups)[i];
     
-    if (hookup->fromPortNumber >= hookup->fromElement->noutputs()) {
+    if (hookup->fromPortNumber >= hookup->fromElement->
+        element()->noutputs()) {
       std::cerr << "Cannot connect from port " <<
         hookup->fromPortNumber << " in an element of type " <<
-        hookup->fromElement->class_name() << "\n";
+        hookup->fromElement->element()->class_name() << "\n";
       errors++;
     }
-    if (hookup->toPortNumber >= hookup->toElement->ninputs()) {
+    if (hookup->toPortNumber >= hookup->toElement->
+        element()->ninputs()) {
       std::cerr << "Cannot connect to port " <<
         hookup->toPortNumber << " in an element of type " <<
-        hookup->toElement->class_name() << "\n";
+        hookup->toElement->element()->class_name() << "\n";
       errors++;
     }
   }
@@ -367,30 +369,34 @@ int Router::initialize()
 
 int Router::check_hookup_elements()
 {
-  // Put all elements in a set to be searchable
+  // Put all (real not spec) elements in a set to be searchable
   std::set< ElementRef > elementSet;
-  ref< vec< ElementRef > > elements =
+  ref< vec< ElementSpecRef > > elements =
     _configuration->elements;
   for (uint i = 0;
        i < _configuration->elements->size();
        i++) {
-    elementSet.insert((*_configuration->elements)[i]);
+    elementSet.insert((*_configuration->elements)[i]->element());
   }
   
-  // Check each hookup to ensure it connects valid elements references
+  // Check each hookup to ensure it connects valid element references
   int errors = 0;
   for (uint i = 0;
        i < _configuration->hookups->size();
        i++) {
     HookupRef hookup = (*_configuration->hookups)[i];
-    if (*elementSet.find(hookup->fromElement) != hookup->fromElement) {
+    if (*elementSet.find(hookup->fromElement->element()) !=
+        hookup->fromElement->element()) {
       // This hookup comes from a non-existing element 
-      std::cerr << "Non-existent from element " << hookup->fromElement << "\n";
+      std::cerr << "Non-existent from element " <<
+        hookup->fromElement->element() << "\n";
       errors++;
     }
-    if (*elementSet.find(hookup->toElement) != hookup->toElement) {
+    if (*elementSet.find(hookup->toElement->element()) !=
+        hookup->toElement->element()) {
       // This hookup goes to a non-existing element 
-      std::cerr << "Non-existent to element " << hookup->toElement << "\n";
+      std::cerr << "Non-existent to element " <<
+        hookup->toElement->element() << "\n";
       errors++;
     }
     if (hookup->fromPortNumber < 0) {

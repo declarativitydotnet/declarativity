@@ -54,17 +54,19 @@ void testCheckHookupElements(MasterRef master)
   tupleRefBuffer->push_back(t);
   ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
   ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
 
 
   //////////////////////////////////////////////////////
   // Configuration that references non-existent elements
-  ref< vec< ElementRef > > elements = New refcounted< vec< ElementRef > >();
-  elements->push_back(pullPrint);
+  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
+  elements->push_back(pullPrintSpec);
 
   // Create the hookups
   Router::HookupRef hookup =
-    New refcounted< Router::Hookup >(memoryPull, 0,
-                                     pullPrint, 0);
+    New refcounted< Router::Hookup >(memoryPullSpec, 0,
+                                     pullPrintSpec, 0);
   ref < vec< Router::HookupRef > > hookups =
     New refcounted< vec< Router::HookupRef > >();
   hookups->push_back(hookup);
@@ -81,7 +83,7 @@ void testCheckHookupElements(MasterRef master)
   }
 
   elements->clear();
-  elements->push_back(memoryPull);
+  elements->push_back(memoryPullSpec);
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
     std::cerr << "** Failed to catch hookup reference to unknown from element\n";
@@ -92,8 +94,8 @@ void testCheckHookupElements(MasterRef master)
 
   // With the correct configuration
   elements->clear();
-  elements->push_back(memoryPull);
-  elements->push_back(pullPrint);
+  elements->push_back(memoryPullSpec);
+  elements->push_back(pullPrintSpec);
 
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() != 0) {
@@ -103,8 +105,8 @@ void testCheckHookupElements(MasterRef master)
   }
 
   // With some bad port numbers
-  hookup = New refcounted< Router::Hookup >(memoryPull, -4,
-                                            pullPrint, 0);
+  hookup = New refcounted< Router::Hookup >(memoryPullSpec, -4,
+                                            pullPrintSpec, 0);
   hookups->push_back(hookup);
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
@@ -113,8 +115,8 @@ void testCheckHookupElements(MasterRef master)
     std::cout << "Correctly caught negative from port\n";
   }
 
-  hookup = New refcounted< Router::Hookup >(memoryPull, 0,
-                                            pullPrint, -4);
+  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
+                                            pullPrintSpec, -4);
   hookups->clear();
   hookups->push_back(hookup);
 
@@ -139,16 +141,18 @@ void testCheckHookupRange(MasterRef master)
   tupleRefBuffer->push_back(t);
   ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
   ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
 
-  ref< vec< ElementRef > > elements = New refcounted< vec< ElementRef > >();
-  elements->push_back(memoryPull);
-  elements->push_back(pullPrint);
+  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
+  elements->push_back(memoryPullSpec);
+  elements->push_back(pullPrintSpec);
 
   // Bad from port
 
   Router::HookupRef hookup =
-    New refcounted< Router::Hookup >(memoryPull, 1,
-                                     pullPrint, 0);
+    New refcounted< Router::Hookup >(memoryPullSpec, 1,
+                                     pullPrintSpec, 0);
   ref < vec< Router::HookupRef > > hookups =
     New refcounted< vec< Router::HookupRef > >();
   hookups->push_back(hookup);
@@ -164,8 +168,8 @@ void testCheckHookupRange(MasterRef master)
   }
 
   hookups->clear();
-  hookup = New refcounted< Router::Hookup >(memoryPull, 0,
-                                            pullPrint, 1);
+  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
+                                            pullPrintSpec, 1);
   hookups->push_back(hookup);
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
@@ -175,8 +179,8 @@ void testCheckHookupRange(MasterRef master)
   }
 
   hookups->clear();
-  hookup = New refcounted< Router::Hookup >(memoryPull, 2,
-                                            pullPrint, 3);
+  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 2,
+                                            pullPrintSpec, 3);
   hookups->push_back(hookup);
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {
@@ -186,8 +190,8 @@ void testCheckHookupRange(MasterRef master)
   }
 
   hookups->clear();
-  hookup = New refcounted< Router::Hookup >(pullPrint, 0,
-                                            memoryPull, 0);
+  hookup = New refcounted< Router::Hookup >(pullPrintSpec, 0,
+                                            memoryPullSpec, 0);
   hookups->push_back(hookup);
   router = New refcounted< Router >(configuration, master);
   if (router->initialize() == 0) {

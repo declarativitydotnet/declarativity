@@ -1,4 +1,4 @@
-// -*- c-basic-offset: 2; related-file-name: "element.C" -*-
+// -*- c-basic-offset: 2; related-file-name: "print.C" -*-
 /*
  * @(#)$Id$
  * 
@@ -7,9 +7,8 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: Element which simply prints any tuple pushed to it
-
- * explicit scheduling point in the dataflow graph)
+ * DESCRIPTION: Element which simply prints any tuple that passes
+ * through it.
  */
 
 #ifndef __PRINT_H__
@@ -22,11 +21,11 @@ public:
   
   int push(int port, TupleRef t, cbv cb);
   TuplePtr pull(int port, cbv);
+
   const char *class_name() const		{ return "Print";}
-  const char *processing() const		{ return PUSH_TO_PULL; }
+  const char *processing() const		{ return AGNOSTIC; }
 
 private:
-  TuplePtr _t;
   cbv	_push_cb;
   cbv	_pull_cb;
   

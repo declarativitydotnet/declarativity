@@ -21,7 +21,8 @@ public:
   PullPrint();
 
   const char *class_name() const		{ return "PullPrint";}
-  const char *processing() const		{ return PULL; }
+  const char *processing() const		{ return "/l"; }
+  const char *flow_code() const			{ return "/"; }
 
   void run();
   void wakeup();

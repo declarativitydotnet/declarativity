@@ -31,6 +31,7 @@
 
 #include <inlines.h>
 #include <element.h>
+#include <elementSpec.h>
 #include <vec.h>
 #include <master.h>
 
@@ -41,33 +42,32 @@ public:
       specifications */
   struct Hookup {
     /** The element from which this hookup originates */
-    ElementRef fromElement;
+    ElementSpecRef fromElement;
     
     /** The port number at the fromElement */
     int fromPortNumber;
 
     /**  The element to which this hookup goes */
-    ElementRef toElement;
+    ElementSpecRef toElement;
 
     /** The port number at the toElement */
     int toPortNumber;
 
-    Hookup(ElementRef fe, int fp,
-           ElementRef te, int tp)
+    Hookup(ElementSpecRef fe, int fp,
+           ElementSpecRef te, int tp)
       : fromElement(fe), fromPortNumber(fp),
         toElement(te), toPortNumber(tp) {};
   };
-
   typedef ref< Hookup > HookupRef;
 
   struct Configuration {
     /** The elements */
-    ref< vec< ElementRef > > elements;
+    ref< vec< ElementSpecRef > > elements;
 
     /** The hookups */
     ref< vec< HookupRef > > hookups;
 
-    Configuration(ref< vec< ElementRef > > e,
+    Configuration(ref< vec< ElementSpecRef > > e,
                   ref< vec< HookupRef > > h)
       : elements(e), hookups(h) {};
   };
