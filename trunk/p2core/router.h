@@ -73,6 +73,7 @@ public:
       : elements(e), hookups(h) {};
   };
   typedef ref< Configuration > ConfigurationRef;
+  typedef ptr< Configuration > ConfigurationPtr;
 
   /** Create a new router given a configuration of constructed but not
       necessarily configured elements. */
@@ -106,8 +107,8 @@ public:
   bool initialized() const			{ return _state == ROUTER_LIVE; }
 
   // ELEMENTS
-  int nelements() const				{ return _elements.size(); }
-  const vec< ElementRef > &elements() const{ return _elements; }
+  int nelements() const				{ return _elements->size(); }
+  const ref< vec< ElementRef > > elements() const { return _elements; }
 
   // MASTER scheduler
   MasterRef master() const			{ return _master; }
@@ -122,13 +123,13 @@ private:
   /** The scheduler */
   MasterRef _master;
     
-  vec< ElementRef > _elements;
+  ref< vec< ElementRef > > _elements;
 
   /** The router state */
   int _state;
 
   /** The configuration spec of the router */
-  ConfigurationRef _configuration;
+  ConfigurationPtr _configuration;
 
   /** Are the configuration hookups refering to existing elements and
       non-negative ports? */
@@ -147,6 +148,10 @@ private:
       something (exactly one something), even pull outputs and push
       inputs. */
   int check_hookup_completeness();
+
+  /** Perform the actual hooking up of real elements from the specs. No
+      error checking at this point.  */
+  void set_connections();
 
   friend class Master;
   friend class Task;

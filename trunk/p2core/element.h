@@ -119,23 +119,12 @@ class Element {
   void add_output()				{ set_noutputs(noutputs()+1); }
   bool ports_frozen() const;
 
-  /** Initialize the ports given the port personalities in the arguments
-      list.  These are the same as those personalities set by the
-      element itself, with some agnostic ports instantiated to one of
-      the other personalities according to the element to which it
-      connects */
-  void initialize_ports(const int *in_v, const int *out_v);
   int connect_input(int i, Element *f, int port);
   int connect_output(int o, Element *f, int port);
   
   const Port &input(int) const;
   const Port &output(int) const;
 
-  bool input_is_push(int) const;
-  bool input_is_pull(int) const;
-  bool output_is_push(int) const;
-  bool output_is_pull(int) const;
-  
   // PROCESSING, FLOW, AND FLAGS
   virtual const char *processing() const;
   virtual const char *flow_code() const;

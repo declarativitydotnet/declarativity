@@ -85,6 +85,29 @@
 #include <iostream>
 #include <set>
 
+void Router::set_connections()
+{
+  // actually assign ports
+  for (int i = 0;
+       i < _configuration->hookups->size();
+       i++) {
+    HookupRef hookup = (*_configuration->hookups)[i];
+    ElementSpecRef fromElement = hookup->fromElement;
+    ElementSpecRef toElement = hookup->toElement;
+    int fromPort = hookup->fromPortNumber;
+    int toPort = hookup->toPortNumber;
+
+    fromElement->element()->connect_output(fromPort,
+                                           toElement->element(),
+                                           toPort);
+    toElement->element()->connect_input(toPort,
+                                        fromElement->element(),
+                                        fromPort);
+  }
+}
+
+
+
 int Router::check_hookup_completeness()
 {
   // Check duplicates
@@ -334,7 +357,7 @@ int Router::check_hookup_range()
 Router::Router(ref<Configuration> c,
                ref<Master> m)
   : _master(m),
-    _elements(),
+    _elements(New refcounted< vec< ElementRef > >()),
     _state(ROUTER_NEW),
     _configuration(c)
 {
@@ -372,6 +395,7 @@ int Router::initialize()
     return -1;
   }
   _state = ROUTER_PRECONFIGURE;
+  assert(_configuration != 0);
 
   // Are the hookups pointing to existing elements and ports?
   if (check_hookup_elements() < 0) {
@@ -394,66 +418,19 @@ int Router::initialize()
     return -1;
   }
 
-#if 0
+  // Time to do the actual hooking up.  Create element connections. Move
+  // the elements from the configuration to the router. Trash the
+  // configuration.
   set_connections();
-  _state = ROUTER_PREINITIALIZE;
-  if (before != errh->nerrors())
-    all_ok = false;
-
-  // Initialize elements if OK so far.
-  if (all_ok) {
-    failure_stage = Element::CLEANUP_INITIALIZE_FAILED;
-    success_stage = Element::CLEANUP_INITIALIZED;
-    initialize_handlers(true, true);
-    for (int ord = 0; ord < _elements.size(); ord++) {
-      int i = _element_configure_order[ord];
-      assert(element_ok[i]);
-#if CLICK_DMALLOC
-      sprintf(dmalloc_buf, "i%d  ", i);
-      CLICK_DMALLOC_REG(dmalloc_buf);
-#endif
-      ContextErrorHandler cerrh
-        (errh, context_message(i, "While initializing"));
-      int before = cerrh.nerrors();
-      if (_elements[i]->initialize(&cerrh) < 0) {
-        element_ok[i] = all_ok = false;
-        // don't report 'unspecified error' for ErrorElements:
-        // keep error messages clean
-        if (cerrh.nerrors() == before && !_elements[i]->cast("Error"))
-          cerrh.error("unspecified error");
-      }
-    }
+  for (int i = 0;
+       i < _configuration->elements->size();
+       i++) {
+    ElementRef theElement = (*_configuration->elements)[i]->element();
+    _elements->push_back(theElement);
   }
-
-#if CLICK_DMALLOC
-  CLICK_DMALLOC_REG("iXXX");
-#endif
+  _configuration = 0;
+  _state = ROUTER_LIVE;
   
-  // If there were errors, uninitialize any elements that we initialized
-  // successfully and return -1 (error). Otherwise, we're all set!
-  if (all_ok) {
-    _state = ROUTER_LIVE;
-    return 0;
-  } else {
-    _state = ROUTER_DEAD;
-    errh->verror_text(ErrorHandler::ERR_CONTEXT_ERROR, "", "Router could not be initialized!");
-    
-    // Unschedule tasks and timers
-    master()->remove_router(this);
-
-    // Clean up elements
-    for (int ord = _elements.size() - 1; ord >= 0; ord--) {
-      int i = _element_configure_order[ord];
-      _elements[i]->cleanup(element_ok[i] ? success_stage : failure_stage);
-    }
-    
-    // Remove element-specific handlers
-    initialize_handlers(true, false);
-    
-    _runcount = 0;
-    return -1;
-  }
-#endif
   return 0;
 }
 
@@ -561,187 +538,6 @@ int Router::add_element(Element *e, const String &ename,
   e->attach_router(this, i);
   return i;
 }
-
-int Router::add_connection(int from_idx, int from_port, int to_idx, int to_port)
-{
-  assert(from_idx >= 0 && from_port >= 0 && to_idx >= 0 && to_port >= 0);
-  if (_state != ROUTER_NEW)
-    return -1;
-  Hookup hfrom(from_idx, from_port);
-  Hookup hto(to_idx, to_port);
-  // only add new connections
-  for (int i = 0; i < _hookup_from.size(); i++)
-    if (_hookup_from[i] == hfrom && _hookup_to[i] == hto)
-      return 0;
-  _hookup_from.push_back(hfrom);
-  _hookup_to.push_back(hto);
-  return 0;
-}
-
-void Router::add_requirement(const String &r)
-{
-  assert(cp_is_word(r));
-  _requirements.push_back(r);
-}
-
-
-// CHECKING HOOKUP
-
-void
-Router::remove_hookup(int c)
-{
-  _hookup_from[c] = _hookup_from.back();
-  _hookup_from.pop_back();
-  _hookup_to[c] = _hookup_to.back();
-  _hookup_to.pop_back();
-}
-
-void
-Router::hookup_error(const Hookup &h, bool is_from, const char *message,
-		     ErrorHandler *errh)
-{
-  bool is_output = is_from;
-  const char *kind = (is_output ? "output" : "input");
-  element_lerror(errh, _elements[h.idx], message,
-                 _elements[h.idx], kind, h.port);
-}
-
-void
-Router::notify_hookup_range()
-{
-  // Count inputs and outputs, and notify elements how many they have
-  Vector<int> nin(nelements(), -1);
-  Vector<int> nout(nelements(), -1);
-  for (int c = 0; c < _hookup_from.size(); c++) {
-    if (_hookup_from[c].port > nout[_hookup_from[c].idx])
-      nout[_hookup_from[c].idx] = _hookup_from[c].port;
-    if (_hookup_to[c].port > nin[_hookup_to[c].idx])
-      nin[_hookup_to[c].idx] = _hookup_to[c].port;
-  }
-  for (int f = 0; f < nelements(); f++) {
-    _elements[f]->notify_ninputs(nin[f] + 1);
-    _elements[f]->notify_noutputs(nout[f] + 1);
-  }
-}
-
-
-
-
-// PORT INDEXES
-
-void
-Router::make_pidxes()
-{
-  _input_pidx.clear();
-  _input_pidx.push_back(0);
-  _output_pidx.clear();
-  _output_pidx.push_back(0);
-  for (int i = 0; i < _elements.size(); i++) {
-    Element *e = _elements[i];
-    _input_pidx.push_back(_input_pidx.back() + e->ninputs());
-    _output_pidx.push_back(_output_pidx.back() + e->noutputs());
-    for (int j = 0; j < e->ninputs(); j++)
-      _input_eidx.push_back(i);
-    for (int j = 0; j < e->noutputs(); j++)
-      _output_eidx.push_back(i);
-  }
-}
-
-REMOVABLE_INLINE int
-Router::input_pidx(const Hookup &h) const
-{
-  return _input_pidx[h.idx] + h.port;
-}
-
-REMOVABLE_INLINE int
-Router::input_pidx_element(int pidx) const
-{
-  return _input_eidx[pidx];
-}
-
-REMOVABLE_INLINE int
-Router::input_pidx_port(int pidx) const
-{
-  return pidx - _input_pidx[_input_eidx[pidx]];
-}
-
-REMOVABLE_INLINE int
-Router::output_pidx(const Hookup &h) const
-{
-  return _output_pidx[h.idx] + h.port;
-}
-
-REMOVABLE_INLINE int
-Router::output_pidx_element(int pidx) const
-{
-  return _output_eidx[pidx];
-}
-
-REMOVABLE_INLINE int
-Router::output_pidx_port(int pidx) const
-{
-  return pidx - _output_pidx[_output_eidx[pidx]];
-}
-
-void
-Router::make_hookpidxes()
-{
-  if (_hookpidx_from.size() != _hookup_from.size()) {
-    for (int c = 0; c < _hookup_from.size(); c++) {
-      int p1 = _output_pidx[_hookup_from[c].idx] + _hookup_from[c].port;
-      _hookpidx_from.push_back(p1);
-      int p2 = _input_pidx[_hookup_to[c].idx] + _hookup_to[c].port;
-      _hookpidx_to.push_back(p2);
-    }
-    assert(_hookpidx_from.size() == _hookup_from.size());
-  }
-}
-
-// PROCESSING
-
-int
-Router::processing_error(const Hookup &hfrom, const Hookup &hto, bool aggie,
-			 int processing_from, ErrorHandler *errh)
-{
-  const char *type1 = (processing_from == Element::VPUSH ? "push" : "pull");
-  const char *type2 = (processing_from == Element::VPUSH ? "pull" : "push");
-  if (!aggie)
-    errh->error("'%{element}' %s output %d connected to '%{element}' %s input %d",
-		_elements[hfrom.idx], type1, hfrom.port,
-		_elements[hto.idx], type2, hto.port);
-  else
-    errh->error("agnostic '%{element}' in mixed context: %s input %d, %s output %d",
-		_elements[hfrom.idx], type2, hto.port, type1, hfrom.port);
-  return -1;
-}
-
-// SET CONNECTIONS
-
-int
-Router::element_lerror(ErrorHandler *errh, Element *e,
-		       const char *format, ...) const
-{
-  va_list val;
-  va_start(val, format);
-  errh->verror(ErrorHandler::ERR_ERROR, e->landmark(), format, val);
-  va_end(val);
-  return -1;
-}
-
-void
-Router::set_connections()
-{
-  // actually assign ports
-  for (int c = 0; c < _hookup_from.size(); c++) {
-    Hookup &hfrom = _hookup_from[c];
-    Element *frome = _elements[hfrom.idx];
-    Hookup &hto = _hookup_to[c];
-    Element *toe = _elements[hto.idx];
-    frome->connect_output(hfrom.port, toe, hto.port);
-    toe->connect_input(hto.port, frome, hfrom.port);
-  }
-}
-
 
 // RUNCOUNT
 

@@ -144,23 +144,6 @@ Element::ports_frozen() const
   return false;
 }
 
-void
-Element::initialize_ports(const int *in_v, const int *out_v)
-{
-  // Only PULL inputs are connectable
-  for (int i = 0; i < ninputs(); i++) {
-    // allowed iff in_v[i] == VPULL
-    int port = (in_v[i] == PULL ? 0 : Port::NOT_CONNECTABLE);
-    _inputs[i] = Port(this, 0, port);
-  }
-  
-  for (int o = 0; o < noutputs(); o++) {
-    // allowed iff out_v[o] != VPULL
-    int port = (out_v[o] == PULL ? Port::NOT_CONNECTABLE : 0);
-    _outputs[o] = Port(this, 0, port);
-  }
-}
-
 int Element::connect_input(int i, Element *f, int port)
 {
   if (i >= 0 && i < ninputs() && _inputs[i].allowed()) {
@@ -293,30 +276,6 @@ Element::output(int o) const
 {
   assert(o >= 0 && o < noutputs());
   return _outputs[o];
-}
-
-REMOVABLE_INLINE bool
-Element::output_is_push(int o) const
-{
-  return o >= 0 && o < noutputs() && _outputs[o].allowed();
-}
-
-REMOVABLE_INLINE bool
-Element::output_is_pull(int o) const
-{
-  return o >= 0 && o < noutputs() && !_outputs[o].allowed();
-}
-
-REMOVABLE_INLINE bool
-Element::input_is_pull(int i) const
-{
-  return i >= 0 && i < ninputs() && _inputs[i].allowed();
-}
-
-REMOVABLE_INLINE bool
-Element::input_is_push(int i) const
-{
-  return i >= 0 && i < ninputs() && !_inputs[i].allowed();
 }
 
 ////////////////////////////////////////////////////////////
