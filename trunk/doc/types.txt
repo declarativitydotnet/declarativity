@@ -1,0 +1,37 @@
+
+The basic value in P2 is a discriminated union of concrete types:
+
+   null
+   int32
+   uint32
+   int64
+   uint64
+   double
+   string
+
+What are the rules for calculations on these types?  
+
+Let's start with integers:
+
+We simplify by saying that all integer calculations are performed in
+64-bits, and yield a 64-bit result. 
+
+All arithmetic operations are performed on signed 64-bit integers, and
+ints are simply cast there beforehand. 
+
+Bitwise operations are performed on unsigned 64-bit numbers.
+
+Arithmetic shifts are performed on signed numbers, with signed
+shifts.
+
+Logical shifts are performed on unsigned numbers, with signed shifts.
+
+Boolean operations are performed on unsigned 64-bit numbers.
+
+Promotions:
+int32 -> int64:   sign extend
+int32 -> uint64:  sign extend; cast.
+uint32 -> int64:  cast (zero fill)
+uint32 -> uint64: cast (zero fill)
+int64 -> uint64:  cast
+
