@@ -183,7 +183,7 @@ TuplePtr Element::pull(int port, cbv cb)
   return p;
 }
 
-TupleRef Element::simple_action(TupleRef p)
+TuplePtr Element::simple_action(TupleRef p)
 {
   return p;
 }

@@ -104,7 +104,9 @@ class Element {
   // there is another one. 
   virtual TuplePtr pull(int port, cbv cb);
 
-  virtual TupleRef simple_action(TupleRef p);
+  // A simple action for 1-1 elements. If the result is 0, then no tuple
+  // was produced for push or pull
+  virtual TuplePtr simple_action(TupleRef p);
 
   /** Return true if did useful work */
   virtual bool run_task();

@@ -80,5 +80,5 @@ AC_FUNC_FORK
 AC_FUNC_STRFTIME
 AC_CHECK_FUNCS([dup2 strchr strerror strstr])
 
-AC_CONFIG_FILES([Makefile p2core/Makefile elements/Makefile tests/Makefile phid/Makefile])
+AC_CONFIG_FILES([Makefile net/Makefile p2core/Makefile elements/Makefile tests/Makefile phid/Makefile])
 AC_OUTPUT

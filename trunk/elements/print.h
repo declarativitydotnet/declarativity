@@ -19,19 +19,20 @@
 class Print : public Element { 
 public:
 
-  Print();
+  Print(str prefix);
 
   ~Print();
   
-  int push(int port, TupleRef t, cbv cb);
-  TuplePtr pull(int port, cbv);
+  /** Overridden to perform the printing */
+  TuplePtr simple_action(TupleRef p);
 
   const char *class_name() const		{ return "Print";}
   const char *processing() const		{ return "a/a"; }
   const char *flow_code() const			{ return "x/x"; }
 
 private:
-  
+  /** The prefix to be placed on every printout by this element */
+  str _prefix;
 };
 
 

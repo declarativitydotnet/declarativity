@@ -1,4 +1,4 @@
-// -*- c-basic-offset: 2; related-file-name: "print.h" -*-
+// -*- c-basic-offset: 2; related-file-name: "discard.h" -*-
 /*
  * @(#)$Id$
  * 
@@ -7,22 +7,18 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
+ * DESCRIPTION: Element discarding all tuples pushed into it
  */
 
-#include "print.h"
+#include "discard.h"
 
-Print::Print(str prefix)
-  : Element(1, 1),
-    _prefix(prefix)
+Discard::Discard() : 
+  Element(1,0)
 {
 }
 
-Print::~Print()
+int Discard::push(int port, TupleRef, cbv cb)
 {
-}
-
-TuplePtr Print::simple_action(TupleRef p)
-{
-  warn << "Print[" << _prefix << "]:  [" << p->toString() << "]\n";
-  return p;
+  // Send as many more tuples as you want
+  return 1;
 }

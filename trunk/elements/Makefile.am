@@ -5,7 +5,9 @@ libp2elements_la_SOURCES = \
 	pullprint.C \
 	memoryPull.C \
 	print.C \
-	timedSource.C
+	timedSource.C \
+	project.C \
+	discard.C
 
 INCLUDES = @SFS_INC@ -I../p2core
 

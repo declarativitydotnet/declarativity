@@ -28,7 +28,9 @@
 #include "router.h"
 #include "master.h"
 #include "timedSource.h"
-
+#include "project.h"
+#include "udp.h"
+#include "discard.h"
 
 /** Test that a puller runs and stops during inaction. */
 void testSinglePuller()
@@ -71,11 +73,72 @@ void testSinglePuller()
   amain();
 }
 
+/** Test a three-element chain with an agnostic in the middle. */
+void testChainPuller()
+{
+  std::cout << "\nCHECK 3-ELEMENT CHAIN\n";
+
+  ref< TimedSource > timedSource = New refcounted< TimedSource >(0.25);
+  ref< Print > print = New refcounted< Print >("Before");
+  ref< Project > project = New refcounted< Project >((1 << 2) | 1);
+  ref< Print > print2 = New refcounted< Print >("After");
+  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+
+  ElementSpecRef timedSourceSpec = New refcounted< ElementSpec >(timedSource);
+  ElementSpecRef printSpec = New refcounted< ElementSpec >(print);
+  ElementSpecRef projectSpec = New refcounted< ElementSpec >(project);
+  ElementSpecRef printSpec2 = New refcounted< ElementSpec >(print2);
+  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
+
+  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
+  elements->push_back(timedSourceSpec);
+  elements->push_back(printSpec);
+  elements->push_back(printSpec2);
+  elements->push_back(projectSpec);
+  elements->push_back(pullPrintSpec);
+
+  Router::HookupPtr hookup;
+  ref < vec< Router::HookupRef > > hookups =
+    New refcounted< vec< Router::HookupRef > >();
+
+  hookups->clear();
+  hookup = New refcounted< Router::Hookup >(timedSourceSpec, 0,
+                                            printSpec, 0);
+  hookups->push_back(hookup);
+  hookup = New refcounted< Router::Hookup >(printSpec, 0,
+                                            projectSpec, 0);
+  hookups->push_back(hookup);
+  hookup = New refcounted< Router::Hookup >(projectSpec, 0,
+                                            printSpec2, 0);
+  hookups->push_back(hookup);
+  hookup = New refcounted< Router::Hookup >(printSpec2, 0,
+                                            pullPrintSpec, 0);
+  hookups->push_back(hookup);
+
+  Router::ConfigurationRef configuration =
+    New refcounted< Router::Configuration >(elements, hookups);
+  MasterRef master = New refcounted< Master >();
+  RouterRef router =
+    New refcounted< Router >(configuration, master);
+  if (router->initialize(router) == 0) {
+    std::cout << "Correctly initialized timed source to pull print spec.\n";
+  } else {
+    std::cout << "** Failed to initialize correct spec\n";
+  }
+
+  // Activate the router
+  router->activate();
+
+  // Run the router
+  amain();
+}
+
+
 int main(int argc, char **argv)
 {
   std::cout << "\nSCHEDULING\n";
 
-  testSinglePuller();
+  testChainPuller();
 
   return 0;
 }

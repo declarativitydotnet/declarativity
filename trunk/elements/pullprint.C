@@ -1,4 +1,4 @@
-// -*- c-basic-offset: 2; related-file-name: "element.C" -*-
+// -*- c-basic-offset: 2; related-file-name: "pullprint.h" -*-
 /*
  * @(#)$Id$
  * 

@@ -56,8 +56,10 @@ void TimedSource::runTimer()
     struct timespec t;
     clock_gettime(CLOCK_REALTIME, &t);
 
+    _tuple->append(New refcounted< TupleField >("Time"));
     _tuple->append(New refcounted< TupleField >((uint64_t) t.tv_sec));
     _tuple->append(New refcounted< TupleField >((uint64_t) t.tv_nsec));
+    _tuple->append(New refcounted< TupleField >("End of time"));
     _tuple->freeze();
 
     // Wake up any sleepers

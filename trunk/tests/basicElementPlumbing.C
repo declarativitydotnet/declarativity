@@ -452,8 +452,8 @@ void testCheckPushPull_PullToPush()
   ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
   ref< PullPrint > pullPrint = New refcounted< PullPrint >();
   ref< PushPrint > pushPrint = New refcounted< PushPrint >();
-  ref< Print > print = New refcounted< Print >();
-  ref< Print > print2 = New refcounted< Print >();
+  ref< Print > print = New refcounted< Print >("Print");
+  ref< Print > print2 = New refcounted< Print >("Print2");
   ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
   ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
   ElementSpecRef pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
@@ -499,8 +499,8 @@ void testCheckPushPull_PullToPushHop()
   ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
   ref< PullPrint > pullPrint = New refcounted< PullPrint >();
   ref< PushPrint > pushPrint = New refcounted< PushPrint >();
-  ref< Print > print = New refcounted< Print >();
-  ref< Print > print2 = New refcounted< Print >();
+  ref< Print > print = New refcounted< Print >("Print");
+  ref< Print > print2 = New refcounted< Print >("Print2");
   ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
   ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
   ElementSpecRef pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
@@ -550,8 +550,8 @@ void testCheckPushPull_PullToPushMultiHop()
   ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
   ref< PullPrint > pullPrint = New refcounted< PullPrint >();
   ref< PushPrint > pushPrint = New refcounted< PushPrint >();
-  ref< Print > print = New refcounted< Print >();
-  ref< Print > print2 = New refcounted< Print >();
+  ref< Print > print = New refcounted< Print >("Print");
+  ref< Print > print2 = New refcounted< Print >("Print2");
   ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
   ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
   ElementSpecRef pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
@@ -607,8 +607,8 @@ void testCheckPushPull_PullToPullMultiHop()
     tupleRefBuffer->push_back(t);
     ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
     ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-    ref< Print > print = New refcounted< Print >();
-    ref< Print > print2 = New refcounted< Print >();
+    ref< Print > print = New refcounted< Print >("Print");
+    ref< Print > print2 = New refcounted< Print >("Print2");
     
     ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
     ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
@@ -700,8 +700,8 @@ void testDuplicates_UnusedPort()
   ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
   ref< PullPrint > pullPrint = New refcounted< PullPrint >();
   ref< PushPrint > pushPrint = New refcounted< PushPrint >();
-  ref< Print > print = New refcounted< Print >();
-  ref< Print > print2 = New refcounted< Print >();
+  ref< Print > print = New refcounted< Print >("Print");
+  ref< Print > print2 = New refcounted< Print >("Print2");
   ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
   ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
   ElementSpecRef pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
@@ -756,8 +756,8 @@ void testDuplicates_ReusedPort()
   ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
   ref< PullPrint > pullPrint = New refcounted< PullPrint >();
   ref< PushPrint > pushPrint = New refcounted< PushPrint >();
-  ref< Print > print = New refcounted< Print >();
-  ref< Print > print2 = New refcounted< Print >();
+  ref< Print > print = New refcounted< Print >("Print");
+  ref< Print > print2 = New refcounted< Print >("Print2");
   ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
   ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
   ElementSpecRef pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
