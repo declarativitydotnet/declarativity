@@ -23,6 +23,7 @@
 #include <arpc.h>
 #include <iostream>
 #include <stdlib.h>
+#include <stdio.h> 
 
 #include "tuple.h"
 #include "router.h"
@@ -64,9 +65,11 @@
 #include "noNullField.h"
 
 
-static const int SYMFINGERSIZE = ID::WORDS * 32;
+//static const int SYMFINGERSIZE = ID::WORDS * 32; // first finger is best successor, last finger is predecessor
+static const int SYMFINGERSIZE = 5; // first finger is best successor, last finger is predecessor
+static const str SYMFINGERSIZESTR("5"); // first finger is best successor, last finger is predecessor
 static const int SYMQUEUE_LENGTH = 1000;
-static const int SYMFINGERTTL = 10;
+static const int SYMFINGERTTL = 30;
 
 /**
  *rule L1 symLookupResults@R(R,K,S,SI,E) :- node@NI(NI,N),
@@ -386,19 +389,49 @@ void ruleSymphonySU3(str name,
 
 
 
+/** 
+    rule SU3a symFinger@NI(NI,SYMFINGERSIZE,S,SI) :- predecessor@NI(NI,S,SI).
+*/
+void ruleSymphonySU3a(str name,
+		      Router::ConfigurationRef conf,
+		      ElementSpecRef pushPredecessorIn,
+		      int pushBestSuccessorInPort,
+		      ElementSpecRef pullSymFingerOut,
+		      int pullSymFingerOutPort)
+{
+  // Project onto symFinger(NI, 0, B, BI)
+  // from
+  // bestSuccessor(NI, S, SI)
+  ElementSpecRef projectS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("project:").cat(name),
+                                                    "\"symFinger\" pop \
+                                                     $1 pop /* out bS.NI */" 
+						    << SYMFINGERSIZESTR <<
+                                                     " pop /* out 0 */\
+                                                     $2 pop /* out bS.S */\
+                                                     $3 pop /* out bS.SI */\
+                                                     "));
+  ElementSpecRef slotS =
+    conf->addElement(New refcounted< Slot >(strbuf("Slot:") << name));
+  conf->hookUp(pushPredecessorIn, pushBestSuccessorInPort, projectS, 0);
+  conf->hookUp(projectS, 0, slotS, 0);
+  conf->hookUp(slotS, 0, pullSymFingerOut, pullSymFingerOutPort);
+}
 
 
-/** rule F1 fixFinger@NI(ni) :- periodic@NI(finger.TTL*0.5). */
+
+
+/** rule F1 symFixFinger@NI(ni) :- periodic@NI(finger.TTL*0.5). */
 void ruleSymphonyF1(str name,
-            Router::ConfigurationRef conf,
-            str localAddress,
-            double fingerTTL,
-            ElementSpecRef pullFixFingerOut,
-            int pullFixFingerOutPort)
+		    Router::ConfigurationRef conf,
+		    str localAddress,
+		    double fingerTTL,
+		    ElementSpecRef pullFixFingerOut,
+		    int pullFixFingerOutPort)
 {
   // My fix finger tuple
   TupleRef fixFingerTuple = Tuple::mk();
-  fixFingerTuple->append(Val_Str::mk("fixFinger"));
+  fixFingerTuple->append(Val_Str::mk("symFixFinger"));
   fixFingerTuple->append(Val_Str::mk(localAddress));
   fixFingerTuple->freeze();
 
@@ -423,19 +456,18 @@ void ruleSymphonyF1(str name,
 
 
 
-
-/** rule F2 nextFingerFix@NI(ni, 0). */
+/** rule F2 nextSymFingerFix@NI(ni, 1). */
 void ruleSymphonyF2(str name,
-            Router::ConfigurationRef conf,
-            str localAddress,
-            ElementSpecRef pullNextFingerFixOut,
-            int pullNextFingerFixOutPort)
+		    Router::ConfigurationRef conf,
+		    str localAddress,
+		    ElementSpecRef pullNextFingerFixOut,
+		    int pullNextFingerFixOutPort)
 {
   // My next finger fix tuple
   TupleRef nextFingerFixTuple = Tuple::mk();
-  nextFingerFixTuple->append(Val_Str::mk("nextFingerFix"));
+  nextFingerFixTuple->append(Val_Str::mk("nextSymFingerFix"));
   nextFingerFixTuple->append(Val_Str::mk(localAddress));
-  nextFingerFixTuple->append(Val_Int32::mk(0));
+  nextFingerFixTuple->append(Val_Int32::mk(1)); // start fixing from finger 1
   nextFingerFixTuple->freeze();
 
   ElementSpecRef sourceS =
@@ -460,8 +492,10 @@ void ruleSymphonyF2(str name,
 }
 
 
-/** rule F3 fingerLookup@NI(NI, E, I) :- fixFinger@NI(NI), E = random(),
-    nextFingerFix@NI(NI, I).
+
+
+/** rule F3 symFingerLookup@NI(NI, E, 1) :- fixFinger@NI(NI), E = random(),
+    nextSymFingerFix@NI(NI, 1).
 */
 void ruleSymphonyF3(str name,
             Router::ConfigurationRef conf,
@@ -488,7 +522,7 @@ void ruleSymphonyF3(str name,
   // <<fixFinger NI><nextFingerFix NI I>>
   ElementSpecRef makeRes1S =
     conf->addElement(New refcounted< PelTransform >(strbuf("FlattenFingerLookup:").cat(name),
-                                                    "\"fingerLookup\" pop \
+                                                    "\"symFingerLookup\" pop \
                                                      $0 1 field pop /* output fixFinger.NI */ \
                                                      $0 1 field \":\" strcat rand strcat pop /* output NI|rand */ \
                                                      $1 2 field pop /* output nextFingerFix.I */"));
@@ -500,7 +534,7 @@ void ruleSymphonyF3(str name,
 }
 
 
-/** rule F4 lookup@NI(NI, K, NI, E) :- fingerLookup@NI(NI, E, I),
+/** rule F4 symLookup@NI(NI, K, NI, E) :- symFingerLookup@NI(NI, E, I),
     node(NI, N), K = N + 1 << I.
 */
 void ruleSymphonyF4(str name,
@@ -509,7 +543,7 @@ void ruleSymphonyF4(str name,
             ElementSpecRef pushFingerLookupIn,
             int pushFingerLookupInPort,
             ElementSpecRef pullLookupOut,
-            int pullLookupOutPort)
+            int pullLookupOutPort, int networkSize)
 {
   // Join fingerLookup with node
   ElementSpecRef join1S =
@@ -523,21 +557,21 @@ void ruleSymphonyF4(str name,
   conf->hookUp(pushFingerLookupIn, pushFingerLookupInPort, join1S, 0);
 
 
+  
+
+
 
   // Produce lookup
   // lookup(NI, K, NI, E) from
-  // <<fingerLookup NI E I><node NI N>>
+  // <<symFingerLookup NI E I><node NI N>>
   ElementSpecRef makeRes1S =
     conf->addElement(New refcounted< PelTransform >(strbuf("lookup:").cat(name),
-                                                    "\"lookup\" pop \
-                                                     $0 1 field pop /* output fixFinger.NI */ \
-                                                     $1 2 field /* node.N */\
-                                                     1 ->u32 ->id /* N (1 as ID) */\
-                                                     $0 3 field /* N 1 fingerLookup.I */\
-                                                     <<id /* N 2^(I) */\
-                                                     +id pop /* output (N+2^I) */\
-                                                     $0 1 field pop /* output fixFinger.NI again */ \
-                                                     $0 2 field pop /* output fingerLookup.E */"));
+						    "\"symLookup\" pop \
+                                                    $0 1 field pop /* output fixFinger.NI */\
+                                                    $1 2 field /* node.N */\
+						    rand ->u32 ->id +id pop \
+						    $0 1 field pop /* output fixFinger.NI again */\
+						    $0 2 field pop /* output fingerLookup.E */"));
   conf->hookUp(join1S, 0, noNullS, 0);
   conf->hookUp(noNullS, 0, makeRes1S, 0);
   
@@ -547,21 +581,23 @@ void ruleSymphonyF4(str name,
 
 
 
-/** rule F5 eagerFinger@NI(NI, I, B, BI) :- fingerLookup@NI(NI, E,
-    I), lookupResults@NI(NI, K, B, BI, E).
+
+/** 
+    rule F5 symFingers@NI(NI, I, B, BI) :- symFingerLookup@NI(NI, E, I), 
+    symLookupResults@NI(NI, K, B, BI, E).
 */
 void ruleSymphonyF5(str name,
-            Router::ConfigurationRef conf,
-            TableRef fingerLookupTable,
-            ElementSpecRef pushLookupResultsIn,
-            int pushLookupResultsInPort,
-            ElementSpecRef pullEagerFingerOut,
-            int pullEagerFingerOutPort)
+		    Router::ConfigurationRef conf,
+		    TableRef symFingerLookupTable,
+		    ElementSpecRef pushLookupResultsIn,
+		    int pushLookupResultsInPort,
+		    ElementSpecRef pullEagerFingerOut,
+		    int pullEagerFingerOutPort)
 {
   // Join lookupResults with fingerLookup table
   ElementSpecRef join1S =
-    conf->addElement(New refcounted< MultLookup >(strbuf("lookupResultsIntoFingerLookup:") << name,
-                                                  fingerLookupTable,
+    conf->addElement(New refcounted< MultLookup >(strbuf("symLookupResultsIntoSymFingerLookup:") << name,
+                                                  symFingerLookupTable,
                                                   1, // Match lookupResults.NI
                                                   1 // with fingerLookup.NI
                                                   ));
@@ -573,23 +609,24 @@ void ruleSymphonyF5(str name,
   // <<lookupResults NI K B BI E><fingerLookup NI E I>>
   ElementSpecRef selectS =
     conf->addElement(New refcounted< PelTransform >(strbuf("select:") << name,
-                                                    "$0 5 field /* lookupResults.E */\
-                                                     $1 2 field /* lR.E fingerLookup.E */\
+                                                    "$0 5 field /* symLookupResults.E */\
+                                                     $1 2 field /* lR.E symFingerLookup.E */\
                                                      ==s not /* lR.E!=fL.E? */\
                                                      ifstop /* empty */\
                                                      $0 pop $1 pop /* pass through */\
                                                      "));
+
   conf->hookUp(join1S, 0, noNullS, 0);
   conf->hookUp(noNullS, 0, selectS, 0);
 
 
 
-  // Produce eagerFinger
-  // eagerFinger(NI, I, B, BI) from
+  // Produce symFingers
+  // symFingers(NI, I, B, BI) from
   // <<lookupResults NI K B BI E><fingerLookup NI E I>>
   ElementSpecRef projectS =
     conf->addElement(New refcounted< PelTransform >(strbuf("project:").cat(name),
-                                                    "\"eagerFinger\" pop \
+                                                    "\"symFingers\" pop \
                                                      $0 1 field pop /* out NI */\
                                                      $1 3 field pop /* out I */\
                                                      $0 3 field pop /* out B */\
@@ -601,199 +638,71 @@ void ruleSymphonyF5(str name,
 }
 
 
-/** rule F6 finger@NI(NI, I, B, BI) :- eagerFinger@NI(NI, I, B, BI). */
-void ruleSymphonyF6(str name,
-            Router::ConfigurationRef conf,
-            ElementSpecRef pushEagerFingerIn,
-            int pushEagerFingerInPort,
-            ElementSpecRef pullFingerOut,
-            int pullFingerOutPort)
-{
-  // Project onto finger(NI, I, B, BI)
-  // from
-  // eagerFinger(NI, I, B, BI)
-  ElementSpecRef projectS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("project:").cat(name),
-                                                    "\"finger\" pop \
-                                                     $1 pop /* out eF.NI */\
-                                                     $2 pop /* out eF.I */\
-                                                     $3 pop /* out eF.B */\
-                                                     $4 pop /* out eF.BI */\
-                                                     "));
-  ElementSpecRef slotS =
-    conf->addElement(New refcounted< Slot >(strbuf("Slot:") << name));
-  conf->hookUp(pushEagerFingerIn, pushEagerFingerInPort, projectS, 0);
-  conf->hookUp(projectS, 0, slotS, 0);
-  conf->hookUp(slotS, 0, pullFingerOut, pullFingerOutPort);
-}
 
 
-/** rule F7 eagerFinger@NI(NI, I, B, BI) :- node@NI(NI, N),
-    eagerFinger@NI(NI, I1, B, BI), I = I1 + 1, I > I1, K = N + 1 <<
-    I, K in (N, B), BI!=NI.
+/** 
+    rule F6 symFingerLookup@NI(NI, E, I+1) :- symFingerLookup@NI(NI, E, I), 
+    symLookupResults@NI(NI, K, B, BI, E), I < symFingersize.SIZE-1
 */
-void ruleSymphonyF7(str name,
-            Router::ConfigurationRef conf,
-            TableRef nodeTable,
-            ElementSpecRef pushEagerFingerIn,
-            int pushEagerFingerInPort,
-            ElementSpecRef pullEagerFingerOut,
-            int pullEagerFingerOutPort)
+
+void ruleSymphonyF6(str name,
+		    Router::ConfigurationRef conf,
+		    TableRef symFingerLookupTable,
+		    ElementSpecRef pushLookupResultsIn,
+		    int pushLookupResultsInPort,
+		    ElementSpecRef pullSymLookupOut,
+		    int pullSymLookupOutPort)
 {
-  // Join eagerFinger with node table
+  // Join lookupResults with fingerLookup table
   ElementSpecRef join1S =
-    conf->addElement(New refcounted< UniqueLookup >(strbuf("eagerFingerIntoNode:") << name,
-                                                    nodeTable,
-                                                    1, // Match eagerFinger.NI
-                                                    1 // with node.NI
-                                                    ));
+    conf->addElement(New refcounted< MultLookup >(strbuf("symLookupResultsIntoSymFingerLookup:") << name,
+                                                  symFingerLookupTable,
+                                                  1, // Match lookupResults.NI
+                                                  1 // with fingerLookup.NI
+                                                  ));
   ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
 
-  conf->hookUp(pushEagerFingerIn, pushEagerFingerInPort, join1S, 0);
+  conf->hookUp(pushLookupResultsIn, pushLookupResultsInPort, join1S, 0);
 
-  // Select I1+1>I1, N+(1<<I1+1) in (N,B), NI!=BI
-  // from
-  // eagerFinger(NI, I1, B, BI), node(NI, N)
-  ElementSpecRef select1S =
-    conf->addElement(New refcounted< PelTransform >(strbuf("select1:") << name,
-                                                    "$0 2 field dup 1 +i /* I1 (I1+1) */\
-                                                     <i /* I1 < I1+1? */\
-                                                     $0 1 field $0 4 field ==s not and /* I1 < I1+1? && BI!=NI */\
-                                                     not ifstop /* (I1+1>?I1) */\
-                                                     $0 pop $1 pop\
-                                                     "));
-  ElementSpecRef select2S =
-    conf->addElement(New refcounted< PelTransform >(strbuf("select2:") << name,
-                                                    "$1 2 field /* N */\
-                                                     1 ->u32 ->id /* N 1 */\
-                                                     $0 2 field 1 +i /* N 1 (I1+1) */\
-                                                     <<id +id /* K=N+[1<<(I1+1)] */\
-                                                     $1 2 field /* K N */\
-                                                     $0 3 field /* K N B */\
-                                                     ()id /* K in (N,B) */\
-                                                     not ifstop /* select clause, empty stack */\
-                                                     $0 pop $1 pop\
-                                                     "));
-  ElementSpecRef projectS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("project:") << name,
-                                                    "$0 0 field pop /* out eagerFinger */\
-                                                     $0 1 field pop /* out NI */\
-                                                     $0 2 field 1 +i pop /* out I1+1 */\
-                                                     $0 3 field pop /* out B */\
-                                                     $0 4 field pop /* out BI */\
-                                                     "));
-  conf->hookUp(join1S, 0, noNullS, 0);
-  conf->hookUp(noNullS, 0, select1S, 0);
-  conf->hookUp(select1S, 0, select2S, 0);
-  conf->hookUp(select2S, 0, projectS, 0);
-  conf->hookUp(projectS, 0, pullEagerFingerOut, pullEagerFingerOutPort);
-}
-
-
-/**
-   rule F8 nextFingerFix@NI(NI, 0) :- eagerFinger@NI(NI, I, B, BI), ((I
-   == finger.SIZE - 1) || (BI == NI)).
-*/
-void ruleSymphonyF8(str name,
-            Router::ConfigurationRef conf,
-            int fingerSize,
-            ElementSpecRef pushEagerFingerIn,
-            int pushEagerFingerInPort,
-            ElementSpecRef pullNextFingerFixOut,
-            int pullNextFingerFixOutPort)
-{
-  // Select I==finger.SIZE-1 or BI==NI
-  // from 
-  // eagerFinger(NI, I, B, BI)
+  // Select fingerLookup.E == lookupResults.E
+  // <<lookupResults NI K B BI E><fingerLookup NI E I>>
   ElementSpecRef selectS =
     conf->addElement(New refcounted< PelTransform >(strbuf("select:") << name,
-                                                    strbuf("$2 /* I */ ")
-                                                    << fingerSize <<
-                                                    " 1 -i /* I fingerSize-1 */\
-                                                     ==i /* I==?fingerSize-1 */\
-                                                     $1 $4 /* I==?fingerSize-1 NI BI */\
-                                                     ==s /* I==?fingerSize-1 NI==?BI */\
-                                                     or /* I==?fingerSize-1 || NI==?BI */\
-                                                     not ifstop /* empty */\
-                                                     \"nextFingerFix\" pop /* out nextFingerFix */\
-                                                     $1 pop /* out NI */\
-                                                     0 pop /* out 0 */\
-                                                     "));
-  ElementSpecRef slotS =
-    conf->addElement(New refcounted< Slot >(strbuf("Slot:") << name));
-  conf->hookUp(pushEagerFingerIn, pushEagerFingerInPort, selectS, 0);
-  conf->hookUp(selectS, 0, slotS, 0);
-  conf->hookUp(slotS, 0, pullNextFingerFixOut, pullNextFingerFixOutPort);
-}
-
-
-
-/** rule F9 nextFingerFix@NI(NI, I) :- node@NI(NI, N),
-    eagerFinger@NI(NI, I1, B, BI), I = I1 + 1, I > I1, K = N + 1 << I, K
-    in (B, N), NI!=BI.
-*/
-void ruleSymphonyF9(str name,
-            Router::ConfigurationRef conf,
-            TableRef nodeTable,
-            ElementSpecRef pushEagerFingerIn,
-            int pushEagerFingerInPort,
-            ElementSpecRef pullNextFingerFixOut,
-            int pullNextFingerFixOutPort)
-{
-  // Join eagerFinger with node table
-  ElementSpecRef join1S =
-    conf->addElement(New refcounted< UniqueLookup >(strbuf("eagerFingerIntoNode:") << name,
-                                                    nodeTable,
-                                                    1, // Match eagerFinger.NI
-                                                    1 // with node.NI
-                                                    ));
-  ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
-
-  conf->hookUp(pushEagerFingerIn, pushEagerFingerInPort, join1S, 0);
-
-  // Select I1+1>I1
-  // from
-  // eagerFinger(NI, I1, B, BI), node(NI, N)
-  ElementSpecRef select1S =
-    conf->addElement(New refcounted< PelTransform >(strbuf("select1:") << name,
-                                                    "$0 2 field dup 1 +i /* I1 (I1+1) */\
-                                                     <i /* I1 < I1+1? */\
-                                                     not ifstop /* (I1+1>?I1) */\
-                                                     $0 pop $1 pop\
-                                                     "));
-  ElementSpecRef select2S =
-    conf->addElement(New refcounted< PelTransform >(strbuf("select2:") << name,
-                                                    "$0 1 field /* NI */\
-                                                     $0 4 field /* NI BI */\
-                                                     ==s /* NI == BI */\
-                                                     ifstop /* (NI!=BI) */\
-                                                     $0 pop $1 pop\
-                                                     "));
-  ElementSpecRef select3S =
-    conf->addElement(New refcounted< PelTransform >(strbuf("select2:") << name,
-                                                    "$1 2 field /* N */\
-                                                     1 ->u32 ->id /* N 1 */\
-                                                     $0 2 field 1 +i /* N 1 (I1+1) */\
-                                                     <<id +id /* K=N+[1<<(I1+1)] */\
-                                                     $0 3 field /* K B */\
-                                                     $1 2 field /* K B N */\
-                                                     ()id /* K in (B,N) */\
-                                                     not ifstop /* select clause, empty stack */\
-                                                     $0 pop $1 pop\
-                                                     "));
-  ElementSpecRef projectS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("project:") << name,
-                                                    "\"nextFingerFix\" pop /* out nextFingerFix */\
-                                                     $0 1 field pop /* out NI */\
-                                                     $0 2 field 1 +i pop /* out I1+1 */\
-                                                     "));
+                                                    strbuf("$0 5 field /* symLookupResults.E */\
+                                                     $1 2 field /* lR.E symFingerLookup.E */\
+                                                     ==s not /* lR.E!=fL.E? */\
+                                                     ifstop /* empty */\
+                                                     $1 3 field ") 
+						    << SYMFINGERSIZESTR << strbuf(" 1 -i >=i ifstop \
+						    $0 pop $1 pop /* pass through */\
+                                                     ")));
   conf->hookUp(join1S, 0, noNullS, 0);
-  conf->hookUp(noNullS, 0, select1S, 0);
-  conf->hookUp(select1S, 0, select2S, 0);
-  conf->hookUp(select2S, 0, select3S, 0);
-  conf->hookUp(select3S, 0, projectS, 0);
-  conf->hookUp(projectS, 0, pullNextFingerFixOut, pullNextFingerFixOutPort);
+  conf->hookUp(noNullS, 0, selectS, 0);
+
+
+
+  // Produce eagerFinger
+  // symLookup(NI, I+1, B, BI) from
+  // <<lookupResults NI K B BI E><fingerLookup NI E I>>
+  ElementSpecRef projectS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("project:").cat(name),
+                                                    "\"symFingerLookup\" pop \
+                                                     $0 1 field pop /* out NI */\
+                                                     $0 1 field \":\" strcat rand strcat pop /* output NI|rand */ \
+                                                     $1 3 field 1 +i pop"));      
+
+  conf->hookUp(selectS, 0, projectS, 0);
+
+  conf->hookUp(projectS, 0, pullSymLookupOut, pullSymLookupOutPort);
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -844,7 +753,7 @@ void ruleSymphonyJ1a(str name,
   ElementSpecRef onceS =
     conf->addElement(New refcounted< TimedPullPush >(strbuf("JoinEventPush:") << name,
                                                      delay, // run then
-                                                     4 // run once
+                                                     10 // run once
                                                      ));
 
   // And a slot from which to pull
@@ -960,7 +869,7 @@ void ruleSymphonyJ3(str name,
 }
 
 
-/** rule J4 lookup@LI(LI,N,NI,E) :- startJoin@LI(LI,N,NI,E).
+/** rule J4 symLookup@LI(LI,N,NI,E) :- startJoin@LI(LI,N,NI,E).
  */
 void ruleSymphonyJ4(str name,
             Router::ConfigurationRef conf,
@@ -974,7 +883,7 @@ void ruleSymphonyJ4(str name,
   // startJoin(NI, J, JI, E)
   ElementSpecRef projectS =
     conf->addElement(New refcounted< PelTransform >(strbuf("project:").cat(name),
-                                                    "\"lookup\" pop \
+                                                    "\"symLookup\" pop \
                                                      $1 pop /* out sj.NI */\
                                                      $2 pop /* out sj.J */\
                                                      $3 pop /* out sj.JI */\
@@ -1002,7 +911,7 @@ void ruleSymphonyJ5(str name,
 {
   // Join lookupResults with joinRecord table
   ElementSpecRef join1S =
-    conf->addElement(New refcounted< MultLookup >(strbuf("lookupResultsIntoJoinRecord:") << name,
+    conf->addElement(New refcounted< MultLookup >(strbuf("symLookupResultsIntoJoinRecord:") << name,
                                                   joinRecordTable,
                                                   1, // Match lookupResults.NI
                                                   1 // with joinRecord.NI
@@ -1015,7 +924,7 @@ void ruleSymphonyJ5(str name,
   // lookupResults(NI, K, S, SI, E),joinRecord(NI, E)
   ElementSpecRef selectS =
     conf->addElement(New refcounted< PelTransform >(strbuf("select:") << name,
-                                                    "$0 5 field /* lookupResults.E */\
+                                                    "$0 5 field /* symLookupResults.E */\
                                                      $1 2 field /* lR.E joinRecord.E */\
                                                      ==s not /* lR.E!=fL.E? */\
                                                      ifstop /* empty */\
@@ -1159,8 +1068,8 @@ connectRulesSymphony(str name,
                      str localAddress,
                      Router::ConfigurationRef conf,
                      TableRef bestSuccessorTable,
-                     TableRef fingerLookupTable,
-                     TableRef fingerTable,
+                     TableRef symFingerLookupTable,
+                     TableRef symFingerTable,
                      TableRef joinRecordTable,
                      TableRef landmarkNodeTable,
                      TableRef nextFingerFixTable,
@@ -1173,6 +1082,7 @@ connectRulesSymphony(str name,
                      int pushTupleInPort,
                      ElementSpecRef pullTupleOut,
                      int pullTupleOutPort,
+		     int networkSize,
                      double delay = 0)
 {
   // My wraparound mux.  On input 0 comes the outside world. On input 1
@@ -1197,13 +1107,13 @@ connectRulesSymphony(str name,
   demuxKeys->push_back(New refcounted< Val_Str >(str("evictSuccessor")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("successorCount")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("node")));
-  demuxKeys->push_back(New refcounted< Val_Str >(str("finger")));
+  demuxKeys->push_back(New refcounted< Val_Str >(str("symFinger")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("predecessor")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("bestSuccessor")));
-  demuxKeys->push_back(New refcounted< Val_Str >(str("nextFingerFix")));
-  demuxKeys->push_back(New refcounted< Val_Str >(str("fingerLookup")));
+  demuxKeys->push_back(New refcounted< Val_Str >(str("nextSymFingerFix")));
+  demuxKeys->push_back(New refcounted< Val_Str >(str("symFingerLookup")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("stabilizeRecord")));
-  demuxKeys->push_back(New refcounted< Val_Str >(str("fixFinger")));
+  demuxKeys->push_back(New refcounted< Val_Str >(str("symFixFinger"))); // same as Chord
   demuxKeys->push_back(New refcounted< Val_Str >(str("symLookupResults")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("join")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("joinEvent")));
@@ -1216,7 +1126,7 @@ connectRulesSymphony(str name,
   demuxKeys->push_back(New refcounted< Val_Str >(str("sendPredecessor")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("notify")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("notifyPredecessor")));
-  demuxKeys->push_back(New refcounted< Val_Str >(str("eagerFinger")));
+  //demuxKeys->push_back(New refcounted< Val_Str >(str("eagerFinger")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("sendSuccessors")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("returnSuccessor")));
   ElementSpecRef demuxS = conf->addElement(New refcounted< Demux >("demux", demuxKeys));
@@ -1277,15 +1187,20 @@ connectRulesSymphony(str name,
   conf->hookUp(demuxS, nextDemuxOutput++, insertNode, 0);
   conf->hookUp(insertNode, 0, discardNode, 0);
 
-  ElementSpecRef insertFinger = conf->addElement(New refcounted< Insert >(strbuf("finger") << "Insert:" << name, fingerTable));
+  ElementSpecRef insertFinger = conf->addElement(New refcounted< Insert >(strbuf("finger") << "Insert:" << name, symFingerTable));
   ElementSpecRef discardFinger = conf->addElement(New refcounted< Discard >(strbuf("finger") << "Discard:" << name));
   conf->hookUp(demuxS, nextDemuxOutput++, insertFinger, 0);
   conf->hookUp(insertFinger, 0, discardFinger, 0);
  
   ElementSpecRef insertPredecessor = conf->addElement(New refcounted< Insert >(strbuf("predecessor") << "Insert:" << name, predecessorTable));
-  ElementSpecRef discardPredecessor = conf->addElement(New refcounted< Discard >(strbuf("predecessor") << "Discard:" << name));
+  //ElementSpecRef discardPredecessor = conf->addElement(New refcounted< Discard >(strbuf("predecessor") << "Discard:" << name));
+  ElementSpecRef dupPredecessor = conf->addElement(New refcounted< DuplicateConservative >(strbuf("predecessor") << "Dup:" << name, 1));
+  ElementSpecRef qPredecessor = conf->addElement(New refcounted< Queue >("predecessor", SYMQUEUE_LENGTH));
+  ElementSpecRef tPPPredecessor = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
   conf->hookUp(demuxS, nextDemuxOutput++, insertPredecessor, 0);
-  conf->hookUp(insertPredecessor, 0, discardPredecessor, 0);
+  conf->hookUp(insertPredecessor, 0, qPredecessor, 0);
+  conf->hookUp(qPredecessor, 0,tPPPredecessor, 0);
+  conf->hookUp(tPPPredecessor, 0,dupPredecessor, 0);
 
   ElementSpecRef insertBestSuccessor = conf->addElement(New refcounted< Insert >(strbuf("bestSuccessor") << "Insert:" << name, bestSuccessorTable));
   ElementSpecRef dupBestSuccessor = conf->addElement(New refcounted< DuplicateConservative >(strbuf("bestSuccessor") << "Dup:" << name, 1));
@@ -1301,7 +1216,7 @@ connectRulesSymphony(str name,
   conf->hookUp(demuxS, nextDemuxOutput++, insertNextFingerFix, 0);
   conf->hookUp(insertNextFingerFix, 0, discardNextFingerFix, 0);
 
-  ElementSpecRef insertFingerLookup = conf->addElement(New refcounted< Insert >(strbuf("fingerLookup") << "Insert:" << name, fingerLookupTable));
+  ElementSpecRef insertFingerLookup = conf->addElement(New refcounted< Insert >(strbuf("fingerLookup") << "Insert:" << name, symFingerLookupTable));
   ElementSpecRef dupFingerLookup = conf->addElement(New refcounted< DuplicateConservative >(strbuf("fingerLookup") << "Dup:" << name, 1));
   ElementSpecRef qFingerLookup = conf->addElement(New refcounted< Queue >("fingerLookupQueue", SYMQUEUE_LENGTH));
   ElementSpecRef tPPFingerLookup = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
@@ -1315,14 +1230,14 @@ connectRulesSymphony(str name,
   conf->hookUp(demuxS, nextDemuxOutput++, insertStabilizeRecord, 0);
   conf->hookUp(insertStabilizeRecord, 0, discardStabilizeRecord, 0);
 
-  ElementSpecRef dupFixFinger = conf->addElement(New refcounted< DuplicateConservative >(strbuf("fixFinger") << "Dup:" << name, 1));
-  ElementSpecRef qFixFinger = conf->addElement(New refcounted< Queue >("fixFingerQueue", SYMQUEUE_LENGTH));
+  ElementSpecRef dupFixFinger = conf->addElement(New refcounted< DuplicateConservative >(strbuf("symFixFinger") << "Dup:" << name, 1));
+  ElementSpecRef qFixFinger = conf->addElement(New refcounted< Queue >("symFixFingerQueue", SYMQUEUE_LENGTH));
   ElementSpecRef tPPFixFinger = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
   conf->hookUp(demuxS, nextDemuxOutput++, qFixFinger, 0);
   conf->hookUp(qFixFinger, 0, tPPFixFinger, 0);
   conf->hookUp(tPPFixFinger, 0, dupFixFinger, 0);
 
-  ElementSpecRef dupSymLookupResults = conf->addElement(New refcounted< DuplicateConservative >(strbuf("symLookupResults") << "Dup:" << name, 2));
+  ElementSpecRef dupSymLookupResults = conf->addElement(New refcounted< DuplicateConservative >(strbuf("symLookupResults") << "Dup:" << name, 3));
   ElementSpecRef qSymLookupResults = conf->addElement(New refcounted< Queue >("SymLookupResultsQueue", SYMQUEUE_LENGTH));
   ElementSpecRef tPPSymLookupResults = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
   conf->hookUp(demuxS, nextDemuxOutput++, qSymLookupResults, 0);
@@ -1402,12 +1317,12 @@ connectRulesSymphony(str name,
   conf->hookUp(qNotifyPredecessor, 0, tPPNotifyPredecessor, 0);
   conf->hookUp(tPPNotifyPredecessor, 0, dupNotifyPredecessor, 0);
 
-  ElementSpecRef dupEagerFinger = conf->addElement(New refcounted< DuplicateConservative >(strbuf("eagerFinger") << "Dup:" << name, 4));
+  /*ElementSpecRef dupEagerFinger = conf->addElement(New refcounted< DuplicateConservative >(strbuf("eagerFinger") << "Dup:" << name, 4));
   ElementSpecRef qEagerFinger = conf->addElement(New refcounted< Queue >("EagerFingerQueue", SYMQUEUE_LENGTH));
   ElementSpecRef tPPEagerFinger = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
   conf->hookUp(demuxS, nextDemuxOutput++, qEagerFinger, 0);
   conf->hookUp(qEagerFinger, 0, tPPEagerFinger, 0);
-  conf->hookUp(tPPEagerFinger, 0, dupEagerFinger, 0);
+  conf->hookUp(tPPEagerFinger, 0, dupEagerFinger, 0);*/
 
   ElementSpecRef dupSendSuccessors = conf->addElement(New refcounted< DuplicateConservative >(strbuf("sendSuccessors") << "Dup:" << name, 1));
   ElementSpecRef qSendSuccessors = conf->addElement(New refcounted< Queue >("sendSuccessorsQueue", SYMQUEUE_LENGTH));
@@ -1437,7 +1352,8 @@ connectRulesSymphony(str name,
 
 
   int roundRobinPortCounter = 0;
-  ElementSpecRef roundRobin = conf->addElement(New refcounted< RoundRobin >(strbuf("RoundRobin:") << name, 38));
+  ElementSpecRef roundRobin = conf->addElement(New refcounted< RoundRobin >(strbuf("RoundRobin:") << name, 36));
+  // we reduce because no connect fix fingers
   ElementSpecRef wrapAroundPush = conf->addElement(New refcounted< TimedPullPush >(strbuf("WrapAroundPush") << name, 0));
 
   // The wrap around for locally bound tuples
@@ -1458,6 +1374,7 @@ connectRulesSymphony(str name,
 
 
 
+  /** Keep the lookup rules */
   ruleSymphonyL1(strbuf(name) << ":SymL1",
          conf,
          nodeTable,
@@ -1467,15 +1384,18 @@ connectRulesSymphony(str name,
   ruleSymphonyL2(strbuf(name) << ":SymL2",
          conf,
          nodeTable,
-         fingerTable,
+         symFingerTable,
          dupSymLookup, 1,
          roundRobin, roundRobinPortCounter++);
   ruleSymphonyL3(strbuf(name) << ":SymL3",
          conf,
          nodeTable,
-         fingerTable,
+         symFingerTable,
          dupBestSymLookupDistance, 0,
          roundRobin, roundRobinPortCounter++);
+
+
+  /* Successor rules eventually have to be factored away and connected by ring.C */
   ruleSU1(strbuf(name) << ":SU1",
           conf,
           nodeTable,
@@ -1493,6 +1413,13 @@ connectRulesSymphony(str name,
                   conf,
                   dupBestSuccessor, 0,
                   roundRobin, roundRobinPortCounter++);
+
+  ruleSymphonySU3a(strbuf(name) << ":SymSU3",
+		   conf,
+		   dupPredecessor, 0,
+		   roundRobin, 
+		   roundRobinPortCounter++);
+
   ruleSR1(strbuf(name) << ":SR1",
           conf,
           successorCountAggregate,
@@ -1513,7 +1440,8 @@ connectRulesSymphony(str name,
           nodeTable,
           successorTable,
           dupMaxSuccessorDist, 0);
-  /**
+
+  /* Finger rules for now */  
   ruleSymphonyF1(strbuf(name) << ":F1",
          conf,
          localAddress,
@@ -1529,35 +1457,22 @@ connectRulesSymphony(str name,
          dupFixFinger, 0,
          roundRobin, roundRobinPortCounter++);
   ruleSymphonyF4(strbuf(name) << ":F4",
-         conf,
-         nodeTable,
-         dupFingerLookup, 0,
-         roundRobin, roundRobinPortCounter++);
+		 conf,
+		 nodeTable,
+		 dupFingerLookup, 0,
+		 roundRobin, roundRobinPortCounter++, 
+		 networkSize);
   ruleSymphonyF5(strbuf(name) << ":F5",
          conf,
-         fingerLookupTable,
-         dupLookupResults, 0,
+         symFingerLookupTable,
+         dupSymLookupResults, 0,
          roundRobin, roundRobinPortCounter++);
   ruleSymphonyF6(strbuf(name) << ":F6",
-         conf,
-         dupEagerFinger, 0,
-         roundRobin, roundRobinPortCounter++);
-  ruleSymphonyF7(strbuf(name) << ":F7",
-         conf,
-         nodeTable,
-         dupEagerFinger, 1,
-         roundRobin, roundRobinPortCounter++);
-  ruleSymphonyF8(strbuf(name) << ":F8",
-         conf,
-         SYMFINGERSIZE,
-         dupEagerFinger, 2,
-         roundRobin, roundRobinPortCounter++);
-  ruleSymphonyF9(strbuf(name) << ":F9",
-         conf,
-         nodeTable,
-         dupEagerFinger, 3,
-         roundRobin, roundRobinPortCounter++);
-  */
+		 conf,
+		 symFingerLookupTable,
+		 dupSymLookupResults, 1,
+		 roundRobin, roundRobinPortCounter++);
+
   ruleSymphonyJ1(strbuf(name) << ":J1",
                  conf,
                  dupJoinEvent, 0,
@@ -1584,7 +1499,7 @@ connectRulesSymphony(str name,
   ruleSymphonyJ5(strbuf(name) << ":J5",
                  conf,
                  joinRecordTable,
-                 dupLookupResults, 1,
+                 dupSymLookupResults, 2, 
                  roundRobin, roundRobinPortCounter++);
   ruleSymphonyJ6(strbuf(name) << ":J6",
                  conf,
@@ -1596,6 +1511,9 @@ connectRulesSymphony(str name,
                  nodeTable,
                  dupJoin, 2,
                  roundRobin, roundRobinPortCounter++);
+
+
+  /** Eventually, we will put the hooking up part inside ring.C */
   ruleS0(strbuf(name) << ":S0",
          conf,
          localAddress,
@@ -1664,15 +1582,16 @@ connectRulesSymphony(str name,
 
 
 void createSymNode(str myAddress,
-                str landmarkAddress,
-                Router::ConfigurationRef conf,
-                Udp* udp,
-                double delay = 0)
+		   str landmarkAddress,
+		   Router::ConfigurationRef conf,
+		   Udp* udp,
+		   int networkSize,
+		   double delay = 0)
 {
-  TableRef fingerTable =
-    New refcounted< Table >(strbuf("fingerTable"), SYMFINGERSIZE);
-  fingerTable->add_unique_index(2);
-  fingerTable->add_multiple_index(1);
+  TableRef symFingerTable =
+      New refcounted< Table >(strbuf("symFingerTable"), SYMFINGERSIZE + 1); // add one for the predecessor
+  symFingerTable->add_unique_index(2);
+  symFingerTable->add_multiple_index(1);
   
   uint32_t r[ID::WORDS];
   for (uint32_t i = 0;
@@ -1716,13 +1635,13 @@ void createSymNode(str myAddress,
 
   // The next finger fix table starts out with a single tuple that never
   // expires and is only replaced
-  TableRef nextFingerFixTable = New refcounted< Table >(strbuf("nextFingerFix"), 1);
+  TableRef nextFingerFixTable = New refcounted< Table >(strbuf("nextSymFingerFix"), 1);
   nextFingerFixTable->add_unique_index(1);
 
   /** The finger lookup table.  It is indexed uniquely by its event ID */
-  TableRef fingerLookupTable = New refcounted< Table >(strbuf("fingerLookup"), 100);
-  fingerLookupTable->add_unique_index(2);
-  fingerLookupTable->add_multiple_index(1);
+  TableRef symFingerLookupTable = New refcounted< Table >(strbuf("symFingerLookup"), 100);
+  symFingerLookupTable->add_unique_index(2);
+  symFingerLookupTable->add_multiple_index(1);
 
   // The predecessor table, indexed by its first field
   TableRef predecessorTable = New refcounted< Table >(strbuf("predecessor"), 3);
@@ -1741,6 +1660,10 @@ void createSymNode(str myAddress,
   // The landmarkNode table. Singleton
   TableRef landmarkNodeTable = New refcounted< Table >(strbuf("landmarkNode"), 2);
   landmarkNodeTable->add_unique_index(1);
+
+  // The network size table. Singleton. 
+  TableRef networkSizeTable = New refcounted< Table >(strbuf("networkSize"), 2);
+  networkSizeTable->add_unique_index(1);
   
 
 
@@ -1794,24 +1717,34 @@ void createSymNode(str myAddress,
   landmark->append(Val_Str::mk(landmarkAddress));
   landmark->freeze();
   landmarkNodeTable->insert(landmark);
+
+
+  TupleRef networkSizeTuple = Tuple::mk();
+  networkSizeTuple->append(Val_Str::mk("networkSize"));
+  networkSizeTuple->append(Val_Str::mk(myAddress));
+  networkSizeTuple->append(Val_Int32::mk(networkSize));
+  networkSizeTuple->freeze();
+  networkSizeTable->insert(networkSizeTuple);
+
   
   connectRulesSymphony(strbuf("[") << myAddress << str("]"),
-               myAddress,
-               conf,
-               bestSuccessorTable,
-               fingerLookupTable,
-               fingerTable,
-               joinRecordTable,
-               landmarkNodeTable,
-               nextFingerFixTable,
-               nodeTable,
-               predecessorTable,
-               stabilizeRecordTable,
-               successorTable,
-               successorCountAggregate,
-               unBoxS, 0,
-               encapS, 0,
-               delay);         // not alone
+		       myAddress,
+		       conf,
+		       bestSuccessorTable,
+		       symFingerLookupTable,
+		       symFingerTable,
+		       joinRecordTable,
+		       landmarkNodeTable,
+		       nextFingerFixTable,
+		       nodeTable,
+		       predecessorTable,
+		       stabilizeRecordTable,
+		       successorTable,
+		       successorCountAggregate,
+		       unBoxS, 0,
+		       encapS, 0,
+		       networkSize,
+		       delay);         // not alone
 
 }
 

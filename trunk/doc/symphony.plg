@@ -3,6 +3,11 @@
 
 
 
+Simplified symphony.
+Assumptions
+- K is fixed.
+- For now, assume N is fixed. No need to run estimation protocol.
+- unidirectional forwarding.
 
 
 
@@ -10,14 +15,85 @@
 
 
 
+Symphony Lookups
+----------------
 Unidirectional forwarding:
 - greedy clockwise over bestSuccessor, predecessor, k long links.
+- Use the same lookup rule as before.
+- Use existing L1 rules. 
+
+symFinger@NI(NI,I,B,BI) :- symLongLinks@NI(NI,I,B,BI).
+symFinger@NI(NI,I,B,BI) :- finger@NI(NI,I,B,BI).
+
+Rewrite L2 and L3 to route using these. Essentially, call rule L2 and L3
+with symFinger table instead of finger table.
+
+rule L1 symLookupResults@R(R,K,S,SI,E) :-
+	node@NI(NI,N),
+	symLookup@NI(NI,K,R,E),
+	bestSuccessor@NI(NI,S,SI),
+	K in (N,S].
+
+rule L2 symBestLookupDistance@NI(NI,K,R,E,min<D>) :-
+	lookup@NI(NI,K,R,E),
+	symFinger@NI(NI,I,B,BI),
+	node@NI(NI, N),
+	B in (N,K),
+	D=f_dist(B,K)-1.
+
+rule L3 symLookup@BI(min<BI>,K,R,E) :-
+	bestLookupDistance@NI(NI,K,R,E,D),
+	symFinger@NI(NI,I,B,BI),
+	D=f_dist(B,K)-1,
+	node@NI(NI,N),
+	B in (N,K).
 
 
 
+Joins
+-----
+Use existing chord protocol to find successor and predecessor to
+establish chord ring.
 
-Ensure no more than 2K incoming links
 
+Fix-fingers
+-----------
+
+
+Call fix fingers for symphony. Let K = 4.
+
+rule F2 nextSymFingerFix@NI(ni, 0).
+
+rule F3 symFingerLookup@NI(NI, E, I) :-
+	fixFinger@NI(NI),
+	E = random(),
+	nextSymFingerFix@NI(NI, I).
+
+rule F4 symLookup@NI(NI, K, NI, E) :-
+	symFingerLookup@NI(NI, E, I),
+	node(NI,N),
+	networkSize(NI,NS),
+        K = exp(log(NS) * (rand - 1.0)).
+
+rule F5 symLongLinks@NI(NI,I,B,BI) :-
+	symFingerLookup@NI(NI, E, I),
+	symLookupResults@NI(NI, B, BI, E).
+
+rule F6	nextSymFingerFix@NI(NI, I),
+	nextSymFingerFix@NI(NI, I1),
+	symLookupResults@NI(NI, B, BI, E),
+	I=I1+1 mod symFinger.SIZE.
+
+
+
+Net size estimation
+--------------------
+Should we do it or should we assume we know N?
+
+
+
+Joins/Leaves
+------------
 inboundCount@Node(Node, count<>) :- inbound@Node(Node, R, T).
 
 inboundEvent@Node(Node, EventID, Requester, Time) :- addMe@Node(Node,
@@ -46,7 +122,7 @@ evict@R(R, N).
 
 
 
-/// Long Links
+
 
 addMeEvent@Node(Node, C, K) :- relinkEvent@Node(Node), C = 0, K =
 exp(log(n) * (rand - 1.0)).
@@ -55,6 +131,8 @@ addMeEvent@Node(Node, C, K) :- addMeEvent@Node(Node, K1, C1), C = C1 +
 	1, C < SYMPHONYLONG, K = exp(log(n) * (rand - 1.0)).
 
 lookup@addMeaddMeEvent@Node(Node, C, K)
+
+
 
 
 

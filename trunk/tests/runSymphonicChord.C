@@ -82,7 +82,8 @@ static const int SUCCESSORSIZE = 4;
 void testNetworked(LoggerI::Level level,
                    str myAddress,
                    int port,    // extracted from myAddress for convenience
-                   str landmarkAddress,
+                   str landmarkAddress, 
+		   int networkSize,
                    double delay = 0)
 {
   // Create the data flow
@@ -90,7 +91,7 @@ void testNetworked(LoggerI::Level level,
   Udp udp(strbuf(myAddress) << ":Udp", port);
 
   createSymNode(myAddress, landmarkAddress,
-             conf, &udp, delay);
+             conf, &udp, networkSize, delay);
 
   RouterRef router = New refcounted< Router >(conf, level);
   if (router->initialize(router) == 0) {
@@ -113,8 +114,8 @@ void testNetworked(LoggerI::Level level,
 
 int main(int argc, char **argv)
 {
-  if (argc < 6) {
-    fatal << "Usage:\n\t runChord <datalogFile> <loggingLevel> <seed> <myipaddr:port> <startDelay> [<landmark_ipaddr:port>]\n";
+  if (argc < 7) {
+    fatal << "Usage:\n\t runChord <datalogFile> <loggingLevel> <seed> <myipaddr:port> <startDelay> <networkSize> [<landmark_ipaddr:port>]\n";
   }
 
   str datalogFile(argv[1]);
@@ -146,9 +147,10 @@ int main(int argc, char **argv)
 
   double delay = atof(argv[5]);
 
+  int networkSize = atoi(argv[6]);
 
   if (runDatalogVersion) {
-    if (argc > 6) {
+    if (argc > 7) {
       assert(false);
     } else {
       assert(false);
@@ -156,18 +158,20 @@ int main(int argc, char **argv)
     return 0;
   }
 
-  if (argc > 6) {
-    str landmark(argv[6]);
+  if (argc > 7) {
+    str landmark(argv[7]);
     testNetworked(level,
                   myAddress,
                   port,
                   landmark,
+		  networkSize,
                   delay);
   } else {
     testNetworked(level,
                   myAddress,
                   port,
                   str("-"),
+		  networkSize,
                   delay);
   }
   return 0;
