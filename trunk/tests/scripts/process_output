@@ -42,7 +42,7 @@ def process_node(out_f, lookups, results):
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
                                  ([a-f0-9]+),\s*                               # Lookup key 
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Destination IP address
-                                 ([0-9\.\:]+)\s*                               # Event ID
+                                 ([a-zA-Z0-9\.\:]+)\s*                         # Event ID
                              \>\]$\n""", re.VERBOSE)
 
     matchresults = re.compile(r"""^Print\[.*\],\s*
@@ -53,13 +53,13 @@ def process_node(out_f, lookups, results):
                                  ([a-f0-9]+),\s*                               # key 
                                  ([a-f0-9]+),\s*                               # key 
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Destination IP address
-                                 ([0-9\.\:]+)\s*                               # Event ID
+                                 ([a-zA-Z0-9\.\:]+)\s*                         # Event ID
                              \>\]$\n""", re.VERBOSE)
 
     matchbandwidth = re.compile(r"""^Print\[Out\:\[.*\],\s*
                                     ([0-9]+),\s*                               # seconds
                                     ([0-9]+)\]\:\s*                            # nanoseconds
-                                    \[\<([a-zA-Z]+),\s*                       # token
+                                    \[\<([a-zA-Z]+),\s*                        # token
                                     .*\>\]$\n""", re.VERBOSE)
 
     bw_measures = []
@@ -205,7 +205,7 @@ def simple_lookups(lookups, results):
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
                                  ([a-f0-9]+),\s*                               # Lookup key 
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Destination IP address
-                                 ([0-9]+)\s*                                   # Event ID
+                                 ([a-zA-Z0-9\.\:]+)\s*                         # Event ID
                              \>\]$\n""", re.VERBOSE)
 
     simple_lookups = {}
@@ -223,7 +223,18 @@ def simple_lookups(lookups, results):
            if results.has_key(event):
                response = results[event]
                responseIPs += [response[-1]]
-       print >> out, "LOOKUP(%s): " % (key), responseIPs
+       responseIPs.sort()
+       maxsofar = -1
+       curip    = "" 
+       cnt      = 0 
+       for ip in responseIPs: 
+           if ip == curip:
+               cnt += 1
+           else:
+               if maxsofar < cnt: maxsofar = cnt
+               cnt = 0
+               curip = ip 
+       print >> out, "LOOKUP(%s): %f " % (key, (float(maxsofar)/float(len(responseIPs)))), responseIPs
 
 if __name__ == "__main__":
     global ip_map
@@ -277,5 +288,5 @@ if __name__ == "__main__":
     print "SANITY CHECK: counted %d distinct result tuples." % (len(resultsHash.keys()))
 
     if flags["simple_lookup"]: simple_lookups(lookups, results)
-    else: eval_lookups(lookups, results)
+    eval_lookups(lookups, results)
     

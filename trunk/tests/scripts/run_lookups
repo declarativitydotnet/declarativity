@@ -28,7 +28,7 @@ def parse_cmdline(argv):
         elif o == "-p": flags["port"]        = int(v)
         elif o == "-n": flags["num_lookups"] = int(v)
         elif o == "-t": flags["sleep_time"]  = int(v)
-    if args[1]: output = open(args[1]+"/lookups.log", 'a')
+    if args[1]: output = open(args[1]+"/lookups.log", 'w')
     return flags, args
 
 def run_lookup(lookup_exec, seed, node, out):
