@@ -32,11 +32,21 @@ ElementSpec::ElementSpec(ElementRef e)
   initializePorts();
 }
 
+vec< ElementSpec::UniGroupPtr, 256 > ElementSpec::_scratchUniGroups =
+vec< ElementSpec::UniGroupPtr, 256 >();
 
 
-
+/**
+ * For flow code initialization, for every new number, create a new
+ * unification link, adding input/output ports as necessary.
+ *
+ * xyxz/zy UniLink({0,2},{}), UniLink({1},{1}), UniLink({3},{0})
+ */
 void ElementSpec::initializePorts()
 {
+  // Empty out the set of unification structures
+  _scratchUniGroups.clear();
+
   // Start an iterator through the personality and flow specs
   const char * personalityPointer = _element->processing();
   const char * flowPointer = _element->flow_code();
@@ -50,6 +60,9 @@ void ElementSpec::initializePorts()
 
   // What is the default personality 
   Element::Processing pCurrent = Element::AGNOSTIC;
+  
+  // What is the default flow code?  Dash for no association.
+  char fCurrent = Element::NO_FLOW_ASSOCIATION;
 
   // Fill in the input port vector
   int ninputs = _element->ninputs();
@@ -69,9 +82,28 @@ void ElementSpec::initializePorts()
       personalityPointer++;
     }
 
+    // Should I change the current flow code?
+    if (!fStop) {
+      fCurrent = *flowPointer;
+      flowPointer++;
+    }
+
     // Create the port
     PortRef port = New refcounted< Port >(pCurrent);
     _inputs.push_back(port);
+
+    // Create or update the unification group
+    if (fCurrent != Element::NO_FLOW_ASSOCIATION) {
+      // Do we already have a unification group for this one?
+      UniGroupPtr u = _scratchUniGroups[fCurrent]; 
+      if (u == 0) {
+        // Create a new one
+        u = New refcounted< UniGroup >;
+      }
+      // Add the input into the group
+      u->inputs.push_back(i);
+      port->uniGroup(u);
+    }
   }
 
   // I have all input ports set.  Proceed with the outputs
@@ -86,6 +118,7 @@ void ElementSpec::initializePorts()
 
   // And start with defaults again
   pCurrent = Element::AGNOSTIC;
+  fCurrent = Element::NO_FLOW_ASSOCIATION;
 
   // Fill in the output port vector
   int noutputs = _element->noutputs();
@@ -102,9 +135,39 @@ void ElementSpec::initializePorts()
       personalityPointer++;
     }
 
+    // Should I change the current flow code?
+    if (!fStop) {
+      fCurrent = *flowPointer;
+      flowPointer++;
+    }
+
     // Create the port
     PortRef port = New refcounted< Port >(pCurrent);
     _outputs.push_back(port);
+
+    // Create or update the unification group
+    if (fCurrent != Element::NO_FLOW_ASSOCIATION) {
+      // Do we already have a unification group for this one?
+      UniGroupPtr u = _scratchUniGroups[fCurrent]; 
+      if (u == 0) {
+        // Create a new one
+        u = New refcounted< UniGroup >;
+      }
+      // Add the input into the group
+      u->outputs.push_back(i);
+      port->uniGroup(u);
+    }
+  }
+
+  // Now migrate all unigroups out of the scratch space and into this
+  // element spec
+  for (int i = 0;
+       i < 256;
+       i++) {
+    if (_scratchUniGroups[i] != 0) {
+      _uniGroups.push_back(_scratchUniGroups[i]);
+      _scratchUniGroups[i] = 0;
+    }
   }
 }
 
@@ -124,7 +187,8 @@ ElementSpec::PortRef ElementSpec::output(int pno)
 }
 
 ElementSpec::Port::Port(Element::Processing personality)
-  : _processing(personality)
+  : _processing(personality),
+    _uniGroup(0)
 {
 }
  
@@ -136,6 +200,18 @@ Element::Processing ElementSpec::Port::personality() const
 void ElementSpec::Port::personality(Element::Processing p)
 {
   _processing = p;
+}
+
+
+ElementSpec::UniGroupPtr ElementSpec::Port::uniGroup() const
+{
+  return _uniGroup;
+}
+
+void ElementSpec::Port::uniGroup(UniGroupRef u)
+{
+  assert(_uniGroup == 0);
+  _uniGroup = u;
 }
 
 
@@ -173,3 +249,120 @@ str ElementSpec::Port::toString() const
   sb << "{" << ElementSpec::processingCodeString(_processing) << "}";
   return str(sb);
 }
+
+ElementSpec::UnificationResult ElementSpec::Port::unify(Element::Processing p)
+{
+  if (_processing == Element::AGNOSTIC) {
+    _processing = p;
+    return PROGRESS;
+  } else if (_processing == p) {
+    return UNCHANGED;
+  } else {
+    return CONFLICT;
+  }
+}
+
+ElementSpec::UnificationResult ElementSpec::unifyInput(int portNumber)
+{
+  assert(portNumber < _element->ninputs());
+  UnificationResult entireResult = UNCHANGED;
+  ElementSpec::PortRef port = _inputs[portNumber];
+  Element::Processing personality = port->personality();
+  if (personality != Element::AGNOSTIC) {
+    // This port's unification group
+    UniGroupPtr u = port->uniGroup();
+    // Only unify if there's a unification group associated
+    if (u != 0) {
+      // First other inputs
+      for (int i = 0;
+           i < portNumber;
+           i++) {
+        ElementSpec::PortRef otherPort = _inputs[u->inputs[i]];
+        UnificationResult result = otherPort->unify(personality);
+        if (result == CONFLICT) {
+          return CONFLICT;
+        } else if (result == PROGRESS) {
+          entireResult = PROGRESS;
+        }
+      }
+      for (int i = portNumber + 1;
+           i < u->inputs.size();
+           i++) {
+        ElementSpec::PortRef otherPort = _inputs[u->inputs[i]];
+        UnificationResult result = otherPort->unify(personality);
+        if (result == CONFLICT) {
+          return CONFLICT;
+        } else if (result == PROGRESS) {
+          entireResult = PROGRESS;
+        }
+      }
+
+      // Then the outputs
+      for (int i = 0;
+           i < u->outputs.size();
+           i++) {
+        ElementSpec::PortRef otherPort = _outputs[u->outputs[i]];
+        UnificationResult result = otherPort->unify(personality);
+        if (result == CONFLICT) {
+          return CONFLICT;
+        } else if (result == PROGRESS) {
+          entireResult = PROGRESS;
+        }
+      }
+    }
+  }
+  return entireResult;
+}
+
+ElementSpec::UnificationResult ElementSpec::unifyOutput(int portNumber)
+{
+  assert(portNumber < _element->noutputs());
+  UnificationResult entireResult = UNCHANGED;
+  ElementSpec::PortRef port = _outputs[portNumber];
+  Element::Processing personality = port->personality();
+  if (personality != Element::AGNOSTIC) {
+    // This port's unification group
+    UniGroupPtr u = port->uniGroup();
+    // Only unify if there's a unification group associated
+    if (u != 0) {
+      // First other outputs
+      for (int i = 0;
+           i < portNumber;
+           i++) {
+        ElementSpec::PortRef otherPort = _outputs[u->outputs[i]];
+        UnificationResult result = otherPort->unify(personality);
+        if (result == CONFLICT) {
+          return CONFLICT;
+        } else if (result == PROGRESS) {
+          entireResult = PROGRESS;
+        }
+      }
+      for (int i = portNumber + 1;
+           i < u->outputs.size();
+           i++) {
+        ElementSpec::PortRef otherPort = _outputs[u->outputs[i]];
+        UnificationResult result = otherPort->unify(personality);
+        if (result == CONFLICT) {
+          return CONFLICT;
+        } else if (result == PROGRESS) {
+          entireResult = PROGRESS;
+        }
+      }
+
+      // Then the inputs
+      for (int i = 0;
+           i < u->inputs.size();
+           i++) {
+        ElementSpec::PortRef otherPort = _inputs[u->inputs[i]];
+        UnificationResult result = otherPort->unify(personality);
+        if (result == CONFLICT) {
+          return CONFLICT;
+        } else if (result == PROGRESS) {
+          entireResult = PROGRESS;
+        }
+      }
+    }
+  }
+  return entireResult;
+}
+

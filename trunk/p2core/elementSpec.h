@@ -34,16 +34,34 @@
 class ElementSpec { 
  public:
   class PortSpec;
+
+  enum UnificationResult {
+    PROGRESS,
+    UNCHANGED,
+    CONFLICT
+  };
+
   
   ElementSpec(ElementRef element);
 
   /** My real element */
   const ElementRef element();
 
+  /** An internal structure for tracking unification groups */
+  struct UniGroup {
+    vec< int > inputs;
+    vec< int > outputs;
+  };
+  typedef ref< UniGroup > UniGroupRef;
+  typedef ptr< UniGroup > UniGroupPtr;
+  
+  /** My unification groups */
+  vec< UniGroupPtr > _uniGroups;
+
   /** A nested class encapsulating port specs. */
   class Port { 
   public:
-    
+
     Port(Element::Processing personality);
     
     /** My personality */
@@ -52,12 +70,29 @@ class ElementSpec {
     /** Set my personality */
     void personality(Element::Processing);
 
+    /** My uni group */
+    UniGroupPtr uniGroup() const;
+
+    /** Set my uni group, if I don't have one already */
+    void uniGroup(UniGroupRef);
+
+    /** Unify this port with the given personality. Return a unification
+        result.  A return value of CONFLICT means that no changes were
+        made to this port. */
+
+
+
+    UnificationResult unify(Element::Processing);
+
     /** Turn to string */
     str toString() const;
-    
+
   private:
     /** What's my personality? */
     Element::Processing _processing;
+
+    /** What's my unification group, if any? */
+    UniGroupPtr _uniGroup;
   };
 
   typedef ref< Port > PortRef;
@@ -88,6 +123,16 @@ class ElementSpec {
     }
   }
 
+  /** Apply unification to a single input port.  If the input port is
+      agnostic, stop with no changes (i.e., don't back propagate from
+      other ports to this one). */
+  UnificationResult unifyInput(int portNumber);
+
+  /** Apply unification to a single output port.  If the output port is
+      agnostic, stop with no changes (i.e., don't back propagate from
+      other ports to this one). */
+  UnificationResult unifyOutput(int portNumber);
+
  private:
 
   /** My target element */
@@ -105,6 +150,10 @@ class ElementSpec {
   
   /** Create my ports */
   void initializePorts();
+
+  /** An auxilliary structure used for connecting flows. It is a vector
+      of unification groups, one per flow code character.  */
+  static vec< UniGroupPtr, 256 > _scratchUniGroups;
 };
 
 

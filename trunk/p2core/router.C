@@ -88,98 +88,144 @@
 int Router::check_push_and_pull()
 {
   int errors = 0;
-
   // For every hookup...
-  for (uint i = 0;
-       i < _configuration->hookups->size();
-       i++) {
-    HookupRef hookup = (*_configuration->hookups)[i];
-    
-    ElementSpecRef fromElement = hookup->fromElement;
-    ElementSpecRef toElement = hookup->toElement;
-    int fromPort = hookup->fromPortNumber;
-    int toPort = hookup->toPortNumber;
-    // By now, the ports should be acceptable
-    assert((fromPort < fromElement->element()->noutputs()) &&
-           (toPort < toElement->element()->ninputs()));
+  ElementSpec::UnificationResult result;
+  while (1) {
+    bool progress = false;
 
-    switch (fromElement->output(fromPort)->personality()) {
-    case Element::PUSH:
-      // If from port is push...
-      switch (toElement->input(toPort)->personality()) {
+    for (uint i = 0;
+         i < _configuration->hookups->size();
+         i++) {
+      HookupRef hookup = (*_configuration->hookups)[i];
+      
+      ElementSpecRef fromElement = hookup->fromElement;
+      ElementSpecRef toElement = hookup->toElement;
+      int fromPort = hookup->fromPortNumber;
+      int toPort = hookup->toPortNumber;
+      // By now, the ports should be acceptable
+      assert((fromPort < fromElement->element()->noutputs()) &&
+             (toPort < toElement->element()->ninputs()));
+      
+      switch (fromElement->output(fromPort)->personality()) {
       case Element::PUSH:
-        // If to port is push, we're ok
-        break;
-
-      case Element::PULL:
-        // If to port is pull, we're not OK
-        std::cerr << "Hookup from PUSH to PULL found\n";
-        errors++;
-        break;
-
-      case Element::AGNOSTIC:
-        // If to port is agnostic, make it push
-        toElement->input(toPort)->personality(Element::PUSH);
-        break;
-      }
-      break;
-
-    case Element::PULL:
-      // Else, if from port is pull...
-      switch (toElement->input(toPort)->personality()) {
-      case Element::PUSH:
-        // If to port is push, we're not Ok
-        std::cerr << "Hookup from PULL to PUSH found\n";
-        errors++;
+        // If from port is push...
+        switch (toElement->input(toPort)->personality()) {
+        case Element::PUSH:
+          // If to port is push, we're ok
+          break;
+          
+        case Element::PULL:
+          // If to port is pull, we're not OK
+          std::cerr << "Hookup from PUSH to PULL found\n";
+          errors++;
+          break;
+          
+        case Element::AGNOSTIC:
+          // If to port is agnostic, make it push and unify it
+          toElement->input(toPort)->personality(Element::PUSH);
+          ElementSpec::UnificationResult result =
+            toElement->unifyInput(toPort);
+          if (result == ElementSpec::CONFLICT) {
+            errors++;
+          };
+          progress = true;
+          break;
+        }
         break;
         
       case Element::PULL:
-        // If to port is pull, we're ok
+        // Else, if from port is pull...
+        switch (toElement->input(toPort)->personality()) {
+        case Element::PUSH:
+          // If to port is push, we're not Ok
+          std::cerr << "Hookup from PULL to PUSH found\n";
+          errors++;
+          break;
+          
+        case Element::PULL:
+          // If to port is pull, we're ok
+          break;
+          
+        case Element::AGNOSTIC:
+          // If to port is agnostic, make it pull
+          toElement->input(toPort)->personality(Element::PULL);
+          ElementSpec::UnificationResult result =
+            toElement->unifyInput(toPort);
+          if (result == ElementSpec::CONFLICT) {
+            errors++;
+          };
+          progress = true;
+          break;
+        }
         break;
-
+        
       case Element::AGNOSTIC:
-        // If to port is agnostic, make it pull
-        toElement->input(toPort)->personality(Element::PULL);
-        break;
+        // Else, if from port is agnostic...
+        switch (toElement->input(toPort)->personality()) {
+        case Element::PUSH:
+          // If to port is push, make from push
+          fromElement->output(fromPort)->personality(Element::PUSH);
+          result = fromElement->unifyOutput(fromPort);
+          if (result == ElementSpec::CONFLICT) {
+            errors++;
+          };
+          progress = true;
+          break;
+          
+        case Element::PULL:
+          // If to port is pull, make from pull
+          fromElement->output(fromPort)->personality(Element::PULL);
+          result = fromElement->unifyOutput(fromPort);
+          if (result == ElementSpec::CONFLICT) {
+            errors++;
+          };
+          progress = true;
+          break;
+          
+        case Element::AGNOSTIC:
+          // If to port is agnostic, we're ok
+          break;
+        }
       }
+    }
+    
+    if (!progress) {
       break;
-
-    case Element::AGNOSTIC:
-      // Else, if from port is agnostic...
-      switch (toElement->input(toPort)->personality()) {
-      case Element::PUSH:
-        // If to port is push, make from push
-        fromElement->output(fromPort)->personality(Element::PUSH);
-        break;
-
-      case Element::PULL:
-        // If to port is pull, make from pull
-        fromElement->output(fromPort)->personality(Element::PULL);
-        break;
-
-      case Element::AGNOSTIC:
-        // If to port is agnostic, we're ok
-        break;
-      }
     }
+  } 
 
+  // Original Click flow code checker does the following:
+  //
+  // For every agnostic input port
+  //   Find all output ports to which the input port is linked with a
+  //     flow code (see below how this is done).
+  //   For every such output port
+  //     Create a false hookup from the input port to the output port
+  // Forever
+  //   For every hookup
+  //     Check semantic consistency and push unifications
+  //   If no changes made, exit loop
+  // 
+  // For a given agnostic input port, the original Click flow code
+  // finds all associated output ports as follows:
+  // 
+  // Find the flow code for the input port
+  // Set all flow codes that match that of the input port
+  // For all output ports
+  //   Find the appropriate flow code
+  //   Set all flow codes that match that of the output port
+  //   If the output code matches have an intersection with the input
+  //     Set the output port as a linked port to the input
+  //
+  // In the P2 implementation, flow codes are much simpler (single
+  // character only)
 
-
-    // XXX For later, when/if using flow codes
-
-    // Repeat until unchanged
-    
-    // For each element...
-    
-    // Carry over personality from left side of flow to right side of
-    // flow; if inconsistent, fail
-
-    if (errors > 0) {
-      return -1;
-    } else {
-      return 0;
-    }
+  if (errors > 0) {
+    return -1;
+  } else {
+    return 0;
   }
+
   
 #if 0
   // set up processing vectors

@@ -69,8 +69,12 @@ class Element {
       that the first input port and both output ports must have the same
       personality. Extra characters in a string are ignored.  If there
       are too few characters in a string, the last character is assumed
-      to repeat for any missing characters. */
+      to repeat for any missing characters. A dash indicates no flow
+      association; matching dashes mean nothing, other than that
+      associated ports have no flow association. */
   static const char * const COMPLETE_FLOW;
+
+  static const char NO_FLOW_ASSOCIATION = '-';
 
   class Port;
   
