@@ -46,22 +46,14 @@ struct LookupGenerator : public FunctorSource::Generator
     tuple->append(Val_Str::mk("lookup"));
     tuple->append(Val_Str::mk(src_));
 
-    uint zerowords = (uint) ((((double) (ID::WORDS + 1)) * rand()) / RAND_MAX);
     uint32_t words[ID::WORDS];
     for (uint i = 0;
-         i < zerowords;
-         i++) {
-      words[i] = 0;
-    }
-    for (uint i = zerowords;
          i < ID::WORDS;
          i++) {
       words[i] = rand();
     }
-    IDRef key = ID::mk(words)->add(ID::mk((uint) 10));  // Adding 10 to
-                                                        // have some
-                                                        // lookups locally
-                                                        // satisfiable
+    IDRef key = ID::mk(words);  
+
     tuple->append(Val_ID::mk(key));
     tuple->append(Val_Str::mk(dest_));		// WHere the answer is returned
     tuple->append(Val_UInt32::mk(event_)); 	// the event ID
