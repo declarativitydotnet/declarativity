@@ -36,11 +36,11 @@ libp2elements_la_SOURCES = \
 	filter.C \
 	store.C \
 	joiner.C \
+	timedPullPush.C \
+	strToSockaddr.C \
 	queue.C \
 	groupby.C \
-	randomPushSource.C \
-	timedPullPush.C \
-	strToSockaddr.C
+	randomPushSource.C
 
 INCLUDES = @SFS_INC@ -I../p2core
 
