@@ -288,6 +288,12 @@ void testCheckPushPull(MasterRef master)
   }
 
   // Connect pull to pull via 2 a/a elements
+  elements->clear();
+  elements->push_back(memoryPullSpec);
+  elements->push_back(printSpec);
+  elements->push_back(printSpec2);
+  elements->push_back(pullPrintSpec);
+  
   hookups->clear();
   hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
                                             printSpec, 0);
@@ -307,6 +313,124 @@ void testCheckPushPull(MasterRef master)
   }
 }
 
+/** Test the portion of router initialization that checks
+    duplicate/unused ports */
+void testDuplicates(MasterRef master)
+{
+  std::cout << "\nCHECK PORT REUSE / NON-USE\n";
+
+  TupleRef t = create_tuple(1);
+  ref< vec< TupleRef > > tupleRefBuffer =
+    New refcounted< vec< TupleRef > >();
+  tupleRefBuffer->push_back(t);
+  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
+  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+  ref< PushPrint > pushPrint = New refcounted< PushPrint >();
+  ref< Print > print = New refcounted< Print >();
+  ref< Print > print2 = New refcounted< Print >();
+  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
+  ElementSpecRef pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
+  ElementSpecRef printSpec = New refcounted< ElementSpec >(print);
+  ElementSpecRef printSpec2 = New refcounted< ElementSpec >(print2);
+
+  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
+  elements->push_back(memoryPullSpec);
+  elements->push_back(pushPrintSpec);
+  elements->push_back(printSpec);
+  elements->push_back(printSpec2);
+  elements->push_back(pullPrintSpec);
+
+  Router::HookupPtr hookup;
+  ref < vec< Router::HookupRef > > hookups =
+    New refcounted< vec< Router::HookupRef > >();
+
+  // Connect pull to pull via 2 a/a elements
+  hookups->clear();
+  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
+                                            printSpec, 0);
+  hookups->push_back(hookup);
+  hookup = New refcounted< Router::Hookup >(printSpec, 0,
+                                            printSpec2, 0);
+  hookups->push_back(hookup);
+  hookup = New refcounted< Router::Hookup >(printSpec2, 0,
+                                            pullPrintSpec, 0);
+  hookups->push_back(hookup);
+
+  Router::ConfigurationRef configuration =
+    New refcounted< Router::Configuration >(elements, hookups);
+  RouterRef router =
+    New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+    std::cerr << "** Incorrectly allowed unused port of an element\n";
+  } else {
+    std::cout << "Correctly caught unused port of an element\n";
+  }
+
+  // Connect pull to pull via 2 a/a elements
+  memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+  pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
+  pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
+  printSpec = New refcounted< ElementSpec >(print);
+  printSpec2 = New refcounted< ElementSpec >(print2);
+  elements->clear();
+  elements->push_back(memoryPullSpec);
+  elements->push_back(printSpec);
+  elements->push_back(printSpec2);
+  elements->push_back(pullPrintSpec);
+  hookups->clear();
+  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
+                                            printSpec, 0);
+  hookups->push_back(hookup);
+  hookup = New refcounted< Router::Hookup >(printSpec, 0,
+                                            printSpec2, 0);
+  hookups->push_back(hookup);
+  hookup = New refcounted< Router::Hookup >(printSpec2, 0,
+                                            pullPrintSpec, 0);
+  hookups->push_back(hookup);
+
+  hookup = New refcounted< Router::Hookup >(printSpec, 0,
+                                            pullPrintSpec, 0);
+  hookups->push_back(hookup);
+
+  router = New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+    std::cerr << "** Incorrectly allowed port reuse\n";
+  } else {
+    std::cout << "Correctly caught port reuse\n";
+  }
+
+  // Connect pull to pull via 2 a/a elements
+  memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+  pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
+  pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
+  printSpec = New refcounted< ElementSpec >(print);
+  printSpec2 = New refcounted< ElementSpec >(print2);
+  elements->clear();
+  elements->push_back(memoryPullSpec);
+  elements->push_back(printSpec);
+  elements->push_back(printSpec2);
+  elements->push_back(pullPrintSpec);
+  
+  hookups->clear();
+  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
+                                            printSpec, 0);
+  hookups->push_back(hookup);
+  hookup = New refcounted< Router::Hookup >(printSpec, 0,
+                                            printSpec2, 0);
+  hookups->push_back(hookup);
+  hookup = New refcounted< Router::Hookup >(printSpec2, 0,
+                                            pullPrintSpec, 0);
+  hookups->push_back(hookup);
+
+  router = New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+    std::cerr << "Correctly allowed all used ports\n";
+  } else {
+    std::cout << "** Caught incorrectly a configuration without duplication/reuse\n";
+  }
+}
+
 
 int main(int argc, char **argv)
 {
@@ -318,6 +442,7 @@ int main(int argc, char **argv)
   testCheckHookupElements(master);
   testCheckHookupRange(master);
   testCheckPushPull(master);
+  testDuplicates(master);
 
   return 0;
 }

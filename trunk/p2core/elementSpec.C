@@ -368,3 +368,19 @@ ElementSpec::UnificationResult ElementSpec::unifyOutput(int portNumber)
   return entireResult;
 }
 
+ElementPtr ElementSpec::Port::counterpart() const
+{
+  return _counterpart;
+}
+
+int ElementSpec::Port::counterpart(ElementRef element)
+{
+  if (_counterpart == 0) {
+    _counterpart = element;
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
+

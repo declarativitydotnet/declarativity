@@ -59,6 +59,7 @@ public:
         toElement(te), toPortNumber(tp) {};
   };
   typedef ref< Hookup > HookupRef;
+  typedef ptr< Hookup > HookupPtr;
 
   struct Configuration {
     /** The elements */
@@ -140,6 +141,12 @@ private:
       checks that the end-points of a hookup are consistent.  Unlike
       Click, it does not follow flow codes through elements. */
   int check_push_and_pull();
+
+  /** Are any ports multiply connected?  Are all ports attached to
+      something?  Unlike Click, we require all ports to be attached to
+      something (exactly one something), even pull outputs and push
+      inputs. */
+  int check_hookup_completeness();
 
   friend class Master;
   friend class Task;

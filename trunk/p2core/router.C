@@ -85,6 +85,76 @@
 #include <iostream>
 #include <set>
 
+int Router::check_hookup_completeness()
+{
+  // Check duplicates
+  int duplicates = 0;
+  for (uint i = 0;
+       i < _configuration->hookups->size();
+       i++) {
+    HookupRef hookup = (*_configuration->hookups)[i];
+    
+    ElementSpecRef fromElement = hookup->fromElement;
+    ElementSpecRef toElement = hookup->toElement;
+    int fromPort = hookup->fromPortNumber;
+    int toPort = hookup->toPortNumber;
+    
+    int dup =
+      fromElement->output(fromPort)->counterpart(toElement->element());
+    if (dup > 0) {
+      std::cerr << "Output port " << fromPort << " of element "
+                << fromElement->toString()
+                << " reused\n";
+    }
+    duplicates += dup;
+    dup =
+      toElement->input(toPort)->counterpart(fromElement->element());
+    if (dup > 0) {
+      std::cerr << "Input port " << toPort << " of element "
+                << toElement->toString()
+                << " reused\n";
+    }
+    duplicates += dup;
+  }
+
+  // Check unuseds
+  int unuseds = 0;
+  for (int i = 0;
+       i < _configuration->elements->size();
+       i++) {
+    ElementSpecRef element = (*_configuration->elements)[i];
+    for (int in = 0;
+         in < element->element()->ninputs();
+         in++) {
+      if (element->input(in)->counterpart() == 0) {
+        unuseds++;
+        std::cerr << "Input port " << in << " of element "
+                  << element->toString()
+                  << " unused\n";
+      }
+    }
+    for (int out = 0;
+         out < element->element()->noutputs();
+         out++) {
+      if (element->output(out)->counterpart() == 0) {
+        unuseds++;
+        std::cerr << "Output port " << out << " of element "
+                  << element->toString()
+                  << " unused\n";
+      }
+    }
+  }
+  
+  if ((unuseds > 0) ||
+      (duplicates > 0)) {
+    return -1;
+  } else {
+    return 0;
+  }
+}
+
+
+
 int Router::check_push_and_pull()
 {
   int errors = 0;
@@ -225,82 +295,6 @@ int Router::check_push_and_pull()
   } else {
     return 0;
   }
-
-  
-#if 0
-  // set up processing vectors
-  Vector<int> input_pers(ninput_pidx(), 0);
-  Vector<int> output_pers(noutput_pidx(), 0);
-  for (int e = 0; e < nelements(); e++)
-    _elements[e]->processing_vector(input_pers.begin() + _input_pidx[e], output_pers.begin() + _output_pidx[e], errh);
-  
-  // add fake connections for agnostics
-  Vector<Hookup> hookup_from = _hookup_from;
-  Vector<Hookup> hookup_to = _hookup_to;
-  Bitvector bv;
-  for (int i = 0; i < ninput_pidx(); i++)
-    if (input_pers[i] == Element::VAGNOSTIC) {
-      int ei = _input_eidx[i];
-      int port = i - _input_pidx[ei];
-      _elements[ei]->forward_flow(port, &bv);
-      int opidx = _output_pidx[ei];
-      for (int j = 0; j < bv.size(); j++)
-	if (bv[j] && output_pers[opidx+j] == Element::VAGNOSTIC) {
-	  hookup_from.push_back(Hookup(ei, j));
-	  hookup_to.push_back(Hookup(ei, port));
-	}
-    }
-  
-  int before = errh->nerrors();
-  int first_agnostic = _hookup_from.size();
-  
-  // spread personalities
-  while (true) {
-    
-    bool changed = false;
-    for (int c = 0; c < hookup_from.size(); c++) {
-      if (hookup_from[c].idx < 0)
-	continue;
-      
-      int offf = output_pidx(hookup_from[c]);
-      int offt = input_pidx(hookup_to[c]);
-      int pf = output_pers[offf];
-      int pt = input_pers[offt];
-      
-      switch (pt) {
-	
-      case Element::VAGNOSTIC:
-	if (pf != Element::VAGNOSTIC) {
-	  input_pers[offt] = pf;
-	  changed = true;
-	}
-	break;
-	
-      case Element::VPUSH:
-      case Element::VPULL:
-	if (pf == Element::VAGNOSTIC) {
-	  output_pers[offf] = pt;
-	  changed = true;
-	} else if (pf != pt) {
-	  processing_error(hookup_from[c], hookup_to[c], c >= first_agnostic,
-			   pf, errh);
-	  hookup_from[c].idx = -1;
-	}
-	break;
-	
-      }
-    }
-    
-    if (!changed) break;
-  }
-  
-  if (errh->nerrors() != before)
-    return -1;
-
-  for (int e = 0; e < nelements(); e++)
-    _elements[e]->initialize_ports(input_pers.begin() + _input_pidx[e], output_pers.begin() + _output_pidx[e]);
-#endif
-  return 0;
 }
 
 
@@ -394,8 +388,13 @@ int Router::initialize()
     return -1;
   }
 
+  // Check hookup completeness.  All ports have something attached to
+  // them
+  if (check_hookup_completeness() < 0) {
+    return -1;
+  }
+
 #if 0
-  check_hookup_completeness(errh);
   set_connections();
   _state = ROUTER_PREINITIALIZE;
   if (before != errh->nerrors())
@@ -626,50 +625,6 @@ Router::notify_hookup_range()
 }
 
 
-void
-Router::check_hookup_completeness(ErrorHandler *errh)
-{
-  Bitvector used_outputs(noutput_pidx(), false);
-  Bitvector used_inputs(ninput_pidx(), false);
-  
-  // Check each hookup to ensure it doesn't reuse a port.
-  // Completely duplicate connections never got into the Router
-  for (int c = 0; c < _hookup_from.size(); c++) {
-    Hookup &hfrom = _hookup_from[c];
-    Hookup &hto = _hookup_to[c];
-    int before = errh->nerrors();
-    
-    int from_pidx = _output_pidx[hfrom.idx] + hfrom.port;
-    int to_pidx = _input_pidx[hto.idx] + hto.port;
-    if (used_outputs[from_pidx]
-	&& _elements[hfrom.idx]->output_is_push(hfrom.port))
-      hookup_error(hfrom, true, "can't reuse '%{element}' push %s %d", errh);
-    else if (used_inputs[to_pidx]
-	     && _elements[hto.idx]->input_is_pull(hto.port))
-      hookup_error(hto, false, "can't reuse '%{element}' pull %s %d", errh);
-    
-    // remove the connection if there were errors
-    if (errh->nerrors() != before) {
-      remove_hookup(c);
-      c--;
-    } else {
-      used_outputs[from_pidx] = true;
-      used_inputs[to_pidx] = true;
-    }
-  }
-
-  // Check for unused inputs and outputs.
-  for (int i = 0; i < ninput_pidx(); i++)
-    if (!used_inputs[i]) {
-      Hookup h(input_pidx_element(i), input_pidx_port(i));
-      hookup_error(h, false, "'%{element}' %s %d unused", errh);
-    }
-  for (int i = 0; i < noutput_pidx(); i++)
-    if (!used_outputs[i]) {
-      Hookup h(output_pidx_element(i), output_pidx_port(i));
-      hookup_error(h, true, "'%{element}' %s %d unused", errh);
-    }
-}
 
 
 // PORT INDEXES

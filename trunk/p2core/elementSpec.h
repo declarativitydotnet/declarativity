@@ -79,13 +79,19 @@ class ElementSpec {
     /** Unify this port with the given personality. Return a unification
         result.  A return value of CONFLICT means that no changes were
         made to this port. */
-
-
-
     UnificationResult unify(Element::Processing);
 
     /** Turn to string */
     str toString() const;
+    
+    /** My counterpart element */
+    ElementPtr counterpart() const;
+
+    /** Set my counterpart element.  Assumes the counterpart is not
+        set. Return 1 if the counterpart was already set (without
+        changing the counterpart), 0 otherwise. */
+    int counterpart(ElementRef);
+
 
   private:
     /** What's my personality? */
@@ -93,6 +99,10 @@ class ElementSpec {
 
     /** What's my unification group, if any? */
     UniGroupPtr _uniGroup;
+
+    /** What's my counterpart element? I should have no more, no less
+        than one. */
+    ElementPtr _counterpart;
   };
 
   typedef ref< Port > PortRef;

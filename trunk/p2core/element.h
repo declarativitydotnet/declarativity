@@ -274,5 +274,6 @@ class Element {
 
 /** A handy dandy reference to elements */
 typedef ref< Element > ElementRef;
+typedef ptr< Element > ElementPtr;
 
 #endif /* __ELEMENT_H_ */
