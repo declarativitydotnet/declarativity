@@ -8,10 +8,9 @@
 class Elemental : public Task {
  public:
   /** Create a task for a specific element */
-  REMOVABLE_INLINE Elemental(ElementRef element);
-  ~Elemental();
+  REMOVABLE_INLINE Elemental(Element * element);
 
-  ElementRef element() const		{ return _element; }
+  Element * element() const		{ return _element; }
 
   void initialize(Element *, bool scheduled);
 
@@ -21,7 +20,7 @@ class Elemental : public Task {
  private:
 
   // My associated element
-  ElementRef _element;
+  Element * _element;
 };
 
 #endif
