@@ -19,7 +19,7 @@ def parse_cmdline(argv):
     emulab = False
 
     shortopts = "l:n:w:e"
-    flags = {"num_nodes" : 0, "bw_window" : 2.0, "simple_lookup" : None}
+    flags = {"num_nodes" : 0, "bw_window" : 20.0, "simple_lookup" : None}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if   o == "-n": flags["num_nodes"]     = int(v)
@@ -65,7 +65,12 @@ def process_node(out_f, lookups, results):
     bw_measures = []
     start_t     = 0.0
     bw_window   = float(flags["bw_window"])
-
+    window_bytes = 0.0
+    min_bw = sys.maxint
+    max_bw = 0.0
+    cnt_bw = 0.0
+    sum_bw = 0.0
+    
     for line in out_f: 
         lookup  = []
         result  = []
@@ -89,24 +94,51 @@ def process_node(out_f, lookups, results):
 
             ts = ts2sec(measure[0], measure[1])
             if not start_t: start_t = ts
+            if not bytes.has_key(measure[2]):
+                print "UNKNOWN MESSAGE: ", measure[2]
+                sys.exit(3)
             if (ts - start_t) > bw_window:
-                if not bytes.has_key(measure[2]):
-                    print "UNKNOWN MESSAGE: ", measure[2]
-                    sys.exit(3)
-                bw_measures.append(bytes[measure[2]]/(ts - start_t))
-                start_t = 0.0
+                # FINALIZE WINDOW HERE
+                # postpone this line to the next window, and finalize
+                cnt_bw += 1
+                bw = window_bytes/bw_window
+                if max_bw < bw: max_bw = bw
+                if min_bw > bw: min_bw = bw
+                sum_bw += bw
+                
+                # set up next window
+                mt_wins = -1 # don't treat the first tumble as an empty window!
+                while ((ts - start_t) > bw_window):
+                    start_t += bw_window # tumble the window
+                    mt_wins += 1
+                window_bytes = bytes[measure[2]]
+                if (mt_wins > 0):
+                    min_bw = 0
+                    cnt_bw += mt_wins
+            else: # MIDDLE OF WINDOW
+                window_bytes += bytes[measure[2]]
+    return min_bw, sum_bw/cnt_bw, max_bw
 
-    if not bw_measures: return 0.0, 0.0, 0.0
-    norm   = 1.0 / float(len(bw_measures))
-    avg_bw = 0.0
-    max_bw = 0.0
-    min_bw = sys.maxint
-    for bw in bw_measures:
-        if max_bw < bw: max_bw = bw
-        if min_bw > bw: min_bw = bw
-        avg_bw += (bw * norm)
-    return min_bw, avg_bw, max_bw
-  
+#               ts = ts2sec(measure[0], measure[1])
+#             if not start_t: start_t = ts
+#             if (ts - start_t) > bw_window:
+#                 if not bytes.has_key(measure[2]):
+#                     print "UNKNOWN MESSAGE: ", measure[2]
+#                     sys.exit(3)
+#                 bw_measures.append(bytes[measure[2]]/(ts - start_t))
+#                 start_t = 0.0
+
+#     if not bw_measures: return 0.0, 0.0, 0.0
+#     norm   = 1.0 / float(len(bw_measures))
+#     avg_bw = 0.0
+#     max_bw = 0.0
+#     min_bw = sys.maxint
+#     for bw in bw_measures:
+#         if max_bw < bw: max_bw = bw
+#         if min_bw > bw: min_bw = bw
+#         avg_bw += (bw * norm)
+#    return min_bw, avg_bw, max_bw
+
 
 def eval_lookups(lookups, results):
     unsuccessful = 0
