@@ -9,7 +9,8 @@
 #include <bitset>
 #include <map>
 #include <utility>
-
+#include <algorithm>
+#include <async.h>
 #include <assert.h>
 
 
@@ -18,17 +19,12 @@ class IdTable;
  *  @CLASS: Id
  *  @DESCRIPTION: Represents 160-bit key value, provides functions
  *                to retrieve hex/bit representations and words
- *  @NOTE: Constructors are private since @IdTable is a FRIEND so
- *         all @Id's are created through the factory functions in
- *         @IdTable
+ *  @NOTE: @IdTable is a FRIEND since it uses the private member
+ *         function refcount_getcnt () for garbage collection
  *  -------------------------------------------------------------- */
-class Id /* : private virtual refcounted */ {
+class Id : private virtual refcount {
   friend class IdTable;
   private:
-    Id (IdTable *);
-    Id (const u_int32_t * num, IdTable *);
-    Id (const std::string&, IdTable *);
-
     static std::bitset<160> toBitWord (u_int32_t num);
     static std::string toHexWord (u_int32_t num);
 
@@ -36,25 +32,17 @@ class Id /* : private virtual refcounted */ {
     u_int32_t key[5];
 
   public:
-    IdTable * table;
+    Id ();
+    Id (const u_int32_t *);
+    Id (const std::string&);
+
     std::bitset<160> toBitSet () const;
     std::string toHexString () const;
     inline size_t hashCode () const;
-    inline u_int32_t getWord (const int index) const;
-    
-    // static Id * unmarshall (const XDR *);
-};
+    inline u_int32_t getWord (const int) const;
 
-/** --------------------------------------------------------------
- *  @STRUCT: IdHashCode
- *  @DESCRIPTION: Represents a function object to compute the hash
- *                code for an @Id object; used in @IdTable
- *  -------------------------------------------------------------- */
-//struct IdHashCode : public unary_function<const Id *, size_t> {
-  //size_t operator () (const Id * idKey) const {
-    //return idKey->hashCode ();
-  //}
-//};
+    // static Id * unmarshal (const XDR *);
+};
 
 /** --------------------------------------------------------------
  *  @STRUCT: IdComparator
@@ -62,13 +50,8 @@ class Id /* : private virtual refcounted */ {
  *                equality of two @Id objects
  *  -------------------------------------------------------------- */
 struct IdComparator {
-  bool operator () (const Id * x, const Id * y) const {
-    for (int i = 0; i < 5; i += 1) {
-      if (x->getWord(i) == y->getWord(i))
-	continue;
-      else return false;
-    }
-    return true;
+  bool operator () (ref<Id> x, ref<Id> y) const {
+    return (x == y);
   }
 };
 
@@ -80,38 +63,35 @@ struct IdComparator {
  *  -------------------------------------------------------------- */
 class IdTable {
   public:
-    IdTable ();
+    IdTable ()   { maxSize = threshold = 0; }
+    ~IdTable ()	 { clear ();     }
 
-    static bool equalByVal (const Id *, const Id *);
-
-    inline void initialize_gc (const size_t);
+    inline void initialize_gc (const size_t, const size_t);
     
     // @create: factory functions to create and memoize @Id's.
-    
-    // If the requested Id already stored, the function returns
-    // the ref<Id> to the existing Id
-    const Id * create (const std::string&);
+    // if the requested @Id already stored, the function returns
+    // the ref<Id> to the existing @Id
+    ref<Id> create (const std::string&);
 
-    const Id * create (const u_int32_t *);
+    ref<Id> create (const u_int32_t *);
 
-    // Create a random @Id using /dev/urandom
-    const Id * create ();
+    // create a random @Id using /dev/urandom
+    ref<Id> create ();
 
     // static Id * create (const XDR *);
 
     inline size_t size () const;
-    inline void remove (const Id *);
+    inline void remove (ref<Id>);
     inline void clear ();
 
   private:
-
-    std::map<const Id *, int, IdComparator> idSet;
-
+    std::map< ref<Id>, int, IdComparator > memTable;
     size_t maxSize;
+    size_t threshold;
 
     void gc ();
-    const Id * storeId (const Id *);
-    void add (const Id *);
+    ref<Id> storeId (ref<Id>);
+    void add (ref<Id>);
 };
 
 #endif /** !__IDTABLE_H__ */
