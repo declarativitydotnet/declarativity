@@ -27,3 +27,8 @@ libsfs0-dev is installed, then you can do:
  - as long as you want to link the SFS libraries dynamically.
 Otherwise, for some reason they're in /usr/lib/sfs/lib.   I believe
 "go figure" is the american vernacular. 
+
+NOTE ABOUT FLEX:
+
+Make sure to have flex version 2.5.4 or greater installed before
+building the project.
