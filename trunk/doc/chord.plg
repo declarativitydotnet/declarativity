@@ -1,145 +1,159 @@
 /*
- * 1.0 Chord
+ * 1.1 Chord
  * ---------
  */
 
 /* The base tuples */
-materialise(node,2,infinity,1).
-materialise(finger,5,infinity,16).
-materialise(sucessor,4,infinity,16).
-materialise(predecessor,3,infinity,1).
+materialise(node, 2, infinity, 1).
+materialise(finger, 4, infinity, 16).
+materialise(sucessor, 3, infinity, 16).
+materialise(predecessor, 3, infinity, 1).
+materialise(bestSuccessor, 3, infinity, 1).
+materialize(nextFingerFix, 2, infinity, 1).
+materialize(fingerLookup, 3, infinity, 16).
+materialize(stabilize, 2, infinity, 1).
+materialize(notify, 2, infinity, 1).
 
 
-lookupResults(R,K,S,SI,E) :-
-	node(NI,N),
-	lookup(NI,K,R,E),
-	bestSuccessor(NI,S,SI),
-	gt(N,K), gte(K,S).
+/** Lookups */
 
-bestLookupDistance(NI,K,R,E,min<D>) :-
-	lookup(NI,K,R,E),
-	finger(NI,I,B,BI,ET),
-	K>B,
-	ET>f_currentTime(),
+rule L1 lookupResults@R(R,K,S,SI,E) :-
+	node@NI(NI,N),
+	lookup@NI(NI,K,R,E),
+	bestSuccessor@NI(NI,S,SI),
+	K in (N,S].
+
+rule L2 bestLookupDistance@NI(NI,K,R,E,min<D>) :-
+	lookup@NI(NI,K,R,E),
+	finger@NI(NI,I,B,BI),
+	B in (N,K),
 	D=f_dist(B,K).
 
-lookup(BI,K,R,E) :-
-	bestLookupDistance(NI,K,R,E,D),
-	finger(NI,I,B,BI,ET),
+rule L3 lookup@BI(BI,K,R,E) :-
+	bestLookupDistance@NI(NI,K,R,E,D),
+	finger@NI(NI,I,B,BI),
 	D=f_dist(B,K),
-	K>B,
-	ET>f_currentTime().
+	B in (N, K).
 
-/* 1.2 Neighbor Selection Rules */
 
-bestSuccessorID(NI,min<D>) :-
+
+/* Neighbor Selection Rules */
+
+rule SU1 bestSuccessorDist@NI(NI,min<D>) :-
+	node@NI(NI,N),
+	successor@NI(NI,S,SI),
+	D=f_dist(N,S) .
+
+rule SU2 bestSuccessor@NI(NI,S,SI) :-
+	node@NI(NI,N),
+	bestSuccessorDist@NI(NI,D),
+	successor@NI(NI,S,SI),
+	D=f_dist(N,S).
+
+rule SR1 successorCount(NI,count<>) :-
+	successor(NI,S,SI).
+
+rule SR2 evictSuccessor@NI(NI) :-
+	successorCount@NI(NI,C),
+	C>successor.size.
+
+rule SR3 maxSuccessorDist@NI(NI,max<D>) :-
+	successor@NI(NI,S,SI),
+	node@NI(NI,N),
+	D = f_dist(N,S),
+	evictSuccessor@NI(NI).
+
+rule SR4 delete@NI<successor(NI,S,SI)> :-
+	successor@NI(NI,S,SI),
+	maxSuccessorDist@NI(NI,D),
+	D=f_dist(N,S).
+
+rule F1 fixFinger@NI(ni) :-
+	periodic@NI(finger.TTL*0.5).
+
+rule F2 nextFingerFix@NI(ni, 0).
+
+rule F3 fingerLookup@NI(NI, E, I) :-
+	fixFinger@NI(NI),
+	E = random(),
+	nextFingerFix@NI(NI, I).
+
+rule F4 lookup@NI(NI, K, NI, E) :-
+	fingerLookup@NI(NI, E, I),
+	node(NI, N),
+	K = N + 1 << I.
+
+rule F5 finger@NI(NI, K, B, BI) :-
+	fingerLookup@NI(NI, E, I),
+	lookupResults@NI(NI, K, B, BI, E).
+
+rule F6 nextFingerFix@NI(NI, I) :-
+	fingerLookup@NI(NI, E, I1),
+	lookupResults@NI(NI, K, B, BI, E),
+	I = I1 + 1 mod finger.SIZE.
+
+
+
+/* Churn Handling */
+
+rule J1 startJoin@LI(LI,N,NI,E) :-
+	join@NI(NI,N,E),
+	landmarkNode@NI(NI,LI).
+
+rule J2 lookup@LI(LI,N,NI,E) :-
+	startJoin@LI(LI,N,NI,E).
+
+rule J3 successor@NI(NI,S,SI) :-
+	join@NI(NI,N,E),
+	lookupResults@NI(NI,K,S,SI,E).
+
+rule J4 predecessor@NI(NI,null,null).
+
+
+/* Stabilization */
+
+rule S1 stabilizeRequest@SI(SI,ni,E) :-
+	stabilize@N1(N1,E),
+	bestSuccessor@N1(N1,S,SI).
+
+rule S2 sendPredecessor@PI1(PI1,P,PI,E) :-
+	stabilizeRequest@NI(NI,PI1,E),
+	predecessor@NI(NI,P,PI),
+	P != null.
+
+rule S3 successor@NI(NI,P,PI) :-
 	node(NI,N),
-	successor(NI,S,SI,ET),
-	ET>f_currentTime(),
-	D=f_dist(S,N).
+	sendPredecessor@NI(NI,P,PI,E),
+	bestSuccessor@NI(NI,S,SI),
+	P in (N,S),
+	stabilize@NI(NI, E).
 
-bestSuccessor(NI,S,SI,ET) :-
-	node(NI,N),
-	bestSuccessorID(NI,D),
-	successor(NI,S,SI,ET),
-	D=f_dist(S,N),
-	ET>f_currentTime().
+rule S4 sendSuccessors@SI(SI,NI,E) :-
+	stabilize@NI(NI,E),
+	successor@NI(NI,S,SI),
+	f_coinFlip().
 
-// Successor replacement policy:
+rule S5 returnSuccessor@PI(PI,S,SI,E) :-
+	sendSuccessors@NI(NI,PI,E),
+	successor@NI(NI,S,SI).
 
-bestKSuccessorID(NI,min-k<D,successor.size>) :-
-	node(NI,N),
-	successor(NI,S,SI,ET),
-	ET>f_currentTime(),
-	D=f_dist(S,N).
+rule S5a successor@NI(NI, S, SI) :-
+	returnSuccessor@NI(NI,S,SI,E),
+	stabilize@NI(NI, E).
 
-successor(NI,S,SI,ET) :-
-	node(NI,N),
-	successor(NI,S,SI,ET),
-	bestKSuccessorID(NI,S1),
-	f_dist(S,N)>S1,
-	ET = -1 .
+rule S6 notifyPredecessor@SI(SI,N,NI,E) :-
+	notify@NI(NI,E),
+	node@NI(NI,N),
+	successor@NI(NI,S,SI).
 
-// Fingers: 
+rule S7 predecessor@NI(NI,P,PI) :-
+	node@NI(NI,N),
+	notify@NI(NI, E),
+	notifyPredessor@NI(NI,P,PI,E),
+	predecessor@NI(NI,P1,PI1),
+	(P1 == null || (P in (P1, N))).
 
-finger(NI,K,B,BI,ET) :-
-	fix_finger(NI,E),
-	lookupResults(NI,K,B,BI,E),
-	ET=(f_currentTime()+finger.TTL).
-
-lookup(NI,K,NI,E) :-
-	fix_finger(NI,E),
-	fingerIndex(NI, I),
-	K=[(NI+2I) mod 2^m] .
-
-fingerIndex(NI, I) :-
-	fix_finger(NI,E),
-	fingerIndex(NI, I1),
-	I=([I1+1] mod fingerIndex.size).
-
-/* ?? F4: fingerIndex(NI,0)
-F5: fix_finger(ni,e), period=finger.TTL*0.5
-
-Periodically, add a fix_finger(ni,e) tuple to repair the ith finger
-entry starting from 0. If finger entry non-existant, creates it.  To
-build the finger table eagerly, we can call fix_finger for all finger
-entries. The less the period beteween each call to fix fingers, the more
-accurate the fingers will be. Set to half of finger TTL. 
-
-*/
-
-/* 1.3 Churn Handling */
-
-lookup(NI,N,NI,E) :-
-	node(NI,N),
-	join(NI,N,E).
-
-
-successor(NI,S,SI,ET) :-
-	join(NI,N,E),
-	lookupResults(NI,K,S,SI,E),
-	ET=(f_currentTime() + successor.TTL) .
-
-predecessor(NI,null,null).
-
-/*
-The tuple join(ni,n,e) is added as input for node ni to join n. A lookup
-message with id q is generated by rule J1. Results is used to initialize
-the successor in J2. If this is the first node, J2 will set successor to
-itself. 
-
-Stabilization:
-
-Update successor:
-S1: stabilizeRequest(SI, NI,E) :- stabilize(N1,E), bestSuccessor(N1,S,SI,ET)
-S2: sendPredecessor(NI,P,PI,E) :- stabilizeRequest(NI,PI1,E),
-predecessor(NI,P,PI), P != null 
-S3: successor(NI,P,PI,ET) :- node(NI,N), sendPredecessor(NI,P,PI,E),
-bestSuccessor(NI,S,SI,ET), N<P<S, ET=(f_currentTime()+successor.TTL) 
-
-Get successor list:
-S4: sendSuccessors(NI,S,SI) :- stabilize(NI,PI,E), successor(NI,S,SI)
-S5: successor(NI,S,SI,ET) :- sendSuccessors(NI,S,SI),
-ET=(f_currentTime()+successor.TTL) 
-
-Update predecessor:
-S6: notifyPredecessor(SI,N,NI,E) :- notify(NI,E), node(NI,N),
-successor(NI,S,SI,ET) 
-S7: predecessor(NI,P,PI) :- node(NI,N), notifyPredessor(NI,P,PI,E),
-predecessor(NI,P1,PI1), (P1 == null || (P1<P<N)) 
-
-Periodically, generate a stabilize(ni,e) and notify(ni,e) events. The
-stablize event is used to improve upon the immediate successor (S1-S3),
-and also for each node to get its successor lists from its successor
-(S4-S5). Upon receiving successors, S5 may result in current successor
-entries being evicted (based on the replacement policy). S6 and S7 are
-used to notify a successor node about the current predecessor, and
-update if necessary. If there is only a single successor, we do not need
-S4 and S5. 
-
-SendSucessors, stabilizeRequest, stabilize, notify, notifyPredecessor
-are all event tuples with TTL=0. 
-
+/** 
 
 1.4 Failure Detection
 ---------------------
