@@ -11,15 +11,16 @@ import re
 
 def print_usage():
     print
-    print "Usage: process_output -n <num_nodes> output_dir"
+    print "Usage: process_output -n <num_nodes> [-w <bw_window>] output_dir"
     print
 
 def parse_cmdline(argv): 
-    shortopts = "n:"
-    flags = {"num_nodes" : 0}
+    shortopts = "n:w:"
+    flags = {"num_nodes" : 0, "bw_window" : 2.0}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if   o == "-n": flags["num_nodes"]  = int(v)
+        elif o == "-w": flags["bw_window"]  = int(v)
         else:
             print_usage()
             exit(3)
@@ -36,14 +37,6 @@ def parse_node_lookups(out_f, lookups, results):
                                  ([0-9]+)\s*                                   # Event ID
                              \>\]$\n""", re.VERBOSE)
 
-    for line in out_f: 
-        if matchlookup.match(line):
-            lookup = [x for x in matchlookup.split(line) if x]
-            ekey   = lookup[-1]
-            lookup_list = [lookup[:-1]]
-            if lookups.has_key(ekey): lookup_list += lookups[ekey]
-            lookups[ekey] = lookup_list 
-
     matchresults = re.compile(r"""^Print\[.*\],\s*
                                  ([0-9]+),\s*                                  # seconds
                                  ([0-9]+)\]\:\s*                               # nanoseconds
@@ -55,14 +48,39 @@ def parse_node_lookups(out_f, lookups, results):
                                  ([0-9]+)\s*                                   # Event ID
                              \>\]$\n""", re.VERBOSE)
 
-    out_f.seek(0)
+    matchbandwidth = re.compile(r"""^Print\[Out\:\[.*\],\s*
+                                    ([0-9]+),\s*                               # seconds
+                                    ([0-9]+)\]\:\s*                            # nanoseconds
+                                    \[\<([a-zA-Z]+),\s*                       # token
+                                    .*\>\]$\n""", re.VERBOSE)
+
+    bw_measures = []
+    start_t     = 0.0
+    bw_window   = float(flags["bw_window"])
+
     for line in out_f: 
+        if matchlookup.match(line):
+            lookup = [x for x in matchlookup.split(line) if x]
+            ekey   = lookup[-1]
+            lookup_list = [lookup[:-1]]
+            if lookups.has_key(ekey): lookup_list += lookups[ekey]
+            lookups[ekey] = lookup_list 
         if matchresults.match(line):
             result = [x for x in matchresults.split(line) if x]
-            ekey   = lookup[-1]
+            ekey   = result[-1]
             result_list = [result[:-1]]
             if results.has_key(ekey): result_list += results[ekey]
             results[ekey] = result_list                            # Hash key:=eventID
+        if matchbandwidth.match(line):
+            measure = [x for x in matchbandwidth.split(line) if x]
+            ts = float(measure[0]) + (float(measure[1]) / 1000000000.0)
+            if not start_t: start_t = ts
+            if (ts - start_t) > bw_window:
+                if not bytes.has_key(measure[2]):
+                    print "UNKNOWN MESSAGE: ", measure[2]
+                    sys.exit(3)
+                bw_measures.append(bytes[measure[2]]/(ts - start_t))
+                start_t = 0.0
 
 
 def eval_lookup(lookups):
@@ -98,6 +116,11 @@ def eval_lookup(lookups):
 
 if __name__ == "__main__":
     global ip_map
+    global bytes
+
+    bytes = {"startJoin" : 10, "lookup" : 10, "lookupResults" : 10, "stablize" : 10, "stabilizeRequest" : 10,
+             "stablizeRecord" : 10, "notify" : 10, "notifyPredecessor" : 10, "sendPredecessor" : 10, 
+             "fixFinger" : 10, "fingerLookup" : 10}
 
     try:
         flags, args = parse_cmdline(sys.argv)
@@ -117,11 +140,6 @@ if __name__ == "__main__":
                fname = os.path.join(root, host, "chord_node%d.out" % (n))
                if not os.path.exists(fname): break
                fh = open(fname, "r")
-
-               #matchnodeip = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")  # Source IP address
-               #nodeip = matchnodeip.findall(fh.readline())[0]
-               #print "NODE IP: ", nodeip
-               #ip_map[nodeip] += [nodeid]                                   # Store nodes that live @ IP
 
                parse_node_lookups(fh, lookups, results)
                fh.close()
