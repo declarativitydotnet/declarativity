@@ -39,9 +39,11 @@ public:
   enum Type { NULLV=0, INT32, UINT32, INT64, UINT64, STRING, DOUBLE, INVALID };
   
   struct TypeError {} ;
+  
+  // Discriminator
+  Type t;
 
 protected:
-  Type t;
   union {
     int32_t	i32;
     uint32_t	ui32;

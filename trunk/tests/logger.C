@@ -8,7 +8,7 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: Tests for UDP
+ * DESCRIPTION: Tests for logger element
  *
  */
 

@@ -21,7 +21,8 @@ bin_PROGRAMS 	= 	tuples \
 			scheduling \
 			test_timecb \
 			net \
-			logger
+			logger \
+			csv
 
 tuples_SOURCES	= tuples.C
 tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
@@ -67,6 +68,11 @@ test_timecb_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
+csv_SOURCES	= csv.C
+csv_LDADD = \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 
 CLEANFILES = core *.core *~

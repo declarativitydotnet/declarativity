@@ -14,6 +14,7 @@
 
 lib_LTLIBRARIES = libp2elements.la
 libp2elements_la_SOURCES = \
+	csvparser.C \
 	slot.C \
 	pushprint.C \
 	pullprint.C \
