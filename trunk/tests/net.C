@@ -29,7 +29,7 @@
 #include "timedSource.h"
 #include "project.h"
 #include "udp.h"
-#include "plsensor.h"
+//#include "plsensor.h"
 #include "discard.h"
 
 /** Test the Rx part of the Udp element. */
@@ -61,7 +61,9 @@ void testUdpReceive()
   // Run the router
   amain();
 }
+#
 
+#if 0
 /** Test the Rx part of the Udp element. */
 void testPLSensor()
 {
@@ -88,13 +90,14 @@ void testPLSensor()
   // Run the router
   amain();
 }
+#endif 
 
 int main(int argc, char **argv)
 {
   std::cout << "\nNET\n";
 
   testUdpReceive();
-  testPLSensor();
+  //  testPLSensor();
 
   return 0;
 }
