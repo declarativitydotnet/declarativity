@@ -2025,8 +2025,12 @@ connectRules(str name,
   // come tuples that have left locally destined for local rules
   ElementSpecRef wrapAroundMux = conf->addElement(New refcounted< Mux >(strbuf("WA:") <<(name), 2));
   ElementSpecRef incomingP = conf->addElement(New refcounted< PrintTime >(strbuf("In:") << name));
+  ElementSpecRef incomingQueue = conf->addElement(New refcounted< Queue >(strbuf("incomingQueue")<< name, 1000));
+  ElementSpecRef incomingPusher = conf->addElement(New refcounted< TimedPullPush >(strbuf("incomingPusher:") << name, 0));
   conf->hookUp(pushTupleIn, pushTupleInPort, incomingP, 0);
-  conf->hookUp(incomingP, 0, wrapAroundMux, 0);
+  conf->hookUp(incomingP, 0, incomingQueue, 0);
+  conf->hookUp(incomingQueue, 0, incomingPusher, 0);
+  conf->hookUp(incomingPusher, 0, wrapAroundMux, 0);
 
 
   // The demux element for tuples

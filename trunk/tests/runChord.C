@@ -80,14 +80,15 @@ extern int ol_parser_debug;
 void testNetworked(LoggerI::Level level,
                    str myAddress,
                    int port,    // extracted from myAddress for convenience
-                   str landmarkAddress)
+                   str landmarkAddress,
+                   double delay = 0)
 {
   // Create the data flow
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
   Udp udp(strbuf(myAddress) << ":Udp", port);
 
   createNode(myAddress, landmarkAddress,
-             conf, &udp);
+             conf, &udp, delay);
 
   RouterRef router = New refcounted< Router >(conf, level);
   if (router->initialize(router) == 0) {
@@ -123,8 +124,8 @@ void testNetworkedDatalog(LoggerI::Level level,
 
 int main(int argc, char **argv)
 {
-  if (argc < 5) {
-    fatal << "Usage:\n\t runChord <datalogFile> <loggingLevel> <seed> <myipaddr:port> [<landmark_ipaddr:port>]\n";
+  if (argc < 6) {
+    fatal << "Usage:\n\t runChord <datalogFile> <loggingLevel> <seed> <myipaddr:port> <startDelay> [<landmark_ipaddr:port>]\n";
   }
 
   str datalogFile(argv[1]);
@@ -154,9 +155,12 @@ int main(int argc, char **argv)
   str thePort(theColon + 1);
   int port = atoi(thePort);
 
+  double delay = atof(argv[5]);
+
+
   if (runDatalogVersion) {
-    if (argc > 5) {
-      str landmark(argv[5]);
+    if (argc > 6) {
+      str landmark(argv[6]);
       testNetworkedDatalog(level,
 			   myAddress,
 			   port,
@@ -172,17 +176,19 @@ int main(int argc, char **argv)
     return 0;
   }
 
-  if (argc > 5) {
-    str landmark(argv[5]);
+  if (argc > 6) {
+    str landmark(argv[6]);
     testNetworked(level,
                   myAddress,
                   port,
-                  landmark);
+                  landmark,
+                  delay);
   } else {
     testNetworked(level,
                   myAddress,
                   port,
-                  str("-"));
+                  str("-"),
+                  delay);
   }
   return 0;
 }
