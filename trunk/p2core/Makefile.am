@@ -55,4 +55,5 @@ pel_opcode_descriptions.gen.txt: pel_gen.py
 	@PYTHON@ pel_gen.py
  
 pel_lexer.C: pel_lexer.lex pel_opcode_tokens.gen.h
-	$(LEX) $(AM_LFLAGS) $(LFLAGS) -opel_lexer.C -8 pel_lexer.lex
+	$(top_builddir)/util/fixflex.sh $(AM_LFLAGS) $(LFLAGS) -opel_lexer.C -8 pel_lexer.lex
+#	$(LEX) $(AM_LFLAGS) $(LFLAGS) -opel_lexer.C -8 pel_lexer.lex
