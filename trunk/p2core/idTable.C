@@ -83,19 +83,19 @@ void IdTable::initialize_gc (const size_t num, const size_t thresh) {
 
 // ref<Id> create (const XDR * xdr); look at tuple.C
 
-ref<Id> IdTable::create (const std::string& idString) {
-  ref<Id> result = New refcounted<Id> (idString); // add the string
+Id * IdTable::create (const std::string& idString) {
+  Id * result = New Id (idString); // add the string
   return storeId (result);
 }
 
-ref<Id> IdTable::create (const u_int32_t * random) {
-  ref<Id> result = New refcounted<Id> (random);
+Id * IdTable::create (const u_int32_t * random) {
+  Id * result = New Id (random);
   return storeId (result);
 }
 
-ref<Id> IdTable::create () {
+Id * IdTable::create () {
   u_int32_t random[] = { 0, 0, 0, 0, 0 };
-  ref<Id> result = New refcounted<Id> (random); // use dev/urandom
+  Id * result = New Id (random); // use dev/urandom
   return storeId (result);
 }
 
@@ -103,27 +103,22 @@ size_t IdTable::size () const {
   return memTable.size ();
 }
 
-void IdTable::remove (ref<Id> idPtr) {
-  /*
-  Id * remPtr = idPtr;
-  memTable.remove (remPtr);
-  */
+void IdTable::remove (Id * idPtr) {
+  memTable.remove (idPtr);
 }
 
 void IdTable::clear () {
   memTable.clear ();
 }
 
-ref<Id> IdTable::storeId (ref<Id> idKey) {
+Id * IdTable::storeId (Id * idKey) {
   Id * result = memTable[idKey->hashCode];
   if (result) {
     delete idKey;
-    ref<Id> r = New refcounted<Id> (*result);
-    return r;
+    return result;
   }
   else {
-    Id * newKey = idKey;
-    add (newKey);
+    add (idKey);
     return idKey;
   }
   /*
