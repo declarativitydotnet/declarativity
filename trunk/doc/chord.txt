@@ -35,12 +35,12 @@ tuples with the expiration time less than the current time.
 
 
 1.1 Route Selection Rules
--------------------------
+-------------------------  
 
 L1: lookupResults(R,K,S,SI,E) :- node(NI,N), lookup(NI,K,R,E),
-bestSuccessor(NI,S,SI), N<K<=S 
+bestSuccessor(NI,S,SI), K in (N,S]
 L2: bestLookupDistance(NI,K,R,E,min<D>) :- lookup(NI,K,R,E),
-finger(NI,I,B,BI,ET), K>B, ET>f_currentTime(), D=f_dist(B,K)
+finger(NI,I,B,BI,ET), B in (N,K), ET>f_currentTime(), D=f_dist(B,K)
 L3: lookup(BI,K,R,E) :- bestLookupDistance(NI,K,R,E,D),
 finger(NI,I,B,BI,ET), D=f_dist(B,K), K>B, ET>f_currentTime() 
 
@@ -145,6 +145,8 @@ entries being evicted (based on the replacement policy). S6 and S7 are
 used to notify a successor node about the current predecessor, and
 update if necessary. If there is only a single successor, we do not need
 S4 and S5. 
+
+We can modify S4 and S5 to only exchange with random neighbors.
 
 SendSucessors, stabilizeRequest, stabilize, notify, notifyPredecessor
 are all event tuples with TTL=0. 
