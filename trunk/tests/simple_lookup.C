@@ -33,21 +33,6 @@
 #include "pelTransform.h"
 #include "marshalField.h"
 
-int getLocalName(char *name)
-{
-  char* c = (char*) malloc(80 * sizeof(char));
-  char *d = (char*) malloc(80 * sizeof(char));
-  int id = 0;
-  gethostname(c, 80);
-  struct hostent *h = gethostbyname(c);
-  sprintf(d, "%s", inet_ntoa(*((struct in_addr *)h->h_addr)));
-  sscanf(d, "%s%d", name, &id);
-
-  free(c);
-  free(d);
-  return id;
-}
-
 struct LookupGenerator : public FunctorSource::Generator
 {
   // virtual ~LookupGenerator() {};
