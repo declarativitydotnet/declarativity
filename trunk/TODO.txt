@@ -1,0 +1,71 @@
+
+ELEMENTS
+
+ - Storage element (push): takes a tuple and stores it in a "table"
+   (see below) under a key.  Convention: the key is the first element
+   of the tuple. 
+
+ - A TCP connect element pair: analogous to UDP element.  Some kind of
+   reconnection policy.   Rx is push output, Tx is pull input. 
+
+ - An HTTP fetch element: when created, attempts to send tuples
+   consisting of an HTTP fetch.  Output is pull. 
+
+ - An HTTP response element: filters the HTTP headers from an HTTP
+   response, thereafter passes through the payload.  Push input, push
+   output. 
+ 
+ - Push-in, push-out element to split a sequence of packets into a
+   sequence of strings. 
+
+ - CSV parser: Takes a string tuple and outputs a tuple from CSV
+   parsing the string. 
+
+ - UDPCC elements: packets flow in both directions, and congestion
+   control is applied. 
+
+ - Element to demultiplex packets based on peer IP address.  push-in,
+   push-out. 
+
+ - Element to parse a packet stream into a set of (query, tuple list)
+   pairs.
+
+ - Element to demultiplex a (query, tuple list) into a set of tuples
+   to be pushed to different dataflow arguments. 
+
+ - Tuple transform element: tuple comes in, expression is evaluated to
+   a new tuple, tuple is emitted.  push-push or pull-pull.
+
+ - Tuple filter element: tuple expression is evaluated to boolean
+   which lets tuple through or not.  push-push or pull-pull. 
+
+ - Element to marshal tuples into a packet 
+
+OTHER OBJECTS / FACILTIES
+
+ - Various "table" objects.  A table stores tuples, either on disk or
+   in  memory, together with some "replacement policy" which
+   determines what tuples get discarded when a new tuple arrives.
+   Tables are referred to by global IDs (global across P2, since
+   queries need to treat the set of local tables sharing a single Id
+   as a single global table).  Examples of replacement policies: 
+    1) Unique key - a tuple replaces previous ones with the same key
+    2) Time-based FIFO: every tuple for the last n seconds
+    3) Fixed-size FIFO: the last n tuples. 
+
+ - Unit testing library: put useful test functions/classes into a
+   library, built in the tests directory. 
+
+ - Framework for each unit test program: convention for output,
+   etc. together with a coherent way to run all the tests and collate
+   the failures. 
+
+ - Adding microbenchmarks to the framework above.
+
+ - Cron job to checkout a fresh tree on grumpy each night, build P2,
+   run all the regression tests, archive the benchmark timings, and
+   send any errors to p2devel. 
+
+ - Message-level simulation
+
+
