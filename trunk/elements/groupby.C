@@ -171,7 +171,6 @@ void GroupBy::runTimer()
       log(LoggerI::INFO, 0, "runTimer: sleeping");
       return;
     } else {
-      std::cout << "Pushed " << t->toString() << "\n";
       _lastSentTuples.erase(groupByStr);
       _lastSentTuples.insert(std::make_pair(groupByStr, t)); 
     }
