@@ -18,7 +18,7 @@ materialize(joinRecord, 2, infinity, 1).
 materialize(successorNodeDistance, 3, infinity, 100).
 materialize(successorCount, 2, infinity, 1).
 materialize(fingerCount, 2, infinity, 1).
-materialize(lookupDistance, 7, infinity, infinity).
+/*materialize(lookupDistance, 7, infinity, infinity).*/
 
 /* Start count from 1 */
 primarykeys(node, 1).
@@ -35,7 +35,7 @@ primarykeys(fingerLookup, 2).
 primarykeys(stabilizeRecord, 1).
 primarykeys(landmarkNode, 1).
 primarykeys(joinRecord, 1).
-primarykeys(lookupDistance,2).
+/*primarykeys(lookupDistance,2).*/
 
 
 /** Lookups */
@@ -59,6 +59,13 @@ rule L2 lookup@SI(SI,K,R,E) :-
 	bestSuccessor@NI(NI,S,SI),
 	!select_rangeID3(K,N,S). 
 
+
+rule L3 bestLookupDistance@NI(NI,K,R,E, min<D>) :-
+	lookup@NI(NI,K,R,E),
+	finger@NI(NI,I,B,BI),
+	node@NI(NI,N),
+	select_rangeID1(B,N,K),	
+	assign_distID(D,B,K). 	
 
 /* Materialized version */
 /*rule L3 lookupDistance@NI(NI,IE,K,R,I,E,D) :-
