@@ -94,10 +94,12 @@ def process_node(out_f, lookups, results):
     norm   = 1.0 / float(len(bw_measures))
     avg_bw = 0.0
     max_bw = 0.0
+    min_bw = sys.maxint
     for bw in bw_measures:
         if max_bw < bw: max_bw = bw
+        if min_bw > bw: min_bw = bw
         avg_bw += (bw * norm)
-    return avg_bw, max_bw
+    return min_bw, avg_bw, max_bw
   
 
 def eval_lookups(lookups, results):
@@ -234,7 +236,10 @@ def simple_lookups(lookups, results):
                if maxsofar < cnt: maxsofar = cnt
                cnt = 0
                curip = ip 
-       print >> out, "LOOKUP(%s): %f " % (key, (float(maxsofar)/float(len(responseIPs)))), responseIPs
+       if len(responseIPs) == 0:
+           print >> out, "LOOKUP(%s): %f " % (key, 0), responseIPs
+       else:
+           print >> out, "LOOKUP(%s): %f " % (key, (float(maxsofar)/float(len(responseIPs)))), responseIPs
 
 if __name__ == "__main__":
     global ip_map
@@ -255,22 +260,27 @@ if __name__ == "__main__":
         print_usage()        
         sys.exit(3)
 
-    files   = []
-    for root, dirs, datfiles in os.walk(args[0]):
-        if emulab:
-	    for host in dirs:
-                for n in range(flags["num_nodes"]): 
-                    files += [os.path.join(root, host, "chord_node%d.out" % (n))]
-                    if int(host) == 0: break
-        else: 
-            for f in datfiles: 
-                files += [os.path.join(root, f)]
+    files = filter(lambda files: files[-4:] == '.log', os.listdir(args[0]) )
+
+#    for files in os.walk(args[0]):
+#        if emulab:
+#	    for host in dirs:
+#                for n in range(flags["num_nodes"]): 
+#                    files += [os.path.join(root, host, "chord_node%d.out" % (n))]
+#                    if int(host) == 0: break
+#        else: 
+#            for f in datfiles: 
+#                files += [os.path.join(root, f)]
 
     node_bw = open('./node_bw.dat', 'w')
     nodeid  = 0
     lookups = {}
     results = {}
 
+    avg_avg_bw = 0.0
+    max_max_bw = 0.0
+    min_min_bw = sys.maxint
+    
     for file in files:
         nodeid = nodeid + 1
         if not os.path.exists(file):
@@ -278,10 +288,17 @@ if __name__ == "__main__":
             exit(3)
         fh = open(file, "r")
 
-        avg_bw, max_bw = process_node(fh, lookups, results)
-        print >> node_bw, "%d %f %f" % (nodeid, float(avg_bw), float(max_bw))
+        min_bw, avg_bw, max_bw = process_node(fh, lookups, results)
+        print >> node_bw, "%d %f %f %f" % (nodeid, float(min_bw), float(avg_bw), float(max_bw))
+
+        if max_max_bw < max_bw: max_max_bw = max_bw
+        if min_min_bw > min_bw: min_min_bw = min_bw
+        avg_avg_bw += avg_bw
+
         node_bw.flush()
         fh.close()
+    avg_avg_bw /= float(nodeid)
+    print >> node_bw, "#%d %f %f %f" % (nodeid, float(min_bw), float(avg_bw), float(max_bw))
     node_bw.close()
 
     print "SANITY CHECK: counted %d distinct result tuples." % (len(resultsHash.keys()))
