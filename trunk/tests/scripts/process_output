@@ -204,9 +204,9 @@ def eval_lookups(lookups, results):
         print >> tlookups, "%d %f %d" % (h, (ih + eh), (itotal + etotal))
     tlookups.close()
 
-def get_simple_lookups():
+def get_simple_lookup():
     slookups = open(flags["simple_lookup"], 'r')
-    out = open("./simple_lookups.dat", 'w')
+    out = open("./simple_lookup.dat", 'w')
     matchlookup = re.compile(r"""^Print\[lookup]\:\s*
                                  \[\<lookup,\s*                                # token
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
@@ -215,20 +215,20 @@ def get_simple_lookups():
                                  ([a-zA-Z0-9\.\:]+)\s*                         # Event ID
                              \>\]$\n""", re.VERBOSE)
 
-    simple_lookups = {}
+    simple_lookup = {}
     for line in slookups: 
         if matchlookup.match(line):
             lookup = [x for x in matchlookup.split(line) if x]
             key    = lookup[1]
             events = [lookup[-1]]                         # Only need the eventid
-            if simple_lookups.has_key(key): events += simple_lookups[key]
-            simple_lookups[key] = events 
-    return simple_lookups
+            if simple_lookup.has_key(key): events += simple_lookup[key]
+            simple_lookup[key] = events 
+    return simple_lookup
 
-def eval_simple_lookups(lookups, results):
-    for key in simple_lookups.keys():
+def eval_simple_lookup(lookups, results):
+    for key in simple_lookup.keys():
        responseIPs = []
-       for event in simple_lookups[key]:
+       for event in simple_lookup[key]:
            if results.has_key(event):
                response = results[event]
                responseIPs += [response[-1]]
@@ -249,7 +249,7 @@ def eval_simple_lookups(lookups, results):
            print >> out, "LOOKUP(%s): %f " % (key, (float(maxsofar)/float(len(responseIPs)))), responseIPs
 
 if __name__ == "__main__":
-    global simple_lookups
+    global simple_lookup
     global ip_map
     global bytes
     global resultsHash
@@ -280,8 +280,8 @@ if __name__ == "__main__":
 #            for f in datfiles: 
 #                files += [os.path.join(root, f)]
 
-    simple_lookups = {}
-    if flags["simple_lookup"]: simple_lookups = get_simple_lookups()
+    simple_lookup = {}
+    if flags["simple_lookup"]: simple_lookup = get_simple_lookup()
 
     node_bw = open('./node_bw.dat', 'w')
     nodeid  = 0
@@ -314,6 +314,6 @@ if __name__ == "__main__":
 
     print "SANITY CHECK: counted %d distinct result tuples." % (len(resultsHash.keys()))
 
-    if simple_lookups: eval_simple_lookups(lookups, results)
+    if simple_lookup: eval_simple_lookup(lookups, results)
     eval_lookups(lookups, results)
     
