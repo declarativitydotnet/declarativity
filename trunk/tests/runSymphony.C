@@ -9,7 +9,7 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: A chord dataflow.
+ * DESCRIPTION: A symphony dataflow.
  *
  */
 
@@ -68,16 +68,16 @@
 extern int ol_parser_debug;
 
 
-static const int SUCCESSORSIZE = 4;
+static const int SUCCESSORSIZE = 1;
 #include "ring.C"
-#include "chord.C"
-#include "chordDatalog.C"
+#include "symphony.C"
 
 
 
 
 
-/** Created a networked chord flow. If alone, I'm my own successor.  If
+
+/** Created a networked symphony flow. If alone, I'm my own successor.  If
     with landmark, I start with a join. */
 void testNetworked(LoggerI::Level level,
                    str myAddress,
@@ -89,12 +89,12 @@ void testNetworked(LoggerI::Level level,
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
   Udp udp(strbuf(myAddress) << ":Udp", port);
 
-  createNode(myAddress, landmarkAddress,
+  createSymNode(myAddress, landmarkAddress,
              conf, &udp, delay);
 
   RouterRef router = New refcounted< Router >(conf, level);
   if (router->initialize(router) == 0) {
-    std::cout << "Correctly initialized network of chord lookup flows.\n";
+    std::cout << "Correctly initialized network of symphony lookup flows.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
     return;
@@ -108,33 +108,18 @@ void testNetworked(LoggerI::Level level,
 }
 
 
-void testNetworkedDatalog(LoggerI::Level level,
-			  str myAddress,
-			  int port,    // extracted from myAddress for convenience
-			  str landmarkAddress, str filename,
-			  double delay)
-{
-  ref< OL_Context > ctxt = New refcounted< OL_Context>();
-  std::ifstream istr(filename);
-  ctxt->parse_stream(&istr);
-   
-  startChordInDatalog(level, ctxt, filename, myAddress, landmarkAddress, port, delay);
-}
-
-
-
 
 
 int main(int argc, char **argv)
 {
   if (argc < 6) {
-    fatal << "Usage:\n\t runChord <datalogFile> <loggingLevel> <seed> <myipaddr:port> <startDelay> [<landmark_ipaddr:port>]\n";
+    fatal << "Usage:\n\t runSymphony <datalogFile> <loggingLevel> <seed> <myipaddr:port> <startDelay> [<landmark_ipaddr:port>]\n";
   }
 
   str datalogFile(argv[1]);
   bool runDatalogVersion = false;
   if (datalogFile == "0") {
-      std::cout << "Manual translated chord\n";
+      std::cout << "Manual translated symphony\n";
   } else {
       runDatalogVersion = true;
       std::cout << "Running from translated file " << datalogFile << "\n";
@@ -152,7 +137,7 @@ int main(int argc, char **argv)
   char * theColon = strchr(theString, ':');
   if (theColon == NULL) {
     // Couldn't find the correct format
-    fatal << "Usage:\n\trunChord <seed> <myipaddr:port> [<landmark_ipaddr:port>]\n\
+    fatal << "Usage:\n\trunSymphony <seed> <myipaddr:port> [<landmark_ipaddr:port>]\n\
               \tMy address is malformed\n";
   }
   str thePort(theColon + 1);
@@ -163,20 +148,9 @@ int main(int argc, char **argv)
 
   if (runDatalogVersion) {
     if (argc > 6) {
-      str landmark(argv[6]);
-      testNetworkedDatalog(level,
-			   myAddress,
-			   port,
-			   landmark, 
-			   datalogFile, 
-			   delay);
+      assert(false);
     } else {
-      testNetworkedDatalog(level,
-			   myAddress,
-			   port,
-			   str("0"),
-			   datalogFile,
-			   delay);
+      assert(false);
     }
     return 0;
   }

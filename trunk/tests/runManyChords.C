@@ -60,6 +60,8 @@
 #include "noNullField.h"
 
 
+static const int SUCCESSORSIZE = 4;
+#include "ring.C"
 #include "chord.C"
 #include "chordDatalog.C"
 

@@ -22,6 +22,8 @@ bin_PROGRAMS 	= 	values \
 			IDs \
 			runManyChords \
 			runChord \
+			runSymphony \
+			runSymphonicChord \
 			simple_lookup \
 			lookupGenerator \
 			basicelements \
@@ -99,6 +101,22 @@ join_LDADD = \
 
 runChord_SOURCES = runChord.C
 runChord_LDADD = \
+	$(top_builddir)/overlog/.libs/liboverlog.a \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+runSymphony_SOURCES = runSymphony.C
+runSymphony_LDADD = \
+	$(top_builddir)/overlog/.libs/liboverlog.a \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+runSymphonicChord_SOURCES = runSymphonicChord.C
+runSymphonicChord_LDADD = \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \

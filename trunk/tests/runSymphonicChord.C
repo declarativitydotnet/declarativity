@@ -9,7 +9,7 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: A chord dataflow.
+ * DESCRIPTION: A symphony/chord dataflow.
  *
  */
 
@@ -71,7 +71,7 @@ extern int ol_parser_debug;
 static const int SUCCESSORSIZE = 4;
 #include "ring.C"
 #include "chord.C"
-#include "chordDatalog.C"
+#include "symphony.C"
 
 
 
@@ -89,7 +89,7 @@ void testNetworked(LoggerI::Level level,
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
   Udp udp(strbuf(myAddress) << ":Udp", port);
 
-  createNode(myAddress, landmarkAddress,
+  createSymNode(myAddress, landmarkAddress,
              conf, &udp, delay);
 
   RouterRef router = New refcounted< Router >(conf, level);
@@ -105,20 +105,6 @@ void testNetworked(LoggerI::Level level,
 
   // Run the router
   amain();
-}
-
-
-void testNetworkedDatalog(LoggerI::Level level,
-			  str myAddress,
-			  int port,    // extracted from myAddress for convenience
-			  str landmarkAddress, str filename,
-			  double delay)
-{
-  ref< OL_Context > ctxt = New refcounted< OL_Context>();
-  std::ifstream istr(filename);
-  ctxt->parse_stream(&istr);
-   
-  startChordInDatalog(level, ctxt, filename, myAddress, landmarkAddress, port, delay);
 }
 
 
@@ -163,20 +149,9 @@ int main(int argc, char **argv)
 
   if (runDatalogVersion) {
     if (argc > 6) {
-      str landmark(argv[6]);
-      testNetworkedDatalog(level,
-			   myAddress,
-			   port,
-			   landmark, 
-			   datalogFile, 
-			   delay);
+      assert(false);
     } else {
-      testNetworkedDatalog(level,
-			   myAddress,
-			   port,
-			   str("0"),
-			   datalogFile,
-			   delay);
+      assert(false);
     }
     return 0;
   }
