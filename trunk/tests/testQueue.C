@@ -25,7 +25,7 @@
 #include "timedPushSource.h"
 #include "timedPullSink.h"
 #include "router.h"
-#include "val_null.h"
+/*#include "val_null.h"
 #include "val_str.h"
 #include "val_int32.h"
 #include "val_uint32.h"
@@ -33,22 +33,7 @@
 #include "val_uint64.h"
 #include "val_double.h"
 #include "val_opaque.h"
-
-TupleRef create_tuple(int i) {
-  TupleRef t = Tuple::mk();
-  t->append(Val_Null::mk());
-  t->append(Val_Int32::mk(i));
-  t->append(Val_UInt64::mk(i));
-  t->append(Val_Int32::mk(i));
-  strbuf myStringBuf;
-  myStringBuf << "This is string '" << i << "'";
-  str myString = myStringBuf;
-  t->append(Val_Str::mk(myString));
-  t->freeze();
-  std::cout << "Created tuple " << (t->toString()) << "\n";
-  return t;
-}
-
+*/
 
 /** Test queue */
 
@@ -58,11 +43,11 @@ void testQueue()
 
     Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
 
-    ElementSpecRef timedPushSourceSpec = conf->addElement(new refcounted<TimedPushSource>(1));
+    ElementSpecRef timedPushSourceSpec = conf->addElement(new refcounted<TimedPushSource>("source", 1));
     ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
-    ElementSpecRef queueSpec = conf->addElement(New refcounted<Queue>(5));
+    ElementSpecRef queueSpec = conf->addElement(New refcounted<Queue>("queue", 5));
     ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
-    ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >(3));
+    ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >("sink", 3));
 
     conf->hookUp(timedPushSourceSpec, 0, sourcePrintS ,0);
     conf->hookUp(sourcePrintS, 0, queueSpec, 0);

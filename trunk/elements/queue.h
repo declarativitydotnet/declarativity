@@ -19,7 +19,7 @@
 class Queue : public Element { 
 public:
 
-  Queue(int queueSize);
+  Queue(str name, int queueSize);
 
   ~Queue();
   
