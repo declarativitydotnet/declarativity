@@ -56,7 +56,7 @@ public:
   
   Type get_type() const { return t; };
 
-  str TupleField::toString() const;
+  str toString() const;
 
   CAST(int32_t,  i32, INT32);
   CAST(u_int32_t,ui32,UINT32);

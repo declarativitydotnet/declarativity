@@ -1,9 +1,14 @@
 $(PROGRAMS): $(LDEPS)
 
-bin_PROGRAMS 	= tuples basicelements
+bin_PROGRAMS 	= tuples basicelements basicElementPlumbing
 # noinst_HEADERS	= 
 tuples_SOURCES	= tuples.C
 tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a $(LDADD)
+
+basicElementPlumbing_SOURCES = basicElementPlumbing.C
+basicElementPlumbing_LDADD =	$(top_builddir)/p2core/.libs/libp2core.a \
+				$(top_builddir)/elements/.libs/libp2elements.a \
+				$(LDADD)
 
 basicelements_SOURCES	= basicelements.C
 basicelements_LDADD = \

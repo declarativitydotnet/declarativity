@@ -102,16 +102,6 @@ dnl 	AC_DEFINE(HAVE_TIMESPEC, 1,
 dnl 		  Define if sys/time.h defines a struct timespec.))
 ])
 dnl
-dnl Find the crypt function
-dnl
-AC_DEFUN(SFS_FIND_CRYPT,
-[AC_SUBST(LIBCRYPT)
-AC_CHECK_FUNC(crypt)
-if test $ac_cv_func_crypt = no; then
-	AC_CHECK_LIB(crypt, crypt, LIBCRYPT="-lcrypt")
-fi
-])
-dnl
 dnl Find pty functions
 dnl
 AC_DEFUN(SFS_PTYLIB,
@@ -605,111 +595,6 @@ fi
 CFLAGS=$ac_save_CFLAGS
 CPPFLAGS="$CPPFLAGS $sfs_cv_pthread_h"
 LIBS="$ac_save_LIBS $sfs_cv_libpthread"])
-dnl
-dnl Find GMP
-dnl
-AC_DEFUN(SFS_GMP,
-[AC_ARG_WITH(gmp,
---with-gmp[[=/usr/local]]   specify path for gmp)
-AC_SUBST(GMP_DIR)
-AC_SUBST(LIBGMP)
-AC_MSG_CHECKING([for GMP library])
-test "$with_gmp" = "no" && unset with_gmp
-if test -z "$with_gmp"; then
-    if test -z "$GMP_DIR"; then
-	for dir in `cd $srcdir && echo gmp*`; do
-	    if test -d "$srcdir/$dir"; then
-		GMP_DIR=$dir
-		break
-	    fi
-	done
-    fi
-    if test "${with_gmp+set}" != set \
-		-a "$GMP_DIR" -a -d "$srcdir/$GMP_DIR"; then
-	GMP_DIR=`echo $GMP_DIR | sed -e 's!/$!!'`
-	CPPFLAGS="$CPPFLAGS "'-I$(top_srcdir)/'"$GMP_DIR"
-	#LDFLAGS="$LDFLAGS "'-L$(top_builddir)/'"$GMP_DIR"
-    else
-	GMP_DIR=
-	for dir in "$prefix" /usr/local /usr; do
-	    if test \( -f $dir/lib/libgmp.a -o -f $dir/lib/libgmp.la \) \
-		-a \( -f $dir/include/gmp.h -o -f $dir/include/gmp3/gmp.h \
-			-o -f $dir/include/gmp2/gmp.h \); then
-		    with_gmp=$dir
-		    break
-	    fi
-	done
-	if test -z "$with_gmp"; then
-	    AC_MSG_ERROR([Could not find GMP library])
-	fi
-	test "$with_gmp" = /usr -a -f /usr/include/gmp.h && unset with_gmp
-    fi
-fi
-if test "$with_gmp"; then
-    unset GMP_DIR
-    if test -f ${with_gmp}/include/gmp.h; then
-	CPPFLAGS="$CPPFLAGS -I${with_gmp}/include"
-    elif test -f ${with_gmp}/include/gmp3/gmp.h; then
-	CPPFLAGS="$CPPFLAGS -I${with_gmp}/include/gmp3"
-    elif test -f ${with_gmp}/include/gmp2/gmp.h; then
-	CPPFLAGS="$CPPFLAGS -I${with_gmp}/include/gmp2"
-    else
-	AC_MSG_ERROR([Could not find gmp.h header])
-    fi
-
-    #LDFLAGS="$LDFLAGS -L${with_gmp}/lib"
-    #LIBGMP=-lgmp
-    if test -f "${with_gmp}/lib/libgmp.la"; then
-	LIBGMP="${with_gmp}/lib/libgmp.la"
-    else
-	LIBGMP="${with_gmp}/lib/libgmp.a"
-    fi
-    AC_MSG_RESULT([$LIBGMP])
-elif test "$GMP_DIR"; then
-    export GMP_DIR
-    AC_MSG_RESULT([using distribution in $GMP_DIR subdirectory])
-    LIBGMP='$(top_builddir)/'"$GMP_DIR/libgmp.la"
-else
-    AC_MSG_RESULT(yes)
-    if test -f /usr/lib/libgmp.la; then
-	LIBGMP=/usr/lib/libgmp.la
-    elif test -f /usr/lib/libgmp.a; then
-	# FreeBSD (among others) has a broken gmp shared library
-	LIBGMP=/usr/lib/libgmp.a
-    else
-	LIBGMP=-lgmp
-    fi
-fi
-
-AC_CONFIG_SUBDIRS($GMP_DIR)
-
-ac_save_CFLAGS="$CFLAGS"
-test "$GMP_DIR" && CFLAGS="$CFLAGS -I${srcdir}/${GMP_DIR}"
-
-AC_CACHE_CHECK(for mpz_xor, sfs_cv_have_mpz_xor,
-unset sfs_cv_have_mpz_xor
-if test "$GMP_DIR"; then
-	sfs_cv_have_mpz_xor=yes
-else
-	AC_EGREP_HEADER(mpz_xor, [gmp.h], sfs_cv_have_mpz_xor=yes)
-fi)
-test "$sfs_cv_have_mpz_xor" && AC_DEFINE([HAVE_MPZ_XOR], 1,
-	[Define if you have mpz_xor in your GMP library.])
-
-AC_CACHE_CHECK(size of GMP mp_limb_t, sfs_cv_mp_limb_t_size,
-sfs_cv_mp_limb_t_size=no
-for size in 2 4 8; do
-    AC_TRY_COMPILE([#include <gmp.h>],
-    [switch (0) case 0: case (sizeof (mp_limb_t) == $size):;],
-    sfs_cv_mp_limb_t_size=$size; break)
-done)
-
-CFLAGS="$ac_save_CFLAGS"
-
-test "$sfs_cv_mp_limb_t_size" = no \
-    && AC_MSG_ERROR(Could not determine size of mp_limb_t.)
-AC_DEFINE_UNQUOTED(GMP_LIMB_SIZE, $sfs_cv_mp_limb_t_size,
-		   Define to be the size of GMP's mp_limb_t type.)])
 
 dnl
 dnl Find BekeleyDB 3
@@ -1092,13 +977,12 @@ if test -f ${with_sfs}/Makefile -a -f ${with_sfs}/autoconf.h; then
     esac
 
     CPPFLAGS="$CPPFLAGS -I${with_sfs}"
-    for lib in async arpc crypt sfsmisc; do
+    for lib in async arpc sfsmisc; do
 	CPPFLAGS="$CPPFLAGS -I${sfssrcdir}/$lib"
     done
     CPPFLAGS="$CPPFLAGS -I${with_sfs}/svc"
     LIBASYNC=${with_sfs}/async/libasync.la
     LIBARPC=${with_sfs}/arpc/libarpc.la
-    LIBSFSCRYPT=${with_sfs}/crypt/libsfscrypt.la
     LIBSFSMISC=${with_sfs}/sfsmisc/libsfsmisc.la
     LIBSVC=${with_sfs}/svc/libsvc.la
     MALLOCK=${with_sfs}/sfsmisc/mallock.o
@@ -1115,7 +999,6 @@ elif test -f ${with_sfs}/include/sfs/autoconf.h \
     CPPFLAGS="$CPPFLAGS -I${sfsincludedir}"
     LIBASYNC=${sfslibdir}/libasync.la
     LIBARPC=${sfslibdir}/libarpc.la
-    LIBSFSCRYPT=${sfslibdir}/libsfscrypt.la
     LIBSFSMISC=${sfslibdir}/libsfsmisc.la
     LIBSVC=${sfslibdir}/libsvc.la
     MALLOCK=${sfslibdir}/mallock.o
@@ -1150,11 +1033,10 @@ AC_SUBST(RPCC)
 AC_SUBST(MALLOCK)
 AC_SUBST(NOPAGING)
 
-SFS_GMP
 SFS_DMALLOC
 
 LDEPS='$(LIBSFSMISC) $(LIBSVC) $(LIBSFSCRYPT) $(LIBARPC) $(LIBASYNC)'
-LDADD="$LDEPS "'$(LIBGMP)'
+LDADD="$LDEPS "
 AC_SUBST(LDEPS)
 AC_SUBST(LDADD)
 ])

@@ -26,7 +26,7 @@ void PullPrint::run()
   TuplePtr t = input(0).pull(_wakeup_cb);
   if (t != NULL) {
     // Ensure element is still runnable
-    std::cout << "PullPrint: " << t->toString() << "\n";
+    std::cout << "PullPrint: " << "1 tuple" << "\n";
   } else {
     // Element is no longer runnable
   }
