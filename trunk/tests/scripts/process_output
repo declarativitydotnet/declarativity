@@ -28,6 +28,7 @@ def parse_cmdline(argv):
 def parse_node_lookups(out_f):
     lookups  = {}
     results = {}
+
     matchlookup = re.compile(r"""^.*\[\<lookup,\s*                             # token
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
                                  ([a-f0-9]+),\s*                               # Lookup key 
@@ -57,6 +58,8 @@ def parse_node_lookups(out_f):
     return lookups, results
 
 if __name__ == "__main__":
+    global ip_map
+
     try:
         flags, args = parse_cmdline(sys.argv)
     except:
@@ -66,6 +69,7 @@ if __name__ == "__main__":
         print_usage()        
         sys.exit(3)
 
+    ip_map    = {}
     host_info = {}
     for root, dirs, files in os.walk(args[0]):
 	for host in dirs:
@@ -74,6 +78,10 @@ if __name__ == "__main__":
                fname = os.path.join(root, host, "chord_node%d.out" % (n))
                if not os.path.exists(fname): break
                fh = open(fname, "r")
+               matchnodeip = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")  # Source IP address
+               nodeip = matchnodeip.findall(fh.readline())[0]
+               print "NODE IP: ", nodeip
+               ip_map[nodeip] += [nodeid]                                   # Store nodes that live @ IP
 
                host_info[nodeid] = parse_node_lookups(fh)
 

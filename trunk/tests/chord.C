@@ -63,9 +63,9 @@
 #include "noNullField.h"
 
 
-static const int SUCCESSORSIZE = 16;
-static const double FINGERTTL = 0.2;
-static const int FINGERSIZE = ID::WORDS * 32;
+static const int SUCCESSORSIZE = 4;
+static const double FINGERTTL = 5.0;
+static const int FINGERSIZE = ID::WORDS * 4;
 
 
 /**

@@ -14,11 +14,7 @@ import threading
 
 def print_usage():
     print
-    print "Usage: run_node -i <IP> -p <start_port> [-l <landmark_ip:port> [-n <num_nodes>]] [-s <seed>] [-t <session_time>] chord_exec output_dir"
-    print "DESC:  Start some number of chord nodes on an emulab host."
-    print "DESC:  If arg seed is not given then a random seed in [0, 2^32-1] is supplied ."
-    print "DESC:  If a landmark node is not supplied then it is assumed to be the master."
-    print "DESC:  If a landmark node exists then a number of slaves can be supplied and assigned ports [0-(num_nodes-1)]."
+    print "Usage: run_lookups -i <my_ip:port> -l <landmark_ip:port> lookup_exec output_dir"
     print
 
 def parse_cmdline(argv): 
