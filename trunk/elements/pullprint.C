@@ -17,8 +17,49 @@
 PullPrint::PullPrint() : 
   Element(1,0),
   _wakeup_cb(wrap(this, &PullPrint::wakeup)),
-  _run_cb(wrap(this, &PullPrint::run))
+  _run_cb(wrap(this, &PullPrint::run)),
+  _task(this)
 {
+}
+
+void PullPrint::wakeup()
+{
+  // I was signalled from my input that it's OK to pull some more.
+  // Schedule myself.  This is only called from someone's callback so
+  // it's OK to invoke fast reschedule.
+
+  _task.fast_reschedule();
+  
+  //  lazycb(0, _run_cb);
+}
+
+int PullPrint::initialize()
+{
+  // Schedule my task to run
+  _task.initialize(this, true);
+}
+
+
+bool PullPrint::run_task()
+{
+  // Doesn't care if it receives pull failure.
+
+  // Pull and print.  If pull fails, don't schedule yourself.  If pull
+  // succeeds, schedule yourself again.
+  TuplePtr t = input(0).pull(_wakeup_cb);
+  if (t != NULL) {
+    // Print tuple
+    std::cout << "PullPrint: " << (t->toString()) << "\n";
+
+    // Reschedule
+    _task.fast_reschedule();
+    return true;
+  } else {
+    // Didn't get anything
+    
+    // Do nothing
+    return false;
+  }
 }
 
 void PullPrint::run()
@@ -32,7 +73,3 @@ void PullPrint::run()
   }
 }
 
-void PullPrint::wakeup()
-{
-  lazycb(0, _run_cb);
-}
