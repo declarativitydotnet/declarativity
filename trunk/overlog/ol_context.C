@@ -285,7 +285,7 @@ void OL_Context::materialize( Parse_ExprList *l)
 {
   TableInfo *tableInfo = new TableInfo();
   
-  if (l->size() != 5) {
+  if (l->size() != 4) {
     error("bad number of arguments to materialize");
     goto mat_error;
   }
@@ -327,16 +327,16 @@ void OL_Context::materialize( Parse_ExprList *l)
   }
 
   // eventFlag
-  if (l->at(4)->val->toString() == "0") {
+  /*if (l->at(4)->val->toString() == "0") {
     tableInfo->eventFlag = false;
   } else {
     tableInfo->eventFlag = true;
-  }
+    }*/
 
   tableInfoMap->insert(std::make_pair(tableInfo->tableName, tableInfo));
   
   DBG( "Materialize " << tableInfo->tableName << "/" << tableInfo->arity 
-       << ", timeout " << tableInfo->timeout << ", size " << tableInfo->size << ". eventFlag " << tableInfo->eventFlag);
+       << ", timeout " << tableInfo->timeout << ", size " << tableInfo->size); 
 
  mat_error:
   delete l;

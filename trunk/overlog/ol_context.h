@@ -63,7 +63,7 @@ public:
     int arity;
     int timeout;
     int size;
-    bool eventFlag; // is it used as an event tuple
+    //bool eventFlag; // is it used as an event tuple
   };
   
   struct Functor {
