@@ -134,7 +134,7 @@ Element::ports_frozen() const
 
 int Element::connect_input(int i, Element *f, int port)
 {
-  if (i >= 0 && i < ninputs() && input(i)->allowed()) {
+  if (i >= 0 && i < ninputs()) {
     _inputs[i] = New refcounted< Port >(this, f, port);
     return 0;
   } else
@@ -143,7 +143,7 @@ int Element::connect_input(int i, Element *f, int port)
 
 int Element::connect_output(int o, Element *f, int port)
 {
-  if (o >= 0 && o < noutputs() && output(o)->allowed()) {
+  if (o >= 0 && o < noutputs()) {
     _outputs[o] = New refcounted< Port >(this, f, port);
     return 0;
   } else
@@ -166,51 +166,6 @@ const char *Element::flags() const
 {
   return "";
 }
-
-#if P2_STATS >= 1
-
-static str
-read_icounts_handler(Element *f, void *)
-{
-  strbuf sa;
-  for (int i = 0; i < f->ninputs(); i++)
-    if (f->input(i).allowed() || P2_STATS >= 2)
-      sa << f->input(i).ntuples() << "\n";
-    else
-      sa << "??\n";
-  return sa.take_string();
-}
-
-static str
-read_ocounts_handler(Element *f, void *)
-{
-  strbuf sa;
-  for (int i = 0; i < f->noutputs(); i++)
-    if (f->output(i).allowed() || P2_STATS >= 2)
-      sa << f->output(i).ntuples() << "\n";
-    else
-      sa << "??\n";
-  return sa.take_string();
-}
-
-#endif /* P2_STATS >= 1 */
-
-#if P2_STATS >= 2
-/*
- * cycles:
- * # of calls to this element (push or pull).
- * cycles spent in this element and elements it pulls or pushes.
- * cycles spent in the elements this one pulls and pushes.
- */
-static str
-read_cycles_handler(Element *f, void *)
-{
-  return(str(f->_calls) + "\n" +
-         str(f->_self_cycles) + "\n" +
-         str(f->_child_cycles) + "\n");
-}
-#endif
-
 
 // RUNNING
 

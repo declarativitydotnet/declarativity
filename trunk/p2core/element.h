@@ -161,7 +161,6 @@ class Element {
          int correspondentPortNumber);
     
     operator bool() const		{ return _e != 0; }
-    bool allowed() const		{ return _port >= 0; }
     bool initialized() const		{ return _port >= -1; }
     
 
