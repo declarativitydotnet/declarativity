@@ -5,6 +5,8 @@
 #ifndef __IDTABLE_H__
 #define __IDTABLE_H__
 
+#define IDTBL_TEST 0
+
 #include <string>
 #include <bitset>
 #include <map>
@@ -13,6 +15,8 @@
 #include <async.h>
 #include <assert.h>
 #include <ihash.h>
+
+#include "random.h"
 
 
 class IdTable;
@@ -74,8 +78,10 @@ class IdTable {
     // if the requested @Id already stored, the function returns
     // the ref<Id> to the existing @Id
     Id * create (const std::string&);
-
+    
+    #if IDTBL_TEST == 1
     Id * create (const u_int32_t *);
+    #endif
 
     // create a random @Id using /dev/urandom
     Id * create ();
