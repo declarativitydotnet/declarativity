@@ -67,7 +67,7 @@ rule L4 checkFingers@NI(NI,K,R,E,I2):-
 /* Neighbor Selection */
 
 
-rule SU1 successorNodeDistance@NI(NI,S,SI) :-
+rule SU1 successorNodeDistance@NI(NI,S,D) :-
          node@NI(NI,N),
 	 newSuccessor@NI(NI,S,SI),
 	 !select_eqS(N,S),
