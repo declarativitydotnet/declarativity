@@ -11,7 +11,7 @@ import re
 
 def print_usage():
     print
-    print "Usage: process_output [-e] -n <num_nodes> [-w <bw_window>] [-l <simple_lookup_output>] output_dir"
+    print "Usage: process_output [-e -n <num_nodes>] [-w <bw_window>] [-l <simple_lookup_output>] output_dir"
     print
 
 def parse_cmdline(argv): 
@@ -35,7 +35,7 @@ def ts2sec(sec, ns):
     return (float(sec) + (float(ns) / 1000000000.0))
 
 def process_node(out_f, lookups, results):
-    matchlookup = re.compile(r"""^Print\[(.*)\:.*\],\s*
+    matchlookup = re.compile(r"""^Print\[(.*)\:\[.*\],\s*
                                  ([0-9]+),\s*                                  # seconds
                                  ([0-9]+)\]\:\s*                               # nanoseconds
                                  \[\<lookup,\s*                                # token
@@ -101,62 +101,91 @@ def process_node(out_f, lookups, results):
   
 
 def eval_lookups(lookups, results):
-    hop_counts = {}
+    unsuccessful = 0
+    i_hop_counts = {}
+    e_hop_counts = {}
     htimes   = open('./hop_time.dat', 'w')
-    hlookups = open('./hop_lookup.dat', 'w')
+    ilookups = open('./hopCount_internal.dat', 'w')
+    elookups = open('./hopCount_external.dat', 'w')
+    tlookups = open('./hopCount_total.dat', 'w')
     llatency = open('./latency.dat', 'w')
-    lin      = open('./latency_in.dat', 'w')
-    lout     = open('./latency_out.dat', 'w')
-    lwrap    = open('./latency_wrap.dat', 'w')
     latency     = []
     hop_time    = []
-    hop_lookup  = {} 
-    total       = len(lookups)
 
     num_lookups = 0.0
     avg_hc      = 0.0
     for event in lookups.keys(): 
+       if not results.has_key(event): 
+           unsuccessful += 1
+           continue                                          # Only care about successful lookups
        lookup = lookups[event]
-       lookup.sort()
+       lookup.sort()                                         # sort([type, sec, ns, ...])
        ins = outs = wraps = []
        start_sec = start_ns = -1.0 
-       for hop in lookup: # Find the start time; the min
-           if hop[0] == "In":   ins   += hop 
-           if hop[0] == "Out":  outs  += hop
-           if hop[0] == "Wrap": wraps += hop
-           sec = float(hop[1])
-           ns  = float(hop[2])
+       for t in lookup:                                      # For each lookup tuple t
+           if t[0] == "In":   ins   += t 
+           if t[0] == "Out":  outs  += t
+           if t[0] == "Wrap": wraps += t
+           sec = float(t[1])
+           ns  = float(t[2])
            if start_sec < 0.0 or sec < start_sec or (sec == start_sec and ns < start_ns): 
                start_sec = sec 
                start_ns  = ns      
-       print >> lin, ins
-       print >> lout, outs
-       print >> lwrap, wraps
-       hop_time.append([start_sec, start_ns, 1+len(outs)])
 
-       if results.has_key(event):
-           r_sec = results[event][0]
-           r_ns  = results[event][1]
-           latency.append(ts2sec(r_sec, r_ns) - ts2sec(start_sec, start_ns))
-       looks = 1.0
-       if hop_lookup.has_key(len(lookup)): looks += hop_lookup[len(lookup)]
-       hop_lookup[len(lookup)] = looks 
+       hops  = len(outs) - 1.0                                               # THE hop count
+       hop_time.append([start_sec, start_ns, hops])
+
+       r_sec = results[event][0]
+       r_ns  = results[event][1]
+       latency.append([(ts2sec(r_sec, r_ns) - ts2sec(start_sec, start_ns)), hops])
+
+       looks = 1.0                                                           # Number of dudes with above hop count.
+       if wraps:
+           if i_hop_counts.has_key(len(ins)): looks += i_hop_counts[hops]
+           i_hop_counts[hops] = looks
+       else: 
+           if e_hop_counts.has_key(len(ins)): looks += e_hop_counts[hops]
+           e_hop_counts[hops] = looks
 
 
     if latency:
         latency.sort()
-        for lat in latency: print >> llatency, "%f" % (float(lat))
+        for lat in latency: print >> llatency, "%f %d" % (float(lat[0]), int(lat[1]))
+    llatency.close()
 
     hop_time.sort()
     for x in hop_time: 
         print >> htimes, "%s %s %s" % (x[0], x[1], x[2]) 
     htimes.close()
 
-    hops = hop_lookup.keys()
-    hops.sort()
-    for hop in hops:        
-        print >> hlookups, "%d %f %d" % (int(hop), float(hop_lookup[hop]), total)
-    hlookups.close()
+    thops = []
+
+    itotal = 0
+    for i in i_hop_lookup.values(): total += float(i_hop_lookup[i])
+    ihops = i_hop_lookup.keys()
+    ihops.sort()
+    for h in ihops:        
+        if not h in thops: thops += h
+        print >> ilookups, "%d %f %d" % (h, float(i_hop_lookup[h]), itotal)
+    ilookups.close()
+
+    etotal = 0
+    for e in e_hop_lookup.values(): total += float(e_hop_lookup[e])
+    ehops = e_hop_lookup.keys()
+    ehops.sort()
+    for h in ehops:        
+        if not h in thops: thops += h
+        print >> elookups, "%d %f %d" % (h, float(hop_lookup[h]), etotal)
+    elookups.close()
+
+    thops.sort()
+    for h in thops:        
+        ih = eh = 0
+        if i_hop_lookup.has_key(h): ih += float(i_hop_lookup[h])
+        if e_hop_lookup.has_key(h): eh += float(e_hop_lookup[h])
+        print >> tlookups, "%d %f %d" % (h, (ih + eh), (itotal + etotal))
+    tlookups.close()
+
 
 def simple_lookups(lookups, results):
     slookups = open(flags["simple_lookup"], 'r')
