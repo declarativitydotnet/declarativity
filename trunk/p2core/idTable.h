@@ -23,12 +23,14 @@ class IdTable;
  *  @NOTE: @IdTable is a FRIEND since it uses the private member
  *         function refcount_getcnt () for garbage collection
  *  -------------------------------------------------------------- */
-class Id /* : private virtual refcount */ {
+class Id : private virtual refcount {
   friend class IdTable;
   private:
     inline size_t getHash () const;
     static std::bitset<160> toBitWord (u_int32_t num);
     static std::string toHexWord (u_int32_t num);
+    
+    // void finalize () 	{ delete this; }
 
     // key represented as 5 @u_int32_t words
     u_int32_t key[5];
@@ -55,18 +57,6 @@ struct IdComparator {
   }
 };
 
-struct IdHash {
-  size_t operator () (size_t key) const {
-    return key;
-  }
-};
-
-struct IdEql {
-  size_t operator () (size_t key1, size_t key2) const {
-    return (key1 == key2);
-  }
-};
-
 /** --------------------------------------------------------------
  *  @CLASS: IdTable
  *  @DESCRIPTION: Stores and provides functions to memoize @Id
@@ -83,17 +73,17 @@ class IdTable {
     // @create: factory functions to create and memoize @Id's.
     // if the requested @Id already stored, the function returns
     // the ref<Id> to the existing @Id
-    Id * create (const std::string&);
+    ref<Id> create (const std::string&);
 
-    Id * create (const u_int32_t *);
+    ref<Id> create (const u_int32_t *);
 
     // create a random @Id using /dev/urandom
-    Id * create ();
+    ref<Id> create ();
 
     // static Id * create (const XDR *);
 
     inline size_t size () const;
-    inline void remove (Id *);
+    inline void remove (ref<Id>);
     inline void clear ();
 
   private:
@@ -102,7 +92,7 @@ class IdTable {
     size_t threshold;
 
     void gc ();
-    Id * storeId (Id *);
+    ref<Id> storeId (ref<Id>);
     void add (Id *);
 };
 
