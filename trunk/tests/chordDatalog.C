@@ -28,38 +28,11 @@
 #include "val_str.h"
 #include "val_id.h"
 
-#include "print.h"
-#include "discard.h"
-#include "pelTransform.h"
-#include "duplicate.h"
-#include "dupElim.h"
-#include "filter.h"
-#include "timedPullPush.h"
-#include "udp.h"
-#include "marshalField.h"
-#include "unmarshalField.h"
-#include "mux.h"
-#include "roundRobin.h"
-#include "demux.h"
-#include "strToSockaddr.h"
-#include "slot.h"
-#include "timedPullSink.h"
-#include "timestampSource.h"
-#include "hexdump.h"
-#include "table.h"
-#include "lookup.h"
-#include "aggregate.h"
-#include "insert.h"
-#include "scan.h"
-#include "delete.h"
-#include "pelScan.h"
-#include "functorSource.h"
-#include "queue.h"
-#include "noNull.h"
-#include "noNullField.h"
 #include "ol_lexer.h"
 #include "ol_context.h"
 #include "routerConfigGenerator.h"
+#include "udp.h"
+
 
 extern int ol_parser_debug;
 
@@ -93,7 +66,7 @@ struct SuccessorGenerator : public FunctorSource::Generator
     
     IDRef successor = ID::mk((uint32_t) rand());
     tuple->append(Val_ID::mk(successor));
-  
+
     str succAddress = str(strbuf() << successor->toString() << "IP");
     tuple->append(Val_Str::mk(succAddress));
     tuple->freeze();
@@ -176,6 +149,43 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref< RouterConfigGenerator> rou
 }
 
 
+void sendSuccessorStream(ref< Udp> udp, ref< Router::Configuration > conf)
+{
+  // have something that populates the table of successors. For testing purposes
+  SuccessorGenerator* successorGenerator = new SuccessorGenerator();
+  ElementSpecRef sourceS =
+    conf->addElement(New refcounted< FunctorSource >(str("SuccessorSource:"),
+						     successorGenerator));
+  
+  ElementSpecRef print   = conf->addElement(New refcounted< Print >(strbuf("Successor")));
+  
+  // The timed pusher
+  ElementSpecRef pushS =
+    conf->addElement(New refcounted< TimedPullPush >(strbuf("SuccessorPush:"),
+						     2));
+  
+  // And a slot from which to pull
+  ElementSpecRef slotS =
+    conf->addElement(New refcounted< Slot >(strbuf("SuccessorSlot:")));
+  
+  ElementSpecRef encap = conf->addElement(New refcounted< PelTransform >("Encap",
+									 "$1 pop \
+                                                     $0 ->t $1 append $2 append $3 append pop")); // the rest
+  ElementSpecRef marshal = conf->addElement(New refcounted< MarshalField >("MarshalField", 1));
+  ElementSpecRef route   = conf->addElement(New refcounted< StrToSockaddr >(strbuf("Route"), 0));
+  
+  ElementSpecRef udpTx = conf->addElement(udp->get_tx());
+  
+  conf->hookUp(sourceS, 0, print, 0);
+  conf->hookUp(print, 0, pushS, 0);
+  conf->hookUp(pushS, 0, slotS, 0);
+  conf->hookUp(slotS, 0, encap, 0);
+  conf->hookUp(encap, 0, marshal, 0);
+  conf->hookUp(marshal, 0, route, 0);
+  conf->hookUp(route, 0, udpTx, 0);
+  
+ }
+
 /** Test lookups. */
 void startChord(LoggerI::Level level, ref< OL_Context> ctxt, str datalogFile)
 {
@@ -186,11 +196,14 @@ void startChord(LoggerI::Level level, ref< OL_Context> ctxt, str datalogFile)
   routerConfigGenerator->createTables(LOCAL);
 
   ref< Udp > udp = New refcounted< Udp > (LOCAL, 10000);
+  ref< Udp > bootstrapUdp = New refcounted< Udp > ("Bootstrap", 9999);
   routerConfigGenerator->configureRouter(udp, LOCAL);
 
    
   // populate the finger entries
   initializeBaseTables(ctxt, routerConfigGenerator);
+  sendSuccessorStream(bootstrapUdp, conf);
+
   
   RouterRef router = New refcounted< Router >(conf, level);
   if (router->initialize(router) == 0) {
