@@ -16,6 +16,7 @@ $(PROGRAMS): $(LDEPS)
 
 bin_PROGRAMS 	= 	values \
 			tuples \
+			tables \
 			pel \
 			basicelements \
 			basicElementPlumbing \
@@ -31,6 +32,10 @@ values_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
 
 tuples_SOURCES	= tuples.C
 tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+tables_SOURCES	= tables.C
+tables_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 pel_SOURCES	= pel.C

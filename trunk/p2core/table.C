@@ -14,8 +14,7 @@
 
 #include "table.h"
 
-
-#include "trace.h"
+#include "val_str.h"
 
 //
 // Constructor
@@ -34,24 +33,27 @@ Table::Table(str table_name, size_t max_size, timespec *lifetime)
 //
 // Create and destroy indices.  
 //
-void Table::add_unique_index(int fn)
+void Table::add_unique_index(unsigned fn)
 {
   del_unique_index(fn);
   uni_indices.at(fn) = New UniqueIndex();
 }
-void Table::del_unique_index(int fn)
+void Table::del_unique_index(unsigned fn)
 {
   uni_indices.reserve(fn);
+  while( uni_indices.size() <= fn) {
+    uni_indices.push_back(NULL);
+  }
   if (uni_indices.at(fn) != NULL) {
     delete uni_indices.at(fn);
   }
 }
-void Table::add_multiple_index(int fn)
+void Table::add_multiple_index(unsigned fn)
 {
   del_multiple_index(fn);
   mul_indices.at(fn) = New MultIndex();
 }
-void Table::del_multiple_index(int fn)
+void Table::del_multiple_index(unsigned fn)
 {
   mul_indices.reserve(fn);
   if (mul_indices.at(fn) != NULL) {
@@ -69,6 +71,17 @@ void Table::set_tuple_lifetime(timespec &lifetime)
   garbage_collect();
 }
 
+//
+// Create a key from a Val_Ref
+//
+static str mkkey(ValueRef v)
+{
+  return Val_Str::cast(v);
+}
+static str mkkey(TupleRef t, int i)
+{
+  return mkkey((*t)[i]);
+}
 
 //
 // Inserting a tuple..
@@ -83,16 +96,14 @@ void Table::insert(TupleRef t)
   // Add to all unique indices.
   for( size_t i=0; i<uni_indices.size(); i++) {
     UniqueIndex *ndx = uni_indices.at(i);
-    str key = e->t[i].toString();
     if (ndx) {
-      (*ndx)[key] = e;
+      ndx->insert(std::make_pair(mkkey(e->t,i),e));
     }
   }
   // Add to all multiple indices
   for( size_t i=0; i<mul_indices.size(); i++) {
     MultIndex *ndx = mul_indices.at(i);
-    str key = e->t[i].toString();
-    ndx->insert(std::make_pair(key,e));
+    ndx->insert(std::make_pair(mkkey(e->t,i),e));
   }
   // And clear up...
   garbage_collect();
@@ -101,15 +112,17 @@ void Table::insert(TupleRef t)
 //
 // Lookup a tuple
 //
-TuplePtr Table::lookup(int field, ValueRef key)  
+TuplePtr Table::lookup(unsigned field, ValueRef key)  
 {
   garbage_collect();
   UniqueIndex *ndx = uni_indices.at(field);
   if (ndx) {
-    return (*ndx)[key->toString()]->t;
-  } else {
-    return NULL;
+    const UniqueIndex::iterator pos = ndx->find(mkkey(key));
+    if (pos != ndx->end()) {
+      return pos->second->t;
+    }
   }
+ return NULL;
 }
 
 //
@@ -119,17 +132,16 @@ void Table::remove_from_indices(Entry *e)
 {
   for( size_t i=0; i<uni_indices.size(); i++) {
     UniqueIndex *ndx = uni_indices.at(i);
-    str key = e->t[i].toString();
+    str key = mkkey(e->t,i);
     if (ndx) {
-      TRC("Removing from index field " << i );
       ndx->erase(key);
     }
   }
   for( size_t i=0; i<mul_indices.size(); i++) {
     MultIndex *ndx = mul_indices.at(i);
-    str key = e->t[i].toString();
+    str key = mkkey(e->t,i);
     for( MultIndex::iterator pos = ndx->find(key); 
-	 pos != ndx->end() && pos->second->t[i].toString() != key; 
+	 pos != ndx->end() && mkkey(pos->second->t,i) != key; 
 	 pos++) {
       if ( pos->second == e ) {
 	ndx->erase(pos);

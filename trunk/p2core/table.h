@@ -86,10 +86,10 @@ public:
   // accuracy down to the binary level by formatting the result as hex
   // floating point number.  But this would confuse anyone or anything
   // that currently assumes v.toString() == Val_Str::cast(v). 
-  void add_unique_index(int fn);
-  void del_unique_index(int fn); 
-  void add_multiple_index(int fn);
-  void del_multiple_index(int fn);
+  void add_unique_index(unsigned fn);
+  void del_unique_index(unsigned fn); 
+  void add_multiple_index(unsigned fn);
+  void del_multiple_index(unsigned fn);
 
   // Setting and removing the expiry time
   void set_tuple_lifetime(timespec &lifetime);
@@ -99,7 +99,7 @@ public:
   void insert(TupleRef t);
 
   // Lookup a tuple
-  TuplePtr lookup(int field, ValueRef key);
+  TuplePtr lookup(unsigned field, ValueRef key);
 
   // XXX Need a multiple lookup, return an iterator.
 
@@ -108,7 +108,7 @@ public:
 
   // Lookup based on a field
   
-private:
+  //private:
 
   str name;
   size_t	max_tbl_size;
@@ -122,8 +122,8 @@ private:
   };
   std::deque<Entry *> els;
 
-  typedef std::multimap<str, Entry *, compare<str> > MultIndex;
-  typedef std::map<str, Entry *, compare<str> >  UniqueIndex;
+  typedef std::multimap<str, Entry *> MultIndex;
+  typedef std::map<str, Entry *>  UniqueIndex;
 
   std::vector<MultIndex *> mul_indices;
   std::vector<UniqueIndex *> uni_indices;
