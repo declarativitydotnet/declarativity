@@ -17,7 +17,7 @@ liboverlog_la_SOURCES = \
 	ol_lexer.C \
 	ol_parser.C \
 	ol_context.C \
-	routerConfigGenerator.C
+	rtr_confgen.C
 
 INCLUDES = @SFS_INC@ -I../p2core -I../elements -I../net
 

@@ -30,7 +30,7 @@
 
 #include "ol_lexer.h"
 #include "ol_context.h"
-#include "routerConfigGenerator.h"
+#include "rtr_confgen.h"
 #include "udp.h"
 
 
@@ -74,7 +74,7 @@ str FINGERIP("Finger.com");
 //struct SuccessorGenerator successorGenerator;
 
 
-void initializeBaseTables(ref< OL_Context> ctxt, ref< RouterConfigGenerator> routerConfigGenerator, str localAddress)
+void initializeBaseTables(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGenerator, str localAddress)
 {
   // create another dataflow to send in the lookups via another udp
 
@@ -215,7 +215,7 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref< RouterConfigGenerator> rou
  }*/
 
 
-void initiateJoinRequest(ref< RouterConfigGenerator > routerConfigGenerator, ref< Router::Configuration > conf, 
+void initiateJoinRequest(ref< Rtr_ConfGen > routerConfigGenerator, ref< Router::Configuration > conf, 
 			 str localAddress, double delay)
 {
 
@@ -267,10 +267,8 @@ void startChordInDatalog(LoggerI::Level level, ref< OL_Context> ctxt,
 {
   // create dataflow for translated chord lookup rules
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ref< RouterConfigGenerator > routerConfigGenerator = 
-    New refcounted< RouterConfigGenerator >(ctxt, conf, 
-					    false, DEBUG, 
-					    datalogFile);
+  ref< Rtr_ConfGen > routerConfigGenerator 
+    = New refcounted< Rtr_ConfGen >(ctxt, conf, false, DEBUG, datalogFile);
 
   routerConfigGenerator->createTables(localAddress);
 
@@ -345,14 +343,3 @@ int main(int argc, char **argv)
   startChordInDatalog(level, ctxt, file, localAddress);
   return 0;
 }*/
-  
-
-
-
-
-
-
-
-
-
-

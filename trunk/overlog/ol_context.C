@@ -17,6 +17,7 @@
 #include "ol_lexer.h"
 #include "val_uint32.h"
 #include "tuple.h"
+#define TRACE_OFF
 #include "trace.h"
 
 /**********************************************************************
@@ -113,6 +114,7 @@ void OL_Context::add_rule( Parse_Expr *e, Parse_Term *lhs, Parse_TermList *rhs, 
   // Create a new rule and register it. 
   Rule *r = New Rule();
   r->ruleID = e->val->toString();
+  r->aggField = -1;
   fn->rules.push_back(r);
   r->deleteFlag = deleteFlag;
 
@@ -126,6 +128,7 @@ void OL_Context::add_rule( Parse_Expr *e, Parse_Term *lhs, Parse_TermList *rhs, 
     case Parse_Expr::DONTCARE:
       r->args.push_back("_");
       break;
+    case Parse_Expr::AGG:
     case Parse_Expr::VAR:
       // The argument is a free variable - the usual case. 
       if (r->find_arg((*i)->val->toString()) >= 0) {
@@ -141,6 +144,14 @@ void OL_Context::add_rule( Parse_Expr *e, Parse_Term *lhs, Parse_TermList *rhs, 
       } else {
 	// Otherwise, just add the new argument.
 	r->add_arg((*i)->val->toString());
+      }
+      // The argument is an aggregate over a free variable
+      if ((*i)->t == Parse_Expr::AGG) {
+	r->aggFn = (*i)->agg->toString();
+	r->aggField = r->find_arg((*i)->val->toString());
+	DBG("Aggregate " << r->aggFn 
+	    << "<" << (*i)->val->toString() << ">" 
+	    << ", var num. " << r->aggField );
       }
       break;
     case Parse_Expr::VAL:
@@ -175,6 +186,8 @@ void OL_Context::add_rule( Parse_Expr *e, Parse_Term *lhs, Parse_TermList *rhs, 
       case Parse_Expr::DONTCARE:
 	t.args.push_back(Arg(r->add_arg(strbuf() << "$" << fict_varnum++)));
 	break;
+      case Parse_Expr::AGG:
+	// XXX We ignore aggregates not in the rule head
       case Parse_Expr::VAR:
 	t.args.push_back(Arg(r->add_arg((*arg)->val->toString())));
 	break;

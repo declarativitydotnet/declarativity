@@ -451,7 +451,7 @@ int Router::initialize(RouterRef myRef)
 {
   // Am I already initialized?
   if (_state != ROUTER_NEW) {
-    std::cerr << "Second attempt to initialize router";
+    std::cerr << "** Second attempt to initialize router";
     return -1;
   }
   _state = ROUTER_PRECONFIGURE;
@@ -459,22 +459,26 @@ int Router::initialize(RouterRef myRef)
 
   // Are the hookups pointing to existing elements and ports?
   if (check_hookup_elements() < 0) {
+    std::cerr << "** Check_Hookup_Elements failed";
     return -1;
   }
 
   // Are the port numbers plausible?
   if (check_hookup_range() < 0) {
+    std::cerr << "** Port numbers implausible";
     return -1;
   }
 
   // Check push/pull semantics
   if (check_push_and_pull() < 0) {
+    std::cerr << "** Bad push/pull semantics";
     return -1;
   }
 
   // Check hookup completeness.  All ports have something attached to
   // them
   if (check_hookup_completeness() < 0) {
+    std::cerr << "** Hookup incompleteness";
     return -1;
   }
 

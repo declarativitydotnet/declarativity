@@ -39,6 +39,8 @@
 %token<v> OL_VAR
 %token OL_LPAR
 %token OL_RPAR
+%token OL_LT
+%token OL_GT
 %token OL_MAT
 %token OL_RULE
 %token OL_EVENT
@@ -129,6 +131,8 @@ expr:		OL_ATOM {
 		        $$ = New Parse_Expr($1, true); }
 		| OL_DONTCARE { 
 			$$ = New Parse_Expr(); }
+		| OL_ATOM OL_LT OL_VAR OL_GT {
+			$$ = New Parse_Expr($3, $1); }
 		;
 
 %%

@@ -135,6 +135,8 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>"," { return OL_COMMA; }
 <INITIAL>"(" { return OL_LPAR; }
 <INITIAL>")" { return OL_RPAR; }
+<INITIAL>"<" { return OL_LT; }
+<INITIAL>">" { return OL_GT; }
 <INITIAL>"." { return OL_DOT; }
 <INITIAL>":-" { return OL_IF; }
 <INITIAL>"period=" { return OL_PERIOD; }

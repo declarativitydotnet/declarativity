@@ -20,7 +20,8 @@
 
 #include "ol_lexer.h"
 #include "ol_context.h"
-#include "routerConfigGenerator.h"
+#include "rtr_confgen.h"
+// #include "routerConfigGenerator.h"
 #include "udp.h"
 
 extern int ol_parser_debug;
@@ -61,11 +62,11 @@ int main(int argc, char **argv)
   
   // test a configuration of a router
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  RouterConfigGenerator routerConfigGenerator(ctxt, conf, true, false, filename);
-  routerConfigGenerator.createTables("localhost");
+  Rtr_ConfGen gen(ctxt, conf, true, false, filename);
+  gen.createTables("localhost");
 
   ref< Udp > udp = New refcounted< Udp >("Udp", 10000);
-  routerConfigGenerator.configureRouter(udp, "localhost");
+  gen.configureRouter(udp, "localhost");
 
   LoggerI::Level level = LoggerI::NONE;
   RouterRef router = New refcounted< Router >(conf, level);

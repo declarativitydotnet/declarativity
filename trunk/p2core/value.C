@@ -13,6 +13,8 @@
  */
 
 #include "value.h"
+#define TRACE_OFF
+#define DEBUG_OFF
 #include "trace.h"
 
 #include "val_null.h"

@@ -1,7 +1,7 @@
-/* A Bison parser, made by GNU Bison 1.875c.  */
+/* A Bison parser, made by GNU Bison 1.875d.  */
 
 /* Skeleton parser for Yacc-like parsing with Bison,
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -40,13 +40,15 @@
      OL_VAR = 266,
      OL_LPAR = 267,
      OL_RPAR = 268,
-     OL_MAT = 269,
-     OL_RULE = 270,
-     OL_EVENT = 271,
-     OL_PERIOD = 272,
-     OL_DEL = 273,
-     OL_PK = 274,
-     OL_WATCH = 275
+     OL_LT = 269,
+     OL_GT = 270,
+     OL_MAT = 271,
+     OL_RULE = 272,
+     OL_EVENT = 273,
+     OL_PERIOD = 274,
+     OL_DEL = 275,
+     OL_PK = 276,
+     OL_WATCH = 277
    };
 #endif
 #define OL_AT 258
@@ -60,19 +62,21 @@
 #define OL_VAR 266
 #define OL_LPAR 267
 #define OL_RPAR 268
-#define OL_MAT 269
-#define OL_RULE 270
-#define OL_EVENT 271
-#define OL_PERIOD 272
-#define OL_DEL 273
-#define OL_PK 274
-#define OL_WATCH 275
+#define OL_LT 269
+#define OL_GT 270
+#define OL_MAT 271
+#define OL_RULE 272
+#define OL_EVENT 273
+#define OL_PERIOD 274
+#define OL_DEL 275
+#define OL_PK 276
+#define OL_WATCH 277
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 54 "ol_parser.y"
+#line 56 "ol_parser.y"
 typedef union YYSTYPE {
   Parse_FunctorName	*u_functorname;
   Parse_Term		*u_term;
@@ -81,8 +85,8 @@ typedef union YYSTYPE {
   Parse_ExprList	*u_exprlist;
   Parse_Val		*v;
 } YYSTYPE;
-/* Line 1275 of yacc.c.  */
-#line 86 "ol_parser.tab.h"
+/* Line 1285 of yacc.c.  */
+#line 90 "ol_parser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

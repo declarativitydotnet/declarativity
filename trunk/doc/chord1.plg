@@ -71,7 +71,7 @@ rule L2 lookup@SI(SI,K,R,E) :-
 
 rule L4 bestLookupDistance@NI(NI,E,MD) :-
 	lookupDistance@NI(NI,IE,K,R,I,E,D),
-	agg_min(MD,D).
+ 	agg_min(MD,D).
 
 rule L5 lookup@BI(BI,K,R,E) :-
 	bestLookupDistance@NI(NI,E,D),
@@ -181,7 +181,7 @@ rule SU3 newSuccessorEvent@NI(NI,S,SI) :-
 
 rule SU4 minSuccessorDist@NI(NI,MD) :-
         successorNodeDistance@NI(NI,S,D),
-	agg_min(MD,D).
+ 	agg_min(MD,D).
 
 rule SU5 bestSuccessor@NI(NI,S,SI) :-
 	minSuccessorDist@NI(NI,D),
@@ -190,7 +190,7 @@ rule SU5 bestSuccessor@NI(NI,S,SI) :-
 
 rule SR1 successorCount@NI(NI,C) :-
 	successor@NI(NI,S,SI),
-	agg_count(C).
+ 	agg_count(C).
 
 
 rule SR2 evictSuccessor@NI(NI) :-
@@ -200,7 +200,7 @@ rule SR2 evictSuccessor@NI(NI) :-
 
 rule SR3 maxSuccessorDist@NI(NI,MD) :-
         successorNodeDistance(NI,S,D),
-	agg_max(MD,D).
+ 	agg_max(MD,D).
 
 rule SR4 evictSuccessorAt@NI(NI,S,D) :-
 	evictSuccessor@NI(NI),

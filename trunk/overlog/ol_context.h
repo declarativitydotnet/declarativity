@@ -49,6 +49,8 @@ public:
 
   struct Rule {
     str ruleID;
+    str aggFn;
+    int aggField;
     bool deleteFlag;
     std::vector<str> args; // List of free variables in the rule.
     std::vector<Term> terms; // List of terms.

@@ -30,15 +30,20 @@ struct Parse_Val {
 
 // Really should be a discriminated union
 struct Parse_Expr {
-  enum Type { DONTCARE=0, VAL, VAR };
+  enum Type { DONTCARE=0, VAL, VAR, AGG };
   Parse_Expr() : t(DONTCARE) {};
   ~Parse_Expr() { std::cerr << "Deleting a Parse_Expr\n"; };
+  Parse_Expr( Parse_Val *v, Parse_Val *a ) : t(AGG), val(v->v), agg(a->v) { 
+    delete v;
+    delete a;
+  };
   Parse_Expr( Parse_Val *v, bool is_var=false ) : val(v->v) { 
     t = is_var ? VAR : VAL;
     delete v;
   };
   Type	t;
   ValuePtr	val;
+  ValuePtr	agg;
 };
 typedef std::deque<Parse_Expr *> Parse_ExprList;
 

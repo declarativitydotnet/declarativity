@@ -169,5 +169,6 @@ class ElementSpec {
 
 /** A handy dandy reference to element specs */
 typedef ref< ElementSpec > ElementSpecRef;
+typedef ptr< ElementSpec > ElementSpecPtr;
 
 #endif /* __ELEMENT_SPEC_H_ */

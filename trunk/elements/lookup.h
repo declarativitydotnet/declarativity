@@ -35,7 +35,8 @@ public:
   Lookup(str name,
          TableRef table,
          unsigned inputKeyField,
-         unsigned lookupIndexField);
+         unsigned lookupIndexField,
+	 cbv completion_cb=cbv_null );
   ~Lookup();
 
 
@@ -61,6 +62,9 @@ private:
   
   /** My puller's callback */
   cbv _pullCallback;
+  
+  /** My completion callback */
+  cbv _compCallback;
   
   /** My current lookup tuple */
   TuplePtr _lookupTuple;
@@ -99,11 +103,14 @@ template < typename _EncapsulatedIterator, typename _LookupGenerator >
 Lookup< _EncapsulatedIterator, _LookupGenerator >::Lookup(str name,
                                                           TableRef table,
                                                           unsigned inputKeyField,
-                                                          unsigned lookupIndexField)
+                                                          unsigned lookupIndexField,
+							  cbv completion_cb )
+
   : Element(name, 1, 1),
     _table(table),
     _pushCallback(cbv_null),
     _pullCallback(cbv_null),
+    _compCallback(completion_cb),
     _lookupTuple(NULL),
     _lookupTupleValue(NULL),
     _key(NULL),
@@ -201,6 +208,7 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::pull(int port,
       // I already have a pull callback
       log(LoggerI::INFO, 0, "pull: callback underrun");
     }
+    if (_compCallback != cbv_null) { _compCallback(); }
     return 0;
   } else {
     // {

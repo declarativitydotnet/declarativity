@@ -14,6 +14,7 @@
 
 lib_LTLIBRARIES = libp2elements.la
 libp2elements_la_SOURCES = \
+	aggwrap.C \
 	slot.C \
 	print.C \
 	printTime.C \
