@@ -53,12 +53,12 @@ rule L1 lookupResults@R(R,K,S,SI,E) :-
 	select_rangeID3(K,N,S). 
 
 /* Non-log */
-/*rule L2 lookup@SI(SI,K,R,E) :-
+rule L2 lookup@SI(SI,K,R,E) :-
 	node@NI(NI,N),
 	lookup@NI(NI,K,R,E),
 	bestSuccessor@NI(NI,S,SI),
 	!select_rangeID3(K,N,S). 
-*/
+
 
 /* Materialized version */
 /*rule L3 lookupDistance@NI(NI,IE,K,R,I,E,D) :-
@@ -82,13 +82,14 @@ rule L5 lookup@BI(BI,K,R,E) :-
 
 
 /* Check from top */
-rule L2 checkFingers@NI(NI,K,R,E,I) :- 
+/*rule L2 checkFingers@NI(NI,K,R,E,I) :- 
         node@NI(NI,N),
         lookup@NI(NI,K,R,E),
         bestSuccessor@NI(NI,S,SI),
         !select_rangeID3(K,N,S),
         assign_iZero(I).
 
+*/
 /*rule L3 lookup@BI(BI,K,R,E) :- 
      node@NI(NI,N),
      checkFingers@NI(NI,K,R,E,I), 
@@ -96,6 +97,7 @@ rule L2 checkFingers@NI(NI,K,R,E,I) :-
      select_rangeID1(B,N,K),
      !select_eqS(BI,0).*/
 
+/*
 rule L4 checkFingers@NI(NI,K,R,E,I2):- 
      node@NI(NI,N),
      checkFingers@NI(NI,K,R,E,I), 
@@ -112,7 +114,7 @@ rule L5 checkFingers@NI(NI,K,R,E,I2):-
      select_gtI(I,0),
      select_eqS(BI,0),
      assign_addI(I2,I,1).
-
+*/
 
 /* check from bottom
 rule L2 checkFingers@NI(NI,K,R,E,I) :- 
