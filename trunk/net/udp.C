@@ -25,7 +25,6 @@ Udp::Rx::Rx(const Udp &udp)
   : Element(0, 1),
     u(&udp), push_pending(true) 
 {
-  socket_on();
 }
 
 //
@@ -80,7 +79,6 @@ void Udp::Rx::element_cb()
 Udp::Tx::Tx(const Udp &udp) 
   : u(&udp), pull_pending(true) 
 {
-  socket_on();
 }
 
 //
@@ -145,4 +143,6 @@ Udp::Udp(u_int16_t port, u_int32_t addr)
   sd = inetsocket(SOCK_DGRAM, port, addr);
   make_async(sd);
   close_on_exec(sd);
+  rx->socket_on();
+  tx->socket_on();
 }

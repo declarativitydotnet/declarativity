@@ -40,12 +40,12 @@ public:
     const char *class_name() const		{ return "Udp::Rx";};
     const char *processing() const		{ return "/hh"; };
     const char *flow_code() const		{ return "/-"; };
-  private:
-    void socket_cb(); // Callback for socket activity
-    void element_cb(); // Callback for element push 
 
     void socket_on() { fdcb(u->sd, selread, wrap(this,&Udp::Rx::socket_cb)); };
     void socket_off() { fdcb(u->sd, selread, NULL); };
+  private:
+    void socket_cb(); // Callback for socket activity
+    void element_cb(); // Callback for element push 
     
     const Udp *u;
     bool push_pending;  // == push enabled (return value of last push)
@@ -61,12 +61,12 @@ public:
     const char *class_name() const		{ return "Udp::Tx";};
     const char *processing() const		{ return "l/h"; };
     const char *flow_code() const		{ return "-/"; };
-  private:
-    void socket_cb(); // Callback for socket activity
-    void element_cb(); // Callback for element pull
 
     void socket_on() { fdcb(u->sd, selwrite, wrap(this,&Udp::Tx::socket_cb));};
     void socket_off() { fdcb(u->sd, selwrite, NULL); };
+  private:
+    void socket_cb(); // Callback for socket activity
+    void element_cb(); // Callback for element pull
     
     const Udp *u;
     bool pull_pending;  // == pull enabled (there is a pull to do)
