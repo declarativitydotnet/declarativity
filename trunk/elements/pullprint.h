@@ -14,6 +14,7 @@
 #define __PULLPRINT_H__
 
 #include "element.h"
+#include "elemental.h"
 
 class PullPrint : public Element { 
 public:
@@ -21,9 +22,14 @@ public:
   PullPrint();
 
   const char *class_name() const		{ return "PullPrint";}
-  const char *processing() const		{ return "/l"; }
+  const char *processing() const		{ return "l/"; }
   const char *flow_code() const			{ return "/"; }
 
+  /** Place the element task into the running queue.  It should be
+      pulling as long as there's something to pull */
+  virtual int initialize();
+
+  virtual bool run_task();
   void run();
   void wakeup();
   
@@ -31,6 +37,9 @@ private:
   cbv _wakeup_cb;
   cbv _run_cb;
 
+
+  /** My task object */
+  Elemental _task;
 };
 
 
