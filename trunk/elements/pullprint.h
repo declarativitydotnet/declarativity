@@ -14,7 +14,7 @@
 #define __PULLPRINT_H__
 
 #include "element.h"
-#include "elemental.h"
+#include "async.h"
 
 class PullPrint : public Element { 
 public:
@@ -29,17 +29,21 @@ public:
       pulling as long as there's something to pull */
   virtual int initialize();
 
-  virtual bool run_task();
   void run();
   void wakeup();
   
 private:
+  /** Wake me up */
   cbv _wakeup_cb;
+
+  /** Run me */
   cbv _run_cb;
 
+  /** Run callback */
+  timecb_t * _run;
 
-  /** My task object */
-  Elemental _task;
+  /** Am I scheduled? */
+  bool _scheduled;
 };
 
 

@@ -18,59 +18,56 @@ PullPrint::PullPrint() :
   Element(1,0),
   _wakeup_cb(wrap(this, &PullPrint::wakeup)),
   _run_cb(wrap(this, &PullPrint::run)),
-  _task(this)
+  _run(0),
+  _scheduled(false)
 {
 }
 
+/** This is only called from another element's task.  It should not call
+    run directly */
 void PullPrint::wakeup()
 {
   // I was signalled from my input that it's OK to pull some more.
   // Schedule myself.  This is only called from someone's callback so
   // it's OK to invoke fast reschedule.
 
-  _task.fast_reschedule();
-  
-  //  lazycb(0, _run_cb);
+  std::cerr << "PULLPRINT/wakeup: pull print waking up\n";
+  assert(!_scheduled && (_run == 0));
+  _run = delaycb(0, 0, _run_cb);
+  _scheduled = true;
 }
 
 int PullPrint::initialize()
 {
   // Schedule my task to run
-  _task.initialize(this, true);
+  std::cerr << "PULLPRINT/init\n";
+  assert(!_scheduled && (_run == 0));
+  _run = delaycb(0, 0, _run_cb);
+  _scheduled = true;
   return 0;
 }
 
 
-bool PullPrint::run_task()
+void PullPrint::run()
 {
+  assert(_scheduled && (_run != 0));
   // Doesn't care if it receives pull failure.
 
   // Pull and print.  If pull fails, don't schedule yourself.  If pull
   // succeeds, schedule yourself again.
+  std::cerr << "PULLPRINT/run\n";
   TuplePtr t = input(0)->pull(_wakeup_cb);
   if (t != NULL) {
     // Print tuple
     std::cout << "PullPrint: " << (t->toString()) << "\n";
 
-    // Reschedule
-    _task.fast_reschedule();
-    return true;
+    // Keep running. Don't remove it.
+    _run = delaycb(0, 0, _run_cb);
   } else {
+    std::cerr << "PULLPRINT/run: pull failed, sleeping.\n";
     // Didn't get anything
     
-    // Do nothing
-    return false;
+    _run = 0;
+    _scheduled = false;
   }
 }
-
-void PullPrint::run()
-{
-  TuplePtr t = input(0)->pull(_wakeup_cb);
-  if (t != NULL) {
-    // Ensure element is still runnable
-    std::cout << "PullPrint: " << (t->toString()) << "\n";
-  } else {
-    // Element is no longer runnable
-  }
-}
-

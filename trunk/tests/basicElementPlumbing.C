@@ -839,53 +839,6 @@ void testDuplicates()
 
 
 
-/** Test a simple source-sink configuration */
-void testRun()
-{
-  std::cout << "\nCHECK SOURCE-SINK EXAMPLE\n";
-
-  TupleRef t = create_tuple(1);
-  ref< vec< TupleRef > > tupleRefBuffer =
-    New refcounted< vec< TupleRef > >();
-  tupleRefBuffer->push_back(t);
-
-  ref< TimedSource > timedSource = New refcounted< TimedSource >(500);
-  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
-  ElementSpecRef timedSourceSpec = New refcounted< ElementSpec >(timedSource);
-  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
-
-  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
-  elements->push_back(timedSourceSpec);
-  elements->push_back(pullPrintSpec);
-
-  Router::HookupPtr hookup;
-  ref < vec< Router::HookupRef > > hookups =
-    New refcounted< vec< Router::HookupRef > >();
-
-  // Connect pull to pull
-  hookups->clear();
-  hookup = New refcounted< Router::Hookup >(timedSourceSpec, 0,
-                                            pullPrintSpec, 0);
-  hookups->push_back(hookup);
-
-  Router::ConfigurationRef configuration =
-    New refcounted< Router::Configuration >(elements, hookups);
-  MasterRef master = New refcounted< Master >();
-  RouterRef router =
-    New refcounted< Router >(configuration, master);
-  if (router->initialize(router) == 0) {
-    std::cout << "Correctly initialized timed source to pull print spec.\n";
-  } else {
-    std::cout << "** Failed to initialize correct spec\n";
-  }
-
-  // Activate the router
-  router->activate();
-
-  // Run the router
-  router->master()->thread()->driver();
-}
-
 int main(int argc, char **argv)
 {
   std::cout << "\nBASIC ELEMENT PLUMBING\n";
@@ -894,7 +847,6 @@ int main(int argc, char **argv)
   testCheckHookupRange();
   testCheckPushPull();
   testDuplicates();
-  testRun();
 
   return 0;
 }

@@ -1,6 +1,6 @@
 $(PROGRAMS): $(LDEPS)
 
-bin_PROGRAMS 	= tuples pel basicelements basicElementPlumbing 
+bin_PROGRAMS 	= tuples pel basicelements basicElementPlumbing scheduling test_timecb
 
 tuples_SOURCES	= tuples.C
 tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
@@ -16,11 +16,25 @@ basicElementPlumbing_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
+scheduling_SOURCES = scheduling.C
+scheduling_LDADD = \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
 basicelements_SOURCES	= basicelements.C
 basicelements_LDADD = \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+test_timecb_SOURCES	= test_timecb.C
+test_timecb_LDADD = \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+
 
 CLEANFILES = core *.core *~
 EXTRA_DIST = .cvsignore

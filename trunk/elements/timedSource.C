@@ -15,55 +15,65 @@
 
 #include <timedSource.h>
 #include <element.h>
-#include <telemental.h>
+#include <async.h>
+#include <iostream>
 
-TimedSource::TimedSource(int millis)
+TimedSource::TimedSource(double seconds)
   : Element(0, 1),
-    _millis(millis),
     _tuple(0),
     _callBack(0),
-    _tElemental(this)
+    _runTimerCB(wrap(this, &TimedSource::runTimer))
 {
-  assert(millis > 0);
+  assert(seconds > 0);
+  _seconds = (uint) floor(seconds);
+  seconds -= _seconds;
+  _nseconds = (uint) (seconds * 1000000);
 }
     
 int TimedSource::initialize()
 {
-  // Initialize and schedule my timer
-  _tElemental.initialize(this);
-
-  _tElemental.schedule_after_ms(_millis);
+  std::cerr << "TIMEDSOURCE/init\n";
+  // Schedule my timer
+  _timeCallback = delaycb(_seconds,
+                          _nseconds, _runTimerCB);
 
   return 0;
 }
 
 
-bool TimedSource::run_timer()
+void TimedSource::runTimer()
 {
+  // remove the timer id
+  _timeCallback = 0;
+
   if (!_tuple) {
+    std::cerr << "TIMEDSOURCE/timer: Creating new tuple\n";
+
     // Create a new one
     _tuple = Tuple::mk();
 
     // Fill it up with the current timeval
-    struct timeval t;
-    click_gettimeofday(&t);
+    struct timespec t;
+    clock_gettime(CLOCK_REALTIME, &t);
 
     _tuple->append(New refcounted< TupleField >((uint64_t) t.tv_sec));
-    _tuple->append(New refcounted< TupleField >((uint64_t) t.tv_usec));
+    _tuple->append(New refcounted< TupleField >((uint64_t) t.tv_nsec));
     _tuple->freeze();
 
     // Wake up any sleepers
     if (_callBack) {
-      cbv c = _callBack;
+      (*_callBack)();
       _callBack = 0;
-      c();
     }
 
-    _tElemental.reschedule_after_ms(_millis);
-    return true;
+    // Reschedule me
+    _timeCallback = delaycb(_seconds,
+                            _nseconds,
+                            _runTimerCB);
   } else {
-    // Current one hasn't been used. Skip this round
-    return false;
+    std::cerr << "TIMEDSOURCE/timer: Can't create new tuple. Sleeping\n";
+    // Current one hasn't been used. Skip this round and don't
+    // reschedule
   }
 }
 
@@ -75,13 +85,30 @@ TuplePtr TimedSource::pull(int port,
 
   // Do we have a tuple handy?
   if (_tuple) {
+    std::cerr << "TIMEDSOURCE/Pull: tuple ready\n";
     // Give it
     TupleRef t = _tuple;
     _tuple = 0;
+
+    // Reschedule the timer if it's not scheduled
+    if (_timeCallback == 0) {
+      _timeCallback = delaycb(_seconds,
+                              _nseconds,
+                              _runTimerCB);
+    }
+
     return t;
   } else {
-    // Keep the callback and respond with a null tuple
-    _callBack = cb;
+    // If I already have a callback waiting, throw a warning sign and do
+    // nothing
+    std::cerr << "TIMEDSOURCE/Pull: tuple not ready\n";
+    if (_callBack != 0) {
+      std::cerr << "TIMEDSOURCE/Pull: Pull received while callback is registered\n";
+    } else {
+      // Keep the callback and respond with a null tuple
+      _callBack = cb;
+    }
+
     return 0;
   }
 }

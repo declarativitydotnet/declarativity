@@ -19,13 +19,12 @@
 
 #include <amisc.h>
 #include <element.h>
-#include <telemental.h>
 
 class TimedSource : public Element { 
  public:
   
   /** Initialized with the interval between tuple generation events. */
-  TimedSource(int millis);
+  TimedSource(double seconds);
 
   virtual ~TimedSource();
   
@@ -42,12 +41,14 @@ class TimedSource : public Element {
 
   virtual int initialize();
 
-  virtual bool run_timer();
+  void runTimer();
   
  private:
-  /** The interval (in millis) between tuple generations. Must be
-      positive. */
-  int _millis;
+  /** The integer seconds portion of the interval */
+  uint _seconds;
+
+  /** The nsec portion of the interval */
+  uint _nseconds;
 
   /** My tuple */
   TuplePtr _tuple;
@@ -55,8 +56,11 @@ class TimedSource : public Element {
   /** My waiter */
   callback< void >::ptr _callBack;
 
-  /** The generation timer event. */
-  TElemental _tElemental;
+  /** Callback to my runTimer() */
+  cbv _runTimerCB;
+
+  /** My time callback ID. */
+  timecb_t * _timeCallback;
 };
 
 #endif /* __TIMED_SOURCE_H_ */
