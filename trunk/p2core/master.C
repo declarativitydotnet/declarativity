@@ -36,7 +36,7 @@ Master::Master() :
   _task_list(),
   _timer_list()
 {
-  _thread = new RouterThread(this, 0);
+  _thread = New refcounted< RouterThread >(this, 0);
   if (_thread == 0) {
     // No memory left
     throw MasterError();
@@ -48,7 +48,6 @@ Master::Master() :
 
 Master::~Master()
 {
-  delete _thread;
   _timer_list.unmake_list();
 }
 
@@ -56,7 +55,7 @@ void Master::run()
 {
 }
 
-REMOVABLE_INLINE RouterThread * Master::thread() const
+REMOVABLE_INLINE RouterThreadPtr Master::thread() const
 {
   // return the router thread.
   return _thread;
