@@ -1,0 +1,323 @@
+
+
+
+
+
+
+
+
+
+
+
+
+Unidirectional forwarding:
+- greedy clockwise over bestSuccessor, predecessor, k long links.
+
+
+
+
+Ensure no more than 2K incoming links
+
+inboundCount@Node(Node, count<>) :- inbound@Node(Node, R, T).
+
+inboundEvent@Node(Node, EventID, Requester, Time) :- addMe@Node(Node,
+Requester, EventID), inboundCount@Node(Node, IncomingCount),
+IncomingCount < SYMPHONYINBOUND, Time=f_currentTime().
+
+inbound@Node(Node, Requester, Time) :- inboundEvent@Node(Node, EventID,
+Requester, Time).
+
+welcome@Requester(Requester, Node, EventID) :- inboundEvent@Node(Node,
+EventID, Requester, Time).
+
+latestInbound@Node(Node, min<Time>) :- inbound@Node(Node, Requester,
+Time), inboundCount@Node(Node, C), periodic@Node(Node, E,
+SYMPHONY_CLEANUPINBOUND).
+
+evictEvent@Node(Node, Requester) :- inbound@Node(Node, Requester, Time),
+latestInbound@Node(Node, Time).
+
+evict@Requester(Requester, Node) :- evictEvent@Node(Node, Requester).
+
+delete@N<inbound@Node(Node, Requester, Time)> :- evictEvent@Node(Node,
+	Requester).
+
+evict@R(R, N).
+
+
+
+/// Long Links
+
+addMeEvent@Node(Node, C, K) :- relinkEvent@Node(Node), C = 0, K =
+exp(log(n) * (rand - 1.0)).
+
+addMeEvent@Node(Node, C, K) :- addMeEvent@Node(Node, K1, C1), C = C1 +
+	1, C < SYMPHONYLONG, K = exp(log(n) * (rand - 1.0)).
+
+lookup@addMeaddMeEvent@Node(Node, C, K)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Choose K for discovery of long links via f_symphony(N estimate)
+
+Keep track of N Estimate for long links.
+
+When N estimate of links differs too much from current, relink.
+
+Estimate of N based on 3 segment lengths (from predecessor, to me, to
+successor.
+
+
+
+/*
+ * 1.1 Chord
+ * ---------
+ */
+
+/* The base tuples */
+materialise(node, 2, infinity, 1).
+materialise(finger, 4, infinity, 16).
+materialise(successor, 3, infinity, 16).
+materialise(predecessor, 3, infinity, 1).
+materialise(bestSuccessor, 3, infinity, 1).
+materialize(nextFingerFix, 2, infinity, 1).
+materialize(fingerLookup, 3, infinity, 16).
+materialize(stabilize, 2, infinity, 1).
+materialize(joinRecord, 2, infinity, 1).
+
+
+/** Lookups */
+
+rule L1 lookupResults@R(R,K,S,SI,E) :-
+	node@NI(NI,N),
+	lookup@NI(NI,K,R,E),
+	bestSuccessor@NI(NI,S,SI),
+	K in (N,S].
+
+rule L2 bestLookupDistance@NI(NI,K,R,E,min<D>) :-
+	lookup@NI(NI,K,R,E),
+	finger@NI(NI,I,B,BI),
+	node@NI(NI, N),
+	B in (N,K),
+	D=f_dist(B,K)-1.
+
+rule L3 lookup@BI(min<BI>,K,R,E) :-
+	bestLookupDistance@NI(NI,K,R,E,D),
+	finger@NI(NI,I,B,BI),
+	D=f_dist(B,K)-1,
+	node@NI(NI, N),
+	B in (N, K).
+
+
+
+/* Neighbor Selection */
+
+rule SU1 bestSuccessorDist@NI(NI,min<D>) :-
+	node@NI(NI,N),
+	successor@NI(NI,S,SI),
+	D=f_dist(N,S)-1.
+
+rule SU2 bestSuccessor@NI(NI,S,SI) :-
+	node@NI(NI,N),
+	bestSuccessorDist@NI(NI,D),
+	successor@NI(NI,S,SI),
+	D=f_dist(N,S)-1.
+
+rule SU3 finger@NI(NI,0,S,SI) :-
+	bestSuccessor@NI(NI,S,SI).
+
+rule SR1 successorCount(NI,count<>) :-
+	successor(NI,S,SI).
+
+rule SR2 evictSuccessor@NI(NI) :-
+	successorCount@NI(NI,C),
+	C>successor.size.
+
+rule SR3 maxSuccessorDist@NI(NI,max<D>) :-
+	successor@NI(NI,S,SI),
+	node@NI(NI,N),
+	D = f_dist(N,S)-1,
+	evictSuccessor@NI(NI).
+
+rule SR4 delete@NI<successor(NI,S,SI)> :-
+	successor@NI(NI,S,SI),
+	maxSuccessorDist@NI(NI,D),
+	D=f_dist(N,S)-1.
+
+
+
+
+
+rule F1 fixFinger@NI(ni) :-
+	periodic@NI(finger.TTL*0.5).
+
+rule F2 nextFingerFix@NI(ni, 0).
+
+rule F3 fingerLookup@NI(NI, E, I) :-
+	fixFinger@NI(NI),
+	E = random(),
+	nextFingerFix@NI(NI, I).
+
+rule F4 lookup@NI(NI, K, NI, E) :-
+	fingerLookup@NI(NI, E, I),
+	node(NI, N),
+	K = N + 1 << I.
+
+rule F5 eagerFinger@NI(NI, I, B, BI) :-
+	fingerLookup@NI(NI, E, I),
+	lookupResults@NI(NI, B, BI, E).
+
+rule F6 finger@NI(NI, I, B, BI) :-
+	eagerFinger@NI(NI, I, B, BI).
+
+rule F7 eagerFinger@NI(NI, I, B, BI) :-
+	node@NI(NI, N),
+	eagerFinger@NI(NI, I1, B, BI), 
+	I = I1 + 1,
+	I > I1,
+	K = N + 1 << I,
+	K in (N, B), NI!=BI.
+
+rule F8 nextFingerFix@NI(NI, 0) :-
+	eagerFinger@NI(NI, I, B, BI),
+	((I == finger.SIZE - 1) || (BI == NI)).
+
+rule F9 nextFingerFix@NI(NI, I) :-
+	node@NI(NI, N),
+	eagerFinger@NI(NI, I1, B, BI), 
+	I = I1 + 1,
+	I > I1,
+	K = N + 1 << I,
+	K in (B, N).
+
+
+
+
+
+/* Churn Handling */
+
+rule J1 join@NI(NI,E) :-
+	joinEvent@NI(NI), E=f_rand().
+
+rule J2 joinRecord@NI(NI,E) :-
+	join@NI(NI,E).
+
+rule J3 startJoin@LI(LI,N,NI,E) :-
+	join@NI(NI,E),
+	node@NI(NI,N),
+	landmarkNode@NI(NI,LI),
+	LI != "-".
+
+rule J4 lookup@LI(LI,N,NI,E) :-
+	startJoin@LI(LI,N,NI,E).
+
+rule J5 successor@NI(NI,S,SI) :-
+	joinRecord@NI(NI,E),
+	lookupResults@NI(NI,K,S,SI,E).
+
+rule J6 predecessor@NI(ni,null,"-").
+
+rule J7 successor@NI(NI, N, NI) :-
+	landmarkNode@NI(NI, LI),
+	node@NI(NI, N),
+	join@NI(NI, E),
+	LI == "-".
+
+
+/* Stabilization */
+
+rule S0 stabilizeEvent@NI(ni) :-
+	periodic@NI(TTL * 0.5).
+
+rule S0a stabilize@NI(NI, E) :-
+	stabilizeEvent@NI(NI, TTL * 0.5), E=f_rand(), NI=ni.
+
+rule S0b stabilizeRecord@NI(NI, E) :-
+	stabilize@NI(NI, E).
+
+rule S1 stabilizeRequest@SI(SI,NI,E) :-
+	stabilize@NI(NI,E),
+	bestSuccessor@NI(NI,S,SI), 
+
+rule S2 sendPredecessor@PI1(PI1,P,PI,E) :-
+	stabilizeRequest@NI(NI,PI1,E),
+	predecessor@NI(NI,P,PI),
+	PI != "-".
+
+rule S3 successor@NI(NI,P,PI) :-
+	node(NI,N),
+	sendPredecessor@NI(NI,P,PI,E),
+	bestSuccessor@NI(NI,S,SI),
+	P in (N,S),
+	stabilizeRecord@NI(NI, E).
+
+rule S4 sendSuccessors@SI(SI,NI,E) :-
+	stabilizeRecord@NI(NI,E),
+	successor@NI(NI,S,SI),
+	f_coinFlip().
+
+rule S5 returnSuccessor@PI(PI,S,SI,E) :-
+	sendSuccessors@NI(NI,PI,E),
+	successor@NI(NI,S,SI).
+
+rule S5a successor@NI(NI, S, SI) :-
+	returnSuccessor@NI(NI,S,SI,E),
+	stabilizeRecord@NI(NI, E).
+
+rule S6a notify@NI(NI) :-
+	periodic@NI(TTL * 0.5), NI=ni.
+
+rule S6 notifyPredecessor@SI(SI,N,NI) :-
+	notify@NI(NI),
+	node@NI(NI,N),
+	successor@NI(NI,S,SI).
+
+rule S7 predecessor@NI(NI,P,PI) :-
+	node@NI(NI,N),
+	notifyPredecessor@NI(NI,P,PI),
+	predecessor@NI(NI,P1,PI1),
+	((PI1 == "") || (P in (P1, N))).
+
+
+
+
+
+/* Connectivity monitoring */
+
+#include ping.plg
+
+
+/** successors should be pinged every SUCCESSORPING */
+
+rule CS1 pingReg@NI(NI,SI,SUCCESSORPING) :- successor@NI(NI,S,SI).
+
+
+
+/** Fingers should be pinged every FINGERPING */
+
+rule CF1 pingReg@NI(NI,FI,FINGERPING) :- finger@NI(NI,I,B,BI).
+
+
+
+
+/** A successor for which a new latency event arrives (regardless of the
+actual latency) is refreshed */
+rule CS2 successor@NI(NI, S, SI) :- successor@NI(NI, S, SI),
+	latency@NI(NI, SI, L).
+
+rule CF2 finger@NI(NI, I, B, BI) :- finger@NI(NI, I, B, BI),
+	latency@NI(NI, BI, L).
+
+
