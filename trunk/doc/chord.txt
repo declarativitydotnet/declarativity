@@ -43,7 +43,7 @@ L1: lookupResults@R(R,K,S,SI,E) :- node@NI(NI,N), lookup@NI(NI,K,R,E),
 bestSuccessor@NI(NI,S,SI), K in (N,S]
 
 L2: bestLookupDistance@NI(NI,K,R,E,min<D>) :- lookup@NI(NI,K,R,E),
-finger@NI(NI,I,B,BI,ET), B in (N,K), D=f_dist(B,K)
+finger@NI(NI,I,B,BI), B in (N,K), D=f_dist(B,K)
 
 L3: lookup@BI(BI,K,R,E) :- bestLookupDistance@NI(NI,K,R,E,D),
 finger@NI(NI,I,B,BI), D=f_dist(B,K), B in (N, K)
