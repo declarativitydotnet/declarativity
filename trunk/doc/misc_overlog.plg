@@ -4,12 +4,13 @@ this_is_a_fact(a,1,3.4).
 this_is_another_fact().
 materialize(some_table,3,infinity,3).
 
+materialize(node,2,infinity,10).
+materialize(bestSuccessor,3,infinity,10).
 
-lookupResults(R,K,S,SI,E) :-
+rule R1 lookupResults(R,K,S,SI, min<E>) :-
 	node(NI,N),
 	lookup(NI,K,R,E),
-	bestSuccessor(NI,S,SI),
-	gt(N,K), gte(K,S).
+	bestSuccessor(NI,S,SI).
 
 
 
