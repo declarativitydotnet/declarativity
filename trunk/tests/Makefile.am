@@ -1,9 +1,13 @@
 $(PROGRAMS): $(LDEPS)
 
-bin_PROGRAMS 	= tuples basicelements basicElementPlumbing
+bin_PROGRAMS 	= tuples pel basicelements basicElementPlumbing
 
 tuples_SOURCES	= tuples.C
 tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+pel_SOURCES	= pel.C
+pel_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 basicElementPlumbing_SOURCES = basicElementPlumbing.C

@@ -125,7 +125,7 @@ HEXDIGIT	[0-9a-fA-F]
   // Double-precision literal
   double v = strtod(yytext,NULL);
   if ( v == HUGE_VAL || v == -HUGE_VAL) {
-    log_error("Double precision literal out of bounds");
+    log_error(strbuf() << "Double precision literal '" << yytext << "' out of bounds");
   } else {
     add_const_dbl(v);
   }
@@ -135,21 +135,27 @@ HEXDIGIT	[0-9a-fA-F]
   // C-style string literal
   strbuf b;
   const char *text = yytext + 1;
-  while (*text) {
+  char c;
+  while (text[1]) {
     if (*text == '\\' && text[1]) {
       switch (text[1]) 	{
       case '\n': break;
-      case 'n': b << '\n'; break;
-      case 'r': b << '\r'; break;
-      case 't': b << '\t'; break;
-      default: b << text[1]; break;
+      case 'n': c = '\n'; break;
+      case 'r': c = '\r'; break;
+      case 't': c = '\t'; break;
+      default: c = text[1]; break;
       }
       text += 2;
     } else {
-      b << *text++;
+      c = *text++;
     }
+    b.fmt("%c",c);
   }
   add_const_str(b);
+}
+
+null { 
+  add_const(New refcounted<TupleField>());
 }
 
 \${DIGIT}+ {
@@ -164,9 +170,12 @@ HEXDIGIT	[0-9a-fA-F]
   for (i = 0; i < num_tokens; i++) {
     if (strcmp(yytext, tokens[i].name) == 0) {
       add_opcode(tokens[i].code);
+      break;
     }
+  } 
+  if (i == num_tokens) {
+    log_error(strbuf() << "Bad token <" << yytext << ">");
   }
-  log_error("Bad token");
 }
 
 %%
@@ -224,7 +233,7 @@ void Pel_Lexer::add_opcode(u_int32_t op)
 // 
 // Called from the lexer: signal an error in the input.
 //
-void Pel_Lexer::log_error(const char *errstr) 
+void Pel_Lexer::log_error(str errstr) 
 {
   warn << "Pel_Lexer::" << errstr << "\n";
 }
@@ -238,3 +247,30 @@ const char *Pel_Lexer::opcode_mnemonic(u_int32_t opcode)
   return opcode < Pel_Lexer::num_tokens ? tokens[opcode].name : NULL;
 }
 
+//
+// Decompile a PEL program back into a string using the opcode table
+//
+str Pel_Lexer::decompile(Pel_Program &prog)
+{
+  strbuf sb;
+  
+  std::vector<u_int32_t>::iterator op;
+  for(op = prog.ops.begin(); op < prog.ops.end(); op++ ) {
+    unsigned opn = (*op) >> 16;
+    unsigned opc = (*op) & 0xFFFF;
+    if ( opc == Pel_VM::OP_LD_FIELD ) {
+      sb << "$" << opn << " ";
+    } else if ( opc == Pel_VM::OP_LD_CONST ) {
+      if ( opn < prog.const_pool.size() ) {
+	sb << prog.const_pool[opn]->toString() << " ";
+      } else {
+	sb << "<out-of-range-const-" << opn << "> ";
+      }
+    } else if ( opc < num_tokens ) {
+      sb << tokens[opc].name << " ";
+    } else {
+      sb << "<unknown-op-code-" << opc << "> ";
+    }
+  }
+  return sb;
+}

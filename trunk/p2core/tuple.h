@@ -64,6 +64,7 @@ public:
   Type get_type() const { return t; };
 
   str toString() const;
+  str toTypeString() const ;
 
   CAST(int32_t,  i32, INT32);
   CAST(u_int32_t,ui32,UINT32);
@@ -105,7 +106,6 @@ public:
   static TupleRef xdr_unmarshal( XDR *uio );
 
   str toString() const;
-
 };
 
 #endif /* __TUPLE_H_ */

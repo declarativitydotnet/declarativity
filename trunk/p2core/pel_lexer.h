@@ -36,7 +36,7 @@ private:
   static opcode_token tokens[];
   static const size_t num_tokens;
 
-  YY_BUFFER_STATE bufstate;
+  yy_buffer_state *bufstate;
   std::istringstream strb;
 
   Pel_Program *result;
@@ -50,14 +50,26 @@ private:
   void add_const(TupleFieldRef f);
   void add_tuple_load(int f);
   void add_opcode(u_int32_t op);
-  void log_error(const char *errstr);
+  void log_error(str errstr);
 
   Pel_Lexer(const char *prog);
   virtual ~Pel_Lexer() { yy_delete_buffer(bufstate); };
 
 public:
-  
+
+  // 
+  // Take a string and compile into a PEL program
+  //
   static Pel_Program *compile(const char *prog);
+
+  //
+  // Decompile a PEL program back into a string
+  //
+  static str decompile(Pel_Program &prog);
+
+  //
+  // Translate a PEL opcode into a mnemonic for the instruction
+  //
   static const char *opcode_mnemonic(u_int32_t opcode);
 
 };

@@ -55,7 +55,37 @@ str TupleField::toString() const
   strbuf sb;
   switch (t) {
   case NULLV:
-    sb << "NULL"; break;
+    sb << "null"; break;
+  case INT32:
+    sb << i32; break;
+  case UINT32:
+    sb << ui32; break;
+  case INT64:
+    sb << i64; break;
+  case UINT64:
+    sb << ui64; break;
+  case DOUBLE:
+    // Yuck.  IF we convert libasync to the STL this will be easier.
+    char dbuf[100];
+    sprintf(dbuf,"%g",d);
+    sb << dbuf; break;
+  case STRING:
+    sb << "\"" << s << "\""; break;
+  default:
+    sb << "BAD TYPE " << t; break;
+  }
+  return str(sb);
+}
+
+//
+// Printout a tuple field with type annotations
+//
+str TupleField::toTypeString() const 
+{
+  strbuf sb;
+  switch (t) {
+  case NULLV:
+    sb << "null"; break;
   case INT32:
     sb << "(int32)" << i32; break;
   case UINT32:

@@ -19,56 +19,56 @@ import string
 decls=[]
 curop = 0
 
-def emit_opcode( op, va ):
+def emit_opcode( op, va, desc ):
   global curop
-  decls.append((curop, op, va))
+  decls.append((curop, op, va, desc))
   curop += 1
   
-for op, va in [
-  ("swap",	"SWAP"),
-  ("dup",	"DUP"),
-  ("!", 	"NOT"),
-  ("and",	"AND"),
-  ("or",	"OR"),
-  ("xor",	"XOR"),
-  ("<<",	"LSR"),
-  (">>",	"LSL"),
-  (">>>",	"ASL"),
-  ("|",         "BITOR"),
-  ("&",         "BITAND"),
-  ("^",         "BITXOR"),
-  ("~",         "BITNOT"),
-  ("strcat",	"STRCAT"),
-  ("strlen",	"STRLEN"),
-  ("upper",	"STRUPPER"),
-  ("lower",	"STRLOWER"),
-  ("substr",	"SUBSTR"),
-  ("match",	"STRMATCH"),
-  ("like",	"STRLIKE"),
-  ("ilike",	"STRILIKE") ]:  emit_opcode(op,va)
+for op, va, desc in [
+  ("swap",	"SWAP",         "Swap top two stack values"),
+  ("dup",	"DUP",          "Duplicate the top stack value"),
+  ("!", 	"NOT",          "Boolean negation"),
+  ("and",	"AND",          "Boolean AND"),
+  ("or",	"OR",           "Boolean inclusive-OR"),
+  ("xor",	"XOR",          "Boolean exclusive-OR"),
+  ("<<",	"LSR",          "Integer logical shift right"),
+  (">>",	"ASL",          "Integer arithmetic shift left"),
+  ("&",         "BITAND",       "Bitwise AND"),
+  ("|",         "BITOR",        "Bitwise inclusive-OR"),
+  ("^",         "BITXOR",       "Bitwise exclusive-OR"),
+  ("~",         "BITNOT",       "1's complement"),
+  ("strcat",	"STRCAT",       "String concatenation"),
+  ("strlen",	"STRLEN",       "String length"),
+  ("upper",	"STRUPPER",     "Convert string to upper case"),
+  ("lower",	"STRLOWER",     "Convert string to lower case"),
+  ("substr",	"SUBSTR",       "Extract substring"),
+  ("match",	"STRMATCH",     "Regular expression matching"),
+  ("like",	"STRLIKE",      "Substring matching (case-sensitive)"),
+  ("ilike",	"STRILIKE",     "Substring matching (case-insensitive)")
+  ]:  emit_opcode(op,va, desc)
 
-for op, va in [
-  ("+",         "PLUS"),
-  ("-",         "MINUS"),
-  ("*",         "MUL"),
-  ("/",         "DIV"),
-  ("%",         "MOD"),
-  ("@",         "ABS"),
-  ("<",         "LT"),
-  (">=",        "GE") ]:
-  emit_opcode(op+"i", va+"_INT")
-  emit_opcode(op+"f", va+"_DBL")
+for op, va, desc in [
+  ("+",         "PLUS",         "addition"),
+  ("-",         "MINUS",        "subtraction"),
+  ("*",         "MUL",          "multiplication"),
+  ("/",         "DIV",          "division"),
+  ("%",         "MOD",          "modulus"),
+  ("@",         "ABS",          "absolute value"),
+  ("<",         "LT",           "compare less-than"),
+  (">=",        "GE",           "compare greater-than-or-equal") ]:
+  emit_opcode(op+"i", va+"_INT", "Integer")
+  emit_opcode(op+"f", va+"_DBL", "Double precision")
   
-emit_opcode("<s", "LT_STR")
-emit_opcode(">=s", "GE_STR")
-emit_opcode("==", "EQ")
-emit_opcode("push", "PUSH")
+emit_opcode("<s", "LT_STR",     "String compare less-than")
+emit_opcode(">=s", "GE_STR",    "String compare greater-than-or-equal")
+emit_opcode("==", "EQ",         "Compare equality")
+emit_opcode("push", "PUSH",     "Push top of stack to result tuple")
 
 for i in [ "i32", "u32", "i64", "u64", "dbl", "str" ]:
-  emit_opcode("->"+i, "CAST_" + i.upper())
+  emit_opcode("->"+i, "CAST_" + i.upper(), "Cast to type "+i)
 
-emit_opcode("", "LD_CONST")
-emit_opcode("", "LD_FIELD")
+emit_opcode("", "LD_CONST",     "Load from the constant pool")
+emit_opcode("", "LD_FIELD",     "Load from the operand tuple")
 
 warning="""
 
@@ -84,19 +84,19 @@ warning="""
 f = open("pel_opcode_decls.gen.h","w+")
 f.write(warning)
 f.write('public:\n')
-map(lambda (n,o,v): f.write("  static const u_int32_t OP_%s = %d;\n" % (v, n)),
+map(lambda (n,o,v,d): f.write("  static const u_int32_t OP_%s = %d;\n" % (v, n)),
     decls)
 f.write('  static const size_t NUM_OPCODES= %d;\n' % curop)
 
 # f.write('private:\n')
-map(lambda (n,o,v): f.write("  int op_%s(u_int32_t inst);\n" % v ),decls)
+map(lambda (n,o,v,d): f.write("  int op_%s(u_int32_t inst);\n" % v ),decls)
 f.close()
 
 
 f = open("pel_opcode_defns.gen.h","w+")
 f.write(warning)
 f.write('static JumpTableEnt_t jump_table[] = {\n')
-f.write(string.join(map(lambda (n,o,v): '  {"%s", \t&Pel_VM::op_%s}' % (o,v), decls),
+f.write(string.join(map(lambda (n,o,v,d): '  {"%s", \t&Pel_VM::op_%s}' % (o,v), decls),
                     ',\n'))
 f.write('\n};\n')
 f.write('#define DEF_OP(_name) int Pel_VM::op_##_name(u_int32_t inst)\n')
@@ -104,7 +104,7 @@ f.close()
 
 f = open("pel_opcode_tokens.gen.h","w+")
 f.write(warning)
-f.write(string.join(map(lambda (n,o,v): '  {"%s", \tPel_VM::OP_%s}' % (o,v), decls),
+f.write(string.join(map(lambda (n,o,v,d): '  {"%s", \tPel_VM::OP_%s}' % (o,v), decls),
                     ',\n'))
 f.write('\n')
 f.close()

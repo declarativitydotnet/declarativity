@@ -12,6 +12,9 @@
  *
  */
 
+#ifndef __PEL_PROGRAM_H__
+#define __PEL_PROGRAM_H__
+
 #include <vector>
 
 #include "tuple.h"
@@ -21,8 +24,4 @@ struct Pel_Program {
   Tuple	            const_pool;
 };
 
-  
-
-/*
- * End of file 
- */
+#endif /* __PEL_PROGRAM_H_ */
