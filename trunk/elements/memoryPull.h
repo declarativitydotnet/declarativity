@@ -22,7 +22,7 @@ class MemoryPull : public Element {
   
   /** Initialized with the tuple ref array and size.  Eventually, this
       will be given via a configure method or some such. */
-  MemoryPull(TupleRef * tupleRefBuffer,
+  MemoryPull(ref< vec< TupleRef > > tupleRefBuffer,
              int bufferSize);
 
   /** Remove the tuple ref array */
@@ -39,7 +39,7 @@ class MemoryPull : public Element {
   
  private:
   /** The tuple ref array from which I pull */
-  TupleRef * const _tupleRefBuffer;
+  ref< vec< TupleRef > > const _tupleRefBuffer;
 
   /** The current index within the tuple ref buffer. */
   int _tupleIndex;

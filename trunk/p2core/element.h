@@ -247,4 +247,7 @@ class Element {
 # endif
 #endif
 
+/** A handy dandy reference to elements */
+typedef ref< Element > ElementRef;
+
 #endif /* __ELEMENT_H_ */

@@ -22,9 +22,11 @@
 #include "tuple.h"
 #include "pullprint.h"
 #include "memoryPull.h"
+#include "router.h"
+#include "master.h"
 
 TupleRef create_tuple(int i) {
-  TupleRef t = New refcounted<Tuple>;
+  TupleRef t = New refcounted< Tuple >;
   t->append(*New TupleField());
   t->append(*New TupleField((int32_t)i));
   t->append(*New TupleField((uint64_t)i));
@@ -37,23 +39,45 @@ TupleRef create_tuple(int i) {
   return t;
 }
 
+Router::ConfigurationRef createConfiguration(ref< vec< TupleRef > > buffer)
+{
+  // Create the elements
+  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(buffer, 1);
+  ref< vec< ElementRef > > elements = New refcounted< vec< ElementRef > >();
+  elements->push_back(pullPrint);
+  elements->push_back(memoryPull);
+
+  // Create the hookups
+  Router::HookupRef hookup =
+    New refcounted< Router::Hookup >(memoryPull, 0,
+                                     pullPrint, 0);
+  ref < vec< Router::HookupRef > > hookups =
+    New refcounted< vec< Router::HookupRef > >();
+  hookups->push_back(hookup);
+
+  // Create the configuration
+  Router::ConfigurationRef configuration =
+    New refcounted< Router::Configuration >(elements, hookups);
+
+  return configuration;
+}
+
 int main(int argc, char **argv)
 {
   TupleRef t = create_tuple(1);
-  TupleRef tupleRefBuffer[1] = {t};
+  ref< vec< TupleRef > > tupleRefBuffer =
+    New refcounted< vec< TupleRef > >();
+  tupleRefBuffer->push_back(t);
 
-  std::cout << "BASIC_ELEMENT_PLUMBING\n";
+  Router::ConfigurationRef configuration =
+    createConfiguration(tupleRefBuffer);
 
-  PullPrint *pullPrint = New PullPrint();
-  MemoryPull *memoryPull = New MemoryPull(tupleRefBuffer, 1);
-  if (pullPrint->connect_input(0, memoryPull, 0) == -1) {
-    std::cerr << "Cannot connect elements\n";
-    exit(-1);
-  }
-
-  std::cout << "PullPrint\n";
-  pullPrint->run();
-
+  MasterRef master = New refcounted< Master >();
+  RouterRef router = New refcounted< Router >(configuration, master);
+  router->initialize();
+  router->activate();
+  master->run();
 
   return 0;
 }

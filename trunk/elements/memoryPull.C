@@ -15,7 +15,7 @@
 #include "memoryPull.h"
 #include "tuple.h"
 
-MemoryPull::MemoryPull(TupleRef * tupleRefBuffer,
+MemoryPull::MemoryPull(ref< vec< TupleRef > > tupleRefBuffer,
                        int bufferSize) :
   Element(0,1),
   _tupleRefBuffer(tupleRefBuffer),
@@ -30,7 +30,6 @@ MemoryPull::MemoryPull(TupleRef * tupleRefBuffer,
 
 MemoryPull::~MemoryPull()
 {
-  free(_tupleRefBuffer);
 }
 
 /** Pull the next tuple ref from the buffer and advance the index. If at
@@ -38,7 +37,7 @@ MemoryPull::~MemoryPull()
 TuplePtr MemoryPull::pull(int port, cbv cb)
 {
   if (_tupleIndex < _bufferSize) {
-    TuplePtr p = _tupleRefBuffer[_tupleIndex++];
+    TuplePtr p = (*_tupleRefBuffer)[_tupleIndex++];
     return p;
   } else {
     return 0;

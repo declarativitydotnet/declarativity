@@ -27,9 +27,21 @@
  */
 
 #include <master.h>
-#include <element.h>
 #include <router.h>
-#include <unistd.h>
+
+
+Master::Master()
+{}
+
+Master::~Master()
+{}
+
+void Master::run()
+{
+}
+
+
+#if 0
 
 #if CLICK_USERLEVEL && !HAVE_POLL_H
 enum { POLLIN = Element::SELECT_READ, POLLOUT = Element::SELECT_WRITE };
@@ -697,3 +709,5 @@ REMOVABLE_INLINE RouterThread * Master::thread(int id) const
 # include <click/vector.cc>
 #endif
 CLICK_ENDDECLS
+
+#endif

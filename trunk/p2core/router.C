@@ -64,171 +64,200 @@
  *    instantiated as a push port.  The ports are created and
  *    initialized, making appropriate ports not connectable (i.e., pull
  *    outputs or push inputs).
+ *
+ *    Next, hookups are checked for duplication.  Connectable ports
+ *    (i.e., push outputs and pull inputs) can only be connected to a
+ *    single counterpart.  Also unused ports are identified.  Neither
+ *    condition permits initialization to continue.
+ *
+ *    Next the actual plumbing occurs.  Actual element objects are
+ *    introduced to each other and connected at the appropriate ports.
+ *
+ *    Once connected, elements are themselves initialized in their
+ *    configuration order.  Initialization consists of the creation of
+ *    their handlers (introspection interfaces) and any element-specific
+ *    other initialization.  This is the stage at which "active"
+ *    elements place themselves in the run queue.
  */
 
 
 #include <router.h>
+#include <master.h>
 
-#include <routerthread.hh>
-#include <bitvector.hh>
-#include <error.hh>
-#include <straccum.hh>
-#include <elemfilter.hh>
-#include <confparse.hh>
-#include <timer.hh>
-#include <master.hh>
-#include <notifier.hh>
-#include <click/standard/errorelement.hh>
-#include <click/standard/threadsched.hh>
-#include <stdarg.h>
-#include <unistd.h>
-
-static Router::Handler *globalh;
-static int nglobalh;
-static int globalh_cap;
-
-Router::Router(const String &configuration, Master *m)
+Router::Router(ref<Configuration> c,
+               ref<Master> m)
   : _master(m),
+    _elements(),
     _state(ROUTER_NEW),
-    _allow_star_handler(true),
-    _running(RUNNING_INACTIVE),
-    _handlers(0),
-    _nhandlers(-1),
-    _handlers_cap(0),
-    _root_element(0),
-    _configuration(configuration),
-    _notifier_signals(0),
-    _n_notifier_signals(0),
-    _thread_sched(0),
-    _next_router(0)
+    _configuration(c)
 {
-  _refcount = 0;
-  _runcount = 0;
-  
-  _root_element = new ErrorElement;
-  _root_element->attach_router(this, -1);
-
-  _master->use();
 }
 
 Router::~Router()
 {
-  if (_refcount > 0)
-    click_chatter("deleting router while ref count > 0");
+  // Unschedule if running
 
-  // Clean up elements in reverse configuration order
-  if (_state == ROUTER_LIVE) {
-    // Unschedule tasks and timers
-    _master->remove_router(this);
-    for (int ord = _elements.size() - 1; ord >= 0; ord--)
-      _elements[ _element_configure_order[ord] ]->cleanup(Element::CLEANUP_ROUTER_INITIALIZED);
-  } else if (_state != ROUTER_DEAD) {
-    assert(_element_configure_order.size() == 0 && _state <= ROUTER_PRECONFIGURE);
-    for (int i = _elements.size() - 1; i >= 0; i--)
-      _elements[i]->cleanup(Element::CLEANUP_NO_ROUTER);
-  }
-  
-  // Delete elements in reverse configuration order
-  if (_element_configure_order.size())
-    for (int ord = _elements.size() - 1; ord >= 0; ord--)
-      delete _elements[ _element_configure_order[ord] ];
-  else
-    for (int i = 0; i < _elements.size(); i++)
-      delete _elements[i];
-  
-  delete _root_element;
-  delete[] _handlers;
-  delete[] _notifier_signals;
-  _master->unuse();
+  // Uninitialize elements in reverse order
+
+  // Kill elements
 }
 
-void
-Router::unuse()
+
+
+/**
+ * initialize
+ *
+ * 
+ */
+int Router::initialize()
 {
-  if (_refcount.dec_and_test())
-    delete this;
+#if 0
+  if (_state != ROUTER_NEW)
+    return errh->error("second attempt to initialize router");
+  _state = ROUTER_PRECONFIGURE;
+
+  // initialize handlers to empty
+  initialize_handlers(false, false);
+  
+  // clear attachments
+  _attachment_names.clear();
+  _attachments.clear();
+  
+  if (check_hookup_elements(errh) < 0)
+    return -1;
+  
+  _runcount = 1;
+  _master->register_router(this);
+
+  // set up configuration order
+  _element_configure_order.assign(nelements(), 0);
+  if (_element_configure_order.size()) {
+    Vector<int> configure_phase(nelements(), 0);
+    configure_order_phase = &configure_phase;
+    for (int i = 0; i < _elements.size(); i++) {
+      configure_phase[i] = _elements[i]->configure_phase();
+      _element_configure_order[i] = i;
+    }
+    click_qsort(&_element_configure_order[0], _element_configure_order.size(), sizeof(int), configure_order_compar);
+  }
+
+  // notify elements of hookup range
+  notify_hookup_range();
+
+  // Configure all elements in configure order. Remember the ones that failed
+  Bitvector element_ok(nelements(), true);
+  bool all_ok = true;
+  Element::CleanupStage failure_stage = Element::CLEANUP_CONFIGURE_FAILED;
+  Element::CleanupStage success_stage = Element::CLEANUP_CONFIGURED;
+  Vector<String> conf;
+#if CLICK_DMALLOC
+  char dmalloc_buf[12];
+#endif
+  for (int ord = 0; ord < _elements.size(); ord++) {
+    int i = _element_configure_order[ord];
+#if CLICK_DMALLOC
+    sprintf(dmalloc_buf, "c%d  ", i);
+    CLICK_DMALLOC_REG(dmalloc_buf);
+#endif
+    ContextErrorHandler cerrh
+      (errh, context_message(i, "While configuring"));
+    int before = cerrh.nerrors();
+    conf.clear();
+    cp_argvec(_element_configurations[i], conf);
+    if (_elements[i]->configure(conf, &cerrh) < 0) {
+      element_ok[i] = all_ok = false;
+      if (cerrh.nerrors() == before)
+        cerrh.error("unspecified error");
+    }
+  }
+
+#if CLICK_DMALLOC
+  CLICK_DMALLOC_REG("iHoo");
+#endif
+  
+  int before = errh->nerrors();
+  check_hookup_range(errh);
+  make_pidxes();
+  check_push_and_pull(errh);
+  check_hookup_completeness(errh);
+  set_connections();
+  _state = ROUTER_PREINITIALIZE;
+  if (before != errh->nerrors())
+    all_ok = false;
+
+  // Initialize elements if OK so far.
+  if (all_ok) {
+    failure_stage = Element::CLEANUP_INITIALIZE_FAILED;
+    success_stage = Element::CLEANUP_INITIALIZED;
+    initialize_handlers(true, true);
+    for (int ord = 0; ord < _elements.size(); ord++) {
+      int i = _element_configure_order[ord];
+      assert(element_ok[i]);
+#if CLICK_DMALLOC
+      sprintf(dmalloc_buf, "i%d  ", i);
+      CLICK_DMALLOC_REG(dmalloc_buf);
+#endif
+      ContextErrorHandler cerrh
+        (errh, context_message(i, "While initializing"));
+      int before = cerrh.nerrors();
+      if (_elements[i]->initialize(&cerrh) < 0) {
+        element_ok[i] = all_ok = false;
+        // don't report 'unspecified error' for ErrorElements:
+        // keep error messages clean
+        if (cerrh.nerrors() == before && !_elements[i]->cast("Error"))
+          cerrh.error("unspecified error");
+      }
+    }
+  }
+
+#if CLICK_DMALLOC
+  CLICK_DMALLOC_REG("iXXX");
+#endif
+  
+  // If there were errors, uninitialize any elements that we initialized
+  // successfully and return -1 (error). Otherwise, we're all set!
+  if (all_ok) {
+    _state = ROUTER_LIVE;
+    return 0;
+  } else {
+    _state = ROUTER_DEAD;
+    errh->verror_text(ErrorHandler::ERR_CONTEXT_ERROR, "", "Router could not be initialized!");
+    
+    // Unschedule tasks and timers
+    master()->remove_router(this);
+
+    // Clean up elements
+    for (int ord = _elements.size() - 1; ord >= 0; ord--) {
+      int i = _element_configure_order[ord];
+      _elements[i]->cleanup(element_ok[i] ? success_stage : failure_stage);
+    }
+    
+    // Remove element-specific handlers
+    initialize_handlers(true, false);
+    
+    _runcount = 0;
+    return -1;
+  }
+#endif
+  return -1;
 }
+
+
+
+
+
+void Router::activate()
+{
+}
+
+
 
 
 // ACCESS
 
-Element * Router::find(const String &name, String prefix, ErrorHandler *errh) const
-{
-  while (1) {
-    int got = -1;
-    String n = prefix + name;
-    for (int i = 0; i < _elements.size(); i++)
-      if (_element_names[i] == n) {
-	if (got >= 0) {
-	  if (errh) errh->error("more than one element named '%s'", n.cc());
-	  return 0;
-	} else
-	  got = i;
-      }
-    if (got >= 0)
-      return _elements[got];
-    if (!prefix)
-      break;
-    
-    int slash = prefix.find_right('/', prefix.length() - 2);
-    prefix = (slash >= 0 ? prefix.substring(0, slash + 1) : String());
-  }
-  
-  if (errh)
-    errh->error("no element named '%s'", name.c_str());
-  return 0;
-}
-
-Element * Router::find(const String &name, Element *context, ErrorHandler *errh) const
-{
-  String prefix = ename(context->eindex());
-  int slash = prefix.find_right('/');
-  return find(name, (slash >= 0 ? prefix.substring(0, slash + 1) : String()), errh);
-}
-
-Element * Router::element(const Router *r, int ei)
-{
-  if (r && ei >= 0 && ei < r->nelements())
-    return r->_elements[ei];
-  else if (r && ei == -1)
-    return r->root_element();
-  else
-    return 0;
-}
-
-const String & Router::ename(int ei) const
-{
-  if (ei < 0 || ei >= nelements())
-    return String::null_string();
-  else
-    return _element_names[ei];
-}
-
-const String & Router::default_configuration_string(int ei) const
-{
-  if (ei < 0 || ei >= nelements())
-    return String::null_string();
-  else
-    return _element_configurations[ei];
-}
-
-void Router::set_default_configuration_string(int ei, const String &s)
-{
-  if (ei >= 0 && ei < nelements())
-    _element_configurations[ei] = s;
-}
-
-const String & Router::elandmark(int ei) const
-{
-  if (ei < 0 || ei >= nelements())
-    return String::null_string();
-  else
-    return _element_landmarks[ei];
-}
-
 
 // CREATION 
-
+#if 0
 int Router::add_element(Element *e, const String &ename,
                         const String &conf,
                         const String &landmark)
@@ -245,8 +274,7 @@ int Router::add_element(Element *e, const String &ename,
   return i;
 }
 
-int
-Router::add_connection(int from_idx, int from_port, int to_idx, int to_port)
+int Router::add_connection(int from_idx, int from_port, int to_idx, int to_port)
 {
   assert(from_idx >= 0 && from_port >= 0 && to_idx >= 0 && to_port >= 0);
   if (_state != ROUTER_NEW)
@@ -262,8 +290,7 @@ Router::add_connection(int from_idx, int from_port, int to_idx, int to_port)
   return 0;
 }
 
-void
-Router::add_requirement(const String &r)
+void Router::add_requirement(const String &r)
 {
   assert(cp_is_word(r));
   _requirements.push_back(r);
@@ -835,136 +862,6 @@ Router::initialize_handlers(bool defaults, bool specifics)
       _elements[i]->add_handlers();
 }
 
-int
-Router::initialize(ErrorHandler *errh)
-{
-  if (_state != ROUTER_NEW)
-    return errh->error("second attempt to initialize router");
-  _state = ROUTER_PRECONFIGURE;
-
-  // initialize handlers to empty
-  initialize_handlers(false, false);
-  
-  // clear attachments
-  _attachment_names.clear();
-  _attachments.clear();
-  
-  if (check_hookup_elements(errh) < 0)
-    return -1;
-  
-  _runcount = 1;
-  _master->register_router(this);
-
-  // set up configuration order
-  _element_configure_order.assign(nelements(), 0);
-  if (_element_configure_order.size()) {
-    Vector<int> configure_phase(nelements(), 0);
-    configure_order_phase = &configure_phase;
-    for (int i = 0; i < _elements.size(); i++) {
-      configure_phase[i] = _elements[i]->configure_phase();
-      _element_configure_order[i] = i;
-    }
-    click_qsort(&_element_configure_order[0], _element_configure_order.size(), sizeof(int), configure_order_compar);
-  }
-
-  // notify elements of hookup range
-  notify_hookup_range();
-
-  // Configure all elements in configure order. Remember the ones that failed
-  Bitvector element_ok(nelements(), true);
-  bool all_ok = true;
-  Element::CleanupStage failure_stage = Element::CLEANUP_CONFIGURE_FAILED;
-  Element::CleanupStage success_stage = Element::CLEANUP_CONFIGURED;
-  Vector<String> conf;
-#if CLICK_DMALLOC
-  char dmalloc_buf[12];
-#endif
-  for (int ord = 0; ord < _elements.size(); ord++) {
-    int i = _element_configure_order[ord];
-#if CLICK_DMALLOC
-    sprintf(dmalloc_buf, "c%d  ", i);
-    CLICK_DMALLOC_REG(dmalloc_buf);
-#endif
-    ContextErrorHandler cerrh
-      (errh, context_message(i, "While configuring"));
-    int before = cerrh.nerrors();
-    conf.clear();
-    cp_argvec(_element_configurations[i], conf);
-    if (_elements[i]->configure(conf, &cerrh) < 0) {
-      element_ok[i] = all_ok = false;
-      if (cerrh.nerrors() == before)
-        cerrh.error("unspecified error");
-    }
-  }
-
-#if CLICK_DMALLOC
-  CLICK_DMALLOC_REG("iHoo");
-#endif
-  
-  int before = errh->nerrors();
-  check_hookup_range(errh);
-  make_pidxes();
-  check_push_and_pull(errh);
-  check_hookup_completeness(errh);
-  set_connections();
-  _state = ROUTER_PREINITIALIZE;
-  if (before != errh->nerrors())
-    all_ok = false;
-
-  // Initialize elements if OK so far.
-  if (all_ok) {
-    failure_stage = Element::CLEANUP_INITIALIZE_FAILED;
-    success_stage = Element::CLEANUP_INITIALIZED;
-    initialize_handlers(true, true);
-    for (int ord = 0; ord < _elements.size(); ord++) {
-      int i = _element_configure_order[ord];
-      assert(element_ok[i]);
-#if CLICK_DMALLOC
-      sprintf(dmalloc_buf, "i%d  ", i);
-      CLICK_DMALLOC_REG(dmalloc_buf);
-#endif
-      ContextErrorHandler cerrh
-        (errh, context_message(i, "While initializing"));
-      int before = cerrh.nerrors();
-      if (_elements[i]->initialize(&cerrh) < 0) {
-        element_ok[i] = all_ok = false;
-        // don't report 'unspecified error' for ErrorElements:
-        // keep error messages clean
-        if (cerrh.nerrors() == before && !_elements[i]->cast("Error"))
-          cerrh.error("unspecified error");
-      }
-    }
-  }
-
-#if CLICK_DMALLOC
-  CLICK_DMALLOC_REG("iXXX");
-#endif
-  
-  // If there were errors, uninitialize any elements that we initialized
-  // successfully and return -1 (error). Otherwise, we're all set!
-  if (all_ok) {
-    _state = ROUTER_LIVE;
-    return 0;
-  } else {
-    _state = ROUTER_DEAD;
-    errh->verror_text(ErrorHandler::ERR_CONTEXT_ERROR, "", "Router could not be initialized!");
-    
-    // Unschedule tasks and timers
-    master()->remove_router(this);
-
-    // Clean up elements
-    for (int ord = _elements.size() - 1; ord >= 0; ord--) {
-      int i = _element_configure_order[ord];
-      _elements[i]->cleanup(element_ok[i] ? success_stage : failure_stage);
-    }
-    
-    // Remove element-specific handlers
-    initialize_handlers(true, false);
-    
-    _runcount = 0;
-    return -1;
-  }
-}
 
 void
 Router::activate(bool foreground, ErrorHandler *errh)
@@ -1671,6 +1568,4 @@ REMOVABLE_INLINE int Router::initial_thread_preference(Task *t,
   else
     return _thread_sched->initial_thread_preference(t, scheduled);
 }
-
-// Vector template instance
-# include <click/vector.cc>
+#endif

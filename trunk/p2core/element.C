@@ -103,9 +103,9 @@ Element::set_nports(int new_ninputs, int new_noutputs)
   }
 
   // install information
-  if (!_inputs)
+  if (_inputs)
     delete[] _inputs;
-  if (!_outputs)
+  if (_outputs)
     delete[] _outputs;
   _inputs = new_inputs;
   _outputs = new_outputs;
@@ -149,8 +149,7 @@ Element::initialize_ports(const int *in_v, const int *out_v)
   }
 }
 
-int
-Element::connect_input(int i, Element *f, int port)
+int Element::connect_input(int i, Element *f, int port)
 {
   if (i >= 0 && i < ninputs() && _inputs[i].allowed()) {
     _inputs[i] = Port(this, f, port);
@@ -159,8 +158,7 @@ Element::connect_input(int i, Element *f, int port)
     return -1;
 }
 
-int
-Element::connect_output(int o, Element *f, int port)
+int Element::connect_output(int o, Element *f, int port)
 {
   if (o >= 0 && o < noutputs() && _outputs[o].allowed()) {
     _outputs[o] = Port(this, f, port);
