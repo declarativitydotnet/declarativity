@@ -49,7 +49,7 @@ void ElementSpec::initializePorts()
   bool fStop;
 
   // What is the default personality 
-  Element::Processing pCurrent = Element::VAGNOSTIC;
+  Element::Processing pCurrent = Element::AGNOSTIC;
 
   // Fill in the input port vector
   int ninputs = _element->ninputs();
@@ -65,7 +65,7 @@ void ElementSpec::initializePorts()
 
     // Should I change the current personality?
     if (!pStop) {
-      pCurrent = Element::processingCode(personalityPointer);
+      pCurrent = (Element::Processing) *personalityPointer;
       personalityPointer++;
     }
 
@@ -85,7 +85,7 @@ void ElementSpec::initializePorts()
   flowPointer++;
 
   // And start with defaults again
-  pCurrent = Element::VAGNOSTIC;
+  pCurrent = Element::AGNOSTIC;
 
   // Fill in the output port vector
   int noutputs = _element->noutputs();
@@ -98,7 +98,7 @@ void ElementSpec::initializePorts()
 
     // Should I change the current personality?
     if (!pStop) {
-      pCurrent = Element::processingCode(personalityPointer);
+      pCurrent = (Element::Processing) (*personalityPointer);
       personalityPointer++;
     }
 
@@ -106,4 +106,70 @@ void ElementSpec::initializePorts()
     PortRef port = New refcounted< Port >(pCurrent);
     _outputs.push_back(port);
   }
+}
+
+const ElementRef ElementSpec::element()
+{
+  return _element;
+}
+
+ElementSpec::PortRef ElementSpec::input(int pno)
+{
+  return _inputs[pno];
+}
+
+ElementSpec::PortRef ElementSpec::output(int pno)
+{
+  return _outputs[pno];
+}
+
+ElementSpec::Port::Port(Element::Processing personality)
+  : _processing(personality)
+{
+}
+ 
+Element::Processing ElementSpec::Port::personality() const
+{
+  return _processing;
+}
+
+void ElementSpec::Port::personality(Element::Processing p)
+{
+  _processing = p;
+}
+
+
+str ElementSpec::toString() const
+{
+  strbuf sb;
+  sb << "<" << _element->class_name() << "(" << _element->ID() << "):";
+  int ninputs = _inputs.size();
+  if (ninputs > 0) {
+    sb << "IN[ " ;
+    for (int i = 0;
+         i < ninputs;
+         i++) {
+      sb << i << "/" << (_inputs[i]->toString()) << " ";
+    }
+    sb << "] ";
+  }
+  int noutputs = _outputs.size();
+  if (noutputs > 0) {
+    sb << "OUT[ " ;
+    for (int i = 0;
+         i < noutputs;
+         i++) {
+      sb << i << "/" << (_outputs[i]->toString()) << " ";
+    }
+    sb << "]";
+  }
+  sb << ">";
+  return str(sb);
+}
+
+str ElementSpec::Port::toString() const
+{
+  strbuf sb;
+  sb << "{" << ElementSpec::processingCodeString(_processing) << "}";
+  return str(sb);
 }

@@ -37,31 +37,56 @@ class ElementSpec {
   
   ElementSpec(ElementRef element);
 
-  // INPUTS AND OUTPUTS
-  int ninputs() const				{ return _ninputs; }
-  int noutputs() const				{ return _noutputs; }
-
   /** My real element */
-  const ElementRef element()			{ return _element; }
+  const ElementRef element();
 
   /** A nested class encapsulating port specs. */
   class Port { 
   public:
     
-    Port(Element::Processing personality) : _processing(personality) {};
+    Port(Element::Processing personality);
     
     /** My personality */
-    Element::Processing personality() const { return _processing; }
+    Element::Processing personality() const;
     
-   private:
+    /** Set my personality */
+    void personality(Element::Processing);
+
+    /** Turn to string */
+    str toString() const;
+    
+  private:
     /** What's my personality? */
     Element::Processing _processing;
   };
 
   typedef ref< Port > PortRef;
 
+  /** My input */
+  PortRef input(int pno);
+
+  /** My output */
+  PortRef output(int pno);
+  
   /** A place holder exception for this class */
   struct ElementSpecError {};
+
+  /** Turn spec to string */
+  str toString() const;
+
+  /** Turn processing code to processing string */
+  REMOVABLE_INLINE static char * processingCodeString(Element::Processing p) {
+    switch (p) {
+    case Element::PUSH:
+      return "h";
+    case Element::PULL:
+      return "l";
+    case Element::AGNOSTIC:
+      return "a";
+    default:
+      return "I";               /* for invalid */
+    }
+  }
 
  private:
 
@@ -74,12 +99,6 @@ class ElementSpec {
 
   /** My output ports */
   vec< PortRef > _outputs;
-
-  /** How many inputs do I have? */
-  int _ninputs;
-
-  /** How many outputs do I have? */
-  int _noutputs;
 
   ElementSpec(const Element &);
   ElementSpec &operator=(const Element &);

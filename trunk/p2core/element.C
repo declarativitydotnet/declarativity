@@ -53,6 +53,7 @@ const char * const Element::COMPLETE_FLOW = "x/x";
 
 
 int Element::nelements_allocated = 0;
+int Element::elementCounter = 0;
 
 #if P2_STATS >= 2
 # define ELEMENT_CTOR_STATS _calls(0), _self_cycles(0), _child_cycles(0),
@@ -68,6 +69,7 @@ Element::Element() :
   _noutputs(0)
 {
   nelements_allocated++;
+  _ID = elementCounter++;
 }
 
 Element::Element(int ninputs, int noutputs) :
@@ -79,6 +81,7 @@ Element::Element(int ninputs, int noutputs) :
 {
   set_nports(ninputs, noutputs);
   nelements_allocated++;
+  _ID = elementCounter++;
 }
 
 Element::~Element()
@@ -147,13 +150,13 @@ Element::initialize_ports(const int *in_v, const int *out_v)
   // Only PULL inputs are connectable
   for (int i = 0; i < ninputs(); i++) {
     // allowed iff in_v[i] == VPULL
-    int port = (in_v[i] == VPULL ? 0 : Port::NOT_CONNECTABLE);
+    int port = (in_v[i] == PULL ? 0 : Port::NOT_CONNECTABLE);
     _inputs[i] = Port(this, 0, port);
   }
   
   for (int o = 0; o < noutputs(); o++) {
     // allowed iff out_v[o] != VPULL
-    int port = (out_v[o] == VPULL ? Port::NOT_CONNECTABLE : 0);
+    int port = (out_v[o] == PULL ? Port::NOT_CONNECTABLE : 0);
     _outputs[o] = Port(this, 0, port);
   }
 }

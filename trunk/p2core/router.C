@@ -87,8 +87,9 @@
 
 int Router::check_push_and_pull()
 {
-  // For every hookup...
+  int errors = 0;
 
+  // For every hookup...
   for (uint i = 0;
        i < _configuration->hookups->size();
        i++) {
@@ -98,30 +99,69 @@ int Router::check_push_and_pull()
     ElementSpecRef toElement = hookup->toElement;
     int fromPort = hookup->fromPortNumber;
     int toPort = hookup->toPortNumber;
+    // By now, the ports should be acceptable
+    assert((fromPort < fromElement->element()->noutputs()) &&
+           (toPort < toElement->element()->ninputs()));
 
-    // If from port is push...
-    
-    // If to port is push, we're ok
+    switch (fromElement->output(fromPort)->personality()) {
+    case Element::PUSH:
+      // If from port is push...
+      switch (toElement->input(toPort)->personality()) {
+      case Element::PUSH:
+        // If to port is push, we're ok
+        break;
 
-    // If to port is pull, we're not OK
+      case Element::PULL:
+        // If to port is pull, we're not OK
+        std::cerr << "Hookup from PUSH to PULL found\n";
+        errors++;
+        break;
 
-    // If to port is agnostic, make it push
+      case Element::AGNOSTIC:
+        // If to port is agnostic, make it push
+        toElement->input(toPort)->personality(Element::PUSH);
+        break;
+      }
+      break;
 
-    // Else, if from port is pull...
+    case Element::PULL:
+      // Else, if from port is pull...
+      switch (toElement->input(toPort)->personality()) {
+      case Element::PUSH:
+        // If to port is push, we're not Ok
+        std::cerr << "Hookup from PULL to PUSH found\n";
+        errors++;
+        break;
+        
+      case Element::PULL:
+        // If to port is pull, we're ok
+        break;
 
-    // If to port is push, we're not Ok
+      case Element::AGNOSTIC:
+        // If to port is agnostic, make it pull
+        toElement->input(toPort)->personality(Element::PULL);
+        break;
+      }
+      break;
 
-    // If to port is pull, we're ok
+    case Element::AGNOSTIC:
+      // Else, if from port is agnostic...
+      switch (toElement->input(toPort)->personality()) {
+      case Element::PUSH:
+        // If to port is push, make from push
+        fromElement->output(fromPort)->personality(Element::PUSH);
+        break;
 
-    // If to port is agnostic, make it pull
+      case Element::PULL:
+        // If to port is pull, make from pull
+        fromElement->output(fromPort)->personality(Element::PULL);
+        break;
 
-    // Else, if from port is agnostic...
-
-    // If to port is push, make from push
-
-    // If to port is pull, make from pull
-
-    // If to port is agnostic, we're ok
+      case Element::AGNOSTIC:
+        // If to port is agnostic, we're ok
+        break;
+      }
+    }
 
 
 
@@ -133,6 +173,12 @@ int Router::check_push_and_pull()
     
     // Carry over personality from left side of flow to right side of
     // flow; if inconsistent, fail
+
+    if (errors > 0) {
+      return -1;
+    } else {
+      return 0;
+    }
   }
   
 #if 0
@@ -224,15 +270,15 @@ int Router::check_hookup_range()
     if (hookup->fromPortNumber >= hookup->fromElement->
         element()->noutputs()) {
       std::cerr << "Cannot connect from port " <<
-        hookup->fromPortNumber << " in an element of type " <<
-        hookup->fromElement->element()->class_name() << "\n";
+        hookup->fromPortNumber << " in element " <<
+        hookup->fromElement->toString() << "\n";
       errors++;
     }
     if (hookup->toPortNumber >= hookup->toElement->
         element()->ninputs()) {
       std::cerr << "Cannot connect to port " <<
-        hookup->toPortNumber << " in an element of type " <<
-        hookup->toElement->element()->class_name() << "\n";
+        hookup->toPortNumber << " in element " <<
+        hookup->toElement->toString() << "\n";
       errors++;
     }
   }
@@ -389,14 +435,14 @@ int Router::check_hookup_elements()
         hookup->fromElement->element()) {
       // This hookup comes from a non-existing element 
       std::cerr << "Non-existent from element " <<
-        hookup->fromElement->element() << "\n";
+        hookup->fromElement->toString() << "\n";
       errors++;
     }
     if (*elementSet.find(hookup->toElement->element()) !=
         hookup->toElement->element()) {
       // This hookup goes to a non-existing element 
       std::cerr << "Non-existent to element " <<
-        hookup->toElement->element() << "\n";
+        hookup->toElement->toString() << "\n";
       errors++;
     }
     if (hookup->fromPortNumber < 0) {

@@ -21,6 +21,8 @@
 
 #include "tuple.h"
 #include "pullprint.h"
+#include "pushprint.h"
+#include "print.h"
 #include "memoryPull.h"
 #include "router.h"
 #include "master.h"
@@ -36,6 +38,7 @@ TupleRef create_tuple(int i) {
   str myString = myStringBuf;
   t->append(*New TupleField(myString));
   t->freeze();
+  std::cout << "Created tuple " << (t->toString()) << "\n";
   return t;
 }
 
@@ -202,6 +205,80 @@ void testCheckHookupRange(MasterRef master)
 }
 
 
+/** Test the portion of router initialization that checks semantic
+    consistency. */
+void testCheckPushPull(MasterRef master)
+{
+  std::cout << "CHECK ELEMENT PUSH and PULL\n";
+
+  TupleRef t = create_tuple(1);
+  ref< vec< TupleRef > > tupleRefBuffer =
+    New refcounted< vec< TupleRef > >();
+  tupleRefBuffer->push_back(t);
+  ref< MemoryPull > memoryPull = New refcounted< MemoryPull >(tupleRefBuffer, 1);
+  ref< PullPrint > pullPrint = New refcounted< PullPrint >();
+  ref< PushPrint > pushPrint = New refcounted< PushPrint >();
+  ElementSpecRef memoryPullSpec = New refcounted< ElementSpec >(memoryPull);
+  ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
+  ElementSpecRef pushPrintSpec = New refcounted< ElementSpec >(pushPrint);
+
+  ref< vec< ElementSpecRef > > elements = New refcounted< vec< ElementSpecRef > >();
+  elements->push_back(memoryPullSpec);
+  elements->push_back(pushPrintSpec);
+
+  // Connect push to pull
+  Router::HookupRef hookup =
+    New refcounted< Router::Hookup >(memoryPullSpec, 0,
+                                     pushPrintSpec, 0);
+  ref < vec< Router::HookupRef > > hookups =
+    New refcounted< vec< Router::HookupRef > >();
+  hookups->push_back(hookup);
+
+  Router::ConfigurationRef configuration =
+    New refcounted< Router::Configuration >(elements, hookups);
+
+  RouterRef router = New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+    std::cerr << "** Failed to catch push output hooked up with pull input\n";
+  } else {
+    std::cout << "Caught incorrect push-to-pull hookup\n";
+  }
+
+  hookups->clear();
+  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 0,
+                                            pullPrintSpec, 1);
+  hookups->push_back(hookup);
+  router = New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+    std::cerr << "** Failed to catch incorrect to port\n";
+  } else {
+    std::cout << "Correctly caught incorrect to port\n";
+  }
+
+  hookups->clear();
+  hookup = New refcounted< Router::Hookup >(memoryPullSpec, 2,
+                                            pullPrintSpec, 3);
+  hookups->push_back(hookup);
+  router = New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+    std::cerr << "** Failed to catch incorrect from/to ports\n";
+  } else {
+    std::cout << "Correctly caught incorrect from/to ports\n";
+  }
+
+  hookups->clear();
+  hookup = New refcounted< Router::Hookup >(pullPrintSpec, 0,
+                                            memoryPullSpec, 0);
+  hookups->push_back(hookup);
+  router = New refcounted< Router >(configuration, master);
+  if (router->initialize() == 0) {
+    std::cerr << "** Failed to catch portless hookup\n";
+  } else {
+    std::cout << "Correctly caught portless hookup\n";
+  }
+}
+
+
 int main(int argc, char **argv)
 {
   std::cout << "BASIC ELEMENT PLUMBING\n";
@@ -211,6 +288,7 @@ int main(int argc, char **argv)
 
   testCheckHookupElements(master);
   testCheckHookupRange(master);
+  testCheckPushPull(master);
 
   return 0;
 }

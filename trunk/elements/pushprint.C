@@ -13,6 +13,7 @@
  */
 
 #include "pushprint.h"
+#include <tuple.h>
 
 #include <iostream>
 
@@ -22,6 +23,6 @@ PushPrint::PushPrint() : Element(1,0)
 
 int PushPrint::push(int port, TupleRef t, cbv cb)
 {
-  std::cout << "PushPrint: " << t->toString() << "\n";
+  std::cout << "PushPrint: " << (t->toString()) << "\n";
   return 1;
 }

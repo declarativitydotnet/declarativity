@@ -33,7 +33,7 @@
  * way we'll all develop a better understanding of why Click (and P2)
  * are the way they are. 
  * 
- * We've also enhanced to push/pull tuple to allow blocking (something
+ * We've also enhanced to push/pull tuple to prevent blocking (something
  * Click, being a router, doesn't need to bother with). 
  */
 
@@ -46,17 +46,14 @@
 class Element { 
  public:
   
-  // Port types.  These are the constituent characters of the
-  // "processing" signature of the element. 
-  static const char AGNOSTIC = 'a';
-  static const char PUSH = 'h';
-  static const char PULL = 'l';
-
   // Two shorthand processing signatures.  
-  static const char * const PUSH_TO_PULL, * const PULL_TO_PUSH;
+  static const char * const PUSH_TO_PULL;
+  static const char * const PULL_TO_PUSH;
 
-  // The three processing types and the invalid type
-  enum Processing { VAGNOSTIC, VPUSH, VPULL, VINVALID };
+  // The three processing types
+  enum Processing { AGNOSTIC = 'a',
+                    PUSH = 'h',
+                    PULL = 'l' };
 
   /** The flow specification of the element.  This is a simplified
       version of that used in Click.  A flow spec has the format
@@ -81,6 +78,7 @@ class Element {
   Element(int ninputs, int noutputs);
   virtual ~Element();
   static int nelements_allocated;
+  static int elementCounter;
 
   //
   // RUNTIME
@@ -101,6 +99,7 @@ class Element {
 
   // CHARACTERISTICS
   virtual const char *class_name() const = 0;
+  int ID() const				{ return _ID; }
 
   /** Return the router that contains me */
   class Router;
@@ -138,28 +137,11 @@ class Element {
   virtual const char *flow_code() const;
   virtual const char *flags() const;
   
-  REMOVABLE_INLINE static Processing processingCode(const char * code)
-    {
-      switch (*code) {
-      case Element::AGNOSTIC:
-        return Element::VAGNOSTIC;
-    
-      case Element::PUSH:
-        return Element::VPUSH;
-    
-      case Element::PULL:
-        return Element::VPULL;
-
-      default:
-        return Element::VINVALID;
-      }
-    };
-
   // METHODS USED BY `ROUTER'
   
   /** Attach me to a router */
   void attach_router(Router *r)		{ _router = r; }
-  
+
 
 
 
@@ -264,6 +246,9 @@ class Element {
 
   /** How many outputs do I have? */
   int _noutputs;
+
+  /** My ID */
+  long _ID;
 
   Element(const Element &);
   Element &operator=(const Element &);

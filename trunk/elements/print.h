@@ -23,7 +23,8 @@ public:
   TuplePtr pull(int port, cbv);
 
   const char *class_name() const		{ return "Print";}
-  const char *processing() const		{ return AGNOSTIC; }
+  const char *processing() const		{ return "a/a"; }
+  const char *flow_code() const			{ return "x/x"; }
 
 private:
   cbv	_push_cb;
