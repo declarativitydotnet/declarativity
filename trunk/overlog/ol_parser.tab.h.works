@@ -1,0 +1,82 @@
+/* A Bison parser, made by GNU Bison 1.875d.  */
+
+/* Skeleton parser for Yacc-like parsing with Bison,
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
+
+/* As a special exception, when this file is copied by Bison into a
+   Bison output file, you may use that output file without restriction.
+   This special exception was added by the Free Software Foundation
+   in version 1.24 of Bison.  */
+
+/* Tokens.  */
+#ifndef YYTOKENTYPE
+# define YYTOKENTYPE
+   /* Put the tokens into the symbol table, so that GDB and other debuggers
+      know about them.  */
+   enum yytokentype {
+     OL_AT = 258,
+     OL_ATOM = 259,
+     OL_COMMA = 260,
+     OL_DONTCARE = 261,
+     OL_DOT = 262,
+     OL_EOF = 263,
+     OL_IF = 264,
+     OL_VALUE = 265,
+     OL_VAR = 266,
+     OL_LPAR = 267,
+     OL_RPAR = 268,
+     OL_MAT = 269
+   };
+#endif
+#define OL_AT 258
+#define OL_ATOM 259
+#define OL_COMMA 260
+#define OL_DONTCARE 261
+#define OL_DOT 262
+#define OL_EOF 263
+#define OL_IF 264
+#define OL_VALUE 265
+#define OL_VAR 266
+#define OL_LPAR 267
+#define OL_RPAR 268
+#define OL_MAT 269
+
+
+
+
+#if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
+#line 48 "ol_parser.y"
+typedef union YYSTYPE {
+  Parse_FunctorName	*u_functorname;
+  Parse_Term		*u_term;
+  Parse_TermList	*u_termlist;
+  Parse_Expr		*u_expr;
+  Parse_ExprList	*u_exprlist;
+  Parse_Val		*v;
+} YYSTYPE;
+/* Line 1285 of yacc.c.  */
+#line 74 "ol_parser.tab.h"
+# define yystype YYSTYPE /* obsolescent; will be withdrawn */
+# define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
+#endif
+
+
+
+
+
