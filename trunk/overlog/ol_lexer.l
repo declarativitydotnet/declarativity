@@ -126,6 +126,7 @@ WHITESPACE	[ \t\r\n]+
 }
 
 <INITIAL>materialize { return OL_MAT; }
+<INITIAL>watch { return OL_WATCH; }
 <INITIAL>materialise { return OL_MAT; }
 <INITIAL>primarykeys { return OL_PK; }
 <INITIAL>rule { return OL_RULE; }

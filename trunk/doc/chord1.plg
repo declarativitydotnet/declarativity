@@ -13,7 +13,6 @@ materialize(maxSuccessorDist, 2, infinity, 1).
 materialize(nextFingerFix, 2, infinity, 1).
 materialize(fingerLookup, 3, infinity, 16).
 materialize(stabilize, 2, infinity, 1).
-materialize(notify, 2, infinity, 1).
 materialize(landmarkNode, 2, infinity, 1).
 materialize(joinRecord, 2, infinity, 1).
 materialize(successorNodeDistance, 3, infinity, 100).
@@ -31,13 +30,13 @@ primarykeys(maxSuccessorDist, 1).
 primarykeys(nextFingerFix, 1).
 primarykeys(fingerLookup, 2).
 primarykeys(stabilizeRecord, 1).
-primarykeys(notify, 2).
 primarykeys(landmarkNode, 1).
 primarykeys(joinRecord, 1).
 
 
 /** Lookups */
 /* for f_range, 1 - (), 2 - [], 3 - (], 4 - [) */
+
 
 
 rule L1 lookupResults@R(R,K,S,SI,E) :-
@@ -71,23 +70,32 @@ rule L4 checkFingers@NI(NI,K,R,E,I2):-
 
 
 /* Neighbor Selection */
+watch(successor).
+watch(bestSuccessor).
+watch(successorCount).
+watch(maxSuccessorDist).
+watch(minSuccessorDist).
 
-
-rule SU1 successorNodeDistance@NI(NI,S,D) :-
+rule SU1 computeSuccessorNodeDistance@NI(NI,S,D) :-
          node@NI(NI,N),
-	 newSuccessor@NI(NI,S,SI),
-	 !select_eqS(N,S),
+	 newSuccessorEvent@NI(NI,S,SI),
 	 assign_distID(D,N,S).
 
-rule SU2 newSuccessor@NI(NI,S,SI) :- 
+rule SU2 successorNodeDistance@NI(NI,S,D) :-
+     computeSuccessorNodeDistance@NI(NI,S,D1),
+     assign_minusOneID(D,D1).
+
+/*	 !select_eqS(N,S),*/
+
+rule SU3 newSuccessorEvent@NI(NI,S,SI) :- 
      successor@NI(NI,S,SI).
 
 
-rule SU3 minSuccessorDist@NI(NI,MD) :-
+rule SU4 minSuccessorDist@NI(NI,MD) :-
         successorNodeDistance@NI(NI,S,D),
 	agg_min(MD,D).
 
-rule SU4 bestSuccessor@NI(NI,S,SI) :-
+rule SU5 bestSuccessor@NI(NI,S,SI) :-
 	minSuccessorDist@NI(NI,D),
 	successorNodeDistance@NI(NI,S,D),
 	successor@NI(NI,S,SI).
@@ -122,39 +130,58 @@ rule SR6 delete successor@NI(NI,S,SI) :-
 
 /** Fix fingers */
 
-rule F1 fixFinger@NI(LOCAL) :-
-	periodic@NI(1).
+/*watch(lookup).
+watch(lookupResults).
+watch(nextFingerFix).
+watch(fingerLookup).
+watch(fixFinger).*/
 
-rule F2 computeLookupOne@NI(NI,K,E,I) :-
+
+rule F1 fixFinger@NI(LOCAL) :-
+	periodic@NI(2).
+
+rule F2 fingerLookup@NI(NI,E,I) :-
 	fixFinger@NI(NI),
 	assign_random(E),
-	nextFingerFix@NI(NI,I),
+	nextFingerFix@NI(NI,I).
+
+rule F3 fingerLookupEvent@NI(NI,E,I) :-
+     fingerLookup@NI(NI,E,I).
+
+rule F4 computeLookupOne@NI(NI,K,E,I) :-
+	fingerLookupEvent@NI(NI,E,I),
 	assign_idOne(K).
 
-rule F3 computeLookupTwo@NI(NI,K,E,I) :-
+rule F5 computeLookupTwo@NI(NI,K,E,I) :-
      computeLookupOne@NI(NI,K1,E,I),
      assign_leftShiftID(K,K1,I).
 
-rule F4 lookup@NI(NI,K,NI1,E) :-
+rule F6 lookup@NI(NI,K,NI1,E) :-
      computeLookupTwo@NI(NI,K1,E,I),
      node@NI(NI,N),
      assign_varAssign(NI1,NI),
      assign_addID(K,K1,N).
 
-rule F5 computeNextFingerFix@NI(NI,I) :-
-	fixFinger@NI(NI),
-	nextFingerFix@NI(NI,I1),	
+rule F7 computeNextFingerFix@NI(NI,I) :-
+	lookupResults@NI(NI,K,B,BI,E),
+	fingerLookup@NI(NI,E,I1),	
 	assign_addI(I,I1,1).
 
-rule F6 nextFingerFix@NI(NI,I) :-
+rule F8 nextFingerFix@NI(NI,I) :-
 	computeNextFingerFix@NI(NI,I1),	
 	assign_modI(I,I1,TABLESIZE.finger).
 
-
+rule F9 finger@NI(NI,I,B,BI) :-
+	fingerLookup@NI(NI,E,I),
+	lookupResults@NI(NI,K,B,BI,E).
 
 /* Churn Handling */
 
-/*
+watch(join).
+watch(joinEvent).
+watch(joinRecord).
+watch(startJoin).
+
 rule J1 join@NI(NI,E) :-
 	joinEvent@NI(NI), 
 	assign_random(E).
@@ -166,47 +193,55 @@ rule J3 startJoin@LI(LI,N,NI,E) :-
 	join@NI(NI,E),
 	node@NI(NI,N),
 	landmarkNode@NI(NI,LI),
-	!select_eqS(LI,-).
+	!select_eqS(LI,0).
 
+rule J4 successor@NI(NI,N,NI1) :-
+	join@NI(NI,E),
+	landmarkNode@NI(NI,LI),
+	node@NI(NI,N),
+	assign_varAssign(NI1,NI),
+	select_eqS(LI,0).
 
-rule J4 lookup@LI(LI,N,NI,E) :-
+rule J5 lookup@LI(LI,N,NI,E) :-
 	startJoin@LI(LI,N,NI,E).
-*/
 
-rule J5 successor@NI(NI,S,SI) :-
+rule J6 successor@NI(NI,S,SI) :-
 	joinRecord@NI(NI,E),
 	lookupResults@NI(NI,K,S,SI,E).
 
-/*
-rule J6 predecessor@NI(ni,null,"-").
 
-rule J7 successor@NI(NI, N, NI) :-
-	landmarkNode@NI(NI, LI),
-	node@NI(NI, N),
-	join@NI(NI, E),
-	LI == "-".
 
-*/
+
 /* Stabilization */
 
-/*rule S0 stabilizeEvent@NI(LOCAL) :-
-	periodic@NI(TTL * 0.5).
+watch(stabilize).
+watch(stabilizeEvent).
+watch(stabilizeRequest).
+watch(sendPredecessor).
+watch(notify).
+watch(notifyEvent).
+watch(notifyPredecessor).
+watch(predecessor).
+watch(stabilizeEvent).
 
-rule S0a stabilize@NI(NI, E) :-
-	stabilizeEvent@NI(NITTL * 0.5), E=f_rand(), NI=ni.
+rule S0 stabilize@NI(LOCAL) :-
+	periodic@NI(2).
 
-rule S0b stabilizeRecord@NI(NI, E) :-
-	stabilize@NI(NI, E).
+rule S1 stabilizeEvent@NI(NI,E) :-
+	stabilize@NI(NI),
+	assign_random(E).	
 
-rule S1 stabilizeRequest@SI(SI,NI,E) :-
-	stabilize@NI(NI,E),
-	bestSuccessor@NI(NI,S,SI), 
+rule S2 stabilizeRequest@SI(SI,NI,E) :-
+	stabilizeEvent@NI(NI,E),
+	bestSuccessor@NI(NI,S,SI).
 
-rule S2 sendPredecessor@PI1(PI1,P,PI,E) :-
+rule S3 sendPredecessor@PI1(PI1,P,PI,E) :-
 	stabilizeRequest@NI(NI,PI1,E),
 	predecessor@NI(NI,P,PI),
-	PI != "-".
+	!select_eqS(PI,0).
 
+
+/*
 rule S3 successor@NI(NI,P,PI) :-
 	node(NI,N),
 	sendPredecessor@NI(NI,P,PI,E),
@@ -226,18 +261,32 @@ rule S5 returnSuccessor@PI(PI,S,SI,E) :-
 rule S5a successor@NI(NI, S, SI) :-
 	returnSuccessor@NI(NI,S,SI,E),
 	stabilizeRecord@NI(NI, E).
+*/
 
-rule S6a notify@NI(NI) :-
-	periodic@NI(TTL * 0.5), NI=ni.
 
-rule S6 notifyPredecessor@SI(SI,N,NI) :-
+
+rule S6a notify@NI(LOCAL) :- 
+     periodic@NI(2).
+
+
+rule S6b notifyEvent@NI(NI,E) :-
 	notify@NI(NI),
+	assign_random(E).	
+
+rule S6c notifyPredecessor@SI(SI,N,NI) :-
+	notifyEvent@NI(NI),
 	node@NI(NI,N),
 	successor@NI(NI,S,SI).
 
-rule S7 predecessor@NI(NI,P,PI) :-
+rule S6d predecessor@NI(NI,P,PI) :-
 	node@NI(NI,N),
 	notifyPredecessor@NI(NI,P,PI),
 	predecessor@NI(NI,P1,PI1),
-	((PI1 == "") || (P in (P1, N))).
-*/
+	select_eqS(PI1,0).
+
+rule S6e predecessor@NI(NI,P,PI) :-
+	node@NI(NI,N),
+	notifyPredecessor@NI(NI,P,PI),
+	predecessor@NI(NI,P1,PI1),
+	select_rangeID1(P,P1,N).
+

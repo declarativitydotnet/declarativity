@@ -45,6 +45,7 @@
 %token OL_PERIOD
 %token OL_DEL
 %token OL_PK
+%token OL_WATCH
 %start program
 %file-prefix="ol_parser"
 %name-prefix="ol_parser_"
@@ -76,11 +77,14 @@ clause:		OL_RULE rule
                 | materialize
                 | event
                 | primaryKeys
+                | watch
 		;
 
 materialize:	OL_MAT termbody OL_DOT { ctxt->materialize($2); };
 
 primaryKeys:	OL_PK termbody OL_DOT { ctxt->primaryKeys($2); };
+
+watch:	        OL_WATCH termbody OL_DOT { ctxt->watchVariables($2); };
 
 fact:		term OL_DOT { ctxt->add_fact($1); } ;
 

@@ -19,6 +19,7 @@
 #include <async.h>
 #include <list>
 #include <map>
+#include <set>
 #include "value.h"
 
 class OL_Lexer;
@@ -107,6 +108,8 @@ public:
 
   void primaryKeys( Parse_ExprList *l);
 
+  void watchVariables( Parse_ExprList *l);
+
   void add_fact( Parse_Term *t);
 
   void add_event( Parse_Term *t);
@@ -115,7 +118,7 @@ public:
 
   OL_Lexer *lexer;
 
-  str OL_Context::toString();
+  str toString();
   
   typedef std::map<str, OL_Context::Functor *> FunctorMap;
   typedef std::map<str, OL_Context::TableInfo *> TableInfoMap;
@@ -123,6 +126,7 @@ public:
 private:
   FunctorMap* functors;
   TableInfoMap* tableInfoMap;
+  std::set<str> watchTables;
 
   Functor *retrieve_functor( str name, int arity, str loc,
 			     bool create=false,
@@ -131,7 +135,7 @@ private:
 public: 
   FunctorMap* getFunctors();
   TableInfoMap* getTableInfos();
-   
+  std::set<str> getWatchTables();
 };
 
 extern int ol_parser_parse( OL_Context *env );

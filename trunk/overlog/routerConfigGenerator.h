@@ -66,6 +66,8 @@
 #include "functorSource.h"
 #include "delete.h"
 #include "tupleSource.h"
+#include "printWatch.h"
+#include "aggregate.h"
 
 class RouterConfigGenerator {
   // takes as input the udp send / receive, the router config, accept each other code or not
@@ -161,6 +163,8 @@ private:
 					    int assignmentID); 
 
   ElementSpecRef generatePrintElement(str header, ElementSpecRef connectingElement);
+
+  ElementSpecRef generatePrintWatchElement(str header, ElementSpecRef connectingElement);
 
   ElementSpecRef generateDupElimElement(str header, ElementSpecRef connectingElement);
   

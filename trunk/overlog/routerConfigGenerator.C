@@ -12,7 +12,6 @@
 //#include <async.h>
 #//include <arpc.h>
 #include "routerConfigGenerator.h"
-#include "aggregate.h"
 
 const str RouterConfigGenerator::SEL_PRE("select_");
 const str RouterConfigGenerator::AGG_PRE("agg_");
@@ -41,6 +40,7 @@ RouterConfigGenerator::RouterConfigGenerator(OL_Context* ctxt, Router::Configura
   pelFunctions.insert(std::make_pair(SEL_PRE << "rangeID3", "(]id"));
   pelFunctions.insert(std::make_pair(SEL_PRE << "rangeID4", "[)id"));
   pelFunctions.insert(std::make_pair(ASSIGN_PRE << "minusI", "-i"));
+  pelFunctions.insert(std::make_pair(ASSIGN_PRE << "minusOneID", "--id"));
   pelFunctions.insert(std::make_pair(ASSIGN_PRE << "addID", "+id"));
   pelFunctions.insert(std::make_pair(ASSIGN_PRE << "addI", "+i"));
   pelFunctions.insert(std::make_pair(ASSIGN_PRE << "distID", "distance"));
@@ -189,6 +189,8 @@ void RouterConfigGenerator::processFunctor(OL_Context::Functor* currentFunctor, 
       */ 
       mostRecentElement = generatePrintElement(strbuf("PrintBeforeDelete:") << nextRule->ruleID << nodeID, 
 					       mostRecentElement);
+      mostRecentElement = generatePrintWatchElement(strbuf("PrintWatchDelete:") << nextRule->ruleID << nodeID, 
+					       mostRecentElement);
       ElementSpecRef deleteElement =
 	_conf->addElement(New refcounted< Delete >(strbuf("Delete:") << nextRule->ruleID << nodeID,
 						   tableToDelete, 
@@ -258,6 +260,8 @@ void RouterConfigGenerator::generateReceiveElements(ref< Udp> udp, str nodeID)
  
   ElementSpecRef mostRecentElement = generatePrintElement(strbuf("PrintReceivedBeforeDemux:") << nodeID, unBoxS);
   mostRecentElement = generateDupElimElement(strbuf("ReceiveDupElim:") << nodeID, mostRecentElement); 
+  mostRecentElement = generatePrintWatchElement(strbuf("PrintWatchReceive:") << nodeID, 
+					   mostRecentElement);
   //mostRecentElement = generatePrintElement(strbuf("PrintReceivedAfterDupElim:") << nodeID, mostRecentElement);  
 
   hookUp(mostRecentElement, 0, demuxS, 0);
@@ -286,7 +290,11 @@ void RouterConfigGenerator::generateReceiveElements(ref< Udp> udp, str nodeID)
 									  getTableByName(nodeID, 
 											 tableName)));
       hookUp(demuxS, counter++, insertS, 0);
-      hookUp(insertS, 0, duplicator, 0);
+
+      mostRecentElement = generatePrintWatchElement(strbuf("PrintWatchInsert:") << nodeID, 
+						    insertS);
+
+      hookUp(mostRecentElement, 0, duplicator, 0);
     } else {
       hookUp(demuxS, counter++, duplicator, 0);
     }
@@ -380,6 +388,11 @@ RouterConfigGenerator::generateSendMarshalElements(OL_Context::Rule* rule, str n
   ElementSpecRef mostRecentElement = generateDupElimElement(strbuf("SendDupElim:") << rule->ruleID 
 							    << ":" << nodeID, toSend);
 
+  mostRecentElement = generatePrintWatchElement(strbuf("PrintWatchSend:") << 
+						rule->ruleID << ":" << nodeID, mostRecentElement);
+
+ 
+  
   // Create the encapsulated version of this tuple, holding the
   // destination address and, encapsulated, the payload containing the
   // reach tuple. Take care to avoid sending the first field address
@@ -393,13 +406,12 @@ RouterConfigGenerator::generateSendMarshalElements(OL_Context::Rule* rule, str n
 
   ElementSpecRef encapS =
     _conf->addElement(New refcounted< PelTransform >(strbuf("encapSend:") << rule->ruleID << ":" << nodeID, 
-						    "$1 pop" << marshalPelStr)); // the rest
+						     "$1 pop " << marshalPelStr)); // the rest
   hookUp(mostRecentElement, 0, encapS, 0);
 
   mostRecentElement = generatePrintElement(strbuf("PrintSend:") << 
 					   rule->ruleID << ":" << nodeID, encapS);
 
-  
   // Now marshall the payload (second field)
   ElementSpecRef marshalS = 
     _conf->addElement(New refcounted< MarshalField >("marshal:" << 
@@ -510,7 +522,8 @@ RouterConfigGenerator::generateSelectionElements(OL_Context::Rule* currentRule,
     selectionPel << "$" << k << " pop ";
   }
 
-  std::cout << "Generate selection functions for " << str(selectionPel) << " " << probeNames->toString() << "\n";
+  std::cout << "Generate selection functions for " << str(selectionPel) 
+	    << " " << currentRule->ruleID << " " << probeNames->toString() << "\n";
  
   ElementSpecRef selection =
     _conf->addElement(New refcounted< PelTransform >(strbuf("Selection:") 
@@ -1145,6 +1158,16 @@ RouterConfigGenerator::generatePrintElement(str header, ElementSpecRef connectin
     return print;
   }
   return connectingElement;
+}
+
+ElementSpecRef 
+RouterConfigGenerator::generatePrintWatchElement(str header, ElementSpecRef connectingElement)
+{
+  ElementSpecRef printWatchElement = 
+      _conf->addElement(New refcounted< PrintWatch >(header, _ctxt->getWatchTables()));
+  hookUp(connectingElement, 0, printWatchElement, 0);
+  return printWatchElement;
+
 }
 
 

@@ -367,6 +367,12 @@ void OL_Context::primaryKeys( Parse_ExprList *l)
   }
 }
 
+void OL_Context::watchVariables( Parse_ExprList *l)
+{
+  std::cout << "Watch variables " << l->at(0)->val->toString() << "\n";
+  watchTables.insert(l->at(0)->val->toString());
+}
+
 //
 // Adding a fact
 //
@@ -404,3 +410,5 @@ void OL_Context::add_event( Parse_Term *t)
 OL_Context::FunctorMap* OL_Context::getFunctors() { return functors; }
 
 OL_Context::TableInfoMap* OL_Context::getTableInfos() { return tableInfoMap; } 
+
+std::set<str> OL_Context::getWatchTables() { return watchTables; } 

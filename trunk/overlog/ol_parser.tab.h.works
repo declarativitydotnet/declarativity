@@ -45,7 +45,8 @@
      OL_EVENT = 271,
      OL_PERIOD = 272,
      OL_DEL = 273,
-     OL_PK = 274
+     OL_PK = 274,
+     OL_WATCH = 275
    };
 #endif
 #define OL_AT 258
@@ -65,12 +66,13 @@
 #define OL_PERIOD 272
 #define OL_DEL 273
 #define OL_PK 274
+#define OL_WATCH 275
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 53 "ol_parser.y"
+#line 54 "ol_parser.y"
 typedef union YYSTYPE {
   Parse_FunctorName	*u_functorname;
   Parse_Term		*u_term;
@@ -80,7 +82,7 @@ typedef union YYSTYPE {
   Parse_Val		*v;
 } YYSTYPE;
 /* Line 1240 of yacc.c.  */
-#line 83 "ol_parser.tab.h"
+#line 85 "ol_parser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
