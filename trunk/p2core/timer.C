@@ -1,12 +1,14 @@
 // -*- c-basic-offset: 2; related-file-name: "timer.h" -*-
 /*
- * timer.{cc,hh} -- portable timers
- * Eddie Kohler
- *
+ * @(#)$Id$
+ * Modified from the Click portable timers by Eddie Kohler
+ * 
  * Copyright (c) 1999-2000 Massachusetts Institute of Technology
+ * Copyright (c) 2004 Regents of the University of California
+ * Copyright (c) 2004 Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * copy of this software and associated documentation files (the "Software")
  * to deal in the Software without restriction, subject to the conditions
  * listed in the Click LICENSE file. These conditions include: you must
  * preserve this copyright notice, and you cannot mention the copyright
@@ -14,16 +16,24 @@
  * The Software is provided WITHOUT ANY WARRANTY, EXPRESS OR IMPLIED. This
  * notice is a summary of the Click LICENSE file; the license in that file is
  * legally binding.
+ * 
+ * This file is distributed under the terms in the attached INTEL-LICENSE file.
+ * If you do not find these files, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * 
+ * DESCRIPTION: Portable timers for P2 elements
+ *
+ * Note: removed the dependency on glue.hh from click for simplicity
+ * until the generality is clearly needed.
  */
 
-#include <click/config.h>
-#include <click/timer.hh>
-#include <click/element.hh>
-#include <click/router.hh>
-#include <click/master.hh>
-#include <click/routerthread.hh>
-#include <click/task.hh>
-CLICK_DECLS
+#include <timer.h>
+#include <element.h>
+#include <router.h>
+#include <master.h>
+#include <routerthread.h>
+#include <task.h>
 
 /*
  * element_hook is a callback that gets called when a Timer,
@@ -32,7 +42,6 @@ CLICK_DECLS
  * When used in userlevel or kernel polling mode, timer is maintained by
  * Click, so element_hook is called within Click.
  */
-
 static void
 element_hook(Timer *, void *thunk)
 {
@@ -158,6 +167,45 @@ Timer::unschedule()
     }
 }
 
-// list-related functions in master.cc
+REMOVABLE_INLINE void
+Timer::initialize(Router *router)
+{
+  assert(!initialized());
+  _router = router;
+}
 
-CLICK_ENDDECLS
+REMOVABLE_INLINE void
+Timer::initialize(Element *element)
+{
+  initialize(element->router());
+}
+
+REMOVABLE_INLINE void
+Timer::schedule_now()
+{
+  schedule_after_ms(0);
+}
+
+REMOVABLE_INLINE void
+Timer::schedule_after_s(uint32_t s)
+{
+  schedule_after(make_timeval(s, 0));
+}
+
+REMOVABLE_INLINE void
+Timer::schedule_after_ms(uint32_t ms)
+{
+  schedule_after(make_timeval(ms / 1000, (ms % 1000) * 1000));
+}
+
+REMOVABLE_INLINE void
+Timer::reschedule_after(const timeval &delta)
+{
+  schedule_at(_expiry + delta);
+}
+
+REMOVABLE_INLINE void
+Timer::reschedule_at(const timeval &tv)
+{
+  schedule_at(tv);
+}

@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 
   PullPrint *pullPrint = New PullPrint();
   MemoryPull *memoryPull = New MemoryPull(tupleRefBuffer, 1);
-  if (memoryPull->connect_output(0, pullPrint, 0) == -1) {
+  if (pullPrint->connect_input(0, memoryPull, 0) == -1) {
     std::cerr << "Cannot connect elements\n";
     exit(-1);
   }

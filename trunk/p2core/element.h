@@ -44,7 +44,7 @@
 #include "tuple.h"
 
 class Element { 
-public:
+ public:
   
   // Port types.  These are the constituent characters of the
   // "processing" signature of the element. 

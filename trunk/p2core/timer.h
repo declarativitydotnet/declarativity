@@ -29,7 +29,8 @@
 #define __TIMER_H__
 #include <inlines.h>
 #include <element.h>
-CLICK_DECLS
+#include <sys/time.h>
+
 class Element;
 class Router;
 class Timer;
@@ -37,97 +38,53 @@ class Task;
 
 typedef void (*TimerHook)(Timer *, void *);
 
-class Timer { public:
-
-    Timer(TimerHook, void *);
-    Timer(Element *);			// call element->run_timer()
-    Timer(Task *);			// call task->reschedule()
-    ~Timer()				{ if (scheduled()) unschedule(); }
-
-    bool initialized() const		{ return _router != 0; }
-    bool scheduled() const		{ return _prev != 0; }
-    const timeval &expiry() const	{ return _expiry; }
+class Timer {
+ public:
   
-    REMOVABLE_INLINE void initialize(Router *);
-    REMOVABLE_INLINE void initialize(Element *);
-    void cleanup()			{ unschedule(); }
-    void uninitialize()			{ cleanup(); }	// deprecated
+  Timer(TimerHook, void *);
+  Timer(Element *);			// call element->run_timer()
+  Timer(Task *);			// call task->reschedule()
+  ~Timer()				{ if (scheduled()) unschedule(); }
 
-    void schedule_at(const timeval &);
-    REMOVABLE_INLINE void reschedule_at(const timeval &); // synonym
-
-    REMOVABLE_INLINE void schedule_now();
-    void schedule_after(const timeval &);
-    REMOVABLE_INLINE void schedule_after_s(uint32_t);
-    REMOVABLE_INLINE void schedule_after_ms(uint32_t);
-    REMOVABLE_INLINE void reschedule_after(const timeval &);
-    void reschedule_after_s(uint32_t);
-    void reschedule_after_ms(uint32_t);
-
-    void unschedule();
+  bool initialized() const		{ return _router != 0; }
+  bool scheduled() const		{ return _prev != 0; }
+  const timeval &expiry() const		{ return _expiry; }
   
-  private:
+  REMOVABLE_INLINE void initialize(Router *);
+  REMOVABLE_INLINE void initialize(Element *);
+  void cleanup()			{ unschedule(); }
+
+  void schedule_at(const timeval &);
+  REMOVABLE_INLINE void reschedule_at(const timeval &); // synonym
+
+  REMOVABLE_INLINE void schedule_now();
+  void schedule_after(const timeval &);
+  REMOVABLE_INLINE void schedule_after_s(uint32_t);
+  REMOVABLE_INLINE void schedule_after_ms(uint32_t);
+  REMOVABLE_INLINE void reschedule_after(const timeval &);
+  void reschedule_after_s(uint32_t);
+  void reschedule_after_ms(uint32_t);
+
+  void unschedule();
   
-    Timer *_prev;
-    Timer *_next;
-    timeval _expiry;
-    TimerHook _hook;
-    void *_thunk;
-    Router *_router;
+ private:
+  
+  Timer *_prev;
+  Timer *_next;
+  timeval _expiry;
+  TimerHook _hook;
+  void *_thunk;
+  Router *_router;
 
-    Timer(const Timer &);
-    Timer &operator=(const Timer &);
+  Timer(const Timer &);
+  Timer &operator=(const Timer &);
 
-    // list functions
-    void make_list();
-    void unmake_list();
+  // list functions
+  void make_list();
+  void unmake_list();
 
-    friend class Master;
+  friend class Master;
   
 };
 
-REMOVABLE_INLINE void
-Timer::initialize(Router *router)
-{
-    assert(!initialized());
-    _router = router;
-}
-
-REMOVABLE_INLINE void
-Timer::initialize(Element *element)
-{
-    initialize(element->router());
-}
-
-REMOVABLE_INLINE void
-Timer::schedule_now()
-{
-    schedule_after_ms(0);
-}
-
-REMOVABLE_INLINE void
-Timer::schedule_after_s(uint32_t s)
-{
-    schedule_after(make_timeval(s, 0));
-}
-
-REMOVABLE_INLINE void
-Timer::schedule_after_ms(uint32_t ms)
-{
-    schedule_after(make_timeval(ms / 1000, (ms % 1000) * 1000));
-}
-
-REMOVABLE_INLINE void
-Timer::reschedule_after(const timeval &delta)
-{
-    schedule_at(_expiry + delta);
-}
-
-REMOVABLE_INLINE void
-Timer::reschedule_at(const timeval &tv)
-{
-    schedule_at(tv);
-}
-
-CLICK_ENDDECLS
 #endif
