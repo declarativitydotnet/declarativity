@@ -23,7 +23,7 @@ class IdTable;
  *  @NOTE: @IdTable is a FRIEND since it uses the private member
  *         function refcount_getcnt () for garbage collection
  *  -------------------------------------------------------------- */
-class Id : private virtual refcount {
+class Id /* : private virtual refcount */ {
   friend class IdTable;
   private:
     inline size_t getHash () const;
@@ -52,7 +52,7 @@ class Id : private virtual refcount {
  *  memoized and a @Id bit pattern is stored once in the address
  *  space, it suffices to just check references */
 struct IdComparator {
-  bool operator () (ref<Id> x, ref<Id> y) const {
+  bool operator () (Id * x, Id * y) const {
     return (x == y);
   }
 };
@@ -73,17 +73,17 @@ class IdTable {
     // @create: factory functions to create and memoize @Id's.
     // if the requested @Id already stored, the function returns
     // the ref<Id> to the existing @Id
-    ref<Id> create (const std::string&);
+    Id * create (const std::string&);
 
-    ref<Id> create (const u_int32_t *);
+    Id * create (const u_int32_t *);
 
     // create a random @Id using /dev/urandom
-    ref<Id> create ();
+    Id * create ();
 
     // static Id * create (const XDR *);
 
     inline size_t size () const;
-    inline void remove (ref<Id>);
+    inline void remove (Id *);
     inline void clear ();
 
   private:
@@ -92,7 +92,7 @@ class IdTable {
     size_t threshold;
 
     void gc ();
-    ref<Id> storeId (ref<Id>);
+    Id * storeId (Id *);
     void add (Id *);
 };
 
