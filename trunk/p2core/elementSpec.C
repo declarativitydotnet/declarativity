@@ -69,12 +69,12 @@ void ElementSpec::initializePorts()
   for (int i = 0;
        i < ninputs;
        i++) {
-    // Better not be at the end of the specs
-    assert((pStop != 0) && (fStop != 0));
-
     // Is this the end of the input descriptors?
     pStop = (*personalityPointer == '/');
     fStop = (*flowPointer == '/');
+
+    // Better not be at the end of the specs
+    assert(!pStop && !fStop);
 
     // Should I change the current personality?
     if (!pStop) {
