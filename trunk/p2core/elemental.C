@@ -28,7 +28,7 @@
 
 #include <elemental.h>
 
-REMOVABLE_INLINE Elemental::Elemental(ElementRef e)
+REMOVABLE_INLINE Elemental::Elemental(Element * e)
   : Task(),
     _element(e)
 {
