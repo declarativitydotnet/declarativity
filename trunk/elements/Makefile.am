@@ -34,11 +34,11 @@ libp2elements_la_SOURCES = \
 	mux.C \
 	roundRobin.C \
 	duplicate.C \
+	duplicateConservative.C \
 	dupElim.C \
 	filter.C \
 	store.C \
 	insert.C \
-	scan.C \
 	delete.C \
 	joiner.C \
 	timedPullPush.C \

@@ -233,8 +233,8 @@ void Pel_VM::dumpStack(str message)
 {
   
   // Dump the stack
-  for (std::deque<ValueRef>::iterator i = _st.begin();
-       i != _st.end();
+  for (std::deque<ValueRef>::reverse_iterator i = _st.rbegin();
+       i != _st.rend();
        i++) {
     warn << "Stack entry[" << message << "]: " << (*i)->toString() << "\n";
   }

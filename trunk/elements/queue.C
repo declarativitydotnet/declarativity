@@ -38,7 +38,7 @@ int Queue::push(int port, TupleRef p, cbv cb)
 
   // have we reached the max size? If so, we have to wait
   if (_q.size() == _size) {
-    log(LoggerI::INFO, 0, "Queue: Reach max size\n");
+    log(LoggerI::INFO, 0, "Queue: Reach max size");
     _pushCB = cb;
     return 0;
   }
@@ -51,7 +51,7 @@ int Queue::push(int port, TupleRef p, cbv cb)
 TuplePtr Queue::pull(int port, cbv cb)
 {
   if (_q.size() == 0) { 
-    log(LoggerI::INFO, 0, "Queue: Empty\n");
+    log(LoggerI::INFO, 0, "Queue: Empty");
     _pullCB = cb;
     return 0; 
   }

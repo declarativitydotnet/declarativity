@@ -35,6 +35,7 @@
 #include "discard.h"
 #include "pelTransform.h"
 #include "duplicate.h"
+#include "duplicateConservative.h"
 #include "dupElim.h"
 #include "filter.h"
 #include "timedPullPush.h"
@@ -63,10 +64,10 @@
 #include "noNullField.h"
 
 
-static const int SUCCESSORSIZE = 16;
-static const double FINGERTTL = 0.2;
+static const int SUCCESSORSIZE = 4;
+static const double FINGERTTL = 10;
 static const int FINGERSIZE = ID::WORDS * 32;
-
+static const int QUEUE_LENGTH = 1000;
 
 /**
  *rule L1 lookupResults@R(R,K,S,SI,E) :- node@NI(NI,N),
@@ -836,6 +837,7 @@ void ruleF3(str name,
                                                     1, // Match fixFinger.NI
                                                     1 // with nextFingerFix.NI
                                                     ));
+  ElementSpecRef p = conf->addElement(New refcounted< PrintTime >(strbuf("JoinFingerFix:") << name));
   ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
 
   // Link it to the evictSuccessor coming in. Pushes match already
@@ -850,7 +852,8 @@ void ruleF3(str name,
                                                      $0 1 field pop /* output fixFinger.NI */ \
                                                      rand pop /* output random */ \
                                                      $1 2 field pop /* output nextFingerFix.I */"));
-  conf->hookUp(join1S, 0, noNullS, 0);
+  conf->hookUp(join1S, 0, p, 0);
+  conf->hookUp(p, 0, noNullS, 0);
   conf->hookUp(noNullS, 0, makeRes1S, 0);
   
 
@@ -890,7 +893,7 @@ void ruleF4(str name,
                                                     "\"lookup\" pop \
                                                      $0 1 field pop /* output fixFinger.NI */ \
                                                      $1 2 field /* node.N */\
-                                                     1 ->u32 ->id /* N (1 as ID)*/\
+                                                     1 ->u32 ->id /* N (1 as ID) */\
                                                      $0 3 field /* N 1 fingerLookup.I */\
                                                      <<id /* N 2^(I) */\
                                                      +id pop /* output (N+2^I) */\
@@ -905,16 +908,16 @@ void ruleF4(str name,
 
 
 
-/** rule F5 finger@NI(NI, K, B, BI) :- fingerLookup@NI(NI, E, I),
-    lookupResults@NI(NI, K, B, BI, E).
+/** rule F5 eagerFinger@NI(NI, I, B, BI) :- fingerLookup@NI(NI, E,
+    I), lookupResults@NI(NI, K, B, BI, E).
 */
 void ruleF5(str name,
             Router::ConfigurationRef conf,
             TableRef fingerLookupTable,
             ElementSpecRef pushLookupResultsIn,
             int pushLookupResultsInPort,
-            ElementSpecRef pullFingerOut,
-            int pullFingerOutPort)
+            ElementSpecRef pullEagerFingerOut,
+            int pullEagerFingerOutPort)
 {
   // Join lookupResults with fingerLookup table
   ElementSpecRef join1S =
@@ -942,12 +945,12 @@ void ruleF5(str name,
 
 
 
-  // Produce finger
-  // finger(NI, I, B, BI) from
+  // Produce eagerFinger
+  // eagerFinger(NI, I, B, BI) from
   // <<lookupResults NI K B BI E><fingerLookup NI E I>>
   ElementSpecRef projectS =
     conf->addElement(New refcounted< PelTransform >(strbuf("project:").cat(name),
-                                                    "\"finger\" pop \
+                                                    "\"eagerFinger\" pop \
                                                      $0 1 field pop /* out NI */\
                                                      $1 3 field pop /* out I */\
                                                      $0 3 field pop /* out B */\
@@ -955,64 +958,204 @@ void ruleF5(str name,
                                                      "));
   conf->hookUp(selectS, 0, projectS, 0);
 
-  conf->hookUp(projectS, 0, pullFingerOut, pullFingerOutPort);
+  conf->hookUp(projectS, 0, pullEagerFingerOut, pullEagerFingerOutPort);
 }
 
 
-/** rule F6 nextFingerFix@NI(NI, I) :- fingerLookup@NI(NI, E, I1),
-    lookupResults@NI(NI, K, B, BI, E), I = I1 + 1 mod finger.SIZE.
-*/
+/** rule F6 finger@NI(NI, I, B, BI) :- eagerFinger@NI(NI, I, B, BI). */
 void ruleF6(str name,
             Router::ConfigurationRef conf,
-            TableRef fingerLookupTable,
+            ElementSpecRef pushEagerFingerIn,
+            int pushEagerFingerInPort,
+            ElementSpecRef pullFingerOut,
+            int pullFingerOutPort)
+{
+  // Project onto finger(NI, I, B, BI)
+  // from
+  // eagerFinger(NI, I, B, BI)
+  ElementSpecRef projectS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("project:").cat(name),
+                                                    "\"finger\" pop \
+                                                     $1 pop /* out eF.NI */\
+                                                     $2 pop /* out eF.I */\
+                                                     $3 pop /* out eF.B */\
+                                                     $4 pop /* out eF.BI */\
+                                                     "));
+  ElementSpecRef slotS =
+    conf->addElement(New refcounted< Slot >(strbuf("Slot:") << name));
+  conf->hookUp(pushEagerFingerIn, pushEagerFingerInPort, projectS, 0);
+  conf->hookUp(projectS, 0, slotS, 0);
+  conf->hookUp(slotS, 0, pullFingerOut, pullFingerOutPort);
+}
+
+
+/** rule F7 eagerFinger@NI(NI, I, B, BI) :- node@NI(NI, N),
+    eagerFinger@NI(NI, I1, B, BI), I = I1 + 1, I > I1, K = N + 1 <<
+    I, K in (N, B), BI!=NI.
+*/
+void ruleF7(str name,
+            Router::ConfigurationRef conf,
+            TableRef nodeTable,
+            ElementSpecRef pushEagerFingerIn,
+            int pushEagerFingerInPort,
+            ElementSpecRef pullEagerFingerOut,
+            int pullEagerFingerOutPort)
+{
+  // Join eagerFinger with node table
+  ElementSpecRef join1S =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("eagerFingerIntoNode:") << name,
+                                                    nodeTable,
+                                                    1, // Match eagerFinger.NI
+                                                    1 // with node.NI
+                                                    ));
+  ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
+
+  conf->hookUp(pushEagerFingerIn, pushEagerFingerInPort, join1S, 0);
+
+  // Select I1+1>I1, N+(1<<I1+1) in (N,B), NI!=BI
+  // from
+  // eagerFinger(NI, I1, B, BI), node(NI, N)
+  ElementSpecRef select1S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("select1:") << name,
+                                                    "$0 2 field dup 1 +i /* I1 (I1+1) */\
+                                                     <i /* I1 < I1+1? */\
+                                                     $0 1 field $0 4 field ==s not and /* I1 < I1+1? && BI!=NI */\
+                                                     not ifstop /* (I1+1>?I1) */\
+                                                     $0 pop $1 pop\
+                                                     "));
+  ElementSpecRef select2S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("select2:") << name,
+                                                    "$1 2 field /* N */\
+                                                     1 ->u32 ->id /* N 1 */\
+                                                     $0 2 field 1 +i /* N 1 (I1+1) */\
+                                                     <<id +id /* K=N+[1<<(I1+1)] */\
+                                                     $1 2 field /* K N */\
+                                                     $0 3 field /* K N B */\
+                                                     ()id /* K in (N,B) */\
+                                                     not ifstop /* select clause, empty stack */\
+                                                     $0 pop $1 pop\
+                                                     "));
+  ElementSpecRef projectS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("project:") << name,
+                                                    "$0 0 field pop /* out eagerFinger */\
+                                                     $0 1 field pop /* out NI */\
+                                                     $0 2 field 1 +i pop /* out I1+1 */\
+                                                     $0 3 field pop /* out B */\
+                                                     $0 4 field pop /* out BI */\
+                                                     "));
+  conf->hookUp(join1S, 0, noNullS, 0);
+  conf->hookUp(noNullS, 0, select1S, 0);
+  conf->hookUp(select1S, 0, select2S, 0);
+  conf->hookUp(select2S, 0, projectS, 0);
+  conf->hookUp(projectS, 0, pullEagerFingerOut, pullEagerFingerOutPort);
+}
+
+
+/**
+   rule F8 nextFingerFix@NI(NI, 0) :- eagerFinger@NI(NI, I, B, BI), ((I
+   == finger.SIZE - 1) || (BI == NI)).
+*/
+void ruleF8(str name,
+            Router::ConfigurationRef conf,
             int fingerSize,
-            ElementSpecRef pushLookupResultsIn,
-            int pushLookupResultsInPort,
+            ElementSpecRef pushEagerFingerIn,
+            int pushEagerFingerInPort,
             ElementSpecRef pullNextFingerFixOut,
             int pullNextFingerFixOutPort)
 {
-  // Join lookupResults with fingerLookup table
-  ElementSpecRef join1S =
-    conf->addElement(New refcounted< MultLookup >(strbuf("lookupResultsIntoFingerLookup:") << name,
-                                                  fingerLookupTable,
-                                                  1, // Match lookupResults.NI
-                                                  1 // with fingerLookup.NI
-                                                  ));
-  ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
-
-  conf->hookUp(pushLookupResultsIn, pushLookupResultsInPort, join1S, 0);
-
-
-
-  // Select fingerLookup.E == lookupResults.E
-  // <<lookupResults NI K B BI E><fingerLookup NI E I>>
+  // Select I==finger.SIZE-1 or BI==NI
+  // from 
+  // eagerFinger(NI, I, B, BI)
   ElementSpecRef selectS =
     conf->addElement(New refcounted< PelTransform >(strbuf("select:") << name,
-                                                    "$0 5 field /* lookupResults.E */\
-                                                     $1 2 field /* lR.E fingerLookup.E */\
-                                                     ==i not /* lR.E!=fL.E? */\
-                                                     ifstop /* empty */\
-                                                     $0 pop $1 pop /* pass through */\
+                                                    strbuf("$2 /* I */")
+                                                    << fingerSize <<
+                                                    "1 -i /* I fingerSize-1 */\
+                                                     ==i /* I==?fingerSize-1 */\
+                                                     $1 $4 /* I==?fingerSize-1 NI BI */\
+                                                     ==s /* I==?fingerSize-1 NI==?BI */\
+                                                     or /* I==?fingerSize-1 || NI==?BI */\
+                                                     not ifstop /* empty */\
+                                                     \"nextFingerFix\" pop /* out nextFingerFix */\
+                                                     $1 pop /* out NI */\
+                                                     0 pop /* out 0 */\
+                                                     "));
+  ElementSpecRef slotS =
+    conf->addElement(New refcounted< Slot >(strbuf("Slot:") << name));
+  conf->hookUp(pushEagerFingerIn, pushEagerFingerInPort, selectS, 0);
+  conf->hookUp(selectS, 0, slotS, 0);
+  conf->hookUp(slotS, 0, pullNextFingerFixOut, pullNextFingerFixOutPort);
+}
+
+
+
+/** rule F9 nextFingerFix@NI(NI, I) :- node@NI(NI, N),
+    eagerFinger@NI(NI, I1, B, BI), I = I1 + 1, I > I1, K = N + 1 << I, K
+    in (B, N), NI!=BI.
+*/
+void ruleF9(str name,
+            Router::ConfigurationRef conf,
+            TableRef nodeTable,
+            ElementSpecRef pushEagerFingerIn,
+            int pushEagerFingerInPort,
+            ElementSpecRef pullNextFingerFixOut,
+            int pullNextFingerFixOutPort)
+{
+  // Join eagerFinger with node table
+  ElementSpecRef join1S =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("eagerFingerIntoNode:") << name,
+                                                    nodeTable,
+                                                    1, // Match eagerFinger.NI
+                                                    1 // with node.NI
+                                                    ));
+  ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
+
+  conf->hookUp(pushEagerFingerIn, pushEagerFingerInPort, join1S, 0);
+
+  // Select I1+1>I1
+  // from
+  // eagerFinger(NI, I1, B, BI), node(NI, N)
+  ElementSpecRef select1S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("select1:") << name,
+                                                    "$0 2 field dup 1 +i /* I1 (I1+1) */\
+                                                     <i /* I1 < I1+1? */\
+                                                     not ifstop /* (I1+1>?I1) */\
+                                                     $0 pop $1 pop\
+                                                     "));
+  ElementSpecRef select2S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("select2:") << name,
+                                                    "$0 1 field /* NI */\
+                                                     $0 4 field /* NI BI */\
+                                                     ==s /* NI == BI */\
+                                                     ifstop /* (NI!=BI) */\
+                                                     $0 pop $1 pop\
+                                                     "));
+  ElementSpecRef select3S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("select2:") << name,
+                                                    "$1 2 field /* N */\
+                                                     1 ->u32 ->id /* N 1 */\
+                                                     $0 2 field 1 +i /* N 1 (I1+1) */\
+                                                     <<id +id /* K=N+[1<<(I1+1)] */\
+                                                     $0 3 field /* K B */\
+                                                     $1 2 field /* K B N */\
+                                                     ()id /* K in (B,N) */\
+                                                     not ifstop /* select clause, empty stack */\
+                                                     $0 pop $1 pop\
+                                                     "));
+  ElementSpecRef projectS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("project:") << name,
+                                                    "\"nextFingerFix\" pop /* out nextFingerFix */\
+                                                     $0 1 field pop /* out NI */\
+                                                     $0 2 field 1 +i pop /* out I1+1 */\
                                                      "));
   conf->hookUp(join1S, 0, noNullS, 0);
-  conf->hookUp(noNullS, 0, selectS, 0);
-
-  // Produce nextFingerFix
-  // nextFingerFix(NI, I) from
-  // <<lookupResults NI K B BI E><fingerLookup NI E I>>
-  ElementSpecRef projectS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("project:").cat(name),
-                                                    strbuf("\"nextFingerFix\" pop \
-                                                     $0 1 field pop /* out lR.NI */\
-                                                     $1 3 field /* fL.I */\
-                                                     1 +i /* (I+1) */")
-                                                    << fingerSize
-                                                    << " % /* ((I+1) mod finger.Size)*/\
-                                                     pop /* out newI */\
-                                                     "));
-  conf->hookUp(selectS, 0, projectS, 0);
+  conf->hookUp(noNullS, 0, select1S, 0);
+  conf->hookUp(select1S, 0, select2S, 0);
+  conf->hookUp(select2S, 0, select3S, 0);
+  conf->hookUp(select3S, 0, projectS, 0);
   conf->hookUp(projectS, 0, pullNextFingerFixOut, pullNextFingerFixOutPort);
 }
+
 
 
 /** rule J1 join@NI(NI,E) :- joinEvent@NI(NI), E=f_rand(). */
@@ -1044,6 +1187,7 @@ void ruleJ1(str name,
 void ruleJ1a(str name,
              Router::ConfigurationRef conf,
              str localAddress,
+             double delay,
              ElementSpecRef pullJoinEventOut,
              int pullJoinEventOutPort)
 {
@@ -1060,7 +1204,7 @@ void ruleJ1a(str name,
   // The once pusher
   ElementSpecRef onceS =
     conf->addElement(New refcounted< TimedPullPush >(strbuf("JoinEventPush:") << name,
-                                                     0, // run immediately
+                                                     delay, // run then
                                                      1 // run once
                                                      ));
 
@@ -1876,7 +2020,8 @@ connectRules(str name,
              ElementSpecRef pushTupleIn,
              int pushTupleInPort,
              ElementSpecRef pullTupleOut,
-             int pullTupleOutPort)
+             int pullTupleOutPort,
+             double delay = 0)
 {
   // My wraparound mux.  On input 0 comes the outside world. On input 1
   // come tuples that have left locally destined for local rules
@@ -1915,34 +2060,59 @@ connectRules(str name,
   demuxKeys->push_back(New refcounted< Val_Str >(str("sendPredecessor")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("notify")));
   demuxKeys->push_back(New refcounted< Val_Str >(str("notifyPredecessor")));
+  demuxKeys->push_back(New refcounted< Val_Str >(str("eagerFinger")));
   ElementSpecRef demuxS = conf->addElement(New refcounted< Demux >("demux", demuxKeys));
   conf->hookUp(wrapAroundMux, 0, demuxS, 0);
 
   int nextDemuxOutput = 0;
   // Create the duplicator for each tuple name.  Store the tuple first
   // for materialized tuples
-  ElementSpecRef dupSuccessor = conf->addElement(New refcounted< Duplicate >(strbuf("successor") << "Dup:" << name, 1));
+  ElementSpecRef dupSuccessor = conf->addElement(New refcounted< DuplicateConservative >(strbuf("successor") << "Dup:" << name, 1));
   ElementSpecRef insertSuccessor = conf->addElement(New refcounted< Insert >(strbuf("successor") << "Insert:" << name, successorTable));
   conf->hookUp(demuxS, nextDemuxOutput++, insertSuccessor, 0);
   conf->hookUp(insertSuccessor, 0, dupSuccessor, 0);
 
-  ElementSpecRef dupLookup = conf->addElement(New refcounted< Duplicate >(strbuf("lookup") << "Dup:" << name, 2));
-  conf->hookUp(demuxS, nextDemuxOutput++, dupLookup, 0);
+  ElementSpecRef dupLookup = conf->addElement(New refcounted< DuplicateConservative >(strbuf("lookup") << "Dup:" << name, 2));
+  ElementSpecRef qLookup = conf->addElement(New refcounted< Queue >("lookupQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPLookup = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qLookup, 0);
+  conf->hookUp(qLookup, 0, tPPLookup, 0);
+  conf->hookUp(tPPLookup, 0, dupLookup, 0);
 
-  ElementSpecRef dupBestLookupDistance = conf->addElement(New refcounted< Duplicate >(strbuf("bestLookupDistance") << "Dup:" << name, 1));
-  conf->hookUp(demuxS, nextDemuxOutput++, dupBestLookupDistance, 0);
+  ElementSpecRef dupBestLookupDistance = conf->addElement(New refcounted< DuplicateConservative >(strbuf("bestLookupDistance") << "Dup:" << name, 1));
+  ElementSpecRef qBestLookupDistance = conf->addElement(New refcounted< Queue >("BestLookupDistance", QUEUE_LENGTH));
+  ElementSpecRef tPPBestLookupDistance = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qBestLookupDistance, 0);
+  conf->hookUp(qBestLookupDistance, 0, tPPBestLookupDistance, 0);
+  conf->hookUp(tPPBestLookupDistance, 0, dupBestLookupDistance, 0);
 
-  ElementSpecRef dupBestSuccessorDistance = conf->addElement(New refcounted< Duplicate >(strbuf("bestSuccessorDist") << "Dup:" << name, 1));
-  conf->hookUp(demuxS, nextDemuxOutput++, dupBestSuccessorDistance, 0);
+  ElementSpecRef dupBestSuccessorDistance = conf->addElement(New refcounted< DuplicateConservative >(strbuf("bestSuccessorDist") << "Dup:" << name, 1));
+  ElementSpecRef qBestSuccessorDistance = conf->addElement(New refcounted< Queue >("BestSuccessorDistanceQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPBestSuccessorDistance = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qBestSuccessorDistance, 0);
+  conf->hookUp(qBestSuccessorDistance, 0, tPPBestSuccessorDistance, 0);
+  conf->hookUp(tPPBestSuccessorDistance, 0, dupBestSuccessorDistance, 0);
 
-  ElementSpecRef dupMaxSuccessorDist = conf->addElement(New refcounted< Duplicate >(strbuf("maxSuccessorDist") << "Dup:" << name, 1));
-  conf->hookUp(demuxS, nextDemuxOutput++, dupMaxSuccessorDist, 0);
+  ElementSpecRef dupMaxSuccessorDist = conf->addElement(New refcounted< DuplicateConservative >(strbuf("maxSuccessorDist") << "Dup:" << name, 1));
+  ElementSpecRef qMaxSuccessorDist = conf->addElement(New refcounted< Queue >("maxSuccessorDistQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPMaxSuccessorDist = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qMaxSuccessorDist, 0);
+  conf->hookUp(qMaxSuccessorDist, 0, tPPMaxSuccessorDist, 0);
+  conf->hookUp(tPPMaxSuccessorDist, 0, dupMaxSuccessorDist, 0);
 
-  ElementSpecRef dupEvictSuccessor = conf->addElement(New refcounted< Duplicate >(strbuf("evictSuccessor") << "Dup:" << name, 1));
-  conf->hookUp(demuxS, nextDemuxOutput++, dupEvictSuccessor, 0);
+  ElementSpecRef dupEvictSuccessor = conf->addElement(New refcounted< DuplicateConservative >(strbuf("evictSuccessor") << "Dup:" << name, 1));
+  ElementSpecRef qEvictSuccessor = conf->addElement(New refcounted< Queue >("evictSuccessorQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPEvictSuccessor = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qEvictSuccessor, 0);
+  conf->hookUp(qEvictSuccessor, 0, tPPEvictSuccessor, 0);
+  conf->hookUp(tPPEvictSuccessor, 0, dupEvictSuccessor, 0);
 
-  ElementSpecRef dupSuccessorCount = conf->addElement(New refcounted< Duplicate >(strbuf("successorCount") << "Dup:" << name, 1));
-  conf->hookUp(demuxS, nextDemuxOutput++, dupSuccessorCount, 0);
+  ElementSpecRef dupSuccessorCount = conf->addElement(New refcounted< DuplicateConservative >(strbuf("successorCount") << "Dup:" << name, 1));
+  ElementSpecRef qSuccessorCount = conf->addElement(New refcounted< Queue >("successorCountQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPSuccessorCount = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qSuccessorCount, 0);
+  conf->hookUp(qSuccessorCount, 0, tPPSuccessorCount, 0);
+  conf->hookUp(tPPSuccessorCount, 0, dupSuccessorCount, 0);
 
   ElementSpecRef insertNode = conf->addElement(New refcounted< Insert >(strbuf("node") << "Insert:" << name, nodeTable));
   ElementSpecRef discardNode = conf->addElement(New refcounted< Discard >(strbuf("node") << "Discard:" << name));
@@ -1970,26 +2140,46 @@ connectRules(str name,
   conf->hookUp(insertNextFingerFix, 0, discardNextFingerFix, 0);
 
   ElementSpecRef insertFingerLookup = conf->addElement(New refcounted< Insert >(strbuf("fingerLookup") << "Insert:" << name, fingerLookupTable));
-  ElementSpecRef dupFingerLookup = conf->addElement(New refcounted< Duplicate >(strbuf("fingerLookup") << "Dup:" << name, 1));
+  ElementSpecRef dupFingerLookup = conf->addElement(New refcounted< DuplicateConservative >(strbuf("fingerLookup") << "Dup:" << name, 1));
+  ElementSpecRef qFingerLookup = conf->addElement(New refcounted< Queue >("fingerLookupQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPFingerLookup = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
   conf->hookUp(demuxS, nextDemuxOutput++, insertFingerLookup, 0);
-  conf->hookUp(insertFingerLookup, 0, dupFingerLookup, 0);
+  conf->hookUp(insertFingerLookup, 0, qFingerLookup, 0);
+  conf->hookUp(qFingerLookup, 0, tPPFingerLookup, 0);
+  conf->hookUp(tPPFingerLookup, 0, dupFingerLookup, 0);
 
   ElementSpecRef insertStabilizeRecord = conf->addElement(New refcounted< Insert >(strbuf("stabilizeRecord") << "Insert:" << name, stabilizeRecordTable));
   ElementSpecRef discardStabilizeRecord = conf->addElement(New refcounted< Discard >(strbuf("stabilizeRecord") << "Discard:" << name));
   conf->hookUp(demuxS, nextDemuxOutput++, insertStabilizeRecord, 0);
   conf->hookUp(insertStabilizeRecord, 0, discardStabilizeRecord, 0);
 
-  ElementSpecRef dupFixFinger = conf->addElement(New refcounted< Duplicate >(strbuf("fixFinger") << "Dup:" << name, 1));
-  conf->hookUp(demuxS, nextDemuxOutput++, dupFixFinger, 0);
+  ElementSpecRef dupFixFinger = conf->addElement(New refcounted< DuplicateConservative >(strbuf("fixFinger") << "Dup:" << name, 1));
+  ElementSpecRef qFixFinger = conf->addElement(New refcounted< Queue >("fixFingerQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPFixFinger = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qFixFinger, 0);
+  conf->hookUp(qFixFinger, 0, tPPFixFinger, 0);
+  conf->hookUp(tPPFixFinger, 0, dupFixFinger, 0);
 
-  ElementSpecRef dupLookupResults = conf->addElement(New refcounted< Duplicate >(strbuf("lookupResults") << "Dup:" << name, 3));
-  conf->hookUp(demuxS, nextDemuxOutput++, dupLookupResults, 0);
+  ElementSpecRef dupLookupResults = conf->addElement(New refcounted< DuplicateConservative >(strbuf("lookupResults") << "Dup:" << name, 2));
+  ElementSpecRef qLookupResults = conf->addElement(New refcounted< Queue >("LookupResultsQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPLookupResults = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qLookupResults, 0);
+  conf->hookUp(qLookupResults, 0, tPPLookupResults, 0);
+  conf->hookUp(tPPLookupResults, 0, dupLookupResults, 0);
 
-  ElementSpecRef dupJoin = conf->addElement(New refcounted< Duplicate >(strbuf("join") << "Dup:" << name, 3));
-  conf->hookUp(demuxS, nextDemuxOutput++, dupJoin, 0);
+  ElementSpecRef dupJoin = conf->addElement(New refcounted< DuplicateConservative >(strbuf("join") << "Dup:" << name, 3));
+  ElementSpecRef qJoin = conf->addElement(New refcounted< Queue >("JoinQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPJoin = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qJoin, 0);
+  conf->hookUp(qJoin, 0, tPPJoin, 0);
+  conf->hookUp(tPPJoin, 0, dupJoin, 0);
 
-  ElementSpecRef dupJoinEvent = conf->addElement(New refcounted< Duplicate >(strbuf("joinEvent") << "Dup:" << name, 1));
-  conf->hookUp(demuxS, nextDemuxOutput++, dupJoinEvent, 0);
+  ElementSpecRef dupJoinEvent = conf->addElement(New refcounted< DuplicateConservative >(strbuf("joinEvent") << "Dup:" << name, 1));
+  ElementSpecRef qJoinEvent = conf->addElement(New refcounted< Queue >("joinEventQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPJoinEvent = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qJoinEvent, 0);
+  conf->hookUp(qJoinEvent, 0, tPPJoinEvent, 0);
+  conf->hookUp(tPPJoinEvent, 0, dupJoinEvent, 0);
 
   ElementSpecRef insertJoinRecord = conf->addElement(New refcounted< Insert >(strbuf("joinRecord") << "Insert:" << name, joinRecordTable));
   ElementSpecRef discardJoinRecord = conf->addElement(New refcounted< Discard >(strbuf("joinRecord") << "Discard:" << name));
@@ -2001,26 +2191,61 @@ connectRules(str name,
   conf->hookUp(demuxS, nextDemuxOutput++, insertLandmarkNode, 0);
   conf->hookUp(insertLandmarkNode, 0, discardLandmarkNode, 0);
 
-  ElementSpecRef dupStartJoin = conf->addElement(New refcounted< Duplicate >(strbuf("startJoin") << "Dup:" << name, 1));
-  conf->hookUp(demuxS, nextDemuxOutput++, dupStartJoin, 0);
+  ElementSpecRef dupStartJoin = conf->addElement(New refcounted< DuplicateConservative >(strbuf("startJoin") << "Dup:" << name, 1));
+  ElementSpecRef qStartJoin = conf->addElement(New refcounted< Queue >("startJoinQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPStartJoin = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qStartJoin, 0);
+  conf->hookUp(qStartJoin, 0, tPPStartJoin, 0);
+  conf->hookUp(tPPStartJoin, 0, dupStartJoin, 0);
 
-  ElementSpecRef dupStabilize = conf->addElement(New refcounted< Duplicate >(strbuf("stabilize") << "Dup:" << name, 2));
-  conf->hookUp(demuxS, nextDemuxOutput++, dupStabilize, 0);
+  ElementSpecRef dupStabilize = conf->addElement(New refcounted< DuplicateConservative >(strbuf("stabilize") << "Dup:" << name, 2));
+  ElementSpecRef qStabilize = conf->addElement(New refcounted< Queue >("StabilizeQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPStabilize = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qStabilize, 0);
+  conf->hookUp(qStabilize, 0, tPPStabilize, 0);
+  conf->hookUp(tPPStabilize, 0, dupStabilize, 0);
 
-  ElementSpecRef dupStabilizeEvent = conf->addElement(New refcounted< Duplicate >(strbuf("stabilizeEvent") << "Dup:" << name, 1));
-  conf->hookUp(demuxS, nextDemuxOutput++, dupStabilizeEvent, 0);
+  ElementSpecRef dupStabilizeEvent = conf->addElement(New refcounted< DuplicateConservative >(strbuf("stabilizeEvent") << "Dup:" << name, 1));
+  ElementSpecRef qStabilizeEvent = conf->addElement(New refcounted< Queue >("stabilizeEventQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPStabilizeEvent = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qStabilizeEvent, 0);
+  conf->hookUp(qStabilizeEvent, 0, tPPStabilizeEvent, 0);
+  conf->hookUp(tPPStabilizeEvent, 0, dupStabilizeEvent, 0);
 
-  ElementSpecRef dupStabilizeRequest = conf->addElement(New refcounted< Duplicate >(strbuf("stabilizeRequest") << "Dup:" << name, 1));
-  conf->hookUp(demuxS, nextDemuxOutput++, dupStabilizeRequest, 0);
+  ElementSpecRef dupStabilizeRequest = conf->addElement(New refcounted< DuplicateConservative >(strbuf("stabilizeRequest") << "Dup:" << name, 1));
+  ElementSpecRef qStabilizeRequest = conf->addElement(New refcounted< Queue >("stabilizeRequestQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPStabilizeRequest = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qStabilizeRequest, 0);
+  conf->hookUp(qStabilizeRequest, 0, tPPStabilizeRequest, 0);
+  conf->hookUp(tPPStabilizeRequest, 0, dupStabilizeRequest, 0);
 
-  ElementSpecRef dupSendPredecessor = conf->addElement(New refcounted< Duplicate >(strbuf("sendPredecessor") << "Dup:" << name, 1));
-  conf->hookUp(demuxS, nextDemuxOutput++, dupSendPredecessor, 0);
+  ElementSpecRef dupSendPredecessor = conf->addElement(New refcounted< DuplicateConservative >(strbuf("sendPredecessor") << "Dup:" << name, 1));
+  ElementSpecRef qSendPredecessor = conf->addElement(New refcounted< Queue >("sendPredecessorQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPSendPredecessor = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qSendPredecessor, 0);
+  conf->hookUp(qSendPredecessor, 0, tPPSendPredecessor, 0);
+  conf->hookUp(tPPSendPredecessor, 0, dupSendPredecessor, 0);
 
-  ElementSpecRef dupNotify = conf->addElement(New refcounted< Duplicate >(strbuf("notify") << "Dup:" << name, 1));
-  conf->hookUp(demuxS, nextDemuxOutput++, dupNotify, 0);
+  ElementSpecRef dupNotify = conf->addElement(New refcounted< DuplicateConservative >(strbuf("notify") << "Dup:" << name, 1));
+  ElementSpecRef qNotify = conf->addElement(New refcounted< Queue >("notifyQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPNotify = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qNotify, 0);
+  conf->hookUp(qNotify, 0, tPPNotify, 0);
+  conf->hookUp(tPPNotify, 0, dupNotify, 0);
 
-  ElementSpecRef dupNotifyPredecessor = conf->addElement(New refcounted< Duplicate >(strbuf("notifyPredecessor") << "Dup:" << name, 1));
-  conf->hookUp(demuxS, nextDemuxOutput++, dupNotifyPredecessor, 0);
+  ElementSpecRef dupNotifyPredecessor = conf->addElement(New refcounted< DuplicateConservative >(strbuf("notifyPredecessor") << "Dup:" << name, 1));
+  ElementSpecRef qNotifyPredecessor = conf->addElement(New refcounted< Queue >("notifyPredecessorQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPNotifyPredecessor = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qNotifyPredecessor, 0);
+  conf->hookUp(qNotifyPredecessor, 0, tPPNotifyPredecessor, 0);
+  conf->hookUp(tPPNotifyPredecessor, 0, dupNotifyPredecessor, 0);
+
+  ElementSpecRef dupEagerFinger = conf->addElement(New refcounted< DuplicateConservative >(strbuf("eagerFinger") << "Dup:" << name, 4));
+  ElementSpecRef qEagerFinger = conf->addElement(New refcounted< Queue >("EagerFingerQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPEagerFinger = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
+  conf->hookUp(demuxS, nextDemuxOutput++, qEagerFinger, 0);
+  conf->hookUp(qEagerFinger, 0, tPPEagerFinger, 0);
+  conf->hookUp(tPPEagerFinger, 0, dupEagerFinger, 0);
 
 
 
@@ -2035,7 +2260,8 @@ connectRules(str name,
 
 
 
-  ElementSpecRef roundRobin = conf->addElement(New refcounted< RoundRobin >(strbuf("RoundRobin:") << name, 31));
+  int roundRobinPortCounter = 0;
+  ElementSpecRef roundRobin = conf->addElement(New refcounted< RoundRobin >(strbuf("RoundRobin:") << name, 34));
   ElementSpecRef wrapAroundPush = conf->addElement(New refcounted< TimedPullPush >(strbuf("WrapAroundPush") << name, 0));
 
   // The wrap around for locally bound tuples
@@ -2061,47 +2287,47 @@ connectRules(str name,
          nodeTable,
          bestSuccessorTable,
          dupLookup, 0,
-         roundRobin, 0);
+         roundRobin, roundRobinPortCounter++);
   ruleL2(strbuf(name) << ":L2",
          conf,
          nodeTable,
          fingerTable,
          dupLookup, 1,
-         roundRobin, 1);
+         roundRobin, roundRobinPortCounter++);
   ruleL3(strbuf(name) << ":L3",
          conf,
          nodeTable,
          fingerTable,
          dupBestLookupDistance, 0,
-         roundRobin, 2);
+         roundRobin, roundRobinPortCounter++);
   ruleSU1(strbuf(name) << ":SU1",
           conf,
           nodeTable,
           successorTable,
           dupSuccessor, 0,
-          roundRobin, 3);
+          roundRobin, roundRobinPortCounter++);
   ruleSU2(strbuf(name) << ":SU2",
           conf,
           nodeTable,
           successorTable,
           bestSuccessorTable,
           dupBestSuccessorDistance, 0,
-          roundRobin, 4);
+          roundRobin, roundRobinPortCounter++);
   ruleSR1(strbuf(name) << ":SR1",
           conf,
           successorCountAggregate,
-          roundRobin, 5);
+          roundRobin, roundRobinPortCounter++);
   ruleSR2(strbuf(name) << ":SR2",
           conf,
           SUCCESSORSIZE,
           dupSuccessorCount, 0,
-          roundRobin, 6);
+          roundRobin, roundRobinPortCounter++);
   ruleSR3(strbuf(name) << ":SR3",
           conf,
           nodeTable,
           successorTable,
           dupEvictSuccessor, 0,
-          roundRobin, 7);
+          roundRobin, roundRobinPortCounter++);
   ruleSR4(strbuf(name) << ":SR4",
           conf,
           nodeTable,
@@ -2111,116 +2337,130 @@ connectRules(str name,
          conf,
          localAddress,
          FINGERTTL,
-         roundRobin, 8);
+         roundRobin, roundRobinPortCounter++);
   ruleF2(strbuf(name) << ":F2",
          conf,
          localAddress,
-         roundRobin, 9);
+         roundRobin, roundRobinPortCounter++);
   ruleF3(strbuf(name) << ":F3",
          conf,
          nextFingerFixTable,
          dupFixFinger, 0,
-         roundRobin, 10);
+         roundRobin, roundRobinPortCounter++);
   ruleF4(strbuf(name) << ":F4",
          conf,
          nodeTable,
          dupFingerLookup, 0,
-         roundRobin, 11);
+         roundRobin, roundRobinPortCounter++);
   ruleF5(strbuf(name) << ":F5",
          conf,
          fingerLookupTable,
          dupLookupResults, 0,
-         roundRobin, 12);
+         roundRobin, roundRobinPortCounter++);
   ruleF6(strbuf(name) << ":F6",
          conf,
-         fingerLookupTable,
+         dupEagerFinger, 0,
+         roundRobin, roundRobinPortCounter++);
+  ruleF7(strbuf(name) << ":F7",
+         conf,
+         nodeTable,
+         dupEagerFinger, 1,
+         roundRobin, roundRobinPortCounter++);
+  ruleF8(strbuf(name) << ":F8",
+         conf,
          FINGERSIZE,
-         dupLookupResults, 1,
-         roundRobin, 13);
+         dupEagerFinger, 2,
+         roundRobin, roundRobinPortCounter++);
+  ruleF9(strbuf(name) << ":F9",
+         conf,
+         nodeTable,
+         dupEagerFinger, 3,
+         roundRobin, roundRobinPortCounter++);
   ruleJ1(strbuf(name) << ":J1",
          conf,
          dupJoinEvent, 0,
-         roundRobin, 14);
+         roundRobin, roundRobinPortCounter++);
   ruleJ1a(strbuf(name) << ":J1a",
           conf,
           localAddress,
-          roundRobin, 15);
+          delay,
+          roundRobin, roundRobinPortCounter++);
   ruleJ2(strbuf(name) << ":J2",
          conf,
          dupJoin, 0,
-         roundRobin, 16);
+         roundRobin, roundRobinPortCounter++);
   ruleJ3(strbuf(name) << ":J3",
          conf,
          landmarkNodeTable,
          nodeTable,
          dupJoin, 1,
-         roundRobin, 17);
+         roundRobin, roundRobinPortCounter++);
   ruleJ4(strbuf(name) << ":J4",
          conf,
          dupStartJoin, 0,
-         roundRobin, 18);
+         roundRobin, roundRobinPortCounter++);
   ruleJ5(strbuf(name) << ":J5",
          conf,
          joinRecordTable,
-         dupLookupResults, 2,
-         roundRobin, 19);
+         dupLookupResults, 1,
+         roundRobin, roundRobinPortCounter++);
   ruleJ6(strbuf(name) << ":J6",
          conf,
          localAddress,
-         roundRobin, 20);
+         roundRobin, roundRobinPortCounter++);
   ruleJ7(strbuf(name) << ":J7",
          conf,
          landmarkNodeTable,
          nodeTable,
          dupJoin, 2,
-         roundRobin, 21);
+         roundRobin, roundRobinPortCounter++);
   ruleS0(strbuf(name) << ":S0",
          conf,
          localAddress,
          FINGERTTL,
-         roundRobin, 22);
+         roundRobin, roundRobinPortCounter++);
   ruleS0a(strbuf(name) << ":S0a",
           conf,
           dupStabilizeEvent, 0,
-          roundRobin, 23);
+          roundRobin, roundRobinPortCounter++);
   ruleS0b(strbuf(name) << ":S0b",
           conf,
           dupStabilize, 0,
-          roundRobin, 24);
+          roundRobin, roundRobinPortCounter++);
   ruleS1(strbuf(name) << ":S1",
          conf,
          bestSuccessorTable,
          dupStabilize, 1,
-         roundRobin, 25);
+         roundRobin, roundRobinPortCounter++);
   ruleS2(strbuf(name) << ":S2",
          conf,
          predecessorTable,
          dupStabilizeRequest, 0,
-         roundRobin, 26);
+         roundRobin, roundRobinPortCounter++);
   ruleS3(strbuf(name) << ":S3",
          conf,
          stabilizeRecordTable,
          nodeTable,
          bestSuccessorTable,
          dupSendPredecessor, 0,
-         roundRobin, 27);
+         roundRobin, roundRobinPortCounter++);
   ruleS6a(strbuf(name) << ":S6a",
           conf,
           localAddress,
           FINGERTTL,
-          roundRobin, 28);
+          roundRobin, roundRobinPortCounter++);
   ruleS6(strbuf(name) << ":S6",
          conf,
          nodeTable,
          successorTable,
          dupNotify, 0,
-         roundRobin, 29);
+         roundRobin, roundRobinPortCounter++);
   ruleS7(strbuf(name) << ":S7",
          conf,
          nodeTable,
          predecessorTable,
          dupNotifyPredecessor, 0,
-         roundRobin, 30);
+         roundRobin, roundRobinPortCounter++);
 }
 
   
@@ -2229,7 +2469,8 @@ connectRules(str name,
 void createNode(str myAddress,
                 str landmarkAddress,
                 Router::ConfigurationRef conf,
-                Udp* udp)
+                Udp* udp,
+                double delay = 0)
 {
   TableRef fingerTable =
     New refcounted< Table >(strbuf("fingerTable"), 100);
@@ -2374,7 +2615,8 @@ void createNode(str myAddress,
                successorTable,
                successorCountAggregate,
                unBoxS, 0,
-               encapS, 0);         // not alone
+               encapS, 0,
+               delay);         // not alone
 
 }
 

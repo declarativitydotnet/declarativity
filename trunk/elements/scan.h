@@ -1,3 +1,5 @@
+// Eliminated
+#if 0
 // -*- c-basic-offset: 2; related-file-name: "scan.C" -*-
 /*
  * @(#)$Id$
@@ -44,3 +46,4 @@ class Scan : public Element {
 };
 
 #endif /* __SCAN_H_ */
+#endif

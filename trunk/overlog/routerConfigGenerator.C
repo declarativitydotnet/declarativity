@@ -1171,49 +1171,6 @@ RouterConfigGenerator::generatePrintWatchElement(str header, ElementSpecRef conn
 }
 
 
- // Unused 
-ElementSpecRef 
-RouterConfigGenerator::createScanElements(OL_Context::Functor* currentFunctor, 
-					  OL_Context::Rule* rule,
-					  OL_Context::Term term, 
-					  OL_Context::TableInfo* tableInfo, 
-					  str nodeID)
-{
-  // if we want to debug, have to create print elements. For now, assume we debug
-  // get the table to create the scanner over.
-  // in future, this scanner may be replaced by a push-based scanner that outputs
-  // whenever there is an incoming tuple that is newly added/updated.
-  // in future, keep track of all scanners, and we may be able to combile them
-
-  ElementSpecRef dummyElement = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlotScanElements"));
-  TableRef baseTable = getTableByName(nodeID, tableInfo->tableName);
-
-  str ruleStr = rule->ruleID;
-  // by default, scan from the first
-  ElementSpecRef scanS =
-    _conf->addElement(New refcounted< Scan >(strbuf("Scanner:") << ruleStr << ":" << nodeID, baseTable, 1));
-
-  ElementSpecRef timedPullPushS =
-    _conf->addElement(New refcounted< TimedPullPush >(strbuf("ScanPush:") << ruleStr << ":" << nodeID, 1));
-
-  // only if we use the duplicate elimination operator
-  ElementSpecRef dupRemove =
-    _conf->addElement(New refcounted< DupElim >(strbuf("ScanDupElim:") << ruleStr << ":" << nodeID));
- 
-  if (_debug) {
-    ElementSpecRef scanPrint1 =
-      _conf->addElement(New refcounted< Print >(strbuf("PrintScan:") << ruleStr << ":" << nodeID));
-    hookUp(scanS, 0, scanPrint1, 0);  
-    hookUp(scanPrint1, 0, timedPullPushS, 0); 
-    hookUp(timedPullPushS, 0, dupRemove, 0); // only necessary if dup elimination
-    return dupRemove;
-  }
-
-  hookUp(scanS, 0, timedPullPushS, 0);  
-  hookUp(timedPullPushS, 0, dupRemove, 0); // only necessary if dup elimination
-  return dupRemove;
-}
-
 
 
 

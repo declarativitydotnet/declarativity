@@ -16,37 +16,39 @@
 #define __SCANITERATOROBJ_H__
 
 
-template < typename _Index >
-Table::ScanIteratorObj< _Index >::ScanIteratorObj(_Index * index)
-  : _index(index),
-    _iter(_index->begin())
+template < typename _Index, typename _FlatIndex >
+Table::ScanIteratorObj< _Index, _FlatIndex >::ScanIteratorObj(_Index * index)
+  : _index(),
+    _iter(_index.begin())
 {
+  // copying the index locally!!!
+  for (IndexIterator i = index->begin();
+       i != index->end();
+       i++) {
+    _index.insert(std::make_pair(i->first, i->second->t));
+  }
+  _iter = _index.begin();
 }
 
-template < typename _Index >
+template < typename _Index, typename _FlatIndex >
 TuplePtr
-Table::ScanIteratorObj< _Index >::next()
+Table::ScanIteratorObj< _Index, _FlatIndex >::next()
 {
-  if (_iter == _index->end()) {
+  if (_iter == _index.end()) {
     // We've run out of elements, period.
     return NULL;
   } else {
-    return (_iter++)->second->t;
+    FlatIndexIterator current = _iter;
+    _iter++;
+    return current->second;
   }
 }
 
-template < typename _Index >
+template < typename _Index, typename _FlatIndex >
 bool
-Table::ScanIteratorObj< _Index >::done()
+Table::ScanIteratorObj< _Index, _FlatIndex >::done()
 {
-  return (_iter == _index->end());
-}
-
-template < typename _Index >
-void
-Table::ScanIteratorObj< _Index >::reset()
-{
-  _iter = _index->begin();
+  return (_iter == _index.end());
 }
 
 #endif /* __SCANITERATOROBJ_H__ */

@@ -15,21 +15,28 @@
 #ifndef __ITERATOROBJ_H__
 #define __ITERATOROBJ_H__
 
-template < typename _Index >
-Table::IteratorObj< _Index >::IteratorObj(_Index * index,
-                                          ValueRef key)
-  : _index(index),
+template < typename _Index, typename _FlatIndex >
+Table::IteratorObj< _Index, _FlatIndex >::IteratorObj(_Index * index,
+                                                      ValueRef key)
+  : _index(),
     _key(key),
-    _iter(_index->find(_key))
+    _iter(_index.find(_key))
 {
-  assert(_index != NULL);
+  assert(index != NULL);
+  // copying the index locally!!!
+  for (IndexIterator i = index->begin();
+       i != index->end();
+       i++) {
+    _index.insert(std::make_pair(i->first, i->second->t));
+  }
+  _iter = _index.find(_key);
 }
 
-template < typename _Index >
+template < typename _Index, typename _FlatIndex >
 TuplePtr
-Table::IteratorObj< _Index >::next()
+Table::IteratorObj< _Index, _FlatIndex >::next()
 {
-  if (_iter == _index->end()) {
+  if (_iter == _index.end()) {
     // We've run out of elements, period.
     return NULL;
   } else {
@@ -38,16 +45,16 @@ Table::IteratorObj< _Index >::next()
       // We've gone past the end of this key
       return NULL;
     } else {
-      return (_iter++)->second->t;
+      return (_iter++)->second;
     }
   }
 }
 
-template < typename _Index >
+template < typename _Index, typename _FlatIndex >
 bool
-Table::IteratorObj< _Index >::done()
+Table::IteratorObj< _Index, _FlatIndex >::done()
 {
-  if (_iter == _index->end()) {
+  if (_iter == _index.end()) {
     return true;
   } else {
     if (_iter->first->compareTo(_key) != 0) {

@@ -70,6 +70,10 @@ rule SR4 delete@NI<successor(NI,S,SI)> :-
 	maxSuccessorDist@NI(NI,D),
 	D=f_dist(N,S)-1.
 
+
+
+
+
 rule F1 fixFinger@NI(ni) :-
 	periodic@NI(finger.TTL*0.5).
 
@@ -85,14 +89,34 @@ rule F4 lookup@NI(NI, K, NI, E) :-
 	node(NI, N),
 	K = N + 1 << I.
 
-rule F5 finger@NI(NI, I, B, BI) :-
+rule F5 eagerFinger@NI(NI, I, B, BI) :-
 	fingerLookup@NI(NI, E, I),
-	lookupResults@NI(NI, K, B, BI, E).
+	lookupResults@NI(NI, B, BI, E).
 
-rule F6 nextFingerFix@NI(NI, I) :-
-	fingerLookup@NI(NI, E, I1),
-	lookupResults@NI(NI, K, B, BI, E),
-	I = I1 + 1 mod finger.SIZE.
+rule F6 finger@NI(NI, I, B, BI) :-
+	eagerFinger@NI(NI, I, B, BI).
+
+rule F7 eagerFinger@NI(NI, I, B, BI) :-
+	node@NI(NI, N),
+	eagerFinger@NI(NI, I1, B, BI), 
+	I = I1 + 1,
+	I > I1,
+	K = N + 1 << I,
+	K in (N, B), NI!=BI.
+
+rule F8 nextFingerFix@NI(NI, 0) :-
+	eagerFinger@NI(NI, I, B, BI),
+	((I == finger.SIZE - 1) || (BI == NI)).
+
+rule F9 nextFingerFix@NI(NI, I) :-
+	node@NI(NI, N),
+	eagerFinger@NI(NI, I1, B, BI), 
+	I = I1 + 1,
+	I > I1,
+	K = N + 1 << I,
+	K in (B, N).
+
+
 
 
 

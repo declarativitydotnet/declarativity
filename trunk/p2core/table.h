@@ -122,6 +122,8 @@ public:
 
   typedef std::multimap< ValueRef, Entry *, Table::valueRefCompare > MultIndex;
   typedef std::map< ValueRef, Entry *, Table::valueRefCompare >  UniqueIndex;
+  typedef std::multimap< ValueRef, TupleRef, Table::valueRefCompare > MultIndexFlat;
+  typedef std::map< ValueRef, TupleRef, Table::valueRefCompare >  UniqueIndexFlat;
 
   class AggregateFunction
   {
@@ -310,7 +312,7 @@ public:
 
   /** An opaque container for the iterator logic to be used with
       indices. */
-  template < typename _Index >
+  template < typename _Index, typename _FlatIndex >
   class IteratorObj {
   public:
     /** Fetch the next tuple pointer, or null if no next tuple exists */
@@ -325,27 +327,25 @@ public:
     
   private:
     /** My index */
-    _Index * _index;
+    _FlatIndex _index;
     
     /** My lookup key */
     ValueRef _key;
     
     typedef typename _Index::iterator IndexIterator;
+    typedef typename _FlatIndex::iterator FlatIndexIterator;
 
     /** My iterator */
-    IndexIterator _iter;
+    FlatIndexIterator _iter;
   };
   
   /** An opaque container for the iterator logic to be used with
       fully scanned indices. */
-  template < typename _Index >
+  template < typename _Index, typename _FlatIndex >
   class ScanIteratorObj {
   public:
     /** Fetch the next tuple pointer, or null if no next tuple exists */
     TuplePtr next();
-
-    /** Reset the iterator to its beginning */
-    void reset();
 
     /** Is the iterator done? */
     bool done();
@@ -354,19 +354,20 @@ public:
     ScanIteratorObj(_Index * index);
     
   private:
-    /** My index */
-    _Index * _index;
+    /** My flattened index */
+    _FlatIndex _index;
     
     typedef typename _Index::iterator IndexIterator;
+    typedef typename _FlatIndex::iterator FlatIndexIterator;
 
     /** My iterator */
-    IndexIterator _iter;
+    FlatIndexIterator _iter;
   };
   
 public:
-  typedef IteratorObj < MultIndex > MultIteratorObj;
-  typedef IteratorObj < UniqueIndex > UniqueIteratorObj;
-  typedef ScanIteratorObj < MultIndex > MultScanIteratorObj;
+  typedef IteratorObj < MultIndex, MultIndexFlat > MultIteratorObj;
+  typedef IteratorObj < UniqueIndex, UniqueIndexFlat > UniqueIteratorObj;
+  typedef ScanIteratorObj < MultIndex, MultIndexFlat > MultScanIteratorObj;
   typedef ptr< MultIteratorObj > MultIterator;
   typedef ptr< UniqueIteratorObj > UniqueIterator;
   typedef ptr< MultScanIteratorObj > MultScanIterator;

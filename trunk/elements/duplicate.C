@@ -68,7 +68,7 @@ int Duplicate::push(int port, TupleRef p, cbv cb)
     // Is the output blocked?
     if (_block_flags[i]) {
       // No can do. Skip this output
-      log(LoggerI::INFO, -1, "push: Skipped duplication on blocked output");
+      log(LoggerI::INFO, -1, strbuf("push: Skipped duplication on blocked output ") << i);
     } else {
       // Send it with the appropriate callback
       int result = output(i)->push(p, wrap(this, &Duplicate::unblock, i));

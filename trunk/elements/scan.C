@@ -1,3 +1,4 @@
+#if 0
 // -*- c-basic-offset: 2; related-file-name: "scan.h" -*-
 /*
  * @(#)$Id$
@@ -40,3 +41,4 @@ TuplePtr Scan::pull(int port, cbv cb)
     return Tuple::EMPTY;
   }
 }
+#endif

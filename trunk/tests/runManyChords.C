@@ -71,7 +71,8 @@
 
 /** Create many chord dataflows joining via the same gateway. */
 void testNetworked(LoggerI::Level level,
-                   int nodes)
+                   int nodes,
+                   double interarrival)
 {
   // Create the data flow
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
@@ -92,8 +93,9 @@ void testNetworked(LoggerI::Level level,
     udp = New Udp(name, port);
 
     strbuf myAddress = strbuf(str("127.0.0.1:")) << port;
-    strbuf landmarkAddress = strbuf(str("127.0.0.1:")) << ((port - 1) % 17);
-    createNode(myAddress, landmarkAddress, conf, udp);
+    strbuf landmarkAddress = strbuf(str("127.0.0.1:")) << ((port - 1));
+    createNode(myAddress, landmarkAddress, conf, udp,
+               i * interarrival);
   }
 
   RouterRef router = New refcounted< Router >(conf, level);
@@ -117,8 +119,8 @@ void testNetworked(LoggerI::Level level,
 
 int main(int argc, char **argv)
 {
-  if (argc != 4) {
-    fatal << "Usage:\n\t runManyChord <loggingLevel> <seed> <noNodes>\n";
+  if (argc != 5) {
+    fatal << "Usage:\n\t runManyChord <loggingLevel> <seed> <noNodes> <interarrival>\n";
   }
 
   str levelName(argv[1]);
@@ -128,8 +130,11 @@ int main(int argc, char **argv)
   srand(seed);
 
   int noNodes = atoi(argv[3]);
+
+  double interarrival = atof(argv[4]);
   testNetworked(level,
-                noNodes);
+                noNodes,
+                interarrival);
   return 0;
 }
   
