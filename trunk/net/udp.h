@@ -38,7 +38,7 @@ public:
   public:
     Rx(const Udp &udp);
     const char *class_name() const		{ return "Udp::Rx";};
-    const char *processing() const		{ return "/hh"; };
+    const char *processing() const		{ return "/h"; };
     const char *flow_code() const		{ return "/-"; };
 
     void socket_on() { fdcb(u->sd, selread, wrap(this,&Udp::Rx::socket_cb)); };

@@ -20,19 +20,18 @@
 class PlSensor : public Element { 
   
   const char *class_name() const		{ return "Plsensor";};
-  const char *processing() const		{ return "/hh"; };
-  const char *flow_code() const		{ return "/-"; };
+  const char *flow_code() const			{ return "/-"; }
+  const char *processing() const		{ return "/h"; }
 
 public:
 
-  PlSensor(u_int16_t sensor_port, str sensor_path, timespec reconnect_delay);
+  PlSensor(u_int16_t sensor_port, str sensor_path, uint32_t reconnect_delay);
 
 private:
 
   void enter_connecting();
   void error_cleanup(uint32_t errnum, str errmsg);
   void enter_waiting();
-  void wait_cb();
   void connect_cb(int fd);
   void write_cb();
   void rx_hdr_cb();
@@ -58,17 +57,19 @@ private:
   int		sd; 
   tcpconnect_t *tc;
   rxx		req_re;
-  str		hdrs;
+  strbuf       *hdrs;
   in_addr	localaddr;
-  timecb_t     *wait_timecb;
+  timecb_t     *wait_delaycb;
 
 
   // Time between reconnects
-  timespec	delay;
+  uint32_t	delay;
 
   // The request string
-  strbuf	request;
+  str		reqtmpl;
+  strbuf       *req_buf;
 };
+
 
 
 #endif /* __PLSENSOR_H_ */

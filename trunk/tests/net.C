@@ -29,6 +29,7 @@
 #include "timedSource.h"
 #include "project.h"
 #include "udp.h"
+#include "plsensor.h"
 #include "discard.h"
 
 /** Test the Rx part of the Udp element. */
@@ -47,10 +48,36 @@ void testUdpReceive()
 
   // Create the router and check it statically
   MasterRef master = New refcounted< Master >();
-  RouterRef router =
-    New refcounted< Router >(conf, master);
+  RouterRef router = New refcounted< Router >(conf, master);
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized timed source to pull print spec.\n";
+  } else {
+    std::cout << "** Failed to initialize correct spec\n";
+  }
+
+  // Activate the router
+  router->activate();
+
+  // Run the router
+  amain();
+}
+
+/** Test the Rx part of the Udp element. */
+void testPLSensor()
+{
+  std::cout << "\nCHECK PL SENSOR\n";
+
+  ref<PlSensor> pl = New refcounted<PlSensor>((uint16_t)80,"/", 5);
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  ElementSpecRef plSpec = conf->addElement(pl);
+  ElementSpecRef printSpec = conf->addElement(New refcounted<PushPrint>());
+  conf->hookUp(plSpec,0,printSpec,0);
+
+  // Create the router and check it statically
+  MasterRef master = New refcounted< Master >();
+  RouterRef router = New refcounted< Router >(conf, master);
+  if (router->initialize(router) == 0) {
+    std::cout << "Correctly initialized PlSensor to push print spec.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
@@ -67,6 +94,7 @@ int main(int argc, char **argv)
   std::cout << "\nNET\n";
 
   testUdpReceive();
+  testPLSensor();
 
   return 0;
 }

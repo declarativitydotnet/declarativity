@@ -15,7 +15,8 @@
 lib_LTLIBRARIES = libp2net.la
 libp2net_la_SOURCES = \
 	udpsuio.C \
-	udp.C
+	udp.C \
+	plsensor.C
 
 INCLUDES = @SFS_INC@ -I../p2core
 
