@@ -31,7 +31,10 @@ libp2elements_la_SOURCES = \
 	dupElim.C \
 	filter.C \
 	store.C \
-	joiner.C
+	joiner.C \
+	queue.C \
+	groupby.C \
+	randomPushSource.C
 
 INCLUDES = @SFS_INC@ -I../p2core
 

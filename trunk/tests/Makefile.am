@@ -25,7 +25,10 @@ bin_PROGRAMS 	= 	values \
 			join \
 			net \
 			logger \
-			csv
+			csv \
+			testQueue \
+			agg
+
 
 values_SOURCES	= values.C
 values_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
@@ -81,6 +84,18 @@ net_LDADD = \
 
 basicelements_SOURCES	= basicelements.C
 basicelements_LDADD = \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+testQueue_SOURCES	= testQueue.C
+testQueue_LDADD = \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+agg_SOURCES	= agg.C
+agg_LDADD = \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
