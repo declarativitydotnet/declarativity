@@ -760,7 +760,6 @@ YY_RULE_SETUP
 #line 101 "pel_lexer.lex"
 {
   // An escaped character literal
-  u_int32_t v;
   switch (yytext[2]) {
   case 'n': add_const_int('\n'); break;
   case 'r': add_const_int('\r'); break;
@@ -773,7 +772,7 @@ YY_RULE_SETUP
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 113 "pel_lexer.lex"
+#line 112 "pel_lexer.lex"
 { 
   // An unescaped character literal
   add_const_int(yytext[1]);
@@ -781,7 +780,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 118 "pel_lexer.lex"
+#line 117 "pel_lexer.lex"
 {
   // Unsigned integer literal (including octal and/or hex
   uint64_t v = strtoull(yytext,NULL,0);
@@ -790,7 +789,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 124 "pel_lexer.lex"
+#line 123 "pel_lexer.lex"
 {
   // Some integer literal (including octal and/or hex
   int64_t v = strtoll(yytext,NULL,0);
@@ -799,7 +798,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 130 "pel_lexer.lex"
+#line 129 "pel_lexer.lex"
 {
   // Double-precision literal
   double v = strtod(yytext,NULL);
@@ -813,12 +812,12 @@ YY_RULE_SETUP
 case 10:
 /* rule 10 can match eol */
 YY_RULE_SETUP
-#line 140 "pel_lexer.lex"
+#line 139 "pel_lexer.lex"
 {
   // C-style string literal
   strbuf b;
   const char *text = yytext + 1;
-  char c;
+  char c = '\0';
   while (text[1]) {
     if (*text == '\\' && text[1]) {
       switch (text[1]) 	{
@@ -839,14 +838,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 163 "pel_lexer.lex"
+#line 162 "pel_lexer.lex"
 { 
-  add_const(New refcounted<TupleField>());
+  add_const(Val_Null::mk());
 }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 167 "pel_lexer.lex"
+#line 166 "pel_lexer.lex"
 {
   // $0, $1, $2, etc: loading tuple fields
   add_tuple_load(strtol(yytext+1,NULL,0));
@@ -854,10 +853,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 173 "pel_lexer.lex"
+#line 172 "pel_lexer.lex"
 {
   // Anything else we lookup in the mnemonic list
-  int i;
+  unsigned int i;
   for (i = 0; i < num_tokens; i++) {
     if (strcmp(yytext, tokens[i].name) == 0) {
       add_opcode(tokens[i].code);
@@ -871,10 +870,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 187 "pel_lexer.lex"
+#line 186 "pel_lexer.lex"
 ECHO;
 	YY_BREAK
-#line 878 "pel_lexer.C"
+#line 877 "pel_lexer.C"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1771,7 +1770,7 @@ void PelBasefree (void * ptr )
 #undef YY_DECL_IS_OURS
 #undef YY_DECL
 #endif
-#line 187 "pel_lexer.lex"
+#line 186 "pel_lexer.lex"
 
 
 
@@ -1803,7 +1802,7 @@ Pel_Lexer::Pel_Lexer(const char *prog)
 // Called from the lexer: add a "load constant" instruction.
 //  XXX TODO: remove duplicates in the constant 
 //
-void Pel_Lexer::add_const(TupleFieldRef f)
+void Pel_Lexer::add_const(ValueRef f)
 {
   result->ops.push_back( (result->const_pool.size() & 0xFFFF) << 16 | Pel_VM::OP_PUSH_CONST );
   result->const_pool.append(f);
@@ -1857,7 +1856,7 @@ str Pel_Lexer::decompile(Pel_Program &prog)
       sb << "$" << opn << " ";
     } else if ( opc == Pel_VM::OP_PUSH_CONST ) {
       if ( opn < prog.const_pool.size() ) {
-	if (prog.const_pool[opn]->get_type() == TupleField::STRING) { 
+	if (prog.const_pool[opn]->typeCode() == Value::STR) { 
 	  sb << "\"" << prog.const_pool[opn]->toString() << "\" ";
 	} else {
 	  sb << prog.const_pool[opn]->toString() << " ";
