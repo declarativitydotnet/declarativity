@@ -24,7 +24,14 @@ libp2core_la_SOURCES = \
 	elementSpec.C \
 	pel_lexer.C \
 	pel_vm.C \
-        idTable.C
+        idTable.C \
+	val_str.C \
+	val_null.C \
+	val_int32.C \
+	val_uint32.C \
+	val_int64.C \
+	val_uint64.C \
+	val_double.C
 
 INCLUDES = @SFS_INC@
 

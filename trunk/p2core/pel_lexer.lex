@@ -140,7 +140,7 @@ HEXDIGIT	[0-9a-fA-F]
   // C-style string literal
   strbuf b;
   const char *text = yytext + 1;
-  char c;
+  char c = '\0';
   while (text[1]) {
     if (*text == '\\' && text[1]) {
       switch (text[1]) 	{

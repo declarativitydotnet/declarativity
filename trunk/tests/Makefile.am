@@ -14,7 +14,8 @@
 
 $(PROGRAMS): $(LDEPS)
 
-bin_PROGRAMS 	= 	tuples \
+bin_PROGRAMS 	= 	values \
+			tuples \
 			pel \
 			basicelements \
 			basicElementPlumbing \
@@ -23,6 +24,10 @@ bin_PROGRAMS 	= 	tuples \
 			net \
 			logger \
 			csv
+
+values_SOURCES	= values.C
+values_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 tuples_SOURCES	= tuples.C
 tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
