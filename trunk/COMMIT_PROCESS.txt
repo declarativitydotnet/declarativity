@@ -1,0 +1,106 @@
+INTERIM PROCESS
+
+
+Starting on a new task from the trunk of the code:
+
+- Check out the latest, trunk of the code base
+
+  - If you have a working directory
+  
+    # cd <working directory>
+    # cvs update -dPA
+
+    The "A" option ensures you are working on the main trunk
+    The d option ensures you do a recursive update
+    The P option truncates empty directories
+
+  - If you do not have a working directory
+
+    # cd <base directory>
+    # cvs -d <your username>@blsshsvr.berkeley.intel-research.net:/projects/cvs/ checkout phi/phi
+
+- Create a branch for yourself
+
+  - The branch name is <your name>-<4 digit year>-<2 digit month>-<2
+    digit day>-<counter>.  For example, the first branch Petros creates
+    on 2/1/2005 will be named Petros-2005-02-01-1
+
+  - Create the branch
+
+    # cvs tag -b <branch name>
+
+  - Update your working directory to be in that branch
+
+    # cvs update -dP -r <branch name>
+
+
+- Work on your branch.
+
+  - To look at the latest version of this branch (the "tip") on another
+    machine, remember to use "-r <branch name>" when cvs updating.
+
+  - You can commit your intermediate changes to your branch as usual
+    with "cvs commit".  Make sure, however, that you are committing into
+    your branch, i.e., you run commit within a working directory that
+    you have previously set to your branch through cvs update -j
+    <branch>.
+
+- Test your branch
+
+  - When you're reasonably certain what you were doing is done, go to
+    grouchy, check out your branch (as described above), configure it to
+    work with the local sfs build (see README file).  If it compiles,
+    then you're ready to start the merger process
+
+- Merge your branch into a trunk working copy
+
+  - After everything in your branch is committed, change your working
+    copy to the trunk
+
+    # cvs update -dPA
+
+  - Now merge your branch into your trunk working copy
+
+    # cvs update -kk -dP -j <branch>
+
+    The -kk option says "do not substitute CVS variables"
+
+  - Some files might claim to have a conflict
+
+    In the log, there will be a message to the effect
+       "rcsmerge: warning: conflicts during merge"
+    under the conflicted file.  Go into your conflicted files and find
+    all conflicts.  They are enclosed in ">>>>", "====", "<<<<<" marks,
+    as usual with CVS.
+
+
+    You can also find those files by doing a normal cvs update.  In the
+    log, files with conflicts will have a "C" in front of them. For
+    example:
+	C README
+
+
+    Once you have resolved conflicts, test again that your changes,
+    merged with the trunk, compile on grouchy, and that the tests
+    run. Then you can commit your fixes to the main trunk as usual
+    (with cvs commit).
+
+
+    DO NOT UNDER ANY CIRCUMSTANCES COMMIT FILES WITH CONFLICTS IN THEM!!!!
+    Before you commit, do one last "cvs update." Make sure no files has
+    a "C" before it in the log.
+
+
+- At this point, MAKE A NEW BRANCH WITH EVERY NEW TASK YOU UNDERTAKE,
+  that is, do not attempt to continue changes in a branch that you have
+  already merged in.  The reason for this is it is not clear how cleanly
+  to back-port changes that have occurred in the main trunk INTO your branch
+  before you continue work with it.  The CVS machinery and documentation
+  avoids discussing that issue.  The problem is that if you merge
+  changes from the trunk into your branch.
+
+
+
+
+
+- Tentative structure
