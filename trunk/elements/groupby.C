@@ -24,15 +24,16 @@ const int GroupBy::AVG_AGG = 2;
 
 GroupBy::GroupBy(str name, str newTableName, std::vector<int> primaryFields, std::vector<int> groupByFields, 
 		 std::vector<int> aggFields, std::vector<int> aggTypes, 
-		 double seconds): Element(name,1,1), 
-				  _wakeupCB(wrap(this, &GroupBy::wakeup)),
-				  _runTimerCB(wrap(this, &GroupBy::runTimer))
+		 double seconds, bool aggregateSelections): Element(name,1,1), 
+							       _wakeupCB(wrap(this, &GroupBy::wakeup)),
+							       _runTimerCB(wrap(this, &GroupBy::runTimer))
 {
   _primaryFields = primaryFields;
   _groupByFields = groupByFields;
   _aggFields = aggFields;
   _aggTypes = aggTypes;
   _newTableName = newTableName;
+  _aggregateSelections = aggregateSelections;
 
   _seconds = (uint) floor(seconds);
   seconds -= _seconds;
@@ -68,62 +69,61 @@ str GroupBy::getFieldStr(std::vector<int> fields, TupleRef p)
   return fieldStr;
 }
 
-void GroupBy::computeAgg(str groupByStr, TupleRef newTuple)
+void GroupBy::recomputeAllAggs()
 {
   bool changed = false;
-  
-  _iterator = _aggValues.find(groupByStr);
+
+  _aggValues.clear();
+
+  // go through all tuples we have seen so far and recompute aggregates stored in aggValues
+  for (_multiIterator = _tuples.begin(); _multiIterator != _tuples.end(); _multiIterator++) {
+    TupleRef nextTuple = _multiIterator->second;    
+    str groupByStr = getFieldStr(_groupByFields, nextTuple);    
+
+    // the initial fields
+    TupleRef newAggTuple = Tuple::mk();
+    newAggTuple->append(Val_Str::mk(_newTableName));
+    for (int k = 0; k < _groupByFields.size(); k++) {
+      newAggTuple->append((*nextTuple)[_groupByFields[k]]);
+    }
+
+    _iterator = _aggValues.find(groupByStr);
+    if (_iterator != _aggValues.end()) { // already exist an aggregate value
+      TupleRef currentAgg = _iterator->second;
  
-  TupleRef newAggTuple = Tuple::mk();
-  newAggTuple->append(Val_Str::mk(_newTableName));
+      // check which fields contribute to the "best agg"
+      for (int k = 0; k < _aggFields.size(); k++) {
+	ValueRef origVal = (*currentAgg)[k + 1 + _groupByFields.size()];
+	ValueRef newVal = (*nextTuple)[_aggFields[k]];
 
-  for (int k = 0; k < _groupByFields.size(); k++) {
-    newAggTuple->append((*newTuple)[_groupByFields[k]]);
-  }
-
-  if (_iterator != _aggValues.end()) {
-    TupleRef currentAgg = _iterator->second;
-    
-    // go through all the aggs, compute new one
-    //std::cout << "Sizes "  << _aggFields.size() << " " << _aggTypes.size() << "\n";
-    for (int k = 0; k < _aggFields.size(); k++) {
-      ValueRef origVal = (*currentAgg)[k + 1 + _groupByFields.size()];
-      ValueRef newVal = (*newTuple)[_aggFields[k]];
-      // TOFIX: agg types
-      if (_aggTypes[k] == MIN_AGG) {
-	if (newVal->compareTo(origVal) < 0) {
-	  // new value is smaller
+	if (_aggTypes[k] == MIN_AGG) {
+	  if (newVal->compareTo(origVal) < 0) {
+	    // new value is smaller
+	    origVal = newVal;
+	    changed = true;
+	  }
+	}
+	
+	if (_aggTypes[k] == MAX_AGG) {
+	  if (newVal->compareTo(origVal) > 0) {
+	    // new value is bigger
 	  origVal = newVal;
 	  changed = true;
-	}
+	  }
       }
-
-      if (_aggTypes[k] == MAX_AGG) {
-	if (newVal->compareTo(origVal) > 0) {
-	  // new value is bigger
-	  origVal = newVal;
-	  changed = true;
-	}
-      }
-      newAggTuple->append(origVal);
+	newAggTuple->append(origVal);
+      }    
+    } else {
+      // the first time
+      for (int k = 0; k < _aggFields.size(); k++) {
+	newAggTuple->append((*nextTuple)[_aggFields[k]]);
+      }      
     }
-  } else {
-    // the first time
-    for (int k = 0; k < _aggFields.size(); k++) {
-      newAggTuple->append((*newTuple)[_aggFields[k]]);
-    }
-    _pendingTuples.insert(std::make_pair(groupByStr, newAggTuple));
-    _aggValues.insert(std::make_pair(groupByStr, newAggTuple));
-  }
-
-  if (changed == true) {
-    _pendingTuples.insert(std::make_pair(groupByStr, newAggTuple));
-
-    // update the agg in store
     _aggValues.erase(groupByStr);
-    _aggValues.insert(std::make_pair(groupByStr, newAggTuple));
-  } 
+    _aggValues.insert(std::make_pair(groupByStr, newAggTuple));      
+  }
 }
+
 
 int GroupBy::push(int port, TupleRef p, cbv cb)
 {  
@@ -134,48 +134,37 @@ int GroupBy::push(int port, TupleRef p, cbv cb)
   for (_multiIterator = _tuples.lower_bound(groupByStr); _multiIterator != _tuples.upper_bound(groupByStr); _multiIterator++) {
     TupleRef t = _multiIterator->second;    
     if (getFieldStr(_primaryFields, t) == indexStr) {
+      // update an existing tuple
       _tuples.erase(_multiIterator);
     }
   }
-  _tuples.insert(std::make_pair(groupByStr, p));
-
-  // compute new agg. Check if new tuple has changed the 
-  // agg value. If so, add it to pending
-  computeAgg(groupByStr, p);
+  _tuples.insert(std::make_pair(groupByStr, p)); // store the tuple
   return 1;
 }
 
-void GroupBy::dumpTuples(str str)
-{
-  std::cout << "Key " << str << ": ";
-  for (_multiIterator = _tuples.lower_bound(str); _multiIterator != _tuples.upper_bound(str); _multiIterator++) {
-    TupleRef t = _multiIterator->second;    
-    std::cout << t->toString() << ", ";
-  }
-  std::cout << "\n";
-}
-
-void GroupBy::dumpAggs(str str)
-{
-  std::cout << "Grouping Key " << str << ": ";
-  for (_iterator = _aggValues.lower_bound(str); _iterator != _aggValues.upper_bound(str); _iterator++) {
-    TupleRef t = _iterator->second;    
-    std::cout << t->toString() << "\n";
-  }
-}
 
 // periodically, push changes upsteam if possible until no more pending, 
 // or upstream unable to accept more tuples
 void GroupBy::runTimer()
 {
-  std::cout << "Flush pending " << _pendingTuples.size() << "\n";
-
   // remove the timer id
   _timeCallback = 0;
 
+  recomputeAllAggs();
+
   // Attempt to push it
-  for (_iterator = _pendingTuples.begin(); _iterator != _pendingTuples.end(); _iterator++) {
+  for (_iterator = _aggValues.begin(); _iterator != _aggValues.end(); _iterator++) {
     TupleRef t = _iterator->second;
+    str groupByStr = getFieldStr(_groupByFields, t);    
+
+    // check whether this tuple has been sent already previously (suppress for monotonic aggs)
+    TupleMap::iterator previousSent = _lastSentTuples.find(groupByStr);
+    if (previousSent != _lastSentTuples.end()) {
+      if (previousSent->second->compareTo(t) == 0) {
+	continue;
+      }
+    }
+
     int result = output(0)->push(t, _wakeupCB);
     if (result == 0) {
       // We have been pushed back.  Don't reschedule wakeup
@@ -183,7 +172,8 @@ void GroupBy::runTimer()
       return;
     } else {
       std::cout << "Pushed " << t->toString() << "\n";
-      _pendingTuples.erase(_iterator);
+      _lastSentTuples.erase(groupByStr);
+      _lastSentTuples.insert(std::make_pair(groupByStr, t)); 
     }
   }
 
@@ -207,3 +197,24 @@ void GroupBy::wakeup()
                           _runTimerCB);
 }
 
+
+// output tuples seen
+void GroupBy::dumpTuples(str str)
+{
+  std::cout << "Key " << str << ": ";
+  for (_multiIterator = _tuples.lower_bound(str); _multiIterator != _tuples.upper_bound(str); _multiIterator++) {
+    TupleRef t = _multiIterator->second;    
+    std::cout << t->toString() << ", ";
+  }
+  std::cout << "\n";
+}
+
+// output aggs
+void GroupBy::dumpAggs(str str)
+{
+  std::cout << "Grouping Key " << str << ": ";
+  for (_iterator = _aggValues.lower_bound(str); _iterator != _aggValues.upper_bound(str); _iterator++) {
+    TupleRef t = _iterator->second;    
+    std::cout << t->toString() << "\n";
+  }
+}

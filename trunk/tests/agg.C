@@ -48,7 +48,8 @@ void agg()
     std::vector<int> aggTypes; aggTypes.push_back(GroupBy::MIN_AGG);
 
     ElementSpecRef groupBySpec = conf->addElement(New refcounted<GroupBy>("groupBy", "testAgg", primaryFields, 
-									  groupByFields, aggFields, aggTypes, 5)); 
+									  groupByFields, aggFields, aggTypes, 
+									  5, true)); 
 
     ElementSpecRef queueSpec = conf->addElement(New refcounted<Queue>("queue", 10));
     ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));

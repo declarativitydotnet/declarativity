@@ -32,7 +32,7 @@ public:
   static const int AVG_AGG;
 
   GroupBy(str name, str newTableName, std::vector<int> primaryFields, std::vector<int> groupByFields, 
-	  std::vector<int> aggFields, std::vector<int> aggTypes, double seconds);
+	  std::vector<int> aggFields, std::vector<int> aggTypes, double seconds, bool aggregateSelections);
 
   ~GroupBy();
 
@@ -46,9 +46,10 @@ public:
 
 private:
   str getFieldStr(std::vector<int> fields, TupleRef p);
-  void computeAgg(str groupByStr, TupleRef newTuple);
+  void recomputeAllAggs();
   void dumpTuples(str str);
   void dumpAggs(str str);
+  //void insertPendingTuple(str groupKey, TupleRef aggTuple, TupleRef actualTuple);
 
   typedef std::multimap<str, TupleRef> TupleMultiMap;
   typedef std::map<str, TupleRef> TupleMap;
@@ -71,8 +72,7 @@ private:
   // what types of aggregates
   std::vector<int> _aggTypes;
 
-  // buffered aggs for pushing upstream
-  TupleMap _pendingTuples; 
+  TupleMap _lastSentTuples; 
 
   // name of new agg tuples
   str _newTableName;
@@ -99,6 +99,8 @@ private:
   /** My wakeup method */
   void wakeup();
   void runTimer();
+
+  bool _aggregateSelections;
 };
 
 
