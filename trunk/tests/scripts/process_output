@@ -11,7 +11,7 @@ import re
 
 def print_usage():
     print
-    print "Usage: run_node -n <num_nodes> output_dir"
+    print "Usage: process_output -n <num_nodes> output_dir"
     print
 
 def parse_cmdline(argv): 
@@ -25,11 +25,11 @@ def parse_cmdline(argv):
             exit(3)
     return flags, args
 
-def parse_node_lookups(out_f):
-    lookups  = {}
-    results = {}
-
-    matchlookup = re.compile(r"""^.*\[\<lookup,\s*                             # token
+def parse_node_lookups(out_f, lookups, results):
+    matchlookup = re.compile(r"""^Print\[.*\],\s*
+                                 ([0-9]+),\s*                                  # seconds
+                                 ([0-9]+)\]\:\s*                               # nanoseconds
+                                 \[\<lookup,\s*                                # token
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
                                  ([a-f0-9]+),\s*                               # Lookup key 
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Destination IP address
@@ -39,9 +39,15 @@ def parse_node_lookups(out_f):
     for line in out_f: 
         if matchlookup.match(line):
             lookup = [x for x in matchlookup.split(line) if x]
-            lookups[lookup[-1]] = lookup[:-1]
+            ekey   = lookup[-1]
+            lookup_list = [lookup[:-1]]
+            if lookups.has_key(ekey): lookup_list += lookups[ekey]
+            lookups[ekey] = lookup_list 
 
-    matchresults = re.compile(r"""^.*\[\<lookupResults,\s*                     # token
+    matchresults = re.compile(r"""^Print\[.*\],\s*
+                                 ([0-9]+),\s*                                  # seconds
+                                 ([0-9]+)\]\:\s*                               # nanoseconds
+                                 \[\<lookupResults,\s*                         # token
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
                                  ([a-f0-9]+),\s*                               # key 
                                  ([a-f0-9]+),\s*                               # key 
@@ -49,13 +55,46 @@ def parse_node_lookups(out_f):
                                  ([0-9]+)\s*                                   # Event ID
                              \>\]$\n""", re.VERBOSE)
 
-
+    out_f.seek(0)
     for line in out_f: 
         if matchresults.match(line):
             result = [x for x in matchresults.split(line) if x]
-            results[result[-1]] = result[:-1]
+            ekey   = lookup[-1]
+            result_list = [result[:-1]]
+            if results.has_key(ekey): result_list += results[ekey]
+            results[ekey] = result_list                            # Hash key:=eventID
 
-    return lookups, results
+
+def eval_lookup(lookups):
+    hop_counts = {}
+    htimes   = open('./hop_time.dat', 'w')
+    hlookups = open('./hop_lookup.dat', 'w')
+    hop_time   = []
+    hop_lookup = {} 
+    total      = len(lookups)
+
+    num_lookups = 0.0
+    avg_hc      = 0.0
+    for lookup in lookups.values(): 
+       sec = ns = 0.0
+       for hop in lookup:
+           if not sec or hop[0] < sec or (hop[0] == sec and hop[1] < ns): 
+               sec = hop[0]      
+               ns  = hop[1]      
+       hop_time.append([sec, ns, len(lookup)])
+       looks = 1.0
+       if hop_lookup.has_key(len(lookup)): looks += hop_lookup[len(lookup)]
+       hop_lookup[len(lookup)] = looks 
+
+    hop_time.sort()
+    for x in hop_time: 
+        print >> htimes, "%s %s %s" % (x[0], x[1], x[2]) 
+
+    hops = hop_lookup.keys()
+    hops.sort()
+    for hop in hops:        
+        print >> hlookups, "%d %f %d" % (int(hop), float(hop_lookup[hop]), total)
+
 
 if __name__ == "__main__":
     global ip_map
@@ -69,8 +108,8 @@ if __name__ == "__main__":
         print_usage()        
         sys.exit(3)
 
-    ip_map    = {}
-    host_info = {}
+    lookups = {}
+    results = {}
     for root, dirs, files in os.walk(args[0]):
 	for host in dirs:
            for n in range(flags["num_nodes"]): 
@@ -78,12 +117,14 @@ if __name__ == "__main__":
                fname = os.path.join(root, host, "chord_node%d.out" % (n))
                if not os.path.exists(fname): break
                fh = open(fname, "r")
-               matchnodeip = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")  # Source IP address
-               nodeip = matchnodeip.findall(fh.readline())[0]
-               print "NODE IP: ", nodeip
-               ip_map[nodeip] += [nodeid]                                   # Store nodes that live @ IP
 
-               host_info[nodeid] = parse_node_lookups(fh)
+               #matchnodeip = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")  # Source IP address
+               #nodeip = matchnodeip.findall(fh.readline())[0]
+               #print "NODE IP: ", nodeip
+               #ip_map[nodeip] += [nodeid]                                   # Store nodes that live @ IP
 
+               parse_node_lookups(fh, lookups, results)
                fh.close()
 
+    eval_lookup(lookups)
+    
