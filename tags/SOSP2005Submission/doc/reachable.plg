@@ -1,0 +1,20 @@
+
+/** All-Pairs All Paths */
+
+/** Declared tables */
+materialize(neighbor,2,infinity,infinity).
+materialize(reach,2,infinity,infinity).
+/*materialize(reachable,2,infinity,infinity).*/
+
+
+/* Rules */
+
+rule R1 reachable@X(X,Y) :- neighbor@X(X,Y).
+
+rule R2 reachable@X(X,Y) :- neighbor@Z(Z,X), 
+	                  reachable@Z(Z,Y),
+	                  f_ne(X,Y). 
+
+
+
+
