@@ -34,7 +34,7 @@ std::string Id::toHexWord (u_int32_t num) {
   char result[] = {'0','0','0','0','0','0','0','0','\0'};
   int remainder;
   for (int i = 0; i < 8 && num >= 1; i += 1) {
-    if (remainder = num % 16)
+    if ((remainder = num % 16))
       result[7 - i] = HEX_DIGITS.at (remainder);
     num /= 16;
   }
