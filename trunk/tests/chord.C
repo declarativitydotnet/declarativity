@@ -45,8 +45,10 @@
 #include "hexdump.h"
 #include "table.h"
 #include "lookup.h"
+#include "aggregate.h"
 #include "insert.h"
 #include "scan.h"
+#include "delete.h"
 #include "pelScan.h"
 #include "functorSource.h"
 
@@ -141,6 +143,30 @@ struct LookupGenerator : public FunctorSource::Generator
 };
 
 struct LookupGenerator lookupGenerator;
+
+
+struct SuccessorGenerator : public FunctorSource::Generator
+{
+  virtual ~SuccessorGenerator() {};
+  TupleRef operator()() const {
+    
+    TupleRef tuple = Tuple::mk();
+    tuple->append(Val_Str::mk("Successor"));
+    
+    str myAddress = str(strbuf() << LOCAL);
+    tuple->append(Val_Str::mk(myAddress));
+    
+    IDRef successor = ID::mk((uint32_t) rand());
+    tuple->append(Val_ID::mk(successor));
+  
+    str succAddress = str(strbuf() << successor->toString() << "IP");
+    tuple->append(Val_Str::mk(succAddress));
+    tuple->freeze();
+    return tuple;
+  }
+};
+
+struct SuccessorGenerator successorGenerator;
 
 
 /** Test best lookup distance. */
@@ -634,49 +660,127 @@ void lookupRules(str name,
 
 
 
-/** SU1: bestSuccessorID@NI(NI,min<D>) :- node@NI(NI,N),
-    successor@NI(NI,S,SI), D=f_dist(S,N)
+/** SU1: bestSuccessorDist@NI(NI,min<D>) :- node@NI(NI,N),
+    successor@NI(NI,S,SI), D=f_dist(N,S)
 */
 void ruleSU1(str name,
              Router::ConfigurationRef conf,
              TableRef nodeTable,
-             TableRef fingerTable,
-             ElementSpecRef pushBLDIn,
-             int pushBLDInPort,
-             ElementSpecRef pullLookupOut,
-             int pullLookupOutPort)
+             TableRef successorTable,
+             ElementSpecRef pushSuccessorIn,
+             int pushSuccessorInPort,
+             ElementSpecRef pullBSDOut,
+             int pullBSDOutPort)
 {
   // Join with node
-  ElementSpecRef matchBLDIntoNodeS =
-    conf->addElement(New refcounted< UniqueLookup >(strbuf("BLDInNode:") << name,
+  ElementSpecRef matchSuccessorIntoNodeS =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("SuccessorInNode:") << name,
                                                     nodeTable,
                                                     1, // Match lookup.NI
                                                     1 // with node.NI
                                                     ));
-  // Link it to the BLD coming in. Pushes match already
-  conf->hookUp(pushBLDIn, pushBLDInPort, matchBLDIntoNodeS, 0);
+  // Link it to the successor coming in. Pushes match already
+  conf->hookUp(pushSuccessorIn, pushSuccessorInPort, matchSuccessorIntoNodeS, 0);
 
 
 
   // Produce intermediate ephemeral result
-  // res1(NI, K, R, E, D, N) from
-  // <<BLD NI K R E D><node NI N>>
+  // res1(NI, N) from
+  // <<Successor NI S SI><node NI N>>
   ElementSpecRef makeRes1S =
     conf->addElement(New refcounted< PelTransform >(strbuf("FlattenRes1:").cat(name),
                                                     "\"Res1\" pop \
-                                                     $0 unbox \
-                                                     drop /* No need for BLD literal */ \
-                                                     pop pop pop pop pop /* all BLD fields */ \
-                                                     $1 2 field pop /* node.N */"));
-  conf->hookUp(matchBLDIntoNodeS, 0, makeRes1S, 0);
+                                                     $0 1 field pop /* output successor.NI */ \
+                                                     $1 2 field pop /* output node.N */"));
+  conf->hookUp(matchSuccessorIntoNodeS, 0, makeRes1S, 0);
   
 
-  // Join with finger table
-  ElementSpecRef matchRes1IntoFingerS =
-    conf->addElement(New refcounted< MultLookup >(strbuf("LookupInFinger:") << name,
-                                                  fingerTable,
+  // Run aggregation over successor table
+  // Agg bestSuccessorDist
+  // NI, min<D>
+  // (res1.NI == successor.NI,
+  //  D = distance(N, S))
+  ElementSpecRef findMinInSuccessorS =
+    conf->addElement(New refcounted< PelScan >(str("BestSuccessorDist:") << name,
+                                               successorTable, 1,
+                                               str("$1 /* res1.NI */ \
+                                                    $2 /* NI res1.N */ \
+                                                    1 ->u32 ->id 0 ->u32 ->id distance /* NI N maxdist */"),
+                                               str("2 peek /* NI */ \
+                                                    $1 /* successor.NI */ \
+                                                    ==s not /* res1.NI != successor.NI */ \
+                                                    ifstop /* empty */ \
+                                                    1 peek /* N */ \
+                                                    $2  /* N successor.S */ \
+                                                    distance dup /* dist(N,S) twice */ \
+                                                    2 peek /* newDist newDist oldDist */ \
+                                                    <id /* newDist (newDist<oldDist) */ \
+                                                    swap /* (newDist<oldDist) newDist */ \
+                                                    2 peek ifelse /* ((newDist<oldDist) ? newDist : oldDist) */ \
+                                                    swap /* swap newMin in state where oldMin was */ \
+                                                    drop /* only state remains */"),
+                                               str("\"BestSuccessorDist\" pop 1 peek /* output NI */\
+                                                   pop /* output minDistance */\
+                                                   drop dop /* empty the stack */")));
+  // Res1 must be pushed to second join
+  ElementSpecRef pushRes1S =
+    conf->addElement(New refcounted< TimedPullPush >(strbuf("PushRes1:") << name,
+                                                     0));
+
+
+
+  // Link the join to the aggregation
+  conf->hookUp(makeRes1S, 0, pushRes1S, 0);
+  conf->hookUp(pushRes1S, 0, findMinInSuccessorS, 0);
+  conf->hookUp(findMinInSuccessorS, 0, pullBSDOut, pullBSDOutPort);
+}
+
+
+
+/** SU2: bestSuccessor@NI(NI,S,SI) :- node@NI(NI,N),
+    bestSuccessorDist@NI(NI,D), successor@NI(NI,S,SI), D=f_dist(N,S)
+*/
+void ruleSU2(str name,
+             Router::ConfigurationRef conf,
+             TableRef nodeTable,
+             TableRef successorTable,
+             TableRef bestSuccessorTable,
+             ElementSpecRef pushBSDIn,
+             int pushBSDInPort,
+             ElementSpecRef pushBSOut,
+             int pushBSOutPort)
+{
+  // Join with node
+  ElementSpecRef matchBSDIntoNodeS =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("BSDInNode:") << name,
+                                                    nodeTable,
+                                                    1, // Match bSD.NI
+                                                    1 // with node.NI
+                                                    ));
+  // Link it to the BSD coming in. Pushes match already
+  conf->hookUp(pushBSDIn, pushBSDInPort, matchBSDIntoNodeS, 0);
+
+
+
+  // Produce intermediate ephemeral result
+  // res1(NI, N, D) from
+  // <<BSD NI D><node NI N>>
+  ElementSpecRef makeRes1S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("FlattenRes1:").cat(name),
+                                                    "\"Res1\" pop \
+                                                     $0 1 field pop /* output BSD.NI */ \
+                                                     $1 2 field pop /* output node.N */ \
+                                                     $0 2 field pop /* output BSD.D */ \
+                                                     "));
+  conf->hookUp(matchBSDIntoNodeS, 0, makeRes1S, 0);
+  
+
+  // Join with successor table
+  ElementSpecRef matchRes1IntoSuccessorS =
+    conf->addElement(New refcounted< MultLookup >(strbuf("Res1InSuccessor:") << name,
+                                                  successorTable,
                                                   1, // Match res1.NI
-                                                  1 // with finger.NI
+                                                  1 // with successor.NI
                                                   ));
   // Res1 must be pushed to second join
   ElementSpecRef pushRes1S =
@@ -684,39 +788,251 @@ void ruleSU1(str name,
                                                      0));
   // Link the two joins together
   conf->hookUp(makeRes1S, 0, pushRes1S, 0);
-  conf->hookUp(pushRes1S, 0, matchRes1IntoFingerS, 0);
+  conf->hookUp(pushRes1S, 0, matchRes1IntoSuccessorS, 0);
 
   // Select out the outcomes that match the select clause
-  // (finger.B in (res1.N, res1.K)) and (res1.D == distance(finger.B,
-  // res1.K))
-  // from <<Res1 NI K R E D N><Finger NI I B BI>>
+  // (res1.D == distance(res1.N, successor.S))
+  // from <<Res1 NI N D><Successor NI S SI>>
   ElementSpecRef selectS =
     conf->addElement(New refcounted< PelTransform >(strbuf("SelectRes1:").cat(name),
-                                                    "$1 3 field /* finger.B */\
-                                                     $0 6 field /* B res1.N */\
-                                                     $0 2 field /* B N res1.K */\
-                                                     ()id /* B in (N,K) */\
-                                                     $1 3 field /* B in (N,K) finger.B */\
-                                                     $0 2 field /* B in (N,K) B res1.K */\
-                                                     distance /* B in (N,K) dist(B,K) */\
-                                                     $0 5 field /* B in (N,K) dist(B,K) res1.D */\
-                                                     ==id /* B in (N,K) (dist==D) */\
-                                                     and not ifstop /* select clause */\
+                                                    "$0 2 field /* res1.N */\
+                                                     $1 2 field /* D successor.S */\
+                                                     distance /* dist(N,S) */\
+                                                     $0 3 field /* dist(N,S) res1.D */\
+                                                     ==id /* (dist==D) */\
+                                                     not ifstop /* drop if not equal */\
                                                      $0 pop $1 pop /* pass through */"));
-  conf->hookUp(matchRes1IntoFingerS, 0, selectS, 0);
+  conf->hookUp(matchRes1IntoSuccessorS, 0, selectS, 0);
 
-  // Project onto lookup(BI,K,R,E)
-  // from <<Res1 NI K R E D N><Finger NI I B BI>>
-  ElementSpecRef makeLookupS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("FlattenLookup:").cat(name),
-                                                    "\"Lookup\" pop \
-                                                     $1 4 field pop /* BI */ \
-                                                     $0 2 field pop /* K */ \
-                                                     $0 3 field pop /* R */ \
-                                                     $0 4 field pop /* E */"));
-  conf->hookUp(selectS, 0, makeLookupS, 0);
-  conf->hookUp(makeLookupS, 0, pullLookupOut, pullLookupOutPort);
+  // Turn into bestSuccessor
+  // from <<Res1...><Successor...>>
+  ElementSpecRef makeBSS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("FlattenSuccessor:").cat(name),
+                                                    "$1 unbox drop /* replace with BestSuccessor */\
+                                                     \"BestSuccessor\" pop /* new literal */\
+                                                     pop pop pop /* Remaining fields */"));
+  conf->hookUp(selectS, 0, makeBSS, 0);
+
+  // Best successor must be pushed to materialized view
+  ElementSpecRef pushBSS =
+    conf->addElement(New refcounted< TimedPullPush >(strbuf("PushBSS:") << name,
+                                                     0));
+  ElementSpecRef insertBSS =
+    conf->addElement(New refcounted< Insert >(strbuf("InsertBSS:") << name,
+                                              bestSuccessorTable));
+  conf->hookUp(makeBSS, 0, pushBSS, 0);
+  conf->hookUp(pushBSS, 0, insertBSS, 0);
+  conf->hookUp(insertBSS, 0, pushBSOut, pushBSOutPort);
 }
+
+
+/** SR1: successorCount(NI, count<>) :- successor(NI, S, SI)
+*/
+void ruleSR1(str name,
+             Router::ConfigurationRef conf,
+             Table::MultAggregate aggregate,
+             ElementSpecRef pullSuccessorCountOut,
+             int pullSuccessorCountOutPort)
+{
+  // Create the agg element
+  ElementSpecRef successorCountAggS =
+    conf->addElement(New refcounted< Aggregate >(strbuf("CountSuccessors:") << name,
+                                                 aggregate));
+
+
+  // Produce result
+  // successorCount(NI, C) from
+  // <NI C>
+  ElementSpecRef makeSuccessorCountS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("FlattenSuccessorCount:").cat(name),
+                                                    "\"SuccessorCount\" pop \
+                                                     $0 pop /* output NI */ \
+                                                     $1 pop /* output C */ \
+                                                     "));
+  conf->hookUp(successorCountAggS, 0, makeSuccessorCountS, 0);
+  conf->hookUp(makeSuccessorCountS, 0, pullSuccessorCountOut, pullSuccessorCountOutPort);
+}
+
+/**
+   SR2: evictSuccessor(NI) :- successorCount(NI, C), C > successor.SIZE
+*/
+void ruleSR3(str name,
+             Router::ConfigurationRef conf,
+             unsigned successorSize,
+             ElementSpecRef pullSuccessorCountIn,
+             int pullSuccessorCountInPort,
+             ElementSpecRef pullEvictOut,
+             int pullEvictOutPort)
+{
+  // Join with node
+  ElementSpecRef selectS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("SelectSuccCount:").cat(name),
+                                                    strbuf() << successorSize
+                                                    << " $2 >i /* successor.Size < C*/\
+                                                        ifstop /* drop if less than max */\
+                                                        \"EvictSuccessor\" pop\
+                                                        $1 pop /* NI */"));
+  conf->hookUp(pullSuccessorCountIn, pullSuccessorCountInPort, selectS, 0);
+  conf->hookUp(selectS, 0, pullEvictOut, pullEvictOutPort);
+}
+
+/** SR3: maxSuccessorDist(NI, max<D>) :- successor(NI, S, SI), node(NI,
+    N), D = dist(N, S)
+*/
+void ruleSR3(str name,
+             Router::ConfigurationRef conf,
+             TableRef nodeTable,
+             TableRef successorTable,
+             ElementSpecRef pushSuccessorIn,
+             int pushSuccessorInPort,
+             ElementSpecRef pullMSDOut,
+             int pullMSDOutPort)
+{
+  // Join with node
+  ElementSpecRef matchSuccessorIntoNodeS =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("SuccessorInNode:") << name,
+                                                    nodeTable,
+                                                    1, // Match lookup.NI
+                                                    1 // with node.NI
+                                                    ));
+  // Link it to the successor coming in. Pushes match already
+  conf->hookUp(pushSuccessorIn, pushSuccessorInPort, matchSuccessorIntoNodeS, 0);
+
+
+
+  // Produce intermediate ephemeral result
+  // res1(NI, N) from
+  // <<Successor NI S SI><node NI N>>
+  ElementSpecRef makeRes1S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("FlattenRes1:").cat(name),
+                                                    "\"Res1\" pop \
+                                                     $0 1 field pop /* output successor.NI */ \
+                                                     $1 2 field pop /* output node.N */"));
+  conf->hookUp(matchSuccessorIntoNodeS, 0, makeRes1S, 0);
+  
+
+  // Run aggregation over successor table
+  // Agg bestSuccessorDist
+  // NI, max<D>
+  // (res1.NI == successor.NI,
+  //  D = distance(N, S))
+  ElementSpecRef findMaxInSuccessorS =
+    conf->addElement(New refcounted< PelScan >(str("BestSuccessorDist:") << name,
+                                               successorTable, 1,
+                                               str("$1 /* res1.NI */ \
+                                                    $2 /* NI res1.N */ \
+                                                    0 ->u32 ->id /* NI N mindist */"),
+                                               str("2 peek /* NI */ \
+                                                    $1 /* successor.NI */ \
+                                                    ==s not /* res1.NI != successor.NI */ \
+                                                    ifstop /* empty */ \
+                                                    1 peek /* N */ \
+                                                    $2  /* N successor.S */ \
+                                                    distance dup /* dist(N,S) twice */ \
+                                                    2 peek /* newDist newDist oldDist */ \
+                                                    >id /* newDist (newDist>oldDist) */ \
+                                                    swap /* (newDist>oldDist) newDist */ \
+                                                    2 peek ifelse /* ((newDist>oldDist) ? newDist : oldDist) */ \
+                                                    swap /* swap newMax in state where oldMax was */ \
+                                                    drop /* only state remains */"),
+                                               str("\"MaxSuccessorDist\" pop 1 peek /* output NI */\
+                                                    pop /* output maxDistance */\
+                                                    drop dop /* empty the stack */")));
+  // Res1 must be pushed to second join
+  ElementSpecRef pushRes1S =
+    conf->addElement(New refcounted< TimedPullPush >(strbuf("PushRes1:") << name,
+                                                     0));
+
+
+
+  // Link the join to the aggregation
+  conf->hookUp(makeRes1S, 0, pushRes1S, 0);
+  conf->hookUp(pushRes1S, 0, findMaxInSuccessorS, 0);
+  conf->hookUp(findMaxInSuccessorS, 0, pullMSDOut, pullMSDOutPort);
+}
+
+/** SR4: maxSuccessor(NI, S, SI) :- successor(NI, S, SI),
+    maxSuccessorDist(NI, D), D=dist(N, S)
+*/
+void ruleSR4(str name,
+             Router::ConfigurationRef conf,
+             TableRef nodeTable,
+             TableRef successorTable,
+             ElementSpecRef pushMSDIn,
+             int pushMSDInPort)
+{
+  // Join with node
+  ElementSpecRef matchMSDIntoNodeS =
+    conf->addElement(New refcounted< UniqueLookup >(strbuf("MSDInNode:") << name,
+                                                    nodeTable,
+                                                    1, // Match bSD.NI
+                                                    1 // with node.NI
+                                                    ));
+  // Link it to the MSD coming in. Pushes match already
+  conf->hookUp(pushMSDIn, pushMSDInPort, matchMSDIntoNodeS, 0);
+
+
+
+  // Produce intermediate ephemeral result
+  // res1(NI, N, D) from
+  // <<MSD NI D><node NI N>>
+  ElementSpecRef makeRes1S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("FlattenRes1:").cat(name),
+                                                    "\"Res1\" pop \
+                                                     $0 1 field pop /* output MSD.NI */ \
+                                                     $1 2 field pop /* output node.N */ \
+                                                     $0 2 field pop /* output MSD.D */ \
+                                                     "));
+  conf->hookUp(matchMSDIntoNodeS, 0, makeRes1S, 0);
+  
+
+  // Join with successor table
+  ElementSpecRef matchRes1IntoSuccessorS =
+    conf->addElement(New refcounted< MultLookup >(strbuf("Res1InSuccessor:") << name,
+                                                  successorTable,
+                                                  1, // Match res1.NI
+                                                  1 // with successor.NI
+                                                  ));
+  // Res1 must be pushed to second join
+  ElementSpecRef pushRes1S =
+    conf->addElement(New refcounted< TimedPullPush >(strbuf("PushRes1:") << name,
+                                                     0));
+  // Link the two joins together
+  conf->hookUp(makeRes1S, 0, pushRes1S, 0);
+  conf->hookUp(pushRes1S, 0, matchRes1IntoSuccessorS, 0);
+
+  // Select out the outcomes that match the select clause
+  // (res1.D == distance(res1.N, successor.S))
+  // from <<Res1 NI N D><Successor NI S SI>>
+  ElementSpecRef selectS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("SelectRes1:").cat(name),
+                                                    "$0 2 field /* res1.N */\
+                                                     $1 2 field /* D successor.S */\
+                                                     distance /* dist(N,S) */\
+                                                     $0 3 field /* dist(N,S) res1.D */\
+                                                     ==id /* (dist==D) */\
+                                                     not ifstop /* drop if not equal */\
+                                                     $0 pop $1 pop /* pass through */"));
+  conf->hookUp(matchRes1IntoSuccessorS, 0, selectS, 0);
+
+  // Turn into res2
+  // from <<Res1...><Successor...>>
+  ElementSpecRef makeMSS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("FlattenRes2:").cat(name),
+                                                    "$1 unbox drop /* replace with Res2 */\
+                                                     \"Res2\" pop /* new literal */\
+                                                     pop pop pop /* Remaining fields */"));
+  conf->hookUp(selectS, 0, makeMSS, 0);
+
+  // And send it for deletion
+  ElementSpecRef deleteSuccessorS =
+    conf->addElement(New refcounted< Delete >(strbuf("DeleteSuccessor:") << name,
+                                              successorTable,
+                                              2,
+                                              2));
+  conf->hookUp(makeMSS, 0, deleteSuccessorS, 0);
+}
+
 
 
 
@@ -782,14 +1098,15 @@ void testLookups(LoggerI::Level level)
     
     str myAddress = str(strbuf() << LOCAL);
     tuple->append(Val_Str::mk(myAddress));
-
+    
     IDRef target = ID::mk((uint32_t) 0X200)->add(me);
     IDRef best = ID::mk()->add(target)->add(ID::mk((uint) 10));
     tuple->append(Val_ID::mk(best));
-  
+    
     str address = str(strbuf() << FINGERIP << ":" << 0);
     tuple->append(Val_Str::mk(address));
     tuple->freeze();
+
     bestSuccessorTable->insert(tuple);
   }
     
@@ -843,6 +1160,77 @@ void testLookups(LoggerI::Level level)
 }
 
 
+
+/** Test SR1. */
+void testRuleSR1(LoggerI::Level level)
+{
+  // successor(currentNodeIP, successorID, successorIP),
+  TableRef successorTable =
+    New refcounted< Table >(strbuf("SuccessorTable"), 5);
+  successorTable->add_multiple_index(1);
+
+  // Create the count aggregate on the unique index
+  std::vector< unsigned > groupBy;
+  groupBy.push_back(1);
+  Table::MultAggregate u =
+    successorTable->add_mult_groupBy_agg(1, groupBy, 1, &Table::AGG_COUNT);
+
+  
+
+  // Create the data flow
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+
+
+  ElementSpecRef funkyS =
+    conf->addElement(New refcounted< FunctorSource >(str("Source"),
+                                                     &successorGenerator));
+  ElementSpecRef lookupPS =
+    conf->addElement(New refcounted< Print >(strbuf("NewSuccessor")));
+  ElementSpecRef timedPullPushS =
+    conf->addElement(New refcounted< TimedPullPush >("PullPush", 1));
+  ElementSpecRef insertS =
+    conf->addElement(New refcounted< Insert >(strbuf("Insert"),
+                                              successorTable));
+  ElementSpecRef discardS =
+    conf->addElement(New refcounted< Discard >("Discard"));
+  conf->hookUp(funkyS, 0, lookupPS, 0);
+  conf->hookUp(lookupPS, 0, timedPullPushS, 0);
+  conf->hookUp(timedPullPushS, 0, insertS, 0);
+  conf->hookUp(insertS, 0, discardS, 0);
+
+  ElementSpecRef outputPS =
+    conf->addElement(New refcounted< Print >(strbuf("Output")));
+  ElementSpecRef sinkS =
+    conf->addElement(New refcounted< TimedPullSink >("Sink", 0));
+  conf->hookUp(outputPS, 0, sinkS, 0);
+
+
+  ruleSR1(str("SR1"),
+          conf,
+          u,
+          outputPS, 0);
+
+  RouterRef router = New refcounted< Router >(conf, level);
+  if (router->initialize(router) == 0) {
+    std::cout << "Correctly initialized Chord Rule SR1.\n";
+  } else {
+    std::cout << "** Failed to initialize correct spec\n";
+    return;
+  }
+
+  // Activate the router
+  router->activate();
+
+  // Schedule kill
+  //delaycb(10, 0, wrap(&killJoin));
+
+  // Run the router
+  amain();
+}
+
+
+
+
 int main(int argc, char **argv)
 {
   std::cout << "\nChord\n";
@@ -860,8 +1248,9 @@ int main(int argc, char **argv)
   srand(seed);
 
   // testBestLookupDistance(level);
-  testLookups(level);
+  // testLookups(level);
   // testRuleL2(level);
+  testRuleSR1(level);
   return 0;
 }
   

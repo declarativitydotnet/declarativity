@@ -37,6 +37,7 @@ libp2elements_la_SOURCES = \
 	store.C \
 	insert.C \
 	scan.C \
+	delete.C \
 	joiner.C \
 	timedPullPush.C \
 	strToSockaddr.C \

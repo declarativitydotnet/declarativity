@@ -15,6 +15,7 @@
 #include "table.h"
 
 #include "val_str.h"
+#include "val_uint64.h"
 
 //
 // Constructor
@@ -203,6 +204,42 @@ void Table::insert(TupleRef t)
   garbage_collect();
 }
 
+/**
+   Removing a tuple from an index.  It finds the entry in the index and,
+   if it exists, removes it from all indices and aggregates.  XXX This
+   doesn't remove an entry from the queue; the entry will expire in
+   time.
+*/
+void
+Table::remove(unsigned fieldNo, ValueRef key)
+{
+  UniqueIndex *ndx = uni_indices.at(fieldNo);
+  if (!ndx) {
+    // This index does not exist
+    warn << "Requesting removal from non-existent unique index " << fieldNo
+         << " in table " << name << "\n";
+    assert(false);
+    // We don't get here
+    return;
+  }
+
+  // Find the entry itself
+  UniqueIndex::iterator iter = ndx->find(key);
+  if (iter == ndx->end()) {
+    // No such key exists.  Do nothing
+  } else {
+    // Got it
+    Entry* theEntry = iter->second;
+
+    // Now eradicate
+    remove_from_indices(theEntry);
+    remove_from_aggregates(theEntry->t);
+  }
+
+  // And clean up while we're at it...
+  garbage_collect();
+}
+
 //
 // Remove an entry from all the indices
 //
@@ -335,6 +372,7 @@ Table::UniqueLookupGenerator::lookup(TableRef t, unsigned field, ValueRef key)
 
 Table::AggregateFunctionMIN Table::AGG_MIN;
 Table::AggregateFunctionMAX Table::AGG_MAX;
+Table::AggregateFunctionCOUNT Table::AGG_COUNT;
 
 
 
@@ -424,3 +462,42 @@ Table::AggregateFunctionMAX::result()
 {
   return _currentMax;
 }
+
+
+
+Table::AggregateFunctionCOUNT::AggregateFunctionCOUNT()
+  : _current(0)
+{
+}
+
+Table::AggregateFunctionCOUNT::~AggregateFunctionCOUNT()
+{
+}
+  
+void
+Table::AggregateFunctionCOUNT::reset()
+{
+  _current = 0;
+}
+  
+void
+Table::AggregateFunctionCOUNT::first(ValueRef v)
+{
+  _current = 1;
+}
+  
+void
+Table::AggregateFunctionCOUNT::process(ValueRef v)
+{
+  _current++;
+}
+
+ValuePtr 
+Table::AggregateFunctionCOUNT::result()
+{
+  return Val_UInt64::mk(_current);
+}
+
+
+
+

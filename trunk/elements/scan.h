@@ -7,7 +7,7 @@
  * found by writing to: Intel Research Berkeley, 2150 Shattuck Avenue,
  * Suite 1300, Berkeley, CA, 94704.  Attention: Intel License Inquiry.
  *
- * The scan element.  It has a single pull output.  I continuously
+ * The scan element.  It has a single pull output.  It continuously
  * iterates over elemenets in the table returning them when pulled.
  * XXX. It does not block.  If the table is empty, it returns empty
  * tuples. When storage is abstracted to the table object, we could

@@ -69,31 +69,39 @@ to return a random value will result in a random routing policy.
 ----------------------------
 
 Best Successor:
-
-SU1: bestSuccessorID@NI(NI,min<D>) :- node@NI(NI,N), successor@NI(NI,S,SI),
-D=f_dist(S,N) 
-SU2: bestSuccessor@NI(NI,S,SI) :- node@NI(NI,N), bestSuccessorID@NI(NI,D),
-successor@NI(NI,S,SI), D=f_dist(S,N)
+SU1: bestSuccessorDist@NI(NI,min<D>) :- node@NI(NI,N), successor@NI(NI,S,SI),
+D=f_dist(N,S) 
+SU2: bestSuccessor@NI(NI,S,SI) :- node@NI(NI,N), bestSuccessorDist@NI(NI,D),
+successor@NI(NI,S,SI), D=f_dist(N,S)
 
 Successor replacement policy:
-SR1: evictSuccessor@NI(NI) :- successorCount@NI(NI,C), C>successor.size
-SR2: delete@NI<successor(NI,S,SI)> :- successor@NI(NI,S,SI),
-evictSuccessor@NI(NI), maxSuccessor@NI(NI,S,SI)
-SR3: maxSuccessorDistance@NI(NI,max<D>) :- successor@NI(NI,S,SI), node@NI(NI,N), D = f_dist(N,S)
-SR4: maxSuccessor@NI(NI,S,SI) :- successor@NI(NI,S,SI),
-maxSuccessorDistance@NI(NI,D), D=f_dist(N,S) 
-
+SR1: successorCount(NI,count<>) :- successor(NI,S,SI)
+SR2: evictSuccessor@NI(NI) :- successorCount@NI(NI,C), C>successor.size
+SR3: maxSuccessorDist@NI(NI,max<D>) :- successor@NI(NI,S,SI),
+node@NI(NI,N), D = f_dist(N,S), evictSuccessor@NI(NI)
+SR4: delete@NI<successor(NI,S,SI)> :- successor@NI(NI,S,SI),
+maxSuccessorDist@NI(NI,D), D=f_dist(N,S)
 
 Fingers: 
-F1: finger@NI(NI,K,B,BI) :- fix_finger@NI(NI,E), lookupResults@NI(NI,K,B,BI,E)
-F2: lookup@NI(NI,K,NI,E) :- fix_finger@NI(NI,E), fingerIndex@NI(NI, I),
-K=[(NI+2I) mod 2^m] 
-F3: fingerIndex@NI(NI, I) :- fix_finger@NI(NI,E), fingerIndex@NI(NI, I1),
-I=([I1+1] mod fingerIndex.size) 
-F4: fingerIndex@NI(NI,0)
-F5: fix_finger@NI(ni,e), period=finger.TTL*0.5
 
-Periodically, add a fix_finger(ni,e) tuple to repair the ith finger
+F1: fixFinger@NI(ni), period=finger.TTL*0.5
+
+F2: nextFingerFix@NI(ni, 0).
+
+F3: fingerLookup@NI(NI, E, I) :- fixFinger@NI(NI), E = random(),
+nextFingerFix@NI(NI, I)
+
+F4: lookup@NI(NI, K, NI, E) :- fingerLookup@NI(NI, E, I), node(NI, N), K
+= N + 1 << I
+
+F5: finger@NI(NI, K, B, BI) :- fingerLookup@NI(NI, E, I),
+lookupResults@NI(NI, K, B, BI, E)
+
+F6: nextFingerFix@NI(NI, I) :- fingerLookup@NI(NI, E, I1),
+lookupResults@NI(NI, K, B, BI, E), I = I1 + 1 mod finger.SIZE
+
+
+Periodically, add a fix_finger(ni) tuple to repair the ith finger
 entry starting from 0. If finger entry non-existant, creates it.  To
 build the finger table eagerly, we can call fix_finger for all finger
 entries. The less the period beteween each call to fix fingers, the more
