@@ -518,6 +518,35 @@ void ruleSU2(str name,
 }
 
 
+/** 
+    rule SU3 finger@NI(NI,0,S,SI) :- bestSuccessor@NI(NI,S,SI).
+ */
+void ruleSU3(str name,
+             Router::ConfigurationRef conf,
+             ElementSpecRef pushBestSuccessorIn,
+             int pushBestSuccessorInPort,
+             ElementSpecRef pullFingerOut,
+             int pullFingerOutPort)
+{
+  // Project onto finger(NI, 0, B, BI)
+  // from
+  // bestSuccessor(NI, S, SI)
+  ElementSpecRef projectS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("project:").cat(name),
+                                                    "\"finger\" pop \
+                                                     $1 pop /* out bS.NI */\
+                                                     0 pop /* out 0 */\
+                                                     $2 pop /* out bS.S */\
+                                                     $3 pop /* out bS.SI */\
+                                                     "));
+  ElementSpecRef slotS =
+    conf->addElement(New refcounted< Slot >(strbuf("Slot:") << name));
+  conf->hookUp(pushBestSuccessorIn, pushBestSuccessorInPort, projectS, 0);
+  conf->hookUp(projectS, 0, slotS, 0);
+  conf->hookUp(slotS, 0, pullFingerOut, pullFingerOutPort);
+}
+
+
 /** SR1: successorCount(NI, count<>) :- successor(NI, S, SI)
 */
 void ruleSR1(str name,
@@ -635,7 +664,8 @@ void ruleSR3(str name,
                                                     2 peek ifelse /* ((newDist>oldDist) ? newDist : oldDist) */ \
                                                     swap /* swap newMax in state where oldMax was */ \
                                                     drop /* only state remains */"),
-                                               str("\"maxSuccessorDist\" pop 1 peek /* output NI */\
+                                               str("\"maxSuccessorDist\" pop /* output name */\
+                                                    $1 pop /* output NI */\
                                                     pop /* output maxDistance */\
                                                     drop drop /* empty the stack */")));
   // Res1 must be pushed to second join
@@ -672,7 +702,6 @@ void ruleSR4(str name,
 
   // Link it to the MSD coming in. Pushes match already
   conf->hookUp(pushMSDIn, pushMSDInPort, matchMSDIntoNodeS, 0);
-
 
 
   // Produce intermediate ephemeral result
@@ -1203,7 +1232,7 @@ void ruleJ1a(str name,
   ElementSpecRef onceS =
     conf->addElement(New refcounted< TimedPullPush >(strbuf("JoinEventPush:") << name,
                                                      delay, // run then
-                                                     1 // run once
+                                                     4 // run once
                                                      ));
 
   // And a slot from which to pull
@@ -1361,11 +1390,11 @@ void ruleJ5(str name,
 {
   // Join lookupResults with joinRecord table
   ElementSpecRef join1S =
-    conf->addElement(New refcounted< UniqueLookup >(strbuf("lookupResultsIntoJoinRecord:") << name,
-                                                    joinRecordTable,
-                                                    1, // Match lookupResults.NI
-                                                    1 // with joinRecord.NI
-                                                    ));
+    conf->addElement(New refcounted< MultLookup >(strbuf("lookupResultsIntoJoinRecord:") << name,
+                                                  joinRecordTable,
+                                                  1, // Match lookupResults.NI
+                                                  1 // with joinRecord.NI
+                                                  ));
   ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
 
   conf->hookUp(pushLookupResultsIn, pushLookupResultsInPort, join1S, 0);
@@ -2132,9 +2161,13 @@ connectRules(str name,
   conf->hookUp(insertPredecessor, 0, discardPredecessor, 0);
 
   ElementSpecRef insertBestSuccessor = conf->addElement(New refcounted< Insert >(strbuf("bestSuccessor") << "Insert:" << name, bestSuccessorTable));
-  ElementSpecRef discardBestSuccessor = conf->addElement(New refcounted< Discard >(strbuf("bestSuccessor") << "Discard:" << name));
+  ElementSpecRef dupBestSuccessor = conf->addElement(New refcounted< DuplicateConservative >(strbuf("bestSuccessor") << "Dup:" << name, 1));
+  ElementSpecRef qBestSuccessor = conf->addElement(New refcounted< Queue >("bestSuccessorQueue", QUEUE_LENGTH));
+  ElementSpecRef tPPBestSuccessor = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
   conf->hookUp(demuxS, nextDemuxOutput++, insertBestSuccessor, 0);
-  conf->hookUp(insertBestSuccessor, 0, discardBestSuccessor, 0);
+  conf->hookUp(insertBestSuccessor, 0, qBestSuccessor, 0);
+  conf->hookUp(qBestSuccessor, 0, tPPBestSuccessor, 0);
+  conf->hookUp(tPPBestSuccessor, 0, dupBestSuccessor, 0);
 
   ElementSpecRef insertNextFingerFix = conf->addElement(New refcounted< Insert >(strbuf("nextFingerFix") << "Insert:" << name, nextFingerFixTable));
   ElementSpecRef discardNextFingerFix = conf->addElement(New refcounted< Discard >(strbuf("nextFingerFix") << "Discard:" << name));
@@ -2263,7 +2296,7 @@ connectRules(str name,
 
 
   int roundRobinPortCounter = 0;
-  ElementSpecRef roundRobin = conf->addElement(New refcounted< RoundRobin >(strbuf("RoundRobin:") << name, 34));
+  ElementSpecRef roundRobin = conf->addElement(New refcounted< RoundRobin >(strbuf("RoundRobin:") << name, 35));
   ElementSpecRef wrapAroundPush = conf->addElement(New refcounted< TimedPullPush >(strbuf("WrapAroundPush") << name, 0));
 
   // The wrap around for locally bound tuples
@@ -2314,6 +2347,10 @@ connectRules(str name,
           successorTable,
           bestSuccessorTable,
           dupBestSuccessorDistance, 0,
+          roundRobin, roundRobinPortCounter++);
+  ruleSU3(strbuf(name) << ":SU3",
+          conf,
+          dupBestSuccessor, 0,
           roundRobin, roundRobinPortCounter++);
   ruleSR1(strbuf(name) << ":SR1",
           conf,
@@ -2475,7 +2512,7 @@ void createNode(str myAddress,
                 double delay = 0)
 {
   TableRef fingerTable =
-    New refcounted< Table >(strbuf("fingerTable"), 100);
+    New refcounted< Table >(strbuf("fingerTable"), FINGERSIZE);
   fingerTable->add_unique_index(2);
   fingerTable->add_multiple_index(1);
   
@@ -2528,7 +2565,7 @@ void createNode(str myAddress,
   nextFingerFixTable->add_unique_index(1);
 
   /** The finger lookup table.  It is indexed uniquely by its event ID */
-  TableRef fingerLookupTable = New refcounted< Table >(strbuf("fingerLookup"), 3);
+  TableRef fingerLookupTable = New refcounted< Table >(strbuf("fingerLookup"), 100);
   fingerLookupTable->add_unique_index(2);
   fingerLookupTable->add_multiple_index(1);
 
@@ -2538,8 +2575,9 @@ void createNode(str myAddress,
   
 
   // The joinRecord table. Singleton
-  TableRef joinRecordTable = New refcounted< Table >(strbuf("joinRecord"), 2);
-  joinRecordTable->add_unique_index(1);
+  TableRef joinRecordTable = New refcounted< Table >(strbuf("joinRecord"), 100);
+  joinRecordTable->add_unique_index(2);
+  joinRecordTable->add_multiple_index(1);
 
   // The stabilizeRecord table. Singleton.
   TableRef stabilizeRecordTable = New refcounted< Table >(strbuf("stabilizeRecord"), 2);

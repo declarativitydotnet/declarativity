@@ -52,6 +52,9 @@ rule SU2 bestSuccessor@NI(NI,S,SI) :-
 	successor@NI(NI,S,SI),
 	D=f_dist(N,S)-1.
 
+rule SU3 finger@NI(NI,0,S,SI) :-
+	bestSuccessor@NI(NI,S,SI).
+
 rule SR1 successorCount(NI,count<>) :-
 	successor(NI,S,SI).
 

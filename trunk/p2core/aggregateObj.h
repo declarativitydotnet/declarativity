@@ -83,7 +83,6 @@ Table::AggregateObj< _Index >::update(TupleRef t)
   if (!started) {
     // This was a removal that left no aggregate.
     assert(aMatchingTuple == NULL);
-    assert(_aggregateFn->result() == NULL);
 
     // Remove the remembered aggregate for these group-by values
     _currentAggregates.erase(t);
