@@ -117,7 +117,11 @@ def process_node(out_f, lookups, results):
                     cnt_bw += mt_wins
             else: # MIDDLE OF WINDOW
                 window_bytes += bytes[measure[2]]
-    return min_bw, sum_bw/cnt_bw, max_bw
+    theNewAverage = 0
+    if cnt_bw == 0: theNewAverage = 0
+    else : theNewAverage = sum_bw/cnt_bw
+
+    return min_bw, theNewAverage, max_bw
 
 #               ts = ts2sec(measure[0], measure[1])
 #             if not start_t: start_t = ts
