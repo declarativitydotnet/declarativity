@@ -53,8 +53,8 @@ int Element::nelements_allocated = 0;
 
 Element::Element() :
   ELEMENT_CTOR_STATS
-  _inputs(&_ports0[0]),
-  _outputs(&_ports0[0]),
+  _inputs(0),
+  _outputs(0),
   _ninputs(0),
   _noutputs(0)
 {
@@ -63,8 +63,8 @@ Element::Element() :
 
 Element::Element(int ninputs, int noutputs) :
   ELEMENT_CTOR_STATS
-  _inputs(&_ports0[0]),
-  _outputs(&_ports0[0]),
+  _inputs(0),
+  _outputs(0),
   _ninputs(0),
   _noutputs(0)
 {
@@ -75,9 +75,9 @@ Element::Element(int ninputs, int noutputs) :
 Element::~Element()
 {
   nelements_allocated--;
-  if (_inputs != _ports0)
+  if (_inputs)
     delete[] _inputs;
-  if (_outputs != _ports0 && _outputs != _ports0 + _ninputs)
+  if (_outputs)
     delete[] _outputs;
 }
 
@@ -87,46 +87,25 @@ void
 Element::set_nports(int new_ninputs, int new_noutputs)
 {
   // exit on bad counts, or if already initialized
-  if (new_ninputs < 0 || new_noutputs < 0 || _ports0[0].initialized())
+  // XXX initialized flag for element
+  if (new_ninputs < 0 || new_noutputs < 0)
     return;
   
-  // decide if inputs & outputs were inlined
-  bool old_in_inline =
-    (_inputs == _ports0);
-  bool old_out_inline =
-    (_outputs == _ports0 || _outputs == _ports0 + _ninputs);
-
-  // decide if inputs & outputs should be inlined
-  bool new_in_inline =
-    (new_ninputs == 0
-     || new_ninputs + new_noutputs <= INLINE_PORTS
-     || (new_ninputs <= INLINE_PORTS && new_noutputs > INLINE_PORTS)
-     || (new_ninputs <= INLINE_PORTS && new_ninputs > new_noutputs
-	 && processing() == PULL));
-  bool new_out_inline =
-    (new_noutputs == 0
-     || new_ninputs + new_noutputs <= INLINE_PORTS
-     || (new_noutputs <= INLINE_PORTS && !new_in_inline));
-
   // create new port arrays
-  Port *new_inputs =
-    (new_in_inline ? _ports0 : new Port[new_ninputs]);
+  Port *new_inputs = new Port[new_ninputs];
   if (!new_inputs)		// out of memory -- return
     return;
 
-  Port *new_outputs =
-    (new_out_inline ? (new_in_inline ? _ports0 + new_ninputs : _ports0)
-     : new Port[new_noutputs]);
+  Port *new_outputs = new Port[new_noutputs];
   if (!new_outputs) {		// out of memory -- return
-    if (!new_in_inline)
-      delete[] new_inputs;
+    delete[] new_inputs;
     return;
   }
 
   // install information
-  if (!old_in_inline)
+  if (!_inputs)
     delete[] _inputs;
-  if (!old_out_inline)
+  if (!_outputs)
     delete[] _outputs;
   _inputs = new_inputs;
   _outputs = new_outputs;
@@ -149,7 +128,8 @@ Element::set_noutputs(int count)
 bool
 Element::ports_frozen() const
 {
-  return _ports0[0].initialized();
+  assert(0);                    // Deal with freezing without port0
+  return false;
 }
 
 void
@@ -158,13 +138,13 @@ Element::initialize_ports(const int *in_v, const int *out_v)
   // Only PULL inputs are connectable
   for (int i = 0; i < ninputs(); i++) {
     // allowed iff in_v[i] == VPULL
-    int port = (in_v[i] == VPULL ? 0 : NOT_CONNECTABLE);
+    int port = (in_v[i] == VPULL ? 0 : Port::NOT_CONNECTABLE);
     _inputs[i] = Port(this, 0, port);
   }
   
   for (int o = 0; o < noutputs(); o++) {
     // allowed iff out_v[o] != VPULL
-    int port = (out_v[o] == VPULL ? NOT_CONNECTABLE : 0);
+    int port = (out_v[o] == VPULL ? Port::NOT_CONNECTABLE : 0);
     _outputs[o] = Port(this, 0, port);
   }
 }

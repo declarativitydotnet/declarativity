@@ -84,6 +84,7 @@ class Element {
   virtual const char *class_name() const = 0;
 
   /** Return the router that contains me */
+  class Router;
   Router *router() const			{ return _router; }
 
 
