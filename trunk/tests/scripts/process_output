@@ -67,6 +67,9 @@ def process_node(out_f, lookups, results):
     bw_window   = float(flags["bw_window"])
 
     for line in out_f: 
+        lookup  = []
+        result  = []
+        measure = []
         if matchlookup.match(line):
             lookup = [x for x in matchlookup.split(line) if x]
             ekey   = lookup[-1]
@@ -81,6 +84,9 @@ def process_node(out_f, lookups, results):
                 resultsHash[result[5]] = True
         if matchbandwidth.match(line):
             measure = [x for x in matchbandwidth.split(line) if x]
+            if lookup and simple_lookup.has_key(lookup[-1]): continue
+            if result and simple_lookup.has_key(result[-1]): continue
+
             ts = ts2sec(measure[0], measure[1])
             if not start_t: start_t = ts
             if (ts - start_t) > bw_window:
@@ -198,8 +204,7 @@ def eval_lookups(lookups, results):
         print >> tlookups, "%d %f %d" % (h, (ih + eh), (itotal + etotal))
     tlookups.close()
 
-
-def simple_lookups(lookups, results):
+def get_simple_lookups():
     slookups = open(flags["simple_lookup"], 'r')
     out = open("./simple_lookups.dat", 'w')
     matchlookup = re.compile(r"""^Print\[lookup]\:\s*
@@ -218,7 +223,9 @@ def simple_lookups(lookups, results):
             events = [lookup[-1]]                         # Only need the eventid
             if simple_lookups.has_key(key): events += simple_lookups[key]
             simple_lookups[key] = events 
+    return simple_lookups
 
+def eval_simple_lookups(lookups, results):
     for key in simple_lookups.keys():
        responseIPs = []
        for event in simple_lookups[key]:
@@ -242,6 +249,7 @@ def simple_lookups(lookups, results):
            print >> out, "LOOKUP(%s): %f " % (key, (float(maxsofar)/float(len(responseIPs)))), responseIPs
 
 if __name__ == "__main__":
+    global simple_lookups
     global ip_map
     global bytes
     global resultsHash
@@ -271,6 +279,9 @@ if __name__ == "__main__":
 #        else: 
 #            for f in datfiles: 
 #                files += [os.path.join(root, f)]
+
+    simple_lookups = {}
+    if flags["simple_lookup"]: simple_lookups = get_simple_lookups()
 
     node_bw = open('./node_bw.dat', 'w')
     nodeid  = 0
@@ -303,6 +314,6 @@ if __name__ == "__main__":
 
     print "SANITY CHECK: counted %d distinct result tuples." % (len(resultsHash.keys()))
 
-    if flags["simple_lookup"]: simple_lookups(lookups, results)
+    if simple_lookups: eval_simple_lookups(lookups, results)
     eval_lookups(lookups, results)
     

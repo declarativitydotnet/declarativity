@@ -28,12 +28,16 @@ def parse_cmdline(argv):
         elif o == "-p": flags["port"]        = int(v)
         elif o == "-n": flags["num_lookups"] = int(v)
         elif o == "-t": flags["sleep_time"]  = int(v)
-    if args[1]: output = open(args[1]+"/lookups.log", 'w')
+    if args[1]: 
+        output = open(args[1]+"/lookups.log", 'w')
+        output.close()
     return flags, args
 
 def run_lookup(lookup_exec, seed, node, out):
-    rv = os.system("%s NONE %d %d %s %s >> %s 2>&1" \
-                    % (lookup_exec, seed, random.random()*sys.maxint, node, node, out))
+    try:
+        rv = os.system(r"%s NONE %d simpleLookup:%d %s %s >> %s 2>&1" \
+                        % (lookup_exec, seed, random.random()*sys.maxint, node, node, out))
+    except: pass
 
 if __name__ == "__main__":
     try:
@@ -54,11 +58,12 @@ if __name__ == "__main__":
     print "IPS: ", ips
 
     while 1:
-        for v in range(vantages):
-            print "VANTAGE: ", v
-            if len(ips) == 1: run_lookup(args[0], seed, "%s:%s" % (ips[0], int(port)+int(v)), args[1]+"/lookups.log")
-            else: run_lookup(args[0], seed, "%s:%s" % (ips[v], port), args[1]+"/lookups.log")
-        seed += 1
-        time.sleep(sleep_time)
+        try:
+            for v in range(vantages):
+                if len(ips) == 1: run_lookup(args[0], seed, "%s:%s" % (ips[0], int(port)+int(v)), args[1]+"/lookups.log")
+                else: run_lookup(args[0], seed, "%s:%s" % (ips[v], port), args[1]+"/lookups.log")
+            seed += 1
+            time.sleep(sleep_time)
+        except: pass
 
 
