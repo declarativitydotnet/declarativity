@@ -46,6 +46,8 @@ public:
     OPAQUE,
     TUPLE
   };
+
+  virtual unsigned int size() const = 0;
   
   // The type name
   virtual const TypeCode typeCode() const =0;

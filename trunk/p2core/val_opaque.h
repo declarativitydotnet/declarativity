@@ -27,6 +27,7 @@ public:
   const Value::TypeCode typeCode() const { return Value::OPAQUE; };
   const char *typeName() const { return "opaque"; };
   str toString() const { return strbuf(u); };
+  virtual unsigned int size() const { return (u ? u->resid() : 0); }
 
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );

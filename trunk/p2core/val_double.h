@@ -26,6 +26,7 @@ public:
   const Value::TypeCode typeCode() const { return Value::DOUBLE; };
   const char *typeName() const { return "double"; };
   virtual str toString() const;
+  virtual unsigned int size() const { return sizeof(double); }
 
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );

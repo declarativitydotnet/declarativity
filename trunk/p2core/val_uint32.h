@@ -26,6 +26,7 @@ public:
   const Value::TypeCode typeCode() const { return Value::UINT32; };
   const char *typeName() const { return "uint32"; };
   virtual str toString() const { return strbuf() << i; };
+  virtual unsigned int size() const { return sizeof(uint32_t); }
 
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );

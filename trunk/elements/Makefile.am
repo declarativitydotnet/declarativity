@@ -41,6 +41,7 @@ libp2elements_la_SOURCES = \
 	queue.C \
 	groupby.C \
 	randomPushSource.C \
+	snetsim.C \
 	ping.C \
 	pong.C 
 

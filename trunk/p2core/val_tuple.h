@@ -28,6 +28,7 @@ public:
   const Value::TypeCode typeCode() const { return Value::TUPLE; };
   const char *typeName() const { return "tuple"; };
   str toString() const { return t->toString(); };
+  virtual unsigned int size() const { return (t ? t->size() : 0); }
 
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );

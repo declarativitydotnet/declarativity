@@ -85,7 +85,7 @@ void Defrag::defragment(TupleRef t)
 {
   uint64_t seq_num = SEQ_NUM(Val_UInt64::cast((*t)[SEQ_FIELD]));
   int      offset  = OFFSET(Val_UInt64::cast((*t)[SEQ_FIELD]));
-  int      chunks  = Val_UInt32::cast(t->tag(NUM_CHUNKS));
+  uint32_t chunks  = Val_UInt32::cast(t->tag(NUM_CHUNKS));
 
   if (chunks == 1) {
     tuples_.push_back(t);
