@@ -85,48 +85,157 @@
 #include <iostream>
 #include <set>
 
-int Router::check_hookup_elements()
+int Router::check_push_and_pull()
 {
-  // Put all elements in a set to be searchable
-  std::set< ElementRef > elementSet;
-  ref< vec< ElementRef > > elements =
-    _configuration->elements;
+  // For every hookup...
+
   for (uint i = 0;
-       i < _configuration->elements->size();
+       i < _configuration->hookups->size();
        i++) {
-    elementSet.insert((*_configuration->elements)[i]);
+    HookupRef hookup = (*_configuration->hookups)[i];
+    
+    ElementRef fromElement = hookup->fromElement;
+    ElementRef toElement = hookup->toElement;
+    int fromPort = hookup->fromPortNumber;
+    int toPort = hookup->toPortNumber;
+
+    // If from port is push...
+    
+    // If to port is push, we're ok
+
+    // If to port is pull, we're not OK
+
+    // If to port is agnostic, make it push
+
+    // Else, if from port is pull...
+
+    // If to port is push, we're not Ok
+
+    // If to port is pull, we're ok
+
+    // If to port is agnostic, make it pull
+
+    // Else, if from port is agnostic...
+
+    // If to port is push, make from push
+
+    // If to port is pull, make from pull
+
+    // If to port is agnostic, we're ok
+
+
+
+    // XXX For later, when/if using flow codes
+
+    // Repeat until unchanged
+    
+    // For each element...
+    
+    // Carry over personality from left side of flow to right side of
+    // flow; if inconsistent, fail
   }
   
-  // Check each hookup to ensure it connects valid elements references
+#if 0
+  // set up processing vectors
+  Vector<int> input_pers(ninput_pidx(), 0);
+  Vector<int> output_pers(noutput_pidx(), 0);
+  for (int e = 0; e < nelements(); e++)
+    _elements[e]->processing_vector(input_pers.begin() + _input_pidx[e], output_pers.begin() + _output_pidx[e], errh);
+  
+  // add fake connections for agnostics
+  Vector<Hookup> hookup_from = _hookup_from;
+  Vector<Hookup> hookup_to = _hookup_to;
+  Bitvector bv;
+  for (int i = 0; i < ninput_pidx(); i++)
+    if (input_pers[i] == Element::VAGNOSTIC) {
+      int ei = _input_eidx[i];
+      int port = i - _input_pidx[ei];
+      _elements[ei]->forward_flow(port, &bv);
+      int opidx = _output_pidx[ei];
+      for (int j = 0; j < bv.size(); j++)
+	if (bv[j] && output_pers[opidx+j] == Element::VAGNOSTIC) {
+	  hookup_from.push_back(Hookup(ei, j));
+	  hookup_to.push_back(Hookup(ei, port));
+	}
+    }
+  
+  int before = errh->nerrors();
+  int first_agnostic = _hookup_from.size();
+  
+  // spread personalities
+  while (true) {
+    
+    bool changed = false;
+    for (int c = 0; c < hookup_from.size(); c++) {
+      if (hookup_from[c].idx < 0)
+	continue;
+      
+      int offf = output_pidx(hookup_from[c]);
+      int offt = input_pidx(hookup_to[c]);
+      int pf = output_pers[offf];
+      int pt = input_pers[offt];
+      
+      switch (pt) {
+	
+      case Element::VAGNOSTIC:
+	if (pf != Element::VAGNOSTIC) {
+	  input_pers[offt] = pf;
+	  changed = true;
+	}
+	break;
+	
+      case Element::VPUSH:
+      case Element::VPULL:
+	if (pf == Element::VAGNOSTIC) {
+	  output_pers[offf] = pt;
+	  changed = true;
+	} else if (pf != pt) {
+	  processing_error(hookup_from[c], hookup_to[c], c >= first_agnostic,
+			   pf, errh);
+	  hookup_from[c].idx = -1;
+	}
+	break;
+	
+      }
+    }
+    
+    if (!changed) break;
+  }
+  
+  if (errh->nerrors() != before)
+    return -1;
+
+  for (int e = 0; e < nelements(); e++)
+    _elements[e]->initialize_ports(input_pers.begin() + _input_pidx[e], output_pers.begin() + _output_pidx[e]);
+#endif
+  return 0;
+}
+
+
+int Router::check_hookup_range()
+{
+  // Check each hookup to ensure its port numbers are within range
   int errors = 0;
   for (uint i = 0;
        i < _configuration->hookups->size();
        i++) {
     HookupRef hookup = (*_configuration->hookups)[i];
-    if (*elementSet.find(hookup->fromElement) != hookup->fromElement) {
-      // This hookup comes from a non-existing element 
-      std::cerr << "Non-existent from element " << hookup->fromElement << "\n";
+    
+    if (hookup->fromPortNumber >= hookup->fromElement->noutputs()) {
+      std::cerr << "Cannot connect from port " <<
+        hookup->fromPortNumber << " in an element of type " <<
+        hookup->fromElement->class_name() << "\n";
       errors++;
     }
-    if (*elementSet.find(hookup->toElement) != hookup->toElement) {
-      // This hookup goes to a non-existing element 
-      std::cerr << "Non-existent to element " << hookup->toElement << "\n";
-      errors++;
-    }
-    if (hookup->fromPortNumber < 0) {
-      // Negative port is bad
-      std::cerr << "Bad hookup from port " << hookup->fromPortNumber << "\n";
-      errors++;
-    }
-    if (hookup->toPortNumber < 0) {
-      // Negative port is bad
-      std::cerr << "Bad hookup to port " << hookup->toPortNumber << "\n";
+    if (hookup->toPortNumber >= hookup->toElement->ninputs()) {
+      std::cerr << "Cannot connect to port " <<
+        hookup->toPortNumber << " in an element of type " <<
+        hookup->toElement->class_name() << "\n";
       errors++;
     }
   }
-    
+
   if (errors > 0) {
-    // Ooops, there were problems
     return -1;
   } else {
     return 0;
@@ -157,7 +266,15 @@ Router::~Router()
 /**
  * initialize
  *
- * 
+ * This performs a simplified (compared to Click) initialization of the
+ * element topology:
+ *
+ * - Check that connections refer to correct elements
+ *
+ * - Skip configuration ordering, since for now we start with
+ * preconfigured elements.
+ *
+ *
  */
 int Router::initialize()
 {
@@ -173,61 +290,17 @@ int Router::initialize()
     return -1;
   }
 
+  // Are the port numbers plausible?
+  if (check_hookup_range() < 0) {
+    return -1;
+  }
+
+  // Check push/pull semantics
+  if (check_push_and_pull() < 0) {
+    return -1;
+  }
+
 #if 0
-  
-  _runcount = 1;
-  _master->register_router(this);
-
-  // set up configuration order
-  _element_configure_order.assign(nelements(), 0);
-  if (_element_configure_order.size()) {
-    Vector<int> configure_phase(nelements(), 0);
-    configure_order_phase = &configure_phase;
-    for (int i = 0; i < _elements.size(); i++) {
-      configure_phase[i] = _elements[i]->configure_phase();
-      _element_configure_order[i] = i;
-    }
-    click_qsort(&_element_configure_order[0], _element_configure_order.size(), sizeof(int), configure_order_compar);
-  }
-
-  // notify elements of hookup range
-  notify_hookup_range();
-
-  // Configure all elements in configure order. Remember the ones that failed
-  Bitvector element_ok(nelements(), true);
-  bool all_ok = true;
-  Element::CleanupStage failure_stage = Element::CLEANUP_CONFIGURE_FAILED;
-  Element::CleanupStage success_stage = Element::CLEANUP_CONFIGURED;
-  Vector<String> conf;
-#if CLICK_DMALLOC
-  char dmalloc_buf[12];
-#endif
-  for (int ord = 0; ord < _elements.size(); ord++) {
-    int i = _element_configure_order[ord];
-#if CLICK_DMALLOC
-    sprintf(dmalloc_buf, "c%d  ", i);
-    CLICK_DMALLOC_REG(dmalloc_buf);
-#endif
-    ContextErrorHandler cerrh
-      (errh, context_message(i, "While configuring"));
-    int before = cerrh.nerrors();
-    conf.clear();
-    cp_argvec(_element_configurations[i], conf);
-    if (_elements[i]->configure(conf, &cerrh) < 0) {
-      element_ok[i] = all_ok = false;
-      if (cerrh.nerrors() == before)
-        cerrh.error("unspecified error");
-    }
-  }
-
-#if CLICK_DMALLOC
-  CLICK_DMALLOC_REG("iHoo");
-#endif
-  
-  int before = errh->nerrors();
-  check_hookup_range(errh);
-  make_pidxes();
-  check_push_and_pull(errh);
   check_hookup_completeness(errh);
   set_connections();
   _state = ROUTER_PREINITIALIZE;
@@ -289,6 +362,55 @@ int Router::initialize()
   }
 #endif
   return 0;
+}
+
+
+int Router::check_hookup_elements()
+{
+  // Put all elements in a set to be searchable
+  std::set< ElementRef > elementSet;
+  ref< vec< ElementRef > > elements =
+    _configuration->elements;
+  for (uint i = 0;
+       i < _configuration->elements->size();
+       i++) {
+    elementSet.insert((*_configuration->elements)[i]);
+  }
+  
+  // Check each hookup to ensure it connects valid elements references
+  int errors = 0;
+  for (uint i = 0;
+       i < _configuration->hookups->size();
+       i++) {
+    HookupRef hookup = (*_configuration->hookups)[i];
+    if (*elementSet.find(hookup->fromElement) != hookup->fromElement) {
+      // This hookup comes from a non-existing element 
+      std::cerr << "Non-existent from element " << hookup->fromElement << "\n";
+      errors++;
+    }
+    if (*elementSet.find(hookup->toElement) != hookup->toElement) {
+      // This hookup goes to a non-existing element 
+      std::cerr << "Non-existent to element " << hookup->toElement << "\n";
+      errors++;
+    }
+    if (hookup->fromPortNumber < 0) {
+      // Negative port is bad
+      std::cerr << "Bad hookup from port " << hookup->fromPortNumber << "\n";
+      errors++;
+    }
+    if (hookup->toPortNumber < 0) {
+      // Negative port is bad
+      std::cerr << "Bad hookup to port " << hookup->toPortNumber << "\n";
+      errors++;
+    }
+  }
+    
+  if (errors > 0) {
+    // Ooops, there were problems
+    return -1;
+  } else {
+    return 0;
+  }
 }
 
 
@@ -405,27 +527,6 @@ Router::notify_hookup_range()
   }
 }
 
-void
-Router::check_hookup_range(ErrorHandler *errh)
-{
-  // Check each hookup to ensure its port numbers are within range
-  for (int c = 0; c < _hookup_from.size(); c++) {
-    Hookup &hfrom = _hookup_from[c];
-    Hookup &hto = _hookup_to[c];
-    int before = errh->nerrors();
-    
-    if (hfrom.port >= _elements[hfrom.idx]->noutputs())
-      hookup_error(hfrom, true, "'%{element}' has no %s %d", errh);
-    if (hto.port >= _elements[hto.idx]->ninputs())
-      hookup_error(hto, false, "'%{element}' has no %s %d", errh);
-    
-    // remove the connection if there were errors
-    if (errh->nerrors() != before) {
-      remove_hookup(c);
-      c--;
-    }
-  }
-}
 
 void
 Router::check_hookup_completeness(ErrorHandler *errh)
@@ -560,86 +661,6 @@ Router::processing_error(const Hookup &hfrom, const Hookup &hto, bool aggie,
 		_elements[hfrom.idx], type2, hto.port, type1, hfrom.port);
   return -1;
 }
-
-int
-Router::check_push_and_pull(ErrorHandler *errh)
-{
-  if (!errh) errh = ErrorHandler::default_handler();
-  
-  // set up processing vectors
-  Vector<int> input_pers(ninput_pidx(), 0);
-  Vector<int> output_pers(noutput_pidx(), 0);
-  for (int e = 0; e < nelements(); e++)
-    _elements[e]->processing_vector(input_pers.begin() + _input_pidx[e], output_pers.begin() + _output_pidx[e], errh);
-  
-  // add fake connections for agnostics
-  Vector<Hookup> hookup_from = _hookup_from;
-  Vector<Hookup> hookup_to = _hookup_to;
-  Bitvector bv;
-  for (int i = 0; i < ninput_pidx(); i++)
-    if (input_pers[i] == Element::VAGNOSTIC) {
-      int ei = _input_eidx[i];
-      int port = i - _input_pidx[ei];
-      _elements[ei]->forward_flow(port, &bv);
-      int opidx = _output_pidx[ei];
-      for (int j = 0; j < bv.size(); j++)
-	if (bv[j] && output_pers[opidx+j] == Element::VAGNOSTIC) {
-	  hookup_from.push_back(Hookup(ei, j));
-	  hookup_to.push_back(Hookup(ei, port));
-	}
-    }
-  
-  int before = errh->nerrors();
-  int first_agnostic = _hookup_from.size();
-  
-  // spread personalities
-  while (true) {
-    
-    bool changed = false;
-    for (int c = 0; c < hookup_from.size(); c++) {
-      if (hookup_from[c].idx < 0)
-	continue;
-      
-      int offf = output_pidx(hookup_from[c]);
-      int offt = input_pidx(hookup_to[c]);
-      int pf = output_pers[offf];
-      int pt = input_pers[offt];
-      
-      switch (pt) {
-	
-      case Element::VAGNOSTIC:
-	if (pf != Element::VAGNOSTIC) {
-	  input_pers[offt] = pf;
-	  changed = true;
-	}
-	break;
-	
-      case Element::VPUSH:
-      case Element::VPULL:
-	if (pf == Element::VAGNOSTIC) {
-	  output_pers[offf] = pt;
-	  changed = true;
-	} else if (pf != pt) {
-	  processing_error(hookup_from[c], hookup_to[c], c >= first_agnostic,
-			   pf, errh);
-	  hookup_from[c].idx = -1;
-	}
-	break;
-	
-      }
-    }
-    
-    if (!changed) break;
-  }
-  
-  if (errh->nerrors() != before)
-    return -1;
-
-  for (int e = 0; e < nelements(); e++)
-    _elements[e]->initialize_ports(input_pers.begin() + _input_pidx[e], output_pers.begin() + _output_pidx[e]);
-  return 0;
-}
-
 
 // SET CONNECTIONS
 

@@ -130,8 +130,16 @@ private:
   ConfigurationRef _configuration;
 
   /** Are the configuration hookups refering to existing elements and
-      ports? */
+      non-negative ports? */
   int check_hookup_elements();
+
+  /** Are the port numbers within the attached element's range? */
+  int check_hookup_range();
+
+  /** Is personality semantics correctly applied to hookups?  This only
+      checks that the end-points of a hookup are consistent.  Unlike
+      Click, it does not follow flow codes through elements. */
+  int check_push_and_pull();
 
   friend class Master;
   friend class Task;

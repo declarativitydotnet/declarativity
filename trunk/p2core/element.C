@@ -37,6 +37,7 @@
 #include "element.h"
 
 
+// Some basic element types
 const char * const Element::AGNOSTIC = "a";
 const char * const Element::PUSH = "h";
 const char * const Element::PULL = "l";
