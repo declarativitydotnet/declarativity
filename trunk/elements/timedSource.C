@@ -18,6 +18,9 @@
 #include <async.h>
 #include <math.h>
 
+#include "val_str.h"
+#include "val_uint64.h"
+
 TimedSource::TimedSource(double seconds)
   : Element(0, 1),
     _tuple(0),
@@ -56,10 +59,10 @@ void TimedSource::runTimer()
     struct timespec t;
     clock_gettime(CLOCK_REALTIME, &t);
 
-    _tuple->append(New refcounted< TupleField >("Time"));
-    _tuple->append(New refcounted< TupleField >((uint64_t) t.tv_sec));
-    _tuple->append(New refcounted< TupleField >((uint64_t) t.tv_nsec));
-    _tuple->append(New refcounted< TupleField >("End of time"));
+    _tuple->append(Val_Str::mk("Time"));
+    _tuple->append(Val_UInt64::mk(t.tv_sec));
+    _tuple->append(Val_UInt64::mk(t.tv_nsec));
+    _tuple->append(Val_Str::mk("End of time"));
     _tuple->freeze();
 
     // Wake up any sleepers

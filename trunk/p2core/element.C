@@ -45,6 +45,11 @@
 #include "router.h"
 #include "loggerI.h"
 
+#include "val_double.h"
+#include "val_uint64.h"
+#include "val_str.h"
+#include "val_int32.h"
+
 
 // Some basic element types
 const char * const Element::PUSH_TO_PULL = "h/l";
@@ -347,13 +352,13 @@ REMOVABLE_INLINE void Element::log(str instanceName,
     now = now_ts.tv_sec + (1.0 / 1000 / 1000 / 1000 * now_ts.tv_nsec);
     
     TupleRef t = Tuple::mk();
-    t->append(New refcounted<TupleField>(now));
-    t->append(New refcounted<TupleField>(seq++));
-    t->append(New refcounted<TupleField>(class_name()));
-    t->append(New refcounted<TupleField>(instanceName));
-    t->append(New refcounted<TupleField>(severity));
-    t->append(New refcounted<TupleField>(errnum));
-    t->append(New refcounted<TupleField>(explanation));
+    t->append(Val_Double::mk(now));
+    t->append(Val_UInt64::mk(seq++));
+    t->append(Val_Str::mk(class_name()));
+    t->append(Val_Str::mk(instanceName));
+    t->append(Val_Int32::mk(severity));
+    t->append(Val_Int32::mk(errnum));
+    t->append(Val_Str::mk(explanation));
     t->freeze();
     warn << "PRE-init LOGGER: " << t->toString() << "\n";
 

@@ -50,18 +50,22 @@ public:
   virtual const TypeCode typeCode() const =0;
   virtual const char *typeName() const =0;
 
+  // Conversions to strings: mandatory. 
   virtual str toString() const =0;
   str toTypeString() { return strbuf() << typeName() << ":" << toString();};
-  
+
+  // Thrown when an invalid type conversion is attempted. 
   struct TypeError { 
     TypeCode	realType;
     TypeCode	toType;
     TypeError(TypeCode t1, TypeCode t2) : realType(t1), toType(t2) {};
   };
 
-  // Marshalling and unmarshallng
-  virtual void xdr_marshal( XDR *x ) =0;
-  
+  // Marshalling
+  void xdr_marshal( XDR *x );
+  static ValueRef xdr_unmarshal( XDR *x );
+protected:
+  virtual void xdr_marshal_subtype( XDR *x )=0;
 };
 
 #endif /* __VALUE_H_ */

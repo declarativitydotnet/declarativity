@@ -25,6 +25,7 @@ libp2core_la_SOURCES = \
 	pel_lexer.C \
 	pel_vm.C \
         idTable.C \
+	value.C \
 	val_str.C \
 	val_null.C \
 	val_int32.C \

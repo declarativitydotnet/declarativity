@@ -20,6 +20,7 @@
 #include <iostream>
 
 #include "csvparser.h"
+#include "val_str.h"
 
 struct csv_test {
   char *in;
@@ -57,7 +58,7 @@ int main(int argc, char **argv)
   
   for(unsigned i=0; i < (sizeof(tests) / sizeof(csv_test)); i++) {
     TupleRef t = Tuple::mk();
-    t->append(New refcounted<TupleField>(str(tests[i].in))); 
+    t->append(Val_Str::mk(str(tests[i].in))); 
     t->freeze();
     cp.push(0,t,cbv_null);
     TuplePtr t_out = cp.pull(0,cbv_null);

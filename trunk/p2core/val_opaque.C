@@ -20,7 +20,7 @@
 //
 // Marshal a opaqueing
 // 
-void Val_Opaque::xdr_marshal( XDR *x ) 
+void Val_Opaque::xdr_marshal_subtype( XDR *x ) 
 {
   warn << "Cannot marshal an OPAQUE value\n";
 }

@@ -24,6 +24,15 @@
 #include "pushprint.h"
 #include "slot.h"
 
+#include "val_null.h"
+#include "val_str.h"
+#include "val_int32.h"
+#include "val_uint32.h"
+#include "val_int64.h"
+#include "val_uint64.h"
+#include "val_double.h"
+#include "val_opaque.h"
+
 #if 0
 // Unused
 static double time_fn(cbv cb) 
@@ -50,11 +59,11 @@ static double time_fn(cbv cb)
 
 static TupleRef create_tuple_1() {
   TupleRef t = New refcounted<Tuple>;
-  t->append(New refcounted<TupleField>());
-  t->append(New refcounted<TupleField>((int32_t)-32));
-  t->append(New refcounted<TupleField>((uint64_t)64));
-  t->append(New refcounted<TupleField>(0.012345));
-  t->append(New refcounted<TupleField>("This is a string"));
+  t->append(Val_Null::mk());
+  t->append(Val_Int32::mk(-32));
+  t->append(Val_UInt64::mk(64));
+  t->append(Val_Double::mk(0.012345));
+  t->append(Val_Str::mk("This is a string"));
   t->freeze();
   return t;
 }

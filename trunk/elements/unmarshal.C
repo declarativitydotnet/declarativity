@@ -11,6 +11,8 @@
 
 #include "unmarshal.h"
 
+#include "val_opaque.h"
+
 Unmarshal::Unmarshal()
   : Element(1, 1)
 {
@@ -23,39 +25,16 @@ Unmarshal::~Unmarshal()
 TuplePtr Unmarshal::simple_action(TupleRef p)
 {
   // Get first tuple field
-  TupleFieldPtr first = (*p)[0];
-  if (first == 0) {
-    // No such field
-    log(LoggerI::WARN,
-        -1,
-        "Input tuple has no first field");
+  if (p->size() == 0) {
+    log(LoggerI::WARN, -1, "Input tuple has no first field");
     return 0;
   }
 
-  // Is it a string?
-  if (first->get_type() != TupleField::STRING) {
-    // Can't hexdump a string
-    log(LoggerI::WARN,
-        -1,
-        "Input tuple's first field is not a string");
-    return 0;
-  }
-
-  // Dearmor the string to a char*
-
-  // XXX What if the string is not armored?
-  str dearmored = dearmor64(first->as_s());
-  const char * buf = dearmored.cstr();
-  size_t sz = dearmored.len();
-  if (buf == 0) {
-    log(LoggerI::WARN,
-        -1,
-        "String to unmarshal is null");
-  }
-  
-  xdrmem xd(buf, sz);
+  ref<suio> u = Val_Opaque::cast((*p)[0]);
+  char *buf = suio_flatten(u);
+  size_t sz = u->resid();
+  xdrmem xd(buf,sz);
   TupleRef t = Tuple::xdr_unmarshal(&xd);
-
-  // Return this one
+  xfree(buf);
   return t;
 }

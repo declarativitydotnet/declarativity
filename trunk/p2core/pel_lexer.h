@@ -20,6 +20,13 @@
 #include "pel_program.h"
 #include "pel_vm.h"
 
+#include "val_int32.h"
+#include "val_int64.h"
+#include "val_uint64.h"
+#include "val_str.h"
+#include "val_double.h"
+#include "val_null.h"
+
 #ifndef yyFlexLexer
 #define yyFlexLexer PelBaseFlexLexer
 #include <FlexLexer.h>
@@ -43,12 +50,12 @@ private:
 
   virtual int yylex();
 
-  void add_const_int(int v) { add_const(New refcounted<TupleField>(v));};
-  void add_const_int(int64_t v) { add_const(New refcounted<TupleField>(v));};
-  void add_const_int(uint64_t v) { add_const(New refcounted<TupleField>(v));};
-  void add_const_str(str s) { add_const(New refcounted<TupleField>(s));};
-  void add_const_dbl(double d) { add_const(New refcounted<TupleField>(d));};
-  void add_const(TupleFieldRef f);
+  void add_const_int(int v) { add_const(Val_Int32::mk(v));};
+  void add_const_int(int64_t v) { add_const(Val_Int64::mk(v));};
+  void add_const_int(uint64_t v) { add_const(Val_UInt64::mk(v));};
+  void add_const_str(str s) { add_const(Val_Str::mk(s));};
+  void add_const_dbl(double d) { add_const(Val_Double::mk(d));};
+  void add_const(ValueRef f);
   void add_tuple_load(int f);
   void add_opcode(u_int32_t op);
   void log_error(str errstr);

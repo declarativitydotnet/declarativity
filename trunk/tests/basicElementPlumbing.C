@@ -27,17 +27,25 @@
 #include "router.h"
 #include "master.h"
 #include "timedSource.h"
+#include "val_null.h"
+#include "val_str.h"
+#include "val_int32.h"
+#include "val_uint32.h"
+#include "val_int64.h"
+#include "val_uint64.h"
+#include "val_double.h"
+#include "val_opaque.h"
 
 TupleRef create_tuple(int i) {
   TupleRef t = Tuple::mk();
-  t->append(New refcounted<TupleField>());
-  t->append(New refcounted<TupleField>((int32_t)i));
-  t->append(New refcounted<TupleField>((uint64_t)i));
-  t->append(New refcounted<TupleField>(i));
+  t->append(Val_Null::mk());
+  t->append(Val_Int32::mk(i));
+  t->append(Val_UInt64::mk(i));
+  t->append(Val_Int32::mk(i));
   strbuf myStringBuf;
   myStringBuf << "This is string '" << i << "'";
   str myString = myStringBuf;
-  t->append(New refcounted<TupleField>(myString));
+  t->append(Val_Str::mk(myString));
   t->freeze();
   std::cout << "Created tuple " << (t->toString()) << "\n";
   return t;

@@ -25,9 +25,15 @@
 //
 // Marshalling and unmarshallng
 //
-void Val_UInt64::xdr_marshal( XDR *x )
+void Val_UInt64::xdr_marshal_subtype( XDR *x )
 {
   xdr_uint64_t(x, &i);
+}
+ValueRef Val_UInt64::xdr_unmarshal( XDR *x )
+{
+  uint64_t i;
+  xdr_uint64_t(x, &i);
+  return mk(i);
 }
 
 //

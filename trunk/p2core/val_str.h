@@ -28,7 +28,8 @@ public:
   str toString() const { return s; };
 
   // Marshalling and unmarshallng
-  void xdr_marshal( XDR *x );
+  void xdr_marshal_subtype( XDR *x );
+  static ValueRef xdr_unmarshal( XDR *x );
 
   // Constructor
   Val_Str(str theString) : s(theString) {};

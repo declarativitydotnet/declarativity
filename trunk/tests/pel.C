@@ -23,22 +23,30 @@
 #include <iostream>
 #include <stdlib.h>
 
+#include "val_null.h"
+#include "val_str.h"
+#include "val_int32.h"
+#include "val_uint32.h"
+#include "val_int64.h"
+#include "val_uint64.h"
+#include "val_double.h"
+#include "val_opaque.h"
 
 //
 // The follow set of tests is for the VM.  Each program should leave
 // the given value on the top of the stack.
 //
-#define _nullv TupleField::NULLV
-#define _int32 TupleField::INT32
-#define _uint32 TupleField::UINT32
-#define _int64 TupleField::INT64
-#define _uint64 TupleField::UINT64
-#define _string TupleField::STRING
-#define _double TupleField::DOUBLE
+#define _nullv Value::NULLV
+#define _int32 Value::INT32
+#define _uint32 Value::UINT32
+#define _int64 Value::INT64
+#define _uint64 Value::UINT64
+#define _string Value::STR
+#define _double Value::DOUBLE
   
 
 struct ValTest {
-  TupleField::Type t;	// Type of expected result
+  Value::TypeCode t;	// Type of expected result
   Pel_VM::Error err;	// Error (0 = success)
   char *val;		// String representation of value
   char *src;		// Source code
@@ -717,12 +725,12 @@ void vm_test(Pel_VM &vm, TupleRef tpl, int i) {
     return;
   }
   
-  TupleFieldRef top = vm.result_val();
-  if ( top->get_type() != t->t ) {
+  ValueRef top = vm.result_val();
+  if ( top->typeCode() != t->t ) {
     std::cerr << "** Bad result type for '" << t->src << "'; '" 
-	      << TupleField::typeName(top->get_type()) 
+	      << top->typeName()
 	      << "' instead of expected '" 
-	      << TupleField::typeName(t->t) << "'\n";
+	      << t->t << "'\n";
     return;
   }
   
@@ -731,17 +739,17 @@ void vm_test(Pel_VM &vm, TupleRef tpl, int i) {
   case _nullv:
     eq = 1; break;
   case _int32: 
-    eq = (strtol(t->val,NULL,0)==top->as_i32()); break;
+    eq = (strtol(t->val,NULL,0)==Val_Int32::cast(top)); break;
   case _uint32:  
-    eq = (strtoul(t->val,NULL,0)==top->as_ui32()); break;
+    eq = (strtoul(t->val,NULL,0)==Val_UInt32::cast(top)); break;
   case _int64: 
-    eq = (strtoll(t->val,NULL,0)==top->as_i64()); break;
+    eq = (strtoll(t->val,NULL,0)==Val_Int64::cast(top)); break;
   case _uint64:  
-    eq = (strtoull(t->val,NULL,0)==top->as_ui64()); break;
+    eq = (strtoull(t->val,NULL,0)==Val_UInt64::cast(top)); break;
   case _double:
-    eq = (strtod(t->val,NULL)==top->as_d()); break;
+    eq = (strtod(t->val,NULL)==Val_Double::cast(top)); break;
   case _string:
-    eq = (top->as_s() == t->val ); break;
+    eq = (Val_Str::cast(top) == t->val ); break;
   default:
     std::cerr << "** Unknown type " << t->t << "\n";
     eq = 1;

@@ -28,7 +28,8 @@ public:
   str toString() const { return "NULL"; };
 
   // Marshalling and unmarshallng
-  void xdr_marshal( XDR *x );
+  void xdr_marshal_subtype( XDR *x );
+  static ValueRef xdr_unmarshal( XDR *x );
 
   // Factory
   static ValueRef mk() { return singleton; };

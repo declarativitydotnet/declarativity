@@ -21,16 +21,13 @@
 
 #include "tuple.h"
 
-#define TEST_TYPING(TN,TF,TM,VAL) { \
-  TupleField tf( (TN)VAL ); \
-    if (tf.get_type() != TupleField::TF) { \
-      std::cerr << "** Bad type field: " << tf.get_type() << "\n"; \
-    } else if (tf.as_##TM() != VAL) { \
-      std::cerr << "** Bad value returned: " << tf.as_##TM() << "\n"; \
-    } else { \
-      std::cout << "Value: " << tf.as_##TM() << "\n"; \
-    } \
-}; 
+#include "val_null.h"
+#include "val_str.h"
+#include "val_int32.h"
+#include "val_uint32.h"
+#include "val_int64.h"
+#include "val_uint64.h"
+#include "val_double.h"
 
 
 static double time_fn(cbv cb) 
@@ -59,14 +56,6 @@ const int TUPLE_TST_SZ=500000;
 const int MARSHAL_CHUNK_SZ=100;
 const int MARSHAL_NUM_UIOS=5000;
 
-
-static void create_lots_of_fields() {
-  TupleField *t[FIELD_TST_SZ];
-  for( int i=0; i<FIELD_TST_SZ; i++) {
-    t[i] = New TupleField((int32_t)(3 * i));
-  }
-}
-
 /* What hex dump of the next tuple in XDR should look like... 
  00000004 // Tuple has 5 fields
  00000000 // Null (type code = 0)
@@ -86,12 +75,12 @@ static void create_lots_of_fields() {
  72696e67 //
 */
 static TupleRef create_tuple_1() {
-  TupleRef t = New refcounted<Tuple>();
-  t->append(New refcounted<TupleField>());
-  t->append(New refcounted<TupleField>((int32_t)-32));
-  t->append(New refcounted<TupleField>((uint64_t)64));
-  t->append(New refcounted<TupleField>(0.012345));
-  t->append(New refcounted<TupleField>("This is a string"));
+  TupleRef t = Tuple::mk();
+  t->append(Val_Null::mk());
+  t->append(Val_Int32::mk((int32_t)-32));
+  t->append(Val_UInt64::mk((uint64_t)64));
+  t->append(Val_Double::mk(0.012345));
+  t->append(Val_Str::mk("This is a string"));
   t->freeze();
   return t;
 }
@@ -129,89 +118,9 @@ static void unmarshal_lots_of_tuples()
   }
 }
 
-void test_conv( TupleFieldRef tf, 
-		uint64_t u_val, bool u_ok, 
-		int64_t s_val, bool s_ok )
-{
-  int64_t s_ans;
-  uint64_t u_ans;
-  
-  if (tf->convert_unsigned(u_ans) != u_ok) {
-    if (u_ok) {
-      std::cerr << "** Expected " << tf->toTypeString() 
-		<< " to convert to unsigned, but it didn't\n";
-    } else {
-      std::cerr << "** Didn't expect " << tf->toTypeString() 
-		<< " to convert to unsigned, but it did\n";
-    } 
-  }
-  if (u_val != u_ans) {
-    std::cerr.setf(std::ios_base::hex,std::ios_base::basefield);
-    std::cerr << "** Expected " << tf->toTypeString() 
-	      << " to convert to unsigned as 0x" << u_val
-	      << " but got 0x" << u_ans
-	      << " instead.\n";
-    std::cerr.setf(std::ios_base::dec,std::ios_base::basefield);
-  }
-  if (tf->convert_signed(s_ans) != s_ok) {
-    if (s_ok) {
-      std::cerr << "** Expected " << tf->toTypeString() 
-		<< " to convert to signed, but it didn't\n";
-    } else {
-      std::cerr << "** Didn't expect " << tf->toTypeString() 
-		<< " to convert to signed, but it did\n";
-    } 
-  }
-  if (s_val != s_ans) {
-    std::cerr << "** Expected " << tf->toTypeString() 
-	      << " to convert to unsigned as " << s_val
-	      << " but got " << s_ans
-	      << " instead.\n";
-  }
-}
-
 int main(int argc, char **argv)
 {
   std::cout << "TUPLES\n";
-  std::cout << "sizeof(TupleField)=" << sizeof(TupleField) << "\n";
-  std::cout << "sizeof(size_t)=" << sizeof(size_t) << "\n";
-
-  TEST_TYPING(int32_t, INT32, i32, -123456);
-  TEST_TYPING(uint32_t,UINT32, ui32, 123456);
-  TEST_TYPING(int64_t, INT64, i64, -123456);
-  TEST_TYPING(uint64_t, UINT64, ui64, 123456);
-  TEST_TYPING(double, DOUBLE, d, 1.23456);
-  TEST_TYPING(str, STRING, s, "Hello world");
-
-  std::cout << "Creating " << FIELD_TST_SZ << " fields: ";
-  time_fn(wrap(create_lots_of_fields));
-
-  TupleField tf((uint64_t)1234);
-  try {
-    str s = tf.as_s();
-    std::cerr << "** Failed to raise type error exception\n";
-  } catch (TupleField::TypeError) {
-    std::cout << "Correctly caught type exception\n";
-    // Pass
-  }
-
-  std::cout << "Testing type conversions..\n";
-
-  test_conv(New refcounted<TupleField>(0), 0, true, 0, true);
-  test_conv(New refcounted<TupleField>(1), 1, true, 1, true);
-  test_conv(New refcounted<TupleField>(-1), 0xffffffffffffffffULL, true, -1, true);
-  test_conv(New refcounted<TupleField>(-1LL), 0xffffffffffffffffULL, true, -1, true);
-  test_conv(New refcounted<TupleField>(0xffffffffffffffffULL), 0xffffffffffffffffULL, true, -1, true);
-  test_conv(New refcounted<TupleField>(1.0), 0, false, 0, false);
-  test_conv(New refcounted<TupleField>(), 0, false, 0, false);
-  test_conv(New refcounted<TupleField>("Hello"), 0, false, 0, false);
-  test_conv(New refcounted<TupleField>(0xffffffff), 0xffffffffULL, true, 0xffffffffLL, true);
-
-
-  //void test_conv( TupleField &tf, uint64_t u_val, bool u_ok, 
-  //int64_t s_val, bool s_ok )
-
-
 
   // Create a bunch of tuples...
   std::cout << "Creating tuples...\n";

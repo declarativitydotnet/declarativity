@@ -17,6 +17,7 @@
 
 #include "csvparser.h"
 
+#include "val_str.h"
 #define TRACE_OFF
 #include "trace.h"
 
@@ -86,11 +87,8 @@ int CSVParser::push(int port, TupleRef t, cbv cb)
   
   if (t->size() != 1) {
     DBG("Error: tuple is not of size 1");
-  } else if ((*t)[0]->t != TupleField::STRING) {
-    // Error: field is not a string
-    DBG("Error: field is not a string");
   } else {
-    str tf = (*t)[0]->as_s();
+    str tf = Val_Str::cast((*t)[0]);
     strbuf newacc;
     newacc << _acc;
     newacc << tf;
@@ -131,7 +129,7 @@ int CSVParser::try_to_parse_line()
 	rxx::matchresult m = _re_qstr.search(line);
 	if (m) {
 	  TRC("Got a quoted string <" << m[1] << ">");
-	  t->append(New refcounted<TupleField>(m[1]));
+	  t->append(Val_Str::mk(m[1]));
 	  line = substr(line,m[0].len());
 	  continue;
 	}
@@ -140,7 +138,7 @@ int CSVParser::try_to_parse_line()
 	rxx::matchresult m = _re_tokn.search(line);
 	if (m) {
 	  TRC("Got a token <" << m[1] << ">");
-	  t->append(New refcounted<TupleField>(m[1]));
+	  t->append(Val_Str::mk(m[1]));
 	  line = substr(line,m[0].len());
 	  continue;
 	}

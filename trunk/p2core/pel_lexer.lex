@@ -160,7 +160,7 @@ HEXDIGIT	[0-9a-fA-F]
 }
 
 null { 
-  add_const(New refcounted<TupleField>());
+  add_const(Val_Null::mk());
 }
 
 \${DIGIT}+ {
@@ -213,7 +213,7 @@ Pel_Lexer::Pel_Lexer(const char *prog)
 // Called from the lexer: add a "load constant" instruction.
 //  XXX TODO: remove duplicates in the constant 
 //
-void Pel_Lexer::add_const(TupleFieldRef f)
+void Pel_Lexer::add_const(ValueRef f)
 {
   result->ops.push_back( (result->const_pool.size() & 0xFFFF) << 16 | Pel_VM::OP_PUSH_CONST );
   result->const_pool.append(f);
@@ -267,7 +267,7 @@ str Pel_Lexer::decompile(Pel_Program &prog)
       sb << "$" << opn << " ";
     } else if ( opc == Pel_VM::OP_PUSH_CONST ) {
       if ( opn < prog.const_pool.size() ) {
-	if (prog.const_pool[opn]->get_type() == TupleField::STRING) { 
+	if (prog.const_pool[opn]->typeCode() == Value::STR) { 
 	  sb << "\"" << prog.const_pool[opn]->toString() << "\" ";
 	} else {
 	  sb << prog.const_pool[opn]->toString() << " ";

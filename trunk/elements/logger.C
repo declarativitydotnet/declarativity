@@ -14,6 +14,11 @@
 #include <logger.h>
 #include <tuple.h>
 
+#include "val_double.h"
+#include "val_uint64.h"
+#include "val_str.h"
+#include "val_int32.h"
+
 //
 // One global sequence number
 //
@@ -40,13 +45,13 @@ void Logger::log( str classname,
   now = now_ts.tv_sec + (1.0 / 1000 / 1000 / 1000 * now_ts.tv_nsec);
 
   TupleRef t = Tuple::mk();
-  t->append(New refcounted<TupleField>(now));
-  t->append(New refcounted<TupleField>(seq++));
-  t->append(New refcounted<TupleField>(classname));
-  t->append(New refcounted<TupleField>(instancename));
-  t->append(New refcounted<TupleField>(severity));
-  t->append(New refcounted<TupleField>(errnum));
-  t->append(New refcounted<TupleField>(explanation));
+  t->append(Val_Double::mk(now));
+  t->append(Val_UInt64::mk(seq++));
+  t->append(Val_Str::mk(classname));
+  t->append(Val_Str::mk(instancename));
+  t->append(Val_Int32::mk(severity));
+  t->append(Val_Int32::mk(errnum));
+  t->append(Val_Str::mk(explanation));
   t->freeze();
   if (push(1,t,cbv_null) == 0) {
     warn << "Logger: possible tuple overrun next time\n";

@@ -11,6 +11,9 @@
 
 #include "marshal.h"
 
+#include "val_opaque.h"
+#include "xdr_suio.h"
+
 Marshal::Marshal()
   : Element(1, 1)
 {
@@ -25,23 +28,19 @@ TuplePtr Marshal::simple_action(TupleRef p)
   // Taken straight from the tuples test.
   xdrsuio xe;
   p->xdr_marshal(&xe);
-  const char *buf = suio_flatten(xe.uio());
-  size_t sz = xe.uio()->resid();
-  str s = armor64(buf, sz);
+  ref<suio> uio = New refcounted<suio>();
+  uio->take(xsuio(&xe));
 
   // Now create a new tuple to host this string
-  TuplePtr marshalledTuple = Tuple::mk();
-  if (marshalledTuple == 0) {
+  TuplePtr t = Tuple::mk();
+  if (t == 0) {
     // Couldn't create one. Memory problems?
-    log(LoggerI::WARN,
-        -1,
-        "Couldn't allocate new tuple");
-
+    log(LoggerI::ERROR, -1, "Couldn't allocate new tuple");
     return 0;
   } else {
     // Stick the string into a tuple field and into the tuple
-    marshalledTuple->append(New refcounted<TupleField>(s));
-    marshalledTuple->freeze();
-    return marshalledTuple;
+    t->append(Val_Opaque::mk(uio));
+    t->freeze();
+    return t;
   }
 }

@@ -17,6 +17,15 @@
 #include <math.h>
 #include <rxx.h>
 
+#include "val_int32.h"
+#include "val_uint32.h"
+#include "val_int64.h"
+#include "val_uint64.h"
+#include "val_str.h"
+#include "val_double.h"
+#include "val_null.h"
+
+
 typedef void(Pel_VM::*Op_fn_t)(u_int32_t);
 
 struct JumpTableEnt_t {
@@ -59,10 +68,10 @@ void Pel_VM::reset()
 //
 // Return some value. 
 //
-TupleFieldRef Pel_VM::result_val()
+ValueRef Pel_VM::result_val()
 {
   if (st.empty()) {
-    st.push(New refcounted<TupleField>());
+    st.push(Val_Null::mk());
   }
   return st.top();
 }
@@ -93,12 +102,13 @@ const char *Pel_VM::strerror(Pel_VM::Error e) {
 //
 uint64_t Pel_VM::pop_unsigned() 
 {
-  TupleFieldRef t = st.top(); st.pop();
-  uint64_t v;
-  if ( !t->convert_unsigned(v) ) {
+  ValueRef t = st.top(); st.pop();
+  try {
+    return Val_UInt64::cast(t);
+  } catch (Value::TypeError) {
     error = PE_TYPE_CONVERSION;
+    return 0;
   }
-  return v;
 }
 
 //
@@ -106,23 +116,24 @@ uint64_t Pel_VM::pop_unsigned()
 //
 int64_t Pel_VM::pop_signed() 
 {
-  TupleFieldRef t = st.top(); st.pop();
-  int64_t v;
-  if ( !t->convert_signed(v) ) {
+  ValueRef t = st.top(); st.pop();
+  try {
+    return Val_Int64::cast(t);
+  } catch (Value::TypeError) {
     error = PE_TYPE_CONVERSION;
+    return 0;
   }
-  return v;
 }
- 
+
 //
 // Pull a string off the stack
 //  
 str Pel_VM::pop_string() 
 {
-  TupleFieldRef t = st.top(); st.pop();
-  if (t->get_type() == TupleField::STRING) {
-    return t->as_s();
-  } else {
+  ValueRef t = st.top(); st.pop();
+  try {
+    return Val_Str::cast(t);
+  } catch (Value::TypeError) {
     error = PE_TYPE_CONVERSION;
     return str("");
   }
@@ -133,10 +144,10 @@ str Pel_VM::pop_string()
 //  
 double Pel_VM::pop_double() 
 {
-  TupleFieldRef t = st.top(); st.pop();
-  if (t->get_type() == TupleField::DOUBLE) {
-    return t->as_d();
-  } else {
+  ValueRef t = st.top(); st.pop();
+  try { 
+    return Val_Double::cast(t);
+  } catch (Value::TypeError) {
     error = PE_TYPE_CONVERSION;
     return 0.0;
   }
@@ -198,8 +209,8 @@ Pel_VM::Error Pel_VM::execute_instruction( u_int32_t inst, TupleRef data)
 //
 DEF_OP(DROP) { st.pop(); }
 DEF_OP(SWAP) { 
-  TupleFieldRef t1 = st.top(); st.pop();
-  TupleFieldRef t2 = st.top(); st.pop();
+  ValueRef t1 = st.top(); st.pop();
+  ValueRef t2 = st.top(); st.pop();
   st.push(t1); 
   st.push(t2);
 }
@@ -227,17 +238,17 @@ DEF_OP(POP) {
 //
 DEF_OP(NOT) {
   u_int64_t v = pop_unsigned();
-  st.push(New refcounted<TupleField>(!v));
+  st.push(Val_UInt64::mk(!v));
 }
 DEF_OP(AND) {
   u_int64_t v1 = pop_unsigned();
   u_int64_t v2 = pop_unsigned();
-  st.push(New refcounted<TupleField>(v1 && v2));
+  st.push(Val_UInt64::mk(v1 && v2));
 }
 DEF_OP(OR) {
   u_int64_t v1 = pop_unsigned();
   u_int64_t v2 = pop_unsigned();
-  st.push(New refcounted<TupleField>(v1 || v2));
+  st.push(Val_UInt64::mk(v1 || v2));
 }
 
 //
@@ -246,35 +257,35 @@ DEF_OP(OR) {
 DEF_OP(LSR) {
   u_int64_t v1 = pop_unsigned();
   u_int64_t v2 = pop_unsigned();
-  st.push(New refcounted<TupleField>(v2 >> v1));
+  st.push(Val_UInt64::mk(v2 >> v1));
 }
 DEF_OP(ASR) {
   u_int64_t v1 = pop_unsigned();
   int64_t v2 = pop_signed();
-  st.push(New refcounted<TupleField>(v2 >> v1));
+  st.push(Val_Int64::mk(v2 >> v1));
 }
 DEF_OP(LSL) {
   uint64_t v1 = pop_unsigned();
   uint64_t v2 = pop_unsigned();
-  st.push(New refcounted<TupleField>(v2 << v1));
+  st.push(Val_UInt64::mk(v2 << v1));
 }
 DEF_OP(BIT_AND) {
-  st.push(New refcounted<TupleField>(pop_unsigned() & pop_unsigned()));
+  st.push(Val_UInt64::mk(pop_unsigned() & pop_unsigned()));
 }
 DEF_OP(BIT_OR) {
-  st.push(New refcounted<TupleField>(pop_unsigned() | pop_unsigned()));
+  st.push(Val_UInt64::mk(pop_unsigned() | pop_unsigned()));
 }
 DEF_OP(BIT_XOR) {
-  st.push(New refcounted<TupleField>(pop_unsigned() ^ pop_unsigned()));
+  st.push(Val_UInt64::mk(pop_unsigned() ^ pop_unsigned()));
 }
 DEF_OP(BIT_NOT) {
-  st.push(New refcounted<TupleField>(~pop_unsigned()));
+  st.push(Val_UInt64::mk(~pop_unsigned()));
 }
 DEF_OP(MOD) {
   int64_t v1 = pop_signed();
   int64_t v2 = pop_signed();
   if (v1) { 
-    st.push(New refcounted<TupleField>(v2 % v1));
+    st.push(Val_Int64::mk(v2 % v1));
   } else if (error == PE_SUCCESS) {
     error = PE_DIVIDE_BY_ZERO;
   }
@@ -287,36 +298,36 @@ DEF_OP(MOD) {
 DEF_OP(STR_LT) { 
   str s1 = pop_string();
   str s2 = pop_string();
-  st.push(New refcounted<TupleField>(s2 < s1));
+  st.push(Val_Int32::mk(s2 < s1));
 }
 DEF_OP(STR_LTE) { 
   str s1 = pop_string();
   str s2 = pop_string();
-  st.push(New refcounted<TupleField>(s2 <= s1));
+  st.push(Val_Int32::mk(s2 <= s1));
 }
 DEF_OP(STR_GT) { 
   str s1 = pop_string();
   str s2 = pop_string();
-  st.push(New refcounted<TupleField>(s2 > s1));
+  st.push(Val_Int32::mk(s2 > s1));
 }
 DEF_OP(STR_GTE) { 
   str s1 = pop_string();
   str s2 = pop_string();
-  st.push(New refcounted<TupleField>(s2 >= s1));
+  st.push(Val_Int32::mk(s2 >= s1));
 }
 DEF_OP(STR_EQ) { 
   str s1 = pop_string();
   str s2 = pop_string();
-  st.push(New refcounted<TupleField>(s2 == s1));
+  st.push(Val_Int32::mk(s2 == s1));
 }
 DEF_OP(STR_CAT) { 
   str s1 = pop_string();
   str s2 = pop_string();
   str r = strbuf() << s2 << s1;
-  st.push(New refcounted<TupleField>(r));
+  st.push(Val_Str::mk(r));
 }
 DEF_OP(STR_LEN) {
-  st.push(New refcounted<TupleField>(pop_string().len()));
+  st.push(Val_UInt32::mk(pop_string().len()));
 }
 DEF_OP(STR_UPPER) {
   // There _has_ to be a better way of doing this...
@@ -328,7 +339,7 @@ DEF_OP(STR_UPPER) {
     tmp_str[0] = toupper(s[i]);
     sb.cat(tmp_str);
   }
-  st.push(New refcounted<TupleField>(sb));
+  st.push(Val_Str::mk(sb));
 }
 DEF_OP(STR_LOWER) {
   // There _has_ to be a better way of doing this...
@@ -340,66 +351,66 @@ DEF_OP(STR_LOWER) {
     tmp_str[0] = tolower(s[i]);
     sb.cat(tmp_str);
   }
-  st.push(New refcounted<TupleField>(sb));
+  st.push(Val_Str::mk(sb));
 }
 DEF_OP(STR_SUBSTR) {
   int len = pop_unsigned();
   int pos = pop_unsigned();
   str s = pop_string();
-  st.push(New refcounted<TupleField>(substr(s,pos,len)));
+  st.push(Val_Str::mk(substr(s,pos,len)));
 }
 DEF_OP(STR_MATCH) {
   // XXX This is slow!!! For better results, memoize each regexp in a
   // hash map and study each one. 
   rxx re(pop_string());
   re.match(pop_string());
-  st.push(New refcounted<TupleField>(re.success()));
+  st.push(Val_Int32::mk(re.success()));
 }
 //
 // Integer arithmetic operations
 //
 DEF_OP(INT_NEG) {
-  st.push(New refcounted<TupleField>(-pop_signed()));
+  st.push(Val_Int64::mk(-pop_signed()));
 }
 DEF_OP(INT_PLUS) {
-  st.push(New refcounted<TupleField>(pop_signed()+pop_signed()));
+  st.push(Val_Int64::mk(pop_signed()+pop_signed()));
 }
 DEF_OP(INT_MINUS) {
   // Be careful of undefined evaluation order in C++!
   int64_t v1 = pop_signed();
   int64_t v2 = pop_signed();
-  st.push(New refcounted<TupleField>(v2-v1));
+  st.push(Val_Int64::mk(v2-v1));
 }
 DEF_OP(INT_MUL) {
-  st.push(New refcounted<TupleField>(pop_signed()*pop_signed()));
+  st.push(Val_Int64::mk(pop_signed()*pop_signed()));
 }
 DEF_OP(INT_DIV) {
   // Be careful of undefined evaluation order in C++!
   int64_t v1 = pop_signed();
   int64_t v2 = pop_signed();
   if (v1) { 
-    st.push(New refcounted<TupleField>(v2 / v1));
+    st.push(Val_Int64::mk(v2 / v1));
   } else if (error == PE_SUCCESS) {
     error = PE_DIVIDE_BY_ZERO;
   }
 }
 DEF_OP(INT_ABS) {
-  st.push(New refcounted<TupleField>(llabs(pop_signed())));
+  st.push(Val_Int64::mk(llabs(pop_signed())));
 }
 DEF_OP(INT_EQ) {
-  st.push(New refcounted<TupleField>(pop_signed() == pop_signed()));
+  st.push(Val_Int64::mk(pop_signed() == pop_signed()));
 }
 DEF_OP(INT_LT) { 
-  st.push(New refcounted<TupleField>(pop_signed() > pop_signed())); 
+  st.push(Val_Int64::mk(pop_signed() > pop_signed())); 
 }
 DEF_OP(INT_LTE) { 
-  st.push(New refcounted<TupleField>(pop_signed() >= pop_signed())); 
+  st.push(Val_Int64::mk(pop_signed() >= pop_signed())); 
 }
 DEF_OP(INT_GT) { 
-  st.push(New refcounted<TupleField>(pop_signed() < pop_signed())); 
+  st.push(Val_Int64::mk(pop_signed() < pop_signed())); 
 }
 DEF_OP(INT_GTE) { 
-  st.push(New refcounted<TupleField>(pop_signed() <= pop_signed())); 
+  st.push(Val_Int64::mk(pop_signed() <= pop_signed())); 
 }
 
 
@@ -407,164 +418,68 @@ DEF_OP(INT_GTE) {
 // Floating-point arithmetic operations
 //
 DEF_OP(DBL_NEG) {
-  st.push(New refcounted<TupleField>(-pop_double()));
+  st.push(Val_Double::mk(-pop_double()));
 }
 DEF_OP(DBL_PLUS) {
-  st.push(New refcounted<TupleField>(pop_double()+pop_double()));
+  st.push(Val_Double::mk(pop_double()+pop_double()));
 }
 DEF_OP(DBL_MINUS) {
   // Be careful of undefined evaluation order in C++!
   double v1 = pop_double();
   double v2 = pop_double();
-  st.push(New refcounted<TupleField>(v2-v1));
+  st.push(Val_Double::mk(v2-v1));
 }
 DEF_OP(DBL_MUL) {
-  st.push(New refcounted<TupleField>(pop_double()*pop_double()));
+  st.push(Val_Double::mk(pop_double()*pop_double()));
 }
 DEF_OP(DBL_DIV) {
   // Be careful of undefined evaluation order in C++!
   double v1 = pop_double();
   double v2 = pop_double();
-  st.push(New refcounted<TupleField>(v2 / v1));
+  st.push(Val_Double::mk(v2 / v1));
 }
 DEF_OP(DBL_EQ) {
-  st.push(New refcounted<TupleField>(pop_double() == pop_double()));
+  st.push(Val_Int32::mk(pop_double() == pop_double()));
 }
 DEF_OP(DBL_LT) { 
-  st.push(New refcounted<TupleField>(pop_double() > pop_double())); 
+  st.push(Val_Int32::mk(pop_double() > pop_double())); 
 }
 DEF_OP(DBL_LTE) { 
-  st.push(New refcounted<TupleField>(pop_double() >= pop_double())); 
+  st.push(Val_Int32::mk(pop_double() >= pop_double())); 
 }
 DEF_OP(DBL_GT) { 
-  st.push(New refcounted<TupleField>(pop_double() < pop_double())); 
+  st.push(Val_Int32::mk(pop_double() < pop_double())); 
 }
 DEF_OP(DBL_GTE) { 
-  st.push(New refcounted<TupleField>(pop_double() <= pop_double())); 
+  st.push(Val_Int32::mk(pop_double() <= pop_double())); 
 }
 DEF_OP(DBL_FLOOR) {
-  st.push(New refcounted<TupleField>(floor(pop_double())));
+  st.push(Val_Double::mk(floor(pop_double())));
 }
 DEF_OP(DBL_CEIL) {
-  st.push(New refcounted<TupleField>(ceil(pop_double())));
+  st.push(Val_Double::mk(ceil(pop_double())));
 }
 
 //
 // Explicit Type conversions
 //
 DEF_OP(CONV_I32) {
-  TupleFieldRef t = st.top(); st.pop();
-  int32_t i;
-  switch( t->get_type() ) {
-  case TupleField::INT32:
-    i = t->as_i32(); break;
-  case TupleField::UINT32:
-    i = t->as_ui32(); break;
-  case TupleField::INT64:
-    i = t->as_i64(); break;
-  case TupleField::UINT64:
-    i = t->as_ui64(); break;
-  case TupleField::STRING:
-    i = lrint(atof(t->as_s())); break;
-  case TupleField::DOUBLE:
-    i = lrint(t->as_d()); break;
-  default:
-    error = PE_TYPE_CONVERSION;
-    i = 0;
-  }
-  st.push(New refcounted<TupleField>(i));
+  st.push(Val_Int32::mk(pop_signed()));
 }
 DEF_OP(CONV_U32) {
-  TupleFieldRef t = st.top(); st.pop();
-  uint32_t i;
-  switch( t->get_type() ) {
-  case TupleField::INT32:
-    i = t->as_i32(); break;
-  case TupleField::UINT32:
-    i = t->as_ui32(); break;
-  case TupleField::INT64:
-    i = t->as_i64(); break;
-  case TupleField::UINT64:
-    i = t->as_ui64(); break;
-  case TupleField::STRING:
-    i = lrint(atof(t->as_s())); break;
-  case TupleField::DOUBLE:
-    i = lrint(t->as_d()); break;
-  default:
-    error = PE_TYPE_CONVERSION;
-    i = 0;
-  }
-  st.push(New refcounted<TupleField>(i));
-}
+  st.push(Val_UInt32::mk(pop_unsigned()));
+}  
 DEF_OP(CONV_I64) {
-  TupleFieldRef t = st.top(); st.pop();
-  int64_t i;
-  switch( t->get_type() ) {
-  case TupleField::INT32:
-    i = t->as_i32(); break;
-  case TupleField::UINT32:
-    i = t->as_ui32(); break;
-  case TupleField::INT64:
-    i = t->as_i64(); break;
-  case TupleField::UINT64:
-    i = t->as_ui64(); break;
-  case TupleField::STRING:
-    i = llrint(atof(t->as_s())); break;
-  case TupleField::DOUBLE:
-    i = llrint(t->as_d()); break;
-  default:
-    error = PE_TYPE_CONVERSION;
-    i = 0;
-  }
-  st.push(New refcounted<TupleField>(i));
+  st.push(Val_Int64::mk(pop_signed()));
 }
 DEF_OP(CONV_U64) {
-  TupleFieldRef t = st.top(); st.pop();
-  uint64_t i;
-  switch( t->get_type() ) {
-  case TupleField::INT32:
-    i = t->as_i32(); break; 
-  case TupleField::UINT32:
-    i = t->as_ui32(); break;
-  case TupleField::INT64:
-    i = t->as_i64(); break;
-  case TupleField::UINT64:
-    i = t->as_ui64(); break;
-  case TupleField::STRING:
-    i = llrint(atof(t->as_s())); break;
-  case TupleField::DOUBLE:
-    i = llrint(t->as_d()); break;
-  default:
-    error = PE_TYPE_CONVERSION;
-    i = 0;
-  }
-  st.push(New refcounted<TupleField>(i));
+  st.push(Val_UInt64::mk(pop_unsigned()));
 }
 DEF_OP(CONV_STR) {
-  TupleFieldRef t = st.top(); st.pop();
-  st.push(New refcounted<TupleField>(t->toString()));
+  st.push(Val_Str::mk(pop_string()));
 }
 DEF_OP(CONV_DBL) {
-  TupleFieldRef t = st.top(); st.pop();
-  double i;
-  switch( t->get_type() ) {
-  case TupleField::INT32:
-    i = t->as_i32(); break;
-  case TupleField::UINT32:
-    i = t->as_ui32(); break;
-  case TupleField::INT64:
-    i = t->as_i64(); break;
-  case TupleField::UINT64:
-    i = t->as_ui64(); break;
-  case TupleField::STRING:
-    i = atof(t->as_s()); break;
-  case TupleField::DOUBLE:
-    i = t->as_d(); break;
-  default:
-    error = PE_TYPE_CONVERSION;
-    i = 0;
-  }
-  st.push(New refcounted<TupleField>(i));
+  st.push(Val_Double::mk(pop_double()));
 }
 
 //
@@ -573,7 +488,7 @@ DEF_OP(CONV_DBL) {
 DEF_OP(HASH) {
   uint32_t h = (hash_t)(st.top()->toTypeString());
   st.pop();
-  st.push(New refcounted<TupleField>(h));
+  st.push(Val_UInt32::mk(h));
 }
 
 

@@ -29,7 +29,7 @@ public:
   str toString() const { return strbuf(u); };
 
   // Marshalling and unmarshallng
-  void xdr_marshal( XDR *x );
+  void xdr_marshal_subtype( XDR *x );
 
   // Constructor
   Val_Opaque(ref<suio> uio) : u(uio) {};

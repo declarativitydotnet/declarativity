@@ -32,6 +32,12 @@ ELEMENTS
  - Element to marshal tuples into a packet 
 
 OTHER OBJECTS / FACILTIES
+ 
+ - IP address concrete value type
+
+ - Time concrete value type.  Modify Logger to use it. 
+
+ - Id concrete value type. 
 
  - Various "table" objects.  A table stores tuples, either on disk or
    in  memory, together with some "replacement policy" which

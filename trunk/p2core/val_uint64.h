@@ -28,7 +28,8 @@ public:
   virtual str toString() const { return strbuf() << i; };
 
   // Marshalling and unmarshallng
-  void xdr_marshal( XDR *x );
+  void xdr_marshal_subtype( XDR *x );
+  static ValueRef xdr_unmarshal( XDR *x );
 
   // Constructor
   Val_UInt64(uint64_t theInt) : i(theInt) {};

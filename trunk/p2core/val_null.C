@@ -23,9 +23,13 @@ ValueRef Val_Null::singleton = New refcounted<Val_Null>();
 //
 // Marshalling and unmarshallng
 //
-void Val_Null::xdr_marshal( XDR *x ) 
+void Val_Null::xdr_marshal_subtype( XDR *x ) 
 {
   return;
+}
+ValueRef Val_Null::xdr_unmarshal( XDR *x )
+{
+  return singleton;
 }
 
 //

@@ -18,6 +18,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include "val_str.h"
+
 //#define TRACE_OFF
 #include "trace.h"
 
@@ -44,8 +46,8 @@ PlSensor::PlSensor(u_int16_t sensor_port,
     port(sensor_port), 
     path(sensor_path), 
     sd(-1),
-    delay(reconnect_delay),
     req_re(HTTP_RX),
+    delay(reconnect_delay),
     req_buf(NULL)
 {
   TRC_FN;
@@ -188,7 +190,7 @@ void PlSensor::rx_hdr_cb()
     if (m) {
       // Create a tuple with the single string, the matching body.
       TupleRef t = Tuple::mk();
-      t->append(New refcounted<TupleField>(m[5]));
+      t->append(Val_Str::mk(m[5]));
       if (push(0,t,wrap(this,&PlSensor::element_cb))) {
 	socket_on();
 	state = ST_RX_BODY;
@@ -241,7 +243,7 @@ void PlSensor::rx_body_cb()
     return;
   default:
     TupleRef t = Tuple::mk();
-    t->append(New refcounted<TupleField>(rx));
+    t->append(Val_Str::mk(rx));
     if (push(0,t,wrap(this,&PlSensor::element_cb))) {
       socket_on();
       state = ST_RX_BODY;

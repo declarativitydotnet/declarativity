@@ -19,10 +19,18 @@
 //
 // Marshal a string
 // 
-void Val_Str::xdr_marshal( XDR *x ) 
+void Val_Str::xdr_marshal_subtype( XDR *x ) 
 {
   rpc_str<RPC_INFINITY> rs(s);
   rpc_traverse(x,rs);
+}
+ValueRef Val_Str::xdr_unmarshal( XDR *x )
+{
+  // Note that this looks like a yucky double copy, but at least the
+  // string data itself isn't copied (since rpc_str <: str).
+  rpc_str<RPC_INFINITY> rs;
+  rpc_traverse(x,rs);
+  return mk(rs);
 }
   
 /* 

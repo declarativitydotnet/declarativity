@@ -39,7 +39,7 @@ public:
 
 private:
   // Execution state
-  std::stack<TupleFieldRef> st;
+  std::stack<ValueRef> st;
   const Pel_Program	*prg;
   Error		 error;
   uint		 pc;
@@ -73,7 +73,7 @@ public:
   Error execute_instruction( u_int32_t inst, TupleRef data);
 
   // Return the result (top of the stack)
-  TupleFieldRef result_val();
+  ValueRef result_val();
   
   // Return the current result tuple.
   TupleRef result_tuple();

@@ -17,6 +17,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include "val_str.h"
+#include "val_int32.h"
+
 /////////////////////////////////////////////////////////////////////
 //
 // Receive element
@@ -47,15 +50,15 @@ void Udp::Rx::socket_cb()
     if (errno != EAGAIN) {
       // Make an error tuple... 
       TupleRef t = Tuple::mk();
-      t->append(New refcounted<TupleField>(errno));
+      t->append(Val_Int32::mk(errno));
       push(1,t,cbv_null);
     }
     delete uio;
   } else {
     // Success! We've got a packet.  Package it up...
     TupleRef t = Tuple::mk();
-    t->append(New refcounted<TupleField>(str(*uio)));
-    t->append(New refcounted<TupleField>(str( (const char *)&sa, sa_len)));
+    t->append(Val_Str::mk(str(*uio)));
+    t->append(Val_Str::mk(str( (const char *)&sa, sa_len)));
     // Push it. 
     push_pending = push(0,t,wrap(this,&Udp::Rx::element_cb));
   }
@@ -101,8 +104,8 @@ void Udp::Tx::socket_cb()
   }
   
   // We've now go a packet...
-  str payload = (*t)[0]->as_s();
-  str addr = (*t)[1]->as_s();
+  str payload = Val_Str::cast((*t)[0]);
+  str addr = Val_Str::cast((*t)[1]);
   ssize_t s = sendto(u->sd, 
 		     payload.cstr(), payload.len(),
 		     0, 
@@ -117,7 +120,7 @@ void Udp::Tx::socket_cb()
     //  socket buffers. 
     // Make an error tuple... 
     TupleRef t = Tuple::mk();
-    t->append(New refcounted<TupleField>(errno));
+    t->append(Val_Int32::mk(errno));
     push(1,t,cbv_null);
   }
   socket_on();

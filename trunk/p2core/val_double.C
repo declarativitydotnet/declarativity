@@ -35,9 +35,15 @@ str Val_Double::toString() const
 //
 // Marshalling and unmarshallng
 //
-void Val_Double::xdr_marshal( XDR *x )
+void Val_Double::xdr_marshal_subtype( XDR *x )
 {
   xdr_double(x, &d);
+}
+ValueRef Val_Double::xdr_unmarshal( XDR *x )
+{
+  double d;
+  xdr_double(x, &d);
+  return mk(d);
 }
 
 //
