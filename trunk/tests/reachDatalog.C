@@ -61,6 +61,51 @@ static int LINKS = 2;
 static int STARTING_PORT = 10000;
 static const int nodes = 5;
 
+/* Initial sending of links into the p2 dataflow */
+void bookstrapData(Router::ConfigurationRef conf,
+                   str name,
+                   TableRef linkTable, 
+		   ref< Udp > udp)
+{
+  // Scanner element over link table
+  ElementSpecRef scanS =
+    conf->addElement(New refcounted< Scan >(strbuf("Scanner:") << name, linkTable, 1));
+  ElementSpecRef scanPrintS =
+    conf->addElement(New refcounted< Print >(strbuf("Scan:") << name));
+  ElementSpecRef timedPullPushS =
+    conf->addElement(New refcounted< TimedPullPush >(strbuf("PushReach:").cat(name), 1));
+  ElementSpecRef slotS =
+    conf->addElement(New refcounted< Slot >(strbuf("Slot:").cat(name)));
+
+ ElementSpecRef encapS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("encap:").cat(name),
+                                                    "$1 pop /* The From address */\
+                                                     $0 ->t $1 append $2 append pop")); // the rest
+
+  ElementSpecRef encapPrintS =
+    conf->addElement(New refcounted< Print >(strbuf("Encap:") << name));
+
+  // Now marshall the payload (second field)
+  ElementSpecRef marshalS =
+    conf->addElement(New refcounted< MarshalField >(strbuf("Marshal:").cat(name),
+                                                    1));
+  ElementSpecRef routeS =
+    conf->addElement(New refcounted< StrToSockaddr >(strbuf("Router:").cat(name), 0));
+  ElementSpecRef udpTxS =
+    conf->addElement(udp->get_tx());
+    
+  // Connect to outgoing hook
+  conf->hookUp(scanS, 0, scanPrintS, 0);
+  conf->hookUp(scanPrintS, 0, timedPullPushS, 0);
+  conf->hookUp(timedPullPushS, 0, slotS, 0);
+  conf->hookUp(slotS, 0, encapS, 0);
+  conf->hookUp(encapS, 0, encapPrintS, 0);
+  conf->hookUp(encapPrintS, 0, marshalS, 0);
+  conf->hookUp(marshalS, 0, routeS, 0);
+  conf->hookUp(routeS, 0, udpTxS, 0);
+}
+
+
 /** Build a symmetric link transitive closure. */
 void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
 {
@@ -71,15 +116,22 @@ void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
 
   // Create one data flow per "node"
   ptr< Udp > udps[nodes];
+  ptr< Udp > bootstrapUDP[nodes];
   ValuePtr nodeIds[nodes];
   str names[nodes];
+  TablePtr bootstrapTable[nodes];
   
   // Create the networking objects
   for (int i = 0; i < nodes; i++) {
     names[i] = strbuf("Node") << i;
     nodeIds[i] = Val_Str::mk(strbuf("127.0.0.1") << ":" << (STARTING_PORT + i));
+    
 
     udps[i] = New refcounted< Udp >(names[i] << ":Udp", STARTING_PORT + i);
+    bootstrapUDP[i] = New refcounted< Udp >(names[i] << ":bootstrapUdp", 
+					    STARTING_PORT + i + 5000);
+    bootstrapTable[i] = New refcounted< Table >("neighbor", 100000);
+    bootstrapTable[i]->add_multiple_index(1);
 
     routerConfigGenerator.createTables(names[i]);
   }
@@ -107,8 +159,9 @@ void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
 
       t->append((ValueRef) nodeIds[other]);
       t->freeze();
-      TableRef tableRef = routerConfigGenerator.getTableByName(names[i], "neighbor");
-      tableRef->insert(t);
+      //TableRef tableRef = routerConfigGenerator.getTableByName(names[i], "neighbor");
+      //tableRef->insert(t);
+      bootstrapTable[i]->insert(t);
 
       // Make the symmetric one
       TupleRef symmetric = Tuple::mk();
@@ -116,15 +169,22 @@ void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
       symmetric->append((ValueRef) nodeIds[other]);
       symmetric->append((ValueRef) nodeIds[i]);
       symmetric->freeze();
-      tableRef = routerConfigGenerator.getTableByName(names[other], "neighbor");
-      tableRef->insert(symmetric);
+      //tableRef = routerConfigGenerator.getTableByName(names[other], "neighbor");
+      //tableRef->insert(symmetric);
+      bootstrapTable[other]->insert(symmetric);
     }
   }
 
   // And make the data flows
   for (int i = 0; i < nodes; i++) {
+      // initial loading of data into p2 dataflows
+      bookstrapData(conf, "bootstrap" << names[i], bootstrapTable[i], bootstrapUDP[i]);
       routerConfigGenerator.configureRouter(udps[i], names[i]);
   }
+
+
+  // add extra here to initialize the tables
+
 
   RouterRef router = New refcounted< Router >(conf, level);
   if (router->initialize(router) == 0) {
