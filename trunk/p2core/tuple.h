@@ -52,7 +52,7 @@ public:
 
   /** Append all the fields of the given tuple to the end of this tuple
   */
-  void append(TupleRef t);
+  void concat(TupleRef t);
 
   /** Attach a named tag to the tuple. The tuple must not be frozen. To
       store a tag with no value use Val_Null::mk() to return the

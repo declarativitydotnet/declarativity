@@ -30,9 +30,10 @@
 #include "duplicate.h"
 #include "dupElim.h"
 #include "filter.h"
-#include "store.h"
 #include "timedPullSink.h"
-#include "joiner.h"
+#include "lookup.h"
+#include "insert.h"
+#include "table.h"
 
 void killJoin()
 {
@@ -60,8 +61,8 @@ void testSimpleJoin(LoggerI::Level level)
 
 
   // The rehash factories
-  Store storeA("ATuples", 1);
-  //  Store storeB;
+  TableRef tableA = New refcounted< Table >("ATuples", 1000);
+  tableA->add_unique_index(1);
 
 
 
@@ -80,7 +81,7 @@ void testSimpleJoin(LoggerI::Level level)
   ElementSpecRef dupElimAS = conf->addElement(New refcounted< DupElim >("DupElimA"));
   ElementSpecRef transAPrintS =
     conf->addElement(New refcounted< Print >("ATuples"));
-  ElementSpecRef rehashAS = conf->addElement(storeA.mkInsert());
+  ElementSpecRef rehashAS = conf->addElement(New refcounted< Insert >("InsertA", tableA));
   ElementSpecRef sinkAS =
     conf->addElement(New refcounted< Discard >("discardA"));
   conf->hookUp(dupS, 0, transAS, 0);
@@ -106,21 +107,16 @@ void testSimpleJoin(LoggerI::Level level)
     conf->addElement(New refcounted< PelTransform >("filterDropB", "$0 pop $2 pop $3 pop"));
   ElementSpecRef dupElimBS = conf->addElement(New refcounted< DupElim >("dupElimB"));
   ElementSpecRef transBPrintS = conf->addElement(New refcounted< Print >("BTuples"));
-  ElementSpecRef keyMakerBS =
-    conf->addElement(New refcounted< PelTransform >("keyMakerB", "$1 pop"));
-  ElementSpecRef lookupBS = conf->addElement(storeA.mkLookup());
+  ElementSpecRef lookupBS =
+    conf->addElement(New refcounted< UniqueLookup >("Lookup", tableA, 1, 1));
   ElementSpecRef lookupBPrintS =
     conf->addElement(New refcounted< Print >("LookupBInA"));
-  ElementSpecRef splitBS =
-    conf->addElement(New refcounted< Duplicate >("splitB", 2));
   conf->hookUp(dupS, 1, transBS, 0);
   conf->hookUp(transBS, 0, filterBS, 0);
   conf->hookUp(filterBS, 0, filterDropBS, 0);
   conf->hookUp(filterDropBS, 0, dupElimBS, 0);
   conf->hookUp(dupElimBS, 0, transBPrintS, 0);
-  conf->hookUp(transBPrintS, 0, splitBS, 0);
-  conf->hookUp(splitBS, 0, keyMakerBS, 0);
-  conf->hookUp(keyMakerBS, 0, lookupBS, 0);
+  conf->hookUp(transBPrintS, 0, lookupBS, 0);
   conf->hookUp(lookupBS, 0, lookupBPrintS, 0);
 
 
@@ -129,13 +125,10 @@ void testSimpleJoin(LoggerI::Level level)
 
 
   // The joining dataflow
-  ElementSpecRef joinerBS = conf->addElement(New refcounted< Joiner >("joinerB"));
   ElementSpecRef joinerBPrintS = conf->addElement(New refcounted< Print >("BJoinWithA"));
   ElementSpecRef sinkBS =
     conf->addElement(New refcounted< TimedPullSink >("sinkB", 0));
-  conf->hookUp(lookupBPrintS, 0, joinerBS, 0);
-  conf->hookUp(splitBS, 1, joinerBS, 1);
-  conf->hookUp(joinerBS, 0, joinerBPrintS, 0);
+  conf->hookUp(lookupBPrintS, 0, joinerBPrintS, 0);
   conf->hookUp(joinerBPrintS, 0, sinkBS, 0);
 
 

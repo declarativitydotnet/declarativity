@@ -140,7 +140,7 @@ TupleRef Tuple::EMPTY = Tuple::mk();
 // initialized.
 Tuple::EmptyInitializer _theEmptyInitializer;
 
-void Tuple::append(TupleRef tf)
+void Tuple::concat(TupleRef tf)
 {
   assert(!frozen);
 

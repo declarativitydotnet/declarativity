@@ -131,9 +131,9 @@ TuplePtr Joiner::mergeTuples(TupleRef p)
     TupleRef newTuple = Tuple::mk();
 
     // Append the fixed
-    newTuple->append(myFixed);
+    newTuple->concat(myFixed);
     // and the fetched
-    newTuple->append(p);
+    newTuple->concat(p);
     // and prepare it for shipping
     newTuple->freeze();
 

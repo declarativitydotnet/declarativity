@@ -31,9 +31,7 @@
 #include "duplicate.h"
 #include "dupElim.h"
 #include "filter.h"
-#include "store.h"
 #include "timedPullPush.h"
-#include "joiner.h"
 #include "udp.h"
 #include "marshalField.h"
 #include "unmarshalField.h"
@@ -43,6 +41,10 @@
 #include "timedPullSink.h"
 #include "timestampSource.h"
 #include "hexdump.h"
+#include "table.h"
+#include "lookup.h"
+#include "insert.h"
+#include "scan.h"
 
 void killJoin()
 {
@@ -57,13 +59,13 @@ static const int nodes = 100;
     entries and blast them out */
 void makeReachFlow(Router::ConfigurationRef conf,
                    str name,
-                   ref< Store > linkStore,
+                   TableRef linkTable,
                    ElementSpecRef outgoingInput,
                    int outgoingInputPort)
 {
   // Scanner element over link table
   ElementSpecRef scanS =
-    conf->addElement(linkStore->mkScan());
+    conf->addElement(New refcounted< Scan >(strbuf("Scaner:") << name, linkTable, 1));
   ElementSpecRef scanPrintS =
     conf->addElement(New refcounted< Print >(strbuf("Scan:") << name));
   ElementSpecRef timedPullPushS =
@@ -84,47 +86,10 @@ void makeReachFlow(Router::ConfigurationRef conf,
 }
 
 
-void makeSemiJoin(Router::ConfigurationRef conf,
-                  str name,
-                  ref< Store > store,
-                  ElementSpecRef incomingOutput,
-                  int incomingOutputPort,
-                  ElementSpecRef outgoingInput,
-                  int outgoingInputPort)
-{
-  ElementSpecRef splitS =
-    conf->addElement(New refcounted< Duplicate >(strbuf("Split:").cat(name), 2));
-  ElementSpecRef keyMakerS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("KeyMaker:").cat(name), "$1 pop"));
-  ElementSpecRef lookupPS =
-    conf->addElement(New refcounted< Print >(strbuf("Lookup:") << name));
-  ElementSpecRef lookupS =
-    conf->addElement(store->mkLookup());
-  ElementSpecRef foundPS =
-    conf->addElement(New refcounted< Print >(strbuf("Found:") << name));
-  ElementSpecRef joinerS =
-    conf->addElement(New refcounted< Joiner >(strbuf("Joiner:").cat(name)));
-  
-  conf->hookUp(splitS, 0, keyMakerS, 0);
-  conf->hookUp(keyMakerS, 0, lookupPS, 0);
-  conf->hookUp(lookupPS, 0, lookupS, 0);
-  conf->hookUp(lookupS, 0, foundPS, 0);
-  conf->hookUp(foundPS, 0, joinerS, 0);
-  conf->hookUp(splitS, 1, joinerS, 1);
-                     
-  
-
-  // Hook it up
-  conf->hookUp(incomingOutput, incomingOutputPort,
-               splitS, 0);
-  conf->hookUp(joinerS, 0,
-               outgoingInput, outgoingInputPort);
-}
-
 
 void makeTransitiveFlow(Router::ConfigurationRef conf,
-                        ref< Store > linkStore,
-                        ref< Store > reachStore,
+                        TableRef linkTable,
+                        TableRef reachTable,
                         str name,
                         ref< Udp > udp,
                         ElementSpecRef outgoingInput,
@@ -140,9 +105,9 @@ void makeTransitiveFlow(Router::ConfigurationRef conf,
     conf->addElement(New refcounted< PelTransform >(strbuf("UnBox:").cat(name),
                                                     "$1 unbox pop pop pop"));
   ElementSpecRef dupElimS =
-    conf->addElement(New refcounted< DupElim >(strbuf("DupElimA") << name));
+    conf->addElement(New refcounted< DupElim >(strbuf("DupElimA:") << name));
   ElementSpecRef insertS =
-    conf->addElement(reachStore->mkInsert());
+    conf->addElement(New refcounted< Insert >(strbuf("ReachInsert:") << name, reachTable));
   ElementSpecRef recvPS =
     conf->addElement(New refcounted< Print >(strbuf("Received:") << name));
 
@@ -154,13 +119,18 @@ void makeTransitiveFlow(Router::ConfigurationRef conf,
   conf->hookUp(insertS, 0, recvPS, 0);
 
   // Here's where the join happens
+  ElementSpecRef lookupS =
+    conf->addElement(New refcounted< MultLookup >(strbuf("Lookup:") << name,
+                                                  linkTable,
+                                                  1, 1));
+  conf->hookUp(recvPS, 0, lookupS, 0);
 
   // Take the joined tuples and produce the resulting path
   ElementSpecRef joinedS =
     conf->addElement(New refcounted< Print >(strbuf("Joined:") << name));
   ElementSpecRef transS =
     conf->addElement(New refcounted< PelTransform >(strbuf("JoinReach:").cat(name),
-                                                    "\"Reach\" pop $5 pop $2 pop"));
+                                                    "\"Reach\" pop $1 2 field pop $0 2 field pop"));
 
 
   // Prepend with true if this is a Reach X, X.
@@ -179,20 +149,13 @@ void makeTransitiveFlow(Router::ConfigurationRef conf,
     conf->addElement(New refcounted< Print >(strbuf("Generated:") << name));
 
 
+  conf->hookUp(lookupS, 0, joinedS, 0);
   conf->hookUp(joinedS, 0, transS, 0);
   conf->hookUp(transS, 0, cycleCheckS, 0);
   conf->hookUp(cycleCheckS, 0, filterS, 0);
   conf->hookUp(filterS, 0, filterDropS, 0);
   conf->hookUp(filterDropS, 0, generatedS, 0);
 
-
-
-  // Hookup the joiner
-  makeSemiJoin(conf,
-               strbuf("Join:").cat(name),
-               linkStore,
-               recvPS, 0,
-               joinedS, 0);
 
 
   // And connect to the outoing element
@@ -207,8 +170,8 @@ void makeTransitiveFlow(Router::ConfigurationRef conf,
 void makeForwarder(Router::ConfigurationRef conf,
                    str name,
                    ref< Udp > udp,
-                   ref< Store > linkStore,
-                   ref< Store > reachStore)
+                   TableRef linkTable,
+                   TableRef reachTable)
 {
   ElementSpecRef muxS =
     conf->addElement(New refcounted< Mux >(strbuf("RR:").cat(name), 2));
@@ -251,11 +214,11 @@ void makeForwarder(Router::ConfigurationRef conf,
 
 
   // Create reach scanning flow
-  makeReachFlow(conf, name, linkStore,
+  makeReachFlow(conf, name, linkTable,
                 muxS, 0);
 
   // ... and the link/reach joiner
-  makeTransitiveFlow(conf, linkStore, reachStore,
+  makeTransitiveFlow(conf, linkTable, reachTable,
                      name, udp,
                      muxS, 1);
 }
@@ -271,7 +234,7 @@ void testMakeReach(LoggerI::Level level)
 
   // Create one data flow per "node"
   const int nodes = 10;
-  ptr< Store > stores;
+  TablePtr tables;
   ValuePtr nodeIds[nodes];
   str names[nodes];
   
@@ -286,7 +249,8 @@ void testMakeReach(LoggerI::Level level)
   // Create the link tables and links themselves.  Links must be
   // symmetric
   ValueRef LINK = Val_Str::mk("Link");
-  stores = New refcounted< Store >(strbuf("Link:") << names[0], 2);
+  tables = New refcounted< Table >(strbuf("Link:") << names[0], 10000);
+  tables->add_multiple_index(2);
   std::set< int > others;
   others.insert(0);             // me
   for (int j = 0;
@@ -307,12 +271,12 @@ void testMakeReach(LoggerI::Level level)
 
     t->append((ValueRef) nodeIds[other]);
     t->freeze();
-    stores->insert(t);
+    tables->insert(t);
   }
 
   // And make the data flow
   ElementSpecRef scanS =
-    conf->addElement(stores->mkScan());
+    conf->addElement(New refcounted< Scan >(strbuf("Scaner:"), tables, 2));
   ElementSpecRef scanPrintS =
     conf->addElement(New refcounted< Print >(strbuf("Scan:") << names[0]));
   ElementSpecRef timedPullPushS =
@@ -368,7 +332,7 @@ void testTransmit(LoggerI::Level level)
 
   // Create one data flow per "node"
   const int nodes = 10;
-  ptr< Store > stores;
+  TablePtr tables;
   ValuePtr nodeIds[nodes];
   str names[nodes];
   
@@ -383,7 +347,8 @@ void testTransmit(LoggerI::Level level)
   // Create the link tables and links themselves.  Links must be
   // symmetric
   ValueRef LINK = Val_Str::mk("Link");
-  stores = New refcounted< Store >(strbuf("Link:") << names[0], 2);
+  tables = New refcounted< Table >(strbuf("Link:") << names[0], 10000);
+  tables->add_multiple_index(2);
   std::set< int > others;
   others.insert(0);             // me
   for (int j = 0;
@@ -404,12 +369,12 @@ void testTransmit(LoggerI::Level level)
 
     t->append((ValueRef) nodeIds[other]);
     t->freeze();
-    stores->insert(t);
+    tables->insert(t);
   }
 
   // And make the data flow
   ElementSpecRef scanS =
-    conf->addElement(stores->mkScan());
+    conf->addElement(New refcounted< Scan >(strbuf("Scaner:"), tables, 2));
   ElementSpecRef scanPrintS =
     conf->addElement(New refcounted< Print >(strbuf("Scan:") << names[0]));
   ElementSpecRef timedPullPushS =
@@ -512,8 +477,8 @@ void testReachability(LoggerI::Level level)
 
   // Create one data flow per "node"
   ptr< Udp > udps[nodes];
-  ptr< Store > linkStores[nodes];
-  ptr< Store > reachStores[nodes];
+  TablePtr linkTables[nodes];
+  TablePtr reachTables[nodes];
   ValuePtr nodeIds[nodes];
   str names[nodes];
   
@@ -534,10 +499,12 @@ void testReachability(LoggerI::Level level)
   for (int i = 0;
        i < nodes;
        i++) {
-    linkStores[i] = 
-      New refcounted< Store >(strbuf("Link:") << names[i], 1);
-    reachStores[i] = 
-      New refcounted< Store >(strbuf("Reach:") << names[i], 2);
+    linkTables[i] = 
+      New refcounted< Table >(strbuf("Link:") << names[i], 10000);
+    linkTables[i]->add_multiple_index(1);
+    reachTables[i] = 
+      New refcounted< Table >(strbuf("Reach:") << names[i], 10000);
+    reachTables[i]->add_multiple_index(2);
   }
   for (int i = 0;
        i < nodes;
@@ -563,7 +530,7 @@ void testReachability(LoggerI::Level level)
 
       t->append((ValueRef) nodeIds[other]);
       t->freeze();
-      linkStores[i]->insert(t);
+      linkTables[i]->insert(t);
 
       // Make the symmetric one
       TupleRef symmetric = Tuple::mk();
@@ -571,7 +538,7 @@ void testReachability(LoggerI::Level level)
       symmetric->append((ValueRef) nodeIds[other]);
       symmetric->append((ValueRef) nodeIds[i]);
       symmetric->freeze();
-      linkStores[other]->insert(symmetric);
+      linkTables[other]->insert(symmetric);
     }
   }
 
@@ -580,7 +547,7 @@ void testReachability(LoggerI::Level level)
        i < nodes;
        i++) {
     makeForwarder(conf, names[i], udps[i],
-                  linkStores[i], reachStores[i]);
+                  linkTables[i], reachTables[i]);
   }
 
   RouterRef router = New refcounted< Router >(conf, level);
@@ -613,8 +580,8 @@ void testSimpleCycle(LoggerI::Level level)
 
   // Create one data flow per "node"
   ptr< Udp > udps[nodes];
-  ptr< Store > linkStores[nodes];
-  ptr< Store > reachStores[nodes];
+  TablePtr linkTables[nodes];
+  TablePtr reachTables[nodes];
   ValuePtr nodeIds[nodes];
   str names[nodes];
   
@@ -635,10 +602,12 @@ void testSimpleCycle(LoggerI::Level level)
   for (int i = 0;
        i < nodes;
        i++) {
-    linkStores[i] = 
-      New refcounted< Store >(strbuf("Link:") << names[i], 1);
-    reachStores[i] = 
-      New refcounted< Store >(strbuf("Reach:") << names[i], 2);
+    linkTables[i] = 
+      New refcounted< Table >(strbuf("Link:") << names[i], 10000);
+    linkTables[i]->add_multiple_index(1);
+    reachTables[i] = 
+      New refcounted< Table >(strbuf("Reach:") << names[i], 10000);
+    reachTables[i]->add_multiple_index(2);
   }
 
   for (int i = 0;
@@ -651,7 +620,7 @@ void testSimpleCycle(LoggerI::Level level)
     int other = (i + 1) % nodes;
     forward->append((ValueRef) nodeIds[other]);
     forward->freeze();
-    linkStores[i]->insert(forward);
+    linkTables[i]->insert(forward);
 
     // Backward link
     TupleRef backward = Tuple::mk();
@@ -660,7 +629,7 @@ void testSimpleCycle(LoggerI::Level level)
     int backOther = (i + nodes - 1) % nodes;
     backward->append((ValueRef) nodeIds[backOther]);
     backward->freeze();
-    linkStores[i]->insert(backward);
+    linkTables[i]->insert(backward);
   }
 
   // And make the data flows
@@ -668,7 +637,7 @@ void testSimpleCycle(LoggerI::Level level)
        i < nodes;
        i++) {
     makeForwarder(conf, names[i], udps[i],
-                  linkStores[i], reachStores[i]);
+                  linkTables[i], reachTables[i]);
   }
 
   RouterRef router = New refcounted< Router >(conf, level);
@@ -690,10 +659,11 @@ void testSimpleCycle(LoggerI::Level level)
 }
 
 
-
 int main(int argc, char **argv)
 {
   std::cout << "\nGRAPH REACHABILITY\n";
+
+  TableRef table = new refcounted< Table >("name", 100);
 
   LoggerI::Level level = LoggerI::ALL;
   if (argc > 1) {
@@ -707,8 +677,8 @@ int main(int argc, char **argv)
   }
   srand(seed);
 
-  // testSimpleCycle(level);
-  testReachability(level);
+  testSimpleCycle(level);
+  // testReachability(level);
   // testMakeReach(level);
   // testTransmit(level);
 

@@ -41,6 +41,12 @@ static TuplePtr tpls[ N_TPLS ];
 
 #define FAIL std::cerr << __FILE__":" << __LINE__ << ": failed test: "
 
+void aggListener(TupleRef t)
+{
+  std::cout << "Agg update: " << t->toString() << "\n";
+}
+
+
 int main(int argc, char **argv)
 {
   std::cout << "TABLES\n";
@@ -66,13 +72,53 @@ int main(int argc, char **argv)
     tbl->insert(tpls[i]);
   }
   for( int i=0; i< N_TPLS/2; i++) { 
-    if (tbl->lookup(0,Val_Int32::mk(i)) == NULL) {
+    if (tbl->lookup(0,Val_Int32::mk(i))->done()) {
       FAIL << "tuple " << i << " doesn't seem to be in the table\n";
     }
-    if (tbl->lookup(0,Val_Int32::mk(i + N_TPLS/2)) != NULL) {
+    if (!tbl->lookup(0,Val_Int32::mk(i + N_TPLS/2))->done()) {
       FAIL << "tuple " << i << " seems to be in the table after all\n";
     }
   }
+
+  // Check multi indices
+  std::cout << "Testing multiple indices \n";
+  tbl = New refcounted<Table>("test_table", 200);
+  tbl->add_multiple_index(4);
+  for( int i=0; i < N_TPLS; i++) { 
+    tbl->insert(tpls[i]);
+  }
+  // Now every key we find in the first quarter must have four distinct
+  // instances in the index
+  for( int i=0; i < N_TPLS / 4; i++) { 
+    Table::MultIterator iter = tbl->lookupAll(4, Val_Int32::mk(i));
+    for (int counter = 0;
+         counter < 4;
+         counter++) {
+      TuplePtr result = iter->next();
+      if (result == NULL) {
+        FAIL << "key " << i << " seems to have too few tuples in the mult index\n";
+      }
+    }
+    if (iter->next() != NULL) {
+      FAIL << "key " << i << " seems to have too many tuples in the mult index\n";
+    }
+  }
+
+  // Now check aggregates
+  std::cout << "Testing group-by-aggregates\n";
+  tbl = New refcounted< Table >("test_table", 4);
+  tbl->add_multiple_index(4);
+  // My group-by fields are 4
+  std::vector< unsigned > groupBy;
+  groupBy.push_back(4);
+  Table::MultAggregate u =
+    tbl->add_mult_groupBy_agg(4, groupBy, 3, &Table::AGG_MAX);
+  u->addListener(wrap(&aggListener));
+  for( int i=0; i < N_TPLS; i++) { 
+    std::cout << "Inserting " << tpls[i]->toString() << "\n";
+    tbl->insert(tpls[i]);
+  }
+  
 
   return 0;
 }

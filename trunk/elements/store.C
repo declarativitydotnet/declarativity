@@ -182,7 +182,7 @@ TuplePtr Store::Lookup::pull(int port, cbv cb)
 
       // Make a thawed tuple to be tagged
       TupleRef newTuple = Tuple::mk();
-      newTuple->append(theT);
+      newTuple->concat(theT);
       newTuple->tag(Store::END_OF_SEARCH, Val_Null::mk());
       newTuple->freeze();
 

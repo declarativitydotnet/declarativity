@@ -18,7 +18,6 @@
 #include "csvparser.h"
 
 #include "val_str.h"
-#define TRACE_OFF
 #include "trace.h"
 
 //

@@ -38,6 +38,7 @@ for op, ar, va, desc in [
   ("->t", 1,    "T_MKTUPLE",    "Create a tuple out of the argument"),
   ("append", 2, "T_APPEND",     "Append first argument to second tuple"),
   ("unbox", 1,  "T_UNBOX",      "Replaces a tuple value with its fields top to bottom"),
+  ("field", 2,  "T_FIELD",      "Extracts a field of a tuple value"),
   
   ("not",1, 	"NOT",          "Boolean negation"),
   ("and",2,	"AND",          "Boolean AND"),

@@ -293,6 +293,17 @@ DEF_OP(T_UNBOX) {
     st.push((*t)[i]);
   }
 }
+DEF_OP(T_FIELD) {
+  unsigned field = pop_unsigned();
+  ValueRef tuple = st.top(); st.pop();
+  TupleRef theTuple = Val_Tuple::cast(tuple);
+  ValuePtr value = (*theTuple)[field];
+  if (field == NULL) {
+    st.push(Val_Null::mk());
+  } else {
+    st.push(value);
+  }
+}
 
 //
 // Boolean operations

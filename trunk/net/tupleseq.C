@@ -21,7 +21,7 @@ TuplePtr TupleSeq::Package::simple_action(TupleRef p)
   TupleRef n = Tuple::mk();
 
   n->append(Val_UInt64::mk(MAKE_SEQ(seq_++, 0)));
-  n->append(p);
+  n->concat(p);
   n->freeze();
 
   return n;

@@ -20,13 +20,44 @@
 // Constructor
 //
 Table::Table(str table_name, size_t max_size, timespec *lifetime)
-  : name(table_name), max_tbl_size(max_size)
+  : name(table_name),
+    max_tbl_size(max_size),
+    _uniqueAggregates(),
+    _multAggregates()
 {
   if (lifetime != NULL) {
     expiry_lifetime = true;
     max_lifetime = *lifetime;
   } else {
     expiry_lifetime = false;
+  }
+}
+
+Table::~Table()
+{
+  // Remove all entries from the deque
+  for (size_t i = 0;
+       i < els.size();
+       i++) {
+    Entry * e = els[i];
+    els[i] = NULL;
+    delete e;
+  }
+
+  // And remove all indices
+  for (size_t i = 0;
+       i < uni_indices.size();
+       i++) {
+    if (uni_indices[i]) {
+      delete uni_indices[i];
+    }
+  }
+  for (size_t i = 0;
+       i < mul_indices.size();
+       i++) {
+    if (mul_indices[i]) {
+      delete mul_indices[i];
+    }
   }
 }
 
@@ -56,10 +87,60 @@ void Table::add_multiple_index(unsigned fn)
 void Table::del_multiple_index(unsigned fn)
 {
   mul_indices.reserve(fn);
+  while( mul_indices.size() <= fn) {
+    mul_indices.push_back(NULL);
+  }
   if (mul_indices.at(fn) != NULL) {
     delete mul_indices.at(fn);
   }
 }
+
+Table::UniqueAggregate
+Table::add_unique_groupBy_agg(unsigned keyFieldNo,
+                              std::vector< unsigned > groupByFieldNos,
+                              unsigned aggFieldNo,
+                              Table::AggregateFunction* aggregate)
+{
+  // Get the index
+  UniqueIndex* uI = uni_indices.at(keyFieldNo);
+  assert(uI != NULL);
+  Table::UniqueAggregate uA =
+    New refcounted< Table::UniqueAggregateObj >(keyFieldNo,
+                                                uI,
+                                                groupByFieldNos,
+                                                aggFieldNo,
+                                                aggregate);
+
+  
+  // Store the aggregate
+  _uniqueAggregates.push_back(uA);
+  return uA;
+}
+
+Table::MultAggregate
+Table::add_mult_groupBy_agg(unsigned keyFieldNo,
+                            std::vector< unsigned > groupByFieldNos,
+                            unsigned aggFieldNo,
+                            Table::AggregateFunction* aggregate)
+{
+  // Get the index
+  MultIndex* mI = mul_indices.at(keyFieldNo);
+  assert(mI != NULL);
+  Table::MultAggregate mA =
+    New refcounted< Table::MultAggregateObj >(keyFieldNo,
+                                              mI,
+                                              groupByFieldNos,
+                                              aggFieldNo,
+                                              aggregate);
+
+  
+  // Store the aggregate
+  _multAggregates.push_back(mA);
+  return mA;
+}
+
+
+
 
 //
 // Setting the expiry time for tuples
@@ -69,18 +150,6 @@ void Table::set_tuple_lifetime(timespec &lifetime)
   max_lifetime = lifetime;
   expiry_lifetime = true;
   garbage_collect();
-}
-
-//
-// Create a key from a Val_Ref
-//
-static str mkkey(ValueRef v)
-{
-  return Val_Str::cast(v);
-}
-static str mkkey(TupleRef t, int i)
-{
-  return mkkey((*t)[i]);
 }
 
 //
@@ -94,35 +163,44 @@ void Table::insert(TupleRef t)
   els.push_front(e);
   
   // Add to all unique indices.
-  for( size_t i=0; i<uni_indices.size(); i++) {
+  for(size_t i = 0;
+      i < uni_indices.size();
+      i++) {
     UniqueIndex *ndx = uni_indices.at(i);
     if (ndx) {
-      ndx->insert(std::make_pair(mkkey(e->t,i),e));
+      // Replace the existing one if it's there
+      ndx->erase((*e->t)[i]);
+      ndx->insert(std::make_pair((*e->t)[i], e));
     }
   }
+
   // Add to all multiple indices
-  for( size_t i=0; i<mul_indices.size(); i++) {
+  for(size_t i = 0;
+      i < mul_indices.size();
+      i++) {
     MultIndex *ndx = mul_indices.at(i);
-    ndx->insert(std::make_pair(mkkey(e->t,i),e));
+    if (ndx) {
+      ndx->insert(std::make_pair((*e->t)[i], e));
+    }
   }
+
+  // And update the aggregates
+  for (size_t i = 0;
+       i < _uniqueAggregates.size();
+       i++) {
+    UniqueAggregate uA = _uniqueAggregates[i];
+    uA->update(t);
+  }
+
+  for (size_t i = 0;
+       i < _multAggregates.size();
+       i++) {
+    MultAggregate mA = _multAggregates[i];
+    mA->update(t);
+  }
+
   // And clear up...
   garbage_collect();
-}
-
-//
-// Lookup a tuple
-//
-TuplePtr Table::lookup(unsigned field, ValueRef key)  
-{
-  garbage_collect();
-  UniqueIndex *ndx = uni_indices.at(field);
-  if (ndx) {
-    const UniqueIndex::iterator pos = ndx->find(mkkey(key));
-    if (pos != ndx->end()) {
-      return pos->second->t;
-    }
-  }
- return NULL;
 }
 
 //
@@ -130,24 +208,48 @@ TuplePtr Table::lookup(unsigned field, ValueRef key)
 //
 void Table::remove_from_indices(Entry *e)
 {
-  for( size_t i=0; i<uni_indices.size(); i++) {
-    UniqueIndex *ndx = uni_indices.at(i);
-    str key = mkkey(e->t,i);
+  for (size_t i = 0;
+       i < uni_indices.size();
+       i++) {
+    UniqueIndex* ndx = uni_indices.at(i);
+    ValueRef key = (*e->t)[i];
     if (ndx) {
       ndx->erase(key);
     }
   }
-  for( size_t i=0; i<mul_indices.size(); i++) {
-    MultIndex *ndx = mul_indices.at(i);
-    str key = mkkey(e->t,i);
-    for( MultIndex::iterator pos = ndx->find(key); 
-	 pos != ndx->end() && mkkey(pos->second->t,i) != key; 
-	 pos++) {
-      if ( pos->second == e ) {
-	ndx->erase(pos);
-	break;
+  for (size_t i = 0;
+       i < mul_indices.size();
+       i++) {
+    MultIndex* ndx = mul_indices.at(i);
+    ValueRef key = (*e->t)[i];
+    if (ndx) {
+      for (MultIndex::iterator pos = ndx->find(key); 
+           (pos != ndx->end()) && (pos->first->compareTo(key) == 0); 
+           pos++) {
+        if (pos->second == e) {
+          ndx->erase(pos);
+          break;
+        }
       }
     }
+  }
+}
+
+void Table::remove_from_aggregates(TupleRef t)
+{
+  // And update the unique aggregates
+  for (size_t i = 0;
+       i < _uniqueAggregates.size();
+       i++) {
+    UniqueAggregate uA = _uniqueAggregates[i];
+    uA->update(t);
+  }
+  // And update the mult aggregates
+  for (size_t i = 0;
+       i < _multAggregates.size();
+       i++) {
+    MultAggregate mA = _multAggregates[i];
+    mA->update(t);
   }
 }
 
@@ -163,14 +265,159 @@ void Table::garbage_collect()
     clock_gettime(CLOCK_REALTIME, &now);
     
     timespec expiry_time = now - max_lifetime;
-    while( els.back()->ts < (now-max_lifetime) ) {
-      remove_from_indices(els.back());
+    Entry * back = els.back();
+    while( back->ts < (now-max_lifetime) ) {
+      remove_from_indices(back);
+      remove_from_aggregates(back->t);
       els.pop_back();
+      delete back;
+      back = els.back();
     }
   } 
   // Trim the size of the table
   while( els.size() > max_tbl_size ) {
-    remove_from_indices(els.back());
+    Entry * back = els.back();
+    remove_from_indices(back);
+    remove_from_aggregates(back->t);
     els.pop_back();
+    delete back;
   }
+}
+
+
+Table::MultIterator
+Table::lookupAll(unsigned field, ValueRef key)
+{
+  garbage_collect();
+  Table::MultIndex *ndx = mul_indices.at(field);
+  if (ndx) {
+    return New refcounted< Table::MultIteratorObj >(ndx, key);
+  }
+  return NULL;
+}
+
+Table::MultScanIterator
+Table::scanAll(unsigned field)
+{
+  garbage_collect();
+  Table::MultIndex *ndx = mul_indices.at(field);
+  if (ndx) {
+    return New refcounted< Table::MultScanIteratorObj >(ndx);
+  }
+  return NULL;
+}
+
+Table::UniqueIterator
+Table::lookup(unsigned field, ValueRef key)  
+{
+  garbage_collect();
+  UniqueIndex *ndx = uni_indices.at(field);
+  if (ndx) {
+    return New refcounted< Table::UniqueIteratorObj >(ndx, key);
+  }
+  return NULL;
+}
+
+Table::MultIterator
+Table::MultLookupGenerator::lookup(TableRef t, unsigned field, ValueRef key)
+{
+  return t->lookupAll(field, key);
+}
+
+Table::UniqueIterator
+Table::UniqueLookupGenerator::lookup(TableRef t, unsigned field, ValueRef key)
+{
+  return t->lookup(field, key);
+}
+
+Table::AggregateFunctionMIN Table::AGG_MIN;
+Table::AggregateFunctionMAX Table::AGG_MAX;
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////
+// Aggregation functions
+////////////////////////////////////////////////////////////
+
+
+
+Table::AggregateFunctionMIN::AggregateFunctionMIN()
+  : _currentMin(NULL)
+{
+}
+
+Table::AggregateFunctionMIN::~AggregateFunctionMIN()
+{
+}
+  
+void
+Table::AggregateFunctionMIN::reset()
+{
+  _currentMin = NULL;
+}
+  
+void
+Table::AggregateFunctionMIN::first(ValueRef v)
+{
+  _currentMin = v;
+}
+  
+void
+Table::AggregateFunctionMIN::process(ValueRef v)
+{
+  assert(_currentMin != 0);
+  if (v->compareTo(_currentMin) < 0) {
+    _currentMin = v;
+  }
+}
+
+ValuePtr 
+Table::AggregateFunctionMIN::result()
+{
+  return _currentMin;
+}
+
+
+Table::AggregateFunctionMAX::AggregateFunctionMAX()
+  : _currentMax(NULL)
+{
+}
+
+Table::AggregateFunctionMAX::~AggregateFunctionMAX()
+{
+}
+  
+void
+Table::AggregateFunctionMAX::reset()
+{
+  _currentMax = NULL;
+}
+  
+void
+Table::AggregateFunctionMAX::first(ValueRef v)
+{
+  _currentMax = v;
+}
+  
+void
+Table::AggregateFunctionMAX::process(ValueRef v)
+{
+  if (v->compareTo(_currentMax) > 0) {
+    _currentMax = v;
+  }
+}
+
+ValuePtr 
+Table::AggregateFunctionMAX::result()
+{
+  return _currentMax;
 }
