@@ -58,9 +58,10 @@ int main(int argc, char **argv)
   std::cout << "Finish parsing (functors / tableInfos) " << ctxt->getFunctors()->size() 
 	    << " " << ctxt->getTableInfos()->size() << "\n";
 
+  
   // test a configuration of a router
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  RouterConfigGenerator routerConfigGenerator(ctxt, conf, true, true, filename);
+  RouterConfigGenerator routerConfigGenerator(ctxt, conf, true, false, filename);
   routerConfigGenerator.createTables("localhost");
 
   ref< Udp > udp = New refcounted< Udp >("Udp", 10000);
@@ -73,7 +74,7 @@ int main(int argc, char **argv)
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
-
+  
 
   return 0;
 }
