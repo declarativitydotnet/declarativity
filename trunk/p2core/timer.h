@@ -46,7 +46,7 @@ class Timer {
  public:
   
   Timer();
-  ~Timer()				{ if (scheduled()) unschedule(); }
+  virtual ~Timer()			{ if (scheduled()) unschedule(); }
 
   /** Call whatever it is this task is doing.  Instances of this class
       should never be run.  They are only used as sentinel elements of

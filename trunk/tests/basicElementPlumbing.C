@@ -86,7 +86,7 @@ void testCheckHookupElements_NonExistentToElement()
 
   MasterRef master = New refcounted< Master >();
   RouterRef router = New refcounted< Router >(configuration, master);
-  if (router->initialize() == 0) {
+  if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch hookup reference to unknown to element\n";
   } else {
     std::cout << "Caught hookup reference to unknown to element\n";
@@ -128,7 +128,7 @@ void testCheckHookupElements_NonExistentFromElement()
 
   MasterRef master = New refcounted< Master >();
   RouterRef router = New refcounted< Router >(configuration, master);
-  if (router->initialize() == 0) {
+  if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch hookup reference to unknown from element\n";
   } else {
     std::cout << "Caught hookup reference to unknown from element\n";
@@ -165,7 +165,7 @@ void testCheckHookupElements_NegativeFromPort()
   MasterRef master = New refcounted< Master >();
   RouterRef router = New refcounted< Router >(configuration, master);
 
-  if (router->initialize() == 0) {
+  if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch negative from port\n";
   } else {
     std::cout << "Correctly caught negative from port\n";
@@ -204,7 +204,7 @@ void testCheckHookupElements_NegativeToPort()
   MasterRef master = New refcounted< Master >();
   RouterRef router = New refcounted< Router >(configuration, master);
 
-  if (router->initialize() == 0) {
+  if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch negative to port\n";
   } else {
     std::cout << "Correctly caught negative to port\n";
@@ -276,7 +276,7 @@ void testCheckHookupRange_IncorrectFromPort()
 
   MasterRef master = New refcounted< Master >();
   RouterRef router = New refcounted< Router >(configuration, master);
-  if (router->initialize() == 0) {
+  if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch incorrect from port\n";
   } else {
     std::cout << "Caught incorrect from port\n";
@@ -314,7 +314,7 @@ void testCheckHookupRange_IncorrectToPort()
   MasterRef master = New refcounted< Master >();
   RouterRef router = New refcounted< Router >(configuration, master);
 
-  if (router->initialize() == 0) {
+  if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch incorrect to port\n";
   } else {
     std::cout << "Correctly caught incorrect to port\n";
@@ -353,7 +353,7 @@ void testCheckHookupRange_IncorrectPorts()
   RouterRef router = New refcounted< Router >(configuration, master);
 
 
-  if (router->initialize() == 0) {
+  if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch incorrect from/to ports\n";
   } else {
     std::cout << "Correctly caught incorrect from/to ports\n";
@@ -391,7 +391,7 @@ void testCheckHookupRange_Portless()
   MasterRef master = New refcounted< Master >();
   RouterRef router = New refcounted< Router >(configuration, master);
 
-  if (router->initialize() == 0) {
+  if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch portless hookup\n";
   } else {
     std::cout << "Correctly caught portless hookup\n";
@@ -479,7 +479,7 @@ void testCheckPushPull_PullToPush()
 
   MasterRef master = New refcounted< Master >();
   RouterRef router = New refcounted< Router >(configuration, master);
-  if (router->initialize() == 0) {
+  if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch pull output hooked up with push input\n";
   } else {
     std::cout << "Caught incorrect pull-to-push hookup\n";
@@ -530,7 +530,7 @@ void testCheckPushPull_PullToPushHop()
 
   MasterRef master = New refcounted< Master >();
   RouterRef router = New refcounted< Router >(configuration, master);
-  if (router->initialize() == 0) {
+  if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch incorrect pull-push hookup via a/a element\n";
   } else {
     std::cout << "Correctly caught incorrect transitive pull-push hookup\n";
@@ -583,7 +583,7 @@ void testCheckPushPull_PullToPushMultiHop()
 
   MasterRef master = New refcounted< Master >();
   RouterRef router = New refcounted< Router >(configuration, master);
-  if (router->initialize() == 0) {
+  if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch incorrect pull-push hookup via multiple a/a elements\n";
   } else {
     std::cout << "Correctly caught incorrect transitive (multi hop) pull-push hookup\n";
@@ -639,14 +639,14 @@ void testCheckPushPull_PullToPullMultiHop()
     Router::ConfigurationRef configuration =
       New refcounted< Router::Configuration >(elements, hookups);
     
-MasterRef    master = New refcounted< Master >();
+    MasterRef    master = New refcounted< Master >();
     RouterRef router = New refcounted< Router >(configuration, master);
   
 
   // Now all that remains are the master and router, everything else is
   // owned by them since they're out of scope
 
-  if (router->initialize() == 0) {
+  if (router->initialize(router) == 0) {
     std::cerr << "Correctly allowed pull-pull hookup via multiple a/a elements\n";
   } else {
     std::cout << "** Caught incorrectly a pull-pull hookup via multiple a/a elements\n";
@@ -735,7 +735,7 @@ void testDuplicates_UnusedPort()
   MasterRef master = New refcounted< Master >();
   RouterRef router =
     New refcounted< Router >(configuration, master);
-  if (router->initialize() == 0) {
+  if (router->initialize(router) == 0) {
     std::cerr << "** Incorrectly allowed unused port of an element\n";
   } else {
     std::cout << "Correctly caught unused port of an element\n";
@@ -791,7 +791,7 @@ void testDuplicates_ReusedPort()
     New refcounted< Router::Configuration >(elements, hookups);
   MasterRef master = New refcounted< Master >();
   RouterRef router = New refcounted< Router >(configuration, master);
-  if (router->initialize() == 0) {
+  if (router->initialize(router) == 0) {
     std::cerr << "** Incorrectly allowed port reuse\n";
   } else {
     std::cout << "Correctly caught port reuse\n";
@@ -871,7 +871,7 @@ void testRun()
   MasterRef master = New refcounted< Master >();
   RouterRef router =
     New refcounted< Router >(configuration, master);
-  if (router->initialize() == 0) {
+  if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized memory pull to pull print spec.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
