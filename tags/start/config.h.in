@@ -1,0 +1,23 @@
+/* config.h.in.  Generated automatically from configure.in by autoheader.  */
+
+/* Define if you have the <dlfcn.h> header file.  */
+#undef HAVE_DLFCN_H
+
+/* Define if you have the <memory.h> header file.  */
+#undef HAVE_MEMORY_H
+
+/* Name of package */
+#undef PACKAGE
+
+/* Version number of package */
+#undef VERSION
+
+/* Define if you have mpz_xor in your GMP library. */
+#undef HAVE_MPZ_XOR
+
+/* Define to be the size of GMP's mp_limb_t type. */
+#undef GMP_LIMB_SIZE
+
+/* Define if compiling with dmalloc.  */
+#undef DMALLOC
+
