@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <async.h>
 #include <assert.h>
+#include <ihash.h>
 
 
 class IdTable;
@@ -22,9 +23,10 @@ class IdTable;
  *  @NOTE: @IdTable is a FRIEND since it uses the private member
  *         function refcount_getcnt () for garbage collection
  *  -------------------------------------------------------------- */
-class Id : private virtual refcount {
+class Id /* : private virtual refcount */ {
   friend class IdTable;
   private:
+    inline size_t getHash () const;
     static std::bitset<160> toBitWord (u_int32_t num);
     static std::string toHexWord (u_int32_t num);
 
@@ -32,26 +34,36 @@ class Id : private virtual refcount {
     u_int32_t key[5];
 
   public:
-    Id ();
     Id (const u_int32_t *);
     Id (const std::string&);
 
+    size_t hashCode;
     std::bitset<160> toBitSet () const;
     std::string toHexString () const;
-    inline size_t hashCode () const;
     inline u_int32_t getWord (const int) const;
+    ihash_entry <Id> id_hashLink;
 
     // static Id * unmarshal (const XDR *);
 };
 
-/** --------------------------------------------------------------
- *  @STRUCT: IdComparator
- *  @DESCRIPTION: Represents a function object to compare the
- *                equality of two @Id objects
- *  -------------------------------------------------------------- */
+/** Function object to quickly compare ID's - since they are
+ *  memoized and a @Id bit pattern is stored once in the address
+ *  space, it suffices to just check references */
 struct IdComparator {
   bool operator () (ref<Id> x, ref<Id> y) const {
     return (x == y);
+  }
+};
+
+struct IdHash {
+  size_t operator () (size_t key) const {
+    return key;
+  }
+};
+
+struct IdEql {
+  size_t operator () (size_t key1, size_t key2) const {
+    return (key1 == key2);
   }
 };
 
@@ -71,27 +83,27 @@ class IdTable {
     // @create: factory functions to create and memoize @Id's.
     // if the requested @Id already stored, the function returns
     // the ref<Id> to the existing @Id
-    ref<Id> create (const std::string&);
+    Id * create (const std::string&);
 
-    ref<Id> create (const u_int32_t *);
+    Id * create (const u_int32_t *);
 
     // create a random @Id using /dev/urandom
-    ref<Id> create ();
+    Id * create ();
 
     // static Id * create (const XDR *);
 
     inline size_t size () const;
-    inline void remove (ref<Id>);
+    inline void remove (Id *);
     inline void clear ();
 
   private:
-    std::map< ref<Id>, int, IdComparator > memTable;
+    ihash< size_t, Id, &Id::hashCode, &Id::id_hashLink > memTable;
     size_t maxSize;
     size_t threshold;
 
     void gc ();
-    ref<Id> storeId (ref<Id>);
-    void add (ref<Id>);
+    Id * storeId (Id *);
+    void add (Id *);
 };
 
 #endif /** !__IDTABLE_H__ */
