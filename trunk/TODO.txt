@@ -8,18 +8,8 @@ ELEMENTS
  - A TCP connect element pair: analogous to UDP element.  Some kind of
    reconnection policy.   Rx is push output, Tx is pull input. 
 
- - An HTTP fetch element: when created, attempts to send tuples
-   consisting of an HTTP fetch.  Output is pull. 
-
- - An HTTP response element: filters the HTTP headers from an HTTP
-   response, thereafter passes through the payload.  Push input, push
-   output. 
- 
- - Push-in, push-out element to split a sequence of packets into a
-   sequence of strings. 
-
- - CSV parser: Takes a string tuple and outputs a tuple from CSV
-   parsing the string. 
+ - Make plsensor more a generic HTTP sensor.  This amounts to just
+   making it understand hostnames other than localhost. 
 
  - UDPCC elements: packets flow in both directions, and congestion
    control is applied. 

@@ -1,0 +1,3 @@
+.deps .libs *.lo *.la Makefile.in Makefile
+config.h config.h.in config.log config.status configure
+stamp-h stamp-h.in libtool aclocal.m4 autom4te.cache

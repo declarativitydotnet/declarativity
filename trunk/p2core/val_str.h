@@ -32,6 +32,7 @@ public:
 
   // Constructor
   Val_Str(str theString) : s(theString) {};
+  virtual ~Val_Str() {};
 
   // Factory
   static ValueRef mk(str s) { return New refcounted<Val_Str>(s); };
