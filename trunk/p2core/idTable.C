@@ -88,14 +88,18 @@ Id * IdTable::create (const std::string& idString) {
   return storeId (result);
 }
 
+#if IDTBL_TEST == 1
 Id * IdTable::create (const u_int32_t * random) {
   Id * result = New Id (random);
   return storeId (result);
 }
+#endif
 
 Id * IdTable::create () {
-  u_int32_t random[] = { 0, 0, 0, 0, 0 };
-  Id * result = New Id (random); // use dev/urandom
+  u_int32_t random[5];
+  for (int i = 0; i < 5; i += 1)
+    random[i] = random::uint32t_urand ();
+  Id * result = New Id (random);
   return storeId (result);
 }
 
