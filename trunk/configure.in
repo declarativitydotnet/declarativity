@@ -1,0 +1,41 @@
+dnl
+dnl Copyright goes here.
+dnl
+AC_INIT(config.h.in)
+
+dnl
+dnl Sets PACKAGE and VERSION defines
+dnl
+AM_INIT_AUTOMAKE(phi,0.1.0)
+
+dnl
+dnl Creates config.h file with #defines instead of passing to compiler.
+dnl
+AM_CONFIG_HEADER(config.h)
+
+AC_CANONICAL_HOST
+
+dnl
+dnl Checks for programs.
+dnl
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_CXX
+SFS_WFLAGS
+AC_PROG_INSTALL
+AC_PROG_LN_S
+
+dnl
+dnl Miscellaneous
+dnl
+AM_DISABLE_SHARED
+AM_PROG_LIBTOOL
+
+SFS_SFS
+SFS_CFLAGS
+ETAGS_ARGS='-C /dev/null'
+AC_SUBST(ETAGS_ARGS)
+
+AC_OUTPUT(Makefile 
+          phid/Makefile
+         )
