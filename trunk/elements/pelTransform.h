@@ -19,7 +19,6 @@
 
 class PelTransform : public Element { 
 public:
-
   PelTransform(str, str);
 
   ~PelTransform();

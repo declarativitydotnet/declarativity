@@ -28,7 +28,7 @@ class Scan : public Element {
        TableRef table,
        unsigned field);
   
-  const char *class_name() const		{ return "Store::Scan";}
+  const char *class_name() const		{ return "Scan";}
   const char *processing() const		{ return "/l"; }
   const char *flow_code() const			{ return "/-"; }
   

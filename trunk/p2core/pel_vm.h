@@ -15,7 +15,7 @@
 #ifndef __PEL_VM_H__
 #define __PEL_VM_H__
 
-#include <stack>
+#include <deque>
 #include <vector>
 #include <async.h>
 
@@ -35,12 +35,13 @@ public:
     PE_BAD_OPCODE,
     PE_DIVIDE_BY_ZERO,
     PE_INVALID_ERRNO,
+    PE_STOP,
     PE_UNKNOWN // Must be the last error
   };
 
 private:
   // Execution state
-  std::stack<ValueRef> st;
+  std::deque<ValueRef> _st;
   const Pel_Program	*prg;
   Error		 error;
   uint		 pc;
@@ -58,8 +59,17 @@ private:
   struct timespec pop_time();
   IDRef pop_ID();
 
+
+  // Deque to stack conversion facilities
+  inline void stackPop() {  _st.pop_back(); }
+  inline void stackPush(ValueRef v) { _st.push_back(v); }
+  inline ValueRef stackTop() { return _st.back(); }
+  inline ValueRef stackPeek(unsigned p) { return _st[_st.size() - 1 - p]; }
+
+
 public:
   Pel_VM();
+  Pel_VM(std::deque< ValueRef >);
 
   // 
   // Execution paths
@@ -67,6 +77,9 @@ public:
 
   // Reset the VM (clear the stack)
   void reset();
+
+  // Stop execution without error
+  void stop();
 
   // Execute the program on the tuple. 
   // Return 0 if success, -1 if an error. 
@@ -79,7 +92,10 @@ public:
   ValueRef result_val();
   
   // Return the current result tuple.
-  TupleRef result_tuple();
+  TuplePtr result_tuple();
+
+  // Reset the result tuple to nothingness
+  void reset_result_tuple();
 
   // Convert the error into a string.
   static const char *strerror(Error e);

@@ -745,6 +745,7 @@ void vm_test(Pel_VM &vm, TupleRef tpl, int i) {
   std::cout << "Running: " << t->src << "\n";
   
   Pel_Program *prog = Pel_Lexer::compile( t->src);
+  vm.reset();
   Pel_VM::Error e = vm.execute(*prog, tpl);
   if ( e != t->err ) {
     const char *x = Pel_VM::strerror(t->err);

@@ -31,10 +31,12 @@ for op, ar, va, desc in [
   ("",0,        "PUSH_CONST",   "Push a constant"),
   ("",0,        "PUSH_FIELD",   "Push a field of the tuple"),
   ("pop",1,     "POP",          "Pop result tuple field"),
+  ("peek", 1,   "PEEK",         "Push a duplicate of a stack element"),
   ("ifelse",3,  "IFELSE",       "If first arg, then return second, else third"),
   ("ifpop",2,   "IFPOP",        "If first arg, then pop second, else nothing"),
   ("ifpoptuple",1,"IFPOP_TUPLE","If first arg, then pop entire tuple, else nothing"),
-
+  ("ifstop",2,   "IFSTOP",      "If first arg, then stop execution"),
+ 
   ("->t", 1,    "T_MKTUPLE",    "Create a tuple out of the argument"),
   ("append", 2, "T_APPEND",     "Append first argument to second tuple"),
   ("unbox", 1,  "T_UNBOX",      "Replaces a tuple value with its fields top to bottom"),
@@ -70,6 +72,10 @@ for op, ar, va, desc in [
   ("+id",2,      "ID_PLUS",     "ID addition"),
   ("distance",2, "ID_DIST",     "ID subtraction"),
   ("<<id",2,	 "ID_LSL",      "ID arithmetic shift left"),
+  ("()id",3,	 "ID_BTWOO",    "ID interval open-open containment"),
+  ("(]id",2,	 "ID_BTWOC",    "ID interval open-closed containment"),
+  ("[)id",3,	 "ID_BTWCO",    "ID interval closed-open containment"),
+  ("[]id",2,	 "ID_BTWCC",    "ID interval closed-closed containment"),
 
   ("<s",2,      "STR_LT",       "String less-than comparison"),
   ("<=s",2,     "STR_LTE",      "String less-than-or-eq comparison"),
@@ -110,7 +116,7 @@ for op, ar, va, desc in [
 
 
 
-for i in [ "i32", "u32", "i64", "u64", "dbl", "str", "time" ]:
+for i in [ "i32", "u32", "i64", "u64", "dbl", "str", "time", "id" ]:
   emit_opcode("->"+i, 1, "CONV_" + i.upper(), "Convert to type "+i)
 
 warning="""

@@ -23,7 +23,9 @@
 #include "tuple.h"
 #include "router.h"
 #include "val_int32.h"
+#include "val_uint32.h"
 #include "val_str.h"
+#include "val_id.h"
 
 #include "print.h"
 #include "discard.h"
@@ -45,449 +47,128 @@
 #include "lookup.h"
 #include "insert.h"
 #include "scan.h"
+#include "pelScan.h"
+#include "functorSource.h"
 
 void killJoin()
 {
   exit(0);
 }
 
-static int LINKS = 4;
-static int STARTING_PORT = 10000;
-static const int nodes = 100;
 
+static const uint FINGERS = 16;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/** Periodically go over my existing link entries, turn them into reach
-    entries and blast them out */
-void makeReachFlow(Router::ConfigurationRef conf,
-                   str name,
-                   TableRef linkTable,
-                   ElementSpecRef outgoingInput,
-                   int outgoingInputPort)
+struct LookupGenerator : public FunctorSource::Generator
 {
-  // Scanner element over link table
-  ElementSpecRef scanS =
-    conf->addElement(New refcounted< Scan >(strbuf("Scaner:") << name, linkTable, 1));
-  ElementSpecRef scanPrintS =
-    conf->addElement(New refcounted< Print >(strbuf("Scan:") << name));
-  ElementSpecRef timedPullPushS =
-    conf->addElement(New refcounted< TimedPullPush >(strbuf("PushReach:").cat(name),
-                                                 1));
-  ElementSpecRef slotS =
-    conf->addElement(New refcounted< Slot >(strbuf("Slot:").cat(name)));
-  ElementSpecRef transS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("MakeReach").cat(name),
-                                                    "\"Reach\" pop $1 pop $2 pop"));
+  virtual ~LookupGenerator() {};
+  TupleRef operator()() const {
+    TupleRef tuple = Tuple::mk();
+    tuple->append(Val_Str::mk("Lookup"));
+    str address = str(strbuf() << "127.0.0.2:10000");
+    tuple->append(Val_Str::mk(address));
 
-  // Connect to outgoing hook
-  conf->hookUp(scanS, 0, scanPrintS, 0);
-  conf->hookUp(scanPrintS, 0, timedPullPushS, 0);
-  conf->hookUp(timedPullPushS, 0, slotS, 0);
-  conf->hookUp(slotS, 0, transS, 0);
-  conf->hookUp(transS, 0, outgoingInput, outgoingInputPort);
-}
-
-
-
-void makeTransitiveFlow(Router::ConfigurationRef conf,
-                        TableRef linkTable,
-                        TableRef reachTable,
-                        str name,
-                        ref< Udp > udp,
-                        ElementSpecRef outgoingInput,
-                        int outgoingInputPort)
-{
-  // My store of reach tuples
-  ElementSpecRef udpRxS = conf->addElement(udp->get_rx());
-  ElementSpecRef unmarshalS =
-    conf->addElement(New refcounted< UnmarshalField >(strbuf("Unmarshal:").cat(name), 1));
-
-  // Drop the source address and decapsulate
-  ElementSpecRef unBoxS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("UnBox:").cat(name),
-                                                    "$1 unbox pop pop pop"));
-  ElementSpecRef dupElimS =
-    conf->addElement(New refcounted< DupElim >(strbuf("DupElimA:") << name));
-  ElementSpecRef insertS =
-    conf->addElement(New refcounted< Insert >(strbuf("ReachInsert:") << name, reachTable));
-  ElementSpecRef recvPS =
-    conf->addElement(New refcounted< Print >(strbuf("Received:") << name));
-
-  
-  conf->hookUp(udpRxS, 0, unmarshalS, 0);
-  conf->hookUp(unmarshalS, 0, unBoxS, 0);
-  conf->hookUp(unBoxS, 0, dupElimS, 0);
-  conf->hookUp(dupElimS, 0, insertS, 0);
-  conf->hookUp(insertS, 0, recvPS, 0);
-
-  // Here's where the join happens
-  ElementSpecRef lookupS =
-    conf->addElement(New refcounted< MultLookup >(strbuf("Lookup:") << name,
-                                                  linkTable,
-                                                  1, 1));
-  conf->hookUp(recvPS, 0, lookupS, 0);
-
-  // Take the joined tuples and produce the resulting path
-  ElementSpecRef joinedS =
-    conf->addElement(New refcounted< Print >(strbuf("Joined:") << name));
-  ElementSpecRef transS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("JoinReach:").cat(name),
-                                                    "\"Reach\" pop $1 2 field pop $0 2 field pop"));
-
-
-  // Prepend with true if this is a Reach X, X.
-  ElementSpecRef cycleCheckS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("CycleCheck:").cat(name), 
-                                                    "$1 $2 ==s not pop $0 pop $1 pop $2 pop"));
-  // Only pass through those that have different from and to
-  ElementSpecRef filterS =
-    conf->addElement(New refcounted< Filter >(strbuf("filter:").cat(name), 0));
-  // And drop the filter field
-  ElementSpecRef filterDropS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("filterDrop:").cat(name),
-                                                    "$1 pop $2 pop $3 pop"));
-
-  ElementSpecRef generatedS =
-    conf->addElement(New refcounted< Print >(strbuf("Generated:") << name));
-
-
-  conf->hookUp(lookupS, 0, joinedS, 0);
-  conf->hookUp(joinedS, 0, transS, 0);
-  conf->hookUp(transS, 0, cycleCheckS, 0);
-  conf->hookUp(cycleCheckS, 0, filterS, 0);
-  conf->hookUp(filterS, 0, filterDropS, 0);
-  conf->hookUp(filterDropS, 0, generatedS, 0);
-
-
-
-  // And connect to the outoing element
-  conf->hookUp(generatedS, 0,
-               outgoingInput, outgoingInputPort);
-}
-
-
-
-
-/** Create the entire data flow residing at a single node */
-void makeForwarder(Router::ConfigurationRef conf,
-                   str name,
-                   ref< Udp > udp,
-                   TableRef linkTable,
-                   TableRef reachTable)
-{
-  ElementSpecRef muxS =
-    conf->addElement(New refcounted< Mux >(strbuf("RR:").cat(name), 2));
-  // ElementSpecRef muxPrintS =
-  //   conf->addElement(New refcounted< Print >(strbuf("Mux:") << name));
-
-  // Create the encapsulated version of this tuple, holding the
-  // destination address and, encapsulated, the payload containing the
-  // reach tuple.
-  ElementSpecRef encapS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("encap:").cat(name),
-                                                    "$1 pop /* The From address */\
-                                                     $0 ->t $1 append $2 append pop")); // the rest
-
-  // Now marshall the payload (second field)
-  ElementSpecRef marshalS =
-    conf->addElement(New refcounted< MarshalField >(strbuf("Marshal:").cat(name),
-                                                    1));
-
-  // Hexdump the result
-  // ElementSpecRef hexS =
-  //   conf->addElement(New refcounted< Hexdump >(strbuf("Hex:").cat(name),
-  //                                              1));
-  // ElementSpecRef postMarshalS =
-  //   conf->addElement(New refcounted< Print >("PostMarshal:"));
-
-
-  // And translate the address into a sockaddr.  This is a hack until
-  // we have a consistent view of the UDP interface.
-  ElementSpecRef routeS =
-    conf->addElement(New refcounted< StrToSockaddr >(strbuf("Router:").cat(name), 0));
-  ElementSpecRef udpTxS =
-    conf->addElement(udp->get_tx());
-  
-  
-  conf->hookUp(muxS, 0, encapS, 0);
-  conf->hookUp(encapS, 0, marshalS, 0);
-  conf->hookUp(marshalS, 0, routeS, 0);
-  conf->hookUp(routeS, 0, udpTxS, 0);
-
-
-  // Create reach scanning flow
-  makeReachFlow(conf, name, linkTable,
-                muxS, 0);
-
-  // ... and the link/reach joiner
-  makeTransitiveFlow(conf, linkTable, reachTable,
-                     name, udp,
-                     muxS, 1);
-}
-
-
-
-
-void testMakeReach(LoggerI::Level level)
-{
-  std::cout << "\nCHECK MAKE REACH FLOWCHUNK\n";
-
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-
-  // Create one data flow per "node"
-  const int nodes = 10;
-  TablePtr tables;
-  ValuePtr nodeIds[nodes];
-  str names[nodes];
-  
-  // Create the networking objects
-  for (int i = 0;
-       i < nodes;
-       i++) {
-    names[i] = strbuf("Node") << i;
-    nodeIds[i] = Val_Str::mk(strbuf("127.0.0.1") << ":" << (STARTING_PORT + i));
-  }
-
-  // Create the link tables and links themselves.  Links must be
-  // symmetric
-  ValueRef LINK = Val_Str::mk("Link");
-  tables = New refcounted< Table >(strbuf("Link:") << names[0], 10000);
-  tables->add_multiple_index(2);
-  std::set< int > others;
-  others.insert(0);             // me
-  for (int j = 0;
-       j < LINKS;
-       j++) {
-    TupleRef t = Tuple::mk();
-    t->append(LINK);
-    // From me
-    t->append((ValueRef) nodeIds[0]);
-    // To someone at random, but not me. Replacement is possible but
-    // discouraged
-    int other = 0;
-    while (others.find(other) != others.end()) {
-      other = (int) (10.0 * rand() / (RAND_MAX + 1.0));
+    uint zerowords = (uint) ((((double) (ID::WORDS + 1)) * rand()) / RAND_MAX);
+    uint32_t words[ID::WORDS];
+    for (uint i = 0;
+         i < zerowords;
+         i++) {
+      words[i] = 0;
     }
-    // Got one
-    others.insert(other);
+    for (uint i = zerowords;
+         i < ID::WORDS;
+         i++) {
+      words[i] = rand();
+    }
+    IDRef key = ID::mk(words);
+    tuple->append(Val_ID::mk(key));
 
-    t->append((ValueRef) nodeIds[other]);
-    t->freeze();
-    tables->insert(t);
+    str req = str(strbuf() << "127.0.0.100:10000");
+    tuple->append(Val_Str::mk(req));
+
+    tuple->append(Val_UInt32::mk(rand())); // the event ID
+
+    IDRef me = ID::mk((uint32_t) 1);
+    tuple->append(Val_ID::mk(me));
+
+    tuple->freeze();
+
+    return tuple;
   }
+};
 
-  // And make the data flow
-  ElementSpecRef scanS =
-    conf->addElement(New refcounted< Scan >(strbuf("Scaner:"), tables, 2));
-  ElementSpecRef scanPrintS =
-    conf->addElement(New refcounted< Print >(strbuf("Scan:") << names[0]));
+struct LookupGenerator lookupGenerator;
+
+
+/** Test best lookup distance. */
+void testBestLookupDistance(LoggerI::Level level)
+{
+  TableRef fingers =
+    New refcounted< Table >(strbuf("Fingers"), 10000);
+  fingers->add_multiple_index(2);
+  
+  IDRef me = ID::mk((uint32_t) 1);
+
+  // Fill up the table with fingers
+  for (uint i = 0;
+       i < FINGERS;
+       i++) {
+    TupleRef tuple = Tuple::mk();
+    tuple->append(Val_Str::mk("Finger"));
+
+    str myAddress = str(strbuf() << "127.0.0.1:1");
+    tuple->append(Val_Str::mk(myAddress));
+
+    IDRef target = ID::mk((uint32_t) 0X200)->shift(10 * i)->add(me);
+    tuple->append(Val_ID::mk(target));
+
+    IDRef best = ID::mk()->add(target)->add(ID::mk((uint32_t) i*10));
+    tuple->append(Val_ID::mk(best));
+  
+    str address = str(strbuf() << "127.0.0.1:" << i);
+    tuple->append(Val_Str::mk(address));
+    tuple->freeze();
+    fingers->insert(tuple);
+    warn << tuple->toString() << "\n";
+  }
+  
+  // Create the data flow
+  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  
+  ElementSpecRef funkyS =
+    conf->addElement(New refcounted< FunctorSource >(str("Source"),
+                                                     &lookupGenerator));
+  ElementSpecRef lookupPS =
+    conf->addElement(New refcounted< Print >(strbuf("Lookup")));
   ElementSpecRef timedPullPushS =
-    conf->addElement(New refcounted< TimedPullPush >(strbuf("PushReach:").cat(names[0]),
-                                                     1));
-  ElementSpecRef slotS =
-    conf->addElement(New refcounted< Slot >(strbuf("Slot:").cat(names[0])));
-  ElementSpecRef transS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("MakeReach").cat(names[0]),
-                                                    "\"Reach\" pop $1 pop $2 pop"));
-  ElementSpecRef sinkPrintS =
-    conf->addElement(New refcounted< Print >(strbuf("SinkPrint:") << names[0]));
+    conf->addElement(New refcounted< TimedPullPush >("PullPush", 1));
+  ElementSpecRef bestDistanceScannerS =
+    conf->addElement(New refcounted< PelScan >(str("BestDistance"), fingers, 2,
+                                               str("$2 $5 1 ->u32 ->id 0 ->u32 ->id distance"),
+                                               str("$3 /* B */ \
+                                                    2 peek /* B N */ \
+                                                    4 peek /* B N K */ \
+                                                    ()id  /* (B in (N,K)) */ \
+                                                    not ifstop /* empty */ \
+                                                    $3 3 peek distance dup /* dist(B,N) twice */ \
+                                                    2 peek /* newDist newDist oldDist */ \
+                                                    <id /* newDist (newDist<oldMin) */ \
+                                                    swap /* (old>new?) newDist */ \
+                                                    2 peek ifelse /* ((old>new) ? new : old) */ \
+                                                    swap /* replace newMin in state where oldMin was */ \
+                                                    drop /* only state remains */"),
+                                               str("\"BestDistance\" pop swap pop swap pop pop")));
+
+  ElementSpecRef bestDistancePS =
+    conf->addElement(New refcounted< Print >(strbuf("BestDistancePrint")));
   ElementSpecRef sinkS =
-    conf->addElement(New refcounted< TimedPullSink >(strbuf("Sink:") << names[0], 0));
-
-  // Connect to outgoing hook
-  conf->hookUp(scanS, 0, scanPrintS, 0);
-  conf->hookUp(scanPrintS, 0, timedPullPushS, 0);
-  conf->hookUp(timedPullPushS, 0, slotS, 0);
-  conf->hookUp(slotS, 0, transS, 0);
-  conf->hookUp(transS, 0, sinkPrintS, 0);
-  conf->hookUp(sinkPrintS, 0, sinkS, 0);
-
-
-
-
-
-  RouterRef router = New refcounted< Router >(conf, level);
-  if (router->initialize(router) == 0) {
-    std::cout << "Correctly initialized network of reachability flows.\n";
-  } else {
-    std::cout << "** Failed to initialize correct spec\n";
-    return;
-  }
-
-  // Activate the router
-  router->activate();
-
-  // Schedule kill
-  //delaycb(10, 0, wrap(&killJoin));
-
-  // Run the router
-  amain();
-
-
-
-}
-
-
-void testTransmit(LoggerI::Level level)
-{
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-
-  // Create one data flow per "node"
-  const int nodes = 10;
-  TablePtr tables;
-  ValuePtr nodeIds[nodes];
-  str names[nodes];
+    conf->addElement(New refcounted< TimedPullSink >("Sink", 0));
   
-  // Create the networking objects
-  for (int i = 0;
-       i < nodes;
-       i++) {
-    names[i] = strbuf("Node") << i;
-    nodeIds[i] = Val_Str::mk(strbuf("127.0.0.1") << ":" << (STARTING_PORT + i));
-  }
 
-  // Create the link tables and links themselves.  Links must be
-  // symmetric
-  ValueRef LINK = Val_Str::mk("Link");
-  tables = New refcounted< Table >(strbuf("Link:") << names[0], 10000);
-  tables->add_multiple_index(2);
-  std::set< int > others;
-  others.insert(0);             // me
-  for (int j = 0;
-       j < LINKS;
-       j++) {
-    TupleRef t = Tuple::mk();
-    t->append(LINK);
-    // From me
-    t->append((ValueRef) nodeIds[0]);
-    // To someone at random, but not me. Replacement is possible but
-    // discouraged
-    int other = 0;
-    while (others.find(other) != others.end()) {
-      other = (int) (10.0 * rand() / (RAND_MAX + 1.0));
-    }
-    // Got one
-    others.insert(other);
-
-    t->append((ValueRef) nodeIds[other]);
-    t->freeze();
-    tables->insert(t);
-  }
-
-  // And make the data flow
-  ElementSpecRef scanS =
-    conf->addElement(New refcounted< Scan >(strbuf("Scaner:"), tables, 2));
-  ElementSpecRef scanPrintS =
-    conf->addElement(New refcounted< Print >(strbuf("Scan:") << names[0]));
-  ElementSpecRef timedPullPushS =
-    conf->addElement(New refcounted< TimedPullPush >(strbuf("PushReach:").cat(names[0]),
-                                                     1));
-  ElementSpecRef slotS =
-    conf->addElement(New refcounted< Slot >(strbuf("Slot:").cat(names[0])));
-  ElementSpecRef transS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("MakeReach").cat(names[0]),
-                                                    "\"Reach\" pop $1 pop $2 pop"));
-  ElementSpecRef sinkPrintS =
-    conf->addElement(New refcounted< Print >(strbuf("SinkPrint:") << names[0]));
-
-  // Connect to outgoing hook
-  conf->hookUp(scanS, 0, scanPrintS, 0);
-  conf->hookUp(scanPrintS, 0, timedPullPushS, 0);
-  conf->hookUp(timedPullPushS, 0, slotS, 0);
-  conf->hookUp(slotS, 0, transS, 0);
-  conf->hookUp(transS, 0, sinkPrintS, 0);
-
-
-
-
-
-  // Create the encapsulated version of this tuple, holding the
-  // destination address and, encapsulated, the payload containing the
-  // reach tuple.
-  ElementSpecRef encapS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("encap:").cat(names[0]),
-                                                    "$2 pop /* The To address */\
-                                                     $0 ->t $1 append $2 append pop")); // the rest
-
-  ElementSpecRef preMarshalS =
-    conf->addElement(New refcounted< Print >("PreMarshal:"));
-
-  // Now marshall the payload (second field)
-  ElementSpecRef marshalS =
-    conf->addElement(New refcounted< MarshalField >(strbuf("Marshal:").cat(names[0]),
-                                                    1));
-
-  ElementSpecRef postMarshalS =
-    conf->addElement(New refcounted< Print >("PostMarshal:"));
-
-  // And translate the address into a sockaddr.  This is a hack until
-  // we have a consistent view of the UDP interface.
-  ElementSpecRef routeS =
-    conf->addElement(New refcounted< StrToSockaddr >(strbuf("Router:").cat(names[0]), 0));
-  ref< Udp > udp = New refcounted< Udp >(names[0] << ":Udp",
-                                         10000);
-  ElementSpecRef udpTxS =
-    conf->addElement(udp->get_tx());
-
-  ElementSpecRef muxS =
-    conf->addElement(New refcounted< Mux >(strbuf("RR:").cat(names[0]), 2));
-  ElementSpecRef tsSourceS =
-    conf->addElement(New refcounted< TimestampSource >("TSSource"));
-  ElementSpecRef fakeSlotS =
-    conf->addElement(New refcounted< Slot >(strbuf("FakeSlot:").cat(names[0])));
-  ElementSpecRef fakeHLS =
-    conf->addElement(New refcounted< TimedPullPush >(strbuf("FakeHL:").cat(names[0]),
-                                                     2));
-
-  conf->hookUp(tsSourceS, 0, fakeHLS, 0);
-  conf->hookUp(fakeHLS, 0, fakeSlotS, 0);
-  conf->hookUp(fakeSlotS, 0, muxS, 1);
-  conf->hookUp(sinkPrintS, 0, muxS, 0);
-  conf->hookUp(muxS, 0, encapS, 0);
-  conf->hookUp(encapS, 0, preMarshalS, 0);
-  conf->hookUp(preMarshalS, 0, marshalS, 0);
-  conf->hookUp(marshalS, 0, postMarshalS, 0);
-  conf->hookUp(postMarshalS, 0, routeS, 0);
-  conf->hookUp(routeS, 0, udpTxS, 0);
+  conf->hookUp(funkyS, 0, lookupPS, 0);
+  conf->hookUp(lookupPS, 0, timedPullPushS, 0);
+  conf->hookUp(timedPullPushS, 0, bestDistanceScannerS, 0);
+  conf->hookUp(bestDistanceScannerS, 0, bestDistancePS, 0);
+  conf->hookUp(bestDistancePS, 0, sinkS, 0);
 
 
   RouterRef router = New refcounted< Router >(conf, level);
@@ -506,205 +187,15 @@ void testTransmit(LoggerI::Level level)
 
   // Run the router
   amain();
-}
-
-/** Build a symmetric link transitive closure. */
-void testReachability(LoggerI::Level level)
-{
-  std::cout << "\nCHECK TRANSITIVE REACHABILITY\n";
-
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-
-
-  // Create one data flow per "node"
-  ptr< Udp > udps[nodes];
-  TablePtr linkTables[nodes];
-  TablePtr reachTables[nodes];
-  ValuePtr nodeIds[nodes];
-  str names[nodes];
   
-  // Create the networking objects
-  for (int i = 0;
-       i < nodes;
-       i++) {
-    names[i] = strbuf("Node") << i;
-    nodeIds[i] = Val_Str::mk(strbuf("127.0.0.1") << ":" << (STARTING_PORT + i));
-
-    udps[i] = New refcounted< Udp >(names[i] << ":Udp",
-                                    STARTING_PORT + i);
-  }
-
-  // Create the link tables and links themselves.  Links must be
-  // symmetric
-  ValueRef LINK = Val_Str::mk("Link");
-  for (int i = 0;
-       i < nodes;
-       i++) {
-    linkTables[i] = 
-      New refcounted< Table >(strbuf("Link:") << names[i], 10000);
-    linkTables[i]->add_multiple_index(1);
-    reachTables[i] = 
-      New refcounted< Table >(strbuf("Reach:") << names[i], 10000);
-    reachTables[i]->add_multiple_index(2);
-  }
-  for (int i = 0;
-       i < nodes;
-       i++) {
-    std::set< int > others;
-    others.insert(i);           // me
-
-    for (int j = 0;
-         j < LINKS;
-         j++) {
-      TupleRef t = Tuple::mk();
-      t->append(LINK);
-      // From me
-      t->append((ValueRef) nodeIds[i]);
-      // To someone at random, but not me. Replacement is discouraged
-
-      int other = i;
-      while (others.find(other) != others.end()) {
-        other = (int) (1.0 * nodes * rand() / (RAND_MAX + 1.0));
-      }
-      // Got one
-      others.insert(other);
-
-      t->append((ValueRef) nodeIds[other]);
-      t->freeze();
-      linkTables[i]->insert(t);
-
-      // Make the symmetric one
-      TupleRef symmetric = Tuple::mk();
-      symmetric->append(LINK);
-      symmetric->append((ValueRef) nodeIds[other]);
-      symmetric->append((ValueRef) nodeIds[i]);
-      symmetric->freeze();
-      linkTables[other]->insert(symmetric);
-    }
-  }
-
-  // And make the data flows
-  for (int i = 0;
-       i < nodes;
-       i++) {
-    makeForwarder(conf, names[i], udps[i],
-                  linkTables[i], reachTables[i]);
-  }
-
-  RouterRef router = New refcounted< Router >(conf, level);
-  if (router->initialize(router) == 0) {
-    std::cout << "Correctly initialized network of reachability flows.\n";
-  } else {
-    std::cout << "** Failed to initialize correct spec\n";
-    return;
-  }
-
-  // Activate the router
-  router->activate();
-
-  // Schedule kill
-  //delaycb(10, 0, wrap(&killJoin));
-
-  // Run the router
-  amain();
 }
 
 
-
-/** Test over a ring. */
-void testSimpleCycle(LoggerI::Level level)
-{
-  std::cout << "\nCHECK TRANSITIVE REACHABILITY ON RING\n";
-
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-
-
-  // Create one data flow per "node"
-  ptr< Udp > udps[nodes];
-  TablePtr linkTables[nodes];
-  TablePtr reachTables[nodes];
-  ValuePtr nodeIds[nodes];
-  str names[nodes];
-  
-  // Create the networking objects
-  for (int i = 0;
-       i < nodes;
-       i++) {
-    names[i] = strbuf("Node") << i;
-    nodeIds[i] = Val_Str::mk(strbuf("127.0.0.1") << ":" << (STARTING_PORT + i));
-
-    udps[i] = New refcounted< Udp >(names[i] << ":Udp",
-                                    STARTING_PORT + i);
-  }
-
-  // Create the link tables and links themselves.  Links must be
-  // symmetric
-  ValueRef LINK = Val_Str::mk("Link");
-  for (int i = 0;
-       i < nodes;
-       i++) {
-    linkTables[i] = 
-      New refcounted< Table >(strbuf("Link:") << names[i], 10000);
-    linkTables[i]->add_multiple_index(1);
-    reachTables[i] = 
-      New refcounted< Table >(strbuf("Reach:") << names[i], 10000);
-    reachTables[i]->add_multiple_index(2);
-  }
-
-  for (int i = 0;
-       i < nodes;
-       i++) {
-    // Forward link
-    TupleRef forward = Tuple::mk();
-    forward->append(LINK);
-    forward->append((ValueRef) nodeIds[i]);
-    int other = (i + 1) % nodes;
-    forward->append((ValueRef) nodeIds[other]);
-    forward->freeze();
-    linkTables[i]->insert(forward);
-
-    // Backward link
-    TupleRef backward = Tuple::mk();
-    backward->append(LINK);
-    backward->append((ValueRef) nodeIds[i]);
-    int backOther = (i + nodes - 1) % nodes;
-    backward->append((ValueRef) nodeIds[backOther]);
-    backward->freeze();
-    linkTables[i]->insert(backward);
-  }
-
-  // And make the data flows
-  for (int i = 0;
-       i < nodes;
-       i++) {
-    makeForwarder(conf, names[i], udps[i],
-                  linkTables[i], reachTables[i]);
-  }
-
-  RouterRef router = New refcounted< Router >(conf, level);
-  if (router->initialize(router) == 0) {
-    std::cout << "Correctly initialized network of reachability flows.\n";
-  } else {
-    std::cout << "** Failed to initialize correct spec\n";
-    return;
-  }
-
-  // Activate the router
-  router->activate();
-
-  // Schedule kill
-  //delaycb(10, 0, wrap(&killJoin));
-
-  // Run the router
-  amain();
-}
 
 
 int main(int argc, char **argv)
 {
-  std::cout << "\nGRAPH REACHABILITY\n";
-
-  TableRef table = new refcounted< Table >("name", 100);
+  std::cout << "\nChord\n";
 
   LoggerI::Level level = LoggerI::ALL;
   if (argc > 1) {
@@ -718,11 +209,7 @@ int main(int argc, char **argv)
   }
   srand(seed);
 
-  testSimpleCycle(level);
-  // testReachability(level);
-  // testMakeReach(level);
-  // testTransmit(level);
-
+  testBestLookupDistance(level);
   return 0;
 }
   

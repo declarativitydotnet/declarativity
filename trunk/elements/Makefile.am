@@ -45,7 +45,9 @@ libp2elements_la_SOURCES = \
 	randomPushSource.C \
 	snetsim.C \
 	ping.C \
-	pong.C 
+	pong.C \
+	pelScan.C \
+	functorSource.C
 
 INCLUDES = @SFS_INC@ -I../p2core
 

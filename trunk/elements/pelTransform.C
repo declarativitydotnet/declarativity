@@ -27,6 +27,7 @@ PelTransform::~PelTransform()
 
 TuplePtr PelTransform::simple_action(TupleRef p)
 {
+  _vm.reset();
   Pel_VM::Error e = _vm.execute(*_program, p);
 
   if (e != Pel_VM::PE_SUCCESS) {
@@ -37,7 +38,7 @@ TuplePtr PelTransform::simple_action(TupleRef p)
 
     // Was there a result tuple?
     TuplePtr result = _vm.result_tuple();
-    if ((result == 0) || (result->size() == 0)) {
+    if (result == 0) {
       // No result tuple or empty result tuple.  Return nothing
       return 0;
     } else {

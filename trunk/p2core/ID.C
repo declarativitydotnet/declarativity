@@ -15,7 +15,7 @@
 
 ID::ID()
 {
-  for (int i = 0;
+  for (unsigned i = 0;
        i < WORDS;
        i++) {
     words[i] = 0;
@@ -24,7 +24,7 @@ ID::ID()
 
 ID::ID(uint32_t newWords[ID::WORDS])
 {
-  for (int i = 0;
+  for (unsigned i = 0;
        i < WORDS;
        i++) {
     words[i] = newWords[i];
@@ -33,7 +33,7 @@ ID::ID(uint32_t newWords[ID::WORDS])
 
 ID::ID(uint32_t word)
 {
-  for (int i = 0;
+  for (unsigned i = 0;
        i < WORDS;
        i++) {
     words[i] = 0;
@@ -43,7 +43,7 @@ ID::ID(uint32_t word)
 
 ID::ID(uint64_t doubleword)
 {
-  for (int i = 0;
+  for (unsigned i = 0;
        i < WORDS;
        i++) {
     words[i] = 0;
@@ -57,10 +57,10 @@ str
 ID::toString() const
 {
   strbuf result;
-  for (int i = 0;
+  for (unsigned i = 0;
        i < WORDS;
        i++) {
-    result << hexdump(&(words[i]), sizeof(uint32_t));
+    result.fmt("%08x", words[i]);
   }
   return result;
 }
@@ -68,7 +68,7 @@ ID::toString() const
 int
 ID::compareTo(IDRef other) const
 {
-  for (int i = 0;
+  for (unsigned i = 0;
        i < WORDS;
        i++) {
     if (words[i] < other->words[i]) {
@@ -81,12 +81,44 @@ ID::compareTo(IDRef other) const
   return 0;
 }
 
+bool
+ID::betweenOO(IDRef from, IDRef to) const
+{
+  return (((compareTo(from) > 0) && (compareTo(to) < 0)) ||
+          ((to->compareTo(from) < 0) && (compareTo(from) > 0)) ||
+          ((compareTo(to) < 0) && (to->compareTo(from) < 0)));
+}
+
+bool
+ID::betweenOC(IDRef from, IDRef to) const
+{
+  return (((compareTo(from) > 0) && (compareTo(to) <= 0)) ||
+          ((to->compareTo(from) < 0) && (compareTo(from) > 0)) ||
+          ((compareTo(to) <= 0) && (to->compareTo(from) < 0)));
+}
+
+bool
+ID::betweenCO(IDRef from, IDRef to) const
+{
+  return (((compareTo(from) >= 0) && (compareTo(to) < 0)) ||
+          ((to->compareTo(from) < 0) && (compareTo(from) >= 0)) ||
+          ((compareTo(to) < 0) && (to->compareTo(from) < 0)));
+}
+
+bool
+ID::betweenCC(IDRef from, IDRef to) const
+{
+  return (((compareTo(from) >= 0) && (compareTo(to) <= 0)) ||
+          ((to->compareTo(from) < 0) && (compareTo(from) >= 0)) ||
+          ((compareTo(to) <= 0) && (to->compareTo(from) < 0)));
+}
+
 IDRef
 ID::distance(IDRef to) const
 {
   IDRef newID = ID::mk();
   uint32_t carry = 0;
-  for (int i = WORDS - 1;
+  for (int i = (int) WORDS - 1;
        i >= 0;
        i--) {
     if (to->words[i] >=
@@ -100,7 +132,7 @@ ID::distance(IDRef to) const
       }
     } else {
       newID->words[i] =
-        UINT_MAX - words[i] - carry + to->words[i];
+        to->words[i] - words[i] - carry;
       carry = 1;
     }
   }
@@ -110,16 +142,40 @@ ID::distance(IDRef to) const
 IDRef
 ID::shift(uint32_t shift) const
 {
+  if ((shift == 0) || (shift >= WORDS * 32)) {
+    return ID::mk((uint32_t*) words);
+  }
+
   IDRef newID = ID::mk();
+
+  // Perform long shifts (i.e., by bytes, not by bits)
+  if (shift > 32) {
+    // By how many entire bytes (at most)?
+    uint32_t longShift = shift >> 5;
+    for (uint i = 0;
+         i < WORDS - longShift;
+         i++) {
+      newID->words[i] = words[i + longShift];
+    }
+    shift = shift & 0x1f;
+  } else {
+    for (uint i = 0;
+         i < WORDS;
+         i++) {
+      newID->words[i] = words[i];
+    }
+  }
+  
+  // Now we only have short shifts
   uint32_t carry = 0;
-  for (int i = 0;
-       i < WORDS;
-       i++) {
-    uint64_t temp = words[i];
+  for (int i = (int) WORDS-1;
+       i >= 0;
+       i--) {
+    uint64_t temp = newID->words[i];
     temp = temp << shift;
     temp = temp | carry;
-    newID->words[i] = (temp & 0xFFFFFFFF);
     carry = temp >> 32;
+    newID->words[i] = (temp & 0xFFFFFFFF);
   }
 
   return newID;
@@ -130,7 +186,7 @@ ID::add(IDRef other) const
 {
   IDRef newID = ID::mk();
   uint32_t carry = 0;
-  for (int i = WORDS - 1;
+  for (int i = (int) WORDS - 1;
        i >= 0;
        i--) {
     uint64_t temp = words[i] + other->words[i] + carry;
@@ -148,7 +204,7 @@ ID::add(IDRef other) const
 void
 ID::xdr_marshal(XDR *x)
 {
-  for (int i = 0;
+  for (uint i = 0;
        i < WORDS;
        i++) {
     xdr_int32_t(x, &(words[i]));
@@ -159,7 +215,7 @@ IDRef
 ID::xdr_unmarshal(XDR *x)
 {
   IDRef newID = New refcounted< ID >();
-  for (int i = 0;
+  for (uint i = 0;
        i < WORDS;
        i++) {
     xdr_int32_t(x, &(newID->words[i]));

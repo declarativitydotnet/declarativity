@@ -53,8 +53,14 @@ const char *Pel_VM::err_msgs[] = {
 //
 // Create the VM
 //
-Pel_VM::Pel_VM() : st() {
+Pel_VM::Pel_VM() : _st() {
   reset();
+}
+
+//
+// Create the VM with a preset stack
+//
+Pel_VM::Pel_VM(std::deque< ValueRef > staque) : _st(staque) {
 }
 
 //
@@ -62,9 +68,14 @@ Pel_VM::Pel_VM() : st() {
 //
 void Pel_VM::reset() 
 {
-  while (!st.empty()) {
-    st.pop();
+  while (!_st.empty()) {
+    stackPop();
   }
+}
+
+void Pel_VM::stop()
+{
+  error = Pel_VM::PE_STOP;
 }
 
 //
@@ -72,21 +83,27 @@ void Pel_VM::reset()
 //
 ValueRef Pel_VM::result_val()
 {
-  if (st.empty()) {
-    st.push(Val_Null::mk());
+  if (_st.empty()) {
+    stackPush(Val_Null::mk());
   }
-  return st.top();
+  return stackTop();
 }
 
 // 
-// Make a tuple out of the top elements on the stack and return it
+// Make a tuple out of the top elements on the stack and return it.  If
+// no result has been popped, return NULL.
 // 
-TupleRef Pel_VM::result_tuple() 
+TuplePtr Pel_VM::result_tuple() 
 {
-  if (!result) {
-    result = Tuple::mk();
-  }
   return result;
+}
+
+// 
+// Reset the result tuple
+// 
+void Pel_VM::reset_result_tuple() 
+{
+  result = NULL;
 }
 
 //
@@ -104,7 +121,7 @@ const char *Pel_VM::strerror(Pel_VM::Error e) {
 //
 uint64_t Pel_VM::pop_unsigned() 
 {
-  ValueRef t = st.top(); st.pop();
+  ValueRef t = stackTop(); stackPop();
   try {
     return Val_UInt64::cast(t);
   } catch (Value::TypeError) {
@@ -118,7 +135,7 @@ uint64_t Pel_VM::pop_unsigned()
 //
 int64_t Pel_VM::pop_signed() 
 {
-  ValueRef t = st.top(); st.pop();
+  ValueRef t = stackTop(); stackPop();
   try {
     return Val_Int64::cast(t);
   } catch (Value::TypeError) {
@@ -132,7 +149,7 @@ int64_t Pel_VM::pop_signed()
 //  
 str Pel_VM::pop_string() 
 {
-  ValueRef t = st.top(); st.pop();
+  ValueRef t = stackTop(); stackPop();
   try {
     return Val_Str::cast(t);
   } catch (Value::TypeError) {
@@ -146,7 +163,7 @@ str Pel_VM::pop_string()
 //  
 struct timespec Pel_VM::pop_time() 
 {
-  ValueRef t = st.top(); st.pop();
+  ValueRef t = stackTop(); stackPop();
   try {
     return Val_Time::cast(t);
   } catch (Value::TypeError) {
@@ -163,7 +180,7 @@ struct timespec Pel_VM::pop_time()
 //  
 IDRef Pel_VM::pop_ID() 
 {
-  ValueRef t = st.top(); st.pop();
+  ValueRef t = stackTop(); stackPop();
   try {
     return Val_ID::cast(t);
   } catch (Value::TypeError) {
@@ -177,7 +194,7 @@ IDRef Pel_VM::pop_ID()
 //  
 double Pel_VM::pop_double() 
 {
-  ValueRef t = st.top(); st.pop();
+  ValueRef t = stackTop(); stackPop();
   try { 
     return Val_Double::cast(t);
   } catch (Value::TypeError) {
@@ -191,15 +208,21 @@ double Pel_VM::pop_double()
 //
 Pel_VM::Error Pel_VM::execute(const Pel_Program &prog, const TupleRef data)
 {
-  reset();
   prg = &prog;
   error = PE_SUCCESS;
   pc = 0;
   result = NULL;
   operand = data;
   
-  for(pc=0; pc < prg->ops.size(); pc++) {
-    if (execute_instruction( prg->ops[pc], operand ) != PE_SUCCESS) {
+  for (pc = 0;
+       pc < prg->ops.size();
+       pc++) {
+    error = execute_instruction(prg->ops[pc], operand);
+    if (error == PE_STOP) {
+      // Requested from the program
+      return PE_SUCCESS;
+    }
+    if (error != PE_SUCCESS) {
       return error;
     }
   }
@@ -214,7 +237,7 @@ Pel_VM::Error Pel_VM::execute_instruction( u_int32_t inst, TupleRef data)
   u_int32_t op = inst & 0xFFFF;
   if (op > NUM_OPCODES) {
     error = PE_BAD_OPCODE;
-  } else if (st.size() < (uint) jump_table[op].arity) {
+  } else if (_st.size() < (uint) jump_table[op].arity) {
     error = PE_STACK_UNDERFLOW;
   } else {
     // This is a somewhat esoteric bit of C++.  Believe it or not,
@@ -240,53 +263,69 @@ Pel_VM::Error Pel_VM::execute_instruction( u_int32_t inst, TupleRef data)
 //
 // Stack operations
 //
-DEF_OP(DROP) { st.pop(); }
+DEF_OP(DROP) { stackPop(); }
 DEF_OP(SWAP) { 
-  ValueRef t1 = st.top(); st.pop();
-  ValueRef t2 = st.top(); st.pop();
-  st.push(t1); 
-  st.push(t2);
+  ValueRef t1 = stackTop(); stackPop();
+  ValueRef t2 = stackTop(); stackPop();
+  stackPush(t1); 
+  stackPush(t2);
 }
 DEF_OP(DUP) { 
-  st.push(st.top()); 
+  stackPush(stackTop()); 
 }
 DEF_OP(PUSH_CONST) { 
   uint ndx = (inst >> 16);
   if (ndx > prg->const_pool.size() ) { error = PE_BAD_CONSTANT; return; }
-  st.push(prg->const_pool[ndx]);
+  stackPush(prg->const_pool[ndx]);
 }
 DEF_OP(PUSH_FIELD) { 
   uint ndx = (inst >> 16);
   if (ndx > operand->size() ) { error = PE_BAD_FIELD; return; }
-  st.push((*operand)[ndx]);
+  stackPush((*operand)[ndx]);
 }
 DEF_OP(POP) {
   if (!result) { result = Tuple::mk(); }
-  ValueRef top = st.top(); st.pop();
+  ValueRef top = stackTop(); stackPop();
   if (top->typeCode() == Value::TUPLE) {
     // Freeze it before taking it out
     Val_Tuple::cast(top)->freeze();
   }
   result->append(top);
 }
+DEF_OP(PEEK) {
+  uint stackPosition = pop_unsigned();
+  if (stackPosition >= _st.size()) {
+    error = PE_STACK_UNDERFLOW;
+    return;
+  }
+
+  // Push that stack element
+  stackPush(stackPeek(stackPosition));
+}
 DEF_OP(IFELSE) {
-  ValueRef elseVal = st.top(); st.pop();
-  ValueRef thenVal = st.top(); st.pop();
+  ValueRef elseVal = stackTop(); stackPop();
+  ValueRef thenVal = stackTop(); stackPop();
   int64_t ifVal = pop_unsigned();
   if (ifVal) {
-    st.push(thenVal);
+    stackPush(thenVal);
   } else {
-    st.push(elseVal);
+    stackPush(elseVal);
   }
 }
 DEF_OP(IFPOP) {
-  ValueRef thenVal = st.top(); st.pop();
+  ValueRef thenVal = stackTop(); stackPop();
   int64_t ifVal = pop_unsigned();
   if (ifVal) {
     if (!result) {
       result = Tuple::mk();
     }
     result->append(thenVal);
+  }
+}
+DEF_OP(IFSTOP) {
+  int64_t ifVal = pop_unsigned();
+  if (ifVal) {
+    stop();
   }
 }
 DEF_OP(IFPOP_TUPLE) {
@@ -303,37 +342,37 @@ DEF_OP(IFPOP_TUPLE) {
   }
 }
 DEF_OP(T_MKTUPLE) {
-  ValueRef val = st.top(); st.pop();
+  ValueRef val = stackTop(); stackPop();
   TupleRef t = Tuple::mk();
   t->append(val);
   ValueRef tuple = Val_Tuple::mk(t);
-  st.push(tuple);
+  stackPush(tuple);
 }
 DEF_OP(T_APPEND) {
-  ValueRef value = st.top(); st.pop();
-  ValueRef tuple = st.top();
+  ValueRef value = stackTop(); stackPop();
+  ValueRef tuple = stackTop();
   TupleRef t = Val_Tuple::cast(tuple);
   t->append(value);
 }
 DEF_OP(T_UNBOX) {
-  ValueRef tuple = st.top(); st.pop();
+  ValueRef tuple = stackTop(); stackPop();
   TupleRef t = Val_Tuple::cast(tuple);
   // Now start pushing fields from the end forwards
   for (int i = t->size() - 1;
        i >= 0;
        i--) {
-    st.push((*t)[i]);
+    stackPush((*t)[i]);
   }
 }
 DEF_OP(T_FIELD) {
   unsigned field = pop_unsigned();
-  ValueRef tuple = st.top(); st.pop();
+  ValueRef tuple = stackTop(); stackPop();
   TupleRef theTuple = Val_Tuple::cast(tuple);
   ValuePtr value = (*theTuple)[field];
-  if (field == NULL) {
-    st.push(Val_Null::mk());
+  if (value == NULL) {
+    stackPush(Val_Null::mk());
   } else {
-    st.push(value);
+    stackPush(value);
   }
 }
 
@@ -342,17 +381,17 @@ DEF_OP(T_FIELD) {
 //
 DEF_OP(NOT) {
   u_int64_t v = pop_unsigned();
-  st.push(Val_Int32::mk(!v));
+  stackPush(Val_Int32::mk(!v));
 }
 DEF_OP(AND) {
   u_int64_t v1 = pop_unsigned();
   u_int64_t v2 = pop_unsigned();
-  st.push(Val_Int32::mk(v1 && v2));
+  stackPush(Val_Int32::mk(v1 && v2));
 }
 DEF_OP(OR) {
   u_int64_t v1 = pop_unsigned();
   u_int64_t v2 = pop_unsigned();
-  st.push(Val_Int32::mk(v1 || v2));
+  stackPush(Val_Int32::mk(v1 || v2));
 }
 
 //
@@ -361,35 +400,35 @@ DEF_OP(OR) {
 DEF_OP(LSR) {
   u_int64_t v1 = pop_unsigned();
   u_int64_t v2 = pop_unsigned();
-  st.push(Val_UInt64::mk(v2 >> v1));
+  stackPush(Val_UInt64::mk(v2 >> v1));
 }
 DEF_OP(ASR) {
   u_int64_t v1 = pop_unsigned();
   int64_t v2 = pop_signed();
-  st.push(Val_Int64::mk(v2 >> v1));
+  stackPush(Val_Int64::mk(v2 >> v1));
 }
 DEF_OP(LSL) {
   uint64_t v1 = pop_unsigned();
   uint64_t v2 = pop_unsigned();
-  st.push(Val_UInt64::mk(v2 << v1));
+  stackPush(Val_UInt64::mk(v2 << v1));
 }
 DEF_OP(BIT_AND) {
-  st.push(Val_UInt64::mk(pop_unsigned() & pop_unsigned()));
+  stackPush(Val_UInt64::mk(pop_unsigned() & pop_unsigned()));
 }
 DEF_OP(BIT_OR) {
-  st.push(Val_UInt64::mk(pop_unsigned() | pop_unsigned()));
+  stackPush(Val_UInt64::mk(pop_unsigned() | pop_unsigned()));
 }
 DEF_OP(BIT_XOR) {
-  st.push(Val_UInt64::mk(pop_unsigned() ^ pop_unsigned()));
+  stackPush(Val_UInt64::mk(pop_unsigned() ^ pop_unsigned()));
 }
 DEF_OP(BIT_NOT) {
-  st.push(Val_UInt64::mk(~pop_unsigned()));
+  stackPush(Val_UInt64::mk(~pop_unsigned()));
 }
 DEF_OP(MOD) {
   int64_t v1 = pop_signed();
   int64_t v2 = pop_signed();
   if (v1) { 
-    st.push(Val_Int64::mk(v2 % v1));
+    stackPush(Val_Int64::mk(v2 % v1));
   } else if (error == PE_SUCCESS) {
     error = PE_DIVIDE_BY_ZERO;
   }
@@ -403,41 +442,41 @@ DEF_OP(MOD) {
 DEF_OP(TIME_LT) { 
   struct timespec s1 = pop_time();
   struct timespec s2 = pop_time();
-  st.push(Val_Int32::mk(s2 < s1));
+  stackPush(Val_Int32::mk(s2 < s1));
 }
 DEF_OP(TIME_LTE) { 
   struct timespec s1 = pop_time();
   struct timespec s2 = pop_time();
-  st.push(Val_Int32::mk(s2 <= s1));
+  stackPush(Val_Int32::mk(s2 <= s1));
 }
 DEF_OP(TIME_GT) { 
   struct timespec s1 = pop_time();
   struct timespec s2 = pop_time();
-  st.push(Val_Int32::mk(s2 > s1));
+  stackPush(Val_Int32::mk(s2 > s1));
 }
 DEF_OP(TIME_GTE) { 
   struct timespec s1 = pop_time();
   struct timespec s2 = pop_time();
-  st.push(Val_Int32::mk(s2 >= s1));
+  stackPush(Val_Int32::mk(s2 >= s1));
 }
 DEF_OP(TIME_EQ) { 
   struct timespec s1 = pop_time();
   struct timespec s2 = pop_time();
-  st.push(Val_Int32::mk(s2 == s1));
+  stackPush(Val_Int32::mk(s2 == s1));
 }
 DEF_OP(TIME_NOW) { 
   struct timespec t;
   clock_gettime(CLOCK_REALTIME, &t);
-  st.push(Val_Time::mk(t));
+  stackPush(Val_Time::mk(t));
 }
 DEF_OP(TIME_PLUS) {
-  st.push(Val_Time::mk(pop_time()+pop_time()));
+  stackPush(Val_Time::mk(pop_time()+pop_time()));
 }
 DEF_OP(TIME_MINUS) {
   // Be careful of undefined evaluation order in C++!
   struct timespec v1 = pop_time();
   struct timespec v2 = pop_time();
-  st.push(Val_Time::mk(v2-v1));
+  stackPush(Val_Time::mk(v2-v1));
 }
 
 //
@@ -447,41 +486,65 @@ DEF_OP(TIME_MINUS) {
 DEF_OP(ID_LT) { 
   IDRef s1 = pop_ID();
   IDRef s2 = pop_ID();
-  st.push(Val_Int32::mk(s2->compareTo(s1) < 0));
+  stackPush(Val_Int32::mk(s2->compareTo(s1) < 0));
 }
 DEF_OP(ID_LTE) { 
   IDRef s1 = pop_ID();
   IDRef s2 = pop_ID();
-  st.push(Val_Int32::mk(s2->compareTo(s1) <= 0));
+  stackPush(Val_Int32::mk(s2->compareTo(s1) <= 0));
 }
 DEF_OP(ID_GT) { 
   IDRef s1 = pop_ID();
   IDRef s2 = pop_ID();
-  st.push(Val_Int32::mk(s2->compareTo(s1) > 0));
+  stackPush(Val_Int32::mk(s2->compareTo(s1) > 0));
 }
 DEF_OP(ID_GTE) { 
   IDRef s1 = pop_ID();
   IDRef s2 = pop_ID();
-  st.push(Val_Int32::mk(s2->compareTo(s1) >= 0));
+  stackPush(Val_Int32::mk(s2->compareTo(s1) >= 0));
 }
 DEF_OP(ID_EQ) { 
   IDRef s1 = pop_ID();
   IDRef s2 = pop_ID();
-  st.push(Val_Int32::mk(s1->equals(s2)));
+  stackPush(Val_Int32::mk(s1->equals(s2)));
 }
 DEF_OP(ID_PLUS) {
-  st.push(Val_ID::mk(pop_ID()->add(pop_ID())));
+  stackPush(Val_ID::mk(pop_ID()->add(pop_ID())));
 }
 DEF_OP(ID_LSL) {
   uint32_t shift = pop_unsigned();
   IDRef id = pop_ID();
-  st.push(Val_ID::mk(id->shift(shift)));
+  stackPush(Val_ID::mk(id->shift(shift)));
 }
 DEF_OP(ID_DIST) {
   // Be careful of undefined evaluation order in C++!
   IDRef v1 = pop_ID();
   IDRef v2 = pop_ID();
-  st.push(Val_ID::mk(v2->distance(v1)));
+  stackPush(Val_ID::mk(v2->distance(v1)));
+}
+DEF_OP(ID_BTWOO) {
+  IDRef to = pop_ID();
+  IDRef from = pop_ID();
+  IDRef key = pop_ID();
+  stackPush(Val_Int32::mk(key->betweenOO(from, to)));
+}
+DEF_OP(ID_BTWOC) {
+  IDRef to = pop_ID();
+  IDRef from = pop_ID();
+  IDRef key = pop_ID();
+  stackPush(Val_Int32::mk(key->betweenOC(from, to)));
+}
+DEF_OP(ID_BTWCO) {
+  IDRef to = pop_ID();
+  IDRef from = pop_ID();
+  IDRef key = pop_ID();
+  stackPush(Val_Int32::mk(key->betweenCO(from, to)));
+}
+DEF_OP(ID_BTWCC) {
+  IDRef to = pop_ID();
+  IDRef from = pop_ID();
+  IDRef key = pop_ID();
+  stackPush(Val_Int32::mk(key->betweenCC(from, to)));
 }
 
 //
@@ -491,36 +554,36 @@ DEF_OP(ID_DIST) {
 DEF_OP(STR_LT) { 
   str s1 = pop_string();
   str s2 = pop_string();
-  st.push(Val_Int32::mk(s2 < s1));
+  stackPush(Val_Int32::mk(s2 < s1));
 }
 DEF_OP(STR_LTE) { 
   str s1 = pop_string();
   str s2 = pop_string();
-  st.push(Val_Int32::mk(s2 <= s1));
+  stackPush(Val_Int32::mk(s2 <= s1));
 }
 DEF_OP(STR_GT) { 
   str s1 = pop_string();
   str s2 = pop_string();
-  st.push(Val_Int32::mk(s2 > s1));
+  stackPush(Val_Int32::mk(s2 > s1));
 }
 DEF_OP(STR_GTE) { 
   str s1 = pop_string();
   str s2 = pop_string();
-  st.push(Val_Int32::mk(s2 >= s1));
+  stackPush(Val_Int32::mk(s2 >= s1));
 }
 DEF_OP(STR_EQ) { 
   str s1 = pop_string();
   str s2 = pop_string();
-  st.push(Val_Int32::mk(s2 == s1));
+  stackPush(Val_Int32::mk(s2 == s1));
 }
 DEF_OP(STR_CAT) { 
   str s1 = pop_string();
   str s2 = pop_string();
   str r = strbuf() << s2 << s1;
-  st.push(Val_Str::mk(r));
+  stackPush(Val_Str::mk(r));
 }
 DEF_OP(STR_LEN) {
-  st.push(Val_UInt32::mk(pop_string().len()));
+  stackPush(Val_UInt32::mk(pop_string().len()));
 }
 DEF_OP(STR_UPPER) {
   // There _has_ to be a better way of doing this...
@@ -532,7 +595,7 @@ DEF_OP(STR_UPPER) {
     tmp_str[0] = toupper(s[i]);
     sb.cat(tmp_str);
   }
-  st.push(Val_Str::mk(sb));
+  stackPush(Val_Str::mk(sb));
 }
 DEF_OP(STR_LOWER) {
   // There _has_ to be a better way of doing this...
@@ -544,71 +607,71 @@ DEF_OP(STR_LOWER) {
     tmp_str[0] = tolower(s[i]);
     sb.cat(tmp_str);
   }
-  st.push(Val_Str::mk(sb));
+  stackPush(Val_Str::mk(sb));
 }
 DEF_OP(STR_SUBSTR) {
   int len = pop_unsigned();
   int pos = pop_unsigned();
   str s = pop_string();
-  st.push(Val_Str::mk(substr(s,pos,len)));
+  stackPush(Val_Str::mk(substr(s,pos,len)));
 }
 DEF_OP(STR_MATCH) {
   // XXX This is slow!!! For better results, memoize each regexp in a
   // hash map and study each one. 
   rxx re(pop_string());
   re.match(pop_string());
-  st.push(Val_Int32::mk(re.success()));
+  stackPush(Val_Int32::mk(re.success()));
 }
 DEF_OP(STR_CONV) {
-  ValueRef t = st.top(); st.pop();
-  st.push(Val_Str::mk(t->toString()));
+  ValueRef t = stackTop(); stackPop();
+  stackPush(Val_Str::mk(t->toString()));
 }
 
 //
 // Integer arithmetic operations
 //
 DEF_OP(INT_NEG) {
-  st.push(Val_Int64::mk(-pop_signed()));
+  stackPush(Val_Int64::mk(-pop_signed()));
 }
 DEF_OP(INT_PLUS) {
-  st.push(Val_Int64::mk(pop_signed()+pop_signed()));
+  stackPush(Val_Int64::mk(pop_signed()+pop_signed()));
 }
 DEF_OP(INT_MINUS) {
   // Be careful of undefined evaluation order in C++!
   int64_t v1 = pop_signed();
   int64_t v2 = pop_signed();
-  st.push(Val_Int64::mk(v2-v1));
+  stackPush(Val_Int64::mk(v2-v1));
 }
 DEF_OP(INT_MUL) {
-  st.push(Val_Int64::mk(pop_signed()*pop_signed()));
+  stackPush(Val_Int64::mk(pop_signed()*pop_signed()));
 }
 DEF_OP(INT_DIV) {
   // Be careful of undefined evaluation order in C++!
   int64_t v1 = pop_signed();
   int64_t v2 = pop_signed();
   if (v1) { 
-    st.push(Val_Int64::mk(v2 / v1));
+    stackPush(Val_Int64::mk(v2 / v1));
   } else if (error == PE_SUCCESS) {
     error = PE_DIVIDE_BY_ZERO;
   }
 }
 DEF_OP(INT_ABS) {
-  st.push(Val_Int64::mk(llabs(pop_signed())));
+  stackPush(Val_Int64::mk(llabs(pop_signed())));
 }
 DEF_OP(INT_EQ) {
-  st.push(Val_Int32::mk(pop_signed() == pop_signed()));
+  stackPush(Val_Int32::mk(pop_signed() == pop_signed()));
 }
 DEF_OP(INT_LT) { 
-  st.push(Val_Int32::mk(pop_signed() > pop_signed())); 
+  stackPush(Val_Int32::mk(pop_signed() > pop_signed())); 
 }
 DEF_OP(INT_LTE) { 
-  st.push(Val_Int32::mk(pop_signed() >= pop_signed())); 
+  stackPush(Val_Int32::mk(pop_signed() >= pop_signed())); 
 }
 DEF_OP(INT_GT) { 
-  st.push(Val_Int32::mk(pop_signed() < pop_signed())); 
+  stackPush(Val_Int32::mk(pop_signed() < pop_signed())); 
 }
 DEF_OP(INT_GTE) { 
-  st.push(Val_Int32::mk(pop_signed() <= pop_signed())); 
+  stackPush(Val_Int32::mk(pop_signed() <= pop_signed())); 
 }
 
 
@@ -616,82 +679,87 @@ DEF_OP(INT_GTE) {
 // Floating-point arithmetic operations
 //
 DEF_OP(DBL_NEG) {
-  st.push(Val_Double::mk(-pop_double()));
+  stackPush(Val_Double::mk(-pop_double()));
 }
 DEF_OP(DBL_PLUS) {
-  st.push(Val_Double::mk(pop_double()+pop_double()));
+  stackPush(Val_Double::mk(pop_double()+pop_double()));
 }
 DEF_OP(DBL_MINUS) {
   // Be careful of undefined evaluation order in C++!
   double v1 = pop_double();
   double v2 = pop_double();
-  st.push(Val_Double::mk(v2-v1));
+  stackPush(Val_Double::mk(v2-v1));
 }
 DEF_OP(DBL_MUL) {
-  st.push(Val_Double::mk(pop_double()*pop_double()));
+  stackPush(Val_Double::mk(pop_double()*pop_double()));
 }
 DEF_OP(DBL_DIV) {
   // Be careful of undefined evaluation order in C++!
   double v1 = pop_double();
   double v2 = pop_double();
-  st.push(Val_Double::mk(v2 / v1));
+  stackPush(Val_Double::mk(v2 / v1));
 }
 DEF_OP(DBL_EQ) {
-  st.push(Val_Int32::mk(pop_double() == pop_double()));
+  stackPush(Val_Int32::mk(pop_double() == pop_double()));
 }
 DEF_OP(DBL_LT) { 
-  st.push(Val_Int32::mk(pop_double() > pop_double())); 
+  stackPush(Val_Int32::mk(pop_double() > pop_double())); 
 }
 DEF_OP(DBL_LTE) { 
-  st.push(Val_Int32::mk(pop_double() >= pop_double())); 
+  stackPush(Val_Int32::mk(pop_double() >= pop_double())); 
 }
 DEF_OP(DBL_GT) { 
-  st.push(Val_Int32::mk(pop_double() < pop_double())); 
+  stackPush(Val_Int32::mk(pop_double() < pop_double())); 
 }
 DEF_OP(DBL_GTE) { 
-  st.push(Val_Int32::mk(pop_double() <= pop_double())); 
+  stackPush(Val_Int32::mk(pop_double() <= pop_double())); 
 }
 DEF_OP(DBL_FLOOR) {
-  st.push(Val_Double::mk(floor(pop_double())));
+  stackPush(Val_Double::mk(floor(pop_double())));
 }
 DEF_OP(DBL_CEIL) {
-  st.push(Val_Double::mk(ceil(pop_double())));
+  stackPush(Val_Double::mk(ceil(pop_double())));
 }
 
 //
 // Explicit Type conversions
 //
 DEF_OP(CONV_I32) {
-  st.push(Val_Int32::mk(pop_signed()));
+  stackPush(Val_Int32::mk(pop_signed()));
 }
 DEF_OP(CONV_U32) {
-  st.push(Val_UInt32::mk(pop_unsigned()));
+  stackPush(Val_UInt32::mk(pop_unsigned()));
 }  
 DEF_OP(CONV_I64) {
-  st.push(Val_Int64::mk(pop_signed()));
+  stackPush(Val_Int64::mk(pop_signed()));
 }
 DEF_OP(CONV_U64) {
-  st.push(Val_UInt64::mk(pop_unsigned()));
+  stackPush(Val_UInt64::mk(pop_unsigned()));
 }
 DEF_OP(CONV_STR) {
-  st.push(Val_Str::mk(pop_string()));
+  stackPush(Val_Str::mk(pop_string()));
 }
 DEF_OP(CONV_DBL) {
-  st.push(Val_Double::mk(pop_double()));
+  stackPush(Val_Double::mk(pop_double()));
 }
 DEF_OP(CONV_TIME) {
-  ValueRef top = st.top();
-  st.pop();
-  st.push(Val_Time::mk(Val_Time::cast(top)));
+  ValueRef top = stackTop();
+  stackPop();
+  stackPush(Val_Time::mk(Val_Time::cast(top)));
+}
+DEF_OP(CONV_ID) {
+  ValueRef top = stackTop();
+  stackPop();
+  stackPush(Val_ID::mk(Val_ID::cast(top)));
 }
 
 //
 // Hashing - could be a lot faster.  Room for improvement here. 
 //
 DEF_OP(HASH) {
-  uint32_t h = (hash_t)(st.top()->toTypeString());
-  st.pop();
-  st.push(Val_UInt32::mk(h));
+  uint32_t h = (hash_t)(stackTop()->toTypeString());
+  stackPop();
+  stackPush(Val_UInt32::mk(h));
 }
 
 

@@ -25,17 +25,18 @@ typedef ref< ID > IDRef;
 typedef ptr< ID > IDPtr;
 
 class ID {
-private:
+public:
   /** My number of 4-byte words in this ID.  This could eventually
       become a template parameter, but not for now. */
-  static const int WORDS = 5;
-
+  static const unsigned WORDS = 5;
+  
+private:
   /** My representation of an ID.   */
   uint32_t words[WORDS];
-
+  
 public:  
   ID();
-
+  
   ID(uint32_t[WORDS]);
 
   ID(uint32_t);
@@ -51,6 +52,18 @@ public:
       less, 0 means equal, +1 means greater.  This is done strictly on
       the numerical space, i.e., not on the ring. */
   int compareTo(IDRef) const;
+
+  /** Am I in (from, to)? */
+  bool betweenOO(IDRef, IDRef) const;
+
+  /** Am I in (from, to]? */
+  bool betweenOC(IDRef, IDRef) const;
+
+  /** Am I in [from, to)? */
+  bool betweenCO(IDRef, IDRef) const;
+
+  /** Am I in [from, to]? */
+  bool betweenCC(IDRef, IDRef) const;
 
   /** The minimum directional distance from me to the given ID on the
       ring. */
@@ -70,6 +83,7 @@ public:
 
   /** Create an ID */
   static IDRef mk() { return New refcounted< ID >(); }
+  static IDRef mk(uint32_t w[WORDS]) { return New refcounted< ID >(w); }
   static IDRef mk(uint32_t u) { return New refcounted< ID >(u); }
   static IDRef mk(uint64_t u) { return New refcounted< ID >(u); }
 };
