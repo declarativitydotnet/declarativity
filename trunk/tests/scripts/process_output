@@ -206,7 +206,6 @@ def eval_lookups(lookups, results):
 
 def get_simple_lookup():
     slookups = open(flags["simple_lookup"], 'r')
-    out = open("./simple_lookup.dat", 'w')
     matchlookup = re.compile(r"""^Print\[lookup]\:\s*
                                  \[\<lookup,\s*                                # token
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
@@ -226,6 +225,7 @@ def get_simple_lookup():
     return simple_lookup
 
 def eval_simple_lookup(lookups, results):
+    out = open("./simple_lookup.dat", 'w')
     for key in simple_lookup.keys():
        responseIPs = []
        for event in simple_lookup[key]:
