@@ -26,7 +26,13 @@ def parse_cmdline(argv):
             exit(3)
     return flags, args
 
-def parse_node_lookups(out_f, lookups, results):
+def ts2sec(sec, ns):
+    return (float(sec) + (float(ns) / 1000000000.0))
+
+def diffts(s1, n1, s2, n2):
+    return float(s1) - float(s2) + (float(n1)/1000000000.0 - float(n2)/1000000000.0)
+
+def process_node(out_f, lookups, results):
     matchlookup = re.compile(r"""^Print\[.*\],\s*
                                  ([0-9]+),\s*                                  # seconds
                                  ([0-9]+)\]\:\s*                               # nanoseconds
@@ -62,18 +68,17 @@ def parse_node_lookups(out_f, lookups, results):
         if matchlookup.match(line):
             lookup = [x for x in matchlookup.split(line) if x]
             ekey   = lookup[-1]
-            lookup_list = [lookup[:-1]]
+            lookup_list = [[lookup[0], lookup[1]]]                        # Only need the time
             if lookups.has_key(ekey): lookup_list += lookups[ekey]
             lookups[ekey] = lookup_list 
         if matchresults.match(line):
             result = [x for x in matchresults.split(line) if x]
             ekey   = result[-1]
-            result_list = [result[:-1]]
-            if results.has_key(ekey): result_list += results[ekey]
-            results[ekey] = result_list                            # Hash key:=eventID
+            result_tuple = (result[0], result[1])                       # Only need the time
+            results[ekey] = result_tuple                                # Hash key:=eventID
         if matchbandwidth.match(line):
             measure = [x for x in matchbandwidth.split(line) if x]
-            ts = float(measure[0]) + (float(measure[1]) / 1000000000.0)
+            ts = ts2sec(measure[0], measure[1])
             if not start_t: start_t = ts
             if (ts - start_t) > bw_window:
                 if not bytes.has_key(measure[2]):
@@ -82,36 +87,61 @@ def parse_node_lookups(out_f, lookups, results):
                 bw_measures.append(bytes[measure[2]]/(ts - start_t))
                 start_t = 0.0
 
+    if not bw_measures: return 0.0, 0.0
+    norm   = 1.0 / float(len(bw_measures))
+    avg_bw = 0.0
+    max_bw = 0.0
+    for bw in bw_measures:
+        if max_bw < bw: max_bw = bw
+        avg_bw += (bw * norm)
+    return avg_bw, max_bw
+  
 
-def eval_lookup(lookups):
+def eval_lookups(lookups, results):
     hop_counts = {}
     htimes   = open('./hop_time.dat', 'w')
     hlookups = open('./hop_lookup.dat', 'w')
-    hop_time   = []
-    hop_lookup = {} 
-    total      = len(lookups)
+    llatency = open('./latency.dat', 'w')
+    latency     = []
+    hop_time    = []
+    hop_lookup  = {} 
+    total       = len(lookups)
 
     num_lookups = 0.0
     avg_hc      = 0.0
-    for lookup in lookups.values(): 
-       sec = ns = 0.0
-       for hop in lookup:
-           if not sec or hop[0] < sec or (hop[0] == sec and hop[1] < ns): 
-               sec = hop[0]      
-               ns  = hop[1]      
-       hop_time.append([sec, ns, len(lookup)])
+    for event in lookups.keys(): 
+       lookup = lookups[event]
+       start_sec = start_ns = -1.0 
+       for hop in lookup: # Find the start time; the min
+           sec = float(hop[0])
+           ns  = float(hop[1])
+           if start_sec < 0.0 or sec < start_sec or (sec == start_sec and ns < start_ns): 
+               start_sec = sec 
+               start_ns  = ns      
+       hop_time.append([start_sec, start_ns, len(lookup)])
+
+       if results.has_key(event):
+           r_sec, r_ns = results[event]
+           latency.append(ts2sec(r_sec, r_ns) - ts2sec(start_sec, start_ns))
        looks = 1.0
        if hop_lookup.has_key(len(lookup)): looks += hop_lookup[len(lookup)]
        hop_lookup[len(lookup)] = looks 
 
+
+    if latency:
+        latency.sort()
+        for lat in latency: print >> llatency, "%f" % (float(lat))
+
     hop_time.sort()
     for x in hop_time: 
         print >> htimes, "%s %s %s" % (x[0], x[1], x[2]) 
+    htimes.close()
 
     hops = hop_lookup.keys()
     hops.sort()
     for hop in hops:        
         print >> hlookups, "%d %f %d" % (int(hop), float(hop_lookup[hop]), total)
+    hlookups.close()
 
 
 if __name__ == "__main__":
@@ -131,18 +161,24 @@ if __name__ == "__main__":
         print_usage()        
         sys.exit(3)
 
+    node_bw = open('./node_bw.dat', 'w')
+    nodeid  = 0
     lookups = {}
     results = {}
     for root, dirs, files in os.walk(args[0]):
 	for host in dirs:
            for n in range(flags["num_nodes"]): 
-               nodeid = int(host) + (int(host)*n)
+               nodeid = nodeid + 1
                fname = os.path.join(root, host, "chord_node%d.out" % (n))
                if not os.path.exists(fname): break
                fh = open(fname, "r")
 
-               parse_node_lookups(fh, lookups, results)
+               avg_bw, max_bw = process_node(fh, lookups, results)
+               print >> node_bw, "%d %f %f" % (nodeid, float(avg_bw), float(max_bw))
+               node_bw.flush()
                fh.close()
+               if int(host) == 0: break
+    node_bw.close()
 
-    eval_lookup(lookups)
+    eval_lookups(lookups, results)
     
