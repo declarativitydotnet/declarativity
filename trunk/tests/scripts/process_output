@@ -11,16 +11,21 @@ import re
 
 def print_usage():
     print
-    print "Usage: process_output -n <num_nodes> [-w <bw_window>] output_dir"
+    print "Usage: process_output [-e] -n <num_nodes> [-w <bw_window>] [-l <simple_lookup_output>] output_dir"
     print
 
 def parse_cmdline(argv): 
-    shortopts = "n:w:"
-    flags = {"num_nodes" : 0, "bw_window" : 2.0}
+    global emulab
+    emulab = False
+
+    shortopts = "l:n:w:e"
+    flags = {"num_nodes" : 0, "bw_window" : 2.0, "simple_lookup" : None}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
-        if   o == "-n": flags["num_nodes"]  = int(v)
-        elif o == "-w": flags["bw_window"]  = int(v)
+        if   o == "-n": flags["num_nodes"]     = int(v)
+        elif o == "-w": flags["bw_window"]     = int(v)
+        elif o == "-l": flags["simple_lookup"] = v
+        elif o == "-e": emulab = True
         else:
             print_usage()
             exit(3)
@@ -71,8 +76,9 @@ def process_node(out_f, lookups, results):
         if matchresults.match(line):
             result = [x for x in matchresults.split(line) if x]
             ekey   = result[-1]
-            result_tuple = (result[0], result[1])                       # Only need the time
-            results[ekey] = result_tuple                                # Hash key:=eventID
+            results[ekey] = result[:-1]                                # Hash key:=eventID
+            if result[2] != result[5] and not resultsHash.has_key(result[5]):
+                resultsHash[result[5]] = True
         if matchbandwidth.match(line):
             measure = [x for x in matchbandwidth.split(line) if x]
             ts = ts2sec(measure[0], measure[1])
@@ -118,7 +124,8 @@ def eval_lookups(lookups, results):
        hop_time.append([start_sec, start_ns, len(lookup)])
 
        if results.has_key(event):
-           r_sec, r_ns = results[event]
+           r_sec = results[event][0]
+           r_ns  = results[event][1]
            latency.append(ts2sec(r_sec, r_ns) - ts2sec(start_sec, start_ns))
        looks = 1.0
        if hop_lookup.has_key(len(lookup)): looks += hop_lookup[len(lookup)]
@@ -140,11 +147,40 @@ def eval_lookups(lookups, results):
         print >> hlookups, "%d %f %d" % (int(hop), float(hop_lookup[hop]), total)
     hlookups.close()
 
+def simple_lookups(lookups, results):
+    slookups = open(flags["simple_lookup"], 'r')
+    out = open("./simple_lookups.dat", 'w')
+    matchlookup = re.compile(r"""^Print\[lookup]\:\s*
+                                 \[\<lookup,\s*                                # token
+                                 ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
+                                 ([a-f0-9]+),\s*                               # Lookup key 
+                                 ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Destination IP address
+                                 ([0-9]+)\s*                                   # Event ID
+                             \>\]$\n""", re.VERBOSE)
+
+    simple_lookups = {}
+    for line in slookups: 
+        if matchlookup.match(line):
+            lookup = [x for x in matchlookup.split(line) if x]
+            key    = lookup[1]
+            events = [lookup[-1]]                         # Only need the eventid
+            if simple_lookups.has_key(key): events += simple_lookups[key]
+            simple_lookups[key] = events 
+
+    for key in simple_lookups.keys():
+       responseIPs = []
+       for event in simple_lookups[key]:
+           if results.has_key(event):
+               response = results[event]
+               responseIPs += [response[-1]]
+       print >> out, "LOOKUP(%s): " % (key), responseIPs
 
 if __name__ == "__main__":
     global ip_map
     global bytes
+    global resultsHash
 
+    resultsHash = {}
     bytes = {"startJoin" : 10, "lookup" : 10, "lookupResults" : 10, "stablize" : 10, "stabilizeRequest" : 10,
              "stablizeRecord" : 10, "notify" : 10, "notifyPredecessor" : 10, "sendPredecessor" : 10, 
              "fixFinger" : 10, "fingerLookup" : 10}
@@ -152,30 +188,44 @@ if __name__ == "__main__":
     try:
         flags, args = parse_cmdline(sys.argv)
     except:
+        print "EXCEPTION"
         print_usage()
         sys.exit(3)
     if len(args) < 1:
         print_usage()        
         sys.exit(3)
 
+    files   = []
+    for root, dirs, datfiles in os.walk(args[0]):
+        if emulab:
+	    for host in dirs:
+                for n in range(flags["num_nodes"]): 
+                    files += [os.path.join(root, host, "chord_node%d.out" % (n))]
+                    if int(host) == 0: break
+        else: 
+            for f in datfiles: 
+                files += [os.path.join(root, f)]
+
     node_bw = open('./node_bw.dat', 'w')
     nodeid  = 0
     lookups = {}
     results = {}
-    for root, dirs, files in os.walk(args[0]):
-	for host in dirs:
-           for n in range(flags["num_nodes"]): 
-               nodeid = nodeid + 1
-               fname = os.path.join(root, host, "chord_node%d.out" % (n))
-               if not os.path.exists(fname): break
-               fh = open(fname, "r")
 
-               avg_bw, max_bw = process_node(fh, lookups, results)
-               print >> node_bw, "%d %f %f" % (nodeid, float(avg_bw), float(max_bw))
-               node_bw.flush()
-               fh.close()
-               if int(host) == 0: break
+    for file in files:
+        nodeid = nodeid + 1
+        if not os.path.exists(file):
+            print "ERROR: file does not exist ", file
+            exit(3)
+        fh = open(file, "r")
+
+        avg_bw, max_bw = process_node(fh, lookups, results)
+        print >> node_bw, "%d %f %f" % (nodeid, float(avg_bw), float(max_bw))
+        node_bw.flush()
+        fh.close()
     node_bw.close()
 
-    eval_lookups(lookups, results)
+    print "SANITY CHECK: counted %d distinct result tuples." % (len(resultsHash.keys()))
+
+    if flags["simple_lookup"]: simple_lookups(lookups, results)
+    else: eval_lookups(lookups, results)
     
