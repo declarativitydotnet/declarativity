@@ -120,19 +120,24 @@ def eval_lookups(lookups, results):
            continue                                          # Only care about successful lookups
        lookup = lookups[event]
        lookup.sort()                                         # sort([type, sec, ns, ...])
-       ins = outs = wraps = []
+       ins   = []
+       outs  = []
+       wraps = []
        start_sec = start_ns = -1.0 
        for t in lookup:                                      # For each lookup tuple t
-           if t[0] == "In":   ins   += t 
-           if t[0] == "Out":  outs  += t
-           if t[0] == "Wrap": wraps += t
+           if t[0]   == "In":   ins   += [t] 
+           elif t[0] == "Out":  outs  += [t]
+           elif t[0] == "Wrap": wraps += [t]
+           else: print "UNKNOWN TUPLE TYPE: ", t[0]
            sec = float(t[1])
            ns  = float(t[2])
            if start_sec < 0.0 or sec < start_sec or (sec == start_sec and ns < start_ns): 
                start_sec = sec 
                start_ns  = ns      
 
-       hops  = len(outs) - 1.0                                               # THE hop count
+       hops = 0
+       if outs: hops = len(outs) - 1    # THE hop count
+       
        hop_time.append([start_sec, start_ns, hops])
 
        r_sec = results[event][0]
@@ -141,10 +146,10 @@ def eval_lookups(lookups, results):
 
        looks = 1.0                                                           # Number of dudes with above hop count.
        if wraps:
-           if i_hop_counts.has_key(len(ins)): looks += i_hop_counts[hops]
+           if i_hop_counts.has_key(hops): looks += i_hop_counts[hops]
            i_hop_counts[hops] = looks
        else: 
-           if e_hop_counts.has_key(len(ins)): looks += e_hop_counts[hops]
+           if e_hop_counts.has_key(hops): looks += e_hop_counts[hops]
            e_hop_counts[hops] = looks
 
 
@@ -160,27 +165,32 @@ def eval_lookups(lookups, results):
 
     thops = []
 
+    # INTERNAL LOOKUP COUNT
     itotal = 0
-    for i in i_hop_counts.values(): total += float(i_hop_counts[i])
+    for looks in i_hop_counts.values(): itotal += float(looks)        # Add up total internal lookups
     ihops = i_hop_counts.keys()
     ihops.sort()
     for h in ihops:        
-        if not h in thops: thops += h
+        if not h in thops: thops += [h]                             # Save for later compute of total hops
         print >> ilookups, "%d %f %d" % (h, float(i_hop_counts[h]), itotal)
     ilookups.close()
 
+    # EXTERNAL LOOKUP COUNT
     etotal = 0
-    for e in e_hop_counts.values(): total += float(e_hop_counts[e])
+    for looks in e_hop_counts.values(): etotal += float(looks)        # Add up total external lookups
     ehops = e_hop_counts.keys()
     ehops.sort()
     for h in ehops:        
-        if not h in thops: thops += h
-        print >> elookups, "%d %f %d" % (h, float(hop_lookup[h]), etotal)
+        if not h in thops: thops += [h]                             # Save for later compute of total hops
+        print >> elookups, "%d %f %d" % (h, float(e_hop_counts[h]), etotal)
     elookups.close()
 
+    # TOTAL LOOKUP COUNT
     thops.sort()
+    print "TOTAL HOP TYPES: ", thops
     for h in thops:        
-        ih = eh = 0
+        ih = 0
+        eh = 0
         if i_hop_counts.has_key(h): ih += float(i_hop_counts[h])
         if e_hop_counts.has_key(h): eh += float(e_hop_counts[h])
         print >> tlookups, "%d %f %d" % (h, (ih + eh), (itotal + etotal))
