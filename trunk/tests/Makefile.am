@@ -21,6 +21,7 @@ bin_PROGRAMS 	= 	values \
 			pel \
 			IDs \
 			chord \
+			simple_lookup \
 			basicelements \
 			basicElementPlumbing \
 			scheduling \
@@ -98,6 +99,13 @@ reachDatalog_LDADD = \
 
 chord_SOURCES = chord.C
 chord_LDADD = \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+simple_lookup_SOURCES = simple_lookup.C
+simple_lookup_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \

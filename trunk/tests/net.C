@@ -158,6 +158,7 @@ Router::ConfigurationRef UdpCC_source(Udp *udp_out, Udp *udp_in, CC *cc, ref< su
   ElementSpecRef ccL               = conf->addElement(cc->get_tx());
   ElementSpecRef marshalDataL      = conf->addElement(New refcounted< Marshal >("marshal data"));
   ElementSpecRef routeL            = conf->addElement(New refcounted< Route >("router src", addr));
+  ElementSpecRef tupleDelay        = conf->addElement(New refcounted< SimpleNetSim >("Ack", 10, 100, 0.));
   ElementSpecRef udpTxL            = conf->addElement(udp_out->get_tx());
 
   ElementSpecRef udpRxL            = conf->addElement(udp_in->get_rx());
@@ -169,7 +170,8 @@ Router::ConfigurationRef UdpCC_source(Udp *udp_out, Udp *udp_in, CC *cc, ref< su
   conf->hookUp(seqL, 0, ccL, 0);
   conf->hookUp(ccL, 0, marshalDataL, 0);
   conf->hookUp(marshalDataL, 0, routeL, 0);
-  conf->hookUp(routeL, 0, udpTxL, 0);
+  conf->hookUp(routeL, 0, tupleDelay, 0);
+  conf->hookUp(tupleDelay, 0, udpTxL, 0);
 
   // The local ack flow
   conf->hookUp(udpRxL, 0, unrouteL, 0);
@@ -196,7 +198,7 @@ Router::ConfigurationRef UdpCC_sink(Udp *udp_out, Udp *udp_in, CC *cc, ref< suio
 
   // The remote ack flow
   ElementSpecRef udpTxR        = conf->addElement(udp_out->get_tx());
-  ElementSpecRef ackDrop       = conf->addElement(New refcounted< SimpleNetSim >("Ack", 0, 0, 0.1));
+  ElementSpecRef ackDrop       = conf->addElement(New refcounted< SimpleNetSim >("Ack", 0, 0, 0.01));
   ElementSpecRef marshalAckR   = conf->addElement(New refcounted< Marshal >("marshal ack"));
   ElementSpecRef routeR        = conf->addElement(New refcounted< Route >("router dest", addr));
 
@@ -262,8 +264,8 @@ int main(int argc, char **argv)
 
   // testUdpTx();
   //  testPLSensor();
-  testUdpCC(true, "clash", 10000);
-  // testUdpCC(false, "clash", 10000);
+  testUdpCC(true, "nodeb", 10000);
+  // testUdpCC(false, "grouchy", 10000);
 
   return 0;
 }
