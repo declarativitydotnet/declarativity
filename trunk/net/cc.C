@@ -124,21 +124,18 @@ CC::Tx::Tx(const CC &cc, double init_wnd, double max_wnd)
  */
 int CC::Tx::push(int port, TupleRef tp, cbv cb)
 {
+  int retval = 1;
+
   assert(port < 2);
 
   switch(port) {
   case 0:	// Queue tuple and check window size.
     send_q_.push_back(tp);
 
-    if (_output_cb != cbv_null) {
-      (*_output_cb)();
-      _output_cb = cbv_null;
-    }
-
     if (current_window() >= max_window()) {
       log(LoggerI::INFO, 0, "CC::Tx::push WINDOW IS FULL"); 
       _input_cb = cb;
-      return 0;
+      retval = 0;
     }
     break;
   case 1:	// Acknowledge tuple and update measurements.
@@ -147,7 +144,7 @@ int CC::Tx::push(int port, TupleRef tp, cbv cb)
     //TODO: Use timestamps to track the latest rwnd value.
     rwnd_ = Val_Double::cast((*tp)[ACK_RWND_FIELD]);		// Receiver window
 
-    log(LoggerI::INFO, 0, "CC::Tx::push receive acknowledgement"); 
+    log(LoggerI::WARN, 0, "CC::Tx::push receive acknowledgement"); 
 
     OTupleIndex::iterator iter = ot_map_.find(seq);
     if (iter != ot_map_.end()) { 
@@ -166,7 +163,12 @@ int CC::Tx::push(int port, TupleRef tp, cbv cb)
 
     break;
   }
-  return 1;
+
+  if (!send_q_.empty() && _output_cb != cbv_null) {
+    (*_output_cb)();
+    _output_cb = cbv_null;
+  }
+  return retval;
 }
 
 /**
@@ -224,6 +226,11 @@ void CC::Tx::timeout_cb(otuple_ref otr)
   }
 
   rtran_q_.push_back(otr);				 	// Add to retransmit queue
+  if (_output_cb != cbv_null) {
+    (*_output_cb)();
+    _output_cb = cbv_null;
+  }
+
 }
 
 /**
