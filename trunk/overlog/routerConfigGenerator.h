@@ -63,6 +63,8 @@
 #include "printTime.h"
 #include "roundRobin.h"
 #include "noNullField.h"
+#include "functorSource.h"
+
 
 class RouterConfigGenerator {
   // takes as input the udp send / receive, the router config, accept each other code or not
@@ -94,6 +96,7 @@ private:
   bool _debug; // do we stick debug elements in?
   FILE *_output;
   Router::ConfigurationRef _conf; 
+  std::map<str, str> _multTableIndices;
 
   // counter to determine how many muxers and demuxers are needed
   str _currentType;
@@ -164,7 +167,12 @@ private:
 				 OL_Context::Rule* currentRule, 
 				 str nodeID, 
 				 FieldNamesTracker* namesTracker);
-    
+
+  void generateSingleAggregateElements(OL_Context::Functor* currentFunctor, 
+				       OL_Context::Rule* currentRule, 
+				       str nodeID, 
+				       FieldNamesTracker* currentNamesTracker);
+  
   // Network elements
   void generateSendElements(ref< Udp> udp, str nodeID);
   void generateReceiveElements(ref< Udp> udp, str nodeID);
@@ -178,8 +186,11 @@ private:
 	      ElementSpecRef secondElement, int secondPort);  
   str getRuleStr(OL_Context::Functor* currentFunctor, 
 		 OL_Context::Rule* currentRule);
-  bool RouterConfigGenerator::isSelection(OL_Context::Term term);  
+  void addMultTableIndex(TableRef table, int fn, str nodeID);
+  bool isSelection(OL_Context::Term term);  
   bool isAssignment(OL_Context::Term term);
+  bool isAggregation(OL_Context::Term term);
+  bool hasSingleAggTerm(OL_Context::Rule* rule);
 
   // convince placeholder to figure out the current fields in a tuple in flight
   class FieldNamesTracker {

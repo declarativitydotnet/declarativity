@@ -64,7 +64,7 @@
 DIGIT           [0-9]
 EXP		[eE][+-]?{DIGIT}+
 DECIM		\.{DIGIT}+
-ALNUM		[_0-9a-zA-Z.]
+ALNUM		[_0-9a-zA-Z.-]
 HEXDIGIT	[0-9a-fA-F]
 
 VARIABLE	[A-Z]{ALNUM}*

@@ -9,10 +9,10 @@
  * 
  */
 
-#include <async.h>
-#include <arpc.h>
+//#include <async.h>
+#//include <arpc.h>
 #include "routerConfigGenerator.h"
-
+#include "aggregate.h"
 
 const str RouterConfigGenerator::SEL_PRE("select_");
 const str RouterConfigGenerator::AGG_PRE("agg_");
@@ -41,6 +41,7 @@ RouterConfigGenerator::RouterConfigGenerator(OL_Context* ctxt, Router::Configura
   pelFunctions.insert(std::make_pair(SEL_PRE << "rangeID3", "(]id"));
   pelFunctions.insert(std::make_pair(SEL_PRE << "rangeID4", "[)id"));
   pelFunctions.insert(std::make_pair(ASSIGN_PRE << "minusI", "-i"));
+  pelFunctions.insert(std::make_pair(ASSIGN_PRE << "distID", "distance"));
 
 
   _pendingRegisterReceiver = false;
@@ -81,6 +82,17 @@ void RouterConfigGenerator::configureRouter(ref< Udp > udp, str nodeID)
 }
 
 
+bool RouterConfigGenerator::hasSingleAggTerm(OL_Context::Rule* currentRule)
+{
+  int numAggs = 0;
+  for (uint k = 0; k < currentRule->terms.size(); k++) {
+    if (isAggregation(currentRule->terms.at(k))) {
+      numAggs ++;
+    }
+  }
+  return (numAggs == 1);
+}
+
 void RouterConfigGenerator::processFunctor(OL_Context::Functor* currentFunctor, str nodeID)
 {
   // The current translation proceeds as follows. 
@@ -94,7 +106,7 @@ void RouterConfigGenerator::processFunctor(OL_Context::Functor* currentFunctor, 
   // 4) Apply projections, address to send (based on head)
   // 5) Stick muxers and demuxers accordingly
 
-  ElementSpecRef mostRecentElement = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlot"));
+  ElementSpecRef mostRecentElement = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlotProcessFunctor"));
 
   for (unsigned int k = 0; k < currentFunctor->rules.size(); k++) {
     OL_Context::Rule* nextRule = currentFunctor->rules.at(k);
@@ -104,6 +116,17 @@ void RouterConfigGenerator::processFunctor(OL_Context::Functor* currentFunctor, 
 
     // step 1:
     FieldNamesTracker* currentNamesTracker = new FieldNamesTracker();
+
+    // special case for aggregates
+    if (hasSingleAggTerm(nextRule)) { // has a single agg on a single materialized table
+      generateSingleAggregateElements(currentFunctor, nextRule, 
+				      nodeID, currentNamesTracker);      
+      
+      delete joinKeys;
+      delete currentNamesTracker;
+      continue;
+    }
+
     if (joinKeys->size() == 0) {
       // if there are no possible unifications, we process only the first term
       generateSingleTermElement(currentFunctor, nextRule, 
@@ -117,10 +140,9 @@ void RouterConfigGenerator::processFunctor(OL_Context::Functor* currentFunctor, 
       // 2) Probes may be on different nodes. So may have to rehash.
       mostRecentElement = generateJoinElements(currentFunctor, nextRule, 
 					       nodeID, currentNamesTracker);
-      _currentType = "l";
-      
+      _currentType = "h";      
     }
-
+    
     delete joinKeys;
 
     // do any selections. 
@@ -243,14 +265,24 @@ void RouterConfigGenerator::generateSendElements(ref< Udp> udp, str nodeID)
   ElementSpecRef muxS =
     _conf->addElement(New refcounted< RoundRobin >("sendMux:" << nodeID, _udpPushSenders.size() + _udpPullSenders.size()));
 
+  /*ElementSpecRef pullPush =
+    _conf->addElement(New refcounted< TimedPullPush >(strbuf("PullPush:") 
+						      << nodeID,
+						      0));
+  ElementSpecRef pushToPullQueue = 
+    _conf->addElement(New refcounted< Queue >(strbuf("Queue:") << nodeID, 1000));
+  */
   hookUp(muxS, 0, udpSend, 0);
+  //hookUp(pullPush, 0, pushToPullQueue, 0);
+  //hookUp(pushToPullQueue, 0, udpSend, 0);
   
   // form the push senders
   for (unsigned int k = 0; k < _udpPushSenders.size(); k++) {
     ElementSpecRef nextElementSpec = _udpPushSenders.at(k);
-    ElementSpecRef pushToPull = 
-      _conf->addElement(New refcounted< Queue >(strbuf("Queue:") << nodeID << ":" << k, 1000));
 
+    ElementSpecRef pushToPull = 
+      _conf->addElement(New refcounted< Queue >(strbuf("Queue:") << 
+					       nodeID << ":" << k, 1000));
     hookUp(nextElementSpec, 0, pushToPull, 0);
     hookUp(pushToPull, 0, muxS, k);
   }
@@ -354,6 +386,12 @@ bool RouterConfigGenerator::isAssignment(OL_Context::Term term)
 }
 
 
+bool RouterConfigGenerator::isAggregation(OL_Context::Term term)
+{
+  str termName = term.fn->name;
+  return substr(termName, 0, AGG_PRE.len()) == AGG_PRE;
+}
+
 ElementSpecRef 
 RouterConfigGenerator::generateSelectionElements(OL_Context::Rule* currentRule, 
 						 OL_Context::Term nextSelection, 
@@ -403,7 +441,13 @@ RouterConfigGenerator::generateSelectionElements(OL_Context::Rule* currentRule,
 						     << selectionID << ":" << nodeID, 
 						     selectionPel));
 
-  hookUp(lastElement, 0, selection, 0);
+ if (_pendingRegisterReceiver) {
+    registerReceiver(_pendingReceiverTable, selection);
+    _pendingRegisterReceiver = false;
+  } else {
+    // connecting now
+    hookUp(lastElement, 0, selection, 0);
+  }
 
   return generatePrintElement(strbuf("PrintAfterSelection:") 
 			      << currentRule->ruleID << ":" 
@@ -586,7 +630,7 @@ RouterConfigGenerator::generateProbeElements(OL_Context::Rule* currentRule,
 					     int joinOrder)
 {
   // Here's where the join happens 
-  ElementSpecRef mostRecentElement = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlot"));
+  ElementSpecRef mostRecentElement = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlotProbeElements"));
   FieldNamesTracker* baseTableNames = New FieldNamesTracker(baseTerm.argNames, baseTerm.argNames.size());
   std::vector<int> leftJoinKeys = baseTableNames->matchingJoinKeys(eventTerm.argNames);
   std::vector<int> rightJoinKeys =  probeNames->matchingJoinKeys(baseTerm.argNames);
@@ -622,7 +666,8 @@ RouterConfigGenerator::generateProbeElements(OL_Context::Rule* currentRule,
 						     << ":" << nodeID, probeTable,
 						     leftJoinKey, rightJoinKey));
     
-    probeTable->add_multiple_index(rightJoinKey);
+    //probeTable->add_multiple_index(rightJoinKey, nodeID);
+    addMultTableIndex(probeTable, rightJoinKey, nodeID);
   }
   
   ElementSpecRef noNull = _conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << currentRule->ruleID << ":" 
@@ -720,11 +765,13 @@ RouterConfigGenerator::generateJoinElements(OL_Context::Functor* currentFunctor,
 					    FieldNamesTracker* namesTracker)
 {
   // identify the events, use that to probe the other matching tables
-  ElementSpecRef mostRecentElement = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlot"));
+  ElementSpecRef mostRecentElement = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlotJoinElements"));
 
   OL_Context::Term eventTerm;
   std::vector<OL_Context::Term> selections; 
   std::vector<OL_Context::Term> baseTerms;
+  bool eventFound = false;
+  std::map<str, OL_Context::Term> staticTerms;
   for (unsigned int k = 0; k < currentRule->terms.size(); k++) {
     OL_Context::Term nextTerm = currentRule->terms.at(k);
     str termName = nextTerm.fn->name;
@@ -735,7 +782,14 @@ RouterConfigGenerator::generateJoinElements(OL_Context::Functor* currentFunctor,
     if (isAssignment(nextTerm)) {
       continue;
     }
+    if (isAggregation(nextTerm)) {
+      continue;
+    }
     //baseTerms.push_back(nextTerm);
+
+    if (nextTerm.fn->rules.size() == 0) {
+      staticTerms.insert(std::make_pair(termName, nextTerm));
+    }
 
     OL_Context::TableInfoMap::iterator _iterator = _ctxt->getTableInfos()->find(termName);
     if (_iterator != _ctxt->getTableInfos()->end()) {     
@@ -748,39 +802,188 @@ RouterConfigGenerator::generateJoinElements(OL_Context::Functor* currentFunctor,
       _pendingRegisterReceiver = true;
       _pendingReceiverTable = nextTerm.fn->name;
       eventTerm = nextTerm;
+      eventFound = true;
     } 
   }
 
+  if (eventFound == false) {
+    std::cerr << "Cannot find event tuple. Performing multi-way joins in future!. \n";
+    // is there a static table? If so, we can just use the other table(s) to probe
+    // FIXME: Write the code for n-way joins after SOSP
+    
+    for (unsigned int k = 0; k < currentRule->terms.size(); k++) {
+      OL_Context::Term nextTerm = currentRule->terms.at(k);
+      str termName = nextTerm.fn->name;
+      if (staticTerms.find(termName) == staticTerms.end()) {
+	// pick the non-static term
+	registerReceiverTable(nextTerm.fn->name); 
+	_pendingRegisterReceiver = true;
+	_pendingReceiverTable = nextTerm.fn->name;
+	eventTerm = nextTerm;
+	eventFound = true;	
+	break;
+      }        
+    } 
+  }
+  std:: cout << "Event term " << eventTerm.fn->name << "\n";
   // for all the base tuples, use the join to probe. 
   // keep track also the current ordering of variables
   namesTracker->initialize(eventTerm.argNames, eventTerm.argNames.size());  
-  for (uint k = 0; k < baseTerms.size(); k++) {
-    //std::cout << "Probing " << eventTerm.fn->name << " " << baseTerms.at(k).fn->name << "\n";
+  for (uint k = 0; k < baseTerms.size(); k++) {    
+    if (baseTerms.at(k).fn->name == eventTerm.fn->name) { continue; }
+    std::cout << "Probing " << eventTerm.fn->name << " " << baseTerms.at(k).fn->name << "\n";
     mostRecentElement = generateProbeElements(currentRule, eventTerm, baseTerms.at(k), 
 					      nodeID, namesTracker, mostRecentElement, k);
     //std::cout << "Current namesTracker " << namesTracker->toString() << "\n";
     // are there any more probes? If so, we have to change from pull to push
-    if (k != (baseTerms.size() - 1)) {
-      ElementSpecRef pullPush =
-	_conf->addElement(New refcounted< TimedPullPush >(strbuf("PullPush:") 
-							  << currentRule->ruleID << ":" << nodeID,
-							 0));
-      hookUp(mostRecentElement, 0, pullPush, 0);
-      mostRecentElement = pullPush;
-    }
+    //if (k != (baseTerms.size() - 1)) {
+    ElementSpecRef pullPush =
+      _conf->addElement(New refcounted< TimedPullPush >(strbuf("PullPush:") 
+							<< currentRule->ruleID << ":" << nodeID,
+							0));
+    hookUp(mostRecentElement, 0, pullPush, 0);
+    mostRecentElement = pullPush;
+      //}
   }
 
   return mostRecentElement;
 }
 
 
+void RouterConfigGenerator::addMultTableIndex(TableRef table, int fn, str nodeID)
+{
+  strbuf uniqStr = str(table->name);
+  uniqStr << ":" << fn << ":" << nodeID;
+  if (_multTableIndices.find(str(uniqStr)) == _multTableIndices.end()) {
+    // not there yet
+    table->add_multiple_index(fn);
+    _multTableIndices.insert(std::make_pair(str(uniqStr), str(uniqStr)));
+    std::cout << "Mult index already added " << str(uniqStr) << "\n";
+  } else {
+    std::cerr << "Mult index already exists " << str(uniqStr) << "\n";
+  }
+}
+
+void
+RouterConfigGenerator::generateSingleAggregateElements(OL_Context::Functor* currentFunctor, 
+						       OL_Context::Rule* currentRule, 
+						       str nodeID, 
+						       FieldNamesTracker* currentNamesTracker)
+{
+  OL_Context::Term baseTerm, aggTerm;
+  // figure first, which term is the base term
+  for (unsigned int j = 0; j < currentRule->terms.size(); j++) {
+    // skip those that we already decide is going to participate in     
+    OL_Context::Term currentTerm = currentRule->terms.at(j);    
+    str tableName = currentTerm.fn->name;
+    
+    // skip funcitons
+    if (isSelection(currentTerm)) { continue; } // skip functions
+    if (isAssignment(currentTerm)) { continue; } // skip assignments
+    if (isAggregation(currentTerm)) { 
+      // figure out what kind of agg this is
+      aggTerm = currentTerm;
+    } else {
+      baseTerm = currentTerm;
+    }
+  }
+
+  currentNamesTracker->initialize(baseTerm.argNames, baseTerm.argNames.size());
+
+  std::vector<unsigned int> groupByFields;      
+  
+  // once we obtain the base term, figure out which are the fields needed for aggregation
+  // project only the necessary ones
+  // iterate through all functor's output, project all, except the aggregate field itself
+  FieldNamesTracker* newFieldNamesTracker = new FieldNamesTracker();
+  for (unsigned int k = 0; k < currentFunctor->arity; k++) {
+    int pos = currentNamesTracker->fieldPosition(currentRule->args.at(k));
+    if (pos != -1) {
+      groupByFields.push_back((uint) pos + 1);
+      newFieldNamesTracker->fieldNames.push_back(currentNamesTracker->fieldNames.at(pos));
+    }
+  }
+  int aggField = -1;
+  Table::AggregateFunction* af = 0;
+  
+  if (aggTerm.fn->name == "agg_min") {
+    // aggregate for min
+    aggField = currentNamesTracker->fieldPosition(aggTerm.argNames.at(1)) + 1;
+    af = &Table::AGG_MIN;
+  } 
+  if (aggTerm.fn->name == "agg_max") {
+    // aggregate for min
+    aggField = currentNamesTracker->fieldPosition(aggTerm.argNames.at(1)) + 1;
+    af = &Table::AGG_MAX;
+  } 
+
+  if (aggTerm.fn->name == "agg_count") {
+    // aggregate for min
+    aggField = groupByFields.at(0);
+    af = &Table::AGG_COUNT;
+  } 
+  
+  // get the table, create the index
+  TableRef aggTable = getTableByName(nodeID, baseTerm.fn->name);
+  std::cout << "Obtain base term " << baseTerm.fn->name << " " << aggTerm.fn->name << " " 
+	    << groupByFields.at(0) << " " << aggField << " " << " for aggregation \n";
+  
+
+  addMultTableIndex(aggTable, groupByFields.at(0), nodeID);
+  
+  Table::MultAggregate tableAgg 
+    = aggTable->add_mult_groupBy_agg(groupByFields.at(0), // groupby field
+				     groupByFields,
+				     aggField, // the agg field
+				     af);
+  ElementSpecRef aggElement =
+    _conf->addElement(New refcounted< Aggregate >(strbuf("Agg:") << currentRule->ruleID << ":" << nodeID,
+						  tableAgg));
+  
+  ElementSpecRef printAgg = 
+    _conf->addElement(New refcounted< Print >("PrintAgg:" << 
+					      currentRule->ruleID << ":" << nodeID));
+ 
+  // send back
+  newFieldNamesTracker->fieldNames.push_back(aggTerm.argNames.at(0));
+
+  strbuf pelTransformStr;
+  pelTransformStr << "\"" << "aggResult:" << currentRule->ruleID << "\" pop";
+  for (uint k = 0; k < newFieldNamesTracker->fieldNames.size(); k++) {
+    pelTransformStr << " $" << k << " pop";
+  }
+  std::cout << "Pel Transform str " << str(pelTransformStr) << "\n";
+  // apply PEL to add a table name
+  ElementSpecRef addTableName =
+    _conf->addElement(New refcounted< PelTransform >(strbuf("Aggregation:") 
+						     << currentRule->ruleID << ":" 
+						     << nodeID, 
+						     pelTransformStr));
+
+  ElementSpecRef timedPullPush = 
+    _conf->addElement(New refcounted<TimedPullPush>("timedPullPush:" << 
+						    currentRule->ruleID 
+						    << ":" << nodeID, 0));
+  
+  hookUp(aggElement, 0, addTableName, 0);
+  hookUp(addTableName, 0, printAgg, 0);
+  hookUp(printAgg, 0, timedPullPush, 0);
+  ElementSpecRef projectHeadElement = generateProjectHeadElements(currentFunctor, currentRule, 
+								  nodeID, newFieldNamesTracker, 
+								  timedPullPush);
+  ElementSpecRef mostRecentElement = generateSendMarshalElements(currentRule, nodeID, 
+								 currentFunctor->arity, projectHeadElement);
+  _udpPushSenders.push_back(mostRecentElement);
+}
+
+
 void RouterConfigGenerator::generateSingleTermElement(OL_Context::Functor* currentFunctor, 
-						 OL_Context::Rule* currentRule, 
-						 str nodeID, 
-						 FieldNamesTracker* currentNamesTracker)
+						      OL_Context::Rule* currentRule, 
+						      str nodeID, 
+						      FieldNamesTracker* currentNamesTracker)
 {
   
-  ElementSpecRef resultElement = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlot"));
+  ElementSpecRef resultElement = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlotSingleTerm"));
   OL_Context::Term currentTerm;
   // if not, form basic scanners, then connect to selections, and then to form head the last
 
@@ -791,6 +994,7 @@ void RouterConfigGenerator::generateSingleTermElement(OL_Context::Functor* curre
     // skip funcitons
     if (isSelection(currentTerm)) { continue; } // skip functions
     if (isAssignment(currentTerm)) { continue; } // skip functions
+    if (isAggregation(currentTerm)) { continue; } // skip functions
     registerReceiverTable(currentTerm.fn->name); //generateReceiveUnmarshalElements(currentFunctor, currentRule, currentTerm, nodeID);	
     _pendingRegisterReceiver = true;
     _pendingReceiverTable = currentTerm.fn->name;
@@ -843,7 +1047,7 @@ RouterConfigGenerator::createScanElements(OL_Context::Functor* currentFunctor,
   // whenever there is an incoming tuple that is newly added/updated.
   // in future, keep track of all scanners, and we may be able to combile them
 
-  ElementSpecRef dummyElement = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlot"));
+  ElementSpecRef dummyElement = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlotScanElements"));
   TableRef baseTable = getTableByName(nodeID, tableInfo->tableName);
 
   str ruleStr = rule->ruleID;
@@ -967,12 +1171,14 @@ void RouterConfigGenerator::setJoinKeys(OL_Context::Rule* rule, std::vector<Join
    str firstName(firstTerm.fn->name);
    if (isSelection(firstTerm)) { continue; }
    if (isAssignment(firstTerm)) { continue; }
+   if (isAggregation(firstTerm)) { continue; }
    std::vector<str> firstArgNames = firstTerm.argNames;
     for (uint j = k+1; j < rule->terms.size(); j++) {
       OL_Context::Term secondTerm = rule->terms.at(j);
       str secondName(secondTerm.fn->name);
       if (isSelection(secondTerm)) { continue; }
       if (isAssignment(secondTerm)) { continue; }
+      if (isAggregation(secondTerm)) { continue; }
       std::vector<str> secondArgNames = secondTerm.argNames;
       
       for (uint x = 0; x < firstArgNames.size(); x++) {	
