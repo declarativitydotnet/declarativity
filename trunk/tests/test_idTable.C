@@ -12,78 +12,102 @@
 
 #define DEFAULT_ID_SIZE 10
 
+// Returns a randomly generated Id key
+// Retrieves random numbers from /dev/urandom
+uint32_t key[5];
+uint32_t * randomKey () {
+  for (int i = 0; i < 5; i += 1)
+    key[i] = random::uint32t_urand ();
+  return key;
+}
+
 // Simply creates a bunch of Id's in a new
 // IdTable memoizing structure 
 void generateIds (u_int count) {
   IdTable * table = New IdTable ();
-  for (int i = 0; i < count; i += 1)
+  for (u_int i = 0; i < count; i += 1)
     table->create (randomKey ());
   delete table;
 }
 
 // Checks if the toBitSet function of Id works
 // properly
-void bitSetTests (u_int count) {
+void
+bitSetTests(u_int count)
+{
   IdTable * table = New IdTable ();
-TOP:for (int i = 0; i < count; i += 1) {
-    ref<Id> idPtr = table->create (randomKey ());
-    std::bitset<160> idBitSet = idPtr->toBitSet ();
-OUTER:for (int j = 0; j < 5; j += 1) {
-      std::bitset<32> idWord = std::bitset<32> (idPtr->getWord (j));
-INNER:for (int k = 0; k < 32; k += 1) {
-	if (idWord[k] == idBitSet[(k + (32 * j))])
-	  continue;
-	else {
-	  warn << "BITSET TEST FAILED for SET " << idBitSet <<
-	    " and on WORD " << idWord;
-	  break OUTER;
-	}
+  for (u_int i = 0;
+       i < count;
+       i++) {
+    ref<Id> idPtr = table->create(randomKey());
+    std::bitset<160> idBitSet = idPtr->toBitSet();
+    for (int j = 0;
+         j < 5;
+         j++) {
+      std::bitset<32> idWord = std::bitset<32>(idPtr->getWord(j));
+      for (int k = 0;
+           k < 32;
+           k++) {
+        if (idWord[k] == idBitSet[(k + (32 * j))]) {
+        } else {
+          warn << "BITSET TEST FAILED";
+          delete table;
+          return;
+        }
       } // end INNER
     }
   } // end TOP
-
+  
   delete table;
 }
 
 // Checks if the toHexString function of Id
 // works properly
-void hexTests (u_int count) {
-  IdTable * table = New IdTable ();
-  std::string hexWord;
-  for (int i = 0; i < count; i += 1) {
-    ref<Id> idPtr = table->create (randomKey ());
-    std::string idString = idPtr->toHexString ();
-INNER:for (int j = 0; j < 5; j += 1) {
-      hexWord = toHexWord (idPtr->getWord (j));
-      if (hexWord.compare (idString ((8 * j), (8 * j) + 8)))
-	continue;
+void
+hexTests(u_int count)
+{
+  IdTable * table = New IdTable();
+  str hexWord;
+  for (u_int i = 0;
+       i < count;
+       i++) {
+    ref<Id> idPtr = table->create(randomKey());
+    str idString = idPtr->toHexString();
+    for (int j = 0;
+         j < 5;
+         j++) {
+      uint32_t theWord = idPtr->getWord(j);
+      hexWord = str(strbuf() << hexdump((void*) &theWord, sizeof(uint32_t))).cstr();
+      //      hexWord = toHexWord(idPtr->getWord(j));
+      if (hexWord.cmp(substr(idString, (8 * j), 8))) 
+        continue;
       else {
-	warn << "HEXSTRING TEST FAILED FOR STR " << idString <<
-	  " and on WORD " << hexWord;
-	break INNER;
+        warn << "HEXSTRING TEST FAILED FOR STR " << idString <<
+          " and on WORD " << hexWord;
+        delete table;
+        return;
       }
-    } // end INNER
+    }
   }
   delete table;
 }
 
-// With a few cases, checks if IdTable actually
-// memoizes and returns the ref<Id> of an already
-// stored Id when asked to memoize the same bit
+// With a few cases, checks if IdTable actually memoizes and returns the
+// ref<Id> of an already stored Id when asked to memoize the same bit
 // pattern more than once
-void doesItMemoize () {
+void doesItMemoize() {
   IdTable * table = New IdTable ();
-  u_int_32 key1[5];
+  uint32_t key1[5];
   for (int i = 0; i < 5; i += 1) {
     key1[i] = 2 * i;
   }
-  u_int_32 key2[5];
+  uint32_t key2[5];
   for (int i = 0; i < 5; i += 1) {
     key2[i] = key1[i];
   }
-  ref<Id> idPtr1 = table->create (key1);
-  ref<Id> idPtr2 = table->create (key2);
-  if (!(idPtr1 == idPtr2 && table.size () == 1))
+  ref<Id> idPtr1 = table->create(key1);
+  ref<Id> idPtr2 = table->create(key2);
+  if (!(idPtr1 == idPtr2 && table->size() == 1))
     warn << "FAILED TO MEMOIZE TWO SAME ID's\n";
   
   delete table;
@@ -102,15 +126,6 @@ void doesItGc () {
 void lotsOfIdsToGc (u_int count) {
 }
 
-// Returns a randomly generated Id key
-// Retrieves random numbers from /dev/urandom
-u_int_32 * randomKey () {
-  u_int_32 key[5];
-  for (int i = 0; i < 5; i += 1)
-    key[i] = random::uint32t_urand ();
-  return key;
-}
-
 std::bitset<160> toBitWord (u_int32_t num) {
   return std::bitset<160> (num);
   /* std::bitset<160> result;
@@ -122,16 +137,16 @@ std::bitset<160> toBitWord (u_int32_t num) {
   return result; */
 }
 
-std::string toHexWord (u_int32_t num) {
-  static const std::string HEX_DIGITS = "0123456789ABCDEF";
+str toHexWord(u_int32_t num) {
+  static str HEX_DIGITS = "0123456789ABCDEF";
   char result[] = {'0','0','0','0','0','0','0','0','\0'};
   int remainder;
   for (int i = 0; i < 8 && num >= 1; i += 1) {
     if ((remainder = num % 16))
-      result[7 - i] = HEX_DIGITS.at (remainder);
+      result[7 - i] = HEX_DIGITS[remainder];
     num /= 16;
   }
-  return std::string (result);
+  return str(result);
 }
 
 int main (int argc, char * arg[]) {
@@ -139,7 +154,7 @@ int main (int argc, char * arg[]) {
 
   // CHECK IF VALID PROGRAM ARG
   if (argc > 1) {
-    if (idCount = atoi (arg[1]));
+    if ((idCount = atoi (arg[1])));
     else
       fatal << "Invalid ARG: " << arg[1] <<
 	". Please supply an INT value\n";

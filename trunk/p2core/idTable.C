@@ -17,7 +17,7 @@ ref<Id> Id::mkIdRef (const u_int32_t * num) {
 }
 
 // NEED TO IMPLEMENT
-ref<Id> Id::mkIdRef (const std::string& idString) {
+ref<Id> Id::mkIdRef (str idString) {
   ref<Id> result = New refcounted<Id> ();
   return result;
 }
@@ -33,16 +33,16 @@ std::bitset<160> Id::toBitWord (u_int32_t num) {
   return result; */
 }
 
-std::string Id::toHexWord (u_int32_t num) {
-  static const std::string HEX_DIGITS = "0123456789ABCDEF";
+str Id::toHexWord(u_int32_t num) {
+  static const str HEX_DIGITS = "0123456789ABCDEF";
   char result[] = {'0','0','0','0','0','0','0','0','\0'};
   int remainder;
   for (int i = 0; i < 8 && num >= 1; i += 1) {
     if ((remainder = num % 16))
-      result[7 - i] = HEX_DIGITS.at (remainder);
+      result[7 - i] = HEX_DIGITS[remainder];
     num /= 16;
   }
-  return std::string (result);
+  return str(result);
 }
 
 std::bitset<160> Id::toBitSet () const {
@@ -53,22 +53,19 @@ std::bitset<160> Id::toBitSet () const {
   return result;
 }
 
-std::string Id::toHexString () const {
-  std::string currentWord;
-  char result[] =
-  {'0','0','0','0','0','0','0','0','0','0',
-   '0','0','0','0','0','0','0','0','0','0',
-   '0','0','0','0','0','0','0','0','0','0',
-   '0','0','0','0','0','0','0','0','0','0', '\0'};
-  for (int i = 0; i < 5; i += 1) {
-    currentWord = toHexWord (key[i]);
-      for (int j = i * 8; j < (i * 8) + 8; j += 1)
-	result[j] = currentWord.at (j % 8);
+str
+Id::toHexString() const {
+  strbuf result;
+  for (int i = 0;
+       i < 5;
+       i++) {
+    result << toHexWord(key[i]);
   }
-  return std::string (result);
+  return str(result);
 }
 
-size_t Id::getHash () const {
+size_t
+Id::getHash() const {
   size_t result = 0;
   for (int i = 0; i < 5; i += 1)
     result ^= key[i];
@@ -91,8 +88,8 @@ IdHash::IdHash (ref<Id> idPtr, IdTable * table)
   hashCode = idPtr->getHash ();
 }
 
-void IdHash::idRemove () {
-  table->remove (this);
+void IdHash::idRemove() {
+  table->remove(this);
 }
 
 /** --------------------------------------------------------------
@@ -105,12 +102,14 @@ void IdTable::initialize_gc (const size_t thresh = 30) {
 
 // ref<Id> create (const XDR * xdr); look at tuple.C
 
-ref<Id> IdTable::create (const std::string& idString) {
-  ref<Id> result = Id::mkIdRef (idString);
-  return storeId (result);
+ref<Id>
+IdTable::create(const str idString) {
+  ref<Id> result = Id::mkIdRef(idString);
+  return storeId(result);
 }
 
-ref<Id> IdTable::create (const u_int32_t * random) {
+ref<Id>
+IdTable::create(const u_int32_t * random) {
   ref<Id> result = Id::mkIdRef (random);
   return storeId (result);
 }

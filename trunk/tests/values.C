@@ -22,6 +22,7 @@
 #include "val_str.h"
 #include "val_null.h"
 #include "val_opaque.h"
+#include "val_time.h"
 
 #if HAVE_CONFIG_H
 #include <config.h>
@@ -38,6 +39,21 @@
 { \
   std::cout << "Making Val_" << #_mkt << "(" << #_mkv << ")\n"; \
   ValueRef v = Val_##_mkt::mk(_mkv);  \
+  if ( v->typeCode() != Value::_mktc ) { \
+    FAIL << "Bad typeCode from " #_mkt ", expected " #_mktc " but got " << v->typeCode() << "\n"; \
+  } \
+  str mktn(_mktn); \
+  if (mktn != v->typeName()) { \
+    FAIL << "Bad typeName from " #_mkt ", expected " #_mktn " but got " << v->typeName() << "\n"; \
+  } \
+}
+
+#define TEST_TIMEVAL(_mkt, _mks, _mkns, _mktc, _mktn) \
+{ \
+  struct timespec t;\
+  std::cout << "Making Val_" << #_mkt << "(" << #_mks << "," << #_mkns << ")\n"; \
+  t.tv_sec = _mks; t.tv_nsec = _mkns; \
+  ValueRef v = Val_##_mkt::mk(t);  \
   if ( v->typeCode() != Value::_mktc ) { \
     FAIL << "Bad typeCode from " #_mkt ", expected " #_mktc " but got " << v->typeCode() << "\n"; \
   } \
@@ -128,6 +144,12 @@ int main(int argc, char **argv)
   TEST_VAL( Double, 1.79769E+308, DOUBLE, "double");
   TEST_VAL( Double, 2.225E-307, DOUBLE, "double");
   TEST_VAL( Double, -2.225E-307, DOUBLE, "double");
+
+  TEST_TIMEVAL( Time,  0,  0, TIME, "time");
+  TEST_TIMEVAL( Time, 10, 10, TIME, "time");
+  TEST_TIMEVAL( Time, -1,  0, TIME, "time");
+  TEST_TIMEVAL( Time,  0, -1, TIME, "time");
+  TEST_TIMEVAL( Time, -2, -2, TIME, "time");
 
   TEST_VAL( Str, "", STR, "str");
   TEST_VAL( Str, "This is a string", STR, "str");

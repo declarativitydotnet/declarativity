@@ -14,13 +14,13 @@
 
 lib_LTLIBRARIES = libp2core.la
 libp2core_la_SOURCES = \
+	ID.C \
 	element.C \
 	tuple.C \
 	router.C \
 	elementSpec.C \
 	pel_lexer.C \
 	pel_vm.C \
-        idTable.C \
 	value.C \
 	val_str.C \
 	val_null.C \
@@ -31,6 +31,8 @@ libp2core_la_SOURCES = \
 	val_double.C \
 	val_opaque.C \
 	val_tuple.C \
+	val_time.C \
+	val_id.C \
 	table.C \
 	loggerI.C
 

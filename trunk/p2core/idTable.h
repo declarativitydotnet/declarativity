@@ -5,7 +5,6 @@
 #ifndef __IDTABLE_H__
 #define __IDTABLE_H__
 
-#include <string>
 #include <bitset>
 #include <utility>
 #include <algorithm>
@@ -24,7 +23,7 @@ class IdTable;
  *                stored in the ihash
  *  -------------------------------------------------------------- */
 struct IdHash {
-  inline void idRemove ();
+  void idRemove();
   ihash_entry <IdHash> id_hashLink;
   size_t hashCode;
 
@@ -45,10 +44,10 @@ class Id : private virtual refcount {
   friend class IdTable;
   private:
     static ref<Id> mkIdRef (const u_int32_t *);
-    static ref<Id> mkIdRef (const std::string&);
+    static ref<Id> mkIdRef (const str);
     
     static std::bitset<160> toBitWord (u_int32_t num);
-    static std::string toHexWord (u_int32_t num);
+    static str toHexWord (u_int32_t num);
 
     IdHash * hashWrapper;
 
@@ -59,10 +58,10 @@ class Id : private virtual refcount {
     // constructor should be private but that doesn't play
     // nicely with @refcounted
     Id () {}
-    inline size_t getHash () const;
+    size_t getHash() const;
     std::bitset<160> toBitSet () const;
-    std::string toHexString () const;
-    inline u_int32_t getWord (const u_int) const;
+    str toHexString () const;
+    u_int32_t getWord(const u_int) const;
 
     // remove the wrapper @IdHash from the ihash and delete my ptr
     // check if @finalize needs to be private
@@ -87,7 +86,7 @@ class IdTable {
     // @create: factory functions to create and memoize @Id's.
     // if the requested @Id is already stored, the function
     // returns the ref<Id> to the existing @Id
-    ref<Id> create (const std::string&);
+    ref<Id> create (const str);
 
     ref<Id> create (const u_int32_t *);
 
@@ -96,10 +95,10 @@ class IdTable {
 
     // static Id * create (const XDR *);
 
-    inline size_t size () const;
+    size_t size () const;
 
-    inline void remove (IdHash *);
-    inline void clear ();
+    void remove (IdHash *);
+    void clear ();
 
   private:
     ihash< size_t, IdHash, &IdHash::hashCode, &IdHash::id_hashLink >

@@ -39,7 +39,7 @@ class random { public:
 
 };
 
-#undef INIT_RAND(SEED)
+#undef INIT_RAND
 #undef RANDOM
 
 #endif /** !__RANDOM_H__ */

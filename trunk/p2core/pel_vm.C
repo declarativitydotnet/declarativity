@@ -25,7 +25,8 @@
 #include "val_double.h"
 #include "val_null.h"
 #include "val_tuple.h"
-
+#include "val_time.h"
+#include "val_id.h"
 
 typedef void(Pel_VM::*Op_fn_t)(u_int32_t);
 
@@ -137,6 +138,37 @@ str Pel_VM::pop_string()
   } catch (Value::TypeError) {
     error = PE_TYPE_CONVERSION;
     return str("");
+  }
+}
+
+//
+// Pull a time off the stack
+//  
+struct timespec Pel_VM::pop_time() 
+{
+  ValueRef t = st.top(); st.pop();
+  try {
+    return Val_Time::cast(t);
+  } catch (Value::TypeError) {
+    error = PE_TYPE_CONVERSION;
+    struct timespec t;
+    t.tv_sec = 0;
+    t.tv_nsec = 0;
+    return t;
+  }
+}
+
+//
+// Pull an ID off the stack
+//  
+IDRef Pel_VM::pop_ID() 
+{
+  ValueRef t = st.top(); st.pop();
+  try {
+    return Val_ID::cast(t);
+  } catch (Value::TypeError) {
+    error = PE_TYPE_CONVERSION;
+    return ID::mk();
   }
 }
 
@@ -363,6 +395,95 @@ DEF_OP(MOD) {
   }
 }
 
+
+//
+// Time operations.  Note that the '>' and '<' are reversed: think
+// about operand order on the stack!
+//
+DEF_OP(TIME_LT) { 
+  struct timespec s1 = pop_time();
+  struct timespec s2 = pop_time();
+  st.push(Val_Int32::mk(s2 < s1));
+}
+DEF_OP(TIME_LTE) { 
+  struct timespec s1 = pop_time();
+  struct timespec s2 = pop_time();
+  st.push(Val_Int32::mk(s2 <= s1));
+}
+DEF_OP(TIME_GT) { 
+  struct timespec s1 = pop_time();
+  struct timespec s2 = pop_time();
+  st.push(Val_Int32::mk(s2 > s1));
+}
+DEF_OP(TIME_GTE) { 
+  struct timespec s1 = pop_time();
+  struct timespec s2 = pop_time();
+  st.push(Val_Int32::mk(s2 >= s1));
+}
+DEF_OP(TIME_EQ) { 
+  struct timespec s1 = pop_time();
+  struct timespec s2 = pop_time();
+  st.push(Val_Int32::mk(s2 == s1));
+}
+DEF_OP(TIME_NOW) { 
+  struct timespec t;
+  clock_gettime(CLOCK_REALTIME, &t);
+  st.push(Val_Time::mk(t));
+}
+DEF_OP(TIME_PLUS) {
+  st.push(Val_Time::mk(pop_time()+pop_time()));
+}
+DEF_OP(TIME_MINUS) {
+  // Be careful of undefined evaluation order in C++!
+  struct timespec v1 = pop_time();
+  struct timespec v2 = pop_time();
+  st.push(Val_Time::mk(v2-v1));
+}
+
+//
+// ID operations.  Note that the '>' and '<' are reversed: think
+// about operand order on the stack!
+//
+DEF_OP(ID_LT) { 
+  IDRef s1 = pop_ID();
+  IDRef s2 = pop_ID();
+  st.push(Val_Int32::mk(s2->compareTo(s1) < 0));
+}
+DEF_OP(ID_LTE) { 
+  IDRef s1 = pop_ID();
+  IDRef s2 = pop_ID();
+  st.push(Val_Int32::mk(s2->compareTo(s1) <= 0));
+}
+DEF_OP(ID_GT) { 
+  IDRef s1 = pop_ID();
+  IDRef s2 = pop_ID();
+  st.push(Val_Int32::mk(s2->compareTo(s1) > 0));
+}
+DEF_OP(ID_GTE) { 
+  IDRef s1 = pop_ID();
+  IDRef s2 = pop_ID();
+  st.push(Val_Int32::mk(s2->compareTo(s1) >= 0));
+}
+DEF_OP(ID_EQ) { 
+  IDRef s1 = pop_ID();
+  IDRef s2 = pop_ID();
+  st.push(Val_Int32::mk(s1->equals(s2)));
+}
+DEF_OP(ID_PLUS) {
+  st.push(Val_ID::mk(pop_ID()->add(pop_ID())));
+}
+DEF_OP(ID_LSL) {
+  uint32_t shift = pop_unsigned();
+  IDRef id = pop_ID();
+  st.push(Val_ID::mk(id->shift(shift)));
+}
+DEF_OP(ID_DIST) {
+  // Be careful of undefined evaluation order in C++!
+  IDRef v1 = pop_ID();
+  IDRef v2 = pop_ID();
+  st.push(Val_ID::mk(v2->distance(v1)));
+}
+
 //
 // String operations.  Note that the '>' and '<' are reversed: think
 // about operand order on the stack!
@@ -557,6 +678,11 @@ DEF_OP(CONV_STR) {
 }
 DEF_OP(CONV_DBL) {
   st.push(Val_Double::mk(pop_double()));
+}
+DEF_OP(CONV_TIME) {
+  ValueRef top = st.top();
+  st.pop();
+  st.push(Val_Time::mk(Val_Time::cast(top)));
 }
 
 //

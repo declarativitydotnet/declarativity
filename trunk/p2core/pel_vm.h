@@ -21,6 +21,7 @@
 
 #include "tuple.h"
 #include "pel_program.h"
+#include "ID.h"
 
 class Pel_VM {
 
@@ -54,6 +55,8 @@ private:
   int64_t pop_signed();
   str pop_string();
   double pop_double();
+  struct timespec pop_time();
+  IDRef pop_ID();
 
 public:
   Pel_VM();

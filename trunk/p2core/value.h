@@ -44,7 +44,9 @@ public:
     UINT64,
     DOUBLE,
     OPAQUE,
-    TUPLE
+    TUPLE,
+    TIME,
+    ID
   };
 
   virtual unsigned int size() const = 0;

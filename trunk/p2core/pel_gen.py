@@ -53,6 +53,24 @@ for op, ar, va, desc in [
   ("~",1,       "BIT_NOT",      "1's complement"),
   ("%",2,       "MOD",          "Integer modulus"),
 
+  ("<time",2,      "TIME_LT",       "Time less-than comparison"),
+  ("<=time",2,     "TIME_LTE",      "Time less-than-or-eq comparison"),
+  (">time",2,      "TIME_GT",       "Time greater-than comparison"),
+  (">=time",2,     "TIME_GTE",      "Time greater-than-or-eq comparison"),
+  ("==time",2,     "TIME_EQ",       "Time compare equality"),
+  ("+time",2,      "TIME_PLUS",     "Time addition"),
+  ("-time",2,      "TIME_MINUS",    "Time subtraction"),
+  ("now",0,        "TIME_NOW",      "The current time token"),
+
+  ("<id",2,      "ID_LT",       "ID less-than comparison"),
+  ("<=id",2,     "ID_LTE",      "ID less-than-or-eq comparison"),
+  (">id",2,      "ID_GT",       "ID greater-than comparison"),
+  (">=id",2,     "ID_GTE",      "ID greater-than-or-eq comparison"),
+  ("==id",2,     "ID_EQ",       "ID compare equality"),
+  ("+id",2,      "ID_PLUS",     "ID addition"),
+  ("distance",2, "ID_DIST",     "ID subtraction"),
+  ("<<id",2,	 "ID_LSL",      "ID arithmetic shift left"),
+
   ("<s",2,      "STR_LT",       "String less-than comparison"),
   ("<=s",2,     "STR_LTE",      "String less-than-or-eq comparison"),
   (">s",2,      "STR_GT",       "String greater-than comparison"),
@@ -92,7 +110,7 @@ for op, ar, va, desc in [
 
 
 
-for i in [ "i32", "u32", "i64", "u64", "dbl", "str" ]:
+for i in [ "i32", "u32", "i64", "u64", "dbl", "str", "time" ]:
   emit_opcode("->"+i, 1, "CONV_" + i.upper(), "Convert to type "+i)
 
 warning="""

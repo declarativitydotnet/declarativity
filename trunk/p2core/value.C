@@ -24,7 +24,8 @@
 #include "val_double.h"
 #include "val_opaque.h"
 #include "val_tuple.h"
-
+#include "val_time.h"
+#include "val_id.h"
 
 typedef ValueRef (*_unmarshal_fn)( XDR *);
 
@@ -37,7 +38,9 @@ static _unmarshal_fn jump_tab[] = {
   Val_UInt64::xdr_unmarshal,
   Val_Double::xdr_unmarshal,
   Val_Opaque::xdr_unmarshal,
-  Val_Tuple::xdr_unmarshal
+  Val_Tuple::xdr_unmarshal,
+  Val_Time::xdr_unmarshal,
+  Val_ID::xdr_unmarshal
 };
 
 //
