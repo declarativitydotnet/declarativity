@@ -16,8 +16,10 @@
 #include <async.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <iostream>
 
 #include "val_str.h"
+#include "val_opaque.h"
 #include "val_int32.h"
 
 /////////////////////////////////////////////////////////////////////
@@ -26,7 +28,8 @@
 //
 Udp::Rx::Rx(const Udp &udp) 
   : Element(0, 1),
-    u(&udp), push_pending(true) 
+    u(&udp),
+    push_pending(true) 
 {
 }
 
@@ -42,25 +45,27 @@ void Udp::Rx::socket_cb()
   }
 
   // Read packet. 
-  UdpSuio *uio = New UdpSuio();
+  ref< UdpSuio > udpSuio = New refcounted< UdpSuio >;
   struct sockaddr sa;
-  socklen_t sa_len;
-  if ( uio->inputfrom(u->sd, &sa, &sa_len) <= 0) {
+  bzero(&sa, sizeof(sa));
+  socklen_t sa_len = 0;
+  if ( udpSuio->inputfrom(u->sd, &sa, &sa_len) <= 0) {
     // Error! 
-    if (errno != EAGAIN) {
-      // Make an error tuple... 
-      TupleRef t = Tuple::mk();
-      t->append(Val_Int32::mk(errno));
-      push(1,t,cbv_null);
+    int error = errno;
+    if (error != EAGAIN) {
+      log(LoggerI::ERROR, error, strerror(error));
     }
-    delete uio;
   } else {
     // Success! We've got a packet.  Package it up...
+    ref< suio > addressUio = New refcounted< suio >;
+    addressUio->copy(&sa, sa_len);
+
     TupleRef t = Tuple::mk();
-    t->append(Val_Str::mk(str(*uio)));
-    t->append(Val_Str::mk(str( (const char *)&sa, sa_len)));
+    t->append(Val_Opaque::mk(addressUio));
+    t->append(Val_Opaque::mk(udpSuio));
+    t->freeze();
     // Push it. 
-    push_pending = push(0,t,wrap(this,&Udp::Rx::element_cb));
+    push_pending = push(0, t, wrap(this, &Udp::Rx::element_cb));
   }
   socket_on();
 }
@@ -74,13 +79,21 @@ void Udp::Rx::element_cb()
   socket_on();
 }
 
+int Udp::Rx::initialize()
+{
+  socket_on();
+  return 0;
+}
+
 
 /////////////////////////////////////////////////////////////////////
 //
 // Transmit element
 //
 Udp::Tx::Tx(const Udp &udp) 
-  : u(&udp), pull_pending(true) 
+  : Element(1, 0),
+    u(&udp),
+    pull_pending(true)
 {
 }
 
@@ -96,32 +109,37 @@ void Udp::Tx::socket_cb()
   }
 
   // Try to pull a packet. 
-  TuplePtr t = input(0)->pull(wrap(this,&Udp::Tx::element_cb));
+  Element::PortRef myInput = input(0);
+  TuplePtr t = myInput->pull(wrap(this,&Udp::Tx::element_cb));
   if (!t) {
     pull_pending = false;
     socket_off();
     return;
   }
   
-  // We've now go a packet...
-  str payload = Val_Str::cast((*t)[0]);
-  str addr = Val_Str::cast((*t)[1]);
+  // We've now got a packet...
+  struct sockaddr address;
+  ref< suio > uio = Val_Opaque::cast((*t)[0]);
+  uio->copyout(&address, sizeof(address));
+
+  ref< suio > puio = Val_Opaque::cast((*t)[1]);
+  ssize_t payloadLength = puio->resid();
+  char* payloadBuffer[payloadLength];
+  puio->copyout(&payloadBuffer, payloadLength);
+
   ssize_t s = sendto(u->sd, 
-		     payload.cstr(), payload.len(),
+		     &payloadBuffer, payloadLength,
 		     0, 
-		     (struct sockaddr *)(addr.cstr()), addr.len());
+		     &address, sizeof(address));
   // 's' is signed, whereas the payload.len() isn't. Hence the following:
-  if (s <= 0 || (unsigned)s <= payload.len() ) {
+  if (s <= 0 || s < payloadLength ) {
     // Error!  Technically, this can happen if the payload is larger
     //  than the socket buffer (in which case errno=EAGAIN).  We treat
     //  this as an error, nevertheless, and leave it up to the
     //  segmentation and reassembly elements upstream to not make us
     //  send anything bigger than the MTU, which should fit into the
     //  socket buffers. 
-    // Make an error tuple... 
-    TupleRef t = Tuple::mk();
-    t->append(Val_Int32::mk(errno));
-    push(1,t,cbv_null);
+    log(LoggerI::ERROR, errno, "Payload larger than socket buffer");
   }
   socket_on();
 }
@@ -135,6 +153,12 @@ void Udp::Tx::element_cb()
   socket_on();
 }
 
+int Udp::Tx::initialize()
+{
+  socket_on();
+  return 0;
+}
+
 ////////////////////////////////////////////////////////////////////
 //
 // The main object itself
@@ -143,9 +167,10 @@ Udp::Udp(u_int16_t port, u_int32_t addr)
   : rx(New refcounted< Udp::Rx >(*this)),
     tx(New refcounted< Udp::Tx >(*this))
 {
+  warn << "UDP Init\n";
   sd = inetsocket(SOCK_DGRAM, port, addr);
+  std::cout << "Got descriptor " << sd << " with errno " << strerror(errno) << "\n";
   make_async(sd);
   close_on_exec(sd);
-  rx->socket_on();
-  tx->socket_on();
+  warn << "UDPinited\n";
 }

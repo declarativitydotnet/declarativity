@@ -31,7 +31,7 @@ TuplePtr Marshal::simple_action(TupleRef p)
   ref<suio> uio = New refcounted<suio>();
   uio->take(xsuio(&xe));
 
-  // Now create a new tuple to host this string
+  // Now create a new tuple to host the opaque
   TuplePtr t = Tuple::mk();
   if (t == 0) {
     // Couldn't create one. Memory problems?

@@ -36,12 +36,13 @@
 #include "unmarshal.h"
 #include "hexdump.h"
 
+
 /** Test that a puller runs and stops during inaction. */
 void testSinglePuller()
 {
   std::cout << "\nCHECK SIMPLE PULLER\n";
 
-  ref< TimedSource > timedSource = New refcounted< TimedSource >(0.8);
+  ref< TimedSource > timedSource = New refcounted< TimedSource >(2);
   ref< PullPrint > pullPrint = New refcounted< PullPrint >();
   ElementSpecRef timedSourceSpec = New refcounted< ElementSpec >(timedSource);
   ElementSpecRef pullPrintSpec = New refcounted< ElementSpec >(pullPrint);
@@ -123,7 +124,7 @@ void testChainPuller()
   //elements->push_back(projectSpec);
   elements->push_back(marshalSpec);
   //elements->push_back(marshalSpec2);
-  elements->push_back(unmarshalSpec);
+  //elements->push_back(unmarshalSpec);
   //elements->push_back(hexSpec);
   elements->push_back(pullPrintSpec);
 
@@ -146,9 +147,6 @@ void testChainPuller()
                                             printSpec2, 0);
   hookups->push_back(hookup);
   hookup = New refcounted< Router::Hookup >(printSpec2, 0,
-                                            unmarshalSpec, 0);
-  hookups->push_back(hookup);
-  hookup = New refcounted< Router::Hookup >(unmarshalSpec, 0,
                                             printSpec3, 0);
   hookups->push_back(hookup);
   hookup = New refcounted< Router::Hookup >(printSpec3, 0,

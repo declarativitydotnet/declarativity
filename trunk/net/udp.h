@@ -43,6 +43,10 @@ public:
 
     void socket_on() { fdcb(u->sd, selread, wrap(this,&Udp::Rx::socket_cb)); };
     void socket_off() { fdcb(u->sd, selread, NULL); };
+
+    /** Turn on the socket and start listening. */
+    virtual int initialize();
+
   private:
     void socket_cb(); // Callback for socket activity
     void element_cb(); // Callback for element push 
@@ -59,11 +63,15 @@ public:
   public:
     Tx(const Udp &udp);
     const char *class_name() const		{ return "Udp::Tx";};
-    const char *processing() const		{ return "l/h"; };
+    const char *processing() const		{ return "l/"; };
     const char *flow_code() const		{ return "-/"; };
 
     void socket_on() { fdcb(u->sd, selwrite, wrap(this,&Udp::Tx::socket_cb));};
     void socket_off() { fdcb(u->sd, selwrite, NULL); };
+
+    /** Turn on the socket */
+    virtual int initialize();
+
   private:
     void socket_cb(); // Callback for socket activity
     void element_cb(); // Callback for element pull

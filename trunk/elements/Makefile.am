@@ -26,7 +26,8 @@ libp2elements_la_SOURCES = \
 	marshal.C \
 	hexdump.C \
 	csvparser.C \
-	unmarshal.C
+	unmarshal.C \
+	route.C
 
 INCLUDES = @SFS_INC@ -I../p2core
 
