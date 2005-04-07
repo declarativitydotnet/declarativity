@@ -16,6 +16,7 @@
 #include "groupby.h"
 #include "tuple.h"
 #include "val_str.h"
+#include "math.h"
 
 
 const int GroupBy::MIN_AGG = 0;

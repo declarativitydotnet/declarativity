@@ -72,10 +72,11 @@
 
 class RouterConfigGenerator {
   // takes as input the udp send / receive, the router config, accept each other code or not
-public:
-
+ private:
   class FieldNamesTracker;
   struct ReceiverInfo;
+
+public:
 
   RouterConfigGenerator(OL_Context* ctxt, Router::ConfigurationRef conf, 
 			bool _dups, bool debug, str filename);

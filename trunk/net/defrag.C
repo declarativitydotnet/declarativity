@@ -103,10 +103,10 @@ void Defrag::defragment(TupleRef t)
     if (fragments_.count(seq_num) == chunks) {  
       // Put fragments back together
       ref <suio> uio = New refcounted<suio>();
-      for (int i = 0; i < chunks; i++) {
+      for (uint i = 0; i < chunks; i++) {
         TuplePtr p = NULL;
         for (FragMap::iterator iter = fragments_.find(seq_num); iter != fragments_.end(); iter++) {
-          if (OFFSET(Val_UInt64::cast((*iter->second)[SEQ_FIELD])) == i) {
+          if (OFFSET(Val_UInt64::cast((*iter->second)[SEQ_FIELD])) == (int) i) {
             p = iter->second;
             fragments_.erase(iter);
             break;

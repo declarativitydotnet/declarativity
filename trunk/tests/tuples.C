@@ -51,8 +51,8 @@ static double time_fn(cbv cb)
   return elapsed;
 }
 
-const int FIELD_TST_SZ=500000;
-const int TUPLE_TST_SZ=500000;
+const int FIELD_TST_SZ=500;
+const int TUPLE_TST_SZ=500;
 const int MARSHAL_CHUNK_SZ=100;
 const int MARSHAL_NUM_UIOS=5000;
 

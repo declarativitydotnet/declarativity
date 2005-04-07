@@ -17,7 +17,6 @@
 #include "ol_lexer.h"
 #include "val_uint32.h"
 #include "tuple.h"
-#define TRACE_OFF
 #define DEBUG_OFF
 #include "trace.h"
 

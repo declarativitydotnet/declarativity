@@ -17,6 +17,7 @@
 #include <async.h>
 #include <arpc.h>
 #include <time.h>
+#include "math.h"
 
 #include "ping.h"
 #include "val_null.h"

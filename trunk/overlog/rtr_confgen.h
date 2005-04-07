@@ -73,11 +73,11 @@
 
 class Rtr_ConfGen {
   // takes as input the udp send / receive, the router config, accept each other code or not
-public:
-
+ private:
   class FieldNamesTracker;
   struct ReceiverInfo;
 
+ public:
   Rtr_ConfGen(OL_Context* ctxt, Router::ConfigurationRef conf, 
 			bool _dups, bool debug, str filename);
   Rtr_ConfGen::~Rtr_ConfGen();

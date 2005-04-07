@@ -10,7 +10,6 @@
  */
 
 #include "rtr_confgen.h"
-#define TRACE_OFF
 #include "trace.h"
 const str Rtr_ConfGen::SEL_PRE("select_");
 const str Rtr_ConfGen::AGG_PRE("agg_");
