@@ -1,7 +1,7 @@
-/* A Bison parser, made by GNU Bison 1.875c.  */
+/* A Bison parser, made by GNU Bison 1.875d.  */
 
 /* Skeleton parser for Yacc-like parsing with Bison,
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -29,64 +29,117 @@
    /* Put the tokens into the symbol table, so that GDB and other debuggers
       know about them.  */
    enum yytokentype {
-     OL_AT = 258,
-     OL_ATOM = 259,
-     OL_COMMA = 260,
-     OL_DONTCARE = 261,
-     OL_DOT = 262,
-     OL_EOF = 263,
-     OL_IF = 264,
-     OL_VALUE = 265,
-     OL_VAR = 266,
-     OL_LPAR = 267,
-     OL_RPAR = 268,
-     OL_LT = 269,
-     OL_GT = 270,
-     OL_MAT = 271,
-     OL_RULE = 272,
-     OL_EVENT = 273,
-     OL_PERIOD = 274,
-     OL_DEL = 275,
-     OL_PK = 276,
-     OL_WATCH = 277
+     OL_OR = 258,
+     OL_AND = 259,
+     OL_BITOR = 260,
+     OL_BITXOR = 261,
+     OL_BITAND = 262,
+     OL_NEQ = 263,
+     OL_EQ = 264,
+     OL_LTE = 265,
+     OL_LT = 266,
+     OL_GTE = 267,
+     OL_GT = 268,
+     OL_NOTREGIEXP = 269,
+     OL_NOTREGEXP = 270,
+     OL_REGIEXP = 271,
+     OL_REGEXP = 272,
+     OL_RSHIFT = 273,
+     OL_LSHIFT = 274,
+     OL_MINUS = 275,
+     OL_PLUS = 276,
+     OL_MODULUS = 277,
+     OL_DIVIDE = 278,
+     OL_TIMES = 279,
+     OL_EXP = 280,
+     OL_NOT = 281,
+     OL_IN = 282,
+     OL_AT = 283,
+     OL_ATOM = 284,
+     OL_COMMA = 285,
+     OL_DONTCARE = 286,
+     OL_DOT = 287,
+     OL_EOF = 288,
+     OL_IF = 289,
+     OL_VALUE = 290,
+     OL_VAR = 291,
+     OL_LPAR = 292,
+     OL_RPAR = 293,
+     OL_LSQUB = 294,
+     OL_RSQUB = 295,
+     OL_RULE = 296,
+     OL_EVENT = 297,
+     OL_PERIOD = 298,
+     OL_DEL = 299,
+     OL_RANGEOO = 300,
+     OL_RANGEOC = 301,
+     OL_RANGECO = 302,
+     OL_RANGECC = 303
    };
 #endif
-#define OL_AT 258
-#define OL_ATOM 259
-#define OL_COMMA 260
-#define OL_DONTCARE 261
-#define OL_DOT 262
-#define OL_EOF 263
-#define OL_IF 264
-#define OL_VALUE 265
-#define OL_VAR 266
-#define OL_LPAR 267
-#define OL_RPAR 268
-#define OL_LT 269
-#define OL_GT 270
-#define OL_MAT 271
-#define OL_RULE 272
-#define OL_EVENT 273
-#define OL_PERIOD 274
-#define OL_DEL 275
-#define OL_PK 276
-#define OL_WATCH 277
+#define OL_OR 258
+#define OL_AND 259
+#define OL_BITOR 260
+#define OL_BITXOR 261
+#define OL_BITAND 262
+#define OL_NEQ 263
+#define OL_EQ 264
+#define OL_LTE 265
+#define OL_LT 266
+#define OL_GTE 267
+#define OL_GT 268
+#define OL_NOTREGIEXP 269
+#define OL_NOTREGEXP 270
+#define OL_REGIEXP 271
+#define OL_REGEXP 272
+#define OL_RSHIFT 273
+#define OL_LSHIFT 274
+#define OL_MINUS 275
+#define OL_PLUS 276
+#define OL_MODULUS 277
+#define OL_DIVIDE 278
+#define OL_TIMES 279
+#define OL_EXP 280
+#define OL_NOT 281
+#define OL_IN 282
+#define OL_AT 283
+#define OL_ATOM 284
+#define OL_COMMA 285
+#define OL_DONTCARE 286
+#define OL_DOT 287
+#define OL_EOF 288
+#define OL_IF 289
+#define OL_VALUE 290
+#define OL_VAR 291
+#define OL_LPAR 292
+#define OL_RPAR 293
+#define OL_LSQUB 294
+#define OL_RSQUB 295
+#define OL_RULE 296
+#define OL_EVENT 297
+#define OL_PERIOD 298
+#define OL_DEL 299
+#define OL_RANGEOO 300
+#define OL_RANGEOC 301
+#define OL_RANGECO 302
+#define OL_RANGECC 303
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 56 "ol_parser.y"
+#line 75 "ol_parser.y"
 typedef union YYSTYPE {
   Parse_FunctorName	*u_functorname;
   Parse_Term		*u_term;
   Parse_TermList	*u_termlist;
   Parse_Expr		*u_expr;
   Parse_ExprList	*u_exprlist;
+  Parse_Range		*u_range;
   Parse_Val		*v;
 } YYSTYPE;
-/* Line 1275 of yacc.c.  */
-#line 90 "ol_parser.tab.h"
+/* Line 1285 of yacc.c.  */
+#line 143 "ol_parser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

@@ -77,8 +77,8 @@ WHITESPACE	[ \t\r\n]+
 
 <INITIAL><<EOF>> { return OL_EOF; }
 <INITIAL>{WHITESPACE}		;
-<INITIAL>\%\%.*\n		; // Ignore %% comments
-<INITIAL>^\#!.*\n		; // Ignore '#' directives
+<INITIAL>%%.*			; // Ignore %% comments
+<INITIAL>^#!.*			; // Ignore '#' directives
 
 <INITIAL>\/\* { 
   if ( comment_depth == 0 ) {
@@ -125,18 +125,49 @@ WHITESPACE	[ \t\r\n]+
     (*cstring) << yytext; 
 }
 
-<INITIAL>materialize { return OL_MAT; }
-<INITIAL>watch { return OL_WATCH; }
-<INITIAL>materialise { return OL_MAT; }
-<INITIAL>primarykeys { return OL_PK; }
 <INITIAL>rule { return OL_RULE; }
 <INITIAL>event { return OL_EVENT; }
+<INITIAL>in { return OL_IN; }
 <INITIAL>"@" { return OL_AT; }
 <INITIAL>"," { return OL_COMMA; }
 <INITIAL>"(" { return OL_LPAR; }
 <INITIAL>")" { return OL_RPAR; }
+<INITIAL>"[" { return OL_LSQUB; }
+<INITIAL>"]" { return OL_RSQUB; }
+
+ /* Relational operators */
 <INITIAL>"<" { return OL_LT; }
 <INITIAL>">" { return OL_GT; }
+<INITIAL>"<=" { return OL_LTE; }
+<INITIAL>">=" { return OL_GTE; }
+<INITIAL>"!=" { return OL_NEQ; }
+<INITIAL>"<>" { return OL_NEQ; }
+<INITIAL>"==" { return OL_EQ; }
+
+ /* Arithmetic operations */
+<INITIAL>"+" { return OL_PLUS; }
+<INITIAL>"-" { return OL_MINUS; }
+<INITIAL>"*" { return OL_TIMES; }
+<INITIAL>"/" { return OL_DIVIDE; }
+<INITIAL>"%" { return OL_MODULUS; }
+<INITIAL>"**" { return OL_EXP; }
+<INITIAL>"^" { return OL_BITXOR; }
+<INITIAL>"&" { return OL_BITAND; }
+<INITIAL>"|" { return OL_BITOR; }
+<INITIAL>">>" { return OL_RSHIFT; }
+<INITIAL>"<<" { return OL_LSHIFT; }
+
+ /* Boolean operations */
+<INITIAL>"!" { return OL_NOT; }
+<INITIAL>"&&" { return OL_AND; }
+<INITIAL>"||" { return OL_OR; } 
+
+ /* Regular expressions */
+<INITIAL>"~" { return OL_REGEXP; }
+<INITIAL>"~*" { return OL_REGIEXP; }
+<INITIAL>"!~" { return OL_NOTREGEXP; }
+<INITIAL>"!~*" { return OL_NOTREGIEXP; }
+
 <INITIAL>"." { return OL_DOT; }
 <INITIAL>":-" { return OL_IF; }
 <INITIAL>"period=" { return OL_PERIOD; }

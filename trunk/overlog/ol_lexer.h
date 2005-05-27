@@ -15,7 +15,6 @@
 #ifndef __OL_LEXER_H__
 #define __OL_LEXER_H__
 
-#include <async.h>
 #include <sstream>
 #include <iostream>
 

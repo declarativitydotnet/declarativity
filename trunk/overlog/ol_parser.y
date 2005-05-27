@@ -28,6 +28,22 @@
 %defines
 %verbose
 %pure_parser
+
+%left OL_OR
+%left OL_AND
+%left OL_BITOR
+%left OL_BITXOR
+%left OL_BITAND
+%left OL_EQ OL_NEQ
+%nonassoc OL_GT OL_GTE OL_LT OL_LTE
+%nonassoc OL_REGEXP OL_REGIEXP OL_NOTREGEXP OL_NOTREGIEXP
+%left OL_LSHIFT OL_RSHIFT
+%left OL_PLUS OL_MINUS 
+%left OL_TIMES OL_DIVIDE OL_MODULUS
+%left OL_EXP
+%right OL_NOT
+%left OL_IN
+
 %token OL_AT 
 %token<v> OL_ATOM 
 %token OL_COMMA
@@ -39,15 +55,18 @@
 %token<v> OL_VAR
 %token OL_LPAR
 %token OL_RPAR
-%token OL_LT
-%token OL_GT
-%token OL_MAT
+%token OL_LSQUB
+%token OL_RSQUB
 %token OL_RULE
 %token OL_EVENT
 %token OL_PERIOD
 %token OL_DEL
-%token OL_PK
-%token OL_WATCH
+
+%token OL_RANGEOO
+%token OL_RANGEOC
+%token OL_RANGECO
+%token OL_RANGECC
+
 %start program
 %file-prefix="ol_parser"
 %name-prefix="ol_parser_"
@@ -59,13 +78,16 @@
   Parse_TermList	*u_termlist;
   Parse_Expr		*u_expr;
   Parse_ExprList	*u_exprlist;
+  Parse_Range		*u_range;
   Parse_Val		*v;
 }
 %type<u_termlist> termlist;
 %type<u_exprlist> exprlist termbody; 
 %type<u_term> term;
 %type<u_expr> expr;
+%type<u_expr> infix_expr;
 %type<u_functorname> functorname;
+%type<u_range> range_expr;
 %%
 program:	OL_EOF { YYACCEPT; }
 		| clauselist OL_EOF { YYACCEPT; }
@@ -76,17 +98,8 @@ clauselist:	clause
 
 clause:		OL_RULE rule 
 		| fact 
-                | materialize
                 | event
-                | primaryKeys
-                | watch
 		;
-
-materialize:	OL_MAT termbody OL_DOT { ctxt->materialize($2); };
-
-primaryKeys:	OL_PK termbody OL_DOT { ctxt->primaryKeys($2); };
-
-watch:	        OL_WATCH termbody OL_DOT { ctxt->watchVariables($2); };
 
 fact:		term OL_DOT { ctxt->add_fact($1); } ;
 
@@ -101,8 +114,8 @@ event:          OL_EVENT term OL_DOT { ctxt->add_event($2); } ;
 termlist:	term { $$ = New Parse_TermList(); $$->push_front($1); }
 		| term OL_COMMA termlist { $3->push_front($1); $$=$3; } ;
 
-term:		functorname termbody { $$=New Parse_Term($1, $2); }
-                | 
+term:		functorname termbody { $$=New Parse_Term($1, $2); } ;
+		| infix_expr { $$=New Parse_Term($1); };
 
 termbody:	OL_LPAR OL_RPAR { 
 			$$=New Parse_ExprList(); }
@@ -115,12 +128,76 @@ functorname:	OL_ATOM {
 			$$ = New Parse_FunctorName($1,$3); }
 		;
 
-exprlist:	expr { 
+exprlist:	infix_expr { 
 			$$ = New Parse_ExprList(); 
 			$$->push_front($1); }
-		| expr OL_COMMA exprlist { 
+		| infix_expr OL_COMMA exprlist { 
 			$3->push_front($1); 
 			$$=$3; }
+		;
+
+infix_expr:	OL_LPAR infix_expr OL_RPAR 
+			{ $$ = $2; }
+		| OL_VAR OL_IN range_expr 
+			{ $$ = New Parse_Expr( $1, $3 ); } 
+		| expr 
+			{ $$ = $1; }
+		| OL_PLUS infix_expr 
+			{ $$ = New Parse_Expr( OL_PLUS, $2 ); } 
+		| OL_MINUS infix_expr 
+			{ $$ = New Parse_Expr( OL_MINUS, $2 ); } 
+		| OL_NOT infix_expr 
+			{ $$ = New Parse_Expr( OL_NOT, $2 ); } 
+		| infix_expr OL_OR infix_expr
+			{ $$ = New Parse_Expr( OL_OR, $1, $3 ); }
+		| infix_expr OL_AND infix_expr
+			{ $$ = New Parse_Expr( OL_AND, $1, $3 ); }
+		| infix_expr OL_EQ infix_expr
+			{ $$ = New Parse_Expr( OL_EQ, $1, $3 ); }
+		| infix_expr OL_NEQ infix_expr
+			{ $$ = New Parse_Expr( OL_NEQ, $1, $3 ); }
+		| infix_expr OL_GT infix_expr
+			{ $$ = New Parse_Expr( OL_GT, $1, $3 ); }
+		| infix_expr OL_LT infix_expr
+			{ $$ = New Parse_Expr( OL_LT, $1, $3 ); }
+		| infix_expr OL_GTE infix_expr
+			{ $$ = New Parse_Expr( OL_GTE, $1, $3 ); }
+		| infix_expr OL_LTE infix_expr
+			{ $$ = New Parse_Expr( OL_LTE, $1, $3 ); }
+		| infix_expr OL_REGEXP infix_expr
+			{ $$ = New Parse_Expr( OL_REGEXP, $1, $3 ); }
+		| infix_expr OL_REGIEXP infix_expr
+			{ $$ = New Parse_Expr( OL_REGIEXP, $1, $3 ); }
+		| infix_expr OL_NOTREGEXP infix_expr
+			{ $$ = New Parse_Expr( OL_NOTREGEXP, $1, $3 ); }
+		| infix_expr OL_NOTREGIEXP infix_expr
+			{ $$ = New Parse_Expr( OL_NOTREGIEXP, $1, $3 ); }
+		| infix_expr OL_LSHIFT infix_expr
+			{ $$ = New Parse_Expr( OL_LSHIFT, $1, $3 ); }
+		| infix_expr OL_RSHIFT infix_expr
+			{ $$ = New Parse_Expr( OL_RSHIFT, $1, $3 ); }
+		| infix_expr OL_PLUS infix_expr
+			{ $$ = New Parse_Expr( OL_PLUS, $1, $3 ); }
+		| infix_expr OL_MINUS infix_expr
+			{ $$ = New Parse_Expr( OL_MINUS, $1, $3 ); }
+		| infix_expr OL_TIMES infix_expr
+			{ $$ = New Parse_Expr( OL_TIMES, $1, $3 ); }
+		| infix_expr OL_DIVIDE infix_expr
+			{ $$ = New Parse_Expr( OL_DIVIDE, $1, $3 ); }
+		| infix_expr OL_MODULUS infix_expr
+			{ $$ = New Parse_Expr( OL_MODULUS, $1, $3 ); }
+		| infix_expr OL_EXP infix_expr
+			{ $$ = New Parse_Expr( OL_EXP, $1, $3 ); }
+		;
+
+range_expr:	OL_LPAR infix_expr OL_COMMA infix_expr OL_RPAR 
+			{ $$ = New Parse_Range(OL_RANGEOO, $2, $4); } 
+		| OL_LPAR infix_expr OL_COMMA infix_expr OL_RSQUB
+			{ $$ = New Parse_Range(OL_RANGEOC, $2, $4); } 
+		| OL_LSQUB infix_expr OL_COMMA infix_expr OL_RPAR
+			{ $$ = New Parse_Range(OL_RANGECO, $2, $4); } 
+		| OL_LSQUB infix_expr OL_COMMA infix_expr OL_RSQUB
+			{ $$ = New Parse_Range(OL_RANGECC, $2, $4); } 
 		;
 
 expr:		OL_ATOM {

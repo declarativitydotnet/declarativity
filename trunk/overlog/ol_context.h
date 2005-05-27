@@ -16,13 +16,11 @@
 #ifndef __OL_PARSEENV_H__
 #define __OL_PARSEENV_H__
 
-#include <async.h>
 #include <list>
 #include <map>
 #include <set>
 #include "value.h"
 
-class OL_Lexer;
 #include "parser_stuff.h"
 
 class OL_Context {
@@ -127,7 +125,7 @@ public:
 
 private:
   FunctorMap* functors;
-  TableInfoMap* tableInfoMap;
+  TableInfoMap* tables;
   std::set<str> watchTables;
 
   Functor *retrieve_functor( str name, int arity, str loc,

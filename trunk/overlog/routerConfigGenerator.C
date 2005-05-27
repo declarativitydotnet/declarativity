@@ -9,8 +9,6 @@
  * 
  */
 
-//#include <async.h>
-//include <arpc.h>
 #include "routerConfigGenerator.h"
 
 const str RouterConfigGenerator::SEL_PRE("select_");

@@ -21,7 +21,6 @@
 //#include <config.h>
 //#endif /* HAVE_CONFIG_H */
 
-#include <async.h>
 #include <list>
 #include <map>
 #include <arpc.h>

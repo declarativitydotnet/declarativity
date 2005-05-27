@@ -253,6 +253,13 @@ OL_Context::Functor *OL_Context::retrieve_functor( str name, int arity, str loc,
 str OL_Context::toString()
 {
   strbuf r;
+  for( TableInfoMap::iterator i = tables->begin(); i != tables->end(); i++ ) {
+    TableInfo *t=i->second;
+    r << "materialise(" << t->tableName << ","
+      << t->arity << ","
+      << t->timeout << ","
+      << t->size << ").\n";
+  }
   
   for( FunctorMap::iterator f=functors->begin(); f != functors->end(); f++) {
     r << f->first << " :- \n";
@@ -268,13 +275,13 @@ OL_Context::OL_Context()
   : lexer(NULL)
 {
   functors = New FunctorMap();
-  tableInfoMap = New TableInfoMap();
+  tables = New TableInfoMap();
 }
 
 OL_Context::~OL_Context()
 {
   delete functors;
-  delete tableInfoMap;
+  delete tables;
 }
 
 void OL_Context::parse_string(const char *prog)
@@ -354,7 +361,7 @@ void OL_Context::materialize( Parse_ExprList *l)
     tableInfo->eventFlag = true;
     }*/
 
-  tableInfoMap->insert(std::make_pair(tableInfo->tableName, tableInfo));
+  tables->insert(std::make_pair(tableInfo->tableName, tableInfo));
   
   DBG( "Materialize " << tableInfo->tableName << "/" << tableInfo->arity 
        << ", timeout " << tableInfo->timeout << ", size " << tableInfo->size); 
@@ -372,8 +379,8 @@ void OL_Context::primaryKeys( Parse_ExprList *l)
     return;
   }
 
-  TableInfoMap::iterator _iterator = tableInfoMap->find(l->at(0)->val->toString());
-  if (_iterator != tableInfoMap->end()) {
+  TableInfoMap::iterator _iterator = tables->find(l->at(0)->val->toString());
+  if (_iterator != tables->end()) {
     for (uint k = 0; k < l->size()-1; k++) {
       _iterator->second->primaryKeys.push_back(atoi(l->at(k+1)->val->toString().cstr()));
     }
@@ -391,7 +398,6 @@ void OL_Context::watchVariables( Parse_ExprList *l)
 //
 void OL_Context::add_fact( Parse_Term *t)
 {
-  TupleRef tpl = Tuple::mk();
   str tblname;
 
   /*if (t->fn->loc != "") {
@@ -400,20 +406,31 @@ void OL_Context::add_fact( Parse_Term *t)
     }*/
   tblname = t->fn->name;
 
-  for(Parse_ExprList::iterator i = t->args->begin(); i != t->args->end(); i++){
-    if ((*i)->t != Parse_Expr::VAL) {
-      error("free variables and don't-cares not allowed in facts.");
-      goto fact_error;
-    } else {
-      ValueRef v=(*i)->val;
-      tpl->append(v);
+  if (tblname == "materialize" || tblname == "materialise" ) {
+    materialize(t->args);
+  } else if (tblname == "watch") { 
+    watchVariables(t->args);
+  } else if (tblname == "primarykeys") {
+    primaryKeys(t->args);
+  } else {
+    TupleRef tpl = Tuple::mk();
+    for( Parse_ExprList::iterator i = t->args->begin(); 
+	 i != t->args->end(); 
+	 i++) {
+      if ((*i)->t != Parse_Expr::VAL) {
+	error("free variables and don't-cares not allowed in facts.");
+	goto fact_error;
+      } else {
+	ValueRef v=(*i)->val;
+	tpl->append(v);
+      }
     }
+    tpl->freeze();
+    DBG( "Fact: " << tblname << " <- " << tpl->toString() );
+    
+  fact_error:
+    delete t;
   }
-  tpl->freeze();
-  DBG( "Fact: " << tblname << " <- " << tpl->toString() );
-  
- fact_error:
-  delete t;
 }
 
 void OL_Context::add_event( Parse_Term *t)
@@ -422,6 +439,6 @@ void OL_Context::add_event( Parse_Term *t)
 
 OL_Context::FunctorMap* OL_Context::getFunctors() { return functors; }
 
-OL_Context::TableInfoMap* OL_Context::getTableInfos() { return tableInfoMap; } 
+OL_Context::TableInfoMap* OL_Context::getTableInfos() { return tables; } 
 
 std::set<str> OL_Context::getWatchTables() { return watchTables; } 
