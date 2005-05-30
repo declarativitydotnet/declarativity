@@ -114,7 +114,7 @@ event:          OL_EVENT term OL_DOT { ctxt->add_event($2); } ;
 termlist:	term { $$ = New Parse_TermList(); $$->push_front($1); }
 		| term OL_COMMA termlist { $3->push_front($1); $$=$3; } ;
 
-term:		functorname termbody { $$=New Parse_Term($1, $2); } ;
+term:		functorname termbody { $$=New Parse_Term($1, $2); } 
 		| infix_expr { $$=New Parse_Term($1); };
 
 termbody:	OL_LPAR OL_RPAR { 

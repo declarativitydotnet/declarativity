@@ -618,13 +618,11 @@ goto find_rule; \
 #define CCOMMENT 1
 #define CSTRING 2
 
-#ifndef YY_NO_UNISTD_H
 /* Special case for "unistd.h", since it is non-ANSI. We include it way
  * down here because we want the user's section 1 to have been scanned first.
  * The user has a chance to override it with an option.
  */
 #include <unistd.h>
-#endif
 
 #ifndef YY_EXTRA_TYPE
 #define YY_EXTRA_TYPE void *
@@ -720,7 +718,7 @@ YY_DECL
 #line 76 "ol_lexer.lex"
 
 
-#line 724 "ol_lexer.C"
+#line 722 "ol_lexer.C"
 
 	if ( (yy_init) )
 		{
@@ -1159,7 +1157,7 @@ YY_RULE_SETUP
 #line 204 "ol_lexer.lex"
 ECHO;
 	YY_BREAK
-#line 1163 "ol_lexer.C"
+#line 1161 "ol_lexer.C"
 			case YY_STATE_EOF(CCOMMENT):
 			case YY_STATE_EOF(CSTRING):
 				yyterminate();

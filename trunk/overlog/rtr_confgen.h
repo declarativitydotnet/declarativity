@@ -78,7 +78,7 @@ class Rtr_ConfGen {
 
  public:
   Rtr_ConfGen(OL_Context* ctxt, Router::ConfigurationRef conf, 
-			bool _dups, bool debug, str filename);
+	      bool _dups, bool debug, str filename);
   Rtr_ConfGen::~Rtr_ConfGen();
 
   void configureRouter(ref< Udp > udp, str nodeID);
@@ -109,14 +109,14 @@ private:
 
   // counter to determine how many muxers and demuxers are needed
   str _curType;
-  std::vector<ElementSpecRef> _udpPushSenders, _udpPullSenders;
+  std::vector<ElementSpecRef> _udpPushSenders;
+  std::vector<ElementSpecRef> _currentElementChain;
    
   ReceiverInfoMap _udpReceivers; // for demuxing
   bool _pendingRegisterReceiver;
   str  _pendingReceiverTable;
   ElementSpecPtr _pendingReceiverSpec;
   
-
   // Relational -> P2 elements
   void processFunctor(OL_Context::Functor* curFunctor, 
 		      str nodeID);
@@ -124,68 +124,56 @@ private:
   void processRule(OL_Context::Rule *r, 
 		   OL_Context::Functor *fn,
 		   str nodeID);
-
-  ElementSpecRef createScanElements(OL_Context::Functor* curFunctor, 
-				    OL_Context::Rule* rule,
-				    OL_Context::Term term, 
-				    OL_Context::TableInfo* tableInfo, 
-				    str nodeID);
   
-  ElementSpecRef genJoinElements(OL_Context::Functor* curFunctor, 
-				 OL_Context::Rule* curRule, 
-				 str nodeID,
-				 FieldNamesTracker* namesTracker,
-				 ptr<Aggwrap> agg_el);
+  void genJoinElements(OL_Context::Functor* curFunctor, 
+		       OL_Context::Rule* curRule, 
+		       str nodeID,
+		       FieldNamesTracker* namesTracker,
+		       ptr<Aggwrap> agg_el);
 
-  ElementSpecRef genProbeElements(OL_Context::Rule* curRule, 
-				  OL_Context::Term eventTerm, 
-				  OL_Context::Term baseTerm, 
-				  str nodeID, 
-				  FieldNamesTracker* namesTracker, 
-				  ElementSpecRef priorElement,
-				  int joinOrder,
-				  cbv comp_cb );
+  void genProbeElements(OL_Context::Rule* curRule, 
+			OL_Context::Term eventTerm, 
+			OL_Context::Term baseTerm, 
+			str nodeID, 
+			FieldNamesTracker* namesTracker, 
+			int joinOrder,
+			cbv comp_cb );
 
-  ElementSpecRef genSelectionElements(OL_Context::Rule* curRule, 
-					   OL_Context::Term nextSelection, 
-					   str nodeID, 
-					   FieldNamesTracker* tracker,
-					   ElementSpecRef priorElement, 
-					   int selectionID); 
+  void genProjectHeadElements(OL_Context::Functor* curFunctor, 
+			      OL_Context::Rule* curRule,
+			      str nodeID,
+			      FieldNamesTracker* curNamesTracker);
 
-  ElementSpecRef genProjectHeadElements(OL_Context::Functor* curFunctor, 
-					     OL_Context::Rule* curRule,
-					     str nodeID,
-					     FieldNamesTracker* curNamesTracker,
-					     ElementSpecRef connectingElement);
+  void genSelectionElements(OL_Context::Rule* curRule, 
+			    OL_Context::Term nextSelection, 
+			    str nodeID, 
+			    FieldNamesTracker* tracker,
+			    int selectionID); 
+  
+  void genAllSelectionElements(OL_Context::Rule* curRule,
+			       str nodeID,
+			       FieldNamesTracker* curNamesTracker);
 
-  ElementSpecRef genAllSelectionElements(OL_Context::Rule* curRule,
-					      str nodeID,
-					      FieldNamesTracker* curNamesTracker,
-					      ElementSpecRef connectingElement);
+  void genAllAssignmentElements(OL_Context::Rule* curRule,
+				str nodeID,
+				FieldNamesTracker* curNamesTracker);
+  
+  void genAssignmentElements(OL_Context::Rule* curRule,
+			     OL_Context::Term curTerm, 
+			     str nodeID,
+			     FieldNamesTracker* curNamesTracker,
+			     int assignmentID); 
+  
+  void genPrintElement(str header);
 
-  ElementSpecRef genAllAssignmentElements(OL_Context::Rule* curRule,
-					       str nodeID,
-					       FieldNamesTracker* curNamesTracker,
-					       ElementSpecRef connectingElement);
+  void genPrintWatchElement(str header);
 
-  ElementSpecRef genAssignmentElements(OL_Context::Rule* curRule,
-					    OL_Context::Term curTerm, 
-					    str nodeID,
-					    FieldNamesTracker* curNamesTracker,
-					    ElementSpecRef connectingElement,
-					    int assignmentID); 
-
-  ElementSpecRef genPrintElement(str header, ElementSpecRef connectingElement);
-
-  ElementSpecRef genPrintWatchElement(str header, ElementSpecRef connectingElement);
-
-  ElementSpecRef genDupElimElement(str header, ElementSpecRef connectingElement);
+  void genDupElimElement(str header);
   
   void genSingleTermElement(OL_Context::Functor* curFunctor, 
-				 OL_Context::Rule* curRule, 
-				 str nodeID, 
-				 FieldNamesTracker* namesTracker);
+			    OL_Context::Rule* curRule, 
+			    str nodeID, 
+			    FieldNamesTracker* namesTracker);
 
   void genSingleAggregateElements(OL_Context::Functor* curFunctor, 
 				  OL_Context::Rule* curRule, 
@@ -197,13 +185,13 @@ private:
   void genReceiveElements(ref< Udp> udp, str nodeID);
   void registerReceiverTable(str tableName);
   void registerReceiver(str tableName, ElementSpecRef elementSpecRef);
-  ElementSpecRef genSendMarshalElements(OL_Context::Rule* rule, str nodeID, 
-					     int arity, ElementSpecRef toSend);
-  ElementSpecRef genFunctorSource(OL_Context::Functor* functor, OL_Context::Rule* rule, str nodeID);
+  void genSendMarshalElements(OL_Context::Rule* rule, str nodeID, int arity);
+  void genFunctorSource(OL_Context::Functor* functor, OL_Context::Rule* rule, str nodeID);
 
   // Helper functions
   void hookUp(ElementSpecRef firstElement, int firstPort,
 	      ElementSpecRef secondElement, int secondPort);  
+  void hookUp(ElementSpecRef secondElement, int secondPort);  
   str getRuleStr(OL_Context::Functor* curFunctor, 
 		 OL_Context::Rule* curRule);
   void addMultTableIndex(TableRef table, int fn, str nodeID);
@@ -212,6 +200,8 @@ private:
   bool isAggregation(OL_Context::Term term);
   bool hasSingleAggTerm(OL_Context::Rule* rule);
   bool hasPeriodicTerm(OL_Context::Rule* curRule);
+  void debugRule(OL_Context::Rule* curRule, str debugMsg) { std::cout << curRule->ruleID << ": " << debugMsg; }
+
 
   // convince placeholder to figure out the cur fields in a tuple in flight
   class FieldNamesTracker {

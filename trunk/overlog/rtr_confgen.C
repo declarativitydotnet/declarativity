@@ -76,10 +76,11 @@ void Rtr_ConfGen::configureRouter(ref< Udp > udp, str nodeID)
     processFunctor(nextFunctor, nodeID);
   }
 
-  if (_udpPushSenders.size() + _udpPullSenders.size() > 0) {
+  if (_udpPushSenders.size()) { 
     genSendElements(udp, nodeID);
   }
 
+  _currentElementChain.clear();
   if (_udpReceivers.size() > 0) {
     genReceiveElements(udp, nodeID);
   }
@@ -88,7 +89,6 @@ void Rtr_ConfGen::configureRouter(ref< Udp > udp, str nodeID)
 void Rtr_ConfGen::clear()
 {
   _udpReceivers.clear();
-  _udpPullSenders.clear();
   _udpPushSenders.clear();
 }
 
@@ -138,6 +138,7 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
 			      OL_Context::Functor *fn,
 			      str nodeID)
 {
+  std::cout << "Process rule " << r->ruleID << "\n";
   // first, get a list of possible unifications needed
   std::vector<JoinKey> joinKeys;
   setJoinKeys(r, &joinKeys);    
@@ -146,93 +147,77 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
 
   _pendingReceiverSpec = NULL;
   // Do we need an aggregation element to wrap around this?
+  // support multiple aggregates next time
   if (r->aggField >= 0) {
-    agg_el = New refcounted<Aggwrap>(r->aggFn, r->aggField );
+    // add 1 for position, add one for table name
+    agg_el = New refcounted<Aggwrap>(r->aggFn, r->aggField + 2);
   }
   
-  ElementSpecRef last_el = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlotProcessFunctor"));
-
-  // step 1:
+  _currentElementChain.clear();
   
   if (hasSingleAggTerm(r)) { 
-    // has a single agg on a single materialized table
+    // has a single agg on a single materialized table. 
+    // Merge this with the other kind of agg
     genSingleAggregateElements(fn, r, nodeID, &curNamesTracker);
     return;
   }
   
   if (hasPeriodicTerm(r)) {
-    last_el = genFunctorSource(fn, r, nodeID);
+    // generate a functor source at at every period
+    genFunctorSource(fn, r, nodeID);
   } else {
     if (joinKeys.size() == 0) {
       // if there are no possible unifications, we process only the first term
       genSingleTermElement(fn, r, nodeID, &curNamesTracker);
-      _curType = "h";   
     } else {
-      // probe
-      // FIXME for future:
-      // 1) In future, have to detect that if there are no events fall back to 
-      //    traditional symmetric hash joins
-      // 2) Probes may be on different nodes. So may have to rehash.
-      last_el = genJoinElements(fn, r, nodeID, &curNamesTracker, agg_el);
-      _curType = "h";      
+      genJoinElements(fn, r, nodeID, &curNamesTracker, agg_el);
     }
     
-    // do any selections. 
-    last_el = genAllSelectionElements(r, nodeID, &curNamesTracker, last_el);
-    
-    last_el = genAllAssignmentElements(r, nodeID, &curNamesTracker, last_el);
-    
-    
-    // do the necessary projections based on the head
-    last_el = genProjectHeadElements(fn, r, nodeID, &curNamesTracker, last_el);
+    // do the selections and assignment, followed by projection
+    genAllSelectionElements(r, nodeID, &curNamesTracker);    
+    genAllAssignmentElements(r, nodeID, &curNamesTracker);
+    std::cout << "Pending register receiver " << _pendingRegisterReceiver << "\n";
+    genProjectHeadElements(fn, r, nodeID, &curNamesTracker);
   }
+
   
+  // generate the elements for the output
   if (r->deleteFlag == true) {
-    TRC("Delete " << fn->name << " for rule " << r->toString() << "\n");
-    // And send it for deletion. Assume deletion happens here. FIXME in future.
+    debugRule(r, str(strbuf() << "Delete " << fn->name << " for rule \n"));
+    // And send it for deletion. Assume deletion happens here. 
+    // It may happen on another node in practice. FIXME in future.
     TableRef tableToDelete = getTableByName(nodeID, fn->name);
     OL_Context::TableInfo* ti = _ctxt->getTableInfos()->find(fn->name)->second;
     
-    /*ElementSpecRef pullPushDelete =
-      _conf->addElement(New refcounted< TimedPullPush >(strbuf("PullPushDelete:") << r->ruleID,
-      0));
-    */ 
+    genPrintElement(strbuf("PrintBeforeDelete:") << r->ruleID << nodeID);
+    genPrintWatchElement(strbuf("PrintWatchDelete:") << r->ruleID << nodeID);
 
-    last_el = genPrintElement(strbuf("PrintBeforeDelete:") << r->ruleID << nodeID, 
-			      last_el);
-    last_el = genPrintWatchElement(strbuf("PrintWatchDelete:") << r->ruleID << nodeID, 
-				   last_el);
     ElementSpecRef deleteElement =
       _conf->addElement(New refcounted< Delete >(strbuf("Delete:") << r->ruleID << nodeID,
 						 tableToDelete, 
 						 ti->primaryKeys.at(0), 						   
-						 ti->primaryKeys.at(0)));
-    
-    // Link the two joins together
-    hookUp(last_el, 0, deleteElement, 0);
-    //hookUp(pullPushDelete, 0, deleteElement, 0);
+						 ti->primaryKeys.at(0)));    
+    // chain up
+    hookUp(deleteElement, 0);
 
     if (_pendingReceiverSpec) {
       registerReceiver(_pendingReceiverTable, _pendingReceiverSpec);
     }
-    return;
-  } else {
+    return; // discard. deleted tuples not sent anywhere
+  } else {    
     if (agg_el) { 
       ElementSpecRef agg_spec = _conf->addElement(agg_el);
-      hookUp(agg_spec, 1, _pendingReceiverSpec, 0);
-      hookUp(last_el, 0, agg_spec, 1);
-      last_el = agg_spec;
-      _pendingReceiverSpec = agg_spec;
-      _curType = "h";
-    }
+      hookUp(agg_spec, 1); // hook up the internal output
+      hookUp(agg_spec, 1, _pendingReceiverSpec, 0); // hookup the internal input
+      _pendingReceiverSpec = agg_spec; // hook the agg_spect to the front later by receivers
+      _currentElementChain.push_back(agg_spec);
+    } 
     // send it!
-    last_el = genSendMarshalElements(r, nodeID, fn->arity, last_el);     
-    // send back
-    // not done yet, we also need to register a table receiver for the head
+    genSendMarshalElements(r, nodeID, fn->arity);         
+    
+    // at the receiver side:
     str headTableName = fn->name;
     registerReceiverTable(headTableName);
-    // link that to a discard. If there are other flows that need it, they will
-    // get the tuples via another fork in the duplicator.
     ElementSpecRef sinkS = _conf->addElement(New refcounted< Discard >("discard"));    
     registerReceiver(headTableName, sinkS);
   }
@@ -241,13 +226,8 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
     registerReceiver(_pendingReceiverTable, _pendingReceiverSpec);
   }
 
-  
-  // do the selections
-  if (_curType == "h") {
-    _udpPushSenders.push_back(last_el); // need a slot
-  } else {
-    _udpPullSenders.push_back(last_el); // no need a slot
-  }      
+  // anything at this point needs to be hookup with senders
+  _udpPushSenders.push_back(_currentElementChain.back()); 
 }
 
 
@@ -278,21 +258,19 @@ void Rtr_ConfGen::genReceiveElements(ref< Udp> udp, str nodeID)
   hookUp(udpReceive, 0, unmarshalS, 0);
   hookUp(unmarshalS, 0, unBoxS, 0);
  
-  ElementSpecRef last_el = genPrintElement(strbuf("PrintReceivedBeforeDemux:") << nodeID, unBoxS);
-  last_el = genDupElimElement(strbuf("ReceiveDupElim:") << nodeID, last_el); 
-  last_el = genPrintWatchElement(strbuf("PrintWatchReceive:") << nodeID, 
-					   last_el);
-  //last_el = genPrintElement(strbuf("PrintReceivedAfterDupElim:") << nodeID, last_el);  
+  genPrintElement(strbuf("PrintReceivedBeforeDemux:") << nodeID);
+  genDupElimElement(strbuf("ReceiveDupElimBeforeDemux:") << nodeID); 
+  genPrintWatchElement(strbuf("PrintWatchReceiveBeforeDemux:") << nodeID);
 
   ElementSpecRef bufferQueue = 
-    _conf->addElement(New refcounted< Queue >(strbuf("Queue:") << 
+    _conf->addElement(New refcounted< Queue >(strbuf("ReceiveQueue:") << 
 					      nodeID, 1000));
   ElementSpecRef pullPush = 
-    _conf->addElement(New refcounted<TimedPullPush>("pullPush", 0));
+    _conf->addElement(New refcounted<TimedPullPush>("ReceiveQueuePullPush", 0));
 
-  hookUp(last_el, 0, bufferQueue, 0);
-  hookUp(bufferQueue, 0, pullPush, 0);
-  hookUp(pullPush, 0, demuxS, 0);
+  hookUp(bufferQueue, 0);
+  hookUp(pullPush, 0);
+  hookUp(demuxS, 0);
 
   // connect to all the pending udp receivers. Assume all 
   // receivers are connected to elements with push input ports for now
@@ -302,37 +280,36 @@ void Rtr_ConfGen::genReceiveElements(ref< Udp> udp, str nodeID)
     int numElementsToReceive = ri._receivers.size(); // figure out the number of receivers
     str tableName = ri._name;
 
-    TRC("Demuxing " << tableName << " for " 
-	<< numElementsToReceive << " elements\n" );
+    std::cout << "Generate Receive: Demuxing " << tableName << " for " << numElementsToReceive << " elements\n";
 
     // DupElim -> DemuxS -> Insert -> Duplicator -> Fork
 
     ElementSpecRef bufferQueue = 
-      _conf->addElement(New refcounted< Queue >(strbuf("Queue:") << 
+      _conf->addElement(New refcounted< Queue >(strbuf("DemuxQueue:") << 
 						nodeID << ":" << tableName, 1000));
     ElementSpecRef pullPush = 
-      _conf->addElement(New refcounted<TimedPullPush>("pullPush", 0));
+      _conf->addElement(New refcounted<TimedPullPush>("DemuxQueuePullPush" << nodeID << ":" << tableName, 0));
     hookUp(demuxS, counter++, bufferQueue, 0);
     hookUp(bufferQueue, 0, pullPush, 0);
+    
 
     // duplicator
-    ElementSpecRef duplicator = _conf->addElement(New refcounted< DuplicateConservative >(strbuf("ReceiveDup:") 
-											  << tableName << ":" << nodeID, 
-											  numElementsToReceive));    
+    ElementSpecRef duplicator = 
+      _conf->addElement(New refcounted< DuplicateConservative >(strbuf("DuplicateConservative:") 
+								<< tableName << ":" << nodeID, 
+								numElementsToReceive));    
     // materialize table only if it is declared and has lifetime>0
     OL_Context::TableInfoMap::iterator _iterator = _ctxt->getTableInfos()->find(tableName);
     if (_iterator != _ctxt->getTableInfos()->end() && _iterator->second->timeout != 0) {
-      ElementSpecRef insertS = _conf->addElement(New refcounted< Insert >(strbuf("Insert:") << 
-									  tableName << ":" << nodeID,  
-									  getTableByName(nodeID, 
-											 tableName)));
+      ElementSpecRef insertS 
+	= _conf->addElement(New refcounted< Insert >(strbuf("Insert:") << 
+						     tableName << ":" << nodeID,  
+						     getTableByName(nodeID, tableName)));
 
       hookUp(pullPush, 0, insertS, 0);
+      genPrintWatchElement(strbuf("PrintWatchInsert:") << nodeID);
 
-      last_el = genPrintWatchElement(strbuf("PrintWatchInsert:") << nodeID, 
-						    insertS);
-
-      hookUp(last_el, 0, duplicator, 0);
+      hookUp(duplicator, 0);
     } else {
       hookUp(pullPush, 0, duplicator, 0);
     }
@@ -370,41 +347,25 @@ void Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
 
   // prepare to send. Assume all tuples send by first tuple
   ElementSpecRef muxS =
-    _conf->addElement(New refcounted< RoundRobin >("sendMux:" << nodeID, _udpPushSenders.size() + _udpPullSenders.size()));
+    _conf->addElement(New refcounted< RoundRobin >("sendMux:" << nodeID, 
+						   _udpPushSenders.size())); 
 
-  /*ElementSpecRef pullPush =
-    _conf->addElement(New refcounted< TimedPullPush >(strbuf("PullPush:") 
-						      << nodeID,
-						      0));
-  ElementSpecRef pushToPullQueue = 
-    _conf->addElement(New refcounted< Queue >(strbuf("Queue:") << nodeID, 1000));
-  */
   hookUp(muxS, 0, udpSend, 0);
-  //hookUp(pullPush, 0, pushToPullQueue, 0);
-  //hookUp(pushToPullQueue, 0, udpSend, 0);
-  
+
   // form the push senders
   for (unsigned int k = 0; k < _udpPushSenders.size(); k++) {
     ElementSpecRef nextElementSpec = _udpPushSenders.at(k);
 
     ElementSpecRef pushToPull = 
-      _conf->addElement(New refcounted< Queue >(strbuf("Queue:") << 
+      _conf->addElement(New refcounted< Queue >(strbuf("SendQueue:") << 
 					       nodeID << ":" << k, 1000));
     hookUp(nextElementSpec, 0, pushToPull, 0);
     hookUp(pushToPull, 0, muxS, k);
   }
-
-  // since pull senders, no need slot
-  for (unsigned int k = 0; k < _udpPullSenders.size(); k++) {
-    ElementSpecRef nextElementSpec = _udpPullSenders.at(k);
-    hookUp(nextElementSpec, 0, muxS, k + _udpPushSenders.size());
-  }
 }
 
-ElementSpecRef 
-Rtr_ConfGen::genFunctorSource(OL_Context::Functor* functor, OL_Context::Rule* rule, str nodeID)
+void Rtr_ConfGen::genFunctorSource(OL_Context::Functor* functor, OL_Context::Rule* rule, str nodeID)
 {
- // My fix finger tuple
   TupleRef functorTuple = Tuple::mk();
   functorTuple->append(Val_Str::mk(functor->name));
   functorTuple->append(Val_Str::mk(nodeID)); // address for marshalling
@@ -414,35 +375,28 @@ Rtr_ConfGen::genFunctorSource(OL_Context::Functor* functor, OL_Context::Rule* ru
   ElementSpecRef source =
     _conf->addElement(New refcounted< TupleSource >(str("FunctorSource:") << rule->ruleID << nodeID,
                                                    functorTuple));
-  
-  ElementSpecRef last_el = genPrintElement(strbuf("PrintFunctorSource:") << 
-							  rule->ruleID << ":" << nodeID, source);
+  _currentElementChain.push_back(source);
+
+  genPrintElement(strbuf("PrintFunctorSource:") << rule->ruleID << ":" << nodeID);
   str firstVar = rule->terms.at(0).argNames.at(0);
   // The timed pusher
   ElementSpecRef pushFunctor =
     _conf->addElement(New refcounted< TimedPullPush >(strbuf("FunctorPush:") << rule->ruleID << ":" << nodeID,
 						      atof(firstVar.cstr())));
 
-  //hookUp(source, 0, last_el, 0);
-  hookUp(last_el, 0, pushFunctor, 0);
-
-  return pushFunctor;
-
+  hookUp(pushFunctor, 0);
 }
 
+
 // create a send element where the first field after table name is the address. Drop that field
-ElementSpecRef 
-Rtr_ConfGen::genSendMarshalElements(OL_Context::Rule* rule, str nodeID, 
-						   int arity, ElementSpecRef toSend)
+void Rtr_ConfGen::genSendMarshalElements(OL_Context::Rule* rule, str nodeID, int arity)
 {
-  ElementSpecRef last_el = genDupElimElement(strbuf("SendDupElim:") << rule->ruleID 
-							    << ":" << nodeID, toSend);
+  genDupElimElement(strbuf("SendDupElim:") << rule->ruleID << ":" << nodeID);
 
-  last_el = genPrintWatchElement(strbuf("PrintWatchSend:") << 
-						rule->ruleID << ":" << nodeID, last_el);
+  genPrintWatchElement(strbuf("PrintWatchSend:") << 
+		       rule->ruleID << ":" << nodeID);
 
- 
-  
+   
   // Create the encapsulated version of this tuple, holding the
   // destination address and, encapsulated, the payload containing the
   // reach tuple. Take care to avoid sending the first field address
@@ -457,10 +411,10 @@ Rtr_ConfGen::genSendMarshalElements(OL_Context::Rule* rule, str nodeID,
   ElementSpecRef encapS =
     _conf->addElement(New refcounted< PelTransform >(strbuf("encapSend:") << rule->ruleID << ":" << nodeID, 
 						     "$1 pop " << marshalPelStr)); // the rest
-  hookUp(last_el, 0, encapS, 0);
+  hookUp(encapS, 0);
 
-  last_el = genPrintElement(strbuf("PrintSend:") << 
-					   rule->ruleID << ":" << nodeID, encapS);
+  genPrintElement(strbuf("PrintSend:") << 
+		  rule->ruleID << ":" << nodeID);
 
   // Now marshall the payload (second field)
   ElementSpecRef marshalS = 
@@ -473,10 +427,8 @@ Rtr_ConfGen::genSendMarshalElements(OL_Context::Rule* rule, str nodeID,
     _conf->addElement(New refcounted< StrToSockaddr >("router:" << rule->ruleID 
 						      << ":" << nodeID, 0));
 
-  hookUp(last_el, 0, marshalS, 0);
-  hookUp(marshalS, 0, routeS, 0);
-
-  return routeS;
+  hookUp(marshalS, 0);
+  hookUp(routeS, 0);
 }
 
 // for a particular table name that we are receiving, register an elementSpec that needs 
@@ -531,13 +483,11 @@ bool Rtr_ConfGen::isAggregation(OL_Context::Term term)
   return substr(termName, 0, AGG_PRE.len()) == AGG_PRE;
 }
 
-ElementSpecRef 
-Rtr_ConfGen::genSelectionElements(OL_Context::Rule* curRule, 
-						 OL_Context::Term nextSelection, 
-						 str nodeID, 
-						 FieldNamesTracker* probeNames,
-						 ElementSpecRef lastElement, 
-						 int selectionID)
+void Rtr_ConfGen::genSelectionElements(OL_Context::Rule* curRule, 
+				       OL_Context::Term nextSelection, 
+				       str nodeID, 
+				       FieldNamesTracker* probeNames,
+				       int selectionID)
 {
   // Prepend with true if this is a Reach X, X.
   str termName = nextSelection.fn->name;
@@ -547,10 +497,9 @@ Rtr_ConfGen::genSelectionElements(OL_Context::Rule* curRule,
     termName = substr(termName, 1, termName.len()-1);
   } 
 
-  if (pelFunctions.find(termName) == pelFunctions.end()) { return lastElement; } // skip this selection
+  if (pelFunctions.find(termName) == pelFunctions.end()) { return; } // skip this selection
   str pelSelectionOpt = pelFunctions.find(termName)->second;
   
-
   // figure out where the selection is
   strbuf selectionPel(" ");
   for (uint k = 0; k < nextSelection.argNames.size(); k++) {
@@ -572,8 +521,8 @@ Rtr_ConfGen::genSelectionElements(OL_Context::Rule* curRule,
     selectionPel << "$" << k << " pop ";
   }
 
-  TRC("Gen selection functions for " << str(selectionPel) 
-      << " " << curRule->ruleID << " " << probeNames->toString() << "\n");
+  debugRule(curRule, str(strbuf() << "Generate selection functions for " << str(selectionPel) 
+			 << " " << probeNames->toString() << "\n"));
  
   ElementSpecRef selection =
     _conf->addElement(New refcounted< PelTransform >(strbuf("Selection:") 
@@ -586,44 +535,36 @@ Rtr_ConfGen::genSelectionElements(OL_Context::Rule* curRule,
     _pendingRegisterReceiver = false;
   } else {
     // connecting now
-    hookUp(lastElement, 0, selection, 0);
+    hookUp(selection, 0);
   }
 
-  return genPrintElement(strbuf("PrintAfterSelection:") 
-			      << curRule->ruleID << ":" 
-			      << selectionID << ":" << nodeID, selection);
+  genPrintElement(strbuf("PrintAfterSelection:") 
+		  << curRule->ruleID << ":" 
+		  << selectionID << ":" << nodeID);
 }
 
 
-ElementSpecRef 
-Rtr_ConfGen::genAllSelectionElements(OL_Context::Rule* curRule,
-						    str nodeID,
-						    FieldNamesTracker* curNamesTracker,
-						    ElementSpecRef connectingElement) 
+void Rtr_ConfGen::genAllSelectionElements(OL_Context::Rule* curRule,
+					  str nodeID,
+					  FieldNamesTracker* curNamesTracker) 
 {
-  ElementSpecRef lastSelectionSpecRef(connectingElement);
   for (unsigned int j = 0; j < curRule->terms.size(); j++) {
     OL_Context::Term nextTerm = curRule->terms.at(j);
     str termName = nextTerm.fn->name;
     if (isSelection(nextTerm)) {
-      TRC("Selection term " << termName << " " << curRule->ruleID << "\n");
-      lastSelectionSpecRef = genSelectionElements(curRule, nextTerm, 
-						       nodeID, curNamesTracker, 
-						       lastSelectionSpecRef, j); 
+      debugRule(curRule, str(strbuf() << "Selection term " << termName << " " << curRule->ruleID << "\n"));
+      genSelectionElements(curRule, nextTerm, nodeID, curNamesTracker, j); 
     }
   }
-  return lastSelectionSpecRef;
 }
 
 
 
-ElementSpecRef 
-Rtr_ConfGen::genAssignmentElements(OL_Context::Rule* curRule,
-						  OL_Context::Term curTerm, 
-						  str nodeID,
-						  FieldNamesTracker* curNamesTracker,
-						  ElementSpecRef connectingElement,
-						  int assignmentID) 
+void Rtr_ConfGen::genAssignmentElements(OL_Context::Rule* curRule,
+					OL_Context::Term curTerm, 
+					str nodeID,
+					FieldNamesTracker* curNamesTracker,
+					int assignmentID) 
 {
   str termName = curTerm.fn->name;
   
@@ -631,7 +572,7 @@ Rtr_ConfGen::genAssignmentElements(OL_Context::Rule* curRule,
   if (pelFunctions.find(termName) == pelFunctions.end()) {
     // cannot find this 
     std::cerr << "Invalid assignment term " << termName << "\n";
-    return connectingElement;
+    return;
   }
   strbuf pelStr;
   for (uint k = 0; k < curNamesTracker->fieldNames.size()+1; k++) {
@@ -655,7 +596,6 @@ Rtr_ConfGen::genAssignmentElements(OL_Context::Rule* curRule,
       // table size keyword
       str tableName = substr(curTerm.argNames.at(k), TABLESIZE.len()+1, 
 			     curTerm.argNames.at(k).len()-TABLESIZE.len()-1);
-      TRC(tableName << "\n");
       if (_ctxt->getTableInfos()->find(tableName) == _ctxt->getTableInfos()->end()) {
 	fail = true;
 	std::cerr << tableName << " cannot be found " << curRule->ruleID << "\n";
@@ -675,20 +615,14 @@ Rtr_ConfGen::genAssignmentElements(OL_Context::Rule* curRule,
   }
   if (fail) { 
     // we cannot assign
-    return connectingElement; 
+    return; 
   }
   
-  //if (substr(termName, ASSIGN_PRE.len(), 
-  //if (substr(termName, ASSIGN_PRE.len(), termName.len()-ASSIGN_PRE.len()) == "varAssign") {
-    //int pos = curNamesTracker->fieldPosition(curTerm.argNames.at(1));
-    //pelStr << "$" << pos << " pop";
-  //} else {
   pelStr << pelExpression << " pop";
-  //}
   curNamesTracker->fieldNames.push_back(curTerm.argNames.at(0));
   
-  TRC("Gen assignments for " << termName << " " << curRule->ruleID << 
-      " " << str(pelStr) << " " << curNamesTracker->toString() << "\n");
+  debugRule(curRule, str(strbuf() << "Generate assignments for " << termName << " " << curRule->ruleID << 
+			 " " << str(pelStr) << " " << curNamesTracker->toString() << "\n"));
   
   ElementSpecRef assignment =
     _conf->addElement(New refcounted< PelTransform >(strbuf("Assignment:") 
@@ -701,40 +635,31 @@ Rtr_ConfGen::genAssignmentElements(OL_Context::Rule* curRule,
     _pendingRegisterReceiver = false;
   } else {
     // connecting now
-    hookUp(connectingElement, 0, assignment, 0);
+    hookUp(assignment, 0);
   }
 
-  connectingElement = genPrintElement(strbuf("PrintAfterAssignment:") 
-					   << curRule->ruleID << ":" 
-					   << assignmentID << ":" << nodeID, assignment);
-  return connectingElement;
+  genPrintElement(strbuf("PrintAfterAssignment:") << curRule->ruleID << ":" 
+		  << assignmentID << ":" << nodeID);
 }
 
 
-ElementSpecRef 
-Rtr_ConfGen::genAllAssignmentElements(OL_Context::Rule* curRule,
-						     str nodeID,
-						     FieldNamesTracker* curNamesTracker,
-						     ElementSpecRef connectingElement) 
+void Rtr_ConfGen::genAllAssignmentElements(OL_Context::Rule* curRule,
+					   str nodeID,
+					   FieldNamesTracker* curNamesTracker) 
 {
   for (unsigned int j = 0; j < curRule->terms.size(); j++) {
     OL_Context::Term nextTerm = curRule->terms.at(j);
     if (isAssignment(nextTerm)) {
-      connectingElement = genAssignmentElements(curRule, nextTerm, nodeID, 
-						    curNamesTracker, connectingElement, j);
+      genAssignmentElements(curRule, nextTerm, nodeID, curNamesTracker, j);
     }
   }
-  return connectingElement;
 }
 
 
-
-ElementSpecRef 
-Rtr_ConfGen::genProjectHeadElements(OL_Context::Functor* curFunctor, 
-						   OL_Context::Rule* curRule,
-						   str nodeID,
-						   FieldNamesTracker* curNamesTracker,
-						   ElementSpecRef connectingElement)
+void Rtr_ConfGen::genProjectHeadElements(OL_Context::Functor* curFunctor, 
+					 OL_Context::Rule* curRule,
+					 str nodeID,
+					 FieldNamesTracker* curNamesTracker)
 {
   // determine the projection fields, and the first address to return. Add 1 for table name     
   int addressField = curNamesTracker->fieldPosition(curFunctor->loc) + 1;
@@ -764,42 +689,28 @@ Rtr_ConfGen::genProjectHeadElements(OL_Context::Functor* curFunctor,
     _pendingRegisterReceiver = false;
   } else {
     // connecting now
-    hookUp(connectingElement, 0, projectHead, 0);
+    hookUp(projectHead, 0);
   }
   
-  return genPrintElement(strbuf("PrintHead:") 
-			      << curRule->ruleID 
-			      << ":" << nodeID, projectHead);
-  
+  genPrintElement(strbuf("PrintHead:") << curRule->ruleID << ":" << nodeID);  
 }
 
 
 
-ElementSpecRef
+void 
 Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule, 
 			      OL_Context::Term eventTerm, 
 			      OL_Context::Term baseTerm, 
 			      str nodeID, 
 			      FieldNamesTracker* probeNames, 
-			      ElementSpecRef priorElement,
 			      int joinOrder,
-			      cbv comp_cb )
+			      cbv comp_cb)
 {
   // probe the right hand side
   // Here's where the join happens 
-  ElementSpecRef last_el = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlotProbeElements"));
   FieldNamesTracker* baseTableNames = New FieldNamesTracker(baseTerm.argNames, baseTerm.argNames.size());
   std::vector<int> leftJoinKeys = baseTableNames->matchingJoinKeys(probeNames->fieldNames);
   std::vector<int> rightJoinKeys =  probeNames->matchingJoinKeys(baseTerm.argNames);
-
-
-  /*
-  for (uint k = 0; k < rightJoinKeys.size(); k++) {
-  TRC("Right join keys " << rightJoinKeys.at(k) << " " << baseTableNames->toString() << "\n");
-  }
-  for (uint k = 0; k < leftJoinKeys.size(); k++) {
-  TRC("Left join keys " << leftJoinKeys.at(k) << " " << probeNames->toString() << "\n");
-    }*/
 
   if (leftJoinKeys.size() == 0 || rightJoinKeys.size() == 0) {
     std::cerr << "No matching join keys " << eventTerm.fn->name << " " << 
@@ -815,18 +726,21 @@ Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
   // first, figure out which are the matching keys on the probed table
 
   // should we use a uniqLookup or a multlookup? Check that the rightJoinKey is the primary key
-  OL_Context::TableInfo* tableInfo = 
-    _ctxt->getTableInfos()->find(baseTerm.fn->name)->second;
-  
+  OL_Context::TableInfo* tableInfo = _ctxt->getTableInfos()->find(baseTerm.fn->name)->second;
+  ElementSpecRef noNull = _conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << curRule->ruleID << ":" 
+									  << joinOrder << ":" << nodeID, 1));
+
+  ElementSpecRef last_el = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlotProbeElements"));
+ 
   if (tableInfo->primaryKeys.size() == 1 && tableInfo->primaryKeys.at(0) == rightJoinKey) {
     // use a unique index
     last_el =
       _conf->addElement(New refcounted< UniqueLookup >(strbuf("UniqueLookup:") << curRule->ruleID << ":" << joinOrder 
 						       << ":" << nodeID, probeTable,
 						       leftJoinKey, rightJoinKey, comp_cb));
-    TRC( "Unique lookup " << curRule->ruleID << " " 
-	 << eventTerm.fn->name << " " << baseTerm.fn->name << " " 
-	 << leftJoinKey << " " << rightJoinKey << "\n");
+    debugRule(curRule, str(strbuf() << "Unique lookup " << " " 
+			   << eventTerm.fn->name << " " << baseTerm.fn->name << " " 
+			   << leftJoinKey << " " << rightJoinKey << "\n"));
     
   } else {
     last_el =
@@ -835,39 +749,31 @@ Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 						     leftJoinKey, rightJoinKey, comp_cb));
     
     addMultTableIndex(probeTable, rightJoinKey, nodeID);
-    TRC( "Mult lookup " << curRule->ruleID << " " << 
-	 eventTerm.fn->name << " " << baseTerm.fn->name << " " 
-	 << leftJoinKey << " " << rightJoinKey << "\n");
+    debugRule(curRule, str(strbuf() << "Mult lookup " << curRule->ruleID << " " << 
+			   eventTerm.fn->name << " " << baseTerm.fn->name << " " 
+			   << leftJoinKey << " " << rightJoinKey << "\n"));
   }
   
-  ElementSpecRef noNull = _conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << curRule->ruleID << ":" 
-									  << joinOrder << ":" << nodeID, 1));
-  
-  hookUp(last_el, 0, noNull, 0);
-
+ 
   int numFieldsProbe = probeNames->fieldNames.size();
-  TRC("Probe before merge " << probeNames->toString() << "\n");
+  debugRule(curRule, str(strbuf() << "Probe before merge " << probeNames->toString() << "\n"));
   probeNames->mergeWith(baseTerm.argNames); 
-  TRC("Probe after merge " << probeNames->toString() << "\n");
+  debugRule(curRule, str(strbuf() << "Probe after merge " << probeNames->toString() << "\n"));
 
   if (_pendingRegisterReceiver) {
     // connecting to udp receiver later
     _pendingReceiverSpec = last_el;
     _pendingRegisterReceiver = false;
   } else {
-    // connecting now
-    hookUp(priorElement, 0, last_el, 0);  
+    // connecting now to prior element
+    hookUp(last_el, 0);  
   }
 
-  last_el = noNull;
-
-  /*last_el  = genPrintElement(strbuf("PrintProbe1:") << 
-					    curRule->ruleID << ":" << joinOrder << ":"
-					    << nodeID, last_el);*/
+  hookUp(last_el, 0, noNull, 0);
 
   // in case there are other join keys, we have to compare them using selections since we can join only 1 field
   // since we don't know the types, do a string compare
-  TRC("Number of join selections " << leftJoinKeys.size()-1 << "\n");
+  debugRule(curRule, str(strbuf() << "Number of join selections " << leftJoinKeys.size()-1 << "\n"));
   for (uint k = 1; k < leftJoinKeys.size(); k++) {
     int leftField = leftJoinKeys.at(k);
     int rightField = rightJoinKeys.at(k);
@@ -875,18 +781,17 @@ Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
     selectionPel << "$0 " << (leftField+1) << " field " << " $1 " << rightField+1 
 		 << " field ==s not ifstop $0 pop $1 pop";
 
-    TRC("Join selections " << str(selectionPel) << "\n");
+    debugRule(curRule, str(strbuf() << "Join selections " << str(selectionPel) << "\n"));
     ElementSpecRef joinSelections =
       _conf->addElement(New refcounted< PelTransform >(strbuf("JoinSelections:") << curRule->ruleID << ":" 
 						       << joinOrder << ":" << k << ":" << nodeID, 
 						       str(selectionPel)));    
-    hookUp(last_el, 0, joinSelections, 0);
-    last_el = joinSelections;
+    hookUp(joinSelections, 0);
   }
 
-  last_el = genPrintElement(strbuf("PrintProbe1:") << 
-					   curRule->ruleID << ":" << joinOrder << ":"
-					   << nodeID, last_el);
+  genPrintElement(strbuf("PrintProbe1:") << 
+		  curRule->ruleID << ":" << joinOrder << ":"
+		  << nodeID);
  
   // Take the joined tuples and produce the resulting path
   // form the pel projection. 
@@ -900,7 +805,6 @@ Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
   for (uint k = 0; k < baseTerm.argNames.size(); k++) {
     bool joinKey = false;
     for (uint j = 0; j < rightJoinKeys.size(); j++) {
-      //TRC( k << " " << rightJoinKeys.at(j) << "\n");
       if (k == (uint) rightJoinKeys.at(j)) { // add one for table name
 	joinKey = true;
 	break;
@@ -912,7 +816,6 @@ Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
   }
 
   str pelProjectStr(pelProject);
-  //TRC("Pel transform " << pelProjectStr << "\n");
   ElementSpecRef transS =
     _conf->addElement(New refcounted< PelTransform >(strbuf("JoinPelTransform:") << curRule->ruleID << ":" 
 						     << joinOrder << ":" << nodeID, 
@@ -920,43 +823,31 @@ Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 
   delete baseTableNames;
 
-  hookUp(last_el, 0, transS, 0);
+  hookUp(transS, 0);
 
-  return genPrintElement(strbuf("PrintProbe2:") << 
-			      curRule->ruleID << ":" << joinOrder << ":"
-			      << nodeID, transS);
+  genPrintElement(strbuf("PrintProbe2:") << 
+		  curRule->ruleID << ":" << joinOrder << ":"
+		  << nodeID);
 }
 
 
-ElementSpecRef 
-Rtr_ConfGen::genJoinElements(OL_Context::Functor* curFunctor, 
-			     OL_Context::Rule* curRule, 
-			     str nodeID, 
-			     FieldNamesTracker* namesTracker,
-			     ptr<Aggwrap> agg_el )
+void Rtr_ConfGen::genJoinElements(OL_Context::Functor* curFunctor, 
+				  OL_Context::Rule* curRule, 
+				  str nodeID, 
+				  FieldNamesTracker* namesTracker,
+				  ptr<Aggwrap> agg_el )
 {
   // identify the events, use that to probe the other matching tables
-  ElementSpecRef last_el = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlotJoinElements"));
-
   OL_Context::Term eventTerm;
-  std::vector<OL_Context::Term> selections; 
   std::vector<OL_Context::Term> baseTerms;
   bool eventFound = false;
   std::map<str, OL_Context::Term> staticTerms;
   for (unsigned int k = 0; k < curRule->terms.size(); k++) {
     OL_Context::Term nextTerm = curRule->terms.at(k);
     str termName = nextTerm.fn->name;
-    if (isSelection(nextTerm)) {
-      selections.push_back(nextTerm); 
+    if (isSelection(nextTerm) || isAssignment(nextTerm) || isAggregation(nextTerm)) {
       continue;
     }
-    if (isAssignment(nextTerm)) {
-      continue;
-    }
-    if (isAggregation(nextTerm)) {
-      continue;
-    }
-    //baseTerms.push_back(nextTerm);
 
     if (nextTerm.fn->rules.size() == 0) {
       staticTerms.insert(std::make_pair(termName, nextTerm));
@@ -980,8 +871,7 @@ Rtr_ConfGen::genJoinElements(OL_Context::Functor* curFunctor,
   if (eventFound == false) {
     std::cerr << "Cannot find event tuple. Performing multi-way joins in future!. \n";
     // is there a static table? If so, we can just use the other table(s) to probe
-    // FIXME: Write the code for n-way joins after SOSP
-    
+    // FIXME: Write the code for n-way joins after SOSP    
     for (unsigned int k = 0; k < curRule->terms.size(); k++) {
       OL_Context::Term nextTerm = curRule->terms.at(k);
       str termName = nextTerm.fn->name;
@@ -996,33 +886,30 @@ Rtr_ConfGen::genJoinElements(OL_Context::Functor* curFunctor,
       }        
     } 
   }
+
   std:: cout << "Event term " << eventTerm.fn->name << "\n";
   // for all the base tuples, use the join to probe. 
   // keep track also the cur ordering of variables
   namesTracker->initialize(eventTerm.argNames, eventTerm.argNames.size());  
   for (uint k = 0; k < baseTerms.size(); k++) {    
     if (baseTerms.at(k).fn->name == eventTerm.fn->name) { continue; }
-    TRC("Probing " << eventTerm.fn->name << " " 
-	<< baseTerms.at(k).fn->name << "\n");
+    debugRule(curRule, str(strbuf() << "Probing " << eventTerm.fn->name << " " 
+			   << baseTerms.at(k).fn->name << "\n"));
     cbv comp_cb = cbv_null;
     if (agg_el) {
       comp_cb = agg_el->get_comp_cb();
     }
-    last_el = genProbeElements(curRule, eventTerm, baseTerms.at(k), 
-			       nodeID, namesTracker, 
-			       last_el, k, comp_cb);
-    // TRC("Cur namesTracker " << namesTracker->toString() << "\n");
-    // are there any more probes? If so, we have to change from pull to push
-    //if (k != (baseTerms.size() - 1)) {
-      ElementSpecRef pullPush =
-	_conf->addElement(New refcounted< TimedPullPush >(strbuf("PullPush:") 
-							  << curRule->ruleID << ":" << nodeID,
-							  0));
-      hookUp(last_el, 0, pullPush, 0);
-      last_el = pullPush;
 
+    genProbeElements(curRule, eventTerm, baseTerms.at(k), 
+		     nodeID, namesTracker, k, comp_cb);
+
+    // Change from pull to push
+    ElementSpecRef pullPush =
+      _conf->addElement(New refcounted< TimedPullPush >(strbuf("JoinPullPush:") 
+							<< curRule->ruleID << ":" << nodeID << ":" << k,
+							0));
+    hookUp(pullPush, 0);
   }
-  return last_el;
 }
 
 
@@ -1034,14 +921,13 @@ void Rtr_ConfGen::addMultTableIndex(TableRef table, int fn, str nodeID)
     // not there yet
     table->add_multiple_index(fn);
     _multTableIndices.insert(std::make_pair(str(uniqStr), str(uniqStr)));
-    TRC("Mult index already added " << str(uniqStr) << "\n");
+    std::cout << "AddMultTableIndex: Mult index added " << str(uniqStr) << "\n";
   } else {
-    TRC("Mult index already exists " << str(uniqStr) << "\n");
+    std::cout << "AddMultTableIndex: Mult index already exists " << str(uniqStr) << "\n";
   }
 }
 
-void
-Rtr_ConfGen::genSingleAggregateElements(OL_Context::Functor* currentFunctor, 
+void Rtr_ConfGen::genSingleAggregateElements(OL_Context::Functor* currentFunctor, 
 					     OL_Context::Rule* currentRule, 
 					     str nodeID, 
 					     FieldNamesTracker* currentNamesTracker)
@@ -1101,8 +987,6 @@ Rtr_ConfGen::genSingleAggregateElements(OL_Context::Functor* currentFunctor,
   
   // get the table, create the index
   TableRef aggTable = getTableByName(nodeID, baseTerm.fn->name);
-  /*std::cout << "Obtain base term " << baseTerm.fn->name << " " << aggTerm.fn->name << " " 
-    << groupByFields.at(0) << " " << aggField << " " << " for aggregation \n";*/
   
   addMultTableIndex(aggTable, groupByFields.at(0), nodeID);
   
@@ -1123,7 +1007,6 @@ Rtr_ConfGen::genSingleAggregateElements(OL_Context::Functor* currentFunctor,
   for (uint k = 0; k < newFieldNamesTracker->fieldNames.size(); k++) {
     pelTransformStr << " $" << k << " pop";
   }
-  //std::cout << "Pel Transform str " << str(pelTransformStr) << "\n";
   // apply PEL to add a table name
   ElementSpecRef addTableName =
     _conf->addElement(New refcounted< PelTransform >(strbuf("Aggregation:") 
@@ -1133,23 +1016,17 @@ Rtr_ConfGen::genSingleAggregateElements(OL_Context::Functor* currentFunctor,
 
   hookUp(aggElement, 0, addTableName, 0);
 
-  ElementSpecRef nextElement = genPrintElement("PrintAgg:" << 
-						    currentRule->ruleID << ":" << nodeID, 
-						    addTableName);
+  genPrintElement("PrintAgg:" << currentRule->ruleID << ":" << nodeID);
 
   ElementSpecRef timedPullPush = 
     _conf->addElement(New refcounted<TimedPullPush>("timedPullPush:" << 
 						    currentRule->ruleID 
 						    << ":" << nodeID, 0));  
 
-  hookUp(nextElement, 0, timedPullPush, 0);
-  ElementSpecRef projectHeadElement = genProjectHeadElements(currentFunctor, currentRule, 
-								  nodeID, newFieldNamesTracker, 
-								  timedPullPush);
-  ElementSpecRef mostRecentElement = genSendMarshalElements(currentRule, nodeID, 
-								 currentFunctor->arity, projectHeadElement);
-
-  _udpPushSenders.push_back(mostRecentElement);
+  hookUp(timedPullPush, 0);
+  genProjectHeadElements(currentFunctor, currentRule, nodeID, newFieldNamesTracker);
+  genSendMarshalElements(currentRule, nodeID, currentFunctor->arity);
+  _udpPushSenders.push_back(_currentElementChain.back());
 
   // FIXME: Selections, assignments, better integration with the rest
 
@@ -1162,10 +1039,11 @@ Rtr_ConfGen::genSingleAggregateElements(OL_Context::Functor* currentFunctor,
   registerReceiver(headTableName, sinkS);
 }
 
+
 void Rtr_ConfGen::genSingleTermElement(OL_Context::Functor* curFunctor, 
-				       OL_Context::Rule* curRule, 
-				       str nodeID, 
-				       FieldNamesTracker* curNamesTracker)
+					OL_Context::Rule* curRule, 
+					str nodeID, 
+					FieldNamesTracker* curNamesTracker)
 {
   
   ElementSpecRef resultElement = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlotSingleTerm"));
@@ -1176,11 +1054,9 @@ void Rtr_ConfGen::genSingleTermElement(OL_Context::Functor* curFunctor,
     // skip those that we already decide is going to participate in     
     curTerm = curRule->terms.at(j);    
     str tableName = curTerm.fn->name;
-    // skip funcitons
-    if (isSelection(curTerm)) { continue; } // skip functions
-    if (isAssignment(curTerm)) { continue; } // skip functions
-    if (isAggregation(curTerm)) { continue; } // skip functions
-    registerReceiverTable(curTerm.fn->name); //genReceiveUnmarshalElements(curFunctor, curRule, curTerm, nodeID);	
+    // skip the following
+    if (isSelection(curTerm) || isAssignment(curTerm) || isAggregation(curTerm)) { continue; } // skip functions
+    registerReceiverTable(curTerm.fn->name); 
     _pendingRegisterReceiver = true;
     _pendingReceiverTable = curTerm.fn->name;
     break; // break at first opportunity. Assume there is only one term   
@@ -1192,39 +1068,29 @@ void Rtr_ConfGen::genSingleTermElement(OL_Context::Functor* curFunctor,
 }
 
 
-ElementSpecRef 
-Rtr_ConfGen::genDupElimElement(str header, ElementSpecRef connectingElement)
+void Rtr_ConfGen::genDupElimElement(str header)
 {
    if (_dups) {
      ElementSpecRef dupElim = _conf->addElement(New refcounted< DupElim >(header));
-
-    hookUp(connectingElement, 0, dupElim, 0);
-    return dupElim;
+     hookUp(dupElim, 0);
   }
-  return connectingElement;
 }
 
 
-ElementSpecRef 
-Rtr_ConfGen::genPrintElement(str header, ElementSpecRef connectingElement)
+void Rtr_ConfGen::genPrintElement(str header)
 {
   if (_debug) {
     ElementSpecRef print = 
       _conf->addElement(New refcounted< PrintTime >(header));
-    hookUp(connectingElement, 0, print, 0);
-    return print;
+    hookUp(print, 0);
   }
-  return connectingElement;
 }
 
-ElementSpecRef 
-Rtr_ConfGen::genPrintWatchElement(str header, ElementSpecRef connectingElement)
+void Rtr_ConfGen::genPrintWatchElement(str header)
 {
   ElementSpecRef printWatchElement = 
       _conf->addElement(New refcounted< PrintWatch >(header, _ctxt->getWatchTables()));
-  hookUp(connectingElement, 0, printWatchElement, 0);
-  return printWatchElement;
-
+  hookUp(printWatchElement, 0);
 }
 
 
@@ -1273,10 +1139,9 @@ void Rtr_ConfGen::createTables(str nodeID)
       std::vector<int> primaryKeys = tableInfo->primaryKeys;
       for (uint k = 0; k < primaryKeys.size(); k++) {
 	newTable->add_unique_index(primaryKeys.at(k));
-	TRC("Add unique index " << newTableName << " " << primaryKeys.at(k) << "\n");
+	std::cout << "Create Tables: Add unique index " << newTableName << " " << primaryKeys.at(k) << "\n";
       }
 
-      //newTable->add_multiple_index(1); 
       _tables.insert(std::make_pair(newTableName, newTable));      
     }
   }
@@ -1299,7 +1164,7 @@ str Rtr_ConfGen::getRuleStr(OL_Context::Functor* curFunctor, OL_Context::Rule* c
 
 
 void Rtr_ConfGen::hookUp(ElementSpecRef firstElement, int firstPort,
-				   ElementSpecRef secondElement, int secondPort)
+			 ElementSpecRef secondElement, int secondPort)
 {
   fprintf(_output, "Connect: \n");
   fprintf(_output, "  %s %s %d\n", firstElement->toString().cstr(), 
@@ -1308,9 +1173,23 @@ void Rtr_ConfGen::hookUp(ElementSpecRef firstElement, int firstPort,
 	  secondElement->element()->_name.cstr(), secondPort);
   fflush(_output);
   
-  // in future, if push/pull, have to put a slot in between. So we don't have to check
-
   _conf->hookUp(firstElement, firstPort, secondElement, secondPort);
+
+  if (_currentElementChain.size() == 0) {
+    // first time
+    _currentElementChain.push_back(firstElement);
+  } 
+  _currentElementChain.push_back(secondElement);
+
+}
+
+void Rtr_ConfGen::hookUp(ElementSpecRef secondElement, int secondPort)
+{
+  if (_currentElementChain.size() == 0) {
+    _currentElementChain.push_back(secondElement);
+    assert(secondPort == 0);
+  }
+  hookUp(_currentElementChain.back(), 0, secondElement, secondPort);
 }
 
 void Rtr_ConfGen::setJoinKeys(OL_Context::Rule* rule, std::vector<JoinKey>* joinKeys)
@@ -1321,23 +1200,18 @@ void Rtr_ConfGen::setJoinKeys(OL_Context::Rule* rule, std::vector<JoinKey>* join
   for (uint k = 0; k < rule->terms.size(); k++) {
    OL_Context::Term firstTerm = rule->terms.at(k);
    str firstName(firstTerm.fn->name);
-   if (isSelection(firstTerm)) { continue; }
-   if (isAssignment(firstTerm)) { continue; }
-   if (isAggregation(firstTerm)) { continue; }
+   if (isSelection(firstTerm) || isAssignment(firstTerm) || isAggregation(firstTerm)) { continue; }
    std::vector<str> firstArgNames = firstTerm.argNames;
     for (uint j = k+1; j < rule->terms.size(); j++) {
       OL_Context::Term secondTerm = rule->terms.at(j);
       str secondName(secondTerm.fn->name);
-      if (isSelection(secondTerm)) { continue; }
-      if (isAssignment(secondTerm)) { continue; }
-      if (isAggregation(secondTerm)) { continue; }
+      if (isSelection(secondTerm) || isAssignment(secondTerm) 
+	  || isAggregation(secondTerm)) { continue; }
       std::vector<str> secondArgNames = secondTerm.argNames;
       
       for (uint x = 0; x < firstArgNames.size(); x++) {	
 	for (uint y = 0; y < secondArgNames.size(); y++) {
 	  if (firstArgNames.at(x) == secondArgNames.at(y)) {
-	    //std::cout << "Set join keys " << firstTerm.fn->name << " " << firstArgNames.at(x) << 
-	    // " " << secondTerm.fn->name << " " << secondArgNames.at(y) << "\n";
 	    JoinKey joinKey(firstName, firstArgNames.at(x), 
 			    secondName, secondArgNames.at(y));
 	    joinKeys->push_back(joinKey);	    
@@ -1357,6 +1231,7 @@ Rtr_ConfGen::FieldNamesTracker::FieldNamesTracker(std::vector<str> argNames, int
 {
   for (int k = 0; k < arity; k++) {
     fieldNames.push_back(argNames.at(k));
+
   }
 }
 

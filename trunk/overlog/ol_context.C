@@ -217,7 +217,8 @@ void OL_Context::add_rule( Parse_Expr *e, Parse_Term *lhs, Parse_TermList *rhs, 
   }
   s << ")";
 
-  std::cout << "New rule for functor " << lhs->fn->name << "@" << lhs->fn->loc << str(s) << r->toString() << "\n";
+  std::cout << r->ruleID << ": New rule for functor " << lhs->fn->name << "@" 
+	    << lhs->fn->loc << str(s) << r->toString() << "\n";
   
   delete lhs;
   delete rhs;
@@ -353,13 +354,6 @@ void OL_Context::materialize( Parse_ExprList *l)
     error("bad size for materialized table");
     goto mat_error;
   }
-
-  // eventFlag
-  /*if (l->at(4)->val->toString() == "0") {
-    tableInfo->eventFlag = false;
-  } else {
-    tableInfo->eventFlag = true;
-    }*/
 
   tables->insert(std::make_pair(tableInfo->tableName, tableInfo));
   
