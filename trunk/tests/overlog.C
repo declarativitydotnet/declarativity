@@ -74,7 +74,7 @@ int main(int argc, char **argv)
   if (route) {
     // test a configuration of a router
     Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-    Rtr_ConfGen gen(ctxt, conf, true, false, "test config");
+    Rtr_ConfGen gen(ctxt, conf, true, true, "test config");
     gen.createTables("localhost");
     
     ref< Udp > udp = New refcounted< Udp >("Udp", 10000);

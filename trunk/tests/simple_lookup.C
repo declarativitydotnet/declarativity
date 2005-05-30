@@ -32,6 +32,14 @@
 #include "loggerI.h"
 #include "pelTransform.h"
 #include "marshalField.h"
+#include "unmarshalField.h"
+#include "timedPullSink.h"
+#include "slot.h"
+
+void killJoin()
+{
+  exit(0);
+}
 
 struct LookupGenerator : public FunctorSource::Generator
 {
@@ -47,9 +55,7 @@ struct LookupGenerator : public FunctorSource::Generator
     tuple->append(Val_Str::mk(src_));
 
     uint32_t words[ID::WORDS];
-    for (uint i = 0;
-         i < ID::WORDS;
-         i++) {
+    for (uint i = 0; i < ID::WORDS; i++) {
       words[i] = random();
     }
     IDRef key = ID::mk(words);  
@@ -71,6 +77,7 @@ void issue_lookup(LoggerI::Level level, ptr<LookupGenerator> lookup)
 {
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
 
+  // sending result
   ElementSpecRef func    = conf->addElement(New refcounted< FunctorSource >(str("Source"), lookup));
   ElementSpecRef print   = conf->addElement(New refcounted< Print >(strbuf("lookup")));
 		       
@@ -79,15 +86,36 @@ void issue_lookup(LoggerI::Level level, ptr<LookupGenerator> lookup)
                                                      $0 ->t $1 append $2 append $3 append $4 append pop")); // the rest
   ElementSpecRef marshal = conf->addElement(New refcounted< MarshalField >("Marshal", 1));
   ElementSpecRef route   = conf->addElement(New refcounted< StrToSockaddr >(strbuf("SimpleLookup"), 0));
-  ref< Udp >     udp     = New refcounted< Udp >("Udp");
+  ref< Udp >     udp     = New refcounted< Udp >("Udp", 10001);
   ElementSpecRef udpTx   = conf->addElement(udp->get_tx());
-
 
   conf->hookUp(func, 0, print, 0);
   conf->hookUp(print, 0, encap, 0);
   conf->hookUp(encap, 0, marshal, 0);
   conf->hookUp(marshal, 0, route, 0);
   conf->hookUp(route, 0, udpTx, 0);
+
+
+  // getting results back
+  ElementSpecRef udpRxS = conf->addElement(udp->get_rx());
+  ElementSpecRef unmarshalS = conf->addElement(New refcounted< UnmarshalField >(strbuf("Unmarshal:"), 1));
+
+  // Drop the source address and decapsulate
+  ElementSpecRef unBoxS =
+    conf->addElement(New refcounted< PelTransform >(strbuf("UnBox:"),
+                                                    "$1 unboxPop "));
+  ElementSpecRef recv =
+    conf->addElement(New refcounted< Print >(strbuf("lookupResults:")));
+
+  ElementSpecRef slot = conf->addElement(New refcounted< Slot >("slot"));
+  ElementSpecRef sinkS =
+    conf->addElement(New refcounted< TimedPullSink >("sink", 0));
+  
+  conf->hookUp(udpRxS, 0, unmarshalS, 0);
+  conf->hookUp(unmarshalS, 0, unBoxS, 0);
+  conf->hookUp(unBoxS, 0, recv, 0);
+  conf->hookUp(recv, 0, slot, 0);
+  conf->hookUp(slot, 0, sinkS, 0);
    
   RouterRef router = New refcounted< Router >(conf, level);
   if (router->initialize(router) != 0) {
@@ -100,6 +128,9 @@ void issue_lookup(LoggerI::Level level, ptr<LookupGenerator> lookup)
 
   // Run the router
   amain();
+
+  // Schedule kill
+  delaycb(10, 0, wrap(&killJoin));
 }
 
 int main(int argc, char **argv)

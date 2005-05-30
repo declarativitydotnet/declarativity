@@ -111,14 +111,15 @@ void testNetworked(LoggerI::Level level,
 void testNetworkedDatalog(LoggerI::Level level,
 			  str myAddress,
 			  int port,    // extracted from myAddress for convenience
-			  str landmarkAddress, str filename,
+			  str landmarkAddress, 
+			  str filename,
 			  double delay)
 {
   ref< OL_Context > ctxt = New refcounted< OL_Context>();
   std::ifstream istr(filename);
   ctxt->parse_stream(&istr);
    
-  startChordInDatalog(level, ctxt, filename, myAddress, landmarkAddress, port, delay);
+  startChordInDatalog(level, ctxt, filename, myAddress, port, landmarkAddress, delay);
 }
 
 

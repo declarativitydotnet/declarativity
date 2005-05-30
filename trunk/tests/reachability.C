@@ -51,9 +51,9 @@ void killJoin()
   exit(0);
 }
 
-static int LINKS = 4;
+static int LINKS = 2; //4;
 static int STARTING_PORT = 10000;
-static const int nodes = 100;
+static const int nodes = 5;
 
 /** Periodically go over my existing link entries, turn them into reach
     entries and blast them out */
@@ -125,13 +125,14 @@ void makeTransitiveFlow(Router::ConfigurationRef conf,
                                                   1, 1));
   conf->hookUp(recvPS, 0, lookupS, 0);
 
-  // Take the joined tuples and produce the resulting path
+ // Take the joined tuples and produce the resulting path
   ElementSpecRef joinedS =
     conf->addElement(New refcounted< Print >(strbuf("Joined:") << name));
   ElementSpecRef transS =
     conf->addElement(New refcounted< PelTransform >(strbuf("JoinReach:").cat(name),
                                                     "\"Reach\" pop $1 2 field pop $0 2 field pop"));
-
+  ElementSpecRef joinedS1 =
+    conf->addElement(New refcounted< Print >(strbuf("JoinedPel:") << name));
 
   // Prepend with true if this is a Reach X, X.
   ElementSpecRef cycleCheckS =
@@ -151,11 +152,11 @@ void makeTransitiveFlow(Router::ConfigurationRef conf,
 
   conf->hookUp(lookupS, 0, joinedS, 0);
   conf->hookUp(joinedS, 0, transS, 0);
-  conf->hookUp(transS, 0, cycleCheckS, 0);
+  conf->hookUp(transS, 0, joinedS1, 0);
+  conf->hookUp(joinedS1, 0, cycleCheckS, 0);
   conf->hookUp(cycleCheckS, 0, filterS, 0);
   conf->hookUp(filterS, 0, filterDropS, 0);
   conf->hookUp(filterDropS, 0, generatedS, 0);
-
 
 
   // And connect to the outoing element
@@ -675,10 +676,11 @@ int main(int argc, char **argv)
   if (argc > 2) {
     seed = atoi(argv[2]);
   }
-  srand(seed);
+  //srand(seed); 
+  srand(0);
 
-  testSimpleCycle(level);
-  // testReachability(level);
+  //testSimpleCycle(level);
+  testReachability(level);
   // testMakeReach(level);
   // testTransmit(level);
 

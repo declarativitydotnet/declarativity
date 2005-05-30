@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 2; related-file-name: "" -*-
 /*
  * @(#)$Id$
  *
@@ -27,7 +28,6 @@
 
 #include "ol_lexer.h"
 #include "ol_context.h"
-// #include "routerConfigGenerator.h"
 #include "rtr_confgen.h"
 #include "print.h"
 #include "discard.h"
@@ -48,10 +48,12 @@
 #include "table.h"
 #include "lookup.h"
 #include "insert.h"
-#include "scan.h"
+#include "functorSource.h"
+#include "store.h"
 
 extern int ol_parser_debug;
 
+typedef ref<Store> StoreRef;
 
 void killJoin()
 {
@@ -60,32 +62,31 @@ void killJoin()
 
 static int LINKS = 2;
 static int STARTING_PORT = 10000;
-static const int nodes = 5;
+static const int nodes = 4;
+
+
 
 /* Initial sending of links into the p2 dataflow */
 void bookstrapData(Router::ConfigurationRef conf,
                    str name,
-                   TableRef linkTable, 
-		   ref< Udp > udp)
+                   Store* linkTable, 
+ 		   ref< Udp > udp)
 {
   // Scanner element over link table
-  ElementSpecRef scanS =
-    conf->addElement(New refcounted< Scan >(strbuf("Scanner:") << name, linkTable, 1));
+  ElementSpecRef scanS = conf->addElement(linkTable->mkScan());
+
   ElementSpecRef scanPrintS =
     conf->addElement(New refcounted< Print >(strbuf("Scan:") << name));
   ElementSpecRef timedPullPushS =
     conf->addElement(New refcounted< TimedPullPush >(strbuf("PushReach:").cat(name), 1));
   ElementSpecRef slotS =
     conf->addElement(New refcounted< Slot >(strbuf("Slot:").cat(name)));
-
- ElementSpecRef encapS =
+  
+  ElementSpecRef encapS =
     conf->addElement(New refcounted< PelTransform >(strbuf("encap:").cat(name),
-                                                    "$1 pop /* The From address */\
+						    "$1 pop /* The From address */\
                                                      $0 ->t $1 append $2 append pop")); // the rest
-
-  ElementSpecRef encapPrintS =
-    conf->addElement(New refcounted< Print >(strbuf("Encap:") << name));
-
+  
   // Now marshall the payload (second field)
   ElementSpecRef marshalS =
     conf->addElement(New refcounted< MarshalField >(strbuf("Marshal:").cat(name),
@@ -94,14 +95,13 @@ void bookstrapData(Router::ConfigurationRef conf,
     conf->addElement(New refcounted< StrToSockaddr >(strbuf("Router:").cat(name), 0));
   ElementSpecRef udpTxS =
     conf->addElement(udp->get_tx());
-    
+  
   // Connect to outgoing hook
   conf->hookUp(scanS, 0, scanPrintS, 0);
   conf->hookUp(scanPrintS, 0, timedPullPushS, 0);
   conf->hookUp(timedPullPushS, 0, slotS, 0);
   conf->hookUp(slotS, 0, encapS, 0);
-  conf->hookUp(encapS, 0, encapPrintS, 0);
-  conf->hookUp(encapPrintS, 0, marshalS, 0);
+  conf->hookUp(encapS, 0, marshalS, 0);
   conf->hookUp(marshalS, 0, routeS, 0);
   conf->hookUp(routeS, 0, udpTxS, 0);
 }
@@ -120,8 +120,8 @@ void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
   ptr< Udp > bootstrapUDP[nodes];
   ValuePtr nodeIds[nodes];
   str names[nodes];
-  TablePtr bootstrapTable[nodes];
   
+   
   // Create the networking objects
   for (int i = 0; i < nodes; i++) {
     names[i] = strbuf("Node") << i;
@@ -131,19 +131,24 @@ void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
     udps[i] = New refcounted< Udp >(names[i] << ":Udp", STARTING_PORT + i);
     bootstrapUDP[i] = New refcounted< Udp >(names[i] << ":bootstrapUdp", 
 					    STARTING_PORT + i + 5000);
-    bootstrapTable[i] = New refcounted< Table >("neighbor", 100000);
-    bootstrapTable[i]->add_multiple_index(1);
-
     routerConfigGenerator.createTables(names[i]);
   }
 
-  
-  // Create the link tables and links themselves.  Links must be
-  // symmetric
+
+  // And make the data flows
   for (int i = 0; i < nodes; i++) {
+    // initial loading of data into p2 dataflows
+    Store* bootstrapTable = New Store("neighbor", 2);
+        
+    bookstrapData(conf, "bootstrap" << names[i], bootstrapTable, bootstrapUDP[i]);
+    routerConfigGenerator.clear(); 
+    routerConfigGenerator.configureRouter(udps[i], names[i]);
+  
+    // Create the link tables and links themselves.  Links must be
+    // symmetric
     std::set< int > others;
     others.insert(i);           // me
-
+    
     for (int j = 0; j < LINKS; j++) {
       TupleRef t = Tuple::mk();
       t->append(Val_Str::mk("neighbor"));
@@ -160,9 +165,10 @@ void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
 
       t->append((ValueRef) nodeIds[other]);
       t->freeze();
-      //TableRef tableRef = routerConfigGenerator.getTableByName(names[i], "neighbor");
-      //tableRef->insert(t);
-      bootstrapTable[i]->insert(t);
+      TableRef tableRef = routerConfigGenerator.getTableByName(names[i], "neighbor");
+      std::cout << "Node " << j << " insert tuple " << t->toString() << "\n";
+      tableRef->insert(t);
+      bootstrapTable->insert(t);
 
       // Make the symmetric one
       TupleRef symmetric = Tuple::mk();
@@ -170,22 +176,15 @@ void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
       symmetric->append((ValueRef) nodeIds[other]);
       symmetric->append((ValueRef) nodeIds[i]);
       symmetric->freeze();
-      //tableRef = routerConfigGenerator.getTableByName(names[other], "neighbor");
-      //tableRef->insert(symmetric);
-      bootstrapTable[other]->insert(symmetric);
+      tableRef = routerConfigGenerator.getTableByName(names[other], "neighbor");
+      std::cout << "Node " << j << " insert tuple " << symmetric->toString() << "\n";
+      tableRef->insert(symmetric);
+      bootstrapTable->insert(symmetric);
     }
   }
-
-  // And make the data flows
-  for (int i = 0; i < nodes; i++) {
-      // initial loading of data into p2 dataflows
-      bookstrapData(conf, "bootstrap" << names[i], bootstrapTable[i], bootstrapUDP[i]);
-      routerConfigGenerator.configureRouter(udps[i], names[i]);
-  }
-
+  
 
   // add extra here to initialize the tables
-
 
   RouterRef router = New refcounted< Router >(conf, level);
   if (router->initialize(router) == 0) {
@@ -209,9 +208,9 @@ int main(int argc, char **argv)
   std::cout << "\nGRAPH REACHABILITY\n";
   srand(0);
 
-  TableRef table = new refcounted< Table >("name", 100);
+  //StoreRef table = new refcounted< Table >("name", 100);
 
-  LoggerI::Level level = LoggerI::NONE;
+  LoggerI::Level level = LoggerI::ALL;
   ref< OL_Context > ctxt = New refcounted< OL_Context>();
   strbuf filename;
 
