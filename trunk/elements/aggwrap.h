@@ -10,8 +10,8 @@
  * DESCRIPTION: Element that "wraps" a dataflow graph and performs one
  * aggegate calculation for each input tuple. 
  * Inputs:  0, push: incoming event tuples
- *          1, pull: output from the inner graph
- * Outputs: 0, pull: aggregates (external output)
+ *          1, push: output from the inner graph
+ * Outputs: 0, push: aggregates (external output)
  *          1, push: push events to the inner graph
  *
  */
@@ -27,7 +27,7 @@ public:
   Aggwrap(str aggfn, int aggfield);
 
   const char *class_name() const		{ return "Aggwrap";}
-  const char *processing() const		{ return "ha/hh"; }
+  const char *processing() const		{ return "hh/hh"; }; //"ha/hh"; }
   const char *flow_code() const			{ return "--/--"; }
 
   /** Receive a new fixed tuple */
@@ -54,9 +54,6 @@ private:
   int count;
 
   void int_push_cb();
-  void int_pull_cb();
-  void pull_everything();
-
   void agg_init();
   void agg_accum(TupleRef t);
   void agg_finalize();

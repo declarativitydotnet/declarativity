@@ -27,13 +27,15 @@ Queue::~Queue()
 /* push. When receive, put to queue. If have pending, wake up.*/
 int Queue::push(int port, TupleRef p, cbv cb)
 {
-
   _q.push(p);  
 
+  log(LoggerI::INFO, 0, str(strbuf() << "Push " << p->toString()));
   if (_pullCB != cbv_null) {
     // is there a pending callback? If so, wake it up
     _pullCB();
     _pullCB = cbv_null;
+  } else {
+      log(LoggerI::INFO, 0, "No pending pull callbacks");
   }
 
   // have we reached the max size? If so, we have to wait
@@ -50,6 +52,7 @@ int Queue::push(int port, TupleRef p, cbv cb)
 /* pull. When pull, drain the queue. Do nothing if queue is empty but register callback. */
 TuplePtr Queue::pull(int port, cbv cb)
 {
+  log(LoggerI::INFO, 0, "Queue: Attempt Pull");
   if (_q.size() == 0) { 
     log(LoggerI::INFO, 0, "Queue: Empty");
     _pullCB = cb;
@@ -63,6 +66,7 @@ TuplePtr Queue::pull(int port, cbv cb)
     _pushCB = cbv_null;
   }
 
+  log(LoggerI::INFO, 0, str(strbuf() << "Queue: Pull succeed " << p->toString()));
   return p;
 }
 
