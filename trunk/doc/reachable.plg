@@ -3,8 +3,11 @@
 
 /** Declared tables */
 materialize(neighbor,2,infinity,infinity).
-materialize(reach,2,infinity,infinity).
 /*materialize(reachable,2,infinity,infinity).*/
+/*materialize(reachable,2,infinity,infinity).*/
+
+primarykeys(neighbor,2).
+/*primarykeys(reachable,2).*/
 
 
 /* Rules */

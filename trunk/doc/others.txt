@@ -24,19 +24,51 @@ L1: forwardState(SI,NI,K,G) :- node(NI,N), lookup(NI,K,R,P,G,E),
 bestSuccessor(NI,S,SI), N<K<=S 
 
 
-
-3.0 Pastry
-----------
+3.0 Pastry / Bamboo
+-------------------
 
 Routing table = Finger
 Successors = Leaf Set
-Change lookup rules.
-F_dist now depends on prefix.
+Change lookup rules: F_dist now depends on prefix.
+
+Rather than eagerly finding leaf sets, can randomly pick one leaf set
+neighbor to periodically exchange. (Same for Chord, if do periodic exchanges)
 
 Is the above enough?
 
 
-4.0 Gossip Network
+4.0 Symphony
+------------
+Successors = short links
+Routing table = long link
+
+Each routing table entry (key, best matching node, best
+matching node IP). The route selection rules can create a view
+consisting of both short links, long links and also links that are 2
+hops away.
+
+Route selection:
+- Greedy unidirectional lookup stays the same. If use bidirectional,
+change the function to compute absolute distance.
+- If use lookahead, extra rule in stabilization to get routing tables two
+hops away. Create a view of candidate routing entries.
+
+Neighbor selection:
+- Rather than pick 2^(entry) + K, pick random K.
+- Same fix fingers protocol. Periodically repair them.
+
+
+Churn:
+- Join: Find landmark node, get 2 immediate successors, run estimation
+protocol, followed by link establishment. 
+
+Additionals:
+-  Estimation protocol
+
+Failure Detection:
+Shared.
+
+5.0 Gossip Network
 ------------------
 
 Base tuples: 
@@ -72,8 +104,22 @@ invoke a pull request and a message is returned if present.
 
 
 
-5.0 Multicast Overlay
+6.0 Multicast Overlay
 ---------------------
 SIGCOMM example for single-source multicast. First, compute the best
 paths, then set up the state of the multicast tree. 
 
+
+
+7.0 Rules sharing 
+-----------------
+- Route selection: 
+  - Greedily minimize distance (View on successors and fingers)
+- Successors formation (gossip by picking random successor to exchange)
+ - table with replacement policy (keep the smallest K)
+- Routing table maintenance
+  - fix fingers (for chord and symphony)
+  - Gossip (for bamboo and Pastry)
+- Failure detection (can be shared)
+- Successors = Short Links (Symphony) = Leaf Sets
+- Fingers = Long links (Symphony) = Routing tables

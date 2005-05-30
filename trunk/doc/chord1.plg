@@ -60,7 +60,7 @@ rule L2 lookup@SI(SI,K,R,E) :-
 	!select_rangeID3(K,N,S). 
 
 
-rule L3 bestLookupDistance@NI(NI,K,R,E, min<D>) :-
+rule L3 bestLookupDistance@NI(NI,K,R,E,D) :-
 	lookup@NI(NI,K,R,E),
 	finger@NI(NI,I,B,BI),
 	node@NI(NI,N),
@@ -270,6 +270,7 @@ rule J6 successor@NI(NI,S,SI) :-
 
 watch(predecessor).
 watch(successor).
+
 /*watch(stabilize).
 watch(stabilizeEvent).
 watch(stabilizeRequest).
@@ -278,6 +279,7 @@ watch(notify).
 watch(notifyEvent).
 watch(notifyPredecessor).*/
 
+/*
 rule S0 stabilize@NI(LOCAL) :-
 	periodic@NI(0.1).
 
@@ -331,7 +333,7 @@ rule S6e predecessor@NI(NI,P,PI) :-
 	notifyPredecessor@NI(NI,P,PI),
 	predecessor@NI(NI,P1,PI1),
 	select_rangeID1(P,P1,N).
-
+*/
 
 /*	stabilizeRecord@NI(NI, E).*/
 
