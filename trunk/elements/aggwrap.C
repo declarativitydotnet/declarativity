@@ -158,7 +158,8 @@ void Aggwrap::agg_accum(TupleRef t) {
   if ((cr == -1 && _aggfn == "min") || (cr == 1 && _aggfn == "max")) {
     aggResult = t;
   }
-  log(LoggerI::INFO, 0, str(strbuf() << "After Agg accumulation: " << aggResult->toString()));
+  log(LoggerI::INFO, 0, str(strbuf() << "After Agg accumulation: " << aggResult->toString() << cr 
+			    << " " << (*t)[_aggfield]->toString() << " " << (*aggResult)[_aggfield]->toString()));
 }
 
 void Aggwrap::agg_finalize() {
