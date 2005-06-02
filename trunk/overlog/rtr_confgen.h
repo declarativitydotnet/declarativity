@@ -150,14 +150,10 @@ private:
 			    FieldNamesTracker* tracker,
 			    int selectionID); 
   
-  void genAllSelectionElements(OL_Context::Rule* curRule,
-			       str nodeID,
-			       FieldNamesTracker* curNamesTracker);
+  void genAllSelectionAssignmentElements(OL_Context::Rule* curRule,
+					 str nodeID,
+					 FieldNamesTracker* curNamesTracker);
 
-  void genAllAssignmentElements(OL_Context::Rule* curRule,
-				str nodeID,
-				FieldNamesTracker* curNamesTracker);
-  
   void genAssignmentElements(OL_Context::Rule* curRule,
 			     OL_Context::Term curTerm, 
 			     str nodeID,
@@ -183,7 +179,7 @@ private:
   // Network elements
   void genSendElements(ref< Udp> udp, str nodeID);
   void genReceiveElements(ref< Udp> udp, str nodeID);
-  void registerReceiverTable(str tableName);
+  void registerReceiverTable(OL_Context::Rule* rule, str tableName);
   void registerReceiver(str tableName, ElementSpecRef elementSpecRef);
   void genSendMarshalElements(OL_Context::Rule* rule, str nodeID, int arity);
   void genFunctorSource(OL_Context::Functor* functor, OL_Context::Rule* rule, str nodeID);
@@ -198,7 +194,7 @@ private:
   bool isSelection(OL_Context::Term term);  
   bool isAssignment(OL_Context::Term term);
   bool isAggregation(OL_Context::Term term);
-  bool hasSingleAggTerm(OL_Context::Rule* rule);
+  bool hasEventTerm(OL_Context::Rule* rule);
   bool hasPeriodicTerm(OL_Context::Rule* curRule);
   void debugRule(OL_Context::Rule* curRule, str debugMsg) { std::cout << curRule->ruleID << ": " << debugMsg; }
 

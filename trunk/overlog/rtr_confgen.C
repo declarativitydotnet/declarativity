@@ -33,6 +33,7 @@ Rtr_ConfGen::Rtr_ConfGen(OL_Context* ctxt, Router::ConfigurationRef conf,
   pelFunctions.insert(std::make_pair(SEL_PRE << "geI", ">=i"));
   pelFunctions.insert(std::make_pair(SEL_PRE << "gtI", ">i"));
   pelFunctions.insert(std::make_pair(SEL_PRE << "eqI", "==i"));
+  pelFunctions.insert(std::make_pair(SEL_PRE << "eqID", "==id"));
   pelFunctions.insert(std::make_pair(SEL_PRE << "rangeID1", "()id"));
   pelFunctions.insert(std::make_pair(SEL_PRE << "rangeID2", "[]id"));
   pelFunctions.insert(std::make_pair(SEL_PRE << "rangeID3", "(]id"));
@@ -93,27 +94,6 @@ void Rtr_ConfGen::clear()
 }
 
 
-bool Rtr_ConfGen::hasSingleAggTerm(OL_Context::Rule* curRule)
-{
-  int numAggs = 0;
-  for (uint k = 0; k < curRule->terms.size(); k++) {
-    if (isAggregation(curRule->terms.at(k))) {
-      numAggs ++;
-    }
-  }
-  return (numAggs == 1);
-}
-
-bool Rtr_ConfGen::hasPeriodicTerm(OL_Context::Rule* curRule)
-{
-  for (uint k = 0; k < curRule->terms.size(); k++) {
-    if (curRule->terms.at(k).fn->name == "periodic") {
-      return true;
-    }
-  }
-  return false;
-}
-
 void Rtr_ConfGen::processFunctor(OL_Context::Functor* fn, str nodeID)
 {
   // The cur translation proceeds as follows. 
@@ -146,36 +126,38 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
   ptr<Aggwrap> agg_el = NULL;
 
   _pendingReceiverSpec = NULL;
-  // Do we need an aggregation element to wrap around this?
-  // support multiple aggregates next time
+
+  // AGGREGATES
   if (r->aggField >= 0) {
-    // add 1 for position, add one for table name
-    agg_el = New refcounted<Aggwrap>(r->aggFn, r->aggField + 2);
+    if (hasEventTerm(r)) {
+      // there is an aggregate and involves an event, we need an agg wrap      
+      agg_el = New refcounted<Aggwrap>(r->aggFn, r->aggField + 2);
+    } else {
+      // an agg that involves only base tables. 
+      genSingleAggregateElements(fn, r, nodeID, &curNamesTracker);
+      return;    
+    }
   }
   
   _currentElementChain.clear();
-  
-  if (hasSingleAggTerm(r)) { 
-    // has a single agg on a single materialized table. 
-    // Merge this with the other kind of agg
-    genSingleAggregateElements(fn, r, nodeID, &curNamesTracker);
-    return;
-  }
-  
+
+  // PERIODIC
   if (hasPeriodicTerm(r)) {
-    // generate a functor source at at every period
     genFunctorSource(fn, r, nodeID);
   } else {
     if (joinKeys.size() == 0) {
-      // if there are no possible unifications, we process only the first term
+      // SINGLE_TERM
+      //ElementSpecRef last_el = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlot"));
       genSingleTermElement(fn, r, nodeID, &curNamesTracker);
+      //_currentElementChain.push_back(last_el);
     } else {
+      // MULTIPLE TERMS WITH JOINS
       genJoinElements(fn, r, nodeID, &curNamesTracker, agg_el);
     }
     
     // do the selections and assignment, followed by projection
-    genAllSelectionElements(r, nodeID, &curNamesTracker);    
-    genAllAssignmentElements(r, nodeID, &curNamesTracker);
+    genAllSelectionAssignmentElements(r, nodeID, &curNamesTracker);    
+    //genAllAssignmentElements(r, nodeID, &curNamesTracker);
     std::cout << "Pending register receiver " << _pendingRegisterReceiver << "\n";
     genProjectHeadElements(fn, r, nodeID, &curNamesTracker);
   }
@@ -217,7 +199,7 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
     
     // at the receiver side:
     str headTableName = fn->name;
-    registerReceiverTable(headTableName);
+    registerReceiverTable(r, headTableName);
     ElementSpecRef sinkS = _conf->addElement(New refcounted< Discard >("discard"));    
     registerReceiver(headTableName, sinkS);
   }
@@ -360,6 +342,7 @@ void Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
       _conf->addElement(New refcounted< Queue >(strbuf("SendQueue:") << 
 					       nodeID << ":" << k, 1000));
     hookUp(nextElementSpec, 0, pushToPull, 0);
+    
     hookUp(pushToPull, 0, muxS, k);
   }
 }
@@ -392,11 +375,10 @@ void Rtr_ConfGen::genFunctorSource(OL_Context::Functor* functor, OL_Context::Rul
 void Rtr_ConfGen::genSendMarshalElements(OL_Context::Rule* rule, str nodeID, int arity)
 {
   genDupElimElement(strbuf("SendDupElim:") << rule->ruleID << ":" << nodeID);
-
-  genPrintWatchElement(strbuf("PrintWatchSend:") << 
-		       rule->ruleID << ":" << nodeID);
-
    
+  genPrintElement(strbuf("PrintSend:") << rule->ruleID << ":" << nodeID);
+  genPrintWatchElement(strbuf("PrintWatchSend:") << rule->ruleID << ":" << nodeID);
+
   // Create the encapsulated version of this tuple, holding the
   // destination address and, encapsulated, the payload containing the
   // reach tuple. Take care to avoid sending the first field address
@@ -411,10 +393,11 @@ void Rtr_ConfGen::genSendMarshalElements(OL_Context::Rule* rule, str nodeID, int
   ElementSpecRef encapS =
     _conf->addElement(New refcounted< PelTransform >(strbuf("encapSend:") << rule->ruleID << ":" << nodeID, 
 						     "$1 pop " << marshalPelStr)); // the rest
+  
   hookUp(encapS, 0);
 
-  genPrintElement(strbuf("PrintSend:") << 
-		  rule->ruleID << ":" << nodeID);
+  /*genPrintElement(strbuf("PrintSend:") << rule->ruleID << ":" << nodeID);
+    genPrintWatchElement(strbuf("PrintWatchSend:") << rule->ruleID << ":" << nodeID);*/
 
   // Now marshall the payload (second field)
   ElementSpecRef marshalS = 
@@ -446,13 +429,14 @@ void Rtr_ConfGen::registerReceiver(str tableName, ElementSpecRef elementSpecRef)
 
 // regiser a new receiver for a particular table name
 // use to later hook up the demuxer
-void Rtr_ConfGen::registerReceiverTable(str tableName)
+void Rtr_ConfGen::registerReceiverTable(OL_Context::Rule* rule, str tableName)
 {  
   ReceiverInfoMap::iterator _iterator = _udpReceivers.find(tableName);
   if (_iterator == _udpReceivers.end()) {
     // not there, we register
     _udpReceivers.insert(std::make_pair(tableName, ReceiverInfo(tableName)));
   }  
+  debugRule(rule, str(strbuf() << "Register table " << tableName << "\n"));
 }
 					     
 
@@ -482,6 +466,7 @@ bool Rtr_ConfGen::isAggregation(OL_Context::Term term)
   str termName = term.fn->name;
   return substr(termName, 0, AGG_PRE.len()) == AGG_PRE;
 }
+
 
 void Rtr_ConfGen::genSelectionElements(OL_Context::Rule* curRule, 
 				       OL_Context::Term nextSelection, 
@@ -532,6 +517,7 @@ void Rtr_ConfGen::genSelectionElements(OL_Context::Rule* curRule,
 
   if (_pendingRegisterReceiver) {
     _pendingReceiverSpec = selection;
+    _currentElementChain.push_back(selection); // first element in chain
     _pendingRegisterReceiver = false;
   } else {
     // connecting now
@@ -544,9 +530,9 @@ void Rtr_ConfGen::genSelectionElements(OL_Context::Rule* curRule,
 }
 
 
-void Rtr_ConfGen::genAllSelectionElements(OL_Context::Rule* curRule,
-					  str nodeID,
-					  FieldNamesTracker* curNamesTracker) 
+void Rtr_ConfGen::genAllSelectionAssignmentElements(OL_Context::Rule* curRule,
+						    str nodeID,
+						    FieldNamesTracker* curNamesTracker) 
 {
   for (unsigned int j = 0; j < curRule->terms.size(); j++) {
     OL_Context::Term nextTerm = curRule->terms.at(j);
@@ -554,6 +540,9 @@ void Rtr_ConfGen::genAllSelectionElements(OL_Context::Rule* curRule,
     if (isSelection(nextTerm)) {
       debugRule(curRule, str(strbuf() << "Selection term " << termName << " " << curRule->ruleID << "\n"));
       genSelectionElements(curRule, nextTerm, nodeID, curNamesTracker, j); 
+    }
+    if (isAssignment(nextTerm)) {
+      genAssignmentElements(curRule, nextTerm, nodeID, curNamesTracker, j);
     }
   }
 }
@@ -632,6 +621,7 @@ void Rtr_ConfGen::genAssignmentElements(OL_Context::Rule* curRule,
 
   if (_pendingRegisterReceiver) {
     _pendingReceiverSpec = assignment;
+    _currentElementChain.push_back(assignment); // first element in chain
     _pendingRegisterReceiver = false;
   } else {
     // connecting now
@@ -640,19 +630,6 @@ void Rtr_ConfGen::genAssignmentElements(OL_Context::Rule* curRule,
 
   genPrintElement(strbuf("PrintAfterAssignment:") << curRule->ruleID << ":" 
 		  << assignmentID << ":" << nodeID);
-}
-
-
-void Rtr_ConfGen::genAllAssignmentElements(OL_Context::Rule* curRule,
-					   str nodeID,
-					   FieldNamesTracker* curNamesTracker) 
-{
-  for (unsigned int j = 0; j < curRule->terms.size(); j++) {
-    OL_Context::Term nextTerm = curRule->terms.at(j);
-    if (isAssignment(nextTerm)) {
-      genAssignmentElements(curRule, nextTerm, nodeID, curNamesTracker, j);
-    }
-  }
 }
 
 
@@ -686,6 +663,7 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Functor* curFunctor,
 						     pelTransformStr));
   if (_pendingRegisterReceiver) {
     _pendingReceiverSpec = projectHead;
+    _currentElementChain.push_back(projectHead); // first element in chain
     _pendingRegisterReceiver = false;
   } else {
     // connecting now
@@ -835,13 +813,12 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Functor* curFunctor,
 				  OL_Context::Rule* curRule, 
 				  str nodeID, 
 				  FieldNamesTracker* namesTracker,
-				  ptr<Aggwrap> agg_el )
+				  ptr<Aggwrap> agg_el)
 {
   // identify the events, use that to probe the other matching tables
   OL_Context::Term eventTerm;
   std::vector<OL_Context::Term> baseTerms;
   bool eventFound = false;
-  std::map<str, OL_Context::Term> staticTerms;
   for (unsigned int k = 0; k < curRule->terms.size(); k++) {
     OL_Context::Term nextTerm = curRule->terms.at(k);
     str termName = nextTerm.fn->name;
@@ -849,41 +826,17 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Functor* curFunctor,
       continue;
     }
 
-    if (nextTerm.fn->rules.size() == 0) {
-      staticTerms.insert(std::make_pair(termName, nextTerm));
-    }
-
     OL_Context::TableInfoMap::iterator _iterator = _ctxt->getTableInfos()->find(termName);
     if (_iterator != _ctxt->getTableInfos()->end()) {     
       baseTerms.push_back(nextTerm);
     } else {
-      // FIXME: If not materialized, assume events for now.
-      // WE ASSUME THERE IS ONLY ONE SUCH EVENT PER RULE!!      
-      // We also assume event is fired by probing tables on the same node!
-      registerReceiverTable(nextTerm.fn->name); 
+      // assume one event per not.
+      // event probes local base tables
+      registerReceiverTable(curRule, nextTerm.fn->name); 
       _pendingRegisterReceiver = true;
       _pendingReceiverTable = nextTerm.fn->name;
       eventTerm = nextTerm;
       eventFound = true;
-    } 
-  }
-
-  if (eventFound == false) {
-    std::cerr << "Cannot find event tuple. Performing multi-way joins in future!. \n";
-    // is there a static table? If so, we can just use the other table(s) to probe
-    // FIXME: Write the code for n-way joins after SOSP    
-    for (unsigned int k = 0; k < curRule->terms.size(); k++) {
-      OL_Context::Term nextTerm = curRule->terms.at(k);
-      str termName = nextTerm.fn->name;
-      if (staticTerms.find(termName) == staticTerms.end()) {
-	// pick the non-static term
-	registerReceiverTable(nextTerm.fn->name); 
-	_pendingRegisterReceiver = true;
-	_pendingReceiverTable = nextTerm.fn->name;
-	eventTerm = nextTerm;
-	eventFound = true;	
-	break;
-      }        
     } 
   }
 
@@ -892,7 +845,7 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Functor* curFunctor,
   // keep track also the cur ordering of variables
   namesTracker->initialize(eventTerm.argNames, eventTerm.argNames.size());  
   for (uint k = 0; k < baseTerms.size(); k++) {    
-    if (baseTerms.at(k).fn->name == eventTerm.fn->name) { continue; }
+    if (baseTerms.at(k).fn->name == eventTerm.fn->name) { continue; } // skip events
     debugRule(curRule, str(strbuf() << "Probing " << eventTerm.fn->name << " " 
 			   << baseTerms.at(k).fn->name << "\n"));
     cbv comp_cb = cbv_null;
@@ -927,86 +880,82 @@ void Rtr_ConfGen::addMultTableIndex(TableRef table, int fn, str nodeID)
   }
 }
 
+
 void Rtr_ConfGen::genSingleAggregateElements(OL_Context::Functor* currentFunctor, 
 					     OL_Context::Rule* currentRule, 
 					     str nodeID, 
-					     FieldNamesTracker* currentNamesTracker)
+					     FieldNamesTracker* baseNamesTracker)
 {
-  OL_Context::Term baseTerm, aggTerm;
-  // figure first, which term is the base term
-  for (unsigned int j = 0; j < currentRule->terms.size(); j++) {
-    // skip those that we already decide is going to participate in     
+
+  OL_Context::Term baseTerm;
+  // figure first, which term is the base term. Assume there is only one for now. Support more in future.
+  for (unsigned int j = 0; j < currentRule->terms.size(); j++) {    
     OL_Context::Term currentTerm = currentRule->terms.at(j);    
-    str tableName = currentTerm.fn->name;
-    
-    // skip funcitons
-    if (isSelection(currentTerm)) { continue; } // skip functions
-    if (isAssignment(currentTerm)) { continue; } // skip assignments
-    if (isAggregation(currentTerm)) { 
-      // figure out what kind of agg this is
-      aggTerm = currentTerm;
-    } else {
-      baseTerm = currentTerm;
-    }
+    if (isSelection(currentTerm) || isAssignment(currentTerm)) { continue; } // skip functions
+    baseTerm = currentTerm;    
   }
 
-  currentNamesTracker->initialize(baseTerm.argNames, baseTerm.argNames.size());
+  baseNamesTracker->initialize(baseTerm.argNames, baseTerm.argNames.size());
 
   std::vector<unsigned int> groupByFields;      
   
   // once we obtain the base term, figure out which are the fields needed for aggregation
-  // project only the necessary ones
-  // iterate through all functor's output, project all, except the aggregate field itself
-  FieldNamesTracker* newFieldNamesTracker = new FieldNamesTracker();
+  FieldNamesTracker* aggregateNamesTracker = new FieldNamesTracker();
   for (unsigned int k = 0; k < currentFunctor->arity; k++) {
-    int pos = currentNamesTracker->fieldPosition(currentRule->args.at(k));
-    if (pos != -1) {
+    // go through the functor head, but skip the aggField itself
+    int pos = baseNamesTracker->fieldPosition(currentRule->args.at(k));
+    if ((int) k != currentRule->aggField) {
+      std::cout << pos << " " << currentRule->aggField << " " << baseNamesTracker->fieldNames.at(pos) << "\n";
       groupByFields.push_back((uint) pos + 1);
-      newFieldNamesTracker->fieldNames.push_back(currentNamesTracker->fieldNames.at(pos));
+      aggregateNamesTracker->fieldNames.push_back(baseNamesTracker->fieldNames.at(pos));
     }
   }
-  int aggField = -1;
+  str aggVarname;
+  if (currentRule->aggFn != "count") {
+    aggVarname = currentRule->args.at(currentRule->aggField);
+  }
+  aggregateNamesTracker->fieldNames.push_back(aggVarname);
+  int aggFieldBaseTable = -1;
   Table::AggregateFunction* af = 0;
   
-  if (aggTerm.fn->name == "agg_min") {
+  if (currentRule->aggFn == "min") {
     // aggregate for min
-    aggField = currentNamesTracker->fieldPosition(aggTerm.argNames.at(1)) + 1;
+    aggFieldBaseTable = baseNamesTracker->fieldPosition(aggVarname) + 1;
     af = &Table::AGG_MIN;
   } 
-  if (aggTerm.fn->name == "agg_max") {
+  if (currentRule->aggFn == "max") {
     // aggregate for min
-    aggField = currentNamesTracker->fieldPosition(aggTerm.argNames.at(1)) + 1;
+    aggFieldBaseTable = baseNamesTracker->fieldPosition(aggVarname) + 1;
     af = &Table::AGG_MAX;
   } 
 
-  if (aggTerm.fn->name == "agg_count") {
+  if (currentRule->aggFn == "count") {
     // aggregate for min
-    aggField = groupByFields.at(0);
+    aggFieldBaseTable = groupByFields.at(0);
     af = &Table::AGG_COUNT;
   } 
+
+  debugRule(currentRule, str(strbuf() << aggregateNamesTracker->toString() << " " << aggFieldBaseTable << " " 
+			     << currentRule->aggField << " " << currentRule->aggFn << "\n"));
   
   // get the table, create the index
-  TableRef aggTable = getTableByName(nodeID, baseTerm.fn->name);
-  
-  addMultTableIndex(aggTable, groupByFields.at(0), nodeID);
-  
+  TableRef aggTable = getTableByName(nodeID, baseTerm.fn->name);  
+  addMultTableIndex(aggTable, groupByFields.at(0), nodeID);  
   Table::MultAggregate tableAgg 
     = aggTable->add_mult_groupBy_agg(groupByFields.at(0), // groupby field
 				     groupByFields,
-				     aggField, // the agg field
+				     aggFieldBaseTable, // the agg field
 				     af);
   ElementSpecRef aggElement =
     _conf->addElement(New refcounted< Aggregate >(strbuf("Agg:") << currentRule->ruleID << ":" << nodeID,
 						  tableAgg));
    
-  // send back
-  newFieldNamesTracker->fieldNames.push_back(aggTerm.argNames.at(0));
-
   strbuf pelTransformStr;
   pelTransformStr << "\"" << "aggResult:" << currentRule->ruleID << "\" pop";
-  for (uint k = 0; k < newFieldNamesTracker->fieldNames.size(); k++) {
+  for (uint k = 0; k < aggregateNamesTracker->fieldNames.size(); k++) {
     pelTransformStr << " $" << k << " pop";
   }
+  debugRule(currentRule, str(strbuf() << "Agg Pel Expr " << pelTransformStr <<"\n"));
   // apply PEL to add a table name
   ElementSpecRef addTableName =
     _conf->addElement(New refcounted< PelTransform >(strbuf("Aggregation:") 
@@ -1024,7 +973,7 @@ void Rtr_ConfGen::genSingleAggregateElements(OL_Context::Functor* currentFunctor
 						    << ":" << nodeID, 0));  
 
   hookUp(timedPullPush, 0);
-  genProjectHeadElements(currentFunctor, currentRule, nodeID, newFieldNamesTracker);
+  genProjectHeadElements(currentFunctor, currentRule, nodeID, aggregateNamesTracker);
   genSendMarshalElements(currentRule, nodeID, currentFunctor->arity);
   _udpPushSenders.push_back(_currentElementChain.back());
 
@@ -1032,7 +981,7 @@ void Rtr_ConfGen::genSingleAggregateElements(OL_Context::Functor* currentFunctor
 
   // not done yet, we also need to register a table receiver for the head
   str headTableName = currentFunctor->name;
-  registerReceiverTable(headTableName);
+  registerReceiverTable(currentRule, headTableName);
   // link that to a discard. If there are other flows that need it, they will
   // get the tuples via another fork in the duplicator.
   ElementSpecRef sinkS = _conf->addElement(New refcounted< Discard >("discard"));    
@@ -1056,7 +1005,7 @@ void Rtr_ConfGen::genSingleTermElement(OL_Context::Functor* curFunctor,
     str tableName = curTerm.fn->name;
     // skip the following
     if (isSelection(curTerm) || isAssignment(curTerm) || isAggregation(curTerm)) { continue; } // skip functions
-    registerReceiverTable(curTerm.fn->name); 
+    registerReceiverTable(curRule, curTerm.fn->name); 
     _pendingRegisterReceiver = true;
     _pendingReceiverTable = curTerm.fn->name;
     break; // break at first opportunity. Assume there is only one term   
@@ -1188,6 +1137,7 @@ void Rtr_ConfGen::hookUp(ElementSpecRef secondElement, int secondPort)
   if (_currentElementChain.size() == 0) {
     _currentElementChain.push_back(secondElement);
     assert(secondPort == 0);
+    return;
   }
   hookUp(_currentElementChain.back(), 0, secondElement, secondPort);
 }
@@ -1221,6 +1171,35 @@ void Rtr_ConfGen::setJoinKeys(OL_Context::Rule* rule, std::vector<JoinKey>* join
     }
   }
 }
+
+
+bool Rtr_ConfGen::hasEventTerm(OL_Context::Rule* curRule)
+{
+  for (uint k = 0; k < curRule->terms.size(); k++) {
+    if (isAssignment(curRule->terms.at(k)) || isSelection(curRule->terms.at(k))) {
+      continue;
+    }
+    str termName = curRule->terms.at(k).fn->name;
+    OL_Context::TableInfoMap::iterator _iterator = _ctxt->getTableInfos()->find(termName);
+    if (_iterator == _ctxt->getTableInfos()->end()) {     
+      debugRule(curRule, str(strbuf() << "Found event term " << termName));
+      // an event
+      return true;
+    }
+  }
+  return false;
+}
+
+bool Rtr_ConfGen::hasPeriodicTerm(OL_Context::Rule* curRule)
+{
+  for (uint k = 0; k < curRule->terms.size(); k++) {
+    if (curRule->terms.at(k).fn->name == "periodic") {
+      return true;
+    }
+  }
+  return false;
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////
