@@ -51,7 +51,6 @@ str FINGERIP("Finger.com");
 
 struct SuccessorGenerator : public FunctorSource::Generator
 {
-  //virtual ~SuccessorGenerator() {};
   TupleRef operator()() 
   {
     
@@ -71,7 +70,6 @@ struct SuccessorGenerator : public FunctorSource::Generator
   }
 };
 
-//struct SuccessorGenerator successorGenerator;
 
 // this allows us to isolate and test just the finger lookup rules
 void fakeFingersSuccessors(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGenerator, str localAddress, IDRef me)
@@ -92,7 +90,7 @@ void fakeFingersSuccessors(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigG
     IDRef best = ID::mk()->add(target)->add(ID::mk((uint32_t) i*10));
     tuple->append(Val_ID::mk(best));
   
-    str address = str(strbuf() << "Finger:" << i);
+    str address = str(strbuf() << "Finger:" << (i / 2));
     tuple->append(Val_Str::mk(address));
     tuple->freeze();
     fingerTable->insert(tuple);
@@ -190,11 +188,11 @@ void sendSuccessorStream(ref< Udp> udp, ref< Router::Configuration > conf, str l
   ElementSpecRef slotS =
     conf->addElement(New refcounted< Slot >(strbuf("SuccessorSlot:")));
   
-  ElementSpecRef encap = conf->addElement(New refcounted< PelTransform >("Encap",
+  ElementSpecRef encap = conf->addElement(New refcounted< PelTransform >("SuccessorEncap",
 									 "$1 pop \
                                                      $0 ->t $1 append $2 append $3 append pop")); // the rest
-  ElementSpecRef marshal = conf->addElement(New refcounted< MarshalField >("MarshalField", 1));
-  ElementSpecRef route   = conf->addElement(New refcounted< StrToSockaddr >(strbuf("Route"), 0));
+  ElementSpecRef marshal = conf->addElement(New refcounted< MarshalField >("SuccessorMarshalField", 1));
+  ElementSpecRef route   = conf->addElement(New refcounted< StrToSockaddr >(strbuf("SuccessorStrToSocket"), 0));
   
   ElementSpecRef udpTx = conf->addElement(udp->get_tx());
   
@@ -229,15 +227,20 @@ void initiateJoinRequest(ref< Rtr_ConfGen > routerConfigGenerator, ref< Router::
                                                      delay, // run immediately
                                                      1 // run once
                                                      ));
-  ElementSpecRef encap = conf->addElement(New refcounted< PelTransform >("Encap",
+
+  ElementSpecRef slotS =
+    conf->addElement(New refcounted< Slot >(strbuf("JoineEventSlot:")));
+
+  ElementSpecRef encap = conf->addElement(New refcounted< PelTransform >("JoinEventEncap",
 									 "$1 pop \
                                                      $0 ->t $1 append pop")); // the rest
-  ElementSpecRef marshal = conf->addElement(New refcounted< MarshalField >("MarshalField", 1));
-  ElementSpecRef route   = conf->addElement(New refcounted< StrToSockaddr >(strbuf("Route"), 0));
+  ElementSpecRef marshal = conf->addElement(New refcounted< MarshalField >("JoinEventMarshalField", 1));
+  ElementSpecRef route   = conf->addElement(New refcounted< StrToSockaddr >(strbuf("JoinEventRoute"), 0));
   
   // Link everything
   conf->hookUp(sourceS, 0, onceS, 0);
-  conf->hookUp(onceS, 0, encap, 0);
+  conf->hookUp(onceS, 0, slotS, 0);
+  conf->hookUp(slotS, 0, encap, 0);
   conf->hookUp(encap, 0, marshal, 0);
   conf->hookUp(marshal, 0, route, 0);
 
@@ -266,10 +269,10 @@ void startChordInDatalog(LoggerI::Level level, ref< OL_Context> ctxt, str datalo
    
   // synthetically generate stream of successors to test replacement policies
   // at one node
-  //if (TEST_SUCCESSOR) {
   ref< Udp > bootstrapUdp = New refcounted< Udp > (localAddress, 9999);
-  sendSuccessorStream(bootstrapUdp, conf, localAddress);
-  //}
+  if (TEST_SUCCESSOR) { 
+    sendSuccessorStream(bootstrapUdp, conf, localAddress);
+  }
 
   TableRef landmarkNodeTable = routerConfigGenerator->getTableByName(localAddress, "landmarkNode");  
   TupleRef landmark = Tuple::mk();
