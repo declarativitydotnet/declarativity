@@ -147,9 +147,7 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
   } else {
     if (joinKeys.size() == 0) {
       // SINGLE_TERM
-      //ElementSpecRef last_el = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlot"));
       genSingleTermElement(fn, r, nodeID, &curNamesTracker);
-      //_currentElementChain.push_back(last_el);
     } else {
       // MULTIPLE TERMS WITH JOINS
       genJoinElements(fn, r, nodeID, &curNamesTracker, agg_el);
@@ -174,6 +172,10 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
     genPrintElement(strbuf("PrintBeforeDelete:") << r->ruleID << nodeID);
     genPrintWatchElement(strbuf("PrintWatchDelete:") << r->ruleID << nodeID);
 
+    ElementSpecRef pullPush = 
+      _conf->addElement(New refcounted<TimedPullPush>("DeletePullPush", 0));
+    hookUp(pullPush, 0);
+  
     ElementSpecRef deleteElement =
       _conf->addElement(New refcounted< Delete >(strbuf("Delete:") << r->ruleID << nodeID,
 						 tableToDelete, 
@@ -188,11 +190,13 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
     return; // discard. deleted tuples not sent anywhere
   } else {    
     if (agg_el) { 
+      ElementSpecRef aggWrapSlot = _conf->addElement(New refcounted<Slot>("aggWrapSlot"));      
       ElementSpecRef agg_spec = _conf->addElement(agg_el);
-      hookUp(agg_spec, 1); // hook up the internal output
+      hookUp(agg_spec, 1); // hook up the internal output to most recent element 
       hookUp(agg_spec, 1, _pendingReceiverSpec, 0); // hookup the internal input
+      hookUp(agg_spec, 0, aggWrapSlot, 0);
       _pendingReceiverSpec = agg_spec; // hook the agg_spect to the front later by receivers
-      _currentElementChain.push_back(agg_spec);
+      _currentElementChain.push_back(aggWrapSlot); // for hooking up with senders later
     } 
     // send it!
     genSendMarshalElements(r, nodeID, fn->arity);         
@@ -328,23 +332,25 @@ void Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
   ElementSpecRef udpSend = _conf->addElement(udp->get_tx());  
 
   // prepare to send. Assume all tuples send by first tuple
-  ElementSpecRef muxS =
-    _conf->addElement(New refcounted< RoundRobin >("sendMux:" << nodeID, 
+  ElementSpecRef roundRobin =
+    _conf->addElement(New refcounted< RoundRobin >("roundRobinSender:" << nodeID, 
 						   _udpPushSenders.size())); 
 
-  hookUp(muxS, 0, udpSend, 0);
+  ElementSpecRef pullPush =
+      _conf->addElement(New refcounted< TimedPullPush >(strbuf("SendPullPush:") 
+							<< nodeID, 0));
+  hookUp(roundRobin, 0, pullPush, 0);
+
+  ElementSpecRef sendQueue = 
+    _conf->addElement(New refcounted< Queue >(strbuf("SendQueue:") << nodeID, 1000));
+  hookUp(pullPush, 0, sendQueue, 0);
 
   // form the push senders
   for (unsigned int k = 0; k < _udpPushSenders.size(); k++) {
     ElementSpecRef nextElementSpec = _udpPushSenders.at(k);
-
-    ElementSpecRef pushToPull = 
-      _conf->addElement(New refcounted< Queue >(strbuf("SendQueue:") << 
-					       nodeID << ":" << k, 1000));
-    hookUp(nextElementSpec, 0, pushToPull, 0);
-    
-    hookUp(pushToPull, 0, muxS, k);
+    hookUp(nextElementSpec, 0, roundRobin, k);
   }
+  hookUp(sendQueue, 0, udpSend, 0);
 }
 
 void Rtr_ConfGen::genFunctorSource(OL_Context::Functor* functor, OL_Context::Rule* rule, str nodeID)
@@ -368,6 +374,9 @@ void Rtr_ConfGen::genFunctorSource(OL_Context::Functor* functor, OL_Context::Rul
 						      atof(firstVar.cstr())));
 
   hookUp(pushFunctor, 0);
+
+  ElementSpecRef functorSlot = _conf->addElement(New refcounted<Slot>("functorSlot"));      
+  hookUp(functorSlot, 0);
 }
 
 
@@ -395,9 +404,6 @@ void Rtr_ConfGen::genSendMarshalElements(OL_Context::Rule* rule, str nodeID, int
 						     "$1 pop " << marshalPelStr)); // the rest
   
   hookUp(encapS, 0);
-
-  /*genPrintElement(strbuf("PrintSend:") << rule->ruleID << ":" << nodeID);
-    genPrintWatchElement(strbuf("PrintWatchSend:") << rule->ruleID << ":" << nodeID);*/
 
   // Now marshall the payload (second field)
   ElementSpecRef marshalS = 
@@ -657,7 +663,7 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Functor* curFunctor,
     pelTransformStrbuf << " $" << indices.at(k) << " pop";
   }
 
-  if (curRule->aggFn = "count") {
+  if (curRule->aggField != -1 && curRule->aggFn == "count") {
     // output the count
     pelTransformStrbuf << " $" << (curRule->aggField + 1) << " pop"; // add one for table name
   }
@@ -867,12 +873,14 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Functor* curFunctor,
     genProbeElements(curRule, eventTerm, baseTerms.at(k), 
 		     nodeID, namesTracker, k, comp_cb);
 
-    // Change from pull to push
-    ElementSpecRef pullPush =
-      _conf->addElement(New refcounted< TimedPullPush >(strbuf("JoinPullPush:") 
-							<< curRule->ruleID << ":" << nodeID << ":" << k,
-							0));
-    hookUp(pullPush, 0);
+    if (agg_el || baseTerms.size() - 1 != k) {
+      // Change from pull to push
+      ElementSpecRef pullPush =
+	_conf->addElement(New refcounted< TimedPullPush >(strbuf("JoinPullPush:") 
+							  << curRule->ruleID << ":" << nodeID << ":" << k,
+							  0));
+      hookUp(pullPush, 0);
+    }
   }
 }
 
@@ -981,13 +989,14 @@ void Rtr_ConfGen::genSingleAggregateElements(OL_Context::Functor* currentFunctor
   genPrintElement("PrintAgg:" << currentRule->ruleID << ":" << nodeID);
   genPrintWatchElement("PrintWatchAgg:" << currentRule->ruleID << ":" << nodeID);
 
-  ElementSpecRef timedPullPush = 
+  /*ElementSpecRef timedPullPush = 
     _conf->addElement(New refcounted<TimedPullPush>("timedPullPush:" << 
 						    currentRule->ruleID 
 						    << ":" << nodeID, 0));  
 
   hookUp(timedPullPush, 0);
-  
+  */
+
   genProjectHeadElements(currentFunctor, currentRule, nodeID, aggregateNamesTracker);
   genSendMarshalElements(currentRule, nodeID, currentFunctor->arity);
   _udpPushSenders.push_back(_currentElementChain.back());
@@ -1006,9 +1015,8 @@ void Rtr_ConfGen::genSingleTermElement(OL_Context::Functor* curFunctor,
 					OL_Context::Rule* curRule, 
 					str nodeID, 
 					FieldNamesTracker* curNamesTracker)
-{
-  
-  ElementSpecRef resultElement = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlotSingleTerm"));
+{  
+  ElementSpecRef slotElement = _conf->addElement(New refcounted<Slot>("singleTermSlot:" << curRule->ruleID << ":" << nodeID));
   OL_Context::Term curTerm;
   // if not, form basic scanners, then connect to selections, and then to form head the last
 
@@ -1019,8 +1027,8 @@ void Rtr_ConfGen::genSingleTermElement(OL_Context::Functor* curFunctor,
     // skip the following
     if (isSelection(curTerm) || isAssignment(curTerm) || isAggregation(curTerm)) { continue; } // skip functions
     registerReceiverTable(curRule, curTerm.fn->name); 
-    _pendingRegisterReceiver = true;
-    _pendingReceiverTable = curTerm.fn->name;
+    registerReceiver(curTerm.fn->name, slotElement);
+    _currentElementChain.push_back(slotElement);
     break; // break at first opportunity. Assume there is only one term   
   }
 
