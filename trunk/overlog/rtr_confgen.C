@@ -644,7 +644,9 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Functor* curFunctor,
   
   // iterate through all functor's output
   for (unsigned int k = 0; k < curFunctor->arity; k++) {
-    indices.push_back(curNamesTracker->fieldPosition(curRule->args.at(k)) + 1);
+    int pos = curNamesTracker->fieldPosition(curRule->args.at(k));
+    if (pos == -1) { continue; }
+    indices.push_back(pos + 1);
   }
   
   strbuf pelTransformStrbuf("\"" << curFunctor->name << "\" pop");
@@ -654,8 +656,17 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Functor* curFunctor,
   for (unsigned int k = 0; k < indices.size(); k++) {
     pelTransformStrbuf << " $" << indices.at(k) << " pop";
   }
+
+  if (curRule->aggFn = "count") {
+    // output the count
+    pelTransformStrbuf << " $" << (curRule->aggField + 1) << " pop"; // add one for table name
+  }
+
   str pelTransformStr(pelTransformStrbuf);
-  
+ 
+
+  debugRule(curRule, str(strbuf() << curNamesTracker->toString() << " " << pelTransformStr << "\n"));
+ 
   // project, and make sure first field after table name has the address 
   ElementSpecRef projectHead =
     _conf->addElement(New refcounted< PelTransform >(strbuf("ProjectHead:") 
@@ -913,8 +924,10 @@ void Rtr_ConfGen::genSingleAggregateElements(OL_Context::Functor* currentFunctor
   str aggVarname;
   if (currentRule->aggFn != "count") {
     aggVarname = currentRule->args.at(currentRule->aggField);
+  } else {
+    aggVarname = "count";
   }
-  aggregateNamesTracker->fieldNames.push_back(aggVarname);
+  aggregateNamesTracker->fieldNames.push_back(aggVarname);      
   int aggFieldBaseTable = -1;
   Table::AggregateFunction* af = 0;
   
@@ -966,6 +979,7 @@ void Rtr_ConfGen::genSingleAggregateElements(OL_Context::Functor* currentFunctor
   hookUp(aggElement, 0, addTableName, 0);
 
   genPrintElement("PrintAgg:" << currentRule->ruleID << ":" << nodeID);
+  genPrintWatchElement("PrintWatchAgg:" << currentRule->ruleID << ":" << nodeID);
 
   ElementSpecRef timedPullPush = 
     _conf->addElement(New refcounted<TimedPullPush>("timedPullPush:" << 
@@ -973,11 +987,10 @@ void Rtr_ConfGen::genSingleAggregateElements(OL_Context::Functor* currentFunctor
 						    << ":" << nodeID, 0));  
 
   hookUp(timedPullPush, 0);
+  
   genProjectHeadElements(currentFunctor, currentRule, nodeID, aggregateNamesTracker);
   genSendMarshalElements(currentRule, nodeID, currentFunctor->arity);
   _udpPushSenders.push_back(_currentElementChain.back());
-
-  // FIXME: Selections, assignments, better integration with the rest
 
   // not done yet, we also need to register a table receiver for the head
   str headTableName = currentFunctor->name;
