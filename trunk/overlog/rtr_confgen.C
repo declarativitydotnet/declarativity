@@ -74,17 +74,13 @@ void Rtr_ConfGen::configureRouter(ref< Udp > udp, str nodeID)
   for (_iterator = _ctxt->getFunctors()->begin(); 
        _iterator != _ctxt->getFunctors()->end(); _iterator++) {
     OL_Context::Functor* nextFunctor = _iterator->second;
+    _currentFunctor = nextFunctor;
     processFunctor(nextFunctor, nodeID);
   }
 
-  if (_udpPushSenders.size()) { 
-    genSendElements(udp, nodeID);
-  }
-
+  ElementSpecRef receiveMux = genSendElements(udp, nodeID); 
   _currentElementChain.clear();
-  if (_udpReceivers.size() > 0) {
-    genReceiveElements(udp, nodeID);
-  }
+  genReceiveElements(udp, nodeID, receiveMux);
 }
 
 void Rtr_ConfGen::clear()
@@ -131,7 +127,7 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
   if (r->aggField >= 0) {
     if (hasEventTerm(r)) {
       // there is an aggregate and involves an event, we need an agg wrap      
-      agg_el = New refcounted<Aggwrap>(r->aggFn, r->aggField + 2);
+      agg_el = New refcounted<Aggwrap>(r->aggFn, r->aggField + 1);
     } else {
       // an agg that involves only base tables. 
       genSingleAggregateElements(fn, r, nodeID, &curNamesTracker);
@@ -159,7 +155,6 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
     std::cout << "Pending register receiver " << _pendingRegisterReceiver << "\n";
     genProjectHeadElements(fn, r, nodeID, &curNamesTracker);
   }
-
   
   // generate the elements for the output
   if (r->deleteFlag == true) {
@@ -198,8 +193,7 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
       _pendingReceiverSpec = agg_spec; // hook the agg_spect to the front later by receivers
       _currentElementChain.push_back(aggWrapSlot); // for hooking up with senders later
     } 
-    // send it!
-    genSendMarshalElements(r, nodeID, fn->arity);         
+    
     
     // at the receiver side:
     str headTableName = fn->name;
@@ -219,11 +213,21 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
 
 
 //////////////////// Transport layer //////////////////////////////////////////
-void Rtr_ConfGen::genReceiveElements(ref< Udp> udp, str nodeID)
+void Rtr_ConfGen::genReceiveElements(ref< Udp> udp, str nodeID, ElementSpecRef wrapAroundDemux)
 {
 
-  // My store of reach tuples
+  // network in
   ElementSpecRef udpReceive = _conf->addElement(udp->get_rx());  
+  ElementSpecRef unmarshalS =
+    _conf->addElement(New refcounted< UnmarshalField >(strbuf("ReceiveUnmarshal:") << nodeID, 1));
+  ElementSpecRef unBoxS =
+    _conf->addElement(New refcounted< UnboxField >(strbuf("ReceiveUnBox:") << nodeID, 1));
+
+  hookUp(udpReceive, 0, unmarshalS, 0);
+  hookUp(unmarshalS, 0, unBoxS, 0);
+
+  ElementSpecRef wrapAroundMux = _conf->addElement(New refcounted< Mux >(strbuf("wrapAroundMux:") << nodeID, 2));
+  hookUp(unBoxS, 0, wrapAroundMux, 0);
 
   // demuxer
   ref< vec< ValueRef > > demuxKeys = New refcounted< vec< ValueRef > >;
@@ -234,15 +238,6 @@ void Rtr_ConfGen::genReceiveElements(ref< Udp> udp, str nodeID)
   }
 
   ElementSpecRef demuxS = _conf->addElement(New refcounted< Demux >("receiveDemux", demuxKeys));
-
-  ElementSpecRef unmarshalS =
-    _conf->addElement(New refcounted< UnmarshalField >(strbuf("ReceiveUnmarshal:") << nodeID, 1));
-
-  ElementSpecRef unBoxS =
-    _conf->addElement(New refcounted< UnboxField >(strbuf("ReceiveUnBox:") << nodeID, 1));
-
-  hookUp(udpReceive, 0, unmarshalS, 0);
-  hookUp(unmarshalS, 0, unBoxS, 0);
  
   genPrintElement(strbuf("PrintReceivedBeforeDemux:") << nodeID);
   genDupElimElement(strbuf("ReceiveDupElimBeforeDemux:") << nodeID); 
@@ -259,7 +254,7 @@ void Rtr_ConfGen::genReceiveElements(ref< Udp> udp, str nodeID)
   hookUp(demuxS, 0);
 
   // connect to all the pending udp receivers. Assume all 
-  // receivers are connected to elements with push input ports for now
+  // receivers are connected to elements with push input ports for now 
   int counter = 0;
   for (_iterator = _udpReceivers.begin(); _iterator != _udpReceivers.end(); _iterator++) {
     ReceiverInfo ri = _iterator->second;
@@ -269,16 +264,15 @@ void Rtr_ConfGen::genReceiveElements(ref< Udp> udp, str nodeID)
     std::cout << "Generate Receive: Demuxing " << tableName << " for " << numElementsToReceive << " elements\n";
 
     // DupElim -> DemuxS -> Insert -> Duplicator -> Fork
-
     ElementSpecRef bufferQueue = 
       _conf->addElement(New refcounted< Queue >(strbuf("DemuxQueue:") << 
 						nodeID << ":" << tableName, 1000));
     ElementSpecRef pullPush = 
       _conf->addElement(New refcounted<TimedPullPush>("DemuxQueuePullPush" << nodeID << ":" << tableName, 0));
+
     hookUp(demuxS, counter++, bufferQueue, 0);
     hookUp(bufferQueue, 0, pullPush, 0);
     
-
     // duplicator
     ElementSpecRef duplicator = 
       _conf->addElement(New refcounted< DuplicateConservative >(strbuf("DuplicateConservative:") 
@@ -318,6 +312,14 @@ void Rtr_ConfGen::genReceiveElements(ref< Udp> udp, str nodeID)
 
   ElementSpecRef sinkS = _conf->addElement(New refcounted< Discard >("discard"));
   hookUp(demuxS, _udpReceivers.size(), sinkS, 0); // if we don't know where this should go
+
+  _currentElementChain.push_back(wrapAroundDemux);
+  genPrintElement(strbuf("PrintWrapAroundBeforeReceiveMux:") << nodeID);
+  genPrintWatchElement(strbuf("PrintWrapAroundBeforeReceiveMux:") << nodeID);
+  
+  // connect the orignal wrap around
+  hookUp(wrapAroundMux, 1);
+  
 }
 
 
@@ -327,7 +329,7 @@ void Rtr_ConfGen::registerUDPPushSenders(ElementSpecRef elementSpecRef)
 }
 
 
-void Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
+ElementSpecRef Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
 {
   ElementSpecRef udpSend = _conf->addElement(udp->get_tx());  
 
@@ -341,17 +343,49 @@ void Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
 							<< nodeID, 0));
   hookUp(roundRobin, 0, pullPush, 0);
 
+  genDupElimElement(strbuf("SendDupElim:") << nodeID);   
+  genPrintElement(strbuf("PrintSend:") << nodeID);
+  genPrintWatchElement(strbuf("PrintWatchSend:") << nodeID);
+
+  // check here for the wrap around
+  ref< vec< ValueRef > > wrapAroundDemuxKeys = New refcounted< vec< ValueRef > >;  
+  wrapAroundDemuxKeys->push_back(New refcounted< Val_Str >(str(strbuf() << nodeID)));
+  ElementSpecRef wrapAroundDemux = _conf->addElement(New refcounted< Demux >("wrapAroundDemux", wrapAroundDemuxKeys, 1));  
+
+  hookUp(wrapAroundDemux, 0); // connect to the wrap around
   ElementSpecRef sendQueue = 
     _conf->addElement(New refcounted< Queue >(strbuf("SendQueue:") << nodeID, 1000));
-  hookUp(pullPush, 0, sendQueue, 0);
+  hookUp(wrapAroundDemux, 1, sendQueue, 0); // connect first port of wrap around to sendQueue
+
+  // connect to send queue
+  genPrintElement(strbuf("PrintRemoteSend:") << nodeID);
+  genPrintWatchElement(strbuf("PrintWatchRemoteSend:") << nodeID);
+
+  ///////// Network Out ///////////////
+  // for now, assume addr field is the put here
+  ElementSpecRef encapSend =
+    _conf->addElement(New refcounted< PelTransform >(strbuf("encapSend:") << nodeID, 
+						     "$1 pop swallow pop")); // the rest
+  // Now marshall the payload (second field)
+  ElementSpecRef marshalSend = 
+    _conf->addElement(New refcounted< MarshalField >("marshal:" << nodeID, 1));  
+  ElementSpecRef routeSend =
+    _conf->addElement(New refcounted< StrToSockaddr >("router:" << nodeID, 0));
+
+  hookUp(encapSend, 0);
+  hookUp(marshalSend, 0);
+  hookUp(routeSend, 0);
+  hookUp(udpSend, 0);
 
   // form the push senders
   for (unsigned int k = 0; k < _udpPushSenders.size(); k++) {
     ElementSpecRef nextElementSpec = _udpPushSenders.at(k);
     hookUp(nextElementSpec, 0, roundRobin, k);
   }
-  hookUp(sendQueue, 0, udpSend, 0);
+
+  return wrapAroundDemux;
 }
+
 
 void Rtr_ConfGen::genFunctorSource(OL_Context::Functor* functor, OL_Context::Rule* rule, str nodeID)
 {
@@ -380,45 +414,6 @@ void Rtr_ConfGen::genFunctorSource(OL_Context::Functor* functor, OL_Context::Rul
 }
 
 
-// create a send element where the first field after table name is the address. Drop that field
-void Rtr_ConfGen::genSendMarshalElements(OL_Context::Rule* rule, str nodeID, int arity)
-{
-  genDupElimElement(strbuf("SendDupElim:") << rule->ruleID << ":" << nodeID);
-   
-  genPrintElement(strbuf("PrintSend:") << rule->ruleID << ":" << nodeID);
-  genPrintWatchElement(strbuf("PrintWatchSend:") << rule->ruleID << ":" << nodeID);
-
-  // Create the encapsulated version of this tuple, holding the
-  // destination address and, encapsulated, the payload containing the
-  // reach tuple. Take care to avoid sending the first field address
-  strbuf marshalPelStr(" $0 ->t ");
-  // fill in depending on arity. Notice we drop the first field, and avoid the 
-  // table name which is already inside (+2)
-  for (int k = 0; k < arity; k++) {
-    marshalPelStr << "$" << k+2 << " append ";
-  }
-  marshalPelStr << "pop";
-
-  ElementSpecRef encapS =
-    _conf->addElement(New refcounted< PelTransform >(strbuf("encapSend:") << rule->ruleID << ":" << nodeID, 
-						     "$1 pop " << marshalPelStr)); // the rest
-  
-  hookUp(encapS, 0);
-
-  // Now marshall the payload (second field)
-  ElementSpecRef marshalS = 
-    _conf->addElement(New refcounted< MarshalField >("marshal:" << 
-						     rule->ruleID << ":" << nodeID, 1));
-  
-  // And translate the address into a sockaddr.  This is a hack until
-  // we have a consistent view of the UDP interface.
-  ElementSpecRef routeS =
-    _conf->addElement(New refcounted< StrToSockaddr >("router:" << rule->ruleID 
-						      << ":" << nodeID, 0));
-
-  hookUp(marshalS, 0);
-  hookUp(routeS, 0);
-}
 
 // for a particular table name that we are receiving, register an elementSpec that needs 
 // that data
@@ -440,7 +435,7 @@ void Rtr_ConfGen::registerReceiverTable(OL_Context::Rule* rule, str tableName)
   ReceiverInfoMap::iterator _iterator = _udpReceivers.find(tableName);
   if (_iterator == _udpReceivers.end()) {
     // not there, we register
-    _udpReceivers.insert(std::make_pair(tableName, ReceiverInfo(tableName)));
+    _udpReceivers.insert(std::make_pair(tableName, ReceiverInfo(tableName, _currentFunctor->arity)));
   }  
   debugRule(rule, str(strbuf() << "Register table " << tableName << "\n"));
 }
@@ -645,7 +640,7 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Functor* curFunctor,
 					 FieldNamesTracker* curNamesTracker)
 {
   // determine the projection fields, and the first address to return. Add 1 for table name     
-  int addressField = curNamesTracker->fieldPosition(curFunctor->loc) + 1;
+  //int addressField = curNamesTracker->fieldPosition(curFunctor->loc) + 1;
   std::vector<unsigned int> indices;  
   
   // iterate through all functor's output
@@ -656,9 +651,10 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Functor* curFunctor,
   }
   
   strbuf pelTransformStrbuf("\"" << curFunctor->name << "\" pop");
-  if (curRule->deleteFlag == false) {
+  /*if (curRule->deleteFlag == false) {
     pelTransformStrbuf << " $" << addressField << " pop"; // we are not deleting
-  }
+    }*/
+
   for (unsigned int k = 0; k < indices.size(); k++) {
     pelTransformStrbuf << " $" << indices.at(k) << " pop";
   }
@@ -989,16 +985,7 @@ void Rtr_ConfGen::genSingleAggregateElements(OL_Context::Functor* currentFunctor
   genPrintElement("PrintAgg:" << currentRule->ruleID << ":" << nodeID);
   genPrintWatchElement("PrintWatchAgg:" << currentRule->ruleID << ":" << nodeID);
 
-  /*ElementSpecRef timedPullPush = 
-    _conf->addElement(New refcounted<TimedPullPush>("timedPullPush:" << 
-						    currentRule->ruleID 
-						    << ":" << nodeID, 0));  
-
-  hookUp(timedPullPush, 0);
-  */
-
   genProjectHeadElements(currentFunctor, currentRule, nodeID, aggregateNamesTracker);
-  genSendMarshalElements(currentRule, nodeID, currentFunctor->arity);
   _udpPushSenders.push_back(_currentElementChain.back());
 
   // not done yet, we also need to register a table receiver for the head

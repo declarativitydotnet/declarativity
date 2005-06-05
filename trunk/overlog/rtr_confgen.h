@@ -116,6 +116,7 @@ private:
   bool _pendingRegisterReceiver;
   str  _pendingReceiverTable;
   ElementSpecPtr _pendingReceiverSpec;
+  OL_Context::Functor* _currentFunctor;
   
   // Relational -> P2 elements
   void processFunctor(OL_Context::Functor* curFunctor, 
@@ -177,11 +178,10 @@ private:
 				  FieldNamesTracker* curNamesTracker);
   
   // Network elements
-  void genSendElements(ref< Udp> udp, str nodeID);
-  void genReceiveElements(ref< Udp> udp, str nodeID);
+  ElementSpecRef genSendElements(ref< Udp> udp, str nodeID);
+  void genReceiveElements(ref< Udp> udp, str nodeID, ElementSpecRef wrapAroundDemux);
   void registerReceiverTable(OL_Context::Rule* rule, str tableName);
   void registerReceiver(str tableName, ElementSpecRef elementSpecRef);
-  void genSendMarshalElements(OL_Context::Rule* rule, str nodeID, int arity);
   void genFunctorSource(OL_Context::Functor* functor, OL_Context::Rule* rule, str nodeID);
 
   // Helper functions
@@ -236,8 +236,10 @@ private:
   struct ReceiverInfo {
     std::vector<ElementSpecRef> _receivers;
     str _name;
-    ReceiverInfo(str name) {
+    u_int _arity;
+    ReceiverInfo(str name, u_int arity) {
       _name = name;
+      _arity = arity;
     }      
     void addReceiver(ElementSpecRef elementSpecRef) { 
       _receivers.push_back(elementSpecRef);
