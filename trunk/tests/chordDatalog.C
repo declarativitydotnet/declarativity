@@ -36,7 +36,7 @@
 
 
 bool DEBUG = false;
-bool TEST_SUCCESSOR = true;
+bool TEST_SUCCESSOR = false;
 bool TEST_LOOKUP = true;
 
 
@@ -231,20 +231,11 @@ void initiateJoinRequest(ref< Rtr_ConfGen > routerConfigGenerator, ref< Router::
   ElementSpecRef slotS =
     conf->addElement(New refcounted< Slot >(strbuf("JoineEventSlot:")));
 
-  ElementSpecRef encap = conf->addElement(New refcounted< PelTransform >("JoinEventEncap",
-									 "$1 pop \
-                                                     $0 ->t $1 append pop")); // the rest
-  ElementSpecRef marshal = conf->addElement(New refcounted< MarshalField >("JoinEventMarshalField", 1));
-  ElementSpecRef route   = conf->addElement(New refcounted< StrToSockaddr >(strbuf("JoinEventRoute"), 0));
-  
   // Link everything
   conf->hookUp(sourceS, 0, onceS, 0);
   conf->hookUp(onceS, 0, slotS, 0);
-  conf->hookUp(slotS, 0, encap, 0);
-  conf->hookUp(encap, 0, marshal, 0);
-  conf->hookUp(marshal, 0, route, 0);
 
-  routerConfigGenerator->registerUDPPushSenders(route);
+  routerConfigGenerator->registerUDPPushSenders(slotS);
 }
 
 

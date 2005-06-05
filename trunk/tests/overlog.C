@@ -78,7 +78,7 @@ int main(int argc, char **argv)
     gen.createTables("localhost");
     
     ref< Udp > udp = New refcounted< Udp >("Udp", 10000);
-    gen.configureRouter(udp, "localhost");
+    gen.configureRouter(udp, "localhost:10000");
     
     LoggerI::Level level = LoggerI::NONE;
     RouterRef router = New refcounted< Router >(conf, level);
