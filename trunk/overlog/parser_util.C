@@ -13,13 +13,22 @@
 #ifndef __PARSER_UTIL_C__
 #define __PARSER_UTIL_C__
 
+#include <math.h>
 #include "parser_util.h"
+#include "val_int32.h"
 
 
 //=====================================
 
+Parse_Val::operator int() {
+  int val = Val_Int32::cast(v);
+  return (neg_) ? -1*val : val;
+}
+
 Parse_Expr* Parse_Agg::DONT_CARE = New Parse_Var(Val_Str::mk("*"));
 Parse_Expr* Parse_Expr::Nil = New Parse_Var(Val_Str::mk("null"));
+Parse_Expr* Parse_Expr::Now = New Parse_Var(Val_Str::mk("now"));
+Parse_Expr* Parse_Expr::Local = New Parse_Var(Val_Str::mk("local"));
 
 bool Parse_Agg::operator==(const Parse_Expr &e){
   try {
@@ -108,6 +117,39 @@ str Parse_Range::toString() {
   return r;
 }
 
+
+Parse_Math::operator int() {
+  Parse_Math *m;
+  Parse_Val  *v;
+  int l = 0;
+  int r = 0;
+  
+  if ((m=dynamic_cast<Parse_Math*>(lhs)) != NULL) 
+    l = int(*m);
+  else if ((v=dynamic_cast<Parse_Val*>(lhs)) != NULL) 
+    l = int(*v);
+  else
+    return 0;	// TODO: throw some kind of exception.
+
+  if ((m=dynamic_cast<Parse_Math*>(rhs)) != NULL) 
+    r = int(*m);
+  else if ((v=dynamic_cast<Parse_Val*>(rhs)) != NULL) 
+    r = int(*v);
+  else
+    return 0;	// TODO: throw some kind of exception.
+
+  switch (oper) {
+    case LSHIFT:  return l << r;
+    case RSHIFT:  return l >> r;
+    case PLUS:    return l +  r;
+    case MINUS:   return l -  r;
+    case TIMES:   return l *  r;
+    case DIVIDE:  return l /  r;
+    case MODULUS: return l %  r;
+    case EXP:     int(pow(l, r));
+    default: assert(0);
+  }
+}
 
 bool Parse_Math::operator==(const Parse_Expr &e){
   try {

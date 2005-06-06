@@ -1,10 +1,23 @@
-/*2 The base tuples */
-materialise(node,infinity,1).
-materialise(bestSucc,tSucc*2,1).
-materialise(finger,tFix*2,160).
+#define tSucc          5
+#define tFix           5
+#define tJoin          5
+#define tStabilizeWait 5
+#define tPingSoftState 5
+#define tStap          5
+#define succSize       5
+#define fNum           5
+#define fFixProb       0.5
+#define t_Fix          5
+#define tStab          5
+#define tPing          5
 
-materialise(succ,tSucc*2,16).
-materialise(pred,infinity,1).
+/* The base tuples */
+materialize(node,infinity,1).
+materialize(bestSucc,tSucc*2,1).
+materialize(finger,tFix*2,160).
+
+materialize(succ,tSucc*2,16).
+materialize(pred,infinity,1).
 materialize(join,tJoin,5).
 materialize(landmark,infinity,5).
 
@@ -23,7 +36,7 @@ bestLookupDist@NI(NI,K,R,E,min<D>) :-
 
 lookup@BI(min<BI>,K,R,E) :- node@NI(NI,N),
         bestLookupDist@NI(NI,K,R,E,D), B in (N,K),
-        finger@NI(NI,I,B,BI), D=K-B-1.
+        finger@NI(NI,I,B,BI), D:=K-B-1.
 
 
 /** Neighbor Selection */
@@ -32,46 +45,45 @@ bestSuccDist@NI(NI,min<D>) :- node@NI(NI,N),
 
 bestSucc@NI(NI,S,SI) :- succ@NI(NI,S,SI),
         bestSuccDist@NI(NI,D), node@NI(NI,N),
-        D=S-N-1.
+        D:=S-N-1.
 
 finger@NI(NI,0,S,SI) :- bestSuccessor@NI(NI,S,SI).
 
 
 /** Successor eviction */
-succCount(NI,count<>) :- succ(NI,S,SI).
+succCount(NI,count<*>) :- succ(NI,S,SI).
 
-evictSucc@NI(NI) :- succCount@NI(NI,C),
-        C > succSize.
+evictSucc@NI(NI) :- succCount@NI(NI,C), C > succSize.
 
 maxSuccDist@NI(NI,max<D>) :- succ@NI(NI,S,SI),
         node@NI(NI,N), D:=S-N-1,
         evictSucc@NI(NI).
 
-delete@NI<succ(NI,S,SI)> :- succ@NI(NI,S,SI),
-        maxSuccDist@NI(NI,D), D=S-N-1.
+delete succ@NI(NI,S,SI) :- succ@NI(NI,S,SI),
+        maxSuccDist@NI(NI,D), D:=S-N-1.
 
 
 /** Finger fixing */
 fFix@NI(NI,E,I) :- periodic@NI(NI,E,t_Fix),
-        range(I,0,fNum-1), coinFlip(fFixProb).
+        I in [0,fNum-1), coinFlip(fFixProb).
 
 lookup@NI(NI,K,NI,E) :- fFix@NI(NI,E,I),
         node(NI,N), K:=N+1<<I.
 
-finger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I1),
-         lookupRes@NI(NI,K,B,BI,E),
-	K in (N+1<<I,N), node@NI(NI,N),  range(I,0,fNum-1).
+finger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I),
+        lookupRes@NI(NI,K,B,BI,E),
+	K in (N+1<<I,N), node@NI(NI,N).
 
 
 /** Churn Handling */
-pred@NI(ni,null,"").
+pred@NI(local,null,"").
 
 joinReq@LI(LI,N,NI,E) :- join@NI(NI,E),
         node@NI(NI,N), landmark@NI(NI,LI),
         LI != "".
 
 succ@NI(NI,N,NI) :- landmark@NI(NI,LI),
-        node@NI(NI,N), join@NI(NI,E),LI = "".
+        node@NI(NI,N), join@NI(NI,E),LI := "".
 
 lookup@LI(LI,N,NI,E) :- joinReq@LI(LI,N,NI,E).
 
@@ -105,7 +117,7 @@ notifyPred@SI(SI,N,NI) :- stabilize@NI(NI,E),
 
 pred@NI(NI,P,PI) :- node@NI(NI,N),
         notifyPred@NI(NI,P,PI), pred@NI(NI,P1,PI1),
-        ((PI1="")||(P in (P1,N))).
+        ((PI1=="")||(P in (P1,N))).
 
 
 /** Connectivity Monitoring */
@@ -118,7 +130,7 @@ pingResp@RI(RI,NI,E,TS) :-
 
 latency@NI(NI,PI,L) :-
         pingReply@NI(NI,PI,E,TS),
-        pingReq@NI(NI,PI,E,TS1), L=now-TS1.
+        pingReq@NI(NI,PI,E,TS1), L:=now-TS1.
 
 pingNode@NI(NI,SI) :- succ@NI(NI,S,SI).
 

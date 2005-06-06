@@ -24,6 +24,8 @@ class OL_Lexer;
 class Parse_Expr {
 public:
   static Parse_Expr* Nil;
+  static Parse_Expr* Now;
+  static Parse_Expr* Local;
 
   Parse_Expr(ValuePtr val=NULL) : v(val), position_(-1) {};
   Parse_Expr(Parse_Expr *val) : v(val->v), position_(-1) {};
@@ -51,6 +53,8 @@ public:
   virtual void neg(bool n) { neg_ = n; };
   virtual bool neg() { return neg_; };
   virtual str toString() { return v->toString(); };
+
+  virtual operator int();
 
 private:
   bool neg_;
@@ -129,6 +133,8 @@ public:
   virtual bool operator==(const Parse_Expr &e);
 
   virtual str toString();
+
+  virtual operator int();
 
   Operator   oper;
   Parse_Expr *lhs;
