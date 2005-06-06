@@ -1,4 +1,4 @@
-/* The base tuples */
+/*2 The base tuples */
 materialise(node,infinity,1).
 materialise(bestSucc,tSucc*2,1).
 materialise(finger,tFix*2,160).
@@ -58,9 +58,9 @@ fFix@NI(NI,E,I) :- periodic@NI(NI,E,t_Fix),
 lookup@NI(NI,K,NI,E) :- fFix@NI(NI,E,I),
         node(NI,N), K:=N+1<<I.
 
-finger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I),
-        lookupRes@NI(NI,K,B,BI,E),
-	K in (N+1<<I,N), node@NI(NI,N).
+finger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I1),
+         lookupRes@NI(NI,K,B,BI,E),
+	K in (N+1<<I,N), node@NI(NI,N),  range(I,0,fNum-1).
 
 
 /** Churn Handling */
