@@ -33,6 +33,7 @@ int main(int argc, char **argv)
   ref< OL_Context > ctxt = New refcounted< OL_Context>();
   bool route = false;
   bool builtin = false;
+  str filename("");
 
   for( int i=1; i<argc; i++) { 
     std::string arg(argv[i]);
@@ -55,6 +56,7 @@ int main(int argc, char **argv)
     } else if (arg == "-") {
       ctxt->parse_stream(&std::cin);
     } else { 
+      filename = argv[i];
       std::ifstream istr(argv[i]);
       ctxt->parse_stream(&istr);
     }
@@ -74,11 +76,11 @@ int main(int argc, char **argv)
   if (route) {
     // test a configuration of a router
     Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-    Rtr_ConfGen gen(ctxt, conf, true, true, "test config");
-    gen.createTables("localhost");
+    Rtr_ConfGen gen(ctxt, conf, false, false, filename);
+    gen.createTables("127.0.0.1:10000");
     
     ref< Udp > udp = New refcounted< Udp >("Udp", 10000);
-    gen.configureRouter(udp, "localhost:10000");
+    gen.configureRouter(udp, "127.0.0.1:10000");
     
     LoggerI::Level level = LoggerI::NONE;
     RouterRef router = New refcounted< Router >(conf, level);
