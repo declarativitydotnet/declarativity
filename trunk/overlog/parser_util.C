@@ -28,7 +28,6 @@ Parse_Val::operator int() {
 Parse_Expr* Parse_Agg::DONT_CARE = New Parse_Var(Val_Str::mk("*"));
 Parse_Expr* Parse_Expr::Nil = New Parse_Var(Val_Str::mk("null"));
 Parse_Expr* Parse_Expr::Now = New Parse_Var(Val_Str::mk("now"));
-Parse_Expr* Parse_Expr::Local = New Parse_Var(Val_Str::mk("local"));
 
 bool Parse_Agg::operator==(const Parse_Expr &e){
   try {
@@ -74,7 +73,9 @@ str Parse_Bool::toString() {
     b << lhs->toString() << " IN " << rhs->toString();
   }
   else {
-    b << "( " << lhs->toString() << ")";
+    if (dynamic_cast<Parse_Bool*>(lhs) != NULL) b << "( ";
+    b << lhs->toString();
+    if (dynamic_cast<Parse_Bool*>(lhs) != NULL) b << " )";
     switch (oper) {
       case AND: b << " AND "; break;
       case OR:  b << " OR "; break;
@@ -86,7 +87,9 @@ str Parse_Bool::toString() {
       case GTE: b << " >= "; break;
       default: assert(0);
     }
-    b << "( " << rhs->toString() << " )";
+    if (dynamic_cast<Parse_Bool*>(rhs) != NULL) b << "( ";
+    b << rhs->toString();
+    if (dynamic_cast<Parse_Bool*>(rhs) != NULL) b << " )";
   }
 
   return b;
@@ -171,16 +174,19 @@ str Parse_Math::toString() {
   if (lpar) m << " )";
 
   switch (oper) {
-    case LSHIFT:  m << " << "; break;
-    case RSHIFT:  m << " >> "; break;
-    case PLUS:    m << " + "; break;
-    case MINUS:   m << " - "; break;
-    case TIMES:   m << " * "; break;
-    case DIVIDE:  m << " / "; break;
-    case MODULUS: m << " % "; break;
-    case EXP:     m << " ** "; break;
+    case LSHIFT:  m << " <<"; break;
+    case RSHIFT:  m << " >>"; break;
+    case PLUS:    m << " +"; break;
+    case MINUS:   m << " -"; break;
+    case TIMES:   m << " *"; break;
+    case DIVIDE:  m << " /"; break;
+    case MODULUS: m << " %"; break;
+    case EXP:     m << " **"; break;
     default: assert(0);
   }
+  if (id) m << "id ";
+  else m << " ";
+
   if (rpar) m << "( ";
   m << rhs->toString();
   if (rpar) m << " )";

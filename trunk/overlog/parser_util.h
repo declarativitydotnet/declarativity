@@ -25,7 +25,6 @@ class Parse_Expr {
 public:
   static Parse_Expr* Nil;
   static Parse_Expr* Now;
-  static Parse_Expr* Local;
 
   Parse_Expr(ValuePtr val=NULL) : v(val), position_(-1) {};
   Parse_Expr(Parse_Expr *val) : v(val->v), position_(-1) {};
@@ -124,8 +123,8 @@ public:
 class Parse_Math : public Parse_Expr {
 public:
   enum Operator {LSHIFT, RSHIFT, PLUS, MINUS, TIMES, DIVIDE, MODULUS, EXP, NOP};
-  Parse_Math(Operator o, Parse_Expr *l, Parse_Expr *r=NULL) 
-    : oper(o), lhs(l), rhs(r) {
+  Parse_Math(Operator o, Parse_Expr *l, Parse_Expr *r=NULL, bool i = false) 
+    : oper(o), id(i), lhs(l), rhs(r) {
       // TODO: if (oper != NOP && rhs == NULL) ERROR!
   };
   ~Parse_Math() { delete lhs; if (rhs) delete rhs; };
@@ -137,6 +136,7 @@ public:
   virtual operator int();
 
   Operator   oper;
+  bool       id;
   Parse_Expr *lhs;
   Parse_Expr *rhs;
 };
