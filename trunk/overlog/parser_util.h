@@ -229,5 +229,18 @@ public:
   Parse_Bool *select;
 };
 
+class Parse_RangeFunction : public Parse_Term {
+public:
+  Parse_RangeFunction(Parse_Expr *v, Parse_Expr *s, Parse_Expr *e) 
+    : var(v), start(s), end(e) { };
+  virtual ~Parse_RangeFunction() { delete var; delete start; delete end; }
+
+  virtual str toString();
+  
+  Parse_Expr *var;
+  Parse_Expr *start;
+  Parse_Expr *end;
+};
+
 
 #endif /* __PARSER_UTIL_H__ */

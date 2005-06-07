@@ -13,17 +13,17 @@
 #define local          "127.0.0.1:80"
 
 /* The base tuples */
-materialize(node,infinity,1).
-materialize(bestSucc,tSucc*2,1).
-materialize(finger,tFix*2,160).
+materialize(node,infinity,1, keys(1)).
+materialize(bestSucc,tSucc*2,1,keys(1)).
+materialize(finger,tFix*2,160,keys(2)).
 
-materialize(succ,tSucc*2,16).
-materialize(pred,infinity,1).
-materialize(join,tJoin,5).
-materialize(landmark,infinity,5).
+materialize(succ,tSucc*2,16,keys(2)).
+materialize(pred,infinity,1,keys(1)).
+materialize(join,tJoin,5,keys(1)).
+materialize(landmark,infinity,5,keys(1)).
 
-materialize(stabilize,tStabilizeWait,5).
-materialize(pingNode,tPingSoftState,infinity).  
+materialize(stabilize,tStabilizeWait,5,keys(1)).
+materialize(pingNode,tPingSoftState,infinity,keys(1)).  
 
 
 /** Lookups */
@@ -66,7 +66,7 @@ delete succ@NI(NI,S,SI) :- succ@NI(NI,S,SI),
 
 /** Finger fixing */
 fFix@NI(NI,E,I) :- periodic@NI(NI,E,t_Fix),
-        I in [0,fNum-1), coinFlip(fFixProb).
+        range(I,0,fNum-1), coinFlip(fFixProb).
 
 lookup@NI(NI,K,NI,E) :- fFix@NI(NI,E,I),
         node(NI,N), K:=N +id 1 <<id I.

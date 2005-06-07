@@ -264,5 +264,9 @@ str Parse_Function::toString() {
   return f;
 }
 
+str Parse_RangeFunction::toString() {
+  return "RANGE( " << var->toString() << ", " << start->toString() 
+         << ", " << end->toString() << " )";
+}
 
 #endif /* __PARSER_UTIL_C__ */
