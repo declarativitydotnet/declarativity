@@ -51,7 +51,7 @@ public:
   Parse_Val(ValuePtr val) : Parse_Expr(val), neg_(false) {};
   virtual void neg(bool n) { neg_ = n; };
   virtual bool neg() { return neg_; };
-  virtual str toString() { return v->toString(); };
+  virtual str toString() { return ((neg_ ? "-" : "") << v->toString()); };
 
   virtual operator int();
 
@@ -65,13 +65,6 @@ public:
   Parse_Var(const strbuf& var) : Parse_Expr(Val_Str::mk(var))  {};
 
   virtual str toString() { return v->toString(); };
-};
-
-class Parse_String : public Parse_Expr {
-public:
-  Parse_String(ValuePtr s) : Parse_Expr(s) {};
-
-  virtual str toString() { return strbuf()<<"\""<<v->toString()<<"\""; };
 };
 
 class Parse_Agg : public Parse_Expr {
