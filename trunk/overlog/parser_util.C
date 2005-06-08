@@ -148,7 +148,7 @@ Parse_Math::operator int() {
     case TIMES:   return l *  r;
     case DIVIDE:  return l /  r;
     case MODULUS: return l %  r;
-    case EXP:     int(pow(l, r));
+    case EXP:     return int(pow(l, r));
     default: assert(0);
   }
 }
