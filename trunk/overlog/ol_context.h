@@ -16,76 +16,52 @@
 #ifndef __OL_PARSEENV_H__
 #define __OL_PARSEENV_H__
 
-#include <list>
+#include <vector>
 #include <map>
 #include <set>
 #include "value.h"
+#include "tuple.h"
 
-#include "parser_stuff.h"
+#include "parser_util.h"
 
 class OL_Context {
 
 public:
-  
-  struct Functor;
 
   struct Error {
-    int	 line_num;	// Line number
-    str  msg;		// What?
+    int  line_num;      // Line number
+    str  msg;           // What?
     Error(int l, str m) : line_num(l), msg(m) {};
   };
   
-  struct Arg {
-    int    var;	// Position, or -1
-    ValuePtr val;	// Value, if var == -1
-    Arg(u_int v) : var(v) {};
-    Arg(ValuePtr v): var(-1), val(v) {} ;
-  };
-
-  struct Term {
-    Functor *fn;		// The actual functor this refers to. 
-    int location;		// The 'location' of this eval, in the
-				// positional list of the owning
-				// Rule. 
-    std::vector<Arg> args;	// functor->arity args. 
-    std::vector<str> argNames;	// functor->arity args. 
-  };
-
   struct Rule {
-    str ruleID;
-    str aggFn;
-    int aggField;
-    bool deleteFlag;
-    std::vector<str> args; // List of free variables in the rule.
-    std::vector<Term> terms; // List of terms.
+    Rule(str r, Parse_Functor *h, bool d) 
+      : ruleID(r), head(h), deleteFlag(d) {};
 
-    str toString();	       // For debugging...
-    int add_arg(str varname);  // Add a new var and return its position
-    int find_arg(str varname); // Look up a var and ret. pos or -1
+    str toString();
+
+    str           ruleID;
+    Parse_Functor *head;
+    bool          deleteFlag;
+    std::vector<Parse_Term*> terms; 	// List of terms in the left hand side.
   };
 
 
   /* The meta-data of the table */
   struct TableInfo {
+    str toString();
+
     str tableName;
-    int arity;
     int timeout;
     int size;
     std::vector<int> primaryKeys;
   };
   
-  struct Functor {
-    str name;		// The name of the functor or table
-    u_int arity;	// The arity
-    bool defined;	// Has it been defined yet?
-    std::vector<Rule *> rules;	// List of associated rules
-    str loc;
+  struct WatchDef {
+    WatchDef(Parse_Expr *e) : watch(e->v) {};
+    str toString() { return "watch( " << watch->toString() << " )"; };
 
-    Functor(str n, u_int a, str l) : name(n), arity(a), loc(l) {};
-    static str calc_key(str name, u_int arity, str loc) {
-      return strbuf() << name << "/" << arity << "/" << loc;
-    };
-    str key() const { return calc_key(name, arity, loc); }
+    ValuePtr watch;
   };
 
   /*******************************************************************/
@@ -107,18 +83,14 @@ public:
 
   //
   // Add a new rule to the system
-  void add_rule( Parse_Expr *e, Parse_Term *lhs, Parse_TermList *rhs, bool deleteFlag );
+  void rule( Parse_Term *lhs, Parse_TermList *rhs, bool deleteFlag, Parse_Expr *n=NULL );
 
   // Materialize a table
-  void materialize( Parse_ExprList *l);
+  void table( Parse_Expr *n, Parse_Expr *t, Parse_Expr *s, Parse_ExprList *k=NULL );
 
-  void primaryKeys( Parse_ExprList *l);
+  void fact( Parse_Term *t );
 
-  void watchVariables( Parse_ExprList *l);
-
-  void add_fact( Parse_Term *t);
-
-  void add_event( Parse_Term *t);
+  void watch( Parse_Expr *t );
 
   void error(str msg);
 
@@ -126,24 +98,23 @@ public:
 
   str toString();
   
-  typedef std::map<str, OL_Context::Functor *> FunctorMap;
-  typedef std::map<str, OL_Context::TableInfo *> TableInfoMap;
+  typedef std::vector<Rule*>                      RuleList;
+  typedef std::map<str, OL_Context::TableInfo *>  TableInfoMap;
   typedef std::vector<OL_Context::Error *> ErrorList;
 
-private:
-  FunctorMap* functors;
-  TableInfoMap* tables;
-  std::set<str> watchTables;
 
-  Functor *retrieve_functor( str name, int arity, str loc,
-			     bool create=false,
-			     bool define=false );
- 
+private:
+  TableInfoMap*      tables;
+  RuleList*          rules;
+  std::set<str>      watchTables;
+  std::set<TupleRef> facts;
+
 public: 
-  ErrorList	errors;
-  FunctorMap* getFunctors();
-  TableInfoMap* getTableInfos();
-  std::set<str> getWatchTables();
+  ErrorList          errors;
+  RuleList*          getRules()       { return rules; };
+  TableInfoMap*      getTableInfos()  { return tables;   };
+  std::set<str>      getWatchTables() { return watchTables; };
+  std::set<TupleRef> getFacts()       { return facts; };
 };
 
 extern int ol_parser_parse( OL_Context *env );

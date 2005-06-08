@@ -30,7 +30,7 @@
 
 #include "ol_context.h"
 #include "value.h"
-#include "parser_stuff.h"
+#include "parser_util.h"
 #include "ol_lexer.h"
 #include "tuple.h"
 #include "router.h"
@@ -116,37 +116,32 @@ private:
   bool _pendingRegisterReceiver;
   str  _pendingReceiverTable;
   ElementSpecPtr _pendingReceiverSpec;
-  OL_Context::Functor* _currentFunctor;
+  OL_Context::Rule* _currentRule;
   
   // Relational -> P2 elements
-  void processFunctor(OL_Context::Functor* curFunctor, 
-		      str nodeID);
-
   void processRule(OL_Context::Rule *r, 
-		   OL_Context::Functor *fn,
 		   str nodeID);
   
-  void genJoinElements(OL_Context::Functor* curFunctor, 
-		       OL_Context::Rule* curRule, 
+  void genJoinElements(OL_Context::Rule* curRule, 
 		       str nodeID,
 		       FieldNamesTracker* namesTracker,
 		       ptr<Aggwrap> agg_el);
 
   void genProbeElements(OL_Context::Rule* curRule, 
-			OL_Context::Term eventTerm, 
-			OL_Context::Term baseTerm, 
+			Parse_Functor* eventFunctor, 
+			Parse_Functor* baseFunctor, 
 			str nodeID, 
 			FieldNamesTracker* namesTracker, 
 			int joinOrder,
-			cbv comp_cb );
+			cbv comp_cb ); 
 
-  void genProjectHeadElements(OL_Context::Functor* curFunctor, 
-			      OL_Context::Rule* curRule,
-			      str nodeID,
-			      FieldNamesTracker* curNamesTracker);
-
-  void genSelectionElements(OL_Context::Rule* curRule, 
-			    OL_Context::Term nextSelection, 
+  void genProjectHeadElements(OL_Context::Rule* curRule,
+ 			      str nodeID,
+ 			      FieldNamesTracker* curNamesTracker);
+  
+  
+  /*void genSelectionElements(OL_Context::Rule* curRule, 
+			    Parse_Term* nextSelection, 
 			    str nodeID, 
 			    FieldNamesTracker* tracker,
 			    int selectionID); 
@@ -154,12 +149,15 @@ private:
   void genAllSelectionAssignmentElements(OL_Context::Rule* curRule,
 					 str nodeID,
 					 FieldNamesTracker* curNamesTracker);
+  */
 
+  /*
   void genAssignmentElements(OL_Context::Rule* curRule,
-			     OL_Context::Term curTerm, 
+			     Parse_Term* curTerm, 
 			     str nodeID,
 			     FieldNamesTracker* curNamesTracker,
 			     int assignmentID); 
+  */
   
   void genPrintElement(str header);
 
@@ -167,46 +165,42 @@ private:
 
   void genDupElimElement(str header);
   
-  void genSingleTermElement(OL_Context::Functor* curFunctor, 
-			    OL_Context::Rule* curRule, 
+  void genSingleTermElement(OL_Context::Rule* curRule, 
 			    str nodeID, 
 			    FieldNamesTracker* namesTracker);
 
-  void genSingleAggregateElements(OL_Context::Functor* curFunctor, 
-				  OL_Context::Rule* curRule, 
+  /*
+  void genSingleAggregateElements(OL_Context::Rule* curRule, 
 				  str nodeID, 
 				  FieldNamesTracker* curNamesTracker);
-  
+  */
+ 
   // Network elements
   ElementSpecRef genSendElements(ref< Udp> udp, str nodeID);
   void genReceiveElements(ref< Udp> udp, str nodeID, ElementSpecRef wrapAroundDemux);
   void registerReceiverTable(OL_Context::Rule* rule, str tableName);
   void registerReceiver(str tableName, ElementSpecRef elementSpecRef);
-  void genFunctorSource(OL_Context::Functor* functor, OL_Context::Rule* rule, str nodeID);
+  //void genFunctorSource(OL_Context::Rule* rule, str nodeID);
 
   // Helper functions
   void hookUp(ElementSpecRef firstElement, int firstPort,
 	      ElementSpecRef secondElement, int secondPort);  
   void hookUp(ElementSpecRef secondElement, int secondPort);  
-  str getRuleStr(OL_Context::Functor* curFunctor, 
-		 OL_Context::Rule* curRule);
   void addMultTableIndex(TableRef table, int fn, str nodeID);
-  bool isSelection(OL_Context::Term term);  
-  bool isAssignment(OL_Context::Term term);
-  bool isAggregation(OL_Context::Term term);
-  bool hasEventTerm(OL_Context::Rule* rule);
-  bool hasPeriodicTerm(OL_Context::Rule* curRule);
+  int numFunctors(OL_Context::Rule* rule);
+  //bool hasEventTerm(OL_Context::Rule* rule);
+  //bool hasPeriodicTerm(OL_Context::Rule* curRule);
   void debugRule(OL_Context::Rule* curRule, str debugMsg) { std::cout << curRule->ruleID << ": " << debugMsg; }
 
 
   // convince placeholder to figure out the cur fields in a tuple in flight
   class FieldNamesTracker {
   public:
-    std::vector<str> fieldNames;
-    
+    std::vector<str> fieldNames;    
     FieldNamesTracker();   
-    FieldNamesTracker(std::vector<str> names, int arity);    
-    void initialize(std::vector<str> names, int arity);    
+    FieldNamesTracker(Parse_Functor* pf);
+
+    void initialize(Parse_Functor* pf);
     std::vector<int> matchingJoinKeys(std::vector<str> names);    
     void mergeWith(std::vector<str> names);
     void mergeWith(std::vector<str> names, int numJoinKeys);
@@ -229,9 +223,6 @@ private:
       _secondFieldName = secondFieldName;
     }
   };
-
-  void setJoinKeys(OL_Context::Rule* rule, 
-		   std::vector<JoinKey>* joinKeys);
 
   struct ReceiverInfo {
     std::vector<ElementSpecRef> _receivers;

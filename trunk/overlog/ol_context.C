@@ -27,62 +27,36 @@
  *********************************************************************/
 
 //
-// Given a variable name, return it's positional number, or -1 if it
-// doesn't exist. 
-//
-int OL_Context::Rule::find_arg(str varname)
-{
-  for( u_int i=0; i < args.size(); i++ ) {
-    if ( args[i] == varname) {
-      return i;
-    } 
-  } 
-  return -1;
-}
-
-//
-// Given a variable name, return its position number, creating a new
-// one if necessary;
-//
-int OL_Context::Rule::add_arg(str varname)
-{
-  int pos = find_arg(varname);
-  if (pos < 0) {
-    args.push_back(varname);
-    return args.size() -1;
-  } else {
-    return pos;
-  }
-}
-
-//
 // Print out the rule for debugging purposes
 //
-str OL_Context::Rule::toString()
-{
+str OL_Context::Rule::toString() {
   strbuf r;
-  r << ":- ";
+  r << ruleID << " ";
+  r << head->toString() << " :- ";
 
-  for(std::vector<Term>::iterator t = terms.begin(); t!=terms.end(); t++) {
-    assert(t->fn != NULL);
-    r << t->fn->name;
-    if (t->location >= 0) {
-      r << "@" << args.at(t->location);
-    }
-    r << "( ";
-
-    for (unsigned int k = 0; k < t->argNames.size(); k++) {
-      r << t->argNames.at(k) << " ";
-    }
-    r << "), ";
+  for(std::vector<Parse_Term*>::iterator t = terms.begin(); t!=terms.end(); t++) {
+    r << (*t)->toString();
+    r << (((t+1) != terms.end()) ? ", " : ".");
   }
 
-  /*for (unsigned int k = 0; k < args.size(); k++) {
-    str nextStr = args.at(k);
-    r << nextStr << ",";
-    }*/
-
   return r;
+}
+
+str OL_Context::TableInfo::toString() {
+  strbuf t;
+  t << "MATERIALIZE( " << tableName << ", ";
+  if (timeout < 0) t << "infinity, ";
+  else t << timeout << ", ";
+
+  if (size < 0) t << "infinity";
+  else t << size;
+
+  if (primaryKeys.size() > 0) {
+    t << ", " << primaryKeys.at(0);
+  }
+  t << " )";
+
+  return t;
 }
 
 /**********************************************************************
@@ -96,156 +70,103 @@ str OL_Context::Rule::toString()
 // all variable references at this point and convert them to
 // positional arguments. 
 // 
-void OL_Context::add_rule( Parse_Expr *e, Parse_Term *lhs, Parse_TermList *rhs, bool deleteFlag ) 
+void OL_Context::rule( Parse_Term *lhs, Parse_TermList *rhs, bool deleteFlag, Parse_Expr *n ) 
 {
   TRC_FN;
+  Parse_Functor *h    = dynamic_cast<Parse_Functor*>(lhs);
+  str     ruleName    = (n) ? n->v->toString() : "";
+  int     fict_varnum = 1;		// Counter for inventing anonymous variables. 
+
+
   // Get hold of the functor (rule head) for this new rule.  This
   // holds a list of all the rule bodies that match the head.  Note
   // that this match is only performed on (name,arity), since we
   // convert all bound values to extra "eq" terms in the body down
   // below. 
 
-  //std::cout << "Add rule for functor " << lhs->fn->name << "@" << lhs->fn->loc << "\n";
-  Functor *fn = retrieve_functor( lhs->fn->name, lhs->args->size(), lhs->fn->loc,
-				  true, true );
-  assert(fn != NULL);
-  int fict_varnum = 1;	// Counter for inventing anonymous variables. 
-
   // Create a new rule and register it. 
-  Rule *r = New Rule();
-  r->ruleID = e->val->toString();
-  r->aggField = -1;
-  fn->rules.push_back(r);
-  r->deleteFlag = deleteFlag;
+  Rule *r = New Rule(ruleName, h, deleteFlag);
 
   // Next, we canonicalize all the args in the rule head.  We build up
   // a list of argument names - the first 'arity' of these will be the
   // free variables in the rule head.  Literals and duplicate free
   // variables here are eliminated, by a process of prepending extra
   // "eq" terms to the body, and inventing new free variables.
-  for( Parse_ExprList::iterator i=lhs->args->begin(); i != lhs->args->end(); i++ ) {
-    switch ((*i)->t) {
-    case Parse_Expr::DONTCARE:
-      r->args.push_back("_");
-      break;
-    case Parse_Expr::AGG:
-    case Parse_Expr::VAR:
+  for(int i = 0; i < h->args(); i++) {
+    Parse_Agg *agg = NULL;
+    Parse_Var *var = NULL;
+    Parse_Val *val = NULL;
+
+    if ((agg = dynamic_cast<Parse_Agg*>(h->arg(i))) != NULL) {
+      agg->position(i); 
+    }
+    else if ((var = dynamic_cast<Parse_Var*>(h->arg(i))) != NULL) {
       // The argument is a free variable - the usual case. 
-      if (r->find_arg((*i)->val->toString()) >= 0) {
+      int loc = h->find(var->toString());
+      if (loc < i) {
 	// We've found a duplicate variable in the head. Add a new
 	// "eq" term to the front of the term list. 
-	Term t;
-	int new_arg = r->add_arg( strbuf() << "$" << fict_varnum++ );
-	t.fn = retrieve_functor( "assign", 2, "-1", true, false );
-	t.location = -1;
-	t.args.push_back(Arg(r->find_arg((*i)->val->toString())));
-	t.args.push_back(Arg(new_arg));
-	r->terms.push_back(t);
+        Parse_Var *tmp = New Parse_Var(strbuf() << "$" << fict_varnum++);
+        tmp->position(i);
+        h->replace(i, tmp);
+        r->terms.push_back(New Parse_Assign(tmp, h->arg(loc)));
       } else {
-	// Otherwise, just add the new argument.
-	r->add_arg((*i)->val->toString());
+        var->position(i);
       }
-      // The argument is an aggregate over a free variable
-      if ((*i)->t == Parse_Expr::AGG) {
-	r->aggFn = (*i)->agg->toString();
-	r->aggField = r->find_arg((*i)->val->toString());
-	DBG("Aggregate " << r->aggFn 
-	    << "<" << (*i)->val->toString() << ">" 
-	    << ", var num. " << r->aggField );
-      }
-      break;
-    case Parse_Expr::VAL:
-      // The argument is a literal value.  We add a new "eq" term to
-      // the front of the term list and invent a new free variable which
-      // appears in this clause. 
-      Term t;
-      int new_arg = r->add_arg( strbuf() << "$" << fict_varnum++ );
-      t.fn = retrieve_functor( "assign", 2, "-1", true, false );
-      t.location = -1;
-      t.args.push_back(Arg(new_arg));
-      t.args.push_back(Arg((*i)->val));
-      r->terms.push_back(t);
-      break;
+    }
+    else if ((val = dynamic_cast<Parse_Val*>(h->arg(i))) != NULL) {
+      Parse_Var *tmp = New Parse_Var(strbuf() << "$" << fict_varnum++);
+      tmp->position(i);
+      h->replace(i, tmp);
+      r->terms.push_back(New Parse_Assign(tmp, val));
+    }
+    else {
+      error("Parse rule unknown functor body type.");
     }
   }
-  
+
   // Now we've taken care of the head (and possibly created a few
   // terms), we run through the rest of the terms converting all the
   // variables we encounter to indices. 
-  for( Parse_TermList::iterator j=rhs->begin(); j != rhs->end(); j++ ) {
-    Term t;
-    t.fn = retrieve_functor( (*j)->fn->name, (*j)->args->size(), (*j)->fn->loc, true, false );
-    if ((*j)->fn->loc == "") {
-      t.location = -1;
-    } else {
-      t.location = r->add_arg((*j)->fn->loc);
-    }
-    for( Parse_ExprList::iterator arg = (*j)->args->begin();
-	 arg != (*j)->args->end();	 arg++ ) {
-      switch ((*arg)->t) {
-      case Parse_Expr::DONTCARE:
-	t.args.push_back(Arg(r->add_arg(strbuf() << "$" << fict_varnum++)));
-	break;
-      case Parse_Expr::AGG:
-	// XXX We ignore aggregates not in the rule head
-      case Parse_Expr::VAR:
-	t.args.push_back(Arg(r->add_arg((*arg)->val->toString())));
-	break;
-      case Parse_Expr::VAL:
-	t.args.push_back(Arg((*arg)->val));
-	break;
+  int tpos = 1;
+  for(Parse_TermList::iterator iter = rhs->begin(); iter != rhs->end(); 
+      (*iter)->position(tpos++), iter++) {
+    Parse_Functor       *f  = NULL;
+    Parse_Assign        *a  = NULL;
+    Parse_Select        *s  = NULL;
+    Parse_RangeFunction *rf = NULL;
+
+    if ((f = dynamic_cast<Parse_Functor*>(*iter)) != NULL) {
+
+      for(int i = 0; i < f->args(); i++) {
+        Parse_Var *var = NULL;
+        Parse_Val *val = NULL;
+
+        if ((var = dynamic_cast<Parse_Var*>(f->arg(i))) != NULL) {
+          var->position(i);
+        }
+        else if ((val = dynamic_cast<Parse_Val*>(f->arg(i))) != NULL) {
+          val->position(i);
+        }
+        else {
+          error("Parse functor term unknown argument type.");
+        }
       }
     }
+    else if ((a = dynamic_cast<Parse_Assign*>(*iter)) != NULL) {
 
-    // generate the arg names for the term
-    for (unsigned int k = 0; k < t.args.size(); k++) {      
-      int pos = t.args.at(k).var;
-      if (pos == -1) {
-	t.argNames.push_back(t.args.at(k).val->toString());
-      } else {
-	t.argNames.push_back(r->args.at(pos));
-      }
     }
+    else if ((s = dynamic_cast<Parse_Select*>(*iter)) != NULL) {
 
-    r->terms.push_back(t);
-  }
-
-  strbuf s;
-  s << "( ";
-  for (uint k = 0; k < fn->arity; k++) {
-    s << r->args.at(k) << " ";
-  }
-  s << ")";
-
-  std::cout << r->ruleID << ": New rule for functor " << lhs->fn->name << "@" 
-	    << lhs->fn->loc << str(s) << r->toString() << "\n";
-  
-  delete lhs;
-  delete rhs;
-}
-
-//
-// Look up a functor by its name and arity, creating it if necessary.
-//
-OL_Context::Functor *OL_Context::retrieve_functor( str name, int arity, str loc,
-						   bool create,
-						   bool define )
-{
-  //TRC_FN;
-  str key = OL_Context::Functor::calc_key(name, arity, loc);
-  FunctorMap::iterator fni = functors->find(key);
-  if (fni == functors->end() ) {
-    if (create == false) {
-      return NULL;
-    } else {
-      OL_Context::Functor *fn = New Functor(name, arity, loc);
-      fn->defined = define;
-      functors->insert(std::make_pair(key, fn));
-      return fn;
     }
-  } else {
-    return fni->second;
+    else if ((rf = dynamic_cast<Parse_RangeFunction*>(*iter)) != NULL) {
+
+    }
+    else error("Internal parse error: unknown term type!");
+
+    r->terms.push_back(*iter);
   }
+  rules->push_back(r);
 }
 
 //
@@ -259,34 +180,25 @@ str OL_Context::toString()
   for( ErrorList::iterator e=errors.begin(); e!=errors.end(); e++) {
     r << "error(" << (*e)->line_num << ",'" << (*e)->msg << "').\n";
   }
-  for( TableInfoMap::iterator i = tables->begin(); i != tables->end(); i++ ) {
-    TableInfo *t=i->second;
-    r << "materialise(" << t->tableName << ","
-      << t->arity << ","
-      << t->timeout << ","
-      << t->size << ").\n";
+  for (TableInfoMap::iterator i = tables->begin(); i != tables->end(); i++ ) {
+    r << i->second->toString() << "\n";
   }
   
-  for( FunctorMap::iterator f=functors->begin(); f != functors->end(); f++) {
-    r << f->first << " :- \n";
-    for( std::vector<Rule *>::iterator ri = f->second->rules.begin();
-	 ri != f->second->rules.end(); 
-	 ri++) {
-    }
+  for(RuleList::iterator rule=rules->begin(); rule != rules->end(); rule++) {
+    r << (*rule)->toString() << "\n";
   }
   return r;
 }
 
-OL_Context::OL_Context()
-  : lexer(NULL)
+OL_Context::OL_Context() : lexer(NULL)
 {
-  functors = New FunctorMap();
+  rules  = New RuleList();
   tables = New TableInfoMap();
 }
 
 OL_Context::~OL_Context()
 {
-  delete functors;
+  delete rules;
   delete tables;
 }
 
@@ -312,132 +224,83 @@ void OL_Context::error(str msg)
   errors.push_back(New OL_Context::Error(lexer->line_num(), msg));
 }
 
-//
-// Materialize a table
-// 
-void OL_Context::materialize( Parse_ExprList *l)
+void OL_Context::watch(Parse_Expr *w)
 {
-  TableInfo *tableInfo = new TableInfo();
+  std::cout << "Add watch variable " << w->toString() << "\n";
+  watchTables.insert(w->v->toString());
+}
+
+
+void OL_Context::table(Parse_Expr *name, Parse_Expr *ttl, 
+                       Parse_Expr *size, Parse_ExprList *keys) {
+  TableInfo  *tableInfo = new TableInfo();
+  Parse_Math *math;
   
-  if (l->size() != 4) {
-    error("bad number of arguments to materialize");
-    goto mat_error;
+  tableInfo->tableName = name->toString();
+  
+  
+  if ((math = dynamic_cast<Parse_Math*>(ttl)) == NULL) {
+    tableInfo->timeout = Val_UInt32::cast(ttl->v);
+    if (tableInfo->timeout == 0) {
+      error("bad timeout for materialized table");
+      goto mat_error;
+    }
+  }
+  else {
+    tableInfo->timeout = *math;
   }
 
-  // tablename
-  if (l->at(0)->t != Parse_Expr::VAL ) {
-    error("bad table name for materialization");
-    goto mat_error;
+  if ((math = dynamic_cast<Parse_Math*>(size)) == NULL) {
+    tableInfo->size = Val_UInt32::cast(size->v);
+    if (tableInfo->size == 0) {
+      error("bad size for materialized table");
+      goto mat_error;
+    }
   }
-  tableInfo->tableName = l->at(0)->val->toString();
-  
-  // arity
-  tableInfo->arity = Val_UInt32::cast(l->at(1)->val);
-  if ( tableInfo->arity < 1 ) { 
-    error("bad arity for materialized table");
-    goto mat_error;
-  }
-  
-  // timeout
-  if (l->at(2)->val->toString() == "infinity") {
-    tableInfo->timeout = -1; 
-  } else {
-    tableInfo->timeout = Val_UInt32::cast(l->at(2)->val);
-  }
-  if (tableInfo->timeout == 0) {
-    error("bad timeout for materialized table");
-    goto mat_error;
+  else {
+    tableInfo->timeout = *math;
   }
 
-  // size
-  if (l->at(3)->val->toString() == "infinity") {
-    tableInfo->size = -1; 
-  } else {
-    tableInfo->size = Val_UInt32::cast(l->at(3)->val);
-  }
-  if (tableInfo->size == 0) {
-    error("bad size for materialized table");
-    goto mat_error;
+  if (keys) {
+    for (Parse_ExprList::iterator i = keys->begin(); i != keys->end(); i++)
+	tableInfo->primaryKeys.push_back(Val_UInt32::cast((*i)->v));
   }
 
   tables->insert(std::make_pair(tableInfo->tableName, tableInfo));
   
-  DBG( "Materialize " << tableInfo->tableName << "/" << tableInfo->arity 
+  DBG( "Materialize " << tableInfo->tableName << "/"
        << ", timeout " << tableInfo->timeout << ", size " << tableInfo->size); 
 
  mat_error:
-  delete l;
-}
-
-void OL_Context::primaryKeys( Parse_ExprList *l)
-{
-  
-  if (l->size() <= 1) {
-    error("bad number of arguments to form primary keys");
-    delete l;
-    return;
-  }
-
-  TableInfoMap::iterator _iterator = tables->find(l->at(0)->val->toString());
-  if (_iterator != tables->end()) {
-    for (uint k = 0; k < l->size()-1; k++) {
-      _iterator->second->primaryKeys.push_back(atoi(l->at(k+1)->val->toString().cstr()));
-    }
-  }
-}
-
-void OL_Context::watchVariables( Parse_ExprList *l)
-{
-  std::cout << "Watch variables " << l->at(0)->val->toString() << "\n";
-  watchTables.insert(l->at(0)->val->toString());
+  delete name;
+  delete ttl;
+  delete size;
+  if (keys) delete keys;
 }
 
 //
 // Adding a fact
 //
-void OL_Context::add_fact( Parse_Term *t)
+void OL_Context::fact(Parse_Term *t)
 {
-  str tblname;
+  Parse_Functor *f = dynamic_cast<Parse_Functor*>(t);
 
-  /*if (t->fn->loc != "") {
-    error("Location not allowed in fact declarations");
-    goto fact_error;
-    }*/
-  tblname = t->fn->name;
-
-  if (tblname == "materialize" || tblname == "materialise" ) {
-    materialize(t->args);
-  } else if (tblname == "watch") { 
-    watchVariables(t->args);
-  } else if (tblname == "primarykeys") {
-    primaryKeys(t->args);
-  } else {
-    TupleRef tpl = Tuple::mk();
-    for( Parse_ExprList::iterator i = t->args->begin(); 
-	 i != t->args->end(); 
-	 i++) {
-      if ((*i)->t != Parse_Expr::VAL) {
-	error("free variables and don't-cares not allowed in facts.");
-	goto fact_error;
-      } else {
-	ValueRef v=(*i)->val;
-	tpl->append(v);
-      }
+  TupleRef tpl = Tuple::mk();
+  for (int i = 0; i < f->args(); i++) {
+    Parse_Val  *val = dynamic_cast<Parse_Val*>(f->arg(i));
+    if (val != NULL) {
+      tpl->append(val->v);
+    } 
+    else {
+      error("free variables and don't-cares not allowed in facts:" << f->arg(i)->toString());
+      goto fact_error;
     }
-    tpl->freeze();
-    DBG( "Fact: " << tblname << " <- " << tpl->toString() );
+  }
+  tpl->freeze();
+  facts.insert(tpl);
+
+  DBG("Fact: " << tblname << " <- " << tpl->toString());
     
   fact_error:
-    delete t;
-  }
+    delete f;
 }
-
-void OL_Context::add_event( Parse_Term *t)
-{
-}
-
-OL_Context::FunctorMap* OL_Context::getFunctors() { return functors; }
-
-OL_Context::TableInfoMap* OL_Context::getTableInfos() { return tables; } 
-
-std::set<str> OL_Context::getWatchTables() { return watchTables; } 

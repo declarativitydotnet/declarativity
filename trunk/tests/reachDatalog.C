@@ -210,7 +210,7 @@ int main(int argc, char **argv)
 
   //StoreRef table = new refcounted< Table >("name", 100);
 
-  LoggerI::Level level = LoggerI::ALL;
+  LoggerI::Level level = LoggerI::NONE;
   ref< OL_Context > ctxt = New refcounted< OL_Context>();
   strbuf filename;
 
@@ -235,7 +235,7 @@ int main(int argc, char **argv)
     }
   }
 
-  std::cout << "Finish parsing (functors / tableInfos) " << ctxt->getFunctors()->size() 
+  std::cout << "Finish parsing (functors / tableInfos) " << ctxt->getRules()->size() 
 	    << " " << ctxt->getTableInfos()->size() << "\n";
 
   testReachability(level, ctxt, filename);

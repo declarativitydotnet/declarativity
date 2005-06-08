@@ -1,7 +1,7 @@
-/* A Bison parser, made by GNU Bison 1.875d.  */
+/* A Bison parser, made by GNU Bison 1.875c.  */
 
 /* Skeleton parser for Yacc-like parsing with Bison,
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -54,27 +54,39 @@
      OL_EXP = 280,
      OL_NOT = 281,
      OL_IN = 282,
-     OL_AT = 283,
-     OL_ATOM = 284,
-     OL_COMMA = 285,
-     OL_DONTCARE = 286,
-     OL_DOT = 287,
-     OL_EOF = 288,
-     OL_IF = 289,
-     OL_VALUE = 290,
-     OL_VAR = 291,
-     OL_LPAR = 292,
-     OL_RPAR = 293,
-     OL_LSQUB = 294,
-     OL_RSQUB = 295,
-     OL_RULE = 296,
-     OL_EVENT = 297,
-     OL_PERIOD = 298,
-     OL_DEL = 299,
-     OL_RANGEOO = 300,
-     OL_RANGEOC = 301,
-     OL_RANGECO = 302,
-     OL_RANGECC = 303
+     OL_ID = 283,
+     OL_ASSIGN = 284,
+     OL_AT = 285,
+     OL_NAME = 286,
+     OL_MAX = 287,
+     OL_MIN = 288,
+     OL_COUNT = 289,
+     OL_COMMA = 290,
+     OL_DONTCARE = 291,
+     OL_DOT = 292,
+     OL_EOF = 293,
+     OL_IF = 294,
+     OL_STRING = 295,
+     OL_VALUE = 296,
+     OL_VAR = 297,
+     OL_FUNCTION = 298,
+     OL_NULL = 299,
+     OL_LPAR = 300,
+     OL_RPAR = 301,
+     OL_LSQUB = 302,
+     OL_RSQUB = 303,
+     OL_PERIOD = 304,
+     OL_DEL = 305,
+     OL_RANGE = 306,
+     OL_NOW = 307,
+     OL_LOCAL = 308,
+     OL_MATERIALIZE = 309,
+     OL_KEYS = 310,
+     OL_WATCH = 311,
+     OL_RANGEOO = 312,
+     OL_RANGEOC = 313,
+     OL_RANGECO = 314,
+     OL_RANGECC = 315
    };
 #endif
 #define OL_OR 258
@@ -102,44 +114,57 @@
 #define OL_EXP 280
 #define OL_NOT 281
 #define OL_IN 282
-#define OL_AT 283
-#define OL_ATOM 284
-#define OL_COMMA 285
-#define OL_DONTCARE 286
-#define OL_DOT 287
-#define OL_EOF 288
-#define OL_IF 289
-#define OL_VALUE 290
-#define OL_VAR 291
-#define OL_LPAR 292
-#define OL_RPAR 293
-#define OL_LSQUB 294
-#define OL_RSQUB 295
-#define OL_RULE 296
-#define OL_EVENT 297
-#define OL_PERIOD 298
-#define OL_DEL 299
-#define OL_RANGEOO 300
-#define OL_RANGEOC 301
-#define OL_RANGECO 302
-#define OL_RANGECC 303
+#define OL_ID 283
+#define OL_ASSIGN 284
+#define OL_AT 285
+#define OL_NAME 286
+#define OL_MAX 287
+#define OL_MIN 288
+#define OL_COUNT 289
+#define OL_COMMA 290
+#define OL_DONTCARE 291
+#define OL_DOT 292
+#define OL_EOF 293
+#define OL_IF 294
+#define OL_STRING 295
+#define OL_VALUE 296
+#define OL_VAR 297
+#define OL_FUNCTION 298
+#define OL_NULL 299
+#define OL_LPAR 300
+#define OL_RPAR 301
+#define OL_LSQUB 302
+#define OL_RSQUB 303
+#define OL_PERIOD 304
+#define OL_DEL 305
+#define OL_RANGE 306
+#define OL_NOW 307
+#define OL_LOCAL 308
+#define OL_MATERIALIZE 309
+#define OL_KEYS 310
+#define OL_WATCH 311
+#define OL_RANGEOO 312
+#define OL_RANGEOC 313
+#define OL_RANGECO 314
+#define OL_RANGECC 315
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 75 "ol_parser.y"
+#line 87 "ol_parser.y"
 typedef union YYSTYPE {
-  Parse_FunctorName	*u_functorname;
-  Parse_Term		*u_term;
+  Parse_Bool::Operator  u_boper;
+  Parse_Math::Operator  u_moper;
+  Parse_Agg::Operator   u_aoper;
   Parse_TermList	*u_termlist;
-  Parse_Expr		*u_expr;
+  Parse_Term		*u_term;
+  Parse_FunctorName	*u_functorname;
   Parse_ExprList	*u_exprlist;
-  Parse_Range		*u_range;
-  Parse_Val		*v;
+  Parse_Expr		*v;
 } YYSTYPE;
-/* Line 1285 of yacc.c.  */
-#line 143 "ol_parser.tab.h"
+/* Line 1275 of yacc.c.  */
+#line 168 "ol_parser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

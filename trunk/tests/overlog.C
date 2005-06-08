@@ -22,7 +22,6 @@
 #include "ol_lexer.h"
 #include "ol_context.h"
 #include "rtr_confgen.h"
-// #include "routerConfigGenerator.h"
 #include "udp.h"
 
 extern int ol_parser_debug;
@@ -69,8 +68,9 @@ int main(int argc, char **argv)
     std::cout.flush();
   } 
 
-  std::cout << "Finish parsing (functors / tableInfos) " << ctxt->getFunctors()->size() 
+  std::cout << "Finish parsing (functors / tableInfos) " << ctxt->getRules()->size() 
 	    << " " << ctxt->getTableInfos()->size() << "\n";
+
 
 
   if (route) {
@@ -90,6 +90,7 @@ int main(int argc, char **argv)
       std::cout << "** Failed to initialize correct spec\n";
     }
   } 
+
   std::cout << "Done.\n";
 
   return 0;

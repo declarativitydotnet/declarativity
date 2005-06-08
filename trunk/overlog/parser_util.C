@@ -49,6 +49,15 @@ str Parse_Agg::toString() {
   return a;
 }
 
+str Parse_Agg::aggName() {
+  switch(oper) {
+    case MIN:   return "min";
+    case MAX:   return "max";
+    case COUNT: return "count";
+  }
+  return "bad";
+}
+
 Parse_Bool::Parse_Bool(Parse_Bool::Operator o, Parse_Expr *l, Parse_Expr *r, bool id) 
   : oper(o), lhs(l), rhs(r), id_(id) {
   // TODO: if (oper != NOT && rhs == NULL) ERROR!

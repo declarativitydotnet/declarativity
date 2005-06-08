@@ -77,6 +77,7 @@ public:
   virtual bool operator==(const Parse_Expr &e);
 
   virtual str toString();
+  virtual str aggName();
 
   Operator oper;
 };

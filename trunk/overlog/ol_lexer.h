@@ -32,7 +32,7 @@
 
 class OL_Context;
 
-#include "parser_stuff.h"
+#include "parser_util.h"
 #include "ol_parser.tab.h"
 
 class OL_Lexer : public OLBaseFlexLexer {

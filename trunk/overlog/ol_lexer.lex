@@ -64,7 +64,7 @@
 DIGIT           [0-9]
 EXP		[eE][+-]?{DIGIT}+
 DECIM		\.{DIGIT}+
-ALNUM		[_0-9a-zA-Z.-]
+ALNUM		[_0-9a-zA-Z]
 HEXDIGIT	[0-9a-fA-F]
 
 VARIABLE	[A-Z]{ALNUM}*
@@ -106,8 +106,9 @@ WHITESPACE	[ \t\r\n]+
   assert(cstring != NULL);
   lvalp->v = New Parse_Val(Val_Str::mk(*cstring));
   delete cstring;
+  cstring = NULL;
   BEGIN(INITIAL); 
-  return OL_VALUE; 
+  return OL_STRING; 
 }
 <CSTRING>\\.	{
   assert(cstring != NULL);
@@ -125,9 +126,10 @@ WHITESPACE	[ \t\r\n]+
     (*cstring) << yytext; 
 }
 
-<INITIAL>rule { return OL_RULE; }
-<INITIAL>event { return OL_EVENT; }
+<INITIAL>materialize { return OL_MATERIALIZE; }
+<INITIAL>keys { return OL_KEYS; }
 <INITIAL>in { return OL_IN; }
+<INITIAL>id { return OL_ID; }
 <INITIAL>"@" { return OL_AT; }
 <INITIAL>"," { return OL_COMMA; }
 <INITIAL>"(" { return OL_LPAR; }
@@ -168,19 +170,40 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>"!~" { return OL_NOTREGEXP; }
 <INITIAL>"!~*" { return OL_NOTREGIEXP; }
 
+<INITIAL>":=" { return OL_ASSIGN; }
 <INITIAL>"." { return OL_DOT; }
 <INITIAL>":-" { return OL_IF; }
 <INITIAL>"period=" { return OL_PERIOD; }
+<INITIAL>"watch" { return OL_WATCH; }
 <INITIAL>"delete" { return OL_DEL; }
+<INITIAL>"range" { return OL_RANGE; }
+<INITIAL>"now" { return OL_NOW; }
+<INITIAL>[Mm][Aa][Xx] { return OL_MAX; }
+<INITIAL>[Mm][Ii][Nn] { return OL_MIN; }
+<INITIAL>[Cc][Oo][Uu][Nn][Tt] { return OL_COUNT; }
+<INITIAL>"null" { 
+  lvalp->v = New Parse_Val(Val_Null::mk()); 
+  return OL_NULL; }
+
+<INITIAL>f_[a-zA-Z]+ { 
+  lvalp->v = New Parse_Var(Val_Str::mk(yytext)); 
+  return OL_FUNCTION; }
 
 <INITIAL>[A-Z]{ALNUM}* { 
-  lvalp->v = New Parse_Val(Val_Str::mk(yytext)); 
+  lvalp->v = New Parse_Var(Val_Str::mk(yytext)); 
   return OL_VAR; }
+
 <INITIAL>_ { return OL_DONTCARE; }
 
-<INITIAL>[!a-z]?{ALNUM}* { 
+<INITIAL>infinity {
+  // Unsigned integer literal (including octal and/or hex
+  lvalp->v = New Parse_Val(Val_Int64::mk(-1));
+  return OL_VALUE;
+}
+
+<INITIAL>[a-z]{ALNUM}* { 
   lvalp->v = New Parse_Val(Val_Str::mk(yytext)); 
-  return OL_ATOM; 
+  return OL_NAME; 
 }
 
 <INITIAL>({DIGIT}+|0[xX]{HEXDIGIT}+)U {
@@ -189,13 +212,13 @@ WHITESPACE	[ \t\r\n]+
   return OL_VALUE;
 }
 
-<INITIAL>-?({DIGIT}+|0[xX]{HEXDIGIT}+) {
+<INITIAL>({DIGIT}+|0[xX]{HEXDIGIT}+) {
   // Some integer literal (including octal and/or hex
   lvalp->v = New Parse_Val(Val_Int64::mk(strtoll(yytext,NULL,0)));
   return OL_VALUE;
 }
 
-<INITIAL>-?{DIGIT}+(({DECIM}{EXP}?)|{EXP}) {
+<INITIAL>{DIGIT}+(({DECIM}{EXP}?)|{EXP}) {
   // Double-precision literal
   lvalp->v = New Parse_Val(Val_Double::mk(strtod(yytext,NULL)));
   return OL_VALUE;

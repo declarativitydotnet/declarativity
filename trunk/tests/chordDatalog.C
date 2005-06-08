@@ -99,9 +99,9 @@ void fakeFingersSuccessors(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigG
 
 
   // fake the best successor table. Only for testing purposes.  
-  TableRef bestSuccessorTable = routerConfigGenerator->getTableByName(localAddress, "bestSuccessor");
+  TableRef bestSuccessorTable = routerConfigGenerator->getTableByName(localAddress, "bestSucc");
   TupleRef tuple = Tuple::mk();
-  tuple->append(Val_Str::mk("bestSuccessor"));
+  tuple->append(Val_Str::mk("bestSucc"));
   
   str myAddress = str(strbuf() << localAddress);
   tuple->append(Val_Str::mk(myAddress));
@@ -115,7 +115,7 @@ void fakeFingersSuccessors(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigG
   tuple->freeze();
   
   bestSuccessorTable->insert(tuple);
-  std::cout << "BestSuccessor: " << tuple->toString() << "\n";
+  std::cout << "BestSucc: " << tuple->toString() << "\n";
 }
 
 
