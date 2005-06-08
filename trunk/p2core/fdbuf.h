@@ -41,6 +41,21 @@ private:
   int	 err;		// Last value of errno. 
   char	*data;		// Data itself
 
+  // Used by write, send, sendto...
+  inline ssize_t post_write(ssize_t w) {
+    err = errno;
+    if (w > 0) { start += w; len =- w; }
+    return w;
+  };
+  
+  // Used by read, recv, recvfrom...
+  inline ssize_t post_read(ssize_t r) {
+    err = errno;
+    if (r > 0) { len += r; }
+    return r;
+  };
+
+
 public:
 
   // Size constants.
@@ -62,8 +77,9 @@ public:
   // read(1), return the number of bytes read this time, 0 if EOF, or
   // -1 if there was some "real" error (including EAGAIN).
   ssize_t read(int fd, size_t max_read = BUF_DFLT_READ);
-  ssize_t recvfrom(int fd, struct sockaddr *from, socklen_t *fromlen,
-		   size_t max_read = BUF_DFLT_READ );
+  ssize_t recv(int sd, size_t max_read = BUF_DFLT_READ, int flags=0);
+  ssize_t recvfrom(int sd, size_t max_read = BUF_DFLT_READ, int flags=0,
+		   struct sockaddr *from=NULL, socklen_t *fromlen=0);
   
   // Member functions to append values to the buffer.
   const Fdbuf &push_back(const Fdbuf &fb );
@@ -89,6 +105,10 @@ public:
   // the number of bytes written (which will be subtracted from the
   // buffer), or 0 if EAGAIN, or -1 in the event of some other error. 
   ssize_t write(int fd, ssize_t max_write = BUF_UNLIMITED);
+  ssize_t send(int sd, ssize_t max_write = BUF_UNLIMITED, int flags=0);
+	       
+  ssize_t sendto(int sd, ssize_t max_write = BUF_UNLIMITED, int flags=0,
+		 const struct sockaddr *to=NULL, socklen_t tolen=0 );
 
   //
   // ACCESS FUNCTIONS: those that aren't quite INPUT or OUTPUT. 

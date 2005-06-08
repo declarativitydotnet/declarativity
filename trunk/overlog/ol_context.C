@@ -254,6 +254,11 @@ OL_Context::Functor *OL_Context::retrieve_functor( str name, int arity, str loc,
 str OL_Context::toString()
 {
   strbuf r;
+
+  // Errors first
+  for( ErrorList::iterator e=errors.begin(); e!=errors.end(); e++) {
+    r << "error(" << (*e)->line_num << ",'" << (*e)->msg << "').\n";
+  }
   for( TableInfoMap::iterator i = tables->begin(); i != tables->end(); i++ ) {
     TableInfo *t=i->second;
     r << "materialise(" << t->tableName << ","
@@ -304,7 +309,7 @@ void OL_Context::parse_stream(std::istream *str)
 
 void OL_Context::error(str msg)
 {
-  std::cerr << "*** line " << lexer->line_num() << ": " << msg << "\n"; 
+  errors.push_back(New OL_Context::Error(lexer->line_num(), msg));
 }
 
 //

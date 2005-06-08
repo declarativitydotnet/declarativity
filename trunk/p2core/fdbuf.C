@@ -51,25 +51,18 @@ Fdbuf::~Fdbuf()
 ssize_t Fdbuf::read(int fd, size_t max_read)
 {
   ensure_additional( max_read );
-  ssize_t rc = ::read(fd, data + len + start, max_read);
-  err = errno;
-  if (rc > 0) {
-    len += rc;
-  }
-  return rc;
+  return post_read(::read(fd, data + len + start, max_read));
 }
-
-int Fdbuf::recvfrom(int sd, 
-		      struct sockaddr *from, socklen_t *fromlen,
-		      size_t max_read) 
+ssize_t Fdbuf::recv(int fd, size_t max_read, int flags)
 {
   ensure_additional( max_read );
-  ssize_t rc = ::recvfrom(sd, data + start + len, max_read, 0, from, fromlen);
-  err = errno;
-  if (rc > 0) {
-    len += rc;
-  }
-  return rc;
+  return post_read(::recv(fd, data + len + start, max_read, flags));
+}
+ssize_t Fdbuf::recvfrom(int sd, size_t max_read, int flags,
+			struct sockaddr *from, socklen_t *fromlen)
+{
+  ensure_additional( max_read );
+  return post_read(::recvfrom(sd, data + start + len, max_read, 0, from, fromlen));
 }
 
 // Appending a string
@@ -89,7 +82,7 @@ const Fdbuf &Fdbuf::push_back(const char *buf, size_t size)
 }
 const Fdbuf &Fdbuf::push_back(const char *str)
 {
-  return push_back(strlen(str));
+  return push_back(str,strlen(str));
 }
 const Fdbuf &Fdbuf::push_back(const Fdbuf &fb)
 {
@@ -105,15 +98,21 @@ const Fdbuf &Fdbuf::push_back(const Fdbuf &fb)
 //
 ssize_t Fdbuf::write(int fd, ssize_t max_write)
 {
-  ssize_t written = ::write(fd, 
-			    data + start, 
-			    max_write<0 ? len : std::min(len,(size_t)max_write));
-  err = errno;
-  if (written > 0) {
-    start += written; 
-    len =- written;
-  }
-  return written;
+  return post_write(::write(fd, data + start, 
+			    max_write<0 ? len : std::min(len,(size_t)max_write)));
+}
+ssize_t Fdbuf::send(int sd, ssize_t max_write, int flags)
+{
+  return post_write(::send(sd, data + start, 
+			   max_write<0 ? len : std::min(len,(size_t)max_write),
+			   flags ));
+}
+ssize_t Fdbuf::sendto(int sd, ssize_t max_write, int flags,
+		      const struct sockaddr *to, socklen_t tolen )
+{
+  return post_write(::sendto(sd, data + start, 
+			     max_write<0 ? len : std::min(len,(size_t)max_write),
+			     flags, to, tolen ));
 }
 
 //

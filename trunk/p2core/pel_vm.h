@@ -39,6 +39,8 @@ public:
     PE_UNKNOWN // Must be the last error
   };
 
+#include "pel_opcode_decls.gen.h"
+
 private:
   // Execution state
   std::deque<ValueRef> _st;
@@ -49,8 +51,6 @@ private:
   TuplePtr	 operand;
 
   static const char* err_msgs[];
-
-#include "pel_opcode_decls.gen.h"
 
   uint64_t pop_unsigned();
   int64_t pop_signed();

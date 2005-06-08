@@ -28,6 +28,12 @@ class OL_Context {
 public:
   
   struct Functor;
+
+  struct Error {
+    int	 line_num;	// Line number
+    str  msg;		// What?
+    Error(int l, str m) : line_num(l), msg(m) {};
+  };
   
   struct Arg {
     int    var;	// Position, or -1
@@ -122,6 +128,7 @@ public:
   
   typedef std::map<str, OL_Context::Functor *> FunctorMap;
   typedef std::map<str, OL_Context::TableInfo *> TableInfoMap;
+  typedef std::vector<OL_Context::Error *> ErrorList;
 
 private:
   FunctorMap* functors;
@@ -133,6 +140,7 @@ private:
 			     bool define=false );
  
 public: 
+  ErrorList	errors;
   FunctorMap* getFunctors();
   TableInfoMap* getTableInfos();
   std::set<str> getWatchTables();
