@@ -49,8 +49,8 @@ str Parse_Agg::toString() {
   return a;
 }
 
-Parse_Bool::Parse_Bool(Parse_Bool::Operator o, Parse_Expr *l, Parse_Expr *r) 
-  : oper(o), lhs(l), rhs(r) {
+Parse_Bool::Parse_Bool(Parse_Bool::Operator o, Parse_Expr *l, Parse_Expr *r, bool id) 
+  : oper(o), lhs(l), rhs(r), id_(id) {
   // TODO: if (oper != NOT && rhs == NULL) ERROR!
 }
 

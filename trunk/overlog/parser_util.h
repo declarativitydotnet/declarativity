@@ -85,7 +85,7 @@ class Parse_Bool : public Parse_Expr {
 public:
   enum Operator {NOT, AND, OR, EQ, NEQ, GT, LT, LTE, GTE, RANGE, NOP};
 
-  Parse_Bool(Operator o, Parse_Expr *l, Parse_Expr *r=NULL); 
+  Parse_Bool(Operator o, Parse_Expr *l, Parse_Expr *r=NULL, bool id = false); 
   virtual ~Parse_Bool() { delete lhs; if (rhs) delete rhs; };
   virtual bool operator==(const Parse_Expr &e); 
 
@@ -94,14 +94,15 @@ public:
   Operator   oper;
   Parse_Expr *lhs;
   Parse_Expr *rhs;
+  bool       id_;
 };
 
 class Parse_Range : public Parse_Expr {
 public:
   enum Interval{RANGEOO, RANGEOC, RANGECO, RANGECC};
 
-  Parse_Range(Interval i, Parse_Expr *l, Parse_Expr *r)
-    : type(i), lhs(l), rhs(r) { };
+  Parse_Range(Interval i, Parse_Expr *l, Parse_Expr *r, bool id = false)
+    : type(i), lhs(l), rhs(r), id_(id) { };
 
   virtual bool operator==(const Parse_Expr &e);
 
@@ -110,6 +111,7 @@ public:
   Interval   type;
   Parse_Expr *lhs;
   Parse_Expr *rhs;
+  bool       id_;
 };
 
 class Parse_Math : public Parse_Expr {
