@@ -26,7 +26,6 @@ Parse_Val::operator int() {
 }
 
 Parse_Expr* Parse_Agg::DONT_CARE = New Parse_Var(Val_Str::mk("*"));
-Parse_Expr* Parse_Expr::Nil = New Parse_Var(Val_Str::mk("null"));
 Parse_Expr* Parse_Expr::Now = New Parse_Var(Val_Str::mk("now"));
 
 bool Parse_Agg::operator==(const Parse_Expr &e){

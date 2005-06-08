@@ -23,7 +23,6 @@ class OL_Lexer;
 
 class Parse_Expr {
 public:
-  static Parse_Expr* Nil;
   static Parse_Expr* Now;
 
   Parse_Expr(ValuePtr val=NULL) : v(val), position_(-1) {};
