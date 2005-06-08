@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <string>
 #include <sstream>
+#include <errno.h>
 
 /*
   A brief implementation discussion is in order.  Unlike (say) DM's
