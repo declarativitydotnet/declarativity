@@ -138,10 +138,9 @@ private:
   void genProjectHeadElements(OL_Context::Rule* curRule,
  			      str nodeID,
  			      FieldNamesTracker* curNamesTracker);
-  
-  
-  /*void genSelectionElements(OL_Context::Rule* curRule, 
-			    Parse_Term* nextSelection, 
+    
+  void genSelectionElements(OL_Context::Rule* curRule, 
+			    Parse_Bool* pb,
 			    str nodeID, 
 			    FieldNamesTracker* tracker,
 			    int selectionID); 
@@ -149,15 +148,12 @@ private:
   void genAllSelectionAssignmentElements(OL_Context::Rule* curRule,
 					 str nodeID,
 					 FieldNamesTracker* curNamesTracker);
-  */
-
-  /*
+    
   void genAssignmentElements(OL_Context::Rule* curRule,
-			     Parse_Term* curTerm, 
+			     Parse_Assign* parse_assign, 
 			     str nodeID,
 			     FieldNamesTracker* curNamesTracker,
-			     int assignmentID); 
-  */
+			     int assignmentID);   
   
   void genPrintElement(str header);
 
@@ -169,8 +165,7 @@ private:
 			    str nodeID, 
 			    FieldNamesTracker* namesTracker);
 
-  /*
-  void genSingleAggregateElements(OL_Context::Rule* curRule, 
+  /*void genSingleAggregateElements(OL_Context::Rule* curRule, 
 				  str nodeID, 
 				  FieldNamesTracker* curNamesTracker);
   */
@@ -180,15 +175,18 @@ private:
   void genReceiveElements(ref< Udp> udp, str nodeID, ElementSpecRef wrapAroundDemux);
   void registerReceiverTable(OL_Context::Rule* rule, str tableName);
   void registerReceiver(str tableName, ElementSpecRef elementSpecRef);
+
   //void genFunctorSource(OL_Context::Rule* rule, str nodeID);
 
   // Helper functions
+  str genSelectionPel(Parse_Bool* pb, FieldNamesTracker *tracker);
+  str genAssignmentPel(Parse_Assign* pb, FieldNamesTracker *tracker);
   void hookUp(ElementSpecRef firstElement, int firstPort,
 	      ElementSpecRef secondElement, int secondPort);  
   void hookUp(ElementSpecRef secondElement, int secondPort);  
   void addMultTableIndex(TableRef table, int fn, str nodeID);
   int numFunctors(OL_Context::Rule* rule);
-  //bool hasEventTerm(OL_Context::Rule* rule);
+  bool hasEventTerm(OL_Context::Rule* rule);
   //bool hasPeriodicTerm(OL_Context::Rule* curRule);
   void debugRule(OL_Context::Rule* curRule, str debugMsg) { std::cout << curRule->ruleID << ": " << debugMsg; }
 
