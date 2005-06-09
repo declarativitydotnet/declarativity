@@ -375,9 +375,10 @@ void Rtr_ConfGen::registerReceiverTable(OL_Context::Rule* rule, str tableName)
 //////////////////////////////////////////////////////////////////
 
 str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
-  Parse_Var  *v;
-  Parse_Math *m;
-  strbuf     pel;  
+  Parse_Var*  var;
+  Parse_Val*  val;
+  Parse_Math* math;
+  strbuf      pel;  
 
 
   if (expr->id && expr->oper == Parse_Math::MINUS) {
@@ -386,28 +387,34 @@ str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
     expr->rhs = tmp;
   }
 
-  if ((v = dynamic_cast<Parse_Var*>(expr->lhs)) != NULL) {
-    int pos = names->fieldPosition(v->toString());
+  if ((var = dynamic_cast<Parse_Var*>(expr->lhs)) != NULL) {
+    int pos = names->fieldPosition(var->toString());
     pel << "$" << (pos+1) << " ";
   }
-  else if ((m = dynamic_cast<Parse_Math*>(expr->lhs)) != NULL) {
-    pel << pelMath(names, m); 
+  else if ((val = dynamic_cast<Parse_Val*>(expr->lhs)) != NULL) {
+    pel << val->toString() << " "; 
+  }
+  else if ((math = dynamic_cast<Parse_Math*>(expr->lhs)) != NULL) {
+    pel << pelMath(names, math); 
   }
   else {
     // TODO: throw/signal some kind of error
-    return "ERROR";
+    return "MATH ERROR";
   }
 
-  if ((v = dynamic_cast<Parse_Var*>(expr->rhs)) != NULL) {
-    int pos = names->fieldPosition(v->toString());
+  if ((var = dynamic_cast<Parse_Var*>(expr->rhs)) != NULL) {
+    int pos = names->fieldPosition(var->toString());
     pel << "$" << (pos+1) << " ";
   }
-  else if ((m = dynamic_cast<Parse_Math*>(expr->rhs)) != NULL) {
-    pel << pelMath(names, m); 
+  else if ((val = dynamic_cast<Parse_Val*>(expr->rhs)) != NULL) {
+    pel << val->toString() << " "; 
+  }
+  else if ((math = dynamic_cast<Parse_Math*>(expr->rhs)) != NULL) {
+    pel << pelMath(names, math); 
   }
   else {
     // TODO: throw/signal some kind of error
-    return "ERROR";
+    return "MATH ERROR";
   }
 
   switch (expr->oper) {
@@ -476,44 +483,51 @@ str Rtr_ConfGen::pelRange(FieldNamesTracker* names, Parse_Bool *expr) {
 }
 
 str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
-  Parse_Var*      v = NULL;
-  Parse_Function* f = NULL;
-  Parse_Bool*     b = NULL;
+  Parse_Var*      var = NULL;
+  Parse_Val*      val = NULL;
+  Parse_Function* fn  = NULL;
+  Parse_Bool*     b   = NULL;
   strbuf          pel;  
 
   if (expr->oper == Parse_Bool::RANGE) return pelRange(names, expr);
 
-  if ((v = dynamic_cast<Parse_Var*>(expr->lhs)) != NULL) {
-    int pos = names->fieldPosition(v->toString());
+  if ((var = dynamic_cast<Parse_Var*>(expr->lhs)) != NULL) {
+    int pos = names->fieldPosition(var->toString());
     pel << "$" << (pos+1) << " ";
+  }
+  else if ((val = dynamic_cast<Parse_Val*>(expr->lhs)) != NULL) {
+    pel << val->toString() << " "; 
   }
   else if ((b = dynamic_cast<Parse_Bool*>(expr->lhs)) != NULL) {
     pel << pelBool(names, b); 
   }
-  else if ((f = dynamic_cast<Parse_Function*>(expr->lhs)) != NULL) {
-    if (f->name() == "f_coinFlip")
+  else if ((fn = dynamic_cast<Parse_Function*>(expr->lhs)) != NULL) {
+    if (fn->name() == "f_coinFlip")
       pel << "COIN FLIP "; 
   }
   else {
     // TODO: throw/signal some kind of error
-    return "ERROR";
+    return "UNKNOWN BOOL OPERAND ERROR";
   }
 
   if (expr->rhs != NULL) {
-    if ((v = dynamic_cast<Parse_Var*>(expr->rhs)) != NULL) {
-      int pos = names->fieldPosition(v->toString());
+    if ((var = dynamic_cast<Parse_Var*>(expr->rhs)) != NULL) {
+      int pos = names->fieldPosition(var->toString());
       pel << "$" << (pos+1) << " ";
+    }
+    else if ((val = dynamic_cast<Parse_Val*>(expr->rhs)) != NULL) {
+      pel << val->toString() << " "; 
     }
     else if ((b = dynamic_cast<Parse_Bool*>(expr->rhs)) != NULL) {
       pel << pelBool(names, b); 
     }
-    else if ((f = dynamic_cast<Parse_Function*>(expr->lhs)) != NULL) {
-      if (f->name() == "f_coinFlip")
+    else if ((fn = dynamic_cast<Parse_Function*>(expr->rhs)) != NULL) {
+      if (fn->name() == "f_coinFlip")
         pel << "COIN FLIP "; 
     }
     else {
       // TODO: throw/signal some kind of error
-      return "ERROR";
+      return "UNKNOWN BOOL OPERAND ERROR";
     }
   }
 
@@ -585,19 +599,25 @@ void Rtr_ConfGen::pelAssign(OL_Context::Rule* rule, FieldNamesTracker* names,
   strbuf pel;
   strbuf pelAssign;
   Parse_Var  *a = dynamic_cast<Parse_Var*>(expr->var);
-  Parse_Var  *v = dynamic_cast<Parse_Var*>(expr->assign);
-  Parse_Bool *b = dynamic_cast<Parse_Bool*>(expr->assign);
-  Parse_Math *m = dynamic_cast<Parse_Math*>(expr->assign);
+  Parse_Var  *var = dynamic_cast<Parse_Var*>(expr->assign);
+  Parse_Val  *val = dynamic_cast<Parse_Val*>(expr->assign);
+  Parse_Bool *b   = dynamic_cast<Parse_Bool*>(expr->assign);
+  Parse_Math *m   = dynamic_cast<Parse_Math*>(expr->assign);
 
-  if (expr->assign == Parse_Expr::Now) 
+  if (expr->assign == Parse_Expr::Now)
     pelAssign << "now "; 
-  else if (b)                              
+  else if (b)
     pelAssign << pelBool(names, b);
-  else if (m)                              
+  else if (m)
     pelAssign << pelMath(names, m);
-  else if (v && names->fieldPosition(v->toString()) >= 0)                              
-    pelAssign << "$" << names->fieldPosition(v->toString()) << " ";
-  else std::cerr << "Rtr_ConfGen ASSIGN ERROR!\n";
+  else if (var && names->fieldPosition(var->toString()) >= 0)                              
+    pelAssign << "$" << (names->fieldPosition(var->toString())+1) << " ";
+  else if (val)
+    pelAssign << val->toString() << " ";
+  else {
+    std::cerr << "Rtr_ConfGen ASSIGN ERROR!\n";
+    assert(0);
+  }
    
   int pos = names->fieldPosition(a->toString());
   for (int k = 0; k < int(names->fieldNames.size()+1); k++) {
