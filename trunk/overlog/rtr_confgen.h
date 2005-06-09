@@ -139,11 +139,14 @@ private:
  			      str nodeID,
  			      FieldNamesTracker* curNamesTracker);
     
-  void genSelectionElements(OL_Context::Rule* curRule, 
-			    Parse_Bool* pb,
-			    str nodeID, 
-			    FieldNamesTracker* tracker,
-			    int selectionID); 
+  str pelRange(FieldNamesTracker* names, Parse_Bool *expr);
+  str pelMath(FieldNamesTracker* names, Parse_Math *expr);
+  str pelBool(FieldNamesTracker* names, Parse_Bool *expr);
+
+  void pelSelect(OL_Context::Rule* rule, FieldNamesTracker *names, Parse_Select *expr, 
+                 str nodeID, int selectionID);
+  void pelAssign(OL_Context::Rule* rule, FieldNamesTracker *names, Parse_Assign *expr, 
+                 str nodeID, int assignID);
   
   void genAllSelectionAssignmentElements(OL_Context::Rule* curRule,
 					 str nodeID,
@@ -179,8 +182,6 @@ private:
   //void genFunctorSource(OL_Context::Rule* rule, str nodeID);
 
   // Helper functions
-  str genSelectionPel(Parse_Bool* pb, FieldNamesTracker *tracker);
-  str genAssignmentPel(Parse_Assign* pb, FieldNamesTracker *tracker);
   void hookUp(ElementSpecRef firstElement, int firstPort,
 	      ElementSpecRef secondElement, int secondPort);  
   void hookUp(ElementSpecRef secondElement, int secondPort);  

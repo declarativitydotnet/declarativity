@@ -13,7 +13,6 @@
 #ifndef __PARSER_UTIL_C__
 #define __PARSER_UTIL_C__
 
-#include <math.h>
 #include "parser_util.h"
 #include "val_int32.h"
 
@@ -157,7 +156,6 @@ Parse_Math::operator int() {
     case TIMES:   return l *  r;
     case DIVIDE:  return l /  r;
     case MODULUS: return l %  r;
-    case EXP:     return int(pow(l, r));
     default: assert(0);
   }
 }
@@ -189,7 +187,6 @@ str Parse_Math::toString() {
     case TIMES:   m << " *"; break;
     case DIVIDE:  m << " /"; break;
     case MODULUS: m << " %"; break;
-    case EXP:     m << " **"; break;
     default: assert(0);
   }
   if (id) m << "id ";

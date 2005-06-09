@@ -296,7 +296,6 @@ math_oper:	  OL_LSHIFT  { $$ = Parse_Math::LSHIFT; }
 		| OL_TIMES   { $$ = Parse_Math::TIMES; }
 		| OL_DIVIDE  { $$ = Parse_Math::DIVIDE; }
 		| OL_MODULUS { $$ = Parse_Math::MODULUS; }
-		| OL_EXP     { $$ = Parse_Math::EXP; }
 		;
 
 

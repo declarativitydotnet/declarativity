@@ -117,7 +117,7 @@ public:
 
 class Parse_Math : public Parse_Expr {
 public:
-  enum Operator {LSHIFT, RSHIFT, PLUS, MINUS, TIMES, DIVIDE, MODULUS, EXP, NOP};
+  enum Operator {LSHIFT, RSHIFT, PLUS, MINUS, TIMES, DIVIDE, MODULUS, NOP};
   Parse_Math(Operator o, Parse_Expr *l, Parse_Expr *r=NULL, bool i = false) 
     : oper(o), id(i), lhs(l), rhs(r) {
       // TODO: if (oper != NOP && rhs == NULL) ERROR!
