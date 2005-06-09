@@ -144,6 +144,8 @@ public:
 
   virtual str toString();
 
+  str name() { return v->toString(); };
+
   void arg(Parse_Expr *arg) { args_->push_back(arg); };
   Parse_Expr* arg(int i) { return args_->at(i); };
   int args() { return args_->size(); };

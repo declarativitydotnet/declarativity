@@ -476,9 +476,10 @@ str Rtr_ConfGen::pelRange(FieldNamesTracker* names, Parse_Bool *expr) {
 }
 
 str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
-  Parse_Var*  v   = NULL;
-  Parse_Bool* b   = NULL;
-  strbuf      pel;  
+  Parse_Var*      v = NULL;
+  Parse_Function* f = NULL;
+  Parse_Bool*     b = NULL;
+  strbuf          pel;  
 
   if (expr->oper == Parse_Bool::RANGE) return pelRange(names, expr);
 
@@ -488,6 +489,10 @@ str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
   }
   else if ((b = dynamic_cast<Parse_Bool*>(expr->lhs)) != NULL) {
     pel << pelBool(names, b); 
+  }
+  else if ((f = dynamic_cast<Parse_Function*>(expr->lhs)) != NULL) {
+    if (f->name() == "f_coinFlip")
+      pel << "COIN FLIP "; 
   }
   else {
     // TODO: throw/signal some kind of error
@@ -501,6 +506,10 @@ str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
     }
     else if ((b = dynamic_cast<Parse_Bool*>(expr->rhs)) != NULL) {
       pel << pelBool(names, b); 
+    }
+    else if ((f = dynamic_cast<Parse_Function*>(expr->lhs)) != NULL) {
+      if (f->name() == "f_coinFlip")
+        pel << "COIN FLIP "; 
     }
     else {
       // TODO: throw/signal some kind of error
@@ -580,10 +589,15 @@ void Rtr_ConfGen::pelAssign(OL_Context::Rule* rule, FieldNamesTracker* names,
   Parse_Bool *b = dynamic_cast<Parse_Bool*>(expr->assign);
   Parse_Math *m = dynamic_cast<Parse_Math*>(expr->assign);
 
-  if (b)      pelAssign << pelBool(names, b);
-  else if (m) pelAssign << pelMath(names, m);
-  else if (v) pelAssign << "$" << v->toString() << " ";
-  else std::cerr << "PEL ASSIGN ERROR!\n";
+  if (expr->assign == Parse_Expr::Now) 
+    pelAssign << "now "; 
+  else if (b)                              
+    pelAssign << pelBool(names, b);
+  else if (m)                              
+    pelAssign << pelMath(names, m);
+  else if (v && names->fieldPosition(v->toString()) >= 0)                              
+    pelAssign << "$" << names->fieldPosition(v->toString()) << " ";
+  else std::cerr << "Rtr_ConfGen ASSIGN ERROR!\n";
    
   int pos = names->fieldPosition(a->toString());
   for (int k = 0; k < int(names->fieldNames.size()+1); k++) {

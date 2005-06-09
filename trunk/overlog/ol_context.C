@@ -286,6 +286,7 @@ void OL_Context::fact(Parse_Term *t)
   Parse_Functor *f = dynamic_cast<Parse_Functor*>(t);
 
   TupleRef tpl = Tuple::mk();
+  tpl->append(Val_Str::mk(f->fn->name));
   for (int i = 0; i < f->args(); i++) {
     Parse_Val  *val = dynamic_cast<Parse_Val*>(f->arg(i));
     if (val != NULL) {

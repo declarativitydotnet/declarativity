@@ -29,14 +29,14 @@ materialize(pingNode,tPingSoftState,infinity,keys(1)).
 /** Lookups */
 lookupRes@R(R,K,S,SI,E) :- node@NI(NI,N),
         lookup@NI(NI,K,R,E), bestSucc@NI(NI,S,SI),
-        K in (N,S].
+        K in id (N,S].
 
 bestLookupDist@NI(NI,K,R,E,min<D>) :-
         lookup@NI(NI,K,R,E), finger@NI(NI,I,B,BI),
-        node@NI(NI,N), B in (N,K), D:=K -id B -id 1.
+        node@NI(NI,N), B in id (N,K), D:=K -id B -id 1.
 
 lookup@BI(min<BI>,K,R,E) :- node@NI(NI,N),
-        bestLookupDist@NI(NI,K,R,E,D), B in (N,K),
+        bestLookupDist@NI(NI,K,R,E,D), B in id (N,K),
         finger@NI(NI,I,B,BI), D:=K -id B -id 1.
 
 
@@ -61,19 +61,19 @@ maxSuccDist@NI(NI,max<D>) :- succ@NI(NI,S,SI),
         evictSucc@NI(NI).
 
 delete succ@NI(NI,S,SI) :- succ@NI(NI,S,SI),
-        maxSuccDist@NI(NI,D), D:=S -id N -id 1.
+        maxSuccDist@NI(NI,D), node@NI(NI, N), D:=S -id N -id 1.
 
 
 /** Finger fixing */
 fFix@NI(NI,E,I) :- periodic@NI(NI,E,t_Fix),
-        range(I,0,fNum-1), coinFlip(fFixProb).
+        range(I,0,fNum-1), f_coinFlip(fFixProb) == 1.
 
 lookup@NI(NI,K,NI,E) :- fFix@NI(NI,E,I),
         node(NI,N), K:=N +id 1 <<id I.
 
 finger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I),
         lookupRes@NI(NI,K,B,BI,E),
-	K in (N +id 1 <<id I,N), node@NI(NI,N).
+	K in id (N +id 1 <<id I,N), node@NI(NI,N).
 
 
 /** Churn Handling */
@@ -104,7 +104,7 @@ sendPred@PI1(PI1,P,PI,E) :-
 
 succ@NI(NI,P,PI) :- node(NI,N),
         sendPred@NI(NI,P,PI,E),
-        bestSucc@NI(NI,S,SI), P in (N,S),
+        bestSucc@NI(NI,S,SI), P in id (N,S),
         stabilize@NI(NI,E).
 
 sendSucc@SI(SI,NI) :- stabilize@NI(NI,E),
@@ -118,7 +118,7 @@ notifyPred@SI(SI,N,NI) :- stabilize@NI(NI,E),
 
 pred@NI(NI,P,PI) :- node@NI(NI,N),
         notifyPred@NI(NI,P,PI), pred@NI(NI,P1,PI1),
-        ((PI1=="")||(P in (P1,N))).
+        ((PI1=="")||(P in id (P1,N))).
 
 
 /** Connectivity Monitoring */
