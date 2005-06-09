@@ -102,8 +102,8 @@ class Parse_Range : public Parse_Expr {
 public:
   enum Interval{RANGEOO, RANGEOC, RANGECO, RANGECC};
 
-  Parse_Range(Interval i, Parse_Expr *l, Parse_Expr *r, bool id = false)
-    : type(i), lhs(l), rhs(r), id_(id) { };
+  Parse_Range(Interval i, Parse_Expr *l, Parse_Expr *r)
+    : type(i), lhs(l), rhs(r) { };
 
   virtual bool operator==(const Parse_Expr &e);
 
@@ -112,7 +112,6 @@ public:
   Interval   type;
   Parse_Expr *lhs;
   Parse_Expr *rhs;
-  bool       id_;
 };
 
 class Parse_Math : public Parse_Expr {

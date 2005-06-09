@@ -380,6 +380,12 @@ str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
   strbuf     pel;  
 
 
+  if (expr->id && expr->oper == Parse_Math::MINUS) {
+    Parse_Expr *tmp = expr->lhs;
+    expr->lhs = expr->rhs;
+    expr->rhs = tmp;
+  }
+
   if ((v = dynamic_cast<Parse_Var*>(expr->lhs)) != NULL) {
     int pos = names->fieldPosition(v->toString());
     pel << "$" << (pos+1) << " ";
@@ -405,13 +411,13 @@ str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
   }
 
   switch (expr->oper) {
-    case Parse_Math::LSHIFT:  pel << (expr->id ? "<<id " : "<<i "); break;
-    case Parse_Math::RSHIFT:  pel << (expr->id ? ">>id " : ">>i "); break;
-    case Parse_Math::PLUS:    pel << (expr->id ? "+id "  : "+i " ); break;
-    case Parse_Math::MINUS:   pel << (expr->id ? "-id "  : "-i " ); break;
-    case Parse_Math::TIMES:   pel << (expr->id ? "*id "  : "*i " ); break;
-    case Parse_Math::DIVIDE:  pel << (expr->id ? "/id "  : "/i " ); break;
-    case Parse_Math::MODULUS: pel << (expr->id ? "\%id " : "\%i "); break;
+    case Parse_Math::LSHIFT:  pel << (expr->id ? "<<id "      : "<<i "); break;
+    case Parse_Math::RSHIFT:  pel << (expr->id ? ">>id "      : ">>i "); break;
+    case Parse_Math::PLUS:    pel << (expr->id ? "+id "       : "+i " ); break;
+    case Parse_Math::MINUS:   pel << (expr->id ? "distance "  : "-i " ); break;
+    case Parse_Math::TIMES:   pel << (expr->id ? "*id "       : "*i " ); break;
+    case Parse_Math::DIVIDE:  pel << (expr->id ? "/id "       : "/i " ); break;
+    case Parse_Math::MODULUS: pel << (expr->id ? "\%id "      : "\%i "); break;
     default: return "ERROR";
   }
 
@@ -419,45 +425,59 @@ str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
 }
 
 str Rtr_ConfGen::pelRange(FieldNamesTracker* names, Parse_Bool *expr) {
-  Parse_Var   *a = NULL;
-  Parse_Var   *v = dynamic_cast<Parse_Var*>(expr->lhs);
-  Parse_Range *r = dynamic_cast<Parse_Range*>(expr->rhs);
-  strbuf     pel;
-  int        pos;
+  Parse_Var*   var       = NULL;
+  Parse_Val*   val       = NULL;
+  Parse_Math*  math      = NULL;
+  Parse_Var*   range_var = dynamic_cast<Parse_Var*>(expr->lhs);
+  Parse_Range* range     = dynamic_cast<Parse_Range*>(expr->rhs);
+  strbuf       pel;
+  int          pos;
 
-  if (!v || !r) return "ERROR";
+  if (!range || !range_var) return "ERROR";
 
-  if ((a = dynamic_cast<Parse_Var*>(r->lhs)) != NULL) {
-    pos - names->fieldPosition(a->toString());
+  if ((var = dynamic_cast<Parse_Var*>(range->lhs)) != NULL) {
+    pos = names->fieldPosition(var->toString());
     if (pos < 0) return "ERROR";
     pel << "$" << (pos + 1) << " ";
   }
-  else return "ERROR";
-
-  if ((a = dynamic_cast<Parse_Var*>(r->rhs)) != NULL) {
-    pos - names->fieldPosition(a->toString());
-    if (pos < 0) return "ERROR";
-    pel << "$" << (pos + 1) << " ";
+  else if ((val = dynamic_cast<Parse_Val*>(range->lhs)) != NULL) {
+    pel << val->toString() << " ";
+  }
+  else if ((math = dynamic_cast<Parse_Math*>(range->lhs)) != NULL) {
+   pel << pelMath(names, math);
   }
   else return "ERROR";
 
-  pos - names->fieldPosition(v->toString());
+  if ((var = dynamic_cast<Parse_Var*>(range->rhs)) != NULL) {
+    pos = names->fieldPosition(var->toString());
+    if (pos < 0) return "ERROR";
+    pel << "$" << (pos + 1) << " ";
+  }
+  else if ((val = dynamic_cast<Parse_Val*>(range->rhs)) != NULL) {
+    pel << val->toString() << " ";
+  }
+  else if ((math = dynamic_cast<Parse_Math*>(range->rhs)) != NULL) {
+   pel << pelMath(names, math);
+  }
+  else return "ERROR";
+
+  pos = names->fieldPosition(range_var->toString());
   if (pos < 0) return "ERROR";
   pel << "$" << (pos + 1) << " ";
 
-  switch (r->type) {
-    case Parse_Range::RANGEOO: pel << (r->id_ ? "()id " : "()i "); break;
-    case Parse_Range::RANGEOC: pel << (r->id_ ? "(]id " : "(]i "); break;
-    case Parse_Range::RANGECO: pel << (r->id_ ? "[)id " : "[)i "); break;
-    case Parse_Range::RANGECC: pel << (r->id_ ? "[]id " : "[]i "); break;
+  switch (range->type) {
+    case Parse_Range::RANGEOO: pel << (expr->id_ ? "()id " : "()i "); break;
+    case Parse_Range::RANGEOC: pel << (expr->id_ ? "(]id " : "(]i "); break;
+    case Parse_Range::RANGECO: pel << (expr->id_ ? "[)id " : "[)i "); break;
+    case Parse_Range::RANGECC: pel << (expr->id_ ? "[]id " : "[]i "); break;
   }
 
   return pel;
 }
 
 str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
-  Parse_Var   *v;
-  Parse_Bool  *b;
+  Parse_Var*  v   = NULL;
+  Parse_Bool* b   = NULL;
   strbuf      pel;  
 
   if (expr->oper == Parse_Bool::RANGE) return pelRange(names, expr);
@@ -507,7 +527,7 @@ str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
 void Rtr_ConfGen::pelSelect(OL_Context::Rule* rule, FieldNamesTracker* names, Parse_Select *expr,
 			    str nodeID, int selectionID)
 {
-  str sPel = pelBool(names, expr->select) << " ifstop ";
+  str sPel = pelBool(names, expr->select) << "ifstop ";
   
   // put in the old fields (+1 since we have to include the table name)
   for (uint k = 0; k < names->fieldNames.size() + 1; k++) {
@@ -567,11 +587,11 @@ void Rtr_ConfGen::pelAssign(OL_Context::Rule* rule, FieldNamesTracker* names,
    
   int pos = names->fieldPosition(a->toString());
   for (int k = 0; k < int(names->fieldNames.size()+1); k++) {
-    if (k == pos) pel << pelAssign << " pop ";
+    if (k == pos) pel << pelAssign << "pop ";
     else pel << "$" << k << " pop ";
   }
   if (pos < 0) { 
-    pel << pelAssign << " pop ";
+    pel << pelAssign << "pop ";
     names->fieldNames.push_back(a->toString()); // the variable name
   } 
 
