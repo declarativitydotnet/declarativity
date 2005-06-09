@@ -492,46 +492,12 @@ void Rtr_ConfGen::genAssignmentElements(OL_Context::Rule* curRule,
 					FieldNamesTracker* curNamesTracker,
 					int assignmentID) 
 {
-  // get the assignment str
-  /*if (pelFunctions.find(termName) == pelFunctions.end()) {
-    // cannot find this 
-    std::cerr << "Invalid assignment term " << termName << "\n";
-    return;
-    }*/
-
   strbuf pelStr;
   for (uint k = 0; k < curNamesTracker->fieldNames.size()+1; k++) {
     pelStr << "$" << k << " pop ";
   }
   
   str pelExpression = genAssignmentPel(parse_assign, curNamesTracker);
-  
-  // go through the arguments in the assignment
-/*bool fail = false;
-  for (uint k = 1; k < curTerm.argNames.size(); k++) {
-    str curTermArgName = curTerm.argNames.at(k);
-    
-    if (curTerm.args.at(k).var == -1) {
-      // a constant
-      pelStr << curTerm.args.at(k).val->toString() << " ";
-    }        
-    else {     
-      // a variable
-      if (curNamesTracker->fieldPosition(curTerm.argNames.at(k)) == -1) {
-	fail = true;
-	std::cerr <<curTerm.argNames.at(k) << " is not a valid variable for " << 
-	  termName << " in " << curRule->ruleID << "\n";
-	break;
-      }
-      pelStr << "$" << (1 + curNamesTracker->fieldPosition(curTerm.argNames.at(k))) << " ";
-    }
-  }
-  if (fail) { 
-    // we cannot assign
-    return; 
-  }
-*/
-
   pelStr << pelExpression << " pop";
   curNamesTracker->fieldNames.push_back(parse_assign->var->toString()); // the variable name
   
