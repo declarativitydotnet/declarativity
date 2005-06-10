@@ -15,6 +15,7 @@
 lib_LTLIBRARIES = libp2core.la
 libp2core_la_SOURCES = \
 	fdbuf.C \
+	xdrbuf.C \
 	ID.C \
 	element.C \
 	tuple.C \

@@ -28,15 +28,15 @@
 //
 void Val_Time::xdr_marshal_subtype( XDR *x )
 {
-  xdr_int32_t(x, &(t.tv_sec));
-  xdr_int32_t(x, &(t.tv_nsec));
+  xdr_long(x, &(t.tv_sec));
+  xdr_long(x, &(t.tv_nsec));
 }
 
 ValueRef Val_Time::xdr_unmarshal( XDR *x )
 {
   struct timespec t;
-  xdr_int32_t(x, &(t.tv_sec));
-  xdr_int32_t(x, &(t.tv_nsec));
+  xdr_long(x, &(t.tv_sec));
+  xdr_long(x, &(t.tv_nsec));
   return mk(t);
 }
 

@@ -214,7 +214,7 @@ ID::xdr_marshal(XDR *x)
   for (uint i = 0;
        i < WORDS;
        i++) {
-    xdr_int32_t(x, &(words[i]));
+    xdr_uint32_t(x, &(words[i]));
   }
 }
 
@@ -225,7 +225,7 @@ ID::xdr_unmarshal(XDR *x)
   for (uint i = 0;
        i < WORDS;
        i++) {
-    xdr_int32_t(x, &(newID->words[i]));
+    xdr_uint32_t(x, &(newID->words[i]));
   }
   return newID;
 }

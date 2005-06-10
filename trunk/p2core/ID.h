@@ -18,7 +18,7 @@
 
 #include "inlines.h"
 #include <async.h>
-#include <arpc.h>
+#include <rpc/xdr.h>
 
 class ID;
 typedef ref< ID > IDRef;

@@ -24,7 +24,7 @@ void Tuple::xdr_marshal( XDR *x )
   assert(sizeof(size_t) == sizeof(u_int32_t));
   // Tuple size overall
   size_t sz = fields.size();
-  xdr_u_int32_t(x, &sz );
+  xdr_uint32_t(x, &sz );
   // Marshal the fields
   for(size_t i=0; i < fields.size(); i++) {
     fields[i]->xdr_marshal(x);
@@ -40,7 +40,7 @@ ref<Tuple> Tuple::xdr_unmarshal( XDR *x )
   assert(sizeof(size_t) == sizeof(u_int32_t));
   // Tuple size overall
   size_t sz;
-  xdr_u_int32_t(x, &sz );
+  xdr_uint32_t(x, &sz );
   // Marshal the fields
   for(size_t i=0; i < sz; i++) {
     t->append(Value::xdr_unmarshal(x));

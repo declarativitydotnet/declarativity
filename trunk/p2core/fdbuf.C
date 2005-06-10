@@ -18,16 +18,18 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <assert.h>
 
 //
 // Constructor
 //
-Fdbuf::Fdbuf( int init_capacity )
-  : capacity(init_capacity),
+Fdbuf::Fdbuf( int init_capacity, bool is_safe )
+  : capacity(align(init_capacity)),
     len(0),
     start(0),
     err(0),
-    data( new char[capacity] )
+    data( new char[capacity] ),
+    safe(is_safe)
 {
 }
 
@@ -37,6 +39,9 @@ Fdbuf::Fdbuf( int init_capacity )
 Fdbuf::~Fdbuf()
 {
   if (data) {
+    if (safe) {
+      memset(data, 0, capacity );
+    }
     delete data;
   }
 }
@@ -51,12 +56,12 @@ Fdbuf::~Fdbuf()
 ssize_t Fdbuf::read(int fd, size_t max_read)
 {
   ensure_additional( max_read );
-  return post_read(::read(fd, data + len + start, max_read));
+  return post_read(::read(fd, data + start + len, max_read));
 }
 ssize_t Fdbuf::recv(int fd, size_t max_read, int flags)
 {
   ensure_additional( max_read );
-  return post_read(::recv(fd, data + len + start, max_read, flags));
+  return post_read(::recv(fd, data + start + len, max_read, flags));
 }
 ssize_t Fdbuf::recvfrom(int sd, size_t max_read, int flags,
 			struct sockaddr *from, socklen_t *fromlen)
@@ -116,24 +121,57 @@ ssize_t Fdbuf::sendto(int sd, ssize_t max_write, int flags,
 }
 
 //
+// Extracting values
+//
+u_int32_t Fdbuf::pop_uint32()
+{
+  u_int32_t v = 0;
+  if (len > sizeof(v)) {
+    v = *((u_int32_t *)(data + start));
+    len -= sizeof(v);
+    start += sizeof(v);
+  }
+  return v;
+}
+bool Fdbuf::pop_bytes(char *buf, size_t sz)
+{
+  if (len >= sz) {
+    memcpy(buf, data + start, sz);
+    len -= sz;
+    start += sz;
+    return true;
+  } else {
+    return false;
+  }
+}
+
+//
 // Make sure the buffer is big enough
 //
 void Fdbuf::ensure(size_t new_capacity)
 {
+  // Always give us aligned headroom.
+  new_capacity = align(new_capacity);
   if ( capacity < new_capacity ) {
     size_t new_size = (new_capacity + BUF_INCREMENT - 1) / BUF_INCREMENT * BUF_INCREMENT;
     char *old_buf = data;
     char *new_buf = new char[new_size];
     memcpy( new_buf, old_buf + start, len );
+    if (safe) {
+      memset(new_buf + len, 0, new_size -len );
+      memset(old_buf, 0, capacity );
+    }
     data = new_buf;
-    capacity = new_capacity;
+    capacity = new_size;
     start = 0;
     delete old_buf;
   } 
   if ( capacity - start < new_capacity ) {
     memcpy( data, data + start, len );
   }
+  assert( capacity >= start + len );
 }
+
 
 /*
  * End of file

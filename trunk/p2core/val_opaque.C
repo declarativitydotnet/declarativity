@@ -13,9 +13,7 @@
  */
 
 #include "val_opaque.h"
-
 #include "val_str.h"
-#include <arpc.h>
 
 //
 // Marshal a opaqueing
@@ -28,18 +26,18 @@ void Val_Opaque::xdr_marshal_subtype( XDR *x )
 //
 // Casting
 //
-ref<suio> Val_Opaque::cast(ValueRef v)
+ref<Fdbuf> Val_Opaque::cast(ValueRef v)
 {
   Value *vp = v;
   switch (v->typeCode()) {
   case Value::OPAQUE:
-    return (static_cast<Val_Opaque *>(vp))->u;
+    return (static_cast<Val_Opaque *>(vp))->b;
   case Value::STR:
     {
-      ref<suio> u = New refcounted<suio>();
+      ref<Fdbuf> fb = New refcounted<Fdbuf>();
       str s = Val_Str::cast(v);
-      u->copy(s.cstr(),s.len());
-      return u;
+      fb->push_back(s.cstr(),s.len());
+      return fb;
     }
   default:
     throw Value::TypeError(v->typeCode(), Value::OPAQUE );
@@ -57,7 +55,7 @@ int Val_Opaque::compareTo(ValueRef other) const
   }
   warn << "Comparing opaques. Not implemented yet!!!\n";
   exit(-1);
-  //  return cmp(u, cast(other));
+  //  return cmp(b, cast(other));
   return -1;
 }
 

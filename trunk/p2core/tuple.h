@@ -21,7 +21,6 @@
 
 #include <assert.h>
 #include <async.h>
-#include <arpc.h>
 #include "inlines.h"
 #include "value.h"
 
@@ -71,8 +70,8 @@ public:
   ValueRef operator[] (ptrdiff_t i) { return fields[i]; };
   const ValueRef operator[] (ptrdiff_t i) const { return fields[i]; };
 
-  void xdr_marshal( XDR *uio );
-  static TupleRef xdr_unmarshal( XDR *uio );
+  void xdr_marshal( XDR *xdrs );
+  static TupleRef xdr_unmarshal( XDR *xdrs );
 
   str toString() const;
 

@@ -12,8 +12,6 @@
 
 #include "val_tuple.h"
 
-#include <arpc.h>
-
 //
 // Marshal a tuple
 // 

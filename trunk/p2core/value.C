@@ -47,12 +47,13 @@ static _unmarshal_fn jump_tab[] = {
 //
 // Marshalling
 //
+
 void Value::xdr_marshal( XDR *x ) 
 {
   TRC_FN;
-  TypeCode tc = typeCode();
+  uint32_t tc = typeCode();
   TRC("TypeCode is " << tc);
-  xdr_u_int32_t( x, &tc);
+  xdr_uint32_t( x, &tc);
   xdr_marshal_subtype(x);
 }
 
@@ -62,8 +63,8 @@ void Value::xdr_marshal( XDR *x )
 ValueRef Value::xdr_unmarshal( XDR *x )
 {
   TRC_FN;
-  TypeCode tc;
-  xdr_u_int32_t( x, &tc);
+  uint32_t tc;
+  xdr_uint32_t( x, &tc);
   TRC("TypeCode is " << tc);
   if ( (unsigned)tc >= (sizeof(jump_tab)/sizeof(_unmarshal_fn))) {
     warn << "Unmarshalling: Bad typecode " << tc << "\n";

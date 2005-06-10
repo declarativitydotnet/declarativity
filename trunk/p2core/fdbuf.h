@@ -41,6 +41,7 @@ private:
   size_t start;		// Offset of first valid byte
   int	 err;		// Last value of errno. 
   char	*data;		// Data itself
+  bool	 safe;		// Zero any data before deleting
 
   // Used by write, send, sendto...
   inline ssize_t post_write(ssize_t w) {
@@ -55,7 +56,9 @@ private:
     if (r > 0) { len += r; }
     return r;
   };
-
+  
+  // Alignment calculation to 32-bit boundaries
+  inline size_t align(size_t x) { return ((x)+3)&(~3); };
 
 public:
 
@@ -67,22 +70,25 @@ public:
     BUF_INCREMENT = 0x80	// Granularity of buffer growing.
   };
 
-  Fdbuf( int init_capacity = BUF_DFLT_CAP );
+  Fdbuf( int init_capacity = BUF_DFLT_CAP, bool is_safe=false );
   ~Fdbuf();
   
   //
   // INPUT FUNCTIONS: stuff that adds data to the tail of the buffer.
   //
+  // All input operations increase "length()" and leave "removed()"
+  // unchanged.  
   
   // Read some data into the buffer from a file descriptor.  As with
   // read(1), return the number of bytes read this time, 0 if EOF, or
   // -1 if there was some "real" error (including EAGAIN).
+  // 
   ssize_t read(int fd, size_t max_read = BUF_DFLT_READ);
   ssize_t recv(int sd, size_t max_read = BUF_DFLT_READ, int flags=0);
   ssize_t recvfrom(int sd, size_t max_read = BUF_DFLT_READ, int flags=0,
 		   struct sockaddr *from=NULL, socklen_t *fromlen=0);
   
-  // Member functions to append values to the buffer.
+
   const Fdbuf &push_back(const Fdbuf &fb );
   const Fdbuf &push_back(const std::string &s);
   const Fdbuf &push_back(const char *buf, size_t len);
@@ -93,13 +99,14 @@ public:
     os << t; 
     return push_back(os.str()); 
   };
-
+  
   // Operators
   template <class T> const Fdbuf &operator<< (const T &t) { return push_back(t); }
  
   //
   // OUTPUT FUNCTIONS: remove stuff from the head of the buffer. 
   //
+  // All output functions increase "removed()" and reduce "length()". 
 
   // Write data to a file descriptor.  Write max_write bytes at most,
   // or else the whole valid chunk of data.  As with write(1), return
@@ -110,6 +117,10 @@ public:
 	       
   ssize_t sendto(int sd, ssize_t max_write = BUF_UNLIMITED, int flags=0,
 		 const struct sockaddr *to=NULL, socklen_t tolen=0 );
+
+  // Member functions: stuff removing data from the head of the buffer
+  u_int32_t pop_uint32();
+  bool pop_bytes(char *buf, size_t len);
 
   //
   // ACCESS FUNCTIONS: those that aren't quite INPUT or OUTPUT. 
@@ -123,19 +134,33 @@ public:
   
   // How much valid data is in the buffer?
   size_t length() { return len; };
+
+  // How much have we written?
+  size_t removed() { return start; };
   
   // Return the buffer as a C++ string - the whole length contents of
   // the buffer.
-  std::string str() { return std::string(data, len); };
+  std::string str() { return std::string(data + start, len); };
   
   // Return the buffer as a C string - terminate the string with a
   // null character.  Embedded nulls in the string are your own
   // problem.  The pointer is good until you call any other method.  
-  char *cstr() { ensure_additional(1); data[len+start] = '\0'; return data; };
+  char *cstr() { ensure_additional(1); data[len+start] = '\0'; return data+start; };
+
+  // Access to the buffer as a byte array.  Fairly dangerous, but used
+  // by xdr_inline, among other things. 
+  char *raw_inline(size_t sz) { ensure(sz); return data+start; };
 
   // Make sure the buffer has sufficient capacity
   void ensure(size_t new_capacity);
-  void ensure_additional(size_t extra) { ensure(extra + len); };
+  void ensure_additional(size_t extra) { ensure(extra + len + start); };
+
+  void align_read() { 
+    size_t new_start = align(start); 
+    len -= (new_start - start);
+    start = new_start;
+  };
+  void align_write() { len = align(len); };
 };
 
 
