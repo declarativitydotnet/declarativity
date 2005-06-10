@@ -21,20 +21,20 @@
 // 
 void Val_Str::xdr_marshal_subtype( XDR *x ) 
 {
-  const char *st = s.cstr();
-  xdr_wrapstring(x,(char **)&st);
-  //  rpc_str<RPC_INFINITY> rs(s);
-  //rpc_traverse(x,rs);
+  //const char *st = s.cstr();
+  //  xdr_wrapstring(x,(char **)&st);
+  rpc_str<RPC_INFINITY> rs(s);
+  rpc_traverse(x,rs);
 }
 ValueRef Val_Str::xdr_unmarshal( XDR *x )
 {
   // Note that this looks like a yucky double copy, but at least the
   // string data itself isn't copied (since rpc_str <: str).
-  char *st;
-  xdr_wrapstring(x,&st);
-  //rpc_str<RPC_INFINITY> rs;
-  //rpc_traverse(x,rs);
-  return mk(str(st));
+  //char *st;
+  //xdr_wrapstring(x,&st);
+  rpc_str<RPC_INFINITY> rs;
+  rpc_traverse(x,rs);
+  return mk(str(rs));
 }
   
 int Val_Str::compareTo(ValueRef other) const
