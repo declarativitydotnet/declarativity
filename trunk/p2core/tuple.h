@@ -21,6 +21,7 @@
 
 #include <assert.h>
 #include <async.h>
+#include <arpc.h>
 #include "inlines.h"
 #include "value.h"
 

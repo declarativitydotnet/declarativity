@@ -17,7 +17,7 @@
 #define __VAL_OPAQUE_H__
 
 #include "value.h"
-#include "fdbuf.h"
+
 class Val_Opaque : public Value {
 
 public:  
@@ -26,28 +26,28 @@ public:
   // The type name
   const Value::TypeCode typeCode() const { return Value::OPAQUE; };
   const char *typeName() const { return "opaque"; };
-  str toString() const { return strbuf(b->cstr()); };
-  virtual unsigned int size() const { return (b ? b->length() : 0); }
+  str toString() const { return strbuf(b); };
+  virtual unsigned int size() const { return (b ? b->resid() : 0); }
 
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );
 
   // Constructor
-  Val_Opaque(ref<Fdbuf> fb) : b(fb) {};
+  Val_Opaque(ref<suio> fb) : b(fb) {};
   virtual ~Val_Opaque() {};
 
   // Factory
-  static ValueRef mk(ref<Fdbuf> fb) {
+  static ValueRef mk(ref<suio> fb) {
     return New refcounted<Val_Opaque>(fb); };
 
   // Strict comparison
   int compareTo(ValueRef) const;
 
   // Casting
-  static ref<Fdbuf> cast(ValueRef v);
+  static ref<suio> cast(ValueRef v);
   
 private:
-  ref<Fdbuf> b;
+  ref<suio> b;
   
 };
 

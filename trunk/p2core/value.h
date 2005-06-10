@@ -19,7 +19,7 @@
 
 #include <assert.h>
 #include <async.h>
-#include <rpc/xdr.h>
+#include <arpc.h>
 #include "inlines.h"
 
 class Value;

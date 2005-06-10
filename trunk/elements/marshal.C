@@ -8,11 +8,10 @@
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
  */
-
 #include "marshal.h"
+#include "xdr_suio.h"
 
 #include "val_opaque.h"
-#include "xdr_suio.h"
 
 Marshal::Marshal(str name)
   : Element(name, 1, 1)

@@ -26,7 +26,7 @@ void Val_Opaque::xdr_marshal_subtype( XDR *x )
 //
 // Casting
 //
-ref<Fdbuf> Val_Opaque::cast(ValueRef v)
+ref<suio> Val_Opaque::cast(ValueRef v)
 {
   Value *vp = v;
   switch (v->typeCode()) {
@@ -34,9 +34,9 @@ ref<Fdbuf> Val_Opaque::cast(ValueRef v)
     return (static_cast<Val_Opaque *>(vp))->b;
   case Value::STR:
     {
-      ref<Fdbuf> fb = New refcounted<Fdbuf>();
+      ref<suio> fb = New refcounted<suio>();
       str s = Val_Str::cast(v);
-      fb->push_back(s.cstr(),s.len());
+      fb->copy(s.cstr(),s.len());
       return fb;
     }
   default:

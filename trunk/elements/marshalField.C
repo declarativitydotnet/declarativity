@@ -10,9 +10,9 @@
  */
 
 #include "marshalField.h"
+#include "xdr_suio.h"
 
 #include "val_opaque.h"
-#include "xdr_suio.h"
 
 MarshalField::MarshalField(str name,
                            unsigned fieldNo)
