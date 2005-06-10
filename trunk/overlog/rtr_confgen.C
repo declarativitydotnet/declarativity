@@ -489,12 +489,19 @@ str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
 
   if (expr->oper == Parse_Bool::RANGE) return pelRange(names, expr);
 
+  bool strCompare = false;
   if ((var = dynamic_cast<Parse_Var*>(expr->lhs)) != NULL) {
     int pos = names->fieldPosition(var->toString());
     pel << "$" << (pos+1) << " ";
   }
   else if ((val = dynamic_cast<Parse_Val*>(expr->lhs)) != NULL) {
-    pel << val->toString() << " "; 
+    if (val->v->typeCode() == Value::STR) { 
+      strCompare = true; 
+      pel << "\"" << val->toString() << "\" "; 
+    } else {
+      strCompare = false;
+      pel << val->toString() << " "; 
+    }
   }
   else if ((b = dynamic_cast<Parse_Bool*>(expr->lhs)) != NULL) {
     pel << pelBool(names, b); 
@@ -516,8 +523,14 @@ str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
       int pos = names->fieldPosition(var->toString());
       pel << "$" << (pos+1) << " ";
     }
-    else if ((val = dynamic_cast<Parse_Val*>(expr->rhs)) != NULL) {
-      pel << val->toString() << " "; 
+    else if ((val = dynamic_cast<Parse_Val*>(expr->rhs)) != NULL) {      
+      if (val->v->typeCode() == Value::STR) { 
+	strCompare = true; 
+	pel << "\"" << val->toString() << "\" "; 
+      } else {
+	strCompare = false;
+	pel << val->toString() << " "; 
+      }
     }
     else if ((b = dynamic_cast<Parse_Bool*>(expr->rhs)) != NULL) {
       pel << pelBool(names, b); 
@@ -535,17 +548,32 @@ str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
     }
   }
 
-  switch (expr->oper) {
+  if (strCompare == true) {
+    switch (expr->oper) {
     case Parse_Bool::NOT: pel << "not "; break;
     case Parse_Bool::AND: pel << "and "; break;
     case Parse_Bool::OR:  pel << "or "; break;
-    case Parse_Bool::EQ:  pel << (expr->id_ ? "==id " : "==i "); break;
-    case Parse_Bool::NEQ: pel << (expr->id_ ? "==id not " : "==i not "); break;
-    case Parse_Bool::GT:  pel << (expr->id_ ? ">id " : ">i "); break;
-    case Parse_Bool::LT:  pel << (expr->id_ ? "<id " : "<i "); break;
-    case Parse_Bool::LTE: pel << (expr->id_ ? "<=id " : "<=i "); break;
-    case Parse_Bool::GTE: pel << (expr->id_ ? ">=id " : ">=i "); break;
+    case Parse_Bool::EQ:  pel << "==s "; break;
+    case Parse_Bool::NEQ: pel << "==s not "; break;
+    case Parse_Bool::GT:  pel << ">s "; break;
+    case Parse_Bool::LT:  pel << "<s "; break;
+    case Parse_Bool::LTE: pel << "<=s "; break;
+    case Parse_Bool::GTE: pel << ">=s "; break;
     default: return "ERROR";
+    }
+  } else {
+      switch (expr->oper) {
+      case Parse_Bool::NOT: pel << "not "; break;
+      case Parse_Bool::AND: pel << "and "; break;
+      case Parse_Bool::OR:  pel << "or "; break;
+      case Parse_Bool::EQ:  pel << (expr->id_ ? "==id " : "==i "); break;
+      case Parse_Bool::NEQ: pel << (expr->id_ ? "==id not " : "==i not "); break;
+      case Parse_Bool::GT:  pel << (expr->id_ ? ">id " : ">i "); break;
+      case Parse_Bool::LT:  pel << (expr->id_ ? "<id " : "<i "); break;
+      case Parse_Bool::LTE: pel << (expr->id_ ? "<=id " : "<=i "); break;
+      case Parse_Bool::GTE: pel << (expr->id_ ? ">=id " : ">=i "); break;
+      default: return "ERROR";
+      }
   }
 
   return pel;
