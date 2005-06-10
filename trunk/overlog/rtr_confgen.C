@@ -483,6 +483,7 @@ str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
   Parse_Var*      var = NULL;
   Parse_Val*      val = NULL;
   Parse_Function* fn  = NULL;
+  Parse_Math*     m   = NULL;
   Parse_Bool*     b   = NULL;
   strbuf          pel;  
 
@@ -497,6 +498,9 @@ str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
   }
   else if ((b = dynamic_cast<Parse_Bool*>(expr->lhs)) != NULL) {
     pel << pelBool(names, b); 
+  }
+  else if ((m = dynamic_cast<Parse_Math*>(expr->lhs)) != NULL) {
+    pel << pelMath(names, m); 
   }
   else if ((fn = dynamic_cast<Parse_Function*>(expr->lhs)) != NULL) {
     if (fn->name() == "f_coinFlip")
@@ -517,6 +521,9 @@ str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
     }
     else if ((b = dynamic_cast<Parse_Bool*>(expr->rhs)) != NULL) {
       pel << pelBool(names, b); 
+    }
+    else if ((m = dynamic_cast<Parse_Math*>(expr->rhs)) != NULL) {
+      pel << pelMath(names, m); 
     }
     else if ((fn = dynamic_cast<Parse_Function*>(expr->rhs)) != NULL) {
       if (fn->name() == "f_coinFlip")
