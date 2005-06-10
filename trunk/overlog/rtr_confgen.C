@@ -11,11 +11,6 @@
 
 #include "rtr_confgen.h"
 #include "trace.h"
-//const str Rtr_ConfGen::SEL_PRE("select_");
-const str Rtr_ConfGen::AGG_PRE("agg_");
-const str Rtr_ConfGen::ASSIGN_PRE("assign_");
-const str Rtr_ConfGen::TABLESIZE("TABLESIZE");
-
 
 Rtr_ConfGen::Rtr_ConfGen(OL_Context* ctxt, 
 			 Router::ConfigurationRef conf, 
@@ -42,9 +37,6 @@ Rtr_ConfGen::~Rtr_ConfGen()
 // if running only one, nodeID is the local host name,
 void Rtr_ConfGen::configureRouter(ref< Udp > udp, str nodeID)
 {
-  // first create the tables if they are not created yet.
-  // iterate through all the table info
-  
   // iterate through all the rules and process them
   for (unsigned int k = 0; k < _ctxt->getRules()->size(); k++) {
     _currentRule = _ctxt->getRules()->at(k);    
@@ -77,7 +69,7 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
 
   // AGGREGATES
   int aggField = r->head->aggregate();
-  std::cout << "Agg field " << aggField << "\n";
+  //std::cout << "Agg field " << aggField << "\n";
   if (aggField >= 0) {
     if (hasEventTerm(r)) {
       // there is an aggregate and involves an event, we need an agg wrap      
@@ -85,7 +77,7 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
       agg_el = New refcounted<Aggwrap>(aggExpr->aggName(), aggField + 1);
     } else {
       // an agg that involves only base tables. 
-      //genSingleAggregateElements(r, nodeID, &curNamesTracker);
+      genSingleAggregateElements(r, nodeID, &curNamesTracker);
       return;    
     }
   }
@@ -93,38 +85,38 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
   _currentElementChain.clear();
 
   // PERIODIC
-  /*if (hasPeriodicTerm(r)) {
+  if (hasPeriodicTerm(r)) {
     genFunctorSource(r, nodeID);
-    } else {*/
-  if (numFunctors(r) == 1) {
-    // SINGLE_TERM
-    genSingleTermElement(r, nodeID, &curNamesTracker);
   } else {
-    // MULTIPLE TERMS WITH JOINS
-    genJoinElements(r, nodeID, &curNamesTracker, agg_el);
+    if (numFunctors(r) == 1) {
+      // SINGLE_TERM
+      genSingleTermElement(r, nodeID, &curNamesTracker);
+    } else {
+      // MULTIPLE TERMS WITH JOINS
+      genJoinElements(r, nodeID, &curNamesTracker, agg_el);
+    }
+  
+    // do the selections and assignment, followed by projection
+    genAllSelectionAssignmentElements(r, nodeID, &curNamesTracker);    
+    std::cout << "Pending register receiver " << _pendingRegisterReceiver << "\n";
+    genProjectHeadElements(r, nodeID, &curNamesTracker);
   }
-  
-  // do the selections and assignment, followed by projection
-  genAllSelectionAssignmentElements(r, nodeID, &curNamesTracker);    
-  std::cout << "Pending register receiver " << _pendingRegisterReceiver << "\n";
-  genProjectHeadElements(r, nodeID, &curNamesTracker);
-  //}
-  
-  // generate the elements for the output
-  /*if (r->deleteFlag == true) {
-    debugRule(r, str(strbuf() << "Delete " << fn->name << " for rule \n"));
+    
+    // generate the elements for the output
+  if (r->deleteFlag == true) {
+    debugRule(r, str(strbuf() << "Delete " << r->head->fn->name << " for rule \n"));
     // And send it for deletion. Assume deletion happens here. 
     // It may happen on another node in practice. FIXME in future.
-    TableRef tableToDelete = getTableByName(nodeID, fn->name);
-    OL_Context::TableInfo* ti = _ctxt->getTableInfos()->find(fn->name)->second;
+    TableRef tableToDelete = getTableByName(nodeID, r->head->fn->name);
+    OL_Context::TableInfo* ti = _ctxt->getTableInfos()->find(r->head->fn->name)->second;
     
     genPrintElement(strbuf("PrintBeforeDelete:") << r->ruleID << nodeID);
     genPrintWatchElement(strbuf("PrintWatchDelete:") << r->ruleID << nodeID);
-
+    
     ElementSpecRef pullPush = 
       _conf->addElement(New refcounted<TimedPullPush>("DeletePullPush", 0));
     hookUp(pullPush, 0);
-  
+    
     ElementSpecRef deleteElement =
       _conf->addElement(New refcounted< Delete >(strbuf("Delete:") << r->ruleID << nodeID,
 						 tableToDelete, 
@@ -132,12 +124,12 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
 						 ti->primaryKeys.at(0)));    
     // chain up
     hookUp(deleteElement, 0);
-
+    
     if (_pendingReceiverSpec) {
       registerReceiver(_pendingReceiverTable, _pendingReceiverSpec);
     }
     return; // discard. deleted tuples not sent anywhere
-    } else {    */
+  } else {    
     if (agg_el) { 
       ElementSpecRef aggWrapSlot = _conf->addElement(New refcounted<Slot>("aggWrapSlot"));      
       ElementSpecRef agg_spec = _conf->addElement(agg_el);
@@ -149,13 +141,12 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
     } 
      
 
-  // at the receiver side, generate a dummy receive
-  
-  str headTableName = r->head->fn->name;
-  registerReceiverTable(r, headTableName);
-  ElementSpecRef sinkS = _conf->addElement(New refcounted< Discard >("discard"));    
-  registerReceiver(headTableName, sinkS);
-    //}
+    // at the receiver side, generate a dummy receive  
+    str headTableName = r->head->fn->name;
+    registerReceiverTable(r, headTableName);
+    ElementSpecRef sinkS = _conf->addElement(New refcounted< Discard >("discard"));    
+    registerReceiver(headTableName, sinkS);
+  }
 
   if (_pendingReceiverSpec) {
     registerReceiver(_pendingReceiverTable, _pendingReceiverSpec);
@@ -393,6 +384,9 @@ str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
   }
   else if ((val = dynamic_cast<Parse_Val*>(expr->lhs)) != NULL) {
     pel << val->toString() << " "; 
+    if (expr->id) { 
+      pel << "->u32 ->id "; 
+    }
   }
   else if ((math = dynamic_cast<Parse_Math*>(expr->lhs)) != NULL) {
     pel << pelMath(names, math); 
@@ -406,8 +400,11 @@ str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
     int pos = names->fieldPosition(var->toString());
     pel << "$" << (pos+1) << " ";
   }
-  else if ((val = dynamic_cast<Parse_Val*>(expr->rhs)) != NULL) {
+  else if ((val = dynamic_cast<Parse_Val*>(expr->rhs)) != NULL) {    
     pel << val->toString() << " "; 
+    if (expr->id) { 
+      pel << "->u32 ->id "; 
+    }
   }
   else if ((math = dynamic_cast<Parse_Math*>(expr->rhs)) != NULL) {
     pel << pelMath(names, math); 
@@ -442,6 +439,10 @@ str Rtr_ConfGen::pelRange(FieldNamesTracker* names, Parse_Bool *expr) {
 
   if (!range || !range_var) return "ERROR";
 
+  pos = names->fieldPosition(range_var->toString());
+  if (pos < 0) return "ERROR";
+  pel << "$" << (pos + 1) << " ";
+
   if ((var = dynamic_cast<Parse_Var*>(range->lhs)) != NULL) {
     pos = names->fieldPosition(var->toString());
     if (pos < 0) return "ERROR";
@@ -467,10 +468,6 @@ str Rtr_ConfGen::pelRange(FieldNamesTracker* names, Parse_Bool *expr) {
    pel << pelMath(names, math);
   }
   else return "ERROR";
-
-  pos = names->fieldPosition(range_var->toString());
-  if (pos < 0) return "ERROR";
-  pel << "$" << (pos + 1) << " ";
 
   switch (range->type) {
     case Parse_Range::RANGEOO: pel << (expr->id_ ? "()id " : "()i "); break;
@@ -550,7 +547,7 @@ str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
 void Rtr_ConfGen::pelSelect(OL_Context::Rule* rule, FieldNamesTracker* names, Parse_Select *expr,
 			    str nodeID, int selectionID)
 {
-  str sPel = pelBool(names, expr->select) << "ifstop ";
+  strbuf sPel = pelBool(names, expr->select) << "not ifstop ";
   
   // put in the old fields (+1 since we have to include the table name)
   for (uint k = 0; k < names->fieldNames.size() + 1; k++) {
@@ -651,6 +648,177 @@ void Rtr_ConfGen::pelAssign(OL_Context::Rule* rule, FieldNamesTracker* names,
 		  << assignID << ":" << nodeID);
 }
 
+/*
+
+void Rtr_ConfGen::genSelectionElements(OL_Context::Rule* curRule, 
+				       Parse_Bool* pb,
+				       str nodeID, 
+				       FieldNamesTracker* probeNames,
+				       int selectionID)
+{
+  // Prepend with true if this is a Reach X, X.
+
+  str pelSelectionOpt = genSelectionPel(pb, probeNames);
+
+  strbuf selectionPel(" ");
+  selectionPel << pelSelectionOpt << " not ifstop ";
+  
+  // put in the old fields (+1 since we have to include the table name)
+  for (uint k = 0; k < probeNames->fieldNames.size() + 1; k++) {
+    selectionPel << "$" << k << " pop ";
+  }
+
+  debugRule(curRule, str(strbuf() << "Generate selection functions for " << str(selectionPel) 
+			 << " " << probeNames->toString() << "\n"));
+ 
+  ElementSpecRef selectionPelTransform =
+    _conf->addElement(New refcounted< PelTransform >(strbuf("Selection:") 
+						     << curRule->ruleID << ":" 
+						     << selectionID << ":" << nodeID, 
+						     selectionPel));
+
+  if (_pendingRegisterReceiver) {
+    _pendingReceiverSpec = selectionPelTransform;
+    _currentElementChain.push_back(selectionPelTransform); // first element in chain
+    _pendingRegisterReceiver = false;
+  } else {
+    // connecting now
+    hookUp(selectionPelTransform, 0);
+  }
+
+  genPrintElement(strbuf("PrintAfterSelection:") 
+		  << curRule->ruleID << ":" 
+		  << selectionID << ":" << nodeID);
+}
+
+
+void Rtr_ConfGen::genAllSelectionAssignmentElements(OL_Context::Rule* curRule,
+						    str nodeID,
+						    FieldNamesTracker* curNamesTracker) 
+{
+  for (unsigned int j = 0; j < curRule->terms.size(); j++) {
+    Parse_Select* parse_select = dynamic_cast<Parse_Select *>(curRule->terms.at(j));
+    if (parse_select != NULL) {
+      debugRule(curRule, str(strbuf() << "Selection term " << parse_select->toString() << " " << curRule->ruleID << "\n"));
+      genSelectionElements(curRule, parse_select->select, nodeID, curNamesTracker, j); 
+    }
+    Parse_Assign* parse_assign = dynamic_cast<Parse_Assign *>(curRule->terms.at(j));
+    if (parse_assign != NULL) {
+      genAssignmentElements(curRule, parse_assign, nodeID, curNamesTracker, j);
+    }
+  }
+}
+
+
+str Rtr_ConfGen::genSelectionPel(Parse_Bool* pb, FieldNamesTracker *tracker)
+{
+  strbuf toRet;
+  if (pb->id_ == true) {
+    if (pb->oper == Parse_Bool::RANGE) {
+      Parse_Range* pr = dynamic_cast<Parse_Range *>(pb->rhs);      
+      toRet << "$" << (1 + tracker->fieldPosition(pb->lhs->toString()));
+      Parse_Var* leftRange = dynamic_cast<Parse_Var *>(pr->lhs);      
+      Parse_Var* rightRange = dynamic_cast<Parse_Var *>(pr->rhs);   
+      if (leftRange != NULL && rightRange != NULL) {
+	toRet << " $" << (1 + tracker->fieldPosition(leftRange->toString()));
+	toRet << " $" << (1 + tracker->fieldPosition(rightRange->toString()));
+	switch (pr->type) {
+	   case Parse_Range::RANGEOO: return str(toRet << " ()id");
+	   case Parse_Range::RANGEOC: return str(toRet << " (]id");
+	   case Parse_Range::RANGECO: return str(toRet << " [)id");
+	   case Parse_Range::RANGECC: return str(toRet << " []id");
+	}
+      } 
+    }
+
+    if (pb->oper == Parse_Bool::EQ) {
+      toRet << " $" << (1 + tracker->fieldPosition(pb->lhs->toString()));
+      toRet << " $" << (1 + tracker->fieldPosition(pb->rhs->toString()));
+      toRet << " ==id";
+      return toRet;
+    }
+  }
+
+  if (pb->id_ == false) {
+    if (pb->oper == Parse_Bool::GT) {
+      Parse_Var* left = dynamic_cast<Parse_Var *>(pb->lhs);      
+      toRet << " $" << (1 + tracker->fieldPosition(left->toString()));      
+      toRet << " " << pb->rhs->toString();
+      toRet << " >i";
+      return toRet;
+    }
+    if (pb->oper == Parse_Bool::EQ) {
+      toRet << " $" << (1 + tracker->fieldPosition(pb->lhs->toString()));
+      toRet << " $" << (1 + tracker->fieldPosition(pb->rhs->toString()));
+      toRet << " ==";
+      return toRet;
+    }
+  }
+
+  return "bad";  
+}
+
+
+str Rtr_ConfGen::genAssignmentPel(Parse_Assign* pa, FieldNamesTracker *tracker)
+{
+  strbuf toRet;
+  Parse_Math* pm = dynamic_cast<Parse_Math *>(pa->assign);
+
+  if (pm != NULL) {
+    if (pm->id == true) {
+      if (pm->oper == Parse_Math::MINUS) {
+	int leftPos = 1 + tracker->fieldPosition(pm->lhs->toString());
+	int rightPos = 1 + tracker->fieldPosition(pm->rhs->toString());
+	toRet << "$" << rightPos << " $" << leftPos << " distance";
+	return str(toRet);
+      }
+    }
+  }  
+
+  Parse_Val* pv = dynamic_cast<Parse_Val *>(pa->assign);
+  if (pv != NULL) { return pv->toString(); } 
+
+  return pa->toString();
+}
+
+
+void Rtr_ConfGen::genAssignmentElements(OL_Context::Rule* curRule,
+					Parse_Assign* parse_assign,
+					str nodeID,
+					FieldNamesTracker* curNamesTracker,
+					int assignmentID) 
+{
+  strbuf pelStr;
+  for (uint k = 0; k < curNamesTracker->fieldNames.size()+1; k++) {
+    pelStr << "$" << k << " pop ";
+  }
+  
+  str pelExpression = genAssignmentPel(parse_assign, curNamesTracker);
+  pelStr << pelExpression << " pop";
+  curNamesTracker->fieldNames.push_back(parse_assign->var->toString()); // the variable name
+  
+  debugRule(curRule, str(strbuf() << "Generate assignments for " << parse_assign->toString() << " " << curRule->ruleID << 
+			 " " << str(pelStr) << " " << curNamesTracker->toString() << "\n"));
+  
+  ElementSpecRef assignmentPelTransform =
+    _conf->addElement(New refcounted< PelTransform >(strbuf("Assignment:") 
+						     << curRule->ruleID << ":" 
+						     << assignmentID << ":" << nodeID, 
+						     str(pelStr)));
+
+  if (_pendingRegisterReceiver) {
+    _pendingReceiverSpec = assignmentPelTransform;
+    _currentElementChain.push_back(assignmentPelTransform); // first element in chain
+    _pendingRegisterReceiver = false;
+  } else {
+    // connecting now
+    hookUp(assignmentPelTransform, 0);
+  }
+
+  genPrintElement(strbuf("PrintAfterAssignment:") << curRule->ruleID << ":" 
+		  << assignmentID << ":" << nodeID);
+}
+*/
 
 
 void Rtr_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
@@ -695,7 +863,7 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
   }
 
   str pelTransformStr(pelTransformStrbuf);
-  debugRule(curRule, str(strbuf() << curNamesTracker->toString() << " " << pelTransformStr << "\n"));
+  debugRule(curRule, str(strbuf() << "Project head " << curNamesTracker->toString() << " " << pelTransformStr << "\n"));
  
   // project, and make sure first field after table name has the address 
   ElementSpecRef projectHeadPelTransform =
@@ -921,67 +1089,70 @@ void Rtr_ConfGen::addMultTableIndex(TableRef table, int fn, str nodeID)
 
 
 
-/*
 void Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule, 
 					     str nodeID, 
 					     FieldNamesTracker* baseNamesTracker)
 {
 
-  OL_Context::Term baseTerm;
+  Parse_Functor* baseFunctor;
   // figure first, which term is the base term. Assume there is only one for now. Support more in future.
   for (unsigned int j = 0; j < currentRule->terms.size(); j++) {    
-    OL_Context::Term currentTerm = currentRule->terms.at(j);    
-    if (isSelection(currentTerm) || isAssignment(currentTerm)) { continue; } // skip functions
-    baseTerm = currentTerm;    
+    Parse_Functor* currentFunctor = dynamic_cast<Parse_Functor* > (currentRule->terms.at(j));    
+    if (currentFunctor == NULL) { continue; }
+    baseFunctor = currentFunctor;
   }
 
-  baseNamesTracker->initialize(baseTerm.argNames, baseTerm.argNames.size());
+  baseNamesTracker->initialize(baseFunctor);
 
   std::vector<unsigned int> groupByFields;      
   
-  // once we obtain the base term, figure out which are the fields needed for aggregation
+  // once we obtain the base term, figure out which are the groupby fields needed for aggregation
   FieldNamesTracker* aggregateNamesTracker = new FieldNamesTracker();
-  for (unsigned int k = 0; k < currentFunctor->arity; k++) {
-    // go through the functor head, but skip the aggField itself
-    int pos = baseNamesTracker->fieldPosition(currentRule->args.at(k));
-    if ((int) k != currentRule->aggField) {
-      std::cout << pos << " " << currentRule->aggField << " " << baseNamesTracker->fieldNames.at(pos) << "\n";
+  Parse_Functor* pf = currentRule->head;
+  str headTableName = pf->fn->name;
+  for (int k = 0; k < pf->args(); k++) {
+    // go through the functor head, but skip the aggField itself    
+    Parse_Var* pv = dynamic_cast<Parse_Var* > (pf->arg(k));
+    if (pv == NULL) { continue; }
+    int pos = baseNamesTracker->fieldPosition(pv->toString());
+    if (k != -1 && k != pf->aggregate()) {
+      debugRule(currentRule, str(strbuf() << pos << " " << currentRule->head->aggregate() << " " << 
+				 baseNamesTracker->fieldNames.at(pos) << "\n"));
       groupByFields.push_back((uint) pos + 1);
       aggregateNamesTracker->fieldNames.push_back(baseNamesTracker->fieldNames.at(pos));
     }
   }
-  str aggVarname;
-  if (currentRule->aggFn != "count") {
-    aggVarname = currentRule->args.at(currentRule->aggField);
-  } else {
-    aggVarname = "count";
-  }
+  Parse_Agg* pa = dynamic_cast<Parse_Agg* > (pf->arg(pf->aggregate()));
+
+  str aggVarname = pa->v->toString();
+
   aggregateNamesTracker->fieldNames.push_back(aggVarname);      
   int aggFieldBaseTable = -1;
   Table::AggregateFunction* af = 0;
   
-  if (currentRule->aggFn == "min") {
+  if (pa->oper == Parse_Agg::MIN) {
     // aggregate for min
     aggFieldBaseTable = baseNamesTracker->fieldPosition(aggVarname) + 1;
     af = &Table::AGG_MIN;
   } 
-  if (currentRule->aggFn == "max") {
+  if (pa->oper == Parse_Agg::MAX) {
     // aggregate for min
     aggFieldBaseTable = baseNamesTracker->fieldPosition(aggVarname) + 1;
     af = &Table::AGG_MAX;
   } 
 
-  if (currentRule->aggFn == "count") {
+  if (pa->oper == Parse_Agg::COUNT) {
     // aggregate for min
     aggFieldBaseTable = groupByFields.at(0);
     af = &Table::AGG_COUNT;
   } 
 
-  debugRule(currentRule, str(strbuf() << aggregateNamesTracker->toString() << " " << aggFieldBaseTable << " " 
-			     << currentRule->aggField << " " << currentRule->aggFn << "\n"));
+  debugRule(currentRule, str(strbuf() << aggregateNamesTracker->toString() << " " << baseFunctor->fn->name << 
+			     " " << aggFieldBaseTable << " " 
+			     << pf->aggregate() << " " << aggVarname << "\n"));
   
   // get the table, create the index
-  TableRef aggTable = getTableByName(nodeID, baseTerm.fn->name);  
+  TableRef aggTable = getTableByName(nodeID, baseFunctor->fn->name);  
   addMultTableIndex(aggTable, groupByFields.at(0), nodeID);  
   Table::MultAggregate tableAgg 
     = aggTable->add_mult_groupBy_agg(groupByFields.at(0), // groupby field
@@ -1010,18 +1181,14 @@ void Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
   genPrintElement("PrintAgg:" << currentRule->ruleID << ":" << nodeID);
   genPrintWatchElement("PrintWatchAgg:" << currentRule->ruleID << ":" << nodeID);
 
-  genProjectHeadElements(currentFunctor, currentRule, nodeID, aggregateNamesTracker);
+  genProjectHeadElements(currentRule, nodeID, aggregateNamesTracker);
   _udpPushSenders.push_back(_currentElementChain.back());
 
-  // not done yet, we also need to register a table receiver for the head
-  str headTableName = currentFunctor->name;
   registerReceiverTable(currentRule, headTableName);
-  // link that to a discard. If there are other flows that need it, they will
-  // get the tuples via another fork in the duplicator.
   ElementSpecRef sinkS = _conf->addElement(New refcounted< Discard >("discard"));    
   registerReceiver(headTableName, sinkS);
 }
-*/
+
 
 
 void Rtr_ConfGen::genSingleTermElement(OL_Context::Rule* curRule, 
@@ -1050,12 +1217,10 @@ void Rtr_ConfGen::genSingleTermElement(OL_Context::Rule* curRule,
 }
 
 
-
-/*void Rtr_ConfGen::genFunctorSource(OL_Context::Rule* rule, str nodeID)
+void Rtr_ConfGen::genFunctorSource(OL_Context::Rule* rule, str nodeID)
 {
   TupleRef functorTuple = Tuple::mk();
-  functorTuple->append(Val_Str::mk(functor->name));
-  functorTuple->append(Val_Str::mk(nodeID)); // address for marshalling
+  functorTuple->append(Val_Str::mk(rule->head->fn->name));
   functorTuple->append(Val_Str::mk(nodeID)); 
   functorTuple->freeze();
 
@@ -1065,18 +1230,25 @@ void Rtr_ConfGen::genSingleTermElement(OL_Context::Rule* curRule,
   _currentElementChain.push_back(source);
 
   genPrintElement(strbuf("PrintFunctorSource:") << rule->ruleID << ":" << nodeID);
-  str firstVar = rule->terms.at(0).argNames.at(0);
+  Parse_Functor* pf = dynamic_cast<Parse_Functor* > (rule->terms.at(0));
+  if (pf == NULL) { return; }
+  
+  str period = pf->arg(1)->toString();
+  
+  debugRule(rule, str(strbuf() << "Functor source " << pf->toString()) << " " << period << "\n");
   // The timed pusher
   ElementSpecRef pushFunctor =
     _conf->addElement(New refcounted< TimedPullPush >(strbuf("FunctorPush:") << rule->ruleID << ":" << nodeID,
-						      atof(firstVar.cstr())));
+						      atof(period.cstr())));
 
   hookUp(pushFunctor, 0);
 
   ElementSpecRef functorSlot = _conf->addElement(New refcounted<Slot>("functorSlot"));      
   hookUp(functorSlot, 0);
-}*/
 
+  
+
+}
 
 
 
@@ -1120,7 +1292,11 @@ void Rtr_ConfGen::genPrintWatchElement(str header)
 // preload some data.
 TableRef Rtr_ConfGen::getTableByName(str nodeID, str tableName)
 {
+  std::cout << "Get table " << nodeID << ":" << tableName << "\n";
   TableMap::iterator _iterator = _tables.find(nodeID << ":" << tableName);
+  if (_iterator == _tables.end()) { 
+    std::cerr << "Table " << nodeID << ":" << tableName << " not found\n";
+  }
   return _iterator->second;
 }
 
@@ -1154,6 +1330,17 @@ void Rtr_ConfGen::createTables(str nodeID)
 
       _tables.insert(std::make_pair(newTableName, newTable));      
     }
+  }
+
+  for (unsigned int k = 0; k < _ctxt->getFacts().size(); k++) {
+    TupleRef tr = _ctxt->getFacts().at(k);
+    ValueRef vr = (*tr)[0];
+    std::cout << "Insert tuple " << tr->toString() << " into table " << vr->toString() 
+	      << " " << tr->size() << "\n";
+    TableRef tableToInsert = getTableByName(nodeID, vr->toString());     
+    tableToInsert->insert(tr);
+    std::cout << "Tuple inserted: " << tr->toString() << " into table " << vr->toString() 
+	      << " " << tr->size() << "\n";
   }
 }
 
@@ -1223,17 +1410,18 @@ bool Rtr_ConfGen::hasEventTerm(OL_Context::Rule* curRule)
 }
 
 
-/*
 bool Rtr_ConfGen::hasPeriodicTerm(OL_Context::Rule* curRule)
 {
   for (uint k = 0; k < curRule->terms.size(); k++) {
-    if (curRule->terms.at(k).fn->name == "periodic") {
+    Parse_Functor* pf = dynamic_cast<Parse_Functor*>(curRule->terms.at(k));
+    if (pf == NULL) { continue;}
+    str termName = pf->fn->name;
+    if (termName == "periodic") {
       return true;
     }
   }
   return false;
 }
-*/
 
 
 ///////////////////////////////////////////////////////////////////////////

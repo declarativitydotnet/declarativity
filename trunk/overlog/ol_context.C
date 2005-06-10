@@ -298,7 +298,7 @@ void OL_Context::fact(Parse_Term *t)
     }
   }
   tpl->freeze();
-  facts.insert(tpl);
+  facts.push_back(tpl);
 
   DBG("Fact: " << tblname << " <- " << tpl->toString());
     

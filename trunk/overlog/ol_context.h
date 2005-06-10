@@ -107,14 +107,14 @@ private:
   TableInfoMap*      tables;
   RuleList*          rules;
   std::set<str>      watchTables;
-  std::set<TupleRef> facts;
+  std::vector<TupleRef> facts;
 
 public: 
   ErrorList          errors;
   RuleList*          getRules()       { return rules; };
   TableInfoMap*      getTableInfos()  { return tables;   };
   std::set<str>      getWatchTables() { return watchTables; };
-  std::set<TupleRef> getFacts()       { return facts; };
+  std::vector<TupleRef> getFacts()       { return facts; };
 };
 
 extern int ol_parser_parse( OL_Context *env );
