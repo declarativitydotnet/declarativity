@@ -37,7 +37,7 @@
 
 bool DEBUG = false;
 bool TEST_SUCCESSOR = false;
-bool TEST_LOOKUP = true;
+bool TEST_LOOKUP = false;
 
 
 void killJoin()
@@ -55,7 +55,7 @@ struct SuccessorGenerator : public FunctorSource::Generator
   {
     
     TupleRef tuple = Tuple::mk();
-    tuple->append(Val_Str::mk("successor"));
+    tuple->append(Val_Str::mk("succ"));
     
     str myAddress = str(strbuf() << LOCAL);
     tuple->append(Val_Str::mk(myAddress));
@@ -107,7 +107,6 @@ void fakeFingersSuccessors(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigG
   tuple->append(Val_Str::mk(myAddress));
   
   IDRef target = ID::mk((uint32_t) 0X1)->add(me);
-  //IDRef best = ID::mk()->add(target)->add(ID::mk((uint) 10));
   tuple->append(Val_ID::mk(target));
   
   str address = str(strbuf() << "Finger:" << 0);
@@ -147,25 +146,14 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGe
   nodeTable->insert(tuple);
   std::cout << "Node: " << tuple->toString() << "\n";
     
-  TableRef nextFingerFixTable = routerConfigGenerator->getTableByName(localAddress, "nextFingerFix");
+  /*TableRef nextFingerFixTable = routerConfigGenerator->getTableByName(localAddress, "nextFingerFix");
   TupleRef nextFingerFixTuple = Tuple::mk();
   nextFingerFixTuple->append(Val_Str::mk("nextFingerFix"));
   nextFingerFixTuple->append(Val_Str::mk(localAddress));
   nextFingerFixTuple->append(Val_Int32::mk(0));
   nextFingerFixTuple->freeze();
   nextFingerFixTable->insert(nextFingerFixTuple);
-  std::cout << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";
-
-  TableRef predecessorTable = routerConfigGenerator->getTableByName(localAddress, "predecessor");
-  TupleRef predecessorTuple = Tuple::mk();
-  predecessorTuple->append(Val_Str::mk("predecessor"));
-  predecessorTuple->append(Val_Str::mk(localAddress));
-  predecessorTuple->append(Val_ID::mk(ID::mk()));
-  predecessorTuple->append(Val_Str::mk(str("0"))); // this is "null"
-  predecessorTuple->freeze();
-  predecessorTable->insert(predecessorTuple);
-  std::cout << "Initial predecessor " << predecessorTuple->toString() << "\n";
-
+  std::cout << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";*/  
 }
 
 
@@ -213,8 +201,9 @@ void initiateJoinRequest(ref< Rtr_ConfGen > routerConfigGenerator, ref< Router::
 
  // My next finger fix tuple
   TupleRef joinEventTuple = Tuple::mk();
-  joinEventTuple->append(Val_Str::mk("joinEvent"));
+  joinEventTuple->append(Val_Str::mk("join"));
   joinEventTuple->append(Val_Str::mk(localAddress));
+  joinEventTuple->append(Val_Int32::mk(random()));
   joinEventTuple->freeze();
 
   ElementSpecRef sourceS =
@@ -229,7 +218,7 @@ void initiateJoinRequest(ref< Rtr_ConfGen > routerConfigGenerator, ref< Router::
                                                      ));
 
   ElementSpecRef slotS =
-    conf->addElement(New refcounted< Slot >(strbuf("JoineEventSlot:")));
+    conf->addElement(New refcounted< Slot >(strbuf("JoinEventSlot:")));
 
   // Link everything
   conf->hookUp(sourceS, 0, onceS, 0);
@@ -265,12 +254,13 @@ void startChordInDatalog(LoggerI::Level level, ref< OL_Context> ctxt, str datalo
     sendSuccessorStream(bootstrapUdp, conf, localAddress);
   }
 
-  TableRef landmarkNodeTable = routerConfigGenerator->getTableByName(localAddress, "landmarkNode");  
+  TableRef landmarkNodeTable = routerConfigGenerator->getTableByName(localAddress, "landmark");  
   TupleRef landmark = Tuple::mk();
-  landmark->append(Val_Str::mk("landmarkNode"));
+  landmark->append(Val_Str::mk("landmark"));
   landmark->append(Val_Str::mk(localAddress));
   landmark->append(Val_Str::mk(landmarkAddress));
   landmark->freeze();
+  std::cout << "Insert landmark node " << landmark->toString() << "\n";
   landmarkNodeTable->insert(landmark);
   
   RouterRef router = New refcounted< Router >(conf, level);

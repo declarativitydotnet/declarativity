@@ -174,7 +174,7 @@ int main(int argc, char **argv)
       testNetworkedDatalog(level,
 			   myAddress,
 			   port,
-			   str("0"),
+			   str("-"),
 			   datalogFile,
 			   delay);
     }
