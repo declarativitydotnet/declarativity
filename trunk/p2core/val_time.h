@@ -17,6 +17,8 @@
 
 #include "value.h"
 
+class Oper;
+
 class Val_Time : public Value {
 
 public:  
@@ -47,6 +49,7 @@ public:
   // Casting
   static struct timespec cast(ValueRef v);
 
+  const static Oper* oper_;
 private:
   /** The time */
   struct timespec t;

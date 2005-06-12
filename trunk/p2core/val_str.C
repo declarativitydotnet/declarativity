@@ -14,7 +14,9 @@
 
 #include "val_str.h"
 #include "val_double.h"
+#include "oper.h"
 
+const Oper* Val_Str::oper_ = New OperCompare<Val_Str>();
 
 //
 // Marshal a string

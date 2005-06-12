@@ -14,6 +14,19 @@
 
 
 #include "val_null.h"
+#include "oper.h"
+
+
+class OperNull : public Oper {
+  bool _eq(ValueRef v1, ValueRef v2) {
+    return v1->typeCode() == Value::NULLV && v2->typeCode() == Value::NULLV;
+  }; 
+  bool _neq(ValueRef v1, ValueRef v2) {
+    return !OperNull::_eq(v1, v2);
+  };
+};
+
+const Oper* Val_Null::oper_ = New OperNull();
 
 //
 // Singleton null value.

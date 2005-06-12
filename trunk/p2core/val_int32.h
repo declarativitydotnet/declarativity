@@ -17,6 +17,8 @@
 
 #include "value.h"
 
+class Oper;
+
 class Val_Int32 : public Value {
 
 public:  
@@ -47,6 +49,7 @@ public:
   // The ZERO
   static ValueRef ZERO;
   
+  const static Oper* oper_;
 private:
   int32_t i;
   

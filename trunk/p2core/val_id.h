@@ -18,6 +18,8 @@
 #include "value.h"
 #include "ID.h"
 
+class Oper;
+
 class Val_ID : public Value {
 
 public:  
@@ -49,6 +51,7 @@ public:
   // Casting
   static IDRef cast(ValueRef v);
 
+  const static Oper* oper_;
 private:
   /** The ID */
   IDRef i;

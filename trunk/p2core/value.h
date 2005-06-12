@@ -46,7 +46,8 @@ public:
     OPAQUE,
     TUPLE,
     TIME,
-    ID
+    ID,
+    TYPES
   };
 
   virtual unsigned int size() const = 0;
@@ -76,8 +77,10 @@ public:
   // Marshalling
   void xdr_marshal( XDR *x );
   static ValueRef xdr_unmarshal( XDR *x );
+
 protected:
   virtual void xdr_marshal_subtype( XDR *x )=0;
 };
 
+ 
 #endif /* __VALUE_H_ */

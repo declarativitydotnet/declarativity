@@ -11,6 +11,9 @@
  */
 
 #include "val_tuple.h"
+#include "oper.h"
+
+const Oper* Val_Tuple::oper_ = New OperCompare<Val_Tuple>();
 
 //
 // Marshal a tuple

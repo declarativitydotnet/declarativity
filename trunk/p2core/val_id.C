@@ -14,7 +14,9 @@
 
 #include "val_uint32.h"
 #include "val_uint64.h"
+#include "oper.h"
 
+const Oper* Val_ID::oper_ = New OperCompare<Val_ID>();
 
 //
 // Marshalling and unmarshallng

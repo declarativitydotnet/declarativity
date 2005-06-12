@@ -17,6 +17,8 @@
 
 #include "value.h"
 
+class Oper;
+
 class Val_Double : public Value {
 
 public:  
@@ -44,6 +46,7 @@ public:
   // Casting
   static double cast(ValueRef v);
   
+  const static Oper* oper_;
 private:
   double d;
   

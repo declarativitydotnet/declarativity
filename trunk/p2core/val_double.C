@@ -21,6 +21,10 @@
 #include "val_str.h"
 #include "val_null.h"
 
+#define DOUBLE_HACK
+#include "oper.h"
+const Oper* Val_Double::oper_ = New OperImpl<Val_Double, double>();
+
 //
 // String conversion. 
 // Yuck.  IF we convert libasync to the STL this will be easier.

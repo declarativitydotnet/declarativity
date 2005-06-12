@@ -36,7 +36,8 @@ libp2core_la_SOURCES = \
 	val_time.C \
 	val_id.C \
 	table.C \
-	loggerI.C
+	loggerI.C \
+	oper.C
 
 INCLUDES = @SFS_INC@
 

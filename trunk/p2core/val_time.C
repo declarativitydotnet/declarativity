@@ -20,8 +20,10 @@
 #include "val_str.h"
 #include "val_null.h"
 #include "val_tuple.h"
-
 #include "math.h"
+#include "oper.h"
+
+const Oper* Val_Time::oper_ = New OperCompare<Val_Time>();
 
 //
 // Marshalling and unmarshallng

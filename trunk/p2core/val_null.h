@@ -17,6 +17,8 @@
 
 #include "value.h"
 
+class Oper;
+
 class Val_Null : public Value {
 
 public:  
@@ -41,6 +43,7 @@ public:
   // Casting: more for completeness than anything else...
   static void cast(ValueRef v);
   
+  const static Oper* oper_;
 private:
   static ValueRef singleton;
 };

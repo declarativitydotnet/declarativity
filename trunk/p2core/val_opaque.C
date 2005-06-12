@@ -14,6 +14,10 @@
 
 #include "val_opaque.h"
 #include "val_str.h"
+#include "oper.h"
+
+const Oper* Val_Opaque::oper_ = New OperCompare<Val_Opaque>();
+
 
 //
 // Marshal a opaqueing

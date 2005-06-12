@@ -19,6 +19,8 @@
 #include "value.h"
 #include "tuple.h"
 
+class Oper;
+
 class Val_Tuple : public Value {
 
 public:  
@@ -47,6 +49,7 @@ public:
   // Casting
   static TupleRef cast(ValueRef v);
   
+  const static Oper* oper_;
 private:
   TupleRef t;
 };

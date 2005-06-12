@@ -20,7 +20,10 @@
 #include "val_double.h"
 #include "val_str.h"
 #include "val_null.h"
+#include "oper.h"
 
+
+const Oper* Val_Int64::oper_ = New OperImpl<Val_Int64, int64_t>();
 
 //
 // Marshalling and unmarshallng
