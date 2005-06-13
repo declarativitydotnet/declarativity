@@ -138,6 +138,7 @@ private:
   str pelRange(FieldNamesTracker* names, Parse_Bool *expr);
   str pelMath(FieldNamesTracker* names, Parse_Math *expr);
   str pelBool(FieldNamesTracker* names, Parse_Bool *expr);
+  str pelFunction(FieldNamesTracker* names, Parse_Function *expr);
 
   void pelSelect(OL_Context::Rule* rule, FieldNamesTracker *names, Parse_Select *expr, 
                  str nodeID, int selectionID);

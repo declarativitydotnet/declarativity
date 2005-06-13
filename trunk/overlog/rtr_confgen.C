@@ -479,6 +479,18 @@ str Rtr_ConfGen::pelRange(FieldNamesTracker* names, Parse_Bool *expr) {
   return pel;
 }
 
+str Rtr_ConfGen::pelFunction(FieldNamesTracker* names, Parse_Function *expr) {
+  strbuf pel;
+
+  if (expr->name() == "f_coinFlip") {
+    Val_Double &val = dynamic_cast<Val_Double&>(*expr->arg(0)->v);
+    pel << val.toString() << " coin not ifstop "; 
+  }
+  else return "ERROR: unknown function name.";
+
+  return pel;
+}
+
 str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
   Parse_Var*      var = NULL;
   Parse_Val*      val = NULL;
@@ -510,8 +522,7 @@ str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
     pel << pelMath(names, m); 
   }
   else if ((fn = dynamic_cast<Parse_Function*>(expr->lhs)) != NULL) {
-    if (fn->name() == "f_coinFlip")
-      pel << "COIN FLIP "; 
+      pel << pelFunction(names, fn); 
   }
   else {
     // TODO: throw/signal some kind of error
@@ -539,8 +550,7 @@ str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
       pel << pelMath(names, m); 
     }
     else if ((fn = dynamic_cast<Parse_Function*>(expr->rhs)) != NULL) {
-      if (fn->name() == "f_coinFlip")
-        pel << "COIN FLIP "; 
+      pel << pelFunction(names, fn); 
     }
     else {
       // TODO: throw/signal some kind of error
