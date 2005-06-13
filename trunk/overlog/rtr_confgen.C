@@ -484,7 +484,7 @@ str Rtr_ConfGen::pelFunction(FieldNamesTracker* names, Parse_Function *expr) {
 
   if (expr->name() == "f_coinFlip") {
     Val_Double &val = dynamic_cast<Val_Double&>(*expr->arg(0)->v);
-    pel << val.toString() << " coin not ifstop "; 
+    pel << val.toString() << " coin "; 
   }
   else return "ERROR: unknown function name.";
 

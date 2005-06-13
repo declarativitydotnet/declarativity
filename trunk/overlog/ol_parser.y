@@ -257,6 +257,8 @@ bool_expr:	OL_LPAR bool_expr OL_RPAR
 
 rel_atom:	math_expr 
 			{ $$ = $1; }
+		| function
+			{ $$ = $1; }
 		| atom
 			{ $$ = $1; }
 		;
