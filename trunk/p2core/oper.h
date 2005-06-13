@@ -38,10 +38,17 @@ public:
   virtual bool _not (const ValueRef& v) const {
     throw New Exception("Oper(!) not supported for type " << str(v->typeName())); 
     return false; };
+  virtual bool _bnot (const ValueRef& v) const {
+    throw New Exception("Oper(~) not supported for type " << str(v->typeName())); 
+    return false; };
   virtual bool _and (const ValueRef& v1, const ValueRef& v2) const
     { NOSUP("&&", v1->typeName(), v2->typeName()); return false; };
+  virtual bool _band (const ValueRef& v1, const ValueRef& v2) const
+    { NOSUP("&", v1->typeName(), v2->typeName()); return false; };
   virtual bool _or (const ValueRef& v1, const ValueRef& v2)const
     { NOSUP("||", v1->typeName(), v2->typeName()); return false; };
+  virtual bool _bor (const ValueRef& v1, const ValueRef& v2)const
+    { NOSUP("|", v1->typeName(), v2->typeName()); return false; };
   virtual bool _eq (const ValueRef& v1, const ValueRef& v2) const
     { NOSUP("==", v1->typeName(), v2->typeName()); return false; };
   virtual bool _neq (const ValueRef& v1, const ValueRef& v2) const
