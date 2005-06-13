@@ -486,6 +486,9 @@ str Rtr_ConfGen::pelFunction(FieldNamesTracker* names, Parse_Function *expr) {
     Val_Double &val = dynamic_cast<Val_Double&>(*expr->arg(0)->v);
     pel << val.toString() << " coin "; 
   }
+  else if (expr->name() == "f_rand") {
+    pel << "rand "; 
+  }
   else return "ERROR: unknown function name.";
 
   return pel;
@@ -640,21 +643,25 @@ void Rtr_ConfGen::pelAssign(OL_Context::Rule* rule, FieldNamesTracker* names,
 {
   strbuf pel;
   strbuf pelAssign;
-  Parse_Var  *a = dynamic_cast<Parse_Var*>(expr->var);
-  Parse_Var  *var = dynamic_cast<Parse_Var*>(expr->assign);
-  Parse_Val  *val = dynamic_cast<Parse_Val*>(expr->assign);
-  Parse_Bool *b   = dynamic_cast<Parse_Bool*>(expr->assign);
-  Parse_Math *m   = dynamic_cast<Parse_Math*>(expr->assign);
+  Parse_Var      *a   = dynamic_cast<Parse_Var*>(expr->var);
+  Parse_Var      *var = NULL;
+  Parse_Val      *val = NULL;
+  Parse_Bool     *b   = NULL;
+  Parse_Math     *m   = NULL;
+  Parse_Function *f   = NULL; 
 
   if (expr->assign == Parse_Expr::Now)
     pelAssign << "now "; 
-  else if (b)
+  else if ((b = dynamic_cast<Parse_Bool*>(expr->assign)) != NULL)
     pelAssign << pelBool(names, b);
-  else if (m)
+  else if ((m = dynamic_cast<Parse_Math*>(expr->assign)) != NULL)
     pelAssign << pelMath(names, m);
-  else if (var && names->fieldPosition(var->toString()) >= 0)                              
+  else if ((f = dynamic_cast<Parse_Function*>(expr->assign)) != NULL)
+    pelAssign << pelFunction(names, f);
+  else if ((var=dynamic_cast<Parse_Var*>(expr->assign)) != NULL && 
+           names->fieldPosition(var->toString()) >= 0)                              
     pelAssign << "$" << (names->fieldPosition(var->toString())+1) << " ";
-  else if (val)
+  else if ((val=dynamic_cast<Parse_Val*>(expr->assign)) != NULL)
     pelAssign << val->toString() << " ";
   else {
     std::cerr << "Rtr_ConfGen ASSIGN ERROR!\n";
