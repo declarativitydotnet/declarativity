@@ -49,6 +49,7 @@ for op, ar, va, desc in [
   ("and",2,	"AND",          "Boolean AND"),
   ("or",2,	"OR",           "Boolean inclusive-OR"),
   ("rand",0,	"RAND",         "A random Int32"),
+  ("coin",1,	"COIN",         "A coin flip biased to 1 with probability given as the argument"),
 
   (">>",2,	"LSR",          "Integer logical shift right"),
   (">>>",2,	"ASR",          "Integer arithmetic shift right"),

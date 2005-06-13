@@ -79,8 +79,12 @@ ValueRef operator/ (const ValueRef& v1, const ValueRef& v2);
 ValueRef operator% (const ValueRef& v1, const ValueRef& v2); 
 
 bool     operator! (const ValueRef& v);
+bool     operator~ (const ValueRef& v);
 bool     operator&&(const ValueRef& v1, const ValueRef& v2); 
+bool     operator& (const ValueRef& v1, const ValueRef& v2); 
 bool     operator||(const ValueRef& v1, const ValueRef& v2); 
+bool     operator| (const ValueRef& v1, const ValueRef& v2); 
+bool     operator^ (const ValueRef& v1, const ValueRef& v2); 
 bool     operator==(const ValueRef& v1, const ValueRef& v2); 
 bool     operator!=(const ValueRef& v1, const ValueRef& v2); 
 bool     operator< (const ValueRef& v1, const ValueRef& v2); 
@@ -123,6 +127,18 @@ public:
   };
 
 #ifndef DOUBLE_HACK
+  virtual bool _bnot (const ValueRef& v) const {
+    return ~(T::cast(v));
+  };
+  virtual bool _band (const ValueRef& v1, const ValueRef& v2) const {
+    return T::cast(v1) & T::cast(v2);
+  };
+  virtual bool _bor (const ValueRef& v1, const ValueRef& v2) const {
+    return T::cast(v1) | T::cast(v2);
+  };
+  virtual bool _bxor (const ValueRef& v1, const ValueRef& v2) const {
+    return T::cast(v1) ^ T::cast(v2);
+  };
   virtual ValuePtr _lshift (const ValueRef& v1, const ValueRef& v2) const {
     B b1 = T::cast(v1);
     B b2 = T::cast(v2);
@@ -132,6 +148,11 @@ public:
     B b1 = T::cast(v1);
     B b2 = T::cast(v2);
     return T::mk(b1 >> b2);
+  };
+  virtual ValuePtr _mod (const ValueRef& v1, const ValueRef& v2) const {
+    B b1 = T::cast(v1);
+    B b2 = T::cast(v2);
+    return T::mk(b1 % b2);
   };
 #endif
 
@@ -155,14 +176,6 @@ public:
     B b2 = T::cast(v2);
     return T::mk(b1 / b2);
   };
-
-#ifndef DOUBLE_HACK
-  virtual ValuePtr _mod (const ValueRef& v1, const ValueRef& v2) const {
-    B b1 = T::cast(v1);
-    B b2 = T::cast(v2);
-    return T::mk(b1 % b2);
-  };
-#endif
 
 };
 

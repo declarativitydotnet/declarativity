@@ -434,6 +434,11 @@ DEF_OP(RAND) {
   int32_t r = random();
   stackPush(Val_Int32::mk(r));
 }
+DEF_OP(COIN) {
+  double r = double(random()) / double(RAND_MAX);
+  double p = pop_double();
+  stackPush(Val_Int32::mk(r <= p));
+}
 
 //
 // Integer-only arithmetic operations (mostly bitwise)
