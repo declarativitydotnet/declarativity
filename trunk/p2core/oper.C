@@ -44,25 +44,19 @@ ValueRef operator/(const ValueRef& v1, const ValueRef& v2) {
 ValueRef operator%(const ValueRef& v1, const ValueRef& v2) { 
   return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_lshift(v1, v2);
 };
-
-bool operator! (const ValueRef& v) {
-  return Oper::oper_table_[v->typeCode()][v->typeCode()]->_not(v);
-};
-bool operator~ (const ValueRef& v) {
+ValueRef operator~ (const ValueRef& v) {
   return Oper::oper_table_[v->typeCode()][v->typeCode()]->_bnot(v);
 };
-bool operator&&(const ValueRef& v1, const ValueRef& v2) { 
-  return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_and(v1, v2);
-};
-bool operator& (const ValueRef& v1, const ValueRef& v2) { 
+ValueRef operator& (const ValueRef& v1, const ValueRef& v2) { 
   return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_band(v1, v2);
 };
-bool operator||(const ValueRef& v1, const ValueRef& v2) { 
-  return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_or(v1, v2);
-};
-bool operator| (const ValueRef& v1, const ValueRef& v2) { 
+ValueRef operator| (const ValueRef& v1, const ValueRef& v2) { 
   return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_bor(v1, v2);
 };
+ValueRef operator^ (const ValueRef& v1, const ValueRef& v2) { 
+  return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_bxor(v1, v2);
+};
+
 bool operator==(const ValueRef& v1, const ValueRef& v2) { 
   return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_eq(v1, v2);
 };
