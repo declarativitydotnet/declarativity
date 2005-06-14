@@ -144,6 +144,34 @@ public:
   virtual bool _lte (const ValueRef& v1, const ValueRef& v2) const {
     return v1->compareTo(v2) <= 0;
   };
+
+  virtual bool _inOO(const ValueRef& v, const ValueRef& f,
+                     const ValueRef& t) const {
+    return (((v->compareTo(f) >  0) && (v->compareTo(t) <  0)) ||
+            ((t->compareTo(f) <= 0) && (v->compareTo(f) >  0)) ||
+            ((v->compareTo(t) <  0) && (t->compareTo(f) <= 0)));
+  }
+
+  virtual bool _inOC(const ValueRef& v, const ValueRef& f,
+                     const ValueRef& t) const {
+    return (((v->compareTo(f) >  0) && (v->compareTo(t) <= 0)) ||
+            ((t->compareTo(f) <= 0) && (v->compareTo(f) >  0)) ||
+            ((v->compareTo(t) <= 0) && (t->compareTo(f) <= 0)));
+  }
+
+  virtual bool _inCO(const ValueRef& v, const ValueRef& f,
+                     const ValueRef& t) const {
+    return (((v->compareTo(f) >= 0) && (v->compareTo(t) <  0)) ||
+            ((t->compareTo(f) <= 0) && (v->compareTo(f) >= 0)) ||
+            ((v->compareTo(t) <  0) && (t->compareTo(f) <= 0)));
+  }
+
+  virtual bool _inCC(const ValueRef& v, const ValueRef& f,
+                     const ValueRef& t) const {
+    return (((v->compareTo(f) >= 0) && (v->compareTo(t) <= 0)) ||
+            ((t->compareTo(f) <= 0) && (v->compareTo(f) >= 0)) ||
+            ((v->compareTo(t) <= 0) && (t->compareTo(f) <= 0)));
+  }
 };
 
 template <class T, class B> class OperImpl : public OperCompare<T> { 
