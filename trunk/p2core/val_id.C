@@ -16,7 +16,26 @@
 #include "val_uint64.h"
 #include "oper.h"
 
-const Oper* Val_ID::oper_ = New OperCompare<Val_ID>();
+class OperID : public OperCompare<Val_ID> {
+  virtual ValuePtr _lshift (const ValueRef& v1, const ValueRef& v2) const {
+    IDRef   id = Val_ID::cast(v1);
+    uint32_t s = Val_UInt32::cast(v2);
+    return Val_ID::mk(id->shift(s));
+  };
+
+  virtual ValuePtr _plus (const ValueRef& v1, const ValueRef& v2) const {
+    IDRef id1 = Val_ID::cast(v1);
+    IDRef id2 = Val_ID::cast(v2);
+    return Val_ID::mk(id1->add(id2));
+  };
+
+  virtual ValuePtr _minus (const ValueRef& v1, const ValueRef& v2) const {
+    IDRef id1 = Val_ID::cast(v1);
+    IDRef id2 = Val_ID::cast(v2);
+    return Val_ID::mk(id2->distance(id1));
+  };
+};
+const Oper* Val_ID::oper_ = New OperID();
 
 //
 // Marshalling and unmarshallng

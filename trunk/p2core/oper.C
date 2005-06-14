@@ -76,6 +76,19 @@ bool operator>=(const ValueRef& v1, const ValueRef& v2) {
   return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_gte(v1, v2);
 };
 
+bool inOO(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3) {
+  return Oper::oper_table_[v2->typeCode()][v3->typeCode()]->_inOO(v1, v2, v3);
+};
+bool inOC(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3) {
+  return Oper::oper_table_[v2->typeCode()][v3->typeCode()]->_inOC(v1, v2, v3);
+};
+bool inCO(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3) {
+  return Oper::oper_table_[v2->typeCode()][v3->typeCode()]->_inCO(v1, v2, v3);
+};
+bool inCC(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3) {
+  return Oper::oper_table_[v2->typeCode()][v3->typeCode()]->_inCC(v1, v2, v3);
+};
+
 /*
  * NULLV,  STR,    INT32,  UINT32, INT64,
  * UINT64, DOUBLE, OPAQUE, TUPLE,  TIME,

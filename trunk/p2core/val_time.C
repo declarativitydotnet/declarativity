@@ -23,7 +23,20 @@
 #include "math.h"
 #include "oper.h"
 
-const Oper* Val_Time::oper_ = New OperCompare<Val_Time>();
+class OperTime : public OperCompare<Val_Time> {
+  virtual ValuePtr _plus (const ValueRef& v1, const ValueRef& v2) const {
+    struct timespec t1 = Val_Time::cast(v1);
+    struct timespec t2 = Val_Time::cast(v2);
+    return Val_Time::mk(t1 + t2);
+  };
+
+  virtual ValuePtr _minus (const ValueRef& v1, const ValueRef& v2) const {
+    struct timespec t1 = Val_Time::cast(v1);
+    struct timespec t2 = Val_Time::cast(v2);
+    return Val_Time::mk(t2 - t1);
+  };
+};
+const Oper* Val_Time::oper_ = New OperTime();
 
 //
 // Marshalling and unmarshallng

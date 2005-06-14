@@ -17,9 +17,16 @@
 
 #include "value.h"
 
-#define NOSUP(o, t1, t2) \
+#define NOSUP1(o, t1) \
+throw New Exception("Oper("<<str(o)<<") not supported for types "<<str(t1))
+
+#define NOSUP2(o, t1, t2) \
 throw New Exception("Oper("<<str(o)<<") not supported for types " \
                      <<str(t1)<<", "<<str(t2))
+
+#define NOSUP3(o, t1, t2, t3) \
+throw New Exception("Oper("<<str(o)<<") not supported for types " \
+                     <<str(t1)<<", "<<str(t2)<<", "<<str(t3))
 
 class Oper {
 public:
@@ -35,42 +42,62 @@ public:
       str desc_;
   };
 
-  virtual bool _eq (const ValueRef& v1, const ValueRef& v2) const
-    { NOSUP("==", v1->typeName(), v2->typeName()); return false; };
-  virtual bool _neq (const ValueRef& v1, const ValueRef& v2) const
-    { NOSUP("!=", v1->typeName(), v2->typeName()); return false; };
-  virtual bool _gt (const ValueRef& v1, const ValueRef& v2) const
-    { NOSUP(">", v1->typeName(), v2->typeName()); return false; };
-  virtual bool _gte (const ValueRef& v1, const ValueRef& v2) const
-    { NOSUP(">=", v1->typeName(), v2->typeName()); return false; };
-  virtual bool _lt (const ValueRef& v1, const ValueRef& v2) const
-    { NOSUP("<", v1->typeName(), v2->typeName()); return false; };
-  virtual bool _lte (const ValueRef& v1, const ValueRef& v2) const
-    { NOSUP("<=", v1->typeName(), v2->typeName()); return false; };
-
-  virtual ValuePtr _bnot (const ValueRef& v) const {
-    throw New Exception("Oper(~) not supported for type " << str(v->typeName())); 
-    return false; };
+  virtual ValuePtr _bnot (const ValueRef& v) const
+    { NOSUP1("~", v->typeName()); return false; };
   virtual ValuePtr _band (const ValueRef& v1, const ValueRef& v2) const
-    { NOSUP("&", v1->typeName(), v2->typeName()); return false; };
+    { NOSUP2("&", v1->typeName(), v2->typeName()); return false; };
   virtual ValuePtr _bor (const ValueRef& v1, const ValueRef& v2)const
-    { NOSUP("|", v1->typeName(), v2->typeName()); return false; };
+    { NOSUP2("|", v1->typeName(), v2->typeName()); return false; };
   virtual ValuePtr _bxor (const ValueRef& v1, const ValueRef& v2)const
-    { NOSUP("^", v1->typeName(), v2->typeName()); return false; };
+    { NOSUP2("^", v1->typeName(), v2->typeName()); return false; };
   virtual ValuePtr _lshift (const ValueRef& v1, const ValueRef& v2) const
-    { NOSUP("<<", v1->typeName(), v2->typeName()); return NULL; };
+    { NOSUP2("<<", v1->typeName(), v2->typeName()); return NULL; };
   virtual ValuePtr _rshift (const ValueRef& v1, const ValueRef& v2) const
-    { NOSUP(">>", v1->typeName(), v2->typeName()); return NULL; };
+    { NOSUP2(">>", v1->typeName(), v2->typeName()); return NULL; };
   virtual ValuePtr _plus (const ValueRef& v1, const ValueRef& v2) const
-    { NOSUP("+", v1->typeName(), v2->typeName()); return NULL; };
+    { NOSUP2("+", v1->typeName(), v2->typeName()); return NULL; };
   virtual ValuePtr _minus (const ValueRef& v1, const ValueRef& v2) const
-    { NOSUP("-", v1->typeName(), v2->typeName()); return NULL; };
+    { NOSUP2("-", v1->typeName(), v2->typeName()); return NULL; };
   virtual ValuePtr _times (const ValueRef& v1, const ValueRef& v2) const
-    { NOSUP("*", v1->typeName(), v2->typeName()); return NULL; };
+    { NOSUP2("*", v1->typeName(), v2->typeName()); return NULL; };
   virtual ValuePtr _divide (const ValueRef& v1, const ValueRef& v2) const
-    { NOSUP("/", v1->typeName(), v2->typeName()); return NULL; };
+    { NOSUP2("/", v1->typeName(), v2->typeName()); return NULL; };
   virtual ValuePtr _mod (const ValueRef& v1, const ValueRef& v2) const
-    { NOSUP("\%", v1->typeName(), v2->typeName()); return NULL; };
+    { NOSUP2("\%", v1->typeName(), v2->typeName()); return NULL; };
+
+  virtual bool _eq (const ValueRef& v1, const ValueRef& v2) const
+    { NOSUP2("==", v1->typeName(), v2->typeName()); return false; };
+  virtual bool _neq (const ValueRef& v1, const ValueRef& v2) const
+    { NOSUP2("!=", v1->typeName(), v2->typeName()); return false; };
+  virtual bool _gt (const ValueRef& v1, const ValueRef& v2) const
+    { NOSUP2(">", v1->typeName(), v2->typeName()); return false; };
+  virtual bool _gte (const ValueRef& v1, const ValueRef& v2) const
+    { NOSUP2(">=", v1->typeName(), v2->typeName()); return false; };
+  virtual bool _lt (const ValueRef& v1, const ValueRef& v2) const
+    { NOSUP2("<", v1->typeName(), v2->typeName()); return false; };
+  virtual bool _lte (const ValueRef& v1, const ValueRef& v2) const
+    { NOSUP2("<=", v1->typeName(), v2->typeName()); return false; };
+
+  virtual bool _inOO (const ValueRef& v1, const ValueRef& v2, 
+                          const ValueRef& v3) const { 
+    NOSUP3("()", v1->typeName(), v2->typeName(), v3->typeName()); 
+    return NULL; 
+  };
+  virtual bool _inOC (const ValueRef& v1, const ValueRef& v2, 
+                          const ValueRef& v3) const { 
+    NOSUP3("(]", v1->typeName(), v2->typeName(), v3->typeName()); 
+    return NULL; 
+  };
+  virtual bool _inCO (const ValueRef& v1, const ValueRef& v2, 
+                          const ValueRef& v3) const { 
+    NOSUP3("[)", v1->typeName(), v2->typeName(), v3->typeName()); 
+    return NULL; 
+  };
+  virtual bool _inCC (const ValueRef& v1, const ValueRef& v2, 
+                          const ValueRef& v3) const { 
+    NOSUP3("[]", v1->typeName(), v2->typeName(), v3->typeName()); 
+    return NULL; 
+  };
 };
  
 ValueRef operator<<(const ValueRef& v1, const ValueRef& v2);
@@ -91,6 +118,11 @@ bool     operator< (const ValueRef& v1, const ValueRef& v2);
 bool     operator<=(const ValueRef& v1, const ValueRef& v2); 
 bool     operator> (const ValueRef& v1, const ValueRef& v2); 
 bool     operator>=(const ValueRef& v1, const ValueRef& v2); 
+
+bool     inOO(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3);
+bool     inOC(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3);
+bool     inCO(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3);
+bool     inCC(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3);
 
 template <class T> class OperCompare : public Oper { 
 public: 
