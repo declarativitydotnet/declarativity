@@ -27,22 +27,22 @@ ValueRef operator<<(const ValueRef& v1, const ValueRef& v2) {
   return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_lshift(v1, v2);
 };
 ValueRef operator>>(const ValueRef& v1, const ValueRef& v2) { 
-  return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_lshift(v1, v2);
+  return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_rshift(v1, v2);
 };
 ValueRef operator+(const ValueRef& v1, const ValueRef& v2) { 
-  return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_lshift(v1, v2);
+  return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_plus(v1, v2);
 };
 ValueRef operator-(const ValueRef& v1, const ValueRef& v2) { 
-  return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_lshift(v1, v2);
+  return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_minus(v1, v2);
 };
 ValueRef operator*(const ValueRef& v1, const ValueRef& v2) { 
-  return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_lshift(v1, v2);
+  return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_times(v1, v2);
 };
 ValueRef operator/(const ValueRef& v1, const ValueRef& v2) { 
-  return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_lshift(v1, v2);
+  return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_divide(v1, v2);
 };
 ValueRef operator%(const ValueRef& v1, const ValueRef& v2) { 
-  return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_lshift(v1, v2);
+  return Oper::oper_table_[v1->typeCode()][v2->typeCode()]->_mod(v1, v2);
 };
 ValueRef operator~ (const ValueRef& v) {
   return Oper::oper_table_[v->typeCode()][v->typeCode()]->_bnot(v);
@@ -97,8 +97,8 @@ bool inCC(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3) {
 
 const Oper* Oper::oper_table_[Value::TYPES][Value::TYPES] = {
 /* NULLV */
-{Val_Null::oper_, Val_Null::oper_, Val_Null::oper_, Val_Null::oper_, Val_Null::oper_, 
- Val_Null::oper_, Val_Null::oper_, Val_Null::oper_, Val_Null::oper_, Val_Null::oper_, 
+{Val_Null::oper_,   Val_Null::oper_,   Val_Int32::oper_, Val_UInt32::oper_, Val_Int64::oper_, 
+ Val_UInt64::oper_, Val_Double::oper_, Val_Null::oper_,  Val_Null::oper_,   Val_Time::oper_, 
  Val_Null::oper_},
 /* STR */
 {Val_Null::oper_, Val_Str::oper_, Val_Str::oper_,    Val_Str::oper_,   Val_Str::oper_, 
