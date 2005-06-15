@@ -30,7 +30,7 @@ throw New Exception("Oper("<<str(o)<<") not supported for types " \
 
 class Oper {
 public:
-  const static Oper* oper_table_[Value::TYPES][Value::TYPES];
+  const static Oper** oper_table_[Value::TYPES][Value::TYPES];
 
   class Exception {
   public:
@@ -127,54 +127,78 @@ bool     inCC(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3);
 template <class T> class OperCompare : public Oper { 
 public: 
   virtual bool _eq (const ValueRef& v1, const ValueRef& v2) const {
-    return v1->compareTo(v2) == 0;
+    ValueRef c1 = T::mk(T::cast(v1));
+    ValueRef c2 = T::mk(T::cast(v2));
+    return c1->compareTo(c2) == 0;
   };
   virtual bool _neq (const ValueRef& v1, const ValueRef& v2) const {
-    return v1->compareTo(v2) != 0;
+    ValueRef c1 = T::mk(T::cast(v1));
+    ValueRef c2 = T::mk(T::cast(v2));
+    return c1->compareTo(c2) != 0;
   };
   virtual bool _gt (const ValueRef& v1, const ValueRef& v2) const {
-    return v1->compareTo(v2) > 0;
+    ValueRef c1 = T::mk(T::cast(v1));
+    ValueRef c2 = T::mk(T::cast(v2));
+    return c1->compareTo(c2) > 0;
   };
   virtual bool _gte (const ValueRef& v1, const ValueRef& v2) const {
-    return v1->compareTo(v2) >= 0;
+    ValueRef c1 = T::mk(T::cast(v1));
+    ValueRef c2 = T::mk(T::cast(v2));
+    return c1->compareTo(c2) >= 0;
   };
   virtual bool _lt (const ValueRef& v1, const ValueRef& v2) const {
-    return v1->compareTo(v2) < 0;
+    ValueRef c1 = T::mk(T::cast(v1));
+    ValueRef c2 = T::mk(T::cast(v2));
+    return c1->compareTo(c2) < 0;
   };
   virtual bool _lte (const ValueRef& v1, const ValueRef& v2) const {
-    return v1->compareTo(v2) <= 0;
+    ValueRef c1 = T::mk(T::cast(v1));
+    ValueRef c2 = T::mk(T::cast(v2));
+    return c1->compareTo(c2) <= 0;
   };
 
-  virtual bool _inOO(const ValueRef& v, const ValueRef& f,
-                     const ValueRef& t) const {
+  virtual bool _inOO(const ValueRef& vc, const ValueRef& fc,
+                     const ValueRef& tc) const {
+    ValueRef v = T::mk(T::cast(vc));
+    ValueRef f = T::mk(T::cast(fc));
+    ValueRef t = T::mk(T::cast(tc));
     return (((v->compareTo(f) >  0) && (v->compareTo(t) <  0)) ||
             ((t->compareTo(f) <= 0) && (v->compareTo(f) >  0)) ||
             ((v->compareTo(t) <  0) && (t->compareTo(f) <= 0)));
   }
 
-  virtual bool _inOC(const ValueRef& v, const ValueRef& f,
-                     const ValueRef& t) const {
+  virtual bool _inOC(const ValueRef& vc, const ValueRef& fc,
+                     const ValueRef& tc) const {
+    ValueRef v = T::mk(T::cast(vc));
+    ValueRef f = T::mk(T::cast(fc));
+    ValueRef t = T::mk(T::cast(tc));
     return (((v->compareTo(f) >  0) && (v->compareTo(t) <= 0)) ||
             ((t->compareTo(f) <= 0) && (v->compareTo(f) >  0)) ||
             ((v->compareTo(t) <= 0) && (t->compareTo(f) <= 0)));
   }
 
-  virtual bool _inCO(const ValueRef& v, const ValueRef& f,
-                     const ValueRef& t) const {
+  virtual bool _inCO(const ValueRef& vc, const ValueRef& fc,
+                     const ValueRef& tc) const {
+    ValueRef v = T::mk(T::cast(vc));
+    ValueRef f = T::mk(T::cast(fc));
+    ValueRef t = T::mk(T::cast(tc));
     return (((v->compareTo(f) >= 0) && (v->compareTo(t) <  0)) ||
             ((t->compareTo(f) <= 0) && (v->compareTo(f) >= 0)) ||
             ((v->compareTo(t) <  0) && (t->compareTo(f) <= 0)));
   }
 
-  virtual bool _inCC(const ValueRef& v, const ValueRef& f,
-                     const ValueRef& t) const {
+  virtual bool _inCC(const ValueRef& vc, const ValueRef& fc,
+                     const ValueRef& tc) const {
+    ValueRef v = T::mk(T::cast(vc));
+    ValueRef f = T::mk(T::cast(fc));
+    ValueRef t = T::mk(T::cast(tc));
     return (((v->compareTo(f) >= 0) && (v->compareTo(t) <= 0)) ||
             ((t->compareTo(f) <= 0) && (v->compareTo(f) >= 0)) ||
             ((v->compareTo(t) <= 0) && (t->compareTo(f) <= 0)));
   }
 };
 
-template <class T, class B> class OperImpl : public OperCompare<T> { 
+template <class T> class OperImpl : public OperCompare<T> { 
 public: 
 #ifndef DOUBLE_HACK
   virtual ValuePtr _bnot (const ValueRef& v) const {
@@ -190,41 +214,27 @@ public:
     return T::mk(T::cast(v1) ^ T::cast(v2));
   };
   virtual ValuePtr _lshift (const ValueRef& v1, const ValueRef& v2) const {
-    B b1 = T::cast(v1);
-    B b2 = T::cast(v2);
-    return T::mk(b1 << b2);
+    return T::mk(T::cast(v1) << T::cast(v2));
   };
   virtual ValuePtr _rshift (const ValueRef& v1, const ValueRef& v2) const {
-    B b1 = T::cast(v1);
-    B b2 = T::cast(v2);
-    return T::mk(b1 >> b2);
+    return T::mk(T::cast(v1) >> T::cast(v2));
   };
   virtual ValuePtr _mod (const ValueRef& v1, const ValueRef& v2) const {
-    B b1 = T::cast(v1);
-    B b2 = T::cast(v2);
-    return T::mk(b1 % b2);
+    return T::mk(T::cast(v1) % T::cast(v2));
   };
 #endif
 
   virtual ValuePtr _plus (const ValueRef& v1, const ValueRef& v2) const {
-    B b1 = T::cast(v1);
-    B b2 = T::cast(v2);
-    return T::mk(b1 + b2);
+    return T::mk(T::cast(v1) + T::cast(v2));
   };
   virtual ValuePtr _minus (const ValueRef& v1, const ValueRef& v2) const {
-    B b1 = T::cast(v1);
-    B b2 = T::cast(v2);
-    return T::mk(b1 - b2);
+    return T::mk(T::cast(v1) - T::cast(v2));
   };
   virtual ValuePtr _times (const ValueRef& v1, const ValueRef& v2) const {
-    B b1 = T::cast(v1);
-    B b2 = T::cast(v2);
-    return T::mk(b1 * b2);
+    return T::mk(T::cast(v1) * T::cast(v2));
   };
   virtual ValuePtr _divide (const ValueRef& v1, const ValueRef& v2) const {
-    B b1 = T::cast(v1);
-    B b2 = T::cast(v2);
-    return T::mk(b1 / b2);
+    return T::mk(T::cast(v1) / T::cast(v2));
   };
 
 };

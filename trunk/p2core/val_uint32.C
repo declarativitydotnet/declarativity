@@ -23,7 +23,7 @@
 #include "oper.h"
 
 
-const Oper* Val_UInt32::oper_ = New OperImpl<Val_UInt32, uint32_t>();
+const Oper* Val_UInt32::oper_ = New OperImpl<Val_UInt32>();
 
 //
 // Marshalling and unmarshallng

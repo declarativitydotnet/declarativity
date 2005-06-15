@@ -23,7 +23,7 @@
 
 #define DOUBLE_HACK
 #include "oper.h"
-const Oper* Val_Double::oper_ = New OperImpl<Val_Double, double>();
+const Oper* Val_Double::oper_ = New OperImpl<Val_Double>();
 
 //
 // String conversion. 
