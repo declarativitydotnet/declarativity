@@ -30,6 +30,7 @@ public:
     PE_SUCCESS=0,
     PE_BAD_CONSTANT,
     PE_BAD_FIELD,
+    PE_OPER_UNSUP,
     PE_STACK_UNDERFLOW,
     PE_TYPE_CONVERSION,
     PE_BAD_OPCODE,
@@ -52,6 +53,7 @@ private:
 
   static const char* err_msgs[];
 
+  ValueRef pop();
   uint64_t pop_unsigned();
   int64_t pop_signed();
   str pop_string();

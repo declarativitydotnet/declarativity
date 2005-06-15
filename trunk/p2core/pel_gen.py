@@ -51,9 +51,8 @@ for op, ar, va, desc in [
   ("rand",0,	"RAND",         "A random Int32"),
   ("coin",1,	"COIN",         "A coin flip biased to 1 with probability given as the argument"),
 
-  (">>",2,	"LSR",          "Integer logical shift right"),
-  (">>>",2,	"ASR",          "Integer arithmetic shift right"),
-  ("<<",2,	"LSL",          "Integer arithmetic shift left"),
+  (">>",2,	"ASR",          "Arithmetic shift right"),
+  ("<<",2,	"ASL",          "Arithmetic shift left"),
   ("&",2,       "BIT_AND",      "Bitwise AND"),
   ("|",2,       "BIT_OR",       "Bitwise inclusive-OR"),
   ("^",2,       "BIT_XOR",      "Bitwise exclusive-OR"),
@@ -82,6 +81,10 @@ for op, ar, va, desc in [
   ("(]id",2,	 "ID_BTWOC",    "ID interval open-closed containment"),
   ("[)id",3,	 "ID_BTWCO",    "ID interval closed-open containment"),
   ("[]id",2,	 "ID_BTWCC",    "ID interval closed-closed containment"),
+  ("()",3,	 "INOO",       "Interval open-open containment"),
+  ("(]",3,	 "INOC",       "Interval open-closed containment"),
+  ("[)",3,	 "INCO",       "Interval closed-open containment"),
+  ("[]",3,	 "INCC",       "Interval closed-closed containment"),
 
   ("<s",2,      "STR_LT",       "String less-than comparison"),
   ("<=s",2,     "STR_LTE",      "String less-than-or-eq comparison"),
@@ -109,6 +112,7 @@ for op, ar, va, desc in [
   (">",2,       "GT",           "greater-than comparison"),
   (">=",2,      "GTE",          "greater-than-or-eq comparison")
   ]: 
+  emit_opcode(op, ar, va, desc + " for polymorphic types.")
   emit_opcode(op+"i", ar, "INT_" + va, "Integer " + desc)
   emit_opcode(op+"f", ar, "DBL_" + va, "Float " + desc)
 

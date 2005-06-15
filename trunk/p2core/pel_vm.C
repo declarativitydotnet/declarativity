@@ -14,6 +14,7 @@
 
 #include "pel_vm.h"
 #include <stdlib.h>
+#include <iostream>
 #include <math.h>
 #include <rxx.h>
 
@@ -27,6 +28,7 @@
 #include "val_tuple.h"
 #include "val_time.h"
 #include "val_id.h"
+#include "oper.h"
 
 typedef void(Pel_VM::*Op_fn_t)(u_int32_t);
 
@@ -40,6 +42,7 @@ const char *Pel_VM::err_msgs[] = {
   "Success",
   "Out-of-range constant reference",
   "Out-of-range field reference",
+  "Operator not supported for type",
   "Stack underflow",
   "Bad type conversion",
   "Bad opcode",
@@ -114,6 +117,15 @@ const char *Pel_VM::strerror(Pel_VM::Error e) {
     e = PE_INVALID_ERRNO;
   }
   return err_msgs[e];
+}
+
+//
+// Type conversion to an unsigned number with no checkng
+//
+ValueRef Pel_VM::pop() 
+{
+  ValueRef t = stackTop(); stackPop();
+  return t;
 }
 
 //
@@ -443,43 +455,136 @@ DEF_OP(COIN) {
 //
 // Integer-only arithmetic operations (mostly bitwise)
 //
-DEF_OP(LSR) {
-  u_int64_t v1 = pop_unsigned();
-  u_int64_t v2 = pop_unsigned();
-  stackPush(Val_UInt64::mk(v2 >> v1));
-}
 DEF_OP(ASR) {
-  u_int64_t v1 = pop_unsigned();
-  int64_t v2 = pop_signed();
-  stackPush(Val_Int64::mk(v2 >> v1));
+  stackPush((pop() >> pop()));
 }
-DEF_OP(LSL) {
-  uint64_t v1 = pop_unsigned();
-  uint64_t v2 = pop_unsigned();
-  stackPush(Val_UInt64::mk(v2 << v1));
+DEF_OP(ASL) {
+  stackPush((pop() << pop()));
 }
 DEF_OP(BIT_AND) {
-  stackPush(Val_UInt64::mk(pop_unsigned() & pop_unsigned()));
+  stackPush((pop() & pop()));
 }
 DEF_OP(BIT_OR) {
-  stackPush(Val_UInt64::mk(pop_unsigned() | pop_unsigned()));
+  stackPush((pop() | pop()));
 }
 DEF_OP(BIT_XOR) {
-  stackPush(Val_UInt64::mk(pop_unsigned() ^ pop_unsigned()));
+  stackPush((pop() ^ pop()));
 }
 DEF_OP(BIT_NOT) {
-  stackPush(Val_UInt64::mk(~pop_unsigned()));
+  stackPush((~pop()));
+}
+
+//
+// arithmetic operations
+//
+DEF_OP(NEG) {
+  try {
+    ValueRef neg = Val_Int32::mk(-1);
+    stackPush((neg * pop()));
+  } catch (Oper::Exception *e) {
+    error = PE_OPER_UNSUP;
+  }
+}
+DEF_OP(PLUS) {
+  try {
+    stackPush((pop()+pop()));
+  } catch (Oper::Exception *e) {
+    error = PE_OPER_UNSUP;
+  }
+}
+DEF_OP(MINUS) {
+  // Be careful of undefined evaluation order in C++!
+  ValueRef v1 = pop();
+  ValueRef v2 = pop();
+  try {
+    stackPush((v2-v1));
+  } catch (Oper::Exception *e) {
+    error = PE_OPER_UNSUP;
+  }
+}
+DEF_OP(MUL) {
+  try {
+    stackPush((pop()*pop()));
+  } catch (Oper::Exception *e) {
+    error = PE_OPER_UNSUP;
+  }
+}
+DEF_OP(DIV) {
+  // Be careful of undefined evaluation order in C++!
+  ValueRef v1 = pop();
+  ValueRef v2 = pop();
+  if (v1 != Val_UInt64::mk(0)) { 
+    try {
+      stackPush((v2 / v1));
+    } catch (Oper::Exception *e) {
+      error = PE_OPER_UNSUP;
+    }
+  } else if (error == PE_SUCCESS) {
+    error = PE_DIVIDE_BY_ZERO;
+  }
 }
 DEF_OP(MOD) {
-  int64_t v1 = pop_signed();
-  int64_t v2 = pop_signed();
-  if (v1) { 
-    stackPush(Val_Int64::mk(v2 % v1));
+  // Be careful of undefined evaluation order in C++!
+  ValueRef v1 = pop();
+  ValueRef v2 = pop();
+  if (v1 != Val_UInt64::mk(0)) { 
+    try {
+      stackPush((v2 % v1));
+    } catch (Oper::Exception *e) {
+      error = PE_OPER_UNSUP;
+    }
   } else if (error == PE_SUCCESS) {
     error = PE_DIVIDE_BY_ZERO;
   }
 }
 
+
+//
+// Comparison operators
+//
+DEF_OP(EQ) {
+  stackPush(Val_Int32::mk(pop() == pop()));
+}
+DEF_OP(LT) { 
+  stackPush(Val_Int32::mk(pop() > pop())); 
+}
+DEF_OP(LTE) { 
+  stackPush(Val_Int32::mk(pop() >= pop())); 
+}
+DEF_OP(GT) { 
+  stackPush(Val_Int32::mk(pop() < pop())); 
+}
+DEF_OP(GTE) { 
+  stackPush(Val_Int32::mk(pop() <= pop())); 
+}
+
+//
+// IN Operator
+//
+DEF_OP(INOO) {
+  ValueRef to   = pop();
+  ValueRef from = pop();
+  ValueRef key  = pop();
+  stackPush(Val_Int32::mk(inOO(key, from, to)));
+}
+DEF_OP(INOC) {
+  ValueRef to   = pop();
+  ValueRef from = pop();
+  ValueRef key  = pop();
+  stackPush(Val_Int32::mk(inOC(key, from, to)));
+}
+DEF_OP(INCO) {
+  ValueRef to   = pop();
+  ValueRef from = pop();
+  ValueRef key  = pop();
+  stackPush(Val_Int32::mk(inCO(key, from, to)));
+}
+DEF_OP(INCC) {
+  ValueRef to   = pop();
+  ValueRef from = pop();
+  ValueRef key  = pop();
+  stackPush(Val_Int32::mk(inCC(key, from, to)));
+}
 
 //
 // Time operations.  Note that the '>' and '<' are reversed: think
