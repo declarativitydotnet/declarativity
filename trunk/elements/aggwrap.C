@@ -172,12 +172,11 @@ void Aggwrap::agg_finalize() {
   if (aggResult) {
     log(LoggerI::INFO, 0, str(strbuf() << " finalize: Pushing tuple" << aggResult->toString()));
     output(0)->push(aggResult, cbv_null);
-
-    if (ext_in_cb) {
-      ext_in_cb(); // accept new tuples to be pushed in via outer
-    }
   } else {
     log(LoggerI::INFO, 0, "Finalize: Alas, nothing to push");
+  }
+  if (ext_in_cb) {
+    ext_in_cb(); // accept new tuples to be pushed in via outer regardless of any outputs
   }
   aggState = 0;
 }
