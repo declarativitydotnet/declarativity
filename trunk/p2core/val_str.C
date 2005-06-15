@@ -12,6 +12,7 @@
  *
  */
 
+#include <iostream>
 #include "val_str.h"
 #include "val_double.h"
 #include "oper.h"

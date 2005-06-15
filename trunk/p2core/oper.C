@@ -55,7 +55,7 @@ const Oper** Oper::oper_table_[Value::TYPES][Value::TYPES] = {
  &Val_UInt64::oper_, &Val_Double::oper_, &Val_Opaque::oper_, &Val_Tuple::oper_,  &Val_Time::oper_, 
  &Val_ID::oper_},
 /* DOUBLE */
-{&Val_Null::oper_,   &Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_, 
+{&Val_Null::oper_,   &Val_Str::oper_, &Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_, 
  &Val_Double::oper_, &Val_Double::oper_, &Val_Opaque::oper_, &Val_Tuple::oper_,  &Val_Time::oper_, 
  &Val_ID::oper_},
 /* OPAQUE */

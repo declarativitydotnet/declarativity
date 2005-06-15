@@ -129,32 +129,32 @@ public:
   virtual bool _eq (const ValueRef& v1, const ValueRef& v2) const {
     ValueRef c1 = T::mk(T::cast(v1));
     ValueRef c2 = T::mk(T::cast(v2));
-    return c1->compareTo(c2) == 0;
+    return c2->compareTo(c1) == 0;
   };
   virtual bool _neq (const ValueRef& v1, const ValueRef& v2) const {
     ValueRef c1 = T::mk(T::cast(v1));
     ValueRef c2 = T::mk(T::cast(v2));
-    return c1->compareTo(c2) != 0;
+    return c2->compareTo(c1) != 0;
   };
   virtual bool _gt (const ValueRef& v1, const ValueRef& v2) const {
     ValueRef c1 = T::mk(T::cast(v1));
     ValueRef c2 = T::mk(T::cast(v2));
-    return c1->compareTo(c2) > 0;
+    return c2->compareTo(c1) > 0;
   };
   virtual bool _gte (const ValueRef& v1, const ValueRef& v2) const {
     ValueRef c1 = T::mk(T::cast(v1));
     ValueRef c2 = T::mk(T::cast(v2));
-    return c1->compareTo(c2) >= 0;
+    return c2->compareTo(c1) >= 0;
   };
   virtual bool _lt (const ValueRef& v1, const ValueRef& v2) const {
     ValueRef c1 = T::mk(T::cast(v1));
     ValueRef c2 = T::mk(T::cast(v2));
-    return c1->compareTo(c2) < 0;
+    return c2->compareTo(c1) < 0;
   };
   virtual bool _lte (const ValueRef& v1, const ValueRef& v2) const {
     ValueRef c1 = T::mk(T::cast(v1));
     ValueRef c2 = T::mk(T::cast(v2));
-    return c1->compareTo(c2) <= 0;
+    return c2->compareTo(c1) <= 0;
   };
 
   virtual bool _inOO(const ValueRef& vc, const ValueRef& fc,
