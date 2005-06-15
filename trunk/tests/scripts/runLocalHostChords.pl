@@ -8,7 +8,7 @@ use strict 'vars';
 use Getopt::Std;
 use FindBin;
 
-our($opt_s, $opt_n, $opt_d, $opt_N, $opt_l, $opt_D, $opt_m, $opt_g, $opt_f, $opt_L, $opt_R);
+our($opt_s, $opt_n, $opt_d, $opt_N, $opt_l, $opt_D, $opt_m, $opt_g, $opt_f, $opt_L, $opt_R, $opt_F);
 
 if ($#ARGV == -1){
     print "Usage runLocalHostChords.pl [options]\n";
@@ -24,11 +24,16 @@ if ($#ARGV == -1){
     print "\t-f <firstPort> : First port to use as a gateway\n";
     print "\t-L <localHost> : My local IP address\n";
     print "\t-R <remoteHost>: The first gateway's IP address\n";
+    print "\t-F <file>: Overlog input file. 0 if not using\n";
     exit 0;
 }
 
-if (!getopts('m:n:d:s:N:l:D:gf:L:R:')){
+if (!getopts('m:n:d:s:N:l:D:gf:L:R:F:')){
     die "Unknown option specified\n";
+}
+
+if (!defined $opt_F) {
+    $opt_F = 0;
 }
 
 if (!defined $opt_s) {
@@ -82,7 +87,7 @@ if (defined $opt_R) {
 my $firstGateway = "$remoteHost:$firstPort";
 my $firstLog = "$firstGateway.log";
 my $nextSeed = $opt_s;
-my $firstLine = "tests/runChord doc/chord2.plg $opt_l $nextSeed $firstGateway $opt_D >& $firstLog &";
+my $firstLine = "tests/runChord $opt_F $opt_l $nextSeed $firstGateway $opt_D >& $firstLog &";
 if (!defined $opt_g) {
     print "$firstLine\n";
     system($firstLine);
@@ -125,7 +130,7 @@ while($remainingNodes > 0) {
 	}
 	my $nextNodeAddress = "$localHost:$nextNode";
 	my $nextLog = "$nextNodeAddress.log";
-	my $nextLine = "tests/runChord doc/chord2.plg $opt_l $nextSeed $nextNodeAddress $opt_D $nextGatewayAddress >& $nextLog&";
+	my $nextLine = "tests/runChord $opt_F $opt_l $nextSeed $nextNodeAddress $opt_D $nextGatewayAddress >& $nextLog&";
 	print "$nextLine\n";
 	system($nextLine);
 	$currentGateway++;
