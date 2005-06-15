@@ -78,7 +78,7 @@ class Rtr_ConfGen {
 
  public:
   Rtr_ConfGen(OL_Context* ctxt, Router::ConfigurationRef conf, 
-	      bool _dups, bool debug, str filename);
+	      bool _dups, bool debug, bool cc, str filename);
   Rtr_ConfGen::~Rtr_ConfGen();
 
   void configureRouter(ref< Udp > udp, str nodeID);
@@ -103,6 +103,7 @@ private:
   OL_Context* _ctxt; // the context after parsing
   bool _dups; // do we care about duplicates in our dataflow? 
   bool _debug; // do we stick debug elements in?
+  bool _cc; // are we using congestion control
   FILE *_output;
   Router::ConfigurationRef _conf; 
   std::map<str, str> _multTableIndices;
@@ -129,11 +130,12 @@ private:
 
   void genProbeElements(OL_Context::Rule* curRule, 
 			Parse_Functor* eventFunctor, 
-			Parse_Functor* baseFunctor, 
-			str nodeID, 
-			FieldNamesTracker* namesTracker, 
+			Parse_Term* baseTerm, 
+			str nodeID, 	     
+			FieldNamesTracker* probeNames, 
+			FieldNamesTracker* baseProbeNames, 
 			int joinOrder,
-			cbv comp_cb ); 
+			cbv comp_cb);
 
   str pelRange(FieldNamesTracker* names, Parse_Bool *expr);
   str pelMath(FieldNamesTracker* names, Parse_Math *expr);
@@ -207,9 +209,9 @@ private:
   public:
     std::vector<str> fieldNames;    
     FieldNamesTracker();   
-    FieldNamesTracker(Parse_Functor* pf);
+    FieldNamesTracker(Parse_Term* pf);
 
-    void initialize(Parse_Functor* pf);
+    void initialize(Parse_Term* pf);
     std::vector<int> matchingJoinKeys(std::vector<str> names);    
     void mergeWith(std::vector<str> names);
     void mergeWith(std::vector<str> names, int numJoinKeys);

@@ -113,7 +113,7 @@ void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
   std::cout << "\nCHECK TRANSITIVE REACHABILITY\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  Rtr_ConfGen routerConfigGenerator(ctxt, conf, true, true, filename);
+  Rtr_ConfGen routerConfigGenerator(ctxt, conf, true, true, false, filename);
 
   // Create one data flow per "node"
   ptr< Udp > udps[nodes];

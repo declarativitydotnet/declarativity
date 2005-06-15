@@ -16,11 +16,13 @@ Rtr_ConfGen::Rtr_ConfGen(OL_Context* ctxt,
 			 Router::ConfigurationRef conf, 
 			 bool dups, 
 			 bool debug, 
+			 bool cc,
 			 str filename) :_conf(conf)
 {
   _ctxt = ctxt;
   _dups = dups;
   _debug = debug;
+  _cc = cc;
   str outputFile(filename << ".out");
   _output = fopen(outputFile.cstr(), "w");
   _pendingRegisterReceiver = false;
@@ -172,7 +174,7 @@ void Rtr_ConfGen::genReceiveElements(ref< Udp> udp, str nodeID, ElementSpecRef w
   hookUp(udpReceive, 0, unmarshalS, 0);
   hookUp(unmarshalS, 0, unBoxS, 0);
 
-  ElementSpecRef wrapAroundMux = _conf->addElement(New refcounted< Mux >(strbuf("wrapAroundMux:") << nodeID, 2));
+  ElementSpecRef wrapAroundMux = _conf->addElement(New refcounted< Mux >(strbuf("wrapAroundSendMux:") << nodeID, 2));
   hookUp(unBoxS, 0, wrapAroundMux, 0);
 
   // demuxer
@@ -191,7 +193,7 @@ void Rtr_ConfGen::genReceiveElements(ref< Udp> udp, str nodeID, ElementSpecRef w
 
   ElementSpecRef bufferQueue = 
     _conf->addElement(New refcounted< Queue >(strbuf("ReceiveQueue:") << 
-					      nodeID, 1000));
+					      nodeID, 10000));
   ElementSpecRef pullPush = 
     _conf->addElement(New refcounted<TimedPullPush>("ReceiveQueuePullPush", 0));
 
@@ -212,7 +214,7 @@ void Rtr_ConfGen::genReceiveElements(ref< Udp> udp, str nodeID, ElementSpecRef w
     // DupElim -> DemuxS -> Insert -> Duplicator -> Fork
     ElementSpecRef bufferQueue = 
       _conf->addElement(New refcounted< Queue >(strbuf("DemuxQueue:") << 
-						nodeID << ":" << tableName, 1000));
+						nodeID << ":" << tableName, 10000));
     ElementSpecRef pullPush = 
       _conf->addElement(New refcounted<TimedPullPush>("DemuxQueuePullPush" << nodeID << ":" << tableName, 0));
 
@@ -260,8 +262,8 @@ void Rtr_ConfGen::genReceiveElements(ref< Udp> udp, str nodeID, ElementSpecRef w
   hookUp(demuxS, _udpReceivers.size(), sinkS, 0); // if we don't know where this should go
 
   _currentElementChain.push_back(wrapAroundDemux);
-  genPrintElement(strbuf("PrintWrapAroundBeforeReceiveMux:") << nodeID);
-  genPrintWatchElement(strbuf("PrintWrapAroundBeforeReceiveMux:") << nodeID);
+  genPrintElement(strbuf("PrintWrapAround:") << nodeID);
+  genPrintWatchElement(strbuf("PrintWrapAround:") << nodeID);
   
   // connect the orignal wrap around
   hookUp(wrapAroundMux, 1);
@@ -289,18 +291,18 @@ ElementSpecRef Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
 							<< nodeID, 0));
   hookUp(roundRobin, 0, pullPush, 0);
 
-  genDupElimElement(strbuf("SendDupElim:") << nodeID);   
+  /*genDupElimElement(strbuf("SendDupElim:") << nodeID);   
   genPrintElement(strbuf("PrintSend:") << nodeID);
-  genPrintWatchElement(strbuf("PrintWatchSend:") << nodeID);
+  genPrintWatchElement(strbuf("PrintWatchSend:") << nodeID);*/
 
   // check here for the wrap around
   ref< vec< ValueRef > > wrapAroundDemuxKeys = New refcounted< vec< ValueRef > >;  
   wrapAroundDemuxKeys->push_back(New refcounted< Val_Str >(str(strbuf() << nodeID)));
-  ElementSpecRef wrapAroundDemux = _conf->addElement(New refcounted< Demux >("wrapAroundDemux", wrapAroundDemuxKeys, 1));  
+  ElementSpecRef wrapAroundDemux = _conf->addElement(New refcounted< Demux >("wrapAroundSendDemux", wrapAroundDemuxKeys, 1));  
 
   hookUp(wrapAroundDemux, 0); // connect to the wrap around
   ElementSpecRef sendQueue = 
-    _conf->addElement(New refcounted< Queue >(strbuf("SendQueue:") << nodeID, 1000));
+    _conf->addElement(New refcounted< Queue >(strbuf("SendQueue:") << nodeID, 10000));
   hookUp(wrapAroundDemux, 1, sendQueue, 0); // connect first port of wrap around to sendQueue
 
   // connect to send queue
@@ -765,32 +767,43 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
 
 void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule, 
 				   Parse_Functor* eventFunctor, 
-				   Parse_Functor* baseFunctor, 
-				   str nodeID, 
+				   Parse_Term* baseTableTerm, 
+				   str nodeID, 	     
 				   FieldNamesTracker* probeNames, 
+				   FieldNamesTracker* baseProbeNames, 
 				   int joinOrder,
 				   cbv comp_cb)
 {
   // probe the right hand side
   // Here's where the join happens 
-  FieldNamesTracker* baseTableNames = New FieldNamesTracker(baseFunctor);
-  std::vector<int> leftJoinKeys = baseTableNames->matchingJoinKeys(probeNames->fieldNames);
-  std::vector<int> rightJoinKeys =  probeNames->matchingJoinKeys(baseTableNames->fieldNames);
+  std::vector<int> leftJoinKeys = baseProbeNames->matchingJoinKeys(probeNames->fieldNames);
+  std::vector<int> rightJoinKeys =  probeNames->matchingJoinKeys(baseProbeNames->fieldNames);
 
-  str baseFunctorName = baseFunctor->fn->name;
+  Parse_Functor* pf = dynamic_cast<Parse_Functor*>(baseTableTerm);
+  Parse_RangeFunction* pr = dynamic_cast<Parse_RangeFunction*>(baseTableTerm);    
+
+  str baseTableName;
+  if (pf != NULL) {
+    baseTableName = pf->fn->name;
+  }
+  if (pr != NULL) {
+    baseTableName = str("range" << curRule->ruleID);
+  }
+  
+
   if (leftJoinKeys.size() == 0 || rightJoinKeys.size() == 0) {
     std::cerr << "No matching join keys " << eventFunctor->fn->name << " " << 
-      baseFunctorName << " " << curRule->ruleID << "\n";
+      baseTableName << " " << curRule->ruleID << "\n";
   }
 
   // add one to offset for table name. Join the first matching key
   int leftJoinKey = leftJoinKeys.at(0) + 1;
   int rightJoinKey = rightJoinKeys.at(0) + 1;
 
-  TableRef probeTable = getTableByName(nodeID, baseFunctorName);
+  TableRef probeTable = getTableByName(nodeID, baseTableName);
 
   // should we use a uniqLookup or a multlookup? Check that the rightJoinKey is the primary key
-  OL_Context::TableInfo* tableInfo = _ctxt->getTableInfos()->find(baseFunctorName)->second;
+  OL_Context::TableInfo* tableInfo = _ctxt->getTableInfos()->find(baseTableName)->second;
   ElementSpecRef noNull = _conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << curRule->ruleID << ":" 
 									  << joinOrder << ":" << nodeID, 1));
 
@@ -803,7 +816,7 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 						       << ":" << nodeID, probeTable,
 						       leftJoinKey, rightJoinKey, comp_cb));
     debugRule(curRule, str(strbuf() << "Unique lookup " << " " 
-			   << eventFunctor->fn->name << " " << baseFunctorName << " " 
+			   << eventFunctor->fn->name << " " << baseTableName << " " 
 			   << leftJoinKey << " " << rightJoinKey << "\n"));
     
   } else {
@@ -814,14 +827,14 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
     
     addMultTableIndex(probeTable, rightJoinKey, nodeID);
     debugRule(curRule, str(strbuf() << "Mult lookup " << curRule->ruleID << " " << 
-			   eventFunctor->fn->name << " " << baseFunctorName << " " 
+			   eventFunctor->fn->name << " " << baseTableName << " " 
 			   << leftJoinKey << " " << rightJoinKey << "\n"));
   }
   
  
   int numFieldsProbe = probeNames->fieldNames.size();
   debugRule(curRule, str(strbuf() << "Probe before merge " << probeNames->toString() << "\n"));
-  probeNames->mergeWith(baseTableNames->fieldNames); 
+  probeNames->mergeWith(baseProbeNames->fieldNames); 
   debugRule(curRule, str(strbuf() << "Probe after merge " << probeNames->toString() << "\n"));
 
   if (_pendingRegisterReceiver) {
@@ -861,12 +874,12 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
   // form the pel projection. 
   //Keep all fields on left, all fields on right except the join keys
   strbuf pelProject("\"join:");
-  pelProject << eventFunctor->fn->name << ":" << baseFunctorName << ":" 
+  pelProject << eventFunctor->fn->name << ":" << baseTableName << ":" 
 	     << curRule->ruleID << ":" << nodeID << "\" pop "; // table name
   for (int k = 0; k < numFieldsProbe; k++) {
     pelProject << "$0 " << k+1 << " field pop ";
   }
-  for (uint k = 0; k < baseTableNames->fieldNames.size(); k++) {
+  for (uint k = 0; k < baseProbeNames->fieldNames.size(); k++) {
     bool joinKey = false;
     for (uint j = 0; j < rightJoinKeys.size(); j++) {
       if (k == (uint) rightJoinKeys.at(j)) { // add one for table name
@@ -885,7 +898,7 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 						     << joinOrder << ":" << nodeID, 
 						     pelProjectStr));
 
-  delete baseTableNames;
+  delete baseProbeNames;
 
   hookUp(transS, 0);
 
@@ -903,25 +916,60 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Rule* curRule,
 {
   // identify the events, use that to probe the other matching tables
   Parse_Functor* eventFunctor;
-  std::vector<Parse_Functor*> baseFunctors;
+  std::vector<Parse_Term*> baseFunctors;
   bool eventFound = false;
   for (unsigned int k = 0; k < curRule->terms.size(); k++) {
     Parse_Functor* pf = dynamic_cast<Parse_Functor*>(curRule->terms.at(k));
-    if (pf == NULL) { continue; }
-    str functorName = pf->fn->name;
-    
-    OL_Context::TableInfoMap::iterator _iterator = _ctxt->getTableInfos()->find(functorName);
-    if (_iterator != _ctxt->getTableInfos()->end()) {     
-      baseFunctors.push_back(pf);
-    } else {
-      // assume one event per not.
-      // event probes local base tables
-      registerReceiverTable(curRule, functorName); 
-      _pendingRegisterReceiver = true;
-      _pendingReceiverTable = functorName;
-      eventFunctor = pf;
-      eventFound = true;
-    } 
+    if (pf != NULL) {
+      str functorName = pf->fn->name;    
+      OL_Context::TableInfoMap::iterator _iterator = _ctxt->getTableInfos()->find(functorName);
+      if (_iterator != _ctxt->getTableInfos()->end()) {     
+	baseFunctors.push_back(pf);
+      } else {
+	// assume one event per not.
+	// event probes local base tables
+	registerReceiverTable(curRule, functorName); 
+	_pendingRegisterReceiver = true;
+	_pendingReceiverTable = functorName;
+	eventFunctor = pf;
+	eventFound = true;
+      } 
+    }
+
+    // check if range, if so, create a table, add to baseFunctors
+    Parse_RangeFunction* pr = dynamic_cast<Parse_RangeFunction*>(curRule->terms.at(k));    
+    if (pr != NULL) {
+      // create table for range. Initialize with values      
+      baseFunctors.push_back(pr);
+
+      int32_t low = 0, high = 0;
+      low = Val_Int32::cast(pr->start->v);
+      high = Val_Int32::cast(pr->end->v);
+
+      OL_Context::TableInfo  *tableInfo = new OL_Context::TableInfo();
+      tableInfo->tableName = "range" << curRule->ruleID;
+      tableInfo->timeout = -1; // never expire
+      tableInfo->size = high - low + 1;
+      tableInfo->primaryKeys.push_back(2);
+      _ctxt->getTableInfos()->insert(std::make_pair(tableInfo->tableName, tableInfo));
+      
+      str newRangeTableName = nodeID << ":" << tableInfo->tableName;
+      TableRef rangeTable = New refcounted< Table> (tableInfo->tableName, (high - low + 1));
+      rangeTable->add_unique_index(2);
+      addMultTableIndex(rangeTable, 1, nodeID);
+      _tables.insert(std::make_pair(newRangeTableName, rangeTable));            
+      debugRule(curRule, "Create Range Tables: Add unique index " << newRangeTableName << " " << low << " " << high << "\n");
+ 
+      for (int x = low; x <= high; x++) {
+	TupleRef tuple = Tuple::mk();
+	tuple->append(Val_Str::mk(tableInfo->tableName));
+	tuple->append(Val_Str::mk(nodeID));
+	tuple->append(Val_Int32::mk(x));
+	tuple->freeze();
+	rangeTable->insert(tuple);
+	debugRule(curRule, "Insert tuple " << tuple->toString() << "\n");
+      }
+    }
   }
 
   std:: cout << "Event term " << eventFunctor->fn->name << "\n";
@@ -930,16 +978,19 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Rule* curRule,
   // keep track also the cur ordering of variables
   namesTracker->initialize(eventFunctor);
   for (uint k = 0; k < baseFunctors.size(); k++) {    
-    if (baseFunctors.at(k)->fn->name == eventFunctor->fn->name) { continue; } // skip events
+    Parse_Functor* pf = dynamic_cast<Parse_Functor*>(baseFunctors.at(k));
+    
+    if (pf != NULL && pf->fn->name == eventFunctor->fn->name) { continue; } // skip events
     debugRule(curRule, str(strbuf() << "Probing " << eventFunctor->fn->name << " " 
-			   << baseFunctors.at(k)->fn->name << "\n"));
+			   << baseFunctors.at(k)->toString() << "\n"));
     cbv comp_cb = cbv_null;
     if (agg_el) {
       comp_cb = agg_el->get_comp_cb();
     }
-
+    
+    FieldNamesTracker* baseProbeNames = New FieldNamesTracker(baseFunctors.at(k));
     genProbeElements(curRule, eventFunctor, baseFunctors.at(k), 
-		     nodeID, namesTracker, k, comp_cb);
+		     nodeID, namesTracker, baseProbeNames, k, comp_cb);
 
     if (agg_el || baseFunctors.size() - 1 != k) {
       // Change from pull to push
@@ -1102,6 +1153,7 @@ void Rtr_ConfGen::genFunctorSource(OL_Context::Rule* rule, str nodeID)
   TupleRef functorTuple = Tuple::mk();
   functorTuple->append(Val_Str::mk(rule->head->fn->name));
   functorTuple->append(Val_Str::mk(nodeID)); 
+  functorTuple->append(Val_Int32::mk(random()));
   functorTuple->freeze();
 
   ElementSpecRef source =
@@ -1113,7 +1165,7 @@ void Rtr_ConfGen::genFunctorSource(OL_Context::Rule* rule, str nodeID)
   Parse_Functor* pf = dynamic_cast<Parse_Functor* > (rule->terms.at(0));
   if (pf == NULL) { return; }
   
-  str period = pf->arg(1)->toString();
+  str period = pf->arg(2)->toString();
   
   debugRule(rule, str(strbuf() << "Functor source " << pf->toString()) << " " << period << "\n");
   // The timed pusher
@@ -1200,12 +1252,19 @@ void Rtr_ConfGen::createTables(str nodeID)
       }
       str newTableName = nodeID << ":" << tableInfo->tableName;
       TableRef newTable = New refcounted< Table> (tableInfo->tableName, tableInfo->size);
+      if (tableInfo->timeout != -1) {
+	timespec* expiration = new timespec();
+	expiration->tv_sec = tableInfo->timeout;
+	expiration->tv_nsec = 0;
+	newTable = New refcounted< Table> (tableInfo->tableName, tableInfo->size, expiration);
+      }
 
       // first create unique indexes
       std::vector<int> primaryKeys = tableInfo->primaryKeys;
       for (uint k = 0; k < primaryKeys.size(); k++) {
 	newTable->add_unique_index(primaryKeys.at(k));
-	std::cout << "Create Tables: Add unique index " << newTableName << " " << primaryKeys.at(k) << "\n";
+	std::cout << "Create Tables: Add unique index " << newTableName << " " << 
+	  primaryKeys.at(k) << " " << tableInfo->timeout << "\n";
       }
 
       _tables.insert(std::make_pair(newTableName, newTable));      
@@ -1265,7 +1324,11 @@ int Rtr_ConfGen::numFunctors(OL_Context::Rule* rule)
 
   for (unsigned int k = 0; k < rule->terms.size(); k++) {
     Parse_Functor* pf = dynamic_cast<Parse_Functor*>(rule->terms.at(k));
-    if (pf != NULL) { count ++; }
+    if (pf != NULL) { count ++; continue; }
+
+    Parse_RangeFunction* pr = dynamic_cast<Parse_RangeFunction*>(rule->terms.at(k));
+    if (pr != NULL) { count ++; continue; }
+    
   }
 
   return count;
@@ -1308,18 +1371,28 @@ bool Rtr_ConfGen::hasPeriodicTerm(OL_Context::Rule* curRule)
 
 Rtr_ConfGen::FieldNamesTracker::FieldNamesTracker() { }
 
-Rtr_ConfGen::FieldNamesTracker::FieldNamesTracker(Parse_Functor* pf)
+Rtr_ConfGen::FieldNamesTracker::FieldNamesTracker(Parse_Term* pf)
 {
   initialize(pf);
 }
 
 
-void Rtr_ConfGen::FieldNamesTracker::initialize(Parse_Functor* pf)
+void Rtr_ConfGen::FieldNamesTracker::initialize(Parse_Term* term)
 {
-  for (int k = 0; k < pf->args(); k++) {
-    Parse_Var* parse_var = dynamic_cast<Parse_Var*>(pf->arg(k));
-    fieldNames.push_back(parse_var->toString());
-  }  
+  Parse_Functor* pf = dynamic_cast<Parse_Functor* > (term);    
+ 
+  if (pf != NULL) {
+    for (int k = 0; k < pf->args(); k++) {
+      Parse_Var* parse_var = dynamic_cast<Parse_Var*>(pf->arg(k));
+      fieldNames.push_back(parse_var->toString());
+    }  
+  }
+
+  Parse_RangeFunction* pr = dynamic_cast<Parse_RangeFunction* > (term);    
+  if (pr != NULL) {
+    fieldNames.push_back(str("NI"));
+    fieldNames.push_back(str(pr->var->toString()));
+  }
 }
 
 

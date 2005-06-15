@@ -36,6 +36,7 @@
 
 
 bool DEBUG = false;
+bool CC = false;
 bool TEST_SUCCESSOR = false;
 bool TEST_LOOKUP = false;
 
@@ -94,7 +95,7 @@ void fakeFingersSuccessors(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigG
     tuple->append(Val_Str::mk(address));
     tuple->freeze();
     fingerTable->insert(tuple);
-    std::cout << tuple->toString() << "\n";
+    warn << tuple->toString() << "\n";
   }
 
 
@@ -114,7 +115,7 @@ void fakeFingersSuccessors(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigG
   tuple->freeze();
   
   bestSuccessorTable->insert(tuple);
-  std::cout << "BestSucc: " << tuple->toString() << "\n";
+  warn << "BestSucc: " << tuple->toString() << "\n";
 }
 
 
@@ -127,8 +128,8 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGe
     random[i] = rand();
   }
   
-  //IDRef myKey = ID::mk(random);
-  IDRef myKey = ID::mk((uint32_t) 1);
+  IDRef myKey = ID::mk(random);
+  //IDRef myKey = ID::mk((uint32_t) 1);
 
   if (TEST_LOOKUP) {
     // fake fingers and best successors
@@ -144,8 +145,18 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGe
   tuple->append(Val_ID::mk(myKey));
   tuple->freeze();
   nodeTable->insert(tuple);
-  std::cout << "Node: " << tuple->toString() << "\n";
-    
+  warn << "Node: " << tuple->toString() << "\n";
+
+  TableRef predecessorTable = routerConfigGenerator->getTableByName(localAddress, "pred");
+  TupleRef predecessorTuple = Tuple::mk();
+  predecessorTuple->append(Val_Str::mk("pred"));
+  predecessorTuple->append(Val_Str::mk(localAddress));
+  predecessorTuple->append(Val_ID::mk(ID::mk()));
+  predecessorTuple->append(Val_Str::mk(str("-"))); 
+  predecessorTuple->freeze();
+  predecessorTable->insert(predecessorTuple);
+  warn << "Initial predecessor " << predecessorTuple->toString() << "\n";
+
   /*TableRef nextFingerFixTable = routerConfigGenerator->getTableByName(localAddress, "nextFingerFix");
   TupleRef nextFingerFixTuple = Tuple::mk();
   nextFingerFixTuple->append(Val_Str::mk("nextFingerFix"));
@@ -153,7 +164,7 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGe
   nextFingerFixTuple->append(Val_Int32::mk(0));
   nextFingerFixTuple->freeze();
   nextFingerFixTable->insert(nextFingerFixTuple);
-  std::cout << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";*/  
+  warn << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";*/  
 }
 
 
@@ -236,7 +247,7 @@ void startChordInDatalog(LoggerI::Level level, ref< OL_Context> ctxt, str datalo
   // create dataflow for translated chord lookup rules
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
   ref< Rtr_ConfGen > routerConfigGenerator 
-    = New refcounted< Rtr_ConfGen >(ctxt, conf, false, DEBUG, datalogFile);
+    = New refcounted< Rtr_ConfGen >(ctxt, conf, false, DEBUG, CC, datalogFile);
 
   routerConfigGenerator->createTables(localAddress);
 
@@ -249,7 +260,7 @@ void startChordInDatalog(LoggerI::Level level, ref< OL_Context> ctxt, str datalo
    
   // synthetically generate stream of successors to test replacement policies
   // at one node
-  ref< Udp > bootstrapUdp = New refcounted< Udp > (localAddress, 9999);
+  ref< Udp > bootstrapUdp = New refcounted< Udp > (localAddress, 20000 + port);
   if (TEST_SUCCESSOR) { 
     sendSuccessorStream(bootstrapUdp, conf, localAddress);
   }
@@ -260,14 +271,14 @@ void startChordInDatalog(LoggerI::Level level, ref< OL_Context> ctxt, str datalo
   landmark->append(Val_Str::mk(localAddress));
   landmark->append(Val_Str::mk(landmarkAddress));
   landmark->freeze();
-  std::cout << "Insert landmark node " << landmark->toString() << "\n";
+  warn << "Insert landmark node " << landmark->toString() << "\n";
   landmarkNodeTable->insert(landmark);
   
   RouterRef router = New refcounted< Router >(conf, level);
   if (router->initialize(router) == 0) {
-    std::cout << "Correctly initialized network of chord lookup flows.\n";
+    warn << "Correctly initialized network of chord lookup flows.\n";
   } else {
-    std::cout << "** Failed to initialize correct spec\n";
+    warn << "** Failed to initialize correct spec\n";
     return;
   }
 
