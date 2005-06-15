@@ -79,12 +79,17 @@ finger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I),
 /** Churn Handling */
 pred@NI(local,null,"").
 
-joinReq@LI(LI,N,NI,E) :- join@NI(NI,E),
-        node@NI(NI,N), landmark@NI(NI,LI),
-        LI != "".
+join@NI(NI,E) :- joinEvent@NI(NI,E).
+
+joinReq@LI(LI,N,NI,E) :- joinEvent@NI(NI,E),
+		      node@NI(NI,N), 
+		      landmark@NI(NI,LI),
+		      LI != "".
 
 succ@NI(NI,N,NI) :- landmark@NI(NI,LI),
-        node@NI(NI,N), join@NI(NI,E),LI := "".
+		 node@NI(NI,N), 
+		 joinEvent@NI(NI,E),
+		 LI := "".
 
 lookup@LI(LI,N,NI,E) :- joinReq@LI(LI,N,NI,E).
 
