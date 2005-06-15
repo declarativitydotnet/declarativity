@@ -967,7 +967,6 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Rule* curRule,
 	tuple->append(Val_Int32::mk(x));
 	tuple->freeze();
 	rangeTable->insert(tuple);
-	debugRule(curRule, "Insert tuple " << tuple->toString() << "\n");
       }
     }
   }
