@@ -157,14 +157,14 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGe
   predecessorTable->insert(predecessorTuple);
   warn << "Initial predecessor " << predecessorTuple->toString() << "\n";
 
-  /*TableRef nextFingerFixTable = routerConfigGenerator->getTableByName(localAddress, "nextFingerFix");
+  TableRef nextFingerFixTable = routerConfigGenerator->getTableByName(localAddress, "nextFingerFix");
   TupleRef nextFingerFixTuple = Tuple::mk();
   nextFingerFixTuple->append(Val_Str::mk("nextFingerFix"));
   nextFingerFixTuple->append(Val_Str::mk(localAddress));
   nextFingerFixTuple->append(Val_Int32::mk(0));
   nextFingerFixTuple->freeze();
   nextFingerFixTable->insert(nextFingerFixTuple);
-  warn << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";*/  
+  warn << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";
 }
 
 
