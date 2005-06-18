@@ -61,6 +61,8 @@ IDRef Val_ID::cast(ValueRef v) {
     return (static_cast<Val_ID *>(vp))->i;
   case Value::UINT32:
     return ID::mk(Val_UInt32::cast(v));
+  case Value::INT64:
+    return ID::mk(Val_UInt64::cast(v));
   case Value::UINT64:
     return ID::mk(Val_UInt64::cast(v));
   default:
