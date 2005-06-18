@@ -18,7 +18,7 @@ def print_usage():
     print
 
 def process_node(file, shash, mhash, rhash):
-    match_maintenance_lookup = re.compile(r"""^.*Print\[PrintWatchRemoteSend.*,\s*
+    match_maintenance_lookup = re.compile(r"""^.*Print\[PrintWatchReceiveBeforeDemux.*,\s*
                                  ([0-9]+),\s*                                  # seconds
                                  ([0-9]+)\]\:\s*                               # nanoseconds
                                  \[\<lookup,\s*                                # token
