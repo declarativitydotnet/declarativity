@@ -417,6 +417,18 @@ str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
   }
 
   switch (expr->oper) {
+    case Parse_Math::LSHIFT:  pel << "<< "; break;
+    case Parse_Math::RSHIFT:  pel << ">> "; break;
+    case Parse_Math::PLUS:    pel << "+ "; break;
+    case Parse_Math::MINUS:   pel << "- "; break;
+    case Parse_Math::TIMES:   pel << "* "; break;
+    case Parse_Math::DIVIDE:  pel << "/ "; break;
+    case Parse_Math::MODULUS: pel << "\% "; break;
+    default: return "ERROR";
+  }
+
+ /*
+  switch (expr->oper) {
     case Parse_Math::LSHIFT:  pel << (expr->id ? "<<id "      : "<<i "); break;
     case Parse_Math::RSHIFT:  pel << (expr->id ? ">>id "      : ">>i "); break;
     case Parse_Math::PLUS:    pel << (expr->id ? "+id "       : "+i " ); break;
@@ -425,7 +437,7 @@ str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
     case Parse_Math::DIVIDE:  pel << (expr->id ? "/id "       : "/i " ); break;
     case Parse_Math::MODULUS: pel << (expr->id ? "\%id "      : "\%i "); break;
     default: return "ERROR";
-  }
+    }*/
 
   return pel;
 }
@@ -472,11 +484,18 @@ str Rtr_ConfGen::pelRange(FieldNamesTracker* names, Parse_Bool *expr) {
   else return "ERROR";
 
   switch (range->type) {
+    case Parse_Range::RANGEOO: pel << "() "; break;
+    case Parse_Range::RANGEOC: pel << "(] "; break;
+    case Parse_Range::RANGECO: pel << "[) "; break;
+    case Parse_Range::RANGECC: pel << "[] "; break;
+    }
+
+  /*switch (range->type) {
     case Parse_Range::RANGEOO: pel << (expr->id_ ? "()id " : "()i "); break;
     case Parse_Range::RANGEOC: pel << (expr->id_ ? "(]id " : "(]i "); break;
     case Parse_Range::RANGECO: pel << (expr->id_ ? "[)id " : "[)i "); break;
     case Parse_Range::RANGECC: pel << (expr->id_ ? "[]id " : "[]i "); break;
-  }
+    }*/
 
   return pel;
 }
@@ -563,7 +582,20 @@ str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
     }
   }
 
-  if (strCompare == true) {
+  switch (expr->oper) {
+    case Parse_Bool::NOT: pel << "not "; break;
+    case Parse_Bool::AND: pel << "and "; break;
+    case Parse_Bool::OR:  pel << "or "; break;
+    case Parse_Bool::EQ:  pel << "== "; break;
+    case Parse_Bool::NEQ: pel << "== not "; break;
+    case Parse_Bool::GT:  pel << "> "; break;
+    case Parse_Bool::LT:  pel << "< "; break;
+    case Parse_Bool::LTE: pel << "<= "; break;
+    case Parse_Bool::GTE: pel << ">= "; break;
+    default: return "ERROR";
+    }
+
+  /*if (strCompare == true) {
     switch (expr->oper) {
     case Parse_Bool::NOT: pel << "not "; break;
     case Parse_Bool::AND: pel << "and "; break;
@@ -589,7 +621,7 @@ str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
       case Parse_Bool::GTE: pel << (expr->id_ ? ">=id " : ">=i "); break;
       default: return "ERROR";
       }
-  }
+      }*/
 
   return pel;
 }
