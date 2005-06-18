@@ -417,9 +417,9 @@ str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
   }
 
   switch (expr->oper) {
-    case Parse_Math::LSHIFT:  pel << "<< "; break;
+    case Parse_Math::LSHIFT:  pel << (expr->id ? "<<id "      : "<< "); break;
     case Parse_Math::RSHIFT:  pel << ">> "; break;
-    case Parse_Math::PLUS:    pel << "+ "; break;
+    case Parse_Math::PLUS:    pel << (expr->id ? "+id "       : "+ " ); break;
     case Parse_Math::MINUS:   pel << "- "; break;
     case Parse_Math::TIMES:   pel << "* "; break;
     case Parse_Math::DIVIDE:  pel << "/ "; break;
