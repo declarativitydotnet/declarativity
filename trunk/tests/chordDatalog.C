@@ -161,7 +161,7 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGe
   TupleRef nextFingerFixTuple = Tuple::mk();
   nextFingerFixTuple->append(Val_Str::mk("nextFingerFix"));
   nextFingerFixTuple->append(Val_Str::mk(localAddress));
-  nextFingerFixTuple->append(Val_Int32::mk(0));
+  nextFingerFixTuple->append(Val_UInt32::mk(0));
   nextFingerFixTuple->freeze();
   nextFingerFixTable->insert(nextFingerFixTuple);
   warn << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";
