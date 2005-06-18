@@ -18,8 +18,8 @@
 
 class OperID : public OperCompare<Val_ID> {
   virtual ValuePtr _lshift (const ValueRef& v1, const ValueRef& v2) const {
-    IDRef   id = Val_ID::cast(v1);
-    uint32_t s = Val_UInt32::cast(v2);
+    uint32_t s = Val_UInt32::cast(v1);
+    IDRef   id = Val_ID::cast(v2);
     return Val_ID::mk(id->shift(s));
   };
 
