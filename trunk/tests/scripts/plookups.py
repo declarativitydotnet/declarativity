@@ -28,7 +28,7 @@ def process_node(file, shash, mhash, rhash):
                                  ([0-9]+)\s*                                   # Event ID
                              \>\]$\n""", re.VERBOSE)
 
-    match_simple_lookup = re.compile(r"""^.*Print\[PrintWatchRemoteSend.*,\s*
+    match_simple_lookup = re.compile(r"""^.*Print\[PrintWatchReceiveBeforeDemux.*,\s*
                                  ([0-9]+),\s*                                  # seconds
                                  ([0-9]+)\]\:\s*                               # nanoseconds
                                  \[\<lookup,\s*                                # token
@@ -81,7 +81,7 @@ def eval_lookups(shash, mhash, rhash):
     latency      = []
     hop_time     = []
 
-    for event in mhash.keys(): 
+    for event in mhash.keys():
        if not rhash.has_key(event): 
            unsuccessful += 1
            continue                                          # Only care about successful lookups
@@ -120,7 +120,7 @@ def eval_lookups(shash, mhash, rhash):
     unsuccessful = 0
     latency      = []
     hop_time     = []
-    for event in shash.keys(): 
+    for event in shash.keys():
        if not rhash.has_key(event): 
            unsuccessful += 1
            continue                                          # Only care about successful lookups
@@ -169,7 +169,7 @@ if __name__ == "__main__":
     rhash = {}
 
     for file in files:
-        file = args[0] + "/" + file; 
+        file = args[0] + "/" + file;
         if not os.path.exists(file):
             print "ERROR: file does not exist ", file
             exit(3)
