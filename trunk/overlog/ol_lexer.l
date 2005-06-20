@@ -226,7 +226,9 @@ WHITESPACE	[ \t\r\n]+
 
 <INITIAL>({DIGIT}+|0[xX]{HEXDIGIT}+)I {
   // Unsigned integer literal (including octal and/or hex
-  lvalp->v = New Parse_Val(Val_ID::mk(ID::mk(strtoull(yytext,NULL,0))));
+  Parse_Val *val = New Parse_Val(Val_ID::mk(ID::mk(strtoull(yytext,NULL,0))));
+  val->id(true);
+  lvalp->v = val;
   return OL_VALUE;
 }
 

@@ -1408,16 +1408,18 @@ YY_RULE_SETUP
 #line 227 "ol_lexer.lex"
 {
   // Unsigned integer literal (including octal and/or hex
-  lvalp->v = New Parse_Val(Val_ID::mk(ID::mk(strtoull(yytext,NULL,0))));
+  Parse_Val *val = New Parse_Val(Val_ID::mk(ID::mk(strtoull(yytext,NULL,0))));
+  val->id(true);
+  lvalp->v = val;
   return OL_VALUE;
 }
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 233 "ol_lexer.lex"
+#line 235 "ol_lexer.lex"
 ECHO;
 	YY_BREAK
-#line 1421 "ol_lexer.C"
+#line 1423 "ol_lexer.C"
 			case YY_STATE_EOF(CCOMMENT):
 			case YY_STATE_EOF(CSTRING):
 				yyterminate();
@@ -2423,7 +2425,7 @@ void OLBasefree (void * ptr )
 #undef YY_DECL_IS_OURS
 #undef YY_DECL
 #endif
-#line 233 "ol_lexer.lex"
+#line 235 "ol_lexer.lex"
 
 
 
