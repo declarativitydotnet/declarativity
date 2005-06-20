@@ -224,6 +224,12 @@ WHITESPACE	[ \t\r\n]+
   return OL_VALUE;
 }
 
+<INITIAL>({DIGIT}+|0[xX]{HEXDIGIT}+)I {
+  // Unsigned integer literal (including octal and/or hex
+  lvalp->v = New Parse_Val(Val_ID::mk(ID::mk(strtoull(yytext,NULL,0))));
+  return OL_VALUE;
+}
+
 %%
 
 // Default: yyin == std::cin.

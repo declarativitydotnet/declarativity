@@ -24,6 +24,8 @@
 #include "val_str.h"
 #include "val_double.h"
 #include "val_null.h"
+#include "val_id.h"
+#include "ID.h"
 
 #ifndef yyFlexLexer
 #define yyFlexLexer OLBaseFlexLexer
