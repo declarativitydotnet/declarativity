@@ -10,7 +10,7 @@ for i in /usr/local/bin /usr/bin /bin ; do
     case "`$i/flex --version`" in 
     *2.5.3[1-9])
         echo "Found a suitable flex in $i, running it..."
-	$i/flex $* &&
+	$i/flex -d $* &&
 	echo "Copying $OUT_FILE to $WORKING_FILE ..." &&
 	cp -v $OUT_FILE $WORKING_FILE &&
 	exit 0

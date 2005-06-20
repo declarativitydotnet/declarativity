@@ -8,7 +8,7 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: P2's concrete type system.  The base type for values.
+ * DESCRIPTION: P2's operator system for basic concrete types.
  *
  */
 

@@ -10,8 +10,8 @@
  * 
  */
 
+#include <iostream>
 #include "val_id.h"
-
 #include "val_uint32.h"
 #include "val_uint64.h"
 #include "oper.h"
@@ -20,6 +20,7 @@ class OperID : public OperCompare<Val_ID> {
   virtual ValuePtr _lshift (const ValueRef& v1, const ValueRef& v2) const {
     uint32_t s = Val_UInt32::cast(v1);
     IDRef   id = Val_ID::cast(v2);
+    std::cout << "OperID::_lshift: " << id->toString() << " << " << s << "\n";
     return Val_ID::mk(id->shift(s));
   };
 

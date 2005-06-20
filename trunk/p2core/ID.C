@@ -48,8 +48,8 @@ ID::ID(uint64_t doubleword)
        i++) {
     words[i] = 0;
   }
-  words[WORDS - 1] = doubleword | 0xFFFFFFFF;
-  words[WORDS - 2] = (doubleword >> 32) | 0xFFFFFFFF;
+  words[WORDS - 1] = doubleword & 0xFFFFFFFF;
+  words[WORDS - 2] = (doubleword >> 32) & 0xFFFFFFFF;
 }
 
 /** Turns to hexadecimal */

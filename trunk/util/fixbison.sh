@@ -11,7 +11,7 @@ for i in /usr/local/bin /usr/bin /bin ; do
     case "`$i/bison --version` | grep '(GNU Bison)'" in 
     *1.87[5-9]*)
         echo "Found a suitable bison in $i, running it..."
-	$i/bison -y $IN_FILE && cp $TAB_CFILE $OUT_FILE
+	$i/bison -t -y $IN_FILE && cp $TAB_CFILE $OUT_FILE
 	for f in $OUT_FILE $TAB_HFILE; do 
 	    echo "Copying $f to $f.works ..."
 	    cp -v $f ${f}.works
