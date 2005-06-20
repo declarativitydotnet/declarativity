@@ -151,7 +151,7 @@ static const ValTest vtests[] = {
   TST(INT64, SUCCESS, "2",	"1 1 <<" ),
   TST(INT64, SUCCESS, "4",	"2 1 <<" ),
   TST(INT64, SUCCESS, "64",	"16 2 <<" ),
-  TST(ID,    SUCCESS, "4",	"2 1 ->id <<" ),
+  TST(ID,    SUCCESS, "4",	"1 ->id 2 <<" ),
   TST(UINT64, SUCCESS, "0xfffffffffffffffeU",	"0xffffffffffffffffU 1 <<" ),
   TST(UINT64, SUCCESS, "0xfffffffffffffffcU",	"-1 ->u64 2 <<" ),
   // & (bitwise AND)

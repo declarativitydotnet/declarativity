@@ -14,7 +14,6 @@
 
 #include "pel_vm.h"
 #include <stdlib.h>
-#include <iostream>
 #include <math.h>
 #include <rxx.h>
 
@@ -456,18 +455,14 @@ DEF_OP(COIN) {
 // Integer-only arithmetic operations (mostly bitwise)
 //
 DEF_OP(ASR) {
-  stackPush((pop() >> pop()));
+  ValueRef v1 = pop();
+  ValueRef v2 = pop();
+  stackPush((v2 >> v1));
 }
 DEF_OP(ASL) {
   ValueRef v1 = pop();
   ValueRef v2 = pop();
-  std::cout << "Left shift pel " << v2->typeName() << " << " << v1->typeName() << "\n";
-  try {
-      stackPush((v2 << v1));
-  } catch(Value::TypeError *e) {
-      std::cout << e->realType << " " << e->toType << "\n";
-  }
-  std::cout << "Left shift pel success\n";
+  stackPush((v2 << v1));
 }
 DEF_OP(BIT_AND) {
   stackPush((pop() & pop()));

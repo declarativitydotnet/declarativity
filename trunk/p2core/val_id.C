@@ -10,7 +10,6 @@
  * 
  */
 
-#include <iostream>
 #include "val_id.h"
 #include "val_uint32.h"
 #include "val_uint64.h"
@@ -18,21 +17,15 @@
 
 class OperID : public OperCompare<Val_ID> {
   virtual ValuePtr _lshift (const ValueRef& v1, const ValueRef& v2) const {
-    std::cout << "OperID::_lshift\n";
     IDRef   id = Val_ID::cast(v1);
     uint32_t s = Val_UInt32::cast(v2);
-    std::cout << "OperID::_lshift: " << id->toString() << " << " << s << "\n";
     return Val_ID::mk(id->shift(s));
   };
 
   virtual ValuePtr _plus (const ValueRef& v1, const ValueRef& v2) const {
     IDRef id1 = Val_ID::cast(v1);
     IDRef id2 = Val_ID::cast(v2);
-    ValuePtr ret = Val_ID::mk(id1->add(id2));
-    std::cout << "Val_ID Plus: " << v1->toString() << " " << v2->toString() << "\n";
-    std::cout << "Val_ID Plus: " << v1->typeName() << " " << v2->typeName() << "\n";
-    std::cout << "Val_ID Plus: " << id1->toString() << " " << id2->toString() << " " << ret->toString() << "\n";
-    return ret;
+    return Val_ID::mk(id1->add(id2));
   };
 
   virtual ValuePtr _minus (const ValueRef& v1, const ValueRef& v2) const {
@@ -74,7 +67,6 @@ IDRef Val_ID::cast(ValueRef v) {
   case Value::UINT64:
     return ID::mk(Val_UInt64::cast(v));
   default:
-      std::cout << "Type cat error " << v->typeCode() << "\n";  
     throw Value::TypeError(v->typeCode(), Value::ID );
   }
 }
