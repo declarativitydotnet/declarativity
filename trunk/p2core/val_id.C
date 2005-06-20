@@ -18,8 +18,9 @@
 
 class OperID : public OperCompare<Val_ID> {
   virtual ValuePtr _lshift (const ValueRef& v1, const ValueRef& v2) const {
-    uint32_t s = Val_UInt32::cast(v1);
-    IDRef   id = Val_ID::cast(v2);
+    std::cout << "OperID::_lshift\n";
+    IDRef   id = Val_ID::cast(v1);
+    uint32_t s = Val_UInt32::cast(v2);
     std::cout << "OperID::_lshift: " << id->toString() << " << " << s << "\n";
     return Val_ID::mk(id->shift(s));
   };
@@ -27,7 +28,11 @@ class OperID : public OperCompare<Val_ID> {
   virtual ValuePtr _plus (const ValueRef& v1, const ValueRef& v2) const {
     IDRef id1 = Val_ID::cast(v1);
     IDRef id2 = Val_ID::cast(v2);
-    return Val_ID::mk(id1->add(id2));
+    ValuePtr ret = Val_ID::mk(id1->add(id2));
+    std::cout << "Val_ID Plus: " << v1->toString() << " " << v2->toString() << "\n";
+    std::cout << "Val_ID Plus: " << v1->typeName() << " " << v2->typeName() << "\n";
+    std::cout << "Val_ID Plus: " << id1->toString() << " " << id2->toString() << " " << ret->toString() << "\n";
+    return ret;
   };
 
   virtual ValuePtr _minus (const ValueRef& v1, const ValueRef& v2) const {
@@ -60,6 +65,8 @@ IDRef Val_ID::cast(ValueRef v) {
   switch (v->typeCode()) {
   case Value::ID:
     return (static_cast<Val_ID *>(vp))->i;
+  case Value::INT32:
+    return ID::mk(Val_UInt32::cast(v));
   case Value::UINT32:
     return ID::mk(Val_UInt32::cast(v));
   case Value::INT64:
@@ -67,6 +74,7 @@ IDRef Val_ID::cast(ValueRef v) {
   case Value::UINT64:
     return ID::mk(Val_UInt64::cast(v));
   default:
+      std::cout << "Type cat error " << v->typeCode() << "\n";  
     throw Value::TypeError(v->typeCode(), Value::ID );
   }
 }

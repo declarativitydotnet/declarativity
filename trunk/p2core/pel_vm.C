@@ -459,7 +459,15 @@ DEF_OP(ASR) {
   stackPush((pop() >> pop()));
 }
 DEF_OP(ASL) {
-  stackPush((pop() << pop()));
+  ValueRef v1 = pop();
+  ValueRef v2 = pop();
+  std::cout << "Left shift pel " << v2->typeName() << " << " << v1->typeName() << "\n";
+  try {
+      stackPush((v2 << v1));
+  } catch(Value::TypeError *e) {
+      std::cout << e->realType << " " << e->toType << "\n";
+  }
+  std::cout << "Left shift pel success\n";
 }
 DEF_OP(BIT_AND) {
   stackPush((pop() & pop()));
@@ -668,6 +676,7 @@ DEF_OP(ID_MINUSMINUS) {
 DEF_OP(ID_LSL) {
   uint32_t shift = pop_unsigned();
   IDRef id = pop_ID();
+  //warn << "Left shift " << shift << " " << id->toString() << " " << id->shift(shift)->toString() << "\n";
   stackPush(Val_ID::mk(id->shift(shift)));
 }
 DEF_OP(ID_DIST) {
