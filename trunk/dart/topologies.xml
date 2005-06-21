@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<topologies>
+
+  <topology>  
+    <name>p2-chord-1</name>
+    <nrouters>3</nrouters>
+    <nhosts>20</nhosts>
+    <ns2>P2-CHORD.ns</ns2>
+  </topology>
+
+</topologies>
