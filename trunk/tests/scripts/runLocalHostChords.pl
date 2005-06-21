@@ -55,7 +55,7 @@ if (!defined $opt_d) {
 }
 
 if (!defined $opt_D) {
-    $opt_D = 1.0;
+    $opt_D = 0.0;
 } else {
     $opt_D = $opt_D + 0.0;
 }
