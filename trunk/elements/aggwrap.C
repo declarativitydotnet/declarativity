@@ -175,7 +175,8 @@ void Aggwrap::agg_finalize() {
   } else {
     log(LoggerI::INFO, 0, "Finalize: Alas, nothing to push");
   }
-  if (ext_in_cb) {
+  if (ext_in_cb && ext_in_cb != cbv_null) {
+    log(LoggerI::INFO, 0, "Invoke push callback for more tuples");
     ext_in_cb(); // accept new tuples to be pushed in via outer regardless of any outputs
   }
   aggState = 0;
