@@ -37,7 +37,7 @@ void DuplicateConservative::unblock(int output)
 
   // If I have no more blocked outputs, unblock my pusher
   if (_block_flag_count == 0) {
-    assert(_push_cb != cbv_null);
+    //assert(_push_cb != cbv_null);
     log(LoggerI::INFO, -1, "unblock: propagating aggregate unblock");
     _push_cb();
     _push_cb = cbv_null;
