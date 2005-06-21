@@ -62,6 +62,7 @@ int Aggwrap::push(int port, TupleRef t, cbv cb)
     default:
       log(LoggerI::INFO, 0, str(strbuf() << "FAIL: weird state " << aggState));
     }     
+    log(LoggerI::INFO, 0, str(strbuf() << " Block downstream"));
     return 0;
   case 1:
     switch(aggState) {
@@ -96,6 +97,7 @@ void Aggwrap::int_push_cb()
   if (aggState == 0 && ext_in_cb) {
     log(LoggerI::INFO, 0, str(strbuf() << "Invoke ext_in_cb"));
     ext_in_cb();
+    ext_in_cb = cbv_null;
   }
 }
 
@@ -175,9 +177,10 @@ void Aggwrap::agg_finalize() {
   } else {
     log(LoggerI::INFO, 0, "Finalize: Alas, nothing to push");
   }
-  if (ext_in_cb && ext_in_cb != cbv_null) {
+  if (ext_in_cb) {
     log(LoggerI::INFO, 0, "Invoke push callback for more tuples");
     ext_in_cb(); // accept new tuples to be pushed in via outer regardless of any outputs
+    ext_in_cb = cbv_null;
   }
   aggState = 0;
 }
