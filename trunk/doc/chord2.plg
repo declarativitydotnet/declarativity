@@ -109,7 +109,7 @@ watch(eagerFinger).
 watch(eagerFinger1).
 watch(nextFingerFix).
 
-F0 fFixPeriodic@NI(NI) :- periodic@NI(NI,E,1).
+F0 fFixPeriodic@NI(NI) :- periodic@NI(NI,E,10).
 
 F1 fFix@NI(NI,E,I) :- fFixPeriodic@NI(NI), 
 		   nextFingerFix@NI(NI,I), 
@@ -120,30 +120,28 @@ F3 fFixEvent@NI(NI,E,I) :- fFix@NI(NI,E,I).
 
 F4 lookup@NI(NI,K,NI,E) :- fFixEvent@NI(NI,E,I),
 			node(NI,N), 
-			K:=1 <<id I + N.
-
-/*
-F5 finger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I), 
-			     lookupRes@NI(NI,K,B,BI,E).
-
-F6 nextFingerFix@NI(NI,0) :- fFixEvent@NI(NI,E,I), 
-			   ((I == 159)).
-
-F7 nextFingerFix@NI(NI,I) :- fFixEvent@NI(NI,E,I1),
-			   I:=I1 + 1, 
-			   I1 != 159.
-*/
-
+			K:=1I << I + N.
 
 F5 eagerFinger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I), 
 			     lookupRes@NI(NI,K,B,BI,E).
 
 F6 finger@NI(NI,I,B,BI) :- eagerFinger@NI(NI,I,B,BI).
 
+
+/*F7 eagerFinger@NI(NI,I,B,BI) :- node@NI(NI,N), 
+			     fFix@NI(NI,E,I),
+			     lookupRes@NI(NI,K,B,BI,E),
+			     range(I1,0,159),
+			     I1 <= I,
+			     K:=1I << I1 + N, 
+			     K in (N,B), 
+			     BI != NI.*/
+
+
 F7 eagerFinger@NI(NI,I,B,BI) :- node@NI(NI,N), 
 			     eagerFinger@NI(NI,I1,B,BI), 
 			     I:=I1 + 1, 
-			     K:=1 <<id I +id N, 
+			     K:=1I << I + N, 
 			     K in (N,B), 
 			     BI != NI.
 
@@ -153,7 +151,7 @@ F8 nextFingerFix@NI(NI,0) :- eagerFinger@NI(NI,I,B,BI),
 F9 nextFingerFix@NI(NI,I) :- node@NI(NI,N), 
 			   eagerFinger@NI(NI,I1,B,BI), 
 			   I:=I1 + 1, 
-			   K:=1 <<id I +id N, 
+			   K:=1I << I + N, 
 			   K in (B,N), 
 			   NI != BI.
 
@@ -235,6 +233,8 @@ SB8 pred@NI(NI,P,PI) :- node@NI(NI,N),
 			notifyPred@NI(NI,P,PI), 
 			pred@NI(NI,P1,PI1),
 			((PI1 == "-") || (P in (P1,N))).
+
+
 
 /** Connectivity Monitoring */
 /*
