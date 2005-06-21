@@ -291,10 +291,6 @@ ElementSpecRef Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
 							<< nodeID, 0));
   hookUp(roundRobin, 0, pullPush, 0);
 
-  /*genDupElimElement(strbuf("SendDupElim:") << nodeID);   
-  genPrintElement(strbuf("PrintSend:") << nodeID);
-  genPrintWatchElement(strbuf("PrintWatchSend:") << nodeID);*/
-
   // check here for the wrap around
   ref< vec< ValueRef > > wrapAroundDemuxKeys = New refcounted< vec< ValueRef > >;  
   wrapAroundDemuxKeys->push_back(New refcounted< Val_Str >(str(strbuf() << nodeID)));
@@ -387,8 +383,8 @@ str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
   else if ((val = dynamic_cast<Parse_Val*>(expr->lhs)) != NULL) {
     pel << val->toString() << " "; 
 
-    if (val->id()) pel << "->id "; 
-    else if (expr->id) pel << "->id "; 
+    if (val->id()) pel << "->u32 ->id "; 
+    else if (expr->id) pel << "->u32 ->id "; 
   }
   else if ((math = dynamic_cast<Parse_Math*>(expr->lhs)) != NULL) {
     pel << pelMath(names, math); 
@@ -405,8 +401,8 @@ str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
   else if ((val = dynamic_cast<Parse_Val*>(expr->rhs)) != NULL) {    
     pel << val->toString() << " "; 
 
-    if (val->id()) pel << "->id "; 
-    else if (expr->id) pel << "->id "; 
+    if (val->id()) pel << "->u32 ->id "; 
+    else if (expr->id) pel << "->u32 ->id "; 
   }
   else if ((math = dynamic_cast<Parse_Math*>(expr->rhs)) != NULL) {
     pel << pelMath(names, math); 
@@ -419,25 +415,13 @@ str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
   switch (expr->oper) {
     case Parse_Math::LSHIFT:  pel << (expr->id ? "<<id "      : "<< "); break;
     case Parse_Math::RSHIFT:  pel << ">> "; break;
-    case Parse_Math::PLUS:    pel << (expr->id ? "+id "       : "+ " ); break;
+    case Parse_Math::PLUS:    pel << "+ "; break;
     case Parse_Math::MINUS:   pel << "- "; break;
     case Parse_Math::TIMES:   pel << "* "; break;
     case Parse_Math::DIVIDE:  pel << "/ "; break;
     case Parse_Math::MODULUS: pel << "\% "; break;
     default: return "ERROR";
   }
-
- /*
-  switch (expr->oper) {
-    case Parse_Math::LSHIFT:  pel << (expr->id ? "<<id "      : "<<i "); break;
-    case Parse_Math::RSHIFT:  pel << (expr->id ? ">>id "      : ">>i "); break;
-    case Parse_Math::PLUS:    pel << (expr->id ? "+id "       : "+i " ); break;
-    case Parse_Math::MINUS:   pel << (expr->id ? "distance "  : "-i " ); break;
-    case Parse_Math::TIMES:   pel << (expr->id ? "*id "       : "*i " ); break;
-    case Parse_Math::DIVIDE:  pel << (expr->id ? "/id "       : "/i " ); break;
-    case Parse_Math::MODULUS: pel << (expr->id ? "\%id "      : "\%i "); break;
-    default: return "ERROR";
-    }*/
 
   return pel;
 }
@@ -489,13 +473,6 @@ str Rtr_ConfGen::pelRange(FieldNamesTracker* names, Parse_Bool *expr) {
     case Parse_Range::RANGECO: pel << "[) "; break;
     case Parse_Range::RANGECC: pel << "[] "; break;
     }
-
-  /*switch (range->type) {
-    case Parse_Range::RANGEOO: pel << (expr->id_ ? "()id " : "()i "); break;
-    case Parse_Range::RANGEOC: pel << (expr->id_ ? "(]id " : "(]i "); break;
-    case Parse_Range::RANGECO: pel << (expr->id_ ? "[)id " : "[)i "); break;
-    case Parse_Range::RANGECC: pel << (expr->id_ ? "[]id " : "[]i "); break;
-    }*/
 
   return pel;
 }
@@ -594,35 +571,6 @@ str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
     case Parse_Bool::GTE: pel << ">= "; break;
     default: return "ERROR";
     }
-
-  /*if (strCompare == true) {
-    switch (expr->oper) {
-    case Parse_Bool::NOT: pel << "not "; break;
-    case Parse_Bool::AND: pel << "and "; break;
-    case Parse_Bool::OR:  pel << "or "; break;
-    case Parse_Bool::EQ:  pel << "==s "; break;
-    case Parse_Bool::NEQ: pel << "==s not "; break;
-    case Parse_Bool::GT:  pel << ">s "; break;
-    case Parse_Bool::LT:  pel << "<s "; break;
-    case Parse_Bool::LTE: pel << "<=s "; break;
-    case Parse_Bool::GTE: pel << ">=s "; break;
-    default: return "ERROR";
-    }
-  } else {
-      switch (expr->oper) {
-      case Parse_Bool::NOT: pel << "not "; break;
-      case Parse_Bool::AND: pel << "and "; break;
-      case Parse_Bool::OR:  pel << "or "; break;
-      case Parse_Bool::EQ:  pel << (expr->id_ ? "==id " : "==i "); break;
-      case Parse_Bool::NEQ: pel << (expr->id_ ? "==id not " : "==i not "); break;
-      case Parse_Bool::GT:  pel << (expr->id_ ? ">id " : ">i "); break;
-      case Parse_Bool::LT:  pel << (expr->id_ ? "<id " : "<i "); break;
-      case Parse_Bool::LTE: pel << (expr->id_ ? "<=id " : "<=i "); break;
-      case Parse_Bool::GTE: pel << (expr->id_ ? ">=id " : ">=i "); break;
-      default: return "ERROR";
-      }
-      }*/
-
   return pel;
 }
 
