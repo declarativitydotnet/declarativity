@@ -42,7 +42,7 @@ def process_node(file, shash, mhash, rhash):
     match_lookup_result = re.compile(r"""^.*Print\[PrintWatchReceiveBeforeDemux.*,\s*
                                  ([0-9]+),\s*                                  # seconds
                                  ([0-9]+)\]\:\s*                               # nanoseconds
-                                 \[\<lookupRes,\s*                             # token
+                                 \[\<lookupResults,\s*                             # token
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
                                  ([a-f0-9]+),\s*                               # key 
                                  ([a-f0-9]+),\s*                               # key 
