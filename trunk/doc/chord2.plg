@@ -28,13 +28,13 @@ materialize(nextFingerFix, infinity, 1, keys(1)).
 
 /** Lookups */
 
-watch(lookupRes).
+watch(lookupResults).
 watch(lookup).
 watch(bestLookupDist).
 watch(finger).
 
 
-L1 lookupRes@R(R,K,S,SI,E) :- node@NI(NI,N),
+L1 lookupResults@R(R,K,S,SI,E) :- node@NI(NI,N),
 			      lookup@NI(NI,K,R,E), 
 			      bestSucc@NI(NI,S,SI),
 			      K in (N,S].
@@ -57,10 +57,11 @@ L3 lookup@BI(min<BI>,K,R,E) :- node@NI(NI,N),
 
 /** Neighbor Selection */
 
-watch(succEvent).
 watch(bestSucc).
 
-/*watch(succDist).
+/*
+watch(succEvent).
+watch(succDist).
 watch(bestSuccDist).*/
 
 N0 succEvent@NI(NI,S,SI) :- succ@NI(NI,S,SI).
@@ -123,7 +124,7 @@ F4 lookup@NI(NI,K,NI,E) :- fFixEvent@NI(NI,E,I),
 			K:=1I << I + N.
 
 F5 eagerFinger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I), 
-			     lookupRes@NI(NI,K,B,BI,E).
+			     lookupResults@NI(NI,K,B,BI,E).
 
 F6 finger@NI(NI,I,B,BI) :- eagerFinger@NI(NI,I,B,BI).
 
@@ -150,10 +151,11 @@ F9 nextFingerFix@NI(NI,I) :- node@NI(NI,N),
 
 watch(joinEvent).
 watch(join).
+watch(startJoin).
 
 C0 joinEvent@NI(NI,E) :- join@NI(NI,E).
 
-C1 joinReq@LI(LI,N,NI,E) :- joinEvent@NI(NI,E),
+C1 startJoin@LI(LI,N,NI,E) :- joinEvent@NI(NI,E),
 			 node@NI(NI,N), 
 			 landmark@NI(NI,LI),
 			 LI != "-".
@@ -163,10 +165,10 @@ C2 succ@NI(NI,N,NI) :- landmark@NI(NI,LI),
 		       node@NI(NI,N), 
 		       LI == "-".
 
-C3 lookup@LI(LI,N,NI,E) :- joinReq@LI(LI,N,NI,E).
+C3 lookup@LI(LI,N,NI,E) :- startJoin@LI(LI,N,NI,E).
 
 C4 succ@NI(NI,S,SI) :- join@NI(NI,E),
-		    lookupRes@NI(NI,K,S,SI,E).
+		    lookupResults@NI(NI,K,S,SI,E).
 
 
 /** Stabilization */
@@ -174,38 +176,41 @@ C4 succ@NI(NI,S,SI) :- join@NI(NI,E),
 watch(stabilize).
 watch(succ).
 watch(pred).
-watch(stabilizeReq).
-watch(sendPred).
-watch(sendSucc).
-watch(notifyPred).
+watch(stabilizeRequest).
+watch(sendPredecessor).
+watch(sendSuccessors).
+watch(notifyPredecessor).
+watch(returnSuccessor).
 
 
 SB1 stabilize@NI(NI,E) :- periodic@NI(NI,E,5).
 
-SB2 stabilizeReq@SI(SI,NI,E) :- stabilize@NI(NI,E),
+SB2 stabilizeRequest@SI(SI,NI,E) :- stabilize@NI(NI,E),
 				bestSucc@NI(NI,S,SI).
 
-SB3 sendPred@PI1(PI1,P,PI,E) :- stabilizeReq@NI(NI,PI1,E),
+SB3 sendPredecessor@PI1(PI1,P,PI,E) :- stabilizeRequest@NI(NI,PI1,E),
 				pred@NI(NI,P,PI), 
 				PI != "-".
 
 SB4 succ@NI(NI,P,PI) :- node(NI,N),
-			sendPred@NI(NI,P,PI,E),
+		     	sendPredecessor@NI(NI,P,PI,E),
 			bestSucc@NI(NI,S,SI), 
 			P in (N,S).
 
-SB5 sendSucc@SI(SI,NI) :- stabilize@NI(NI,E),
+SB5 sendSuccessors@SI(SI,NI) :- stabilize@NI(NI,E),
 			  succ@NI(NI,S,SI).
 
-SB6 succ@PI(PI,S,SI) :- sendSucc@NI(NI,PI),
-			succ@NI(NI,S,SI).
+SB6 returnSuccessor@PI(PI,S,SI) :- sendSuccessors@NI(NI,PI),
+				   succ@NI(NI,S,SI).
 
-SB7 notifyPred@SI(SI,N,NI) :- stabilize@NI(NI,E),
+SB7 succ@NI(NI,S,SI) :- returnSuccessor@NI(NI,S,SI).
+
+SB7 notifyPredecessor@SI(SI,N,NI) :- stabilize@NI(NI,E),
 			      node@NI(NI,N), 
 			      succ@NI(NI,S,SI).
 
 SB8 pred@NI(NI,P,PI) :- node@NI(NI,N),
-			notifyPred@NI(NI,P,PI), 
+			notifyPredecessor@NI(NI,P,PI), 
 			pred@NI(NI,P1,PI1),
 			((PI1 == "-") || (P in (P1,N))).
 
