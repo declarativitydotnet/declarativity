@@ -109,7 +109,7 @@ watch(eagerFinger).
 watch(eagerFinger1).
 watch(nextFingerFix).
 
-F0 fFixPeriodic@NI(NI) :- periodic@NI(NI,E,10).
+F0 fFixPeriodic@NI(NI) :- periodic@NI(NI,E,5).
 
 F1 fFix@NI(NI,E,I) :- fFixPeriodic@NI(NI), 
 		   nextFingerFix@NI(NI,I), 
@@ -126,16 +126,6 @@ F5 eagerFinger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I),
 			     lookupRes@NI(NI,K,B,BI,E).
 
 F6 finger@NI(NI,I,B,BI) :- eagerFinger@NI(NI,I,B,BI).
-
-
-/*F7 eagerFinger@NI(NI,I,B,BI) :- node@NI(NI,N), 
-			     fFix@NI(NI,E,I),
-			     lookupRes@NI(NI,K,B,BI,E),
-			     range(I1,0,159),
-			     I1 <= I,
-			     K:=1I << I1 + N, 
-			     K in (N,B), 
-			     BI != NI.*/
 
 
 F7 eagerFinger@NI(NI,I,B,BI) :- node@NI(NI,N), 
@@ -155,21 +145,6 @@ F9 nextFingerFix@NI(NI,I) :- node@NI(NI,N),
 			   K in (B,N), 
 			   NI != BI.
 
-/*
-F1 fFix@NI(NI,E,I) :- fFixPeriodic@NI(NI), 
-		      range(I,0,159), 
-		      f_coinFlip(0.01) == 1,
-		      E:=f_rand().
-
-F2 fFixEvent@NI(NI,E,I) :- fFix@NI(NI,E,I).
-
-F3 lookup@NI(NI,K,NI,E) :- fFixEvent@NI(NI,E,I),
-			node(NI,N), 
-			K:=1 <<id I +id N.
-
-F4 finger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I),
-			lookupRes@NI(NI,K,B,BI,E).
-*/
 
 /** Churn Handling */
 
