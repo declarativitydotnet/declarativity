@@ -23,12 +23,19 @@
 #include "val_time.h"
 #include "val_id.h"
 
-/*
+/**
+ * The initialization of the operator table for operator functions. The entries are 
+ * filled in based on the base type of the corresponding operands. The TypeName of 
+ * the operands are used to index this table. Each entry for each possible combination
+ * of operand types holds the location of the BASE type operator function. The base type
+ * operator function is a public static member variable defined as oper_ in each P2 
+ * concrete type.  
+ *
+ * CHEAT SHEET: type of each column entry.
  * NULLV,  STR,    INT32,  UINT32, INT64,
  * UINT64, DOUBLE, OPAQUE, TUPLE,  TIME,
  * ID
  */
-
 const Oper** Oper::oper_table_[Value::TYPES][Value::TYPES] = {
 /* NULLV */
 {&Val_Null::oper_,   &Val_Null::oper_,   &Val_Int32::oper_, &Val_UInt32::oper_, &Val_Int64::oper_, 

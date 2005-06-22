@@ -17,6 +17,11 @@
 
 #include "value.h"
 
+/**
+ * MACROS for throwing operator not supported exceptions. 
+ * An operator is not supported if the types of the operands
+ * do not override the operator. 
+ */
 #define NOSUP1(o, t1) \
 throw New Exception("Oper("<<str(o)<<") not supported for types "<<str(t1))
 
@@ -30,8 +35,22 @@ throw New Exception("Oper("<<str(o)<<") not supported for types " \
 
 class Oper {
 public:
+  /**
+   * Operator Type Table
+   * This is an NxN matrix of operator functions. Most operators
+   * take operate on two operands. The types of those operators are
+   * used to index this table, which will hold the operator function
+   * of the base type of the operands. The initialization of this table
+   * occurs in oper.C, but this be changed to support a different type 
+   * conversion lattice.
+   * See also value.h for defining new P2 concrete types and how such
+   * new types affect the operator table definition.
+   */
   const static Oper** oper_table_[Value::TYPES][Value::TYPES];
 
+  /**
+   * Thrown when operand types do not override an operator function.
+   */ 
   class Exception {
   public:
     Exception(str d) : desc_(d) {};
@@ -42,6 +61,15 @@ public:
       str desc_;
   };
 
+  /**
+   * OPERATOR FUNCTIONS
+   * An operator function is where the functionality of the operator
+   * exists. The default operator functions listed below will throw
+   * an exception, meaning that the operator is not supported for that
+   * type. Each P2 concreate type will define a subclass of Oper and
+   * override those operator functions that have definitions for the
+   * respective type.
+   */
   virtual ValuePtr _bnot (const ValueRef& v) const
     { NOSUP1("~", v->typeName()); return false; };
   virtual ValuePtr _band (const ValueRef& v1, const ValueRef& v2) const
@@ -100,6 +128,12 @@ public:
   };
 };
  
+/**
+ * C++ Operator functions
+ * The job of these functions is to simply lookup the base
+ * type of the type operands and call the operator function 
+ * (defined by the subclass of Oper) defined by the base type. 
+ */
 ValueRef operator<<(const ValueRef& v1, const ValueRef& v2);
 ValueRef operator>>(const ValueRef& v1, const ValueRef& v2); 
 ValueRef operator+ (const ValueRef& v1, const ValueRef& v2); 
@@ -124,6 +158,12 @@ bool     inOC(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3);
 bool     inCO(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3);
 bool     inCC(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3);
 
+/**
+ * Basic Operator Function Template for comparison based operators.
+ * Most of the concrete P2 types define a compareTo method. The
+ * OperCompare template will override the comparison operators (==, !=, etc.)
+ * of Oper by implementing the respective operator using the compareTo logic.
+ */
 template <class T> class OperCompare : public Oper { 
 public: 
   virtual bool _eq (const ValueRef& v1, const ValueRef& v2) const {
@@ -198,6 +238,12 @@ public:
   }
 };
 
+/**
+ * Basic Operator Function Template.
+ * This template provides basic functionality for ALL operator functions
+ * defined in Oper. Only the most basic concrete types will be able to
+ * make use of this template (e.g., Int32, UInt32, Int64, UInt64, Double).
+ */
 template <class T> class OperImpl : public OperCompare<T> { 
 public: 
 #ifndef DOUBLE_HACK
