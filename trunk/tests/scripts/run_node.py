@@ -14,7 +14,7 @@ import threading
 
 def print_usage():
     print
-    print "Usage: run_node -i <IP> -p <start_port> [-l <landmark_ip:port> [-n <num_nodes>]] [-s <seed>] [-t <session_time>] chord_exec output_dir"
+    print "Usage: run_node -i <IP> -p <start_port> [-l <landmark_ip:port> [-n <num_nodes>]] [-s <seed>] [-t <session_time>] main_dir output_dir"
     print "DESC:  Start some number of chord nodes on an emulab host."
     print "DESC:  If arg seed is not given then a random seed in [0, 2^32-1] is supplied ."
     print "DESC:  If a landmark node is not supplied then it is assumed to be the master."
@@ -38,17 +38,18 @@ def parse_cmdline(argv):
     return flags, args
 
 # e.g., runChord <loggingLevel> <seed> <myipaddr:port> [<landmark_ipaddr:port>]\n";
-def run_node(chord_exec, seed, ip, p, lm, out):
+def run_node(main_dir, seed, ip, p, lm, out):
     output = open(out, 'a')
     print >> output, "NODEIP = %s:%s"               % (ip, p)
     print >> output, "LANDMARK = %s"                % (lm)
     print >> output, "SIMULATION TIME = %f seconds" % (time.time() - start_time)
+    print >> output, "%s/runChord %s/chord2.plg NONE %d %s:%s 10 %s >> %s 2>&1" % (main_dir, main_dir, seed, ip, p, lm, out) 
     output.close()
 
     pid = os.fork()
     if pid == 0:
-        if lm: rv = os.system(r"%s 0 NONE %d %s:%s 10 %s >> %s 2>&1" % (chord_exec, seed, ip, p, lm, out))
-        else:  rv = os.system(r"%s 0 NONE %d %s:%s 0 >> %s 2>&1" % (chord_exec, seed, ip, p, out))
+        if lm: rv = os.system(r"%s/runChord %s/chord2.plg NONE %d %s:%s 10 %s >> %s 2>&1" % (main_dir, main_dir, seed, ip, p, lm, out))
+        else:  rv = os.system(r"%s/runChord %s/chord2.plg NONE %d %s:%s 0 >> %s 2>&1" % (main_dir, main_dir, seed, ip, p, out))
         print >> log, "SYSTEM CALL EXIT"
         sys.exit(0)
     return pid
@@ -103,5 +104,5 @@ if __name__ == "__main__":
                 print >> log, "PID DONE: ", p
                 pids.remove(p)
             time.sleep(5)
-
-
+            if not flags["session"]: 
+		sys.exit(0)
