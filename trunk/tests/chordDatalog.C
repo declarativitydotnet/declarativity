@@ -39,7 +39,7 @@ bool DEBUG = false;
 bool CC = false;
 bool TEST_SUCCESSOR = false;
 bool TEST_LOOKUP = false;
-int JOIN_ATTEMPTS = 5;
+int JOIN_ATTEMPTS = 1;
 
 void killJoin()
 {
