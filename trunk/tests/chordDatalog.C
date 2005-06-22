@@ -39,7 +39,7 @@ bool DEBUG = false;
 bool CC = false;
 bool TEST_SUCCESSOR = false;
 bool TEST_LOOKUP = false;
-
+int JOIN_ATTEMPTS = 5;
 
 void killJoin()
 {
@@ -119,7 +119,8 @@ void fakeFingersSuccessors(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigG
 }
 
 
-void initializeBaseTables(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGenerator, str localAddress)
+void initializeBaseTables(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGenerator, 
+			  str localAddress, str landmarkAddress)
 {
 
  // create information on the node itself  
@@ -165,6 +166,15 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGe
   nextFingerFixTuple->freeze();
   nextFingerFixTable->insert(nextFingerFixTuple);
   warn << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";
+
+  TableRef landmarkNodeTable = routerConfigGenerator->getTableByName(localAddress, "landmark");  
+  TupleRef landmark = Tuple::mk();
+  landmark->append(Val_Str::mk("landmark"));
+  landmark->append(Val_Str::mk(localAddress));
+  landmark->append(Val_Str::mk(landmarkAddress));
+  landmark->freeze();
+  warn << "Insert landmark node " << landmark->toString() << "\n";
+  landmarkNodeTable->insert(landmark);
 }
 
 
@@ -225,7 +235,7 @@ void initiateJoinRequest(ref< Rtr_ConfGen > routerConfigGenerator, ref< Router::
   ElementSpecRef onceS =
     conf->addElement(New refcounted< TimedPullPush >(strbuf("JoinEventPush:") << localAddress,
                                                      delay, // run immediately
-                                                     1 // run once
+                                                     JOIN_ATTEMPTS // run once
                                                      ));
 
   ElementSpecRef slotS =
@@ -256,7 +266,7 @@ void startChordInDatalog(LoggerI::Level level, ref< OL_Context> ctxt, str datalo
   initiateJoinRequest(routerConfigGenerator, conf, localAddress, delay);
   routerConfigGenerator->configureRouter(udp, localAddress);
 
-  initializeBaseTables(ctxt, routerConfigGenerator, localAddress);
+  initializeBaseTables(ctxt, routerConfigGenerator, localAddress, landmarkAddress);
    
   // synthetically generate stream of successors to test replacement policies
   // at one node
@@ -265,15 +275,6 @@ void startChordInDatalog(LoggerI::Level level, ref< OL_Context> ctxt, str datalo
     sendSuccessorStream(bootstrapUdp, conf, localAddress);
   }
 
-  TableRef landmarkNodeTable = routerConfigGenerator->getTableByName(localAddress, "landmark");  
-  TupleRef landmark = Tuple::mk();
-  landmark->append(Val_Str::mk("landmark"));
-  landmark->append(Val_Str::mk(localAddress));
-  landmark->append(Val_Str::mk(landmarkAddress));
-  landmark->freeze();
-  warn << "Insert landmark node " << landmark->toString() << "\n";
-  landmarkNodeTable->insert(landmark);
-  
   RouterRef router = New refcounted< Router >(conf, level);
   if (router->initialize(router) == 0) {
     warn << "Correctly initialized network of chord lookup flows.\n";
