@@ -120,8 +120,7 @@ private:
   OL_Context::Rule* _currentRule;
   
   // Relational -> P2 elements
-  void processRule(OL_Context::Rule *r, 
-		   str nodeID);
+  void processRule(OL_Context::Rule *r, str nodeID);
   
   void genJoinElements(OL_Context::Rule* curRule, 
 		       str nodeID,
@@ -151,13 +150,6 @@ private:
  			      str nodeID,
  			      FieldNamesTracker* curNamesTracker);
     
-  /*void genSelectionElements(OL_Context::Rule* curRule, 
-			    Parse_Bool* pb,
-			    str nodeID, 
-			    FieldNamesTracker* tracker,
-			    int selectionID); 
-  */
-
   void genAllSelectionAssignmentElements(OL_Context::Rule* curRule,
 					 str nodeID,
 					 FieldNamesTracker* curNamesTracker);
