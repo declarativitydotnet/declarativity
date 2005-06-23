@@ -19,7 +19,7 @@ def parse_cmdline(argv):
     emulab = False
 
     shortopts = "l:n:w:e"
-    flags = {"num_nodes" : 0, "bw_window" : 20.0, "simple_lookup" : None}
+    flags = {"num_nodes" : 0, "bw_window" : 4.0, "simple_lookup" : None}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if   o == "-n": flags["num_nodes"]     = int(v)
@@ -144,6 +144,7 @@ def eval_lookups(shash, mhash, rhash):
     sl_fh   = open('./simple_latency.dat', 'w')
     mht_fh  = open('./maintenance_hop_time.dat', 'w')
     ml_fh   = open('./maintenance_latency.dat', 'w')
+    sim_start    = float(sys.maxint)
     successful   = 0
     unsuccessful = 0
     start_sec    = 0 
@@ -169,6 +170,7 @@ def eval_lookups(shash, mhash, rhash):
        hops = len(mlookup) - 1    # THE hop count
        
        if hops: hop_time.append([start_sec, start_ns, hops])
+       if ts2sec(start_sec, start_ns) < sim_start: sim_start = ts2sec(start_sec, start_ns)
 
        r_sec = rhash[event][0]
        r_ns  = rhash[event][1]
@@ -182,7 +184,7 @@ def eval_lookups(shash, mhash, rhash):
 
     hop_time.sort()
     for x in hop_time: 
-        print >> mht_fh, "%s %s %s" % (x[0], x[1], x[2]) 
+        print >> mht_fh, "%s %s" % ((ts2sec(x[0], x[1])-sim_start), x[2]) 
     mht_fh.close()
     ml_fh.close()
 
@@ -208,6 +210,7 @@ def eval_lookups(shash, mhash, rhash):
        hops = hops = len(slookup) - 1    # THE hop count
        
        if hops: hop_time.append([start_sec, start_ns, hops])
+       if ts2sec(start_sec, start_ns) < sim_start: sim_start = ts2sec(start_sec, start_ns)
 
        r_sec = rhash[event][0]
        r_ns  = rhash[event][1]
@@ -216,12 +219,13 @@ def eval_lookups(shash, mhash, rhash):
     if latency:
         latency.sort()
         for lat in latency: print >> sl_fh, "%f %d" % (float(lat[0]), int(lat[1]))
+
     print "Successful simple lookup count: ", successful
     print "Unsuccessful simple lookup count: ", unsuccessful
 
     hop_time.sort()
     for x in hop_time: 
-        print >> sht_fh, "%s %s %s" % (x[0], x[1], x[2]) 
+        print >> sht_fh, "%s %s %s" % ((ts2sec(x[0], x[1])-sim_start), x[2]) 
     sht_fh.close()
     sl_fh.close()
 
@@ -246,17 +250,17 @@ if __name__ == "__main__":
         print_usage()        
         sys.exit(3)
 
-    # files = filter(lambda files: files[-4:] == '.log', os.listdir(args[0]) )
-
-    for files in os.walk(args[0]):
-        if emulab:
-	    for host in dirs:
-                for n in range(flags["num_nodes"]): 
-                    files += [os.path.join(root, host, "chord_node%d.out" % (n))]
-                    if int(host) == 0: break
-        else: 
-            for f in datfiles: 
-                files += [os.path.join(root, f)]
+    files = []
+    if emulab:
+        for node in os.listdir(args[0]):
+	    node = args[0] + node
+            logs = filter(lambda files: files[-4:] == '.out', os.listdir(node) )
+            for l in logs:
+                files += [("%s/%s" % (node, l))]
+    else:
+        logs = filter(lambda files: files[-4:] == '.out', os.listdir(args[0]) )
+        for l in logs: files += [("%s%s" % (args[0], l))]
+            
 
     mhash = {}
     shash = {}
@@ -279,7 +283,7 @@ if __name__ == "__main__":
 
         avg, min, max = process_node(fh, shash, mhash, rhash)
 	if avg != 0:
-            print >> node_bw, "%d %f %f %f" % (nodeid, float(min_bw), float(avg_bw), float(max_bw))
+            print >> node_bw, "%d %f %f %f" % (nodeid, float(avg), float(min), float(max))
             if max_bw < max_bw: max_max_bw = max_bw
             if min_bw > min_bw: min_min_bw = min_bw
             avg_bw += avg
@@ -291,7 +295,5 @@ if __name__ == "__main__":
     else: avg_bw = -1
     print >> node_bw, "#%d %f %f %f" % (avg_counter, float(avg_bw), float(min_bw), float(max_bw))
     node_bw.close()
-
-    print "SANITY CHECK: counted %d distinct result tuples." % (len(rhash.keys()))
 
     eval_lookups(shash, mhash, rhash)
