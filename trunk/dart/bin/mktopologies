@@ -13,11 +13,11 @@
 import getopt
 import os
 import sys
-sys.path.append("/home-local/tcondie/workspace/phi/phi/dart/lib/python2.2") # NOTE: changeme!
+sys.path.append(os.environ['DART_DIR'] + "/lib/python2.2") # NOTE: changeme!
 import dart
 from topology import *
 
-MKNS2_CMD = "/home-local/tcondie/workspace/phi/phi/dart/bin/mkns2" # NOTE: changeme!
+MKNS2_CMD = os.environ['DART_DIR'] + "/bin/mkns2" # NOTE: changeme!
 
 def print_usage():
     print "Usage: mktopologies [-o outdir] topologies.xml"

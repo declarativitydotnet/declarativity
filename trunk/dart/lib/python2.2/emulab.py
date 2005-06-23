@@ -22,16 +22,17 @@ class Emulab(RemoteHost):
         except: pass
         basensfile = os.path.basename(self.nsfile)
         self.xfer_to(self.nsfile, basensfile)
-	#self.rexec("batchexp -w -i -p %s -e %s %s" % \
-        #           (self.pid, self.eid, basensfile))
-        self.rexec("batchexp -w -p %s -e %s %s" % \
+	# Immediate mode
+	self.rexec("batchexp -w -i -p %s -e %s %s" % \
                    (self.pid, self.eid, basensfile))
+	# Batch mode
+        #self.rexec("batchexp -w -p %s -e %s %s" % \
+        #           (self.pid, self.eid, basensfile))
         self.rexec("sshxmlrpc_client.py waitforactive proj=%s exp=%s" % \
                    (self.pid, self.eid))
         
     def rmexp(self):
-        pass
-# self.rexec("endexp -w %s %s" % (self.pid, self.eid))
+	self.rexec("endexp -w %s %s" % (self.pid, self.eid))
 
     def setup(self):
         tb = TBReport(self.pid, self.eid, self.nsfile)

@@ -249,7 +249,6 @@ class Dart:
         self.master = None
 
     def map_vnns(self, vnns, type):
-        print "FOO: ", vnns, type
         assert(type == EXTERNAL_IPS or type == INTERNAL_IPS)
         if type == EXTERNAL_IPS:
             allips = self.eips

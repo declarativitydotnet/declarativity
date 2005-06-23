@@ -18,7 +18,7 @@
 import getopt
 import os
 import sys
-sys.path.append("/home-local/tcondie/workspace/phi/phi/dart/lib/python2.2") # NOTE: changeme!
+sys.path.append(os.environ['DART_DIR'] + "/lib/python2.2") # NOTE: changeme!
 import dart
 from topology import *
 

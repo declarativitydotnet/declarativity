@@ -13,7 +13,7 @@ import os
 import sys
 import time
 
-sys.path.append("/home-local/tcondie/workspace/phi/phi/dart/lib/python2.2") # NOTE: changeme!
+sys.path.append(ol.environ['DART_DIR'] + "/lib/python2.2") # NOTE: changeme!
 
 from dart import Dart
 
