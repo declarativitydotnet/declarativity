@@ -22,8 +22,8 @@ materialize(pred, infinity, 100, keys(1)).
 materialize(succCount, infinity, 1, keys(1)).
 materialize(join, infinity, 1, keys(1)).
 materialize(landmark, infinity, 1, keys(1)).
-materialize(pingNode, infinity, infinity, keys(1)).  
-materialize(fFix, 5, infinity, keys(2)).  
+/*materialize(pingNode, infinity, infinity, keys(1)).  
+materialize(fFix, 5, infinity, keys(2)).  */
 materialize(nextFingerFix, infinity, 1, keys(1)).  
 
 /** Lookups */
@@ -107,23 +107,25 @@ watch(fFixEvent).
 watch(fFix).
 watch(fFixPeriodic).
 watch(eagerFinger).
-watch(eagerFinger1).
 watch(nextFingerFix).
 
 F0 fFixPeriodic@NI(NI) :- periodic@NI(NI,E,10).
 
-F1 fFix@NI(NI,E,I) :- fFixPeriodic@NI(NI), 
+F1 fFixEvent@NI(NI,E,I) :- fFixPeriodic@NI(NI), 
 		   nextFingerFix@NI(NI,I), 
 		   E:=f_rand().
 
 
-F3 fFixEvent@NI(NI,E,I) :- fFix@NI(NI,E,I).
+/*F3 fFixEvent@NI(NI,E,I) :- fFix@NI(NI,E,I).*/
 
 F4 lookup@NI(NI,K,NI,E) :- fFixEvent@NI(NI,E,I),
 			node(NI,N), 
 			K:=1I << I + N.
 
-F5 eagerFinger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I), 
+/*F5 eagerFinger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I), 
+			     lookupResults@NI(NI,K,B,BI,E).*/
+
+F5 eagerFinger@NI(NI,I,B,BI) :- nextFingerFix@NI(NI,I), 
 			     lookupResults@NI(NI,K,B,BI,E).
 
 F6 finger@NI(NI,I,B,BI) :- eagerFinger@NI(NI,I,B,BI).
