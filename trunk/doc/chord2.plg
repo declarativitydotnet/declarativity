@@ -110,7 +110,7 @@ watch(eagerFinger).
 watch(eagerFinger1).
 watch(nextFingerFix).
 
-F0 fFixPeriodic@NI(NI) :- periodic@NI(NI,E,5).
+F0 fFixPeriodic@NI(NI) :- periodic@NI(NI,E,10).
 
 F1 fFix@NI(NI,E,I) :- fFixPeriodic@NI(NI), 
 		   nextFingerFix@NI(NI,I), 
