@@ -62,7 +62,7 @@ struct LookupGenerator : public FunctorSource::Generator
 
     tuple->append(Val_ID::mk(key));
     tuple->append(Val_Str::mk(dest_));		// WHere the answer is returned
-    tuple->append(Val_UInt32::mk(event_)); 	// the event ID
+    tuple->append(Val_Str::mk(strbuf() << "test:" << event_)); 	// the event ID
     tuple->freeze();
     return tuple;
   }

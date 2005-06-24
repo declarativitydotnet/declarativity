@@ -184,7 +184,9 @@ def eval_lookups(shash, mhash, rhash):
 
     hop_time.sort()
     for x in hop_time: 
-        print >> mht_fh, "%s %s" % ((ts2sec(x[0], x[1])-sim_start), x[2]) 
+        try:
+            print >> mht_fh, "%s %s" % ((ts2sec(x[0], x[1])-sim_start), x[2]) 
+        except: pass
     mht_fh.close()
     ml_fh.close()
 
@@ -225,7 +227,9 @@ def eval_lookups(shash, mhash, rhash):
 
     hop_time.sort()
     for x in hop_time: 
-        print >> sht_fh, "%s %s %s" % ((ts2sec(x[0], x[1])-sim_start), x[2]) 
+	try:
+       	    print >> sht_fh, "%s %s %s" % ((ts2sec(x[0], x[1])-sim_start), x[2]) 
+	except: pass
     sht_fh.close()
     sl_fh.close()
 

@@ -18,7 +18,7 @@ def print_usage():
     print
 
 def parse_cmdline(argv): 
-    global output
+    global log
     shortopts = "v:p:s:t:"
     flags = {"seed" : random.random()*sys.maxint, "vantages" : 1, "port" : 0, "sleep_time" : 1}
     opts, args = getopt.getopt(argv[1:], shortopts)
@@ -29,15 +29,15 @@ def parse_cmdline(argv):
         elif o == "-n": flags["num_lookups"] = int(v)
         elif o == "-t": flags["sleep_time"]  = int(v)
     if args[1]: 
-        output = open(args[1]+"/lookups.log", 'w')
-        output.close()
+        log = open(args[1]+"/lookups.log", 'w')
     return flags, args
 
 def run_lookup(lookup_exec, seed, node, out):
     try:
-        rv = os.system(r"%s NONE %d simpleLookup:%d %s %s >> %s 2>&1" \
+        rv = os.system(r"%s NONE %d %d %s %s >> %s 2>&1" \
                         % (lookup_exec, seed, random.random()*sys.maxint, node, node, out))
-    except: pass
+    except: 
+        print >> log, "EXCEPTION RUN LOOKUP: %s\n" % str(sys.exc_info()[:2])
 
 if __name__ == "__main__":
     try:
@@ -64,6 +64,7 @@ if __name__ == "__main__":
                 else: run_lookup(args[0], seed, "%s:%s" % (ips[v], port), args[1]+"/lookups.log")
             seed += 1
             time.sleep(sleep_time)
-        except: pass
+        except:
+       	    print >> log, "EXCEPTION WHILE LOOP: %s\n" % str(sys.exc_info()[:2])
 
 
