@@ -106,7 +106,8 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
     
     // generate the elements for the output
   if (r->deleteFlag == true) {
-    debugRule(r, str(strbuf() << "Delete " << r->head->fn->name << " for rule \n"));
+    debugRule(r, str(strbuf() << "Delete " 
+		     << r->head->fn->name << " for rule \n"));
     // And send it for deletion. Assume deletion happens here. 
     // It may happen on another node in practice. FIXME in future.
     TableRef tableToDelete = getTableByName(nodeID, r->head->fn->name);
@@ -120,9 +121,10 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
     hookUp(pullPush, 0);
     
     ElementSpecRef deleteElement =
-      _conf->addElement(New refcounted< Delete >(strbuf("Delete:") << r->ruleID << nodeID,
+      _conf->addElement(New refcounted< Delete >(strbuf("Delete:") 
+						 << r->ruleID << nodeID,
 						 tableToDelete, 
-						 ti->primaryKeys.at(0), 						   
+						 ti->primaryKeys.at(0), 
 						 ti->primaryKeys.at(0)));    
     // chain up
     hookUp(deleteElement, 0);
@@ -133,20 +135,26 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
     return; // discard. deleted tuples not sent anywhere
   } else {    
     if (agg_el) { 
-      ElementSpecRef aggWrapSlot = _conf->addElement(New refcounted<Slot>("aggWrapSlot"));      
+      ElementSpecRef aggWrapSlot 
+	= _conf->addElement(New refcounted<Slot>("aggWrapSlot"));      
       ElementSpecRef agg_spec = _conf->addElement(agg_el);
-      hookUp(agg_spec, 1); // hook up the internal output to most recent element 
-      hookUp(agg_spec, 1, _pendingReceiverSpec, 0); // hookup the internal input
+      // hook up the internal output to most recent element 
+      hookUp(agg_spec, 1); 
+      // hookup the internal input
+      hookUp(agg_spec, 1, _pendingReceiverSpec, 0); 
       hookUp(agg_spec, 0, aggWrapSlot, 0);
-      _pendingReceiverSpec = agg_spec; // hook the agg_spect to the front later by receivers
-      _currentElementChain.push_back(aggWrapSlot); // for hooking up with senders later
+      // hook the agg_spect to the front later by receivers
+      _pendingReceiverSpec = agg_spec; 
+      // for hooking up with senders later
+      _currentElementChain.push_back(aggWrapSlot); 
     } 
      
 
     // at the receiver side, generate a dummy receive  
     str headTableName = r->head->fn->name;
     registerReceiverTable(r, headTableName);
-    ElementSpecRef sinkS = _conf->addElement(New refcounted< Discard >("discard"));    
+    ElementSpecRef sinkS = 
+      _conf->addElement(New refcounted< Discard >("discard"));    
     registerReceiver(headTableName, sinkS);
   }
 
