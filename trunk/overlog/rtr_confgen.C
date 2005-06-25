@@ -60,9 +60,7 @@ void Rtr_ConfGen::clear()
 void Rtr_ConfGen::processRule(OL_Context::Rule *r, 
 			      str nodeID)
 {
-  std::cout << "Process rule " << r->toString() << "\n";
-  // first, get a list of possible unifications needed
-  
+  debugRule(r, str(strbuf() << "Process rule " << r->toString() << "\n"));  
   std::vector<JoinKey> joinKeys;
   FieldNamesTracker curNamesTracker;
   ptr<Aggwrap> agg_el = NULL;
@@ -105,12 +103,9 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
     genProjectHeadElements(r, nodeID, &curNamesTracker);
   }
     
-    // generate the elements for the output
   if (r->deleteFlag == true) {
     debugRule(r, str(strbuf() << "Delete " 
 		     << r->head->fn->name << " for rule \n"));
-    // And send it for deletion. Assume deletion happens here. 
-    // It may happen on another node in practice. FIXME in future.
     TableRef tableToDelete = getTableByName(nodeID, r->head->fn->name);
     OL_Context::TableInfo* ti 
       = _ctxt->getTableInfos()->find(r->head->fn->name)->second;
@@ -128,7 +123,6 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
 						 tableToDelete, 
 						 ti->primaryKeys.at(0), 
 						 ti->primaryKeys.at(0)));    
-    // chain up
     hookUp(deleteElement, 0);
     
     if (_pendingReceiverSpec) {
@@ -229,7 +223,7 @@ Rtr_ConfGen::genReceiveElements(ref< Udp> udp,
        _iterator != _udpReceivers.end(); 
        _iterator++) {
     ReceiverInfo ri = _iterator->second;
-    int numElementsToReceive = ri._receivers.size(); // figure out the number of receivers
+    int numElementsToReceive = ri._receivers.size(); 
     str tableName = ri._name;
 
     std::cout << "Generate Receive: Demuxing " << tableName << " for " 
@@ -306,13 +300,15 @@ Rtr_ConfGen::genReceiveElements(ref< Udp> udp,
 }
 
 
-void Rtr_ConfGen::registerUDPPushSenders(ElementSpecRef elementSpecRef)
+void 
+Rtr_ConfGen::registerUDPPushSenders(ElementSpecRef elementSpecRef)
 {
   _udpPushSenders.push_back(elementSpecRef);
 }
 
 
-ElementSpecRef Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
+ElementSpecRef 
+Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
 {
   ElementSpecRef udpSend = _conf->addElement(udp->get_tx());  
 
@@ -378,7 +374,8 @@ ElementSpecRef Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
 // for a particular table name that we are receiving, 
 // register an elementSpec that needs that data
 void 
-Rtr_ConfGen::registerReceiver(str tableName, ElementSpecRef elementSpecRef)
+Rtr_ConfGen::registerReceiver(str tableName, 
+			      ElementSpecRef elementSpecRef)
 {
   // add to the right receiver
   ReceiverInfoMap::iterator _iterator = _udpReceivers.find(tableName);
@@ -391,7 +388,8 @@ Rtr_ConfGen::registerReceiver(str tableName, ElementSpecRef elementSpecRef)
 
 // regiser a new receiver for a particular table name
 // use to later hook up the demuxer
-void Rtr_ConfGen::registerReceiverTable(OL_Context::Rule* rule, str tableName)
+void Rtr_ConfGen::registerReceiverTable(OL_Context::Rule* rule, 
+					str tableName)
 {  
   ReceiverInfoMap::iterator _iterator = _udpReceivers.find(tableName);
   if (_iterator == _udpReceivers.end()) {
@@ -871,14 +869,15 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
       tableInfo->primaryKeys.at(0) == rightJoinKey) {
     // use a unique index
     last_el =
-      _conf->addElement(New refcounted< UniqueLookup >(strbuf("UniqueLookup:") 
-						       << curRule->ruleID 
-						       << ":" << joinOrder 
-						       << ":" << nodeID, 
-						       probeTable,
-						       leftJoinKey, 
-						       rightJoinKey, 
-						       comp_cb));
+      _conf->addElement(New refcounted< 
+			UniqueLookup >(strbuf("UniqueLookup:") 
+				       << curRule->ruleID 
+				       << ":" << joinOrder 
+				       << ":" << nodeID, 
+				       probeTable,
+				       leftJoinKey, 
+				       rightJoinKey, 
+				       comp_cb));
     debugRule(curRule, str(strbuf() << "Unique lookup " << " " 
 			   << eventFunctor->fn->name << " " 
 			   << baseTableName << " " 
@@ -1107,9 +1106,10 @@ void Rtr_ConfGen::addMultTableIndex(TableRef table, int fn, str nodeID)
 
 
 
-void Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule, 
-					     str nodeID, 
-					     FieldNamesTracker* baseNamesTracker)
+void 
+Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule, 
+					str nodeID, 
+					FieldNamesTracker* baseNamesTracker)
 {
 
   Parse_Functor* baseFunctor;
