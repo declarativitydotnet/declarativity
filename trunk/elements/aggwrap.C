@@ -161,7 +161,8 @@ void Aggwrap::agg_accum(TupleRef t) {
     aggResult = t;
   }
   log(LoggerI::INFO, 0, str(strbuf() << "After Agg accumulation: " << aggResult->toString() << cr 
-			    << " " << (*t)[_aggfield]->toString() << " " << (*aggResult)[_aggfield]->toString()));
+			    << " " << (*t)[_aggfield]->toString() << " " 
+			    << (*aggResult)[_aggfield]->toString()));
 }
 
 void Aggwrap::agg_finalize() {
