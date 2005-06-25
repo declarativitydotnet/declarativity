@@ -28,7 +28,8 @@ Aggwrap::Aggwrap(str aggfn, int aggfield)
   } else if (aggfn == "count") { 
     log(LoggerI::INFO, 0, str(strbuf() << "count aggregation " << _aggfield));
   } else {
-    log(LoggerI::INFO, 0, "HELP: Don't understand agg function '" << aggfn << "'");
+    log(LoggerI::INFO, 0, "HELP: Don't understand agg function '" 
+	<< aggfn << "'");
   }
 }
 
@@ -47,7 +48,9 @@ int Aggwrap::push(int port, TupleRef t, cbv cb)
     ext_in_cb = cb;
     switch(aggState) {
     case 0:  // Waiting
-      log(LoggerI::INFO, 0, str(strbuf() << " received a tuple from outside!" << t->toString()));
+      log(LoggerI::INFO, 0, 
+	  str(strbuf() << " received a tuple from outside!" 
+	      << t->toString()));
       assert(inner_accepting);
       agg_init();
       inner_accepting = output(1)->push(t, wrap(this, &Aggwrap::int_push_cb));
@@ -60,14 +63,16 @@ int Aggwrap::push(int port, TupleRef t, cbv cb)
       log(LoggerI::INFO, 0, "FAIL: pushed when done pending");
       break;
     default:
-      log(LoggerI::INFO, 0, str(strbuf() << "FAIL: weird state " << aggState));
+      log(LoggerI::INFO, 0, str(strbuf() << "FAIL: weird state " 
+				<< aggState));
     }     
     log(LoggerI::INFO, 0, str(strbuf() << " Block downstream"));
     return 0;
   case 1:
     switch(aggState) {
     case 0:  // Waiting
-      log(LoggerI::INFO, 0, "OOPS: unexpected result tuple when in state waiting");
+      log(LoggerI::INFO, 0, 
+	  "OOPS: unexpected result tuple when in state waiting");
       break;
     case 1:
       agg_accum(t);
@@ -76,7 +81,8 @@ int Aggwrap::push(int port, TupleRef t, cbv cb)
       log(LoggerI::INFO, 0, "FAIL: pushed when done pending");
       break;
     default:
-      log(LoggerI::INFO, 0, str(strbuf() << "FAIL: weird state " << aggState));
+      log(LoggerI::INFO, 0, str(strbuf() << "FAIL: weird state " 
+				<< aggState));
     } 
     return 1;
   default:
@@ -93,7 +99,9 @@ void Aggwrap::int_push_cb()
 {
   TRC_FN;
   inner_accepting = true;
-  log(LoggerI::INFO, 0, str(strbuf() << "Callback from inner graph on successful push" << aggState));
+  log(LoggerI::INFO, 
+      0, str(strbuf() 
+	     << "Callback from inner graph on successful push" << aggState));
   if (aggState == 0 && ext_in_cb) {
     log(LoggerI::INFO, 0, str(strbuf() << "Invoke ext_in_cb"));
     ext_in_cb();
@@ -151,16 +159,19 @@ void Aggwrap::agg_accum(TupleRef t) {
 
   if ( aggResult == NULL ) {
     aggResult = t;
-    log(LoggerI::INFO, 0, str(strbuf() << "After Agg accumulation: " << aggResult->toString()));
+    log(LoggerI::INFO, 0, str(strbuf() << "After Agg accumulation: " 
+			      << aggResult->toString()));
     return;
   }
 
-  log(LoggerI::INFO, 0, str(strbuf() << "Before Agg accumulation: " << aggResult->toString()));
+  log(LoggerI::INFO, 0, str(strbuf() << "Before Agg accumulation: " 
+			    << aggResult->toString()));
   int cr = (*t)[_aggfield]->compareTo((*aggResult)[_aggfield]);
   if ((cr == -1 && _aggfn == "min") || (cr == 1 && _aggfn == "max")) {
     aggResult = t;
   }
-  log(LoggerI::INFO, 0, str(strbuf() << "After Agg accumulation: " << aggResult->toString() << cr 
+  log(LoggerI::INFO, 0, str(strbuf() << "After Agg accumulation: " 
+			    << aggResult->toString() << cr 
 			    << " " << (*t)[_aggfield]->toString() << " " 
 			    << (*aggResult)[_aggfield]->toString()));
 }
@@ -173,14 +184,16 @@ void Aggwrap::agg_finalize() {
     aggResult->freeze();
   }
   if (aggResult) {
-    log(LoggerI::INFO, 0, str(strbuf() << " finalize: Pushing tuple" << aggResult->toString()));
+    log(LoggerI::INFO, 0, 
+	str(strbuf() << " finalize: Pushing tuple" << aggResult->toString()));
     output(0)->push(aggResult, cbv_null);
   } else {
     log(LoggerI::INFO, 0, "Finalize: Alas, nothing to push");
   }
   if (ext_in_cb) {
     log(LoggerI::INFO, 0, "Invoke push callback for more tuples");
-    ext_in_cb(); // accept new tuples to be pushed in via outer regardless of any outputs
+    // accept new tuples to be pushed in via outer regardless of any outputs
+    ext_in_cb(); 
     ext_in_cb = cbv_null;
   }
   aggState = 0;
