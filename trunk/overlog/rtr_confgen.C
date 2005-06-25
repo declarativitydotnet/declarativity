@@ -160,8 +160,10 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
 
 
 
-//////////////////// Transport layer //////////////////////////////////////////
-void Rtr_ConfGen::genReceiveElements(ref< Udp> udp, str nodeID, ElementSpecRef wrapAroundDemux)
+//////////////////// Transport layer //////////////////////////////
+void 
+Rtr_ConfGen::genReceiveElements(ref< Udp> udp, 
+				str nodeID, ElementSpecRef wrapAroundDemux)
 {
 
   // network in
@@ -174,7 +176,8 @@ void Rtr_ConfGen::genReceiveElements(ref< Udp> udp, str nodeID, ElementSpecRef w
   hookUp(udpReceive, 0, unmarshalS, 0);
   hookUp(unmarshalS, 0, unBoxS, 0);
 
-  ElementSpecRef wrapAroundMux = _conf->addElement(New refcounted< Mux >(strbuf("wrapAroundSendMux:") << nodeID, 2));
+  ElementSpecRef wrapAroundMux = 
+    _conf->addElement(New refcounted< Mux >(strbuf("wrapAroundSendMux:") << nodeID, 2));
   hookUp(unBoxS, 0, wrapAroundMux, 0);
 
   // demuxer
@@ -209,14 +212,16 @@ void Rtr_ConfGen::genReceiveElements(ref< Udp> udp, str nodeID, ElementSpecRef w
     int numElementsToReceive = ri._receivers.size(); // figure out the number of receivers
     str tableName = ri._name;
 
-    std::cout << "Generate Receive: Demuxing " << tableName << " for " << numElementsToReceive << " elements\n";
+    std::cout << "Generate Receive: Demuxing " << tableName << " for " 
+	      << numElementsToReceive << " elements\n";
 
     // DupElim -> DemuxS -> Insert -> Duplicator -> Fork
     ElementSpecRef bufferQueue = 
       _conf->addElement(New refcounted< Queue >(strbuf("DemuxQueue:") << 
 						nodeID << ":" << tableName, 10000));
     ElementSpecRef pullPush = 
-      _conf->addElement(New refcounted<TimedPullPush>("DemuxQueuePullPush" << nodeID << ":" << tableName, 0));
+      _conf->addElement(New refcounted<TimedPullPush>("DemuxQueuePullPush" << nodeID 
+						      << ":" << tableName, 0));
 
     hookUp(demuxS, counter++, bufferQueue, 0);
     hookUp(bufferQueue, 0, pullPush, 0);
@@ -294,7 +299,8 @@ ElementSpecRef Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
   // check here for the wrap around
   ref< vec< ValueRef > > wrapAroundDemuxKeys = New refcounted< vec< ValueRef > >;  
   wrapAroundDemuxKeys->push_back(New refcounted< Val_Str >(str(strbuf() << nodeID)));
-  ElementSpecRef wrapAroundDemux = _conf->addElement(New refcounted< Demux >("wrapAroundSendDemux", wrapAroundDemuxKeys, 1));  
+  ElementSpecRef wrapAroundDemux 
+    = _conf->addElement(New refcounted< Demux >("wrapAroundSendDemux", wrapAroundDemuxKeys, 1));  
 
   hookUp(wrapAroundDemux, 0); // connect to the wrap around
   ElementSpecRef sendQueue = 
@@ -331,8 +337,8 @@ ElementSpecRef Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
 }
 
 
-// for a particular table name that we are receiving, register an elementSpec that needs 
-// that data
+// for a particular table name that we are receiving, 
+// register an elementSpec that needs that data
 void Rtr_ConfGen::registerReceiver(str tableName, ElementSpecRef elementSpecRef)
 {
   // add to the right receiver
@@ -351,7 +357,8 @@ void Rtr_ConfGen::registerReceiverTable(OL_Context::Rule* rule, str tableName)
   ReceiverInfoMap::iterator _iterator = _udpReceivers.find(tableName);
   if (_iterator == _udpReceivers.end()) {
     // not there, we register
-    _udpReceivers.insert(std::make_pair(tableName, ReceiverInfo(tableName, rule->head->args())));
+    _udpReceivers.insert(std::make_pair(tableName, 
+					ReceiverInfo(tableName, rule->head->args())));
   }  
   debugRule(rule, str(strbuf() << "Register table " << tableName << "\n"));
 }
@@ -574,7 +581,8 @@ str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
   return pel;
 }
 
-void Rtr_ConfGen::pelSelect(OL_Context::Rule* rule, FieldNamesTracker* names, Parse_Select *expr,
+void Rtr_ConfGen::pelSelect(OL_Context::Rule* rule, FieldNamesTracker* names, 
+			    Parse_Select *expr,
 			    str nodeID, int selectionID)
 {
   strbuf sPel = pelBool(names, expr->select) << "not ifstop ";
@@ -589,7 +597,8 @@ void Rtr_ConfGen::pelSelect(OL_Context::Rule* rule, FieldNamesTracker* names, Pa
  
   ElementSpecRef sPelTrans =
     _conf->addElement(New refcounted< PelTransform >(strbuf("Selection:") 
-						     << selectionID << ":" << nodeID, sPel));
+						     << selectionID << ":" 
+						     << nodeID, sPel));
 
   if (_pendingRegisterReceiver) {
     _pendingReceiverSpec = sPelTrans;
@@ -610,7 +619,8 @@ void Rtr_ConfGen::genAllSelectionAssignmentElements(OL_Context::Rule* curRule,
   for (unsigned int j = 0; j < curRule->terms.size(); j++) {
     Parse_Select* parse_select = dynamic_cast<Parse_Select *>(curRule->terms.at(j));
     if (parse_select != NULL) {
-      debugRule(curRule, str(strbuf() << "Selection term " << parse_select->toString() << " " << curRule->ruleID << "\n"));
+      debugRule(curRule, str(strbuf() << "Selection term " << 
+			     parse_select->toString() << " " << curRule->ruleID << "\n"));
       pelSelect(curRule, curNamesTracker, parse_select, nodeID, j); 
     }
     Parse_Assign* parse_assign = dynamic_cast<Parse_Assign *>(curRule->terms.at(j));
@@ -688,7 +698,8 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
 					 FieldNamesTracker* curNamesTracker)
 {
   Parse_Functor* pf = curRule->head;
-  // determine the projection fields, and the first address to return. Add 1 for table name     
+  // determine the projection fields, and the first address to return. 
+  // Add 1 for table name     
   std::vector<unsigned int> indices;  
   // iterate through all functor's output
   for (int k = 0; k < pf->args(); k++) {
@@ -725,7 +736,8 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
   }
 
   str pelTransformStr(pelTransformStrbuf);
-  debugRule(curRule, str(strbuf() << "Project head " << curNamesTracker->toString() << " " << pelTransformStr << "\n"));
+  debugRule(curRule, str(strbuf() << "Project head " << curNamesTracker->toString() 
+			 << " " << pelTransformStr << "\n"));
  
   // project, and make sure first field after table name has the address 
   ElementSpecRef projectHeadPelTransform =
@@ -756,8 +768,10 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 {
   // probe the right hand side
   // Here's where the join happens 
-  std::vector<int> leftJoinKeys = baseProbeNames->matchingJoinKeys(probeNames->fieldNames);
-  std::vector<int> rightJoinKeys =  probeNames->matchingJoinKeys(baseProbeNames->fieldNames);
+  std::vector<int> leftJoinKeys 
+    = baseProbeNames->matchingJoinKeys(probeNames->fieldNames);
+  std::vector<int> rightJoinKeys 
+    =  probeNames->matchingJoinKeys(baseProbeNames->fieldNames);
 
   Parse_Functor* pf = dynamic_cast<Parse_Functor*>(baseTableTerm);
   Parse_RangeFunction* pr = dynamic_cast<Parse_RangeFunction*>(baseTableTerm);    
@@ -782,17 +796,21 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 
   TableRef probeTable = getTableByName(nodeID, baseTableName);
 
-  // should we use a uniqLookup or a multlookup? Check that the rightJoinKey is the primary key
+  // should we use a uniqLookup or a multlookup? 
+  // Check that the rightJoinKey is the primary key
   OL_Context::TableInfo* tableInfo = _ctxt->getTableInfos()->find(baseTableName)->second;
-  ElementSpecRef noNull = _conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << curRule->ruleID << ":" 
-									  << joinOrder << ":" << nodeID, 1));
+  ElementSpecRef noNull 
+    = _conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") 
+						      << curRule->ruleID << ":" 
+						      << joinOrder << ":" << nodeID, 1));
 
   ElementSpecRef last_el = New refcounted<ElementSpec>(New refcounted<Slot>("dummySlotProbeElements"));
  
   if (tableInfo->primaryKeys.size() == 1 && tableInfo->primaryKeys.at(0) == rightJoinKey) {
     // use a unique index
     last_el =
-      _conf->addElement(New refcounted< UniqueLookup >(strbuf("UniqueLookup:") << curRule->ruleID << ":" << joinOrder 
+      _conf->addElement(New refcounted< UniqueLookup >(strbuf("UniqueLookup:") 
+						       << curRule->ruleID << ":" << joinOrder 
 						       << ":" << nodeID, probeTable,
 						       leftJoinKey, rightJoinKey, comp_cb));
     debugRule(curRule, str(strbuf() << "Unique lookup " << " " 
@@ -801,7 +819,8 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
     
   } else {
     last_el =
-      _conf->addElement(New refcounted< MultLookup >(strbuf("MultLookup:") << curRule->ruleID << ":" << joinOrder 
+      _conf->addElement(New refcounted< MultLookup >(strbuf("MultLookup:") << curRule->ruleID 
+						     << ":" << joinOrder 
 						     << ":" << nodeID, probeTable,
 						     leftJoinKey, rightJoinKey, comp_cb));
     
@@ -813,9 +832,11 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
   
  
   int numFieldsProbe = probeNames->fieldNames.size();
-  debugRule(curRule, str(strbuf() << "Probe before merge " << probeNames->toString() << "\n"));
+  debugRule(curRule, str(strbuf() << "Probe before merge " 
+			 << probeNames->toString() << "\n"));
   probeNames->mergeWith(baseProbeNames->fieldNames); 
-  debugRule(curRule, str(strbuf() << "Probe after merge " << probeNames->toString() << "\n"));
+  debugRule(curRule, str(strbuf() << "Probe after merge " 
+			 << probeNames->toString() << "\n"));
 
   if (_pendingRegisterReceiver) {
     // connecting to udp receiver later
@@ -828,9 +849,8 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 
   hookUp(last_el, 0, noNull, 0);
 
-  // in case there are other join keys, we have to compare them using selections since we can join only 1 field
-  // since we don't know the types, do a string compare
-  debugRule(curRule, str(strbuf() << "Number of join selections " << leftJoinKeys.size()-1 << "\n"));
+  debugRule(curRule, str(strbuf() << "Number of join selections " 
+			 << leftJoinKeys.size()-1 << "\n"));
   for (uint k = 1; k < leftJoinKeys.size(); k++) {
     int leftField = leftJoinKeys.at(k);
     int rightField = rightJoinKeys.at(k);
@@ -840,7 +860,8 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 
     debugRule(curRule, str(strbuf() << "Join selections " << str(selectionPel) << "\n"));
     ElementSpecRef joinSelections =
-      _conf->addElement(New refcounted< PelTransform >(strbuf("JoinSelections:") << curRule->ruleID << ":" 
+      _conf->addElement(New refcounted< PelTransform >(strbuf("JoinSelections:") 
+						       << curRule->ruleID << ":" 
 						       << joinOrder << ":" << k << ":" << nodeID, 
 						       str(selectionPel)));    
     hookUp(joinSelections, 0);
@@ -874,7 +895,8 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 
   str pelProjectStr(pelProject);
   ElementSpecRef transS =
-    _conf->addElement(New refcounted< PelTransform >(strbuf("JoinPelTransform:") << curRule->ruleID << ":" 
+    _conf->addElement(New refcounted< PelTransform >(strbuf("JoinPelTransform:") 
+						     << curRule->ruleID << ":" 
 						     << joinOrder << ":" << nodeID, 
 						     pelProjectStr));
 
@@ -938,7 +960,8 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Rule* curRule,
       rangeTable->add_unique_index(2);
       addMultTableIndex(rangeTable, 1, nodeID);
       _tables.insert(std::make_pair(newRangeTableName, rangeTable));            
-      debugRule(curRule, "Create Range Tables: Add unique index " << newRangeTableName << " " << low << " " << high << "\n");
+      debugRule(curRule, "Create Range Tables: Add unique index " << newRangeTableName 
+		<< " " << low << " " << high << "\n");
  
       for (int x = low; x <= high; x++) {
 	TupleRef tuple = Tuple::mk();
@@ -975,7 +998,8 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Rule* curRule,
       // Change from pull to push
       ElementSpecRef pullPush =
 	_conf->addElement(New refcounted< TimedPullPush >(strbuf("JoinPullPush:") 
-							  << curRule->ruleID << ":" << nodeID << ":" << k,
+							  << curRule->ruleID << ":" 
+							  << nodeID << ":" << k,
 							  0));
       hookUp(pullPush, 0);
     }
@@ -1005,7 +1029,8 @@ void Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
 {
 
   Parse_Functor* baseFunctor;
-  // figure first, which term is the base term. Assume there is only one for now. Support more in future.
+  // figure first, which term is the base term. 
+  // Assume there is only one for now. Support more in future.
   for (unsigned int j = 0; j < currentRule->terms.size(); j++) {    
     Parse_Functor* currentFunctor = dynamic_cast<Parse_Functor* > (currentRule->terms.at(j));    
     if (currentFunctor == NULL) { continue; }
@@ -1026,7 +1051,8 @@ void Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
     if (pv == NULL) { continue; }
     int pos = baseNamesTracker->fieldPosition(pv->toString());
     if (k != -1 && k != pf->aggregate()) {
-      debugRule(currentRule, str(strbuf() << pos << " " << currentRule->head->aggregate() << " " << 
+      debugRule(currentRule, str(strbuf() << pos << " " << 
+				 currentRule->head->aggregate() << " " << 
 				 baseNamesTracker->fieldNames.at(pos) << "\n"));
       groupByFields.push_back((uint) pos + 1);
       aggregateNamesTracker->fieldNames.push_back(baseNamesTracker->fieldNames.at(pos));
@@ -1057,7 +1083,8 @@ void Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
     af = &Table::AGG_COUNT;
   } 
 
-  debugRule(currentRule, str(strbuf() << aggregateNamesTracker->toString() << " " << baseFunctor->fn->name << 
+  debugRule(currentRule, str(strbuf() << aggregateNamesTracker->toString() << " " 
+			     << baseFunctor->fn->name << 
 			     " " << aggFieldBaseTable << " " 
 			     << pf->aggregate() << " " << aggVarname << "\n"));
   
@@ -1070,7 +1097,8 @@ void Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
 				     aggFieldBaseTable, // the agg field
 				     af);
   ElementSpecRef aggElement =
-    _conf->addElement(New refcounted< Aggregate >(strbuf("Agg:") << currentRule->ruleID << ":" << nodeID,
+    _conf->addElement(New refcounted< Aggregate >(strbuf("Agg:") 
+						  << currentRule->ruleID << ":" << nodeID,
 						  tableAgg));
    
   strbuf pelTransformStr;
@@ -1105,8 +1133,8 @@ void Rtr_ConfGen::genSingleTermElement(OL_Context::Rule* curRule,
 				       str nodeID, 
 				       FieldNamesTracker* curNamesTracker)
 {  
-  ElementSpecRef slotElement = _conf->addElement(New refcounted<Slot>("singleTermSlot:" << curRule->ruleID << ":" << nodeID));
-  // if not, form basic scanners, then connect to selections, and then to form head the last
+  ElementSpecRef slotElement 
+    = _conf->addElement(New refcounted<Slot>("singleTermSlot:" << curRule->ruleID << ":" << nodeID));
 
   std::cout << "Number of terms " << curRule->terms.size() << "\n";
   for (unsigned int j = 0; j < curRule->terms.size(); j++) {
@@ -1149,7 +1177,8 @@ void Rtr_ConfGen::genFunctorSource(OL_Context::Rule* rule, str nodeID)
   debugRule(rule, str(strbuf() << "Functor source " << pf->toString()) << " " << period << "\n");
   // The timed pusher
   ElementSpecRef pushFunctor =
-    _conf->addElement(New refcounted< TimedPullPush >(strbuf("FunctorPush:") << rule->ruleID << ":" << nodeID,
+    _conf->addElement(New refcounted< TimedPullPush >(strbuf("FunctorPush:") 
+						      << rule->ruleID << ":" << nodeID,
 						      atof(period.cstr())));
 
   hookUp(pushFunctor, 0);
@@ -1160,8 +1189,6 @@ void Rtr_ConfGen::genFunctorSource(OL_Context::Rule* rule, str nodeID)
   
 
 }
-
-
 
 
 void Rtr_ConfGen::genDupElimElement(str header)
@@ -1356,7 +1383,8 @@ Rtr_ConfGen::FieldNamesTracker::FieldNamesTracker(Parse_Term* pf)
 }
 
 
-void Rtr_ConfGen::FieldNamesTracker::initialize(Parse_Term* term)
+void 
+Rtr_ConfGen::FieldNamesTracker::initialize(Parse_Term* term)
 {
   Parse_Functor* pf = dynamic_cast<Parse_Functor* > (term);    
  
@@ -1375,7 +1403,8 @@ void Rtr_ConfGen::FieldNamesTracker::initialize(Parse_Term* term)
 }
 
 
-std::vector<int> Rtr_ConfGen::FieldNamesTracker::matchingJoinKeys(std::vector<str> otherArgNames)
+std::vector<int> 
+Rtr_ConfGen::FieldNamesTracker::matchingJoinKeys(std::vector<str> otherArgNames)
 {
   // figure out the matching on other side. Assuming that
   // there is only one matching key for now
@@ -1390,7 +1419,8 @@ std::vector<int> Rtr_ConfGen::FieldNamesTracker::matchingJoinKeys(std::vector<st
   return toRet;
 }
 
-int Rtr_ConfGen::FieldNamesTracker::fieldPosition(str var)
+int 
+Rtr_ConfGen::FieldNamesTracker::fieldPosition(str var)
 {
   for (uint k = 0; k < fieldNames.size(); k++) {
     if (fieldNames.at(k) == var) {
@@ -1400,7 +1430,8 @@ int Rtr_ConfGen::FieldNamesTracker::fieldPosition(str var)
   return -1;
 }
 
-void Rtr_ConfGen::FieldNamesTracker::mergeWith(std::vector<str> names)
+void 
+Rtr_ConfGen::FieldNamesTracker::mergeWith(std::vector<str> names)
 {
   for (uint k = 0; k < names.size(); k++) {
     str nextStr = names.at(k);
@@ -1410,7 +1441,8 @@ void Rtr_ConfGen::FieldNamesTracker::mergeWith(std::vector<str> names)
   }
 }
 
-void Rtr_ConfGen::FieldNamesTracker::mergeWith(std::vector<str> names, int numJoinKeys)
+void 
+Rtr_ConfGen::FieldNamesTracker::mergeWith(std::vector<str> names, int numJoinKeys)
 {
   int count = 0;
   for (uint k = 0; k < names.size(); k++) {

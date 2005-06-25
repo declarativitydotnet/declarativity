@@ -71,7 +71,6 @@
 #include "aggwrap.h"
 
 class Rtr_ConfGen {
-  // takes as input the udp send / receive, the router config, accept each other code or not
  private:
   class FieldNamesTracker;
   struct ReceiverInfo;
@@ -193,7 +192,9 @@ private:
   int numFunctors(OL_Context::Rule* rule);
   bool hasEventTerm(OL_Context::Rule* rule);
   bool hasPeriodicTerm(OL_Context::Rule* curRule);
-  void debugRule(OL_Context::Rule* curRule, str debugMsg) { std::cout << curRule->ruleID << ": " << debugMsg; }
+  void debugRule(OL_Context::Rule* curRule, str debugMsg) { 
+    std::cout << curRule->ruleID << ": " << debugMsg; 
+  }
 
 
   // convince placeholder to figure out the cur fields in a tuple in flight
