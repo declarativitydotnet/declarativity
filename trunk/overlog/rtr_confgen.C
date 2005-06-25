@@ -1155,8 +1155,6 @@ void Rtr_ConfGen::genSingleTermElement(OL_Context::Rule* curRule,
     registerReceiver(pf->fn->name, slotElement);
     _currentElementChain.push_back(slotElement);
 
-    // with knowledge of on which is a scan term, we can do the pel transform magic now
-    // first, figure out which field is the results. Then figureout which fields need to be sent
     curNamesTracker->initialize(pf);    
     return; 
   }
