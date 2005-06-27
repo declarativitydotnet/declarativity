@@ -11,19 +11,20 @@ import re
 
 def print_usage():
     print
-    print "Usage: pout.py [-e -n <num_nodes>] [-w <bw_window>] [-l <simple_lookup_output>] output_dir"
+    print "Usage: pout.py [-e -n <num_nodes>] [-d <duration>] [-w <bw_window>] [-l <simple_lookup_output>] output_dir"
     print
 
 def parse_cmdline(argv): 
     global emulab
     emulab = False
 
-    shortopts = "l:n:w:e"
-    flags = {"num_nodes" : 0, "bw_window" : 4.0, "simple_lookup" : None}
+    shortopts = "d:l:n:w:e"
+    flags = {"duration" : sys.maxint, "num_nodes" : 0, "bw_window" : 4.0, "simple_lookup" : None}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if   o == "-n": flags["num_nodes"]     = int(v)
         elif o == "-w": flags["bw_window"]     = int(v)
+        elif o == "-d": flags["duration"]      = int(v)
         elif o == "-l": flags["simple_lookup"] = v
         elif o == "-e": emulab = True
         else:
@@ -153,10 +154,6 @@ def eval_lookups(shash, mhash, rhash):
     hop_time     = []
 
     for event in mhash.keys():
-       if not rhash.has_key(event): 
-           unsuccessful += 1
-           continue                                          # Only care about successful lookups
-       successful += 1
        mlookup = mhash[event]
        mlookup.sort()                                         # sort([type, sec, ns, ...])
        start_sec = start_ns = -1.0 
@@ -166,6 +163,11 @@ def eval_lookups(shash, mhash, rhash):
            if start_sec < 0.0 or sec < start_sec or (sec == start_sec and ns < start_ns): 
                start_sec = sec 
                start_ns  = ns      
+       if not rhash.has_key(event): 
+           if (ts2sec(start_sec, start_ns) - sim_start <= flags["duration"]):
+               unsuccessful += 1
+           continue                                          # Only care about successful lookups
+       successful += 1
 
        hops = len(mlookup) - 1    # THE hop count
        
@@ -195,10 +197,6 @@ def eval_lookups(shash, mhash, rhash):
     latency      = []
     hop_time     = []
     for event in shash.keys():
-       if not rhash.has_key(event): 
-           unsuccessful += 1
-           continue                                          # Only care about successful lookups
-       successful += 1
        slookup = shash[event]
        slookup.sort()                                         # sort([type, sec, ns, ...])
        start_sec = start_ns = -1.0 
@@ -208,6 +206,11 @@ def eval_lookups(shash, mhash, rhash):
            if start_sec < 0.0 or sec < start_sec or (sec == start_sec and ns < start_ns): 
                start_sec = sec 
                start_ns  = ns      
+       if not rhash.has_key(event): 
+           if (ts2sec(start_sec, start_ns) - sim_start <= flags["duration"]):
+               unsuccessful += 1
+           continue                                          # Only care about successful lookups
+       successful += 1
 
        hops = hops = len(slookup) - 1    # THE hop count
        
