@@ -135,16 +135,6 @@ private:
 			int joinOrder,
 			cbv comp_cb);
 
-  str pelRange(FieldNamesTracker* names, Parse_Bool *expr);
-  str pelMath(FieldNamesTracker* names, Parse_Math *expr);
-  str pelBool(FieldNamesTracker* names, Parse_Bool *expr);
-  str pelFunction(FieldNamesTracker* names, Parse_Function *expr);
-
-  void pelSelect(OL_Context::Rule* rule, FieldNamesTracker *names, Parse_Select *expr, 
-                 str nodeID, int selectionID);
-  void pelAssign(OL_Context::Rule* rule, FieldNamesTracker *names, Parse_Assign *expr, 
-                 str nodeID, int assignID);
-
   void genProjectHeadElements(OL_Context::Rule* curRule,
  			      str nodeID,
  			      FieldNamesTracker* curNamesTracker);
@@ -153,16 +143,6 @@ private:
 					 str nodeID,
 					 FieldNamesTracker* curNamesTracker);
     
-  void genAssignmentElements(OL_Context::Rule* curRule,
-			     Parse_Assign* parse_assign, 
-			     str nodeID,
-			     FieldNamesTracker* curNamesTracker,
-			     int assignmentID);   
-  
-  void genPrintElement(str header);
-
-  void genPrintWatchElement(str header);
-
   void genDupElimElement(str header);
   
   void genSingleTermElement(OL_Context::Rule* curRule, 
@@ -173,26 +153,76 @@ private:
 				  str nodeID, 
 				  FieldNamesTracker* curNamesTracker);  
 
+
+  // Debug elements
+  void genPrintElement(str header);
+
+  void genPrintWatchElement(str header);
+
+  void genFunctorSource(OL_Context::Rule* rule, 
+			str nodeID);
  
   // Network elements
   ElementSpecRef genSendElements(ref< Udp> udp, str nodeID);
-  void genReceiveElements(ref< Udp> udp, str nodeID, ElementSpecRef wrapAroundDemux);
-  void registerReceiverTable(OL_Context::Rule* rule, str tableName);
-  void registerReceiver(str tableName, ElementSpecRef elementSpecRef);
 
-  void genFunctorSource(OL_Context::Rule* rule, str nodeID);
+  void genReceiveElements(ref< Udp> udp, 
+			  str nodeID, 
+			  ElementSpecRef wrapAroundDemux);
 
-  // Helper functions
-  str genSelectionPel(Parse_Bool* pb, FieldNamesTracker *tracker);
-  str genAssignmentPel(Parse_Assign* pb, FieldNamesTracker *tracker);
-  void hookUp(ElementSpecRef firstElement, int firstPort,
-	      ElementSpecRef secondElement, int secondPort);  
-  void hookUp(ElementSpecRef secondElement, int secondPort);  
-  void addMultTableIndex(TableRef table, int fn, str nodeID);
+  void registerReceiverTable(OL_Context::Rule* rule, 
+			     str tableName);
+
+  void registerReceiver(str tableName, 
+			ElementSpecRef elementSpecRef);
+
+
+
+  // Pel Generation functions
+  str pelRange(FieldNamesTracker* names, 
+	       Parse_Bool *expr);
+
+  str pelMath(FieldNamesTracker* names, 
+	      Parse_Math *expr);
+
+  str pelBool(FieldNamesTracker* names, 
+	      Parse_Bool *expr);
+
+  str pelFunction(FieldNamesTracker* names, 
+		  Parse_Function *expr);
+
+  void pelSelect(OL_Context::Rule* rule, 
+		 FieldNamesTracker *names, 
+		 Parse_Select *expr, 
+                 str nodeID, 
+		 int selectionID);
+
+  void pelAssign(OL_Context::Rule* rule, 
+		 FieldNamesTracker *names, 
+		 Parse_Assign *expr, 
+                 str nodeID, 
+		 int assignID);
+
+  // Other helper functions
+  void hookUp(ElementSpecRef firstElement, 
+	      int firstPort,
+	      ElementSpecRef secondElement, 
+	      int secondPort);  
+
+  void hookUp(ElementSpecRef secondElement, 
+	      int secondPort);  
+  
+  void addMultTableIndex(TableRef table, 
+			 int fn, 
+			 str nodeID);
+  
   int numFunctors(OL_Context::Rule* rule);
+
   bool hasEventTerm(OL_Context::Rule* rule);
+
   bool hasPeriodicTerm(OL_Context::Rule* curRule);
-  void debugRule(OL_Context::Rule* curRule, str debugMsg) { 
+
+  void debugRule(OL_Context::Rule* curRule, 
+		 str debugMsg) { 
     std::cout << curRule->ruleID << ": " << debugMsg; 
   }
 
