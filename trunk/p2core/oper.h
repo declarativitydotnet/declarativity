@@ -30,9 +30,12 @@
  *    (oper_table_) static member variable of class Oper is a jump table
  *    to your operator.  The dispatch simply uses the typeName of the operator
  *    formals to lookup the correct operator method in oper_table_. 
- * 4. There are a couple of template subclasses of Oper than you new operator
- *    will likely fit into. Please see the descriptions of the classes (i.e.,
- *    OperCompare, OperImpl) below for the best match. 
+ * 4. Define your new operator in one of two template classes defined below. 
+ *    Please see the descriptions of the classes (i.e., OperCompare, OperImpl) below for 
+ *    the best match. 
+ * Optional:
+ * 5. Add the PEL operator that will make use of your new operator definition.
+ * 6. Add test cases to pel.C that test your new operator under PEL.
  */
 
 #ifndef __OPER_IMPL_H__

@@ -104,6 +104,7 @@ for op, ar, va, desc in [
   ("neg",1,     "NEG",          "negation"),
   ("+",2,       "PLUS",         "addition"),
   ("-",2,       "MINUS",        "subtraction"),
+  ("--",1,      "MINUSMINUS",   "decrement by one"),
   ("*",2,       "MUL",          "multiplication"),
   ("/",2,       "DIV",          "division"),
   ("==",2,      "EQ",           "Compare equality"), 

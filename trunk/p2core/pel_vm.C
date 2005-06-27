@@ -505,6 +505,14 @@ DEF_OP(MINUS) {
     error = PE_OPER_UNSUP;
   }
 }
+DEF_OP(MINUSMINUS) {
+  ValueRef v1 = pop();
+  try {
+    stackPush(--v1);
+  } catch (Oper::Exception *e) {
+    error = PE_OPER_UNSUP;
+  }
+}
 DEF_OP(MUL) {
   try {
     stackPush((pop()*pop()));

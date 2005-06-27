@@ -34,6 +34,11 @@ class OperID : public OperCompare<Val_ID> {
     return Val_ID::mk(id2->distance(id1));
   };
 
+  virtual ValuePtr _minus (const ValueRef& v1) const {
+    IDRef id1 = Val_ID::cast(v1);
+    return Val_ID::mk(ID::ONE->distance(id1));
+  };
+
 };
 const Oper* Val_ID::oper_ = New OperID();
 
