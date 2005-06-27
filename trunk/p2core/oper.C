@@ -43,7 +43,7 @@ const Oper** Oper::oper_table_[Value::TYPES][Value::TYPES] = {
 {&Val_Null::oper_,   &Val_Null::oper_,   &Val_Int32::oper_, 
  &Val_UInt32::oper_, &Val_Int64::oper_,  &Val_UInt64::oper_, 
  &Val_Double::oper_, &Val_Null::oper_,   &Val_Null::oper_,   
- &Val_Time::oper_, &Val_Null::oper_},
+ &Val_Time::oper_,   &Val_Null::oper_},
 /* STR */
 {&Val_Null::oper_, &Val_Str::oper_,    &Val_Str::oper_,    
  &Val_Str::oper_,  &Val_Str::oper_,    &Val_Str::oper_,  
@@ -107,6 +107,9 @@ ValueRef operator+(const ValueRef& v1, const ValueRef& v2) {
 };
 ValueRef operator-(const ValueRef& v1, const ValueRef& v2) { 
  return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_minus(v1, v2);
+};
+ValueRef operator--(const ValueRef& v1) { 
+ return (*Oper::oper_table_[v1->typeCode()][v1->typeCode()])->_dec(v1);
 };
 ValueRef operator*(const ValueRef& v1, const ValueRef& v2) { 
  return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_times(v1, v2);

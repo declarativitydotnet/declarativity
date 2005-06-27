@@ -9,7 +9,30 @@
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
  * DESCRIPTION: P2's operator system for basic concrete types.
- *
+ * 
+ * So you'd like to add a new operator... Read on then.
+ * The following is a set of steps for adding a new overloaded operator.
+ * 1. Define the operator interface method in class Oper. 
+ *    1a. The method must be virtual, return a ValuePtr as the operator 
+ *        result type, and have 1-3 const ValueRef reference formals.
+ *    1b. The body of the method will contain one of the 3 NOSUP# macros
+ *        listed below. Which of the 3 depends on how many ValueRef formals
+ *        are defined by your operator. 
+ * 2. Define C++ overload operator interface method.
+ *    The C++ overload operator definition is for syntactic sugar only.
+ *    If your P2 operator does not have a corresponding C++ operator then
+ *    you may skip this step. However, you may wish to define some dispatch
+ *    method that you can call, within PEL for instance.
+ * 3. Define the body of your C++ overload operator method.
+ *    The body of this method must contain a dispatch to your operator interface
+ *    method that you defined in step 1. The exact operator implementation called
+ *    is dependent on the concrete types of the listed formals. The operator table
+ *    (oper_table_) static member variable of class Oper is a jump table
+ *    to your operator.  The dispatch simply uses the typeName of the operator
+ *    formals to lookup the correct operator method in oper_table_. 
+ * 4. There are a couple of template subclasses of Oper than you new operator
+ *    will likely fit into. Please see the descriptions of the classes (i.e.,
+ *    OperCompare, OperImpl) below for the best match. 
  */
 
 #ifndef __OPER_IMPL_H__
@@ -92,6 +115,8 @@ public:
     { NOSUP2("/", v1->typeName(), v2->typeName()); return NULL; };
   virtual ValuePtr _mod (const ValueRef& v1, const ValueRef& v2) const
     { NOSUP2("\%", v1->typeName(), v2->typeName()); return NULL; };
+  virtual ValuePtr _dec (const ValueRef& v1) const
+    { NOSUP1("--", v1->typeName()); return NULL; };
 
   virtual bool _eq (const ValueRef& v1, const ValueRef& v2) const
     { NOSUP2("==", v1->typeName(), v2->typeName()); return false; };
@@ -138,6 +163,7 @@ ValueRef operator<<(const ValueRef& v1, const ValueRef& v2);
 ValueRef operator>>(const ValueRef& v1, const ValueRef& v2); 
 ValueRef operator+ (const ValueRef& v1, const ValueRef& v2); 
 ValueRef operator- (const ValueRef& v1, const ValueRef& v2); 
+ValueRef operator--(const ValueRef& v1); 
 ValueRef operator* (const ValueRef& v1, const ValueRef& v2); 
 ValueRef operator/ (const ValueRef& v1, const ValueRef& v2); 
 ValueRef operator% (const ValueRef& v1, const ValueRef& v2); 
@@ -282,7 +308,9 @@ public:
   virtual ValuePtr _divide (const ValueRef& v1, const ValueRef& v2) const {
     return T::mk(T::cast(v1) / T::cast(v2));
   };
-
+  virtual ValuePtr _dec (const ValueRef& v1) const {
+    return T::mk((T::cast(v1)) - 1);
+  };
 };
 
 #endif /* __OPER_H_ */

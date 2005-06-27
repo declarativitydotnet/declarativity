@@ -33,6 +33,7 @@ class OperID : public OperCompare<Val_ID> {
     IDRef id2 = Val_ID::cast(v2);
     return Val_ID::mk(id2->distance(id1));
   };
+
 };
 const Oper* Val_ID::oper_ = New OperID();
 
