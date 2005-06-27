@@ -111,6 +111,9 @@ ValueRef operator-(const ValueRef& v1, const ValueRef& v2) {
 ValueRef operator--(const ValueRef& v1) { 
  return (*Oper::oper_table_[v1->typeCode()][v1->typeCode()])->_dec(v1);
 };
+ValueRef operator++(const ValueRef& v1) { 
+ return (*Oper::oper_table_[v1->typeCode()][v1->typeCode()])->_inc(v1);
+};
 ValueRef operator*(const ValueRef& v1, const ValueRef& v2) { 
  return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_times(v1, v2);
 };

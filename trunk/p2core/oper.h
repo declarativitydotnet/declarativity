@@ -120,6 +120,8 @@ public:
     { NOSUP2("\%", v1->typeName(), v2->typeName()); return NULL; };
   virtual ValuePtr _dec (const ValueRef& v1) const
     { NOSUP1("--", v1->typeName()); return NULL; };
+  virtual ValuePtr _inc (const ValueRef& v1) const
+    { NOSUP1("++", v1->typeName()); return NULL; };
 
   virtual bool _eq (const ValueRef& v1, const ValueRef& v2) const
     { NOSUP2("==", v1->typeName(), v2->typeName()); return false; };
@@ -167,6 +169,7 @@ ValueRef operator>>(const ValueRef& v1, const ValueRef& v2);
 ValueRef operator+ (const ValueRef& v1, const ValueRef& v2); 
 ValueRef operator- (const ValueRef& v1, const ValueRef& v2); 
 ValueRef operator--(const ValueRef& v1); 
+ValueRef operator++(const ValueRef& v1); 
 ValueRef operator* (const ValueRef& v1, const ValueRef& v2); 
 ValueRef operator/ (const ValueRef& v1, const ValueRef& v2); 
 ValueRef operator% (const ValueRef& v1, const ValueRef& v2); 
@@ -313,6 +316,9 @@ public:
   };
   virtual ValuePtr _dec (const ValueRef& v1) const {
     return T::mk((T::cast(v1)) - 1);
+  };
+  virtual ValuePtr _inc (const ValueRef& v1) const {
+    return T::mk((T::cast(v1)) + 1);
   };
 };
 
