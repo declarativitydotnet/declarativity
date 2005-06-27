@@ -2,9 +2,9 @@
 <topologies>
 
   <topology>  
-    <name>p2-chord-1</name>
-    <nrouters>10</nrouters>
-    <nhosts>120</nhosts>
+    <name>p2-chord-60</name>
+    <nrouters>1</nrouters>
+    <nhosts>10</nhosts>
     <ns2>P2-CHORD.ns</ns2>
   </topology>
 
