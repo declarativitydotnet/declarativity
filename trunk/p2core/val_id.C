@@ -63,18 +63,25 @@ ValueRef Val_ID::xdr_unmarshal( XDR *x )
 
 //
 // Casting
+//  no negative values allowed
 //
 IDRef Val_ID::cast(ValueRef v) {
   Value *vp = v;
   switch (v->typeCode()) {
   case Value::ID:
     return (static_cast<Val_ID *>(vp))->i;
-  case Value::INT32:
+  case Value::INT32: {
+    if (Val_UInt32::cast(v) < 0)
+      throw Value::TypeError(v->typeCode(), Value::ID );
     return ID::mk(Val_UInt32::cast(v));
+  }
+  case Value::INT64: {
+    if (Val_UInt64::cast(v) < 0)
+      throw Value::TypeError(v->typeCode(), Value::ID );
+    return ID::mk(Val_UInt64::cast(v));
+  }
   case Value::UINT32:
     return ID::mk(Val_UInt32::cast(v));
-  case Value::INT64:
-    return ID::mk(Val_UInt64::cast(v));
   case Value::UINT64:
     return ID::mk(Val_UInt64::cast(v));
   default:
