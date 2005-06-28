@@ -69,9 +69,9 @@ static const int QUEUE_LENGTH = 1000;
 #define __P2__WITH_CHURN__
 #ifdef __P2__WITH_CHURN__
 //#warning WITH CHURN
-static const int FINGERTTL = 2;
-static const int SUCCEXPIRATION = 10;
-static const int FINGEREXPIRATION = 10;
+static const int FINGERTTL = 10;
+static const int SUCCEXPIRATION = 15;
+static const int FINGEREXPIRATION = 15;
 #else
 //#warning WITHOUT CHURN
 static const int FINGERTTL = 10;
@@ -630,6 +630,72 @@ void ruleF6(str name,
   conf->hookUp(projectS, 0, slotS, 0);
   conf->hookUp(slotS, 0, pullFingerOut, pullFingerOutPort);
 }
+
+
+/** rule F6a delete<fingerLookup@NI(NI, E, I1)> :- eagerFinger@NI(NI, I,
+    B, BI), I > 0, I1 = I - 1, fingerLookup@NI(NI, E, I1).
+*/
+void ruleF6a(str name,
+             Router::ConfigurationRef conf,
+             TableRef fingerLookupTable,
+             ElementSpecRef pushEagerFingerIn,
+             int pushEagerFingerInPort)
+{
+  // Join eagerFinger with fingerLookup
+  ElementSpecRef join1S =
+    conf->addElement(New refcounted< MultLookup >(strbuf("eagerFingerIntoFingerLookup:") << name,
+                                                  fingerLookupTable,
+                                                  1, // Match eagerFinger.NI
+                                                  1 // with fingerLookup.NI
+                                                  ));
+  ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
+
+  conf->hookUp(pushEagerFingerIn, pushEagerFingerInPort, join1S, 0);
+  conf->hookUp(join1S, 0, noNullS, 0);
+
+
+  // Select I > 0, I1 = I - 1, fingerLookup.I == I1
+  // from
+  // eagerFinger(NI, I, B, BI), fingerLookup(NI, E, I1)
+  ElementSpecRef select1S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("select1:") << name,
+                                                    "$0 2 field /* eF.I */\
+                                                     0 >i /* I > 0? */\
+                                                     $0 2 field /* (I>0) I  */\
+                                                     1 -i /* (I>0) (I-1) */\
+                                                     $1 3 field /* (I>0) (I-1) fL.I */\
+                                                     ==i /* (I>0) (I-1==fL.I) */\
+                                                     and not ifstop /* selection criterion */\
+                                                     $0 pop $1 pop\
+                                                     "));
+
+  // Produce tuple with only E
+  // from 
+  // eagerFinger(NI, I, B, BI), fingerLookup(NI, E, I1)
+  ElementSpecRef makeRes1S =
+    conf->addElement(New refcounted< PelTransform >(strbuf("makeDeleteTuple:").cat(name),
+                                                    "\"deleteTuple\" pop \
+                                                     $1 2 field pop /* output fingerLookup.E */ \
+                                                     "));
+
+
+  ElementSpecRef pushRes1S =
+    conf->addElement(New refcounted< TimedPullPush >(strbuf("PushRes1:") << name,
+                                                     0));
+  // Send it for deletion
+  ElementSpecRef deleteFingerLookup =
+    conf->addElement(New refcounted< Delete >(strbuf("DeleteFingerLookup:") << name,
+                                              fingerLookupTable,
+                                              2,
+                                              1));
+
+
+  conf->hookUp(noNullS, 0, select1S, 0);
+  conf->hookUp(select1S, 0, makeRes1S, 0);
+  conf->hookUp(makeRes1S, 0, pushRes1S, 0);
+  conf->hookUp(pushRes1S, 0, deleteFingerLookup, 0);
+}
+
 
 
 /** rule F7 eagerFinger@NI(NI, I, B, BI) :- node@NI(NI, N),
@@ -1408,7 +1474,7 @@ connectRules(str name,
   conf->hookUp(qNotifyPredecessor, 0, tPPNotifyPredecessor, 0);
   conf->hookUp(tPPNotifyPredecessor, 0, dupNotifyPredecessor, 0);
 
-  ElementSpecRef dupEagerFinger = conf->addElement(New refcounted< DuplicateConservative >(strbuf("eagerFinger") << "Dup:" << name, 4));
+  ElementSpecRef dupEagerFinger = conf->addElement(New refcounted< DuplicateConservative >(strbuf("eagerFinger") << "Dup:" << name, 5));
   ElementSpecRef qEagerFinger = conf->addElement(New refcounted< Queue >("EagerFingerQueue", QUEUE_LENGTH));
   ElementSpecRef tPPEagerFinger = conf->addElement(New refcounted< TimedPullPush >(strbuf("TPP") << name, 0));
   conf->hookUp(demuxS, nextDemuxOutput++, qEagerFinger, 0);
@@ -1662,6 +1728,10 @@ connectRules(str name,
          predecessorTable,
          dupNotifyPredecessor, 0,
          roundRobin, roundRobinPortCounter++);
+  ruleF6a(strbuf(name) << ":F6a",
+          conf,
+          fingerLookupTable,
+          dupEagerFinger, 4);
 }
 
   
