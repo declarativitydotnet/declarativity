@@ -2,8 +2,8 @@
 <dart>
 
   <test>
-    <name>p2-chord-60</name>
-    <outdir>/tmp/p2-chord-60</outdir>
+    <name>p2-chord-300</name>
+    <outdir>/tmp/boon2/p2-chord-300</outdir>
   </test>
 
   <topology>
@@ -44,10 +44,10 @@
   </commonfiles>
 
   <preexecution>
-    <script>$DART_COMMON_DIR/reset.sh</script>
+    <script>$DART_COMMON_DIR/reset.sh $DART_MY_OUTPUT_DIR</script>
   </preexecution>
 
-  <execution duration="1800">
+  <execution duration="1600">
 
     <nodegroup>
       <nodes>0</nodes>
@@ -56,36 +56,57 @@
 
     <nodegroup>
       <nodes>1</nodes>
-      <cmd time="10">$DART_COMMON_DIR/run_node.py -n 5 -i $DART_MY_IP -p 10000 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
+      <cmd time="10">$DART_COMMON_DIR/run_node.py -n 6 -i $DART_MY_IP -p 10000 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
     </nodegroup>
 
     <nodegroup>
       <nodes>2</nodes>
-      <cmd time="20">$DART_COMMON_DIR/run_node.py -n 5 -i $DART_MY_IP -p 10000 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
+      <cmd time="20">$DART_COMMON_DIR/run_node.py -n 6 -i $DART_MY_IP -p 10000 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
     </nodegroup>
 
     <nodegroup>
       <nodes>3-4</nodes>
-      <cmd time="30">$DART_COMMON_DIR/run_node.py -n 5 -i $DART_MY_IP -p 10000 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
+      <cmd time="30">$DART_COMMON_DIR/run_node.py -n 6 -i $DART_MY_IP -p 10000 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
     </nodegroup>
 
     <nodegroup>
       <nodes>5-9</nodes>
-      <cmd time="40">$DART_COMMON_DIR/run_node.py -n 5  -i $DART_MY_IP -p 10000 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
+      <cmd time="50">$DART_COMMON_DIR/run_node.py -n 6 -i $DART_MY_IP -p 10000 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
     </nodegroup>
 
-   <nodegroup>
-      <nodes>0-9</nodes>
-      <cmd time="900">$DART_COMMON_DIR/run_lookups.py -p 10000 -t 15 $DART_COMMON_DIR/simple_lookup $DART_MY_OUTPUT_DIR $DART_MY_IP</cmd>
+    <nodegroup>
+      <nodes>10-19</nodes>
+      <cmd time="70">$DART_COMMON_DIR/run_node.py -n 6 -i $DART_MY_IP -p 10000 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
+    </nodegroup>
+
+ 
+  <nodegroup>
+      <nodes>20-29</nodes>
+      <cmd time="90">$DART_COMMON_DIR/run_node.py -n 6 -i $DART_MY_IP -p 10000 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
+    </nodegroup>
+
+    <nodegroup>
+      <nodes>30-39</nodes>
+      <cmd time="110">$DART_COMMON_DIR/run_node.py -n 6 -i $DART_MY_IP -p 10000 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
+    </nodegroup>
+
+ <nodegroup>
+      <nodes>40-49</nodes>
+      <cmd time="130">$DART_COMMON_DIR/run_node.py -n 6 -i $DART_MY_IP -p 10000 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
+    </nodegroup>
+
+ <nodegroup>
+      <nodes>1-5</nodes>
+      <cmd time="700">$DART_COMMON_DIR/run_lookups.py -p 10000 -t 10 $DART_COMMON_DIR/simple_lookup $DART_MY_OUTPUT_DIR $DART_MY_IP</cmd>
     </nodegroup>
 
   </execution>
   <postexecution>
-    <script>$DART_COMMON_DIR/reset.sh</script>
+    <script>$DART_COMMON_DIR/reset.sh $DART_MY_OUTPUT_DIR</script>
   </postexecution>
 
   <reset>
-    <script>$DART_COMMON_DIR/reset.sh</script>
+    <script>$DART_COMMON_DIR/reset.sh $DART_MY_OUTPUT_DIR</script>
   </reset>
 
 </dart>
