@@ -86,7 +86,7 @@ void issue_lookup(LoggerI::Level level, ptr<LookupGenerator> lookup)
                                                      $0 ->t $1 append $2 append $3 append $4 append pop")); // the rest
   ElementSpecRef marshal = conf->addElement(New refcounted< MarshalField >("Marshal", 1));
   ElementSpecRef route   = conf->addElement(New refcounted< StrToSockaddr >(strbuf("SimpleLookup"), 0));
-  ref< Udp >     udp     = New refcounted< Udp >("Udp", 10001);
+  ref< Udp >     udp     = New refcounted< Udp >("Udp", 9999);
   ElementSpecRef udpTx   = conf->addElement(udp->get_tx());
 
   conf->hookUp(func, 0, print, 0);
