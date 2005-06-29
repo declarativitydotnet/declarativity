@@ -22,8 +22,8 @@ materialize(pred, infinity, 100, keys(1)).
 materialize(succCount, infinity, 1, keys(1)).
 materialize(join, infinity, 1, keys(1)).
 materialize(landmark, infinity, 1, keys(1)).
-/*materialize(pingNode, infinity, infinity, keys(1)).  
-materialize(fFix, 5, infinity, keys(2)).  */
+/*materialize(pingNode, infinity, infinity, keys(1)).  */
+materialize(fFix, infinity, infinity, keys(2)).  
 materialize(nextFingerFix, infinity, 1, keys(1)).  
 
 /** Lookups */
@@ -89,7 +89,7 @@ watch(maxSuccDist).*/
 S1 succCount(NI,count<*>) :- succ(NI,S,SI).
 
 S2 evictSucc@NI(NI) :- succCount@NI(NI,C), 
-		    C > 1.
+		    C > 2.
 
 S3 maxSuccDist@NI(NI,max<D>) :- succ@NI(NI,S,SI),
 			     node@NI(NI,N), 
@@ -109,34 +109,35 @@ watch(fFixPeriodic).
 watch(eagerFinger).
 watch(nextFingerFix).
 
-F0 fFixPeriodic@NI(NI) :- periodic@NI(NI,E,10).
+F0 fFixPeriodic@NI(NI) :- periodic@NI(NI,E,20).
 
-F1 fFixEvent@NI(NI,E,I) :- fFixPeriodic@NI(NI), 
+F1 fFix@NI(NI,E,I) :- fFixPeriodic@NI(NI), 
 		   nextFingerFix@NI(NI,I), 
 		   E:=f_rand().
 
+F2 fFixEvent@NI(NI,E,I) :- fFix@NI(NI,E,I).
 
-/*F3 fFixEvent@NI(NI,E,I) :- fFix@NI(NI,E,I).*/
-
-F4 lookup@NI(NI,K,NI,E) :- fFixEvent@NI(NI,E,I),
+F3 lookup@NI(NI,K,NI,E) :- fFixEvent@NI(NI,E,I),
 			node(NI,N), 
 			K:=1I << I + N.
 
-/*F5 eagerFinger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I), 
-			     lookupResults@NI(NI,K,B,BI,E).*/
-
-F5 eagerFinger@NI(NI,I,B,BI) :- nextFingerFix@NI(NI,I), 
+F4 eagerFinger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I), 
 			     lookupResults@NI(NI,K,B,BI,E).
 
-F6 finger@NI(NI,I,B,BI) :- eagerFinger@NI(NI,I,B,BI).
+F5 finger@NI(NI,I,B,BI) :- eagerFinger@NI(NI,I,B,BI).
 
-
-F7 eagerFinger@NI(NI,I,B,BI) :- node@NI(NI,N), 
+F6 eagerFinger@NI(NI,I,B,BI) :- node@NI(NI,N), 
 			     eagerFinger@NI(NI,I1,B,BI), 
 			     I:=I1 + 1, 
 			     K:=1I << I + N, 
 			     K in (N,B), 
 			     BI != NI.
+
+F7 delete fFix@NI(NI,E,I1) :- eagerFinger@NI(NI,I,B,BI), 
+			  fFix@NI(NI,E,I1),
+		          I > 0, 
+			  I1 == I - 1.
+
 
 F8 nextFingerFix@NI(NI,0) :- eagerFinger@NI(NI,I,B,BI), 
 			   ((I == 159) || (BI == NI)).
@@ -185,7 +186,7 @@ watch(notifyPredecessor).
 watch(returnSuccessor).
 
 
-SB1 stabilize@NI(NI,E) :- periodic@NI(NI,E,5).
+SB1 stabilize@NI(NI,E) :- periodic@NI(NI,E,10).
 
 SB2 stabilizeRequest@SI(SI,NI,E) :- stabilize@NI(NI,E),
 				bestSucc@NI(NI,S,SI).
