@@ -4,7 +4,7 @@ for i in `ps -ef | grep run_lookups | awk '{print $2}'`
 do
 	kill -9 $i >> $1/reset.log 2>&1
 done
-for i in `ps -ef | grep run_node | awk '{print $2}'` 
+for i in `ps -ef | grep rnode | awk '{print $2}'` 
 do
 	kill -9 $i >> $1/reset.log 2>&1
 done
