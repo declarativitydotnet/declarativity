@@ -25,6 +25,15 @@ if (!defined $opt_f) {
     die "Must have an input file name";
 }
 
+my $totalLatencyCounts = 0;
+
+open INFILE, "<$opt_f" or die "Couldn't open $opt_f";
+while (<INFILE>) {
+    chomp;
+    $totalLatencyCounts += 1;
+}
+
+close INFILE;
 
 
 open INFILE, "<$opt_f" or die "Couldn't open $opt_f";
@@ -40,7 +49,8 @@ while (<INFILE>) {
 my $size = @array;
 my $count = 0;
 for ($count = 1; $count < $size; $count++) {
-    print "$count $array[$count]\n";
+    my $percentage = $array[$count] / $totalLatencyCounts;
+    print "$count $array[$count] $percentage $totalLatencyCounts\n";
 }
 
 close INFILE;
