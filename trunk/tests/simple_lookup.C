@@ -44,7 +44,7 @@ void killJoin()
 struct LookupGenerator : public FunctorSource::Generator
 {
   // virtual ~LookupGenerator() {};
-  LookupGenerator(str s, str d, uint32_t e) : src_(s), dest_(d), event_(e), exit_(false) {};
+  LookupGenerator(str s, str d, str e) : src_(s), dest_(d), event_(e), exit_(false) {};
 
   TupleRef operator()() {
     if (exit_) exit(0);
@@ -62,14 +62,14 @@ struct LookupGenerator : public FunctorSource::Generator
 
     tuple->append(Val_ID::mk(key));
     tuple->append(Val_Str::mk(dest_));		// WHere the answer is returned
-    tuple->append(Val_Str::mk(strbuf() << "test:" << event_)); 	// the event ID
+    tuple->append(Val_Str::mk(event_)); 	// the event ID
     tuple->freeze();
     return tuple;
   }
 
   str src_;
   str dest_;
-  uint32_t event_;
+  str event_;
   mutable bool exit_;
 };
 
@@ -145,7 +145,7 @@ int main(int argc, char **argv)
   level = LoggerI::levelFromName[str(argv[1])];
   seed = atoi(argv[2]);
   srandom(seed);
-  issue_lookup(level, New refcounted<LookupGenerator>(argv[4], argv[5], atoi(argv[3])));
+  issue_lookup(level, New refcounted<LookupGenerator>(argv[4], argv[5], argv[3]));
 
   return 0;
 }
