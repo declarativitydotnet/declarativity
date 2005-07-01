@@ -53,7 +53,7 @@ def process_node(file, shash, mhash, rhash):
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
                                  ([a-f0-9]+),\s*                               # Lookup key
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Destination IP address
-                                 (simple_lookup\:[0-9\.\:]+)\s*                             # Event ID
+                                 (simple_lookup\:[0-9\.\:]+)\s*                # Event ID
                              \>\]$\n""", re.VERBOSE)
 
 
@@ -65,7 +65,7 @@ def process_node(file, shash, mhash, rhash):
                                  ([a-f0-9]+),\s*                               # key
                                  ([a-f0-9]+),\s*                               # key
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Destination IP address
-                                 ([a-zA-Z0-9\.\:]+)\s*                         # Event ID
+                                 ([a-zA-Z0-9\.\:\_]+)\s*                         # Event ID
                              \>\]$\n""", re.VERBOSE)
 
     matchbandwidth = re.compile(r"""^Print\[PrintWatchRemoteSend.*,\s*
