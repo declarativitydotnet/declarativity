@@ -14,17 +14,19 @@
 
 /* The base tuples */
 materialize(node, infinity, 1, keys(1)).
-materialize(finger, infinity, 160, keys(2)).
+materialize(finger, 15, 160, keys(2)).
 materialize(bestSucc, infinity, 1, keys(1)).
 materialize(succDist, infinity, 100, keys(2)).
-materialize(succ, infinity, 100, keys(2)).
+materialize(succ, 15, 100, keys(2)).
 materialize(pred, infinity, 100, keys(1)).
 materialize(succCount, infinity, 1, keys(1)).
 materialize(join, infinity, 1, keys(1)).
 materialize(landmark, infinity, 1, keys(1)).
-/*materialize(pingNode, infinity, infinity, keys(1)).  */
 materialize(fFix, infinity, infinity, keys(2)).  
 materialize(nextFingerFix, infinity, 1, keys(1)).  
+
+/*materialize(pingNode, infinity, infinity, keys(1)).  */
+
 
 /** Lookups */
 
@@ -109,7 +111,7 @@ watch(fFixPeriodic).
 watch(eagerFinger).
 watch(nextFingerFix).
 
-F0 fFixPeriodic@NI(NI) :- periodic@NI(NI,E,20).
+F0 fFixPeriodic@NI(NI) :- periodic@NI(NI,E,10).
 
 F1 fFix@NI(NI,E,I) :- fFixPeriodic@NI(NI), 
 		   nextFingerFix@NI(NI,I), 
