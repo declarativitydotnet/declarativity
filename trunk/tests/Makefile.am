@@ -33,6 +33,7 @@ bin_PROGRAMS 	= 	values \
 			demultiplex \
 			join \
 			net \
+			netcc \
 			logger \
 			csv \
 			testQueue \
@@ -165,6 +166,13 @@ IDs_LDADD = \
 
 net_SOURCES = net.C
 net_LDADD = \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+netcc_SOURCES = netcc.C
+netcc_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
