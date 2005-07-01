@@ -34,8 +34,8 @@ def parse_cmdline(argv):
 
 def run_lookup(lookup_exec, seed, node, out):
     try:
-        rv = os.system(r"%s NONE %d %d %s %s >> %s 2>&1" \
-                        % (lookup_exec, seed, random.random()*sys.maxint, node, node, out))
+        rv = os.system(r"%s NONE %d %s %s %s >> %s 2>&1" \
+                        % (lookup_exec, seed, "simple_lookup:%s%d" % (node, random.random()*sys.maxint), node, node, out))
     except: 
         print >> log, "EXCEPTION RUN LOOKUP: %s\n" % str(sys.exc_info()[:2])
 

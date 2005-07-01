@@ -53,7 +53,7 @@ def process_node(file, shash, mhash, rhash):
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
                                  ([a-f0-9]+),\s*                               # Lookup key
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Destination IP address
-                                 (test\:[0-9]+)\s*                             # Event ID
+                                 (simple_lookup\:[0-9\.\:]+)\s*                             # Event ID
                              \>\]$\n""", re.VERBOSE)
 
 
