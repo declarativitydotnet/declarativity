@@ -96,11 +96,12 @@ Router::ConfigurationRef UdpCC_sink(Udp *udp, double drop) {
 
   // The remote ack elements
   ElementSpecRef udpTx    = conf->addElement(udp->get_tx());
-  ElementSpecRef netsim   = conf->addElement(New refcounted< SimpleNetSim >("Simple Net Sim (Sender)", 10, 1000, drop));
   ElementSpecRef route    = conf->addElement(New refcounted< StrToSockaddr >("Convert dest addr", 0));
   ElementSpecRef marshal  = conf->addElement(New refcounted< MarshalField >("marshal ack", 1));
+  ElementSpecRef ackP     = conf->addElement(New refcounted< Print >("ACK PRINT"));
   ElementSpecRef destAddr = conf->addElement(New refcounted< PelTransform >("RESPONSE ADDRESS",
   									    "$0 pop swallow pop"));
+  ElementSpecRef netsim   = conf->addElement(New refcounted< SimpleNetSim >("Simple Net Sim (Sender)", 0, 0, drop));
 
 
   // PACKET RECEIVE DATA FLOW
@@ -114,11 +115,12 @@ Router::ConfigurationRef UdpCC_sink(Udp *udp, double drop) {
   conf->hookUp(sinkP, 0, sink, 0);
 
   // ACK DATA FLOW
-  conf->hookUp(cc, 1, destAddr, 0);
-  conf->hookUp(destAddr, 0, marshal, 0);
+  conf->hookUp(cc, 1, netsim, 0);
+  conf->hookUp(netsim, 0, destAddr, 0);
+  conf->hookUp(destAddr, 0, ackP, 0);
+  conf->hookUp(ackP, 0, marshal, 0);
   conf->hookUp(marshal, 0, route, 0);
-  conf->hookUp(route, 0, netsim, 0);
-  conf->hookUp(netsim, 0, udpTx, 0);
+  conf->hookUp(route, 0, udpTx, 0);
 
   return conf;
 }
@@ -147,7 +149,7 @@ int main(int argc, char **argv)
 
    if (type == "source") {
        Udp *src = new Udp("SOURCE", 10000);
-       testUdpCC(UdpCC_source(src, "127.0.0.1:10000", "127.0.0.1:10001", drop));
+       testUdpCC(UdpCC_source(src, "10.212.2.205:10000", "10.212.2.20:10001", drop));
    }
    else if (type == "sink") {
        Udp *sink = new Udp("SINK", 10001);

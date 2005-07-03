@@ -17,27 +17,8 @@
 #include "inlines.h"
 
 
-class otuple;
-typedef ref<otuple> otuple_ref;
-typedef ptr<otuple> otuple_ptr;
-typedef uint64_t    SeqNum; 
-
-class otuple
-{
- public:
-  otuple() : tt_ms_(0), tcb_(NULL), wnd_(true), tp_(NULL) {}
-
-  otuple(u_int64_t tt_ms, TuplePtr tp)
-    : tt_ms_(tt_ms), tcb_(NULL), wnd_(true), tp_(tp) {}
-
-
-  void operator()(std::pair<const SeqNum, otuple_ref>& entry); 
-
-  u_int64_t tt_ms_;	// Transmit time in milliseconds
-  timecb_t  *tcb_;	// Used to cancel retransmit timer
-  bool      wnd_;	// If true then window updated on timeout.
-  TuplePtr  tp_;	// The tuple.
-};
+class OTuple;
+typedef uint64_t SeqNum; 
 
 /**
  * The Rx element acknowledges incoming cc tuples on output1 
@@ -89,18 +70,18 @@ public:
   TuplePtr pull(int port, cbv cb);		// Rate limited output tuple stream
 
 private:
-  void timeout_cb(otuple_ref otr);		// Callback for to retry sending a tuple
-  REMOVABLE_INLINE void add_rtt_meas(long m);	// Update sa, sv, and rto based on m
-  REMOVABLE_INLINE void timeout();		// Update sa, sv, and rto based on m
-  REMOVABLE_INLINE int current_window();	// Returns the current window size
-  REMOVABLE_INLINE int max_window();		// Returns the current window size
+  void timeout_cb(OTuple *otp);				// Callback for to retry sending a tuple
+  REMOVABLE_INLINE void add_rtt_meas(int32_t m);	// Update sa, sv, and rto based on m
+  REMOVABLE_INLINE void timeout();			// Update sa, sv, and rto based on m
+  REMOVABLE_INLINE int current_window();		// Returns the current window size
+  REMOVABLE_INLINE int max_window();			// Returns the current window size
 
   cbv _input_cb; 				// Callback for element push
   cbv _output_cb; 				// Callback for send. Pulls from send_q.
     
-  long sa_;					// Scaled avg. RTT (ms) scaled by 8
-  long sv_;					// Scaled variance RTT (ms) scaled by 4
-  long rto_;					// The round-trip timeout
+  int32_t sa_;					// Scaled avg. RTT (ms) scaled by 8
+  int32_t sv_;					// Scaled variance RTT (ms) scaled by 4
+  int32_t rto_;					// The round-trip timeout
 
   double max_wnd_;				// Max window size
   double rwnd_;					// Receiver window size
@@ -110,10 +91,11 @@ private:
   int    ack_seq_field_;
   int    ack_rwnd_field_;
 
-  std::vector <TuplePtr>   send_q_; 		// Primary queue containing tuples not yet sent
-  std::vector <otuple_ref> rtran_q_;		// Retransmit queue 
+  std::vector <TuplePtr> send_q_; 		// Primary queue containing tuples 
+						// not yet sent
+  std::vector <OTuple*>  rtran_q_;		// Retransmit queue 
 
-  typedef std::map<SeqNum, otuple_ref> OTupleIndex;
+  typedef std::map<SeqNum, OTuple*> OTupleIndex;
   OTupleIndex ot_map_;			// Map containing unacked in transit tuples
 };
   

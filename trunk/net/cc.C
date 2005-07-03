@@ -8,14 +8,43 @@
  * 
  */
 
-#include <sys/time.h>
+// #include <sys/time.h>
 #include <iostream>
 
+#include "sysconf.h"
 #include "cc.h"
 #include "val_uint64.h"
 #include "val_uint32.h"
 #include "val_double.h"
 #include "val_str.h"
+
+
+/////////////////////////////////////////////////////////////////////
+//
+// OTuple: Private Class 
+//
+class OTuple
+{
+ public:
+  OTuple() : tcb_(NULL), wnd_(true), tp_(NULL) {}
+
+  OTuple(TuplePtr tp) : tcb_(NULL), wnd_(true), tp_(tp) 
+    { resetTime(); }
+
+
+  void operator()(std::pair<const SeqNum, OTuple*>& entry); 
+  void resetTime() { clock_gettime (CLOCK_REALTIME, &tt_); }
+
+  timespec  tt_;	// Transmit time
+  timecb_t  *tcb_;	// Used to cancel retransmit timer
+  bool      wnd_;	// If true then window updated on timeout.
+  TuplePtr  tp_;	// The tuple.
+};
+
+void OTuple::operator()(std::pair<const SeqNum, OTuple*>& entry) 
+{
+  (entry.second)->wnd_ = false;
+}
 
 /////////////////////////////////////////////////////////////////////
 //
@@ -25,17 +54,23 @@
 #define MAX_RTO        (5*1000)
 #define MIN_RTO        (500)
 
-void otuple::operator()(std::pair<const SeqNum, otuple_ref>& entry) 
-{
-  (entry.second)->wnd_ = false;
-}
+/////////////////////////////////////////////////////////////////////
+//
+// Helper Functions
+//
 
-uint64_t now_ms()
+int32_t delay(timespec *ts)
 {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
+  timespec  now;
+  clock_gettime(CLOCK_REALTIME, &now);
 
-  return uint64_t (tv.tv_usec / 1000);	// Time in milliseconds
+  if (now.tv_nsec < ts->tv_nsec) { 
+    now.tv_nsec += 1000000000;
+    now.tv_sec--; 
+  } 
+
+  return (((now.tv_sec - ts->tv_sec)*1000) + 
+          ((now.tv_nsec - ts->tv_nsec)/1000000));	// Delay in milliseconds
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -61,8 +96,6 @@ CCRx::CCRx(str name, double max_wnd, int seq, int src)
  */
 TuplePtr CCRx::simple_action(TupleRef p) 
 {
-  log(LoggerI::INFO, 0, "CCRx::simple_action"); 
-
   /* Get source location, sequence number and ack tuple, signal my window also */
   SeqNum seq = Val_UInt64::cast((*p)[seq_field_]);
   str    src = Val_Str::cast((*p)[src_field_]);
@@ -75,7 +108,6 @@ TuplePtr CCRx::simple_action(TupleRef p)
   ack_q_.push_back(ack);
 
   if (_ack_cb != cbv_null) {
-    log(LoggerI::INFO, 0, "CC::Rx::simple_action notify ack ready to send"); 
     (*_ack_cb)();		// Notify new ack
     _ack_cb = cbv_null;
   } 
@@ -90,14 +122,11 @@ TuplePtr CCRx::pull(int port, cbv cb)
 {
   assert(port == 1);
 
-  log(LoggerI::INFO, 0, "CC::Rx::pull check ack q"); 
   if (!ack_q_.empty()) {
-    log(LoggerI::INFO, 0, "CC::Rx::pull has ack"); 
     TuplePtr ack = ack_q_[0];
     ack_q_.erase(ack_q_.begin());
     return ack;
   }
-  log(LoggerI::INFO, 0, "CC::Rx::pull no ack, store callback"); 
   _ack_cb = cb;
   return NULL;
 }
@@ -153,18 +182,14 @@ int CCTx::push(int port, TupleRef tp, cbv cb)
     //TODO: Use timestamps to track the latest rwnd value.
     rwnd_ = Val_Double::cast((*tp)[ack_rwnd_field_]);		// Receiver window
 
-    log(LoggerI::INFO, 0, "CCTx::push receive acknowledgement"); 
     OTupleIndex::iterator iter = ot_map_.find(seq);
     if (iter != ot_map_.end()) { 
-      long delay = now_ms() - (iter->second)->tt_ms_;
+      int32_t d = delay(&(iter->second)->tt_);
 
-      if ((iter->second)->tcb_ != NULL) {
-        timecb_remove((iter->second)->tcb_);
-        (iter->second)->tcb_ = NULL;
-      }
-      if (delay > 0) 
-        add_rtt_meas(delay);
+      timecb_remove((iter->second)->tcb_);
+      add_rtt_meas(d);
 
+      delete iter->second;
       ot_map_.erase(iter);
       if (current_window() < max_window() && _input_cb != cbv_null) {
         (*_input_cb)();
@@ -175,8 +200,6 @@ int CCTx::push(int port, TupleRef tp, cbv cb)
       // Log event: possibly due to duplicate ack.
       log(LoggerI::WARN, 0, "CCTx::push receive unknown ack, possible duplicate"); 
     }
-    log(LoggerI::INFO, 0, "CCTx::push ack received."); 
-
     break;
   }
 
@@ -194,25 +217,25 @@ int CCTx::push(int port, TupleRef tp, cbv cb)
 TuplePtr CCTx::pull(int port, cbv cb)
 {
   assert(port == 0);
+  assert (rto_ >= MIN_RTO && rto_ <= MAX_RTO);
 
   // All retransmit packets go first.
   if (!rtran_q_.empty()) {
-    otuple_ref otr = rtran_q_[0];
+    OTuple *otp = rtran_q_[0];
     rtran_q_.erase(rtran_q_.begin());
-    otr->tcb_ = delaycb(rto_ / 1000, rto_ * 1000000, wrap(this, &CCTx::timeout_cb, otr)); 
+    otp->tcb_ = delaycb(rto_/1000, (rto_ % 1000)*1000000, wrap(this, &CCTx::timeout_cb, otp)); 
 
-    return otr->tp_;
+    return otp->tp_;
   }
   else if (!send_q_.empty()) {
     TuplePtr  tp    = send_q_[0];
     SeqNum    seq   = Val_UInt64::cast((*tp)[seq_field_]);	// Sequence number
-    uint64_t  tt_ms = now_ms();
 
     send_q_.erase(send_q_.begin());
 
-    otuple_ref otr = New refcounted<otuple>(tt_ms, tp);
-    otr->tcb_ = delaycb(rto_ / 1000, rto_ * 1000000, wrap(this, &CCTx::timeout_cb, otr)); 
-    ot_map_.insert(std::make_pair(seq, otr));
+    OTuple *otp = new OTuple(tp);
+    otp->tcb_ = delaycb(rto_/1000, (rto_ % 1000)*1000000, wrap(this, &CCTx::timeout_cb, otp)); 
+    ot_map_.insert(std::make_pair(seq, otp));
 
     return tp;
   }
@@ -227,36 +250,35 @@ TuplePtr CCTx::pull(int port, cbv cb)
  * 1. Update window size
  * 2. Retransmit the packet
  */
-void CCTx::timeout_cb(otuple_ref otr)
+void CCTx::timeout_cb(OTuple *otp)
 {
-  SeqNum seq = Val_UInt64::cast((*otr->tp_)[seq_field_]);	// Sequence number
-  log(LoggerI::INFO, 0, strbuf() << "TIMEOUT: Packet seq(" << seq << ") timeout after " 
-			<< (now_ms() - otr->tt_ms_) << "ms");
+  SeqNum seq = Val_UInt64::cast((*otp->tp_)[seq_field_]);	// Sequence number
 
-  otr->tcb_ = NULL;
-  if (otr->wnd_ == true) {
-    log(LoggerI::INFO, 0, "Adjusting window size after timeout."); 
-
-    timeout(); 							// Update window sizes and enter slow start
-    std::for_each(ot_map_.begin(), ot_map_.end(), otuple()); 	// Set all current otuple::wnd_ = false.
+  otp->tcb_ = NULL;
+  if (otp->wnd_ == true) {
+    // Update window sizes and enter slow start
+    timeout(); 		
+    // Set all current OTuple::wnd_ = false.
+    std::for_each(ot_map_.begin(), ot_map_.end(), OTuple());
   }
 
-  rtran_q_.push_back(otr);				 	// Add to retransmit queue
+  rtran_q_.push_back(otp);				 	// Add to retransmit queue
   if (_output_cb != cbv_null) {
     (*_output_cb)();
     _output_cb = cbv_null;
   }
 
-  log(LoggerI::INFO, 0, "DONE TIMEOUT."); 
+  log(LoggerI::INFO, 0, strbuf() << "TIMEOUT: Packet seq(" << seq << ") timeout after " 
+			<< (delay(&otp->tt_)) << "ms");
 }
 
 /**
  *
  */
-REMOVABLE_INLINE void CCTx::add_rtt_meas(long m)
+REMOVABLE_INLINE void CCTx::add_rtt_meas(int32_t m)
 {
-  long orig_m = m;
-  assert(m > 0);
+  int32_t orig_m = m;
+  assert(m >= 0);
 
   if (sa_ == -1) {
     // After the first measurement, set the timeout to four
@@ -278,9 +300,10 @@ REMOVABLE_INLINE void CCTx::add_rtt_meas(long m)
 
   // Don't backoff past 1 second.
   if (rto_ > MAX_RTO) {
-    log(LoggerI::WARN, 1, strbuf() << "HUGE RTO: m=" << long(orig_m)); 
+    log(LoggerI::WARN, 1, strbuf() << "HUGE RTO: m = " << orig_m); 
     rto_ = MAX_RTO;
   }
+  else if (rto_ < MIN_RTO) rto_ = MIN_RTO;
 
   if (cwnd_ < ssthresh_) 
     cwnd_ *= 2.0; 		// slow start
@@ -290,8 +313,9 @@ REMOVABLE_INLINE void CCTx::add_rtt_meas(long m)
   if (cwnd_ > max_wnd_)
     cwnd_ = max_wnd_;
 
-  log(LoggerI::INFO, 0, strbuf() << "CWND(" << long(cwnd_) << ") MAX_WND(" << long(max_wnd_) 
-			<< ") SSTHRESH(" << long(ssthresh_) << ")\n");
+  log(LoggerI::INFO, 0, strbuf() << "CURRENT WINDOW: " << current_window()
+			<< "\n\tCWND(" << long(cwnd_) << ") MAX_WND(" 
+			<< long(max_wnd_) << ") SSTHRESH(" << long(ssthresh_) << ")\n");
 }
 
 
