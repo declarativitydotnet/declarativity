@@ -56,6 +56,8 @@ Router::ConfigurationRef UdpCC_source(Udp *udp, str src, str dest, double drop) 
                                                                             strbuf() << "\"" << dest << "\""
 									    << " pop $0 pop"));
   ElementSpecRef route    = conf->addElement(New refcounted< StrToSockaddr >("Convert dest addr", 0));
+  ElementSpecRef netsim   = conf->addElement(New refcounted< SimpleNetSim >("Simple Net Sim (Sender)", 
+									    10, 100, drop));
   ElementSpecRef udpTx    = conf->addElement(udp->get_tx());
 
   // The receiving data flow
@@ -70,7 +72,8 @@ Router::ConfigurationRef UdpCC_source(Udp *udp, str src, str dest, double drop) 
   conf->hookUp(cc, 0, marshal, 0);
   conf->hookUp(marshal, 0, destAddr, 0);
   conf->hookUp(destAddr, 0, route, 0);
-  conf->hookUp(route, 0, udpTx, 0);
+  conf->hookUp(route, 0, netsim, 0);
+  conf->hookUp(netsim, 0, udpTx, 0);
 
   // The local ack flow
   conf->hookUp(udpRx, 0, unmarshal, 0);
@@ -96,12 +99,13 @@ Router::ConfigurationRef UdpCC_sink(Udp *udp, double drop) {
 
   // The remote ack elements
   ElementSpecRef udpTx    = conf->addElement(udp->get_tx());
-  ElementSpecRef route    = conf->addElement(New refcounted< StrToSockaddr >("Convert dest addr", 0));
+  ElementSpecRef netsim   = conf->addElement(New refcounted< SimpleNetSim >("Simple Net Sim (Sender)", 
+									    10, 100, drop));
+  ElementSpecRef route    = conf->addElement(New refcounted< StrToSockaddr >("Convert src addr", 0));
   ElementSpecRef marshal  = conf->addElement(New refcounted< MarshalField >("marshal ack", 1));
   ElementSpecRef ackP     = conf->addElement(New refcounted< Print >("ACK PRINT"));
   ElementSpecRef destAddr = conf->addElement(New refcounted< PelTransform >("RESPONSE ADDRESS",
   									    "$0 pop swallow pop"));
-  ElementSpecRef netsim   = conf->addElement(New refcounted< SimpleNetSim >("Simple Net Sim (Sender)", 0, 0, drop));
 
 
   // PACKET RECEIVE DATA FLOW
@@ -115,12 +119,12 @@ Router::ConfigurationRef UdpCC_sink(Udp *udp, double drop) {
   conf->hookUp(sinkP, 0, sink, 0);
 
   // ACK DATA FLOW
-  conf->hookUp(cc, 1, netsim, 0);
-  conf->hookUp(netsim, 0, destAddr, 0);
+  conf->hookUp(cc, 1, destAddr, 0);
   conf->hookUp(destAddr, 0, ackP, 0);
   conf->hookUp(ackP, 0, marshal, 0);
   conf->hookUp(marshal, 0, route, 0);
-  conf->hookUp(route, 0, udpTx, 0);
+  conf->hookUp(route, 0, netsim, 0);
+  conf->hookUp(netsim, 0, udpTx, 0);
 
   return conf;
 }
@@ -143,18 +147,25 @@ void testUdpCC(Router::ConfigurationRef conf)
 
 int main(int argc, char **argv)
 {
-   str    type = str(argv[1]);
-   double drop = 0.;
-   if (argc == 3) drop = atof(argv[2]);
+  if (argc < 2) {
+    std::cout << "Usage: netcc {(source <src_addr> <dest_addr>) | sink} [<drop_probability>]\n";
+    exit(0);
+  }
 
-   if (type == "source") {
-       Udp *src = new Udp("SOURCE", 10000);
-       testUdpCC(UdpCC_source(src, "10.212.2.205:10000", "10.212.2.20:10001", drop));
-   }
-   else if (type == "sink") {
-       Udp *sink = new Udp("SINK", 10001);
-       testUdpCC(UdpCC_sink(sink, drop));
-   }
+  str    type = str(argv[1]);
+  double drop = 0.;
+
+  if (type == "source") {
+      Udp *src = new Udp("SOURCE", 10000);
+      if (argc == 5) drop = atof(argv[4]);
+      testUdpCC(UdpCC_source(src, strbuf() << str(argv[2]) << ":10000", 
+			          strbuf() << str(argv[3]) << ":10001", drop));
+  }
+  else if (type == "sink") {
+      Udp *sink = new Udp("SINK", 10001);
+      if (argc == 3) drop = atof(argv[2]);
+      testUdpCC(UdpCC_sink(sink, drop));
+  }
 
   return 0;
 }

@@ -51,8 +51,8 @@ void OTuple::operator()(std::pair<const SeqNum, OTuple*>& entry)
 // Macros
 //
 
-#define MAX_RTO        (5*1000)
-#define MIN_RTO        (500)
+#define MAX_RTO (5000)
+#define MIN_RTO (500)
 
 /////////////////////////////////////////////////////////////////////
 //
@@ -277,7 +277,6 @@ void CCTx::timeout_cb(OTuple *otp)
  */
 REMOVABLE_INLINE void CCTx::add_rtt_meas(int32_t m)
 {
-  int32_t orig_m = m;
   assert(m >= 0);
 
   if (sa_ == -1) {
@@ -298,11 +297,8 @@ REMOVABLE_INLINE void CCTx::add_rtt_meas(int32_t m)
     rto_ = (sa_ >> 3) + sv_ + 10; 	// the 10 is to accont for GC
   }
 
-  // Don't backoff past 1 second.
-  if (rto_ > MAX_RTO) {
-    log(LoggerI::WARN, 1, strbuf() << "HUGE RTO: m = " << orig_m); 
-    rto_ = MAX_RTO;
-  }
+  // Don't backoff past 5 seconds.
+  if (rto_ > MAX_RTO)      rto_ = MAX_RTO;
   else if (rto_ < MIN_RTO) rto_ = MIN_RTO;
 
   if (cwnd_ < ssthresh_) 

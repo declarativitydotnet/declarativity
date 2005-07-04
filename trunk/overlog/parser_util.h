@@ -21,6 +21,9 @@
 
 class OL_Lexer;
 
+/**
+ * A Parse_Expr represents expressions in the Overlog language
+ */
 class Parse_Expr {
 public:
   static Parse_Expr* Now;

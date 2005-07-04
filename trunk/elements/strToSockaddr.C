@@ -9,6 +9,7 @@
  * 
  */
 
+#include <arpc.h>
 #include "strToSockaddr.h"
 #include "val_opaque.h"
 #include "string.h"
@@ -57,6 +58,8 @@ TuplePtr StrToSockaddr::simple_action(TupleRef p)
     return 0;
   }
   str theAddress(theString, theAtSign - theString);
+  struct hostent *host = gethostbyname(theAddress);
+  if (host != NULL) theAddress = inet_ntoa(*((struct in_addr*)host->h_addr));
   str thePort(theAtSign + 1);
   int port = atoi(thePort);
 
