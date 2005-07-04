@@ -25,20 +25,22 @@
 //
 class OTuple
 {
- public:
-  OTuple() : tcb_(NULL), wnd_(true), tp_(NULL) {}
+public:
+  OTuple() : tcb_(NULL), wnd_(true), tran_cnt_(0), tp_(NULL) {}
 
-  OTuple(TuplePtr tp) : tcb_(NULL), wnd_(true), tp_(tp) 
+  OTuple(TuplePtr tp) : tcb_(NULL), wnd_(true), tran_cnt_(0), tp_(tp) 
     { resetTime(); }
 
+  ~OTuple() { tp_ = NULL; }
 
   void operator()(std::pair<const SeqNum, OTuple*>& entry); 
   void resetTime() { clock_gettime (CLOCK_REALTIME, &tt_); }
 
-  timespec  tt_;	// Transmit time
-  timecb_t  *tcb_;	// Used to cancel retransmit timer
-  bool      wnd_;	// If true then window updated on timeout.
-  TuplePtr  tp_;	// The tuple.
+  timespec  tt_;		// Transmit time
+  timecb_t  *tcb_;		// Used to cancel retransmit timer
+  bool      wnd_;		// If true then window updated on timeout.
+  uint32_t  tran_cnt_;		// Transmit counter.
+  TuplePtr  tp_;		// The tuple.
 };
 
 void OTuple::operator()(std::pair<const SeqNum, OTuple*>& entry) 
@@ -142,8 +144,8 @@ TuplePtr CCRx::pull(int port, cbv cb)
  * Input  1 (push): Acknowledgement of some (possibly) outstanding tuple.
  * Output 0 (pull): Tuple to send with cc info wrapper.
  */
-CCTx::CCTx(str name, double init_wnd, double max_wnd, 
-           int seq_field, int ack_seq_field, int ack_rwnd_field) 
+CCTx::CCTx(str name, double init_wnd, double max_wnd, uint32_t max_retry, 
+           uint32_t seq_field, uint32_t ack_seq_field, uint32_t ack_rwnd_field) 
   : Element(name, 2, 1), _input_cb(cbv_null), _output_cb(cbv_null), sa_(-1), sv_(0)
 {
   rto_            = MAX_RTO;
@@ -151,6 +153,7 @@ CCTx::CCTx(str name, double init_wnd, double max_wnd,
   cwnd_           = init_wnd;
   ssthresh_       = max_wnd;
   rwnd_           = max_wnd;
+  max_retry_      = max_retry;
   seq_field_      = seq_field;
   ack_seq_field_  = ack_seq_field;
   ack_rwnd_field_ = ack_rwnd_field;
@@ -224,6 +227,7 @@ TuplePtr CCTx::pull(int port, cbv cb)
     OTuple *otp = rtran_q_[0];
     rtran_q_.erase(rtran_q_.begin());
     otp->tcb_ = delaycb(rto_/1000, (rto_ % 1000)*1000000, wrap(this, &CCTx::timeout_cb, otp)); 
+    otp->tran_cnt_++;
 
     return otp->tp_;
   }
@@ -235,6 +239,7 @@ TuplePtr CCTx::pull(int port, cbv cb)
 
     OTuple *otp = new OTuple(tp);
     otp->tcb_ = delaycb(rto_/1000, (rto_ % 1000)*1000000, wrap(this, &CCTx::timeout_cb, otp)); 
+    otp->tran_cnt_++;
     ot_map_.insert(std::make_pair(seq, otp));
 
     return tp;
@@ -260,6 +265,19 @@ void CCTx::timeout_cb(OTuple *otp)
     timeout(); 		
     // Set all current OTuple::wnd_ = false.
     std::for_each(ot_map_.begin(), ot_map_.end(), OTuple());
+  }
+  else if (otp->tran_cnt_ > max_retry_) {
+    log(LoggerI::WARN, 0, strbuf() << "MAX NUMBER OF RETRIES REACHED FOR TUPLE seq(" 
+			  << seq << ")"); 
+    OTupleIndex::iterator iter = ot_map_.find(seq);
+    assert(iter != ot_map_.end());
+    delete iter->second;
+    ot_map_.erase(iter);
+    if (current_window() < max_window() && _input_cb != cbv_null) {
+      (*_input_cb)();
+      _input_cb = cbv_null;
+    }
+    return;
   }
 
   rtran_q_.push_back(otp);				 	// Add to retransmit queue
@@ -331,7 +349,7 @@ REMOVABLE_INLINE void CCTx::timeout()
 }
 
 REMOVABLE_INLINE int CCTx::current_window() {
-  return send_q_.size() + ot_map_.size();
+  return send_q_.size() + rtran_q_.size() + ot_map_.size();
 }
 
 REMOVABLE_INLINE int CCTx::max_window() {

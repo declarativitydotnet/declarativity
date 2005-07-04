@@ -60,8 +60,8 @@ private:
  */
 class CCTx : public Element {
 public:
-  CCTx(str name, double init_wnd, double max_wnd, 
-       int seq_field = 0, int ack_seq_field=1, int ack_rwnd_field=2);
+  CCTx(str name, double init_wnd, double max_wnd, uint32_t max_retry=5,
+       uint32_t seq_field = 0, uint32_t ack_seq_field=1, uint32_t ack_rwnd_field=2);
   const char *class_name() const { return "CC::Tx";};
   const char *processing() const { return "hh/l"; };
   const char *flow_code() const	 { return "--/-"; };
@@ -73,8 +73,8 @@ private:
   void timeout_cb(OTuple *otp);				// Callback for to retry sending a tuple
   REMOVABLE_INLINE void add_rtt_meas(int32_t m);	// Update sa, sv, and rto based on m
   REMOVABLE_INLINE void timeout();			// Update sa, sv, and rto based on m
-  REMOVABLE_INLINE int current_window();		// Returns the current window size
-  REMOVABLE_INLINE int max_window();			// Returns the current window size
+  REMOVABLE_INLINE int  current_window();		// Returns the current window size
+  REMOVABLE_INLINE int  max_window();			// Returns the current window size
 
   cbv _input_cb; 				// Callback for element push
   cbv _output_cb; 				// Callback for send. Pulls from send_q.
@@ -83,13 +83,14 @@ private:
   int32_t sv_;					// Scaled variance RTT (ms) scaled by 4
   int32_t rto_;					// The round-trip timeout
 
-  double max_wnd_;				// Max window size
-  double rwnd_;					// Receiver window size
-  double cwnd_;					// Current congestion window size
-  double ssthresh_;				// Slow start threshold
-  int    seq_field_;
-  int    ack_seq_field_;
-  int    ack_rwnd_field_;
+  double    max_wnd_;				// Max window size
+  double    rwnd_;				// Receiver window size
+  double    cwnd_;				// Current congestion window size
+  double    ssthresh_;				// Slow start threshold
+  uint32_t  max_retry_;				// Max number of retries for a tuple
+  uint32_t  seq_field_;
+  uint32_t  ack_seq_field_;
+  uint32_t  ack_rwnd_field_;
 
   std::vector <TuplePtr> send_q_; 		// Primary queue containing tuples 
 						// not yet sent
