@@ -86,9 +86,9 @@ int32_t delay(timespec *ts)
  * Output 0 (push): Stream of tuples (possibly out of order and with dups).	
  * Output 1 (pull): Acknowledgements of individual tuples.
  */
-CCRx::CCRx(str name, double max_wnd, int seq, int src) 
-  : Element(name, 1, 2), _ack_cb(cbv_null), max_wnd_(max_wnd), 
-    rwnd_(max_wnd), seq_field_(seq), src_field_(src)
+CCRx::CCRx(str name, double rwnd, int seq, int src) 
+  : Element(name, 1, 2), _ack_cb(cbv_null),
+    rwnd_(rwnd), seq_field_(seq), src_field_(src)
 {
 }
 
@@ -104,7 +104,7 @@ TuplePtr CCRx::simple_action(TupleRef p)
   TupleRef ack = Tuple::mk();
   ack->append(Val_Str::mk(src));
   ack->append(Val_UInt64::mk(seq));
-  ack->append(Val_Double::mk(get_rwnd()));
+  ack->append(Val_Double::mk(rwnd_));
   ack->freeze();
 
   ack_q_.push_back(ack);

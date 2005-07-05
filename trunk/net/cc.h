@@ -27,7 +27,7 @@ typedef uint64_t SeqNum;
  */
 class CCRx : public Element {
 public:
-  CCRx(str name, double max_wnd, int seq=0, int src=1);
+  CCRx(str name, double rwnd=512., int seq=0, int src=1);
   const char *class_name() const { return "CCRx";};
   const char *processing() const { return "a/al"; };
   const char *flow_code() const	 { return "x/x-"; };
@@ -38,14 +38,9 @@ public:
 
   int push(int port, TupleRef tp, cbv cb);	// Flow control input
 
-  void set_rwnd(double wnd) { rwnd_ = wnd; }	// Set receive window
-
-  double get_rwnd() const { return rwnd_; }	// Get receive window
-
 private:
   cbv _ack_cb; 					// Callback to send an ack 
 
-  double   max_wnd_;				// Max window size
   double   rwnd_;				// Receiver window size
   int      seq_field_;
   int      src_field_;
