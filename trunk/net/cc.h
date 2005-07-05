@@ -36,6 +36,8 @@ public:
 
   TuplePtr pull(int port, cbv cb);		// Pull next acknowledgement from ack_q
 
+  int push(int port, TupleRef tp, cbv cb);	// Flow control input
+
   void set_rwnd(double wnd) { rwnd_ = wnd; }	// Set receive window
 
   double get_rwnd() const { return rwnd_; }	// Get receive window
@@ -63,8 +65,8 @@ public:
   CCTx(str name, double init_wnd, double max_wnd, uint32_t max_retry=5,
        uint32_t seq_field = 0, uint32_t ack_seq_field=1, uint32_t ack_rwnd_field=2);
   const char *class_name() const { return "CC::Tx";};
-  const char *processing() const { return "hh/l"; };
-  const char *flow_code() const	 { return "--/-"; };
+  const char *processing() const { return "hh/ll"; };
+  const char *flow_code() const	 { return "--/--"; };
 
   int push(int port, TupleRef tp, cbv cb);	// Incoming, either add to send_q or ack
   TuplePtr pull(int port, cbv cb);		// Rate limited output tuple stream
@@ -76,8 +78,8 @@ private:
   REMOVABLE_INLINE int  current_window();		// Returns the current window size
   REMOVABLE_INLINE int  max_window();			// Returns the current window size
 
-  cbv _input_cb; 				// Callback for element push
-  cbv _output_cb; 				// Callback for send. Pulls from send_q.
+  cbv _din_cb; 					// Callback for data input ready
+  cbv _dout_cb; 				// Callback for data output ready
     
   int32_t sa_;					// Scaled avg. RTT (ms) scaled by 8
   int32_t sv_;					// Scaled variance RTT (ms) scaled by 4

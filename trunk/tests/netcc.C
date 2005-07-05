@@ -147,23 +147,24 @@ void testUdpCC(Router::ConfigurationRef conf)
 
 int main(int argc, char **argv)
 {
-  if (argc < 2) {
-    std::cout << "Usage: netcc {(source <src_addr> <dest_addr>) | sink} [<drop_probability>]\n";
+  if (argc < 3) {
+    std::cout << "Usage: netcc {(source <port> <src_addr> <dest_addr:port>) | sink <port>} [<drop_probability>]\n";
     exit(0);
   }
 
   str    type = str(argv[1]);
+  int    port = atoi(argv[2]);
   double drop = 0.;
 
   if (type == "source") {
-      Udp *src = new Udp("SOURCE", 10000);
-      if (argc == 5) drop = atof(argv[4]);
-      testUdpCC(UdpCC_source(src, strbuf() << str(argv[2]) << ":10000", 
-			          strbuf() << str(argv[3]) << ":10001", drop));
+      Udp *src = new Udp("SOURCE", port);
+      if (argc == 6) drop = atof(argv[5]);
+      testUdpCC(UdpCC_source(src, strbuf() << str(argv[3]) << ":" << port, 
+			     str(argv[4]), drop));
   }
   else if (type == "sink") {
-      Udp *sink = new Udp("SINK", 10001);
-      if (argc == 3) drop = atof(argv[2]);
+      Udp *sink = new Udp("SINK", port);
+      if (argc == 4) drop = atof(argv[3]);
       testUdpCC(UdpCC_sink(sink, drop));
   }
 

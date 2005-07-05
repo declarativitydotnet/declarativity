@@ -133,6 +133,21 @@ TuplePtr CCRx::pull(int port, cbv cb)
   return NULL;
 }
 
+int CCRx::push(int port, TupleRef tp, cbv cb)
+{
+  if (port == 1) {
+    try {
+      if (Val_Str::cast((*tp)[0]) == "RWND")
+        rwnd_ = Val_Double::cast((*tp)[1]);
+    }
+    catch (Value::TypeError *e) {
+      log(LoggerI::WARN, 0, "CCRx::push TypeError Thrown on port 1"); 
+    } 
+    return int(rwnd_);
+  }
+  return this->Element::push(port, tp, cb);
+}
+
 /////////////////////////////////////////////////////////////////////
 //
 // Transmit element
@@ -146,7 +161,7 @@ TuplePtr CCRx::pull(int port, cbv cb)
  */
 CCTx::CCTx(str name, double init_wnd, double max_wnd, uint32_t max_retry, 
            uint32_t seq_field, uint32_t ack_seq_field, uint32_t ack_rwnd_field) 
-  : Element(name, 2, 1), _input_cb(cbv_null), _output_cb(cbv_null), sa_(-1), sv_(0)
+  : Element(name, 2, 1), _din_cb(cbv_null), _dout_cb(cbv_null), sa_(-1), sv_(0)
 {
   rto_            = MAX_RTO;
   max_wnd_        = max_wnd;
@@ -175,7 +190,7 @@ int CCTx::push(int port, TupleRef tp, cbv cb)
 
     if (current_window() >= max_window()) {
       log(LoggerI::INFO, 0, "CCTx::push WINDOW IS FULL"); 
-      _input_cb = cb;
+      _din_cb = cb;
       retval = 0;
     }
     break;
@@ -194,9 +209,9 @@ int CCTx::push(int port, TupleRef tp, cbv cb)
 
       delete iter->second;
       ot_map_.erase(iter);
-      if (current_window() < max_window() && _input_cb != cbv_null) {
-        (*_input_cb)();
-        _input_cb = cbv_null;
+      if (current_window() < max_window() && _din_cb != cbv_null) {
+        (*_din_cb)();
+        _din_cb = cbv_null;
       }
     }
     else {
@@ -206,46 +221,59 @@ int CCTx::push(int port, TupleRef tp, cbv cb)
     break;
   }
 
-  if (!send_q_.empty() && _output_cb != cbv_null) {
-    (*_output_cb)();
-    _output_cb = cbv_null;
+  if (!send_q_.empty() && _dout_cb != cbv_null) {
+    (*_dout_cb)();
+    _dout_cb = cbv_null;
   }
   return retval;
 }
 
 /**
- * Return the next tuple from send_q_, prepending a timestamp.
- * If no tuples exist then store callback and return NULL
+ * Handles 2 output ports
+ * port 0: Return the next tuple from either the retran or send queue
+ * port 1: Return a tuple containing the internal CC state
  */
 TuplePtr CCTx::pull(int port, cbv cb)
 {
-  assert(port == 0);
-  assert (rto_ >= MIN_RTO && rto_ <= MAX_RTO);
-
-  // All retransmit packets go first.
-  if (!rtran_q_.empty()) {
-    OTuple *otp = rtran_q_[0];
-    rtran_q_.erase(rtran_q_.begin());
-    otp->tcb_ = delaycb(rto_/1000, (rto_ % 1000)*1000000, wrap(this, &CCTx::timeout_cb, otp)); 
-    otp->tran_cnt_++;
-
-    return otp->tp_;
+  if (port == 0) {
+    assert (rto_ >= MIN_RTO && rto_ <= MAX_RTO);
+  
+    // All retransmit packets go first.
+    if (!rtran_q_.empty()) {
+      OTuple *otp = rtran_q_[0];
+      rtran_q_.erase(rtran_q_.begin());
+      otp->tcb_ = delaycb(rto_/1000, (rto_ % 1000)*1000000, wrap(this, &CCTx::timeout_cb, otp)); 
+      otp->tran_cnt_++;
+  
+      return otp->tp_;
+    }
+    else if (!send_q_.empty()) {
+      TuplePtr  tp    = send_q_[0];
+      SeqNum    seq   = Val_UInt64::cast((*tp)[seq_field_]);	// Sequence number
+  
+      send_q_.erase(send_q_.begin());
+  
+      OTuple *otp = new OTuple(tp);
+      otp->tcb_ = delaycb(rto_/1000, (rto_ % 1000)*1000000, wrap(this, &CCTx::timeout_cb, otp)); 
+      otp->tran_cnt_++;
+      ot_map_.insert(std::make_pair(seq, otp));
+  
+      return tp;
+    }
+    _dout_cb = cb;
   }
-  else if (!send_q_.empty()) {
-    TuplePtr  tp    = send_q_[0];
-    SeqNum    seq   = Val_UInt64::cast((*tp)[seq_field_]);	// Sequence number
+  else if (port == 1) {
+    // Package up a Tuple containing my current CC state
+    TuplePtr state = Tuple::mk();
+    state->append(Val_Double::mk(rwnd_));		// Receiver window size (flow control)
+    state->append(Val_Double::mk(cwnd_));		// Current congestion window size
+    state->append(Val_Double::mk(ssthresh_));		// Slow start threshold
+    state->append(Val_UInt32::mk(rto_));		// Round trip time estimate
+    state->append(Val_UInt32::mk(current_window()));	// Current window size (# unacked tuples)
 
-    send_q_.erase(send_q_.begin());
+    return state;
+  } else assert(0);
 
-    OTuple *otp = new OTuple(tp);
-    otp->tcb_ = delaycb(rto_/1000, (rto_ % 1000)*1000000, wrap(this, &CCTx::timeout_cb, otp)); 
-    otp->tran_cnt_++;
-    ot_map_.insert(std::make_pair(seq, otp));
-
-    return tp;
-  }
-
-  _output_cb = cb;
   return NULL;
 
 }
@@ -257,7 +285,7 @@ TuplePtr CCTx::pull(int port, cbv cb)
  */
 void CCTx::timeout_cb(OTuple *otp)
 {
-  SeqNum seq = Val_UInt64::cast((*otp->tp_)[seq_field_]);	// Sequence number
+  SeqNum seq = Val_UInt64::cast((*otp->tp_)[seq_field_]);
 
   otp->tcb_ = NULL;
   if (otp->wnd_ == true) {
@@ -267,27 +295,28 @@ void CCTx::timeout_cb(OTuple *otp)
     std::for_each(ot_map_.begin(), ot_map_.end(), OTuple());
   }
   else if (otp->tran_cnt_ > max_retry_) {
-    log(LoggerI::WARN, 0, strbuf() << "MAX NUMBER OF RETRIES REACHED FOR TUPLE seq(" 
-			  << seq << ")"); 
+    log(LoggerI::WARN, 0, 
+        strbuf()<<"MAX NUMBER OF RETRIES REACHED FOR TUPLE seq("<<seq<<")");
     OTupleIndex::iterator iter = ot_map_.find(seq);
     assert(iter != ot_map_.end());
     delete iter->second;
     ot_map_.erase(iter);
-    if (current_window() < max_window() && _input_cb != cbv_null) {
-      (*_input_cb)();
-      _input_cb = cbv_null;
+    if (current_window() < max_window() && _din_cb != cbv_null) {
+      (*_din_cb)();
+      _din_cb = cbv_null;
     }
     return;
   }
 
-  rtran_q_.push_back(otp);				 	// Add to retransmit queue
-  if (_output_cb != cbv_null) {
-    (*_output_cb)();
-    _output_cb = cbv_null;
+  rtran_q_.push_back(otp);	// Add to retransmit queue
+  if (_dout_cb != cbv_null) {
+    (*_dout_cb)();
+    _dout_cb = cbv_null;
   }
 
-  log(LoggerI::INFO, 0, strbuf() << "TIMEOUT: Packet seq(" << seq << ") timeout after " 
-			<< (delay(&otp->tt_)) << "ms");
+  log(LoggerI::INFO, 0, 
+      strbuf()<< "TIMEOUT: Packet seq(" << seq << ") timeout after " 
+              << (delay(&otp->tt_)) << "ms");
 }
 
 /**
@@ -328,8 +357,9 @@ REMOVABLE_INLINE void CCTx::add_rtt_meas(int32_t m)
     cwnd_ = max_wnd_;
 
   log(LoggerI::INFO, 0, strbuf() << "CURRENT WINDOW: " << current_window()
-			<< "\n\tCWND(" << long(cwnd_) << ") MAX_WND(" 
-			<< long(max_wnd_) << ") SSTHRESH(" << long(ssthresh_) << ")\n");
+			<< "\n\tCWND(" << long(cwnd_) << ") MAX_WND("
+			<< long(max_wnd_) << ") SSTHRESH(" << long(ssthresh_)
+			<< ")\n");
 }
 
 
@@ -337,15 +367,15 @@ REMOVABLE_INLINE void CCTx::timeout()
 {
   rto_ <<= 1;
 
-  // Don't backoff past 1 second.
   if (rto_ > MAX_RTO)      rto_ = MAX_RTO;
   else if (rto_ < MIN_RTO) rto_ = MIN_RTO;
 
   ssthresh_ = cwnd_ / 2.0;	// multiplicative decrease
-  cwnd_     = 1.0;
+  cwnd_     = 1.0;		// Enter slow start
 
   log(LoggerI::INFO, 0, strbuf() << "CONGESTION ADJUST: RTO = " << long(rto_)
-			<< " | SSTHRESH = " << long(ssthresh_) << " | CWND = " << long(cwnd_));
+			<< " | SSTHRESH = " << long(ssthresh_) 
+			<< " | CWND = " << long(cwnd_));
 }
 
 REMOVABLE_INLINE int CCTx::current_window() {
