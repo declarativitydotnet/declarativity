@@ -29,7 +29,7 @@ int Queue::push(int port, TupleRef p, cbv cb)
 {
   _q.push(p);  
 
-  log(LoggerI::INFO, 0, str(strbuf() << "Push " << p->toString()));
+  log(LoggerI::INFO, 0, str(strbuf() << "Push " << p->toString()) << ", queuesize=" << _q.size());
   if (_pullCB != cbv_null) {
     // is there a pending callback? If so, wake it up
     _pullCB();
@@ -40,7 +40,7 @@ int Queue::push(int port, TupleRef p, cbv cb)
 
   // have we reached the max size? If so, we have to wait
   if (_q.size() == _size) {
-    log(LoggerI::INFO, 0, "Queue: Reach max size");
+    log(LoggerI::INFO, 0, str(strbuf() << "Queue has reach max size, queuesize=" << _q.size()));
     _pushCB = cb;
     return 0;
   }
@@ -52,9 +52,8 @@ int Queue::push(int port, TupleRef p, cbv cb)
 /* pull. When pull, drain the queue. Do nothing if queue is empty but register callback. */
 TuplePtr Queue::pull(int port, cbv cb)
 {
-  log(LoggerI::INFO, 0, "Queue: Attempt Pull");
   if (_q.size() == 0) { 
-    log(LoggerI::INFO, 0, "Queue: Empty");
+    log(LoggerI::INFO, 0, "Queue is empty during pull");
     _pullCB = cb;
     return 0; 
   }
@@ -66,7 +65,7 @@ TuplePtr Queue::pull(int port, cbv cb)
     _pushCB = cbv_null;
   }
 
-  log(LoggerI::INFO, 0, str(strbuf() << "Queue: Pull succeed " << p->toString()));
+  log(LoggerI::INFO, 0, str(strbuf() << "Pull succeed " << p->toString() << ", queuesize=" << _q.size()));
   return p;
 }
 
