@@ -103,7 +103,7 @@ if __name__ == "__main__":
         p, s = os.wait() 
         for node in range(nodes):
             if p == procs[node].pid:
-                pid = run_node(log, args[0], seeds[node], flags["IP"], port, flags["landmark"], \
+                pid = run_node(log, args[0], seeds[node] + port, flags["IP"], port, flags["landmark"], \
                                args[1]+"/chord_node" + str(node) + ".out")
                 procs[node] = Monitor(flags["session"], pid, log) 
                 port += 1

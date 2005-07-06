@@ -88,6 +88,10 @@ foreach $key (keys (%searchKeys)) {
 my $x = 0;
 my $cum = 0;
 for ($x = 0; $x < @consistencyArray; $x++) {
+    if ($consistencyArray[$x] == undef) {
+	$consistencyArray[$x] = 0;
+    }
+    print $x . " " . $consistencyArray[$x] . " " . $x / $opt_n . " " . $cum / $totalSize . "\n";
     $cum = $cum + $consistencyArray[$x];
     print $x . " " . $consistencyArray[$x] . " " . $x / $opt_n . " " . $cum / $totalSize . "\n";
 }
