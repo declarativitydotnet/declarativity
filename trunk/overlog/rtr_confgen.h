@@ -69,6 +69,8 @@
 #include "aggregate.h"
 #include "duplicateConservative.h"
 #include "aggwrap.h"
+#include "tupleseq.h"
+#include "cc.h"
 
 class Rtr_ConfGen {
  private:
@@ -117,6 +119,7 @@ private:
   str  _pendingReceiverTable;
   ElementSpecPtr _pendingReceiverSpec;
   OL_Context::Rule* _currentRule;
+  ElementSpecPtr _ccTx, _ccRx, _roundRobinCC;
   
   // Relational -> P2 elements
   void processRule(OL_Context::Rule *r, str nodeID);

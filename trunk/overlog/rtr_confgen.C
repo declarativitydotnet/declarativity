@@ -25,7 +25,7 @@ Rtr_ConfGen::Rtr_ConfGen(OL_Context* ctxt,
   _cc = cc;
   str outputFile(filename << ".out");
   _output = fopen(outputFile.cstr(), "w");
-  _pendingRegisterReceiver = false;
+  _pendingRegisterReceiver = false;  
 }
 
 
@@ -39,6 +39,18 @@ Rtr_ConfGen::~Rtr_ConfGen()
 // if running only one, nodeID is the local host name,
 void Rtr_ConfGen::configureRouter(ref< Udp > udp, str nodeID)
 {
+
+  if (!_cc) {
+    _ccTx = NULL;
+    _ccRx = NULL;
+  } else {
+    _ccTx 
+      = _conf->addElement(New refcounted< CCTx >("Transmit CC" << nodeID, 1, 2048, 0, 1, 1, 2));
+    _ccRx 
+      = _conf->addElement(New refcounted< CCRx >("CC Receive" << nodeID, 2048, 1, 2));
+  }
+
+
   // iterate through all the rules and process them
   for (unsigned int k = 0; k < _ctxt->getRules()->size(); k++) {
     _currentRule = _ctxt->getRules()->at(k);    
@@ -149,9 +161,9 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
     // at the receiver side, generate a dummy receive  
     str headTableName = r->head->fn->name;
     registerReceiverTable(r, headTableName);
-    ElementSpecRef sinkS = 
+    /*ElementSpecRef sinkS = 
       _conf->addElement(New refcounted< Discard >("discard"));    
-    registerReceiver(headTableName, sinkS);
+      registerReceiver(headTableName, sinkS);*/
   }
 
   if (_pendingReceiverSpec) {
@@ -183,10 +195,40 @@ Rtr_ConfGen::genReceiveElements(ref< Udp> udp,
   hookUp(udpReceive, 0, unmarshalS, 0);
   hookUp(unmarshalS, 0, unBoxS, 0);
 
-  ElementSpecRef wrapAroundMux = 
-    _conf->addElement(New refcounted< Mux >(strbuf("wrapAroundSendMux:") 
-					    << nodeID, 2));
-  hookUp(unBoxS, 0, wrapAroundMux, 0);
+  ElementSpecPtr wrapAroundMux = NULL;
+  if (_cc) {
+    wrapAroundMux = _conf->addElement(New refcounted< Mux >(strbuf("wrapAroundSendMux:") 
+							    << nodeID, 3));
+
+    ref< vec< ValueRef > > demuxKeysCC = New refcounted< vec< ValueRef > >;
+    demuxKeysCC->push_back(New refcounted< Val_Str > ("ack"));
+    demuxKeysCC->push_back(New refcounted< Val_Str > ("ccdata"));
+
+    ElementSpecRef demuxRxCC 
+      = _conf->addElement(New refcounted< Demux >("receiveDemuxCC", demuxKeysCC));
+
+    genPrintElement(strbuf("PrintBeforeReceiveDemuxCC:") << nodeID);
+    hookUp(demuxRxCC, 0);
+    hookUp(demuxRxCC, 0, _ccTx, 1);  // send acknowledgements to cc transmit
+    hookUp(demuxRxCC, 2, wrapAroundMux, 2); // regular non-CC data
+
+    // handle CC data. <ccdata, seq, src, <t>>
+    ElementSpecRef unpackCC =  
+      _conf->addElement(New refcounted< 
+			UnboxField >(strbuf("ReceiveUnBoxCC:") << nodeID, 3));
+
+      //      = _conf->addElement(New refcounted< PelTransform >("ccRxUnpackage" << nodeID, 
+      //							 "$3 pop"));
+    hookUp(demuxRxCC, 1, _ccRx, 0);  // regular CC data    
+    hookUp(unpackCC, 0);
+    genPrintElement(strbuf("PrintReceiveUnpackCC:") << nodeID);
+    hookUp(wrapAroundMux, 0); // connect data to wraparound mux   
+
+  } else {
+    wrapAroundMux = _conf->addElement(New refcounted< Mux >(strbuf("wrapAroundSendMux:") 
+							    << nodeID, 2));
+    hookUp(unBoxS, 0, wrapAroundMux, 0);
+  }
 
   // demuxer
   ref< vec< ValueRef > > demuxKeys = New refcounted< vec< ValueRef > >;
@@ -286,9 +328,11 @@ Rtr_ConfGen::genReceiveElements(ref< Udp> udp,
     }
   }
 
+  // connect the acknowledgement port to ccTx
   ElementSpecRef sinkS 
     = _conf->addElement(New refcounted< Discard >("discard"));
   hookUp(demuxS, _udpReceivers.size(), sinkS, 0); 
+  
 
   _currentElementChain.push_back(wrapAroundDemux);
   genPrintElement(strbuf("PrintWrapAround:") << nodeID);
@@ -344,20 +388,82 @@ Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
   genPrintWatchElement(strbuf("PrintWatchRemoteSend:") << nodeID);
 
   ///////// Network Out ///////////////
-  // for now, assume addr field is the put here
-  ElementSpecRef encapSend =
-    _conf->addElement(New refcounted< PelTransform >(strbuf("encapSend:") 
-						     << nodeID, 
-						     "$1 pop swallow pop")); 
-  // Now marshall the payload (second field)
-  ElementSpecRef marshalSend = 
-    _conf->addElement(New refcounted< MarshalField >("marshal:" << 
-						     nodeID, 1));  
+  if (_cc) {
+    ElementSpecRef srcAddress  = 
+      _conf->addElement(New refcounted< PelTransform >(strbuf("AddSrcAddressCC:" << nodeID), 
+							      "\"" << nodeID 
+							      << "\" pop swallow pop"));
+    ElementSpecRef seq 
+      = _conf->addElement(New refcounted< Sequence >("SequenceCC" << nodeID));
+    hookUp(srcAddress, 0);
+    hookUp(seq, 0);
+
+    // <data, seq, src, <t>>
+    ElementSpecRef tagData  = 
+      _conf->addElement(New refcounted< PelTransform >(strbuf("TagData:" << nodeID), 
+						       "\"ccdata\" pop $0 pop $1 pop $2 pop"));
+    hookUp(tagData, 0);
+
+    genPrintElement(strbuf("PrintRemoteSendCCOne:") << nodeID);
+
+    ElementSpecRef pullPushCC =
+      _conf->addElement(New refcounted< 
+			TimedPullPush >(strbuf("SendPullPushCC:") 
+					<< nodeID, 0));
+
+    hookUp(pullPushCC, 0);
+    hookUp(_ccTx, 0); // <seq, addr, <t>>
+
+    // <dst, <seq, addr, <t>>
+    ElementSpecRef encapSendCC =
+      _conf->addElement(New refcounted< PelTransform >(strbuf("encapSendCC:") 
+						       << nodeID, 
+						       "$3 1 field pop swallow pop")); 
+    hookUp(_ccTx, 0, encapSendCC, 0);
+
+    genPrintElement(strbuf("PrintRemoteSendCCTwo:") << nodeID);
+    
+    _roundRobinCC =
+       _conf->addElement(New refcounted< RoundRobin >("roundRobinSenderCC:" 
+						      << nodeID, 2)); 
+     hookUp(_roundRobinCC, 0);
+
+    // acknowledgements. <dst, <ack, seq, windowsize>>
+    ElementSpecRef ackPelTransform
+      = _conf->addElement(New refcounted< PelTransform >("ackPelTransformCC" << nodeID,
+							"$0 pop \"ack\" ->t $1 append $2 append pop"));
+    
+    hookUp(_ccRx, 1, ackPelTransform, 0);
+    genPrintElement(strbuf("PrintSendAck:") << nodeID);
+
+    hookUp(_currentElementChain.back(), 0, _roundRobinCC, 1);
+
+     // Now marshall the payload (second field)
+     // <dst, marshalled>
+     ElementSpecRef marshalSendCC = 
+       _conf->addElement(New refcounted< MarshalField >("marshalCC:" << 
+							nodeID, 1));  
+     genPrintElement(strbuf("PrintRemoteSendCCMarshal:") << nodeID);
+     hookUp(marshalSendCC, 0); 
+
+  } else {
+    // for now, assume addr field is the put here
+    ElementSpecRef encapSend =
+      _conf->addElement(New refcounted< PelTransform >(strbuf("encapSend:") 
+						       << nodeID, 
+						       "$1 pop swallow pop")); 
+    hookUp(encapSend, 0);
+
+    // Now marshall the payload (second field)
+    ElementSpecRef marshalSend = 
+      _conf->addElement(New refcounted< MarshalField >("marshal:" << 
+						       nodeID, 1));  
+    hookUp(marshalSend, 0);  
+  }
+   
   ElementSpecRef routeSend =
     _conf->addElement(New refcounted< StrToSockaddr >("router:" << nodeID, 0));
 
-  hookUp(encapSend, 0);
-  hookUp(marshalSend, 0);
   hookUp(routeSend, 0);
   hookUp(udpSend, 0);
 
@@ -1211,9 +1317,9 @@ Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
   _udpPushSenders.push_back(_currentElementChain.back());
 
   registerReceiverTable(currentRule, headTableName);
-  ElementSpecRef sinkS 
+  /*ElementSpecRef sinkS 
     = _conf->addElement(New refcounted< Discard >("discard"));    
-  registerReceiver(headTableName, sinkS);
+    registerReceiver(headTableName, sinkS);*/
 }
 
 
