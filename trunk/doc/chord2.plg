@@ -14,10 +14,10 @@
 
 /* The base tuples */
 materialize(node, infinity, 1, keys(1)).
-materialize(finger, 15, 160, keys(2)).
+materialize(finger, infinity, 160, keys(2)).
 materialize(bestSucc, infinity, 1, keys(1)).
 materialize(succDist, infinity, 100, keys(2)).
-materialize(succ, 15, 100, keys(2)).
+materialize(succ, infinity, 100, keys(2)).
 materialize(pred, infinity, 100, keys(1)).
 materialize(succCount, infinity, 1, keys(1)).
 materialize(join, infinity, 1, keys(1)).
