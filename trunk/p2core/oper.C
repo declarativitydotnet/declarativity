@@ -22,6 +22,7 @@
 #include "val_tuple.h"
 #include "val_time.h"
 #include "val_id.h"
+#include "val_ip_addr.h"
 
 /**
  * The initialization of the operator table for operator functions.
@@ -36,64 +37,69 @@
  * NULLV,  STR,    INT32,  
  * UINT32, INT64,  UINT64, 
  * DOUBLE, OPAQUE, TUPLE,  
- * TIME,   ID
+ * TIME,   ID,     IP_ADDR
  */
 const Oper** Oper::oper_table_[Value::TYPES][Value::TYPES] = {
 /* NULLV */
 {&Val_Null::oper_,   &Val_Null::oper_,   &Val_Int32::oper_, 
  &Val_UInt32::oper_, &Val_Int64::oper_,  &Val_UInt64::oper_, 
  &Val_Double::oper_, &Val_Null::oper_,   &Val_Null::oper_,   
- &Val_Time::oper_,   &Val_Null::oper_},
+ &Val_Time::oper_,   &Val_Null::oper_, &Val_IP_ADDR::oper_},
 /* STR */
 {&Val_Null::oper_, &Val_Str::oper_,    &Val_Str::oper_,    
  &Val_Str::oper_,  &Val_Str::oper_,    &Val_Str::oper_,  
  &Val_Str::oper_,  &Val_Opaque::oper_, &Val_Tuple::oper_, 
- &Val_Str::oper_,  &Val_Str::oper_},
+ &Val_Str::oper_,  &Val_Str::oper_,  &Val_IP_ADDR::oper_},
 /* INT32 */
 {&Val_Null::oper_,   &Val_Str::oper_,    &Val_Int32::oper_,  
  &Val_UInt32::oper_, &Val_Int64::oper_,  &Val_UInt64::oper_, 
  &Val_Double::oper_, &Val_Opaque::oper_, &Val_Tuple::oper_,  
- &Val_Time::oper_,   &Val_ID::oper_},
+ &Val_Time::oper_,   &Val_ID::oper_,  &Val_IP_ADDR::oper_},
 /* UINT32 */
 {&Val_Null::oper_,   &Val_Str::oper_,    &Val_UInt32::oper_, 
  &Val_UInt32::oper_, &Val_Int64::oper_,  &Val_UInt64::oper_, 
  &Val_Double::oper_, &Val_Opaque::oper_, &Val_Tuple::oper_,  
- &Val_Time::oper_,   &Val_ID::oper_},
+ &Val_Time::oper_,   &Val_ID::oper_, &Val_IP_ADDR::oper_},
 /* INT64 */
 {&Val_Null::oper_,   &Val_Str::oper_,    &Val_Int64::oper_,  
  &Val_Int64::oper_,  &Val_Int64::oper_,  &Val_UInt64::oper_, 
  &Val_Double::oper_, &Val_Opaque::oper_, &Val_Tuple::oper_, 
- &Val_Time::oper_,   &Val_ID::oper_},
+ &Val_Time::oper_,   &Val_ID::oper_, &Val_IP_ADDR::oper_},
 /* UINT64 */
 {&Val_Null::oper_,   &Val_Str::oper_,    &Val_UInt64::oper_,  
  &Val_UInt64::oper_, &Val_UInt64::oper_, &Val_UInt64::oper_, 
  &Val_Double::oper_, &Val_Opaque::oper_, &Val_Tuple::oper_,  
- &Val_Time::oper_,   &Val_ID::oper_},
+ &Val_Time::oper_,   &Val_ID::oper_, &Val_IP_ADDR::oper_},
 /* DOUBLE */
 {&Val_Null::oper_,   &Val_Str::oper_,    &Val_Double::oper_, 
  &Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_, 
  &Val_Double::oper_, &Val_Opaque::oper_, &Val_Tuple::oper_,  
- &Val_Time::oper_,   &Val_ID::oper_},
+ &Val_Time::oper_,   &Val_ID::oper_, &Val_IP_ADDR::oper_},
 /* OPAQUE */
 {&Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_, 
  &Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_, 
  &Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_, 
- &Val_Opaque::oper_, &Val_Opaque::oper_},
+ &Val_Opaque::oper_, &Val_Opaque::oper_, &Val_IP_ADDR::oper_},
 /* TUPLE */
 {&Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_, 
  &Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_, 
  &Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_, 
- &Val_Tuple::oper_, &Val_Tuple::oper_},
+ &Val_Tuple::oper_, &Val_Tuple::oper_, &Val_IP_ADDR::oper_},
 /* TIME */
 {&Val_Null::oper_, &Val_Str::oper_,    &Val_Time::oper_,   
  &Val_Time::oper_, &Val_Time::oper_,   &Val_Time::oper_, 
  &Val_Time::oper_, &Val_Opaque::oper_, &Val_Tuple::oper_, 
- &Val_Time::oper_, &Val_Str::oper_},
+ &Val_Time::oper_, &Val_Str::oper_, &Val_IP_ADDR::oper_},
 /* ID */
 {&Val_Null::oper_, &Val_Str::oper_,    &Val_ID::oper_,     
  &Val_ID::oper_,   &Val_ID::oper_,     &Val_ID::oper_,   
  &Val_ID::oper_,   &Val_Opaque::oper_, &Val_Tuple::oper_, 
- &Val_Str::oper_,  &Val_ID::oper_}
+ &Val_Str::oper_,  &Val_ID::oper_, &Val_IP_ADDR::oper_},
+/* IP_ADDR */
+{&Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_,
+ &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_,
+ &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_,
+ &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_}
 };
 
 ValueRef operator<<(const ValueRef& v1, const ValueRef& v2) {

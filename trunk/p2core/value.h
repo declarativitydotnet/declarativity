@@ -88,6 +88,7 @@ public:
     TUPLE,
     TIME,
     ID,
+    IP_ADDR,
     /* NEW TYPE DEFINITIONS GO HERE */
     TYPES
   };
