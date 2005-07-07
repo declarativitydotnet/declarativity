@@ -45,7 +45,7 @@ void Rtr_ConfGen::configureRouter(ref< Udp > udp, str nodeID)
     _ccRx = NULL;
   } else {
     _ccTx 
-      = _conf->addElement(New refcounted< CCTx >("Transmit CC" << nodeID, 1, 2048, 0, 1, 1, 2));
+      = _conf->addElement(New refcounted< CCTx >("Transmit CC" << nodeID, 1, 2048, 1, 1, 1, 2));
     _ccRx 
       = _conf->addElement(New refcounted< CCRx >("CC Receive" << nodeID, 2048, 1, 2));
   }

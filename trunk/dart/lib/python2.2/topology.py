@@ -112,6 +112,7 @@ class Topology:
         s.write("set lan%04d [$ns make-lan \"" % self.lanno)
         s.write("%s" % (" ".join(map(lambda(x): "$router%04d" % x, nodes))))
         s.write("\" %.3fMb %.3fms]\n" % (PLACEHOLDER_BW, PLACEHOLDER_LAT))
+	# END NODE SHAPING
         s.write("tb-set-endnodeshaping lan%04d 1\n" % self.lanno)
         for r in nodes:
             p = self.rparams[r]
@@ -129,6 +130,7 @@ class Topology:
             s.write("set lan%04d [$ns make-lan \"" % self.lanno)
             s.write("%s" % (rstr + " " + hstr))
             s.write("\" %.3fMb %.3fms]\n" % (PLACEHOLDER_BW, PLACEHOLDER_LAT))
+	    # END NODE SHAPING
             s.write("tb-set-endnodeshaping lan%04d 1\n" % self.lanno)
             s.write("tb-set-node-lan-params $router%04d $lan%04d %.3fms %.3fMb %.3f\n" % (r, self.lanno, rp.extlat, rp.extbw, rp.extloss))
             for h in self.hostlans[r]:

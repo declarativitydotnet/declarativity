@@ -108,6 +108,7 @@ TuplePtr CCRx::simple_action(TupleRef p)
   ack->freeze();
 
   ack_q_.push_back(ack);
+  log(LoggerI::INFO, 0, strbuf() << "ACK QUEUE SIZE: " << ack_q_.size()); 
 
   if (_ack_cb != cbv_null) {
     (*_ack_cb)();		// Notify new ack
@@ -125,8 +126,8 @@ TuplePtr CCRx::pull(int port, cbv cb)
   assert(port == 1);
 
   if (!ack_q_.empty()) {
-    TuplePtr ack = ack_q_[0];
-    ack_q_.erase(ack_q_.begin());
+    TuplePtr ack = ack_q_.front();
+    ack_q_.pop_front();
     return ack;
   }
   _ack_cb = cb;
@@ -200,24 +201,7 @@ int CCTx::push(int port, TupleRef tp, cbv cb)
     //TODO: Use timestamps to track the latest rwnd value.
     rwnd_ = Val_Double::cast((*tp)[ack_rwnd_field_]);		// Receiver window
 
-    OTupleIndex::iterator iter = ot_map_.find(seq);
-    if (iter != ot_map_.end()) { 
-      int32_t d = delay(&(iter->second)->tt_);
-
-      timecb_remove((iter->second)->tcb_);
-      add_rtt_meas(d);
-
-      delete iter->second;
-      ot_map_.erase(iter);
-      if (current_window() < max_window() && _din_cb != cbv_null) {
-        (*_din_cb)();
-        _din_cb = cbv_null;
-      }
-    }
-    else {
-      // Log event: possibly due to duplicate ack.
-      log(LoggerI::WARN, 0, "CCTx::push receive unknown ack, possible duplicate"); 
-    }
+    add_rtt_meas(dealloc(seq));
     break;
   }
 
@@ -240,25 +224,24 @@ TuplePtr CCTx::pull(int port, cbv cb)
   
     // All retransmit packets go first.
     if (!rtran_q_.empty()) {
-      OTuple *otp = rtran_q_[0];
-      rtran_q_.erase(rtran_q_.begin());
-      otp->tcb_ = delaycb(rto_/1000, (rto_ % 1000)*1000000, wrap(this, &CCTx::timeout_cb, otp)); 
-      otp->tran_cnt_++;
-  
+      OTuple *otp = rtran_q_.front();
+      SeqNum  seq = Val_UInt64::cast((*otp->tp_)[seq_field_]);	// Sequence number
+
+      log(LoggerI::INFO, 0, strbuf()<<"RETRANSMITING seq("<<seq<<"), delay => "<<delay(&otp->tt_)); 
+      rtran_q_.pop_front();
+      map(seq, otp);
+
       return otp->tp_;
     }
     else if (!send_q_.empty()) {
-      TuplePtr  tp    = send_q_[0];
-      SeqNum    seq   = Val_UInt64::cast((*tp)[seq_field_]);	// Sequence number
+      OTuple *otp = new OTuple(send_q_.front());
+      SeqNum  seq = Val_UInt64::cast((*otp->tp_)[seq_field_]);	// Sequence number
   
-      send_q_.erase(send_q_.begin());
-  
-      OTuple *otp = new OTuple(tp);
-      otp->tcb_ = delaycb(rto_/1000, (rto_ % 1000)*1000000, wrap(this, &CCTx::timeout_cb, otp)); 
-      otp->tran_cnt_++;
-      ot_map_.insert(std::make_pair(seq, otp));
-  
-      return tp;
+      send_q_.pop_front();
+      map(seq, otp);
+
+      log(LoggerI::INFO, 0, strbuf()<<"TRANSMITING seq("<<seq<<")"); 
+      return otp->tp_;
     }
     _dout_cb = cb;
   }
@@ -278,6 +261,38 @@ TuplePtr CCTx::pull(int port, cbv cb)
 
 }
 
+void CCTx::map(SeqNum seq, OTuple *otp) 
+{
+  otp->tran_cnt_++;
+  ot_map_.insert(std::make_pair(seq, otp));
+  otp->tcb_ = delaycb(rto_/1000, (rto_ % 1000)*1000000, wrap(this, &CCTx::timeout_cb, otp)); 
+}
+
+int32_t CCTx::dealloc(SeqNum seq)
+{
+  int32_t d = -1;
+  OTupleIndex::iterator iter = ot_map_.find(seq);
+  if (iter != ot_map_.end()) { 
+    log(LoggerI::INFO, 0, strbuf()<<"DEALLOCATING seq("<<seq<<")"); 
+    d = delay(&(iter->second)->tt_);
+
+    if (iter->second->tcb_ != NULL) timecb_remove((iter->second)->tcb_);
+    iter->second->tcb_ = NULL;
+
+    delete iter->second;
+    ot_map_.erase(iter);
+    if (current_window() < max_window() && _din_cb != cbv_null) {
+      (*_din_cb)();
+      _din_cb = cbv_null;
+    }
+  }
+  else {
+    // Log event: possibly due to duplicate ack.
+    log(LoggerI::INFO, 0, "CCTx::push receive unknown ack, possible duplicate"); 
+  }
+  return d;
+}
+
 /**
  * This function performs the following actions.
  * 1. Update window size
@@ -286,29 +301,23 @@ TuplePtr CCTx::pull(int port, cbv cb)
 void CCTx::timeout_cb(OTuple *otp)
 {
   SeqNum seq = Val_UInt64::cast((*otp->tp_)[seq_field_]);
-
-  otp->tcb_ = NULL;
   if (otp->wnd_ == true) {
     // Update window sizes and enter slow start
     timeout(); 		
-    // Set all current OTuple::wnd_ = false.
     std::for_each(ot_map_.begin(), ot_map_.end(), OTuple());
   }
-  else if (otp->tran_cnt_ > max_retry_) {
-    log(LoggerI::WARN, 0, 
-        strbuf()<<"MAX NUMBER OF RETRIES REACHED FOR TUPLE seq("<<seq<<")");
-    OTupleIndex::iterator iter = ot_map_.find(seq);
-    assert(iter != ot_map_.end());
-    delete iter->second;
-    ot_map_.erase(iter);
-    if (current_window() < max_window() && _din_cb != cbv_null) {
-      (*_din_cb)();
-      _din_cb = cbv_null;
-    }
+
+  otp->tcb_ = NULL;
+  if (otp->tran_cnt_ > max_retry_) {
+    log(LoggerI::WARN, 0, strbuf()<<"MAX NUMBER OF RETRIES REACHED FOR TUPLE seq("
+			  <<seq<<") delay => " << (delay(&otp->tt_)) << " ms");
+    assert(dealloc(seq) > 0);
     return;
   }
 
+  ot_map_.erase(ot_map_.find(seq));
   rtran_q_.push_back(otp);	// Add to retransmit queue
+
   if (_dout_cb != cbv_null) {
     (*_dout_cb)();
     _dout_cb = cbv_null;
@@ -324,7 +333,7 @@ void CCTx::timeout_cb(OTuple *otp)
  */
 REMOVABLE_INLINE void CCTx::add_rtt_meas(int32_t m)
 {
-  assert(m >= 0);
+  if (m < 0) return;
 
   if (sa_ == -1) {
     // After the first measurement, set the timeout to four
@@ -349,15 +358,15 @@ REMOVABLE_INLINE void CCTx::add_rtt_meas(int32_t m)
   else if (rto_ < MIN_RTO) rto_ = MIN_RTO;
 
   if (cwnd_ < ssthresh_) 
-    cwnd_ *= 2.0; 		// slow start
+    cwnd_ *= 2.0; 			// slow start
   else		 
-    cwnd_ += 1.0 / cwnd_; 	// additive increase 
+    cwnd_ += 1.0; 			// additive increase 
 
   if (cwnd_ > max_wnd_)
     cwnd_ = max_wnd_;
 
   log(LoggerI::INFO, 0, strbuf() << "CURRENT WINDOW: " << current_window()
-			<< "\n\tCWND(" << long(cwnd_) << ") MAX_WND("
+			<< "\tCWND(" << long(cwnd_) << ") MAX_WND("
 			<< long(max_wnd_) << ") SSTHRESH(" << long(ssthresh_)
 			<< ")\n");
 }
@@ -371,7 +380,8 @@ REMOVABLE_INLINE void CCTx::timeout()
   else if (rto_ < MIN_RTO) rto_ = MIN_RTO;
 
   ssthresh_ = cwnd_ / 2.0;	// multiplicative decrease
-  cwnd_     = 1.0;		// Enter slow start
+  cwnd_     = 2.0;		// Enter slow start
+  if (ssthresh_ < 2.0) ssthresh_ = 2.0;
 
   log(LoggerI::INFO, 0, strbuf() << "CONGESTION ADJUST: RTO = " << long(rto_)
 			<< " | SSTHRESH = " << long(ssthresh_) 
@@ -379,7 +389,7 @@ REMOVABLE_INLINE void CCTx::timeout()
 }
 
 REMOVABLE_INLINE int CCTx::current_window() {
-  return send_q_.size() + rtran_q_.size() + ot_map_.size();
+  return ot_map_.size();
 }
 
 REMOVABLE_INLINE int CCTx::max_window() {

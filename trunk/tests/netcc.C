@@ -45,7 +45,7 @@ Router::ConfigurationRef UdpCC_source(Udp *udp, str src, str dest, double drop) 
   // The sending data flow
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
 
-  ElementSpecRef data     = conf->addElement(New refcounted< TimedPushSource >("source", .5));
+  ElementSpecRef data     = conf->addElement(New refcounted< TimedPushSource >("source", .01));
   ElementSpecRef srcAddr  = conf->addElement(New refcounted< PelTransform >(strbuf("src:").cat(src), 
 									   strbuf() << "\"" << src << "\""
 									   << " pop swallow pop"));

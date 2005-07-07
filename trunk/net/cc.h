@@ -11,6 +11,7 @@
 #define __CC_H__
 
 #include <map>
+#include <deque>
 #include <async.h>
 #include "tuple.h"
 #include "element.h"
@@ -44,7 +45,7 @@ private:
   double   rwnd_;				// Receiver window size
   int      seq_field_;
   int      src_field_;
-  std::vector <TuplePtr> ack_q_;		// Output ack queue
+  std::deque <TuplePtr> ack_q_;		// Output ack queue
 };
   
 /**
@@ -68,6 +69,8 @@ public:
 
 private:
   void timeout_cb(OTuple *otp);				// Callback for to retry sending a tuple
+  REMOVABLE_INLINE int32_t dealloc(SeqNum seq);		// Remove OTuple from map
+  REMOVABLE_INLINE void map(SeqNum seq, OTuple *otp);	// Map tuple and set timeout
   REMOVABLE_INLINE void add_rtt_meas(int32_t m);	// Update sa, sv, and rto based on m
   REMOVABLE_INLINE void timeout();			// Update sa, sv, and rto based on m
   REMOVABLE_INLINE int  current_window();		// Returns the current window size
@@ -89,9 +92,9 @@ private:
   uint32_t  ack_seq_field_;
   uint32_t  ack_rwnd_field_;
 
-  std::vector <TuplePtr> send_q_; 		// Primary queue containing tuples 
+  std::deque <TuplePtr> send_q_; 		// Primary queue containing tuples 
 						// not yet sent
-  std::vector <OTuple*>  rtran_q_;		// Retransmit queue 
+  std::deque <OTuple*>  rtran_q_;		// Retransmit queue 
 
   typedef std::map<SeqNum, OTuple*> OTupleIndex;
   OTupleIndex ot_map_;			// Map containing unacked in transit tuples
