@@ -15,16 +15,15 @@
 #include <iostream>
 #include "val_str.h"
 #include "val_double.h"
-#include "oper.h"
 
-class OperStr : public OperCompare<Val_Str> {
+class OperStr : public opr::OperCompare<Val_Str> {
   virtual ValuePtr _plus (const ValueRef& v1, const ValueRef& v2) const {
     str s1 = Val_Str::cast(v1);
     str s2 = Val_Str::cast(v2);
     return Val_Str::mk((strbuf() << s2 << s1));
   };
 };
-const Oper* Val_Str::oper_ = New OperStr();
+const opr::Oper* Val_Str::oper_ = New OperStr();
 
 //
 // Marshal a string

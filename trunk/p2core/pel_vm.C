@@ -29,6 +29,8 @@
 #include "val_id.h"
 #include "oper.h"
 
+using namespace opr;
+
 typedef void(Pel_VM::*Op_fn_t)(u_int32_t);
 
 struct JumpTableEnt_t {
@@ -484,14 +486,14 @@ DEF_OP(NEG) {
   try {
     ValueRef neg = Val_Int32::mk(-1);
     stackPush((neg * pop()));
-  } catch (Oper::Exception *e) {
+  } catch (opr::Oper::Exception *e) {
     error = PE_OPER_UNSUP;
   }
 }
 DEF_OP(PLUS) {
   try {
     stackPush((pop()+pop()));
-  } catch (Oper::Exception *e) {
+  } catch (opr::Oper::Exception *e) {
     error = PE_OPER_UNSUP;
   }
 }
@@ -501,7 +503,7 @@ DEF_OP(MINUS) {
   ValueRef v2 = pop();
   try {
     stackPush((v2-v1));
-  } catch (Oper::Exception *e) {
+  } catch (opr::Oper::Exception *e) {
     error = PE_OPER_UNSUP;
   }
 }
@@ -509,7 +511,7 @@ DEF_OP(MINUSMINUS) {
   ValueRef v1 = pop();
   try {
     stackPush(--v1);
-  } catch (Oper::Exception *e) {
+  } catch (opr::Oper::Exception *e) {
     error = PE_OPER_UNSUP;
   }
 }
@@ -517,14 +519,14 @@ DEF_OP(PLUSPLUS) {
   ValueRef v1 = pop();
   try {
     stackPush(++v1);
-  } catch (Oper::Exception *e) {
+  } catch (opr::Oper::Exception *e) {
     error = PE_OPER_UNSUP;
   }
 }
 DEF_OP(MUL) {
   try {
     stackPush((pop()*pop()));
-  } catch (Oper::Exception *e) {
+  } catch (opr::Oper::Exception *e) {
     error = PE_OPER_UNSUP;
   }
 }
@@ -535,7 +537,7 @@ DEF_OP(DIV) {
   if (v1 != Val_UInt64::mk(0)) { 
     try {
       stackPush((v2 / v1));
-    } catch (Oper::Exception *e) {
+    } catch (opr::Oper::Exception *e) {
       error = PE_OPER_UNSUP;
     }
   } else if (error == PE_SUCCESS) {
@@ -549,7 +551,7 @@ DEF_OP(MOD) {
   if (v1 != Val_UInt64::mk(0)) { 
     try {
       stackPush((v2 % v1));
-    } catch (Oper::Exception *e) {
+    } catch (opr::Oper::Exception *e) {
       error = PE_OPER_UNSUP;
     }
   } else if (error == PE_SUCCESS) {

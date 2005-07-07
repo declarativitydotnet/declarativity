@@ -16,8 +16,8 @@
 #define __VAL_UINT64_H__
 
 #include "value.h"
+#include "oper.h"
 
-class Oper;
 
 class Val_UInt64 : public Value {
 
@@ -46,7 +46,7 @@ public:
   // Casting
   static uint64_t cast(ValueRef v);
   
-  const static Oper* oper_;
+  const static opr::Oper* oper_;
 private:
   uint64_t i;
   

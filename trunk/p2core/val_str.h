@@ -16,8 +16,7 @@
 #define __VAL_STR_H__
 
 #include "value.h"
-
-class Oper;
+#include "oper.h"
 
 class Val_Str : public Value {
 
@@ -47,7 +46,7 @@ public:
   // Casting
   static str cast(ValueRef v);
   
-  const static Oper *oper_;
+  const static opr::Oper *oper_;
 private:
   str s;
 };

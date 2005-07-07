@@ -16,8 +16,7 @@
 #define __VAL_INT32_H__
 
 #include "value.h"
-
-class Oper;
+#include "oper.h"
 
 class Val_Int32 : public Value {
 
@@ -49,7 +48,7 @@ public:
   // The ZERO
   static ValueRef ZERO;
   
-  const static Oper* oper_;
+  const static opr::Oper* oper_;
 private:
   int32_t i;
   

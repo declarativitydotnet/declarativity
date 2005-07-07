@@ -21,9 +21,27 @@
 #include "val_str.h"
 #include "val_null.h"
 
-#define DOUBLE_HACK
-#include "oper.h"
-const Oper* Val_Double::oper_ = New OperImpl<Val_Double>();
+class OperDouble : public opr::OperCompare<Val_Double> {
+  virtual ValuePtr _plus (const ValueRef& v1, const ValueRef& v2) const {
+    return Val_Double::mk(Val_Double::cast(v1) + Val_Double::cast(v2));
+  };
+  virtual ValuePtr _minus (const ValueRef& v1, const ValueRef& v2) const {
+    return Val_Double::mk(Val_Double::cast(v1) - Val_Double::cast(v2));
+  };
+  virtual ValuePtr _times (const ValueRef& v1, const ValueRef& v2) const {
+    return Val_Double::mk(Val_Double::cast(v1) * Val_Double::cast(v2));
+  };
+  virtual ValuePtr _divide (const ValueRef& v1, const ValueRef& v2) const {
+    return Val_Double::mk(Val_Double::cast(v1) / Val_Double::cast(v2));
+  };
+  virtual ValuePtr _dec (const ValueRef& v1) const {
+    return Val_Double::mk((Val_Double::cast(v1)) - 1.);
+  };
+  virtual ValuePtr _inc (const ValueRef& v1) const {
+    return Val_Double::mk((Val_Double::cast(v1)) + 1.);
+  };
+};
+const opr::Oper* Val_Double::oper_ = New OperDouble();
 
 //
 // String conversion. 

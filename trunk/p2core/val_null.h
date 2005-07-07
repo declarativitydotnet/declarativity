@@ -16,8 +16,7 @@
 #define __VAL_NULL_H__
 
 #include "value.h"
-
-class Oper;
+#include "oper.h"
 
 class Val_Null : public Value {
 
@@ -43,7 +42,7 @@ public:
   // Casting: more for completeness than anything else...
   static void cast(ValueRef v);
   
-  const static Oper* oper_;
+  const static opr::Oper* oper_;
 private:
   static ValueRef singleton;
 };

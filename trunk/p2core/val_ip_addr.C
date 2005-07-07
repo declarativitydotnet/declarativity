@@ -2,11 +2,9 @@
 #include <iostream>
 #include "val_str.h"
 #include "math.h"
-#include "oper.h"
 #include <loggerI.h>
 
-const Oper* Val_IP_ADDR::oper_ = New OperCompare< Val_IP_ADDR> ();
-
+const opr::Oper* Val_IP_ADDR::oper_ = New opr::OperCompare< Val_IP_ADDR> ();
 
 //
 // Marshalling and unmarshallng

@@ -17,8 +17,7 @@
 #define __VAL_OPAQUE_H__
 
 #include "value.h"
-
-class Oper;
+#include "oper.h"
 
 class Val_Opaque : public Value {
 
@@ -48,7 +47,7 @@ public:
   // Casting
   static ref<suio> cast(ValueRef v);
   
-  const static Oper* oper_;
+  const static opr::Oper* oper_;
 private:
   ref<suio> b;
   

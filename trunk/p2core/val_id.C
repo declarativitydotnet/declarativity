@@ -13,9 +13,8 @@
 #include "val_id.h"
 #include "val_uint32.h"
 #include "val_uint64.h"
-#include "oper.h"
 
-class OperID : public OperCompare<Val_ID> {
+class OperID : public opr::OperCompare<Val_ID> {
   virtual ValuePtr _lshift (const ValueRef& v1, const ValueRef& v2) const {
     IDRef   id = Val_ID::cast(v1);
     uint32_t s = Val_UInt32::cast(v2);
@@ -45,7 +44,7 @@ class OperID : public OperCompare<Val_ID> {
   };
 
 };
-const Oper* Val_ID::oper_ = New OperID();
+const opr::Oper* Val_ID::oper_ = New OperID();
 
 //
 // Marshalling and unmarshallng

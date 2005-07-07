@@ -20,10 +20,8 @@
 #include "val_double.h"
 #include "val_str.h"
 #include "val_null.h"
-#include "oper.h"
 
-
-const Oper* Val_Int32::oper_ = New OperImpl<Val_Int32>();
+const opr::Oper* Val_Int32::oper_ = New opr::OperImpl<Val_Int32>();
 
 //
 // Marshalling and unmarshallng

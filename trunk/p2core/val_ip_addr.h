@@ -5,8 +5,6 @@
 #include "val_str.h"
 #include <loggerI.h>
 
-class Oper;
-
 class Val_IP_ADDR : public Value {
   
  public:  
@@ -33,7 +31,7 @@ class Val_IP_ADDR : public Value {
   // Strict comparison
   int compareTo(ValueRef) const;
   
-  const static Oper* oper_;
+  const static opr::Oper* oper_;
   
   /** My logging level */
   LoggerI::Level loggingLevel;
