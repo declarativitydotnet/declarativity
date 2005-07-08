@@ -35,9 +35,9 @@ def print_usage():
     print
 
 def parse_cmdline(argv): 
-    shortopts = "n:i:p:l:t:"
+    shortopts = "n:i:p:l:t:f:"
     flags = {"num_nodes" : 1, "seed" : random.random()*sys.maxint, "IP" : None, 
-             "start_port" : None, "landmark" : None, "session" : 0.0}
+             "start_port" : None, "landmark" : None, "session" : 0.0, "nochurn" : -1}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if   o == "-n": flags["num_nodes"]  = v
@@ -45,6 +45,7 @@ def parse_cmdline(argv):
         elif o == "-i": flags["IP"]         = v
         elif o == "-p": flags["start_port"] = v
         elif o == "-l": flags["landmark"]   = v
+        elif o == "-f": flags["nochurn"]    = int(v)
         elif o == "-t": flags["session"]    = float(v)
     return flags, args
 
@@ -94,7 +95,7 @@ if __name__ == "__main__":
                        args[1]+"/chord_node" + str(node) + ".out")
         port += 1
         print >> log, "NODE %d START TIME %d\n" % (node, time.time() - start)
-        if flags["session"]: 
+        if flags["session"] and node != flags["nochurn"]: 
             procs.append(Monitor(5.0 + (random.random() * flags["session"]), pid, log))
         else: procs.append(Monitor(0, pid, log))
 
