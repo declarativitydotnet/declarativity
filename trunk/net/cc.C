@@ -8,8 +8,7 @@
  * 
  */
 
-// #include <sys/time.h>
-#include <iostream>
+#include <algorithm>
 
 #include "sysconf.h"
 #include "cc.h"
@@ -205,7 +204,7 @@ int CCTx::push(int port, TupleRef tp, cbv cb)
     break;
   }
 
-  if (!send_q_.empty() && _dout_cb != cbv_null) {
+  if (!(send_q_.empty() && rtran_q_.empty()) && _dout_cb != cbv_null) {
     (*_dout_cb)();
     _dout_cb = cbv_null;
   }
@@ -304,7 +303,7 @@ void CCTx::timeout_cb(OTuple *otp)
   if (otp->wnd_ == true) {
     // Update window sizes and enter slow start
     timeout(); 		
-    std::for_each(ot_map_.begin(), ot_map_.end(), OTuple());
+    for_each(ot_map_.begin(), ot_map_.end(), OTuple());
   }
 
   otp->tcb_ = NULL;

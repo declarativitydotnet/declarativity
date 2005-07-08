@@ -1,4 +1,3 @@
-// -*- c-basic-offset: 2; related-file-name: "element.C" -*-
 /*
  * This file is distributed under the terms in the attached INTEL-LICENSE file.
  * If you do not find these files, copies can be found by writing to:
