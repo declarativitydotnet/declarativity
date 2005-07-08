@@ -45,7 +45,7 @@ void Rtr_ConfGen::configureRouter(ref< Udp > udp, str nodeID)
     _ccRx = NULL;
   } else {
     _ccTx 
-      = _conf->addElement(New refcounted< CCTx >("Transmit CC" << nodeID, 1, 2048, 1, 1, 1, 2));
+      = _conf->addElement(New refcounted< CCTx >("Transmit CC" << nodeID, 1, 2048, 0, 1, 1, 2));
     _ccRx 
       = _conf->addElement(New refcounted< CCRx >("CC Receive" << nodeID, 2048, 1, 2));
   }
@@ -161,9 +161,6 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
     // at the receiver side, generate a dummy receive  
     str headTableName = r->head->fn->name;
     registerReceiverTable(r, headTableName);
-    /*ElementSpecRef sinkS = 
-      _conf->addElement(New refcounted< Discard >("discard"));    
-      registerReceiver(headTableName, sinkS);*/
   }
 
   if (_pendingReceiverSpec) {
@@ -216,9 +213,6 @@ Rtr_ConfGen::genReceiveElements(ref< Udp> udp,
     ElementSpecRef unpackCC =  
       _conf->addElement(New refcounted< 
 			UnboxField >(strbuf("ReceiveUnBoxCC:") << nodeID, 3));
-
-      //      = _conf->addElement(New refcounted< PelTransform >("ccRxUnpackage" << nodeID, 
-      //							 "$3 pop"));
     hookUp(demuxRxCC, 1, _ccRx, 0);  // regular CC data    
     hookUp(unpackCC, 0);
     genPrintElement(strbuf("PrintReceiveUnpackCC:") << nodeID);
