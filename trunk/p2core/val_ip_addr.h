@@ -12,7 +12,7 @@ class Val_IP_ADDR : public Value {
   // Required fields for all concrete types.
   // The type name
   const Value::TypeCode typeCode() const { return Value::IP_ADDR; };
-  const char *typeName() const { return "ip_address"; };
+  const char *typeName() const { return "ip_addr"; };
   str toString() const { return _s; };
   virtual unsigned int size() const { return (_s ? sizeof(_s) : 0); }
   

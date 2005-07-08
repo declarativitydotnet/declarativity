@@ -23,7 +23,7 @@
 #include "val_null.h"
 #include "val_opaque.h"
 #include "val_time.h"
-#include "val_id.h"
+#include "val_ip_addr.h"
 
 #if HAVE_CONFIG_H
 #include <config.h>
@@ -32,7 +32,6 @@
 #include <arpc.h>
 #include <iostream>
 #include <limits.h>
-#include <amisc.h>
 
 
 #define FAIL std::cerr << __FILE__ << ":" << __LINE__ << ": **"
@@ -52,7 +51,7 @@
 
 #define TEST_TIMEVAL(_mkt, _mks, _mkns, _mktc, _mktn) \
 { \
-  struct timespec t; \
+  struct timespec t;\
   std::cout << "Making Val_" << #_mkt << "(" << #_mks << "," << #_mkns << ")\n"; \
   t.tv_sec = _mks; t.tv_nsec = _mkns; \
   ValueRef v = Val_##_mkt::mk(t);  \
@@ -74,43 +73,6 @@
     if ( cv != _castv ) { \
       FAIL << "Bad cast value from Val_" #_mkt "(" #_mkv ")->Val_" #_castt \
                 << "; expected " #_castv " but got " << cv << "\n"; \
-    } \
-  } catch (Value::TypeError) { \
-    FAIL << "Type exception casting Val_" #_mkt "(" #_mkv ")->Val_" #_castt "\n"; \
-  } \
-}
-
-#define TEST_TIMEVAL_CAST(_mkt, _mkv, _castt, _casts, _castns) \
-{ \
-  struct timespec t; \
-  t.tv_sec = _casts; \
-  t.tv_nsec = _castns; \
-  std::cout << "Casting Val_" #_mkt "(" #_mkv ") -> " #_castt "\n"; \
-  ValueRef v = Val_##_mkt::mk(_mkv);  \
-  try { \
-    struct timespec cv = Val_##_castt::cast(v); \
-    if ( tscmp(cv, t) ) { \
-      FAIL << "Bad cast value from Val_" #_mkt "(" #_mkv ")->Val_" #_castt \
-                << "; expected " << t.tv_sec << "s " << t.tv_nsec << "ns " \
-                << " but got " << cv.tv_sec << "s " << cv.tv_nsec << "ns" \
-                << "\n"; \
-    } \
-  } catch (Value::TypeError) { \
-    FAIL << "Type exception casting Val_" #_mkt "(" #_mkv ")->Val_" #_castt "\n"; \
-  } \
-}
-
-#define TEST_ID_CAST(_mkt, _mkv, _castct, _castt, _castv) \
-{ \
-  IDRef i = ID::mk(Val_##_castt::cast(Val_##_mkt::mk(_castv))); \
-  std::cout << "Casting Val_" #_mkt "(" #_mkv ") -> " #_castct "\n"; \
-  ValueRef v = Val_##_mkt::mk(_mkv);  \
-  try { \
-    IDRef cv = Val_ID::cast(v); \
-    if ( cv->compareTo(i) ) { \
-      FAIL << "Bad cast value from Val_" #_mkt "(" #_mkv ")->Val_" #_castt \
-                << "; expected " << i->toString() << " but got " \
-                << cv->toString() << "\n"; \
     } \
   } catch (Value::TypeError) { \
     FAIL << "Type exception casting Val_" #_mkt "(" #_mkv ")->Val_" #_castt "\n"; \
@@ -143,6 +105,8 @@ int main(int argc, char **argv)
   suio_uprintf(u2, "This is UIO 2");
   ref<suio> u3 = New refcounted<suio>();
   suio_uprintf(u3, "This is UIO 3"); 
+  
+  str addr = "127.0.0.1:1000";
 
   // 
   // First, make sure that typecodes and typenames are assigned
@@ -195,6 +159,8 @@ int main(int argc, char **argv)
 
   TEST_VAL( Opaque, u1, OPAQUE, "opaque");
 
+  TEST_VAL( IP_ADDR, addr, IP_ADDR, "ip_addr"); 
+
   //
   // Test trivial (T->T) cast operations
   //
@@ -218,6 +184,8 @@ int main(int argc, char **argv)
 
   TEST_CAST( Opaque, u1, ref<suio>, Opaque, u1);
 
+  TEST_CAST( IP_ADDR, addr, str, IP_ADDR, addr);
+  
   // 
   //Test casting to NULL.
   //
@@ -239,6 +207,7 @@ int main(int argc, char **argv)
   TEST_BADCAST( Str, "", int, Null );
   TEST_BADCAST( Str, "Hello", int, Null );
   TEST_BADCAST( Opaque, u2, int, Null );
+  TEST_BADCAST( IP_ADDR, addr, int, Null);
 
   // Test casting to int32.
   #undef TEST_CAST_T
@@ -291,7 +260,7 @@ int main(int argc, char **argv)
   TEST_CAST_T( Str, "Rubbish", 0 );
   
   TEST_BADCAST( Opaque, u2, int32_t, Int32 );
-
+  TEST_BADCAST( IP_ADDR, addr, int32_t, Int32);
   // Test casting to uint32.
   #undef TEST_CAST_T
   #define TEST_CAST_T(_t,_v,_r) TEST_CAST(_t,_v,uint32_t,UInt32,_r)
@@ -343,7 +312,7 @@ int main(int argc, char **argv)
   TEST_CAST_T( Str, "Rubbish", 0 );
   
   TEST_BADCAST( Opaque, u2, uint32_t, UInt32 );
-
+  TEST_BADCAST( IP_ADDR, addr, IP_ADDR, UInt32);
 
   // Test casting to int64.
   #undef TEST_CAST_T
@@ -396,6 +365,7 @@ int main(int argc, char **argv)
   TEST_CAST_T( Str, "Rubbish", 0 );
   
   TEST_BADCAST( Opaque, u2, int64_t, Int64 );
+  TEST_BADCAST( IP_ADDR, addr, int64_t, Int64);
 
   // Test casting to uint64.
   #undef TEST_CAST_T
@@ -448,6 +418,7 @@ int main(int argc, char **argv)
   TEST_CAST_T( Str, "Rubbish", 0 );
   
   TEST_BADCAST( Opaque, u2, uint64_t, UInt64 );
+  TEST_BADCAST( IP_ADDR, addr, int64_t, Int64);
 
   // Test casting to double.
   #undef TEST_CAST_T
@@ -500,7 +471,7 @@ int main(int argc, char **argv)
   TEST_CAST_T( Str, "Rubbish", 0 );
   
   TEST_BADCAST( Opaque, u2, double, Double );
-
+  TEST_BADCAST( IP_ADDR, addr, int64_t, Int64);
 
   // Test casting to Str.
   #undef TEST_CAST_T
@@ -554,6 +525,8 @@ int main(int argc, char **argv)
   
   TEST_CAST_T( Opaque, u2, "This is UIO 2" );
 
+  TEST_CAST_T( IP_ADDR, addr, "127.0.0.1:1000");
+
   // Test casting to Opaque.
   #undef TEST_CAST_T
   #define TEST_CAST_T(_t,_v,_r) TEST_CAST(_t,_v,ref<suio>,Opaque,_r)
@@ -566,7 +539,8 @@ int main(int argc, char **argv)
   TEST_BADCAST_T( Int32, 0 );
   TEST_BADCAST_T( UInt64, 0 );
   TEST_BADCAST_T( Double, 0 );
-  
+  TEST_BADCAST_T(IP_ADDR, addr);
+
 #if 0
   TEST_CAST_T( Str, "", "" );
   TEST_CAST_T( Str, "0", "0" );
@@ -579,74 +553,34 @@ int main(int argc, char **argv)
   TEST_CAST_T( Str, "Rubbish", "Rubbish" );
 #endif  
   TEST_CAST_T( Opaque, u2, u2 );
+  
 
-  // Test casting to Time, time_t.tv_sec is of type int32
+  // Test casting to IP_ADDR type.
+  
   #undef TEST_CAST_T
-  #define TEST_CAST_T(_t,_v,_s,_ns) TEST_TIMEVAL_CAST(_t,_v,Time,_s,_ns)
+  #define TEST_CAST_T(_t,_v,_r) TEST_CAST(_t, _v, str, IP_ADDR, _r)
+  #undef TEST_BADCAST_T
+  #define TEST_BADCAST_T(_t,_v) TEST_BADCAST(_t, _v, str, IP_ADDR)
 
-  TEST_CAST_T( Null, , 0, 0 );
+  TEST_CAST_T( Str, "", "" );
+  TEST_CAST_T( Str, "0", "0" );
+  TEST_CAST_T( Str, "1", "1" );
+  TEST_CAST_T( Str, "0x1a", "0x1a" );
+  TEST_CAST_T( Str, "011", "011" );
+  TEST_CAST_T( Str, "-200", "-200" );
+  TEST_CAST_T( Str, "1.5", "1.5" );
+  TEST_CAST_T( Str, "-1.5", "-1.5" );
+  TEST_CAST_T( Str, "Rubbish", "Rubbish" );
 
-  TEST_CAST_T( Int32, 0, 0, 0 );
-  TEST_CAST_T( Int32, 1, 1, 0 );
-  TEST_CAST_T( Int32, 2000, 2000, 0 );
-  TEST_CAST_T( Int32, INT_MAX, INT_MAX, 0 );
-  TEST_CAST_T( Int32, -1, -1, 0 );
-  TEST_CAST_T( Int32, -2000, -2000, 0 );
-  TEST_CAST_T( Int32, INT_MIN, INT_MIN, 0 );
+  TEST_BADCAST_T( Null, );
+  TEST_BADCAST_T( Int32, 0 );
+  TEST_BADCAST_T( UInt64, 0 );
+  TEST_BADCAST_T( Int32, 0 );
+  TEST_BADCAST_T( UInt64, 0 );
+  TEST_BADCAST_T( Double, 0 );
+  TEST_BADCAST_T( Opaque, u2 );
 
-  TEST_CAST_T( Int64, 0, 0, 0 );
-  TEST_CAST_T( Int64, 1, 1, 0 );
-  TEST_CAST_T( Int64, 2000, 2000, 0 );
-  TEST_CAST_T( Int64, LONG_LONG_MAX, -1, 0 );
-  TEST_CAST_T( Int64, -1, -1, 0 );
-  TEST_CAST_T( Int64, -2000, -2000, 0 );
-  TEST_CAST_T( Int64, LONG_LONG_MIN, 0, 0 );
-  
-  TEST_CAST_T( UInt32, 0, 0, 0 );
-  TEST_CAST_T( UInt32, 1, 1, 0 );
-  TEST_CAST_T( UInt32, 1000, 1000, 0 );
-  TEST_CAST_T( UInt32, UINT_MAX, -1, 0 );
-
-  TEST_CAST_T( UInt64, 0, 0, 0 );
-  TEST_CAST_T( UInt64, 1, 1, 0 );
-  TEST_CAST_T( UInt64, 1000, 1000, 0 );
-  TEST_CAST_T( UInt64, ULONG_LONG_MAX, -1, 0 );
-
-  TEST_CAST_T( Double, 0, 0, 0 );
-  TEST_CAST_T( Double, 1.0, 1, 0 );
-  TEST_CAST_T( Double, -1.0, -1, 0 );
-  TEST_CAST_T( Double, -1.79769E+308, INT_MIN, 0 );
-  TEST_CAST_T( Double, 1.79769E+308, INT_MIN, 0 );
-  TEST_CAST_T( Double, 2.225E-307, 0, 0 );
-  TEST_CAST_T( Double, -2.225E-307, 0, 0 );
-  
-  // Test casting to ID.
   #undef TEST_CAST_T
-  //#define TEST_CAST_T(_t,_v,_r) TEST_CAST(_t,_v,uint32_t,UInt32,_r)
-  #define TEST_CAST_T(_t,_v,_c,_r) TEST_ID_CAST(_t,_v,ID,_c,_r)
-
-  TEST_CAST_T( Int32, INT_MAX, UInt32, INT_MAX );
-  TEST_CAST_T( Int32, -1, UInt32, ULONG_LONG_MAX );
-  TEST_CAST_T( Int32, -2000, UInt32, ULONG_LONG_MAX -2000 + 1 );
-  TEST_CAST_T( Int32, INT_MIN, UInt32, ULONG_LONG_MAX - INT_MAX );
-
-  TEST_CAST_T( Int64, 0, UInt64, 0 );
-  TEST_CAST_T( Int64, 1, UInt64, 1 );
-  TEST_CAST_T( Int64, 2000, UInt64, 2000 );
-  TEST_CAST_T( Int64, LONG_LONG_MAX, UInt64, LONG_LONG_MAX );
-  TEST_CAST_T( Int64, -1, UInt64, ULONG_LONG_MAX );
-  TEST_CAST_T( Int64, -2000, UInt64, ULONG_LONG_MAX-2000 +1 );
-  TEST_CAST_T( Int64, LONG_LONG_MIN, UInt64, 1UL + (uint64_t)(LONG_LONG_MAX) );
-  
-  TEST_CAST_T( UInt32, 0, UInt32, 0 );
-  TEST_CAST_T( UInt32, 1, UInt32, 1 );
-  TEST_CAST_T( UInt32, 1000, UInt32, 1000 );
-  TEST_CAST_T( UInt32, UINT_MAX, UInt32, UINT_MAX );
-
-  TEST_CAST_T( UInt64, 0, UInt64, 0 );
-  TEST_CAST_T( UInt64, 1, UInt64, 1 );
-  TEST_CAST_T( UInt64, 1000, UInt64, 1000 );
-  TEST_CAST_T( UInt64, ULONG_LONG_MAX, UInt64, ULONG_LONG_MAX );
 
   std::cout.flush();
   std::cerr.flush();
