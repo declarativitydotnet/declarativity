@@ -5,7 +5,7 @@ rm $2/*.dat
 rm $2/*.out
 rm $2/simple_results
 
-../pout.py -e -n $1 $2 
+../pout.py -e -n $1 $2 > pout.out
 
 ./buildCDF.pl -f simple_latency.dat > $2/simple_latency_cdf.dat
 ./hopDist.pl -f simple_latency.dat > $2/simple_latency_hopdist.dat
@@ -16,4 +16,8 @@ mv simple_hop_time.dat $2/.
 mv maintenance_hop_time.dat $2/.
 ./stripResults.sh $2/
 ./consistency.pl -f $2/simple_results -n $3 > $2/consistency.dat
-./messages.pl -f $2/ 
+./messages.pl -f $2/ > messages.out
+cat pout.out
+cat messages.out
+mv messages.out $2/.
+mv pout.out $2/.

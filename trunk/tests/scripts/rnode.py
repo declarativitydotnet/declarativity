@@ -96,7 +96,7 @@ if __name__ == "__main__":
         port += 1
         print >> log, "NODE %d START TIME %d\n" % (node, time.time() - start)
         if flags["session"] and node != flags["nochurn"]: 
-            procs.append(Monitor(5.0 + (random.random() * flags["session"]), pid, log))
+            procs.append(Monitor(450.0 + (random.random() * flags["session"]), pid, log))
         else: procs.append(Monitor(0, pid, log))
 
     while procs:

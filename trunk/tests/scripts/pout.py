@@ -234,7 +234,7 @@ def eval_lookups(shash, mhash, rhash):
        	    print >> sht_fh, "%s %s %s" % ((ts2sec(x[0], x[1])-sim_start), x[2]) 
 	except: pass
     sht_fh.close()
-    sl_fh.close()
+    sl_fh.close()    
 
 if __name__ == "__main__":
     global simple_lookup
