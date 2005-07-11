@@ -23,6 +23,7 @@
 #include "val_null.h"
 #include "val_opaque.h"
 #include "val_time.h"
+#include "val_ip_addr.h"
 #include "val_id.h"
 #include "val_tuple.h"
 #include "testerr.h"
@@ -35,7 +36,6 @@
 #include <iostream>
 #include <limits.h>
 #include <amisc.h>
-
 
 #define TEST_VAL(_mkt, _mkv, _mktc, _mktn) \
 { \
