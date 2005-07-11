@@ -20,6 +20,8 @@ libp2net_la_SOURCES = \
 	udp.C \
 	tupleseq.C \
 	cc.C \
+	cct.C \
+	ccr.C \
 	rdelivery.C \
 	bw.C \
 	frag.C \

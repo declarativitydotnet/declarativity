@@ -52,8 +52,8 @@ void OTuple::operator()(std::pair<const SeqNum, OTuple*>& entry)
 // Macros
 //
 
-#define MAX_RTO (5000)
-#define MIN_RTO (500)
+#define MAX_RTO (5000)	// 5 sec. max timeout
+#define MIN_RTO (1000)	// 1 sec. min timeout (recommended in RFC 2988)
 
 /////////////////////////////////////////////////////////////////////
 //
