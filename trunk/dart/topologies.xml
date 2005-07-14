@@ -3,9 +3,8 @@
 
   <topology>  
     <name>p2-chord</name>
-    <nrouters>10</nrouters>
+    <nrouters>12</nrouters>
     <nhosts>100</nhosts>
     <ns2>P2-CHORD.ns</ns2>
   </topology>
-
 </topologies>

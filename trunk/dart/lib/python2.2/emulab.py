@@ -23,11 +23,11 @@ class Emulab(RemoteHost):
         basensfile = os.path.basename(self.nsfile)
         self.xfer_to(self.nsfile, basensfile)
 	# Immediate mode
-	self.rexec("batchexp -w -i -p %s -e %s %s" % \
-                   (self.pid, self.eid, basensfile))
-	# Batch mode
-        #self.rexec("batchexp -w -p %s -e %s %s" % \
+	#self.rexec("batchexp -w -i -p %s -e %s %s" % \
         #           (self.pid, self.eid, basensfile))
+	# Batch mode
+        self.rexec("batchexp -w -p %s -e %s %s" % \
+                   (self.pid, self.eid, basensfile))
         self.rexec("sshxmlrpc_client.py waitforactive proj=%s exp=%s" % \
                    (self.pid, self.eid))
         
