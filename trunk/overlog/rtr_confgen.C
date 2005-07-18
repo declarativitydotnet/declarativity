@@ -873,6 +873,10 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
 
   strbuf pelTransformStrbuf("\"" << pf->fn->name << "\" pop");
 
+  if (pf->aggregate() != -1 && pf->fn->loc == "") {
+    pelTransformStrbuf << " \"" << nodeID << "\" pop";
+  }
+
   for (unsigned int k = 0; k < indices.size(); k++) {
     pelTransformStrbuf << " $" << indices.at(k) << " pop";
   }
@@ -1229,6 +1233,7 @@ Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
   FieldNamesTracker* aggregateNamesTracker = new FieldNamesTracker();
   Parse_Functor* pf = currentRule->head;
   str headTableName = pf->fn->name;
+
   for (int k = 0; k < pf->args(); k++) {
     // go through the functor head, but skip the aggField itself    
     Parse_Var* pv = dynamic_cast<Parse_Var* > (pf->arg(k));
@@ -1311,9 +1316,6 @@ Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
   _udpPushSenders.push_back(_currentElementChain.back());
 
   registerReceiverTable(currentRule, headTableName);
-  /*ElementSpecRef sinkS 
-    = _conf->addElement(New refcounted< Discard >("discard"));    
-    registerReceiver(headTableName, sinkS);*/
 }
 
 
