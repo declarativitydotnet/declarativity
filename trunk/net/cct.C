@@ -22,21 +22,17 @@
 class CCTuple
 {
 public:
-  CCTuple() : tcb_(NULL), wnd_(true), tp_(NULL) {}
-
-  CCTuple(TuplePtr tp) : tcb_(NULL), wnd_(true), tp_(tp) 
-    { resetTime(); }
-
-  ~CCTuple() { tp_ = NULL; }
+  CCTuple() {}
+  CCTuple(SeqNum seq) : seq_(seq), tcb_(NULL), wnd_(true) { resetTime(); }
 
   void operator()(std::pair<const SeqNum, CCTuple*>& entry); 
   void resetTime() { clock_gettime (CLOCK_REALTIME, &tt_); }
   int32_t delay();
 
-  timespec  tt_;		// Transmit time
-  timecb_t  *tcb_;		// Used to cancel retransmit timer
-  bool      wnd_;		// If true then window updated on timeout.
-  TuplePtr  tp_;		// The tuple.
+  timespec  tt_;	// Transmit time
+  SeqNum    seq_;	// Tuple sequence number
+  timecb_t  *tcb_;	// Used to cancel retransmit timer
+  bool      wnd_;	// If true then window updated on timeout.
 };
 
 void CCTuple::operator()(std::pair<const SeqNum, CCTuple*>& entry) 
@@ -107,12 +103,12 @@ int CCT::push(int port, TupleRef tp, cbv cb)
   switch(port) {
     case 0:	// Queue tuple and check window size.
     {
-        CCTuple *otp = new CCTuple(tp);
-        SeqNum   seq = Val_UInt64::cast((*otp->tp_)[seq_field_]);	// Sequence number
+        SeqNum   seq = Val_UInt64::cast((*tp)[seq_field_]);	// Sequence number
+        CCTuple *otp = new CCTuple(seq);
   
         map(seq, otp);
 
-        if ((data_on_ = output(0)->push(otp->tp_, wrap(this, &CCT::data_ready)))) {
+        if ((data_on_ = output(0)->push(tp, wrap(this, &CCT::data_ready)))) {
           _dout_cb = cb;
           return 0; 
         }
@@ -152,8 +148,8 @@ TuplePtr CCT::pull(int port, cbv cb)
       assert (rto_ >= MIN_RTO && rto_ <= MAX_RTO);
       if (current_window() < max_window() && 
           (data_on_ = (tp = input(0)->pull(wrap(this, &CCT::data_ready))) != NULL)) {
-        CCTuple *otp = new CCTuple(tp);
-        SeqNum   seq = Val_UInt64::cast((*otp->tp_)[seq_field_]);	// Sequence number
+        SeqNum   seq = Val_UInt64::cast((*tp)[seq_field_]);	// Sequence number
+        CCTuple *otp = new CCTuple(seq);
         map(seq, otp);
       } else _dout_cb = cb;
       break;
@@ -221,7 +217,7 @@ void CCT::data_ready() {
  */
 void CCT::timeout_cb(CCTuple *otp)
 {
-  SeqNum seq = Val_UInt64::cast((*otp->tp_)[seq_field_]);
+  SeqNum seq = otp->seq_;
 
   if (otp->wnd_ == true) {
     // Update window sizes and enter slow start

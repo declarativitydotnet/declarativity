@@ -7,21 +7,35 @@
  * 
  */
 
+
 #include "tupleseq.h"
 #include "val_int64.h"
+#include "val_str.h"
+#include "val_tuple.h"
 
-Sequence::Sequence(str name, u_int64_t start_seq)
-  : Element(name,1, 1), seq_(start_seq)
+#define MAX_INIT_SEQ 2048
+
+Sequence::Sequence(str n, str c, uint64_t s)
+  : Element(n,1,1), cid_(c), seq_(s)
 {
+  if (!seq_) seq_ = uint64_t(rand() * MAX_INIT_SEQ);
 }
 
 
 TuplePtr Sequence::simple_action(TupleRef p)
 {
   TupleRef n = Tuple::mk();
+  TupleRef s = Tuple::mk();
 
-  n->append(Val_UInt64::mk(MAKE_SEQ(seq_++, 0)));
-  n->concat(p);
+  s->append(Val_Str::mk("SEQ"));
+  s->append(Val_UInt64::mk(seq_++));
+  if (cid_ != "") 
+    s->append(Val_Str::mk(cid_));
+  s->freeze();
+
+  n->append(Val_Tuple::mk(s));
+  for (uint i = 0; i < p->size(); i++)
+    n->append((*p)[i]); 
   n->freeze();
 
   return n;

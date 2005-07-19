@@ -67,7 +67,6 @@ private:
   double    rwnd_;				// Receiver window size
   double    cwnd_;				// Current congestion window size
   double    ssthresh_;				// Slow start threshold
-  uint32_t  max_retry_;				// Max number of retries for a tuple
   uint32_t  seq_field_;
   uint32_t  ack_seq_field_;
   uint32_t  ack_rwnd_field_;

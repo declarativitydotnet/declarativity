@@ -19,7 +19,7 @@
 
 class Sequence : public Element {
 public:
-  Sequence(str name="Sequence", u_int64_t start_seq=1);
+  Sequence(str n="Sequence", str c="", uint64_t s=1);
   const char *class_name() const { return "Sequence";};
   const char *processing() const { return "a/a"; };
   const char *flow_code() const	 { return "x/x"; };
@@ -27,7 +27,8 @@ public:
   TuplePtr simple_action(TupleRef p);	// Adds the next sequence num to tuple stream. 
 
 private:
-  u_int64_t seq_;
+  str      cid_;
+  uint64_t seq_;
 };
 
 #endif /* __TupleSeq_H_ */

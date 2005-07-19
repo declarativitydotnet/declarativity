@@ -34,6 +34,7 @@ bin_PROGRAMS 	= 	values \
 			join \
 			net \
 			netcc \
+			netrcc \
 			netcc2 \
 			logger \
 			csv \
@@ -174,6 +175,13 @@ net_LDADD = \
 
 netcc_SOURCES = netcc.C
 netcc_LDADD = \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+netrcc_SOURCES = netrcc.C
+netrcc_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
