@@ -801,9 +801,13 @@ void Rtr_ConfGen::pelAssign(OL_Context::Rule* rule,
   else if ((var=dynamic_cast<Parse_Var*>(expr->assign)) != NULL && 
            names->fieldPosition(var->toString()) >= 0)                              
     pelAssign << "$" << (names->fieldPosition(var->toString())+1) << " ";
-  else if ((val=dynamic_cast<Parse_Val*>(expr->assign)) != NULL)
-    pelAssign << val->toString() << " ";
-  else {
+  else if ((val=dynamic_cast<Parse_Val*>(expr->assign)) != NULL) {
+    if (val->v->typeCode() == Value::STR) { 
+      pelAssign << "\"" << val->toString() << "\" ";
+    } else {
+      pelAssign << val->toString() << " ";
+    }
+  } else {
     std::cerr << "Rtr_ConfGen ASSIGN ERROR!\n";
     assert(0);
   }
