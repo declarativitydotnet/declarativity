@@ -7,12 +7,14 @@
  */
 
 #include <algorithm>
+#include <iostream>
 #include "cct.h"
 #include "sysconf.h"
 #include "val_uint64.h"
 #include "val_uint32.h"
 #include "val_double.h"
 #include "val_str.h"
+#include "val_tuple.h"
 
 
 /////////////////////////////////////////////////////////////////////
@@ -76,18 +78,14 @@ int32_t CCTuple::delay()
  * Optional:
  * Output 2 (pull): Status of the CC element.
  */
-CCT::CCT(str name, double init_wnd, double max_wnd, bool stat,
-         uint32_t seq_field, uint32_t ack_seq_field, uint32_t ack_rwnd_field) 
-  : Element(name, 2, (stat ? 3 : 2)), _dout_cb(cbv_null), data_on_(true), sa_(-1), sv_(0)
+CCT::CCT(str name, double init_wnd, double max_wnd, bool stat) 
+  : Element(name, 2, (stat ? 3 : 2)), _data_cb(cbv_null), data_on_(true), sa_(-1), sv_(0)
 {
   rto_            = MAX_RTO;
   max_wnd_        = max_wnd;
   cwnd_           = init_wnd;
   ssthresh_       = max_wnd;
   rwnd_           = max_wnd;
-  seq_field_      = seq_field;
-  ack_seq_field_  = ack_seq_field;
-  ack_rwnd_field_ = ack_rwnd_field;
   stat_           = stat;
 }
 
@@ -98,39 +96,18 @@ CCT::CCT(str name, double init_wnd, double max_wnd, bool stat,
  */
 int CCT::push(int port, TupleRef tp, cbv cb)
 {
-  assert(port < 2);
+  assert(port == 1);
 
-  switch(port) {
-    case 0:	// Queue tuple and check window size.
-    {
-        SeqNum   seq = Val_UInt64::cast((*tp)[seq_field_]);	// Sequence number
-        CCTuple *otp = new CCTuple(seq);
-  
-        map(seq, otp);
-
-        if ((data_on_ = output(0)->push(tp, wrap(this, &CCT::data_ready)))) {
-          _dout_cb = cb;
-          return 0; 
-        }
-        else if (current_window() >= max_window()) {
-          log(LoggerI::INFO, 0, "CCT::push WINDOW IS FULL"); 
-          _dout_cb = cb;
-          return 0;
-        }
-      break;
-    }
-    case 1:
-    {
+  try {
+    if (Val_Str::cast((*tp)[1]) == "ACK") {
       // Acknowledge tuple and update measurements.
-      SeqNum seq  = Val_UInt64::cast((*tp)[ack_seq_field_]);	// Sequence number
+      SeqNum seq  = Val_UInt64::cast((*tp)[2]);	// Sequence number
       //TODO: Use timestamps to track the latest rwnd value.
-      rwnd_ = Val_Double::cast((*tp)[ack_rwnd_field_]);		// Receiver window
-
+      rwnd_ = Val_Double::cast((*tp)[3]);		// Receiver window
       add_rtt_meas(dealloc(seq, "ACK"));
-      break;
     }
-    default: assert(0);
   }
+  catch (Value::TypeError& e) { } 
   return 1;
 }
 
@@ -148,10 +125,10 @@ TuplePtr CCT::pull(int port, cbv cb)
       assert (rto_ >= MIN_RTO && rto_ <= MAX_RTO);
       if (current_window() < max_window() && 
           (data_on_ = (tp = input(0)->pull(wrap(this, &CCT::data_ready))) != NULL)) {
-        SeqNum   seq = Val_UInt64::cast((*tp)[seq_field_]);	// Sequence number
+        SeqNum   seq = extract_seq(Val_Tuple::cast((*tp)[1]));
         CCTuple *otp = new CCTuple(seq);
         map(seq, otp);
-      } else _dout_cb = cb;
+      } else _data_cb = cb;
       break;
     case 2:
       // Package up a Tuple containing my current CC state
@@ -185,9 +162,9 @@ int32_t CCT::dealloc(SeqNum seq, str status)
 
     delete iter->second;
     tmap_.erase(iter);
-    if (data_on_ && _dout_cb != cbv_null) {
-      (*_dout_cb)();
-      _dout_cb = cbv_null;
+    if (current_window() < max_window() && data_on_ && _data_cb != cbv_null) {
+      (*_data_cb)();
+      _data_cb = cbv_null;
     }
 
     TuplePtr tp = Tuple::mk();
@@ -204,9 +181,9 @@ int32_t CCT::dealloc(SeqNum seq, str status)
 
 void CCT::data_ready() {
   data_on_ = true;
-  if (_dout_cb != cbv_null) {
-    (*_dout_cb)();
-    _dout_cb = cbv_null;
+  if (_data_cb != cbv_null) {
+    (*_data_cb)();
+    _data_cb = cbv_null;
   }
 }
 
@@ -299,4 +276,18 @@ REMOVABLE_INLINE int CCT::current_window() {
 
 REMOVABLE_INLINE int CCT::max_window() {
   return (cwnd_ < rwnd_) ? int(cwnd_) : int(rwnd_);
+}
+
+REMOVABLE_INLINE SeqNum CCT::extract_seq(TuplePtr tp) {
+  SeqNum seq = 0;
+  for (uint i = 0; i < tp->size(); i++) {
+    try {
+      TupleRef t = Val_Tuple::cast((*tp)[i]); 
+      if (Val_Str::cast((*t)[0]) == "SEQ") {
+        seq = Val_UInt64::cast((*t)[1]);
+      }
+    }
+    catch (Value::TypeError& e) { } 
+  }
+  return seq;
 }

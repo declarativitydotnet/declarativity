@@ -22,28 +22,25 @@ class RateCCT : public Element {
 public:
   RateCCT(str name);
   const char *class_name() const { return "RateCCT";};
-  const char *processing() const { return "lh/hh"; };
+  const char *processing() const { return "lh/lh"; };
   const char *flow_code() const	 { return "--/--"; };
 
   int push(int port, TupleRef tp, cbv cb); 
   TuplePtr pull(int port, cbv cb);
 
 private:
-  void in_ready();			// Callback for tuple output ready
-  void out_ready();			// Callback for input data ready
-  void send_timeout();			// Callback indicating tuple sendtime
+  void data_ready();			// Callback for tuple output ready
   void tuple_timeout(str);		// Callback indicating tuple timeout
   void feedback_timeout();
 
   // Difference between current time and that given in timespec
   REMOVABLE_INLINE uint32_t delay(timespec*);	
-  // Sends (pulls) tuples from input.	
-  REMOVABLE_INLINE void send();		
+  REMOVABLE_INLINE TuplePtr package(TuplePtr);		
   // Update rtt_, rto_, and sending rate
   REMOVABLE_INLINE void feedback(uint32_t, uint32_t, double);	
 
-  bool     out_on_;
-  bool     in_on_;
+  bool     data_on_;
+  cbv      data_cbv_;
 
   uint32_t  trate_;			// Allowable tuple rate (tuples/sec)
   uint32_t  rrate_;			// Receiver tuple rate (tuples/sec)

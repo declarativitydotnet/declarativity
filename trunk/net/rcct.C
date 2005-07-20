@@ -73,11 +73,10 @@ do { \
  * Output 2 (pull): Status of the CC element. (Optional)
  */
 RateCCT::RateCCT(str name) 
-  : Element(name, 2, 2), out_on_(true), in_on_(true), 
+  : Element(name, 2, 2), data_on_(true), data_cbv_(cbv_null), 
     trate_(1), rtt_(100), rto_(4000), nofeedback_(NULL)
 {
   clock_gettime(CLOCK_REALTIME, &tld_);
-  delaycb(0, 0, wrap(this, &RateCCT::send_timeout));
 }
 
 /**
@@ -85,7 +84,6 @@ RateCCT::RateCCT(str name)
  * port 0: Indicates a tuple to send.
  * port 1: Indicates the acknowledgement of some outstanding tuple.
  */
-static timespec acktime;
 int RateCCT::push(int port, TupleRef tp, cbv cb)
 {
   assert(port == 1);
@@ -106,8 +104,10 @@ int RateCCT::push(int port, TupleRef tp, cbv cb)
     UNMAP(strbuf() << cid << ":" << seq, true);
     ACK("SUCCESS", cid, seq);
     feedback(delay(&ts), rr, p);
-    clock_gettime(CLOCK_REALTIME, &acktime);
-    if (in_on_ && out_on_ && tmap_.size() < trate_) send();
+    if (tmap_.size() < trate_ && data_cbv_ != cbv_null) {
+      (*data_cbv_)();
+      data_cbv_ = cbv_null;
+    }
     std::cerr << "WINDOW SIZE: " << tmap_.size() << std::endl;
   }
   return 1;
@@ -118,31 +118,33 @@ int RateCCT::push(int port, TupleRef tp, cbv cb)
  */
 TuplePtr RateCCT::pull(int port, cbv cb)
 {
-  assert(port == 2);
+  TuplePtr tp = NULL;
 
-  TuplePtr tp = Tuple::mk();
-  tp->append(Val_Double::mk(trate_));		// Transmit rate
-  tp->append(Val_Double::mk(rrate_));		// Receiver rate
-  tp->append(Val_UInt32::mk(rtt_));		// Round trip time
-  tp->append(Val_UInt32::mk(rto_));		// Retransmit timeout
-  return tp;
+  if (port == 0) {
+    if (tmap_.size() < trate_ && 
+        (data_on_ = (tp = input(0)->pull(wrap(this, &RateCCT::data_ready))) != NULL)) {
+      return package(tp);
+    }
+    data_cbv_ = cb;
+  }
+  else if (port == 2) {
+    tp = Tuple::mk();
+    tp->append(Val_Double::mk(trate_));		// Transmit rate
+    tp->append(Val_Double::mk(rrate_));		// Receiver rate
+    tp->append(Val_UInt32::mk(rtt_));		// Round trip time
+    tp->append(Val_UInt32::mk(rto_));		// Retransmit timeout
+    return tp;
+  } else assert (0);
+  return NULL;
 }
 
-void RateCCT::in_ready()
+void RateCCT::data_ready()
 {
-  in_on_ = true;
-}
-
-void RateCCT::out_ready()
-{
-  out_on_ = true;
-}
-
-void RateCCT::send_timeout()
-{
-  while (in_on_ && out_on_ && tmap_.size() < trate_) 
-    send();
-  delaycb(rtt_/1000, (rtt_ % 1000)*1000000, wrap(this, &RateCCT::send_timeout));
+  data_on_ = true;
+  if (data_cbv_ != cbv_null) {
+    (*data_cbv_)();
+    data_cbv_ = cbv_null;
+  }
 }
 
 void RateCCT::tuple_timeout(str key) 
@@ -159,8 +161,6 @@ void RateCCT::tuple_timeout(str key)
 
 void RateCCT::feedback_timeout() 
 {
-  // std::cerr << "\nFEEDBACK TIMEOUT" << std::endl;
-  // std::cerr << "LAST ACK DELAY: " << delay(&acktime) << std::endl;
   nofeedback_ = NULL;
   if (trate_ > 2*rrate_) {
     rrate_ = max(trate_/2, 1U);
@@ -185,44 +185,36 @@ REMOVABLE_INLINE uint32_t RateCCT::delay(timespec *ts)
           ((now.tv_nsec - ts->tv_nsec)/1000000)); // Delay in milliseconds
 }
 
-REMOVABLE_INLINE void RateCCT::send()
+REMOVABLE_INLINE TuplePtr RateCCT::package(TuplePtr tp)
 {
-  assert(out_on_ && in_on_);
-
-  TuplePtr tp = NULL;
-  if ((tp = input(0)->pull(wrap(this, &RateCCT::in_ready))) == NULL) {
-    in_on_ = false;
-  }
-  else {
-    str      cid = "";
-    SeqNum   seq = 0;
-    timespec now;
-    clock_gettime(CLOCK_REALTIME, &now);
-    for (uint i = 0; i < tp->size(); i++) {
-      try {
-        TupleRef t = Val_Tuple::cast((*tp)[i]); 
-        if (Val_Str::cast((*t)[0]) == "SEQ") {
-          seq = Val_UInt64::cast((*t)[1]);
-          if (t->size() == 3) cid = Val_Str::cast((*t)[2]);
-        }
+  str      cid = "";
+  SeqNum   seq = 0;
+  timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  for (uint i = 0; i < tp->size(); i++) {
+    try {
+      TupleRef t = Val_Tuple::cast((*tp)[i]); 
+      if (Val_Str::cast((*t)[0]) == "SEQ") {
+        seq = Val_UInt64::cast((*t)[1]);
+        if (t->size() == 3) cid = Val_Str::cast((*t)[2]);
       }
-      catch (Value::TypeError& e) { } 
     }
-   
-    MAP(strbuf() << cid << ":" << seq);
-
-    TuplePtr otp   = Tuple::mk();
-    TuplePtr tinfo = Tuple::mk();
-    tinfo->append(Val_Str::mk("TINFO"));
-    tinfo->append(Val_UInt32::mk(rtt_));	// Round trip time
-    tinfo->append(Val_Time::mk(now));		// Time stamp
-    tinfo->freeze();
-    otp->append(Val_Tuple::mk(tinfo));
-    for (uint i = 0; i < tp->size(); i++)
-      otp->append((*tp)[i]);
-    otp->freeze();
-    out_on_ = output(0)->push(otp, wrap(this, &RateCCT::out_ready));
+    catch (Value::TypeError& e) { } 
   }
+   
+  MAP(strbuf() << cid << ":" << seq);
+
+  TuplePtr otp   = Tuple::mk();
+  TuplePtr tinfo = Tuple::mk();
+  tinfo->append(Val_Str::mk("TINFO"));
+  tinfo->append(Val_UInt32::mk(rtt_));	// Round trip time
+  tinfo->append(Val_Time::mk(now));		// Time stamp
+  tinfo->freeze();
+  otp->append(Val_Tuple::mk(tinfo));
+  for (uint i = 0; i < tp->size(); i++)
+    otp->append((*tp)[i]);
+  otp->freeze();
+  return otp;
 }
 
 /**

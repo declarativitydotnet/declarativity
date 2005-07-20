@@ -14,6 +14,7 @@
 #include "val_uint64.h"
 #include "val_double.h"
 #include "val_str.h"
+#include "val_tuple.h"
 
 
 /////////////////////////////////////////////////////////////////////
@@ -25,12 +26,10 @@
  * Constructor: 
  * name: The name given to this element.
  * rwnd: Initial receiver window size (default given in ccrx.h).
- * seq:  The field position of the sequence number in the input data tuple.
- * src:  The field position of the source location in the input data tuple.
  */
-CCR::CCR(str name, double rwnd, int seq, int src, bool flow) 
+CCR::CCR(str name, double rwnd, uint src, bool flow) 
   : Element(name, (flow ? 2 : 1), 2), _ack_cb(cbv_null),
-    rwnd_(rwnd), seq_field_(seq), src_field_(src), flow_(flow)
+    rwnd_(rwnd), src_field_(src), flow_(flow)
 {
 }
 
@@ -40,20 +39,21 @@ CCR::CCR(str name, double rwnd, int seq, int src, bool flow)
  */
 TuplePtr CCR::simple_action(TupleRef p) 
 {
-  uint64_t seq = Val_UInt64::cast((*p)[seq_field_]); 	// Get the seq number
-  ValueRef src = (*p)[src_field_];			// Get source location
+  uint64_t seq = extract_seq(Val_Tuple::cast((*p)[src_field_+1]));
+  ValueRef src = (*p)[src_field_];	// Get source location
   TupleRef ack = Tuple::mk();
-  ack->append(src);					// Source location
-  ack->append(Val_UInt64::mk(seq));			// The sequence number
-  ack->append(Val_Double::mk(rwnd_));			// Receiver window size
+  ack->append(src);			// Source location
+  ack->append(Val_Str::mk("ACK"));
+  ack->append(Val_UInt64::mk(seq));	// The sequence number
+  ack->append(Val_Double::mk(rwnd_));	// Receiver window size
   ack->freeze();
-  ack_q_.push_back(ack);				// Append to ack queue
+  ack_q_.push_back(ack);		// Append to ack queue
 
   if (_ack_cb != cbv_null) {
-    (*_ack_cb)();					// Notify new ack
+    (*_ack_cb)();			// Notify new ack
     _ack_cb = cbv_null;
   } 
-  return p;						// Forward data tuple
+  return p;				// Forward data tuple
 }
 
 /**
@@ -91,4 +91,18 @@ int CCR::push(int port, TupleRef tp, cbv cb)
 
   // Need this to go through regular push
   return this->Element::push(port, tp, cb); 	
+}
+
+REMOVABLE_INLINE SeqNum CCR::extract_seq(TuplePtr tp) {
+  SeqNum seq = 0;
+  for (uint i = 0; i < tp->size(); i++) {
+    try {
+      TupleRef t = Val_Tuple::cast((*tp)[i]); 
+      if (Val_Str::cast((*t)[0]) == "SEQ") {
+        seq = Val_UInt64::cast((*t)[1]);
+      }
+    }
+    catch (Value::TypeError& e) { } 
+  }
+  return seq;
 }

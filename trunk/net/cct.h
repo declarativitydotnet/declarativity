@@ -37,10 +37,9 @@ typedef uint64_t SeqNum;
  */
 class CCT : public Element {
 public:
-  CCT(str name, double init_wnd, double max_wnd, bool stat=false,
-       uint32_t seq_field = 0, uint32_t ack_seq_field=1, uint32_t ack_rwnd_field=2);
+  CCT(str name, double init_wnd, double max_wnd, bool stat=false);
   const char *class_name() const { return "CCT";};
-  const char *processing() const { return stat_ ? "ah/ahl" : "ah/ah"; };
+  const char *processing() const { return stat_ ? "lh/lhl" : "lh/lh"; };
   const char *flow_code() const	 { return stat_ ? "--/---" : "--/--"; };
 
   int push(int port, TupleRef tp, cbv cb);	// Incoming, either add to send_q or ack
@@ -55,9 +54,9 @@ private:
   REMOVABLE_INLINE void timeout();		// Update sa, sv, and rto based on m
   REMOVABLE_INLINE int  current_window();	// Returns the current window size
   REMOVABLE_INLINE int  max_window();		// Returns the current window size
+  REMOVABLE_INLINE SeqNum extract_seq(TuplePtr);
 
-  cbv _dout_cb; 				// Callback for data output ready
-    
+  cbv     _data_cb; 				// Callback for data output ready
   bool    data_on_;
   int32_t sa_;					// Scaled avg. RTT (ms) scaled by 8
   int32_t sv_;					// Scaled variance RTT (ms) scaled by 4
@@ -67,9 +66,6 @@ private:
   double    rwnd_;				// Receiver window size
   double    cwnd_;				// Current congestion window size
   double    ssthresh_;				// Slow start threshold
-  uint32_t  seq_field_;
-  uint32_t  ack_seq_field_;
-  uint32_t  ack_rwnd_field_;
   bool      stat_;
 
   typedef std::map<SeqNum, CCTuple*> CCTupleIndex;

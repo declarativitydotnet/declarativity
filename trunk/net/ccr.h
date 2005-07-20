@@ -16,6 +16,8 @@
 #include "inlines.h"
 
 
+typedef uint64_t SeqNum;
+
 /**
  * The CCR element acknowledges incoming CCT tuples on port 1 
  * as they are passed from input port 0 to output port 0. 
@@ -35,7 +37,7 @@
  */
 class CCR : public Element {
 public:
-  CCR(str name, double rwnd=512., int seq=0, int src=1, bool flow=false);
+  CCR(str name, double rwnd=512., uint src=0, bool flow=false);
   const char *class_name() const { return "CCR";};
   const char *processing() const { return flow_ ? "ah/al" : "a/al"; };
   const char *flow_code() const	 { return flow_ ? "--/--" : "-/--"; };
@@ -47,11 +49,11 @@ public:
   int push(int port, TupleRef tp, cbv cb);	// Flow control input
 
 private:
+  REMOVABLE_INLINE SeqNum extract_seq(TuplePtr);
   cbv _ack_cb; 					// Callback to send an ack 
 
   double   rwnd_;				// Receiver window size
-  int      seq_field_;
-  int      src_field_;
+  uint     src_field_;
   bool     flow_;
   std::deque <TuplePtr> ack_q_;			// Output ack queue
 };
