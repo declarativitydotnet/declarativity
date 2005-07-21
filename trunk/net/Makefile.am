@@ -16,6 +16,8 @@ lib_LTLIBRARIES = libp2net.la
 libp2net_la_SOURCES = \
 	udpsuio.C \
 	snetsim.C \
+	skr.C \
+	tgen.C \
 	plsensor.C \
 	udp.C \
 	tupleseq.C \
