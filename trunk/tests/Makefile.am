@@ -16,6 +16,7 @@ $(PROGRAMS): $(LDEPS)
 
 bin_PROGRAMS 	= 	values \
 			tuples \
+      benchmark \
 			fdbufs \
 			overlog \
 			tables \
@@ -50,6 +51,10 @@ values_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
 
 tuples_SOURCES	= tuples.C
 tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+benchmark_SOURCES	= benchmark.C
+benchmark_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 fdbufs_SOURCES	= fdbufs.C
