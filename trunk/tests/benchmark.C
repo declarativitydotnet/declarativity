@@ -35,9 +35,8 @@ const int FIELD_TST_SZ=500;
 const int TUPLE_TST_SZ=500;
 const int MARSHAL_CHUNK_SZ=100;
 const int MARSHAL_NUM_UIOS=5000;
-const int TST_ITER=500;
 
-static ValuePtr va[TST_ITER];
+static ValuePtr va[FIELD_TST_SZ];
 
 static xdrsuio single_uios;
 static xdrsuio xe[MARSHAL_NUM_UIOS];
@@ -112,7 +111,7 @@ static ValueRef create_val_null_1() {
 }
 
 static void create_lots_val_null() {
-  for (int i = 0; i < TST_ITER; i++) {
+  for (int i = 0; i < FIELD_TST_SZ; i++) {
     va[i] = create_val_null_1();
   }
 }
@@ -122,7 +121,7 @@ static ValueRef create_val_uint64_1() {
 }
 
 static void create_lots_val_uint64() {
-  for (int i = 0; i < TST_ITER; i++) {
+  for (int i = 0; i < FIELD_TST_SZ; i++) {
     va[i] = create_val_uint64_1();
   }
 }
@@ -132,7 +131,7 @@ static ValueRef create_val_int32_1() {
 }
 
 static void create_lots_val_int32() {
-  for (int i = 0; i < TST_ITER; i++) {
+  for (int i = 0; i < FIELD_TST_SZ; i++) {
     va[i] = create_val_int32_1();
   }
 }
@@ -142,7 +141,7 @@ static ValueRef create_val_double_1() {
 }
 
 static void create_lots_val_double() {
-  for (int i = 0; i < TST_ITER; i++) {
+  for (int i = 0; i < FIELD_TST_SZ; i++) {
     va[i] = create_val_double_1();
   }
 }
@@ -152,7 +151,7 @@ static ValueRef create_val_str_1() {
 }
 
 static void create_lots_val_str() {
-  for (int i = 0; i < TST_ITER; i++) {
+  for (int i = 0; i < FIELD_TST_SZ; i++) {
     va[i] = create_val_str_1();
   }
 }
