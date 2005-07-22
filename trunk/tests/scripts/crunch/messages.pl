@@ -37,7 +37,8 @@ my $numSendMsgs = 0;
 while ($file = readdir(INDIR)) {
     if (index($file, "dat") == -1 &&
 	index($file, "simple") == -1 &&
-	index($file, "messages") == -1) {
+	index($file, "messages") == -1 && 
+	index($file, "out") == -1) {
 	opendir (NODEDIR, $opt_f . "/" . $file) || die "Cannot open $file";
 	my $nodeFile;
 	while ($nodeFile = readdir(NODEDIR)) {

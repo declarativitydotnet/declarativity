@@ -15,7 +15,7 @@ mv node_bw.dat $2/.
 mv simple_hop_time.dat $2/.
 mv maintenance_hop_time.dat $2/.
 ./stripResults.sh $2/
-./consistency.pl -f $2/simple_results -n $3 > $2/consistency.dat
+./consistency.pl -f $2/ -n $3 > $2/consistency.dat
 ./messages.pl -f $2/ > messages.out
 cat pout.out
 cat messages.out

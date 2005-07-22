@@ -29,7 +29,7 @@ if (!defined $opt_n) {
 
 my $totalLatencyCounts = 0;
 
-open INFILE, "<$opt_f" or die "Couldn't open $opt_f";
+open INFILE, "<$opt_f/allLookups.out" or die "Couldn't open $opt_f";
 
 # go through the file, get <IP address, search key, located key>
 # index each search key by all located keys separated by ":"
@@ -40,11 +40,11 @@ my %searchKeys;
 while (<INFILE>) {
 	chomp;
 	my @line = split /, /;
-	$searchKeys{$line[4]} = "";	
+	$searchKeys{$line[2]} = "";	
     }
 close INFILE;
 
-open INFILE, "<$opt_f" or die "Couldn't open $opt_f";
+open INFILE, "<$opt_f/simple_results" or die "Couldn't open $opt_f";
 while (<INFILE>) {
     chomp;
     my @line = split /, /;
@@ -64,7 +64,7 @@ foreach $key (keys (%searchKeys)) {
     my $x = 0;
     my $y = 0;
     my $size = @array;
-    my $max = -1;
+    my $max = 0;
     for ($x = 0; $x < $size; $x++) {
 	my $count = 0;
 	my $str1 = $array[$x];	
