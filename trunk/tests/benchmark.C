@@ -77,9 +77,9 @@ static double time_fn(cbv cb)
     past_average = average;
   } 
 
-  std::cout << "\n";
 
-  std::cout << "iter: " << iter << " ";
+  std::cout << " Total numbers of values: " << iter << " * " << FIELD_TST_SZ << " = " << FIELD_TST_SZ * iter;
+  std::cout << "\n";
   std::cout << "average: " << average * 1000 << " msecs, ";
   std::cout << "elasped: " << elapsed * 1000 << " secs (";
   std::cout << after_ts.tv_sec << " secs " << (after_ts.tv_nsec/1000) << " usecs)\n";
