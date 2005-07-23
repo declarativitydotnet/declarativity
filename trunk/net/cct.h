@@ -54,7 +54,7 @@ private:
   REMOVABLE_INLINE void timeout();		// Update sa, sv, and rto based on m
   REMOVABLE_INLINE int  current_window();	// Returns the current window size
   REMOVABLE_INLINE int  max_window();		// Returns the current window size
-  REMOVABLE_INLINE SeqNum extract_seq(TuplePtr);
+  REMOVABLE_INLINE SeqNum getSeq(TuplePtr);
 
   cbv     _data_cb; 				// Callback for data output ready
   bool    data_on_;

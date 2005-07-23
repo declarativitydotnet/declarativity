@@ -146,7 +146,6 @@ private:
 REMOVABLE_INLINE void RateCCR::Connection::handle_tuple(SeqNum seq, uint rtt, timespec ts)
 {
   TupleInfo *tip = new TupleInfo(seq, rtt, ts);
-
   rate_ = 1;
   for (std::vector<TupleInfo*>::iterator i = history_.begin();
        i != history_.end(); i++) {
@@ -231,8 +230,8 @@ REMOVABLE_INLINE void RateCCR::Connection::clearHistory() {
 // Receive element
 //
 
-RateCCR::RateCCR(str name, uint32_t sf) 
-  : Element(name, 1, 2), _ack_cb(cbv_null), source_field_(sf) { }
+RateCCR::RateCCR(str name) 
+  : Element(name, 1, 2), _ack_cb(cbv_null) { }
 
 /**
  * Acknowledge tuple p if ack_q is empty and output1 is open.
@@ -240,21 +239,20 @@ RateCCR::RateCCR(str name, uint32_t sf)
  */
 TuplePtr RateCCR::simple_action(TupleRef tp) 
 {
-  Connection *c = NULL;
-  ValuePtr  src = (*tp)[source_field_];
-  SeqNum    seq = 0;
-  str       cid = "";
-  int       rtt = -1;
+  Connection *c  = NULL;
+  ValuePtr  src  = NULL;
+  ValuePtr  port = NULL;
+  SeqNum    seq  = 0;
+  int       rtt  = -1;
   timespec  ts;
 
-  tp = Val_Tuple::cast((*tp)[source_field_+1]);
   for (uint i = 0; i < tp->size(); i++) {
     try {
       TupleRef t = Val_Tuple::cast((*tp)[i]); 
       if (Val_Str::cast((*t)[0]) == "SEQ") {
-        seq = Val_UInt64::cast((*t)[1]);
-        if (t->size() == 3) 
-          cid = Val_Str::cast((*t)[2]);
+        seq  = Val_UInt64::cast((*t)[1]);
+        src  = (*t)[2];
+        port = (*t)[3];
       }
       else if (Val_Str::cast((*t)[0]) == "TINFO") {
         rtt = (int) Val_UInt32::cast((*t)[1]);
@@ -269,17 +267,17 @@ TuplePtr RateCCR::simple_action(TupleRef tp)
     return tp;
   }
 
-  if (cmap_.find(cid) == cmap_.end()) {
+  if (cmap_.find(src->toString()) == cmap_.end()) {
     c = new Connection(); 
-    cmap_.insert(std::make_pair(cid, c));
-  } else c = cmap_.find(cid)->second;
+    cmap_.insert(std::make_pair(src->toString(), c));
+  } else c = cmap_.find(src->toString())->second;
 
   c->handle_tuple(seq, rtt, ts);
 
   TupleRef ack = Tuple::mk();
-  ack->append(Val_Str::mk("ACK"));		// Acknowledgement name
   ack->append(src);				// Source location
-  ack->append(Val_Str::mk(cid));		// The connection id
+  ack->append(port);				// Port
+  ack->append(Val_Str::mk("ACK"));		// Acknowledgement name
   ack->append(Val_UInt64::mk(seq));		// The sequence number
   ack->append(Val_UInt32::mk(c->receiveRate()));// Rate observed in past rtt
   ack->append(Val_Double::mk(c->lossRate()));	// Loss event rate

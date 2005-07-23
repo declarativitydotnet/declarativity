@@ -30,7 +30,7 @@ public:
 
 private:
   void data_ready();			// Callback for tuple output ready
-  void tuple_timeout(str);		// Callback indicating tuple timeout
+  void tuple_timeout(SeqNum);		// Callback indicating tuple timeout
   void feedback_timeout();
 
   // Difference between current time and that given in timespec
@@ -49,7 +49,7 @@ private:
   timecb_t  *nofeedback_;		// No feedback timer
   timespec  tld_;			// Time last doubled (for slow start)
 
-  typedef std::map<str, timecb_t*> TupleTOIndex;
+  typedef std::map<SeqNum, timecb_t*> TupleTOIndex;
   TupleTOIndex tmap_;			// Map containing unacked in transit tuples
 };
   

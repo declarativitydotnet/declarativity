@@ -49,7 +49,6 @@ public:
   int push(int port, TupleRef tp, cbv cb);	// Flow control input
 
 private:
-  REMOVABLE_INLINE SeqNum extract_seq(TuplePtr);
   cbv _ack_cb; 					// Callback to send an ack 
 
   double   rwnd_;				// Receiver window size

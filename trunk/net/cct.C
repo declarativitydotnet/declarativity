@@ -99,12 +99,12 @@ int CCT::push(int port, TupleRef tp, cbv cb)
   assert(port == 1);
 
   try {
-    if (Val_Str::cast((*tp)[1]) == "ACK") {
+    if (Val_Str::cast((*tp)[2]) == "ACK") {
       // Acknowledge tuple and update measurements.
-      SeqNum seq  = Val_UInt64::cast((*tp)[2]);	// Sequence number
+      SeqNum seq  = Val_UInt64::cast((*tp)[3]);	// Sequence number
       //TODO: Use timestamps to track the latest rwnd value.
-      rwnd_ = Val_Double::cast((*tp)[3]);		// Receiver window
-      add_rtt_meas(dealloc(seq, "ACK"));
+      rwnd_ = Val_Double::cast((*tp)[4]);		// Receiver window
+      add_rtt_meas(dealloc(seq, "SUCCESS"));
     }
   }
   catch (Value::TypeError& e) { } 
@@ -125,7 +125,7 @@ TuplePtr CCT::pull(int port, cbv cb)
       assert (rto_ >= MIN_RTO && rto_ <= MAX_RTO);
       if (current_window() < max_window() && 
           (data_on_ = (tp = input(0)->pull(wrap(this, &CCT::data_ready))) != NULL)) {
-        SeqNum   seq = extract_seq(Val_Tuple::cast((*tp)[1]));
+        SeqNum   seq = getSeq(tp);
         CCTuple *otp = new CCTuple(seq);
         map(seq, otp);
       } else _data_cb = cb;
@@ -170,6 +170,7 @@ int32_t CCT::dealloc(SeqNum seq, str status)
     TuplePtr tp = Tuple::mk();
     tp->append(Val_Str::mk(status));		// Signal drop
     tp->append(Val_UInt64::mk(seq));		// Sequence number 
+    tp->freeze();
     assert(output(1)->push(tp, cbv_null));
   }
   else {
@@ -278,7 +279,7 @@ REMOVABLE_INLINE int CCT::max_window() {
   return (cwnd_ < rwnd_) ? int(cwnd_) : int(rwnd_);
 }
 
-REMOVABLE_INLINE SeqNum CCT::extract_seq(TuplePtr tp) {
+REMOVABLE_INLINE SeqNum CCT::getSeq(TuplePtr tp) {
   SeqNum seq = 0;
   for (uint i = 0; i < tp->size(); i++) {
     try {

@@ -22,22 +22,23 @@ typedef uint64_t SeqNum;
 
 class RDelivery : public Element {
 public:
-  RDelivery(str name, uint32_t max_retry=5, uint32_t seq_field = 0, uint32_t ack_seq_field=1);
+  RDelivery(str name, bool retry=true, uint32_t max_retry=5);
   const char *class_name() const { return "RDelivery";};
-  const char *processing() const { return "ah/ah"; };
+  const char *processing() const { return "lh/lh"; };
   const char *flow_code() const	 { return "--/--"; };
 
-  TuplePtr simple_action(TupleRef p); 
+  TuplePtr pull(int port, cbv cb);
   int push(int port, TupleRef tp, cbv cb);	// Incoming ack or timeout
 
 private:
+  REMOVABLE_INLINE SeqNum getSeq(TuplePtr tp);
   REMOVABLE_INLINE void handle_failure(SeqNum);		// Handles a failure to deliver a tuple
-  void element_cb(); 					// Callback for retry push 
+  void input_cb();
+  cbv _out_cb;
 
-  bool      retry_on_;					// Indicates a retry can be made
+  bool      in_on_;
+  bool      retry_;
   uint32_t  max_retry_;					// Max number of retries for a tuple
-  uint32_t  seq_field_;
-  uint32_t  ack_seq_field_;
 
   std::deque <RTuple*>  rtran_q_;			// Retransmit queue 
 

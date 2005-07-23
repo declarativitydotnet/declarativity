@@ -39,10 +39,25 @@ CCR::CCR(str name, double rwnd, uint src, bool flow)
  */
 TuplePtr CCR::simple_action(TupleRef p) 
 {
-  uint64_t seq = extract_seq(Val_Tuple::cast((*p)[src_field_+1]));
-  ValueRef src = (*p)[src_field_];	// Get source location
-  TupleRef ack = Tuple::mk();
+  uint64_t seq  = 0;
+  ValuePtr src  = NULL; 
+  ValuePtr port = NULL;
+
+  for (uint i = 0; i < p->size(); i++) {
+    try {
+      TupleRef t = Val_Tuple::cast((*p)[i]); 
+      if (Val_Str::cast((*t)[0]) == "SEQ") {
+        seq  = Val_UInt64::cast((*t)[1]);
+        src  = (*t)[2];
+        port = (*t)[3];
+      }
+    }
+    catch (Value::TypeError& e) { } 
+  }
+
+  TupleRef ack  = Tuple::mk();
   ack->append(src);			// Source location
+  ack->append(port);			// Source location
   ack->append(Val_Str::mk("ACK"));
   ack->append(Val_UInt64::mk(seq));	// The sequence number
   ack->append(Val_Double::mk(rwnd_));	// Receiver window size
@@ -91,18 +106,4 @@ int CCR::push(int port, TupleRef tp, cbv cb)
 
   // Need this to go through regular push
   return this->Element::push(port, tp, cb); 	
-}
-
-REMOVABLE_INLINE SeqNum CCR::extract_seq(TuplePtr tp) {
-  SeqNum seq = 0;
-  for (uint i = 0; i < tp->size(); i++) {
-    try {
-      TupleRef t = Val_Tuple::cast((*tp)[i]); 
-      if (Val_Str::cast((*t)[0]) == "SEQ") {
-        seq = Val_UInt64::cast((*t)[1]);
-      }
-    }
-    catch (Value::TypeError& e) { } 
-  }
-  return seq;
 }

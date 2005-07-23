@@ -18,19 +18,25 @@ class Route;
 class SimpleKeyRouter : public Element {
 public:
 
-  SimpleKeyRouter(str name="SimpleKeyRouter");
+  SimpleKeyRouter(str name="SimpleKeyRouter", bool retry=false);
   const char *class_name() const	{ return "SimpleKeyRouter";};
-  const char *processing() const	{ return "ah/ah"; };
-  const char *flow_code() const		{ return "--/--"; };
+  const char *processing() const	{ return "hh/h"; };
+  const char *flow_code() const		{ return "-/-"; };
 
-  TuplePtr simple_action(TupleRef p);
+  int push(int port, TupleRef tp, cbv cb);
 
   void route(ValuePtr key, ValuePtr loc);
 
   ref< vec< ValueRef > > neighbors();
 
 private:
+  REMOVABLE_INLINE uint greedyRoute(TuplePtr tp);
+  REMOVABLE_INLINE TuplePtr tagRoute(TuplePtr tp, uint r);
+  REMOVABLE_INLINE TuplePtr untagRoute(TuplePtr tp);
+  REMOVABLE_INLINE int getRoute(TuplePtr tp);
   REMOVABLE_INLINE ValuePtr getKey(TuplePtr tp);
+
+  bool retry_;
   std::vector<Route*> routes_;
 };
 

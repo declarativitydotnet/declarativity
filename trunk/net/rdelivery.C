@@ -7,11 +7,13 @@
  * 
  */
 
+#include <iostream>
 #include "rdelivery.h"
 #include "val_uint64.h"
 #include "val_uint32.h"
 #include "val_double.h"
 #include "val_str.h"
+#include "val_tuple.h"
 
 
 #define MAP(s, t) tmap_.insert(std::make_pair((s), new RTuple((t))))
@@ -56,15 +58,33 @@ public:
   TuplePtr  tp_;		// The tuple.
 };
 
+RDelivery::RDelivery(str n, bool r, uint32_t m)
+  : Element(n, 2, 2), _out_cb(cbv_null), in_on_(true), retry_(r), max_retry_(m) { }
+
 /**
  * New tuple to send
  */
-TuplePtr RDelivery::simple_action(TupleRef p) 
+TuplePtr RDelivery::pull(int port, cbv cb)
 {
-  /* Store the tuple for retry, if failure */
-  SeqNum seq = Val_UInt64::cast((*p)[seq_field_]);
-  MAP(seq, p);
-  return p;			// forward tuple along
+  assert (port == 0);
+
+  TuplePtr tp = NULL;
+  if (rtran_q_.empty() && in_on_ && 
+      (in_on_ = ((tp = input(0)->pull(wrap(this, &RDelivery::input_cb))) != NULL))) {
+    /* Store the tuple for retry, if failure */
+    SeqNum seq = getSeq(tp); 
+    MAP(seq, tp);
+    return tp;			// forward tuple along
+  }
+  else if (!rtran_q_.empty()) {
+    RTuple *rt = rtran_q_.front();
+    rtran_q_.pop_front();
+    std::cerr << "RETRY TUPLE: " << rt->tp_->toString() << std::endl;
+    return rt->tp_;
+  }
+
+  _out_cb = cb;
+  return NULL;
 }
 
 /**
@@ -81,8 +101,8 @@ int RDelivery::push(int port, TupleRef tp, cbv cb)
   if (type == "FAIL") {
     handle_failure(seq);
   }
-  else if (type == "ACK") {
-    UNMAP(seq);
+  else if (type == "SUCCESS") {
+    UNMAP(seq);					// And that's all folks.
   } else assert(0);
 
   return 1;
@@ -92,18 +112,42 @@ REMOVABLE_INLINE void RDelivery::handle_failure(SeqNum seq)
 {
   RTuple *rt = tmap_.find(seq)->second;
   
-  if (rt->retry_cnt_ < max_retry_) {
-    if (retry_on_) {
-      retry_on_ = output(1)->push(rt->tp_, wrap(this,&RDelivery::element_cb)); 
-    } else rtran_q_.push_back(rt);
-  } else UNMAP(seq);
+  if (retry_ && rt->retry_cnt_ < max_retry_) {
+    rtran_q_.push_back(rt);
+    if (_out_cb != NULL) {
+      (*_out_cb)();
+      _out_cb = cbv_null;
+    }
+  }
+  else {
+    TupleRef f = Tuple::mk();
+    f->append(Val_Str::mk("FAIL"));
+    f->append(Val_Tuple::mk(rt->tp_));
+    f->freeze();
+    // Push failed tuple upstream.
+    assert(output(1)->push(f, cbv_null));
+    UNMAP(seq);
+  }
 }
 
-void RDelivery::element_cb()
+void RDelivery::input_cb()
 {
-  do {
-    RTuple *rt = rtran_q_.front();
-    rtran_q_.pop_front();
-    retry_on_ = output(1)->push(rt->tp_, wrap(this,&RDelivery::element_cb)); 
-  } while (retry_on_);
+  in_on_ = true;
+  if (_out_cb != cbv_null) {
+    (*_out_cb)();
+    _out_cb = cbv_null;
+  }
+}
+
+REMOVABLE_INLINE SeqNum RDelivery::getSeq(TuplePtr tp) {
+  for (uint i = 0; i < tp->size(); i++) {
+    try {
+      TupleRef t = Val_Tuple::cast((*tp)[i]); 
+      if (Val_Str::cast((*t)[0]) == "SEQ") {
+         return Val_UInt64::cast((*t)[1]);
+      }
+    }
+    catch (Value::TypeError& e) { } 
+  }
+  return 0;
 }

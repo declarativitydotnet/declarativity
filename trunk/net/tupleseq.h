@@ -19,15 +19,18 @@
 
 class Sequence : public Element {
 public:
-  Sequence(str n="Sequence", str c="", uint64_t s=1);
+  Sequence(str n="Sequence", str src="", uint32_t port=0, uint64_t s=1);
   const char *class_name() const { return "Sequence";};
   const char *processing() const { return "a/a"; };
   const char *flow_code() const	 { return "x/x"; };
 
-  TuplePtr simple_action(TupleRef p);	// Adds the next sequence num to tuple stream. 
+  TuplePtr Sequence::simple_action(TupleRef p);
 
 private:
-  str      cid_;
+  REMOVABLE_INLINE bool isSeq(ValuePtr);
+
+  str      src_;
+  uint32_t port_;
   uint64_t seq_;
 };
 
