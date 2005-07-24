@@ -59,7 +59,7 @@ public:
 };
 
 RDelivery::RDelivery(str n, bool r, uint32_t m)
-  : Element(n, 2, 2), _out_cb(cbv_null), in_on_(true), retry_(r), max_retry_(m) { }
+  : Element(n, 2, 3), _out_cb(cbv_null), in_on_(true), retry_(r), max_retry_(m) { }
 
 /**
  * New tuple to send
@@ -103,7 +103,7 @@ int RDelivery::push(int port, TupleRef tp, cbv cb)
   }
   else if (type == "SUCCESS") {
     UNMAP(seq);					// And that's all folks.
-  } else assert(0);
+  } else return output(1)->push(tp, cb);
 
   return 1;
 }
@@ -125,7 +125,7 @@ REMOVABLE_INLINE void RDelivery::handle_failure(SeqNum seq)
     f->append(Val_Tuple::mk(rt->tp_));
     f->freeze();
     // Push failed tuple upstream.
-    assert(output(1)->push(f, cbv_null));
+    assert(output(2)->push(f, cbv_null));
     UNMAP(seq);
   }
 }

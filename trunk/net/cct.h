@@ -37,7 +37,7 @@ typedef uint64_t SeqNum;
  */
 class CCT : public Element {
 public:
-  CCT(str name, double init_wnd, double max_wnd, bool stat=false);
+  CCT(str name, double init_wnd, double max_wnd, bool tstat=true, bool stat=false);
   const char *class_name() const { return "CCT";};
   const char *processing() const { return stat_ ? "lh/lhl" : "lh/lh"; };
   const char *flow_code() const	 { return stat_ ? "--/---" : "--/--"; };
@@ -67,6 +67,7 @@ private:
   double    cwnd_;				// Current congestion window size
   double    ssthresh_;				// Slow start threshold
   bool      stat_;
+  bool      tstat_;
 
   typedef std::map<SeqNum, CCTuple*> CCTupleIndex;
   CCTupleIndex tmap_;			// Map containing unacked in transit tuples

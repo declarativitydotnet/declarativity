@@ -11,6 +11,7 @@
 #include <iostream>
 
 #include "rccr.h"
+#include "rcct.h"
 #include "sysconf.h"
 #include "val_uint64.h"
 #include "val_uint32.h"
@@ -22,6 +23,7 @@
 #define RF        0.9
 #define HIST_SIZE 100000
 #define LOSS_SIZE 8
+#define MAX_CTIME (5 * 60 * 1000) 
 
 class TupleInfo {
 public:
@@ -121,13 +123,15 @@ public:
       if (i < LOSS_SIZE/2) i_weights_[i] = 1.;
       else i_weights_[i] = 1. - (double(i) - (LOSS_SIZE/2. - 1.)) /
                                (LOSS_SIZE/2. + 1.); 
+    clock_gettime(CLOCK_REALTIME, &active_ts_);
   }
 
   // Computes loss event rate from intervals
   REMOVABLE_INLINE void handle_tuple(SeqNum, uint, timespec);
   
-  double lossRate()    { return loss_rate_; }
-  uint   receiveRate() { return rate_; }
+  double  lossRate()    { return loss_rate_; }
+  uint    receiveRate() { return rate_; }
+  bool    active()      { return RateCCT::delay(&active_ts_) < MAX_CTIME; }
 
 private:
   REMOVABLE_INLINE void compute_loss_rate();
@@ -137,6 +141,7 @@ private:
   uint                    order_;
   uint                    rate_; 	// Receiver rate
   SeqNum                  seq_miss_;    // Missing sequence number
+  timespec                active_ts_;   // Last time we heard from this connection
   std::vector<TupleInfo*> history_;     // Tuple history
   std::deque<LossRec*>    loss_recs_;   // The last n loss intervals
   std::vector <double>    i_weights_;   // Interval weights
@@ -145,6 +150,8 @@ private:
 
 REMOVABLE_INLINE void RateCCR::Connection::handle_tuple(SeqNum seq, uint rtt, timespec ts)
 {
+  clock_gettime(CLOCK_REALTIME, &active_ts_);
+
   TupleInfo *tip = new TupleInfo(seq, rtt, ts);
   rate_ = 1;
   for (std::vector<TupleInfo*>::iterator i = history_.begin();
@@ -262,8 +269,7 @@ TuplePtr RateCCR::simple_action(TupleRef tp)
     catch (Value::TypeError& e) { } 
   }
   if (seq == 0 || rtt < 0) {
-    log(LoggerI::WARN, 0, strbuf() << "RateCCR::simple_action Bad seq or rtt: "
-				   << tp->toString()); 
+    log(LoggerI::INFO, 0, strbuf() << "NON-RateCC Tuple: " << tp->toString()); 
     return tp;
   }
 
@@ -272,6 +278,12 @@ TuplePtr RateCCR::simple_action(TupleRef tp)
     cmap_.insert(std::make_pair(src->toString(), c));
   } else c = cmap_.find(src->toString())->second;
 
+  if (!c->active()) { 
+    log(LoggerI::WARN, 0, strbuf() << "REMOVING INACTIVE CONNECTION FROM SOURCE: " << src->toString()); 
+    cmap_.erase(cmap_.find(src->toString()));
+    c = new Connection(); 
+    cmap_.insert(std::make_pair(src->toString(), c));
+  }
   c->handle_tuple(seq, rtt, ts);
 
   TupleRef ack = Tuple::mk();

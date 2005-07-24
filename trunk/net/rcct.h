@@ -20,7 +20,7 @@ typedef uint64_t SeqNum;
 
 class RateCCT : public Element {
 public:
-  RateCCT(str name);
+  RateCCT(str name, bool tstat=true);
   const char *class_name() const { return "RateCCT";};
   const char *processing() const { return "lh/lh"; };
   const char *flow_code() const	 { return "--/--"; };
@@ -28,13 +28,13 @@ public:
   int push(int port, TupleRef tp, cbv cb); 
   TuplePtr pull(int port, cbv cb);
 
+  // Difference between current time and that given in timespec
+  static REMOVABLE_INLINE uint32_t delay(timespec*);	
 private:
   void data_ready();			// Callback for tuple output ready
   void tuple_timeout(SeqNum);		// Callback indicating tuple timeout
   void feedback_timeout();
 
-  // Difference between current time and that given in timespec
-  REMOVABLE_INLINE uint32_t delay(timespec*);	
   REMOVABLE_INLINE TuplePtr package(TuplePtr);		
   // Update rtt_, rto_, and sending rate
   REMOVABLE_INLINE void feedback(uint32_t, uint32_t, double);	
@@ -48,6 +48,7 @@ private:
   uint32_t  rto_;			// The round-trip timeout
   timecb_t  *nofeedback_;		// No feedback timer
   timespec  tld_;			// Time last doubled (for slow start)
+  bool      tstat_;
 
   typedef std::map<SeqNum, timecb_t*> TupleTOIndex;
   TupleTOIndex tmap_;			// Map containing unacked in transit tuples

@@ -78,7 +78,7 @@ int32_t CCTuple::delay()
  * Optional:
  * Output 2 (pull): Status of the CC element.
  */
-CCT::CCT(str name, double init_wnd, double max_wnd, bool stat) 
+CCT::CCT(str name, double init_wnd, double max_wnd, bool tstat, bool stat) 
   : Element(name, 2, (stat ? 3 : 2)), _data_cb(cbv_null), data_on_(true), sa_(-1), sv_(0)
 {
   rto_            = MAX_RTO;
@@ -86,6 +86,7 @@ CCT::CCT(str name, double init_wnd, double max_wnd, bool stat)
   cwnd_           = init_wnd;
   ssthresh_       = max_wnd;
   rwnd_           = max_wnd;
+  tstat_          = tstat;
   stat_           = stat;
 }
 
@@ -103,11 +104,14 @@ int CCT::push(int port, TupleRef tp, cbv cb)
       // Acknowledge tuple and update measurements.
       SeqNum seq  = Val_UInt64::cast((*tp)[3]);	// Sequence number
       //TODO: Use timestamps to track the latest rwnd value.
-      rwnd_ = Val_Double::cast((*tp)[4]);		// Receiver window
+      rwnd_ = Val_Double::cast((*tp)[4]);	// Receiver window
       add_rtt_meas(dealloc(seq, "SUCCESS"));
+      return 1;
     }
   }
   catch (Value::TypeError& e) { } 
+
+  assert(output(1)->push(tp, cbv_null)); // Pass data tuple through
   return 1;
 }
 
@@ -167,11 +171,13 @@ int32_t CCT::dealloc(SeqNum seq, str status)
       _data_cb = cbv_null;
     }
 
-    TuplePtr tp = Tuple::mk();
-    tp->append(Val_Str::mk(status));		// Signal drop
-    tp->append(Val_UInt64::mk(seq));		// Sequence number 
-    tp->freeze();
-    assert(output(1)->push(tp, cbv_null));
+    if (tstat_) {
+      TuplePtr tp = Tuple::mk();
+      tp->append(Val_Str::mk(status));		// Signal drop
+      tp->append(Val_UInt64::mk(seq));		// Sequence number 
+      tp->freeze();
+      assert(output(1)->push(tp, cbv_null));
+    }
   }
   else {
     // Log event: possibly due to duplicate ack.

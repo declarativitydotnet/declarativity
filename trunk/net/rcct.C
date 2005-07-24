@@ -55,10 +55,12 @@ do { \
 
 #define ACK(status, s) \
 do { \
-  TuplePtr tp = Tuple::mk(); \
-  tp->append(Val_Str::mk((status))); \
-  tp->append(Val_UInt64::mk(s)); \
-  assert(output(1)->push(tp, cbv_null)); \
+  if (tstat_) { \
+    TuplePtr tp = Tuple::mk(); \
+    tp->append(Val_Str::mk((status))); \
+    tp->append(Val_UInt64::mk(s)); \
+    assert(output(1)->push(tp, cbv_null)); \
+  } \
 } while (0)
 
 /////////////////////////////////////////////////////////////////////
@@ -74,9 +76,9 @@ do { \
  * Output 1 (push): Status of a tuple that was recently sent.
  * Output 2 (pull): Status of the CC element. (Optional)
  */
-RateCCT::RateCCT(str name) 
+RateCCT::RateCCT(str name, bool tstat) 
   : Element(name, 2, 2), data_on_(true), data_cbv_(cbv_null), 
-    trate_(1), rtt_(100), rto_(4000), nofeedback_(NULL)
+    trate_(1), rtt_(100), rto_(4000), nofeedback_(NULL), tstat_(tstat)
 {
   clock_gettime(CLOCK_REALTIME, &tld_);
 }
@@ -84,29 +86,34 @@ RateCCT::RateCCT(str name)
 /**
  * The push method handles input on 2 ports.
  * port 0: Indicates a tuple to send.
- * port 1: Indicates the acknowledgement of some outstanding tuple.
+ * port 1: Tuple received.
  */
 int RateCCT::push(int port, TupleRef tp, cbv cb)
 {
   assert(port == 1);
 
-  str name  = Val_Str::cast((*tp)[ACK_SIG]);
-  if (name == "ACK") {
-    // Acknowledge tuple with rate feedback.
-    SeqNum  seq = Val_UInt64::cast((*tp)[ACK_SEQ]);
-    uint32_t rr = Val_UInt32::cast((*tp)[ACK_RATE]);
-    double   p  = Val_Double::cast((*tp)[ACK_LOSS]);
-    timespec ts = Val_Time::cast(  (*tp)[ACK_TIME]);
+  try {
+    str name  = Val_Str::cast((*tp)[ACK_SIG]);
+    if (name == "ACK") {
+      // Acknowledge tuple with rate feedback.
+      SeqNum  seq = Val_UInt64::cast((*tp)[ACK_SEQ]);
+      uint32_t rr = Val_UInt32::cast((*tp)[ACK_RATE]);
+      double   p  = Val_Double::cast((*tp)[ACK_LOSS]);
+      timespec ts = Val_Time::cast(  (*tp)[ACK_TIME]);
 
-    log(LoggerI::INFO, 0, strbuf() << "SEQ: " << seq
-				   << ", RRATE: " << rr << ", LOSS RATE: " << long(p)
-				   << ", DELAY: " << delay(&ts));
+      log(LoggerI::INFO, 0, strbuf() << "SEQ: " << seq
+                            << ", RRATE: " << rr << ", LOSS RATE: " << long(p)
+			    << ", DELAY: " << delay(&ts));
 
-    UNMAP(seq, true);
-    ACK("SUCCESS", seq);
-    feedback(delay(&ts), rr, p);
-    // std::cerr << "WINDOW SIZE: " << tmap_.size() << std::endl;
+      UNMAP(seq, true);
+      ACK("SUCCESS", seq);
+      feedback(delay(&ts), rr, p);
+      return 1;
+    }
   }
+  catch (Value::TypeError& e) { } 
+
+  assert(output(1)->push(tp, cbv_null)); // Pass data tuple through
   return 1;
 }
 
@@ -146,8 +153,6 @@ void RateCCT::data_ready()
 
 void RateCCT::tuple_timeout(SeqNum s) 
 {
-  std::cerr << "\nTUPLE TIMEOUT: " << s << std::endl;
-
   ACK("FAIL", s);
   UNMAP(s, false);
 }
@@ -168,10 +173,15 @@ REMOVABLE_INLINE uint32_t RateCCT::delay(timespec *ts)
 {
   timespec  now;
   clock_gettime(CLOCK_REALTIME, &now);
-
   if (now.tv_nsec < ts->tv_nsec) { 
-    now.tv_nsec += 1000000000;
-    now.tv_sec--; 
+    if (now.tv_nsec + 1000000000 < 0) {
+      now.tv_nsec -= 1000000000;
+      now.tv_sec++;
+    }
+    else {
+      now.tv_nsec += 1000000000;
+      now.tv_sec--; 
+    }
   } 
 
   return (((now.tv_sec - ts->tv_sec)*1000) + 
