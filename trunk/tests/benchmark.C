@@ -29,6 +29,7 @@
 #include "val_int64.h"
 #include "val_uint64.h"
 #include "val_double.h"
+#include "testerr.h"
 
 
 const int FIELD_TST_SZ=500;
@@ -62,7 +63,7 @@ static double time_fn(cbv cb)
       (cb) ();
     } 
 
-    if (clock_gettime(CLOCK_REALTIME,&after_ts)) {
+    if (clock_gettime (CLOCK_REALTIME,&after_ts)) {
       fatal << "clock_gettime:" << strerror(errno) << "\n";
     }
 
@@ -71,9 +72,9 @@ static double time_fn(cbv cb)
     average = elapsed / iter;
     sum = (average - past_average);
     if (sum > 0) 
-      deviation = sum/average;
+      deviation = sum / average;
     else 
-      deviation = -sum/average;
+      deviation = -sum / average;
     past_average = average;
   } 
 
@@ -81,7 +82,7 @@ static double time_fn(cbv cb)
   std::cout << " Total numbers of values: " << iter << " * " << FIELD_TST_SZ << " = " << FIELD_TST_SZ * iter;
   std::cout << "\n";
   std::cout << "average: " << average * 1000 << " msecs, ";
-  std::cout << "elasped: " << elapsed * 1000 << " secs (";
+  std::cout << "elasped: " << elapsed * 1000 << " msecs (";
   std::cout << after_ts.tv_sec << " secs " << (after_ts.tv_nsec/1000) << " usecs)\n";
   return elapsed;
 }
@@ -172,7 +173,7 @@ static xdrsuio encode_uios[MARSHAL_NUM_UIOS];
 static void unmarshal_lots_of(Value::TypeCode t) {
   for (int c = 0; c < MARSHAL_NUM_UIOS; c++) {
     suio *u = xe[5].uio();
-    char *buf = suio_flatten(u);
+    const char *buf = suio_flatten(u);
     size_t sz = u->resid();
     xdrmem xd(buf, sz);
     for (int i = 0; i < MARSHAL_CHUNK_SZ; i++) {
@@ -182,9 +183,10 @@ static void unmarshal_lots_of(Value::TypeCode t) {
         case Value::INT32:   va[i] = Val_Int32::xdr_unmarshal(&xd);  break;
         case Value::DOUBLE:  va[i] = Val_Double::xdr_unmarshal(&xd); break;
         case Value::STR:     va[i] = Val_Str::xdr_unmarshal(&xd);    break;
+        default: FAIL << "TypeCode: " << t << " not handle\n";       break;
       }
     }   
-    free(buf);
+    delete [] buf;
   }
 }
 
@@ -309,7 +311,9 @@ static void unit_test_for(Value::TypeCode t ) {
       time_fn(wrap(marshal_lots_of_tuples));
       std::cout << "unmarshalling:";
       time_fn(wrap(unmarshal_lots_of_tuples));
-
+      break;
+    default:
+        FAIL << "TypeCode: " << t << " not handle\n";
       break;
   }
 }
@@ -334,7 +338,6 @@ int main(int argc, char **argv)
   unit_test_for(Value::DOUBLE);
   unit_test_for(Value::STR);
   unit_test_for(Value::TUPLE);
-
 
   return 0;
 }
