@@ -86,9 +86,8 @@ REMOVABLE_INLINE int SimpleKeyRouter::greedyRoute(TuplePtr tp)
     if (k->compareTo(routes_.front()->key_) < 0 || k->compareTo(routes_.back()->key_) > 0)
       route = routes_.size() - 1;
     else {
-      route = 0;
       for (std::vector<Route*>::iterator i = routes_.begin(); 
-           i != routes_.end() &&  k->compareTo((*i)->key_) > 0; i++, route++)
+           i != routes_.end() &&  k->compareTo((*i)->key_) >= 0; i++, route++)
         ;
     }
     assert (route < int(routes_.size()));

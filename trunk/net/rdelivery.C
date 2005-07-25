@@ -103,7 +103,7 @@ int RDelivery::push(int port, TupleRef tp, cbv cb)
   }
   else if (type == "SUCCESS") {
     UNMAP(seq);					// And that's all folks.
-  } else return output(1)->push(tp, cb);
+  } else return output(1)->push(tp, cb);	// DATA DELIVERY
 
   return 1;
 }

@@ -54,6 +54,7 @@ TuplePtr CCR::simple_action(TupleRef p)
     }
     catch (Value::TypeError& e) { } 
   }
+  if (!src || !port) return p;		// Punt
 
   TupleRef ack  = Tuple::mk();
   ack->append(src);			// Source location

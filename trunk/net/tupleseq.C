@@ -38,7 +38,6 @@ TuplePtr Sequence::simple_action(TupleRef p)
   for (uint i = 0; i < p->size(); i++)
     if (!isSeq((*p)[i])) n->append((*p)[i]); 
   n->freeze();
-
   return n;
 }
 

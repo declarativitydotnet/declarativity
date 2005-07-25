@@ -16,7 +16,7 @@ $(PROGRAMS): $(LDEPS)
 
 bin_PROGRAMS 	= 	values \
 			tuples \
-      benchmark \
+      			benchmark \
 			fdbufs \
 			overlog \
 			tables \
@@ -37,6 +37,7 @@ bin_PROGRAMS 	= 	values \
 			netcc \
 			netrcc \
 			netcc2 \
+			perfectChord \
 			logger \
 			csv \
 			testQueue \
@@ -194,6 +195,13 @@ netrcc_LDADD = \
 
 netcc2_SOURCES = netcc2.C
 netcc2_LDADD = \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+perfectChord_SOURCES = perfectChord.C
+perfectChord_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \

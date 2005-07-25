@@ -301,7 +301,7 @@ TuplePtr RateCCR::simple_action(TupleRef tp)
     (*_ack_cb)();				// Notify new ack
     _ack_cb = cbv_null;
   } 
-  return tp;					// Forward data tuple
+  return strip(tp);				// Forward data tuple
 }
 
 /**
@@ -345,3 +345,16 @@ int RateCCR::push(int port, TupleRef tp, cbv cb)
   return this->Element::push(port, tp, cb); 	
 }
 
+REMOVABLE_INLINE TuplePtr RateCCR::strip(TuplePtr p) {
+  TuplePtr tuple = Tuple::mk();
+  for (uint i = 0; i < p->size(); i++) {
+    try {
+      TupleRef t = Val_Tuple::cast((*p)[i]); 
+      if (Val_Str::cast((*t)[0]) == "TINFO") continue;
+    }
+    catch (Value::TypeError& e) { } 
+    tuple->append((*p)[i]);
+  }
+  tuple->freeze();
+  return tuple;
+}

@@ -36,6 +36,7 @@ public:
 
 private:
   class Connection;
+  REMOVABLE_INLINE TuplePtr strip(TuplePtr p);
 
   cbv  _ack_cb;
 
