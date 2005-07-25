@@ -115,6 +115,7 @@ static void unmarshal_lots_of_tuples()
     for( int i=0; i< MARSHAL_CHUNK_SZ; i++) {
       ta[i]=Tuple::xdr_unmarshal(&xd);
     }
+    delete [] buf;
   }
 }
 
