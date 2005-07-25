@@ -1,0 +1,168 @@
+// -*- c-basic-offset: 2; related-file-name: "timedPushSource.h" -*-
+/*
+ * @(#)$Id$
+ * 
+ * This file is distributed under the terms in the attached INTEL-LICENSE file.
+ * If you do not find these files, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * 
+ */
+
+#include <element.h>
+#include <iostream>
+#include <async.h>
+#include <math.h>
+#include "tman.h"
+#include "val_str.h"
+#include "val_uint32.h"
+#include "val_tuple.h"
+#include "val_time.h"
+
+TrafficManager::TrafficManager(str n, str a, uint k, uint r, double s)
+  : Element(n, 1, 2), 
+    _wakeupCB(wrap(this, &TrafficManager::wakeup)),
+    _runTimerCB(wrap(this, &TrafficManager::runTimer)),
+    my_addr_(a), my_key_(k), key_range_(r), total_received_(0)
+{
+  _seconds = (uint) floor(s);
+  s -= _seconds;
+  _nseconds = (uint) (s * 1000000000);
+}
+
+int TrafficManager::push(int port, TupleRef tp, cbv cb) {
+  assert(port == 0);
+  ValuePtr vp = NULL;
+
+  uint key = getKey(tp);
+  if (key == my_key_) {
+    total_received_++;
+    assert(output(1)->push(mkResponse(tp), cbv_null));
+  }
+  else if ((vp = getLookupTime(tp)) != NULL) {
+    timespec t = Val_Time::cast(vp); 
+    std::cerr << "LOOKUP DELAY: " << delay(&t) << std::endl;
+  } 
+  else {
+    log(LoggerI::WARN, 1, strbuf() << "MY KEY: " << my_key_ 
+                          << ", RECEIVED LOOKUP " << key 
+                          << " FROM TUPLE: " << tp->toString());
+    assert(0);
+  }
+  return 1;
+}      
+    
+int TrafficManager::initialize()
+{
+  log(LoggerI::INFO, 0, "initialize");
+  // Schedule my timer
+  if (_seconds || _nseconds)
+    _timeCallback = delaycb(_seconds, _nseconds, _runTimerCB);
+  return 0;
+}
+
+
+void TrafficManager::runTimer()
+{
+  // remove the timer id
+  _timeCallback = NULL;
+
+  timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+
+  // Create a tuple
+  TuplePtr tuple = Tuple::mk();
+  tuple->append(Val_Str::mk("LOOKUP"));
+  tuple->append(Val_UInt32::mk(genLookupKey()));
+  tuple->append(Val_Str::mk(my_addr_));
+  tuple->append(Val_Time::mk(now));
+  tuple->freeze();
+
+  // Attempt to push it
+  if (!output(0)->push(tuple, _wakeupCB)) {
+    // We have been pushed back.  Don't reschedule wakeup
+    log(LoggerI::INFO, 0, "runTimer: sleeping");
+  } else {
+    // Reschedule me into the future
+    log(LoggerI::INFO, 0, "runTimer: rescheduling");
+    _timeCallback = delaycb(_seconds, _nseconds, _runTimerCB);
+  }
+}
+
+void TrafficManager::wakeup()
+{
+  // I'd better not be already scheduled
+  assert(_timeCallback == NULL);
+
+  log(LoggerI::INFO, 0, "wakeup");
+
+  // Okey dokey.  Reschedule me into the future
+  _timeCallback = delaycb(_seconds, _nseconds, _runTimerCB);
+}
+
+REMOVABLE_INLINE uint TrafficManager::genLookupKey() {
+  uint k = my_key_;
+  while (k == my_key_) k = rand() % key_range_;
+  return k;
+}
+
+REMOVABLE_INLINE int TrafficManager::getKey(TuplePtr tp) {
+  for (uint i = 0; i < tp->size(); i++) {
+    try {
+      if (Val_Str::cast((*tp)[i]) == "LOOKUP") {
+        return Val_UInt32::cast((*tp)[i+1]);
+      }
+    }
+    catch (Value::TypeError& e) { } 
+  }
+  return -1;
+}
+
+REMOVABLE_INLINE ValuePtr TrafficManager::getLookupTime(TuplePtr tp) {
+  for (uint i = 0; i < tp->size(); i++) {
+    try {
+      if (Val_Str::cast((*tp)[i]) == "RESPONSE") {
+        return (*tp)[i+2];	// Lookup time
+      }
+    }
+    catch (Value::TypeError& e) { } 
+  }
+  return NULL;
+}
+
+REMOVABLE_INLINE TuplePtr TrafficManager::mkResponse(TuplePtr tp) {
+  TuplePtr resp = Tuple::mk();
+  resp->append(Val_Str::mk("RESPONSE"));
+   
+  for (uint i = 0; i < tp->size(); i++) {
+    try {
+      if (Val_Str::cast((*tp)[i]) == "LOOKUP") {
+        resp->append((*tp)[i+2]);	// Response address
+        resp->append((*tp)[i+3]);	// Lookup time
+        return resp;
+      }
+    }
+    catch (Value::TypeError& e) { } 
+  }
+  return NULL;
+
+}
+
+REMOVABLE_INLINE uint32_t TrafficManager::delay(timespec *ts)
+{
+  timespec  now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  if (now.tv_nsec < ts->tv_nsec) { 
+    if (now.tv_nsec + 1000000000 < 0) {
+      now.tv_nsec -= 1000000000;
+      now.tv_sec++;
+    }
+    else {
+      now.tv_nsec += 1000000000;
+      now.tv_sec--; 
+    }
+  } 
+
+  return (((now.tv_sec - ts->tv_sec)*1000) + 
+          ((now.tv_nsec - ts->tv_nsec)/1000000)); // Delay in milliseconds
+}
