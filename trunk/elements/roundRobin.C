@@ -80,7 +80,7 @@ TuplePtr RoundRobin::pull(int port, cbv cb)
         // Did we just run out of unblocked inputs?
         if (_block_flag_count == ninputs()) {
           // No more inputs to try.  Fail to return and block output
-          _nextInput = (currentInput++) % ninputs();
+          _nextInput = (currentInput+1) % ninputs();
           _pull_cb = cb;
 
           return 0;
@@ -89,7 +89,7 @@ TuplePtr RoundRobin::pull(int port, cbv cb)
         }
       } else {
         // Got an input tuple.  Just keep state and return this tuple
-        _nextInput = (currentInput++) % ninputs();
+        _nextInput = (currentInput+1) % ninputs();
         return p;
       }
     }
