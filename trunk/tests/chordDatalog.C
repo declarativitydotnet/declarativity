@@ -36,7 +36,7 @@
 
 
 bool DEBUG = false;
-bool CC = true;
+bool CC = false;
 bool TEST_SUCCESSOR = false;
 bool TEST_LOOKUP = false;
 int JOIN_ATTEMPTS = 4;
