@@ -65,9 +65,9 @@ static double time_fn(cbv cb)
 
     if (clock_gettime (CLOCK_REALTIME,&after_ts)) {
       fatal << "clock_gettime:" << strerror(errno) << "\n";
-    }
+    } 
 
-    after_ts = after_ts - before_ts;
+    after_ts = after_ts - before_ts; 
     elapsed = after_ts.tv_sec + (1.0 / 1000 / 1000 / 1000 * after_ts.tv_nsec);
     average = elapsed / iter;
     sum = (average - past_average);
@@ -78,7 +78,7 @@ static double time_fn(cbv cb)
     past_average = average;
   } 
 
-
+  iter /= 2;
   std::cout << " Total numbers of values: " << iter << " * " << FIELD_TST_SZ << " = " << FIELD_TST_SZ * iter;
   std::cout << "\n";
   std::cout << "average: " << average * 1000 << " msecs, ";
@@ -271,9 +271,9 @@ static void unit_test_for(Value::TypeCode t ) {
     case Value::INT32: 
       std::cout << "INT32: creating:"; 
       time_fn(wrap(create_lots_val_int32));
-      std::cout << " marshalling:";
+      std::cout << "marshalling:";
       time_fn(wrap(marshal_lots_of_values));
-      std::cout << " unmarshalling:";
+      std::cout << "unmarshalling:";
       time_fn(wrap(unmarshal_lots_of_int32));  
       std::cout << "\n";
       break;
