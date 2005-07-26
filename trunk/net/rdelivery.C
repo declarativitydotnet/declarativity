@@ -16,13 +16,21 @@
 #include "val_tuple.h"
 
 
-#define MAP(s, t) tmap_.insert(std::make_pair((s), new RTuple((t))))
+#define MAP(s, t) \
+do { \
+  if (max_seq_ && s != max_seq_+1) \
+    std::cerr << "MAX SEQ ERROR: " << max_seq_ << ", NEXT SEQ: " << s << std::endl; \
+  max_seq_ = s; \
+  tmap_.insert(std::make_pair((s), new RTuple((t)))); \
+} while (0)
 
 #define UNMAP(s) \
 do { \
   RTupleIndex::iterator i = tmap_.find((s)); \
-  delete i->second; \
-  if (i != tmap_.end()) tmap_.erase(i); \
+  if (i != tmap_.end()) { \
+    delete i->second; \
+    tmap_.erase(i); \
+  } \
 } while (0)
 
 
@@ -59,7 +67,7 @@ public:
 };
 
 RDelivery::RDelivery(str n, bool r, uint32_t m)
-  : Element(n, 2, 3), _out_cb(cbv_null), in_on_(true), retry_(r), max_retry_(m) { }
+  : Element(n, 2, 3), _out_cb(cbv_null), in_on_(true), retry_(r), max_retry_(m) { max_seq_ = 0; }
 
 /**
  * New tuple to send
@@ -79,7 +87,6 @@ TuplePtr RDelivery::pull(int port, cbv cb)
   else if (!rtran_q_.empty()) {
     RTuple *rt = rtran_q_.front();
     rtran_q_.pop_front();
-    std::cerr << "RETRY TUPLE: " << rt->tp_->toString() << std::endl;
     return rt->tp_;
   }
 
@@ -144,6 +151,8 @@ REMOVABLE_INLINE SeqNum RDelivery::getSeq(TuplePtr tp) {
     try {
       TupleRef t = Val_Tuple::cast((*tp)[i]); 
       if (Val_Str::cast((*t)[0]) == "SEQ") {
+         if (Val_Str::cast((*t)[2]) == "localhost:10000" && Val_UInt32::cast((*t)[3]) == 0) 
+           std::cerr << "SEQ NUMBER: " << (*t)[1]->toString() << std::endl;
          return Val_UInt64::cast((*t)[1]);
       }
     }

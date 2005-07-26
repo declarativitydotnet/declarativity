@@ -7,7 +7,7 @@
  * 
  */
 
-
+#include <iostream>
 #include "tupleseq.h"
 #include "val_uint64.h"
 #include "val_uint32.h"

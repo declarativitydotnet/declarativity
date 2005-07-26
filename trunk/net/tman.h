@@ -37,7 +37,7 @@ class TrafficManager : public Element {
   REMOVABLE_INLINE uint genLookupKey();
   REMOVABLE_INLINE int getKey(TuplePtr tp);
   REMOVABLE_INLINE TuplePtr mkResponse(TuplePtr tp);
-  REMOVABLE_INLINE ValuePtr getLookupTime(TuplePtr tp);
+  REMOVABLE_INLINE bool processResponse(TuplePtr tp);
   REMOVABLE_INLINE uint32_t delay(timespec *ts);
 
   /** My wakeup method */

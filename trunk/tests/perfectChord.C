@@ -70,6 +70,10 @@ void hookupSend_RCC(Router::ConfigurationRef conf, str src, bool do_retry,
   ElementSpecRef addr   = conf->addElement(New refcounted< PelTransform >("ADDRESS", 
                                                                          "$2 2 field pop swallow pop"));
   ElementSpecRef pstrip = conf->addElement(New refcounted< PelTransform >("PORT STRIP", "$1 unboxPop"));
+  ElementSpecRef rcount = conf->addElement(New refcounted< PelTransform >("RETRY ADD", 
+                                                                          "$0 pop $1 pop $2 pop \
+                                                                           $3 pop $4 pop $5 pop \
+                                                                           $6 pop $7 1 + pop"));
 
   conf->hookUp(dmux_out, pdo, pstrip, 0);
   conf->hookUp(pstrip,   0,   dataq,  0);
@@ -78,15 +82,13 @@ void hookupSend_RCC(Router::ConfigurationRef conf, str src, bool do_retry,
     ElementSpecRef retryq   = conf->addElement(New refcounted< Queue >("Retry Q", 1000));
     ElementSpecRef strip    = conf->addElement(New refcounted< PelTransform >("STRIP", 
                                                                               "$1 unboxPop"));
-    ElementSpecRef retryP   = conf->addElement(New refcounted< Print >("RETRY PRINT"));
 
 
     conf->hookUp(dataq,    0, rr_retry, 0);
     conf->hookUp(retry,    1, mux_in,   pmi); 
     conf->hookUp(retry,    2, strip,    0);
     conf->hookUp(strip,    0, retryq,   0);
-    conf->hookUp(retryq,   0, retryP,   0);
-    conf->hookUp(retryP,   0, rr_retry, 1);
+    conf->hookUp(retryq,   0, rr_retry, 1);
     conf->hookUp(rr_retry, 0, seq,      0);
   }
   else {
@@ -97,11 +99,15 @@ void hookupSend_RCC(Router::ConfigurationRef conf, str src, bool do_retry,
     conf->hookUp(retry, 2, rm,     1); 
     conf->hookUp(rm,    0, mux_in, pmi); 
   }
+  ElementSpecRef retryP   = conf->addElement(New refcounted< Print >("RETRY INC PRINT"));
 
-  conf->hookUp(seq,   0, retry,  0);
-  conf->hookUp(retry, 0, rcct,   0);
-  conf->hookUp(rcct,  0, addr,   0);
-  conf->hookUp(addr,  0, rr_out, pmo);
+  conf->hookUp(seq,   0, retryP,  0);		// Plug in the retry
+  // conf->hookUp(retryP, 0, retry,  0);		// Plug in the retry
+  conf->hookUp(retryP, 0, rcount, 0);		// Plug in the retry
+  conf->hookUp(rcount, 0, retry,  0);		// Plug in the retry
+  conf->hookUp(retry,  0, rcct,   0);
+  conf->hookUp(rcct,   0, addr,   0);
+  conf->hookUp(addr,   0, rr_out, pmo);
 
   conf->hookUp(dmux_in, pdi, rcct,  1);
   conf->hookUp(rcct,    1,   retry, 1);
@@ -136,6 +142,10 @@ void hookupSend_CC(Router::ConfigurationRef conf, str src, bool do_retry,
   ElementSpecRef dataq  = conf->addElement(New refcounted< Queue >("Data Q", 1000));
   ElementSpecRef seq    = conf->addElement(New refcounted< Sequence >("Sequence", src, pdi));
   ElementSpecRef retry  = conf->addElement(New refcounted< RDelivery >("RETRY", do_retry));
+  ElementSpecRef rcount  = conf->addElement(New refcounted< PelTransform >("RETRY ADD", 
+                                                                          "$0 pop $1 pop $2 pop \
+                                                                           $3 pop $4 pop $5 pop \
+                                                                           $6 pop $7 1 + pop"));
   ElementSpecRef cct    = conf->addElement(New refcounted< CCT >("CCT",2,2048));
   ElementSpecRef addr   = conf->addElement(New refcounted< PelTransform >("ADDRESS", 
                                                                          "$1 2 field pop swallow pop"));
@@ -146,8 +156,16 @@ void hookupSend_CC(Router::ConfigurationRef conf, str src, bool do_retry,
   conf->hookUp(pstrip,   0,   dataq,  0);	// Put in data send queue
 
   conf->hookUp(dataq, 0, seq,    0);		// Data send queue to sequence
-  conf->hookUp(seq,   0, retry,  0);		// Plug in the retry
-  conf->hookUp(retry, 0, cct,    0);		// Right on down to the cc transmit
+  if (!do_retry) {
+    conf->hookUp(seq,   0, rcount,  0);		// Plug in the retry
+    conf->hookUp(rcount,0, retry,  0);		// Plug in the retry
+    conf->hookUp(retry, 0, cct, 0);		// Right on down to the cc transmit
+  }
+  else {
+    conf->hookUp(seq,    0, retry,  0);		// Plug in the retry
+    conf->hookUp(retry,  0, rcount, 0);		// Plug in the retry
+    conf->hookUp(rcount, 0, cct,    0);		// Right on down to the cc transmit
+  }
   conf->hookUp(cct,   0, addr,   0);		// Extract the next hop address
   conf->hookUp(addr,  0, rr_out, pmo);		// And away she goes
 
@@ -160,7 +178,7 @@ void hookupSend_CC(Router::ConfigurationRef conf, str src, bool do_retry,
 }
 
 void hookupRecv_CC(Router::ConfigurationRef conf, ElementSpecRef udprx, 
-                ElementSpecRef dmux_in, ElementSpecRef rr_out)
+                   ElementSpecRef dmux_in, ElementSpecRef rr_out)
 {
 
   // RECEIVER
@@ -190,6 +208,7 @@ void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
     sprintf(buf, "node%04d:%d\n", nodeid, (START_PORT+nodeid));
     my_addr = str(buf);
   }
+  // std::cerr << "MY ADDRESS: " << my_addr << std::endl;
 
   // Create the router routing table, specifically for Emulab.
   ptr < SimpleKeyRouter > skrp = New refcounted< SimpleKeyRouter >("SimpleKeyRoute", 
@@ -200,6 +219,7 @@ void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
     if (emulab) sprintf(buf, "node%04d:%d\n", nid, (START_PORT+nid));
     else        sprintf(buf, "localhost:%d\n", (START_PORT + nid));
     skrp->route(Val_UInt32::mk(nid), Val_Str::mk(buf));
+    // std::cerr << "FINGER( " << i << " ): " << str(buf) << std::endl;
   }
   ptr < vec<ValueRef> > ports = skrp->routes();
 
@@ -222,11 +242,19 @@ void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
   conf->hookUp(dmux_out, ports->size(), dout_errP, 0);
   conf->hookUp(dout_errP, 0, dout_dis, 0);
 
-  conf->hookUp(dmux_in, ports->size(), mux_in, ports->size());
+  ElementSpecRef hopcntI   = conf->addElement(New refcounted< PelTransform >("HOP COUNT INCREMENT", 
+                                                                          "$0 pop $1 pop $2 pop \
+                                                                           $3 pop $4 pop $5 pop \
+                                                                           $6 1 + pop $7 pop"));
+  ElementSpecRef hopcntP   = conf->addElement(New refcounted< Print >("HOPCOUNT INC PRINT"));
+
+  // conf->hookUp(dmux_in, ports->size(), mux_in, ports->size());
+  conf->hookUp(dmux_in, ports->size(), hopcntP, 0);
+  conf->hookUp(hopcntP, 0, hopcntI, 0);
+  conf->hookUp(hopcntI, 0, mux_in, ports->size());
 
   // SENDER PACKAGE UP AND SEND TUPLE
   ElementSpecRef sendP    = conf->addElement(New refcounted< Print >("SEND PRINT"));
-  ElementSpecRef recvP    = conf->addElement(New refcounted< Print >("RECEIVE PRINT"));
   ElementSpecRef marshal  = conf->addElement(New refcounted< MarshalField >("MARHSAL", 1));
   ElementSpecRef route    = conf->addElement(New refcounted< StrToSockaddr >("sock2addr", 0));
   ElementSpecRef netsim   = conf->addElement(New refcounted< SimpleNetSim >("Net Sim (Sender)", 
@@ -248,14 +276,13 @@ void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
   conf->hookUp(skr,      0, portA,    0); // Router out channel print
   conf->hookUp(portA,    0, sendP,    0); // Router out channel print
   conf->hookUp(sendP,    0, dmux_out, 0); // Router out channel to CC demux
-  conf->hookUp(mux_in,   0, recvP,    0); // Incoming lookups, responses, and failed attempts
-  conf->hookUp(recvP,    0, skr,      1);
+  conf->hookUp(mux_in,   0, skr,     1); // Incoming lookups, responses, and failed attempts
 
   // HOOKUP EVERYTHING IN THE MIDDLE
   for (uint i = 0; i < ports->size(); i++) {
-    hookupSend_CC(conf, my_addr, false, dmux_out, i, dmux_in, i, rr_out, i+2, mux_in, i);
+    hookupSend_RCC(conf, my_addr, true, dmux_out, i, dmux_in, i, rr_out, i+2, mux_in, i);
   }
-  hookupRecv_CC(conf, udpRx, dmux_in, rr_out);
+  hookupRecv_RCC(conf, udpRx, dmux_in, rr_out);
 
 
   // Create router and run.

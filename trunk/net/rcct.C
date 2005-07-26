@@ -250,7 +250,7 @@ REMOVABLE_INLINE void RateCCT::feedback(uint32_t rt, uint32_t X_recv, double p)
   }
 
   rrate_ = X_recv;		// Save the receiver rate
-  uint32_t tms = max(rto_, 4000/trate_);
+  uint32_t tms = max(rto_, 8000/trate_);
   nofeedback_ = delaycb(tms/1000, (tms % 1000)*1000000,
                         wrap(this, &RateCCT::feedback_timeout));
 }

@@ -39,6 +39,7 @@ private:
   bool      in_on_;
   bool      retry_;
   uint32_t  max_retry_;					// Max number of retries for a tuple
+  uint64_t  max_seq_;
 
   std::deque <RTuple*>  rtran_q_;			// Retransmit queue 
 

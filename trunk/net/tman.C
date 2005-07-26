@@ -39,11 +39,7 @@ int TrafficManager::push(int port, TupleRef tp, cbv cb) {
     total_received_++;
     assert(output(1)->push(mkResponse(tp), cbv_null));
   }
-  else if ((vp = getLookupTime(tp)) != NULL) {
-    timespec t = Val_Time::cast(vp); 
-    std::cerr << "LOOKUP DELAY: " << delay(&t) << std::endl;
-  } 
-  else {
+  else if (!processResponse(tp)) {
     log(LoggerI::WARN, 1, strbuf() << "MY KEY: " << my_key_ 
                           << ", RECEIVED LOOKUP " << key 
                           << " FROM TUPLE: " << tp->toString());
@@ -76,6 +72,8 @@ void TrafficManager::runTimer()
   tuple->append(Val_UInt32::mk(genLookupKey()));
   tuple->append(Val_Str::mk(my_addr_));
   tuple->append(Val_Time::mk(now));
+  tuple->append(Val_UInt32::mk(0));	// Hop count
+  tuple->append(Val_UInt32::mk(0));	// Retries
   tuple->freeze();
 
   // Attempt to push it
@@ -118,16 +116,20 @@ REMOVABLE_INLINE int TrafficManager::getKey(TuplePtr tp) {
   return -1;
 }
 
-REMOVABLE_INLINE ValuePtr TrafficManager::getLookupTime(TuplePtr tp) {
+REMOVABLE_INLINE bool TrafficManager::processResponse(TuplePtr tp) {
   for (uint i = 0; i < tp->size(); i++) {
     try {
       if (Val_Str::cast((*tp)[i]) == "RESPONSE") {
-        return (*tp)[i+2];	// Lookup time
+        timespec t = Val_Time::cast((*tp)[i+2]); 
+        uint    hc = Val_UInt32::cast((*tp)[i+3]);
+        uint    rc = Val_UInt32::cast((*tp)[i+4]);
+        std::cerr << "RECEIVE RESPONSE: delay " << delay(&t) << ", hop count " << hc << ", retry count " << rc << std::endl;
+        return true;
       }
     }
     catch (Value::TypeError& e) { } 
   }
-  return NULL;
+  return false;
 }
 
 REMOVABLE_INLINE TuplePtr TrafficManager::mkResponse(TuplePtr tp) {
@@ -137,8 +139,14 @@ REMOVABLE_INLINE TuplePtr TrafficManager::mkResponse(TuplePtr tp) {
   for (uint i = 0; i < tp->size(); i++) {
     try {
       if (Val_Str::cast((*tp)[i]) == "LOOKUP") {
-        resp->append((*tp)[i+2]);	// Response address
-        resp->append((*tp)[i+3]);	// Lookup time
+        resp->append((*tp)[i+2]);		// Response address
+        resp->append((*tp)[i+3]);		// Lookup time
+        resp->append((*tp)[i+4]);		// Hop Count
+        resp->append((*tp)[i+5]);		// Retry count
+        resp->append(Val_UInt32::mk(0));	// HACK: PAD FOR DATA PEL TRANSFORM
+        resp->append(Val_UInt32::mk(0));	// HACK: PAD FOR DATA PEL TRANSFORM
+        resp->append(Val_UInt32::mk(0));	// HACK: PAD FOR DATA PEL TRANSFORM
+        resp->freeze();
         return resp;
       }
     }
