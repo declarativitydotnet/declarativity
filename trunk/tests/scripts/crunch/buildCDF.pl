@@ -37,15 +37,24 @@ close INFILE;
 print "Total number of lookups " . $totalLatencyCounts . "\n";
 
 open INFILE, "<$opt_f" or die "Couldn't open $opt_f";
+my $totalLatency = 0;
+my $medianLatency = -1;
 while (<INFILE>) {
 	chomp;
 	my @line = split / /;
 	my $latency = $line[0];
 	$latencyCounts++;
+	$totalLatency += $latency;
 	my $percentCount = 0;
 	$percentCount = ($latencyCounts / $totalLatencyCounts) * 100;
+	if ($percentCount > 50 && $medianLatency == -1) {
+	    $medianLatency = $latency;
+	}
 	print "$latency $latencyCounts $percentCount\n";
 }
+my $meanLatency = $totalLatency / $totalLatencyCounts;
+print "Mean = $meanLatency\n";
+print "Median = $medianLatency\n";
 
 close INFILE;
 
