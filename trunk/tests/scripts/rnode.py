@@ -21,6 +21,7 @@ class Monitor:
     def kill(self):
         try:
             os.kill(self.pid, signal.SIGKILL)
+            print >> self.log, "Killed is successful"
         except:
             print >> self.log, sys.exc_info()[:2]
     
