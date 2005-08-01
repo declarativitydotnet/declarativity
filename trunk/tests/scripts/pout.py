@@ -245,7 +245,7 @@ if __name__ == "__main__":
     resultsHash = {}
     bytes = {"startJoin" : 136, "lookup" : 132, "lookupResults" : 164, "stabilizeRequest" : 136,
              "notifyPredecessor" : 108, "sendPredecessor" : 140, "returnSuccessor" : 140,
-             "sendSuccessors" : 140}
+             "sendSuccessors" : 140, "pingReq" : 100, "pingResp" : 100}
 
     try:
         flags, args = parse_cmdline(sys.argv)
