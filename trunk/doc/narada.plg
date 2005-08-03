@@ -1,4 +1,10 @@
-/* Narada */
+/* Narada $Id$
+
+Try out with
+
+tests/runOverLog doc/narada.plg NONE 0 127.0.0.1:10000 0 "neighbor=127.0.0.1:100001;"
+*/
+
 
 /* Materializations */
 materialize(neighbor, infinity, 60, keys(2)).
