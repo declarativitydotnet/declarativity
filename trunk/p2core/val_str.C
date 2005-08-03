@@ -20,7 +20,7 @@ class OperStr : public opr::OperCompare<Val_Str> {
   virtual ValuePtr _plus (const ValueRef& v1, const ValueRef& v2) const {
     str s1 = Val_Str::cast(v1);
     str s2 = Val_Str::cast(v2);
-    return Val_Str::mk((strbuf() << s2 << s1));
+    return Val_Str::mk((strbuf() << s1 << s2));
   };
 };
 const opr::Oper* Val_Str::oper_ = New OperStr();
