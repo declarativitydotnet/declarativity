@@ -9,37 +9,42 @@ tests/runOverLog doc/narada.plg NONE 0 127.0.0.1:10000 0 "neighbor=127.0.0.1:100
 /* Materializations */
 materialize(neighbor, infinity, 60, keys(2)).
 materialize(member, infinity, 60, keys(2)).
-materialize(env, infinity, infinity, keys(2)).
+materialize(env, infinity, infinity, keys(2,3)).
+materialize(latency, 30, infinity, keys(2)).
 
+/*
 watch(gossipEvent).
-watch(request).
 watch(gossipPartner).
+*/
 watch(neighbor).
+watch(request).
+watch(reply).
+watch(latency).
 watch(member).
 watch(report).
 
-E0 neighbor(X,Y) :- periodic(X,E,0,1), env(X, H, Y), H=="neighbor".
+E0 neighbor(X,Y1) :- periodic(X,E,0,1), env(X, H, Y), H=="neighbor", Y1
+	:= Y + "1".
+
+E01 neighbor(X,Y1) :- periodic(X,E,0,1), env(X, H, Y), H=="neighbor", Y1
+	:= Y + "2a".
+
 E1 member(X,Y) :- periodic(X,E,0,1), env(X, H, Y), H=="hostname".
 
 R0 gossipEvent(X) :- periodic(X,E,1).
 
 R1 gossipPartner(X,Y) :- gossipEvent(X), neighbor(X,Y).
 
-R2 member@Y(X,Y,Z) :- gossipPartner@X(X,Y), f_rand() % 10 == 0, member@X(X,Z).
+R2 member@Y(Y,Z) :- gossipPartner@X(X,Y), f_rand() % 10 == 0, member@X(X,Z).
 
-/*R2 member@Y(Y,Z) :- gossipPartner@X(X,Y), member@X(X,Z).*/
+RRR report@X(X,F,N) :- periodic(X,E,1), F:=f_rand(), neighbor@X(X,N).
 
-
-
-
-
-/*
-R3 request@Y(Y,X,E,T) :- periodic@X(X,E,30), member@X(X,Y), T:=f_now().
+R3 request@Y(Y,X,E,T) :- periodic@X(X,E,10), member@X(X,Y), T := f_now().
 
 R4 reply@Y(Y,X,E,T) :- request@X(X,Y,E,T).
 
-R5 latency@X(X,Y,T) :- reply@X(X,Y,E,T1), T:=f_now() - T1.
-*/
+R5 latency@X(X,Y,T) :- reply@X(X,Y,E,T1), T := f_now() - T1.
+
 
 
 
