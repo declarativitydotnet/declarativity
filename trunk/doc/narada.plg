@@ -2,33 +2,39 @@
 
 /* Materializations */
 materialize(neighbor, infinity, 60, keys(2)).
-materialize(member, infinity, 60, keys(1)).
+materialize(member, infinity, 60, keys(2)).
 materialize(env, infinity, infinity, keys(2)).
-materialize(landmark, infinity, infinity, keys(2)).
 
 watch(gossipEvent).
 watch(request).
 watch(gossipPartner).
-watch(landmark).
 watch(neighbor).
+watch(member).
+watch(imember).
 
 E0 neighbor(X,Y) :- periodic(X,E,0,1), env(X, H, Y), H=="neighbor".
+E1 member(X,Y) :- periodic(X,E,0,1), env(X, H, Y), H=="hostname".
 
-R0 gossipEvent(X) :- periodic(X,E,1).
+R0 gossipEvent(X) :- periodic(X,E,1,3).
 
 R1 gossipPartner(X,Y) :- gossipEvent(X), neighbor(X,Y).
 
+/*R2 member@Y(Y,Z) :- gossipPartner@X(X,Y), f_coinFlip(0.1) == 1, member@X(X,Z).*/
+
+/* R2 member@Y(Y,Z) :- gossipPartner@X(X,Y), member@X(X,Z).*/
+
+R21 imember@Y(Y,X,Z) :- gossipPartner(X,Y), member@X(X,Z).
 
 
 
-R2 member@Y(Y,Z) :- gossipPartner@X(X,Y), f_coinFlip(0.1) == 1, member@X(X,Z).
 
+/*
 R3 request@Y(Y,X,E,T) :- periodic@X(X,E,30), member@X(X,Y), T:=f_now().
 
 R4 reply@Y(Y,X,E,T) :- request@X(X,Y,E,T).
 
 R5 latency@X(X,Y,T) :- reply@X(X,Y,E,T1), T:=f_now() - T1.
-
+*/
 
 
 
