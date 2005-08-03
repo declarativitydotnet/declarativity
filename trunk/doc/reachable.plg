@@ -7,10 +7,11 @@ materialize(neighbor,infinity,infinity,keys(2)).
 /* Rules */
 watch(reachable).
 
-R1 reachable@X(X,Y) :- neighbor@X(X,Y).
+R1 reachable(X,Y) :- neighbor(X,Y)..
 
-R2 reachable@X(X,Y) :- neighbor@Z(Z,X), 
-   	               reachable@Z(Z,Y).
+R2 reachable@X(X,Y) :- neighbor(Z,X), 
+   	               reachable@Z(Z,Y), 
+		       X != Y.
 
 
 
