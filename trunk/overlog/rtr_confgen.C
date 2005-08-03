@@ -1422,6 +1422,11 @@ void Rtr_ConfGen::genFunctorSource(OL_Context::Rule* rule,
   if (pf == NULL) { return; }
   
   str period = pf->arg(2)->toString();
+  int count = 0;
+  if (pf->args() > 3) {
+    count = atoi(pf->arg(3)->toString().cstr());
+    debugRule(rule, str(strbuf() << "Periodic has count " << count << "\n"));
+  }
 
   namesTracker->fieldNames.push_back(pf->arg(0)->toString());
   namesTracker->fieldNames.push_back("E");
@@ -1442,7 +1447,8 @@ void Rtr_ConfGen::genFunctorSource(OL_Context::Rule* rule,
     _conf->addElement(New refcounted< TimedPullPush >(strbuf("FunctorPush:") 
 						      << rule->ruleID << 
 						      ":" << nodeID,
-						      atof(period.cstr())));
+						      atof(period.cstr()),
+						      count));
 
   hookUp(pushFunctor, 0);
 

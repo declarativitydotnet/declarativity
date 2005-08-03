@@ -3,18 +3,23 @@
 /* Materializations */
 materialize(neighbor, infinity, 60, keys(2)).
 materialize(member, infinity, 60, keys(1)).
-materialize(env, infinity, infinity, keys(1)).
+materialize(env, infinity, infinity, keys(2)).
+materialize(landmark, infinity, infinity, keys(2)).
 
 watch(gossipEvent).
 watch(request).
 watch(gossipPartner).
+watch(landmark).
+watch(neighbor).
 
-member("B").
-neighbor("A","B").
+E0 neighbor(X,Y) :- periodic(X,E,0,1), env(X, H, Y), H=="neighbor".
 
-R0 gossipEvent@X(X,Y) :- periodic@X(X,E,1), Y:="A".
+R0 gossipEvent(X) :- periodic(X,E,1).
 
-R1 gossipPartner@X(X,Y) :- periodic@X(X,E,1), neighbor@X(X,Y).
+R1 gossipPartner(X,Y) :- gossipEvent(X), neighbor(X,Y).
+
+
+
 
 R2 member@Y(Y,Z) :- gossipPartner@X(X,Y), f_coinFlip(0.1) == 1, member@X(X,Z).
 

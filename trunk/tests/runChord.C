@@ -116,6 +116,11 @@ void testNetworkedDatalog(LoggerI::Level level,
 {
   ref< OL_Context > ctxt = New refcounted< OL_Context>();
   std::ifstream istr(filename);
+  if (!istr.is_open()) {
+    // Failed to open the file
+    std::cerr << "Could not open file " << filename << "\n";
+    exit(-1);
+  }
   ctxt->parse_stream(&istr);
    
   startChordInDatalog(level, ctxt, filename, myAddress, port, landmarkAddress, delay);

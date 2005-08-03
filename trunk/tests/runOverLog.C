@@ -41,7 +41,7 @@ bool CC = false;
 /**
    My usage string
 */
-static char * USAGE = "Usage:\n\t runOverLog <overLogFile> <loggingLevel> <seed> <myipaddr:port> <startDelay>\n";
+static char * USAGE = "Usage:\n\t runOverLog <overLogFile> <loggingLevel> <seed> <myipaddr:port> <startDelay> <{key=value;}>\n";
 
 
 
@@ -51,17 +51,61 @@ static char * USAGE = "Usage:\n\t runOverLog <overLogFile> <loggingLevel> <seed>
 void
 initializeBaseTables(ref< OL_Context> ctxt,
                      ref<Rtr_ConfGen> routerConfigGenerator, 
-                     str localAddress)
+                     str localAddress,
+                     str environment)
 {
   // Put in my own address
-  TableRef nodeTable = routerConfigGenerator->getTableByName(localAddress, "env");
+  TableRef envTable = routerConfigGenerator->getTableByName(localAddress, "env");
   TupleRef tuple = Tuple::mk();
-  tuple->append(Val_Str::mk("env"));
+  ValueRef envName = Val_Str::mk("env");
+  tuple->append(envName);
+  ValueRef myAddress = Val_Str::mk(strbuf() << localAddress);
+  tuple->append(myAddress);
   tuple->append(Val_Str::mk("hostname"));
-  str myAddress = str(strbuf() << localAddress);
-  tuple->append(Val_Str::mk(myAddress));
+  tuple->append(myAddress);
   tuple->freeze();
-  nodeTable->insert(tuple);
+  envTable->insert(tuple);
+
+  // Now rest of the environment
+  warn << "Environment is " << environment << "\n";
+  const char * current = environment.cstr();
+  while (strlen(current) > 0) {
+    // Find a semicolon
+    char * theSemi = strchr(current, ';');
+    if (theSemi == NULL) {
+      fatal << "Malformed environment string. No semicolon\n";
+      exit(-1);
+    }
+
+    *theSemi = 0;
+
+    // Find an =
+    char * theEqual = strchr(current, '=');
+    if (theEqual == NULL) {
+      fatal << "Malformed environment entry [" << current << "]. No equals sign\n";
+      exit (-1);
+    }
+    
+    // Register the part from current to = and from = to semicolon
+    *theEqual = 0;
+    str attribute(current);
+    *theEqual = '=';
+
+    str value(theEqual + 1);
+    warn << "[" << attribute << "=" << value << "]\n";
+
+    TupleRef tuple = Tuple::mk();
+    tuple->append(envName);
+    tuple->append(myAddress);
+    tuple->append(Val_Str::mk(attribute));
+    tuple->append(Val_Str::mk(value));
+    tuple->freeze();
+    envTable->insert(tuple);
+
+    // Move after semicolon
+    *theSemi = ';';
+    current = theSemi+1;
+  }
 }
 
 
@@ -75,7 +119,8 @@ startOverLogDataflow(LoggerI::Level level,
                      str overLogFile, 
                      str localAddress,
                      int port,
-                     double delay)
+                     double delay,
+                     str environment)
 {
   // create dataflow for translated OverLog
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
@@ -88,7 +133,7 @@ startOverLogDataflow(LoggerI::Level level,
   routerConfigGenerator->clear();
   routerConfigGenerator->configureRouter(udp, localAddress);
 
-  initializeBaseTables(ctxt, routerConfigGenerator, localAddress);
+  initializeBaseTables(ctxt, routerConfigGenerator, localAddress, environment);
    
   RouterRef router = New refcounted< Router >(conf, level);
   if (router->initialize(router) == 0) {
@@ -113,7 +158,8 @@ void testOverLog(LoggerI::Level level,
                  str myAddress,
                  int port,    // extracted from myAddress for convenience
                  str filename,
-                 double delay)
+                 double delay,
+                 str environment)
 {
   ref< OL_Context > ctxt = New refcounted< OL_Context>();
   std::ifstream istr(filename);
@@ -124,7 +170,7 @@ void testOverLog(LoggerI::Level level,
   }
   ctxt->parse_stream(&istr);
   
-  startOverLogDataflow(level, ctxt, filename, myAddress, port, delay);
+  startOverLogDataflow(level, ctxt, filename, myAddress, port, delay, environment);
 }
 
 
@@ -137,7 +183,7 @@ void testOverLog(LoggerI::Level level,
 int
 main(int argc, char **argv)
 {
-  if (argc < 6) {
+  if (argc < 7) {
     fatal << USAGE;
   }
 
@@ -165,11 +211,14 @@ main(int argc, char **argv)
   // How long should I wait before I begin?
   double delay = atof(argv[5]);
 
+  str environment(argv[6]);
+
   testOverLog(level,
               myAddress,
               port,
               overLogFile, 
-              delay);
+              delay,
+              environment);
   return 0;
 }
 
