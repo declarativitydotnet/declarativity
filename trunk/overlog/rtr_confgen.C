@@ -81,11 +81,12 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
 
   // AGGREGATES
   int aggField = r->head->aggregate();
-  //std::cout << "Agg field " << aggField << "\n";
   if (aggField >= 0) {
     if (hasEventTerm(r)) {
       // there is an aggregate and involves an event, we need an agg wrap      
       Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(r->head->arg(aggField));
+      debugRule(r, str(strbuf() << "Agg wrap " << aggExpr->aggName() 
+		       << " " << aggField << "\n"));
       agg_el = New refcounted<Aggwrap>(aggExpr->aggName(), aggField + 1);
     } else {
       // an agg that involves only base tables. 
@@ -99,6 +100,9 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
   // PERIODIC
   if (hasPeriodicTerm(r)) {
     genFunctorSource(r, nodeID);
+    // if there are more terms, we have to perform the genJoinElements, 
+    // followed by selection/assignments
+
   } else {
     if (numFunctors(r) == 1) {
       // SINGLE_TERM
@@ -243,7 +247,7 @@ Rtr_ConfGen::genReceiveElements(ref< Udp> udp,
 
   ElementSpecRef bufferQueue = 
     _conf->addElement(New refcounted< Queue >(strbuf("ReceiveQueue:") << 
-					      nodeID, 10000));
+					      nodeID, 1000));
   ElementSpecRef pullPush = 
     _conf->addElement(New refcounted<
 		      TimedPullPush>("ReceiveQueuePullPush", 0));
@@ -269,7 +273,7 @@ Rtr_ConfGen::genReceiveElements(ref< Udp> udp,
     ElementSpecRef bufferQueue = 
       _conf->addElement(New refcounted< Queue >(strbuf("DemuxQueue:") << 
 						nodeID << ":" << tableName, 
-						10000));
+						1000));
     ElementSpecRef pullPush = 
       _conf->addElement(New refcounted<
 			TimedPullPush>("DemuxQueuePullPush" << nodeID 
@@ -374,7 +378,7 @@ Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
   hookUp(wrapAroundDemux, 0); // connect to the wrap around
   ElementSpecRef sendQueue = 
     _conf->addElement(New refcounted< Queue >(strbuf("SendQueue:") << nodeID, 
-					      10000));
+					      1000));
   hookUp(wrapAroundDemux, 1, sendQueue, 0); 
 
   // connect to send queue
@@ -631,6 +635,9 @@ str Rtr_ConfGen::pelFunction(FieldNamesTracker* names, Parse_Function *expr) {
   }
   else if (expr->name() == "f_rand") {
     pel << "rand "; 
+  } 
+  else if (expr->name() == "f_now") {
+    pel << "now "; 
   }
   else return "ERROR: unknown function name.";
 
@@ -1355,7 +1362,6 @@ void Rtr_ConfGen::genFunctorSource(OL_Context::Rule* rule, str nodeID)
   TupleRef functorTuple = Tuple::mk();
   functorTuple->append(Val_Str::mk(rule->head->fn->name));
   functorTuple->append(Val_Str::mk(nodeID)); 
-  functorTuple->append(Val_Int32::mk(random()));
   functorTuple->freeze();
 
   ElementSpecRef source =
@@ -1373,6 +1379,15 @@ void Rtr_ConfGen::genFunctorSource(OL_Context::Rule* rule, str nodeID)
   
   debugRule(rule, str(strbuf() << "Functor source " 
 		      << pf->toString()) << " " << period << "\n");
+
+  // a pel transform that puts in the periodic stuff
+  ElementSpecRef pelRand = 
+    _conf->addElement(New refcounted< PelTransform >(strbuf("FunctorSourcePel:" << 
+							    rule->ruleID << ":" << nodeID), 
+						     "$0 pop $1 pop rand pop"));
+ 
+  hookUp(pelRand, 0);
+
   // The timed pusher
   ElementSpecRef pushFunctor =
     _conf->addElement(New refcounted< TimedPullPush >(strbuf("FunctorPush:") 
