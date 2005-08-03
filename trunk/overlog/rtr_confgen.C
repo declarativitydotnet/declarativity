@@ -384,9 +384,16 @@ Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
 							       << nodeID)));
   ElementSpecRef wrapAroundDemux 
     = _conf->addElement(New refcounted< Demux >("wrapAroundSendDemux", 
-						wrapAroundDemuxKeys, 1));  
+						wrapAroundDemuxKeys, 0));  
 
   hookUp(wrapAroundDemux, 0); // connect to the wrap around
+
+  ElementSpecRef unBoxWrapAround =
+    _conf->addElement(New refcounted< 
+		      UnboxField >(strbuf("UnBoxWrapAround:") << nodeID, 1));
+
+  hookUp(wrapAroundDemux, 0, unBoxWrapAround, 0);
+
   ElementSpecRef sendQueue = 
     _conf->addElement(New refcounted< Queue >(strbuf("SendQueue:") << nodeID, 
 					      1000));
@@ -457,13 +464,6 @@ Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
 
   } else {
 
-    ElementSpecRef encapSend =
-      _conf->addElement(New refcounted< PelTransform >(strbuf("encapSend:") 
-						       << ":" << nodeID, 
-						       //strbuf("$1")// << _udpPushSendersPos.at(k)
-						       "$1 pop swallow pop")); 
-    hookUp(encapSend, 0);
-
     // Now marshall the payload (second field)
     ElementSpecRef marshalSend = 
       _conf->addElement(New refcounted< MarshalField >("marshal:" << 
@@ -481,22 +481,23 @@ Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
   for (unsigned int k = 0; k < _udpPushSenders.size(); k++) {
     ElementSpecRef nextElementSpec = _udpPushSenders.at(k);
 
-    //std::cout << "Encap send " << _udpPushSendersPos.at(k) << "\n";
+    std::cout << "Encapsulation " << k << " pop " << _udpPushSendersPos.at(k) << "\n";
 
-    /*ElementSpecRef encapSend =
+    ElementSpecRef encapSend =
       _conf->addElement(New refcounted< PelTransform >(strbuf("encapSend:") 
 						       << ":" << nodeID, 
-						       //strbuf("$1")// << _udpPushSendersPos.at(k)
-						       "$1 pop swallow pop")); */
+						       strbuf("$") << 
+						       _udpPushSendersPos.at(k) 
+						       << " pop swallow pop"));
     
     // for now, assume addr field is the put here
-    hookUp(nextElementSpec, 0, roundRobin, k);
+    //hookUp(nextElementSpec, 0, roundRobin, k);
 
-    //hookUp(nextElementSpec, 0, encapSend, 0);
-    //hookUp(encapSend, 0, roundRobin, k);
+    hookUp(nextElementSpec, 0, encapSend, 0);
+    hookUp(encapSend, 0, roundRobin, k);
   }
 
-  return wrapAroundDemux;
+  return unBoxWrapAround;
 }
 
 
