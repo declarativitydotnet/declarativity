@@ -58,8 +58,7 @@ public:
   virtual bool id() { return id_; };
 
   virtual str toString() { 
-    return (v->typeCode() == Value::STR) ? 
-           "\"" << v->toString() << "\"" : ((neg_ ? "-" : "") << v->toString()); 
+    return ((neg_ ? "-" : "") << v->toString()); 
   };
 
   virtual operator int();

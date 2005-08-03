@@ -557,7 +557,9 @@ str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
     pel << "$" << (pos+1) << " ";
   }
   else if ((val = dynamic_cast<Parse_Val*>(expr->lhs)) != NULL) {
-    pel << val->toString() << " "; 
+    if (val->v->typeCode() == Value::STR)
+      pel << "\"" << val->toString() << "\"" << " "; 
+    else pel << val->toString() << " "; 
 
     if (val->id()) pel << "->u32 ->id "; 
     else if (expr->id) pel << "->u32 ->id "; 
@@ -578,7 +580,9 @@ str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
     pel << "$" << (pos+1) << " ";
   }
   else if ((val = dynamic_cast<Parse_Val*>(expr->rhs)) != NULL) {    
-    pel << val->toString() << " "; 
+    if (val->v->typeCode() == Value::STR)
+      pel << "\"" << val->toString() << "\"" << " "; 
+    else pel << val->toString() << " "; 
 
     if (val->id()) pel << "->u32 ->id "; 
     else if (expr->id) pel << "->u32 ->id "; 
