@@ -16,7 +16,7 @@ $(PROGRAMS): $(LDEPS)
 
 bin_PROGRAMS 	= 	values \
 			tuples \
-      			benchmark \
+			benchmark \
 			fdbufs \
 			overlog \
 			tables \
@@ -24,6 +24,7 @@ bin_PROGRAMS 	= 	values \
 			IDs \
 			runManyChords \
 			runChord \
+			runOverLog \
 			runSymphony \
 			runSymphonicChord \
 			simple_lookup \
@@ -98,13 +99,6 @@ join_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
-#reachability_SOURCES = reachability.C
-#reachability_LDADD = \
-#	$(top_builddir)/net/.libs/libp2net.a \
-#	$(top_builddir)/elements/.libs/libp2elements.a \
-#	$(top_builddir)/p2core/.libs/libp2core.a \
-#	@SFS_LIBASYNC@ @SFS_LIBARPC@
-
 reachDatalog_SOURCES = reachDatalog.C
 reachDatalog_LDADD = \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
@@ -115,6 +109,14 @@ reachDatalog_LDADD = \
 
 runChord_SOURCES = runChord.C
 runChord_LDADD = \
+	$(top_builddir)/overlog/.libs/liboverlog.a \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+runOverLog_SOURCES = runOverLog.C
+runOverLog_LDADD = \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
