@@ -1,0 +1,27 @@
+/* Narada */
+
+/* Materializations */
+materialize(neighbor, infinity, 60, keys(2)).
+materialize(member, infinity, 60, keys(1)).
+materialize(env, infinity, infinity, keys(1)).
+
+watch(gossipEvent).
+watch(request).
+watch(gossipPartner).
+
+member("B").
+neighbor("A","B").
+
+gossipEvent(Y) :- periodic(X,E,1), Y:="A".
+gossipPartner(X,Y) :- gossipEvent(X), neighbor(X,Y).
+member@Y(Z) :- gossipPartner@X(X,Y), coinflip(weight), member@X(Z).
+
+
+request@Y(X,Y,E,T) :- periodic(X,E,30), member@X(Y), T:=now.
+reply@X(X,Y,E,T) :- request@Y(X,Y,E,T).
+latency@X(X,Y,T) :- reply@X(X,Y,E,T1),T:=now-T1.
+
+
+
+
+/* End of Narada */

@@ -57,6 +57,7 @@ initializeBaseTables(ref< OL_Context> ctxt,
   TableRef nodeTable = routerConfigGenerator->getTableByName(localAddress, "env");
   TupleRef tuple = Tuple::mk();
   tuple->append(Val_Str::mk("env"));
+  tuple->append(Val_Str::mk("hostname"));
   str myAddress = str(strbuf() << localAddress);
   tuple->append(Val_Str::mk(myAddress));
   tuple->freeze();
@@ -116,6 +117,11 @@ void testOverLog(LoggerI::Level level,
 {
   ref< OL_Context > ctxt = New refcounted< OL_Context>();
   std::ifstream istr(filename);
+  if (!istr.is_open()) {
+    // Failed to open the file
+    std::cerr << "Could not open file " << filename << "\n";
+    exit(-1);
+  }
   ctxt->parse_stream(&istr);
   
   startOverLogDataflow(level, ctxt, filename, myAddress, port, delay);
