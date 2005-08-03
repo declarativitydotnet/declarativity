@@ -12,14 +12,17 @@ watch(gossipPartner).
 member("B").
 neighbor("A","B").
 
-gossipEvent(Y) :- periodic(X,E,1), Y:="A".
-gossipPartner(X,Y) :- gossipEvent(X), neighbor(X,Y).
-member@Y(Z) :- gossipPartner@X(X,Y), coinflip(weight), member@X(Z).
+R0 gossipEvent@X(X,Y) :- periodic@X(X,E,1), Y:="A".
 
+R1 gossipPartner@X(X,Y) :- periodic@X(X,E,1), neighbor@X(X,Y).
 
-request@Y(X,Y,E,T) :- periodic(X,E,30), member@X(Y), T:=now.
-reply@X(X,Y,E,T) :- request@Y(X,Y,E,T).
-latency@X(X,Y,T) :- reply@X(X,Y,E,T1),T:=now-T1.
+R2 member@Y(Y,Z) :- gossipPartner@X(X,Y), f_coinFlip(0.1) == 1, member@X(X,Z).
+
+R3 request@Y(Y,X,E,T) :- periodic@X(X,E,30), member@X(X,Y), T:=f_now().
+
+R4 reply@Y(Y,X,E,T) :- request@X(X,Y,E,T).
+
+R5 latency@X(X,Y,T) :- reply@X(X,Y,E,T1), T:=f_now() - T1.
 
 
 
