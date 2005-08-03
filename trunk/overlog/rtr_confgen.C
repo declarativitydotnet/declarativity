@@ -26,6 +26,8 @@ Rtr_ConfGen::Rtr_ConfGen(OL_Context* ctxt,
   str outputFile(filename << ".out");
   _output = fopen(outputFile.cstr(), "w");
   _pendingRegisterReceiver = false;  
+  _isPeriodic = false;
+  _currentPositionIndex = -1;
 }
 
 
@@ -96,13 +98,21 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
   }
   
   _currentElementChain.clear();
+  _isPeriodic = false;
 
   // PERIODIC
   if (hasPeriodicTerm(r)) {
-    genFunctorSource(r, nodeID);
+    genFunctorSource(r, nodeID, &curNamesTracker);
     // if there are more terms, we have to perform the genJoinElements, 
     // followed by selection/assignments
-
+    _isPeriodic = true;
+    if (numFunctors(r) > 1) {
+      debugRule(r, str(strbuf() << "Periodic join\n"));
+      genJoinElements(r, nodeID, &curNamesTracker, agg_el);
+    }
+    // do the selections and assignment, followed by projection
+    genAllSelectionAssignmentElements(r, nodeID, &curNamesTracker);
+    genProjectHeadElements(r, nodeID, &curNamesTracker);    
   } else {
     if (numFunctors(r) == 1) {
       // SINGLE_TERM
@@ -141,7 +151,7 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
 						 ti->primaryKeys.at(0)));    
     hookUp(deleteElement, 0);
     
-    if (_pendingReceiverSpec) {
+    if (_isPeriodic == false && _pendingReceiverSpec) {
       registerReceiver(_pendingReceiverTable, _pendingReceiverSpec);
     }
     return; // discard. deleted tuples not sent anywhere
@@ -161,18 +171,18 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
       _currentElementChain.push_back(aggWrapSlot); 
     } 
      
-
     // at the receiver side, generate a dummy receive  
     str headTableName = r->head->fn->name;
     registerReceiverTable(r, headTableName);
   }
 
-  if (_pendingReceiverSpec) {
+  if (_isPeriodic == false && _pendingReceiverSpec) {
     registerReceiver(_pendingReceiverTable, _pendingReceiverSpec);
   }
 
   // anything at this point needs to be hookup with senders
   _udpPushSenders.push_back(_currentElementChain.back()); 
+  _udpPushSendersPos.push_back(_currentPositionIndex); 
 }
 
 
@@ -346,6 +356,7 @@ void
 Rtr_ConfGen::registerUDPPushSenders(ElementSpecRef elementSpecRef)
 {
   _udpPushSenders.push_back(elementSpecRef);
+  _udpPushSendersPos.push_back(1);
 }
 
 
@@ -445,10 +456,11 @@ Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
      hookUp(marshalSendCC, 0); 
 
   } else {
-    // for now, assume addr field is the put here
+
     ElementSpecRef encapSend =
       _conf->addElement(New refcounted< PelTransform >(strbuf("encapSend:") 
-						       << nodeID, 
+						       << ":" << nodeID, 
+						       //strbuf("$1")// << _udpPushSendersPos.at(k)
 						       "$1 pop swallow pop")); 
     hookUp(encapSend, 0);
 
@@ -468,7 +480,20 @@ Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
   // form the push senders
   for (unsigned int k = 0; k < _udpPushSenders.size(); k++) {
     ElementSpecRef nextElementSpec = _udpPushSenders.at(k);
+
+    //std::cout << "Encap send " << _udpPushSendersPos.at(k) << "\n";
+
+    /*ElementSpecRef encapSend =
+      _conf->addElement(New refcounted< PelTransform >(strbuf("encapSend:") 
+						       << ":" << nodeID, 
+						       //strbuf("$1")// << _udpPushSendersPos.at(k)
+						       "$1 pop swallow pop")); */
+    
+    // for now, assume addr field is the put here
     hookUp(nextElementSpec, 0, roundRobin, k);
+
+    //hookUp(nextElementSpec, 0, encapSend, 0);
+    //hookUp(encapSend, 0, roundRobin, k);
   }
 
   return wrapAroundDemux;
@@ -516,6 +541,7 @@ str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
   Parse_Var*  var;
   Parse_Val*  val;
   Parse_Math* math;
+  Parse_Function* fn  = NULL;
   strbuf      pel;  
 
 
@@ -537,6 +563,9 @@ str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
   }
   else if ((math = dynamic_cast<Parse_Math*>(expr->lhs)) != NULL) {
     pel << pelMath(names, math); 
+  }
+  else if ((fn = dynamic_cast<Parse_Function*>(expr->lhs)) != NULL) {
+    pel << pelFunction(names, fn); 
   }
   else {
     // TODO: throw/signal some kind of error
@@ -746,7 +775,7 @@ Rtr_ConfGen::pelSelect(OL_Context::Rule* rule, FieldNamesTracker* names,
 						     << selectionID << ":" 
 						     << nodeID, sPel));
 
-  if (_pendingRegisterReceiver) {
+  if (_isPeriodic == false &&_pendingRegisterReceiver) {
     _pendingReceiverSpec = sPelTrans;
     _currentElementChain.push_back(sPelTrans); // first element in chain
     _pendingRegisterReceiver = false;
@@ -841,7 +870,7 @@ void Rtr_ConfGen::pelAssign(OL_Context::Rule* rule,
 						     << nodeID, 
 						     pel));
 
-  if (_pendingRegisterReceiver) {
+  if (_isPeriodic == false &&_pendingRegisterReceiver) {
     _pendingReceiverSpec = assignPelTrans;
     _currentElementChain.push_back(assignPelTrans); // first element in chain
     _pendingRegisterReceiver = false;
@@ -863,11 +892,15 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
   // determine the projection fields, and the first address to return. 
   // Add 1 for table name     
   std::vector<unsigned int> indices;  
+  int locationIndex = -1;
   // iterate through all functor's output
   for (int k = 0; k < pf->args(); k++) {
     Parse_Var* parse_var = dynamic_cast<Parse_Var*>(pf->arg(k));
     int pos = -1;
     if (parse_var != NULL) {
+      if (parse_var->toString() == pf->fn->loc) {
+	locationIndex = k;
+      }
       // care only about vars    
       pos = curNamesTracker->fieldPosition(parse_var->toString());    
     }
@@ -881,6 +914,7 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
     if (pos == -1) { continue; }    
     indices.push_back(pos + 1);
   }
+  if (locationIndex == -1) { locationIndex = 0; } // default
 
   strbuf pelTransformStrbuf("\"" << pf->fn->name << "\" pop");
 
@@ -905,15 +939,18 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
   str pelTransformStr(pelTransformStrbuf);
   debugRule(curRule, str(strbuf() << "Project head " 
 			 << curNamesTracker->toString() 
-			 << " " << pelTransformStr << "\n"));
+			 << " " << pelTransformStr << " " << 
+			 pf->fn->loc << " " << locationIndex 
+			 << "\n"));
  
+  _currentPositionIndex = locationIndex + 1;
   // project, and make sure first field after table name has the address 
   ElementSpecRef projectHeadPelTransform =
     _conf->addElement(New refcounted< PelTransform >(strbuf("ProjectHead:") 
 						     << curRule->ruleID 
 						     << ":" << nodeID,
 						     pelTransformStr));
-  if (_pendingRegisterReceiver) {
+  if (_isPeriodic == false && _pendingRegisterReceiver) {
     _pendingReceiverSpec = projectHeadPelTransform;
     _currentElementChain.push_back(projectHeadPelTransform); 
     _pendingRegisterReceiver = false;
@@ -1024,7 +1061,7 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
   debugRule(curRule, str(strbuf() << "Probe after merge " 
 			 << probeNames->toString() << "\n"));
 
-  if (_pendingRegisterReceiver) {
+  if (_isPeriodic == false && _pendingRegisterReceiver) {
     // connecting to udp receiver later
     _pendingReceiverSpec = last_el;
     _pendingRegisterReceiver = false;
@@ -1121,9 +1158,11 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Rule* curRule,
       } else {
 	// assume one event per not.
 	// event probes local base tables
-	registerReceiverTable(curRule, functorName); 
-	_pendingRegisterReceiver = true;
-	_pendingReceiverTable = functorName;
+	if (_isPeriodic == false) {
+	  registerReceiverTable(curRule, functorName); 
+	  _pendingRegisterReceiver = true;
+	  _pendingReceiverTable = functorName;
+	}
 	eventFunctor = pf;
 	eventFound = true;
       } 
@@ -1167,12 +1206,15 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Rule* curRule,
       }
     }
   }
-
-  std:: cout << "Event term " << eventFunctor->fn->name << "\n";
-
-  // for all the base tuples, use the join to probe. 
-  // keep track also the cur ordering of variables
-  namesTracker->initialize(eventFunctor);
+  if (_isPeriodic == false) {
+    std:: cout << "Event term " << eventFunctor->fn->name << "\n";
+    // for all the base tuples, use the join to probe. 
+    // keep track also the cur ordering of variables
+    namesTracker->initialize(eventFunctor);
+  } else {
+    debugRule(curRule, str(strbuf() << 
+			   "Periodic joins " << namesTracker->toString() << "\n"));
+  }
   for (uint k = 0; k < baseFunctors.size(); k++) {    
     Parse_Functor* pf = dynamic_cast<Parse_Functor*>(baseFunctors.at(k));
     
@@ -1325,6 +1367,7 @@ Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
 
   genProjectHeadElements(currentRule, nodeID, aggregateNamesTracker);
   _udpPushSenders.push_back(_currentElementChain.back());
+  _udpPushSendersPos.push_back(1);
 
   registerReceiverTable(currentRule, headTableName);
 }
@@ -1357,7 +1400,9 @@ void Rtr_ConfGen::genSingleTermElement(OL_Context::Rule* curRule,
 }
 
 
-void Rtr_ConfGen::genFunctorSource(OL_Context::Rule* rule, str nodeID)
+void Rtr_ConfGen::genFunctorSource(OL_Context::Rule* rule, 
+				   str nodeID, 
+				   FieldNamesTracker* namesTracker)
 {
   TupleRef functorTuple = Tuple::mk();
   functorTuple->append(Val_Str::mk(rule->head->fn->name));
@@ -1376,6 +1421,9 @@ void Rtr_ConfGen::genFunctorSource(OL_Context::Rule* rule, str nodeID)
   if (pf == NULL) { return; }
   
   str period = pf->arg(2)->toString();
+
+  namesTracker->fieldNames.push_back(pf->arg(0)->toString());
+  namesTracker->fieldNames.push_back("E");
   
   debugRule(rule, str(strbuf() << "Functor source " 
 		      << pf->toString()) << " " << period << "\n");
@@ -1397,12 +1445,12 @@ void Rtr_ConfGen::genFunctorSource(OL_Context::Rule* rule, str nodeID)
 
   hookUp(pushFunctor, 0);
 
-  ElementSpecRef functorSlot 
-    = _conf->addElement(New refcounted<Slot>("functorSlot"));      
-  hookUp(functorSlot, 0);
-
-  
-
+  //  if (rule->terms.size() <= 1) {
+  if (numFunctors(rule) <= 1) {
+    ElementSpecRef functorSlot 
+      = _conf->addElement(New refcounted<Slot>("functorSlot"));      
+    hookUp(functorSlot, 0);
+  }
 }
 
 

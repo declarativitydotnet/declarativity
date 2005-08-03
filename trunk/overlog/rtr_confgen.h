@@ -112,6 +112,7 @@ private:
   // counter to determine how many muxers and demuxers are needed
   str _curType;
   std::vector<ElementSpecRef> _udpPushSenders;
+  std::vector<int> _udpPushSendersPos;
   std::vector<ElementSpecRef> _currentElementChain;
    
   ReceiverInfoMap _udpReceivers; // for demuxing
@@ -120,6 +121,8 @@ private:
   ElementSpecPtr _pendingReceiverSpec;
   OL_Context::Rule* _currentRule;
   ElementSpecPtr _ccTx, _ccRx, _roundRobinCC;
+  bool _isPeriodic;
+  int _currentPositionIndex;
   
   // Relational -> P2 elements
   void processRule(OL_Context::Rule *r, str nodeID);
@@ -163,7 +166,8 @@ private:
   void genPrintWatchElement(str header);
 
   void genFunctorSource(OL_Context::Rule* rule, 
-			str nodeID);
+			str nodeID,
+			FieldNamesTracker* namesTracker);
  
   // Network elements
   ElementSpecRef genSendElements(ref< Udp> udp, str nodeID);
