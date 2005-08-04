@@ -184,9 +184,9 @@ watch(sendSuccessors).
 watch(notifyPredecessor).
 watch(returnSuccessor).
 
-SB1 stabilize@NI(NI) :- periodic@NI(NI,E,15).
+SB1 stabilize@NI(NI,E) :- periodic@NI(NI,E,15).
 
-SB2 stabilizeRequest@SI(SI,NI) :- stabilize@NI(NI),
+SB2 stabilizeRequest@SI(SI,NI) :- stabilize@NI(NI,E),
 				bestSucc@NI(NI,S,SI).
 
 SB3 sendPredecessor@PI1(PI1,P,PI) :- stabilizeRequest@NI(NI,PI1),
@@ -198,7 +198,7 @@ SB4 succ@NI(NI,P,PI) :- node@NI(NI,N),
 			bestSucc@NI(NI,S,SI), 
 			P in (N,S).
 
-SB5 sendSuccessors@SI(SI,NI) :- stabilize@NI(NI),
+SB5 sendSuccessors@SI(SI,NI) :- stabilize@NI(NI,E),
 			  succ@NI(NI,S,SI).
 
 SB6 returnSuccessor@PI(PI,S,SI) :- sendSuccessors@NI(NI,PI),
@@ -206,7 +206,7 @@ SB6 returnSuccessor@PI(PI,S,SI) :- sendSuccessors@NI(NI,PI),
 
 SB7 succ@NI(NI,S,SI) :- returnSuccessor@NI(NI,S,SI).
 
-SB7 notifyPredecessor@SI(SI,N,NI) :- stabilize@NI(NI),
+SB7 notifyPredecessor@SI(SI,N,NI) :- stabilize@NI(NI,E),
 			      node@NI(NI,N), 
 			      succ@NI(NI,S,SI).
 
