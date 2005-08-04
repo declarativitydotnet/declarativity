@@ -6,33 +6,164 @@ tests/runOverLog doc/narada.plg NONE 0 127.0.0.1:10000 0 "neighbor=127.0.0.1:100
 */
 
 
-/* Materializations */
-materialize(neighbor, infinity, infinity, keys(2)).
-materialize(member, infinity, 60, keys(2)).
-materialize(env, infinity, infinity, keys(2,3)).
-materialize(live, 10, infinity, keys(2)).
-materialize(pingRequest, infinity, infinity, keys(3)).
+
+/** Real Narada (from the ESM paper)
+
+    Member holds: address, last sequence number seen, local time when
+    last sequence number was seen
+    member@X(X, Address, Sequence, Time, Live)
 
 
-/*
-watch(gossipEvent).
-watch(gossipPartner).
-watch(neighbor).
-watch(request).
-watch(reply).
-watch(latency).
-watch(member).
+
+    A refresh message to neighbors contains a bunch of entries.
+    refresh@X(X, NewSequence, Address, ASequence).
+
+    Each entry contains member address, last sequence.
+    entry@X(X, Address, Sequence).
+
+    My current sequence, starting with 0.
+
+
+
+    To join, I start sending refreshes to my chosen neighbors.
 */
-watch(report).
-watch(update).
-watch(remove).
-watch(neighborSize).
-watch(expired).
-watch(pingUpdate).
-watch(pingRequest).
+
+
+materialize(member, infinity, infinity, keys(2)).
+materialize(sequence, infinity, 1, keys(2)).
+materialize(env, infinity, infinity, keys(2,3)).
+materialize(neighbor, infinity, infinity, keys(2)).
+
+
+/** Start with sequence 0 */
+S0 sequence(X, Sequence) :- periodic(X, E, 0, 1), Sequence := 0.
+
+
+
+/** Periodically start a refresh */
+
+R1 refreshEvent(X) :- periodic(X, E, 10).
+
+
+
+/** Pick a member at random and increment my own sequence */
+
+R2 refreshSequence(X, NewSequence, Address, ASequence, Live, max<R>) :-
+  refreshEvent(X), sequence(X, Sequence), NewSequence := Sequence + 1,
+  member(X, Address, ASequence, T, Live), R := f_rand().
+
+
+/** Save my incremented sequence */
+
+
+R3 sequence(X, NewSequence) :- refreshSequence(X, NewSequence, A, AS, L,
+  R).
+
+
+
+/** Send a message to all neighbors with the chosen member in a refresh
+message */
+
+R4 refresh@Y(Y, X, MySequence, Address, ASequence, ALive) :-
+  refreshSequence(X, MySequence, Address, ASequence, Live, R),
+  neighbor(X, Y).
+
+
+
+
+
+/** If I receive a refresh and have no entry for the contents, store the
+member (first bullet in Figure 2 of the ESM paper). Don't update
+myself. */
+
+R5 member@X(X, Address, Sequence, T, Live) :- refresh@X(X, Y, Address,
+  Sequence, Live), T := f_now(), not member@X(X, Address, MySequence,
+  MyTime, MyLive), X != Address.
+
+
+
+
+
+/** If I receive a refresh and already have an entry for the contents,
+but my entry is older, replace it with contents (bullet 2.2 in Figure 2
+of the ESM paper). Don't update myself. */
+
+R6 member@X(X, Address, Sequence, T, Live) :- refresh@X(X, Y, Address,
+  Sequence, Live), T := f_now(), member@X(X, Address, MySequence,
+  MyTime, Live), MySequence < Sequence, X != Address.
+
+
+
+/** Add anyone from whom I receive a refresh message to my neighbors */
+
+N1 neighbor(X, Y, T) :- refresh(X, Y, A, S, L), T:= f_now().
+
+
+
+
+
+
+/** Probing of neighbor liveness */
+
+L1 neighborProbe(X) :- periodic(X, E, 2).
+
+L2 deadNeighbor(X, Y) :- neighborProbe(X), T := f_now(), neighbor(X, Y,
+  YT), T - YT > 20.
+
+L3 delete neighbor(X, Y, T) :- deadNeighbor(X, Y).
+
+L4 member(X, Neighbor, DeadSequence, T, Dead) :- deadNeighbor(X, Neighbor),
+  member(X, Neighbor, S, T1, L), Dead := 1, DeadSequence := S + 1, T:= f_now().
+
+
+
+/** Clean out dead members */
+
+C0 delete member(X, A, AS, T, L) :- refreshEvent(X), member(X, A, AS, T,
+  L), L == 1, Now := f_now(), Now - T > 20.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Half assed attempt at building a mesh, i.e., just something that looks correct and compiles. The problem is that addUtility and delUtility seem like event and do not work with latency events.
+
+
+
+Materializations 
+materialize(neighbor, infinity, 60, keys(2)).
+materialize(member, infinity, 60, keys(2)).
+
+The environment
+materialize(env, infinity, infinity, keys(2,3)).
+
+
+Setup configuration from environment
 
 E0 neighbor(X,Y) :- periodic(X,E,0,1), env(X, H, Y), H=="neighbor".
-
 E1 member(X,Y) :- periodic(X,E,5), env(X, H, Y), H=="hostname".
 
 
@@ -43,12 +174,87 @@ R0 gossipEvent(X) :- periodic(X,E,1).
 
 R1 gossipPartner(X,Y) :- gossipEvent(X), neighbor(X,Y).
 
+R2 member@Y(Y,Z) :- gossipPartner@X(X,Y), f_coinFlip(0.1) == 1, member@X(X,Z).
+
+
+
+
+
+
+R3 request@Y(Y, X, E, T) :- periodic@X(X, E, 30), member@X(X,Y), T := f_now().
+
+R4 reply@X(X, Y, E, T) :- request@Y(Y, X, E, T).
+
+R5 latency@X(X, Y, T) :- reply@X(X, Y, E, T1), T := f_now() - T1.
+
+
+
+
+R6 neighbor@X(X, Y) :- latency@X(X, Y, T), addUtility(X, Y, T).
+
+R7 delete neighbor@X(X, Y) :- latency@X(X, Y, T), delUtility(X, Y, T).
+
+
+
+
+/*
+
+
+
+
+
+
+
+
+
+
+/* Honest attempt at building a mesh.  It failed. Members need to be
+explicitly removed and stale members gossiped from others should be
+ignored. We have no negation so we have to keep blasting all members to
+every neighbor periodically.
+
+Pings are complicated. You need to check for expired ping requests and
+when you find them, stop pinging.
+
+Materializations
+
+materialize(neighbor, infinity, infinity, keys(2)).
+materialize(member, infinity, 60, keys(2)).
+materialize(env, infinity, infinity, keys(2,3)).
+materialize(live, 10, infinity, keys(2)).
+materialize(pingRequest, infinity, infinity, keys(3)).
+
+
+watch(gossipEvent).
+watch(gossipPartner).
+watch(neighbor).
+watch(request).
+watch(reply).
+watch(latency).
+watch(member).
+watch(report).
+watch(update).
+watch(remove).
+watch(neighborSize).
+watch(expired).
+watch(pingUpdate).
+watch(pingRequest).
+
+
+E0 neighbor(X,Y) :- periodic(X,E,0,1), env(X, H, Y), H=="neighbor".
+
+E1 member(X,Y) :- periodic(X,E,5), env(X, H, Y), H=="hostname".
+
+R0 gossipEvent(X) :- periodic(X,E,1).
+
+R1 gossipPartner(X,Y) :- gossipEvent(X), neighbor(X,Y).
+
 R2 member@Y(Y,Z) :- gossipPartner@X(X,Y), f_rand() % 10 == 0, member@X(X,Z).
 
 
 
 
-/* Send a ping and store a record for later */
+//Send a ping and store a record for later
 
 R30 pingUpdate(X) :- periodic@X(X, E, 2).
 
@@ -57,22 +263,21 @@ R3 pingRequest@X(X,Y,E,T) :- pingUpdate(X), E := f_rand(), member@X(X,Y), T := f
 R31 request@Y(Y, X, E, T) :- pingRequest@X(X, Y, E, T).
 
 
-/* Echo the request */
+//Echo the request
 
 R4 reply@Y(Y,X,E,T) :- request@X(X,Y,E,T).
 
 
-/* Issue a latency event */
+//Issue a latency event
 
 R5 latency@X(X,Y,T) :- reply@X(X,Y,E,T1), T := 0 + (f_now() - T1).
 
-/* Remove a corresponding outstanding ping request */
+//Remove a corresponding outstanding ping request
 
 R6 delete pingRequest(X, Y, E, T) :- reply@X(X, Y, E, T).
 
 
-/* Flush out any expired ping requests */
-
+// Flush out any expired ping requests
 R7 expired(X, Y, E, T) :- pingUpdate(X), pingRequest(X,Y,E,T), T1 := f_now(), T1 - T > 4.
 R71 delete pingRequest(X, Y, E, T) :- expired(X, Y, E1, T1).
 R73 delete member(X, Y) :- expired(X, Y, E, T).
@@ -80,14 +285,17 @@ R73 delete member(X, Y) :- expired(X, Y, E, T).
 
 
 
-/*
 RRR report@X(X,Y) :- periodic(X,E,5), neighbor(X,Y).
 
 L3 neighborSize@X(X, count<*>) :- neighbor(X, Y).
 L1 live@X(X, Y, T) :- latency@X(X,Y,T).
 L4 remove@X(X, Y, max<T>) :- neighborSize@X(X, C), C > 2, neighbor(X, Y), live(X, Y, T).
 L2 update@X(X, Y) :- gossipEvent(X), live(X, Y, T).
+
 */
+
+
+
 
 
 
