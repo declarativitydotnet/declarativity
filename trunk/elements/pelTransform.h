@@ -35,6 +35,9 @@ private:
   /** My program.  */
   Pel_Program * _program;
 
+  /** My code */
+  str _pelCode;
+
   /** The virtual machine within which to execute the transform.  Any
       need to share this? */
   Pel_VM _vm;

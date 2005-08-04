@@ -15,6 +15,7 @@
 PelTransform::PelTransform(str name, str pelCode)
   : Element(name, 1, 1)
 {
+  _pelCode = pelCode;
   _program = Pel_Lexer::compile(pelCode);
 }
 
