@@ -12,10 +12,11 @@
 #include "aggwrap.h"
 #include "trace.h"
 #include "val_int32.h"
+#include "val_str.h"
 
 Aggwrap::Aggwrap(str aggfn, int aggfield)
   : Element(strbuf() << "Aggwrap<" << aggfn << "," << aggfield << ">", 2, 2),
-    _aggfn(aggfn), _aggfield(aggfield),
+    _aggfn(aggfn), _aggfield(aggfield), 
     inner_accepting(true),
     ext_in_cb(cbv_null), 
     ext_out_cb(cbv_null)
@@ -154,6 +155,9 @@ void Aggwrap::agg_accum(TupleRef t) {
   TRC_FN;
   if ( _aggfn == "count") {
     count++;
+    aggResult = t;
+    log(LoggerI::INFO, 0, str(strbuf() << "After Agg accumulation: " 
+			      << aggResult->toString()));
     return;
   } 
 
@@ -179,9 +183,18 @@ void Aggwrap::agg_accum(TupleRef t) {
 void Aggwrap::agg_finalize() {
   TRC_FN;
   if (_aggfn == "count") {
-    aggResult = Tuple::mk();
-    aggResult->append(Val_Int32::mk(count));
-    aggResult->freeze();
+    if (count != 0) {
+      TupleRef aggResultToRet = Tuple::mk();    
+      aggResultToRet->append((*aggResult)[0]);
+      for (uint k = 0; k < _groupByFields.size(); k++) {
+	aggResultToRet->append((*aggResult)[k+1]);
+      }
+      aggResultToRet->append(Val_Int32::mk(count));
+      aggResultToRet->freeze();
+      aggResult = Tuple::mk();
+      aggResult->concat(aggResultToRet);
+      aggResult->freeze();
+    } 
   }
   if (aggResult) {
     log(LoggerI::INFO, 0, 
@@ -197,4 +210,10 @@ void Aggwrap::agg_finalize() {
     ext_in_cb = cbv_null;
   }
   aggState = 0;
+}
+
+void Aggwrap::registerGroupbyField(int field)
+{ 
+  _groupByFields.push_back(field); 
+  //warn << "Agg wrap group by " << name << "\n"; 
 }

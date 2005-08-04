@@ -33,6 +33,7 @@ public:
   /** Receive a new fixed tuple */
   int push(int port, TupleRef, cbv cb);
 
+  void registerGroupbyField(int field); 
   void comp_cb(int jnum);
   cbv get_comp_cb();
   int numJoins;
@@ -40,7 +41,8 @@ public:
 private:
   str _aggfn;
   int _aggfield;
-  
+  std::vector<int> _groupByFields;
+    
   int curJoin;
   
   bool inner_accepting;
