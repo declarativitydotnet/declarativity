@@ -32,7 +32,7 @@ class OperTime : public opr::OperCompare<Val_Time> {
   virtual ValuePtr _minus (const ValueRef& v1, const ValueRef& v2) const {
     struct timespec t1 = Val_Time::cast(v1);
     struct timespec t2 = Val_Time::cast(v2);
-    return Val_Time::mk(t2 - t1);
+    return Val_Time::mk(t1 - t2);
   };
 };
 const opr::Oper* Val_Time::oper_ = New OperTime();
