@@ -7,25 +7,33 @@ tests/runOverLog doc/narada.plg NONE 0 127.0.0.1:10000 0 "neighbor=127.0.0.1:100
 
 
 /* Materializations */
-materialize(neighbor, infinity, 60, keys(2)).
+materialize(neighbor, infinity, infinity, keys(2)).
 materialize(member, infinity, 60, keys(2)).
 materialize(env, infinity, infinity, keys(2,3)).
-materialize(latency, 30, infinity, keys(2)).
+materialize(live, 10, infinity, keys(2)).
+materialize(pingRequest, infinity, infinity, keys(3)).
+
 
 /*
 watch(gossipEvent).
 watch(gossipPartner).
-*/
 watch(neighbor).
 watch(request).
 watch(reply).
 watch(latency).
 watch(member).
+*/
 watch(report).
+watch(update).
+watch(remove).
+watch(neighborSize).
+watch(expired).
+watch(pingUpdate).
+watch(pingRequest).
 
 E0 neighbor(X,Y) :- periodic(X,E,0,1), env(X, H, Y), H=="neighbor".
 
-E1 member(X,Y) :- periodic(X,E,0,1), env(X, H, Y), H=="hostname".
+E1 member(X,Y) :- periodic(X,E,5), env(X, H, Y), H=="hostname".
 
 
 
@@ -38,15 +46,48 @@ R1 gossipPartner(X,Y) :- gossipEvent(X), neighbor(X,Y).
 R2 member@Y(Y,Z) :- gossipPartner@X(X,Y), f_rand() % 10 == 0, member@X(X,Z).
 
 
-/* RRR report@X(X,F,N) :- periodic(X,E,1), F:=f_rand(), neighbor@X(X,N). */
 
-R3 request@Y(Y,X,E,T) :- periodic@X(X,E,10), member@X(X,Y), T := f_now().
+
+/* Send a ping and store a record for later */
+
+R30 pingUpdate(X) :- periodic@X(X, E, 2).
+
+R3 pingRequest@X(X,Y,E,T) :- pingUpdate(X), E := f_rand(), member@X(X,Y), T := f_now().
+
+R31 request@Y(Y, X, E, T) :- pingRequest@X(X, Y, E, T).
+
+
+/* Echo the request */
 
 R4 reply@Y(Y,X,E,T) :- request@X(X,Y,E,T).
 
-R5 latency@X(X,Y,T) :- reply@X(X,Y,E,T1), T := 0 + (f_now() - T1).
-RRR report@X(X,Y,T1, T, N) :- reply@X(X,Y,E,T1), T := f_now(), N := 0 + (T - T1).
 
+/* Issue a latency event */
+
+R5 latency@X(X,Y,T) :- reply@X(X,Y,E,T1), T := 0 + (f_now() - T1).
+
+/* Remove a corresponding outstanding ping request */
+
+R6 delete pingRequest(X, Y, E, T) :- reply@X(X, Y, E, T).
+
+
+/* Flush out any expired ping requests */
+
+R7 expired(X, Y, E, T) :- pingUpdate(X), pingRequest(X,Y,E,T), T1 := f_now(), T1 - T > 4.
+R71 delete pingRequest(X, Y, E, T) :- expired(X, Y, E1, T1).
+R73 delete member(X, Y) :- expired(X, Y, E, T).
+
+
+
+
+/*
+RRR report@X(X,Y) :- periodic(X,E,5), neighbor(X,Y).
+
+L3 neighborSize@X(X, count<*>) :- neighbor(X, Y).
+L1 live@X(X, Y, T) :- latency@X(X,Y,T).
+L4 remove@X(X, Y, max<T>) :- neighborSize@X(X, C), C > 2, neighbor(X, Y), live(X, Y, T).
+L2 update@X(X, Y) :- gossipEvent(X), live(X, Y, T).
+*/
 
 
 
