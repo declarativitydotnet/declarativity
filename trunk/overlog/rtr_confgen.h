@@ -225,6 +225,8 @@ private:
   int numFunctors(OL_Context::Rule* rule);
 
   bool hasEventTerm(OL_Context::Rule* rule);
+  
+  Parse_Functor* getEventTerm(OL_Context::Rule* curRule);
 
   bool hasPeriodicTerm(OL_Context::Rule* curRule);
 

@@ -84,15 +84,28 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
   int aggField = r->head->aggregate();
   if (aggField >= 0) {
     if (hasEventTerm(r)) {
+      
+      // get the event term
+      Parse_Functor* eventTerm = getEventTerm(r);
+           
       // there is an aggregate and involves an event, we need an agg wrap      
       Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(r->head->arg(aggField));
       debugRule(r, str(strbuf() << "Agg wrap " << aggExpr->aggName() 
 		       << " " << aggField << "\n"));     
       agg_el = New refcounted<Aggwrap>(aggExpr->aggName(), 
-				       aggField + 1);
+				       aggField + 1, r->head->fn->name);
       for (int k = 0; k < r->head->args(); k++) {
 	if (k != aggField) {
-	  agg_el->registerGroupbyField(k);
+	  // for each groupby value, figure out it's 
+	  // location in the initial event tuple, 
+	  // if not present, throw an error
+	  for (int j = 0; j < eventTerm->args(); j++) {
+	    warn << "Compare " << r->head->arg(k)->toString() 
+		 << " " << eventTerm->arg(j)->toString() << "\n";
+	    if (r->head->arg(k)->toString() == eventTerm->arg(j)->toString()) {
+	      agg_el->registerGroupbyField(j);
+	    }
+	  }
 	}
       }
     } else {
@@ -167,8 +180,9 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
       ElementSpecRef agg_spec = _conf->addElement(agg_el);
       // hook up the internal output to most recent element 
       hookUp(agg_spec, 1); 
-      // hookup the internal input
+      // hookup the internal input      
       hookUp(agg_spec, 1, _pendingReceiverSpec, 0); 
+      
       hookUp(agg_spec, 0, aggWrapSlot, 0);
       // hook the agg_spect to the front later by receivers
       _pendingReceiverSpec = agg_spec; 
@@ -1644,6 +1658,23 @@ bool Rtr_ConfGen::hasEventTerm(OL_Context::Rule* curRule)
   }
   return false;
 }
+
+
+Parse_Functor* Rtr_ConfGen::getEventTerm(OL_Context::Rule* curRule)
+{
+  for (unsigned int k = 0; k < curRule->terms.size(); k++) {
+    Parse_Functor* pf = dynamic_cast<Parse_Functor*>(curRule->terms.at(k));
+    if (pf == NULL) { continue;}
+    str termName = pf->fn->name;
+    OL_Context::TableInfoMap::iterator _iterator 
+      = _ctxt->getTableInfos()->find(termName);
+    if (_iterator == _ctxt->getTableInfos()->end()) {     
+      return pf;
+    }
+  }
+  return NULL;
+}
+
 
 
 bool Rtr_ConfGen::hasPeriodicTerm(OL_Context::Rule* curRule)

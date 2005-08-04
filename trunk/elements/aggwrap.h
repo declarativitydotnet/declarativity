@@ -24,7 +24,7 @@
 class Aggwrap : public Element { 
 public:
 
-  Aggwrap(str aggfn, int aggfield);
+  Aggwrap(str aggfn, int aggfield, str outputTableName);
 
   const char *class_name() const		{ return "Aggwrap";}
   const char *processing() const		{ return "hh/hh"; }; //"ha/hh"; }
@@ -54,6 +54,7 @@ private:
   int aggState;
   TuplePtr aggResult, _incomingTuple;
   int count;
+  str _outputTableName;
 
   void int_push_cb();
   void agg_init();

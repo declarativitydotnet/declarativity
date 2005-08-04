@@ -14,14 +14,17 @@
 #include "val_int32.h"
 #include "val_str.h"
 
-Aggwrap::Aggwrap(str aggfn, int aggfield)
-  : Element(strbuf() << "Aggwrap<" << aggfn << "," << aggfield << ">", 2, 2),
-    _aggfn(aggfn), _aggfield(aggfield), 
+Aggwrap::Aggwrap(str aggfn, int aggfield, str outputTableName)
+  : Element(strbuf() << "Aggwrap<" << aggfn << "," << aggfield 
+	    << ", " << outputTableName << ">", 2, 2),
+    _aggfn(aggfn), 
+    _aggfield(aggfield), 
     inner_accepting(true),
     ext_in_cb(cbv_null), 
     ext_out_cb(cbv_null)
 {
   numJoins = 0;
+  _outputTableName = outputTableName;
   if (aggfn == "min") {
     log(LoggerI::INFO, 0, str(strbuf() << "min aggregation " << _aggfield));
   } else if (aggfn == "max") {
@@ -182,16 +185,18 @@ void Aggwrap::agg_accum(TupleRef t) {
 }
 
 void Aggwrap::agg_finalize() {
-  TRC_FN;
-  if (_aggfn == "count") {    
-    if (count != 0) {
-      TupleRef aggResultToRet = Tuple::mk();    
-      aggResultToRet->append((*aggResult)[0]);
+  TRC_FN; 
+  if (_aggfn == "count") {       
+    if (_incomingTuple) {
+      TupleRef aggResultToRet = Tuple::mk();
+      aggResultToRet->append(Val_Str::mk(_outputTableName));
       for (uint k = 0; k < _groupByFields.size(); k++) {
-	aggResultToRet->append((*aggResult)[k+1]);
+	warn << _incomingTuple->toString() << " " << k+1 << "\n";     
+	aggResultToRet->append((*_incomingTuple)[k+1]);
       }
       aggResultToRet->append(Val_Int32::mk(count));
       aggResultToRet->freeze();
+      
       aggResult = Tuple::mk();
       aggResult->concat(aggResultToRet);
       aggResult->freeze();     
@@ -216,5 +221,5 @@ void Aggwrap::agg_finalize() {
 void Aggwrap::registerGroupbyField(int field)
 { 
   _groupByFields.push_back(field); 
-  //warn << "Agg wrap group by " << name << "\n"; 
+  warn << " Register group by" << field << "\n";
 }
