@@ -23,13 +23,13 @@ watch(latency).
 watch(member).
 watch(report).
 
-E0 neighbor(X,Y1) :- periodic(X,E,0,1), env(X, H, Y), H=="neighbor", Y1
-	:= Y + "1".
-
-E01 neighbor(X,Y1) :- periodic(X,E,0,1), env(X, H, Y), H=="neighbor", Y1
-	:= Y + "2a".
+E0 neighbor(X,Y) :- periodic(X,E,0,1), env(X, H, Y), H=="neighbor".
 
 E1 member(X,Y) :- periodic(X,E,0,1), env(X, H, Y), H=="hostname".
+
+
+
+
 
 R0 gossipEvent(X) :- periodic(X,E,1).
 
@@ -37,13 +37,15 @@ R1 gossipPartner(X,Y) :- gossipEvent(X), neighbor(X,Y).
 
 R2 member@Y(Y,Z) :- gossipPartner@X(X,Y), f_rand() % 10 == 0, member@X(X,Z).
 
-RRR report@X(X,F,N) :- periodic(X,E,1), F:=f_rand(), neighbor@X(X,N).
+
+/* RRR report@X(X,F,N) :- periodic(X,E,1), F:=f_rand(), neighbor@X(X,N). */
 
 R3 request@Y(Y,X,E,T) :- periodic@X(X,E,10), member@X(X,Y), T := f_now().
 
 R4 reply@Y(Y,X,E,T) :- request@X(X,Y,E,T).
 
-R5 latency@X(X,Y,T) :- reply@X(X,Y,E,T1), T := f_now() - T1.
+R5 latency@X(X,Y,T) :- reply@X(X,Y,E,T1), T := 0 + (f_now() - T1).
+RRR report@X(X,Y,T1, T, N) :- reply@X(X,Y,E,T1), T := f_now(), N := 0 + (T - T1).
 
 
 
