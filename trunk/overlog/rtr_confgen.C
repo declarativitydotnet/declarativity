@@ -92,8 +92,12 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
       Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(r->head->arg(aggField));
       debugRule(r, str(strbuf() << "Agg wrap " << aggExpr->aggName() 
 		       << " " << aggField << "\n"));     
-      agg_el = New refcounted<Aggwrap>(aggExpr->aggName(), 
-				       aggField + 1, r->head->fn->name);
+      agg_el = New refcounted<Aggwrap>(strbuf("Aggwrap:") 
+				       << r->ruleID << ":" << 
+				       nodeID,
+				       aggExpr->aggName(), 
+				       aggField + 1, 
+				       r->head->fn->name);
       for (int k = 0; k < r->head->args(); k++) {
 	if (k != aggField) {
 	  // for each groupby value, figure out it's 
@@ -163,7 +167,8 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
     
     ElementSpecRef deleteElement =
       _conf->addElement(New refcounted< Delete >(strbuf("Delete:") 
-						 << r->ruleID << nodeID,
+						 << r->ruleID << ":" << 
+						 nodeID,
 						 tableToDelete, 
 						 ti->primaryKeys.at(0), 
 						 ti->primaryKeys.at(0)));    
@@ -176,7 +181,8 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
   } else {    
     if (agg_el) { 
       ElementSpecRef aggWrapSlot 
-	= _conf->addElement(New refcounted<Slot>("aggWrapSlot"));      
+	= _conf->addElement(New refcounted<Slot>("aggWrapSlot:" << r->ruleID 
+						 << ":" << nodeID));      
       ElementSpecRef agg_spec = _conf->addElement(agg_el);
       // hook up the internal output to most recent element 
       hookUp(agg_spec, 1); 
@@ -796,7 +802,8 @@ Rtr_ConfGen::pelSelect(OL_Context::Rule* rule, FieldNamesTracker* names,
  
   ElementSpecRef sPelTrans =
     _conf->addElement(New refcounted< PelTransform >(strbuf("Selection:") 
-						     << selectionID << ":" 
+						     << rule->ruleID << ":" << 
+						     selectionID << ":" 
 						     << nodeID, sPel));
 
   if (_isPeriodic == false &&_pendingRegisterReceiver) {
@@ -1478,7 +1485,9 @@ void Rtr_ConfGen::genFunctorSource(OL_Context::Rule* rule,
   //  if (rule->terms.size() <= 1) {
   if (numFunctors(rule) <= 1) {
     ElementSpecRef functorSlot 
-      = _conf->addElement(New refcounted<Slot>("functorSlot"));      
+      = _conf->addElement(New refcounted<Slot>("functorSlot:" << 
+					       rule->ruleID << ":" 
+					       << nodeID));      
     hookUp(functorSlot, 0);
   }
 }
