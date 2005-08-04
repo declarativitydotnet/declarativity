@@ -54,6 +54,7 @@ int Aggwrap::push(int port, TupleRef t, cbv cb)
 	      << t->toString()));
       assert(inner_accepting);
       agg_init();
+      _incomingTuple = t;
       inner_accepting = output(1)->push(t, wrap(this, &Aggwrap::int_push_cb));
       break;
     case 1:
@@ -182,7 +183,7 @@ void Aggwrap::agg_accum(TupleRef t) {
 
 void Aggwrap::agg_finalize() {
   TRC_FN;
-  if (_aggfn == "count") {
+  if (_aggfn == "count") {    
     if (count != 0) {
       TupleRef aggResultToRet = Tuple::mk();    
       aggResultToRet->append((*aggResult)[0]);
@@ -193,8 +194,8 @@ void Aggwrap::agg_finalize() {
       aggResultToRet->freeze();
       aggResult = Tuple::mk();
       aggResult->concat(aggResultToRet);
-      aggResult->freeze();
-    } 
+      aggResult->freeze();     
+    }
   }
   if (aggResult) {
     log(LoggerI::INFO, 0, 

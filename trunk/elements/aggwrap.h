@@ -52,7 +52,7 @@ private:
   cbv ext_out_cb;
 
   int aggState;
-  TuplePtr aggResult;
+  TuplePtr aggResult, _incomingTuple;
   int count;
 
   void int_push_cb();
