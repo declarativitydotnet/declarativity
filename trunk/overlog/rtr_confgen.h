@@ -111,8 +111,8 @@ private:
 
   // counter to determine how many muxers and demuxers are needed
   str _curType;
-  std::vector<ElementSpecRef> _udpPushSenders;
-  std::vector<int> _udpPushSendersPos;
+  std::vector<ElementSpecRef> _udpSenders;
+  std::vector<int> _udpSendersPos;
   std::vector<ElementSpecRef> _currentElementChain;
    
   ReceiverInfoMap _udpReceivers; // for demuxing

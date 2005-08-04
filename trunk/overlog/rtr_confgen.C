@@ -52,7 +52,6 @@ void Rtr_ConfGen::configureRouter(ref< Udp > udp, str nodeID)
       = _conf->addElement(New refcounted< CCRx >("CC Receive" << nodeID, 2048, 1, 2));
   }
 
-
   // iterate through all the rules and process them
   for (unsigned int k = 0; k < _ctxt->getRules()->size(); k++) {
     _currentRule = _ctxt->getRules()->at(k);    
@@ -67,7 +66,7 @@ void Rtr_ConfGen::configureRouter(ref< Udp > udp, str nodeID)
 void Rtr_ConfGen::clear()
 {
   _udpReceivers.clear();
-  _udpPushSenders.clear();
+  _udpSenders.clear();
 }
 
 
@@ -88,8 +87,14 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
       // there is an aggregate and involves an event, we need an agg wrap      
       Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(r->head->arg(aggField));
       debugRule(r, str(strbuf() << "Agg wrap " << aggExpr->aggName() 
-		       << " " << aggField << "\n"));
-      agg_el = New refcounted<Aggwrap>(aggExpr->aggName(), aggField + 1);
+		       << " " << aggField << "\n"));     
+      agg_el = New refcounted<Aggwrap>(aggExpr->aggName(), 
+				       aggField + 1);
+      for (int k = 0; k < r->head->args(); k++) {
+	if (k != aggField) {
+	  agg_el->registerGroupbyField(k);
+	}
+      }
     } else {
       // an agg that involves only base tables. 
       genSingleAggregateElements(r, nodeID, &curNamesTracker);
@@ -181,8 +186,8 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
   }
 
   // anything at this point needs to be hookup with senders
-  _udpPushSenders.push_back(_currentElementChain.back()); 
-  _udpPushSendersPos.push_back(_currentPositionIndex); 
+  _udpSenders.push_back(_currentElementChain.back()); 
+  _udpSendersPos.push_back(_currentPositionIndex); 
 }
 
 
@@ -355,8 +360,8 @@ Rtr_ConfGen::genReceiveElements(ref< Udp> udp,
 void 
 Rtr_ConfGen::registerUDPPushSenders(ElementSpecRef elementSpecRef)
 {
-  _udpPushSenders.push_back(elementSpecRef);
-  _udpPushSendersPos.push_back(1);
+  _udpSenders.push_back(elementSpecRef);
+  _udpSendersPos.push_back(1);
 }
 
 
@@ -369,7 +374,7 @@ Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
   ElementSpecRef roundRobin =
     _conf->addElement(New refcounted< RoundRobin >("roundRobinSender:" 
 						   << nodeID, 
-						   _udpPushSenders.size())); 
+						   _udpSenders.size())); 
 
   ElementSpecRef pullPush =
       _conf->addElement(New refcounted< 
@@ -478,16 +483,16 @@ Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
   hookUp(udpSend, 0);
 
   // form the push senders
-  for (unsigned int k = 0; k < _udpPushSenders.size(); k++) {
-    ElementSpecRef nextElementSpec = _udpPushSenders.at(k);
+  for (unsigned int k = 0; k < _udpSenders.size(); k++) {
+    ElementSpecRef nextElementSpec = _udpSenders.at(k);
 
-    std::cout << "Encapsulation " << k << " pop " << _udpPushSendersPos.at(k) << "\n";
+    std::cout << "Encapsulation " << k << " pop " << _udpSendersPos.at(k) << "\n";
 
     ElementSpecRef encapSend =
       _conf->addElement(New refcounted< PelTransform >(strbuf("encapSend:") 
 						       << ":" << nodeID, 
 						       strbuf("$") << 
-						       _udpPushSendersPos.at(k) 
+						       _udpSendersPos.at(k) 
 						       << " pop swallow pop"));
     
     // for now, assume addr field is the put here
@@ -1371,8 +1376,8 @@ Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
 		       << nodeID);
 
   genProjectHeadElements(currentRule, nodeID, aggregateNamesTracker);
-  _udpPushSenders.push_back(_currentElementChain.back());
-  _udpPushSendersPos.push_back(1);
+  _udpSenders.push_back(_currentElementChain.back());
+  _udpSendersPos.push_back(1);
 
   registerReceiverTable(currentRule, headTableName);
 }
