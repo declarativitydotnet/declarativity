@@ -34,15 +34,26 @@ materialize(sequence, infinity, 1, keys(2)).
 materialize(env, infinity, infinity, keys(2,3)).
 materialize(neighbor, infinity, infinity, keys(2)).
 
+watch(member).
+watch(sequence).
+watch(refreshSequence).
+E0 neighbor(X,Y,T) :- periodic(X,E,0,1), env(X, H, Y), H=="neighbor", T:=f_now().
+E1 member(X, A, S, T, L) :- periodic(X,E,0,1), T :=f_now(), S := 0, L := 1, A := X.
+
+
 
 /** Start with sequence 0 */
 S0 sequence(X, Sequence) :- periodic(X, E, 0, 1), Sequence := 0.
 
 
 
+
 /** Periodically start a refresh */
 
 R1 refreshEvent(X) :- periodic(X, E, 10).
+
+E2 member(X, X, Sequence, T, Live) :- refreshEvent(X), sequence(X,
+  Sequence), T:=f_now(), Live := 1.
 
 
 
@@ -66,7 +77,7 @@ message */
 
 R4 refresh@Y(Y, X, MySequence, Address, ASequence, ALive) :-
   refreshSequence(X, MySequence, Address, ASequence, Live, R),
-  neighbor(X, Y).
+  neighbor(X, Y, T).
 
 
 
@@ -76,47 +87,58 @@ R4 refresh@Y(Y, X, MySequence, Address, ASequence, ALive) :-
 member (first bullet in Figure 2 of the ESM paper). Don't update
 myself. */
 
+
+/** How many member entries that match the member in a refresh message
+(but not myself) do I have? */
+
+R51 membersFound@X(X, Address, Sequence, Live, count<*>) :- refresh@X(X,
+  Y, Address, Sequence, Live), member@X(X, Address, MySequence, MyTime,
+  MyLive), X != Address.
+
+
+/** If I have none, just store the information I just received */
+
+R52 member@X(X, Address, Sequence, T, Live) :- membersFound@X(X,
+  Address, Sequence, Live, C), C == 0, T := f_now().
+
+/** If I have some, just update with the information I received if it
+has a higher sequence number. */
+
+R53 member@X(X, Address, Sequence, T, Live) :- membersFound@X(X,
+  Address, Sequence, Live, C), C > 0, T := f_now(), member@X(X, Address,
+  MySequence, MyT, MyLive), MySequence < Sequence.
+
+
+
+
+/** Member updates if we have negation
+
+If I receive a refresh and have no entry for the contents, store the
+member (first bullet in Figure 2 of the ESM paper). Don't update
+myself.
+
 R5 member@X(X, Address, Sequence, T, Live) :- refresh@X(X, Y, Address,
   Sequence, Live), T := f_now(), not member@X(X, Address, MySequence,
   MyTime, MyLive), X != Address.
 
 
 
-R51 members@X(X, Address, Sequence, Live, count<*>) :- refresh@X(X, Y, Address,
-  Sequence, Live), member@X(X, Address, MySequence,
-  MyTime, MyLive), X != Address.
-
-R52 member@X(X, Address, Sequence, T, Live) :- members@X(X, Address,
-  Sequence, Live, C), C == 0, T := f_now().
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/** If I receive a refresh and already have an entry for the contents,
-but my entry is older, replace it with contents (bullet 2.2 in Figure 2
-of the ESM paper). Don't update myself. */
+If I receive a refresh and already have an entry for the contents, but
+my entry is older, replace it with contents (bullet 2.2 in Figure 2 of
+the ESM paper). Don't update myself.
 
 R6 member@X(X, Address, Sequence, T, Live) :- refresh@X(X, Y, Address,
   Sequence, Live), T := f_now(), member@X(X, Address, MySequence,
   MyTime, Live), MySequence < Sequence, X != Address.
+
+*/
+
+
+
+
+
+
+
 
 
 
