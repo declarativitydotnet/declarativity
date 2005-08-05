@@ -82,6 +82,32 @@ R5 member@X(X, Address, Sequence, T, Live) :- refresh@X(X, Y, Address,
 
 
 
+R51 members@X(X, Address, Sequence, Live, count<*>) :- refresh@X(X, Y, Address,
+  Sequence, Live), member@X(X, Address, MySequence,
+  MyTime, MyLive), X != Address.
+
+R52 member@X(X, Address, Sequence, T, Live) :- members@X(X, Address,
+  Sequence, Live, C), C == 0, T := f_now().
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /** If I receive a refresh and already have an entry for the contents,
