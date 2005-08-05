@@ -24,7 +24,7 @@
 class Aggwrap : public Element { 
 public:
 
-  Aggwrap(str aggfn, int aggfield, str outputTableName);
+  Aggwrap(str name, str aggfn, int aggfield, str outputTableName);
 
   const char *class_name() const		{ return "Aggwrap";}
   const char *processing() const		{ return "hh/hh"; }; //"ha/hh"; }

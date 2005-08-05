@@ -14,9 +14,8 @@
 #include "val_int32.h"
 #include "val_str.h"
 
-Aggwrap::Aggwrap(str aggfn, int aggfield, str outputTableName)
-  : Element(strbuf() << "Aggwrap<" << aggfn << "," << aggfield 
-	    << ", " << outputTableName << ">", 2, 2),
+Aggwrap::Aggwrap(str name, str aggfn, int aggfield, str outputTableName)
+  : Element(name, 2, 2),
     _aggfn(aggfn), 
     _aggfield(aggfield), 
     inner_accepting(true),
