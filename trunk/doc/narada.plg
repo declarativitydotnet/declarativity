@@ -34,11 +34,16 @@ materialize(sequence, infinity, 1, keys(2)).
 materialize(env, infinity, infinity, keys(2,3)).
 materialize(neighbor, infinity, infinity, keys(2)).
 
+/*
 watch(member).
 watch(sequence).
 watch(refreshSequence).
 watch(refresh).
 watch(membersFound).
+*/
+
+watch(report).
+
 
 E0 neighbor@X(X,Y,T) :- periodic@X(X,E,0,1), env@X(X, H, Y),
   H=="neighbor", T:=f_now().
@@ -56,7 +61,7 @@ S0 sequence@X(X, Sequence) :- periodic@X(X, E, 0, 1), Sequence := 0.
 
 /** Periodically start a refresh */
 
-R1 refreshEvent@X(X) :- periodic@X(X, E, 10).
+R1 refreshEvent@X(X) :- periodic@X(X, E, 3).
 
 /** Always refresh myself */
 
@@ -160,7 +165,7 @@ N1 neighbor@X(X, Y, T) :- refresh@X(X, Y, A, S, L), T:= f_now().
 
 /** Probing of neighbor liveness */
 
-L1 neighborProbe@X(X) :- periodic@X(X, E, 2).
+L1 neighborProbe@X(X) :- periodic@X(X, E, 1).
 
 L2 deadNeighbor@X(X, Y) :- neighborProbe@X(X), T := f_now(),
   neighbor@X(X, Y, YT), T - YT > 20.
@@ -176,10 +181,17 @@ L4 member@X(X, Neighbor, DeadSequence, T, Dead) :- deadNeighbor@X(X,
 /** Clean out dead members */
 
 C0 delete member@X(X, A, AS, T, L) :- refreshEvent@X(X), member@X(X, A,
-  AS, T, L), L == 1, Now := f_now(), Now - T > 20.
+  AS, T, L), L == 0, Now := f_now(), Now - T > 20.
 
 
 
+
+
+/** Reporting current members */
+
+M1 reportEvent@X(X) :- periodic@X(X, E, 10).
+
+M2 report@X(X, Y, S, D) :- reportEvent@X(X), member@X(X, Y, S, T, D).
 
 
 
