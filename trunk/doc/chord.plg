@@ -87,7 +87,7 @@ N5 finger@NI(NI,0,S,SI) :- bestSucc@NI(NI,S,SI).
 watch(evictSucc).
 watch(maxSuccDist).*/
 
-S1 succCount@NI(NI,count<*>) :- succ(NI,S,SI).
+S1 succCount@NI(NI,count<*>) :- succ@NI(NI,S,SI).
 
 S2 evictSucc@NI(NI) :- succCount@NI(NI,C), 
 		    C > 4.
@@ -224,8 +224,9 @@ watch(pingResp).
 watch(pingNodeCount).*/
 watch(pendingPing).
 
+CM0 pingEvent@NI(NI,E) :- periodic@NI(NI,E,5).
 
-CM1 pendingPing@NI(NI,PI,E) :- periodic@NI(NI,E,5),                         
+CM1 pendingPing@NI(NI,PI,E) :- pingEvent@NI(NI,E),
 			pingNode@NI(NI,PI).
 
 CM2 pingReq@PI(PI,NI,E) :- pendingPing@NI(NI,PI,E).
@@ -247,7 +248,7 @@ CM7 succ@NI(NI,S,SI) :- succ@NI(NI,S,SI),
 CM8 pred@NI(NI,P,PI) :- pred@NI(NI,P,PI),
 		     pingResp@NI(NI,PI,E).
 
-CM9 pred@NI(NI,"-","-") :- pingEvent@NI(NI), 
+CM9 pred@NI(NI,"-","-") :- pingEvent@NI(NI,E), 
 			pendingPing@NI(NI,PI,E), 
 			pred@NI(NI,P,PI).
 
