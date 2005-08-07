@@ -153,11 +153,11 @@ F9 nextFingerFix@NI(NI,I) :- node@NI(NI,N),
 
 /*watch(joinEvent).
 watch(join).*/
-watch(startJoin).
+watch(joinReq). 
 
 C1 joinEvent@NI(NI,E) :- join@NI(NI,E).
 
-C2 startJoin@LI(LI,N,NI,E) :- joinEvent@NI(NI,E),
+C2 joinReq@LI(LI,N,NI,E) :- joinEvent@NI(NI,E),
 			 node@NI(NI,N), 
 			 landmark@NI(NI,LI),
 			 LI != "-".
@@ -167,7 +167,7 @@ C3 succ@NI(NI,N,NI) :- landmark@NI(NI,LI),
 		       node@NI(NI,N), 
 		       LI == "-".
 
-C4 lookup@LI(LI,N,NI,E) :- startJoin@LI(LI,N,NI,E).
+C4 lookup@LI(LI,N,NI,E) :- joinReq@LI(LI,N,NI,E).
 
 C5 succ@NI(NI,S,SI) :- join@NI(NI,E),
 		    lookupResults@NI(NI,K,S,SI,E).
