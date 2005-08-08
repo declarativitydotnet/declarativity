@@ -90,7 +90,7 @@ watch(maxSuccDist).*/
 S1 succCount@NI(NI,count<*>) :- succ@NI(NI,S,SI).
 
 S2 evictSucc@NI(NI) :- succCount@NI(NI,C), 
-		    C > 4.
+		    C > 2.
 
 S3 maxSuccDist@NI(NI,max<D>) :- succ@NI(NI,S,SI),
 				node@NI(NI,N), 
