@@ -45,11 +45,8 @@ watch(membersFound).
 watch(report).
 
 
-E0 neighbor@X(X,Y,T) :- periodic@X(X,E,0,1), env@X(X, H, Y),
-  H=="neighbor", T:=f_now().
-
-E1 member@X(X, A, S, T, L) :- periodic@X(X,E,0,1), T :=f_now(), S := 0,
-  L := 1, A := X.
+E0 neighbor@X(X,Y) :- periodic@X(X,E,0,1), env@X(X, H, Y),
+  H=="neighbor".
 
 
 
@@ -63,62 +60,58 @@ S0 sequence@X(X, Sequence) :- periodic@X(X, E, 0, 1), Sequence := 0.
 
 R1 refreshEvent@X(X) :- periodic@X(X, E, 3).
 
-/** Always refresh myself */
-
-E2 member@X(X, A, Sequence, T, Live) :- refreshEvent@X(X), sequence@X(X,
-  Sequence), T:=f_now(), Live := 1, A := X.
 
 
+/** Increment my own sequence number */
 
-/** Pick a member at random and increment my own sequence */
-
-R2 refreshSequence@X(X, NewSequence, Address, ASequence, Live, max<R>)
-  :- refreshEvent@X(X), sequence@X(X, Sequence), NewSequence := Sequence
-  + 1, member@X(X, Address, ASequence, T, Live), R := f_rand().
+R2 refreshSequence@X(X, NewSequence) :- refreshEvent@X(X), sequence@X(X,
+  Sequence), NewSequence := Sequence + 1.
 
 
 /** Save my incremented sequence */
 
-
-R3 sequence@X(X, NewSequence) :- refreshSequence@X(X, NewSequence, A, AS,
-  L, R).
+R3 sequence@X(X, NewSequence) :- refreshSequence@X(X, NewSequence).
 
 
 
-/** Send a message to all neighbors with the chosen member in a refresh
-message */
+/** Send a refresh to all neighbors with my current membership */
 
-R4 refresh@Y(Y, X, Address, ASequence, ALive) :- refreshSequence@X(X,
-  NewSequence, Address, ASequence, ALive, R), neighbor@X(X, Y, T).
-
-
+R4 refresh@Y(Y, X, NewSequence, Address, ASequence, ALive) :-
+  refreshSequence@X(X, NewSequence), member@X(X, Address, ASequence,
+  Time, ALive), neighbor@X(X, Y).
 
 
 
-/** If I receive a refresh and have no entry for the contents, store the
-member (first bullet in Figure 2 of the ESM paper). Don't update
-myself. */
 
 
 /** How many member entries that match the member in a refresh message
 (but not myself) do I have? */
 
-R51 membersFound@X(X, Address, ASequence, Live, count<*>) :-
-  refresh@X(X, Y, Address, ASequence, Live), member@X(X, Address,
-  MySequence, MyTime, MyLive), X != Address.
+R5 membersFound@X(X, Address, ASequence, ALive, count<*>) :-
+  refresh@X(X, Y, YSequence, Address, ASequence, ALive), member@X(X,
+  Address, MySequence, MyTime, MyLive), X != Address.
+
 
 
 /** If I have none, just store the information I just received */
 
-R52 member@X(X, Address, Sequence, T, Live) :- membersFound@X(X,
-  Address, Sequence, Live, C), C == 0, T := f_now().
+R6 member@X(X, Address, ASequence, T, ALive) :- membersFound@X(X,
+  Address, ASequence, ALive, C), C == 0, T := f_now().
+
 
 /** If I have some, just update with the information I received if it
 has a higher sequence number. */
 
-R53 member@X(X, Address, Sequence, T, Live) :- membersFound@X(X,
-  Address, Sequence, Live, C), C > 0, T := f_now(), member@X(X, Address,
-  MySequence, MyT, MyLive), MySequence < Sequence.
+R7 member@X(X, Address, ASequence, T, ALive) :- membersFound@X(X,
+  Address, ASequence, ALive, C), C > 0, T := f_now(), member@X(X, Address,
+  MySequence, MyT, MyLive), MySequence < ASequence.
+
+
+/** Update my neighbor's member entry */
+
+R8 member@X(X, Y, YSequence, T, YLive) :- refresh@X(X, Y, YSequence, A,
+  AS, AL), T := f_now(), YLive := 1.
+
 
 
 
@@ -156,7 +149,7 @@ R6 member@X(X, Address, Sequence, T, Live) :- refresh@X(X, Y, Address,
 
 /** Add anyone from whom I receive a refresh message to my neighbors */
 
-N1 neighbor@X(X, Y, T) :- refresh@X(X, Y, A, S, L), T:= f_now().
+N1 neighbor@X(X, Y) :- refresh@X(X, Y, YS, A, AS, L).
 
 
 
@@ -168,20 +161,14 @@ N1 neighbor@X(X, Y, T) :- refresh@X(X, Y, A, S, L), T:= f_now().
 L1 neighborProbe@X(X) :- periodic@X(X, E, 1).
 
 L2 deadNeighbor@X(X, Y) :- neighborProbe@X(X), T := f_now(),
-  neighbor@X(X, Y, YT), T - YT > 20.
+  neighbor@X(X, Y), member@X(X, Y, YS, YT, L), T - YT > 20.
 
-L3 delete neighbor@X(X, Y, T) :- deadNeighbor@X(X, Y).
+L3 delete neighbor@X(X, Y) :- deadNeighbor@X(X, Y).
 
-L4 member@X(X, Neighbor, DeadSequence, T, Dead) :- deadNeighbor@X(X,
-  Neighbor), member@X(X, Neighbor, S, T1, L), Dead := 0, DeadSequence :=
+L4 member@X(X, Neighbor, DeadSequence, T, Live) :- deadNeighbor@X(X,
+  Neighbor), member@X(X, Neighbor, S, T1, L), Live := 0, DeadSequence :=
   S + 1, T:= f_now().
 
-
-
-/** Clean out dead members */
-
-C0 delete member@X(X, A, AS, T, L) :- refreshEvent@X(X), member@X(X, A,
-  AS, T, L), L == 0, Now := f_now(), Now - T > 20.
 
 
 
