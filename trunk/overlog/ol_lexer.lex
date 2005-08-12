@@ -59,6 +59,8 @@
 #endif
 #define YY_DECL int OL_Lexer::yylex (YYSTYPE *lvalp, OL_Context *ctxt)
 
+int dcvar = 0;
+
 %}
 
 DIGIT           [0-9]
@@ -71,7 +73,6 @@ VARIABLE	[A-Z]{ALNUM}*
 LOC_VARIABLE	_{
 QATOM		\'[^\']*\'
 WHITESPACE	[ \t\r\n]+
-
 
 %%
 
@@ -193,7 +194,9 @@ WHITESPACE	[ \t\r\n]+
   lvalp->v = New Parse_Var(Val_Str::mk(yytext)); 
   return OL_VAR; }
 
-<INITIAL>_ { return OL_DONTCARE; }
+<INITIAL>_ { 
+  lvalp->v = New Parse_Var(Val_Str::mk(strbuf() << "$_" << dcvar++)); 
+  return OL_VAR; }
 
 <INITIAL>infinity {
   // Unsigned integer literal (including octal and/or hex
