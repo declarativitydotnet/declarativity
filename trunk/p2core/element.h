@@ -212,6 +212,12 @@ public:
         invoked when there is another one. */
     TuplePtr pull(cbv cb) const;
 
+    /** A push is called on the input port of an element **/
+    int push_incoming(int port, TupleRef p, cbv cb) const;
+    
+    /** A pull is called on the output port of an element **/
+    TuplePtr pull_outgoing(int port, cbv cb) const;
+
 #if P2_STATS >= 1
     unsigned ntuples() const		{ return _tuples; }
 #endif
@@ -234,9 +240,9 @@ public:
 #if P2_STATS >= 1
     mutable unsigned _tuples;		// How many tuples have we moved?
 #endif
-#if P2_STATS >= 2
+    //#if P2_STATS >= 2
     Element *_owner;			// Whose input or output are we?
-#endif
+    //#endif
   };
 
   typedef ptr< Port > PortPtr;

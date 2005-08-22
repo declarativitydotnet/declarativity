@@ -257,7 +257,8 @@ REMOVABLE_INLINE int Element::Port::push(TupleRef p, cbv cb) const
   uint64_t c0 = click_get_cycles();
 #endif // P2_STATS >= 2
 
-  returnValue = _e->push(_port, p, cb);
+  //returnValue = _e->push(_port, p, cb);
+  returnValue = _e->input(_port)->push_incoming(_port, p, cb);
 
 #if P2_STATS >= 2
   uint64_t c1 = click_get_cycles();
@@ -279,7 +280,8 @@ REMOVABLE_INLINE TuplePtr Element::Port::pull(cbv cb) const
   uint64_t c0 = click_get_cycles();
 #endif
 
-  TuplePtr p = _e->pull(_port, cb);
+  //TuplePtr p = _e->pull(_port, cb);
+  TuplePtr p = _e->output(_port)->pull_outgoing(_port, cb);
 
 #if P2_STATS >= 2
   uint64_t c1 = click_get_cycles();
@@ -296,6 +298,18 @@ REMOVABLE_INLINE TuplePtr Element::Port::pull(cbv cb) const
   return p;
 }
 
+REMOVABLE_INLINE int Element::Port::push_incoming(int port, TupleRef p, cbv cb) const
+{
+  return _owner->push(port, p, cb);
+}
+
+REMOVABLE_INLINE TuplePtr Element::Port::pull_outgoing(int port, cbv cb ) const
+{
+  TuplePtr t = _owner->pull(port, cb);
+  return t;
+}
+
+
 /** Construct a detached free port */
 REMOVABLE_INLINE Element::Port::Port() :
   _e(0),
@@ -310,6 +324,7 @@ REMOVABLE_INLINE Element::Port::Port(Element *owner,
                                      int p)
   : _e(e),
     _port(p),
+    _owner(owner),
     _cb(cbv_null)
   PORT_CTOR_INIT(owner)
 {
