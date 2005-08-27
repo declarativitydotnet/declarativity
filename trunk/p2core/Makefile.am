@@ -38,7 +38,8 @@ libp2core_la_SOURCES = \
 	table.C \
 	loggerI.C \
 	oper.C \
-	val_ip_addr.C
+	val_ip_addr.C \
+	dot.C
 
 INCLUDES = @SFS_INC@
 

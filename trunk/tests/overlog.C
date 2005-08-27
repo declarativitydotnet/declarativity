@@ -24,6 +24,8 @@
 #include "rtr_confgen.h"
 #include "udp.h"
 
+#include "dot.h"
+
 extern int ol_parser_debug;
 
 int main(int argc, char **argv)
@@ -44,6 +46,7 @@ int main(int argc, char **argv)
 		<< "\t-c: canonical form (used for builtin tests)\n"
 		<< "\t-d: turn on parser debugging\n"
 		<< "\t-r: try to instantiate a router config\n"
+                << "\t-g: produce a DOT graph spec\n"
 		<< "\t-h: print this help text\n"
 		<< "\t- : read from stdin\n";
       exit(0);
@@ -54,6 +57,19 @@ int main(int argc, char **argv)
       builtin = false;
     } else if (arg == "-") {
       ctxt->parse_stream(&std::cin);
+    } else if (arg == "-g") {
+      filename = argv[i+1];
+      std::ifstream istr(filename);
+      std::ofstream ostr("overlog.dot");
+      ctxt->parse_stream(&istr);
+      Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+      Rtr_ConfGen gen(ctxt, conf, false, false, true, filename);
+      gen.createTables("127.0.0.1:10000");
+      
+      ref< Udp > udp = New refcounted< Udp >("Udp", 10000);
+      gen.configureRouter(udp, "127.0.0.1:10000");
+      toDot(&ostr, conf);
+      exit (0);
     } else { 
       filename = argv[i];
       std::ifstream istr(argv[i]);

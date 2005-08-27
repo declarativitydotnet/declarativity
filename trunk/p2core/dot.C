@@ -1,0 +1,78 @@
+// -*- c-basic-offset: 2; -*-
+/*
+ * @(#)$Id$
+ *
+ *  Utility functions to produce a DOT description of a router
+ *  configuration.
+ *
+ *  Petros Maniatis.
+ */
+
+#include <router.h>
+#include <element.h>
+#include <elementSpec.h>
+#include <iostream>
+
+void
+toDot(std::ostream * ostr,
+      Router::ConfigurationRef configuration)
+{
+  *ostr << "digraph G {\n"
+        << "rankdir=LR;\n"
+        << "node [shape=record];\n";
+
+  // Delcare all elements.
+  for (uint e = 0;
+       e < configuration->elements.size();
+       e++) {
+    ElementRef element = configuration->elements[e]->element();
+    *ostr << element->ID()      // unique element ID
+          << " [ label=\"{";
+
+    // Now figure out how many input ports
+    if (element->ninputs() > 0) {
+      *ostr << "{<i0> 0";
+      for (int p = 1;
+           p < element->ninputs();
+           p++) {
+        *ostr << "| <i" << p << "> " << p << " ";
+      }
+      *ostr << "}|";
+    }
+      
+    // Show the name
+    *ostr << element->class_name() // the official type
+          << "\\n"
+          << element->name();   // the official name
+
+    // And figure out the output ports
+    if (element->noutputs() > 0) {
+      *ostr << "|{<o0> 0";
+      for (int p = 1;
+           p < element->noutputs();
+           p++) {
+        *ostr << "| <o" << p << "> " << p << " ";
+      }
+      *ostr << "}";
+    }
+
+    // Close the element label
+    *ostr << "}\" ];\n";
+  }
+
+  for (uint i = 0;
+       i < configuration->hookups.size();
+       i++) {
+    Router::HookupRef hookup = configuration->hookups[i];
+    ElementSpecRef fromElement = hookup->fromElement;
+    ElementSpecRef toElement = hookup->toElement;
+    int fromPort = hookup->fromPortNumber;
+    int toPort = hookup->toPortNumber;
+    *ostr << fromElement->element()->ID() << ":" << "o" << fromPort
+          << " -> "
+          << toElement->element()->ID() << ":" << "i" << toPort
+          << ";\n";
+  }
+  *ostr << "}\n";
+  ostr->flush();
+}
