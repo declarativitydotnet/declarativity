@@ -295,9 +295,9 @@ protected:
 # define PORT_CTOR_INIT(o) , _tuples(0), _owner(o)
 #else
 # if P2_STATS >= 1
-#  define PORT_CTOR_INIT(o) , _tuples(0)
+#  define PORT_CTOR_INIT(o) , _tuples(0), _owner(o)
 # else
-#  define PORT_CTOR_INIT(o)
+#  define PORT_CTOR_INIT(o) , _owner(o)
 # endif
 #endif
 

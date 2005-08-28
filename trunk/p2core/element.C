@@ -324,7 +324,6 @@ REMOVABLE_INLINE Element::Port::Port(Element *owner,
                                      int p)
   : _e(e),
     _port(p),
-    _owner(owner),
     _cb(cbv_null)
   PORT_CTOR_INIT(owner)
 {
