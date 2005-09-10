@@ -1,0 +1,125 @@
+/* Accordion $Id$
+
+Prototype implementation of the Accordion overlay in OverLog.
+
+Contains parallel lookups and acknowledgments with exploration.
+
+Still to do: exploratory lookups, forwarding of non-primary lookups,
+	expiration of neighbors, inclusion of stabilization and such.
+
+Try out with
+
+tests/runOverLog doc/accordion.plg NONE 0 127.0.0.1:10000 0 "neighbor=127.0.0.1:10001;"
+*/
+
+
+/** Constants
+
+t_inc: budget refresh period
+
+b_avail: remaining available bandwidth budget
+
+b_burst: maximum bandwidth burst
+
+r_avg: desired traffic rate
+
+w_max: maximum size of parallelism window
+
+*/
+
+
+
+
+
+/** Ring maintenance */
+
+
+
+
+/** Bandwidth budget refresh */
+
+b1 budget@NI(NI, BNew) :- periodic@NI(NI, E, t_inc), budget@NI(NI, B),
+   BNew := B + r_avg * t_inc.
+
+
+
+/** Parallelism window */
+
+p1 updatePWin@NI(NI, W, Exp, Look) :- periodic@NI(NI, E, b_burst/r_avg),
+   pWindow@NI(NI, W), explorations@NI(NI, Exp), lookups@NI(NI, L).
+
+p2 pWindow@NI(NI, WNew) :- updatePWin@NI(NI, W, E, L), E > L, W := min(W
+   + 1, w_max).
+
+p3 pWindow@NI(NI, WNew) :- updatePWin@NI(NI, W, E, L), E <= L, W :=
+   max(W / 2, 1).
+
+
+
+/** Lookups */
+
+l1 responseM@NI(NI, R, K, S, SI, E) :- lookup@NI(NI, PH, K, R, E),
+   node@NI(NI, N), bestSuccessor@NI(NI, S, SI), K in (N, S].
+
+l2 bestNeighborDistance@NI(NI, K, R, E, min<D, BI>) :- lookup@NI(NI,
+   PH, K, R, E), node@NI(NI, N), neighbor@NI(NI, B, BI), D := K - B - 1,
+   B in (N, K).
+
+l3 forward@NI(NI, BI, K, R, E) :- bestNeighborDistance@NI(NI, K, R, E, D,
+   BI).
+
+
+
+/** Lookup acknowledgment */
+
+a1 ackExplore@NI(NI, PH, K, R, E, min(m)<D, SI, S>) :- lookup@NI(NI, PH, K,
+  R, E), neighbor@NI(NI, SI, S), node@NI(NI, N), S in (N, K], D := K - S
+  - 1.
+
+a2 ack@PH(PH, NI, K, R, E, concat(n)<SI, S>) :- ackExplore@NI(NI, PH, K,
+   R, E, D, SI, S).
+
+a3 neighbor@NI(NI, S, SI) :- ack@NI(NI, NH, K, R, E, Neighbors), n(SI,
+   S) over Neighbors.
+
+
+
+
+
+
+/** Parallelism. If I have room in my parallelism window, duplicate an
+outgoing lookup. */
+
+pp1 lookupM@NI(NI, BI, K, R, E, true) :- forward@NI(NI, BI, K, R, E).
+
+pp2 pNextHop@NI(NI, K, R, E, min(Remaining)<D, BI>) :- forward@NI(NI,
+   NH, K, R, E), pWindow@NI(NI, W), W > 1, Remaining := W - 1,
+   neighbor@NI(NI, B, BI), BI != NH, D := K - B - 1, budget@NI(NI, Bud),
+   Bud > -b_burst.
+
+pp3 lookupM@NI(NI, BI, K, R, E, false) :- pNextHop@NI(NI, K, R, E, D,
+   BI).
+
+
+
+
+
+
+
+/** Bandwidth consumption */
+
+bc0 budget@NI(NI, BNew) :- message@NI(NI, C), budget@NI(NI, B), BNew :=
+   max(B - C, -b_burst).
+
+
+bc1 message@NI(NI, C) :- responseM@NI(NI, R, K, S, SI, E), C :=
+   resp_size.
+
+bc1a response@R(R, K, S, SI, E) :- responseM@NI(NI, R, K, S, SI, E).
+
+
+bc2 message@NI(NI, C) :- lookupM@NI(NI, BI, K, R, E, P), C :=
+   lookup_size.
+
+bc2a lookup@BI(BI, NI, K, R, E, P) :- lookupM@NI(NI, BI, K, R, E, P).
+
