@@ -38,8 +38,10 @@ w_max: maximum size of parallelism window
 
 /** Bandwidth budget refresh */
 
-b1 budget@NI(NI, BNew) :- periodic@NI(NI, E, t_inc), budget@NI(NI, B),
-   BNew := B + r_avg * t_inc.
+b1 budgetInc@NI(NI, BNew) :- periodic@NI(NI, E, t_inc), budget@NI(NI,
+   B), BNew := B + r_avg * t_inc.
+
+b2 budget@NI(NI, B) :- budgetInc@NI(NI, B).
 
 
 
@@ -123,3 +125,49 @@ bc2 message@NI(NI, C) :- lookupM@NI(NI, BI, K, R, E, P), C :=
 
 bc2a lookup@BI(BI, NI, K, R, E, P) :- lookupM@NI(NI, BI, K, R, E, P).
 
+
+bc3 message@NI(NI, C) :- exploreM@NI(NI, BI, NB, E), C := explore_size.
+
+bc3a explore@BI(BI, NB, NI, E) :- exploreM@NI(NI, BI, NB, E).
+
+
+
+
+
+/** Exploration */
+
+e1 exploreEvent@NI(NI) :- budgetInc@NI(NI, B), B > 0.
+
+e2 interNeighborDist@NI(NI, B, BI, min<D, NB>) :- exploreEvent@NI(NI),
+   neighbor@NI(NI, B, BI), neighbor@NI(NI, NB, NBI), D := NB - N - 1.
+
+e3 exploreNeighbor@NI(NI, max<Gap, BI, NB>) :- interNeighborDist@NI(NI,
+   B, BI, D, NB), node@NI(NI, N), Gap := D / (B - N - 1).
+
+e4 exploreM@NI(NI, BI, NB, E) :- exploreNeighbor@NI(NI, Gap, BI, NB), E
+   := f_rand().
+
+
+
+/** Exploration response */
+
+ea1 exploreGetNodes@NI(NI, PH, K, E, min(m)<D, SI, S>) :- explore@NI(NI,
+  K, PH, E), neighbor@NI(NI, SI, S), node@NI(NI, N), S in (N, K], D := K
+  - S - 1.
+
+ea2 eResp@PH(PH, NI, K, E, concat(n)<SI, S>) :- exploreGetNodes@NI(NI,
+   PH, K, E, D, SI, S).
+
+ea3 neighbor@NI(NI, S, SI) :- eResp@NI(NI, NH, K, E, Neighbors), n(SI,
+   S) over Neighbors.
+
+
+
+
+
+
+
+
+
+
+/** END */
