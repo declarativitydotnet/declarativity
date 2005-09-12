@@ -103,7 +103,7 @@ if __name__ == "__main__":
     while procs:
         log.flush()
         p, s = os.wait() 
-        os.system(r"ps -ef | awk '{print $2}' | grep %d >> %s 2>&1" % (p, args[1]+"/setup_node.log"))
+        os.system(r"ps -ef | grep %d >> %s 2>&1" % (p, args[1]+"/setup_node.log"))
         for node in range(nodes):
             if p == procs[node].pid:
                 pid = run_node(log, args[0], seeds[node] + port, flags["IP"], port, flags["landmark"], \
