@@ -1,4 +1,3 @@
-#if 0
 // -*- c-basic-offset: 2; related-file-name: "scan.h" -*-
 /*
  * @(#)$Id$
@@ -13,32 +12,51 @@
 #include "scan.h"
 
 Scan::Scan(str name,
-           TableRef table,
-           unsigned fieldNo)
-  : Element(name, 0, 1),
-    _table(table),
-    _iterator(table->scanAll(fieldNo))
+	   Table::UniqueScanIterator iterator,
+	   bool continuous)
+  : Element(name, 0, 1), _iterator(iterator), _pullCB(cbv_null)
 {
+  _firstTime = true;
+  _continuous = continuous; 
+
+  if (continuous) {
+    _iterator->addListener(wrap(this, &Scan::listener));
+  }
+}
+
+void
+Scan::listener(TupleRef t)
+{
+  log(LoggerI::INFO, 0, str(strbuf() << "Listener " << t->toString()));
+  scanBuffer.push_back(t);
+  if (_pullCB  != cbv_null) {
+    _pullCB();
+    _pullCB = cbv_null;
+  }
 }
 
 TuplePtr Scan::pull(int port, cbv cb) 
 {
+  
   // Is this the right port?
   assert(port == 0);
-  
-  // Does the table have elements?
-  if (_table->size() > 0) {
-    // Is the iterator at the end?
-    if (_iterator->done()) {
-      // Reset it 
-      _iterator->reset();
+
+  if (_firstTime) {
+    // buffer up all the entries     
+    while (_iterator->done() == false) {
+      scanBuffer.push_back(_iterator->next());
     }
-    
-    // Return the next element
-    return _iterator->next();
-  } else {
-    // No elements.  Just return the empty tuple
-    return Tuple::EMPTY;
+    _firstTime = false;
   }
+
+  if (scanBuffer.size() == 0) { 
+    _pullCB = cb;
+    return 0; 
+  }
+  TuplePtr retTuple = scanBuffer.front();
+  scanBuffer.pop_front();
+  log(LoggerI::INFO, 0, str(strbuf() << "Pull returns " << retTuple->toString()));
+  return retTuple;
 }
-#endif
+
+// add update callbacks

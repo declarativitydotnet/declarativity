@@ -1,5 +1,4 @@
-// Eliminated
-#if 0
+
 // -*- c-basic-offset: 2; related-file-name: "scan.C" -*-
 /*
  * @(#)$Id$
@@ -23,27 +22,32 @@
 
 #include "table.h"
 #include "element.h"
+#include "tuple.h"
+#include <list>
 
 class Scan : public Element {
  public:
-  Scan(str name,
-       TableRef table,
-       unsigned field);
-  
+  Scan(str name, 
+       Table::UniqueScanIterator iterator,
+       bool continuous);
+
   const char *class_name() const		{ return "Scan";}
   const char *processing() const		{ return "/l"; }
   const char *flow_code() const			{ return "/-"; }
   
   /** Return a match to the current lookup */
   TuplePtr pull(int port, cbv cb);
+
+  void listener(TupleRef t);
   
  private:
-  /** My parent's table */
-  TableRef _table;
   
   /** My current iterator */
-  Table::MultScanIterator _iterator;
+  Table::UniqueScanIterator _iterator;
+
+  bool _firstTime, _continuous;
+  std::list<TuplePtr> scanBuffer;
+  cbv _pullCB;
 };
 
 #endif /* __SCAN_H_ */
-#endif

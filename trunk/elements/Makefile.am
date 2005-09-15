@@ -56,7 +56,8 @@ libp2elements_la_SOURCES = \
 	noNullField.C\
 	unboxField.C \
 	printWatch.C \
-	aggregate.C
+	aggregate.C \
+	scan.C
 
 
 INCLUDES = @SFS_INC@ -I../p2core
