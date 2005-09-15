@@ -352,7 +352,11 @@ public:
 
     /** The constructor just initializes the iterator */
     ScanIteratorObj(_Index * index);
-    
+
+    void update(TupleRef t);
+
+    void addListener(Table::Listener listenerCallback);
+
   private:
     /** My flattened index */
     _FlatIndex _index;
@@ -362,15 +366,20 @@ public:
 
     /** My iterator */
     FlatIndexIterator _iter;
+
+    /** For continuous scanner */
+    std::vector< Listener > _listeners;
   };
   
 public:
   typedef IteratorObj < MultIndex, MultIndexFlat > MultIteratorObj;
   typedef IteratorObj < UniqueIndex, UniqueIndexFlat > UniqueIteratorObj;
+  typedef ScanIteratorObj < UniqueIndex, UniqueIndexFlat > UniqueScanIteratorObj;
   typedef ScanIteratorObj < MultIndex, MultIndexFlat > MultScanIteratorObj;
   typedef ptr< MultIteratorObj > MultIterator;
   typedef ptr< UniqueIteratorObj > UniqueIterator;
   typedef ptr< MultScanIteratorObj > MultScanIterator;
+  typedef ptr< UniqueScanIteratorObj > UniqueScanIterator;
   
   
   /** A lookup generator for mult indices */
@@ -394,7 +403,10 @@ private:
   
   /** My mult aggregators */
   std::vector< MultAggregate > _multAggregates;
-  
+
+  /** Continuous unique scanners */
+  std::vector< UniqueScanIterator > _uni_scans;
+
   // Helper function to remove an Entry from all the indices in the system.
   void remove_from_indices(Entry *);
 
@@ -410,17 +422,20 @@ public:
   /** Lookup in a multi index. */
   MultIterator lookupAll(unsigned field, ValueRef key);
 
-  /** Get all entries in a multi index */
+  /** Get all entries in a unique index */
   MultScanIterator scanAll(unsigned field);
+  UniqueScanIterator uniqueScanAll(unsigned field, bool continuous);
 
   /** Remove the entry found on the given unique index by the given key.
       The removal occurs from all indices. */
-  void remove(unsigned field, ValueRef key);
+  TuplePtr remove(unsigned field, ValueRef key);
 
   /** My aggregator functions */
   static AggregateFunctionMIN AGG_MIN;
   static AggregateFunctionMAX AGG_MAX;
   static AggregateFunctionCOUNT AGG_COUNT;
+
+  
 };
 
 #include "iteratorObj.h"

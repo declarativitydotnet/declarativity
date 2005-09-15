@@ -173,8 +173,16 @@ void Table::insert(TupleRef t)
     if (ndx) {
       // Remove any tuple with the same unique key from all indices and
       // aggregates
-      remove(i, (*t)[i]);
-      
+      TuplePtr removedEntry = remove(i, (*t)[i]);
+
+      if (removedEntry == NULL || expiry_lifetime ||
+	  t->compareTo(removedEntry) != 0) {
+	// inform the scan listeners
+	for (unsigned i = 0; i < _uni_scans.size(); i++) {
+	  _uni_scans.at(i)->update(t);
+	}
+      }
+
       // Now store the new tuple.  Make sure it's stored
       std::pair< UniqueIndex::iterator, bool > result =
         ndx->insert(std::make_pair((*e->t)[i], e));
@@ -217,8 +225,7 @@ void Table::insert(TupleRef t)
    doesn't remove an entry from the queue; the entry will expire in
    time.
 */
-void
-Table::remove(unsigned fieldNo, ValueRef key)
+TuplePtr Table::remove(unsigned fieldNo, ValueRef key)
 {
   UniqueIndex *ndx = uni_indices.at(fieldNo);
   if (!ndx) {
@@ -226,12 +233,12 @@ Table::remove(unsigned fieldNo, ValueRef key)
     warn << "Requesting removal from non-existent unique index " << fieldNo
          << " in table " << name << "\n";
     assert(false);
-    // We don't get here
-    return;
+    // We don't get here   
   }
 
   // Find the entry itself
   UniqueIndex::iterator iter = ndx->find(key);
+  TuplePtr toRet = NULL;
   if (iter == ndx->end()) {
     // No such key exists.  Do nothing
   } else {
@@ -241,10 +248,12 @@ Table::remove(unsigned fieldNo, ValueRef key)
     // Now eradicate
     remove_from_indices(theEntry);
     remove_from_aggregates(theEntry->t);
+    toRet = theEntry->t;
   }
 
   // And clean up while we're at it...
   garbage_collect();
+  return toRet;
 }
 
 //
@@ -372,7 +381,24 @@ Table::scanAll(unsigned field)
   if (ndx) {
     return New refcounted< Table::MultScanIteratorObj >(ndx);
   }
-  warn << "Requesting multi scan in table " << name << " on missing index " << field << "\n";
+  warn << "Requesting multiple scan in table " << name << " on missing index " << field << "\n";
+  assert(false);
+}
+
+Table::UniqueScanIterator
+Table::uniqueScanAll(unsigned field, bool continuous)
+{
+  garbage_collect();
+  Table::UniqueIndex *ndx = uni_indices.at(field);
+  if (ndx) {
+    Table::UniqueScanIterator scanIterator 
+      = New refcounted< Table::UniqueScanIteratorObj >(ndx);
+    if (continuous) {
+      _uni_scans.push_back(scanIterator);
+    }
+    return scanIterator;
+  }
+  warn << "Requesting unique scan in table " << name << " on missing index " << field << "\n";
   assert(false);
 }
 

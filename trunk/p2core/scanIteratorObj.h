@@ -51,4 +51,26 @@ Table::ScanIteratorObj< _Index, _FlatIndex >::done()
   return (_iter == _index.end());
 }
 
+template < typename _Index, typename _FlatIndex >
+void
+Table::ScanIteratorObj< _Index, _FlatIndex >::addListener(Table::Listener listenerCallback)
+{
+  _listeners.push_back(listenerCallback);
+}
+
+template < typename _Index, typename _FlatIndex >
+void
+Table::ScanIteratorObj< _Index, _FlatIndex >::update(TupleRef t)
+{
+  for (size_t i = 0;
+       i < _listeners.size();
+       i++) {
+    Listener listener = _listeners[i];
+    listener(t);
+  }
+}
+
+
+
+
 #endif /* __SCANITERATOROBJ_H__ */
