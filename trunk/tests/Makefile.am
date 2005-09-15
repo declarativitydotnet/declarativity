@@ -44,7 +44,8 @@ bin_PROGRAMS 	= 	values \
 			testQueue \
 			agg \
 			pingpong \
-			reachDatalog
+			paths \
+			testPlanner
 
 
 values_SOURCES	= values.C
@@ -99,8 +100,9 @@ join_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
-reachDatalog_SOURCES = reachDatalog.C
-reachDatalog_LDADD = \
+paths_SOURCES = paths.C
+paths_LDADD = \
+	$(top_builddir)/planner/.libs/libp2planner.a \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
@@ -248,9 +250,18 @@ overlog_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
+testPlanner_SOURCES	= testPlanner.C
+testPlanner_LDADD = \
+	$(top_builddir)/planner/.libs/libp2planner.a \
+	$(top_builddir)/overlog/.libs/liboverlog.a \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
 CLEANFILES = core *.core *~
 EXTRA_DIST = .cvsignore
-INCLUDES = @SFS_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements -I$(top_builddir)/net -I$(top_builddir)/overlog
+INCLUDES = @SFS_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements -I$(top_builddir)/net -I$(top_builddir)/overlog -I$(top_builddir)/planner
 
 MAINTAINERCLEANFILES = aclocal.m4 install-sh mkinstalldirs \
 	missing configure config.guess config.sub config.h.in \
