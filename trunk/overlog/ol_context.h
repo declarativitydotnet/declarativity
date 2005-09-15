@@ -46,6 +46,7 @@ public:
     std::vector<Parse_Term*> terms; 	// List of terms in the left hand side.
   };
 
+  // create a ECA_Rule struct
 
   /* The meta-data of the table */
   struct TableInfo {
@@ -84,9 +85,12 @@ public:
   //
   // Add a new rule to the system
   void rule( Parse_Term *lhs, Parse_TermList *rhs, bool deleteFlag, Parse_Expr *n=NULL );
+  void aggRule( Parse_Term *lhs, Parse_AggTerm *rhs, bool deleteFlag, Parse_Expr *n=NULL );
 
   // Materialize a table
   void table( Parse_Expr *n, Parse_Expr *t, Parse_Expr *s, Parse_ExprList *k=NULL );
+
+  void query( Parse_Term *term);
 
   void fact( Parse_Term *t );
 
@@ -108,6 +112,7 @@ private:
   RuleList*          rules;
   std::set<str>      watchTables;
   std::vector<TupleRef> facts;
+  Parse_Functor* singleQuery;
 
 public: 
   ErrorList          errors;
@@ -115,6 +120,8 @@ public:
   TableInfoMap*      getTableInfos()  { return tables;   };
   std::set<str>      getWatchTables() { return watchTables; };
   std::vector<TupleRef> getFacts()       { return facts; };
+  
+  
 };
 
 extern int ol_parser_parse( OL_Context *env );

@@ -70,7 +70,8 @@ str OL_Context::TableInfo::toString() {
 // all variable references at this point and convert them to
 // positional arguments. 
 // 
-void OL_Context::rule( Parse_Term *lhs, Parse_TermList *rhs, bool deleteFlag, Parse_Expr *n ) 
+void OL_Context::rule( Parse_Term *lhs, Parse_TermList *rhs, 
+		       bool deleteFlag, Parse_Expr *n ) 
 {
   TRC_FN;
   Parse_Functor *h    = dynamic_cast<Parse_Functor*>(lhs);
@@ -168,6 +169,17 @@ void OL_Context::rule( Parse_Term *lhs, Parse_TermList *rhs, bool deleteFlag, Pa
   }
   rules->push_back(r);
 }
+
+void OL_Context::aggRule( Parse_Term *lhs, Parse_AggTerm *rhs, 
+			  bool deleteFlag, Parse_Expr *n ) 
+{
+  Parse_Functor *h    = dynamic_cast<Parse_Functor*>(lhs);
+  str     ruleName    = (n) ? n->v->toString() : "";
+  Rule *r = New Rule(ruleName, h, deleteFlag);  
+  r->terms.push_back(rhs);
+  rules->push_back(r);
+}
+
 
 //
 // Print out the whole parse result, if we can
@@ -293,7 +305,8 @@ void OL_Context::fact(Parse_Term *t)
       tpl->append(val->v);
     } 
     else {
-      error("free variables and don't-cares not allowed in facts:" << f->arg(i)->toString());
+      error("free variables and don't-cares not allowed in facts:" 
+	    << f->arg(i)->toString());
       goto fact_error;
     }
   }
@@ -305,3 +318,11 @@ void OL_Context::fact(Parse_Term *t)
   fact_error:
     delete f;
 }
+
+
+void OL_Context::query( Parse_Term *term) 
+{
+  singleQuery = dynamic_cast<Parse_Functor*>(term);
+  std::cout << "Add query " << singleQuery->toString() << "\n";  
+}
+

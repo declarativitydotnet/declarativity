@@ -77,16 +77,17 @@
      OL_RSQUB = 303,
      OL_PERIOD = 304,
      OL_DEL = 305,
-     OL_RANGE = 306,
-     OL_NOW = 307,
-     OL_LOCAL = 308,
-     OL_MATERIALIZE = 309,
-     OL_KEYS = 310,
-     OL_WATCH = 311,
-     OL_RANGEOO = 312,
-     OL_RANGEOC = 313,
-     OL_RANGECO = 314,
-     OL_RANGECC = 315
+     OL_QUERY = 306,
+     OL_RANGE = 307,
+     OL_NOW = 308,
+     OL_LOCAL = 309,
+     OL_MATERIALIZE = 310,
+     OL_KEYS = 311,
+     OL_WATCH = 312,
+     OL_RANGEOO = 313,
+     OL_RANGEOC = 314,
+     OL_RANGECO = 315,
+     OL_RANGECC = 316
    };
 #endif
 #define OL_OR 258
@@ -137,22 +138,23 @@
 #define OL_RSQUB 303
 #define OL_PERIOD 304
 #define OL_DEL 305
-#define OL_RANGE 306
-#define OL_NOW 307
-#define OL_LOCAL 308
-#define OL_MATERIALIZE 309
-#define OL_KEYS 310
-#define OL_WATCH 311
-#define OL_RANGEOO 312
-#define OL_RANGEOC 313
-#define OL_RANGECO 314
-#define OL_RANGECC 315
+#define OL_QUERY 306
+#define OL_RANGE 307
+#define OL_NOW 308
+#define OL_LOCAL 309
+#define OL_MATERIALIZE 310
+#define OL_KEYS 311
+#define OL_WATCH 312
+#define OL_RANGEOO 313
+#define OL_RANGEOC 314
+#define OL_RANGECO 315
+#define OL_RANGECC 316
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 87 "ol_parser.y"
+#line 88 "ol_parser.y"
 typedef union YYSTYPE {
   Parse_Bool::Operator  u_boper;
   Parse_Math::Operator  u_moper;
@@ -162,9 +164,10 @@ typedef union YYSTYPE {
   Parse_FunctorName	*u_functorname;
   Parse_ExprList	*u_exprlist;
   Parse_Expr		*v;
+  Parse_AggTerm         *u_aggterm;
 } YYSTYPE;
 /* Line 1275 of yacc.c.  */
-#line 168 "ol_parser.tab.h"
+#line 171 "ol_parser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

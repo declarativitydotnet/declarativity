@@ -67,6 +67,7 @@
 %token OL_RSQUB
 %token OL_PERIOD
 %token OL_DEL
+%token OL_QUERY
 %token OL_RANGE
 %token OL_NOW
 %token OL_LOCAL
@@ -93,12 +94,14 @@
   Parse_FunctorName	*u_functorname;
   Parse_ExprList	*u_exprlist;
   Parse_Expr		*v;
+  Parse_AggTerm         *u_aggterm;
 }
 
 %type<u_termlist>    termlist;
 %type<u_exprlist>    functorbody functorargs functionargs primarykeys keylist; 
 %type<u_functorname> functorname;
 %type<u_term>        term range_function functor assign select;
+%type<u_aggterm>     aggview;
 %type<v>             functorarg functionarg tablearg atom rel_atom math_atom function math_expr bool_expr range_expr range_atom aggregate;
 %type<u_boper>       rel_oper;
 %type<u_moper>       math_oper;
@@ -117,6 +120,7 @@ clause:		  rule
 		| fact
                 | materialize
                 | watch
+                | query               
 		;
 
 fact:		functor OL_DOT { ctxt->fact($1); } 
@@ -160,6 +164,16 @@ rule:	        OL_VAR functor OL_IF termlist OL_DOT {
                     ctxt->rule($1, $3, false); } 
                 | OL_DEL functor OL_IF termlist OL_DOT { 
 		    ctxt->rule($2, $4, true); } 
+                | OL_VAR functor OL_IF aggview OL_DOT {
+		    ctxt->aggRule($2, $4, false, $1); 
+		  }
+                | functor OL_IF aggview OL_DOT {
+                    ctxt->aggRule($1, $3, false);
+		  }
+                ;
+
+query:          OL_QUERY functorname functorbody OL_DOT {
+		   ctxt->query(New Parse_Functor($2, $3)); }
                 ;
 
 termlist:	term { $$ = New Parse_TermList(); $$->push_front($1); }
@@ -176,6 +190,10 @@ range_function:	OL_RANGE OL_LPAR OL_VAR OL_COMMA range_atom OL_COMMA range_atom 
 functor:	functorname functorbody 
 			{ $$=New Parse_Functor($1, $2); } 
 		;
+
+aggview:        agg_oper OL_LPAR functorbody OL_COMMA functorbody OL_COMMA functor OL_RPAR 
+                        { $$ = New Parse_AggTerm($1, $3, $5, $7); }
+                ;
 
 functorname:	OL_NAME 
 			{ $$ = New Parse_FunctorName($1); }

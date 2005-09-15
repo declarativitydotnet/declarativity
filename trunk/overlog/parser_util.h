@@ -249,4 +249,20 @@ public:
 };
 
 
+class Parse_AggTerm : public Parse_Term {
+public: 
+  Parse_AggTerm(Parse_Agg::Operator oper, 
+		Parse_ExprList *groupByFields, 
+		Parse_ExprList *aggFields, 
+		Parse_Term *baseTerm) :
+    _groupByFields(groupByFields),
+    _aggFields(aggFields), _baseTerm(baseTerm) { _oper = oper;};
+
+  Parse_ExprList *_groupByFields;
+  Parse_ExprList *_aggFields; 
+  Parse_Term *_baseTerm;
+  Parse_Agg::Operator _oper;
+  virtual str toString();
+};
+
 #endif /* __PARSER_UTIL_H__ */

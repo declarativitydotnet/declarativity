@@ -274,4 +274,45 @@ str Parse_RangeFunction::toString() {
          << ", " << end->toString() << " )";
 }
 
+str Parse_AggTerm::toString() {
+
+  strbuf aggFieldStr("(");
+  strbuf groupByFieldStr("(");
+
+  for (unsigned k = 0; k < _groupByFields->size(); k++) {
+    groupByFieldStr << _groupByFields->at(k)->toString();
+    if (k != _groupByFields->size() - 1) {
+      groupByFieldStr << ", ";
+    }
+  }
+  groupByFieldStr << ")";
+
+
+  for (unsigned k = 0; k < _aggFields->size(); k++) {
+    aggFieldStr << _aggFields->at(k)->toString();
+    if (k != _aggFields->size() - 1) {
+      aggFieldStr << ", ";
+    }
+  }
+  aggFieldStr << ")";
+  
+
+  if (_oper == Parse_Agg::MIN) {
+    return "min( " << groupByFieldStr << 
+      ", " << aggFieldStr << ", " << _baseTerm->toString() << " )";    
+  }
+
+  if (_oper == Parse_Agg::MAX) {
+    return "max( " << groupByFieldStr << 
+      ", " << aggFieldStr << ", " << _baseTerm->toString() << " )";    
+  }
+
+  if (_oper == Parse_Agg::COUNT) {
+    return "count( " << groupByFieldStr << 
+      ", " << aggFieldStr << ", " << _baseTerm->toString() << " )";    
+  }
+  return "BAD";  
+}
+
+
 #endif /* __PARSER_UTIL_C__ */

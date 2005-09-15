@@ -179,6 +179,7 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>"delete" { return OL_DEL; }
 <INITIAL>"range" { return OL_RANGE; }
 <INITIAL>"now" { return OL_NOW; }
+<INITIAL>"Query" { return OL_QUERY; }
 <INITIAL>[Mm][Aa][Xx] { return OL_MAX; }
 <INITIAL>[Mm][Ii][Nn] { return OL_MIN; }
 <INITIAL>[Cc][Oo][Uu][Nn][Tt] { return OL_COUNT; }
