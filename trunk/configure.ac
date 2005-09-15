@@ -101,5 +101,6 @@ AC_CONFIG_FILES([
 	net/Makefile 
 	tests/Makefile 
 	phid/Makefile
-	overlog/Makefile ])
+	overlog/Makefile 
+	planner/Makefile ])
 AC_OUTPUT
