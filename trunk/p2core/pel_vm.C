@@ -453,6 +453,43 @@ DEF_OP(COIN) {
   stackPush(Val_Int32::mk(r <= p));
 }
 
+DEF_OP(INITLIST) {
+  ValueRef second = stackTop(); stackPop();
+  ValueRef first = stackTop(); stackPop();
+  TupleRef newTuple = Tuple::mk();
+  newTuple->append(first);
+  newTuple->append(second);
+  newTuple->freeze();
+  stackPush(Val_Tuple::mk(newTuple));
+}
+
+DEF_OP(CONSLIST) {
+  ValueRef second = stackTop(); stackPop();
+  ValueRef first = stackTop(); stackPop();
+  
+  TuplePtr firstTuple, secondTuple;
+  // make each argument a tuple
+  if (str(first->typeName()) == "tuple") {
+    firstTuple = Val_Tuple::cast(first);
+  } else {
+    firstTuple = Tuple::mk();
+    firstTuple->append(first);
+  }
+  if (str(second->typeName()) == "tuple") {
+    secondTuple = Val_Tuple::cast(second);
+  } else {
+    secondTuple = Tuple::mk();
+    secondTuple->append(second);
+  }
+
+  // combine the two
+  TuplePtr combinedTuple = Tuple::mk();
+  combinedTuple->concat(firstTuple);
+  combinedTuple->concat(secondTuple);
+  combinedTuple->freeze();
+  stackPush(Val_Tuple::mk(combinedTuple));
+}
+
 //
 // Integer-only arithmetic operations (mostly bitwise)
 //

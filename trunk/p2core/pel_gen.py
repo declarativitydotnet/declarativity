@@ -50,6 +50,8 @@ for op, ar, va, desc in [
   ("or",2,	"OR",           "Boolean inclusive-OR"),
   ("rand",0,	"RAND",         "A random Int32"),
   ("coin",1,	"COIN",         "A coin flip biased to 1 with probability given as the argument"),
+  ("initlist",2,"INITLIST",         "Initialize a list with 2 arguments"),
+  ("conslist",2,"CONSLIST",         "Add two lists together. If one argument is not a list, convert to list"),
 
   (">>",2,	"ASR",          "Arithmetic shift right"),
   ("<<",2,	"ASL",          "Arithmetic shift left"),
