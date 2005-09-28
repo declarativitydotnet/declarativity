@@ -162,6 +162,7 @@ void testOverLog(LoggerI::Level level,
                  str environment)
 {
   ref< OL_Context > ctxt = New refcounted< OL_Context>();
+
   std::ifstream istr(filename);
   if (!istr.is_open()) {
     // Failed to open the file
@@ -188,7 +189,7 @@ main(int argc, char **argv)
   }
 
   str overLogFile(argv[1]);
-  std::cout << "Running from translated file " << overLogFile << "\n";
+  std::cout << "Running from translated file \"" << overLogFile << "\"\n";
 
   str levelName(argv[2]);
   LoggerI::Level level = LoggerI::levelFromName[levelName];

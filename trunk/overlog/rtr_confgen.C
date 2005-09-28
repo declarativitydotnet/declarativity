@@ -53,6 +53,7 @@ void Rtr_ConfGen::configureRouter(ref< Udp > udp, str nodeID)
   }
 
   // iterate through all the rules and process them
+  assert(_ctxt->getRules()->size() > 0);
   for (unsigned int k = 0; k < _ctxt->getRules()->size(); k++) {
     _currentRule = _ctxt->getRules()->at(k);    
     processRule(_currentRule, nodeID);
@@ -391,6 +392,8 @@ Rtr_ConfGen::genSendElements(ref< Udp> udp, str nodeID)
   ElementSpecRef udpSend = _conf->addElement(udp->get_tx());  
 
   // prepare to send. Assume all tuples send by first tuple
+  
+  assert(_udpSenders.size() > 0);
   ElementSpecRef roundRobin =
     _conf->addElement(New refcounted< RoundRobin >("roundRobinSender:" 
 						   << nodeID, 

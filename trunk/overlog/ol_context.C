@@ -233,6 +233,7 @@ void OL_Context::parse_stream(std::istream *str)
 
 void OL_Context::error(str msg)
 {
+  std::cerr << "Caught an error: (" << lexer->line_num() << ") " << msg << "\n";
   errors.push_back(New OL_Context::Error(lexer->line_num(), msg));
 }
 

@@ -15,23 +15,36 @@ tests/runOverLog doc/accordion.plg NONE 0 127.0.0.1:10000 0 "neighbor=127.0.0.1:
 
 /** Constants
 
-t_inc: budget refresh period
+t_inc: budget refresh period (5 sec)
 
-b_avail: remaining available bandwidth budget
+r_avg: desired traffic rate (1000 Bytes/sec)
 
 b_burst: maximum bandwidth burst
-
-r_avg: desired traffic rate
 
 w_max: maximum size of parallelism window
 
 */
 
 
+#define t_inc 5
 
 
 
-/** Ring maintenance */
+
+
+
+/** Tables */
+
+materialize(budget, infinity, 1, keys(2)).
+materialize(pWindow, infinity, 1, keys(2)).
+materialize(explores, infinity, 1, keys(2)).
+materialize(lookups, infinity, 1, keys(2)).
+materialize(node, infinity, 1, keys(1)).
+materialize(bestSuccessor, infinity, 1, keys(2)).
+materialize(neighbor, infinity, infinity, keys(3)).
+materialize(interNeighborDist, infinity, 1, keys(3)).
+materialize(maxGap, infinity, 1, keys(2)).
+materialize(env, infinity, infinity, keys(2,3)).
 
 
 
@@ -39,8 +52,9 @@ w_max: maximum size of parallelism window
 /** Bandwidth budget refresh */
 
 b1 budgetInc@NodeAddr(NodeAddr, BAvailNew) :-
-   periodic@NodeAddr(NodeAddr, Nonce, t_inc), budget@NodeAddr(NodeAddr,
-   BAvail), BAvailNew := BAvail + r_avg * t_inc.
+   periodic@NodeAddr(NodeAddr, Nonce, 5 t_inc),
+   budget@NodeAddr(NodeAddr, BAvail), BAvailNew := BAvail + 1000 /*
+   r_avg */ * 5 /* t_inc */.
 
 b2 budget@NodeAddr(NodeAddr, BAvail) :- budgetInc@NodeAddr(NodeAddr,
    BAvail).
@@ -50,15 +64,15 @@ b2 budget@NodeAddr(NodeAddr, BAvail) :- budgetInc@NodeAddr(NodeAddr,
 /** Parallelism window */
 
 p1 updatePWin@NodeAddr(NodeAddr, Win, Exp, Lookups) :-
-   periodic@NodeAddr(NodeAddr, Nonce, b_burst/r_avg),
-   pWindow@NodeAddr(NodeAddr, Win), explorations@NodeAddr(NodeAddr,
-   Exp), lookups@NodeAddr(NodeAddr, Lookups).
+   periodic@NodeAddr(NodeAddr, Nonce, 10 /* b_burst / r_avg */),
+   pWindow@NodeAddr(NodeAddr, Win), explores@NodeAddr(NodeAddr, Exp),
+   lookups@NodeAddr(NodeAddr, Lookups).
 
 p2 pWindow@NodeAddr(NodeAddr, WinNew) :- updatePWin@NodeAddr(NodeAddr,
-   Win, Nonce, Lookups), Explores > Lookups, Win := min(Win + 1, w_max).
+   Win, Nonce, Lookups), Explores > Lookups, Win := f_min(Win + 1, 16 /* w_max */).
 
 p3 pWindow@NodeAddr(NodeAddr, WinNew) :- updatePWin@NodeAddr(NodeAddr,
-   Win, Nonce, Lookups), Explores <= Lookups, Win := max(Win / 2, 1).
+   Win, Nonce, Lookups), Explores <= Lookups, Win := f_max(Win / 2, 1).
 
 
 
@@ -70,13 +84,6 @@ l1 responseM@NodeAddr(NodeAddr, Requester, Key, SuccID, SuccAddr, Nonce)
    bestSuccessor@NodeAddr(NodeAddr, SuccID, SuccAddr), Key in (NodeID,
    SuccID].
 
-l2 bestNeighborDistance@NodeAddr(NodeAddr, Key, Requester, Nonce,
-   Primary, min<Dist, NbrAddr>) :- lookup@NodeAddr(NodeAddr, PrevHop,
-   Key, Requester, Nonce, Primary), node@NodeAddr(NodeAddr, NodeID),
-   neighbor@NodeAddr(NodeAddr, NbrID, NbrAddr), Dist := Key - NbrID - 1,
-   NbrID in (NodeID, Key), budget@NodeAddr(NodeAddr, BAvail), Primary ||
-   (BAvail > 0).
-
 l3 forward@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce, Primary)
    :- bestNeighborDistance@NodeAddr(NodeAddr, Key, Requester, Nonce,
    Primary, Dist, NbrAddr).
@@ -84,12 +91,6 @@ l3 forward@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce, Primary)
 
 
 /** Lookup acknowledgment */
-
-a1 ackExplore@NodeAddr(NodeAddr, PrevHop, Key, Requester, Nonce,
-  min(m)<Dist, NbrAddr, NbrID>) :- lookup@NodeAddr(NodeAddr, PrevHop,
-  Key, Requester, Nonce, Primary), neighbor@NodeAddr(NodeAddr, NbrAddr,
-  NbrID), node@NodeAddr(NodeAddr, N), NbrID in (N, Key], Dist := Key -
-  NbrID - 1.
 
 a2 ack@PrevHop(PrevHop, NodeAddr, Key, Requester, Nonce, NbrAddr,
    NbrID) :- ackExplore@NodeAddr(NodeAddr, PrevHop, Key, Requester, Nonce,
@@ -110,14 +111,7 @@ pp1 lookupM@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce, Primary)
    :- forward@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce,
    Primary).
 
-pp2 pNextHop@NodeAddr(NodeAddr, Key, Requester, Nonce,
-   min(Remaining)<Dist, NbrAddr>) :- forward@NodeAddr(NodeAddr, NH, Key,
-   Requester, Nonce, Primary), pWindow@NodeAddr(NodeAddr, Win), Win > 1,
-   Remaining := Win - 1, neighbor@NodeAddr(NodeAddr, NbrID, NbrAddr),
-   NbrAddr != NH, Dist := Key - NbrID - 1, budget@NodeAddr(NodeAddr,
-   BAvail), BAvail > -b_burst.
-
-pp3 lookupM@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce, false) :-
+pp3 lookupM@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce, 0) :-
    pNextHop@NodeAddr(NodeAddr, Key, Requester, Nonce, Dist, NbrAddr).
 
 
@@ -129,8 +123,8 @@ pp3 lookupM@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce, false) :-
 /** Bandwidth consumption */
 
 bc0 budget@NodeAddr(NodeAddr, BAvailNew) :- message@NodeAddr(NodeAddr,
-   Cost), budget@NodeAddr(NodeAddr, BAvail), BAvailNew := max(BAvail -
-   Cost, -b_burst).
+   Cost), budget@NodeAddr(NodeAddr, BAvail), BAvail := -100, BAvailNew
+   := f_max(BAvail - Cost, -10000).
 
 
 bc1 message@NodeAddr(NodeAddr, Cost) :- responseM@NodeAddr(NodeAddr,
@@ -219,6 +213,27 @@ ea3 neighbor@NodeAddr(NodeAddr, NbrID, NbrAddr) :-
 
 
 
+/** Unparsable rules */
+
+l2 bestNeighborDistance@NodeAddr(NodeAddr, Key, Requester, Nonce,
+   Primary, min<Dist, NbrAddr>) :- lookup@NodeAddr(NodeAddr, PrevHop,
+   Key, Requester, Nonce, Primary), node@NodeAddr(NodeAddr, NodeID),
+   neighbor@NodeAddr(NodeAddr, NbrID, NbrAddr), Dist := Key - NbrID - 1,
+   NbrID in (NodeID, Key), budget@NodeAddr(NodeAddr, BAvail), Primary ||
+   (BAvail > 0).
+
+a1 ackExplore@NodeAddr(NodeAddr, PrevHop, Key, Requester, Nonce,
+   min(m)<Dist, NbrAddr, NbrID>) :- lookup@NodeAddr(NodeAddr, PrevHop,
+   Key, Requester, Nonce, Primary), neighbor@NodeAddr(NodeAddr, NbrAddr,
+   NbrID), node@NodeAddr(NodeAddr, N), NbrID in (N, Key], Dist := Key -
+   NbrID - 1.
+
+pp2 pNextHop@NodeAddr(NodeAddr, Key, Requester, Nonce,
+   min(Remaining)<Dist, NbrAddr>) :- forward@NodeAddr(NodeAddr, NH, Key,
+   Requester, Nonce, Primary), pWindow@NodeAddr(NodeAddr, Win), Win > 1,
+   Remaining := Win - 1, neighbor@NodeAddr(NodeAddr, NbrID, NbrAddr),
+   NbrAddr != NH, Dist := Key - NbrID - 1, budget@NodeAddr(NodeAddr,
+   BAvail), BAvail > -10000 /* b_burst */.
 
 
 
