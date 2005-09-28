@@ -4,8 +4,8 @@ Prototype implementation of the Accordion overlay in OverLog.
 
 Contains parallel lookups and acknowledgments with exploration.
 
-Still to do: exploratory lookups, forwarding of non-primary lookups,
-	expiration of neighbors, inclusion of stabilization and such.
+Still to do: expiration of neighbors, inclusion of stabilization and
+	such.
 
 Try out with
 
@@ -38,51 +38,65 @@ w_max: maximum size of parallelism window
 
 /** Bandwidth budget refresh */
 
-b1 budgetInc@NI(NI, BNew) :- periodic@NI(NI, E, t_inc), budget@NI(NI,
-   B), BNew := B + r_avg * t_inc.
+b1 budgetInc@NodeAddr(NodeAddr, BAvailNew) :-
+   periodic@NodeAddr(NodeAddr, Nonce, t_inc), budget@NodeAddr(NodeAddr,
+   BAvail), BAvailNew := BAvail + r_avg * t_inc.
 
-b2 budget@NI(NI, B) :- budgetInc@NI(NI, B).
+b2 budget@NodeAddr(NodeAddr, BAvail) :- budgetInc@NodeAddr(NodeAddr,
+   BAvail).
 
 
 
 /** Parallelism window */
 
-p1 updatePWin@NI(NI, W, Exp, Look) :- periodic@NI(NI, E, b_burst/r_avg),
-   pWindow@NI(NI, W), explorations@NI(NI, Exp), lookups@NI(NI, L).
+p1 updatePWin@NodeAddr(NodeAddr, Win, Exp, Lookups) :-
+   periodic@NodeAddr(NodeAddr, Nonce, b_burst/r_avg),
+   pWindow@NodeAddr(NodeAddr, Win), explorations@NodeAddr(NodeAddr,
+   Exp), lookups@NodeAddr(NodeAddr, Lookups).
 
-p2 pWindow@NI(NI, WNew) :- updatePWin@NI(NI, W, E, L), E > L, W := min(W
-   + 1, w_max).
+p2 pWindow@NodeAddr(NodeAddr, WinNew) :- updatePWin@NodeAddr(NodeAddr,
+   Win, Nonce, Lookups), Explores > Lookups, Win := min(Win + 1, w_max).
 
-p3 pWindow@NI(NI, WNew) :- updatePWin@NI(NI, W, E, L), E <= L, W :=
-   max(W / 2, 1).
+p3 pWindow@NodeAddr(NodeAddr, WinNew) :- updatePWin@NodeAddr(NodeAddr,
+   Win, Nonce, Lookups), Explores <= Lookups, Win := max(Win / 2, 1).
 
 
 
 /** Lookups */
 
-l1 responseM@NI(NI, R, K, S, SI, E) :- lookup@NI(NI, PH, K, R, E),
-   node@NI(NI, N), bestSuccessor@NI(NI, S, SI), K in (N, S].
+l1 responseM@NodeAddr(NodeAddr, Requester, Key, SuccID, SuccAddr, Nonce)
+   :- lookup@NodeAddr(NodeAddr, PrevHop, Key, Requester, Nonce,
+   Primary), node@NodeAddr(NodeAddr, NodeID),
+   bestSuccessor@NodeAddr(NodeAddr, SuccID, SuccAddr), Key in (NodeID,
+   SuccID].
 
-l2 bestNeighborDistance@NI(NI, K, R, E, min<D, BI>) :- lookup@NI(NI,
-   PH, K, R, E), node@NI(NI, N), neighbor@NI(NI, B, BI), D := K - B - 1,
-   B in (N, K).
+l2 bestNeighborDistance@NodeAddr(NodeAddr, Key, Requester, Nonce,
+   Primary, min<Dist, NbrAddr>) :- lookup@NodeAddr(NodeAddr, PrevHop,
+   Key, Requester, Nonce, Primary), node@NodeAddr(NodeAddr, NodeID),
+   neighbor@NodeAddr(NodeAddr, NbrID, NbrAddr), Dist := Key - NbrID - 1,
+   NbrID in (NodeID, Key), budget@NodeAddr(NodeAddr, BAvail), Primary ||
+   (BAvail > 0).
 
-l3 forward@NI(NI, BI, K, R, E) :- bestNeighborDistance@NI(NI, K, R, E, D,
-   BI).
+l3 forward@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce, Primary)
+   :- bestNeighborDistance@NodeAddr(NodeAddr, Key, Requester, Nonce,
+   Primary, Dist, NbrAddr).
 
 
 
 /** Lookup acknowledgment */
 
-a1 ackExplore@NI(NI, PH, K, R, E, min(m)<D, SI, S>) :- lookup@NI(NI, PH, K,
-  R, E), neighbor@NI(NI, SI, S), node@NI(NI, N), S in (N, K], D := K - S
-  - 1.
+a1 ackExplore@NodeAddr(NodeAddr, PrevHop, Key, Requester, Nonce,
+  min(m)<Dist, NbrAddr, NbrID>) :- lookup@NodeAddr(NodeAddr, PrevHop,
+  Key, Requester, Nonce, Primary), neighbor@NodeAddr(NodeAddr, NbrAddr,
+  NbrID), node@NodeAddr(NodeAddr, N), NbrID in (N, Key], Dist := Key -
+  NbrID - 1.
 
-a2 ack@PH(PH, NI, K, R, E, concat(n)<SI, S>) :- ackExplore@NI(NI, PH, K,
-   R, E, D, SI, S).
+a2 ack@PrevHop(PrevHop, NodeAddr, Key, Requester, Nonce, NbrAddr,
+   NbrID) :- ackExplore@NodeAddr(NodeAddr, PrevHop, Key, Requester, Nonce,
+   Dist, NbrAddr, NbrID).
 
-a3 neighbor@NI(NI, S, SI) :- ack@NI(NI, NH, K, R, E, Neighbors), n(SI,
-   S) over Neighbors.
+a3 neighbor@NodeAddr(NodeAddr, NbrID, NbrAddr) :- ack@NodeAddr(NodeAddr, NH, Key,
+   Requester, Nonce, NbrAddr, NbrID).
 
 
 
@@ -92,15 +106,19 @@ a3 neighbor@NI(NI, S, SI) :- ack@NI(NI, NH, K, R, E, Neighbors), n(SI,
 /** Parallelism. If I have room in my parallelism window, duplicate an
 outgoing lookup. */
 
-pp1 lookupM@NI(NI, BI, K, R, E, true) :- forward@NI(NI, BI, K, R, E).
+pp1 lookupM@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce, Primary)
+   :- forward@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce,
+   Primary).
 
-pp2 pNextHop@NI(NI, K, R, E, min(Remaining)<D, BI>) :- forward@NI(NI,
-   NH, K, R, E), pWindow@NI(NI, W), W > 1, Remaining := W - 1,
-   neighbor@NI(NI, B, BI), BI != NH, D := K - B - 1, budget@NI(NI, Bud),
-   Bud > -b_burst.
+pp2 pNextHop@NodeAddr(NodeAddr, Key, Requester, Nonce,
+   min(Remaining)<Dist, NbrAddr>) :- forward@NodeAddr(NodeAddr, NH, Key,
+   Requester, Nonce, Primary), pWindow@NodeAddr(NodeAddr, Win), Win > 1,
+   Remaining := Win - 1, neighbor@NodeAddr(NodeAddr, NbrID, NbrAddr),
+   NbrAddr != NH, Dist := Key - NbrID - 1, budget@NodeAddr(NodeAddr,
+   BAvail), BAvail > -b_burst.
 
-pp3 lookupM@NI(NI, BI, K, R, E, false) :- pNextHop@NI(NI, K, R, E, D,
-   BI).
+pp3 lookupM@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce, false) :-
+   pNextHop@NodeAddr(NodeAddr, Key, Requester, Nonce, Dist, NbrAddr).
 
 
 
@@ -110,57 +128,72 @@ pp3 lookupM@NI(NI, BI, K, R, E, false) :- pNextHop@NI(NI, K, R, E, D,
 
 /** Bandwidth consumption */
 
-bc0 budget@NI(NI, BNew) :- message@NI(NI, C), budget@NI(NI, B), BNew :=
-   max(B - C, -b_burst).
+bc0 budget@NodeAddr(NodeAddr, BAvailNew) :- message@NodeAddr(NodeAddr,
+   Cost), budget@NodeAddr(NodeAddr, BAvail), BAvailNew := max(BAvail -
+   Cost, -b_burst).
 
 
-bc1 message@NI(NI, C) :- responseM@NI(NI, R, K, S, SI, E), C :=
-   resp_size.
+bc1 message@NodeAddr(NodeAddr, Cost) :- responseM@NodeAddr(NodeAddr,
+   Requester, Key, NbrID, NbrAddr, Nonce), Cost := resp_size.
 
-bc1a response@R(R, K, S, SI, E) :- responseM@NI(NI, R, K, S, SI, E).
-
-
-bc2 message@NI(NI, C) :- lookupM@NI(NI, BI, K, R, E, P), C :=
-   lookup_size.
-
-bc2a lookup@BI(BI, NI, K, R, E, P) :- lookupM@NI(NI, BI, K, R, E, P).
+bc1a response@Requester(Requester, Key, NbrID, NbrAddr, Nonce) :-
+   responseM@NodeAddr(NodeAddr, Requester, Key, NbrID, NbrAddr, Nonce).
 
 
-bc3 message@NI(NI, C) :- exploreM@NI(NI, BI, NB, E), C := explore_size.
+bc2 message@NodeAddr(NodeAddr, Cost) :- lookupM@NodeAddr(NodeAddr,
+   NbrAddr, Key, Requester, Nonce, P), Cost := lookup_size.
 
-bc3a explore@BI(BI, NB, NI, E) :- exploreM@NI(NI, BI, NB, E).
+bc2a lookup@NbrAddr(NbrAddr, NodeAddr, Key, Requester, Nonce, Primary) :-
+   lookupM@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce, Primary).
 
 
+bc3 message@NodeAddr(NodeAddr, Cost) :- exploreM@NodeAddr(NodeAddr,
+   NbrAddr, NNbrID, Nonce), Cost := explore_size.
+
+bc3a explore@NbrAddr(NbrAddr, NNbrID, NodeAddr, Nonce) :-
+   exploreM@NodeAddr(NodeAddr, NbrAddr, NNbrID, Nonce).
+
+
+
+
+/** Continuously compute maximum gap for current neighbor
+distribution. */
+
+n1 interNeighborDist@NodeAddr(NodeAddr, NbrID, NbrAddr, min<Dist,
+   NNbrID>) :- neighbor@NodeAddr(NodeAddr, NbrID, NbrAddr),
+   neighbor@NodeAddr(NodeAddr, NNbrID, NNbrAddr), Dist := NNbrID - NbrID
+   - 1.
+
+n2 maxGap@NodeAddr(NodeAddr, max<Gap, NbrAddr, NNbrID>) :-
+   interNeighborDist@NodeAddr(NodeAddr, NbrID, NbrAddr, Dist, NNbrID),
+   node@NodeAddr(NodeAddr, NodeID), Gap := Dist / (NbrID - NodeID - 1).
 
 
 
 /** Exploration */
 
-e1 exploreEvent@NI(NI) :- budgetInc@NI(NI, B), B > 0.
+e1 exploreEvent@NodeAddr(NodeAddr) :- budgetInc@NodeAddr(NodeAddr,
+   NbrID), NbrID > 0.
 
-e2 interNeighborDist@NI(NI, B, BI, min<D, NB>) :- exploreEvent@NI(NI),
-   neighbor@NI(NI, B, BI), neighbor@NI(NI, NB, NBI), D := NB - N - 1.
-
-e3 exploreNeighbor@NI(NI, max<Gap, BI, NB>) :- interNeighborDist@NI(NI,
-   B, BI, D, NB), node@NI(NI, N), Gap := D / (B - N - 1).
-
-e4 exploreM@NI(NI, BI, NB, E) :- exploreNeighbor@NI(NI, Gap, BI, NB), E
-   := f_rand().
+e2 exploreM@NodeAddr(NodeAddr, NbrAddr, NNbrID, Nonce) :-
+   maxGap@NodeAddr(NodeAddr, Gap, NbrAddr, NNbrID), Nonce := f_rand().
 
 
 
 /** Exploration response */
 
-ea1 exploreGetNodes@NI(NI, PH, K, E, min(m)<D, SI, S>) :- explore@NI(NI,
-  K, PH, E), neighbor@NI(NI, SI, S), node@NI(NI, N), S in (N, K], D := K
-  - S - 1.
+ea1 exploreGetNodes@NodeAddr(NodeAddr, PrevHop, Key, Nonce, min(m)<Dist,
+  NbrAddr, NbrID>) :- explore@NodeAddr(NodeAddr, Key, PrevHop, Nonce),
+  neighbor@NodeAddr(NodeAddr, NbrAddr, NbrID), node@NodeAddr(NodeAddr,
+  N), NbrID in (N, Key], Dist := Key - NbrID - 1.
 
-ea2 eResp@PH(PH, NI, K, E, concat(n)<SI, S>) :- exploreGetNodes@NI(NI,
-   PH, K, E, D, SI, S).
+ea2 eResp@PrevHop(PrevHop, NodeAddr, Key, Nonce, NbrAddr,
+   NbrID) :- exploreGetNodes@NodeAddr(NodeAddr, PrevHop, Key, Nonce,
+   Dist, NbrAddr, NbrID).
 
-ea3 neighbor@NI(NI, S, SI) :- eResp@NI(NI, NH, K, E, Neighbors), n(SI,
-   S) over Neighbors.
-
+ea3 neighbor@NodeAddr(NodeAddr, NbrID, NbrAddr) :-
+   eResp@NodeAddr(NodeAddr, NH, Key, Nonce, NbrAddr,
+   NbrID).
 
 
 
