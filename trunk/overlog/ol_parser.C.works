@@ -1786,12 +1786,12 @@ yyreduce:
 
   case 97:
 #line 344 "ol_parser.y"
-    { yyval.v = New Parse_Agg(yyvsp[-1].v, yyvsp[-3].u_aoper); }
+    { yyval.v = New Parse_Agg(yyvsp[-1].v, yyvsp[-3].u_aoper, NULL); }
     break;
 
   case 98:
 #line 347 "ol_parser.y"
-    { yyval.v = New Parse_Agg(Parse_Agg::DONT_CARE, yyvsp[-3].u_aoper); }
+    { yyval.v = New Parse_Agg(Parse_Agg::DONT_CARE, yyvsp[-3].u_aoper, NULL); }
     break;
 
   case 99:

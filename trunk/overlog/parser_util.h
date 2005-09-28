@@ -77,8 +77,13 @@ public:
   enum Operator {MAX, MIN, COUNT};
   static Parse_Expr* DONT_CARE;
 
-  Parse_Agg(Parse_Expr *v, Operator o) 
-    : Parse_Expr(v), oper(o) {};
+  Parse_Agg(Parse_Expr *v,
+            Operator o,
+            ValuePtr p)
+    : Parse_Expr(v),
+      oper(o),
+      parameter(p)
+  {};
 
   virtual bool operator==(const Parse_Expr &e);
 
@@ -86,6 +91,9 @@ public:
   virtual str aggName();
 
   Operator oper;
+
+  // The parameter of the aggregate, if it's parametric
+  ValuePtr parameter;
 };
 
 class Parse_Bool : public Parse_Expr {

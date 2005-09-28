@@ -163,6 +163,34 @@ public:
     ValuePtr _currentMin;
   };
 
+
+  // k-min
+
+  class AggregateFunctionK_MIN : public AggregateFunction
+  {
+  public:
+    AggregateFunctionK_MIN(uint k);
+    virtual ~AggregateFunctionK_MIN();
+
+    void reset();
+
+    void first(ValueRef);
+    
+    void process(ValueRef);
+    
+    ValuePtr result();
+
+  private:
+    /** The number of mins I'm maintaining */
+    uint _k;
+
+    /** The vector of mins I'm maintaining */
+    std::vector<ValuePtr> _currentMins; 
+  };
+
+
+  // max
+
   class AggregateFunctionMAX : public AggregateFunction
   {
   public:

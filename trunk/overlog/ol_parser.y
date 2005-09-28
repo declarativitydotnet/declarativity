@@ -341,10 +341,10 @@ atom:		OL_VALUE | OL_VAR | OL_STRING | OL_NULL
 		;
 
 aggregate:	agg_oper OL_LT OL_VAR OL_GT 
-			{ $$ = New Parse_Agg($3, $1); }
+			{ $$ = New Parse_Agg($3, $1, NULL); }
 		|
 		agg_oper OL_LT OL_TIMES OL_GT 
-			{ $$ = New Parse_Agg(Parse_Agg::DONT_CARE, $1); }
+			{ $$ = New Parse_Agg(Parse_Agg::DONT_CARE, $1, NULL); }
 		;
 
 agg_oper:	  OL_MIN   { $$ = Parse_Agg::MIN; }

@@ -17,6 +17,8 @@
 #include "val_str.h"
 #include "val_uint64.h"
 
+#include "algorithm"
+
 //
 // Constructor
 //
@@ -447,6 +449,8 @@ Table::AggregateFunctionCOUNT Table::AGG_COUNT;
 
 
 
+// Simple MIN
+
 Table::AggregateFunctionMIN::AggregateFunctionMIN()
   : _currentMin(NULL)
 {
@@ -484,6 +488,57 @@ Table::AggregateFunctionMIN::result()
 }
 
 
+
+
+// k MIN
+
+Table::AggregateFunctionK_MIN::AggregateFunctionK_MIN(uint k)
+  : _k(k)
+{
+  assert(k >= 1);                // At least 1 min kept
+}
+
+Table::AggregateFunctionK_MIN::~AggregateFunctionK_MIN()
+{
+}
+  
+void
+Table::AggregateFunctionK_MIN::reset()
+{
+  _currentMins.clear();
+}
+  
+void
+Table::AggregateFunctionK_MIN::first(ValueRef v)
+{
+  _currentMins.push_back(v);
+  std::push_heap(_currentMins.begin(), _currentMins.end());
+}
+  
+void
+Table::AggregateFunctionK_MIN::process(ValueRef v)
+{
+  _currentMins.push_back(v);
+  std::push_heap(_currentMins.begin(), _currentMins.end());
+
+  // If I've exceeded size k, pop the smallest element
+  if (_currentMins.size() > _k) {
+    std::pop_heap(_currentMins.begin(), _currentMins.end());
+    _currentMins.pop_back();
+  }
+}
+
+ValuePtr 
+Table::AggregateFunctionK_MIN::result()
+{
+  return NULL;
+}
+
+
+
+
+// Simple MAX
+
 Table::AggregateFunctionMAX::AggregateFunctionMAX()
   : _currentMax(NULL)
 {
@@ -520,6 +575,8 @@ Table::AggregateFunctionMAX::result()
 }
 
 
+
+// Simple COUNT
 
 Table::AggregateFunctionCOUNT::AggregateFunctionCOUNT()
   : _current(0)
