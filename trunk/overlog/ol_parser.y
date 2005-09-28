@@ -156,15 +156,15 @@ watch:		OL_WATCH OL_LPAR OL_NAME OL_RPAR OL_DOT {
 		}
 		;
 
-rule:	        OL_VAR functor OL_IF termlist OL_DOT { 
+rule:	        OL_NAME functor OL_IF termlist OL_DOT { 
                     ctxt->rule($2, $4, false, $1); } 
-                | OL_VAR OL_DEL functor OL_IF termlist OL_DOT { 
+                | OL_NAME OL_DEL functor OL_IF termlist OL_DOT { 
 		    ctxt->rule($3, $5, true, $1); } 
 	        | functor OL_IF termlist OL_DOT { 
                     ctxt->rule($1, $3, false); } 
                 | OL_DEL functor OL_IF termlist OL_DOT { 
 		    ctxt->rule($2, $4, true); } 
-                | OL_VAR functor OL_IF aggview OL_DOT {
+                | OL_NAME functor OL_IF aggview OL_DOT {
 		    ctxt->aggRule($2, $4, false, $1); 
 		  }
                 | functor OL_IF aggview OL_DOT {
