@@ -15,9 +15,9 @@ tests/runOverLog doc/accordion.plg NONE 0 127.0.0.1:10000 0 "neighbor=127.0.0.1:
 
 /** Constants
 
-t_inc: budget refresh period (5 sec)
+t_inc: budget refresh period
 
-r_avg: desired traffic rate (1000 Bytes/sec)
+r_avg: desired traffic rate
 
 b_burst: maximum bandwidth burst
 
@@ -27,9 +27,9 @@ w_max: maximum size of parallelism window
 
 
 #define t_inc 5
-#define r_avg 1000
-#define b_burst 100000
-#define w_max 15
+#define r_avg 100
+#define b_burst 10000
+#define w_max 6
 #define b_burstOVERr_avg 100
 
 
@@ -87,6 +87,13 @@ l1 responseM@NodeAddr(NodeAddr, Requester, Key, SuccID, SuccAddr, Nonce)
    bestSuccessor@NodeAddr(NodeAddr, SuccID, SuccAddr), Key in (NodeID,
    SuccID].
 
+l2 bestNeighborDistance@NodeAddr(NodeAddr, Key, Requester, Nonce,
+   Primary, min<Dist, NbrAddr>) :- lookup@NodeAddr(NodeAddr, PrevHop,
+   Key, Requester, Nonce, Primary), node@NodeAddr(NodeAddr, NodeID),
+   neighbor@NodeAddr(NodeAddr, NbrID, NbrAddr), Dist := Key - NbrID - 1,
+   NbrID in (NodeID, Key), budget@NodeAddr(NodeAddr, BAvail), Primary ||
+   (BAvail > 0).
+
 l3 forward@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce, Primary)
    :- bestNeighborDistance@NodeAddr(NodeAddr, Key, Requester, Nonce,
    Primary, Dist, NbrAddr).
@@ -94,6 +101,12 @@ l3 forward@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce, Primary)
 
 
 /** Lookup acknowledgment */
+
+a1 ackExplore@NodeAddr(NodeAddr, PrevHop, Key, Requester, Nonce,
+   min(m)<Dist, NbrAddr, NbrID>) :- lookup@NodeAddr(NodeAddr, PrevHop,
+   Key, Requester, Nonce, Primary), neighbor@NodeAddr(NodeAddr, NbrAddr,
+   NbrID), node@NodeAddr(NodeAddr, N), NbrID in (N, Key], Dist := Key -
+   NbrID - 1.
 
 a2 ack@PrevHop(PrevHop, NodeAddr, Key, Requester, Nonce, NbrAddr,
    NbrID) :- ackExplore@NodeAddr(NodeAddr, PrevHop, Key, Requester, Nonce,
@@ -114,6 +127,13 @@ pp1 lookupM@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce, Primary)
    :- forward@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce,
    Primary).
 
+pp2 pNextHop@NodeAddr(NodeAddr, Key, Requester, Nonce,
+   min(Remaining)<Dist, NbrAddr>) :- forward@NodeAddr(NodeAddr, NH, Key,
+   Requester, Nonce, Primary), pWindow@NodeAddr(NodeAddr, Win), Win > 1,
+   Remaining := Win - 1, neighbor@NodeAddr(NodeAddr, NbrID, NbrAddr),
+   NbrAddr != NH, Dist := Key - NbrID - 1, budget@NodeAddr(NodeAddr,
+   BAvail), BAvail > -b_burst.
+
 pp3 lookupM@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce, 0) :-
    pNextHop@NodeAddr(NodeAddr, Key, Requester, Nonce, Dist, NbrAddr).
 
@@ -131,21 +151,22 @@ bc0 budget@NodeAddr(NodeAddr, BAvailNew) :- message@NodeAddr(NodeAddr,
 
 
 bc1 message@NodeAddr(NodeAddr, Cost) :- responseM@NodeAddr(NodeAddr,
-   Requester, Key, NbrID, NbrAddr, Nonce), Cost := resp_size.
+   Requester, Key, NbrID, NbrAddr, Nonce), Cost := 9 + 4 + 4 + 20 + 20 +
+   4 + 8.
 
 bc1a response@Requester(Requester, Key, NbrID, NbrAddr, Nonce) :-
    responseM@NodeAddr(NodeAddr, Requester, Key, NbrID, NbrAddr, Nonce).
 
 
 bc2 message@NodeAddr(NodeAddr, Cost) :- lookupM@NodeAddr(NodeAddr,
-   NbrAddr, Key, Requester, Nonce, P), Cost := lookup_size.
+   NbrAddr, Key, Requester, Nonce, P), Cost := 7 + 4 + 4 + 20 + 4 + 8 + 4.
 
 bc2a lookup@NbrAddr(NbrAddr, NodeAddr, Key, Requester, Nonce, Primary) :-
    lookupM@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce, Primary).
 
 
 bc3 message@NodeAddr(NodeAddr, Cost) :- exploreM@NodeAddr(NodeAddr,
-   NbrAddr, NNbrID, Nonce), Cost := explore_size.
+   NbrAddr, NNbrID, Nonce), Cost := 8 + 4 + 4 + 20 + 8.
 
 bc3a explore@NbrAddr(NbrAddr, NNbrID, NodeAddr, Nonce) :-
    exploreM@NodeAddr(NodeAddr, NbrAddr, NNbrID, Nonce).
@@ -180,7 +201,6 @@ n1 interNeighborDist@NodeAddr(NodeAddr, NbrID, NbrAddr, min<Dist,
 n2 maxGap@NodeAddr(NodeAddr, max<Gap, NbrAddr, NNbrID>) :-
    interNeighborDist@NodeAddr(NodeAddr, NbrID, NbrAddr, Dist, NNbrID),
    node@NodeAddr(NodeAddr, NodeID), Gap := Dist / (NbrID - NodeID - 1).
-
 
 
 /** Exploration */
@@ -218,25 +238,7 @@ ea3 neighbor@NodeAddr(NodeAddr, NbrID, NbrAddr) :-
 
 /** Unparsable rules */
 
-l2 bestNeighborDistance@NodeAddr(NodeAddr, Key, Requester, Nonce,
-   Primary, min<Dist, NbrAddr>) :- lookup@NodeAddr(NodeAddr, PrevHop,
-   Key, Requester, Nonce, Primary), node@NodeAddr(NodeAddr, NodeID),
-   neighbor@NodeAddr(NodeAddr, NbrID, NbrAddr), Dist := Key - NbrID - 1,
-   NbrID in (NodeID, Key), budget@NodeAddr(NodeAddr, BAvail), Primary ||
-   (BAvail > 0).
 
-a1 ackExplore@NodeAddr(NodeAddr, PrevHop, Key, Requester, Nonce,
-   min(m)<Dist, NbrAddr, NbrID>) :- lookup@NodeAddr(NodeAddr, PrevHop,
-   Key, Requester, Nonce, Primary), neighbor@NodeAddr(NodeAddr, NbrAddr,
-   NbrID), node@NodeAddr(NodeAddr, N), NbrID in (N, Key], Dist := Key -
-   NbrID - 1.
-
-pp2 pNextHop@NodeAddr(NodeAddr, Key, Requester, Nonce,
-   min(Remaining)<Dist, NbrAddr>) :- forward@NodeAddr(NodeAddr, NH, Key,
-   Requester, Nonce, Primary), pWindow@NodeAddr(NodeAddr, Win), Win > 1,
-   Remaining := Win - 1, neighbor@NodeAddr(NodeAddr, NbrID, NbrAddr),
-   NbrAddr != NH, Dist := Key - NbrID - 1, budget@NodeAddr(NodeAddr,
-   BAvail), BAvail > -b_burst.
 
 
 
