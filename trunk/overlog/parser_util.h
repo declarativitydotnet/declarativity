@@ -50,21 +50,17 @@ typedef std::deque<Parse_Expr *> Parse_ExprList;
 // union unscathed. 
 class Parse_Val : public Parse_Expr { 
 public:
-  Parse_Val(ValuePtr val) : Parse_Expr(val), neg_(false), id_(false) {};
-  virtual void neg(bool n) { neg_ = n; };
-  virtual bool neg() { return neg_; };
-
+  Parse_Val(ValuePtr val) : Parse_Expr(val), id_(false) {};
   virtual void id(bool i) { id_ = i; };
   virtual bool id() { return id_; };
 
   virtual str toString() { 
-    return ((neg_ ? "-" : "") << v->toString()); 
+    return v->toString(); 
   };
 
   virtual operator int();
 
 private:
-  bool neg_;
   bool id_;
 };
 

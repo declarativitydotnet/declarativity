@@ -20,8 +20,7 @@
 //=====================================
 
 Parse_Val::operator int() {
-  int val = Val_Int32::cast(v);
-  return (neg_) ? -1*val : val;
+  return Val_Int32::cast(v);
 }
 
 Parse_Expr* Parse_Agg::DONT_CARE = New Parse_Var(Val_Str::mk("*"));

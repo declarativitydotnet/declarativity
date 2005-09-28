@@ -301,8 +301,6 @@ math_expr:	math_expr math_oper math_atom
 
 math_atom:	atom 
 			{ $$ = $1; }
-		| OL_MINUS atom 
-			{ (dynamic_cast<Parse_Val*>($2))->neg(true); $$ = $2; }
 		| function
 			{ $$ = $1; }
 		| OL_LPAR math_expr OL_RPAR 

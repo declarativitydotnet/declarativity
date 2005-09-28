@@ -216,13 +216,13 @@ WHITESPACE	[ \t\r\n]+
   return OL_VALUE;
 }
 
-<INITIAL>({DIGIT}+|0[xX]{HEXDIGIT}+) {
+<INITIAL>(-?{DIGIT}+|0[xX]{HEXDIGIT}+) {
   // Some integer literal (including octal and/or hex
   lvalp->v = New Parse_Val(Val_Int64::mk(strtoll(yytext,NULL,0)));
   return OL_VALUE;
 }
 
-<INITIAL>{DIGIT}+(({DECIM}{EXP}?)|{EXP}) {
+<INITIAL>-?{DIGIT}+(({DECIM}{EXP}?)|{EXP}) {
   // Double-precision literal
   lvalp->v = New Parse_Val(Val_Double::mk(strtod(yytext,NULL)));
   return OL_VALUE;

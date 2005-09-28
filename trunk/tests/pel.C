@@ -471,8 +471,8 @@ static const ValTest vtests[] = {
   // + (integer addition)
   TST(INT64, STACK_UNDERFLOW, "", "+" ),
   TST(INT64, STACK_UNDERFLOW, "", "1 +" ),
-  TST(STR, SUCCESS, "Hello1", "1 \"Hello\" +" ),
-  TST(STR, SUCCESS, "1Hello", "\"Hello\"  1 +" ),
+  TST(STR, SUCCESS, "1Hello", "1 \"Hello\" +" ),
+  TST(STR, SUCCESS, "Hello1", "\"Hello\"  1 +" ),
   TST(DOUBLE, SUCCESS, "2", "1.0 1 +" ),
   TST(DOUBLE, SUCCESS, "2", "1 1.0 +" ),
   TST(INT64, SUCCESS, "3", "1 2 +" ),
@@ -498,6 +498,7 @@ static const ValTest vtests[] = {
   TST(DOUBLE, SUCCESS, "0",	"1 1.0 -" ),
   TST(INT64, SUCCESS, "-1",	"1 2 -" ),
   TST(INT64, SUCCESS, "2",	"1 -1 -" ),
+  TST(INT64, SUCCESS, "-2",	"-1 1 -" ),
   TST(INT64, SUCCESS, "0",	"0xffffffffffffffffU ->i64 -1 -" ),
   // *i (integer multiplication)
   TST(INT64, STACK_UNDERFLOW, "",	"*i" ),
@@ -784,8 +785,8 @@ static const ValTest vtests[] = {
   TST(DOUBLE, SUCCESS, "2000.5", "-2000.5 neg" ),
   TST(DOUBLE, SUCCESS, "0",	"0.0 neg" ),
   // + (floating-point addition)
-  TST(STR, SUCCESS, "Hello0x1p+0",	"1.0 \"Hello\" +" ),
-  TST(STR, SUCCESS, "0x1p+0Hello",	"\"Hello\"  1.0 +" ),
+  TST(STR, SUCCESS, "0x1p+0Hello",	"1.0 \"Hello\" +" ),
+  TST(STR, SUCCESS, "Hello0x1p+0",	"\"Hello\"  1.0 +" ),
   TST(DOUBLE, SUCCESS, "2.0",	"1.0 1 +" ),
   TST(DOUBLE, SUCCESS, "2.0",	"1 1.0 +" ),
   TST(DOUBLE, SUCCESS, "3.0",	"1.0 2.0 +" ),
