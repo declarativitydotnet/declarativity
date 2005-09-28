@@ -163,7 +163,25 @@ void testOverLog(LoggerI::Level level,
 {
   ref< OL_Context > ctxt = New refcounted< OL_Context>();
 
-  std::ifstream istr(filename);
+  str processed(strbuf(filename) << ".processed");
+
+  // Run the OverLog through the preprocessor
+  pid_t pid = fork();
+  if (pid == -1) {
+    fatal << "Cannot fork a preprocessor\n";
+  } else if (pid == 0) {
+    // I am the preprocessor
+    execlp("cpp", "cpp", "-P", filename.cstr(), processed.cstr(), NULL);
+
+    // If I'm here, I failed
+    fatal << "Preprocessor execution failed\n";
+  } else {
+    // I am the child
+    wait(NULL);
+  }
+
+  // Parse the preprocessed file
+  std::ifstream istr(processed);
   if (!istr.is_open()) {
     // Failed to open the file
     std::cerr << "Could not open file " << filename << "\n";
