@@ -12,20 +12,6 @@ import random
 import signal
 import threading
 
-class Monitor:
-    def __init__(self, sec, pid, log):
-        self.pid = pid
-        self.log = log
-	if sec: threading.Timer(sec, (lambda: self.kill())).start()
-
-    def kill(self):
-        try:
-            os.kill(self.pid, signal.SIGKILL)
-            print >> self.log, "Killed is successful"
-        except:
-            print >> self.log, sys.exc_info()[:2]
-    
-
 def print_usage():
     print
     print "Usage: run_node -i <IP> -p <start_port> [-l <landmark_ip:port> [-n <num_nodes>]] [-s <seed>] [-t <session_time>] main_dir [output_dir]"
@@ -38,7 +24,7 @@ def print_usage():
 def parse_cmdline(argv): 
     shortopts = "n:i:p:l:t:f:"
     flags = {"num_nodes" : 1, "seed" : random.random()*sys.maxint, "IP" : None, 
-             "start_port" : None, "landmark" : None, "session" : 0.0, "nochurn" : -1}
+             "start_port" : None, "landmark" : None, "session" : 0.0, "churn" : 0}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if   o == "-n": flags["num_nodes"]  = v
@@ -46,7 +32,7 @@ def parse_cmdline(argv):
         elif o == "-i": flags["IP"]         = v
         elif o == "-p": flags["start_port"] = v
         elif o == "-l": flags["landmark"]   = v
-        elif o == "-f": flags["nochurn"]    = int(v)
+        elif o == "-f": flags["churn"]    = int(v)
         elif o == "-t": flags["session"]    = float(v)
     return flags, args
 
@@ -59,10 +45,13 @@ def run_node(log, main_dir, seed, ip, p, lm, out):
 
     pid = os.fork()
     if pid == 0:
-        if lm: rv = os.system(r"%s/runChord %s/chord2.plg NONE %d %s:%s 10 %s >> %s 2>&1" \
-                              % (main_dir, main_dir, seed, ip, p, lm, out))
-        else:  rv = os.system(r"%s/runChord %s/chord2.plg NONE %d %s:%s 0 >> %s 2>&1" \
-                              % (main_dir, main_dir, seed, ip, p, out))
+	st = 0
+	if flags["churn"]:
+		st = 450.0 + (random.random() * flags["session"])
+        if lm: rv = os.system(r"%s/runChord %s/chord2.plg NONE %d %s:%s 10 %d %s >> %s 2>&1" \
+                              % (main_dir, main_dir, seed, ip, p, st, lm, out))
+        else:  rv = os.system(r"%s/runChord %s/chord2.plg NONE %d %s:%s 0 %d >> %s 2>&1" \
+                              % (main_dir, main_dir, seed, ip, p, st, out))
         print >> log, "SYSTEM CALL EXIT"
         sys.exit(0)
     return pid
@@ -96,19 +85,16 @@ if __name__ == "__main__":
                        args[1]+"/chord_node" + str(node) + ".out")
         port += 1
         print >> log, "NODE %d START TIME %d\n" % (node, time.time() - start)
-        if flags["session"] and node != flags["nochurn"]: 
-            procs.append(Monitor(450.0 + (random.random() * flags["session"]), pid, log))
-        else: procs.append(Monitor(0, pid, log))
+        procs.append(pid)
 
     while procs:
         log.flush()
         p, s = os.wait() 
         os.system(r"ps -ef | grep %d >> %s 2>&1" % (p, args[1]+"/setup_node.log"))
-        for node in range(nodes):
-            if p == procs[node].pid:
+        for proc in procs:
+            if p == proc:
                 pid = run_node(log, args[0], seeds[node] + port, flags["IP"], port, flags["landmark"], \
                                args[1]+"/chord_node" + str(node) + ".out")
-                procs[node] = Monitor(flags["session"], pid, log) 
+                procs.append(pid)
                 port += 1
                 print >> log, "NODE %d RESTART TIME %d\n" % (node, time.time() - start)
-
