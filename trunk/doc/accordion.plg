@@ -156,6 +156,22 @@ bc3a explore@NbrAddr(NbrAddr, NNbrID, NodeAddr, Nonce) :-
 
 
 
+
+/** Counting lookups */
+
+cl1 explores@NodeAddr(NodeAddr, NewExplores) :-
+   explores@NodeAddr(NodeAddr, Explores), exploreM@NodeAddr(NodeAddr,
+   NbrAddr, NNbrID, Nonce), NewExplores := Explores + 1.
+
+cl2 lookups@NodeAddr(NodeAddr, NewLookups) :- lookups@NodeAddr(NodeAddr,
+   Lookups), lookupM@NodeAddr(NodeAddr, NbrAddr, Key, Requester, Nonce,
+   Primary), NewLookups := Lookups + 1.
+
+
+
+
+
+
 /** Continuously compute maximum gap for current neighbor
 distribution. */
 
@@ -194,6 +210,10 @@ ea2 eResp@PrevHop(PrevHop, NodeAddr, Key, Nonce, NbrAddr,
 ea3 neighbor@NodeAddr(NodeAddr, NbrID, NbrAddr) :-
    eResp@NodeAddr(NodeAddr, NH, Key, Nonce, NbrAddr,
    NbrID).
+
+
+
+
 
 
 
