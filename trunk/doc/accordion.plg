@@ -27,6 +27,10 @@ w_max: maximum size of parallelism window
 
 
 #define t_inc 5
+#define r_avg 1000
+#define b_burst 100000
+#define w_max 15
+#define b_burstOVERr_avg 100
 
 
 
@@ -52,9 +56,8 @@ materialize(env, infinity, infinity, keys(2,3)).
 /** Bandwidth budget refresh */
 
 b1 budgetInc@NodeAddr(NodeAddr, BAvailNew) :-
-   periodic@NodeAddr(NodeAddr, Nonce, 5 t_inc),
-   budget@NodeAddr(NodeAddr, BAvail), BAvailNew := BAvail + 1000 /*
-   r_avg */ * 5 /* t_inc */.
+   periodic@NodeAddr(NodeAddr, Nonce, t_inc), budget@NodeAddr(NodeAddr,
+   BAvail), BAvailNew := BAvail + r_avg * t_inc.
 
 b2 budget@NodeAddr(NodeAddr, BAvail) :- budgetInc@NodeAddr(NodeAddr,
    BAvail).
@@ -64,12 +67,12 @@ b2 budget@NodeAddr(NodeAddr, BAvail) :- budgetInc@NodeAddr(NodeAddr,
 /** Parallelism window */
 
 p1 updatePWin@NodeAddr(NodeAddr, Win, Exp, Lookups) :-
-   periodic@NodeAddr(NodeAddr, Nonce, 10 /* b_burst / r_avg */),
+   periodic@NodeAddr(NodeAddr, Nonce, b_burstOVERr_avg),
    pWindow@NodeAddr(NodeAddr, Win), explores@NodeAddr(NodeAddr, Exp),
    lookups@NodeAddr(NodeAddr, Lookups).
 
 p2 pWindow@NodeAddr(NodeAddr, WinNew) :- updatePWin@NodeAddr(NodeAddr,
-   Win, Nonce, Lookups), Explores > Lookups, Win := f_min(Win + 1, 16 /* w_max */).
+   Win, Nonce, Lookups), Explores > Lookups, Win := f_min(Win + 1, w_max).
 
 p3 pWindow@NodeAddr(NodeAddr, WinNew) :- updatePWin@NodeAddr(NodeAddr,
    Win, Nonce, Lookups), Explores <= Lookups, Win := f_max(Win / 2, 1).
@@ -233,7 +236,7 @@ pp2 pNextHop@NodeAddr(NodeAddr, Key, Requester, Nonce,
    Requester, Nonce, Primary), pWindow@NodeAddr(NodeAddr, Win), Win > 1,
    Remaining := Win - 1, neighbor@NodeAddr(NodeAddr, NbrID, NbrAddr),
    NbrAddr != NH, Dist := Key - NbrID - 1, budget@NodeAddr(NodeAddr,
-   BAvail), BAvail > -10000 /* b_burst */.
+   BAvail), BAvail > -b_burst.
 
 
 
