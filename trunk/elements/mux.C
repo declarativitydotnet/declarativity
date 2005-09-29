@@ -46,9 +46,9 @@ void Mux::catchUp()
 
   // Go through all pending tuples XXX we always begin from input 0, so
   // we could potentially have starvation
-  for (int i = 0;
-       i < ninputs();
-       i++) {
+  for (int i = 0; i < ninputs(); i++) {
+    if (isUnusedPort(i)) continue;
+
     if (_inputTuples[i] != NULL) {
       // Found one.  Push it out
       assert(_pushCallbacks[i] != cbv_null);
@@ -85,6 +85,7 @@ void Mux::catchUp()
 int Mux::push(int port, TupleRef p, cbv cb)
 {
   assert((port >= 0) && (port < ninputs()));
+  assert (!isUnusedPort(port));
 
   // Is my output blocked?
   if (_blocked) {
@@ -124,4 +125,36 @@ int Mux::push(int port, TupleRef p, cbv cb)
       return 1;
     }
   }
+}
+
+/** Add a new input port, and return the port number */
+int Mux::add_input() {
+  int port = -1;
+  if (_unusedPorts.size() > 0) {
+    port = _unusedPorts.front();
+    _unusedPorts.erase(_unusedPorts.begin());
+    _pushCallbacks[port] = cbv_null;
+    _inputTuples[port]   = NULL;
+  }
+  else {
+    this->Element::add_input();
+    _pushCallbacks.push_back(cbv_null);
+    _inputTuples.push_back(NULL);
+    port = ninputs() - 1;
+  }
+  return port;
+}
+
+/** Remove port (will not affect other port positions) */
+void Mux::remove_input(int port) {
+  if (isUnusedPort(port)) 
+    return;
+  _unusedPorts.push_back(port);
+}
+
+bool Mux::isUnusedPort(int port) {
+  for (std::vector<int>::iterator iter = _unusedPorts.begin(); 
+       iter != _unusedPorts.end(); iter++)
+    if (*iter == port) return true;
+  return false;
 }

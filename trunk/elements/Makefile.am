@@ -31,6 +31,7 @@ libp2elements_la_SOURCES = \
 	unmarshal.C \
 	unmarshalField.C \
 	route.C \
+	ddemux.C \
 	demux.C \
 	mux.C \
 	roundRobin.C \
