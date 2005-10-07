@@ -73,7 +73,7 @@ namespace opr {
      * See also value.h for defining new P2 concrete types and how such
      * new types affect the operator table definition.
      */
-    const static Oper** oper_table_[Value::TYPES][Value::TYPES];
+    static const Oper** oper_table_[Value::TYPES][Value::TYPES];
   
     /**
      * Thrown when operand types do not override an operator function.
