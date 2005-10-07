@@ -48,7 +48,7 @@ public:
   // The ZERO
   static ValueRef ZERO;
   
-  const static opr::Oper* oper_;
+  static const opr::Oper* oper_;
 private:
   int32_t i;
   

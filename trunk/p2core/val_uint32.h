@@ -45,7 +45,7 @@ public:
   // Casting
   static uint32_t cast(ValueRef v);
   
-  const static opr::Oper* oper_;
+  static const opr::Oper* oper_;
 private:
   uint32_t i;
   

@@ -31,7 +31,7 @@ class Val_IP_ADDR : public Value {
   // Strict comparison
   int compareTo(ValueRef) const;
   
-  const static opr::Oper* oper_;
+  static const opr::Oper* oper_;
   
   /** My logging level */
   LoggerI::Level loggingLevel;
@@ -42,7 +42,9 @@ class Val_IP_ADDR : public Value {
   // Casting
   static str cast(ValueRef v);
 
+#ifndef SWIG
   ref<suio> getAddress();
+#endif
   
  private:
   str _s;

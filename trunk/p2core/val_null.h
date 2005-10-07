@@ -42,7 +42,7 @@ public:
   // Casting: more for completeness than anything else...
   static void cast(ValueRef v);
   
-  const static opr::Oper* oper_;
+  static const opr::Oper* oper_;
 private:
   static ValueRef singleton;
 };

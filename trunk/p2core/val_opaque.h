@@ -47,7 +47,7 @@ public:
   // Casting
   static ref<suio> cast(ValueRef v);
   
-  const static opr::Oper* oper_;
+  static const opr::Oper* oper_;
 private:
   ref<suio> b;
   

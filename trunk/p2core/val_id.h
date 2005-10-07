@@ -50,7 +50,7 @@ public:
   // Casting
   static IDRef cast(ValueRef v);
 
-  const static opr::Oper* oper_;
+  static const opr::Oper* oper_;
 private:
   /** The ID */
   IDRef i;

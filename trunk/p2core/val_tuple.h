@@ -49,7 +49,7 @@ public:
   // Casting
   static TupleRef cast(ValueRef v);
   
-  const static opr::Oper* oper_;
+  static const opr::Oper* oper_;
 private:
   TupleRef t;
 };
