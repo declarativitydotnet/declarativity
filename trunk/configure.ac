@@ -63,6 +63,10 @@ AC_PROG_YACC
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_LIBTOOL
+AM_PATH_PYTHON(2.3)
+AC_PROG_SWIG(1.3.21)
+SWIG_ENABLE_CXX
+SWIG_PYTHON
 
 # Checks for libraries.
 P2_SFSLIB
@@ -97,6 +101,7 @@ AC_CHECK_FUNCS([dup2 strchr strerror strstr])
 AC_CONFIG_FILES([
 	Makefile 
 	p2core/Makefile 
+  swig/Makefile
 	elements/Makefile 
 	net/Makefile 
 	tests/Makefile 
