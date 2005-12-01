@@ -87,6 +87,7 @@ int main(int argc, char **argv)
   std::cout << "Finish parsing (functors / tableInfos) " << ctxt->getRules()->size() 
 	    << " " << ctxt->getTableInfos()->size() << "\n";
 
+  std::cout << ctxt->toString() << "\n";
 
 
   if (route) {
