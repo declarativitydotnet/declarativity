@@ -490,6 +490,51 @@ DEF_OP(CONSLIST) {
   stackPush(Val_Tuple::mk(combinedTuple));
 }
 
+DEF_OP(INLIST) {
+  ValueRef second = stackTop(); stackPop();
+  ValueRef first = stackTop(); stackPop();
+
+  TupleRef curTuple= Val_Tuple::cast(first);
+
+  bool flag = false;
+  for (unsigned k = 0; k < curTuple->size(); k++) {
+    if ((*curTuple)[k]->compareTo(second) == 0) {
+      flag = true;
+    }
+  }
+  if (flag == true) {
+    stackPush(Val_Int32::mk(1));
+  } else {
+    stackPush(Val_Int32::mk(0));
+  } 
+}
+
+DEF_OP(REMOVELAST) {
+  ValueRef first = stackTop(); stackPop();
+
+  TupleRef curTuple= Val_Tuple::cast(first);
+
+  TupleRef newTuple = Tuple::mk();
+  for (unsigned k = 0; k < curTuple->size()-1; k++) {
+    newTuple->append(Val_Str::mk((*curTuple)[k]->toString()));
+  }
+  newTuple->freeze();
+  stackPush(Val_Tuple::mk(newTuple));
+}
+
+DEF_OP(LAST) {
+  ValueRef first = stackTop(); stackPop();
+  TupleRef curTuple= Val_Tuple::cast(first);
+  warn << "Get Last: " << curTuple->toString() << "\n";
+  stackPush(Val_Str::mk((*curTuple)[curTuple->size()-1]->toString()));
+}
+
+DEF_OP(SIZE) {
+  ValueRef first = stackTop(); stackPop();
+  TupleRef curTuple= Val_Tuple::cast(first);
+  stackPush(Val_Int32::mk(curTuple->size()));
+}
+
 //
 // Integer-only arithmetic operations (mostly bitwise)
 //

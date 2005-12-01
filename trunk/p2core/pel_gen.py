@@ -52,6 +52,10 @@ for op, ar, va, desc in [
   ("coin",1,	"COIN",         "A coin flip biased to 1 with probability given as the argument"),
   ("initlist",2,"INITLIST",         "Initialize a list with 2 arguments"),
   ("conslist",2,"CONSLIST",         "Add two lists together. If one argument is not a list, convert to list"),
+  ("inlist",2,"INLIST",         "Check if second argument contained in first"),
+  ("removeLast",1,"REMOVELAST",         "Remove last item in list"),
+  ("last",1,"LAST",         "Get last item in list"),
+  ("size",1,"SIZE",         "numbers of items in list"),
 
   (">>",2,	"ASR",          "Arithmetic shift right"),
   ("<<",2,	"ASL",          "Arithmetic shift left"),
