@@ -10,13 +10,15 @@
  */
 
 #include "printWatch.h"
+#include "val_tuple.h"
 #include <iostream>
 
-PrintWatch::PrintWatch(str prefix, std::set<str> tableNames)
+PrintWatch::PrintWatch(str prefix, std::set<str> tableNames, 
+		       FILE* output)
   : Element(prefix, 1, 1),
-    _prefix(prefix)
+    _prefix(prefix), _output(output)
 {
-  _tableNames = tableNames;
+  _tableNames = tableNames;  
 }
 
 PrintWatch::~PrintWatch()
@@ -29,16 +31,38 @@ TuplePtr PrintWatch::simple_action(TupleRef p)
     return p; // we don't care about print this
   }
 
+  double bytes = 0;
+  for (unsigned int i = 0; i < p->size(); i++) {
+    ValueRef v = (*p)[i];
+    if (str(v->typeName()) == "tuple") {
+      TupleRef t = Val_Tuple::cast(v);
+      for (unsigned int j = 0; j < t->size(); j++) {
+	bytes += (*t)[j]->size();
+      }
+    } else {
+      bytes += (*p)[i]->size();
+    }
+  }
+
+
   timespec now_ts;
   
   if (clock_gettime(CLOCK_REALTIME,&now_ts)) {
     fatal << "clock_gettime:" << strerror(errno) << "\n";
   }
-  warn << "Print[" << _prefix
-       << ", "
-       << now_ts.tv_sec
-       << ", "
-       << now_ts.tv_nsec
-       << "]:  [" << p->toString() << "]\n";
+  strbuf b;
+  b << "Print[" << _prefix
+    << ", "
+    << now_ts.tv_sec
+    << ", "
+    << now_ts.tv_nsec
+    << "]:  [" << (int) bytes << ", " << p->toString() << "]\n";
+  
+  if (_output != NULL) {
+    fprintf(_output, "%s", str(b).cstr()); 
+  } else {
+    warn << b;
+  }
+  fflush(_output);
   return p;
 }

@@ -20,7 +20,7 @@
 class PrintWatch : public Element { 
 public:
 
-  PrintWatch(str prefix, std::set<str> tableNames);
+  PrintWatch(str prefix, std::set<str> tableNames,  FILE*output=NULL);
 
   ~PrintWatch();
   
@@ -35,6 +35,7 @@ private:
   /** The prefix to be placed on every printout by this element */
   str _prefix;
   std::set<str> _tableNames;
+  FILE *_output;
 };
 
 
