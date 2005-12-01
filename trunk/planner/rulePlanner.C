@@ -62,16 +62,17 @@
 #include "delete.h"
 #include "tupleSource.h"
 #include "printWatch.h"
-#include "aggregate.h"
+//#include "aggregate.h"
 #include "duplicateConservative.h"
-#include "aggwrap.h"
+//#include "aggwrap.h"
 #include "tupleseq.h"
 #include "cc.h"
 #include "scan.h"
-
+#include "agg.h"
 #include "ruleStrand.h"
 #include "planContext.h"
 #include "catalog.h"
+
 
 void debugRule(PlanContext* pc, str msg)
 {
@@ -81,6 +82,24 @@ void debugRule(PlanContext* pc, str msg)
 
 #include "rulePel.C"
 
+void addWatch(PlanContext* pc, strbuf b)
+{
+  RuleStrand* rs = pc->_ruleStrand;
+  str bStr(b);
+
+  if (pc->_outputDebugFile == NULL) {
+    ElementSpecRef print = 
+      pc->_conf->addElement(New refcounted< PrintWatch >(b, pc->_catalog->getWatchTables()));
+    rs->addElement(pc->_conf, print);  
+  } else {
+    ElementSpecRef print = 
+      pc->_conf->addElement(New refcounted< 
+			    PrintWatch >(b, pc->_catalog->getWatchTables(), 
+					 pc->_outputDebugFile));
+    rs->addElement(pc->_conf, print);  
+  }
+}
+
 void generateEventElement(PlanContext* pc)
 {
   RuleStrand* rs = pc->_ruleStrand;
@@ -89,7 +108,8 @@ void generateEventElement(PlanContext* pc)
     = New PlanContext::FieldNamesTracker(rs->_eca_rule->_event->_pf);
   
   // update, create a scanner, 
-  if (rs->eventType() == Parse_Event::UPDATE) {
+  if (rs->eventType() == Parse_Event::UPDATE || 
+      rs->eventType() == Parse_Event::AGGUPDATE) {
     debugRule(pc, strbuf() << "Update event NamesTracker " 
 	      << pc->_namesTracker->toString() << "\n");
     Catalog::TableInfo* ti =  pc->_catalog->getTableInfo(rs->eventFunctorName());
@@ -112,12 +132,10 @@ void generateEventElement(PlanContext* pc)
     rs->addElement(pc->_conf, updateTable);
 
     // add a debug element
-    ElementSpecRef print = 
-      pc->_conf->addElement(New refcounted< PrintTime >(strbuf("DebugAfterUpdateEvent|")
-							<< curRule->_ruleID 
-							<< "|" << pc->_nodeID));
-    rs->addElement(pc->_conf, print);  
-
+    addWatch(pc, strbuf("DebugAfterUpdateEvent|")
+	     << curRule->_ruleID 
+	     << "|" << pc->_nodeID);
+    
     if (curRule->_probeTerms.size() > 0) {
       ElementSpecRef pullPush = 
 	pc->_conf->addElement(New refcounted< 
@@ -131,13 +149,10 @@ void generateEventElement(PlanContext* pc)
   if (rs->eventType() == Parse_Event::RECV) {
     debugRule(pc, strbuf() << "Recv event NamesTracker " 
 	      << pc->_namesTracker->toString() << "\n");
-    // add a debug element
-    ElementSpecRef print = 
-      pc->_conf->addElement(New refcounted< PrintTime >(strbuf("DebugAfterRecvEvent|")
-							<< curRule->_ruleID 
-							<< "|" << pc->_nodeID));
+    addWatch(pc, strbuf("DebugAfterRecvEvent|")
+	     << curRule->_ruleID 
+	     << "|" << pc->_nodeID);
 
-    rs->addElement(pc->_conf, print);
     if (curRule->_probeTerms.size() == 0) {
       ElementSpecRef slot = 
 	pc->_conf->addElement(New refcounted< Slot >(strbuf("RecvEventSlot|")
@@ -157,12 +172,10 @@ void generateActionElement(PlanContext* pc)
   // add, insert
   if (rs->actionType() == Parse_Action::ADD) {    
     // add a debug element
-    ElementSpecRef print = 
-      pc->_conf->addElement(New refcounted< PrintTime >(strbuf("DebugBeforeInsertAction|")
-							<< curRule->_ruleID << "|"
-							<< rs->actionFunctorName() 
-							<< "|" << pc->_nodeID));
-    rs->addElement(pc->_conf, print);
+    addWatch(pc, strbuf("DebugBeforeInsertAction|")
+	     << curRule->_ruleID << "|"
+	     << rs->actionFunctorName() 
+	     << "|" << pc->_nodeID);
 
     Catalog::TableInfo* ti =  pc->_catalog->getTableInfo(rs->actionFunctorName());    
     if (ti == NULL) {
@@ -194,7 +207,6 @@ void generateActionElement(PlanContext* pc)
     rs->addElement(pc->_conf, sinkS);
   }
 
-
   if (rs->actionType() == Parse_Action::SEND) {    
     // do a pel transform, figure out what is the field number
     Parse_Functor* head = curRule->_action->_pf;
@@ -206,6 +218,10 @@ void generateActionElement(PlanContext* pc)
 	locationIndex = k+1;
       }
     }
+    addWatch(pc, strbuf("DebugBeforeSendAction|") 
+	     << curRule->_ruleID 
+	     << "|" << pc->_nodeID);
+
     ElementSpecRef sendPelTransform =
       pc->_conf->addElement(New refcounted< 
 			    PelTransform >(strbuf("SendActionAddress|") 
@@ -214,16 +230,8 @@ void generateActionElement(PlanContext* pc)
 					   strbuf("$") << 
 					   locationIndex << " pop swallow pop"));
     
-
-    // add a debug element
-    ElementSpecRef print = 
-      pc->_conf->addElement(New refcounted< PrintTime >(strbuf("DebugBeforeSendAction|")
-							<< curRule->_ruleID 
-							<< "|" << pc->_nodeID));
-    rs->addElement(pc->_conf, sendPelTransform);
-    rs->addElement(pc->_conf, print);
-  }
-   
+    rs->addElement(pc->_conf, sendPelTransform);   
+  }   
 }
 
 
@@ -475,12 +483,11 @@ void generateProjectElements(PlanContext* pc)
   pc->_ruleStrand->addElement(pc->_conf, projectHeadPelTransform);  
 }
 
-void generateAggEventElement(PlanContext* pc)
+void generateAggElement(PlanContext* pc)
 {  
   ECA_Rule* curRule = pc->_ruleStrand->_eca_rule;
   Parse_AggTerm *aggTerm = curRule->_aggTerm;
   Parse_Functor* baseFunctor = dynamic_cast<Parse_Functor* > (aggTerm->_baseTerm);    
-  RuleStrand* rs = pc->_ruleStrand;
 
   if (baseFunctor == NULL) { 
     warn << "Cannot process " << curRule->toString() << "\n";
@@ -491,16 +498,8 @@ void generateAggEventElement(PlanContext* pc)
   Parse_ExprList* groupByFields = aggTerm->_groupByFields;
   Parse_Expr* aggField = aggTerm->_aggFields->at(0);
     
-  // generate a names tracker for <groupby fields, agg fields>
-  pc->_namesTracker = new PlanContext::FieldNamesTracker();
-  for (unsigned k = 0; k < groupByFields->size(); k++) {
-    pc->_namesTracker->fieldNames.push_back(groupByFields->at(k)->toString());
-  }
-  pc->_namesTracker->fieldNames.push_back(aggField->toString());
-  debugRule(pc, strbuf () << "Result names tracker " 
-	    << pc->_namesTracker->toString() << "\n");
-
-  // determine the location of the groupby fields and agg fields
+  // generate a names tracker for <groupby fields, agg field, other fields>
+  pc->_namesTracker = new PlanContext::FieldNamesTracker(baseFunctor);
   std::vector<unsigned int> groupByFieldNos;      
   int aggFieldNo = -1;
 
@@ -542,64 +541,40 @@ void generateAggEventElement(PlanContext* pc)
   // get the table, create the index
   Catalog::TableInfo* ti =  pc->_catalog->getTableInfo(baseFunctor->fn->name);  
   TableRef aggTable = ti->_table;
-
-  pc->_catalog->createMultIndex(baseFunctor->fn->name, groupByFieldNos.at(0));
-
-  Table::MultAggregate tableAgg 
-    = aggTable->add_mult_groupBy_agg(groupByFieldNos.at(0), // primary key
-				       groupByFieldNos,
-				       aggFieldNo, // the agg field
-				       af);
-  ElementSpecRef aggElement =
-    pc->_conf->addElement(New refcounted< Aggregate >(strbuf("AggUpdate|") 
-						      << curRule->_ruleID << "|" 
-						      << baseFunctor->fn->name 
-						      << "|" << pc->_nodeID 
-						      << "|" << aggStr,
-						      tableAgg));
   
-  strbuf pelTransformStr;
-  pelTransformStr << "\"" << "aggResult:" << curRule->_ruleID << "\" pop";
-  for (uint k = 0; k < pc->_namesTracker->fieldNames.size(); k++) {
-    pelTransformStr << " $" << k << " pop";
-  }
-  debugRule(pc, str(strbuf() << "Agg Pel Expr " << pelTransformStr <<"\n"));
-  // apply PEL to add a table name
-  ElementSpecRef addTableName =
-    pc->_conf->addElement(New refcounted< PelTransform >(strbuf("AggPel|") 
-						     << curRule->_ruleID 
-						     << "|" << pc->_nodeID, 
-						     pelTransformStr));
+  unsigned primaryKey = ti->_tableInfo->primaryKeys.at(0);
+  ElementSpecRef aggElement =
+    pc->_conf->addElement(New refcounted< Agg >(strbuf("Agg|") 
+						<< curRule->_ruleID << "|" 
+						<< baseFunctor->fn->name 
+						<< "|" << pc->_nodeID 
+						<< "|" << 
+						primaryKey << "|" <<
+						aggStr << "|" << aggFieldNo,
+						groupByFieldNos, 
+						aggFieldNo, 
+						primaryKey, aggStr));
 
   pc->_ruleStrand->addElement(pc->_conf, aggElement);   
-  pc->_ruleStrand->addElement(pc->_conf, addTableName);   
 
-
-  ElementSpecRef print = 
-    pc->_conf->addElement(New refcounted< PrintTime >(strbuf("DebugAfterAggUpdateEvent|")
-						      << curRule->_ruleID 
-						      << "|" << pc->_nodeID));
-  rs->addElement(pc->_conf, print);  
+  addWatch(pc, strbuf("DebugAfterAggUpdateEvent|")
+	   << curRule->_ruleID 
+	   << "|" << pc->_nodeID);
 }
 
 void generateAggElements(PlanContext* pc)
 {
   RuleStrand* rs = pc->_ruleStrand;
-  // generate the aggregate event listener
-  generateAggEventElement(pc);
-
-  // probe the base table to retrieve the actual values
   ECA_Rule* curRule = pc->_ruleStrand->_eca_rule;
-  Parse_AggTerm *aggTerm = curRule->_aggTerm;
-  Parse_Functor* baseFunctor = dynamic_cast<Parse_Functor* > (aggTerm->_baseTerm);    
-
-  ElementSpecRef pullPush = 
+  ElementSpecRef pullPushTwo = 
     pc->_conf->addElement(New refcounted< 
-			  TimedPullPush >(strbuf("AggUpdateTimedPullPush|")
+			  TimedPullPush >(strbuf("ScanUpdateTimedPullPush|")
 					  << curRule->_ruleID 
 					  << "|" << pc->_nodeID, 0));
-  rs->addElement(pc->_conf, pullPush);  
-  generateProbeElements(pc, baseFunctor);
+  rs->addElement(pc->_conf, pullPushTwo);  
+
+  // generate the aggregate event listener
+  generateAggElement(pc);
 }
 
 void generateEcaElements(PlanContext* pc)
@@ -608,11 +583,10 @@ void generateEcaElements(PlanContext* pc)
   // for recv, register with mux later
   ECA_Rule* curRule = pc->_ruleStrand->_eca_rule;
   Parse_Event* event = curRule->_event;
+  generateEventElement(pc);        
   if (event->_event == Parse_Event::AGGUPDATE) {
     generateAggElements(pc);
   } else {
-    generateEventElement(pc);    
-    // do probes on tables
     generateMultipleProbeElements(pc);
   }
 

@@ -74,7 +74,8 @@ int main(int argc, char **argv)
       ectxt->eca_rewrite(ctxt, catalog);
       
       ref< Planner > planner 
-	= New refcounted< Planner >(conf, catalog, false, "127.0.0.1:10000");  
+	= New refcounted< Planner >(conf, catalog, false, 
+				    "127.0.0.1:10000", "0");  
       ref< Udp > udp = New refcounted< Udp >("Udp", 10000);
       std::vector<RuleStrand*> ruleStrands = planner->generateRuleStrands(ectxt);
 
@@ -111,7 +112,7 @@ int main(int argc, char **argv)
     ectxt->eca_rewrite(ctxt, catalog);
     
     ref< Planner > planner 
-      = New refcounted< Planner >(conf, catalog, false, "127.0.0.1:10000");  
+      = New refcounted< Planner >(conf, catalog, false, "127.0.0.1:10000", "0");  
     ref< Udp > udp = New refcounted< Udp >("Udp", 10000);
     std::vector<RuleStrand*> ruleStrands = planner->generateRuleStrands(ectxt);
     

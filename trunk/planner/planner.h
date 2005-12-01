@@ -75,15 +75,19 @@
 class Planner
 {
 public:
-  Planner(Router::ConfigurationRef conf, Catalog* catalog, bool debug, str nodeID); 
+  Planner(Router::ConfigurationRef conf, Catalog* catalog, 
+	  bool debug, str nodeID, str outputFile); 
 
-  ~Planner() { delete _netPlanner; }
+  ~Planner() { delete _netPlanner; 
+  if (_outputDebugFile != NULL) {fclose(_outputDebugFile); }}
 
   std::vector<RuleStrand*> generateRuleStrands(ECA_ContextRef ectxt);
   void registerRuleStrand(RuleStrand* rs);
   void registerAllRuleStrands(std::vector<RuleStrand*>);  
   void generateRouterConfig(Router::ConfigurationRef conf);
   void setupNetwork(ref<Udp> udp);
+  void registerOptimizeSend(std::vector<ElementSpecRef> optimizeSend) {
+    _netPlanner->registerOptimizeSend(optimizeSend); }
   NetPlanner* getNetPlanner() { return _netPlanner; }
 
 private:
@@ -93,6 +97,7 @@ private:
   int _ruleCount;
   NetPlanner* _netPlanner;
   Catalog* _catalog;
+  FILE* _outputDebugFile;
 };
 
 #endif

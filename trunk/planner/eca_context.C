@@ -157,7 +157,8 @@ OL_Context::Rule* generateSendRule(OL_Context::Rule* nextRule,
   std::vector<Parse_Term*> newTerms;
   newTerms.push_back(functor);
   Parse_Functor* newHead 
-    = new Parse_Functor(new Parse_FunctorName(new Parse_Var(Val_Str::mk(functor->fn->name << loc)), 
+    = new Parse_Functor(new Parse_FunctorName(new Parse_Var(Val_Str::mk(functor->fn->name << 
+									nextRule->ruleID << loc)), 
 					      new Parse_Var(Val_Str::mk(loc))),   
 			functor->args_);
   OL_Context::Rule* newRule 
@@ -168,7 +169,7 @@ OL_Context::Rule* generateSendRule(OL_Context::Rule* nextRule,
   Catalog::TableInfo* ti = catalog->getTableInfo(functor->fn->name);  
   OL_Context::TableInfo* cti = new OL_Context::TableInfo();
   *cti = *(ti->_tableInfo);
-  cti->tableName = str(strbuf() << functor->fn->name << loc);
+  cti->tableName = str(strbuf() << functor->fn->name << nextRule->ruleID << loc);
   if (ti != NULL) {
     catalog->createTable(cti);
   }

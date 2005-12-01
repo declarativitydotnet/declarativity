@@ -49,11 +49,11 @@
 #include "lookup.h"
 #include "insert.h"
 #include "functorSource.h"
-#include "store.h"
+#include "scan.h"
 
 extern int ol_parser_debug;
 
-typedef ref<Store> StoreRef;
+//typedef ref<Store> StoreRef;
 
 void killJoin()
 {
@@ -67,18 +67,19 @@ static const int nodes = 4;
 
 
 /* Initial sending of links into the p2 dataflow */
-void bookstrapData(Router::ConfigurationRef conf,
+void bootstrapData(Router::ConfigurationRef conf,
                    str name,
-                   Store* linkTable, 
+                   TableRef linkTable,
  		   ref< Udp > udp)
 {
   // Scanner element over link table
-  ElementSpecRef scanS = conf->addElement(linkTable->mkScan());
+  ElementSpecRef scanS 
+    = conf->addElement(New refcounted< Scan >(strbuf("ScanLink:" << name << ":"), linkTable, 0));
 
   ElementSpecRef scanPrintS =
-    conf->addElement(New refcounted< Print >(strbuf("Scan:") << name));
+    conf->addElement(New refcounted< Print >(strbuf("PrintScan:") << name));
   ElementSpecRef timedPullPushS =
-    conf->addElement(New refcounted< TimedPullPush >(strbuf("PushReach:").cat(name), 1));
+    conf->addElement(New refcounted< TimedPullPush >(strbuf("PushReach:").cat(name), 0));
   ElementSpecRef slotS =
     conf->addElement(New refcounted< Slot >(strbuf("Slot:").cat(name)));
   
@@ -113,14 +114,14 @@ void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
   std::cout << "\nCHECK TRANSITIVE REACHABILITY\n";
 
   Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  Rtr_ConfGen routerConfigGenerator(ctxt, conf, true, true, false, filename);
+  Rtr_ConfGen routerConfigGenerator(ctxt, conf, false, false, false, filename);
 
   // Create one data flow per "node"
   ptr< Udp > udps[nodes];
   ptr< Udp > bootstrapUDP[nodes];
   ValuePtr nodeIds[nodes];
   str names[nodes];
-  
+  TablePtr bootstrapTables[nodes];
    
   // Create the networking objects
   for (int i = 0; i < nodes; i++) {
@@ -132,17 +133,14 @@ void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
     bootstrapUDP[i] = New refcounted< Udp >(names[i] << ":bootstrapUdp", 
 					    STARTING_PORT + i + 5000);
     routerConfigGenerator.createTables(names[i]);
+    bootstrapTables[i] = new refcounted< Table >(strbuf("bootstrapNeighbor:") << i, 100);
+    bootstrapTables[i]->add_multiple_index(0);  
   }
 
 
-  // And make the data flows
+  // create a random topology
   for (int i = 0; i < nodes; i++) {
     // initial loading of data into p2 dataflows
-    Store* bootstrapTable = New Store("neighbor", 2);
-        
-    bookstrapData(conf, "bootstrap" << names[i], bootstrapTable, bootstrapUDP[i]);
-    routerConfigGenerator.clear(); 
-    routerConfigGenerator.configureRouter(udps[i], names[i]);
   
     // Create the link tables and links themselves.  Links must be
     // symmetric
@@ -166,9 +164,9 @@ void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
       t->append((ValueRef) nodeIds[other]);
       t->freeze();
       TableRef tableRef = routerConfigGenerator.getTableByName(names[i], "neighbor");
-      std::cout << "Node " << j << " insert tuple " << t->toString() << "\n";
+      std::cout << "Node " << i << " insert tuple " << t->toString() << "\n";
       tableRef->insert(t);
-      bootstrapTable->insert(t);
+      bootstrapTables[i]->insert(t);
 
       // Make the symmetric one
       TupleRef symmetric = Tuple::mk();
@@ -177,12 +175,17 @@ void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
       symmetric->append((ValueRef) nodeIds[i]);
       symmetric->freeze();
       tableRef = routerConfigGenerator.getTableByName(names[other], "neighbor");
-      std::cout << "Node " << j << " insert tuple " << symmetric->toString() << "\n";
+      std::cout << "Node " << other << " insert tuple " << symmetric->toString() << "\n";
       tableRef->insert(symmetric);
-      bootstrapTable->insert(symmetric);
+      bootstrapTables[other]->insert(symmetric);
     }
   }
-  
+
+  for (int i = 0; i < nodes; i++) {
+    bootstrapData(conf, "bootstrap" << names[i], bootstrapTables[i], bootstrapUDP[i]);
+    routerConfigGenerator.clear(); 
+    routerConfigGenerator.configureRouter(udps[i], names[i]);      
+  }
 
   // add extra here to initialize the tables
 

@@ -64,6 +64,9 @@
 #include "aggwrap.h"
 #include "tupleseq.h"
 #include "cc.h"
+#include "measureBW.h"
+//#include "pathsIn.h"
+//#include "agg.h"
 
 #include "ruleStrand.h"
 #define QUEUESIZE 1000
@@ -71,12 +74,18 @@
 class NetPlanner
 {
 public:
-  NetPlanner(Router::ConfigurationRef conf, str nodeID) :
+  NetPlanner(Router::ConfigurationRef conf, str nodeID, 
+	     FILE* outputDebugFile) :
     _conf(conf)
-  { _nodeID = nodeID; _receiveMux = NULL; _sendRoundRobin = NULL;};
+  { _nodeID = nodeID; _outputDebugFile = outputDebugFile;
+  _receiveMux = NULL; _sendRoundRobin = NULL;};
 
+  ~NetPlanner() { }; 
   void generateNetworkElements(ref<Udp> udp);
   void registerAllRuleStrands(std::vector<RuleStrand*>);
+
+  void registerOptimizeSend(std::vector<ElementSpecRef> outOptimize) {
+    _outOptimize = outOptimize; }
 
   str toString();
 
@@ -97,8 +106,10 @@ private:
   void generateNetworkInElements(ref<Udp> udp);
 
   str _nodeID;
+  FILE* _outputDebugFile;
   Router::ConfigurationRef _conf;
   std::vector<ElementSpecRef> _networkIn, _networkOut;
+  std::vector<ElementSpecRef> _outOptimize;
   ReceiverInfoMap _receiverInfo;  
   std::vector<ElementSpecRef> _senders;
   ElementSpecPtr _receiveMux, _sendRoundRobin;

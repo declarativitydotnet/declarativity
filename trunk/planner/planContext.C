@@ -17,8 +17,9 @@
 
 PlanContext::PlanContext(Router::ConfigurationRef conf, 
 			 Catalog* catalog, 
-			 RuleStrand* ruleStrand, str nodeID) :
-  _conf(conf)
+			 RuleStrand* ruleStrand, str nodeID,
+			 FILE* outputDebugFile) :
+  _outputDebugFile(outputDebugFile), _conf(conf)
 {
   _catalog = catalog;
   _ruleStrand = ruleStrand;

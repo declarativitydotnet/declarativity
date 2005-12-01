@@ -41,13 +41,27 @@ void NetPlanner::generateNetworkOutElements(ref<Udp> udp)
   ElementSpecRef udpSend = _conf->addElement(udp->get_tx());  
   
   _networkOut.push_back(pullPush);
+  for (unsigned k = 0; k < _outOptimize.size(); k++) {
+    _networkOut.push_back(_outOptimize.at(k));
+  }
   _networkOut.push_back(sendQueue);
+  //_networkOut.push_back(measureBW);
   _networkOut.push_back(marshalSend);
   _networkOut.push_back(routeSend);
-  _networkOut.push_back(udpSend);
+    _networkOut.push_back(udpSend);
 
-  _conf->hookUp(pullPush, 0, sendQueue, 0);
+  if (_outOptimize.size() == 0) {
+    _conf->hookUp(pullPush, 0, sendQueue, 0);
+  } else {
+    _conf->hookUp(pullPush, 0, _outOptimize.at(0), 0);
+    for (unsigned k = 0; k < _outOptimize.size()-1; k++) {
+      _conf->hookUp(_outOptimize.at(k), 0, _outOptimize.at(k+1), 0);
+    }
+    _conf->hookUp(_outOptimize.at(_outOptimize.size()-1), 
+		  0, sendQueue, 0);
+  }
   _conf->hookUp(sendQueue, 0, marshalSend, 0);
+  //_conf->hookUp(measureBW, 0, marshalSend, 0);
   _conf->hookUp(marshalSend, 0, routeSend, 0);
   _conf->hookUp(routeSend, 0, udpSend, 0);
 }
@@ -64,9 +78,22 @@ void NetPlanner::generateNetworkInElements(ref<Udp> udp)
     _conf->addElement(New refcounted< 
 		      UnboxField >(strbuf("ReceiveUnBox|") << _nodeID, 1));
 
+  // add a special push-pull element here. 
+  // if receive a special correlated message, break up into many small messages
+  /*ElementSpecRef pathsIn = 
+    _conf->addElement(New refcounted<
+		      PathsIn>("PathsIn", 5));  
+
+  // connect to a pull push
+  ElementSpecRef pathsInPullPush = 
+    _conf->addElement(New refcounted<
+		      TimedPullPush>("PathsInPullPush", 0));
+  */
+
   ElementSpecRef receiveBufferQueue = 
     _conf->addElement(New refcounted< Queue >(strbuf("ReceiveQueue|") << 
 					      _nodeID, QUEUESIZE));
+
   ElementSpecRef receiveQueuePullPush = 
     _conf->addElement(New refcounted<
 		      TimedPullPush>("ReceiveQueuePullPush", 0));
@@ -74,11 +101,16 @@ void NetPlanner::generateNetworkInElements(ref<Udp> udp)
   _networkIn.push_back(udpReceive);
   _networkIn.push_back(unmarshalS);
   _networkIn.push_back(unBoxS);
+  /*_networkIn.push_back(pathsIn);
+    _networkIn.push_back(pathsInPullPush);*/
   _networkIn.push_back(receiveBufferQueue);
   _networkIn.push_back(receiveQueuePullPush);
   
   _conf->hookUp(udpReceive, 0, unmarshalS, 0);
   _conf->hookUp(unmarshalS, 0, unBoxS, 0);
+  //_conf->hookUp(unBoxS, 0, pathsIn, 0);
+  //_conf->hookUp(pathsIn, 0, pathsInPullPush, 0);
+  //_conf->hookUp(pathsInPullPush, 0, receiveBufferQueue, 0);
   _conf->hookUp(unBoxS, 0, receiveBufferQueue, 0);
   _conf->hookUp(receiveBufferQueue, 0, receiveQueuePullPush, 0);
 }

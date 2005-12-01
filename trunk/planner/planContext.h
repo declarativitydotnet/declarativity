@@ -26,11 +26,13 @@ class PlanContext {
 
 public:
   PlanContext(Router::ConfigurationRef conf, Catalog* catalog, 
-	      RuleStrand* ruleStrand, str nodeID);
+	      RuleStrand* ruleStrand, str nodeID, 
+	      FILE* outputDebugFile);
   ~PlanContext();
   Catalog* _catalog;
   RuleStrand* _ruleStrand;
   str _nodeID;
+  FILE* _outputDebugFile;
   Router::ConfigurationRef _conf;
 
   // convince placeholder to figure out the cur fields in a tuple in flight

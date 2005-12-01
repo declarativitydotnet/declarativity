@@ -50,10 +50,14 @@ public:
     // more..
   };
 
-  TableInfoMap* getTableInfos()  { return tables;   };
-  ~Catalog() { delete tables; }
   Catalog() { _queryID = 0; tables = new TableInfoMap(); };
+  ~Catalog() { delete tables; }
+
   str nextQueryID(); 
+
+  void setWatchTables(std::set<str> watchTables) { _watchTables = watchTables; }
+  std::set<str> getWatchTables() { return _watchTables; };
+  TableInfoMap* getTableInfos()  { return tables;   };
   void initTables(OL_Context* ctxt);
   void createTable(OL_Context::TableInfo* ti);
   Catalog::TableInfo* getTableInfo(str tableName);
@@ -63,6 +67,7 @@ public:
 private:
   TableInfoMap* tables;
   int _queryID;
+  std::set<str> _watchTables;
 };
 
 #endif

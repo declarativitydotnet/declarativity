@@ -56,6 +56,7 @@ TuplePtr Scan::pull(int port, cbv cb)
   TuplePtr retTuple = scanBuffer.front();
   scanBuffer.pop_front();
   log(LoggerI::INFO, 0, str(strbuf() << "Pull returns " << retTuple->toString()));
+  //warn << "Pull returns " << retTuple->toString() << "\n";
   return retTuple;
 }
 

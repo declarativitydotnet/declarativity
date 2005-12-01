@@ -210,8 +210,48 @@ str pelFunction(PlanContext::FieldNamesTracker* names, Parse_Function *expr)
     pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString());
     pel << " $" << 1 + names->fieldPosition(expr->arg(1)->toString()) << " ";
     pel << "conslist "; 
+  } 
+  else if (expr->name() == "f_inList") {
+    if (expr->args() != 2) {
+      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      exit(-1);
+      return "ERROR.";
+    }
+    pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString());
+    pel << " $" << 1 + names->fieldPosition(expr->arg(1)->toString()) << " ";
+    pel << "inlist "; 
+  }
+  else if (expr->name() == "f_removeLast") {
+    if (expr->args() != 1) {
+      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      exit(-1);
+      return "ERROR.";
+    }
+    pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString()) << " ";
+    pel << "removeLast "; 
   }
   
+  else if (expr->name() == "f_last") {
+    if (expr->args() != 1) {
+      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      exit(-1);
+      return "ERROR.";
+    }
+    pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString()) << " ";
+    pel << "last "; 
+  }
+
+  else if (expr->name() == "f_size") {
+    if (expr->args() != 1) {
+      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      exit(-1);
+      return "ERROR.";
+    }
+    pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString()) << " ";
+    pel << "size "; 
+  }
+  
+
   else {
     std::cerr << "Error in pel generation " << expr->toString() << "\n";
     exit(-1);

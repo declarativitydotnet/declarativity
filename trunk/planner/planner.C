@@ -20,14 +20,21 @@
 #include "planContext.h"
 #include "rulePlanner.C"
 
-Planner::Planner(Router::ConfigurationRef conf, Catalog* catalog, bool debug, str nodeID) 
+Planner::Planner(Router::ConfigurationRef conf, Catalog* catalog, 
+		 bool debug, str nodeID, str outputFile) 
   : _conf(conf)
 { 
   _catalog = catalog; 
   _debug = debug; 
   _nodeID = nodeID;
   _ruleCount = 0;
-  _netPlanner = new NetPlanner(conf, nodeID); 
+
+  if (outputFile[0] != '0') {
+    _outputDebugFile = fopen(outputFile, "w");
+  } else {
+    _outputDebugFile = NULL;
+  }
+  _netPlanner = new NetPlanner(conf, nodeID, _outputDebugFile); 
 }
 
 std::vector<RuleStrand*> 
@@ -40,7 +47,8 @@ Planner::generateRuleStrands(ECA_ContextRef ectxt)
     strbuf b; b << _ruleCount++ << "-" << _nodeID;
     RuleStrand *rs = New RuleStrand(nextRule, str(b));
     toRet.push_back(rs);
-    PlanContext* pc = new PlanContext(_conf, _catalog, rs, _nodeID);
+    PlanContext* pc = new PlanContext(_conf, _catalog, rs, 
+				      _nodeID, _outputDebugFile);
     generateEcaElements(pc);    
     delete pc;
   }
