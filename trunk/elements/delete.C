@@ -23,7 +23,7 @@ Delete::Delete(str name,
 }
 
 int
-Delete::push(int port, TupleRef t, cbv cb)
+Delete::push(int port, TupleRef t, b_cbv cb)
 {
   // Is this the right port?
   assert(port == 0);

@@ -24,13 +24,13 @@ public:
   const char *processing() const	{ return PUSH_TO_PULL; };
   const char *flow_code()  const	{ return "-/-"; };
 
-  int push(int port, TupleRef t, cbv cb);
+  int push(int port, TupleRef t, b_cbv cb);
 
-  TuplePtr pull(int port, cbv cb);
+  TuplePtr pull(int port, b_cbv cb);
 
  private:
-  cbv _push_cb;
-  cbv _pull_cb;
+  b_cbv _push_cb;
+  b_cbv _pull_cb;
 
   void defragment(TupleRef t);
 

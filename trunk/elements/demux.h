@@ -28,7 +28,7 @@ public:
   
   Demux(str, ref< vec< ValueRef > >, unsigned f = 0);
 
-  int push(int port, TupleRef t, cbv cb);
+  int push(int port, TupleRef t, b_cbv cb);
 
   const char *class_name() const		{ return "Demux";}
   const char *processing() const		{ return "h/h"; }
@@ -37,11 +37,11 @@ public:
   /** A tuple may be dropped without notification if it resolves to an
       output that's held back.  Push back only if all outputs have
       pushed back. */
-  int push(TupleRef p, cbv cb) const;
+  int push(TupleRef p, b_cbv cb) const;
 
 private:
   /** The callback for my input */
-  cbv	_push_cb;
+  b_cbv	_push_cb;
 
   /** My demux key vector */
   ref< vec< ValueRef > > _demuxKeys;

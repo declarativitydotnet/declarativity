@@ -65,7 +65,7 @@ void Udp::Rx::socket_cb()
     t->append(Val_Opaque::mk(udpSuio));
     t->freeze();
     // Push it. 
-    push_pending = push(0, t, wrap(this, &Udp::Rx::element_cb));
+    push_pending = push(0, t, boost::bind(&Udp::Rx::element_cb, this));
   }
   socket_on();
 }
@@ -110,7 +110,7 @@ void Udp::Tx::socket_cb()
 
   // Try to pull a packet. 
   Element::PortRef myInput = input(0);
-  TuplePtr t = myInput->pull(wrap(this,&Udp::Tx::element_cb));
+  TuplePtr t = myInput->pull(boost::bind(&Udp::Tx::element_cb, this));
   if (!t) {
     pull_pending = false;
     socket_off();

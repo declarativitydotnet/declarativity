@@ -27,7 +27,7 @@ public:
   
   DDemux(str, std::vector< ValueRef >, unsigned f = 0);
 
-  int push(int port, TupleRef t, cbv cb);
+  int push(int port, TupleRef t, b_cbv cb);
 
   const char *class_name() const		{ return "DDemux";}
   const char *processing() const		{ return "h/h"; }
@@ -36,7 +36,7 @@ public:
   /** A tuple may be dropped without notification if it resolves to an
       output that's held back.  Push back only if all outputs have
       pushed back. */
-  int push(TupleRef p, cbv cb) const;
+  int push(TupleRef p, b_cbv cb) const;
 
   /** Add output port keyed off ValueRef argument, returns allocated port # */
   int add_output(ValueRef);
@@ -47,7 +47,7 @@ public:
 
 private:
   /** The callback for my input */
-  cbv	_push_cb;
+  b_cbv	_push_cb;
 
   typedef std::map<ValueRef, int> PortMap;
   PortMap _port_map;

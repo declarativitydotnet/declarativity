@@ -32,7 +32,7 @@ public:
   const char *processing() const		{ return "h/h"; }
   const char *flow_code() const			{ return "-/-"; }
 
-  int push(int, TupleRef, cbv);
+  int push(int, TupleRef, b_cbv);
 
   /** My callback method */
   void callback();
@@ -56,19 +56,19 @@ private:
   std::vector<int> _unusedPorts;
 
   /** My input callback vector */
-  std::vector< cbv > _pushCallbacks;
+  std::vector< b_cbv > _pushCallbacks;
 
   /** My input buffer, one tuple per input. */
   std::vector< TuplePtr > _inputTuples;
 
   /** My catch-up callback */
-  cbv _catchUp;
+  b_cbv _catchUp;
 
   /** My time callback */
   timecb_t * _timeCallback;
 
   /** My own output callback */
-  cbv _callback;
+  b_cbv _callback;
 };
 
 

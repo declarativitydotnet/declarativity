@@ -49,13 +49,13 @@ class TimedPullPush : public Element {
   int _counter;
 
   /** My pull wakeup callback */
-  cbv _unblockPull;
+  b_cbv _unblockPull;
 
   /** My push wakeup callback */
-  cbv _unblockPush;
+  b_cbv _unblockPush;
 
   /** Callback to my runTimer() */
-  cbv _runTimerCB;
+  b_cbv _runTimerCB;
 
   /** My time callback ID. */
   timecb_t * _timeCallback;

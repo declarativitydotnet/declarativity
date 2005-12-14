@@ -15,7 +15,7 @@ Demux::Demux(str name,
              ref< vec< ValueRef > > demuxKeys,
              unsigned inputFieldNo)
   : Element(name, 1, demuxKeys->size() + 1),
-    _push_cb(cbv_null),
+    _push_cb(b_cbv_null),
     _demuxKeys(demuxKeys),
     _block_flags(),
     _block_flag_count(0),
@@ -40,14 +40,14 @@ void Demux::unblock(int output)
   }
 
   // If I have a push callback, call it and remove it
-  if (_push_cb != cbv_null) {
+  if (_push_cb != b_cbv_null) {
     log(LoggerI::INFO, -1, "unblock: propagating aggregate unblock");
     _push_cb();
-    _push_cb = cbv_null;
+    _push_cb = b_cbv_null;
   }
 }
 
-int Demux::push(int port, TupleRef p, cbv cb)
+int Demux::push(int port, TupleRef p, b_cbv cb)
 {
   assert(p != 0);
   assert(port == 0);
@@ -56,7 +56,7 @@ int Demux::push(int port, TupleRef p, cbv cb)
   // Can I take more?
   if (_block_flag_count == noutputs()) {
     // Drop it and hold on to the callback if I don't have it already
-    if (_push_cb == cbv_null) {
+    if (_push_cb == b_cbv_null) {
       _push_cb = cb;
     } else {
       log(LoggerI::WARN, -1, "push: Callback overrun");
@@ -90,7 +90,7 @@ int Demux::push(int port, TupleRef p, cbv cb)
         return 1;
       } else {
         // Send it with the appropriate callback
-        int result = output(i)->push(p, wrap(this, &Demux::unblock, i));
+        int result = output(i)->push(p, boost::bind(&Demux::unblock, this, i));
 
         // If it can take no more
         if (result == 0) {
@@ -100,7 +100,7 @@ int Demux::push(int port, TupleRef p, cbv cb)
 
           // If I just blocked all of my outputs, push back my input
           if (_block_flag_count == noutputs()) {
-            assert(_push_cb == cbv_null);
+            assert(_push_cb == b_cbv_null);
             _push_cb = cb;
             log(LoggerI::WARN, -1, "push: Blocking input");
             return 0;
@@ -130,7 +130,7 @@ int Demux::push(int port, TupleRef p, cbv cb)
     return 1;
   } else {
     // Send it with the appropriate callback
-    int result = output(noutputs() - 1)->push(p, wrap(this, &Demux::unblock, noutputs() - 1));
+    int result = output(noutputs() - 1)->push(p, boost::bind(&Demux::unblock, this, noutputs() - 1));
     
     // If it can take no more
     if (result == 0) {
@@ -140,7 +140,7 @@ int Demux::push(int port, TupleRef p, cbv cb)
       
       // If I just blocked all of my outputs, push back my input
       if (_block_flag_count == noutputs()) {
-        assert(_push_cb == cbv_null);
+        assert(_push_cb == b_cbv_null);
         _push_cb = cb;
         log(LoggerI::WARN, -1, "push: Blocking input");
         return 0;

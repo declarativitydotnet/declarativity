@@ -18,6 +18,7 @@
 #include <deque>
 #include <map>
 #include <vector>
+#include <boost/function.hpp>
 
 #include "tuple.h"
 
@@ -230,7 +231,7 @@ public:
 
 
   /** A listener */
-  typedef callback< void, TupleRef >::ref Listener;
+  typedef boost::function<void (TupleRef)> Listener;
 
 
   /** An aggregate state record */

@@ -31,11 +31,11 @@ public:
   const char *flow_code() const			{ return "--/--"; }
 
   /** Receive a new fixed tuple */
-  int push(int port, TupleRef, cbv cb);
+  int push(int port, TupleRef, b_cbv cb);
 
   void registerGroupbyField(int field); 
   void comp_cb(int jnum);
-  cbv get_comp_cb();
+  b_cbv get_comp_cb();
   int numJoins;
 
 private:
@@ -48,8 +48,8 @@ private:
   bool inner_accepting;
 
   // External callbacks
-  cbv ext_in_cb;
-  cbv ext_out_cb;
+  b_cbv ext_in_cb;
+  b_cbv ext_out_cb;
 
   int aggState;
   TuplePtr aggResult, _incomingTuple;

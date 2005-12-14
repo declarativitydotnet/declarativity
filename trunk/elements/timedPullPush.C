@@ -23,9 +23,9 @@ TimedPullPush::TimedPullPush(str name,
   : Element(name, 1, 1),
     _tuples(tuples),
     _counter(0),
-    _unblockPull(wrap(this, &TimedPullPush::pullWakeup)),
-    _unblockPush(wrap(this, &TimedPullPush::pushWakeup)),
-    _runTimerCB(wrap(this, &TimedPullPush::runTimer)),
+    _unblockPull(boost::bind(&TimedPullPush::pullWakeup, this)),
+    _unblockPush(boost::bind(&TimedPullPush::pushWakeup, this)),
+    _runTimerCB(boost::bind(&TimedPullPush::runTimer, this)),
     _timeCallback(NULL)
 {
   assert(_tuples >= 0);

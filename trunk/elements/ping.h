@@ -30,7 +30,7 @@ class Ping : public Element {
 public:
 
   Ping(str name, int numRetries, int seconds, double retry_interval);
-  int push(int port, TupleRef p, cbv cb);     
+  int push(int port, TupleRef p, b_cbv cb);     
   int initialize();
   
   const char *class_name() const		{ return "Ping";}
@@ -71,7 +71,7 @@ private:
   timecb_t * _timeCallback;
 
   /** My wakeup callback */
-  cbv _wakeupCB, _runTimerCB;
+  b_cbv _wakeupCB, _runTimerCB;
 
   double _retry_interval;
   int _numPings;

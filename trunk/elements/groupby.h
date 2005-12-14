@@ -38,7 +38,7 @@ public:
 
   virtual int initialize();
   
-  int push(int port, TupleRef p, cbv cb);
+  int push(int port, TupleRef p, b_cbv cb);
 
   const char *class_name() const		{ return "GroupBy";}
   const char *processing() const		{ return "h/h"; }
@@ -87,10 +87,10 @@ private:
   TupleMap::iterator _iterator;
 
   /** My wakeup callback */
-  cbv _wakeupCB;
+  b_cbv _wakeupCB;
 
   /** Callback to my runTimer() */
-  cbv _runTimerCB;
+  b_cbv _runTimerCB;
 
   /** My time callback ID. */
   timecb_t * _timeCallback;

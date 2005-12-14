@@ -44,12 +44,12 @@ public:
 
   TuplePtr simple_action(TupleRef p);		// Ack on output1 before passing to output0.
 
-  TuplePtr pull(int port, cbv cb);		// Pull next acknowledgement from ack_q
+  TuplePtr pull(int port, b_cbv cb);		// Pull next acknowledgement from ack_q
 
-  int push(int port, TupleRef tp, cbv cb);	// Flow control input
+  int push(int port, TupleRef tp, b_cbv cb);	// Flow control input
 
 private:
-  cbv _ack_cb; 					// Callback to send an ack 
+  b_cbv _ack_cb; 					// Callback to send an ack 
 
   double   rwnd_;				// Receiver window size
   uint     src_field_;

@@ -50,7 +50,6 @@
 #include "val_str.h"
 #include "val_int32.h"
 
-
 // Some basic element types
 const char * const Element::PUSH_TO_PULL = "h/l";
 const char * const Element::PULL_TO_PUSH = "l/h";
@@ -181,10 +180,10 @@ const char *Element::flags() const
 }
 
 // RUNNING
-
-int Element::push(int port, TupleRef p, cbv cb)
+int Element::push(int port, TupleRef p, b_cbv cb)
 {
   assert(p != 0);
+
 
   // Apply the action
   TuplePtr result = simple_action(p);
@@ -201,7 +200,7 @@ int Element::push(int port, TupleRef p, cbv cb)
   }
 }
 
-TuplePtr Element::pull(int port, cbv cb)
+TuplePtr Element::pull(int port, b_cbv cb)
 {
   while (1) {
     TuplePtr p = input(0)->pull(cb);
@@ -243,7 +242,7 @@ REMOVABLE_INLINE const Element::PortRef Element::output(int o) const
 // Element::Port
 
 
-REMOVABLE_INLINE int Element::Port::push(TupleRef p, cbv cb) const
+REMOVABLE_INLINE int Element::Port::push(TupleRef p, b_cbv cb) const
 {
   // If I am not connected, I shouldn't be pushed.
   assert(_e);
@@ -271,7 +270,7 @@ REMOVABLE_INLINE int Element::Port::push(TupleRef p, cbv cb) const
   return returnValue;
 }
 
-REMOVABLE_INLINE TuplePtr Element::Port::pull(cbv cb) const
+REMOVABLE_INLINE TuplePtr Element::Port::pull(b_cbv cb) const
 {
   // If I am not connected, I shouldn't be pulled.
   assert(_e);
@@ -298,12 +297,12 @@ REMOVABLE_INLINE TuplePtr Element::Port::pull(cbv cb) const
   return p;
 }
 
-REMOVABLE_INLINE int Element::Port::push_incoming(int port, TupleRef p, cbv cb) const
+REMOVABLE_INLINE int Element::Port::push_incoming(int port, TupleRef p, b_cbv cb) const
 {
   return _owner->push(port, p, cb);
 }
 
-REMOVABLE_INLINE TuplePtr Element::Port::pull_outgoing(int port, cbv cb ) const
+REMOVABLE_INLINE TuplePtr Element::Port::pull_outgoing(int port, b_cbv cb ) const
 {
   TuplePtr t = _owner->pull(port, cb);
   return t;
@@ -314,7 +313,7 @@ REMOVABLE_INLINE TuplePtr Element::Port::pull_outgoing(int port, cbv cb ) const
 REMOVABLE_INLINE Element::Port::Port() :
   _e(0),
   _port(NOT_INITIALIZED),
-  _cb(cbv_null)
+  _cb(b_cbv_null)
   PORT_CTOR_INIT(0)
 { }
 
@@ -324,7 +323,7 @@ REMOVABLE_INLINE Element::Port::Port(Element *owner,
                                      int p)
   : _e(e),
     _port(p),
-    _cb(cbv_null)
+    _cb(b_cbv_null)
   PORT_CTOR_INIT(owner)
 {
   (void) owner;

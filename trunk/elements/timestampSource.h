@@ -27,7 +27,7 @@ class TimestampSource : public Element {
   const char *flow_code() const			{ return "/-"; }
   const char *processing() const		{ return "/l"; }
 
-  virtual TuplePtr pull(int port, cbv cb);
+  virtual TuplePtr pull(int port, b_cbv cb);
 
  private:
 };

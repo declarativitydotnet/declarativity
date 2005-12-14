@@ -17,7 +17,7 @@ Discard::Discard(str name) :
 {
 }
 
-int Discard::push(int port, TupleRef, cbv cb)
+int Discard::push(int port, TupleRef, b_cbv cb)
 {
   // Send as many more tuples as you want
   return 1;

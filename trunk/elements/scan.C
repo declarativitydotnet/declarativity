@@ -14,13 +14,13 @@
 Scan::Scan(str name,
 	   Table::UniqueScanIterator iterator,
 	   bool continuous)
-  : Element(name, 0, 1), _iterator(iterator), _pullCB(cbv_null)
+  : Element(name, 0, 1), _iterator(iterator), _pullCB(b_cbv_null)
 {
   _firstTime = true;
   _continuous = continuous; 
 
   if (continuous) {
-    _iterator->addListener(wrap(this, &Scan::listener));
+    _iterator->addListener(boost::bind(&Scan::listener, this, _1));
   }
 }
 
@@ -29,13 +29,13 @@ Scan::listener(TupleRef t)
 {
   log(LoggerI::INFO, 0, str(strbuf() << "Listener " << t->toString()));
   scanBuffer.push_back(t);
-  if (_pullCB  != cbv_null) {
+  if (_pullCB  != b_cbv_null) {
     _pullCB();
-    _pullCB = cbv_null;
+    _pullCB = b_cbv_null;
   }
 }
 
-TuplePtr Scan::pull(int port, cbv cb) 
+TuplePtr Scan::pull(int port, b_cbv cb) 
 {
   
   // Is this the right port?

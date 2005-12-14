@@ -21,8 +21,8 @@
 
 TrafficManager::TrafficManager(str n, str a, uint k, uint r, double s)
   : Element(n, 1, 2), 
-    _wakeupCB(wrap(this, &TrafficManager::wakeup)),
-    _runTimerCB(wrap(this, &TrafficManager::runTimer)),
+    _wakeupCB(boost::bind(&TrafficManager::wakeup, this)),
+    _runTimerCB(boost::bind(&TrafficManager::runTimer, this)),
     my_addr_(a), my_key_(k), key_range_(r), total_received_(0)
 {
   _seconds = (uint) floor(s);
@@ -30,14 +30,14 @@ TrafficManager::TrafficManager(str n, str a, uint k, uint r, double s)
   _nseconds = (uint) (s * 1000000000);
 }
 
-int TrafficManager::push(int port, TupleRef tp, cbv cb) {
+int TrafficManager::push(int port, TupleRef tp, b_cbv cb) {
   assert(port == 0);
   ValuePtr vp = NULL;
 
   uint key = getKey(tp);
   if (key == my_key_) {
     total_received_++;
-    assert(output(1)->push(mkResponse(tp), cbv_null));
+    assert(output(1)->push(mkResponse(tp), b_cbv_null));
   }
   else if (!processResponse(tp)) {
     log(LoggerI::WARN, 1, strbuf() << "MY KEY: " << my_key_ 

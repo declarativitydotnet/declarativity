@@ -23,12 +23,12 @@ public:
   const char *processing() const	{ return "l/l"; };
   const char *flow_code() const		{ return "x/x"; };
 
-  TuplePtr pull(int port, cbv cb);
+  TuplePtr pull(int port, b_cbv cb);
 
   void tuple_ready(TupleRef t);
 
 private:
-  cbv _out_cb;
+  b_cbv _out_cb;
   void element_cb();
   void grab();
 

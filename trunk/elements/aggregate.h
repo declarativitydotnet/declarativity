@@ -29,7 +29,7 @@ class Aggregate : public Element {
   const char *flow_code() const			{ return "/-"; }
   
   /** Return an updated aggregate. */
-  TuplePtr pull(int port, cbv cb);
+  TuplePtr pull(int port, b_cbv cb);
   
  private:
   /** My aggregate */
@@ -42,7 +42,7 @@ class Aggregate : public Element {
   void listener(TupleRef t);
 
   /** My puller's callback */
-  cbv _pullCallback;
+  b_cbv _pullCallback;
 
   /** Is the latest pending transmission? */
   bool _pending;

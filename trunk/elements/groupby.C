@@ -26,8 +26,8 @@ const int GroupBy::AVG_AGG = 2;
 GroupBy::GroupBy(str name, str newTableName, std::vector<int> primaryFields, std::vector<int> groupByFields, 
 		 std::vector<int> aggFields, std::vector<int> aggTypes, 
 		 double seconds, bool aggregateSelections): Element(name,1,1), 
-							    _wakeupCB(wrap(this, &GroupBy::wakeup)),
-							    _runTimerCB(wrap(this, &GroupBy::runTimer))
+							    _wakeupCB(boost::bind(&GroupBy::wakeup, this)),
+							    _runTimerCB(boost::bind(&GroupBy::runTimer, this))
 {
   _primaryFields = primaryFields;
   _groupByFields = groupByFields;
@@ -139,7 +139,7 @@ void GroupBy::recomputeAllAggs()
 }
 
 
-int GroupBy::push(int port, TupleRef p, cbv cb)
+int GroupBy::push(int port, TupleRef p, b_cbv cb)
 {  
   str indexStr = getFieldStr(_primaryFields, p);
   str groupByStr = getFieldStr(_groupByFields, p);

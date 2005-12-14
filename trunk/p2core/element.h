@@ -40,9 +40,29 @@
 #ifndef __ELEMENT_H__
 #define __ELEMENT_H__
 
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
 #include "inlines.h"
 #include "tuple.h"
 #include "loggerI.h"
+
+// Common callback types
+typedef boost::function<void (void)>        b_cbv;
+typedef boost::function<void (int)>         b_cbi;
+typedef boost::function<void (std::string)> b_cbs;
+typedef boost::function<void (bool)>        b_cbb;
+
+static void b_cbv_null() {};
+// static void b_cbi_null(int) {};
+// static void b_cbs_null(std::string) {};
+// static void b_cbb_null(bool) {};
+
+#undef delaycb
+#define delaycb(a, b, c) NULL
+#undef fdcb
+#define fdcb(a, b, c)
+#undef tcpconnect
+#define tcpconnect(a, b, c) NULL
 
 class Router;
 typedef ref< Router > RouterRef;
@@ -97,13 +117,13 @@ public:
   // If push returns '1', it's OK to send more tuples, and the
   // callback has not been registered.  If '0', it's NOT OK to send
   // more tuples, and the callback will be invoked as soon as it is. 
-  virtual int push(int port, TupleRef, cbv cb);
+  virtual int push(int port, TupleRef, b_cbv cb);
 
   // If pull returns a Tuple, the callback has not been registered and
   // there _might_ be another Tuple available.  If it returns null,
   // there wasn't another Tuple, and the callback will be invoked when
   // there is another one. 
-  virtual TuplePtr pull(int port, cbv cb);
+  virtual TuplePtr pull(int port, b_cbv cb);
 
   // A simple action for 1-1 elements. If the result is 0, then no tuple
   // was produced for push or pull
@@ -204,19 +224,19 @@ public:
         callback has not been registered.  If '0', it's NOT OK to send
         more tuples, and the callback will be invoked as soon as it
         is.  */
-    int push(TupleRef p, cbv cb) const;
+    int push(TupleRef p, b_cbv cb) const;
 
     /** If pull returns a Tuple, the callback has not been registered
         and there _might_ be another Tuple available.  If it returns
         null, there wasn't another Tuple, and the callback will be
         invoked when there is another one. */
-    TuplePtr pull(cbv cb) const;
+    TuplePtr pull(b_cbv cb) const;
 
     /** A push is called on the input port of an element **/
-    int push_incoming(int port, TupleRef p, cbv cb) const;
+    int push_incoming(int port, TupleRef p, b_cbv cb) const;
     
     /** A pull is called on the output port of an element **/
-    TuplePtr pull_outgoing(int port, cbv cb) const;
+    TuplePtr pull_outgoing(int port, b_cbv cb) const;
 
 #if P2_STATS >= 1
     unsigned ntuples() const		{ return _tuples; }
@@ -235,7 +255,7 @@ public:
     int _port;
 
     /** My callback */
-    cbv _cb;
+    b_cbv _cb;
     
 #if P2_STATS >= 1
     mutable unsigned _tuples;		// How many tuples have we moved?

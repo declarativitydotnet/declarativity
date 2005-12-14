@@ -31,10 +31,10 @@ public:
   const char *flow_code() const			{ return "--/-"; }
 
   /** Receive a new fixed tuple */
-  int push(int port, TupleRef, cbv cb);
+  int push(int port, TupleRef, b_cbv cb);
 
   /** Return a new joined tuple. */
-  TuplePtr pull(int port, cbv cb);
+  TuplePtr pull(int port, b_cbv cb);
 
 private:
 
@@ -42,10 +42,10 @@ private:
   TuplePtr _fixed;
 
   /** My pusher's callback */
-  cbv _pushCallback;
+  b_cbv _pushCallback;
   
   /** My puller's callback */
-  cbv _pullCallback;
+  b_cbv _pullCallback;
 
   /** My tuple merging method.  If I have a pair, return a tuple
       containing both. If I had an empty search, return nothing.  */

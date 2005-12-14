@@ -28,7 +28,7 @@
  * rwnd: Initial receiver window size (default given in ccrx.h).
  */
 CCR::CCR(str name, double rwnd, uint src, bool flow) 
-  : Element(name, (flow ? 2 : 1), 2), _ack_cb(cbv_null),
+  : Element(name, (flow ? 2 : 1), 2), _ack_cb(b_cbv_null),
     rwnd_(rwnd), src_field_(src), flow_(flow)
 {
 }
@@ -65,9 +65,9 @@ TuplePtr CCR::simple_action(TupleRef p)
   ack->freeze();
   ack_q_.push_back(ack);		// Append to ack queue
 
-  if (_ack_cb != cbv_null) {
-    (*_ack_cb)();			// Notify new ack
-    _ack_cb = cbv_null;
+  if (_ack_cb != b_cbv_null) {
+    _ack_cb();			// Notify new ack
+    _ack_cb = b_cbv_null;
   } 
   return p;				// Forward data tuple
 }
@@ -76,7 +76,7 @@ TuplePtr CCR::simple_action(TupleRef p)
  * Pulls the next acknowledgement in ack_q_ to send to the
  * receiver.
  */
-TuplePtr CCR::pull(int port, cbv cb)
+TuplePtr CCR::pull(int port, b_cbv cb)
 {
   if (port == 1) {
     if (!ack_q_.empty()) {
@@ -92,7 +92,7 @@ TuplePtr CCR::pull(int port, cbv cb)
   return this->Element::pull(port, cb); 	
 }
 
-int CCR::push(int port, TupleRef tp, cbv cb)
+int CCR::push(int port, TupleRef tp, b_cbv cb)
 {
   if (port == 1) {
     try {

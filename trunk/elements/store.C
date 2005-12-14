@@ -35,8 +35,8 @@ Store::Lookup::Lookup(str name,
                       std::multimap< ValueRef, TupleRef, Store::tupleRefCompare > * table)
   : Element(name, 1, 1),
     _table(table),
-    _pushCallback(cbv_null),
-    _pullCallback(cbv_null)
+    _pushCallback(b_cbv_null),
+    _pullCallback(b_cbv_null)
 {
 }
 
@@ -79,7 +79,7 @@ void Store::insert(TupleRef p)
   }
 }
 
-int Store::Lookup::push(int port, TupleRef t, cbv cb)
+int Store::Lookup::push(int port, TupleRef t, b_cbv cb)
 {
   // Is this the right port?
   assert(port == 0);
@@ -87,7 +87,7 @@ int Store::Lookup::push(int port, TupleRef t, cbv cb)
   // Do I have a lookup pending?
   if (_key == NULL) {
     // No pending lookup.  Take it in
-    assert(_pushCallback == cbv_null);
+    assert(_pushCallback == b_cbv_null);
 
     // Fetch the first field
     _key = (*t)[0];
@@ -104,10 +104,10 @@ int Store::Lookup::push(int port, TupleRef t, cbv cb)
       log(LoggerI::INFO, 0, logLine);
       
       // Unblock the puller if one is waiting
-      if (_pullCallback != cbv_null) {
+      if (_pullCallback != b_cbv_null) {
         log(LoggerI::INFO, 0, "push: wakeup puller");
         _pullCallback();
-        _pullCallback = cbv_null;
+        _pullCallback = b_cbv_null;
       }
 
       // Start the iterator
@@ -120,13 +120,13 @@ int Store::Lookup::push(int port, TupleRef t, cbv cb)
     }
   } else {
     // I'm psarry. I can't help ya.
-    assert(_pushCallback != cbv_null);
+    assert(_pushCallback != b_cbv_null);
     log(LoggerI::WARN, 0, "push: lookup overrun");
     return 0;
   }
 }
 
-TuplePtr Store::Lookup::pull(int port, cbv cb) 
+TuplePtr Store::Lookup::pull(int port, b_cbv cb) 
 {
   // Is this the right port?
   assert(port == 0);
@@ -135,7 +135,7 @@ TuplePtr Store::Lookup::pull(int port, cbv cb)
   if (_key == NULL) {
     // Nope, no pending lookup.  Deal with underruns.
 
-    if (_pullCallback == cbv_null) {
+    if (_pullCallback == b_cbv_null) {
       // Accept the callback
       log(LoggerI::INFO, 0, "pull: raincheck");
       _pullCallback = cb;
@@ -190,10 +190,10 @@ TuplePtr Store::Lookup::pull(int port, cbv cb)
       _key = NULL;
 
       // Wake up any pusher
-      if (_pushCallback != cbv_null) {
+      if (_pushCallback != b_cbv_null) {
         log(LoggerI::INFO, 0, "pull: wakeup pusher");
         _pushCallback();
-        _pushCallback = cbv_null;
+        _pushCallback = b_cbv_null;
       }
       return newTuple;
     } else {
@@ -206,7 +206,7 @@ TuplePtr Store::Lookup::pull(int port, cbv cb)
 /** The END_OF_SEARCH tag */
 str Store::END_OF_SEARCH = "Store:END_OF_SEARCH";
 
-TuplePtr Store::Scan::pull(int port, cbv cb) 
+TuplePtr Store::Scan::pull(int port, b_cbv cb) 
 {
   // Is this the right port?
   assert(port == 0);

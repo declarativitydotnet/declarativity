@@ -25,7 +25,7 @@
 class Pong : public Element {
 public:
   Pong(str name, int seconds);
-  int push(int port, TupleRef p, cbv cb);      
+  int push(int port, TupleRef p, b_cbv cb);      
   int initialize();  
 
   const char *class_name() const		{ return "Pong";}
@@ -47,7 +47,7 @@ private:
   timecb_t * _timeCallback;
 
   /** My wakeup callback */
-  cbv _wakeupCB, _runTimerCB;
+  b_cbv _wakeupCB, _runTimerCB;
 
   std::queue<TupleRef> _pendingResults;
 };

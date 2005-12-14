@@ -27,7 +27,7 @@ class TrafficManager : public Element {
   const char *flow_code() const	 { return "-/--"; }
   const char *processing() const { return "h/hh"; }
 
-  int push(int port, TupleRef tp, cbv cb);
+  int push(int port, TupleRef tp, b_cbv cb);
 
   virtual int initialize();
 
@@ -48,9 +48,9 @@ class TrafficManager : public Element {
   /** The nsec portion of the interval */
   uint                  _nseconds;
   /** My wakeup callback */
-  cbv                   _wakeupCB;
+  b_cbv                   _wakeupCB;
   /** Callback to my runTimer() */
-  cbv                  _runTimerCB;
+  b_cbv                  _runTimerCB;
   /** My time callback ID. */
   timecb_t *           _timeCallback;
 

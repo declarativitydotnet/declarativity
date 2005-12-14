@@ -19,17 +19,17 @@
 
 Defrag::Defrag(str name)
   : Element(name, 1, 1),
-    _push_cb(cbv_null), _pull_cb(cbv_null)
+    _push_cb(b_cbv_null), _pull_cb(b_cbv_null)
 {
 }
 
 
-int Defrag::push(int port, TupleRef t, cbv cb)
+int Defrag::push(int port, TupleRef t, b_cbv cb)
 {
   // Is this the right port?
   assert(port == 0);
 
-  if (_push_cb != cbv_null) {
+  if (_push_cb != b_cbv_null) {
     // Complain and do nothing
     log(LoggerI::INFO, 0, "push: callback overrun"); 
   } else {
@@ -42,15 +42,15 @@ int Defrag::push(int port, TupleRef t, cbv cb)
   defragment(t);
 
   // Unblock the puller if one is waiting
-  if (_pull_cb != cbv_null) {
+  if (_pull_cb != b_cbv_null) {
     log(LoggerI::INFO, 0, "push: wakeup puller");
     _pull_cb();
-    _pull_cb = cbv_null;
+    _pull_cb = b_cbv_null;
   }
   return 0;
 }
 
-TuplePtr Defrag::pull(int port, cbv cb) 
+TuplePtr Defrag::pull(int port, b_cbv cb) 
 {
   // Is this the right port?
   assert(port == 0);
@@ -61,15 +61,15 @@ TuplePtr Defrag::pull(int port, cbv cb)
     TuplePtr t = tuples_.front();
     tuples_.pop_front();
 
-    if (tuples_.empty() && _push_cb != cbv_null) {
+    if (tuples_.empty() && _push_cb != b_cbv_null) {
       log(LoggerI::INFO, 0, "pull: wakeup pusher");
       _push_cb();
-      _push_cb = cbv_null;
+      _push_cb = b_cbv_null;
     }
     return t;
   } else {
     // I don't have a tuple.  Do I have a pull callback already?
-    if (_pull_cb == cbv_null) {
+    if (_pull_cb == b_cbv_null) {
       // Accept the callback
       log(LoggerI::INFO, 0, "pull: raincheck");
       _pull_cb = cb;

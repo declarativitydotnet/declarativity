@@ -30,7 +30,7 @@
 /// Pong 
 ////////////////////////////
 Pong::Pong(str name, int seconds)
-    : Element(name, 1, 1), _wakeupCB(wrap(this, &Pong::wakeup)), _runTimerCB(wrap(this, &Pong::runTimer))
+    : Element(name, 1, 1), _wakeupCB(boost::bind(&Pong::wakeup, this)), _runTimerCB(boost::bind(&Pong::runTimer, this))
 {
   _name = name;
   _seconds = (uint) floor(seconds);
@@ -49,7 +49,7 @@ int Pong::initialize()
 }
 
 
-int Pong::push(int port, TupleRef p, cbv cb)
+int Pong::push(int port, TupleRef p, b_cbv cb)
 {  
   if (p == Tuple::EMPTY) { return 1; }
   ValueRef tableName = (*p)[0];

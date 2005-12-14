@@ -139,7 +139,7 @@ private:
 			FieldNamesTracker* probeNames, 
 			FieldNamesTracker* baseProbeNames, 
 			int joinOrder,
-			cbv comp_cb);
+			b_cbv comp_cb);
 
   void genProjectHeadElements(OL_Context::Rule* curRule,
  			      str nodeID,

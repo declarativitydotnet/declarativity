@@ -15,12 +15,12 @@
 Joiner::Joiner(str name)
   : Element(name, 2, 1),
     _fixed(0),
-    _pushCallback(cbv_null),
-    _pullCallback(cbv_null)
+    _pushCallback(b_cbv_null),
+    _pullCallback(b_cbv_null)
 {
 }
 
-int Joiner::push(int port, TupleRef t, cbv cb)
+int Joiner::push(int port, TupleRef t, b_cbv cb)
 {
   // Is this the right port?
   assert(port == 1);
@@ -28,7 +28,7 @@ int Joiner::push(int port, TupleRef t, cbv cb)
   // Do I have a fixed tuple pending?
   if (_fixed == NULL) {
     // No pending tuple.  Take it in
-    assert(_pushCallback == cbv_null);
+    assert(_pushCallback == b_cbv_null);
     _fixed = t;
 
     // Do I have a puller pending?
@@ -37,10 +37,10 @@ int Joiner::push(int port, TupleRef t, cbv cb)
     log(LoggerI::INFO, 0, s);
     
     // Unblock the puller if one is waiting
-    if (_pullCallback != cbv_null) {
+    if (_pullCallback != b_cbv_null) {
       log(LoggerI::INFO, 0, "push: wakeup puller");
       _pullCallback();
-      _pullCallback = cbv_null;
+      _pullCallback = b_cbv_null;
     }
 
     // And stop the pusher since we have to wait until all joins on this
@@ -50,13 +50,13 @@ int Joiner::push(int port, TupleRef t, cbv cb)
   } else {
     // I'm psarry. I can't help ya.
     // XXX We might have to resynchronize the streams here.
-    assert(_pushCallback != cbv_null);
+    assert(_pushCallback != b_cbv_null);
     log(LoggerI::WARN, 0, "push: fixed tuple overrun");
     return 0;
   }
 }
 
-TuplePtr Joiner::pull(int port, cbv cb) 
+TuplePtr Joiner::pull(int port, b_cbv cb) 
 {
   // Is this the right port?
   assert(port == 0);
@@ -65,7 +65,7 @@ TuplePtr Joiner::pull(int port, cbv cb)
   if (_fixed == NULL) {
     // Nope, no pending join.  Deal with underruns.
 
-    if (_pullCallback == cbv_null) {
+    if (_pullCallback == b_cbv_null) {
       // Accept the callback
       log(LoggerI::INFO, 0, "pull: raincheck");
       _pullCallback = cb;
@@ -77,7 +77,7 @@ TuplePtr Joiner::pull(int port, cbv cb)
   } else {
     // OK, flow through me is enabled.  Now pretend to be a 1-in-1-out
     // element
-    assert(_pullCallback == cbv_null);
+    assert(_pullCallback == b_cbv_null);
 
     while (1) {
       TuplePtr p = input(0)->pull(cb);
@@ -112,9 +112,9 @@ TuplePtr Joiner::mergeTuples(TupleRef p)
     _fixed = NULL;
 
     // ... and wake up any push waiters.
-    if (_pushCallback != cbv_null) {
+    if (_pushCallback != b_cbv_null) {
       _pushCallback();
-      _pushCallback = cbv_null;
+      _pushCallback = b_cbv_null;
     }
   }
     

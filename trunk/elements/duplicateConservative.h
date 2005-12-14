@@ -24,18 +24,18 @@ public:
   
   DuplicateConservative(str, int);
 
-  int push(int port, TupleRef t, cbv cb);
+  int push(int port, TupleRef t, b_cbv cb);
 
   const char *class_name() const		{ return "DuplicateConservative";}
   const char *processing() const		{ return "h/h"; }
   const char *flow_code() const			{ return "x/x"; }
 
   /** Push back only if all outputs have pushed back. */
-  int push(TupleRef p, cbv cb) const;
+  int push(TupleRef p, b_cbv cb) const;
 
 private:
   /** The callback for my input */
-  cbv _push_cb;
+  b_cbv _push_cb;
 
   /** My block flags, one per output port */
   bitvec _block_flags;

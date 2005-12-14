@@ -36,8 +36,8 @@ public:
   const char *processing() const { return "ah/ahl"; };
   const char *flow_code() const	 { return "--/--"; };
 
-  int push(int port, TupleRef tp, cbv cb);	// Incoming, either add to send_q or ack
-  TuplePtr pull(int port, cbv cb);		// Rate limited output tuple stream
+  int push(int port, TupleRef tp, b_cbv cb);	// Incoming, either add to send_q or ack
+  TuplePtr pull(int port, b_cbv cb);		// Rate limited output tuple stream
 
 private:
   void timeout_cb(CCTuple*);			// Callback for to retry sending a tuple
@@ -49,7 +49,7 @@ private:
   REMOVABLE_INLINE int  current_window();	// Returns the current window size
   REMOVABLE_INLINE int  max_window();		// Returns the current window size
 
-  cbv _dout_cb; 				// Callback for data output ready
+  b_cbv _dout_cb; 				// Callback for data output ready
     
   bool    data_on_;
   int32_t sa_;					// Scaled avg. RTT (ms) scaled by 8

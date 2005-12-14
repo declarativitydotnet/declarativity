@@ -113,7 +113,7 @@ int main(int argc, char **argv)
   groupBy.push_back(4);
   Table::MultAggregate u =
     tbl->add_mult_groupBy_agg(4, groupBy, 3, &Table::AGG_MAX);
-  u->addListener(wrap(&aggListener));
+  u->addListener(&aggListener);
   for( int i=0; i < N_TPLS; i++) { 
     std::cout << "Inserting " << tpls[i]->toString() << "\n";
     tbl->insert(tpls[i]);

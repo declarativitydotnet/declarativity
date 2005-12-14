@@ -79,7 +79,7 @@ int32_t CCTuple::delay()
  */
 CCTx::CCTx(str name, double init_wnd, double max_wnd, 
            uint32_t seq_field, uint32_t ack_seq_field, uint32_t ack_rwnd_field) 
-  : Element(name, 2, 1), _dout_cb(cbv_null), data_on_(true), sa_(-1), sv_(0)
+  : Element(name, 2, 1), _dout_cb(b_cbv_null), data_on_(true), sa_(-1), sv_(0)
 {
   rto_            = MAX_RTO;
   max_wnd_        = max_wnd;
@@ -96,7 +96,7 @@ CCTx::CCTx(str name, double init_wnd, double max_wnd,
  * port 0: Indicates a tuple to send.
  * port 1: Indicates the acknowledgement of some outstanding tuple.
  */
-int CCTx::push(int port, TupleRef tp, cbv cb)
+int CCTx::push(int port, TupleRef tp, b_cbv cb)
 {
   assert(port < 2);
 
@@ -139,7 +139,7 @@ int CCTx::push(int port, TupleRef tp, cbv cb)
  * port 0: Return the next tuple from either the retran or send queue
  * port 2: Return a tuple containing the internal CC state
  */
-TuplePtr CCTx::pull(int port, cbv cb)
+TuplePtr CCTx::pull(int port, b_cbv cb)
 {
   TuplePtr tp = NULL;
 
@@ -185,15 +185,15 @@ int32_t CCTx::dealloc(SeqNum seq, str status)
 
     delete iter->second;
     tmap_.erase(iter);
-    if (data_on_ && _dout_cb != cbv_null) {
+    if (data_on_ && _dout_cb != b_cbv_null) {
       (*_dout_cb)();
-      _dout_cb = cbv_null;
+      _dout_cb = b_cbv_null;
     }
 
     TuplePtr tp = Tuple::mk();
     tp->append(Val_Str::mk(status));		// Signal drop
     tp->append(Val_UInt64::mk(seq));		// Sequence number 
-    assert(output(1)->push(tp, cbv_null));
+    assert(output(1)->push(tp, b_cbv_null));
   }
   else {
     // Log event: possibly due to duplicate ack.
@@ -204,9 +204,9 @@ int32_t CCTx::dealloc(SeqNum seq, str status)
 
 void CCTx::data_ready() {
   data_on_ = true;
-  if (_dout_cb != cbv_null) {
+  if (_dout_cb != b_cbv_null) {
     (*_dout_cb)();
-    _dout_cb = cbv_null;
+    _dout_cb = b_cbv_null;
   }
 }
 

@@ -18,7 +18,7 @@ TimestampSource::TimestampSource(str name)
 {
 }
     
-TuplePtr TimestampSource::pull(int port, cbv cb)
+TuplePtr TimestampSource::pull(int port, b_cbv cb)
 {
   // Always produce a result, never block
 

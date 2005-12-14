@@ -17,7 +17,7 @@
 
 Agg::Agg(str name, std::vector<unsigned int> groupByFields, 
 	 int aggField, unsigned uniqueField, str aggStr)
-  : Element(name, 1, 1), _pullCB(cbv_null), _pushCB(cbv_null)
+  : Element(name, 1, 1), _pullCB(b_cbv_null), _pushCB(b_cbv_null)
 {
   _aggField = aggField;
   _groupByFields = groupByFields;
@@ -106,7 +106,7 @@ str Agg::getGroupByFields(TupleRef p)
   return str(b);
 }
 
-int Agg::push(int port, TupleRef p, cbv cb)
+int Agg::push(int port, TupleRef p, b_cbv cb)
 {
   str uniqueVal = (*p)[_uniqueField]->toString();
   std::map<str, TupleRef>::iterator iter = _allValues.find(uniqueVal);
@@ -119,9 +119,9 @@ int Agg::push(int port, TupleRef p, cbv cb)
 
   if (changed == true) {
     // we may need to wake up puller
-    if (_pullCB != cbv_null) {
+    if (_pullCB != b_cbv_null) {
       _pullCB();
-      _pullCB = cbv_null;
+      _pullCB = b_cbv_null;
     } else {
       log(LoggerI::INFO, 0, "No pending pull callbacks");
     }
@@ -131,7 +131,7 @@ int Agg::push(int port, TupleRef p, cbv cb)
 
 
 /* pull. When pull, drain the queue. Do nothing if queue is empty but register callback. */
-TuplePtr Agg::pull(int port, cbv cb)
+TuplePtr Agg::pull(int port, b_cbv cb)
 {
   if (_buffer.size() == 0) { 
     log(LoggerI::INFO, 0, "Buffer is empty during pull");
@@ -142,9 +142,9 @@ TuplePtr Agg::pull(int port, cbv cb)
   TuplePtr p = _buffer.begin()->second;
   _buffer.erase(_buffer.begin());
 
-  if (_pushCB != cbv_null) {
+  if (_pushCB != b_cbv_null) {
     _pushCB();
-    _pushCB = cbv_null;
+    _pushCB = b_cbv_null;
   }
 
   log(LoggerI::INFO, 0, str(strbuf() << "Pull succeed " << p->toString() 

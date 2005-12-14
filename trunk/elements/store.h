@@ -90,20 +90,20 @@ private:
     const char *flow_code() const		{ return "-/-"; }
 
     /** Receive a new lookup key */
-    int push(int port, TupleRef, cbv cb);
+    int push(int port, TupleRef, b_cbv cb);
 
     /** Return a match to the current lookup */
-    TuplePtr pull(int port, cbv cb);
+    TuplePtr pull(int port, b_cbv cb);
 
   private:
     /** My parent's table */
     std::multimap< ValueRef, TupleRef, Store::tupleRefCompare > * _table;
     
     /** My pusher's callback */
-    cbv _pushCallback;
+    b_cbv _pushCallback;
 
     /** My puller's callback */
-    cbv _pullCallback;
+    b_cbv _pullCallback;
 
     /** My current lookup key */
     ValuePtr _key;
@@ -129,7 +129,7 @@ private:
     const char *flow_code() const		{ return "/-"; }
 
     /** Return a match to the current lookup */
-    TuplePtr pull(int port, cbv cb);
+    TuplePtr pull(int port, b_cbv cb);
 
   private:
     /** My parent's table */

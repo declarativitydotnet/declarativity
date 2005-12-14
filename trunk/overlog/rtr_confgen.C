@@ -1004,7 +1004,7 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 				   FieldNamesTracker* probeNames, 
 				   FieldNamesTracker* baseProbeNames, 
 				   int joinOrder,
-				   cbv comp_cb)
+				   b_cbv comp_cb)
 {
   // probe the right hand side
   // Here's where the join happens 
@@ -1255,7 +1255,7 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Rule* curRule,
     if (pf != NULL && pf->fn->name == eventFunctor->fn->name) { continue; } 
     debugRule(curRule, str(strbuf() << "Probing " << eventFunctor->fn->name 
 			   << " " << baseFunctors.at(k)->toString() << "\n"));
-    cbv comp_cb = cbv_null;
+    b_cbv comp_cb = b_cbv_null;
     if (agg_el) {
       comp_cb = agg_el->get_comp_cb();
     }

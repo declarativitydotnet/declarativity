@@ -85,13 +85,13 @@ int main(int argc, char **argv)
 
   Slot *s = New Slot("slot");
   for(int i=0; i<5; i++) {
-    TuplePtr tp = s->pull(0,wrap(slot_pull_cb));
+    TuplePtr tp = s->pull(0, &slot_pull_cb);
     if (tp == NULL) {
       std::cout << "Null tuple\n";
     } else {
       std::cout << "Got tuple " << t->toString() << "\n";
     }
-    s->push(0,t,wrap(slot_push_cb));
+    s->push(0,t, &slot_push_cb);
   }
   return 0;
 }

@@ -26,7 +26,7 @@ SimpleKeyRouter::SimpleKeyRouter(str n, ValuePtr id, bool r)
   : Element(n, 2, 2), my_id_(id), retry_(r) { }
 
 
-int SimpleKeyRouter::push(int port, TupleRef tp, cbv cb) {
+int SimpleKeyRouter::push(int port, TupleRef tp, b_cbv cb) {
   int route = -1;
 
   if (port == 0) route = greedyRoute(tp);

@@ -24,7 +24,7 @@ public:
   
   RoundRobin(str, int);
 
-  TuplePtr pull(int port, cbv cb);
+  TuplePtr pull(int port, b_cbv cb);
 
   const char *class_name() const		{ return "RoundRobin";}
   const char *processing() const		{ return "l/l"; }
@@ -32,11 +32,11 @@ public:
 
   /** A tuple may be dropped without notification if it resolves to an
       output that's held back. */
-  int push(TupleRef p, cbv cb) const;
+  int push(TupleRef p, b_cbv cb) const;
 
 private:
   /** The callback for my outputs */
-  cbv	_pull_cb;
+  b_cbv	_pull_cb;
 
   /** My block flags, one per input port */
   bitvec _block_flags;

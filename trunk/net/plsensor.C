@@ -95,7 +95,7 @@ void PlSensor::enter_waiting()
     hdrs = NULL;
   }
   state = ST_WAITING;
-  wait_delaycb = delaycb( delay, wrap(this, &PlSensor::enter_connecting));
+  wait_delaycb = delaycb(delay, 0, boost::bind(&PlSensor::enter_connecting, this));
 }
 
 //
@@ -112,7 +112,7 @@ void PlSensor::enter_connecting()
   assert(hdrs == NULL);
   hdrs = New strbuf();
   req_buf = New strbuf(reqtmpl);
-  tc = tcpconnect( localaddr, port, wrap(this, &PlSensor::connect_cb));
+  tc = tcpconnect(localaddr, port, boost::bind(&PlSensor::connect_cb, this));
 }
 
 //
@@ -129,7 +129,7 @@ void PlSensor::connect_cb(int fd)
     // Enter SENDING
     TRC( "socket descriptor is " << sd);
     state = ST_SENDING;
-    fdcb(sd, selwrite, wrap(this, &PlSensor::write_cb));
+    fdcb(sd, selwrite, boost::bind(&PlSensor::write_cb, this));
   }
 }
 
@@ -156,7 +156,7 @@ void PlSensor::write_cb()
     // Enter RX_HEADERS state
     fdcb(sd, selwrite, NULL);
     state = ST_RX_HEADERS;
-    fdcb(sd, selread, wrap(this, &PlSensor::rx_hdr_cb));
+    fdcb(sd, selread, boost::bind(&PlSensor::rx_hdr_cb, this));
   }
 }
 
@@ -192,7 +192,7 @@ void PlSensor::rx_hdr_cb()
       // Create a tuple with the single string, the matching body.
       TupleRef t = Tuple::mk();
       t->append(Val_Str::mk(m[5]));
-      if (push(0,t,wrap(this,&PlSensor::element_cb))) {
+      if (push(0,t,boost::bind(&PlSensor::element_cb, this))) {
 	socket_on();
 	state = ST_RX_BODY;
       } else {
@@ -245,7 +245,7 @@ void PlSensor::rx_body_cb()
   default:
     TupleRef t = Tuple::mk();
     t->append(Val_Str::mk(rx));
-    if (push(0,t,wrap(this,&PlSensor::element_cb))) {
+    if (push(0,t,boost::bind(&PlSensor::element_cb, this))) {
       socket_on();
       state = ST_RX_BODY;
     } else {

@@ -13,7 +13,7 @@
 
 DuplicateConservative::DuplicateConservative(str name, int outputs)
   : Element(name, 1, outputs),
-    _push_cb(cbv_null),
+    _push_cb(b_cbv_null),
     _block_flags(),
     _block_flag_count(0)
 {
@@ -38,13 +38,13 @@ void DuplicateConservative::unblock(int output)
   // If I have no more blocked outputs, unblock my pusher
   if (_block_flag_count == 0) {
    log(LoggerI::INFO, -1, str(strbuf() << "unblock: propagating aggregate unblock " << output));
-   //assert(_push_cb != cbv_null);
+   //assert(_push_cb != b_cbv_null);
      _push_cb();
-    _push_cb = cbv_null;
+    _push_cb = b_cbv_null;
   }
 }
 
-int DuplicateConservative::push(int port, TupleRef p, cbv cb)
+int DuplicateConservative::push(int port, TupleRef p, b_cbv cb)
 {
   assert(p != 0);
   assert(port == 0);
@@ -52,21 +52,21 @@ int DuplicateConservative::push(int port, TupleRef p, cbv cb)
   // Can I take more?
   if (_block_flag_count > 0) {
     // I'm still blocked
-    assert(_push_cb != cbv_null);
+    assert(_push_cb != b_cbv_null);
     log(LoggerI::WARN, -1, "push: Overrun");
     return 0;
   }
 
   // We're free and clear
   assert(_block_flag_count == 0);
-  assert(_push_cb == cbv_null);
+  assert(_push_cb == b_cbv_null);
 
   // For every output
   for (int i = 0;
        i < noutputs();
        i++) {
     // Send it with the appropriate callback
-    int result = output(i)->push(p, wrap(this, &DuplicateConservative::unblock, i));
+    int result = output(i)->push(p, boost::bind(&DuplicateConservative::unblock, this, i));
 
     assert(_block_flags[i] == false);
 

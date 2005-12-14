@@ -25,7 +25,7 @@ public:
   const char *flow_code() const			{ return "-/"; }
 
   /** Overridden since I have no outputs */
-  int push(int port, TupleRef, cbv cb);
+  int push(int port, TupleRef, b_cbv cb);
 };
 
 

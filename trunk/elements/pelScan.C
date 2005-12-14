@@ -21,8 +21,8 @@ PelScan::PelScan(str name,
   : Element(name, 1, 1),
     _table(table),
     _iterator(table->scanAll(fieldNo)),
-    _pushCallback(cbv_null),
-    _pullCallback(cbv_null),
+    _pushCallback(b_cbv_null),
+    _pullCallback(b_cbv_null),
     _indexFieldNo(fieldNo),
     _startup(Pel_Lexer::compile(startup)),
     _scan(Pel_Lexer::compile(scan)),
@@ -45,7 +45,7 @@ PelScan::~PelScan()
 }
 
 int
-PelScan::push(int port, TupleRef t, cbv cb)
+PelScan::push(int port, TupleRef t, b_cbv cb)
 {
   // Is this the right port?
   assert(port == 0);
@@ -53,7 +53,7 @@ PelScan::push(int port, TupleRef t, cbv cb)
   // Do I have a scan pending?
   if (_scanTuple == NULL) {
     // No pending scan.  Take it in
-    assert(_pushCallback == cbv_null);
+    assert(_pushCallback == b_cbv_null);
 
     // Establish the scan and run the startup script
     _scanTuple = t;
@@ -71,10 +71,10 @@ PelScan::push(int port, TupleRef t, cbv cb)
         << _scanTuple->toString());
     
     // Unblock the puller if one is waiting
-    if (_pullCallback != cbv_null) {
+    if (_pullCallback != b_cbv_null) {
       log(LoggerI::INFO, 0, "push: wakeup puller");
       _pullCallback();
-      _pullCallback = cbv_null;
+      _pullCallback = b_cbv_null;
     }
     
     // Fetch the iterator
@@ -86,14 +86,14 @@ PelScan::push(int port, TupleRef t, cbv cb)
     return 0;
   } else {
     // We already have a lookup pending
-    assert(_pushCallback != cbv_null);
+    assert(_pushCallback != b_cbv_null);
     log(LoggerI::WARN, 0, "push: lookup overrun");
     return 0;
   }
 }
 
 
-TuplePtr PelScan::pull(int port, cbv cb) 
+TuplePtr PelScan::pull(int port, b_cbv cb) 
 {
   // Is this the right port?
   assert(port == 0);
@@ -104,7 +104,7 @@ TuplePtr PelScan::pull(int port, cbv cb)
   
     assert(_scanTuple == NULL);
     
-    if (_pullCallback == cbv_null) {
+    if (_pullCallback == b_cbv_null) {
       // Accept the callback
       log(LoggerI::INFO, 0, "pull: raincheck");
       _pullCallback = cb;
@@ -140,10 +140,10 @@ TuplePtr PelScan::pull(int port, cbv cb)
       // We've run out of tuples.   Just clean up.
 
       // Wake up any pusher
-      if (_pushCallback != cbv_null) {
+      if (_pushCallback != b_cbv_null) {
         log(LoggerI::INFO, 0, "pull: wakeup pusher");
         _pushCallback();
-        _pushCallback = cbv_null;
+        _pushCallback = b_cbv_null;
       }
 
       // The cleanup script

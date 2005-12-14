@@ -19,8 +19,8 @@ Aggwrap::Aggwrap(str name, str aggfn, int aggfield, str outputTableName)
     _aggfn(aggfn), 
     _aggfield(aggfield), 
     inner_accepting(true),
-    ext_in_cb(cbv_null), 
-    ext_out_cb(cbv_null)
+    ext_in_cb(b_cbv_null), 
+    ext_out_cb(b_cbv_null)
 {
   numJoins = 0;
   _outputTableName = outputTableName;
@@ -39,7 +39,7 @@ Aggwrap::Aggwrap(str name, str aggfn, int aggfield, str outputTableName)
 //
 // A new tuple is coming in from outside. 
 //
-int Aggwrap::push(int port, TupleRef t, cbv cb)
+int Aggwrap::push(int port, TupleRef t, b_cbv cb)
 {
   log(LoggerI::INFO, 0, str(strbuf() << " Push: " << port << "," << t->toString()));
 
@@ -57,7 +57,7 @@ int Aggwrap::push(int port, TupleRef t, cbv cb)
       assert(inner_accepting);
       agg_init();
       _incomingTuple = t;
-      inner_accepting = output(1)->push(t, wrap(this, &Aggwrap::int_push_cb));
+      inner_accepting = output(1)->push(t, boost::bind(&Aggwrap::int_push_cb, this));
       break;
     case 1:
       log(LoggerI::INFO, 0, "FAIL: pushed when processing!");
@@ -109,7 +109,7 @@ void Aggwrap::int_push_cb()
   if (aggState == 0 && ext_in_cb) {
     log(LoggerI::INFO, 0, str(strbuf() << "Invoke ext_in_cb"));
     ext_in_cb();
-    ext_in_cb = cbv_null;
+    ext_in_cb = b_cbv_null;
   }
 }
 
@@ -134,10 +134,10 @@ void Aggwrap::comp_cb(int jnum)
 //
 // Getting hold of a closure for the above
 //
-cbv Aggwrap::get_comp_cb()
+b_cbv Aggwrap::get_comp_cb()
 {
   log(LoggerI::INFO, 0, str(strbuf() << "Joins so far: " << numJoins + 1));
-  return wrap(this,&Aggwrap::comp_cb,numJoins++);
+  return boost::bind(&Aggwrap::comp_cb, this, numJoins++);
 }
 
 //
@@ -205,7 +205,7 @@ void Aggwrap::agg_finalize() {
   if (aggResult) {
     log(LoggerI::INFO, 0, 
 	str(strbuf() << " finalize: Pushing tuple" << aggResult->toString()));
-    output(0)->push(aggResult, cbv_null);
+    output(0)->push(aggResult, b_cbv_null);
   } else {
     log(LoggerI::INFO, 0, "Finalize: Alas, nothing to push");
   }
@@ -213,7 +213,7 @@ void Aggwrap::agg_finalize() {
     log(LoggerI::INFO, 0, "Invoke push callback for more tuples");
     // accept new tuples to be pushed in via outer regardless of any outputs
     ext_in_cb(); 
-    ext_in_cb = cbv_null;
+    ext_in_cb = b_cbv_null;
   }
   aggState = 0;
 }

@@ -86,7 +86,7 @@ int32_t delay(timespec *ts)
  * Output 1 (pull): Acknowledgements of individual tuples.
  */
 CCRx::CCRx(str name, double rwnd, int seq, int src) 
-  : Element(name, 1, 2), _ack_cb(cbv_null),
+  : Element(name, 1, 2), _ack_cb(b_cbv_null),
     rwnd_(rwnd), seq_field_(seq), src_field_(src)
 {
 }
@@ -109,9 +109,9 @@ TuplePtr CCRx::simple_action(TupleRef p)
   ack_q_.push_back(ack);
   log(LoggerI::INFO, 0, strbuf() << "ACK QUEUE SIZE: " << ack_q_.size()); 
 
-  if (_ack_cb != cbv_null) {
-    (*_ack_cb)();		// Notify new ack
-    _ack_cb = cbv_null;
+  if (_ack_cb != b_cbv_null) {
+    _ack_cb();		// Notify new ack
+    _ack_cb = b_cbv_null;
   } 
   return p;			// forward tuple along
 }
@@ -120,7 +120,7 @@ TuplePtr CCRx::simple_action(TupleRef p)
  * Pulls the next acknowledgement in ack_q_ to send to the
  * receiver.
  */
-TuplePtr CCRx::pull(int port, cbv cb)
+TuplePtr CCRx::pull(int port, b_cbv cb)
 {
   assert(port == 1);
 
@@ -133,7 +133,7 @@ TuplePtr CCRx::pull(int port, cbv cb)
   return NULL;
 }
 
-int CCRx::push(int port, TupleRef tp, cbv cb)
+int CCRx::push(int port, TupleRef tp, b_cbv cb)
 {
   if (port == 1) {
     try {
@@ -161,7 +161,7 @@ int CCRx::push(int port, TupleRef tp, cbv cb)
  */
 CCTx::CCTx(str name, double init_wnd, double max_wnd, uint32_t max_retry, 
            uint32_t seq_field, uint32_t ack_seq_field, uint32_t ack_rwnd_field) 
-  : Element(name, 2, 1), _din_cb(cbv_null), _dout_cb(cbv_null), sa_(-1), sv_(0)
+  : Element(name, 2, 1), _din_cb(b_cbv_null), _dout_cb(b_cbv_null), sa_(-1), sv_(0)
 {
   rto_            = MAX_RTO;
   max_wnd_        = max_wnd;
@@ -179,7 +179,7 @@ CCTx::CCTx(str name, double init_wnd, double max_wnd, uint32_t max_retry,
  * port 0: Indicates a tuple to send.
  * port 1: Indicates the acknowledgement of some outstanding tuple.
  */
-int CCTx::push(int port, TupleRef tp, cbv cb)
+int CCTx::push(int port, TupleRef tp, b_cbv cb)
 {
   int retval = 1;
   assert(port < 2);
@@ -204,9 +204,9 @@ int CCTx::push(int port, TupleRef tp, cbv cb)
     break;
   }
 
-  if (!(send_q_.empty() && rtran_q_.empty()) && _dout_cb != cbv_null) {
-    (*_dout_cb)();
-    _dout_cb = cbv_null;
+  if (!(send_q_.empty() && rtran_q_.empty()) && _dout_cb != b_cbv_null) {
+    _dout_cb();
+    _dout_cb = b_cbv_null;
   }
   return retval;
 }
@@ -216,7 +216,7 @@ int CCTx::push(int port, TupleRef tp, cbv cb)
  * port 0: Return the next tuple from either the retran or send queue
  * port 1: Return a tuple containing the internal CC state
  */
-TuplePtr CCTx::pull(int port, cbv cb)
+TuplePtr CCTx::pull(int port, b_cbv cb)
 {
   if (port == 0) {
     assert (rto_ >= MIN_RTO && rto_ <= MAX_RTO);
@@ -280,9 +280,9 @@ int32_t CCTx::dealloc(SeqNum seq)
 
     delete iter->second;
     ot_map_.erase(iter);
-    if (current_window() < max_window() && _din_cb != cbv_null) {
-      (*_din_cb)();
-      _din_cb = cbv_null;
+    if (current_window() < max_window() && _din_cb != b_cbv_null) {
+      _din_cb();
+      _din_cb = b_cbv_null;
     }
   }
   else {
@@ -317,9 +317,9 @@ void CCTx::timeout_cb(OTuple *otp)
   ot_map_.erase(ot_map_.find(seq));
   rtran_q_.push_back(otp);	// Add to retransmit queue
 
-  if (_dout_cb != cbv_null) {
-    (*_dout_cb)();
-    _dout_cb = cbv_null;
+  if (_dout_cb != b_cbv_null) {
+    _dout_cb();
+    _dout_cb = b_cbv_null;
   }
 
   log(LoggerI::INFO, 0, 

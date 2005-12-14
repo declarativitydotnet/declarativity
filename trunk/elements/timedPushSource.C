@@ -20,8 +20,8 @@
 TimedPushSource::TimedPushSource(str name,
                                  double seconds)
   : Element(name, 0, 1),
-    _wakeupCB(wrap(this, &TimedPushSource::wakeup)),
-    _runTimerCB(wrap(this, &TimedPushSource::runTimer))
+    _wakeupCB(boost::bind(&TimedPushSource::wakeup, this)),
+    _runTimerCB(boost::bind(&TimedPushSource::runTimer, this))
 {
   _seconds = (uint) floor(seconds);
   seconds -= _seconds;

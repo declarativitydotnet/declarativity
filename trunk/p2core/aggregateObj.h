@@ -16,7 +16,6 @@
 #define __AGGREGATEOBJ_H__
 
 
-
 template< typename _Index >
 Table::AggregateObj< _Index >::AggregateObj(unsigned keyField,
                                             _Index* index,

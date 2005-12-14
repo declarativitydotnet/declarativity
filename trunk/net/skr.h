@@ -23,7 +23,7 @@ public:
   const char *processing() const	{ return "hh/hh"; };
   const char *flow_code() const		{ return "-/-"; };
 
-  int push(int port, TupleRef tp, cbv cb);
+  int push(int port, TupleRef tp, b_cbv cb);
 
   void route(ValuePtr key, ValuePtr loc);
 

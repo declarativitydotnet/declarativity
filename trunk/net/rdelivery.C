@@ -67,18 +67,18 @@ public:
 };
 
 RDelivery::RDelivery(str n, bool r, uint32_t m)
-  : Element(n, 2, 3), _out_cb(cbv_null), in_on_(true), retry_(r), max_retry_(m) { max_seq_ = 0; }
+  : Element(n, 2, 3), _out_cb(b_cbv_null), in_on_(true), retry_(r), max_retry_(m) { max_seq_ = 0; }
 
 /**
  * New tuple to send
  */
-TuplePtr RDelivery::pull(int port, cbv cb)
+TuplePtr RDelivery::pull(int port, b_cbv cb)
 {
   assert (port == 0);
 
   TuplePtr tp = NULL;
   if (rtran_q_.empty() && in_on_ && 
-      (in_on_ = ((tp = input(0)->pull(wrap(this, &RDelivery::input_cb))) != NULL))) {
+      (in_on_ = ((tp = input(0)->pull(boost::bind(&RDelivery::input_cb,this))) != NULL))) {
     /* Store the tuple for retry, if failure */
     SeqNum seq = getSeq(tp); 
     MAP(seq, tp);
@@ -98,7 +98,7 @@ TuplePtr RDelivery::pull(int port, cbv cb)
  * The push method handles input on 2 ports.
  * port 1: Acknowledgement or Failure Tuple
  */
-int RDelivery::push(int port, TupleRef tp, cbv cb)
+int RDelivery::push(int port, TupleRef tp, b_cbv cb)
 {
   assert(port == 1);
 
@@ -122,8 +122,8 @@ REMOVABLE_INLINE void RDelivery::handle_failure(SeqNum seq)
   if (retry_ && rt->retry_cnt_ < max_retry_) {
     rtran_q_.push_back(rt);
     if (_out_cb != NULL) {
-      (*_out_cb)();
-      _out_cb = cbv_null;
+      _out_cb();
+      _out_cb = b_cbv_null;
     }
   }
   else {
@@ -132,7 +132,7 @@ REMOVABLE_INLINE void RDelivery::handle_failure(SeqNum seq)
     f->append(Val_Tuple::mk(rt->tp_));
     f->freeze();
     // Push failed tuple upstream.
-    assert(output(2)->push(f, cbv_null));
+    assert(output(2)->push(f, b_cbv_null));
     UNMAP(seq);
   }
 }
@@ -140,9 +140,9 @@ REMOVABLE_INLINE void RDelivery::handle_failure(SeqNum seq)
 void RDelivery::input_cb()
 {
   in_on_ = true;
-  if (_out_cb != cbv_null) {
-    (*_out_cb)();
-    _out_cb = cbv_null;
+  if (_out_cb != b_cbv_null) {
+    _out_cb();
+    _out_cb = b_cbv_null;
   }
 }
 

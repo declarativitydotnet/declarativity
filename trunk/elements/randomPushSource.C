@@ -20,8 +20,8 @@
 
 RandomPushSource::RandomPushSource(str name, double seconds, int randSeed, int max)
   : Element(name, 0, 1),
-    _wakeupCB(wrap(this, &RandomPushSource::wakeup)),
-    _runTimerCB(wrap(this, &RandomPushSource::runTimer))
+    _wakeupCB(boost::bind(&RandomPushSource::wakeup, this)),
+    _runTimerCB(boost::bind(&RandomPushSource::runTimer, this))
 {
   _seconds = (uint) floor(seconds);
   seconds -= _seconds;

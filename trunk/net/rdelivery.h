@@ -27,14 +27,14 @@ public:
   const char *processing() const { return "lh/lhh"; };
   const char *flow_code() const	 { return "--/--"; };
 
-  TuplePtr pull(int port, cbv cb);
-  int push(int port, TupleRef tp, cbv cb);	// Incoming ack or timeout
+  TuplePtr pull(int port, b_cbv cb);
+  int push(int port, TupleRef tp, b_cbv cb);	// Incoming ack or timeout
 
 private:
   REMOVABLE_INLINE SeqNum getSeq(TuplePtr tp);
   REMOVABLE_INLINE void handle_failure(SeqNum);		// Handles a failure to deliver a tuple
   void input_cb();
-  cbv _out_cb;
+  b_cbv _out_cb;
 
   bool      in_on_;
   bool      retry_;

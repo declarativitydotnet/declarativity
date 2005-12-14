@@ -42,10 +42,10 @@ class TimedPullSink : public Element {
   uint _nseconds;
 
   /** My wakeup callback */
-  cbv _wakeupCB;
+  b_cbv _wakeupCB;
 
   /** Callback to my runTimer() */
-  cbv _runTimerCB;
+  b_cbv _runTimerCB;
 
   /** My time callback ID. */
   timecb_t * _timeCallback;

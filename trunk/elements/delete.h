@@ -31,7 +31,7 @@ class Delete : public Element {
   const char *flow_code() const			{ return "-/"; }
   
   /** Delete a pushed element */
-  int push(int port, TupleRef, cbv cb);
+  int push(int port, TupleRef, b_cbv cb);
 
   
  private:

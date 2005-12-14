@@ -16,11 +16,11 @@ Aggregate::Aggregate(str name,
   : Element(name, 0, 1),
     _aggregate(aggregate),
     _latest(NULL),
-    _pullCallback(cbv_null),
+    _pullCallback(b_cbv_null),
     _pending(false)
 {
   // Place myself as a listener on the aggregate
-  _aggregate->addListener(wrap(this, &Aggregate::listener));
+  _aggregate->addListener(boost::bind(&Aggregate::listener, this, _1));
 }
 
 void
@@ -42,15 +42,15 @@ Aggregate::listener(TupleRef t)
   }
 
   // If there's a pull callback, call it
-  if (_pullCallback != cbv_null) {
+  if (_pullCallback != b_cbv_null) {
     log(LoggerI::INFO, 0, "listener: wakeup puller");
     _pullCallback();
-    _pullCallback = cbv_null;
+    _pullCallback = b_cbv_null;
   }
 }
 
 TuplePtr
-Aggregate::pull(int port, cbv cb) 
+Aggregate::pull(int port, b_cbv cb) 
 {
   // Is this the right port?
   assert(port == 0);
@@ -58,7 +58,7 @@ Aggregate::pull(int port, cbv cb)
   // Do I have a pending update?
   if (!_pending) {
     // Nope, no pending update.  Deal with underruns.
-    if (_pullCallback == cbv_null) {
+    if (_pullCallback == b_cbv_null) {
       // Accept the callback
       log(LoggerI::INFO, 0, "pull: raincheck");
       _pullCallback = cb;
@@ -69,7 +69,7 @@ Aggregate::pull(int port, cbv cb)
     return 0;
   } else {
     // I'd better have no callback pending and definitely a value
-    assert(_pullCallback == cbv_null);
+    assert(_pullCallback == b_cbv_null);
     assert(_latest != NULL);
 
     // No longer pending

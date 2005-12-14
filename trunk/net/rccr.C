@@ -238,7 +238,7 @@ REMOVABLE_INLINE void RateCCR::Connection::clearHistory() {
 //
 
 RateCCR::RateCCR(str name) 
-  : Element(name, 1, 2), _ack_cb(cbv_null) { }
+  : Element(name, 1, 2), _ack_cb(b_cbv_null) { }
 
 /**
  * Acknowledge tuple p if ack_q is empty and output1 is open.
@@ -297,9 +297,9 @@ TuplePtr RateCCR::simple_action(TupleRef tp)
   ack->freeze();
   ack_q_.push_back(ack);			// Append to ack queue
 
-  if (_ack_cb != cbv_null) {
-    (*_ack_cb)();				// Notify new ack
-    _ack_cb = cbv_null;
+  if (_ack_cb != b_cbv_null) {
+    _ack_cb();				// Notify new ack
+    _ack_cb = b_cbv_null;
   } 
   return strip(tp);				// Forward data tuple
 }
@@ -308,7 +308,7 @@ TuplePtr RateCCR::simple_action(TupleRef tp)
  * Pulls the next acknowledgement in ack_q_ to send to the
  * receiver.
  */
-TuplePtr RateCCR::pull(int port, cbv cb)
+TuplePtr RateCCR::pull(int port, b_cbv cb)
 {
   if (port == 1) {
     if (!ack_q_.empty()) {
@@ -327,7 +327,7 @@ TuplePtr RateCCR::pull(int port, cbv cb)
 /**
  * Port 1 deals with Flow control
  */
-int RateCCR::push(int port, TupleRef tp, cbv cb)
+int RateCCR::push(int port, TupleRef tp, b_cbv cb)
 {
   if (port == 1) {
   /*

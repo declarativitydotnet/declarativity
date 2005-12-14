@@ -30,15 +30,15 @@ public:
 
   TuplePtr simple_action(TupleRef p);
 
-  TuplePtr pull(int port, cbv cb);
+  TuplePtr pull(int port, b_cbv cb);
 
-  int push(int port, TupleRef tp, cbv cb);	// Rate control input
+  int push(int port, TupleRef tp, b_cbv cb);	// Rate control input
 
 private:
   class Connection;
   REMOVABLE_INLINE TuplePtr strip(TuplePtr p);
 
-  cbv  _ack_cb;
+  b_cbv  _ack_cb;
 
   std::deque <TuplePtr>        ack_q_;	// Output ack queue
   std::map <str, Connection*>  cmap_;	// Interval weights

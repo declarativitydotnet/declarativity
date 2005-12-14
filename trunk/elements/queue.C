@@ -15,7 +15,7 @@
 #include<iostream>
 
 Queue::Queue(str name, unsigned int queueSize)
-  : Element(name, 1, 1), _pullCB(cbv_null), _pushCB(cbv_null)
+  : Element(name, 1, 1), _pullCB(b_cbv_null), _pushCB(b_cbv_null)
 {
   _size = queueSize;
 }
@@ -25,15 +25,15 @@ Queue::~Queue()
 }
 
 /* push. When receive, put to queue. If have pending, wake up.*/
-int Queue::push(int port, TupleRef p, cbv cb)
+int Queue::push(int port, TupleRef p, b_cbv cb)
 {
   _q.push(p);  
 
   log(LoggerI::INFO, 0, str(strbuf() << "Push " << p->toString()) << ", queuesize=" << _q.size());
-  if (_pullCB != cbv_null) {
+  if (_pullCB != b_cbv_null) {
     // is there a pending callback? If so, wake it up
     _pullCB();
-    _pullCB = cbv_null;
+    _pullCB = b_cbv_null;
   } else {
       log(LoggerI::INFO, 0, "No pending pull callbacks");
   }
@@ -50,7 +50,7 @@ int Queue::push(int port, TupleRef p, cbv cb)
 
 
 /* pull. When pull, drain the queue. Do nothing if queue is empty but register callback. */
-TuplePtr Queue::pull(int port, cbv cb)
+TuplePtr Queue::pull(int port, b_cbv cb)
 {
   if (_q.size() == 0) { 
     log(LoggerI::INFO, 0, "Queue is empty during pull");
@@ -60,9 +60,9 @@ TuplePtr Queue::pull(int port, cbv cb)
   TuplePtr p = _q.front();
   _q.pop();
 
-  if (_pushCB != cbv_null) {
+  if (_pushCB != b_cbv_null) {
     _pushCB();
-    _pushCB = cbv_null;
+    _pushCB = b_cbv_null;
   }
 
   log(LoggerI::INFO, 0, str(strbuf() << "Pull succeed " << p->toString() << ", queuesize=" << _q.size()));

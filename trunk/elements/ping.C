@@ -38,7 +38,7 @@
 /// the previous ping is lost or dead
 /////////////////////////////////
 Ping::Ping(str name, int numPings, int seconds, double retry_interval)
-  : Element(name, 2, 2), _wakeupCB(wrap(this, &Ping::wakeup)), _runTimerCB(wrap(this, &Ping::runTimer))
+  : Element(name, 2, 2), _wakeupCB(boost::bind(&Ping::wakeup, this)), _runTimerCB(boost::bind(&Ping::runTimer, this))
 {
   _name = name;
   _seconds = (uint) floor(seconds);
@@ -58,7 +58,7 @@ int Ping::initialize()
   return 0;
 }
 
-int Ping::push(int port, TupleRef p, cbv cb)
+int Ping::push(int port, TupleRef p, b_cbv cb)
 {
   // when received a ping(X,Y) request
   // first, check generate a ping request to be sent out

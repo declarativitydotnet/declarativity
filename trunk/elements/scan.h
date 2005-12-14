@@ -36,7 +36,7 @@ class Scan : public Element {
   const char *flow_code() const			{ return "/-"; }
   
   /** Return a match to the current lookup */
-  TuplePtr pull(int port, cbv cb);
+  TuplePtr pull(int port, b_cbv cb);
 
   void listener(TupleRef t);
   
@@ -47,7 +47,7 @@ class Scan : public Element {
 
   bool _firstTime, _continuous;
   std::list<TuplePtr> scanBuffer;
-  cbv _pullCB;
+  b_cbv _pullCB;
 };
 
 #endif /* __SCAN_H_ */

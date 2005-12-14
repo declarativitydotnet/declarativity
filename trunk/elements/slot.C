@@ -14,13 +14,13 @@
 Slot::Slot(str name)
   : Element(name, 1, 1),
     _t(NULL),
-    _push_cb(cbv_null),
-    _pull_cb(cbv_null)
+    _push_cb(b_cbv_null),
+    _pull_cb(b_cbv_null)
 {
 }
 
 
-int Slot::push(int port, TupleRef t, cbv cb)
+int Slot::push(int port, TupleRef t, b_cbv cb)
 {
   // Is this the right port?
   assert(port == 0);
@@ -35,7 +35,7 @@ int Slot::push(int port, TupleRef t, cbv cb)
 
   // One way or another I must accept a push callback if I don't already
   // have one, since either way I'll block my pushes.
-  if (_push_cb != cbv_null) {
+  if (_push_cb != b_cbv_null) {
     // Complain and do nothing
     log(LoggerI::INFO, 0, "push: callback overrun");
   } else {
@@ -51,10 +51,10 @@ int Slot::push(int port, TupleRef t, cbv cb)
     log(LoggerI::INFO, 0, "push: put accepted");
 
     // Unblock the puller if one is waiting
-    if (_pull_cb != cbv_null) {
+    if (_pull_cb != b_cbv_null) {
       log(LoggerI::INFO, 0, "push: wakeup puller");
       _pull_cb();
-      _pull_cb = cbv_null;
+      _pull_cb = b_cbv_null;
     }
   } else {
     // I already have a tuple so the one I just accepted is dropped
@@ -63,7 +63,7 @@ int Slot::push(int port, TupleRef t, cbv cb)
   return 0;
 }
 
-TuplePtr Slot::pull(int port, cbv cb) 
+TuplePtr Slot::pull(int port, b_cbv cb) 
 {
   // Is this the right port?
   assert(port == 0);
@@ -73,10 +73,10 @@ TuplePtr Slot::pull(int port, cbv cb)
     log(LoggerI::INFO, 0, "pull: will succeed");
     // I do so I will return it.  First, unblock my pusher if one is
     // waiting
-    if (_push_cb != cbv_null) {
+    if (_push_cb != b_cbv_null) {
       log(LoggerI::INFO, 0, "pull: wakeup pusher");
       _push_cb();
-      _push_cb = cbv_null;
+      _push_cb = b_cbv_null;
     }
 
     TuplePtr t = _t;
@@ -84,7 +84,7 @@ TuplePtr Slot::pull(int port, cbv cb)
     return t;
   } else {
     // I don't have a tuple.  Do I have a pull callback already?
-    if (_pull_cb == cbv_null) {
+    if (_pull_cb == b_cbv_null) {
       // Accept the callback
       log(LoggerI::INFO, 0, "pull: raincheck");
       _pull_cb = cb;

@@ -25,8 +25,8 @@ public:
   const char *processing() const { return "lh/lh"; };
   const char *flow_code() const	 { return "--/--"; };
 
-  int push(int port, TupleRef tp, cbv cb); 
-  TuplePtr pull(int port, cbv cb);
+  int push(int port, TupleRef tp, b_cbv cb); 
+  TuplePtr pull(int port, b_cbv cb);
 
   // Difference between current time and that given in timespec
   static REMOVABLE_INLINE uint32_t delay(timespec*);	
@@ -40,7 +40,7 @@ private:
   REMOVABLE_INLINE void feedback(uint32_t, uint32_t, double);	
 
   bool     data_on_;
-  cbv      data_cbv_;
+  b_cbv    data_cbv_;
 
   uint32_t  trate_;			// Allowable tuple rate (tuples/sec)
   uint32_t  rrate_;			// Receiver tuple rate (tuples/sec)

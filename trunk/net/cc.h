@@ -35,12 +35,12 @@ public:
 
   TuplePtr simple_action(TupleRef p);		// Ack on output1 before passing to output0.
 
-  TuplePtr pull(int port, cbv cb);		// Pull next acknowledgement from ack_q
+  TuplePtr pull(int port, b_cbv cb);		// Pull next acknowledgement from ack_q
 
-  int push(int port, TupleRef tp, cbv cb);	// Flow control input
+  int push(int port, TupleRef tp, b_cbv cb);	// Flow control input
 
 private:
-  cbv _ack_cb; 					// Callback to send an ack 
+  b_cbv _ack_cb; 					// Callback to send an ack 
 
   double   rwnd_;				// Receiver window size
   int      seq_field_;
@@ -64,8 +64,8 @@ public:
   const char *processing() const { return "hh/ll"; };
   const char *flow_code() const	 { return "--/--"; };
 
-  int push(int port, TupleRef tp, cbv cb);	// Incoming, either add to send_q or ack
-  TuplePtr pull(int port, cbv cb);		// Rate limited output tuple stream
+  int push(int port, TupleRef tp, b_cbv cb);	// Incoming, either add to send_q or ack
+  TuplePtr pull(int port, b_cbv cb);		// Rate limited output tuple stream
 
 private:
   void timeout_cb(OTuple *otp);				// Callback for to retry sending a tuple
@@ -76,8 +76,8 @@ private:
   REMOVABLE_INLINE int  current_window();		// Returns the current window size
   REMOVABLE_INLINE int  max_window();			// Returns the current window size
 
-  cbv _din_cb; 					// Callback for data input ready
-  cbv _dout_cb; 				// Callback for data output ready
+  b_cbv _din_cb; 					// Callback for data input ready
+  b_cbv _dout_cb; 				// Callback for data output ready
     
   int32_t sa_;					// Scaled avg. RTT (ms) scaled by 8
   int32_t sv_;					// Scaled variance RTT (ms) scaled by 4

@@ -36,7 +36,7 @@
 #define MAP(key) \
 do { \
   timecb_t *t = delaycb(rto_/1000, (rto_ % 1000)*1000000, \
-                        wrap(this, &RateCCT::tuple_timeout, (key))); \
+                        boost::bind(&RateCCT::tuple_timeout, this, (key))); \
   tmap_.insert(std::make_pair((key), t)); \
 } while (0)
 
@@ -47,9 +47,9 @@ do { \
     if (c) timecb_remove(i->second); \
     tmap_.erase(i); \
   } \
-  if (tmap_.size() < trate_ && data_cbv_ != cbv_null) { \
-      (*data_cbv_)(); \
-      data_cbv_ = cbv_null; \
+  if (tmap_.size() < trate_ && data_cbv_ != b_cbv_null) { \
+      data_cbv_(); \
+      data_cbv_ = b_cbv_null; \
     } \
 } while (0)
 
@@ -59,7 +59,7 @@ do { \
     TuplePtr tp = Tuple::mk(); \
     tp->append(Val_Str::mk((status))); \
     tp->append(Val_UInt64::mk(s)); \
-    assert(output(1)->push(tp, cbv_null)); \
+    assert(output(1)->push(tp, b_cbv_null)); \
   } \
 } while (0)
 
@@ -77,7 +77,7 @@ do { \
  * Output 2 (pull): Status of the CC element. (Optional)
  */
 RateCCT::RateCCT(str name, bool tstat) 
-  : Element(name, 2, 2), data_on_(true), data_cbv_(cbv_null), 
+  : Element(name, 2, 2), data_on_(true), data_cbv_(b_cbv_null), 
     trate_(1), rtt_(100), rto_(4000), nofeedback_(NULL), tstat_(tstat)
 {
   clock_gettime(CLOCK_REALTIME, &tld_);
@@ -88,7 +88,7 @@ RateCCT::RateCCT(str name, bool tstat)
  * port 0: Indicates a tuple to send.
  * port 1: Tuple received.
  */
-int RateCCT::push(int port, TupleRef tp, cbv cb)
+int RateCCT::push(int port, TupleRef tp, b_cbv cb)
 {
   assert(port == 1);
 
@@ -113,20 +113,20 @@ int RateCCT::push(int port, TupleRef tp, cbv cb)
   }
   catch (Value::TypeError& e) { } 
 
-  assert(output(1)->push(tp, cbv_null)); // Pass data tuple through
+  assert(output(1)->push(tp, b_cbv_null)); // Pass data tuple through
   return 1;
 }
 
 /**
  * port 2: Return a tuple containing the internal CC state
  */
-TuplePtr RateCCT::pull(int port, cbv cb)
+TuplePtr RateCCT::pull(int port, b_cbv cb)
 {
   TuplePtr tp = NULL;
 
   if (port == 0) {
     if (tmap_.size() < trate_ && 
-        (data_on_ = (tp = input(0)->pull(wrap(this, &RateCCT::data_ready))) != NULL)) {
+        (data_on_ = (tp = input(0)->pull(boost::bind(&RateCCT::data_ready, this))) != NULL)) {
       return package(tp);
     }
     data_cbv_ = cb;
@@ -145,9 +145,9 @@ TuplePtr RateCCT::pull(int port, cbv cb)
 void RateCCT::data_ready()
 {
   data_on_ = true;
-  if (data_cbv_ != cbv_null) {
-    (*data_cbv_)();
-    data_cbv_ = cbv_null;
+  if (data_cbv_ != b_cbv_null) {
+    data_cbv_();
+    data_cbv_ = b_cbv_null;
   }
 }
 
@@ -252,5 +252,5 @@ REMOVABLE_INLINE void RateCCT::feedback(uint32_t rt, uint32_t X_recv, double p)
   rrate_ = X_recv;		// Save the receiver rate
   uint32_t tms = max(rto_, 8000/trate_);
   nofeedback_ = delaycb(tms/1000, (tms % 1000)*1000000,
-                        wrap(this, &RateCCT::feedback_timeout));
+                        boost::bind(&RateCCT::feedback_timeout, this));
 }

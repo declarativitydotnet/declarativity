@@ -27,8 +27,8 @@ public:
 
   CSVParser(str);
 
-  int push(int port, TupleRef t, cbv cb);
-  TuplePtr pull(int port, cbv);
+  int push(int port, TupleRef t, b_cbv cb);
+  TuplePtr pull(int port, b_cbv);
 
   const char *class_name() const		{ return "CSVParser";}
   const char *processing() const		{ return PUSH_TO_PULL; }
@@ -43,9 +43,9 @@ private:
   std::queue<TupleRef> _q;
 
   // Dataflow synchronization callbacks
-  cbv	_push_cb;
+  b_cbv	_push_cb;
   bool  _push_blocked;
-  cbv	_pull_cb;
+  b_cbv	_pull_cb;
   
   // Regular expressions for matching the input
   rxx	_re_line;

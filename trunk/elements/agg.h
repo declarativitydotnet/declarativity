@@ -22,8 +22,8 @@ public:
 
   ~Agg();
   
-  int push(int port, TupleRef p, cbv cb);
-  TuplePtr pull(int port, cbv cb);  
+  int push(int port, TupleRef p, b_cbv cb);
+  TuplePtr pull(int port, b_cbv cb);  
 
   const char *class_name() const		{ return "Agg";}
   const char *processing() const		{ return "h/l"; }
@@ -34,7 +34,7 @@ private:
   bool checkBestTuple(TupleRef p);
   void updateBestTuple(TupleRef p);
 
-  cbv _pullCB, _pushCB;
+  b_cbv _pullCB, _pushCB;
   std::map<str, TupleRef> _buffer; // best values to send 
   std::map<str, TupleRef> _bestSoFar; // best tuple so far
   std::vector<unsigned int> _groupByFields;
