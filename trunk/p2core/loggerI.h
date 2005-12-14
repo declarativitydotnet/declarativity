@@ -22,6 +22,8 @@
 
 class LoggerI { 
 public:
+  virtual ~LoggerI() {};
+
   
   enum Level { ALL = 0, WORDY, INFO, WARN, ERROR, NONE };
 

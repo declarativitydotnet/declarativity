@@ -29,6 +29,8 @@
 class Parse_Event 
 {
 public:
+  virtual ~Parse_Event() {};
+
   enum Event {UPDATE, AGGUPDATE, RECV, PERIODIC};
   
   Parse_Event(Parse_Functor *pf, Event e)
@@ -45,6 +47,8 @@ public:
 class Parse_Action 
 {
 public:
+  virtual ~Parse_Action() {};
+
   enum Action {SEND, ADD, DELETE};
 
   Parse_Action(Parse_Functor *pf, Action a)

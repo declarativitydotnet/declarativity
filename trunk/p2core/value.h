@@ -72,6 +72,7 @@ class Value {
 protected: 
 
   Value() {};
+  virtual ~Value() {};
 
 public:  
 

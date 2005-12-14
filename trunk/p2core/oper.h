@@ -62,6 +62,9 @@ namespace opr {
   
   class Oper {
   public:
+    virtual ~Oper() {};
+
+
     /**
      * Operator Type Table
      * This is an NxN matrix of operator functions. Most operators

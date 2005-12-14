@@ -171,7 +171,8 @@ void testOverLog(LoggerI::Level level,
     fatal << "Cannot fork a preprocessor\n";
   } else if (pid == 0) {
     // I am the preprocessor
-    execlp("cpp", "cpp", "-P", filename.cstr(), processed.cstr(), NULL);
+    execlp("cpp", "cpp", "-P", filename.cstr(), processed.cstr(),
+           (char*) NULL);
 
     // If I'm here, I failed
     fatal << "Preprocessor execution failed\n";
