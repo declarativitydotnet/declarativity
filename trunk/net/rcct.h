@@ -46,11 +46,11 @@ private:
   uint32_t  rrate_;			// Receiver tuple rate (tuples/sec)
   uint32_t  rtt_;			// Estimated round trip time
   uint32_t  rto_;			// The round-trip timeout
-  timecb_t  *nofeedback_;		// No feedback timer
+  timeCBHandle  *nofeedback_;		// No feedback timer
   timespec  tld_;			// Time last doubled (for slow start)
   bool      tstat_;
 
-  typedef std::map<SeqNum, timecb_t*> TupleTOIndex;
+  typedef std::map<SeqNum, timeCBHandle*> TupleTOIndex;
   TupleTOIndex tmap_;			// Map containing unacked in transit tuples
 };
   

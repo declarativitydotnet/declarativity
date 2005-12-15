@@ -38,12 +38,12 @@
 /// the previous ping is lost or dead
 /////////////////////////////////
 Ping::Ping(str name, int numPings, int seconds, double retry_interval)
-  : Element(name, 2, 2), _wakeupCB(boost::bind(&Ping::wakeup, this)), _runTimerCB(boost::bind(&Ping::runTimer, this))
+  : Element(name, 2, 2),
+    _seconds(seconds),
+    _wakeupCB(boost::bind(&Ping::wakeup, this)),
+    _runTimerCB(boost::bind(&Ping::runTimer, this))
 {
   _name = name;
-  _seconds = (uint) floor(seconds);
-  seconds -= _seconds;
-  _nseconds = (uint) (seconds * 1000000000);
   _numPings = numPings;
   _retry_interval = retry_interval;
 }
@@ -52,8 +52,7 @@ int Ping::initialize()
 {
   log(LoggerI::INFO, 0, "initialize");
   // Schedule my timer
-  _timeCallback = delaycb(_seconds,
-                          _nseconds, _runTimerCB);
+  _timeCallback = delayCB(_seconds, _runTimerCB);
 
   return 0;
 }
@@ -189,8 +188,7 @@ void Ping::runTimer()
   }
 
   // Reschedule me into the future
-  _timeCallback = delaycb(_seconds,
-			  _nseconds,
+  _timeCallback = delayCB(_seconds,
 			  _runTimerCB);  
 
 }
@@ -203,8 +201,7 @@ void Ping::wakeup()
   log(LoggerI::INFO, 0, "wakeup");
 
   // Okey dokey.  Reschedule me into the future
-  _timeCallback = delaycb(_seconds,
-                          _nseconds,
+  _timeCallback = delayCB(_seconds,
                           _runTimerCB);
 }
 

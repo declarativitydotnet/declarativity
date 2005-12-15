@@ -100,8 +100,9 @@ AC_CHECK_FUNCS([dup2 strchr strerror strstr])
 
 AC_CONFIG_FILES([
 	Makefile 
+	eventLoop/Makefile
 	p2core/Makefile 
-  swig/Makefile
+	swig/Makefile
 	elements/Makefile 
 	net/Makefile 
 	tests/Makefile 

@@ -65,7 +65,7 @@ private:
   b_cbv _catchUp;
 
   /** My time callback */
-  timecb_t * _timeCallback;
+  timeCBHandle * _timeCallback;
 
   /** My own output callback */
   b_cbv _callback;

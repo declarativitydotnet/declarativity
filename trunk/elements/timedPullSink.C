@@ -17,20 +17,17 @@
 TimedPullSink::TimedPullSink(str name,
                              double seconds)
   : Element(name, 1, 0),
+    _seconds(seconds),
     _wakeupCB(boost::bind(&TimedPullSink::wakeup, this)),
     _runTimerCB(boost::bind(&TimedPullSink::runTimer, this))
 {
-  _seconds = (uint) floor(seconds);
-  seconds -= _seconds;
-  _nseconds = (uint) (seconds * 1000000000);
 }
     
 int TimedPullSink::initialize()
 {
   log(LoggerI::INFO, 0, "initialize: TIMEDPULLSINK/init");
   // Schedule my timer
-  _timeCallback = delaycb(_seconds,
-                          _nseconds, _runTimerCB);
+  _timeCallback = delayCB(_seconds, _runTimerCB);
 
   return 0;
 }
@@ -49,8 +46,7 @@ void TimedPullSink::runTimer()
     log(LoggerI::INFO, 0, "runTimer: sleeping");
   } else {
     // Reschedule me into the future
-    _timeCallback = delaycb(_seconds,
-                            _nseconds,
+    _timeCallback = delayCB(_seconds,
                             _runTimerCB);
     log(LoggerI::INFO, 0, "runTimer: rescheduling");
   }
@@ -64,8 +60,7 @@ void TimedPullSink::wakeup()
   log(LoggerI::INFO, 0, "wakeup");
 
   // Okey dokey.  Reschedule me into the future
-  _timeCallback = delaycb(_seconds,
-                          _nseconds,
+  _timeCallback = delayCB(_seconds,
                           _runTimerCB);
 }
 

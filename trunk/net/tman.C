@@ -20,14 +20,15 @@
 #include "val_time.h"
 
 TrafficManager::TrafficManager(str n, str a, uint k, uint r, double s)
-  : Element(n, 1, 2), 
+  : Element(n, 1, 2),
+    _seconds((uint) s), 
     _wakeupCB(boost::bind(&TrafficManager::wakeup, this)),
     _runTimerCB(boost::bind(&TrafficManager::runTimer, this)),
-    my_addr_(a), my_key_(k), key_range_(r), total_received_(0)
+    my_addr_(a),
+    my_key_(k),
+    key_range_(r),
+    total_received_(0)
 {
-  _seconds = (uint) floor(s);
-  s -= _seconds;
-  _nseconds = (uint) (s * 1000000000);
 }
 
 int TrafficManager::push(int port, TupleRef tp, b_cbv cb) {
@@ -52,8 +53,8 @@ int TrafficManager::initialize()
 {
   log(LoggerI::INFO, 0, "initialize");
   // Schedule my timer
-  if (_seconds || _nseconds)
-    _timeCallback = delaycb(_seconds, _nseconds, _runTimerCB);
+  if (_seconds != 0.0)
+    _timeCallback = delayCB(_seconds, _runTimerCB);
   return 0;
 }
 
@@ -83,7 +84,7 @@ void TrafficManager::runTimer()
   } else {
     // Reschedule me into the future
     log(LoggerI::INFO, 0, "runTimer: rescheduling");
-    _timeCallback = delaycb(_seconds, _nseconds, _runTimerCB);
+    _timeCallback = delayCB(_seconds, _runTimerCB);
   }
 }
 
@@ -95,7 +96,7 @@ void TrafficManager::wakeup()
   log(LoggerI::INFO, 0, "wakeup");
 
   // Okey dokey.  Reschedule me into the future
-  _timeCallback = delaycb(_seconds, _nseconds, _runTimerCB);
+  _timeCallback = delayCB(_seconds, _runTimerCB);
 }
 
 REMOVABLE_INLINE uint TrafficManager::genLookupKey() {

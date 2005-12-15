@@ -21,6 +21,7 @@ TimedPullPush::TimedPullPush(str name,
                              double seconds,
                              int tuples)
   : Element(name, 1, 1),
+    _seconds(seconds),
     _tuples(tuples),
     _counter(0),
     _unblockPull(boost::bind(&TimedPullPush::pullWakeup, this)),
@@ -29,9 +30,6 @@ TimedPullPush::TimedPullPush(str name,
     _timeCallback(NULL)
 {
   assert(_tuples >= 0);
-  _seconds = (uint) floor(seconds);
-  seconds -= _seconds;
-  _nseconds = (uint) (seconds * 1000000000);
 }
 
 int TimedPullPush::initialize()
@@ -99,8 +97,7 @@ TimedPullPush::reschedule()
 
     log(LoggerI::INFO, 0, "reschedule: rescheduling");
     // Okey dokey.  Reschedule me into the future
-    _timeCallback = delaycb(_seconds,
-                            _nseconds,
+    _timeCallback = delayCB(_seconds,
                             _runTimerCB);
   } else {
     log(LoggerI::INFO, 0, "reschedule: DONE!");

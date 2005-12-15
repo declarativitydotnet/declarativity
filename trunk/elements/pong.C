@@ -30,20 +30,20 @@
 /// Pong 
 ////////////////////////////
 Pong::Pong(str name, int seconds)
-    : Element(name, 1, 1), _wakeupCB(boost::bind(&Pong::wakeup, this)), _runTimerCB(boost::bind(&Pong::runTimer, this))
+  : Element(name, 1, 1),
+    _seconds(seconds),
+    _wakeupCB(boost::bind(&Pong::wakeup, this)),
+    _runTimerCB(boost::bind(&Pong::runTimer, this))
 {
   _name = name;
-  _seconds = (uint) floor(seconds);
-  seconds -= _seconds;
-  _nseconds = (uint) (seconds * 1000000000);
 }
 
 int Pong::initialize()
 {
   log(LoggerI::INFO, 0, "initialize");
   // Schedule my timer
-  _timeCallback = delaycb(_seconds,
-                          _nseconds, _runTimerCB);
+  _timeCallback = delayCB(_seconds,
+                          _runTimerCB);
 
   return 0;
 }
@@ -79,8 +79,7 @@ void Pong::wakeup()
   log(LoggerI::INFO, 0, "wakeup");
 
   // Okey dokey.  Reschedule me into the future
-  _timeCallback = delaycb(_seconds,
-                          _nseconds,
+  _timeCallback = delayCB(_seconds,
                           _runTimerCB);
 }
 
@@ -105,8 +104,7 @@ void Pong::runTimer()
 
   // Reschedule me into the future
   //log(LoggerI::INFO, 0, "runTimer: rescheduling");
-  _timeCallback = delaycb(_seconds,
-			  _nseconds,
+  _timeCallback = delayCB(_seconds,
 			  _runTimerCB);  
 }
 

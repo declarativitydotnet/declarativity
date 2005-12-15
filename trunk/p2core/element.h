@@ -40,29 +40,10 @@
 #ifndef __ELEMENT_H__
 #define __ELEMENT_H__
 
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
 #include "inlines.h"
 #include "tuple.h"
 #include "loggerI.h"
-
-// Common callback types
-typedef boost::function<void (void)>        b_cbv;
-typedef boost::function<void (int)>         b_cbi;
-typedef boost::function<void (std::string)> b_cbs;
-typedef boost::function<void (bool)>        b_cbb;
-
-static void b_cbv_null() {};
-// static void b_cbi_null(int) {};
-// static void b_cbs_null(std::string) {};
-// static void b_cbb_null(bool) {};
-
-#undef delaycb
-#define delaycb(a, b, c) NULL
-#undef fdcb
-#define fdcb(a, b, c)
-#undef tcpconnect
-#define tcpconnect(a, b, c) NULL
+#include "loop.h"
 
 class Router;
 typedef ref< Router > RouterRef;

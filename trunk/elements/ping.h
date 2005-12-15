@@ -61,14 +61,11 @@ private:
   void generatePingSuccess(TupleRef p);
   void generatePingFailure(TupleRef p);
 
-  /** The integer seconds portion of the interval */
+  /** The interval in seconds */
   uint _seconds;
 
-  /** The nsec portion of the interval */
-  uint _nseconds;
-
   /** My time callback ID. */
-  timecb_t * _timeCallback;
+  timeCBHandle * _timeCallback;
 
   /** My wakeup callback */
   b_cbv _wakeupCB, _runTimerCB;

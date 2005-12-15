@@ -76,11 +76,8 @@ private:
   // name of new agg tuples
   str _newTableName;
 
- /** The integer seconds portion of the interval */
-  uint _seconds;
-
-  /** The nsec portion of the interval */
-  uint _nseconds;
+  /** The interval in seconds */
+  double _seconds;
 
   /** My current iterators */
   TupleMultiMap::iterator _multiIterator;
@@ -93,7 +90,7 @@ private:
   b_cbv _runTimerCB;
 
   /** My time callback ID. */
-  timecb_t * _timeCallback;
+  timeCBHandle * _timeCallback;
 
   /** My wakeup method */
   void wakeup();

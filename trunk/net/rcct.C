@@ -35,8 +35,7 @@
 
 #define MAP(key) \
 do { \
-  timecb_t *t = delaycb(rto_/1000, (rto_ % 1000)*1000000, \
-                        boost::bind(&RateCCT::tuple_timeout, this, (key))); \
+  timeCBHandle *t = delayCB((0.0 + rto_) / 1000.0, boost::bind(&RateCCT::tuple_timeout, this, (key))); \
   tmap_.insert(std::make_pair((key), t)); \
 } while (0)
 
@@ -44,7 +43,7 @@ do { \
 do { \
   TupleTOIndex::iterator i = tmap_.find((key)); \
   if (i != tmap_.end()) { \
-    if (c) timecb_remove(i->second); \
+    if (c) timeCBRemove(i->second); \
     tmap_.erase(i); \
   } \
   if (tmap_.size() < trate_ && data_cbv_ != b_cbv_null) { \
@@ -226,7 +225,7 @@ REMOVABLE_INLINE TuplePtr RateCCT::package(TuplePtr tp)
 REMOVABLE_INLINE void RateCCT::feedback(uint32_t rt, uint32_t X_recv, double p)
 {
   if (nofeedback_ != NULL) {
-    timecb_remove(nofeedback_);
+    timeCBRemove(nofeedback_);
   }
 
   if (!rtt_) {
@@ -251,6 +250,6 @@ REMOVABLE_INLINE void RateCCT::feedback(uint32_t rt, uint32_t X_recv, double p)
 
   rrate_ = X_recv;		// Save the receiver rate
   uint32_t tms = max(rto_, 8000/trate_);
-  nofeedback_ = delaycb(tms/1000, (tms % 1000)*1000000,
+  nofeedback_ = delayCB((0.0 + tms) / 1000.0,
                         boost::bind(&RateCCT::feedback_timeout, this));
 }

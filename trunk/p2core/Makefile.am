@@ -41,7 +41,7 @@ libp2core_la_SOURCES = \
 	val_ip_addr.C \
 	dot.C
 
-INCLUDES = @SFS_INC@
+INCLUDES = @SFS_INC@ -I../eventLoop
 
 CLEANFILES = core *.core *~ *.gen.h *.gen.txt pel_lexer.C
 

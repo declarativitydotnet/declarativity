@@ -34,11 +34,8 @@ class TimedPushSource : public Element {
   void runTimer();
   
  private:
-  /** The integer seconds portion of the interval */
-  uint _seconds;
-
-  /** The nsec portion of the interval */
-  uint _nseconds;
+  /** The interval duration in seconds. */
+  double _seconds;
 
   /** My wakeup callback */
   b_cbv _wakeupCB;
@@ -47,7 +44,7 @@ class TimedPushSource : public Element {
   b_cbv _runTimerCB;
 
   /** My time callback ID. */
-  timecb_t * _timeCallback;
+  timeCBHandle * _timeCallback;
 
   /** My wakeup method */
   void wakeup();

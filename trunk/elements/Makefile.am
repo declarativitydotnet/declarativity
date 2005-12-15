@@ -61,7 +61,7 @@ libp2elements_la_SOURCES = \
 	scan.C \
 	agg.C 
 
-INCLUDES = @SFS_INC@ -I../p2core
+INCLUDES = @SFS_INC@ -I../p2core -I../eventLoop
 
 CLEANFILES = core *.core *~
 EXTRA_DIST = .cvsignore

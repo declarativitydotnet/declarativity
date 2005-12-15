@@ -36,11 +36,8 @@ class TimedPullPush : public Element {
   void runTimer();
   
  private:
-  /** The integer seconds portion of the interval */
-  uint _seconds;
-
-  /** The nsec portion of the interval */
-  uint _nseconds;
+  /** The interval in seconds */
+  double _seconds;
 
   /** The number of tuples to pull */
   int _tuples;
@@ -58,7 +55,7 @@ class TimedPullPush : public Element {
   b_cbv _runTimerCB;
 
   /** My time callback ID. */
-  timecb_t * _timeCallback;
+  timeCBHandle * _timeCallback;
 
   /** My pull wakeup method */
   void pullWakeup();

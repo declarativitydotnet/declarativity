@@ -33,7 +33,7 @@ public:
 
   timespec  tt_;	// Transmit time
   SeqNum    seq_;	// Tuple sequence number
-  timecb_t  *tcb_;	// Used to cancel retransmit timer
+  timeCBHandle *tcb_;	// Used to cancel retransmit timer
   bool      wnd_;	// If true then window updated on timeout.
 };
 
@@ -151,7 +151,9 @@ TuplePtr CCT::pull(int port, b_cbv cb)
 void CCT::map(SeqNum seq, CCTuple *otp) 
 {
   tmap_.insert(std::make_pair(seq, otp));
-  otp->tcb_ = delaycb(rto_/1000, (rto_ % 1000)*1000000, boost::bind(&CCT::timeout_cb, this, otp)); 
+  otp->tcb_ =
+    delayCB((0.0 + rto_) / 1000.0,
+            boost::bind(&CCT::timeout_cb, this, otp)); 
 }
 
 int32_t CCT::dealloc(SeqNum seq, str status)
@@ -162,7 +164,9 @@ int32_t CCT::dealloc(SeqNum seq, str status)
     log(LoggerI::INFO, 0, strbuf()<<"DEALLOCATING seq("<<seq<<")"); 
     d = iter->second->delay();
 
-    if (iter->second->tcb_ != NULL) timecb_remove((iter->second)->tcb_);
+    if (iter->second->tcb_ != NULL) {
+      timeCBRemove((iter->second)->tcb_);
+    }
 
     delete iter->second;
     tmap_.erase(iter);

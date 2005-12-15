@@ -36,7 +36,7 @@ public:
   void resetTime() { clock_gettime (CLOCK_REALTIME, &tt_); }
 
   timespec  tt_;		// Transmit time
-  timecb_t  *tcb_;		// Used to cancel retransmit timer
+  timeCBHandle *tcb_;		// Used to cancel retransmit timer
   bool      wnd_;		// If true then window updated on timeout.
   uint32_t  tran_cnt_;		// Transmit counter.
   TuplePtr  tp_;		// The tuple.
@@ -264,7 +264,9 @@ void CCTx::map(SeqNum seq, OTuple *otp)
 {
   otp->tran_cnt_++;
   ot_map_.insert(std::make_pair(seq, otp));
-  otp->tcb_ = delaycb(rto_/1000, (rto_ % 1000)*1000000, wrap(this, &CCTx::timeout_cb, otp)); 
+  otp->tcb_ =
+    delayCB((0.0 + rto_) / 1000.0,
+            boost::bind(&CCTx::timeout_cb, this, otp)); 
 }
 
 int32_t CCTx::dealloc(SeqNum seq)
@@ -275,7 +277,9 @@ int32_t CCTx::dealloc(SeqNum seq)
     log(LoggerI::INFO, 0, strbuf()<<"DEALLOCATING seq("<<seq<<")"); 
     d = delay(&(iter->second)->tt_);
 
-    if (iter->second->tcb_ != NULL) timecb_remove((iter->second)->tcb_);
+    if (iter->second->tcb_ != NULL) {
+      timeCBRemove((iter->second)->tcb_);
+    }
     iter->second->tcb_ = NULL;
 
     delete iter->second;

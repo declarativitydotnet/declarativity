@@ -95,7 +95,9 @@ void PlSensor::enter_waiting()
     hdrs = NULL;
   }
   state = ST_WAITING;
-  wait_delaycb = delaycb(delay, 0, boost::bind(&PlSensor::enter_connecting, this));
+  wait_delaycb =
+    delayCB(delay,
+            boost::bind(&PlSensor::enter_connecting, this));
 }
 
 //

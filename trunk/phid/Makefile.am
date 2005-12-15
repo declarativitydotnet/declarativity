@@ -22,6 +22,7 @@ phid_SOURCES	= phid.C
 phid_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	@SFS_LIBARPC@ \
 	@SFS_LIBASYNC@
@@ -32,5 +33,6 @@ EXTRA_DIST = .cvsignore
 INCLUDES = @SFS_INC@ \
 	-I$(top_builddir)/p2core \
 	-I$(top_builddir)/elements \
+	-I$(top_builddir)/eventLoop \
 	-I$(top_builddir)/net
 

@@ -12,8 +12,12 @@
 #include "snetsim.h"
 
 SimpleNetSim::SimpleNetSim(str name, uint32_t min, uint32_t max, double p)
-  : Element(name,1, 1), _out_cb(b_cbv_null), min_delay_(min), max_delay_(max), 
-    drop_prob_(p), pull_pending(true)
+  : Element(name,1, 1),
+    _out_cb(b_cbv_null),
+    min_delay_(min),
+    max_delay_(max), 
+    drop_prob_(p),
+    pull_pending(true)
 {
 }
 
@@ -45,10 +49,8 @@ void SimpleNetSim::grab() {
     uint32_t d = min_delay_ + uint32_t((max_delay_ - min_delay_)*(rand()/double(RAND_MAX)));
     log(LoggerI::INFO, 0, strbuf() << "SimpleNetSim: Delaying for " << d << "(ms)"); 
 
-    if (d < 1000)
-      delaycb(0, d * 1000000, boost::bind(&SimpleNetSim::tuple_ready, this, t));
-    else
-      delaycb((d/1000), (d%1000) * 1000000, boost::bind(&SimpleNetSim::tuple_ready, this, t));
+    delayCB((0.0 + d) / 1000.0, boost::bind(&SimpleNetSim::tuple_ready,
+                                            this, t));
   } else {
     pull_pending = false; 
   }
@@ -58,7 +60,9 @@ void SimpleNetSim::grab() {
 void SimpleNetSim::element_cb() {
   log(LoggerI::INFO, 0, strbuf() << "SimpleNetSim element_cb(): Upstream callback called"); 
 
-  if (!pull_pending) delaycb(0, 0, bind::boost(&SimpleNetSim::grab, this));
+  if (!pull_pending) {
+    delayCB(0.0, boost::bind(&SimpleNetSim::grab, this));
+  }
   pull_pending = true;
 
   log(LoggerI::INFO, 0, strbuf() << "SimpleNetSim element_cb(): FINISHED"); 

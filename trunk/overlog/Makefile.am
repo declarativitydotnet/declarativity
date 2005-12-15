@@ -20,7 +20,7 @@ liboverlog_la_SOURCES = \
 	ol_context.C \
 	rtr_confgen.C
 
-INCLUDES = @SFS_INC@ -I../p2core -I../elements -I../net
+INCLUDES = @SFS_INC@ -I../p2core -I../elements -I../net -I../eventLoop
 
 CLEANFILES = core *.core *~ *.gen.h *.gen.txt ol_lexer.C \
 	ol_parser.output ol_parser.C ol_parser.tab.h ol_parser.tab.c

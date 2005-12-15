@@ -20,21 +20,18 @@
 TimedPushSource::TimedPushSource(str name,
                                  double seconds)
   : Element(name, 0, 1),
+    _seconds(seconds),
     _wakeupCB(boost::bind(&TimedPushSource::wakeup, this)),
     _runTimerCB(boost::bind(&TimedPushSource::runTimer, this))
 {
-  _seconds = (uint) floor(seconds);
-  seconds -= _seconds;
-  _nseconds = (uint) (seconds * 1000000000);
 }
     
 int TimedPushSource::initialize()
 {
   log(LoggerI::INFO, 0, "initialize");
   // Schedule my timer
-  _timeCallback = delaycb(_seconds,
-                          _nseconds, _runTimerCB);
-
+  _timeCallback = delayCB(_seconds, _runTimerCB);
+  
   return 0;
 }
 
@@ -71,8 +68,7 @@ void TimedPushSource::runTimer()
   } else {
     // Reschedule me into the future
     log(LoggerI::INFO, 0, "runTimer: rescheduling");
-    _timeCallback = delaycb(_seconds,
-                            _nseconds,
+    _timeCallback = delayCB(_seconds,
                             _runTimerCB);
   }
 }
@@ -85,7 +81,6 @@ void TimedPushSource::wakeup()
   log(LoggerI::INFO, 0, "wakeup");
 
   // Okey dokey.  Reschedule me into the future
-  _timeCallback = delaycb(_seconds,
-                          _nseconds,
+  _timeCallback = delayCB(_seconds,
                           _runTimerCB);
 }

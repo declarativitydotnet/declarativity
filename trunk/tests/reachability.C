@@ -317,7 +317,7 @@ void testMakeReach(LoggerI::Level level)
   router->activate();
 
   // Schedule kill
-  //delaycb(10, 0, wrap(&killJoin));
+  //delayCB(10, wrap(&killJoin));
 
   // Run the router
   amain();

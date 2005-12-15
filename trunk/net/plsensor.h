@@ -75,7 +75,7 @@ private:
   rxx		req_re;
   strbuf       *hdrs;
   in_addr	localaddr;
-  timecb_t     *wait_delaycb;
+  timeCBHandle *wait_delaycb;
 
 
   // Time between reconnects

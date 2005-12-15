@@ -103,6 +103,7 @@ join_LDADD = \
 paths_SOURCES = paths.C
 paths_LDADD = \
 	$(top_builddir)/planner/.libs/libp2planner.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
@@ -111,6 +112,7 @@ paths_LDADD = \
 
 runChord_SOURCES = runChord.C
 runChord_LDADD = \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
@@ -121,6 +123,7 @@ runOverLog_SOURCES = runOverLog.C
 runOverLog_LDADD = \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
@@ -129,12 +132,14 @@ runSymphony_SOURCES = runSymphony.C
 runSymphony_LDADD = \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 runSymphonicChord_SOURCES = runSymphonicChord.C
 runSymphonicChord_LDADD = \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
@@ -144,6 +149,7 @@ runSymphonicChord_LDADD = \
 runManyChords_SOURCES = runManyChords.C
 runManyChords_LDADD = \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
@@ -151,6 +157,7 @@ runManyChords_LDADD = \
 
 simple_lookup_SOURCES = simple_lookup.C
 simple_lookup_LDADD = \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
@@ -159,6 +166,7 @@ simple_lookup_LDADD = \
 lookupGenerator_SOURCES = lookupGenerator.C
 lookupGenerator_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
@@ -173,6 +181,7 @@ lookupGenerator_LDADD = \
 
 IDs_SOURCES = IDs.C
 IDs_LDADD = \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
@@ -180,6 +189,7 @@ net_SOURCES = net.C
 net_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
@@ -187,6 +197,7 @@ netcc_SOURCES = netcc.C
 netcc_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
@@ -194,12 +205,14 @@ netrcc_SOURCES = netrcc.C
 netrcc_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 netcc2_SOURCES = netcc2.C
 netcc2_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
@@ -207,18 +220,21 @@ netcc2_LDADD = \
 perfectChord_SOURCES = perfectChord.C
 perfectChord_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 basicelements_SOURCES	= basicelements.C
 basicelements_LDADD = \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 testQueue_SOURCES	= testQueue.C
 testQueue_LDADD = \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
@@ -226,17 +242,20 @@ testQueue_LDADD = \
 agg_SOURCES	= agg.C
 agg_LDADD = \
 	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 csv_SOURCES	= csv.C
 csv_LDADD = \
 	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 pingpong_SOURCES	= pingpong.C
 pingpong_LDADD = \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
@@ -244,6 +263,7 @@ pingpong_LDADD = \
 
 overlog_SOURCES	= overlog.C
 overlog_LDADD = \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
@@ -257,11 +277,14 @@ testPlanner_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 CLEANFILES = core *.core *~
 EXTRA_DIST = .cvsignore
-INCLUDES = @SFS_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements -I$(top_builddir)/net -I$(top_builddir)/overlog -I$(top_builddir)/planner
+INCLUDES = @SFS_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements \
+		-I$(top_builddir)/net -I$(top_builddir)/overlog \
+		-I$(top_builddir)/planner -I$(top_builddir)/eventLoop
 
 MAINTAINERCLEANFILES = aclocal.m4 install-sh mkinstalldirs \
 	missing configure config.guess config.sub config.h.in \

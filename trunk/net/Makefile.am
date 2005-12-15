@@ -31,7 +31,7 @@ libp2net_la_SOURCES = \
 	frag.C \
 	defrag.C
 
-INCLUDES = @SFS_INC@ -I../p2core
+INCLUDES = @SFS_INC@ -I../p2core -I../eventLoop
 
 CLEANFILES = core *.core *~
 EXTRA_DIST = .cvsignore

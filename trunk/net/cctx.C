@@ -170,7 +170,9 @@ TuplePtr CCTx::pull(int port, b_cbv cb)
 void CCTx::map(SeqNum seq, CCTuple *otp) 
 {
   tmap_.insert(std::make_pair(seq, otp));
-  otp->tcb_ = delaycb(rto_/1000, (rto_ % 1000)*1000000, wrap(this, &CCTx::timeout_cb, otp)); 
+  otp->tcb_ =
+    delayCB(((double) rto_) / 1000.0,
+            wrap(this, &CCTx::timeout_cb, otp)); 
 }
 
 int32_t CCTx::dealloc(SeqNum seq, str status)

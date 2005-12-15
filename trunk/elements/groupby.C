@@ -25,9 +25,11 @@ const int GroupBy::AVG_AGG = 2;
 
 GroupBy::GroupBy(str name, str newTableName, std::vector<int> primaryFields, std::vector<int> groupByFields, 
 		 std::vector<int> aggFields, std::vector<int> aggTypes, 
-		 double seconds, bool aggregateSelections): Element(name,1,1), 
-							    _wakeupCB(boost::bind(&GroupBy::wakeup, this)),
-							    _runTimerCB(boost::bind(&GroupBy::runTimer, this))
+		 double seconds, bool aggregateSelections)
+  : Element(name,1,1), 
+    _seconds(seconds),
+    _wakeupCB(boost::bind(&GroupBy::wakeup, this)),
+    _runTimerCB(boost::bind(&GroupBy::runTimer, this))
 {
   _primaryFields = primaryFields;
   _groupByFields = groupByFields;
@@ -36,9 +38,6 @@ GroupBy::GroupBy(str name, str newTableName, std::vector<int> primaryFields, std
   _newTableName = newTableName;
   _aggregateSelections = aggregateSelections;
 
-  _seconds = (uint) floor(seconds);
-  seconds -= _seconds;
-  _nseconds = (uint) (seconds * 1000000000);
   _numAdded = 0;
 
   assert(_aggregateSelections == false || (aggregateSelections == true && aggFields.size() == 1));
@@ -52,8 +51,7 @@ int GroupBy::initialize()
 {
   log(LoggerI::INFO, 0, "initialize");
   // Schedule my timer
-  _timeCallback = delaycb(_seconds,
-                          _nseconds, _runTimerCB);
+  _timeCallback = delayCB(_seconds, _runTimerCB);
 
   return 0;
 }
@@ -200,8 +198,7 @@ void GroupBy::runTimer()
 
   // Reschedule me into the future
   //log(LoggerI::INFO, 0, "runTimer: rescheduling");
-  _timeCallback = delaycb(_seconds,
-			  _nseconds,
+  _timeCallback = delayCB(_seconds,
 			  _runTimerCB);  
 }
 
@@ -213,8 +210,7 @@ void GroupBy::wakeup()
   log(LoggerI::INFO, 0, "wakeup");
 
   // Okey dokey.  Reschedule me into the future
-  _timeCallback = delaycb(_seconds,
-                          _nseconds,
+  _timeCallback = delayCB(_seconds,
                           _runTimerCB);
 }
 

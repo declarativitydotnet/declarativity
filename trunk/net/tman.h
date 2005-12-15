@@ -52,7 +52,7 @@ class TrafficManager : public Element {
   /** Callback to my runTimer() */
   b_cbv                  _runTimerCB;
   /** My time callback ID. */
-  timecb_t *           _timeCallback;
+  timeCBHandle *           _timeCallback;
 
   str  my_addr_;
   uint my_key_;
