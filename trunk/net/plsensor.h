@@ -31,19 +31,6 @@ public:
 
 private:
 
-  //
-  // Different versions of libasync have different names for a TCP
-  // connection-in-progress handle...
-  //
-#ifdef HAVE_TCPCONN_T_P
-  typedef tcpconn_t conn_t;
-#else
-#ifdef HAVE_TCPCONNECT_T_P
-  typedef tcpconnect_t *conn_t;
-#else
-#error No TCP connection type from libasync!
-#endif
-#endif
 
   void enter_connecting();
   void error_cleanup(uint32_t errnum, str errmsg);
@@ -52,8 +39,9 @@ private:
   void write_cb();
   void rx_hdr_cb();
   void rx_body_cb();
-  void socket_on() { fdcb(sd, selread, wrap(this,&PlSensor::rx_body_cb)); };
-  void socket_off() { fdcb(sd, selread, NULL); };
+  void socket_on() { fileDescriptorCB(sd, b_selread,
+                                      boost::bind(&PlSensor::rx_body_cb, this)); };
+  void socket_off() { fileDescriptorCB(sd, b_selread, NULL); };
   void element_cb();
   
   static const size_t MAX_REQUEST_SIZE = 10000;
@@ -71,7 +59,7 @@ private:
   u_int16_t	port;
   str		path;
   int		sd; 
-  conn_t        tc;
+  tcpHandle*    tc;
   rxx		req_re;
   strbuf       *hdrs;
   in_addr	localaddr;

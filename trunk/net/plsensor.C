@@ -81,8 +81,8 @@ void PlSensor::enter_waiting()
 {
   TRC_FN;
   if (sd >= 0) { 
-    fdcb(sd, selread, NULL);
-    fdcb(sd, selwrite, NULL);
+    fileDescriptorCB(sd, b_selread, NULL);
+    fileDescriptorCB(sd, b_selwrite, NULL);
     close(sd);
     sd = -1;
   }
@@ -114,7 +114,7 @@ void PlSensor::enter_connecting()
   assert(hdrs == NULL);
   hdrs = New strbuf();
   req_buf = New strbuf(reqtmpl);
-  tc = tcpconnect(localaddr, port, boost::bind(&PlSensor::connect_cb, this));
+  tc = tcpConnect(localaddr, port, boost::bind(&PlSensor::connect_cb, this));
 }
 
 //
@@ -131,7 +131,7 @@ void PlSensor::connect_cb(int fd)
     // Enter SENDING
     TRC( "socket descriptor is " << sd);
     state = ST_SENDING;
-    fdcb(sd, selwrite, boost::bind(&PlSensor::write_cb, this));
+    fileDescriptorCB(sd, b_selwrite, boost::bind(&PlSensor::write_cb, this));
   }
 }
 
@@ -156,9 +156,9 @@ void PlSensor::write_cb()
   // Falls through to here when the sending is done...
   if (req_buf->tosuio()->resid() == 0) {
     // Enter RX_HEADERS state
-    fdcb(sd, selwrite, NULL);
+    fileDescriptorCB(sd, b_selwrite, NULL);
     state = ST_RX_HEADERS;
-    fdcb(sd, selread, boost::bind(&PlSensor::rx_hdr_cb, this));
+    fileDescriptorCB(sd, b_selread, boost::bind(&PlSensor::rx_hdr_cb, this));
   }
 }
 

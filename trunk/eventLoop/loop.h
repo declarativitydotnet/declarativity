@@ -96,10 +96,10 @@ timeCBRemove(timeCBHandle *);
 
 
 void
-fileCB(int, b_selop, b_cbv);
+fileDescriptorCB(int, b_selop, b_cbv);
 
 tcpHandle*
-tcpconnect(in_addr addr, u_int16_t port, b_cbi cb);
+tcpConnect(in_addr addr, u_int16_t port, b_cbi cb);
 
 
 #endif /* __LOOP_H_ */
