@@ -13,14 +13,15 @@
 #include "trace.h"
 #include "val_int32.h"
 #include "val_str.h"
+#include "loop.h"
 
 Aggwrap::Aggwrap(str name, str aggfn, int aggfield, str outputTableName)
   : Element(name, 2, 2),
     _aggfn(aggfn), 
     _aggfield(aggfield), 
     inner_accepting(true),
-    ext_in_cb(b_cbv_null), 
-    ext_out_cb(b_cbv_null)
+    ext_in_cb(0), 
+    ext_out_cb(0)
 {
   numJoins = 0;
   _outputTableName = outputTableName;
@@ -109,7 +110,7 @@ void Aggwrap::int_push_cb()
   if (aggState == 0 && ext_in_cb) {
     log(LoggerI::INFO, 0, str(strbuf() << "Invoke ext_in_cb"));
     ext_in_cb();
-    ext_in_cb = b_cbv_null;
+    ext_in_cb = 0;
   }
 }
 
@@ -205,7 +206,7 @@ void Aggwrap::agg_finalize() {
   if (aggResult) {
     log(LoggerI::INFO, 0, 
 	str(strbuf() << " finalize: Pushing tuple" << aggResult->toString()));
-    output(0)->push(aggResult, b_cbv_null);
+    output(0)->push(aggResult, 0);
   } else {
     log(LoggerI::INFO, 0, "Finalize: Alas, nothing to push");
   }
@@ -213,7 +214,7 @@ void Aggwrap::agg_finalize() {
     log(LoggerI::INFO, 0, "Invoke push callback for more tuples");
     // accept new tuples to be pushed in via outer regardless of any outputs
     ext_in_cb(); 
-    ext_in_cb = b_cbv_null;
+    ext_in_cb = 0;
   }
   aggState = 0;
 }

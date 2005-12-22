@@ -67,7 +67,14 @@ public:
 };
 
 RDelivery::RDelivery(str n, bool r, uint32_t m)
-  : Element(n, 2, 3), _out_cb(b_cbv_null), in_on_(true), retry_(r), max_retry_(m) { max_seq_ = 0; }
+  : Element(n, 2, 3),
+    _out_cb(0),
+    in_on_(true),
+    retry_(r),
+    max_retry_(m)
+{
+  max_seq_ = 0;
+}
 
 /**
  * New tuple to send
@@ -121,9 +128,9 @@ REMOVABLE_INLINE void RDelivery::handle_failure(SeqNum seq)
   
   if (retry_ && rt->retry_cnt_ < max_retry_) {
     rtran_q_.push_back(rt);
-    if (_out_cb != NULL) {
+    if (_out_cb) {
       _out_cb();
-      _out_cb = b_cbv_null;
+      _out_cb = 0;
     }
   }
   else {
@@ -132,7 +139,7 @@ REMOVABLE_INLINE void RDelivery::handle_failure(SeqNum seq)
     f->append(Val_Tuple::mk(rt->tp_));
     f->freeze();
     // Push failed tuple upstream.
-    assert(output(2)->push(f, b_cbv_null));
+    assert(output(2)->push(f, 0));
     UNMAP(seq);
   }
 }
@@ -140,9 +147,9 @@ REMOVABLE_INLINE void RDelivery::handle_failure(SeqNum seq)
 void RDelivery::input_cb()
 {
   in_on_ = true;
-  if (_out_cb != b_cbv_null) {
+  if (_out_cb) {
     _out_cb();
-    _out_cb = b_cbv_null;
+    _out_cb = 0;
   }
 }
 

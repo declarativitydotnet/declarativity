@@ -20,6 +20,7 @@
 
 #include <amisc.h>
 #include <element.h>
+#include "loop.h"
 
 class TimedPullPush : public Element { 
  public:

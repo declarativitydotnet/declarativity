@@ -21,8 +21,8 @@ PelScan::PelScan(str name,
   : Element(name, 1, 1),
     _table(table),
     _iterator(table->scanAll(fieldNo)),
-    _pushCallback(b_cbv_null),
-    _pullCallback(b_cbv_null),
+    _pushCallback(0),
+    _pullCallback(0),
     _indexFieldNo(fieldNo),
     _startup(Pel_Lexer::compile(startup)),
     _scan(Pel_Lexer::compile(scan)),
@@ -53,7 +53,7 @@ PelScan::push(int port, TupleRef t, b_cbv cb)
   // Do I have a scan pending?
   if (_scanTuple == NULL) {
     // No pending scan.  Take it in
-    assert(_pushCallback == b_cbv_null);
+    assert(!_pushCallback);
 
     // Establish the scan and run the startup script
     _scanTuple = t;
@@ -71,10 +71,10 @@ PelScan::push(int port, TupleRef t, b_cbv cb)
         << _scanTuple->toString());
     
     // Unblock the puller if one is waiting
-    if (_pullCallback != b_cbv_null) {
+    if (_pullCallback) {
       log(LoggerI::INFO, 0, "push: wakeup puller");
       _pullCallback();
-      _pullCallback = b_cbv_null;
+      _pullCallback = 0;
     }
     
     // Fetch the iterator
@@ -86,7 +86,7 @@ PelScan::push(int port, TupleRef t, b_cbv cb)
     return 0;
   } else {
     // We already have a lookup pending
-    assert(_pushCallback != b_cbv_null);
+    assert(!_pushCallback);
     log(LoggerI::WARN, 0, "push: lookup overrun");
     return 0;
   }
@@ -104,7 +104,7 @@ TuplePtr PelScan::pull(int port, b_cbv cb)
   
     assert(_scanTuple == NULL);
     
-    if (_pullCallback == b_cbv_null) {
+    if (!_pullCallback) {
       // Accept the callback
       log(LoggerI::INFO, 0, "pull: raincheck");
       _pullCallback = cb;
@@ -140,10 +140,10 @@ TuplePtr PelScan::pull(int port, b_cbv cb)
       // We've run out of tuples.   Just clean up.
 
       // Wake up any pusher
-      if (_pushCallback != b_cbv_null) {
+      if (_pushCallback) {
         log(LoggerI::INFO, 0, "pull: wakeup pusher");
         _pushCallback();
-        _pushCallback = b_cbv_null;
+        _pushCallback = 0;
       }
 
       // The cleanup script

@@ -1255,7 +1255,7 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Rule* curRule,
     if (pf != NULL && pf->fn->name == eventFunctor->fn->name) { continue; } 
     debugRule(curRule, str(strbuf() << "Probing " << eventFunctor->fn->name 
 			   << " " << baseFunctors.at(k)->toString() << "\n"));
-    b_cbv comp_cb = b_cbv_null;
+    b_cbv comp_cb = 0;
     if (agg_el) {
       comp_cb = agg_el->get_comp_cb();
     }

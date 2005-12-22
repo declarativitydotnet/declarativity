@@ -14,6 +14,9 @@
 #define __UDP_H__
 
 #include "element.h"
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
+#include "loop.h"
 
 //
 // The Udp::Rx element emits 2-tuples:
@@ -41,7 +44,7 @@ public:
     const char *processing() const		{ return "/h"; };
     const char *flow_code() const		{ return "/-"; };
 
-    void socket_on() { fileDescriptorCB(u->sd, b_selread, wrap(this,&Udp::Rx::socket_cb)); };
+    void socket_on() { fileDescriptorCB(u->sd, b_selread, boost::bind(&Udp::Rx::socket_cb, this)); };
     void socket_off() { fileDescriptorCB(u->sd, b_selread, NULL); };
 
     /** Turn on the socket and start listening. */
@@ -66,7 +69,7 @@ public:
     const char *processing() const		{ return "l/"; };
     const char *flow_code() const		{ return "-/"; };
 
-    void socket_on() { fileDescriptorCB(u->sd, b_selwrite, wrap(this,&Udp::Tx::socket_cb));};
+    void socket_on() { fileDescriptorCB(u->sd, b_selwrite, boost::bind(&Udp::Tx::socket_cb, this));};
     void socket_off() { fileDescriptorCB(u->sd, b_selwrite, NULL); };
 
     /** Turn on the socket */

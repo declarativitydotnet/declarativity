@@ -79,7 +79,11 @@ int32_t CCTuple::delay()
  * Output 2 (pull): Status of the CC element.
  */
 CCT::CCT(str name, double init_wnd, double max_wnd, bool tstat, bool stat) 
-  : Element(name, 2, (stat ? 3 : 2)), _data_cb(b_cbv_null), data_on_(true), sa_(-1), sv_(0)
+  : Element(name, 2, (stat ? 3 : 2)),
+    _data_cb(0),
+    data_on_(true),
+    sa_(-1),
+    sv_(0)
 {
   rto_            = MAX_RTO;
   max_wnd_        = max_wnd;
@@ -111,7 +115,7 @@ int CCT::push(int port, TupleRef tp, b_cbv cb)
   }
   catch (Value::TypeError& e) { } 
 
-  assert(output(1)->push(tp, b_cbv_null)); // Pass data tuple through
+  assert(output(1)->push(tp, 0)); // Pass data tuple through
   return 1;
 }
 
@@ -170,9 +174,9 @@ int32_t CCT::dealloc(SeqNum seq, str status)
 
     delete iter->second;
     tmap_.erase(iter);
-    if (current_window() < max_window() && data_on_ && _data_cb != b_cbv_null) {
+    if (current_window() < max_window() && data_on_ && _data_cb) {
       _data_cb();
-      _data_cb = b_cbv_null;
+      _data_cb = 0;
     }
 
     if (tstat_) {
@@ -180,7 +184,7 @@ int32_t CCT::dealloc(SeqNum seq, str status)
       tp->append(Val_Str::mk(status));		// Signal drop
       tp->append(Val_UInt64::mk(seq));		// Sequence number 
       tp->freeze();
-      assert(output(1)->push(tp, b_cbv_null));
+      assert(output(1)->push(tp, 0));
     }
   }
   else {
@@ -192,9 +196,9 @@ int32_t CCT::dealloc(SeqNum seq, str status)
 
 void CCT::data_ready() {
   data_on_ = true;
-  if (_data_cb != b_cbv_null) {
+  if (_data_cb) {
     _data_cb();
-    _data_cb = b_cbv_null;
+    _data_cb = 0;
   }
 }
 

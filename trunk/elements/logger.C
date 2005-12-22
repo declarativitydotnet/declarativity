@@ -53,7 +53,7 @@ void Logger::log( str classname,
     t->append(Val_Int32::mk(errnum));
     t->append(Val_Str::mk(explanation));
     t->freeze();
-    if (push(1,t,b_cbv_null) == 0) {
+    if (push(1, t, 0) == 0) {
       warn << "Logger: possible tuple overrun next time\n";
     }
   }

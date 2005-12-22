@@ -313,7 +313,7 @@ REMOVABLE_INLINE TuplePtr Element::Port::pull_outgoing(int port, b_cbv cb ) cons
 REMOVABLE_INLINE Element::Port::Port() :
   _e(0),
   _port(NOT_INITIALIZED),
-  _cb(b_cbv_null)
+  _cb(0)
   PORT_CTOR_INIT(0)
 { }
 
@@ -323,7 +323,7 @@ REMOVABLE_INLINE Element::Port::Port(Element *owner,
                                      int p)
   : _e(e),
     _port(p),
-    _cb(b_cbv_null)
+    _cb(0)
   PORT_CTOR_INIT(owner)
 {
   (void) owner;

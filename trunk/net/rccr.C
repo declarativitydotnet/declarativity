@@ -238,7 +238,10 @@ REMOVABLE_INLINE void RateCCR::Connection::clearHistory() {
 //
 
 RateCCR::RateCCR(str name) 
-  : Element(name, 1, 2), _ack_cb(b_cbv_null) { }
+  : Element(name, 1, 2),
+    _ack_cb(0)
+{
+}
 
 /**
  * Acknowledge tuple p if ack_q is empty and output1 is open.
@@ -297,9 +300,9 @@ TuplePtr RateCCR::simple_action(TupleRef tp)
   ack->freeze();
   ack_q_.push_back(ack);			// Append to ack queue
 
-  if (_ack_cb != b_cbv_null) {
+  if (_ack_cb) {
     _ack_cb();				// Notify new ack
-    _ack_cb = b_cbv_null;
+    _ack_cb = 0;
   } 
   return strip(tp);				// Forward data tuple
 }

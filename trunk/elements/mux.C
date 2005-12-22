@@ -11,6 +11,7 @@
 
 #include "mux.h"
 #include "async.h"
+#include "loop.h"
 
 Mux::Mux(str name,
          int noInputs)
@@ -25,7 +26,7 @@ Mux::Mux(str name,
   for (int i = 0;
        i < ninputs();
        i++) {
-    _pushCallbacks.push_back(b_cbv_null);
+    _pushCallbacks.push_back(0);
     _inputTuples.push_back(NULL);
   }
 }
@@ -51,7 +52,7 @@ void Mux::catchUp()
 
     if (_inputTuples[i] != NULL) {
       // Found one.  Push it out
-      assert(_pushCallbacks[i] != b_cbv_null);
+      assert(_pushCallbacks[i]);
       int result = output(0)->push(_inputTuples[i], _callback);
 
       // Did my output block again?
@@ -70,10 +71,10 @@ void Mux::catchUp()
   for (int i = 0;
        i < ninputs();
        i++) {
-    if (_pushCallbacks[i] != b_cbv_null) {
+    if (_pushCallbacks[i]) {
       // Found one.  Wake it up
       _pushCallbacks[i]();
-      _pushCallbacks[i] = b_cbv_null;
+      _pushCallbacks[i] = 0;
     }
   }
 
@@ -92,7 +93,7 @@ int Mux::push(int port, TupleRef p, b_cbv cb)
     // Yup.  Is this input's buffer full?
     if (_inputTuples[port] == NULL) {
       // We have room.  We'd better not have a callback for that input
-      assert(_pushCallbacks[port] == b_cbv_null);
+      assert(!_pushCallbacks[port]);
 
       // Take it
       _inputTuples[port] = p;
@@ -100,7 +101,7 @@ int Mux::push(int port, TupleRef p, b_cbv cb)
       return 0;
     } else {
       // We'd better have a callback
-      assert(_pushCallbacks[port] != b_cbv_null);
+      assert(_pushCallbacks[port]);
 
       // We have already received a buffered tuple from that input.  Bad
       // input!
@@ -109,7 +110,7 @@ int Mux::push(int port, TupleRef p, b_cbv cb)
     }
   } else {
     // I can forward this
-    assert((_pushCallbacks[port] == b_cbv_null) &&
+    assert(!_pushCallbacks[port] &&
            (_inputTuples[port] == NULL));
 
     int result = output(0)->push(p, _callback);
@@ -133,12 +134,12 @@ int Mux::add_input() {
   if (_unusedPorts.size() > 0) {
     port = _unusedPorts.front();
     _unusedPorts.erase(_unusedPorts.begin());
-    _pushCallbacks[port] = b_cbv_null;
-    _inputTuples[port]   = NULL;
+    _pushCallbacks[port] = 0;
+    _inputTuples[port] = NULL;
   }
   else {
     this->Element::add_input();
-    _pushCallbacks.push_back(b_cbv_null);
+    _pushCallbacks.push_back(0);
     _inputTuples.push_back(NULL);
     port = ninputs() - 1;
   }

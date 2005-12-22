@@ -28,6 +28,7 @@
 #include "table.h"
 #include "val_tuple.h"
 #include "val_null.h"
+#include "loop.h"
 
 template < typename _EncapsulatedIterator, typename _LookupGenerator >
 class Lookup : public Element {
@@ -36,7 +37,7 @@ public:
          TableRef table,
          unsigned inputKeyField,
          unsigned lookupIndexField,
-	 b_cbv completion_cb=b_cbv_null );
+	 b_cbv completion_cb = 0);
   ~Lookup();
 
 
@@ -108,8 +109,8 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::Lookup(str name,
 
   : Element(name, 1, 1),
     _table(table),
-    _pushCallback(b_cbv_null),
-    _pullCallback(b_cbv_null),
+    _pushCallback(0),
+    _pullCallback(0),
     _compCallback(completion_cb),
     _lookupTuple(NULL),
     _lookupTupleValue(NULL),
@@ -137,7 +138,7 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::push(int port,
   // Do I have a lookup pending?
   if (_lookupTuple == NULL) {
     // No pending lookup.  Take it in
-    assert(_pushCallback == b_cbv_null);
+    assert(!_pushCallback);
     assert((_key == NULL) && (_lookupTupleValue == NULL) && (_iterator == NULL));
 
     // Fetch the search field
@@ -159,10 +160,10 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::push(int port,
       log(LoggerI::INFO, 0, strbuf("push: accepted lookup of key ") << _key->toString());
       
       // Unblock the puller if one is waiting
-      if (_pullCallback != b_cbv_null) {
+      if (_pullCallback) {
         log(LoggerI::INFO, 0, "push: wakeup puller");
         _pullCallback();
-        _pullCallback = b_cbv_null;
+        _pullCallback = 0;
       }
 
       // Fetch the iterator
@@ -176,7 +177,7 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::push(int port,
     }
   } else {
     // We already have a lookup pending
-    assert(_pushCallback != b_cbv_null);
+    assert(_pushCallback);
     assert(_key != NULL);
     assert(_iterator != NULL);
     assert(_lookupTuple != NULL);
@@ -200,7 +201,7 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::pull(int port,
     assert((_lookupTuple == NULL) && (_lookupTupleValue == NULL));
     assert(_iterator == NULL);
 
-    if (_pullCallback == b_cbv_null) {
+    if (!_pullCallback) {
       // Accept the callback
       log(LoggerI::INFO, 0, "pull: raincheck");
       _pullCallback = cb;
@@ -208,7 +209,9 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::pull(int port,
       // I already have a pull callback
       log(LoggerI::INFO, 0, "pull: callback underrun");
     }
-    if (_compCallback != b_cbv_null) { _compCallback(); }
+    if (_compCallback) {
+      _compCallback();
+    }
     return 0;
   } else {
     // {
@@ -261,10 +264,10 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::pull(int port,
       log(LoggerI::WORDY, 0, strbuf("push: iterator now is null"));
 
       // Wake up any pusher
-      if (_pushCallback != b_cbv_null) {
+      if (_pushCallback) {
         log(LoggerI::INFO, 0, "pull: wakeup pusher");
         _pushCallback();
-        _pushCallback = b_cbv_null;
+        _pushCallback = 0;
       }
     } else {
       // More results to be had.  Don't tag

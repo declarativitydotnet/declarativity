@@ -14,7 +14,7 @@
 RoundRobin::RoundRobin(str name,
                        int noInputs)
   : Element(name, noInputs, 1),
-    _pull_cb(b_cbv_null),
+    _pull_cb(0),
     _block_flags(),
     _block_flag_count(0),
     _nextInput(0)               // start with input 0
@@ -36,9 +36,9 @@ void RoundRobin::unblock(int input)
   }
 
   // If I have a pull callback, call it and remove it
-  if (_pull_cb != b_cbv_null) {
+  if (_pull_cb) {
     _pull_cb();
-    _pull_cb = b_cbv_null;
+    _pull_cb = 0;
   }
 }
 
@@ -49,7 +49,7 @@ TuplePtr RoundRobin::pull(int port, b_cbv cb)
   // Can I give more?
   if (_block_flag_count == ninputs()) {
     // Refuse it and hold on to the callback if I don't have it already
-    if (_pull_cb == b_cbv_null) {
+    if (!_pull_cb) {
       _pull_cb = cb;
     }
     log(LoggerI::WARN, -1, "pull: Underrun");
@@ -57,7 +57,7 @@ TuplePtr RoundRobin::pull(int port, b_cbv cb)
   }
 
   // By now, I'd better have no callbacks stored.
-  assert(_pull_cb == b_cbv_null);
+  assert(!_pull_cb);
 
   // Fetch the next unblocked input
   for (int i = 0;

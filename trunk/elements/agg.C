@@ -17,7 +17,9 @@
 
 Agg::Agg(str name, std::vector<unsigned int> groupByFields, 
 	 int aggField, unsigned uniqueField, str aggStr)
-  : Element(name, 1, 1), _pullCB(b_cbv_null), _pushCB(b_cbv_null)
+  : Element(name, 1, 1),
+    _pullCB(0),
+    _pushCB(0)
 {
   _aggField = aggField;
   _groupByFields = groupByFields;
@@ -119,9 +121,9 @@ int Agg::push(int port, TupleRef p, b_cbv cb)
 
   if (changed == true) {
     // we may need to wake up puller
-    if (_pullCB != b_cbv_null) {
+    if (_pullCB) {
       _pullCB();
-      _pullCB = b_cbv_null;
+      _pullCB = 0;
     } else {
       log(LoggerI::INFO, 0, "No pending pull callbacks");
     }
@@ -142,9 +144,9 @@ TuplePtr Agg::pull(int port, b_cbv cb)
   TuplePtr p = _buffer.begin()->second;
   _buffer.erase(_buffer.begin());
 
-  if (_pushCB != b_cbv_null) {
+  if (_pushCB) {
     _pushCB();
-    _pushCB = b_cbv_null;
+    _pushCB = 0;
   }
 
   log(LoggerI::INFO, 0, str(strbuf() << "Pull succeed " << p->toString() 

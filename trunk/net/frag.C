@@ -16,7 +16,8 @@
 
 Frag::Frag(str name, uint32_t block_size)
   : Element(name, 1, 1),
-    _push_cb(b_cbv_null), _pull_cb(b_cbv_null),
+    _push_cb(0),
+    _pull_cb(0),
     block_size_(block_size)
 {
 }
@@ -27,7 +28,7 @@ int Frag::push(int port, TupleRef t, b_cbv cb)
   // Is this the right port?
   assert(port == 0);
 
-  if (_push_cb != b_cbv_null) {
+  if (_push_cb) {
     // Complain and do nothing
     log(LoggerI::INFO, 0, "push: callback overrun"); 
   } else {
@@ -43,10 +44,10 @@ int Frag::push(int port, TupleRef t, b_cbv cb)
     fragment(t);
 
     // Unblock the puller if one is waiting
-    if (_pull_cb != b_cbv_null) {
+    if (_pull_cb) {
       log(LoggerI::INFO, 0, "push: wakeup puller");
       _pull_cb();
-      _pull_cb = b_cbv_null;
+      _pull_cb = 0;
     }
   } else {
     // I already have a tuple so the one I just accepted is dropped
@@ -66,16 +67,16 @@ TuplePtr Frag::pull(int port, b_cbv cb)
     TuplePtr t = fragments_.front();
     fragments_.pop_front();
 
-    if (fragments_.empty() && _push_cb != b_cbv_null) {
+    if (fragments_.empty() && _push_cb) {
       log(LoggerI::INFO, 0, "pull: wakeup pusher");
       _push_cb();
-      _push_cb = b_cbv_null;
+      _push_cb = 0;
     }
 
     return t;
   } else {
     // I don't have a tuple.  Do I have a pull callback already?
-    if (_pull_cb == b_cbv_null) {
+    if (!_pull_cb) {
       // Accept the callback
       log(LoggerI::INFO, 0, "pull: raincheck");
       _pull_cb = cb;

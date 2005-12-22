@@ -130,7 +130,7 @@ void issue_lookup(LoggerI::Level level, ptr<LookupGenerator> lookup)
   amain();
 
   // Schedule kill
-  delayCB(10, wrap(&killJoin));
+  delayCB(10, boost::bind(&killJoin));
 }
 
 int main(int argc, char **argv)

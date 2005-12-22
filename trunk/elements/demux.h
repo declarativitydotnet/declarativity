@@ -22,6 +22,7 @@
 
 #include "element.h"
 #include "bitvec.h"
+#include "loop.h"
 
 class Demux : public Element { 
 public:

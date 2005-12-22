@@ -114,7 +114,7 @@ void PlSensor::enter_connecting()
   assert(hdrs == NULL);
   hdrs = New strbuf();
   req_buf = New strbuf(reqtmpl);
-  tc = tcpConnect(localaddr, port, boost::bind(&PlSensor::connect_cb, this));
+  tc = tcpConnect(localaddr, port, boost::bind(&PlSensor::connect_cb, this, _1));
 }
 
 //

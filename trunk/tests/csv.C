@@ -60,8 +60,8 @@ int main(int argc, char **argv)
     TupleRef t = Tuple::mk();
     t->append(Val_Str::mk(str(tests[i].in))); 
     t->freeze();
-    cp.push(0,t,cbv_null);
-    TuplePtr t_out = cp.pull(0,cbv_null);
+    cp.push(0, t, 0);
+    TuplePtr t_out = cp.pull(0, 0);
     if (t_out != NULL) {
       // got a tuple
       std::cout << "Expected " << tests[i].out 

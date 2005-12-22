@@ -46,9 +46,9 @@ do { \
     if (c) timeCBRemove(i->second); \
     tmap_.erase(i); \
   } \
-  if (tmap_.size() < trate_ && data_cbv_ != b_cbv_null) { \
+  if (tmap_.size() < trate_ && data_cbv_) { \
       data_cbv_(); \
-      data_cbv_ = b_cbv_null; \
+      data_cbv_ = 0; \
     } \
 } while (0)
 
@@ -58,7 +58,7 @@ do { \
     TuplePtr tp = Tuple::mk(); \
     tp->append(Val_Str::mk((status))); \
     tp->append(Val_UInt64::mk(s)); \
-    assert(output(1)->push(tp, b_cbv_null)); \
+    assert(output(1)->push(tp, 0)); \
   } \
 } while (0)
 
@@ -76,8 +76,14 @@ do { \
  * Output 2 (pull): Status of the CC element. (Optional)
  */
 RateCCT::RateCCT(str name, bool tstat) 
-  : Element(name, 2, 2), data_on_(true), data_cbv_(b_cbv_null), 
-    trate_(1), rtt_(100), rto_(4000), nofeedback_(NULL), tstat_(tstat)
+  : Element(name, 2, 2),
+    data_on_(true),
+    data_cbv_(0), 
+    trate_(1),
+    rtt_(100),
+    rto_(4000),
+    nofeedback_(NULL),
+    tstat_(tstat)
 {
   clock_gettime(CLOCK_REALTIME, &tld_);
 }
@@ -112,7 +118,7 @@ int RateCCT::push(int port, TupleRef tp, b_cbv cb)
   }
   catch (Value::TypeError& e) { } 
 
-  assert(output(1)->push(tp, b_cbv_null)); // Pass data tuple through
+  assert(output(1)->push(tp, 0)); // Pass data tuple through
   return 1;
 }
 
@@ -144,9 +150,9 @@ TuplePtr RateCCT::pull(int port, b_cbv cb)
 void RateCCT::data_ready()
 {
   data_on_ = true;
-  if (data_cbv_ != b_cbv_null) {
+  if (data_cbv_) {
     data_cbv_();
-    data_cbv_ = b_cbv_null;
+    data_cbv_ = 0;
   }
 }
 

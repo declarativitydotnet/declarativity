@@ -18,6 +18,7 @@
 
 #include <amisc.h>
 #include <element.h>
+#include "loop.h"
 
 class TimedPushSource : public Element { 
  public:

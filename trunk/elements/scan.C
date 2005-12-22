@@ -14,7 +14,9 @@
 Scan::Scan(str name,
 	   Table::UniqueScanIterator iterator,
 	   bool continuous)
-  : Element(name, 0, 1), _iterator(iterator), _pullCB(b_cbv_null)
+  : Element(name, 0, 1),
+    _iterator(iterator),
+    _pullCB(0)
 {
   _firstTime = true;
   _continuous = continuous; 
@@ -29,9 +31,9 @@ Scan::listener(TupleRef t)
 {
   log(LoggerI::INFO, 0, str(strbuf() << "Listener " << t->toString()));
   scanBuffer.push_back(t);
-  if (_pullCB  != b_cbv_null) {
+  if (_pullCB) {
     _pullCB();
-    _pullCB = b_cbv_null;
+    _pullCB = 0;
   }
 }
 

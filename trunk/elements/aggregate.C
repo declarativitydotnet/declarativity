@@ -16,7 +16,7 @@ Aggregate::Aggregate(str name,
   : Element(name, 0, 1),
     _aggregate(aggregate),
     _latest(NULL),
-    _pullCallback(b_cbv_null),
+    _pullCallback(0),
     _pending(false)
 {
   // Place myself as a listener on the aggregate
@@ -42,10 +42,10 @@ Aggregate::listener(TupleRef t)
   }
 
   // If there's a pull callback, call it
-  if (_pullCallback != b_cbv_null) {
+  if (_pullCallback) {
     log(LoggerI::INFO, 0, "listener: wakeup puller");
     _pullCallback();
-    _pullCallback = b_cbv_null;
+    _pullCallback = 0;
   }
 }
 
@@ -58,7 +58,7 @@ Aggregate::pull(int port, b_cbv cb)
   // Do I have a pending update?
   if (!_pending) {
     // Nope, no pending update.  Deal with underruns.
-    if (_pullCallback == b_cbv_null) {
+    if (!_pullCallback) {
       // Accept the callback
       log(LoggerI::INFO, 0, "pull: raincheck");
       _pullCallback = cb;
@@ -69,7 +69,7 @@ Aggregate::pull(int port, b_cbv cb)
     return 0;
   } else {
     // I'd better have no callback pending and definitely a value
-    assert(_pullCallback == b_cbv_null);
+    assert(!_pullCallback);
     assert(_latest != NULL);
 
     // No longer pending

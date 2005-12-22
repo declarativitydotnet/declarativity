@@ -80,95 +80,108 @@ basicElementPlumbing_SOURCES = basicElementPlumbing.C
 basicElementPlumbing_LDADD = \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 scheduling_SOURCES = scheduling.C
 scheduling_LDADD = \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 demultiplex_SOURCES = demultiplex.C
 demultiplex_LDADD = \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 join_SOURCES = join.C
 join_LDADD = \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 paths_SOURCES = paths.C
 paths_LDADD = \
 	$(top_builddir)/planner/.libs/libp2planner.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
-	@SFS_LIBASYNC@ @SFS_LIBARPC@
-
-runChord_SOURCES = runChord.C
-runChord_LDADD = \
 	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
-	$(top_builddir)/overlog/.libs/liboverlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 runOverLog_SOURCES = runOverLog.C
 runOverLog_LDADD = \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 runSymphony_SOURCES = runSymphony.C
 runSymphony_LDADD = \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 runSymphonicChord_SOURCES = runSymphonicChord.C
 runSymphonicChord_LDADD = \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+runChord_SOURCES = runChord.C
+runChord_LDADD = \
+	$(top_builddir)/overlog/.libs/liboverlog.a \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 runManyChords_SOURCES = runManyChords.C
 runManyChords_LDADD = \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
+	@SFS_LIBASYNC@ @SFS_LIBARPC@
+
+overlog_SOURCES	= overlog.C
+overlog_LDADD = \
+	$(top_builddir)/overlog/.libs/liboverlog.a \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 simple_lookup_SOURCES = simple_lookup.C
 simple_lookup_LDADD = \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 lookupGenerator_SOURCES = lookupGenerator.C
 lookupGenerator_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 #chordDatalog_SOURCES = chordDatalog.C
@@ -189,8 +202,8 @@ net_SOURCES = net.C
 net_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 netcc_SOURCES = netcc.C
@@ -227,16 +240,16 @@ perfectChord_LDADD = \
 
 basicelements_SOURCES	= basicelements.C
 basicelements_LDADD = \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 testQueue_SOURCES	= testQueue.C
 testQueue_LDADD = \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 agg_SOURCES	= agg.C
@@ -255,19 +268,10 @@ csv_LDADD = \
 
 pingpong_SOURCES	= pingpong.C
 pingpong_LDADD = \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
-	@SFS_LIBASYNC@ @SFS_LIBARPC@
-
-overlog_SOURCES	= overlog.C
-overlog_LDADD = \
 	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
-	$(top_builddir)/overlog/.libs/liboverlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
 	@SFS_LIBASYNC@ @SFS_LIBARPC@
 
 testPlanner_SOURCES	= testPlanner.C

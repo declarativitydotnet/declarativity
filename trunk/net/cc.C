@@ -16,7 +16,7 @@
 #include "val_uint32.h"
 #include "val_double.h"
 #include "val_str.h"
-
+#include "loop.h"
 
 /////////////////////////////////////////////////////////////////////
 //
@@ -86,8 +86,11 @@ int32_t delay(timespec *ts)
  * Output 1 (pull): Acknowledgements of individual tuples.
  */
 CCRx::CCRx(str name, double rwnd, int seq, int src) 
-  : Element(name, 1, 2), _ack_cb(b_cbv_null),
-    rwnd_(rwnd), seq_field_(seq), src_field_(src)
+  : Element(name, 1, 2),
+    _ack_cb(0),
+    rwnd_(rwnd),
+    seq_field_(seq),
+    src_field_(src)
 {
 }
 
@@ -109,9 +112,9 @@ TuplePtr CCRx::simple_action(TupleRef p)
   ack_q_.push_back(ack);
   log(LoggerI::INFO, 0, strbuf() << "ACK QUEUE SIZE: " << ack_q_.size()); 
 
-  if (_ack_cb != b_cbv_null) {
+  if (_ack_cb) {
     _ack_cb();		// Notify new ack
-    _ack_cb = b_cbv_null;
+    _ack_cb = 0;
   } 
   return p;			// forward tuple along
 }
@@ -161,7 +164,11 @@ int CCRx::push(int port, TupleRef tp, b_cbv cb)
  */
 CCTx::CCTx(str name, double init_wnd, double max_wnd, uint32_t max_retry, 
            uint32_t seq_field, uint32_t ack_seq_field, uint32_t ack_rwnd_field) 
-  : Element(name, 2, 1), _din_cb(b_cbv_null), _dout_cb(b_cbv_null), sa_(-1), sv_(0)
+  : Element(name, 2, 1),
+    _din_cb(0),
+    _dout_cb(0),
+    sa_(-1),
+    sv_(0)
 {
   rto_            = MAX_RTO;
   max_wnd_        = max_wnd;
@@ -204,9 +211,9 @@ int CCTx::push(int port, TupleRef tp, b_cbv cb)
     break;
   }
 
-  if (!(send_q_.empty() && rtran_q_.empty()) && _dout_cb != b_cbv_null) {
+  if (!(send_q_.empty() && rtran_q_.empty()) && _dout_cb) {
     _dout_cb();
-    _dout_cb = b_cbv_null;
+    _dout_cb = 0;
   }
   return retval;
 }
@@ -284,9 +291,9 @@ int32_t CCTx::dealloc(SeqNum seq)
 
     delete iter->second;
     ot_map_.erase(iter);
-    if (current_window() < max_window() && _din_cb != b_cbv_null) {
+    if (current_window() < max_window() && _din_cb) {
       _din_cb();
-      _din_cb = b_cbv_null;
+      _din_cb = 0;
     }
   }
   else {
@@ -321,9 +328,9 @@ void CCTx::timeout_cb(OTuple *otp)
   ot_map_.erase(ot_map_.find(seq));
   rtran_q_.push_back(otp);	// Add to retransmit queue
 
-  if (_dout_cb != b_cbv_null) {
+  if (_dout_cb) {
     _dout_cb();
-    _dout_cb = b_cbv_null;
+    _dout_cb = 0;
   }
 
   log(LoggerI::INFO, 0, 

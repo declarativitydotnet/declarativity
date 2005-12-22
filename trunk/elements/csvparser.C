@@ -36,9 +36,9 @@ const size_t CSVParser::MAX_Q_SIZE = 100;
 //  
 CSVParser::CSVParser(str name) 
   : Element(name, 1,1), 
-    _push_cb(b_cbv_null), 
+    _push_cb(0), 
     _push_blocked(false), 
-    _pull_cb(b_cbv_null),
+    _pull_cb(0),
     _re_line("^([^\\r\\n]*)\\r?\\n"),
     _re_comm("(^$|#.*)"),
     _re_qstr("^\\s*\\\"(([^\\n\\\"]*(\\\\(.|\\n))?)+)\\\"\\s*(,|$)"),
@@ -62,13 +62,13 @@ TuplePtr CSVParser::pull(int port, b_cbv cb)
   } else {
     p = _q.back();
     _q.pop();
-    _pull_cb = b_cbv_null;
+    _pull_cb = 0;
   }
 
   // Should we restart pushes?  
   if (_push_blocked && _q.size() < MIN_Q_SIZE) {
     _push_blocked = false;
-    if (_push_cb != b_cbv_null) {
+    if (_push_cb) {
       _push_cb();
     }
   }
@@ -150,7 +150,7 @@ int CSVParser::try_to_parse_line()
     // Restart pulls if we need to
     if (_pull_cb) {
       _pull_cb();
-      _pull_cb = b_cbv_null;
+      _pull_cb = 0;
     }
     return 1;
   } else {

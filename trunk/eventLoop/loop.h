@@ -42,17 +42,6 @@ typedef boost::function<void (int)>         b_cbi;
 typedef boost::function<void (std::string)> b_cbs;
 typedef boost::function<void (bool)>        b_cbb;
 
-void
-b_cbv_null(void);
-
-void
-b_cbi_null(int);
-
-void
-b_cbs_null(std::string);
-
-void
-b_cbb_null(bool);
 
 /** Operation type for selects */
 enum

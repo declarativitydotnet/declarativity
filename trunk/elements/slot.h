@@ -15,6 +15,7 @@
 #define __SLOT_H__
 
 #include "element.h"
+#include "loop.h"
 
 class Slot : public Element { 
 public:

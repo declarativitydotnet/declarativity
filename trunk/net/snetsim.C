@@ -13,7 +13,7 @@
 
 SimpleNetSim::SimpleNetSim(str name, uint32_t min, uint32_t max, double p)
   : Element(name,1, 1),
-    _out_cb(b_cbv_null),
+    _out_cb(0),
     min_delay_(min),
     max_delay_(max), 
     drop_prob_(p),
@@ -73,9 +73,9 @@ void SimpleNetSim::tuple_ready(TupleRef t)
   log(LoggerI::INFO, 0, strbuf() << "SimpleNetSim tuple_ready(): Down stream callback called"); 
   ready_q_.push_back(t); 
 
-  if (_out_cb != b_cbv_null) {
+  if (_out_cb) {
     _out_cb();
-    _out_cb = b_cbv_null;
+    _out_cb = 0;
   }
   log(LoggerI::INFO, 0, strbuf() << "SimpleNetSim tuple_ready(): FINISHED"); 
 }

@@ -63,6 +63,7 @@
 #include "noNull.h"
 #include "noNullField.h"
 
+#include "loop.h"
 
 static const int FINGERSIZE = ID::WORDS * 32;
 static const int QUEUE_LENGTH = 1000;
@@ -95,8 +96,8 @@ void ruleL1(str name,
     conf->addElement(New refcounted< UniqueLookup >(strbuf("LookupInNode:") << name,
                                                     nodeTable,
                                                     1, // Match lookup.NI
-                                                    1, // with node.NI
-                                                    cbv_null ));
+                                                    1 // with node.NI
+                                                    ));
   ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));
   // Link it to the lookup coming in. Pushes match already
   conf->hookUp(pushLookupIn, pushLookupInPort, matchLookupIntoNodeS, 0);
@@ -124,8 +125,8 @@ void ruleL1(str name,
     conf->addElement(New refcounted< UniqueLookup >(strbuf("LookupInBestSucc:") << name,
                                                     bestSuccessorTable,
                                                     1, // Match res1.NI
-                                                    1, // with bestSuccessor.NI
-                                                    cbv_null ));
+                                                    1 // with bestSuccessor.NI
+                                                    ));
   ElementSpecRef noNull2S = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull2:") << name, 1));
   // Res1 must be pushed to second join
   ElementSpecRef pushRes1S =
@@ -180,8 +181,8 @@ void ruleL2(str name,
     conf->addElement(New refcounted< UniqueLookup >(strbuf("LookupInNode:") << name,
                                                     nodeTable,
                                                     1, // Match lookup.NI
-                                                    1, // with node.NI
-                                                    cbv_null ));
+                                                    1 // with node.NI
+                                                    ));
   // Link it to the lookup coming in. Pushes match already
   conf->hookUp(pushLookupIn, pushLookupInPort, matchLookupIntoNodeS, 0);
   ElementSpecRef noNullS = conf->addElement(New refcounted< NoNullField >(strbuf("NoNull:") << name, 1));

@@ -13,9 +13,12 @@
 #include "queue.h"
 #include "tuple.h"
 #include<iostream>
+#include "loop.h"
 
 Queue::Queue(str name, unsigned int queueSize)
-  : Element(name, 1, 1), _pullCB(b_cbv_null), _pushCB(b_cbv_null)
+  : Element(name, 1, 1),
+    _pullCB(0),
+    _pushCB(0)
 {
   _size = queueSize;
 }
@@ -30,10 +33,10 @@ int Queue::push(int port, TupleRef p, b_cbv cb)
   _q.push(p);  
 
   log(LoggerI::INFO, 0, str(strbuf() << "Push " << p->toString()) << ", queuesize=" << _q.size());
-  if (_pullCB != b_cbv_null) {
+  if (_pullCB) {
     // is there a pending callback? If so, wake it up
     _pullCB();
-    _pullCB = b_cbv_null;
+    _pullCB = 0;
   } else {
       log(LoggerI::INFO, 0, "No pending pull callbacks");
   }
@@ -60,9 +63,9 @@ TuplePtr Queue::pull(int port, b_cbv cb)
   TuplePtr p = _q.front();
   _q.pop();
 
-  if (_pushCB != b_cbv_null) {
+  if (_pushCB) {
     _pushCB();
-    _pushCB = b_cbv_null;
+    _pushCB = 0;
   }
 
   log(LoggerI::INFO, 0, str(strbuf() << "Pull succeed " << p->toString() << ", queuesize=" << _q.size()));

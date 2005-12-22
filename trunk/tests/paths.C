@@ -297,7 +297,7 @@ void insertMagicSource(ptr< Catalog> catalog, str address)
     tableRef->insert(magicSource);
     //}
   }
-  delayCB(magicIntervalSeconds, wrap(&insertMagicSource, catalog, address));   
+  delayCB(magicIntervalSeconds, boost::bind(&insertMagicSource, catalog, address));   
 }
 
 // XXX: not used for correlated experiment

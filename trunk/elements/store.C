@@ -35,8 +35,8 @@ Store::Lookup::Lookup(str name,
                       std::multimap< ValueRef, TupleRef, Store::tupleRefCompare > * table)
   : Element(name, 1, 1),
     _table(table),
-    _pushCallback(b_cbv_null),
-    _pullCallback(b_cbv_null)
+    _pushCallback(0),
+    _pullCallback(0)
 {
 }
 
@@ -87,7 +87,7 @@ int Store::Lookup::push(int port, TupleRef t, b_cbv cb)
   // Do I have a lookup pending?
   if (_key == NULL) {
     // No pending lookup.  Take it in
-    assert(_pushCallback == b_cbv_null);
+    assert(!_pushCallback);
 
     // Fetch the first field
     _key = (*t)[0];
@@ -104,10 +104,10 @@ int Store::Lookup::push(int port, TupleRef t, b_cbv cb)
       log(LoggerI::INFO, 0, logLine);
       
       // Unblock the puller if one is waiting
-      if (_pullCallback != b_cbv_null) {
+      if (_pullCallback) {
         log(LoggerI::INFO, 0, "push: wakeup puller");
         _pullCallback();
-        _pullCallback = b_cbv_null;
+        _pullCallback = 0;
       }
 
       // Start the iterator
@@ -120,7 +120,7 @@ int Store::Lookup::push(int port, TupleRef t, b_cbv cb)
     }
   } else {
     // I'm psarry. I can't help ya.
-    assert(_pushCallback != b_cbv_null);
+    assert(_pushCallback);
     log(LoggerI::WARN, 0, "push: lookup overrun");
     return 0;
   }
@@ -135,7 +135,7 @@ TuplePtr Store::Lookup::pull(int port, b_cbv cb)
   if (_key == NULL) {
     // Nope, no pending lookup.  Deal with underruns.
 
-    if (_pullCallback == b_cbv_null) {
+    if (!_pullCallback) {
       // Accept the callback
       log(LoggerI::INFO, 0, "pull: raincheck");
       _pullCallback = cb;
@@ -190,10 +190,10 @@ TuplePtr Store::Lookup::pull(int port, b_cbv cb)
       _key = NULL;
 
       // Wake up any pusher
-      if (_pushCallback != b_cbv_null) {
+      if (_pushCallback) {
         log(LoggerI::INFO, 0, "pull: wakeup pusher");
         _pushCallback();
-        _pushCallback = b_cbv_null;
+        _pushCallback = 0;
       }
       return newTuple;
     } else {

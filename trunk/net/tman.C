@@ -38,7 +38,7 @@ int TrafficManager::push(int port, TupleRef tp, b_cbv cb) {
   uint key = getKey(tp);
   if (key == my_key_) {
     total_received_++;
-    assert(output(1)->push(mkResponse(tp), b_cbv_null));
+    assert(output(1)->push(mkResponse(tp), 0));
   }
   else if (!processResponse(tp)) {
     log(LoggerI::WARN, 1, strbuf() << "MY KEY: " << my_key_ 

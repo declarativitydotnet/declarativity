@@ -13,7 +13,7 @@
 
 Duplicate::Duplicate(str name, int outputs)
   : Element(name, 1, outputs),
-    _push_cb(b_cbv_null),
+    _push_cb(0),
     _block_flags(),
     _block_flag_count(0)
 {
@@ -36,10 +36,10 @@ void Duplicate::unblock(int output)
   }
 
   // If I have a push callback, call it and remove it
-  if (_push_cb != b_cbv_null) {
+  if (_push_cb) {
     log(LoggerI::INFO, -1, "unblock: propagating aggregate unblock");
     _push_cb();
-    _push_cb = b_cbv_null;
+    _push_cb = 0;
   }
 }
 
@@ -52,7 +52,7 @@ int Duplicate::push(int port, TupleRef p, b_cbv cb)
   // Can I take more?
   if (_block_flag_count == noutputs()) {
     // Drop it and hold on to the callback if I don't have it already
-    if (_push_cb == b_cbv_null) {
+    if (!_push_cb) {
       _push_cb = cb;
     } else {
       log(LoggerI::WARN, -1, "push: Callback overrun");
@@ -84,7 +84,7 @@ int Duplicate::push(int port, TupleRef p, b_cbv cb)
 
   // If I just blocked all of my outputs, push back my input
   if (_block_flag_count == noutputs()) {
-    assert(_push_cb == b_cbv_null);
+    assert(!_push_cb);
     _push_cb = cb;
     log(LoggerI::WARN, -1, "push: Blocking input");
     return 0;

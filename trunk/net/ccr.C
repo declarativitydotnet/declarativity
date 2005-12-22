@@ -28,8 +28,11 @@
  * rwnd: Initial receiver window size (default given in ccrx.h).
  */
 CCR::CCR(str name, double rwnd, uint src, bool flow) 
-  : Element(name, (flow ? 2 : 1), 2), _ack_cb(b_cbv_null),
-    rwnd_(rwnd), src_field_(src), flow_(flow)
+  : Element(name, (flow ? 2 : 1), 2),
+    _ack_cb(0),
+    rwnd_(rwnd),
+    src_field_(src),
+    flow_(flow)
 {
 }
 
@@ -65,9 +68,9 @@ TuplePtr CCR::simple_action(TupleRef p)
   ack->freeze();
   ack_q_.push_back(ack);		// Append to ack queue
 
-  if (_ack_cb != b_cbv_null) {
+  if (_ack_cb) {
     _ack_cb();			// Notify new ack
-    _ack_cb = b_cbv_null;
+    _ack_cb = 0;
   } 
   return p;				// Forward data tuple
 }
