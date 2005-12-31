@@ -39,7 +39,7 @@ class Aggregate : public Element {
   TuplePtr _latest;
 
   /** My listener method */
-  void listener(TupleRef t);
+  void listener(TuplePtr t);
 
   /** My puller's callback */
   b_cbv _pullCallback;

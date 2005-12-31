@@ -25,7 +25,7 @@ public:
   ~PrintWatch();
   
   /** Overridden to perform the printing */
-  TuplePtr simple_action(TupleRef p);
+  TuplePtr simple_action(TuplePtr p);
 
   const char *class_name() const		{ return "PrintWatch";}
   const char *processing() const		{ return "a/a"; }

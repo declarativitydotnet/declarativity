@@ -31,22 +31,22 @@ public:
 
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );
-  static ValueRef xdr_unmarshal( XDR *x );
+  static ValuePtr xdr_unmarshal( XDR *x );
 
   // Constructor
   Val_Int32(int32_t theInt) : i(theInt) {};
 
   // Factory
-  static ValueRef mk(int32_t i) { return New refcounted<Val_Int32>(i); };
+  static ValuePtr mk(int32_t i) { ValuePtr p(new Val_Int32(i)); return p; };
 
   // Strict comparison
-  int compareTo(ValueRef) const;
+  int compareTo(ValuePtr) const;
 
   // Casting
-  static int32_t cast(ValueRef v);
+  static int32_t cast(ValuePtr v);
 
   // The ZERO
-  static ValueRef ZERO;
+  static ValuePtr ZERO;
   
   static const opr::Oper* oper_;
 private:

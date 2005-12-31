@@ -22,19 +22,19 @@ Unmarshal::~Unmarshal()
 {
 }
 
-TuplePtr Unmarshal::simple_action(TupleRef p)
+TuplePtr Unmarshal::simple_action(TuplePtr p)
 {
   // Get first tuple field
   if (p->size() == 0) {
     log(LoggerI::WARN, -1, "Input tuple has no first field");
-    return 0;
+    return TuplePtr();
   }
 
   ref<suio> u = Val_Opaque::cast((*p)[0]);
   char *buf = suio_flatten(u);
   size_t sz = u->resid();
   xdrmem xd(buf,sz);
-  TupleRef t = Tuple::xdr_unmarshal(&xd);
+  TuplePtr t = Tuple::xdr_unmarshal(&xd);
   xfree(buf);
   return t;
 }

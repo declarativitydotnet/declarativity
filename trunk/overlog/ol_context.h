@@ -111,7 +111,7 @@ private:
   TableInfoMap*      tables;
   RuleList*          rules;
   std::set<str>      watchTables;
-  std::vector<TupleRef> facts;
+  std::vector<TuplePtr> facts;
   Parse_Functor* singleQuery;
 
 public: 
@@ -119,7 +119,7 @@ public:
   RuleList*          getRules()       { return rules; };
   TableInfoMap*      getTableInfos()  { return tables;   };
   std::set<str>      getWatchTables() { return watchTables; };
-  std::vector<TupleRef> getFacts()       { return facts; };
+  std::vector<TuplePtr> getFacts()       { return facts; };
   
   
 };

@@ -21,7 +21,7 @@ PrintTime::~PrintTime()
 {
 }
 
-TuplePtr PrintTime::simple_action(TupleRef p)
+TuplePtr PrintTime::simple_action(TuplePtr p)
 {
   timespec now_ts;
   

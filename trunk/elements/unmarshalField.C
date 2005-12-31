@@ -25,7 +25,7 @@ UnmarshalField::~UnmarshalField()
 {
 }
 
-TuplePtr UnmarshalField::simple_action(TupleRef p)
+TuplePtr UnmarshalField::simple_action(TuplePtr p)
 {
   // Get the field in question
   ValuePtr value = (*p)[_fieldNo];
@@ -33,7 +33,7 @@ TuplePtr UnmarshalField::simple_action(TupleRef p)
   // Does this field exist?
   if (value == NULL) {
     // Nope.  Return nothing
-    return 0;
+    return TuplePtr();
   } else {
     // Is this a field of type OPAQUE?
     if (value->typeCode() == Value::OPAQUE) {
@@ -43,11 +43,11 @@ TuplePtr UnmarshalField::simple_action(TupleRef p)
       char *buf = suio_flatten(u);
       size_t sz = u->resid();
       xdrmem xd(buf,sz);
-      ValueRef unmarshalled = Value::xdr_unmarshal(&xd);
+      ValuePtr unmarshalled = Value::xdr_unmarshal(&xd);
       xfree(buf);
 
       // Now create a tuple copy replacing the unmarshalled field
-      TupleRef newTuple = Tuple::mk();
+      TuplePtr newTuple = Tuple::mk();
       for (unsigned field = 0;
            field < _fieldNo;
            field++) {

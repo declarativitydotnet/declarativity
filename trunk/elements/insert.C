@@ -12,13 +12,13 @@
 #include "insert.h"
 
 Insert::Insert(str name,
-               TableRef table)
+               TablePtr table)
   : Element(name, 1, 1),
     _table(table)
 {
 }
 
-TuplePtr Insert::simple_action(TupleRef p)
+TuplePtr Insert::simple_action(TuplePtr p)
 {
   // Nothing to do. Just insert
   _table->insert(p);

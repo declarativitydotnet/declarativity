@@ -24,7 +24,7 @@ public:
   Filter(str, unsigned);
 
   /** Overridden to perform the filtering. */
-  TuplePtr simple_action(TupleRef p);
+  TuplePtr simple_action(TuplePtr p);
 
   const char *class_name() const		{ return "Filter";}
   const char *processing() const		{ return "a/a"; }

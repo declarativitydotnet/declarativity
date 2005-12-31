@@ -18,7 +18,7 @@ class Val_IP_ADDR : public Value {
   
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );
-  //static ValueRef xdr_unmarshal( XDR *x );
+  //static ValuePtr xdr_unmarshal( XDR *x );
   
   // Constructor
   // takes in a string of format "xx.xx.xx.xx:port"
@@ -26,10 +26,10 @@ class Val_IP_ADDR : public Value {
   virtual ~Val_IP_ADDR(){};
   
   // Factory
-  static ValueRef mk(str s){ return New refcounted< Val_IP_ADDR > (s);};
+  static ValuePtr mk(str s){ ValuePtr p(new Val_IP_ADDR(s)); return p;};
   
   // Strict comparison
-  int compareTo(ValueRef) const;
+  int compareTo(ValuePtr) const;
   
   static const opr::Oper* oper_;
   
@@ -40,7 +40,7 @@ class Val_IP_ADDR : public Value {
   LoggerI * _logger;
 
   // Casting
-  static str cast(ValueRef v);
+  static str cast(ValuePtr v);
 
 #ifndef SWIG
   ref<suio> getAddress();

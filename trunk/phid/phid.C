@@ -36,21 +36,17 @@ int main(int argc, char **argv)
 {
   std::cout << "\nPhi daemon started\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef pl =
-    conf->addElement(New refcounted<PlSensor>("PLSensor", port, path, 30));
-  ElementSpecRef csv =
-    conf->addElement(New refcounted<CSVParser>("CSVParser"));
-  ElementSpecRef print =
-    conf->addElement(New refcounted<Print>("Printer"));
-  ElementSpecRef sink =
-    conf->addElement(New refcounted<TimedPullSink>("sink", 0));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr pl = conf->addElement(ElementPtr(new PlSensor("PLSensor", port, path, 30)));
+  ElementSpecPtr csv = conf->addElement(ElementPtr(new CSVParser("CSVParser")));
+  ElementSpecPtr print = conf->addElement(ElementPtr(new Print("Printer")));
+  ElementSpecPtr sink = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
   conf->hookUp(pl,0,csv,0);
   conf->hookUp(csv,0,print,0);
   conf->hookUp(print,0, sink, 0);
 
   // Create the router and check it statically
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized configuration.\n";
   } else {

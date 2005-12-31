@@ -36,7 +36,7 @@ extern int ol_parser_debug;
 int main(int argc, char **argv)
 {
   std::cout << "OVERLOG\n";
-  ref< OL_Context > ctxt = New refcounted< OL_Context>();
+  boost::shared_ptr< OL_Context > ctxt(new OL_Context());
   bool route = false;
   bool builtin = false;
   str filename("");
@@ -67,16 +67,14 @@ int main(int argc, char **argv)
       std::ifstream istr(filename);
       std::ofstream ostr(str(strbuf() << filename << ".dot"));
       ctxt->parse_stream(&istr);
-      Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-      ref< Catalog > catalog = New refcounted< Catalog >();  
-      catalog->initTables(ctxt); 
-      ref< ECA_Context > ectxt = New refcounted< ECA_Context >(); 
-      ectxt->eca_rewrite(ctxt, catalog);
+      Router::ConfigurationPtr conf(new Router::Configuration());
+      boost::shared_ptr< Catalog > catalog(new Catalog());  
+      catalog->initTables(ctxt.get()); 
+      boost::shared_ptr< ECA_Context > ectxt(new ECA_Context()); 
+      ectxt->eca_rewrite(ctxt.get(), catalog.get());
       
-      ref< Planner > planner 
-	= New refcounted< Planner >(conf, catalog, false, 
-				    "127.0.0.1:10000", "0");  
-      ref< Udp > udp = New refcounted< Udp >("Udp", 10000);
+      boost::shared_ptr< Planner > planner(new Planner(conf, catalog.get(), false, "127.0.0.1:10000", "0"));  
+      boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));
       std::vector<RuleStrand*> ruleStrands = planner->generateRuleStrands(ectxt);
 
       planner->setupNetwork(udp);
@@ -105,15 +103,14 @@ int main(int argc, char **argv)
   std::cout << ctxt->toString() << "\n";
 
   if (route) {
-    Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-    ref< Catalog > catalog = New refcounted< Catalog >();  
-    catalog->initTables(ctxt); 
-    ref< ECA_Context > ectxt = New refcounted< ECA_Context >(); 
-    ectxt->eca_rewrite(ctxt, catalog);
+    Router::ConfigurationPtr conf(new Router::Configuration());
+    boost::shared_ptr< Catalog > catalog(new Catalog());  
+    catalog->initTables(ctxt.get()); 
+    boost::shared_ptr< ECA_Context > ectxt(new ECA_Context()); 
+    ectxt->eca_rewrite(ctxt.get(), catalog.get());
     
-    ref< Planner > planner 
-      = New refcounted< Planner >(conf, catalog, false, "127.0.0.1:10000", "0");  
-    ref< Udp > udp = New refcounted< Udp >("Udp", 10000);
+    boost::shared_ptr< Planner > planner(new Planner(conf, catalog.get(), false, "127.0.0.1:10000", "0"));
+    boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));
     std::vector<RuleStrand*> ruleStrands = planner->generateRuleStrands(ectxt);
     
     for (unsigned k = 0; k < ruleStrands.size(); k++) {
@@ -125,7 +122,7 @@ int main(int argc, char **argv)
     std::cout << planner->getNetPlanner()->toString() << "\n";
 
     LoggerI::Level level = LoggerI::NONE;
-    RouterRef router = New refcounted< Router >(conf, level);
+    RouterPtr router(new Router(conf, level));
     if (router->initialize(router) == 0) {
       std::cout << "Correctly initialized network of reachability flows.\n";
     } else {

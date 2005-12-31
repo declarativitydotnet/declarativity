@@ -35,19 +35,19 @@ public:
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );
 
-  static ValueRef xdr_unmarshal( XDR *x );
+  static ValuePtr xdr_unmarshal( XDR *x );
 
   // Constructors
   Val_Time(struct timespec theTime) : t(theTime) {};
 
   // Factory
-  static ValueRef mk(struct timespec theTime) { return New refcounted<Val_Time>(theTime); };
+  static ValuePtr mk(struct timespec theTime) { ValuePtr(new Val_Time(theTime)); };
 
   // Strict comparison
-  int compareTo(ValueRef) const;
+  int compareTo(ValuePtr) const;
 
   // Casting
-  static struct timespec cast(ValueRef v);
+  static struct timespec cast(ValuePtr v);
 
   static const opr::Oper* oper_;
 private:

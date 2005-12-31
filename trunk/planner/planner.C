@@ -20,7 +20,7 @@
 #include "planContext.h"
 #include "rulePlanner.C"
 
-Planner::Planner(Router::ConfigurationRef conf, Catalog* catalog, 
+Planner::Planner(Router::ConfigurationPtr conf, Catalog* catalog, 
 		 bool debug, str nodeID, str outputFile) 
   : _conf(conf)
 { 
@@ -38,7 +38,7 @@ Planner::Planner(Router::ConfigurationRef conf, Catalog* catalog,
 }
 
 std::vector<RuleStrand*> 
-Planner::generateRuleStrands(ECA_ContextRef ectxt)
+Planner::generateRuleStrands(ECA_ContextPtr ectxt)
 {
   std::vector<RuleStrand*> toRet;
   // go through each eca rule, form a rule strand
@@ -55,7 +55,7 @@ Planner::generateRuleStrands(ECA_ContextRef ectxt)
   return toRet;
 }
 
-void Planner::setupNetwork(ref<Udp> udp)
+void Planner::setupNetwork(boost::shared_ptr<Udp> udp)
 {
   // call the netplanner to generate network in and out
   // mux and demux not generated

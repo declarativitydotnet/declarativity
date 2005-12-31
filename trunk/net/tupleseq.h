@@ -24,7 +24,7 @@ public:
   const char *processing() const { return "a/a"; };
   const char *flow_code() const	 { return "-/-"; };
 
-  TuplePtr simple_action(TupleRef p);
+  TuplePtr simple_action(TuplePtr p);
 
 private:
   REMOVABLE_INLINE bool isSeq(ValuePtr);

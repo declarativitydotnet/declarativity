@@ -48,8 +48,8 @@ struct LookupGenerator : public FunctorSource::Generator
       _prefix(eventPrefix)
   {};
   
-  TupleRef operator()() {
-    TupleRef tuple = Tuple::mk();
+  TuplePtr operator()() {
+    TuplePtr tuple = Tuple::mk();
     tuple->append(Val_Str::mk("lookup"));
 
     // The source
@@ -62,7 +62,7 @@ struct LookupGenerator : public FunctorSource::Generator
          i++) {
       words[i] = random();
     }
-    IDRef key = ID::mk(words);  
+    IDPtr key = ID::mk(words);  
     tuple->append(Val_ID::mk(key));
 
     tuple->append(Val_Str::mk(node));		// WHere the answer is returned
@@ -81,30 +81,30 @@ struct LookupGenerator : public FunctorSource::Generator
   str _prefix;
 };
 
-void issue_lookup(LoggerI::Level level, ptr<LookupGenerator> lookup,
+void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> lookup,
                   double delay, int times)
 {
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  Router::ConfigurationPtr conf(new Router::Configuration());
 
-  ElementSpecRef func    = conf->addElement(New refcounted< FunctorSource >(str("Source"), lookup));
-  ElementSpecRef print   = conf->addElement(New refcounted< Print >(strbuf("lookup")));
-  ElementSpecRef pushS =
-    conf->addElement(New refcounted< TimedPullPush >(strbuf("Push:"),
+  ElementSpecPtr func    = conf->addElement(ElementPtr(new FunctorSource(str("Source"), lookup.get())));
+  ElementSpecPtr print   = conf->addElement(ElementPtr(new Print(strbuf("lookup"))));
+  ElementSpecPtr pushS =
+    conf->addElement(ElementPtr(new TimedPullPush(strbuf("Push:"),
                                                      delay, // run then
                                                      times // run once
-                                                     ));
+                                                     )));
 
   // And a slot from which to pull
-  ElementSpecRef slotS =
-    conf->addElement(New refcounted< Slot >(strbuf("JoinEventSlot:")));
+  ElementSpecPtr slotS =
+    conf->addElement(ElementPtr(new Slot(strbuf("JoinEventSlot:"))));
 		       
-  ElementSpecRef encap = conf->addElement(New refcounted< PelTransform >("encapRequest",
+  ElementSpecPtr encap = conf->addElement(ElementPtr(new PelTransform("encapRequest",
 									  "$1 pop \
-                                                     $0 ->t $1 append $2 append $3 append $4 append pop")); // the rest
-  ElementSpecRef marshal = conf->addElement(New refcounted< MarshalField >("Marshal", 1));
-  ElementSpecRef route   = conf->addElement(New refcounted< StrToSockaddr >(strbuf("SimpleLookup"), 0));
-  ref< Udp >     udp     = New refcounted< Udp >("Udp");
-  ElementSpecRef udpTx   = conf->addElement(udp->get_tx());
+                                                     $0 ->t $1 append $2 append $3 append $4 append pop"))); // the rest
+  ElementSpecPtr marshal = conf->addElement(ElementPtr(new MarshalField("Marshal", 1)));
+  ElementSpecPtr route   = conf->addElement(ElementPtr(new StrToSockaddr(strbuf("SimpleLookup"), 0)));
+  boost::shared_ptr< Udp > udp(new Udp("Udp"));
+  ElementSpecPtr udpTx   = conf->addElement(udp->get_tx());
 
 
   conf->hookUp(func, 0, print, 0);
@@ -115,7 +115,7 @@ void issue_lookup(LoggerI::Level level, ptr<LookupGenerator> lookup,
   conf->hookUp(marshal, 0, route, 0);
   conf->hookUp(route, 0, udpTx, 0);
    
-  RouterRef router = New refcounted< Router >(conf, level);
+  RouterPtr router(new Router(conf, level));
   if (router->initialize(router) != 0) {
     std::cout << "** Failed to initialize correct spec\n";
     return;
@@ -140,12 +140,12 @@ int main(int argc, char **argv)
   level = LoggerI::levelFromName[str(argv[1])];
   seed = atoi(argv[2]);
   srandom(seed);
-  issue_lookup(level, New refcounted<LookupGenerator>(argv[3],
-                                                      atoi(argv[4]),
-                                                      atoi(argv[5]),
-                                                      argv[8]),
-               atof(argv[6]),
-               atoi(argv[7]));
+  issue_lookup(level, boost::shared_ptr<LookupGenerator>(new LookupGenerator(argv[3],
+                                                                             atoi(argv[4]),
+                                                                             atoi(argv[5]),
+                                                                             argv[8])),
+                                                                             atof(argv[6]),
+                                                                             atoi(argv[7]));
 
   return 0;
 }

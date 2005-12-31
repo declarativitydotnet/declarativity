@@ -16,10 +16,10 @@ DupElim::DupElim(str name)
 {
 }
 
-TuplePtr DupElim::simple_action(TupleRef p)
+TuplePtr DupElim::simple_action(TuplePtr p)
 {
   // Attempt to insert tuple
-  std::pair< std::set< TupleRef >::iterator, bool > result = _table.insert(p);
+  std::pair< std::set< TuplePtr >::iterator, bool > result = _table.insert(p);
 
   // Did we succeed?
   if (result.second) {
@@ -27,6 +27,6 @@ TuplePtr DupElim::simple_action(TupleRef p)
     return p;
   } else {
     // No, another one was there
-    return 0;
+    return TuplePtr();
   }
 }

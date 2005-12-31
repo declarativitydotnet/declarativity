@@ -68,8 +68,6 @@
 
 extern int ol_parser_debug;
 
-//typedef ref<Store> StoreRef;
-
 static int STARTING_PORT = 20000;
 static str LOCAL("127.0.0.1");
 static int nodeNo;
@@ -96,7 +94,7 @@ static int numLinks = 0;
 
 void defaultRing(Catalog* catalog, str address)
 {
-  TupleRef link = Tuple::mk();
+  TuplePtr link = Tuple::mk();
   link->append(Val_Str::mk("link"));
   strbuf src(address); src << ":" << port;   
   int dstPort = port + 1;
@@ -111,7 +109,7 @@ void defaultRing(Catalog* catalog, str address)
   link->append(Val_Int32::mk(1));
   link->freeze();
 
-  TupleRef reverseLink = Tuple::mk();
+  TuplePtr reverseLink = Tuple::mk();
   reverseLink->append(Val_Str::mk("link"));
   strbuf src1(LOCAL); src1 << ":" << port;   
   dstPort = port - 1;
@@ -125,11 +123,11 @@ void defaultRing(Catalog* catalog, str address)
   reverseLink->append(Val_Int32::mk(1));
   reverseLink->freeze();
   
-  TableRef tableRef 
+  TablePtr tablePtr 
     = catalog->getTableInfo("link")->_table; 
   
-  tableRef->insert(link);
-  tableRef->insert(reverseLink);
+  tablePtr->insert(link);
+  tablePtr->insert(reverseLink);
 
 }
 
@@ -162,7 +160,7 @@ void loadLinkTable(Catalog* catalog, str inputGraph,
 	continue;
       }
 
-      TupleRef link = Tuple::mk();
+      TuplePtr link = Tuple::mk();
       link->append(Val_Str::mk("link"));
       strbuf src(LOCAL); src << ":" << (STARTING_PORT + srcI);   
       strbuf dst(LOCAL); dst << ":" << (STARTING_PORT + dstI);   
@@ -179,9 +177,9 @@ void loadLinkTable(Catalog* catalog, str inputGraph,
 	link->append(Val_Double::mk(linkMetric));
       }
       link->freeze();
-      TableRef tableRef 
+      TablePtr tablePtr 
 	= catalog->getTableInfo("link")->_table; 
-      tableRef->insert(link);
+      tablePtr->insert(link);
       numLinks++;
     } else {
       str s = strtok(c," ");
@@ -206,7 +204,7 @@ void loadLinkTable(Catalog* catalog, str inputGraph,
 	continue;
       }
 
-      TupleRef link = Tuple::mk();
+      TuplePtr link = Tuple::mk();
       link->append(Val_Str::mk("link"));
       strbuf src(s); src << ":" << port;  
       strbuf dst(d); dst << ":" << port;
@@ -222,9 +220,9 @@ void loadLinkTable(Catalog* catalog, str inputGraph,
 	link->append(Val_Double::mk(linkMetric));
       }
       link->freeze();
-      TableRef tableRef 
+      TablePtr tablePtr 
 	= catalog->getTableInfo("link")->_table; 
-      tableRef->insert(link);
+      tablePtr->insert(link);
       numLinks ++;
     }
   }
@@ -257,7 +255,7 @@ void quit()
 //static IntMap previousDsts;
 static int offset = 1;
 
-void insertMagicSource(ptr< Catalog> catalog, str address)
+void insertMagicSource(boost::shared_ptr< Catalog> catalog, str address)
 {
   int nodeVal = rand() % numNodes;
   int dstVal = (nodeVal + offset) % (int) (numNodes * percentMagicDsts);
@@ -284,48 +282,48 @@ void insertMagicSource(ptr< Catalog> catalog, str address)
     }
     if (prevFlag == false) {*/
       // pick a random node that is not itself
-    TableRef tableRef 
+    TablePtr tablePtr 
       = catalog->getTableInfo("magic")->_table; 
     
-    TupleRef magicSource = Tuple::mk();
+    TuplePtr magicSource = Tuple::mk();
     strbuf src(address); src << ":" << port;  
     strbuf dst(address); dst << ":" << (STARTING_PORT + dstVal);  
     magicSource->append(Val_Str::mk("magic"));
     magicSource->append(Val_Str::mk(str(src)));
     magicSource->append(Val_Str::mk(str(dst)));
     magicSource->append(Val_Int32::mk(queries));
-    tableRef->insert(magicSource);
+    tablePtr->insert(magicSource);
     //}
   }
   delayCB(magicIntervalSeconds, boost::bind(&insertMagicSource, catalog, address));   
 }
 
 // XXX: not used for correlated experiment
-void updateLinks(ptr< Catalog> catalog)
+void updateLinks(boost::shared_ptr< Catalog> catalog)
 {
   // go through all the links. Pick X% to change by Y\%
   // insert into the table
   // generate a number from 
   warn << "Update links\n";
-  TableRef tableRef 
+  TablePtr tablePtr 
     = catalog->getTableInfo("link")->_table; 
 
-  Table::UniqueScanIterator linkScan = tableRef->uniqueScanAll(1, false);
-  std::vector<TupleRef> newTuples;
+  Table::UniqueScanIterator linkScan = tablePtr->uniqueScanAll(1, false);
+  std::vector<TuplePtr> newTuples;
   while (linkScan->done() == false) {
-    TupleRef linkTuple = linkScan->next();
+    TuplePtr linkTuple = linkScan->next();
     int randomVal = rand() % 100;
     warn << "Update link " << randomVal << " " << (int) (percentUpdate * 100) << "\n";
     if (randomVal < (100 * percentUpdate)) {
       // increase or decrease latency metric by X\%
       warn << "Update link old " << linkTuple->toString() << "\n";
       // inserto into table.
-      TupleRef newLink = Tuple::mk();
+      TuplePtr newLink = Tuple::mk();
       //newLink->append(Val_Str::mk("link"));
 
       for (unsigned k = 0; k < linkTuple->size(); k++) {
 	// insert all fields back, except for latency (field 4)
-	ValueRef nextVal = (*linkTuple)[k];       
+	ValuePtr nextVal = (*linkTuple)[k];       
 	if (k == 4) {
 	  double val = Val_Double::cast(nextVal);
 	  int maxIncr = 10;
@@ -347,7 +345,7 @@ void updateLinks(ptr< Catalog> catalog)
     }       
   }
   for (unsigned k = 0; k < newTuples.size(); k++) {
-    tableRef->insert(newTuples.at(k));
+    tablePtr->insert(newTuples.at(k));
   }
 
   updateTimes++;
@@ -356,7 +354,7 @@ void updateLinks(ptr< Catalog> catalog)
 }
 
 #if 0
-void generateReversePathElement(Router::ConfigurationRef conf, ptr< Catalog> catalog)
+void generateReversePathElement(Router::ConfigurationPtr conf, ptr< Catalog> catalog)
 {
   // update bestPathReverse event element -> printWatch 
   // -> cacheGenerator -> printWatch -> Insert
@@ -367,49 +365,49 @@ void generateReversePathElement(Router::ConfigurationRef conf, ptr< Catalog> cat
     exit(-1);
     return;
   }
-  TableRef tableRef = ti->_table;
+  TablePtr tablePtr = ti->_table;
 
   Catalog::TableInfo* tc =  catalog->getTableInfo("sendBestPathReverse");
-  TableRef sendTableRef = tc->_table;
+  TablePtr sendTablePtr = tc->_table;
   
   unsigned primaryKey = ti->_tableInfo->primaryKeys.at(0);
-  Table::UniqueScanIterator uniqueIterator = tableRef->uniqueScanAll(primaryKey, true);
-  ElementSpecRef updateTable =
+  Table::UniqueScanIterator uniqueIterator = tablePtr->uniqueScanAll(primaryKey, true);
+  ElementSpecPtr updateTable =
     conf->addElement(New refcounted< Scan >(strbuf("ScanUpdateCacheTwo|") 						  
 					    << "|bestPathReverse" 
 					    << "|" << nodeNo,
 					    uniqueIterator, 
 					    true));
   
-  ElementSpecRef printOne = 
+  ElementSpecPtr printOne = 
     conf->addElement(New refcounted< 
 		     PrintWatch >(strbuf("PrintWatchRBPReverseCacheTwo"),
 				  catalog->getWatchTables()));
     
-  ElementSpecRef pullPushBPReverse = 
+  ElementSpecPtr pullPushBPReverse = 
     conf->addElement(New refcounted< 
 		     TimedPullPush >(strbuf("BPReversePullPushTwo|"), 0));    
   
-  ElementSpecRef reversePath
+  ElementSpecPtr reversePath
     = conf->addElement(New refcounted< ReversePath >(strbuf("ReversePath") << nodeNo));
   
-  ElementSpecRef insertElement
+  ElementSpecPtr insertElement
     = conf->addElement(New refcounted< 
 		       Insert >(strbuf("InsertSendReversePath|") 
 				<< "rBPCache|" << nodeNo,
-				sendTableRef));
+				sendTablePtr));
   
-  ElementSpecRef printTwo = 
+  ElementSpecPtr printTwo = 
     conf->addElement(New refcounted< 
 		     PrintWatch >(strbuf("PrintWatchAddCacheTwo"),
 				  catalog->getWatchTables()));
   
-  ElementSpecRef pullPushCache = 
+  ElementSpecPtr pullPushCache = 
     conf->addElement(New refcounted< 
 		     TimedPullPush >(strbuf("RBPCachePullPush|"), 0));  
   
   
-  ElementSpecRef sinkS 
+  ElementSpecPtr sinkS 
     = conf->addElement(New refcounted< Discard >("DiscardInsertTwo"));
   
   conf->hookUp(updateTable, 0, printOne, 0);
@@ -422,7 +420,7 @@ void generateReversePathElement(Router::ConfigurationRef conf, ptr< Catalog> cat
 }
 
 
-void generateCacheElement(Router::ConfigurationRef conf, ptr< Catalog> catalog)
+void generateCacheElement(Router::ConfigurationPtr conf, ptr< Catalog> catalog)
 {
   // update bestPathReverse event element -> printWatch 
   // -> cacheGenerator -> printWatch -> Insert
@@ -433,50 +431,50 @@ void generateCacheElement(Router::ConfigurationRef conf, ptr< Catalog> catalog)
     exit(-1);
     return;
   }
-  TableRef tableRef = ti->_table;
+  TablePtr tablePtr = ti->_table;
 
   Catalog::TableInfo* tc =  catalog->getTableInfo("bestPathCache");
-  TableRef tableCacheRef = tc->_table;
+  TablePtr tableCachePtr = tc->_table;
 
   unsigned primaryKey = ti->_tableInfo->primaryKeys.at(0);
-  Table::UniqueScanIterator uniqueIterator = tableRef->uniqueScanAll(primaryKey, true);
-  ElementSpecRef updateTable =
+  Table::UniqueScanIterator uniqueIterator = tablePtr->uniqueScanAll(primaryKey, true);
+  ElementSpecPtr updateTable =
     conf->addElement(New refcounted< Scan >(strbuf("ScanUpdateCache|") 						  
 					    << "|bestPathReverse" 
 					    << "|" << nodeNo,
 					    uniqueIterator, 
 					    true));
 
-  ElementSpecRef printOne = 
+  ElementSpecPtr printOne = 
     conf->addElement(New refcounted< 
 		     PrintWatch >(strbuf("PrintWatchBPReverseCache"),
 					 catalog->getWatchTables()));
   
-  ElementSpecRef pullPushBPReverse = 
+  ElementSpecPtr pullPushBPReverse = 
     conf->addElement(New refcounted< 
 		     TimedPullPush >(strbuf("BPReversePullPush|"), 0));    
 
-  ElementSpecRef cacheMgr 
+  ElementSpecPtr cacheMgr 
     = conf->addElement(New refcounted< CacheMgr >(strbuf("CacheMgr") << nodeNo,
 						  numLinks));
   
-  ElementSpecRef insertElement
+  ElementSpecPtr insertElement
     = conf->addElement(New refcounted< 
 		       Insert >(strbuf("InsertBPCache|") 
 				<< "bPCache|" << nodeNo,
-				tableCacheRef));
+				tableCachePtr));
   
-  ElementSpecRef printTwo = 
+  ElementSpecPtr printTwo = 
     conf->addElement(New refcounted< 
 		     PrintWatch >(strbuf("PrintWatchAddCache"),
 					 catalog->getWatchTables()));
   
-  ElementSpecRef pullPushCache = 
+  ElementSpecPtr pullPushCache = 
    conf->addElement(New refcounted< 
 		    TimedPullPush >(strbuf("BPCachePullPush|"), 0));  
   
   
-  ElementSpecRef sinkS 
+  ElementSpecPtr sinkS 
     = conf->addElement(New refcounted< Discard >("DiscardInsert"));
   
   conf->hookUp(updateTable, 0, printOne, 0);
@@ -491,8 +489,8 @@ void generateCacheElement(Router::ConfigurationRef conf, ptr< Catalog> catalog)
 #endif
 
 /** Build a symmetric link transitive closure. */
-void runPathQuery(Router::ConfigurationRef conf, 
-		  LoggerI::Level level, ref< OL_Context> ctxt, 
+void runPathQuery(Router::ConfigurationPtr conf, 
+		  LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt, 
 		  str address, std::vector<str> filenames, 
 		  str inputGraph, str debugFile)
 {
@@ -505,27 +503,25 @@ void runPathQuery(Router::ConfigurationRef conf,
   str ecaFile(strbuf(debugFile << ".eca"));
   FILE *ecaOutput = fopen(ecaFile.cstr(), "w");
 
-  ptr< Udp > udp;
-  ptr< Catalog > catalog;
-  ptr< ECA_Context > ectxt;
+  boost::shared_ptr< Udp > udp;
+  boost::shared_ptr< Catalog > catalog;
+  boost::shared_ptr< ECA_Context > ectxt;
   
   str nodeID;   
   nodeID = strbuf(address) << ":" << port;
-  udp = New refcounted< Udp >(strbuf("Udp:") << nodeID, port);
+  udp.reset(new Udp(strbuf("Udp:") << nodeID, port));
 
   // for each filename
 
-  catalog = New refcounted< Catalog >();  
-  catalog->initTables(ctxt); 
+  catalog.reset(new Catalog());  
+  catalog->initTables(ctxt.get()); 
   catalog->setWatchTables(ctxt->getWatchTables());  
 
-  ectxt = New refcounted< ECA_Context >(); 
-  ectxt->eca_rewrite(ctxt, catalog);  
+  ectxt.reset(new ECA_Context()); 
+  ectxt->eca_rewrite(ctxt.get(), catalog.get());  
   fprintf(ecaOutput, "%s\n", ectxt->toString().cstr());
    
-  planner = New Planner (conf, catalog, 
-			 false, nodeID, 
-			 debugFile << "-" << nodeNo);      
+  planner = New Planner (conf, catalog.get(), false, nodeID, debugFile << "-" << nodeNo);      
   std::vector<RuleStrand*> ruleStrands = 
     planner->generateRuleStrands(ectxt);
 
@@ -536,7 +532,7 @@ void runPathQuery(Router::ConfigurationRef conf,
   
   // set timer on quitting, initialize link table, periodic updates
   delaycb(duration, 0, wrap(&quit));
-  delaycb(10, 0, wrap(&initializeLinkTable, catalog, address, inputGraph));
+  delaycb(10, 0, wrap(&initializeLinkTable, catalog.get(), address, inputGraph));
   if (updatePeriodSeconds.at(0) != -1) {
     delaycb(10 + updatePeriodSeconds.at(updateRoundRobin % updatePeriodSeconds.size()), 0, wrap(&updateLinks, catalog));
     updateRoundRobin++;
@@ -545,7 +541,7 @@ void runPathQuery(Router::ConfigurationRef conf,
   // add a path optimizer, timedpullpush, 
   /*
   if (periodicPush > 0 || magicCache != 0) {    
-    std::vector<ElementSpecRef> optimizeSend;
+    std::vector<ElementSpecPtr> optimizeSend;
 
     if (periodicPush > 0) {
       std::vector<unsigned int> groupByFields;
@@ -563,14 +559,14 @@ void runPathQuery(Router::ConfigurationRef conf,
       
       bool correlateShare = (correlate == 2);
       
-      ElementSpecRef pathsOpt =
+      ElementSpecPtr pathsOpt =
 	conf->addElement(New refcounted< PathsOpt >(strbuf("PathsOpt|") 
 						    << address << ":" << port,
 						    pathNames,
 						    groupByFields, 
 						    5, 6, 
 						    periodicPush, correlateShare));
-      ElementSpecRef pullPush = 
+      ElementSpecPtr pullPush = 
 	conf->addElement(New refcounted< 
 			 TimedPullPush >(strbuf("PathsOptTimedPullPush|")
 					 << address << ":" << port, 0));
@@ -584,21 +580,21 @@ void runPathQuery(Router::ConfigurationRef conf,
       // find the cache table
       // create a checkCache table
       Catalog::TableInfo* tc =  catalog->getTableInfo("bestPathCache");
-      TableRef tableCacheRef = tc->_table;
+      TablePtr tableCachePtr = tc->_table;
 
-      ElementSpecRef pullPush = 
+      ElementSpecPtr pullPush = 
 	conf->addElement(New refcounted< 
 			 TimedPullPush >(strbuf("CheckCachePullPush|")
 					 << address << ":" << port, 0));      
 
       Catalog::TableInfo* tc1 =  catalog->getTableInfo("cacheHit");
-      TableRef cacheHitRef = tc1->_table;
+      TablePtr cacheHitPtr = tc1->_table;
 
-      ElementSpecRef checkCache = 
+      ElementSpecPtr checkCache = 
 	conf->addElement(New refcounted< 
 			 CheckCache >(strbuf("CheckCache|")
 				      << address << ":" << port, 
-				      tableCacheRef, cacheHitRef));      
+				      tableCachePtr, cacheHitPtr));      
       
       optimizeSend.push_back(checkCache);
       optimizeSend.push_back(pullPush);
@@ -626,7 +622,7 @@ void runPathQuery(Router::ConfigurationRef conf,
   }
   */
 
-  RouterRef router = New refcounted< Router >(conf, level);
+  RouterPtr router(new Router(conf, level));
   if (router->initialize(router) == 0) {
     warn << "Correctly initialized network of reachability flows.\n";
   } else {
@@ -650,7 +646,7 @@ void runPathQuery(Router::ConfigurationRef conf,
 
 int main(int argc, char **argv)
 {
-  ref< OL_Context > ctxt = New refcounted< OL_Context>();
+  boost::shared_ptr< OL_Context > ctxt(new OL_Context());
 
   if (argc < 20) {
     fatal << "Usage:\n\t paths <numNodes> <nodeNo> <address> <port> <datalogFile> <inputgraph> <outputFile> <loggingLevel> <seed> <duration> <periodicSend> <metric> <updatePeriodSeconds> <percentUpdate> <correlate> <magicIntervalSeconds> <magicNumQueries> <magicCache> <percentMagicDsts>\n";
@@ -702,7 +698,7 @@ int main(int argc, char **argv)
   std::cout << "Finish parsing (functors / tableInfos) " << ctxt->getRules()->size() 
 	    << " " << ctxt->getTableInfos()->size() << "\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  Router::ConfigurationPtr conf(new Router::Configuration());
 
   if (correlate != 0) {
     std::vector<str> filenames;

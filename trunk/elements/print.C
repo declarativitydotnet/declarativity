@@ -21,7 +21,7 @@ Print::~Print()
 {
 }
 
-TuplePtr Print::simple_action(TupleRef p)
+TuplePtr Print::simple_action(TuplePtr p)
 {
   warn << "Print[" << _prefix << "]:  [" << p->toString() << "]\n";
   return p;

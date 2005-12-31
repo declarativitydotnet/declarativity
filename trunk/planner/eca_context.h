@@ -93,6 +93,6 @@ private:
   std::vector<OL_Context::Rule*> localizeRule(OL_Context::Rule*, Catalog*);
 };
 
-typedef ref<ECA_Context> ECA_ContextRef;
+typedef boost::shared_ptr<ECA_Context> ECA_ContextPtr;
 
 #endif

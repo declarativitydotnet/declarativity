@@ -265,8 +265,8 @@ int main(int argc, char **argv)
     right[3] = idTest->rw3;
     right[4] = idTest->rw4;
 
-    IDRef leftID = ID::mk(left);
-    IDRef rightID = ID::mk(right);
+    IDPtr leftID = ID::mk(left);
+    IDPtr rightID = ID::mk(right);
 
     int result = leftID->compareTo(rightID);
     if (idTest->result != result) {
@@ -305,9 +305,9 @@ int main(int argc, char **argv)
     right[3] = idTest->rw3;
     right[4] = idTest->rw4;
 
-    IDRef leftID = ID::mk(left);
-    IDRef rightID = ID::mk(right);
-    IDRef middleID = ID::mk(middle);
+    IDPtr leftID = ID::mk(left);
+    IDPtr rightID = ID::mk(right);
+    IDPtr middleID = ID::mk(middle);
 
     bool resultoo = middleID->betweenOO(leftID, rightID);
     bool resultoc = middleID->betweenOC(leftID, rightID);
@@ -378,10 +378,10 @@ int main(int argc, char **argv)
     right[3] = idTest->rw3;
     right[4] = idTest->rw4;
 
-    IDRef leftID = ID::mk(left);
-    IDRef rightID = ID::mk(right);
-    IDRef middleID = ID::mk(middle);
-    IDRef resultID = leftID->distance(rightID);
+    IDPtr leftID = ID::mk(left);
+    IDPtr rightID = ID::mk(right);
+    IDPtr middleID = ID::mk(middle);
+    IDPtr resultID = leftID->distance(rightID);
 
     if (middleID->compareTo(resultID) != 0) {
       std::cerr << "***" << __FILE__ ":" << idTest->line << ": "
@@ -420,10 +420,10 @@ int main(int argc, char **argv)
     right[3] = idTest->rw3;
     right[4] = idTest->rw4;
 
-    IDRef leftID = ID::mk(left);
-    IDRef rightID = ID::mk(right);
-    IDRef middleID = ID::mk(middle);
-    IDRef resultID = leftID->add(rightID);
+    IDPtr leftID = ID::mk(left);
+    IDPtr rightID = ID::mk(right);
+    IDPtr middleID = ID::mk(middle);
+    IDPtr resultID = leftID->add(rightID);
 
     if (middleID->compareTo(resultID) != 0) {
       std::cerr << "***" << __FILE__ ":" << idTest->line << ": "
@@ -455,9 +455,9 @@ int main(int argc, char **argv)
     right[3] = idTest->rw3;
     right[4] = idTest->rw4;
 
-    IDRef leftID = ID::mk(left);
-    IDRef rightID = ID::mk(right);
-    IDRef resultID = leftID->shift(idTest->shift);
+    IDPtr leftID = ID::mk(left);
+    IDPtr rightID = ID::mk(right);
+    IDPtr resultID = leftID->shift(idTest->shift);
 
     if (resultID->compareTo(rightID) != 0) {
       std::cerr << "***" << __FILE__ ":" << idTest->line << ": "

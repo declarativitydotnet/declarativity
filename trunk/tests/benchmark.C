@@ -107,7 +107,7 @@ static double time_fn(cbv cb)
    72696e67 //
  */
 
-static ValueRef create_val_null_1() {
+static ValuePtr create_val_null_1() {
   return Val_Null::mk();
 }
 
@@ -117,7 +117,7 @@ static void create_lots_val_null() {
   }
 }
 
-static ValueRef create_val_uint64_1() {
+static ValuePtr create_val_uint64_1() {
   return Val_UInt64::mk((uint64_t)64);
 }
 
@@ -127,7 +127,7 @@ static void create_lots_val_uint64() {
   }
 }
 
-static ValueRef create_val_int32_1() {
+static ValuePtr create_val_int32_1() {
   return Val_Int32::mk((int32_t)-32);
 }
 
@@ -137,7 +137,7 @@ static void create_lots_val_int32() {
   }
 }
 
-static ValueRef create_val_double_1() {
+static ValuePtr create_val_double_1() {
   return Val_Double::mk(0.012345);
 }
 
@@ -147,7 +147,7 @@ static void create_lots_val_double() {
   }
 }
 
-static ValueRef create_val_str_1() {
+static ValuePtr create_val_str_1() {
   return Val_Str::mk("This is a string");
 }
 
@@ -213,8 +213,8 @@ static void unmarshal_lots_of_str() {
 // for tuples
 
 static TuplePtr ta[TUPLE_TST_SZ];
-static TupleRef create_tuple_1() {
-  TupleRef t = Tuple::mk();
+static TuplePtr create_tuple_1() {
+  TuplePtr t = Tuple::mk();
   t->append(create_val_null_1());
   t->append(create_val_int32_1());
   t->append(create_val_uint64_1());

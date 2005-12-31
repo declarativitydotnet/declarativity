@@ -24,7 +24,7 @@ public:
   ~PelTransform();
   
   /** Overridden to perform the tranformation. */
-  TuplePtr simple_action(TupleRef p);
+  TuplePtr simple_action(TuplePtr p);
 
   const char *class_name() const		{ return "PelTransform";}
   const char *processing() const		{ return "a/a"; }

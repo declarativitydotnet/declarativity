@@ -73,9 +73,6 @@ static const int SUCCESSORSIZE = 1;
 
 
 
-
-
-
 /** Created a networked symphony flow. If alone, I'm my own successor.  If
     with landmark, I start with a join. */
 void testNetworked(LoggerI::Level level,
@@ -85,13 +82,12 @@ void testNetworked(LoggerI::Level level,
                    double delay = 0)
 {
   // Create the data flow
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  Router::ConfigurationPtr conf(new Router::Configuration());
   Udp udp(strbuf(myAddress) << ":Udp", port);
 
-  createSymNode(myAddress, landmarkAddress,
-             conf, &udp, networkSize, delay);
+  // FIX ME createSymNode(myAddress, landmarkAddress, conf, &udp, networkSize, delay);
 
-  RouterRef router = New refcounted< Router >(conf, level);
+  RouterPtr router(new Router(conf, level));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized network of symphony lookup flows.\n";
   } else {
@@ -173,7 +169,6 @@ int main(int argc, char **argv)
   return 0;
 }
   
-
 /*
  * End of file 
  */

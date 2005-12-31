@@ -64,7 +64,7 @@ Pel_VM::Pel_VM() : _st() {
 //
 // Create the VM with a preset stack
 //
-Pel_VM::Pel_VM(std::deque< ValueRef > staque) : _st(staque) {
+Pel_VM::Pel_VM(std::deque< ValuePtr > staque) : _st(staque) {
 }
 
 //
@@ -85,7 +85,7 @@ void Pel_VM::stop()
 //
 // Return some value. 
 //
-ValueRef Pel_VM::result_val()
+ValuePtr Pel_VM::result_val()
 {
   if (_st.empty()) {
     stackPush(Val_Null::mk());
@@ -107,7 +107,7 @@ TuplePtr Pel_VM::result_tuple()
 // 
 void Pel_VM::reset_result_tuple() 
 {
-  result = NULL;
+  result.reset();
 }
 
 //
@@ -123,9 +123,9 @@ const char *Pel_VM::strerror(Pel_VM::Error e) {
 //
 // Type conversion to an unsigned number with no checkng
 //
-ValueRef Pel_VM::pop() 
+ValuePtr Pel_VM::pop() 
 {
-  ValueRef t = stackTop(); stackPop();
+  ValuePtr t = stackTop(); stackPop();
   return t;
 }
 
@@ -134,7 +134,7 @@ ValueRef Pel_VM::pop()
 //
 uint64_t Pel_VM::pop_unsigned() 
 {
-  ValueRef t = stackTop(); stackPop();
+  ValuePtr t = stackTop(); stackPop();
   try {
     return Val_UInt64::cast(t);
   } catch (Value::TypeError) {
@@ -148,7 +148,7 @@ uint64_t Pel_VM::pop_unsigned()
 //
 int64_t Pel_VM::pop_signed() 
 {
-  ValueRef t = stackTop(); stackPop();
+  ValuePtr t = stackTop(); stackPop();
   try {
     return Val_Int64::cast(t);
   } catch (Value::TypeError) {
@@ -162,7 +162,7 @@ int64_t Pel_VM::pop_signed()
 //  
 str Pel_VM::pop_string() 
 {
-  ValueRef t = stackTop(); stackPop();
+  ValuePtr t = stackTop(); stackPop();
   try {
     return Val_Str::cast(t);
   } catch (Value::TypeError) {
@@ -176,7 +176,7 @@ str Pel_VM::pop_string()
 //  
 struct timespec Pel_VM::pop_time() 
 {
-  ValueRef t = stackTop(); stackPop();
+  ValuePtr t = stackTop(); stackPop();
   try {
     return Val_Time::cast(t);
   } catch (Value::TypeError) {
@@ -191,9 +191,9 @@ struct timespec Pel_VM::pop_time()
 //
 // Pull an ID off the stack
 //  
-IDRef Pel_VM::pop_ID() 
+IDPtr Pel_VM::pop_ID() 
 {
-  ValueRef t = stackTop(); stackPop();
+  ValuePtr t = stackTop(); stackPop();
   try {
     return Val_ID::cast(t);
   } catch (Value::TypeError) {
@@ -207,7 +207,7 @@ IDRef Pel_VM::pop_ID()
 //  
 double Pel_VM::pop_double() 
 {
-  ValueRef t = stackTop(); stackPop();
+  ValuePtr t = stackTop(); stackPop();
   try { 
     return Val_Double::cast(t);
   } catch (Value::TypeError) {
@@ -219,12 +219,12 @@ double Pel_VM::pop_double()
 //
 // Actually execute a program
 //
-Pel_VM::Error Pel_VM::execute(const Pel_Program &prog, const TupleRef data)
+Pel_VM::Error Pel_VM::execute(const Pel_Program &prog, const TuplePtr data)
 {
   prg = &prog;
   error = PE_SUCCESS;
   pc = 0;
-  result = NULL;
+  result.reset();
   operand = data;
   
   for (pc = 0;
@@ -246,7 +246,7 @@ void Pel_VM::dumpStack(str message)
 {
   
   // Dump the stack
-  for (std::deque<ValueRef>::reverse_iterator i = _st.rbegin();
+  for (std::deque<ValuePtr>::reverse_iterator i = _st.rbegin();
        i != _st.rend();
        i++) {
     warn << "Stack entry[" << message << "]: " << (*i)->toString() << "\n";
@@ -256,7 +256,7 @@ void Pel_VM::dumpStack(str message)
 //
 // Execute a single instruction
 //
-Pel_VM::Error Pel_VM::execute_instruction( u_int32_t inst, TupleRef data)
+Pel_VM::Error Pel_VM::execute_instruction( u_int32_t inst, TuplePtr data)
 {
   u_int32_t op = inst & 0xFFFF;
   if (op > NUM_OPCODES) {
@@ -289,8 +289,8 @@ Pel_VM::Error Pel_VM::execute_instruction( u_int32_t inst, TupleRef data)
 //
 DEF_OP(DROP) { stackPop(); }
 DEF_OP(SWAP) { 
-  ValueRef t1 = stackTop(); stackPop();
-  ValueRef t2 = stackTop(); stackPop();
+  ValuePtr t1 = stackTop(); stackPop();
+  ValuePtr t2 = stackTop(); stackPop();
   stackPush(t1); 
   stackPush(t2);
 }
@@ -309,7 +309,7 @@ DEF_OP(PUSH_FIELD) {
 }
 DEF_OP(POP) {
   if (!result) { result = Tuple::mk(); }
-  ValueRef top = stackTop(); stackPop();
+  ValuePtr top = stackTop(); stackPop();
   if (top->typeCode() == Value::TUPLE) {
     // Freeze it before taking it out
     Val_Tuple::cast(top)->freeze();
@@ -327,8 +327,8 @@ DEF_OP(PEEK) {
   stackPush(stackPeek(stackPosition));
 }
 DEF_OP(IFELSE) {
-  ValueRef elseVal = stackTop(); stackPop();
-  ValueRef thenVal = stackTop(); stackPop();
+  ValuePtr elseVal = stackTop(); stackPop();
+  ValuePtr thenVal = stackTop(); stackPop();
   int64_t ifVal = pop_unsigned();
   if (ifVal) {
     stackPush(thenVal);
@@ -337,7 +337,7 @@ DEF_OP(IFELSE) {
   }
 }
 DEF_OP(IFPOP) {
-  ValueRef thenVal = stackTop(); stackPop();
+  ValuePtr thenVal = stackTop(); stackPop();
   int64_t ifVal = pop_unsigned();
   if (ifVal) {
     if (!result) {
@@ -373,21 +373,21 @@ DEF_OP(IFPOP_TUPLE) {
   }
 }
 DEF_OP(T_MKTUPLE) {
-  ValueRef val = stackTop(); stackPop();
-  TupleRef t = Tuple::mk();
+  ValuePtr val = stackTop(); stackPop();
+  TuplePtr t = Tuple::mk();
   t->append(val);
-  ValueRef tuple = Val_Tuple::mk(t);
+  ValuePtr tuple = Val_Tuple::mk(t);
   stackPush(tuple);
 }
 DEF_OP(T_APPEND) {
-  ValueRef value = stackTop(); stackPop();
-  ValueRef tuple = stackTop();
-  TupleRef t = Val_Tuple::cast(tuple);
+  ValuePtr value = stackTop(); stackPop();
+  ValuePtr tuple = stackTop();
+  TuplePtr t = Val_Tuple::cast(tuple);
   t->append(value);
 }
 DEF_OP(T_UNBOX) {
-  ValueRef tuple = stackTop(); stackPop();
-  TupleRef t = Val_Tuple::cast(tuple);
+  ValuePtr tuple = stackTop(); stackPop();
+  TuplePtr t = Val_Tuple::cast(tuple);
   // Now start pushing fields from the end forwards
   for (int i = t->size() - 1;
        i >= 0;
@@ -396,8 +396,8 @@ DEF_OP(T_UNBOX) {
   }
 }
 DEF_OP(T_UNBOXPOP) {
-  ValueRef tuple = stackTop(); stackPop();
-  TupleRef t = Val_Tuple::cast(tuple);
+  ValuePtr tuple = stackTop(); stackPop();
+  TuplePtr t = Val_Tuple::cast(tuple);
   // Now start popping fields from front out
   if (!result) {
     result = Tuple::mk();
@@ -410,8 +410,8 @@ DEF_OP(T_UNBOXPOP) {
 }
 DEF_OP(T_FIELD) {
   unsigned field = pop_unsigned();
-  ValueRef tuple = stackTop(); stackPop();
-  TupleRef theTuple = Val_Tuple::cast(tuple);
+  ValuePtr tuple = stackTop(); stackPop();
+  TuplePtr theTuple = Val_Tuple::cast(tuple);
   ValuePtr value = (*theTuple)[field];
   if (value == NULL) {
     stackPush(Val_Null::mk());
@@ -420,7 +420,7 @@ DEF_OP(T_FIELD) {
   }
 }
 DEF_OP(T_SWALLOW) { 
-  ValueRef swallowed = Val_Tuple::mk(operand);
+  ValuePtr swallowed = Val_Tuple::mk(operand);
   stackPush(swallowed);
 }
 
@@ -454,9 +454,9 @@ DEF_OP(COIN) {
 }
 
 DEF_OP(INITLIST) {
-  ValueRef second = stackTop(); stackPop();
-  ValueRef first = stackTop(); stackPop();
-  TupleRef newTuple = Tuple::mk();
+  ValuePtr second = stackTop(); stackPop();
+  ValuePtr first = stackTop(); stackPop();
+  TuplePtr newTuple = Tuple::mk();
   newTuple->append(first);
   newTuple->append(second);
   newTuple->freeze();
@@ -464,8 +464,8 @@ DEF_OP(INITLIST) {
 }
 
 DEF_OP(CONSLIST) {
-  ValueRef second = stackTop(); stackPop();
-  ValueRef first = stackTop(); stackPop();
+  ValuePtr second = stackTop(); stackPop();
+  ValuePtr first = stackTop(); stackPop();
   
   TuplePtr firstTuple, secondTuple;
   // make each argument a tuple
@@ -491,10 +491,10 @@ DEF_OP(CONSLIST) {
 }
 
 DEF_OP(INLIST) {
-  ValueRef second = stackTop(); stackPop();
-  ValueRef first = stackTop(); stackPop();
+  ValuePtr second = stackTop(); stackPop();
+  ValuePtr first = stackTop(); stackPop();
 
-  TupleRef curTuple= Val_Tuple::cast(first);
+  TuplePtr curTuple= Val_Tuple::cast(first);
 
   bool flag = false;
   for (unsigned k = 0; k < curTuple->size(); k++) {
@@ -510,11 +510,11 @@ DEF_OP(INLIST) {
 }
 
 DEF_OP(REMOVELAST) {
-  ValueRef first = stackTop(); stackPop();
+  ValuePtr first = stackTop(); stackPop();
 
-  TupleRef curTuple= Val_Tuple::cast(first);
+  TuplePtr curTuple= Val_Tuple::cast(first);
 
-  TupleRef newTuple = Tuple::mk();
+  TuplePtr newTuple = Tuple::mk();
   for (unsigned k = 0; k < curTuple->size()-1; k++) {
     newTuple->append(Val_Str::mk((*curTuple)[k]->toString()));
   }
@@ -523,15 +523,15 @@ DEF_OP(REMOVELAST) {
 }
 
 DEF_OP(LAST) {
-  ValueRef first = stackTop(); stackPop();
-  TupleRef curTuple= Val_Tuple::cast(first);
+  ValuePtr first = stackTop(); stackPop();
+  TuplePtr curTuple= Val_Tuple::cast(first);
   warn << "Get Last: " << curTuple->toString() << "\n";
   stackPush(Val_Str::mk((*curTuple)[curTuple->size()-1]->toString()));
 }
 
 DEF_OP(SIZE) {
-  ValueRef first = stackTop(); stackPop();
-  TupleRef curTuple= Val_Tuple::cast(first);
+  ValuePtr first = stackTop(); stackPop();
+  TuplePtr curTuple= Val_Tuple::cast(first);
   stackPush(Val_Int32::mk(curTuple->size()));
 }
 
@@ -539,13 +539,13 @@ DEF_OP(SIZE) {
 // Integer-only arithmetic operations (mostly bitwise)
 //
 DEF_OP(ASR) {
-  ValueRef v1 = pop();
-  ValueRef v2 = pop();
+  ValuePtr v1 = pop();
+  ValuePtr v2 = pop();
   stackPush((v2 >> v1));
 }
 DEF_OP(ASL) {
-  ValueRef v1 = pop();
-  ValueRef v2 = pop();
+  ValuePtr v1 = pop();
+  ValuePtr v2 = pop();
   stackPush((v2 << v1));
 }
 DEF_OP(BIT_AND) {
@@ -566,7 +566,7 @@ DEF_OP(BIT_NOT) {
 //
 DEF_OP(NEG) {
   try {
-    ValueRef neg = Val_Int32::mk(-1);
+    ValuePtr neg = Val_Int32::mk(-1);
     stackPush((neg * pop()));
   } catch (opr::Oper::Exception *e) {
     error = PE_OPER_UNSUP;
@@ -581,8 +581,8 @@ DEF_OP(PLUS) {
 }
 DEF_OP(MINUS) {
   // Be careful of undefined evaluation order in C++!
-  ValueRef v1 = pop();
-  ValueRef v2 = pop();
+  ValuePtr v1 = pop();
+  ValuePtr v2 = pop();
   try {
     stackPush((v2-v1));
   } catch (opr::Oper::Exception *e) {
@@ -590,7 +590,7 @@ DEF_OP(MINUS) {
   }
 }
 DEF_OP(MINUSMINUS) {
-  ValueRef v1 = pop();
+  ValuePtr v1 = pop();
   try {
     stackPush(--v1);
   } catch (opr::Oper::Exception *e) {
@@ -598,7 +598,7 @@ DEF_OP(MINUSMINUS) {
   }
 }
 DEF_OP(PLUSPLUS) {
-  ValueRef v1 = pop();
+  ValuePtr v1 = pop();
   try {
     stackPush(++v1);
   } catch (opr::Oper::Exception *e) {
@@ -614,8 +614,8 @@ DEF_OP(MUL) {
 }
 DEF_OP(DIV) {
   // Be careful of undefined evaluation order in C++!
-  ValueRef v1 = pop();
-  ValueRef v2 = pop();
+  ValuePtr v1 = pop();
+  ValuePtr v2 = pop();
   if (v1 != Val_UInt64::mk(0)) { 
     try {
       stackPush((v2 / v1));
@@ -628,8 +628,8 @@ DEF_OP(DIV) {
 }
 DEF_OP(MOD) {
   // Be careful of undefined evaluation order in C++!
-  ValueRef v1 = pop();
-  ValueRef v2 = pop();
+  ValuePtr v1 = pop();
+  ValuePtr v2 = pop();
   if (v1 != Val_UInt64::mk(0)) { 
     try {
       stackPush((v2 % v1));
@@ -665,27 +665,27 @@ DEF_OP(GTE) {
 // IN Operator
 //
 DEF_OP(INOO) {
-  ValueRef to   = pop();
-  ValueRef from = pop();
-  ValueRef key  = pop();
+  ValuePtr to   = pop();
+  ValuePtr from = pop();
+  ValuePtr key  = pop();
   stackPush(Val_Int32::mk(inOO(key, from, to)));
 }
 DEF_OP(INOC) {
-  ValueRef to   = pop();
-  ValueRef from = pop();
-  ValueRef key  = pop();
+  ValuePtr to   = pop();
+  ValuePtr from = pop();
+  ValuePtr key  = pop();
   stackPush(Val_Int32::mk(inOC(key, from, to)));
 }
 DEF_OP(INCO) {
-  ValueRef to   = pop();
-  ValueRef from = pop();
-  ValueRef key  = pop();
+  ValuePtr to   = pop();
+  ValuePtr from = pop();
+  ValuePtr key  = pop();
   stackPush(Val_Int32::mk(inCO(key, from, to)));
 }
 DEF_OP(INCC) {
-  ValueRef to   = pop();
-  ValueRef from = pop();
-  ValueRef key  = pop();
+  ValuePtr to   = pop();
+  ValuePtr from = pop();
+  ValuePtr key  = pop();
   stackPush(Val_Int32::mk(inCC(key, from, to)));
 }
 
@@ -738,28 +738,28 @@ DEF_OP(TIME_MINUS) {
 // about operand order on the stack!
 //
 DEF_OP(ID_LT) { 
-  IDRef s1 = pop_ID();
-  IDRef s2 = pop_ID();
+  IDPtr s1 = pop_ID();
+  IDPtr s2 = pop_ID();
   stackPush(Val_Int32::mk(s2->compareTo(s1) < 0));
 }
 DEF_OP(ID_LTE) { 
-  IDRef s1 = pop_ID();
-  IDRef s2 = pop_ID();
+  IDPtr s1 = pop_ID();
+  IDPtr s2 = pop_ID();
   stackPush(Val_Int32::mk(s2->compareTo(s1) <= 0));
 }
 DEF_OP(ID_GT) { 
-  IDRef s1 = pop_ID();
-  IDRef s2 = pop_ID();
+  IDPtr s1 = pop_ID();
+  IDPtr s2 = pop_ID();
   stackPush(Val_Int32::mk(s2->compareTo(s1) > 0));
 }
 DEF_OP(ID_GTE) { 
-  IDRef s1 = pop_ID();
-  IDRef s2 = pop_ID();
+  IDPtr s1 = pop_ID();
+  IDPtr s2 = pop_ID();
   stackPush(Val_Int32::mk(s2->compareTo(s1) >= 0));
 }
 DEF_OP(ID_EQ) { 
-  IDRef s1 = pop_ID();
-  IDRef s2 = pop_ID();
+  IDPtr s1 = pop_ID();
+  IDPtr s2 = pop_ID();
   stackPush(Val_Int32::mk(s1->equals(s2)));
 }
 DEF_OP(ID_PLUS) {
@@ -770,41 +770,41 @@ DEF_OP(ID_MINUSMINUS) {
 }
 DEF_OP(ID_LSL) {
   uint32_t shift = pop_unsigned();
-  IDRef id = pop_ID();
+  IDPtr id = pop_ID();
   //warn << "Left shift " << shift << " " << id->toString() << " " << id->shift(shift)->toString() << "\n";
   stackPush(Val_ID::mk(id->shift(shift)));
 }
 DEF_OP(ID_DIST) {
   // Be careful of undefined evaluation order in C++!
-  IDRef v1 = pop_ID();
-  IDRef v2 = pop_ID();
+  IDPtr v1 = pop_ID();
+  IDPtr v2 = pop_ID();
   //warn << "Distance(" << v2->toString() << " to " << v1->toString() << "=" << v2->distance(v1)->toString() << "\n";
   stackPush(Val_ID::mk(v2->distance(v1)));
 }
 DEF_OP(ID_BTWOO) {
-  IDRef to = pop_ID();
-  IDRef from = pop_ID();
-  IDRef key = pop_ID();
+  IDPtr to = pop_ID();
+  IDPtr from = pop_ID();
+  IDPtr key = pop_ID();
   //  warn << key->toString() << "(" << from->toString() << "," << to->toString() << ") :" << key->betweenOO(from, to) << "\n";
   stackPush(Val_Int32::mk(key->betweenOO(from, to)));
 }
 DEF_OP(ID_BTWOC) {
-  IDRef to = pop_ID();
-  IDRef from = pop_ID();
-  IDRef key = pop_ID();
+  IDPtr to = pop_ID();
+  IDPtr from = pop_ID();
+  IDPtr key = pop_ID();
   //  warn << key->toString() << "(" << from->toString() << "," << to->toString() << "] :" << key->betweenOC(from, to) << "\n";
   stackPush(Val_Int32::mk(key->betweenOC(from, to)));
 }
 DEF_OP(ID_BTWCO) {
-  IDRef to = pop_ID();
-  IDRef from = pop_ID();
-  IDRef key = pop_ID();
+  IDPtr to = pop_ID();
+  IDPtr from = pop_ID();
+  IDPtr key = pop_ID();
   stackPush(Val_Int32::mk(key->betweenCO(from, to)));
 }
 DEF_OP(ID_BTWCC) {
-  IDRef to = pop_ID();
-  IDRef from = pop_ID();
-  IDRef key = pop_ID();
+  IDPtr to = pop_ID();
+  IDPtr from = pop_ID();
+  IDPtr key = pop_ID();
   stackPush(Val_Int32::mk(key->betweenCC(from, to)));
 }
 
@@ -885,7 +885,7 @@ DEF_OP(STR_MATCH) {
   stackPush(Val_Int32::mk(re.success()));
 }
 DEF_OP(STR_CONV) {
-  ValueRef t = stackTop(); stackPop();
+  ValuePtr t = stackTop(); stackPop();
   stackPush(Val_Str::mk(t->toString()));
 }
 
@@ -1005,12 +1005,12 @@ DEF_OP(CONV_DBL) {
   stackPush(Val_Double::mk(pop_double()));
 }
 DEF_OP(CONV_TIME) {
-  ValueRef top = stackTop();
+  ValuePtr top = stackTop();
   stackPop();
   stackPush(Val_Time::mk(Val_Time::cast(top)));
 }
 DEF_OP(CONV_ID) {
-  ValueRef top = stackTop();
+  ValuePtr top = stackTop();
   stackPop();
   stackPush(Val_ID::mk(Val_ID::cast(top)));
 }

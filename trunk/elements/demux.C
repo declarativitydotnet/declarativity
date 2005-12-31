@@ -12,7 +12,7 @@
 #include "demux.h"
 
 Demux::Demux(str name,
-             ref< vec< ValueRef > > demuxKeys,
+             boost::shared_ptr< std::vector< ValuePtr > > demuxKeys,
              unsigned inputFieldNo)
   : Element(name, 1, demuxKeys->size() + 1),
     _push_cb(0),
@@ -47,7 +47,7 @@ void Demux::unblock(int output)
   }
 }
 
-int Demux::push(int port, TupleRef p, b_cbv cb)
+int Demux::push(int port, TuplePtr p, b_cbv cb)
 {
   assert(p != 0);
   assert(port == 0);
@@ -66,7 +66,7 @@ int Demux::push(int port, TupleRef p, b_cbv cb)
   }
 
   // Extract the first field of the tuple
-  ValueRef first = (*p)[_inputFieldNo];
+  ValuePtr first = (*p)[_inputFieldNo];
 
   // XXX Slow version for now.  Use a hash table eventually
 
@@ -74,7 +74,7 @@ int Demux::push(int port, TupleRef p, b_cbv cb)
   for (int i = 0;
        i < noutputs() - 1;
        i++) {
-    ValueRef key = (*_demuxKeys)[i];
+    ValuePtr key = (*_demuxKeys)[i];
 
     // The match must be exact.  No type conversions allowed.
     if (key->equals(first)) {

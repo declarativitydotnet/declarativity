@@ -23,13 +23,13 @@
 #include "math.h"
 
 class OperTime : public opr::OperCompare<Val_Time> {
-  virtual ValuePtr _plus (const ValueRef& v1, const ValueRef& v2) const {
+  virtual ValuePtr _plus (const ValuePtr& v1, const ValuePtr& v2) const {
     struct timespec t1 = Val_Time::cast(v1);
     struct timespec t2 = Val_Time::cast(v2);
     return Val_Time::mk(t1 + t2);
   };
 
-  virtual ValuePtr _minus (const ValueRef& v1, const ValueRef& v2) const {
+  virtual ValuePtr _minus (const ValuePtr& v1, const ValuePtr& v2) const {
     struct timespec t1 = Val_Time::cast(v1);
     struct timespec t2 = Val_Time::cast(v2);
     return Val_Time::mk(t1 - t2);
@@ -46,7 +46,7 @@ void Val_Time::xdr_marshal_subtype( XDR *x )
   xdr_long(x, &(t.tv_nsec));
 }
 
-ValueRef Val_Time::xdr_unmarshal( XDR *x )
+ValuePtr Val_Time::xdr_unmarshal( XDR *x )
 {
   struct timespec t;
   xdr_long(x, &(t.tv_sec));
@@ -59,11 +59,10 @@ double Val_Time::_theDouble = 0;
 //
 // Casting
 //
-struct timespec Val_Time::cast(ValueRef v) {
-  Value *vp = v;
+struct timespec Val_Time::cast(ValuePtr v) {
   switch (v->typeCode()) {
   case Value::TIME:
-    return (static_cast<Val_Time *>(vp))->t;
+    return (static_cast<Val_Time *>(v.get()))->t;
   case Value::INT32:
     {
       struct timespec t;
@@ -110,7 +109,7 @@ struct timespec Val_Time::cast(ValueRef v) {
   case Value::TUPLE:
     {
       struct timespec t;
-      TupleRef theTuple = Val_Tuple::cast(v);
+      TuplePtr theTuple = Val_Tuple::cast(v);
       if (theTuple->size() >= 2) {
         t.tv_sec = Val_Int32::cast((*theTuple)[0]);
         t.tv_nsec = Val_Int32::cast((*theTuple)[1]);
@@ -125,7 +124,7 @@ struct timespec Val_Time::cast(ValueRef v) {
   }
 }
 
-int Val_Time::compareTo(ValueRef other) const
+int Val_Time::compareTo(ValuePtr other) const
 {
   if (other->typeCode() != Value::TIME) {
     if (Value::TIME < other->typeCode()) {

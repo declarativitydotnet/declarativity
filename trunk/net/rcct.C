@@ -93,7 +93,7 @@ RateCCT::RateCCT(str name, bool tstat)
  * port 0: Indicates a tuple to send.
  * port 1: Tuple received.
  */
-int RateCCT::push(int port, TupleRef tp, b_cbv cb)
+int RateCCT::push(int port, TuplePtr tp, b_cbv cb)
 {
   assert(port == 1);
 
@@ -127,7 +127,7 @@ int RateCCT::push(int port, TupleRef tp, b_cbv cb)
  */
 TuplePtr RateCCT::pull(int port, b_cbv cb)
 {
-  TuplePtr tp = NULL;
+  TuplePtr tp;
 
   if (port == 0) {
     if (tmap_.size() < trate_ && 
@@ -144,7 +144,7 @@ TuplePtr RateCCT::pull(int port, b_cbv cb)
     tp->append(Val_UInt32::mk(rto_));		// Retransmit timeout
     return tp;
   } else assert (0);
-  return NULL;
+  return TuplePtr();
 }
 
 void RateCCT::data_ready()
@@ -201,7 +201,7 @@ REMOVABLE_INLINE TuplePtr RateCCT::package(TuplePtr tp)
   clock_gettime(CLOCK_REALTIME, &now);
   for (uint i = 0; i < tp->size(); i++) {
     try {
-      TupleRef t = Val_Tuple::cast((*tp)[i]); 
+      TuplePtr t = Val_Tuple::cast((*tp)[i]); 
       if (Val_Str::cast((*t)[0]) == "SEQ") {
         seq = Val_UInt64::cast((*t)[1]);
         if (t->size() == 3) cid = Val_Str::cast((*t)[2]);

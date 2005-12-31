@@ -32,19 +32,19 @@ public:
 
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );
-  static ValueRef xdr_unmarshal( XDR *x );
+  static ValuePtr xdr_unmarshal( XDR *x );
 
   // Constructor
   Val_UInt64(uint64_t theInt) : i(theInt) {};
 
   // Factory
-  static ValueRef mk(uint64_t i) { return New refcounted<Val_UInt64>(i); };
+  static ValuePtr mk(uint64_t i) { ValuePtr p(new Val_UInt64(i)); return p; };
 
   // Strict comparison
-  int compareTo(ValueRef) const;
+  int compareTo(ValuePtr) const;
 
   // Casting
-  static uint64_t cast(ValueRef v);
+  static uint64_t cast(ValuePtr v);
   
   static const opr::Oper* oper_;
 private:

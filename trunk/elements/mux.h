@@ -32,7 +32,7 @@ public:
   const char *processing() const		{ return "h/h"; }
   const char *flow_code() const			{ return "-/-"; }
 
-  int push(int, TupleRef, b_cbv);
+  int push(int, TuplePtr, b_cbv);
 
   /** My callback method */
   void callback();

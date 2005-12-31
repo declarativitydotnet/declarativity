@@ -23,7 +23,7 @@ Store::Store(str name,
 
 
 Store::Insert::Insert(str name,
-                      std::multimap< ValueRef, TupleRef, Store::tupleRefCompare > * table,
+                      std::multimap< ValuePtr, TuplePtr, Store::tuplePtrCompare > * table,
                       unsigned fieldNo)
   : Element(name, 1, 1),
     _table(table),
@@ -32,7 +32,7 @@ Store::Insert::Insert(str name,
 }
 
 Store::Lookup::Lookup(str name,
-                      std::multimap< ValueRef, TupleRef, Store::tupleRefCompare > * table)
+                      std::multimap< ValuePtr, TuplePtr, Store::tuplePtrCompare > * table)
   : Element(name, 1, 1),
     _table(table),
     _pushCallback(0),
@@ -41,21 +41,21 @@ Store::Lookup::Lookup(str name,
 }
 
 Store::Scan::Scan(str name,
-                  std::multimap< ValueRef, TupleRef, Store::tupleRefCompare > * table)
+                  std::multimap< ValuePtr, TuplePtr, Store::tuplePtrCompare > * table)
   : Element(name, 0, 1),
     _table(table),
     _iterator(table->end())
 {
 }
 
-TuplePtr Store::Insert::simple_action(TupleRef p)
+TuplePtr Store::Insert::simple_action(TuplePtr p)
 {
   // Fetch the key field
   ValuePtr key = (*p)[_fieldNo];
   if (key == NULL) {
     // No key field? WTF?
     log(LoggerI::WARN, 0, "push: tuple without key field received");
-    return 0;
+    return TuplePtr();
   } else {
     // Groovy.  Insert it
     _table->insert(std::make_pair(key, p));
@@ -65,7 +65,7 @@ TuplePtr Store::Insert::simple_action(TupleRef p)
   }
 }
 
-void Store::insert(TupleRef p)
+void Store::insert(TuplePtr p)
 {
   // Fetch the key field
   ValuePtr key = (*p)[_fieldNo];
@@ -79,7 +79,7 @@ void Store::insert(TupleRef p)
   }
 }
 
-int Store::Lookup::push(int port, TupleRef t, b_cbv cb)
+int Store::Lookup::push(int port, TuplePtr t, b_cbv cb)
 {
   // Is this the right port?
   assert(port == 0);
@@ -143,15 +143,15 @@ TuplePtr Store::Lookup::pull(int port, b_cbv cb)
       // I already have a pull callback
       log(LoggerI::INFO, 0, "pull: callback underrun");
     }
-    return 0;
+    return TuplePtr();
   } else {
     TuplePtr t;
-    std::multimap< ValueRef, TupleRef >::iterator theEnd = _table->upper_bound(_key);
+    std::multimap< ValuePtr, TuplePtr >::iterator theEnd = _table->upper_bound(_key);
 
     // {
     //   // Dump the contents
     //   strbuf dump;
-    //   for (std::multimap< ValueRef, TupleRef >::iterator it = _table->begin();
+    //   for (std::multimap< ValuePtr, TuplePtr >::iterator it = _table->begin();
     //        it != _table->end();
     //        ++it)
     //     dump << "  [" << ((*it).first)->toString() << ", " << ((*it).second)->toString() << "]\n";
@@ -170,7 +170,7 @@ TuplePtr Store::Lookup::pull(int port, b_cbv cb)
       t = _iterator->second;
       _iterator++;
     }
-    TupleRef theT = t;
+    TuplePtr theT = t;
 
     // Now, are we done with this search?  XXX For cleanliness, the same
     // condition as above is repeated.  Hopefully the compiler can
@@ -181,13 +181,13 @@ TuplePtr Store::Lookup::pull(int port, b_cbv cb)
       log(LoggerI::INFO, 0, logLine);
 
       // Make a thawed tuple to be tagged
-      TupleRef newTuple = Tuple::mk();
+      TuplePtr newTuple = Tuple::mk();
       newTuple->concat(theT);
       newTuple->tag(Store::END_OF_SEARCH, Val_Null::mk());
       newTuple->freeze();
 
       // Clean the lookup state
-      _key = NULL;
+      _key.reset();
 
       // Wake up any pusher
       if (_pushCallback) {
@@ -220,7 +220,7 @@ TuplePtr Store::Scan::pull(int port, b_cbv cb)
     }
 
     // Get the current element
-    TupleRef t = _iterator->second;
+    TuplePtr t = _iterator->second;
     
     // And advance the iterator.  Don't reset it; it will be done in the
     // next iteration

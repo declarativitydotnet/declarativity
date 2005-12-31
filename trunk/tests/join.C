@@ -48,42 +48,41 @@ void testSimpleJoin(LoggerI::Level level)
 {
   std::cout << "\nCHECK SIMPLE JOIN\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  Router::ConfigurationPtr conf(new Router::Configuration());
 
   // The source dataflow.  Produce random tuples.
-  ElementSpecRef sourceS =
-    conf->addElement(New refcounted< TimedPushSource >("source", 1));
-  ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
-  ElementSpecRef dupS =
-    conf->addElement(New refcounted< Duplicate >("sourceDup", 2));
+  ElementSpecPtr sourceS =
+    conf->addElement(ElementPtr(new TimedPushSource("source", 1)));
+  ElementSpecPtr sourcePrintS = conf->addElement(ElementPtr(new Print("AfterSource")));
+  ElementSpecPtr dupS =
+    conf->addElement(ElementPtr(new Duplicate("sourceDup", 2)));
   conf->hookUp(sourceS, 0, sourcePrintS, 0);
   conf->hookUp(sourcePrintS, 0, dupS, 0);
 
 
   // The rehash factories
-  TableRef tableA = New refcounted< Table >("ATuples", 1000);
+  TablePtr tableA(new Table("ATuples", 1000));
   tableA->add_unique_index(1);
 
 
 
   // The A transformation dataflow.  Drop tuples with seconds ending in
   // 7.  Prepend the table name "A"
-  ElementSpecRef transAS =
-    conf->addElement(New refcounted< PelTransform >("sourceTransform",
+  ElementSpecPtr transAS =
+    conf->addElement(ElementPtr(new PelTransform("sourceTransform",
                                                     "\"A\" pop /* This is an A tuple */ \
                                                      $1 5 % dup 2 ==i not pop /* This determines keep or drop */ \
                                                      pop /* This pops the join key */ \
-						     $2 1000 /i 3 % pop /* And a non-join key */ "));
-  ElementSpecRef filterAS =
-    conf->addElement(New refcounted< Filter >("filterA", 1));
-  ElementSpecRef filterDropAS =
-    conf->addElement(New refcounted< PelTransform >("filterDropA", "$0 pop $2 pop $3 pop"));
-  ElementSpecRef dupElimAS = conf->addElement(New refcounted< DupElim >("DupElimA"));
-  ElementSpecRef transAPrintS =
-    conf->addElement(New refcounted< Print >("ATuples"));
-  ElementSpecRef rehashAS = conf->addElement(New refcounted< Insert >("InsertA", tableA));
-  ElementSpecRef sinkAS =
-    conf->addElement(New refcounted< Discard >("discardA"));
+						     $2 1000 /i 3 % pop /* And a non-join key */ ")));
+  ElementSpecPtr filterAS = conf->addElement(ElementPtr(new Filter("filterA", 1)));
+  ElementSpecPtr filterDropAS =
+    conf->addElement(ElementPtr(new PelTransform("filterDropA", "$0 pop $2 pop $3 pop")));
+  ElementSpecPtr dupElimAS = conf->addElement(ElementPtr(new DupElim("DupElimA")));
+  ElementSpecPtr transAPrintS =
+    conf->addElement(ElementPtr(new Print("ATuples")));
+  ElementSpecPtr rehashAS = conf->addElement(ElementPtr(new Insert("InsertA", tableA)));
+  ElementSpecPtr sinkAS =
+    conf->addElement(ElementPtr(new Discard("discardA")));
   conf->hookUp(dupS, 0, transAS, 0);
   conf->hookUp(transAS, 0, filterAS, 0);
   conf->hookUp(filterAS, 0, filterDropAS, 0);
@@ -95,22 +94,22 @@ void testSimpleJoin(LoggerI::Level level)
 
   // The B transformation dataflow.  Drop tuples with seconds ending in
   // 3.  Prepend the table name "B"
-  ElementSpecRef transBS =
-    conf->addElement(New refcounted< PelTransform >("transB", 
+  ElementSpecPtr transBS =
+    conf->addElement(ElementPtr(new PelTransform("transB", 
                                                     "\"B\" pop /* This is a B tuple */ \
                                                      $1 5 % dup 3 ==i not pop /* Keep or drop? */ \
                                                      pop /* Result */ \
-                                                     $2 1000 /i 3 % ->str \"z\" strcat pop /* non-join key */"));
-  ElementSpecRef filterBS =
-    conf->addElement(New refcounted< Filter >("filterB", 1));
-  ElementSpecRef filterDropBS =
-    conf->addElement(New refcounted< PelTransform >("filterDropB", "$0 pop $2 pop $3 pop"));
-  ElementSpecRef dupElimBS = conf->addElement(New refcounted< DupElim >("dupElimB"));
-  ElementSpecRef transBPrintS = conf->addElement(New refcounted< Print >("BTuples"));
-  ElementSpecRef lookupBS =
-    conf->addElement(New refcounted< UniqueLookup >("Lookup", tableA, 1, 1));
-  ElementSpecRef lookupBPrintS =
-    conf->addElement(New refcounted< Print >("LookupBInA"));
+                                                     $2 1000 /i 3 % ->str \"z\" strcat pop /* non-join key */")));
+  ElementSpecPtr filterBS =
+    conf->addElement(ElementPtr(new Filter("filterB", 1)));
+  ElementSpecPtr filterDropBS =
+    conf->addElement(ElementPtr(new PelTransform("filterDropB", "$0 pop $2 pop $3 pop")));
+  ElementSpecPtr dupElimBS = conf->addElement(ElementPtr(new DupElim("dupElimB")));
+  ElementSpecPtr transBPrintS = conf->addElement(ElementPtr(new Print("BTuples")));
+  ElementSpecPtr lookupBS =
+    conf->addElement(ElementPtr(new UniqueLookup("Lookup", tableA, 1, 1)));
+  ElementSpecPtr lookupBPrintS =
+    conf->addElement(ElementPtr(new Print("LookupBInA")));
   conf->hookUp(dupS, 1, transBS, 0);
   conf->hookUp(transBS, 0, filterBS, 0);
   conf->hookUp(filterBS, 0, filterDropBS, 0);
@@ -125,16 +124,16 @@ void testSimpleJoin(LoggerI::Level level)
 
 
   // The joining dataflow
-  ElementSpecRef joinerBPrintS = conf->addElement(New refcounted< Print >("BJoinWithA"));
-  ElementSpecRef sinkBS =
-    conf->addElement(New refcounted< TimedPullSink >("sinkB", 0));
+  ElementSpecPtr joinerBPrintS = conf->addElement(ElementPtr(new Print("BJoinWithA")));
+  ElementSpecPtr sinkBS =
+    conf->addElement(ElementPtr(new TimedPullSink("sinkB", 0)));
   conf->hookUp(lookupBPrintS, 0, joinerBPrintS, 0);
   conf->hookUp(joinerBPrintS, 0, sinkBS, 0);
 
 
 
 
-  RouterRef router = New refcounted< Router >(conf, level);
+  RouterPtr router(new Router(conf, level));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized simple join.\n";
   } else {

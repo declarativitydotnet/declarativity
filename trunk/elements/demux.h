@@ -27,9 +27,9 @@
 class Demux : public Element { 
 public:
   
-  Demux(str, ref< vec< ValueRef > >, unsigned f = 0);
+  Demux(str, boost::shared_ptr< std::vector< ValuePtr > >, unsigned f = 0);
 
-  int push(int port, TupleRef t, b_cbv cb);
+  int push(int port, TuplePtr t, b_cbv cb);
 
   const char *class_name() const		{ return "Demux";}
   const char *processing() const		{ return "h/h"; }
@@ -38,14 +38,14 @@ public:
   /** A tuple may be dropped without notification if it resolves to an
       output that's held back.  Push back only if all outputs have
       pushed back. */
-  int push(TupleRef p, b_cbv cb) const;
+  int push(TuplePtr p, b_cbv cb) const;
 
 private:
   /** The callback for my input */
   b_cbv	_push_cb;
 
   /** My demux key vector */
-  ref< vec< ValueRef > > _demuxKeys;
+  boost::shared_ptr< std::vector< ValuePtr > > _demuxKeys;
 
   /** My block flags, one per output port */
   bitvec _block_flags;

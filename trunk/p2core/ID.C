@@ -66,7 +66,7 @@ ID::toString() const
 }
 
 int
-ID::compareTo(IDRef other) const
+ID::compareTo(IDPtr other) const
 {
   for (unsigned i = 0;
        i < WORDS;
@@ -82,7 +82,7 @@ ID::compareTo(IDRef other) const
 }
 
 bool
-ID::betweenOO(IDRef from, IDRef to) const
+ID::betweenOO(IDPtr from, IDPtr to) const
 {
   return (((compareTo(from) > 0) && (compareTo(to) < 0)) ||
           ((to->compareTo(from) <= 0) && (compareTo(from) > 0)) ||
@@ -90,7 +90,7 @@ ID::betweenOO(IDRef from, IDRef to) const
 }
 
 bool
-ID::betweenOC(IDRef from, IDRef to) const
+ID::betweenOC(IDPtr from, IDPtr to) const
 {
   return (((compareTo(from) > 0) && (compareTo(to) <= 0)) ||
           ((to->compareTo(from) <= 0) && (compareTo(from) > 0)) ||
@@ -98,7 +98,7 @@ ID::betweenOC(IDRef from, IDRef to) const
 }
 
 bool
-ID::betweenCO(IDRef from, IDRef to) const
+ID::betweenCO(IDPtr from, IDPtr to) const
 {
   return (((compareTo(from) >= 0) && (compareTo(to) < 0)) ||
           ((to->compareTo(from) <= 0) && (compareTo(from) >= 0)) ||
@@ -106,17 +106,17 @@ ID::betweenCO(IDRef from, IDRef to) const
 }
 
 bool
-ID::betweenCC(IDRef from, IDRef to) const
+ID::betweenCC(IDPtr from, IDPtr to) const
 {
   return (((compareTo(from) >= 0) && (compareTo(to) <= 0)) ||
           ((to->compareTo(from) <= 0) && (compareTo(from) >= 0)) ||
           ((compareTo(to) <= 0) && (to->compareTo(from) <= 0)));
 }
 
-IDRef
-ID::distance(IDRef to) const
+IDPtr
+ID::distance(IDPtr to) const
 {
-  IDRef newID = ID::mk();
+  IDPtr newID = ID::mk();
   uint32_t carry = 0;
   for (int i = (int) WORDS - 1;
        i >= 0;
@@ -141,7 +141,7 @@ ID::distance(IDRef to) const
   return newID;
 }
 
-IDRef
+IDPtr
 ID::shift(uint32_t shift) const
 {
   if (shift == 0) {
@@ -151,7 +151,7 @@ ID::shift(uint32_t shift) const
     return ID::ZERO;
   }
 
-  IDRef newID = ID::mk();
+  IDPtr newID = ID::mk();
 
   // Perform long shifts (i.e., by bytes, not by bits)
   if (shift > 32) {
@@ -186,10 +186,10 @@ ID::shift(uint32_t shift) const
   return newID;
 }
 
-IDRef
-ID::add(IDRef other) const
+IDPtr
+ID::add(IDPtr other) const
 {
-  IDRef newID = ID::mk();
+  IDPtr newID = ID::mk();
   uint32_t carry = 0;
   for (int i = (int) WORDS - 1;
        i >= 0;
@@ -218,10 +218,10 @@ ID::xdr_marshal(XDR *x)
   }
 }
 
-IDRef
+IDPtr
 ID::xdr_unmarshal(XDR *x)
 {
-  IDRef newID = New refcounted< ID >();
+  IDPtr newID(new ID());
   for (uint i = 0;
        i < WORDS;
        i++) {
@@ -230,9 +230,9 @@ ID::xdr_unmarshal(XDR *x)
   return newID;
 }
 
-IDRef
+IDPtr
 ID::ZERO(ID::mk((uint32_t) 0));
 
-IDRef
+IDPtr
 ID::ONE(ID::mk((uint32_t) 1));
 

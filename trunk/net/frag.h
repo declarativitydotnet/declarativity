@@ -28,12 +28,12 @@ public:
   const char *processing() const	{ return PUSH_TO_PULL; };
   const char *flow_code()  const	{ return "-/-"; };
 
-  int push(int port, TupleRef t, b_cbv cb);
+  int push(int port, TuplePtr t, b_cbv cb);
 
   TuplePtr pull(int port, b_cbv cb);
 
  private:
-  void fragment(TupleRef t);
+  void fragment(TuplePtr t);
 
   b_cbv _push_cb;
   b_cbv _pull_cb;

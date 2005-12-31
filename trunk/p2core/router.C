@@ -110,17 +110,17 @@ void Router::set_connections()
   for (uint i = 0;
        i < _configuration->hookups.size();
        i++) {
-    HookupRef hookup = _configuration->hookups[i];
-    ElementSpecRef fromElement = hookup->fromElement;
-    ElementSpecRef toElement = hookup->toElement;
+    HookupPtr hookup = _configuration->hookups[i];
+    ElementSpecPtr fromElement = hookup->fromElement;
+    ElementSpecPtr toElement = hookup->toElement;
     int fromPort = hookup->fromPortNumber;
     int toPort = hookup->toPortNumber;
 
     fromElement->element()->connect_output(fromPort,
-                                           toElement->element(),
+                                           toElement->element().get(),
                                            toPort);
     toElement->element()->connect_input(toPort,
-                                        fromElement->element(),
+                                        fromElement->element().get(),
                                         fromPort);
   }
 }
@@ -134,10 +134,10 @@ int Router::check_hookup_completeness()
   for (uint i = 0;
        i < _configuration->hookups.size();
        i++) {
-    HookupRef hookup = _configuration->hookups[i];
+    HookupPtr hookup = _configuration->hookups[i];
     
-    ElementSpecRef fromElement = hookup->fromElement;
-    ElementSpecRef toElement = hookup->toElement;
+    ElementSpecPtr fromElement = hookup->fromElement;
+    ElementSpecPtr toElement = hookup->toElement;
     int fromPort = hookup->fromPortNumber;
     int toPort = hookup->toPortNumber;
     
@@ -164,7 +164,7 @@ int Router::check_hookup_completeness()
   for (uint i = 0;
        i < _configuration->elements.size();
        i++) {
-    ElementSpecRef element = (_configuration->elements)[i];
+    ElementSpecPtr element = (_configuration->elements)[i];
     for (int in = 0;
          in < element->element()->ninputs();
          in++) {
@@ -208,10 +208,10 @@ int Router::check_push_and_pull()
     for (uint i = 0;
          i < _configuration->hookups.size();
          i++) {
-      HookupRef hookup = (_configuration->hookups)[i];
+      HookupPtr hookup = (_configuration->hookups)[i];
       
-      ElementSpecRef fromElement = hookup->fromElement;
-      ElementSpecRef toElement = hookup->toElement;
+      ElementSpecPtr fromElement = hookup->fromElement;
+      ElementSpecPtr toElement = hookup->toElement;
       int fromPort = hookup->fromPortNumber;
       int toPort = hookup->toPortNumber;
       // By now, the ports should be acceptable
@@ -384,7 +384,7 @@ int Router::check_hookup_range()
   for (uint i = 0;
        i < _configuration->hookups.size();
        i++) {
-    HookupRef hookup = (_configuration->hookups)[i];
+    HookupPtr hookup = (_configuration->hookups)[i];
     
     if (hookup->fromPortNumber >= hookup->fromElement->
         element()->noutputs()) {
@@ -410,10 +410,10 @@ int Router::check_hookup_range()
 }
 
 
-Router::Router(ConfigurationRef c,
+Router::Router(ConfigurationPtr c,
                LoggerI::Level loggingLevel)
   : loggingLevel(loggingLevel),
-    _elements(New refcounted< vec< ElementRef > >()),
+    _elements(new std::vector< ElementPtr >()),
     _state(ROUTER_NEW),
     _configuration(c),
     _logger(0)
@@ -447,7 +447,7 @@ Router::~Router()
  * down the line.
  *
  */
-int Router::initialize(RouterRef myRef)
+int Router::initialize(RouterPtr myPtr)
 {
   // Am I already initialized?
   if (_state != ROUTER_NEW) {
@@ -489,32 +489,32 @@ int Router::initialize(RouterRef myRef)
   for (uint i = 0;
        i < _configuration->elements.size();
        i++) {
-    ElementRef theElement = (_configuration->elements)[i]->element();
-    add_element(myRef,
+    ElementPtr theElement = (_configuration->elements)[i]->element();
+    add_element(myPtr,
                 theElement);
 
     // Initialize the element
     theElement->initialize();
   }
-  _configuration = 0;
+  _configuration.reset();
   _state = ROUTER_LIVE;
   
   return 0;
 }
 
-void Router::add_element(RouterRef myRef,
-                         ElementRef e)
+void Router::add_element(RouterPtr myPtr,
+                         ElementPtr e)
 {
   // router now owns the element
   _elements->push_back(e);
-  e->attach_router(myRef);
+  e->attach_router(myPtr);
 }
 
 
 int Router::check_hookup_elements()
 {
   // Put all (real not spec) elements in a set to be searchable
-  std::set< ElementRef > elementSet;
+  std::set< ElementPtr > elementSet;
   for (uint i = 0;
        i < _configuration->elements.size();
        i++) {
@@ -526,8 +526,8 @@ int Router::check_hookup_elements()
   for (uint i = 0;
        i < _configuration->hookups.size();
        i++) {
-    HookupRef hookup = (_configuration->hookups)[i];
-    std::set< ElementRef >::iterator found =
+    HookupPtr hookup = (_configuration->hookups)[i];
+    std::set< ElementPtr >::iterator found =
       elementSet.find(hookup->fromElement->element());
     if ((found == elementSet.end()) ||
         (*found != hookup->fromElement->element())) {

@@ -27,7 +27,7 @@ Mux::Mux(str name,
        i < ninputs();
        i++) {
     _pushCallbacks.push_back(0);
-    _inputTuples.push_back(NULL);
+    _inputTuples.push_back(TuplePtr());
   }
 }
 
@@ -61,7 +61,7 @@ void Mux::catchUp()
         return;
       } else {
         // Ah, we got this one out, phew...
-        _inputTuples[i] = NULL;
+        _inputTuples[i].reset();
       }
     }
   }
@@ -83,7 +83,7 @@ void Mux::catchUp()
 }
 
 
-int Mux::push(int port, TupleRef p, b_cbv cb)
+int Mux::push(int port, TuplePtr p, b_cbv cb)
 {
   assert((port >= 0) && (port < ninputs()));
   assert (!isUnusedPort(port));
@@ -135,12 +135,12 @@ int Mux::add_input() {
     port = _unusedPorts.front();
     _unusedPorts.erase(_unusedPorts.begin());
     _pushCallbacks[port] = 0;
-    _inputTuples[port] = NULL;
+    _inputTuples[port].reset();
   }
   else {
     this->Element::add_input();
     _pushCallbacks.push_back(0);
-    _inputTuples.push_back(NULL);
+    _inputTuples.push_back(TuplePtr());
     port = ninputs() - 1;
   }
   return port;

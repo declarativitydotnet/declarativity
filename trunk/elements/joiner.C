@@ -14,13 +14,12 @@
 
 Joiner::Joiner(str name)
   : Element(name, 2, 1),
-    _fixed(0),
     _pushCallback(0),
     _pullCallback(0)
 {
 }
 
-int Joiner::push(int port, TupleRef t, b_cbv cb)
+int Joiner::push(int port, TuplePtr t, b_cbv cb)
 {
   // Is this the right port?
   assert(port == 1);
@@ -73,7 +72,7 @@ TuplePtr Joiner::pull(int port, b_cbv cb)
       // I already have a pull callback
       log(LoggerI::INFO, 0, "pull: callback underrun");
     }
-    return 0;
+    return TuplePtr();
   } else {
     // OK, flow through me is enabled.  Now pretend to be a 1-in-1-out
     // element
@@ -88,20 +87,20 @@ TuplePtr Joiner::pull(int port, b_cbv cb)
         }
       } else {
         // Didn't get any tuples from my input. Fail.
-        return 0;
+        return TuplePtr();
       }
     }
   }
 }
 
 
-TuplePtr Joiner::mergeTuples(TupleRef p)
+TuplePtr Joiner::mergeTuples(TuplePtr p)
 {
   // XXX Merge tuples indiscriminately for now.
   assert(_fixed != NULL);
 
   // Keep it around because we might clean out the fixed tuple state.
-  TupleRef myFixed = _fixed;
+  TuplePtr myFixed = _fixed;
 
   // Is this the end of the current joining?
   if (p->tag(Store::END_OF_SEARCH) != NULL) {
@@ -109,7 +108,7 @@ TuplePtr Joiner::mergeTuples(TupleRef p)
     log(LoggerI::INFO,
         -1,
         "mergeTuples: End of search found.");
-    _fixed = NULL;
+    _fixed.reset();
 
     // ... and wake up any push waiters.
     if (_pushCallback) {
@@ -125,10 +124,10 @@ TuplePtr Joiner::mergeTuples(TupleRef p)
     assert(_fixed == NULL);
 
     // Okey, return nothing then.
-    return NULL;
+    return TuplePtr();
   } else {
     // I've got a real pair to report. Merge them.
-    TupleRef newTuple = Tuple::mk();
+    TuplePtr newTuple = Tuple::mk();
 
     // Append the fixed
     newTuple->concat(myFixed);

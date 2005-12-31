@@ -43,7 +43,7 @@ void Duplicate::unblock(int output)
   }
 }
 
-int Duplicate::push(int port, TupleRef p, b_cbv cb)
+int Duplicate::push(int port, TuplePtr p, b_cbv cb)
 {
   assert(p != 0);
   assert(port == 0);

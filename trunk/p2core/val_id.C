@@ -15,31 +15,31 @@
 #include "val_uint64.h"
 
 class OperID : public opr::OperCompare<Val_ID> {
-  virtual ValuePtr _lshift (const ValueRef& v1, const ValueRef& v2) const {
-    IDRef   id = Val_ID::cast(v1);
+  virtual ValuePtr _lshift (const ValuePtr& v1, const ValuePtr& v2) const {
+    IDPtr   id = Val_ID::cast(v1);
     uint32_t s = Val_UInt32::cast(v2);
     return Val_ID::mk(id->shift(s));
   };
 
-  virtual ValuePtr _plus (const ValueRef& v1, const ValueRef& v2) const {
-    IDRef id1 = Val_ID::cast(v1);
-    IDRef id2 = Val_ID::cast(v2);
+  virtual ValuePtr _plus (const ValuePtr& v1, const ValuePtr& v2) const {
+    IDPtr id1 = Val_ID::cast(v1);
+    IDPtr id2 = Val_ID::cast(v2);
     return Val_ID::mk(id1->add(id2));
   };
 
-  virtual ValuePtr _minus (const ValueRef& v1, const ValueRef& v2) const {
-    IDRef id1 = Val_ID::cast(v1);
-    IDRef id2 = Val_ID::cast(v2);
+  virtual ValuePtr _minus (const ValuePtr& v1, const ValuePtr& v2) const {
+    IDPtr id1 = Val_ID::cast(v1);
+    IDPtr id2 = Val_ID::cast(v2);
     return Val_ID::mk(id2->distance(id1));
   };
 
-  virtual ValuePtr _dec (const ValueRef& v1) const {
-    IDRef id1 = Val_ID::cast(v1);
+  virtual ValuePtr _dec (const ValuePtr& v1) const {
+    IDPtr id1 = Val_ID::cast(v1);
     return Val_ID::mk(ID::ONE->distance(id1));
   };
 
-  virtual ValuePtr _inc (const ValueRef& v1) const {
-    IDRef id1 = Val_ID::cast(v1);
+  virtual ValuePtr _inc (const ValuePtr& v1) const {
+    IDPtr id1 = Val_ID::cast(v1);
     return Val_ID::mk(id1->add(ID::ONE));
   };
 
@@ -54,7 +54,7 @@ void Val_ID::xdr_marshal_subtype( XDR *x )
   i->xdr_marshal(x);
 }
 
-ValueRef Val_ID::xdr_unmarshal( XDR *x )
+ValuePtr Val_ID::xdr_unmarshal( XDR *x )
 {
   return Val_ID::mk(ID::xdr_unmarshal(x));
 }
@@ -64,11 +64,10 @@ ValueRef Val_ID::xdr_unmarshal( XDR *x )
 // Casting
 //  no negative values allowed
 //
-IDRef Val_ID::cast(ValueRef v) {
-  Value *vp = v;
+IDPtr Val_ID::cast(ValuePtr v) {
   switch (v->typeCode()) {
   case Value::ID:
-    return (static_cast<Val_ID *>(vp))->i;
+    return (static_cast<Val_ID *>(v.get()))->i;
   case Value::INT32: {
     if (Val_UInt32::cast(v) < 0)
       throw Value::TypeError(v->typeCode(), Value::ID );
@@ -88,7 +87,7 @@ IDRef Val_ID::cast(ValueRef v) {
   }
 }
 
-int Val_ID::compareTo(ValueRef other) const
+int Val_ID::compareTo(ValuePtr other) const
 {
   if (other->typeCode() != Value::ID) {
     if (Value::ID < other->typeCode()) {

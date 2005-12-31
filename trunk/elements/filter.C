@@ -19,7 +19,7 @@ Filter::Filter(str name, unsigned filterNo)
 }
 
 
-TuplePtr Filter::simple_action(TupleRef p)
+TuplePtr Filter::simple_action(TuplePtr p)
 {
   // Extract the requested field
   ValuePtr field = (*p)[_filterNo];
@@ -28,17 +28,17 @@ TuplePtr Filter::simple_action(TupleRef p)
   if (field == NULL) {
     // Nope, no such field. Log a warning and return nothing.
     log(LoggerI::WARN, -1, "Filtered field unavailable");
-    return 0;
+    return TuplePtr();
   } else {
     // Make sure it is an INT32
     if (field->typeCode() != Value::INT32) {
       // Drop this and issue a warning
       log(LoggerI::WARN, -1, "Filtered field not an INT32. Dropping");
-      return 0;
+      return TuplePtr();
     } else {
       // OK, this is the right type.  Now do the filtering
       if (field->equals(Val_Int32::ZERO)) {
-        return 0;
+        return TuplePtr();
       } else {
         return p;
       }

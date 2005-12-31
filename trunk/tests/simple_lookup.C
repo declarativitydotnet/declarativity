@@ -46,11 +46,11 @@ struct LookupGenerator : public FunctorSource::Generator
   // virtual ~LookupGenerator() {};
   LookupGenerator(str s, str d, str e) : src_(s), dest_(d), event_(e), exit_(false) {};
 
-  TupleRef operator()() {
+  TuplePtr operator()() {
     if (exit_) exit(0);
     else exit_ = true;
 
-    TupleRef tuple = Tuple::mk();
+    TuplePtr tuple = Tuple::mk();
     tuple->append(Val_Str::mk("lookup"));
     tuple->append(Val_Str::mk(src_));
 
@@ -58,7 +58,7 @@ struct LookupGenerator : public FunctorSource::Generator
     for (uint i = 0; i < ID::WORDS; i++) {
       words[i] = random();
     }
-    IDRef key = ID::mk(words);  
+    IDPtr key = ID::mk(words);  
 
     tuple->append(Val_ID::mk(key));
     tuple->append(Val_Str::mk(dest_));		// WHere the answer is returned
@@ -73,21 +73,21 @@ struct LookupGenerator : public FunctorSource::Generator
   mutable bool exit_;
 };
 
-void issue_lookup(LoggerI::Level level, ptr<LookupGenerator> lookup)
+void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> lookup)
 {
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  Router::ConfigurationPtr conf(new Router::Configuration());
 
   // sending result
-  ElementSpecRef func    = conf->addElement(New refcounted< FunctorSource >(str("Source"), lookup));
-  ElementSpecRef print   = conf->addElement(New refcounted< Print >(strbuf("lookup")));
+  ElementSpecPtr func    = conf->addElement(ElementPtr(new FunctorSource(str("Source"), lookup.get())));
+  ElementSpecPtr print   = conf->addElement(ElementPtr(new Print(strbuf("lookup"))));
 		       
-  ElementSpecRef encap = conf->addElement(New refcounted< PelTransform >("encapRequest",
+  ElementSpecPtr encap = conf->addElement(ElementPtr(new PelTransform("encapRequest",
 									  "$1 pop \
-                                                     $0 ->t $1 append $2 append $3 append $4 append pop")); // the rest
-  ElementSpecRef marshal = conf->addElement(New refcounted< MarshalField >("Marshal", 1));
-  ElementSpecRef route   = conf->addElement(New refcounted< StrToSockaddr >(strbuf("SimpleLookup"), 0));
-  ref< Udp >     udp     = New refcounted< Udp >("Udp", 9999);
-  ElementSpecRef udpTx   = conf->addElement(udp->get_tx());
+                                                     $0 ->t $1 append $2 append $3 append $4 append pop"))); // the rest
+  ElementSpecPtr marshal = conf->addElement(ElementPtr(new MarshalField("Marshal", 1)));
+  ElementSpecPtr route   = conf->addElement(ElementPtr(new StrToSockaddr(strbuf("SimpleLookup"), 0)));
+  boost::shared_ptr< Udp > udp(new Udp("Udp", 9999));
+  ElementSpecPtr udpTx   = conf->addElement(udp->get_tx());
 
   conf->hookUp(func, 0, print, 0);
   conf->hookUp(print, 0, encap, 0);
@@ -97,19 +97,19 @@ void issue_lookup(LoggerI::Level level, ptr<LookupGenerator> lookup)
 
 
   // getting results back
-  ElementSpecRef udpRxS = conf->addElement(udp->get_rx());
-  ElementSpecRef unmarshalS = conf->addElement(New refcounted< UnmarshalField >(strbuf("Unmarshal:"), 1));
+  ElementSpecPtr udpRxS = conf->addElement(udp->get_rx());
+  ElementSpecPtr unmarshalS = conf->addElement(ElementPtr(new UnmarshalField(strbuf("Unmarshal:"), 1)));
 
   // Drop the source address and decapsulate
-  ElementSpecRef unBoxS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("UnBox:"),
-                                                    "$1 unboxPop "));
-  ElementSpecRef recv =
-    conf->addElement(New refcounted< Print >(strbuf("lookupResults:")));
+  ElementSpecPtr unBoxS =
+    conf->addElement(ElementPtr(new PelTransform(strbuf("UnBox:"),
+                                                    "$1 unboxPop ")));
+  ElementSpecPtr recv =
+    conf->addElement(ElementPtr(new Print(strbuf("lookupResults:"))));
 
-  ElementSpecRef slot = conf->addElement(New refcounted< Slot >("slot"));
-  ElementSpecRef sinkS =
-    conf->addElement(New refcounted< TimedPullSink >("sink", 0));
+  ElementSpecPtr slot = conf->addElement(ElementPtr(new Slot("slot")));
+  ElementSpecPtr sinkS =
+    conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
   
   conf->hookUp(udpRxS, 0, unmarshalS, 0);
   conf->hookUp(unmarshalS, 0, unBoxS, 0);
@@ -117,7 +117,7 @@ void issue_lookup(LoggerI::Level level, ptr<LookupGenerator> lookup)
   conf->hookUp(recv, 0, slot, 0);
   conf->hookUp(slot, 0, sinkS, 0);
    
-  RouterRef router = New refcounted< Router >(conf, level);
+  RouterPtr router(new Router(conf, level));
   if (router->initialize(router) != 0) {
     std::cout << "** Failed to initialize correct spec\n";
     return;
@@ -145,7 +145,7 @@ int main(int argc, char **argv)
   level = LoggerI::levelFromName[str(argv[1])];
   seed = atoi(argv[2]);
   srandom(seed);
-  issue_lookup(level, New refcounted<LookupGenerator>(argv[4], argv[5], argv[3]));
+  issue_lookup(level, boost::shared_ptr<LookupGenerator>(new LookupGenerator(argv[4], argv[5], argv[3])));
 
   return 0;
 }

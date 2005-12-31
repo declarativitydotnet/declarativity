@@ -36,7 +36,7 @@ Table::ScanIteratorObj< _Index, _FlatIndex >::next()
 {
   if (_iter == _index.end()) {
     // We've run out of elements, period.
-    return NULL;
+    return TuplePtr();
   } else {
     FlatIndexIterator current = _iter;
     _iter++;
@@ -60,7 +60,7 @@ Table::ScanIteratorObj< _Index, _FlatIndex >::addListener(Table::Listener listen
 
 template < typename _Index, typename _FlatIndex >
 void
-Table::ScanIteratorObj< _Index, _FlatIndex >::update(TupleRef t)
+Table::ScanIteratorObj< _Index, _FlatIndex >::update(TuplePtr t)
 {
   for (size_t i = 0;
        i < _listeners.size();

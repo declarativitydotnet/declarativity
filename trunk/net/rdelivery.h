@@ -28,7 +28,7 @@ public:
   const char *flow_code() const	 { return "--/--"; };
 
   TuplePtr pull(int port, b_cbv cb);
-  int push(int port, TupleRef tp, b_cbv cb);	// Incoming ack or timeout
+  int push(int port, TuplePtr tp, b_cbv cb);	// Incoming ack or timeout
 
 private:
   REMOVABLE_INLINE SeqNum getSeq(TuplePtr tp);

@@ -57,25 +57,25 @@ static const int nodes = 5;
 
 /** Periodically go over my existing link entries, turn them into reach
     entries and blast them out */
-void makeReachFlow(Router::ConfigurationRef conf,
+void makeReachFlow(Router::ConfigurationPtr conf,
                    str name,
-                   TableRef linkTable,
-                   ElementSpecRef outgoingInput,
+                   TablePtr linkTable,
+                   ElementSpecPtr outgoingInput,
                    int outgoingInputPort)
 {
   // Scanner element over link table
-  ElementSpecRef scanS =
-    conf->addElement(New refcounted< Scan >(strbuf("Scaner:") << name, linkTable, 1));
-  ElementSpecRef scanPrintS =
-    conf->addElement(New refcounted< Print >(strbuf("Scan:") << name));
-  ElementSpecRef timedPullPushS =
-    conf->addElement(New refcounted< TimedPullPush >(strbuf("PushReach:").cat(name),
-                                                 1));
-  ElementSpecRef slotS =
-    conf->addElement(New refcounted< Slot >(strbuf("Slot:").cat(name)));
-  ElementSpecRef transS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("MakeReach").cat(name),
-                                                    "\"Reach\" pop $1 pop $2 pop"));
+  ElementSpecPtr scanS =
+    conf->addElement(ElementPtr(new Scan(strbuf("Scaner:") << name, linkTable, 1)));
+  ElementSpecPtr scanPrintS =
+    conf->addElement(ElementPtr(new Print(strbuf("Scan:") << name)));
+  ElementSpecPtr timedPullPushS =
+    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PushReach:").cat(name),
+                                                 1)));
+  ElementSpecPtr slotS =
+    conf->addElement(ElementPtr(new Slot(strbuf("Slot:").cat(name))));
+  ElementSpecPtr transS =
+    conf->addElement(ElementPtr(new PelTransform(strbuf("MakeReach").cat(name),
+                                                    "\"Reach\" pop $1 pop $2 pop")));
 
   // Connect to outgoing hook
   conf->hookUp(scanS, 0, scanPrintS, 0);
@@ -87,29 +87,29 @@ void makeReachFlow(Router::ConfigurationRef conf,
 
 
 
-void makeTransitiveFlow(Router::ConfigurationRef conf,
-                        TableRef linkTable,
-                        TableRef reachTable,
+void makeTransitiveFlow(Router::ConfigurationPtr conf,
+                        TablePtr linkTable,
+                        TablePtr reachTable,
                         str name,
                         ref< Udp > udp,
-                        ElementSpecRef outgoingInput,
+                        ElementSpecPtr outgoingInput,
                         int outgoingInputPort)
 {
   // My store of reach tuples
-  ElementSpecRef udpRxS = conf->addElement(udp->get_rx());
-  ElementSpecRef unmarshalS =
-    conf->addElement(New refcounted< UnmarshalField >(strbuf("Unmarshal:").cat(name), 1));
+  ElementSpecPtr udpRxS = conf->addElement(udp->get_rx());
+  ElementSpecPtr unmarshalS =
+    conf->addElement(ElementPtr(new UnmarshalField(strbuf("Unmarshal:").cat(name), 1)));
 
   // Drop the source address and decapsulate
-  ElementSpecRef unBoxS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("UnBox:").cat(name),
-                                                    "$1 unbox pop pop pop"));
-  ElementSpecRef dupElimS =
-    conf->addElement(New refcounted< DupElim >(strbuf("DupElimA:") << name));
-  ElementSpecRef insertS =
-    conf->addElement(New refcounted< Insert >(strbuf("ReachInsert:") << name, reachTable));
-  ElementSpecRef recvPS =
-    conf->addElement(New refcounted< Print >(strbuf("Received:") << name));
+  ElementSpecPtr unBoxS =
+    conf->addElement(ElementPtr(new PelTransform(strbuf("UnBox:").cat(name),
+                                                    "$1 unbox pop pop pop")));
+  ElementSpecPtr dupElimS =
+    conf->addElement(ElementPtr(new DupElim(strbuf("DupElimA:") << name)));
+  ElementSpecPtr insertS =
+    conf->addElement(ElementPtr(new Insert(strbuf("ReachInsert:") << name, reachTable)));
+  ElementSpecPtr recvPS =
+    conf->addElement(ElementPtr(new Print(strbuf("Received:") << name)));
 
   
   conf->hookUp(udpRxS, 0, unmarshalS, 0);
@@ -119,35 +119,35 @@ void makeTransitiveFlow(Router::ConfigurationRef conf,
   conf->hookUp(insertS, 0, recvPS, 0);
 
   // Here's where the join happens
-  ElementSpecRef lookupS =
-    conf->addElement(New refcounted< MultLookup >(strbuf("Lookup:") << name,
+  ElementSpecPtr lookupS =
+    conf->addElement(ElementPtr(new MultLookup(strbuf("Lookup:") << name,
                                                   linkTable,
-                                                  1, 1));
+                                                  1, 1)));
   conf->hookUp(recvPS, 0, lookupS, 0);
 
  // Take the joined tuples and produce the resulting path
-  ElementSpecRef joinedS =
-    conf->addElement(New refcounted< Print >(strbuf("Joined:") << name));
-  ElementSpecRef transS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("JoinReach:").cat(name),
-                                                    "\"Reach\" pop $1 2 field pop $0 2 field pop"));
-  ElementSpecRef joinedS1 =
-    conf->addElement(New refcounted< Print >(strbuf("JoinedPel:") << name));
+  ElementSpecPtr joinedS =
+    conf->addElement(ElementPtr(new Print(strbuf("Joined:") << name)));
+  ElementSpecPtr transS =
+    conf->addElement(ElementPtr(new PelTransform(strbuf("JoinReach:").cat(name),
+                                                    "\"Reach\" pop $1 2 field pop $0 2 field pop")));
+  ElementSpecPtr joinedS1 =
+    conf->addElement(ElementPtr(new Print(strbuf("JoinedPel:") << name)));
 
   // Prepend with true if this is a Reach X, X.
-  ElementSpecRef cycleCheckS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("CycleCheck:").cat(name), 
-                                                    "$1 $2 ==s not pop $0 pop $1 pop $2 pop"));
+  ElementSpecPtr cycleCheckS =
+    conf->addElement(ElementPtr(new PelTransform(strbuf("CycleCheck:").cat(name), 
+                                                    "$1 $2 ==s not pop $0 pop $1 pop $2 pop")));
   // Only pass through those that have different from and to
-  ElementSpecRef filterS =
-    conf->addElement(New refcounted< Filter >(strbuf("filter:").cat(name), 0));
+  ElementSpecPtr filterS =
+    conf->addElement(ElementPtr(new Filter(strbuf("filter:").cat(name), 0)));
   // And drop the filter field
-  ElementSpecRef filterDropS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("filterDrop:").cat(name),
-                                                    "$1 pop $2 pop $3 pop"));
+  ElementSpecPtr filterDropS =
+    conf->addElement(ElementPtr(new PelTransform(strbuf("filterDrop:").cat(name),
+                                                    "$1 pop $2 pop $3 pop")));
 
-  ElementSpecRef generatedS =
-    conf->addElement(New refcounted< Print >(strbuf("Generated:") << name));
+  ElementSpecPtr generatedS =
+    conf->addElement(ElementPtr(new Print(strbuf("Generated:") << name)));
 
 
   conf->hookUp(lookupS, 0, joinedS, 0);
@@ -168,43 +168,42 @@ void makeTransitiveFlow(Router::ConfigurationRef conf,
 
 
 /** Create the entire data flow residing at a single node */
-void makeForwarder(Router::ConfigurationRef conf,
+void makeForwarder(Router::ConfigurationPtr conf,
                    str name,
                    ref< Udp > udp,
-                   TableRef linkTable,
-                   TableRef reachTable)
+                   TablePtr linkTable,
+                   TablePtr reachTable)
 {
-  ElementSpecRef muxS =
-    conf->addElement(New refcounted< RoundRobin >(strbuf("RR:").cat(name), 2));
-  // ElementSpecRef muxPrintS =
-  //   conf->addElement(New refcounted< Print >(strbuf("Mux:") << name));
+  ElementSpecPtr muxS =
+    conf->addElement(ElementPtr(new RoundRobin(strbuf("RR:").cat(name), 2)));
+  // ElementSpecPtr muxPrintS =
+  //   conf->addElement(ElementPtr(new Print(strbuf("Mux:") << name)));
 
   // Create the encapsulated version of this tuple, holding the
   // destination address and, encapsulated, the payload containing the
   // reach tuple.
-  ElementSpecRef encapS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("encap:").cat(name),
+  ElementSpecPtr encapS =
+    conf->addElement(ElementPtr(new PelTransform(strbuf("encap:").cat(name),
                                                     "$1 pop /* The From address */\
-                                                     $0 ->t $1 append $2 append pop")); // the rest
+                                                     $0 ->t $1 append $2 append pop"))); // the rest
 
   // Now marshall the payload (second field)
-  ElementSpecRef marshalS =
-    conf->addElement(New refcounted< MarshalField >(strbuf("Marshal:").cat(name),
-                                                    1));
+  ElementSpecPtr marshalS =
+    conf->addElement(ElementPtr(new MarshalField(strbuf("Marshal:").cat(name), 1)));
 
   // Hexdump the result
-  // ElementSpecRef hexS =
-  //   conf->addElement(New refcounted< Hexdump >(strbuf("Hex:").cat(name),
-  //                                              1));
-  // ElementSpecRef postMarshalS =
-  //   conf->addElement(New refcounted< Print >("PostMarshal:"));
+  // ElementSpecPtr hexS =
+  //   conf->addElement(ElementPtr(new Hexdump(strbuf("Hex:").cat(name),
+  //                                              1)));
+  // ElementSpecPtr postMarshalS =
+  //   conf->addElement(ElementPtr(new Print("PostMarshal:")));
 
 
   // And translate the address into a sockaddr.  This is a hack until
   // we have a consistent view of the UDP interface.
-  ElementSpecRef routeS =
-    conf->addElement(New refcounted< StrToSockaddr >(strbuf("Router:").cat(name), 0));
-  ElementSpecRef udpTxS =
+  ElementSpecPtr routeS =
+    conf->addElement(ElementPtr(new StrToSockaddr(strbuf("Router:").cat(name), 0)));
+  ElementSpecPtr udpTxS =
     conf->addElement(udp->get_tx());
   
   
@@ -231,7 +230,7 @@ void testMakeReach(LoggerI::Level level)
 {
   std::cout << "\nCHECK MAKE REACH FLOWCHUNK\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  Router::ConfigurationPtr conf(new Router::Configuration());
 
   // Create one data flow per "node"
   const int nodes = 10;
@@ -249,18 +248,18 @@ void testMakeReach(LoggerI::Level level)
 
   // Create the link tables and links themselves.  Links must be
   // symmetric
-  ValueRef LINK = Val_Str::mk("Link");
-  tables = New refcounted< Table >(strbuf("Link:") << names[0], 10000);
+  ValuePtr LINK = Val_Str::mk("Link");
+  tables.reset(new Table(strbuf("Link:") << names[0], 10000));
   tables->add_multiple_index(2);
   std::set< int > others;
   others.insert(0);             // me
   for (int j = 0;
        j < LINKS;
        j++) {
-    TupleRef t = Tuple::mk();
+    TuplePtr t = Tuple::mk();
     t->append(LINK);
     // From me
-    t->append((ValueRef) nodeIds[0]);
+    t->append((ValuePtr) nodeIds[0]);
     // To someone at random, but not me. Replacement is possible but
     // discouraged
     int other = 0;
@@ -270,28 +269,28 @@ void testMakeReach(LoggerI::Level level)
     // Got one
     others.insert(other);
 
-    t->append((ValueRef) nodeIds[other]);
+    t->append((ValuePtr) nodeIds[other]);
     t->freeze();
     tables->insert(t);
   }
 
   // And make the data flow
-  ElementSpecRef scanS =
-    conf->addElement(New refcounted< Scan >(strbuf("Scaner:"), tables, 2));
-  ElementSpecRef scanPrintS =
-    conf->addElement(New refcounted< Print >(strbuf("Scan:") << names[0]));
-  ElementSpecRef timedPullPushS =
-    conf->addElement(New refcounted< TimedPullPush >(strbuf("PushReach:").cat(names[0]),
-                                                     1));
-  ElementSpecRef slotS =
-    conf->addElement(New refcounted< Slot >(strbuf("Slot:").cat(names[0])));
-  ElementSpecRef transS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("MakeReach").cat(names[0]),
-                                                    "\"Reach\" pop $1 pop $2 pop"));
-  ElementSpecRef sinkPrintS =
-    conf->addElement(New refcounted< Print >(strbuf("SinkPrint:") << names[0]));
-  ElementSpecRef sinkS =
-    conf->addElement(New refcounted< TimedPullSink >(strbuf("Sink:") << names[0], 0));
+  ElementSpecPtr scanS =
+    conf->addElement(ElementPtr(new Scan(strbuf("Scaner:"), tables, 2)));
+  ElementSpecPtr scanPrintS =
+    conf->addElement(ElementPtr(new Print(strbuf("Scan:") << names[0])));
+  ElementSpecPtr timedPullPushS =
+    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PushReach:").cat(names[0]),
+                                                     1)));
+  ElementSpecPtr slotS =
+    conf->addElement(ElementPtr(new Slot(strbuf("Slot:").cat(names[0]))));
+  ElementSpecPtr transS =
+    conf->addElement(ElementPtr(new PelTransform(strbuf("MakeReach").cat(names[0]),
+                                                    "\"Reach\" pop $1 pop $2 pop")));
+  ElementSpecPtr sinkPrintS =
+    conf->addElement(ElementPtr(new Print(strbuf("SinkPrint:") << names[0])));
+  ElementSpecPtr sinkS =
+    conf->addElement(ElementPtr(new TimedPullSink(strbuf("Sink:") << names[0], 0)));
 
   // Connect to outgoing hook
   conf->hookUp(scanS, 0, scanPrintS, 0);
@@ -305,7 +304,7 @@ void testMakeReach(LoggerI::Level level)
 
 
 
-  RouterRef router = New refcounted< Router >(conf, level);
+  RouterPtr router(new Router(conf, level));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized network of reachability flows.\n";
   } else {
@@ -329,7 +328,7 @@ void testMakeReach(LoggerI::Level level)
 
 void testTransmit(LoggerI::Level level)
 {
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  Router::ConfigurationPtr conf(new Router::Configuration());
 
   // Create one data flow per "node"
   const int nodes = 10;
@@ -347,18 +346,18 @@ void testTransmit(LoggerI::Level level)
 
   // Create the link tables and links themselves.  Links must be
   // symmetric
-  ValueRef LINK = Val_Str::mk("Link");
-  tables = New refcounted< Table >(strbuf("Link:") << names[0], 10000);
+  ValuePtr LINK = Val_Str::mk("Link");
+  tables.reset(new Table(strbuf("Link:") << names[0], 10000));
   tables->add_multiple_index(2);
   std::set< int > others;
   others.insert(0);             // me
   for (int j = 0;
        j < LINKS;
        j++) {
-    TupleRef t = Tuple::mk();
+    TuplePtr t = Tuple::mk();
     t->append(LINK);
     // From me
-    t->append((ValueRef) nodeIds[0]);
+    t->append((ValuePtr) nodeIds[0]);
     // To someone at random, but not me. Replacement is possible but
     // discouraged
     int other = 0;
@@ -368,26 +367,25 @@ void testTransmit(LoggerI::Level level)
     // Got one
     others.insert(other);
 
-    t->append((ValueRef) nodeIds[other]);
+    t->append((ValuePtr) nodeIds[other]);
     t->freeze();
     tables->insert(t);
   }
 
   // And make the data flow
-  ElementSpecRef scanS =
-    conf->addElement(New refcounted< Scan >(strbuf("Scaner:"), tables, 2));
-  ElementSpecRef scanPrintS =
-    conf->addElement(New refcounted< Print >(strbuf("Scan:") << names[0]));
-  ElementSpecRef timedPullPushS =
-    conf->addElement(New refcounted< TimedPullPush >(strbuf("PushReach:").cat(names[0]),
-                                                     1));
-  ElementSpecRef slotS =
-    conf->addElement(New refcounted< Slot >(strbuf("Slot:").cat(names[0])));
-  ElementSpecRef transS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("MakeReach").cat(names[0]),
-                                                    "\"Reach\" pop $1 pop $2 pop"));
-  ElementSpecRef sinkPrintS =
-    conf->addElement(New refcounted< Print >(strbuf("SinkPrint:") << names[0]));
+  ElementSpecPtr scanS =
+    conf->addElement(ElementPtr(new Scan(strbuf("Scaner:"), tables, 2)));
+  ElementSpecPtr scanPrintS =
+    conf->addElement(ElementPtr(new Print(strbuf("Scan:") << names[0])));
+  ElementSpecPtr timedPullPushS =
+    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PushReach:").cat(names[0]), 1)));
+  ElementSpecPtr slotS =
+    conf->addElement(ElementPtr(new Slot(strbuf("Slot:").cat(names[0]))));
+  ElementSpecPtr transS =
+    conf->addElement(ElementPtr(new PelTransform(strbuf("MakeReach").cat(names[0]),
+                                                    "\"Reach\" pop $1 pop $2 pop")));
+  ElementSpecPtr sinkPrintS =
+    conf->addElement(ElementPtr(new Print(strbuf("SinkPrint:") << names[0])));
 
   // Connect to outgoing hook
   conf->hookUp(scanS, 0, scanPrintS, 0);
@@ -403,40 +401,39 @@ void testTransmit(LoggerI::Level level)
   // Create the encapsulated version of this tuple, holding the
   // destination address and, encapsulated, the payload containing the
   // reach tuple.
-  ElementSpecRef encapS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("encap:").cat(names[0]),
+  ElementSpecPtr encapS =
+    conf->addElement(ElementPtr(new PelTransform(strbuf("encap:").cat(names[0]),
                                                     "$2 pop /* The To address */\
-                                                     $0 ->t $1 append $2 append pop")); // the rest
+                                                     $0 ->t $1 append $2 append pop"))); // the rest
 
-  ElementSpecRef preMarshalS =
-    conf->addElement(New refcounted< Print >("PreMarshal:"));
+  ElementSpecPtr preMarshalS =
+    conf->addElement(ElementPtr(new Print("PreMarshal:")));
 
   // Now marshall the payload (second field)
-  ElementSpecRef marshalS =
-    conf->addElement(New refcounted< MarshalField >(strbuf("Marshal:").cat(names[0]),
-                                                    1));
+  ElementSpecPtr marshalS =
+    conf->addElement(ElementPtr(new MarshalField(strbuf("Marshal:").cat(names[0]),
+                                                    1)));
 
-  ElementSpecRef postMarshalS =
-    conf->addElement(New refcounted< Print >("PostMarshal:"));
+  ElementSpecPtr postMarshalS =
+    conf->addElement(ElementPtr(new Print("PostMarshal:")));
 
   // And translate the address into a sockaddr.  This is a hack until
   // we have a consistent view of the UDP interface.
-  ElementSpecRef routeS =
-    conf->addElement(New refcounted< StrToSockaddr >(strbuf("Router:").cat(names[0]), 0));
-  ref< Udp > udp = New refcounted< Udp >(names[0] << ":Udp",
-                                         10000);
-  ElementSpecRef udpTxS =
+  ElementSpecPtr routeS =
+    conf->addElement(ElementPtr(new StrToSockaddr(strbuf("Router:").cat(names[0]), 0)));
+  boost::shared_ptr< Udp > udp(new Udp(names[0] << ":Udp", 10000));
+  ElementSpecPtr udpTxS =
     conf->addElement(udp->get_tx());
 
-  ElementSpecRef muxS =
-    conf->addElement(New refcounted< RoundRobin >(strbuf("RR:").cat(names[0]), 2));
-  ElementSpecRef tsSourceS =
-    conf->addElement(New refcounted< TimestampSource >("TSSource"));
-  ElementSpecRef fakeSlotS =
-    conf->addElement(New refcounted< Slot >(strbuf("FakeSlot:").cat(names[0])));
-  ElementSpecRef fakeHLS =
-    conf->addElement(New refcounted< TimedPullPush >(strbuf("FakeHL:").cat(names[0]),
-                                                     2));
+  ElementSpecPtr muxS =
+    conf->addElement(ElementPtr(new RoundRobin(strbuf("RR:").cat(names[0]), 2)));
+  ElementSpecPtr tsSourceS =
+    conf->addElement(ElementPtr(new TimestampSource("TSSource")));
+  ElementSpecPtr fakeSlotS =
+    conf->addElement(ElementPtr(new Slot(strbuf("FakeSlot:").cat(names[0]))));
+  ElementSpecPtr fakeHLS =
+    conf->addElement(ElementPtr(new TimedPullPush(strbuf("FakeHL:").cat(names[0]),
+                                                     2)));
 
   conf->hookUp(tsSourceS, 0, fakeHLS, 0);
   conf->hookUp(fakeHLS, 0, fakeSlotS, 0);
@@ -450,7 +447,7 @@ void testTransmit(LoggerI::Level level)
   conf->hookUp(routeS, 0, udpTxS, 0);
 
 
-  RouterRef router = New refcounted< Router >(conf, level);
+  RouterPtr router(new Router(conf, level));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized network of reachability flows.\n";
   } else {
@@ -473,7 +470,7 @@ void testReachability(LoggerI::Level level)
 {
   std::cout << "\nCHECK TRANSITIVE REACHABILITY\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  Router::ConfigurationPtr conf(new Router::Configuration());
 
 
   // Create one data flow per "node"
@@ -490,21 +487,18 @@ void testReachability(LoggerI::Level level)
     names[i] = strbuf("Node") << i;
     nodeIds[i] = Val_Str::mk(strbuf("127.0.0.1") << ":" << (STARTING_PORT + i));
 
-    udps[i] = New refcounted< Udp >(names[i] << ":Udp",
-                                    STARTING_PORT + i);
+    udps[i].reset(new Udp(names[i] << ":Udp", STARTING_PORT + i));
   }
 
   // Create the link tables and links themselves.  Links must be
   // symmetric
-  ValueRef LINK = Val_Str::mk("Link");
+  ValuePtr LINK = Val_Str::mk("Link");
   for (int i = 0;
        i < nodes;
        i++) {
-    linkTables[i] = 
-      New refcounted< Table >(strbuf("Link:") << names[i], 10000);
+    linkTables[i].reset(new Table(strbuf("Link:") << names[i], 10000));
     linkTables[i]->add_multiple_index(1);
-    reachTables[i] = 
-      New refcounted< Table >(strbuf("Reach:") << names[i], 10000);
+    reachTables[i].reset(new Table(strbuf("Reach:") << names[i], 10000));
     reachTables[i]->add_multiple_index(2);
   }
   for (int i = 0;
@@ -516,10 +510,10 @@ void testReachability(LoggerI::Level level)
     for (int j = 0;
          j < LINKS;
          j++) {
-      TupleRef t = Tuple::mk();
+      TuplePtr t = Tuple::mk();
       t->append(LINK);
       // From me
-      t->append((ValueRef) nodeIds[i]);
+      t->append((ValuePtr) nodeIds[i]);
       // To someone at random, but not me. Replacement is discouraged
 
       int other = i;
@@ -529,15 +523,15 @@ void testReachability(LoggerI::Level level)
       // Got one
       others.insert(other);
 
-      t->append((ValueRef) nodeIds[other]);
+      t->append((ValuePtr) nodeIds[other]);
       t->freeze();
       linkTables[i]->insert(t);
 
       // Make the symmetric one
-      TupleRef symmetric = Tuple::mk();
+      TuplePtr symmetric = Tuple::mk();
       symmetric->append(LINK);
-      symmetric->append((ValueRef) nodeIds[other]);
-      symmetric->append((ValueRef) nodeIds[i]);
+      symmetric->append((ValuePtr) nodeIds[other]);
+      symmetric->append((ValuePtr) nodeIds[i]);
       symmetric->freeze();
       linkTables[other]->insert(symmetric);
     }
@@ -551,7 +545,7 @@ void testReachability(LoggerI::Level level)
                   linkTables[i], reachTables[i]);
   }
 
-  RouterRef router = New refcounted< Router >(conf, level);
+  RouterPtr router(new Router(conf, level));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized network of reachability flows.\n";
   } else {
@@ -576,7 +570,7 @@ void testSimpleCycle(LoggerI::Level level)
 {
   std::cout << "\nCHECK TRANSITIVE REACHABILITY ON RING\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  Router::ConfigurationPtr conf(new Router::Configuration());
 
 
   // Create one data flow per "node"
@@ -593,21 +587,18 @@ void testSimpleCycle(LoggerI::Level level)
     names[i] = strbuf("Node") << i;
     nodeIds[i] = Val_Str::mk(strbuf("127.0.0.1") << ":" << (STARTING_PORT + i));
 
-    udps[i] = New refcounted< Udp >(names[i] << ":Udp",
-                                    STARTING_PORT + i);
+    udps[i].reset(new Udp(names[i] << ":Udp", STARTING_PORT + i));
   }
 
   // Create the link tables and links themselves.  Links must be
   // symmetric
-  ValueRef LINK = Val_Str::mk("Link");
+  ValuePtr LINK = Val_Str::mk("Link");
   for (int i = 0;
        i < nodes;
        i++) {
-    linkTables[i] = 
-      New refcounted< Table >(strbuf("Link:") << names[i], 10000);
+    linkTables[i].reset(new Table(strbuf("Link:") << names[i], 10000));
     linkTables[i]->add_multiple_index(1);
-    reachTables[i] = 
-      New refcounted< Table >(strbuf("Reach:") << names[i], 10000);
+    reachTables[i].reset(new Table(strbuf("Reach:") << names[i], 10000));
     reachTables[i]->add_multiple_index(2);
   }
 
@@ -615,20 +606,20 @@ void testSimpleCycle(LoggerI::Level level)
        i < nodes;
        i++) {
     // Forward link
-    TupleRef forward = Tuple::mk();
+    TuplePtr forward = Tuple::mk();
     forward->append(LINK);
-    forward->append((ValueRef) nodeIds[i]);
+    forward->append((ValuePtr) nodeIds[i]);
     int other = (i + 1) % nodes;
-    forward->append((ValueRef) nodeIds[other]);
+    forward->append((ValuePtr) nodeIds[other]);
     forward->freeze();
     linkTables[i]->insert(forward);
 
     // Backward link
-    TupleRef backward = Tuple::mk();
+    TuplePtr backward = Tuple::mk();
     backward->append(LINK);
-    backward->append((ValueRef) nodeIds[i]);
+    backward->append((ValuePtr) nodeIds[i]);
     int backOther = (i + nodes - 1) % nodes;
-    backward->append((ValueRef) nodeIds[backOther]);
+    backward->append((ValuePtr) nodeIds[backOther]);
     backward->freeze();
     linkTables[i]->insert(backward);
   }
@@ -641,7 +632,7 @@ void testSimpleCycle(LoggerI::Level level)
                   linkTables[i], reachTables[i]);
   }
 
-  RouterRef router = New refcounted< Router >(conf, level);
+  RouterPtr router(new Router(conf, level));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized network of reachability flows.\n";
   } else {
@@ -664,7 +655,7 @@ int main(int argc, char **argv)
 {
   std::cout << "\nGRAPH REACHABILITY\n";
 
-  TableRef table = new refcounted< Table >("name", 100);
+  TablePtr table = new refcounted< Table >("name", 100);
 
   LoggerI::Level level = LoggerI::ALL;
   if (argc > 1) {

@@ -34,24 +34,24 @@ public:
 
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );
-  static ValueRef xdr_unmarshal( XDR *x );
+  static ValuePtr xdr_unmarshal( XDR *x );
 
   // Constructor
-  Val_Tuple(TupleRef tuple) : t(tuple) {};
+  Val_Tuple(TuplePtr tuple) : t(tuple) {};
   virtual ~Val_Tuple() {};
 
   // Factory
-  static ValueRef mk(TupleRef t) { return New refcounted<Val_Tuple>(t); };
+  static ValuePtr mk(TuplePtr t) { ValuePtr p(new Val_Tuple(t)); return p; };
 
   // Strict comparison
-  int compareTo(ValueRef) const;
+  int compareTo(ValuePtr) const;
 
   // Casting
-  static TupleRef cast(ValueRef v);
+  static TuplePtr cast(ValuePtr v);
   
   static const opr::Oper* oper_;
 private:
-  TupleRef t;
+  TuplePtr t;
 };
 
 #endif /* __VAL_TUPLE_H_ */

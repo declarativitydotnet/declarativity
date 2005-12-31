@@ -22,7 +22,7 @@ public:
   
   Slot(str name);
 
-  int push(int port, TupleRef t, b_cbv cb);
+  int push(int port, TuplePtr t, b_cbv cb);
   TuplePtr pull(int port, b_cbv);
   const char *class_name() const		{ return "Slot";}
   const char *processing() const		{ return PUSH_TO_PULL; }

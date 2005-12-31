@@ -25,15 +25,15 @@ MarshalField::~MarshalField()
 {
 }
 
-TuplePtr MarshalField::simple_action(TupleRef p)
+TuplePtr MarshalField::simple_action(TuplePtr p)
 {
   // Take out the appropriate field
   ValuePtr value = (*p)[_fieldNo];
 
   // Does this field exist?
-  if (value == NULL) {
+  if (!value) {
     // Nope.  Return nothing
-    return 0;
+    return TuplePtr();
   } else {
     // Is this a field of type TUPLE?
     if (value->typeCode() == Value::TUPLE) {
@@ -45,10 +45,10 @@ TuplePtr MarshalField::simple_action(TupleRef p)
       uio->take(xsuio(&xe));
       
       // Now create the opaque
-      ValueRef marshalled = Val_Opaque::mk(uio);
+      ValuePtr marshalled = Val_Opaque::mk(uio);
 
       // Now create a tuple copy replacing the marshalled field
-      TupleRef newTuple = Tuple::mk();
+      TuplePtr newTuple = Tuple::mk();
       for (unsigned field = 0;
            field < _fieldNo;
            field++) {

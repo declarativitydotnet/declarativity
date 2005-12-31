@@ -44,14 +44,12 @@ void Catalog::createTable(OL_Context::TableInfo* tableInfo)
       } else {
 	tableSize = UINT_MAX; // consider this infinity
       }
-      TableRef newTable = New refcounted< Table> (tableInfo->tableName, 
-						  tableInfo->size);
+      TablePtr newTable(new Table(tableInfo->tableName, tableInfo->size));
       if (tableInfo->timeout != -1) {
 	timespec* expiration = new timespec();
 	expiration->tv_sec = tableInfo->timeout;
 	expiration->tv_nsec = 0;
-	newTable = New refcounted< Table> (tableInfo->tableName, 
-					   tableInfo->size, expiration);
+	newTable.reset(new Table(tableInfo->tableName, tableInfo->size, expiration));
       }
 
       TableInfo* newTableInfo = new TableInfo(tableInfo, newTable);

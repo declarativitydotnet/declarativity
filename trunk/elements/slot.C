@@ -13,14 +13,13 @@
 
 Slot::Slot(str name)
   : Element(name, 1, 1),
-    _t(NULL),
     _push_cb(0),
     _pull_cb(0)
 {
 }
 
 
-int Slot::push(int port, TupleRef t, b_cbv cb)
+int Slot::push(int port, TuplePtr t, b_cbv cb)
 {
   // Is this the right port?
   assert(port == 0);
@@ -80,7 +79,7 @@ TuplePtr Slot::pull(int port, b_cbv cb)
     }
 
     TuplePtr t = _t;
-    _t = NULL;
+    _t.reset();
     return t;
   } else {
     // I don't have a tuple.  Do I have a pull callback already?
@@ -92,6 +91,6 @@ TuplePtr Slot::pull(int port, b_cbv cb)
       // I already have a pull callback
       log(LoggerI::INFO, 0, "pull: underrun");
     }
-    return 0;
+    return TuplePtr();
   }
 }

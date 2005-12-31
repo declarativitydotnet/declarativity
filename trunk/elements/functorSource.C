@@ -21,6 +21,6 @@ FunctorSource::FunctorSource(str name,
 TuplePtr FunctorSource::pull(int port, b_cbv cb)
 {
   // Always produce a result, never block
-  TupleRef generated = (*_generator)();
+  TuplePtr generated = (*_generator)();
   return generated;
 }

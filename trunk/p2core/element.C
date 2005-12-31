@@ -108,20 +108,22 @@ Element::set_nports(int new_ninputs, int new_noutputs)
     return;
   
   // Enlarge port arrays if necessary
-  _inputs.setsize(new_ninputs);
+  _inputs.resize(new_ninputs);
   _ninputs = new_ninputs;
   for (int i = 0;
        i < new_ninputs;
        i++) {
-    _inputs[i] = New refcounted< Port >();
+    PortPtr p(new Port());
+    _inputs[i] = p;
   }
 
-  _outputs.setsize(new_noutputs);
+  _outputs.resize(new_noutputs);
   _noutputs = new_noutputs;
   for (int i = 0;
        i < new_noutputs;
        i++) {
-    _outputs[i] = New refcounted< Port >();
+    PortPtr p(new Port());
+    _outputs[i] = p;
   }
 }
 
@@ -147,7 +149,8 @@ Element::ports_frozen() const
 int Element::connect_input(int i, Element *f, int port)
 {
   if (i >= 0 && i < ninputs()) {
-    _inputs[i] = New refcounted< Port >(this, f, port);
+    PortPtr p(new Port(this, f, port));
+    _inputs[i] = p;
     return 0;
   } else
     return -1;
@@ -156,7 +159,8 @@ int Element::connect_input(int i, Element *f, int port)
 int Element::connect_output(int o, Element *f, int port)
 {
   if (o >= 0 && o < noutputs()) {
-    _outputs[o] = New refcounted< Port >(this, f, port);
+    PortPtr p(new Port(this, f, port));
+    _outputs[o] = p;
     return 0;
   } else
     return -1;
@@ -180,7 +184,7 @@ const char *Element::flags() const
 }
 
 // RUNNING
-int Element::push(int port, TupleRef p, b_cbv cb)
+int Element::push(int port, TuplePtr p, b_cbv cb)
 {
   assert(p != 0);
 
@@ -216,23 +220,23 @@ TuplePtr Element::pull(int port, b_cbv cb)
       }
     } else {
       // Didn't get any tuples from my input. Fail.
-      return 0;
+      return TuplePtr();
     }
   }
 }
 
-TuplePtr Element::simple_action(TupleRef p)
+TuplePtr Element::simple_action(TuplePtr p)
 {
   return p;
 }
 
-REMOVABLE_INLINE const Element::PortRef Element::input(int i) const
+REMOVABLE_INLINE const Element::PortPtr Element::input(int i) const
 {
   assert(i >= 0 && i < ninputs());
   return _inputs[i];
 }
 
-REMOVABLE_INLINE const Element::PortRef Element::output(int o) const
+REMOVABLE_INLINE const Element::PortPtr Element::output(int o) const
 {
   assert(o >= 0 && o < noutputs());
   return _outputs[o];
@@ -242,7 +246,7 @@ REMOVABLE_INLINE const Element::PortRef Element::output(int o) const
 // Element::Port
 
 
-REMOVABLE_INLINE int Element::Port::push(TupleRef p, b_cbv cb) const
+REMOVABLE_INLINE int Element::Port::push(TuplePtr p, b_cbv cb) const
 {
   // If I am not connected, I shouldn't be pushed.
   assert(_e);
@@ -297,7 +301,7 @@ REMOVABLE_INLINE TuplePtr Element::Port::pull(b_cbv cb) const
   return p;
 }
 
-REMOVABLE_INLINE int Element::Port::push_incoming(int port, TupleRef p, b_cbv cb) const
+REMOVABLE_INLINE int Element::Port::push_incoming(int port, TuplePtr p, b_cbv cb) const
 {
   return _owner->push(port, p, cb);
 }
@@ -402,7 +406,7 @@ REMOVABLE_INLINE void Element::logDefault(str instanceName,
   }
   now = now_ts.tv_sec + (1.0 / 1000 / 1000 / 1000 * now_ts.tv_nsec);
   
-  TupleRef t = Tuple::mk();
+  TuplePtr t = Tuple::mk();
   t->append(Val_Double::mk(now));
   t->append(Val_UInt64::mk(seq++));
   t->append(Val_Str::mk(class_name()));

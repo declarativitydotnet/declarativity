@@ -49,17 +49,17 @@ int Pong::initialize()
 }
 
 
-int Pong::push(int port, TupleRef p, b_cbv cb)
+int Pong::push(int port, TuplePtr p, b_cbv cb)
 {  
   if (p == Tuple::EMPTY) { return 1; }
-  ValueRef tableName = (*p)[0];
+  ValuePtr tableName = (*p)[0];
   // is it a ping request from port 1? If so, send back a reply
-  ValueRef defaultName = Val_Str::mk("PingRequest");
+  ValuePtr defaultName = Val_Str::mk("PingRequest");
   if (port == 0 && tableName->compareTo(defaultName) == 0)  {	
-    ValueRef destination = (*p)[1];
-    ValueRef source = (*p)[2];
+    ValuePtr destination = (*p)[1];
+    ValuePtr source = (*p)[2];
     
-    TupleRef pingRequestTuple = Tuple::mk();
+    TuplePtr pingRequestTuple = Tuple::mk();
     pingRequestTuple->append(Val_Str::mk("PingResponse"));
     pingRequestTuple->append(source);  
     pingRequestTuple->append(destination);  
@@ -91,7 +91,7 @@ void Pong::runTimer()
 
   // check here for results to push up
   while (_pendingResults.size() > 0) {
-    TupleRef t = _pendingResults.front();
+    TuplePtr t = _pendingResults.front();
     _pendingResults.pop();
     int result = output(0)->push(t, _wakeupCB);
       

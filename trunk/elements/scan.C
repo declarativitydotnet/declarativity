@@ -27,7 +27,7 @@ Scan::Scan(str name,
 }
 
 void
-Scan::listener(TupleRef t)
+Scan::listener(TuplePtr t)
 {
   log(LoggerI::INFO, 0, str(strbuf() << "Listener " << t->toString()));
   scanBuffer.push_back(t);
@@ -53,7 +53,7 @@ TuplePtr Scan::pull(int port, b_cbv cb)
 
   if (scanBuffer.size() == 0) { 
     _pullCB = cb;
-    return 0; 
+    return TuplePtr(); 
   }
   TuplePtr retTuple = scanBuffer.front();
   scanBuffer.pop_front();

@@ -88,14 +88,13 @@ void addWatch(PlanContext* pc, strbuf b)
   str bStr(b);
 
   if (pc->_outputDebugFile == NULL) {
-    ElementSpecRef print = 
-      pc->_conf->addElement(New refcounted< PrintWatch >(b, pc->_catalog->getWatchTables()));
+    ElementSpecPtr print = 
+      pc->_conf->addElement(ElementPtr(new PrintWatch(b, pc->_catalog->getWatchTables())));
     rs->addElement(pc->_conf, print);  
   } else {
-    ElementSpecRef print = 
-      pc->_conf->addElement(New refcounted< 
-			    PrintWatch >(b, pc->_catalog->getWatchTables(), 
-					 pc->_outputDebugFile));
+    ElementSpecPtr print = 
+      pc->_conf->addElement(ElementPtr(new PrintWatch(b, pc->_catalog->getWatchTables(), 
+					 pc->_outputDebugFile)));
     rs->addElement(pc->_conf, print);  
   }
 }
@@ -118,17 +117,17 @@ void generateEventElement(PlanContext* pc)
       exit(-1);
       return;
     }
-    TableRef tableRef = ti->_table;
+    TablePtr tablePtr = ti->_table;
           
     unsigned primaryKey = ti->_tableInfo->primaryKeys.at(0);
-    Table::UniqueScanIterator uniqueIterator = tableRef->uniqueScanAll(primaryKey, true);
-    ElementSpecRef updateTable =
-       pc->_conf->addElement(New refcounted< Scan >(strbuf("ScanUpdate|") 
+    Table::UniqueScanIterator uniqueIterator = tablePtr->uniqueScanAll(primaryKey, true);
+    ElementSpecPtr updateTable =
+       pc->_conf->addElement(ElementPtr(new Scan(strbuf("ScanUpdate|") 
 						    << curRule->_ruleID 
 						    << "|" << rs->eventFunctorName()
 						    << "|" << pc->_nodeID,
 						    uniqueIterator, 
-						    true));
+						    true)));
     rs->addElement(pc->_conf, updateTable);
 
     // add a debug element
@@ -137,11 +136,10 @@ void generateEventElement(PlanContext* pc)
 	     << "|" << pc->_nodeID);
     
     if (curRule->_probeTerms.size() > 0) {
-      ElementSpecRef pullPush = 
-	pc->_conf->addElement(New refcounted< 
-			      TimedPullPush >(strbuf("UpdateEventTimedPullPush|")
+      ElementSpecPtr pullPush = 
+	pc->_conf->addElement(ElementPtr(new TimedPullPush(strbuf("UpdateEventTimedPullPush|")
 						     << curRule->_ruleID 
-						     << "|" << pc->_nodeID, 0));
+						     << "|" << pc->_nodeID, 0)));
       rs->addElement(pc->_conf, pullPush);
     }
   }
@@ -154,10 +152,10 @@ void generateEventElement(PlanContext* pc)
 	     << "|" << pc->_nodeID);
 
     if (curRule->_probeTerms.size() == 0) {
-      ElementSpecRef slot = 
-	pc->_conf->addElement(New refcounted< Slot >(strbuf("RecvEventSlot|")
+      ElementSpecPtr slot = 
+	pc->_conf->addElement(ElementPtr(new Slot(strbuf("RecvEventSlot|")
 						     << curRule->_ruleID 
-						     << "|" << pc->_nodeID));
+						     << "|" << pc->_nodeID)));
       rs->addElement(pc->_conf, slot);
     }
   }
@@ -183,24 +181,22 @@ void generateActionElement(PlanContext* pc)
       exit(-1);
       return;
     }
-    TableRef tableRef = ti->_table;
+    TablePtr tablePtr = ti->_table;
 
-    ElementSpecRef insertElement
-      = pc->_conf->addElement(New refcounted< 
-			  Insert >(strbuf("Insert|") << 
+    ElementSpecPtr insertElement
+      = pc->_conf->addElement(ElementPtr(new Insert(strbuf("Insert|") << 
 				   curRule->_ruleID << "|" 
 				   << rs->actionFunctorName() 
 				   << "|" << pc->_nodeID,
-				   tableRef));
+				   tablePtr)));
 
-    ElementSpecRef insertPullPush = 
-      pc->_conf->addElement(New refcounted<
-			TimedPullPush>(strbuf("Insert|") <<
+    ElementSpecPtr insertPullPush = 
+      pc->_conf->addElement(ElementPtr(new TimedPullPush(strbuf("Insert|") <<
 				       curRule->_ruleID 
-				       << "|" << pc->_nodeID, 0));
+				       << "|" << pc->_nodeID, 0)));
     
-    ElementSpecRef sinkS 
-    = pc->_conf->addElement(New refcounted< Discard >("DiscardInsert"));
+    ElementSpecPtr sinkS 
+    = pc->_conf->addElement(ElementPtr(new Discard("DiscardInsert")));
 
     rs->addElement(pc->_conf, insertElement);
     rs->addElement(pc->_conf, insertPullPush);
@@ -222,13 +218,12 @@ void generateActionElement(PlanContext* pc)
 	     << curRule->_ruleID 
 	     << "|" << pc->_nodeID);
 
-    ElementSpecRef sendPelTransform =
-      pc->_conf->addElement(New refcounted< 
-			    PelTransform >(strbuf("SendActionAddress|") 
+    ElementSpecPtr sendPelTransform =
+      pc->_conf->addElement(ElementPtr(new PelTransform(strbuf("SendActionAddress|") 
 					   << curRule->_ruleID 
 					   << "|" << pc->_nodeID,
 					   strbuf("$") << 
-					   locationIndex << " pop swallow pop"));
+					   locationIndex << " pop swallow pop")));
     
     rs->addElement(pc->_conf, sendPelTransform);   
   }   
@@ -268,7 +263,7 @@ void generateProbeElements(PlanContext* pc, Parse_Functor* probedFunctor)
     return;
   }
 
-  TableRef probedTable = ti->_table;
+  TablePtr probedTable = ti->_table;
   
   // should we use a uniqLookup or a multlookup? 
   // Check that the rightJoinKey is the primary key
@@ -278,16 +273,15 @@ void generateProbeElements(PlanContext* pc, Parse_Functor* probedFunctor)
   if (tableInfo->primaryKeys.size() == 1 && 
       tableInfo->primaryKeys.at(0) == rightJoinKey) {
     // use a unique index
-    ElementSpecRef lookupElement =
-      pc->_conf->addElement(New refcounted< 
-			UniqueLookup >(strbuf("UniqueLookup|") 
+    ElementSpecPtr lookupElement =
+      pc->_conf->addElement(ElementPtr(new UniqueLookup(strbuf("UniqueLookup|") 
 				       << curRule->_ruleID 
 				       << "|" << probedTableName
 				       << "|" << pc->_nodeID, 
 				       probedTable,
 				       leftJoinKey, 
 				       rightJoinKey, 
-				       cbv_null));
+				       cbv_null)));
     debugRule(pc, str(strbuf() << "Unique lookup " << " " 
 			   << rs->eventFunctorName() << " " 
 			   << probedTableName << " " 
@@ -296,14 +290,14 @@ void generateProbeElements(PlanContext* pc, Parse_Functor* probedFunctor)
 
     pc->_ruleStrand->addElement(pc->_conf, lookupElement);    
   } else {
-    ElementSpecRef lookupElement =
-      pc->_conf->addElement(New refcounted< MultLookup >(strbuf("MultLookup|") 
+    ElementSpecPtr lookupElement =
+      pc->_conf->addElement(ElementPtr(new MultLookup(strbuf("MultLookup|") 
 						     << curRule->_ruleID 
 						     << "|" << probedTableName 
 						     << "|" << pc->_nodeID, 
 						     probedTable,
 						     leftJoinKey, 
-						     rightJoinKey, cbv_null));
+						     rightJoinKey, cbv_null)));
 
     pc->_catalog->createMultIndex(probedTableName, rightJoinKey);
   
@@ -323,11 +317,11 @@ void generateProbeElements(PlanContext* pc, Parse_Functor* probedFunctor)
 			 << incomingNamesTracker->toString() << "\n"));
 
  
-  ElementSpecRef noNull 
-    = pc->_conf->addElement(New refcounted< NoNullField >(strbuf("NoNull|") 
+  ElementSpecPtr noNull 
+    = pc->_conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull|") 
 						      << curRule->_ruleID 
 						      << "|" << probedTableName
-						      << "|" << pc->_nodeID, 1));
+						      << "|" << pc->_nodeID, 1)));
 
   pc->_ruleStrand->addElement(pc->_conf, noNull);
 
@@ -344,13 +338,12 @@ void generateProbeElements(PlanContext* pc, Parse_Functor* probedFunctor)
 
     debugRule(pc, str(strbuf() << "Join selections " 
 			   << str(selectionPel) << "\n"));
-    ElementSpecRef joinSelections =
-      pc->_conf->addElement(New refcounted< 
-			    PelTransform >(strbuf("JoinSelections|") 
+    ElementSpecPtr joinSelections =
+      pc->_conf->addElement(ElementPtr(new PelTransform(strbuf("JoinSelections|") 
 					   << curRule->_ruleID << "|" 
 					   << probedTableName << "|" 
 					   << k << "|" << pc->_nodeID, 
-					   str(selectionPel)));    
+					   str(selectionPel))));    
     pc->_ruleStrand->addElement(pc->_conf, joinSelections);
   }
  
@@ -377,12 +370,11 @@ void generateProbeElements(PlanContext* pc, Parse_Functor* probedFunctor)
   }
 
   str pelProjectStr(pelProject);
-  ElementSpecRef joinPelTransform 
-    = pc->_conf->addElement(New refcounted< 
-			PelTransform >(strbuf("JoinPelTransform|") 
+  ElementSpecPtr joinPelTransform 
+    = pc->_conf->addElement(ElementPtr(new PelTransform(strbuf("JoinPelTransform|") 
 				       << curRule->_ruleID << "|" 
 				       << probedTableName << "|" << pc->_nodeID, 
-				       pelProjectStr));
+				       pelProjectStr)));
 
   delete probedNamesTracker;
 
@@ -405,12 +397,11 @@ void generateMultipleProbeElements(PlanContext* pc)
     generateProbeElements(pc, pf);
 
     if (curRule->_probeTerms.size() - 1 != k) {
-      ElementSpecRef pullPush =
-	pc->_conf->addElement(New refcounted< 
-			  TimedPullPush >(strbuf("ProbePullPush|") 
+      ElementSpecPtr pullPush =
+	pc->_conf->addElement(ElementPtr(new TimedPullPush(strbuf("ProbePullPush|") 
 					  << curRule->_ruleID << "|" 
 					  << pc->_nodeID << "|" << k,
-					  0));
+					  0)));
       rs->addElement(pc->_conf, pullPush);
     }
   }
@@ -474,11 +465,11 @@ void generateProjectElements(PlanContext* pc)
 		    << curNamesTracker->toString() 
 		    << " " << pelTransformStr << "\n"));
  
-  ElementSpecRef projectHeadPelTransform =
-    pc->_conf->addElement(New refcounted< PelTransform >(strbuf("ProjectHead|") 
+  ElementSpecPtr projectHeadPelTransform =
+    pc->_conf->addElement(ElementPtr(new PelTransform(strbuf("ProjectHead|") 
 							 << curRule->_ruleID 
 							 << "|" << pc->_nodeID,
-							 pelTransformStr));
+							 pelTransformStr)));
 
   pc->_ruleStrand->addElement(pc->_conf, projectHeadPelTransform);  
 }
@@ -540,11 +531,11 @@ void generateAggElement(PlanContext* pc)
   
   // get the table, create the index
   Catalog::TableInfo* ti =  pc->_catalog->getTableInfo(baseFunctor->fn->name);  
-  TableRef aggTable = ti->_table;
+  TablePtr aggTable = ti->_table;
   
   unsigned primaryKey = ti->_tableInfo->primaryKeys.at(0);
-  ElementSpecRef aggElement =
-    pc->_conf->addElement(New refcounted< Agg >(strbuf("Agg|") 
+  ElementSpecPtr aggElement =
+    pc->_conf->addElement(ElementPtr(new Agg(strbuf("Agg|") 
 						<< curRule->_ruleID << "|" 
 						<< baseFunctor->fn->name 
 						<< "|" << pc->_nodeID 
@@ -553,7 +544,7 @@ void generateAggElement(PlanContext* pc)
 						aggStr << "|" << aggFieldNo,
 						groupByFieldNos, 
 						aggFieldNo, 
-						primaryKey, aggStr));
+						primaryKey, aggStr)));
 
   pc->_ruleStrand->addElement(pc->_conf, aggElement);   
 
@@ -566,11 +557,10 @@ void generateAggElements(PlanContext* pc)
 {
   RuleStrand* rs = pc->_ruleStrand;
   ECA_Rule* curRule = pc->_ruleStrand->_eca_rule;
-  ElementSpecRef pullPushTwo = 
-    pc->_conf->addElement(New refcounted< 
-			  TimedPullPush >(strbuf("ScanUpdateTimedPullPush|")
+  ElementSpecPtr pullPushTwo = 
+    pc->_conf->addElement(ElementPtr(new TimedPullPush(strbuf("ScanUpdateTimedPullPush|")
 					  << curRule->_ruleID 
-					  << "|" << pc->_nodeID, 0));
+					  << "|" << pc->_nodeID, 0)));
   rs->addElement(pc->_conf, pullPushTwo);  
 
   // generate the aggregate event listener

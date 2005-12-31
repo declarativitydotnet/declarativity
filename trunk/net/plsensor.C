@@ -192,7 +192,7 @@ void PlSensor::rx_hdr_cb()
     TRC("Success: " << req_re.success());
     if (m) {
       // Create a tuple with the single string, the matching body.
-      TupleRef t = Tuple::mk();
+      TuplePtr t = Tuple::mk();
       t->append(Val_Str::mk(m[5]));
       if (push(0,t,boost::bind(&PlSensor::element_cb, this))) {
 	socket_on();
@@ -245,7 +245,7 @@ void PlSensor::rx_body_cb()
     }
     return;
   default:
-    TupleRef t = Tuple::mk();
+    TuplePtr t = Tuple::mk();
     t->append(Val_Str::mk(rx));
     if (push(0,t,boost::bind(&PlSensor::element_cb, this))) {
       socket_on();

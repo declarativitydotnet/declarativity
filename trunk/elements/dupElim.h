@@ -22,7 +22,7 @@ public:
   DupElim(str);
 
   /** Overridden to perform the tranformation. */
-  TuplePtr simple_action(TupleRef p);
+  TuplePtr simple_action(TuplePtr p);
 
   const char *class_name() const		{ return "DupElim";}
   const char *processing() const		{ return "a/a"; }
@@ -31,16 +31,16 @@ public:
 
 private:
   /** My tupleref comparison function for the set */
-  struct tupleRefCompare
+  struct tuplePtrCompare
   {
-    bool operator()(const TupleRef first, const TupleRef second) const
+    bool operator()(const TuplePtr first, const TuplePtr second) const
     {
       return first->compareTo(second) < 0;
     }
   };
   
   /** My hash table. */
-  std::set< TupleRef, tupleRefCompare > _table;
+  std::set< TuplePtr, tuplePtrCompare > _table;
 };
 
 

@@ -57,7 +57,7 @@ TuplePtr CSVParser::pull(int port, b_cbv cb)
 
   // Do we have a tuple to give back?
   if (_q.empty()) {
-    p = NULL;
+    p.reset();
     _pull_cb = cb;
   } else {
     p = _q.back();
@@ -78,7 +78,7 @@ TuplePtr CSVParser::pull(int port, b_cbv cb)
 //
 // Push handler.  Accept a string from the input. 
 //
-int CSVParser::push(int port, TupleRef t, b_cbv cb)
+int CSVParser::push(int port, TuplePtr t, b_cbv cb)
 {
   //TRC_FN;
   assert(port == 0);
@@ -115,7 +115,7 @@ int CSVParser::try_to_parse_line()
   rxx::matchresult m = _re_line.search(_acc);
   if (m) {
     TRC("Got a line <" << m[1] << ">");
-    TupleRef t = Tuple::mk();
+    TuplePtr t = Tuple::mk();
     str line = m[1];
     _acc = substr(_acc,m[0].len());
     if (_re_comm.match(line)) {

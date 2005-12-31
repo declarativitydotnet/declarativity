@@ -38,14 +38,14 @@ public:
   virtual ~Val_Opaque() {};
 
   // Factory
-  static ValueRef mk(ref<suio> fb) {
-    return New refcounted<Val_Opaque>(fb); };
+  static ValuePtr mk(ref<suio> fb) {
+    return ValuePtr(new Val_Opaque(fb)); };
 
   // Strict comparison
-  int compareTo(ValueRef) const;
+  int compareTo(ValuePtr) const;
 
   // Casting
-  static ref<suio> cast(ValueRef v);
+  static ref<suio> cast(ValuePtr v);
   
   static const opr::Oper* oper_;
 private:

@@ -34,7 +34,7 @@ template < typename _EncapsulatedIterator, typename _LookupGenerator >
 class Lookup : public Element {
 public:
   Lookup(str name,
-         TableRef table,
+         TablePtr table,
          unsigned inputKeyField,
          unsigned lookupIndexField,
 	 b_cbv completion_cb = 0);
@@ -46,7 +46,7 @@ public:
   const char *flow_code() const			{ return "-/-"; }
   
   /** Receive a new lookup key */
-  int push(int port, TupleRef, b_cbv cb);
+  int push(int port, TuplePtr, b_cbv cb);
   
   /** Return a match to the current lookup */
   TuplePtr pull(int port, b_cbv cb);
@@ -56,7 +56,7 @@ public:
   
 private:
   /** My table */
-  TableRef _table;
+  TablePtr _table;
   
   /** My pusher's callback */
   b_cbv _pushCallback;
@@ -102,7 +102,7 @@ typedef Lookup< Table::MultIterator, Table::MultLookupGenerator > MultLookup;
 
 template < typename _EncapsulatedIterator, typename _LookupGenerator >
 Lookup< _EncapsulatedIterator, _LookupGenerator >::Lookup(str name,
-                                                          TableRef table,
+                                                          TablePtr table,
                                                           unsigned inputKeyField,
                                                           unsigned lookupIndexField,
 							  b_cbv completion_cb )
@@ -112,10 +112,6 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::Lookup(str name,
     _pushCallback(0),
     _pullCallback(0),
     _compCallback(completion_cb),
-    _lookupTuple(NULL),
-    _lookupTupleValue(NULL),
-    _key(NULL),
-    _iterator(NULL),
     _inputFieldNo(inputKeyField),
     _indexFieldNo(lookupIndexField)
 {
@@ -129,7 +125,7 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::~Lookup()
 template < typename _EncapsulatedIterator, typename _LookupGenerator >
 int
 Lookup< _EncapsulatedIterator, _LookupGenerator >::push(int port,
-                                                        TupleRef t,
+                                                        TuplePtr t,
                                                         b_cbv cb)
 {
   // Is this the right port?
@@ -168,7 +164,6 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::push(int port,
 
       // Fetch the iterator
       _iterator = _LookupGenerator::lookup(_table, _indexFieldNo, _key);
-      log(LoggerI::WORDY, 0, strbuf("push: iterator no longer null: ") << (int)(void*)_iterator);
       
       // And stop the pusher since we have to wait until the iterator is
       // flushed one way or another
@@ -212,20 +207,18 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::pull(int port,
     if (_compCallback) {
       _compCallback();
     }
-    return 0;
+    return TuplePtr();
   } else {
     // {
     //   // Dump the contents
     //   strbuf dump;
-    //   for (std::multimap< ValueRef, TupleRef >::iterator it = _table->begin();
+    //   for (std::multimap< ValuePtr, TuplePtr >::iterator it = _table->begin();
     //        it != _table->end();
     //        ++it)
     //     dump << "  [" << ((*it).first)->toString() << ", " << ((*it).second)->toString() << "]\n";
     //   log(LoggerI::INFO, 0, dump);
     // }
-    log(LoggerI::WORDY, 0, strbuf("pull: key is ") << _key->toString()
-        << " and iter is " << (int)(void*)_iterator);
-    assert(_iterator != NULL);
+    assert(_iterator);
 
     // Is the iterator at its end?  This should only happen if a lookup
     // returned no results at all.
@@ -238,29 +231,26 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::pull(int port,
       // This lookup has at least one result.
       t = _iterator->next();
     }
-    log(LoggerI::WORDY, 0, strbuf("pull: A iterator is ") << (int)(void*)_iterator);
-    TupleRef theT = t;
+    TuplePtr theT = t;
 
     // Make an unfrozen result tuple containing first the lookup tuple
     // and then the lookup result
-    TupleRef newTuple = Tuple::mk();
+    TuplePtr newTuple = Tuple::mk();
     newTuple->append(_lookupTupleValue);
     newTuple->append(Val_Tuple::mk(theT));
 
     // Now, are we done with this search?
     if (_iterator->done()) {
       log(LoggerI::INFO, 0, strbuf("pull: Finished search on ") << _key->toString());
-      log(LoggerI::WORDY, 0, strbuf("pull: A iterator is ") << (int)(void*)_iterator);
 
       // Tag the result tuple
       newTuple->tag(Lookup::END_OF_SEARCH, Val_Null::mk());
 
       // Clean the lookup state
-      _key = NULL;
-      log(LoggerI::WORDY, 0, strbuf("push: key is now null: ") << (int)(void*)_key);
-      _lookupTuple = NULL;
-      _lookupTupleValue = NULL;
-      _iterator = NULL;
+      _key.reset();
+      _lookupTuple.reset();
+      _lookupTupleValue.reset();
+      _iterator.reset();
       log(LoggerI::WORDY, 0, strbuf("push: iterator now is null"));
 
       // Wake up any pusher

@@ -21,7 +21,7 @@ public:
     const char *processing() const	{ return "a/a"; };
     const char *flow_code() const	{ return "x/x"; };
 
-    TuplePtr simple_action(TupleRef p);	// Adds the next sequence num to tuple stream. 
+    TuplePtr simple_action(TuplePtr p);	// Adds the next sequence num to tuple stream. 
 
     operator double() { return bw_; };
 

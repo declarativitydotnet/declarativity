@@ -214,7 +214,7 @@ Pel_Lexer::Pel_Lexer(const char *prog)
 // Called from the lexer: add a "load constant" instruction.
 //  XXX TODO: remove duplicates in the constant 
 //
-void Pel_Lexer::add_const(ValueRef f)
+void Pel_Lexer::add_const(ValuePtr f)
 {
   result->ops.push_back( (result->const_pool.size() & 0xFFFF) << 16 | Pel_VM::OP_PUSH_CONST );
   result->const_pool.append(f);

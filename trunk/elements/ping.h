@@ -30,7 +30,7 @@ class Ping : public Element {
 public:
 
   Ping(str name, int numRetries, int seconds, double retry_interval);
-  int push(int port, TupleRef p, b_cbv cb);     
+  int push(int port, TuplePtr p, b_cbv cb);     
   int initialize();
   
   const char *class_name() const		{ return "Ping";}
@@ -38,10 +38,10 @@ public:
   const char *flow_code() const		{ return "xx/xx"; }
    
   struct Entry {
-    TupleRef p; 
+    TuplePtr p; 
     double lastPingTime;
     long numPings;
-    Entry(TupleRef p) : p(p) {};
+    Entry(TuplePtr p) : p(p) {};
   };
 
 private:
@@ -50,7 +50,7 @@ private:
      For now, store one tuple per destination.
      In future, add the time stamp, number of retries, etc. */
   typedef std::map<str, Entry*> EntryMap;
-  typedef std::map<str, TupleRef> TupleMap;
+  typedef std::map<str, TuplePtr> TupleMap;
   EntryMap _pendingPings;
   TupleMap _pendingResults;
   EntryMap::iterator _iterator;  
@@ -58,8 +58,8 @@ private:
 
   void wakeup();
   void runTimer();
-  void generatePingSuccess(TupleRef p);
-  void generatePingFailure(TupleRef p);
+  void generatePingSuccess(TuplePtr p);
+  void generatePingFailure(TuplePtr p);
 
   /** The interval in seconds */
   uint _seconds;

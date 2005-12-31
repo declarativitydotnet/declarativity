@@ -57,8 +57,8 @@ static double time_fn(cbv cb)
 }
 #endif
 
-static TupleRef create_tuple_1() {
-  TupleRef t = New refcounted<Tuple>;
+static TuplePtr create_tuple_1() {
+  TuplePtr t(new Tuple);
   t->append(Val_Null::mk());
   t->append(Val_Int32::mk(-32));
   t->append(Val_UInt64::mk(64));
@@ -79,7 +79,7 @@ static void slot_push_cb() {
 
 int main(int argc, char **argv)
 {
-  TupleRef t = create_tuple_1();
+  TuplePtr t = create_tuple_1();
 
   std::cout << "BASICELEMENTS\n";
 

@@ -24,7 +24,7 @@ public:
   ~Hexdump();
   
   /** Overridden to perform the projecting. */
-  TuplePtr simple_action(TupleRef p);
+  TuplePtr simple_action(TuplePtr p);
 
   const char *class_name() const		{ return "Hexdump";}
   const char *processing() const		{ return "a/a"; }

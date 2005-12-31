@@ -28,11 +28,11 @@ public:
   const char *processing() const { return "a/al"; };
   const char *flow_code()  const { return "-/--"; };
 
-  TuplePtr simple_action(TupleRef p);
+  TuplePtr simple_action(TuplePtr p);
 
   TuplePtr pull(int port, b_cbv cb);
 
-  int push(int port, TupleRef tp, b_cbv cb);	// Rate control input
+  int push(int port, TuplePtr tp, b_cbv cb);	// Rate control input
 
 private:
   class Connection;

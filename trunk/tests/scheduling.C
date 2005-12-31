@@ -34,16 +34,13 @@ void testFastSourcePush()
 {
   std::cout << "\nCHECK FAST SOURCE PUSH\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted<
-                                            TimedPushSource >("source", 0.2));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
-                                          >("sink", 1));
-  ElementSpecRef slotS = conf->addElement(New refcounted< Slot >("slot"));
-  ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
-  ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
-  ElementSpecRef transS = conf->addElement(New refcounted< PelTransform
-                                           >("trans", "$1 10 % ifpoptuple"));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0.2)));
+  ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 1)));
+  ElementSpecPtr slotS = conf->addElement(ElementPtr(new Slot("slot")));
+  ElementSpecPtr sinkPrintS = conf->addElement(ElementPtr(new Print("BeforeSink")));
+  ElementSpecPtr sourcePrintS = conf->addElement(ElementPtr(new Print("AfterSource")));
+  ElementSpecPtr transS = conf->addElement(ElementPtr(new PelTransform("trans", "$1 10 % ifpoptuple")));
 
   conf->hookUp(sourceS, 0, sourcePrintS, 0);
   conf->hookUp(sourcePrintS, 0, transS, 0);
@@ -51,7 +48,7 @@ void testFastSourcePush()
   conf->hookUp(slotS, 0, sinkPrintS, 0);
   conf->hookUp(sinkPrintS, 0, sinkS, 0);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized fast source push.\n";
   } else {
@@ -70,16 +67,13 @@ void testFastSinkPush()
 {
   std::cout << "\nCHECK FAST SINK PUSH\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted<
-                                            TimedPushSource >("source", 1));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
-                                          >("sink", .2));
-  ElementSpecRef slotS = conf->addElement(New refcounted< Slot >("slot"));
-  ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
-  ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
-  ElementSpecRef transS = conf->addElement(New refcounted< PelTransform
-                                           >("trans", "$1 10 % ifpoptuple"));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 1)));
+  ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", .2)));
+  ElementSpecPtr slotS = conf->addElement(ElementPtr(new Slot("slot")));
+  ElementSpecPtr sinkPrintS = conf->addElement(ElementPtr(new Print("BeforeSink")));
+  ElementSpecPtr sourcePrintS = conf->addElement(ElementPtr(new Print("AfterSource")));
+  ElementSpecPtr transS = conf->addElement(ElementPtr(new PelTransform("trans", "$1 10 % ifpoptuple")));
 
   conf->hookUp(sourceS, 0, sourcePrintS, 0);
   conf->hookUp(sourcePrintS, 0, transS, 0);
@@ -87,7 +81,7 @@ void testFastSinkPush()
   conf->hookUp(slotS, 0, sinkPrintS, 0);
   conf->hookUp(sinkPrintS, 0, sinkS, 0);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized fast sink push.\n";
   } else {
@@ -106,16 +100,13 @@ void testFastSinkPull()
 {
   std::cout << "\nCHECK FAST SINK PULL\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted<
-                                            TimedPushSource >("source", 1));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
-                                          >("sink", .2));
-  ElementSpecRef slotS = conf->addElement(New refcounted< Slot >("slot"));
-  ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
-  ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
-  ElementSpecRef transS = conf->addElement(New refcounted< PelTransform
-                                           >("trans", "$1 10 % ifpoptuple"));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 1)));
+  ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", .2)));
+  ElementSpecPtr slotS = conf->addElement(ElementPtr(new Slot("slot")));
+  ElementSpecPtr sinkPrintS = conf->addElement(ElementPtr(new Print("BeforeSink")));
+  ElementSpecPtr sourcePrintS = conf->addElement(ElementPtr(new Print("AfterSource")));
+  ElementSpecPtr transS = conf->addElement(ElementPtr(new PelTransform("trans", "$1 10 % ifpoptuple")));
 
   conf->hookUp(sourceS, 0, sourcePrintS, 0);
   conf->hookUp(sourcePrintS, 0, slotS, 0);
@@ -123,7 +114,7 @@ void testFastSinkPull()
   conf->hookUp(transS, 0, sinkPrintS, 0);
   conf->hookUp(sinkPrintS, 0, sinkS, 0);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized fast sink pull.\n";
   } else {
@@ -142,16 +133,13 @@ void testFastSourcePull()
 {
   std::cout << "\nCHECK FAST SOURCE PULL\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted<
-                                            TimedPushSource >("source", .2));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
-                                          >("sink", 1));
-  ElementSpecRef slotS = conf->addElement(New refcounted< Slot >("slot"));
-  ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
-  ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
-  ElementSpecRef transS = conf->addElement(New refcounted< PelTransform
-                                           >("trans", "$1 10 % ifpoptuple"));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", .2)));
+  ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 1)));
+  ElementSpecPtr slotS = conf->addElement(ElementPtr(new Slot("slot")));
+  ElementSpecPtr sinkPrintS = conf->addElement(ElementPtr(new Print("BeforeSink")));
+  ElementSpecPtr sourcePrintS = conf->addElement(ElementPtr(new Print("AfterSource")));
+  ElementSpecPtr transS = conf->addElement(ElementPtr(new PelTransform("trans", "$1 10 % ifpoptuple")));
 
   conf->hookUp(sourceS, 0, sourcePrintS, 0);
   conf->hookUp(sourcePrintS, 0, slotS, 0);
@@ -159,7 +147,7 @@ void testFastSourcePull()
   conf->hookUp(transS, 0, sinkPrintS, 0);
   conf->hookUp(sinkPrintS, 0, sinkS, 0);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized fast sink pull.\n";
   } else {

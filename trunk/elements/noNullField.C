@@ -23,7 +23,7 @@ NoNullField::~NoNullField()
 {
 }
 
-TuplePtr NoNullField::simple_action(TupleRef p)
+TuplePtr NoNullField::simple_action(TuplePtr p)
 {
   assert(p->size() > _fieldNo);
 
@@ -32,6 +32,6 @@ TuplePtr NoNullField::simple_action(TupleRef p)
   if (Val_Tuple::cast((*p)[_fieldNo])->size() > 0) {
     return p;
   } else {
-    return 0;
+    return TuplePtr();
   }
 }

@@ -59,29 +59,29 @@
 
 #define START_PORT 10000
 
-void hookupSend_RCC(Router::ConfigurationRef conf, str src, bool do_retry,
-                    ElementSpecRef dmux_out,  int pdo, ElementSpecRef dmux_in, int pdi,
-                    ElementSpecRef rr_out,    int pmo, ElementSpecRef mux_in,  int pmi) {
+void hookupSend_RCC(Router::ConfigurationPtr conf, str src, bool do_retry,
+                    ElementSpecPtr dmux_out,  int pdo, ElementSpecPtr dmux_in, int pdi,
+                    ElementSpecPtr rr_out,    int pmo, ElementSpecPtr mux_in,  int pmi) {
   // SENDER
-  ElementSpecRef dataq  = conf->addElement(New refcounted< Queue >("Data Q", 1000));
-  ElementSpecRef seq    = conf->addElement(New refcounted< Sequence >("Sequence", src, pdi));
-  ElementSpecRef retry  = conf->addElement(New refcounted< RDelivery >("RETRY", false));
-  ElementSpecRef rcct   = conf->addElement(New refcounted< RateCCT >("RateCCT"));
-  ElementSpecRef addr   = conf->addElement(New refcounted< PelTransform >("ADDRESS", 
-                                                                         "$2 2 field pop swallow pop"));
-  ElementSpecRef pstrip = conf->addElement(New refcounted< PelTransform >("PORT STRIP", "$1 unboxPop"));
-  ElementSpecRef rcount = conf->addElement(New refcounted< PelTransform >("RETRY ADD", 
+  ElementSpecPtr dataq  = conf->addElement(ElementPtr(new Queue("Data Q", 1000)));
+  ElementSpecPtr seq    = conf->addElement(ElementPtr(new Sequence("Sequence", src, pdi)));
+  ElementSpecPtr retry  = conf->addElement(ElementPtr(new RDelivery("RETRY", false)));
+  ElementSpecPtr rcct   = conf->addElement(ElementPtr(new RateCCT("RateCCT")));
+  ElementSpecPtr addr   = conf->addElement(ElementPtr(new PelTransform("ADDRESS", 
+                                                                         "$2 2 field pop swallow pop")));
+  ElementSpecPtr pstrip = conf->addElement(ElementPtr(new PelTransform("PORT STRIP", "$1 unboxPop")));
+  ElementSpecPtr rcount = conf->addElement(ElementPtr(new PelTransform("RETRY ADD", 
                                                                           "$0 pop $1 pop $2 pop \
                                                                            $3 pop $4 pop $5 pop \
-                                                                           $6 pop $7 1 + pop"));
+                                                                           $6 pop $7 1 + pop")));
 
   conf->hookUp(dmux_out, pdo, pstrip, 0);
   conf->hookUp(pstrip,   0,   dataq,  0);
   if (do_retry) {
-    ElementSpecRef rr_retry = conf->addElement(New refcounted< RoundRobin >("RR RETRY", 2));
-    ElementSpecRef retryq   = conf->addElement(New refcounted< Queue >("Retry Q", 1000));
-    ElementSpecRef strip    = conf->addElement(New refcounted< PelTransform >("STRIP", 
-                                                                              "$1 unboxPop"));
+    ElementSpecPtr rr_retry = conf->addElement(ElementPtr(new RoundRobin("RR RETRY", 2)));
+    ElementSpecPtr retryq   = conf->addElement(ElementPtr(new Queue("Retry Q", 1000)));
+    ElementSpecPtr strip    = conf->addElement(ElementPtr(new PelTransform("STRIP", 
+                                                                              "$1 unboxPop")));
 
 
     conf->hookUp(dataq,    0, rr_retry, 0);
@@ -92,14 +92,14 @@ void hookupSend_RCC(Router::ConfigurationRef conf, str src, bool do_retry,
     conf->hookUp(rr_retry, 0, seq,      0);
   }
   else {
-    ElementSpecRef rm = conf->addElement(New refcounted< Mux >("RETRY MUX", 2));
+    ElementSpecPtr rm = conf->addElement(ElementPtr(new Mux("RETRY MUX", 2)));
 
     conf->hookUp(dataq, 0, seq,    0);
     conf->hookUp(retry, 1, rm,     0); 
     conf->hookUp(retry, 2, rm,     1); 
     conf->hookUp(rm,    0, mux_in, pmi); 
   }
-  ElementSpecRef retryP   = conf->addElement(New refcounted< Print >("RETRY INC PRINT"));
+  ElementSpecPtr retryP   = conf->addElement(ElementPtr(new Print("RETRY INC PRINT")));
 
   conf->hookUp(seq,   0, retryP,  0);		// Plug in the retry
   // conf->hookUp(retryP, 0, retry,  0);		// Plug in the retry
@@ -113,16 +113,16 @@ void hookupSend_RCC(Router::ConfigurationRef conf, str src, bool do_retry,
   conf->hookUp(rcct,    1,   retry, 1);
 }
 
-void hookupRecv_RCC(Router::ConfigurationRef conf, ElementSpecRef udprx, 
-                ElementSpecRef dmux_in, ElementSpecRef rr_out)
+void hookupRecv_RCC(Router::ConfigurationPtr conf, ElementSpecPtr udprx, 
+                ElementSpecPtr dmux_in, ElementSpecPtr rr_out)
 {
 
   // RECEIVER
-  ElementSpecRef unmarshal = conf->addElement(New refcounted< UnmarshalField >("UNMARSHAL FIELD", 1));
-  ElementSpecRef unroute   = conf->addElement(New refcounted< PelTransform >("UNROUTE", "$1 unboxPop"));
-  ElementSpecRef rccr      = conf->addElement(New refcounted< RateCCR >("RCC Receive"));
-  ElementSpecRef respAddr  = conf->addElement(New refcounted< PelTransform >("RESPONSE ADDRESS", 
-									     "$0 pop swallow pop"));
+  ElementSpecPtr unmarshal = conf->addElement(ElementPtr(new UnmarshalField("UNMARSHAL FIELD", 1)));
+  ElementSpecPtr unroute   = conf->addElement(ElementPtr(new PelTransform("UNROUTE", "$1 unboxPop")));
+  ElementSpecPtr rccr      = conf->addElement(ElementPtr(new RateCCR("RCC Receive")));
+  ElementSpecPtr respAddr  = conf->addElement(ElementPtr(new PelTransform("RESPONSE ADDRESS", 
+									     "$0 pop swallow pop")));
 
   // PACKET RECEIVE DATA FLOW
   conf->hookUp(udprx,     0, unmarshal, 0);
@@ -135,22 +135,22 @@ void hookupRecv_RCC(Router::ConfigurationRef conf, ElementSpecRef udprx,
   conf->hookUp(respAddr, 0, rr_out, 1);
 }
 
-void hookupSend_CC(Router::ConfigurationRef conf, str src, bool do_retry,
-                   ElementSpecRef dmux_out,  int pdo, ElementSpecRef dmux_in, int pdi,
-                   ElementSpecRef rr_out,    int pmo, ElementSpecRef mux_in,  int pmi) {
+void hookupSend_CC(Router::ConfigurationPtr conf, str src, bool do_retry,
+                   ElementSpecPtr dmux_out,  int pdo, ElementSpecPtr dmux_in, int pdi,
+                   ElementSpecPtr rr_out,    int pmo, ElementSpecPtr mux_in,  int pmi) {
   // SENDER
-  ElementSpecRef dataq  = conf->addElement(New refcounted< Queue >("Data Q", 1000));
-  ElementSpecRef seq    = conf->addElement(New refcounted< Sequence >("Sequence", src, pdi));
-  ElementSpecRef retry  = conf->addElement(New refcounted< RDelivery >("RETRY", do_retry));
-  ElementSpecRef rcount  = conf->addElement(New refcounted< PelTransform >("RETRY ADD", 
+  ElementSpecPtr dataq  = conf->addElement(ElementPtr(new Queue("Data Q", 1000)));
+  ElementSpecPtr seq    = conf->addElement(ElementPtr(new Sequence("Sequence", src, pdi)));
+  ElementSpecPtr retry  = conf->addElement(ElementPtr(new RDelivery("RETRY", do_retry)));
+  ElementSpecPtr rcount  = conf->addElement(ElementPtr(new PelTransform("RETRY ADD", 
                                                                           "$0 pop $1 pop $2 pop \
                                                                            $3 pop $4 pop $5 pop \
-                                                                           $6 pop $7 1 + pop"));
-  ElementSpecRef cct    = conf->addElement(New refcounted< CCT >("CCT",2,2048));
-  ElementSpecRef addr   = conf->addElement(New refcounted< PelTransform >("ADDRESS", 
-                                                                         "$1 2 field pop swallow pop"));
-  ElementSpecRef pstrip = conf->addElement(New refcounted< PelTransform >("PORT STRIP", "$1 unboxPop"));
-  ElementSpecRef rm = conf->addElement(New refcounted< Mux >("RETRY MUX", 2));
+                                                                           $6 pop $7 1 + pop")));
+  ElementSpecPtr cct    = conf->addElement(ElementPtr(new CCT("CCT",2,2048)));
+  ElementSpecPtr addr   = conf->addElement(ElementPtr(new PelTransform("ADDRESS", 
+                                                                         "$1 2 field pop swallow pop")));
+  ElementSpecPtr pstrip = conf->addElement(ElementPtr(new PelTransform("PORT STRIP", "$1 unboxPop")));
+  ElementSpecPtr rm = conf->addElement(ElementPtr(new Mux("RETRY MUX", 2)));
 
   conf->hookUp(dmux_out, pdo, pstrip, 0);	// Strip off the port
   conf->hookUp(pstrip,   0,   dataq,  0);	// Put in data send queue
@@ -177,16 +177,16 @@ void hookupSend_CC(Router::ConfigurationRef conf, str src, bool do_retry,
   conf->hookUp(rm,     0,    mux_in, pmi); 	// Merge up to the router
 }
 
-void hookupRecv_CC(Router::ConfigurationRef conf, ElementSpecRef udprx, 
-                   ElementSpecRef dmux_in, ElementSpecRef rr_out)
+void hookupRecv_CC(Router::ConfigurationPtr conf, ElementSpecPtr udprx, 
+                   ElementSpecPtr dmux_in, ElementSpecPtr rr_out)
 {
 
   // RECEIVER
-  ElementSpecRef unmarshal = conf->addElement(New refcounted< UnmarshalField >("UNMARSHAL FIELD", 1));
-  ElementSpecRef unroute   = conf->addElement(New refcounted< PelTransform >("UNROUTE", "$1 unboxPop"));
-  ElementSpecRef ccr       = conf->addElement(New refcounted< CCR >("CC Receive"));
-  ElementSpecRef respAddr  = conf->addElement(New refcounted< PelTransform >("RESPONSE ADDRESS", 
-									     "$0 pop swallow pop"));
+  ElementSpecPtr unmarshal = conf->addElement(ElementPtr(new UnmarshalField("UNMARSHAL FIELD", 1)));
+  ElementSpecPtr unroute   = conf->addElement(ElementPtr(new PelTransform("UNROUTE", "$1 unboxPop")));
+  ElementSpecPtr ccr       = conf->addElement(ElementPtr(new CCR("CC Receive")));
+  ElementSpecPtr respAddr  = conf->addElement(ElementPtr(new PelTransform("RESPONSE ADDRESS", 
+									     "$0 pop swallow pop")));
 
   // PACKET RECEIVE DATA FLOW
   conf->hookUp(udprx,     0, unmarshal, 0);
@@ -201,7 +201,7 @@ void hookupRecv_CC(Router::ConfigurationRef conf, ElementSpecRef udprx,
 
 void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
 {
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  Router::ConfigurationPtr conf(new Router::Configuration());
   str my_addr = strbuf() << "localhost:" << (START_PORT + nodeid);
   if (emulab) {
     char buf[64];
@@ -211,8 +211,7 @@ void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
   // std::cerr << "MY ADDRESS: " << my_addr << std::endl;
 
   // Create the router routing table, specifically for Emulab.
-  ptr < SimpleKeyRouter > skrp = New refcounted< SimpleKeyRouter >("SimpleKeyRoute", 
-                                                                   Val_UInt32::mk(nodeid));
+  boost::shared_ptr < SimpleKeyRouter > skrp(new SimpleKeyRouter("SimpleKeyRoute", Val_UInt32::mk(nodeid)));
   for (uint i = 0; pow(2, i) < nodes; i++) {
     uint nid = (nodeid + uint(pow(2, i))) % nodes;
     char buf[64];
@@ -221,32 +220,32 @@ void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
     skrp->route(Val_UInt32::mk(nid), Val_Str::mk(buf));
     // std::cerr << "FINGER( " << i << " ): " << str(buf) << std::endl;
   }
-  ptr < vec<ValueRef> > ports = skrp->routes();
+  boost::shared_ptr < std::vector<ValuePtr> > ports(skrp->routes());
 
-  ptr<Udp>       udp   = New refcounted<Udp>("UDP", (START_PORT+nodeid));
-  ElementSpecRef udpTx = conf->addElement(udp->get_tx());
-  ElementSpecRef udpRx = conf->addElement(udp->get_rx());
-  ElementSpecRef respQ = conf->addElement(New refcounted< Queue >("Response Q", 1000));
+  boost::shared_ptr<Udp> udp(new Udp("UDP", (START_PORT+nodeid)));
+  ElementSpecPtr udpTx = conf->addElement(udp->get_tx());
+  ElementSpecPtr udpRx = conf->addElement(udp->get_rx());
+  ElementSpecPtr respQ = conf->addElement(ElementPtr(new Queue("Response Q", 1000)));
 
-  ElementSpecRef skr      = conf->addElement(skrp);
-  ElementSpecRef tman     = conf->addElement(New refcounted<TrafficManager>("TGEN", my_addr, nodeid, nodes, ltime));
-  ElementSpecRef rr_out   = conf->addElement(New refcounted< RoundRobin >("UDP RR", ports->size()+2));
-  ElementSpecRef mux_in   = conf->addElement(New refcounted< Mux >("MUX IN", ports->size()+1));
+  ElementSpecPtr skr      = conf->addElement(skrp);
+  ElementSpecPtr tman     = conf->addElement(ElementPtr(new TrafficManager("TGEN", my_addr, nodeid, nodes, ltime)));
+  ElementSpecPtr rr_out   = conf->addElement(ElementPtr(new  RoundRobin("UDP RR", ports->size()+2)));
+  ElementSpecPtr mux_in   = conf->addElement(ElementPtr(new  Mux("MUX IN", ports->size()+1)));
 
-  ElementSpecRef portA    = conf->addElement(New refcounted< PelTransform >("SKR PORT ADJUST", 
-									     "$0 1 field pop swallow pop"));
-  ElementSpecRef dmux_out  = conf->addElement(New refcounted< Demux >("CC OUT DEMUX", ports));
-  ElementSpecRef dmux_in   = conf->addElement(New refcounted< Demux >("CC IN DEMUX", ports, 1));
-  ElementSpecRef dout_errP = conf->addElement(New refcounted< Print >("DEMUX OUT ERROR PORT MATCH"));
-  ElementSpecRef dout_dis  = conf->addElement(New refcounted< Discard >("DISCARD ERROR CASE: DOUT"));
+  ElementSpecPtr portA    = conf->addElement(ElementPtr(new  PelTransform("SKR PORT ADJUST", 
+									     "$0 1 field pop swallow pop")));
+  ElementSpecPtr dmux_out  = conf->addElement(ElementPtr(new  Demux("CC OUT DEMUX", ports)));
+  ElementSpecPtr dmux_in   = conf->addElement(ElementPtr(new  Demux("CC IN DEMUX", ports, 1)));
+  ElementSpecPtr dout_errP = conf->addElement(ElementPtr(new  Print("DEMUX OUT ERROR PORT MATCH")));
+  ElementSpecPtr dout_dis  = conf->addElement(ElementPtr(new  Discard("DISCARD ERROR CASE: DOUT")));
   conf->hookUp(dmux_out, ports->size(), dout_errP, 0);
   conf->hookUp(dout_errP, 0, dout_dis, 0);
 
-  ElementSpecRef hopcntI   = conf->addElement(New refcounted< PelTransform >("HOP COUNT INCREMENT", 
+  ElementSpecPtr hopcntI   = conf->addElement(ElementPtr(new  PelTransform("HOP COUNT INCREMENT", 
                                                                           "$0 pop $1 pop $2 pop \
                                                                            $3 pop $4 pop $5 pop \
-                                                                           $6 1 + pop $7 pop"));
-  ElementSpecRef hopcntP   = conf->addElement(New refcounted< Print >("HOPCOUNT INC PRINT"));
+                                                                           $6 1 + pop $7 pop")));
+  ElementSpecPtr hopcntP   = conf->addElement(ElementPtr(new  Print("HOPCOUNT INC PRINT")));
 
   // conf->hookUp(dmux_in, ports->size(), mux_in, ports->size());
   conf->hookUp(dmux_in, ports->size(), hopcntP, 0);
@@ -254,13 +253,13 @@ void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
   conf->hookUp(hopcntI, 0, mux_in, ports->size());
 
   // SENDER PACKAGE UP AND SEND TUPLE
-  ElementSpecRef sendP    = conf->addElement(New refcounted< Print >("SEND PRINT"));
-  ElementSpecRef marshal  = conf->addElement(New refcounted< MarshalField >("MARHSAL", 1));
-  ElementSpecRef route    = conf->addElement(New refcounted< StrToSockaddr >("sock2addr", 0));
-  ElementSpecRef netsim   = conf->addElement(New refcounted< SimpleNetSim >("Net Sim (Sender)", 
-									    0, 0, drop));
-  ElementSpecRef respAddr = conf->addElement(New refcounted< PelTransform >("LOOKUP RESPONSE ADDRESS", 
-									     "$1 pop swallow pop"));
+  ElementSpecPtr sendP    = conf->addElement(ElementPtr(new  Print("SEND PRINT")));
+  ElementSpecPtr marshal  = conf->addElement(ElementPtr(new  MarshalField("MARHSAL", 1)));
+  ElementSpecPtr route    = conf->addElement(ElementPtr(new  StrToSockaddr("sock2addr", 0)));
+  ElementSpecPtr netsim   = conf->addElement(ElementPtr(new  SimpleNetSim("Net Sim (Sender)", 
+									    0, 0, drop)));
+  ElementSpecPtr respAddr = conf->addElement(ElementPtr(new  PelTransform("LOOKUP RESPONSE ADDRESS", 
+									     "$1 pop swallow pop")));
   // SEND CHANNEL
   conf->hookUp(rr_out,  0, marshal, 0);
   conf->hookUp(marshal, 0, route,   0);
@@ -286,7 +285,7 @@ void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
 
 
   // Create router and run.
-  RouterRef router = New refcounted< Router >(conf, LoggerI::WARN);
+  RouterPtr router(new Router(conf, LoggerI::WARN));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized.\n";
   } else {

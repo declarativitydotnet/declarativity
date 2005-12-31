@@ -25,7 +25,7 @@ PrintWatch::~PrintWatch()
 {
 }
 
-TuplePtr PrintWatch::simple_action(TupleRef p)
+TuplePtr PrintWatch::simple_action(TuplePtr p)
 {
   if (_tableNames.find((*p)[0]->toString()) == _tableNames.end()) {
     return p; // we don't care about print this
@@ -33,9 +33,9 @@ TuplePtr PrintWatch::simple_action(TupleRef p)
 
   double bytes = 0;
   for (unsigned int i = 0; i < p->size(); i++) {
-    ValueRef v = (*p)[i];
+    ValuePtr v = (*p)[i];
     if (str(v->typeName()) == "tuple") {
-      TupleRef t = Val_Tuple::cast(v);
+      TuplePtr t = Val_Tuple::cast(v);
       for (unsigned int j = 0; j < t->size(); j++) {
 	bytes += (*t)[j]->size();
       }

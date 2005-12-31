@@ -22,13 +22,13 @@ void Val_Tuple::xdr_marshal_subtype( XDR *x )
   t->xdr_marshal(x);
 }
 
-ValueRef Val_Tuple::xdr_unmarshal( XDR *x )
+ValuePtr Val_Tuple::xdr_unmarshal( XDR *x )
 {
-  TupleRef t = Tuple::xdr_unmarshal(x);
+  TuplePtr t = Tuple::xdr_unmarshal(x);
   return mk(t);
 }
   
-int Val_Tuple::compareTo(ValueRef other) const
+int Val_Tuple::compareTo(ValuePtr other) const
 {
   if (other->typeCode() != Value::TUPLE) {
     return false;
@@ -39,10 +39,9 @@ int Val_Tuple::compareTo(ValueRef other) const
 //
 // Casting
 //
-TupleRef Val_Tuple::cast(ValueRef v) {
-  Value *vp = v;
+TuplePtr Val_Tuple::cast(ValuePtr v) {
   if (v->typeCode() == Value::TUPLE) {
-    return (static_cast< Val_Tuple * >(vp))->t;
+    return (static_cast< Val_Tuple * >(v.get()))->t;
   } else {
     throw Value::TypeError(v->typeCode(), Value::TUPLE);
   }

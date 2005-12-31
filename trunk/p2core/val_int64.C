@@ -30,7 +30,7 @@ void Val_Int64::xdr_marshal_subtype( XDR *x )
 {
   xdr_int64_t(x, &i);
 }
-ValueRef Val_Int64::xdr_unmarshal( XDR *x )
+ValuePtr Val_Int64::xdr_unmarshal( XDR *x )
 {
   int64_t i;
   xdr_int64_t(x, &i);
@@ -40,11 +40,10 @@ ValueRef Val_Int64::xdr_unmarshal( XDR *x )
 //
 // Casting
 //
-int64_t Val_Int64::cast(ValueRef v) {
-  Value *vp = v;
+int64_t Val_Int64::cast(ValuePtr v) {
   switch (v->typeCode()) {
   case Value::INT64:
-    return (static_cast<Val_Int64 *>(vp))->i;
+    return (static_cast<Val_Int64 *>(v.get()))->i;
   case Value::INT32:
     return (int64_t)(Val_Int32::cast(v));
   case Value::UINT32:
@@ -62,7 +61,7 @@ int64_t Val_Int64::cast(ValueRef v) {
   }
 }
 
-int Val_Int64::compareTo(ValueRef other) const
+int Val_Int64::compareTo(ValuePtr other) const
 {
   if (other->typeCode() != Value::INT64) {
     if (Value::INT64 < other->typeCode()) {

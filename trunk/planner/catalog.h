@@ -30,13 +30,13 @@ public:
   /* Table information */
   class TableInfo {
   public:
-    TableInfo(OL_Context::TableInfo* tableInfo, TableRef table) :
+    TableInfo(OL_Context::TableInfo* tableInfo, TablePtr table) :
       _tableInfo(tableInfo), _table(table) { }
 
     str toString();
 
     OL_Context::TableInfo * _tableInfo;    
-    TableRef _table;
+    TablePtr _table;
     std::vector<int> secondaryKeys;
     bool isPrimaryKey(int c);
     bool isSecondaryKey(int c);    

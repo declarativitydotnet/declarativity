@@ -74,8 +74,8 @@ const int MARSHAL_NUM_UIOS=5000;
  61207374 // 
  72696e67 //
 */
-static TupleRef create_tuple_1() {
-  TupleRef t = Tuple::mk();
+static TuplePtr create_tuple_1() {
+  TuplePtr t = Tuple::mk();
   t->append(Val_Null::mk());
   t->append(Val_Int32::mk((int32_t)-32));
   t->append(Val_UInt64::mk((uint64_t)64));
@@ -146,7 +146,7 @@ int main(int argc, char **argv)
   // Now try unmarshalling said tuple...
   std::cout << "Unmarshalling... ";
   xdrmem xd(buf,sz);
-  TupleRef t = Tuple::xdr_unmarshal(&xd);
+  TuplePtr t = Tuple::xdr_unmarshal(&xd);
   std::cout << "read " << t->size() << " fields.\n";
 
   std::cout << "Marshalling " << MARSHAL_NUM_UIOS << " of " << MARSHAL_CHUNK_SZ << " tuples each: ";

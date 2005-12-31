@@ -26,14 +26,14 @@ PelTransform::~PelTransform()
   }
 }
 
-TuplePtr PelTransform::simple_action(TupleRef p)
+TuplePtr PelTransform::simple_action(TuplePtr p)
 {
   _vm.reset();
   Pel_VM::Error e = _vm.execute(*_program, p);
 
   if (e != Pel_VM::PE_SUCCESS) {
     // The transform failed.  Return nothing
-    return 0;
+    return TuplePtr();
   } else {
     // The transform succeeded.
 
@@ -41,7 +41,7 @@ TuplePtr PelTransform::simple_action(TupleRef p)
     TuplePtr result = _vm.result_tuple();
     if (result == 0) {
       // No result tuple or empty result tuple.  Return nothing
-      return 0;
+      return TuplePtr();
     } else {
       // This tuple better have at least a single field
       return result;

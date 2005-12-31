@@ -247,18 +247,18 @@ RateCCR::RateCCR(str name)
  * Acknowledge tuple p if ack_q is empty and output1 is open.
  * Otherwise, add to ack_q and enable callback.
  */
-TuplePtr RateCCR::simple_action(TupleRef tp) 
+TuplePtr RateCCR::simple_action(TuplePtr tp) 
 {
   Connection *c  = NULL;
-  ValuePtr  src  = NULL;
-  ValuePtr  port = NULL;
+  ValuePtr  src;
+  ValuePtr  port;
   SeqNum    seq  = 0;
   int       rtt  = -1;
   timespec  ts;
 
   for (uint i = 0; i < tp->size(); i++) {
     try {
-      TupleRef t = Val_Tuple::cast((*tp)[i]); 
+      TuplePtr t = Val_Tuple::cast((*tp)[i]); 
       if (Val_Str::cast((*t)[0]) == "SEQ") {
         seq  = Val_UInt64::cast((*t)[1]);
         src  = (*t)[2];
@@ -289,7 +289,7 @@ TuplePtr RateCCR::simple_action(TupleRef tp)
   }
   c->handle_tuple(seq, rtt, ts);
 
-  TupleRef ack = Tuple::mk();
+  TuplePtr ack = Tuple::mk();
   ack->append(src);				// Source location
   ack->append(port);				// Port
   ack->append(Val_Str::mk("ACK"));		// Acknowledgement name
@@ -320,7 +320,7 @@ TuplePtr RateCCR::pull(int port, b_cbv cb)
       return ack;
     }
     _ack_cb = cb;
-    return NULL;
+    return TuplePtr();
   } 
 
   // Need this to go through regular pull
@@ -330,7 +330,7 @@ TuplePtr RateCCR::pull(int port, b_cbv cb)
 /**
  * Port 1 deals with Flow control
  */
-int RateCCR::push(int port, TupleRef tp, b_cbv cb)
+int RateCCR::push(int port, TuplePtr tp, b_cbv cb)
 {
   if (port == 1) {
   /*
@@ -352,7 +352,7 @@ REMOVABLE_INLINE TuplePtr RateCCR::strip(TuplePtr p) {
   TuplePtr tuple = Tuple::mk();
   for (uint i = 0; i < p->size(); i++) {
     try {
-      TupleRef t = Val_Tuple::cast((*p)[i]); 
+      TuplePtr t = Val_Tuple::cast((*p)[i]); 
       if (Val_Str::cast((*t)[0]) == "TINFO") continue;
     }
     catch (Value::TypeError& e) { } 

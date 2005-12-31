@@ -22,7 +22,7 @@ class FunctorSource : public Element {
   
   struct Generator {
     virtual ~Generator() {};
-    virtual TupleRef operator()() = 0;
+    virtual TuplePtr operator()() = 0;
   };
 
   FunctorSource(str, Generator*);

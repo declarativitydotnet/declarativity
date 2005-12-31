@@ -37,23 +37,23 @@ void agg()
 {
     std::cout << "\n[Agg]\n";
 
-    Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+    Router::ConfigurationPtr conf(new Router::Configuration());
 
-    ElementSpecRef randomPushSourceSpec = conf->addElement(new refcounted<RandomPushSource>("randSource", 3, 0, 5));
-    ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
+    ElementSpecPtr randomPushSourceSpec = conf->addElement(ElementPtr(new RandomPushSource("randSource", 3, 0, 5)));
+    ElementSpecPtr sourcePrintS = conf->addElement(ElementPtr(new Print("AfterSource")));
     
     std::vector<int> primaryFields; primaryFields.push_back(1); primaryFields.push_back(2);
     std::vector<int> groupByFields; groupByFields.push_back(1);
     std::vector<int> aggFields; aggFields.push_back(3);
     std::vector<int> aggTypes; aggTypes.push_back(GroupBy::MIN_AGG);
 
-    ElementSpecRef groupBySpec = conf->addElement(New refcounted<GroupBy>("groupBy", "testAgg", primaryFields, 
+    ElementSpecPtr groupBySpec = conf->addElement(ElementPtr(new GroupBy("groupBy", "testAgg", primaryFields, 
 									  groupByFields, aggFields, aggTypes, 
-									  1, false)); 
+									  1, false))); 
 
-    ElementSpecRef queueSpec = conf->addElement(New refcounted<Queue>("queue", 10));
-    ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
-    ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >("sink", 1));
+    ElementSpecPtr queueSpec = conf->addElement(ElementPtr(new Queue("queue", 10)));
+    ElementSpecPtr sinkPrintS = conf->addElement(ElementPtr(new Print("BeforeSink")));
+    ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 1)));
 
     conf->hookUp(randomPushSourceSpec, 0, sourcePrintS ,0);
     conf->hookUp(sourcePrintS, 0, groupBySpec, 0);
@@ -61,7 +61,7 @@ void agg()
     conf->hookUp(queueSpec, 0, sinkPrintS, 0);
     conf->hookUp(sinkPrintS, 0, sinkS, 0);   
 
-    RouterRef router = New refcounted< Router >(conf);
+    RouterPtr router(new Router(conf));
 
     if (router->initialize(router) == 0) {
 	std::cout << "Correctly initialized configuration.\n";

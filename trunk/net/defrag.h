@@ -24,7 +24,7 @@ public:
   const char *processing() const	{ return PUSH_TO_PULL; };
   const char *flow_code()  const	{ return "-/-"; };
 
-  int push(int port, TupleRef t, b_cbv cb);
+  int push(int port, TuplePtr t, b_cbv cb);
 
   TuplePtr pull(int port, b_cbv cb);
 
@@ -32,7 +32,7 @@ public:
   b_cbv _push_cb;
   b_cbv _pull_cb;
 
-  void defragment(TupleRef t);
+  void defragment(TuplePtr t);
 
   typedef std::multimap <uint64_t, TuplePtr> FragMap;
   typedef std::deque <TuplePtr> DefragQ;

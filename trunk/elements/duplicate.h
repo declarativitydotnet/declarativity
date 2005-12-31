@@ -24,14 +24,14 @@ public:
   
   Duplicate(str, int);
 
-  int push(int port, TupleRef t, b_cbv cb);
+  int push(int port, TuplePtr t, b_cbv cb);
 
   const char *class_name() const		{ return "Duplicate";}
   const char *processing() const		{ return "h/h"; }
   const char *flow_code() const			{ return "x/x"; }
 
   /** Push back only if all outputs have pushed back. */
-  int push(TupleRef p, b_cbv cb) const;
+  int push(TuplePtr p, b_cbv cb) const;
 
 private:
   /** The callback for my input */

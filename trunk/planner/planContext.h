@@ -25,7 +25,7 @@
 class PlanContext {
 
 public:
-  PlanContext(Router::ConfigurationRef conf, Catalog* catalog, 
+  PlanContext(Router::ConfigurationPtr conf, Catalog* catalog, 
 	      RuleStrand* ruleStrand, str nodeID, 
 	      FILE* outputDebugFile);
   ~PlanContext();
@@ -33,7 +33,7 @@ public:
   RuleStrand* _ruleStrand;
   str _nodeID;
   FILE* _outputDebugFile;
-  Router::ConfigurationRef _conf;
+  Router::ConfigurationPtr _conf;
 
   // convince placeholder to figure out the cur fields in a tuple in flight
   class FieldNamesTracker {

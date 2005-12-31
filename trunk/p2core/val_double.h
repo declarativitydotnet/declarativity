@@ -32,19 +32,19 @@ public:
 
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );
-  static ValueRef xdr_unmarshal( XDR *x );
+  static ValuePtr xdr_unmarshal( XDR *x );
 
   // Constructor
   Val_Double(double theFloat) : d(theFloat) {};
 
   // Factory
-  static ValueRef mk(double d) { return New refcounted<Val_Double>(d); };
+  static ValuePtr mk(double d) { ValuePtr p(new Val_Double(d)); return p; };
 
   // Strict comparison
-  int compareTo(ValueRef) const;
+  int compareTo(ValuePtr) const;
 
   // Casting
-  static double cast(ValueRef v);
+  static double cast(ValuePtr v);
   
   static const opr::Oper* oper_;
 private:

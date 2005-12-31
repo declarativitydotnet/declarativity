@@ -15,7 +15,6 @@ Aggregate::Aggregate(str name,
                      Table::MultAggregate aggregate)
   : Element(name, 0, 1),
     _aggregate(aggregate),
-    _latest(NULL),
     _pullCallback(0),
     _pending(false)
 {
@@ -24,7 +23,7 @@ Aggregate::Aggregate(str name,
 }
 
 void
-Aggregate::listener(TupleRef t)
+Aggregate::listener(TuplePtr t)
 {
   if (_latest == NULL) {
     _latest = t;
@@ -66,7 +65,7 @@ Aggregate::pull(int port, b_cbv cb)
       // I already have a pull callback
       log(LoggerI::INFO, 0, "pull: callback underrun");
     }
-    return 0;
+    return TuplePtr();
   } else {
     // I'd better have no callback pending and definitely a value
     assert(!_pullCallback);

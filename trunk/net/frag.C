@@ -23,7 +23,7 @@ Frag::Frag(str name, uint32_t block_size)
 }
 
 
-int Frag::push(int port, TupleRef t, b_cbv cb)
+int Frag::push(int port, TuplePtr t, b_cbv cb)
 {
   // Is this the right port?
   assert(port == 0);
@@ -84,11 +84,11 @@ TuplePtr Frag::pull(int port, b_cbv cb)
       // I already have a pull callback
       log(LoggerI::INFO, 0, "pull: underrun");
     }
-    return NULL;
+    return TuplePtr();
   }
 }
 
-void Frag::fragment(TupleRef t)
+void Frag::fragment(TuplePtr t)
 {
   uint64_t seq_num = SEQ_NUM(Val_UInt64::cast((*t)[SEQ_FIELD]));
   ref< suio > puio = Val_Opaque::cast((*t)[PLD_FIELD]);
@@ -105,7 +105,7 @@ void Frag::fragment(TupleRef t)
       puio->copy(uio, min<int>(CHUNK_SIZE, puio->resid()));
       puio->rembytes(uio->resid());
 
-      TupleRef p = Tuple::mk();
+      TuplePtr p = Tuple::mk();
       p->append(Val_UInt64::mk(MAKE_SEQ(seq_num, offset)));
       p->append(Val_Opaque::mk(uio));
       p->tag(NUM_CHUNKS, Val_UInt32::mk(num_chunks));

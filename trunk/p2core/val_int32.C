@@ -30,7 +30,7 @@ void Val_Int32::xdr_marshal_subtype( XDR *x )
 {
   xdr_int32_t(x, &i);
 }
-ValueRef Val_Int32::xdr_unmarshal( XDR *x )
+ValuePtr Val_Int32::xdr_unmarshal( XDR *x )
 {
   int32_t i;
   xdr_int32_t(x, &i);
@@ -40,11 +40,11 @@ ValueRef Val_Int32::xdr_unmarshal( XDR *x )
 //
 // Casting
 //
-int32_t Val_Int32::cast(ValueRef v) {
-  Value *vp = v;
+int32_t Val_Int32::cast(ValuePtr v) {
+  ValuePtr vp = v;
   switch (v->typeCode()) {
   case Value::INT32:
-    return (static_cast<Val_Int32 *>(vp))->i;
+    return (static_cast<Val_Int32*>(vp.get()))->i;
   case Value::UINT32:
     return (int32_t)(Val_UInt32::cast(v));
   case Value::INT64:
@@ -62,7 +62,7 @@ int32_t Val_Int32::cast(ValueRef v) {
   }
 }
 
-int Val_Int32::compareTo(ValueRef other) const
+int Val_Int32::compareTo(ValuePtr other) const
 {
   if (other->typeCode() != Value::INT32) {
     if (Value::INT32 < other->typeCode()) {
@@ -81,7 +81,7 @@ int Val_Int32::compareTo(ValueRef other) const
 }
 
 /** Define the ZERO constant */
-ValueRef Val_Int32::ZERO = Val_Int32::mk(0);
+ValuePtr Val_Int32::ZERO = Val_Int32::mk(0);
 
 
 /*

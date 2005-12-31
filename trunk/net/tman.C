@@ -31,9 +31,9 @@ TrafficManager::TrafficManager(str n, str a, uint k, uint r, double s)
 {
 }
 
-int TrafficManager::push(int port, TupleRef tp, b_cbv cb) {
+int TrafficManager::push(int port, TuplePtr tp, b_cbv cb) {
   assert(port == 0);
-  ValuePtr vp = NULL;
+  ValuePtr vp = ValuePtr();
 
   uint key = getKey(tp);
   if (key == my_key_) {
@@ -153,7 +153,7 @@ REMOVABLE_INLINE TuplePtr TrafficManager::mkResponse(TuplePtr tp) {
     }
     catch (Value::TypeError& e) { } 
   }
-  return NULL;
+  return TuplePtr();
 
 }
 

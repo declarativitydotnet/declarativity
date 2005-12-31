@@ -30,7 +30,7 @@ TuplePtr SimpleNetSim::pull(int port, b_cbv cb)
     return p;
   }
   _out_cb = cb;
-  return NULL;
+  return TuplePtr();
 }
 
 void SimpleNetSim::grab() {
@@ -40,7 +40,7 @@ void SimpleNetSim::grab() {
      return;
   }
 
-  TuplePtr t = NULL; 
+  TuplePtr t = TuplePtr(); 
   do {
     t = input(0)->pull(boost::bind(&SimpleNetSim::element_cb, this)); 	// Grab the next one and delay it
   } while (t != NULL && (rand()/double(RAND_MAX)) < drop_prob_);
@@ -68,7 +68,7 @@ void SimpleNetSim::element_cb() {
   log(LoggerI::INFO, 0, strbuf() << "SimpleNetSim element_cb(): FINISHED"); 
 }
 
-void SimpleNetSim::tuple_ready(TupleRef t) 
+void SimpleNetSim::tuple_ready(TuplePtr t) 
 { 
   log(LoggerI::INFO, 0, strbuf() << "SimpleNetSim tuple_ready(): Down stream callback called"); 
   ready_q_.push_back(t); 

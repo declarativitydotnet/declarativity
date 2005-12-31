@@ -16,13 +16,13 @@
 #ifndef __ID_H__
 #define __ID_H__
 
-#include "inlines.h"
+#include <boost/shared_ptr.hpp>
 #include <async.h>
 #include <arpc.h>
+#include "inlines.h"
 
 class ID;
-typedef ref< ID > IDRef;
-typedef ptr< ID > IDPtr;
+typedef boost::shared_ptr< ID > IDPtr;
 
 class ID {
 public:
@@ -31,10 +31,10 @@ public:
   static const unsigned WORDS = 5;
 
   /** ONE */
-  static IDRef ONE;
+  static IDPtr ONE;
 
   /** ZERO */
-  static IDRef ZERO;
+  static IDPtr ZERO;
   
 private:
   /** My representation of an ID.   */
@@ -52,46 +52,46 @@ public:
   str toString() const;
 
   /** Strict equality */
-  REMOVABLE_INLINE bool equals(IDRef other) const { return compareTo(other) == 0; }
+  REMOVABLE_INLINE bool equals(IDPtr other) const { return compareTo(other) == 0; }
 
   /** Am I less than, equal or greater than the other value?  -1 means
       less, 0 means equal, +1 means greater.  This is done strictly on
       the numerical space, i.e., not on the ring. */
-  int compareTo(IDRef) const;
+  int compareTo(IDPtr) const;
 
   /** Am I in (from, to)? */
-  bool betweenOO(IDRef, IDRef) const;
+  bool betweenOO(IDPtr, IDPtr) const;
 
   /** Am I in (from, to]? */
-  bool betweenOC(IDRef, IDRef) const;
+  bool betweenOC(IDPtr, IDPtr) const;
 
   /** Am I in [from, to)? */
-  bool betweenCO(IDRef, IDRef) const;
+  bool betweenCO(IDPtr, IDPtr) const;
 
   /** Am I in [from, to]? */
-  bool betweenCC(IDRef, IDRef) const;
+  bool betweenCC(IDPtr, IDPtr) const;
 
   /** The minimum directional distance from me to the given ID on the
       ring. */
-  IDRef distance(IDRef) const;
+  IDPtr distance(IDPtr) const;
 
   /** Add two IDs together arithmetically */
-  IDRef add(IDRef) const;
+  IDPtr add(IDPtr) const;
 
   /** Shift an ID by a number of bit positions */
-  IDRef shift(uint32_t) const;
+  IDPtr shift(uint32_t) const;
 
   /** Marshal into an XDR, one word at a time */
   void xdr_marshal(XDR *x);
 
   /** Create an ID from an XDR buffer, one word at a time */
-  static IDRef xdr_unmarshal(XDR *x);
+  static IDPtr xdr_unmarshal(XDR *x);
 
   /** Create an ID */
-  static IDRef mk() { return New refcounted< ID >(); }
-  static IDRef mk(uint32_t w[WORDS]) { return New refcounted< ID >(w); }
-  static IDRef mk(uint32_t u) { return New refcounted< ID >(u); }
-  static IDRef mk(uint64_t u) { return New refcounted< ID >(u); }
+  static IDPtr mk()                  { IDPtr p(new ID());  return p; }
+  static IDPtr mk(uint32_t w[WORDS]) { IDPtr p(new ID(w)); return p; }
+  static IDPtr mk(uint32_t u)        { IDPtr p(new ID(u)); return p; }
+  static IDPtr mk(uint64_t u)        { IDPtr p(new ID(u)); return p; }
 
 };
 

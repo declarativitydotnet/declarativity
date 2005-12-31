@@ -35,8 +35,8 @@
 #include "timedPullSink.h"
 #include "slot.h"
 
-TupleRef create_tuple(int i) {
-  TupleRef t = Tuple::mk();
+TuplePtr create_tuple(int i) {
+  TuplePtr t = Tuple::mk();
   t->append(Val_Null::mk());
   t->append(Val_Int32::mk(i));
   t->append(Val_UInt64::mk(i));
@@ -68,14 +68,13 @@ void testCheckHookupElements_NonExistentToElement()
 {
   std::cout << "[Testing non-existent TO element in hookup]\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS =
-    conf->addElement(New refcounted< TimedPushSource >("source", 0));
-  ElementSpecRef sinkS =
-    New refcounted< ElementSpec >(New refcounted< TimedPullSink >("sink", 0));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS =
+    conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
+  ElementSpecPtr sinkS(new ElementSpec(ElementPtr(new TimedPullSink("sink", 0))));
   conf->hookUp(sourceS, 0, sinkS, 0);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch hookup reference to unknown to element\n";
   } else {
@@ -89,14 +88,12 @@ void testCheckHookupElements_NonExistentFromElement()
 {
   std::cout << "\n[Non existent FROM element]\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = New refcounted< ElementSpec >(New refcounted<
-                                                         TimedPushSource >("source", 0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
-                                          >("sink", 0));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS(new ElementSpec(ElementPtr(new TimedPushSource("source", 0))));
+  ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
   conf->hookUp(sourceS, 0, sinkS, 0);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch hookup reference to unknown from element\n";
   } else {
@@ -110,14 +107,12 @@ void testCheckHookupElements_NegativeFromPort()
 {
   std::cout << "\n[Negative From Port]\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted<
-                                            TimedPushSource >("source", 0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
-                                          >("sink", 0));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
+  ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
   conf->hookUp(sourceS, -1, sinkS, 0);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch negative from port\n";
   } else {
@@ -131,14 +126,12 @@ void testCheckHookupElements_NegativeToPort()
 {
   std::cout << "\n[Negative to port]\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted<
-                                            TimedPushSource >("source", 0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
-                                          >("sink", 0));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
+  ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
   conf->hookUp(sourceS, 0, sinkS, -1);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch negative to port\n";
   } else {
@@ -187,14 +180,14 @@ void testCheckHookupRange_IncorrectFromPort()
 {
   std::cout << "\n[Incorrect From Port]\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS =
-    conf->addElement(New refcounted< TimedPushSource >("source", 0));
-  ElementSpecRef sinkS =
-    conf->addElement(New refcounted< TimedPullSink >("sink", 0));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS =
+    conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
+  ElementSpecPtr sinkS =
+    conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
   conf->hookUp(sourceS, 1, sinkS, 0);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch incorrect from port\n";
   } else {
@@ -207,14 +200,14 @@ void testCheckHookupRange_IncorrectToPort()
 {
   std::cout << "\n[Incorrect To Port]\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS =
-    conf->addElement(New refcounted< TimedPushSource >("source", 0));
-  ElementSpecRef sinkS =
-    conf->addElement(New refcounted< TimedPullSink >("sink", 0));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS =
+    conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
+  ElementSpecPtr sinkS =
+    conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
   conf->hookUp(sourceS, 0, sinkS, 1);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch incorrect to port\n";
   } else {
@@ -227,14 +220,14 @@ void testCheckHookupRange_IncorrectPorts()
 {
   std::cout << "\n[Incorrect Ports (Both)]\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS =
-    conf->addElement(New refcounted< TimedPushSource >("source", 0));
-  ElementSpecRef sinkS =
-    conf->addElement(New refcounted< TimedPullSink >("sink", 0));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS =
+    conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
+  ElementSpecPtr sinkS =
+    conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
   conf->hookUp(sourceS, 1, sinkS, 1);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
 
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch incorrect from/to ports\n";
@@ -248,14 +241,14 @@ void testCheckHookupRange_Portless()
 {
   std::cout << "\n[Portless Hookup]\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS =
-    conf->addElement(New refcounted< TimedPushSource >("source", 0));
-  ElementSpecRef sinkS =
-    conf->addElement(New refcounted< TimedPullSink >("sink", 0));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS =
+    conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
+  ElementSpecPtr sinkS =
+    conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
   conf->hookUp(sinkS, 1, sourceS, 1);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch portless hookup\n";
   } else {
@@ -309,18 +302,16 @@ void testCheckPushPull_PullToPush()
 {
   std::cout << "\n[Pull to Push]\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted<
-                                            TimedPushSource >("source", 0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
-                                          >("sink", 0));
-  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >("slot1"));
-  ElementSpecRef slot2S = conf->addElement(New refcounted< Slot >("slot2"));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
+  ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
+  ElementSpecPtr slot1S = conf->addElement(ElementPtr(new Slot("slot1")));
+  ElementSpecPtr slot2S = conf->addElement(ElementPtr(new Slot("slot2")));
   conf->hookUp(sourceS, 0, slot1S, 0);
   conf->hookUp(slot1S, 0, slot2S, 0);
   conf->hookUp(slot2S, 0, sinkS, 0);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch pull output hooked up with push input\n";
   } else {
@@ -333,21 +324,19 @@ void testCheckPushPull_PullToPushHop()
 {
   std::cout << "\n[Pull to Push with hop]\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted<
-                                            TimedPushSource >("source", 0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
-                                          >("sink", 0));
-  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >("slot1"));
-  ElementSpecRef slot2S = conf->addElement(New refcounted< Slot >("slot2"));
-  ElementSpecRef printS = conf->addElement(New refcounted< Print >("Printer"));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
+  ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
+  ElementSpecPtr slot1S = conf->addElement(ElementPtr(new Slot("slot1")));
+  ElementSpecPtr slot2S = conf->addElement(ElementPtr(new Slot("slot2")));
+  ElementSpecPtr printS = conf->addElement(ElementPtr(new Print("Printer")));
 
   conf->hookUp(sourceS, 0, slot1S, 0);
   conf->hookUp(slot1S, 0, printS, 0);
   conf->hookUp(printS, 0, slot2S, 0);
   conf->hookUp(slot2S, 0, sinkS, 0);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch incorrect pull-push hookup via a/a element\n";
   } else {
@@ -360,15 +349,13 @@ void testCheckPushPull_PullToPushMultiHop()
 {
   std::cout << "\n[Pull to Push multi hop]\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted<
-                                            TimedPushSource >("source", 0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
-                                          >("sink", 0));
-  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >("slot1"));
-  ElementSpecRef slot2S = conf->addElement(New refcounted< Slot >("slot2"));
-  ElementSpecRef printS = conf->addElement(New refcounted< Print >("Printer"));
-  ElementSpecRef print2S = conf->addElement(New refcounted< Print >("Printer Two"));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
+  ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
+  ElementSpecPtr slot1S = conf->addElement(ElementPtr(new Slot("slot1")));
+  ElementSpecPtr slot2S = conf->addElement(ElementPtr(new Slot("slot2")));
+  ElementSpecPtr printS = conf->addElement(ElementPtr(new Print("Printer")));
+  ElementSpecPtr print2S = conf->addElement(ElementPtr(new Print("Printer Two")));
 
   conf->hookUp(sourceS, 0, slot1S, 0);
   conf->hookUp(slot1S, 0, printS, 0);
@@ -376,7 +363,7 @@ void testCheckPushPull_PullToPushMultiHop()
   conf->hookUp(print2S, 0, slot2S, 0);
   conf->hookUp(slot2S, 0, sinkS, 0);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cerr << "** Failed to catch incorrect pull-push hookup via multiple a/a elements\n";
   } else {
@@ -389,21 +376,19 @@ void testCheckPushPull_PullToPullMultiHop()
 {
   std::cout << "\n[Pull to pull multi hop]\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS = conf->addElement(New refcounted<
-                                            TimedPushSource >("source", 0));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink
-                                          >("sink", 0));
-  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >("slot"));
-  ElementSpecRef printS = conf->addElement(New refcounted< Print >("Printer"));
-  ElementSpecRef print2S = conf->addElement(New refcounted< Print >("Printer Two"));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
+  ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
+  ElementSpecPtr slot1S = conf->addElement(ElementPtr(new Slot("slot")));
+  ElementSpecPtr printS = conf->addElement(ElementPtr(new Print("Printer")));
+  ElementSpecPtr print2S = conf->addElement(ElementPtr(new Print("Printer Two")));
 
   conf->hookUp(sourceS, 0, slot1S, 0);
   conf->hookUp(slot1S, 0, printS, 0);
   conf->hookUp(printS, 0, print2S, 0);
   conf->hookUp(print2S, 0, sinkS, 0);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
 
   if (router->initialize(router) == 0) {
     std::cerr << "Correctly allowed pull-pull hookup via multiple a/a elements\n";
@@ -451,20 +436,20 @@ void testDuplicates_UnusedPort()
 {
   std::cout << "\n[Unused Port]\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS =
-    conf->addElement(New refcounted< TimedPushSource >("source", 0));
-  ElementSpecRef sinkS =
-    conf->addElement(New refcounted< TimedPullSink >("sink", 0));
-  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >("slot"));
-  ElementSpecRef printS = conf->addElement(New refcounted< Print >("Printer"));
-  ElementSpecRef print2S = conf->addElement(New refcounted< Print >("Printer Two"));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS =
+    conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
+  ElementSpecPtr sinkS =
+    conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
+  ElementSpecPtr slot1S = conf->addElement(ElementPtr(new Slot("slot")));
+  ElementSpecPtr printS = conf->addElement(ElementPtr(new Print("Printer")));
+  ElementSpecPtr print2S = conf->addElement(ElementPtr(new Print("Printer Two")));
 
   conf->hookUp(sourceS, 0, slot1S, 0);
   conf->hookUp(slot1S, 0, print2S, 0);
   conf->hookUp(print2S, 0, sinkS, 0);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cerr << "** Incorrectly allowed unused port of an element\n";
   } else {
@@ -478,21 +463,21 @@ void testDuplicates_ReusedPort()
 {
   std::cout << "\n[Reused Port]\n";
  
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS =
-    conf->addElement(New refcounted< TimedPushSource >("source", 0));
-  ElementSpecRef sinkS =
-    conf->addElement(New refcounted< TimedPullSink >("sink", 0));
-  ElementSpecRef slot1S = conf->addElement(New refcounted< Slot >("slot"));
-  ElementSpecRef printS = conf->addElement(New refcounted< Print >("Printer"));
-  ElementSpecRef print2S = conf->addElement(New refcounted< Print >("Printer Two"));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS =
+    conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
+  ElementSpecPtr sinkS =
+    conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
+  ElementSpecPtr slot1S = conf->addElement(ElementPtr(new Slot("slot")));
+  ElementSpecPtr printS = conf->addElement(ElementPtr(new Print("Printer")));
+  ElementSpecPtr print2S = conf->addElement(ElementPtr(new Print("Printer Two")));
 
   conf->hookUp(sourceS, 0, slot1S, 0);
   conf->hookUp(slot1S, 0, print2S, 0);
   conf->hookUp(print2S, 0, slot1S, 0);
   conf->hookUp(slot1S, 0, sinkS, 0);
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
 
   if (router->initialize(router) == 0) {
     std::cerr << "** Incorrectly allowed port reuse\n";

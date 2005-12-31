@@ -38,7 +38,7 @@ class Scan : public Element {
   /** Return a match to the current lookup */
   TuplePtr pull(int port, b_cbv cb);
 
-  void listener(TupleRef t);
+  void listener(TuplePtr t);
   
  private:
   

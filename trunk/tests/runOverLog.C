@@ -49,17 +49,17 @@ static char * USAGE = "Usage:\n\t runOverLog <overLogFile> <loggingLevel> <seed>
  * Fill in the environment table
  */
 void
-initializeBaseTables(ref< OL_Context> ctxt,
-                     ref<Rtr_ConfGen> routerConfigGenerator, 
+initializeBaseTables(boost::shared_ptr< OL_Context> ctxt,
+                     boost::shared_ptr<Rtr_ConfGen> routerConfigGenerator, 
                      str localAddress,
                      str environment)
 {
   // Put in my own address
-  TableRef envTable = routerConfigGenerator->getTableByName(localAddress, "env");
-  TupleRef tuple = Tuple::mk();
-  ValueRef envName = Val_Str::mk("env");
+  TablePtr envTable = routerConfigGenerator->getTableByName(localAddress, "env");
+  TuplePtr tuple = Tuple::mk();
+  ValuePtr envName = Val_Str::mk("env");
   tuple->append(envName);
-  ValueRef myAddress = Val_Str::mk(strbuf() << localAddress);
+  ValuePtr myAddress = Val_Str::mk(strbuf() << localAddress);
   tuple->append(myAddress);
   tuple->append(Val_Str::mk("hostname"));
   tuple->append(myAddress);
@@ -94,7 +94,7 @@ initializeBaseTables(ref< OL_Context> ctxt,
     str value(theEqual + 1);
     warn << "[" << attribute << "=" << value << "]\n";
 
-    TupleRef tuple = Tuple::mk();
+    TuplePtr tuple = Tuple::mk();
     tuple->append(envName);
     tuple->append(myAddress);
     tuple->append(Val_Str::mk(attribute));
@@ -115,7 +115,7 @@ initializeBaseTables(ref< OL_Context> ctxt,
 */
 void
 startOverLogDataflow(LoggerI::Level level,
-                     ref< OL_Context> ctxt,
+                     boost::shared_ptr< OL_Context> ctxt,
                      str overLogFile, 
                      str localAddress,
                      int port,
@@ -123,19 +123,19 @@ startOverLogDataflow(LoggerI::Level level,
                      str environment)
 {
   // create dataflow for translated OverLog
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ref< Rtr_ConfGen > routerConfigGenerator =
-    New refcounted< Rtr_ConfGen >(ctxt, conf, false, DEBUG, CC, overLogFile);
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  boost::shared_ptr< Rtr_ConfGen > 
+    routerConfigGenerator(new Rtr_ConfGen(ctxt.get(), conf, false, DEBUG, CC, overLogFile));
 
   routerConfigGenerator->createTables(localAddress);
 
-  ref< Udp > udp = New refcounted< Udp > (localAddress, port);
+  boost::shared_ptr< Udp > udp(new Udp(localAddress, port));
   routerConfigGenerator->clear();
   routerConfigGenerator->configureRouter(udp, localAddress);
 
   initializeBaseTables(ctxt, routerConfigGenerator, localAddress, environment);
    
-  RouterRef router = New refcounted< Router >(conf, level);
+  RouterPtr router(new Router(conf, level));
   if (router->initialize(router) == 0) {
     warn << "Correctly initialized network of chord lookup flows.\n";
   } else {
@@ -161,7 +161,7 @@ void testOverLog(LoggerI::Level level,
                  double delay,
                  str environment)
 {
-  ref< OL_Context > ctxt = New refcounted< OL_Context>();
+  boost::shared_ptr< OL_Context > ctxt(new OL_Context());
 
   str processed(strbuf(filename) << ".processed");
 

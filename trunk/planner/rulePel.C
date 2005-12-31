@@ -362,11 +362,11 @@ void pelSelect(PlanContext* pc, Parse_Select *expr, int selectionID)
   debugRule(pc, str(strbuf() << "Generate selection functions for " << sPel 
 		    << " " << pc->_namesTracker->toString() << "\n"));
  
-  ElementSpecRef sPelTrans =
-    pc->_conf->addElement(New refcounted< PelTransform >(strbuf("Selection:") 
+  ElementSpecPtr sPelTrans =
+    pc->_conf->addElement(ElementPtr(new PelTransform(strbuf("Selection:") 
 						     << curRule->_ruleID << ":" << 
 						     selectionID << ":" 
-						     << pc->_nodeID, sPel));
+						     << pc->_nodeID, sPel)));
   pc->_ruleStrand->addElement(pc->_conf, sPelTrans);
 }
 
@@ -420,12 +420,12 @@ void pelAssign(PlanContext* pc, Parse_Assign* expr, int assignID)
 	    << curRule->_ruleID << " " << pel << " " 
 	    << pc->_namesTracker->toString() << "\n");
   
-  ElementSpecRef assignPelTrans =
-    pc->_conf->addElement(New refcounted< PelTransform >(strbuf("Assignment:") 
+  ElementSpecPtr assignPelTrans =
+    pc->_conf->addElement(ElementPtr(new PelTransform(strbuf("Assignment:") 
 						     << curRule->_ruleID << ":" 
 						     << assignID << ":" 
 						     << pc->_nodeID, 
-						     pel));
+						     pel)));
 
   pc->_ruleStrand->addElement(pc->_conf, assignPelTrans);  
 }

@@ -15,7 +15,7 @@
 
 #include "planContext.h"
 
-PlanContext::PlanContext(Router::ConfigurationRef conf, 
+PlanContext::PlanContext(Router::ConfigurationPtr conf, 
 			 Catalog* catalog, 
 			 RuleStrand* ruleStrand, str nodeID,
 			 FILE* outputDebugFile) :

@@ -47,16 +47,16 @@ public:
   str actionFunctorName() 
   { return _eca_rule->_action->_pf->fn->name; }
 
-  ElementSpecRef getEventElement() 
+  ElementSpecPtr getEventElement() 
   { return _elementChain.at(0); }
 
-  ElementSpecRef getActionElement() 
+  ElementSpecPtr getActionElement() 
   { return _elementChain.at(_elementChain.size() - 1); }
 
-  void addElement(Router::ConfigurationRef conf, ElementSpecRef elementSpecRef);
+  void addElement(Router::ConfigurationPtr conf, ElementSpecPtr elementSpecPtr);
 
 private:
-  std::vector<ElementSpecRef> _elementChain;
+  std::vector<ElementSpecPtr> _elementChain;
 };
 
 #endif

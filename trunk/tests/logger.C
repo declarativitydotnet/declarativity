@@ -34,15 +34,15 @@ void testLogger()
 {
   std::cout << "\nCHECK LOGGER\n";
 
-  ref<Logger> log = New refcounted<Logger>("theLogger");
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef logSpec = conf->addElement(log);
-  ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
-  ElementSpecRef sinkS = conf->addElement(New refcounted< Discard >("sink"));
+  boost::shared_ptr<Logger> log(new Logger("theLogger"));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr logSpec = conf->addElement(log);
+  ElementSpecPtr sinkPrintS = conf->addElement(ElementPtr(new Print("BeforeSink")));
+  ElementSpecPtr sinkS = conf->addElement(ElementPtr(new Discard("sink")));
   conf->hookUp(logSpec, 0, sinkPrintS, 0);
   conf->hookUp(sinkPrintS, 0, sinkS, 0);
 
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized spec.\n";
   } else {
@@ -51,7 +51,7 @@ void testLogger()
 
   // Activate the router
   router->activate();
-  router->logger(log);
+  router->logger(log.get());
 
   std::cout << "Router activated, captain.\n";
 

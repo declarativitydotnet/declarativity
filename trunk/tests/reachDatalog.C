@@ -53,8 +53,6 @@
 
 extern int ol_parser_debug;
 
-//typedef ref<Store> StoreRef;
-
 void killJoin()
 {
   exit(0);
@@ -67,34 +65,33 @@ static const int nodes = 4;
 
 
 /* Initial sending of links into the p2 dataflow */
-void bootstrapData(Router::ConfigurationRef conf,
+void bootstrapData(Router::ConfigurationPtr conf,
                    str name,
-                   TableRef linkTable,
- 		   ref< Udp > udp)
+                   TablePtr linkTable,
+ 		   boost::shared_ptr< Udp > udp)
 {
   // Scanner element over link table
-  ElementSpecRef scanS 
-    = conf->addElement(New refcounted< Scan >(strbuf("ScanLink:" << name << ":"), linkTable, 0));
+  ElementSpecPtr scanS 
+    = conf->addElement(ElementPtr(new Scan(strbuf("ScanLink:" << name << ":"), linkTable, 0)));
 
-  ElementSpecRef scanPrintS =
-    conf->addElement(New refcounted< Print >(strbuf("PrintScan:") << name));
-  ElementSpecRef timedPullPushS =
-    conf->addElement(New refcounted< TimedPullPush >(strbuf("PushReach:").cat(name), 0));
-  ElementSpecRef slotS =
-    conf->addElement(New refcounted< Slot >(strbuf("Slot:").cat(name)));
+  ElementSpecPtr scanPrintS =
+    conf->addElement(ElementPtr(new Print(strbuf("PrintScan:") << name)));
+  ElementSpecPtr timedPullPushS =
+    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PushReach:").cat(name), 0)));
+  ElementSpecPtr slotS =
+    conf->addElement(ElementPtr(new Slot(strbuf("Slot:").cat(name))));
   
-  ElementSpecRef encapS =
-    conf->addElement(New refcounted< PelTransform >(strbuf("encap:").cat(name),
+  ElementSpecPtr encapS =
+    conf->addElement(ElementPtr(new PelTransform(strbuf("encap:").cat(name),
 						    "$1 pop /* The From address */\
-                                                     $0 ->t $1 append $2 append pop")); // the rest
+                                                     $0 ->t $1 append $2 append pop"))); // the rest
   
   // Now marshall the payload (second field)
-  ElementSpecRef marshalS =
-    conf->addElement(New refcounted< MarshalField >(strbuf("Marshal:").cat(name),
-                                                    1));
-  ElementSpecRef routeS =
-    conf->addElement(New refcounted< StrToSockaddr >(strbuf("Router:").cat(name), 0));
-  ElementSpecRef udpTxS =
+  ElementSpecPtr marshalS =
+    conf->addElement(ElementPtr(new MarshalField(strbuf("Marshal:").cat(name), 1)));
+  ElementSpecPtr routeS =
+    conf->addElement(ElementPtr(new StrToSockaddr(strbuf("Router:").cat(name), 0)));
+  ElementSpecPtr udpTxS =
     conf->addElement(udp->get_tx());
   
   // Connect to outgoing hook
@@ -109,11 +106,11 @@ void bootstrapData(Router::ConfigurationRef conf,
 
 
 /** Build a symmetric link transitive closure. */
-void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
+void testReachability(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt, str filename)
 {
   std::cout << "\nCHECK TRANSITIVE REACHABILITY\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  Router::ConfigurationPtr conf(new Router::Configuration());
   Rtr_ConfGen routerConfigGenerator(ctxt, conf, false, false, false, filename);
 
   // Create one data flow per "node"
@@ -129,11 +126,10 @@ void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
     nodeIds[i] = Val_Str::mk(strbuf("127.0.0.1") << ":" << (STARTING_PORT + i));
     
 
-    udps[i] = New refcounted< Udp >(names[i] << ":Udp", STARTING_PORT + i);
-    bootstrapUDP[i] = New refcounted< Udp >(names[i] << ":bootstrapUdp", 
-					    STARTING_PORT + i + 5000);
+    udps[i].reset(new Udp(names[i] << ":Udp", STARTING_PORT + i));
+    bootstrapUDP[i].reset(new Udp(names[i] << ":bootstrapUdp", STARTING_PORT + i + 5000));
     routerConfigGenerator.createTables(names[i]);
-    bootstrapTables[i] = new refcounted< Table >(strbuf("bootstrapNeighbor:") << i, 100);
+    bootstrapTables[i].reset(new Table(strbuf("bootstrapNeighbor:") << i, 100));
     bootstrapTables[i]->add_multiple_index(0);  
   }
 
@@ -148,10 +144,10 @@ void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
     others.insert(i);           // me
     
     for (int j = 0; j < LINKS; j++) {
-      TupleRef t = Tuple::mk();
+      TuplePtr t = Tuple::mk();
       t->append(Val_Str::mk("neighbor"));
       // From me
-      t->append((ValueRef) nodeIds[i]);
+      t->append((ValuePtr) nodeIds[i]);
       // To someone at random, but not me. Replacement is discouraged
 
       int other = i;
@@ -161,22 +157,22 @@ void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
       // Got one
       others.insert(other);
 
-      t->append((ValueRef) nodeIds[other]);
+      t->append((ValuePtr) nodeIds[other]);
       t->freeze();
-      TableRef tableRef = routerConfigGenerator.getTableByName(names[i], "neighbor");
+      TablePtr tablePtr = routerConfigGenerator.getTableByName(names[i], "neighbor");
       std::cout << "Node " << i << " insert tuple " << t->toString() << "\n";
-      tableRef->insert(t);
+      tablePtr->insert(t);
       bootstrapTables[i]->insert(t);
 
       // Make the symmetric one
-      TupleRef symmetric = Tuple::mk();
+      TuplePtr symmetric = Tuple::mk();
       symmetric->append(Val_Str::mk("neighbor"));
-      symmetric->append((ValueRef) nodeIds[other]);
-      symmetric->append((ValueRef) nodeIds[i]);
+      symmetric->append((ValuePtr) nodeIds[other]);
+      symmetric->append((ValuePtr) nodeIds[i]);
       symmetric->freeze();
-      tableRef = routerConfigGenerator.getTableByName(names[other], "neighbor");
+      tablePtr = routerConfigGenerator.getTableByName(names[other], "neighbor");
       std::cout << "Node " << other << " insert tuple " << symmetric->toString() << "\n";
-      tableRef->insert(symmetric);
+      tablePtr->insert(symmetric);
       bootstrapTables[other]->insert(symmetric);
     }
   }
@@ -189,7 +185,7 @@ void testReachability(LoggerI::Level level, ref< OL_Context> ctxt, str filename)
 
   // add extra here to initialize the tables
 
-  RouterRef router = New refcounted< Router >(conf, level);
+  RouterPtr router(new Router(conf, level));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized network of reachability flows.\n";
   } else {
@@ -211,10 +207,9 @@ int main(int argc, char **argv)
   std::cout << "\nGRAPH REACHABILITY\n";
   srand(0);
 
-  //StoreRef table = new refcounted< Table >("name", 100);
 
   LoggerI::Level level = LoggerI::NONE;
-  ref< OL_Context > ctxt = New refcounted< OL_Context>();
+  boost::shared_ptr< OL_Context > ctxt(new OL_Context());
   strbuf filename;
 
   for( int i=1; i<argc; i++) { 

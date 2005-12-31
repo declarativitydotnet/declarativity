@@ -24,7 +24,7 @@
 
 #include "elementSpec.h"
 
-ElementSpec::ElementSpec(ElementRef e)
+ElementSpec::ElementSpec(ElementPtr e)
   : _element(e),
     _inputs(),
     _outputs()
@@ -32,8 +32,8 @@ ElementSpec::ElementSpec(ElementRef e)
   initializePorts();
 }
 
-vec< ElementSpec::UniGroupPtr, 256 > ElementSpec::_scratchUniGroups =
-vec< ElementSpec::UniGroupPtr, 256 >();
+std::vector< ElementSpec::UniGroupPtr > ElementSpec::_scratchUniGroups =
+std::vector< ElementSpec::UniGroupPtr >(256);
 
 
 /**
@@ -86,7 +86,7 @@ void ElementSpec::initializePorts()
     }
 
     // Create the port
-    PortRef port = New refcounted< Port >(pCurrent);
+    PortPtr port(new Port(pCurrent));
     _inputs.push_back(port);
 
     // Create or update the unification group
@@ -95,7 +95,7 @@ void ElementSpec::initializePorts()
       UniGroupPtr u = _scratchUniGroups[fCurrent]; 
       if (u == 0) {
         // Create a new one
-        u = New refcounted< UniGroup >;
+        u.reset(new UniGroup());
         _scratchUniGroups[fCurrent] = u;
       }
       // Add the input into the group
@@ -140,7 +140,7 @@ void ElementSpec::initializePorts()
     }
 
     // Create the port
-    PortRef port = New refcounted< Port >(pCurrent);
+    PortPtr port(new Port(pCurrent));
     _outputs.push_back(port);
 
     // Create or update the unification group
@@ -149,7 +149,7 @@ void ElementSpec::initializePorts()
       UniGroupPtr u = _scratchUniGroups[fCurrent]; 
       if (u == 0) {
         // Create a new one
-        u = New refcounted< UniGroup >;
+        u.reset(new UniGroup());
         _scratchUniGroups[fCurrent] = u;
       }
       // Add the input into the group
@@ -165,29 +165,28 @@ void ElementSpec::initializePorts()
        i++) {
     if (_scratchUniGroups[i] != 0) {
       _uniGroups.push_back(_scratchUniGroups[i]);
-      _scratchUniGroups[i] = 0;
+      _scratchUniGroups[i].reset();
     }
   }
 }
 
-const ElementRef ElementSpec::element()
+const ElementPtr ElementSpec::element()
 {
   return _element;
 }
 
-ElementSpec::PortRef ElementSpec::input(int pno)
+ElementSpec::PortPtr ElementSpec::input(int pno)
 {
   return _inputs[pno];
 }
 
-ElementSpec::PortRef ElementSpec::output(int pno)
+ElementSpec::PortPtr ElementSpec::output(int pno)
 {
   return _outputs[pno];
 }
 
 ElementSpec::Port::Port(Element::Processing personality)
-  : _processing(personality),
-    _uniGroup(0)
+  : _processing(personality)
 {
   assert(ElementSpec::processingCodeString(_processing)[0] != 'I');
 }
@@ -209,7 +208,7 @@ ElementSpec::UniGroupPtr ElementSpec::Port::uniGroup() const
   return _uniGroup;
 }
 
-void ElementSpec::Port::uniGroup(UniGroupRef u)
+void ElementSpec::Port::uniGroup(UniGroupPtr u)
 {
   assert(_uniGroup == 0);
   _uniGroup = u;
@@ -268,7 +267,7 @@ ElementSpec::UnificationResult ElementSpec::unifyInput(int portNumber)
 {
   assert(portNumber < _element->ninputs());
   UnificationResult entireResult = UNCHANGED;
-  ElementSpec::PortRef port = _inputs[portNumber];
+  ElementSpec::PortPtr port = _inputs[portNumber];
   Element::Processing personality = port->personality();
   if (personality != Element::AGNOSTIC) {
     // This port's unification group
@@ -279,7 +278,7 @@ ElementSpec::UnificationResult ElementSpec::unifyInput(int portNumber)
       for (int i = 0;
            i < portNumber;
            i++) {
-        ElementSpec::PortRef otherPort = _inputs[u->inputs[i]];
+        ElementSpec::PortPtr otherPort = _inputs[u->inputs[i]];
         UnificationResult result = otherPort->unify(personality);
         if (result == CONFLICT) {
           return CONFLICT;
@@ -290,7 +289,7 @@ ElementSpec::UnificationResult ElementSpec::unifyInput(int portNumber)
       for (uint i = portNumber + 1;
            i < u->inputs.size();
            i++) {
-        ElementSpec::PortRef otherPort = _inputs[u->inputs[i]];
+        ElementSpec::PortPtr otherPort = _inputs[u->inputs[i]];
         UnificationResult result = otherPort->unify(personality);
         if (result == CONFLICT) {
           return CONFLICT;
@@ -303,7 +302,7 @@ ElementSpec::UnificationResult ElementSpec::unifyInput(int portNumber)
       for (uint i = 0;
            i < u->outputs.size();
            i++) {
-        ElementSpec::PortRef otherPort = _outputs[u->outputs[i]];
+        ElementSpec::PortPtr otherPort = _outputs[u->outputs[i]];
         UnificationResult result = otherPort->unify(personality);
         if (result == CONFLICT) {
           return CONFLICT;
@@ -320,7 +319,7 @@ ElementSpec::UnificationResult ElementSpec::unifyOutput(int portNumber)
 {
   assert(portNumber < _element->noutputs());
   UnificationResult entireResult = UNCHANGED;
-  ElementSpec::PortRef port = _outputs[portNumber];
+  ElementSpec::PortPtr port = _outputs[portNumber];
   Element::Processing personality = port->personality();
   if (personality != Element::AGNOSTIC) {
     // This port's unification group
@@ -331,7 +330,7 @@ ElementSpec::UnificationResult ElementSpec::unifyOutput(int portNumber)
       for (int i = 0;
            i < portNumber;
            i++) {
-        ElementSpec::PortRef otherPort = _outputs[u->outputs[i]];
+        ElementSpec::PortPtr otherPort = _outputs[u->outputs[i]];
         UnificationResult result = otherPort->unify(personality);
         if (result == CONFLICT) {
           return CONFLICT;
@@ -342,7 +341,7 @@ ElementSpec::UnificationResult ElementSpec::unifyOutput(int portNumber)
       for (uint i = portNumber + 1;
            i < u->outputs.size();
            i++) {
-        ElementSpec::PortRef otherPort = _outputs[u->outputs[i]];
+        ElementSpec::PortPtr otherPort = _outputs[u->outputs[i]];
         UnificationResult result = otherPort->unify(personality);
         if (result == CONFLICT) {
           return CONFLICT;
@@ -355,7 +354,7 @@ ElementSpec::UnificationResult ElementSpec::unifyOutput(int portNumber)
       for (uint i = 0;
            i < u->inputs.size();
            i++) {
-        ElementSpec::PortRef otherPort = _inputs[u->inputs[i]];
+        ElementSpec::PortPtr otherPort = _inputs[u->inputs[i]];
         UnificationResult result = otherPort->unify(personality);
         if (result == CONFLICT) {
           return CONFLICT;
@@ -373,7 +372,7 @@ ElementPtr ElementSpec::Port::counterpart() const
   return _counterpart;
 }
 
-int ElementSpec::Port::counterpart(ElementRef element)
+int ElementSpec::Port::counterpart(ElementPtr element)
 {
   if (_counterpart == 0) {
     _counterpart = element;

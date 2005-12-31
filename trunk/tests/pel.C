@@ -1016,7 +1016,7 @@ static double time_fn(cbv cb)
 
 #define FLAG_ERROR std::cerr << __FILE__ ":" << t->line << ": "
 
-void vm_test(Pel_VM &vm, TupleRef tpl, int i) {
+void vm_test(Pel_VM &vm, TuplePtr tpl, int i) {
   const ValTest *t = &vtests[i];
   std::cout << "Running: " << t->src << "\n";
   
@@ -1033,7 +1033,7 @@ void vm_test(Pel_VM &vm, TupleRef tpl, int i) {
     return;
   }
   
-  ValueRef top = vm.result_val();
+  ValuePtr top = vm.result_val();
   if ( top->typeCode() != t->t ) {
     FLAG_ERROR <<"error: Bad result type for '" << t->src << "'; '" 
 	       << top->typeName()
@@ -1102,7 +1102,7 @@ int main(int argc, char **argv)
   // Test the VM
   //
   Pel_VM vm;
-  TupleRef tpl = Tuple::mk();
+  TuplePtr tpl = Tuple::mk();
   for(i = 0; i < num_vtests; i++) {
     vm_test(vm, tpl, i);
     std::cout.flush();

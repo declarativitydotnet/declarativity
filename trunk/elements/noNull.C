@@ -20,12 +20,12 @@ NoNull::~NoNull()
 {
 }
 
-TuplePtr NoNull::simple_action(TupleRef p)
+TuplePtr NoNull::simple_action(TuplePtr p)
 {
   // Only return p if it has size greater than 0
   if (p->size() > 0) {
     return p;
   } else {
-    return 0;
+    return TuplePtr();
   }
 }

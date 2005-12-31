@@ -77,7 +77,7 @@ void testNetworked(LoggerI::Level level,
                    double interarrival)
 {
   // Create the data flow
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  Router::ConfigurationPtr conf(new Router::Configuration());
 
 
 
@@ -100,7 +100,7 @@ void testNetworked(LoggerI::Level level,
                i * interarrival);
   }
 
-  RouterRef router = New refcounted< Router >(conf, level);
+  RouterPtr router(new Router(conf, level));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized network of chord lookup flows.\n";
   } else {

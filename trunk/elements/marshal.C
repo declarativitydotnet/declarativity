@@ -22,7 +22,7 @@ Marshal::~Marshal()
 {
 }
 
-TuplePtr Marshal::simple_action(TupleRef p)
+TuplePtr Marshal::simple_action(TuplePtr p)
 {
   // Taken straight from the tuples test.
   xdrsuio xe;
@@ -35,7 +35,7 @@ TuplePtr Marshal::simple_action(TupleRef p)
   if (t == 0) {
     // Couldn't create one. Memory problems?
     log(LoggerI::ERROR, -1, "Couldn't allocate new tuple");
-    return 0;
+    return TuplePtr();
   } else {
     // Stick the string into a tuple field and into the tuple
     t->append(Val_Opaque::mk(uio));

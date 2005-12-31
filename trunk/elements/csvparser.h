@@ -27,7 +27,7 @@ public:
 
   CSVParser(str);
 
-  int push(int port, TupleRef t, b_cbv cb);
+  int push(int port, TuplePtr t, b_cbv cb);
   TuplePtr pull(int port, b_cbv);
 
   const char *class_name() const		{ return "CSVParser";}
@@ -40,7 +40,7 @@ private:
   static const size_t MIN_Q_SIZE;	// See csvparser.C...
   static const size_t MAX_Q_SIZE;
 
-  std::queue<TupleRef> _q;
+  std::queue<TuplePtr> _q;
 
   // Dataflow synchronization callbacks
   b_cbv	_push_cb;

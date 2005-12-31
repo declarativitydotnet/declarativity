@@ -56,6 +56,7 @@
 #ifndef __VALUE_H__
 #define __VALUE_H__
 
+#include <boost/shared_ptr.hpp>
 #include <vector>
 
 #include <assert.h>
@@ -64,8 +65,7 @@
 #include "inlines.h"
 
 class Value;
-typedef ref<Value> ValueRef;
-typedef ptr<Value> ValuePtr;
+typedef boost::shared_ptr<Value> ValuePtr;
 
 class Value {
 
@@ -105,11 +105,11 @@ public:
   str toTypeString() { return strbuf() << typeName() << ":" << toString();};
 
   /** Strict equality */
-  REMOVABLE_INLINE bool equals( ValueRef other ) const { return compareTo(other) == 0; }
+  REMOVABLE_INLINE bool equals( ValuePtr other ) const { return compareTo(other) == 0; }
 
   /** Am I less than, equal or greater than the other value?  -1 means
       less, 0 means equal, +1 means greater. */
-  virtual int compareTo( ValueRef other ) const = 0;
+  virtual int compareTo( ValuePtr other ) const = 0;
 
   // Thrown when an invalid type conversion is attempted. 
   struct TypeError { 
@@ -120,7 +120,7 @@ public:
 
   // Marshalling
   void xdr_marshal( XDR *x );
-  static ValueRef xdr_unmarshal( XDR *x );
+  static ValuePtr xdr_unmarshal( XDR *x );
 
 protected:
   virtual void xdr_marshal_subtype( XDR *x )=0;

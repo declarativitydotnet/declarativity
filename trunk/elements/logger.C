@@ -43,7 +43,7 @@ void Logger::log( str classname,
     if (clock_gettime(CLOCK_REALTIME,&now_ts)) {
       fatal << "clock_gettime:" << strerror(errno) << "\n";
     }
-    TupleRef t = Tuple::mk();
+    TuplePtr t = Tuple::mk();
     t->append(Val_UInt64::mk(now_ts.tv_sec));
     t->append(Val_UInt64::mk(now_ts.tv_nsec));
     t->append(Val_UInt64::mk(seq++));

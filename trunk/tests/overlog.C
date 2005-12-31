@@ -31,7 +31,7 @@ extern int ol_parser_debug;
 int main(int argc, char **argv)
 {
   std::cout << "OVERLOG\n";
-  ref< OL_Context > ctxt = New refcounted< OL_Context>();
+  boost::shared_ptr< OL_Context > ctxt(new OL_Context());
   bool route = false;
   bool builtin = false;
   str filename("");
@@ -62,11 +62,11 @@ int main(int argc, char **argv)
       std::ifstream istr(filename);
       std::ofstream ostr("overlog.dot");
       ctxt->parse_stream(&istr);
-      Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-      Rtr_ConfGen gen(ctxt, conf, false, false, true, filename);
+      Router::ConfigurationPtr conf(new Router::Configuration());
+      Rtr_ConfGen gen(ctxt.get(), conf, false, false, true, filename);
       gen.createTables("127.0.0.1:10000");
       
-      ref< Udp > udp = New refcounted< Udp >("Udp", 10000);
+      boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));
       gen.configureRouter(udp, "127.0.0.1:10000");
       toDot(&ostr, conf);
       exit (0);
@@ -92,15 +92,15 @@ int main(int argc, char **argv)
 
   if (route) {
     // test a configuration of a router
-    Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-    Rtr_ConfGen gen(ctxt, conf, false, false, true, filename);
+    Router::ConfigurationPtr conf(new Router::Configuration());
+    Rtr_ConfGen gen(ctxt.get(), conf, false, false, true, filename);
     gen.createTables("127.0.0.1:10000");
     
-    ref< Udp > udp = New refcounted< Udp >("Udp", 10000);
+    boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));
     gen.configureRouter(udp, "127.0.0.1:10000");
     
     LoggerI::Level level = LoggerI::NONE;
-    RouterRef router = New refcounted< Router >(conf, level);
+    RouterPtr router(new Router(conf, level));
     if (router->initialize(router) == 0) {
       std::cout << "Correctly initialized network of reachability flows.\n";
     } else {

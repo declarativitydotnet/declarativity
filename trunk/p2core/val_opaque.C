@@ -29,12 +29,11 @@ void Val_Opaque::xdr_marshal_subtype( XDR *x )
 //
 // Casting
 //
-ref<suio> Val_Opaque::cast(ValueRef v)
+ref<suio> Val_Opaque::cast(ValuePtr v)
 {
-  Value *vp = v;
   switch (v->typeCode()) {
   case Value::OPAQUE:
-    return (static_cast<Val_Opaque *>(vp))->b;
+    return (static_cast<Val_Opaque *>(v.get()))->b;
   case Value::STR:
     {
       ref<suio> fb = New refcounted<suio>();
@@ -47,7 +46,7 @@ ref<suio> Val_Opaque::cast(ValueRef v)
   }
 }
   
-int Val_Opaque::compareTo(ValueRef other) const
+int Val_Opaque::compareTo(ValuePtr other) const
 {
   if (other->typeCode() != Value::OPAQUE) {
     if (Value::OPAQUE < other->typeCode()) {

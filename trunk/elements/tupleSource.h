@@ -25,19 +25,19 @@ public:
   {
   private:
     /** My tuple */
-    TupleRef _tuple;
+    TuplePtr _tuple;
     
   public:
-    TupleGenerator(TupleRef tuple) : _tuple(tuple) { }
+    TupleGenerator(TuplePtr tuple) : _tuple(tuple) { }
 
     virtual ~TupleGenerator() {};
     
-    TupleRef operator()() {
+    TuplePtr operator()() {
       return _tuple;
     }
   };
 
-  TupleSource(str, TupleRef);
+  TupleSource(str, TuplePtr);
   virtual ~TupleSource();
 
   const char *class_name() const		{ return "TupleSource"; }

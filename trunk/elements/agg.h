@@ -22,7 +22,7 @@ public:
 
   ~Agg();
   
-  int push(int port, TupleRef p, b_cbv cb);
+  int push(int port, TuplePtr p, b_cbv cb);
   TuplePtr pull(int port, b_cbv cb);  
 
   const char *class_name() const		{ return "Agg";}
@@ -30,15 +30,15 @@ public:
   const char *flow_code() const			{ return "x/x"; }
 
 private:
-  str getGroupByFields(TupleRef p);
-  bool checkBestTuple(TupleRef p);
-  void updateBestTuple(TupleRef p);
+  str getGroupByFields(TuplePtr p);
+  bool checkBestTuple(TuplePtr p);
+  void updateBestTuple(TuplePtr p);
 
   b_cbv _pullCB, _pushCB;
-  std::map<str, TupleRef> _buffer; // best values to send 
-  std::map<str, TupleRef> _bestSoFar; // best tuple so far
+  std::map<str, TuplePtr> _buffer; // best values to send 
+  std::map<str, TuplePtr> _bestSoFar; // best tuple so far
   std::vector<unsigned int> _groupByFields;
-  std::map<str, TupleRef> _allValues;
+  std::map<str, TuplePtr> _allValues;
   int _aggField;
   unsigned _uniqueField;
   str _aggStr;

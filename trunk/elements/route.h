@@ -26,7 +26,7 @@ public:
   ~Route();
   
   /** Overridden to perform the projecting. */
-  TuplePtr simple_action(TupleRef p);
+  TuplePtr simple_action(TuplePtr p);
 
   const char *class_name() const		{ return "Route";}
   const char *processing() const		{ return "a/a"; }
@@ -35,7 +35,7 @@ public:
 
 private:
   /** The destination address */
-  ValueRef _destination;
+  ValuePtr _destination;
 };
 
 

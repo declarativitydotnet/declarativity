@@ -28,17 +28,17 @@ private:
   unsigned _fieldNo;
 
   /** My tupleref comparison functor type for the set. */
-  struct tupleRefCompare : public std::less< ValueRef >
+  struct tuplePtrCompare : public std::less< ValuePtr >
   {
-    bool operator()(const ValueRef first,
-                    const ValueRef second) const
+    bool operator()(const ValuePtr first,
+                    const ValuePtr second) const
     {
       return first->compareTo(second) < 0;
     }
   };
   
   /** My storage set */
-  std::multimap< ValueRef, TupleRef, tupleRefCompare > _table;
+  std::multimap< ValuePtr, TuplePtr, tuplePtrCompare > _table;
 
 
  public:
@@ -47,7 +47,7 @@ private:
   Store(str, unsigned);
 
   /** Preload table with tuples */
-  void insert(TupleRef);
+  void insert(TuplePtr);
 
   /** The insert element.  It has only a single push input on which
       tuples to be inserted into the store are sent.  XXX For now all
@@ -55,7 +55,7 @@ private:
   class Insert : public Element {
   public:
     Insert(str name,
-           std::multimap< ValueRef, TupleRef, Store::tupleRefCompare > * table,
+           std::multimap< ValuePtr, TuplePtr, Store::tuplePtrCompare > * table,
            unsigned fieldNo);
 
     const char *class_name() const		{ return "Store::Insert";}
@@ -64,11 +64,11 @@ private:
 
     /** Overridden to perform the insertion operation on passing
         tuples. */
-    TuplePtr simple_action(TupleRef p);
+    TuplePtr simple_action(TuplePtr p);
 
   private:
     /** My parent's table */
-    std::multimap< ValueRef, TupleRef, Store::tupleRefCompare > * _table;
+    std::multimap< ValuePtr, TuplePtr, Store::tuplePtrCompare > * _table;
 
     /** The field number of the key */
     unsigned _fieldNo;
@@ -83,21 +83,21 @@ private:
   class Lookup : public Element {
   public:
     Lookup(str name,
-           std::multimap< ValueRef, TupleRef, tupleRefCompare > * table);
+           std::multimap< ValuePtr, TuplePtr, tuplePtrCompare > * table);
 
     const char *class_name() const		{ return "Store::Lookup";}
     const char *processing() const		{ return "h/l"; }
     const char *flow_code() const		{ return "-/-"; }
 
     /** Receive a new lookup key */
-    int push(int port, TupleRef, b_cbv cb);
+    int push(int port, TuplePtr, b_cbv cb);
 
     /** Return a match to the current lookup */
     TuplePtr pull(int port, b_cbv cb);
 
   private:
     /** My parent's table */
-    std::multimap< ValueRef, TupleRef, Store::tupleRefCompare > * _table;
+    std::multimap< ValuePtr, TuplePtr, Store::tuplePtrCompare > * _table;
     
     /** My pusher's callback */
     b_cbv _pushCallback;
@@ -109,7 +109,7 @@ private:
     ValuePtr _key;
 
     /** My current iterator */
-    std::multimap< ValueRef, TupleRef >::iterator _iterator;
+    std::multimap< ValuePtr, TuplePtr >::iterator _iterator;
   };
   
   
@@ -122,7 +122,7 @@ private:
   class Scan : public Element {
   public:
     Scan(str name,
-         std::multimap< ValueRef, TupleRef, tupleRefCompare > * table);
+         std::multimap< ValuePtr, TuplePtr, tuplePtrCompare > * table);
 
     const char *class_name() const		{ return "Store::Scan";}
     const char *processing() const		{ return "/l"; }
@@ -133,10 +133,10 @@ private:
 
   private:
     /** My parent's table */
-    std::multimap< ValueRef, TupleRef, Store::tupleRefCompare > * _table;
+    std::multimap< ValuePtr, TuplePtr, Store::tuplePtrCompare > * _table;
     
     /** My current iterator */
-    std::multimap< ValueRef, TupleRef >::iterator _iterator;
+    std::multimap< ValuePtr, TuplePtr >::iterator _iterator;
   };
 
 
@@ -155,10 +155,11 @@ private:
   }
 
   /** Create a scan element */
-  ref< Scan > mkScan() {
+  boost::shared_ptr< Scan > mkScan() {
     strbuf iName(_name);
     iName.cat(":Scan");
-    return New refcounted< Scan >(iName, &_table);
+    boost::shared_ptr< Scan > s(new Scan(iName, &_table));
+    return s;
   }
 
   /** The END_OF_SEARCH tuple tag. */

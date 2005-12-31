@@ -26,7 +26,7 @@ StrToSockaddr::~StrToSockaddr()
 {
 }
 
-TuplePtr StrToSockaddr::simple_action(TupleRef p)
+TuplePtr StrToSockaddr::simple_action(TuplePtr p)
 {
   // Get tuple field in question
   ValuePtr firstP = (*p)[_fieldNo];
@@ -35,9 +35,9 @@ TuplePtr StrToSockaddr::simple_action(TupleRef p)
     log(LoggerI::WARN,
         -1,
         "Input tuple has no field to translate");
-    return 0;
+    return TuplePtr();
   }
-  ValueRef first = firstP;
+  ValuePtr first = firstP;
 
   // Is it a string?
   if (first->typeCode() != Value::STR) {
@@ -46,7 +46,7 @@ TuplePtr StrToSockaddr::simple_action(TupleRef p)
         -1,
         strbuf("Field to translate[") << first->toString()
         << "] is not a string");
-    return 0;
+    return TuplePtr();
   }
 
   // Split into address and port
@@ -55,7 +55,7 @@ TuplePtr StrToSockaddr::simple_action(TupleRef p)
   if (theAtSign == NULL) {
     // Couldn't find the correct format
     log(LoggerI::WARN, -1, strbuf("Field to translate ")  << first->toString() << " is malformed");
-    return 0;
+    return TuplePtr();
   }
   str theAddress(theString, theAtSign - theString);
   struct hostent *host = gethostbyname(theAddress);
@@ -71,11 +71,11 @@ TuplePtr StrToSockaddr::simple_action(TupleRef p)
             &addr.sin_addr);
   ref< suio > addressUio = New refcounted< suio >();
   addressUio->copy(&addr, sizeof(addr));
-  ValueRef sockaddr = Val_Opaque::mk(addressUio);
+  ValuePtr sockaddr = Val_Opaque::mk(addressUio);
   
 
   // Finally, copy over the tuple
-  TupleRef newTuple = Tuple::mk();
+  TuplePtr newTuple = Tuple::mk();
   for (unsigned field = 0;
        field < _fieldNo;
        field++) {

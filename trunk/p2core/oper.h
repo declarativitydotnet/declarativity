@@ -14,9 +14,9 @@
  * The following is a set of steps for adding a new overloaded operator.
  * 1. Define the operator interface method in class Oper. 
  *    1a. The method must be virtual, return a ValuePtr as the operator 
- *        result type, and have 1-3 const ValueRef reference formals.
+ *        result type, and have 1-3 const ValuePtr reference formals.
  *    1b. The body of the method will contain one of the 3 NOSUP# macros
- *        listed below. Which of the 3 depends on how many ValueRef formals
+ *        listed below. Which of the 3 depends on how many ValuePtr formals
  *        are defined by your operator. 
  * 2. Define C++ overload operator interface method.
  *    The C++ overload operator definition is for syntactic sugar only.
@@ -100,63 +100,63 @@ namespace opr {
      * override those operator functions that have definitions for the
      * respective type.
      */
-    virtual ValuePtr _bnot (const ValueRef& v) const
-      { NOSUP1("~", v->typeName()); return false; };
-    virtual ValuePtr _band (const ValueRef& v1, const ValueRef& v2) const
-      { NOSUP2("&", v1->typeName(), v2->typeName()); return false; };
-    virtual ValuePtr _bor (const ValueRef& v1, const ValueRef& v2)const
-      { NOSUP2("|", v1->typeName(), v2->typeName()); return false; };
-    virtual ValuePtr _bxor (const ValueRef& v1, const ValueRef& v2)const
-      { NOSUP2("^", v1->typeName(), v2->typeName()); return false; };
-    virtual ValuePtr _lshift (const ValueRef& v1, const ValueRef& v2) const
-      { NOSUP2("<<", v1->typeName(), v2->typeName()); return NULL; };
-    virtual ValuePtr _rshift (const ValueRef& v1, const ValueRef& v2) const
-      { NOSUP2(">>", v1->typeName(), v2->typeName()); return NULL; };
-    virtual ValuePtr _plus (const ValueRef& v1, const ValueRef& v2) const
-      { NOSUP2("+", v1->typeName(), v2->typeName()); return NULL; };
-    virtual ValuePtr _minus (const ValueRef& v1, const ValueRef& v2) const
-      { NOSUP2("-", v1->typeName(), v2->typeName()); return NULL; };
-    virtual ValuePtr _times (const ValueRef& v1, const ValueRef& v2) const
-      { NOSUP2("*", v1->typeName(), v2->typeName()); return NULL; };
-    virtual ValuePtr _divide (const ValueRef& v1, const ValueRef& v2) const
-      { NOSUP2("/", v1->typeName(), v2->typeName()); return NULL; };
-    virtual ValuePtr _mod (const ValueRef& v1, const ValueRef& v2) const
-      { NOSUP2("\%", v1->typeName(), v2->typeName()); return NULL; };
-    virtual ValuePtr _dec (const ValueRef& v1) const
-      { NOSUP1("--", v1->typeName()); return NULL; };
-    virtual ValuePtr _inc (const ValueRef& v1) const
-      { NOSUP1("++", v1->typeName()); return NULL; };
+    virtual ValuePtr _bnot (const ValuePtr& v) const
+      { NOSUP1("~", v->typeName()); return ValuePtr(); };
+    virtual ValuePtr _band (const ValuePtr& v1, const ValuePtr& v2) const
+      { NOSUP2("&", v1->typeName(), v2->typeName()); return ValuePtr(); };
+    virtual ValuePtr _bor (const ValuePtr& v1, const ValuePtr& v2)const
+      { NOSUP2("|", v1->typeName(), v2->typeName()); return ValuePtr(); };
+    virtual ValuePtr _bxor (const ValuePtr& v1, const ValuePtr& v2)const
+      { NOSUP2("^", v1->typeName(), v2->typeName()); return ValuePtr(); };
+    virtual ValuePtr _lshift (const ValuePtr& v1, const ValuePtr& v2) const
+      { NOSUP2("<<", v1->typeName(), v2->typeName()); return ValuePtr(); };
+    virtual ValuePtr _rshift (const ValuePtr& v1, const ValuePtr& v2) const
+      { NOSUP2(">>", v1->typeName(), v2->typeName()); return ValuePtr(); };
+    virtual ValuePtr _plus (const ValuePtr& v1, const ValuePtr& v2) const
+      { NOSUP2("+", v1->typeName(), v2->typeName()); return ValuePtr(); };
+    virtual ValuePtr _minus (const ValuePtr& v1, const ValuePtr& v2) const
+      { NOSUP2("-", v1->typeName(), v2->typeName()); return ValuePtr(); };
+    virtual ValuePtr _times (const ValuePtr& v1, const ValuePtr& v2) const
+      { NOSUP2("*", v1->typeName(), v2->typeName()); return ValuePtr(); };
+    virtual ValuePtr _divide (const ValuePtr& v1, const ValuePtr& v2) const
+      { NOSUP2("/", v1->typeName(), v2->typeName()); return ValuePtr(); };
+    virtual ValuePtr _mod (const ValuePtr& v1, const ValuePtr& v2) const
+      { NOSUP2("\%", v1->typeName(), v2->typeName()); return ValuePtr(); };
+    virtual ValuePtr _dec (const ValuePtr& v1) const
+      { NOSUP1("--", v1->typeName()); return ValuePtr(); };
+    virtual ValuePtr _inc (const ValuePtr& v1) const
+      { NOSUP1("++", v1->typeName()); return ValuePtr(); };
   
-    virtual bool _eq (const ValueRef& v1, const ValueRef& v2) const
+    virtual bool _eq (const ValuePtr& v1, const ValuePtr& v2) const
       { NOSUP2("==", v1->typeName(), v2->typeName()); return false; };
-    virtual bool _neq (const ValueRef& v1, const ValueRef& v2) const
+    virtual bool _neq (const ValuePtr& v1, const ValuePtr& v2) const
       { NOSUP2("!=", v1->typeName(), v2->typeName()); return false; };
-    virtual bool _gt (const ValueRef& v1, const ValueRef& v2) const
+    virtual bool _gt (const ValuePtr& v1, const ValuePtr& v2) const
       { NOSUP2(">", v1->typeName(), v2->typeName()); return false; };
-    virtual bool _gte (const ValueRef& v1, const ValueRef& v2) const
+    virtual bool _gte (const ValuePtr& v1, const ValuePtr& v2) const
       { NOSUP2(">=", v1->typeName(), v2->typeName()); return false; };
-    virtual bool _lt (const ValueRef& v1, const ValueRef& v2) const
+    virtual bool _lt (const ValuePtr& v1, const ValuePtr& v2) const
       { NOSUP2("<", v1->typeName(), v2->typeName()); return false; };
-    virtual bool _lte (const ValueRef& v1, const ValueRef& v2) const
+    virtual bool _lte (const ValuePtr& v1, const ValuePtr& v2) const
       { NOSUP2("<=", v1->typeName(), v2->typeName()); return false; };
   
-    virtual bool _inOO (const ValueRef& v1, const ValueRef& v2, 
-                            const ValueRef& v3) const { 
+    virtual bool _inOO (const ValuePtr& v1, const ValuePtr& v2, 
+                            const ValuePtr& v3) const { 
       NOSUP3("()", v1->typeName(), v2->typeName(), v3->typeName()); 
       return NULL; 
     };
-    virtual bool _inOC (const ValueRef& v1, const ValueRef& v2, 
-                            const ValueRef& v3) const { 
+    virtual bool _inOC (const ValuePtr& v1, const ValuePtr& v2, 
+                            const ValuePtr& v3) const { 
       NOSUP3("(]", v1->typeName(), v2->typeName(), v3->typeName()); 
       return NULL; 
     };
-    virtual bool _inCO (const ValueRef& v1, const ValueRef& v2, 
-                            const ValueRef& v3) const { 
+    virtual bool _inCO (const ValuePtr& v1, const ValuePtr& v2, 
+                            const ValuePtr& v3) const { 
       NOSUP3("[)", v1->typeName(), v2->typeName(), v3->typeName()); 
       return NULL; 
     };
-    virtual bool _inCC (const ValueRef& v1, const ValueRef& v2, 
-                            const ValueRef& v3) const { 
+    virtual bool _inCC (const ValuePtr& v1, const ValuePtr& v2, 
+                            const ValuePtr& v3) const { 
       NOSUP3("[]", v1->typeName(), v2->typeName(), v3->typeName()); 
       return NULL; 
     };
@@ -168,31 +168,31 @@ namespace opr {
    * type of the type operands and call the operator function 
    * (defined by the subclass of Oper) defined by the base type. 
    */
-  ValueRef operator<<(const ValueRef& v1, const ValueRef& v2);
-  ValueRef operator>>(const ValueRef& v1, const ValueRef& v2); 
-  ValueRef operator+ (const ValueRef& v1, const ValueRef& v2); 
-  ValueRef operator- (const ValueRef& v1, const ValueRef& v2); 
-  ValueRef operator--(const ValueRef& v1); 
-  ValueRef operator++(const ValueRef& v1); 
-  ValueRef operator* (const ValueRef& v1, const ValueRef& v2); 
-  ValueRef operator/ (const ValueRef& v1, const ValueRef& v2); 
-  ValueRef operator% (const ValueRef& v1, const ValueRef& v2); 
-  ValueRef operator~ (const ValueRef& v);
-  ValueRef operator& (const ValueRef& v1, const ValueRef& v2); 
-  ValueRef operator| (const ValueRef& v1, const ValueRef& v2); 
-  ValueRef operator^ (const ValueRef& v1, const ValueRef& v2); 
+  ValuePtr operator<<(const ValuePtr& v1, const ValuePtr& v2);
+  ValuePtr operator>>(const ValuePtr& v1, const ValuePtr& v2); 
+  ValuePtr operator+ (const ValuePtr& v1, const ValuePtr& v2); 
+  ValuePtr operator- (const ValuePtr& v1, const ValuePtr& v2); 
+  ValuePtr operator--(const ValuePtr& v1); 
+  ValuePtr operator++(const ValuePtr& v1); 
+  ValuePtr operator* (const ValuePtr& v1, const ValuePtr& v2); 
+  ValuePtr operator/ (const ValuePtr& v1, const ValuePtr& v2); 
+  ValuePtr operator% (const ValuePtr& v1, const ValuePtr& v2); 
+  ValuePtr operator~ (const ValuePtr& v);
+  ValuePtr operator& (const ValuePtr& v1, const ValuePtr& v2); 
+  ValuePtr operator| (const ValuePtr& v1, const ValuePtr& v2); 
+  ValuePtr operator^ (const ValuePtr& v1, const ValuePtr& v2); 
   
-  bool     operator==(const ValueRef& v1, const ValueRef& v2); 
-  bool     operator!=(const ValueRef& v1, const ValueRef& v2); 
-  bool     operator< (const ValueRef& v1, const ValueRef& v2); 
-  bool     operator<=(const ValueRef& v1, const ValueRef& v2); 
-  bool     operator> (const ValueRef& v1, const ValueRef& v2); 
-  bool     operator>=(const ValueRef& v1, const ValueRef& v2); 
+  bool     operator==(const ValuePtr& v1, const ValuePtr& v2); 
+  bool     operator!=(const ValuePtr& v1, const ValuePtr& v2); 
+  bool     operator< (const ValuePtr& v1, const ValuePtr& v2); 
+  bool     operator<=(const ValuePtr& v1, const ValuePtr& v2); 
+  bool     operator> (const ValuePtr& v1, const ValuePtr& v2); 
+  bool     operator>=(const ValuePtr& v1, const ValuePtr& v2); 
   
-  bool     inOO(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3);
-  bool     inOC(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3);
-  bool     inCO(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3);
-  bool     inCC(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3);
+  bool     inOO(const ValuePtr& v1, const ValuePtr& v2, const ValuePtr& v3);
+  bool     inOC(const ValuePtr& v1, const ValuePtr& v2, const ValuePtr& v3);
+  bool     inCO(const ValuePtr& v1, const ValuePtr& v2, const ValuePtr& v3);
+  bool     inCC(const ValuePtr& v1, const ValuePtr& v2, const ValuePtr& v3);
   
   /**
    * Basic Operator Function Template for comparison based operators.
@@ -202,72 +202,72 @@ namespace opr {
    */
   template <class T> class OperCompare : public Oper { 
   public: 
-    virtual bool _eq (const ValueRef& v1, const ValueRef& v2) const {
-      ValueRef c1 = T::mk(T::cast(v1));
-      ValueRef c2 = T::mk(T::cast(v2));
+    virtual bool _eq (const ValuePtr& v1, const ValuePtr& v2) const {
+      ValuePtr c1 = T::mk(T::cast(v1));
+      ValuePtr c2 = T::mk(T::cast(v2));
       return c2->compareTo(c1) == 0;
     };
-    virtual bool _neq (const ValueRef& v1, const ValueRef& v2) const {
-      ValueRef c1 = T::mk(T::cast(v1));
-      ValueRef c2 = T::mk(T::cast(v2));
+    virtual bool _neq (const ValuePtr& v1, const ValuePtr& v2) const {
+      ValuePtr c1 = T::mk(T::cast(v1));
+      ValuePtr c2 = T::mk(T::cast(v2));
       return c2->compareTo(c1) != 0;
     };
-    virtual bool _gt (const ValueRef& v1, const ValueRef& v2) const {
-      ValueRef c1 = T::mk(T::cast(v1));
-      ValueRef c2 = T::mk(T::cast(v2));
+    virtual bool _gt (const ValuePtr& v1, const ValuePtr& v2) const {
+      ValuePtr c1 = T::mk(T::cast(v1));
+      ValuePtr c2 = T::mk(T::cast(v2));
       return c2->compareTo(c1) > 0;
     };
-    virtual bool _gte (const ValueRef& v1, const ValueRef& v2) const {
-      ValueRef c1 = T::mk(T::cast(v1));
-      ValueRef c2 = T::mk(T::cast(v2));
+    virtual bool _gte (const ValuePtr& v1, const ValuePtr& v2) const {
+      ValuePtr c1 = T::mk(T::cast(v1));
+      ValuePtr c2 = T::mk(T::cast(v2));
       return c2->compareTo(c1) >= 0;
     };
-    virtual bool _lt (const ValueRef& v1, const ValueRef& v2) const {
-      ValueRef c1 = T::mk(T::cast(v1));
-      ValueRef c2 = T::mk(T::cast(v2));
+    virtual bool _lt (const ValuePtr& v1, const ValuePtr& v2) const {
+      ValuePtr c1 = T::mk(T::cast(v1));
+      ValuePtr c2 = T::mk(T::cast(v2));
       return c2->compareTo(c1) < 0;
     };
-    virtual bool _lte (const ValueRef& v1, const ValueRef& v2) const {
-      ValueRef c1 = T::mk(T::cast(v1));
-      ValueRef c2 = T::mk(T::cast(v2));
+    virtual bool _lte (const ValuePtr& v1, const ValuePtr& v2) const {
+      ValuePtr c1 = T::mk(T::cast(v1));
+      ValuePtr c2 = T::mk(T::cast(v2));
       return c2->compareTo(c1) <= 0;
     };
   
-    virtual bool _inOO(const ValueRef& vc, const ValueRef& fc,
-                       const ValueRef& tc) const {
-      ValueRef v = T::mk(T::cast(vc));
-      ValueRef f = T::mk(T::cast(fc));
-      ValueRef t = T::mk(T::cast(tc));
+    virtual bool _inOO(const ValuePtr& vc, const ValuePtr& fc,
+                       const ValuePtr& tc) const {
+      ValuePtr v = T::mk(T::cast(vc));
+      ValuePtr f = T::mk(T::cast(fc));
+      ValuePtr t = T::mk(T::cast(tc));
       return (((v->compareTo(f) >  0) && (v->compareTo(t) <  0)) ||
               ((t->compareTo(f) <= 0) && (v->compareTo(f) >  0)) ||
               ((v->compareTo(t) <  0) && (t->compareTo(f) <= 0)));
     }
   
-    virtual bool _inOC(const ValueRef& vc, const ValueRef& fc,
-                       const ValueRef& tc) const {
-      ValueRef v = T::mk(T::cast(vc));
-      ValueRef f = T::mk(T::cast(fc));
-      ValueRef t = T::mk(T::cast(tc));
+    virtual bool _inOC(const ValuePtr& vc, const ValuePtr& fc,
+                       const ValuePtr& tc) const {
+      ValuePtr v = T::mk(T::cast(vc));
+      ValuePtr f = T::mk(T::cast(fc));
+      ValuePtr t = T::mk(T::cast(tc));
       return (((v->compareTo(f) >  0) && (v->compareTo(t) <= 0)) ||
               ((t->compareTo(f) <= 0) && (v->compareTo(f) >  0)) ||
               ((v->compareTo(t) <= 0) && (t->compareTo(f) <= 0)));
     }
   
-    virtual bool _inCO(const ValueRef& vc, const ValueRef& fc,
-                       const ValueRef& tc) const {
-      ValueRef v = T::mk(T::cast(vc));
-      ValueRef f = T::mk(T::cast(fc));
-      ValueRef t = T::mk(T::cast(tc));
+    virtual bool _inCO(const ValuePtr& vc, const ValuePtr& fc,
+                       const ValuePtr& tc) const {
+      ValuePtr v = T::mk(T::cast(vc));
+      ValuePtr f = T::mk(T::cast(fc));
+      ValuePtr t = T::mk(T::cast(tc));
       return (((v->compareTo(f) >= 0) && (v->compareTo(t) <  0)) ||
               ((t->compareTo(f) <= 0) && (v->compareTo(f) >= 0)) ||
               ((v->compareTo(t) <  0) && (t->compareTo(f) <= 0)));
     }
   
-    virtual bool _inCC(const ValueRef& vc, const ValueRef& fc,
-                       const ValueRef& tc) const {
-      ValueRef v = T::mk(T::cast(vc));
-      ValueRef f = T::mk(T::cast(fc));
-      ValueRef t = T::mk(T::cast(tc));
+    virtual bool _inCC(const ValuePtr& vc, const ValuePtr& fc,
+                       const ValuePtr& tc) const {
+      ValuePtr v = T::mk(T::cast(vc));
+      ValuePtr f = T::mk(T::cast(fc));
+      ValuePtr t = T::mk(T::cast(tc));
       return (((v->compareTo(f) >= 0) && (v->compareTo(t) <= 0)) ||
               ((t->compareTo(f) <= 0) && (v->compareTo(f) >= 0)) ||
               ((v->compareTo(t) <= 0) && (t->compareTo(f) <= 0)));
@@ -282,43 +282,43 @@ namespace opr {
    */
   template <class T> class OperImpl : public OperCompare<T> { 
   public: 
-    virtual ValuePtr _bnot (const ValueRef& v) const {
+    virtual ValuePtr _bnot (const ValuePtr& v) const {
       return T::mk(~(T::cast(v)));
     };
-    virtual ValuePtr _band (const ValueRef& v1, const ValueRef& v2) const {
+    virtual ValuePtr _band (const ValuePtr& v1, const ValuePtr& v2) const {
       return T::mk(T::cast(v1) & T::cast(v2));
     };
-    virtual ValuePtr _bor (const ValueRef& v1, const ValueRef& v2) const {
+    virtual ValuePtr _bor (const ValuePtr& v1, const ValuePtr& v2) const {
       return T::mk(T::cast(v1) | T::cast(v2));
     };
-    virtual ValuePtr _bxor (const ValueRef& v1, const ValueRef& v2) const {
+    virtual ValuePtr _bxor (const ValuePtr& v1, const ValuePtr& v2) const {
       return T::mk(T::cast(v1) ^ T::cast(v2));
     };
-    virtual ValuePtr _lshift (const ValueRef& v1, const ValueRef& v2) const {
+    virtual ValuePtr _lshift (const ValuePtr& v1, const ValuePtr& v2) const {
       return T::mk(T::cast(v1) << T::cast(v2));
     };
-    virtual ValuePtr _rshift (const ValueRef& v1, const ValueRef& v2) const {
+    virtual ValuePtr _rshift (const ValuePtr& v1, const ValuePtr& v2) const {
       return T::mk(T::cast(v1) >> T::cast(v2));
     };
-    virtual ValuePtr _mod (const ValueRef& v1, const ValueRef& v2) const {
+    virtual ValuePtr _mod (const ValuePtr& v1, const ValuePtr& v2) const {
       return T::mk(T::cast(v1) % T::cast(v2));
     };
-    virtual ValuePtr _plus (const ValueRef& v1, const ValueRef& v2) const {
+    virtual ValuePtr _plus (const ValuePtr& v1, const ValuePtr& v2) const {
       return T::mk(T::cast(v1) + T::cast(v2));
     };
-    virtual ValuePtr _minus (const ValueRef& v1, const ValueRef& v2) const {
+    virtual ValuePtr _minus (const ValuePtr& v1, const ValuePtr& v2) const {
       return T::mk(T::cast(v1) - T::cast(v2));
     };
-    virtual ValuePtr _times (const ValueRef& v1, const ValueRef& v2) const {
+    virtual ValuePtr _times (const ValuePtr& v1, const ValuePtr& v2) const {
       return T::mk(T::cast(v1) * T::cast(v2));
     };
-    virtual ValuePtr _divide (const ValueRef& v1, const ValueRef& v2) const {
+    virtual ValuePtr _divide (const ValuePtr& v1, const ValuePtr& v2) const {
       return T::mk(T::cast(v1) / T::cast(v2));
     };
-    virtual ValuePtr _dec (const ValueRef& v1) const {
+    virtual ValuePtr _dec (const ValuePtr& v1) const {
       return T::mk((T::cast(v1)) - 1);
     };
-    virtual ValuePtr _inc (const ValueRef& v1) const {
+    virtual ValuePtr _inc (const ValuePtr& v1) const {
       return T::mk((T::cast(v1)) + 1);
     };
   };

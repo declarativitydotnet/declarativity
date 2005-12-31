@@ -86,13 +86,12 @@ void testNetworked(LoggerI::Level level,
                    double delay = 0)
 {
   // Create the data flow
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  Router::ConfigurationPtr conf(new Router::Configuration());
   Udp udp(strbuf(myAddress) << ":Udp", port);
 
-  createSymNode(myAddress, landmarkAddress,
-             conf, &udp, networkSize, delay);
+  //FIX ME createSymNode(myAddress, landmarkAddress, conf, &udp, networkSize, delay);
 
-  RouterRef router = New refcounted< Router >(conf, level);
+  RouterPtr router(new Router(conf, level));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized network of chord lookup flows.\n";
   } else {

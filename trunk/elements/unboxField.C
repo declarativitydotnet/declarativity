@@ -25,20 +25,20 @@ UnboxField::~UnboxField()
 {
 }
 
-TuplePtr UnboxField::simple_action(TupleRef p)
+TuplePtr UnboxField::simple_action(TuplePtr p)
 {
   // Get the field in question
   ValuePtr value = (*p)[_fieldNo];
 
   // Does this field exist?
-  if (value == NULL) {
+  if (!value) {
     // Nope.  Return nothing
-    return 0;
+    return TuplePtr();
   } 
   if (value->typeCode() != Value::TUPLE) {
-    return 0; // bye bye
+    return TuplePtr(); // bye bye
   }
 
-  TupleRef tup = Val_Tuple::cast(value);
+  TuplePtr tup = Val_Tuple::cast(value);
   return tup;
 }

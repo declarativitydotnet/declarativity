@@ -42,21 +42,20 @@ class ElementSpec {
   };
 
   
-  ElementSpec(ElementRef element);
+  ElementSpec(ElementPtr element);
 
   /** My real element */
-  const ElementRef element();
+  const ElementPtr element();
 
   /** An internal structure for tracking unification groups */
   struct UniGroup {
-    vec< int > inputs;
-    vec< int > outputs;
+    std::vector< int > inputs;
+    std::vector< int > outputs;
   };
-  typedef ref< UniGroup > UniGroupRef;
-  typedef ptr< UniGroup > UniGroupPtr;
+  typedef boost::shared_ptr< UniGroup > UniGroupPtr;
   
   /** My unification groups */
-  vec< UniGroupPtr > _uniGroups;
+  std::vector< UniGroupPtr > _uniGroups;
 
   /** A nested class encapsulating port specs. */
   class Port { 
@@ -74,7 +73,7 @@ class ElementSpec {
     UniGroupPtr uniGroup() const;
 
     /** Set my uni group, if I don't have one already */
-    void uniGroup(UniGroupRef);
+    void uniGroup(UniGroupPtr);
 
     /** Unify this port with the given personality. Return a unification
         result.  A return value of CONFLICT means that no changes were
@@ -90,7 +89,7 @@ class ElementSpec {
     /** Set my counterpart element.  Assumes the counterpart is not
         set. Return 1 if the counterpart was already set (without
         changing the counterpart), 0 otherwise. */
-    int counterpart(ElementRef);
+    int counterpart(ElementPtr);
 
 
   private:
@@ -105,13 +104,13 @@ class ElementSpec {
     ElementPtr _counterpart;
   };
 
-  typedef ref< Port > PortRef;
+  typedef boost::shared_ptr< Port > PortPtr;
 
   /** My input */
-  PortRef input(int pno);
+  PortPtr input(int pno);
 
   /** My output */
-  PortRef output(int pno);
+  PortPtr output(int pno);
   
   /** A place holder exception for this class */
   struct ElementSpecError {};
@@ -146,14 +145,14 @@ class ElementSpec {
  private:
 
   /** My target element */
-  ElementRef _element;
+  ElementPtr _element;
 
-  /** My input ports. No need for refcountedness since these do not move
+  /** My input ports. No need for reference count since these do not move
       around at all but die with the object. */
-  vec< PortRef > _inputs;
+  std::vector< PortPtr > _inputs;
 
   /** My output ports */
-  vec< PortRef > _outputs;
+  std::vector< PortPtr > _outputs;
 
   ElementSpec(const Element &);
   ElementSpec &operator=(const Element &);
@@ -163,12 +162,11 @@ class ElementSpec {
 
   /** An auxilliary structure used for connecting flows. It is a vector
       of unification groups, one per flow code character.  */
-  static vec< UniGroupPtr, 256 > _scratchUniGroups;
+  static std::vector< UniGroupPtr > _scratchUniGroups;
 };
 
 
 /** A handy dandy reference to element specs */
-typedef ref< ElementSpec > ElementSpecRef;
-typedef ptr< ElementSpec > ElementSpecPtr;
+typedef boost::shared_ptr< ElementSpec > ElementSpecPtr;
 
 #endif /* __ELEMENT_SPEC_H_ */

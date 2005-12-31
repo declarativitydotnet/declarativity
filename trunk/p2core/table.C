@@ -110,11 +110,11 @@ Table::add_unique_groupBy_agg(unsigned keyFieldNo,
   UniqueIndex* uI = uni_indices.at(keyFieldNo);
   assert(uI != NULL);
   Table::UniqueAggregate uA =
-    New refcounted< Table::UniqueAggregateObj >(keyFieldNo,
-                                                uI,
-                                                groupByFieldNos,
-                                                aggFieldNo,
-                                                aggregate);
+    Table::UniqueAggregate(new Table::UniqueAggregateObj(keyFieldNo,
+                                                         uI,
+                                                         groupByFieldNos,
+                                                         aggFieldNo,
+                                                         aggregate));
 
   
   // Store the aggregate
@@ -132,11 +132,11 @@ Table::add_mult_groupBy_agg(unsigned keyFieldNo,
   MultIndex* mI = mul_indices.at(keyFieldNo);
   assert(mI != NULL);
   Table::MultAggregate mA =
-    New refcounted< Table::MultAggregateObj >(keyFieldNo,
-                                              mI,
-                                              groupByFieldNos,
-                                              aggFieldNo,
-                                              aggregate);
+    Table::MultAggregate(new Table::MultAggregateObj(keyFieldNo,
+                                                     mI,
+                                                     groupByFieldNos,
+                                                     aggFieldNo,
+                                                     aggregate));
 
   
   // Store the aggregate
@@ -160,7 +160,7 @@ void Table::set_tuple_lifetime(timespec &lifetime)
 //
 // Inserting a tuple..
 //
-void Table::insert(TupleRef t)
+void Table::insert(TuplePtr t)
 {
   Entry *e = New Entry(t);
 
@@ -227,7 +227,7 @@ void Table::insert(TupleRef t)
    doesn't remove an entry from the queue; the entry will expire in
    time.
 */
-TuplePtr Table::remove(unsigned fieldNo, ValueRef key)
+TuplePtr Table::remove(unsigned fieldNo, ValuePtr key)
 {
   UniqueIndex *ndx = uni_indices.at(fieldNo);
   if (!ndx) {
@@ -240,7 +240,7 @@ TuplePtr Table::remove(unsigned fieldNo, ValueRef key)
 
   // Find the entry itself
   UniqueIndex::iterator iter = ndx->find(key);
-  TuplePtr toRet = NULL;
+  TuplePtr toRet = TuplePtr();
   if (iter == ndx->end()) {
     // No such key exists.  Do nothing
   } else {
@@ -267,7 +267,7 @@ void Table::remove_from_indices(Entry *e)
        i < uni_indices.size();
        i++) {
     UniqueIndex* ndx = uni_indices.at(i);
-    ValueRef key = (*e->t)[i];
+    ValuePtr key = (*e->t)[i];
     if (ndx) {
       // Removal must be identical to how it happens for multiple
       // indices, because an entry in the queue might not in fact still
@@ -290,7 +290,7 @@ void Table::remove_from_indices(Entry *e)
        i < mul_indices.size();
        i++) {
     MultIndex* ndx = mul_indices.at(i);
-    ValueRef key = (*e->t)[i];
+    ValuePtr key = (*e->t)[i];
     if (ndx) {
       for (MultIndex::iterator pos = ndx->find(key); 
            (pos != ndx->end()) && (pos->first->compareTo(key) == 0); 
@@ -304,7 +304,7 @@ void Table::remove_from_indices(Entry *e)
   }
 }
 
-void Table::remove_from_aggregates(TupleRef t)
+void Table::remove_from_aggregates(TuplePtr t)
 {
   // And update the unique aggregates
   for (size_t i = 0;
@@ -364,12 +364,12 @@ void Table::garbage_collect()
 
 
 Table::MultIterator
-Table::lookupAll(unsigned field, ValueRef key)
+Table::lookupAll(unsigned field, ValuePtr key)
 {
   garbage_collect();
   Table::MultIndex *ndx = mul_indices.at(field);
   if (ndx) {
-    return New refcounted< Table::MultIteratorObj >(ndx, key);
+    return Table::MultIterator(new Table::MultIteratorObj(ndx, key));
   }
   warn << "Requesting multi lookup in table " << name << " on missing index " << field << "\n";
   assert(false);
@@ -381,7 +381,7 @@ Table::scanAll(unsigned field)
   garbage_collect();
   Table::MultIndex *ndx = mul_indices.at(field);
   if (ndx) {
-    return New refcounted< Table::MultScanIteratorObj >(ndx);
+    return Table::MultScanIterator(new Table::MultScanIteratorObj(ndx));
   }
   warn << "Requesting multiple scan in table " << name << " on missing index " << field << "\n";
   assert(false);
@@ -394,7 +394,7 @@ Table::uniqueScanAll(unsigned field, bool continuous)
   Table::UniqueIndex *ndx = uni_indices.at(field);
   if (ndx) {
     Table::UniqueScanIterator scanIterator 
-      = New refcounted< Table::UniqueScanIteratorObj >(ndx);
+      = Table::UniqueScanIterator(new Table::UniqueScanIteratorObj(ndx));
     if (continuous) {
       _uni_scans.push_back(scanIterator);
     }
@@ -405,25 +405,25 @@ Table::uniqueScanAll(unsigned field, bool continuous)
 }
 
 Table::UniqueIterator
-Table::lookup(unsigned field, ValueRef key)  
+Table::lookup(unsigned field, ValuePtr key)  
 {
   garbage_collect();
   UniqueIndex *ndx = uni_indices.at(field);
   if (ndx) {
-    return New refcounted< Table::UniqueIteratorObj >(ndx, key);
+    return Table::UniqueIterator(new Table::UniqueIteratorObj(ndx, key));
   }
   warn << "Requesting unique lookup in table " << name << " on missing index " << field << "\n";
   assert(false);
 }
 
 Table::MultIterator
-Table::MultLookupGenerator::lookup(TableRef t, unsigned field, ValueRef key)
+Table::MultLookupGenerator::lookup(TablePtr t, unsigned field, ValuePtr key)
 {
   return t->lookupAll(field, key);
 }
 
 Table::UniqueIterator
-Table::UniqueLookupGenerator::lookup(TableRef t, unsigned field, ValueRef key)
+Table::UniqueLookupGenerator::lookup(TablePtr t, unsigned field, ValuePtr key)
 {
   return t->lookup(field, key);
 }
@@ -452,7 +452,6 @@ Table::AggregateFunctionCOUNT Table::AGG_COUNT;
 // Simple MIN
 
 Table::AggregateFunctionMIN::AggregateFunctionMIN()
-  : _currentMin(NULL)
 {
 }
 
@@ -463,17 +462,17 @@ Table::AggregateFunctionMIN::~AggregateFunctionMIN()
 void
 Table::AggregateFunctionMIN::reset()
 {
-  _currentMin = NULL;
+  _currentMin.reset();
 }
   
 void
-Table::AggregateFunctionMIN::first(ValueRef v)
+Table::AggregateFunctionMIN::first(ValuePtr v)
 {
   _currentMin = v;
 }
   
 void
-Table::AggregateFunctionMIN::process(ValueRef v)
+Table::AggregateFunctionMIN::process(ValuePtr v)
 {
   assert(_currentMin != 0);
   if (v->compareTo(_currentMin) < 0) {
@@ -509,14 +508,14 @@ Table::AggregateFunctionK_MIN::reset()
 }
   
 void
-Table::AggregateFunctionK_MIN::first(ValueRef v)
+Table::AggregateFunctionK_MIN::first(ValuePtr v)
 {
   _currentMins.push_back(v);
   std::push_heap(_currentMins.begin(), _currentMins.end());
 }
   
 void
-Table::AggregateFunctionK_MIN::process(ValueRef v)
+Table::AggregateFunctionK_MIN::process(ValuePtr v)
 {
   _currentMins.push_back(v);
   std::push_heap(_currentMins.begin(), _currentMins.end());
@@ -531,7 +530,7 @@ Table::AggregateFunctionK_MIN::process(ValueRef v)
 ValuePtr 
 Table::AggregateFunctionK_MIN::result()
 {
-  return NULL;
+  return ValuePtr();
 }
 
 
@@ -540,7 +539,6 @@ Table::AggregateFunctionK_MIN::result()
 // Simple MAX
 
 Table::AggregateFunctionMAX::AggregateFunctionMAX()
-  : _currentMax(NULL)
 {
 }
 
@@ -551,17 +549,17 @@ Table::AggregateFunctionMAX::~AggregateFunctionMAX()
 void
 Table::AggregateFunctionMAX::reset()
 {
-  _currentMax = NULL;
+  _currentMax.reset();
 }
   
 void
-Table::AggregateFunctionMAX::first(ValueRef v)
+Table::AggregateFunctionMAX::first(ValuePtr v)
 {
   _currentMax = v;
 }
   
 void
-Table::AggregateFunctionMAX::process(ValueRef v)
+Table::AggregateFunctionMAX::process(ValuePtr v)
 {
   if (v->compareTo(_currentMax) > 0) {
     _currentMax = v;
@@ -594,13 +592,13 @@ Table::AggregateFunctionCOUNT::reset()
 }
   
 void
-Table::AggregateFunctionCOUNT::first(ValueRef v)
+Table::AggregateFunctionCOUNT::first(ValuePtr v)
 {
   _current = 1;
 }
   
 void
-Table::AggregateFunctionCOUNT::process(ValueRef v)
+Table::AggregateFunctionCOUNT::process(ValuePtr v)
 {
   _current++;
 }

@@ -17,7 +17,7 @@
 #include "val_double.h"
 
 class OperStr : public opr::OperCompare<Val_Str> {
-  virtual ValuePtr _plus (const ValueRef& v1, const ValueRef& v2) const {
+  virtual ValuePtr _plus (const ValuePtr& v1, const ValuePtr& v2) const {
     str s1 = Val_Str::cast(v1);
     str s2 = Val_Str::cast(v2);
     return Val_Str::mk((strbuf() << s1 << s2));
@@ -35,7 +35,7 @@ void Val_Str::xdr_marshal_subtype( XDR *x )
   rpc_str<RPC_INFINITY> rs(s);
   rpc_traverse(x,rs);
 }
-ValueRef Val_Str::xdr_unmarshal( XDR *x )
+ValuePtr Val_Str::xdr_unmarshal( XDR *x )
 {
   // Note that this looks like a yucky double copy, but at least the
   // string data itself isn't copied (since rpc_str <: str).
@@ -46,7 +46,7 @@ ValueRef Val_Str::xdr_unmarshal( XDR *x )
   return mk(str(rs));
 }
   
-int Val_Str::compareTo(ValueRef other) const
+int Val_Str::compareTo(ValuePtr other) const
 {
   if (other->typeCode() != Value::STR) {
     return false;
@@ -57,7 +57,7 @@ int Val_Str::compareTo(ValueRef other) const
 //
 // Casting: we special-case doubles...
 //
-str Val_Str::cast(ValueRef v)
+str Val_Str::cast(ValuePtr v)
 {
   if (v->typeCode() == Value::DOUBLE ) {
     char dbuf[100];

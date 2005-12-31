@@ -12,7 +12,7 @@
 #include "delete.h"
 
 Delete::Delete(str name,
-               TableRef table,
+               TablePtr table,
                unsigned indexFieldNo,
                unsigned keyFieldNo)
   : Element(name, 1, 0),
@@ -23,7 +23,7 @@ Delete::Delete(str name,
 }
 
 int
-Delete::push(int port, TupleRef t, b_cbv cb)
+Delete::push(int port, TuplePtr t, b_cbv cb)
 {
   // Is this the right port?
   assert(port == 0);

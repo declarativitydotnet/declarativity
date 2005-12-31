@@ -44,18 +44,18 @@ Table::AggregateObj< _Index >::addListener(Table::Listener listenerCallback)
     over the whole index. */
 template < typename _Index >
 void
-Table::AggregateObj< _Index >::update(TupleRef t)
+Table::AggregateObj< _Index >::update(TuplePtr t)
 {
   // Go through the portions of the index affected by this insertion
-  ValueRef key = (*t)[_keyField];
+  ValuePtr key = (*t)[_keyField];
   bool started = false;
-  TuplePtr aMatchingTuple = NULL;
+  TuplePtr aMatchingTuple = TuplePtr();
   _aggregateFn->reset();
   for (_Iterator i = _uIndex->lower_bound(key);
        i != _uIndex->upper_bound(key);
        i++) {
     // Fetch the next tuple
-    TupleRef tuple = i->second->t;
+    TuplePtr tuple = i->second->t;
 
     // Does it match the group-by fields?
     bool groupByMatch = true;
@@ -112,7 +112,7 @@ Table::AggregateObj< _Index >::update(TupleRef t)
 
     // Put together the resulting tuple, containing the group-by fields
     // and the aggregate
-    TupleRef resultTuple = Tuple::mk();
+    TuplePtr resultTuple = Tuple::mk();
     for (size_t f = 0;
          f < _groupByFields.size();
          f++) {

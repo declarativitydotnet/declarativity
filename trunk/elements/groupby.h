@@ -38,20 +38,20 @@ public:
 
   virtual int initialize();
   
-  int push(int port, TupleRef p, b_cbv cb);
+  int push(int port, TuplePtr p, b_cbv cb);
 
   const char *class_name() const		{ return "GroupBy";}
   const char *processing() const		{ return "h/h"; }
   const char *flow_code() const			{ return "x/x"; }
 
 private:
-  str getFieldStr(std::vector<int> fields, TupleRef p);
+  str getFieldStr(std::vector<int> fields, TuplePtr p);
   void recomputeAllAggs();
   void dumpTuples(str str);
   void dumpAggs(str str);
 
-  typedef std::multimap<str, TupleRef> TupleMultiMap;
-  typedef std::map<str, TupleRef> TupleMap;
+  typedef std::multimap<str, TuplePtr> TupleMultiMap;
+  typedef std::map<str, TuplePtr> TupleMap;
 
   // tuples, indexed by groupByField
   TupleMultiMap _tuples; 

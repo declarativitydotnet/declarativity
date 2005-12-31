@@ -40,15 +40,17 @@
 #ifndef __ELEMENT_H__
 #define __ELEMENT_H__
 
+#include <boost/shared_ptr.hpp>
 #include "inlines.h"
 #include "tuple.h"
 #include "loggerI.h"
 #include "loop.h"
 
 class Router;
-typedef ref< Router > RouterRef;
-typedef ptr< Router > RouterPtr;
+typedef boost::shared_ptr< Router > RouterPtr;
 
+class Element;
+typedef boost::shared_ptr< Element > ElementPtr;
 
 class Element { 
 public:
@@ -98,7 +100,7 @@ public:
   // If push returns '1', it's OK to send more tuples, and the
   // callback has not been registered.  If '0', it's NOT OK to send
   // more tuples, and the callback will be invoked as soon as it is. 
-  virtual int push(int port, TupleRef, b_cbv cb);
+  virtual int push(int port, TuplePtr, b_cbv cb);
 
   // If pull returns a Tuple, the callback has not been registered and
   // there _might_ be another Tuple available.  If it returns null,
@@ -108,7 +110,7 @@ public:
 
   // A simple action for 1-1 elements. If the result is 0, then no tuple
   // was produced for push or pull
-  virtual TuplePtr simple_action(TupleRef p);
+  virtual TuplePtr simple_action(TuplePtr p);
 
   /** Return true if did useful work */
   virtual bool run_task();
@@ -135,8 +137,8 @@ public:
   bool ports_frozen() const;
 
   // CONFIGURATION
-  int connect_input(int i, Element *f, int port);
-  int connect_output(int o, Element *f, int port);
+  int connect_input(int i, Element* f, int port);
+  int connect_output(int o, Element* f, int port);
   virtual int initialize();
   
   // PROCESSING, FLOW, AND FLAGS
@@ -168,7 +170,7 @@ public:
   // METHODS USED BY `ROUTER'
   
   /** Attach me to a router */
-  void attach_router(RouterRef r)		{ _router = r; }
+  void attach_router(RouterPtr r)		{ _router = r; }
 
   /** A nested class encapsulating connection stubs into and out of an
       element. */
@@ -177,15 +179,15 @@ public:
 
     Port();
 
-    Port(Element * owner,
-         Element * correspondent,
+    Port(Element* owner,
+         Element* correspondent,
          int correspondentPortNumber);
     
     operator bool() const		{ return _e != 0; }
     bool initialized() const		{ return _port >= -1; }
     
 
-    Element *element() const		{ return _e; }
+    Element* element() const		{ return _e; }
     
     /* The port number error values */
     enum PortErrors { NOT_CONNECTABLE = -1,
@@ -205,7 +207,7 @@ public:
         callback has not been registered.  If '0', it's NOT OK to send
         more tuples, and the callback will be invoked as soon as it
         is.  */
-    int push(TupleRef p, b_cbv cb) const;
+    int push(TuplePtr p, b_cbv cb) const;
 
     /** If pull returns a Tuple, the callback has not been registered
         and there _might_ be another Tuple available.  If it returns
@@ -214,7 +216,7 @@ public:
     TuplePtr pull(b_cbv cb) const;
 
     /** A push is called on the input port of an element **/
-    int push_incoming(int port, TupleRef p, b_cbv cb) const;
+    int push_incoming(int port, TuplePtr p, b_cbv cb) const;
     
     /** A pull is called on the output port of an element **/
     TuplePtr pull_outgoing(int port, b_cbv cb) const;
@@ -227,7 +229,7 @@ public:
   private:
     
     /** With whom am I connecting my owner element? */
-    Element *_e;
+    Element* _e;
 
     /** The port number at which I am connected at the destination
         element.  If I am not a connectable port (i.e., a pull output
@@ -242,17 +244,16 @@ public:
     mutable unsigned _tuples;		// How many tuples have we moved?
 #endif
     //#if P2_STATS >= 2
-    Element *_owner;			// Whose input or output are we?
+    Element* _owner;			// Whose input or output are we?
     //#endif
   };
 
-  typedef ptr< Port > PortPtr;
-  typedef ref< Port > PortRef;
-  typedef vec< PortPtr > PortVec;
+  typedef boost::shared_ptr< Port > PortPtr;
+  typedef std::vector< PortPtr > PortVec;
 
 
-  const PortRef input(int) const;
-  const PortRef output(int) const;
+  const PortPtr input(int) const;
+  const PortPtr output(int) const;
 
   /** My router */
   RouterPtr _router;
@@ -301,9 +302,5 @@ protected:
 #  define PORT_CTOR_INIT(o) , _owner(o)
 # endif
 #endif
-
-/** A handy dandy reference to elements */
-typedef ref< Element > ElementRef;
-typedef ptr< Element > ElementPtr;
 
 #endif /* __ELEMENT_H_ */

@@ -15,7 +15,7 @@
 #include <iostream>
 
 void
-toDot(std::ostream*, Router::ConfigurationRef);
+toDot(std::ostream*, Router::ConfigurationPtr);
 
 #endif /* __DOT_H__ */
 

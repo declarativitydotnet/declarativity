@@ -16,7 +16,7 @@ Bandwidth::Bandwidth(str name)
 }
 
 
-TuplePtr Bandwidth::simple_action(TupleRef p)
+TuplePtr Bandwidth::simple_action(TuplePtr p)
 {
   time_t cur_t = now_s();
 

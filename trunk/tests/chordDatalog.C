@@ -52,16 +52,16 @@ str FINGERIP("Finger.com");
 
 struct SuccessorGenerator : public FunctorSource::Generator
 {
-  TupleRef operator()() 
+  TuplePtr operator()() 
   {
     
-    TupleRef tuple = Tuple::mk();
+    TuplePtr tuple = Tuple::mk();
     tuple->append(Val_Str::mk("succ"));
     
     str myAddress = str(strbuf() << LOCAL);
     tuple->append(Val_Str::mk(myAddress));
     
-    IDRef successor = ID::mk((uint32_t) rand());
+    IDPtr successor = ID::mk((uint32_t) rand());
     tuple->append(Val_ID::mk(successor));
 
     str succAddress = str(strbuf() << successor->toString() << "IP");
@@ -73,22 +73,22 @@ struct SuccessorGenerator : public FunctorSource::Generator
 
 
 // this allows us to isolate and test just the finger lookup rules
-void fakeFingersSuccessors(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGenerator, str localAddress, IDRef me)
+void fakeFingersSuccessors(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr<Rtr_ConfGen> routerConfigGenerator, str localAddress, IDPtr me)
 {
-  TableRef fingerTable = routerConfigGenerator->getTableByName(localAddress, "finger");
+  TablePtr fingerTable = routerConfigGenerator->getTableByName(localAddress, "finger");
   OL_Context::TableInfo* fingerTableInfo = ctxt->getTableInfos()->find("finger")->second;  
 
   // Fill up the table with fingers
   for (int i = 0; i < fingerTableInfo->size; i++) {
-    TupleRef tuple = Tuple::mk();
+    TuplePtr tuple = Tuple::mk();
     tuple->append(Val_Str::mk("finger"));
 
     str myAddress = str(strbuf() << localAddress);
     tuple->append(Val_Str::mk(myAddress));
     tuple->append(Val_Int32::mk(i));
 
-    IDRef target = ID::mk((uint32_t) 0X1)->shift(i)->add(me);
-    IDRef best = ID::mk()->add(target)->add(ID::mk((uint32_t) i*10));
+    IDPtr target = ID::mk((uint32_t) 0X1)->shift(i)->add(me);
+    IDPtr best = ID::mk()->add(target)->add(ID::mk((uint32_t) i*10));
     tuple->append(Val_ID::mk(best));
   
     str address = str(strbuf() << "Finger:" << (i / 2));
@@ -100,14 +100,14 @@ void fakeFingersSuccessors(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigG
 
 
   // fake the best successor table. Only for testing purposes.  
-  TableRef bestSuccessorTable = routerConfigGenerator->getTableByName(localAddress, "bestSucc");
-  TupleRef tuple = Tuple::mk();
+  TablePtr bestSuccessorTable = routerConfigGenerator->getTableByName(localAddress, "bestSucc");
+  TuplePtr tuple = Tuple::mk();
   tuple->append(Val_Str::mk("bestSucc"));
   
   str myAddress = str(strbuf() << localAddress);
   tuple->append(Val_Str::mk(myAddress));
   
-  IDRef target = ID::mk((uint32_t) 0X1)->add(me);
+  IDPtr target = ID::mk((uint32_t) 0X1)->add(me);
   tuple->append(Val_ID::mk(target));
   
   str address = str(strbuf() << "Finger:" << 0);
@@ -119,7 +119,7 @@ void fakeFingersSuccessors(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigG
 }
 
 
-void initializeBaseTables(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGenerator, 
+void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr<Rtr_ConfGen> routerConfigGenerator, 
 			  str localAddress, str landmarkAddress)
 {
 
@@ -129,16 +129,16 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGe
     random[i] = rand();
   }
   
-  IDRef myKey = ID::mk(random);
-  //IDRef myKey = ID::mk((uint32_t) 1);
+  IDPtr myKey = ID::mk(random);
+  //IDPtr myKey = ID::mk((uint32_t) 1);
 
   if (TEST_LOOKUP) {
     // fake fingers and best successors
     fakeFingersSuccessors(ctxt, routerConfigGenerator, localAddress, myKey);  
   }
 
-  TableRef nodeTable = routerConfigGenerator->getTableByName(localAddress, "node");
-  TupleRef tuple = Tuple::mk();
+  TablePtr nodeTable = routerConfigGenerator->getTableByName(localAddress, "node");
+  TuplePtr tuple = Tuple::mk();
   tuple->append(Val_Str::mk("node"));
     
   str myAddress = str(strbuf() << localAddress);
@@ -148,8 +148,8 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGe
   nodeTable->insert(tuple);
   warn << "Node: " << tuple->toString() << "\n";
 
-  TableRef predecessorTable = routerConfigGenerator->getTableByName(localAddress, "pred");
-  TupleRef predecessorTuple = Tuple::mk();
+  TablePtr predecessorTable = routerConfigGenerator->getTableByName(localAddress, "pred");
+  TuplePtr predecessorTuple = Tuple::mk();
   predecessorTuple->append(Val_Str::mk("pred"));
   predecessorTuple->append(Val_Str::mk(localAddress));
   predecessorTuple->append(Val_ID::mk(ID::mk()));
@@ -158,8 +158,8 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGe
   predecessorTable->insert(predecessorTuple);
   warn << "Initial predecessor " << predecessorTuple->toString() << "\n";
 
-  TableRef nextFingerFixTable = routerConfigGenerator->getTableByName(localAddress, "nextFingerFix");
-  TupleRef nextFingerFixTuple = Tuple::mk();
+  TablePtr nextFingerFixTable = routerConfigGenerator->getTableByName(localAddress, "nextFingerFix");
+  TuplePtr nextFingerFixTuple = Tuple::mk();
   nextFingerFixTuple->append(Val_Str::mk("nextFingerFix"));
   nextFingerFixTuple->append(Val_Str::mk(localAddress));
   nextFingerFixTuple->append(Val_UInt32::mk(0));
@@ -167,8 +167,8 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGe
   nextFingerFixTable->insert(nextFingerFixTuple);
   warn << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";
 
-  TableRef landmarkNodeTable = routerConfigGenerator->getTableByName(localAddress, "landmark");  
-  TupleRef landmark = Tuple::mk();
+  TablePtr landmarkNodeTable = routerConfigGenerator->getTableByName(localAddress, "landmark");  
+  TuplePtr landmark = Tuple::mk();
   landmark->append(Val_Str::mk("landmark"));
   landmark->append(Val_Str::mk(localAddress));
   landmark->append(Val_Str::mk(landmarkAddress));
@@ -178,32 +178,32 @@ void initializeBaseTables(ref< OL_Context> ctxt, ref<Rtr_ConfGen> routerConfigGe
 }
 
 
-void sendSuccessorStream(ref< Udp> udp, ref< Router::Configuration > conf, str localAddress)
+void sendSuccessorStream(boost::shared_ptr< Udp> udp, boost::shared_ptr< Router::Configuration > conf, str localAddress)
 {
   // have something that populates the table of successors. For testing purposes
   SuccessorGenerator* successorGenerator = new SuccessorGenerator();
-  ElementSpecRef sourceS =
-    conf->addElement(New refcounted< FunctorSource >(str("SuccessorSource:"),
-						     successorGenerator));
+  ElementSpecPtr sourceS =
+    conf->addElement(ElementPtr(new FunctorSource(str("SuccessorSource:"),
+						     successorGenerator)));
   
-  ElementSpecRef print   = conf->addElement(New refcounted< Print >(strbuf("SuccessorSource")));
+  ElementSpecPtr print   = conf->addElement(ElementPtr(new Print(strbuf("SuccessorSource"))));
   
   // The timed pusher
-  ElementSpecRef pushS =
-    conf->addElement(New refcounted< TimedPullPush >(strbuf("SuccessorPush:"),
-						     2));
+  ElementSpecPtr pushS =
+    conf->addElement(ElementPtr(new TimedPullPush(strbuf("SuccessorPush:"),
+						     2)));
   
   // And a slot from which to pull
-  ElementSpecRef slotS =
-    conf->addElement(New refcounted< Slot >(strbuf("SuccessorSlot:")));
+  ElementSpecPtr slotS =
+    conf->addElement(ElementPtr(new Slot(strbuf("SuccessorSlot:"))));
   
-  ElementSpecRef encap = conf->addElement(New refcounted< PelTransform >("SuccessorEncap",
+  ElementSpecPtr encap = conf->addElement(ElementPtr(new PelTransform("SuccessorEncap",
 									 "$1 pop \
-                                                     $0 ->t $1 append $2 append $3 append pop")); // the rest
-  ElementSpecRef marshal = conf->addElement(New refcounted< MarshalField >("SuccessorMarshalField", 1));
-  ElementSpecRef route   = conf->addElement(New refcounted< StrToSockaddr >(strbuf("SuccessorStrToSocket"), 0));
+                                                     $0 ->t $1 append $2 append $3 append pop"))); // the rest
+  ElementSpecPtr marshal = conf->addElement(ElementPtr(new MarshalField("SuccessorMarshalField", 1)));
+  ElementSpecPtr route   = conf->addElement(ElementPtr(new StrToSockaddr(strbuf("SuccessorStrToSocket"), 0)));
   
-  ElementSpecRef udpTx = conf->addElement(udp->get_tx());
+  ElementSpecPtr udpTx = conf->addElement(udp->get_tx());
   
   conf->hookUp(sourceS, 0, print, 0);
   conf->hookUp(print, 0, pushS, 0);
@@ -216,30 +216,31 @@ void sendSuccessorStream(ref< Udp> udp, ref< Router::Configuration > conf, str l
 }
 
 
-void initiateJoinRequest(ref< Rtr_ConfGen > routerConfigGenerator, ref< Router::Configuration > conf, 
+void initiateJoinRequest(boost::shared_ptr< Rtr_ConfGen > routerConfigGenerator, 
+                         boost::shared_ptr< Router::Configuration > conf, 
 			 str localAddress, double delay)
 {
 
  // My next finger fix tuple
-  TupleRef joinEventTuple = Tuple::mk();
+  TuplePtr joinEventTuple = Tuple::mk();
   joinEventTuple->append(Val_Str::mk("join"));
   joinEventTuple->append(Val_Str::mk(localAddress));
   joinEventTuple->append(Val_Int32::mk(random()));
   joinEventTuple->freeze();
 
-  ElementSpecRef sourceS =
-    conf->addElement(New refcounted< TupleSource >(str("JoinEventSource:") << localAddress,
-                                                   joinEventTuple));
+  ElementSpecPtr sourceS =
+    conf->addElement(ElementPtr(new TupleSource(str("JoinEventSource:") << localAddress,
+                                                   joinEventTuple)));
   
   // The once pusher
-  ElementSpecRef onceS =
-    conf->addElement(New refcounted< TimedPullPush >(strbuf("JoinEventPush:") << localAddress,
+  ElementSpecPtr onceS =
+    conf->addElement(ElementPtr(new TimedPullPush(strbuf("JoinEventPush:") << localAddress,
                                                      delay, // run immediately
                                                      JOIN_ATTEMPTS // run once
-                                                     ));
+                                                     )));
 
-  ElementSpecRef slotS =
-    conf->addElement(New refcounted< Slot >(strbuf("JoinEventSlot:")));
+  ElementSpecPtr slotS =
+    conf->addElement(ElementPtr(new Slot(strbuf("JoinEventSlot:"))));
 
   // Link everything
   conf->hookUp(sourceS, 0, onceS, 0);
@@ -250,18 +251,17 @@ void initiateJoinRequest(ref< Rtr_ConfGen > routerConfigGenerator, ref< Router::
 
 
 /** Test lookups. */
-void startChordInDatalog(LoggerI::Level level, ref< OL_Context> ctxt, str datalogFile, 
+void startChordInDatalog(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt, str datalogFile, 
 			 str localAddress, int port, str landmarkAddress, 
 			 double delay)
 {
   // create dataflow for translated chord lookup rules
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ref< Rtr_ConfGen > routerConfigGenerator 
-    = New refcounted< Rtr_ConfGen >(ctxt, conf, false, DEBUG, CC, datalogFile);
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  boost::shared_ptr< Rtr_ConfGen > routerConfigGenerator(new Rtr_ConfGen(ctxt.get(), conf, false, DEBUG, CC, datalogFile));
 
   routerConfigGenerator->createTables(localAddress);
 
-  ref< Udp > udp = New refcounted< Udp > (localAddress, port);
+  boost::shared_ptr< Udp > udp(new Udp(localAddress, port));
   routerConfigGenerator->clear();
   initiateJoinRequest(routerConfigGenerator, conf, localAddress, delay);
   routerConfigGenerator->configureRouter(udp, localAddress);
@@ -270,12 +270,12 @@ void startChordInDatalog(LoggerI::Level level, ref< OL_Context> ctxt, str datalo
    
   // synthetically generate stream of successors to test replacement policies
   // at one node
-  ref< Udp > bootstrapUdp = New refcounted< Udp > (localAddress, 20000 + port);
+  boost::shared_ptr< Udp > bootstrapUdp(new Udp(localAddress, 20000 + port));
   if (TEST_SUCCESSOR) { 
     sendSuccessorStream(bootstrapUdp, conf, localAddress);
   }
 
-  RouterRef router = New refcounted< Router >(conf, level);
+  RouterPtr router(new Router(conf, level));
   if (router->initialize(router) == 0) {
     warn << "Correctly initialized network of chord lookup flows.\n";
   } else {

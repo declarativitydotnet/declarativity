@@ -27,7 +27,7 @@ class TrafficManager : public Element {
   const char *flow_code() const	 { return "-/--"; }
   const char *processing() const { return "h/hh"; }
 
-  int push(int port, TupleRef tp, b_cbv cb);
+  int push(int port, TuplePtr tp, b_cbv cb);
 
   virtual int initialize();
 

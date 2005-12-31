@@ -25,7 +25,7 @@ Hexdump::~Hexdump()
 {
 }
 
-TuplePtr Hexdump::simple_action(TupleRef p)
+TuplePtr Hexdump::simple_action(TuplePtr p)
 {
   // Get field
   ValuePtr first = (*p)[_fieldNo];
@@ -34,7 +34,7 @@ TuplePtr Hexdump::simple_action(TupleRef p)
     log(LoggerI::WARN,
         -1,
         "Input tuple has no requested field");
-    return 0;
+    return TuplePtr();
   }
 
   // Is it an opaque?
@@ -43,7 +43,7 @@ TuplePtr Hexdump::simple_action(TupleRef p)
     log(LoggerI::WARN,
         -1,
         "Input tuple's field to hexdump is not an opaque");
-    return 0;
+    return TuplePtr();
   }
   
   // Hexdump and return new tuple
@@ -53,7 +53,7 @@ TuplePtr Hexdump::simple_action(TupleRef p)
   str s = strbuf() << hexdump(buf, sz);
 
   // And create the output tuple
-  TupleRef newTuple = Tuple::mk();
+  TuplePtr newTuple = Tuple::mk();
   for (unsigned field = 0;
        field < _fieldNo;
        field++) {

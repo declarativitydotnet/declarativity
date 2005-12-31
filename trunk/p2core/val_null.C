@@ -18,10 +18,10 @@
 
 
 class OperNull : public opr::Oper {
-  bool _eq(ValueRef v1, ValueRef v2) {
+  bool _eq(ValuePtr v1, ValuePtr v2) {
     return v1->typeCode() == Value::NULLV && v2->typeCode() == Value::NULLV;
   }; 
-  bool _neq(ValueRef v1, ValueRef v2) {
+  bool _neq(ValuePtr v1, ValuePtr v2) {
     return !OperNull::_eq(v1, v2);
   };
 };
@@ -31,7 +31,7 @@ const opr::Oper* Val_Null::oper_ = New OperNull();
 //
 // Singleton null value.
 //
-ValueRef Val_Null::singleton = New refcounted<Val_Null>();
+ValuePtr Val_Null::singleton = ValuePtr(new Val_Null());
 
 //
 // Marshalling and unmarshallng
@@ -40,12 +40,12 @@ void Val_Null::xdr_marshal_subtype( XDR *x )
 {
   return;
 }
-ValueRef Val_Null::xdr_unmarshal( XDR *x )
+ValuePtr Val_Null::xdr_unmarshal( XDR *x )
 {
   return singleton;
 }
 
-int Val_Null::compareTo(ValueRef other) const
+int Val_Null::compareTo(ValuePtr other) const
 {
   return (other->typeCode() != Value::NULLV);
 }
@@ -53,7 +53,7 @@ int Val_Null::compareTo(ValueRef other) const
 //
 // Casting: more for completeness than anything else...
 // 
-void Val_Null::cast(ValueRef v) { 
+void Val_Null::cast(ValuePtr v) { 
   if (v->typeCode() != Value::NULLV) {
     throw Value::TypeError(v->typeCode(), Value::NULLV);
   };

@@ -41,7 +41,7 @@ static TuplePtr tpls[ N_TPLS ];
 
 #define FAIL std::cerr << __FILE__":" << __LINE__ << ": failed test: "
 
-void aggListener(TupleRef t)
+void aggListener(TuplePtr t)
 {
   std::cout << "Agg update: " << t->toString() << "\n";
 }
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 
   // Create our test set of tuples
   for( int i=0; i < N_TPLS; i++) {
-    TupleRef t = Tuple::mk();
+    TuplePtr t = Tuple::mk();
     t->append(Val_Int32::mk(i));
     t->append(Val_Int32::mk(i/2));
     t->append(Val_Int32::mk(i/4));
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
   //  First: tuples inserted can be looked up.  Tuples not inserted cannot
   // be looked up.  Create a very simple table
   std::cout << "Testing simple presence/absence...\n";
-  TableRef tbl = New refcounted<Table>("test_table", 200);
+  TablePtr tbl(new Table("test_table", 200));
   tbl->add_unique_index(0);
   for( int i=0; i < N_TPLS/2; i++) { 
     tbl->insert(tpls[i]);
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
 
   // Check multi indices
   std::cout << "Testing multiple indices \n";
-  tbl = New refcounted<Table>("test_table", 200);
+  tbl.reset(new Table("test_table", 200));
   tbl->add_multiple_index(4);
   for( int i=0; i < N_TPLS; i++) { 
     tbl->insert(tpls[i]);
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
   // Now check aggregates
   std::cout << "Testing group-by-aggregates\n";
-  tbl = New refcounted< Table >("test_table", 4);
+  tbl.reset(new Table("test_table", 4));
   tbl->add_multiple_index(4);
   // My group-by fields are 4
   std::vector< unsigned > groupBy;

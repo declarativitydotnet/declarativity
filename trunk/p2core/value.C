@@ -28,7 +28,7 @@
 #include "val_time.h"
 #include "val_id.h"
 
-typedef ValueRef (*_unmarshal_fn)( XDR *);
+typedef ValuePtr (*_unmarshal_fn)( XDR *);
 
 static _unmarshal_fn jump_tab[] = {
   Val_Null::xdr_unmarshal,
@@ -60,7 +60,7 @@ void Value::xdr_marshal( XDR *x )
 //
 // Unmarshalling
 //
-ValueRef Value::xdr_unmarshal( XDR *x )
+ValuePtr Value::xdr_unmarshal( XDR *x )
 {
   TRC_FN;
   uint32_t tc;

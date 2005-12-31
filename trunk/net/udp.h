@@ -89,8 +89,8 @@ public:
   Udp(str, u_int16_t port=0, u_int32_t addr = INADDR_ANY);
 
   // Accessing the individual elements
-  ref< Udp::Rx > get_rx() { return rx; };
-  ref< Udp::Tx > get_tx() { return tx; };
+  boost::shared_ptr< Udp::Rx > get_rx() { return rx; };
+  boost::shared_ptr< Udp::Tx > get_tx() { return tx; };
 
 private:
   // Socket
@@ -100,8 +100,8 @@ private:
   str _name;
 
   // Elements 
-  ref< Rx > rx;
-  ref< Tx > tx;
+  boost::shared_ptr< Rx > rx;
+  boost::shared_ptr< Tx > tx;
 };
 
 #endif /* __UDP_H_ */

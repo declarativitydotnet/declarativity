@@ -40,7 +40,7 @@
 #define TEST_VAL(_mkt, _mkv, _mktc, _mktn) \
 { \
   std::cout << "Making Val_" << #_mkt << "(" << #_mkv << ")\n"; \
-  ValueRef v = Val_##_mkt::mk(_mkv);  \
+  ValuePtr v = Val_##_mkt::mk(_mkv);  \
   if ( v->typeCode() != Value::_mktc ) { \
     FAIL << "Bad typeCode from " #_mkt ", expected " #_mktc " but got " << v->typeCode() << "\n"; \
   } \
@@ -56,7 +56,7 @@
   struct timespec t; \
   t.tv_sec = _mks; \
   t.tv_nsec = _mkns; \
-  ValueRef v = Val_##_mkt::mk(t); \
+  ValuePtr v = Val_##_mkt::mk(t); \
   if ( v->typeCode() != Value::TIME ) { \
     FAIL << "Bad typeCode from " #_mkt ", expected " #_mktc " but got " << v->typeCode() << "\n"; \
   } \
@@ -69,7 +69,7 @@
 #define TEST_CAST(_mkt, _mkv, _castct, _castt, _castv) \
 { \
   std::cout << "Casting Val_" #_mkt "(" #_mkv ") -> " #_castt "\n"; \
-  ValueRef v = Val_##_mkt::mk(_mkv);  \
+  ValuePtr v = Val_##_mkt::mk(_mkv);  \
   try { \
     _castct cv = Val_##_castt::cast(v); \
     if ( cv != _castv ) { \
@@ -87,7 +87,7 @@
   t.tv_sec = _casts; \
   t.tv_nsec = _castns; \
   std::cout << "Casting Val_" #_mkt "(" #_mkv ") -> " #_castt "\n"; \
-  ValueRef v = Val_##_mkt::mk(_mkv);  \
+  ValuePtr v = Val_##_mkt::mk(_mkv);  \
   try { \
     struct timespec cv = Val_##_castt::cast(v); \
     if ( tscmp(cv, t) ) { \
@@ -103,11 +103,11 @@
 
 #define TEST_ID_CAST(_mkt, _mkv, _castct, _castt, _castv) \
 { \
-  IDRef i = ID::mk(Val_##_castt::cast(Val_##_mkt::mk(_castv))); \
+  IDPtr i = ID::mk(Val_##_castt::cast(Val_##_mkt::mk(_castv))); \
   std::cout << "Casting Val_" #_mkt "(" #_mkv ") -> " #_castct "\n"; \
-  ValueRef v = Val_##_mkt::mk(_mkv);  \
+  ValuePtr v = Val_##_mkt::mk(_mkv);  \
   try { \
-    IDRef cv = Val_ID::cast(v); \
+    IDPtr cv = Val_ID::cast(v); \
     if ( cv->compareTo(i) ) { \
       FAIL << "Bad cast value from Val_" #_mkt "(" #_mkv ")->Val_" #_castt \
                 << "; expected " << i->toString() << " but got " \
@@ -122,7 +122,7 @@
 #define TEST_BADCAST(_mkt, _mkv, _castct, _castt) \
 { \
   std::cout << "Testing bad cast Val_" #_mkt "(" #_mkv ") -> " #_castt "\n"; \
-  ValueRef v = Val_##_mkt::mk(_mkv);  \
+  ValuePtr v = Val_##_mkt::mk(_mkv);  \
   bool succ; \
   try { \
     Val_##_castt::cast(v); \
@@ -233,7 +233,7 @@ int main(int argc, char **argv)
   //TEST_CAST( Null, , int, Null, 0);
   { 
     std::cout << "Casting Val_Null() -> Null\n";
-    ValueRef v = Val_Null::mk();
+    ValuePtr v = Val_Null::mk();
     try {
       Val_Null::cast(v);
     } catch (Value::TypeError) { 

@@ -99,7 +99,7 @@ CCT::CCT(str name, double init_wnd, double max_wnd, bool tstat, bool stat)
  * port 0: Indicates a tuple to send.
  * port 1: Indicates the acknowledgement of some outstanding tuple.
  */
-int CCT::push(int port, TupleRef tp, b_cbv cb)
+int CCT::push(int port, TuplePtr tp, b_cbv cb)
 {
   assert(port == 1);
 
@@ -126,7 +126,7 @@ int CCT::push(int port, TupleRef tp, b_cbv cb)
  */
 TuplePtr CCT::pull(int port, b_cbv cb)
 {
-  TuplePtr tp = NULL;
+  TuplePtr tp;
 
   switch (port) {
     case 0:
@@ -297,7 +297,7 @@ REMOVABLE_INLINE SeqNum CCT::getSeq(TuplePtr tp) {
   SeqNum seq = 0;
   for (uint i = 0; i < tp->size(); i++) {
     try {
-      TupleRef t = Val_Tuple::cast((*tp)[i]); 
+      TuplePtr t = Val_Tuple::cast((*tp)[i]); 
       if (Val_Str::cast((*t)[0]) == "SEQ") {
         seq = Val_UInt64::cast((*t)[1]);
       }

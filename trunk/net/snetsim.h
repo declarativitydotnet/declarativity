@@ -25,7 +25,7 @@ public:
 
   TuplePtr pull(int port, b_cbv cb);
 
-  void tuple_ready(TupleRef t);
+  void tuple_ready(TuplePtr t);
 
 private:
   b_cbv _out_cb;
@@ -37,7 +37,7 @@ private:
   const double   drop_prob_;	// fraction of packets dropped
   bool           pull_pending;
 
-  std::deque <TupleRef> ready_q_;
+  std::deque <TuplePtr> ready_q_;
 };
 
 #endif /* __SimpleNetSim_H_ */

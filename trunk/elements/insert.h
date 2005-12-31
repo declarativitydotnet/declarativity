@@ -23,7 +23,7 @@
 class Insert : public Element {
  public:
   Insert(str name,
-         TableRef table);
+         TablePtr table);
   
   const char *class_name() const		{ return "Insert";}
   const char *processing() const		{ return "a/a"; }
@@ -31,11 +31,11 @@ class Insert : public Element {
   
   /** Overridden to perform the insertion operation on passing
       tuples. */
-  TuplePtr simple_action(TupleRef p);
+  TuplePtr simple_action(TuplePtr p);
   
  private:
   /** My table */
-  TableRef _table;
+  TablePtr _table;
 
 };
 

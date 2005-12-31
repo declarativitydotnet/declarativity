@@ -31,20 +31,20 @@ public:
 
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );
-  static ValueRef xdr_unmarshal( XDR *x );
+  static ValuePtr xdr_unmarshal( XDR *x );
 
   // Factory
-  static ValueRef mk() { return singleton; };
+  static ValuePtr mk() { return singleton; };
 
   // Strict comparison
-  int compareTo(ValueRef) const;
+  int compareTo(ValuePtr) const;
 
   // Casting: more for completeness than anything else...
-  static void cast(ValueRef v);
+  static void cast(ValuePtr v);
   
   static const opr::Oper* oper_;
 private:
-  static ValueRef singleton;
+  static ValuePtr singleton;
 };
 
 #endif /* __VAL_NULL_H_ */

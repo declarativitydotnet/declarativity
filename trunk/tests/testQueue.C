@@ -42,20 +42,20 @@ void testQueue()
 {
     std::cout << "\n[Test Queue]\n";
 
-    Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+    Router::ConfigurationPtr conf(new Router::Configuration());
 
-    ElementSpecRef timedPushSourceSpec = conf->addElement(new refcounted<TimedPushSource>("source", 1));
-    ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
-    ElementSpecRef queueSpec = conf->addElement(New refcounted< Queue >("queue", 5));
-    ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
-    ElementSpecRef sinkS = conf->addElement(New refcounted< TimedPullSink >("sink", 2));
+    ElementSpecPtr timedPushSourceSpec = conf->addElement(ElementPtr(new TimedPushSource("source", 1)));
+    ElementSpecPtr sourcePrintS = conf->addElement(ElementPtr(new Print("AfterSource")));
+    ElementSpecPtr queueSpec = conf->addElement(ElementPtr(new Queue("queue", 5)));
+    ElementSpecPtr sinkPrintS = conf->addElement(ElementPtr(new Print("BeforeSink")));
+    ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 2)));
 
     conf->hookUp(timedPushSourceSpec, 0, sourcePrintS ,0);
     conf->hookUp(sourcePrintS, 0, queueSpec, 0);
     conf->hookUp(queueSpec, 0, sinkPrintS, 0);
     conf->hookUp(sinkPrintS, 0, sinkS, 0);
    
-    RouterRef router = New refcounted< Router >(conf);
+    RouterPtr router(new Router(conf));
 
     if (router->initialize(router) == 0) {
 	std::cout << "Correctly initialized configuration.\n";

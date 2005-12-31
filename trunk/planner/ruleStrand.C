@@ -24,10 +24,10 @@ str RuleStrand::toString()
   return str(b);
 }
 
-void RuleStrand::addElement(Router::ConfigurationRef conf, ElementSpecRef elementSpecRef)
+void RuleStrand::addElement(Router::ConfigurationPtr conf, ElementSpecPtr elementSpecPtr)
 {
   if (_elementChain.size() > 0) {
-    conf->hookUp(_elementChain.at(_elementChain.size()-1), 0, elementSpecRef, 0);
+    conf->hookUp(_elementChain.at(_elementChain.size()-1), 0, elementSpecPtr, 0);
   }
-  _elementChain.push_back(elementSpecRef);
+  _elementChain.push_back(elementSpecPtr);
 }

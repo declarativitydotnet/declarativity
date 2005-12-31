@@ -37,8 +37,7 @@
 
 /** A handy dandy type for router references */
 class Router;
-typedef ref< Router > RouterRef;
-typedef ptr< Router > RouterPtr;
+typedef boost::shared_ptr< Router > RouterPtr;
 
 
 class Router {
@@ -48,54 +47,53 @@ public:
       specifications */
   struct Hookup {
     /** The element from which this hookup originates */
-    ElementSpecRef fromElement;
+    ElementSpecPtr fromElement;
     
     /** The port number at the fromElement */
     int fromPortNumber;
 
     /**  The element to which this hookup goes */
-    ElementSpecRef toElement;
+    ElementSpecPtr toElement;
 
     /** The port number at the toElement */
     int toPortNumber;
 
-    Hookup(ElementSpecRef fe, int fp,
-           ElementSpecRef te, int tp)
+    Hookup(ElementSpecPtr fe, int fp,
+           ElementSpecPtr te, int tp)
       : fromElement(fe), fromPortNumber(fp),
         toElement(te), toPortNumber(tp) {};
   };
-  typedef ref< Hookup > HookupRef;
-  typedef ptr< Hookup > HookupPtr;
+  typedef boost::shared_ptr< Hookup > HookupPtr;
 
   struct Configuration {
     /** The elements */
-    vec< ElementSpecRef > elements;
+    std::vector< ElementSpecPtr > elements;
 
     /** The hookups */
-    vec< HookupRef > hookups;
+    std::vector< HookupPtr > hookups;
 
-    ElementSpecRef addElement(ref<Element> e) {
-      ElementSpecRef r = New refcounted<ElementSpec>(e);
+    ElementSpecPtr addElement(ElementPtr e) {
+      ElementSpecPtr r(new ElementSpec(e));
       elements.push_back(r);
       return r;
     }
-    void hookUp(ElementSpecRef src, int src_port,
-		ElementSpecRef dst, int dst_port ) {
-      hookups.push_back(New refcounted<Hookup>(src,src_port, dst,dst_port));
+    void hookUp(ElementSpecPtr src, int src_port,
+		ElementSpecPtr dst, int dst_port ) {
+      HookupPtr p(new Hookup(src, src_port, dst, dst_port));
+      hookups.push_back(p);
     }
 
     Configuration() {};
-    Configuration(ref< vec< ElementSpecRef > > e,
-                  ref< vec< HookupRef > > h)
+    Configuration(boost::shared_ptr< std::vector< ElementSpecPtr > > e,
+                  boost::shared_ptr< std::vector< HookupPtr > > h)
       : elements(*e), hookups(*h) {};
 
   };
-  typedef ref< Configuration > ConfigurationRef;
-  typedef ptr< Configuration > ConfigurationPtr;
+  typedef boost::shared_ptr< Configuration > ConfigurationPtr;
 
   /** Create a new router given a configuration of constructed but not
       necessarily configured elements. */
-  Router(ConfigurationRef configuration,
+  Router(ConfigurationPtr configuration,
          LoggerI::Level loggingLevel = LoggerI::INFO);
 
   ~Router();
@@ -103,7 +101,7 @@ public:
   // INITIALIZATION
   
   /** Initialize the engine from the configuration */
-  int initialize(RouterRef);
+  int initialize(RouterPtr);
 
   /** Start the router */
   void activate();
@@ -126,7 +124,7 @@ public:
 
   // ELEMENTS
   int nelements() const				{ return _elements->size(); }
-  const ref< vec< ElementRef > > elements() const { return _elements; }
+  const boost::shared_ptr< std::vector< ElementPtr > > elements() const { return _elements; }
   
   // LOGGING infrastructure
   
@@ -145,7 +143,7 @@ public:
 
 private:
   
-  ref< vec< ElementRef > > _elements;
+  boost::shared_ptr< std::vector< ElementPtr > > _elements;
   
   /** The router state */
   int _state;
@@ -177,7 +175,7 @@ private:
 
   /** Convenience function for adding a created (but not initialized)
       element into the router. */
-  void add_element(RouterRef, ElementRef);
+  void add_element(RouterPtr, ElementPtr);
 
   /** My local logger */
   LoggerI * _logger;

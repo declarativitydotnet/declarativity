@@ -33,7 +33,7 @@
 class PelScan : public Element {
  public:
   PelScan(str name,
-          TableRef table,
+          TablePtr table,
           unsigned field,
           str startup,
           str scan,
@@ -45,7 +45,7 @@ class PelScan : public Element {
   const char *flow_code() const			{ return "-/-"; }
   
   /** Receive a new lookup key */
-  int push(int port, TupleRef, b_cbv cb);
+  int push(int port, TuplePtr, b_cbv cb);
   
   /** Return a match to the current lookup */
   TuplePtr pull(int port, b_cbv cb);
@@ -55,7 +55,7 @@ class PelScan : public Element {
   
  private:
   /** My parent's table */
-  TableRef _table;
+  TablePtr _table;
   
   /** My current iterator */
   Table::MultScanIterator _iterator;

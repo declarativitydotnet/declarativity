@@ -35,25 +35,25 @@ public:
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );
 
-  static ValueRef xdr_unmarshal( XDR *x );
+  static ValuePtr xdr_unmarshal( XDR *x );
 
   // Constructors
-  Val_ID(IDRef theID) : i(theID) {};
+  Val_ID(IDPtr theID) : i(theID) {};
   virtual ~Val_ID() {};
 
   // Factory
-  static ValueRef mk(IDRef theID) { return New refcounted<Val_ID>(theID); };
+  static ValuePtr mk(IDPtr theID) { ValuePtr p(new Val_ID(theID)); return p; };
 
   // Strict comparison
-  int compareTo(ValueRef) const;
+  int compareTo(ValuePtr) const;
 
   // Casting
-  static IDRef cast(ValueRef v);
+  static IDPtr cast(ValuePtr v);
 
   static const opr::Oper* oper_;
 private:
   /** The ID */
-  IDRef i;
+  IDPtr i;
 };
 
 #endif /* __VAL_ID_H_ */

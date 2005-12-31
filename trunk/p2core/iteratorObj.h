@@ -17,7 +17,7 @@
 
 template < typename _Index, typename _FlatIndex >
 Table::IteratorObj< _Index, _FlatIndex >::IteratorObj(_Index * index,
-                                                      ValueRef key)
+                                                      ValuePtr key)
   : _index(),
     _key(key),
     _iter(_index.find(_key))
@@ -38,12 +38,12 @@ Table::IteratorObj< _Index, _FlatIndex >::next()
 {
   if (_iter == _index.end()) {
     // We've run out of elements, period.
-    return NULL;
+    return TuplePtr();
   } else {
-    ValueRef foundKey = _iter->first;
+    ValuePtr foundKey = _iter->first;
     if (foundKey->compareTo(_key) != 0) {
       // We've gone past the end of this key
-      return NULL;
+      return TuplePtr();
     } else {
       return (_iter++)->second;
     }

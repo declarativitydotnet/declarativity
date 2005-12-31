@@ -40,7 +40,7 @@ Aggwrap::Aggwrap(str name, str aggfn, int aggfield, str outputTableName)
 //
 // A new tuple is coming in from outside. 
 //
-int Aggwrap::push(int port, TupleRef t, b_cbv cb)
+int Aggwrap::push(int port, TuplePtr t, b_cbv cb)
 {
   log(LoggerI::INFO, 0, str(strbuf() << " Push: " << port << "," << t->toString()));
 
@@ -151,11 +151,11 @@ void Aggwrap::agg_init() {
   if ( _aggfn == "count") {
     count = 0;
   } else {
-    aggResult = NULL;
+    aggResult.reset();
   }
 }
 
-void Aggwrap::agg_accum(TupleRef t) {
+void Aggwrap::agg_accum(TuplePtr t) {
   TRC_FN;
   if ( _aggfn == "count") {
     count++;
@@ -188,7 +188,7 @@ void Aggwrap::agg_finalize() {
   TRC_FN; 
   if (_aggfn == "count") {       
     if (_incomingTuple) {
-      TupleRef aggResultToRet = Tuple::mk();
+      TuplePtr aggResultToRet = Tuple::mk();
       aggResultToRet->append(Val_Str::mk(_outputTableName));
       for (uint k = 0; k < _groupByFields.size(); k++) {
 	/*warn << _incomingTuple->toString() << " " 

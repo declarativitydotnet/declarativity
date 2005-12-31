@@ -31,7 +31,7 @@ public:
   const char *flow_code() const			{ return "--/--"; }
 
   /** Receive a new fixed tuple */
-  int push(int port, TupleRef, b_cbv cb);
+  int push(int port, TuplePtr, b_cbv cb);
 
   void registerGroupbyField(int field); 
   void comp_cb(int jnum);
@@ -58,7 +58,7 @@ private:
 
   void int_push_cb();
   void agg_init();
-  void agg_accum(TupleRef t);
+  void agg_accum(TuplePtr t);
   void agg_finalize();
     
 };

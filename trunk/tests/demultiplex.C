@@ -36,52 +36,49 @@ void testStaticDemux()
 {
   std::cout << "\nCHECK STATIC DEMUX\n";
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  Router::ConfigurationPtr conf(new Router::Configuration());
 
   // The source dataflow
-  ElementSpecRef sourceS = conf->addElement(New refcounted<
-                                            TimedPushSource >("source", 1));
-  ElementSpecRef sourcePrintS = conf->addElement(New refcounted< Print >("AfterSource"));
-  ElementSpecRef transS =       // If the seconds end in 0, produce a
+  ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 1)));
+  ElementSpecPtr sourcePrintS = conf->addElement(ElementPtr(new Print("AfterSource")));
+  ElementSpecPtr transS =       // If the seconds end in 0, produce a
                                 // tuple.  Prefix the tuple with a 0 or
                                 // 1 based on whether the number of
                                 // seconds was odd or even
-    conf->addElement(New refcounted< PelTransform >("trans", 
-                                                    "$1 10 % dup $1 2 % ->i32 ifpop ifpoptuple"));
-  ElementSpecRef prefixedPrintS = conf->addElement(New refcounted< Print >("Prefixed"));
+    conf->addElement(ElementPtr(new PelTransform("trans", "$1 10 % dup $1 2 % ->i32 ifpop ifpoptuple")));
+  ElementSpecPtr prefixedPrintS = conf->addElement(ElementPtr(new Print("Prefixed")));
   conf->hookUp(sourceS, 0, sourcePrintS, 0);
   conf->hookUp(sourcePrintS, 0, transS, 0);
   conf->hookUp(transS, 0, prefixedPrintS, 0);
 
 
   // The even destination dataflow
-  ElementSpecRef sinkPrintEvenS = conf->addElement(New refcounted< Print >("EvenSink"));
-  ElementSpecRef sinkEvenS = conf->addElement(New refcounted< Discard >("discardEven"));
+  ElementSpecPtr sinkPrintEvenS = conf->addElement(ElementPtr(new Print("EvenSink")));
+  ElementSpecPtr sinkEvenS = conf->addElement(ElementPtr(new Discard("discardEven")));
   conf->hookUp(sinkPrintEvenS, 0, sinkEvenS, 0);
 
   // The odd destination dataflow
-  ElementSpecRef sinkPrintOddS = conf->addElement(New refcounted< Print >("OddSink"));
-  ElementSpecRef sinkOddS = conf->addElement(New refcounted< Discard >("discardOdd"));
+  ElementSpecPtr sinkPrintOddS = conf->addElement(ElementPtr(new Print("OddSink")));
+  ElementSpecPtr sinkOddS = conf->addElement(ElementPtr(new Discard("discardOdd")));
   conf->hookUp(sinkPrintOddS, 0, sinkOddS, 0);
 
   // The other destination dataflow
-  ElementSpecRef sinkPrintOtherS = conf->addElement(New refcounted< Print >("OtherSink"));
-  ElementSpecRef sinkOtherS = conf->addElement(New refcounted< Discard >("discardOther"));
+  ElementSpecPtr sinkPrintOtherS = conf->addElement(ElementPtr(new Print("OtherSink")));
+  ElementSpecPtr sinkOtherS = conf->addElement(ElementPtr(new Discard("discardOther")));
   conf->hookUp(sinkPrintOtherS, 0, sinkOtherS, 0);
 
   // The demultiplexer
-  ref< vec< ValueRef > > demuxKeys = New refcounted< vec< ValueRef > >;
-  demuxKeys->push_back(New refcounted< Val_Int32 >(0));
-  demuxKeys->push_back(New refcounted< Val_Int32 >(1));
-  ElementSpecRef demuxS = conf->addElement(New refcounted< Demux
-                                           >("demux", demuxKeys));
+  boost::shared_ptr< std::vector< ValuePtr > > demuxKeys(new std::vector< ValuePtr >);
+  demuxKeys->push_back(ValuePtr(new Val_Int32(0)));
+  demuxKeys->push_back(ValuePtr(new Val_Int32(1)));
+  ElementSpecPtr demuxS = conf->addElement(ElementPtr(new Demux("demux", demuxKeys)));
   conf->hookUp(prefixedPrintS, 0, demuxS, 0);
   conf->hookUp(demuxS, 0, sinkPrintEvenS, 0);
   conf->hookUp(demuxS, 1, sinkPrintOddS, 0);
   conf->hookUp(demuxS, 2, sinkPrintOtherS, 0);
   
   
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized static demux.\n";
   } else {

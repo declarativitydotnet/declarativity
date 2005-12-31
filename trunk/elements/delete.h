@@ -22,7 +22,7 @@
 class Delete : public Element {
  public:
   Delete(str name,
-         TableRef table,
+         TablePtr table,
          unsigned indexFieldNo,
          unsigned keyFieldNo);
   
@@ -31,12 +31,12 @@ class Delete : public Element {
   const char *flow_code() const			{ return "-/"; }
   
   /** Delete a pushed element */
-  int push(int port, TupleRef, b_cbv cb);
+  int push(int port, TuplePtr, b_cbv cb);
 
   
  private:
   /** My table */
-  TableRef _table;
+  TablePtr _table;
 
   /** My index field into which I search for the entry to remove */
   unsigned _indexFieldNo;

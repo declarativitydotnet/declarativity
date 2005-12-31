@@ -57,7 +57,7 @@ int main(int argc, char **argv)
   
   
   for(unsigned i=0; i < (sizeof(tests) / sizeof(csv_test)); i++) {
-    TupleRef t = Tuple::mk();
+    TuplePtr t = Tuple::mk();
     t->append(Val_Str::mk(str(tests[i].in))); 
     t->freeze();
     cp.push(0, t, 0);

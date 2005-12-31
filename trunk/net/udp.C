@@ -60,7 +60,7 @@ void Udp::Rx::socket_cb()
     ref< suio > addressUio = New refcounted< suio >;
     addressUio->copy(&sa, sa_len);
 
-    TupleRef t = Tuple::mk();
+    TuplePtr t = Tuple::mk();
     t->append(Val_Opaque::mk(addressUio));
     t->append(Val_Opaque::mk(udpSuio));
     t->freeze();
@@ -109,7 +109,7 @@ void Udp::Tx::socket_cb()
   }
 
   // Try to pull a packet. 
-  Element::PortRef myInput = input(0);
+  Element::PortPtr myInput = input(0);
   TuplePtr t = myInput->pull(boost::bind(&Udp::Tx::element_cb, this));
   if (!t) {
     pull_pending = false;
@@ -166,8 +166,8 @@ int Udp::Tx::initialize()
 Udp::Udp(str name,
          u_int16_t port, u_int32_t addr) 
   : _name(name),
-    rx(New refcounted< Udp::Rx >(_name, *this)),
-    tx(New refcounted< Udp::Tx >(_name, *this))
+    rx(new Udp::Rx(_name, *this)),
+    tx(new Udp::Tx(_name, *this))
 {
   sd = inetsocket(SOCK_DGRAM, port, addr);
   make_async(sd);

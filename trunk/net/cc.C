@@ -25,12 +25,12 @@
 class OTuple
 {
 public:
-  OTuple() : tcb_(NULL), wnd_(true), tran_cnt_(0), tp_(NULL) {}
+  OTuple() : tcb_(NULL), wnd_(true), tran_cnt_(0) {}
 
   OTuple(TuplePtr tp) : tcb_(NULL), wnd_(true), tran_cnt_(0), tp_(tp) 
     { resetTime(); }
 
-  ~OTuple() { tp_ = NULL; }
+  ~OTuple() { tp_.reset(); }
 
   void operator()(std::pair<const SeqNum, OTuple*>& entry); 
   void resetTime() { clock_gettime (CLOCK_REALTIME, &tt_); }
@@ -98,12 +98,12 @@ CCRx::CCRx(str name, double rwnd, int seq, int src)
  * Acknowledge tuple p if ack_q is empty and output1 is open.
  * Otherwise, add to ack_q and enable callback.
  */
-TuplePtr CCRx::simple_action(TupleRef p) 
+TuplePtr CCRx::simple_action(TuplePtr p) 
 {
   /* Get source location, sequence number and ack tuple, signal my window also */
   SeqNum seq = Val_UInt64::cast((*p)[seq_field_]);
   str    src = Val_Str::cast((*p)[src_field_]);
-  TupleRef ack = Tuple::mk();
+  TuplePtr ack = Tuple::mk();
   ack->append(Val_Str::mk(src));
   ack->append(Val_UInt64::mk(seq));
   ack->append(Val_Double::mk(rwnd_));
@@ -133,10 +133,10 @@ TuplePtr CCRx::pull(int port, b_cbv cb)
     return ack;
   }
   _ack_cb = cb;
-  return NULL;
+  return TuplePtr();
 }
 
-int CCRx::push(int port, TupleRef tp, b_cbv cb)
+int CCRx::push(int port, TuplePtr tp, b_cbv cb)
 {
   if (port == 1) {
     try {
@@ -186,7 +186,7 @@ CCTx::CCTx(str name, double init_wnd, double max_wnd, uint32_t max_retry,
  * port 0: Indicates a tuple to send.
  * port 1: Indicates the acknowledgement of some outstanding tuple.
  */
-int CCTx::push(int port, TupleRef tp, b_cbv cb)
+int CCTx::push(int port, TuplePtr tp, b_cbv cb)
 {
   int retval = 1;
   assert(port < 2);
@@ -263,7 +263,7 @@ TuplePtr CCTx::pull(int port, b_cbv cb)
     return state;
   } else assert(0);
 
-  return NULL;
+  return TuplePtr();
 
 }
 

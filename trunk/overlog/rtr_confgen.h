@@ -79,24 +79,24 @@ class Rtr_ConfGen {
   struct ReceiverInfo;
 
  public:
-  Rtr_ConfGen(OL_Context* ctxt, Router::ConfigurationRef conf, 
+  Rtr_ConfGen(OL_Context* ctxt, Router::ConfigurationPtr conf, 
 	      bool _dups, bool debug, bool cc, str filename);
   Rtr_ConfGen::~Rtr_ConfGen();
 
-  void configureRouter(ref< Udp > udp, str nodeID);
+  void configureRouter(boost::shared_ptr< Udp > udp, str nodeID);
 
-  TableRef getTableByName(str nodeID, str tableName);
+  TablePtr getTableByName(str nodeID, str tableName);
 
   void createTables(str nodeID);
 
   void clear();
 
   // allow driver program to push data into dataflow
-  void registerUDPPushSenders(ElementSpecRef elementSpecRef);
+  void registerUDPPushSenders(ElementSpecPtr elementSpecPtr);
   
 private:
   static const str SEL_PRE, AGG_PRE, ASSIGN_PRE, TABLESIZE;
-  typedef std::map<str, TableRef> TableMap;
+  typedef std::map<str, TablePtr> TableMap;
   typedef std::map<str, str> PelFunctionMap;
   typedef std::map<str, ReceiverInfo> ReceiverInfoMap;
 
@@ -107,14 +107,14 @@ private:
   bool _debug; // do we stick debug elements in?
   bool _cc; // are we using congestion control
   FILE *_output;
-  Router::ConfigurationRef _conf; 
+  Router::ConfigurationPtr _conf; 
   std::map<str, str> _multTableIndices;
 
   // counter to determine how many muxers and demuxers are needed
   str _curType;
-  std::vector<ElementSpecRef> _udpSenders;
+  std::vector<ElementSpecPtr> _udpSenders;
   std::vector<int> _udpSendersPos;
-  std::vector<ElementSpecRef> _currentElementChain;
+  std::vector<ElementSpecPtr> _currentElementChain;
    
   ReceiverInfoMap _udpReceivers; // for demuxing
   bool _pendingRegisterReceiver;
@@ -131,7 +131,7 @@ private:
   void genJoinElements(OL_Context::Rule* curRule, 
 		       str nodeID,
 		       FieldNamesTracker* namesTracker,
-		       ptr<Aggwrap> agg_el);
+		       boost::shared_ptr<Aggwrap> agg_el);
 
   void genProbeElements(OL_Context::Rule* curRule, 
 			Parse_Functor* eventFunctor, 
@@ -171,17 +171,17 @@ private:
 			FieldNamesTracker* namesTracker);
  
   // Network elements
-  ElementSpecRef genSendElements(ref< Udp> udp, str nodeID);
+  ElementSpecPtr genSendElements(boost::shared_ptr< Udp> udp, str nodeID);
 
-  void genReceiveElements(ref< Udp> udp, 
+  void genReceiveElements(boost::shared_ptr< Udp> udp, 
 			  str nodeID, 
-			  ElementSpecRef wrapAroundDemux);
+			  ElementSpecPtr wrapAroundDemux);
 
   void registerReceiverTable(OL_Context::Rule* rule, 
 			     str tableName);
 
   void registerReceiver(str tableName, 
-			ElementSpecRef elementSpecRef);
+			ElementSpecPtr elementSpecPtr);
 
 
 
@@ -211,15 +211,15 @@ private:
 		 int assignID);
 
   // Other helper functions
-  void hookUp(ElementSpecRef firstElement, 
+  void hookUp(ElementSpecPtr firstElement, 
 	      int firstPort,
-	      ElementSpecRef secondElement, 
+	      ElementSpecPtr secondElement, 
 	      int secondPort);  
 
-  void hookUp(ElementSpecRef secondElement, 
+  void hookUp(ElementSpecPtr secondElement, 
 	      int secondPort);  
   
-  void addMultTableIndex(TableRef table, 
+  void addMultTableIndex(TablePtr table, 
 			 int fn, 
 			 str nodeID);
   
@@ -269,15 +269,15 @@ private:
   };
 
   struct ReceiverInfo {
-    std::vector<ElementSpecRef> _receivers;
+    std::vector<ElementSpecPtr> _receivers;
     str _name;
     u_int _arity;
     ReceiverInfo(str name, u_int arity) {
       _name = name;
       _arity = arity;
     }      
-    void addReceiver(ElementSpecRef elementSpecRef) { 
-      _receivers.push_back(elementSpecRef);
+    void addReceiver(ElementSpecPtr elementSpecPtr) { 
+      _receivers.push_back(elementSpecPtr);
     }
   };
 };

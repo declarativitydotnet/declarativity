@@ -43,7 +43,7 @@ void DuplicateConservative::unblock(int output)
   }
 }
 
-int DuplicateConservative::push(int port, TupleRef p, b_cbv cb)
+int DuplicateConservative::push(int port, TuplePtr p, b_cbv cb)
 {
   assert(p != 0);
   assert(port == 0);

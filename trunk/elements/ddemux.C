@@ -9,14 +9,14 @@
 
 #include "ddemux.h"
 
-DDemux::DDemux(str name, std::vector<ValueRef> keys,
+DDemux::DDemux(str name, std::vector<ValuePtr> keys,
                unsigned inputFieldNo)
   : Element(name, 1, 1),
     _push_cb(0),
     _block_flag_count(0),
     _inputFieldNo(inputFieldNo)
 {
-  for (std::vector<ValueRef>::iterator i = keys.begin(); 
+  for (std::vector<ValuePtr>::iterator i = keys.begin(); 
        i != keys.end(); i++) 
     assert(add_output(*i) > 0);
 }
@@ -27,7 +27,7 @@ DDemux::DDemux(str name, std::vector<ValueRef> keys,
  * will be raised. 
  * RETURN: port allocated to this key.
  */
-int DDemux::add_output(ValueRef key) {
+int DDemux::add_output(ValuePtr key) {
   PortMap::iterator miter = _port_map.find(key);
   assert (miter == _port_map.end());
 
@@ -53,7 +53,7 @@ void DDemux::remove_output(int port) {
       remove_output(miter->first);
 }
 
-void DDemux::remove_output(ValueRef key) {
+void DDemux::remove_output(ValuePtr key) {
   PortMap::iterator miter = _port_map.find(key);
   assert (miter != _port_map.end());
   int port = miter->second;
@@ -84,7 +84,7 @@ void DDemux::unblock(int output)
   }
 }
 
-int DDemux::push(int port, TupleRef p, b_cbv cb)
+int DDemux::push(int port, TuplePtr p, b_cbv cb)
 {
   assert(p != 0);
   assert(port == 0);
@@ -103,7 +103,7 @@ int DDemux::push(int port, TupleRef p, b_cbv cb)
   }
 
   // Extract the first field of the tuple
-  ValueRef key = (*p)[_inputFieldNo];
+  ValuePtr key = (*p)[_inputFieldNo];
   PortMap::iterator piter = _port_map.find(key);
   if (piter != _port_map.end()) {
     int i = piter->second;

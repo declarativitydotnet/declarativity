@@ -70,14 +70,14 @@ void testPingPong(int mode, str targetHost, LoggerI::Level level)
   // the local hostname
   str localHostname = getLocalHostname();
 
-  ptr< Store > pingNodeStore = New refcounted< Store >("PingNodes", 2);
+  boost::shared_ptr< Store > pingNodeStore(new Store("PingNodes", 2));
 
   // The sending data flow
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();    
+  Router::ConfigurationPtr conf(new Router::Configuration());    
 
   // to add a demuxer to differentiate ping and pingresponse
   Udp udpOut("9999", 9999); // port of the sender    
-  std::vector<TupleRef> buffer;
+  std::vector<TuplePtr> buffer;
   TuplePtr tuple = Tuple::mk();
   tuple->append(Val_Str::mk("Ping"));
   tuple->append(Val_Str::mk(localHostname << ":10000")); // my node
@@ -87,32 +87,32 @@ void testPingPong(int mode, str targetHost, LoggerI::Level level)
     pingNodeStore->insert(tuple);  
   }
 
-  ElementSpecRef scanS = conf->addElement(pingNodeStore->mkScan());
-  ElementSpecRef scanPrintS =
-    conf->addElement(New refcounted< Print >("AfterSource"));
-  ElementSpecRef timedPullPushS = conf->addElement(New refcounted< TimedPullPush >("PushPingNodes", 10));
+  ElementSpecPtr scanS = conf->addElement(pingNodeStore->mkScan());
+  ElementSpecPtr scanPrintS =
+    conf->addElement(ElementPtr(new Print("AfterSource")));
+  ElementSpecPtr timedPullPushS = conf->addElement(ElementPtr(new TimedPullPush("PushPingNodes", 10)));
 
   // pass it through the ping element to generate the ping request
-  ElementSpecRef ping = conf->addElement(New refcounted< Ping >("Ping", 5, 1, 15));
-  ElementSpecRef pingPrintS = conf->addElement(New refcounted< Print >("PingPrint"));
+  ElementSpecPtr ping = conf->addElement(ElementPtr(new Ping("Ping", 5, 1, 15)));
+  ElementSpecPtr pingPrintS = conf->addElement(ElementPtr(new Print("PingPrint")));
 
   // send the message where the first field is the address
-  ElementSpecRef encapS =
-    conf->addElement(New refcounted< PelTransform >("encapPingRequest",
+  ElementSpecPtr encapS =
+    conf->addElement(ElementPtr(new PelTransform("encapPingRequest",
                                                     "$1 pop \
-                                                     $0 ->t $1 append $2 append pop")); // the rest
+                                                     $0 ->t $1 append $2 append pop"))); // the rest
 
-  ElementSpecRef marshalS =
-    conf->addElement(New refcounted< MarshalField >("Marshal", 1));
+  ElementSpecPtr marshalS =
+    conf->addElement(ElementPtr(new MarshalField("Marshal", 1)));
   
-  ElementSpecRef routeS =
-    conf->addElement(New refcounted< StrToSockaddr >("Router", 0));
+  ElementSpecPtr routeS =
+    conf->addElement(ElementPtr(new StrToSockaddr("Router", 0)));
 
-  ElementSpecRef printSPostMarshal = conf->addElement(New refcounted< Print >("PrintPostMarshal"));
+  ElementSpecPtr printSPostMarshal = conf->addElement(ElementPtr(new Print("PrintPostMarshal")));
 
-  ElementSpecRef slotTxS = conf->addElement(New refcounted< Slot >("slotTx"));
-  ElementSpecRef udpTxS = conf->addElement(udpOut.get_tx());
-  ElementSpecRef muxS = conf->addElement(New refcounted< RoundRobin >("roundRobin", 2));
+  ElementSpecPtr slotTxS = conf->addElement(ElementPtr(new Slot("slotTx")));
+  ElementSpecPtr udpTxS = conf->addElement(udpOut.get_tx());
+  ElementSpecPtr muxS = conf->addElement(ElementPtr(new RoundRobin("roundRobin", 2)));
   
   conf->hookUp(scanS, 0, scanPrintS, 0);
   conf->hookUp(scanPrintS, 0, timedPullPushS, 0);
@@ -128,21 +128,21 @@ void testPingPong(int mode, str targetHost, LoggerI::Level level)
   
   // pipe them separately into pong and ping
   Udp udpIn("10000", 10000);  
-  ElementSpecRef udpRxS = conf->addElement(udpIn.get_rx());
-  ElementSpecRef rxPrintS = conf->addElement(New refcounted< Print >("Received"));
-  ElementSpecRef unmarshalS =
-    conf->addElement(New refcounted< UnmarshalField >("unmarshal", 1));
-  ElementSpecRef unBoxS =
-    conf->addElement(New refcounted< PelTransform >("UnBox:", "$1 unbox pop pop pop"));
+  ElementSpecPtr udpRxS = conf->addElement(udpIn.get_rx());
+  ElementSpecPtr rxPrintS = conf->addElement(ElementPtr(new Print("Received")));
+  ElementSpecPtr unmarshalS =
+    conf->addElement(ElementPtr(new UnmarshalField("unmarshal", 1)));
+  ElementSpecPtr unBoxS =
+    conf->addElement(ElementPtr(new PelTransform("UnBox:", "$1 unbox pop pop pop")));
 
-  ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("After Unmarshal")); 
-  ref< vec< ValueRef > > demuxKeys = New refcounted< vec< ValueRef > >;
-  demuxKeys->push_back(New refcounted< Val_Str >("PingRequest"));
-  demuxKeys->push_back(New refcounted< Val_Str >("PingResponse"));
-  ElementSpecRef demuxS = conf->addElement(New refcounted< Demux >("demux", demuxKeys));
-  ElementSpecRef pong = conf->addElement(New refcounted< Pong >("Pong", 0)); 
-  ElementSpecRef pongPrint = conf->addElement(New refcounted< Print >("PongReply"));
-  ElementSpecRef slotRxS = conf->addElement(New refcounted< Slot >("slotTx1"));
+  ElementSpecPtr sinkPrintS = conf->addElement(ElementPtr(new Print("After Unmarshal")));
+  boost::shared_ptr< std::vector< ValuePtr > > demuxKeys(new std::vector< ValuePtr >);
+  demuxKeys->push_back(ValuePtr(new Val_Str("PingRequest")));
+  demuxKeys->push_back(ValuePtr(new Val_Str("PingResponse")));
+  ElementSpecPtr demuxS = conf->addElement(ElementPtr(new Demux("demux", demuxKeys)));
+  ElementSpecPtr pong = conf->addElement(ElementPtr(new Pong("Pong", 0)));
+  ElementSpecPtr pongPrint = conf->addElement(ElementPtr(new Print("PongReply")));
+  ElementSpecPtr slotRxS = conf->addElement(ElementPtr(new Slot("slotTx1")));
 
   conf->hookUp(udpRxS, 0, rxPrintS, 0);
   conf->hookUp(rxPrintS, 0, unmarshalS, 0);
@@ -159,15 +159,15 @@ void testPingPong(int mode, str targetHost, LoggerI::Level level)
   conf->hookUp(slotRxS, 0, muxS, 1); 
 
   // output the ping results (with latency numbers)
-  ElementSpecRef slotRxS1 = conf->addElement(New refcounted< Slot >("slotRx1"));
-  ElementSpecRef pingResultPrint = conf->addElement(New refcounted< Print >("PingResultReply"));
-  ElementSpecRef sinkS =
-    conf->addElement(New refcounted< TimedPullSink >("sink", 0));
+  ElementSpecPtr slotRxS1 = conf->addElement(ElementPtr(new Slot("slotRx1")));
+  ElementSpecPtr pingResultPrint = conf->addElement(ElementPtr(new Print("PingResultReply")));
+  ElementSpecPtr sinkS =
+    conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
   conf->hookUp(ping, 0, pingResultPrint, 0);
   conf->hookUp(pingResultPrint, 0, slotRxS1, 0);
   conf->hookUp(slotRxS1, 0, sinkS, 0);   
  
-  RouterRef router = New refcounted< Router >(conf, level);
+  RouterPtr router(new Router(conf, level));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized.\n";
   } else {

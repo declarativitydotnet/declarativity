@@ -29,7 +29,7 @@ Route::~Route()
 {
 }
 
-TuplePtr Route::simple_action(TupleRef p)
+TuplePtr Route::simple_action(TuplePtr p)
 {
   // Get first tuple field
   ValuePtr firstP = (*p)[0];
@@ -38,9 +38,9 @@ TuplePtr Route::simple_action(TupleRef p)
     log(LoggerI::WARN,
         -1,
         "Input tuple has no first field");
-    return 0;
+    return TuplePtr();
   }
-  ValueRef first = firstP;
+  ValuePtr first = firstP;
 
   // Is it a string?
   if (first->typeCode() != Value::OPAQUE) {
@@ -48,7 +48,7 @@ TuplePtr Route::simple_action(TupleRef p)
     log(LoggerI::WARN,
         -1,
         "Input tuple's first field is not an opaque");
-    return 0;
+    return TuplePtr();
   }
 
   // Route and return new tuple
@@ -59,7 +59,7 @@ TuplePtr Route::simple_action(TupleRef p)
         -1,
         "Couldn't allocate new tuple");
 
-    return 0;
+    return TuplePtr();
   } else {
     // Stick the destination address and the opaque into the new tuple
     routed->append(_destination);

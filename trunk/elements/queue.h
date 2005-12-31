@@ -23,7 +23,7 @@ public:
   ~Queue();
   
   /** Overridden to perform the printing */
-  int Queue::push(int port, TupleRef p, b_cbv cb);
+  int Queue::push(int port, TuplePtr p, b_cbv cb);
   TuplePtr pull(int port, b_cbv cb);  
 
 
@@ -35,7 +35,7 @@ private:
   b_cbv _pullCB, _pushCB;
   unsigned int _size;
   /** The tuple ref array from which I pull */
-  std::queue<TupleRef> _q;
+  std::queue<TuplePtr> _q;
 };
 
 

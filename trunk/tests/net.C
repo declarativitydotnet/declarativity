@@ -57,20 +57,20 @@ void testUdpTx()
 
   // The sending data flow
 
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef sourceS =
-    conf->addElement(New refcounted< TimedPushSource >("source", .5));
-  ElementSpecRef sourcePrintS =
-    conf->addElement(New refcounted< Print >("AfterSource"));
-  ElementSpecRef marshalS =
-    conf->addElement(New refcounted< Marshal >("marshal"));
-  ElementSpecRef marshalPrintS =
-    conf->addElement(New refcounted< Print >("Marshalled"));
-  ElementSpecRef routeS =
-    conf->addElement(New refcounted< Route >("router", addressUio));
-  ElementSpecRef routePrintS = conf->addElement(New refcounted< Print >("Routed"));
-  ElementSpecRef udpTxS = conf->addElement(udpOut.get_tx());
-  ElementSpecRef slotTxS = conf->addElement(New refcounted< Slot >("slotTx"));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr sourceS =
+    conf->addElement(ElementPtr(new TimedPushSource("source", .5)));
+  ElementSpecPtr sourcePrintS =
+    conf->addElement(ElementPtr(new Print("AfterSource")));
+  ElementSpecPtr marshalS =
+    conf->addElement(ElementPtr(new Marshal("marshal")));
+  ElementSpecPtr marshalPrintS =
+    conf->addElement(ElementPtr(new Print("Marshalled")));
+  ElementSpecPtr routeS =
+    conf->addElement(ElementPtr(new Route("router", addressUio)));
+  ElementSpecPtr routePrintS = conf->addElement(ElementPtr(new Print("Routed")));
+  ElementSpecPtr udpTxS = conf->addElement(udpOut.get_tx());
+  ElementSpecPtr slotTxS = conf->addElement(ElementPtr(new Slot("slotTx")));
 
   conf->hookUp(sourceS, 0, sourcePrintS, 0);
   conf->hookUp(sourcePrintS, 0, marshalS, 0);
@@ -83,17 +83,17 @@ void testUdpTx()
 
 
   // The receiving data flow
-  ElementSpecRef udpRxS = conf->addElement(udpIn.get_rx());
-  ElementSpecRef rxPrintS = conf->addElement(New refcounted< Print >("Received"));
-  ElementSpecRef unrouteS =
-    conf->addElement(New refcounted< PelTransform >("unRoute", "$1 pop"));
-  ElementSpecRef unroutePrintS = conf->addElement(New refcounted< Print >("DropAddress"));
-  ElementSpecRef unmarshalS =
-    conf->addElement(New refcounted< Unmarshal >("unmarshal"));
-  ElementSpecRef sinkPrintS = conf->addElement(New refcounted< Print >("BeforeSink"));
-  ElementSpecRef slotRxS = conf->addElement(New refcounted< Slot >("slotRx"));
-  ElementSpecRef sinkS =
-    conf->addElement(New refcounted< TimedPullSink >("sink", 0));
+  ElementSpecPtr udpRxS = conf->addElement(udpIn.get_rx());
+  ElementSpecPtr rxPrintS = conf->addElement(ElementPtr(new Print("Received")));
+  ElementSpecPtr unrouteS =
+    conf->addElement(ElementPtr(new PelTransform("unRoute", "$1 pop")));
+  ElementSpecPtr unroutePrintS = conf->addElement(ElementPtr(new Print("DropAddress")));
+  ElementSpecPtr unmarshalS =
+    conf->addElement(ElementPtr(new Unmarshal("unmarshal")));
+  ElementSpecPtr sinkPrintS = conf->addElement(ElementPtr(new Print("BeforeSink")));
+  ElementSpecPtr slotRxS = conf->addElement(ElementPtr(new Slot("slotRx")));
+  ElementSpecPtr sinkS =
+    conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
   conf->hookUp(udpRxS, 0, rxPrintS, 0);
   conf->hookUp(rxPrintS, 0, unrouteS, 0);
   conf->hookUp(unrouteS, 0, unroutePrintS, 0);
@@ -102,7 +102,7 @@ void testUdpTx()
   conf->hookUp(sinkPrintS, 0, slotRxS, 0);
   conf->hookUp(slotRxS, 0, sinkS, 0);
 
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized.\n";
   } else {
@@ -121,14 +121,14 @@ void testPLSensor()
 {
   std::cout << "\nCHECK PL SENSOR\n";
 
-  ref<PlSensor> pl = New refcounted<PlSensor>("Sensor", (uint16_t)80,"/", 5);
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
-  ElementSpecRef plSpec = conf->addElement(pl);
-  ElementSpecRef printSpec = conf->addElement(New refcounted<Print>("PRINT SPEC"));
+  boost::shared_ptr<PlSensor> pl(new PlSensor("Sensor", (uint16_t)80,"/", 5));
+  Router::ConfigurationPtr conf(new Router::Configuration());
+  ElementSpecPtr plSpec = conf->addElement(pl);
+  ElementSpecPtr printSpec = conf->addElement(ElementPtr(new Print("PRINT SPEC")));
   conf->hookUp(plSpec,0,printSpec,0);
 
   // Create the router and check it statically
-  RouterRef router = New refcounted< Router >(conf);
+  RouterPtr router(new Router(conf));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized PlSensor to push print spec.\n";
   } else {

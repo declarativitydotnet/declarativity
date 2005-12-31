@@ -26,7 +26,7 @@ SimpleKeyRouter::SimpleKeyRouter(str n, ValuePtr id, bool r)
   : Element(n, 2, 2), my_id_(id), retry_(r) { }
 
 
-int SimpleKeyRouter::push(int port, TupleRef tp, b_cbv cb) {
+int SimpleKeyRouter::push(int port, TuplePtr tp, b_cbv cb) {
   int route = -1;
 
   if (port == 0) route = greedyRoute(tp);
@@ -64,15 +64,15 @@ void SimpleKeyRouter::route(ValuePtr key, ValuePtr loc) {
   routes_.insert(i, new Route(key, loc));
 }
 
-ref< vec< ValueRef > > SimpleKeyRouter::neighbors() {
-  ref< vec< ValueRef > > n = New refcounted< vec< ValueRef > >;
+boost::shared_ptr< std::vector< ValuePtr > > SimpleKeyRouter::neighbors() {
+  boost::shared_ptr< std::vector< ValuePtr > > n(new std::vector< ValuePtr >);
   for (std::vector<Route*>::iterator i = routes_.begin(); 
        i != routes_.end(); i++) n->push_back((*i)->location_);
   return n;
 }
 
-ref< vec< ValueRef > > SimpleKeyRouter::routes() {
-  ref< vec< ValueRef > > r = New refcounted< vec< ValueRef > >;
+boost::shared_ptr< std::vector< ValuePtr > > SimpleKeyRouter::routes() {
+  boost::shared_ptr< std::vector< ValuePtr > > r(new std::vector< ValuePtr >);
   for (uint i = 0; i < routes_.size(); r->push_back(Val_UInt32::mk(i++)))
     ;
   return r;
@@ -114,7 +114,7 @@ REMOVABLE_INLINE TuplePtr SimpleKeyRouter::untagRoute(TuplePtr tp) {
   TuplePtr tuple = Tuple::mk();
   for (uint i = 0; i < tp->size(); i++) {
     try {
-      TupleRef t = Val_Tuple::cast((*tp)[i]); 
+      TuplePtr t = Val_Tuple::cast((*tp)[i]); 
       if (Val_Str::cast((*t)[0]) == "ROUTE") continue;
     }
     catch (Value::TypeError& e) { } 
@@ -126,7 +126,7 @@ REMOVABLE_INLINE TuplePtr SimpleKeyRouter::untagRoute(TuplePtr tp) {
 REMOVABLE_INLINE int SimpleKeyRouter::getRoute(TuplePtr tp) {
   for (uint i = 0; i < tp->size(); i++) {
     try {
-      TupleRef t = Val_Tuple::cast((*tp)[i]); 
+      TuplePtr t = Val_Tuple::cast((*tp)[i]); 
       if (Val_Str::cast((*t)[0]) == "ROUTE") return Val_Int32::cast((*t)[1]);
     }
     catch (Value::TypeError& e) { } 
@@ -144,10 +144,10 @@ REMOVABLE_INLINE ValuePtr SimpleKeyRouter::getKey(TuplePtr tp) {
 
   for (uint i = 0; i < tp->size(); i++) {
     try {
-      TupleRef t = Val_Tuple::cast((*tp)[i]); 
+      TuplePtr t = Val_Tuple::cast((*tp)[i]); 
       if (Val_Str::cast((*t)[0]) == "LOOKUP") return (*t)[1];
     }
     catch (Value::TypeError& e) { } 
   }
-  return NULL;
+  return ValuePtr();
 }

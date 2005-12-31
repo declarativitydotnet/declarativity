@@ -45,30 +45,30 @@
 #include "discard.h"
 #include "mux.h"
 
-Router::ConfigurationRef UdpCC_source(Udp *udp, str src, str dest, double drop) {
+Router::ConfigurationPtr UdpCC_source(Udp *udp, str src, str dest, double drop) {
   // The sending data flow
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  Router::ConfigurationPtr conf(new Router::Configuration());
 
-  ElementSpecRef data     = conf->addElement(New refcounted< TimedPushSource >("source", .01));
-  ElementSpecRef dqueue   = conf->addElement(New refcounted< Queue >("Source Data Q", 1000));
-  ElementSpecRef seq      = conf->addElement(New refcounted< Sequence >("Sequence", src, 1));
-  ElementSpecRef retry    = conf->addElement(New refcounted< RDelivery >("Retry"));
-  ElementSpecRef retryMux = conf->addElement(New refcounted< Mux >("Retry Mux", 2));
-  ElementSpecRef cct      = conf->addElement(New refcounted< CCT >("Transmit CC", 1, 2048));
-  ElementSpecRef destAddr = conf->addElement(New refcounted< PelTransform >(strbuf("DEST: ").cat(dest),
+  ElementSpecPtr data     = conf->addElement(ElementPtr(new TimedPushSource("source", .01)));
+  ElementSpecPtr dqueue   = conf->addElement(ElementPtr(new Queue("Source Data Q", 1000)));
+  ElementSpecPtr seq      = conf->addElement(ElementPtr(new Sequence("Sequence", src, 1)));
+  ElementSpecPtr retry    = conf->addElement(ElementPtr(new RDelivery("Retry")));
+  ElementSpecPtr retryMux = conf->addElement(ElementPtr(new Mux("Retry Mux", 2)));
+  ElementSpecPtr cct      = conf->addElement(ElementPtr(new CCT("Transmit CC", 1, 2048)));
+  ElementSpecPtr destAddr = conf->addElement(ElementPtr(new PelTransform(strbuf("DEST: ").cat(dest),
                                                                             strbuf() << "\"" << dest << "\""
-									    << " pop swallow pop"));
-  ElementSpecRef marshal  = conf->addElement(New refcounted< MarshalField >("marshal data", 1));
-  ElementSpecRef route    = conf->addElement(New refcounted< StrToSockaddr >("Convert dest addr", 0));
-  ElementSpecRef netsim   = conf->addElement(New refcounted< SimpleNetSim >("Simple Net Sim (Sender)", 
-									    10, 100, drop));
-  ElementSpecRef udpTx    = conf->addElement(udp->get_tx());
+									    << " pop swallow pop")));
+  ElementSpecPtr marshal  = conf->addElement(ElementPtr(new MarshalField("marshal data", 1)));
+  ElementSpecPtr route    = conf->addElement(ElementPtr(new StrToSockaddr("Convert dest addr", 0)));
+  ElementSpecPtr netsim   = conf->addElement(ElementPtr(new SimpleNetSim("Simple Net Sim (Sender)", 
+									    10, 100, drop)));
+  ElementSpecPtr udpTx    = conf->addElement(udp->get_tx());
 
   // The receiving data flow
-  ElementSpecRef udpRx     = conf->addElement(udp->get_rx());
-  ElementSpecRef unmarshal = conf->addElement(New refcounted< UnmarshalField >("unmarshal ack", 1));
-  ElementSpecRef unbox     = conf->addElement(New refcounted< PelTransform >("unRoute", "$1 unboxPop"));
-  ElementSpecRef discard   = conf->addElement(New refcounted< Discard >("DISCARD"));
+  ElementSpecPtr udpRx     = conf->addElement(udp->get_rx());
+  ElementSpecPtr unmarshal = conf->addElement(ElementPtr(new UnmarshalField("unmarshal ack", 1)));
+  ElementSpecPtr unbox     = conf->addElement(ElementPtr(new PelTransform("unRoute", "$1 unboxPop")));
+  ElementSpecPtr discard   = conf->addElement(ElementPtr(new Discard("DISCARD")));
 
   // The local data flow
   conf->hookUp(data, 0, dqueue, 0);
@@ -93,26 +93,26 @@ Router::ConfigurationRef UdpCC_source(Udp *udp, str src, str dest, double drop) 
   return conf;
 }
 
-Router::ConfigurationRef UdpCC_sink(Udp *udp, double drop) {
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+Router::ConfigurationPtr UdpCC_sink(Udp *udp, double drop) {
+  Router::ConfigurationPtr conf(new Router::Configuration());
 
   // The remote data elements
-  ElementSpecRef udpRx     = conf->addElement(udp->get_rx());
-  ElementSpecRef bw        = conf->addElement(New refcounted< Bandwidth >());
-  ElementSpecRef unmarshal = conf->addElement(New refcounted< UnmarshalField >("unmarshal", 1));
-  ElementSpecRef unroute   = conf->addElement(New refcounted< PelTransform >("unRoute", "$1 unboxPop"));
-  ElementSpecRef printS    = conf->addElement(New refcounted< Print >("Print Sink"));
-  ElementSpecRef ccr       = conf->addElement(New refcounted< CCR >("CC Receive", 2048));
-  ElementSpecRef discard   = conf->addElement(New refcounted< Discard >("DISCARD"));
+  ElementSpecPtr udpRx     = conf->addElement(udp->get_rx());
+  ElementSpecPtr bw        = conf->addElement(ElementPtr(new Bandwidth()));
+  ElementSpecPtr unmarshal = conf->addElement(ElementPtr(new UnmarshalField("unmarshal", 1)));
+  ElementSpecPtr unroute   = conf->addElement(ElementPtr(new PelTransform("unRoute", "$1 unboxPop")));
+  ElementSpecPtr printS    = conf->addElement(ElementPtr(new Print("Print Sink")));
+  ElementSpecPtr ccr       = conf->addElement(ElementPtr(new CCR("CC Receive", 2048)));
+  ElementSpecPtr discard   = conf->addElement(ElementPtr(new Discard("DISCARD")));
 
   // The remote ack elements
-  ElementSpecRef udpTx    = conf->addElement(udp->get_tx());
-  ElementSpecRef netsim   = conf->addElement(New refcounted< SimpleNetSim >("Simple Net Sim (Sender)", 
-									    10, 100, drop));
-  ElementSpecRef route    = conf->addElement(New refcounted< StrToSockaddr >("Convert src addr", 0));
-  ElementSpecRef marshal  = conf->addElement(New refcounted< MarshalField >("marshal ack", 1));
-  ElementSpecRef destAddr = conf->addElement(New refcounted< PelTransform >("RESPONSE ADDRESS",
-  									    "$0 pop swallow pop"));
+  ElementSpecPtr udpTx    = conf->addElement(udp->get_tx());
+  ElementSpecPtr netsim   = conf->addElement(ElementPtr(new SimpleNetSim("Simple Net Sim (Sender)", 
+									    10, 100, drop)));
+  ElementSpecPtr route    = conf->addElement(ElementPtr(new StrToSockaddr("Convert src addr", 0)));
+  ElementSpecPtr marshal  = conf->addElement(ElementPtr(new MarshalField("marshal ack", 1)));
+  ElementSpecPtr destAddr = conf->addElement(ElementPtr(new PelTransform("RESPONSE ADDRESS",
+  									    "$0 pop swallow pop")));
 
 
   // PACKET RECEIVE DATA FLOW
@@ -133,9 +133,9 @@ Router::ConfigurationRef UdpCC_sink(Udp *udp, double drop) {
   return conf;
 }
 
-void testUdpCC(Router::ConfigurationRef conf)
+void testUdpCC(Router::ConfigurationPtr conf)
 {
-  RouterRef router = New refcounted< Router >(conf, LoggerI::WARN);
+  RouterPtr router(new Router(conf, LoggerI::WARN));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized.\n";
   } else {

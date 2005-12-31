@@ -104,75 +104,75 @@ namespace opr {
    &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_}
   };
   
-  ValueRef operator<<(const ValueRef& v1, const ValueRef& v2) {
+  ValuePtr operator<<(const ValuePtr& v1, const ValuePtr& v2) {
    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_lshift(v1, v2);
   };
-  ValueRef operator>>(const ValueRef& v1, const ValueRef& v2) { 
+  ValuePtr operator>>(const ValuePtr& v1, const ValuePtr& v2) { 
    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_rshift(v1, v2);
   };
-  ValueRef operator+(const ValueRef& v1, const ValueRef& v2) { 
+  ValuePtr operator+(const ValuePtr& v1, const ValuePtr& v2) { 
    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_plus(v1, v2);
   };
-  ValueRef operator-(const ValueRef& v1, const ValueRef& v2) { 
+  ValuePtr operator-(const ValuePtr& v1, const ValuePtr& v2) { 
    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_minus(v1, v2);
   };
-  ValueRef operator--(const ValueRef& v1) { 
+  ValuePtr operator--(const ValuePtr& v1) { 
    return (*Oper::oper_table_[v1->typeCode()][v1->typeCode()])->_dec(v1);
   };
-  ValueRef operator++(const ValueRef& v1) { 
+  ValuePtr operator++(const ValuePtr& v1) { 
    return (*Oper::oper_table_[v1->typeCode()][v1->typeCode()])->_inc(v1);
   };
-  ValueRef operator*(const ValueRef& v1, const ValueRef& v2) { 
+  ValuePtr operator*(const ValuePtr& v1, const ValuePtr& v2) { 
    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_times(v1, v2);
   };
-  ValueRef operator/(const ValueRef& v1, const ValueRef& v2) { 
+  ValuePtr operator/(const ValuePtr& v1, const ValuePtr& v2) { 
    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_divide(v1, v2);
   };
-  ValueRef operator%(const ValueRef& v1, const ValueRef& v2) { 
+  ValuePtr operator%(const ValuePtr& v1, const ValuePtr& v2) { 
    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_mod(v1, v2);
   };
-  ValueRef operator~ (const ValueRef& v) {
+  ValuePtr operator~ (const ValuePtr& v) {
    return (*Oper::oper_table_[v->typeCode()][v->typeCode()])->_bnot(v);
   };
-  ValueRef operator& (const ValueRef& v1, const ValueRef& v2) { 
+  ValuePtr operator& (const ValuePtr& v1, const ValuePtr& v2) { 
    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_band(v1, v2);
   };
-  ValueRef operator| (const ValueRef& v1, const ValueRef& v2) { 
+  ValuePtr operator| (const ValuePtr& v1, const ValuePtr& v2) { 
    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_bor(v1, v2);
   };
-  ValueRef operator^ (const ValueRef& v1, const ValueRef& v2) { 
+  ValuePtr operator^ (const ValuePtr& v1, const ValuePtr& v2) { 
    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_bxor(v1, v2);
   };
   
-  bool operator==(const ValueRef& v1, const ValueRef& v2) { 
+  bool operator==(const ValuePtr& v1, const ValuePtr& v2) { 
    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_eq(v1, v2);
   };
-  bool operator!=(const ValueRef& v1, const ValueRef& v2) { 
+  bool operator!=(const ValuePtr& v1, const ValuePtr& v2) { 
    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_neq(v1, v2);
   };
-  bool operator< (const ValueRef& v1, const ValueRef& v2) { 
+  bool operator< (const ValuePtr& v1, const ValuePtr& v2) { 
    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_lt(v1, v2);
   };
-  bool operator<=(const ValueRef& v1, const ValueRef& v2) { 
+  bool operator<=(const ValuePtr& v1, const ValuePtr& v2) { 
    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_lte(v1, v2);
   };
-  bool operator> (const ValueRef& v1, const ValueRef& v2) { 
+  bool operator> (const ValuePtr& v1, const ValuePtr& v2) { 
    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_gt(v1, v2);
   };
-  bool operator>=(const ValueRef& v1, const ValueRef& v2) { 
+  bool operator>=(const ValuePtr& v1, const ValuePtr& v2) { 
    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_gte(v1, v2);
   };
   
-  bool inOO(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3) {
+  bool inOO(const ValuePtr& v1, const ValuePtr& v2, const ValuePtr& v3) {
    return (*Oper::oper_table_[v2->typeCode()][v3->typeCode()])->_inOO(v1, v2, v3);
   };
-  bool inOC(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3) {
+  bool inOC(const ValuePtr& v1, const ValuePtr& v2, const ValuePtr& v3) {
    return (*Oper::oper_table_[v2->typeCode()][v3->typeCode()])->_inOC(v1, v2, v3);
   };
-  bool inCO(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3) {
+  bool inCO(const ValuePtr& v1, const ValuePtr& v2, const ValuePtr& v3) {
    return (*Oper::oper_table_[v2->typeCode()][v3->typeCode()])->_inCO(v1, v2, v3);
   };
-  bool inCC(const ValueRef& v1, const ValueRef& v2, const ValueRef& v3) {
+  bool inCC(const ValuePtr& v1, const ValuePtr& v2, const ValuePtr& v3) {
    return (*Oper::oper_table_[v2->typeCode()][v3->typeCode()])->_inCC(v1, v2, v3);
   };
 }; // END NAMESPACE OPR

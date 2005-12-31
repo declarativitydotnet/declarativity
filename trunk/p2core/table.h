@@ -19,12 +19,12 @@
 #include <map>
 #include <vector>
 #include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "tuple.h"
 
 class Table;
-typedef ref<Table> TableRef;
-typedef ptr<Table> TablePtr;
+typedef boost::shared_ptr<Table> TablePtr;
 
 /*
  OK, what does a table _do_?
@@ -92,7 +92,7 @@ public:
   void unset_tuple_lifetime() { expiry_lifetime = false; };
 
   // Insert a tuple
-  void insert(TupleRef t);
+  void insert(TuplePtr t);
 
   // How big is the table
   size_t size() { return els.size(); };
@@ -105,26 +105,26 @@ public:
   bool		expiry_lifetime;
 
   struct Entry {
-    TupleRef t;
+    TuplePtr t;
     timespec ts;
-    Entry(TupleRef tp) : t(tp) { clock_gettime(CLOCK_REALTIME,&ts); };
+    Entry(TuplePtr tp) : t(tp) { clock_gettime(CLOCK_REALTIME,&ts); };
   };
   std::deque<Entry *> els;
 
   /** My valueref comparison functor type for the indices. */
-  struct valueRefCompare
+  struct valuePtrCompare
   {
-    bool operator()(const ValueRef first,
-                    const ValueRef second) const
+    bool operator()(const ValuePtr first,
+                    const ValuePtr second) const
     {
       return first->compareTo(second) < 0;
     }
   };
 
-  typedef std::multimap< ValueRef, Entry *, Table::valueRefCompare > MultIndex;
-  typedef std::map< ValueRef, Entry *, Table::valueRefCompare >  UniqueIndex;
-  typedef std::multimap< ValueRef, TupleRef, Table::valueRefCompare > MultIndexFlat;
-  typedef std::map< ValueRef, TupleRef, Table::valueRefCompare >  UniqueIndexFlat;
+  typedef std::multimap< ValuePtr, Entry *, Table::valuePtrCompare > MultIndex;
+  typedef std::map< ValuePtr, Entry *, Table::valuePtrCompare >  UniqueIndex;
+  typedef std::multimap< ValuePtr, TuplePtr, Table::valuePtrCompare > MultIndexFlat;
+  typedef std::map< ValuePtr, TuplePtr, Table::valuePtrCompare >  UniqueIndexFlat;
 
   class AggregateFunction
   {
@@ -136,10 +136,10 @@ public:
     virtual void reset() = 0;
 
     /** Start a new aggregate computation with a new tuple. */
-    virtual void first(ValueRef) = 0;
+    virtual void first(ValuePtr) = 0;
     
     /** Process a tuple for this function */
-    virtual void process(ValueRef) = 0;
+    virtual void process(ValuePtr) = 0;
     
     /** Retrieve the result for this function. If no tuples have been
         submitted, return NULL. */
@@ -154,9 +154,9 @@ public:
 
     void reset();
 
-    void first(ValueRef);
+    void first(ValuePtr);
     
-    void process(ValueRef);
+    void process(ValuePtr);
     
     ValuePtr result();
 
@@ -175,9 +175,9 @@ public:
 
     void reset();
 
-    void first(ValueRef);
+    void first(ValuePtr);
     
-    void process(ValueRef);
+    void process(ValuePtr);
     
     ValuePtr result();
 
@@ -200,9 +200,9 @@ public:
 
     void reset();
 
-    void first(ValueRef);
+    void first(ValuePtr);
     
-    void process(ValueRef);
+    void process(ValuePtr);
     
     ValuePtr result();
 
@@ -218,9 +218,9 @@ public:
 
     void reset();
 
-    void first(ValueRef);
+    void first(ValuePtr);
     
-    void process(ValueRef);
+    void process(ValuePtr);
     
     ValuePtr result();
 
@@ -231,7 +231,7 @@ public:
 
 
   /** A listener */
-  typedef boost::function<void (TupleRef)> Listener;
+  typedef boost::function<void (TuplePtr)> Listener;
 
 
   /** An aggregate state record */
@@ -248,7 +248,7 @@ public:
     void addListener(Listener);
     
     /** Update the aggregate given a newly inserted tuple */
-    void update(TupleRef);
+    void update(TuplePtr);
 
   private:
     typedef typename _Index::iterator _Iterator;
@@ -281,8 +281,8 @@ public:
       {
       }
 
-      bool operator()(const TupleRef first,
-                      const TupleRef second) const
+      bool operator()(const TuplePtr first,
+                      const TuplePtr second) const
       {
         int groupByMatch = 0;
         for (size_t f = 0;
@@ -305,8 +305,8 @@ public:
     
     /** My map from group-by values to current aggregates.  Used to
         determine aggregate changes during updates. */
-    typedef std::map< TupleRef,
-                      ValueRef,
+    typedef std::map< TuplePtr,
+                      ValuePtr,
                       CompareGroupByFields > AggMap;
     
     /** My current aggregates */
@@ -318,8 +318,8 @@ public:
   typedef AggregateObj< UniqueIndex > UniqueAggregateObj;
   typedef AggregateObj< MultIndex > MultAggregateObj;
   
-  typedef ref< UniqueAggregateObj > UniqueAggregate;
-  typedef ref< MultAggregateObj > MultAggregate;
+  typedef boost::shared_ptr< UniqueAggregateObj > UniqueAggregate;
+  typedef boost::shared_ptr< MultAggregateObj > MultAggregate;
 
   /** Create a group-by aggregation on a unique index.  Every time the
       table is updated, the aggregate is updated as well, creating
@@ -352,14 +352,14 @@ public:
 
     /** The constructor just initializes the iterator */
     IteratorObj(_Index * index,
-                ValueRef key);
+                ValuePtr key);
     
   private:
     /** My index */
     _FlatIndex _index;
     
     /** My lookup key */
-    ValueRef _key;
+    ValuePtr _key;
     
     typedef typename _Index::iterator IndexIterator;
     typedef typename _FlatIndex::iterator FlatIndexIterator;
@@ -382,7 +382,7 @@ public:
     /** The constructor just initializes the iterator */
     ScanIteratorObj(_Index * index);
 
-    void update(TupleRef t);
+    void update(TuplePtr t);
 
     void addListener(Table::Listener listenerCallback);
 
@@ -405,22 +405,22 @@ public:
   typedef IteratorObj < UniqueIndex, UniqueIndexFlat > UniqueIteratorObj;
   typedef ScanIteratorObj < UniqueIndex, UniqueIndexFlat > UniqueScanIteratorObj;
   typedef ScanIteratorObj < MultIndex, MultIndexFlat > MultScanIteratorObj;
-  typedef ptr< MultIteratorObj > MultIterator;
-  typedef ptr< UniqueIteratorObj > UniqueIterator;
-  typedef ptr< MultScanIteratorObj > MultScanIterator;
-  typedef ptr< UniqueScanIteratorObj > UniqueScanIterator;
+  typedef boost::shared_ptr< MultIteratorObj > MultIterator;
+  typedef boost::shared_ptr< UniqueIteratorObj > UniqueIterator;
+  typedef boost::shared_ptr< MultScanIteratorObj > MultScanIterator;
+  typedef boost::shared_ptr< UniqueScanIteratorObj > UniqueScanIterator;
   
   
   /** A lookup generator for mult indices */
   class MultLookupGenerator {
   public:
-    static ptr< MultIteratorObj > lookup(TableRef, unsigned, ValueRef);
+    static boost::shared_ptr< MultIteratorObj > lookup(TablePtr, unsigned, ValuePtr);
   };
 
   /** A lookup generator for mult indices */
   class UniqueLookupGenerator {
   public:
-    static ptr< UniqueIteratorObj > lookup(TableRef, unsigned, ValueRef);
+    static boost::shared_ptr< UniqueIteratorObj > lookup(TablePtr, unsigned, ValuePtr);
   };
 
 private:
@@ -440,16 +440,16 @@ private:
   void remove_from_indices(Entry *);
 
   /** Remove tuple from aggregates */
-  void remove_from_aggregates(TupleRef);
+  void remove_from_aggregates(TuplePtr);
 
   void garbage_collect();
 
 public:
   /** Lookup in a unique index */
-  UniqueIterator lookup(unsigned field, ValueRef key);
+  UniqueIterator lookup(unsigned field, ValuePtr key);
 
   /** Lookup in a multi index. */
-  MultIterator lookupAll(unsigned field, ValueRef key);
+  MultIterator lookupAll(unsigned field, ValuePtr key);
 
   /** Get all entries in a unique index */
   MultScanIterator scanAll(unsigned field);
@@ -457,7 +457,7 @@ public:
 
   /** Remove the entry found on the given unique index by the given key.
       The removal occurs from all indices. */
-  TuplePtr remove(unsigned field, ValueRef key);
+  TuplePtr remove(unsigned field, ValuePtr key);
 
   /** My aggregator functions */
   static AggregateFunctionMIN AGG_MIN;

@@ -33,11 +33,11 @@ public:
   const char *processing() const { return "a/al"; };
   const char *flow_code() const	 { return "x/x-"; };
 
-  TuplePtr simple_action(TupleRef p);		// Ack on output1 before passing to output0.
+  TuplePtr simple_action(TuplePtr p);		// Ack on output1 before passing to output0.
 
   TuplePtr pull(int port, b_cbv cb);		// Pull next acknowledgement from ack_q
 
-  int push(int port, TupleRef tp, b_cbv cb);	// Flow control input
+  int push(int port, TuplePtr tp, b_cbv cb);	// Flow control input
 
 private:
   b_cbv _ack_cb; 					// Callback to send an ack 
@@ -64,7 +64,7 @@ public:
   const char *processing() const { return "hh/ll"; };
   const char *flow_code() const	 { return "--/--"; };
 
-  int push(int port, TupleRef tp, b_cbv cb);	// Incoming, either add to send_q or ack
+  int push(int port, TuplePtr tp, b_cbv cb);	// Incoming, either add to send_q or ack
   TuplePtr pull(int port, b_cbv cb);		// Rate limited output tuple stream
 
 private:

@@ -31,7 +31,7 @@ public:
   const char *flow_code() const			{ return "--/-"; }
 
   /** Receive a new fixed tuple */
-  int push(int port, TupleRef, b_cbv cb);
+  int push(int port, TuplePtr, b_cbv cb);
 
   /** Return a new joined tuple. */
   TuplePtr pull(int port, b_cbv cb);
@@ -49,7 +49,7 @@ private:
 
   /** My tuple merging method.  If I have a pair, return a tuple
       containing both. If I had an empty search, return nothing.  */
-  TuplePtr mergeTuples(TupleRef);
+  TuplePtr mergeTuples(TuplePtr);
 };
 
 #endif /* __JOINER_H_ */

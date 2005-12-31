@@ -73,17 +73,16 @@
 class NetPlanner
 {
 public:
-  NetPlanner(Router::ConfigurationRef conf, str nodeID, 
+  NetPlanner(Router::ConfigurationPtr conf, str nodeID, 
 	     FILE* outputDebugFile) :
     _conf(conf)
-  { _nodeID = nodeID; _outputDebugFile = outputDebugFile;
-  _receiveMux = NULL; _sendRoundRobin = NULL;};
+  { _nodeID = nodeID; _outputDebugFile = outputDebugFile; };
 
   ~NetPlanner() { }; 
-  void generateNetworkElements(ref<Udp> udp);
+  void generateNetworkElements(boost::shared_ptr<Udp> udp);
   void registerAllRuleStrands(std::vector<RuleStrand*>);
 
-  void registerOptimizeSend(std::vector<ElementSpecRef> outOptimize) {
+  void registerOptimizeSend(std::vector<ElementSpecPtr> outOptimize) {
     _outOptimize = outOptimize; }
 
   str toString();
@@ -91,26 +90,26 @@ public:
   class ReceiverInfo {
   public: 
     ReceiverInfo(str tableName) 
-    { _tableName = tableName; _duplicator = NULL; }
+    { _tableName = tableName; _duplicator.reset(); }
     str _tableName;
     ElementSpecPtr _duplicator;
-    std::vector<ElementSpecRef> _receivers;
+    std::vector<ElementSpecPtr> _receivers;
     str toString();
   };
 
   typedef std::map<str, ReceiverInfo*> ReceiverInfoMap;  
   
 private:
-  void generateNetworkOutElements(ref<Udp> udp);
-  void generateNetworkInElements(ref<Udp> udp);
+  void generateNetworkOutElements(boost::shared_ptr<Udp> udp);
+  void generateNetworkInElements(boost::shared_ptr<Udp> udp);
 
   str _nodeID;
   FILE* _outputDebugFile;
-  Router::ConfigurationRef _conf;
-  std::vector<ElementSpecRef> _networkIn, _networkOut;
-  std::vector<ElementSpecRef> _outOptimize;
+  Router::ConfigurationPtr _conf;
+  std::vector<ElementSpecPtr> _networkIn, _networkOut;
+  std::vector<ElementSpecPtr> _outOptimize;
   ReceiverInfoMap _receiverInfo;  
-  std::vector<ElementSpecRef> _senders;
+  std::vector<ElementSpecPtr> _senders;
   ElementSpecPtr _receiveMux, _sendRoundRobin;
 };
 

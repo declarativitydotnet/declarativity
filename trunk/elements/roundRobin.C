@@ -53,7 +53,7 @@ TuplePtr RoundRobin::pull(int port, b_cbv cb)
       _pull_cb = cb;
     }
     log(LoggerI::WARN, -1, "pull: Underrun");
-    return 0;
+    return TuplePtr();
   }
 
   // By now, I'd better have no callbacks stored.
@@ -83,7 +83,7 @@ TuplePtr RoundRobin::pull(int port, b_cbv cb)
           _nextInput = (currentInput+1) % ninputs();
           _pull_cb = cb;
 
-          return 0;
+          return TuplePtr();
         } else {
           // No, we still have inputs to try. Keep going around the loop
         }
@@ -98,6 +98,6 @@ TuplePtr RoundRobin::pull(int port, b_cbv cb)
   // We should never reach this point
   assert(false);
 
-  return 0;
+  return TuplePtr();
 }
 

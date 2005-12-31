@@ -23,10 +23,10 @@ Sequence::Sequence(str n, str src, uint32_t p, uint64_t s)
 }
 
 
-TuplePtr Sequence::simple_action(TupleRef p)
+TuplePtr Sequence::simple_action(TuplePtr p)
 {
-  TupleRef n = Tuple::mk();
-  TupleRef s = Tuple::mk();
+  TuplePtr n = Tuple::mk();
+  TuplePtr s = Tuple::mk();
 
   s->append(Val_Str::mk("SEQ"));
   s->append(Val_UInt64::mk(seq_++));

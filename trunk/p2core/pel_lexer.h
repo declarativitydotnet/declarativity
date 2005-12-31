@@ -55,7 +55,7 @@ private:
   void add_const_int(uint64_t v) { add_const(Val_UInt64::mk(v));};
   void add_const_str(str s) { add_const(Val_Str::mk(s));};
   void add_const_dbl(double d) { add_const(Val_Double::mk(d));};
-  void add_const(ValueRef f);
+  void add_const(ValuePtr f);
   void add_tuple_load(int f);
   void add_opcode(u_int32_t op);
   void log_error(str errstr);

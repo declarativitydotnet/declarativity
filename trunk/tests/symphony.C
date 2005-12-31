@@ -16,6 +16,8 @@
 #define __SYMPHONY_H__
 
 
+#ifdef FOOBAR  // FIX SHARED POINTERS
+
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
@@ -1748,7 +1750,7 @@ void createSymNode(str myAddress,
 
 }
 
-
+#endif /*FIX SHARED POINTERS*/
 
 /*
  * End of file 

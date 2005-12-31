@@ -15,7 +15,7 @@
 
 void
 toDot(std::ostream * ostr,
-      Router::ConfigurationRef configuration)
+      Router::ConfigurationPtr configuration)
 {
   *ostr << "digraph G {\n"
         << "rankdir=LR;\n"
@@ -25,7 +25,7 @@ toDot(std::ostream * ostr,
   for (uint e = 0;
        e < configuration->elements.size();
        e++) {
-    ElementRef element = configuration->elements[e]->element();
+    ElementPtr element = configuration->elements[e]->element();
     *ostr << element->ID()      // unique element ID
           << " [ label=\"{";
 
@@ -63,9 +63,9 @@ toDot(std::ostream * ostr,
   for (uint i = 0;
        i < configuration->hookups.size();
        i++) {
-    Router::HookupRef hookup = configuration->hookups[i];
-    ElementSpecRef fromElement = hookup->fromElement;
-    ElementSpecRef toElement = hookup->toElement;
+    Router::HookupPtr hookup = configuration->hookups[i];
+    ElementSpecPtr fromElement = hookup->fromElement;
+    ElementSpecPtr toElement = hookup->toElement;
     int fromPort = hookup->fromPortNumber;
     int toPort = hookup->toPortNumber;
     *ostr << fromElement->element()->ID() << ":" << "o" << fromPort

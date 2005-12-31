@@ -25,7 +25,7 @@ Defrag::Defrag(str name)
 }
 
 
-int Defrag::push(int port, TupleRef t, b_cbv cb)
+int Defrag::push(int port, TuplePtr t, b_cbv cb)
 {
   // Is this the right port?
   assert(port == 0);
@@ -78,11 +78,11 @@ TuplePtr Defrag::pull(int port, b_cbv cb)
       // I already have a pull callback
       log(LoggerI::INFO, 0, "pull: underrun");
     }
-    return NULL;
+    return TuplePtr();
   }
 }
 
-void Defrag::defragment(TupleRef t)
+void Defrag::defragment(TuplePtr t)
 {
   uint64_t seq_num = SEQ_NUM(Val_UInt64::cast((*t)[SEQ_FIELD]));
   int      offset  = OFFSET(Val_UInt64::cast((*t)[SEQ_FIELD]));
@@ -105,7 +105,7 @@ void Defrag::defragment(TupleRef t)
       // Put fragments back together
       ref <suio> uio = New refcounted<suio>();
       for (uint i = 0; i < chunks; i++) {
-        TuplePtr p = NULL;
+        TuplePtr p;
         for (FragMap::iterator iter = fragments_.find(seq_num); iter != fragments_.end(); iter++) {
           if (OFFSET(Val_UInt64::cast((*iter->second)[SEQ_FIELD])) == (int) i) {
             p = iter->second;
@@ -117,7 +117,7 @@ void Defrag::defragment(TupleRef t)
         ref<suio> payload = Val_Opaque::cast((*p)[PLD_FIELD]);
         uio->copy(payload, payload->resid());
       }
-      TupleRef defraged = Tuple::mk();
+      TuplePtr defraged = Tuple::mk();
       defraged->append(Val_UInt64::mk(MAKE_SEQ(seq_num, 0)));
       defraged->append(Val_Opaque::mk(uio));
       tuples_.push_back(defraged); 

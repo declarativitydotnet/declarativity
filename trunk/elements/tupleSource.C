@@ -12,7 +12,7 @@
 #include <tupleSource.h>
 
 TupleSource::TupleSource(str name,
-                         TupleRef tuple)
+                         TuplePtr tuple)
   : FunctorSource(name, NULL),
     _tupleGenerator(New TupleGenerator(tuple))
 {

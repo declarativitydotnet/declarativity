@@ -31,20 +31,20 @@ public:
 
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );
-  static ValueRef xdr_unmarshal( XDR *x );
+  static ValuePtr xdr_unmarshal( XDR *x );
 
   // Constructor
   Val_Str(str theString) : s(theString) {};
   virtual ~Val_Str() {};
 
   // Factory
-  static ValueRef mk(str s) { return New refcounted<Val_Str>(s); };
+  static ValuePtr mk(str s) { ValuePtr p(new Val_Str(s)); return p; };
 
   // Strict comparison
-  int compareTo(ValueRef) const;
+  int compareTo(ValuePtr) const;
 
   // Casting
-  static str cast(ValueRef v);
+  static str cast(ValuePtr v);
   
   static const opr::Oper *oper_;
 private:

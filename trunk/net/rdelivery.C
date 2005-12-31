@@ -43,7 +43,7 @@ class RTuple
 public:
   RTuple(TuplePtr tp) : retry_cnt_(0), tp_(tp) { resetTime(); } 
 
-  ~RTuple() { tp_ = NULL; }
+  ~RTuple() { tp_.reset(); }
 
   void resetTime() { 
     clock_gettime (CLOCK_REALTIME, &timer_); 
@@ -83,7 +83,7 @@ TuplePtr RDelivery::pull(int port, b_cbv cb)
 {
   assert (port == 0);
 
-  TuplePtr tp = NULL;
+  TuplePtr tp;
   if (rtran_q_.empty() && in_on_ && 
       (in_on_ = ((tp = input(0)->pull(boost::bind(&RDelivery::input_cb,this))) != NULL))) {
     /* Store the tuple for retry, if failure */
@@ -98,14 +98,14 @@ TuplePtr RDelivery::pull(int port, b_cbv cb)
   }
 
   _out_cb = cb;
-  return NULL;
+  return TuplePtr();
 }
 
 /**
  * The push method handles input on 2 ports.
  * port 1: Acknowledgement or Failure Tuple
  */
-int RDelivery::push(int port, TupleRef tp, b_cbv cb)
+int RDelivery::push(int port, TuplePtr tp, b_cbv cb)
 {
   assert(port == 1);
 
@@ -134,7 +134,7 @@ REMOVABLE_INLINE void RDelivery::handle_failure(SeqNum seq)
     }
   }
   else {
-    TupleRef f = Tuple::mk();
+    TuplePtr f = Tuple::mk();
     f->append(Val_Str::mk("FAIL"));
     f->append(Val_Tuple::mk(rt->tp_));
     f->freeze();
@@ -156,7 +156,7 @@ void RDelivery::input_cb()
 REMOVABLE_INLINE SeqNum RDelivery::getSeq(TuplePtr tp) {
   for (uint i = 0; i < tp->size(); i++) {
     try {
-      TupleRef t = Val_Tuple::cast((*tp)[i]); 
+      TuplePtr t = Val_Tuple::cast((*tp)[i]); 
       if (Val_Str::cast((*t)[0]) == "SEQ") {
          if (Val_Str::cast((*t)[2]) == "localhost:10000" && Val_UInt32::cast((*t)[3]) == 0) 
            std::cerr << "SEQ NUMBER: " << (*t)[1]->toString() << std::endl;

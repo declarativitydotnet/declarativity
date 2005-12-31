@@ -57,7 +57,7 @@ int GroupBy::initialize()
 }
 
 
-str GroupBy::getFieldStr(std::vector<int> fields, TupleRef p)
+str GroupBy::getFieldStr(std::vector<int> fields, TuplePtr p)
 {
   strbuf fieldStr;
   for (unsigned int k = 0; k < fields.size(); k++) {
@@ -81,11 +81,11 @@ void GroupBy::recomputeAllAggs()
   // next time, enumerate the store itself
   for (_multiIterator = _tuples.begin(); _multiIterator != _tuples.end(); _multiIterator++) {
     bool changed = false;
-    TupleRef nextTuple = _multiIterator->second;    
+    TuplePtr nextTuple = _multiIterator->second;    
     str groupByStr = getFieldStr(_groupByFields, nextTuple);    
 
     // the initial fields
-    TupleRef newAggTuple = Tuple::mk();
+    TuplePtr newAggTuple = Tuple::mk();
     newAggTuple->append(Val_Str::mk(_newTableName));
     for (unsigned int k = 0; k < _groupByFields.size(); k++) {
       newAggTuple->append((*nextTuple)[_groupByFields[k]]);
@@ -93,12 +93,12 @@ void GroupBy::recomputeAllAggs()
 
     _iterator = _aggValues.find(groupByStr);
     if (_iterator != _aggValues.end()) { // already exist an aggregate value
-      TupleRef currentAgg = _iterator->second;
+      TuplePtr currentAgg = _iterator->second;
  
       // check which fields contribute to the "best agg"
       for (unsigned int k = 0; k < _aggFields.size(); k++) {
-	ValueRef origVal = (*currentAgg)[k + 1 + _groupByFields.size()];
-	ValueRef newVal = (*nextTuple)[_aggFields[k]];
+	ValuePtr origVal = (*currentAgg)[k + 1 + _groupByFields.size()];
+	ValuePtr newVal = (*nextTuple)[_aggFields[k]];
 
 	if (_aggTypes[k] == MIN_AGG) {
 	  if (newVal->compareTo(origVal) < 0) {
@@ -137,14 +137,14 @@ void GroupBy::recomputeAllAggs()
 }
 
 
-int GroupBy::push(int port, TupleRef p, b_cbv cb)
+int GroupBy::push(int port, TuplePtr p, b_cbv cb)
 {  
   str indexStr = getFieldStr(_primaryFields, p);
   str groupByStr = getFieldStr(_groupByFields, p);
 
   // store the tuple. Replace by primary key if necessary. 
   for (_multiIterator = _tuples.lower_bound(groupByStr); _multiIterator != _tuples.upper_bound(groupByStr); _multiIterator++) {
-    TupleRef t = _multiIterator->second;    
+    TuplePtr t = _multiIterator->second;    
     if (getFieldStr(_primaryFields, t) == indexStr) {
       // update an existing tuple
       _tuples.erase(_multiIterator);
@@ -167,7 +167,7 @@ void GroupBy::runTimer()
 
   // Attempt to push it
   for (_iterator = _aggValues.begin(); _iterator != _aggValues.end(); _iterator++) {
-    TupleRef t = _iterator->second;
+    TuplePtr t = _iterator->second;
     str groupByStr = getFieldStr(_groupByFields, t);    
 
     // check whether this tuple has been sent already previously (suppress to prevent sending redundant)
@@ -220,7 +220,7 @@ void GroupBy::dumpTuples(str str)
 {
   std::cout << "Key " << str << ": ";
   for (_multiIterator = _tuples.lower_bound(str); _multiIterator != _tuples.upper_bound(str); _multiIterator++) {
-    TupleRef t = _multiIterator->second;    
+    TuplePtr t = _multiIterator->second;    
     std::cout << t->toString() << ", ";
   }
   std::cout << "\n";
@@ -231,7 +231,7 @@ void GroupBy::dumpAggs(str str)
 {
   std::cout << "Grouping Key " << str << ": ";
   for (_iterator = _aggValues.lower_bound(str); _iterator != _aggValues.upper_bound(str); _iterator++) {
-    TupleRef t = _iterator->second;    
+    TuplePtr t = _iterator->second;    
     std::cout << t->toString() << "\n";
   }
 }

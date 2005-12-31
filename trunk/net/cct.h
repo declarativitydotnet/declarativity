@@ -42,7 +42,7 @@ public:
   const char *processing() const { return stat_ ? "lh/lhl" : "lh/lh"; };
   const char *flow_code() const	 { return stat_ ? "--/---" : "--/--"; };
 
-  int push(int port, TupleRef tp, b_cbv cb);	// Incoming, either add to send_q or ack
+  int push(int port, TuplePtr tp, b_cbv cb);	// Incoming, either add to send_q or ack
   TuplePtr pull(int port, b_cbv cb);		// Rate limited output tuple stream
 
 private:

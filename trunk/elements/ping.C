@@ -57,19 +57,19 @@ int Ping::initialize()
   return 0;
 }
 
-int Ping::push(int port, TupleRef p, b_cbv cb)
+int Ping::push(int port, TuplePtr p, b_cbv cb)
 {
   // when received a ping(X,Y) request
   // first, check generate a ping request to be sent out
   // second, store the ping request in a pending list
   if (p == Tuple::EMPTY) { return 1; }
-  ValueRef tableName = (*p)[0];
-  ValueRef defaultName = Val_Str::mk("Ping");
+  ValuePtr tableName = (*p)[0];
+  ValuePtr defaultName = Val_Str::mk("Ping");
   if (port == 0 && tableName->compareTo(defaultName) == 0) {
-    ValueRef source = (*p)[1];
-    ValueRef destination = (*p)[2];
+    ValuePtr source = (*p)[1];
+    ValuePtr destination = (*p)[2];
 
-    TupleRef pingRequestTuple = Tuple::mk();
+    TuplePtr pingRequestTuple = Tuple::mk();
     pingRequestTuple->append(Val_Str::mk("PingRequest"));
     pingRequestTuple->append(destination);  
     pingRequestTuple->append(source);  
@@ -87,7 +87,7 @@ int Ping::push(int port, TupleRef p, b_cbv cb)
 
   // when receive a pong(X,Y) response on a different port,
   // look up pending pings, send out ping result locally
-  ValueRef defaultResponse = Val_Str::mk("PingResponse");
+  ValuePtr defaultResponse = Val_Str::mk("PingResponse");
   if (port == 1 && tableName->compareTo(defaultResponse) == 0) {
     // create a ping result tuple
     // generate a success
@@ -97,13 +97,13 @@ int Ping::push(int port, TupleRef p, b_cbv cb)
   return 1;
 }
 
-void Ping::generatePingFailure(TupleRef p)
+void Ping::generatePingFailure(TuplePtr p)
 {
-  ValueRef source = (*p)[1];
-  ValueRef destination = (*p)[2];
+  ValuePtr source = (*p)[1];
+  ValuePtr destination = (*p)[2];
   
   // generate a failure, put in pendingResults
-  TupleRef pingResultTuple = Tuple::mk();
+  TuplePtr pingResultTuple = Tuple::mk();
   pingResultTuple->append(Val_Str::mk("PingResult"));
   pingResultTuple->append(source); 
   pingResultTuple->append(destination); 
@@ -113,11 +113,11 @@ void Ping::generatePingFailure(TupleRef p)
   _pendingResults.insert(std::make_pair(destination->toString(), pingResultTuple));
 }
 
-void Ping::generatePingSuccess(TupleRef p)
+void Ping::generatePingSuccess(TuplePtr p)
 {
   // remove the pending
-  ValueRef source = (*p)[1];
-  ValueRef destination = (*p)[2];
+  ValuePtr source = (*p)[1];
+  ValuePtr destination = (*p)[2];
   
   _iterator = _pendingPings.find(destination->toString());
   Entry *e = _iterator->second;
@@ -127,7 +127,7 @@ void Ping::generatePingSuccess(TupleRef p)
     double timeDifference = ((double) clock() - e->lastPingTime) / CLOCKS_PER_SEC;
     _pendingPings.erase(destination->toString()); 
 
-    TupleRef pingResultTuple = Tuple::mk();
+    TuplePtr pingResultTuple = Tuple::mk();
     pingResultTuple->append(Val_Str::mk("PingResult"));
     pingResultTuple->append(source); 
     pingResultTuple->append(destination); 
@@ -151,7 +151,7 @@ void Ping::runTimer()
     Entry *e = _iterator->second;
     double timeDiffSeconds = ((double) clock() - e->lastPingTime) / CLOCKS_PER_SEC;
 
-    TupleRef t = e->p;
+    TuplePtr t = e->p;
     if (e->numPings == 1 || (timeDiffSeconds > _retry_interval)) {
       // enough time has passed
       int result = output(1)->push(t, _wakeupCB);
@@ -176,7 +176,7 @@ void Ping::runTimer()
 
   // check here for results to push up
   for (_tupleIterator = _pendingResults.begin(); _tupleIterator != _pendingResults.end(); _tupleIterator++) {
-    TupleRef t = _tupleIterator->second;
+    TuplePtr t = _tupleIterator->second;
     int result = output(0)->push(t, _wakeupCB);
     _pendingResults.erase(_tupleIterator->first);
       

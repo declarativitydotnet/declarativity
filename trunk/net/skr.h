@@ -23,12 +23,12 @@ public:
   const char *processing() const	{ return "hh/hh"; };
   const char *flow_code() const		{ return "-/-"; };
 
-  int push(int port, TupleRef tp, b_cbv cb);
+  int push(int port, TuplePtr tp, b_cbv cb);
 
   void route(ValuePtr key, ValuePtr loc);
 
-  ref< vec< ValueRef > > neighbors();
-  ref< vec< ValueRef > > routes();
+  boost::shared_ptr< std::vector< ValuePtr > > neighbors();
+  boost::shared_ptr< std::vector< ValuePtr > > routes();
 
 private:
   REMOVABLE_INLINE int greedyRoute(TuplePtr tp);

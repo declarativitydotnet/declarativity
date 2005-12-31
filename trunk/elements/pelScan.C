@@ -13,7 +13,7 @@
 #include "pel_lexer.h"
 
 PelScan::PelScan(str name,
-                 TableRef table,
+                 TablePtr table,
                  unsigned fieldNo,
                  str startup,
                  str scan,
@@ -45,7 +45,7 @@ PelScan::~PelScan()
 }
 
 int
-PelScan::push(int port, TupleRef t, b_cbv cb)
+PelScan::push(int port, TuplePtr t, b_cbv cb)
 {
   // Is this the right port?
   assert(port == 0);
@@ -112,7 +112,7 @@ TuplePtr PelScan::pull(int port, b_cbv cb)
       // I already have a pull callback
       log(LoggerI::INFO, 0, "pull: callback underrun");
     }
-    return 0;
+    return TuplePtr();
   }
 
   // OK, proceed with existing scan.
@@ -124,7 +124,7 @@ TuplePtr PelScan::pull(int port, b_cbv cb)
       if (e != Pel_VM::PE_SUCCESS) {
         log(LoggerI::ERROR, 0, strbuf("pull: scan script:") << Pel_VM::strerror(e));
         _vm.dumpStack(str("scan script"));
-        return 0;
+        return TuplePtr();
       }
       
       // Did we get a result?
@@ -150,11 +150,11 @@ TuplePtr PelScan::pull(int port, b_cbv cb)
       Pel_VM::Error e = _vm.execute(*_cleanup, _scanTuple);
       if (e != Pel_VM::PE_SUCCESS) {
         log(LoggerI::ERROR, 0, strbuf("pull: cleanup script:") << Pel_VM::strerror(e));
-        _scanTuple = NULL;
+        _scanTuple.reset();
         _vm.dumpStack(str("cleanup script"));
-        return 0;
+        return TuplePtr();
       }
-      _scanTuple = NULL;
+      _scanTuple.reset();
 
       
       // Did we get a result?

@@ -85,13 +85,13 @@ void testNetworked(LoggerI::Level level,
                    double delay = 0)
 {
   // Create the data flow
-  Router::ConfigurationRef conf = New refcounted< Router::Configuration >();
+  Router::ConfigurationPtr conf(new Router::Configuration());
   Udp udp(strbuf(myAddress) << ":Udp", port);
 
   createNode(myAddress, landmarkAddress,
              conf, &udp, delay);
 
-  RouterRef router = New refcounted< Router >(conf, level);
+  RouterPtr router(new Router(conf, level));
   if (router->initialize(router) == 0) {
     std::cout << "Correctly initialized network of chord lookup flows.\n";
   } else {
@@ -114,7 +114,7 @@ void testNetworkedDatalog(LoggerI::Level level,
 			  str filename,
 			  double delay)
 {
-  ref< OL_Context > ctxt = New refcounted< OL_Context>();
+  boost::shared_ptr< OL_Context > ctxt(new OL_Context());
   std::ifstream istr(filename);
   if (!istr.is_open()) {
     // Failed to open the file

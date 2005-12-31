@@ -22,22 +22,22 @@
 #include "val_null.h"
 
 class OperDouble : public opr::OperCompare<Val_Double> {
-  virtual ValuePtr _plus (const ValueRef& v1, const ValueRef& v2) const {
+  virtual ValuePtr _plus (const ValuePtr& v1, const ValuePtr& v2) const {
     return Val_Double::mk(Val_Double::cast(v1) + Val_Double::cast(v2));
   };
-  virtual ValuePtr _minus (const ValueRef& v1, const ValueRef& v2) const {
+  virtual ValuePtr _minus (const ValuePtr& v1, const ValuePtr& v2) const {
     return Val_Double::mk(Val_Double::cast(v1) - Val_Double::cast(v2));
   };
-  virtual ValuePtr _times (const ValueRef& v1, const ValueRef& v2) const {
+  virtual ValuePtr _times (const ValuePtr& v1, const ValuePtr& v2) const {
     return Val_Double::mk(Val_Double::cast(v1) * Val_Double::cast(v2));
   };
-  virtual ValuePtr _divide (const ValueRef& v1, const ValueRef& v2) const {
+  virtual ValuePtr _divide (const ValuePtr& v1, const ValuePtr& v2) const {
     return Val_Double::mk(Val_Double::cast(v1) / Val_Double::cast(v2));
   };
-  virtual ValuePtr _dec (const ValueRef& v1) const {
+  virtual ValuePtr _dec (const ValuePtr& v1) const {
     return Val_Double::mk((Val_Double::cast(v1)) - 1.);
   };
-  virtual ValuePtr _inc (const ValueRef& v1) const {
+  virtual ValuePtr _inc (const ValuePtr& v1) const {
     return Val_Double::mk((Val_Double::cast(v1)) + 1.);
   };
 };
@@ -64,7 +64,7 @@ void Val_Double::xdr_marshal_subtype( XDR *x )
 {
   xdr_double(x, &d);
 }
-ValueRef Val_Double::xdr_unmarshal( XDR *x )
+ValuePtr Val_Double::xdr_unmarshal( XDR *x )
 {
   double d;
   xdr_double(x, &d);
@@ -74,12 +74,11 @@ ValueRef Val_Double::xdr_unmarshal( XDR *x )
 //
 // Casting
 //
-double Val_Double::cast(ValueRef v)
+double Val_Double::cast(ValuePtr v)
 {
-  Value *vp = v;
   switch (v->typeCode()) {
   case Value::DOUBLE:
-    return (static_cast<Val_Double *>(vp))->d;
+    return (static_cast<Val_Double *>(v.get()))->d;
   case Value::INT32:
     return (double)(Val_Int32::cast(v));
   case Value::UINT32:
@@ -97,7 +96,7 @@ double Val_Double::cast(ValueRef v)
   }
 }
 
-int Val_Double::compareTo(ValueRef other) const
+int Val_Double::compareTo(ValuePtr other) const
 {
   if (other->typeCode() != Value::DOUBLE) {
     if (Value::DOUBLE < other->typeCode()) {

@@ -40,15 +40,15 @@ CCR::CCR(str name, double rwnd, uint src, bool flow)
  * Acknowledge tuple p if ack_q is empty and output1 is open.
  * Otherwise, add to ack_q and enable callback.
  */
-TuplePtr CCR::simple_action(TupleRef p) 
+TuplePtr CCR::simple_action(TuplePtr p) 
 {
   uint64_t seq  = 0;
-  ValuePtr src  = NULL; 
-  ValuePtr port = NULL;
+  ValuePtr src; 
+  ValuePtr port;
 
   for (uint i = 0; i < p->size(); i++) {
     try {
-      TupleRef t = Val_Tuple::cast((*p)[i]); 
+      TuplePtr t = Val_Tuple::cast((*p)[i]); 
       if (Val_Str::cast((*t)[0]) == "SEQ") {
         seq  = Val_UInt64::cast((*t)[1]);
         src  = (*t)[2];
@@ -59,7 +59,7 @@ TuplePtr CCR::simple_action(TupleRef p)
   }
   if (!src || !port) return p;		// Punt
 
-  TupleRef ack  = Tuple::mk();
+  TuplePtr ack  = Tuple::mk();
   ack->append(src);			// Source location
   ack->append(port);			// Source location
   ack->append(Val_Str::mk("ACK"));
@@ -88,14 +88,14 @@ TuplePtr CCR::pull(int port, b_cbv cb)
       return ack;
     }
     _ack_cb = cb;
-    return NULL;
+    return TuplePtr();
   } 
 
   // Need this to go through regular pull
   return this->Element::pull(port, cb); 	
 }
 
-int CCR::push(int port, TupleRef tp, b_cbv cb)
+int CCR::push(int port, TuplePtr tp, b_cbv cb)
 {
   if (port == 1) {
     try {

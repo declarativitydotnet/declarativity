@@ -28,7 +28,8 @@ class Parse_Expr {
 public:
   static Parse_Expr* Now;
 
-  Parse_Expr(ValuePtr val=NULL) : v(val), position_(-1) {};
+  Parse_Expr() : position_(-1) {};
+  Parse_Expr(ValuePtr val) : v(val), position_(-1) {};
   Parse_Expr(Parse_Expr *val) : v(val->v), position_(-1) {};
 
   virtual ~Parse_Expr() {};
@@ -46,7 +47,7 @@ public:
 };
 typedef std::deque<Parse_Expr *> Parse_ExprList;
 
-// Boxing up a ValueRef see we can pass it through the Bison parser
+// Boxing up a ValuePtr see we can pass it through the Bison parser
 // union unscathed. 
 class Parse_Val : public Parse_Expr { 
 public:
@@ -77,12 +78,8 @@ public:
   enum Operator {MAX, MIN, COUNT};
   static Parse_Expr* DONT_CARE;
 
-  Parse_Agg(Parse_Expr *v,
-            Operator o,
-            ValuePtr p)
-    : Parse_Expr(v),
-      oper(o),
-      parameter(p)
+  Parse_Agg(Parse_Expr *v, Operator o, ValuePtr p)
+    : Parse_Expr(v), oper(o), parameter(p)
   {};
 
   virtual bool operator==(const Parse_Expr &e);

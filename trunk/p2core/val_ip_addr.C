@@ -20,10 +20,9 @@ void Val_IP_ADDR::xdr_marshal_subtype( XDR *x )
 //
 // Casting
 //
-str Val_IP_ADDR::cast(ValueRef v) {
-  Value *vp = v;
+str Val_IP_ADDR::cast(ValuePtr v) {
   if(v->typeCode() == Value::IP_ADDR){
-    return (static_cast<Val_IP_ADDR *>(vp))->_s;
+    return (static_cast<Val_IP_ADDR *>(v.get()))->_s;
   }
   else if(v->typeCode() == Value::STR){
     return Val_Str::cast(v);
@@ -63,7 +62,7 @@ ref<suio> Val_IP_ADDR::getAddress()
   
 }
 
-int Val_IP_ADDR::compareTo(ValueRef other) const
+int Val_IP_ADDR::compareTo(ValuePtr other) const
 {
   if (other->typeCode() != Value::IP_ADDR) {
     if (Value::IP_ADDR < other->typeCode()) {

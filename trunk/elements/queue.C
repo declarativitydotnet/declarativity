@@ -28,7 +28,7 @@ Queue::~Queue()
 }
 
 /* push. When receive, put to queue. If have pending, wake up.*/
-int Queue::push(int port, TupleRef p, b_cbv cb)
+int Queue::push(int port, TuplePtr p, b_cbv cb)
 {
   _q.push(p);  
 
@@ -58,7 +58,7 @@ TuplePtr Queue::pull(int port, b_cbv cb)
   if (_q.size() == 0) { 
     log(LoggerI::INFO, 0, "Queue is empty during pull");
     _pullCB = cb;
-    return 0; 
+    return TuplePtr(); 
   }
   TuplePtr p = _q.front();
   _q.pop();

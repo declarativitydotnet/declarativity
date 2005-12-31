@@ -44,7 +44,7 @@ public:
 
 private:
   // Execution state
-  std::deque<ValueRef> _st;
+  std::deque<ValuePtr> _st;
   const Pel_Program	*prg;
   Error		 error;
   uint		 pc;
@@ -53,25 +53,25 @@ private:
 
   static const char* err_msgs[];
 
-  ValueRef pop();
+  ValuePtr pop();
   uint64_t pop_unsigned();
   int64_t pop_signed();
   str pop_string();
   double pop_double();
   struct timespec pop_time();
-  IDRef pop_ID();
+  IDPtr pop_ID();
 
 
   // Deque to stack conversion facilities
   inline void stackPop() {  _st.pop_back(); }
-  inline void stackPush(ValueRef v) { _st.push_back(v); }
-  inline ValueRef stackTop() { return _st.back(); }
-  inline ValueRef stackPeek(unsigned p) { return _st[_st.size() - 1 - p]; }
+  inline void stackPush(ValuePtr v) { _st.push_back(v); }
+  inline ValuePtr stackTop() { return _st.back(); }
+  inline ValuePtr stackPeek(unsigned p) { return _st[_st.size() - 1 - p]; }
 
 
 public:
   Pel_VM();
-  Pel_VM(std::deque< ValueRef >);
+  Pel_VM(std::deque< ValuePtr >);
 
   // 
   // Execution paths
@@ -88,13 +88,13 @@ public:
 
   // Execute the program on the tuple. 
   // Return 0 if success, -1 if an error. 
-  Error execute(const Pel_Program &prog, const TupleRef data);
+  Error execute(const Pel_Program &prog, const TuplePtr data);
   
   // Single step an instruction
-  Error execute_instruction( u_int32_t inst, TupleRef data);
+  Error execute_instruction( u_int32_t inst, TuplePtr data);
 
   // Return the result (top of the stack)
-  ValueRef result_val();
+  ValuePtr result_val();
   
   // Return the current result tuple.
   TuplePtr result_tuple();
