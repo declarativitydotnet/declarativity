@@ -13,10 +13,12 @@
  * DESCRIPTION: PlanetLab sensor element
  */
 
+#include "loop.h"
 #include "plsensor.h"
-#include <async.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "val_str.h"
 
@@ -39,21 +41,20 @@
 // element will attempt to reconnect to the server after waiting for
 // reconnect_delay seconds. 
 //
-PlSensor::PlSensor(str name,
+PlSensor::PlSensor(string name,
                    u_int16_t sensor_port, 
-		   str sensor_path, 
+		   string sensor_path, 
 		   uint32_t reconnect_delay)
   : Element(name, 0,1),
     port(sensor_port), 
     path(sensor_path), 
     sd(-1),
-    req_re(HTTP_RX),
-    delay(reconnect_delay),
-    req_buf(NULL)
+    // req_re(HTTP_RX), FIX ME
+    delay(reconnect_delay)
 {
   TRC_FN;
   inet_aton("127.0.0.1", &localaddr);
-  reqtmpl = strbuf() << "GET " << path << " HTTP/1.0\r\n" 
+  reqtmpl << "GET " << path << " HTTP/1.0\r\n" 
 	  << "Host: localhost:" << port << "\r\n"
 	  << "Connection: close\r\n"
 	  << "User-Agent: P2SensorScanner/0.1 (Intel Berkeley P2 dataflow engine)\r\n"
@@ -66,7 +67,7 @@ PlSensor::PlSensor(str name,
 // clearly!  When we have a clean way to access the logging element,
 // log the tuple and then enter_waiting, below. 
 // 
-void PlSensor::error_cleanup(uint32_t errnum, str errmsg) 
+void PlSensor::error_cleanup(uint32_t errnum, string errmsg) 
 {
   TRC_FN;
   log(LoggerI::WARN, errnum, errmsg);
@@ -81,23 +82,13 @@ void PlSensor::enter_waiting()
 {
   TRC_FN;
   if (sd >= 0) { 
-    fileDescriptorCB(sd, b_selread, NULL);
-    fileDescriptorCB(sd, b_selwrite, NULL);
+    fdcb(sd, selread, NULL);
+    fdcb(sd, selwrite, NULL);
     close(sd);
     sd = -1;
   }
-  if (req_buf != NULL) {
-    delete req_buf;
-    req_buf = NULL;
-  }
-  if (hdrs != NULL) {
-    delete hdrs;
-    hdrs = NULL;
-  }
   state = ST_WAITING;
-  wait_delaycb =
-    delayCB(delay,
-            boost::bind(&PlSensor::enter_connecting, this));
+  wait_delaycb = delayCB(delay, boost::bind(&PlSensor::enter_connecting,this));
 }
 
 //
@@ -110,11 +101,10 @@ void PlSensor::enter_connecting()
   TRC_FN;
   state = ST_CONNECTING;
   assert(sd < 0);
-  assert(req_buf == NULL);
-  assert(hdrs == NULL);
-  hdrs = New strbuf();
-  req_buf = New strbuf(reqtmpl);
-  tc = tcpConnect(localaddr, port, boost::bind(&PlSensor::connect_cb, this, _1));
+  hdrs.clear();
+  req_buf.clear();
+  req_buf << reqtmpl.str();
+  tc = tcpConnect(localaddr, port, boost::bind(&PlSensor::connect_cb,this,_1));
 }
 
 //
@@ -126,12 +116,12 @@ void PlSensor::connect_cb(int fd)
   TRC_FN;
   sd = fd;
   if (sd < 0) {
-    error_cleanup(errno, strbuf() << "Connecting:" << strerror(errno));
+    error_cleanup(errno, string() + "Connecting:" + strerror(errno));
   } else {
     // Enter SENDING
     TRC( "socket descriptor is " << sd);
     state = ST_SENDING;
-    fileDescriptorCB(sd, b_selwrite, boost::bind(&PlSensor::write_cb, this));
+    fdcb(sd, selwrite, boost::bind(&PlSensor::write_cb,this));
   }
 }
 
@@ -143,22 +133,21 @@ void PlSensor::write_cb()
 {
   TRC_FN;
   assert(state == ST_SENDING);
-  assert(req_buf != NULL);
-  if (req_buf->tosuio()->resid()) {
+  if (req_buf.length()) {
     // Still stuff to send
-    size_t s = req_buf->tosuio()->output(sd);
+    size_t s = req_buf.write(sd);
     TRC( "wrote " << s);
     if ( s < 0 && errno != EAGAIN && errno !=0) {
-      error_cleanup(errno, strbuf() << "Writing request:" << strerror(errno));
+      error_cleanup(errno, string("Writing request:") + strerror(errno));
       return;
     }
   }
   // Falls through to here when the sending is done...
-  if (req_buf->tosuio()->resid() == 0) {
+  if (req_buf.length() == 0) {
     // Enter RX_HEADERS state
-    fileDescriptorCB(sd, b_selwrite, NULL);
+    fdcb(sd, selwrite, NULL);
     state = ST_RX_HEADERS;
-    fileDescriptorCB(sd, b_selread, boost::bind(&PlSensor::rx_hdr_cb, this));
+    fdcb(sd, selread, boost::bind(&PlSensor::rx_hdr_cb,this));
   }
 }
 
@@ -169,32 +158,32 @@ void PlSensor::write_cb()
 void PlSensor::rx_hdr_cb()
 {
   TRC_FN;
-  strbuf rx;
-  switch (rx.tosuio()->input(sd)) {
+  Fdbuf rx;
+  switch (rx.read(sd)) {
   case 0:
-    TRC("Got 0; Read: " << str(*hdrs));
+    TRC("Got 0; Read: " << hdrs.str());
     TRC("Errno: " << errno );
-    error_cleanup(errno, strbuf() << "Server closed connection reading headers");
+    error_cleanup(errno, "Server closed connection reading headers");
     return;
   case -1:
     if (errno != EAGAIN) {
-      error_cleanup(errno, strbuf() << "Reading headers:" << strerror(errno));
+      error_cleanup(errno, string("Reading headers:") +  strerror(errno));
     }
     return;
   default:
-    *hdrs << rx;
-    if (hdrs->tosuio()->resid() > MAX_REQUEST_SIZE ) {
+    hdrs << rx.str();
+    if (hdrs.length() > MAX_REQUEST_SIZE ) {
       error_cleanup(100000, "Headers too large");
       break;
     }
     // Now try and match the regular expression
-    rxx::matchresult m = req_re.search(str(*hdrs));
-    TRC("Success: " << req_re.success());
-    if (m) {
+/** FIX ME
+    boost::smatch m;
+    if ( regex_search( hdrs.str(),m,req_re )) {
       // Create a tuple with the single string, the matching body.
       TuplePtr t = Tuple::mk();
       t->append(Val_Str::mk(m[5]));
-      if (push(0,t,boost::bind(&PlSensor::element_cb, this))) {
+      if (push(0,t,boost::bind(&PlSensor::element_cb,this))) {
 	socket_on();
 	state = ST_RX_BODY;
       } else {
@@ -204,6 +193,7 @@ void PlSensor::rx_hdr_cb()
     } else {
       TRC("No match so far.");
     }
+*/
   }
 }
 
@@ -231,8 +221,8 @@ void PlSensor::rx_body_cb()
     return;
   }
 
-  strbuf rx;
-  switch (rx.tosuio()->input(sd)) {
+  Fdbuf rx;
+  switch (rx.read(sd)) {
   case 0:
     TRC("Connection closed: enter waiting");
     // Not really an error - just retry.
@@ -241,13 +231,13 @@ void PlSensor::rx_body_cb()
     return;
   case -1:
     if (errno != EAGAIN) {
-      error_cleanup(errno, strbuf() << "Reading body:" << strerror(errno));
+      error_cleanup(errno, string("Reading body:") + strerror(errno));
     }
     return;
   default:
     TuplePtr t = Tuple::mk();
-    t->append(Val_Str::mk(rx));
-    if (push(0,t,boost::bind(&PlSensor::element_cb, this))) {
+    t->append(Val_Str::mk(rx.str()));
+    if (push(0,t,boost::bind(&PlSensor::element_cb,this))) {
       socket_on();
       state = ST_RX_BODY;
     } else {

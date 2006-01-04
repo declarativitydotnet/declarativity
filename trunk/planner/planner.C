@@ -21,7 +21,7 @@
 #include "rulePlanner.C"
 
 Planner::Planner(Router::ConfigurationPtr conf, Catalog* catalog, 
-		 bool debug, str nodeID, str outputFile) 
+		 bool debug, string nodeID, string outputFile) 
   : _conf(conf)
 { 
   _catalog = catalog; 
@@ -30,7 +30,7 @@ Planner::Planner(Router::ConfigurationPtr conf, Catalog* catalog,
   _ruleCount = 0;
 
   if (outputFile[0] != '0') {
-    _outputDebugFile = fopen(outputFile, "w");
+    _outputDebugFile = fopen(outputFile.c_str(), "w");
   } else {
     _outputDebugFile = NULL;
   }
@@ -44,8 +44,8 @@ Planner::generateRuleStrands(ECA_ContextPtr ectxt)
   // go through each eca rule, form a rule strand
   for (unsigned k = 0; k < ectxt->_ecaRules.size(); k++) {
     ECA_Rule* nextRule = ectxt->_ecaRules.at(k);
-    strbuf b; b << _ruleCount++ << "-" << _nodeID;
-    RuleStrand *rs = New RuleStrand(nextRule, str(b));
+    ostringstream b; b << _ruleCount++ << "-" << _nodeID;
+    RuleStrand *rs = new RuleStrand(nextRule, b.str());
     toRet.push_back(rs);
     PlanContext* pc = new PlanContext(_conf, _catalog, rs, 
 				      _nodeID, _outputDebugFile);

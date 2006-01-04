@@ -18,7 +18,7 @@
 
 class MarshalField : public Element { 
 public:
-  MarshalField(str, unsigned);
+  MarshalField(string, unsigned);
 
   ~MarshalField();
   

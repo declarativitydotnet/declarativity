@@ -17,12 +17,11 @@
 #define __DUPLICATECONSERVATIVE_H__
 
 #include "element.h"
-#include "bitvec.h"
 
 class DuplicateConservative : public Element { 
 public:
   
-  DuplicateConservative(str, int);
+  DuplicateConservative(string, int);
 
   int push(int port, TuplePtr t, b_cbv cb);
 
@@ -38,7 +37,7 @@ private:
   b_cbv _push_cb;
 
   /** My block flags, one per output port */
-  bitvec _block_flags;
+  std::vector<int> _block_flags;
 
   /** My block flag count. */
   int _block_flag_count;

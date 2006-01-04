@@ -15,13 +15,12 @@
 #ifndef __TIMESTAMP_SOURCE_H__
 #define __TIMESTAMP_SOURCE_H__
 
-#include <amisc.h>
 #include <element.h>
 
 class TimestampSource : public Element { 
  public:
   
-  TimestampSource(str name);
+  TimestampSource(string name);
 
   const char *class_name() const		{ return "TimestampSource"; }
   const char *flow_code() const			{ return "/-"; }

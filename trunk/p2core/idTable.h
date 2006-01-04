@@ -9,7 +9,6 @@
 #include <utility>
 #include <algorithm>
 
-#include <async.h>
 #include <assert.h>
 #include <ihash.h>
 

@@ -9,9 +9,11 @@
  * 
  */
 
+#include <errno.h>
 #include "printTime.h"
+#include "loop.h"
 
-PrintTime::PrintTime(str prefix)
+PrintTime::PrintTime(string prefix)
   : Element(prefix, 1, 1),
     _prefix(prefix)
 {

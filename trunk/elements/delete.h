@@ -21,7 +21,7 @@
 
 class Delete : public Element {
  public:
-  Delete(str name,
+  Delete(string name,
          TablePtr table,
          unsigned indexFieldNo,
          unsigned keyFieldNo);

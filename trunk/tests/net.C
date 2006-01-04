@@ -15,9 +15,10 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 #include "tuple.h"
 #include "router.h"
@@ -45,14 +46,14 @@ void testUdpTx()
   Udp udpIn("10000", 10000);
 
   // The destination address
-  str destinationAddr = "127.0.0.1";
+  string destinationAddr = "127.0.0.1";
   struct sockaddr_in addr;
   bzero(&addr, sizeof(addr));
   addr.sin_port = htons(10000);
-  inet_pton(AF_INET, destinationAddr.cstr(),
+  inet_pton(AF_INET, destinationAddr.c_str(),
             &addr.sin_addr);
-  ref< suio > addressUio = New refcounted< suio >();
-  addressUio->copy(&addr, sizeof(addr));
+  FdbufPtr addressUio(new Fdbuf());
+  addressUio->push_back((char*)&addr, sizeof(addr));
 
 
   // The sending data flow

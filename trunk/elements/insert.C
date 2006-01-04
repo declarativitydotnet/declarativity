@@ -11,7 +11,7 @@
 
 #include "insert.h"
 
-Insert::Insert(str name,
+Insert::Insert(string name,
                TablePtr table)
   : Element(name, 1, 1),
     _table(table)

@@ -18,7 +18,7 @@
 
 class UnmarshalField : public Element { 
 public:
-  UnmarshalField(str, unsigned);
+  UnmarshalField(string, unsigned);
 
   ~UnmarshalField();
   

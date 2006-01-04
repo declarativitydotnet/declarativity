@@ -18,7 +18,6 @@
 #ifndef __TIMED_PULL_PUSH_H__
 #define __TIMED_PULL_PUSH_H__
 
-#include <amisc.h>
 #include <element.h>
 #include "loop.h"
 
@@ -26,7 +25,7 @@ class TimedPullPush : public Element {
  public:
   
   /** Initialized with the interval between forwards. */
-  TimedPullPush(str name, double seconds, int tuples = 0);
+  TimedPullPush(string name, double seconds, int tuples = 0);
 
   const char *class_name() const		{ return "TimedPullPush"; }
   const char *flow_code() const			{ return "-/-"; }

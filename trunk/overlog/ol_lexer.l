@@ -100,12 +100,12 @@ WHITESPACE	[ \t\r\n]+
 }
 <INITIAL>\" { 
   assert(cstring == NULL);
-  cstring = New strbuf();
+  cstring = new ostringstream();
   BEGIN(CSTRING); 
 }
 <CSTRING>\" { 
   assert(cstring != NULL);
-  lvalp->v = New Parse_Val(Val_Str::mk(*cstring));
+  lvalp->v = new Parse_Val(Val_Str::mk(cstring->str()));
   delete cstring;
   cstring = NULL;
   BEGIN(INITIAL); 
@@ -184,53 +184,55 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>[Mm][Ii][Nn] { return OL_MIN; }
 <INITIAL>[Cc][Oo][Uu][Nn][Tt] { return OL_COUNT; }
 <INITIAL>"null" { 
-  lvalp->v = New Parse_Val(Val_Null::mk()); 
+  lvalp->v = new Parse_Val(Val_Null::mk()); 
   return OL_NULL; }
 
 <INITIAL>f_[a-zA-Z]+ { 
-  lvalp->v = New Parse_Var(Val_Str::mk(yytext)); 
+  lvalp->v = new Parse_Var(Val_Str::mk(yytext)); 
   return OL_FUNCTION; }
 
 <INITIAL>[A-Z]{ALNUM}* { 
-  lvalp->v = New Parse_Var(Val_Str::mk(yytext)); 
+  lvalp->v = new Parse_Var(Val_Str::mk(yytext)); 
   return OL_VAR; }
 
 <INITIAL>_ { 
-  lvalp->v = New Parse_Var(Val_Str::mk(strbuf() << "$_" << dcvar++)); 
+  ostringstream oss;
+  oss << "$_" << dcvar++; 
+  lvalp->v = new Parse_Var(Val_Str::mk(oss.str())); 
   return OL_VAR; }
 
 <INITIAL>infinity {
   // Unsigned integer literal (including octal and/or hex
-  lvalp->v = New Parse_Val(Val_Int64::mk(-1));
+  lvalp->v = new Parse_Val(Val_Int64::mk(-1));
   return OL_VALUE;
 }
 
 <INITIAL>[a-z]{ALNUM}* { 
-  lvalp->v = New Parse_Val(Val_Str::mk(yytext)); 
+  lvalp->v = new Parse_Val(Val_Str::mk(yytext)); 
   return OL_NAME; 
 }
 
 <INITIAL>({DIGIT}+|0[xX]{HEXDIGIT}+)U {
   // Unsigned integer literal (including octal and/or hex
-  lvalp->v = New Parse_Val(Val_UInt64::mk(strtoull(yytext,NULL,0)));
+  lvalp->v = new Parse_Val(Val_UInt64::mk(strtoull(yytext,NULL,0)));
   return OL_VALUE;
 }
 
 <INITIAL>(-?{DIGIT}+|0[xX]{HEXDIGIT}+) {
   // Some integer literal (including octal and/or hex
-  lvalp->v = New Parse_Val(Val_Int64::mk(strtoll(yytext,NULL,0)));
+  lvalp->v = new Parse_Val(Val_Int64::mk(strtoll(yytext,NULL,0)));
   return OL_VALUE;
 }
 
 <INITIAL>-?{DIGIT}+(({DECIM}{EXP}?)|{EXP}) {
   // Double-precision literal
-  lvalp->v = New Parse_Val(Val_Double::mk(strtod(yytext,NULL)));
+  lvalp->v = new Parse_Val(Val_Double::mk(strtod(yytext,NULL)));
   return OL_VALUE;
 }
 
 <INITIAL>({DIGIT}+|0[xX]{HEXDIGIT}+)I {
   // Unsigned integer literal (including octal and/or hex
-  Parse_Val *val = New Parse_Val(Val_ID::mk(ID::mk(strtoull(yytext,NULL,0))));
+  Parse_Val *val = new Parse_Val(Val_ID::mk(ID::mk(strtoull(yytext,NULL,0))));
   val->id(true);
   lvalp->v = val;
   return OL_VALUE;

@@ -15,10 +15,8 @@
 
 #include "planContext.h"
 
-PlanContext::PlanContext(Router::ConfigurationPtr conf, 
-			 Catalog* catalog, 
-			 RuleStrand* ruleStrand, str nodeID,
-			 FILE* outputDebugFile) :
+PlanContext::PlanContext(Router::ConfigurationPtr conf, Catalog* catalog, 
+			 RuleStrand* ruleStrand, string nodeID, FILE* outputDebugFile) :
   _outputDebugFile(outputDebugFile), _conf(conf)
 {
   _catalog = catalog;
@@ -55,21 +53,21 @@ PlanContext::FieldNamesTracker::initialize(Parse_Term* term)
 
   Parse_RangeFunction* pr = dynamic_cast<Parse_RangeFunction* > (term);    
   if (pr != NULL) {
-    fieldNames.push_back(str("NI"));
-    fieldNames.push_back(str(pr->var->toString()));
+    fieldNames.push_back(string("NI"));
+    fieldNames.push_back(string(pr->var->toString()));
   }
 }
 
 
 std::vector<int> 
-PlanContext::FieldNamesTracker::matchingJoinKeys(std::vector<str> 
+PlanContext::FieldNamesTracker::matchingJoinKeys(std::vector<string> 
 						 otherArgNames)
 {
   // figure out the matching on other side. Assuming that
   // there is only one matching key for now
   std::vector<int> toRet;
   for (unsigned int k = 0; k < otherArgNames.size(); k++) {
-    str nextStr = otherArgNames.at(k);
+    string nextStr = otherArgNames.at(k);
     if (fieldPosition(nextStr) != -1) {
       // exists
       toRet.push_back(k);
@@ -79,7 +77,7 @@ PlanContext::FieldNamesTracker::matchingJoinKeys(std::vector<str>
 }
 
 int 
-PlanContext::FieldNamesTracker::fieldPosition(str var)
+PlanContext::FieldNamesTracker::fieldPosition(string var)
 {
   for (uint k = 0; k < fieldNames.size(); k++) {
     if (fieldNames.at(k) == var) {
@@ -90,10 +88,10 @@ PlanContext::FieldNamesTracker::fieldPosition(str var)
 }
 
 void 
-PlanContext::FieldNamesTracker::mergeWith(std::vector<str> names)
+PlanContext::FieldNamesTracker::mergeWith(std::vector<string> names)
 {
   for (uint k = 0; k < names.size(); k++) {
-    str nextStr = names.at(k);
+    string nextStr = names.at(k);
     if (fieldPosition(nextStr) == -1) {
       fieldNames.push_back(nextStr);
     }
@@ -101,12 +99,12 @@ PlanContext::FieldNamesTracker::mergeWith(std::vector<str> names)
 }
 
 void 
-PlanContext::FieldNamesTracker::mergeWith(std::vector<str> names, 
+PlanContext::FieldNamesTracker::mergeWith(std::vector<string> names, 
 					  int numJoinKeys)
 {
   int count = 0;
   for (uint k = 0; k < names.size(); k++) {
-    str nextStr = names.at(k);
+    string nextStr = names.at(k);
     if (count == numJoinKeys || fieldPosition(nextStr) == -1) {
       fieldNames.push_back(nextStr);
       count++;
@@ -114,14 +112,14 @@ PlanContext::FieldNamesTracker::mergeWith(std::vector<str> names,
   }
 }
 
-str 
+string 
 PlanContext::FieldNamesTracker::toString()
 {
-  strbuf toRet("FieldNamesTracker<");
+  ostringstream toRet("FieldNamesTracker<");
   
   for (uint k = 0; k < fieldNames.size(); k++) {
     toRet << fieldNames.at(k) << " ";
   }
-  return toRet << ">";
+  return toRet.str() + ">";
 }
 

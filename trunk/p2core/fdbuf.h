@@ -15,7 +15,9 @@
 #ifndef __FDBUF_H__
 #define __FDBUF_H__
 
+#include <boost/shared_ptr.hpp>
 #include <cstdlib>
+#include <stdint.h>
 #include <string>
 #include <sstream>
 #include <errno.h>
@@ -67,7 +69,8 @@ public:
     BUF_DFLT_CAP = 1500,	// Default capacity of the buffer.
     BUF_DFLT_READ = 1500,	// Default quantity to read.
     BUF_UNLIMITED = -1,		// Unlimited capacity.
-    BUF_INCREMENT = 0x80	// Granularity of buffer growing.
+    BUF_INCREMENT = 0x80,	// Granularity of buffer growing.
+    BUF_SIZE_MAX = (2 << (sizeof(size_t) - 1) - 1)
   };
 
   Fdbuf( int init_capacity = BUF_DFLT_CAP, bool is_safe=false );
@@ -88,20 +91,20 @@ public:
   ssize_t recvfrom(int sd, size_t max_read = BUF_DFLT_READ, int flags=0,
 		   struct sockaddr *from=NULL, socklen_t *fromlen=0);
   
+  Fdbuf &push_back(const Fdbuf &fb, size_t max_len = BUF_SIZE_MAX );
+  Fdbuf &push_back(const std::string &s);
+  Fdbuf &push_back(const char *buf, size_t len);
+  Fdbuf &push_back(const char *str);
 
-  const Fdbuf &push_back(const Fdbuf &fb );
-  const Fdbuf &push_back(const std::string &s);
-  const Fdbuf &push_back(const char *buf, size_t len);
-  const Fdbuf &push_back(const char *str);
   // Could probably be more efficient...
-  template <class T> const Fdbuf &push_back(const T &t) { 
+  template <class T> Fdbuf &push_back(const T &t) { 
     std::ostringstream os; 
     os << t; 
     return push_back(os.str()); 
   };
   
   // Operators
-  template <class T> const Fdbuf &operator<< (const T &t) { return push_back(t); }
+  template <class T> Fdbuf &operator<< (const T &t) { return push_back(t); }
  
   //
   // OUTPUT FUNCTIONS: remove stuff from the head of the buffer. 
@@ -121,6 +124,7 @@ public:
   // Member functions: stuff removing data from the head of the buffer
   u_int32_t pop_uint32();
   bool pop_bytes(char *buf, size_t len);
+  size_t pop_to_fdbuf( Fdbuf &fb, size_t len);
 
   //
   // ACCESS FUNCTIONS: those that aren't quite INPUT or OUTPUT. 
@@ -163,5 +167,6 @@ public:
   void align_write() { len = align(len); };
 };
 
+typedef boost::shared_ptr< Fdbuf > FdbufPtr;
 
 #endif /* __FDBUF_H_ */

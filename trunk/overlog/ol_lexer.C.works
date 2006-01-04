@@ -651,7 +651,7 @@ static yyconst flex_int16_t yy_rule_linenum[68] =
       154,  155,  156,  157,  158,  159,  160,  161,  164,  165,
       166,  169,  170,  171,  172,  174,  175,  176,  177,  178,
       179,  180,  181,  182,  183,  184,  185,  186,  190,  194,
-      198,  202,  208,  213,  219,  225,  231
+      198,  204,  210,  215,  221,  227,  233
     } ;
 
 #define REJECT \
@@ -1066,7 +1066,7 @@ YY_RULE_SETUP
 #line 101 "ol_lexer.lex"
 { 
   assert(cstring == NULL);
-  cstring = New strbuf();
+  cstring = new ostringstream();
   BEGIN(CSTRING); 
 }
 	YY_BREAK
@@ -1075,7 +1075,7 @@ YY_RULE_SETUP
 #line 106 "ol_lexer.lex"
 { 
   assert(cstring != NULL);
-  lvalp->v = New Parse_Val(Val_Str::mk(*cstring));
+  lvalp->v = new Parse_Val(Val_Str::mk(cstring->str()));
   delete cstring;
   cstring = NULL;
   BEGIN(INITIAL); 
@@ -1349,80 +1349,82 @@ case 58:
 YY_RULE_SETUP
 #line 186 "ol_lexer.lex"
 { 
-  lvalp->v = New Parse_Val(Val_Null::mk()); 
+  lvalp->v = new Parse_Val(Val_Null::mk()); 
   return OL_NULL; }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
 #line 190 "ol_lexer.lex"
 { 
-  lvalp->v = New Parse_Var(Val_Str::mk(yytext)); 
+  lvalp->v = new Parse_Var(Val_Str::mk(yytext)); 
   return OL_FUNCTION; }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
 #line 194 "ol_lexer.lex"
 { 
-  lvalp->v = New Parse_Var(Val_Str::mk(yytext)); 
+  lvalp->v = new Parse_Var(Val_Str::mk(yytext)); 
   return OL_VAR; }
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
 #line 198 "ol_lexer.lex"
 { 
-  lvalp->v = New Parse_Var(Val_Str::mk(strbuf() << "$_" << dcvar++)); 
+  ostringstream oss;
+  oss << "$_" << dcvar++; 
+  lvalp->v = new Parse_Var(Val_Str::mk(oss.str())); 
   return OL_VAR; }
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 202 "ol_lexer.lex"
+#line 204 "ol_lexer.lex"
 {
   // Unsigned integer literal (including octal and/or hex
-  lvalp->v = New Parse_Val(Val_Int64::mk(-1));
+  lvalp->v = new Parse_Val(Val_Int64::mk(-1));
   return OL_VALUE;
 }
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 208 "ol_lexer.lex"
+#line 210 "ol_lexer.lex"
 { 
-  lvalp->v = New Parse_Val(Val_Str::mk(yytext)); 
+  lvalp->v = new Parse_Val(Val_Str::mk(yytext)); 
   return OL_NAME; 
 }
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 213 "ol_lexer.lex"
+#line 215 "ol_lexer.lex"
 {
   // Unsigned integer literal (including octal and/or hex
-  lvalp->v = New Parse_Val(Val_UInt64::mk(strtoull(yytext,NULL,0)));
+  lvalp->v = new Parse_Val(Val_UInt64::mk(strtoull(yytext,NULL,0)));
   return OL_VALUE;
 }
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 219 "ol_lexer.lex"
+#line 221 "ol_lexer.lex"
 {
   // Some integer literal (including octal and/or hex
-  lvalp->v = New Parse_Val(Val_Int64::mk(strtoll(yytext,NULL,0)));
+  lvalp->v = new Parse_Val(Val_Int64::mk(strtoll(yytext,NULL,0)));
   return OL_VALUE;
 }
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 225 "ol_lexer.lex"
+#line 227 "ol_lexer.lex"
 {
   // Double-precision literal
-  lvalp->v = New Parse_Val(Val_Double::mk(strtod(yytext,NULL)));
+  lvalp->v = new Parse_Val(Val_Double::mk(strtod(yytext,NULL)));
   return OL_VALUE;
 }
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 231 "ol_lexer.lex"
+#line 233 "ol_lexer.lex"
 {
   // Unsigned integer literal (including octal and/or hex
-  Parse_Val *val = New Parse_Val(Val_ID::mk(ID::mk(strtoull(yytext,NULL,0))));
+  Parse_Val *val = new Parse_Val(Val_ID::mk(ID::mk(strtoull(yytext,NULL,0))));
   val->id(true);
   lvalp->v = val;
   return OL_VALUE;
@@ -1430,10 +1432,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 239 "ol_lexer.lex"
+#line 241 "ol_lexer.lex"
 ECHO;
 	YY_BREAK
-#line 1437 "ol_lexer.C"
+#line 1439 "ol_lexer.C"
 			case YY_STATE_EOF(CCOMMENT):
 			case YY_STATE_EOF(CSTRING):
 				yyterminate();
@@ -2439,7 +2441,7 @@ void OLBasefree (void * ptr )
 #undef YY_DECL_IS_OURS
 #undef YY_DECL
 #endif
-#line 239 "ol_lexer.lex"
+#line 241 "ol_lexer.lex"
 
 
 

@@ -16,8 +16,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 #include <stdlib.h>
 
@@ -46,9 +44,9 @@ void killJoin()
   exit(0);
 }
 
-str LOCAL("127.0.0.1:10000");
-str REMOTE("Remote.com");
-str FINGERIP("Finger.com");
+string LOCAL("127.0.0.1:10000");
+string REMOTE("Remote.com");
+string FINGERIP("Finger.com");
 
 struct SuccessorGenerator : public FunctorSource::Generator
 {
@@ -58,13 +56,13 @@ struct SuccessorGenerator : public FunctorSource::Generator
     TuplePtr tuple = Tuple::mk();
     tuple->append(Val_Str::mk("succ"));
     
-    str myAddress = str(strbuf() << LOCAL);
+    string myAddress = LOCAL;
     tuple->append(Val_Str::mk(myAddress));
     
     IDPtr successor = ID::mk((uint32_t) rand());
     tuple->append(Val_ID::mk(successor));
 
-    str succAddress = str(strbuf() << successor->toString() << "IP");
+    string succAddress = successor->toString() + "IP";
     tuple->append(Val_Str::mk(succAddress));
     tuple->freeze();
     return tuple;
@@ -73,7 +71,7 @@ struct SuccessorGenerator : public FunctorSource::Generator
 
 
 // this allows us to isolate and test just the finger lookup rules
-void fakeFingersSuccessors(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr<Rtr_ConfGen> routerConfigGenerator, str localAddress, IDPtr me)
+void fakeFingersSuccessors(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr<Rtr_ConfGen> routerConfigGenerator, string localAddress, IDPtr me)
 {
   TablePtr fingerTable = routerConfigGenerator->getTableByName(localAddress, "finger");
   OL_Context::TableInfo* fingerTableInfo = ctxt->getTableInfos()->find("finger")->second;  
@@ -83,7 +81,7 @@ void fakeFingersSuccessors(boost::shared_ptr< OL_Context> ctxt, boost::shared_pt
     TuplePtr tuple = Tuple::mk();
     tuple->append(Val_Str::mk("finger"));
 
-    str myAddress = str(strbuf() << localAddress);
+    string myAddress = localAddress;
     tuple->append(Val_Str::mk(myAddress));
     tuple->append(Val_Int32::mk(i));
 
@@ -91,8 +89,9 @@ void fakeFingersSuccessors(boost::shared_ptr< OL_Context> ctxt, boost::shared_pt
     IDPtr best = ID::mk()->add(target)->add(ID::mk((uint32_t) i*10));
     tuple->append(Val_ID::mk(best));
   
-    str address = str(strbuf() << "Finger:" << (i / 2));
-    tuple->append(Val_Str::mk(address));
+    ostringstream address;
+    address << "Finger:" << (i / 2);
+    tuple->append(Val_Str::mk(address.str()));
     tuple->freeze();
     fingerTable->insert(tuple);
     warn << tuple->toString() << "\n";
@@ -104,14 +103,15 @@ void fakeFingersSuccessors(boost::shared_ptr< OL_Context> ctxt, boost::shared_pt
   TuplePtr tuple = Tuple::mk();
   tuple->append(Val_Str::mk("bestSucc"));
   
-  str myAddress = str(strbuf() << localAddress);
+  string myAddress = localAddress;
   tuple->append(Val_Str::mk(myAddress));
   
   IDPtr target = ID::mk((uint32_t) 0X1)->add(me);
   tuple->append(Val_ID::mk(target));
   
-  str address = str(strbuf() << "Finger:" << 0);
-  tuple->append(Val_Str::mk(address));
+  ostringstream address;
+  address << "Finger:" << 0;
+  tuple->append(Val_Str::mk(address.str()));
   tuple->freeze();
   
   bestSuccessorTable->insert(tuple);
@@ -120,7 +120,7 @@ void fakeFingersSuccessors(boost::shared_ptr< OL_Context> ctxt, boost::shared_pt
 
 
 void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr<Rtr_ConfGen> routerConfigGenerator, 
-			  str localAddress, str landmarkAddress)
+			  string localAddress, string landmarkAddress)
 {
 
  // create information on the node itself  
@@ -141,7 +141,7 @@ void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr
   TuplePtr tuple = Tuple::mk();
   tuple->append(Val_Str::mk("node"));
     
-  str myAddress = str(strbuf() << localAddress);
+  string myAddress = localAddress;
   tuple->append(Val_Str::mk(myAddress));
   tuple->append(Val_ID::mk(myKey));
   tuple->freeze();
@@ -153,7 +153,7 @@ void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr
   predecessorTuple->append(Val_Str::mk("pred"));
   predecessorTuple->append(Val_Str::mk(localAddress));
   predecessorTuple->append(Val_ID::mk(ID::mk()));
-  predecessorTuple->append(Val_Str::mk(str("-"))); 
+  predecessorTuple->append(Val_Str::mk(string("-"))); 
   predecessorTuple->freeze();
   predecessorTable->insert(predecessorTuple);
   warn << "Initial predecessor " << predecessorTuple->toString() << "\n";
@@ -178,30 +178,29 @@ void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr
 }
 
 
-void sendSuccessorStream(boost::shared_ptr< Udp> udp, boost::shared_ptr< Router::Configuration > conf, str localAddress)
+void sendSuccessorStream(boost::shared_ptr< Udp> udp, boost::shared_ptr< Router::Configuration > conf, string localAddress)
 {
   // have something that populates the table of successors. For testing purposes
   SuccessorGenerator* successorGenerator = new SuccessorGenerator();
   ElementSpecPtr sourceS =
-    conf->addElement(ElementPtr(new FunctorSource(str("SuccessorSource:"),
+    conf->addElement(ElementPtr(new FunctorSource(string("SuccessorSource:"),
 						     successorGenerator)));
   
-  ElementSpecPtr print   = conf->addElement(ElementPtr(new Print(strbuf("SuccessorSource"))));
+  ElementSpecPtr print   = conf->addElement(ElementPtr(new Print(string("SuccessorSource"))));
   
   // The timed pusher
   ElementSpecPtr pushS =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("SuccessorPush:"),
-						     2)));
+    conf->addElement(ElementPtr(new TimedPullPush(string("SuccessorPush:"), 2)));
   
   // And a slot from which to pull
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("SuccessorSlot:"))));
+    conf->addElement(ElementPtr(new Slot(string("SuccessorSlot:"))));
   
   ElementSpecPtr encap = conf->addElement(ElementPtr(new PelTransform("SuccessorEncap",
 									 "$1 pop \
                                                      $0 ->t $1 append $2 append $3 append pop"))); // the rest
   ElementSpecPtr marshal = conf->addElement(ElementPtr(new MarshalField("SuccessorMarshalField", 1)));
-  ElementSpecPtr route   = conf->addElement(ElementPtr(new StrToSockaddr(strbuf("SuccessorStrToSocket"), 0)));
+  ElementSpecPtr route   = conf->addElement(ElementPtr(new StrToSockaddr(string("SuccessorStrToSocket"), 0)));
   
   ElementSpecPtr udpTx = conf->addElement(udp->get_tx());
   
@@ -218,7 +217,7 @@ void sendSuccessorStream(boost::shared_ptr< Udp> udp, boost::shared_ptr< Router:
 
 void initiateJoinRequest(boost::shared_ptr< Rtr_ConfGen > routerConfigGenerator, 
                          boost::shared_ptr< Router::Configuration > conf, 
-			 str localAddress, double delay)
+			 string localAddress, double delay)
 {
 
  // My next finger fix tuple
@@ -229,18 +228,18 @@ void initiateJoinRequest(boost::shared_ptr< Rtr_ConfGen > routerConfigGenerator,
   joinEventTuple->freeze();
 
   ElementSpecPtr sourceS =
-    conf->addElement(ElementPtr(new TupleSource(str("JoinEventSource:") << localAddress,
+    conf->addElement(ElementPtr(new TupleSource(string("JoinEventSource:") + localAddress,
                                                    joinEventTuple)));
   
   // The once pusher
   ElementSpecPtr onceS =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("JoinEventPush:") << localAddress,
+    conf->addElement(ElementPtr(new TimedPullPush(string("JoinEventPush:") + localAddress,
                                                      delay, // run immediately
                                                      JOIN_ATTEMPTS // run once
                                                      )));
 
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("JoinEventSlot:"))));
+    conf->addElement(ElementPtr(new Slot(string("JoinEventSlot:"))));
 
   // Link everything
   conf->hookUp(sourceS, 0, onceS, 0);
@@ -251,8 +250,8 @@ void initiateJoinRequest(boost::shared_ptr< Rtr_ConfGen > routerConfigGenerator,
 
 
 /** Test lookups. */
-void startChordInDatalog(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt, str datalogFile, 
-			 str localAddress, int port, str landmarkAddress, 
+void startChordInDatalog(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt, string datalogFile, 
+			 string localAddress, int port, string landmarkAddress, 
 			 double delay)
 {
   // create dataflow for translated chord lookup rules

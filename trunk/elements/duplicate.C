@@ -11,14 +11,14 @@
 
 #include "duplicate.h"
 
-Duplicate::Duplicate(str name, int outputs)
+Duplicate::Duplicate(string name, int outputs)
   : Element(name, 1, outputs),
     _push_cb(0),
     _block_flags(),
     _block_flag_count(0)
 {
   // Clean out the block flags
-  _block_flags.zsetsize(noutputs());
+  _block_flags.resize(noutputs());
 }
 
 void Duplicate::unblock(int output)
@@ -68,7 +68,7 @@ int Duplicate::push(int port, TuplePtr p, b_cbv cb)
     // Is the output blocked?
     if (_block_flags[i]) {
       // No can do. Skip this output
-      log(LoggerI::INFO, -1, strbuf("push: Skipped duplication on blocked output ") << i);
+      log(LoggerI::INFO, -1, "push: Skipped duplication on blocked output ");
     } else {
       // Send it with the appropriate callback
       int result = output(i)->push(p, boost::bind(&Duplicate::unblock, this, i));

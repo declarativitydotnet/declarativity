@@ -13,11 +13,14 @@
  *
  */
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 #include <stdlib.h>
 #include <vector>
@@ -48,27 +51,27 @@
 #include "store.h"
 #include "timedPullPush.h"
 
-str getLocalHostname()
+string getLocalHostname()
 {
   char* c = (char*) malloc(80 * sizeof(char));
   char *d = (char*) malloc(80 * sizeof(char));
   gethostname(c, 80);
   struct hostent *h = gethostbyname(c);
   sprintf(d, "%s", inet_ntoa(*((struct in_addr *)h->h_addr)));
-  str toRet(d);
+  string toRet(d);
   free(c);
   free(d);
   return toRet;
 }
 
 
-void testPingPong(int mode, str targetHost, LoggerI::Level level)
+void testPingPong(int mode, string targetHost, LoggerI::Level level)
 {
   // sender mode 0
   // receiver mode 1
 
   // the local hostname
-  str localHostname = getLocalHostname();
+  string localHostname = getLocalHostname();
 
   boost::shared_ptr< Store > pingNodeStore(new Store("PingNodes", 2));
 
@@ -80,8 +83,8 @@ void testPingPong(int mode, str targetHost, LoggerI::Level level)
   std::vector<TuplePtr> buffer;
   TuplePtr tuple = Tuple::mk();
   tuple->append(Val_Str::mk("Ping"));
-  tuple->append(Val_Str::mk(localHostname << ":10000")); // my node
-  tuple->append(Val_Str::mk(targetHost << ":10000")); // ping target
+  tuple->append(Val_Str::mk(localHostname + ":10000")); // my node
+  tuple->append(Val_Str::mk(targetHost + ":10000")); // ping target
   tuple->freeze();  
   if (mode == 0) {
     pingNodeStore->insert(tuple);  
@@ -204,7 +207,7 @@ int main(int argc, char **argv)
     char *d = (char*) malloc(80 * sizeof(char));
     struct hostent *h = gethostbyname(argv[2]);
     sprintf(d, "%s", inet_ntoa(*((struct in_addr *)h->h_addr)));
-    str remoteHost(d);
+    string remoteHost(d);
     testPingPong(atoi(argv[1]), remoteHost, level);
     free(d);
   }

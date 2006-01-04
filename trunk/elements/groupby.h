@@ -13,7 +13,6 @@
 #define __GROUPBY_H__
 
 #include "element.h"
-#include <amisc.h>
 #include <map>
 #include <vector>
 
@@ -31,7 +30,7 @@ public:
   static const int MAX_AGG;
   static const int AVG_AGG;
 
-  GroupBy(str name, str newTableName, std::vector<int> primaryFields, std::vector<int> groupByFields, 
+  GroupBy(string name, string newTableName, std::vector<int> primaryFields, std::vector<int> groupByFields, 
 	  std::vector<int> aggFields, std::vector<int> aggTypes, double seconds, bool aggregateSelections);
 
   ~GroupBy();
@@ -45,13 +44,13 @@ public:
   const char *flow_code() const			{ return "x/x"; }
 
 private:
-  str getFieldStr(std::vector<int> fields, TuplePtr p);
+  string getFieldStr(std::vector<int> fields, TuplePtr p);
   void recomputeAllAggs();
-  void dumpTuples(str str);
-  void dumpAggs(str str);
+  void dumpTuples(string str);
+  void dumpAggs(string str);
 
-  typedef std::multimap<str, TuplePtr> TupleMultiMap;
-  typedef std::map<str, TuplePtr> TupleMap;
+  typedef std::multimap<string, TuplePtr> TupleMultiMap;
+  typedef std::map<string, TuplePtr> TupleMap;
 
   // tuples, indexed by groupByField
   TupleMultiMap _tuples; 
@@ -74,7 +73,7 @@ private:
   TupleMap _lastSentTuples; 
 
   // name of new agg tuples
-  str _newTableName;
+  string _newTableName;
 
   /** The interval in seconds */
   double _seconds;

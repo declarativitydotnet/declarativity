@@ -11,7 +11,6 @@
 
 #include <map>
 #include <deque>
-#include <async.h>
 #include "tuple.h"
 #include "element.h"
 #include "inlines.h"
@@ -37,7 +36,7 @@ typedef uint64_t SeqNum;
  */
 class CCT : public Element {
 public:
-  CCT(str name, double init_wnd, double max_wnd, bool tstat=true, bool stat=false);
+  CCT(string name, double init_wnd, double max_wnd, bool tstat=true, bool stat=false);
   const char *class_name() const { return "CCT";};
   const char *processing() const { return stat_ ? "lh/lhl" : "lh/lh"; };
   const char *flow_code() const	 { return stat_ ? "--/---" : "--/--"; };
@@ -48,7 +47,7 @@ public:
 private:
   void timeout_cb(CCTuple*);			// Callback for to retry sending a tuple
   void data_ready();				// Callback for input data ready
-  REMOVABLE_INLINE int32_t dealloc(SeqNum,str);	// Remove CCTuple from map
+  REMOVABLE_INLINE int32_t dealloc(SeqNum,string);	// Remove CCTuple from map
   REMOVABLE_INLINE void map(SeqNum, CCTuple*);	// Map tuple and set timeout
   REMOVABLE_INLINE void add_rtt_meas(int32_t);	// Update sa, sv, and rto based on m
   REMOVABLE_INLINE void timeout();		// Update sa, sv, and rto based on m

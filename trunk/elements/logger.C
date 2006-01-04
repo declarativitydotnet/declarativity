@@ -14,6 +14,7 @@
 #include <logger.h>
 #include <tuple.h>
 #include <router.h>
+#include <errno.h>
 
 #include "val_double.h"
 #include "val_uint64.h"
@@ -29,13 +30,13 @@ uint64_t Logger::seq=0;
 // 
 // Not much of a constructor
 //
-Logger::Logger(str name) : Element(name, 0, 1) { }
+Logger::Logger(string name) : Element(name, 0, 1) { }
 
-void Logger::log( str classname, 
-		  str instancename,
+void Logger::log( string classname, 
+		  string instancename,
 		  Level severity,
 		  int errnum,
-		  str explanation )
+		  string explanation )
 {
   if (severity >= router()->loggingLevel) {
     timespec now_ts;

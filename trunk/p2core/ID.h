@@ -16,10 +16,14 @@
 #ifndef __ID_H__
 #define __ID_H__
 
+#include <rpc/xdr.h>
+#include <string>
+#include <sstream>
 #include <boost/shared_ptr.hpp>
-#include <async.h>
-#include <arpc.h>
 #include "inlines.h"
+
+using std::string;
+using std::ostringstream;
 
 class ID;
 typedef boost::shared_ptr< ID > IDPtr;
@@ -49,7 +53,7 @@ public:
 
   ID(uint64_t);
 
-  str toString() const;
+  string toString() const;
 
   /** Strict equality */
   REMOVABLE_INLINE bool equals(IDPtr other) const { return compareTo(other) == 0; }

@@ -11,14 +11,14 @@
 
 #include "duplicateConservative.h"
 
-DuplicateConservative::DuplicateConservative(str name, int outputs)
+DuplicateConservative::DuplicateConservative(string name, int outputs)
   : Element(name, 1, outputs),
     _push_cb(0),
     _block_flags(),
     _block_flag_count(0)
 {
   // Clean out the block flags
-  _block_flags.zsetsize(noutputs());
+  _block_flags.resize(noutputs());
 }
 
 void DuplicateConservative::unblock(int output)
@@ -28,7 +28,7 @@ void DuplicateConservative::unblock(int output)
   
   // Unset a blocked output
   if (_block_flags[output]) {
-    log(LoggerI::INFO, -1, strbuf("unblock ") << output);
+    log(LoggerI::INFO, -1, "unblock output");
 
     _block_flags[output] = false;
     _block_flag_count--;
@@ -37,7 +37,7 @@ void DuplicateConservative::unblock(int output)
 
   // If I have no more blocked outputs, unblock my pusher
   if (_block_flag_count == 0) {
-   log(LoggerI::INFO, -1, str(strbuf() << "unblock: propagating aggregate unblock " << output));
+   log(LoggerI::INFO, -1, "unblock: propagating aggregate unblock output");
      _push_cb();
     _push_cb = 0;
   }

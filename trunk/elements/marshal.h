@@ -18,7 +18,7 @@
 
 class Marshal : public Element { 
 public:
-  Marshal(str);
+  Marshal(string);
 
   ~Marshal();
   

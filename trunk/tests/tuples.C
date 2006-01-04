@@ -15,10 +15,10 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
+#include <errno.h>
 
+#include "loop.h"
 #include "tuple.h"
 
 #include "val_null.h"
@@ -28,9 +28,11 @@
 #include "val_int64.h"
 #include "val_uint64.h"
 #include "val_double.h"
+#include "oper.h"
 
+using namespace opr;
 
-static double time_fn(cbv cb) 
+static double time_fn(b_cbv cb) 
 {
   timespec before_ts;
   timespec after_ts;
@@ -93,19 +95,22 @@ static void create_lots_of_tuples() {
   }
 }
 
-static xdrsuio encode_uios[MARSHAL_NUM_UIOS];
+// static xdrsuio encode_uios[MARSHAL_NUM_UIOS];
 
 static void marshal_lots_of_tuples() 
 {
+/** FIX ME SUIO
   assert( MARSHAL_CHUNK_SZ < TUPLE_TST_SZ);
   for( int c=0; c< MARSHAL_NUM_UIOS; c++) {
     for( int i=0; i< MARSHAL_CHUNK_SZ; i++) {
       ta[i]->xdr_marshal(&encode_uios[c]);
     }
   }
+*/
 }
 static void unmarshal_lots_of_tuples() 
 {
+/** FIX ME SUIO
   assert( MARSHAL_CHUNK_SZ < TUPLE_TST_SZ);
   for( int c=0; c< MARSHAL_NUM_UIOS; c++) {
     suio *u = encode_uios[c].uio();
@@ -117,10 +122,12 @@ static void unmarshal_lots_of_tuples()
     }
     delete [] buf;
   }
+*/
 }
 
 int main(int argc, char **argv)
 {
+/** FIX ME XDR
   std::cout << "TUPLES\n";
 
   // Create a bunch of tuples...
@@ -140,7 +147,7 @@ int main(int argc, char **argv)
   std::cout << " iovno=" << xe.uio()->iovno() << "\n";
   const char *buf = suio_flatten(xe.uio());
   size_t sz = xe.uio()->resid();
-  str s = strbuf() << hexdump(buf,sz);
+  string s = hexdump(buf,sz);
   std::cout << " Hexdump: " << s << "\n";
   
   // Now try unmarshalling said tuple...
@@ -159,6 +166,7 @@ int main(int argc, char **argv)
 
   t = create_tuple_1();
   std::cout << t->toString() << "\n";
+*/
 
   return 0;
 }

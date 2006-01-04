@@ -17,36 +17,36 @@
 #include "eca_context.h"
 #include "planContext.h"
 
-str Parse_Event::toString()
+string Parse_Event::toString()
 {
-  strbuf b;
+  ostringstream b;
   if (_event == RECV) { b << "EVENT_RECV<" << _pf->toString() << ">"; }
   if (_event == PERIODIC) { b << "EVENT_PERIODIC<" << _pf->toString() << ">"; }
   if (_event == UPDATE) { b << "EVENT_UPDATE<" << _pf->toString() << ">"; }
   if (_event == AGGUPDATE) { b << "EVENT_AGGUPDATE<" << _pf->toString() << ">"; }
-  return str(b);
+  return b.str();
 }
 
-str Parse_Action::toString()
+string Parse_Action::toString()
 {
-  strbuf b;
+  ostringstream b;
   if (_action == SEND) { b << "ACTION_SEND<" << _pf->toString() << ">"; }
   if (_action == ADD) { b << "ACTION_ADD<" << _pf->toString() << ">"; }
   if (_action == DELETE) { b << "ACTION_DELETE<" << _pf->toString() << ">"; }
-  return str(b);
+  return b.str();
 }
 
 
-str ECA_Rule::toString()
+string ECA_Rule::toString()
 {
-  strbuf b;
+  ostringstream b;
   b << "ECA Rule " << _ruleID << " " << toRuleString();
-  return str(b);  
+  return b.str();  
 }
 
-str ECA_Rule::toRuleString()
+string ECA_Rule::toRuleString()
 {
-  strbuf b;
+  ostringstream b;
   if (_event != NULL) {
     b << _action->toString() << ":-" << _event->toString() << ",";
   } else {
@@ -61,13 +61,12 @@ str ECA_Rule::toRuleString()
   if (_aggTerm != NULL) {
     b << _aggTerm->toString();
   }
-  return str(b);  
+  return b.str();  
 }
 
 
 void ECA_Context::add_rule(ECA_Rule* eca_rule)
 {
-  strbuf b;
   for (unsigned k = 0; k < _ecaRules.size(); k++) {
     if (_ecaRules.at(k)->toRuleString() == eca_rule->toRuleString()) {
       return;
@@ -83,7 +82,7 @@ void ECA_Context::activateLocalizedRule(OL_Context::Rule* rule, Catalog* catalog
   // check if it is an aggTerm rule
   Parse_AggTerm *aggTerm = dynamic_cast<Parse_AggTerm*>(rule->terms.at(0)); 
   if (rule->terms.size() == 1 && aggTerm != NULL) {
-    ECA_Rule* eca_rule = new ECA_Rule(strbuf() << rule->ruleID);    
+    ECA_Rule* eca_rule = new ECA_Rule(rule->ruleID);    
     Parse_Functor *baseFunctor = dynamic_cast<Parse_Functor*>(aggTerm->_baseTerm); 
     eca_rule->_event = new Parse_Event(baseFunctor, Parse_Event::AGGUPDATE);
     eca_rule->_action = new Parse_Action(rule->head, Parse_Action::ADD);
@@ -101,10 +100,12 @@ void ECA_Context::activateLocalizedRule(OL_Context::Rule* rule, Catalog* catalog
     if (nextFunctor == NULL) { continue; }
 
     // create an event
-    ECA_Rule* eca_rule = new ECA_Rule(strbuf() << rule->ruleID << "-" << k);    
+    ostringstream oss;
+    oss << rule->ruleID << "-" << k;    
+    ECA_Rule* eca_rule = new ECA_Rule(oss.str());    
 
     // if event is not materialized, do a recv, otherwise, update
-    str functorName = nextFunctor->fn->name;
+    string functorName = nextFunctor->fn->name;
     Catalog::TableInfo* functorTableInfo = catalog->getTableInfo(functorName);
     if (functorTableInfo == NULL ||
 	(functorTableInfo->_tableInfo->timeout == 0)) {
@@ -119,12 +120,13 @@ void ECA_Context::activateLocalizedRule(OL_Context::Rule* rule, Catalog* catalog
     } else {
       eca_rule->_action = new Parse_Action(rule->head, Parse_Action::SEND);
       // check to see if materialize, if so, create one more rule
-      str headName = rule->head->fn->name;
+      string headName = rule->head->fn->name;
       Catalog::TableInfo* headTableInfo = catalog->getTableInfo(headName);
       if (headTableInfo != NULL &&
 	  (headTableInfo->_tableInfo->timeout != 0)) {
-	ECA_Rule* eca_rule1 = new ECA_Rule(strbuf() << rule->ruleID << "-" 
-					   << k << "-" << 1);    
+        ostringstream oss;
+	oss << rule->ruleID << "-" << k << "-" << 1;    
+	ECA_Rule* eca_rule1 = new ECA_Rule(oss.str());    
 	eca_rule1->_event = new Parse_Event(rule->head, Parse_Event::RECV);
 	eca_rule1->_action = new Parse_Action(rule->head, Parse_Action::ADD);      
 	add_rule(eca_rule1);
@@ -151,25 +153,26 @@ void ECA_Context::activateLocalizedRule(OL_Context::Rule* rule, Catalog* catalog
 }
 
 OL_Context::Rule* generateSendRule(OL_Context::Rule* nextRule, 
-				   Parse_Functor *functor, str loc, 
+				   Parse_Functor *functor, string loc, 
 				   Catalog* catalog)
 {
+  ostringstream oss;
   std::vector<Parse_Term*> newTerms;
   newTerms.push_back(functor);
   Parse_Functor* newHead 
-    = new Parse_Functor(new Parse_FunctorName(new Parse_Var(Val_Str::mk(functor->fn->name << 
-									nextRule->ruleID << loc)), 
-					      new Parse_Var(Val_Str::mk(loc))),   
-			functor->args_);
-  OL_Context::Rule* newRule 
-    = new OL_Context::Rule(nextRule->ruleID << "-1", newHead, false);
+    = new Parse_Functor(
+          new Parse_FunctorName(
+              new Parse_Var(Val_Str::mk(functor->fn->name + nextRule->ruleID + loc)), 
+      new Parse_Var(Val_Str::mk(loc))), functor->args_);
+  OL_Context::Rule* newRule = new OL_Context::Rule(nextRule->ruleID + "-1", newHead, false);
   newRule->terms = newTerms;
   warn << "Generate send rule " << newRule->toString() << "\n";
 
   Catalog::TableInfo* ti = catalog->getTableInfo(functor->fn->name);  
   OL_Context::TableInfo* cti = new OL_Context::TableInfo();
   *cti = *(ti->_tableInfo);
-  cti->tableName = str(strbuf() << functor->fn->name << nextRule->ruleID << loc);
+  oss << functor->fn->name << nextRule->ruleID << loc;
+  cti->tableName = oss.str();
   if (ti != NULL) {
     catalog->createTable(cti);
   }
@@ -217,7 +220,7 @@ ECA_Context::localizeRule(OL_Context::Rule* nextRule, Catalog* catalog)
     for (unsigned k = 0; k < otherTerms.size(); k++) {
       newTerms.push_back(otherTerms.at(k));
     }
-    OL_Context::Rule* newRuleTwo = new OL_Context::Rule(nextRule->ruleID << "-2", 
+    OL_Context::Rule* newRuleTwo = new OL_Context::Rule(nextRule->ruleID + "-2", 
 							nextRule->head, false);
     newRuleTwo->terms = newTerms;
     warn << "New rule " << newRuleTwo->toString() << "\n";
@@ -247,11 +250,11 @@ void ECA_Context::eca_rewrite(OL_Context* ctxt, Catalog* catalog)
   }
 }
 
-str ECA_Context::toString()
+string ECA_Context::toString()
 {
-  strbuf b;
+  ostringstream b;
   for (unsigned k = 0; k < _ecaRules.size(); k++) {
     b << _ecaRules.at(k)->toString() << "\n";
   }
-  return str(b);
+  return b.str();
 }

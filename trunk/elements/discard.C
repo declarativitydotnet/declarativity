@@ -12,7 +12,7 @@
 
 #include "discard.h"
 
-Discard::Discard(str name) :
+Discard::Discard(string name) :
   Element(name, 1,0)
 {
 }

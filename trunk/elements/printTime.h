@@ -19,7 +19,7 @@
 class PrintTime : public Element { 
 public:
 
-  PrintTime(str prefix);
+  PrintTime(string prefix);
 
   ~PrintTime();
   
@@ -32,7 +32,7 @@ public:
 
 private:
   /** The prefix to be placed on every printout by this element */
-  str _prefix;
+  string _prefix;
 };
 
 

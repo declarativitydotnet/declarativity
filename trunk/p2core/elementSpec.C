@@ -214,10 +214,9 @@ void ElementSpec::Port::uniGroup(UniGroupPtr u)
   _uniGroup = u;
 }
 
-
-str ElementSpec::toString() const
+string ElementSpec::toString() const
 {
-  strbuf sb;
+  ostringstream sb;
   sb << "<" << _element->class_name() << "(" << _element->name()
      << "/" << _element->ID() << "):";
   int ninputs = _inputs.size();
@@ -241,14 +240,14 @@ str ElementSpec::toString() const
     sb << "]";
   }
   sb << ">";
-  return str(sb);
+  return sb.str();
 }
 
-str ElementSpec::Port::toString() const
+string ElementSpec::Port::toString() const
 {
-  strbuf sb;
+  ostringstream sb;
   sb << "{" << ElementSpec::processingCodeString(_processing) << "}";
-  return str(sb);
+  return sb.str();
 }
 
 ElementSpec::UnificationResult ElementSpec::Port::unify(Element::Processing p)

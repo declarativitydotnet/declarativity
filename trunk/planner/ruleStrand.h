@@ -25,15 +25,15 @@
 class RuleStrand
 {
 public:  
-  RuleStrand(ECA_Rule* rule, str ruleStrandID) :
+  RuleStrand(ECA_Rule* rule, string ruleStrandID) :
     _eca_rule(rule) 
   { _ruleID = rule->_ruleID; _ruleStrandID = ruleStrandID; }; 
 
-  str _ruleID; // original rule ID
-  str _ruleStrandID; // number, issued by planner
+  string _ruleID; // original rule ID
+  string _ruleStrandID; // number, issued by planner
   ECA_Rule* _eca_rule; 
  
-  str toString();
+  string toString();
   
   Parse_Event::Event eventType() 
   { return _eca_rule->_event->_event; }
@@ -41,10 +41,10 @@ public:
   Parse_Action::Action actionType() 
   { return _eca_rule->_action->_action; }
 
-  str eventFunctorName() 
+  string eventFunctorName() 
   { return _eca_rule->_event->_pf->fn->name; }
 
-  str actionFunctorName() 
+  string actionFunctorName() 
   { return _eca_rule->_action->_pf->fn->name; }
 
   ElementSpecPtr getEventElement() 

@@ -29,7 +29,11 @@ public:
   // The type name
   const char *typeName() const { return "time"; };
 
-  virtual str toString() const { return strbuf() << "[" << t.tv_sec << "," << t.tv_nsec << "]"; };
+  virtual string toString() const {
+    ostringstream sb;
+    sb << "[" << t.tv_sec << "," << t.tv_nsec << "]";
+    return sb.str();
+  }
   virtual unsigned int size() const { return sizeof(struct timespec); }
 
   // Marshalling and unmarshallng

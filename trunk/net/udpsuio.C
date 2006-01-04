@@ -12,7 +12,7 @@
  */
 
 #include "udpsuio.h"
-#include "async.h"
+#include "loop.h"
 
 int UdpSuio::inputfrom(int sd, struct sockaddr *from, socklen_t *fromlen) 
 {

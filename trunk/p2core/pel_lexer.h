@@ -15,10 +15,10 @@
 #ifndef __PEL_LEXER_H__
 #define __PEL_LEXER_H__
 
-#include <async.h>
 #include <sstream>
 #include "pel_program.h"
 #include "pel_vm.h"
+#include "loop.h"
 
 #include "val_int32.h"
 #include "val_int64.h"
@@ -46,19 +46,19 @@ private:
   yy_buffer_state *bufstate;
   std::istringstream strb;
 
-  Pel_Program *result;
+  boost::shared_ptr< Pel_Program > result;
 
   virtual int yylex();
 
   void add_const_int(int v) { add_const(Val_Int32::mk(v));};
   void add_const_int(int64_t v) { add_const(Val_Int64::mk(v));};
   void add_const_int(uint64_t v) { add_const(Val_UInt64::mk(v));};
-  void add_const_str(str s) { add_const(Val_Str::mk(s));};
+  void add_const_str(string s) { add_const(Val_Str::mk(s));};
   void add_const_dbl(double d) { add_const(Val_Double::mk(d));};
   void add_const(ValuePtr f);
   void add_tuple_load(int f);
   void add_opcode(u_int32_t op);
-  void log_error(str errstr);
+  void log_error(string errstr);
 
   Pel_Lexer(const char *prog);
   virtual ~Pel_Lexer() { yy_delete_buffer(bufstate); };
@@ -68,12 +68,12 @@ public:
   // 
   // Take a string and compile into a PEL program
   //
-  static Pel_Program *compile(const char *prog);
+  static boost::shared_ptr< Pel_Program > compile(const char *prog);
 
   //
   // Decompile a PEL program back into a string
   //
-  static str decompile(Pel_Program &prog);
+  static string decompile(Pel_Program &prog);
 
   //
   // Translate a PEL opcode into a mnemonic for the instruction

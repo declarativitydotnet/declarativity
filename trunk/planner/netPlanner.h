@@ -73,7 +73,7 @@
 class NetPlanner
 {
 public:
-  NetPlanner(Router::ConfigurationPtr conf, str nodeID, 
+  NetPlanner(Router::ConfigurationPtr conf, string nodeID, 
 	     FILE* outputDebugFile) :
     _conf(conf)
   { _nodeID = nodeID; _outputDebugFile = outputDebugFile; };
@@ -85,25 +85,25 @@ public:
   void registerOptimizeSend(std::vector<ElementSpecPtr> outOptimize) {
     _outOptimize = outOptimize; }
 
-  str toString();
+  string toString();
 
   class ReceiverInfo {
   public: 
-    ReceiverInfo(str tableName) 
+    ReceiverInfo(string tableName) 
     { _tableName = tableName; _duplicator.reset(); }
-    str _tableName;
+    string _tableName;
     ElementSpecPtr _duplicator;
     std::vector<ElementSpecPtr> _receivers;
-    str toString();
+    string toString();
   };
 
-  typedef std::map<str, ReceiverInfo*> ReceiverInfoMap;  
+  typedef std::map<string, ReceiverInfo*> ReceiverInfoMap;  
   
 private:
   void generateNetworkOutElements(boost::shared_ptr<Udp> udp);
   void generateNetworkInElements(boost::shared_ptr<Udp> udp);
 
-  str _nodeID;
+  string _nodeID;
   FILE* _outputDebugFile;
   Router::ConfigurationPtr _conf;
   std::vector<ElementSpecPtr> _networkIn, _networkOut;

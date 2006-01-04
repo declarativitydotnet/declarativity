@@ -13,17 +13,15 @@
  *
  */
 
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <time.h>
 
 #include "ol_lexer.h"
 #include "ol_context.h"
 #include "rtr_confgen.h"
 #include "udp.h"
-
 #include "dot.h"
 
 extern int ol_parser_debug;
@@ -34,7 +32,7 @@ int main(int argc, char **argv)
   boost::shared_ptr< OL_Context > ctxt(new OL_Context());
   bool route = false;
   bool builtin = false;
-  str filename("");
+  string filename("");
 
   for( int i=1; i<argc; i++) { 
     std::string arg(argv[i]);
@@ -59,7 +57,7 @@ int main(int argc, char **argv)
       ctxt->parse_stream(&std::cin);
     } else if (arg == "-g") {
       filename = argv[i+1];
-      std::ifstream istr(filename);
+      std::ifstream istr(filename.c_str());
       std::ofstream ostr("overlog.dot");
       ctxt->parse_stream(&istr);
       Router::ConfigurationPtr conf(new Router::Configuration());

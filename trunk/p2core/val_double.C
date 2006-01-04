@@ -41,7 +41,7 @@ class OperDouble : public opr::OperCompare<Val_Double> {
     return Val_Double::mk((Val_Double::cast(v1)) + 1.);
   };
 };
-const opr::Oper* Val_Double::oper_ = New OperDouble();
+const opr::Oper* Val_Double::oper_ = new OperDouble();
 
 //
 // String conversion. 
@@ -50,11 +50,11 @@ const opr::Oper* Val_Double::oper_ = New OperDouble();
 // (i.e. in binary), rather than the more human-familiar decimal
 // version, which is what you get if you cast it to a string. 
 //
-str Val_Double::toString() const
+string Val_Double::toString() const
 {
-  char dbuf[100];
-  sprintf(dbuf,"%g",d);
-  return strbuf() << dbuf;
+  ostringstream sb;
+  sb << d;
+  return sb.str();
 }
 
 //
@@ -90,7 +90,7 @@ double Val_Double::cast(ValuePtr v)
   case Value::NULLV:
     return 0;
   case Value::STR:
-    return strtod(Val_Str::cast(v).cstr(),NULL);
+    return strtod(Val_Str::cast(v).c_str(),NULL);
   default:
     throw Value::TypeError(v->typeCode(), Value::DOUBLE );
   }

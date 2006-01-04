@@ -16,7 +16,7 @@ lib_LTLIBRARIES = libeventLoop.la
 libeventLoop_la_SOURCES = \
 	loop.C
 
-INCLUDES = @SFS_INC@
+INCLUDES =
 
 CLEANFILES = core *.core *~ *.gen.h *.gen.txt pel_lexer.C
 

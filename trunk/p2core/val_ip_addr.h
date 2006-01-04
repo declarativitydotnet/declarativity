@@ -4,6 +4,7 @@
 #include "value.h"
 #include "val_str.h"
 #include <loggerI.h>
+#include "fdbuf.h"
 
 class Val_IP_ADDR : public Value {
   
@@ -13,8 +14,8 @@ class Val_IP_ADDR : public Value {
   // The type name
   const Value::TypeCode typeCode() const { return Value::IP_ADDR; };
   const char *typeName() const { return "ip_addr"; };
-  str toString() const { return _s; };
-  virtual unsigned int size() const { return (_s ? sizeof(_s) : 0); }
+  string toString() const { return _s; };
+  virtual unsigned int size() const { _s.length(); }
   
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );
@@ -22,11 +23,11 @@ class Val_IP_ADDR : public Value {
   
   // Constructor
   // takes in a string of format "xx.xx.xx.xx:port"
-  Val_IP_ADDR(str s) : _s(s){};
+  Val_IP_ADDR(string s) : _s(s){};
   virtual ~Val_IP_ADDR(){};
   
   // Factory
-  static ValuePtr mk(str s){ ValuePtr p(new Val_IP_ADDR(s)); return p;};
+  static ValuePtr mk(string s){ ValuePtr p(new Val_IP_ADDR(s)); return p;};
   
   // Strict comparison
   int compareTo(ValuePtr) const;
@@ -40,14 +41,14 @@ class Val_IP_ADDR : public Value {
   LoggerI * _logger;
 
   // Casting
-  static str cast(ValuePtr v);
+  static string cast(ValuePtr v);
 
 #ifndef SWIG
-  ref<suio> getAddress();
+  FdbufPtr getAddress();
 #endif
   
  private:
-  str _s;
+  string _s;
 };
 
 #endif /* __VAL_IP_ADDR_H_ */

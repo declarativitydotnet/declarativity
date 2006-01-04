@@ -23,8 +23,8 @@ Parse_Val::operator int() {
   return Val_Int32::cast(v);
 }
 
-Parse_Expr* Parse_Agg::DONT_CARE = New Parse_Var(Val_Str::mk("*"));
-Parse_Expr* Parse_Expr::Now = New Parse_Var(Val_Str::mk("now"));
+Parse_Expr* Parse_Agg::DONT_CARE = new Parse_Var(Val_Str::mk("*"));
+Parse_Expr* Parse_Expr::Now = new Parse_Var(Val_Str::mk("now"));
 
 bool Parse_Agg::operator==(const Parse_Expr &e){
   try {
@@ -36,18 +36,18 @@ bool Parse_Agg::operator==(const Parse_Expr &e){
   }
 }
 
-str Parse_Agg::toString() {
-  strbuf a;
+string Parse_Agg::toString() {
+  ostringstream a;
   switch(oper) {
     case MIN:   a << "min< "; break;
     case MAX:   a << "max< "; break;
     case COUNT: a << "count< "; break;
   }
   a << v->toString() << " >";
-  return a;
+  return a.str();
 }
 
-str Parse_Agg::aggName() {
+string Parse_Agg::aggName() {
   switch(oper) {
     case MIN:   return "min";
     case MAX:   return "max";
@@ -70,8 +70,8 @@ bool Parse_Bool::operator==(const Parse_Expr &e) {
   }
 } 
 
-str Parse_Bool::toString() {
-  strbuf b;
+string Parse_Bool::toString() {
+  ostringstream b;
   if (oper == NOT) {
     b << "NOT( " << lhs->toString() << " )";
   }
@@ -98,7 +98,7 @@ str Parse_Bool::toString() {
     if (dynamic_cast<Parse_Bool*>(rhs) != NULL) b << " )";
   }
 
-  return b;
+  return b.str();
 }
 
 
@@ -111,8 +111,8 @@ bool Parse_Range::operator==(const Parse_Expr &e){
   }
 }
 
-str Parse_Range::toString() {
-  strbuf r;
+string Parse_Range::toString() {
+  ostringstream r;
   switch (type) {
     case RANGEOO: 
       r << "(" << lhs->toString() << ", " << rhs->toString() << ")"; break;
@@ -123,7 +123,7 @@ str Parse_Range::toString() {
     case RANGECC: 
       r << "[" << lhs->toString() << ", " << rhs->toString() << "]"; break;
   }
-  return r;
+  return r.str();
 }
 
 
@@ -169,8 +169,8 @@ bool Parse_Math::operator==(const Parse_Expr &e){
   }
 }
 
-str Parse_Math::toString() {
-  strbuf m;
+string Parse_Math::toString() {
+  ostringstream m;
   bool lpar = (dynamic_cast<Parse_Math*>(lhs) != NULL);
   bool rpar = (dynamic_cast<Parse_Math*>(rhs) != NULL);
 
@@ -195,7 +195,7 @@ str Parse_Math::toString() {
   m << rhs->toString();
   if (rpar) m << " )";
 
-  return m;
+  return m.str();
 }
 
 Parse_FunctorName::Parse_FunctorName(Parse_Expr *n, Parse_Expr *l) {
@@ -208,29 +208,29 @@ Parse_FunctorName::Parse_FunctorName(Parse_Expr *n, Parse_Expr *l) {
   }
 }
 
-str Parse_FunctorName::toString() {
-  strbuf fn;
+string Parse_FunctorName::toString() {
+  ostringstream fn;
   fn <<  name;
   if (loc != "") fn << "@" << loc;
-  return fn;
+  return fn.str();
 }
 
-str Parse_Functor::toString() {
-  strbuf f;
+string Parse_Functor::toString() {
+  ostringstream f;
   f << fn->toString() << "( ";
   for (int i = 0; i < args(); i++) {
     f << arg(i)->toString();
     if (i+1 < args()) f << ", ";
     else f << " )";
   }
-  return f;
+  return f.str();
 }
 
 int Parse_Functor::find(Parse_Expr *arg) {
   return find(arg->v->toString());
 }
 
-int Parse_Functor::find(str argname) {
+int Parse_Functor::find(string argname) {
   int p = 0;
   for ( ; p < args() && arg(p)->toString() != argname; p++);
   return (p < args()) ? p : -1;
@@ -247,36 +247,37 @@ void Parse_Functor::replace(int p, Parse_Expr *e) {
   args_->insert(next, e);
 }
 
-str Parse_Assign::toString() {
-  strbuf a;
-  a << var->toString() << " = " << assign->toString();
-  return a;
+string Parse_Assign::toString() {
+  return var->toString() + " = " + assign->toString();
 }
 
-str Parse_Select::toString() {
+string Parse_Select::toString() {
   return select->toString();
 }
 
-str Parse_Function::toString() {
-  strbuf f;
+string Parse_Function::toString() {
+  ostringstream f;
   f << v->toString() << "( ";
   for (int i = 0; i < args(); i++) {
     f << arg(i)->toString();
     if (i+1 < args()) f << ", ";
   }
   f << ")";
-  return f;
+  return f.str();
 }
 
-str Parse_RangeFunction::toString() {
-  return "RANGE( " << var->toString() << ", " << start->toString() 
-         << ", " << end->toString() << " )";
+string Parse_RangeFunction::toString() {
+  return "RANGE( " + var->toString() + ", " + start->toString() 
+         + ", " + end->toString() + " )";
 }
 
-str Parse_AggTerm::toString() {
+string Parse_AggTerm::toString() {
 
-  strbuf aggFieldStr("(");
-  strbuf groupByFieldStr("(");
+  ostringstream aggFieldStr;
+  ostringstream groupByFieldStr;
+
+  aggFieldStr << "(";
+  groupByFieldStr << "(";
 
   for (unsigned k = 0; k < _groupByFields->size(); k++) {
     groupByFieldStr << _groupByFields->at(k)->toString();
@@ -297,18 +298,18 @@ str Parse_AggTerm::toString() {
   
 
   if (_oper == Parse_Agg::MIN) {
-    return "min( " << groupByFieldStr << 
-      ", " << aggFieldStr << ", " << _baseTerm->toString() << " )";    
+    return "min( " + groupByFieldStr.str() + 
+      ", " + aggFieldStr.str() + ", " + _baseTerm->toString() + " )";    
   }
 
   if (_oper == Parse_Agg::MAX) {
-    return "max( " << groupByFieldStr << 
-      ", " << aggFieldStr << ", " << _baseTerm->toString() << " )";    
+    return "max( " + groupByFieldStr.str() + 
+      ", " + aggFieldStr.str() + ", " + _baseTerm->toString() + " )";    
   }
 
   if (_oper == Parse_Agg::COUNT) {
-    return "count( " << groupByFieldStr << 
-      ", " << aggFieldStr << ", " << _baseTerm->toString() << " )";    
+    return "count( " + groupByFieldStr.str() + 
+      ", " + aggFieldStr.str() + ", " + _baseTerm->toString() + " )";    
   }
   return "BAD";  
 }

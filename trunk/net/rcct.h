@@ -11,7 +11,6 @@
 
 #include <map>
 #include <deque>
-#include <async.h>
 #include "tuple.h"
 #include "element.h"
 #include "inlines.h"
@@ -20,7 +19,7 @@ typedef uint64_t SeqNum;
 
 class RateCCT : public Element {
 public:
-  RateCCT(str name, bool tstat=true);
+  RateCCT(string name, bool tstat=true);
   const char *class_name() const { return "RateCCT";};
   const char *processing() const { return "lh/lh"; };
   const char *flow_code() const	 { return "--/--"; };

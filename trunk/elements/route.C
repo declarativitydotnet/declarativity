@@ -12,11 +12,11 @@
 #include "route.h"
 #include "val_opaque.h"
 
-Route::Route(str name, ref<suio> destinationUio)
+Route::Route(string name, FdbufPtr destinationUio)
   : Element(name, 1, 1),
     _destination(Val_Opaque::mk(destinationUio))
 {
-  if (destinationUio->resid() == 0) {
+  if (destinationUio->length() == 0) {
     // Got no destination. Bummer
     log(LoggerI::ERROR,
         -1,

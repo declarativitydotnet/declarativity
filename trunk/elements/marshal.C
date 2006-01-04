@@ -9,11 +9,12 @@
  * 
  */
 #include "marshal.h"
-#include "xdr_suio.h"
 
 #include "val_opaque.h"
+#include "fdbuf.h"
+#include "xdrbuf.h"
 
-Marshal::Marshal(str name)
+Marshal::Marshal(string name)
   : Element(name, 1, 1)
 {
 }
@@ -25,10 +26,11 @@ Marshal::~Marshal()
 TuplePtr Marshal::simple_action(TuplePtr p)
 {
   // Taken straight from the tuples test.
-  xdrsuio xe;
+  FdbufPtr fb(new Fdbuf());
+  XDR xe;
+  xdrfdbuf_create(&xe, fb.get(), false, XDR_ENCODE);
   p->xdr_marshal(&xe);
-  ref<suio> uio = New refcounted<suio>();
-  uio->take(xsuio(&xe));
+  xdr_destroy(&xe);
 
   // Now create a new tuple to host the opaque
   TuplePtr t = Tuple::mk();
@@ -38,7 +40,7 @@ TuplePtr Marshal::simple_action(TuplePtr p)
     return TuplePtr();
   } else {
     // Stick the string into a tuple field and into the tuple
-    t->append(Val_Opaque::mk(uio));
+    t->append(Val_Opaque::mk(fb));
     t->freeze();
     return t;
   }

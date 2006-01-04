@@ -30,17 +30,17 @@ public:
 
   struct Error {
     int  line_num;      // Line number
-    str  msg;           // What?
-    Error(int l, str m) : line_num(l), msg(m) {};
+    string  msg;           // What?
+    Error(int l, string m) : line_num(l), msg(m) {};
   };
   
   struct Rule {
-    Rule(str r, Parse_Functor *h, bool d) 
+    Rule(string r, Parse_Functor *h, bool d) 
       : ruleID(r), head(h), deleteFlag(d) {};
 
-    str toString();
+    string toString();
 
-    str           ruleID;
+    string           ruleID;
     Parse_Functor *head;
     bool          deleteFlag;
     std::vector<Parse_Term*> terms; 	// List of terms in the left hand side.
@@ -50,9 +50,9 @@ public:
 
   /* The meta-data of the table */
   struct TableInfo {
-    str toString();
+    string toString();
 
-    str tableName;
+    string tableName;
     int timeout;
     int size;
     std::vector<int> primaryKeys;
@@ -60,7 +60,7 @@ public:
   
   struct WatchDef {
     WatchDef(Parse_Expr *e) : watch(e->v) {};
-    str toString() { return "watch( " << watch->toString() << " )"; };
+    string toString() { return "watch( " + watch->toString() + " )"; };
 
     ValuePtr watch;
   };
@@ -96,21 +96,21 @@ public:
 
   void watch( Parse_Expr *t );
 
-  void error(str msg);
+  void error(string msg);
 
   OL_Lexer *lexer;
 
-  str toString();
+  string toString();
   
   typedef std::vector<Rule*>                      RuleList;
-  typedef std::map<str, OL_Context::TableInfo *>  TableInfoMap;
+  typedef std::map<string, OL_Context::TableInfo *>  TableInfoMap;
   typedef std::vector<OL_Context::Error *> ErrorList;
 
 
 private:
   TableInfoMap*      tables;
   RuleList*          rules;
-  std::set<str>      watchTables;
+  std::set<string>      watchTables;
   std::vector<TuplePtr> facts;
   Parse_Functor* singleQuery;
 
@@ -118,7 +118,7 @@ public:
   ErrorList          errors;
   RuleList*          getRules()       { return rules; };
   TableInfoMap*      getTableInfos()  { return tables;   };
-  std::set<str>      getWatchTables() { return watchTables; };
+  std::set<string>      getWatchTables() { return watchTables; };
   std::vector<TuplePtr> getFacts()       { return facts; };
   
   

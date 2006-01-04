@@ -24,7 +24,7 @@
 class Joiner : public Element { 
 public:
 
-  Joiner(str);
+  Joiner(string);
 
   const char *class_name() const		{ return "Joiner";}
   const char *processing() const		{ return "lh/l"; }

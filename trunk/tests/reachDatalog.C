@@ -16,8 +16,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 #include <stdlib.h>
 
@@ -66,31 +64,31 @@ static const int nodes = 4;
 
 /* Initial sending of links into the p2 dataflow */
 void bootstrapData(Router::ConfigurationPtr conf,
-                   str name,
+                   string name,
                    TablePtr linkTable,
  		   boost::shared_ptr< Udp > udp)
 {
   // Scanner element over link table
   ElementSpecPtr scanS 
-    = conf->addElement(ElementPtr(new Scan(strbuf("ScanLink:" << name << ":"), linkTable, 0)));
+    = conf->addElement(ElementPtr(new Scan(string("ScanLink:" + name + ":"), linkTable, 0)));
 
   ElementSpecPtr scanPrintS =
-    conf->addElement(ElementPtr(new Print(strbuf("PrintScan:") << name)));
+    conf->addElement(ElementPtr(new Print(string("PrintScan:") + name)));
   ElementSpecPtr timedPullPushS =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PushReach:").cat(name), 0)));
+    conf->addElement(ElementPtr(new TimedPullPush(string("PushReach:").append(name), 0)));
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("Slot:").cat(name))));
+    conf->addElement(ElementPtr(new Slot(string("Slot:").append(name))));
   
   ElementSpecPtr encapS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("encap:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("encap:").append(name),
 						    "$1 pop /* The From address */\
                                                      $0 ->t $1 append $2 append pop"))); // the rest
   
   // Now marshall the payload (second field)
   ElementSpecPtr marshalS =
-    conf->addElement(ElementPtr(new MarshalField(strbuf("Marshal:").cat(name), 1)));
+    conf->addElement(ElementPtr(new MarshalField(string("Marshal:").append(name), 1)));
   ElementSpecPtr routeS =
-    conf->addElement(ElementPtr(new StrToSockaddr(strbuf("Router:").cat(name), 0)));
+    conf->addElement(ElementPtr(new StrToSockaddr(string("Router:").append(name), 0)));
   ElementSpecPtr udpTxS =
     conf->addElement(udp->get_tx());
   
@@ -106,7 +104,7 @@ void bootstrapData(Router::ConfigurationPtr conf,
 
 
 /** Build a symmetric link transitive closure. */
-void testReachability(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt, str filename)
+void testReachability(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt, string filename)
 {
   std::cout << "\nCHECK TRANSITIVE REACHABILITY\n";
 
@@ -117,19 +115,25 @@ void testReachability(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt,
   ptr< Udp > udps[nodes];
   ptr< Udp > bootstrapUDP[nodes];
   ValuePtr nodeIds[nodes];
-  str names[nodes];
+  string names[nodes];
   TablePtr bootstrapTables[nodes];
    
   // Create the networking objects
   for (int i = 0; i < nodes; i++) {
-    names[i] = strbuf("Node") << i;
-    nodeIds[i] = Val_Str::mk(strbuf("127.0.0.1") << ":" << (STARTING_PORT + i));
+    ostringstream o1;
+    ostringstream o2;
+    o1 << string("Node") << i;
+    o2 << string("127.0.0.1") << ":" << (STARTING_PORT + i);
+    names[i] = o1.str();
+    nodeIds[i] = Val_Str::mk(o2.str());
     
+    ostringstream oss;
+    oss << string("bootstrapNeighbor:") << i;
 
     udps[i].reset(new Udp(names[i] << ":Udp", STARTING_PORT + i));
     bootstrapUDP[i].reset(new Udp(names[i] << ":bootstrapUdp", STARTING_PORT + i + 5000));
     routerConfigGenerator.createTables(names[i]);
-    bootstrapTables[i].reset(new Table(strbuf("bootstrapNeighbor:") << i, 100));
+    bootstrapTables[i].reset(new Table(oss.str(), 100));
     bootstrapTables[i]->add_multiple_index(0);  
   }
 
@@ -210,10 +214,10 @@ int main(int argc, char **argv)
 
   LoggerI::Level level = LoggerI::NONE;
   boost::shared_ptr< OL_Context > ctxt(new OL_Context());
-  strbuf filename;
+  ostringstream filename;
 
   for( int i=1; i<argc; i++) { 
-    str arg(argv[i]);
+    string arg(argv[i]);
     
     if (arg == "-d") { 
       ol_parser_debug = 1;
@@ -227,7 +231,7 @@ int main(int argc, char **argv)
       ctxt->parse_stream(&std::cin);
     } else {      
       filename << argv[i];
-      str file(filename);
+      string file(filename.str());
       std::ifstream istr(file);
       ctxt->parse_stream(&istr);
     }

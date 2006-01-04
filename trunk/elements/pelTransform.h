@@ -19,9 +19,9 @@
 
 class PelTransform : public Element { 
 public:
-  PelTransform(str, str);
+  PelTransform(string, string);
 
-  ~PelTransform();
+  ~PelTransform() {};
   
   /** Overridden to perform the tranformation. */
   TuplePtr simple_action(TuplePtr p);
@@ -33,10 +33,10 @@ public:
 
 private:
   /** My program.  */
-  Pel_Program * _program;
+  boost::shared_ptr< Pel_Program > _program;
 
   /** My code */
-  str _pelCode;
+  string _pelCode;
 
   /** The virtual machine within which to execute the transform.  Any
       need to share this? */

@@ -13,7 +13,6 @@
 #ifndef __TRAFFIC_MANAGER_H__
 #define __TRAFFIC_MANAGER_H__
 
-#include <amisc.h>
 #include <element.h>
 #include <deque>
 
@@ -21,7 +20,7 @@ class TrafficManager : public Element {
  public:
   
   /** Initialized with the interval between tuple generation events. */
-  TrafficManager(str name, str my_addr, uint my_key, uint key_range, double seconds);
+  TrafficManager(string name, string my_addr, uint my_key, uint key_range, double seconds);
 
   const char *class_name() const { return "TrafficManager"; }
   const char *flow_code() const	 { return "-/--"; }
@@ -54,7 +53,7 @@ class TrafficManager : public Element {
   /** My time callback ID. */
   timeCBHandle *           _timeCallback;
 
-  str  my_addr_;
+  string  my_addr_;
   uint my_key_;
   uint key_range_;
   uint total_received_;

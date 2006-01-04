@@ -18,7 +18,7 @@
 
 class UnboxField : public Element { 
 public:
-  UnboxField(str, unsigned);
+  UnboxField(string, unsigned);
 
   ~UnboxField();
   

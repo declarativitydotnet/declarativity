@@ -10,7 +10,6 @@
 
 #include <algorithm>
 
-#include "sysconf.h"
 #include "cc.h"
 #include "val_uint64.h"
 #include "val_uint32.h"
@@ -85,7 +84,7 @@ int32_t delay(timespec *ts)
  * Output 0 (push): Stream of tuples (possibly out of order and with dups).	
  * Output 1 (pull): Acknowledgements of individual tuples.
  */
-CCRx::CCRx(str name, double rwnd, int seq, int src) 
+CCRx::CCRx(string name, double rwnd, int seq, int src) 
   : Element(name, 1, 2),
     _ack_cb(0),
     rwnd_(rwnd),
@@ -102,7 +101,7 @@ TuplePtr CCRx::simple_action(TuplePtr p)
 {
   /* Get source location, sequence number and ack tuple, signal my window also */
   SeqNum seq = Val_UInt64::cast((*p)[seq_field_]);
-  str    src = Val_Str::cast((*p)[src_field_]);
+  string src = Val_Str::cast((*p)[src_field_]);
   TuplePtr ack = Tuple::mk();
   ack->append(Val_Str::mk(src));
   ack->append(Val_UInt64::mk(seq));
@@ -110,7 +109,6 @@ TuplePtr CCRx::simple_action(TuplePtr p)
   ack->freeze();
 
   ack_q_.push_back(ack);
-  log(LoggerI::INFO, 0, strbuf() << "ACK QUEUE SIZE: " << ack_q_.size()); 
 
   if (_ack_cb) {
     _ack_cb();		// Notify new ack
@@ -162,7 +160,7 @@ int CCRx::push(int port, TuplePtr tp, b_cbv cb)
  * Input  1 (push): Acknowledgement of some (possibly) outstanding tuple.
  * Output 0 (pull): Tuple to send with cc info wrapper.
  */
-CCTx::CCTx(str name, double init_wnd, double max_wnd, uint32_t max_retry, 
+CCTx::CCTx(string name, double init_wnd, double max_wnd, uint32_t max_retry, 
            uint32_t seq_field, uint32_t ack_seq_field, uint32_t ack_rwnd_field) 
   : Element(name, 2, 1),
     _din_cb(0),
@@ -233,7 +231,6 @@ TuplePtr CCTx::pull(int port, b_cbv cb)
       OTuple *otp = rtran_q_.front();
       SeqNum  seq = Val_UInt64::cast((*otp->tp_)[seq_field_]);	// Sequence number
 
-      log(LoggerI::INFO, 0, strbuf()<<"RETRANSMITING seq("<<seq<<"), delay => "<<delay(&otp->tt_)); 
       rtran_q_.pop_front();
       map(seq, otp);
 
@@ -246,7 +243,6 @@ TuplePtr CCTx::pull(int port, b_cbv cb)
       send_q_.pop_front();
       map(seq, otp);
 
-      log(LoggerI::INFO, 0, strbuf()<<"TRANSMITING seq("<<seq<<")"); 
       return otp->tp_;
     }
     _dout_cb = cb;
@@ -281,7 +277,6 @@ int32_t CCTx::dealloc(SeqNum seq)
   int32_t d = -1;
   OTupleIndex::iterator iter = ot_map_.find(seq);
   if (iter != ot_map_.end()) { 
-    log(LoggerI::INFO, 0, strbuf()<<"DEALLOCATING seq("<<seq<<")"); 
     d = delay(&(iter->second)->tt_);
 
     if (iter->second->tcb_ != NULL) {
@@ -319,8 +314,6 @@ void CCTx::timeout_cb(OTuple *otp)
 
   otp->tcb_ = NULL;
   if (otp->tran_cnt_ > max_retry_) {
-    log(LoggerI::WARN, 0, strbuf()<<"MAX NUMBER OF RETRIES REACHED FOR TUPLE seq("
-			  <<seq<<") delay => " << (delay(&otp->tt_)) << " ms");
     assert(dealloc(seq) > 0);
     return;
   }
@@ -332,10 +325,6 @@ void CCTx::timeout_cb(OTuple *otp)
     _dout_cb();
     _dout_cb = 0;
   }
-
-  log(LoggerI::INFO, 0, 
-      strbuf()<< "TIMEOUT: Packet seq(" << seq << ") timeout after " 
-              << (delay(&otp->tt_)) << "ms");
 }
 
 /**
@@ -374,11 +363,6 @@ REMOVABLE_INLINE void CCTx::add_rtt_meas(int32_t m)
 
   if (cwnd_ > max_wnd_)
     cwnd_ = max_wnd_;
-
-  log(LoggerI::INFO, 0, strbuf() << "CURRENT WINDOW: " << current_window()
-			<< "\tCWND(" << long(cwnd_) << ") MAX_WND("
-			<< long(max_wnd_) << ") SSTHRESH(" << long(ssthresh_)
-			<< ")\n");
 }
 
 
@@ -392,10 +376,6 @@ REMOVABLE_INLINE void CCTx::timeout()
   ssthresh_ = cwnd_ / 2.0;	// multiplicative decrease
   cwnd_     = 2.0;		// Enter slow start
   if (ssthresh_ < 2.0) ssthresh_ = 2.0;
-
-  log(LoggerI::INFO, 0, strbuf() << "CONGESTION ADJUST: RTO = " << long(rto_)
-			<< " | SSTHRESH = " << long(ssthresh_) 
-			<< " | CWND = " << long(cwnd_));
 }
 
 REMOVABLE_INLINE int CCTx::current_window() {

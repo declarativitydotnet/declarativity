@@ -21,7 +21,7 @@
 #include "val_str.h"
 #include "val_null.h"
 
-const opr::Oper* Val_UInt64::oper_ = New opr::OperImpl<Val_UInt64>();
+const opr::Oper* Val_UInt64::oper_ = new opr::OperImpl<Val_UInt64>();
 
 //
 // Marshalling and unmarshallng
@@ -55,7 +55,7 @@ uint64_t Val_UInt64::cast(ValuePtr v) {
   case Value::NULLV:
     return 0;
   case Value::STR:
-    return strtoull(Val_Str::cast(v).cstr(),(char **)NULL, 0);
+    return strtoull(Val_Str::cast(v).c_str(),(char **)NULL, 0);
   default:
     throw Value::TypeError(v->typeCode(), Value::UINT64 );
   }

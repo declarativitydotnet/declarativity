@@ -12,8 +12,9 @@
 #include "unmarshal.h"
 
 #include "val_opaque.h"
+#include "xdrbuf.h"
 
-Unmarshal::Unmarshal(str name)
+Unmarshal::Unmarshal(string name)
   : Element(name, 1, 1)
 {
 }
@@ -30,11 +31,10 @@ TuplePtr Unmarshal::simple_action(TuplePtr p)
     return TuplePtr();
   }
 
-  ref<suio> u = Val_Opaque::cast((*p)[0]);
-  char *buf = suio_flatten(u);
-  size_t sz = u->resid();
-  xdrmem xd(buf,sz);
+  XDR xd;
+  FdbufPtr fb = Val_Opaque::cast((*p)[0]);
+  xdrfdbuf_create(&xd, fb.get(), false, XDR_DECODE);
   TuplePtr t = Tuple::xdr_unmarshal(&xd);
-  xfree(buf);
+  xdr_destroy(&xd);
   return t;
 }

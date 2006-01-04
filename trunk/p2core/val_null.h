@@ -26,7 +26,7 @@ public:
   // The type name
   const Value::TypeCode typeCode() const { return Value::NULLV; };
   const char *typeName() const { return "null"; };
-  str toString() const { return "NULL"; };
+  string toString() const { return "NULL"; };
   virtual unsigned int size() const { return sizeof(singleton); }
 
   // Marshalling and unmarshallng

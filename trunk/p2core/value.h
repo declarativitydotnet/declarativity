@@ -56,13 +56,18 @@
 #ifndef __VALUE_H__
 #define __VALUE_H__
 
+#include <rpc/xdr.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
+#include <string>
+#include <iostream>
+#include <sstream>
 
 #include <assert.h>
-#include <async.h>
-#include <arpc.h>
 #include "inlines.h"
+
+using std::string;
+using std::ostringstream;
 
 class Value;
 typedef boost::shared_ptr<Value> ValuePtr;
@@ -101,8 +106,12 @@ public:
   virtual const char *typeName() const =0;
 
   // Conversions to strings: mandatory. 
-  virtual str toString() const =0;
-  str toTypeString() { return strbuf() << typeName() << ":" << toString();};
+  virtual std::string toString() const =0;
+  string toTypeString() {
+    ostringstream s;
+    s << typeName() << ":" << toString();
+    return s.str();
+  };
 
   /** Strict equality */
   REMOVABLE_INLINE bool equals( ValuePtr other ) const { return compareTo(other) == 0; }

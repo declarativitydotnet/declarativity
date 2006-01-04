@@ -22,6 +22,8 @@
 #include "val_tuple.h"
 #include "math.h"
 
+using namespace opr;
+
 class OperTime : public opr::OperCompare<Val_Time> {
   virtual ValuePtr _plus (const ValuePtr& v1, const ValuePtr& v2) const {
     struct timespec t1 = Val_Time::cast(v1);
@@ -35,7 +37,7 @@ class OperTime : public opr::OperCompare<Val_Time> {
     return Val_Time::mk(t1 - t2);
   };
 };
-const opr::Oper* Val_Time::oper_ = New OperTime();
+const opr::Oper* Val_Time::oper_ = new OperTime();
 
 //
 // Marshalling and unmarshallng
@@ -133,7 +135,13 @@ int Val_Time::compareTo(ValuePtr other) const
       return 1;
     }
   }
-  return tscmp(t, cast(other));
+  if (t < cast(other)) {
+    return -1;
+  } else if (t > cast(other)) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 /*

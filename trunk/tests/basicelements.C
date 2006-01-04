@@ -15,8 +15,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 
 #include "tuple.h"
@@ -83,7 +81,7 @@ int main(int argc, char **argv)
 
   std::cout << "BASICELEMENTS\n";
 
-  Slot *s = New Slot("slot");
+  Slot *s = new Slot("slot");
   for(int i=0; i<5; i++) {
     TuplePtr tp = s->pull(0, &slot_pull_cb);
     if (tp == NULL) {

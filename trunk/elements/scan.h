@@ -27,7 +27,7 @@
 
 class Scan : public Element {
  public:
-  Scan(str name, 
+  Scan(string name, 
        Table::UniqueScanIterator iterator,
        bool continuous);
 

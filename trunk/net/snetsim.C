@@ -8,10 +8,9 @@
  */
 
 #include <iostream>
-#include <async.h>
 #include "snetsim.h"
 
-SimpleNetSim::SimpleNetSim(str name, uint32_t min, uint32_t max, double p)
+SimpleNetSim::SimpleNetSim(string name, uint32_t min, uint32_t max, double p)
   : Element(name,1, 1),
     _out_cb(0),
     min_delay_(min),
@@ -47,37 +46,30 @@ void SimpleNetSim::grab() {
 
   if (t) {
     uint32_t d = min_delay_ + uint32_t((max_delay_ - min_delay_)*(rand()/double(RAND_MAX)));
-    log(LoggerI::INFO, 0, strbuf() << "SimpleNetSim: Delaying for " << d << "(ms)"); 
+    // log(LoggerI::INFO, 0, strbuf() << "SimpleNetSim: Delaying for " << d << "(ms)"); 
 
     delayCB((0.0 + d) / 1000.0, boost::bind(&SimpleNetSim::tuple_ready,
                                             this, t));
   } else {
     pull_pending = false; 
   }
-  log(LoggerI::INFO, 0, strbuf() << "SimpleNetSim grab(): FINISHED"); 
 }
 
 void SimpleNetSim::element_cb() {
-  log(LoggerI::INFO, 0, strbuf() << "SimpleNetSim element_cb(): Upstream callback called"); 
-
   if (!pull_pending) {
     delayCB(0.0, boost::bind(&SimpleNetSim::grab, this));
   }
   pull_pending = true;
-
-  log(LoggerI::INFO, 0, strbuf() << "SimpleNetSim element_cb(): FINISHED"); 
 }
 
 void SimpleNetSim::tuple_ready(TuplePtr t) 
 { 
-  log(LoggerI::INFO, 0, strbuf() << "SimpleNetSim tuple_ready(): Down stream callback called"); 
   ready_q_.push_back(t); 
 
   if (_out_cb) {
     _out_cb();
     _out_cb = 0;
   }
-  log(LoggerI::INFO, 0, strbuf() << "SimpleNetSim tuple_ready(): FINISHED"); 
 }
 
 

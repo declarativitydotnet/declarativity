@@ -14,7 +14,7 @@
 #include "val_str.h"
 #include "val_opaque.h"
 
-Hexdump::Hexdump(str name,
+Hexdump::Hexdump(string name,
                  unsigned fieldNo)
   : Element(name, 1, 1),
     _fieldNo(fieldNo)
@@ -47,10 +47,15 @@ TuplePtr Hexdump::simple_action(TuplePtr p)
   }
   
   // Hexdump and return new tuple
-  ref<suio> u = Val_Opaque::cast(first);
-  char *buf = suio_flatten(u);
-  size_t sz = u->resid();
-  str s = strbuf() << hexdump(buf, sz);
+  FdbufPtr u = Val_Opaque::cast(first);
+  char *buf = u->cstr();
+  size_t sz = u->length();
+  ostringstream sb;
+  for (size_t i=0; i<sz; i++) {
+    char b[4]; 
+    sprintf(b,"%02x", buf[i]);
+    sb << b;
+  }
 
   // And create the output tuple
   TuplePtr newTuple = Tuple::mk();
@@ -59,7 +64,7 @@ TuplePtr Hexdump::simple_action(TuplePtr p)
        field++) {
     newTuple->append((*p)[field]);
   }
-  newTuple->append(Val_Str::mk(s));
+  newTuple->append(Val_Str::mk(sb.str()));
   for (unsigned field = _fieldNo + 1;
        field < p->size();
        field++) {

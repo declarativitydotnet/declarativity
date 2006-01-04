@@ -53,14 +53,15 @@ ID::ID(uint64_t doubleword)
 }
 
 /** Turns to hexadecimal */
-str
-ID::toString() const
-{
-  strbuf result;
+string ID::toString() const
+{ 
+  char buf[30];
+  string result;
   for (unsigned i = 0;
        i < WORDS;
        i++) {
-    result.fmt("%08x", words[i]);
+    sprintf(buf, "%08x", words[i]);
+    result += buf;
   }
   return result;
 }

@@ -12,7 +12,7 @@
 
 #include "val_tuple.h"
 
-const opr::Oper* Val_Tuple::oper_ = New opr::OperCompare<Val_Tuple>();
+const opr::Oper* Val_Tuple::oper_ = new opr::OperCompare<Val_Tuple>();
 
 //
 // Marshal a tuple

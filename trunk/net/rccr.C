@@ -12,7 +12,6 @@
 
 #include "rccr.h"
 #include "rcct.h"
-#include "sysconf.h"
 #include "val_uint64.h"
 #include "val_uint32.h"
 #include "val_double.h"
@@ -237,7 +236,7 @@ REMOVABLE_INLINE void RateCCR::Connection::clearHistory() {
 // Receive element
 //
 
-RateCCR::RateCCR(str name) 
+RateCCR::RateCCR(string name) 
   : Element(name, 1, 2),
     _ack_cb(0)
 {
@@ -272,7 +271,7 @@ TuplePtr RateCCR::simple_action(TuplePtr tp)
     catch (Value::TypeError& e) { } 
   }
   if (seq == 0 || rtt < 0) {
-    log(LoggerI::INFO, 0, strbuf() << "NON-RateCC Tuple: " << tp->toString()); 
+    log(LoggerI::INFO, 0, "NON-RateCC Tuple: " + tp->toString()); 
     return tp;
   }
 
@@ -282,7 +281,7 @@ TuplePtr RateCCR::simple_action(TuplePtr tp)
   } else c = cmap_.find(src->toString())->second;
 
   if (!c->active()) { 
-    log(LoggerI::WARN, 0, strbuf() << "REMOVING INACTIVE CONNECTION FROM SOURCE: " << src->toString()); 
+    log(LoggerI::WARN, 0, "REMOVING INACTIVE CONNECTION FROM SOURCE: " + src->toString()); 
     cmap_.erase(cmap_.find(src->toString()));
     c = new Connection(); 
     cmap_.insert(std::make_pair(src->toString(), c));

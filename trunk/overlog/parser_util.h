@@ -37,7 +37,7 @@ public:
   virtual bool operator==(const Parse_Expr &e) 
     { return v == e.v; };
 
-  virtual str toString() = 0;
+  virtual string toString() = 0;
 
   virtual void position(int p) { position_ = p; };
   virtual int position() { return position_; }
@@ -55,7 +55,7 @@ public:
   virtual void id(bool i) { id_ = i; };
   virtual bool id() { return id_; };
 
-  virtual str toString() { 
+  virtual string toString() { 
     return v->toString(); 
   };
 
@@ -68,9 +68,9 @@ private:
 class Parse_Var : public Parse_Expr { 
 public:
   Parse_Var(ValuePtr var) : Parse_Expr(var) {};
-  Parse_Var(const strbuf& var) : Parse_Expr(Val_Str::mk(var))  {};
+  Parse_Var(const string& var) : Parse_Expr(Val_Str::mk(var))  {};
 
-  virtual str toString() { return v->toString(); };
+  virtual string toString() { return v->toString(); };
 };
 
 class Parse_Agg : public Parse_Expr {
@@ -84,8 +84,8 @@ public:
 
   virtual bool operator==(const Parse_Expr &e);
 
-  virtual str toString();
-  virtual str aggName();
+  virtual string toString();
+  virtual string aggName();
 
   Operator oper;
 
@@ -101,7 +101,7 @@ public:
   virtual ~Parse_Bool() { delete lhs; if (rhs) delete rhs; };
   virtual bool operator==(const Parse_Expr &e); 
 
-  virtual str toString();
+  virtual string toString();
 
   Operator   oper;
   Parse_Expr *lhs;
@@ -118,7 +118,7 @@ public:
 
   virtual bool operator==(const Parse_Expr &e);
 
-  virtual str toString();
+  virtual string toString();
 
   Interval   type;
   Parse_Expr *lhs;
@@ -136,7 +136,7 @@ public:
 
   virtual bool operator==(const Parse_Expr &e);
 
-  virtual str toString();
+  virtual string toString();
 
   virtual operator int();
 
@@ -153,9 +153,9 @@ public:
 
   ~Parse_Function() { delete args_; };
 
-  virtual str toString();
+  virtual string toString();
 
-  str name() { return v->toString(); };
+  string name() { return v->toString(); };
 
   void arg(Parse_Expr *arg) { args_->push_back(arg); };
   Parse_Expr* arg(int i) { return args_->at(i); };
@@ -169,7 +169,7 @@ class Parse_Term {
 public:
   virtual ~Parse_Term() {};
 
-  virtual str toString() = 0;
+  virtual string toString() = 0;
   void position(int p) { position_ = p; };
   int position() { return position_; };
 
@@ -181,10 +181,10 @@ class Parse_FunctorName {
 public:
   Parse_FunctorName(Parse_Expr *n, Parse_Expr *l=NULL);
 
-  str toString();
+  string toString();
 
-  str name;
-  str loc;
+  string name;
+  string loc;
 };
 
 class Parse_Functor : public Parse_Term {
@@ -193,12 +193,12 @@ public:
     : fn(f), args_(a) {};
   virtual ~Parse_Functor() {delete fn; delete args_; };
 
-  virtual str toString();
+  virtual string toString();
 
   int aggregate();
 
   int find(Parse_Expr *arg);
-  int find(str argname);
+  int find(string argname);
 
   void arg(Parse_Expr *arg) { args_->push_back(arg); };
   Parse_Expr* arg(int i) { return args_->at(i); };
@@ -218,7 +218,7 @@ public:
   };
   virtual ~Parse_Assign() { delete var; delete assign; };
 
-  virtual str toString();
+  virtual string toString();
 
   Parse_Var  *var;
   Parse_Expr *assign;
@@ -231,7 +231,7 @@ public:
   };
   virtual ~Parse_Select() { delete select; }
 
-  virtual str toString();
+  virtual string toString();
 
   Parse_Bool *select;
 };
@@ -242,7 +242,7 @@ public:
     : var(v), start(s), end(e) { };
   virtual ~Parse_RangeFunction() { delete var; delete start; delete end; }
 
-  virtual str toString();
+  virtual string toString();
   
   Parse_Expr *var;
   Parse_Expr *start;
@@ -263,7 +263,7 @@ public:
   Parse_ExprList *_aggFields; 
   Parse_Term *_baseTerm;
   Parse_Agg::Operator _oper;
-  virtual str toString();
+  virtual string toString();
 };
 
 #endif /* __PARSER_UTIL_H__ */

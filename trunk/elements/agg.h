@@ -17,8 +17,8 @@
 class Agg : public Element { 
 public:
 
-  Agg(str name, std::vector<unsigned int> groupByFields, 
-      int aggField, unsigned uniqueField, str aggStr);
+  Agg(string name, std::vector<unsigned int> groupByFields, 
+      int aggField, unsigned uniqueField, string aggStr);
 
   ~Agg();
   
@@ -30,18 +30,18 @@ public:
   const char *flow_code() const			{ return "x/x"; }
 
 private:
-  str getGroupByFields(TuplePtr p);
+  string getGroupByFields(TuplePtr p);
   bool checkBestTuple(TuplePtr p);
   void updateBestTuple(TuplePtr p);
 
   b_cbv _pullCB, _pushCB;
-  std::map<str, TuplePtr> _buffer; // best values to send 
-  std::map<str, TuplePtr> _bestSoFar; // best tuple so far
+  std::map<string, TuplePtr> _buffer; // best values to send 
+  std::map<string, TuplePtr> _bestSoFar; // best tuple so far
   std::vector<unsigned int> _groupByFields;
-  std::map<str, TuplePtr> _allValues;
+  std::map<string, TuplePtr> _allValues;
   int _aggField;
   unsigned _uniqueField;
-  str _aggStr;
+  string _aggStr;
 };
 
 

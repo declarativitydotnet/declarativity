@@ -12,8 +12,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 #include <stdlib.h>
 
@@ -36,10 +34,10 @@
 
 struct LookupGenerator : public FunctorSource::Generator
 {
-  LookupGenerator(str host,
+  LookupGenerator(string host,
                   int firstPort,
                   int ports,
-                  str eventPrefix)
+                  string eventPrefix)
     : _h(host),
       _f(firstPort),
       _p(ports),
@@ -53,8 +51,9 @@ struct LookupGenerator : public FunctorSource::Generator
     tuple->append(Val_Str::mk("lookup"));
 
     // The source
-    str node = strbuf(_h) << ":" << (_f + _current);
-    tuple->append(Val_Str::mk(node));
+    ostringstream node;
+    node << string(_h) << ":" << (_f + _current);
+    tuple->append(Val_Str::mk(node.str()));
 
     uint32_t words[ID::WORDS];
     for (uint i = 0;
@@ -62,23 +61,25 @@ struct LookupGenerator : public FunctorSource::Generator
          i++) {
       words[i] = random();
     }
+    ostringstream oss;
+    oss << _prefix << ":" << _e;
     IDPtr key = ID::mk(words);  
     tuple->append(Val_ID::mk(key));
 
-    tuple->append(Val_Str::mk(node));		// WHere the answer is returned
-    tuple->append(Val_Str::mk(strbuf() << _prefix << ":" << _e )); // the event ID
+    tuple->append(Val_Str::mk(node.str()));		// WHere the answer is returned
+    tuple->append(Val_Str::mk(oss.str())); // the event ID
     tuple->freeze();
     _e++;
     _current = (_current + 1) % _p;
     return tuple;
   }
 
-  str _h;
+  string _h;
   int _f;
   int _p;
   int _current;
   uint64_t _e;
-  str _prefix;
+  string _prefix;
 };
 
 void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> lookup,
@@ -86,23 +87,23 @@ void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> looku
 {
   Router::ConfigurationPtr conf(new Router::Configuration());
 
-  ElementSpecPtr func    = conf->addElement(ElementPtr(new FunctorSource(str("Source"), lookup.get())));
-  ElementSpecPtr print   = conf->addElement(ElementPtr(new Print(strbuf("lookup"))));
+  ElementSpecPtr func    = conf->addElement(ElementPtr(new FunctorSource(string("Source"), lookup.get())));
+  ElementSpecPtr print   = conf->addElement(ElementPtr(new Print(string("lookup"))));
   ElementSpecPtr pushS =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("Push:"),
+    conf->addElement(ElementPtr(new TimedPullPush(string("Push:"),
                                                      delay, // run then
                                                      times // run once
                                                      )));
 
   // And a slot from which to pull
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("JoinEventSlot:"))));
+    conf->addElement(ElementPtr(new Slot(string("JoinEventSlot:"))));
 		       
   ElementSpecPtr encap = conf->addElement(ElementPtr(new PelTransform("encapRequest",
 									  "$1 pop \
                                                      $0 ->t $1 append $2 append $3 append $4 append pop"))); // the rest
   ElementSpecPtr marshal = conf->addElement(ElementPtr(new MarshalField("Marshal", 1)));
-  ElementSpecPtr route   = conf->addElement(ElementPtr(new StrToSockaddr(strbuf("SimpleLookup"), 0)));
+  ElementSpecPtr route   = conf->addElement(ElementPtr(new StrToSockaddr(string("SimpleLookup"), 0)));
   boost::shared_ptr< Udp > udp(new Udp("Udp"));
   ElementSpecPtr udpTx   = conf->addElement(udp->get_tx());
 
@@ -137,7 +138,7 @@ int main(int argc, char **argv)
   }
 
   int seed = 0;
-  level = LoggerI::levelFromName[str(argv[1])];
+  level = LoggerI::levelFromName[string(argv[1])];
   seed = atoi(argv[2]);
   srandom(seed);
   issue_lookup(level, boost::shared_ptr<LookupGenerator>(new LookupGenerator(argv[3],

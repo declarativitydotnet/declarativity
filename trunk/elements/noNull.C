@@ -11,7 +11,7 @@
 
 #include "noNull.h"
 
-NoNull::NoNull(str name)
+NoNull::NoNull(string name)
   : Element(name, 1, 1)
 {
 }

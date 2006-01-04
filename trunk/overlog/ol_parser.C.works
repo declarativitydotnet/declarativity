@@ -211,7 +211,7 @@
 
   union YYSTYPE;
   static int ol_parser_lex (YYSTYPE *lvalp, OL_Context *ctxt);
-  static void ol_parser_error (OL_Context *ctxt, str msg);
+  static void ol_parser_error (OL_Context *ctxt, string msg);
 
 
 
@@ -1397,7 +1397,7 @@ yyreduce:
 
   case 17:
 #line 149 "ol_parser.y"
-    { yyval.u_exprlist = New Parse_ExprList(); yyval.u_exprlist->push_front(yyvsp[0].v); }
+    { yyval.u_exprlist = new Parse_ExprList(); yyval.u_exprlist->push_front(yyvsp[0].v); }
     break;
 
   case 18:
@@ -1453,12 +1453,12 @@ yyreduce:
   case 26:
 #line 175 "ol_parser.y"
     {
-		   ctxt->query(New Parse_Functor(yyvsp[-2].u_functorname, yyvsp[-1].u_exprlist)); }
+		   ctxt->query(new Parse_Functor(yyvsp[-2].u_functorname, yyvsp[-1].u_exprlist)); }
     break;
 
   case 27:
 #line 179 "ol_parser.y"
-    { yyval.u_termlist = New Parse_TermList(); yyval.u_termlist->push_front(yyvsp[0].u_term); }
+    { yyval.u_termlist = new Parse_TermList(); yyval.u_termlist->push_front(yyvsp[0].u_term); }
     break;
 
   case 28:
@@ -1473,32 +1473,32 @@ yyreduce:
 
   case 33:
 #line 187 "ol_parser.y"
-    { yyval.u_term=New Parse_RangeFunction(yyvsp[-5].v, yyvsp[-3].v, yyvsp[-1].v); }
+    { yyval.u_term=new Parse_RangeFunction(yyvsp[-5].v, yyvsp[-3].v, yyvsp[-1].v); }
     break;
 
   case 34:
 #line 191 "ol_parser.y"
-    { yyval.u_term=New Parse_Functor(yyvsp[-1].u_functorname, yyvsp[0].u_exprlist); }
+    { yyval.u_term=new Parse_Functor(yyvsp[-1].u_functorname, yyvsp[0].u_exprlist); }
     break;
 
   case 35:
 #line 195 "ol_parser.y"
-    { yyval.u_aggterm = New Parse_AggTerm(yyvsp[-7].u_aoper, yyvsp[-5].u_exprlist, yyvsp[-3].u_exprlist, yyvsp[-1].u_term); }
+    { yyval.u_aggterm = new Parse_AggTerm(yyvsp[-7].u_aoper, yyvsp[-5].u_exprlist, yyvsp[-3].u_exprlist, yyvsp[-1].u_term); }
     break;
 
   case 36:
 #line 199 "ol_parser.y"
-    { yyval.u_functorname = New Parse_FunctorName(yyvsp[0].v); }
+    { yyval.u_functorname = new Parse_FunctorName(yyvsp[0].v); }
     break;
 
   case 37:
 #line 201 "ol_parser.y"
-    { yyval.u_functorname = New Parse_FunctorName(yyvsp[-2].v,yyvsp[0].v); }
+    { yyval.u_functorname = new Parse_FunctorName(yyvsp[-2].v,yyvsp[0].v); }
     break;
 
   case 38:
 #line 205 "ol_parser.y"
-    { yyval.u_exprlist=New Parse_ExprList(); }
+    { yyval.u_exprlist=new Parse_ExprList(); }
     break;
 
   case 39:
@@ -1509,7 +1509,7 @@ yyreduce:
   case 40:
 #line 209 "ol_parser.y"
     { 
-			yyval.u_exprlist = New Parse_ExprList(); 
+			yyval.u_exprlist = new Parse_ExprList(); 
 			yyval.u_exprlist->push_front(yyvsp[0].v); }
     break;
 
@@ -1532,18 +1532,18 @@ yyreduce:
 
   case 44:
 #line 225 "ol_parser.y"
-    { yyval.v = New Parse_Function(yyvsp[-3].v, yyvsp[-1].u_exprlist); }
+    { yyval.v = new Parse_Function(yyvsp[-3].v, yyvsp[-1].u_exprlist); }
     break;
 
   case 45:
 #line 227 "ol_parser.y"
-    { yyval.v = New Parse_Function(yyvsp[-2].v, New Parse_ExprList()); }
+    { yyval.v = new Parse_Function(yyvsp[-2].v, new Parse_ExprList()); }
     break;
 
   case 46:
 #line 230 "ol_parser.y"
     { 
-			yyval.u_exprlist = New Parse_ExprList(); 
+			yyval.u_exprlist = new Parse_ExprList(); 
 			yyval.u_exprlist->push_front(yyvsp[0].v); }
     break;
 
@@ -1566,27 +1566,27 @@ yyreduce:
 
   case 50:
 #line 245 "ol_parser.y"
-    { yyval.u_term = New Parse_Select(yyvsp[0].v); }
+    { yyval.u_term = new Parse_Select(yyvsp[0].v); }
     break;
 
   case 51:
 #line 249 "ol_parser.y"
-    { yyval.u_term = New Parse_Assign(yyvsp[-2].v, yyvsp[0].v); }
+    { yyval.u_term = new Parse_Assign(yyvsp[-2].v, yyvsp[0].v); }
     break;
 
   case 52:
 #line 251 "ol_parser.y"
-    { yyval.u_term = New Parse_Assign(yyvsp[-2].v, yyvsp[0].v); }
+    { yyval.u_term = new Parse_Assign(yyvsp[-2].v, yyvsp[0].v); }
     break;
 
   case 53:
 #line 253 "ol_parser.y"
-    { yyval.u_term = New Parse_Assign(yyvsp[-2].v, yyvsp[0].v); }
+    { yyval.u_term = new Parse_Assign(yyvsp[-2].v, yyvsp[0].v); }
     break;
 
   case 54:
 #line 255 "ol_parser.y"
-    { yyval.u_term = New Parse_Assign(yyvsp[-2].v, yyvsp[0].v); }
+    { yyval.u_term = new Parse_Assign(yyvsp[-2].v, yyvsp[0].v); }
     break;
 
   case 55:
@@ -1596,37 +1596,37 @@ yyreduce:
 
   case 56:
 #line 261 "ol_parser.y"
-    { yyval.v = New Parse_Bool(Parse_Bool::RANGE, yyvsp[-2].v, yyvsp[0].v); }
+    { yyval.v = new Parse_Bool(Parse_Bool::RANGE, yyvsp[-2].v, yyvsp[0].v); }
     break;
 
   case 57:
 #line 263 "ol_parser.y"
-    { yyval.v = New Parse_Bool(Parse_Bool::RANGE, yyvsp[-3].v, yyvsp[0].v, true); }
+    { yyval.v = new Parse_Bool(Parse_Bool::RANGE, yyvsp[-3].v, yyvsp[0].v, true); }
     break;
 
   case 58:
 #line 265 "ol_parser.y"
-    { yyval.v = New Parse_Bool(Parse_Bool::NOT, yyvsp[0].v ); }
+    { yyval.v = new Parse_Bool(Parse_Bool::NOT, yyvsp[0].v ); }
     break;
 
   case 59:
 #line 267 "ol_parser.y"
-    { yyval.v = New Parse_Bool(Parse_Bool::OR, yyvsp[-2].v, yyvsp[0].v ); }
+    { yyval.v = new Parse_Bool(Parse_Bool::OR, yyvsp[-2].v, yyvsp[0].v ); }
     break;
 
   case 60:
 #line 269 "ol_parser.y"
-    { yyval.v = New Parse_Bool(Parse_Bool::AND, yyvsp[-2].v, yyvsp[0].v ); }
+    { yyval.v = new Parse_Bool(Parse_Bool::AND, yyvsp[-2].v, yyvsp[0].v ); }
     break;
 
   case 61:
 #line 271 "ol_parser.y"
-    { yyval.v = New Parse_Bool(yyvsp[-1].u_boper, yyvsp[-2].v, yyvsp[0].v ); }
+    { yyval.v = new Parse_Bool(yyvsp[-1].u_boper, yyvsp[-2].v, yyvsp[0].v ); }
     break;
 
   case 62:
 #line 273 "ol_parser.y"
-    { yyval.v = New Parse_Bool(yyvsp[-2].u_boper, yyvsp[-3].v, yyvsp[0].v, true); }
+    { yyval.v = new Parse_Bool(yyvsp[-2].u_boper, yyvsp[-3].v, yyvsp[0].v, true); }
     break;
 
   case 63:
@@ -1676,22 +1676,22 @@ yyreduce:
 
   case 72:
 #line 293 "ol_parser.y"
-    { yyval.v = New Parse_Math(yyvsp[-1].u_moper, yyvsp[-2].v, yyvsp[0].v ); }
+    { yyval.v = new Parse_Math(yyvsp[-1].u_moper, yyvsp[-2].v, yyvsp[0].v ); }
     break;
 
   case 73:
 #line 295 "ol_parser.y"
-    { yyval.v = New Parse_Math(yyvsp[-2].u_moper, yyvsp[-3].v, yyvsp[0].v, true ); }
+    { yyval.v = new Parse_Math(yyvsp[-2].u_moper, yyvsp[-3].v, yyvsp[0].v, true ); }
     break;
 
   case 74:
 #line 297 "ol_parser.y"
-    { yyval.v = New Parse_Math(yyvsp[-1].u_moper, yyvsp[-2].v, yyvsp[0].v ); }
+    { yyval.v = new Parse_Math(yyvsp[-1].u_moper, yyvsp[-2].v, yyvsp[0].v ); }
     break;
 
   case 75:
 #line 299 "ol_parser.y"
-    { yyval.v = New Parse_Math(yyvsp[-2].u_moper, yyvsp[-3].v, yyvsp[0].v, true ); }
+    { yyval.v = new Parse_Math(yyvsp[-2].u_moper, yyvsp[-3].v, yyvsp[0].v, true ); }
     break;
 
   case 76:
@@ -1746,22 +1746,22 @@ yyreduce:
 
   case 86:
 #line 321 "ol_parser.y"
-    { yyval.v = New Parse_Range(Parse_Range::RANGEOO, yyvsp[-3].v, yyvsp[-1].v); }
+    { yyval.v = new Parse_Range(Parse_Range::RANGEOO, yyvsp[-3].v, yyvsp[-1].v); }
     break;
 
   case 87:
 #line 323 "ol_parser.y"
-    { yyval.v = New Parse_Range(Parse_Range::RANGEOC, yyvsp[-3].v, yyvsp[-1].v); }
+    { yyval.v = new Parse_Range(Parse_Range::RANGEOC, yyvsp[-3].v, yyvsp[-1].v); }
     break;
 
   case 88:
 #line 325 "ol_parser.y"
-    { yyval.v = New Parse_Range(Parse_Range::RANGECO, yyvsp[-3].v, yyvsp[-1].v); }
+    { yyval.v = new Parse_Range(Parse_Range::RANGECO, yyvsp[-3].v, yyvsp[-1].v); }
     break;
 
   case 89:
 #line 327 "ol_parser.y"
-    { yyval.v = New Parse_Range(Parse_Range::RANGECC, yyvsp[-3].v, yyvsp[-1].v); }
+    { yyval.v = new Parse_Range(Parse_Range::RANGECC, yyvsp[-3].v, yyvsp[-1].v); }
     break;
 
   case 90:
@@ -1786,12 +1786,12 @@ yyreduce:
 
   case 97:
 #line 344 "ol_parser.y"
-    { yyval.v = New Parse_Agg(yyvsp[-1].v, yyvsp[-3].u_aoper, ValuePtr()); }
+    { yyval.v = new Parse_Agg(yyvsp[-1].v, yyvsp[-3].u_aoper, ValuePtr()); }
     break;
 
   case 98:
 #line 347 "ol_parser.y"
-    { yyval.v = New Parse_Agg(Parse_Agg::DONT_CARE, yyvsp[-3].u_aoper, ValuePtr()); }
+    { yyval.v = new Parse_Agg(Parse_Agg::DONT_CARE, yyvsp[-3].u_aoper, ValuePtr()); }
     break;
 
   case 99:
@@ -2050,7 +2050,7 @@ static int ol_parser_lex (YYSTYPE *lvalp, OL_Context *ctxt)
 {
   return ctxt->lexer->yylex(lvalp, ctxt);
 }
-static void ol_parser_error(OL_Context *ctxt, str msg)
+static void ol_parser_error(OL_Context *ctxt, string msg)
 {
   ctxt->error(msg);
 }

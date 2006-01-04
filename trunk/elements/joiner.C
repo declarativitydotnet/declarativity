@@ -12,7 +12,7 @@
 #include "joiner.h"
 #include "store.h"              // For the end-of-search tag
 
-Joiner::Joiner(str name)
+Joiner::Joiner(string name)
   : Element(name, 2, 1),
     _pushCallback(0),
     _pullCallback(0)
@@ -31,8 +31,8 @@ int Joiner::push(int port, TuplePtr t, b_cbv cb)
     _fixed = t;
 
     // Do I have a puller pending?
-    strbuf s("push: accepted fixed tuple ");
-    s.cat(_fixed->toString());
+    string s("push: accepted fixed tuple ");
+    s.append(_fixed->toString());
     log(LoggerI::INFO, 0, s);
     
     // Unblock the puller if one is waiting

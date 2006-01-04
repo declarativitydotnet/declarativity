@@ -23,7 +23,6 @@
 
 #include <list>
 #include <map>
-#include <arpc.h>
 #include <iostream>
 #include <stdlib.h>
 #include <fstream>
@@ -80,14 +79,14 @@ class Rtr_ConfGen {
 
  public:
   Rtr_ConfGen(OL_Context* ctxt, Router::ConfigurationPtr conf, 
-	      bool _dups, bool debug, bool cc, str filename);
+	      bool _dups, bool debug, bool cc, string filename);
   Rtr_ConfGen::~Rtr_ConfGen();
 
-  void configureRouter(boost::shared_ptr< Udp > udp, str nodeID);
+  void configureRouter(boost::shared_ptr< Udp > udp, string nodeID);
 
-  TablePtr getTableByName(str nodeID, str tableName);
+  TablePtr getTableByName(string nodeID, string tableName);
 
-  void createTables(str nodeID);
+  void createTables(string nodeID);
 
   void clear();
 
@@ -95,10 +94,10 @@ class Rtr_ConfGen {
   void registerUDPPushSenders(ElementSpecPtr elementSpecPtr);
   
 private:
-  static const str SEL_PRE, AGG_PRE, ASSIGN_PRE, TABLESIZE;
-  typedef std::map<str, TablePtr> TableMap;
-  typedef std::map<str, str> PelFunctionMap;
-  typedef std::map<str, ReceiverInfo> ReceiverInfoMap;
+  static const string SEL_PRE, AGG_PRE, ASSIGN_PRE, TABLESIZE;
+  typedef std::map<string, TablePtr> TableMap;
+  typedef std::map<string, string> PelFunctionMap;
+  typedef std::map<string, ReceiverInfo> ReceiverInfoMap;
 
   PelFunctionMap pelFunctions;
   TableMap _tables;
@@ -108,17 +107,17 @@ private:
   bool _cc; // are we using congestion control
   FILE *_output;
   Router::ConfigurationPtr _conf; 
-  std::map<str, str> _multTableIndices;
+  std::map<string, string> _multTableIndices;
 
   // counter to determine how many muxers and demuxers are needed
-  str _curType;
+  string _curType;
   std::vector<ElementSpecPtr> _udpSenders;
   std::vector<int> _udpSendersPos;
   std::vector<ElementSpecPtr> _currentElementChain;
    
   ReceiverInfoMap _udpReceivers; // for demuxing
   bool _pendingRegisterReceiver;
-  str  _pendingReceiverTable;
+  string  _pendingReceiverTable;
   ElementSpecPtr _pendingReceiverSpec;
   OL_Context::Rule* _currentRule;
   ElementSpecPtr _ccTx, _ccRx, _roundRobinCC;
@@ -126,88 +125,88 @@ private:
   int _currentPositionIndex;
   
   // Relational -> P2 elements
-  void processRule(OL_Context::Rule *r, str nodeID);
+  void processRule(OL_Context::Rule *r, string nodeID);
   
   void genJoinElements(OL_Context::Rule* curRule, 
-		       str nodeID,
+		       string nodeID,
 		       FieldNamesTracker* namesTracker,
 		       boost::shared_ptr<Aggwrap> agg_el);
 
   void genProbeElements(OL_Context::Rule* curRule, 
 			Parse_Functor* eventFunctor, 
 			Parse_Term* baseTerm, 
-			str nodeID, 	     
+			string nodeID, 	     
 			FieldNamesTracker* probeNames, 
 			FieldNamesTracker* baseProbeNames, 
 			int joinOrder,
 			b_cbv comp_cb);
 
   void genProjectHeadElements(OL_Context::Rule* curRule,
- 			      str nodeID,
+ 			      string nodeID,
  			      FieldNamesTracker* curNamesTracker);
     
   void genAllSelectionAssignmentElements(OL_Context::Rule* curRule,
-					 str nodeID,
+					 string nodeID,
 					 FieldNamesTracker* curNamesTracker);
     
-  void genDupElimElement(str header);
+  void genDupElimElement(string header);
   
   void genSingleTermElement(OL_Context::Rule* curRule, 
-			    str nodeID, 
+			    string nodeID, 
 			    FieldNamesTracker* namesTracker);
   
   void genSingleAggregateElements(OL_Context::Rule* curRule, 
-				  str nodeID, 
+				  string nodeID, 
 				  FieldNamesTracker* curNamesTracker);  
 
 
   // Debug elements
-  void genPrintElement(str header);
+  void genPrintElement(string header);
 
-  void genPrintWatchElement(str header);
+  void genPrintWatchElement(string header);
 
   void genFunctorSource(OL_Context::Rule* rule, 
-			str nodeID,
+			string nodeID,
 			FieldNamesTracker* namesTracker);
  
   // Network elements
-  ElementSpecPtr genSendElements(boost::shared_ptr< Udp> udp, str nodeID);
+  ElementSpecPtr genSendElements(boost::shared_ptr< Udp> udp, string nodeID);
 
   void genReceiveElements(boost::shared_ptr< Udp> udp, 
-			  str nodeID, 
+			  string nodeID, 
 			  ElementSpecPtr wrapAroundDemux);
 
   void registerReceiverTable(OL_Context::Rule* rule, 
-			     str tableName);
+			     string tableName);
 
-  void registerReceiver(str tableName, 
+  void registerReceiver(string tableName, 
 			ElementSpecPtr elementSpecPtr);
 
 
 
   // Pel Generation functions
-  str pelRange(FieldNamesTracker* names, 
+  string pelRange(FieldNamesTracker* names, 
 	       Parse_Bool *expr);
 
-  str pelMath(FieldNamesTracker* names, 
+  string pelMath(FieldNamesTracker* names, 
 	      Parse_Math *expr);
 
-  str pelBool(FieldNamesTracker* names, 
+  string pelBool(FieldNamesTracker* names, 
 	      Parse_Bool *expr);
 
-  str pelFunction(FieldNamesTracker* names, 
+  string pelFunction(FieldNamesTracker* names, 
 		  Parse_Function *expr);
 
   void pelSelect(OL_Context::Rule* rule, 
 		 FieldNamesTracker *names, 
 		 Parse_Select *expr, 
-                 str nodeID, 
+                 string nodeID, 
 		 int selectionID);
 
   void pelAssign(OL_Context::Rule* rule, 
 		 FieldNamesTracker *names, 
 		 Parse_Assign *expr, 
-                 str nodeID, 
+                 string nodeID, 
 		 int assignID);
 
   // Other helper functions
@@ -221,7 +220,7 @@ private:
   
   void addMultTableIndex(TablePtr table, 
 			 int fn, 
-			 str nodeID);
+			 string nodeID);
   
   int numFunctors(OL_Context::Rule* rule);
 
@@ -232,7 +231,7 @@ private:
   bool hasPeriodicTerm(OL_Context::Rule* curRule);
 
   void debugRule(OL_Context::Rule* curRule, 
-		 str debugMsg) { 
+		 string debugMsg) { 
     std::cout << curRule->ruleID << ": " << debugMsg; 
   }
 
@@ -240,27 +239,27 @@ private:
   // convince placeholder to figure out the cur fields in a tuple in flight
   class FieldNamesTracker {
   public:
-    std::vector<str> fieldNames;    
+    std::vector<string> fieldNames;    
     FieldNamesTracker();   
     FieldNamesTracker(Parse_Term* pf);
 
     void initialize(Parse_Term* pf);
-    std::vector<int> matchingJoinKeys(std::vector<str> names);    
-    void mergeWith(std::vector<str> names);
-    void mergeWith(std::vector<str> names, int numJoinKeys);
-    int fieldPosition(str var);
-    str toString();
+    std::vector<int> matchingJoinKeys(std::vector<string> names);    
+    void mergeWith(std::vector<string> names);
+    void mergeWith(std::vector<string> names, int numJoinKeys);
+    int fieldPosition(string var);
+    string toString();
   };
 
   
   // keep track of where joins need to be performed
   struct JoinKey {
-    str _firstTableName;
-    str _firstFieldName;
-    str _secondTableName;
-    str _secondFieldName;   
+    string _firstTableName;
+    string _firstFieldName;
+    string _secondTableName;
+    string _secondFieldName;   
 
-    JoinKey(str firstTableName, str firstFieldName, str secondTableName, str secondFieldName) {
+    JoinKey(string firstTableName, string firstFieldName, string secondTableName, string secondFieldName) {
       _firstTableName = firstTableName;
       _firstFieldName = firstFieldName;
       _secondTableName = secondTableName;
@@ -270,9 +269,9 @@ private:
 
   struct ReceiverInfo {
     std::vector<ElementSpecPtr> _receivers;
-    str _name;
+    string _name;
     u_int _arity;
-    ReceiverInfo(str name, u_int arity) {
+    ReceiverInfo(string name, u_int arity) {
       _name = name;
       _arity = arity;
     }      

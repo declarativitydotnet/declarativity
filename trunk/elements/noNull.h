@@ -17,7 +17,7 @@
 
 class NoNull : public Element { 
 public:
-  NoNull(str);
+  NoNull(string);
   ~NoNull();
   
   /** Overridden to perform the projecting. */

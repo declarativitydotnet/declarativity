@@ -8,15 +8,13 @@
  * 
  */
 
-#include <async.h>
-#include <arpc.h>
 #include "agg.h"
 #include "tuple.h"
 #include "val_double.h"
 #include<iostream>
 
-Agg::Agg(str name, std::vector<unsigned int> groupByFields, 
-	 int aggField, unsigned uniqueField, str aggStr)
+Agg::Agg(string name, std::vector<unsigned int> groupByFields, 
+	 int aggField, unsigned uniqueField, string aggStr)
   : Element(name, 1, 1),
     _pullCB(0),
     _pushCB(0)
@@ -33,8 +31,8 @@ Agg::~Agg()
 
 void Agg::updateBestTuple(TuplePtr p)
 {
-  log(LoggerI::INFO, 0, str(strbuf() << "Update best " << p->toString()));
-  std::map<str, TuplePtr>::iterator iter = _bestSoFar.find(getGroupByFields(p));
+  log(LoggerI::INFO, 0, "Update best " + p->toString());
+  std::map<string, TuplePtr>::iterator iter = _bestSoFar.find(getGroupByFields(p));
   if (iter != _bestSoFar.end()) {
     _bestSoFar.erase(iter);
   }
@@ -47,24 +45,22 @@ void Agg::updateBestTuple(TuplePtr p)
   
   _buffer.insert(std::make_pair(getGroupByFields(p), p));  
 
-  log(LoggerI::INFO, 0, str(strbuf() << "Update best " << p->toString()));
-  getGroupByFields(p) << "\n";
+  log(LoggerI::INFO, 0, "Update best " + p->toString());
 }
 
 bool Agg::checkBestTuple(TuplePtr p)
 {
-  std::map<str, TuplePtr>::iterator iter = _bestSoFar.find(getGroupByFields(p));
+  std::map<string, TuplePtr>::iterator iter = _bestSoFar.find(getGroupByFields(p));
   if (iter == _bestSoFar.end()) { // no best yet
     updateBestTuple(p);
     return true;
   } 
 
   TuplePtr oldTuple = iter->second;  
-  str oldUniqueVal = (*oldTuple)[_uniqueField]->toString();
-  str newUniqueVal = (*p)[_uniqueField]->toString();
+  string oldUniqueVal = (*oldTuple)[_uniqueField]->toString();
+  string newUniqueVal = (*p)[_uniqueField]->toString();
   if (oldUniqueVal == newUniqueVal) {
-      p->toString() << " " << getGroupByFields(p) << "\n";  
-    std::map<str, TuplePtr>::iterator iter;
+    std::map<string, TuplePtr>::iterator iter;
     TuplePtr bestTuple;
     for (iter = _allValues.begin(); iter != _allValues.end(); iter++) {
       TuplePtr nextTuple = iter->second;
@@ -92,26 +88,24 @@ bool Agg::checkBestTuple(TuplePtr p)
   if ((_aggStr == "min" && oldValue->compareTo(newValue) == 1) ||
       (_aggStr == "max" && oldValue->compareTo(newValue) == -1)) {
     updateBestTuple(p);
-      oldValue->toString() << " " << newValue->toString() << 
-      " " << getGroupByFields(p) << "\n";  
     return true;
   }  
   return false;
 }
 
-str Agg::getGroupByFields(TuplePtr p)
+string Agg::getGroupByFields(TuplePtr p)
 {
-  strbuf b;
+  ostringstream b;
   for (unsigned int k = 0; k < _groupByFields.size(); k++) {
     b << (*p)[_groupByFields.at(k)]->toString() << ",";
   }
-  return str(b);
+  return b.str();
 }
 
 int Agg::push(int port, TuplePtr p, b_cbv cb)
 {
-  str uniqueVal = (*p)[_uniqueField]->toString();
-  std::map<str, TuplePtr>::iterator iter = _allValues.find(uniqueVal);
+  string uniqueVal = (*p)[_uniqueField]->toString();
+  std::map<string, TuplePtr>::iterator iter = _allValues.find(uniqueVal);
   if (iter != _allValues.end()) {
     _allValues.erase(iter);
   }
@@ -149,8 +143,9 @@ TuplePtr Agg::pull(int port, b_cbv cb)
     _pushCB = 0;
   }
 
-  log(LoggerI::INFO, 0, str(strbuf() << "Pull succeed " << p->toString() 
-			    << ", queuesize=" << _buffer.size()));
+  ostringstream oss;
+  oss << "Pull succeed " << p->toString() << ", queuesize=" << _buffer.size();
+  log(LoggerI::INFO, 0, oss.str());
   return p;
 }
 

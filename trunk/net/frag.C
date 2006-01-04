@@ -14,10 +14,9 @@
 #include "tupleseq.h"
 #include "math.h"
 
-Frag::Frag(str name, uint32_t block_size)
+Frag::Frag(string name, uint32_t block_size)
   : Element(name, 1, 1),
-    _push_cb(0),
-    _pull_cb(0),
+    _push_cb(0), _pull_cb(0),
     block_size_(block_size)
 {
 }
@@ -28,30 +27,30 @@ int Frag::push(int port, TuplePtr t, b_cbv cb)
   // Is this the right port?
   assert(port == 0);
 
-  if (_push_cb) {
+  if (_push_cb != 0) {
     // Complain and do nothing
-    log(LoggerI::INFO, 0, "push: callback overrun"); 
+    ELEM_INFO( "push: callback overrun"); 
   } else {
     // Accept the callback
     _push_cb = cb;
-    log(LoggerI::INFO, 0, "push: raincheck");
+    ELEM_INFO( "push: raincheck");
   }
 
   // Do I have fragments?
   if (fragments_.size() > 0) {
     // Nope, accept and fragment the tuple
-    log(LoggerI::INFO, 0, "push: put accepted");
+    ELEM_INFO( "push: put accepted");
     fragment(t);
 
     // Unblock the puller if one is waiting
-    if (_pull_cb) {
-      log(LoggerI::INFO, 0, "push: wakeup puller");
+    if (_pull_cb != 0) {
+      ELEM_INFO( "push: wakeup puller");
       _pull_cb();
       _pull_cb = 0;
     }
   } else {
     // I already have a tuple so the one I just accepted is dropped
-    log(LoggerI::INFO, 0, "push: tuple overrun");
+    ELEM_INFO( "push: tuple overrun");
   }
   return 0;
 }
@@ -63,12 +62,12 @@ TuplePtr Frag::pull(int port, b_cbv cb)
 
   // Do I have a fragment?
   if (!fragments_.empty()) {
-    log(LoggerI::INFO, 0, "pull: will succeed");
+    ELEM_INFO( "pull: will succeed");
     TuplePtr t = fragments_.front();
     fragments_.pop_front();
 
-    if (fragments_.empty() && _push_cb) {
-      log(LoggerI::INFO, 0, "pull: wakeup pusher");
+    if (fragments_.empty() && _push_cb != 0) {
+      ELEM_INFO( "pull: wakeup pusher");
       _push_cb();
       _push_cb = 0;
     }
@@ -76,13 +75,13 @@ TuplePtr Frag::pull(int port, b_cbv cb)
     return t;
   } else {
     // I don't have a tuple.  Do I have a pull callback already?
-    if (!_pull_cb) {
+    if (_pull_cb == 0) {
       // Accept the callback
-      log(LoggerI::INFO, 0, "pull: raincheck");
+      ELEM_INFO( "pull: raincheck");
       _pull_cb = cb;
     } else {
       // I already have a pull callback
-      log(LoggerI::INFO, 0, "pull: underrun");
+      ELEM_INFO( "pull: underrun");
     }
     return TuplePtr();
   }
@@ -91,23 +90,22 @@ TuplePtr Frag::pull(int port, b_cbv cb)
 void Frag::fragment(TuplePtr t)
 {
   uint64_t seq_num = SEQ_NUM(Val_UInt64::cast((*t)[SEQ_FIELD]));
-  ref< suio > puio = Val_Opaque::cast((*t)[PLD_FIELD]);
+  FdbufPtr pfb = Val_Opaque::cast((*t)[PLD_FIELD]);
 
-  if (puio->resid() <= CHUNK_SIZE) {
+  if (pfb->length() <= CHUNK_SIZE) {
     // No need to fragment.
     t->tag(NUM_CHUNKS, Val_UInt32::mk(1));
     fragments_.push_back(t);
   }
   else {
-    int num_chunks = (int) ceil(float(puio->resid()) / float(CHUNK_SIZE));
-    for (int offset = 0; puio->resid() > 0; offset++) {
-      ref<suio> uio = New refcounted<suio>();
-      puio->copy(uio, min<int>(CHUNK_SIZE, puio->resid()));
-      puio->rembytes(uio->resid());
-
+    size_t num_chunks = (pfb->length() + CHUNK_SIZE - 1) / CHUNK_SIZE; 
+    size_t offset = 0;
+    while( pfb->length() ) {
       TuplePtr p = Tuple::mk();
       p->append(Val_UInt64::mk(MAKE_SEQ(seq_num, offset)));
-      p->append(Val_Opaque::mk(uio));
+      FdbufPtr fb(new Fdbuf());
+      offset += pfb->pop_to_fdbuf(*fb, CHUNK_SIZE);
+      p->append(Val_Opaque::mk(fb));
       p->tag(NUM_CHUNKS, Val_UInt32::mk(num_chunks));
       fragments_.push_back(p);
     }

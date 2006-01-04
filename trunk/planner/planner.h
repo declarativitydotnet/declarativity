@@ -18,7 +18,6 @@
 
 #include <list>
 #include <map>
-#include <arpc.h>
 #include <iostream>
 #include <stdlib.h>
 #include <fstream>
@@ -76,7 +75,7 @@ class Planner
 {
 public:
   Planner(Router::ConfigurationPtr conf, Catalog* catalog, 
-	  bool debug, str nodeID, str outputFile); 
+	  bool debug, string nodeID, string outputFile); 
 
   ~Planner() { delete _netPlanner; 
   if (_outputDebugFile != NULL) {fclose(_outputDebugFile); }}
@@ -93,7 +92,7 @@ public:
 private:
   bool _debug;
   Router::ConfigurationPtr _conf;
-  str _nodeID;
+  string _nodeID;
   int _ruleCount;
   NetPlanner* _netPlanner;
   Catalog* _catalog;

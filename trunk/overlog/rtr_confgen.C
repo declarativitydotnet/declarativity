@@ -17,14 +17,14 @@ Rtr_ConfGen::Rtr_ConfGen(OL_Context* ctxt,
 			 bool dups, 
 			 bool debug, 
 			 bool cc,
-			 str filename) :_conf(conf)
+			 string filename) :_conf(conf)
 {
   _ctxt = ctxt;
   _dups = dups;
   _debug = debug;
   _cc = cc;
-  str outputFile(filename << ".out");
-  _output = fopen(outputFile.cstr(), "w");
+  string outputFile(filename + ".out");
+  _output = fopen(outputFile.c_str(), "w");
   _pendingRegisterReceiver = false;  
   _isPeriodic = false;
   _currentPositionIndex = -1;
@@ -39,7 +39,7 @@ Rtr_ConfGen::~Rtr_ConfGen()
 
 // call this for each udp element that we wish to hook up the same dataflow
 // if running only one, nodeID is the local host name,
-void Rtr_ConfGen::configureRouter(boost::shared_ptr< Udp > udp, str nodeID)
+void Rtr_ConfGen::configureRouter(boost::shared_ptr< Udp > udp, string nodeID)
 {
 
   if (!_cc) {
@@ -47,9 +47,9 @@ void Rtr_ConfGen::configureRouter(boost::shared_ptr< Udp > udp, str nodeID)
     _ccRx.reset();
   } else {
     _ccTx 
-      = _conf->addElement(ElementPtr(new CCTx("Transmit CC" << nodeID, 1, 2048, 0, 1, 1, 2)));
+      = _conf->addElement(ElementPtr(new CCTx("Transmit CC" + nodeID, 1, 2048, 0, 1, 1, 2)));
     _ccRx 
-      = _conf->addElement(ElementPtr(new CCRx("CC Receive" << nodeID, 2048, 1, 2)));
+      = _conf->addElement(ElementPtr(new CCRx("CC Receive" + nodeID, 2048, 1, 2)));
   }
 
   // iterate through all the rules and process them
@@ -72,9 +72,9 @@ void Rtr_ConfGen::clear()
 
 
 void Rtr_ConfGen::processRule(OL_Context::Rule *r, 
-			      str nodeID)
+			      string nodeID)
 {
-  debugRule(r, str(strbuf() << "Process rule " << r->toString() << "\n"));  
+  debugRule(r, "Process rule " + r->toString() + "\n");  
   std::vector<JoinKey> joinKeys;
   FieldNamesTracker curNamesTracker;
   boost::shared_ptr<Aggwrap> agg_el;
@@ -85,20 +85,16 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
   int aggField = r->head->aggregate();
   if (aggField >= 0) {
     if (hasEventTerm(r)) {
+      ostringstream oss;
       
       // get the event term
       Parse_Functor* eventTerm = getEventTerm(r);
            
       // there is an aggregate and involves an event, we need an agg wrap      
       Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(r->head->arg(aggField));
-      debugRule(r, str(strbuf() << "Agg wrap " << aggExpr->aggName() 
-		       << " " << aggField << "\n"));     
-      agg_el.reset(new Aggwrap(strbuf("Aggwrap:") 
-				       << r->ruleID << ":" << 
-				       nodeID,
-				       aggExpr->aggName(), 
-				       aggField + 1, 
-				       r->head->fn->name));
+      oss << "aggwrap:" << r->ruleID << ":" << nodeID;
+      agg_el.reset(new Aggwrap(oss.str(), aggExpr->aggName(), 
+			       aggField + 1, r->head->fn->name));
       for (int k = 0; k < r->head->args(); k++) {
 	if (k != aggField) {
 	  // for each groupby value, figure out it's 
@@ -130,7 +126,7 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
     // followed by selection/assignments
     _isPeriodic = true;
     if (numFunctors(r) > 1) {
-      debugRule(r, str(strbuf() << "Periodic join\n"));
+      debugRule(r, "Periodic join\n");
       genJoinElements(r, nodeID, &curNamesTracker, agg_el);
     }
     // do the selections and assignment, followed by projection
@@ -153,23 +149,20 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
   }
     
   if (r->deleteFlag == true) {
-    debugRule(r, str(strbuf() << "Delete " 
-		     << r->head->fn->name << " for rule \n"));
+    debugRule(r, "Delete " + r->head->fn->name + " for rule \n");
     TablePtr tableToDelete = getTableByName(nodeID, r->head->fn->name);
     OL_Context::TableInfo* ti 
       = _ctxt->getTableInfos()->find(r->head->fn->name)->second;
     
-    genPrintElement(strbuf("PrintBeforeDelete:") << r->ruleID << nodeID);
-    genPrintWatchElement(strbuf("PrintWatchDelete:") << r->ruleID << nodeID);
+    genPrintElement("PrintBeforeDelete:" + r->ruleID + ":" +nodeID);
+    genPrintWatchElement("PrintWatchDelete:" + r->ruleID + ":" +nodeID);
     
     ElementSpecPtr pullPush = 
       _conf->addElement(ElementPtr(new TimedPullPush("DeletePullPush", 0)));
     hookUp(pullPush, 0);
     
     ElementSpecPtr deleteElement =
-      _conf->addElement(ElementPtr(new Delete(strbuf("Delete:") 
-						 << r->ruleID << ":" << 
-						 nodeID,
+      _conf->addElement(ElementPtr(new Delete("Delete:" + r->ruleID + ":" + nodeID,
 						 tableToDelete, 
 						 ti->primaryKeys.at(0), 
 						 ti->primaryKeys.at(0))));
@@ -182,8 +175,8 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
   } else {    
     if (agg_el) { 
       ElementSpecPtr aggWrapSlot 
-	= _conf->addElement(ElementPtr(new Slot("aggWrapSlot:" << r->ruleID 
-						 << ":" << nodeID)));
+	= _conf->addElement(ElementPtr(new Slot("aggWrapSlot:" + r->ruleID 
+						 + ":" + nodeID)));
       ElementSpecPtr agg_spec = _conf->addElement(agg_el);
       // hook up the internal output to most recent element 
       hookUp(agg_spec, 1); 
@@ -198,7 +191,7 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
     } 
      
     // at the receiver side, generate a dummy receive  
-    str headTableName = r->head->fn->name;
+    string headTableName = r->head->fn->name;
     registerReceiverTable(r, headTableName);
   }
 
@@ -216,24 +209,22 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
 //////////////////// Transport layer //////////////////////////////
 void 
 Rtr_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp, 
-				str nodeID, ElementSpecPtr wrapAroundDemux)
+				string nodeID, ElementSpecPtr wrapAroundDemux)
 {
 
   // network in
   ElementSpecPtr udpReceive = _conf->addElement(udp->get_rx());  
   ElementSpecPtr unmarshalS =
-    _conf->addElement(ElementPtr(new UnmarshalField (strbuf("ReceiveUnmarshal:") 
-				       << nodeID, 1)));
+    _conf->addElement(ElementPtr(new UnmarshalField ("ReceiveUnmarshal:" + nodeID, 1)));
   ElementSpecPtr unBoxS =
-    _conf->addElement(ElementPtr(new  UnboxField (strbuf("ReceiveUnBox:") << nodeID, 1)));
+    _conf->addElement(ElementPtr(new  UnboxField ("ReceiveUnBox:" + nodeID, 1)));
 
   hookUp(udpReceive, 0, unmarshalS, 0);
   hookUp(unmarshalS, 0, unBoxS, 0);
 
   ElementSpecPtr wrapAroundMux;
   if (_cc) {
-    wrapAroundMux = _conf->addElement(ElementPtr(new Mux (strbuf("wrapAroundSendMux:") 
-							    << nodeID, 3)));
+    wrapAroundMux = _conf->addElement(ElementPtr(new Mux ("wrapAroundSendMux:"+ nodeID, 3)));
 
     boost::shared_ptr< std::vector< ValuePtr > > demuxKeysCC(new std::vector< ValuePtr > );
     demuxKeysCC->push_back(ValuePtr(new Val_Str ("ack")));
@@ -242,22 +233,21 @@ Rtr_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
     ElementSpecPtr demuxRxCC 
       = _conf->addElement(ElementPtr(new Demux ("receiveDemuxCC", demuxKeysCC)));
 
-    genPrintElement(strbuf("PrintBeforeReceiveDemuxCC:") << nodeID);
+    genPrintElement("PrintBeforeReceiveDemuxCC:" + nodeID);
     hookUp(demuxRxCC, 0);
     hookUp(demuxRxCC, 0, _ccTx, 1);  // send acknowledgements to cc transmit
     hookUp(demuxRxCC, 2, wrapAroundMux, 2); // regular non-CC data
 
     // handle CC data. <ccdata, seq, src, <t>>
     ElementSpecPtr unpackCC =  
-      _conf->addElement(ElementPtr(new UnboxField (strbuf("ReceiveUnBoxCC:") << nodeID, 3)));
+      _conf->addElement(ElementPtr(new UnboxField ("ReceiveUnBoxCC:" + nodeID, 3)));
     hookUp(demuxRxCC, 1, _ccRx, 0);  // regular CC data    
     hookUp(unpackCC, 0);
-    genPrintElement(strbuf("PrintReceiveUnpackCC:") << nodeID);
+    genPrintElement("PrintReceiveUnpackCC:"+ nodeID);
     hookUp(wrapAroundMux, 0); // connect data to wraparound mux   
 
   } else {
-    wrapAroundMux = _conf->addElement(ElementPtr(new Mux(strbuf("wrapAroundSendMux:") 
-							    << nodeID, 2)));
+    wrapAroundMux = _conf->addElement(ElementPtr(new Mux("wrapAroundSendMux:"+ nodeID, 2)));
     hookUp(unBoxS, 0, wrapAroundMux, 0);
   }
 
@@ -267,20 +257,19 @@ Rtr_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
   for (_iterator = _udpReceivers.begin(); 
        _iterator != _udpReceivers.end(); 
        _iterator++) {
-    str nextTableName = _iterator->second._name;
+    string nextTableName = _iterator->second._name;
     demuxKeys->push_back(ValuePtr(new Val_Str (nextTableName)));
   }
 
   ElementSpecPtr demuxS 
     = _conf->addElement(ElementPtr(new Demux("receiveDemux", demuxKeys)));
  
-  genPrintElement(strbuf("PrintReceivedBeforeDemux:") << nodeID);
-  genDupElimElement(strbuf("ReceiveDupElimBeforeDemux:") << nodeID); 
-  genPrintWatchElement(strbuf("PrintWatchReceiveBeforeDemux:") << nodeID);
+  genPrintElement("PrintReceivedBeforeDemux:"+nodeID);
+  genDupElimElement("ReceiveDupElimBeforeDemux:"+ nodeID); 
+  genPrintWatchElement("PrintWatchReceiveBeforeDemux:"+ nodeID);
 
   ElementSpecPtr bufferQueue = 
-    _conf->addElement(ElementPtr(new Queue(strbuf("ReceiveQueue:") << 
-					      nodeID, 1000)));
+    _conf->addElement(ElementPtr(new Queue("ReceiveQueue:"+nodeID, 1000)));
   ElementSpecPtr pullPush = 
     _conf->addElement(ElementPtr(new TimedPullPush("ReceiveQueuePullPush", 0)));
 
@@ -296,40 +285,37 @@ Rtr_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
        _iterator++) {
     ReceiverInfo ri = _iterator->second;
     int numElementsToReceive = ri._receivers.size(); 
-    str tableName = ri._name;
+    string tableName = ri._name;
 
     std::cout << "Generate Receive: Demuxing " << tableName << " for " 
 	      << numElementsToReceive << " elements\n";
 
     // DupElim -> DemuxS -> Insert -> Duplicator -> Fork
     ElementSpecPtr bufferQueue = 
-      _conf->addElement(ElementPtr(new Queue(strbuf("DemuxQueue:") << 
-						nodeID << ":" << tableName, 
+      _conf->addElement(ElementPtr(new Queue("DemuxQueue:"+ nodeID + ":" + tableName, 
 						1000)));
     ElementSpecPtr pullPush = 
-      _conf->addElement(ElementPtr(new TimedPullPush("DemuxQueuePullPush" << nodeID 
-				       << ":" << tableName, 0)));
+      _conf->addElement(ElementPtr(new TimedPullPush("DemuxQueuePullPush" + nodeID 
+				       + ":" + tableName, 0)));
     
     hookUp(demuxS, counter++, bufferQueue, 0);
     hookUp(bufferQueue, 0, pullPush, 0);
     
     // duplicator
     ElementSpecPtr duplicator = 
-      _conf->addElement(ElementPtr(new DuplicateConservative(strbuf("DuplicateConservative:") 
-			  << tableName << ":" << nodeID, 
-			  numElementsToReceive)));    
+      _conf->addElement(ElementPtr(new DuplicateConservative("DuplicateConservative:"
+			  + tableName + ":" + nodeID, numElementsToReceive)));    
     // materialize table only if it is declared and has lifetime>0
     OL_Context::TableInfoMap::iterator _iterator 
       = _ctxt->getTableInfos()->find(tableName);
     if (_iterator != _ctxt->getTableInfos()->end() 
 	&& _iterator->second->timeout != 0) {
       ElementSpecPtr insertS 
-	= _conf->addElement(ElementPtr(new Insert(strbuf("Insert:") << 
-				     tableName << ":" << nodeID,  
+	= _conf->addElement(ElementPtr(new Insert("Insert:"+ tableName + ":" + nodeID,  
 				     getTableByName(nodeID, tableName))));
       
       hookUp(pullPush, 0, insertS, 0);
-      genPrintWatchElement(strbuf("PrintWatchInsert:") << nodeID);
+      genPrintWatchElement("PrintWatchInsert:"+nodeID);
 
       hookUp(duplicator, 0);
     } else {
@@ -342,9 +328,8 @@ Rtr_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
 
       if (_debug) {
 	ElementSpecPtr printDuplicator = 
-	  _conf->addElement(ElementPtr(new PrintTime(strbuf("PrintAfterDuplicator:"
-					       << tableName << ":" 
-					       << nodeID))));
+	  _conf->addElement(ElementPtr(new PrintTime("PrintAfterDuplicator:"
+					       + tableName + ":" + nodeID)));
 	hookUp(duplicator, k, printDuplicator, 0);
 	hookUp(printDuplicator, 0, nextElementSpec, 0);
 	continue;
@@ -360,8 +345,8 @@ Rtr_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
   
 
   _currentElementChain.push_back(wrapAroundDemux);
-  genPrintElement(strbuf("PrintWrapAround:") << nodeID);
-  genPrintWatchElement(strbuf("PrintWrapAround:") << nodeID);
+  genPrintElement("PrintWrapAround:"+nodeID);
+  genPrintWatchElement("PrintWrapAround:"+nodeID);
   
   // connect the orignal wrap around
   hookUp(wrapAroundMux, 1);
@@ -378,7 +363,7 @@ Rtr_ConfGen::registerUDPPushSenders(ElementSpecPtr elementSpecPtr)
 
 
 ElementSpecPtr 
-Rtr_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, str nodeID)
+Rtr_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
 {
   ElementSpecPtr udpSend = _conf->addElement(udp->get_tx());  
 
@@ -386,104 +371,98 @@ Rtr_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, str nodeID)
   
   assert(_udpSenders.size() > 0);
   ElementSpecPtr roundRobin =
-    _conf->addElement(ElementPtr(new RoundRobin("roundRobinSender:" 
-						   << nodeID, 
+    _conf->addElement(ElementPtr(new RoundRobin("roundRobinSender:" + nodeID, 
 						   _udpSenders.size()))); 
 
   ElementSpecPtr pullPush =
-      _conf->addElement(ElementPtr(new TimedPullPush(strbuf("SendPullPush:") 
-					<< nodeID, 0)));
+      _conf->addElement(ElementPtr(new TimedPullPush("SendPullPush:"+nodeID, 0)));
   hookUp(roundRobin, 0, pullPush, 0);
 
   // check here for the wrap around
   boost::shared_ptr< std::vector< ValuePtr > > wrapAroundDemuxKeys(new std::vector< ValuePtr >);  
-  wrapAroundDemuxKeys->push_back(ValuePtr(new Val_Str(str(strbuf() << nodeID))));
+  wrapAroundDemuxKeys->push_back(ValuePtr(new Val_Str(nodeID)));
   ElementSpecPtr wrapAroundDemux 
     = _conf->addElement(ElementPtr(new Demux("wrapAroundSendDemux", wrapAroundDemuxKeys, 0)));  
 
   hookUp(wrapAroundDemux, 0); // connect to the wrap around
 
   ElementSpecPtr unBoxWrapAround =
-    _conf->addElement(ElementPtr(new UnboxField(strbuf("UnBoxWrapAround:") << nodeID, 1)));
+    _conf->addElement(ElementPtr(new UnboxField("UnBoxWrapAround:"+nodeID, 1)));
 
   hookUp(wrapAroundDemux, 0, unBoxWrapAround, 0);
 
   ElementSpecPtr sendQueue = 
-    _conf->addElement(ElementPtr(new Queue(strbuf("SendQueue:") << nodeID, 1000)));
+    _conf->addElement(ElementPtr(new Queue("SendQueue:"+nodeID, 1000)));
   hookUp(wrapAroundDemux, 1, sendQueue, 0); 
 
   // connect to send queue
-  genPrintElement(strbuf("PrintRemoteSend:") << nodeID);
-  genPrintWatchElement(strbuf("PrintWatchRemoteSend:") << nodeID);
+  genPrintElement("PrintRemoteSend:"+nodeID);
+  genPrintWatchElement("PrintWatchRemoteSend:"+nodeID);
 
   ///////// Network Out ///////////////
   if (_cc) {
+    ostringstream oss;
+    oss << "\"" << nodeID << "\" pop swallow pop";
     ElementSpecPtr srcAddress  = 
-      _conf->addElement(ElementPtr(new PelTransform(strbuf("AddSrcAddressCC:" << nodeID), 
-							      "\"" << nodeID 
-							      << "\" pop swallow pop")));
+      _conf->addElement(ElementPtr(new PelTransform("AddSrcAddressCC:"+nodeID, oss.str())));
     ElementSpecPtr seq 
-      = _conf->addElement(ElementPtr(new Sequence("SequenceCC" << nodeID)));
+      = _conf->addElement(ElementPtr(new Sequence("SequenceCC" + nodeID)));
     hookUp(srcAddress, 0);
     hookUp(seq, 0);
 
     // <data, seq, src, <t>>
     ElementSpecPtr tagData  = 
-      _conf->addElement(ElementPtr(new PelTransform(strbuf("TagData:" << nodeID), 
+      _conf->addElement(ElementPtr(new PelTransform("TagData:" + nodeID, 
 						       "\"ccdata\" pop $0 pop $1 pop $2 pop")));
     hookUp(tagData, 0);
 
-    genPrintElement(strbuf("PrintRemoteSendCCOne:") << nodeID);
+    genPrintElement("PrintRemoteSendCCOne:"+nodeID);
 
     ElementSpecPtr pullPushCC =
-      _conf->addElement(ElementPtr(new TimedPullPush(strbuf("SendPullPushCC:") 
-					<< nodeID, 0)));
+      _conf->addElement(ElementPtr(new TimedPullPush("SendPullPushCC:"+nodeID, 0)));
 
     hookUp(pullPushCC, 0);
     hookUp(_ccTx, 0); // <seq, addr, <t>>
 
     // <dst, <seq, addr, <t>>
     ElementSpecPtr encapSendCC =
-      _conf->addElement(ElementPtr(new PelTransform(strbuf("encapSendCC:") 
-						       << nodeID, 
-						       "$3 1 field pop swallow pop"))); 
+      _conf->addElement(ElementPtr(new PelTransform("encapSendCC:"+nodeID, 
+						    "$3 1 field pop swallow pop"))); 
     hookUp(_ccTx, 0, encapSendCC, 0);
 
-    genPrintElement(strbuf("PrintRemoteSendCCTwo:") << nodeID);
+    genPrintElement("PrintRemoteSendCCTwo:"+nodeID);
     
     _roundRobinCC =
-       _conf->addElement(ElementPtr(new RoundRobin("roundRobinSenderCC:" << nodeID, 2))); 
+       _conf->addElement(ElementPtr(new RoundRobin("roundRobinSenderCC:" + nodeID, 2))); 
      hookUp(_roundRobinCC, 0);
 
     // acknowledgements. <dst, <ack, seq, windowsize>>
     ElementSpecPtr ackPelTransform
-      = _conf->addElement(ElementPtr(new PelTransform("ackPelTransformCC" << nodeID,
+      = _conf->addElement(ElementPtr(new PelTransform("ackPelTransformCC" + nodeID,
 							"$0 pop \"ack\" ->t $1 append $2 append pop")));
     
     hookUp(_ccRx, 1, ackPelTransform, 0);
-    genPrintElement(strbuf("PrintSendAck:") << nodeID);
+    genPrintElement("PrintSendAck:"+nodeID);
 
     hookUp(_currentElementChain.back(), 0, _roundRobinCC, 1);
 
      // Now marshall the payload (second field)
      // <dst, marshalled>
      ElementSpecPtr marshalSendCC = 
-       _conf->addElement(ElementPtr(new MarshalField("marshalCC:" << 
-							nodeID, 1)));
-     genPrintElement(strbuf("PrintRemoteSendCCMarshal:") << nodeID);
+       _conf->addElement(ElementPtr(new MarshalField("marshalCC:" + nodeID, 1)));
+     genPrintElement("PrintRemoteSendCCMarshal:"+nodeID);
      hookUp(marshalSendCC, 0); 
 
   } else {
 
     // Now marshall the payload (second field)
     ElementSpecPtr marshalSend = 
-      _conf->addElement(ElementPtr(new MarshalField("marshal:" << 
-						       nodeID, 1)));  
+      _conf->addElement(ElementPtr(new MarshalField("marshal:" + nodeID, 1)));  
     hookUp(marshalSend, 0);  
   }
    
   ElementSpecPtr routeSend =
-    _conf->addElement(ElementPtr(new StrToSockaddr("router:" << nodeID, 0)));
+    _conf->addElement(ElementPtr(new StrToSockaddr("router:" + nodeID, 0)));
 
   hookUp(routeSend, 0);
   hookUp(udpSend, 0);
@@ -494,12 +473,10 @@ Rtr_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, str nodeID)
 
     std::cout << "Encapsulation " << k << " pop " << _udpSendersPos.at(k) << "\n";
 
+    ostringstream oss;
+    oss << "$"<< _udpSendersPos.at(k) << " pop swallow pop";
     ElementSpecPtr encapSend =
-      _conf->addElement(ElementPtr(new PelTransform(strbuf("encapSend:") 
-						       << ":" << nodeID, 
-						       strbuf("$") << 
-						       _udpSendersPos.at(k) 
-						       << " pop swallow pop")));
+      _conf->addElement(ElementPtr(new PelTransform("encapSend:" + nodeID, oss.str())));
     
     // for now, assume addr field is the put here
     //hookUp(nextElementSpec, 0, roundRobin, k);
@@ -515,7 +492,7 @@ Rtr_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, str nodeID)
 // for a particular table name that we are receiving, 
 // register an elementSpec that needs that data
 void 
-Rtr_ConfGen::registerReceiver(str tableName, 
+Rtr_ConfGen::registerReceiver(string tableName, 
 			      ElementSpecPtr elementSpecPtr)
 {
   // add to the right receiver
@@ -530,7 +507,7 @@ Rtr_ConfGen::registerReceiver(str tableName,
 // regiser a new receiver for a particular table name
 // use to later hook up the demuxer
 void Rtr_ConfGen::registerReceiverTable(OL_Context::Rule* rule, 
-					str tableName)
+					string tableName)
 {  
   ReceiverInfoMap::iterator _iterator = _udpReceivers.find(tableName);
   if (_iterator == _udpReceivers.end()) {
@@ -539,7 +516,7 @@ void Rtr_ConfGen::registerReceiverTable(OL_Context::Rule* rule,
 					ReceiverInfo(tableName, 
 						     rule->head->args())));
   }  
-  debugRule(rule, str(strbuf() << "Register table " << tableName << "\n"));
+  debugRule(rule, "Register table " + tableName + "\n");
 }
 					     
 
@@ -549,12 +526,12 @@ void Rtr_ConfGen::registerReceiverTable(OL_Context::Rule* rule,
 ///////////////// Relational Operators -> P2 Elements
 //////////////////////////////////////////////////////////////////
 
-str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
+string Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
   Parse_Var*  var;
   Parse_Val*  val;
   Parse_Math* math;
   Parse_Function* fn  = NULL;
-  strbuf      pel;  
+  ostringstream  pel;  
 
 
   if (expr->id && expr->oper == Parse_Math::MINUS) {
@@ -617,16 +594,16 @@ str Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
     default: return "ERROR";
   }
 
-  return pel;
+  return pel.str();
 }
 
-str Rtr_ConfGen::pelRange(FieldNamesTracker* names, Parse_Bool *expr) {
+string Rtr_ConfGen::pelRange(FieldNamesTracker* names, Parse_Bool *expr) {
   Parse_Var*   var       = NULL;
   Parse_Val*   val       = NULL;
   Parse_Math*  math      = NULL;
   Parse_Var*   range_var = dynamic_cast<Parse_Var*>(expr->lhs);
   Parse_Range* range     = dynamic_cast<Parse_Range*>(expr->rhs);
-  strbuf       pel;
+  ostringstream pel;
   int          pos;
 
   if (!range || !range_var) return "ERROR";
@@ -668,11 +645,11 @@ str Rtr_ConfGen::pelRange(FieldNamesTracker* names, Parse_Bool *expr) {
     case Parse_Range::RANGECC: pel << "[] "; break;
     }
 
-  return pel;
+  return pel.str();
 }
 
-str Rtr_ConfGen::pelFunction(FieldNamesTracker* names, Parse_Function *expr) {
-  strbuf pel;
+string Rtr_ConfGen::pelFunction(FieldNamesTracker* names, Parse_Function *expr) {
+  ostringstream pel;
 
   if (expr->name() == "f_coinFlip") {
     Val_Double &val = dynamic_cast<Val_Double&>(*expr->arg(0)->v);
@@ -686,16 +663,16 @@ str Rtr_ConfGen::pelFunction(FieldNamesTracker* names, Parse_Function *expr) {
   }
   else return "ERROR: unknown function name.";
 
-  return pel;
+  return pel.str();
 }
 
-str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
+string Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
   Parse_Var*      var = NULL;
   Parse_Val*      val = NULL;
   Parse_Function* fn  = NULL;
   Parse_Math*     m   = NULL;
   Parse_Bool*     b   = NULL;
-  strbuf          pel;  
+  ostringstream   pel;  
 
   if (expr->oper == Parse_Bool::RANGE) return pelRange(names, expr);
 
@@ -768,29 +745,29 @@ str Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
     case Parse_Bool::GTE: pel << ">= "; break;
     default: return "ERROR";
     }
-  return pel;
+  return pel.str();
 }
 
 void 
 Rtr_ConfGen::pelSelect(OL_Context::Rule* rule, FieldNamesTracker* names, 
 		       Parse_Select *expr,
-		       str nodeID, int selectionID)
+		       string nodeID, int selectionID)
 {
-  strbuf sPel = pelBool(names, expr->select) << "not ifstop ";
+  ostringstream sPel;
+  sPel << pelBool(names, expr->select) << "not ifstop ";
   
   // put in the old fields (+1 since we have to include the table name)
   for (uint k = 0; k < names->fieldNames.size() + 1; k++) {
     sPel << "$" << k << " pop ";
   }
 
-  debugRule(rule, str(strbuf() << "Generate selection functions for " << sPel 
-                  << " " << names->toString() << "\n"));
+  debugRule(rule, "Generate selection functions for " + sPel.str() +
+                  " " + names->toString() + "\n");
  
   ElementSpecPtr sPelTrans =
-    _conf->addElement(ElementPtr(new PelTransform(strbuf("Selection:") 
-						     << rule->ruleID << ":" << 
-						     selectionID << ":" 
-						     << nodeID, sPel)));
+    _conf->addElement(ElementPtr(new PelTransform("Selection:" 
+						     + rule->ruleID + ":" + ":" 
+						     + nodeID, sPel.str())));
 
   if (_isPeriodic == false &&_pendingRegisterReceiver) {
     _pendingReceiverSpec = sPelTrans;
@@ -801,13 +778,12 @@ Rtr_ConfGen::pelSelect(OL_Context::Rule* rule, FieldNamesTracker* names,
     hookUp(sPelTrans, 0);
   }
 
-  genPrintElement(strbuf("PrintAfterSelection:") << selectionID << ":" 
-		  << nodeID);
+  genPrintElement(string("PrintAfterSelection:")+":"+nodeID);
 }
 
 void 
 Rtr_ConfGen::genAllSelectionAssignmentElements(OL_Context::Rule* curRule,
-					       str nodeID,
+					       string nodeID,
 					       FieldNamesTracker* 
 					       curNamesTracker) 
 {
@@ -815,9 +791,8 @@ Rtr_ConfGen::genAllSelectionAssignmentElements(OL_Context::Rule* curRule,
     Parse_Select* parse_select 
       = dynamic_cast<Parse_Select *>(curRule->terms.at(j));
     if (parse_select != NULL) {
-      debugRule(curRule, str(strbuf() << "Selection term " << 
-			     parse_select->toString() << " " 
-			     << curRule->ruleID << "\n"));
+      debugRule(curRule, "Selection term " + parse_select->toString() + " " 
+			     + curRule->ruleID + "\n");
       pelSelect(curRule, curNamesTracker, parse_select, nodeID, j); 
     }
     Parse_Assign* parse_assign 
@@ -831,11 +806,11 @@ Rtr_ConfGen::genAllSelectionAssignmentElements(OL_Context::Rule* curRule,
 void Rtr_ConfGen::pelAssign(OL_Context::Rule* rule, 
 			    FieldNamesTracker* names,
                             Parse_Assign* expr, 
-			    str nodeID, 
+			    string nodeID, 
 			    int assignID) 
 {
-  strbuf pel;
-  strbuf pelAssign;
+  ostringstream pel;
+  ostringstream pelAssign;
   Parse_Var      *a   = dynamic_cast<Parse_Var*>(expr->var);
   Parse_Var      *var = NULL;
   Parse_Val      *val = NULL;
@@ -875,17 +850,14 @@ void Rtr_ConfGen::pelAssign(OL_Context::Rule* rule,
     names->fieldNames.push_back(a->toString()); // the variable name
   } 
 
-  debugRule(rule, strbuf() << "Generate assignments for " 
-	    << a->toString() << " " 
-	    << rule->ruleID << " " << pel << " " 
-	    << names->toString() << "\n");
+  debugRule(rule, "Generate assignments for " + a->toString() + " " 
+	    + rule->ruleID + " " + pel.str() + " " 
+	    + names->toString() + "\n");
   
   ElementSpecPtr assignPelTrans =
-    _conf->addElement(ElementPtr(new PelTransform(strbuf("Assignment:") 
-						     << rule->ruleID << ":" 
-						     << assignID << ":" 
-						     << nodeID, 
-						     pel)));
+    _conf->addElement(ElementPtr(new PelTransform("Assignment:"+rule->ruleID+":" 
+						     + ":" + nodeID, 
+						     pel.str())));
 
   if (_isPeriodic == false &&_pendingRegisterReceiver) {
     _pendingReceiverSpec = assignPelTrans;
@@ -896,13 +868,15 @@ void Rtr_ConfGen::pelAssign(OL_Context::Rule* rule,
     hookUp(assignPelTrans, 0);
   }
 
-  genPrintElement(strbuf("PrintAfterAssignment:") << rule->ruleID << ":" 
-		  << assignID << ":" << nodeID);
+  ostringstream oss;
+  oss << "PrintAfterAssignment:" << rule->ruleID<<":"<<assignID<<":"<<nodeID;
+
+  genPrintElement(oss.str());
 }
 
 
 void Rtr_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
-					 str nodeID,
+					 string nodeID,
 					 FieldNamesTracker* curNamesTracker)
 {
   Parse_Functor* pf = curRule->head;
@@ -933,7 +907,8 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
   }
   if (locationIndex == -1) { locationIndex = 0; } // default
 
-  strbuf pelTransformStrbuf("\"" << pf->fn->name << "\" pop");
+  ostringstream pelTransformStrbuf;
+  pelTransformStrbuf << "\"" << pf->fn->name << "\" pop";
 
   if (pf->aggregate() != -1 && pf->fn->loc == "") {
     pelTransformStrbuf << " \"" << nodeID << "\" pop";
@@ -953,19 +928,15 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
     } 
   }
 
-  str pelTransformStr(pelTransformStrbuf);
-  debugRule(curRule, str(strbuf() << "Project head " 
-			 << curNamesTracker->toString() 
-			 << " " << pelTransformStr << " " << 
-			 pf->fn->loc << " " << locationIndex 
-			 << "\n"));
+  string pelTransformStr = pelTransformStrbuf.str();
+  debugRule(curRule, "Project head " + curNamesTracker->toString() 
+			 + " " + pelTransformStr + " " + 
+			 pf->fn->loc + "\n");
  
   _currentPositionIndex = locationIndex + 1;
   // project, and make sure first field after table name has the address 
   ElementSpecPtr projectHeadPelTransform =
-    _conf->addElement(ElementPtr(new PelTransform(strbuf("ProjectHead:") 
-						     << curRule->ruleID 
-						     << ":" << nodeID,
+    _conf->addElement(ElementPtr(new PelTransform("ProjectHead:"+ curRule->ruleID + ":" + nodeID,
 						     pelTransformStr)));
   if (_isPeriodic == false && _pendingRegisterReceiver) {
     _pendingReceiverSpec = projectHeadPelTransform;
@@ -976,14 +947,14 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
     hookUp(projectHeadPelTransform, 0);
   }
   
-  genPrintElement(strbuf("PrintHead:") << curRule->ruleID << ":" << nodeID);  
+  genPrintElement("PrintHead:"+ curRule->ruleID + ":" + nodeID);  
 }
 
 
 void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule, 
 				   Parse_Functor* eventFunctor, 
 				   Parse_Term* baseTableTerm, 
-				   str nodeID, 	     
+				   string nodeID, 	     
 				   FieldNamesTracker* probeNames, 
 				   FieldNamesTracker* baseProbeNames, 
 				   int joinOrder,
@@ -1000,12 +971,12 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
   Parse_RangeFunction* pr 
     = dynamic_cast<Parse_RangeFunction*>(baseTableTerm);    
 
-  str baseTableName;
+  string baseTableName;
   if (pf != NULL) {
     baseTableName = pf->fn->name;
   }
   if (pr != NULL) {
-    baseTableName = str("range" << curRule->ruleID);
+    baseTableName = "range" + curRule->ruleID;
   }
   
 
@@ -1025,10 +996,7 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
   OL_Context::TableInfo* tableInfo 
     = _ctxt->getTableInfos()->find(baseTableName)->second;
   ElementSpecPtr noNull 
-    = _conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") 
-						      << curRule->ruleID 
-						      << ":" << joinOrder 
-						      << ":" << nodeID, 1)));
+    = _conf->addElement(ElementPtr(new NoNullField("NoNull:", 1)));
 
   ElementSpecPtr last_el(new ElementSpec(ElementPtr(new Slot("dummySlotProbeElements"))));
  
@@ -1036,44 +1004,26 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
       tableInfo->primaryKeys.at(0) == rightJoinKey) {
     // use a unique index
     last_el =
-      _conf->addElement(ElementPtr(new UniqueLookup(strbuf("UniqueLookup:") 
-				       << curRule->ruleID 
-				       << ":" << joinOrder 
-				       << ":" << nodeID, 
+      _conf->addElement(ElementPtr(new UniqueLookup("UniqueLookup:" + nodeID, 
 				       probeTable,
 				       leftJoinKey, 
 				       rightJoinKey, 
 				       comp_cb)));
-    debugRule(curRule, str(strbuf() << "Unique lookup " << " " 
-			   << eventFunctor->fn->name << " " 
-			   << baseTableName << " " 
-			   << leftJoinKey << " " 
-			   << rightJoinKey << "\n"));
-    
   } else {
     last_el =
-      _conf->addElement(ElementPtr(new MultLookup(strbuf("MultLookup:") 
-						     << curRule->ruleID 
-						     << ":" << joinOrder 
-						     << ":" << nodeID, 
+      _conf->addElement(ElementPtr(new MultLookup("MultLookup:" + nodeID, 
 						     probeTable,
 						     leftJoinKey, 
 						     rightJoinKey, comp_cb)));
     
     addMultTableIndex(probeTable, rightJoinKey, nodeID);
-    debugRule(curRule, str(strbuf() << "Mult lookup " << curRule->ruleID 
-			   << " " << eventFunctor->fn->name << " " 
-			   << baseTableName << " " 
-			   << leftJoinKey << " " << rightJoinKey << "\n"));
   }
   
  
   int numFieldsProbe = probeNames->fieldNames.size();
-  debugRule(curRule, str(strbuf() << "Probe before merge " 
-			 << probeNames->toString() << "\n"));
+  debugRule(curRule, "Probe before merge " + probeNames->toString() + "\n");
   probeNames->mergeWith(baseProbeNames->fieldNames); 
-  debugRule(curRule, str(strbuf() << "Probe after merge " 
-			 << probeNames->toString() << "\n"));
+  debugRule(curRule, "Probe after merge " + probeNames->toString() + "\n");
 
   if (_isPeriodic == false && _pendingRegisterReceiver) {
     // connecting to udp receiver later
@@ -1086,35 +1036,25 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 
   hookUp(last_el, 0, noNull, 0);
 
-  debugRule(curRule, str(strbuf() << "Number of join selections " 
-			 << leftJoinKeys.size()-1 << "\n"));
   for (uint k = 1; k < leftJoinKeys.size(); k++) {
     int leftField = leftJoinKeys.at(k);
     int rightField = rightJoinKeys.at(k);
-    strbuf selectionPel;
+    ostringstream selectionPel;
     selectionPel << "$0 " << (leftField+1) << " field " << " $1 " 
 		 << rightField+1 << " field ==s not ifstop $0 pop $1 pop";
 
-    debugRule(curRule, str(strbuf() << "Join selections " 
-			   << str(selectionPel) << "\n"));
+    debugRule(curRule, "Join selections " + selectionPel.str() + "\n");
     ElementSpecPtr joinSelections =
-      _conf->addElement(ElementPtr(new PelTransform(strbuf("JoinSelections:") 
-				       << curRule->ruleID << ":" 
-				       << joinOrder << ":" 
-				       << k << ":" << nodeID, 
-				       str(selectionPel))));    
+      _conf->addElement(ElementPtr(new PelTransform("JoinSelections:"+nodeID, 
+				                    selectionPel.str())));    
     hookUp(joinSelections, 0);
   }
 
-  genPrintElement(strbuf("PrintProbe1:") << 
-		  curRule->ruleID << ":" << joinOrder << ":"
-		  << nodeID);
- 
   // Take the joined tuples and produce the resulting path
   // form the pel projection. 
   //Keep all fields on left, all fields on right except the join keys
-  strbuf pelProject("\"join:");
-  pelProject << eventFunctor->fn->name << ":" << baseTableName << ":" 
+  ostringstream pelProject;
+  pelProject << "\"join:" << eventFunctor->fn->name << ":" << baseTableName << ":" 
 	     << curRule->ruleID << ":" << nodeID << "\" pop "; // table name
   for (int k = 0; k < numFieldsProbe; k++) {
     pelProject << "$0 " << k+1 << " field pop ";
@@ -1132,26 +1072,21 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
     }
   }
 
-  str pelProjectStr(pelProject);
+  string pelProjectStr = pelProject.str();
   ElementSpecPtr transS 
-    = _conf->addElement(ElementPtr(new PelTransform(strbuf("JoinPelTransform:") 
-				       << curRule->ruleID << ":" 
-				       << joinOrder << ":" << nodeID, 
-				       pelProjectStr)));
+    = _conf->addElement(ElementPtr(new PelTransform("JoinPelTransform:" + 
+                                                    curRule->ruleID + ":" +
+				                     ":" + nodeID, pelProjectStr)));
 
   delete baseProbeNames;
 
   hookUp(transS, 0);
-
-  genPrintElement(strbuf("PrintProbe2:") << 
-		  curRule->ruleID << ":" << joinOrder << ":"
-		  << nodeID);
 }
 
 
 
 void Rtr_ConfGen::genJoinElements(OL_Context::Rule* curRule, 
-				  str nodeID, 
+				  string nodeID, 
 				  FieldNamesTracker* namesTracker,
 				  boost::shared_ptr<Aggwrap> agg_el)
 {
@@ -1162,7 +1097,7 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Rule* curRule,
   for (unsigned int k = 0; k < curRule->terms.size(); k++) {
     Parse_Functor* pf = dynamic_cast<Parse_Functor*>(curRule->terms.at(k));
     if (pf != NULL) {
-      str functorName = pf->fn->name;    
+      string functorName = pf->fn->name;    
       OL_Context::TableInfoMap::iterator _iterator 
 	= _ctxt->getTableInfos()->find(functorName);
       if (_iterator != _ctxt->getTableInfos()->end()) {     
@@ -1192,20 +1127,18 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Rule* curRule,
       high = Val_Int32::cast(pr->end->v);
 
       OL_Context::TableInfo  *tableInfo = new OL_Context::TableInfo();
-      tableInfo->tableName = "range" << curRule->ruleID;
+      tableInfo->tableName = "range" + curRule->ruleID;
       tableInfo->timeout = -1; // never expire
       tableInfo->size = high - low + 1;
       tableInfo->primaryKeys.push_back(2);
       _ctxt->getTableInfos()->insert(std::make_pair(tableInfo->tableName, 
 						    tableInfo));
       
-      str newRangeTableName = nodeID << ":" << tableInfo->tableName;
+      string newRangeTableName = nodeID + ":" + tableInfo->tableName;
       TablePtr rangeTable(new Table(tableInfo->tableName, (high - low + 1)));
       rangeTable->add_unique_index(2);
       addMultTableIndex(rangeTable, 1, nodeID);
       _tables.insert(std::make_pair(newRangeTableName, rangeTable));         
-      debugRule(curRule, "Create Range Tables: Add unique index " 
-		<< newRangeTableName << " " << low << " " << high << "\n");
  
       for (int x = low; x <= high; x++) {
 	TuplePtr tuple = Tuple::mk();
@@ -1223,51 +1156,48 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Rule* curRule,
     // keep track also the cur ordering of variables
     namesTracker->initialize(eventFunctor);
   } else {
-    debugRule(curRule, str(strbuf() << 
-			   "Periodic joins " << namesTracker->toString() << "\n"));
+    debugRule(curRule, "Periodic joins " + namesTracker->toString() + "\n");
   }
   for (uint k = 0; k < baseFunctors.size(); k++) {    
     Parse_Functor* pf = dynamic_cast<Parse_Functor*>(baseFunctors.at(k));
     
     if (pf != NULL && pf->fn->name == eventFunctor->fn->name) { continue; } 
-    debugRule(curRule, str(strbuf() << "Probing " << eventFunctor->fn->name 
-			   << " " << baseFunctors.at(k)->toString() << "\n"));
+    debugRule(curRule, "Probing " + eventFunctor->fn->name + " " + 
+                       baseFunctors.at(k)->toString() + "\n");
     b_cbv comp_cb = 0;
     if (agg_el) {
       comp_cb = agg_el->get_comp_cb();
     }
     
     FieldNamesTracker* baseProbeNames 
-      = New FieldNamesTracker(baseFunctors.at(k));
+      = new FieldNamesTracker(baseFunctors.at(k));
     genProbeElements(curRule, eventFunctor, baseFunctors.at(k), 
 		     nodeID, namesTracker, baseProbeNames, k, comp_cb);
 
     if (agg_el || baseFunctors.size() - 1 != k) {
       // Change from pull to push
       ElementSpecPtr pullPush =
-	_conf->addElement(ElementPtr(new TimedPullPush(strbuf("JoinPullPush:") 
-					  << curRule->ruleID << ":" 
-					  << nodeID << ":" << k,
-					  0)));
+	_conf->addElement(ElementPtr(new TimedPullPush("JoinPullPush:"+curRule->ruleID+":"+
+					               nodeID, 0)));
       hookUp(pullPush, 0);
     }
   }
 }
 
 
-void Rtr_ConfGen::addMultTableIndex(TablePtr table, int fn, str nodeID)
+void Rtr_ConfGen::addMultTableIndex(TablePtr table, int fn, string nodeID)
 {
-  strbuf uniqStr = str(table->name);
-  uniqStr << ":" << fn << ":" << nodeID;
-  if (_multTableIndices.find(str(uniqStr)) == _multTableIndices.end()) {
+  ostringstream uniqStr;
+  uniqStr << table->name << ":" << fn << ":" << nodeID;
+  if (_multTableIndices.find(uniqStr.str()) == _multTableIndices.end()) {
     // not there yet
     table->add_multiple_index(fn);
-    _multTableIndices.insert(std::make_pair(str(uniqStr), str(uniqStr)));
-    std::cout << "AddMultTableIndex: Mult index added " << str(uniqStr) 
+    _multTableIndices.insert(std::make_pair(uniqStr.str(), uniqStr.str()));
+    std::cout << "AddMultTableIndex: Mult index added " << uniqStr.str() 
 	      << "\n";
   } else {
     std::cout << "AddMultTableIndex: Mult index already exists " 
-	      << str(uniqStr) << "\n";
+	      << uniqStr.str() << "\n";
   }
 }
 
@@ -1275,7 +1205,7 @@ void Rtr_ConfGen::addMultTableIndex(TablePtr table, int fn, str nodeID)
 
 void 
 Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule, 
-					str nodeID, 
+					string nodeID, 
 					FieldNamesTracker* baseNamesTracker)
 {
 
@@ -1295,7 +1225,7 @@ Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
   
   FieldNamesTracker* aggregateNamesTracker = new FieldNamesTracker();
   Parse_Functor* pf = currentRule->head;
-  str headTableName = pf->fn->name;
+  string headTableName = pf->fn->name;
 
   for (int k = 0; k < pf->args(); k++) {
     // go through the functor head, but skip the aggField itself    
@@ -1303,17 +1233,19 @@ Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
     if (pv == NULL) { continue; }
     int pos = baseNamesTracker->fieldPosition(pv->toString());
     if (k != -1 && k != pf->aggregate()) {
+/*
       debugRule(currentRule, 
 		str(strbuf() << pos << " " << 
 		    currentRule->head->aggregate() << " " << 
 		    baseNamesTracker->fieldNames.at(pos) << "\n"));
+*/
       groupByFields.push_back((uint) pos + 1);
       aggregateNamesTracker->fieldNames.push_back(baseNamesTracker->fieldNames.at(pos));
     }
   }
   Parse_Agg* pa = dynamic_cast<Parse_Agg* > (pf->arg(pf->aggregate()));
 
-  str aggVarname = pa->v->toString();
+  string aggVarname = pa->v->toString();
 
   aggregateNamesTracker->fieldNames.push_back(aggVarname);      
   int aggFieldBaseTable = -1;
@@ -1336,10 +1268,12 @@ Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
     af = &Table::AGG_COUNT;
   } 
 
+/*
   debugRule(currentRule, str(strbuf() << aggregateNamesTracker->toString() 
 			     << " " << baseFunctor->fn->name << 
 			     " " << aggFieldBaseTable << " " 
 			     << pf->aggregate() << " " << aggVarname << "\n"));
+*/
   
   // get the table, create the index
   TablePtr aggTable = getTableByName(nodeID, baseFunctor->fn->name);  
@@ -1350,30 +1284,25 @@ Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
 				     aggFieldBaseTable, // the agg field
 				     af);
   ElementSpecPtr aggElement =
-    _conf->addElement(ElementPtr(new Aggregate(strbuf("Agg:") 
-						  << currentRule->ruleID 
-						  << ":" << nodeID,
-						  tableAgg)));
+    _conf->addElement(ElementPtr(new Aggregate("Agg:"+currentRule->ruleID +
+					       ":" + nodeID, tableAgg)));
    
-  strbuf pelTransformStr;
+  ostringstream pelTransformStr;
   pelTransformStr << "\"" << "aggResult:" << currentRule->ruleID << "\" pop";
   for (uint k = 0; k < aggregateNamesTracker->fieldNames.size(); k++) {
     pelTransformStr << " $" << k << " pop";
   }
-  debugRule(currentRule, str(strbuf() << "Agg Pel Expr " 
-			     << pelTransformStr <<"\n"));
+  debugRule(currentRule, "Agg Pel Expr " + pelTransformStr.str()+ "\n");
   // apply PEL to add a table name
   ElementSpecPtr addTableName =
-    _conf->addElement(ElementPtr(new PelTransform(strbuf("Aggregation:") 
-						     << currentRule->ruleID 
-						     << ":" << nodeID, 
-						     pelTransformStr)));
+    _conf->addElement(ElementPtr(new PelTransform("Aggregation:"+currentRule->ruleID 
+						     + ":" + nodeID, 
+						     pelTransformStr.str())));
 
   hookUp(aggElement, 0, addTableName, 0);
 
-  genPrintElement("PrintAgg:" << currentRule->ruleID << ":" << nodeID);
-  genPrintWatchElement("PrintWatchAgg:" << currentRule->ruleID << ":" 
-		       << nodeID);
+  genPrintElement("PrintAgg:" + currentRule->ruleID + ":" + nodeID);
+  genPrintWatchElement("PrintWatchAgg:" + currentRule->ruleID + ":" + nodeID);
 
   genProjectHeadElements(currentRule, nodeID, aggregateNamesTracker);
   _udpSenders.push_back(_currentElementChain.back());
@@ -1385,13 +1314,13 @@ Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
 
 
 void Rtr_ConfGen::genSingleTermElement(OL_Context::Rule* curRule, 
-				       str nodeID, 
+				       string nodeID, 
 				       FieldNamesTracker* curNamesTracker)
 {  
   ElementSpecPtr slotElement 
     = _conf->addElement(ElementPtr(new Slot("singleTermSlot:" 
-					     << curRule->ruleID << ":" 
-					     << nodeID)));
+					     + curRule->ruleID + ":" 
+					     + nodeID)));
 
   std::cout << "Number of terms " << curRule->terms.size() << "\n";
   for (unsigned int j = 0; j < curRule->terms.size(); j++) {
@@ -1411,7 +1340,7 @@ void Rtr_ConfGen::genSingleTermElement(OL_Context::Rule* curRule,
 
 
 void Rtr_ConfGen::genFunctorSource(OL_Context::Rule* rule, 
-				   str nodeID, 
+				   string nodeID, 
 				   FieldNamesTracker* namesTracker)
 {
   TuplePtr functorTuple = Tuple::mk();
@@ -1420,59 +1349,47 @@ void Rtr_ConfGen::genFunctorSource(OL_Context::Rule* rule,
   functorTuple->freeze();
 
   ElementSpecPtr source =
-    _conf->addElement(ElementPtr(new TupleSource(str("FunctorSource:") 
-						    << rule->ruleID << nodeID,
+    _conf->addElement(ElementPtr(new TupleSource("FunctorSource:"+rule->ruleID+nodeID,
                                                    functorTuple)));
   _currentElementChain.push_back(source);
 
-  genPrintElement(strbuf("PrintFunctorSource:") << rule->ruleID << ":" 
-		  << nodeID);
+  genPrintElement("PrintFunctorSource:"+rule->ruleID+":"+nodeID);
   Parse_Functor* pf = dynamic_cast<Parse_Functor* > (rule->terms.at(0));
   if (pf == NULL) { return; }
   
-  str period = pf->arg(2)->toString();
+  string period = pf->arg(2)->toString();
   int count = 0;
   if (pf->args() > 3) {
-    count = atoi(pf->arg(3)->toString().cstr());
-    debugRule(rule, str(strbuf() << "Periodic has count " << count << "\n"));
+    count = atoi(pf->arg(3)->toString().c_str());
   }
 
   namesTracker->fieldNames.push_back(pf->arg(0)->toString());
   namesTracker->fieldNames.push_back("E");
   
-  debugRule(rule, str(strbuf() << "Functor source " 
-		      << pf->toString()) << " " << period << "\n");
-
   // a pel transform that puts in the periodic stuff
   ElementSpecPtr pelRand = 
-    _conf->addElement(ElementPtr(new PelTransform(strbuf("FunctorSourcePel:" << 
-							    rule->ruleID << ":" << nodeID), 
-						     "$0 pop $1 pop rand pop")));
+    _conf->addElement(ElementPtr(new PelTransform("FunctorSourcePel:" + rule->ruleID +
+                                                  ":" + nodeID, "$0 pop $1 pop rand pop")));
  
   hookUp(pelRand, 0);
 
   // The timed pusher
   ElementSpecPtr pushFunctor =
-    _conf->addElement(ElementPtr(new TimedPullPush(strbuf("FunctorPush:") 
-						      << rule->ruleID << 
-						      ":" << nodeID,
-						      atof(period.cstr()),
-						      count)));
+    _conf->addElement(ElementPtr(new TimedPullPush("FunctorPush:" +rule->ruleID+ ":"+ nodeID,
+						      atof(period.c_str()), count)));
 
   hookUp(pushFunctor, 0);
 
   //  if (rule->terms.size() <= 1) {
   if (numFunctors(rule) <= 1) {
     ElementSpecPtr functorSlot 
-      = _conf->addElement(ElementPtr(new Slot("functorSlot:" << 
-					       rule->ruleID << ":" 
-					       << nodeID)));      
+      = _conf->addElement(ElementPtr(new Slot("functorSlot:" + rule->ruleID + ":" + nodeID)));      
     hookUp(functorSlot, 0);
   }
 }
 
 
-void Rtr_ConfGen::genDupElimElement(str header)
+void Rtr_ConfGen::genDupElimElement(string header)
 {
    if (_dups) {
      ElementSpecPtr dupElim 
@@ -1482,7 +1399,7 @@ void Rtr_ConfGen::genDupElimElement(str header)
 }
 
 
-void Rtr_ConfGen::genPrintElement(str header)
+void Rtr_ConfGen::genPrintElement(string header)
 {
   if (_debug) {
     ElementSpecPtr print = 
@@ -1491,7 +1408,7 @@ void Rtr_ConfGen::genPrintElement(str header)
   }
 }
 
-void Rtr_ConfGen::genPrintWatchElement(str header)
+void Rtr_ConfGen::genPrintWatchElement(string header)
 {
   ElementSpecPtr printWatchElement = 
       _conf->addElement(ElementPtr(new PrintWatch(header, _ctxt->getWatchTables())));
@@ -1510,17 +1427,17 @@ void Rtr_ConfGen::genPrintWatchElement(str header)
 
 // Get a handle to the table. Typically used by the driver program to 
 // preload some data.
-TablePtr Rtr_ConfGen::getTableByName(str nodeID, str tableName)
+TablePtr Rtr_ConfGen::getTableByName(string nodeID, string tableName)
 {
   std::cout << "Get table " << nodeID << ":" << tableName << "\n";
-  TableMap::iterator _iterator = _tables.find(nodeID << ":" << tableName);
+  TableMap::iterator _iterator = _tables.find(nodeID + ":" + tableName);
   if (_iterator == _tables.end()) { 
     std::cerr << "Table " << nodeID << ":" << tableName << " not found\n";
   }
   return _iterator->second;
 }
 
-void Rtr_ConfGen::createTables(str nodeID)
+void Rtr_ConfGen::createTables(string nodeID)
 {
   // have to decide where joins are possibly performed, and on what fields
   // create appropriate indices for them
@@ -1538,7 +1455,7 @@ void Rtr_ConfGen::createTables(str nodeID)
       } else {
 	tableSize = UINT_MAX; // consider this infinity
       }
-      str newTableName = nodeID << ":" << tableInfo->tableName;
+      string newTableName = nodeID + ":" + tableInfo->tableName;
       TablePtr newTable(new Table(tableInfo->tableName, tableInfo->size));
       if (tableInfo->timeout != -1) {
 	timespec* expiration = new timespec();
@@ -1581,10 +1498,10 @@ void Rtr_ConfGen::hookUp(ElementSpecPtr firstElement, int firstPort,
 			 ElementSpecPtr secondElement, int secondPort)
 {
   fprintf(_output, "Connect: \n");
-  fprintf(_output, "  %s %s %d\n", firstElement->toString().cstr(), 
-	  firstElement->element()->_name.cstr(), firstPort);
-  fprintf(_output, "  %s %s %d\n", secondElement->toString().cstr(), 
-	  secondElement->element()->_name.cstr(), secondPort);
+  fprintf(_output, "  %s %s %d\n", firstElement->toString().c_str(), 
+	  firstElement->element()->_name.c_str(), firstPort);
+  fprintf(_output, "  %s %s %d\n", secondElement->toString().c_str(), 
+	  secondElement->element()->_name.c_str(), secondPort);
   fflush(_output);
   
   _conf->hookUp(firstElement, firstPort, secondElement, secondPort);
@@ -1632,11 +1549,11 @@ bool Rtr_ConfGen::hasEventTerm(OL_Context::Rule* curRule)
   for (unsigned int k = 0; k < curRule->terms.size(); k++) {
     Parse_Functor* pf = dynamic_cast<Parse_Functor*>(curRule->terms.at(k));
     if (pf == NULL) { continue;}
-    str termName = pf->fn->name;
+    string termName = pf->fn->name;
     OL_Context::TableInfoMap::iterator _iterator 
       = _ctxt->getTableInfos()->find(termName);
     if (_iterator == _ctxt->getTableInfos()->end()) {     
-      debugRule(curRule, str(strbuf() << "Found event term " << termName));
+      debugRule(curRule, "Found event term " + termName);
       // an event
       return true;
     }
@@ -1650,7 +1567,7 @@ Parse_Functor* Rtr_ConfGen::getEventTerm(OL_Context::Rule* curRule)
   for (unsigned int k = 0; k < curRule->terms.size(); k++) {
     Parse_Functor* pf = dynamic_cast<Parse_Functor*>(curRule->terms.at(k));
     if (pf == NULL) { continue;}
-    str termName = pf->fn->name;
+    string termName = pf->fn->name;
     OL_Context::TableInfoMap::iterator _iterator 
       = _ctxt->getTableInfos()->find(termName);
     if (_iterator == _ctxt->getTableInfos()->end()) {     
@@ -1667,7 +1584,7 @@ bool Rtr_ConfGen::hasPeriodicTerm(OL_Context::Rule* curRule)
   for (uint k = 0; k < curRule->terms.size(); k++) {
     Parse_Functor* pf = dynamic_cast<Parse_Functor*>(curRule->terms.at(k));
     if (pf == NULL) { continue;}
-    str termName = pf->fn->name;
+    string termName = pf->fn->name;
     if (termName == "periodic") {
       return true;
     }
@@ -1700,21 +1617,21 @@ Rtr_ConfGen::FieldNamesTracker::initialize(Parse_Term* term)
 
   Parse_RangeFunction* pr = dynamic_cast<Parse_RangeFunction* > (term);    
   if (pr != NULL) {
-    fieldNames.push_back(str("NI"));
-    fieldNames.push_back(str(pr->var->toString()));
+    fieldNames.push_back(string("NI"));
+    fieldNames.push_back(string(pr->var->toString()));
   }
 }
 
 
 std::vector<int> 
-Rtr_ConfGen::FieldNamesTracker::matchingJoinKeys(std::vector<str> 
+Rtr_ConfGen::FieldNamesTracker::matchingJoinKeys(std::vector<string> 
 						 otherArgNames)
 {
   // figure out the matching on other side. Assuming that
   // there is only one matching key for now
   std::vector<int> toRet;
   for (unsigned int k = 0; k < otherArgNames.size(); k++) {
-    str nextStr = otherArgNames.at(k);
+    string nextStr = otherArgNames.at(k);
     if (fieldPosition(nextStr) != -1) {
       // exists
       toRet.push_back(k);
@@ -1724,7 +1641,7 @@ Rtr_ConfGen::FieldNamesTracker::matchingJoinKeys(std::vector<str>
 }
 
 int 
-Rtr_ConfGen::FieldNamesTracker::fieldPosition(str var)
+Rtr_ConfGen::FieldNamesTracker::fieldPosition(string var)
 {
   for (uint k = 0; k < fieldNames.size(); k++) {
     if (fieldNames.at(k) == var) {
@@ -1735,10 +1652,10 @@ Rtr_ConfGen::FieldNamesTracker::fieldPosition(str var)
 }
 
 void 
-Rtr_ConfGen::FieldNamesTracker::mergeWith(std::vector<str> names)
+Rtr_ConfGen::FieldNamesTracker::mergeWith(std::vector<string> names)
 {
   for (uint k = 0; k < names.size(); k++) {
-    str nextStr = names.at(k);
+    string nextStr = names.at(k);
     if (fieldPosition(nextStr) == -1) {
       fieldNames.push_back(nextStr);
     }
@@ -1746,12 +1663,12 @@ Rtr_ConfGen::FieldNamesTracker::mergeWith(std::vector<str> names)
 }
 
 void 
-Rtr_ConfGen::FieldNamesTracker::mergeWith(std::vector<str> names, 
+Rtr_ConfGen::FieldNamesTracker::mergeWith(std::vector<string> names, 
 					  int numJoinKeys)
 {
   int count = 0;
   for (uint k = 0; k < names.size(); k++) {
-    str nextStr = names.at(k);
+    string nextStr = names.at(k);
     if (count == numJoinKeys || fieldPosition(nextStr) == -1) {
       fieldNames.push_back(nextStr);
       count++;
@@ -1759,12 +1676,13 @@ Rtr_ConfGen::FieldNamesTracker::mergeWith(std::vector<str> names,
   }
 }
 
-str Rtr_ConfGen::FieldNamesTracker::toString()
+string Rtr_ConfGen::FieldNamesTracker::toString()
 {
-  strbuf toRet("FieldNamesTracker<");
+  ostringstream toRet("FieldNamesTracker<");
   
   for (uint k = 0; k < fieldNames.size(); k++) {
     toRet << fieldNames.at(k) << " ";
   }
-  return toRet << ">";
+  toRet << ">";
+  return toRet.str();
 }

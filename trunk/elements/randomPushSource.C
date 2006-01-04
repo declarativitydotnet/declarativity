@@ -11,14 +11,13 @@
  
 #include <randomPushSource.h>
 #include <element.h>
-#include <async.h>
 #include <math.h>
 #include <cstdlib>
 
 #include "val_str.h"
 #include "val_double.h"
 
-RandomPushSource::RandomPushSource(str name, double seconds, int randSeed, int max)
+RandomPushSource::RandomPushSource(string name, double seconds, int randSeed, int max)
   : Element(name, 0, 1),
     _seconds(seconds),
     _wakeupCB(boost::bind(&RandomPushSource::wakeup, this)),

@@ -17,12 +17,11 @@
 #define __ROUNDROBIN_H__
 
 #include "element.h"
-#include "bitvec.h"
 
 class RoundRobin : public Element { 
 public:
   
-  RoundRobin(str, int);
+  RoundRobin(string, int);
 
   TuplePtr pull(int port, b_cbv cb);
 
@@ -39,7 +38,7 @@ private:
   b_cbv	_pull_cb;
 
   /** My block flags, one per input port */
-  bitvec _block_flags;
+  std::vector<int> _block_flags;
 
   /** My block flag count. */
   int _block_flag_count;

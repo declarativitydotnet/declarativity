@@ -3,8 +3,11 @@
 #include "val_str.h"
 #include "math.h"
 #include <loggerI.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
-const opr::Oper* Val_IP_ADDR::oper_ = New opr::OperCompare< Val_IP_ADDR> ();
+const opr::Oper* Val_IP_ADDR::oper_ = new opr::OperCompare< Val_IP_ADDR> ();
 
 //
 // Marshalling and unmarshallng
@@ -20,7 +23,7 @@ void Val_IP_ADDR::xdr_marshal_subtype( XDR *x )
 //
 // Casting
 //
-str Val_IP_ADDR::cast(ValuePtr v) {
+string Val_IP_ADDR::cast(ValuePtr v) {
   if(v->typeCode() == Value::IP_ADDR){
     return (static_cast<Val_IP_ADDR *>(v.get()))->_s;
   }
@@ -36,12 +39,12 @@ str Val_IP_ADDR::cast(ValuePtr v) {
  * Returns the suio constructed from the ip-address string. Also checks if the string
  * is in correct format, i.e. xx.xx.xx.xx:xx. 
  **/
-ref<suio> Val_IP_ADDR::getAddress()
+FdbufPtr Val_IP_ADDR::getAddress()
 {
-  ref<suio> x = New refcounted< suio> ();
+  FdbufPtr x(new Fdbuf());
   struct sockaddr_in saddr;
 
-  char * theAtSign = strchr(_s, ':');
+  char * theAtSign = strchr(_s.c_str(), ':');
   
   if (theAtSign == NULL) {
     // Couldn't find the correct format
@@ -50,14 +53,13 @@ ref<suio> Val_IP_ADDR::getAddress()
     //return 0;
   }
   
-  str theAddress(_s, theAtSign - _s);
-  str thePort(theAtSign + 1);
-  int port = atoi(thePort);
+  string theAddress(_s.c_str(), theAtSign - _s.c_str());
+  string thePort(theAtSign + 1);
+  int port = atoi(thePort.c_str());
   bzero(&saddr, sizeof(saddr));
   saddr.sin_port = htons(port);
-  inet_pton(AF_INET, _s.cstr(),
-	    &saddr.sin_addr);
-  x->copy(&saddr, sizeof(saddr));
+  inet_pton(AF_INET, _s.c_str(), &saddr.sin_addr);
+  x->push_back((char*) &saddr, sizeof(saddr));
   return x;
   
 }
@@ -71,7 +73,7 @@ int Val_IP_ADDR::compareTo(ValuePtr other) const
       return 1;
     }
   }
-  return toString().cmp(other->toString());
+  return toString().compare(other->toString());
 }
 
 /*

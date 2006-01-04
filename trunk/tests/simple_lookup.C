@@ -12,8 +12,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 #include <stdlib.h>
 
@@ -44,7 +42,7 @@ void killJoin()
 struct LookupGenerator : public FunctorSource::Generator
 {
   // virtual ~LookupGenerator() {};
-  LookupGenerator(str s, str d, str e) : src_(s), dest_(d), event_(e), exit_(false) {};
+  LookupGenerator(string s, string d, string e) : src_(s), dest_(d), event_(e), exit_(false) {};
 
   TuplePtr operator()() {
     if (exit_) exit(0);
@@ -67,9 +65,9 @@ struct LookupGenerator : public FunctorSource::Generator
     return tuple;
   }
 
-  str src_;
-  str dest_;
-  str event_;
+  string src_;
+  string dest_;
+  string event_;
   mutable bool exit_;
 };
 
@@ -78,14 +76,14 @@ void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> looku
   Router::ConfigurationPtr conf(new Router::Configuration());
 
   // sending result
-  ElementSpecPtr func    = conf->addElement(ElementPtr(new FunctorSource(str("Source"), lookup.get())));
-  ElementSpecPtr print   = conf->addElement(ElementPtr(new Print(strbuf("lookup"))));
+  ElementSpecPtr func    = conf->addElement(ElementPtr(new FunctorSource(string("Source"), lookup.get())));
+  ElementSpecPtr print   = conf->addElement(ElementPtr(new Print(string("lookup"))));
 		       
   ElementSpecPtr encap = conf->addElement(ElementPtr(new PelTransform("encapRequest",
 									  "$1 pop \
                                                      $0 ->t $1 append $2 append $3 append $4 append pop"))); // the rest
   ElementSpecPtr marshal = conf->addElement(ElementPtr(new MarshalField("Marshal", 1)));
-  ElementSpecPtr route   = conf->addElement(ElementPtr(new StrToSockaddr(strbuf("SimpleLookup"), 0)));
+  ElementSpecPtr route   = conf->addElement(ElementPtr(new StrToSockaddr(string("SimpleLookup"), 0)));
   boost::shared_ptr< Udp > udp(new Udp("Udp", 9999));
   ElementSpecPtr udpTx   = conf->addElement(udp->get_tx());
 
@@ -98,14 +96,14 @@ void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> looku
 
   // getting results back
   ElementSpecPtr udpRxS = conf->addElement(udp->get_rx());
-  ElementSpecPtr unmarshalS = conf->addElement(ElementPtr(new UnmarshalField(strbuf("Unmarshal:"), 1)));
+  ElementSpecPtr unmarshalS = conf->addElement(ElementPtr(new UnmarshalField(string("Unmarshal:"), 1)));
 
   // Drop the source address and decapsulate
   ElementSpecPtr unBoxS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("UnBox:"),
+    conf->addElement(ElementPtr(new PelTransform(string("UnBox:"),
                                                     "$1 unboxPop ")));
   ElementSpecPtr recv =
-    conf->addElement(ElementPtr(new Print(strbuf("lookupResults:"))));
+    conf->addElement(ElementPtr(new Print(string("lookupResults:"))));
 
   ElementSpecPtr slot = conf->addElement(ElementPtr(new Slot("slot")));
   ElementSpecPtr sinkS =
@@ -142,7 +140,7 @@ int main(int argc, char **argv)
   }
 
   int seed = 0;
-  level = LoggerI::levelFromName[str(argv[1])];
+  level = LoggerI::levelFromName[string(argv[1])];
   seed = atoi(argv[2]);
   srandom(seed);
   issue_lookup(level, boost::shared_ptr<LookupGenerator>(new LookupGenerator(argv[4], argv[5], argv[3])));

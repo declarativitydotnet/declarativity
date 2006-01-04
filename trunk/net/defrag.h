@@ -19,7 +19,7 @@
 class Defrag : public Element { 
 public:
 
-  Defrag(str name);
+  Defrag(string name);
   const char *class_name() const	{ return "Defrag";};
   const char *processing() const	{ return PUSH_TO_PULL; };
   const char *flow_code()  const	{ return "-/-"; };

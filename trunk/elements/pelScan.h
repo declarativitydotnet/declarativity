@@ -32,13 +32,12 @@
 
 class PelScan : public Element {
  public:
-  PelScan(str name,
+  PelScan(string name,
           TablePtr table,
           unsigned field,
-          str startup,
-          str scan,
-          str cleanup);
-  ~PelScan();
+          string startup,
+          string scan,
+          string cleanup);
   
   const char *class_name() const		{ return "PelScan";}
   const char *processing() const		{ return "h/l"; }
@@ -51,7 +50,7 @@ class PelScan : public Element {
   TuplePtr pull(int port, b_cbv cb);
   
   /** The END_OF_SCAN tuple tag. */
-  static str END_OF_SCAN;
+  static string END_OF_SCAN;
   
  private:
   /** My parent's table */
@@ -73,13 +72,13 @@ class PelScan : public Element {
   TuplePtr _scanTuple;
 
   /** My startup program.  */
-  Pel_Program * _startup;
+  boost::shared_ptr< Pel_Program > _startup;
 
   /** My scan program */
-  Pel_Program * _scan;
+  boost::shared_ptr< Pel_Program > _scan;
 
   /** My cleanup program */
-  Pel_Program * _cleanup;
+  boost::shared_ptr< Pel_Program > _cleanup;
 
   /** The virtual machine within which to execute the transform.  Any
       need to share this? */

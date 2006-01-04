@@ -14,14 +14,11 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <iostream>
-#include <async.h>
-#include <arpc.h>
 
 #include "pong.h"
 #include "val_null.h"
 #include "val_str.h"
 #include "val_int32.h"
-#include "xdr_suio.h"
 #include "tuple.h"
 #include "math.h"
 
@@ -29,7 +26,7 @@
 /////////////////////////////
 /// Pong 
 ////////////////////////////
-Pong::Pong(str name, int seconds)
+Pong::Pong(string name, int seconds)
   : Element(name, 1, 1),
     _seconds(seconds),
     _wakeupCB(boost::bind(&Pong::wakeup, this)),

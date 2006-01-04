@@ -33,7 +33,7 @@
 template < typename _EncapsulatedIterator, typename _LookupGenerator >
 class Lookup : public Element {
 public:
-  Lookup(str name,
+  Lookup(string name,
          TablePtr table,
          unsigned inputKeyField,
          unsigned lookupIndexField,
@@ -52,7 +52,7 @@ public:
   TuplePtr pull(int port, b_cbv cb);
   
   /** The END_OF_SEARCH tuple tag. */
-  static str END_OF_SEARCH;
+  static string END_OF_SEARCH;
   
 private:
   /** My table */
@@ -101,7 +101,7 @@ typedef Lookup< Table::MultIterator, Table::MultLookupGenerator > MultLookup;
 
 
 template < typename _EncapsulatedIterator, typename _LookupGenerator >
-Lookup< _EncapsulatedIterator, _LookupGenerator >::Lookup(str name,
+Lookup< _EncapsulatedIterator, _LookupGenerator >::Lookup(string name,
                                                           TablePtr table,
                                                           unsigned inputKeyField,
                                                           unsigned lookupIndexField,
@@ -146,14 +146,14 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::push(int port,
       // Didn't work out.  Ask for more.
       return 1;
     } else {
-      log(LoggerI::WORDY, 0, strbuf("push: key is no longer null"));
+      log(LoggerI::WORDY, 0, "push: key is no longer null");
 
       // Establish the lookup
       _lookupTuple = t;
       _lookupTupleValue = Val_Tuple::mk(t);
 
       // Groovy.  Signal puller that we're ready to give results
-      log(LoggerI::INFO, 0, strbuf("push: accepted lookup of key ") << _key->toString());
+      log(LoggerI::INFO, 0, "push: accepted lookup of key "+ _key->toString());
       
       // Unblock the puller if one is waiting
       if (_pullCallback) {
@@ -241,7 +241,7 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::pull(int port,
 
     // Now, are we done with this search?
     if (_iterator->done()) {
-      log(LoggerI::INFO, 0, strbuf("pull: Finished search on ") << _key->toString());
+      log(LoggerI::INFO, 0, "pull: Finished search on "+_key->toString());
 
       // Tag the result tuple
       newTuple->tag(Lookup::END_OF_SEARCH, Val_Null::mk());
@@ -251,7 +251,7 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::pull(int port,
       _lookupTuple.reset();
       _lookupTupleValue.reset();
       _iterator.reset();
-      log(LoggerI::WORDY, 0, strbuf("push: iterator now is null"));
+      log(LoggerI::WORDY, 0, "push: iterator now is null");
 
       // Wake up any pusher
       if (_pushCallback) {
@@ -269,7 +269,7 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::pull(int port,
 
 /** The END_OF_SEARCH tag */
 template < typename _EncapsulatedIterator, typename _LookupGenerator >
-str Lookup< _EncapsulatedIterator, _LookupGenerator >::END_OF_SEARCH = "Lookup:END_OF_SEARCH";
+string Lookup< _EncapsulatedIterator, _LookupGenerator >::END_OF_SEARCH = "Lookup:END_OF_SEARCH";
 
 
 #endif /* __LOOKUP_H_ */

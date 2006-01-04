@@ -51,11 +51,11 @@ TuplePtr Tuple::xdr_unmarshal( XDR *x )
 //
 // Format as a string
 //
-str Tuple::toString() const 
-{
-  strbuf sb;
-
-  sb << "<";
+string Tuple::toString() const
+{ 
+  ostringstream sb;
+  
+  sb << "<"; 
   for(size_t i=0; i < fields.size(); i++) {
     sb << fields[i]->toString();
     if (i != fields.size() - 1) {
@@ -63,9 +63,8 @@ str Tuple::toString() const
     }
   }
   sb << ">";
-  return str(sb);
+  return sb.str();
 }
-
 
 /** Compare this tuple to another.  If we have different numbers of
     fields, compare the field counts.  If we have the same numbers of
@@ -97,7 +96,7 @@ int Tuple::compareTo(TuplePtr other) const
 }
 
 
-void Tuple::tag(str key,
+void Tuple::tag(string key,
                 ValuePtr value)
 {
   assert(!frozen);
@@ -105,7 +104,7 @@ void Tuple::tag(str key,
   // Is the tag map created?
   if (_tags == 0) {
     // Create it
-    _tags = New std::map< str, ValuePtr >();
+    _tags = new std::map< string, ValuePtr >();
 
     // We'd better still have memory for this
     assert(_tags != 0);
@@ -114,7 +113,7 @@ void Tuple::tag(str key,
   _tags->insert(std::make_pair(key, value));
 }
 
-ValuePtr Tuple::tag(str key)
+ValuePtr Tuple::tag(string key)
 {
   // Do we have a tag map?
   if (_tags == 0) {
@@ -122,7 +121,7 @@ ValuePtr Tuple::tag(str key)
     return ValuePtr();
   } else {
     // Find the pair for that map
-    std::map< str, ValuePtr >::iterator result = _tags->find(key);
+    std::map< string, ValuePtr >::iterator result = _tags->find(key);
 
     // Did we get it?
     if (result == _tags->end()) {

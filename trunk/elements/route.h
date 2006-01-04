@@ -17,11 +17,11 @@
 
 #include "element.h"
 #include "value.h"
+#include "fdbuf.h"
 
 class Route : public Element { 
 public:
-  Route(str,
-        ref< suio > destinationUio);
+  Route(string, FdbufPtr destinationUio);
 
   ~Route();
   

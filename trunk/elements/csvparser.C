@@ -19,6 +19,7 @@
 
 #include "val_str.h"
 #include "trace.h"
+#include <boost/regex.hpp>
 
 //
 // What are these queue parameters then?  Well...
@@ -34,15 +35,17 @@ const size_t CSVParser::MAX_Q_SIZE = 100;
 // 
 // Constructor. 
 //  
-CSVParser::CSVParser(str name) 
+CSVParser::CSVParser(string name) 
   : Element(name, 1,1), 
     _push_cb(0), 
     _push_blocked(false), 
     _pull_cb(0),
+/*
     _re_line("^([^\\r\\n]*)\\r?\\n"),
     _re_comm("(^$|#.*)"),
     _re_qstr("^\\s*\\\"(([^\\n\\\"]*(\\\\(.|\\n))?)+)\\\"\\s*(,|$)"),
     _re_tokn("^\\s*([^,\\s\"\']+)\\s*(,|$)"),
+*/
     _acc("")
 {
 }  
@@ -68,7 +71,7 @@ TuplePtr CSVParser::pull(int port, b_cbv cb)
   // Should we restart pushes?  
   if (_push_blocked && _q.size() < MIN_Q_SIZE) {
     _push_blocked = false;
-    if (_push_cb) {
+    if (_push_cb != 0) {
       _push_cb();
     }
   }
@@ -87,11 +90,7 @@ int CSVParser::push(int port, TuplePtr t, b_cbv cb)
   if (t->size() != 1) {
     DBG("Error: tuple is not of size 1");
   } else {
-    str tf = Val_Str::cast((*t)[0]);
-    strbuf newacc;
-    newacc << _acc;
-    newacc << tf;
-    _acc = newacc;
+    _acc += Val_Str::cast((*t)[0]);
     while(try_to_parse_line());
   }
   if (_push_blocked) {
@@ -110,35 +109,34 @@ int CSVParser::push(int port, TuplePtr t, b_cbv cb)
 //
 int CSVParser::try_to_parse_line()
 {
+/*
   TRC_FN;
   // Do we have a complete line in the buffer?
-  rxx::matchresult m = _re_line.search(_acc);
-  if (m) {
+  boost::smatch m;
+  if (regex_search(_acc,m,_re_line)) {
     TRC("Got a line <" << m[1] << ">");
     TuplePtr t = Tuple::mk();
-    str line = m[1];
-    _acc = substr(_acc,m[0].len());
-    if (_re_comm.match(line)) {
+    string line = m[1];
+    _acc = _acc.substr(m[0].length());
+    if (regex_match(line, m, _re_comm)) {
       TRC("Comment: discarding.");
       return 1;
     }
-    while( line.len() > 0) {
+    while( line.length() > 0) {
       TRC("Remaining line is <" << line << ">");
       { 
-	rxx::matchresult m = _re_qstr.search(line);
-	if (m) {
+	if (regex_search(line,m,_re_qstr)) {
 	  TRC("Got a quoted string <" << m[1] << ">");
 	  t->append(Val_Str::mk(m[1]));
-	  line = substr(line,m[0].len());
+	  line = line.substr(m[0].length());
 	  continue;
 	}
       }
       {
-	rxx::matchresult m = _re_tokn.search(line);
-	if (m) {
+	if (regex_search(line,m,_re_tokn)) {
 	  TRC("Got a token <" << m[1] << ">");
 	  t->append(Val_Str::mk(m[1]));
-	  line = substr(line,m[0].len());
+	  line = line.substr(m[0].length());
 	  continue;
 	}
       }
@@ -157,4 +155,6 @@ int CSVParser::try_to_parse_line()
     TRC("Don't yet have a whole line <" << _acc << ">");
     return 0;
   }
+*/
+  return 0;
 }

@@ -12,8 +12,7 @@
 #include "noNullField.h"
 #include "val_tuple.h"
 
-NoNullField::NoNullField(str name,
-                         unsigned fieldNo)
+NoNullField::NoNullField(string name, unsigned fieldNo)
   : Element(name, 1, 1),
     _fieldNo(fieldNo)
 {

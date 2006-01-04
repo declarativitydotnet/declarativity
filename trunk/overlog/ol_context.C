@@ -29,8 +29,8 @@
 //
 // Print out the rule for debugging purposes
 //
-str OL_Context::Rule::toString() {
-  strbuf r;
+string OL_Context::Rule::toString() {
+  ostringstream r;
   r << ruleID << " ";
   r << head->toString() << " :- ";
 
@@ -39,11 +39,11 @@ str OL_Context::Rule::toString() {
     r << (((t+1) != terms.end()) ? ", " : ".");
   }
 
-  return r;
+  return r.str();
 }
 
-str OL_Context::TableInfo::toString() {
-  strbuf t;
+string OL_Context::TableInfo::toString() {
+  ostringstream t;
   t << "MATERIALIZE( " << tableName << ", ";
   if (timeout < 0) t << "infinity, ";
   else t << timeout << ", ";
@@ -56,7 +56,7 @@ str OL_Context::TableInfo::toString() {
   }
   t << " )";
 
-  return t;
+  return t.str();
 }
 
 /**********************************************************************
@@ -75,7 +75,7 @@ void OL_Context::rule( Parse_Term *lhs, Parse_TermList *rhs,
 {
   TRC_FN;
   Parse_Functor *h    = dynamic_cast<Parse_Functor*>(lhs);
-  str     ruleName    = (n) ? n->v->toString() : "";
+  string     ruleName    = (n) ? n->v->toString() : "";
   int     fict_varnum = 1;		// Counter for inventing anonymous variables. 
 
 
@@ -86,7 +86,7 @@ void OL_Context::rule( Parse_Term *lhs, Parse_TermList *rhs,
   // below. 
 
   // Create a new rule and register it. 
-  Rule *r = New Rule(ruleName, h, deleteFlag);
+  Rule *r = new Rule(ruleName, h, deleteFlag);
 
   // Next, we canonicalize all the args in the rule head.  We build up
   // a list of argument names - the first 'arity' of these will be the
@@ -105,21 +105,25 @@ void OL_Context::rule( Parse_Term *lhs, Parse_TermList *rhs,
       // The argument is a free variable - the usual case. 
       int loc = h->find(var->toString());
       if (loc < i) {
+        ostringstream oss;
+        oss << "$" << fict_varnum++;
 	// We've found a duplicate variable in the head. Add a new
 	// "eq" term to the front of the term list. 
-        Parse_Var *tmp = New Parse_Var(strbuf() << "$" << fict_varnum++);
+        Parse_Var *tmp = new Parse_Var(oss.str());
         tmp->position(i);
         h->replace(i, tmp);
-        r->terms.push_back(New Parse_Assign(tmp, h->arg(loc)));
+        r->terms.push_back(new Parse_Assign(tmp, h->arg(loc)));
       } else {
         var->position(i);
       }
     }
     else if ((val = dynamic_cast<Parse_Val*>(h->arg(i))) != NULL) {
-      Parse_Var *tmp = New Parse_Var(strbuf() << "$" << fict_varnum++);
+      ostringstream oss;
+      oss << "$" << fict_varnum++;
+      Parse_Var *tmp = new Parse_Var(oss.str());
       tmp->position(i);
       h->replace(i, tmp);
-      r->terms.push_back(New Parse_Assign(tmp, val));
+      r->terms.push_back(new Parse_Assign(tmp, val));
     }
     else {
       error("Parse rule unknown functor body type.");
@@ -174,8 +178,8 @@ void OL_Context::aggRule( Parse_Term *lhs, Parse_AggTerm *rhs,
 			  bool deleteFlag, Parse_Expr *n ) 
 {
   Parse_Functor *h    = dynamic_cast<Parse_Functor*>(lhs);
-  str     ruleName    = (n) ? n->v->toString() : "";
-  Rule *r = New Rule(ruleName, h, deleteFlag);  
+  string     ruleName    = (n) ? n->v->toString() : "";
+  Rule *r = new Rule(ruleName, h, deleteFlag);  
   r->terms.push_back(rhs);
   rules->push_back(r);
 }
@@ -184,9 +188,9 @@ void OL_Context::aggRule( Parse_Term *lhs, Parse_AggTerm *rhs,
 //
 // Print out the whole parse result, if we can
 //
-str OL_Context::toString()
+string OL_Context::toString()
 {
-  strbuf r;
+  ostringstream r;
 
   // Errors first
   for( ErrorList::iterator e=errors.begin(); e!=errors.end(); e++) {
@@ -199,13 +203,13 @@ str OL_Context::toString()
   for(RuleList::iterator rule=rules->begin(); rule != rules->end(); rule++) {
     r << (*rule)->toString() << "\n";
   }
-  return r;
+  return r.str();
 }
 
 OL_Context::OL_Context() : lexer(NULL)
 {
-  rules  = New RuleList();
-  tables = New TableInfoMap();
+  rules  = new RuleList();
+  tables = new TableInfoMap();
 }
 
 OL_Context::~OL_Context()
@@ -217,7 +221,7 @@ OL_Context::~OL_Context()
 void OL_Context::parse_string(const char *prog)
 {
   assert(lexer==NULL);
-  lexer = New OL_Lexer(prog);
+  lexer = new OL_Lexer(prog);
   ol_parser_parse(this);
   delete lexer;
   lexer = NULL;
@@ -225,16 +229,16 @@ void OL_Context::parse_string(const char *prog)
 void OL_Context::parse_stream(std::istream *str)
 {
   assert(lexer==NULL);
-  lexer = New OL_Lexer(str);
+  lexer = new OL_Lexer(str);
   ol_parser_parse(this);
   delete lexer;
   lexer = NULL;
 }
 
-void OL_Context::error(str msg)
+void OL_Context::error(string msg)
 {
   std::cerr << "Caught an error: (" << lexer->line_num() << ") " << msg << "\n";
-  errors.push_back(New OL_Context::Error(lexer->line_num(), msg));
+  errors.push_back(new OL_Context::Error(lexer->line_num(), msg));
 }
 
 void OL_Context::watch(Parse_Expr *w)
@@ -307,7 +311,7 @@ void OL_Context::fact(Parse_Term *t)
     } 
     else {
       error("free variables and don't-cares not allowed in facts:" 
-	    << f->arg(i)->toString());
+	    + f->arg(i)->toString());
       goto fact_error;
     }
   }

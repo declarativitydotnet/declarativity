@@ -16,7 +16,7 @@
 
 #define MAX_INIT_SEQ 2048
 
-Sequence::Sequence(str n, str src, uint32_t p, uint64_t s)
+Sequence::Sequence(string n, string src, uint32_t p, uint64_t s)
   : Element(n,1,1), src_(src), port_(p), seq_(s)
 {
   if (!seq_) seq_ = uint64_t(rand() * MAX_INIT_SEQ);

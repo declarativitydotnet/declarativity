@@ -21,13 +21,12 @@
 #define __DEMUX_H__
 
 #include "element.h"
-#include "bitvec.h"
 #include "loop.h"
 
 class Demux : public Element { 
 public:
   
-  Demux(str, boost::shared_ptr< std::vector< ValuePtr > >, unsigned f = 0);
+  Demux(string, boost::shared_ptr< std::vector< ValuePtr > >, unsigned f = 0);
 
   int push(int port, TuplePtr t, b_cbv cb);
 
@@ -48,7 +47,7 @@ private:
   boost::shared_ptr< std::vector< ValuePtr > > _demuxKeys;
 
   /** My block flags, one per output port */
-  bitvec _block_flags;
+  std::vector<int> _block_flags;
 
   /** My block flag count. */
   int _block_flag_count;

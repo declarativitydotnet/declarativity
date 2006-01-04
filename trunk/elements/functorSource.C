@@ -11,7 +11,7 @@
 
 #include <functorSource.h>
 
-FunctorSource::FunctorSource(str name,
+FunctorSource::FunctorSource(string name,
                              FunctorSource::Generator* generator)
   : Element(name, 0, 1),
     _generator(generator)

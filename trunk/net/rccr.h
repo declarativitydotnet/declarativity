@@ -11,7 +11,6 @@
 
 #include <deque>
 #include <vector>
-#include <async.h>
 #include "tuple.h"
 #include "element.h"
 #include "inlines.h"
@@ -23,7 +22,7 @@ class LossRec;
 
 class RateCCR : public Element {
 public:
-  RateCCR(str name);
+  RateCCR(string name);
   const char *class_name() const { return "RateCCR";};
   const char *processing() const { return "a/al"; };
   const char *flow_code()  const { return "-/--"; };
@@ -41,7 +40,7 @@ private:
   b_cbv  _ack_cb;
 
   std::deque <TuplePtr>        ack_q_;	// Output ack queue
-  std::map <str, Connection*>  cmap_;	// Interval weights
+  std::map <string, Connection*>  cmap_;	// Interval weights
 };
   
 #endif /* __RCCR_H_ */

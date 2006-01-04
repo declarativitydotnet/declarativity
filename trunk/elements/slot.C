@@ -11,7 +11,7 @@
 
 #include "slot.h"
 
-Slot::Slot(str name)
+Slot::Slot(string name)
   : Element(name, 1, 1),
     _push_cb(0),
     _pull_cb(0)

@@ -32,7 +32,6 @@
 #include <inlines.h>
 #include <element.h>
 #include <elementSpec.h>
-#include <vec.h>
 #include <loggerI.h>
 
 /** A handy dandy type for router references */

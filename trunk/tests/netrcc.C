@@ -15,8 +15,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 
 #include "tuple.h"
@@ -45,7 +43,7 @@
 #include "loggerI.h"
 #include "discard.h"
 
-Router::ConfigurationPtr UdpCC_source(Udp *udp, str src, str dest, double drop) {
+Router::ConfigurationPtr UdpCC_source(Udp *udp, string src, string dest, double drop) {
   // The sending data flow
   Router::ConfigurationPtr conf(new Router::Configuration());
 
@@ -55,8 +53,8 @@ Router::ConfigurationPtr UdpCC_source(Udp *udp, str src, str dest, double drop) 
   ElementSpecPtr seq      = conf->addElement(ElementPtr(new Sequence("Sequence", src, 1)));
   ElementSpecPtr retry    = conf->addElement(ElementPtr(new RDelivery("Retry", false)));
   ElementSpecPtr rcct     = conf->addElement(ElementPtr(new RateCCT("RateCCT")));
-  ElementSpecPtr destAddr = conf->addElement(ElementPtr(new PelTransform(strbuf("dest:").cat(dest),
-                                             strbuf() << "\"" << dest << "\"" << " pop swallow pop")));
+  ElementSpecPtr destAddr = conf->addElement(ElementPtr(new PelTransform("dest:"+dest,
+                                             "\"" + dest + "\"" + " pop swallow pop")));
   ElementSpecPtr marshal  = conf->addElement(ElementPtr(new MarshalField("marshal data", 1)));
   ElementSpecPtr route    = conf->addElement(ElementPtr(new StrToSockaddr("sock2addr", 0)));
   ElementSpecPtr netsim   = conf->addElement(ElementPtr(new SimpleNetSim("Net Sim (Sender)", 
@@ -166,15 +164,16 @@ int main(int argc, char **argv)
     exit(0);
   }
 
-  str    type = str(argv[1]);
+  string    type = string(argv[1]);
   int    port = atoi(argv[2]);
   double drop = 0.;
 
   if (type == "source") {
       Udp *src = new Udp("SOURCE", port);
+      ostringstream oss;
+      oss << string(argv[3]) << ":" << port;
       if (argc == 6) drop = atof(argv[5]);
-      testUdpCC(UdpCC_source(src, strbuf() << str(argv[3]) << ":" << port, 
-			     str(argv[4]), drop));
+      testUdpCC(UdpCC_source(src, oss.str(), string(argv[4]), drop));
   }
   else if (type == "sink") {
       Udp *sink = new Udp("SINK", port);

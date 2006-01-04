@@ -16,25 +16,24 @@
 #ifndef __LOGGER_H__
 #define __LOGGER_H__
 
-#include <async.h>
 #include <element.h>
 #include <loggerI.h>
 
 class Logger : public Element,
                public LoggerI { 
 public:
-  Logger(str);
+  Logger(string);
   
   const char *class_name() const		{ return "Logger"; }
   const char *flow_code() const			{ return "/-"; }
   const char *processing() const		{ return "/h"; }
   
   /** Override this since it's pure virtual in the interface */
-  void log( str classname,
-	    str instancename,
+  void log( string classname,
+	    string instancename,
 	    Level severity,
 	    int errnum,
-	    str explanation );
+	    string explanation );
 
 private:
   static uint64_t seq;

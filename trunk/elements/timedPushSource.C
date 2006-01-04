@@ -11,13 +11,12 @@
 
 #include <timedPushSource.h>
 #include <element.h>
-#include <async.h>
 #include <math.h>
 
 #include "val_str.h"
 #include "val_uint64.h"
 
-TimedPushSource::TimedPushSource(str name,
+TimedPushSource::TimedPushSource(string name,
                                  double seconds)
   : Element(name, 0, 1),
     _seconds(seconds),

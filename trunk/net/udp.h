@@ -14,9 +14,6 @@
 #define __UDP_H__
 
 #include "element.h"
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
-#include "loop.h"
 
 //
 // The Udp::Rx element emits 2-tuples:
@@ -39,13 +36,13 @@ public:
   //
   class Rx : public Element {
   public:
-    Rx(str, const Udp &udp);
+    Rx(string, const Udp &udp);
     const char *class_name() const		{ return "Udp::Rx";};
     const char *processing() const		{ return "/h"; };
     const char *flow_code() const		{ return "/-"; };
 
-    void socket_on() { fileDescriptorCB(u->sd, b_selread, boost::bind(&Udp::Rx::socket_cb, this)); };
-    void socket_off() { fileDescriptorCB(u->sd, b_selread, NULL); };
+    void socket_on() { fdcb(u->sd, selread, wrap(this,&Udp::Rx::socket_cb)); };
+    void socket_off() { fdcb(u->sd, selread, NULL); };
 
     /** Turn on the socket and start listening. */
     virtual int initialize();
@@ -64,13 +61,13 @@ public:
   //
   class Tx : public Element {
   public:
-    Tx(str, const Udp &udp);
+    Tx(string, const Udp &udp);
     const char *class_name() const		{ return "Udp::Tx";};
     const char *processing() const		{ return "l/"; };
     const char *flow_code() const		{ return "-/"; };
 
-    void socket_on() { fileDescriptorCB(u->sd, b_selwrite, boost::bind(&Udp::Tx::socket_cb, this));};
-    void socket_off() { fileDescriptorCB(u->sd, b_selwrite, NULL); };
+    void socket_on() { fdcb(u->sd, selwrite, wrap(this,&Udp::Tx::socket_cb));};
+    void socket_off() { fdcb(u->sd, selwrite, NULL); };
 
     /** Turn on the socket */
     virtual int initialize();
@@ -86,7 +83,7 @@ public:
   //
   // Now the Udp object itself.
   //
-  Udp(str, u_int16_t port=0, u_int32_t addr = INADDR_ANY);
+  Udp(string, u_int16_t port=0, u_int32_t addr = INADDR_ANY);
 
   // Accessing the individual elements
   boost::shared_ptr< Udp::Rx > get_rx() { return rx; };
@@ -97,7 +94,7 @@ private:
   int sd; 
 
   // My name
-  str _name;
+  string _name;
 
   // Elements 
   boost::shared_ptr< Rx > rx;

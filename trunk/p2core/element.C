@@ -41,6 +41,7 @@
  * only keep them during configuration and discard them thereafter.
  */
 
+#include <errno.h>
 #include "element.h"
 #include "router.h"
 #include "loggerI.h"
@@ -49,6 +50,7 @@
 #include "val_uint64.h"
 #include "val_str.h"
 #include "val_int32.h"
+
 
 // Some basic element types
 const char * const Element::PUSH_TO_PULL = "h/l";
@@ -69,24 +71,31 @@ int Element::elementCounter = 0;
 # define ELEMENT_CTOR_STATS
 #endif
 
-Element::Element(str instanceName) :
+static inline string mk_id_str(long id)
+{
+  ostringstream s; 
+  s << id;
+  return s.str();
+}
+
+Element::Element(string instanceName) :
   ELEMENT_CTOR_STATS
   _ninputs(0),
   _noutputs(0),
   _ID(elementCounter++),
   _name(instanceName),
-  _IDstr(strbuf() << _ID)
+  _IDstr(mk_id_str(_ID))
 {
   nelements_allocated++;
 }
 
-Element::Element(str instanceName, int ninputs, int noutputs) :
+Element::Element(string instanceName, int ninputs, int noutputs) :
   ELEMENT_CTOR_STATS
   _ninputs(0),
   _noutputs(0),
   _ID(elementCounter++),
   _name(instanceName),
-  _IDstr(strbuf() << _ID)
+  _IDstr(mk_id_str(_ID))
 {
   set_nports(ninputs, noutputs);
   nelements_allocated++;
@@ -113,8 +122,7 @@ Element::set_nports(int new_ninputs, int new_noutputs)
   for (int i = 0;
        i < new_ninputs;
        i++) {
-    PortPtr p(new Port());
-    _inputs[i] = p;
+    _inputs[i].reset(new Port());
   }
 
   _outputs.resize(new_noutputs);
@@ -122,8 +130,7 @@ Element::set_nports(int new_ninputs, int new_noutputs)
   for (int i = 0;
        i < new_noutputs;
        i++) {
-    PortPtr p(new Port());
-    _outputs[i] = p;
+    _outputs[i].reset(new Port());
   }
 }
 
@@ -149,8 +156,7 @@ Element::ports_frozen() const
 int Element::connect_input(int i, Element *f, int port)
 {
   if (i >= 0 && i < ninputs()) {
-    PortPtr p(new Port(this, f, port));
-    _inputs[i] = p;
+    _inputs[i].reset(new Port(this, f, port));
     return 0;
   } else
     return -1;
@@ -159,8 +165,7 @@ int Element::connect_input(int i, Element *f, int port)
 int Element::connect_output(int o, Element *f, int port)
 {
   if (o >= 0 && o < noutputs()) {
-    PortPtr p(new Port(this, f, port));
-    _outputs[o] = p;
+    _outputs[o].reset(new Port(this, f, port));
     return 0;
   } else
     return -1;
@@ -184,10 +189,10 @@ const char *Element::flags() const
 }
 
 // RUNNING
+
 int Element::push(int port, TuplePtr p, b_cbv cb)
 {
   assert(p != 0);
-
 
   // Apply the action
   TuplePtr result = simple_action(p);
@@ -355,22 +360,21 @@ bool Element::run_timer()
 
 REMOVABLE_INLINE void Element::log(LoggerI::Level severity,
                                    int errnum,
-                                   str explanation)
+                                   string explanation)
 {
   // Even this is a shortcut, cut off the process here as well, since
   // creating the instance name is expensive
   if ((_router && (severity >= _router->loggingLevel)) || (!_router)) {
-    strbuf n(_name);
-    n.cat(":");
-    n.cat(_IDstr);
-    log(n, severity, errnum, explanation);
+    ostringstream n;
+    n << _name << ":" << _IDstr;
+    log(n.str(), severity, errnum, explanation);
   }
 }
 
-REMOVABLE_INLINE void Element::log(str instanceName,
+REMOVABLE_INLINE void Element::log(string instanceName,
                                    LoggerI::Level severity,
                                    int errnum,
-                                   str explanation)
+                                   string explanation)
 {
   // Check logging level first
   if (_router != 0) {
@@ -393,10 +397,10 @@ REMOVABLE_INLINE void Element::log(str instanceName,
   }
 }
 
-REMOVABLE_INLINE void Element::logDefault(str instanceName,
+REMOVABLE_INLINE void Element::logDefault(string instanceName,
                                           LoggerI::Level severity,
                                           int errnum,
-                                          str explanation)
+                                          string explanation)
 {
   timespec now_ts;
   double   now;

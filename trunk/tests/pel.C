@@ -19,6 +19,7 @@
 #include "pel_lexer.h"
 #include "pel_program.h"
 #include "pel_vm.h"
+#include "loop.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -1020,7 +1021,7 @@ void vm_test(Pel_VM &vm, TuplePtr tpl, int i) {
   const ValTest *t = &vtests[i];
   std::cout << "Running: " << t->src << "\n";
   
-  Pel_Program *prog = Pel_Lexer::compile( t->src);
+  boost::shared_ptr<Pel_Program> prog = Pel_Lexer::compile( t->src);
   vm.reset();
   Pel_VM::Error e = vm.execute(*prog, tpl);
   if ( e != t->err ) {
@@ -1084,18 +1085,17 @@ int main(int argc, char **argv)
   for(i = 0; i < num_ctests; i++) {
     const CompilerTest *t = &ctests[i];
     std::cout << "Compiling: " << t->src << "\n";
-    Pel_Program *prog = Pel_Lexer::compile( t->src);
+    boost::shared_ptr<Pel_Program> prog = Pel_Lexer::compile( t->src);
     if (prog->ops.size() != (uint) t->num_opcodes) {
       std::cerr << "** Bad # opcodes for '" << t->src << "'; " << prog->ops.size() << " instead of expected " << t->num_opcodes << "\n";
     }
     if (prog->const_pool.size() != (uint) t->num_consts) {
       std::cerr << "** Bad # consts for '" << t->src << "'; " << prog->const_pool.size() << " instead of expected " << t->num_consts << "\n";
     }
-    str dec = Pel_Lexer::decompile(*prog);
+    string dec = Pel_Lexer::decompile(*prog);
     if (dec != t->disassembly) {
       std::cerr << "** Bad disassembly for '" << t->src << "'; '" << dec << "' instead of expected '" << t->disassembly << "'\n";
     }
-    delete prog;
   }
 
   // 

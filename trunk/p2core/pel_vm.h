@@ -17,11 +17,11 @@
 
 #include <deque>
 #include <vector>
-#include <async.h>
 
 #include "tuple.h"
 #include "pel_program.h"
 #include "ID.h"
+#include "loop.h"
 
 class Pel_VM {
 
@@ -56,7 +56,7 @@ private:
   ValuePtr pop();
   uint64_t pop_unsigned();
   int64_t pop_signed();
-  str pop_string();
+  string pop_string();
   double pop_double();
   struct timespec pop_time();
   IDPtr pop_ID();
@@ -84,7 +84,7 @@ public:
   void stop();
 
   /** Dump the stack */
-  void dumpStack(str);
+  void dumpStack(string);
 
   // Execute the program on the tuple. 
   // Return 0 if success, -1 if an error. 

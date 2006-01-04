@@ -11,7 +11,6 @@
 
 #include <element.h>
 #include <iostream>
-#include <async.h>
 #include <math.h>
 #include "tman.h"
 #include "val_str.h"
@@ -19,7 +18,7 @@
 #include "val_tuple.h"
 #include "val_time.h"
 
-TrafficManager::TrafficManager(str n, str a, uint k, uint r, double s)
+TrafficManager::TrafficManager(string n, string a, uint k, uint r, double s)
   : Element(n, 1, 2),
     _seconds((uint) s), 
     _wakeupCB(boost::bind(&TrafficManager::wakeup, this)),
@@ -41,9 +40,6 @@ int TrafficManager::push(int port, TuplePtr tp, b_cbv cb) {
     assert(output(1)->push(mkResponse(tp), 0));
   }
   else if (!processResponse(tp)) {
-    log(LoggerI::WARN, 1, strbuf() << "MY KEY: " << my_key_ 
-                          << ", RECEIVED LOOKUP " << key 
-                          << " FROM TUPLE: " << tp->toString());
     assert(0);
   }
   return 1;

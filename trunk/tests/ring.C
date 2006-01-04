@@ -19,8 +19,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 #include <stdlib.h>
 
@@ -67,7 +65,7 @@
 /** SU1: bestSuccessorDist@NI(NI,min<D>) :- node@NI(NI,N),
     successor@NI(NI,S,SI), D=f_dist(N,S)
 */
-void ruleSU1(str name,
+void ruleSU1(string name,
              Router::ConfigurationPtr conf,
              TablePtr nodeTable,
              TablePtr successorTable,
@@ -78,14 +76,14 @@ void ruleSU1(str name,
 {
   // Join with node
   ElementSpecPtr matchSuccessorIntoNodeS =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("SuccessorInNode:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup(string("SuccessorInNode:") + name,
                                                     nodeTable,
                                                     1, // Match lookup.NI
                                                     1 // with node.NI
                                                     )));
   // Link it to the successor coming in. Pushes match already
   conf->hookUp(pushSuccessorIn, pushSuccessorInPort, matchSuccessorIntoNodeS, 0);
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(string("NoNull:") + name, 1)));
 
 
 
@@ -93,7 +91,7 @@ void ruleSU1(str name,
   // res1(NI, N) from
   // <<Successor NI S SI><node NI N>>
   ElementSpecPtr makeRes1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("FlattenRes1:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("FlattenRes1:").append(name),
                                                     "\"Res1\" pop \
                                                      $0 1 field pop /* output successor.NI */ \
                                                      $1 2 field pop /* output node.N */")));
@@ -107,12 +105,12 @@ void ruleSU1(str name,
   // (res1.NI == successor.NI,
   //  D = distance(N, S))
   ElementSpecPtr findMinInSuccessorS =
-    conf->addElement(ElementPtr(new PelScan(str("bestSuccessorDist:") << name,
+    conf->addElement(ElementPtr(new PelScan(string("bestSuccessorDist:") + name,
                                                successorTable, 1,
-                                               str("$1 /* res1.NI */ \
+                                               string("$1 /* res1.NI */ \
                                                     $2 /* NI res1.N */ \
                                                     1 ->u32 ->id 0 ->u32 ->id distance /* NI N maxdist */"),
-                                               str("2 peek /* NI */ \
+                                               string("2 peek /* NI */ \
                                                     $1 /* successor.NI */ \
                                                     ==s not /* res1.NI != successor.NI */ \
                                                     ifstop /* empty */ \
@@ -125,12 +123,12 @@ void ruleSU1(str name,
                                                     2 peek ifelse /* ((newDist<oldDist) ? newDist : oldDist) */ \
                                                     swap /* swap newMin in state where oldMin was */ \
                                                     drop /* only state remains */"),
-                                               str("\"bestSuccessorDist\" pop 2 peek pop /* output NI */\
+                                               string("\"bestSuccessorDist\" pop 2 peek pop /* output NI */\
                                                    pop /* output minDistance */\
                                                    drop drop /* empty the stack */"))));
   // Res1 must be pushed to second join
   ElementSpecPtr pushRes1S =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PushRes1:") << name,
+    conf->addElement(ElementPtr(new TimedPullPush(string("PushRes1:") + name,
                                                      0)));
 
 
@@ -146,7 +144,7 @@ void ruleSU1(str name,
 /** SU2: bestSuccessor@NI(NI,S,SI) :- node@NI(NI,N),
     bestSuccessorDist@NI(NI,D), successor@NI(NI,S,SI), D=f_dist(N,S)
 */
-void ruleSU2(str name,
+void ruleSU2(string name,
              Router::ConfigurationPtr conf,
              TablePtr nodeTable,
              TablePtr successorTable,
@@ -158,12 +156,12 @@ void ruleSU2(str name,
 {
   // Join with node
   ElementSpecPtr matchBSDIntoNodeS =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("BSDInNode:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup(string("BSDInNode:") + name,
                                                     nodeTable,
                                                     1, // Match bSD.NI
                                                     1 // with node.NI
                                                     )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(string("NoNull:") + name, 1)));
 
   // Link it to the BSD coming in. Pushes match already
   conf->hookUp(pushBSDIn, pushBSDInPort, matchBSDIntoNodeS, 0);
@@ -174,7 +172,7 @@ void ruleSU2(str name,
   // res1(NI, N, D) from
   // <<BSD NI D><node NI N>>
   ElementSpecPtr makeRes1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("FlattenRes1:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("FlattenRes1:").append(name),
                                                     "\"Res1\" pop \
                                                      $0 1 field pop /* output BSD.NI */ \
                                                      $1 2 field pop /* output node.N */ \
@@ -186,16 +184,16 @@ void ruleSU2(str name,
 
   // Join with successor table
   ElementSpecPtr matchRes1IntoSuccessorS =
-    conf->addElement(ElementPtr(new MultLookup(strbuf("Res1InSuccessor:") << name,
+    conf->addElement(ElementPtr(new MultLookup(string("Res1InSuccessor:") + name,
                                                   successorTable,
                                                   1, // Match res1.NI
                                                   1 // with successor.NI
                                                   )));
-  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull2:") << name, 1)));
+  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNullField(string("NoNull2:") + name, 1)));
 
   // Res1 must be pushed to second join
   ElementSpecPtr pushRes1S =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PushRes1:") << name, 0)));
+    conf->addElement(ElementPtr(new TimedPullPush(string("PushRes1:") + name, 0)));
   // Link the two joins together
   conf->hookUp(makeRes1S, 0, pushRes1S, 0);
   conf->hookUp(pushRes1S, 0, matchRes1IntoSuccessorS, 0);
@@ -204,7 +202,7 @@ void ruleSU2(str name,
   // (res1.D == distance(res1.N, successor.S))
   // from <<Res1 NI N D><Successor NI S SI>>
   ElementSpecPtr selectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("SelectRes1:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("SelectRes1:").append(name),
                                                     "$0 2 field /* res1.N */\
                                                      $1 2 field /* D successor.S */\
                                                      distance --id /* dist(N,S) */\
@@ -218,7 +216,7 @@ void ruleSU2(str name,
   // Turn into bestSuccessor
   // from <<Res1...><Successor...>>
   ElementSpecPtr makeBSS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("FlattenSuccessor:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("FlattenSuccessor:").append(name),
                                                     "$1 unbox drop /* replace with BestSuccessor */\
                                                      \"bestSuccessor\" pop /* new literal */\
                                                      pop pop pop /* Remaining fields */")));
@@ -229,7 +227,7 @@ void ruleSU2(str name,
 
 /** SR1: successorCount(NI, count<>) :- successor(NI, S, SI)
 */
-void ruleSR1(str name,
+void ruleSR1(string name,
              Router::ConfigurationPtr conf,
              Table::MultAggregate aggregate,
              ElementSpecPtr pullSuccessorCountOut,
@@ -237,7 +235,7 @@ void ruleSR1(str name,
 {
   // Create the agg element
   ElementSpecPtr successorCountAggS =
-    conf->addElement(ElementPtr(new Aggregate(strbuf("CountSuccessors:") << name,
+    conf->addElement(ElementPtr(new Aggregate(string("CountSuccessors:") + name,
                                                  aggregate)));
 
 
@@ -245,7 +243,7 @@ void ruleSR1(str name,
   // successorCount(NI, C) from
   // <NI C>
   ElementSpecPtr makeSuccessorCountS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("FlattenSuccessorCount:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("FlattenSuccessorCount:").append(name),
                                                     "\"successorCount\" pop \
                                                      $0 pop /* output NI */ \
                                                      $1 pop /* output C */ \
@@ -258,7 +256,7 @@ void ruleSR1(str name,
    rule SR2 evictSuccessor@NI(NI) :- successorCount@NI(NI,C),
    C>successor.size.
 */
-void ruleSR2(str name,
+void ruleSR2(string name,
              Router::ConfigurationPtr conf,
              unsigned successorSize,
              ElementSpecPtr pushSuccessorCountIn,
@@ -267,17 +265,18 @@ void ruleSR2(str name,
              int pullEvictOutPort)
 {
   // Join with node
+  ostringstream oss;
+  oss << successorSize << " $2 >i /* successor.Size < C*/\
+                          ifstop /* drop if less than max */\
+                          \"evictSuccessor\" pop\
+                          $1 pop /* NI */";
   ElementSpecPtr selectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("SelectSuccCount:").cat(name),
-                                                    strbuf() << successorSize
-                                                    << " $2 >i /* successor.Size < C*/\
-                                                        ifstop /* drop if less than max */\
-                                                        \"evictSuccessor\" pop\
-                                                        $1 pop /* NI */")));
+    conf->addElement(ElementPtr(new PelTransform(string("SelectSuccCount:").append(name),
+                                                 oss.str())));
   conf->hookUp(pushSuccessorCountIn, pushSuccessorCountInPort, selectS, 0);
 
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("Slot:") << name)));
+    conf->addElement(ElementPtr(new Slot(string("Slot:") + name)));
   conf->hookUp(selectS, 0, slotS, 0);
   conf->hookUp(slotS, 0, pullEvictOut, pullEvictOutPort);
 }
@@ -285,7 +284,7 @@ void ruleSR2(str name,
 /** rule SR3 maxSuccessorDist@NI(NI,max<D>) :- successor@NI(NI,S,SI),
 	node@NI(NI,N), D = f_dist(N,S), evictSuccessor@NI(NI).
 */
-void ruleSR3(str name,
+void ruleSR3(string name,
              Router::ConfigurationPtr conf,
              TablePtr nodeTable,
              TablePtr successorTable,
@@ -296,12 +295,12 @@ void ruleSR3(str name,
 {
   // Join evictSuccessor with node
   ElementSpecPtr matchEvictSuccessorIntoNodeS =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("evictSuccessorInNode:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup(string("evictSuccessorInNode:") + name,
                                                     nodeTable,
                                                     1, // Match EvictSuccessor.NI
                                                     1 // with node.NI
                                                     )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(string("NoNull:") + name, 1)));
 
   // Link it to the evictSuccessor coming in. Pushes match already
   conf->hookUp(pushEvictSuccessorIn, pushEvictSuccessorInPort, matchEvictSuccessorIntoNodeS, 0);
@@ -312,7 +311,7 @@ void ruleSR3(str name,
   // res1(NI, N) from
   // <<evictSuccessor NI><node NI N>>
   ElementSpecPtr makeRes1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("FlattenRes1:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("FlattenRes1:").append(name),
                                                     "\"Res1\" pop \
                                                      $0 1 field pop /* output evictSuccessor.NI */ \
                                                      $1 2 field pop /* output node.N */")));
@@ -326,12 +325,12 @@ void ruleSR3(str name,
   // (res1.NI == successor.NI,
   //  D = distance(N, S))
   ElementSpecPtr findMaxInSuccessorS =
-    conf->addElement(ElementPtr(new PelScan(str("bestSuccessorDist:") << name,
+    conf->addElement(ElementPtr(new PelScan(string("bestSuccessorDist:") + name,
                                                successorTable, 1,
-                                               str("$1 /* res1.NI */ \
+                                               string("$1 /* res1.NI */ \
                                                     $2 /* NI res1.N */ \
                                                     0 ->u32 ->id /* NI N mindist */"),
-                                               str("2 peek /* NI */ \
+                                               string("2 peek /* NI */ \
                                                     $1 /* successor.NI */ \
                                                     ==s not /* res1.NI != successor.NI */ \
                                                     ifstop /* empty */ \
@@ -344,13 +343,13 @@ void ruleSR3(str name,
                                                     2 peek ifelse /* ((newDist>oldDist) ? newDist : oldDist) */ \
                                                     swap /* swap newMax in state where oldMax was */ \
                                                     drop /* only state remains */"),
-                                               str("\"maxSuccessorDist\" pop /* output name */\
+                                               string("\"maxSuccessorDist\" pop /* output name */\
                                                     $1 pop /* output NI */\
                                                     pop /* output maxDistance */\
                                                     drop drop /* empty the stack */"))));
   // Res1 must be pushed to second join
   ElementSpecPtr pushRes1S =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PushRes1:") << name, 0)));
+    conf->addElement(ElementPtr(new TimedPullPush(string("PushRes1:") + name, 0)));
 
 
 
@@ -363,7 +362,7 @@ void ruleSR3(str name,
 /** SR4: maxSuccessor(NI, S, SI) :- successor(NI, S, SI),
     maxSuccessorDist(NI, D), D=dist(N, S)
 */
-void ruleSR4(str name,
+void ruleSR4(string name,
              Router::ConfigurationPtr conf,
              TablePtr nodeTable,
              TablePtr successorTable,
@@ -372,12 +371,12 @@ void ruleSR4(str name,
 {
   // Join with node
   ElementSpecPtr matchMSDIntoNodeS =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("MSDInNode:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup(string("MSDInNode:") + name,
                                                     nodeTable,
                                                     1, // Match bSD.NI
                                                     1 // with node.NI
                                                     )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(string("NoNull:") + name, 1)));
 
   // Link it to the MSD coming in. Pushes match already
   conf->hookUp(pushMSDIn, pushMSDInPort, matchMSDIntoNodeS, 0);
@@ -387,7 +386,7 @@ void ruleSR4(str name,
   // res1(NI, N, D) from
   // <<MSD NI D><node NI N>>
   ElementSpecPtr makeRes1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("FlattenRes1:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("FlattenRes1:").append(name),
                                                     "\"Res1\" pop \
                                                      $0 1 field pop /* output MSD.NI */ \
                                                      $1 2 field pop /* output node.N */ \
@@ -399,16 +398,16 @@ void ruleSR4(str name,
 
   // Join with successor table
   ElementSpecPtr matchRes1IntoSuccessorS =
-    conf->addElement(ElementPtr(new MultLookup(strbuf("Res1InSuccessor:") << name,
+    conf->addElement(ElementPtr(new MultLookup(string("Res1InSuccessor:") + name,
                                                   successorTable,
                                                   1, // Match res1.NI
                                                   1 // with successor.NI
                                                   )));
-  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull2:") << name, 1)));
+  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNullField(string("NoNull2:") + name, 1)));
 
   // Res1 must be pushed to second join
   ElementSpecPtr pushRes1S =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PushRes1:") << name, 0)));
+    conf->addElement(ElementPtr(new TimedPullPush(string("PushRes1:") + name, 0)));
   // Link the two joins together
   conf->hookUp(makeRes1S, 0, pushRes1S, 0);
   conf->hookUp(pushRes1S, 0, matchRes1IntoSuccessorS, 0);
@@ -417,7 +416,7 @@ void ruleSR4(str name,
   // (res1.D == distance(res1.N, successor.S))
   // from <<Res1 NI N D><Successor NI S SI>>
   ElementSpecPtr selectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("SelectRes1:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("SelectRes1:").append(name),
                                                     "$0 2 field /* res1.N */\
                                                      $1 2 field /* D successor.S */\
                                                      distance --id /* dist(N,S) */\
@@ -431,7 +430,7 @@ void ruleSR4(str name,
   // Turn into res2
   // from <<Res1...><Successor...>>
   ElementSpecPtr makeMSS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("FlattenRes2:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("FlattenRes2:").append(name),
                                                     "$1 unbox drop /* replace with Res2 */\
                                                      \"Res2\" pop /* new literal */\
                                                      pop pop pop /* Remaining fields */")));
@@ -439,12 +438,12 @@ void ruleSR4(str name,
 
   // And send it for deletion
   ElementSpecPtr deleteSuccessorS =
-    conf->addElement(ElementPtr(new Delete(strbuf("DeleteSuccessor:") << name,
+    conf->addElement(ElementPtr(new Delete(string("DeleteSuccessor:") + name,
                                               successorTable,
                                               2,
                                               2)));
   ElementSpecPtr pushRes2S =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PushRes2:") << name, 0)));
+    conf->addElement(ElementPtr(new TimedPullPush(string("PushRes2:") + name, 0)));
   // Link the two joins together
   conf->hookUp(makeMSS, 0, pushRes2S, 0);
   conf->hookUp(pushRes2S, 0, deleteSuccessorS, 0);
@@ -453,9 +452,9 @@ void ruleSR4(str name,
 
 /** rule S0 stabilize@NI(NI, E) :- periodic@NI(TTL * 0.5), E=f_rand(),
     NI=ni. */
-void ruleS0(str name,
+void ruleS0(string name,
             Router::ConfigurationPtr conf,
-            str localAddress,
+            string localAddress,
             double fingerTTL,
             ElementSpecPtr pullStabilizeOut,
             int pullStabilizeOutPort)
@@ -467,17 +466,17 @@ void ruleS0(str name,
   stabilizeTuple->freeze();
 
   ElementSpecPtr sourceS =
-    conf->addElement(ElementPtr(new TupleSource(str("StabilizeSource:") << name,
+    conf->addElement(ElementPtr(new TupleSource(string("StabilizeSource:") + name,
                                                    stabilizeTuple)));
   
   // The timed pusher
   ElementSpecPtr pushS =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("StabilizePush:") << name,
+    conf->addElement(ElementPtr(new TimedPullPush(string("StabilizePush:") + name,
                                                      fingerTTL * 0.5)));
   
   // And a slot from which to pull
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("StabilizeSlot:") << name)));
+    conf->addElement(ElementPtr(new Slot(string("StabilizeSlot:") + name)));
 
   // Link everything
   conf->hookUp(sourceS, 0, pushS, 0);
@@ -489,7 +488,7 @@ void ruleS0(str name,
 /** rule S0a stabilize@NI(NI, E) :- stabilizeEvent@NI(NITTL * 0.5),
     E=f_rand(), NI=ni.
 */
-void ruleS0a(str name,
+void ruleS0a(string name,
              Router::ConfigurationPtr conf,
              ElementSpecPtr pushStabilizeEventIn,
              int pushStabilizeEventInPort,
@@ -500,13 +499,13 @@ void ruleS0a(str name,
   // from
   // stabilizeEvent(NI)
   ElementSpecPtr projectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("project:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("project:").append(name),
                                                     "\"stabilize\" pop \
                                                      $1 pop /* out sE.NI */\
                                                      $1 \":\" strcat rand strcat pop /* out random */\
                                                      ")));
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("Slot:") << name)));
+    conf->addElement(ElementPtr(new Slot(string("Slot:") + name)));
   conf->hookUp(pushStabilizeEventIn, pushStabilizeEventInPort, projectS, 0);
   conf->hookUp(projectS, 0, slotS, 0);
   conf->hookUp(slotS, 0, pullStabilizeOut, pullStabilizeOutPort);
@@ -515,7 +514,7 @@ void ruleS0a(str name,
 
 /** rule S0b stabilizeRecord@NI(NI, E) :- stabilize@NI(NI, E).
  */
-void ruleS0b(str name,
+void ruleS0b(string name,
              Router::ConfigurationPtr conf,
              ElementSpecPtr pushStabilizeIn,
              int pushStabilizeInPort,
@@ -526,13 +525,13 @@ void ruleS0b(str name,
   // from
   // stabilize(NI, E)
   ElementSpecPtr projectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("project:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("project:").append(name),
                                                     "\"stabilizeRecord\" pop \
                                                      $1 pop /* out s.NI */\
                                                      $2 pop /* out s.E */\
                                                      ")));
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("Slot:") << name)));
+    conf->addElement(ElementPtr(new Slot(string("Slot:") + name)));
   conf->hookUp(pushStabilizeIn, pushStabilizeInPort, projectS, 0);
   conf->hookUp(projectS, 0, slotS, 0);
   conf->hookUp(slotS, 0, pullStabilizeRecordOut, pullStabilizeRecordOutPort);
@@ -542,7 +541,7 @@ void ruleS0b(str name,
    rule S1 stabilizeRequest@SI(SI,NI,E) :- stabilize@NI(NI,E),
    bestSuccessor@NI(NI,S,SI),
  */
-void ruleS1(str name,
+void ruleS1(string name,
             Router::ConfigurationPtr conf,
             TablePtr bestSuccessorTable,
             ElementSpecPtr pushStabilizeIn,
@@ -552,12 +551,12 @@ void ruleS1(str name,
 {
   // Join with best successor
   ElementSpecPtr joinS =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("StabilizeInBestSuccessor:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup(string("StabilizeInBestSuccessor:") + name,
                                                     bestSuccessorTable,
                                                     1, // Match stabilize.NI
                                                     1 // with bestSuccessor.NI
                                                     )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(string("NoNull:") + name, 1)));
   // Link it to the stabilize coming in. Pushes match already
   conf->hookUp(pushStabilizeIn, pushStabilizeInPort, joinS, 0);
   conf->hookUp(joinS, 0, noNullS, 0);
@@ -568,7 +567,7 @@ void ruleS1(str name,
   // stabilizeRequest(SI, NI, E) from
   // stabilize(NI, E), bestSuccesssor(NI,S, SI)
   ElementSpecPtr projectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("Project:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("Project:").append(name),
                                                     "\"stabilizeRequest\" pop \
                                                      $1 3 field pop /* SI */\
                                                      $0 1 field pop /* NI */\
@@ -582,7 +581,7 @@ void ruleS1(str name,
     rule S2 sendPredecessor@PI1(PI1,P,PI,E) :-
     stabilizeRequest@NI(NI,PI1,E), predecessor@NI(NI,P,PI), PI != null.
 */
-void ruleS2(str name,
+void ruleS2(string name,
             Router::ConfigurationPtr conf,
             TablePtr predecessorTable,
             ElementSpecPtr pushStabilizeRequestIn,
@@ -592,12 +591,12 @@ void ruleS2(str name,
 {
   // StabilizeRequest stabilizeRequest with landmark table
   ElementSpecPtr join1S =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("stabilizeRequestIntoPredecessor:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup(string("stabilizeRequestIntoPredecessor:") + name,
                                                     predecessorTable,
                                                     1, // Match stabilizeRequest.NI
                                                     1 // with predecessor.NI
                                                     )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(string("NoNull:") + name, 1)));
 
   conf->hookUp(pushStabilizeRequestIn, pushStabilizeRequestInPort, join1S, 0);
   conf->hookUp(join1S, 0, noNullS, 0);
@@ -606,7 +605,7 @@ void ruleS2(str name,
   // Select predecessor.PI != null
   // stabilizeRequest(NI, PI1, E),predecessor(NI, P, PI)>
   ElementSpecPtr selectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("select:") << name,
+    conf->addElement(ElementPtr(new PelTransform(string("select:") + name,
                                                     "$1 3 field /* predecessor.PI */\
                                                      \"-\" ==s ifstop /* select clause */\
                                                      $0 pop $1 pop /* pass through otherwise */\
@@ -619,7 +618,7 @@ void ruleS2(str name,
   // from
   // stabilizeRequest(NI, PI1, E),predecessor(NI, P, PI)>
   ElementSpecPtr project1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("project:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("project:").append(name),
                                                     "\"sendPredecessor\" pop \
                                                      $0 2 field pop /* out stabilizeRequest.PI1 */\
                                                      $1 2 field pop /* out predecessor.P */\
@@ -636,7 +635,7 @@ void ruleS2(str name,
     sendPredecessor@NI(NI,P,PI,E), bestSuccessor@NI(NI,S,SI), P in
     (N,S), stabilizeRecord@NI(NI, E).
 */
-void ruleS3(str name,
+void ruleS3(string name,
             Router::ConfigurationPtr conf,
             TablePtr stabilizeRecordTable,
             TablePtr nodeTable,
@@ -648,19 +647,19 @@ void ruleS3(str name,
 {
   // SendPredecessor sendPredecessor with landmark table
   ElementSpecPtr join1S =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("sendPredecessorIntoNode:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup(string("sendPredecessorIntoNode:") + name,
                                                     nodeTable,
                                                     1, // Match sendPredecessor.NI
                                                     1 // with node.NI
                                                     )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(string("NoNull:") + name, 1)));
   conf->hookUp(pushSendPredecessorIn, pushSendPredecessorInPort, join1S, 0);
   conf->hookUp(join1S, 0, noNullS, 0);
 
   // from
   // sendPredecessor(NI, P, PI, E), node(NI, N)>
   ElementSpecPtr project1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("Project:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("Project:").append(name),
                                                     "\"res1\" pop \
                                                      $0 1 field pop /* out NI */\
                                                      $0 2 field pop /* out P */\
@@ -673,14 +672,14 @@ void ruleS3(str name,
   
   // Now join res1 with stabilize record
   ElementSpecPtr pushRes1S =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PushRes1:") << name, 0)));
+    conf->addElement(ElementPtr(new TimedPullPush(string("PushRes1:") + name, 0)));
   ElementSpecPtr join2S =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("res1IntoStabilizeRecord:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup(string("res1IntoStabilizeRecord:") + name,
                                                     stabilizeRecordTable,
                                                     1, // Match res1.NI
                                                     1 // with stabilizeRecord.NI
                                                     )));
-  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull2:") << name, 1)));
+  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNullField(string("NoNull2:") + name, 1)));
   conf->hookUp(project1S, 0, pushRes1S, 0);
   conf->hookUp(pushRes1S, 0, join2S, 0);
   conf->hookUp(join2S, 0, noNull2S, 0);
@@ -689,7 +688,7 @@ void ruleS3(str name,
   // from
   // res1(NI, P, PI, E, N), stabilizeRecord(NI, E)
   ElementSpecPtr selectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("select:") << name,
+    conf->addElement(ElementPtr(new PelTransform(string("select:") + name,
                                                     "$0 4 field /* res1.E */\
                                                      $1 2 field /* res1.E sR.E */\
                                                      ==s not ifstop /* select clause */\
@@ -701,7 +700,7 @@ void ruleS3(str name,
   // from
   // res1()..., stabilizeRecord(...)
   ElementSpecPtr project2S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("Project2:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("Project2:").append(name),
                                                     "$0 unboxPop\
                                                      ")));
   conf->hookUp(selectS, 0, project2S, 0);
@@ -709,14 +708,14 @@ void ruleS3(str name,
 
   // Finally join res1 with bestSuccessorTable
   ElementSpecPtr push2S =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("Push2:") << name, 0)));
+    conf->addElement(ElementPtr(new TimedPullPush(string("Push2:") + name, 0)));
   ElementSpecPtr join3S =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("res1IntoBestSuccessor:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup(string("res1IntoBestSuccessor:") + name,
                                                     bestSuccessorTable,
                                                     1, // Match res1.NI
                                                     1 // with bestSuccessor.NI
                                                     )));
-  ElementSpecPtr noNull3S = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull3:") << name, 1)));
+  ElementSpecPtr noNull3S = conf->addElement(ElementPtr(new NoNullField(string("NoNull3:") + name, 1)));
   conf->hookUp(project2S, 0, push2S, 0);
   conf->hookUp(push2S, 0, join3S, 0);
   conf->hookUp(join3S, 0, noNull3S, 0);
@@ -726,7 +725,7 @@ void ruleS3(str name,
   // from
   // res1(NI, P, PI, E, N), bestSuccessor(NI, S, SI)
   ElementSpecPtr select2S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("select2:") << name,
+    conf->addElement(ElementPtr(new PelTransform(string("select2:") + name,
                                                     "$0 2 field /* P */\
                                                      $0 5 field /* P N */\
                                                      $1 2 field /* P N S */\
@@ -741,7 +740,7 @@ void ruleS3(str name,
   // from
   // res1(NI, P, PI, E, N), bestSuccessor(NI, S, SI)
   ElementSpecPtr project3S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("project3:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("project3:").append(name),
                                                     "\"successor\" pop \
                                                      $0 1 field pop /* out NI */\
                                                      $0 2 field pop /* out P */\
@@ -756,7 +755,7 @@ void ruleS3(str name,
    rule S4 sendSuccessors@SI(SI,NI,E) :- stabilize@NI(NI,E),
    successor@NI(NI,S,SI).
  */
-void ruleS4(str name,
+void ruleS4(string name,
             Router::ConfigurationPtr conf,
             TablePtr successorTable,
             ElementSpecPtr pushStabilizeIn,
@@ -766,12 +765,12 @@ void ruleS4(str name,
 {
   // Join with successor
   ElementSpecPtr joinS =
-    conf->addElement(ElementPtr(new MultLookup(strbuf("StabilizeInSuccessor:") << name,
+    conf->addElement(ElementPtr(new MultLookup(string("StabilizeInSuccessor:") + name,
                                                   successorTable,
                                                   1, // Match stabilize.NI
                                                   1 // with successor.NI
                                                   )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(string("NoNull:") + name, 1)));
   // Link it to the stabilize coming in. Pushes match already
   conf->hookUp(pushStabilizeIn, pushStabilizeInPort, joinS, 0);
   conf->hookUp(joinS, 0, noNullS, 0);
@@ -782,7 +781,7 @@ void ruleS4(str name,
   // sendSuccessors(SI, NI, E) from
   // stabilize(NI, E), successsor(NI,S, SI)
   ElementSpecPtr projectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("Project:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("Project:").append(name),
                                                     "\"sendSuccessors\" pop \
                                                      $1 3 field pop /* SI */\
                                                      $0 1 field pop /* NI */\
@@ -798,7 +797,7 @@ void ruleS4(str name,
    rule S5 returnSuccessor@PI(PI,S,SI,E) :- sendSuccessors@NI(NI,PI,E),
    successor@NI(NI,S,SI).
  */
-void ruleS5(str name,
+void ruleS5(string name,
             Router::ConfigurationPtr conf,
             TablePtr successorTable,
             ElementSpecPtr pushSendSuccessorsIn,
@@ -808,12 +807,12 @@ void ruleS5(str name,
 {
   // Join with successor
   ElementSpecPtr joinS =
-    conf->addElement(ElementPtr(new MultLookup(strbuf("SendSuccessorsInSuccessor:") << name,
+    conf->addElement(ElementPtr(new MultLookup(string("SendSuccessorsInSuccessor:") + name,
                                                   successorTable,
                                                   1, // Match sendSuccessors.NI
                                                   1 // with successor.NI
                                                   )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(string("NoNull:") + name, 1)));
   // Link it to the sendSuccessors coming in. Pushes match already
   conf->hookUp(pushSendSuccessorsIn, pushSendSuccessorsInPort, joinS, 0);
   conf->hookUp(joinS, 0, noNullS, 0);
@@ -824,7 +823,7 @@ void ruleS5(str name,
   // returnSuccessor(PI, S, SI, E) from
   // sendSuccessors(NI,PI,E), successsor(NI,S, SI)
   ElementSpecPtr projectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("Project:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("Project:").append(name),
                                                     "\"returnSuccessor\" pop \
                                                      $0 2 field pop /* PI */\
                                                      $1 2 field pop /* S */\
@@ -840,7 +839,7 @@ void ruleS5(str name,
     rule S5a successor@NI(NI, S, SI) :- returnSuccessor@NI(NI,S,SI,E),
     stabilizeRecord@NI(NI, E).
 */
-void ruleS5a(str name,
+void ruleS5a(string name,
              Router::ConfigurationPtr conf,
              TablePtr stabilizeRecordTable,
              ElementSpecPtr pushReturnSuccessorIn,
@@ -850,12 +849,12 @@ void ruleS5a(str name,
 {
   // returnSuccessor with stabilizerecord table
   ElementSpecPtr join1S =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("returnSuccessorIntoStabilizeRecord:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup(string("returnSuccessorIntoStabilizeRecord:") + name,
                                                     stabilizeRecordTable,
                                                     1, // Match returnSuccessor.NI
                                                     1 // with stabilizeRecord.NI
                                                     )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(string("NoNull:") + name, 1)));
   conf->hookUp(pushReturnSuccessorIn, pushReturnSuccessorInPort, join1S, 0);
   conf->hookUp(join1S, 0, noNullS, 0);
 
@@ -863,7 +862,7 @@ void ruleS5a(str name,
   // from
   // rS(NI, S, SI, E), stabilizeRecord(NI, E)
   ElementSpecPtr selectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("select:") << name,
+    conf->addElement(ElementPtr(new PelTransform(string("select:") + name,
                                                     "$0 4 field /* rS.E */\
                                                      $1 2 field /* rS1.E sR.E */\
                                                      ==s not ifstop /* select clause */\
@@ -876,7 +875,7 @@ void ruleS5a(str name,
   // from
   // rS(NI, S, SI, E), stabilizeRecord(NI, E)
   ElementSpecPtr project3S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("project3:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("project3:").append(name),
                                                     "\"successor\" pop \
                                                      $0 1 field pop /* out NI */\
                                                      $0 2 field pop /* out S */\
@@ -888,9 +887,9 @@ void ruleS5a(str name,
 
 
 /** rule S6a notify@NI(NI) :- periodic@NI(TTL * 0.5), NI=ni. */
-void ruleS6a(str name,
+void ruleS6a(string name,
              Router::ConfigurationPtr conf,
-             str localAddress,
+             string localAddress,
              double fingerTTL,
              ElementSpecPtr pullNotifyOut,
              int pullNotifyOutPort)
@@ -902,17 +901,17 @@ void ruleS6a(str name,
   notifyTuple->freeze();
 
   ElementSpecPtr sourceS =
-    conf->addElement(ElementPtr(new TupleSource(str("NotifySource:") << name,
+    conf->addElement(ElementPtr(new TupleSource(string("NotifySource:") + name,
                                                    notifyTuple)));
   
   // The timed pusher
   ElementSpecPtr pushS =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("NotifyPush:") << name,
+    conf->addElement(ElementPtr(new TimedPullPush(string("NotifyPush:") + name,
                                                      fingerTTL * 0.5)));
   
   // And a slot from which to pull
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("NotifySlot:") << name)));
+    conf->addElement(ElementPtr(new Slot(string("NotifySlot:") + name)));
 
   // Link everything
   conf->hookUp(sourceS, 0, pushS, 0);
@@ -925,7 +924,7 @@ void ruleS6a(str name,
     rule S6 notifyPredecessor@SI(SI,N,NI) :- notify@NI(NI),
     node@NI(NI,N), successor@NI(NI,S,SI).
 */
-void ruleS6(str name,
+void ruleS6(string name,
             Router::ConfigurationPtr conf,
             TablePtr nodeTable,
             TablePtr successorTable,
@@ -936,12 +935,12 @@ void ruleS6(str name,
 {
   // Join notify with node
   ElementSpecPtr join1S =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("notifyIntoNode:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup(string("notifyIntoNode:") + name,
                                                     nodeTable,
                                                     1, // Match notify.NI
                                                     1 // with node.NI
                                                     )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(string("NoNull:") + name, 1)));
   conf->hookUp(pushNotifyIn, pushNotifyInPort, join1S, 0);
   conf->hookUp(join1S, 0, noNullS, 0);
 
@@ -949,7 +948,7 @@ void ruleS6(str name,
   // from
   // notify(NI), node(NI, N)>
   ElementSpecPtr project1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("Project:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("Project:").append(name),
                                                     "\"res1\" pop \
                                                      $0 1 field pop /* out NI */\
                                                      $1 2 field pop /* out node.N */\
@@ -959,14 +958,14 @@ void ruleS6(str name,
   
   // Now join res1 with successor
   ElementSpecPtr push1S =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("Push1:") << name, 0)));
+    conf->addElement(ElementPtr(new TimedPullPush(string("Push1:") + name, 0)));
   ElementSpecPtr join2S =
-    conf->addElement(ElementPtr(new MultLookup(strbuf("res1IntoSuccessor:") << name,
+    conf->addElement(ElementPtr(new MultLookup(string("res1IntoSuccessor:") + name,
                                                     successorTable,
                                                     1, // Match res1.NI
                                                     1 // with successor.NI
                                                     )));
-  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull2:") << name, 1)));
+  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNullField(string("NoNull2:") + name, 1)));
   conf->hookUp(project1S, 0, push1S, 0);
   conf->hookUp(push1S, 0, join2S, 0);
   conf->hookUp(join2S, 0, noNull2S, 0);
@@ -975,7 +974,7 @@ void ruleS6(str name,
   // from
   // res1(NI, N), successor(NI, S, SI)
   ElementSpecPtr project2S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("Project2:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("Project2:").append(name),
                                                     "\"notifyPredecessor\" pop \
                                                      $1 3 field pop /* out SI */\
                                                      $0 2 field pop /* out N */\
@@ -992,7 +991,7 @@ void ruleS6(str name,
     notifyPredecessor@NI(NI,P,PI), predecessor@NI(NI,P1,PI1), ((PI1 ==
     "") || (P in (P1, N))).
 */
-void ruleS7(str name,
+void ruleS7(string name,
             Router::ConfigurationPtr conf,
             TablePtr nodeTable,
             TablePtr predecessorTable,
@@ -1003,12 +1002,12 @@ void ruleS7(str name,
 {
   // Join notifyPredecessor with table
   ElementSpecPtr join1S =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("notifyPredecessorIntoNode:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup(string("notifyPredecessorIntoNode:") + name,
                                                     nodeTable,
                                                     1, // Match notifyPredecessor.NI
                                                     1 // with node.NI
                                                     )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(string("NoNull:") + name, 1)));
   conf->hookUp(pushNotifyPredecessorIn, pushNotifyPredecessorInPort, join1S, 0);
   conf->hookUp(join1S, 0, noNullS, 0);
 
@@ -1016,7 +1015,7 @@ void ruleS7(str name,
   // from
   // notifyPredecessor(NI, P, PI), node(NI, N)>
   ElementSpecPtr project1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("Project:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("Project:").append(name),
                                                     "\"res1\" pop \
                                                      $0 1 field pop /* out NI */\
                                                      $0 2 field pop /* out P */\
@@ -1028,14 +1027,14 @@ void ruleS7(str name,
   
   // Finally join res1 with predecessorTable
   ElementSpecPtr push2S =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("Push2:") << name, 0)));
+    conf->addElement(ElementPtr(new TimedPullPush(string("Push2:") + name, 0)));
   ElementSpecPtr join3S =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("res1IntoPredecessor:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup(string("res1IntoPredecessor:") + name,
                                                     predecessorTable,
                                                     1, // Match res1.NI
                                                     1 // with predecessor.NI
                                                     )));
-  ElementSpecPtr noNull3S = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull3:") << name, 1)));
+  ElementSpecPtr noNull3S = conf->addElement(ElementPtr(new NoNullField(string("NoNull3:") + name, 1)));
   conf->hookUp(project1S, 0, push2S, 0);
   conf->hookUp(push2S, 0, join3S, 0);
   conf->hookUp(join3S, 0, noNull3S, 0);
@@ -1045,7 +1044,7 @@ void ruleS7(str name,
   // from
   // res1(NI, P, PI, N), predecessor(NI, P1, PI1)
   ElementSpecPtr select2S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("select2:") << name,
+    conf->addElement(ElementPtr(new PelTransform(string("select2:") + name,
                                                     "$0 2 field /* P */\
                                                      $1 2 field /* P P1 */\
                                                      $0 4 field /* P P1 N */\
@@ -1062,7 +1061,7 @@ void ruleS7(str name,
   // from
   // res1(NI, P, PI, N), predecessor(NI, S, SI)
   ElementSpecPtr project3S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("project3:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("project3:").append(name),
                                                     "\"predecessor\" pop \
                                                      $0 1 field pop /* out NI */\
                                                      $0 2 field pop /* out P */\

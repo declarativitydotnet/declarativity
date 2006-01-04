@@ -11,13 +11,12 @@
 
 #include <timedPullPush.h>
 #include <element.h>
-#include <async.h>
 #include <math.h>
 
 #include "val_str.h"
 #include "val_uint64.h"
 
-TimedPullPush::TimedPullPush(str name,
+TimedPullPush::TimedPullPush(string name,
                              double seconds,
                              int tuples)
   : Element(name, 1, 1),

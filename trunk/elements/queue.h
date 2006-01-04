@@ -18,7 +18,7 @@
 class Queue : public Element { 
 public:
 
-  Queue(str name, unsigned int queueSize);
+  Queue(string name, unsigned int queueSize);
 
   ~Queue();
   

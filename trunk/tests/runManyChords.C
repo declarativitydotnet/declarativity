@@ -15,8 +15,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 #include <stdlib.h>
 
@@ -83,7 +81,7 @@ void testNetworked(LoggerI::Level level,
 
 
   // The first
-  Udp* udp = New Udp("127.0.0.1:10000", 10000);
+  Udp* udp = new Udp("127.0.0.1:10000", 10000);
   createNode("127.0.0.1:10000", "-",
              conf, udp);
 
@@ -91,13 +89,15 @@ void testNetworked(LoggerI::Level level,
   for (int i = 1;
        i < nodes;
        i++, port++) {
-    strbuf name = strbuf() << port;
-    udp = New Udp(name, port);
+    ostringstream name;
+    name << port;
+    udp = new Udp(name.str(), port);
 
-    strbuf myAddress = strbuf(str("127.0.0.1:")) << port;
-    strbuf landmarkAddress = strbuf(str("127.0.0.1:")) << ((port - 1));
-    createNode(myAddress, landmarkAddress, conf, udp,
-               i * interarrival);
+    ostringstream myAddress;
+    myAddress <<  string("127.0.0.1:") << port;
+    ostringstream landmarkAddress;
+    landmarkAddress << string("127.0.0.1:") << ((port - 1));
+    createNode(myAddress.str(), landmarkAddress.str(), conf, udp, i * interarrival);
   }
 
   RouterPtr router(new Router(conf, level));
@@ -125,7 +125,7 @@ int main(int argc, char **argv)
     fatal << "Usage:\n\t runManyChord <loggingLevel> <seed> <noNodes> <interarrival>\n";
   }
 
-  str levelName(argv[1]);
+  string levelName(argv[1]);
   LoggerI::Level level = LoggerI::levelFromName[levelName];
 
   int seed = atoi(argv[2]);

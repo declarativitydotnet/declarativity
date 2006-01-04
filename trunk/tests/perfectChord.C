@@ -18,8 +18,6 @@
 #include <unistd.h>
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 #include <math.h>
 
@@ -59,7 +57,7 @@
 
 #define START_PORT 10000
 
-void hookupSend_RCC(Router::ConfigurationPtr conf, str src, bool do_retry,
+void hookupSend_RCC(Router::ConfigurationPtr conf, string src, bool do_retry,
                     ElementSpecPtr dmux_out,  int pdo, ElementSpecPtr dmux_in, int pdi,
                     ElementSpecPtr rr_out,    int pmo, ElementSpecPtr mux_in,  int pmi) {
   // SENDER
@@ -135,7 +133,7 @@ void hookupRecv_RCC(Router::ConfigurationPtr conf, ElementSpecPtr udprx,
   conf->hookUp(respAddr, 0, rr_out, 1);
 }
 
-void hookupSend_CC(Router::ConfigurationPtr conf, str src, bool do_retry,
+void hookupSend_CC(Router::ConfigurationPtr conf, string src, bool do_retry,
                    ElementSpecPtr dmux_out,  int pdo, ElementSpecPtr dmux_in, int pdi,
                    ElementSpecPtr rr_out,    int pmo, ElementSpecPtr mux_in,  int pmi) {
   // SENDER
@@ -202,11 +200,14 @@ void hookupRecv_CC(Router::ConfigurationPtr conf, ElementSpecPtr udprx,
 void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
 {
   Router::ConfigurationPtr conf(new Router::Configuration());
-  str my_addr = strbuf() << "localhost:" << (START_PORT + nodeid);
+  string my_addr;
+  ostringstream oss;
+  oss << "localhost:" << (START_PORT + nodeid);
+  my_addr = oss.str();
   if (emulab) {
     char buf[64];
     sprintf(buf, "node%04d:%d\n", nodeid, (START_PORT+nodeid));
-    my_addr = str(buf);
+    my_addr = string(buf);
   }
   // std::cerr << "MY ADDRESS: " << my_addr << std::endl;
 
@@ -218,7 +219,7 @@ void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
     if (emulab) sprintf(buf, "node%04d:%d\n", nid, (START_PORT+nid));
     else        sprintf(buf, "localhost:%d\n", (START_PORT + nid));
     skrp->route(Val_UInt32::mk(nid), Val_Str::mk(buf));
-    // std::cerr << "FINGER( " << i << " ): " << str(buf) << std::endl;
+    // std::cerr << "FINGER( " << i << " ): " << string(buf) << std::endl;
   }
   boost::shared_ptr < std::vector<ValuePtr> > ports(skrp->routes());
 

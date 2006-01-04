@@ -12,18 +12,11 @@
 #include "pelTransform.h"
 #include "pel_lexer.h"
 
-PelTransform::PelTransform(str name, str pelCode)
+PelTransform::PelTransform(string name, string pelCode)
   : Element(name, 1, 1)
 {
   _pelCode = pelCode;
-  _program = Pel_Lexer::compile(pelCode);
-}
-
-PelTransform::~PelTransform()
-{
-  if (_program != 0) {
-    delete _program;
-  }
+  _program = Pel_Lexer::compile(pelCode.c_str());
 }
 
 TuplePtr PelTransform::simple_action(TuplePtr p)

@@ -16,8 +16,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 #include <stdlib.h>
 
@@ -56,6 +54,7 @@
 #include "planner.h"
 #include "catalog.h"
 #include "eca_context.h"
+#include "loop.h"
 
 #if 0
 
@@ -69,7 +68,7 @@
 extern int ol_parser_debug;
 
 static int STARTING_PORT = 20000;
-static str LOCAL("127.0.0.1");
+static string LOCAL("127.0.0.1");
 static int nodeNo;
 Planner *planner;
 FILE* plannerOutput;
@@ -92,34 +91,34 @@ static int updateRoundRobin = 0;
 int queries = 0;
 static int numLinks = 0;
 
-void defaultRing(Catalog* catalog, str address)
+void defaultRing(Catalog* catalog, string address)
 {
   TuplePtr link = Tuple::mk();
   link->append(Val_Str::mk("link"));
-  strbuf src(address); src << ":" << port;   
+  ostringstream src(address); src << ":" << port;   
   int dstPort = port + 1;
   if (dstPort == (numNodes + port)) {
     dstPort = STARTING_PORT;;
   }
 
-  strbuf dst(address); dst << ":" << dstPort;   
-  link->append(Val_Str::mk(strbuf() << src << "|" << dst)); // primary key
-  link->append(Val_Str::mk(src));
-  link->append(Val_Str::mk(dst));
+  ostringstream dst(address); dst << ":" << dstPort;   
+  link->append(Val_Str::mk(src.str() + "|" + dst.str())); // primary key
+  link->append(Val_Str::mk(src.str()));
+  link->append(Val_Str::mk(dst.str()));
   link->append(Val_Int32::mk(1));
   link->freeze();
 
   TuplePtr reverseLink = Tuple::mk();
   reverseLink->append(Val_Str::mk("link"));
-  strbuf src1(LOCAL); src1 << ":" << port;   
+  ostringstream src1(LOCAL); src1 << ":" << port;   
   dstPort = port - 1;
   if (dstPort == (STARTING_PORT - 1)) {
     dstPort += numNodes;
   }
-  strbuf dst1(LOCAL); dst1 << ":" << dstPort;   
-  reverseLink->append(Val_Str::mk(strbuf() << src1 << "|" << dst1)); // primary key
-  reverseLink->append(Val_Str::mk(src1));
-  reverseLink->append(Val_Str::mk(dst1));
+  ostringstream dst1(LOCAL); dst1 << ":" << dstPort;   
+  reverseLink->append(Val_Str::mk(src1.str() + "|" + dst1.str())); // primary key
+  reverseLink->append(Val_Str::mk(src1.str()));
+  reverseLink->append(Val_Str::mk(dst1.str()));
   reverseLink->append(Val_Int32::mk(1));
   reverseLink->freeze();
   
@@ -132,11 +131,10 @@ void defaultRing(Catalog* catalog, str address)
 }
 
 
-void loadLinkTable(Catalog* catalog, str inputGraph, 
-		   str address)
+void loadLinkTable(Catalog* catalog, string inputGraph, string address)
 {
   // src, dst, metric1, metric2, ...
-  FILE* inputFile = fopen(inputGraph.cstr(), "r");
+  FILE* inputFile = fopen(inputGraph.c_str(), "r");
   char c[200];
   while (fgets(c, 200, inputFile) != NULL) {
     if (address == LOCAL) {
@@ -162,11 +160,11 @@ void loadLinkTable(Catalog* catalog, str inputGraph,
 
       TuplePtr link = Tuple::mk();
       link->append(Val_Str::mk("link"));
-      strbuf src(LOCAL); src << ":" << (STARTING_PORT + srcI);   
-      strbuf dst(LOCAL); dst << ":" << (STARTING_PORT + dstI);   
-      link->append(Val_Str::mk(strbuf() << src << "|" << dst)); // primary key
-      link->append(Val_Str::mk(src));
-      link->append(Val_Str::mk(dst));
+      ostringstream src(LOCAL); src << ":" << (STARTING_PORT + srcI);   
+      ostringstream dst(LOCAL); dst << ":" << (STARTING_PORT + dstI);   
+      link->append(Val_Str::mk(src.str() + "|" + dst.str())); // primary key
+      link->append(Val_Str::mk(src.str()));
+      link->append(Val_Str::mk(dst.str()));
 
       if (correlate != 0) {
 	// dump all the metrics
@@ -182,8 +180,8 @@ void loadLinkTable(Catalog* catalog, str inputGraph,
       tablePtr->insert(link);
       numLinks++;
     } else {
-      str s = strtok(c," ");
-      str d = strtok(NULL," ");
+      string s = strtok(c," ");
+      string d = strtok(NULL," ");
       std::vector<double> metrics;
 
       char* st = NULL;
@@ -206,11 +204,11 @@ void loadLinkTable(Catalog* catalog, str inputGraph,
 
       TuplePtr link = Tuple::mk();
       link->append(Val_Str::mk("link"));
-      strbuf src(s); src << ":" << port;  
-      strbuf dst(d); dst << ":" << port;
-      link->append(Val_Str::mk(strbuf() << src << "|" << dst)); // primary key
-      link->append(Val_Str::mk(src));
-      link->append(Val_Str::mk(dst));
+      ostringstream src(s); src << ":" << port;  
+      ostringstream dst(d); dst << ":" << port;
+      link->append(Val_Str::mk(src.str() + "|" + dst.str())); // primary key
+      link->append(Val_Str::mk(src.str()));
+      link->append(Val_Str::mk(dst.str()));
       if (correlate != 0) {
 	// dump all the metrics
 	for (unsigned k = 0; k < metrics.size(); k++) {
@@ -229,7 +227,7 @@ void loadLinkTable(Catalog* catalog, str inputGraph,
 }
 
 
-void initializeLinkTable(Catalog* catalog, str address, str inputGraph)
+void initializeLinkTable(Catalog* catalog, string address, string inputGraph)
 {
 
   warn << "Initialize link table\n";
@@ -255,7 +253,7 @@ void quit()
 //static IntMap previousDsts;
 static int offset = 1;
 
-void insertMagicSource(boost::shared_ptr< Catalog> catalog, str address)
+void insertMagicSource(boost::shared_ptr< Catalog> catalog, string address)
 {
   int nodeVal = rand() % numNodes;
   int dstVal = (nodeVal + offset) % (int) (numNodes * percentMagicDsts);
@@ -286,11 +284,11 @@ void insertMagicSource(boost::shared_ptr< Catalog> catalog, str address)
       = catalog->getTableInfo("magic")->_table; 
     
     TuplePtr magicSource = Tuple::mk();
-    strbuf src(address); src << ":" << port;  
-    strbuf dst(address); dst << ":" << (STARTING_PORT + dstVal);  
+    ostringstream src(address); src << ":" << port;  
+    ostringstream dst(address); dst << ":" << (STARTING_PORT + dstVal);  
     magicSource->append(Val_Str::mk("magic"));
-    magicSource->append(Val_Str::mk(str(src)));
-    magicSource->append(Val_Str::mk(str(dst)));
+    magicSource->append(Val_Str::mk(src.str()));
+    magicSource->append(Val_Str::mk(dst.str()));
     magicSource->append(Val_Int32::mk(queries));
     tablePtr->insert(magicSource);
     //}
@@ -349,7 +347,7 @@ void updateLinks(boost::shared_ptr< Catalog> catalog)
   }
 
   updateTimes++;
-  delaycb(updatePeriodSeconds.at(updateRoundRobin % updatePeriodSeconds.size()), 0, wrap(&updateLinks, catalog));
+  delayCB(updatePeriodSeconds.at(updateRoundRobin % updatePeriodSeconds.size()), bind(updateLinks, catalog));
   updateRoundRobin++;
 }
 
@@ -491,25 +489,25 @@ void generateCacheElement(Router::ConfigurationPtr conf, ptr< Catalog> catalog)
 /** Build a symmetric link transitive closure. */
 void runPathQuery(Router::ConfigurationPtr conf, 
 		  LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt, 
-		  str address, std::vector<str> filenames, 
-		  str inputGraph, str debugFile)
+		  string address, std::vector<string> filenames, 
+		  string inputGraph, string debugFile)
 {
-  str filename = filenames.at(0);
+  string filename = filenames.at(0);
   warn << "Execute path query " << filename << "\n";
   warn << "Start node " << address << " " << port << "\n";
-  str outputFile(strbuf(filename << ".out"));
-  plannerOutput = fopen(outputFile.cstr(), "w");
+  string outputFile(filename + ".out");
+  plannerOutput = fopen(outputFile.c_str(), "w");
 
-  str ecaFile(strbuf(debugFile << ".eca"));
-  FILE *ecaOutput = fopen(ecaFile.cstr(), "w");
+  string ecaFile(debugFile + ".eca");
+  FILE *ecaOutput = fopen(ecaFile.c_str(), "w");
 
   boost::shared_ptr< Udp > udp;
   boost::shared_ptr< Catalog > catalog;
   boost::shared_ptr< ECA_Context > ectxt;
   
-  str nodeID;   
-  nodeID = strbuf(address) << ":" << port;
-  udp.reset(new Udp(strbuf("Udp:") << nodeID, port));
+  ostringstream nodeID;
+  nodeID << address << ":" << port;
+  udp.reset(new Udp("Udp:"+nodeID.str(), port));
 
   // for each filename
 
@@ -519,22 +517,24 @@ void runPathQuery(Router::ConfigurationPtr conf,
 
   ectxt.reset(new ECA_Context()); 
   ectxt->eca_rewrite(ctxt.get(), catalog.get());  
-  fprintf(ecaOutput, "%s\n", ectxt->toString().cstr());
+  fprintf(ecaOutput, "%s\n", ectxt->toString().c_str());
    
-  planner = New Planner (conf, catalog.get(), false, nodeID, debugFile << "-" << nodeNo);      
+  ostringstream oss;
+  oss << debugFile << "-" << nodeNo;
+  planner = new Planner (conf, catalog.get(), false, nodeID.str(), oss.str());      
   std::vector<RuleStrand*> ruleStrands = 
     planner->generateRuleStrands(ectxt);
 
   for (unsigned k = 0; k < ruleStrands.size(); k++) {
-    fprintf(plannerOutput, "%s", ruleStrands.at(k)->toString().cstr());
+    fprintf(plannerOutput, "%s", ruleStrands.at(k)->toString().c_str());
   }
 
   
   // set timer on quitting, initialize link table, periodic updates
-  delaycb(duration, 0, wrap(&quit));
-  delaycb(10, 0, wrap(&initializeLinkTable, catalog.get(), address, inputGraph));
+  delayCB(duration, boost::bind(quit));
+  delayCB(10, boost::bind(initializeLinkTable, catalog.get(), address, inputGraph));
   if (updatePeriodSeconds.at(0) != -1) {
-    delaycb(10 + updatePeriodSeconds.at(updateRoundRobin % updatePeriodSeconds.size()), 0, wrap(&updateLinks, catalog));
+    delayCB(10 + updatePeriodSeconds.at(updateRoundRobin % updatePeriodSeconds.size()), boost::bind(updateLinks, catalog));
     updateRoundRobin++;
   }
 
@@ -606,7 +606,7 @@ void runPathQuery(Router::ConfigurationPtr conf,
   
   planner->setupNetwork(udp);
   planner->registerAllRuleStrands(ruleStrands);
-  fprintf(plannerOutput, "%s\n", planner->getNetPlanner()->toString().cstr());
+  fprintf(plannerOutput, "%s\n", planner->getNetPlanner()->toString().c_str());
   fclose(plannerOutput);
   fclose(ecaOutput);    
 
@@ -631,7 +631,7 @@ void runPathQuery(Router::ConfigurationPtr conf,
   }
 
   if (magicIntervalSeconds != -1) {
-    delaycb(10 + magicIntervalSeconds, 0, wrap(&insertMagicSource, catalog, address));
+    delayCB(10 + magicIntervalSeconds, boost::bind(insertMagicSource, catalog, address));
   }
 
   // Activate the router
@@ -654,12 +654,12 @@ int main(int argc, char **argv)
 
   numNodes = atoi(argv[1]);
   nodeNo = atoi(argv[2]);
-  str address(argv[3]);
+  string address(argv[3]);
   port = atoi(argv[4]);
-  str datalogFile(argv[5]);
-  str inputGraph(argv[6]);  
-  str debugFile(argv[7]);
-  str levelName(argv[8]);
+  string datalogFile(argv[5]);
+  string inputGraph(argv[6]);  
+  string debugFile(argv[7]);
+  string levelName(argv[8]);
   seed = atoi(argv[9]);
   duration = atoi(argv[10]);
   periodicPush = atof(argv[11]);
@@ -685,7 +685,7 @@ int main(int argc, char **argv)
   }
   std::cout << "\n";
 
-  std::ifstream istr(datalogFile);
+  std::ifstream istr(datalogFile.c_str());
   ctxt->parse_stream(&istr);
   LoggerI::Level level = LoggerI::levelFromName[levelName];
 
@@ -701,12 +701,12 @@ int main(int argc, char **argv)
   Router::ConfigurationPtr conf(new Router::Configuration());
 
   if (correlate != 0) {
-    std::vector<str> filenames;
+    std::vector<string> filenames;
     filenames.push_back(datalogFile);
     // for each datalogFile, call runPathQuery
     runPathQuery(conf, level, ctxt, address, filenames, inputGraph, debugFile);
   } else {
-    std::vector<str> filenames;
+    std::vector<string> filenames;
     filenames.push_back(datalogFile);
     // for each datalogFile, call runPathQuery
     runPathQuery(conf, level, ctxt, address, filenames, inputGraph, debugFile);

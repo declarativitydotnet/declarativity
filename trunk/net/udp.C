@@ -11,9 +11,7 @@
  */
 
 #include "udp.h"
-#include "udpsuio.h"
 #include "tuple.h"
-#include <async.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <iostream>
@@ -26,7 +24,7 @@
 //
 // Receive element
 //
-Udp::Rx::Rx(str name, const Udp &udp) 
+Udp::Rx::Rx(string name, const Udp &udp) 
   : Element(name, 0, 1),
     u(&udp),
     push_pending(true) 
@@ -45,11 +43,11 @@ void Udp::Rx::socket_cb()
   }
 
   // Read packet. 
-  ref< UdpSuio > udpSuio = New refcounted< UdpSuio >;
+  FdbufPtr fb(new Fdbuf());
   struct sockaddr sa;
   bzero(&sa, sizeof(sa));
   socklen_t sa_len = 0;
-  if ( udpSuio->inputfrom(u->sd, &sa, &sa_len) <= 0) {
+  if ( fb->recvfrom(u->sd, Fdbuf::BUF_UNLIMITED, 0, &sa, &sa_len) <= 0) {
     // Error! 
     int error = errno;
     if (error != EAGAIN) {
@@ -57,15 +55,15 @@ void Udp::Rx::socket_cb()
     }
   } else {
     // Success! We've got a packet.  Package it up...
-    ref< suio > addressUio = New refcounted< suio >;
-    addressUio->copy(&sa, sa_len);
+    FdbufPtr addressFb(new Fdbuf());
+    addressFb->pop_bytes(reinterpret_cast<char *>(&sa), sa_len);
 
     TuplePtr t = Tuple::mk();
-    t->append(Val_Opaque::mk(addressUio));
-    t->append(Val_Opaque::mk(udpSuio));
+    t->append(Val_Opaque::mk(addressFb));
+    t->append(Val_Opaque::mk(fb));
     t->freeze();
     // Push it. 
-    push_pending = push(0, t, boost::bind(&Udp::Rx::element_cb, this));
+    push_pending = push(0, t, boost::bind(&Udp::Rx::element_cb,this));
   }
   socket_on();
 }
@@ -90,7 +88,7 @@ int Udp::Rx::initialize()
 //
 // Transmit element
 //
-Udp::Tx::Tx(str name, const Udp &udp) 
+Udp::Tx::Tx(string name, const Udp &udp) 
   : Element(name, 1, 0),
     u(&udp),
     pull_pending(true)
@@ -110,7 +108,7 @@ void Udp::Tx::socket_cb()
 
   // Try to pull a packet. 
   Element::PortPtr myInput = input(0);
-  TuplePtr t = myInput->pull(boost::bind(&Udp::Tx::element_cb, this));
+  TuplePtr t = myInput->pull(boost::bind(&Udp::Tx::element_cb,this));
   if (!t) {
     pull_pending = false;
     socket_off();
@@ -119,20 +117,13 @@ void Udp::Tx::socket_cb()
   
   // We've now got a packet...
   struct sockaddr address;
-  ref< suio > uio = Val_Opaque::cast((*t)[0]);
-  uio->copyout(&address, sizeof(address));
+  FdbufPtr fba = Val_Opaque::cast((*t)[0]);
+  fba->pop_bytes(reinterpret_cast<char *>(&address), sizeof(address));
 
-  ref< suio > puio = Val_Opaque::cast((*t)[1]);
-  ssize_t payloadLength = puio->resid();
-  char* payloadBuffer[payloadLength];
-  puio->copyout(&payloadBuffer, payloadLength);
-
-  ssize_t s = sendto(u->sd, 
-		     &payloadBuffer, payloadLength,
-		     0, 
-		     &address, sizeof(address));
+  FdbufPtr fbp = Val_Opaque::cast((*t)[1]);
+  ssize_t s = fbp->sendto(u->sd, fbp->length(), 0, &address, sizeof(address));
   // 's' is signed, whereas the payload.len() isn't. Hence the following:
-  if (s <= 0 || s < payloadLength ) {
+  if (s <= 0 || (size_t)s < fbp->length() ) {
     // Error!  Technically, this can happen if the payload is larger
     //  than the socket buffer (in which case errno=EAGAIN).  We treat
     //  this as an error, nevertheless, and leave it up to the
@@ -163,7 +154,7 @@ int Udp::Tx::initialize()
 //
 // The main object itself
 //
-Udp::Udp(str name,
+Udp::Udp(string name,
          u_int16_t port, u_int32_t addr) 
   : _name(name),
     rx(new Udp::Rx(_name, *this)),

@@ -12,7 +12,7 @@
 #include "filter.h"
 #include "val_int32.h"
 
-Filter::Filter(str name, unsigned filterNo)
+Filter::Filter(string name, unsigned filterNo)
   : Element(name, 1, 1),
     _filterNo(filterNo)
 {

@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <iostream>
 #include "cct.h"
-#include "sysconf.h"
 #include "val_uint64.h"
 #include "val_uint32.h"
 #include "val_double.h"
@@ -78,7 +77,7 @@ int32_t CCTuple::delay()
  * Optional:
  * Output 2 (pull): Status of the CC element.
  */
-CCT::CCT(str name, double init_wnd, double max_wnd, bool tstat, bool stat) 
+CCT::CCT(string name, double init_wnd, double max_wnd, bool tstat, bool stat) 
   : Element(name, 2, (stat ? 3 : 2)),
     _data_cb(0),
     data_on_(true),
@@ -160,12 +159,11 @@ void CCT::map(SeqNum seq, CCTuple *otp)
             boost::bind(&CCT::timeout_cb, this, otp)); 
 }
 
-int32_t CCT::dealloc(SeqNum seq, str status)
+int32_t CCT::dealloc(SeqNum seq, string status)
 {
   int32_t d = -1;
   CCTupleIndex::iterator iter = tmap_.find(seq);
   if (iter != tmap_.end()) { 
-    log(LoggerI::INFO, 0, strbuf()<<"DEALLOCATING seq("<<seq<<")"); 
     d = iter->second->delay();
 
     if (iter->second->tcb_ != NULL) {
@@ -219,10 +217,6 @@ void CCT::timeout_cb(CCTuple *otp)
 
   otp->tcb_ = NULL;
   dealloc(seq, "FAIL");
-
-  log(LoggerI::INFO, 0, 
-      strbuf()<< "TIMEOUT: Packet seq(" << seq << ") timeout after " 
-              << otp->delay() << "ms");
 }
 
 /**
@@ -261,11 +255,6 @@ REMOVABLE_INLINE void CCT::add_rtt_meas(int32_t m)
 
   if (cwnd_ > max_wnd_)
     cwnd_ = max_wnd_;
-
-  log(LoggerI::INFO, 0, strbuf() << "CURRENT WINDOW: " << current_window()
-			<< "\tCWND(" << long(cwnd_) << ") MAX_WND("
-			<< long(max_wnd_) << ") SSTHRESH(" << long(ssthresh_)
-			<< ")\n");
 }
 
 
@@ -279,10 +268,6 @@ REMOVABLE_INLINE void CCT::timeout()
   ssthresh_ = cwnd_ / 2.0;	// multiplicative decrease
   cwnd_     = 2.0;		// Enter slow start
   if (ssthresh_ < 2.0) ssthresh_ = 2.0;
-
-  log(LoggerI::INFO, 0, strbuf() << "CONGESTION ADJUST: RTO = " << long(rto_)
-			<< " | SSTHRESH = " << long(ssthresh_) 
-			<< " | CWND = " << long(cwnd_));
 }
 
 REMOVABLE_INLINE int CCT::current_window() {

@@ -11,7 +11,7 @@
 
 #include "demux.h"
 
-Demux::Demux(str name,
+Demux::Demux(string name,
              boost::shared_ptr< std::vector< ValuePtr > > demuxKeys,
              unsigned inputFieldNo)
   : Element(name, 1, demuxKeys->size() + 1),
@@ -22,7 +22,7 @@ Demux::Demux(str name,
     _inputFieldNo(inputFieldNo)
 {
   // Clean out the block flags
-  _block_flags.zsetsize(noutputs());
+  _block_flags.resize(noutputs());
 }
 
 void Demux::unblock(int output)

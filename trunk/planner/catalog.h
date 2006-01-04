@@ -33,7 +33,7 @@ public:
     TableInfo(OL_Context::TableInfo* tableInfo, TablePtr table) :
       _tableInfo(tableInfo), _table(table) { }
 
-    str toString();
+    string toString();
 
     OL_Context::TableInfo * _tableInfo;    
     TablePtr _table;
@@ -42,32 +42,32 @@ public:
     bool isSecondaryKey(int c);    
   };
   
-  typedef std::map<str, Catalog::TableInfo* >  TableInfoMap;
+  typedef std::map<string, Catalog::TableInfo* >  TableInfoMap;
  
   /* Query information */
   class QueryInfo {
-    str queryID;
+    string queryID;
     // more..
   };
 
   Catalog() { _queryID = 0; tables = new TableInfoMap(); };
   ~Catalog() { delete tables; }
 
-  str nextQueryID(); 
+  string nextQueryID(); 
 
-  void setWatchTables(std::set<str> watchTables) { _watchTables = watchTables; }
-  std::set<str> getWatchTables() { return _watchTables; };
+  void setWatchTables(std::set<string> watchTables) { _watchTables = watchTables; }
+  std::set<string> getWatchTables() { return _watchTables; };
   TableInfoMap* getTableInfos()  { return tables;   };
   void initTables(OL_Context* ctxt);
   void createTable(OL_Context::TableInfo* ti);
-  Catalog::TableInfo* getTableInfo(str tableName);
-  void createMultIndex(str tableName, int key);
+  Catalog::TableInfo* getTableInfo(string tableName);
+  void createMultIndex(string tableName, int key);
  
   
 private:
   TableInfoMap* tables;
   int _queryID;
-  std::set<str> _watchTables;
+  std::set<string> _watchTables;
 };
 
 #endif

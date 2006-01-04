@@ -10,7 +10,7 @@
 #include <iostream>
 #include "bw.h"
 
-Bandwidth::Bandwidth(str name)
+Bandwidth::Bandwidth(string name)
   : Element(name,1, 1), prev_t_(now_s()), bytes_(0), bw_(0.)
 {
 }

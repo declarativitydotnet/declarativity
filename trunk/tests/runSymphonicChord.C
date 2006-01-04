@@ -16,8 +16,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 #include <stdlib.h>
 
@@ -79,15 +77,15 @@ static const int SUCCESSORSIZE = 4;
 /** Created a networked chord flow. If alone, I'm my own successor.  If
     with landmark, I start with a join. */
 void testNetworked(LoggerI::Level level,
-                   str myAddress,
+                   string myAddress,
                    int port,    // extracted from myAddress for convenience
-                   str landmarkAddress, 
+                   string landmarkAddress, 
 		   int networkSize,
                    double delay = 0)
 {
   // Create the data flow
   Router::ConfigurationPtr conf(new Router::Configuration());
-  Udp udp(strbuf(myAddress) << ":Udp", port);
+  Udp udp(myAddress+":Udp", port);
 
   //FIX ME createSymNode(myAddress, landmarkAddress, conf, &udp, networkSize, delay);
 
@@ -116,7 +114,7 @@ int main(int argc, char **argv)
     fatal << "Usage:\n\t runChord <datalogFile> <loggingLevel> <seed> <myipaddr:port> <startDelay> <networkSize> [<landmark_ipaddr:port>]\n";
   }
 
-  str datalogFile(argv[1]);
+  string datalogFile(argv[1]);
   bool runDatalogVersion = false;
   if (datalogFile == "0") {
       std::cout << "Manual translated chord\n";
@@ -125,12 +123,12 @@ int main(int argc, char **argv)
       std::cout << "Running from translated file " << datalogFile << "\n";
   }
 
-  str levelName(argv[2]);
+  string levelName(argv[2]);
   LoggerI::Level level = LoggerI::levelFromName[levelName];
 
   int seed = atoi(argv[3]);
   srandom(seed);
-  str myAddress(argv[4]);
+  string myAddress(argv[4]);
   
   const char * theString = argv[4];
   std::cout << theString << "\n";
@@ -140,8 +138,8 @@ int main(int argc, char **argv)
     fatal << "Usage:\n\trunChord <seed> <myipaddr:port> [<landmark_ipaddr:port>]\n\
               \tMy address is malformed\n";
   }
-  str thePort(theColon + 1);
-  int port = atoi(thePort);
+  string thePort(theColon + 1);
+  int port = atoi(thePort.c_str());
 
   double delay = atof(argv[5]);
 
@@ -157,7 +155,7 @@ int main(int argc, char **argv)
   }
 
   if (argc > 7) {
-    str landmark(argv[7]);
+    string landmark(argv[7]);
     testNetworked(level,
                   myAddress,
                   port,
@@ -168,7 +166,7 @@ int main(int argc, char **argv)
     testNetworked(level,
                   myAddress,
                   port,
-                  str("-"),
+                  string("-"),
 		  networkSize,
                   delay);
   }

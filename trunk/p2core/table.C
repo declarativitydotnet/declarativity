@@ -13,16 +13,19 @@
  */
 
 #include "table.h"
+#include "loop.h"
 
 #include "val_str.h"
 #include "val_uint64.h"
 
 #include "algorithm"
 
+using namespace opr;
+
 //
 // Constructor
 //
-Table::Table(str table_name, size_t max_size, timespec *lifetime)
+Table::Table(string table_name, size_t max_size, timespec *lifetime)
   : name(table_name),
     max_tbl_size(max_size),
     _uniqueAggregates(),
@@ -72,7 +75,7 @@ Table::~Table()
 void Table::add_unique_index(unsigned fn)
 {
   del_unique_index(fn);
-  uni_indices.at(fn) = New UniqueIndex();
+  uni_indices.at(fn) = new UniqueIndex();
 }
 void Table::del_unique_index(unsigned fn)
 {
@@ -87,7 +90,7 @@ void Table::del_unique_index(unsigned fn)
 void Table::add_multiple_index(unsigned fn)
 {
   del_multiple_index(fn);
-  mul_indices.at(fn) = New MultIndex();
+  mul_indices.at(fn) = new MultIndex();
 }
 void Table::del_multiple_index(unsigned fn)
 {
@@ -162,7 +165,7 @@ void Table::set_tuple_lifetime(timespec &lifetime)
 //
 void Table::insert(TuplePtr t)
 {
-  Entry *e = New Entry(t);
+  Entry *e = new Entry(t);
 
   // Add to the queue
   els.push_front(e);

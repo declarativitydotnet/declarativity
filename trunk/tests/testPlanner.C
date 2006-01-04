@@ -13,8 +13,6 @@
  *
  */
 
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -39,7 +37,7 @@ int main(int argc, char **argv)
   boost::shared_ptr< OL_Context > ctxt(new OL_Context());
   bool route = false;
   bool builtin = false;
-  str filename("");
+  string filename("");
 
   for( int i=1; i<argc; i++) { 
     std::string arg(argv[i]);
@@ -64,8 +62,8 @@ int main(int argc, char **argv)
       ctxt->parse_stream(&std::cin);
     } else if (arg == "-g") {
       filename = argv[i+1];
-      std::ifstream istr(filename);
-      std::ofstream ostr(str(strbuf() << filename << ".dot"));
+      std::ifstream istr(filename.c_str());
+      std::ofstream ostr(string(filename + ".dot").c_str());
       ctxt->parse_stream(&istr);
       Router::ConfigurationPtr conf(new Router::Configuration());
       boost::shared_ptr< Catalog > catalog(new Catalog());  

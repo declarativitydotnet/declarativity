@@ -26,7 +26,7 @@ public:
   // The type name
   const Value::TypeCode typeCode() const { return Value::INT64; };
   const char *typeName() const { return "int64"; };
-  virtual str toString() const { return strbuf() << i; };
+  virtual string toString() const { ostringstream s; s << i; return s.str(); };
   virtual unsigned int size() const { return sizeof(int64_t); }
 
   // Marshalling and unmarshallng

@@ -23,7 +23,7 @@
 class Frag : public Element { 
 public:
 
-  Frag(str name, uint32_t block_size);
+  Frag(string name, uint32_t block_size);
   const char *class_name() const	{ return "Frag";};
   const char *processing() const	{ return PUSH_TO_PULL; };
   const char *flow_code()  const	{ return "-/-"; };

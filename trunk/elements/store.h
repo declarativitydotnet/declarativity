@@ -14,15 +14,16 @@
 #ifndef __STORE_H__
 #define __STORE_H__
 
-#include "element.h"
 #include <map>
+#include "element.h"
+#include "tuple.h"
 #include "val_opaque.h"
 
 class Store {
 
 private:
   /** My name */
-  str _name;
+  string _name;
 
   /** The primary key of the stored tuples */
   unsigned _fieldNo;
@@ -44,7 +45,7 @@ private:
  public:
 
   /** The constructor taking the field number of the primary key */
-  Store(str, unsigned);
+  Store(string, unsigned);
 
   /** Preload table with tuples */
   void insert(TuplePtr);
@@ -54,7 +55,7 @@ private:
       stores succeed. */
   class Insert : public Element {
   public:
-    Insert(str name,
+    Insert(string name,
            std::multimap< ValuePtr, TuplePtr, Store::tuplePtrCompare > * table,
            unsigned fieldNo);
 
@@ -82,7 +83,7 @@ private:
       iterator for output tuples.  */
   class Lookup : public Element {
   public:
-    Lookup(str name,
+    Lookup(string name,
            std::multimap< ValuePtr, TuplePtr, tuplePtrCompare > * table);
 
     const char *class_name() const		{ return "Store::Lookup";}
@@ -121,7 +122,7 @@ private:
       scan side. */
   class Scan : public Element {
   public:
-    Scan(str name,
+    Scan(string name,
          std::multimap< ValuePtr, TuplePtr, tuplePtrCompare > * table);
 
     const char *class_name() const		{ return "Store::Scan";}
@@ -141,29 +142,29 @@ private:
 
 
   /** Create a lookup element */
-  ref< Lookup > mkLookup() {
-    strbuf lName(_name);
-    lName.cat(":Lookup");
-    return New refcounted< Lookup >(lName, &_table);
+  boost::shared_ptr< Lookup > mkLookup() {
+    string lName(_name);
+    lName.append(":Lookup");
+    return boost::shared_ptr< Lookup >(new Lookup(lName, &_table));
   }
   
   /** Create an insert element */
-  ref< Insert > mkInsert() {
-    strbuf iName(_name);
-    iName.cat(":Insert");
-    return New refcounted< Insert >(iName, &_table, _fieldNo);
+  boost::shared_ptr< Insert > mkInsert() {
+    string iName(_name);
+    iName.append(":Insert");
+    return boost::shared_ptr< Insert >(new Insert(iName, &_table, _fieldNo));
   }
 
   /** Create a scan element */
   boost::shared_ptr< Scan > mkScan() {
-    strbuf iName(_name);
-    iName.cat(":Scan");
+    string iName(_name);
+    iName.append(":Scan");
     boost::shared_ptr< Scan > s(new Scan(iName, &_table));
     return s;
   }
 
   /** The END_OF_SEARCH tuple tag. */
-  static str END_OF_SEARCH;
+  static string END_OF_SEARCH;
 };
 
 

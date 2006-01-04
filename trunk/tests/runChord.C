@@ -16,8 +16,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 #include <stdlib.h>
 
@@ -79,14 +77,14 @@ static const int SUCCESSORSIZE = 4;
 /** Created a networked chord flow. If alone, I'm my own successor.  If
     with landmark, I start with a join. */
 void testNetworked(LoggerI::Level level,
-                   str myAddress,
+                   string myAddress,
                    int port,    // extracted from myAddress for convenience
-                   str landmarkAddress,
+                   string landmarkAddress,
                    double delay = 0)
 {
   // Create the data flow
   Router::ConfigurationPtr conf(new Router::Configuration());
-  Udp udp(strbuf(myAddress) << ":Udp", port);
+  Udp udp(string(myAddress) + ":Udp", port);
 
   createNode(myAddress, landmarkAddress,
              conf, &udp, delay);
@@ -108,14 +106,14 @@ void testNetworked(LoggerI::Level level,
 
 
 void testNetworkedDatalog(LoggerI::Level level,
-			  str myAddress,
+			  string myAddress,
 			  int port,    // extracted from myAddress for convenience
-			  str landmarkAddress, 
-			  str filename,
+			  string landmarkAddress, 
+			  string filename,
 			  double delay)
 {
   boost::shared_ptr< OL_Context > ctxt(new OL_Context());
-  std::ifstream istr(filename);
+  std::ifstream istr(filename.c_str());
   if (!istr.is_open()) {
     // Failed to open the file
     std::cerr << "Could not open file " << filename << "\n";
@@ -136,7 +134,7 @@ int main(int argc, char **argv)
     fatal << "Usage:\n\t runChord <datalogFile> <loggingLevel> <seed> <myipaddr:port> <startDelay> [<landmark_ipaddr:port>]\n";
   }
 
-  str datalogFile(argv[1]);
+  string datalogFile(argv[1]);
   bool runDatalogVersion = false;
   if (datalogFile == "0") {
       std::cout << "Manual translated chord\n";
@@ -145,12 +143,12 @@ int main(int argc, char **argv)
       std::cout << "Running from translated file " << datalogFile << "\n";
   }
 
-  str levelName(argv[2]);
+  string levelName(argv[2]);
   LoggerI::Level level = LoggerI::levelFromName[levelName];
 
   int seed = atoi(argv[3]);
   srandom(seed);
-  str myAddress(argv[4]);
+  string myAddress(argv[4]);
   
   const char * theString = argv[4];
   std::cout << theString << "\n";
@@ -160,15 +158,15 @@ int main(int argc, char **argv)
     fatal << "Usage:\n\trunChord <seed> <myipaddr:port> [<landmark_ipaddr:port>]\n\
               \tMy address is malformed\n";
   }
-  str thePort(theColon + 1);
-  int port = atoi(thePort);
+  string thePort(theColon + 1);
+  int port = atoi(thePort.c_str());
 
   double delay = atof(argv[5]);
 
 
   if (runDatalogVersion) {
     if (argc > 6) {
-      str landmark(argv[6]);
+      string landmark(argv[6]);
       testNetworkedDatalog(level,
 			   myAddress,
 			   port,
@@ -179,7 +177,7 @@ int main(int argc, char **argv)
       testNetworkedDatalog(level,
 			   myAddress,
 			   port,
-			   str("-"),
+			   string("-"),
 			   datalogFile,
 			   delay);
     }
@@ -187,7 +185,7 @@ int main(int argc, char **argv)
   }
 
   if (argc > 6) {
-    str landmark(argv[6]);
+    string landmark(argv[6]);
     testNetworked(level,
                   myAddress,
                   port,
@@ -197,7 +195,7 @@ int main(int argc, char **argv)
     testNetworked(level,
                   myAddress,
                   port,
-                  str("-"),
+                  string("-"),
                   delay);
   }
   return 0;

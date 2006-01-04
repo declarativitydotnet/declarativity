@@ -11,7 +11,7 @@
 
 #include "scan.h"
 
-Scan::Scan(str name,
+Scan::Scan(string name,
 	   Table::UniqueScanIterator iterator,
 	   bool continuous)
   : Element(name, 0, 1),
@@ -29,7 +29,7 @@ Scan::Scan(str name,
 void
 Scan::listener(TuplePtr t)
 {
-  log(LoggerI::INFO, 0, str(strbuf() << "Listener " << t->toString()));
+  log(LoggerI::INFO, 0, "Listener " + t->toString());
   scanBuffer.push_back(t);
   if (_pullCB) {
     _pullCB();
@@ -57,7 +57,7 @@ TuplePtr Scan::pull(int port, b_cbv cb)
   }
   TuplePtr retTuple = scanBuffer.front();
   scanBuffer.pop_front();
-  log(LoggerI::INFO, 0, str(strbuf() << "Pull returns " << retTuple->toString()));
+  log(LoggerI::INFO, 0, "Pull returns " + retTuple->toString());
   //warn << "Pull returns " << retTuple->toString() << "\n";
   return retTuple;
 }

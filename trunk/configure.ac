@@ -69,14 +69,11 @@ SWIG_ENABLE_CXX
 SWIG_PYTHON
 
 # Checks for libraries.
-P2_SFSLIB
 
 # Checks for header files.
 AC_HEADER_STDC
-P2_SFSINC
 
 AC_LANG_PUSH(C++)
-CPPFLAGS="$SFS_INC"
 AC_CHECK_TYPES([tcpconn_t *, tcpconnect_t *],[],[],[#include <async.h>])
 AC_LANG_POP(C++)
 

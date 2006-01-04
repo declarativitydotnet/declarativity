@@ -16,7 +16,6 @@
 #ifndef __TIMED_PUSH_SOURCE_H__
 #define __TIMED_PUSH_SOURCE_H__
 
-#include <amisc.h>
 #include <element.h>
 #include "loop.h"
 
@@ -24,7 +23,7 @@ class TimedPushSource : public Element {
  public:
   
   /** Initialized with the interval between tuple generation events. */
-  TimedPushSource(str name, double seconds);
+  TimedPushSource(string name, double seconds);
 
   const char *class_name() const		{ return "TimedPushSource"; }
   const char *flow_code() const			{ return "/-"; }

@@ -21,8 +21,6 @@
 #include <utility>
 
 #include <assert.h>
-#include <async.h>
-#include <arpc.h>
 #include "inlines.h"
 #include "value.h"
 
@@ -39,7 +37,7 @@ private:
       initialized if there is at least one tag.  Only a single tag of
       each type is allowed; for multi-value tags, store a vector as the
       value. */
-  std::map< str, ValuePtr > * _tags;
+  std::map< string, ValuePtr > * _tags;
 
 public:
 
@@ -58,11 +56,11 @@ public:
       store a tag with no value use Val_Null::mk() to return the
       (single, static, constant) NULL P2 value, which is different from
       plain old NULL. */
-  void tag(str, ValuePtr);
+  void tag(string, ValuePtr);
 
   /** Lookup a name tag in the tuple.  If not found, null is returned.
       If found, a real ValuePtr is returned. */
-  ValuePtr tag(str);
+  ValuePtr tag(string);
 
   void freeze() { frozen = true; };
 
@@ -74,7 +72,7 @@ public:
   void xdr_marshal( XDR *xdrs );
   static TuplePtr xdr_unmarshal( XDR *xdrs );
 
-  str toString() const;
+  string toString() const;
 
   /** Strict comparison, one field at a time. */
   int compareTo(TuplePtr) const;

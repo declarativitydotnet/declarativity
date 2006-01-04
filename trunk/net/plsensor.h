@@ -15,8 +15,9 @@
 
 #include "config.h"
 #include "element.h"
-#include <async.h>
-#include <rxx.h>
+#include "fdbuf.h"
+
+// #include <boost/regex.hpp> FIX ME (LINK ERRORS)
 
 class PlSensor : public Element { 
   
@@ -26,22 +27,22 @@ class PlSensor : public Element {
 
 public:
 
-  PlSensor(str,
-           u_int16_t sensor_port, str sensor_path, uint32_t reconnect_delay);
+  PlSensor(string,
+           u_int16_t sensor_port, string sensor_path, uint32_t reconnect_delay);
 
 private:
 
+typedef struct tcpHandle* conn_t;
 
   void enter_connecting();
-  void error_cleanup(uint32_t errnum, str errmsg);
+  void error_cleanup(uint32_t errnum, string errmsg);
   void enter_waiting();
   void connect_cb(int fd);
   void write_cb();
   void rx_hdr_cb();
   void rx_body_cb();
-  void socket_on() { fileDescriptorCB(sd, b_selread,
-                                      boost::bind(&PlSensor::rx_body_cb, this)); };
-  void socket_off() { fileDescriptorCB(sd, b_selread, NULL); };
+  void socket_on() { fdcb(sd, selread, wrap(this,&PlSensor::rx_body_cb)); };
+  void socket_off() { fdcb(sd, selread, NULL); };
   void element_cb();
   
   static const size_t MAX_REQUEST_SIZE = 10000;
@@ -57,21 +58,21 @@ private:
 
   // Socket details
   u_int16_t	port;
-  str		path;
+  string	path;
   int		sd; 
-  tcpHandle*    tc;
-  rxx		req_re;
-  strbuf       *hdrs;
+  conn_t        tc;
+  // boost::regex	req_re;
+  Fdbuf		hdrs;
   in_addr	localaddr;
-  timeCBHandle *wait_delaycb;
+  timeCBHandle  *wait_delaycb;
 
 
   // Time between reconnects
   uint32_t	delay;
 
   // The request string
-  str		reqtmpl;
-  strbuf       *req_buf;
+  Fdbuf		reqtmpl;
+  Fdbuf		req_buf;
 };
 
 

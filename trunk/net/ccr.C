@@ -10,7 +10,6 @@
 #include <algorithm>
 
 #include "ccr.h"
-#include "sysconf.h"
 #include "val_uint64.h"
 #include "val_double.h"
 #include "val_str.h"
@@ -27,7 +26,7 @@
  * name: The name given to this element.
  * rwnd: Initial receiver window size (default given in ccrx.h).
  */
-CCR::CCR(str name, double rwnd, uint src, bool flow) 
+CCR::CCR(string name, double rwnd, uint src, bool flow) 
   : Element(name, (flow ? 2 : 1), 2),
     _ack_cb(0),
     rwnd_(rwnd),

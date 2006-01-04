@@ -10,10 +10,9 @@
  */
 
 #include "mux.h"
-#include "async.h"
 #include "loop.h"
 
-Mux::Mux(str name,
+Mux::Mux(string name,
          int noInputs)
   : Element(name, noInputs, 1),
     _blocked(false),
@@ -105,7 +104,7 @@ int Mux::push(int port, TuplePtr p, b_cbv cb)
 
       // We have already received a buffered tuple from that input.  Bad
       // input!
-      log(LoggerI::WARN, -1, strbuf("pull: Overrun on port ") << port);
+      log(LoggerI::WARN, -1, "pull: Overrun on port");
       return 0;
     }
   } else {

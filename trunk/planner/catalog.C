@@ -16,21 +16,18 @@
 #include "catalog.h"
 #include "val_uint32.h"
 #include "tuple.h"
+#include "loop.h"
 
 
-str Catalog::TableInfo::toString() {
-  strbuf t;
-  t << "TABLE<" << _tableInfo->toString() << ">";
-
-  return t;
+string Catalog::TableInfo::toString() {
+  return "TABLE<" + _tableInfo->toString() + ">";
 }
 
-str Catalog::nextQueryID() {  
-  str toRet;
-  strbuf sbuf;
+string Catalog::nextQueryID() {  
+  ostringstream sbuf;
   sbuf << _queryID;
   _queryID ++;
-  return str(sbuf);
+  return sbuf.str();
 }
 
 void Catalog::createTable(OL_Context::TableInfo* tableInfo)
@@ -75,7 +72,7 @@ void Catalog::initTables(OL_Context* ctxt)
   }
 }
 
-Catalog::TableInfo* Catalog::getTableInfo(str tableName)
+Catalog::TableInfo* Catalog::getTableInfo(string tableName)
 {
   Catalog::TableInfoMap::iterator theIterator;
   theIterator = tables->find(tableName);
@@ -85,7 +82,7 @@ Catalog::TableInfo* Catalog::getTableInfo(str tableName)
   return theIterator->second;
 }
 
-void Catalog::createMultIndex(str tableName, int key) {
+void Catalog::createMultIndex(string tableName, int key) {
     TableInfo* ti = getTableInfo(tableName);
     if (ti->isSecondaryKey(key)) { return; }
     ti->_table->add_multiple_index(key);

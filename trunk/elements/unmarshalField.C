@@ -13,8 +13,9 @@
 
 #include "val_opaque.h"
 #include "val_tuple.h"
+#include "xdrbuf.h"
 
-UnmarshalField::UnmarshalField(str name,
+UnmarshalField::UnmarshalField(string name,
                                unsigned fieldNo)
   : Element(name, 1, 1),
     _fieldNo(fieldNo)
@@ -38,13 +39,11 @@ TuplePtr UnmarshalField::simple_action(TuplePtr p)
     // Is this a field of type OPAQUE?
     if (value->typeCode() == Value::OPAQUE) {
       // Goodie. Unmarshal the field
-
-      ref<suio> u = Val_Opaque::cast(value);
-      char *buf = suio_flatten(u);
-      size_t sz = u->resid();
-      xdrmem xd(buf,sz);
+      FdbufPtr fb = Val_Opaque::cast(value);
+      XDR xd;
+      xdrfdbuf_create(&xd,fb.get(),false,XDR_DECODE);
       ValuePtr unmarshalled = Value::xdr_unmarshal(&xd);
-      xfree(buf);
+      xdr_destroy(&xd);
 
       // Now create a tuple copy replacing the unmarshalled field
       TuplePtr newTuple = Tuple::mk();

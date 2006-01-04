@@ -26,29 +26,29 @@ public:
   // The type name
   const Value::TypeCode typeCode() const { return Value::STR; };
   const char *typeName() const { return "str"; };
-  str toString() const { return s; };
-  virtual unsigned int size() const { return (s ? sizeof(s) : 0); }
+  string toString() const { return s; };
+  virtual unsigned int size() const { return s.size(); }
 
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );
   static ValuePtr xdr_unmarshal( XDR *x );
 
   // Constructor
-  Val_Str(str theString) : s(theString) {};
+  Val_Str(string theString) : s(theString) {};
   virtual ~Val_Str() {};
 
   // Factory
-  static ValuePtr mk(str s) { ValuePtr p(new Val_Str(s)); return p; };
+  static ValuePtr mk(string s) { ValuePtr p(new Val_Str(s)); return p; };
 
   // Strict comparison
   int compareTo(ValuePtr) const;
 
   // Casting
-  static str cast(ValuePtr v);
+  static string cast(ValuePtr v);
   
   static const opr::Oper *oper_;
 private:
-  str s;
+  string s;
 };
 
 #endif /* __VAL_STR_H_ */

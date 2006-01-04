@@ -16,7 +16,6 @@
 #ifndef __TIMED_PULL_SINK_H__
 #define __TIMED_PULL_SINK_H__
 
-#include <amisc.h>
 #include <element.h>
 #include "loop.h"
 
@@ -24,7 +23,7 @@ class TimedPullSink : public Element {
  public:
   
   /** Initialized with the interval between tuple pull events. */
-  TimedPullSink(str name,
+  TimedPullSink(string name,
                 double seconds);
 
   const char *class_name() const		{ return "TimedPullSink"; }

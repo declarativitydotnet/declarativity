@@ -16,13 +16,11 @@
 #define __SYMPHONY_H__
 
 
-#ifdef FOOBAR  // FIX SHARED POINTERS
+#ifdef FOOBAR  // FIX SHARED POINTERS AND STRINGS
 
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h> 
@@ -69,7 +67,7 @@
 
 //static const int SYMFINGERSIZE = ID::WORDS * 32; // first finger is best successor, last finger is predecessor
 static const int SYMFINGERSIZE = 5; // first finger is best successor, last finger is predecessor
-static const str SYMFINGERSIZESTR("5"); // first finger is best successor, last finger is predecessor
+static const string SYMFINGERSIZESTR("5"); // first finger is best successor, last finger is predecessor
 static const int SYMQUEUE_LENGTH = 1000;
 static const int SYMFINGERTTL = 30;
 
@@ -77,7 +75,7 @@ static const int SYMFINGERTTL = 30;
  *rule L1 symLookupResults@R(R,K,S,SI,E) :- node@NI(NI,N),
  *symLookup@NI(NI,K,R,E), bestSuccessor@NI(NI,S,SI), K in (N,S].
  */
-void ruleSymphonyL1(str name,
+void ruleSymphonyL1(string name,
                     Router::ConfigurationRef conf,
                     TableRef nodeTable,
                     TableRef bestSuccessorTable,

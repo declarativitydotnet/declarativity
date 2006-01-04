@@ -17,8 +17,9 @@
 #ifndef __LOGGERI_H__
 #define __LOGGERI_H__
 
-#include <async.h>
 #include <map>
+#include "loop.h"
+
 
 class LoggerI { 
 public:
@@ -29,14 +30,14 @@ public:
 
   
   /** Create a log tuple. */
-  virtual void log( str classname,
-                    str instancename,
+  virtual void log( string classname,
+                    string instancename,
                     Level severity,
                     int errnum,
-                    str explanation ) = 0;
+                    string explanation ) = 0;
 
-  static std::map< str, LoggerI::Level > levelFromName;
-  static std::map< LoggerI::Level, str > levelToName;
+  static std::map< string, LoggerI::Level > levelFromName;
+  static std::map< LoggerI::Level, string > levelToName;
 
   class Initializer {
   public:

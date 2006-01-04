@@ -20,12 +20,12 @@
 
 #include "element.h"
 #include <queue>
-#include <rxx.h>
+// #include <boost/regex.hpp> FIX ME (LINK ERRORS)
 
 class CSVParser : public Element { 
 public:
 
-  CSVParser(str);
+  CSVParser(string);
 
   int push(int port, TuplePtr t, b_cbv cb);
   TuplePtr pull(int port, b_cbv);
@@ -48,13 +48,13 @@ private:
   b_cbv	_pull_cb;
   
   // Regular expressions for matching the input
-  rxx	_re_line;
-  rxx	_re_comm;
-  rxx	_re_qstr;
-  rxx	_re_tokn;
+  // boost::regex	_re_line;
+  // boost::regex	_re_comm;
+  // boost::regex	_re_qstr;
+  // boost::regex	_re_tokn;
 
   // The current string accumulator
-  str	_acc;
+  string	_acc;
 };
 
 

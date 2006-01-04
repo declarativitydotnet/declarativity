@@ -26,7 +26,7 @@ class OperNull : public opr::Oper {
   };
 };
 
-const opr::Oper* Val_Null::oper_ = New OperNull();
+const opr::Oper* Val_Null::oper_ = new OperNull();
 
 //
 // Singleton null value.

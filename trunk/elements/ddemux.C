@@ -9,7 +9,7 @@
 
 #include "ddemux.h"
 
-DDemux::DDemux(str name, std::vector<ValuePtr> keys,
+DDemux::DDemux(string name, std::vector<ValuePtr> keys,
                unsigned inputFieldNo)
   : Element(name, 1, 1),
     _push_cb(0),

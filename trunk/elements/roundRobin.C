@@ -11,7 +11,7 @@
 
 #include "roundRobin.h"
 
-RoundRobin::RoundRobin(str name,
+RoundRobin::RoundRobin(string name,
                        int noInputs)
   : Element(name, noInputs, 1),
     _pull_cb(0),
@@ -20,7 +20,7 @@ RoundRobin::RoundRobin(str name,
     _nextInput(0)               // start with input 0
 {
   // Clean out the block flags
-  _block_flags.zsetsize(ninputs());
+  _block_flags.resize(ninputs());
 }
 
 void RoundRobin::unblock(int input)

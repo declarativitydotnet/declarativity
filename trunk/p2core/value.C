@@ -12,6 +12,7 @@
  *
  */
 
+#include "loop.h"
 #include "value.h"
 #define DEBUG_OFF
 #include "trace.h"

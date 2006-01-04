@@ -12,7 +12,6 @@
 
 #include <map>
 #include <deque>
-#include <async.h>
 #include "tuple.h"
 #include "element.h"
 #include "inlines.h"
@@ -28,7 +27,7 @@ typedef uint64_t SeqNum;
  */
 class CCRx : public Element {
 public:
-  CCRx(str name, double rwnd=512., int seq=0, int src=1);
+  CCRx(string name, double rwnd=512., int seq=0, int src=1);
   const char *class_name() const { return "CCRx";};
   const char *processing() const { return "a/al"; };
   const char *flow_code() const	 { return "x/x-"; };
@@ -58,7 +57,7 @@ private:
  */
 class CCTx : public Element {
 public:
-  CCTx(str name, double init_wnd, double max_wnd, uint32_t max_retry=5,
+  CCTx(string name, double init_wnd, double max_wnd, uint32_t max_retry=5,
        uint32_t seq_field = 0, uint32_t ack_seq_field=1, uint32_t ack_rwnd_field=2);
   const char *class_name() const { return "CC::Tx";};
   const char *processing() const { return "hh/ll"; };

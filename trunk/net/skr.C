@@ -22,7 +22,7 @@ public:
   ValuePtr location_;
 };
 
-SimpleKeyRouter::SimpleKeyRouter(str n, ValuePtr id, bool r) 
+SimpleKeyRouter::SimpleKeyRouter(string n, ValuePtr id, bool r) 
   : Element(n, 2, 2), my_id_(id), retry_(r) { }
 
 

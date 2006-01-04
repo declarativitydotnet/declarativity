@@ -27,7 +27,7 @@ public:
   // The type name
   const Value::TypeCode typeCode() const { return Value::DOUBLE; };
   const char *typeName() const { return "double"; };
-  virtual str toString() const;
+  virtual string toString() const;
   virtual unsigned int size() const { return sizeof(double); }
 
   // Marshalling and unmarshallng

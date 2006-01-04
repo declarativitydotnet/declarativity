@@ -25,7 +25,7 @@
 class DDemux : public Element { 
 public:
   
-  DDemux(str, std::vector< ValuePtr >, unsigned f = 0);
+  DDemux(string, std::vector< ValuePtr >, unsigned f = 0);
 
   int push(int port, TuplePtr t, b_cbv cb);
 

@@ -16,14 +16,13 @@
 #ifndef __RAND_PUSH_SOURCE_H__
 #define __RAND_PUSH_SOURCE_H__
 
-#include <amisc.h>
 #include <element.h>
 
 class RandomPushSource : public Element { 
  public:
   
   /** Initialized with the interval between tuple generation events. */
-  RandomPushSource(str name, double seconds, int randSeed, int max);
+  RandomPushSource(string name, double seconds, int randSeed, int max);
 
   const char *class_name() const		{ return "RandomPushSource"; }
   const char *flow_code() const			{ return "/-"; }

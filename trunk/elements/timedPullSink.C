@@ -11,10 +11,9 @@
 
 #include <timedPullSink.h>
 #include <element.h>
-#include <async.h>
 #include <math.h>
 
-TimedPullSink::TimedPullSink(str name,
+TimedPullSink::TimedPullSink(string name,
                              double seconds)
   : Element(name, 1, 0),
     _seconds(seconds),

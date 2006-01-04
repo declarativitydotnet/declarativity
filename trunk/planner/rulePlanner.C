@@ -19,7 +19,6 @@
 
 #include <list>
 #include <map>
-#include <arpc.h>
 #include <iostream>
 #include <stdlib.h>
 #include <fstream>
@@ -74,7 +73,7 @@
 #include "catalog.h"
 
 
-void debugRule(PlanContext* pc, str msg)
+void debugRule(PlanContext* pc, string msg)
 {
   warn << "DEBUG RULE: " << pc->_ruleStrand->_ruleID << " " 
        << pc->_ruleStrand->_ruleStrandID << " " << msg; 
@@ -82,10 +81,9 @@ void debugRule(PlanContext* pc, str msg)
 
 #include "rulePel.C"
 
-void addWatch(PlanContext* pc, strbuf b)
+void addWatch(PlanContext* pc, string b)
 {
   RuleStrand* rs = pc->_ruleStrand;
-  str bStr(b);
 
   if (pc->_outputDebugFile == NULL) {
     ElementSpecPtr print = 
@@ -103,14 +101,12 @@ void generateEventElement(PlanContext* pc)
 {
   RuleStrand* rs = pc->_ruleStrand;
   ECA_Rule* curRule = pc->_ruleStrand->_eca_rule;
-  pc->_namesTracker 
-    = New PlanContext::FieldNamesTracker(rs->_eca_rule->_event->_pf);
+  pc->_namesTracker = new PlanContext::FieldNamesTracker(rs->_eca_rule->_event->_pf);
   
   // update, create a scanner, 
   if (rs->eventType() == Parse_Event::UPDATE || 
       rs->eventType() == Parse_Event::AGGUPDATE) {
-    debugRule(pc, strbuf() << "Update event NamesTracker " 
-	      << pc->_namesTracker->toString() << "\n");
+    debugRule(pc, "Update event NamesTracker " + pc->_namesTracker->toString() + "\n");
     Catalog::TableInfo* ti =  pc->_catalog->getTableInfo(rs->eventFunctorName());
     if (ti == NULL) {
       warn << "Table " << rs->eventFunctorName() << "is not found\n";
@@ -122,40 +118,31 @@ void generateEventElement(PlanContext* pc)
     unsigned primaryKey = ti->_tableInfo->primaryKeys.at(0);
     Table::UniqueScanIterator uniqueIterator = tablePtr->uniqueScanAll(primaryKey, true);
     ElementSpecPtr updateTable =
-       pc->_conf->addElement(ElementPtr(new Scan(strbuf("ScanUpdate|") 
-						    << curRule->_ruleID 
-						    << "|" << rs->eventFunctorName()
-						    << "|" << pc->_nodeID,
-						    uniqueIterator, 
-						    true)));
+       pc->_conf->addElement(ElementPtr(new Scan("ScanUpdate|" + curRule->_ruleID 
+						    + "|" + rs->eventFunctorName()
+						    + "|" + pc->_nodeID, uniqueIterator, true)));
     rs->addElement(pc->_conf, updateTable);
 
     // add a debug element
-    addWatch(pc, strbuf("DebugAfterUpdateEvent|")
-	     << curRule->_ruleID 
-	     << "|" << pc->_nodeID);
+    addWatch(pc, "DebugAfterUpdateEvent|"+curRule->_ruleID+"|"+pc->_nodeID);
     
     if (curRule->_probeTerms.size() > 0) {
       ElementSpecPtr pullPush = 
-	pc->_conf->addElement(ElementPtr(new TimedPullPush(strbuf("UpdateEventTimedPullPush|")
-						     << curRule->_ruleID 
-						     << "|" << pc->_nodeID, 0)));
+	pc->_conf->addElement(ElementPtr(new TimedPullPush("UpdateEventTimedPullPush|"
+						     + curRule->_ruleID 
+						     + "|" + pc->_nodeID, 0)));
       rs->addElement(pc->_conf, pullPush);
     }
   }
 
   if (rs->eventType() == Parse_Event::RECV) {
-    debugRule(pc, strbuf() << "Recv event NamesTracker " 
-	      << pc->_namesTracker->toString() << "\n");
-    addWatch(pc, strbuf("DebugAfterRecvEvent|")
-	     << curRule->_ruleID 
-	     << "|" << pc->_nodeID);
+    debugRule(pc, "Recv event NamesTracker " + pc->_namesTracker->toString() + "\n");
+    addWatch(pc, "DebugAfterRecvEvent|" + curRule->_ruleID + "|" + pc->_nodeID);
 
     if (curRule->_probeTerms.size() == 0) {
       ElementSpecPtr slot = 
-	pc->_conf->addElement(ElementPtr(new Slot(strbuf("RecvEventSlot|")
-						     << curRule->_ruleID 
-						     << "|" << pc->_nodeID)));
+	pc->_conf->addElement(ElementPtr(new Slot("RecvEventSlot|" + curRule->_ruleID 
+						     + "|" + pc->_nodeID)));
       rs->addElement(pc->_conf, slot);
     }
   }
@@ -170,10 +157,8 @@ void generateActionElement(PlanContext* pc)
   // add, insert
   if (rs->actionType() == Parse_Action::ADD) {    
     // add a debug element
-    addWatch(pc, strbuf("DebugBeforeInsertAction|")
-	     << curRule->_ruleID << "|"
-	     << rs->actionFunctorName() 
-	     << "|" << pc->_nodeID);
+    addWatch(pc, "DebugBeforeInsertAction|" + curRule->_ruleID + "|" + 
+                 rs->actionFunctorName() + "|" + pc->_nodeID);
 
     Catalog::TableInfo* ti =  pc->_catalog->getTableInfo(rs->actionFunctorName());    
     if (ti == NULL) {
@@ -184,16 +169,12 @@ void generateActionElement(PlanContext* pc)
     TablePtr tablePtr = ti->_table;
 
     ElementSpecPtr insertElement
-      = pc->_conf->addElement(ElementPtr(new Insert(strbuf("Insert|") << 
-				   curRule->_ruleID << "|" 
-				   << rs->actionFunctorName() 
-				   << "|" << pc->_nodeID,
-				   tablePtr)));
+      = pc->_conf->addElement(ElementPtr(new Insert("Insert|" + curRule->_ruleID + "|" 
+				   + rs->actionFunctorName() + "|" + pc->_nodeID, tablePtr)));
 
     ElementSpecPtr insertPullPush = 
-      pc->_conf->addElement(ElementPtr(new TimedPullPush(strbuf("Insert|") <<
-				       curRule->_ruleID 
-				       << "|" << pc->_nodeID, 0)));
+      pc->_conf->addElement(ElementPtr(new TimedPullPush("Insert|" + curRule->_ruleID 
+				       + "|" + pc->_nodeID, 0)));
     
     ElementSpecPtr sinkS 
     = pc->_conf->addElement(ElementPtr(new Discard("DiscardInsert")));
@@ -206,7 +187,7 @@ void generateActionElement(PlanContext* pc)
   if (rs->actionType() == Parse_Action::SEND) {    
     // do a pel transform, figure out what is the field number
     Parse_Functor* head = curRule->_action->_pf;
-    str loc = head->fn->loc;
+    string loc = head->fn->loc;
     int locationIndex = 0;
     for (int k = 0; k < head->args(); k++) {
       Parse_Var* parse_var = dynamic_cast<Parse_Var*>(head->arg(k));
@@ -214,16 +195,12 @@ void generateActionElement(PlanContext* pc)
 	locationIndex = k+1;
       }
     }
-    addWatch(pc, strbuf("DebugBeforeSendAction|") 
-	     << curRule->_ruleID 
-	     << "|" << pc->_nodeID);
-
+    addWatch(pc, "DebugBeforeSendAction|"+ curRule->_ruleID + "|" + pc->_nodeID);
+    ostringstream oss;
+    oss << "$" << locationIndex << " pop swallow pop";
     ElementSpecPtr sendPelTransform =
-      pc->_conf->addElement(ElementPtr(new PelTransform(strbuf("SendActionAddress|") 
-					   << curRule->_ruleID 
-					   << "|" << pc->_nodeID,
-					   strbuf("$") << 
-					   locationIndex << " pop swallow pop")));
+      pc->_conf->addElement(ElementPtr(new PelTransform("SendActionAddress|"+curRule->_ruleID 
+					   + "|" + pc->_nodeID,oss.str())));
     
     rs->addElement(pc->_conf, sendPelTransform);   
   }   
@@ -245,7 +222,7 @@ void generateProbeElements(PlanContext* pc, Parse_Functor* probedFunctor)
   std::vector<int> rightJoinKeys 
     =  incomingNamesTracker->matchingJoinKeys(probedNamesTracker->fieldNames);
 
-  str probedTableName = probedFunctor->fn->name;
+  string probedTableName = probedFunctor->fn->name;
   
   if (leftJoinKeys.size() == 0 || rightJoinKeys.size() == 0) {
     std::cerr << "No matching join keys " << rs->eventFunctorName() << " " << 
@@ -274,83 +251,78 @@ void generateProbeElements(PlanContext* pc, Parse_Functor* probedFunctor)
       tableInfo->primaryKeys.at(0) == rightJoinKey) {
     // use a unique index
     ElementSpecPtr lookupElement =
-      pc->_conf->addElement(ElementPtr(new UniqueLookup(strbuf("UniqueLookup|") 
-				       << curRule->_ruleID 
-				       << "|" << probedTableName
-				       << "|" << pc->_nodeID, 
+      pc->_conf->addElement(ElementPtr(new UniqueLookup("UniqueLookup|"+ 
+				       curRule->_ruleID + "|" + probedTableName
+				       + "|" + pc->_nodeID, 
 				       probedTable,
 				       leftJoinKey, 
 				       rightJoinKey, 
-				       cbv_null)));
-    debugRule(pc, str(strbuf() << "Unique lookup " << " " 
-			   << rs->eventFunctorName() << " " 
-			   << probedTableName << " " 
-			   << leftJoinKey << " " 
-			   << rightJoinKey << "\n"));
+				       0)));
+/*
+    debugRule(pc, "Unique lookup " + " " + rs->eventFunctorName() + " " 
+			   + probedTableName + " " + leftJoinKey << " " 
+			   + rightJoinKey + "\n");
+*/
 
     pc->_ruleStrand->addElement(pc->_conf, lookupElement);    
   } else {
     ElementSpecPtr lookupElement =
-      pc->_conf->addElement(ElementPtr(new MultLookup(strbuf("MultLookup|") 
-						     << curRule->_ruleID 
-						     << "|" << probedTableName 
-						     << "|" << pc->_nodeID, 
+      pc->_conf->addElement(ElementPtr(new MultLookup("MultLookup|" 
+						     + curRule->_ruleID 
+						     + "|" + probedTableName 
+						     + "|" + pc->_nodeID, 
 						     probedTable,
 						     leftJoinKey, 
-						     rightJoinKey, cbv_null)));
+						     rightJoinKey, 0)));
 
     pc->_catalog->createMultIndex(probedTableName, rightJoinKey);
   
-    debugRule(pc, str(strbuf() << "Mult lookup " << curRule->_ruleID 
-			   << " " << probedTableName << " " 
-			   << leftJoinKey << " " << rightJoinKey << "\n"));
+/*
+    debugRule(pc, "Mult lookup " + curRule->_ruleID + " " + probedTableName + " " 
+			   + leftJoinKey + " " + rightJoinKey + "\n");
+*/
 
     pc->_ruleStrand->addElement(pc->_conf, lookupElement);
   }
   
  
   int numFieldsProbe = incomingNamesTracker->fieldNames.size();
-  debugRule(pc, str(strbuf() << "Probe before merge " 
-			 << incomingNamesTracker->toString() << "\n"));
+  debugRule(pc, "Probe before merge " + incomingNamesTracker->toString() + "\n");
   incomingNamesTracker->mergeWith(probedNamesTracker->fieldNames); 
-  debugRule(pc, str(strbuf() << "Probe after merge " 
-			 << incomingNamesTracker->toString() << "\n"));
+  debugRule(pc, "Probe after merge " + incomingNamesTracker->toString() + "\n");
 
  
   ElementSpecPtr noNull 
-    = pc->_conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull|") 
-						      << curRule->_ruleID 
-						      << "|" << probedTableName
-						      << "|" << pc->_nodeID, 1)));
+    = pc->_conf->addElement(ElementPtr(new NoNullField("NoNull|" 
+						      + curRule->_ruleID 
+						      + "|" + probedTableName
+						      + "|" + pc->_nodeID, 1)));
 
   pc->_ruleStrand->addElement(pc->_conf, noNull);
 
   
-  debugRule(pc, str(strbuf() << "Number of join selections " 
-		    << leftJoinKeys.size()-1 << "\n"));
+  // debugRule(pc, "Number of join selections " + leftJoinKeys.size()-1 + "\n");
 
   for (uint k = 1; k < leftJoinKeys.size(); k++) {
     int leftField = leftJoinKeys.at(k);
     int rightField = rightJoinKeys.at(k);
-    strbuf selectionPel;
+    ostringstream selectionPel;
     selectionPel << "$0 " << (leftField+1) << " field " << " $1 " 
 		 << rightField+1 << " field == not ifstop $0 pop $1 pop";
 
-    debugRule(pc, str(strbuf() << "Join selections " 
-			   << str(selectionPel) << "\n"));
+    debugRule(pc, "Join selections " + selectionPel.str() + "\n");
     ElementSpecPtr joinSelections =
-      pc->_conf->addElement(ElementPtr(new PelTransform(strbuf("JoinSelections|") 
-					   << curRule->_ruleID << "|" 
-					   << probedTableName << "|" 
-					   << k << "|" << pc->_nodeID, 
-					   str(selectionPel))));    
+      pc->_conf->addElement(ElementPtr(new PelTransform("JoinSelections|"
+					   + curRule->_ruleID + "|" 
+					   + probedTableName + "|" + pc->_nodeID, 
+					   selectionPel.str())));    
     pc->_ruleStrand->addElement(pc->_conf, joinSelections);
   }
  
   // Take the joined tuples and produce the resulting path
   // form the pel projection. 
   //Keep all fields on left, all fields on right except the join keys
-  strbuf pelProject("\"join|");
+  ostringstream pelProject("\"join|");
   pelProject << rs->eventFunctorName() << "|" << probedTableName << "|" 
 	     << curRule->_ruleID << "|" << pc->_nodeID << "\" pop "; // table name
   for (int k = 0; k < numFieldsProbe; k++) {
@@ -369,12 +341,11 @@ void generateProbeElements(PlanContext* pc, Parse_Functor* probedFunctor)
     }
   }
 
-  str pelProjectStr(pelProject);
+  string pelProjectStr = pelProject.str();
   ElementSpecPtr joinPelTransform 
-    = pc->_conf->addElement(ElementPtr(new PelTransform(strbuf("JoinPelTransform|") 
-				       << curRule->_ruleID << "|" 
-				       << probedTableName << "|" << pc->_nodeID, 
-				       pelProjectStr)));
+    = pc->_conf->addElement(ElementPtr(new PelTransform("JoinPelTransform|" 
+				       + curRule->_ruleID + "|" + probedTableName + 
+                                       "|" + pc->_nodeID, pelProjectStr)));
 
   delete probedNamesTracker;
 
@@ -391,17 +362,15 @@ void generateMultipleProbeElements(PlanContext* pc)
   for (uint k = 0; k < curRule->_probeTerms.size(); k++) {    
     Parse_Functor* pf = curRule->_probeTerms.at(k);
     
-    debugRule(pc, str(strbuf() << "Probing " << curRule->_event->_pf->fn->name
-		      << " " << pf->toString() << "\n"));
+    debugRule(pc, "Probing " + curRule->_event->_pf->fn->name
+		      + " " + pf->toString() + "\n");
     
     generateProbeElements(pc, pf);
 
     if (curRule->_probeTerms.size() - 1 != k) {
       ElementSpecPtr pullPush =
-	pc->_conf->addElement(ElementPtr(new TimedPullPush(strbuf("ProbePullPush|") 
-					  << curRule->_ruleID << "|" 
-					  << pc->_nodeID << "|" << k,
-					  0)));
+	pc->_conf->addElement(ElementPtr(new TimedPullPush("ProbePullPush|" 
+					  + curRule->_ruleID + "|" + pc->_nodeID, 0)));
       rs->addElement(pc->_conf, pullPush);
     }
   }
@@ -415,17 +384,15 @@ void generateSelectionAssignmentElements(PlanContext* pc)
     Parse_Select* parse_select 
       = dynamic_cast<Parse_Select *>(curRule->_selectAssignTerms.at(j));
     if (parse_select != NULL) {
-      debugRule(pc, str(strbuf() << "Selection term " << 
-			parse_select->toString() << " " 
-			<< curRule->_ruleID << "\n"));
+      debugRule(pc, "Selection term " + parse_select->toString() + " " 
+			+ curRule->_ruleID + "\n");
       pelSelect(pc, parse_select, j); 
     }
     Parse_Assign* parse_assign 
       = dynamic_cast<Parse_Assign *>(curRule->_selectAssignTerms.at(j));
     if (parse_assign != NULL) {
-      debugRule(pc, str(strbuf() << "Assignment term " << 
-			parse_assign->toString() << " " 
-			<< curRule->_ruleID << "\n"));
+      debugRule(pc, "Assignment term " + parse_assign->toString() + " " 
+			+ curRule->_ruleID + "\n");
       pelAssign(pc, parse_assign, j);
     }
   }
@@ -453,22 +420,22 @@ void generateProjectElements(PlanContext* pc)
     indices.push_back(pos + 1);
   }
  
-  strbuf pelTransformStrbuf("\"" << pf->fn->name << "\" pop");
+  ostringstream pel;
+  pel << "\"" << pf->fn->name << "\" pop";
 
   for (unsigned int k = 0; k < indices.size(); k++) {
-    pelTransformStrbuf << " $" << indices.at(k) << " pop";
+    pel << " $" << indices.at(k) << " pop";
   }
 
 
-  str pelTransformStr(pelTransformStrbuf);
-  debugRule(pc, str(strbuf() << "Project head " 
-		    << curNamesTracker->toString() 
-		    << " " << pelTransformStr << "\n"));
+  string pelTransformStr = pel.str();
+  debugRule(pc, "Project head " + curNamesTracker->toString() 
+		    + " " + pelTransformStr + "\n");
  
   ElementSpecPtr projectHeadPelTransform =
-    pc->_conf->addElement(ElementPtr(new PelTransform(strbuf("ProjectHead|") 
-							 << curRule->_ruleID 
-							 << "|" << pc->_nodeID,
+    pc->_conf->addElement(ElementPtr(new PelTransform("ProjectHead|" 
+							 + curRule->_ruleID 
+							 + "|" + pc->_nodeID,
 							 pelTransformStr)));
 
   pc->_ruleStrand->addElement(pc->_conf, projectHeadPelTransform);  
@@ -503,17 +470,17 @@ void generateAggElement(PlanContext* pc)
     if (pv == NULL) { continue; }
     int pos = baseFunctorTracker->fieldPosition(pv->toString()) + 1;
     groupByFieldNos.push_back((uint) pos);
-    debugRule(pc, str(strbuf() << "GroupBy Field: " << pv->toString() << " " 
-		      << pos << " " << baseFunctorTracker->toString() << "\n"));    
+    debugRule(pc, "GroupBy Field: " + pv->toString() + " " 
+		      + baseFunctorTracker->toString() + "\n");    
   }
   Parse_Var* pv = dynamic_cast<Parse_Var*> (aggField);
   aggFieldNo = baseFunctorTracker->fieldPosition(pv->toString()) + 1;
-  debugRule(pc, str(strbuf() << "Agg Field: " << pv->toString() << " " 
-		    << aggFieldNo << " " << baseFunctorTracker->toString() << "\n"));    
+  debugRule(pc, "Agg Field: " + pv->toString() + " " 
+		    + baseFunctorTracker->toString() + "\n");    
   delete baseFunctorTracker;
 
   Table::AggregateFunction* af = 0;
-  str aggStr;
+  string aggStr;
   if (aggTerm->_oper == Parse_Agg::MIN) {
     af = &Table::AGG_MIN;
     aggStr = "min";
@@ -534,23 +501,16 @@ void generateAggElement(PlanContext* pc)
   TablePtr aggTable = ti->_table;
   
   unsigned primaryKey = ti->_tableInfo->primaryKeys.at(0);
+  ostringstream oss;
+  oss << "Agg|" << curRule->_ruleID << "|" << baseFunctor->fn->name 
+      << "|" << pc->_nodeID << "|" << primaryKey << "|" << aggStr << "|" << aggFieldNo;
   ElementSpecPtr aggElement =
-    pc->_conf->addElement(ElementPtr(new Agg(strbuf("Agg|") 
-						<< curRule->_ruleID << "|" 
-						<< baseFunctor->fn->name 
-						<< "|" << pc->_nodeID 
-						<< "|" << 
-						primaryKey << "|" <<
-						aggStr << "|" << aggFieldNo,
-						groupByFieldNos, 
-						aggFieldNo, 
-						primaryKey, aggStr)));
+    pc->_conf->addElement(ElementPtr(new Agg(oss.str(), groupByFieldNos, 
+						aggFieldNo, primaryKey, aggStr)));
 
   pc->_ruleStrand->addElement(pc->_conf, aggElement);   
 
-  addWatch(pc, strbuf("DebugAfterAggUpdateEvent|")
-	   << curRule->_ruleID 
-	   << "|" << pc->_nodeID);
+  addWatch(pc, "DebugAfterAggUpdateEvent|"+curRule->_ruleID+"|"+pc->_nodeID);
 }
 
 void generateAggElements(PlanContext* pc)
@@ -558,9 +518,8 @@ void generateAggElements(PlanContext* pc)
   RuleStrand* rs = pc->_ruleStrand;
   ECA_Rule* curRule = pc->_ruleStrand->_eca_rule;
   ElementSpecPtr pullPushTwo = 
-    pc->_conf->addElement(ElementPtr(new TimedPullPush(strbuf("ScanUpdateTimedPullPush|")
-					  << curRule->_ruleID 
-					  << "|" << pc->_nodeID, 0)));
+    pc->_conf->addElement(ElementPtr(new TimedPullPush("ScanUpdateTimedPullPush|"
+					  + curRule->_ruleID + "|" + pc->_nodeID, 0)));
   rs->addElement(pc->_conf, pullPushTwo);  
 
   // generate the aggregate event listener

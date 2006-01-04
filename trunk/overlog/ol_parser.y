@@ -21,7 +21,7 @@
 
   union YYSTYPE;
   static int ol_parser_lex (YYSTYPE *lvalp, OL_Context *ctxt);
-  static void ol_parser_error (OL_Context *ctxt, str msg);
+  static void ol_parser_error (OL_Context *ctxt, string msg);
 
 %}
 %debug
@@ -146,7 +146,7 @@ primarykeys:	OL_KEYS OL_LPAR keylist OL_RPAR {
 		}
 		;
 
-keylist:	OL_VALUE { $$ = New Parse_ExprList(); $$->push_front($1); }
+keylist:	OL_VALUE { $$ = new Parse_ExprList(); $$->push_front($1); }
 		| 
 		OL_VALUE OL_COMMA keylist { $3->push_front($1); $$=$3; }
 		; 
@@ -173,10 +173,10 @@ rule:	        OL_NAME functor OL_IF termlist OL_DOT {
                 ;
 
 query:          OL_QUERY functorname functorbody OL_DOT {
-		   ctxt->query(New Parse_Functor($2, $3)); }
+		   ctxt->query(new Parse_Functor($2, $3)); }
                 ;
 
-termlist:	term { $$ = New Parse_TermList(); $$->push_front($1); }
+termlist:	term { $$ = new Parse_TermList(); $$->push_front($1); }
 		| term OL_COMMA termlist { $3->push_front($1); $$=$3; } 
 		;
 
@@ -184,30 +184,30 @@ term:		range_function | functor | assign | select { $$=$1; }
 		;
 
 range_function:	OL_RANGE OL_LPAR OL_VAR OL_COMMA range_atom OL_COMMA range_atom OL_RPAR
-			{ $$=New Parse_RangeFunction($3, $5, $7); }
+			{ $$=new Parse_RangeFunction($3, $5, $7); }
 		;
 
 functor:	functorname functorbody 
-			{ $$=New Parse_Functor($1, $2); } 
+			{ $$=new Parse_Functor($1, $2); } 
 		;
 
 aggview:        agg_oper OL_LPAR functorbody OL_COMMA functorbody OL_COMMA functor OL_RPAR 
-                        { $$ = New Parse_AggTerm($1, $3, $5, $7); }
+                        { $$ = new Parse_AggTerm($1, $3, $5, $7); }
                 ;
 
 functorname:	OL_NAME 
-			{ $$ = New Parse_FunctorName($1); }
+			{ $$ = new Parse_FunctorName($1); }
 		| OL_NAME OL_AT OL_VAR 
-			{ $$ = New Parse_FunctorName($1,$3); }
+			{ $$ = new Parse_FunctorName($1,$3); }
 		;
 
 functorbody:	OL_LPAR OL_RPAR 
-			{ $$=New Parse_ExprList(); }
+			{ $$=new Parse_ExprList(); }
 		| OL_LPAR functorargs OL_RPAR 
 			{ $$=$2; };
 
 functorargs:	functorarg { 
-			$$ = New Parse_ExprList(); 
+			$$ = new Parse_ExprList(); 
 			$$->push_front($1); }
 		| functorarg OL_COMMA functorargs {
 			$3->push_front($1); 
@@ -222,13 +222,13 @@ functorarg:	atom
 
 
 function:	OL_FUNCTION OL_LPAR functionargs OL_RPAR
-			{ $$ = New Parse_Function($1, $3); }
+			{ $$ = new Parse_Function($1, $3); }
 		| OL_FUNCTION OL_LPAR OL_RPAR 
-			{ $$ = New Parse_Function($1, New Parse_ExprList()); }
+			{ $$ = new Parse_Function($1, new Parse_ExprList()); }
 		;
 
 functionargs:	functionarg { 
-			$$ = New Parse_ExprList(); 
+			$$ = new Parse_ExprList(); 
 			$$->push_front($1); }
 		| functionarg OL_COMMA functionargs { 
 			$3->push_front($1); 
@@ -242,35 +242,35 @@ functionarg:	math_expr
 		;
 
 select:    	bool_expr
-			{ $$ = New Parse_Select($1); }
+			{ $$ = new Parse_Select($1); }
 		;
 
 assign:		OL_VAR OL_ASSIGN math_expr
-			{ $$ = New Parse_Assign($1, $3); }
+			{ $$ = new Parse_Assign($1, $3); }
 		| OL_VAR OL_ASSIGN bool_expr
-			{ $$ = New Parse_Assign($1, $3); }
+			{ $$ = new Parse_Assign($1, $3); }
 		| OL_VAR OL_ASSIGN atom
-			{ $$ = New Parse_Assign($1, $3); }
+			{ $$ = new Parse_Assign($1, $3); }
 		| OL_VAR OL_ASSIGN function
-			{ $$ = New Parse_Assign($1, $3); }
+			{ $$ = new Parse_Assign($1, $3); }
 		;
 
 bool_expr:	OL_LPAR bool_expr OL_RPAR 
 			{ $$ = $2; }
 		| OL_VAR OL_IN range_expr 
-			{ $$ = New Parse_Bool(Parse_Bool::RANGE, $1, $3); } 
+			{ $$ = new Parse_Bool(Parse_Bool::RANGE, $1, $3); } 
 		| OL_VAR OL_IN OL_ID range_expr 
-			{ $$ = New Parse_Bool(Parse_Bool::RANGE, $1, $4, true); } 
+			{ $$ = new Parse_Bool(Parse_Bool::RANGE, $1, $4, true); } 
 		| OL_NOT bool_expr 
-			{ $$ = New Parse_Bool(Parse_Bool::NOT, $2 ); } 
+			{ $$ = new Parse_Bool(Parse_Bool::NOT, $2 ); } 
 		| bool_expr OL_OR bool_expr
-			{ $$ = New Parse_Bool(Parse_Bool::OR, $1, $3 ); }
+			{ $$ = new Parse_Bool(Parse_Bool::OR, $1, $3 ); }
 		| bool_expr OL_AND bool_expr
-			{ $$ = New Parse_Bool(Parse_Bool::AND, $1, $3 ); }
+			{ $$ = new Parse_Bool(Parse_Bool::AND, $1, $3 ); }
 		| rel_atom rel_oper rel_atom
-			{ $$ = New Parse_Bool($2, $1, $3 ); }
+			{ $$ = new Parse_Bool($2, $1, $3 ); }
 		| rel_atom rel_oper OL_ID rel_atom
-			{ $$ = New Parse_Bool($2, $1, $4, true); }
+			{ $$ = new Parse_Bool($2, $1, $4, true); }
 		;
 
 rel_atom:	math_expr 
@@ -290,13 +290,13 @@ rel_oper:	  OL_EQ  { $$ = Parse_Bool::EQ; }
 		;
 
 math_expr:	math_expr math_oper math_atom
-			{ $$ = New Parse_Math($2, $1, $3 ); }
+			{ $$ = new Parse_Math($2, $1, $3 ); }
 		| math_expr math_oper OL_ID math_atom
-			{ $$ = New Parse_Math($2, $1, $4, true ); }
+			{ $$ = new Parse_Math($2, $1, $4, true ); }
 		| math_atom math_oper math_atom
-			{ $$ = New Parse_Math($2, $1, $3 ); }
+			{ $$ = new Parse_Math($2, $1, $3 ); }
 		| math_atom math_oper OL_ID math_atom
-			{ $$ = New Parse_Math($2, $1, $4, true ); }
+			{ $$ = new Parse_Math($2, $1, $4, true ); }
 		;
 
 math_atom:	atom 
@@ -318,13 +318,13 @@ math_oper:	  OL_LSHIFT  { $$ = Parse_Math::LSHIFT; }
 
 
 range_expr:	OL_LPAR range_atom OL_COMMA range_atom OL_RPAR 
-			{ $$ = New Parse_Range(Parse_Range::RANGEOO, $2, $4); } 
+			{ $$ = new Parse_Range(Parse_Range::RANGEOO, $2, $4); } 
 		| OL_LPAR range_atom OL_COMMA range_atom OL_RSQUB
-			{ $$ = New Parse_Range(Parse_Range::RANGEOC, $2, $4); } 
+			{ $$ = new Parse_Range(Parse_Range::RANGEOC, $2, $4); } 
 		| OL_LSQUB range_atom OL_COMMA range_atom OL_RPAR
-			{ $$ = New Parse_Range(Parse_Range::RANGECO, $2, $4); } 
+			{ $$ = new Parse_Range(Parse_Range::RANGECO, $2, $4); } 
 		| OL_LSQUB range_atom OL_COMMA range_atom OL_RSQUB
-			{ $$ = New Parse_Range(Parse_Range::RANGECC, $2, $4); } 
+			{ $$ = new Parse_Range(Parse_Range::RANGECC, $2, $4); } 
 		;
 
 range_atom:	math_expr
@@ -341,10 +341,10 @@ atom:		OL_VALUE | OL_VAR | OL_STRING | OL_NULL
 		;
 
 aggregate:	agg_oper OL_LT OL_VAR OL_GT 
-			{ $$ = New Parse_Agg($3, $1, ValuePtr()); }
+			{ $$ = new Parse_Agg($3, $1, ValuePtr()); }
 		|
 		agg_oper OL_LT OL_TIMES OL_GT 
-			{ $$ = New Parse_Agg(Parse_Agg::DONT_CARE, $1, ValuePtr()); }
+			{ $$ = new Parse_Agg(Parse_Agg::DONT_CARE, $1, ValuePtr()); }
 		;
 
 agg_oper:	  OL_MIN   { $$ = Parse_Agg::MIN; }
@@ -363,7 +363,7 @@ static int ol_parser_lex (YYSTYPE *lvalp, OL_Context *ctxt)
 {
   return ctxt->lexer->yylex(lvalp, ctxt);
 }
-static void ol_parser_error(OL_Context *ctxt, str msg)
+static void ol_parser_error(OL_Context *ctxt, string msg)
 {
   ctxt->error(msg);
 }

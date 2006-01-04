@@ -41,7 +41,7 @@ class OL_Lexer : public OLBaseFlexLexer {
 
 private:
   int comment_depth;
-  strbuf *cstring;
+  ostringstream *cstring;
 
   yy_buffer_state *bufstate;
   std::istringstream strb;

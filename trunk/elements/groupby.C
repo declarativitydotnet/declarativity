@@ -9,8 +9,6 @@
  * 
  */
 
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 
 #include "groupby.h"
@@ -23,7 +21,7 @@ const int GroupBy::MIN_AGG = 0;
 const int GroupBy::MAX_AGG = 1;
 const int GroupBy::AVG_AGG = 2;
 
-GroupBy::GroupBy(str name, str newTableName, std::vector<int> primaryFields, std::vector<int> groupByFields, 
+GroupBy::GroupBy(string name, string newTableName, std::vector<int> primaryFields, std::vector<int> groupByFields, 
 		 std::vector<int> aggFields, std::vector<int> aggTypes, 
 		 double seconds, bool aggregateSelections)
   : Element(name,1,1), 
@@ -57,9 +55,9 @@ int GroupBy::initialize()
 }
 
 
-str GroupBy::getFieldStr(std::vector<int> fields, TuplePtr p)
+string GroupBy::getFieldStr(std::vector<int> fields, TuplePtr p)
 {
-  strbuf fieldStr;
+  ostringstream fieldStr;
   for (unsigned int k = 0; k < fields.size(); k++) {
     ValuePtr key = (*p)[fields[k]];
     fieldStr << key->toString();
@@ -67,7 +65,7 @@ str GroupBy::getFieldStr(std::vector<int> fields, TuplePtr p)
       fieldStr << ":";
     }
   }
-  return fieldStr;
+  return fieldStr.str();
 }
 
 void GroupBy::recomputeAllAggs()
@@ -82,7 +80,7 @@ void GroupBy::recomputeAllAggs()
   for (_multiIterator = _tuples.begin(); _multiIterator != _tuples.end(); _multiIterator++) {
     bool changed = false;
     TuplePtr nextTuple = _multiIterator->second;    
-    str groupByStr = getFieldStr(_groupByFields, nextTuple);    
+    string groupByStr = getFieldStr(_groupByFields, nextTuple);    
 
     // the initial fields
     TuplePtr newAggTuple = Tuple::mk();
@@ -139,8 +137,8 @@ void GroupBy::recomputeAllAggs()
 
 int GroupBy::push(int port, TuplePtr p, b_cbv cb)
 {  
-  str indexStr = getFieldStr(_primaryFields, p);
-  str groupByStr = getFieldStr(_groupByFields, p);
+  string indexStr = getFieldStr(_primaryFields, p);
+  string groupByStr = getFieldStr(_groupByFields, p);
 
   // store the tuple. Replace by primary key if necessary. 
   for (_multiIterator = _tuples.lower_bound(groupByStr); _multiIterator != _tuples.upper_bound(groupByStr); _multiIterator++) {
@@ -168,7 +166,7 @@ void GroupBy::runTimer()
   // Attempt to push it
   for (_iterator = _aggValues.begin(); _iterator != _aggValues.end(); _iterator++) {
     TuplePtr t = _iterator->second;
-    str groupByStr = getFieldStr(_groupByFields, t);    
+    string groupByStr = getFieldStr(_groupByFields, t);    
 
     // check whether this tuple has been sent already previously (suppress to prevent sending redundant)
     TupleMap::iterator previousSent = _lastSentTuples.find(groupByStr);
@@ -216,7 +214,7 @@ void GroupBy::wakeup()
 
 
 // output tuples seen
-void GroupBy::dumpTuples(str str)
+void GroupBy::dumpTuples(string str)
 {
   std::cout << "Key " << str << ": ";
   for (_multiIterator = _tuples.lower_bound(str); _multiIterator != _tuples.upper_bound(str); _multiIterator++) {
@@ -227,7 +225,7 @@ void GroupBy::dumpTuples(str str)
 }
 
 // output aggs
-void GroupBy::dumpAggs(str str)
+void GroupBy::dumpAggs(string str)
 {
   std::cout << "Grouping Key " << str << ": ";
   for (_iterator = _aggValues.lower_bound(str); _iterator != _aggValues.upper_bound(str); _iterator++) {

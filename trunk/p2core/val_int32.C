@@ -21,7 +21,7 @@
 #include "val_str.h"
 #include "val_null.h"
 
-const opr::Oper* Val_Int32::oper_ = New opr::OperImpl<Val_Int32>();
+const opr::Oper* Val_Int32::oper_ = new opr::OperImpl<Val_Int32>();
 
 //
 // Marshalling and unmarshallng
@@ -56,7 +56,7 @@ int32_t Val_Int32::cast(ValuePtr v) {
   case Value::NULLV:
     return 0;
   case Value::STR:
-    return strtol(Val_Str::cast(v).cstr(), NULL, 0);
+    return strtol(Val_Str::cast(v).c_str(), NULL, 0);
   default:
     throw Value::TypeError(v->typeCode(), Value::INT32 );
   }

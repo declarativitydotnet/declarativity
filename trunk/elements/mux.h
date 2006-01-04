@@ -19,13 +19,12 @@
 #define __MUX_H__
 
 #include "element.h"
-#include <async.h>
 #include <vector>
 
 class Mux : public Element { 
 public:
   
-  Mux(str, int);
+  Mux(string, int);
   ~Mux() {}
 
   const char *class_name() const		{ return "Mux";}

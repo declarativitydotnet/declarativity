@@ -17,10 +17,9 @@
 #define SEQ_FIELD 0
 #define PLD_FIELD 1
 
-Defrag::Defrag(str name)
+Defrag::Defrag(string name)
   : Element(name, 1, 1),
-    _push_cb(0),
-    _pull_cb(0)
+    _push_cb(0), _pull_cb(0)
 {
 }
 
@@ -30,21 +29,21 @@ int Defrag::push(int port, TuplePtr t, b_cbv cb)
   // Is this the right port?
   assert(port == 0);
 
-  if (_push_cb) {
+  if (_push_cb != 0) {
     // Complain and do nothing
-    log(LoggerI::INFO, 0, "push: callback overrun"); 
+    ELEM_INFO( "push: callback overrun"); 
   } else {
     // Accept the callback
     _push_cb = cb;
-    log(LoggerI::INFO, 0, "push: raincheck");
+    ELEM_INFO( "push: raincheck");
   }
 
-  log(LoggerI::INFO, 0, "push: put accepted");
+  ELEM_INFO( "push: put accepted");
   defragment(t);
 
   // Unblock the puller if one is waiting
-  if (_pull_cb) {
-    log(LoggerI::INFO, 0, "push: wakeup puller");
+  if (_pull_cb != 0) {
+    ELEM_INFO( "push: wakeup puller");
     _pull_cb();
     _pull_cb = 0;
   }
@@ -58,25 +57,25 @@ TuplePtr Defrag::pull(int port, b_cbv cb)
 
   // Do I have a fragment?
   if (!tuples_.empty()) {
-    log(LoggerI::INFO, 0, "pull: will succeed");
+    ELEM_INFO( "pull: will succeed");
     TuplePtr t = tuples_.front();
     tuples_.pop_front();
 
-    if (tuples_.empty() && _push_cb) {
-      log(LoggerI::INFO, 0, "pull: wakeup pusher");
+    if (tuples_.empty() && _push_cb != 0) {
+      ELEM_INFO( "pull: wakeup pusher");
       _push_cb();
       _push_cb = 0;
     }
     return t;
   } else {
     // I don't have a tuple.  Do I have a pull callback already?
-    if (!_pull_cb) {
+    if (_pull_cb == 0) {
       // Accept the callback
-      log(LoggerI::INFO, 0, "pull: raincheck");
+      ELEM_INFO( "pull: raincheck");
       _pull_cb = cb;
     } else {
       // I already have a pull callback
-      log(LoggerI::INFO, 0, "pull: underrun");
+      ELEM_INFO( "pull: underrun");
     }
     return TuplePtr();
   }
@@ -94,7 +93,7 @@ void Defrag::defragment(TuplePtr t)
   else {
     for (FragMap::iterator iter = fragments_.find(seq_num); iter != fragments_.end(); iter++) {
       if (OFFSET(Val_UInt64::cast((*iter->second)[SEQ_FIELD])) == offset) {
-        log(LoggerI::INFO, 0, "defragment: duplicate offset");
+        ELEM_INFO( "defragment: duplicate offset");
         return;
       }
     }
@@ -103,7 +102,7 @@ void Defrag::defragment(TuplePtr t)
 
     if (fragments_.count(seq_num) == chunks) {  
       // Put fragments back together
-      ref <suio> uio = New refcounted<suio>();
+      FdbufPtr fb(new Fdbuf());
       for (uint i = 0; i < chunks; i++) {
         TuplePtr p;
         for (FragMap::iterator iter = fragments_.find(seq_num); iter != fragments_.end(); iter++) {
@@ -113,13 +112,13 @@ void Defrag::defragment(TuplePtr t)
             break;
           }
         }
-        assert(p != NULL);
-        ref<suio> payload = Val_Opaque::cast((*p)[PLD_FIELD]);
-        uio->copy(payload, payload->resid());
+        assert(p);
+        FdbufPtr payload = Val_Opaque::cast((*p)[PLD_FIELD]);
+        fb->push_back( payload->cstr(), payload->length());
       }
       TuplePtr defraged = Tuple::mk();
       defraged->append(Val_UInt64::mk(MAKE_SEQ(seq_num, 0)));
-      defraged->append(Val_Opaque::mk(uio));
+      defraged->append(Val_Opaque::mk(fb));
       tuples_.push_back(defraged); 
     }
   }

@@ -13,7 +13,6 @@
 #ifndef __PING_H__
 #define __PING_H__
 
-#include <amisc.h>
 #include <time.h>
 #include <map>
 
@@ -29,7 +28,7 @@
 class Ping : public Element {
 public:
 
-  Ping(str name, int numRetries, int seconds, double retry_interval);
+  Ping(string name, int numRetries, int seconds, double retry_interval);
   int push(int port, TuplePtr p, b_cbv cb);     
   int initialize();
   
@@ -49,8 +48,8 @@ private:
   /* List of pending pings. 
      For now, store one tuple per destination.
      In future, add the time stamp, number of retries, etc. */
-  typedef std::map<str, Entry*> EntryMap;
-  typedef std::map<str, TuplePtr> TupleMap;
+  typedef std::map<string, Entry*> EntryMap;
+  typedef std::map<string, TuplePtr> TupleMap;
   EntryMap _pendingPings;
   TupleMap _pendingResults;
   EntryMap::iterator _iterator;  

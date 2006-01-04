@@ -28,6 +28,10 @@
 #ifndef __LOOP_H__
 #define __LOOP_H__
 
+#include <time.h>
+#include <string>
+#include <sstream>
+#include <iostream>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -35,13 +39,32 @@
 // For in_addr
 #include <netinet/in.h>
 
+using std::string;
+using std::ostringstream;
+
+#undef warn
+#define warn std::cerr
+#undef fatal
+#define fatal std::cerr
+
+// FIX ME
+#define fdcb(a, b, c)
+#define inetsocket(type, port, addr) 0
+#define make_async(sd) 
+#define close_on_exec(sd)
+#define suio_uprintf(u3, s)
+#define tscmp(cv, t) false
+#define amain()
+#define hash_string(p) 0
+
+#undef clock_gettime
+#define clock_gettime(f, t) false
 
 // Common callback types
 typedef boost::function<void (void)>        b_cbv;
 typedef boost::function<void (int)>         b_cbi;
 typedef boost::function<void (std::string)> b_cbs;
 typedef boost::function<void (bool)>        b_cbb;
-
 
 /** Operation type for selects */
 enum

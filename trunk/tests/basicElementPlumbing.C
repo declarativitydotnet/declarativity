@@ -15,8 +15,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 
 #include "tuple.h"
@@ -41,9 +39,9 @@ TuplePtr create_tuple(int i) {
   t->append(Val_Int32::mk(i));
   t->append(Val_UInt64::mk(i));
   t->append(Val_Int32::mk(i));
-  strbuf myStringBuf;
+  ostringstream myStringBuf;
   myStringBuf << "This is string '" << i << "'";
-  str myString = myStringBuf;
+  string myString = myStringBuf.str();
   t->append(Val_Str::mk(myString));
   t->freeze();
   std::cout << "Created tuple " << (t->toString()) << "\n";

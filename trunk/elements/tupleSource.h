@@ -16,6 +16,7 @@
 #define __TUPLE_SOURCE_H__
 
 #include <element.h>
+#include <boost/shared_ptr.hpp>
 #include "functorSource.h"
 
 class TupleSource : public FunctorSource { 
@@ -30,15 +31,12 @@ public:
   public:
     TupleGenerator(TuplePtr tuple) : _tuple(tuple) { }
 
-    virtual ~TupleGenerator() {};
-    
     TuplePtr operator()() {
       return _tuple;
     }
   };
 
-  TupleSource(str, TuplePtr);
-  virtual ~TupleSource();
+  TupleSource(string, TuplePtr);
 
   const char *class_name() const		{ return "TupleSource"; }
   const char *flow_code() const			{ return "/-"; }
@@ -46,7 +44,7 @@ public:
 
 private:
   /** My generator */
-  TupleGenerator* _tupleGenerator;
+  boost::shared_ptr<TupleGenerator> _tupleGenerator;
 };
 
 #endif /* __TUPLE_SOURCE_H_ */

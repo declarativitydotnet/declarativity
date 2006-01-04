@@ -26,28 +26,27 @@ class PlanContext {
 
 public:
   PlanContext(Router::ConfigurationPtr conf, Catalog* catalog, 
-	      RuleStrand* ruleStrand, str nodeID, 
-	      FILE* outputDebugFile);
+	      RuleStrand* ruleStrand, string nodeID, FILE* outputDebugFile);
   ~PlanContext();
   Catalog* _catalog;
   RuleStrand* _ruleStrand;
-  str _nodeID;
+  string _nodeID;
   FILE* _outputDebugFile;
   Router::ConfigurationPtr _conf;
 
   // convince placeholder to figure out the cur fields in a tuple in flight
   class FieldNamesTracker {
   public:
-    std::vector<str> fieldNames;    
+    std::vector<string> fieldNames;    
     FieldNamesTracker();   
     FieldNamesTracker(Parse_Term* pf);
 
     void initialize(Parse_Term* pf);
-    std::vector<int> matchingJoinKeys(std::vector<str> names);    
-    void mergeWith(std::vector<str> names);
-    void mergeWith(std::vector<str> names, int numJoinKeys);
-    int fieldPosition(str var);
-    str toString();
+    std::vector<int> matchingJoinKeys(std::vector<string> names);    
+    void mergeWith(std::vector<string> names);
+    void mergeWith(std::vector<string> names, int numJoinKeys);
+    int fieldPosition(string var);
+    string toString();
   };
 
   FieldNamesTracker* _namesTracker;

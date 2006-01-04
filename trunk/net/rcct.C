@@ -10,7 +10,6 @@
 #include <iostream>
 #include <math.h>
 #include "rcct.h"
-#include "sysconf.h"
 #include "val_uint64.h"
 #include "val_uint32.h"
 #include "val_double.h"
@@ -62,6 +61,11 @@ do { \
   } \
 } while (0)
 
+#undef MAX
+#define MAX(a, b) (((a) < (b)) ? (b) : (a))
+#undef MIN
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+
 /////////////////////////////////////////////////////////////////////
 //
 // Transmit element
@@ -75,7 +79,7 @@ do { \
  * Output 1 (push): Status of a tuple that was recently sent.
  * Output 2 (pull): Status of the CC element. (Optional)
  */
-RateCCT::RateCCT(str name, bool tstat) 
+RateCCT::RateCCT(string name, bool tstat) 
   : Element(name, 2, 2),
     data_on_(true),
     data_cbv_(0), 
@@ -98,17 +102,13 @@ int RateCCT::push(int port, TuplePtr tp, b_cbv cb)
   assert(port == 1);
 
   try {
-    str name  = Val_Str::cast((*tp)[ACK_SIG]);
+    string name  = Val_Str::cast((*tp)[ACK_SIG]);
     if (name == "ACK") {
       // Acknowledge tuple with rate feedback.
       SeqNum  seq = Val_UInt64::cast((*tp)[ACK_SEQ]);
       uint32_t rr = Val_UInt32::cast((*tp)[ACK_RATE]);
       double   p  = Val_Double::cast((*tp)[ACK_LOSS]);
       timespec ts = Val_Time::cast(  (*tp)[ACK_TIME]);
-
-      log(LoggerI::INFO, 0, strbuf() << "SEQ: " << seq
-                            << ", RRATE: " << rr << ", LOSS RATE: " << long(p)
-			    << ", DELAY: " << delay(&ts));
 
       UNMAP(seq, true);
       ACK("SUCCESS", seq);
@@ -166,7 +166,7 @@ void RateCCT::feedback_timeout()
 {
   nofeedback_ = NULL;
   if (trate_ > 2*rrate_) {
-    rrate_ = max(trate_/2, 1U);
+    rrate_ = MAX(trate_/2, 1U);
   }
   else {
     rrate_ = trate_ / 4;
@@ -195,7 +195,7 @@ REMOVABLE_INLINE uint32_t RateCCT::delay(timespec *ts)
 
 REMOVABLE_INLINE TuplePtr RateCCT::package(TuplePtr tp)
 {
-  str      cid = "";
+  string   cid = "";
   SeqNum   seq = 0;
   timespec now;
   clock_gettime(CLOCK_REALTIME, &now);
@@ -247,15 +247,15 @@ REMOVABLE_INLINE void RateCCT::feedback(uint32_t rt, uint32_t X_recv, double p)
   if (p > 0) {
     double   f      = sqrt(2.*p/3.) + (12.*sqrt(3.*p/8.) * p * (1.+32*pow(p, 2)));
     uint32_t X_calc = (uint32_t) (1000. / (rtt_ * f)); 
-    trate_ = (uint32_t) max(min(X_calc, 2*X_recv), 1U);
+    trate_ = (uint32_t) MAX(MIN(X_calc, 2*X_recv), 1U);
   }
   else if (delay(&tld_) > rtt_) {
-    trate_ = max(min(2*trate_, 2*X_recv), 2U);
+    trate_ = MAX(MIN(2*trate_, 2*X_recv), 2U);
     clock_gettime(CLOCK_REALTIME, &tld_);
   }
 
   rrate_ = X_recv;		// Save the receiver rate
-  uint32_t tms = max(rto_, 8000/trate_);
+  uint32_t tms = MAX(rto_, 8000/trate_);
   nofeedback_ = delayCB((0.0 + tms) / 1000.0,
                         boost::bind(&RateCCT::feedback_timeout, this));
 }

@@ -11,7 +11,7 @@
 
 #include "print.h"
 
-Print::Print(str prefix)
+Print::Print(string prefix)
   : Element(prefix, 1, 1),
     _prefix(prefix)
 {

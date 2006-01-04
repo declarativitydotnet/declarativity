@@ -19,7 +19,7 @@
 
 class Hexdump : public Element { 
 public:
-  Hexdump(str, unsigned);
+  Hexdump(string, unsigned);
 
   ~Hexdump();
   

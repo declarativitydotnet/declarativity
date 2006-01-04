@@ -18,54 +18,52 @@
 
 class OperStr : public opr::OperCompare<Val_Str> {
   virtual ValuePtr _plus (const ValuePtr& v1, const ValuePtr& v2) const {
-    str s1 = Val_Str::cast(v1);
-    str s2 = Val_Str::cast(v2);
-    return Val_Str::mk((strbuf() << s1 << s2));
+    return Val_Str::mk( Val_Str::cast(v1) + Val_Str::cast(v2) );
   };
 };
-const opr::Oper* Val_Str::oper_ = New OperStr();
+const opr::Oper* Val_Str::oper_ = new OperStr();
 
 //
 // Marshal a string
 // 
-void Val_Str::xdr_marshal_subtype( XDR *x ) 
+void Val_Str::xdr_marshal_subtype( XDR *x )
 {
-  //const char *st = s.cstr();
-  //  xdr_wrapstring(x,(char **)&st);
-  rpc_str<RPC_INFINITY> rs(s);
-  rpc_traverse(x,rs);
+  const char *st = s.c_str();
+  xdr_string(x, const_cast<char **>(&st), s.length() + 1);
 }
 ValuePtr Val_Str::xdr_unmarshal( XDR *x )
 {
-  // Note that this looks like a yucky double copy, but at least the
-  // string data itself isn't copied (since rpc_str <: str).
-  //char *st;
-  //xdr_wrapstring(x,&st);
-  rpc_str<RPC_INFINITY> rs;
-  rpc_traverse(x,rs);
-  return mk(str(rs));
+  long sl;
+  xdr_long(x, &sl);
+  char *cp = reinterpret_cast<char *>(xdr_inline(x, sl));
+  if (cp) {
+    return mk(string(cp,sl));
+  } else {
+    // Yuck. 
+    string st(sl,0);
+    for( ssize_t i=0; i<sl; i++) {
+      char c;
+      xdr_char(x, &c);
+      st[i] = c;
+    }
+    return mk(st);
+  }
 }
-  
+
 int Val_Str::compareTo(ValuePtr other) const
 {
   if (other->typeCode() != Value::STR) {
     return false;
   }
-  return s.cmp(cast(other));
+  return s.compare(cast(other));
 }
 
 //
 // Casting: we special-case doubles...
 //
-str Val_Str::cast(ValuePtr v)
+string Val_Str::cast(ValuePtr v)
 {
-  if (v->typeCode() == Value::DOUBLE ) {
-    char dbuf[100];
-    sprintf(dbuf,"%a",Val_Double::cast(v));
-    return strbuf() << dbuf;
-  } else {
-    return v->toString();
-  }
+  return v->toString();
 }
 
 /* 

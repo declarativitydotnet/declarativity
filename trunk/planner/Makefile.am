@@ -22,7 +22,7 @@ libp2planner_la_SOURCES = catalog.C \
 			planner.C 
 
 
-INCLUDES = @SFS_INC@ -I../p2core -I../elements -I../net -I../overlog -I../eventLoop
+INCLUDES = -I../p2core -I../elements -I../net -I../overlog -I../eventLoop
 
 CLEANFILES = core *.core *~
 EXTRA_DIST = .cvsignore

@@ -14,8 +14,7 @@
 #include "val_opaque.h"
 #include "val_tuple.h"
 
-UnboxField::UnboxField(str name,
-		       unsigned fieldNo)
+UnboxField::UnboxField(string name, unsigned fieldNo)
   : Element(name, 1, 1),
     _fieldNo(fieldNo)
 {

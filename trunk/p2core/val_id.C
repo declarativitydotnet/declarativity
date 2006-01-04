@@ -44,7 +44,7 @@ class OperID : public opr::OperCompare<Val_ID> {
   };
 
 };
-const opr::Oper* Val_ID::oper_ = New OperID();
+const opr::Oper* Val_ID::oper_ = new OperID();
 
 //
 // Marshalling and unmarshallng

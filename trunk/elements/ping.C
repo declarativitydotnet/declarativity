@@ -14,8 +14,6 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <iostream>
-#include <async.h>
-#include <arpc.h>
 #include <time.h>
 #include "math.h"
 
@@ -24,7 +22,6 @@
 #include "val_str.h"
 #include "val_int32.h"
 #include "val_uint64.h"
-#include "xdr_suio.h"
 #include "tuple.h"
 #include "val_double.h"
 
@@ -37,7 +34,7 @@
 /// retry_interval is the interval between retries (in seconds). Assuming that after retry_interval,
 /// the previous ping is lost or dead
 /////////////////////////////////
-Ping::Ping(str name, int numPings, int seconds, double retry_interval)
+Ping::Ping(string name, int numPings, int seconds, double retry_interval)
   : Element(name, 2, 2),
     _seconds(seconds),
     _wakeupCB(boost::bind(&Ping::wakeup, this)),
@@ -79,7 +76,7 @@ int Ping::push(int port, TuplePtr p, b_cbv cb)
     _iterator = _pendingPings.find(destination->toString());
     if (_iterator == _pendingPings.end()) {
       // if we have a pending ping request on this, ignore the push
-      Entry *e = New Entry(pingRequestTuple);
+      Entry *e = new Entry(pingRequestTuple);
       e->numPings = 1;
       _pendingPings.insert(std::make_pair(destination->toString(), e)); 
     }

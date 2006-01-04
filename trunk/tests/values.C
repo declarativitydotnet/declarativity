@@ -31,11 +31,8 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 #include <limits.h>
-#include <amisc.h>
 
 #define TEST_VAL(_mkt, _mkv, _mktc, _mktn) \
 { \
@@ -44,7 +41,7 @@
   if ( v->typeCode() != Value::_mktc ) { \
     FAIL << "Bad typeCode from " #_mkt ", expected " #_mktc " but got " << v->typeCode() << "\n"; \
   } \
-  str mktn(_mktn); \
+  string mktn(_mktn); \
   if (mktn != v->typeName()) { \
     FAIL << "Bad typeName from " #_mkt ", expected " #_mktn " but got " << v->typeName() << "\n"; \
   } \
@@ -60,7 +57,7 @@
   if ( v->typeCode() != Value::TIME ) { \
     FAIL << "Bad typeCode from " #_mkt ", expected " #_mktc " but got " << v->typeCode() << "\n"; \
   } \
-  str mktn(_mktn); \
+  string mktn(_mktn); \
   if (mktn != v->typeName()) { \
     FAIL << "Bad typeName from " #_mkt ", expected " #_mktn " but got " << v->typeName() << "\n"; \
   } \
@@ -139,14 +136,14 @@ int main(int argc, char **argv)
 {
   std::cout << "VALUES\n";
 
-  ref<suio> u1 = New refcounted<suio>();
+  FdbufPtr u1(new Fdbuf());
   suio_uprintf(u1, "This is UIO 1");
-  ref<suio> u2 = New refcounted<suio>();
+  FdbufPtr u2(new Fdbuf());
   suio_uprintf(u2, "This is UIO 2");
-  ref<suio> u3 = New refcounted<suio>();
+  FdbufPtr u3(new Fdbuf());
   suio_uprintf(u3, "This is UIO 3"); 
 
-  str addr = "127.0.0.1:1000";
+  string addr = "127.0.0.1:1000";
 
   // 
   // First, make sure that typecodes and typenames are assigned
@@ -220,12 +217,12 @@ int main(int argc, char **argv)
   TEST_CAST( Double, 0.0, double, Double, 0.0);
   TEST_CAST( Double, 1.2, double, Double, 1.2);
 
-  TEST_CAST( Str, "", str, Str, "");
-  TEST_CAST( Str, "This is a string", str, Str, "This is a string");
+  TEST_CAST( Str, "", string, Str, "");
+  TEST_CAST( Str, "This is a string", string, Str, "This is a string");
 
-  TEST_CAST( Opaque, u1, ref<suio>, Opaque, u1);
+  TEST_CAST( Opaque, u1, FdbufPtr, Opaque, u1);
 
-  TEST_CAST( IP_ADDR, addr, str, IP_ADDR, addr);
+  TEST_CAST( IP_ADDR, addr, string, IP_ADDR, addr);
 
   // 
   //Test casting to NULL.
@@ -523,7 +520,7 @@ int main(int argc, char **argv)
 
   // Test casting to Str.
   #undef TEST_CAST_T
-  #define TEST_CAST_T(_t,_v,_r) TEST_CAST(_t,_v,str,Str,_r)
+  #define TEST_CAST_T(_t,_v,_r) TEST_CAST(_t,_v,string,Str,_r)
 
   TEST_CAST_T( Null, , "NULL");
 
@@ -577,8 +574,8 @@ int main(int argc, char **argv)
 
   // Test casting to Opaque.
   #undef TEST_CAST_T
-  #define TEST_CAST_T(_t,_v,_r) TEST_CAST(_t,_v,ref<suio>,Opaque,_r)
-  #define TEST_BADCAST_T(_t,_v) TEST_BADCAST(_t,_v,ref<suio>,Opaque)
+  #define TEST_CAST_T(_t,_v,_r) TEST_CAST(_t,_v,FdbufPtr,Opaque,_r)
+  #define TEST_BADCAST_T(_t,_v) TEST_BADCAST(_t,_v,FdbufPtr,Opaque)
 
   TEST_BADCAST_T( Null, );
 
@@ -604,9 +601,9 @@ int main(int argc, char **argv)
 // Test casting to IP_ADDR type.
 
   #undef TEST_CAST_T
-  #define TEST_CAST_T(_t,_v,_r) TEST_CAST(_t, _v, str, IP_ADDR, _r)
+  #define TEST_CAST_T(_t,_v,_r) TEST_CAST(_t, _v, string, IP_ADDR, _r)
   #undef TEST_BADCAST_T
-  #define TEST_BADCAST_T(_t,_v) TEST_BADCAST(_t, _v, str, IP_ADDR)
+  #define TEST_BADCAST_T(_t,_v) TEST_BADCAST(_t, _v, string, IP_ADDR)
 
   TEST_CAST_T( Str, "", "" );
   TEST_CAST_T( Str, "0", "0" );

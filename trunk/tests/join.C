@@ -15,8 +15,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 
 #include "tuple.h"
@@ -157,7 +155,7 @@ int main(int argc, char **argv)
 
   LoggerI::Level level = LoggerI::ALL;
   if (argc > 1) {
-    str levelName(argv[1]);
+    string levelName(argv[1]);
     level = LoggerI::levelFromName[levelName];
   }
 

@@ -36,7 +36,7 @@ public:
   Parse_Event(Parse_Functor *pf, Event e)
     : _pf(pf), _event(e) {};
   
-  virtual str toString();  
+  virtual string toString();  
   
   Parse_Functor* _pf;
   Event _event;
@@ -54,7 +54,7 @@ public:
   Parse_Action(Parse_Functor *pf, Action a)
     : _pf(pf), _action(a) {};
   
-  virtual str toString();
+  virtual string toString();
   
   Parse_Functor* _pf;
   Action _action;
@@ -62,14 +62,14 @@ public:
 
 class ECA_Rule {
 public:
-  ECA_Rule(str r) 
+  ECA_Rule(string r) 
     : _ruleID(r) 
   { _event = NULL; _action = NULL; _aggTerm = NULL; };
   
-  str toString();
-  str toRuleString();
+  string toString();
+  string toRuleString();
   
-  str _ruleID; 
+  string _ruleID; 
   Parse_Event* _event;
   Parse_Action* _action;   
   std::vector<Parse_Functor*> _probeTerms;
@@ -83,7 +83,7 @@ class ECA_Context
 
 public:
   void eca_rewrite(OL_Context* ctxt, Catalog* catalog);
-  str toString();
+  string toString();
   void add_rule(ECA_Rule* eca_rule);
 
   std::vector<ECA_Rule* > _ecaRules;

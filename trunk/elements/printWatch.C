@@ -12,8 +12,9 @@
 #include "printWatch.h"
 #include "val_tuple.h"
 #include <iostream>
+#include <errno.h>
 
-PrintWatch::PrintWatch(str prefix, std::set<str> tableNames, 
+PrintWatch::PrintWatch(string prefix, std::set<string> tableNames, 
 		       FILE* output)
   : Element(prefix, 1, 1),
     _prefix(prefix), _output(output)
@@ -34,7 +35,7 @@ TuplePtr PrintWatch::simple_action(TuplePtr p)
   double bytes = 0;
   for (unsigned int i = 0; i < p->size(); i++) {
     ValuePtr v = (*p)[i];
-    if (str(v->typeName()) == "tuple") {
+    if (v->typeName() == "tuple") {
       TuplePtr t = Val_Tuple::cast(v);
       for (unsigned int j = 0; j < t->size(); j++) {
 	bytes += (*t)[j]->size();
@@ -50,7 +51,7 @@ TuplePtr PrintWatch::simple_action(TuplePtr p)
   if (clock_gettime(CLOCK_REALTIME,&now_ts)) {
     fatal << "clock_gettime:" << strerror(errno) << "\n";
   }
-  strbuf b;
+  ostringstream b;
   b << "Print[" << _prefix
     << ", "
     << now_ts.tv_sec
@@ -59,9 +60,9 @@ TuplePtr PrintWatch::simple_action(TuplePtr p)
     << "]:  [" << (int) bytes << ", " << p->toString() << "]\n";
   
   if (_output != NULL) {
-    fprintf(_output, "%s", str(b).cstr()); 
+    fprintf(_output, "%s", b.str().c_str()); 
   } else {
-    warn << b;
+    warn << b.str();
   }
   fflush(_output);
   return p;

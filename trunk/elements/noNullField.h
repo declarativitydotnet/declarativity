@@ -18,7 +18,7 @@
 
 class NoNullField : public Element { 
 public:
-  NoNullField(str, unsigned);
+  NoNullField(string, unsigned);
   ~NoNullField();
   
   /** Overridden to perform the projecting. */

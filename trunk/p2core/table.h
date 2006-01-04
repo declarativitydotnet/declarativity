@@ -21,6 +21,7 @@
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "loop.h"
 #include "tuple.h"
 
 class Table;
@@ -70,7 +71,7 @@ public:
   //  'name' is an identifying string.
   //  'max_size' is how many tuples it will hold before discarding (FIFO)
   //  'lifetime' is how long to keep tuples for before discarding
-  Table(str tableName, size_t max_size, timespec *lifetime=NULL);
+  Table(string tableName, size_t max_size, timespec *lifetime=NULL);
 
   ~Table();
 
@@ -99,7 +100,7 @@ public:
 
   //private:
 
-  str name;
+  string name;
   size_t	max_tbl_size;
   timespec	max_lifetime;
   bool		expiry_lifetime;

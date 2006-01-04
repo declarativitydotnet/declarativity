@@ -10,11 +10,11 @@
  */
 
 #include "marshalField.h"
-#include "xdr_suio.h"
 
 #include "val_opaque.h"
+#include "xdrbuf.h"
 
-MarshalField::MarshalField(str name,
+MarshalField::MarshalField(string name,
                            unsigned fieldNo)
   : Element(name, 1, 1),
     _fieldNo(fieldNo)
@@ -31,7 +31,7 @@ TuplePtr MarshalField::simple_action(TuplePtr p)
   ValuePtr value = (*p)[_fieldNo];
 
   // Does this field exist?
-  if (!value) {
+  if (value == NULL) {
     // Nope.  Return nothing
     return TuplePtr();
   } else {
@@ -39,13 +39,14 @@ TuplePtr MarshalField::simple_action(TuplePtr p)
     if (value->typeCode() == Value::TUPLE) {
       // Goodie. Marshal the field
 
-      xdrsuio xe;
+      FdbufPtr fb(new Fdbuf());
+      XDR xe;
+      xdrfdbuf_create(&xe, fb.get(), false, XDR_ENCODE);
       value->xdr_marshal(&xe);
-      ref<suio> uio = New refcounted<suio>();
-      uio->take(xsuio(&xe));
+      xdr_destroy(&xe);
       
       // Now create the opaque
-      ValuePtr marshalled = Val_Opaque::mk(uio);
+      ValuePtr marshalled = Val_Opaque::mk(fb);
 
       // Now create a tuple copy replacing the marshalled field
       TuplePtr newTuple = Tuple::mk();

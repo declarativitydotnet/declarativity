@@ -11,7 +11,7 @@
 
 #include "aggregate.h"
 
-Aggregate::Aggregate(str name,
+Aggregate::Aggregate(string name,
                      Table::MultAggregate aggregate)
   : Element(name, 0, 1),
     _aggregate(aggregate),

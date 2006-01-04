@@ -66,7 +66,7 @@ public:
   TuplePtr  tp_;		// The tuple.
 };
 
-RDelivery::RDelivery(str n, bool r, uint32_t m)
+RDelivery::RDelivery(string n, bool r, uint32_t m)
   : Element(n, 2, 3),
     _out_cb(0),
     in_on_(true),
@@ -109,7 +109,7 @@ int RDelivery::push(int port, TuplePtr tp, b_cbv cb)
 {
   assert(port == 1);
 
-  str   type  = Val_Str::cast((*tp)[0]);	// Tuple Type
+  string type  = Val_Str::cast((*tp)[0]);	// Tuple Type
   SeqNum seq  = Val_UInt64::cast((*tp)[1]);	// Sequence number
 
   if (type == "FAIL") {

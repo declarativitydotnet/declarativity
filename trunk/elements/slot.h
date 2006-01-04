@@ -20,7 +20,7 @@
 class Slot : public Element { 
 public:
   
-  Slot(str name);
+  Slot(string name);
 
   int push(int port, TuplePtr t, b_cbv cb);
   TuplePtr pull(int port, b_cbv);

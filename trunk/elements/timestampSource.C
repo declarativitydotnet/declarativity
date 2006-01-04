@@ -13,7 +13,7 @@
 #include "val_str.h"
 #include "val_uint64.h"
 
-TimestampSource::TimestampSource(str name)
+TimestampSource::TimestampSource(string name)
   : Element(name, 0, 1)
 {
 }

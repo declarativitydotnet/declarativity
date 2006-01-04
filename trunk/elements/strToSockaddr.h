@@ -19,8 +19,7 @@
 
 class StrToSockaddr : public Element { 
 public:
-  StrToSockaddr(str,
-                unsigned);
+  StrToSockaddr(string, unsigned);
 
   ~StrToSockaddr();
   

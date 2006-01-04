@@ -18,6 +18,8 @@
 
 #include "value.h"
 #include "oper.h"
+#include "fdbuf.h"
+#include "loop.h"
 
 class Val_Opaque : public Value {
 
@@ -27,29 +29,29 @@ public:
   // The type name
   const Value::TypeCode typeCode() const { return Value::OPAQUE; };
   const char *typeName() const { return "opaque"; };
-  str toString() const { return strbuf(b); };
-  virtual unsigned int size() const { return (b ? b->resid() : 0); }
+  string toString() const { return b->str(); };
+  virtual unsigned int size() const { return (b ? b->length() : 0); }
 
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );
 
   // Constructor
-  Val_Opaque(ref<suio> fb) : b(fb) {};
+  Val_Opaque(FdbufPtr fb) : b(fb) {};
   virtual ~Val_Opaque() {};
 
   // Factory
-  static ValuePtr mk(ref<suio> fb) {
+  static ValuePtr mk(FdbufPtr fb) {
     return ValuePtr(new Val_Opaque(fb)); };
 
   // Strict comparison
   int compareTo(ValuePtr) const;
 
   // Casting
-  static ref<suio> cast(ValuePtr v);
+  static FdbufPtr cast(ValuePtr v);
   
   static const opr::Oper* oper_;
 private:
-  ref<suio> b;
+  FdbufPtr b;
   
 };
 

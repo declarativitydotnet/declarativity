@@ -19,8 +19,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
-#include <async.h>
-#include <arpc.h>
 #include <iostream>
 #include <stdlib.h>
 
@@ -82,7 +80,7 @@ static const int FINGERTTL = 10;
  *rule L1 lookupResults@R(R,K,S,SI,E) :- node@NI(NI,N),
  *lookup@NI(NI,K,R,E), bestSuccessor@NI(NI,S,SI), K in (N,S].
  */
-void ruleL1(str name,
+void ruleL1(string name,
             Router::ConfigurationPtr conf,
             TablePtr nodeTable,
             TablePtr bestSuccessorTable,
@@ -93,12 +91,12 @@ void ruleL1(str name,
 {
   // Join with node
   ElementSpecPtr matchLookupIntoNodeS =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("LookupInNode:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup("LookupInNode:"+name,
                                                     nodeTable,
                                                     1, // Match lookup.NI
                                                     1 // with node.NI
                                                     )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField("NoNull:"+name, 1)));
   // Link it to the lookup coming in. Pushes match already
   conf->hookUp(pushLookupIn, pushLookupInPort, matchLookupIntoNodeS, 0);
 
@@ -108,7 +106,7 @@ void ruleL1(str name,
   // res1(NI, K, R, E, N) from
   // <<lookup NI K R E><node NI N>>
   ElementSpecPtr makeRes1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("MakeRes1:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("MakeRes1:").append(name),
                                                     "\"Res1\" pop \
                                                      $0 unbox \
                                                      drop /* No need for lookup literal */ \
@@ -122,15 +120,15 @@ void ruleL1(str name,
 
   // Join with best successor table
   ElementSpecPtr matchRes1IntoBestSuccS =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("LookupInBestSucc:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup(string("LookupInBestSucc:") + name,
                                                     bestSuccessorTable,
                                                     1, // Match res1.NI
                                                     1 // with bestSuccessor.NI
                                                     )));
-  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull2:") << name, 1)));
+  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNullField("NoNull2:"+name, 1)));
   // Res1 must be pushed to second join
   ElementSpecPtr pushRes1S =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PushRes1:") << name, 0)));
+    conf->addElement(ElementPtr(new TimedPullPush("PushRes1:"+name, 0)));
   // Link the two joins together
   conf->hookUp(makeRes1S, 0, pushRes1S, 0);
   conf->hookUp(pushRes1S, 0, matchRes1IntoBestSuccS, 0);
@@ -140,7 +138,7 @@ void ruleL1(str name,
   // Select res1.K in (res1.N, bestSuccessor.S]
   // from <<res1 NI, K, R, E, N><bestSuccessor NI S SI>>
   ElementSpecPtr selectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("SelectContainment:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform("SelectContainment:"+name,
                                                     "$0 2 field /* res1.K */\
                                                      $0 5 field /* res1.K res1.N */\
                                                      $1 2 field /* res1.K res1.N bS.S */\
@@ -153,7 +151,7 @@ void ruleL1(str name,
   // Project to create lookupResults(R, K, S, SI, E)
   // from <<res1 NI, K, R, E, N><bestSuccessor NI S SI>>
   ElementSpecPtr makeLookupResultS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("FlattenLookupResult:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform("FlattenLookupResult:"+name,
                                                     "\"lookupResults\" pop \
                                                      $0 3 field pop /* output R */ \
                                                      $0 2 field pop /* output K */ \
@@ -166,7 +164,7 @@ void ruleL1(str name,
 /** L2: bestLookupDistance@NI(NI,K,R,E,min<D>) :- lookup@NI(NI,K,R,E),
     node@NI(NI, N), finger@NI(NI,I,B,BI,ET), B in (N,K), D=f_dist(B,K)-1
 */
-void ruleL2(str name,
+void ruleL2(string name,
             Router::ConfigurationPtr conf,
             TablePtr nodeTable,
             TablePtr fingerTable,
@@ -177,20 +175,20 @@ void ruleL2(str name,
 {
   // Join with node
   ElementSpecPtr matchLookupIntoNodeS =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("LookupInNode:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup("LookupInNode:"+name,
                                                     nodeTable,
                                                     1, // Match lookup.NI
                                                     1 // with node.NI
                                                     )));
   // Link it to the lookup coming in. Pushes match already
   conf->hookUp(pushLookupIn, pushLookupInPort, matchLookupIntoNodeS, 0);
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField("NoNull:"+name, 1)));
 
   // Produce intermediate ephemeral result
   // res1(NI, K, R, E, N) from
   // <<lookup NI K R E><node NI N>>
   ElementSpecPtr makeRes1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("FlattenRes1:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform("FlattenRes1:"+name,
                                                     "\"Res1\" pop \
                                                      $0 unbox \
                                                      drop /* No need for lookup literal */ \
@@ -203,14 +201,14 @@ void ruleL2(str name,
   // Run aggregation over finger table with input
   // res1(NI, K, R, E, N) from
   ElementSpecPtr findMinInFingerS =
-    conf->addElement(ElementPtr(new PelScan(str("bestLookupDistance:") << name,
+    conf->addElement(ElementPtr(new PelScan("bestLookupDistance:"+name,
                                                fingerTable, 1,
-                                               str("$1 /* res1.NI */ \
+                                               string("$1 /* res1.NI */ \
                                                     $2 /* NI res1.K */ \
                                                     $5 /* NI K res1.N */ \
                                                     0 /* NI K res1.N found? */\
                                                     1 ->u32 ->id 0 ->u32 ->id distance /* NI K N found? maxdist */"),
-                                               str("4 peek /* NI */ \
+                                               string("4 peek /* NI */ \
                                                     $1 /* finger.NI */ \
                                                     ==s not /* res1.NI != finger.NI */ \
                                                     ifstop /* empty */ \
@@ -227,7 +225,7 @@ void ruleL2(str name,
                                                     2 peek ifelse /* ((old>new) ? new : old) */ \
                                                     swap /* swap newMin in state where oldMin was */ \
                                                     drop /* only state remains */"),
-                                               str("swap not ifstop\
+                                               string("swap not ifstop\
                                                     \"bestLookupDistance\" pop \
                                                     $1 pop /* output NI */\
                                                     $2 pop /* output K */\
@@ -237,12 +235,12 @@ void ruleL2(str name,
                                                     drop drop drop /* empty the stack */"))));
   // Res1 must be pushed to second join
   ElementSpecPtr pushRes1S =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PushRes1:") << name, 0)));
+    conf->addElement(ElementPtr(new TimedPullPush("PushRes1:"+name, 0)));
   
   // Link the join to the agg
   conf->hookUp(makeRes1S, 0, pushRes1S, 0);
 
-  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNull(strbuf("NoNull2:") << name)));
+  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNull("NoNull2:"+name)));
 
   conf->hookUp(pushRes1S, 0, findMinInFingerS, 0);
 
@@ -259,7 +257,7 @@ void ruleL2(str name,
 /** rule L3 lookup@BI(max<BI>,K,R,E) :-
     bestLookupDistance@NI(NI,K,R,E,D), finger@NI(NI,I,B,BI),
     D=f_dist(B,K), node@NI(NI, N), B in (N, K).*/
-void ruleL3(str name,
+void ruleL3(string name,
             Router::ConfigurationPtr conf,
             TablePtr nodeTable,
             TablePtr fingerTable,
@@ -270,14 +268,14 @@ void ruleL3(str name,
 {
   // Join with node
   ElementSpecPtr matchBLDIntoNodeS =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("BLDInNode:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup("BLDInNode:"+name,
                                                     nodeTable,
                                                     1, // Match lookup.NI
                                                     1 // with node.NI
                                                     )));
   // Link it to the BLD coming in. Pushes match already
   conf->hookUp(pushBLDIn, pushBLDInPort, matchBLDIntoNodeS, 0);
-  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull2:") << name, 1)));
+  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNullField("NoNull2:"+name, 1)));
 
 
 
@@ -285,7 +283,7 @@ void ruleL3(str name,
   // res1(NI, K, R, E, D, N) from
   // <<BLD NI K R E D><node NI N>>
   ElementSpecPtr makeRes1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("FlattenRes1:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform("FlattenRes1:"+name,
                                                     "\"Res1\" pop \
                                                      $0 unbox \
                                                      drop /* No need for BLD literal */ \
@@ -301,15 +299,15 @@ void ruleL3(str name,
   // from <Res1 NI K R E D N> input joined with
   // <Finger NI I B BI>>
   ElementSpecPtr aggregateS =
-    conf->addElement(ElementPtr(new PelScan(str("tieBreaker:") << name,
+    conf->addElement(ElementPtr(new PelScan("tieBreaker:"+name,
                                                fingerTable, 1,
-                                               str("$1 /* res1.NI */ \
+                                               string("$1 /* res1.NI */ \
                                                     $5 /* NI res1.D */\
                                                     $2 /* NI D res1.K */ \
                                                     $6 /* NI D K res1.N */ \
                                                     0 /* NI D K N found?*/ \
                                                     \"\" /* NI D K N found? maxString */"),
-                                               str("$3 /* finger.B */\
+                                               string("$3 /* finger.B */\
                                                     3 peek /* B res1.N */\
                                                     5 peek /* B N res1.K */\
                                                     ()id /* B in (N,K) */\
@@ -331,7 +329,7 @@ void ruleL3(str name,
                                                     2 peek ifelse /* ((new>old) ? new : old) */ \
                                                     swap /* swap newMax in state where oldMax was */ \
                                                     drop /* only state remains */"),
-                                               str("swap not ifstop /* return nothing if none found */\
+                                               string("swap not ifstop /* return nothing if none found */\
                                                     \"lookup\" pop\
                                                     pop /* output maxBI */\
                                                     $2 pop /* output K */\
@@ -341,10 +339,10 @@ void ruleL3(str name,
   
   // Res1 must be pushed to aggregate
   ElementSpecPtr pushRes1S =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PushRes1:") << name, 0)));
+    conf->addElement(ElementPtr(new TimedPullPush("PushRes1:"+name, 0)));
 
   ElementSpecPtr noNullS =
-    conf->addElement(ElementPtr(new NoNull(strbuf("NoNull:") << name)));
+    conf->addElement(ElementPtr(new NoNull("NoNull:"+name)));
 
   // Link the join to the aggregate
   conf->hookUp(makeRes1S, 0, pushRes1S, 0);
@@ -363,7 +361,7 @@ void ruleL3(str name,
 /** 
     rule SU3 finger@NI(NI,0,S,SI) :- bestSuccessor@NI(NI,S,SI).
  */
-void ruleSU3(str name,
+void ruleSU3(string name,
              Router::ConfigurationPtr conf,
              ElementSpecPtr pushBestSuccessorIn,
              int pushBestSuccessorInPort,
@@ -374,7 +372,7 @@ void ruleSU3(str name,
   // from
   // bestSuccessor(NI, S, SI)
   ElementSpecPtr projectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("project:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform("project:"+name,
                                                     "\"finger\" pop \
                                                      $1 pop /* out bS.NI */\
                                                      0 pop /* out 0 */\
@@ -382,7 +380,7 @@ void ruleSU3(str name,
                                                      $3 pop /* out bS.SI */\
                                                      ")));
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("Slot:") << name)));
+    conf->addElement(ElementPtr(new Slot("Slot:"+name)));
   conf->hookUp(pushBestSuccessorIn, pushBestSuccessorInPort, projectS, 0);
   conf->hookUp(projectS, 0, slotS, 0);
   conf->hookUp(slotS, 0, pullFingerOut, pullFingerOutPort);
@@ -391,9 +389,9 @@ void ruleSU3(str name,
 
 
 /** rule F1 fixFinger@NI(ni) :- periodic@NI(finger.TTL*0.5). */
-void ruleF1(str name,
+void ruleF1(string name,
             Router::ConfigurationPtr conf,
-            str localAddress,
+            string localAddress,
             double fingerTTL,
             ElementSpecPtr pullFixFingerOut,
             int pullFixFingerOutPort)
@@ -405,15 +403,15 @@ void ruleF1(str name,
   fixFingerTuple->freeze();
 
   ElementSpecPtr sourceS =
-    conf->addElement(ElementPtr(new TupleSource(str("FFSource:") << name, fixFingerTuple)));
+    conf->addElement(ElementPtr(new TupleSource("FFSource:"+name, fixFingerTuple)));
   
   // The timed pusher
   ElementSpecPtr pushS =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("FFPush:") << name, fingerTTL * 0.5)));
+    conf->addElement(ElementPtr(new TimedPullPush("FFPush:"+name, fingerTTL * 0.5)));
 
   // And a slot from which to pull
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("FFSlot:") << name)));
+    conf->addElement(ElementPtr(new Slot("FFSlot:"+name)));
 
   // Link everything
   conf->hookUp(sourceS, 0, pushS, 0);
@@ -425,9 +423,9 @@ void ruleF1(str name,
 
 
 /** rule F2 nextFingerFix@NI(ni, 0). */
-void ruleF2(str name,
+void ruleF2(string name,
             Router::ConfigurationPtr conf,
-            str localAddress,
+            string localAddress,
             ElementSpecPtr pullNextFingerFixOut,
             int pullNextFingerFixOutPort)
 {
@@ -439,19 +437,19 @@ void ruleF2(str name,
   nextFingerFixTuple->freeze();
 
   ElementSpecPtr sourceS =
-    conf->addElement(ElementPtr(new TupleSource(str("NFFSource:") << name,
+    conf->addElement(ElementPtr(new TupleSource("NFFSource:"+name,
                                                    nextFingerFixTuple)));
   
   // The once pusher
   ElementSpecPtr onceS =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("NFFPush:") << name,
+    conf->addElement(ElementPtr(new TimedPullPush("NFFPush:"+name,
                                                      0, // run immediately
                                                      1 // run once
                                                      )));
 
   // And a slot from which to pull
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("NFFSlot:") << name)));
+    conf->addElement(ElementPtr(new Slot("NFFSlot:"+name)));
 
   // Link everything
   conf->hookUp(sourceS, 0, onceS, 0);
@@ -463,7 +461,7 @@ void ruleF2(str name,
 /** rule F3 fingerLookup@NI(NI, E, I) :- fixFinger@NI(NI), E = random(),
     nextFingerFix@NI(NI, I).
 */
-void ruleF3(str name,
+void ruleF3(string name,
             Router::ConfigurationPtr conf,
             TablePtr nextFingerFixTable,
             ElementSpecPtr pushFixFingerIn,
@@ -473,12 +471,12 @@ void ruleF3(str name,
 {
   // Join fixFinger with nextFingerFix
   ElementSpecPtr join1S =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("fixFingerIntoNextFingerFix:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup("fixFingerIntoNextFingerFix:"+name,
                                                     nextFingerFixTable,
                                                     1, // Match fixFinger.NI
                                                     1 // with nextFingerFix.NI
                                                     )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField("NoNull:"+name, 1)));
 
   // Link it to the evictSuccessor coming in. Pushes match already
   conf->hookUp(pushFixFingerIn, pushFixFingerInPort, join1S, 0);
@@ -487,7 +485,7 @@ void ruleF3(str name,
   // fingerLookup(NI, E, I) from
   // <<fixFinger NI><nextFingerFix NI I>>
   ElementSpecPtr makeRes1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("FlattenFingerLookup:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform("FlattenFingerLookup:"+name,
                                                     "\"fingerLookup\" pop \
                                                      $0 1 field pop /* output fixFinger.NI */ \
                                                      $0 1 field \":\" strcat rand strcat pop /* output NI|rand */ \
@@ -503,7 +501,7 @@ void ruleF3(str name,
 /** rule F4 lookup@NI(NI, K, NI, E) :- fingerLookup@NI(NI, E, I),
     node(NI, N), K = N + 1 << I.
 */
-void ruleF4(str name,
+void ruleF4(string name,
             Router::ConfigurationPtr conf,
             TablePtr nodeTable,
             ElementSpecPtr pushFingerLookupIn,
@@ -513,12 +511,12 @@ void ruleF4(str name,
 {
   // Join fingerLookup with node
   ElementSpecPtr join1S =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("fingerLookupIntoNode:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup("fingerLookupIntoNode:"+name,
                                                     nodeTable,
                                                     1, // Match fingerLookup.NI
                                                     1 // with node.NI
                                                     )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField("NoNull:"+name, 1)));
 
   conf->hookUp(pushFingerLookupIn, pushFingerLookupInPort, join1S, 0);
 
@@ -528,7 +526,7 @@ void ruleF4(str name,
   // lookup(NI, K, NI, E) from
   // <<fingerLookup NI E I><node NI N>>
   ElementSpecPtr makeRes1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("lookup:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform("lookup:"+name,
                                                     "\"lookup\" pop \
                                                      $0 1 field pop /* output fixFinger.NI */ \
                                                      $1 2 field /* node.N */\
@@ -550,7 +548,7 @@ void ruleF4(str name,
 /** rule F5 eagerFinger@NI(NI, I, B, BI) :- fingerLookup@NI(NI, E,
     I), lookupResults@NI(NI, K, B, BI, E).
 */
-void ruleF5(str name,
+void ruleF5(string name,
             Router::ConfigurationPtr conf,
             TablePtr fingerLookupTable,
             ElementSpecPtr pushLookupResultsIn,
@@ -560,19 +558,19 @@ void ruleF5(str name,
 {
   // Join lookupResults with fingerLookup table
   ElementSpecPtr join1S =
-    conf->addElement(ElementPtr(new MultLookup(strbuf("lookupResultsIntoFingerLookup:") << name,
+    conf->addElement(ElementPtr(new MultLookup("lookupResultsIntoFingerLookup:"+name,
                                                   fingerLookupTable,
                                                   1, // Match lookupResults.NI
                                                   1 // with fingerLookup.NI
                                                   )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField("NoNull:"+name, 1)));
 
   conf->hookUp(pushLookupResultsIn, pushLookupResultsInPort, join1S, 0);
 
   // Select fingerLookup.E == lookupResults.E
   // <<lookupResults NI K B BI E><fingerLookup NI E I>>
   ElementSpecPtr selectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("select:") << name,
+    conf->addElement(ElementPtr(new PelTransform("select:"+name,
                                                     "$0 5 field /* lookupResults.E */\
                                                      $1 2 field /* lR.E fingerLookup.E */\
                                                      ==s not /* lR.E!=fL.E? */\
@@ -588,7 +586,7 @@ void ruleF5(str name,
   // eagerFinger(NI, I, B, BI) from
   // <<lookupResults NI K B BI E><fingerLookup NI E I>>
   ElementSpecPtr projectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("project:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform("project:"+name,
                                                     "\"eagerFinger\" pop \
                                                      $0 1 field pop /* out NI */\
                                                      $1 3 field pop /* out I */\
@@ -602,7 +600,7 @@ void ruleF5(str name,
 
 
 /** rule F6 finger@NI(NI, I, B, BI) :- eagerFinger@NI(NI, I, B, BI). */
-void ruleF6(str name,
+void ruleF6(string name,
             Router::ConfigurationPtr conf,
             ElementSpecPtr pushEagerFingerIn,
             int pushEagerFingerInPort,
@@ -613,7 +611,7 @@ void ruleF6(str name,
   // from
   // eagerFinger(NI, I, B, BI)
   ElementSpecPtr projectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("project:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform("project:"+name,
                                                     "\"finger\" pop \
                                                      $1 pop /* out eF.NI */\
                                                      $2 pop /* out eF.I */\
@@ -621,7 +619,7 @@ void ruleF6(str name,
                                                      $4 pop /* out eF.BI */\
                                                      ")));
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("Slot:") << name)));
+    conf->addElement(ElementPtr(new Slot("Slot:"+name)));
   conf->hookUp(pushEagerFingerIn, pushEagerFingerInPort, projectS, 0);
   conf->hookUp(projectS, 0, slotS, 0);
   conf->hookUp(slotS, 0, pullFingerOut, pullFingerOutPort);
@@ -631,7 +629,7 @@ void ruleF6(str name,
 /** rule F6a delete<fingerLookup@NI(NI, E, I1)> :- eagerFinger@NI(NI, I,
     B, BI), I > 0, I1 = I - 1, fingerLookup@NI(NI, E, I1).
 */
-void ruleF6a(str name,
+void ruleF6a(string name,
              Router::ConfigurationPtr conf,
              TablePtr fingerLookupTable,
              ElementSpecPtr pushEagerFingerIn,
@@ -639,12 +637,12 @@ void ruleF6a(str name,
 {
   // Join eagerFinger with fingerLookup
   ElementSpecPtr join1S =
-    conf->addElement(ElementPtr(new MultLookup(strbuf("eagerFingerIntoFingerLookup:") << name,
+    conf->addElement(ElementPtr(new MultLookup("eagerFingerIntoFingerLookup:"+name,
                                                   fingerLookupTable,
                                                   1, // Match eagerFinger.NI
                                                   1 // with fingerLookup.NI
                                                   )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField("NoNull:"+name, 1)));
 
   conf->hookUp(pushEagerFingerIn, pushEagerFingerInPort, join1S, 0);
   conf->hookUp(join1S, 0, noNullS, 0);
@@ -654,7 +652,7 @@ void ruleF6a(str name,
   // from
   // eagerFinger(NI, I, B, BI), fingerLookup(NI, E, I1)
   ElementSpecPtr select1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("select1:") << name,
+    conf->addElement(ElementPtr(new PelTransform("select1:"+name,
                                                     "$0 2 field /* eF.I */\
                                                      0 >i /* I > 0? */\
                                                      $0 2 field /* (I>0) I  */\
@@ -669,18 +667,18 @@ void ruleF6a(str name,
   // from 
   // eagerFinger(NI, I, B, BI), fingerLookup(NI, E, I1)
   ElementSpecPtr makeRes1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("makeDeleteTuple:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform("makeDeleteTuple:"+name,
                                                     "\"deleteTuple\" pop \
                                                      $1 2 field pop /* output fingerLookup.E */ \
                                                      ")));
 
 
   ElementSpecPtr pushRes1S =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PushRes1:") << name,
+    conf->addElement(ElementPtr(new TimedPullPush("PushRes1:"+name,
                                                      0)));
   // Send it for deletion
   ElementSpecPtr deleteFingerLookup =
-    conf->addElement(ElementPtr(new Delete(strbuf("DeleteFingerLookup:") << name,
+    conf->addElement(ElementPtr(new Delete("DeleteFingerLookup:"+name,
                                               fingerLookupTable,
                                               2,
                                               1)));
@@ -698,7 +696,7 @@ void ruleF6a(str name,
     eagerFinger@NI(NI, I1, B, BI), I = I1 + 1, I > I1, K = N + 1 <<
     I, K in (N, B), BI!=NI.
 */
-void ruleF7(str name,
+void ruleF7(string name,
             Router::ConfigurationPtr conf,
             TablePtr nodeTable,
             ElementSpecPtr pushEagerFingerIn,
@@ -708,12 +706,12 @@ void ruleF7(str name,
 {
   // Join eagerFinger with node table
   ElementSpecPtr join1S =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("eagerFingerIntoNode:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup("eagerFingerIntoNode:"+name,
                                                     nodeTable,
                                                     1, // Match eagerFinger.NI
                                                     1 // with node.NI
                                                     )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField("NoNull:"+name, 1)));
 
   conf->hookUp(pushEagerFingerIn, pushEagerFingerInPort, join1S, 0);
 
@@ -721,7 +719,7 @@ void ruleF7(str name,
   // from
   // eagerFinger(NI, I1, B, BI), node(NI, N)
   ElementSpecPtr select1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("select1:") << name,
+    conf->addElement(ElementPtr(new PelTransform("select1:"+name,
                                                     "$0 2 field dup 1 +i /* I1 (I1+1) */\
                                                      <i /* I1 < I1+1? */\
                                                      $0 1 field $0 4 field ==s not and /* I1 < I1+1? && BI!=NI */\
@@ -729,7 +727,7 @@ void ruleF7(str name,
                                                      $0 pop $1 pop\
                                                      ")));
   ElementSpecPtr select2S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("select2:") << name,
+    conf->addElement(ElementPtr(new PelTransform("select2:"+name,
                                                     "$1 2 field /* N */\
                                                      1 ->u32 ->id /* N 1 */\
                                                      $0 2 field 1 +i /* N 1 (I1+1) */\
@@ -741,7 +739,7 @@ void ruleF7(str name,
                                                      $0 pop $1 pop\
                                                      ")));
   ElementSpecPtr projectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("project:") << name,
+    conf->addElement(ElementPtr(new PelTransform("project:"+name,
                                                     "$0 0 field pop /* out eagerFinger */\
                                                      $0 1 field pop /* out NI */\
                                                      $0 2 field 1 +i pop /* out I1+1 */\
@@ -760,7 +758,7 @@ void ruleF7(str name,
    rule F8 nextFingerFix@NI(NI, 0) :- eagerFinger@NI(NI, I, B, BI), ((I
    == finger.SIZE - 1) || (BI == NI)).
 */
-void ruleF8(str name,
+void ruleF8(string name,
             Router::ConfigurationPtr conf,
             int fingerSize,
             ElementSpecPtr pushEagerFingerIn,
@@ -771,22 +769,20 @@ void ruleF8(str name,
   // Select I==finger.SIZE-1 or BI==NI
   // from 
   // eagerFinger(NI, I, B, BI)
+  ostringstream oss;
+  oss << "$2 /* I */ " << fingerSize << " 1 -i /* I fingerSize-1 */\
+                                           ==i /* I==?fingerSize-1 */\
+                                          $1 $4 /* I==?fingerSize-1 NI BI */\
+                                           ==s /* I==?fingerSize-1 NI==?BI */\
+                                          or /* I==?fingerSize-1 || NI==?BI */\
+                                          not ifstop /* empty */\
+                                          \"nextFingerFix\" pop /* out nextFingerFix */\
+                                          $1 pop /* out NI */\
+                                          0 pop /* out 0 */";
   ElementSpecPtr selectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("select:") << name,
-                                                    strbuf("$2 /* I */ ")
-                                                    << fingerSize <<
-                                                    " 1 -i /* I fingerSize-1 */\
-                                                     ==i /* I==?fingerSize-1 */\
-                                                     $1 $4 /* I==?fingerSize-1 NI BI */\
-                                                     ==s /* I==?fingerSize-1 NI==?BI */\
-                                                     or /* I==?fingerSize-1 || NI==?BI */\
-                                                     not ifstop /* empty */\
-                                                     \"nextFingerFix\" pop /* out nextFingerFix */\
-                                                     $1 pop /* out NI */\
-                                                     0 pop /* out 0 */\
-                                                     ")));
+    conf->addElement(ElementPtr(new PelTransform("select:"+ name,oss.str())));
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("Slot:") << name)));
+    conf->addElement(ElementPtr(new Slot("Slot:"+name)));
   conf->hookUp(pushEagerFingerIn, pushEagerFingerInPort, selectS, 0);
   conf->hookUp(selectS, 0, slotS, 0);
   conf->hookUp(slotS, 0, pullNextFingerFixOut, pullNextFingerFixOutPort);
@@ -798,7 +794,7 @@ void ruleF8(str name,
     eagerFinger@NI(NI, I1, B, BI), I = I1 + 1, I > I1, K = N + 1 << I, K
     in (B, N), NI!=BI.
 */
-void ruleF9(str name,
+void ruleF9(string name,
             Router::ConfigurationPtr conf,
             TablePtr nodeTable,
             ElementSpecPtr pushEagerFingerIn,
@@ -808,12 +804,12 @@ void ruleF9(str name,
 {
   // Join eagerFinger with node table
   ElementSpecPtr join1S =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("eagerFingerIntoNode:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup("eagerFingerIntoNode:"+name,
                                                     nodeTable,
                                                     1, // Match eagerFinger.NI
                                                     1 // with node.NI
                                                     )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField("NoNull:"+name, 1)));
 
   conf->hookUp(pushEagerFingerIn, pushEagerFingerInPort, join1S, 0);
 
@@ -821,14 +817,14 @@ void ruleF9(str name,
   // from
   // eagerFinger(NI, I1, B, BI), node(NI, N)
   ElementSpecPtr select1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("select1:") << name,
+    conf->addElement(ElementPtr(new PelTransform("select1:"+name,
                                                     "$0 2 field dup 1 +i /* I1 (I1+1) */\
                                                      <i /* I1 < I1+1? */\
                                                      not ifstop /* (I1+1>?I1) */\
                                                      $0 pop $1 pop\
                                                      ")));
   ElementSpecPtr select2S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("select2:") << name,
+    conf->addElement(ElementPtr(new PelTransform("select2:"+name,
                                                     "$0 1 field /* NI */\
                                                      $0 4 field /* NI BI */\
                                                      ==s /* NI == BI */\
@@ -836,7 +832,7 @@ void ruleF9(str name,
                                                      $0 pop $1 pop\
                                                      ")));
   ElementSpecPtr select3S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("select2:") << name,
+    conf->addElement(ElementPtr(new PelTransform("select2:"+name,
                                                     "$1 2 field /* N */\
                                                      1 ->u32 ->id /* N 1 */\
                                                      $0 2 field 1 +i /* N 1 (I1+1) */\
@@ -848,7 +844,7 @@ void ruleF9(str name,
                                                      $0 pop $1 pop\
                                                      ")));
   ElementSpecPtr projectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("project:") << name,
+    conf->addElement(ElementPtr(new PelTransform("project:"+name,
                                                     "\"nextFingerFix\" pop /* out nextFingerFix */\
                                                      $0 1 field pop /* out NI */\
                                                      $0 2 field 1 +i pop /* out I1+1 */\
@@ -864,7 +860,7 @@ void ruleF9(str name,
 
 
 /** rule J1 join@NI(NI,E) :- joinEvent@NI(NI), E=f_rand(). */
-void ruleJ1(str name,
+void ruleJ1(string name,
             Router::ConfigurationPtr conf,
             ElementSpecPtr pushJoinEventIn,
             int pushJoinEventInPort,
@@ -875,13 +871,13 @@ void ruleJ1(str name,
   // from
   // joinEvent(NI)
   ElementSpecPtr projectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("project:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform("project:"+name,
                                                     "\"join\" pop \
                                                      $1 pop /* out jE.NI */\
                                                      $1 \":\" strcat rand strcat pop /* out random E */\
                                                      ")));
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("Slot:") << name)));
+    conf->addElement(ElementPtr(new Slot("Slot:"+name)));
   conf->hookUp(pushJoinEventIn, pushJoinEventInPort, projectS, 0);
   conf->hookUp(projectS, 0, slotS, 0);
   conf->hookUp(slotS, 0, pullJoinOut, pullJoinOutPort);
@@ -889,9 +885,9 @@ void ruleJ1(str name,
 
 
 /** rule J1a joinEvent@NI(ni) once. */
-void ruleJ1a(str name,
+void ruleJ1a(string name,
              Router::ConfigurationPtr conf,
-             str localAddress,
+             string localAddress,
              double delay,
              ElementSpecPtr pullJoinEventOut,
              int pullJoinEventOutPort)
@@ -903,19 +899,19 @@ void ruleJ1a(str name,
   joinEventTuple->freeze();
 
   ElementSpecPtr sourceS =
-    conf->addElement(ElementPtr(new TupleSource(str("JoinEventSource:") << name,
+    conf->addElement(ElementPtr(new TupleSource("JoinEventSource:"+name,
                                                    joinEventTuple)));
   
   // The once pusher
   ElementSpecPtr onceS =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("JoinEventPush:") << name,
+    conf->addElement(ElementPtr(new TimedPullPush("JoinEventPush:"+name,
                                                      delay, // run then
                                                      4 // run once
                                                      )));
 
   // And a slot from which to pull
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("JoinEventSlot:") << name)));
+    conf->addElement(ElementPtr(new Slot("JoinEventSlot:"+name)));
 
   // Link everything
   conf->hookUp(sourceS, 0, onceS, 0);
@@ -926,7 +922,7 @@ void ruleJ1a(str name,
 
 /** rule J2 joinRecord@NI(NI,E) :- join@NI(NI,E).
  */
-void ruleJ2(str name,
+void ruleJ2(string name,
             Router::ConfigurationPtr conf,
             ElementSpecPtr pushJoinIn,
             int pushJoinInPort,
@@ -937,13 +933,13 @@ void ruleJ2(str name,
   // from
   // join(NI, E)
   ElementSpecPtr projectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("project:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform("project:"+name,
                                                     "\"joinRecord\" pop \
                                                      $1 pop /* out j.NI */\
                                                      $2 pop /* out j.E */\
                                                      ")));
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("Slot:") << name)));
+    conf->addElement(ElementPtr(new Slot("Slot:"+name)));
   conf->hookUp(pushJoinIn, pushJoinInPort, projectS, 0);
   conf->hookUp(projectS, 0, slotS, 0);
   conf->hookUp(slotS, 0, pullJoinRecordOut, pullJoinRecordOutPort);
@@ -952,7 +948,7 @@ void ruleJ2(str name,
 /** rule J3 startJoin@LI(LI,N,NI,E) :- join@NI(NI,E), node@NI(NI,N),
     landmarkNode@NI(NI,LI), LI != "".
 */
-void ruleJ3(str name,
+void ruleJ3(string name,
             Router::ConfigurationPtr conf,
             TablePtr landmarkNodeTable,
             TablePtr nodeTable,
@@ -963,19 +959,19 @@ void ruleJ3(str name,
 {
   // Join join with landmark table
   ElementSpecPtr join1S =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("joinIntoLandmark:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup("joinIntoLandmark:"+name,
                                                     landmarkNodeTable,
                                                     1, // Match join.NI
                                                     1 // with landmarkNode.NI
                                                     )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField("NoNull:"+name, 1)));
 
   conf->hookUp(pushJoinIn, pushJoinInPort, join1S, 0);
 
   // Produce res1(NI, E, LI)
   // <join(NI, E),landmarkNode(NI, LI)>
   ElementSpecPtr project1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("projectRes1:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform("projectRes1:"+name,
                                                     "\"res1\" pop \
                                                      $0 1 field pop /* out join.NI */\
                                                      $0 2 field pop /* out join.E */\
@@ -987,20 +983,20 @@ void ruleJ3(str name,
 
   // Join res1 with node table
   ElementSpecPtr pushRes1S =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PushRes1:") << name, 0)));
+    conf->addElement(ElementPtr(new TimedPullPush("PushRes1:"+name, 0)));
   ElementSpecPtr join2S =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("res1IntoNode:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup(string("res1IntoNode:") + name,
                                                     nodeTable,
                                                     1, // Match res1.NI
                                                     1 // with node.NI
                                                     )));
-  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull2:") << name, 1)));
+  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNullField(string("NoNull2:") + name, 1)));
 
   conf->hookUp(project1S, 0, pushRes1S, 0);
   conf->hookUp(pushRes1S, 0, join2S, 0);
 
   ElementSpecPtr selectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("select:") << name,
+    conf->addElement(ElementPtr(new PelTransform(string("select:") + name,
                                                     "$0 3 field /* res1.LI */\
                                                      \"-\" ==s ifstop /* select clause */\
                                                      $0 pop $1 pop /* pass through otherwise */\
@@ -1010,7 +1006,7 @@ void ruleJ3(str name,
   // Produce startJoin(LI,N,NI,E)
   // <res1(NI, E, LI),node(NI, N)>
   ElementSpecPtr project2S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("makeStartJoin:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("makeStartJoin:").append(name),
                                                     "\"startJoin\" pop \
                                                      $0 3 field pop /* out res1.LI */\
                                                      $1 2 field pop /* out node.N */\
@@ -1028,7 +1024,7 @@ void ruleJ3(str name,
 
 /** rule J4 lookup@LI(LI,N,NI,E) :- startJoin@LI(LI,N,NI,E).
  */
-void ruleJ4(str name,
+void ruleJ4(string name,
             Router::ConfigurationPtr conf,
             ElementSpecPtr pushStartJoinIn,
             int pushStartJoinInPort,
@@ -1039,7 +1035,7 @@ void ruleJ4(str name,
   // from
   // startJoin(NI, J, JI, E)
   ElementSpecPtr projectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("project:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("project:").append(name),
                                                     "\"lookup\" pop \
                                                      $1 pop /* out sj.NI */\
                                                      $2 pop /* out sj.J */\
@@ -1047,7 +1043,7 @@ void ruleJ4(str name,
                                                      $4 pop /* out sj.E */\
                                                      ")));
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("Slot:") << name)));
+    conf->addElement(ElementPtr(new Slot(string("Slot:") + name)));
   conf->hookUp(pushStartJoinIn, pushStartJoinInPort, projectS, 0);
   conf->hookUp(projectS, 0, slotS, 0);
   conf->hookUp(slotS, 0, pullLookupOut, pullLookupOutPort);
@@ -1058,7 +1054,7 @@ void ruleJ4(str name,
 /** rule J5 successor@NI(NI,S,SI) :- joinRecord@NI(NI,E),
     lookupResults@NI(NI,K,S,SI,E).
 */
-void ruleJ5(str name,
+void ruleJ5(string name,
             Router::ConfigurationPtr conf,
             TablePtr joinRecordTable,
             ElementSpecPtr pushLookupResultsIn,
@@ -1068,19 +1064,19 @@ void ruleJ5(str name,
 {
   // Join lookupResults with joinRecord table
   ElementSpecPtr join1S =
-    conf->addElement(ElementPtr(new MultLookup(strbuf("lookupResultsIntoJoinRecord:") << name,
+    conf->addElement(ElementPtr(new MultLookup(string("lookupResultsIntoJoinRecord:") + name,
                                                   joinRecordTable,
                                                   1, // Match lookupResults.NI
                                                   1 // with joinRecord.NI
                                                   )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(string("NoNull:") + name, 1)));
 
   conf->hookUp(pushLookupResultsIn, pushLookupResultsInPort, join1S, 0);
 
   // Select joinRecord.E == lookupResults.E
   // lookupResults(NI, K, S, SI, E),joinRecord(NI, E)
   ElementSpecPtr selectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("select:") << name,
+    conf->addElement(ElementPtr(new PelTransform(string("select:") + name,
                                                     "$0 5 field /* lookupResults.E */\
                                                      $1 2 field /* lR.E joinRecord.E */\
                                                      ==s not /* lR.E!=fL.E? */\
@@ -1094,7 +1090,7 @@ void ruleJ5(str name,
   // from
   // lookupResults(NI, K, S, SI, E),joinRecord(NI, E)
   ElementSpecPtr projectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("project:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("project:").append(name),
                                                     "\"successor\" pop \
                                                      $0 1 field pop /* out lR.NI */\
                                                      $0 3 field pop /* fL.S */\
@@ -1106,9 +1102,9 @@ void ruleJ5(str name,
 
 
 /** rule J6 predecessor@NI(ni,null,""). */
-void ruleJ6(str name,
+void ruleJ6(string name,
             Router::ConfigurationPtr conf,
-            str localAddress,
+            string localAddress,
             ElementSpecPtr pullPredecessorOut,
             int pullPredecessorOutPort)
 {
@@ -1117,23 +1113,23 @@ void ruleJ6(str name,
   predecessorTuple->append(Val_Str::mk("predecessor"));
   predecessorTuple->append(Val_Str::mk(localAddress));
   predecessorTuple->append(Val_ID::mk(ID::mk()));
-  predecessorTuple->append(Val_Str::mk(str("-"))); // this is "null"
+  predecessorTuple->append(Val_Str::mk(string("-"))); // this is "null"
   predecessorTuple->freeze();
 
   ElementSpecPtr sourceS =
-    conf->addElement(ElementPtr(new TupleSource(str("PredSource:") << name,
+    conf->addElement(ElementPtr(new TupleSource(string("PredSource:") + name,
                                                    predecessorTuple)));
   
   // The once pusher
   ElementSpecPtr onceS =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PredPush:") << name,
+    conf->addElement(ElementPtr(new TimedPullPush(string("PredPush:") + name,
                                                      0, // run immediately
                                                      1 // run once
                                                      )));
 
   // And a slot from which to pull
   ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot(strbuf("PredSlot:") << name)));
+    conf->addElement(ElementPtr(new Slot(string("PredSlot:") + name)));
 
   // Link everything
   conf->hookUp(sourceS, 0, onceS, 0);
@@ -1145,7 +1141,7 @@ void ruleJ6(str name,
 /** rule J7 successor@NI(NI, NI, N) :- landmarkNode@NI(NI, LI),
     node@NI(NI, N), LI == "".
 */
-void ruleJ7(str name,
+void ruleJ7(string name,
             Router::ConfigurationPtr conf,
             TablePtr landmarkNodeTable,
             TablePtr nodeTable,
@@ -1156,19 +1152,19 @@ void ruleJ7(str name,
 {
   // Join join with landmark table
   ElementSpecPtr join1S =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("joinIntoLandmark:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup(string("joinIntoLandmark:") + name,
                                                     landmarkNodeTable,
                                                     1, // Match join.NI
                                                     1 // with landmarkNode.NI
                                                     )));
-  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull:") << name, 1)));
+  ElementSpecPtr noNullS = conf->addElement(ElementPtr(new NoNullField(string("NoNull:") + name, 1)));
 
   conf->hookUp(pushJoinIn, pushJoinInPort, join1S, 0);
 
   // Produce res1(NI, E, LI)
   // <join(NI, E),landmarkNode(NI, LI)>
   ElementSpecPtr project1S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("projectRes1:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("projectRes1:").append(name),
                                                     "\"res1\" pop \
                                                      $0 1 field pop /* out join.NI */\
                                                      $0 2 field pop /* out join.E */\
@@ -1180,20 +1176,20 @@ void ruleJ7(str name,
 
   // Join res1 with node table
   ElementSpecPtr pushRes1S =
-    conf->addElement(ElementPtr(new TimedPullPush(strbuf("PushRes1:") << name, 0)));
+    conf->addElement(ElementPtr(new TimedPullPush(string("PushRes1:") + name, 0)));
   ElementSpecPtr join2S =
-    conf->addElement(ElementPtr(new UniqueLookup(strbuf("res1IntoNode:") << name,
+    conf->addElement(ElementPtr(new UniqueLookup(string("res1IntoNode:") + name,
                                                     nodeTable,
                                                     1, // Match res1.NI
                                                     1 // with node.NI
                                                     )));
-  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNullField(strbuf("NoNull2:") << name, 1)));
+  ElementSpecPtr noNull2S = conf->addElement(ElementPtr(new NoNullField(string("NoNull2:") + name, 1)));
 
   conf->hookUp(project1S, 0, pushRes1S, 0);
   conf->hookUp(pushRes1S, 0, join2S, 0);
 
   ElementSpecPtr selectS =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("select:") << name,
+    conf->addElement(ElementPtr(new PelTransform(string("select:") + name,
                                                     "$0 3 field /* res1.LI */\
                                                      \"-\" ==s not ifstop /* select clause */\
                                                      $0 pop $1 pop /* pass through otherwise */\
@@ -1203,7 +1199,7 @@ void ruleJ7(str name,
   // Produce successor(NI, N, NI)
   // <res1(NI, E, LI),node(NI, N)>
   ElementSpecPtr project2S =
-    conf->addElement(ElementPtr(new PelTransform(strbuf("makeSuccessor:").cat(name),
+    conf->addElement(ElementPtr(new PelTransform(string("makeSuccessor:").append(name),
                                                     "\"successor\" pop \
                                                      $0 1 field pop /* out res1.NI */\
                                                      $1 2 field pop /* out node.N */\
@@ -1223,8 +1219,8 @@ void ruleJ7(str name,
 
 
 void
-connectRules(str name,
-             str localAddress,
+connectRules(string name,
+             string localAddress,
              Router::ConfigurationPtr conf,
              TablePtr bestSuccessorTable,
              TablePtr fingerLookupTable,
@@ -1245,10 +1241,10 @@ connectRules(str name,
 {
   // My wraparound mux.  On input 0 comes the outside world. On input 1
   // come tuples that have left locally destined for local rules
-  ElementSpecPtr wrapAroundMux = conf->addElement(ElementPtr(new Mux(strbuf("WA:") <<(name), 2)));
-  ElementSpecPtr incomingP = conf->addElement(ElementPtr(new PrintTime(strbuf("In:") << name)));
-  ElementSpecPtr incomingQueue = conf->addElement(ElementPtr(new Queue(strbuf("incomingQueue")<< name, 1000)));
-  ElementSpecPtr incomingPusher = conf->addElement(ElementPtr(new TimedPullPush(strbuf("incomingPusher:") << name, 0)));
+  ElementSpecPtr wrapAroundMux = conf->addElement(ElementPtr(new Mux(string("WA:")+(name), 2)));
+  ElementSpecPtr incomingP = conf->addElement(ElementPtr(new PrintTime(string("In:") + name)));
+  ElementSpecPtr incomingQueue = conf->addElement(ElementPtr(new Queue(string("incomingQueue")+ name, 1000)));
+  ElementSpecPtr incomingPusher = conf->addElement(ElementPtr(new TimedPullPush(string("incomingPusher:") + name, 0)));
   conf->hookUp(pushTupleIn, pushTupleInPort, incomingP, 0);
   conf->hookUp(incomingP, 0, incomingQueue, 0);
   conf->hookUp(incomingQueue, 0, incomingPusher, 0);
@@ -1257,236 +1253,236 @@ connectRules(str name,
 
   // The demux element for tuples
   boost::shared_ptr< std::vector< ValuePtr > > demuxKeys(new std::vector< ValuePtr >);
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("successor"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("lookup"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("bestLookupDistance"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("bestSuccessorDist"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("maxSuccessorDist"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("evictSuccessor"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("successorCount"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("node"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("finger"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("predecessor"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("bestSuccessor"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("nextFingerFix"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("fingerLookup"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("stabilizeRecord"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("fixFinger"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("lookupResults"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("join"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("joinEvent"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("joinRecord"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("landmarkNode"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("startJoin"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("stabilize"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("stabilizeEvent"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("stabilizeRequest"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("sendPredecessor"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("notify"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("notifyPredecessor"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("eagerFinger"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("sendSuccessors"))));
-  demuxKeys->push_back(ValuePtr(new Val_Str(str("returnSuccessor"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("successor"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("lookup"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("bestLookupDistance"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("bestSuccessorDist"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("maxSuccessorDist"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("evictSuccessor"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("successorCount"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("node"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("finger"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("predecessor"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("bestSuccessor"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("nextFingerFix"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("fingerLookup"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("stabilizeRecord"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("fixFinger"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("lookupResults"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("join"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("joinEvent"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("joinRecord"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("landmarkNode"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("startJoin"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("stabilize"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("stabilizeEvent"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("stabilizeRequest"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("sendPredecessor"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("notify"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("notifyPredecessor"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("eagerFinger"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("sendSuccessors"))));
+  demuxKeys->push_back(ValuePtr(new Val_Str(string("returnSuccessor"))));
   ElementSpecPtr demuxS = conf->addElement(ElementPtr(new Demux("demux", demuxKeys)));
   conf->hookUp(wrapAroundMux, 0, demuxS, 0);
 
   int nextDemuxOutput = 0;
   // Create the duplicator for each tuple name.  Store the tuple first
   // for materialized tuples
-  ElementSpecPtr dupSuccessor = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("successor") << "Dup:" << name, 1)));
-  ElementSpecPtr insertSuccessor = conf->addElement(ElementPtr(new Insert(strbuf("successor") << "Insert:" << name, successorTable)));
+  ElementSpecPtr dupSuccessor = conf->addElement(ElementPtr(new DuplicateConservative(string("successor") + "Dup:" + name, 1)));
+  ElementSpecPtr insertSuccessor = conf->addElement(ElementPtr(new Insert(string("successor") + "Insert:" + name, successorTable)));
   conf->hookUp(demuxS, nextDemuxOutput++, insertSuccessor, 0);
   conf->hookUp(insertSuccessor, 0, dupSuccessor, 0);
 
-  ElementSpecPtr dupLookup = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("lookup") << "Dup:" << name, 2)));
+  ElementSpecPtr dupLookup = conf->addElement(ElementPtr(new DuplicateConservative(string("lookup") + "Dup:" + name, 2)));
   ElementSpecPtr qLookup = conf->addElement(ElementPtr(new Queue("lookupQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPLookup = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPLookup = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qLookup, 0);
   conf->hookUp(qLookup, 0, tPPLookup, 0);
   conf->hookUp(tPPLookup, 0, dupLookup, 0);
 
-  ElementSpecPtr dupBestLookupDistance = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("bestLookupDistance") << "Dup:" << name, 1)));
+  ElementSpecPtr dupBestLookupDistance = conf->addElement(ElementPtr(new DuplicateConservative(string("bestLookupDistance") + "Dup:" + name, 1)));
   ElementSpecPtr qBestLookupDistance = conf->addElement(ElementPtr(new Queue("BestLookupDistance", QUEUE_LENGTH)));
-  ElementSpecPtr tPPBestLookupDistance = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPBestLookupDistance = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qBestLookupDistance, 0);
   conf->hookUp(qBestLookupDistance, 0, tPPBestLookupDistance, 0);
   conf->hookUp(tPPBestLookupDistance, 0, dupBestLookupDistance, 0);
 
-  ElementSpecPtr dupBestSuccessorDistance = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("bestSuccessorDist") << "Dup:" << name, 1)));
+  ElementSpecPtr dupBestSuccessorDistance = conf->addElement(ElementPtr(new DuplicateConservative(string("bestSuccessorDist") + "Dup:" + name, 1)));
   ElementSpecPtr qBestSuccessorDistance = conf->addElement(ElementPtr(new Queue("BestSuccessorDistanceQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPBestSuccessorDistance = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPBestSuccessorDistance = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qBestSuccessorDistance, 0);
   conf->hookUp(qBestSuccessorDistance, 0, tPPBestSuccessorDistance, 0);
   conf->hookUp(tPPBestSuccessorDistance, 0, dupBestSuccessorDistance, 0);
 
-  ElementSpecPtr dupMaxSuccessorDist = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("maxSuccessorDist") << "Dup:" << name, 1)));
+  ElementSpecPtr dupMaxSuccessorDist = conf->addElement(ElementPtr(new DuplicateConservative(string("maxSuccessorDist") + "Dup:" + name, 1)));
   ElementSpecPtr qMaxSuccessorDist = conf->addElement(ElementPtr(new Queue("maxSuccessorDistQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPMaxSuccessorDist = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPMaxSuccessorDist = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qMaxSuccessorDist, 0);
   conf->hookUp(qMaxSuccessorDist, 0, tPPMaxSuccessorDist, 0);
   conf->hookUp(tPPMaxSuccessorDist, 0, dupMaxSuccessorDist, 0);
 
-  ElementSpecPtr dupEvictSuccessor = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("evictSuccessor") << "Dup:" << name, 1)));
+  ElementSpecPtr dupEvictSuccessor = conf->addElement(ElementPtr(new DuplicateConservative(string("evictSuccessor") + "Dup:" + name, 1)));
   ElementSpecPtr qEvictSuccessor = conf->addElement(ElementPtr(new Queue("evictSuccessorQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPEvictSuccessor = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPEvictSuccessor = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qEvictSuccessor, 0);
   conf->hookUp(qEvictSuccessor, 0, tPPEvictSuccessor, 0);
   conf->hookUp(tPPEvictSuccessor, 0, dupEvictSuccessor, 0);
 
-  ElementSpecPtr dupSuccessorCount = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("successorCount") << "Dup:" << name, 1)));
+  ElementSpecPtr dupSuccessorCount = conf->addElement(ElementPtr(new DuplicateConservative(string("successorCount") + "Dup:" + name, 1)));
   ElementSpecPtr qSuccessorCount = conf->addElement(ElementPtr(new Queue("successorCountQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPSuccessorCount = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPSuccessorCount = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qSuccessorCount, 0);
   conf->hookUp(qSuccessorCount, 0, tPPSuccessorCount, 0);
   conf->hookUp(tPPSuccessorCount, 0, dupSuccessorCount, 0);
 
-  ElementSpecPtr insertNode = conf->addElement(ElementPtr(new Insert(strbuf("node") << "Insert:" << name, nodeTable)));
-  ElementSpecPtr discardNode = conf->addElement(ElementPtr(new Discard(strbuf("node") << "Discard:" << name)));
+  ElementSpecPtr insertNode = conf->addElement(ElementPtr(new Insert(string("node") + "Insert:" + name, nodeTable)));
+  ElementSpecPtr discardNode = conf->addElement(ElementPtr(new Discard(string("node") + "Discard:" + name)));
   conf->hookUp(demuxS, nextDemuxOutput++, insertNode, 0);
   conf->hookUp(insertNode, 0, discardNode, 0);
 
-  ElementSpecPtr insertFinger = conf->addElement(ElementPtr(new Insert(strbuf("finger") << "Insert:" << name, fingerTable)));
-  ElementSpecPtr discardFinger = conf->addElement(ElementPtr(new Discard(strbuf("finger") << "Discard:" << name)));
+  ElementSpecPtr insertFinger = conf->addElement(ElementPtr(new Insert(string("finger") + "Insert:" + name, fingerTable)));
+  ElementSpecPtr discardFinger = conf->addElement(ElementPtr(new Discard(string("finger") + "Discard:" + name)));
   conf->hookUp(demuxS, nextDemuxOutput++, insertFinger, 0);
   conf->hookUp(insertFinger, 0, discardFinger, 0);
  
-  ElementSpecPtr insertPredecessor = conf->addElement(ElementPtr(new Insert(strbuf("predecessor") << "Insert:" << name, predecessorTable)));
-  ElementSpecPtr discardPredecessor = conf->addElement(ElementPtr(new Discard(strbuf("predecessor") << "Discard:" << name)));
+  ElementSpecPtr insertPredecessor = conf->addElement(ElementPtr(new Insert(string("predecessor") + "Insert:" + name, predecessorTable)));
+  ElementSpecPtr discardPredecessor = conf->addElement(ElementPtr(new Discard(string("predecessor") + "Discard:" + name)));
   conf->hookUp(demuxS, nextDemuxOutput++, insertPredecessor, 0);
   conf->hookUp(insertPredecessor, 0, discardPredecessor, 0);
 
-  ElementSpecPtr insertBestSuccessor = conf->addElement(ElementPtr(new Insert(strbuf("bestSuccessor") << "Insert:" << name, bestSuccessorTable)));
-  ElementSpecPtr dupBestSuccessor = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("bestSuccessor") << "Dup:" << name, 1)));
+  ElementSpecPtr insertBestSuccessor = conf->addElement(ElementPtr(new Insert(string("bestSuccessor") + "Insert:" + name, bestSuccessorTable)));
+  ElementSpecPtr dupBestSuccessor = conf->addElement(ElementPtr(new DuplicateConservative(string("bestSuccessor") + "Dup:" + name, 1)));
   ElementSpecPtr qBestSuccessor = conf->addElement(ElementPtr(new Queue("bestSuccessorQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPBestSuccessor = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPBestSuccessor = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, insertBestSuccessor, 0);
   conf->hookUp(insertBestSuccessor, 0, qBestSuccessor, 0);
   conf->hookUp(qBestSuccessor, 0, tPPBestSuccessor, 0);
   conf->hookUp(tPPBestSuccessor, 0, dupBestSuccessor, 0);
 
-  ElementSpecPtr insertNextFingerFix = conf->addElement(ElementPtr(new Insert(strbuf("nextFingerFix") << "Insert:" << name, nextFingerFixTable)));
-  ElementSpecPtr discardNextFingerFix = conf->addElement(ElementPtr(new Discard(strbuf("nextFingerFix") << "Discard:" << name)));
+  ElementSpecPtr insertNextFingerFix = conf->addElement(ElementPtr(new Insert(string("nextFingerFix") + "Insert:" + name, nextFingerFixTable)));
+  ElementSpecPtr discardNextFingerFix = conf->addElement(ElementPtr(new Discard(string("nextFingerFix") + "Discard:" + name)));
   conf->hookUp(demuxS, nextDemuxOutput++, insertNextFingerFix, 0);
   conf->hookUp(insertNextFingerFix, 0, discardNextFingerFix, 0);
 
-  ElementSpecPtr insertFingerLookup = conf->addElement(ElementPtr(new Insert(strbuf("fingerLookup") << "Insert:" << name, fingerLookupTable)));
-  ElementSpecPtr dupFingerLookup = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("fingerLookup") << "Dup:" << name, 1)));
+  ElementSpecPtr insertFingerLookup = conf->addElement(ElementPtr(new Insert(string("fingerLookup") + "Insert:" + name, fingerLookupTable)));
+  ElementSpecPtr dupFingerLookup = conf->addElement(ElementPtr(new DuplicateConservative(string("fingerLookup") + "Dup:" + name, 1)));
   ElementSpecPtr qFingerLookup = conf->addElement(ElementPtr(new Queue("fingerLookupQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPFingerLookup = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPFingerLookup = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, insertFingerLookup, 0);
   conf->hookUp(insertFingerLookup, 0, qFingerLookup, 0);
   conf->hookUp(qFingerLookup, 0, tPPFingerLookup, 0);
   conf->hookUp(tPPFingerLookup, 0, dupFingerLookup, 0);
 
-  ElementSpecPtr insertStabilizeRecord = conf->addElement(ElementPtr(new Insert(strbuf("stabilizeRecord") << "Insert:" << name, stabilizeRecordTable)));
-  ElementSpecPtr discardStabilizeRecord = conf->addElement(ElementPtr(new Discard(strbuf("stabilizeRecord") << "Discard:" << name)));
+  ElementSpecPtr insertStabilizeRecord = conf->addElement(ElementPtr(new Insert(string("stabilizeRecord") + "Insert:" + name, stabilizeRecordTable)));
+  ElementSpecPtr discardStabilizeRecord = conf->addElement(ElementPtr(new Discard(string("stabilizeRecord") + "Discard:" + name)));
   conf->hookUp(demuxS, nextDemuxOutput++, insertStabilizeRecord, 0);
   conf->hookUp(insertStabilizeRecord, 0, discardStabilizeRecord, 0);
 
-  ElementSpecPtr dupFixFinger = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("fixFinger") << "Dup:" << name, 1)));
+  ElementSpecPtr dupFixFinger = conf->addElement(ElementPtr(new DuplicateConservative(string("fixFinger") + "Dup:" + name, 1)));
   ElementSpecPtr qFixFinger = conf->addElement(ElementPtr(new Queue("fixFingerQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPFixFinger = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPFixFinger = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qFixFinger, 0);
   conf->hookUp(qFixFinger, 0, tPPFixFinger, 0);
   conf->hookUp(tPPFixFinger, 0, dupFixFinger, 0);
 
-  ElementSpecPtr dupLookupResults = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("lookupResults") << "Dup:" << name, 2)));
+  ElementSpecPtr dupLookupResults = conf->addElement(ElementPtr(new DuplicateConservative(string("lookupResults") + "Dup:" + name, 2)));
   ElementSpecPtr qLookupResults = conf->addElement(ElementPtr(new Queue("LookupResultsQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPLookupResults = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPLookupResults = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qLookupResults, 0);
   conf->hookUp(qLookupResults, 0, tPPLookupResults, 0);
   conf->hookUp(tPPLookupResults, 0, dupLookupResults, 0);
 
-  ElementSpecPtr dupJoin = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("join") << "Dup:" << name, 3)));
+  ElementSpecPtr dupJoin = conf->addElement(ElementPtr(new DuplicateConservative(string("join") + "Dup:" + name, 3)));
   ElementSpecPtr qJoin = conf->addElement(ElementPtr(new Queue("JoinQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPJoin = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPJoin = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qJoin, 0);
   conf->hookUp(qJoin, 0, tPPJoin, 0);
   conf->hookUp(tPPJoin, 0, dupJoin, 0);
 
-  ElementSpecPtr dupJoinEvent = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("joinEvent") << "Dup:" << name, 1)));
+  ElementSpecPtr dupJoinEvent = conf->addElement(ElementPtr(new DuplicateConservative(string("joinEvent") + "Dup:" + name, 1)));
   ElementSpecPtr qJoinEvent = conf->addElement(ElementPtr(new Queue("joinEventQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPJoinEvent = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPJoinEvent = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qJoinEvent, 0);
   conf->hookUp(qJoinEvent, 0, tPPJoinEvent, 0);
   conf->hookUp(tPPJoinEvent, 0, dupJoinEvent, 0);
 
-  ElementSpecPtr insertJoinRecord = conf->addElement(ElementPtr(new Insert(strbuf("joinRecord") << "Insert:" << name, joinRecordTable)));
-  ElementSpecPtr discardJoinRecord = conf->addElement(ElementPtr(new Discard(strbuf("joinRecord") << "Discard:" << name)));
+  ElementSpecPtr insertJoinRecord = conf->addElement(ElementPtr(new Insert(string("joinRecord") + "Insert:" + name, joinRecordTable)));
+  ElementSpecPtr discardJoinRecord = conf->addElement(ElementPtr(new Discard(string("joinRecord") + "Discard:" + name)));
   conf->hookUp(demuxS, nextDemuxOutput++, insertJoinRecord, 0);
   conf->hookUp(insertJoinRecord, 0, discardJoinRecord, 0);
 
-  ElementSpecPtr insertLandmarkNode = conf->addElement(ElementPtr(new Insert(strbuf("landmarkNode") << "Insert:" << name, landmarkNodeTable)));
-  ElementSpecPtr discardLandmarkNode = conf->addElement(ElementPtr(new Discard(strbuf("landmarkNode") << "Discard:" << name)));
+  ElementSpecPtr insertLandmarkNode = conf->addElement(ElementPtr(new Insert(string("landmarkNode") + "Insert:" + name, landmarkNodeTable)));
+  ElementSpecPtr discardLandmarkNode = conf->addElement(ElementPtr(new Discard(string("landmarkNode") + "Discard:" + name)));
   conf->hookUp(demuxS, nextDemuxOutput++, insertLandmarkNode, 0);
   conf->hookUp(insertLandmarkNode, 0, discardLandmarkNode, 0);
 
-  ElementSpecPtr dupStartJoin = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("startJoin") << "Dup:" << name, 1)));
+  ElementSpecPtr dupStartJoin = conf->addElement(ElementPtr(new DuplicateConservative(string("startJoin") + "Dup:" + name, 1)));
   ElementSpecPtr qStartJoin = conf->addElement(ElementPtr(new Queue("startJoinQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPStartJoin = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPStartJoin = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qStartJoin, 0);
   conf->hookUp(qStartJoin, 0, tPPStartJoin, 0);
   conf->hookUp(tPPStartJoin, 0, dupStartJoin, 0);
 
-  ElementSpecPtr dupStabilize = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("stabilize") << "Dup:" << name, 3)));
+  ElementSpecPtr dupStabilize = conf->addElement(ElementPtr(new DuplicateConservative(string("stabilize") + "Dup:" + name, 3)));
   ElementSpecPtr qStabilize = conf->addElement(ElementPtr(new Queue("StabilizeQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPStabilize = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPStabilize = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qStabilize, 0);
   conf->hookUp(qStabilize, 0, tPPStabilize, 0);
   conf->hookUp(tPPStabilize, 0, dupStabilize, 0);
 
-  ElementSpecPtr dupStabilizeEvent = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("stabilizeEvent") << "Dup:" << name, 1)));
+  ElementSpecPtr dupStabilizeEvent = conf->addElement(ElementPtr(new DuplicateConservative(string("stabilizeEvent") + "Dup:" + name, 1)));
   ElementSpecPtr qStabilizeEvent = conf->addElement(ElementPtr(new Queue("stabilizeEventQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPStabilizeEvent = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPStabilizeEvent = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qStabilizeEvent, 0);
   conf->hookUp(qStabilizeEvent, 0, tPPStabilizeEvent, 0);
   conf->hookUp(tPPStabilizeEvent, 0, dupStabilizeEvent, 0);
 
-  ElementSpecPtr dupStabilizeRequest = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("stabilizeRequest") << "Dup:" << name, 1)));
+  ElementSpecPtr dupStabilizeRequest = conf->addElement(ElementPtr(new DuplicateConservative(string("stabilizeRequest") + "Dup:" + name, 1)));
   ElementSpecPtr qStabilizeRequest = conf->addElement(ElementPtr(new Queue("stabilizeRequestQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPStabilizeRequest = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPStabilizeRequest = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qStabilizeRequest, 0);
   conf->hookUp(qStabilizeRequest, 0, tPPStabilizeRequest, 0);
   conf->hookUp(tPPStabilizeRequest, 0, dupStabilizeRequest, 0);
 
-  ElementSpecPtr dupSendPredecessor = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("sendPredecessor") << "Dup:" << name, 1)));
+  ElementSpecPtr dupSendPredecessor = conf->addElement(ElementPtr(new DuplicateConservative(string("sendPredecessor") + "Dup:" + name, 1)));
   ElementSpecPtr qSendPredecessor = conf->addElement(ElementPtr(new Queue("sendPredecessorQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPSendPredecessor = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPSendPredecessor = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qSendPredecessor, 0);
   conf->hookUp(qSendPredecessor, 0, tPPSendPredecessor, 0);
   conf->hookUp(tPPSendPredecessor, 0, dupSendPredecessor, 0);
 
-  ElementSpecPtr dupNotify = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("notify") << "Dup:" << name, 1)));
+  ElementSpecPtr dupNotify = conf->addElement(ElementPtr(new DuplicateConservative(string("notify") + "Dup:" + name, 1)));
   ElementSpecPtr qNotify = conf->addElement(ElementPtr(new Queue("notifyQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPNotify = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPNotify = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qNotify, 0);
   conf->hookUp(qNotify, 0, tPPNotify, 0);
   conf->hookUp(tPPNotify, 0, dupNotify, 0);
 
-  ElementSpecPtr dupNotifyPredecessor = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("notifyPredecessor") << "Dup:" << name, 1)));
+  ElementSpecPtr dupNotifyPredecessor = conf->addElement(ElementPtr(new DuplicateConservative(string("notifyPredecessor") + "Dup:" + name, 1)));
   ElementSpecPtr qNotifyPredecessor = conf->addElement(ElementPtr(new Queue("notifyPredecessorQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPNotifyPredecessor = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPNotifyPredecessor = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qNotifyPredecessor, 0);
   conf->hookUp(qNotifyPredecessor, 0, tPPNotifyPredecessor, 0);
   conf->hookUp(tPPNotifyPredecessor, 0, dupNotifyPredecessor, 0);
 
-  ElementSpecPtr dupEagerFinger = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("eagerFinger") << "Dup:" << name, 5)));
+  ElementSpecPtr dupEagerFinger = conf->addElement(ElementPtr(new DuplicateConservative(string("eagerFinger") + "Dup:" + name, 5)));
   ElementSpecPtr qEagerFinger = conf->addElement(ElementPtr(new Queue("EagerFingerQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPEagerFinger = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPEagerFinger = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qEagerFinger, 0);
   conf->hookUp(qEagerFinger, 0, tPPEagerFinger, 0);
   conf->hookUp(tPPEagerFinger, 0, dupEagerFinger, 0);
 
-  ElementSpecPtr dupSendSuccessors = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("sendSuccessors") << "Dup:" << name, 1)));
+  ElementSpecPtr dupSendSuccessors = conf->addElement(ElementPtr(new DuplicateConservative(string("sendSuccessors") + "Dup:" + name, 1)));
   ElementSpecPtr qSendSuccessors = conf->addElement(ElementPtr(new Queue("sendSuccessorsQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPSendSuccessors = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPSendSuccessors = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qSendSuccessors, 0);
   conf->hookUp(qSendSuccessors, 0, tPPSendSuccessors, 0);
   conf->hookUp(tPPSendSuccessors, 0, dupSendSuccessors, 0);
 
-  ElementSpecPtr dupReturnSuccessor = conf->addElement(ElementPtr(new DuplicateConservative(strbuf("returnSuccessor") << "Dup:" << name, 1)));
+  ElementSpecPtr dupReturnSuccessor = conf->addElement(ElementPtr(new DuplicateConservative(string("returnSuccessor") + "Dup:" + name, 1)));
   ElementSpecPtr qReturnSuccessor = conf->addElement(ElementPtr(new Queue("returnSuccessorQueue", QUEUE_LENGTH)));
-  ElementSpecPtr tPPReturnSuccessor = conf->addElement(ElementPtr(new TimedPullPush(strbuf("TPP") << name, 0)));
+  ElementSpecPtr tPPReturnSuccessor = conf->addElement(ElementPtr(new TimedPullPush(string("TPP") + name, 0)));
   conf->hookUp(demuxS, nextDemuxOutput++, qReturnSuccessor, 0);
   conf->hookUp(qReturnSuccessor, 0, tPPReturnSuccessor, 0);
   conf->hookUp(tPPReturnSuccessor, 0, dupReturnSuccessor, 0);
@@ -1499,22 +1495,22 @@ connectRules(str name,
 
 
   // Tuples that match nothing
-  ElementSpecPtr discardDefault = conf->addElement(ElementPtr(new Discard(strbuf("DEFAULT") << "Discard:" << name)));
+  ElementSpecPtr discardDefault = conf->addElement(ElementPtr(new Discard(string("DEFAULT") + "Discard:" + name)));
   conf->hookUp(demuxS, nextDemuxOutput++, discardDefault, 0);
 
 
 
   int roundRobinPortCounter = 0;
-  ElementSpecPtr roundRobin = conf->addElement(ElementPtr(new RoundRobin(strbuf("RoundRobin:") << name, 38)));
-  ElementSpecPtr wrapAroundPush = conf->addElement(ElementPtr(new  TimedPullPush(strbuf("WrapAroundPush") << name, 0)));
+  ElementSpecPtr roundRobin = conf->addElement(ElementPtr(new RoundRobin(string("RoundRobin:") + name, 38)));
+  ElementSpecPtr wrapAroundPush = conf->addElement(ElementPtr(new  TimedPullPush(string("WrapAroundPush") + name, 0)));
 
   // The wrap around for locally bound tuples
   boost::shared_ptr< std::vector< ValuePtr > > wrapAroundDemuxKeys(new std::vector< ValuePtr >);
   wrapAroundDemuxKeys->push_back(ValuePtr(new Val_Str(localAddress)));
   ElementSpecPtr wrapAroundDemux = conf->addElement(ElementPtr(new  Demux("wrapAround", wrapAroundDemuxKeys, 1)));
   ElementSpecPtr outgoingQueue = conf->addElement(ElementPtr(new  Queue("outgoingQueue", 1000)));
-  ElementSpecPtr wrapAroundPrint = conf->addElement(ElementPtr(new  PrintTime(strbuf("Wrap:") << name)));
-  ElementSpecPtr outgoingP = conf->addElement(ElementPtr(new  PrintTime(strbuf("Out:") << name)));
+  ElementSpecPtr wrapAroundPrint = conf->addElement(ElementPtr(new  PrintTime(string("Wrap:") + name)));
+  ElementSpecPtr outgoingP = conf->addElement(ElementPtr(new  PrintTime(string("Out:") + name)));
   conf->hookUp(roundRobin, 0, wrapAroundPush, 0);
   conf->hookUp(wrapAroundPush, 0, wrapAroundDemux, 0);
   conf->hookUp(wrapAroundDemux, 0, wrapAroundPrint, 0);
@@ -1526,205 +1522,205 @@ connectRules(str name,
 
 
 
-  ruleL1(strbuf(name) << ":L1",
+  ruleL1(string(name) + ":L1",
          conf,
          nodeTable,
          bestSuccessorTable,
          dupLookup, 0,
          roundRobin, roundRobinPortCounter++);
-  ruleL2(strbuf(name) << ":L2",
+  ruleL2(string(name) + ":L2",
          conf,
          nodeTable,
          fingerTable,
          dupLookup, 1,
          roundRobin, roundRobinPortCounter++);
-  ruleL3(strbuf(name) << ":L3",
+  ruleL3(string(name) + ":L3",
          conf,
          nodeTable,
          fingerTable,
          dupBestLookupDistance, 0,
          roundRobin, roundRobinPortCounter++);
-  ruleSU1(strbuf(name) << ":SU1",
+  ruleSU1(string(name) + ":SU1",
           conf,
           nodeTable,
           successorTable,
           dupSuccessor, 0,
           roundRobin, roundRobinPortCounter++);
-  ruleSU2(strbuf(name) << ":SU2",
+  ruleSU2(string(name) + ":SU2",
           conf,
           nodeTable,
           successorTable,
           bestSuccessorTable,
           dupBestSuccessorDistance, 0,
           roundRobin, roundRobinPortCounter++);
-  ruleSU3(strbuf(name) << ":SU3",
+  ruleSU3(string(name) + ":SU3",
           conf,
           dupBestSuccessor, 0,
           roundRobin, roundRobinPortCounter++);
-  ruleSR1(strbuf(name) << ":SR1",
+  ruleSR1(string(name) + ":SR1",
           conf,
           successorCountAggregate,
           roundRobin, roundRobinPortCounter++);
-  ruleSR2(strbuf(name) << ":SR2",
+  ruleSR2(string(name) + ":SR2",
           conf,
           SUCCESSORSIZE,
           dupSuccessorCount, 0,
           roundRobin, roundRobinPortCounter++);
-  ruleSR3(strbuf(name) << ":SR3",
+  ruleSR3(string(name) + ":SR3",
           conf,
           nodeTable,
           successorTable,
           dupEvictSuccessor, 0,
           roundRobin, roundRobinPortCounter++);
-  ruleSR4(strbuf(name) << ":SR4",
+  ruleSR4(string(name) + ":SR4",
           conf,
           nodeTable,
           successorTable,
           dupMaxSuccessorDist, 0);
-  ruleF1(strbuf(name) << ":F1",
+  ruleF1(string(name) + ":F1",
          conf,
          localAddress,
          FINGERTTL,
          roundRobin, roundRobinPortCounter++);
-  ruleF2(strbuf(name) << ":F2",
+  ruleF2(string(name) + ":F2",
          conf,
          localAddress,
          roundRobin, roundRobinPortCounter++);
-  ruleF3(strbuf(name) << ":F3",
+  ruleF3(string(name) + ":F3",
          conf,
          nextFingerFixTable,
          dupFixFinger, 0,
          roundRobin, roundRobinPortCounter++);
-  ruleF4(strbuf(name) << ":F4",
+  ruleF4(string(name) + ":F4",
          conf,
          nodeTable,
          dupFingerLookup, 0,
          roundRobin, roundRobinPortCounter++);
-  ruleF5(strbuf(name) << ":F5",
+  ruleF5(string(name) + ":F5",
          conf,
          fingerLookupTable,
          dupLookupResults, 0,
          roundRobin, roundRobinPortCounter++);
-  ruleF6(strbuf(name) << ":F6",
+  ruleF6(string(name) + ":F6",
          conf,
          dupEagerFinger, 0,
          roundRobin, roundRobinPortCounter++);
-  ruleF7(strbuf(name) << ":F7",
+  ruleF7(string(name) + ":F7",
          conf,
          nodeTable,
          dupEagerFinger, 1,
          roundRobin, roundRobinPortCounter++);
-  ruleF8(strbuf(name) << ":F8",
+  ruleF8(string(name) + ":F8",
          conf,
          FINGERSIZE,
          dupEagerFinger, 2,
          roundRobin, roundRobinPortCounter++);
-  ruleF9(strbuf(name) << ":F9",
+  ruleF9(string(name) + ":F9",
          conf,
          nodeTable,
          dupEagerFinger, 3,
          roundRobin, roundRobinPortCounter++);
-  ruleJ1(strbuf(name) << ":J1",
+  ruleJ1(string(name) + ":J1",
          conf,
          dupJoinEvent, 0,
          roundRobin, roundRobinPortCounter++);
-  ruleJ1a(strbuf(name) << ":J1a",
+  ruleJ1a(string(name) + ":J1a",
           conf,
           localAddress,
           delay,
           roundRobin, roundRobinPortCounter++);
-  ruleJ2(strbuf(name) << ":J2",
+  ruleJ2(string(name) + ":J2",
          conf,
          dupJoin, 0,
          roundRobin, roundRobinPortCounter++);
-  ruleJ3(strbuf(name) << ":J3",
+  ruleJ3(string(name) + ":J3",
          conf,
          landmarkNodeTable,
          nodeTable,
          dupJoin, 1,
          roundRobin, roundRobinPortCounter++);
-  ruleJ4(strbuf(name) << ":J4",
+  ruleJ4(string(name) + ":J4",
          conf,
          dupStartJoin, 0,
          roundRobin, roundRobinPortCounter++);
-  ruleJ5(strbuf(name) << ":J5",
+  ruleJ5(string(name) + ":J5",
          conf,
          joinRecordTable,
          dupLookupResults, 1,
          roundRobin, roundRobinPortCounter++);
-  ruleJ6(strbuf(name) << ":J6",
+  ruleJ6(string(name) + ":J6",
          conf,
          localAddress,
          roundRobin, roundRobinPortCounter++);
-  ruleJ7(strbuf(name) << ":J7",
+  ruleJ7(string(name) + ":J7",
          conf,
          landmarkNodeTable,
          nodeTable,
          dupJoin, 2,
          roundRobin, roundRobinPortCounter++);
-  ruleS0(strbuf(name) << ":S0",
+  ruleS0(string(name) + ":S0",
          conf,
          localAddress,
          FINGERTTL,
          roundRobin, roundRobinPortCounter++);
-  ruleS0a(strbuf(name) << ":S0a",
+  ruleS0a(string(name) + ":S0a",
           conf,
           dupStabilizeEvent, 0,
           roundRobin, roundRobinPortCounter++);
-  ruleS0b(strbuf(name) << ":S0b",
+  ruleS0b(string(name) + ":S0b",
           conf,
           dupStabilize, 0,
           roundRobin, roundRobinPortCounter++);
-  ruleS1(strbuf(name) << ":S1",
+  ruleS1(string(name) + ":S1",
          conf,
          bestSuccessorTable,
          dupStabilize, 1,
          roundRobin, roundRobinPortCounter++);
-  ruleS2(strbuf(name) << ":S2",
+  ruleS2(string(name) + ":S2",
          conf,
          predecessorTable,
          dupStabilizeRequest, 0,
          roundRobin, roundRobinPortCounter++);
-  ruleS3(strbuf(name) << ":S3",
+  ruleS3(string(name) + ":S3",
          conf,
          stabilizeRecordTable,
          nodeTable,
          bestSuccessorTable,
          dupSendPredecessor, 0,
          roundRobin, roundRobinPortCounter++);
-  ruleS4(strbuf(name) << ":S4",
+  ruleS4(string(name) + ":S4",
          conf,
          successorTable,
          dupStabilize, 2,
          roundRobin, roundRobinPortCounter++);
-  ruleS5(strbuf(name) << ":S5",
+  ruleS5(string(name) + ":S5",
          conf,
          successorTable,
          dupSendSuccessors, 0,
          roundRobin, roundRobinPortCounter++);
-  ruleS5a(strbuf(name) << ":S5a",
+  ruleS5a(string(name) + ":S5a",
           conf,
           stabilizeRecordTable,
           dupReturnSuccessor, 0,
           roundRobin, roundRobinPortCounter++);
-  ruleS6a(strbuf(name) << ":S6a",
+  ruleS6a(string(name) + ":S6a",
           conf,
           localAddress,
           FINGERTTL,
           roundRobin, roundRobinPortCounter++);
-  ruleS6(strbuf(name) << ":S6",
+  ruleS6(string(name) + ":S6",
          conf,
          nodeTable,
          successorTable,
          dupNotify, 0,
          roundRobin, roundRobinPortCounter++);
-  ruleS7(strbuf(name) << ":S7",
+  ruleS7(string(name) + ":S7",
          conf,
          nodeTable,
          predecessorTable,
          dupNotifyPredecessor, 0,
          roundRobin, roundRobinPortCounter++);
-  ruleF6a(strbuf(name) << ":F6a",
+  ruleF6a(string(name) + ":F6a",
           conf,
           fingerLookupTable,
           dupEagerFinger, 4);
@@ -1733,8 +1729,8 @@ connectRules(str name,
   
 
 
-void createNode(str myAddress,
-                str landmarkAddress,
+void createNode(string myAddress,
+                string landmarkAddress,
                 Router::ConfigurationPtr conf,
                 Udp* udp,
                 double delay = 0)
@@ -1743,9 +1739,9 @@ void createNode(str myAddress,
   timespec fingerExpiration;
   fingerExpiration.tv_sec = FINGEREXPIRATION;
   fingerExpiration.tv_nsec = 0;
-  TablePtr fingerTable(new Table(strbuf("fingerTable"), FINGERSIZE, &fingerExpiration));
+  TablePtr fingerTable(new Table(string("fingerTable"), FINGERSIZE, &fingerExpiration));
 #else
-  TablePtr fingerTable(new Table(strbuf("fingerTable"), FINGERSIZE));
+  TablePtr fingerTable(new Table(string("fingerTable"), FINGERSIZE));
 #endif
   fingerTable->add_unique_index(2);
   fingerTable->add_multiple_index(1);
@@ -1758,7 +1754,7 @@ void createNode(str myAddress,
   }
   IDPtr myKey = ID::mk(r);
 
-  TablePtr nodeTable(new Table(strbuf("nodeTable"), 1));
+  TablePtr nodeTable(new Table(string("nodeTable"), 1));
   nodeTable->add_unique_index(1);
   
 
@@ -1773,20 +1769,20 @@ void createNode(str myAddress,
   }
     
 
-  TablePtr bestSuccessorTable(new Table(strbuf("bestSuccessorTable"), 1));
+  TablePtr bestSuccessorTable(new Table(string("bestSuccessorTable"), 1));
   bestSuccessorTable->add_unique_index(1);
   
 #ifdef __P2__WITH_CHURN__
   timespec successorExpiration;
   successorExpiration.tv_sec = SUCCEXPIRATION;
   successorExpiration.tv_nsec = 0;
-  TablePtr successorTable(new Table(strbuf("successorTable"), 100,
+  TablePtr successorTable(new Table(string("successorTable"), 100,
                             &successorExpiration)); // let the
                                                    // replacement policy
                                                    // deal with
                                                    // evictions
 #else
-  TablePtr successorTable(new Table(strbuf("successorTable"), 100));
+  TablePtr successorTable(new Table(string("successorTable"), 100));
 #endif
 
   successorTable->add_multiple_index(1);
@@ -1800,30 +1796,30 @@ void createNode(str myAddress,
 
   // The next finger fix table starts out with a single tuple that never
   // expires and is only replaced
-  TablePtr nextFingerFixTable(new Table(strbuf("nextFingerFix"), 1));
+  TablePtr nextFingerFixTable(new Table(string("nextFingerFix"), 1));
   nextFingerFixTable->add_unique_index(1);
 
   /** The finger lookup table.  It is indexed uniquely by its event ID */
-  TablePtr fingerLookupTable(new Table(strbuf("fingerLookup"), 100));
+  TablePtr fingerLookupTable(new Table(string("fingerLookup"), 100));
   fingerLookupTable->add_unique_index(2);
   fingerLookupTable->add_multiple_index(1);
 
   // The predecessor table, indexed by its first field
-  TablePtr predecessorTable(new Table(strbuf("predecessor"), 3));
+  TablePtr predecessorTable(new Table(string("predecessor"), 3));
   predecessorTable->add_unique_index(1);
   
 
   // The joinRecord table. Singleton
-  TablePtr joinRecordTable(new Table(strbuf("joinRecord"), 100));
+  TablePtr joinRecordTable(new Table(string("joinRecord"), 100));
   joinRecordTable->add_unique_index(2);
   joinRecordTable->add_multiple_index(1);
 
   // The stabilizeRecord table. Singleton.
-  TablePtr stabilizeRecordTable(new Table(strbuf("stabilizeRecord"), 2));
+  TablePtr stabilizeRecordTable(new Table(string("stabilizeRecord"), 2));
   stabilizeRecordTable->add_unique_index(1);
 
   // The landmarkNode table. Singleton
-  TablePtr landmarkNodeTable(new Table(strbuf("landmarkNode"), 2));
+  TablePtr landmarkNodeTable(new Table(string("landmarkNode"), 2));
   landmarkNodeTable->add_unique_index(1);
   
 
@@ -1835,11 +1831,11 @@ void createNode(str myAddress,
   ////////////////////////////////////////////////////////
   // The front end, UDP to rules engine
   ElementSpecPtr udpRxS = conf->addElement(udp->get_rx());
-  ElementSpecPtr unmarshalS = conf->addElement(ElementPtr(new UnmarshalField(strbuf("Unmarshal:").cat(myAddress), 1)));
+  ElementSpecPtr unmarshalS = conf->addElement(ElementPtr(new UnmarshalField(string("Unmarshal:").append(myAddress), 1)));
 
 
   // Drop the source address and decapsulate
-  ElementSpecPtr unBoxS = conf->addElement(ElementPtr(new PelTransform(strbuf("UnBox:").cat(myAddress),
+  ElementSpecPtr unBoxS = conf->addElement(ElementPtr(new PelTransform(string("UnBox:").append(myAddress),
                                                                           "$1 unboxPop")));
   conf->hookUp(udpRxS, 0, unmarshalS, 0);
   conf->hookUp(unmarshalS, 0, unBoxS, 0);
@@ -1853,16 +1849,16 @@ void createNode(str myAddress,
   // Create the encapsulated version of this tuple, holding the
   // destination address and, encapsulated, the payload containing the
   // reach tuple.
-  ElementSpecPtr encapS = conf->addElement(ElementPtr(new PelTransform(strbuf("encap:").cat(myAddress),
+  ElementSpecPtr encapS = conf->addElement(ElementPtr(new PelTransform(string("encap:").append(myAddress),
                                                                           "$1 pop /* The From address */\
                                                                            swallow pop /* The entire input tuple encapsulated */")));
 
   // Now marshall the payload (second field)
-  ElementSpecPtr marshalS = conf->addElement(ElementPtr(new MarshalField(strbuf("Marshal:").cat(myAddress), 1)));
+  ElementSpecPtr marshalS = conf->addElement(ElementPtr(new MarshalField(string("Marshal:").append(myAddress), 1)));
 
   // And translate the address into a sockaddr.  This is a hack until
   // we have a consistent view of the UDP interface.
-  ElementSpecPtr routeS = conf->addElement(ElementPtr(new StrToSockaddr(strbuf("Router:").cat(myAddress), 0)));
+  ElementSpecPtr routeS = conf->addElement(ElementPtr(new StrToSockaddr(string("Router:").append(myAddress), 0)));
   ElementSpecPtr udpTxS = conf->addElement(udp->get_tx());
   
   
@@ -1879,7 +1875,7 @@ void createNode(str myAddress,
   landmark->freeze();
   landmarkNodeTable->insert(landmark);
   
-  connectRules(strbuf("[") << myAddress << str("]"),
+  connectRules(string("[") + myAddress + string("]"),
                myAddress,
                conf,
                bestSuccessorTable,

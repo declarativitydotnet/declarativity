@@ -13,9 +13,16 @@
  */
 
 #include "pel_vm.h"
+#include <iterator>    // for back_inserter
+#include <locale>
+#include <string>
+#include <algorithm>
+#include <cctype>      // old <ctype.h>
+
 #include <stdlib.h>
 #include <math.h>
-#include <rxx.h>
+// #include <boost/regex.hpp> FIX ME (LINK ERRORS) 
+
 
 #include "val_int32.h"
 #include "val_uint32.h"
@@ -28,6 +35,7 @@
 #include "val_time.h"
 #include "val_id.h"
 #include "oper.h"
+#include "loop.h"
 
 using namespace opr;
 
@@ -160,14 +168,14 @@ int64_t Pel_VM::pop_signed()
 //
 // Pull a string off the stack
 //  
-str Pel_VM::pop_string() 
+string Pel_VM::pop_string() 
 {
   ValuePtr t = stackTop(); stackPop();
   try {
     return Val_Str::cast(t);
   } catch (Value::TypeError) {
     error = PE_TYPE_CONVERSION;
-    return str("");
+    return "";
   }
 }
 
@@ -242,7 +250,7 @@ Pel_VM::Error Pel_VM::execute(const Pel_Program &prog, const TuplePtr data)
   return error;
 }
 
-void Pel_VM::dumpStack(str message)
+void Pel_VM::dumpStack(string message)
 {
   
   // Dump the stack
@@ -276,11 +284,39 @@ Pel_VM::Error Pel_VM::execute_instruction( u_int32_t inst, TuplePtr data)
 
 /***********************************************************************
  *
+ * String handling functions...
+ */
+
+struct ToUpper
+{
+  ToUpper(std::locale const& l) : loc(l) {;}
+  char operator() (char c) const  { return std::toupper(c,loc); }
+private:
+  std::locale const& loc;
+};
+
+struct ToLower
+{
+  ToLower(std::locale const& l) : loc(l) {;}
+  char operator() (char c) const  { return std::tolower(c,loc); }
+private:
+  std::locale const& loc;
+};
+
+
+/***********************************************************************
+ *
  * Opcode definitions follow
  * 
  * Since the jumptable contains the operation arity, we don't need to
  * check here that there are sufficient operands on the
  * stack. However, we do need to check their types at this stage. 
+ * 
+ * DO NOT be tempted to make some of these functions more concise by
+ * collapsing "pop" statements into "push" arguments.  Remember that
+ * C++ does not define the order of evaluation of function arguments,
+ * and we HAVE seen the optimiser reorder these differently on
+ * different version of the compiler. 
  *
  */
 
@@ -356,7 +392,7 @@ DEF_OP(IFSTOP) {
   }
 }
 DEF_OP(DUMPSTACK) {
-  str s1 = pop_string();
+  string s1 = pop_string();
   dumpStack(s1);
 }
 DEF_OP(IFPOP_TUPLE) {
@@ -469,13 +505,13 @@ DEF_OP(CONSLIST) {
   
   TuplePtr firstTuple, secondTuple;
   // make each argument a tuple
-  if (str(first->typeName()) == "tuple") {
+  if (string(first->typeName()) == "tuple") {
     firstTuple = Val_Tuple::cast(first);
   } else {
     firstTuple = Tuple::mk();
     firstTuple->append(first);
   }
-  if (str(second->typeName()) == "tuple") {
+  if (string(second->typeName()) == "tuple") {
     secondTuple = Val_Tuple::cast(second);
   } else {
     secondTuple = Tuple::mk();
@@ -813,76 +849,77 @@ DEF_OP(ID_BTWCC) {
 // about operand order on the stack!
 //
 DEF_OP(STR_LT) { 
-  str s1 = pop_string();
-  str s2 = pop_string();
+  string s1 = pop_string();
+  string s2 = pop_string();
   stackPush(Val_Int32::mk(s2 < s1));
 }
 DEF_OP(STR_LTE) { 
-  str s1 = pop_string();
-  str s2 = pop_string();
+  string s1 = pop_string();
+  string s2 = pop_string();
   stackPush(Val_Int32::mk(s2 <= s1));
 }
 DEF_OP(STR_GT) { 
-  str s1 = pop_string();
-  str s2 = pop_string();
+  string s1 = pop_string();
+  string s2 = pop_string();
   stackPush(Val_Int32::mk(s2 > s1));
 }
 DEF_OP(STR_GTE) { 
-  str s1 = pop_string();
-  str s2 = pop_string();
+  string s1 = pop_string();
+  string s2 = pop_string();
   stackPush(Val_Int32::mk(s2 >= s1));
 }
 DEF_OP(STR_EQ) { 
-  str s1 = pop_string();
-  str s2 = pop_string();
+  string s1 = pop_string();
+  string s2 = pop_string();
   //  warn << s1 << "==?" << s2 << " is " << (s1==s2) << "\n";
   stackPush(Val_Int32::mk(s2 == s1));
 }
 DEF_OP(STR_CAT) { 
-  str s1 = pop_string();
-  str s2 = pop_string();
-  str r = strbuf() << s2 << s1;
+  string s1 = pop_string();
+  string s2 = pop_string();
+  string r = s2 + s1;
   stackPush(Val_Str::mk(r));
 }
 DEF_OP(STR_LEN) {
-  stackPush(Val_UInt32::mk(pop_string().len()));
+  stackPush(Val_UInt32::mk(pop_string().length()));
 }
 DEF_OP(STR_UPPER) {
-  // There _has_ to be a better way of doing this...
-  char tmp_str[2];
-  tmp_str[1] = '\0';
-  strbuf sb;
-  str s = pop_string();
-  for(uint i=0; i < s.len(); i++) {
-    tmp_str[0] = toupper(s[i]);
-    sb.cat(tmp_str);
-  }
-  stackPush(Val_Str::mk(sb));
+  std::locale  loc_c("C");
+  ToUpper      up(loc_c);
+  string s = pop_string();
+  string  result;
+
+  std::transform(s.begin(), s.end(), std::back_inserter(result), up);
+  stackPush(Val_Str::mk(result));
 }
 DEF_OP(STR_LOWER) {
-  // There _has_ to be a better way of doing this...
-  char tmp_str[2];
-  tmp_str[1] = '\0';
-  strbuf sb;
-  str s = pop_string();
-  for(uint i=0; i < s.len(); i++) {
-    tmp_str[0] = tolower(s[i]);
-    sb.cat(tmp_str);
-  }
-  stackPush(Val_Str::mk(sb));
+  std::locale  loc_c("C");
+  ToLower      down(loc_c);
+  string s = pop_string();
+  string  result;
+
+  std::transform(s.begin(), s.end(), std::back_inserter(result), down);
+  stackPush(Val_Str::mk(result));
 }
 DEF_OP(STR_SUBSTR) {
   int len = pop_unsigned();
   int pos = pop_unsigned();
-  str s = pop_string();
-  stackPush(Val_Str::mk(substr(s,pos,len)));
+  string s = pop_string();
+  stackPush(Val_Str::mk(s.substr(pos,pos+len)));
 }
 DEF_OP(STR_MATCH) {
   // XXX This is slow!!! For better results, memoize each regexp in a
   // hash map and study each one. 
-  rxx re(pop_string());
-  re.match(pop_string());
-  stackPush(Val_Int32::mk(re.success()));
+
+  /** FIX ME
+  boost::regex re(pop_string());
+  boost::smatch what;
+  if (regex_match(pop_string(),what,re)) {
+    stackPush(Val_Int32::mk(true));
+  } else {
+    stackPush(Val_Int32::mk(false));
+  }
+  */
 }
 DEF_OP(STR_CONV) {
   ValuePtr t = stackTop(); stackPop();
@@ -1019,7 +1056,7 @@ DEF_OP(CONV_ID) {
 // Hashing - could be a lot faster.  Room for improvement here. 
 //
 DEF_OP(HASH) {
-  uint32_t h = (hash_t)(stackTop()->toTypeString());
+  uint32_t h = hash_string(stackTop()->toTypeString().c_str());
   stackPop();
   stackPush(Val_UInt32::mk(h));
 }

@@ -25,7 +25,7 @@ class FunctorSource : public Element {
     virtual TuplePtr operator()() = 0;
   };
 
-  FunctorSource(str, Generator*);
+  FunctorSource(string, Generator*);
 
   const char *class_name() const		{ return "FunctorSource"; }
   const char *flow_code() const			{ return "/-"; }

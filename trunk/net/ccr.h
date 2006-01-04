@@ -10,7 +10,6 @@
 #define __CCRX_H__
 
 #include <deque>
-#include <async.h>
 #include "tuple.h"
 #include "element.h"
 #include "inlines.h"
@@ -37,7 +36,7 @@ typedef uint64_t SeqNum;
  */
 class CCR : public Element {
 public:
-  CCR(str name, double rwnd=512., uint src=0, bool flow=false);
+  CCR(string name, double rwnd=512., uint src=0, bool flow=false);
   const char *class_name() const { return "CCR";};
   const char *processing() const { return flow_ ? "ah/al" : "a/al"; };
   const char *flow_code() const	 { return flow_ ? "--/--" : "-/--"; };

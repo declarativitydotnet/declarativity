@@ -8,14 +8,12 @@
  * 
  */
 
-#include <async.h>
-#include <arpc.h>
 #include "queue.h"
 #include "tuple.h"
 #include<iostream>
 #include "loop.h"
 
-Queue::Queue(str name, unsigned int queueSize)
+Queue::Queue(string name, unsigned int queueSize)
   : Element(name, 1, 1),
     _pullCB(0),
     _pushCB(0)
@@ -31,8 +29,10 @@ Queue::~Queue()
 int Queue::push(int port, TuplePtr p, b_cbv cb)
 {
   _q.push(p);  
+  ostringstream oss;
 
-  log(LoggerI::INFO, 0, str(strbuf() << "Push " << p->toString()) << ", queuesize=" << _q.size());
+  oss << "Push " << p->toString() << ", queuesize=" << _q.size();
+  log(LoggerI::INFO, 0,oss.str());
   if (_pullCB) {
     // is there a pending callback? If so, wake it up
     _pullCB();
@@ -43,7 +43,9 @@ int Queue::push(int port, TuplePtr p, b_cbv cb)
 
   // have we reached the max size? If so, we have to wait
   if (_q.size() == _size) {
-    log(LoggerI::INFO, 0, str(strbuf() << "Queue has reach max size, queuesize=" << _q.size()));
+    oss.clear();
+    oss << "Queue has reach max size, queuesize=" << _q.size();
+    log(LoggerI::INFO, 0, oss.str());
     _pushCB = cb;
     return 0;
   }
@@ -68,7 +70,9 @@ TuplePtr Queue::pull(int port, b_cbv cb)
     _pushCB = 0;
   }
 
-  log(LoggerI::INFO, 0, str(strbuf() << "Pull succeed " << p->toString() << ", queuesize=" << _q.size()));
+  ostringstream oss;
+  oss << "Pull succeed " << p->toString() << ", queuesize=" << _q.size();
+  log(LoggerI::INFO, 0, oss.str());
   return p;
 }
 

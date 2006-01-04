@@ -24,7 +24,7 @@
 class Aggwrap : public Element { 
 public:
 
-  Aggwrap(str name, str aggfn, int aggfield, str outputTableName);
+  Aggwrap(string name, string aggfn, int aggfield, string outputTableName);
 
   const char *class_name() const		{ return "Aggwrap";}
   const char *processing() const		{ return "hh/hh"; }; //"ha/hh"; }
@@ -39,7 +39,7 @@ public:
   int numJoins;
 
 private:
-  str _aggfn;
+  string _aggfn;
   int _aggfield;
   std::vector<int> _groupByFields;
     
@@ -54,7 +54,7 @@ private:
   int aggState;
   TuplePtr aggResult, _incomingTuple;
   int count;
-  str _outputTableName;
+  string _outputTableName;
 
   void int_push_cb();
   void agg_init();

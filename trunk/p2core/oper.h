@@ -49,16 +49,25 @@ namespace opr {
    * An operator is not supported if the types of the operands
    * do not override the operator. 
    */
-  #define NOSUP1(o, t1) \
-  throw New Exception("Oper("<<str(o)<<") not supported for types "<<str(t1))
+  #define NOSUP1(o, t1) do { \
+    ostringstream oss; \
+    oss << "Oper("<<string(o)<<") not supported for types "<<string(t1); \
+    throw Exception(oss.str()); \
+  } while (0)
   
-  #define NOSUP2(o, t1, t2) \
-  throw New Exception("Oper("<<str(o)<<") not supported for types " \
-                       <<str(t1)<<", "<<str(t2))
+  #define NOSUP2(o, t1, t2) do { \
+    ostringstream oss; \
+    oss << "Oper("<<string(o)<<") not supported for types " \
+                <<string(t1)<<", "<<string(t2); \
+    throw Exception(oss.str()); \
+  } while (0)
   
-  #define NOSUP3(o, t1, t2, t3) \
-  throw New Exception("Oper("<<str(o)<<") not supported for types " \
-                       <<str(t1)<<", "<<str(t2)<<", "<<str(t3))
+  #define NOSUP3(o, t1, t2, t3) do { \
+    ostringstream oss; \
+    oss << "Oper("<<string(o)<<") not supported for types " \
+                <<string(t1)<<", "<<string(t2)<<", "<<string(t3); \
+    throw Exception(oss.str()); \
+  } while (0)
   
   class Oper {
   public:
@@ -83,12 +92,12 @@ namespace opr {
      */ 
     class Exception {
     public:
-      Exception(str d) : desc_(d) {};
+      Exception(string d) : desc_(d) {};
   
-      operator str() { return desc_; };
+      operator string() { return desc_; };
   
       private:
-        str desc_;
+        string desc_;
     };
   
     /**
@@ -143,22 +152,22 @@ namespace opr {
     virtual bool _inOO (const ValuePtr& v1, const ValuePtr& v2, 
                             const ValuePtr& v3) const { 
       NOSUP3("()", v1->typeName(), v2->typeName(), v3->typeName()); 
-      return NULL; 
+      return false; 
     };
     virtual bool _inOC (const ValuePtr& v1, const ValuePtr& v2, 
                             const ValuePtr& v3) const { 
       NOSUP3("(]", v1->typeName(), v2->typeName(), v3->typeName()); 
-      return NULL; 
+      return false; 
     };
     virtual bool _inCO (const ValuePtr& v1, const ValuePtr& v2, 
                             const ValuePtr& v3) const { 
       NOSUP3("[)", v1->typeName(), v2->typeName(), v3->typeName()); 
-      return NULL; 
+      return false; 
     };
     virtual bool _inCC (const ValuePtr& v1, const ValuePtr& v2, 
                             const ValuePtr& v3) const { 
       NOSUP3("[]", v1->typeName(), v2->typeName(), v3->typeName()); 
-      return NULL; 
+      return false; 
     };
   };
    
@@ -171,7 +180,9 @@ namespace opr {
   ValuePtr operator<<(const ValuePtr& v1, const ValuePtr& v2);
   ValuePtr operator>>(const ValuePtr& v1, const ValuePtr& v2); 
   ValuePtr operator+ (const ValuePtr& v1, const ValuePtr& v2); 
+  struct timespec operator+ (const struct timespec& v1, const struct timespec& v2); 
   ValuePtr operator- (const ValuePtr& v1, const ValuePtr& v2); 
+  struct timespec operator- (const struct timespec& v1, const struct timespec& v2); 
   ValuePtr operator--(const ValuePtr& v1); 
   ValuePtr operator++(const ValuePtr& v1); 
   ValuePtr operator* (const ValuePtr& v1, const ValuePtr& v2); 
@@ -183,11 +194,17 @@ namespace opr {
   ValuePtr operator^ (const ValuePtr& v1, const ValuePtr& v2); 
   
   bool     operator==(const ValuePtr& v1, const ValuePtr& v2); 
+  bool     operator==(const struct timespec& v1, const struct timespec& v2); 
   bool     operator!=(const ValuePtr& v1, const ValuePtr& v2); 
+  bool     operator!=(const struct timespec& v1, const struct timespec& v2); 
   bool     operator< (const ValuePtr& v1, const ValuePtr& v2); 
+  bool     operator< (const struct timespec& v1, const struct timespec& v2); 
   bool     operator<=(const ValuePtr& v1, const ValuePtr& v2); 
+  bool     operator<=(const struct timespec& v1, const struct timespec& v2); 
   bool     operator> (const ValuePtr& v1, const ValuePtr& v2); 
+  bool     operator> (const struct timespec& v1, const struct timespec& v2); 
   bool     operator>=(const ValuePtr& v1, const ValuePtr& v2); 
+  bool     operator>=(const struct timespec& v1, const struct timespec& v2); 
   
   bool     inOO(const ValuePtr& v1, const ValuePtr& v2, const ValuePtr& v3);
   bool     inOC(const ValuePtr& v1, const ValuePtr& v2, const ValuePtr& v3);

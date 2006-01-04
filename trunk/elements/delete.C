@@ -11,7 +11,7 @@
 
 #include "delete.h"
 
-Delete::Delete(str name,
+Delete::Delete(string name,
                TablePtr table,
                unsigned indexFieldNo,
                unsigned keyFieldNo)

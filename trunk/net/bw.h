@@ -16,7 +16,7 @@
 class Bandwidth : public Element {
 public:
 
-    Bandwidth(str name="Bandwidth");
+    Bandwidth(string name="Bandwidth");
     const char *class_name() const	{ return "Bandwidth";};
     const char *processing() const	{ return "a/a"; };
     const char *flow_code() const	{ return "x/x"; };

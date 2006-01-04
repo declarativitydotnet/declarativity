@@ -6,7 +6,6 @@
 #include <iostream>
 #include <ctime>
 #include <cstdlib>
-#include <async.h>
 
 #define INIT_RAND(SEED) srand(SEED)
 #define RANDOM rand ();

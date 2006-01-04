@@ -19,15 +19,15 @@
 
 
 
-str pelFunction(PlanContext::FieldNamesTracker* names, Parse_Function *expr);
+string pelFunction(PlanContext::FieldNamesTracker* names, Parse_Function *expr);
 
-str pelMath(PlanContext::FieldNamesTracker* names, Parse_Math *expr) 
+string pelMath(PlanContext::FieldNamesTracker* names, Parse_Math *expr) 
 {
   Parse_Var*  var;
   Parse_Val*  val;
   Parse_Math* math;
   Parse_Function* fn  = NULL;
-  strbuf      pel;  
+  ostringstream pel;  
 
 
   if (expr->id && expr->oper == Parse_Math::MINUS) {
@@ -95,18 +95,18 @@ str pelMath(PlanContext::FieldNamesTracker* names, Parse_Math *expr)
     default: return "ERROR";
   }
 
-  return pel;
+  return pel.str();
 }
 
 
-str pelRange(PlanContext::FieldNamesTracker* names, Parse_Bool *expr) 
+string pelRange(PlanContext::FieldNamesTracker* names, Parse_Bool *expr) 
 {
   Parse_Var*   var       = NULL;
   Parse_Val*   val       = NULL;
   Parse_Math*  math      = NULL;
   Parse_Var*   range_var = dynamic_cast<Parse_Var*>(expr->lhs);
   Parse_Range* range     = dynamic_cast<Parse_Range*>(expr->rhs);
-  strbuf       pel;
+  ostringstream pel;
   int          pos;
 
   if (!range || !range_var) {
@@ -173,13 +173,13 @@ str pelRange(PlanContext::FieldNamesTracker* names, Parse_Bool *expr)
     case Parse_Range::RANGECC: pel << "[] "; break;
     }
 
-  return pel;
+  return pel.str();
 }
 
 
-str pelFunction(PlanContext::FieldNamesTracker* names, Parse_Function *expr) 
+string pelFunction(PlanContext::FieldNamesTracker* names, Parse_Function *expr) 
 {
-  strbuf pel;
+  ostringstream pel;
 
   if (expr->name() == "f_coinFlip") {
     Val_Double &val = dynamic_cast<Val_Double&>(*expr->arg(0)->v);
@@ -258,18 +258,18 @@ str pelFunction(PlanContext::FieldNamesTracker* names, Parse_Function *expr)
     return "ERROR: unknown function name.";
   }
 
-  return pel;
+  return pel.str();
 }
 
 
-str pelBool(PlanContext::FieldNamesTracker* names, Parse_Bool *expr) 
+string pelBool(PlanContext::FieldNamesTracker* names, Parse_Bool *expr) 
 {
   Parse_Var*      var = NULL;
   Parse_Val*      val = NULL;
   Parse_Function* fn  = NULL;
   Parse_Math*     m   = NULL;
   Parse_Bool*     b   = NULL;
-  strbuf          pel;  
+  ostringstream   pel;  
 
   if (expr->oper == Parse_Bool::RANGE) return pelRange(names, expr);
 
@@ -346,27 +346,27 @@ str pelBool(PlanContext::FieldNamesTracker* names, Parse_Bool *expr)
     case Parse_Bool::GTE: pel << ">= "; break;
     default: return "ERROR";
     }
-  return pel;
+  return pel.str();
 }
 
 void pelSelect(PlanContext* pc, Parse_Select *expr, int selectionID)
 {
   ECA_Rule* curRule = pc->_ruleStrand->_eca_rule;
-  strbuf sPel = pelBool(pc->_namesTracker, expr->select) << "not ifstop ";
+  ostringstream sPel;
+  sPel << pelBool(pc->_namesTracker, expr->select) << "not ifstop ";
   
   // put in the old fields (+1 since we have to include the table name)
   for (uint k = 0; k < pc->_namesTracker->fieldNames.size() + 1; k++) {
     sPel << "$" << k << " pop ";
   }
 
-  debugRule(pc, str(strbuf() << "Generate selection functions for " << sPel 
-		    << " " << pc->_namesTracker->toString() << "\n"));
+  debugRule(pc, "Generate selection functions for " + sPel.str() 
+		    + " " + pc->_namesTracker->toString() + "\n");
  
   ElementSpecPtr sPelTrans =
-    pc->_conf->addElement(ElementPtr(new PelTransform(strbuf("Selection:") 
-						     << curRule->_ruleID << ":" << 
-						     selectionID << ":" 
-						     << pc->_nodeID, sPel)));
+    pc->_conf->addElement(ElementPtr(new PelTransform("Selection:" 
+						     + curRule->_ruleID + ":" + 
+						     pc->_nodeID, sPel.str())));
   pc->_ruleStrand->addElement(pc->_conf, sPelTrans);
 }
 
@@ -374,8 +374,8 @@ void pelSelect(PlanContext* pc, Parse_Select *expr, int selectionID)
 void pelAssign(PlanContext* pc, Parse_Assign* expr, int assignID) 
 {
   ECA_Rule* curRule = pc->_ruleStrand->_eca_rule;
-  strbuf pel;
-  strbuf pelAssign;
+  ostringstream pel;
+  ostringstream pelAssign;
   Parse_Var      *a   = dynamic_cast<Parse_Var*>(expr->var);
   Parse_Var      *var = NULL;
   Parse_Val      *val = NULL;
@@ -415,17 +415,13 @@ void pelAssign(PlanContext* pc, Parse_Assign* expr, int assignID)
     pc->_namesTracker->fieldNames.push_back(a->toString()); // the variable name
   } 
 
-  debugRule(pc, strbuf() << "Generate assignments for " 
-	    << a->toString() << " " 
-	    << curRule->_ruleID << " " << pel << " " 
-	    << pc->_namesTracker->toString() << "\n");
+  debugRule(pc, "Generate assignments for " + a->toString() + " " 
+	    + curRule->_ruleID + " " + pel.str() + " " 
+	    + pc->_namesTracker->toString() + "\n");
   
   ElementSpecPtr assignPelTrans =
-    pc->_conf->addElement(ElementPtr(new PelTransform(strbuf("Assignment:") 
-						     << curRule->_ruleID << ":" 
-						     << assignID << ":" 
-						     << pc->_nodeID, 
-						     pel)));
+    pc->_conf->addElement(ElementPtr(new PelTransform("Assignment:" + curRule->_ruleID + ":" 
+						     + pc->_nodeID, pel.str())));
 
   pc->_ruleStrand->addElement(pc->_conf, assignPelTrans);  
 }

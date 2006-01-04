@@ -21,7 +21,7 @@
 class Filter : public Element { 
 public:
 
-  Filter(str, unsigned);
+  Filter(string, unsigned);
 
   /** Overridden to perform the filtering. */
   TuplePtr simple_action(TuplePtr p);

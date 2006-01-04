@@ -14,14 +14,14 @@
 
 #include "ruleStrand.h"
 
-str RuleStrand::toString()
+string RuleStrand::toString()
 {
-  strbuf b;
+  ostringstream b;
   b << "Rule Strand " << _ruleStrandID << ": " << _eca_rule->toString() << "\n";
   for (unsigned k = 0; k < _elementChain.size(); k++) {
     b << " -> Element " << k << " " << _elementChain.at(k)->toString() << "\n";
   }
-  return str(b);
+  return b.str();
 }
 
 void RuleStrand::addElement(Router::ConfigurationPtr conf, ElementSpecPtr elementSpecPtr)

@@ -17,11 +17,10 @@
 
 #include "table.h"
 #include "element.h"
-#include "async.h"
 
 class Aggregate : public Element {
  public:
-  Aggregate(str name,
+  Aggregate(string name,
             Table::MultAggregate aggregate);
   
   const char *class_name() const		{ return "Aggregate";}

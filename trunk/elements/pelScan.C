@@ -12,36 +12,23 @@
 #include "pelScan.h"
 #include "pel_lexer.h"
 
-PelScan::PelScan(str name,
+PelScan::PelScan(string name,
                  TablePtr table,
                  unsigned fieldNo,
-                 str startup,
-                 str scan,
-                 str cleanup)
+                 string startup,
+                 string scan,
+                 string cleanup)
   : Element(name, 1, 1),
     _table(table),
     _iterator(table->scanAll(fieldNo)),
     _pushCallback(0),
     _pullCallback(0),
     _indexFieldNo(fieldNo),
-    _startup(Pel_Lexer::compile(startup)),
-    _scan(Pel_Lexer::compile(scan)),
-    _cleanup(Pel_Lexer::compile(cleanup)),
+    _startup(Pel_Lexer::compile(startup.c_str())),
+    _scan(Pel_Lexer::compile(scan.c_str())),
+    _cleanup(Pel_Lexer::compile(cleanup.c_str())),
     _vm()
 {
-}
-
-PelScan::~PelScan()
-{
-  if (_startup != 0) {
-    delete _startup;
-  }
-  if (_scan != 0) {
-    delete _scan;
-  }
-  if (_cleanup != 0) {
-    delete _cleanup;
-  }
 }
 
 int
@@ -61,14 +48,13 @@ PelScan::push(int port, TuplePtr t, b_cbv cb)
     Pel_VM::Error e = _vm.execute(*_startup, _scanTuple);
     if (e != Pel_VM::PE_SUCCESS) {
       // Reject the push and warn
-      log(LoggerI::ERROR, 0, strbuf("push: startup script: ") <<
+      log(LoggerI::ERROR, 0, string("push: startup script: ") +
           Pel_VM::strerror(e));
-      _vm.dumpStack(str("startup script"));
+      _vm.dumpStack(string("startup script"));
     }
 
     // Groovy.  Signal puller that we're ready to give results
-    log(LoggerI::INFO, 0, strbuf("push: accepted scan for ")
-        << _scanTuple->toString());
+    log(LoggerI::INFO, 0, string("push: accepted scan for ") + _scanTuple->toString());
     
     // Unblock the puller if one is waiting
     if (_pullCallback) {
@@ -122,8 +108,8 @@ TuplePtr PelScan::pull(int port, b_cbv cb)
       // Run the scan script on this tuple
       Pel_VM::Error e = _vm.execute(*_scan, _iterator->next());
       if (e != Pel_VM::PE_SUCCESS) {
-        log(LoggerI::ERROR, 0, strbuf("pull: scan script:") << Pel_VM::strerror(e));
-        _vm.dumpStack(str("scan script"));
+        log(LoggerI::ERROR, 0, string("pull: scan script:") + Pel_VM::strerror(e));
+        _vm.dumpStack(string("scan script"));
         return TuplePtr();
       }
       
@@ -149,9 +135,9 @@ TuplePtr PelScan::pull(int port, b_cbv cb)
       // The cleanup script
       Pel_VM::Error e = _vm.execute(*_cleanup, _scanTuple);
       if (e != Pel_VM::PE_SUCCESS) {
-        log(LoggerI::ERROR, 0, strbuf("pull: cleanup script:") << Pel_VM::strerror(e));
+        log(LoggerI::ERROR, 0, string("pull: cleanup script:") + Pel_VM::strerror(e));
         _scanTuple.reset();
-        _vm.dumpStack(str("cleanup script"));
+        _vm.dumpStack(string("cleanup script"));
         return TuplePtr();
       }
       _scanTuple.reset();
@@ -169,4 +155,4 @@ TuplePtr PelScan::pull(int port, b_cbv cb)
   }
 }
 
-str PelScan::END_OF_SCAN = "PelScan:END_OF_SCAN";
+string PelScan::END_OF_SCAN = "PelScan:END_OF_SCAN";

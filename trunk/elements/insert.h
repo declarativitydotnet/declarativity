@@ -22,7 +22,7 @@
 
 class Insert : public Element {
  public:
-  Insert(str name,
+  Insert(string name,
          TablePtr table);
   
   const char *class_name() const		{ return "Insert";}

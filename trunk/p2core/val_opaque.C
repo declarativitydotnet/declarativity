@@ -15,7 +15,7 @@
 #include "val_opaque.h"
 #include "val_str.h"
 
-const opr::Oper* Val_Opaque::oper_ = New opr::OperCompare<Val_Opaque>();
+const opr::Oper* Val_Opaque::oper_ = new opr::OperCompare<Val_Opaque>();
 
 
 //
@@ -29,16 +29,15 @@ void Val_Opaque::xdr_marshal_subtype( XDR *x )
 //
 // Casting
 //
-ref<suio> Val_Opaque::cast(ValuePtr v)
+FdbufPtr Val_Opaque::cast(ValuePtr v)
 {
   switch (v->typeCode()) {
   case Value::OPAQUE:
     return (static_cast<Val_Opaque *>(v.get()))->b;
   case Value::STR:
     {
-      ref<suio> fb = New refcounted<suio>();
-      str s = Val_Str::cast(v);
-      fb->copy(s.cstr(),s.len());
+      FdbufPtr fb(new Fdbuf());
+      fb->push_back(Val_Str::cast(v));
       return fb;
     }
   default:

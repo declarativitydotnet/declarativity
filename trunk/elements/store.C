@@ -13,7 +13,7 @@
 #include "store.h"
 #include "val_null.h"
 
-Store::Store(str name,
+Store::Store(string name,
              unsigned fieldNo)
   : _name(name),
     _fieldNo(fieldNo),
@@ -22,7 +22,7 @@ Store::Store(str name,
 }
 
 
-Store::Insert::Insert(str name,
+Store::Insert::Insert(string name,
                       std::multimap< ValuePtr, TuplePtr, Store::tuplePtrCompare > * table,
                       unsigned fieldNo)
   : Element(name, 1, 1),
@@ -31,7 +31,7 @@ Store::Insert::Insert(str name,
 {
 }
 
-Store::Lookup::Lookup(str name,
+Store::Lookup::Lookup(string name,
                       std::multimap< ValuePtr, TuplePtr, Store::tuplePtrCompare > * table)
   : Element(name, 1, 1),
     _table(table),
@@ -40,7 +40,7 @@ Store::Lookup::Lookup(str name,
 {
 }
 
-Store::Scan::Scan(str name,
+Store::Scan::Scan(string name,
                   std::multimap< ValuePtr, TuplePtr, Store::tuplePtrCompare > * table)
   : Element(name, 0, 1),
     _table(table),
@@ -99,8 +99,8 @@ int Store::Lookup::push(int port, TuplePtr t, b_cbv cb)
       return 1;
     } else {
       // Groovy.  Signal puller that we're ready to give results
-      strbuf logLine("push: accepted lookup of key ");
-      logLine.cat(_key->toString());
+      string logLine("push: accepted lookup of key ");
+      logLine.append(_key->toString());
       log(LoggerI::INFO, 0, logLine);
       
       // Unblock the puller if one is waiting
@@ -176,8 +176,8 @@ TuplePtr Store::Lookup::pull(int port, b_cbv cb)
     // condition as above is repeated.  Hopefully the compiler can
     // optimize this
     if (_iterator == theEnd) {
-      strbuf logLine("pull: Finished search on ");
-      logLine.cat(_key->toString());
+      string logLine("pull: Finished search on ");
+      logLine.append(_key->toString());
       log(LoggerI::INFO, 0, logLine);
 
       // Make a thawed tuple to be tagged
@@ -204,7 +204,7 @@ TuplePtr Store::Lookup::pull(int port, b_cbv cb)
 }
 
 /** The END_OF_SEARCH tag */
-str Store::END_OF_SEARCH = "Store:END_OF_SEARCH";
+string Store::END_OF_SEARCH = "Store:END_OF_SEARCH";
 
 TuplePtr Store::Scan::pull(int port, b_cbv cb) 
 {

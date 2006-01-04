@@ -11,17 +11,9 @@
 
 #include <tupleSource.h>
 
-TupleSource::TupleSource(str name,
+TupleSource::TupleSource(string name,
                          TuplePtr tuple)
-  : FunctorSource(name, NULL),
-    _tupleGenerator(New TupleGenerator(tuple))
+  : FunctorSource(name, NULL), _tupleGenerator(new TupleGenerator(tuple))
 {
-  _generator = _tupleGenerator;
-}
-
-TupleSource::~TupleSource()
-{
-  if (_tupleGenerator != NULL) {
-    delete _tupleGenerator;
-  }
+  _generator = _tupleGenerator.get();
 }

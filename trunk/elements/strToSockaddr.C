@@ -9,14 +9,17 @@
  * 
  */
 
-#include <arpc.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include "strToSockaddr.h"
 #include "val_opaque.h"
 #include "string.h"
 #include "val_str.h"
 
-StrToSockaddr::StrToSockaddr(str name,
-                             unsigned fieldNo)
+StrToSockaddr::StrToSockaddr(string name, unsigned fieldNo)
   : Element(name, 1, 1),
     _fieldNo(fieldNo)
 {
@@ -42,35 +45,32 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
   // Is it a string?
   if (first->typeCode() != Value::STR) {
     // Can't translate something that isn't a string
-    log(LoggerI::WARN,
-        -1,
-        strbuf("Field to translate[") << first->toString()
-        << "] is not a string");
+    log(LoggerI::WARN, -1,
+        string("Field to translate[") + first->toString() + "] is not a string");
     return TuplePtr();
   }
 
   // Split into address and port
-  const char * theString = Val_Str::cast(first).cstr();
+  const char * theString = Val_Str::cast(first).c_str();
   char * theAtSign = strchr(theString, ':');
   if (theAtSign == NULL) {
     // Couldn't find the correct format
-    log(LoggerI::WARN, -1, strbuf("Field to translate ")  << first->toString() << " is malformed");
+    log(LoggerI::WARN, -1, string("Field to translate ")+first->toString()+" is malformed");
     return TuplePtr();
   }
-  str theAddress(theString, theAtSign - theString);
-  struct hostent *host = gethostbyname(theAddress);
+  string theAddress(theString, theAtSign - theString);
+  struct hostent *host = gethostbyname(theAddress.c_str());
   if (host != NULL) theAddress = inet_ntoa(*((struct in_addr*)host->h_addr));
-  str thePort(theAtSign + 1);
-  int port = atoi(thePort);
+  string thePort(theAtSign + 1);
+  int port = atoi(thePort.c_str());
 
   // Now construct the sockaddr
   struct sockaddr_in addr;
   bzero(&addr, sizeof(addr));
   addr.sin_port = htons(port);
-  inet_pton(AF_INET, theAddress.cstr(),
-            &addr.sin_addr);
-  ref< suio > addressUio = New refcounted< suio >();
-  addressUio->copy(&addr, sizeof(addr));
+  inet_pton(AF_INET, theAddress.c_str(), &addr.sin_addr);
+  FdbufPtr addressUio(new Fdbuf());
+  addressUio->push_back((char*)&addr, sizeof(addr));
   ValuePtr sockaddr = Val_Opaque::mk(addressUio);
   
 

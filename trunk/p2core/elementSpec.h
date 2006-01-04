@@ -81,7 +81,7 @@ class ElementSpec {
     UnificationResult unify(Element::Processing);
 
     /** Turn to string */
-    str toString() const;
+    string toString() const;
     
     /** My counterpart element */
     ElementPtr counterpart() const;
@@ -116,7 +116,7 @@ class ElementSpec {
   struct ElementSpecError {};
 
   /** Turn spec to string */
-  str toString() const;
+  string toString() const;
 
   /** Turn processing code to processing string */
   REMOVABLE_INLINE static char * processingCodeString(Element::Processing p) {

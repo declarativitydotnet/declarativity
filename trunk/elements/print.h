@@ -19,7 +19,7 @@
 class Print : public Element { 
 public:
 
-  Print(str prefix);
+  Print(string prefix);
 
   ~Print();
   
@@ -32,7 +32,7 @@ public:
 
 private:
   /** The prefix to be placed on every printout by this element */
-  str _prefix;
+  string _prefix;
 };
 
 

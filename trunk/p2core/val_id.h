@@ -29,7 +29,7 @@ public:
   // The type name
   const char *typeName() const { return "ID"; };
 
-  virtual str toString() const { return strbuf() << i->toString(); };
+  virtual string toString() const { return i->toString(); };
   virtual unsigned int size() const { return sizeof(ID); }
 
   // Marshalling and unmarshallng

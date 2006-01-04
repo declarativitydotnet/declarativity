@@ -40,17 +40,18 @@
 #ifndef __ELEMENT_H__
 #define __ELEMENT_H__
 
-#include <boost/shared_ptr.hpp>
 #include "inlines.h"
 #include "tuple.h"
 #include "loggerI.h"
 #include "loop.h"
+  
+#define ELEM_LOG(_sev,_errnum,_rest) do { ostringstream _sb; _sb << _rest; log(_sev,_errnum,_sb.str()); } while (false)
+#define ELEM_INFO(_rest) ELEM_LOG(LoggerI::INFO, 0, _rest)
+
 
 class Router;
 typedef boost::shared_ptr< Router > RouterPtr;
 
-class Element;
-typedef boost::shared_ptr< Element > ElementPtr;
 
 class Element { 
 public:
@@ -87,8 +88,8 @@ public:
 
   class Port;
   
-  Element(str instanceName);
-  Element(str instanceName, int ninputs, int noutputs);
+  Element(string instanceName);
+  Element(string instanceName, int ninputs, int noutputs);
   virtual ~Element();
   static int nelements_allocated;
   static int elementCounter;
@@ -121,7 +122,7 @@ public:
   // CHARACTERISTICS
   virtual const char *class_name() const = 0;
   int ID() const				{ return _ID; }
-  str name() const				{ return _name; }
+  string name() const				{ return _name; }
 
   /** Return the router that contains me */
   RouterPtr router() const			{ return _router; }
@@ -137,8 +138,8 @@ public:
   bool ports_frozen() const;
 
   // CONFIGURATION
-  int connect_input(int i, Element* f, int port);
-  int connect_output(int o, Element* f, int port);
+  int connect_input(int i, Element *f, int port);
+  int connect_output(int o, Element *f, int port);
   virtual int initialize();
   
   // PROCESSING, FLOW, AND FLAGS
@@ -149,23 +150,22 @@ public:
   // LOGGING facilities
 
   /** Log something to the default element logger */
-  REMOVABLE_INLINE void log(str instanceName,
+  REMOVABLE_INLINE void log(string instanceName,
                             LoggerI::Level severity,
                             int errnum,
-                            str explanation);
+                            string explanation);
 
   /** Call the log method without an instance name.  Use the element ID
       instead. */
   REMOVABLE_INLINE void log(LoggerI::Level severity,
                             int errnum,
-                            str explanation);
+                            string explanation);
   
   /** Call the default logger, if the router's logger is unavailable */
-  REMOVABLE_INLINE void logDefault(str instanceName,
+  REMOVABLE_INLINE void logDefault(string instanceName,
                                    LoggerI::Level severity,
                                    int errnum,
-                                   str explanation);
-  
+                                   string explanation);
 
   // METHODS USED BY `ROUTER'
   
@@ -179,15 +179,15 @@ public:
 
     Port();
 
-    Port(Element* owner,
-         Element* correspondent,
+    Port(Element * owner,
+         Element * correspondent,
          int correspondentPortNumber);
     
     operator bool() const		{ return _e != 0; }
     bool initialized() const		{ return _port >= -1; }
     
 
-    Element* element() const		{ return _e; }
+    Element *element() const		{ return _e; }
     
     /* The port number error values */
     enum PortErrors { NOT_CONNECTABLE = -1,
@@ -229,7 +229,7 @@ public:
   private:
     
     /** With whom am I connecting my owner element? */
-    Element* _e;
+    Element *_e;
 
     /** The port number at which I am connected at the destination
         element.  If I am not a connectable port (i.e., a pull output
@@ -244,7 +244,7 @@ public:
     mutable unsigned _tuples;		// How many tuples have we moved?
 #endif
     //#if P2_STATS >= 2
-    Element* _owner;			// Whose input or output are we?
+    Element *_owner;			// Whose input or output are we?
     //#endif
   };
 
@@ -283,12 +283,12 @@ public:
   static uint64_t seq;
 
   /** My instance name */
-  str _name;
+  string _name;
 
 protected:
 
   /** My ID in text */
-  str _IDstr;
+  string _IDstr;
 
 };
 
@@ -302,5 +302,8 @@ protected:
 #  define PORT_CTOR_INIT(o) , _owner(o)
 # endif
 #endif
+
+/** A handy dandy pointer to elements */
+typedef boost::shared_ptr< Element > ElementPtr;
 
 #endif /* __ELEMENT_H_ */
