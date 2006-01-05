@@ -45,7 +45,7 @@ public:
   Val_Time(struct timespec theTime) : t(theTime) {};
 
   // Factory
-  static ValuePtr mk(struct timespec theTime) { ValuePtr(new Val_Time(theTime)); };
+  static ValuePtr mk(struct timespec theTime) { return ValuePtr(new Val_Time(theTime)); };
 
   // Strict comparison
   int compareTo(ValuePtr) const;

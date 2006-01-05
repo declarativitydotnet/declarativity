@@ -26,6 +26,8 @@
 
 extern int ol_parser_debug;
 
+//class boost::c_regex_traits<char>;
+
 int main(int argc, char **argv)
 {
   std::cout << "OVERLOG\n";

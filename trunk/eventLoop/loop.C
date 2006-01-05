@@ -31,3 +31,9 @@ tcpConnect(in_addr addr, u_int16_t port, b_cbi cb)
 {
   return NULL;
 }
+
+int
+clock_gettime(int facilityDescriptor, struct timespec * time)
+{
+  return 0;
+}

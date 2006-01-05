@@ -56,7 +56,7 @@ private:
   ValuePtr pop();
   uint64_t pop_unsigned();
   int64_t pop_signed();
-  string pop_string();
+  std::string pop_string();
   double pop_double();
   struct timespec pop_time();
   IDPtr pop_ID();

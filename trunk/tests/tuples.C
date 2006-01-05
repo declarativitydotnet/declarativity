@@ -32,13 +32,13 @@
 
 using namespace opr;
 
-static double time_fn(b_cbv cb) 
+double time_fn(b_cbv cb) 
 {
   timespec before_ts;
   timespec after_ts;
   double elapsed;
   
-  if (clock_gettime(CLOCK_REALTIME,&before_ts)) {
+  if (clock_gettime(CLOCK_REALTIME, &before_ts)) {
     fatal << "clock_gettime:" << strerror(errno) << "\n";
   }
   (cb)();
@@ -89,7 +89,7 @@ static TuplePtr create_tuple_1() {
 
 static TuplePtr ta[TUPLE_TST_SZ];
 
-static void create_lots_of_tuples() {
+void create_lots_of_tuples() {
   for( int i=0; i<TUPLE_TST_SZ; i++) {
     ta[i] = create_tuple_1();
   }
@@ -97,7 +97,7 @@ static void create_lots_of_tuples() {
 
 // static xdrsuio encode_uios[MARSHAL_NUM_UIOS];
 
-static void marshal_lots_of_tuples() 
+void marshal_lots_of_tuples() 
 {
 /** FIX ME SUIO
   assert( MARSHAL_CHUNK_SZ < TUPLE_TST_SZ);
@@ -108,7 +108,7 @@ static void marshal_lots_of_tuples()
   }
 */
 }
-static void unmarshal_lots_of_tuples() 
+void unmarshal_lots_of_tuples() 
 {
 /** FIX ME SUIO
   assert( MARSHAL_CHUNK_SZ < TUPLE_TST_SZ);

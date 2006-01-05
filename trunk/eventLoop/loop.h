@@ -57,9 +57,6 @@ using std::ostringstream;
 #define amain()
 #define hash_string(p) 0
 
-#undef clock_gettime
-#define clock_gettime(f, t) false
-
 // Common callback types
 typedef boost::function<void (void)>        b_cbv;
 typedef boost::function<void (int)>         b_cbi;
@@ -112,6 +109,12 @@ fileDescriptorCB(int, b_selop, b_cbv);
 
 tcpHandle*
 tcpConnect(in_addr addr, u_int16_t port, b_cbi cb);
+
+
+/** Fill in the current time, according to the existing timing facility
+    */
+int
+clock_gettime (int facilityDescriptor, struct timespec * time);
 
 
 #endif /* __LOOP_H_ */

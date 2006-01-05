@@ -68,7 +68,7 @@ public:
   enum { 
     BUF_DFLT_CAP = 1500,	// Default capacity of the buffer.
     BUF_DFLT_READ = 1500,	// Default quantity to read.
-    BUF_UNLIMITED = -1,		// Unlimited capacity.
+    BUF_UNLIMITED = 0,		// Unlimited capacity.
     BUF_INCREMENT = 0x80,	// Granularity of buffer growing.
     BUF_SIZE_MAX = (2 << (sizeof(size_t) - 1) - 1)
   };
