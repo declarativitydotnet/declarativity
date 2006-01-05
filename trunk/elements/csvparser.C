@@ -109,7 +109,6 @@ int CSVParser::push(int port, TuplePtr t, b_cbv cb)
 //
 int CSVParser::try_to_parse_line()
 {
-/*
   TRC_FN;
   // Do we have a complete line in the buffer?
   boost::smatch m;
@@ -155,6 +154,5 @@ int CSVParser::try_to_parse_line()
     TRC("Don't yet have a whole line <" << _acc << ">");
     return 0;
   }
-*/
   return 0;
 }

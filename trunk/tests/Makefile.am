@@ -53,7 +53,7 @@ values_LDADD = $(top_builddir)/p2core/.libs/libp2core.a
 
 tuples_SOURCES	= tuples.C
 tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
-		$(top_builddir)/elements/.libs/libeventLoop.a
+		$(top_builddir)/eventLoop/.libs/libeventLoop.a
 
 benchmark_SOURCES	= benchmark.C
 benchmark_LDADD = $(top_builddir)/p2core/.libs/libp2core.a
@@ -63,17 +63,17 @@ fdbufs_LDADD = $(top_builddir)/p2core/.libs/libp2core.a
 
 tables_SOURCES	= tables.C
 tables_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
-		$(top_builddir)/elements/.libs/libeventLoop.a
+		$(top_builddir)/eventLoop/.libs/libeventLoop.a
 
 pel_SOURCES	= pel.C
 pel_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
-		$(top_builddir)/elements/.libs/libeventLoop.a
+		$(top_builddir)/eventLoop/.libs/libeventLoop.a
 
 
 logger_SOURCES  = logger.C
 logger_LDADD = $(top_builddir)/elements/.libs/libp2elements.a \
 		$(top_builddir)/p2core/.libs/libp2core.a \
-		$(top_builddir)/elements/.libs/libeventLoop.a
+		$(top_builddir)/eventLoop/.libs/libeventLoop.a
 
 
 basicElementPlumbing_SOURCES = basicElementPlumbing.C
@@ -263,6 +263,8 @@ EXTRA_DIST = .cvsignore
 INCLUDES = -I$(top_builddir)/p2core -I$(top_builddir)/elements \
 		-I$(top_builddir)/net -I$(top_builddir)/overlog \
 		-I$(top_builddir)/planner -I$(top_builddir)/eventLoop
+
+LIBS = -lboost_regex
 
 MAINTAINERCLEANFILES = aclocal.m4 install-sh mkinstalldirs \
 	missing configure config.guess config.sub config.h.in \

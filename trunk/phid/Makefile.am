@@ -25,6 +25,8 @@ phid_LDADD = \
 	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
 	$(top_builddir)/net/.libs/libp2net.a
 
+LIBS = -lboost_regex
+
 CLEANFILES = core *.core *~
 EXTRA_DIST = .cvsignore
 

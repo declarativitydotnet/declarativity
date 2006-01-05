@@ -17,7 +17,7 @@
 #include "element.h"
 #include "fdbuf.h"
 
-// #include <boost/regex.hpp> FIX ME (LINK ERRORS)
+#include <boost/regex.hpp>
 
 class PlSensor : public Element { 
   
@@ -61,7 +61,7 @@ typedef struct tcpHandle* conn_t;
   string	path;
   int		sd; 
   conn_t        tc;
-  // boost::regex	req_re;
+  boost::regex	req_re;
   Fdbuf		hdrs;
   in_addr	localaddr;
   timeCBHandle  *wait_delaycb;

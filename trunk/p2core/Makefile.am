@@ -42,6 +42,7 @@ libp2core_la_SOURCES = \
 	dot.C
 
 INCLUDES = -I../eventLoop
+LIBS = -lboost_regex
 
 CLEANFILES = core *.core *~ *.gen.h *.gen.txt pel_lexer.C
 

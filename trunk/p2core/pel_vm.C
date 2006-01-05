@@ -21,7 +21,7 @@
 
 #include <stdlib.h>
 #include <math.h>
-// #include <boost/regex.hpp> FIX ME (LINK ERRORS) 
+#include <boost/regex.hpp>
 
 
 #include "val_int32.h"
@@ -911,15 +911,13 @@ DEF_OP(STR_MATCH) {
   // XXX This is slow!!! For better results, memoize each regexp in a
   // hash map and study each one. 
 
-  /** FIX ME
   boost::regex re(pop_string());
   boost::smatch what;
-  if (regex_match(pop_string(),what,re)) {
+  if (boost::regex_match(pop_string(),what,re)) {
     stackPush(Val_Int32::mk(true));
   } else {
     stackPush(Val_Int32::mk(false));
   }
-  */
 }
 DEF_OP(STR_CONV) {
   ValuePtr t = stackTop(); stackPop();

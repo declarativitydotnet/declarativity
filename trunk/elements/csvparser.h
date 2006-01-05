@@ -20,7 +20,7 @@
 
 #include "element.h"
 #include <queue>
-// #include <boost/regex.hpp> FIX ME (LINK ERRORS)
+#include <boost/regex.hpp>
 
 class CSVParser : public Element { 
 public:
@@ -48,10 +48,10 @@ private:
   b_cbv	_pull_cb;
   
   // Regular expressions for matching the input
-  // boost::regex	_re_line;
-  // boost::regex	_re_comm;
-  // boost::regex	_re_qstr;
-  // boost::regex	_re_tokn;
+  boost::regex	_re_line;
+  boost::regex	_re_comm;
+  boost::regex	_re_qstr;
+  boost::regex	_re_tokn;
 
   // The current string accumulator
   string	_acc;

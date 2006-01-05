@@ -177,7 +177,6 @@ void PlSensor::rx_hdr_cb()
       break;
     }
     // Now try and match the regular expression
-/** FIX ME
     boost::smatch m;
     if ( regex_search( hdrs.str(),m,req_re )) {
       // Create a tuple with the single string, the matching body.
@@ -193,7 +192,6 @@ void PlSensor::rx_hdr_cb()
     } else {
       TRC("No match so far.");
     }
-*/
   }
 }
 
