@@ -56,7 +56,8 @@ tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
 		$(top_builddir)/eventLoop/.libs/libeventLoop.a
 
 benchmark_SOURCES	= benchmark.C
-benchmark_LDADD = $(top_builddir)/p2core/.libs/libp2core.a
+benchmark_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
+		  $(top_builddir)/eventLoop/.libs/libeventLoop.a
 
 fdbufs_SOURCES	= fdbufs.C
 fdbufs_LDADD = $(top_builddir)/p2core/.libs/libp2core.a

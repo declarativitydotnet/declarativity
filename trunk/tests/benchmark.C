@@ -18,7 +18,11 @@
 #include <iostream>
 #include <cmath>
 
+#include "fdbuf.h"
+#include "xdrbuf.h"
 #include "tuple.h"
+#include "loop.h"
+#include "oper.h"
 
 #include "val_null.h"
 #include "val_str.h"
@@ -29,8 +33,7 @@
 #include "val_double.h"
 #include "testerr.h"
 
-
-#ifdef FOOBAR // FIX ME XDR AND SUIO
+using namespace opr;
 
 const int FIELD_TST_SZ=500;
 const int TUPLE_TST_SZ=500;
@@ -39,11 +42,10 @@ const int MARSHAL_NUM_UIOS=5000;
 
 static ValuePtr va[FIELD_TST_SZ];
 
-static xdrsuio single_uios;
-static xdrsuio xe[MARSHAL_NUM_UIOS];
+static Fdbuf xe[MARSHAL_NUM_UIOS];
 static ValuePtr vf;
 
-static double time_fn(cbv cb) 
+static double time_fn(b_cbv cb) 
 {
   timespec before_ts;
   timespec after_ts;
@@ -55,17 +57,13 @@ static double time_fn(cbv cb)
   int iter;
 
   for (iter = 1; deviation > .05; iter = iter * 2) {
-    if (getTime(CLOCK_REALTIME,&before_ts)) {
-      fatal << "getTime:" << strerror(errno) << "\n";
-    }
+    getTime(before_ts, LOOP_TIME_WALLCLOCK);
 
     for (int i = 0; i < iter; i++) {
       (cb) ();
     } 
 
-    if (getTime (CLOCK_REALTIME,&after_ts)) {
-      fatal << "getTime:" << strerror(errno) << "\n";
-    } 
+    getTime(after_ts, LOOP_TIME_WALLCLOCK);
 
     after_ts = after_ts - before_ts; 
     elapsed = after_ts.tv_sec + (1.0 / 1000 / 1000 / 1000 * after_ts.tv_nsec);
@@ -159,34 +157,31 @@ static void create_lots_val_str() {
 
 static void marshal_lots_of_values() {
   for (int c = 0; c < MARSHAL_NUM_UIOS; c++) { 
+    XDR xdrs;
     // clear uio first, then write.
     // this prevent memory from growing indefinitely
-    xe[c].uio()->clear();
+    xe[c].clear();
+    xdrfdbuf_create(&xdrs, &xe[c], false, XDR_ENCODE);
     for (int i = 0; i < MARSHAL_CHUNK_SZ; i++) {
-      va[i]->xdr_marshal(&xe[c]); 
+      va[i]->xdr_marshal(&xdrs); 
     }
   }
 }
 
-static xdrsuio encode_uios[MARSHAL_NUM_UIOS];
-
 static void unmarshal_lots_of(Value::TypeCode t) {
   for (int c = 0; c < MARSHAL_NUM_UIOS; c++) {
-    suio *u = xe[5].uio();
-    const char *buf = suio_flatten(u);
-    size_t sz = u->resid();
-    xdrmem xd(buf, sz);
+    XDR xdrs;
+    xdrfdbuf_create(&xdrs, &xe[c], false, XDR_DECODE);
     for (int i = 0; i < MARSHAL_CHUNK_SZ; i++) {
       switch (t) {
-        case Value::NULLV:   va[i] = Val_Null::xdr_unmarshal(&xd);   break;
-        case Value::UINT64:  va[i] = Val_UInt64::xdr_unmarshal(&xd); break;
-        case Value::INT32:   va[i] = Val_Int32::xdr_unmarshal(&xd);  break;
-        case Value::DOUBLE:  va[i] = Val_Double::xdr_unmarshal(&xd); break;
-        case Value::STR:     va[i] = Val_Str::xdr_unmarshal(&xd);    break;
+        case Value::NULLV:   va[i] = Val_Null::xdr_unmarshal(&xdrs);   break;
+        case Value::UINT64:  va[i] = Val_UInt64::xdr_unmarshal(&xdrs); break;
+        case Value::INT32:   va[i] = Val_Int32::xdr_unmarshal(&xdrs);  break;
+        case Value::DOUBLE:  va[i] = Val_Double::xdr_unmarshal(&xdrs); break;
+        case Value::STR:     va[i] = Val_Str::xdr_unmarshal(&xdrs);    break;
         default: FAIL << "TypeCode: " << t << " not handle\n";       break;
       }
     }   
-    delete [] buf;
   }
 }
 
@@ -213,6 +208,7 @@ static void unmarshal_lots_of_str() {
 // for tuples
 
 static TuplePtr ta[TUPLE_TST_SZ];
+
 static TuplePtr create_tuple_1() {
   TuplePtr t = Tuple::mk();
   t->append(create_val_null_1());
@@ -230,13 +226,17 @@ static void create_lots_of_tuples() {
   }
 }
 
+static Fdbuf encode_uios[MARSHAL_NUM_UIOS];
+
 static void marshal_lots_of_tuples() 
 {
   assert( MARSHAL_CHUNK_SZ < TUPLE_TST_SZ);
   for( int c=0; c< MARSHAL_NUM_UIOS; c++) {
-    encode_uios[c].uio()->clear();
+    XDR xdrs;
+    encode_uios[c].clear();
+    xdrfdbuf_create(&xdrs, &encode_uios[c], false, XDR_ENCODE);
     for( int i=0; i< MARSHAL_CHUNK_SZ; i++) {
-      ta[i]->xdr_marshal(&encode_uios[c]);
+      ta[i]->xdr_marshal(&xdrs);
     }
   }
 }
@@ -245,14 +245,11 @@ static void unmarshal_lots_of_tuples()
 {
   assert( MARSHAL_CHUNK_SZ < TUPLE_TST_SZ);
   for( int c=0; c< MARSHAL_NUM_UIOS; c++) {
-    suio *u = encode_uios[c].uio();
-    char *buf = suio_flatten(u);
-    size_t sz = u->resid();
-    xdrmem xd(buf,sz);
+    XDR xdrs;
+    xdrfdbuf_create(&xdrs, &encode_uios[c], false, XDR_DECODE);
     for( int i=0; i< MARSHAL_CHUNK_SZ; i++) {
-      ta[i]=Tuple::xdr_unmarshal(&xd);
+      ta[i]=Tuple::xdr_unmarshal(&xdrs);
     }
-    free(buf);
   }
 }
 
@@ -261,80 +258,80 @@ static void unit_test_for(Value::TypeCode t ) {
   switch (t) {
     case Value::NULLV:
       std::cout << "NULLV:\ncreating:";
-      time_fn(wrap(create_lots_val_null));
+      time_fn(boost::bind(create_lots_val_null));
       std::cout << "marshalling:";
-      time_fn(wrap(marshal_lots_of_values));
+      time_fn(boost::bind(marshal_lots_of_values));
       std::cout << "unmarshalling:";
-      time_fn(wrap(unmarshal_lots_of_null));  
+      time_fn(boost::bind(unmarshal_lots_of_null));  
       std::cout << "\n";
       break;
     case Value::INT32: 
       std::cout << "INT32: creating:"; 
-      time_fn(wrap(create_lots_val_int32));
+      time_fn(boost::bind(create_lots_val_int32));
       std::cout << "marshalling:";
-      time_fn(wrap(marshal_lots_of_values));
+      time_fn(boost::bind(marshal_lots_of_values));
       std::cout << "unmarshalling:";
-      time_fn(wrap(unmarshal_lots_of_int32));  
+      time_fn(boost::bind(unmarshal_lots_of_int32));  
       std::cout << "\n";
       break;
     case Value::UINT64:
       std::cout << "UINT64:\ncreating:";
-      time_fn(wrap(create_lots_val_uint64));
+      time_fn(boost::bind(create_lots_val_uint64));
       std::cout << "marshalling:";
-      time_fn(wrap(marshal_lots_of_values));
+      time_fn(boost::bind(marshal_lots_of_values));
       std::cout << "unmarshalling:";
-      time_fn(wrap(unmarshal_lots_of_uint64));  
+      time_fn(boost::bind(unmarshal_lots_of_uint64));  
       std::cout << "\n";
       break;
     case Value::DOUBLE:
       std::cout << "DOUBLE:\ncreating:";
-      time_fn(wrap(create_lots_val_double));
+      time_fn(boost::bind(create_lots_val_double));
       std::cout << "marshalling:";
-      time_fn(wrap(marshal_lots_of_values));
+      time_fn(boost::bind(marshal_lots_of_values));
       std::cout << "unmarshalling:";
-      time_fn(wrap(unmarshal_lots_of_double));  
+      time_fn(boost::bind(unmarshal_lots_of_double));  
       std::cout << "\n";
       break;
     case Value::STR:
       std::cout << "STR:\ncreating:";
-      time_fn(wrap(create_lots_val_str));
+      time_fn(boost::bind(create_lots_val_str));
       std::cout << "marshalling:";
-      time_fn(wrap(marshal_lots_of_values));
+      time_fn(boost::bind(marshal_lots_of_values));
       std::cout << "unmarshalling:";
-      time_fn(wrap(unmarshal_lots_of_str));  
+      time_fn(boost::bind(unmarshal_lots_of_str));  
       std::cout << "\n";
       break;
     case Value::TUPLE:
       std::cout << "TUPLE:\ncreating:";
-      time_fn(wrap(create_lots_of_tuples));
+      time_fn(boost::bind(create_lots_of_tuples));
       std::cout << "marshalling:";
-      time_fn(wrap(marshal_lots_of_tuples));
+      time_fn(boost::bind(marshal_lots_of_tuples));
       std::cout << "unmarshalling:";
-      time_fn(wrap(unmarshal_lots_of_tuples));
+      time_fn(boost::bind(unmarshal_lots_of_tuples));
       break;
     default:
         FAIL << "TypeCode: " << t << " not handle\n";
       break;
   }
 }
-#endif
 
 int main(int argc, char **argv)
 {
-/**
   TuplePtr t = create_tuple_1();
-  xdrsuio singlet;
-  t->xdr_marshal(&singlet);
+  XDR xdrs;
+  Fdbuf singlet;
+  xdrfdbuf_create(&xdrs, &singlet, false, XDR_ENCODE);
+  t->xdr_marshal(&xdrs);
 
-  std::cout << " resid=" << singlet.uio()->resid();
-  std::cout << " byteno=" << singlet.uio()->byteno();
-  std::cout << " iovno=" << singlet.uio()->iovno() << "\n";
-  const char *buf = suio_flatten(singlet.uio());
-  size_t sz = singlet.uio()->resid();
-  string s = hexdump(buf,sz);
-  std::cout << " Hexdump: " << s << "\n";
+  std::cout << " length=" << singlet.length();
+  std::cout << " removed=" << singlet.removed();
+  const char *buf = singlet.cstr();
+  size_t sz = singlet.length();
+  // string s = hexdump(buf,sz);
+  // std::cout << " Hexdump: " << s << "\n";
 
   unit_test_for(Value::NULLV);
+/*
   unit_test_for(Value::INT32);
   unit_test_for(Value::UINT64);
   unit_test_for(Value::DOUBLE);
