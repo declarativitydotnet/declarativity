@@ -325,8 +325,8 @@ int main(int argc, char **argv)
 
   std::cout << " length=" << singlet.length();
   std::cout << " removed=" << singlet.removed();
-  const char *buf = singlet.cstr();
-  size_t sz = singlet.length();
+  // const char *buf = singlet.cstr();
+  // size_t sz = singlet.length();
   // string s = hexdump(buf,sz);
   // std::cout << " Hexdump: " << s << "\n";
 
