@@ -39,12 +39,12 @@ static double time_fn(cbv cb)
   timespec after_ts;
   double elapsed;
   
-  if (clock_gettime(CLOCK_REALTIME,&before_ts)) {
-    fatal << "clock_gettime:" << strerror(errno) << "\n";
+  if (getTime(CLOCK_REALTIME,&before_ts)) {
+    fatal << "getTime:" << strerror(errno) << "\n";
   }
   (cb)();
-  if (clock_gettime(CLOCK_REALTIME,&after_ts)) {
-    fatal << "clock_gettime:" << strerror(errno) << "\n";
+  if (getTime(CLOCK_REALTIME,&after_ts)) {
+    fatal << "getTime:" << strerror(errno) << "\n";
   }
   
   after_ts = after_ts - before_ts;

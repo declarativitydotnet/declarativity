@@ -32,7 +32,7 @@ public:
   ~OTuple() { tp_.reset(); }
 
   void operator()(std::pair<const SeqNum, OTuple*>& entry); 
-  void resetTime() { clock_gettime (CLOCK_REALTIME, &tt_); }
+  void resetTime() { getTime (tt_); }
 
   timespec  tt_;		// Transmit time
   timeCBHandle *tcb_;		// Used to cancel retransmit timer
@@ -62,7 +62,7 @@ void OTuple::operator()(std::pair<const SeqNum, OTuple*>& entry)
 int32_t delay(timespec *ts)
 {
   timespec  now;
-  clock_gettime(CLOCK_REALTIME, &now);
+  getTime(now);
 
   if (now.tv_nsec < ts->tv_nsec) { 
     now.tv_nsec += 1000000000;

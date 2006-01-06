@@ -27,7 +27,7 @@ public:
   CCTuple(SeqNum seq) : seq_(seq), tcb_(NULL), wnd_(true) { resetTime(); }
 
   void operator()(std::pair<const SeqNum, CCTuple*>& entry); 
-  void resetTime() { clock_gettime (CLOCK_REALTIME, &tt_); }
+  void resetTime() { getTime (tt_); }
   int32_t delay();
 
   timespec  tt_;	// Transmit time
@@ -44,7 +44,7 @@ void CCTuple::operator()(std::pair<const SeqNum, CCTuple*>& entry)
 int32_t CCTuple::delay()
 {
   timespec  now;
-  clock_gettime(CLOCK_REALTIME, &now);
+  getTime(now);
 
   if (now.tv_nsec < tt_.tv_nsec) { 
     now.tv_nsec += 1000000000;

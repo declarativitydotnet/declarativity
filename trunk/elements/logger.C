@@ -41,9 +41,7 @@ void Logger::log( string classname,
   if (severity >= router()->loggingLevel) {
     timespec now_ts;
     
-    if (clock_gettime(CLOCK_REALTIME,&now_ts)) {
-      fatal << "clock_gettime:" << strerror(errno) << "\n";
-    }
+    getTime(now_ts);
     TuplePtr t = Tuple::mk();
     t->append(Val_UInt64::mk(now_ts.tv_sec));
     t->append(Val_UInt64::mk(now_ts.tv_nsec));

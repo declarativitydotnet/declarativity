@@ -50,6 +50,7 @@
 #include "val_uint64.h"
 #include "val_str.h"
 #include "val_int32.h"
+#include "val_time.h"
 
 
 // Some basic element types
@@ -402,16 +403,11 @@ REMOVABLE_INLINE void Element::logDefault(string instanceName,
                                           int errnum,
                                           string explanation)
 {
-  timespec now_ts;
-  double   now;
-  
-  if (clock_gettime(CLOCK_REALTIME,&now_ts)) {
-    fatal << "clock_gettime:" << strerror(errno) << "\n";
-  }
-  now = now_ts.tv_sec + (1.0 / 1000 / 1000 / 1000 * now_ts.tv_nsec);
+  struct timespec now;
+  getTime(now);
   
   TuplePtr t = Tuple::mk();
-  t->append(Val_Double::mk(now));
+  t->append(Val_Time::mk(now));
   t->append(Val_UInt64::mk(seq++));
   t->append(Val_Str::mk(class_name()));
   t->append(Val_Str::mk(instanceName));

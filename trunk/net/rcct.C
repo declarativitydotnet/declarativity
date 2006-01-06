@@ -89,7 +89,7 @@ RateCCT::RateCCT(string name, bool tstat)
     nofeedback_(NULL),
     tstat_(tstat)
 {
-  clock_gettime(CLOCK_REALTIME, &tld_);
+  getTime(tld_);
 }
 
 /**
@@ -177,7 +177,7 @@ void RateCCT::feedback_timeout()
 REMOVABLE_INLINE uint32_t RateCCT::delay(timespec *ts)
 {
   timespec  now;
-  clock_gettime(CLOCK_REALTIME, &now);
+  getTime(now);
   if (now.tv_nsec < ts->tv_nsec) { 
     if (now.tv_nsec + 1000000000 < 0) {
       now.tv_nsec -= 1000000000;
@@ -198,7 +198,7 @@ REMOVABLE_INLINE TuplePtr RateCCT::package(TuplePtr tp)
   string   cid = "";
   SeqNum   seq = 0;
   timespec now;
-  clock_gettime(CLOCK_REALTIME, &now);
+  getTime(now);
   for (uint i = 0; i < tp->size(); i++) {
     try {
       TuplePtr t = Val_Tuple::cast((*tp)[i]); 
@@ -251,7 +251,7 @@ REMOVABLE_INLINE void RateCCT::feedback(uint32_t rt, uint32_t X_recv, double p)
   }
   else if (delay(&tld_) > rtt_) {
     trate_ = MAX(MIN(2*trate_, 2*X_recv), 2U);
-    clock_gettime(CLOCK_REALTIME, &tld_);
+    getTime(tld_);
   }
 
   rrate_ = X_recv;		// Save the receiver rate

@@ -48,9 +48,7 @@ TuplePtr PrintWatch::simple_action(TuplePtr p)
 
   timespec now_ts;
   
-  if (clock_gettime(CLOCK_REALTIME,&now_ts)) {
-    fatal << "clock_gettime:" << strerror(errno) << "\n";
-  }
+  getTime(now_ts);
   ostringstream b;
   b << "Print[" << _prefix
     << ", "

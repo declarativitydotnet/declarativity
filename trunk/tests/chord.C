@@ -1739,7 +1739,7 @@ void createNode(string myAddress,
   timespec fingerExpiration;
   fingerExpiration.tv_sec = FINGEREXPIRATION;
   fingerExpiration.tv_nsec = 0;
-  TablePtr fingerTable(new Table(string("fingerTable"), FINGERSIZE, &fingerExpiration));
+  TablePtr fingerTable(new Table(string("fingerTable"), FINGERSIZE, fingerExpiration));
 #else
   TablePtr fingerTable(new Table(string("fingerTable"), FINGERSIZE));
 #endif
@@ -1777,7 +1777,7 @@ void createNode(string myAddress,
   successorExpiration.tv_sec = SUCCEXPIRATION;
   successorExpiration.tv_nsec = 0;
   TablePtr successorTable(new Table(string("successorTable"), 100,
-                            &successorExpiration)); // let the
+                                    successorExpiration)); // let the
                                                    // replacement policy
                                                    // deal with
                                                    // evictions

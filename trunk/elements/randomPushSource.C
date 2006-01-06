@@ -53,7 +53,7 @@ void RandomPushSource::runTimer()
   //log(LoggerI::INFO, 0, "runTimer: Creating new tuple");
   // Fill it up with the current timeval
   struct timespec t;
-  clock_gettime(CLOCK_REALTIME, &t);
+  getTime(t);
   
   tuple->append(Val_Str::mk("Random"));
   tuple->append(Val_Double::mk(random() % _max));

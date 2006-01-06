@@ -122,7 +122,7 @@ public:
       if (i < LOSS_SIZE/2) i_weights_[i] = 1.;
       else i_weights_[i] = 1. - (double(i) - (LOSS_SIZE/2. - 1.)) /
                                (LOSS_SIZE/2. + 1.); 
-    clock_gettime(CLOCK_REALTIME, &active_ts_);
+    getTime(active_ts_);
   }
 
   // Computes loss event rate from intervals
@@ -149,7 +149,7 @@ private:
 
 REMOVABLE_INLINE void RateCCR::Connection::handle_tuple(SeqNum seq, uint rtt, timespec ts)
 {
-  clock_gettime(CLOCK_REALTIME, &active_ts_);
+  getTime(active_ts_);
 
   TupleInfo *tip = new TupleInfo(seq, rtt, ts);
   rate_ = 1;

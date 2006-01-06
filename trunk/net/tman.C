@@ -61,7 +61,7 @@ void TrafficManager::runTimer()
   _timeCallback = NULL;
 
   timespec now;
-  clock_gettime(CLOCK_REALTIME, &now);
+  getTime(now);
 
   // Create a tuple
   TuplePtr tuple = Tuple::mk();
@@ -156,7 +156,7 @@ REMOVABLE_INLINE TuplePtr TrafficManager::mkResponse(TuplePtr tp) {
 REMOVABLE_INLINE uint32_t TrafficManager::delay(timespec *ts)
 {
   timespec  now;
-  clock_gettime(CLOCK_REALTIME, &now);
+  getTime(now);
   if (now.tv_nsec < ts->tv_nsec) { 
     if (now.tv_nsec + 1000000000 < 0) {
       now.tv_nsec -= 1000000000;

@@ -23,7 +23,7 @@ TuplePtr TimestampSource::pull(int port, b_cbv cb)
   // Always produce a result, never block
 
   struct timespec t;
-  clock_gettime(CLOCK_REALTIME, &t);
+  getTime(t);
   
   TuplePtr tuple = Tuple::mk();
   tuple->append(Val_Str::mk("Time"));

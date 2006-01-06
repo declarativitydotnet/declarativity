@@ -25,18 +25,24 @@ using namespace opr;
 //
 // Constructor
 //
-Table::Table(string table_name, size_t max_size, timespec *lifetime)
+Table::Table(string table_name, size_t max_size,
+             struct timespec& lifetime)
+  : name(table_name),
+    max_tbl_size(max_size),
+    max_lifetime(lifetime),
+    _uniqueAggregates(),
+    _multAggregates()
+{
+}
+
+Table::Table(string table_name, size_t max_size)
   : name(table_name),
     max_tbl_size(max_size),
     _uniqueAggregates(),
     _multAggregates()
 {
-  if (lifetime != NULL) {
-    expiry_lifetime = true;
-    max_lifetime = *lifetime;
-  } else {
-    expiry_lifetime = false;
-  }
+  max_lifetime.tv_sec = -1;
+  max_lifetime.tv_nsec = 0;
 }
 
 Table::~Table()
@@ -153,10 +159,9 @@ Table::add_mult_groupBy_agg(unsigned keyFieldNo,
 //
 // Setting the expiry time for tuples
 //
-void Table::set_tuple_lifetime(timespec &lifetime)
+void Table::set_tuple_lifetime(struct timespec& lifetime)
 {
   max_lifetime = lifetime;
-  expiry_lifetime = true;
   garbage_collect();
 }
 
@@ -180,7 +185,7 @@ void Table::insert(TuplePtr t)
       // aggregates
       TuplePtr removedEntry = remove(i, (*t)[i]);
 
-      if (removedEntry == NULL || expiry_lifetime ||
+      if (removedEntry == NULL || (max_lifetime.tv_sec >= 0) ||
 	  t->compareTo(removedEntry) != 0) {
 	// inform the scan listeners
 	for (unsigned i = 0; i < _uni_scans.size(); i++) {
@@ -331,17 +336,18 @@ void Table::remove_from_aggregates(TuplePtr t)
 //
 void Table::garbage_collect()
 {
-  if (expiry_lifetime) {
+  if (max_lifetime.tv_sec >= 0) {
     // Remove everything that has timed out. 
-    timespec now;
-    clock_gettime(CLOCK_REALTIME, &now);
+    struct timespec now;
+    getTime(now);
     
-    timespec expiry_time = now - max_lifetime;
+    struct timespec expiryTime;
+    subtract_timespec(expiryTime, now, max_lifetime);
     while (els.size() > 0) {
       Entry * back = els.back();
-
+      
       // is the last one to be dumped?
-      if (back->ts < (now-max_lifetime)) {
+      if (compare_timespec(back->ts, expiryTime) < 0) {
         // Kick it.
         remove_from_indices(back);
         remove_from_aggregates(back->t);
@@ -356,7 +362,7 @@ void Table::garbage_collect()
     }
   } 
   // Trim the size of the table
-  while( els.size() > max_tbl_size ) {
+  while(els.size() > max_tbl_size) {
     Entry * back = els.back();
     remove_from_indices(back);
     remove_from_aggregates(back->t);

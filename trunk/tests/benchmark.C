@@ -55,16 +55,16 @@ static double time_fn(cbv cb)
   int iter;
 
   for (iter = 1; deviation > .05; iter = iter * 2) {
-    if (clock_gettime(CLOCK_REALTIME,&before_ts)) {
-      fatal << "clock_gettime:" << strerror(errno) << "\n";
+    if (getTime(CLOCK_REALTIME,&before_ts)) {
+      fatal << "getTime:" << strerror(errno) << "\n";
     }
 
     for (int i = 0; i < iter; i++) {
       (cb) ();
     } 
 
-    if (clock_gettime (CLOCK_REALTIME,&after_ts)) {
-      fatal << "clock_gettime:" << strerror(errno) << "\n";
+    if (getTime (CLOCK_REALTIME,&after_ts)) {
+      fatal << "getTime:" << strerror(errno) << "\n";
     } 
 
     after_ts = after_ts - before_ts; 

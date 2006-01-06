@@ -46,11 +46,11 @@ public:
   ~RTuple() { tp_.reset(); }
 
   void resetTime() { 
-    clock_gettime (CLOCK_REALTIME, &timer_); 
+    getTime (timer_); 
   }
   int32_t delay() {
     timespec  now;
-    clock_gettime(CLOCK_REALTIME, &now);
+    getTime(now);
 
     if (now.tv_nsec < timer_.tv_nsec) { 
       now.tv_nsec += 1000000000;

@@ -51,7 +51,7 @@ void TimedPushSource::runTimer()
   log(LoggerI::INFO, 0, "runTimer: Creating new tuple");
   // Fill it up with the current timeval
   struct timespec t;
-  clock_gettime(CLOCK_REALTIME, &t);
+  getTime(t);
   
   tuple->append(Val_Str::mk("Time"));
   tuple->append(Val_UInt64::mk(t.tv_sec));

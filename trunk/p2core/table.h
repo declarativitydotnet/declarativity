@@ -67,12 +67,16 @@ quickly.
 class Table {
 public:
 
-  // Create a new table.
-  //  'name' is an identifying string.
-  //  'max_size' is how many tuples it will hold before discarding (FIFO)
-  //  'lifetime' is how long to keep tuples for before discarding
-  Table(string tableName, size_t max_size, timespec *lifetime=NULL);
-
+  /**  Create a new table.  name is an identifying string.  max_size is
+       how many tuples it will hold before discarding (FIFO).  lifetime
+       is how long to keep tuples for before discarding; if it has
+       negative seconds, it means tuples never expire. */
+  Table(string tableName, size_t max_size,
+        struct timespec& lifetime);
+  
+  /** Create a new table with tuples that do not expire. */
+  Table(string tableName, size_t max_size);
+  
   ~Table();
 
   // Creating and removing indices.  
@@ -89,8 +93,8 @@ public:
 
 
   // Setting and removing the expiry time
-  void set_tuple_lifetime(timespec &lifetime);
-  void unset_tuple_lifetime() { expiry_lifetime = false; };
+  void set_tuple_lifetime(struct timespec& newLifetime);
+  void unset_tuple_lifetime() { max_lifetime.tv_sec = -1; max_lifetime.tv_nsec = 0; };
 
   // Insert a tuple
   void insert(TuplePtr t);
@@ -102,13 +106,14 @@ public:
 
   string name;
   size_t	max_tbl_size;
-  timespec	max_lifetime;
-  bool		expiry_lifetime;
+
+  /** For how long do I keep each entry? */
+  struct timespec max_lifetime;
 
   struct Entry {
     TuplePtr t;
-    timespec ts;
-    Entry(TuplePtr tp) : t(tp) { clock_gettime(CLOCK_REALTIME,&ts); };
+    struct timespec ts;
+    Entry(TuplePtr tp) : t(tp) { getTime(ts); };
   };
   std::deque<Entry *> els;
 

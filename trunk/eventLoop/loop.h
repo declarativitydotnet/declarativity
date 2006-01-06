@@ -34,7 +34,6 @@
 #include <iostream>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 // For in_addr
 #include <netinet/in.h>
@@ -75,13 +74,13 @@ b_selop {
 struct timeCBHandle {
 public:
   /** What was my time target? */
-  boost::posix_time::ptime time;
+  struct timespec time;
   
   /** What was my callback? */
   const b_cbv callback;
   
   /** Construct me */
-  timeCBHandle(const boost::posix_time::ptime& t, const b_cbv& cb)
+  timeCBHandle(struct timespec& t, const b_cbv& cb)
     : time(t), callback(cb)
   {}
 };
@@ -111,10 +110,44 @@ tcpHandle*
 tcpConnect(in_addr addr, u_int16_t port, b_cbi cb);
 
 
-/** Fill in the current time, according to the existing timing facility
+/** Clock facilities */
+enum
+clockT {
+  // The real, system-wide, local-time-zone clock
+  LOOP_TIME_WALLCLOCK,
+  // The default clock, whatever that might be
+  LOOP_TIME_DEFAULT
+};
+
+/** Set the default clock facility */
+void
+setDefaultClock(clockT clockDescriptor);
+
+/** The default clock facility */
+extern clockT
+defaultClockDescriptor;
+
+/** Return the current time, according to the suggested timing facility,
+    or the default if no facility is specified.
     */
+void
+getTime(struct timespec& time,
+        clockT clockDescriptor = LOOP_TIME_DEFAULT);
+
+/** Subtract two timespecs and store the difference */
+void
+subtract_timespec(struct timespec& difference,
+                  struct timespec& minuend,
+                  struct timespec& subtrahend);
+
+
+/** Compare two timespecs, and return -1 if the first is less, 0 if they
+    are equal, +1 if the first is greater. They are assumed well formed,
+    that is, their tv_nsec fields contain fewer than 10^9
+    nanoseconds. */
 int
-clock_gettime (int facilityDescriptor, struct timespec * time);
+compare_timespec(struct timespec& first,
+                 struct timespec& second);
 
 
 #endif /* __LOOP_H_ */

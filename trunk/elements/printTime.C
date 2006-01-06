@@ -27,9 +27,7 @@ TuplePtr PrintTime::simple_action(TuplePtr p)
 {
   timespec now_ts;
   
-  if (clock_gettime(CLOCK_REALTIME,&now_ts)) {
-    fatal << "clock_gettime:" << strerror(errno) << "\n";
-  }
+  getTime(now_ts);
   warn << "Print[" << _prefix
        << ", "
        << now_ts.tv_sec

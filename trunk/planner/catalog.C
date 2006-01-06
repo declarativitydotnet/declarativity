@@ -43,9 +43,9 @@ void Catalog::createTable(OL_Context::TableInfo* tableInfo)
       }
       TablePtr newTable(new Table(tableInfo->tableName, tableInfo->size));
       if (tableInfo->timeout != -1) {
-	timespec* expiration = new timespec();
-	expiration->tv_sec = tableInfo->timeout;
-	expiration->tv_nsec = 0;
+	timespec expiration;
+	expiration.tv_sec = tableInfo->timeout;
+	expiration.tv_nsec = 0;
 	newTable.reset(new Table(tableInfo->tableName, tableInfo->size, expiration));
       }
 

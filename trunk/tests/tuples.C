@@ -38,13 +38,9 @@ double time_fn(b_cbv cb)
   timespec after_ts;
   double elapsed;
   
-  if (clock_gettime(CLOCK_REALTIME, &before_ts)) {
-    fatal << "clock_gettime:" << strerror(errno) << "\n";
-  }
+  getTime(before_ts);
   (cb)();
-  if (clock_gettime(CLOCK_REALTIME,&after_ts)) {
-    fatal << "clock_gettime:" << strerror(errno) << "\n";
-  }
+  getTime(after_ts);
   
   after_ts = after_ts - before_ts;
   elapsed = after_ts.tv_sec + (1.0 / 1000 / 1000 / 1000 * after_ts.tv_nsec);

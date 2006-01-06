@@ -756,7 +756,7 @@ DEF_OP(TIME_EQ) {
 }
 DEF_OP(TIME_NOW) { 
   struct timespec t;
-  clock_gettime(CLOCK_REALTIME, &t);
+  getTime(t);
   stackPush(Val_Time::mk(t));
 }
 DEF_OP(TIME_PLUS) {
