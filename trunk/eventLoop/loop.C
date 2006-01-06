@@ -10,6 +10,14 @@
 timeCBHandle*
 delayCB(double secondDelay, b_cbv cb)
 {
+  // When will this expire?
+  struct timespec now;
+  getTime(now);
+  
+
+  // Create handle for this request
+
+  // Return it
   return NULL;
 }
 
