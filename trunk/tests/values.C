@@ -27,6 +27,7 @@
 #include "val_id.h"
 #include "val_tuple.h"
 #include "testerr.h"
+#include "p2Time.h"
 
 #if HAVE_CONFIG_H
 #include <config.h>
@@ -87,7 +88,7 @@
   ValuePtr v = Val_##_mkt::mk(_mkv);  \
   try { \
     struct timespec cv = Val_##_castt::cast(v); \
-    if ( tscmp(cv, t) ) { \
+    if ( compare_timespec(cv, t) ) { \
       FAIL << "Bad cast value from Val_" #_mkt "(" #_mkv ")->Val_" #_castt \
                 << "; expected " << t.tv_sec << "s " << t.tv_nsec << "ns " \
                 << " but got " << cv.tv_sec << "s " << cv.tv_nsec << "ns" \

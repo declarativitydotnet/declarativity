@@ -28,15 +28,18 @@
 #ifndef __LOOP_H__
 #define __LOOP_H__
 
-#include <time.h>
 #include <string>
 #include <sstream>
 #include <iostream>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
+#include <set>
 
 // For in_addr
 #include <netinet/in.h>
+
+#include <p2Time.h>
+#include <time.h>
 
 using std::string;
 using std::ostringstream;
@@ -52,7 +55,6 @@ using std::ostringstream;
 #define make_async(sd) 
 #define close_on_exec(sd)
 #define suio_uprintf(u3, s)
-#define tscmp(cv, t) false
 #define amain()
 #define hash_string(p) 0
 
@@ -85,7 +87,6 @@ public:
   {}
 };
 
-
 /** A TCP control block */
 struct tcpHandle {
 };
@@ -110,44 +111,18 @@ tcpHandle*
 tcpConnect(in_addr addr, u_int16_t port, b_cbi cb);
 
 
-/** Clock facilities */
-enum
-clockT {
-  // The real, system-wide, local-time-zone clock
-  LOOP_TIME_WALLCLOCK,
-  // The default clock, whatever that might be
-  LOOP_TIME_DEFAULT
+/** My comparator for callback handles. First it compares times, then it
+    compares IDs. */
+struct timeCBHandleCompare
+{
+  bool operator()(const timeCBHandle* first,
+                  const timeCBHandle* second) const
+  {
+    return compare_timespec(first->time, second->time) < 0;
+  }
 };
 
-/** Set the default clock facility */
-void
-setDefaultClock(clockT clockDescriptor);
-
-/** The default clock facility */
-extern clockT
-defaultClockDescriptor;
-
-/** Return the current time, according to the suggested timing facility,
-    or the default if no facility is specified.
-    */
-void
-getTime(struct timespec& time,
-        clockT clockDescriptor = LOOP_TIME_DEFAULT);
-
-/** Subtract two timespecs and store the difference */
-void
-subtract_timespec(struct timespec& difference,
-                  struct timespec& minuend,
-                  struct timespec& subtrahend);
-
-
-/** Compare two timespecs, and return -1 if the first is less, 0 if they
-    are equal, +1 if the first is greater. They are assumed well formed,
-    that is, their tv_nsec fields contain fewer than 10^9
-    nanoseconds. */
-int
-compare_timespec(struct timespec& first,
-                 struct timespec& second);
-
+/** The timed callbacks sorted set */
+extern std::multiset<timeCBHandle*, timeCBHandleCompare> callbacks;
 
 #endif /* __LOOP_H_ */

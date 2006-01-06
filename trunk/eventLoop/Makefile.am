@@ -14,7 +14,8 @@
 
 lib_LTLIBRARIES = libeventLoop.la
 libeventLoop_la_SOURCES = \
-	loop.C
+	loop.C \
+	p2Time.C
 
 INCLUDES =
 
