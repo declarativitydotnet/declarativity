@@ -71,6 +71,8 @@ b_selop {
   b_selwrite = 1
 };
 
+/** The global counter of callbacks */
+extern long callbackID;
 
 /** A callback record */
 struct timeCBHandle {
@@ -81,9 +83,12 @@ public:
   /** What was my callback? */
   const b_cbv callback;
   
+  /** My ID */
+  long ID;
+
   /** Construct me */
   timeCBHandle(struct timespec& t, const b_cbv& cb)
-    : time(t), callback(cb)
+    : time(t), callback(cb), ID(callbackID++)
   {}
 };
 
@@ -104,6 +109,9 @@ void
 timeCBRemove(timeCBHandle *);
 
 
+
+
+
 void
 fileDescriptorCB(int, b_selop, b_cbv);
 
@@ -111,18 +119,22 @@ tcpHandle*
 tcpConnect(in_addr addr, u_int16_t port, b_cbi cb);
 
 
-/** My comparator for callback handles. First it compares times, then it
-    compares IDs. */
-struct timeCBHandleCompare
+/** My ordering predicate for callback handles. Returns true if the
+    first time is less than the second, or if they're equal but the
+    first ID is less than the second. */
+struct timeCBHandleLess
 {
   bool operator()(const timeCBHandle* first,
                   const timeCBHandle* second) const
   {
-    return compare_timespec(first->time, second->time) < 0;
+    return ((compare_timespec(first->time, second->time) < 0) ||
+            ((compare_timespec(first->time, second->time) == 0) &&
+             (first->ID < second->ID)));
   }
 };
 
 /** The timed callbacks sorted set */
-extern std::multiset<timeCBHandle*, timeCBHandleCompare> callbacks;
+typedef std::set<timeCBHandle*, timeCBHandleLess> callbackQueueT;
+extern callbackQueueT callbacks;
 
 #endif /* __LOOP_H_ */

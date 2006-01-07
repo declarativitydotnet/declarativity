@@ -9,7 +9,8 @@
 #include "math.h"
 #include "assert.h"
 
-std::multiset<timeCBHandle*, timeCBHandleCompare> callbacks;
+callbackQueueT callbacks;
+long callbackID = 0;
 
 timeCBHandle*
 delayCB(double secondDelay, b_cbv cb)
@@ -34,6 +35,7 @@ delayCB(double secondDelay, b_cbv cb)
 void
 timeCBRemove(timeCBHandle* handle)
 {
+  callbacks.erase(handle);
 }
 
 void
