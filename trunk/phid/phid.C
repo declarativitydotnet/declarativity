@@ -24,6 +24,8 @@
 #include "print.h"
 #include "timedPullSink.h"
 
+#include "loop.h"
+
 const char *path="/snort/tcpconns";
 const uint16_t port = 12337;
 //const char *path="/slicestat";
@@ -55,7 +57,7 @@ int main(int argc, char **argv)
   router->activate();
 
   // Run the router
-  amain();
+  eventLoop();
 }
   
 

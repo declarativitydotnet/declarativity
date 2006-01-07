@@ -88,7 +88,7 @@ void testStaticDemux()
   router->activate();
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 int main(int argc, char **argv)

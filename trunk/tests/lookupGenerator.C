@@ -126,7 +126,7 @@ void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> looku
   router->activate();
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 int main(int argc, char **argv)

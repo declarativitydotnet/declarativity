@@ -54,3 +54,35 @@ tcpConnect(in_addr addr, u_int16_t port, b_cbi cb)
 }
 
 
+/** Go up to current time and empty out the expired elements from the
+    callback queue */
+void
+timeCBCatchup()
+{
+  struct timespec now;
+  getTime(now);
+
+  callbackQueueT::iterator iter = callbacks.begin();
+  while ((iter != callbacks.end()) &&
+         (compare_timespec((*iter)->time, now) <= 0)) {
+    // Remove this callback from the queue
+    timeCBHandle* theCallback = *iter;
+    iter++;
+    
+    // Run it
+    (theCallback->callback)();
+    
+    // And erase it
+    delete theCallback;
+  }
+}
+
+
+void
+eventLoop()
+{
+  while (1) {
+    timeCBCatchup();
+  }
+}
+

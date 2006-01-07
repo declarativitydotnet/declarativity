@@ -70,7 +70,7 @@ int main(int argc, char **argv)
   std::cout << "\nTest Queue Start\n";
 
   testQueue();
-  amain();
+  eventLoop();
   std::cout << "\nTest Queue End\n";
   return 0;
 }

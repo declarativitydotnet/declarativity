@@ -321,7 +321,7 @@ void testMakeReach(LoggerI::Level level)
   //delayCB(10, wrap(&killJoin));
 
   // Run the router
-  amain();
+  eventLoop();
 
 
 
@@ -469,7 +469,7 @@ void testTransmit(LoggerI::Level level)
   //delaycb(10, 0, wrap(&killJoin));
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 /** Build a symmetric link transitive closure. */
@@ -571,7 +571,7 @@ void testReachability(LoggerI::Level level)
   //delaycb(10, 0, wrap(&killJoin));
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 
@@ -662,7 +662,7 @@ void testSimpleCycle(LoggerI::Level level)
   //delaycb(10, 0, wrap(&killJoin));
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 

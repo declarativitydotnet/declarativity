@@ -144,7 +144,7 @@ void testUdpCC(Router::ConfigurationPtr conf)
   router->activate();
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 int main(int argc, char **argv)

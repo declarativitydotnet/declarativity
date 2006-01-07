@@ -201,7 +201,7 @@ void testReachability(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt,
   router->activate();
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 

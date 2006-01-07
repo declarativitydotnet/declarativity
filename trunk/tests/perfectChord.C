@@ -296,7 +296,7 @@ void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
   router->activate();
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 int main(int argc, char **argv)

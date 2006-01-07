@@ -114,7 +114,7 @@ void testUdpTx()
   router->activate();
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 /** Test the Rx part of the Udp element. */
@@ -140,7 +140,7 @@ void testPLSensor()
   router->activate();
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 int main(int argc, char **argv)

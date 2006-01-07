@@ -181,7 +181,7 @@ void testPingPong(int mode, string targetHost, LoggerI::Level level)
   router->activate();
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 

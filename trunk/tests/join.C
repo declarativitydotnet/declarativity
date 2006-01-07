@@ -146,7 +146,7 @@ void testSimpleJoin(LoggerI::Level level)
   //delayCB(10, wrap(&killJoin));
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 int main(int argc, char **argv)

@@ -638,7 +638,7 @@ void runPathQuery(Router::ConfigurationPtr conf,
   router->activate();
 
   // Run the router
-  amain();
+  eventLoop();
 
 }
 

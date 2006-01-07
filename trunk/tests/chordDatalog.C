@@ -286,7 +286,7 @@ void startChordInDatalog(LoggerI::Level level, boost::shared_ptr< OL_Context> ct
   router->activate();
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 

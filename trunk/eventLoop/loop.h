@@ -55,7 +55,6 @@ using std::ostringstream;
 #define make_async(sd) 
 #define close_on_exec(sd)
 #define suio_uprintf(u3, s)
-#define amain()
 #define hash_string(p) 0
 
 // Common callback types
@@ -136,5 +135,13 @@ struct timeCBHandleLess
 /** The timed callbacks sorted set */
 typedef std::set<timeCBHandle*, timeCBHandleLess> callbackQueueT;
 extern callbackQueueT callbacks;
+
+
+
+
+
+/** The main loop function.  Does not return. */
+void
+eventLoop();
 
 #endif /* __LOOP_H_ */

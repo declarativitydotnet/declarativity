@@ -147,7 +147,7 @@ startOverLogDataflow(LoggerI::Level level,
   router->activate();
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 

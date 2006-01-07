@@ -57,7 +57,7 @@ void testFastSourcePush()
   router->activate();
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 /** Test push chain with fast sink. */
@@ -90,7 +90,7 @@ void testFastSinkPush()
   router->activate();
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 /** Test push chain with fast sink. */
@@ -123,7 +123,7 @@ void testFastSinkPull()
   router->activate();
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 /** Test push chain with fast sink. */
@@ -156,7 +156,7 @@ void testFastSourcePull()
   router->activate();
 
   // Run the router
-  amain();
+  eventLoop();
 }
 
 int main(int argc, char **argv)
