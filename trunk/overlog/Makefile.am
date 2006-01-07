@@ -23,20 +23,23 @@ liboverlog_la_SOURCES = \
 INCLUDES = -I../p2core -I../elements -I../net -I../eventLoop
 
 CLEANFILES = core *.core *~ *.gen.h *.gen.txt ol_lexer.C \
-	ol_parser.output ol_parser.C ol_parser.tab.h ol_parser.tab.c
+	ol_parser.output ol_parser.H ol_parser.C \
+	*.works
 
 EXTRA_DIST = .cvsignore
 MAINTAINERCLEANFILES = Makefile.in 
 
 ol_parser.C: ol_parser.y parser_util.C
-	$(top_builddir)/util/fixbison.sh ol_parser.y
+	bison -t -y ol_parser.y -o ol_parser.C
+
+#	$(top_builddir)/util/fixbison.sh ol_parser.y
 
 #	$(YACC) ol_parser.y
 #	cp ol_parser.tab.c ol_parser.C
 
-ol_parser.tab.h: ol_parser.C
- 
-ol_lexer.C: ol_lexer.lex ol_parser.tab.h parser_util.C
+ol_parser.H: ol_parser.C
+
+ol_lexer.C: ol_lexer.lex ol_parser.H parser_util.C
 	$(top_builddir)/util/fixflex.sh -ool_lexer.C -8 ol_lexer.lex
 #	$(LEX) $(AM_LFLAGS) $(LFLAGS) -ool_lexer.C -8 ol_lexer.lex
 
