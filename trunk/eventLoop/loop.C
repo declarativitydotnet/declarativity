@@ -57,10 +57,13 @@ tcpConnect(in_addr addr, u_int16_t port, b_cbi cb)
 /** Go up to current time and empty out the expired elements from the
     callback queue */
 void
-timeCBCatchup()
+timeCBCatchup(struct timespec& waitDuration)
 {
   struct timespec now;
   getTime(now);
+
+  ////////////////////////////////////////////////////////////
+  // Empty the queue prefix that has already expired
 
   callbackQueueT::iterator iter = callbacks.begin();
   while ((iter != callbacks.end()) &&
@@ -75,14 +78,54 @@ timeCBCatchup()
     // And erase it
     delete theCallback;
   }
+
+  ////////////////////////////////////////////////////////////
+  // Set the wait duration to be the time from now till the first
+  // scheduled event
+  
+  // Update current time
+  getTime(now);
+
+  // Get first waiting time
+  if (callbacks.empty()) {
+    // Nothing to worry about. Set it to a minute
+    waitDuration.tv_sec = 60;
+    waitDuration.tv_nsec = 0;
+  } else {
+    iter = callbacks.begin();
+    assert(iter != callbacks.end()); // since it's not empty
+
+    if (compare_timespec((*iter)->time, now) < 0) {
+      // Oops, the first callback has already expired. Don't wait, just
+      // poll
+      waitDuration.tv_sec = 0;
+      waitDuration.tv_nsec = 0;
+    } else {
+      subtract_timespec(waitDuration, (*iter)->time, now);
+    }
+  }
+}
+
+/** Wait for any pending file descriptor actions for the given time
+    period. */
+void
+fileDescriptorCatchup(struct timespec& waitDuration)
+{
+  
 }
 
 
 void
 eventLoop()
 {
+  // The wait duration for file descriptor waits. It is set by
+  // timeCBCatchup and used by fileDescriptorCatchup.  Equivalent to
+  // selwait in libasync
+  struct timespec waitDuration;
+
   while (1) {
-    timeCBCatchup();
+    timeCBCatchup(waitDuration);
+    fileDescriptorCatchup(waitDuration);
   }
 }
 
