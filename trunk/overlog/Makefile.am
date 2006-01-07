@@ -30,7 +30,7 @@ EXTRA_DIST = .cvsignore
 MAINTAINERCLEANFILES = Makefile.in 
 
 ol_parser.C: ol_parser.y parser_util.C
-	bison -t -y ol_parser.y -o ol_parser.C
+	$(YACC) -t -y ol_parser.y -o ol_parser.C
 
 #	$(top_builddir)/util/fixbison.sh ol_parser.y
 
@@ -40,6 +40,9 @@ ol_parser.C: ol_parser.y parser_util.C
 ol_parser.H: ol_parser.C
 
 ol_lexer.C: ol_lexer.lex ol_parser.H parser_util.C
-	$(top_builddir)/util/fixflex.sh -ool_lexer.C -8 ol_lexer.lex
+	$(LEX) $(AM_LFLAGS) $(LFLAGS) -ool_lexer.C -8 ol_lexer.lex
+
+
+#	$(top_builddir)/util/fixflex.sh -ool_lexer.C -8 ol_lexer.lex
 #	$(LEX) $(AM_LFLAGS) $(LFLAGS) -ool_lexer.C -8 ol_lexer.lex
 
