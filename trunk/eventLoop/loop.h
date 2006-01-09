@@ -143,9 +143,66 @@ b_selop {
   b_selwrite = 1
 };
 
+
+/** A file descriptor callback record */
+struct fileDescriptorCBHandle {
+public:
+  /** What's my file descriptor? */
+  int fileDescriptor;
+
+
+  /** What's my operation? */
+  b_selop operation;
+
+
+  /** What's my callback? */
+  b_cbv callback;
+
+  
+  /** Construct me */
+  fileDescriptorCBHandle(int fd,
+                         b_selop op,
+                         b_cbv& cb)
+    : fileDescriptor(fd), operation(op), callback(cb)
+  { 
+    assert(fd > 0);
+  }
+
+  
+  /** Construct me without a callback */
+  fileDescriptorCBHandle(int fd,
+                         b_selop op)
+    : fileDescriptor(fd), operation(op), callback(0)
+  {
+    assert(fd > 0);
+  }
+                         
+
+  /** Change my callback. It's OK to mutate me because the callback does
+      not participate in the sorting function. */
+  void
+  setCallback(const b_cbv& cb) { callback = cb; }
+};
+
+
+/** My ordering predicate for file descriptor callbacks. Returns true if
+    the first FD is less than the second, or if they're equal but the
+    first operation is less than the second. */
+struct fileDescriptorCBHandleLess
+{
+  bool operator()(const fileDescriptorCBHandle* first,
+                  const fileDescriptorCBHandle* second) const
+  {
+    return ((first->fileDescriptor < second->fileDescriptor) ||
+            ((first->fileDescriptor == second->fileDescriptor) &&
+             (first->operation < second->operation)));
+  }
+};
+
+
 /** The file descriptor callbacks sorted set type */
-typedef std::set<std::pair<int, b_selop>,
-                 b_cbv> fileDescriptorCallbackDirectoryT;
+typedef std::set<fileDescriptorCBHandle*,
+                 fileDescriptorCBHandleLess> fileDescriptorCallbackDirectoryT;
 
 
 /** The file descriptor callback directory. */

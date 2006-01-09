@@ -41,16 +41,6 @@ timeCBRemove(timeCBHandle* handle)
   callbacks.erase(handle);
 }
 
-bool
-fileDescriptorCB(int fileDescriptor,
-                 b_selop op,
-                 b_cbv callback)
-{
-  assert(false);
-  // Do nothing in here until the need arises
-  return false;
-}
-
 tcpHandle*
 tcpConnect(in_addr addr, u_int16_t port, b_cbi cb)
 {
@@ -191,4 +181,46 @@ networkSocket(int type, u_int16_t port, u_int32_t addr)
   close(s);
   return -1;
 }
+
+fileDescriptorCallbackDirectoryT fileDescriptorCallbacks;
+
+
+bool
+fileDescriptorCB(int fileDescriptor,
+                 b_selop op,
+                 b_cbv callback)
+{
+  assert(fileDescriptor >= 0);
+
+  // Do I have the entry already?
+  static fileDescriptorCBHandle handle(fileDescriptor, op, callback);
+  fileDescriptorCallbackDirectoryT::iterator iter =
+    fileDescriptorCallbacks.find(&handle);
+  if (iter == fileDescriptorCallbacks.end()) {
+    // Nope, none exists. Just create and insert it
+    fileDescriptorCBHandle* newHandle =
+      new fileDescriptorCBHandle(fileDescriptor, op, callback);
+    fileDescriptorCallbacks.insert(newHandle);
+    return true;
+  } else {
+    // It already exists. Just replace its callback
+    (*iter)->setCallback(callback);
+    return false;
+  }
+}
+
+bool
+removeFileDescriptorCB(int fileDescriptor,
+                       b_selop operation)
+{
+  assert(fileDescriptor >= 0);
+
+  static fileDescriptorCBHandle handle(fileDescriptor, operation);
+  int removed = fileDescriptorCallbacks.erase(&handle);
+  return (removed > 0);
+}
+
+
+
+
 
