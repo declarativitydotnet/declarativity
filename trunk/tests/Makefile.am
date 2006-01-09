@@ -262,11 +262,11 @@ testPlanner_LDADD = \
 
 CLEANFILES = core *.core *~
 EXTRA_DIST = .cvsignore
-INCLUDES = -I$(top_builddir)/p2core -I$(top_builddir)/elements \
+INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements \
 		-I$(top_builddir)/net -I$(top_builddir)/overlog \
 		-I$(top_builddir)/planner -I$(top_builddir)/eventLoop
 
-LIBS = -lboost_regex -lrt
+LIBS = @BOOST_LIB@ -lrt
 
 MAINTAINERCLEANFILES = aclocal.m4 install-sh mkinstalldirs \
 	missing configure config.guess config.sub config.h.in \

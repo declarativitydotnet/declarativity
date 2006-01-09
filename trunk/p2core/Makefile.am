@@ -41,7 +41,7 @@ libp2core_la_SOURCES = \
 	val_ip_addr.C \
 	dot.C
 
-INCLUDES = -I../eventLoop
+INCLUDES = @BOOST_INC@ -I../eventLoop
 LIBS = -lboost_regex
 
 CLEANFILES = core *.core *~ *.gen.h *.gen.txt pel_lexer.C

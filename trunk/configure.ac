@@ -69,9 +69,11 @@ SWIG_ENABLE_CXX
 SWIG_PYTHON
 
 # Checks for libraries.
+P2_BOOSTLIB
 
 # Checks for header files.
 AC_HEADER_STDC
+P2_BOOSTINC
 
 AC_LANG_PUSH(C++)
 AC_CHECK_TYPES([tcpconn_t *, tcpconnect_t *],[],[],[#include <async.h>])

@@ -61,6 +61,60 @@ fi
 ])
 
 dnl
+dnl Find where the boost is installed
+dnl
+AC_DEFUN([P2_BOOSTLIB],
+[AC_ARG_WITH([boostlib],
+	     AC_HELP_STRING([--with-boostlib],	
+	                    [specify dir for boost libs (default is /usr/lib/boost)]),
+	     [p2_boostlib=$withval], [p2_boostlib=/usr/lib/boost])
+AC_CACHE_CHECK([whether to use boostlib],
+	       [p2_boostlib], 
+	       [p2_boostlib=/usr/lib/boost])
+AC_SUBST(BOOST_LIB)
+unset BOOST_LIB
+
+p2_boostlib=`echo $p2_boostlib | sed -e 's!/$!!'`
+
+if test -d "$p2_boostlib"; then
+    if ls $p2_boostlib | egrep 'boost_regex*.(la|so|a)$' >/dev/null 2>&1; then
+	BOOST_LIB="-L${p2_boostlib} -lboost_regex"
+	AC_MSG_RESULT([using boost from $p2_boostlib])
+    else	
+	AC_MSG_ERROR([Could not find boost in $p2_boostlib])
+    fi
+else
+    AC_MSG_ERROR([Could not find boost lib directory $p2_boostlib])
+fi
+])
+
+AC_DEFUN([P2_BOOSTINC],
+[AC_ARG_WITH([boostinc],
+	     AC_HELP_STRING([--with-boostinc],	
+	                    [specify dir for boost include (default is /usr/include/boost)]),
+	     [p2_boostinc=$withval], [p2_boostinc=/usr/include/boost])
+AC_CACHE_CHECK([whether to use boostinc],
+	       [p2_boostinc], 
+	       [p2_boostinc=/usr/include/boost])
+AC_SUBST(BOOST_INC)
+unset BOOST_INC
+
+p2_boostinc=`echo $p2_boostinc | sed -e 's!/$!!'`
+
+if test -d "$p2_boostinc"; then
+    if ls $p2_boostinc | grep '^boost$' >/dev/null 2>&1; then
+	BOOST_INC="-I${p2_boostinc}"
+	AC_MSG_RESULT([using boost headers from $p2_boostinc])
+    else
+	AC_MSG_ERROR([Could not find boost in $p2_boostinc])
+    fi
+else
+    AC_MSG_ERROR([Could not find boost include directory $p2_boostinc])
+fi
+
+])
+
+dnl
 dnl Find where the libpcap and headers are installed
 dnl
 AC_DEFUN([P2_PCAPLIB],
