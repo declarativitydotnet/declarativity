@@ -66,11 +66,11 @@ dnl
 AC_DEFUN([P2_BOOSTLIB],
 [AC_ARG_WITH([boostlib],
 	     AC_HELP_STRING([--with-boostlib],	
-	                    [specify dir for boost libs (default is /usr/lib/boost)]),
-	     [p2_boostlib=$withval], [p2_boostlib=/usr/lib/boost])
+	                    [specify dir for boost libs (default is /usr/lib)]),
+	     [p2_boostlib=$withval], [p2_boostlib=/usr/lib])
 AC_CACHE_CHECK([whether to use boostlib],
 	       [p2_boostlib], 
-	       [p2_boostlib=/usr/lib/boost])
+	       [p2_boostlib=/usr/lib])
 AC_SUBST(BOOST_LIB)
 unset BOOST_LIB
 
@@ -91,11 +91,11 @@ fi
 AC_DEFUN([P2_BOOSTINC],
 [AC_ARG_WITH([boostinc],
 	     AC_HELP_STRING([--with-boostinc],	
-	                    [specify dir for boost include (default is /usr/include/boost)]),
-	     [p2_boostinc=$withval], [p2_boostinc=/usr/include/boost])
+	                    [specify dir for boost include (default is /usr/include)]),
+	     [p2_boostinc=$withval], [p2_boostinc=/usr/include])
 AC_CACHE_CHECK([whether to use boostinc],
 	       [p2_boostinc], 
-	       [p2_boostinc=/usr/include/boost])
+	       [p2_boostinc=/usr/include])
 AC_SUBST(BOOST_INC)
 unset BOOST_INC
 
