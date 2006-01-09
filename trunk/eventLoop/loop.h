@@ -50,28 +50,28 @@ using std::ostringstream;
 #define fatal std::cerr
 
 // FIX ME
-#define fdcb(a, b, c)
-#define inetsocket(type, port, addr) 0
-#define make_async(sd) 
-#define close_on_exec(sd)
 #define suio_uprintf(u3, s)
 #define hash_string(p) 0
 
-// Common callback types
+
+////////////////////////////////////////////////////////////
+// Callbacks
+////////////////////////////////////////////////////////////
+
 typedef boost::function<void (void)>        b_cbv;
 typedef boost::function<void (int)>         b_cbi;
 typedef boost::function<void (std::string)> b_cbs;
 typedef boost::function<void (bool)>        b_cbb;
 
-/** Operation type for selects */
-enum
-b_selop {
-  b_selread = 0,
-  b_selwrite = 1
-};
 
 /** The global counter of callbacks */
 extern long callbackID;
+
+
+
+////////////////////////////////////////////////////////////
+// Timed callbacks 
+////////////////////////////////////////////////////////////
 
 /** A callback record */
 struct timeCBHandle {
@@ -91,10 +91,6 @@ public:
   {}
 };
 
-/** A TCP control block */
-struct tcpHandle {
-};
-
 
 /** Delay a callback for a given time (in seconds). It returns a handle
     that can be used to unschedule the callback. If the delay is
@@ -103,19 +99,10 @@ struct tcpHandle {
 timeCBHandle*
 delayCB(double secondDelay, b_cbv cb);
 
+
 /** Unschedule a scheduled callback */
 void
 timeCBRemove(timeCBHandle *);
-
-
-
-
-
-void
-fileDescriptorCB(int, b_selop, b_cbv);
-
-tcpHandle*
-tcpConnect(in_addr addr, u_int16_t port, b_cbi cb);
 
 
 /** My ordering predicate for callback handles. Returns true if the
@@ -132,9 +119,86 @@ struct timeCBHandleLess
   }
 };
 
-/** The timed callbacks sorted set */
+
+/** The timed callbacks sorted set type */
 typedef std::set<timeCBHandle*, timeCBHandleLess> callbackQueueT;
+
+
+/** The timed callback queue. */
 extern callbackQueueT callbacks;
+
+
+
+
+
+
+////////////////////////////////////////////////////////////
+// File descriptor callbacks 
+////////////////////////////////////////////////////////////
+
+/** Operation type for file descriptor operations. */
+enum
+b_selop {
+  b_selread = 0,
+  b_selwrite = 1
+};
+
+/** The file descriptor callbacks sorted set type */
+typedef std::set<std::pair<int, b_selop>,
+                 b_cbv> fileDescriptorCallbackDirectoryT;
+
+
+/** The file descriptor callback directory. */
+extern fileDescriptorCallbackDirectoryT fileDescriptorCallbacks;
+
+
+/** Create a non-blocking network socket, given its type */
+int
+networkSocket(int type, u_int16_t port, u_int32_t addr);
+
+
+/** Set a callback for asynchronous operations of a given type
+    (read/write) on a file descriptor.  If such a callback has already
+    been set, replace it. Return true if the callback replaced another,
+    false otherwise. */
+bool
+fileDescriptorCB(int fileDescriptor,
+                 b_selop operation,
+                 b_cbv callback);
+
+
+/** Remove a callback from asynchronous operations of a given type
+    (read/write) on a file descriptor.  Do nothing if no such callback
+    has been set.  Return true if such a callback existed, false
+    otherwise. */
+bool
+removeFileDescriptorCB(int fileDescriptor,
+                       b_selop operation);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** A TCP control block */
+struct tcpHandle {
+};
+
+
+tcpHandle*
+tcpConnect(in_addr addr, u_int16_t port, b_cbi cb);
+
 
 
 

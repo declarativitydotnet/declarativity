@@ -32,8 +32,6 @@ public:
 
 private:
 
-typedef struct tcpHandle* conn_t;
-
   void enter_connecting();
   void error_cleanup(uint32_t errnum, string errmsg);
   void enter_waiting();
@@ -41,8 +39,9 @@ typedef struct tcpHandle* conn_t;
   void write_cb();
   void rx_hdr_cb();
   void rx_body_cb();
-  void socket_on() { fdcb(sd, selread, wrap(this,&PlSensor::rx_body_cb)); };
-  void socket_off() { fdcb(sd, selread, NULL); };
+  void socket_on() { fileDescriptorCB(sd, b_selread,
+                                      boost::bind(&PlSensor::rx_body_cb, this)); };
+  void socket_off() { fileDescriptorCB(sd, b_selread, NULL); };
   void element_cb();
   
   static const size_t MAX_REQUEST_SIZE = 10000;
@@ -60,7 +59,7 @@ typedef struct tcpHandle* conn_t;
   u_int16_t	port;
   string	path;
   int		sd; 
-  conn_t        tc;
+  tcpHandle*    tc;
   boost::regex	req_re;
   Fdbuf		hdrs;
   in_addr	localaddr;

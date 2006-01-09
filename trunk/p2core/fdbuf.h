@@ -111,16 +111,30 @@ public:
   //
   // All output functions increase "removed()" and reduce "length()". 
 
-  // Write data to a file descriptor.  Write max_write bytes at most,
-  // or else the whole valid chunk of data.  As with write(1), return
-  // the number of bytes written (which will be subtracted from the
-  // buffer), or 0 if EAGAIN, or -1 in the event of some other error. 
-  ssize_t write(int fd, ssize_t max_write = BUF_UNLIMITED);
-  ssize_t send(int sd, ssize_t max_write = BUF_UNLIMITED, int flags=0);
-	       
-  ssize_t sendto(int sd, ssize_t max_write = BUF_UNLIMITED, int flags=0,
-		 const struct sockaddr *to=NULL, socklen_t tolen=0 );
-
+  /** Write data to a file descriptor.  Write max_write bytes at most,
+      or else the whole valid chunk of data.  As with write(1), return
+      the number of bytes written (which will be subtracted from the
+      buffer), or 0 if EAGAIN, or -1 in the event of some other error.
+  */
+  ssize_t
+  write(int fd,
+        ssize_t max_write = BUF_UNLIMITED);
+  
+  /** Same as write but with the option of using flags */
+  ssize_t
+  send(int sd,
+       ssize_t max_write = BUF_UNLIMITED,
+       int flags = 0);
+  
+  /** Same as write but with the option of using flags and specifying a
+      destination explicitly.  */
+  ssize_t
+  sendto(int sd,
+         ssize_t max_write = BUF_UNLIMITED,
+         int flags = 0,
+         const struct sockaddr *to = NULL,
+         socklen_t tolen = 0);
+  
   // Member functions: stuff removing data from the head of the buffer
   u_int32_t pop_uint32();
   bool pop_bytes(char *buf, size_t len);

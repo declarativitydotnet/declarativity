@@ -101,11 +101,14 @@ Fdbuf &Fdbuf::push_back(const Fdbuf &fb, size_t max_size)
 //
 // Write data
 //
-ssize_t Fdbuf::write(int fd, ssize_t max_write)
+ssize_t
+Fdbuf::write(int fd, ssize_t max_write)
 {
-  return post_write(::write(fd, data + start, 
-			    max_write<0 ? len : std::min(len,(size_t)max_write)));
+  return post_write(::write(fd,
+                            data + start, 
+			    (max_write < 0) ? len : std::min(len, (size_t) max_write)));
 }
+
 ssize_t Fdbuf::send(int sd, ssize_t max_write, int flags)
 {
   return post_write(::send(sd, data + start, 

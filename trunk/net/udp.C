@@ -47,7 +47,7 @@ void Udp::Rx::socket_cb()
   struct sockaddr sa;
   bzero(&sa, sizeof(sa));
   socklen_t sa_len = 0;
-  if ( fb->recvfrom(u->sd, Fdbuf::BUF_UNLIMITED, 0, &sa, &sa_len) <= 0) {
+  if (fb->recvfrom(u->sd, Fdbuf::BUF_UNLIMITED, 0, &sa, &sa_len) <= 0) {
     // Error! 
     int error = errno;
     if (error != EAGAIN) {
@@ -160,7 +160,5 @@ Udp::Udp(string name,
     rx(new Udp::Rx(_name, *this)),
     tx(new Udp::Tx(_name, *this))
 {
-  sd = inetsocket(SOCK_DGRAM, port, addr);
-  make_async(sd);
-  close_on_exec(sd);
+  sd = networkSocket(SOCK_DGRAM, port, addr);
 }

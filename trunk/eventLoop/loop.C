@@ -8,6 +8,9 @@
 #include <time.h>
 #include "math.h"
 #include "assert.h"
+#include <sys/types.h>
+#include <sys/socket.h>
+#include "fcntl.h"
 
 callbackQueueT callbacks;
 long callbackID = 0;
@@ -38,13 +41,14 @@ timeCBRemove(timeCBHandle* handle)
   callbacks.erase(handle);
 }
 
-void
+bool
 fileDescriptorCB(int fileDescriptor,
                  b_selop op,
                  b_cbv callback)
 {
   assert(false);
   // Do nothing in here until the need arises
+  return false;
 }
 
 tcpHandle*
@@ -127,5 +131,64 @@ eventLoop()
     timeCBCatchup(waitDuration);
     fileDescriptorCatchup(waitDuration);
   }
+}
+
+
+
+////////////////////////////////////////////////////////////
+// File descriptor stuff
+////////////////////////////////////////////////////////////
+
+int
+networkSocket(int type, u_int16_t port, u_int32_t addr)
+{
+  int s;
+  // Create it
+  s = socket(AF_INET, type, 0);
+  if (s < 0) {
+    // Ooops, couldn't allocate it. No can do.
+    return -1;
+  }
+
+  
+  // No bind the socket to the given address
+  struct sockaddr_in sin;
+
+  // Setup the address sturctures
+  bzero(&sin, sizeof(sin));
+  sin.sin_family = AF_INET;
+  sin.sin_port = htons(port);
+  sin.sin_addr.s_addr = htonl(addr);
+
+  // And bind
+  if (bind(s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
+    // Hmm, couldn't bind this socket. Close it and return failure.
+    goto errorAfterOpen;
+  } else {
+    // Now enable keep alives
+    int value = true;
+    if (setsockopt(s, SOL_SOCKET, SO_KEEPALIVE,
+                   &value, sizeof(value)) == -1) {
+      // Hmm, couldn't set the socket option
+      goto errorAfterOpen;
+    }
+    
+    // And make the file descriptor non-blocking
+    value = fcntl(s, F_GETFL, 0);
+    if (value < 0) {
+      // Couldn't read the file descriptor flags
+      goto errorAfterOpen;
+    }
+    value |= O_NONBLOCK;
+    if (fcntl(s, F_SETFL, value) < 0) {
+      // Couldn't set the file descriptor flags
+      goto errorAfterOpen;
+    }
+    return s;
+  }
+
+ errorAfterOpen:
+  close(s);
+  return -1;
 }
 
