@@ -100,29 +100,6 @@ timeCBCatchup(struct timespec& waitDuration)
   }
 }
 
-/** Wait for any pending file descriptor actions for the given time
-    period. */
-void
-fileDescriptorCatchup(struct timespec& waitDuration)
-{
-  
-}
-
-
-void
-eventLoop()
-{
-  // The wait duration for file descriptor waits. It is set by
-  // timeCBCatchup and used by fileDescriptorCatchup.  Equivalent to
-  // selwait in libasync
-  struct timespec waitDuration;
-
-  while (1) {
-    timeCBCatchup(waitDuration);
-    fileDescriptorCatchup(waitDuration);
-  }
-}
-
 
 
 ////////////////////////////////////////////////////////////
@@ -184,6 +161,14 @@ networkSocket(int type, u_int16_t port, u_int32_t addr)
 
 fileDescriptorCallbackDirectoryT fileDescriptorCallbacks;
 
+/** The read bitvector keeping track of set callbacks */
+static fd_set readBits;
+
+/** The write bitvector keeping track of set callbacks */
+static fd_set writeBits;
+
+/** The first untouched filedescriptor */
+static int nextFD = 0;
 
 bool
 fileDescriptorCB(int fileDescriptor,
@@ -201,6 +186,24 @@ fileDescriptorCB(int fileDescriptor,
     fileDescriptorCBHandle* newHandle =
       new fileDescriptorCBHandle(fileDescriptor, op, callback);
     fileDescriptorCallbacks.insert(newHandle);
+
+    // And turn on the appropriate bit
+    switch(op) {
+    case b_selread:
+      FD_SET(fileDescriptor, &readBits);
+      break;
+    case b_selwrite:
+      FD_SET(fileDescriptor, &writeBits);
+      break;
+    default:
+      // No such enum exists
+      break;
+    }
+
+    // Finally, check if the next untouched file descriptor must be
+    // updated
+    nextFD = std::max(fileDescriptor + 1, nextFD);
+
     return true;
   } else {
     // It already exists. Just replace its callback
@@ -217,10 +220,122 @@ removeFileDescriptorCB(int fileDescriptor,
 
   static fileDescriptorCBHandle handle(fileDescriptor, operation);
   int removed = fileDescriptorCallbacks.erase(&handle);
+
+  // And turn off the appropriate bit
+  switch(operation) {
+  case b_selread:
+    FD_CLR(fileDescriptor, &readBits);
+    break;
+  case b_selwrite:
+    FD_CLR(fileDescriptor, &writeBits);
+    break;
+  default:
+    // No such enum exists
+    break;
+  }
+
   return (removed > 0);
 }
 
 
+/** Wait for any pending file descriptor actions for the given time
+    period. */
+void
+fileDescriptorCatchup(struct timespec& waitDuration)
+{
+  // Copy the bit sets over
+  static fd_set readResultBits;
+  static fd_set writeResultBits;
+  memcpy(&readResultBits, &readBits, sizeof(fd_set));
+  memcpy(&writeResultBits, &writeBits, sizeof(fd_set));
+
+  int result = pselect(nextFD, &readResultBits, &writeBits,
+                       NULL, &waitDuration, NULL);
+  if (result == -1) {
+    // Ooops, error
+    fatal << "pselect failed";
+    exit(-1);
+  } else if (result == 0) {
+    // Nothing happened
+    return;
+  } else {
+    // Go through and call all requisite callbacks, first all writes,
+    // then all reads
+    for (int i = 0;
+         i < nextFD;
+         i++) {
+      if (FD_ISSET(i, &writeResultBits)) {
+        // Fetch the callback
+        static fileDescriptorCBHandle handle(i, b_selwrite);
+        static fileDescriptorCallbackDirectoryT::iterator iter =
+          fileDescriptorCallbacks.find(&handle);
+
+        // It'd better be there and be the right thing
+        assert(iter != fileDescriptorCallbacks.end());
+        assert((*iter)->fileDescriptor == i);
+        assert((*iter)->operation == b_selwrite);
+
+        // Call the callback
+        ((*iter)->callback)();
+      }
+    }
+    for (int i = 0;
+         i < nextFD;
+         i++) {
+      if (FD_ISSET(i, &readResultBits)) {
+        // Fetch the callback
+        static fileDescriptorCBHandle handle(i, b_selread);
+        static fileDescriptorCallbackDirectoryT::iterator iter =
+          fileDescriptorCallbacks.find(&handle);
+
+        // It'd better be there and be the right thing
+        assert(iter != fileDescriptorCallbacks.end());
+        assert((*iter)->fileDescriptor == i);
+        assert((*iter)->operation == b_selread);
+
+        // Call the callback
+        ((*iter)->callback)();
+      }
+    }
+  }
+}
+
+
+
+
+
+
+////////////////////////////////////////////////////////////
+// Main loop
+////////////////////////////////////////////////////////////
+
+/** Perform any initialization required by any of the bits of
+    functionality */
+void
+elInitialize()
+{
+  // Empty out the select bits
+  FD_ZERO(&readBits);
+  FD_ZERO(&writeBits);
+}
+
+
+void
+eventLoop()
+{
+  // Do any initializing
+  elInitialize();
+
+  // The wait duration for file descriptor waits. It is set by
+  // timeCBCatchup and used by fileDescriptorCatchup.  Equivalent to
+  // selwait in libasync
+  struct timespec waitDuration;
+
+  while (1) {
+    timeCBCatchup(waitDuration);
+    fileDescriptorCatchup(waitDuration);
+  }
+}
 
 
 
