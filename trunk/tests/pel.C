@@ -430,14 +430,6 @@ static const ValTest vtests[] = {
   TST(INT32, SUCCESS, "1",	"\"abcd\" \".*cd\" match" ),
   TST(INT32, SUCCESS, "0",	"\"abcd\" \"ab\" match" ),
   TST(INT32, SUCCESS, "0",	"\"abcd\" \"cd\" match" ),
-  // hash (hashing a string to 32 bits)
-  TST(UINT32, STACK_UNDERFLOW, "",	"hash" ),
-  TST(UINT32, SUCCESS, "0x568C3A1F","1 hash" ),
-  TST(UINT32, SUCCESS, "0x384BCCBB","1.0 hash" ),
-  TST(UINT32, SUCCESS, "0xF705F9BF","null hash" ),
-  TST(UINT32, SUCCESS, "0x0BA024EB","\"A\" hash" ),
-  TST(UINT32, SUCCESS, "0x7C79376A","\"\" hash" ),
-  TST(UINT32, SUCCESS, "0x4BB7E6E7","\"Hello, world!\" hash" ),
   // negi (integer unary negation)
   TST(INT64, STACK_UNDERFLOW, "",	"negi" ),
   TST(INT64, SUCCESS, "0",	"\"A\" negi" ),

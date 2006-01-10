@@ -1050,14 +1050,6 @@ DEF_OP(CONV_ID) {
   stackPush(Val_ID::mk(Val_ID::cast(top)));
 }
 
-//
-// Hashing - could be a lot faster.  Room for improvement here. 
-//
-DEF_OP(HASH) {
-  uint32_t h = hash_string(stackTop()->toTypeString().c_str());
-  stackPop();
-  stackPush(Val_UInt32::mk(h));
-}
 
 //
 // Extra hacks for Symphony...

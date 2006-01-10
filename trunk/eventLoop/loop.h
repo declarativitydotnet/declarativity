@@ -49,9 +49,6 @@ using std::ostringstream;
 #undef fatal
 #define fatal std::cerr
 
-// FIX ME
-#define suio_uprintf(u3, s)
-#define hash_string(p) 0
 
 
 ////////////////////////////////////////////////////////////

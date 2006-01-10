@@ -128,7 +128,6 @@ for op, ar, va, desc in [
   ("abs",1,     "INT_ABS",      "Absolute value"),
   ("floor",1,   "DBL_FLOOR",    "Next lowest integer"),
   ("ceil",1,    "DBL_CEIL",     "Next highest integer"),
-  ("hash",1,	"HASH",         "Generic value hashing"),
   ("exp",1,	"EXP",          "Natural exponentiation"),
   ("ln",1,	"LN",           "Natural logarithm"),
   ("drand48",0,	"DRAND48",      "Generate a random number")
