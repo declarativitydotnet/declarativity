@@ -650,6 +650,7 @@ int main(int argc, char **argv)
 
   if (argc < 20) {
     fatal << "Usage:\n\t paths <numNodes> <nodeNo> <address> <port> <datalogFile> <inputgraph> <outputFile> <loggingLevel> <seed> <duration> <periodicSend> <metric> <updatePeriodSeconds> <percentUpdate> <correlate> <magicIntervalSeconds> <magicNumQueries> <magicCache> <percentMagicDsts>\n";
+    exit(-1);
   }
 
   numNodes = atoi(argv[1]);

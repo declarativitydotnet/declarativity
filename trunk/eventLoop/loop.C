@@ -64,6 +64,7 @@ timeCBCatchup(struct timespec& waitDuration)
          (compare_timespec((*iter)->time, now) <= 0)) {
     // Remove this callback from the queue
     timeCBHandle* theCallback = *iter;
+    callbacks.erase(iter);
     iter++;
     
     // Run it
@@ -219,7 +220,19 @@ removeFileDescriptorCB(int fileDescriptor,
   assert(fileDescriptor >= 0);
 
   static fileDescriptorCBHandle handle(fileDescriptor, operation);
-  int removed = fileDescriptorCallbacks.erase(&handle);
+  // Must find it so that we can delete the element
+
+  fileDescriptorCallbackDirectoryT::iterator iter =
+    fileDescriptorCallbacks.find(&handle);
+  bool found;
+  if (iter == fileDescriptorCallbacks.end()) {
+    // Didn't find anything
+    found = false;
+  } else {
+    found = true;
+    fileDescriptorCallbacks.erase(iter);
+    delete (*iter);
+  }
 
   // And turn off the appropriate bit
   switch(operation) {
@@ -234,7 +247,7 @@ removeFileDescriptorCB(int fileDescriptor,
     break;
   }
 
-  return (removed > 0);
+  return found;
 }
 
 

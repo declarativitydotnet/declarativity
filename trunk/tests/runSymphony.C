@@ -107,6 +107,7 @@ int main(int argc, char **argv)
 {
   if (argc < 7) {
     fatal << "Usage:\n\t runSymphony <datalogFile> <loggingLevel> <seed> <myipaddr:port> <startDelay> <networkSize> [<landmark_ipaddr:port>]\n";
+    exit(-1);
   }
 
   string datalogFile(argv[1]);
@@ -132,6 +133,7 @@ int main(int argc, char **argv)
     // Couldn't find the correct format
     fatal << "Usage:\n\trunSymphony <seed> <myipaddr:port> [<landmark_ipaddr:port>]\n\
               \tMy address is malformed\n";
+    exit(-1);
   }
   string thePort(theColon + 1);
   int port = atoi(thePort.c_str());

@@ -83,7 +83,7 @@ initializeBaseTables(boost::shared_ptr< OL_Context> ctxt,
     char * theEqual = strchr(current, '=');
     if (theEqual == NULL) {
       fatal << "Malformed environment entry [" << current << "]. No equals sign\n";
-      exit (-1);
+      exit(-1);
     }
     
     // Register the part from current to = and from = to semicolon
@@ -169,6 +169,7 @@ void testOverLog(LoggerI::Level level,
   pid_t pid = fork();
   if (pid == -1) {
     fatal << "Cannot fork a preprocessor\n";
+    exit(-1);
   } else if (pid == 0) {
     // I am the preprocessor
     execlp("cpp", "cpp", "-P", filename.c_str(), processed.c_str(),
@@ -176,6 +177,7 @@ void testOverLog(LoggerI::Level level,
 
     // If I'm here, I failed
     fatal << "Preprocessor execution failed\n";
+    exit(-1);
   } else {
     // I am the child
     wait(NULL);
@@ -205,6 +207,7 @@ main(int argc, char **argv)
 {
   if (argc < 7) {
     fatal << USAGE;
+    exit(-1);
   }
 
   string overLogFile(argv[1]);
@@ -224,6 +227,7 @@ main(int argc, char **argv)
     // Couldn't find the correct format
     std::cerr << "Incorrect own address format\n";
     fatal << USAGE;
+    exit(-1);
   }
   string thePort(theColon + 1);
   int port = atoi(thePort.c_str());

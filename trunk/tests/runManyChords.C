@@ -123,6 +123,7 @@ int main(int argc, char **argv)
 {
   if (argc != 5) {
     fatal << "Usage:\n\t runManyChord <loggingLevel> <seed> <noNodes> <interarrival>\n";
+    exit(-1);
   }
 
   string levelName(argv[1]);

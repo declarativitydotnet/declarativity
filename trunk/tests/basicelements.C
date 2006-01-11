@@ -41,10 +41,12 @@ static double time_fn(cbv cb)
   
   if (getTime(CLOCK_REALTIME,&before_ts)) {
     fatal << "getTime:" << strerror(errno) << "\n";
+    exit(-1);
   }
   (cb)();
   if (getTime(CLOCK_REALTIME,&after_ts)) {
     fatal << "getTime:" << strerror(errno) << "\n";
+    exit(-1);
   }
   
   after_ts = after_ts - before_ts;

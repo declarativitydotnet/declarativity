@@ -155,9 +155,11 @@ int main (int argc, char * arg[]) {
   // CHECK IF VALID PROGRAM ARG
   if (argc > 1) {
     if ((idCount = atoi (arg[1])));
-    else
+    else {
       fatal << "Invalid ARG: " << arg[1] <<
 	". Please supply an INT value\n";
+      exit(-1);
+    }
   }
 
   // USER DID NOT SUPPLY ARG, SO USE DEFAULT

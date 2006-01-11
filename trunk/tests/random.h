@@ -22,6 +22,7 @@ class random { public:
 
     if (randomStream.fail ()) {
       fatal << "Failed to OPEN /dev/urandom\n";
+      exit(-1);
     }
 
     char randomChar;
