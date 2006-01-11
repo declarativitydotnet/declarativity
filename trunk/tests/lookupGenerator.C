@@ -85,6 +85,7 @@ struct LookupGenerator : public FunctorSource::Generator
 void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> lookup,
                   double delay, int times)
 {
+  eventLoopInitialize();
   Router::ConfigurationPtr conf(new Router::Configuration());
 
   ElementSpecPtr func    = conf->addElement(ElementPtr(new FunctorSource(string("Source"), lookup.get())));

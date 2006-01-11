@@ -75,6 +75,7 @@ int main(int argc, char **argv)
 {
   std::cout << "\nTest Agg Start\n";
 
+  eventLoopInitialize();
   agg();
   eventLoop();
   std::cout << "\nTest Agg End\n";

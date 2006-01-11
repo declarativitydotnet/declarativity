@@ -82,8 +82,8 @@ void PlSensor::enter_waiting()
 {
   TRC_FN;
   if (sd >= 0) { 
-    fileDescriptorCB(sd, b_selread, NULL);
-    fileDescriptorCB(sd, b_selwrite, NULL);
+    removeFileDescriptorCB(sd, b_selread);
+    removeFileDescriptorCB(sd, b_selwrite);
     close(sd);
     sd = -1;
   }
@@ -145,7 +145,7 @@ void PlSensor::write_cb()
   // Falls through to here when the sending is done...
   if (req_buf.length() == 0) {
     // Enter RX_HEADERS state
-    fileDescriptorCB(sd, b_selwrite, NULL);
+    removeFileDescriptorCB(sd, b_selwrite);
     state = ST_RX_HEADERS;
     fileDescriptorCB(sd, b_selread, boost::bind(&PlSensor::rx_hdr_cb,this));
   }

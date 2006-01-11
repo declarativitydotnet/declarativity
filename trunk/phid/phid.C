@@ -35,6 +35,7 @@ const uint16_t port = 12337;
 int main(int argc, char **argv)
 {
   std::cout << "\nPhi daemon started\n";
+  eventLoopInitialize();
 
   Router::ConfigurationPtr conf(new Router::Configuration());
   ElementSpecPtr pl = conf->addElement(ElementPtr(new PlSensor("PLSensor", port, path, 30)));

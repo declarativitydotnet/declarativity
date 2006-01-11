@@ -74,6 +74,8 @@ void testNetworked(LoggerI::Level level,
                    int nodes,
                    double interarrival)
 {
+  eventLoopInitialize();
+
   // Create the data flow
   Router::ConfigurationPtr conf(new Router::Configuration());
 

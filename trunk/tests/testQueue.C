@@ -69,6 +69,7 @@ int main(int argc, char **argv)
 {
   std::cout << "\nTest Queue Start\n";
 
+  eventLoopInitialize();
   testQueue();
   eventLoop();
   std::cout << "\nTest Queue End\n";

@@ -64,6 +64,7 @@ void testFastSourcePush()
 void testFastSinkPush()
 {
   std::cout << "\nCHECK FAST SINK PUSH\n";
+  eventLoopInitialize();
 
   Router::ConfigurationPtr conf(new Router::Configuration());
   ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 1)));

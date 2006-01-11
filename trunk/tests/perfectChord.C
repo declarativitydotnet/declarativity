@@ -199,6 +199,7 @@ void hookupRecv_CC(Router::ConfigurationPtr conf, ElementSpecPtr udprx,
 
 void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
 {
+  eventLoopInitialize();
   Router::ConfigurationPtr conf(new Router::Configuration());
   string my_addr;
   ostringstream oss;

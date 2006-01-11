@@ -45,7 +45,7 @@ public:
     const char *flow_code() const		{ return "/-"; };
 
     void socket_on() { fileDescriptorCB(u->sd, b_selread, boost::bind(&Udp::Rx::socket_cb, this)); };
-    void socket_off() { fileDescriptorCB(u->sd, b_selread, NULL); };
+    void socket_off() { removeFileDescriptorCB(u->sd, b_selread); };
 
     /** Turn on the socket and start listening. */
     virtual int initialize();
@@ -70,7 +70,7 @@ public:
     const char *flow_code() const		{ return "-/"; };
 
     void socket_on() { fileDescriptorCB(u->sd, b_selwrite, boost::bind(&Udp::Tx::socket_cb, this));};
-    void socket_off() { fileDescriptorCB(u->sd, b_selwrite, NULL); };
+    void socket_off() { removeFileDescriptorCB(u->sd, b_selwrite); };
 
     /** Turn on the socket */
     virtual int initialize();

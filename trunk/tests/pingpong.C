@@ -67,6 +67,8 @@ string getLocalHostname()
 
 void testPingPong(int mode, string targetHost, LoggerI::Level level)
 {
+  eventLoopInitialize();
+
   // sender mode 0
   // receiver mode 1
 

@@ -94,6 +94,7 @@ void testStaticDemux()
 int main(int argc, char **argv)
 {
   std::cout << "\nDEMULTIPLEX\n";
+  eventLoopInitialize();
 
   testStaticDemux();
 

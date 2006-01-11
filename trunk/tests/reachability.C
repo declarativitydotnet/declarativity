@@ -330,6 +330,7 @@ void testMakeReach(LoggerI::Level level)
 
 void testTransmit(LoggerI::Level level)
 {
+  eventLoopInitialize();
   Router::ConfigurationPtr conf(new Router::Configuration());
 
   // Create one data flow per "node"

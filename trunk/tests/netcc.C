@@ -154,6 +154,7 @@ int main(int argc, char **argv)
   int    port = atoi(argv[2]);
   double drop = 0.;
 
+  eventLoopInitialize();
   if (type == "source") {
       Udp *src = new Udp("SOURCE", port);
       ostringstream oss;

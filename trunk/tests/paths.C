@@ -492,6 +492,8 @@ void runPathQuery(Router::ConfigurationPtr conf,
 		  string address, std::vector<string> filenames, 
 		  string inputGraph, string debugFile)
 {
+  eventLoopInitialize();
+
   string filename = filenames.at(0);
   warn << "Execute path query " << filename << "\n";
   warn << "Start node " << address << " " << port << "\n";

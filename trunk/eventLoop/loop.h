@@ -262,4 +262,12 @@ tcpConnect(in_addr addr, u_int16_t port, b_cbi cb);
 void
 eventLoop();
 
+
+/** The initialization function for the event loop. Must be called
+    before any code that affect the event loop (e.g., before any
+    callbacks are registered, non-blocking sockets have opened, etc.) */
+void
+eventLoopInitialize();
+
+
 #endif /* __LOOP_H_ */

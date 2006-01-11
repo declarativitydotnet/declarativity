@@ -122,6 +122,7 @@ startOverLogDataflow(LoggerI::Level level,
                      double delay,
                      string environment)
 {
+  eventLoopInitialize();
   // create dataflow for translated OverLog
   Router::ConfigurationPtr conf(new Router::Configuration());
   boost::shared_ptr< Rtr_ConfGen > 

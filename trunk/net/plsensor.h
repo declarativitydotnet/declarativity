@@ -41,7 +41,7 @@ private:
   void rx_body_cb();
   void socket_on() { fileDescriptorCB(sd, b_selread,
                                       boost::bind(&PlSensor::rx_body_cb, this)); };
-  void socket_off() { fileDescriptorCB(sd, b_selread, NULL); };
+  void socket_off() { removeFileDescriptorCB(sd, b_selread); };
   void element_cb();
   
   static const size_t MAX_REQUEST_SIZE = 10000;

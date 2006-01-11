@@ -254,6 +254,8 @@ void startChordInDatalog(LoggerI::Level level, boost::shared_ptr< OL_Context> ct
 			 string localAddress, int port, string landmarkAddress, 
 			 double delay)
 {
+  eventLoopInitialize();
+
   // create dataflow for translated chord lookup rules
   Router::ConfigurationPtr conf(new Router::Configuration());
   boost::shared_ptr< Rtr_ConfGen > routerConfigGenerator(new Rtr_ConfGen(ctxt.get(), conf, false, DEBUG, CC, datalogFile));

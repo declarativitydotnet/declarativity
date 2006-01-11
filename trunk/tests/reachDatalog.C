@@ -107,6 +107,7 @@ void bootstrapData(Router::ConfigurationPtr conf,
 void testReachability(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt, string filename)
 {
   std::cout << "\nCHECK TRANSITIVE REACHABILITY\n";
+  eventLoopInitialize();
 
   Router::ConfigurationPtr conf(new Router::Configuration());
   Rtr_ConfGen routerConfigGenerator(ctxt, conf, false, false, false, filename);

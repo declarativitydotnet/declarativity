@@ -45,6 +45,7 @@ void killJoin()
 void testSimpleJoin(LoggerI::Level level)
 {
   std::cout << "\nCHECK SIMPLE JOIN\n";
+  eventLoopInitialize();
 
   Router::ConfigurationPtr conf(new Router::Configuration());
 

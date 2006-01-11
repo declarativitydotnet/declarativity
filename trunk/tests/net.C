@@ -39,6 +39,7 @@
     Udp. */
 void testUdpTx()
 {
+  eventLoopInitialize();
   std::cout << "\nCHECK UDP Transmit\n";
 
   // The udp objects
@@ -120,6 +121,7 @@ void testUdpTx()
 /** Test the Rx part of the Udp element. */
 void testPLSensor()
 {
+  eventLoopInitialize();
   std::cout << "\nCHECK PL SENSOR\n";
 
   boost::shared_ptr<PlSensor> pl(new PlSensor("Sensor", (uint16_t)80,"/", 5));

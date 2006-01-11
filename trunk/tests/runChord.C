@@ -82,6 +82,8 @@ void testNetworked(LoggerI::Level level,
                    string landmarkAddress,
                    double delay = 0)
 {
+  eventLoopInitialize();
+
   // Create the data flow
   Router::ConfigurationPtr conf(new Router::Configuration());
   Udp udp(string(myAddress) + ":Udp", port);

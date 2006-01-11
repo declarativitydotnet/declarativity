@@ -177,9 +177,10 @@ fileDescriptorCB(int fileDescriptor,
                  b_cbv callback)
 {
   assert(fileDescriptor >= 0);
+  assert(callback);
 
   // Do I have the entry already?
-  static fileDescriptorCBHandle handle(fileDescriptor, op, callback);
+  fileDescriptorCBHandle handle(fileDescriptor, op, callback);
   fileDescriptorCallbackDirectoryT::iterator iter =
     fileDescriptorCallbacks.find(&handle);
   if (iter == fileDescriptorCallbacks.end()) {
@@ -219,7 +220,7 @@ removeFileDescriptorCB(int fileDescriptor,
 {
   assert(fileDescriptor >= 0);
 
-  static fileDescriptorCBHandle handle(fileDescriptor, operation);
+  fileDescriptorCBHandle handle(fileDescriptor, operation);
   // Must find it so that we can delete the element
 
   fileDescriptorCallbackDirectoryT::iterator iter =
@@ -262,7 +263,7 @@ fileDescriptorCatchup(struct timespec& waitDuration)
   memcpy(&readResultBits, &readBits, sizeof(fd_set));
   memcpy(&writeResultBits, &writeBits, sizeof(fd_set));
 
-  int result = pselect(nextFD, &readResultBits, &writeBits,
+  int result = pselect(nextFD, &readResultBits, &writeResultBits,
                        NULL, &waitDuration, NULL);
   if (result == -1) {
     // Ooops, error
@@ -279,9 +280,9 @@ fileDescriptorCatchup(struct timespec& waitDuration)
          i++) {
       if (FD_ISSET(i, &writeResultBits)) {
         // Fetch the callback
-        static fileDescriptorCBHandle handle(i, b_selwrite);
-        static fileDescriptorCallbackDirectoryT::iterator iter =
-          fileDescriptorCallbacks.find(&handle);
+        fileDescriptorCBHandle handle(i, b_selwrite);
+        static fileDescriptorCallbackDirectoryT::iterator iter;
+        iter = fileDescriptorCallbacks.find(&handle);
 
         // It'd better be there and be the right thing
         assert(iter != fileDescriptorCallbacks.end());
@@ -297,9 +298,9 @@ fileDescriptorCatchup(struct timespec& waitDuration)
          i++) {
       if (FD_ISSET(i, &readResultBits)) {
         // Fetch the callback
-        static fileDescriptorCBHandle handle(i, b_selread);
-        static fileDescriptorCallbackDirectoryT::iterator iter =
-          fileDescriptorCallbacks.find(&handle);
+        fileDescriptorCBHandle handle(i, b_selread);
+        static fileDescriptorCallbackDirectoryT::iterator iter;
+        iter = fileDescriptorCallbacks.find(&handle);
 
         // It'd better be there and be the right thing
         assert(iter != fileDescriptorCallbacks.end());
@@ -322,12 +323,9 @@ fileDescriptorCatchup(struct timespec& waitDuration)
 // Main loop
 ////////////////////////////////////////////////////////////
 
-/** Perform any initialization required by any of the bits of
-    functionality */
 void
-elInitialize()
+eventLoopInitialize()
 {
-  // Empty out the select bits
   FD_ZERO(&readBits);
   FD_ZERO(&writeBits);
 }
@@ -336,9 +334,6 @@ elInitialize()
 void
 eventLoop()
 {
-  // Do any initializing
-  elInitialize();
-
   // The wait duration for file descriptor waits. It is set by
   // timeCBCatchup and used by fileDescriptorCatchup.  Equivalent to
   // selwait in libasync

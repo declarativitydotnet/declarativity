@@ -139,6 +139,8 @@ int main(int argc, char **argv)
     exit(0);
   }
 
+  eventLoopInitialize();
+
   int seed = 0;
   level = LoggerI::levelFromName[string(argv[1])];
   seed = atoi(argv[2]);
