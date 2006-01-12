@@ -85,7 +85,9 @@ public:
   /** Construct me */
   timeCBHandle(struct timespec& t, const b_cbv& cb)
     : time(t), callback(cb), ID(callbackID++)
-  {}
+  {
+    assert((t.tv_nsec >=0) && (t.tv_nsec < 1000 * 1000 * 1000));
+  }
 };
 
 

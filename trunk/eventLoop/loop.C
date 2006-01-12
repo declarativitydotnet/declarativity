@@ -86,6 +86,7 @@ timeCBCatchup(struct timespec& waitDuration)
     // Nothing to worry about. Set it to a minute
     waitDuration.tv_sec = 60;
     waitDuration.tv_nsec = 0;
+
   } else {
     iter = callbacks.begin();
     assert(iter != callbacks.end()); // since it's not empty

@@ -50,7 +50,7 @@ subtract_timespec(struct timespec& difference,
   // The carry
   if (difference.tv_nsec < 0) {
     difference.tv_nsec += 1000 * 1000 * 1000;
-    difference.tv_sec++;
+    difference.tv_sec--;
   }
 }
 
@@ -80,7 +80,10 @@ increment_timespec(struct timespec& ts,
 {
   double extraSecs;
   long nsecs = (long) (modf(seconds, &extraSecs) * 1000 * 1000 * 1000);
+  assert((nsecs >= 0) && (nsecs < 1000 * 1000 * 1000));
+  assert((ts.tv_nsec >= 0) && (ts.tv_nsec < 1000 * 1000 * 1000));
   ts.tv_nsec += nsecs;
+  assert((ts.tv_nsec >= 0) && (ts.tv_nsec < 2000 * 1000 * 1000));
   ts.tv_sec += (time_t) extraSecs;
 
   if (ts.tv_nsec > 1000 * 1000 * 1000) {
