@@ -45,6 +45,8 @@ void TimedPullPush::runTimer()
   // remove the timer id
   _timeCallback = 0;
 
+  log(LoggerI::INFO, 0, "runTimer: called back");
+
   // Attempt to fetch a tuple. If it's there, it will certainly be
   // delivered.
   TuplePtr p = input(0)->pull(_unblockPull);

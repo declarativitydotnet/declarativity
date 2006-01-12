@@ -96,7 +96,7 @@ Udp::Tx::Tx(string name, const Udp &udp)
 }
 
 //
-// Socket callback for receive element
+// Socket callback for transmit element
 //
 void Udp::Tx::socket_cb()
 {

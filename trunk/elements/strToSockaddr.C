@@ -60,7 +60,9 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
   }
   string theAddress(theString, theAtSign - theString);
   struct hostent *host = gethostbyname(theAddress.c_str());
-  if (host != NULL) theAddress = inet_ntoa(*((struct in_addr*)host->h_addr));
+  if (host != NULL) {
+    theAddress = inet_ntoa(*((struct in_addr*)host->h_addr));
+  }
   string thePort(theAtSign + 1);
   int port = atoi(thePort.c_str());
 

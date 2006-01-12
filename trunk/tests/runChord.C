@@ -151,8 +151,9 @@ int main(int argc, char **argv)
 
   int seed = atoi(argv[3]);
   srandom(seed);
+
+
   string myAddress(argv[4]);
-  
   const char * theString = argv[4];
   std::cout << theString << "\n";
   char * theColon = strchr(theString, ':');
@@ -164,6 +165,7 @@ int main(int argc, char **argv)
   }
   string thePort(theColon + 1);
   int port = atoi(thePort.c_str());
+
 
   double delay = atof(argv[5]);
 

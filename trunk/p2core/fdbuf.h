@@ -46,16 +46,21 @@ private:
   bool	 safe;		// Zero any data before deleting
 
   // Used by write, send, sendto...
-  inline ssize_t post_write(ssize_t w) {
+  inline ssize_t post_write(size_t w) {
     err = errno;
-    if (w > 0) { start += w; len =- w; }
+    if (w > 0) {
+      start += w;
+      len -= w;
+    }
     return w;
   };
   
   // Used by read, recv, recvfrom...
-  inline ssize_t post_read(ssize_t r) {
+  inline ssize_t post_read(size_t r) {
     err = errno;
-    if (r > 0) { len += r; }
+    if (r > 0) {
+      len += r;
+    }
     return r;
   };
   

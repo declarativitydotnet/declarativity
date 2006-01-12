@@ -50,6 +50,7 @@
 #include "unmarshalField.h"
 #include "store.h"
 #include "timedPullPush.h"
+#include "discard.h"
 
 string getLocalHostname()
 {
@@ -142,8 +143,12 @@ void testPingPong(int mode, string targetHost, LoggerI::Level level)
 
   ElementSpecPtr sinkPrintS = conf->addElement(ElementPtr(new Print("After Unmarshal")));
   boost::shared_ptr< std::vector< ValuePtr > > demuxKeys(new std::vector< ValuePtr >);
+  
+  ElementSpecPtr discardS = conf->addElement(ElementPtr(new Discard("defaultSink")));
+  
   demuxKeys->push_back(ValuePtr(new Val_Str("PingRequest")));
   demuxKeys->push_back(ValuePtr(new Val_Str("PingResponse")));
+
   ElementSpecPtr demuxS = conf->addElement(ElementPtr(new Demux("demux", demuxKeys)));
   ElementSpecPtr pong = conf->addElement(ElementPtr(new Pong("Pong", 0)));
   ElementSpecPtr pongPrint = conf->addElement(ElementPtr(new Print("PongReply")));
@@ -156,6 +161,7 @@ void testPingPong(int mode, string targetHost, LoggerI::Level level)
   conf->hookUp(sinkPrintS, 0, demuxS, 0);
   conf->hookUp(demuxS, 0, pong, 0);
   conf->hookUp(demuxS, 1, ping, 1);
+  conf->hookUp(demuxS, 2, discardS, 0);
   conf->hookUp(pong, 0, pongPrint, 0);
   conf->hookUp(pongPrint, 0, slotRxS, 0);
 

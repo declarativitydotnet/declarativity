@@ -44,6 +44,7 @@ bin_PROGRAMS 	= 	values \
 			testQueue \
 			agg \
 			pingpong \
+			udpMessage \
 			paths \
 			testPlanner
 
@@ -246,6 +247,13 @@ csv_LDADD = \
 
 pingpong_SOURCES	= pingpong.C
 pingpong_LDADD = \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a
+
+udpMessage_SOURCES	= udpMessage.C
+udpMessage_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \

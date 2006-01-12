@@ -44,8 +44,15 @@ public:
     const char *processing() const		{ return "/h"; };
     const char *flow_code() const		{ return "/-"; };
 
-    void socket_on() { fileDescriptorCB(u->sd, b_selread, boost::bind(&Udp::Rx::socket_cb, this)); };
-    void socket_off() { removeFileDescriptorCB(u->sd, b_selread); };
+    void socket_on()
+    {
+      fileDescriptorCB(u->sd, b_selread,
+                       boost::bind(&Udp::Rx::socket_cb, this));
+    };
+    void socket_off()
+    {
+      removeFileDescriptorCB(u->sd, b_selread);
+    };
 
     /** Turn on the socket and start listening. */
     virtual int initialize();
