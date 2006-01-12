@@ -41,7 +41,7 @@ TuplePtr UnmarshalField::simple_action(TuplePtr p)
       // Goodie. Unmarshal the field
       FdbufPtr fb = Val_Opaque::cast(value);
       XDR xd;
-      xdrfdbuf_create(&xd,fb.get(),false,XDR_DECODE);
+      xdrfdbuf_create(&xd, fb.get(), false, XDR_DECODE);
       ValuePtr unmarshalled = Value::xdr_unmarshal(&xd);
       xdr_destroy(&xd);
 

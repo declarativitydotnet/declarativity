@@ -19,7 +19,7 @@ const opr::Oper* Val_Opaque::oper_ = new opr::OperCompare<Val_Opaque>();
 
 
 //
-// Marshal a opaqueing
+// Marshal an opaque
 // 
 void Val_Opaque::xdr_marshal_subtype( XDR *x ) 
 {

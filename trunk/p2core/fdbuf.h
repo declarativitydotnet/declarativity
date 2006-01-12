@@ -73,7 +73,7 @@ public:
   enum { 
     BUF_DFLT_CAP = 1500,	// Default capacity of the buffer.
     BUF_DFLT_READ = 1500,	// Default quantity to read.
-    BUF_UNLIMITED = 0,		// Unlimited capacity.
+    BUF_UNLIMITED = -1,		// Unlimited capacity.
     BUF_INCREMENT = 0x80,	// Granularity of buffer growing.
     BUF_SIZE_MAX = (2 << (sizeof(size_t) - 1) - 1)
   };
@@ -93,7 +93,7 @@ public:
   // 
   ssize_t read(int fd, size_t max_read = BUF_DFLT_READ);
   ssize_t recv(int sd, size_t max_read = BUF_DFLT_READ, int flags=0);
-  ssize_t recvfrom(int sd, size_t max_read = BUF_DFLT_READ, int flags=0,
+  ssize_t recvfrom(int sd, ssize_t max_read = BUF_DFLT_READ, int flags=0,
 		   struct sockaddr *from=NULL, socklen_t *fromlen=0);
   
   Fdbuf &push_back(const Fdbuf &fb, size_t max_len = BUF_SIZE_MAX );

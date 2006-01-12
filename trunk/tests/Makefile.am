@@ -45,6 +45,7 @@ bin_PROGRAMS 	= 	values \
 			agg \
 			pingpong \
 			udpMessage \
+			udpListen \
 			paths \
 			testPlanner
 
@@ -254,6 +255,13 @@ pingpong_LDADD = \
 
 udpMessage_SOURCES	= udpMessage.C
 udpMessage_LDADD = \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a
+
+udpListen_SOURCES	= udpListen.C
+udpListen_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \

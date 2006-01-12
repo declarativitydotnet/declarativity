@@ -54,49 +54,34 @@
 #include "discard.h"
 
 void
-sendMessages(std::string udpAddress)
+listenForMessages(std::string ipAddress,
+                  int port)
 {
   eventLoopInitialize();
 
   // The sending data flow
   Router::ConfigurationPtr conf(new Router::Configuration());    
 
-  Udp udpOut("9999", 9999); // port of the sender    
+  Udp udpOut("ListenerUDP", port); // port of the sender    
   std::vector<TuplePtr> buffer;
 
-  // The message contents
-  TuplePtr payload = Tuple::mk();
-  payload->append(Val_Str::mk("Payload"));
-  payload->freeze();  
 
-  // The input tuple
-  TuplePtr tuple = Tuple::mk();
-  tuple->append(Val_Str::mk(udpAddress)); // target
-  tuple->append(Val_Tuple::mk(payload)); // payload
-  tuple->freeze();  
-
-  ElementSpecPtr sourceS =
-    conf->addElement(ElementPtr(new TupleSource("Source", tuple)));
-  ElementSpecPtr pusherS =
-    conf->addElement(ElementPtr(new TimedPullPush("Push", 0.5)));
-  ElementSpecPtr slotS =
-    conf->addElement(ElementPtr(new Slot("Slot")));
-  ElementSpecPtr marshalS =
-    conf->addElement(ElementPtr(new MarshalField("Marshal", 1)));
-  ElementSpecPtr routeS =
-    conf->addElement(ElementPtr(new StrToSockaddr("Router", 0)));
-  ElementSpecPtr udpTxPrintS =
-    conf->addElement(ElementPtr(new Print("Before Udp::Tx")));
-  ElementSpecPtr udpTxS = conf->addElement(udpOut.get_tx());
+  ElementSpecPtr udpRxS =
+    conf->addElement(udpOut.get_rx());
+  ElementSpecPtr udpRxPrintS =
+    conf->addElement(ElementPtr(new Print("After Udp::Rx")));
+  ElementSpecPtr unmarshalS =
+    conf->addElement(ElementPtr(new UnmarshalField("unmarshal", 1)));
+  ElementSpecPtr sinkPrintS =
+    conf->addElement(ElementPtr(new Print("After Unmarshal")));
+  ElementSpecPtr discardS =
+    conf->addElement(ElementPtr(new Discard("defaultSink")));
 
   // Link everything
-  conf->hookUp(sourceS, 0, pusherS, 0);
-  conf->hookUp(pusherS, 0, slotS, 0);
-  conf->hookUp(slotS, 0, marshalS, 0);
-  conf->hookUp(marshalS, 0, routeS, 0);
-  conf->hookUp(routeS, 0, udpTxPrintS, 0);
-  conf->hookUp(udpTxPrintS, 0, udpTxS, 0);
-  
+  conf->hookUp(udpRxS, 0, udpRxPrintS, 0);
+  conf->hookUp(udpRxPrintS, 0, unmarshalS, 0);
+  conf->hookUp(unmarshalS, 0, sinkPrintS, 0);
+  conf->hookUp(sinkPrintS, 0, discardS, 0);
 
   // Put the router together
   RouterPtr router(new Router(conf, LoggerI::ALL));
@@ -116,21 +101,24 @@ sendMessages(std::string udpAddress)
 
 int main(int argc, char **argv)
 {
-  std::cout << "Simple message via UDP\n";
+  std::cout << "Simple message listener on UDP\n";
   
-  if (argc != 2) {
-    std::cerr << "Usage: udpMessage <destIP:destPort>\n";
+  if (argc != 3) {
+    std::cerr << "Usage: udpListen <myIP> <myPort>\n";
     exit(0);
   }
 
 
   std::string myAddress(argv[1]);
+  int port = atoi(argv[2]);
 
-  std::cout << "Sending messages to address "
+  std::cout << "Listening for messages to address "
             << myAddress 
+            << " and port "
+            << port
             << "\n";
 
-  sendMessages(myAddress);
+  listenForMessages(myAddress, port);
   return 0;
 }
   

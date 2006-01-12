@@ -54,20 +54,20 @@ void Value::xdr_marshal( XDR *x )
   TRC_FN;
   uint32_t tc = typeCode();
   TRC("TypeCode is " << tc);
-  xdr_uint32_t( x, &tc);
+  xdr_uint32_t(x, &tc);
   xdr_marshal_subtype(x);
 }
 
 //
 // Unmarshalling
 //
-ValuePtr Value::xdr_unmarshal( XDR *x )
+ValuePtr Value::xdr_unmarshal(XDR *x)
 {
   TRC_FN;
   uint32_t tc;
-  xdr_uint32_t( x, &tc);
+  xdr_uint32_t(x, &tc);
   TRC("TypeCode is " << tc);
-  if ( (unsigned)tc >= (sizeof(jump_tab)/sizeof(_unmarshal_fn))) {
+  if ((unsigned) tc >= (sizeof(jump_tab)/sizeof(_unmarshal_fn))) {
     warn << "Unmarshalling: Bad typecode " << tc << "\n";
     return Val_Null::mk();
   } else {

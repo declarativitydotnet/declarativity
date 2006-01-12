@@ -48,16 +48,16 @@ struct JumpTableEnt_t {
 };
 
 const char *Pel_VM::err_msgs[] = {
-  "Success",
-  "Out-of-range constant reference",
-  "Out-of-range field reference",
-  "Operator not supported for type",
-  "Stack underflow",
-  "Bad type conversion",
-  "Bad opcode",
-  "Divide by zero",
-  "Invalid Errno",
-  "Unknown Error"
+  "ER:Success",
+  "ER:Out-of-range constant reference",
+  "ER:Out-of-range field reference",
+  "ER:Operator not supported for type",
+  "ER:Stack underflow",
+  "ER:Bad type conversion",
+  "ER:Bad opcode",
+  "ER:Divide by zero",
+  "ER:Invalid Errno",
+  "ER:Unknown Error"
 };
 
 #include "pel_opcode_defns.gen.h"
