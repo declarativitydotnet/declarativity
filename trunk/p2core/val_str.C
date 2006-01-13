@@ -29,23 +29,35 @@ const opr::Oper* Val_Str::oper_ = new OperStr();
 void Val_Str::xdr_marshal_subtype( XDR *x )
 {
   const char *st = s.c_str();
-  xdr_string(x, const_cast<char **>(&st), s.length() + 1);
+  long sl = s.length();
+  xdr_long(x, &sl);
+  xdr_string(x, const_cast<char **>(&st), sl + 1);
 }
+
+/** The preallocated string buffer used for unmarshaling strings */
+const int STATIC_STRING_BUFFER = 10000;
+
 ValuePtr Val_Str::xdr_unmarshal( XDR *x )
 {
   long sl;
   xdr_long(x, &sl);
-  char *cp = reinterpret_cast<char *>(xdr_inline(x, sl));
-  if (cp) {
-    return mk(string(cp,sl));
-  } else {
-    // Yuck. 
-    string st(sl,0);
-    for( ssize_t i=0; i<sl; i++) {
-      char c;
-      xdr_char(x, &c);
-      st[i] = c;
-    }
+  // Now fetch the string itself
+  static char stringBuffer[STATIC_STRING_BUFFER];
+  
+  if (sl + 1 <= STATIC_STRING_BUFFER) {
+    // We can use the static buffer
+    xdr_string(x, (char**) &stringBuffer, sl + 1);
+    stringBuffer[sl] = 0;       // make sure it's null terminated
+    string st(stringBuffer, sl);
+    return mk(st);
+  }  else {
+    // We can't use the static buffer. We must allocate a one-shot
+    // buffer
+    char * localBuffer = new char[sl + 1];
+    xdr_string(x, &localBuffer, sl);
+    localBuffer[sl] = 0;
+    string st(localBuffer, sl);
+    delete localBuffer;
     return mk(st);
   }
 }

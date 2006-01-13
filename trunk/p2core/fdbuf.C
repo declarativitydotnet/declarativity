@@ -78,20 +78,22 @@ Fdbuf &Fdbuf::push_back(const std::string &s)
   len += s.length();
   return *this;
 }
+
 Fdbuf &Fdbuf::push_back(const char *buf, size_t size)
 {
   ensure_additional(len);
-  memcpy( data + start + len, buf, size );
+  memcpy(data + start + len, buf, size);
   len += size;
   return *this;
 }
+
 Fdbuf &Fdbuf::push_back(const char *str)
 {
   return push_back(str,strlen(str));
 }
 Fdbuf &Fdbuf::push_back(const Fdbuf &fb, size_t max_size)
 {
-  return push_back( fb.data + start, std::min(fb.len, max_size) );
+  return push_back(fb.data + start, std::min(fb.len, max_size));
 }
 
 //
@@ -128,16 +130,29 @@ ssize_t Fdbuf::sendto(int sd, ssize_t max_write, int flags,
 //
 // Extracting values
 //
-u_int32_t Fdbuf::pop_uint32()
+u_int32_t
+Fdbuf::pop_uint32()
 {
   u_int32_t v = 0;
-  if (len > sizeof(v)) {
+  if (len >= sizeof(u_int32_t)) {
     v = *((u_int32_t *)(data + start));
-    len -= sizeof(v);
-    start += sizeof(v);
+    len -= sizeof(u_int32_t);
+    start += sizeof(u_int32_t);
   }
   return v;
 }
+
+
+Fdbuf&
+Fdbuf::push_uint32(const u_int32_t l)
+{
+  ensure_additional(sizeof(u_int32_t));
+  *((u_int32_t *)(data + start + len)) = l;
+  len += sizeof(u_int32_t);
+  return *this;
+}
+
+
 bool Fdbuf::pop_bytes(char *buf, size_t sz)
 {
   if (len >= sz) {
@@ -149,10 +164,23 @@ bool Fdbuf::pop_bytes(char *buf, size_t sz)
     return false;
   }
 }
-size_t Fdbuf::pop_to_fdbuf( Fdbuf &fb, size_t to_write)
+
+
+Fdbuf&
+Fdbuf::push_bytes(const char *buf, size_t sz)
+{
+  ensure_additional(sz);
+  memcpy(data + start + len, buf, sz);
+  len += sz;
+  return *this;
+}
+
+
+size_t
+Fdbuf::pop_to_fdbuf( Fdbuf &fb, size_t to_write)
 {
   to_write = std::min(to_write, len);
-  fb.push_back( *this, to_write );
+  fb.push_back(*this, to_write);
   len -= to_write;
   start += to_write;
   return to_write;

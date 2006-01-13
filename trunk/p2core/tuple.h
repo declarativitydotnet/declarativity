@@ -74,7 +74,10 @@ public:
 
   string toString() const;
 
-  /** Strict comparison, one field at a time. */
+  /** Strict comparison, one field at a time.  Only compare user-visible
+      (i.e., enumerable via tuple[fieldNo]) fields. For instance, do not
+      compare pointers, and do not compare tuple IDs.  For tuples of
+      different field counts, compare their field counts instead.  */
   int compareTo(TuplePtr) const;
 
   /** The empty untagged tuple. */

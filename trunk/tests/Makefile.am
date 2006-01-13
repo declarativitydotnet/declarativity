@@ -14,7 +14,8 @@
 
 $(PROGRAMS): $(LDEPS)
 
-bin_PROGRAMS 	= 	values \
+bin_PROGRAMS 	= 	testMarshal \
+			values \
 			tuples \
 			benchmark \
 			fdbufs \
@@ -82,6 +83,12 @@ logger_LDADD = $(top_builddir)/elements/.libs/libp2elements.a \
 
 basicElementPlumbing_SOURCES = basicElementPlumbing.C
 basicElementPlumbing_LDADD = \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a
+
+testMarshal_SOURCES = testMarshal.C
+testMarshal_LDADD = \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/eventLoop/.libs/libeventLoop.a

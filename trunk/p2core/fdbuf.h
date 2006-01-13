@@ -142,8 +142,10 @@ public:
   
   // Member functions: stuff removing data from the head of the buffer
   u_int32_t pop_uint32();
+  Fdbuf& push_uint32(const u_int32_t);
   bool pop_bytes(char *buf, size_t len);
-  size_t pop_to_fdbuf( Fdbuf &fb, size_t len);
+  Fdbuf& push_bytes(const char *buf, size_t len);
+  size_t pop_to_fdbuf(Fdbuf &fb, size_t len);
 
   //
   // ACCESS FUNCTIONS: those that aren't quite INPUT or OUTPUT. 

@@ -34,13 +34,13 @@ void Tuple::xdr_marshal( XDR *x )
 //
 // Deserialize a Tuple from an XDR
 //
-TuplePtr Tuple::xdr_unmarshal( XDR *x ) 
+TuplePtr Tuple::xdr_unmarshal(XDR* x) 
 {
   TuplePtr t = Tuple::mk();
   assert(sizeof(size_t) == sizeof(u_int32_t));
   // Tuple size overall
   size_t sz;
-  xdr_uint32_t(x, &sz );
+  xdr_uint32_t(x, &sz);
   // Marshal the fields
   for(size_t i=0; i < sz; i++) {
     t->append(Value::xdr_unmarshal(x));
