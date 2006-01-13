@@ -34,21 +34,21 @@ void Val_Str::xdr_marshal_subtype( XDR *x )
   xdr_string(x, const_cast<char **>(&st), sl + 1);
 }
 
-/** The preallocated string buffer used for unmarshaling strings */
-const int STATIC_STRING_BUFFER = 10000;
 
 ValuePtr Val_Str::xdr_unmarshal( XDR *x )
 {
   long sl;
   xdr_long(x, &sl);
   // Now fetch the string itself
-  static char stringBuffer[STATIC_STRING_BUFFER];
-  
+  static const int STATIC_STRING_BUFFER = 10000;
+
   if (sl + 1 <= STATIC_STRING_BUFFER) {
     // We can use the static buffer
-    xdr_string(x, (char**) &stringBuffer, sl + 1);
-    stringBuffer[sl] = 0;       // make sure it's null terminated
-    string st(stringBuffer, sl);
+    static char stringBuffer[STATIC_STRING_BUFFER];
+    static char* sb = &(stringBuffer[0]);
+    xdr_string(x, &sb, sl + 1);
+    sb[sl] = 0;       // make sure it's null terminated
+    string st(sb, sl);
     return mk(st);
   }  else {
     // We can't use the static buffer. We must allocate a one-shot
