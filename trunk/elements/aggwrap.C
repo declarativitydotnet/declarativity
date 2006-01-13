@@ -224,5 +224,5 @@ void Aggwrap::agg_finalize() {
 void Aggwrap::registerGroupbyField(int field)
 { 
   _groupByFields.push_back(field); 
-  warn << " Register group by" << field << "\n";
+  warn << "Register group by " << field << "\n";
 }
