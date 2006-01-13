@@ -53,7 +53,24 @@ void Rtr_ConfGen::configureRouter(boost::shared_ptr< Udp > udp, string nodeID)
   }
 
   // iterate through all the rules and process them
-  assert(_ctxt->getRules()->size() > 0);
+  // check to see if there are any errors in parsing
+  if (_ctxt->errors.size() > 0) {
+    ostringstream oss;
+    oss << "There are " << _ctxt->errors.size() 
+	<< " error(s) accumulated in the parser.\n";
+    for (int k = 0; k < _ctxt->errors.size(); k++) {
+      OL_Context::Error* error = _ctxt->errors.at(k);
+      oss << " => Parser error at line " << error->line_num 
+	  << " with error message \"" << error->msg << "\".\n";
+    }
+    error(oss.str());
+    exit(-1);
+  }
+
+  if (_ctxt->getRules()->size() == 0) {
+    error("There are no rules to plan.\n");
+  }
+
   for (unsigned int k = 0; k < _ctxt->getRules()->size(); k++) {
     _currentRule = _ctxt->getRules()->at(k);    
     processRule(_currentRule, nodeID);
@@ -82,17 +99,35 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
   _pendingReceiverSpec.reset();
 
   // AGGREGATES
-  int aggField = r->head->aggregate();
+  int aggField = r->head->aggregate(); 
   if (aggField >= 0) {
     if (hasEventTerm(r)) {
       ostringstream oss;
       
       // get the event term
       Parse_Functor* eventTerm = getEventTerm(r);
-           
+      
+      if (eventTerm == NULL) {
+	error("Cannot find event term", r);
+      }
+      checkFunctor(eventTerm, r);
+
+      if (numFunctors(r) <= 1) {
+	ostringstream oss;
+	oss << "Check that " 
+	    << eventTerm->fn->name << " is materialized";
+	error(oss.str(), r);
+      }
+
       // there is an aggregate and involves an event, we need an agg wrap      
       Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(r->head->arg(aggField));
-      oss << "aggwrap:" << r->ruleID << ":" << nodeID;
+      if (aggExpr == NULL) {
+	ostringstream oss;
+	oss << "Invalid aggregate field " << aggField << " for rule " << r->ruleID; 
+	error(oss.str());
+      }
+
+      oss << "Aggwrap:" << r->ruleID << ":" << nodeID;
       agg_el.reset(new Aggwrap(oss.str(), aggExpr->aggName(), 
 			       aggField + 1, r->head->fn->name));
       for (int k = 0; k < r->head->args(); k++) {
@@ -101,8 +136,6 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
 	  // location in the initial event tuple, 
 	  // if not present, throw an error
 	  for (int j = 0; j < eventTerm->args(); j++) {
-	    warn << "Compare " << r->head->arg(k)->toString() 
-		 << " " << eventTerm->arg(j)->toString() << "\n";
 	    if (r->head->arg(k)->toString() == eventTerm->arg(j)->toString()) {
 	      agg_el->registerGroupbyField(j);
 	    }
@@ -143,8 +176,8 @@ void Rtr_ConfGen::processRule(OL_Context::Rule *r,
   
     // do the selections and assignment, followed by projection
     genAllSelectionAssignmentElements(r, nodeID, &curNamesTracker);    
-    std::cout << "Pending register receiver " 
-	      << _pendingRegisterReceiver << "\n";
+    //std::cout << "NetPlanner: Register receiver at demux " 
+    //	      << _pendingRegisterReceiver << "\n";
     genProjectHeadElements(r, nodeID, &curNamesTracker);
   }
     
@@ -287,7 +320,7 @@ Rtr_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
     int numElementsToReceive = ri._receivers.size(); 
     string tableName = ri._name;
 
-    std::cout << "Generate Receive: Demuxing " << tableName << " for " 
+    std::cout << "NetPlanner Receive: add demux port for " << tableName << " for " 
 	      << numElementsToReceive << " elements\n";
 
     // DupElim -> DemuxS -> Insert -> Duplicator -> Fork
@@ -471,7 +504,7 @@ Rtr_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
   for (unsigned int k = 0; k < _udpSenders.size(); k++) {
     ElementSpecPtr nextElementSpec = _udpSenders.at(k);
 
-    std::cout << "Encapsulation " << k << " pop " << _udpSendersPos.at(k) << "\n";
+    //std::cout << "Encapsulation " << k << " pop " << _udpSendersPos.at(k) << "\n";
 
     ostringstream oss;
     oss << "$"<< _udpSendersPos.at(k) << " pop swallow pop";
@@ -526,7 +559,8 @@ void Rtr_ConfGen::registerReceiverTable(OL_Context::Rule* rule,
 ///////////////// Relational Operators -> P2 Elements
 //////////////////////////////////////////////////////////////////
 
-string Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
+string Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr, 
+			    OL_Context::Rule* rule) {
   Parse_Var*  var;
   Parse_Val*  val;
   Parse_Math* math;
@@ -542,6 +576,9 @@ string Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
 
   if ((var = dynamic_cast<Parse_Var*>(expr->lhs)) != NULL) {
     int pos = names->fieldPosition(var->toString());
+    if (pos < 0) {
+      error("Pel math error " + expr->toString(), rule);
+    }
     pel << "$" << (pos+1) << " ";
   }
   else if ((val = dynamic_cast<Parse_Val*>(expr->lhs)) != NULL) {
@@ -553,18 +590,21 @@ string Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
     else if (expr->id) pel << "->u32 ->id "; 
   }
   else if ((math = dynamic_cast<Parse_Math*>(expr->lhs)) != NULL) {
-    pel << pelMath(names, math); 
+    pel << pelMath(names, math, rule); 
   }
   else if ((fn = dynamic_cast<Parse_Function*>(expr->lhs)) != NULL) {
-    pel << pelFunction(names, fn); 
+    pel << pelFunction(names, fn, rule); 
   }
-  else {
+  else {    
     // TODO: throw/signal some kind of error
-    return "MATH ERROR";
+    error("Pel Math error " + expr->toString(), rule);
   }
 
   if ((var = dynamic_cast<Parse_Var*>(expr->rhs)) != NULL) {
     int pos = names->fieldPosition(var->toString());
+    if (pos < 0) {
+      error("Pel Math error " + expr->toString(), rule);
+    }
     pel << "$" << (pos+1) << " ";
   }
   else if ((val = dynamic_cast<Parse_Val*>(expr->rhs)) != NULL) {    
@@ -576,11 +616,11 @@ string Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
     else if (expr->id) pel << "->u32 ->id "; 
   }
   else if ((math = dynamic_cast<Parse_Math*>(expr->rhs)) != NULL) {
-    pel << pelMath(names, math); 
+    pel << pelMath(names, math, rule); 
   }
   else {
     // TODO: throw/signal some kind of error
-    return "MATH ERROR";
+    error("Math error " + expr->toString(), rule);
   }
 
   switch (expr->oper) {
@@ -591,13 +631,14 @@ string Rtr_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr) {
     case Parse_Math::TIMES:   pel << "* "; break;
     case Parse_Math::DIVIDE:  pel << "/ "; break;
     case Parse_Math::MODULUS: pel << "\% "; break;
-    default: return "ERROR";
+  default: error("Pel Math error" + expr->toString(), rule);
   }
 
   return pel.str();
 }
 
-string Rtr_ConfGen::pelRange(FieldNamesTracker* names, Parse_Bool *expr) {
+string Rtr_ConfGen::pelRange(FieldNamesTracker* names, Parse_Bool *expr,
+			     OL_Context::Rule* rule) {			   
   Parse_Var*   var       = NULL;
   Parse_Val*   val       = NULL;
   Parse_Math*  math      = NULL;
@@ -606,37 +647,49 @@ string Rtr_ConfGen::pelRange(FieldNamesTracker* names, Parse_Bool *expr) {
   ostringstream pel;
   int          pos;
 
-  if (!range || !range_var) return "ERROR";
+  if (!range || !range_var) {
+    error("Math range error " + expr->toString(), rule);
+  }
 
   pos = names->fieldPosition(range_var->toString());
-  if (pos < 0) return "ERROR";
+  if (pos < 0) {
+    error("Math range error " + expr->toString(), rule);
+  }
   pel << "$" << (pos + 1) << " ";
 
   if ((var = dynamic_cast<Parse_Var*>(range->lhs)) != NULL) {
     pos = names->fieldPosition(var->toString());
-    if (pos < 0) return "ERROR";
+    if (pos < 0) {
+      error("Math range error " + expr->toString(), rule);
+    }
     pel << "$" << (pos + 1) << " ";
   }
   else if ((val = dynamic_cast<Parse_Val*>(range->lhs)) != NULL) {
     pel << val->toString() << " ";
   }
   else if ((math = dynamic_cast<Parse_Math*>(range->lhs)) != NULL) {
-   pel << pelMath(names, math);
+   pel << pelMath(names, math, rule);
   }
-  else return "ERROR";
+  else {
+    error("Math range error " + expr->toString(), rule);
+  }
 
   if ((var = dynamic_cast<Parse_Var*>(range->rhs)) != NULL) {
     pos = names->fieldPosition(var->toString());
-    if (pos < 0) return "ERROR";
+    if (pos < 0) {
+      error("Math range error " + expr->toString(), rule);
+    }
     pel << "$" << (pos + 1) << " ";
   }
   else if ((val = dynamic_cast<Parse_Val*>(range->rhs)) != NULL) {
     pel << val->toString() << " ";
   }
   else if ((math = dynamic_cast<Parse_Math*>(range->rhs)) != NULL) {
-   pel << pelMath(names, math);
+   pel << pelMath(names, math, rule);
   }
-  else return "ERROR";
+  else {
+    error("Math range error " + expr->toString(), rule);
+  }
 
   switch (range->type) {
     case Parse_Range::RANGEOO: pel << "() "; break;
@@ -648,7 +701,8 @@ string Rtr_ConfGen::pelRange(FieldNamesTracker* names, Parse_Bool *expr) {
   return pel.str();
 }
 
-string Rtr_ConfGen::pelFunction(FieldNamesTracker* names, Parse_Function *expr) {
+string Rtr_ConfGen::pelFunction(FieldNamesTracker* names, Parse_Function *expr, 
+				OL_Context::Rule* rule) {
   ostringstream pel;
 
   if (expr->name() == "f_coinFlip") {
@@ -661,12 +715,14 @@ string Rtr_ConfGen::pelFunction(FieldNamesTracker* names, Parse_Function *expr) 
   else if (expr->name() == "f_now") {
     pel << "now "; 
   }
-  else return "ERROR: unknown function name.";
-
+  else {
+    error("Pel function error " + expr->toString(), rule);
+  }
   return pel.str();
 }
 
-string Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
+string Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr,
+			    OL_Context::Rule* rule) {
   Parse_Var*      var = NULL;
   Parse_Val*      val = NULL;
   Parse_Function* fn  = NULL;
@@ -674,11 +730,14 @@ string Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
   Parse_Bool*     b   = NULL;
   ostringstream   pel;  
 
-  if (expr->oper == Parse_Bool::RANGE) return pelRange(names, expr);
+  if (expr->oper == Parse_Bool::RANGE) return pelRange(names, expr, rule);
 
   bool strCompare = false;
   if ((var = dynamic_cast<Parse_Var*>(expr->lhs)) != NULL) {
     int pos = names->fieldPosition(var->toString());
+    if (pos < 0) {
+      error("Pel bool error " + expr->toString(), rule);
+    }
     pel << "$" << (pos+1) << " ";
   }
   else if ((val = dynamic_cast<Parse_Val*>(expr->lhs)) != NULL) {
@@ -691,22 +750,25 @@ string Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
     }
   }
   else if ((b = dynamic_cast<Parse_Bool*>(expr->lhs)) != NULL) {
-    pel << pelBool(names, b); 
+    pel << pelBool(names, b, rule); 
   }
   else if ((m = dynamic_cast<Parse_Math*>(expr->lhs)) != NULL) {
-    pel << pelMath(names, m); 
+    pel << pelMath(names, m, rule); 
   }
   else if ((fn = dynamic_cast<Parse_Function*>(expr->lhs)) != NULL) {
-      pel << pelFunction(names, fn); 
+      pel << pelFunction(names, fn, rule); 
   }
   else {
     // TODO: throw/signal some kind of error
-    return "UNKNOWN BOOL OPERAND ERROR";
+    error("Unknown bool operand error " + expr->toString(), rule);
   }
 
   if (expr->rhs != NULL) {
     if ((var = dynamic_cast<Parse_Var*>(expr->rhs)) != NULL) {
       int pos = names->fieldPosition(var->toString());
+      if (pos < 0) {
+	error("Pel bool error " + expr->toString(), rule);
+      }
       pel << "$" << (pos+1) << " ";
     }
     else if ((val = dynamic_cast<Parse_Val*>(expr->rhs)) != NULL) {      
@@ -719,17 +781,17 @@ string Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
       }
     }
     else if ((b = dynamic_cast<Parse_Bool*>(expr->rhs)) != NULL) {
-      pel << pelBool(names, b); 
+      pel << pelBool(names, b, rule); 
     }
     else if ((m = dynamic_cast<Parse_Math*>(expr->rhs)) != NULL) {
-      pel << pelMath(names, m); 
+      pel << pelMath(names, m, rule); 
     }
     else if ((fn = dynamic_cast<Parse_Function*>(expr->rhs)) != NULL) {
-      pel << pelFunction(names, fn); 
+      pel << pelFunction(names, fn, rule); 
     }
     else {
       // TODO: throw/signal some kind of error
-      return "UNKNOWN BOOL OPERAND ERROR";
+      error("Unknown bool operand error " + expr->toString(), rule);
     }
   }
 
@@ -743,7 +805,7 @@ string Rtr_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr) {
     case Parse_Bool::LT:  pel << "< "; break;
     case Parse_Bool::LTE: pel << "<= "; break;
     case Parse_Bool::GTE: pel << ">= "; break;
-    default: return "ERROR";
+    default: error("Unknown bool operand error " + expr->toString(), rule);
     }
   return pel.str();
 }
@@ -754,7 +816,7 @@ Rtr_ConfGen::pelSelect(OL_Context::Rule* rule, FieldNamesTracker* names,
 		       string nodeID, int selectionID)
 {
   ostringstream sPel;
-  sPel << pelBool(names, expr->select) << "not ifstop ";
+  sPel << pelBool(names, expr->select, rule) << "not ifstop ";
   
   // put in the old fields (+1 since we have to include the table name)
   for (uint k = 0; k < names->fieldNames.size() + 1; k++) {
@@ -764,11 +826,13 @@ Rtr_ConfGen::pelSelect(OL_Context::Rule* rule, FieldNamesTracker* names,
   debugRule(rule, "Generate selection functions for " + sPel.str() +
                   " " + names->toString() + "\n");
  
-  ElementSpecPtr sPelTrans =
-    _conf->addElement(ElementPtr(new PelTransform("Selection:" 
-						     + rule->ruleID + ":" + ":" 
-						     + nodeID, sPel.str())));
+  ostringstream oss;
+  oss << "Selection:" << rule->ruleID << ":" << selectionID << ":"
+      << nodeID;
 
+  ElementSpecPtr sPelTrans =
+    _conf->addElement(ElementPtr(new PelTransform(oss.str(), sPel.str())));
+  
   if (_isPeriodic == false &&_pendingRegisterReceiver) {
     _pendingReceiverSpec = sPelTrans;
     _currentElementChain.push_back(sPelTrans); // first element in chain
@@ -821,11 +885,11 @@ void Rtr_ConfGen::pelAssign(OL_Context::Rule* rule,
   if (expr->assign == Parse_Expr::Now)
     pelAssign << "now "; 
   else if ((b = dynamic_cast<Parse_Bool*>(expr->assign)) != NULL)
-    pelAssign << pelBool(names, b);
+    pelAssign << pelBool(names, b, rule);
   else if ((m = dynamic_cast<Parse_Math*>(expr->assign)) != NULL)
-    pelAssign << pelMath(names, m);
+    pelAssign << pelMath(names, m, rule);
   else if ((f = dynamic_cast<Parse_Function*>(expr->assign)) != NULL)
-    pelAssign << pelFunction(names, f);
+    pelAssign << pelFunction(names, f, rule);
   else if ((var=dynamic_cast<Parse_Var*>(expr->assign)) != NULL && 
            names->fieldPosition(var->toString()) >= 0)                              
     pelAssign << "$" << (names->fieldPosition(var->toString())+1) << " ";
@@ -836,7 +900,7 @@ void Rtr_ConfGen::pelAssign(OL_Context::Rule* rule,
       pelAssign << val->toString() << " ";
     }
   } else {
-    std::cerr << "Rtr_ConfGen ASSIGN ERROR!\n";
+    error("Pel Assign error " + expr->toString(), rule);
     assert(0);
   }
    
@@ -853,11 +917,12 @@ void Rtr_ConfGen::pelAssign(OL_Context::Rule* rule,
   debugRule(rule, "Generate assignments for " + a->toString() + " " 
 	    + rule->ruleID + " " + pel.str() + " " 
 	    + names->toString() + "\n");
-  
+
+  ostringstream oss1;
+  oss1 << "Assignment:" << rule->ruleID << ":" << assignID << ":" << nodeID;
   ElementSpecPtr assignPelTrans =
-    _conf->addElement(ElementPtr(new PelTransform("Assignment:"+rule->ruleID+":" 
-						     + ":" + nodeID, 
-						     pel.str())));
+    _conf->addElement(ElementPtr(new PelTransform(oss1.str(),
+						  pel.str())));
 
   if (_isPeriodic == false &&_pendingRegisterReceiver) {
     _pendingReceiverSpec = assignPelTrans;
@@ -889,23 +954,46 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
     Parse_Var* parse_var = dynamic_cast<Parse_Var*>(pf->arg(k));
     int pos = -1;
     if (parse_var != NULL) {
-      if (parse_var->toString() == pf->fn->loc) {
+      //warn << "Check " << parse_var->toString() << " " << pf->fn->loc << "\n";
+      if (parse_var->toString() == pf->fn->loc) {	
 	locationIndex = k;
       }
       // care only about vars    
       pos = curNamesTracker->fieldPosition(parse_var->toString());    
+      if (pos == -1) {
+	error("Head predicate \"" + pf->fn->name 
+	      + "\" has invalid variable " + parse_var->toString(), curRule);
+      } 
     }
     if (k == pf->aggregate()) {
       // as input into aggwrap
       Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(curRule->head->arg(k));
+      //warn << "Check " << aggExpr->v->toString() << " " << pf->fn->loc << "\n";
+      if (aggExpr->v->toString() == pf->fn->loc) {	
+	locationIndex = k;
+      }
       if (aggExpr->aggName() != "count") {
 	pos = curNamesTracker->fieldPosition(aggExpr->v->toString());
+	if (pos == -1) {
+	  error("Head predicate \"" + pf->fn->name 
+		+ "\" has invalid variable " + aggExpr->v->toString(), curRule);
+	} 
       }
     }
-    if (pos == -1) { continue; }    
+    if (pos == -1) { 
+      continue; 
+    }    
     indices.push_back(pos + 1);
   }
-  if (locationIndex == -1) { locationIndex = 0; } // default
+
+  if (locationIndex == -1 && pf->fn->loc != "") {
+    error("Head predicate \"" + pf->fn->name + "\" has invalid location specifier " 
+	  + pf->fn->loc, curRule);
+  }
+						  
+  if (locationIndex == -1) { 
+    locationIndex = 0;     
+  } // default
 
   ostringstream pelTransformStrbuf;
   pelTransformStrbuf << "\"" << pf->fn->name << "\" pop";
@@ -929,9 +1017,11 @@ void Rtr_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
   }
 
   string pelTransformStr = pelTransformStrbuf.str();
-  debugRule(curRule, "Project head " + curNamesTracker->toString() 
-			 + " " + pelTransformStr + " " + 
-			 pf->fn->loc + "\n");
+  ostringstream oss;
+  oss << "Project head " << curNamesTracker->toString() 
+      << " " << pelTransformStr + " " << locationIndex << " " <<
+    pf->fn->loc << "\n";
+  debugRule(curRule, oss.str());
  
   _currentPositionIndex = locationIndex + 1;
   // project, and make sure first field after table name has the address 
@@ -974,15 +1064,17 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
   string baseTableName;
   if (pf != NULL) {
     baseTableName = pf->fn->name;
+    checkFunctor(pf, curRule);
   }
   if (pr != NULL) {
     baseTableName = "range" + curRule->ruleID;
   }
+
   
 
   if (leftJoinKeys.size() == 0 || rightJoinKeys.size() == 0) {
-    std::cerr << "No matching join keys " << eventFunctor->fn->name << " " << 
-      baseTableName << " " << curRule->ruleID << "\n";
+    error("No matching join keys " + eventFunctor->fn->name + " " + 
+	  baseTableName + " ", curRule);
   }
 
   // add one to offset for table name. Join the first matching key
@@ -995,26 +1087,33 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
   // Check that the rightJoinKey is the primary key
   OL_Context::TableInfo* tableInfo 
     = _ctxt->getTableInfos()->find(baseTableName)->second;
+  ostringstream oss;
+  oss << "NoNull:" << curRule->ruleID << ":" << joinOrder << ":" << nodeID;
+
   ElementSpecPtr noNull 
-    = _conf->addElement(ElementPtr(new NoNullField("NoNull:", 1)));
+    = _conf->addElement(ElementPtr(new NoNullField(oss.str(), 1)));
 
   ElementSpecPtr last_el(new ElementSpec(ElementPtr(new Slot("dummySlotProbeElements"))));
  
   if (tableInfo->primaryKeys.size() == 1 && 
       tableInfo->primaryKeys.at(0) == rightJoinKey) {
     // use a unique index
+    ostringstream oss;
+    oss << "UniqueLookup:" << curRule->ruleID << ":" << joinOrder << ":" << nodeID; 
     last_el =
-      _conf->addElement(ElementPtr(new UniqueLookup("UniqueLookup:" + nodeID, 
-				       probeTable,
-				       leftJoinKey, 
-				       rightJoinKey, 
-				       comp_cb)));
+      _conf->addElement(ElementPtr(new UniqueLookup(oss.str(),
+						    probeTable,
+						    leftJoinKey, 
+						    rightJoinKey, 
+						    comp_cb)));
   } else {
+    ostringstream oss;
+    oss << "MultLookup:" << curRule->ruleID << ":" << joinOrder << ":" << nodeID; 
     last_el =
-      _conf->addElement(ElementPtr(new MultLookup("MultLookup:" + nodeID, 
-						     probeTable,
-						     leftJoinKey, 
-						     rightJoinKey, comp_cb)));
+      _conf->addElement(ElementPtr(new MultLookup(oss.str(),
+						  probeTable,
+						  leftJoinKey, 
+						  rightJoinKey, comp_cb)));
     
     addMultTableIndex(probeTable, rightJoinKey, nodeID);
   }
@@ -1044,8 +1143,14 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 		 << rightField+1 << " field ==s not ifstop $0 pop $1 pop";
 
     debugRule(curRule, "Join selections " + selectionPel.str() + "\n");
+
+    ostringstream oss;
+    oss << "JoinSelections:" << curRule->ruleID << ":"
+	<< joinOrder << ":"
+	<< k << ":" << nodeID;
+    
     ElementSpecPtr joinSelections =
-      _conf->addElement(ElementPtr(new PelTransform("JoinSelections:"+nodeID, 
+      _conf->addElement(ElementPtr(new PelTransform(oss.str(), 
 				                    selectionPel.str())));    
     hookUp(joinSelections, 0);
   }
@@ -1073,10 +1178,13 @@ void Rtr_ConfGen::genProbeElements(OL_Context::Rule* curRule,
   }
 
   string pelProjectStr = pelProject.str();
+  ostringstream oss1; 
+  oss1 << "JoinPelTransform:"
+      << curRule->ruleID << ":"
+      << joinOrder << ":" << nodeID;
+
   ElementSpecPtr transS 
-    = _conf->addElement(ElementPtr(new PelTransform("JoinPelTransform:" + 
-                                                    curRule->ruleID + ":" +
-				                     ":" + nodeID, pelProjectStr)));
+    = _conf->addElement(ElementPtr(new PelTransform(oss1.str(), pelProjectStr)));
 
   delete baseProbeNames;
 
@@ -1094,9 +1202,11 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Rule* curRule,
   Parse_Functor* eventFunctor;
   std::vector<Parse_Term*> baseFunctors;
   bool eventFound = false;
+
   for (unsigned int k = 0; k < curRule->terms.size(); k++) {
     Parse_Functor* pf = dynamic_cast<Parse_Functor*>(curRule->terms.at(k));
     if (pf != NULL) {
+      checkFunctor(pf, curRule);
       string functorName = pf->fn->name;    
       OL_Context::TableInfoMap::iterator _iterator 
 	= _ctxt->getTableInfos()->find(functorName);
@@ -1109,6 +1219,9 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Rule* curRule,
 	  registerReceiverTable(curRule, functorName); 
 	  _pendingRegisterReceiver = true;
 	  _pendingReceiverTable = functorName;
+	}
+	if (eventFound == true) {
+	  error("There can be only one event predicate in a rule. Check all the predicates ", curRule);
 	}
 	eventFunctor = pf;
 	eventFound = true;
@@ -1151,7 +1264,7 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Rule* curRule,
     }
   }
   if (_isPeriodic == false) {
-    std:: cout << "Event term " << eventFunctor->fn->name << "\n";
+    debugRule(curRule, "Event term " + eventFunctor->fn->name + "\n");
     // for all the base tuples, use the join to probe. 
     // keep track also the cur ordering of variables
     namesTracker->initialize(eventFunctor);
@@ -1171,14 +1284,23 @@ void Rtr_ConfGen::genJoinElements(OL_Context::Rule* curRule,
     
     FieldNamesTracker* baseProbeNames 
       = new FieldNamesTracker(baseFunctors.at(k));
+    
+    if (eventFunctor->fn->loc != pf->fn->loc) {
+      error("Event " + eventFunctor->fn->name + "@" + eventFunctor->fn->loc + 
+	    " and predicate " + pf->fn->name + "@" + pf->fn->loc  
+	    + " should have the same location specifier", curRule);
+    }
+
     genProbeElements(curRule, eventFunctor, baseFunctors.at(k), 
 		     nodeID, namesTracker, baseProbeNames, k, comp_cb);
 
     if (agg_el || baseFunctors.size() - 1 != k) {
       // Change from pull to push
+      ostringstream oss;
+      oss << "JoinPullPush:" << curRule->ruleID << ":"
+	  << nodeID << ":" << k;
       ElementSpecPtr pullPush =
-	_conf->addElement(ElementPtr(new TimedPullPush("JoinPullPush:"+curRule->ruleID+":"+
-					               nodeID, 0)));
+	_conf->addElement(ElementPtr(new TimedPullPush(oss.str(), 0)));
       hookUp(pullPush, 0);
     }
   }
@@ -1217,6 +1339,7 @@ Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
       = dynamic_cast<Parse_Functor* > (currentRule->terms.at(j));    
     if (currentFunctor == NULL) { continue; }
     baseFunctor = currentFunctor;
+    checkFunctor(baseFunctor, currentRule);
   }
 
   baseNamesTracker->initialize(baseFunctor);
@@ -1233,12 +1356,6 @@ Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
     if (pv == NULL) { continue; }
     int pos = baseNamesTracker->fieldPosition(pv->toString());
     if (k != -1 && k != pf->aggregate()) {
-/*
-      debugRule(currentRule, 
-		str(strbuf() << pos << " " << 
-		    currentRule->head->aggregate() << " " << 
-		    baseNamesTracker->fieldNames.at(pos) << "\n"));
-*/
       groupByFields.push_back((uint) pos + 1);
       aggregateNamesTracker->fieldNames.push_back(baseNamesTracker->fieldNames.at(pos));
     }
@@ -1267,13 +1384,6 @@ Rtr_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
     aggFieldBaseTable = groupByFields.at(0);
     af = &Table::AGG_COUNT;
   } 
-
-/*
-  debugRule(currentRule, str(strbuf() << aggregateNamesTracker->toString() 
-			     << " " << baseFunctor->fn->name << 
-			     " " << aggFieldBaseTable << " " 
-			     << pf->aggregate() << " " << aggVarname << "\n"));
-*/
   
   // get the table, create the index
   TablePtr aggTable = getTableByName(nodeID, baseFunctor->fn->name);  
@@ -1322,7 +1432,7 @@ void Rtr_ConfGen::genSingleTermElement(OL_Context::Rule* curRule,
 					     + curRule->ruleID + ":" 
 					     + nodeID)));
 
-  std::cout << "Number of terms " << curRule->terms.size() << "\n";
+  //std::cout << "Number of terms " << curRule->terms.size() << "\n";
   for (unsigned int j = 0; j < curRule->terms.size(); j++) {
     // skip those that we already decide is going to participate in     
     Parse_Term* curTerm = curRule->terms.at(j);    
@@ -1429,10 +1539,10 @@ void Rtr_ConfGen::genPrintWatchElement(string header)
 // preload some data.
 TablePtr Rtr_ConfGen::getTableByName(string nodeID, string tableName)
 {
-  std::cout << "Get table " << nodeID << ":" << tableName << "\n";
+  //std::cout << "Get table " << nodeID << ":" << tableName << "\n";
   TableMap::iterator _iterator = _tables.find(nodeID + ":" + tableName);
   if (_iterator == _tables.end()) { 
-    std::cerr << "Table " << nodeID << ":" << tableName << " not found\n";
+    error("Table " + nodeID + ":" + tableName + " not found\n");
   }
   return _iterator->second;
 }
@@ -1483,6 +1593,7 @@ void Rtr_ConfGen::createTables(string nodeID)
     std::cout << "Insert tuple " << tr->toString() << " into table " 
 	      << vr->toString() << " " << tr->size() << "\n";
     TablePtr tableToInsert = getTableByName(nodeID, vr->toString());     
+    
     tableToInsert->insert(tr);
     std::cout << "Tuple inserted: " << tr->toString() 
 	      << " into table " << vr->toString() 
@@ -1584,6 +1695,7 @@ bool Rtr_ConfGen::hasPeriodicTerm(OL_Context::Rule* curRule)
   for (uint k = 0; k < curRule->terms.size(); k++) {
     Parse_Functor* pf = dynamic_cast<Parse_Functor*>(curRule->terms.at(k));
     if (pf == NULL) { continue;}
+    checkFunctor(pf, curRule);
     string termName = pf->fn->name;
     if (termName == "periodic") {
       return true;
@@ -1591,6 +1703,7 @@ bool Rtr_ConfGen::hasPeriodicTerm(OL_Context::Rule* curRule)
   }
   return false;
 }
+
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -1685,4 +1798,40 @@ string Rtr_ConfGen::FieldNamesTracker::toString()
   }
   toRet << ">";
   return toRet.str();
+}
+
+void Rtr_ConfGen::error(string msg)
+{
+  std::cerr << "PLANNER ERROR: " << msg << "\n";
+  exit(-1);
+}
+
+void Rtr_ConfGen::error(string msg, 
+			OL_Context::Rule* rule)
+{
+  std::cerr << "PLANNER ERROR: " << msg 
+	    << " for rule " << rule->ruleID << ". Planner exits.\n";
+  exit(-1);
+}
+
+void Rtr_ConfGen::checkFunctor(Parse_Functor* functor, OL_Context::Rule* rule)
+{
+  if (functor->fn->loc == "") {
+    error("\"" + functor->fn->name + "\" lacks a location specifier", rule);
+  }
+  if (functor->fn->name == "periodic") { 
+    if (functor->args() < 3) {
+      error("Make sure periodic predicate has three fields (NI,E,duration)", rule);
+    }
+    return; 
+  }
+  bool validLoc = false;
+  for (int k = 0; k < functor->args(); k++) {
+    if (functor->arg(k)->toString() == functor->fn->loc) {
+      validLoc = true;
+    }
+  }
+  if (validLoc == false) {
+    error("Invalid location specifier in predicate " + functor->toString(), rule);
+  }
 }

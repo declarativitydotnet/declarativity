@@ -190,7 +190,7 @@ public:
 class Parse_Functor : public Parse_Term {
 public:
   Parse_Functor(Parse_FunctorName *f, Parse_ExprList *a) 
-    : fn(f), args_(a) {};
+    : fn(f), args_(a) {}
   virtual ~Parse_Functor() {delete fn; delete args_; };
 
   virtual string toString();

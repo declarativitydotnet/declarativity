@@ -186,16 +186,20 @@ private:
 
   // Pel Generation functions
   string pelRange(FieldNamesTracker* names, 
-	       Parse_Bool *expr);
+		  Parse_Bool *expr,
+		  OL_Context::Rule* rule);		  
 
   string pelMath(FieldNamesTracker* names, 
-	      Parse_Math *expr);
+		 Parse_Math *expr,
+		 OL_Context::Rule* rule);
 
   string pelBool(FieldNamesTracker* names, 
-	      Parse_Bool *expr);
+		 Parse_Bool *expr,
+		 OL_Context::Rule* rule);
 
   string pelFunction(FieldNamesTracker* names, 
-		  Parse_Function *expr);
+		     Parse_Function *expr,
+		     OL_Context::Rule* rule);
 
   void pelSelect(OL_Context::Rule* rule, 
 		 FieldNamesTracker *names, 
@@ -232,9 +236,12 @@ private:
 
   void debugRule(OL_Context::Rule* curRule, 
 		 string debugMsg) { 
-    std::cout << curRule->ruleID << ": " << debugMsg; 
+    std::cout << "Planner debug rule (" << curRule->ruleID<< "): " << debugMsg; 
   }
 
+  void error(string msg);
+  void error(string msg, OL_Context::Rule* rule);
+  void checkFunctor(Parse_Functor* baseFunctor, OL_Context::Rule* rule);
 
   // convince placeholder to figure out the cur fields in a tuple in flight
   class FieldNamesTracker {
