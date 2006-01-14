@@ -105,6 +105,7 @@ AC_CONFIG_FILES([
 	elements/Makefile 
 	net/Makefile 
 	tests/Makefile 
+	unitTests/Makefile 
 	phid/Makefile
 	overlog/Makefile 
 	planner/Makefile ])
