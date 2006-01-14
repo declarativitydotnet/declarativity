@@ -30,7 +30,6 @@ bin_PROGRAMS 	= 	values \
 			simple_lookup \
 			lookupGenerator \
 			basicelements \
-			basicElementPlumbing \
 			scheduling \
 			demultiplex \
 			join \
@@ -78,13 +77,6 @@ logger_SOURCES  = logger.C
 logger_LDADD = $(top_builddir)/elements/.libs/libp2elements.a \
 		$(top_builddir)/p2core/.libs/libp2core.a \
 		$(top_builddir)/eventLoop/.libs/libeventLoop.a
-
-
-basicElementPlumbing_SOURCES = basicElementPlumbing.C
-basicElementPlumbing_LDADD = \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a
 
 
 scheduling_SOURCES = scheduling.C
