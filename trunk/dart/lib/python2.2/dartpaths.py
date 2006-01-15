@@ -6,7 +6,8 @@ import os
 DART_RPMS         = [ "/proj/P2/rpms/authd-0.2.1-1.i386.rpm",
                       "/proj/P2/rpms/gexec-0.3.5-1.i386.rpm",
                       "/proj/P2/rpms/libe-0.2.2-1.i386.rpm",
-                      "/proj/P2/rpms/pcp-0.3.2-1.i386.rpm" ]
+                      "/proj/P2/rpms/pcp-0.3.2-1.i386.rpm",
+                      "/proj/P2/rpms/gexec-pcp-fix-1-1.i386.rpm" ]
 DART_KEYS_TARFILE   = "/proj/P2/tarfiles/authkeys.tar.gz"
 
 DART_SETUP_SCRIPT   = "/proj/P2/setup"
