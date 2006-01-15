@@ -15,6 +15,8 @@
 #include "val_uint32.h"
 #include "val_double.h"
 #include "val_str.h"
+#include "val_tuple.h"
+#include "tupleseq.h"
 #include "loop.h"
 
 /////////////////////////////////////////////////////////////////////
@@ -100,8 +102,9 @@ CCRx::CCRx(string name, double rwnd, int seq, int src)
 TuplePtr CCRx::simple_action(TuplePtr p) 
 {
   /* Get source location, sequence number and ack tuple, signal my window also */
-  SeqNum seq = Val_UInt64::cast((*p)[seq_field_]);
-  string src = Val_Str::cast((*p)[src_field_]);
+  TuplePtr st  = Val_Tuple::cast((*p)[seq_field_]);
+  SeqNum seq   = Val_UInt64::cast((*st)[SEQ_FIELD]);
+  string src   = Val_Str::cast((*p)[src_field_]);
   TuplePtr ack = Tuple::mk();
   ack->append(Val_Str::mk(src));
   ack->append(Val_UInt64::mk(seq));
@@ -139,9 +142,9 @@ int CCRx::push(int port, TuplePtr tp, b_cbv cb)
   if (port == 1) {
     try {
       if (Val_Str::cast((*tp)[0]) == "RWND")
-        rwnd_ = Val_Double::cast((*tp)[1]);
+        rwnd_ = Val_Double::cast((*tp)[SEQ_FIELD]);
     }
-    catch (Value::TypeError *e) {
+    catch (Value::TypeError e) {
       log(LoggerI::WARN, 0, "CCRx::push TypeError Thrown on port 1"); 
     } 
     return int(rwnd_);
@@ -204,6 +207,7 @@ int CCTx::push(int port, TuplePtr tp, b_cbv cb)
     SeqNum seq  = Val_UInt64::cast((*tp)[ack_seq_field_]);	// Sequence number
     //TODO: Use timestamps to track the latest rwnd value.
     rwnd_ = Val_Double::cast((*tp)[ack_rwnd_field_]);		// Receiver window
+    std::cerr << " RECEIVED: " << tp->toString() << std::endl;
 
     add_rtt_meas(dealloc(seq));
     break;
@@ -228,8 +232,9 @@ TuplePtr CCTx::pull(int port, b_cbv cb)
   
     // All retransmit packets go first.
     if (!rtran_q_.empty()) {
-      OTuple *otp = rtran_q_.front();
-      SeqNum  seq = Val_UInt64::cast((*otp->tp_)[seq_field_]);	// Sequence number
+      OTuple    *otp = rtran_q_.front();
+      TuplePtr  seq_tuple = Val_Tuple::cast((*otp->tp_)[seq_field_]);	// Tuple Sequence number
+      SeqNum    seq       = Val_UInt64::cast((*seq_tuple)[SEQ_FIELD]);		// Sequence number
 
       rtran_q_.pop_front();
       map(seq, otp);
@@ -237,8 +242,9 @@ TuplePtr CCTx::pull(int port, b_cbv cb)
       return otp->tp_;
     }
     else if (!send_q_.empty()) {
-      OTuple *otp = new OTuple(send_q_.front());
-      SeqNum  seq = Val_UInt64::cast((*otp->tp_)[seq_field_]);	// Sequence number
+      OTuple    *otp      = new OTuple(send_q_.front());
+      TuplePtr  seq_tuple = Val_Tuple::cast((*otp->tp_)[seq_field_]);	// Tuple Sequence number
+      SeqNum    seq       = Val_UInt64::cast((*seq_tuple)[SEQ_FIELD]);		// Sequence number
   
       send_q_.pop_front();
       map(seq, otp);
@@ -305,7 +311,8 @@ int32_t CCTx::dealloc(SeqNum seq)
  */
 void CCTx::timeout_cb(OTuple *otp)
 {
-  SeqNum seq = Val_UInt64::cast((*otp->tp_)[seq_field_]);
+  TuplePtr tp  = Val_Tuple::cast((*otp->tp_)[seq_field_]);
+  SeqNum   seq = Val_UInt64::cast((*tp)[SEQ_FIELD]);
   if (otp->wnd_ == true) {
     // Update window sizes and enter slow start
     timeout(); 		

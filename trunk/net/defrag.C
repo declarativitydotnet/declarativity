@@ -14,7 +14,6 @@
 #include "val_opaque.h"
 #include "tupleseq.h"
 
-#define SEQ_FIELD 0
 #define PLD_FIELD 1
 
 Defrag::Defrag(string name)
@@ -83,8 +82,8 @@ TuplePtr Defrag::pull(int port, b_cbv cb)
 
 void Defrag::defragment(TuplePtr t)
 {
-  uint64_t seq_num = SEQ_NUM(Val_UInt64::cast((*t)[SEQ_FIELD]));
-  int      offset  = OFFSET(Val_UInt64::cast((*t)[SEQ_FIELD]));
+  uint64_t seq_num = Val_UInt64::cast((*t)[SEQ_FIELD]);
+  int      offset  = Val_UInt64::cast((*t)[SEQ_FIELD]);
   uint32_t chunks  = Val_UInt32::cast(t->tag(NUM_CHUNKS));
 
   if (chunks == 1) {
@@ -92,7 +91,7 @@ void Defrag::defragment(TuplePtr t)
   }
   else {
     for (FragMap::iterator iter = fragments_.find(seq_num); iter != fragments_.end(); iter++) {
-      if (OFFSET(Val_UInt64::cast((*iter->second)[SEQ_FIELD])) == offset) {
+      if (Val_UInt64::cast((*iter->second)[SEQ_FIELD]) == offset) {
         ELEM_INFO( "defragment: duplicate offset");
         return;
       }
@@ -106,7 +105,7 @@ void Defrag::defragment(TuplePtr t)
       for (uint i = 0; i < chunks; i++) {
         TuplePtr p;
         for (FragMap::iterator iter = fragments_.find(seq_num); iter != fragments_.end(); iter++) {
-          if (OFFSET(Val_UInt64::cast((*iter->second)[SEQ_FIELD])) == (int) i) {
+          if (Val_UInt64::cast((*iter->second)[SEQ_FIELD]) == (int) i) {
             p = iter->second;
             fragments_.erase(iter);
             break;
@@ -117,7 +116,7 @@ void Defrag::defragment(TuplePtr t)
         fb->push_back( payload->cstr(), payload->length());
       }
       TuplePtr defraged = Tuple::mk();
-      defraged->append(Val_UInt64::mk(MAKE_SEQ(seq_num, 0)));
+      defraged->append(Val_UInt64::mk(seq_num));
       defraged->append(Val_Opaque::mk(fb));
       tuples_.push_back(defraged); 
     }

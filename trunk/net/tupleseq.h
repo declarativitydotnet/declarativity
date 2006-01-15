@@ -13,9 +13,7 @@
 #include "element.h"
 #include "val_uint64.h"
 
-#define MAKE_SEQ(s, o) (((s) << 4) | ((o) & 0xF))
-#define SEQ_NUM(n)     ((n) >> 4)
-#define OFFSET(n)      ((int)((n) & 0xF))
+#define SEQ_FIELD 1
 
 class Sequence : public Element {
 public:

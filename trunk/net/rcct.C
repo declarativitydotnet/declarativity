@@ -116,7 +116,7 @@ int RateCCT::push(int port, TuplePtr tp, b_cbv cb)
       return 1;
     }
   }
-  catch (Value::TypeError& e) { } 
+  catch (Value::TypeError e) { } 
 
   assert(output(1)->push(tp, 0)); // Pass data tuple through
   return 1;
@@ -207,7 +207,7 @@ REMOVABLE_INLINE TuplePtr RateCCT::package(TuplePtr tp)
         if (t->size() == 3) cid = Val_Str::cast((*t)[2]);
       }
     }
-    catch (Value::TypeError& e) { } 
+    catch (Value::TypeError e) { } 
   }
    
   MAP(seq);

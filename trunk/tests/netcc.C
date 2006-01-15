@@ -140,7 +140,11 @@ void testUdpCC(Router::ConfigurationPtr conf)
   router->activate();
 
   // Run the router
-  eventLoop();
+  try {
+    eventLoop();
+  } catch(Value::TypeError& e) {
+    std::cout << "TYPE ERROR: real type - " << e.realType << ", to type - " << e.toType << std::endl;
+  }
 }
 
 int main(int argc, char **argv)

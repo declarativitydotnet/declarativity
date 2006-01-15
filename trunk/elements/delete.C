@@ -38,7 +38,9 @@ Delete::push(int port, TuplePtr t, b_cbv cb)
     return 1;
   } else {
     // Erase the entry by that key
-    _table->remove(_indexFieldNo, key);
+    std::vector<unsigned> vkey;
+    vkey.push_back(_indexFieldNo);
+    _table->remove(vkey, t);
 
     return 1;
   }

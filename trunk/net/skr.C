@@ -38,7 +38,7 @@ int SimpleKeyRouter::push(int port, TuplePtr tp, b_cbv cb) {
         failure = true;
       }
     }
-    catch (Value::TypeError& e) { } 
+    catch (Value::TypeError e) { } 
 
     ValuePtr k = getKey(tp);
     if (k != NULL && !k->equals(my_id_)) { 
@@ -117,7 +117,7 @@ REMOVABLE_INLINE TuplePtr SimpleKeyRouter::untagRoute(TuplePtr tp) {
       TuplePtr t = Val_Tuple::cast((*tp)[i]); 
       if (Val_Str::cast((*t)[0]) == "ROUTE") continue;
     }
-    catch (Value::TypeError& e) { } 
+    catch (Value::TypeError e) { } 
     tuple->append((*tp)[i]);
   }
   return tuple;
@@ -129,7 +129,7 @@ REMOVABLE_INLINE int SimpleKeyRouter::getRoute(TuplePtr tp) {
       TuplePtr t = Val_Tuple::cast((*tp)[i]); 
       if (Val_Str::cast((*t)[0]) == "ROUTE") return Val_Int32::cast((*t)[1]);
     }
-    catch (Value::TypeError& e) { } 
+    catch (Value::TypeError e) { } 
   }
   return -1;
 }
@@ -139,7 +139,7 @@ REMOVABLE_INLINE ValuePtr SimpleKeyRouter::getKey(TuplePtr tp) {
     try {
       if (Val_Str::cast((*tp)[i]) == "LOOKUP") return (*tp)[i+1];
     }
-    catch (Value::TypeError& e) { } 
+    catch (Value::TypeError e) { } 
   }
 
   for (uint i = 0; i < tp->size(); i++) {
@@ -147,7 +147,7 @@ REMOVABLE_INLINE ValuePtr SimpleKeyRouter::getKey(TuplePtr tp) {
       TuplePtr t = Val_Tuple::cast((*tp)[i]); 
       if (Val_Str::cast((*t)[0]) == "LOOKUP") return (*t)[1];
     }
-    catch (Value::TypeError& e) { } 
+    catch (Value::TypeError e) { } 
   }
   return ValuePtr();
 }

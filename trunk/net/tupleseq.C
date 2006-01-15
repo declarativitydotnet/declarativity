@@ -28,14 +28,13 @@ TuplePtr Sequence::simple_action(TuplePtr p)
   TuplePtr n = Tuple::mk();
   TuplePtr s = Tuple::mk();
 
-  s->append(Val_Str::mk("SEQ"));
-  s->append(Val_UInt64::mk(seq_++));
-  s->append(Val_Str::mk(src_));
-  s->append(Val_UInt32::mk(port_));
+  s->append(Val_Str::mk("SEQ"));	// Indicates sequence number tuple
+  s->append(Val_UInt64::mk(seq_++));	// The sequence number
+  s->append(Val_UInt32::mk(0));		// The offset (for fragmenting)
   s->freeze();
 
-  n->append(Val_Tuple::mk(s));
-  for (uint i = 0; i < p->size(); i++)
+  n->append(Val_Tuple::mk(s));		// Prepend the sequence number
+  for (uint i = 0; i < p->size(); i++)	// Append the original tuple
     if (!isSeq((*p)[i])) n->append((*p)[i]); 
   n->freeze();
   return n;
@@ -46,6 +45,6 @@ REMOVABLE_INLINE bool Sequence::isSeq(ValuePtr vp) {
     TuplePtr t = Val_Tuple::cast(vp);
     if (Val_Str::cast((*t)[0]) == "SEQ") return true;
   }
-  catch (Value::TypeError& e) { } 
+  catch (Value::TypeError e) { } 
   return false;
 }

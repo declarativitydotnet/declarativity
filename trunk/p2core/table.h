@@ -86,10 +86,14 @@ public:
   // happen (though this limitation is easily fixed and may be in the
   // future). 
   //
-  void add_unique_index(unsigned fn);
-  void del_unique_index(unsigned fn); 
-  void add_multiple_index(unsigned fn);
-  void del_multiple_index(unsigned fn);
+  void add_unique_index(unsigned key);
+  void add_unique_index(std::vector<unsigned> keys);
+  void del_unique_index(unsigned key); 
+  void del_unique_index(std::vector<unsigned> keys); 
+  void add_multiple_index(unsigned key);
+  void add_multiple_index(std::vector<unsigned> keys);
+  void del_multiple_index(unsigned key);
+  void del_multiple_index(std::vector<unsigned> keys);
 
 
   // Setting and removing the expiry time
@@ -117,20 +121,33 @@ public:
   };
   std::deque<Entry *> els;
 
-  /** My valueref comparison functor type for the indices. */
-  struct valuePtrCompare
+  /** 
+   * My valueref comparison functor type for the indices. 
+   * Returns true upon reaching a vector element in first that is strictly 
+   * less than a vector element in second, in the respective position.
+   */
+  struct valuesPtrCompare
   {
-    bool operator()(const ValuePtr first,
-                    const ValuePtr second) const
+    bool operator()(const std::vector<ValuePtr> first,
+                    const std::vector<ValuePtr> second) const
     {
-      return first->compareTo(second) < 0;
+      assert(first.size() == second.size());
+      for (int i = 0; i < first.size(); i++) {
+        if ((first[i])->compareTo(second[i]) < 0) {
+	  return true;
+        }
+        else if ((first[i])->compareTo(second[i]) > 0) {
+          return false;
+        }
+      }
+      return false;
     }
   };
 
-  typedef std::multimap< ValuePtr, Entry *, Table::valuePtrCompare > MultIndex;
-  typedef std::map< ValuePtr, Entry *, Table::valuePtrCompare >  UniqueIndex;
-  typedef std::multimap< ValuePtr, TuplePtr, Table::valuePtrCompare > MultIndexFlat;
-  typedef std::map< ValuePtr, TuplePtr, Table::valuePtrCompare >  UniqueIndexFlat;
+  typedef std::multimap< std::vector<ValuePtr>, Entry *, Table::valuesPtrCompare > MultIndex;
+  typedef std::map< std::vector<ValuePtr>, Entry *, Table::valuesPtrCompare >  UniqueIndex;
+  typedef std::multimap< std::vector<ValuePtr>, TuplePtr, Table::valuesPtrCompare > MultIndexFlat;
+  typedef std::map< std::vector<ValuePtr>, TuplePtr, Table::valuesPtrCompare >  UniqueIndexFlat;
 
   class AggregateFunction
   {
@@ -245,7 +262,7 @@ public:
   class AggregateObj
   {
   public:
-    AggregateObj(unsigned,
+    AggregateObj(std::vector< unsigned >,
                  _Index*,
                  std::vector< unsigned >,
                  unsigned,
@@ -260,7 +277,7 @@ public:
     typedef typename _Index::iterator _Iterator;
 
     /** My key field */
-    unsigned _keyField;
+    std::vector<unsigned> _keyFields;
     
     /** Which index? */
     _Index * _uIndex;
@@ -290,16 +307,16 @@ public:
       bool operator()(const TuplePtr first,
                       const TuplePtr second) const
       {
-        int groupByMatch = 0;
-        for (size_t f = 0;
-             (f < _groupBy.size()) &&
-               (groupByMatch == 0);
-             f++) {
+        for (size_t f = 0; f < _groupBy.size(); f++) {
           unsigned fieldNo = _groupBy[f];
-          groupByMatch +=
-            (*first)[fieldNo]->compareTo((*second)[fieldNo]);
+          if ( ((*first)[fieldNo])->compareTo((*second)[fieldNo]) < 0) {
+	    return true;
+          }
+          else if ( ((*first)[fieldNo])->compareTo((*second)[fieldNo]) > 0) {
+            return false;
+          }
         }
-        return (groupByMatch < 0);
+        return false;
       }
 
       /** On which fields should I compare tuples? */
@@ -335,10 +352,20 @@ public:
                                          unsigned,
                                          AggregateFunction*);
 
+  UniqueAggregate add_unique_groupBy_agg(std::vector< unsigned >,
+                                         std::vector< unsigned >,
+                                         unsigned,
+                                         AggregateFunction*);
+
   /** Create a group-by aggregation on a mult index.  Every time the
       table is updated, the aggregate is updated as well, creating
       notifications to all aggregate listeners. */
   MultAggregate add_mult_groupBy_agg(unsigned,
+                                     std::vector< unsigned >,
+                                     unsigned,
+                                     AggregateFunction*);
+
+  MultAggregate add_mult_groupBy_agg(std::vector< unsigned >,
                                      std::vector< unsigned >,
                                      unsigned,
                                      AggregateFunction*);
@@ -357,15 +384,15 @@ public:
     bool done();
 
     /** The constructor just initializes the iterator */
-    IteratorObj(_Index * index,
-                ValuePtr key);
+    IteratorObj(_Index * index, ValuePtr key);
+    IteratorObj(_Index * index, std::vector<ValuePtr> key);
     
   private:
     /** My index */
     _FlatIndex _index;
     
     /** My lookup key */
-    ValuePtr _key;
+    std::vector<ValuePtr> _key;
     
     typedef typename _Index::iterator IndexIterator;
     typedef typename _FlatIndex::iterator FlatIndexIterator;
@@ -431,7 +458,10 @@ public:
 
 private:
   std::vector<MultIndex *> mul_indices;
+  std::vector<std::vector<unsigned> > mul_indices_keys;
+
   std::vector<UniqueIndex *> uni_indices;
+  std::vector<std::vector<unsigned> > uni_indices_keys;
 
   /** My unique aggregators */
   std::vector< UniqueAggregate > _uniqueAggregates;
@@ -453,17 +483,21 @@ private:
 public:
   /** Lookup in a unique index */
   UniqueIterator lookup(unsigned field, ValuePtr key);
+  UniqueIterator lookup(std::vector<unsigned> fields, std::vector<ValuePtr> keys);
 
   /** Lookup in a multi index. */
   MultIterator lookupAll(unsigned field, ValuePtr key);
+  MultIterator lookupAll(std::vector<unsigned> fields, std::vector<ValuePtr> keys);
 
   /** Get all entries in a unique index */
   MultScanIterator scanAll(unsigned field);
+  MultScanIterator scanAll(std::vector<unsigned> fields);
   UniqueScanIterator uniqueScanAll(unsigned field, bool continuous);
+  UniqueScanIterator uniqueScanAll(std::vector<unsigned> fields, bool continuous);
 
   /** Remove the entry found on the given unique index by the given key.
       The removal occurs from all indices. */
-  TuplePtr remove(unsigned field, ValuePtr key);
+  TuplePtr remove(std::vector<unsigned> fields, TuplePtr tuple);
 
   /** My aggregator functions */
   static AggregateFunctionMIN AGG_MIN;

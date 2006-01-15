@@ -108,7 +108,7 @@ REMOVABLE_INLINE int TrafficManager::getKey(TuplePtr tp) {
         return Val_UInt32::cast((*tp)[i+1]);
       }
     }
-    catch (Value::TypeError& e) { } 
+    catch (Value::TypeError e) { } 
   }
   return -1;
 }
@@ -124,7 +124,7 @@ REMOVABLE_INLINE bool TrafficManager::processResponse(TuplePtr tp) {
         return true;
       }
     }
-    catch (Value::TypeError& e) { } 
+    catch (Value::TypeError e) { } 
   }
   return false;
 }
@@ -147,7 +147,7 @@ REMOVABLE_INLINE TuplePtr TrafficManager::mkResponse(TuplePtr tp) {
         return resp;
       }
     }
-    catch (Value::TypeError& e) { } 
+    catch (Value::TypeError e) { } 
   }
   return TuplePtr();
 

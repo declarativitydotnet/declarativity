@@ -163,7 +163,7 @@ REMOVABLE_INLINE SeqNum RDelivery::getSeq(TuplePtr tp) {
          return Val_UInt64::cast((*t)[1]);
       }
     }
-    catch (Value::TypeError& e) { } 
+    catch (Value::TypeError e) { } 
   }
   return 0;
 }

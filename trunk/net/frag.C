@@ -89,7 +89,7 @@ TuplePtr Frag::pull(int port, b_cbv cb)
 
 void Frag::fragment(TuplePtr t)
 {
-  uint64_t seq_num = SEQ_NUM(Val_UInt64::cast((*t)[SEQ_FIELD]));
+  uint64_t seq_num = Val_UInt64::cast((*t)[SEQ_FIELD]);
   FdbufPtr pfb = Val_Opaque::cast((*t)[PLD_FIELD]);
 
   if (pfb->length() <= CHUNK_SIZE) {
@@ -102,7 +102,7 @@ void Frag::fragment(TuplePtr t)
     size_t offset = 0;
     while( pfb->length() ) {
       TuplePtr p = Tuple::mk();
-      p->append(Val_UInt64::mk(MAKE_SEQ(seq_num, offset)));
+      p->append(Val_UInt64::mk(seq_num));
       FdbufPtr fb(new Fdbuf());
       offset += pfb->pop_to_fdbuf(*fb, CHUNK_SIZE);
       p->append(Val_Opaque::mk(fb));

@@ -22,6 +22,18 @@
 
 using namespace opr;
 
+#define FIND_MUL_INDEX(ndx, fields) do { \
+  ndx = NULL; \
+  for (int i = 0; i < mul_indices_keys.size(); i++) \
+    if (mul_indices_keys[i] == (fields)) ndx = mul_indices[i]; \
+} while (0)
+
+#define FIND_UNI_INDEX(ndx, fields) do { \
+  ndx = NULL; \
+  for (int i = 0; i < uni_indices_keys.size(); i++) \
+    if (uni_indices_keys[i] == (fields)) ndx = uni_indices[i]; \
+} while (0)
+
 //
 // Constructor
 //
@@ -80,32 +92,68 @@ Table::~Table()
 //
 void Table::add_unique_index(unsigned fn)
 {
-  del_unique_index(fn);
-  uni_indices.at(fn) = new UniqueIndex();
+  std::vector<unsigned> key;
+  key.push_back(fn);
+  add_unique_index(key);
 }
+void Table::add_unique_index(std::vector<unsigned> keys)
+{
+  del_unique_index(keys);
+  uni_indices.push_back(new UniqueIndex());
+  uni_indices_keys.push_back(keys); 
+}
+
 void Table::del_unique_index(unsigned fn)
 {
-  uni_indices.reserve(fn);
-  while( uni_indices.size() <= fn) {
-    uni_indices.push_back(NULL);
-  }
-  if (uni_indices.at(fn) != NULL) {
-    delete uni_indices.at(fn);
+  std::vector<unsigned> key;
+  key.push_back(fn);
+  del_unique_index(key);
+}
+
+void Table::del_unique_index(std::vector<unsigned> keys)
+{
+  std::vector<UniqueIndex *>::iterator          i_iter = uni_indices.begin();
+  std::vector<std::vector<unsigned> >::iterator k_iter = uni_indices_keys.begin();
+
+  for ( ;i_iter != uni_indices.end() && *k_iter != keys; i_iter++, k_iter++)
+	;
+  if (i_iter != uni_indices.end()) {
+    delete *i_iter;
+    uni_indices.erase(i_iter);
+    uni_indices_keys.erase(k_iter);
   }
 }
+
 void Table::add_multiple_index(unsigned fn)
 {
-  del_multiple_index(fn);
-  mul_indices.at(fn) = new MultIndex();
+  std::vector<unsigned> key;
+  key.push_back(fn);
+  add_multiple_index(key);
 }
 void Table::del_multiple_index(unsigned fn)
 {
-  mul_indices.reserve(fn);
-  while( mul_indices.size() <= fn) {
-    mul_indices.push_back(NULL);
-  }
-  if (mul_indices.at(fn) != NULL) {
-    delete mul_indices.at(fn);
+  std::vector<unsigned> key;
+  key.push_back(fn);
+  del_multiple_index(key);
+}
+
+void Table::add_multiple_index(std::vector<unsigned> keys)
+{
+  del_multiple_index(keys);
+  mul_indices.push_back(new MultIndex());
+  mul_indices_keys.push_back(keys);
+}
+void Table::del_multiple_index(std::vector<unsigned> keys)
+{
+  std::vector<MultIndex *>::iterator            i_iter = mul_indices.begin();
+  std::vector<std::vector<unsigned> >::iterator k_iter = mul_indices_keys.begin();
+
+  for ( ;i_iter != mul_indices.end() && *k_iter != keys; i_iter++, k_iter++)
+	;
+  if (i_iter != mul_indices.end()) {
+    delete *i_iter;
+    mul_indices.erase(i_iter);
+    mul_indices_keys.erase(k_iter);
   }
 }
 
@@ -115,11 +163,23 @@ Table::add_unique_groupBy_agg(unsigned keyFieldNo,
                               unsigned aggFieldNo,
                               Table::AggregateFunction* aggregate)
 {
+  std::vector< unsigned > keyFields;
+  keyFields.push_back(keyFieldNo);
+  return add_unique_groupBy_agg(keyFields, groupByFieldNos, aggFieldNo, aggregate);
+}
+
+Table::UniqueAggregate
+Table::add_unique_groupBy_agg(std::vector< unsigned > keyFields,
+                              std::vector< unsigned > groupByFieldNos,
+                              unsigned aggFieldNo,
+                              Table::AggregateFunction* aggregate)
+{
   // Get the index
-  UniqueIndex* uI = uni_indices.at(keyFieldNo);
+  UniqueIndex* uI = NULL;
+  FIND_UNI_INDEX(uI, keyFields);
   assert(uI != NULL);
   Table::UniqueAggregate uA =
-    Table::UniqueAggregate(new Table::UniqueAggregateObj(keyFieldNo,
+    Table::UniqueAggregate(new Table::UniqueAggregateObj(keyFields,
                                                          uI,
                                                          groupByFieldNos,
                                                          aggFieldNo,
@@ -137,11 +197,23 @@ Table::add_mult_groupBy_agg(unsigned keyFieldNo,
                             unsigned aggFieldNo,
                             Table::AggregateFunction* aggregate)
 {
+  std::vector< unsigned > keyFields;
+  keyFields.push_back(keyFieldNo);
+  return add_mult_groupBy_agg(keyFields, groupByFieldNos, aggFieldNo, aggregate);
+}
+
+Table::MultAggregate
+Table::add_mult_groupBy_agg(std::vector< unsigned > keyFields,
+                            std::vector< unsigned > groupByFieldNos,
+                            unsigned aggFieldNo,
+                            Table::AggregateFunction* aggregate)
+{
   // Get the index
-  MultIndex* mI = mul_indices.at(keyFieldNo);
+  MultIndex* mI = NULL;
+  FIND_MUL_INDEX(mI, keyFields);
   assert(mI != NULL);
   Table::MultAggregate mA =
-    Table::MultAggregate(new Table::MultAggregateObj(keyFieldNo,
+    Table::MultAggregate(new Table::MultAggregateObj(keyFields,
                                                      mI,
                                                      groupByFieldNos,
                                                      aggFieldNo,
@@ -152,7 +224,6 @@ Table::add_mult_groupBy_agg(unsigned keyFieldNo,
   _multAggregates.push_back(mA);
   return mA;
 }
-
 
 
 
@@ -179,35 +250,42 @@ void Table::insert(TuplePtr t)
   for(size_t i = 0;
       i < uni_indices.size();
       i++) {
-    UniqueIndex *ndx = uni_indices.at(i);
-    if (ndx) {
-      // Remove any tuple with the same unique key from all indices and
-      // aggregates
-      TuplePtr removedEntry = remove(i, (*t)[i]);
+    UniqueIndex*          ndx  = uni_indices[i];
+    std::vector<unsigned> keys = uni_indices_keys[i];
+    // Remove any tuple with the same unique key from all indices and
+    // aggregates
+    TuplePtr removedEntry = remove(keys, t);
 
-      if (removedEntry == NULL || (max_lifetime.tv_sec >= 0) ||
-	  t->compareTo(removedEntry) != 0) {
-	// inform the scan listeners
-	for (unsigned i = 0; i < _uni_scans.size(); i++) {
-	  _uni_scans.at(i)->update(t);
-	}
+    if (removedEntry == NULL || (max_lifetime.tv_sec >= 0) ||
+        t->compareTo(removedEntry) != 0) {
+      // inform the scan listeners
+      for (unsigned i = 0; i < _uni_scans.size(); i++) {
+        _uni_scans.at(i)->update(t);
       }
-
-      // Now store the new tuple.  Make sure it's stored
-      std::pair< UniqueIndex::iterator, bool > result =
-        ndx->insert(std::make_pair((*e->t)[i], e));
-      assert(result.second);
     }
+
+    // Now store the new tuple.  Make sure it's stored
+    std::vector<ValuePtr> vkey;
+    for (std::vector<unsigned>::iterator iter = keys.begin();
+         iter != keys.end(); iter++) 
+      vkey.push_back((*e->t)[*iter]);
+    std::pair< UniqueIndex::iterator, bool > result =
+        ndx->insert(std::make_pair(vkey, e));
+    assert(result.second);
   }
 
   // Add to all multiple indices
   for(size_t i = 0;
       i < mul_indices.size();
       i++) {
-    MultIndex *ndx = mul_indices.at(i);
-    if (ndx) {
-      ndx->insert(std::make_pair((*e->t)[i], e));
-    }
+    MultIndex*            ndx  = mul_indices[i];
+    std::vector<unsigned> keys = mul_indices_keys[i];
+
+    std::vector<ValuePtr> vkey;
+    for (std::vector<unsigned>::iterator iter = keys.begin();
+         iter != keys.end(); iter++) 
+      vkey.push_back((*e->t)[*iter]);
+    ndx->insert(std::make_pair(vkey, e));
   }
 
   // And update the aggregates
@@ -235,19 +313,26 @@ void Table::insert(TuplePtr t)
    doesn't remove an entry from the queue; the entry will expire in
    time.
 */
-TuplePtr Table::remove(unsigned fieldNo, ValuePtr key)
+TuplePtr Table::remove(std::vector<unsigned> fields, TuplePtr tuple)
 {
-  UniqueIndex *ndx = uni_indices.at(fieldNo);
+  UniqueIndex *ndx = NULL;
+  FIND_UNI_INDEX(ndx, fields);
+
   if (!ndx) {
     // This index does not exist
-    warn << "Requesting removal from non-existent unique index " << fieldNo
+    warn << "Requesting removal from non-existent unique index "
          << " in table " << name << "\n";
     assert(false);
     // We don't get here   
   }
 
   // Find the entry itself
-  UniqueIndex::iterator iter = ndx->find(key);
+  std::vector<ValuePtr> vkey;
+  for (std::vector<unsigned>::iterator iter = fields.begin();
+       iter != fields.end(); iter++) 
+    vkey.push_back((*tuple)[*iter]);
+
+  UniqueIndex::iterator iter = ndx->find(vkey);
   TuplePtr toRet = TuplePtr();
   if (iter == ndx->end()) {
     // No such key exists.  Do nothing
@@ -274,39 +359,46 @@ void Table::remove_from_indices(Entry *e)
   for (size_t i = 0;
        i < uni_indices.size();
        i++) {
-    UniqueIndex* ndx = uni_indices.at(i);
-    ValuePtr key = (*e->t)[i];
-    if (ndx) {
-      // Removal must be identical to how it happens for multiple
-      // indices, because an entry in the queue might not in fact still
-      // be in this index.  As a result, if the queue contains two
-      // entries with the same primary key (as far as this index is
-      // concerned), and one of them is removed from this unique index,
-      // we must compare not only the keys, but also the entries
-      // themselves.
-      for (UniqueIndex::iterator pos = ndx->find(key); 
-           (pos != ndx->end()) && (pos->first->compareTo(key) == 0); 
-           pos++) {
-        if (pos->second == e) {
-          ndx->erase(pos);
-          break;
-        }
+    UniqueIndex*          ndx  = uni_indices[i];
+    std::vector<unsigned> keys = uni_indices_keys[i];
+    std::vector<ValuePtr> vkey;
+    for (std::vector<unsigned>::iterator iter = keys.begin();
+         iter != keys.end(); iter++) 
+      vkey.push_back((*e->t)[*iter]);
+
+    // Removal must be identical to how it happens for multiple
+    // indices, because an entry in the queue might not in fact still
+    // be in this index.  As a result, if the queue contains two
+    // entries with the same primary key (as far as this index is
+    // concerned), and one of them is removed from this unique index,
+    // we must compare not only the keys, but also the entries
+    // themselves.
+    for (UniqueIndex::iterator pos = ndx->find(vkey); 
+         (pos != ndx->end()) && (pos->first == vkey); 
+         pos++) {
+      if (pos->second == e) {
+        ndx->erase(pos);
+        break;
       }
     }
   }
+
   for (size_t i = 0;
        i < mul_indices.size();
        i++) {
-    MultIndex* ndx = mul_indices.at(i);
-    ValuePtr key = (*e->t)[i];
-    if (ndx) {
-      for (MultIndex::iterator pos = ndx->find(key); 
-           (pos != ndx->end()) && (pos->first->compareTo(key) == 0); 
-           pos++) {
-        if (pos->second == e) {
-          ndx->erase(pos);
-          break;
-        }
+    MultIndex*            ndx  = mul_indices[i];
+    std::vector<unsigned> keys = mul_indices_keys[i];
+    std::vector<ValuePtr> vkey;
+    for (std::vector<unsigned>::iterator iter = keys.begin();
+         iter != keys.end(); iter++) 
+      vkey.push_back((*e->t)[*iter]);
+
+    for (MultIndex::iterator pos = ndx->find(vkey); 
+         (pos != ndx->end()) && (pos->first == vkey); 
+         pos++) {
+      if (pos->second == e) {
+        ndx->erase(pos);
+        break;
       }
     }
   }
@@ -375,32 +467,65 @@ void Table::garbage_collect()
 Table::MultIterator
 Table::lookupAll(unsigned field, ValuePtr key)
 {
+  std::vector<unsigned> fields;
+  std::vector<ValuePtr> keys;
+  fields.push_back(field);
+  keys.push_back(key);
+  return lookupAll(fields, keys);
+}
+
+Table::MultIterator
+Table::lookupAll(std::vector<unsigned> fields, std::vector<ValuePtr> keys)
+{
   garbage_collect();
-  Table::MultIndex *ndx = mul_indices.at(field);
+  Table::MultIndex *ndx = NULL;
+  FIND_MUL_INDEX(ndx, fields);
+
   if (ndx) {
-    return Table::MultIterator(new Table::MultIteratorObj(ndx, key));
+    return Table::MultIterator(new Table::MultIteratorObj(ndx, keys));
   }
-  warn << "Requesting multi lookup in table " << name << " on missing index " << field << "\n";
+  warn << "Requesting multi lookup in table " << name << " on missing index." << "\n";
   assert(false);
 }
+
 
 Table::MultScanIterator
 Table::scanAll(unsigned field)
 {
+  std::vector<unsigned> fields;
+  fields.push_back(field);
+  return scanAll(fields);
+}
+
+Table::MultScanIterator
+Table::scanAll(std::vector<unsigned> fields)
+{
   garbage_collect();
-  Table::MultIndex *ndx = mul_indices.at(field);
+  Table::MultIndex *ndx = NULL;
+  FIND_MUL_INDEX(ndx, fields);
+
   if (ndx) {
     return Table::MultScanIterator(new Table::MultScanIteratorObj(ndx));
   }
-  warn << "Requesting multiple scan in table " << name << " on missing index " << field << "\n";
+  warn << "Requesting multiple scan in table " << name << " on missing index." << "\n";
   assert(false);
 }
 
 Table::UniqueScanIterator
 Table::uniqueScanAll(unsigned field, bool continuous)
 {
+  std::vector<unsigned> fields;
+  fields.push_back(field);
+  return uniqueScanAll(fields, continuous);
+}
+
+Table::UniqueScanIterator
+Table::uniqueScanAll(std::vector<unsigned> fields, bool continuous)
+{
   garbage_collect();
-  Table::UniqueIndex *ndx = uni_indices.at(field);
+  UniqueIndex *ndx = NULL;
+  FIND_UNI_INDEX(ndx, fields);
+
   if (ndx) {
     Table::UniqueScanIterator scanIterator 
       = Table::UniqueScanIterator(new Table::UniqueScanIteratorObj(ndx));
@@ -409,21 +534,34 @@ Table::uniqueScanAll(unsigned field, bool continuous)
     }
     return scanIterator;
   }
-  warn << "Requesting unique scan in table " << name << " on missing index " << field << "\n";
+  warn << "Requesting unique scan in table " << name << " on missing index." << "\n";
   assert(false);
 }
 
 Table::UniqueIterator
 Table::lookup(unsigned field, ValuePtr key)  
 {
+  std::vector<unsigned> fields;
+  std::vector<ValuePtr> keys;
+  fields.push_back(field);
+  keys.push_back(key);
+  return lookup(fields, keys);
+}
+
+Table::UniqueIterator
+Table::lookup(std::vector<unsigned> fields, std::vector<ValuePtr> keys)  
+{
   garbage_collect();
-  UniqueIndex *ndx = uni_indices.at(field);
+  UniqueIndex *ndx = NULL;
+  FIND_UNI_INDEX(ndx, fields);
+
   if (ndx) {
-    return Table::UniqueIterator(new Table::UniqueIteratorObj(ndx, key));
+    return Table::UniqueIterator(new Table::UniqueIteratorObj(ndx, keys));
   }
-  warn << "Requesting unique lookup in table " << name << " on missing index " << field << "\n";
+  warn << "Requesting unique lookup in table " << name << " on missing index." << "\n";
   assert(false);
 }
+
 
 Table::MultIterator
 Table::MultLookupGenerator::lookup(TablePtr t, unsigned field, ValuePtr key)

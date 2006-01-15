@@ -268,7 +268,7 @@ TuplePtr RateCCR::simple_action(TuplePtr tp)
         ts  = Val_Time::cast((*t)[2]);
       }
     }
-    catch (Value::TypeError& e) { } 
+    catch (Value::TypeError e) { } 
   }
   if (seq == 0 || rtt < 0) {
     log(LoggerI::INFO, 0, "NON-RateCC Tuple: " + tp->toString()); 
@@ -336,7 +336,7 @@ int RateCCR::push(int port, TuplePtr tp, b_cbv cb)
     try {
       if (Val_Str::cast((*tp)[0]) == "RRATE")
     }
-    catch (Value::TypeError *e) {
+    catch (Value::TypeError e) {
       log(LoggerI::WARN, 0, "CCR::push TypeError Thrown on port 1"); 
     } 
   */
@@ -354,7 +354,7 @@ REMOVABLE_INLINE TuplePtr RateCCR::strip(TuplePtr p) {
       TuplePtr t = Val_Tuple::cast((*p)[i]); 
       if (Val_Str::cast((*t)[0]) == "TINFO") continue;
     }
-    catch (Value::TypeError& e) { } 
+    catch (Value::TypeError e) { } 
     tuple->append((*p)[i]);
   }
   tuple->freeze();

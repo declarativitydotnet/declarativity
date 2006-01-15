@@ -14,6 +14,7 @@
 #include "val_double.h"
 #include "val_str.h"
 #include "val_tuple.h"
+#include "tupleseq.h"
 
 
 /////////////////////////////////////////////////////////////////////
@@ -112,7 +113,7 @@ int CCT::push(int port, TuplePtr tp, b_cbv cb)
       return 1;
     }
   }
-  catch (Value::TypeError& e) { } 
+  catch (Value::TypeError e) { } 
 
   assert(output(1)->push(tp, 0)); // Pass data tuple through
   return 1;
@@ -284,10 +285,10 @@ REMOVABLE_INLINE SeqNum CCT::getSeq(TuplePtr tp) {
     try {
       TuplePtr t = Val_Tuple::cast((*tp)[i]); 
       if (Val_Str::cast((*t)[0]) == "SEQ") {
-        seq = Val_UInt64::cast((*t)[1]);
+        seq = Val_UInt64::cast((*t)[SEQ_FIELD]);
       }
     }
-    catch (Value::TypeError& e) { } 
+    catch (Value::TypeError e) { } 
   }
   return seq;
 }

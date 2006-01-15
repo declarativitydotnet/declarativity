@@ -54,7 +54,7 @@ TuplePtr CCR::simple_action(TuplePtr p)
         port = (*t)[3];
       }
     }
-    catch (Value::TypeError& e) { } 
+    catch (Value::TypeError e) { } 
   }
   if (!src || !port) return p;		// Punt
 
@@ -101,7 +101,7 @@ int CCR::push(int port, TuplePtr tp, b_cbv cb)
       if (Val_Str::cast((*tp)[0]) == "RWND")
         rwnd_ = Val_Double::cast((*tp)[1]);
     }
-    catch (Value::TypeError *e) {
+    catch (Value::TypeError e) {
       log(LoggerI::WARN, 0, "CCR::push TypeError Thrown on port 1"); 
     } 
     return int(rwnd_);

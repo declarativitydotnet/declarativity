@@ -14,7 +14,6 @@
 #include "tuple.h"
 #include "element.h"
 
-#define SEQ_FIELD  0
 #define PLD_FIELD  1
 #define NUM_CHUNKS "chunks"
 #define CHUNK_SIZE (block_size_ - sizeof(uint64_t))
