@@ -58,7 +58,7 @@ void Rtr_ConfGen::configureRouter(boost::shared_ptr< Udp > udp, string nodeID)
     ostringstream oss;
     oss << "There are " << _ctxt->errors.size() 
 	<< " error(s) accumulated in the parser.\n";
-    for (int k = 0; k < _ctxt->errors.size(); k++) {
+    for (unsigned int k = 0; k < _ctxt->errors.size(); k++) {
       OL_Context::Error* error = _ctxt->errors.at(k);
       oss << " => Parser error at line " << error->line_num 
 	  << " with error message \"" << error->msg << "\".\n";
