@@ -882,17 +882,23 @@ void Rtr_ConfGen::pelAssign(OL_Context::Rule* rule,
   Parse_Math     *m   = NULL;
   Parse_Function *f   = NULL; 
 
-  if (expr->assign == Parse_Expr::Now)
+  if (expr->assign == Parse_Expr::Now) {
     pelAssign << "now "; 
-  else if ((b = dynamic_cast<Parse_Bool*>(expr->assign)) != NULL)
+  }
+  else if ((b = dynamic_cast<Parse_Bool*>(expr->assign)) != NULL) {
     pelAssign << pelBool(names, b, rule);
-  else if ((m = dynamic_cast<Parse_Math*>(expr->assign)) != NULL)
-    pelAssign << pelMath(names, m, rule);
-  else if ((f = dynamic_cast<Parse_Function*>(expr->assign)) != NULL)
+  }
+  else if ((m = dynamic_cast<Parse_Math*>(expr->assign)) != NULL) {
+    string pelMathStr = pelMath(names, m, rule); 
+    pelAssign << pelMathStr;
+  }
+  else if ((f = dynamic_cast<Parse_Function*>(expr->assign)) != NULL) {
     pelAssign << pelFunction(names, f, rule);
+  }
   else if ((var=dynamic_cast<Parse_Var*>(expr->assign)) != NULL && 
-           names->fieldPosition(var->toString()) >= 0)                              
+           names->fieldPosition(var->toString()) >= 0) {
     pelAssign << "$" << (names->fieldPosition(var->toString())+1) << " ";
+  }
   else if ((val=dynamic_cast<Parse_Val*>(expr->assign)) != NULL) {
     if (val->v->typeCode() == Value::STR) { 
       pelAssign << "\"" << val->toString() << "\" ";
@@ -906,11 +912,15 @@ void Rtr_ConfGen::pelAssign(OL_Context::Rule* rule,
    
   int pos = names->fieldPosition(a->toString());
   for (int k = 0; k < int(names->fieldNames.size()+1); k++) {
-    if (k == pos) pel << pelAssign << "pop ";
-    else pel << "$" << k << " pop ";
+    if (k == pos) { 
+      pel << pelAssign << "pop ";
+    } 
+    else {
+      pel << "$" << k << " pop ";
+    }
   }
   if (pos < 0) { 
-    pel << pelAssign << "pop ";
+    pel << pelAssign.str() << "pop ";
     names->fieldNames.push_back(a->toString()); // the variable name
   } 
 
