@@ -1801,7 +1801,9 @@ Rtr_ConfGen::FieldNamesTracker::mergeWith(std::vector<string> names,
 
 string Rtr_ConfGen::FieldNamesTracker::toString()
 {
-  ostringstream toRet("FieldNamesTracker<");
+  ostringstream toRet;
+
+  toRet << "FieldNamesTracker<";
   
   for (uint k = 0; k < fieldNames.size(); k++) {
     toRet << fieldNames.at(k) << " ";

@@ -236,7 +236,7 @@ private:
 
   void debugRule(OL_Context::Rule* curRule, 
 		 string debugMsg) { 
-    std::cout << "Planner debug rule (" << curRule->ruleID<< "): " << debugMsg; 
+    warn << "Planner debug rule (" << curRule->ruleID<< "): " << debugMsg; 
   }
 
   void error(string msg);
