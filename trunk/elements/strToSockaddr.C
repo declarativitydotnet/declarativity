@@ -72,7 +72,7 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
   addr.sin_port = htons(port);
   inet_pton(AF_INET, theAddress.c_str(), &addr.sin_addr);
   FdbufPtr addressUio(new Fdbuf());
-  addressUio->push_back((char*)&addr, sizeof(addr));
+  addressUio->push_bytes((char*)&addr, sizeof(addr));
   ValuePtr sockaddr = Val_Opaque::mk(addressUio);
   
 

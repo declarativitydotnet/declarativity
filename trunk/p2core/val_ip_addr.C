@@ -59,7 +59,7 @@ FdbufPtr Val_IP_ADDR::getAddress()
   bzero(&saddr, sizeof(saddr));
   saddr.sin_port = htons(port);
   inet_pton(AF_INET, _s.c_str(), &saddr.sin_addr);
-  x->push_back((char*) &saddr, sizeof(saddr));
+  x->push_bytes((char*) &saddr, sizeof(saddr));
   return x;
   
 }

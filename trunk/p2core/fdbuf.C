@@ -71,7 +71,7 @@ ssize_t Fdbuf::recvfrom(int sd, ssize_t max_read, int flags,
 }
 
 // Appending a string
-Fdbuf &Fdbuf::push_back(const std::string &s)
+Fdbuf &Fdbuf::pushString(const std::string &s)
 {
   ensure_additional(s.length());
   s.copy( data + start + len, s.length(), 0 );
@@ -79,21 +79,14 @@ Fdbuf &Fdbuf::push_back(const std::string &s)
   return *this;
 }
 
-Fdbuf &Fdbuf::push_back(const char *buf, size_t size)
+Fdbuf &Fdbuf::pushString(const char *str)
 {
-  ensure_additional(len);
-  memcpy(data + start + len, buf, size);
-  len += size;
-  return *this;
+  return push_bytes(str, strlen(str));
 }
 
-Fdbuf &Fdbuf::push_back(const char *str)
+Fdbuf &Fdbuf::pushFdbuf(const Fdbuf &fb, size_t max_size)
 {
-  return push_back(str,strlen(str));
-}
-Fdbuf &Fdbuf::push_back(const Fdbuf &fb, size_t max_size)
-{
-  return push_back(fb.data + start, std::min(fb.len, max_size));
+  return push_bytes(fb.data + start, std::min(fb.len, max_size));
 }
 
 //
@@ -180,7 +173,7 @@ size_t
 Fdbuf::pop_to_fdbuf( Fdbuf &fb, size_t to_write)
 {
   to_write = std::min(to_write, len);
-  fb.push_back(*this, to_write);
+  fb.pushFdbuf(*this, to_write);
   len -= to_write;
   start += to_write;
   return to_write;

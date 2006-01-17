@@ -138,11 +138,11 @@ int main(int argc, char **argv)
   std::cout << "VALUES\n";
 
   FdbufPtr u1(new Fdbuf());
-  u1->push_back("This is UIO 1");
+  u1->pushBack("This is UIO 1");
   FdbufPtr u2(new Fdbuf());
-  u2->push_back("This is UIO 2");
+  u2->pushBack("This is UIO 2");
   FdbufPtr u3(new Fdbuf());
-  u3->push_back("This is UIO 3"); 
+  u3->pushBack("This is UIO 3"); 
 
   string addr = "127.0.0.1:1000";
 

@@ -96,20 +96,21 @@ public:
   ssize_t recvfrom(int sd, ssize_t max_read = BUF_DFLT_READ, int flags=0,
 		   struct sockaddr *from=NULL, socklen_t *fromlen=0);
   
-  Fdbuf &push_back(const Fdbuf &fb, size_t max_len = BUF_SIZE_MAX );
-  Fdbuf &push_back(const std::string &s);
-  Fdbuf &push_back(const char *buf, size_t len);
-  Fdbuf &push_back(const char *str);
+  Fdbuf &pushFdbuf(const Fdbuf &fb, size_t max_len = BUF_SIZE_MAX );
+
+  Fdbuf &pushString(const std::string &s);
+
+  Fdbuf &pushString(const char *str);
 
   // Could probably be more efficient...
-  template <class T> Fdbuf &push_back(const T &t) { 
+  template <class T> Fdbuf &pushBack(const T &t) { 
     std::ostringstream os; 
     os << t; 
-    return push_back(os.str()); 
+    return pushString(os.str()); 
   };
   
   // Operators
-  template <class T> Fdbuf &operator<< (const T &t) { return push_back(t); }
+  template <class T> Fdbuf &operator<< (const T &t) { return pushBack(t); }
  
   //
   // OUTPUT FUNCTIONS: remove stuff from the head of the buffer. 

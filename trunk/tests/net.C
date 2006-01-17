@@ -54,7 +54,7 @@ void testUdpTx()
   inet_pton(AF_INET, destinationAddr.c_str(),
             &addr.sin_addr);
   FdbufPtr addressUio(new Fdbuf());
-  addressUio->push_back((char*)&addr, sizeof(addr));
+  addressUio->push_bytes((char*)&addr, sizeof(addr));
 
 
   // The sending data flow

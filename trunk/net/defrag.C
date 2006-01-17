@@ -113,7 +113,7 @@ void Defrag::defragment(TuplePtr t)
         }
         assert(p);
         FdbufPtr payload = Val_Opaque::cast((*p)[PLD_FIELD]);
-        fb->push_back( payload->cstr(), payload->length());
+        fb->push_bytes(payload->cstr(), payload->length());
       }
       TuplePtr defraged = Tuple::mk();
       defraged->append(Val_UInt64::mk(seq_num));

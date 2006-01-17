@@ -37,7 +37,7 @@ FdbufPtr Val_Opaque::cast(ValuePtr v)
   case Value::STR:
     {
       FdbufPtr fb(new Fdbuf());
-      fb->push_back(Val_Str::cast(v));
+      fb->pushBack(Val_Str::cast(v));
       return fb;
     }
   default:
