@@ -2,7 +2,8 @@ bin_PROGRAMS = p2Test
 
 p2Test_SOURCES =	p2Test.C \
 			testMarshal.C \
-			testBasicElementPlumbing.C
+			testBasicElementPlumbing.C \
+			testFdbufs.C
 
 p2Test_LDADD =		-lboost_unit_test_framework
 

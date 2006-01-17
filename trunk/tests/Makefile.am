@@ -17,7 +17,6 @@ $(PROGRAMS): $(LDEPS)
 bin_PROGRAMS 	= 	values \
 			tuples \
 			benchmark \
-			fdbufs \
 			overlog \
 			tables \
 			pel \
@@ -60,9 +59,6 @@ tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
 benchmark_SOURCES	= benchmark.C
 benchmark_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
 		  $(top_builddir)/eventLoop/.libs/libeventLoop.a
-
-fdbufs_SOURCES	= fdbufs.C
-fdbufs_LDADD = $(top_builddir)/p2core/.libs/libp2core.a
 
 tables_SOURCES	= tables.C
 tables_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \

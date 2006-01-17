@@ -2,6 +2,7 @@
 
 #include "testMarshal.C"
 #include "testBasicElementPlumbing.C"
+#include "testFdbufs.C"
 
 boost::unit_test_framework::test_suite*
 init_unit_test_suite(int, char**)
@@ -11,6 +12,7 @@ init_unit_test_suite(int, char**)
 
   top->add(new testMarshal_testSuite());
   top->add(new testBasicElementPlumbing_testSuite());
+  top->add(new testFdbufs_testSuite());
 
   return top.release();
 }
