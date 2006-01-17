@@ -17,12 +17,12 @@
 
 
 template< typename _Index >
-Table::AggregateObj< _Index >::AggregateObj(std::vector< unsigned > keyFields,
+Table::AggregateObj< _Index >::AggregateObj(unsigned keyField,
                                             _Index* index,
                                             std::vector< unsigned > groupByFields,
                                             unsigned aggField,
                                             Table::AggregateFunction* aggregateFn)
-  : _keyFields(keyFields),
+  : _keyField(keyField),
     _uIndex(index),
     _groupByFields(groupByFields),
     _aggField(aggField),
@@ -31,11 +31,6 @@ Table::AggregateObj< _Index >::AggregateObj(std::vector< unsigned > keyFields,
     _groupByComparator(groupByFields),
     _currentAggregates(_groupByComparator)
 {
-  // index key fields must be a prefix of the groupByFields
-  assert(keyFields.size() <= groupByFields.size());
-  for (int i = 0; i < keyFields.size(); i++) {
-    assert(keyFields[i] == groupByFields[i]);
-  }
 }
 
 template< typename _Index >
@@ -52,16 +47,12 @@ void
 Table::AggregateObj< _Index >::update(TuplePtr t)
 {
   // Go through the portions of the index affected by this insertion
-  std::vector<ValuePtr> vkey;
-  for (std::vector<unsigned>::iterator iter = _keyFields.begin();
-       iter != _keyFields.end(); iter++)
-    vkey.push_back((*t)[*iter]);
-
+  ValuePtr key = (*t)[_keyField];
   bool started = false;
   TuplePtr aMatchingTuple = TuplePtr();
   _aggregateFn->reset();
-  for (_Iterator i = _uIndex->lower_bound(vkey);
-       i != _uIndex->upper_bound(vkey);
+  for (_Iterator i = _uIndex->lower_bound(key);
+       i != _uIndex->upper_bound(key);
        i++) {
     // Fetch the next tuple
     TuplePtr tuple = i->second->t;
@@ -72,8 +63,9 @@ Table::AggregateObj< _Index >::update(TuplePtr t)
          f < _groupByFields.size() && groupByMatch;
          f++) {
       unsigned fieldNo = _groupByFields[f];
-      groupByMatch = groupByMatch && 
-                     ((*t)[fieldNo]->compareTo((*tuple)[fieldNo]) == 0);
+      groupByMatch = groupByMatch &&
+        ((fieldNo == _keyField) ||
+         ((*t)[fieldNo]->compareTo((*tuple)[fieldNo]) == 0));
     }
     if (groupByMatch) {
       if (!started) {
@@ -97,7 +89,7 @@ Table::AggregateObj< _Index >::update(TuplePtr t)
     // And notify no one
   } else {
     ValuePtr result = _aggregateFn->result();
-    assert(result);
+    assert(result != NULL);
 
     // Is this a new aggregate for these group-by values?
     typename AggMap::iterator remembered = _currentAggregates.find(t);
