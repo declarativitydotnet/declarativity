@@ -113,12 +113,6 @@ public:
   // was produced for push or pull
   virtual TuplePtr simple_action(TuplePtr p);
 
-  /** Return true if did useful work */
-  virtual bool run_task();
-
-  /** Return true if did useful work. */
-  virtual bool run_timer();
-
   // CHARACTERISTICS
   virtual const char *class_name() const = 0;
   int ID() const				{ return _ID; }

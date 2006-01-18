@@ -345,21 +345,6 @@ int Element::initialize()
   return 0;
 }
 
-bool Element::run_task()
-{
-  // This should never be run
-  assert(0);
-  return false;
-}
-
-bool Element::run_timer()
-{
-  // This should never be run
-  assert(0);
-  return false;
-}
-
-
 REMOVABLE_INLINE void Element::log(LoggerI::Level severity,
                                    int errnum,
                                    string explanation)

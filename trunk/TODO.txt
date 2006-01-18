@@ -63,4 +63,6 @@ OTHER OBJECTS / FACILTIES
 
  - Message-level simulation
 
-
+ - Autoconf should check for correct version of automake (1.9)
+ - Autoconf should check for correct version of flex 
+ - Autoconf should check for correct version of bison
