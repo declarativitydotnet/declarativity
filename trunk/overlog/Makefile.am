@@ -33,7 +33,6 @@ ol_parser.C: ol_parser.y parser_util.C
 	$(YACC) -t -y ol_parser.y -o ol_parser.C
 
 #	$(top_builddir)/util/fixbison.sh ol_parser.y
-
 #	$(YACC) ol_parser.y
 #	cp ol_parser.tab.c ol_parser.C
 
