@@ -345,7 +345,8 @@ DEF_OP(PUSH_FIELD) {
 }
 DEF_OP(POP) {
   if (!result) { result = Tuple::mk(); }
-  ValuePtr top = stackTop(); stackPop();
+  ValuePtr top = stackTop();
+  stackPop();
   if (top->typeCode() == Value::TUPLE) {
     // Freeze it before taking it out
     Val_Tuple::cast(top)->freeze();
