@@ -91,7 +91,7 @@ void Defrag::defragment(TuplePtr t)
   }
   else {
     for (FragMap::iterator iter = fragments_.find(seq_num); iter != fragments_.end(); iter++) {
-      if (Val_UInt64::cast((*iter->second)[SEQ_FIELD]) == offset) {
+      if (Val_UInt64::cast((*iter->second)[SEQ_FIELD]) == (uint64_t) offset) {
         ELEM_INFO( "defragment: duplicate offset");
         return;
       }
@@ -102,10 +102,12 @@ void Defrag::defragment(TuplePtr t)
     if (fragments_.count(seq_num) == chunks) {  
       // Put fragments back together
       FdbufPtr fb(new Fdbuf());
-      for (uint i = 0; i < chunks; i++) {
+      for (uint64_t i = 0;
+           i < chunks;
+           i++) {
         TuplePtr p;
         for (FragMap::iterator iter = fragments_.find(seq_num); iter != fragments_.end(); iter++) {
-          if (Val_UInt64::cast((*iter->second)[SEQ_FIELD]) == (int) i) {
+          if (Val_UInt64::cast((*iter->second)[SEQ_FIELD]) == i) {
             p = iter->second;
             fragments_.erase(iter);
             break;
