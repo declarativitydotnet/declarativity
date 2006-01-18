@@ -46,8 +46,8 @@ class TBReport:
     def read_internal_ips(self):
         ips = {}
         for l in self.tblines:
-            m = re.search("^(node\d+)\s+node\d+:0\s+(.*?)\s+", l)
-            if m:
+            m = re.search("^.*(node\d+):0\s+([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*", l)
+            if m and not ips.has_key(m.group(1)):
                 node, ip = m.group(1), m.group(2)
                 ips[node] = ip
         return ips
