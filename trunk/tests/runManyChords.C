@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "val_int32.h"
 #include "val_uint32.h"
 #include "val_str.h"
@@ -77,7 +77,7 @@ void testNetworked(LoggerI::Level level,
   eventLoopInitialize();
 
   // Create the data flow
-  Router::ConfigurationPtr conf(new Router::Configuration());
+  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
 
 
 
@@ -102,18 +102,18 @@ void testNetworked(LoggerI::Level level,
     createNode(myAddress.str(), landmarkAddress.str(), conf, udp, i * interarrival);
   }
 
-  RouterPtr router(new Router(conf, level));
-  if (router->initialize(router) == 0) {
+  PlumberPtr plumber(new Plumber(conf, level));
+  if (plumber->initialize(plumber) == 0) {
     std::cout << "Correctly initialized network of chord lookup flows.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
     return;
   }
 
-  // Activate the router
-  router->activate();
+  // Activate the plumber
+  plumber->activate();
 
-  // Run the router
+  // Run the plumber
   eventLoop();
 }
 

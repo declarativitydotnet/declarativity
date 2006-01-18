@@ -18,7 +18,7 @@
 #include <iostream>
 
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "udp.h"
 //#include "plsensor.h"
 #include "tupleseq.h"
@@ -39,9 +39,9 @@
 #include "slot.h"
 #include "loggerI.h"
 
-Router::ConfigurationPtr UdpCC_source(Udp *udp, string src, string dest, double drop) {
+Plumber::ConfigurationPtr UdpCC_source(Udp *udp, string src, string dest, double drop) {
   // The sending data flow
-  Router::ConfigurationPtr conf(new Router::Configuration());
+  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
 
   ElementSpecPtr data     = conf->addElement(ElementPtr(new TimedPushSource("source", .01)));
   ElementSpecPtr srcAddr  = conf->addElement(ElementPtr(new PelTransform(string("src:").append(src), 
@@ -81,8 +81,8 @@ Router::ConfigurationPtr UdpCC_source(Udp *udp, string src, string dest, double 
   return conf;
 }
 
-Router::ConfigurationPtr UdpCC_sink(Udp *udp, double drop) {
-  Router::ConfigurationPtr conf(new Router::Configuration());
+Plumber::ConfigurationPtr UdpCC_sink(Udp *udp, double drop) {
+  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
 
   // The remote data elements
   ElementSpecPtr udpRx     = conf->addElement(udp->get_rx());
@@ -127,19 +127,19 @@ Router::ConfigurationPtr UdpCC_sink(Udp *udp, double drop) {
   return conf;
 }
 
-void testUdpCC(Router::ConfigurationPtr conf)
+void testUdpCC(Plumber::ConfigurationPtr conf)
 {
-  RouterPtr router(new Router(conf, LoggerI::WARN));
-  if (router->initialize(router) == 0) {
+  PlumberPtr plumber(new Plumber(conf, LoggerI::WARN));
+  if (plumber->initialize(plumber) == 0) {
     std::cout << "Correctly initialized.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
 
-  // Activate the router
-  router->activate();
+  // Activate the plumber
+  plumber->activate();
 
-  // Run the router
+  // Run the plumber
   try {
     eventLoop();
   } catch(Value::TypeError& e) {

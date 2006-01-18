@@ -20,7 +20,7 @@
 
 #include "ol_lexer.h"
 #include "ol_context.h"
-#include "rtr_confgen.h"
+#include "plmb_confgen.h"
 #include "udp.h"
 #include "dot.h"
 
@@ -45,7 +45,7 @@ int main(int argc, char **argv)
       std::cerr << "Usage: " << argv[0] << "{option|filename}+\n"
 		<< "\t-c: canonical form (used for builtin tests)\n"
 		<< "\t-d: turn on parser debugging\n"
-		<< "\t-r: try to instantiate a router config\n"
+		<< "\t-r: try to instantiate a plumber config\n"
                 << "\t-g: produce a DOT graph spec\n"
 		<< "\t-h: print this help text\n"
 		<< "\t- : read from stdin\n";
@@ -62,12 +62,12 @@ int main(int argc, char **argv)
       std::ifstream istr(filename.c_str());
       std::ofstream ostr("overlog.dot");
       ctxt->parse_stream(&istr);
-      Router::ConfigurationPtr conf(new Router::Configuration());
-      Rtr_ConfGen gen(ctxt.get(), conf, false, false, true, filename);
+      Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+      Plmb_ConfGen gen(ctxt.get(), conf, false, false, true, filename);
       gen.createTables("127.0.0.1:10000");
       
       boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));
-      gen.configureRouter(udp, "127.0.0.1:10000");
+      gen.configurePlumber(udp, "127.0.0.1:10000");
       toDot(&ostr, conf);
       exit (0);
     } else { 
@@ -91,17 +91,17 @@ int main(int argc, char **argv)
 
 
   if (route) {
-    // test a configuration of a router
-    Router::ConfigurationPtr conf(new Router::Configuration());
-    Rtr_ConfGen gen(ctxt.get(), conf, false, false, true, filename);
+    // test a configuration of a plumber
+    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+    Plmb_ConfGen gen(ctxt.get(), conf, false, false, true, filename);
     gen.createTables("127.0.0.1:10000");
     
     boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));
-    gen.configureRouter(udp, "127.0.0.1:10000");
+    gen.configurePlumber(udp, "127.0.0.1:10000");
     
     LoggerI::Level level = LoggerI::NONE;
-    RouterPtr router(new Router(conf, level));
-    if (router->initialize(router) == 0) {
+    PlumberPtr plumber(new Plumber(conf, level));
+    if (plumber->initialize(plumber) == 0) {
       std::cout << "Correctly initialized network of reachability flows.\n";
     } else {
       std::cout << "** Failed to initialize correct spec\n";

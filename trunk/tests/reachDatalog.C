@@ -20,13 +20,13 @@
 #include <stdlib.h>
 
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "val_int32.h"
 #include "val_str.h"
 
 #include "ol_lexer.h"
 #include "ol_context.h"
-#include "rtr_confgen.h"
+#include "plmb_confgen.h"
 #include "print.h"
 #include "discard.h"
 #include "pelTransform.h"
@@ -63,7 +63,7 @@ static const int nodes = 4;
 
 
 /* Initial sending of links into the p2 dataflow */
-void bootstrapData(Router::ConfigurationPtr conf,
+void bootstrapData(Plumber::ConfigurationPtr conf,
                    string name,
                    TablePtr linkTable,
  		   boost::shared_ptr< Udp > udp)
@@ -109,8 +109,8 @@ void testReachability(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt,
   std::cout << "\nCHECK TRANSITIVE REACHABILITY\n";
   eventLoopInitialize();
 
-  Router::ConfigurationPtr conf(new Router::Configuration());
-  Rtr_ConfGen routerConfigGenerator(ctxt, conf, false, false, false, filename);
+  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  Plmb_ConfGen plumberConfigGenerator(ctxt, conf, false, false, false, filename);
 
   // Create one data flow per "node"
   ptr< Udp > udps[nodes];
@@ -133,7 +133,7 @@ void testReachability(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt,
 
     udps[i].reset(new Udp(names[i] << ":Udp", STARTING_PORT + i));
     bootstrapUDP[i].reset(new Udp(names[i] << ":bootstrapUdp", STARTING_PORT + i + 5000));
-    routerConfigGenerator.createTables(names[i]);
+    plumberConfigGenerator.createTables(names[i]);
     bootstrapTables[i].reset(new Table(oss.str(), 100));
     bootstrapTables[i]->add_multiple_index(0);  
   }
@@ -164,7 +164,7 @@ void testReachability(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt,
 
       t->append((ValuePtr) nodeIds[other]);
       t->freeze();
-      TablePtr tablePtr = routerConfigGenerator.getTableByName(names[i], "neighbor");
+      TablePtr tablePtr = plumberConfigGenerator.getTableByName(names[i], "neighbor");
       std::cout << "Node " << i << " insert tuple " << t->toString() << "\n";
       tablePtr->insert(t);
       bootstrapTables[i]->insert(t);
@@ -175,7 +175,7 @@ void testReachability(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt,
       symmetric->append((ValuePtr) nodeIds[other]);
       symmetric->append((ValuePtr) nodeIds[i]);
       symmetric->freeze();
-      tablePtr = routerConfigGenerator.getTableByName(names[other], "neighbor");
+      tablePtr = plumberConfigGenerator.getTableByName(names[other], "neighbor");
       std::cout << "Node " << other << " insert tuple " << symmetric->toString() << "\n";
       tablePtr->insert(symmetric);
       bootstrapTables[other]->insert(symmetric);
@@ -184,24 +184,24 @@ void testReachability(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt,
 
   for (int i = 0; i < nodes; i++) {
     bootstrapData(conf, "bootstrap" << names[i], bootstrapTables[i], bootstrapUDP[i]);
-    routerConfigGenerator.clear(); 
-    routerConfigGenerator.configureRouter(udps[i], names[i]);      
+    plumberConfigGenerator.clear(); 
+    plumberConfigGenerator.configurePlumber(udps[i], names[i]);      
   }
 
   // add extra here to initialize the tables
 
-  RouterPtr router(new Router(conf, level));
-  if (router->initialize(router) == 0) {
+  PlumberPtr plumber(new Plumber(conf, level));
+  if (plumber->initialize(plumber) == 0) {
     std::cout << "Correctly initialized network of reachability flows.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
     return;
   }
 
-  // Activate the router
-  router->activate();
+  // Activate the plumber
+  plumber->activate();
 
-  // Run the router
+  // Run the plumber
   eventLoop();
 }
 

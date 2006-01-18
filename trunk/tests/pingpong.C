@@ -29,7 +29,7 @@
 #include <unistd.h>
 #include "strToSockaddr.h"
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "udp.h"
 
 #include "print.h"
@@ -79,7 +79,7 @@ void testPingPong(int mode, string targetHost, LoggerI::Level level)
   boost::shared_ptr< Store > pingNodeStore(new Store("PingNodes", 2));
 
   // The sending data flow
-  Router::ConfigurationPtr conf(new Router::Configuration());    
+  Plumber::ConfigurationPtr conf(new Plumber::Configuration());    
 
   // to add a demuxer to differentiate ping and pingresponse
   Udp udpOut("9999", 9999); // port of the sender    
@@ -112,7 +112,7 @@ void testPingPong(int mode, string targetHost, LoggerI::Level level)
     conf->addElement(ElementPtr(new MarshalField("Marshal", 1)));
   
   ElementSpecPtr routeS =
-    conf->addElement(ElementPtr(new StrToSockaddr("Router", 0)));
+    conf->addElement(ElementPtr(new StrToSockaddr("Router:", 0)));
 
   ElementSpecPtr printSPostMarshal = conf->addElement(ElementPtr(new Print("PrintPostMarshal")));
 
@@ -178,17 +178,17 @@ void testPingPong(int mode, string targetHost, LoggerI::Level level)
   conf->hookUp(pingResultPrint, 0, slotRxS1, 0);
   conf->hookUp(slotRxS1, 0, sinkS, 0);   
  
-  RouterPtr router(new Router(conf, level));
-  if (router->initialize(router) == 0) {
+  PlumberPtr plumber(new Plumber(conf, level));
+  if (plumber->initialize(plumber) == 0) {
     std::cout << "Correctly initialized.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
 
-  // Activate the router
-  router->activate();
+  // Activate the plumber
+  plumber->activate();
 
-  // Run the router
+  // Run the plumber
   eventLoop();
 }
 

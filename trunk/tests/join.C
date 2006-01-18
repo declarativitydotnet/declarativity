@@ -18,7 +18,7 @@
 #include <iostream>
 
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "val_int32.h"
 
 #include "print.h"
@@ -47,7 +47,7 @@ void testSimpleJoin(LoggerI::Level level)
   std::cout << "\nCHECK SIMPLE JOIN\n";
   eventLoopInitialize();
 
-  Router::ConfigurationPtr conf(new Router::Configuration());
+  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
 
   // The source dataflow.  Produce random tuples.
   ElementSpecPtr sourceS =
@@ -132,21 +132,21 @@ void testSimpleJoin(LoggerI::Level level)
 
 
 
-  RouterPtr router(new Router(conf, level));
-  if (router->initialize(router) == 0) {
+  PlumberPtr plumber(new Plumber(conf, level));
+  if (plumber->initialize(plumber) == 0) {
     std::cout << "Correctly initialized simple join.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
     return;
   }
 
-  // Activate the router
-  router->activate();
+  // Activate the plumber
+  plumber->activate();
 
   // Schedule kill
   //delayCB(10, wrap(&killJoin));
 
-  // Run the router
+  // Run the plumber
   eventLoop();
 }
 

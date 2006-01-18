@@ -34,7 +34,7 @@
  * are the way they are. 
  * 
  * We've also enhanced to push/pull tuple to prevent blocking (something
- * Click, being a router, doesn't need to bother with). 
+ * Click, being a plumber, doesn't need to bother with). 
  */
 
 #ifndef __ELEMENT_H__
@@ -49,8 +49,8 @@
 #define ELEM_INFO(_rest) ELEM_LOG(LoggerI::INFO, 0, _rest)
 
 
-class Router;
-typedef boost::shared_ptr< Router > RouterPtr;
+class Plumber;
+typedef boost::shared_ptr< Plumber > PlumberPtr;
 
 
 class Element { 
@@ -118,8 +118,8 @@ public:
   int ID() const				{ return _ID; }
   string name() const				{ return _name; }
 
-  /** Return the router that contains me */
-  RouterPtr router() const			{ return _router; }
+  /** Return the plumber that contains me */
+  PlumberPtr plumber() const			{ return _plumber; }
 
 
   // INPUTS AND OUTPUTS
@@ -155,16 +155,16 @@ public:
                             int errnum,
                             string explanation);
   
-  /** Call the default logger, if the router's logger is unavailable */
+  /** Call the default logger, if the plumber's logger is unavailable */
   REMOVABLE_INLINE void logDefault(string instanceName,
                                    LoggerI::Level severity,
                                    int errnum,
                                    string explanation);
 
-  // METHODS USED BY `ROUTER'
+  // METHODS USED BY `PLUMBER'
   
-  /** Attach me to a router */
-  void attach_router(RouterPtr r)		{ _router = r; }
+  /** Attach me to a plumber */
+  void attach_plumber(PlumberPtr r)		{ _plumber = r; }
 
   /** A nested class encapsulating connection stubs into and out of an
       element. */
@@ -249,8 +249,8 @@ public:
   const PortPtr input(int) const;
   const PortPtr output(int) const;
 
-  /** My router */
-  RouterPtr _router;
+  /** My plumber */
+  PlumberPtr _plumber;
 
   /** My input ports */
   PortVec _inputs;

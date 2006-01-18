@@ -1,4 +1,4 @@
-// -*- c-basic-offset: 2; related-file-name: "router.h" -*-
+// -*- c-basic-offset: 2; related-file-name: "plumber.h" -*-
 /*
  * @(#)$Id$
  * Modified from the Click Element base class by Eddie Kohler
@@ -23,21 +23,20 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: The tuple router class providing support for element
- * plumbing.
+ * DESCRIPTION: The plumber class, for creating dataflow graphs
  * 
- * Click machinery works as follows:
+ * Machinery works as follows:
  *
  *  Lexer finds all distinct elements and their interconnections
  *
  *  For every found element, a default constructor is called and the
- *  element is added into the router (as a singleton object)
+ *  element is added into the plumber (as a singleton object)
  *
- *  For every found connection, the router adds a connection spec
+ *  For every found connection, the plumber adds a connection spec
  *  (called a "hookup") from the source element to the destination
  *  element to a queue of new connections to be created.
  *
- *  The router is "initialized."
+ *  The plumber is "initialized."
  *
  *    The queued hookups are checked for sanity (they connect existing
  *    elements and existing port numbers).  Incorrect hookups are
@@ -82,29 +81,29 @@
  *
  * Synchronization machinery:
  *  
- *  Each router has a runcount used as a semaphore (it's an integer
+ *  Each plumber has a runcount used as a semaphore (it's an integer
  *  protected by a global lock stored at the master).
  *
- *  The master also have a runcount which is the minimum of all router
+ *  The master also have a runcount which is the minimum of all plumber
  *  runcount values.
  *
- *  Correctly initialized routers have runcount of at least
- *  1. Incorrectly initialized router have non-positive runcounts.
+ *  Correctly initialized plumbers have runcount of at least
+ *  1. Incorrectly initialized plumber have non-positive runcounts.
  *
- *  A router thread runs continuously, as long as the master runcount
- *  remains positive.  When a router thread detects that the master
+ *  A plumber thread runs continuously, as long as the master runcount
+ *  remains positive.  When a plumber thread detects that the master
  *  runcount is no longer positive, it kicks the master to clean up its
- *  routers. If after the cleanup the master reports there's more
- *  running to be had by all, the driver method of the router thread
+ *  plumbers. If after the cleanup the master reports there's more
+ *  running to be had by all, the driver method of the plumber thread
  *  continues the loop.
  */
 
 
-#include <router.h>
+#include <plumber.h>
 #include <iostream>
 #include <set>
 
-void Router::set_connections()
+void Plumber::set_connections()
 {
   // actually assign ports
   for (uint i = 0;
@@ -127,7 +126,7 @@ void Router::set_connections()
 
 
 
-int Router::check_hookup_completeness()
+int Plumber::check_hookup_completeness()
 {
   // Check duplicates
   int duplicates = 0;
@@ -197,7 +196,7 @@ int Router::check_hookup_completeness()
 
 
 
-int Router::check_push_and_pull()
+int Plumber::check_push_and_pull()
 {
   int errors = 0;
   // For every hookup...
@@ -377,7 +376,7 @@ int Router::check_push_and_pull()
 }
 
 
-int Router::check_hookup_range()
+int Plumber::check_hookup_range()
 {
   // Check each hookup to ensure its port numbers are within range
   int errors = 0;
@@ -410,17 +409,17 @@ int Router::check_hookup_range()
 }
 
 
-Router::Router(ConfigurationPtr c,
+Plumber::Plumber(ConfigurationPtr c,
                LoggerI::Level loggingLevel)
   : loggingLevel(loggingLevel),
     _elements(new std::vector< ElementPtr >()),
-    _state(ROUTER_NEW),
+    _state(PLUMBER_NEW),
     _configuration(c),
     _logger(0)
 {
 }
 
-Router::~Router()
+Plumber::~Plumber()
 {
   // Unschedule if running
 
@@ -442,19 +441,19 @@ Router::~Router()
  * - Skip configuration ordering, since for now we start with
  * preconfigured elements.
  *
- * The router ref parameter is not stored locally (this could prevent
- * routers from being freed in the end) but used to initialize elements
+ * The plumber ref parameter is not stored locally (this could prevent
+ * plumbers from being freed in the end) but used to initialize elements
  * down the line.
  *
  */
-int Router::initialize(RouterPtr myPtr)
+int Plumber::initialize(PlumberPtr myPtr)
 {
   // Am I already initialized?
-  if (_state != ROUTER_NEW) {
-    //    std::cerr << "** Second attempt to initialize router";
+  if (_state != PLUMBER_NEW) {
+    //    std::cerr << "** Second attempt to initialize plumber";
     return -1;
   }
-  _state = ROUTER_PRECONFIGURE;
+  _state = PLUMBER_PRECONFIGURE;
   assert(_configuration != 0);
 
   // Are the hookups pointing to existing elements and ports?
@@ -483,7 +482,7 @@ int Router::initialize(RouterPtr myPtr)
   }
 
   // Time to do the actual hooking up.  Create element connections. Move
-  // the elements from the configuration to the router. Trash the
+  // the elements from the configuration to the plumber. Trash the
   // configuration.
   set_connections();
   for (uint i = 0;
@@ -497,21 +496,21 @@ int Router::initialize(RouterPtr myPtr)
     theElement->initialize();
   }
   _configuration.reset();
-  _state = ROUTER_LIVE;
+  _state = PLUMBER_LIVE;
   
   return 0;
 }
 
-void Router::add_element(RouterPtr myPtr,
+void Plumber::add_element(PlumberPtr myPtr,
                          ElementPtr e)
 {
-  // router now owns the element
+  // plumber now owns the element
   _elements->push_back(e);
-  e->attach_router(myPtr);
+  e->attach_plumber(myPtr);
 }
 
 
-int Router::check_hookup_elements()
+int Plumber::check_hookup_elements()
 {
   // Put all (real not spec) elements in a set to be searchable
   std::set< ElementPtr > elementSet;
@@ -568,9 +567,9 @@ int Router::check_hookup_elements()
 
 
 
-void Router::activate()
+void Plumber::activate()
 {
-  if (_state != ROUTER_LIVE) {
+  if (_state != PLUMBER_LIVE) {
     return;
   }
 }
@@ -601,10 +600,10 @@ void Router::activate()
 
 
 
-REMOVABLE_INLINE LoggerI * Router::logger(LoggerI * newLogger)
+REMOVABLE_INLINE LoggerI * Plumber::logger(LoggerI * newLogger)
 {
-  if (_state != ROUTER_LIVE) {
-    warn << "Cannot install a new logger before the router is live\n";
+  if (_state != PLUMBER_LIVE) {
+    warn << "Cannot install a new logger before the plumber is live\n";
     return 0;
   } else {
     LoggerI * l = _logger;

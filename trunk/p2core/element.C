@@ -43,7 +43,7 @@
 
 #include <errno.h>
 #include "element.h"
-#include "router.h"
+#include "plumber.h"
 #include "loggerI.h"
 #include "p2Time.h"
 
@@ -351,7 +351,7 @@ REMOVABLE_INLINE void Element::log(LoggerI::Level severity,
 {
   // Even this is a shortcut, cut off the process here as well, since
   // creating the instance name is expensive
-  if ((_router && (severity >= _router->loggingLevel)) || (!_router)) {
+  if ((_plumber && (severity >= _plumber->loggingLevel)) || (!_plumber)) {
     ostringstream n;
     n << _name << ":" << _IDstr;
     log(n.str(), severity, errnum, explanation);
@@ -364,9 +364,9 @@ REMOVABLE_INLINE void Element::log(string instanceName,
                                    string explanation)
 {
   // Check logging level first
-  if (_router != 0) {
-    if (severity >= _router->loggingLevel) {
-      LoggerI* l = _router->logger();
+  if (_plumber != 0) {
+    if (severity >= _plumber->loggingLevel) {
+      LoggerI* l = _plumber->logger();
       if (l != 0) {
         l->log(class_name(),
                instanceName,

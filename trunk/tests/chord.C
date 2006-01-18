@@ -23,7 +23,7 @@
 #include <stdlib.h>
 
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "val_int32.h"
 #include "val_uint32.h"
 #include "val_str.h"
@@ -81,7 +81,7 @@ static const int FINGERTTL = 10;
  *lookup@NI(NI,K,R,E), bestSuccessor@NI(NI,S,SI), K in (N,S].
  */
 void ruleL1(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr nodeTable,
             TablePtr bestSuccessorTable,
             ElementSpecPtr pushLookupIn,
@@ -165,7 +165,7 @@ void ruleL1(string name,
     node@NI(NI, N), finger@NI(NI,I,B,BI,ET), B in (N,K), D=f_dist(B,K)-1
 */
 void ruleL2(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr nodeTable,
             TablePtr fingerTable,
             ElementSpecPtr pushLookupIn,
@@ -258,7 +258,7 @@ void ruleL2(string name,
     bestLookupDistance@NI(NI,K,R,E,D), finger@NI(NI,I,B,BI),
     D=f_dist(B,K), node@NI(NI, N), B in (N, K).*/
 void ruleL3(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr nodeTable,
             TablePtr fingerTable,
             ElementSpecPtr pushBLDIn,
@@ -362,7 +362,7 @@ void ruleL3(string name,
     rule SU3 finger@NI(NI,0,S,SI) :- bestSuccessor@NI(NI,S,SI).
  */
 void ruleSU3(string name,
-             Router::ConfigurationPtr conf,
+             Plumber::ConfigurationPtr conf,
              ElementSpecPtr pushBestSuccessorIn,
              int pushBestSuccessorInPort,
              ElementSpecPtr pullFingerOut,
@@ -390,7 +390,7 @@ void ruleSU3(string name,
 
 /** rule F1 fixFinger@NI(ni) :- periodic@NI(finger.TTL*0.5). */
 void ruleF1(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             string localAddress,
             double fingerTTL,
             ElementSpecPtr pullFixFingerOut,
@@ -424,7 +424,7 @@ void ruleF1(string name,
 
 /** rule F2 nextFingerFix@NI(ni, 0). */
 void ruleF2(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             string localAddress,
             ElementSpecPtr pullNextFingerFixOut,
             int pullNextFingerFixOutPort)
@@ -462,7 +462,7 @@ void ruleF2(string name,
     nextFingerFix@NI(NI, I).
 */
 void ruleF3(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr nextFingerFixTable,
             ElementSpecPtr pushFixFingerIn,
             int pushFixFingerInPort,
@@ -502,7 +502,7 @@ void ruleF3(string name,
     node(NI, N), K = N + 1 << I.
 */
 void ruleF4(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr nodeTable,
             ElementSpecPtr pushFingerLookupIn,
             int pushFingerLookupInPort,
@@ -549,7 +549,7 @@ void ruleF4(string name,
     I), lookupResults@NI(NI, K, B, BI, E).
 */
 void ruleF5(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr fingerLookupTable,
             ElementSpecPtr pushLookupResultsIn,
             int pushLookupResultsInPort,
@@ -601,7 +601,7 @@ void ruleF5(string name,
 
 /** rule F6 finger@NI(NI, I, B, BI) :- eagerFinger@NI(NI, I, B, BI). */
 void ruleF6(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             ElementSpecPtr pushEagerFingerIn,
             int pushEagerFingerInPort,
             ElementSpecPtr pullFingerOut,
@@ -630,7 +630,7 @@ void ruleF6(string name,
     B, BI), I > 0, I1 = I - 1, fingerLookup@NI(NI, E, I1).
 */
 void ruleF6a(string name,
-             Router::ConfigurationPtr conf,
+             Plumber::ConfigurationPtr conf,
              TablePtr fingerLookupTable,
              ElementSpecPtr pushEagerFingerIn,
              int pushEagerFingerInPort)
@@ -697,7 +697,7 @@ void ruleF6a(string name,
     I, K in (N, B), BI!=NI.
 */
 void ruleF7(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr nodeTable,
             ElementSpecPtr pushEagerFingerIn,
             int pushEagerFingerInPort,
@@ -759,7 +759,7 @@ void ruleF7(string name,
    == finger.SIZE - 1) || (BI == NI)).
 */
 void ruleF8(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             int fingerSize,
             ElementSpecPtr pushEagerFingerIn,
             int pushEagerFingerInPort,
@@ -795,7 +795,7 @@ void ruleF8(string name,
     in (B, N), NI!=BI.
 */
 void ruleF9(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr nodeTable,
             ElementSpecPtr pushEagerFingerIn,
             int pushEagerFingerInPort,
@@ -861,7 +861,7 @@ void ruleF9(string name,
 
 /** rule J1 join@NI(NI,E) :- joinEvent@NI(NI), E=f_rand(). */
 void ruleJ1(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             ElementSpecPtr pushJoinEventIn,
             int pushJoinEventInPort,
             ElementSpecPtr pullJoinOut,
@@ -886,7 +886,7 @@ void ruleJ1(string name,
 
 /** rule J1a joinEvent@NI(ni) once. */
 void ruleJ1a(string name,
-             Router::ConfigurationPtr conf,
+             Plumber::ConfigurationPtr conf,
              string localAddress,
              double delay,
              ElementSpecPtr pullJoinEventOut,
@@ -923,7 +923,7 @@ void ruleJ1a(string name,
 /** rule J2 joinRecord@NI(NI,E) :- join@NI(NI,E).
  */
 void ruleJ2(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             ElementSpecPtr pushJoinIn,
             int pushJoinInPort,
             ElementSpecPtr pullJoinRecordOut,
@@ -949,7 +949,7 @@ void ruleJ2(string name,
     landmarkNode@NI(NI,LI), LI != "".
 */
 void ruleJ3(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr landmarkNodeTable,
             TablePtr nodeTable,
             ElementSpecPtr pushJoinIn,
@@ -1025,7 +1025,7 @@ void ruleJ3(string name,
 /** rule J4 lookup@LI(LI,N,NI,E) :- startJoin@LI(LI,N,NI,E).
  */
 void ruleJ4(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             ElementSpecPtr pushStartJoinIn,
             int pushStartJoinInPort,
             ElementSpecPtr pullLookupOut,
@@ -1055,7 +1055,7 @@ void ruleJ4(string name,
     lookupResults@NI(NI,K,S,SI,E).
 */
 void ruleJ5(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr joinRecordTable,
             ElementSpecPtr pushLookupResultsIn,
             int pushLookupResultsInPort,
@@ -1103,7 +1103,7 @@ void ruleJ5(string name,
 
 /** rule J6 predecessor@NI(ni,null,""). */
 void ruleJ6(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             string localAddress,
             ElementSpecPtr pullPredecessorOut,
             int pullPredecessorOutPort)
@@ -1142,7 +1142,7 @@ void ruleJ6(string name,
     node@NI(NI, N), LI == "".
 */
 void ruleJ7(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr landmarkNodeTable,
             TablePtr nodeTable,
             ElementSpecPtr pushJoinIn,
@@ -1221,7 +1221,7 @@ void ruleJ7(string name,
 void
 connectRules(string name,
              string localAddress,
-             Router::ConfigurationPtr conf,
+             Plumber::ConfigurationPtr conf,
              TablePtr bestSuccessorTable,
              TablePtr fingerLookupTable,
              TablePtr fingerTable,
@@ -1731,7 +1731,7 @@ connectRules(string name,
 
 void createNode(string myAddress,
                 string landmarkAddress,
-                Router::ConfigurationPtr conf,
+                Plumber::ConfigurationPtr conf,
                 Udp* udp,
                 double delay = 0)
 {

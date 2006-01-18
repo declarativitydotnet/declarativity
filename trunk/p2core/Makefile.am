@@ -19,7 +19,7 @@ libp2core_la_SOURCES = \
 	ID.C \
 	element.C \
 	tuple.C \
-	router.C \
+	plumber.C \
 	elementSpec.C \
 	pel_lexer.C \
 	pel_vm.C \

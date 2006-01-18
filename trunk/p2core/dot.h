@@ -2,7 +2,7 @@
 /*
  * @(#)$Id$
  *
- *  Utility functions to produce a DOT description of a router
+ *  Utility functions to produce a DOT description of a plumber
  *  configuration.
  *
  *  Petros Maniatis.
@@ -11,11 +11,11 @@
 #ifndef __DOT_H__
 #define __DOT_H__
 
-#include <router.h>
+#include <plumber.h>
 #include <iostream>
 
 void
-toDot(std::ostream*, Router::ConfigurationPtr);
+toDot(std::ostream*, Plumber::ConfigurationPtr);
 
 #endif /* __DOT_H__ */
 

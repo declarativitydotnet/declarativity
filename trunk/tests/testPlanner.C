@@ -21,7 +21,7 @@
 #include "ol_lexer.h"
 #include "ol_context.h"
 #include "eca_context.h"
-#include "rtr_confgen.h"
+#include "plmb_confgen.h"
 #include "catalog.h"
 #include "udp.h"
 #include "planner.h"
@@ -48,7 +48,7 @@ int main(int argc, char **argv)
       std::cerr << "Usage: " << argv[0] << "{option|filename}+\n"
 		<< "\t-c: canonical form (used for builtin tests)\n"
 		<< "\t-d: turn on parser debugging\n"
-		<< "\t-r: try to instantiate a router config\n"
+		<< "\t-r: try to instantiate a plumber config\n"
                 << "\t-g: produce a DOT graph spec\n"
 		<< "\t-h: print this help text\n"
 		<< "\t- : read from stdin\n";
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
       std::ifstream istr(filename.c_str());
       std::ofstream ostr(string(filename + ".dot").c_str());
       ctxt->parse_stream(&istr);
-      Router::ConfigurationPtr conf(new Router::Configuration());
+      Plumber::ConfigurationPtr conf(new Plumber::Configuration());
       boost::shared_ptr< Catalog > catalog(new Catalog());  
       catalog->initTables(ctxt.get()); 
       boost::shared_ptr< ECA_Context > ectxt(new ECA_Context()); 
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
   std::cout << ctxt->toString() << "\n";
 
   if (route) {
-    Router::ConfigurationPtr conf(new Router::Configuration());
+    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
     boost::shared_ptr< Catalog > catalog(new Catalog());  
     catalog->initTables(ctxt.get()); 
     boost::shared_ptr< ECA_Context > ectxt(new ECA_Context()); 
@@ -120,8 +120,8 @@ int main(int argc, char **argv)
     std::cout << planner->getNetPlanner()->toString() << "\n";
 
     LoggerI::Level level = LoggerI::NONE;
-    RouterPtr router(new Router(conf, level));
-    if (router->initialize(router) == 0) {
+    PlumberPtr plumber(new Plumber(conf, level));
+    if (plumber->initialize(plumber) == 0) {
       std::cout << "Correctly initialized network of reachability flows.\n";
     } else {
       std::cout << "** Failed to initialize correct spec\n";

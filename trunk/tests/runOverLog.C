@@ -22,7 +22,7 @@
 #include <sys/wait.h>
 
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "val_int32.h"
 #include "val_uint32.h"
 #include "val_str.h"
@@ -30,7 +30,7 @@
 
 #include "ol_lexer.h"
 #include "ol_context.h"
-#include "rtr_confgen.h"
+#include "plmb_confgen.h"
 
 
 
@@ -50,12 +50,12 @@ static char * USAGE = "Usage:\n\t runOverLog <overLogFile> <loggingLevel> <seed>
  */
 void
 initializeBaseTables(boost::shared_ptr< OL_Context> ctxt,
-                     boost::shared_ptr<Rtr_ConfGen> routerConfigGenerator, 
+                     boost::shared_ptr<Plmb_ConfGen> plumberConfigGenerator, 
                      string localAddress,
                      string environment)
 {
   // Put in my own address
-  TablePtr envTable = routerConfigGenerator->getTableByName(localAddress, "env");
+  TablePtr envTable = plumberConfigGenerator->getTableByName(localAddress, "env");
   TuplePtr tuple = Tuple::mk();
   ValuePtr envName = Val_Str::mk("env");
   tuple->append(envName);
@@ -124,30 +124,30 @@ startOverLogDataflow(LoggerI::Level level,
 {
   eventLoopInitialize();
   // create dataflow for translated OverLog
-  Router::ConfigurationPtr conf(new Router::Configuration());
-  boost::shared_ptr< Rtr_ConfGen > 
-    routerConfigGenerator(new Rtr_ConfGen(ctxt.get(), conf, false, DEBUG, CC, overLogFile));
+  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  boost::shared_ptr< Plmb_ConfGen > 
+    plumberConfigGenerator(new Plmb_ConfGen(ctxt.get(), conf, false, DEBUG, CC, overLogFile));
 
-  routerConfigGenerator->createTables(localAddress);
+  plumberConfigGenerator->createTables(localAddress);
 
   boost::shared_ptr< Udp > udp(new Udp(localAddress, port));
-  routerConfigGenerator->clear();
-  routerConfigGenerator->configureRouter(udp, localAddress);
+  plumberConfigGenerator->clear();
+  plumberConfigGenerator->configurePlumber(udp, localAddress);
 
-  initializeBaseTables(ctxt, routerConfigGenerator, localAddress, environment);
+  initializeBaseTables(ctxt, plumberConfigGenerator, localAddress, environment);
    
-  RouterPtr router(new Router(conf, level));
-  if (router->initialize(router) == 0) {
+  PlumberPtr plumber(new Plumber(conf, level));
+  if (plumber->initialize(plumber) == 0) {
     warn << "Correctly initialized network of chord lookup flows.\n";
   } else {
     warn << "** Failed to initialize correct spec\n";
     return;
   }
 
-  // Activate the router
-  router->activate();
+  // Activate the plumber
+  plumber->activate();
 
-  // Run the router
+  // Run the plumber
   eventLoop();
 }
 

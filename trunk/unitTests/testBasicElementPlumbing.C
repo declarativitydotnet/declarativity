@@ -1,7 +1,7 @@
 #include "boost/test/unit_test.hpp"
 
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "val_null.h"
 #include "val_str.h"
 #include "val_int32.h"
@@ -50,27 +50,27 @@ public:
   /** Hookup referring to non-existent element. */
   void testCheckHookupElements_NonExistentToElement()
   {
-    Router::ConfigurationPtr conf(new Router::Configuration());
+    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
     ElementSpecPtr sourceS =
       conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS(new ElementSpec(ElementPtr(new TimedPullSink("sink", 0))));
     conf->hookUp(sourceS, 0, sinkS, 0);
   
-    RouterPtr router(new Router(conf));
-    BOOST_CHECK_MESSAGE(router->initialize(router) != 0,
+    PlumberPtr plumber(new Plumber(conf));
+    BOOST_CHECK_MESSAGE(plumber->initialize(plumber) != 0,
                         "Failed to catch hookup reference to unknown to element");
   }
 
   /** Non existent from element */
   void testCheckHookupElements_NonExistentFromElement()
   {
-    Router::ConfigurationPtr conf(new Router::Configuration());
+    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
     ElementSpecPtr sourceS(new ElementSpec(ElementPtr(new TimedPushSource("source", 0))));
     ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     conf->hookUp(sourceS, 0, sinkS, 0);
   
-    RouterPtr router(new Router(conf));
-    BOOST_CHECK_MESSAGE(router->initialize(router) != 0,
+    PlumberPtr plumber(new Plumber(conf));
+    BOOST_CHECK_MESSAGE(plumber->initialize(plumber) != 0,
                         "Failed to catch hookup reference to unknown from element");
   }
 
@@ -78,13 +78,13 @@ public:
   /** From port is negative */
   void testCheckHookupElements_NegativeFromPort()
   {
-    Router::ConfigurationPtr conf(new Router::Configuration());
+    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
     ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     conf->hookUp(sourceS, -1, sinkS, 0);
   
-    RouterPtr router(new Router(conf));
-    BOOST_CHECK_MESSAGE(router->initialize(router) != 0,
+    PlumberPtr plumber(new Plumber(conf));
+    BOOST_CHECK_MESSAGE(plumber->initialize(plumber) != 0,
                         "Failed to catch negative from port");
   }
 
@@ -92,13 +92,13 @@ public:
   /** To port is negative */
   void testCheckHookupElements_NegativeToPort()
   {
-    Router::ConfigurationPtr conf(new Router::Configuration());
+    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
     ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     conf->hookUp(sourceS, 0, sinkS, -1);
   
-    RouterPtr router(new Router(conf));
-    BOOST_CHECK_MESSAGE(router->initialize(router) != 0,
+    PlumberPtr plumber(new Plumber(conf));
+    BOOST_CHECK_MESSAGE(plumber->initialize(plumber) != 0,
                         "Failed to catch negative to port");
   }
 
@@ -116,15 +116,15 @@ public:
   /** Incorrect from port. */
   void testCheckHookupRange_IncorrectFromPort()
   {
-    Router::ConfigurationPtr conf(new Router::Configuration());
+    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
     ElementSpecPtr sourceS =
       conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS =
       conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     conf->hookUp(sourceS, 1, sinkS, 0);
   
-    RouterPtr router(new Router(conf));
-    BOOST_CHECK_MESSAGE(router->initialize(router) != 0,
+    PlumberPtr plumber(new Plumber(conf));
+    BOOST_CHECK_MESSAGE(plumber->initialize(plumber) != 0,
                         "Failed to catch incorrect from port");
   }
 
@@ -132,15 +132,15 @@ public:
   /** Incorrect to port. */
   void testCheckHookupRange_IncorrectToPort()
   {
-    Router::ConfigurationPtr conf(new Router::Configuration());
+    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
     ElementSpecPtr sourceS =
       conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS =
       conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     conf->hookUp(sourceS, 0, sinkS, 1);
   
-    RouterPtr router(new Router(conf));
-    BOOST_CHECK_MESSAGE(router->initialize(router) != 0,
+    PlumberPtr plumber(new Plumber(conf));
+    BOOST_CHECK_MESSAGE(plumber->initialize(plumber) != 0,
                         "Failed to catch incorrect to port");
   }
 
@@ -148,16 +148,16 @@ public:
   /** Incorrect ports (both). */
   void testCheckHookupRange_IncorrectPorts()
   {
-    Router::ConfigurationPtr conf(new Router::Configuration());
+    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
     ElementSpecPtr sourceS =
       conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS =
       conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     conf->hookUp(sourceS, 1, sinkS, 1);
   
-    RouterPtr router(new Router(conf));
+    PlumberPtr plumber(new Plumber(conf));
 
-    BOOST_CHECK_MESSAGE(router->initialize(router) != 0,
+    BOOST_CHECK_MESSAGE(plumber->initialize(plumber) != 0,
                         "Failed to catch incorrect from/to ports");
   }
 
@@ -165,15 +165,15 @@ public:
   /** Portless hookup. */
   void testCheckHookupRange_Portless()
   {
-    Router::ConfigurationPtr conf(new Router::Configuration());
+    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
     ElementSpecPtr sourceS =
       conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS =
       conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     conf->hookUp(sinkS, 1, sourceS, 1);
   
-    RouterPtr router(new Router(conf));
-    BOOST_CHECK_MESSAGE(router->initialize(router) != 0,
+    PlumberPtr plumber(new Plumber(conf));
+    BOOST_CHECK_MESSAGE(plumber->initialize(plumber) != 0,
                         "Failed to catch portless hookup");
   }
 
@@ -211,7 +211,7 @@ public:
   /** Pull to push. */
   void testCheckPushPull_PullToPush()
   {
-    Router::ConfigurationPtr conf(new Router::Configuration());
+    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
     ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     ElementSpecPtr slot1S = conf->addElement(ElementPtr(new Slot("slot1")));
@@ -220,8 +220,8 @@ public:
     conf->hookUp(slot1S, 0, slot2S, 0);
     conf->hookUp(slot2S, 0, sinkS, 0);
   
-    RouterPtr router(new Router(conf));
-    BOOST_CHECK_MESSAGE(router->initialize(router) != 0,
+    PlumberPtr plumber(new Plumber(conf));
+    BOOST_CHECK_MESSAGE(plumber->initialize(plumber) != 0,
                         "Failed to catch pull output hooked up with push input");
   }
 
@@ -229,7 +229,7 @@ public:
   /** Pull to Push. */
   void testCheckPushPull_PullToPushHop()
   {
-    Router::ConfigurationPtr conf(new Router::Configuration());
+    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
     ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     ElementSpecPtr slot1S = conf->addElement(ElementPtr(new Slot("slot1")));
@@ -241,8 +241,8 @@ public:
     conf->hookUp(printS, 0, slot2S, 0);
     conf->hookUp(slot2S, 0, sinkS, 0);
   
-    RouterPtr router(new Router(conf));
-    BOOST_CHECK_MESSAGE(router->initialize(router) != 0,
+    PlumberPtr plumber(new Plumber(conf));
+    BOOST_CHECK_MESSAGE(plumber->initialize(plumber) != 0,
                         "Failed to catch incorrect pull-push hookup via a/a element");
   }
 
@@ -250,7 +250,7 @@ public:
   /** Push to pull, multi hop. */
   void testCheckPushPull_PullToPushMultiHop()
   {
-    Router::ConfigurationPtr conf(new Router::Configuration());
+    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
     ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     ElementSpecPtr slot1S = conf->addElement(ElementPtr(new Slot("slot1")));
@@ -264,8 +264,8 @@ public:
     conf->hookUp(print2S, 0, slot2S, 0);
     conf->hookUp(slot2S, 0, sinkS, 0);
   
-    RouterPtr router(new Router(conf));
-    BOOST_CHECK_MESSAGE(router->initialize(router) != 0,
+    PlumberPtr plumber(new Plumber(conf));
+    BOOST_CHECK_MESSAGE(plumber->initialize(plumber) != 0,
                         "Failed to catch incorrect pull-push hookup via multiple a/a elements");
   }
 
@@ -273,7 +273,7 @@ public:
   /** Pull to pull multi hop (correct). */
   void testCheckPushPull_PullToPullMultiHop()
   {
-    Router::ConfigurationPtr conf(new Router::Configuration());
+    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
     ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     ElementSpecPtr slot1S = conf->addElement(ElementPtr(new Slot("slot")));
@@ -285,9 +285,9 @@ public:
     conf->hookUp(printS, 0, print2S, 0);
     conf->hookUp(print2S, 0, sinkS, 0);
   
-    RouterPtr router(new Router(conf));
+    PlumberPtr plumber(new Plumber(conf));
 
-    BOOST_CHECK_MESSAGE(router->initialize(router) == 0,
+    BOOST_CHECK_MESSAGE(plumber->initialize(plumber) == 0,
                         "Caught incorrectly a pull-pull hookup via multiple a/a elements");
   }
 
@@ -313,7 +313,7 @@ public:
   /** Unused port */
   void testDuplicates_UnusedPort()
   {
-    Router::ConfigurationPtr conf(new Router::Configuration());
+    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
     ElementSpecPtr sourceS =
       conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS =
@@ -326,8 +326,8 @@ public:
     conf->hookUp(slot1S, 0, print2S, 0);
     conf->hookUp(print2S, 0, sinkS, 0);
   
-    RouterPtr router(new Router(conf));
-    BOOST_CHECK_MESSAGE(router->initialize(router) != 0,
+    PlumberPtr plumber(new Plumber(conf));
+    BOOST_CHECK_MESSAGE(plumber->initialize(plumber) != 0,
                         "Incorrectly allowed unused port of an element");
   }
 
@@ -335,7 +335,7 @@ public:
   /** Reused port */
   void testDuplicates_ReusedPort()
   {
-    Router::ConfigurationPtr conf(new Router::Configuration());
+    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
     ElementSpecPtr sourceS =
       conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS =
@@ -349,9 +349,9 @@ public:
     conf->hookUp(print2S, 0, slot1S, 0);
     conf->hookUp(slot1S, 0, sinkS, 0);
   
-    RouterPtr router(new Router(conf));
+    PlumberPtr plumber(new Plumber(conf));
 
-    BOOST_CHECK_MESSAGE(router->initialize(router) != 0,
+    BOOST_CHECK_MESSAGE(plumber->initialize(plumber) != 0,
                         "Incorrectly allowed port reuse");
   }
 

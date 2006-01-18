@@ -26,7 +26,7 @@
 #include <stdio.h> 
 
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "val_int32.h"
 #include "val_uint32.h"
 #include "val_str.h"
@@ -76,7 +76,7 @@ static const int SYMFINGERTTL = 30;
  *symLookup@NI(NI,K,R,E), bestSuccessor@NI(NI,S,SI), K in (N,S].
  */
 void ruleSymphonyL1(string name,
-                    Router::ConfigurationRef conf,
+                    Plumber::ConfigurationRef conf,
                     TableRef nodeTable,
                     TableRef bestSuccessorTable,
                     ElementSpecRef pushSymLookupIn,
@@ -164,7 +164,7 @@ void ruleSymphonyL1(string name,
     node@NI(NI, N), symFinger@NI(NI,I,B,BI,ET), B in (N,K), D=f_dist(B,K)-1
 */
 void ruleSymphonyL2(str name,
-            Router::ConfigurationRef conf,
+            Plumber::ConfigurationRef conf,
             TableRef nodeTable,
             TableRef symFingerTable,
             ElementSpecRef pushSymLookupIn,
@@ -258,7 +258,7 @@ void ruleSymphonyL2(str name,
     bestSymLookupDistance@NI(NI,K,R,E,D), symFinger@NI(NI,I,B,BI),
     D=f_dist(B,K), node@NI(NI, N), B in (N, K).*/
 void ruleSymphonyL3(str name,
-            Router::ConfigurationRef conf,
+            Plumber::ConfigurationRef conf,
             TableRef nodeTable,
             TableRef symFingerTable,
             ElementSpecRef pushBLDIn,
@@ -363,7 +363,7 @@ void ruleSymphonyL3(str name,
     rule SU3 symFinger@NI(NI,0,S,SI) :- bestSuccessor@NI(NI,S,SI).
 */
 void ruleSymphonySU3(str name,
-                     Router::ConfigurationRef conf,
+                     Plumber::ConfigurationRef conf,
                      ElementSpecRef pushBestSuccessorIn,
                      int pushBestSuccessorInPort,
                      ElementSpecRef pullSymFingerOut,
@@ -393,7 +393,7 @@ void ruleSymphonySU3(str name,
     rule SU3a symFinger@NI(NI,SYMFINGERSIZE,S,SI) :- predecessor@NI(NI,S,SI).
 */
 void ruleSymphonySU3a(str name,
-		      Router::ConfigurationRef conf,
+		      Plumber::ConfigurationRef conf,
 		      ElementSpecRef pushPredecessorIn,
 		      int pushBestSuccessorInPort,
 		      ElementSpecRef pullSymFingerOut,
@@ -423,7 +423,7 @@ void ruleSymphonySU3a(str name,
 
 /** rule F1 symFixFinger@NI(ni) :- periodic@NI(finger.TTL*0.5). */
 void ruleSymphonyF1(str name,
-		    Router::ConfigurationRef conf,
+		    Plumber::ConfigurationRef conf,
 		    str localAddress,
 		    double fingerTTL,
 		    ElementSpecRef pullFixFingerOut,
@@ -458,7 +458,7 @@ void ruleSymphonyF1(str name,
 
 /** rule F2 nextSymFingerFix@NI(ni, 1). */
 void ruleSymphonyF2(str name,
-		    Router::ConfigurationRef conf,
+		    Plumber::ConfigurationRef conf,
 		    str localAddress,
 		    ElementSpecRef pullNextFingerFixOut,
 		    int pullNextFingerFixOutPort)
@@ -498,7 +498,7 @@ void ruleSymphonyF2(str name,
     nextSymFingerFix@NI(NI, 1).
 */
 void ruleSymphonyF3(str name,
-            Router::ConfigurationRef conf,
+            Plumber::ConfigurationRef conf,
             TableRef nextFingerFixTable,
             ElementSpecRef pushFixFingerIn,
             int pushFixFingerInPort,
@@ -538,7 +538,7 @@ void ruleSymphonyF3(str name,
     node(NI, N), K = N + 1 << I.
 */
 void ruleSymphonyF4(str name,
-            Router::ConfigurationRef conf,
+            Plumber::ConfigurationRef conf,
             TableRef nodeTable,
             ElementSpecRef pushFingerLookupIn,
             int pushFingerLookupInPort,
@@ -587,7 +587,7 @@ void ruleSymphonyF4(str name,
     symLookupResults@NI(NI, K, B, BI, E).
 */
 void ruleSymphonyF5(str name,
-		    Router::ConfigurationRef conf,
+		    Plumber::ConfigurationRef conf,
 		    TableRef symFingerLookupTable,
 		    ElementSpecRef pushLookupResultsIn,
 		    int pushLookupResultsInPort,
@@ -646,7 +646,7 @@ void ruleSymphonyF5(str name,
 */
 
 void ruleSymphonyF6(str name,
-		    Router::ConfigurationRef conf,
+		    Plumber::ConfigurationRef conf,
 		    TableRef symFingerLookupTable,
 		    ElementSpecRef pushLookupResultsIn,
 		    int pushLookupResultsInPort,
@@ -708,7 +708,7 @@ void ruleSymphonyF6(str name,
 
 /** rule J1 join@NI(NI,E) :- joinEvent@NI(NI), E=f_rand(). */
 void ruleSymphonyJ1(str name,
-            Router::ConfigurationRef conf,
+            Plumber::ConfigurationRef conf,
             ElementSpecRef pushJoinEventIn,
             int pushJoinEventInPort,
             ElementSpecRef pullJoinOut,
@@ -733,7 +733,7 @@ void ruleSymphonyJ1(str name,
 
 /** rule J1a joinEvent@NI(ni) once. */
 void ruleSymphonyJ1a(str name,
-             Router::ConfigurationRef conf,
+             Plumber::ConfigurationRef conf,
              str localAddress,
              double delay,
              ElementSpecRef pullJoinEventOut,
@@ -770,7 +770,7 @@ void ruleSymphonyJ1a(str name,
 /** rule J2 joinRecord@NI(NI,E) :- join@NI(NI,E).
  */
 void ruleSymphonyJ2(str name,
-            Router::ConfigurationRef conf,
+            Plumber::ConfigurationRef conf,
             ElementSpecRef pushJoinIn,
             int pushJoinInPort,
             ElementSpecRef pullJoinRecordOut,
@@ -796,7 +796,7 @@ void ruleSymphonyJ2(str name,
     landmarkNode@NI(NI,LI), LI != "".
 */
 void ruleSymphonyJ3(str name,
-            Router::ConfigurationRef conf,
+            Plumber::ConfigurationRef conf,
             TableRef landmarkNodeTable,
             TableRef nodeTable,
             ElementSpecRef pushJoinIn,
@@ -872,7 +872,7 @@ void ruleSymphonyJ3(str name,
 /** rule J4 symLookup@LI(LI,N,NI,E) :- startJoin@LI(LI,N,NI,E).
  */
 void ruleSymphonyJ4(str name,
-            Router::ConfigurationRef conf,
+            Plumber::ConfigurationRef conf,
             ElementSpecRef pushStartJoinIn,
             int pushStartJoinInPort,
             ElementSpecRef pullLookupOut,
@@ -902,7 +902,7 @@ void ruleSymphonyJ4(str name,
     lookupResults@NI(NI,K,S,SI,E).
 */
 void ruleSymphonyJ5(str name,
-            Router::ConfigurationRef conf,
+            Plumber::ConfigurationRef conf,
             TableRef joinRecordTable,
             ElementSpecRef pushLookupResultsIn,
             int pushLookupResultsInPort,
@@ -950,7 +950,7 @@ void ruleSymphonyJ5(str name,
 
 /** rule J6 predecessor@NI(ni,null,""). */
 void ruleSymphonyJ6(str name,
-            Router::ConfigurationRef conf,
+            Plumber::ConfigurationRef conf,
             str localAddress,
             ElementSpecRef pullPredecessorOut,
             int pullPredecessorOutPort)
@@ -989,7 +989,7 @@ void ruleSymphonyJ6(str name,
     node@NI(NI, N), LI == "".
 */
 void ruleSymphonyJ7(str name,
-            Router::ConfigurationRef conf,
+            Plumber::ConfigurationRef conf,
             TableRef landmarkNodeTable,
             TableRef nodeTable,
             ElementSpecRef pushJoinIn,
@@ -1066,7 +1066,7 @@ void ruleSymphonyJ7(str name,
 void
 connectRulesSymphony(str name,
                      str localAddress,
-                     Router::ConfigurationRef conf,
+                     Plumber::ConfigurationRef conf,
                      TableRef bestSuccessorTable,
                      TableRef symFingerLookupTable,
                      TableRef symFingerTable,
@@ -1583,7 +1583,7 @@ connectRulesSymphony(str name,
 
 void createSymNode(str myAddress,
 		   str landmarkAddress,
-		   Router::ConfigurationRef conf,
+		   Plumber::ConfigurationRef conf,
 		   Udp* udp,
 		   int networkSize,
 		   double delay = 0)

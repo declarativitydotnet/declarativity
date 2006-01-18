@@ -24,7 +24,7 @@ string RuleStrand::toString()
   return b.str();
 }
 
-void RuleStrand::addElement(Router::ConfigurationPtr conf, ElementSpecPtr elementSpecPtr)
+void RuleStrand::addElement(Plumber::ConfigurationPtr conf, ElementSpecPtr elementSpecPtr)
 {
   if (_elementChain.size() > 0) {
     conf->hookUp(_elementChain.at(_elementChain.size()-1), 0, elementSpecPtr, 0);

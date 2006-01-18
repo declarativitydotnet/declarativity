@@ -20,7 +20,7 @@
 #include "planContext.h"
 #include "rulePlanner.C"
 
-Planner::Planner(Router::ConfigurationPtr conf, Catalog* catalog, 
+Planner::Planner(Plumber::ConfigurationPtr conf, Catalog* catalog, 
 		 bool debug, string nodeID, string outputFile) 
   : _conf(conf)
 { 

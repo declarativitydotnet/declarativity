@@ -32,7 +32,7 @@ void NetPlanner::generateNetworkOutElements(boost::shared_ptr<Udp> udp)
 
   // <dstAddr, <opaque>>
   ElementSpecPtr routeSend =
-    _conf->addElement(ElementPtr(new StrToSockaddr("router|" + _nodeID, 0)));
+    _conf->addElement(ElementPtr(new StrToSockaddr("plumber|" + _nodeID, 0)));
 
   ElementSpecPtr udpSend = _conf->addElement(udp->get_tx());  
   

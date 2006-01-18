@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "val_int32.h"
 #include "val_str.h"
 
@@ -55,7 +55,7 @@ static const int nodes = 5;
 
 /** Periodically go over my existing link entries, turn them into reach
     entries and blast them out */
-void makeReachFlow(Router::ConfigurationPtr conf,
+void makeReachFlow(Plumber::ConfigurationPtr conf,
                    string name,
                    TablePtr linkTable,
                    ElementSpecPtr outgoingInput,
@@ -85,7 +85,7 @@ void makeReachFlow(Router::ConfigurationPtr conf,
 
 
 
-void makeTransitiveFlow(Router::ConfigurationPtr conf,
+void makeTransitiveFlow(Plumber::ConfigurationPtr conf,
                         TablePtr linkTable,
                         TablePtr reachTable,
                         string name,
@@ -166,7 +166,7 @@ void makeTransitiveFlow(Router::ConfigurationPtr conf,
 
 
 /** Create the entire data flow residing at a single node */
-void makeForwarder(Router::ConfigurationPtr conf,
+void makeForwarder(Plumber::ConfigurationPtr conf,
                    string name,
                    ref< Udp > udp,
                    TablePtr linkTable,
@@ -228,7 +228,7 @@ void testMakeReach(LoggerI::Level level)
 {
   std::cout << "\nCHECK MAKE REACH FLOWCHUNK\n";
 
-  Router::ConfigurationPtr conf(new Router::Configuration());
+  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
 
   // Create one data flow per "node"
   const int nodes = 10;
@@ -306,21 +306,21 @@ void testMakeReach(LoggerI::Level level)
 
 
 
-  RouterPtr router(new Router(conf, level));
-  if (router->initialize(router) == 0) {
+  PlumberPtr plumber(new Plumber(conf, level));
+  if (plumber->initialize(plumber) == 0) {
     std::cout << "Correctly initialized network of reachability flows.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
     return;
   }
 
-  // Activate the router
-  router->activate();
+  // Activate the plumber
+  plumber->activate();
 
   // Schedule kill
   //delayCB(10, wrap(&killJoin));
 
-  // Run the router
+  // Run the plumber
   eventLoop();
 
 
@@ -331,7 +331,7 @@ void testMakeReach(LoggerI::Level level)
 void testTransmit(LoggerI::Level level)
 {
   eventLoopInitialize();
-  Router::ConfigurationPtr conf(new Router::Configuration());
+  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
 
   // Create one data flow per "node"
   const int nodes = 10;
@@ -455,21 +455,21 @@ void testTransmit(LoggerI::Level level)
   conf->hookUp(routeS, 0, udpTxS, 0);
 
 
-  RouterPtr router(new Router(conf, level));
-  if (router->initialize(router) == 0) {
+  PlumberPtr plumber(new Plumber(conf, level));
+  if (plumber->initialize(plumber) == 0) {
     std::cout << "Correctly initialized network of reachability flows.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
     return;
   }
 
-  // Activate the router
-  router->activate();
+  // Activate the plumber
+  plumber->activate();
 
   // Schedule kill
   //delaycb(10, 0, wrap(&killJoin));
 
-  // Run the router
+  // Run the plumber
   eventLoop();
 }
 
@@ -478,7 +478,7 @@ void testReachability(LoggerI::Level level)
 {
   std::cout << "\nCHECK TRANSITIVE REACHABILITY\n";
 
-  Router::ConfigurationPtr conf(new Router::Configuration());
+  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
 
 
   // Create one data flow per "node"
@@ -557,21 +557,21 @@ void testReachability(LoggerI::Level level)
                   linkTables[i], reachTables[i]);
   }
 
-  RouterPtr router(new Router(conf, level));
-  if (router->initialize(router) == 0) {
+  PlumberPtr plumber(new Plumber(conf, level));
+  if (plumber->initialize(plumber) == 0) {
     std::cout << "Correctly initialized network of reachability flows.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
     return;
   }
 
-  // Activate the router
-  router->activate();
+  // Activate the plumber
+  plumber->activate();
 
   // Schedule kill
   //delaycb(10, 0, wrap(&killJoin));
 
-  // Run the router
+  // Run the plumber
   eventLoop();
 }
 
@@ -582,7 +582,7 @@ void testSimpleCycle(LoggerI::Level level)
 {
   std::cout << "\nCHECK TRANSITIVE REACHABILITY ON RING\n";
 
-  Router::ConfigurationPtr conf(new Router::Configuration());
+  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
 
 
   // Create one data flow per "node"
@@ -648,21 +648,21 @@ void testSimpleCycle(LoggerI::Level level)
                   linkTables[i], reachTables[i]);
   }
 
-  RouterPtr router(new Router(conf, level));
-  if (router->initialize(router) == 0) {
+  PlumberPtr plumber(new Plumber(conf, level));
+  if (plumber->initialize(plumber) == 0) {
     std::cout << "Correctly initialized network of reachability flows.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
     return;
   }
 
-  // Activate the router
-  router->activate();
+  // Activate the plumber
+  plumber->activate();
 
   // Schedule kill
   //delaycb(10, 0, wrap(&killJoin));
 
-  // Run the router
+  // Run the plumber
   eventLoop();
 }
 

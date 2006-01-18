@@ -18,7 +18,7 @@
 #include <iostream>
 
 #include "plsensor.h"
-#include "router.h"
+#include "plumber.h"
 
 #include "csvparser.h"
 #include "print.h"
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
   std::cout << "\nPhi daemon started\n";
   eventLoopInitialize();
 
-  Router::ConfigurationPtr conf(new Router::Configuration());
+  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
   ElementSpecPtr pl = conf->addElement(ElementPtr(new PlSensor("PLSensor", port, path, 30)));
   ElementSpecPtr csv = conf->addElement(ElementPtr(new CSVParser("CSVParser")));
   ElementSpecPtr print = conf->addElement(ElementPtr(new Print("Printer")));
@@ -46,18 +46,18 @@ int main(int argc, char **argv)
   conf->hookUp(csv,0,print,0);
   conf->hookUp(print,0, sink, 0);
 
-  // Create the router and check it statically
-  RouterPtr router(new Router(conf));
-  if (router->initialize(router) == 0) {
+  // Create the plumber and check it statically
+  PlumberPtr plumber(new Plumber(conf));
+  if (plumber->initialize(plumber) == 0) {
     std::cout << "Correctly initialized configuration.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
 
-  // Activate the router
-  router->activate();
+  // Activate the plumber
+  plumber->activate();
 
-  // Run the router
+  // Run the plumber
   eventLoop();
 }
   

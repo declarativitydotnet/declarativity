@@ -1,7 +1,7 @@
-// -*- c-basic-offset: 2; related-file-name: "router.C" -*-
+// -*- c-basic-offset: 2; related-file-name: "plumber.C" -*-
 /*
  * @(#)$Id$
- * Loosely inspired from the Click Router class, by Eddie Kohler
+ * Loosely inspired from the Click Plumber class, by Eddie Kohler
  * 
  * Copyright (c) 1999-2000 Massachusetts Institute of Technology
  * Copyright (c) 2000 Mazu Networks, Inc.
@@ -23,23 +23,23 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: The router shell providing plumbing functionality.
+ * DESCRIPTION: The plumber shell providing plumbing functionality.
  */
 
-#ifndef __ROUTER_H__
-#define __ROUTER_H__
+#ifndef __PLUMBER_H__
+#define __PLUMBER_H__
 
 #include <inlines.h>
 #include <element.h>
 #include <elementSpec.h>
 #include <loggerI.h>
 
-/** A handy dandy type for router references */
-class Router;
-typedef boost::shared_ptr< Router > RouterPtr;
+/** A handy dandy type for plumber references */
+class Plumber;
+typedef boost::shared_ptr< Plumber > PlumberPtr;
 
 
-class Router {
+class Plumber {
 public:
   
   /** An auxilliary structure to help pass around element connection
@@ -90,19 +90,19 @@ public:
   };
   typedef boost::shared_ptr< Configuration > ConfigurationPtr;
 
-  /** Create a new router given a configuration of constructed but not
+  /** Create a new plumber given a configuration of constructed but not
       necessarily configured elements. */
-  Router(ConfigurationPtr configuration,
+  Plumber(ConfigurationPtr configuration,
          LoggerI::Level loggingLevel = LoggerI::INFO);
 
-  ~Router();
+  ~Plumber();
 
   // INITIALIZATION
   
   /** Initialize the engine from the configuration */
-  int initialize(RouterPtr);
+  int initialize(PlumberPtr);
 
-  /** Start the router */
+  /** Start the plumber */
   void activate();
 
 
@@ -112,14 +112,14 @@ public:
   static void static_initialize();
   static void static_cleanup();
 
-  /** Router state */
-  enum { ROUTER_NEW,
-         ROUTER_PRECONFIGURE,
-         ROUTER_PREINITIALIZE,
-         ROUTER_LIVE,
-         ROUTER_DEAD };
+  /** Plumber state */
+  enum { PLUMBER_NEW,
+         PLUMBER_PRECONFIGURE,
+         PLUMBER_PREINITIALIZE,
+         PLUMBER_LIVE,
+         PLUMBER_DEAD };
 
-  bool initialized() const			{ return _state == ROUTER_LIVE; }
+  bool initialized() const			{ return _state == PLUMBER_LIVE; }
 
   // ELEMENTS
   int nelements() const				{ return _elements->size(); }
@@ -127,12 +127,12 @@ public:
   
   // LOGGING infrastructure
   
-  /** The router-wide logger.  The pointer to the logger should not be
+  /** The plumber-wide logger.  The pointer to the logger should not be
       cached or used at any time other than immediately after the
       invocation of this method. */
   REMOVABLE_INLINE LoggerI * logger()		{ return _logger; }
 
-  /** Install a different logger for this router. This returns a pointer
+  /** Install a different logger for this plumber. This returns a pointer
       to the previous logger.  If non zero, it is the caller's
       responsibility to delete that logger if it's on the heap. */
   REMOVABLE_INLINE LoggerI * logger(LoggerI * newLogger);
@@ -144,10 +144,10 @@ private:
   
   boost::shared_ptr< std::vector< ElementPtr > > _elements;
   
-  /** The router state */
+  /** The plumber state */
   int _state;
 
-  /** The configuration spec of the router */
+  /** The configuration spec of the plumber */
   ConfigurationPtr _configuration;
 
   /** Are the configuration hookups refering to existing elements and
@@ -173,8 +173,8 @@ private:
   void set_connections();
 
   /** Convenience function for adding a created (but not initialized)
-      element into the router. */
-  void add_element(RouterPtr, ElementPtr);
+      element into the plumber. */
+  void add_element(PlumberPtr, ElementPtr);
 
   /** My local logger */
   LoggerI * _logger;

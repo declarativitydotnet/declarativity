@@ -16,7 +16,7 @@
 #include <stdlib.h>
 
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "val_uint32.h"
 #include "val_str.h"
 #include "val_id.h"
@@ -86,7 +86,7 @@ void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> looku
                   double delay, int times)
 {
   eventLoopInitialize();
-  Router::ConfigurationPtr conf(new Router::Configuration());
+  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
 
   ElementSpecPtr func    = conf->addElement(ElementPtr(new FunctorSource(string("Source"), lookup.get())));
   ElementSpecPtr print   = conf->addElement(ElementPtr(new Print(string("lookup"))));
@@ -117,16 +117,16 @@ void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> looku
   conf->hookUp(marshal, 0, route, 0);
   conf->hookUp(route, 0, udpTx, 0);
    
-  RouterPtr router(new Router(conf, level));
-  if (router->initialize(router) != 0) {
+  PlumberPtr plumber(new Plumber(conf, level));
+  if (plumber->initialize(plumber) != 0) {
     std::cout << "** Failed to initialize correct spec\n";
     return;
   }
 
-  // Activate the router
-  router->activate();
+  // Activate the plumber
+  plumber->activate();
 
-  // Run the router
+  // Run the plumber
   eventLoop();
 }
 

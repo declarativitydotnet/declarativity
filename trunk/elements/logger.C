@@ -13,7 +13,7 @@
 
 #include <logger.h>
 #include <tuple.h>
-#include <router.h>
+#include <plumber.h>
 #include <errno.h>
 
 #include "val_double.h"
@@ -38,7 +38,7 @@ void Logger::log( string classname,
 		  int errnum,
 		  string explanation )
 {
-  if (severity >= router()->loggingLevel) {
+  if (severity >= plumber()->loggingLevel) {
     timespec now_ts;
     
     getTime(now_ts);

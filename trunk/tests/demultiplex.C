@@ -18,7 +18,7 @@
 #include <iostream>
 
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "val_int32.h"
 
 #include "print.h"
@@ -34,7 +34,7 @@ void testStaticDemux()
 {
   std::cout << "\nCHECK STATIC DEMUX\n";
 
-  Router::ConfigurationPtr conf(new Router::Configuration());
+  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
 
   // The source dataflow
   ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 1)));
@@ -76,18 +76,18 @@ void testStaticDemux()
   conf->hookUp(demuxS, 2, sinkPrintOtherS, 0);
   
   
-  RouterPtr router(new Router(conf));
-  if (router->initialize(router) == 0) {
+  PlumberPtr plumber(new Plumber(conf));
+  if (plumber->initialize(plumber) == 0) {
     std::cout << "Correctly initialized static demux.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
     return;
   }
 
-  // Activate the router
-  router->activate();
+  // Activate the plumber
+  plumber->activate();
 
-  // Run the router
+  // Run the plumber
   eventLoop();
 }
 

@@ -27,7 +27,7 @@
 #include "parser_util.h"
 #include "ol_lexer.h"
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "val_int32.h"
 #include "val_str.h"
 #include "print.h"
@@ -74,7 +74,7 @@
 class Planner
 {
 public:
-  Planner(Router::ConfigurationPtr conf, Catalog* catalog, 
+  Planner(Plumber::ConfigurationPtr conf, Catalog* catalog, 
 	  bool debug, string nodeID, string outputFile); 
 
   ~Planner() { delete _netPlanner; 
@@ -83,7 +83,7 @@ public:
   std::vector<RuleStrand*> generateRuleStrands(ECA_ContextPtr ectxt);
   void registerRuleStrand(RuleStrand* rs);
   void registerAllRuleStrands(std::vector<RuleStrand*>);  
-  void generateRouterConfig(Router::ConfigurationPtr conf);
+  void generatePlumberConfig(Plumber::ConfigurationPtr conf);
   void setupNetwork(boost::shared_ptr<Udp> udp);
   void registerOptimizeSend(std::vector<ElementSpecPtr> optimizeSend) {
     _netPlanner->registerOptimizeSend(optimizeSend); }
@@ -91,7 +91,7 @@ public:
 
 private:
   bool _debug;
-  Router::ConfigurationPtr _conf;
+  Plumber::ConfigurationPtr _conf;
   string _nodeID;
   int _ruleCount;
   NetPlanner* _netPlanner;

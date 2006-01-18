@@ -2,20 +2,20 @@
 /*
  * @(#)$Id$
  *
- *  Utility functions to produce a DOT description of a router
+ *  Utility functions to produce a DOT description of a plumber
  *  configuration.
  *
  *  Petros Maniatis.
  */
 
-#include <router.h>
+#include <plumber.h>
 #include <element.h>
 #include <elementSpec.h>
 #include <iostream>
 
 void
 toDot(std::ostream * ostr,
-      Router::ConfigurationPtr configuration)
+      Plumber::ConfigurationPtr configuration)
 {
   *ostr << "digraph G {\n"
         << "rankdir=LR;\n"
@@ -63,7 +63,7 @@ toDot(std::ostream * ostr,
   for (uint i = 0;
        i < configuration->hookups.size();
        i++) {
-    Router::HookupPtr hookup = configuration->hookups[i];
+    Plumber::HookupPtr hookup = configuration->hookups[i];
     ElementSpecPtr fromElement = hookup->fromElement;
     ElementSpecPtr toElement = hookup->toElement;
     int fromPort = hookup->fromPortNumber;

@@ -18,7 +18,7 @@ liboverlog_la_SOURCES = \
 	ol_lexer.C \
 	ol_parser.C \
 	ol_context.C \
-	rtr_confgen.C
+	plmb_confgen.C
 
 INCLUDES = @BOOST_INC@ -I../p2core -I../elements -I../net -I../eventLoop
 

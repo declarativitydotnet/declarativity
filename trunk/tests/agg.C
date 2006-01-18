@@ -25,7 +25,7 @@
 #include "randomPushSource.h"
 #include "pelTransform.h"
 #include "timedPullSink.h"
-#include "router.h"
+#include "plumber.h"
 #include "queue.h"
 
 
@@ -35,7 +35,7 @@ void agg()
 {
     std::cout << "\n[Agg]\n";
 
-    Router::ConfigurationPtr conf(new Router::Configuration());
+    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
 
     ElementSpecPtr randomPushSourceSpec = conf->addElement(ElementPtr(new RandomPushSource("randSource", 3, 0, 5)));
     ElementSpecPtr sourcePrintS = conf->addElement(ElementPtr(new Print("AfterSource")));
@@ -59,16 +59,16 @@ void agg()
     conf->hookUp(queueSpec, 0, sinkPrintS, 0);
     conf->hookUp(sinkPrintS, 0, sinkS, 0);   
 
-    RouterPtr router(new Router(conf));
+    PlumberPtr plumber(new Plumber(conf));
 
-    if (router->initialize(router) == 0) {
+    if (plumber->initialize(plumber) == 0) {
 	std::cout << "Correctly initialized configuration.\n";
     } else {
 	std::cout << "** Failed to initialize correct spec\n";
     }
     
-    // Activate the router
-    router->activate();    
+    // Activate the plumber
+    plumber->activate();    
 }
 
 int main(int argc, char **argv)

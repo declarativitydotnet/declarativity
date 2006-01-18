@@ -20,19 +20,19 @@
 #include "catalog.h"
 #include "ol_context.h"
 #include "ruleStrand.h"
-#include "router.h"
+#include "plumber.h"
 
 class PlanContext {
 
 public:
-  PlanContext(Router::ConfigurationPtr conf, Catalog* catalog, 
+  PlanContext(Plumber::ConfigurationPtr conf, Catalog* catalog, 
 	      RuleStrand* ruleStrand, string nodeID, FILE* outputDebugFile);
   ~PlanContext();
   Catalog* _catalog;
   RuleStrand* _ruleStrand;
   string _nodeID;
   FILE* _outputDebugFile;
-  Router::ConfigurationPtr _conf;
+  Plumber::ConfigurationPtr _conf;
 
   // convince placeholder to figure out the cur fields in a tuple in flight
   class FieldNamesTracker {

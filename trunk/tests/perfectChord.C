@@ -22,7 +22,7 @@
 #include <math.h>
 
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "udp.h"
 #include "tupleseq.h"
 #include "rcct.h"
@@ -57,7 +57,7 @@
 
 #define START_PORT 10000
 
-void hookupSend_RCC(Router::ConfigurationPtr conf, string src, bool do_retry,
+void hookupSend_RCC(Plumber::ConfigurationPtr conf, string src, bool do_retry,
                     ElementSpecPtr dmux_out,  int pdo, ElementSpecPtr dmux_in, int pdi,
                     ElementSpecPtr rr_out,    int pmo, ElementSpecPtr mux_in,  int pmi) {
   // SENDER
@@ -111,7 +111,7 @@ void hookupSend_RCC(Router::ConfigurationPtr conf, string src, bool do_retry,
   conf->hookUp(rcct,    1,   retry, 1);
 }
 
-void hookupRecv_RCC(Router::ConfigurationPtr conf, ElementSpecPtr udprx, 
+void hookupRecv_RCC(Plumber::ConfigurationPtr conf, ElementSpecPtr udprx, 
                 ElementSpecPtr dmux_in, ElementSpecPtr rr_out)
 {
 
@@ -133,7 +133,7 @@ void hookupRecv_RCC(Router::ConfigurationPtr conf, ElementSpecPtr udprx,
   conf->hookUp(respAddr, 0, rr_out, 1);
 }
 
-void hookupSend_CC(Router::ConfigurationPtr conf, string src, bool do_retry,
+void hookupSend_CC(Plumber::ConfigurationPtr conf, string src, bool do_retry,
                    ElementSpecPtr dmux_out,  int pdo, ElementSpecPtr dmux_in, int pdi,
                    ElementSpecPtr rr_out,    int pmo, ElementSpecPtr mux_in,  int pmi) {
   // SENDER
@@ -175,7 +175,7 @@ void hookupSend_CC(Router::ConfigurationPtr conf, string src, bool do_retry,
   conf->hookUp(rm,     0,    mux_in, pmi); 	// Merge up to the router
 }
 
-void hookupRecv_CC(Router::ConfigurationPtr conf, ElementSpecPtr udprx, 
+void hookupRecv_CC(Plumber::ConfigurationPtr conf, ElementSpecPtr udprx, 
                    ElementSpecPtr dmux_in, ElementSpecPtr rr_out)
 {
 
@@ -200,7 +200,7 @@ void hookupRecv_CC(Router::ConfigurationPtr conf, ElementSpecPtr udprx,
 void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
 {
   eventLoopInitialize();
-  Router::ConfigurationPtr conf(new Router::Configuration());
+  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
   string my_addr;
   ostringstream oss;
   oss << "localhost:" << (START_PORT + nodeid);
@@ -286,17 +286,17 @@ void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
   hookupRecv_RCC(conf, udpRx, dmux_in, rr_out);
 
 
-  // Create router and run.
-  RouterPtr router(new Router(conf, LoggerI::WARN));
-  if (router->initialize(router) == 0) {
+  // Create plumber and run.
+  PlumberPtr plumber(new Plumber(conf, LoggerI::WARN));
+  if (plumber->initialize(plumber) == 0) {
     std::cout << "Correctly initialized.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
-  // Activate the router
-  router->activate();
+  // Activate the plumber
+  plumber->activate();
 
-  // Run the router
+  // Run the plumber
   eventLoop();
 }
 

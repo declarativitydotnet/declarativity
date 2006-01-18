@@ -20,14 +20,14 @@
 #include <stdlib.h>
 
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "val_int32.h"
 #include "val_str.h"
 #include "val_double.h"
 
 #include "ol_lexer.h"
 #include "ol_context.h"
-#include "rtr_confgen.h"
+#include "plmb_confgen.h"
 #include "print.h"
 #include "discard.h"
 #include "pelTransform.h"
@@ -352,7 +352,7 @@ void updateLinks(boost::shared_ptr< Catalog> catalog)
 }
 
 #if 0
-void generateReversePathElement(Router::ConfigurationPtr conf, ptr< Catalog> catalog)
+void generateReversePathElement(Plumber::ConfigurationPtr conf, ptr< Catalog> catalog)
 {
   // update bestPathReverse event element -> printWatch 
   // -> cacheGenerator -> printWatch -> Insert
@@ -418,7 +418,7 @@ void generateReversePathElement(Router::ConfigurationPtr conf, ptr< Catalog> cat
 }
 
 
-void generateCacheElement(Router::ConfigurationPtr conf, ptr< Catalog> catalog)
+void generateCacheElement(Plumber::ConfigurationPtr conf, ptr< Catalog> catalog)
 {
   // update bestPathReverse event element -> printWatch 
   // -> cacheGenerator -> printWatch -> Insert
@@ -487,7 +487,7 @@ void generateCacheElement(Router::ConfigurationPtr conf, ptr< Catalog> catalog)
 #endif
 
 /** Build a symmetric link transitive closure. */
-void runPathQuery(Router::ConfigurationPtr conf, 
+void runPathQuery(Plumber::ConfigurationPtr conf, 
 		  LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt, 
 		  string address, std::vector<string> filenames, 
 		  string inputGraph, string debugFile)
@@ -624,8 +624,8 @@ void runPathQuery(Router::ConfigurationPtr conf,
   }
   */
 
-  RouterPtr router(new Router(conf, level));
-  if (router->initialize(router) == 0) {
+  PlumberPtr plumber(new Plumber(conf, level));
+  if (plumber->initialize(plumber) == 0) {
     warn << "Correctly initialized network of reachability flows.\n";
   } else {
     warn << "** Failed to initialize correct spec\n";
@@ -636,10 +636,10 @@ void runPathQuery(Router::ConfigurationPtr conf,
     delayCB(10 + magicIntervalSeconds, boost::bind(insertMagicSource, catalog, address));
   }
 
-  // Activate the router
-  router->activate();
+  // Activate the plumber
+  plumber->activate();
 
-  // Run the router
+  // Run the plumber
   eventLoop();
 
 }
@@ -701,7 +701,7 @@ int main(int argc, char **argv)
   std::cout << "Finish parsing (functors / tableInfos) " << ctxt->getRules()->size() 
 	    << " " << ctxt->getTableInfos()->size() << "\n";
 
-  Router::ConfigurationPtr conf(new Router::Configuration());
+  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
 
   if (correlate != 0) {
     std::vector<string> filenames;

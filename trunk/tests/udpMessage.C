@@ -29,7 +29,7 @@
 #include <unistd.h>
 #include "strToSockaddr.h"
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "udp.h"
 
 #include "print.h"
@@ -59,7 +59,7 @@ sendMessages(std::string udpAddress)
   eventLoopInitialize();
 
   // The sending data flow
-  Router::ConfigurationPtr conf(new Router::Configuration());    
+  Plumber::ConfigurationPtr conf(new Plumber::Configuration());    
 
   Udp udpOut("9999", 9999); // port of the sender    
   std::vector<TuplePtr> buffer;
@@ -98,18 +98,18 @@ sendMessages(std::string udpAddress)
   conf->hookUp(udpTxPrintS, 0, udpTxS, 0);
   
 
-  // Put the router together
-  RouterPtr router(new Router(conf, LoggerI::ALL));
-  if (router->initialize(router) == 0) {
+  // Put the plumber together
+  PlumberPtr plumber(new Plumber(conf, LoggerI::ALL));
+  if (plumber->initialize(plumber) == 0) {
     std::cout << "Correctly initialized.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
 
-  // Activate the router
-  router->activate();
+  // Activate the plumber
+  plumber->activate();
 
-  // Run the router
+  // Run the plumber
   eventLoop();
 }
 

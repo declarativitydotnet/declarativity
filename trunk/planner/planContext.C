@@ -15,7 +15,7 @@
 
 #include "planContext.h"
 
-PlanContext::PlanContext(Router::ConfigurationPtr conf, Catalog* catalog, 
+PlanContext::PlanContext(Plumber::ConfigurationPtr conf, Catalog* catalog, 
 			 RuleStrand* ruleStrand, string nodeID, FILE* outputDebugFile) :
   _outputDebugFile(outputDebugFile), _conf(conf)
 {

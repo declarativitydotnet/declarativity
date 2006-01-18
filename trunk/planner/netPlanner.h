@@ -16,7 +16,7 @@
 #ifndef __PL_NETPLANNER_H__
 #define __PL_NETPLANNER_H__
 
-#include "router.h"
+#include "plumber.h"
 #include "elementSpec.h"
 #include "element.h"
 #include <vector>
@@ -26,7 +26,7 @@
 #include "parser_util.h"
 #include "ol_lexer.h"
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "val_int32.h"
 #include "val_str.h"
 #include "print.h"
@@ -73,7 +73,7 @@
 class NetPlanner
 {
 public:
-  NetPlanner(Router::ConfigurationPtr conf, string nodeID, 
+  NetPlanner(Plumber::ConfigurationPtr conf, string nodeID, 
 	     FILE* outputDebugFile) :
     _conf(conf)
   { _nodeID = nodeID; _outputDebugFile = outputDebugFile; };
@@ -105,7 +105,7 @@ private:
 
   string _nodeID;
   FILE* _outputDebugFile;
-  Router::ConfigurationPtr _conf;
+  Plumber::ConfigurationPtr _conf;
   std::vector<ElementSpecPtr> _networkIn, _networkOut;
   std::vector<ElementSpecPtr> _outOptimize;
   ReceiverInfoMap _receiverInfo;  

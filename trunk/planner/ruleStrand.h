@@ -20,7 +20,7 @@
 #include "eca_context.h"
 #include "elementSpec.h"
 #include "element.h"
-#include "router.h"
+#include "plumber.h"
 
 class RuleStrand
 {
@@ -53,7 +53,7 @@ public:
   ElementSpecPtr getActionElement() 
   { return _elementChain.at(_elementChain.size() - 1); }
 
-  void addElement(Router::ConfigurationPtr conf, ElementSpecPtr elementSpecPtr);
+  void addElement(Plumber::ConfigurationPtr conf, ElementSpecPtr elementSpecPtr);
 
 private:
   std::vector<ElementSpecPtr> _elementChain;

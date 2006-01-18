@@ -23,7 +23,7 @@
 #include <stdlib.h>
 
 #include "tuple.h"
-#include "router.h"
+#include "plumber.h"
 #include "val_int32.h"
 #include "val_uint32.h"
 #include "val_str.h"
@@ -66,7 +66,7 @@
     successor@NI(NI,S,SI), D=f_dist(N,S)
 */
 void ruleSU1(string name,
-             Router::ConfigurationPtr conf,
+             Plumber::ConfigurationPtr conf,
              TablePtr nodeTable,
              TablePtr successorTable,
              ElementSpecPtr pushSuccessorIn,
@@ -145,7 +145,7 @@ void ruleSU1(string name,
     bestSuccessorDist@NI(NI,D), successor@NI(NI,S,SI), D=f_dist(N,S)
 */
 void ruleSU2(string name,
-             Router::ConfigurationPtr conf,
+             Plumber::ConfigurationPtr conf,
              TablePtr nodeTable,
              TablePtr successorTable,
              TablePtr bestSuccessorTable,
@@ -228,7 +228,7 @@ void ruleSU2(string name,
 /** SR1: successorCount(NI, count<>) :- successor(NI, S, SI)
 */
 void ruleSR1(string name,
-             Router::ConfigurationPtr conf,
+             Plumber::ConfigurationPtr conf,
              Table::MultAggregate aggregate,
              ElementSpecPtr pullSuccessorCountOut,
              int pullSuccessorCountOutPort)
@@ -257,7 +257,7 @@ void ruleSR1(string name,
    C>successor.size.
 */
 void ruleSR2(string name,
-             Router::ConfigurationPtr conf,
+             Plumber::ConfigurationPtr conf,
              unsigned successorSize,
              ElementSpecPtr pushSuccessorCountIn,
              int pushSuccessorCountInPort,
@@ -285,7 +285,7 @@ void ruleSR2(string name,
 	node@NI(NI,N), D = f_dist(N,S), evictSuccessor@NI(NI).
 */
 void ruleSR3(string name,
-             Router::ConfigurationPtr conf,
+             Plumber::ConfigurationPtr conf,
              TablePtr nodeTable,
              TablePtr successorTable,
              ElementSpecPtr pushEvictSuccessorIn,
@@ -363,7 +363,7 @@ void ruleSR3(string name,
     maxSuccessorDist(NI, D), D=dist(N, S)
 */
 void ruleSR4(string name,
-             Router::ConfigurationPtr conf,
+             Plumber::ConfigurationPtr conf,
              TablePtr nodeTable,
              TablePtr successorTable,
              ElementSpecPtr pushMSDIn,
@@ -453,7 +453,7 @@ void ruleSR4(string name,
 /** rule S0 stabilize@NI(NI, E) :- periodic@NI(TTL * 0.5), E=f_rand(),
     NI=ni. */
 void ruleS0(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             string localAddress,
             double fingerTTL,
             ElementSpecPtr pullStabilizeOut,
@@ -489,7 +489,7 @@ void ruleS0(string name,
     E=f_rand(), NI=ni.
 */
 void ruleS0a(string name,
-             Router::ConfigurationPtr conf,
+             Plumber::ConfigurationPtr conf,
              ElementSpecPtr pushStabilizeEventIn,
              int pushStabilizeEventInPort,
              ElementSpecPtr pullStabilizeOut,
@@ -515,7 +515,7 @@ void ruleS0a(string name,
 /** rule S0b stabilizeRecord@NI(NI, E) :- stabilize@NI(NI, E).
  */
 void ruleS0b(string name,
-             Router::ConfigurationPtr conf,
+             Plumber::ConfigurationPtr conf,
              ElementSpecPtr pushStabilizeIn,
              int pushStabilizeInPort,
              ElementSpecPtr pullStabilizeRecordOut,
@@ -542,7 +542,7 @@ void ruleS0b(string name,
    bestSuccessor@NI(NI,S,SI),
  */
 void ruleS1(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr bestSuccessorTable,
             ElementSpecPtr pushStabilizeIn,
             int pushStabilizeInPort,
@@ -582,7 +582,7 @@ void ruleS1(string name,
     stabilizeRequest@NI(NI,PI1,E), predecessor@NI(NI,P,PI), PI != null.
 */
 void ruleS2(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr predecessorTable,
             ElementSpecPtr pushStabilizeRequestIn,
             int pushStabilizeRequestInPort,
@@ -636,7 +636,7 @@ void ruleS2(string name,
     (N,S), stabilizeRecord@NI(NI, E).
 */
 void ruleS3(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr stabilizeRecordTable,
             TablePtr nodeTable,
             TablePtr bestSuccessorTable,
@@ -756,7 +756,7 @@ void ruleS3(string name,
    successor@NI(NI,S,SI).
  */
 void ruleS4(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr successorTable,
             ElementSpecPtr pushStabilizeIn,
             int pushStabilizeInPort,
@@ -798,7 +798,7 @@ void ruleS4(string name,
    successor@NI(NI,S,SI).
  */
 void ruleS5(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr successorTable,
             ElementSpecPtr pushSendSuccessorsIn,
             int pushSendSuccessorsInPort,
@@ -840,7 +840,7 @@ void ruleS5(string name,
     stabilizeRecord@NI(NI, E).
 */
 void ruleS5a(string name,
-             Router::ConfigurationPtr conf,
+             Plumber::ConfigurationPtr conf,
              TablePtr stabilizeRecordTable,
              ElementSpecPtr pushReturnSuccessorIn,
              int pushReturnSuccessorInPort,
@@ -888,7 +888,7 @@ void ruleS5a(string name,
 
 /** rule S6a notify@NI(NI) :- periodic@NI(TTL * 0.5), NI=ni. */
 void ruleS6a(string name,
-             Router::ConfigurationPtr conf,
+             Plumber::ConfigurationPtr conf,
              string localAddress,
              double fingerTTL,
              ElementSpecPtr pullNotifyOut,
@@ -925,7 +925,7 @@ void ruleS6a(string name,
     node@NI(NI,N), successor@NI(NI,S,SI).
 */
 void ruleS6(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr nodeTable,
             TablePtr successorTable,
             ElementSpecPtr pushNotifyIn,
@@ -992,7 +992,7 @@ void ruleS6(string name,
     "") || (P in (P1, N))).
 */
 void ruleS7(string name,
-            Router::ConfigurationPtr conf,
+            Plumber::ConfigurationPtr conf,
             TablePtr nodeTable,
             TablePtr predecessorTable,
             ElementSpecPtr pushNotifyPredecessorIn,
