@@ -45,38 +45,38 @@ watch(membersFound).
 watch(report).
 
 
-E0 neighbor@X(X,Y) :- periodic@X(X,E,0,1), env@X(X, H, Y),
+e0 neighbor@X(X,Y) :- periodic@X(X,E,0,1), env@X(X, H, Y),
   H=="neighbor".
 
 
 
 /** Start with sequence 0 */
-S0 sequence@X(X, Sequence) :- periodic@X(X, E, 0, 1), Sequence := 0.
+s0 sequence@X(X, Sequence) :- periodic@X(X, E, 0, 1), Sequence := 0.
 
 
 
 
 /** Periodically start a refresh */
 
-R1 refreshEvent@X(X) :- periodic@X(X, E, 3).
+r1 refreshEvent@X(X) :- periodic@X(X, E, 3).
 
 
 
 /** Increment my own sequence number */
 
-R2 refreshSequence@X(X, NewSequence) :- refreshEvent@X(X), sequence@X(X,
+r2 refreshSequence@X(X, NewSequence) :- refreshEvent@X(X), sequence@X(X,
   Sequence), NewSequence := Sequence + 1.
 
 
 /** Save my incremented sequence */
 
-R3 sequence@X(X, NewSequence) :- refreshSequence@X(X, NewSequence).
+r3 sequence@X(X, NewSequence) :- refreshSequence@X(X, NewSequence).
 
 
 
 /** Send a refresh to all neighbors with my current membership */
 
-R4 refresh@Y(Y, X, NewSequence, Address, ASequence, ALive) :-
+r4 refresh@Y(Y, X, NewSequence, Address, ASequence, ALive) :-
   refreshSequence@X(X, NewSequence), member@X(X, Address, ASequence,
   Time, ALive), neighbor@X(X, Y).
 
@@ -87,7 +87,7 @@ R4 refresh@Y(Y, X, NewSequence, Address, ASequence, ALive) :-
 /** How many member entries that match the member in a refresh message
 (but not myself) do I have? */
 
-R5 membersFound@X(X, Address, ASequence, ALive, count<*>) :-
+r5 membersFound@X(X, Address, ASequence, ALive, count<*>) :-
   refresh@X(X, Y, YSequence, Address, ASequence, ALive), member@X(X,
   Address, MySequence, MyTime, MyLive), X != Address.
 
@@ -95,21 +95,21 @@ R5 membersFound@X(X, Address, ASequence, ALive, count<*>) :-
 
 /** If I have none, just store the information I just received */
 
-R6 member@X(X, Address, ASequence, T, ALive) :- membersFound@X(X,
+r6 member@X(X, Address, ASequence, T, ALive) :- membersFound@X(X,
   Address, ASequence, ALive, C), C == 0, T := f_now().
 
 
 /** If I have some, just update with the information I received if it
 has a higher sequence number. */
 
-R7 member@X(X, Address, ASequence, T, ALive) :- membersFound@X(X,
+r7 member@X(X, Address, ASequence, T, ALive) :- membersFound@X(X,
   Address, ASequence, ALive, C), C > 0, T := f_now(), member@X(X, Address,
   MySequence, MyT, MyLive), MySequence < ASequence.
 
 
 /** Update my neighbor's member entry */
 
-R8 member@X(X, Y, YSequence, T, YLive) :- refresh@X(X, Y, YSequence, A,
+r8 member@X(X, Y, YSequence, T, YLive) :- refresh@X(X, Y, YSequence, A,
   AS, AL), T := f_now(), YLive := 1.
 
 
@@ -122,7 +122,7 @@ If I receive a refresh and have no entry for the contents, store the
 member (first bullet in Figure 2 of the ESM paper). Don't update
 myself.
 
-R5 member@X(X, Address, Sequence, T, Live) :- refresh@X(X, Y, Address,
+r5 member@X(X, Address, Sequence, T, Live) :- refresh@X(X, Y, Address,
   Sequence, Live), T := f_now(), not member@X(X, Address, MySequence,
   MyTime, MyLive), X != Address.
 
@@ -132,7 +132,7 @@ If I receive a refresh and already have an entry for the contents, but
 my entry is older, replace it with contents (bullet 2.2 in Figure 2 of
 the ESM paper). Don't update myself.
 
-R6 member@X(X, Address, Sequence, T, Live) :- refresh@X(X, Y, Address,
+r6 member@X(X, Address, Sequence, T, Live) :- refresh@X(X, Y, Address,
   Sequence, Live), T := f_now(), member@X(X, Address, MySequence,
   MyTime, Live), MySequence < Sequence, X != Address.
 
@@ -149,7 +149,7 @@ R6 member@X(X, Address, Sequence, T, Live) :- refresh@X(X, Y, Address,
 
 /** Add anyone from whom I receive a refresh message to my neighbors */
 
-N1 neighbor@X(X, Y) :- refresh@X(X, Y, YS, A, AS, L).
+n1 neighbor@X(X, Y) :- refresh@X(X, Y, YS, A, AS, L).
 
 
 
@@ -158,14 +158,14 @@ N1 neighbor@X(X, Y) :- refresh@X(X, Y, YS, A, AS, L).
 
 /** Probing of neighbor liveness */
 
-L1 neighborProbe@X(X) :- periodic@X(X, E, 1).
+l1 neighborProbe@X(X) :- periodic@X(X, E, 1).
 
-L2 deadNeighbor@X(X, Y) :- neighborProbe@X(X), T := f_now(),
+l2 deadNeighbor@X(X, Y) :- neighborProbe@X(X), T := f_now(),
   neighbor@X(X, Y), member@X(X, Y, YS, YT, L), T - YT > 20.
 
-L3 delete neighbor@X(X, Y) :- deadNeighbor@X(X, Y).
+l3 delete neighbor@X(X, Y) :- deadNeighbor@X(X, Y).
 
-L4 member@X(X, Neighbor, DeadSequence, T, Live) :- deadNeighbor@X(X,
+l4 member@X(X, Neighbor, DeadSequence, T, Live) :- deadNeighbor@X(X,
   Neighbor), member@X(X, Neighbor, S, T1, L), Live := 0, DeadSequence :=
   S + 1, T:= f_now().
 
@@ -176,9 +176,9 @@ L4 member@X(X, Neighbor, DeadSequence, T, Live) :- deadNeighbor@X(X,
 
 /** Reporting current members */
 
-M1 reportEvent@X(X) :- periodic@X(X, E, 10).
+m1 reportEvent@X(X) :- periodic@X(X, E, 10).
 
-M2 report@X(X, Y, S, D) :- reportEvent@X(X), member@X(X, Y, S, T, D).
+m2 report@X(X, Y, S, D) :- reportEvent@X(X), member@X(X, Y, S, T, D).
 
 
 
@@ -218,36 +218,36 @@ materialize(env, infinity, infinity, keys(2,3)).
 
 Setup configuration from environment
 
-E0 neighbor(X,Y) :- periodic(X,E,0,1), env(X, H, Y), H=="neighbor".
-E1 member(X,Y) :- periodic(X,E,5), env(X, H, Y), H=="hostname".
+e0 neighbor(X,Y) :- periodic(X,E,0,1), env(X, H, Y), H=="neighbor".
+e1 member(X,Y) :- periodic(X,E,5), env(X, H, Y), H=="hostname".
 
 
 
 
 
-R0 gossipEvent(X) :- periodic(X,E,1).
+r0 gossipEvent(X) :- periodic(X,E,1).
 
-R1 gossipPartner(X,Y) :- gossipEvent(X), neighbor(X,Y).
+r1 gossipPartner(X,Y) :- gossipEvent(X), neighbor(X,Y).
 
-R2 member@Y(Y,Z) :- gossipPartner@X(X,Y), f_coinFlip(0.1) == 1, member@X(X,Z).
-
-
+r2 member@Y(Y,Z) :- gossipPartner@X(X,Y), f_coinFlip(0.1) == 1, member@X(X,Z).
 
 
 
 
-R3 request@Y(Y, X, E, T) :- periodic@X(X, E, 30), member@X(X,Y), T := f_now().
-
-R4 reply@X(X, Y, E, T) :- request@Y(Y, X, E, T).
-
-R5 latency@X(X, Y, T) :- reply@X(X, Y, E, T1), T := f_now() - T1.
 
 
+r3 request@Y(Y, X, E, T) :- periodic@X(X, E, 30), member@X(X,Y), T := f_now().
+
+r4 reply@X(X, Y, E, T) :- request@Y(Y, X, E, T).
+
+r5 latency@X(X, Y, T) :- reply@X(X, Y, E, T1), T := f_now() - T1.
 
 
-R6 neighbor@X(X, Y) :- latency@X(X, Y, T), addUtility(X, Y, T).
 
-R7 delete neighbor@X(X, Y) :- latency@X(X, Y, T), delUtility(X, Y, T).
+
+r6 neighbor@X(X, Y) :- latency@X(X, Y, T), addUtility(X, Y, T).
+
+r7 delete neighbor@X(X, Y) :- latency@X(X, Y, T), delUtility(X, Y, T).
 
 
 
@@ -296,56 +296,56 @@ watch(pingUpdate).
 watch(pingRequest).
 
 
-E0 neighbor(X,Y) :- periodic(X,E,0,1), env(X, H, Y), H=="neighbor".
+e0 neighbor(X,Y) :- periodic(X,E,0,1), env(X, H, Y), H=="neighbor".
 
-E1 member(X,Y) :- periodic(X,E,5), env(X, H, Y), H=="hostname".
+e1 member(X,Y) :- periodic(X,E,5), env(X, H, Y), H=="hostname".
 
-R0 gossipEvent(X) :- periodic(X,E,1).
+r0 gossipEvent(X) :- periodic(X,E,1).
 
-R1 gossipPartner(X,Y) :- gossipEvent(X), neighbor(X,Y).
+r1 gossipPartner(X,Y) :- gossipEvent(X), neighbor(X,Y).
 
-R2 member@Y(Y,Z) :- gossipPartner@X(X,Y), f_rand() % 10 == 0, member@X(X,Z).
+r2 member@Y(Y,Z) :- gossipPartner@X(X,Y), f_rand() % 10 == 0, member@X(X,Z).
 
 
 
 
 //Send a ping and store a record for later
 
-R30 pingUpdate(X) :- periodic@X(X, E, 2).
+r30 pingUpdate(X) :- periodic@X(X, E, 2).
 
-R3 pingRequest@X(X,Y,E,T) :- pingUpdate(X), E := f_rand(), member@X(X,Y), T := f_now().
+r3 pingRequest@X(X,Y,E,T) :- pingUpdate(X), E := f_rand(), member@X(X,Y), T := f_now().
 
-R31 request@Y(Y, X, E, T) :- pingRequest@X(X, Y, E, T).
+r31 request@Y(Y, X, E, T) :- pingRequest@X(X, Y, E, T).
 
 
 //Echo the request
 
-R4 reply@Y(Y,X,E,T) :- request@X(X,Y,E,T).
+r4 reply@Y(Y,X,E,T) :- request@X(X,Y,E,T).
 
 
 //Issue a latency event
 
-R5 latency@X(X,Y,T) :- reply@X(X,Y,E,T1), T := 0 + (f_now() - T1).
+r5 latency@X(X,Y,T) :- reply@X(X,Y,E,T1), T := 0 + (f_now() - T1).
 
 //Remove a corresponding outstanding ping request
 
-R6 delete pingRequest(X, Y, E, T) :- reply@X(X, Y, E, T).
+r6 delete pingRequest(X, Y, E, T) :- reply@X(X, Y, E, T).
 
 
 // Flush out any expired ping requests
-R7 expired(X, Y, E, T) :- pingUpdate(X), pingRequest(X,Y,E,T), T1 := f_now(), T1 - T > 4.
-R71 delete pingRequest(X, Y, E, T) :- expired(X, Y, E1, T1).
-R73 delete member(X, Y) :- expired(X, Y, E, T).
+r7 expired(X, Y, E, T) :- pingUpdate(X), pingRequest(X,Y,E,T), T1 := f_now(), T1 - T > 4.
+r71 delete pingRequest(X, Y, E, T) :- expired(X, Y, E1, T1).
+r73 delete member(X, Y) :- expired(X, Y, E, T).
 
 
 
 
-RRR report@X(X,Y) :- periodic(X,E,5), neighbor(X,Y).
+rrr report@X(X,Y) :- periodic(X,E,5), neighbor(X,Y).
 
-L3 neighborSize@X(X, count<*>) :- neighbor(X, Y).
-L1 live@X(X, Y, T) :- latency@X(X,Y,T).
-L4 remove@X(X, Y, max<T>) :- neighborSize@X(X, C), C > 2, neighbor(X, Y), live(X, Y, T).
-L2 update@X(X, Y) :- gossipEvent(X), live(X, Y, T).
+l3 neighborSize@X(X, count<*>) :- neighbor(X, Y).
+l1 live@X(X, Y, T) :- latency@X(X,Y,T).
+l4 remove@X(X, Y, max<T>) :- neighborSize@X(X, C), C > 2, neighbor(X, Y), live(X, Y, T).
+l2 update@X(X, Y) :- gossipEvent(X), live(X, Y, T).
 
 */
 
