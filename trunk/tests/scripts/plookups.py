@@ -21,7 +21,7 @@ def process_node(file, shash, mhash, rhash):
     match_maintenance_lookup = re.compile(r"""^.*Print\[PrintWatchReceiveBeforeDemux.*,\s*
                                  ([0-9]+),\s*                                  # seconds
                                  ([0-9]+)\]\:\s*                               # nanoseconds
-                                 \[\<lookup,\s*                                # token
+                                 \[[0-9]+,\s*\<lookup,\s*                                # token
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
                                  ([a-f0-9]+),\s*                               # Lookup key 
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Destination IP address
@@ -31,7 +31,7 @@ def process_node(file, shash, mhash, rhash):
     match_simple_lookup = re.compile(r"""^.*Print\[PrintWatchReceiveBeforeDemux.*,\s*
                                  ([0-9]+),\s*                                  # seconds
                                  ([0-9]+)\]\:\s*                               # nanoseconds
-                                 \[\<lookup,\s*                                # token
+                                 \[[0-9]+,\s*\<lookup,\s*                                # token
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
                                  ([a-f0-9]+),\s*                               # Lookup key 
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Destination IP address
