@@ -2,7 +2,7 @@ import re, socket, popen2, time
 
 class TBReport:
     def __init__(self, project, experiment, nsfile):
-        cmd = "ssh users.emulab.net /usr/testbed/bin/expinfo -l -e %s,%s" % (project, experiment)
+        cmd = "ssh users.emulab.net /usr/testbed/bin/expinfo -l %s %s" % (project, experiment)
         child = popen2.Popen3(cmd)
         cstdout = child.fromchild
         self.tblines = cstdout.readlines()
@@ -46,7 +46,7 @@ class TBReport:
     def read_internal_ips(self):
         ips = {}
         for l in self.tblines:
-            m = re.search("^.*(node\d+):0\s+([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*", l)
+            m = re.search("^.*(node\d+):0\s+(\d+\.\d+\.\d+\.\d+).*", l)
             if m and not ips.has_key(m.group(1)):
                 node, ip = m.group(1), m.group(2)
                 ips[node] = ip
