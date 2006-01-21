@@ -1,13 +1,9 @@
 $Id$
 
-When you've checked out a fresh repository or modified the autoconf macros, first run setup to configure your new source tree:
+When you've checked out a fresh repository or modified the autoconf
+macros, first run setup to configure your new source tree:
 
    # ./setup
-
-Then, to build the source, run configure and point it at your SFS
-installation (e.g., /projects/phi/sfs).
-
-   # configure --with-sfslib=/projects/phi/sfs/lib --with-sfsinc=/projects/phi/sfs/include
   
 Then compile: 
 
@@ -17,19 +13,12 @@ Remember never to edit Makefile or Makefile.in.  Instead, make your
 changes to Makefile.am.  If you're still having problems, ask the nice
 folks on p2devel@yahoogroups.com.
 
-NOTE FOR DEBIAN USERS:
-
-If you're using Debian Sarge (testing, at time of writing), make sure
-libsfs0-dev is installed, then you can do:
-
-   # ./configure --with-sfsinc=/usr/include/sfs --with-sfslib=/lib
-
- - as long as you want to link the SFS libraries dynamically.
-Otherwise, for some reason they're in /usr/lib/sfs/lib.   I believe
-"go figure" is the american vernacular. 
-
 NOTE ABOUT FLEX:
 
 Make sure to have flex version 2.5.4 or greater installed before
 building the project.
 
+NOTE ABOUT AUTOMAKE:
+
+If you want to run automake (i.e., if you want to run ./setup), make
+sure you have automake version 1.9 or greater.
