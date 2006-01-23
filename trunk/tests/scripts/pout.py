@@ -39,7 +39,7 @@ def process_node(file, shash, mhash, rhash):
     match_maintenance_lookup = re.compile(r"""^.*Print\[PrintWatchReceiveBeforeDemux.*,\s*
                                  ([0-9]+),\s*                                  # seconds
                                  ([0-9]+)\]\:\s*                               # nanoseconds
-                                 \[\<lookup,\s*                                # token
+                                 \[[0-9]+,\s*\<lookup,\s*                                # token
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
                                  ([a-f0-9]+),\s*                               # Lookup key
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Destination IP address
@@ -49,7 +49,7 @@ def process_node(file, shash, mhash, rhash):
     match_simple_lookup = re.compile(r"""^.*Print\[PrintWatchReceiveBeforeDemux.*,\s*
                                  ([0-9]+),\s*                                  # seconds
                                  ([0-9]+)\]\:\s*                               # nanoseconds
-                                 \[\<lookup,\s*                                # token
+                                 \[[0-9]+,\s*\<lookup,\s*                                # token
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
                                  ([a-f0-9]+),\s*                               # Lookup key
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Destination IP address
@@ -60,7 +60,7 @@ def process_node(file, shash, mhash, rhash):
     match_lookup_result = re.compile(r"""^.*Print\[PrintWatchReceiveBeforeDemux.*,\s*
                                  ([0-9]+),\s*                                  # seconds
                                  ([0-9]+)\]\:\s*                               # nanoseconds
-                                 \[\<lookupResults,\s*                         # token
+                                 \[[0-9]+,\s*\<lookupResults,\s*                         # token
                                  ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address
                                  ([a-f0-9]+),\s*                               # key
                                  ([a-f0-9]+),\s*                               # key
@@ -71,7 +71,7 @@ def process_node(file, shash, mhash, rhash):
     matchbandwidth = re.compile(r"""^Print\[PrintWatchRemoteSend.*,\s*
                                     ([0-9]+),\s*                               # seconds
                                     ([0-9]+)\]\:\s*                            # nanoseconds
-                                    \[\<([a-zA-Z]+),\s*                        # token
+                                    \[[0-9]+,\s*\<([a-zA-Z]+),\s*                        # token
                                     .*\>\]$\n""", re.VERBOSE)
 
     start_t     = 0.0
@@ -220,6 +220,8 @@ def eval_lookups(shash, mhash, rhash):
        r_sec = rhash[event][0]
        r_ns  = rhash[event][1]
        if hops: latency.append([(ts2sec(r_sec, r_ns) - ts2sec(start_sec, start_ns)), hops])
+       ElatVal = ts2sec(r_sec, r_ns) - ts2sec(start_sec, start_ns);
+       #if (latVal > 10): print rhash[event], ts2sec(r_sec, r_ns), ts2sec(start_sec, start_ns)
 
     if latency:
         latency.sort()
