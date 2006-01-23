@@ -48,9 +48,10 @@ open INFILE, "<$opt_f/simple_results" or die "Couldn't open $opt_f";
 while (<INFILE>) {
     chomp;
     my @line = split /, /;
-    my $str = $searchKeys{$line[4]};
-    $str = $str . " " . $line[5];
-    $searchKeys{$line[4]} = $str;
+    my $str = $searchKeys{$line[5]};
+    $str = $str . " " . $line[6];
+    #print "$line[5] $line[6]\n";
+    $searchKeys{$line[5]} = $str;
 }
 close INFILE;
 
@@ -80,7 +81,7 @@ foreach $key (keys (%searchKeys)) {
     }
     if ($max > $opt_n) {
 	$max = $opt_n;
-    } 
+    }
     $consistencyArray[$max] = $consistencyArray[$max] + 1;
     $totalSize += 1;
 }
