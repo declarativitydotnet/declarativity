@@ -40,7 +40,7 @@ def parse_cmdline(argv):
 def run_node(log, main_dir, seed, ip, p, lm, out):
     print >> log, "NODEIP = %s:%s" % (ip, p)
     print >> log, "LANDMARK = %s"  % (lm)
-    print >> log, "%s/runChord %s/chord2.plg NONE %d %s:%s 10 %s >> %s 2>&1" \
+    print >> log, "%s/runChord %s/chord.plg NONE %d %s:%s 10 -1 %s >> %s 2>&1" \
                   % (main_dir, main_dir, seed, ip, p, lm, out) 
 
     pid = os.fork()
@@ -48,10 +48,10 @@ def run_node(log, main_dir, seed, ip, p, lm, out):
 	st = 0
 	if flags["churn"]:
 		st = 450.0 + (random.random() * flags["session"])
-        if lm: rv = os.system(r"%s/runChord %s/chord2.plg NONE %d %s:%s 10 %d %s >> %s 2>&1" \
-                              % (main_dir, main_dir, seed, ip, p, st, lm, out))
-        else:  rv = os.system(r"%s/runChord %s/chord2.plg NONE %d %s:%s 0 %d >> %s 2>&1" \
-                              % (main_dir, main_dir, seed, ip, p, st, out))
+        if lm: rv = os.system(r"%s/runChord %s/chord.plg NONE %d %s:%s 10 -1 %s >> %s 2>&1" \
+                              % (main_dir, main_dir, seed, ip, p, lm, out))
+        else:  rv = os.system(r"%s/runChord %s/chord.plg NONE %d %s:%s 0 -1 >> %s 2>&1" \
+                              % (main_dir, main_dir, seed, ip, p, out))
         print >> log, "SYSTEM CALL EXIT"
         sys.exit(0)
     return pid
