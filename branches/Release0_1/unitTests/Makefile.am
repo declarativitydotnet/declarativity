@@ -8,7 +8,6 @@ p2Test_SOURCES =	p2Test.C \
 p2Test_LDADD =		-lboost_unit_test_framework
 
 p2Test_LDFLAGS = \
-	$(top_builddir)/planner/.libs/libp2planner.a \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \

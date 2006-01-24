@@ -47,4 +47,4 @@
 # 
 #
 
-SUBDIRS=eventLoop p2core elements net overlog planner tests unitTests phid
+SUBDIRS=eventLoop p2core elements net overlog tests unitTests 

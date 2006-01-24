@@ -41,7 +41,7 @@
 # Afghanistan and any other country to which the U.S. has embargoed
 # goods and services.
 # 
-# DESCRIPTION: Configure script for asynchronous sensor server
+# DESCRIPTION: Configure script for P2
 # 
 #   $Id$
 # 
@@ -95,12 +95,9 @@ AC_CONFIG_FILES([
 	Makefile 
 	eventLoop/Makefile
 	p2core/Makefile 
-	swig/Makefile
 	elements/Makefile 
 	net/Makefile 
 	tests/Makefile 
 	unitTests/Makefile 
-	phid/Makefile
-	overlog/Makefile 
-	planner/Makefile ])
+	overlog/Makefile ])
 AC_OUTPUT

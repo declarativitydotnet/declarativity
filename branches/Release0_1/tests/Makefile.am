@@ -93,15 +93,6 @@ join_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/eventLoop/.libs/libeventLoop.a
 
-paths_SOURCES = paths.C
-paths_LDADD = \
-	$(top_builddir)/planner/.libs/libp2planner.a \
-	$(top_builddir)/overlog/.libs/liboverlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a
-
 runOverLog_SOURCES = runOverLog.C
 runOverLog_LDADD = \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
@@ -251,15 +242,6 @@ udpMessage_LDADD = \
 
 udpListen_SOURCES	= udpListen.C
 udpListen_LDADD = \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a
-
-testPlanner_SOURCES	= testPlanner.C
-testPlanner_LDADD = \
-	$(top_builddir)/planner/.libs/libp2planner.a \
-	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
