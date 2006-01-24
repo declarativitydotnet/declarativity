@@ -43,9 +43,7 @@ bin_PROGRAMS 	= 	values \
 			agg \
 			pingpong \
 			udpMessage \
-			udpListen \
-			paths \
-			testPlanner
+			udpListen
 
 
 values_SOURCES	= values.C
