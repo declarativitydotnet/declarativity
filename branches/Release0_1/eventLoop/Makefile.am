@@ -9,7 +9,7 @@
 # Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
 # Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
 #
-# DESCRIPTION: Makefile for the P2 core library
+# DESCRIPTION: Makefile for the P2 event loop library
 #
 
 lib_LTLIBRARIES = libeventLoop.la
