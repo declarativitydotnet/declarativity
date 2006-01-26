@@ -67,12 +67,6 @@ uint64_t Element::seq=0;
 int Element::nelements_allocated = 0;
 int Element::elementCounter = 0;
 
-#if P2_STATS >= 2
-# define ELEMENT_CTOR_STATS _calls(0), _self_cycles(0), _child_cycles(0),
-#else
-# define ELEMENT_CTOR_STATS
-#endif
-
 static inline string mk_id_str(long id)
 {
   ostringstream s; 
@@ -81,7 +75,6 @@ static inline string mk_id_str(long id)
 }
 
 Element::Element(string instanceName) :
-  ELEMENT_CTOR_STATS
   _ninputs(0),
   _noutputs(0),
   _ID(elementCounter++),
@@ -92,7 +85,6 @@ Element::Element(string instanceName) :
 }
 
 Element::Element(string instanceName, int ninputs, int noutputs) :
-  ELEMENT_CTOR_STATS
   _ninputs(0),
   _noutputs(0),
   _ID(elementCounter++),
@@ -257,54 +249,14 @@ REMOVABLE_INLINE int Element::Port::push(TuplePtr p, b_cbv cb) const
 {
   // If I am not connected, I shouldn't be pushed.
   assert(_e);
-#if P2_STATS >= 1
-  _tuples++;
-#endif
-
-  int returnValue;
-#if P2_STATS >= 2
-  _e->input(_port)._tuples++;
-  uint64_t c0 = click_get_cycles();
-#endif // P2_STATS >= 2
-
-  //returnValue = _e->push(_port, p, cb);
-  returnValue = _e->input(_port)->push_incoming(_port, p, cb);
-
-#if P2_STATS >= 2
-  uint64_t c1 = click_get_cycles();
-  uint64_t x = c1 - c0;
-  _e->_calls += 1;
-  _e->_self_cycles += x;
-  _owner->_child_cycles += x;
-#endif
-
-  return returnValue;
+  return _e->input(_port)->push_incoming(_port, p, cb);
 }
 
 REMOVABLE_INLINE TuplePtr Element::Port::pull(b_cbv cb) const
 {
   // If I am not connected, I shouldn't be pulled.
   assert(_e);
-#if P2_STATS >= 2
-  _e->output(_port)._tuples++;
-  uint64_t c0 = click_get_cycles();
-#endif
-
-  //TuplePtr p = _e->pull(_port, cb);
   TuplePtr p = _e->output(_port)->pull_outgoing(_port, cb);
-
-#if P2_STATS >= 2
-  uint64_t c1 = click_get_cycles();
-  uint64_t x = c1 - c0;
-  _e->_calls += 1;
-  _e->_self_cycles += x;
-  _owner->_child_cycles += x;
-#endif
-
-#if P2_STATS >= 1
-  if (p) _tuples++;
-#endif
-
   return p;
 }
 
@@ -325,8 +277,8 @@ REMOVABLE_INLINE Element::Port::Port() :
   _e(0),
   _port(NOT_INITIALIZED),
   _cb(0)
-  PORT_CTOR_INIT(0)
-{ }
+{
+}
 
 /** Construct an attached port */
 REMOVABLE_INLINE Element::Port::Port(Element *owner,
@@ -334,10 +286,9 @@ REMOVABLE_INLINE Element::Port::Port(Element *owner,
                                      int p)
   : _e(e),
     _port(p),
-    _cb(0)
-  PORT_CTOR_INIT(owner)
+    _cb(0),
+    _owner(owner)
 {
-  (void) owner;
 }
 
 int Element::initialize()
