@@ -1077,7 +1077,7 @@ int main(int argc, char **argv)
   for(i = 0; i < num_ctests; i++) {
     const CompilerTest *t = &ctests[i];
     std::cout << "Compiling: " << t->src << "\n";
-    boost::shared_ptr<Pel_Program> prog = Pel_Lexer::compile( t->src);
+    boost::shared_ptr<Pel_Program> prog = Pel_Lexer::compile(t->src);
     if (prog->ops.size() != (uint) t->num_opcodes) {
       std::cerr << "** Bad # opcodes for '" << t->src << "'; " << prog->ops.size() << " instead of expected " << t->num_opcodes << "\n";
     }
