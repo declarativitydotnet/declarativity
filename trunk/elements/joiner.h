@@ -6,6 +6,9 @@
  * If you do not find these files, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
  * 
  * DESCRIPTION: Element that performs the merger of a tuple from one
  * relation of a join with all other tuples from the other relation that

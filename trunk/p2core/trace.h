@@ -1,6 +1,5 @@
 // -*- c-basic-offset: 2; related-file-name: "element.C" -*-
 /*
- * Copyright (c) 2004 Intel Corporation
  * All rights reserved.
  * 
  * @(#)$Id$
@@ -9,6 +8,9 @@
  * If you do not find these files, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
  * 
  * DESCRIPTION: Low-level tracing facility.  Use logging elements if
  *   you can!

@@ -22,6 +22,10 @@
       <dst>$DART_COMMON_DIR/runChord</dst>
     </dir>
     <dir>
+      <src>/home/tcondie/phi/phi/tests/simple_lookup</src>
+      <dst>$DART_COMMON_DIR/simple_lookup</dst>
+    </dir>
+    <dir>
       <src>/home/tcondie/phi/phi/tests/scripts/rnode.py</src>
       <dst>$DART_COMMON_DIR/rnode.py</dst>
     </dir>
@@ -32,10 +36,6 @@
     <dir>
       <src>/home/tcondie/phi/phi/tests/scripts/run_lookups.py</src>
       <dst>$DART_COMMON_DIR/run_lookups.py</dst>
-    </dir>
-    <dir>
-      <src>/home/tcondie/phi/phi/tests/simple_lookup</src>
-      <dst>$DART_COMMON_DIR/simple_lookup</dst>
     </dir>
     <dir>
       <src>/home/tcondie/phi/phi/doc/chord2.plg</src>
@@ -56,71 +56,26 @@
 
     <nodegroup>
       <nodes>1</nodes>
-      <cmd time="10">$DART_COMMON_DIR/rnode.py -i $DART_MY_IP -p 10000 -n 5 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
+      <cmd time="10">$DART_COMMON_DIR/rnode.py -i $DART_MY_IP -p 10000 -n 1 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
     </nodegroup>
 
     <nodegroup>
       <nodes>2</nodes>
-      <cmd time="20">$DART_COMMON_DIR/rnode.py -i $DART_MY_IP -p 10000 -n 5 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
+      <cmd time="20">$DART_COMMON_DIR/rnode.py -i $DART_MY_IP -p 10000 -n 1 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
     </nodegroup>
 
     <nodegroup>
       <nodes>3-4</nodes>
-      <cmd time="30">$DART_COMMON_DIR/rnode.py -i $DART_MY_IP -p 10000 -n 5 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
+      <cmd time="30">$DART_COMMON_DIR/rnode.py -i $DART_MY_IP -p 10000 -n 1 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
     </nodegroup>
 
     <nodegroup>
       <nodes>5-9</nodes>
-      <cmd time="40">$DART_COMMON_DIR/rnode.py -i $DART_MY_IP -p 10000 -n 5 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
+      <cmd time="40">$DART_COMMON_DIR/rnode.py -i $DART_MY_IP -p 10000 -n 1 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
     </nodegroup>
 
     <nodegroup>
-      <nodes>10-19</nodes>
-      <cmd time="50">$DART_COMMON_DIR/rnode.py -i $DART_MY_IP -p 10000 -n 5 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
-    </nodegroup>
-
-    <nodegroup>
-      <nodes>20-29</nodes>
-      <cmd time="60">$DART_COMMON_DIR/rnode.py -i $DART_MY_IP -p 10000 -n 5 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
-    </nodegroup>
-
-    <nodegroup>
-      <nodes>30-39</nodes>
-      <cmd time="70">$DART_COMMON_DIR/rnode.py -i $DART_MY_IP -p 10000 -n 5 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
-    </nodegroup>
-
-    <nodegroup>
-      <nodes>40-49</nodes>
-      <cmd time="80">$DART_COMMON_DIR/rnode.py -i $DART_MY_IP -p 10000 -n 5 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
-    </nodegroup>
-
-    <nodegroup>
-      <nodes>50-59</nodes>
-      <cmd time="100">$DART_COMMON_DIR/rnode.py -i $DART_MY_IP -p 10000 -n 5 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
-    </nodegroup>
-
-    <nodegroup>
-      <nodes>60-69</nodes>
-      <cmd time="120">$DART_COMMON_DIR/rnode.py -i $DART_MY_IP -p 10000 -n 5 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
-    </nodegroup>
-
-    <nodegroup>
-      <nodes>70-79</nodes>
-      <cmd time="140">$DART_COMMON_DIR/rnode.py -i $DART_MY_IP -p 10000 -n 5 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
-    </nodegroup>
-
-    <nodegroup>
-      <nodes>80-89</nodes>
-      <cmd time="160">$DART_COMMON_DIR/rnode.py -i $DART_MY_IP -p 10000 -n 5 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
-    </nodegroup>
-
-    <nodegroup>
-      <nodes>90-99</nodes>
-      <cmd time="180">$DART_COMMON_DIR/rnode.py -i $DART_MY_IP -p 10000 -n 5 -l $DART_MASTER:10000 $DART_COMMON_DIR $DART_MY_OUTPUT_DIR</cmd>
-    </nodegroup>
-
-    <nodegroup>
-      <nodes>1-20</nodes>
+      <nodes>1-2</nodes>
       <cmd time="300">$DART_COMMON_DIR/run_lookups.py -p 10000 -t 15 $DART_COMMON_DIR/simple_lookup $DART_MY_OUTPUT_DIR $DART_MY_IP</cmd>
     </nodegroup>
 

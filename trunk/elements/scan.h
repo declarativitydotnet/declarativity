@@ -7,6 +7,9 @@
  * INTEL-LICENSE file.  If you do not find these files, copies can be
  * found by writing to: Intel Research Berkeley, 2150 Shattuck Avenue,
  * Suite 1300, Berkeley, CA, 94704.  Attention: Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
  *
  * The scan element.  It has a single pull output.  It continuously
  * iterates over elemenets in the table returning them when pulled.
