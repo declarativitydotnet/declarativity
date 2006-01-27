@@ -29,7 +29,6 @@ libp2elements_la_SOURCES = \
 	unmarshal.C \
 	unmarshalField.C \
 	route.C \
-	ddemux.C \
 	demux.C \
 	mux.C \
 	roundRobin.C \
@@ -40,14 +39,9 @@ libp2elements_la_SOURCES = \
 	store.C \
 	insert.C \
 	delete.C \
-	joiner.C \
 	timedPullPush.C \
 	strToSockaddr.C \
 	queue.C \
-	groupby.C \
-	randomPushSource.C \
-	ping.C \
-	pong.C \
 	pelScan.C \
 	functorSource.C \
 	tupleSource.C \
@@ -56,8 +50,7 @@ libp2elements_la_SOURCES = \
 	unboxField.C \
 	printWatch.C \
 	aggregate.C \
-	scan.C \
-	agg.C 
+	scan.C
 
 INCLUDES = @BOOST_INC@ -I../p2core -I../eventLoop
 

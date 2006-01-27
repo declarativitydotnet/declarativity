@@ -38,8 +38,6 @@ bin_PROGRAMS 	= 	values \
 			logger \
 			csv \
 			testQueue \
-			agg \
-			pingpong \
 			udpMessage \
 			udpListen
 
@@ -210,21 +208,8 @@ testQueue_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/eventLoop/.libs/libeventLoop.a
 
-agg_SOURCES	= agg.C
-agg_LDADD = \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
-	$(top_builddir)/p2core/.libs/libp2core.a
-
 csv_SOURCES	= csv.C
 csv_LDADD = \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a
-
-pingpong_SOURCES	= pingpong.C
-pingpong_LDADD = \
-	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/eventLoop/.libs/libeventLoop.a

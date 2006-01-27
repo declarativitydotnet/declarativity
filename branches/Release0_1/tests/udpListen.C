@@ -37,8 +37,6 @@
 #include "unmarshal.h"
 #include "tupleSource.h"
 #include "timedPullSink.h"
-#include "ping.h"
-#include "pong.h"
 #include "slot.h"
 #include "val_str.h"
 #include "val_tuple.h"
