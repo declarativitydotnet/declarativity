@@ -4,8 +4,12 @@ When you've checked out a fresh repository or modified the autoconf
 macros, first run setup to configure your new source tree:
 
    # ./setup
+
+Then configure:
+
+   # ./configure
   
-Then compile: 
+Finally build: 
 
    # make
 
