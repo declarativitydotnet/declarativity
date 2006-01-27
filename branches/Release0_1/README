@@ -1,5 +1,9 @@
 $Id$
 
+------------------------------------------------------------
+-- BUILDING
+------------------------------------------------------------
+
 When you've checked out a fresh repository or modified the autoconf
 macros, first run setup to configure your new source tree:
 
@@ -26,3 +30,79 @@ NOTE ABOUT AUTOMAKE:
 
 If you want to run automake (i.e., if you want to run ./setup), make
 sure you have automake version 1.9 or greater.
+
+
+
+------------------------------------------------------------
+-- NOW WHAT?  A DATAFLOW GRAPH
+------------------------------------------------------------
+
+You can run our measly unit tests:
+
+   # unitTests/p2Test
+
+
+You can look at some of our test programs under tests/.  
+
+tests/join is a test that demonstrates a dataflow graph that performs
+some matching of semi-random tuples produced over time.  It does not use
+OverLog, but puts the dataflow graph together directly.
+
+The testSimpleJoin function creates a new Plumber (the container object
+for a dataflow graph), and then constructs the following dataflow graph:
+
+             /------TRANSFORM_A----STORE in A
+TUPLESOURCE -|                        
+             \------TRANSFORM_B----MATCH with A
+
+TUPLESOURCE arranges a timed push source (producing tuples with the
+current time at regular intervals) connected to a Print element
+(printing out to standard out the tuples it sees) connected to a
+duplicator element that duplicates the timed source stream.  One output
+of the duplicator is fed into TRANSFORM_A and the other into
+TRANSFORM_B.
+
+TRANSFORM_A is a portion of the dataflow graph that takes the first of
+the duplicator's outputs, transforms it with a PelTransform element
+(transAS), drops some of its tuples with a Filter element (filterAS),
+projects the result to remove the filtering field with a PelTransform
+element (filterDropAS), performs duplicate elimination with a DupElim
+element (dupElimAS), prints what comes through with a Print element
+(transAPrintS), and inserts what remains in a local table with an Insert
+element (rehashAS), then discarding the result (sinkAS).
+
+TRANSFORM_B is a portion of the dataflow graph that takes the second of
+the duplicator's outputs, transforms it with a PelTransform (transBS) in
+a way different from transAS, again filters on a transformed field
+(filterBS), projects away some of the transformed fields (filterDropBS),
+eliminates duplicates (dupElimBS), and prints the output
+(transBPrintS). Then this graph joins this stream with the elements
+stored by the TRANSFORM_A branch of the graph, using a UniqueLookup
+element (lookupBS) on field numbers 1 on either side, printing what
+comes back with a Print element (lookupBPrintS), and then discarding it
+(sinkBS).
+
+
+The entire dataflow (as stored into the conf configuration object) is
+passed to the plumber, which is then initialized, and run (with
+eventLoop()).
+
+The output on the console is rather verbose.  One can look at the
+sequence of output from Print elements by doing:
+
+   # tests/join |& grep Print
+
+"AfterSource" entries indicate a new source tuple has been
+created. "ATuples" prints out tuples produced (and stored) by
+TRANSFORM_A. "BTuples" prints out tuples produces by TRANSFORM_B, before
+the join.  "Matches" prints out those B tuples that match (thus far)
+stored A tuples on their field numbers 1.  Some "Matches" tuples contain
+an empty subtuple for A tuples: those correspond to B tuples that return
+no match.
+
+
+
+------------------------------------------------------------
+-- NOW WHAT?  A DATAFLOW GRAPH
+------------------------------------------------------------
+

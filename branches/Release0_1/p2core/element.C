@@ -47,8 +47,8 @@ static inline string mk_id_str(long id)
 }
 
 Element::Element(string instanceName) :
-  _ninputs(0),
-  _noutputs(0),
+  _ninputs(1),
+  _noutputs(1),
   _ID(elementCounter++),
   _name(instanceName),
   _IDstr(mk_id_str(_ID))
@@ -57,8 +57,8 @@ Element::Element(string instanceName) :
 }
 
 Element::Element(string instanceName, int ninputs, int noutputs) :
-  _ninputs(0),
-  _noutputs(0),
+  _ninputs(ninputs),
+  _noutputs(noutputs),
   _ID(elementCounter++),
   _name(instanceName),
   _IDstr(mk_id_str(_ID))

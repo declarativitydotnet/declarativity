@@ -47,6 +47,7 @@ void testSimpleJoin(LoggerI::Level level)
 
   Plumber::ConfigurationPtr conf(new Plumber::Configuration());
 
+  // TUPLESOURCE
   // The source dataflow.  Produce random tuples.
   ElementSpecPtr sourceS =
     conf->addElement(ElementPtr(new TimedPushSource("source", 1)));
@@ -57,11 +58,10 @@ void testSimpleJoin(LoggerI::Level level)
   conf->hookUp(sourcePrintS, 0, dupS, 0);
 
 
+  // TRANSFORM_A
   // The rehash factories
   TablePtr tableA(new Table("ATuples", 1000));
   tableA->add_unique_index(1);
-
-
 
   // The A transformation dataflow.  Drop tuples with seconds ending in
   // 7.  Prepend the table name "A"
@@ -89,6 +89,7 @@ void testSimpleJoin(LoggerI::Level level)
   conf->hookUp(rehashAS, 0, sinkAS, 0);
 
 
+  // TRANSFORM_B
   // The B transformation dataflow.  Drop tuples with seconds ending in
   // 3.  Prepend the table name "B"
   ElementSpecPtr transBS =
@@ -106,7 +107,9 @@ void testSimpleJoin(LoggerI::Level level)
   ElementSpecPtr lookupBS =
     conf->addElement(ElementPtr(new UniqueLookup("Lookup", tableA, 1, 1)));
   ElementSpecPtr lookupBPrintS =
-    conf->addElement(ElementPtr(new Print("LookupBInA")));
+    conf->addElement(ElementPtr(new Print("Matches")));
+  ElementSpecPtr sinkBS =
+    conf->addElement(ElementPtr(new TimedPullSink("sinkB", 0)));
   conf->hookUp(dupS, 1, transBS, 0);
   conf->hookUp(transBS, 0, filterBS, 0);
   conf->hookUp(filterBS, 0, filterDropBS, 0);
@@ -114,18 +117,7 @@ void testSimpleJoin(LoggerI::Level level)
   conf->hookUp(dupElimBS, 0, transBPrintS, 0);
   conf->hookUp(transBPrintS, 0, lookupBS, 0);
   conf->hookUp(lookupBS, 0, lookupBPrintS, 0);
-
-
-
-
-
-
-  // The joining dataflow
-  ElementSpecPtr joinerBPrintS = conf->addElement(ElementPtr(new Print("BJoinWithA")));
-  ElementSpecPtr sinkBS =
-    conf->addElement(ElementPtr(new TimedPullSink("sinkB", 0)));
-  conf->hookUp(lookupBPrintS, 0, joinerBPrintS, 0);
-  conf->hookUp(joinerBPrintS, 0, sinkBS, 0);
+  conf->hookUp(lookupBPrintS, 0, sinkBS, 0);
 
 
 
