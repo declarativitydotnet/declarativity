@@ -46,6 +46,10 @@ private:
   void
   commonConstruction();
   
+  /** Shortcut to setting and sanity-checking port counts. */
+  void
+  portSetup();
+
 public:
   
   // Two shorthand processing signatures.  
@@ -269,9 +273,6 @@ public:
   Element(const Element &);
   Element &operator=(const Element &);
   
-  /** Set my ports before I'm initialized */
-  void set_nports(int, int);
-
   /** For my default logger's sequencing */
   static uint64_t seq;
 

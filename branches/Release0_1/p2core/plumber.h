@@ -143,14 +143,13 @@ private:
   int check_hookup_range();
 
   /** Is personality semantics correctly applied to hookups?  This only
-      checks that the end-points of a hookup are consistent.  Unlike
-      Click, it does not follow flow codes through elements. */
+      checks that the end-points of a hookup are consistent.  It does
+      not follow flow codes through elements. */
   int check_push_and_pull();
 
   /** Are any ports multiply connected?  Are all ports attached to
-      something?  Unlike Click, we require all ports to be attached to
-      something (exactly one something), even pull outputs and push
-      inputs. */
+      something?  We require all ports to be attached to something
+      (exactly one something), even pull outputs and push inputs. */
   int check_hookup_completeness();
 
   /** Perform the actual hooking up of real elements from the specs. No
