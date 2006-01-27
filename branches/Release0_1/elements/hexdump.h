@@ -6,6 +6,9 @@
  * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
  * 
  * DESCRIPTION: Element that dumps in hex the named opaque element of
  * the input tuple.  It just replaces that field in the tuple which it
