@@ -6,8 +6,6 @@
  * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
- * 
- * DESCRIPTION: Element discarding all tuples pushed into it
  */
 
 #include "discard.h"

@@ -1,4 +1,4 @@
-// -*- c-basic-offset: 2; related-file-name: "element.C" -*-
+// -*- c-basic-offset: 2; related-file-name: "csvparser.C" -*-
 /*
  * @(#)$Id$
  * 
@@ -7,7 +7,7 @@
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: Element which takes a push input consisting of strings
+ * DESCRIPTION: Element that takes a push input consisting of strings
  *  (strictly speaking, tuples with a single string field) comprising
  *   a sequence of Comma-Separated Value lines, and exports a pull
  *   output which consists of tuples parsed from the input.  No
