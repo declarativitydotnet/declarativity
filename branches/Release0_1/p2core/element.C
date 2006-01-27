@@ -84,8 +84,9 @@ void
 Element::portSetup()
 {
   // exit on bad counts, or if already initialized
-  if (_ninputs < 0 || _noutputs < 0)
+  if (_ninputs < 0 || _noutputs < 0) {
     return;
+  }
   
   // Enlarge port arrays if necessary
   _inputs.resize(_ninputs);
