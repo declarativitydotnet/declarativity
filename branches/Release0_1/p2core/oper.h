@@ -53,21 +53,21 @@ namespace opr {
   #define NOSUP1(o, t1) do { \
     ostringstream oss; \
     oss << "Oper("<<string(o)<<") not supported for types "<<string(t1); \
-    throw Exception(oss.str()); \
+    throw OperException(oss.str()); \
   } while (0)
   
-  #define NOSUP2(o, t1, t2) do { \
+  #define NOSUP2(o, t1, t2) { \
     ostringstream oss; \
     oss << "Oper("<<string(o)<<") not supported for types " \
                 <<string(t1)<<", "<<string(t2); \
-    throw Exception(oss.str()); \
-  } while (0)
+    throw OperException(oss.str()); \
+  }
   
   #define NOSUP3(o, t1, t2, t3) do { \
     ostringstream oss; \
     oss << "Oper("<<string(o)<<") not supported for types " \
                 <<string(t1)<<", "<<string(t2)<<", "<<string(t3); \
-    throw Exception(oss.str()); \
+    throw OperException(oss.str()); \
   } while (0)
   
   class Oper {
@@ -91,9 +91,9 @@ namespace opr {
     /**
      * Thrown when operand types do not override an operator function.
      */ 
-    class Exception {
+    class OperException {
     public:
-      Exception(string d) : desc_(d) {};
+      OperException(string d) : desc_(d) {};
   
       operator string() { return desc_; };
   
@@ -106,7 +106,7 @@ namespace opr {
      * An operator function is where the functionality of the operator
      * exists. The default operator functions listed below will throw
      * an exception, meaning that the operator is not supported for that
-     * type. Each P2 concreate type will define a subclass of Oper and
+     * type. Each P2 concrete type will define a subclass of Oper and
      * override those operator functions that have definitions for the
      * respective type.
      */

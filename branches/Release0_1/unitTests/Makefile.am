@@ -6,12 +6,16 @@
 # UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
 # Berkeley, CA,  94707. Attention: P2 Group.
 #
+
+$(PROGRAMS): $(LDEPS) \
+		 	testBasicElementPlumbing.C \
+			testFdbufs.C \
+			testMarshal.C \
+			testPel.C
+
 bin_PROGRAMS = p2Test
 
-p2Test_SOURCES =	p2Test.C \
-			testMarshal.C \
-			testBasicElementPlumbing.C \
-			testFdbufs.C
+p2Test_SOURCES =	p2Test.C
 
 p2Test_LDADD =		-lboost_unit_test_framework
 

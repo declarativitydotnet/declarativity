@@ -20,7 +20,6 @@ bin_PROGRAMS 	= 	values \
 			benchmark \
 			overlog \
 			tables \
-			pel \
 			IDs \
 			runManyChords \
 			runChord \
@@ -59,10 +58,6 @@ benchmark_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
 
 tables_SOURCES	= tables.C
 tables_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
-		$(top_builddir)/eventLoop/.libs/libeventLoop.a
-
-pel_SOURCES	= pel.C
-pel_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
 		$(top_builddir)/eventLoop/.libs/libeventLoop.a
 
 

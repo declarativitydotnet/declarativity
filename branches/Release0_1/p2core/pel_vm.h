@@ -36,6 +36,7 @@ public:
     PE_TYPE_CONVERSION,
     PE_BAD_OPCODE,
     PE_DIVIDE_BY_ZERO,
+    PE_BAD_STRING_OP,
     PE_INVALID_ERRNO,
     PE_STOP,
     PE_UNKNOWN // Must be the last error
