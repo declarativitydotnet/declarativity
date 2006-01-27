@@ -1,0 +1,24 @@
+$Id$
+
+When you've checked out a fresh repository or modified the autoconf
+macros, first run setup to configure your new source tree:
+
+   # ./setup
+  
+Then compile: 
+
+   # make
+
+Remember never to edit Makefile or Makefile.in.  Instead, make your
+changes to Makefile.am.  If you're still having problems, ask the nice
+folks on p2devel@yahoogroups.com.
+
+NOTE ABOUT FLEX:
+
+Make sure to have flex version 2.5.4 or greater installed before
+building the project.
+
+NOTE ABOUT AUTOMAKE:
+
+If you want to run automake (i.e., if you want to run ./setup), make
+sure you have automake version 1.9 or greater.
