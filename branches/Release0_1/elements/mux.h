@@ -39,15 +39,7 @@ public:
   /** My catch up method, to handle callbacks off the callback thread */
   void catchUp();
 
-  /** Add a new input port, and return the port number */
-  int add_input();
-
-  /** Remove port (will not affect other port positions) */
-  void remove_input(int);
-
 private:
-  bool isUnusedPort(int port);
-
   /** Is my output blocked? */
   bool _blocked;
 

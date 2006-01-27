@@ -64,8 +64,11 @@ const char * const Element::COMPLETE_FLOW = "x/x";
 // For use in default-logger sequencing
 uint64_t Element::seq=0;
 
-int Element::nelements_allocated = 0;
-int Element::elementCounter = 0;
+int
+Element::elementsLive = 0;
+
+int
+Element::elementCounter = 0;
 
 static inline string mk_id_str(long id)
 {
@@ -81,7 +84,7 @@ Element::Element(string instanceName) :
   _name(instanceName),
   _IDstr(mk_id_str(_ID))
 {
-  nelements_allocated++;
+  commonConstruction();
 }
 
 Element::Element(string instanceName, int ninputs, int noutputs) :
@@ -92,12 +95,18 @@ Element::Element(string instanceName, int ninputs, int noutputs) :
   _IDstr(mk_id_str(_ID))
 {
   set_nports(ninputs, noutputs);
-  nelements_allocated++;
+  commonConstruction();
 }
 
 Element::~Element()
 {
-  nelements_allocated--;
+  elementsLive--;
+}
+
+void
+Element::commonConstruction()
+{
+  elementsLive++;
 }
 
 // INPUTS AND OUTPUTS
@@ -106,7 +115,6 @@ void
 Element::set_nports(int new_ninputs, int new_noutputs)
 {
   // exit on bad counts, or if already initialized
-  // XXX initialized flag for element
   if (new_ninputs < 0 || new_noutputs < 0)
     return;
   
@@ -128,17 +136,6 @@ Element::set_nports(int new_ninputs, int new_noutputs)
   }
 }
 
-void
-Element::set_ninputs(int count)
-{
-  set_nports(count, _noutputs);
-}
-
-void
-Element::set_noutputs(int count)
-{
-  set_nports(_ninputs, count);
-}
 
 bool
 Element::ports_frozen() const

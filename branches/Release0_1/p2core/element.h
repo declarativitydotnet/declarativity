@@ -2,39 +2,26 @@
 /*
  * @(#)$Id$
  *
- * Modified from the Click Element base class by Eddie Kohler
- * statistics: Robert Morris
- * P2 version: Timothy Roscoe
- * 
- * Copyright (c) 1999-2000 Massachusetts Institute of Technology
- * Copyright (c) 2004 Regents of the University of California
- * Copyright (c) 2004 Intel Corporation
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software")
- * to deal in the Software without restriction, subject to the conditions
- * listed in the Click LICENSE file. These conditions include: you must
- * preserve this copyright notice, and you cannot mention the copyright
- * holders in advertising related to the Software without their permission.
- * The Software is provided WITHOUT ANY WARRANTY, EXPRESS OR IMPLIED. This
- * notice is a summary of the Click LICENSE file; the license in that file is
- * legally binding.
- * 
  * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * 
- * DESCRIPTION: Base class for P2 elements
+ * DESCRIPTION: Base class for P2 elements.  Interface is reminiscent of
+ * Click's.
  *
- * Note to P2 hackers: much has been removed from the original Click
- * class.  Much of that may well find its way back in, but for now
- * let's put stuff back in when we understand why we need it.  That
- * way we'll all develop a better understanding of why Click (and P2)
- * are the way they are. 
- * 
- * We've also enhanced to push/pull tuple to prevent blocking (something
- * Click, being a plumber, doesn't need to bother with). 
+ * An element may be in one of two states: CONFIGURATION and RUNNING.
+ * During configuration, the element maintains data about its ports
+ * (including personalities, flow codes, etc.) that faciliate with
+ * static analysis of the big picture of the forwarding engine.  Since
+ * all those data aare not useful once the element is up and running, we
+ * only keep them during configuration and discard them thereafter.
+ *
+ * We've also enhanced to push/pull tuple to prevent blocking.
+ *
+ * Element signatures (flow and personality) are similar to Click's
+ * equivalent descriptors.
+ *
  */
 
 #ifndef __ELEMENT_H__
@@ -54,6 +41,11 @@ typedef boost::shared_ptr< Plumber > PlumberPtr;
 
 
 class Element { 
+private:
+  /** My common constructor method */
+  void
+  commonConstruction();
+  
 public:
   
   // Two shorthand processing signatures.  
@@ -84,51 +76,69 @@ public:
       associated ports have no flow association. */
   static const char * const COMPLETE_FLOW;
 
+  /** Indicates in this position there is no flow association between
+      inputs and outputs */
   static const char NO_FLOW_ASSOCIATION = '-';
-
+  
+  /** Will be defined later */
   class Port;
   
+  /** Create a 1-1 element with just its name */
   Element(string instanceName);
+
+  /** Create an element of arbitrary inputs/outputs */
   Element(string instanceName, int ninputs, int noutputs);
+
   virtual ~Element();
-  static int nelements_allocated;
+
+  /** How many elements are currently live? */
+  static int elementsLive;
+
+  /** Counter of elements ever created, to be used for IDs */
   static int elementCounter;
 
   //
   // RUNTIME
   //
 
-  // If push returns '1', it's OK to send more tuples, and the
-  // callback has not been registered.  If '0', it's NOT OK to send
-  // more tuples, and the callback will be invoked as soon as it is. 
+  /** If push returns '1', it's OK to send more tuples, and the callback
+      has not been registered.  If '0', it's NOT OK to send more tuples,
+      and the callback will be invoked as soon as it is. */
   virtual int push(int port, TuplePtr, b_cbv cb);
 
-  // If pull returns a Tuple, the callback has not been registered and
-  // there _might_ be another Tuple available.  If it returns null,
-  // there wasn't another Tuple, and the callback will be invoked when
-  // there is another one. 
+  /** If pull returns a Tuple, the callback has not been registered and
+      there _might_ be another Tuple available.  If it returns null,
+      there wasn't another Tuple, and the callback will be invoked when
+      there is another one. */
   virtual TuplePtr pull(int port, b_cbv cb);
 
-  // A simple action for 1-1 elements. If the result is 0, then no tuple
-  // was produced for push or pull
+  /** A simple action for 1-1 elements. If the result is 0, then no
+      tuple was produced for push or pull */
   virtual TuplePtr simple_action(TuplePtr p);
 
   // CHARACTERISTICS
   virtual const char *class_name() const = 0;
-  int ID() const				{ return _ID; }
-  string name() const				{ return _name; }
 
+  /** The unique ID of the element */
+  int ID() const				{ return _ID; }
+
+  /** A descriptive name for the element */
+  string name() const				{ return _name; }
+  
   /** Return the plumber that contains me */
   PlumberPtr plumber() const			{ return _plumber; }
-
-
+  
+  
   // INPUTS AND OUTPUTS
+  
+  // Getters
   int ninputs() const				{ return _ninputs; }
   int noutputs() const				{ return _noutputs; }
-  void set_ninputs(int);
-  void set_noutputs(int);
-  void add_input()				{ set_ninputs(ninputs()+1); }
-  void add_output()				{ set_noutputs(noutputs()+1); }
+  
+  // Setters
+  void ninputs(int);
+  void noutputs(int);
+
   bool ports_frozen() const;
 
   // CONFIGURATION
@@ -165,12 +175,12 @@ public:
   
   /** Attach me to a plumber */
   void attach_plumber(PlumberPtr r)		{ _plumber = r; }
-
+  
   /** A nested class encapsulating connection stubs into and out of an
       element. */
   class Port { 
   public:
-
+    
     Port();
 
     Port(Element * owner,
@@ -235,7 +245,6 @@ public:
   typedef boost::shared_ptr< Port > PortPtr;
   typedef std::vector< PortPtr > PortVec;
 
-
   const PortPtr input(int) const;
   const PortPtr output(int) const;
 
@@ -270,10 +279,10 @@ public:
   string _name;
 
 protected:
-
+  
   /** My ID in text */
   string _IDstr;
-
+  
 };
 
 /** A handy dandy pointer to elements */
