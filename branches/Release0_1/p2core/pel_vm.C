@@ -612,16 +612,16 @@ DEF_OP(BIT_NOT) {
 //
 DEF_OP(NEG) {
   try {
-    ValuePtr neg = Val_Int32::mk(-1);
+    ValuePtr neg = Val_Int64::mk(-1);
     stackPush(pop() * neg);
-  } catch (opr::Oper::OperException *e) {
+  } catch (opr::Oper::OperException e) {
     error = PE_OPER_UNSUP;
   }
 }
 DEF_OP(PLUS) {
   try {
     stackPush((pop()+pop()));
-  } catch (opr::Oper::OperException *e) {
+  } catch (opr::Oper::OperException e) {
     error = PE_OPER_UNSUP;
   }
 }
@@ -631,7 +631,7 @@ DEF_OP(MINUS) {
   ValuePtr v2 = pop();
   try {
     stackPush((v2-v1));
-  } catch (opr::Oper::OperException *e) {
+  } catch (opr::Oper::OperException e) {
     error = PE_OPER_UNSUP;
   }
 }
@@ -639,7 +639,7 @@ DEF_OP(MINUSMINUS) {
   ValuePtr v1 = pop();
   try {
     stackPush(--v1);
-  } catch (opr::Oper::OperException *e) {
+  } catch (opr::Oper::OperException e) {
     error = PE_OPER_UNSUP;
   }
 }
@@ -647,14 +647,14 @@ DEF_OP(PLUSPLUS) {
   ValuePtr v1 = pop();
   try {
     stackPush(++v1);
-  } catch (opr::Oper::OperException *e) {
+  } catch (opr::Oper::OperException e) {
     error = PE_OPER_UNSUP;
   }
 }
 DEF_OP(MUL) {
   try {
     stackPush((pop()*pop()));
-  } catch (opr::Oper::OperException *e) {
+  } catch (opr::Oper::OperException e) {
     error = PE_OPER_UNSUP;
   }
 }
@@ -665,7 +665,7 @@ DEF_OP(DIV) {
   if (v1 != Val_UInt64::mk(0)) { 
     try {
       stackPush((v2 / v1));
-    } catch (opr::Oper::OperException *e) {
+    } catch (opr::Oper::OperException e) {
       error = PE_OPER_UNSUP;
     }
   } else if (error == PE_SUCCESS) {
@@ -679,7 +679,7 @@ DEF_OP(MOD) {
   if (v1 != Val_UInt64::mk(0)) { 
     try {
       stackPush((v2 % v1));
-    } catch (opr::Oper::OperException *e) {
+    } catch (opr::Oper::OperException e) {
       error = PE_OPER_UNSUP;
     }
   } else if (error == PE_SUCCESS) {

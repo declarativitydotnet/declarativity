@@ -681,9 +681,9 @@ testPel::vtests[] = {
   TST(INT64, SUCCESS, "0",	"0 negi" ),
   // neg (unary negation)
   TST(INT64, STACK_UNDERFLOW, "", "neg" ),
-  TST(INT64, SUCCESS, "0", "\"A\" neg" ), // turns A into 0
+  TST(INT64, OPER_UNSUP, "0", "\"A\" neg" ), // turns A into 0
   TST(DOUBLE, SUCCESS, "-1.0", "1.0 neg" ),
-  TST(INT64, OPER_UNSUP, "0",	"null neg" ),
+  TST(INT64, SUCCESS, "0",	"null neg" ),
   TST(INT64, SUCCESS, "-1",	"1 neg" ),
   TST(INT64, SUCCESS, "1",	"-1 neg" ),
   TST(INT64, SUCCESS, "-2000","2000 neg" ),
