@@ -23,15 +23,17 @@ public:
   }
 
 
+  ////////////////////////////////////////////////////////////
+  // Value construction tests
+  ////////////////////////////////////////////////////////////
 
-private:
+public:
 #define TEST_VAL(valTypeExt, value, typecode, typestr)  \
   { \
     std::string testID; \
     { \
       std::ostringstream ID; \
-      ID << "Value construction test at line " \
-         << __LINE__; \
+      ID << "Value construction test. "; \
       testID = ID.str(); \
     } \
      \
@@ -40,7 +42,7 @@ private:
     { \
       std::ostringstream message; \
       message << testID \
-              << ". Bad typeCode after construction of '" \
+              << "Bad typeCode after construction of '" \
               << typestr \
               << "'. Expected '" \
               << Value::typecode \
@@ -48,14 +50,14 @@ private:
               << v->typeCode() \
               << "'."; \
       BOOST_CHECK_MESSAGE(v->typeCode() == Value::typecode,     \
-                          message); \
+                          message.str().c_str());               \
     } \
      \
     string mktn(typestr); \
     { \
       std::ostringstream message; \
       message << testID \
-              << ". Bad typeName after construction of '" \
+              << "Bad typeName after construction of '" \
               << typestr \
               << "'. Expected '" \
               << typestr \
@@ -63,12 +65,11 @@ private:
               << v->typeName() \
               << "'"; \
       BOOST_CHECK_MESSAGE(mktn == v->typeName(), \
-                          message); \
+                          message.str().c_str());       \
     } \
-  } \
+  }
 
 
-public:
   void
   testConstructions()
   {
@@ -111,15 +112,438 @@ public:
     TEST_VAL(Str, "", STR, "str");
     TEST_VAL(Str, "This is a string", STR, "str");
     
+
+    // Opaques
     FdbufPtr u1(new Fdbuf());
     u1->pushBack("This is UIO 1");
     TEST_VAL(Opaque, u1, OPAQUE, "opaque");
     
+
+    // Strings
     std::string addr = "127.0.0.1:1000";
     TEST_VAL(IP_ADDR, addr, IP_ADDR, "ip_addr"); 
 
-#undef TEST_VAL
+
+    // Time
+#define TEST_TIME(valTypeExt, secs, nsecs, typecode, typestr) \
+    { \
+      struct timespec ts; \
+      ts.tv_sec = secs; \
+      ts.tv_nsec = nsecs; \
+      TEST_VAL(valTypeExt, ts, typecode, typestr); \
+    }
+
+    TEST_TIME(Time,  0,  0, TIME, "time");
+    TEST_TIME(Time, 10, 10, TIME, "time");
+    TEST_TIME(Time, -1,  0, TIME, "time");
+    TEST_TIME(Time,  0, -1, TIME, "time");
+    TEST_TIME(Time, -2, -2, TIME, "time");
+#undef TEST_TIMEVAL
   } 
+#undef TEST_VAL
+
+
+
+
+
+
+
+  ////////////////////////////////////////////////////////////
+  // Self casting tests
+  ////////////////////////////////////////////////////////////
+
+#define TEST_CAST(valTypeExt, value, cType, dstValTypeExt, dstValue) \
+  { \
+    std::string testID; \
+    { \
+      std::ostringstream ID; \
+      ID << "Value casting test. "; \
+      testID = ID.str(); \
+    } \
+ \
+    ValuePtr v = Val_##valTypeExt::mk(value); \
+    try { \
+      cType cValue = Val_##dstValTypeExt::cast(v); \
+ \
+      std::ostringstream message; \
+      message << testID \
+              << "Bad cast value from 'Val_" #valTypeExt "' (" \
+              << #value \
+              << ")->'" #dstValTypeExt \
+              << "'. Expected " \
+              << #dstValue \
+              << " but got " \
+              << cValue \
+              << "."; \
+      BOOST_CHECK_MESSAGE(cValue == dstValue, \
+                          message.str().c_str()); \
+    } catch (Value::TypeError) { \
+      std::ostringstream message; \
+      message << testID \
+              << "Type exception casting from 'Val_" #valTypeExt "' (" \
+              << #value \
+              << ")->'" #dstValTypeExt \
+              << "'."; \
+      BOOST_CHECK_MESSAGE(false, message.str().c_str()); \
+    } \
+  }
+
+
+  void
+  testSelfCasts()
+  {
+    TEST_CAST(UInt32, 0, uint32_t, UInt32, 0);
+    TEST_CAST(UInt32, 1, uint32_t, UInt32, 1);
+    
+    TEST_CAST(Int64, 0, int64_t, Int64, 0);
+    TEST_CAST(Int64, -1, int64_t, Int64, -1);
+    TEST_CAST(Int64, 1, int64_t, Int64, 1);
+    
+    TEST_CAST(UInt64, 0, uint64_t, UInt64, 0);
+    TEST_CAST(UInt64, 1, uint64_t, UInt64, 1);
+    
+    TEST_CAST(Double, 0, double, Double, 0);
+    TEST_CAST(Double, 0.0, double, Double, 0.0);
+    TEST_CAST(Double, 1.2, double, Double, 1.2);
+    
+    TEST_CAST(Str, "", string, Str, "");
+    TEST_CAST(Str, "This is a string", string, Str, "This is a string");
+    
+    // Opaques
+    FdbufPtr u1(new Fdbuf());
+    u1->pushBack("This is UIO 1");
+    TEST_CAST(Opaque, u1, FdbufPtr, Opaque, u1);
+    
+    // Strings
+    std::string addr = "127.0.0.1:1000";
+    TEST_CAST(IP_ADDR, addr, string, IP_ADDR, addr);
+  }
+
+
+  void
+  testCorrectCasts()
+  {
+    // Test casting to int32.
+#define TEST_CAST_T(_t,_v,_r) TEST_CAST(_t,_v,int32_t,Int32,_r)
+    TEST_CAST_T( Null, , 0);
+    
+    TEST_CAST_T( Int32, 0, 0);
+    TEST_CAST_T( Int32, 1, 1);
+    TEST_CAST_T( Int32, 2000, 2000);
+    TEST_CAST_T( Int32, INT_MAX, INT_MAX );
+    TEST_CAST_T( Int32, -1, -1 );
+    TEST_CAST_T( Int32, -2000, -2000);
+    TEST_CAST_T( Int32, INT_MIN, INT_MIN);
+
+    TEST_CAST_T( Int64, 0, 0 );
+    TEST_CAST_T( Int64, 1, 1 );
+    TEST_CAST_T( Int64, 2000, 2000 );
+    TEST_CAST_T( Int64, LONG_LONG_MAX, -1 );
+    TEST_CAST_T( Int64, -1, -1 );
+    TEST_CAST_T( Int64, -2000, -2000 );
+    TEST_CAST_T( Int64, LONG_LONG_MIN, 0 );
+  
+    TEST_CAST_T( UInt32, 0, 0 );
+    TEST_CAST_T( UInt32, 1, 1 );
+    TEST_CAST_T( UInt32, 1000, 1000 );
+    TEST_CAST_T( UInt32, UINT_MAX, -1 );
+
+    TEST_CAST_T( UInt64, 0, 0 );
+    TEST_CAST_T( UInt64, 1, 1 );
+    TEST_CAST_T( UInt64, 1000, 1000 );
+    TEST_CAST_T( UInt64, ULONG_LONG_MAX, -1 );
+
+    TEST_CAST_T( Double, 0, 0 );
+    TEST_CAST_T( Double, 1.0, 1 );
+    TEST_CAST_T( Double, -1.0, -1 );
+    TEST_CAST_T( Double, -1.79769E+308, INT_MIN );
+    TEST_CAST_T( Double, 1.79769E+308, INT_MIN );
+    TEST_CAST_T( Double, 2.225E-307, 0 );
+    TEST_CAST_T( Double, -2.225E-307, 0 );
+  
+    TEST_CAST_T( Str, "", 0 );
+    TEST_CAST_T( Str, "0", 0 );
+    TEST_CAST_T( Str, "1", 1 );
+    TEST_CAST_T( Str, "0x1a", 26 );
+    TEST_CAST_T( Str, "011", 9 );
+    TEST_CAST_T( Str, "-200", -200 );
+    TEST_CAST_T( Str, "1.5", 1 );
+    TEST_CAST_T( Str, "-1.5", -1 );
+    TEST_CAST_T( Str, "Rubbish", 0 );
+#undef TEST_CAST_T
+
+
+  // Test casting to uint32.
+#define TEST_CAST_T(_t,_v,_r) TEST_CAST(_t,_v,uint32_t,UInt32,_r)
+
+  TEST_CAST_T( Null, , 0);
+
+  TEST_CAST_T( Int32, 0, 0);
+  TEST_CAST_T( Int32, 1, 1);
+  TEST_CAST_T( Int32, 2000, 2000);
+  TEST_CAST_T( Int32, INT_MAX, INT_MAX );
+  TEST_CAST_T( Int32, -1, UINT_MAX );
+  TEST_CAST_T( Int32, -2000, UINT_MAX -2000 + 1);
+  TEST_CAST_T( Int32, INT_MIN, INT_MAX+1U);
+
+  TEST_CAST_T( Int64, 0, 0 );
+  TEST_CAST_T( Int64, 1, 1 );
+  TEST_CAST_T( Int64, 2000, 2000 );
+  TEST_CAST_T( Int64, LONG_LONG_MAX, UINT_MAX );
+  TEST_CAST_T( Int64, -1, UINT_MAX );
+  TEST_CAST_T( Int64, -2000, UINT_MAX-2000 +1);
+  TEST_CAST_T( Int64, LONG_LONG_MIN, 0 );
+  
+  TEST_CAST_T( UInt32, 0, 0 );
+  TEST_CAST_T( UInt32, 1, 1 );
+  TEST_CAST_T( UInt32, 1000, 1000 );
+  TEST_CAST_T( UInt32, UINT_MAX, UINT_MAX );
+
+  TEST_CAST_T( UInt64, 0, 0 );
+  TEST_CAST_T( UInt64, 1, 1 );
+  TEST_CAST_T( UInt64, 1000, 1000 );
+  TEST_CAST_T( UInt64, ULONG_LONG_MAX, UINT_MAX );
+
+  TEST_CAST_T( Double, 0, 0 );
+  TEST_CAST_T( Double, 1.0, 1 );
+  TEST_CAST_T( Double, -1.0, UINT_MAX );
+  TEST_CAST_T( Double, -1.79769E+308, 0 );
+  TEST_CAST_T( Double, 1.79769E+308, 0 );
+  TEST_CAST_T( Double, 2.225E-307, 0 );
+  TEST_CAST_T( Double, -2.225E-307, 0 );
+  
+  TEST_CAST_T( Str, "", 0 );
+  TEST_CAST_T( Str, "0", 0 );
+  TEST_CAST_T( Str, "1", 1 );
+  TEST_CAST_T( Str, "0x1a", 26 );
+  TEST_CAST_T( Str, "011", 9 );
+  TEST_CAST_T( Str, "-200", UINT_MAX-200 +1 );
+  TEST_CAST_T( Str, "1.5", 1 );
+  TEST_CAST_T( Str, "-1.5", UINT_MAX );
+  TEST_CAST_T( Str, "Rubbish", 0 );
+  #undef TEST_CAST_T
+
+
+  // Test casting to int64.
+#define TEST_CAST_T(_t,_v,_r) TEST_CAST(_t,_v,int64_t,Int64,_r)
+
+  TEST_CAST_T( Null, , 0);
+
+  TEST_CAST_T( Int32, 0, 0);
+  TEST_CAST_T( Int32, 1, 1);
+  TEST_CAST_T( Int32, 2000, 2000);
+  TEST_CAST_T( Int32, INT_MAX, INT_MAX );
+  TEST_CAST_T( Int32, -1, -1 );
+  TEST_CAST_T( Int32, -2000, -2000);
+  TEST_CAST_T( Int32, INT_MIN, INT_MIN);
+
+  TEST_CAST_T( Int64, 0, 0 );
+  TEST_CAST_T( Int64, 1, 1 );
+  TEST_CAST_T( Int64, 2000, 2000 );
+  TEST_CAST_T( Int64, LONG_LONG_MAX, LONG_LONG_MAX );
+  TEST_CAST_T( Int64, -1, -1 );
+  TEST_CAST_T( Int64, -2000, -2000 );
+  TEST_CAST_T( Int64, LONG_LONG_MIN, LONG_LONG_MIN );
+  
+  TEST_CAST_T( UInt32, 0, 0 );
+  TEST_CAST_T( UInt32, 1, 1 );
+  TEST_CAST_T( UInt32, 1000, 1000 );
+  TEST_CAST_T( UInt32, UINT_MAX, UINT_MAX );
+
+  TEST_CAST_T( UInt64, 0, 0 );
+  TEST_CAST_T( UInt64, 1, 1 );
+  TEST_CAST_T( UInt64, 1000, 1000 );
+  TEST_CAST_T( UInt64, ULONG_LONG_MAX, -1 );
+
+  TEST_CAST_T( Double, 0, 0 );
+  TEST_CAST_T( Double, 1.0, 1 );
+  TEST_CAST_T( Double, -1.0, -1 );
+  TEST_CAST_T( Double, -1.79769E+308, LONG_LONG_MIN );
+  TEST_CAST_T( Double, 1.79769E+308, LONG_LONG_MIN );
+  TEST_CAST_T( Double, 2.225E-307, 0 );
+  TEST_CAST_T( Double, -2.225E-307, 0 );
+  
+  TEST_CAST_T( Str, "", 0 );
+  TEST_CAST_T( Str, "0", 0 );
+  TEST_CAST_T( Str, "1", 1 );
+  TEST_CAST_T( Str, "0x1a", 26 );
+  TEST_CAST_T( Str, "011", 9 );
+  TEST_CAST_T( Str, "-200", -200 );
+  TEST_CAST_T( Str, "1.5", 1 );
+  TEST_CAST_T( Str, "-1.5", -1 );
+  TEST_CAST_T( Str, "Rubbish", 0 );
+  #undef TEST_CAST_T
+  
+
+  // Test casting to uint64.
+#define TEST_CAST_T(_t,_v,_r) TEST_CAST(_t,_v,uint64_t,UInt64,_r)
+  TEST_CAST_T( Null, , 0);
+
+  TEST_CAST_T( Int32, 0, 0);
+  TEST_CAST_T( Int32, 1, 1);
+  TEST_CAST_T( Int32, 2000, 2000);
+  TEST_CAST_T( Int32, INT_MAX, INT_MAX );
+  TEST_CAST_T( Int32, -1, ULONG_LONG_MAX );
+  TEST_CAST_T( Int32, -2000, ULONG_LONG_MAX -2000 + 1);
+  TEST_CAST_T( Int32, INT_MIN, ULONG_LONG_MAX - INT_MAX);
+
+  TEST_CAST_T( Int64, 0, 0 );
+  TEST_CAST_T( Int64, 1, 1 );
+  TEST_CAST_T( Int64, 2000, 2000 );
+  TEST_CAST_T( Int64, LONG_LONG_MAX, LONG_LONG_MAX );
+  TEST_CAST_T( Int64, -1, ULONG_LONG_MAX );
+  TEST_CAST_T( Int64, -2000, ULONG_LONG_MAX-2000 +1);
+  TEST_CAST_T( Int64, LONG_LONG_MIN, 1UL + (uint64_t)(LONG_LONG_MAX) );
+  
+  TEST_CAST_T( UInt32, 0, 0 );
+  TEST_CAST_T( UInt32, 1, 1 );
+  TEST_CAST_T( UInt32, 1000, 1000 );
+  TEST_CAST_T( UInt32, UINT_MAX, UINT_MAX );
+
+  TEST_CAST_T( UInt64, 0, 0 );
+  TEST_CAST_T( UInt64, 1, 1 );
+  TEST_CAST_T( UInt64, 1000, 1000 );
+  TEST_CAST_T( UInt64, ULONG_LONG_MAX, ULONG_LONG_MAX );
+
+  TEST_CAST_T( Double, 0, 0 );
+  TEST_CAST_T( Double, 1.0, 1 );
+  TEST_CAST_T( Double, -1.0, UINT_MAX );
+  TEST_CAST_T( Double, -1.79769E+308, 0 );
+  TEST_CAST_T( Double, 1.79769E+308, 0 );
+  TEST_CAST_T( Double, 2.225E-307, 0 );
+  TEST_CAST_T( Double, -2.225E-307, 0 );
+  
+  TEST_CAST_T( Str, "", 0 );
+  TEST_CAST_T( Str, "0", 0 );
+  TEST_CAST_T( Str, "1", 1 );
+  TEST_CAST_T( Str, "0x1a", 26 );
+  TEST_CAST_T( Str, "011", 9 );
+  TEST_CAST_T( Str, "-200", ULONG_LONG_MAX-200 +1 );
+  TEST_CAST_T( Str, "1.5", 1 );
+  TEST_CAST_T( Str, "-1.5", ULONG_LONG_MAX );
+  TEST_CAST_T( Str, "Rubbish", 0 );
+#undef TEST_CAST_T
+  
+
+
+  // Test casting to double.
+#define TEST_CAST_T(_t,_v,_r) TEST_CAST(_t,_v,double,Double,_r)
+
+  TEST_CAST_T( Null, , 0);
+
+  TEST_CAST_T( Int32, 0, 0);
+  TEST_CAST_T( Int32, 1, 1);
+  TEST_CAST_T( Int32, 2000, 2000);
+  TEST_CAST_T( Int32, INT_MAX, INT_MAX );
+  TEST_CAST_T( Int32, -1, -1 );
+  TEST_CAST_T( Int32, -2000, -2000);
+  TEST_CAST_T( Int32, INT_MIN, INT_MIN);
+
+  TEST_CAST_T( Int64, 0, 0 );
+  TEST_CAST_T( Int64, 1, 1 );
+  TEST_CAST_T( Int64, 2000, 2000 );
+  TEST_CAST_T( Int64, LONG_LONG_MAX, LONG_LONG_MAX );
+  TEST_CAST_T( Int64, -1, -1 );
+  TEST_CAST_T( Int64, -2000, -2000);
+  TEST_CAST_T( Int64, LONG_LONG_MIN, LONG_LONG_MIN );
+  
+  TEST_CAST_T( UInt32, 0, 0 );
+  TEST_CAST_T( UInt32, 1, 1 );
+  TEST_CAST_T( UInt32, 1000, 1000 );
+  TEST_CAST_T( UInt32, UINT_MAX, UINT_MAX );
+
+  TEST_CAST_T( UInt64, 0, 0 );
+  TEST_CAST_T( UInt64, 1, 1 );
+  TEST_CAST_T( UInt64, 1000, 1000 );
+  TEST_CAST_T( UInt64, ULONG_LONG_MAX, ULONG_LONG_MAX );
+
+  TEST_CAST_T( Double, 0, 0 );
+  TEST_CAST_T( Double, 1.0, 1 );
+  TEST_CAST_T( Double, -1.0, -1.0 );
+  TEST_CAST_T( Double, -1.79769E+308,  -1.79769E+308 );
+  TEST_CAST_T( Double, 1.79769E+308, 1.79769E+308 );
+  TEST_CAST_T( Double, 2.225E-307, 2.225E-307 );
+  TEST_CAST_T( Double, -2.225E-307, -2.225E-307 );
+  
+  TEST_CAST_T( Str, "", 0 );
+  TEST_CAST_T( Str, "0", 0 );
+  TEST_CAST_T( Str, "1", 1 );
+  TEST_CAST_T( Str, "0x1a", 26 );
+  TEST_CAST_T( Str, "011", 11 );
+  TEST_CAST_T( Str, "-200", -200 );
+  TEST_CAST_T( Str, "1.5", 1.5 );
+  TEST_CAST_T( Str, "-1.5", -1.5 );
+  TEST_CAST_T( Str, "Rubbish", 0 );
+#undef TEST_CAST_T
+
+
+  // Test casting to Str.
+#define TEST_CAST_T(_t,_v,_r) TEST_CAST(_t,_v,string,Str,_r)
+
+  TEST_CAST_T( Null, , "NULL");
+
+  TEST_CAST_T( Int32, 0, "0");
+  TEST_CAST_T( Int32, 1, "1");
+  TEST_CAST_T( Int32, 2000, "2000");
+  TEST_CAST_T( Int32, INT_MAX, "2147483647" );
+  TEST_CAST_T( Int32, -1, "-1" );
+  TEST_CAST_T( Int32, -2000, "-2000");
+  TEST_CAST_T( Int32, INT_MIN, "-2147483648");
+
+  TEST_CAST_T( Int64, 0, "0" );
+  TEST_CAST_T( Int64, 1, "1" );
+  TEST_CAST_T( Int64, 2000, "2000" );
+  TEST_CAST_T( Int64, LONG_LONG_MAX, "9223372036854775807" );
+  TEST_CAST_T( Int64, -1, "-1" );
+  TEST_CAST_T( Int64, -2000, "-2000");
+  TEST_CAST_T( Int64, LONG_LONG_MIN, "-9223372036854775808" );
+  
+  TEST_CAST_T( UInt32, 0, "0" );
+  TEST_CAST_T( UInt32, 1, "1" );
+  TEST_CAST_T( UInt32, 1000, "1000" );
+  TEST_CAST_T( UInt32, UINT_MAX, "4294967295" );
+
+  TEST_CAST_T( UInt64, 0, "0" );
+  TEST_CAST_T( UInt64, 1, "1" );
+  TEST_CAST_T( UInt64, 1000, "1000" );
+  TEST_CAST_T( UInt64, ULONG_LONG_MAX, "18446744073709551615" );
+
+  TEST_CAST_T( Double, 0, "0" );
+  TEST_CAST_T( Double, 1.0, "1" );
+  TEST_CAST_T( Double, -1.0, "-1" );
+  TEST_CAST_T( Double, -1.79769E+308,  "-1.79769e+308" );
+  TEST_CAST_T( Double, 1.79769E+308, "1.79769e+308" );
+  TEST_CAST_T( Double, 2.225E-307, "2.225e-307" );
+  TEST_CAST_T( Double, -2.225E-307, "-2.225e-307" );
+  
+  TEST_CAST_T( Str, "", "" );
+  TEST_CAST_T( Str, "0", "0" );
+  TEST_CAST_T( Str, "1", "1" );
+  TEST_CAST_T( Str, "0x1a", "0x1a" );
+  TEST_CAST_T( Str, "011", "011" );
+  TEST_CAST_T( Str, "-200", "-200" );
+  TEST_CAST_T( Str, "1.5", "1.5" );
+  TEST_CAST_T( Str, "-1.5", "-1.5" );
+  TEST_CAST_T( Str, "Rubbish", "Rubbish" );
+  
+  FdbufPtr u2(new Fdbuf());
+  u2->pushBack("This is UIO 2");
+  TEST_CAST_T( Opaque, u2, "This is UIO 2" );
+
+
+  string addr = "127.0.0.1:1000";
+  TEST_CAST_T( IP_ADDR, addr, "127.0.0.1:1000");
+#undef TEST_CAST_T
+
+  
+  }
+#undef TEST_CAST
+
+
+
+
+
+
 };
 
 
@@ -134,6 +558,10 @@ public:
     
     
     add(BOOST_CLASS_TEST_CASE(&testValues::testConstructions,
+                              instance));
+    add(BOOST_CLASS_TEST_CASE(&testValues::testSelfCasts,
+                              instance));
+    add(BOOST_CLASS_TEST_CASE(&testValues::testCorrectCasts,
                               instance));
   }
 };
