@@ -16,6 +16,7 @@ using boost::unit_test_framework::test_suite;
 #include "testFdbufs.C"
 #include "testPel.C"
 #include "testValues.C"
+#include "testCsv.C"
 
 
 test_suite* init_unit_test_suite(int, char**)
@@ -27,6 +28,7 @@ test_suite* init_unit_test_suite(int, char**)
   top->add(new testFdbufs_testSuite());
   top->add(new testPel_testSuite());
   top->add(new testValues_testSuite());
+  top->add(new testCsv_testSuite());
 
   return top;
 }

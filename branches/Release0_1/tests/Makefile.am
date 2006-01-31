@@ -37,7 +37,6 @@ bin_PROGRAMS 	=  	tuples \
 			netcc2 \
 			perfectChord \
 			logger \
-			csv \
 			testQueue \
 			udpMessage \
 			udpListen
@@ -197,12 +196,6 @@ basicelements_LDADD = \
 
 testQueue_SOURCES	= testQueue.C
 testQueue_LDADD = \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a
-
-csv_SOURCES	= csv.C
-csv_LDADD = \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/eventLoop/.libs/libeventLoop.a
