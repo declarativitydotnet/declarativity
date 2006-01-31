@@ -15,8 +15,7 @@
 
 $(PROGRAMS): $(LDEPS)
 
-bin_PROGRAMS 	= 	values \
-			tuples \
+bin_PROGRAMS 	=  	tuples \
 			benchmark \
 			overlog \
 			tables \
@@ -43,10 +42,6 @@ bin_PROGRAMS 	= 	values \
 			udpMessage \
 			udpListen
 
-
-values_SOURCES	= values.C
-values_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
-		$(top_builddir)/eventLoop/.libs/libeventLoop.a
 
 tuples_SOURCES	= tuples.C
 tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \

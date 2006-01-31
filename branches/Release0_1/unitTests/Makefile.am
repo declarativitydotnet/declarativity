@@ -11,7 +11,8 @@ $(PROGRAMS): $(LDEPS) \
 		 	testBasicElementPlumbing.C \
 			testFdbufs.C \
 			testMarshal.C \
-			testPel.C
+			testPel.C \
+			testValues.C
 
 bin_PROGRAMS = p2Test
 

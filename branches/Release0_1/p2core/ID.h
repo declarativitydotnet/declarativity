@@ -97,7 +97,10 @@ public:
   static IDPtr mk(uint32_t w[WORDS]) { IDPtr p(new ID(w)); return p; }
   static IDPtr mk(uint32_t u)        { IDPtr p(new ID(u)); return p; }
   static IDPtr mk(uint64_t u)        { IDPtr p(new ID(u)); return p; }
-
 };
+
+/** The stream operator */
+std::ostream&
+operator <<(std::ostream& os, const ID& object);
 
 #endif /* __ID_H_ */

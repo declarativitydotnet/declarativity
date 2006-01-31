@@ -238,3 +238,10 @@ ID::ZERO(ID::mk((uint32_t) 0));
 IDPtr
 ID::ONE(ID::mk((uint32_t) 1));
 
+std::ostream&
+operator <<(std::ostream& os, const ID& object)
+{
+  os << object.toString();
+  return os;
+}
+

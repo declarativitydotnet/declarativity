@@ -189,6 +189,52 @@ public:
   }
 
 
+#define TEST_TIMESPEC_CAST(valTypeExt, value, dstValTypeExt, dstSec, dstNsec) \
+  { \
+    std::string testID; \
+    { \
+      std::ostringstream ID; \
+      ID << "Value casting test. "; \
+      testID = ID.str(); \
+    } \
+ \
+    struct timespec dest; \
+    dest.tv_sec = dstSec; \
+    dest.tv_nsec = dstNsec; \
+    ValuePtr v = Val_##valTypeExt::mk(value); \
+    try { \
+      struct timespec cValue = Val_##dstValTypeExt::cast(v); \
+ \
+      std::ostringstream message; \
+      message << testID \
+              << "Bad cast value from 'Val_" #valTypeExt "' (" \
+              << #value \
+              << ")->'" #dstValTypeExt \
+              << "'. Expected <" \
+              << #dstSec \
+              << "," \
+              << #dstNsec \
+              << "> but got <" \
+              << cValue.tv_sec \
+              << "," \
+              << cValue.tv_nsec \
+              << ">."; \
+      BOOST_CHECK_MESSAGE(!compare_timespec(cValue, dest), \
+                          message.str().c_str()); \
+    } catch (Value::TypeError) {                  \
+      std::ostringstream message; \
+      message << testID \
+              << "Type exception casting from 'Val_" #valTypeExt "' (" \
+              << #value \
+              << ")->'" #dstValTypeExt \
+              << "'."; \
+      BOOST_CHECK_MESSAGE(false, message.str().c_str()); \
+    }                                                    \
+  }
+
+
+
+
   void
   testSelfCasts()
   {
@@ -535,16 +581,217 @@ public:
   TEST_CAST_T( IP_ADDR, addr, "127.0.0.1:1000");
 #undef TEST_CAST_T
 
+
+
+  // Casting to IP address
+  // XXX What exactly are we testing here?
+#define TEST_CAST_T(_t,_v,_r) TEST_CAST(_t, _v, string, IP_ADDR, _r)
+  TEST_CAST_T( Str, "", "" );
+  TEST_CAST_T( Str, "0", "0" );
+  TEST_CAST_T( Str, "1", "1" );
+  TEST_CAST_T( Str, "0x1a", "0x1a" );
+  TEST_CAST_T( Str, "011", "011" );
+  TEST_CAST_T( Str, "-200", "-200" );
+  TEST_CAST_T( Str, "1.5", "1.5" );
+  TEST_CAST_T( Str, "-1.5", "-1.5" );
+  TEST_CAST_T( Str, "Rubbish", "Rubbish" );
+#undef TEST_CAST_T
+
+
+
+  // Test casting to Time, time_t.tv_sec is of type int32
+#define TEST_CAST_T(_t,_v,_s,_ns) TEST_TIMESPEC_CAST(_t,_v,Time,_s,_ns)
+  TEST_CAST_T( Null, , 0, 0 );
+
+  TEST_CAST_T( Int32, 0, 0, 0 );
+  TEST_CAST_T( Int32, 1, 1, 0 );
+  TEST_CAST_T( Int32, 2000, 2000, 0 );
+  TEST_CAST_T( Int32, INT_MAX, INT_MAX, 0 );
+  TEST_CAST_T( Int32, -1, -1, 0 );
+  TEST_CAST_T( Int32, -2000, -2000, 0 );
+  TEST_CAST_T( Int32, INT_MIN, INT_MIN, 0 );
+
+  TEST_CAST_T( Int64, 0, 0, 0 );
+  TEST_CAST_T( Int64, 1, 1, 0 );
+  TEST_CAST_T( Int64, 2000, 2000, 0 );
+  TEST_CAST_T( Int64, LONG_LONG_MAX, -1, 0 );
+  TEST_CAST_T( Int64, -1, -1, 0 );
+  TEST_CAST_T( Int64, -2000, -2000, 0 );
+  TEST_CAST_T( Int64, LONG_LONG_MIN, 0, 0 );
+  
+  TEST_CAST_T( UInt32, 0, 0, 0 );
+  TEST_CAST_T( UInt32, 1, 1, 0 );
+  TEST_CAST_T( UInt32, 1000, 1000, 0 );
+  TEST_CAST_T( UInt32, UINT_MAX, -1, 0 );
+
+  TEST_CAST_T( UInt64, 0, 0, 0 );
+  TEST_CAST_T( UInt64, 1, 1, 0 );
+  TEST_CAST_T( UInt64, 1000, 1000, 0 );
+  TEST_CAST_T( UInt64, ULONG_LONG_MAX, -1, 0 );
+
+  TEST_CAST_T( Double, 0, 0, 0 );
+  TEST_CAST_T( Double, 1.0, 1, 0 );
+  TEST_CAST_T( Double, -1.0, -1, 0 );
+  TEST_CAST_T( Double, -1.79769E+308, INT_MIN, 0 );
+  TEST_CAST_T( Double, 1.79769E+308, INT_MIN, 0 );
+  TEST_CAST_T( Double, 2.225E-307, 0, 0 );
+  TEST_CAST_T( Double, -2.225E-307, 0, 0 );
+#undef TEST_CAST_T
+  
+
   
   }
 #undef TEST_CAST
+#undef TEST_TIMESPEC_CAST
 
 
+#define TEST_ID_CAST(valTypeExt, value, d1, d2, d3, d4, d5)        \
+  { \
+    std::string testID; \
+    { \
+      std::ostringstream ID; \
+      ID << "Value casting test. "; \
+      testID = ID.str(); \
+    } \
+ \
+    ValuePtr v = Val_##valTypeExt::mk(value); \
+    uint32_t bytes[5] = {d1, d2, d3, d4, d5}; \
+    IDPtr destination = ID::mk(bytes);   \
+    try { \
+      IDPtr cValue = Val_ID::cast(v); \
+ \
+      std::ostringstream message; \
+      message << testID \
+              << "Bad cast value from 'Val_" #valTypeExt "' (" \
+              << #value \
+              << ")->'ID'. Expected " \
+              << *destination \
+              << " but got " \
+              << *cValue \
+              << "."; \
+      BOOST_CHECK_MESSAGE(cValue->compareTo(destination) == 0,  \
+                          message.str().c_str()); \
+    } catch (Value::TypeError) { \
+      std::ostringstream message; \
+      message << testID \
+              << "Type exception casting from 'Val_" #valTypeExt "' ("  \
+              << #value \
+              << ")->'ID'."; \
+      BOOST_CHECK_MESSAGE(false, message.str().c_str()); \
+    } \
+  }
 
 
+void
+testIDCasts()
+{
+  TEST_ID_CAST(Int32, INT_MAX, 0, 0, 0, 0, INT_MAX);
+  TEST_ID_CAST(Int32, -1, 0, 0, 0, 0, ((uint32_t) -1));
+  TEST_ID_CAST(Int32, -2000, 0, 0, 0, 0, ((uint32_t) -2000));
+  TEST_ID_CAST(Int32, INT_MIN, 0, 0, 0, 0, ((uint32_t) INT_MIN));
+
+  TEST_ID_CAST(Int64, 0, 0, 0, 0, 0, 0);
+  TEST_ID_CAST(Int64, 1, 0, 0, 0, 0, 1);
+  TEST_ID_CAST(Int64, 2000, 0, 0, 0, 0, 2000 );
+  TEST_ID_CAST(Int64, LONG_LONG_MAX, 0, 0, 0, ((uint32_t) (LONG_LONG_MAX >> 32)), ((uint32_t) LONG_LONG_MAX));
+  TEST_ID_CAST(Int64, -1, 0, 0, 0, 0xffffffff, (uint32_t) -1);
+  TEST_ID_CAST(Int64, -2000, 0, 0, 0, 0xffffffff, (uint32_t) -2000);
+  TEST_ID_CAST(Int64, LONG_LONG_MIN, 0, 0, 0, ((uint32_t) (LONG_LONG_MIN >> 32)), ((uint32_t) LONG_LONG_MIN));
+
+  TEST_ID_CAST(UInt32, 0, 0, 0, 0, 0, 0);
+  TEST_ID_CAST(UInt32, 1, 0, 0, 0, 0, 1);
+  TEST_ID_CAST(UInt32, 1000, 0, 0, 0, 0, 1000);
+  TEST_ID_CAST(UInt32, UINT_MAX, 0, 0, 0, 0, UINT_MAX);
+
+  TEST_ID_CAST(UInt64, 0, 0, 0, 0, 0, 0);
+  TEST_ID_CAST(UInt64, 1, 0, 0, 0, 0, 1);
+  TEST_ID_CAST(UInt64, 1000, 0, 0, 0, 0, 1000);
+  TEST_ID_CAST(UInt64, ULONG_LONG_MAX, 0, 0, 0, 0xffffffff, 0xffffffff);
+}
+#undef TEST_ID_CAST
 
 
+  
+#define TEST_BADCAST(valTypeExt, value, dstValTypeExt) \
+  { \
+    std::string testID; \
+    { \
+      std::ostringstream ID; \
+      ID << "Value casting test. "; \
+      testID = ID.str(); \
+    } \
+ \
+    ValuePtr v = Val_##valTypeExt::mk(value); \
+    bool success; \
+    try { \
+      Val_##dstValTypeExt::cast(v); \
+      success = true; \
+    } catch (Value::TypeError) { \
+      success = false; \
+    } \
+    std::ostringstream message;                 \
+    message << testID                                          \
+            << "Missed type exception casting 'Val_" #valTypeExt "' ("  \
+            << #value                                                   \
+            << ")->'" #dstValTypeExt                                    \
+            << "'.";                                                    \
+    BOOST_CHECK_MESSAGE(success == false,                               \
+                        message.str().c_str());                         \
+  }
+  
+void
+testBadCasts()
+{
+  FdbufPtr u2(new Fdbuf());
+  u2->pushBack("This is UIO 2");
+  string addr = "127.0.0.1:1000";
+
+  TEST_BADCAST(Int32, -1, Null);
+  TEST_BADCAST(UInt32, 1, Null);
+  TEST_BADCAST(Int64, -1, Null);
+  TEST_BADCAST(UInt64, 1, Null);
+  TEST_BADCAST(Double, 1.0, Null);
+  TEST_BADCAST(Str, "", Null);
+  TEST_BADCAST(Str, "Hello", Null);
+  TEST_BADCAST(Opaque, u2, Null);
+  TEST_BADCAST(IP_ADDR, addr, Null);
+  TEST_BADCAST(Opaque, u2, Int32);
+  TEST_BADCAST(IP_ADDR, addr, Int32);
+  TEST_BADCAST(Opaque, u2, UInt32);
+  TEST_BADCAST(IP_ADDR, addr, UInt32);
+  TEST_BADCAST(Opaque, u2, Int64);
+  TEST_BADCAST(IP_ADDR, addr, Int64);
+  TEST_BADCAST(Opaque, u2, UInt64);
+  TEST_BADCAST(IP_ADDR, addr, Int64);
+  TEST_BADCAST(Opaque, u2, Double);
+  TEST_BADCAST(IP_ADDR, addr, Int64);
+
+  TEST_BADCAST(Null,, Opaque);
+  TEST_BADCAST(Int32, 0, Opaque);
+  TEST_BADCAST(UInt64, 0, Opaque);
+  TEST_BADCAST(Int32, 0, Opaque);
+  TEST_BADCAST(UInt64, 0, Opaque);
+  TEST_BADCAST(Double, 0, Opaque);
+  TEST_BADCAST(IP_ADDR, addr, Opaque); 
+
+  TEST_BADCAST(Null,, IP_ADDR);
+  TEST_BADCAST(Int32, 0, IP_ADDR);
+  TEST_BADCAST(UInt64, 0, IP_ADDR);
+  TEST_BADCAST(Int32, 0, IP_ADDR);
+  TEST_BADCAST(UInt64, 0, IP_ADDR);
+  TEST_BADCAST(Double, 0, IP_ADDR);
+  TEST_BADCAST(Opaque, u2, IP_ADDR);
+
+  TEST_BADCAST(Null,, Tuple);
+  TEST_BADCAST(Int32, 0, Tuple);
+  TEST_BADCAST(UInt64, 0, Tuple);
+  TEST_BADCAST(Int32, 0, Tuple);
+  TEST_BADCAST(UInt64, 0, Tuple);
+  TEST_BADCAST(Double, 0, Tuple);
+}
+#undef TEST_BADCAST
 };
+
 
 
 class testValues_testSuite
@@ -562,6 +809,10 @@ public:
     add(BOOST_CLASS_TEST_CASE(&testValues::testSelfCasts,
                               instance));
     add(BOOST_CLASS_TEST_CASE(&testValues::testCorrectCasts,
+                              instance));
+    add(BOOST_CLASS_TEST_CASE(&testValues::testIDCasts,
+                              instance));
+    add(BOOST_CLASS_TEST_CASE(&testValues::testBadCasts,
                               instance));
   }
 };

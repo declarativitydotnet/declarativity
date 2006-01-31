@@ -15,6 +15,7 @@ using boost::unit_test_framework::test_suite;
 #include "testBasicElementPlumbing.C"
 #include "testFdbufs.C"
 #include "testPel.C"
+#include "testValues.C"
 
 
 test_suite* init_unit_test_suite(int, char**)
@@ -25,6 +26,7 @@ test_suite* init_unit_test_suite(int, char**)
   top->add(new testBasicElementPlumbing_testSuite());
   top->add(new testFdbufs_testSuite());
   top->add(new testPel_testSuite());
+  top->add(new testValues_testSuite());
 
   return top;
 }

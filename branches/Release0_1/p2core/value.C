@@ -29,6 +29,7 @@
 #include "val_tuple.h"
 #include "val_time.h"
 #include "val_id.h"
+#include "val_ip_addr.h"
 
 typedef ValuePtr (*_unmarshal_fn)( XDR *);
 
