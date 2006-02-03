@@ -23,7 +23,7 @@ public:
   {
   }
 
-  static const int N_TPLS = 1000;
+  static const int N_TPLS = 100;
 
   TuplePtr tpls[N_TPLS];
 
@@ -34,6 +34,14 @@ public:
   void
   test();
 };
+
+// Add tests for flushing due to length
+
+// Add tests for flushing due to time
+
+// Fix aggregates test
+
+// Add tests for multi-field group by fields
 
 void
 testTables::test()
@@ -142,7 +150,8 @@ testTables::test()
 void
 testTables::aggListener(TuplePtr t)
 {
-  std::cout << "Agg update: " << t->toString() << "\n";
+  // XXX Store what the latest update was, to be used by main loop for
+  // check.
 }
 
 class testTables_testSuite
