@@ -18,7 +18,6 @@ $(PROGRAMS): $(LDEPS)
 bin_PROGRAMS 	=  	tuples \
 			benchmark \
 			overlog \
-			tables \
 			IDs \
 			runManyChords \
 			runChord \
@@ -49,10 +48,6 @@ tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
 benchmark_SOURCES	= benchmark.C
 benchmark_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
 		  $(top_builddir)/eventLoop/.libs/libeventLoop.a
-
-tables_SOURCES	= tables.C
-tables_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
-		$(top_builddir)/eventLoop/.libs/libeventLoop.a
 
 
 logger_SOURCES  = logger.C
