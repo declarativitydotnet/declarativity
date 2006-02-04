@@ -240,6 +240,11 @@ private:
     warn << "Planner debug rule (" << curRule->ruleID<< "): " << debugMsg; 
   }
 
+  // Debugging stuff starts here **
+  void createLoggingTable(string);
+
+  // Debugging stuff ends here **
+
   void error(string msg);
   void error(string msg, OL_Context::Rule* rule);
   void checkFunctor(Parse_Functor* baseFunctor, OL_Context::Rule* rule);

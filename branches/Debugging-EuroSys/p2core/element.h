@@ -47,6 +47,7 @@
 #include "tuple.h"
 #include "loggerI.h"
 #include "loop.h"
+#include "table.h"
   
 #define ELEM_LOG(_sev,_errnum,_rest) do { ostringstream _sb; _sb << _rest; log(_sev,_errnum,_sb.str()); } while (false)
 #define ELEM_INFO(_rest) ELEM_LOG(LoggerI::INFO, 0, _rest)
@@ -55,6 +56,7 @@
 class Plumber;
 typedef boost::shared_ptr< Plumber > PlumberPtr;
 
+class DLogger;
 
 class Element { 
 public:
@@ -62,6 +64,9 @@ public:
   // Two shorthand processing signatures.  
   static const char * const PUSH_TO_PULL;
   static const char * const PULL_TO_PUSH;
+
+  // My debugging logger
+  static DLogger * _debuggingLogger;
 
   // The three processing types
   enum Processing { AGNOSTIC = 'a',
@@ -97,6 +102,22 @@ public:
   static int nelements_allocated;
   static int elementCounter;
 
+  void enableLogging(bool start, bool end){ 
+    std::cout << "Called enable logging at " << name() << " startOrEnd "<< start
+ << "\n"; _doLogging = true; 
+    //_start = start; _end = end; 
+    return;};
+  void countRule(bool x) { _doCounting = x;};
+  void precondOrder(int x){ _preConditionOrder = x;};
+  void initDebugParams();
+
+  string getRule(){ return _ruleId;};
+  string getAction(){ return _action;};
+  string getStatus(){ return _status;};
+  int getRuleNum(){ return _ruleNum;};
+  string getNodeId(){ return _nodeId;};
+  int getPrecondOrder(){ return _preConditionOrder;};
+ 
   //
   // RUNTIME
   //
@@ -286,6 +307,20 @@ protected:
 
   /** My ID in text */
   string _IDstr;
+
+  bool _doLogging;
+  bool _doCounting;
+  int _preConditionOrder;
+  
+
+  // Tags are not maintained in hash table but as simple class fields
+  // for efficiency reasons (?)
+  string _nodeId;
+  string _action; // what does this element do?
+  string _ruleId;
+  string _status; // which part of the rule, start or end
+  int _ruleNum;
+
 
 };
 

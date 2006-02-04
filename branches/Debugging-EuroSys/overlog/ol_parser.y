@@ -74,6 +74,7 @@
 %token OL_MATERIALIZE
 %token OL_KEYS
 %token OL_WATCH
+%token OL_TRACE
 
 %token OL_RANGEOO
 %token OL_RANGEOC
@@ -120,7 +121,8 @@ clause:		  rule
 		| fact
                 | materialize
                 | watch
-                | query               
+                | query
+                | trace
 		;
 
 fact:		functor OL_DOT { ctxt->fact($1); } 
@@ -155,6 +157,11 @@ watch:		OL_WATCH OL_LPAR OL_NAME OL_RPAR OL_DOT {
 			ctxt->watch($3);
 		}
 		;
+
+trace:          OL_TRACE OL_LPAR OL_NAME OL_RPAR OL_DOT {
+                        ctxt->traceTuple($3);
+                }
+                ;
 
 rule:	        OL_NAME functor OL_IF termlist OL_DOT { 
                     ctxt->rule($2, $4, false, $1); } 

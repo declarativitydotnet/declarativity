@@ -14,6 +14,7 @@
 
 #include "plmb_confgen.h"
 #include "trace.h"
+#include "dlogger.h"
 
 Plmb_ConfGen::Plmb_ConfGen(OL_Context* ctxt, 
 			 Plumber::ConfigurationPtr conf, 
@@ -1612,7 +1613,23 @@ void Plmb_ConfGen::createTables(string nodeID)
 	      << " into table " << vr->toString() 
 	      << " " << tr->size() << "\n";
   }
+
+  createLoggingTable(nodeID);
 }
+
+void Plmb_ConfGen::createLoggingTable(string nodeID)
+{
+  string table1 = "ruleExecTable";
+  TablePtr ruleTable = getTableByName(nodeID, table1);
+  string table2 = "tupleTable";
+  TablePtr tupleTable = getTableByName(nodeID, table2);
+  string table3 = "traceTable";
+  TablePtr traceTable = getTableByName(nodeID, table3);
+  std::set<string> tracingTuples = _ctxt->getTraceTables();
+  Element::_debuggingLogger = new DLogger(ruleTable, tupleTable, traceTable, tracingTuples);
+}
+
+
 
 /////////////////////////////////////////////
 

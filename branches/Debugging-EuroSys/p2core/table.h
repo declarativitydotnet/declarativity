@@ -101,6 +101,8 @@ public:
   // Insert a tuple
   void insert(TuplePtr t);
 
+  bool exists(TuplePtr t);
+
   // How big is the table
   size_t size() { return els.size(); };
 

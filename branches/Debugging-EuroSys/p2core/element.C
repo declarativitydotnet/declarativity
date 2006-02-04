@@ -55,6 +55,7 @@
 #include "val_str.h"
 #include "val_int32.h"
 #include "val_time.h"
+#include "dlogger.h"
 
 
 // Some basic element types
@@ -69,6 +70,9 @@ uint64_t Element::seq=0;
 
 int Element::nelements_allocated = 0;
 int Element::elementCounter = 0;
+
+// Debugging Logger
+DLogger * Element::_debuggingLogger = NULL;
 
 #if P2_STATS >= 2
 # define ELEMENT_CTOR_STATS _calls(0), _self_cycles(0), _child_cycles(0),
@@ -92,6 +96,7 @@ Element::Element(string instanceName) :
   _IDstr(mk_id_str(_ID))
 {
   nelements_allocated++;
+  initDebugParams();
 }
 
 Element::Element(string instanceName, int ninputs, int noutputs) :
@@ -104,11 +109,27 @@ Element::Element(string instanceName, int ninputs, int noutputs) :
 {
   set_nports(ninputs, noutputs);
   nelements_allocated++;
+  initDebugParams();
 }
 
 Element::~Element()
 {
   nelements_allocated--;
+}
+
+// initialize debugging parameters
+void
+Element::initDebugParams()
+{
+  
+  _doLogging = false;
+  _doCounting = false;
+  _ruleId = "$";
+  _action = "-";
+  _status = "-";
+  _nodeId = "-";
+  _ruleNum = -1;
+  _preConditionOrder = -1;
 }
 
 // INPUTS AND OUTPUTS
@@ -313,12 +334,19 @@ REMOVABLE_INLINE TuplePtr Element::Port::pull(b_cbv cb) const
 
 REMOVABLE_INLINE int Element::Port::push_incoming(int port, TuplePtr p, b_cbv cb) const
 {
+  if(p && _owner->_doLogging && port == 0)
+    _owner->_debuggingLogger->put(p, _owner, "START_RULE");
+
   return _owner->push(port, p, cb);
 }
 
 REMOVABLE_INLINE TuplePtr Element::Port::pull_outgoing(int port, b_cbv cb ) const
 {
+
   TuplePtr t = _owner->pull(port, cb);
+  if(t && _owner->_doLogging && port == 0)
+    _owner->_debuggingLogger->put(t, _owner, "END_RULE");
+
   return t;
 }
 

@@ -97,6 +97,8 @@ public:
 
   void watch( Parse_Expr *t );
 
+  void traceTuple( Parse_Expr *t);
+
   void error(string msg);
 
   OL_Lexer *lexer;
@@ -114,6 +116,7 @@ private:
   std::set<string>      watchTables;
   std::vector<TuplePtr> facts;
   Parse_Functor* singleQuery;
+  std::set<string> traceTables;
 
 public: 
   ErrorList          errors;
@@ -121,7 +124,7 @@ public:
   TableInfoMap*      getTableInfos()  { return tables;   };
   std::set<string>      getWatchTables() { return watchTables; };
   std::vector<TuplePtr> getFacts()       { return facts; };
-  
+  std::set<string> getTraceTables() {return traceTables;};
   
 };
 

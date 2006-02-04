@@ -166,6 +166,35 @@ void Table::set_tuple_lifetime(struct timespec& lifetime)
   garbage_collect();
 }
 
+bool Table::exists(TuplePtr t)
+{
+  ValuePtr key;
+  bool exists = true;
+  //std::cout << "Checking if tuple " << t->toString() << " exists in this table " << name << ", size of uni_ind " << uni_indices.size() << ", tuple.size() == " << t->size() << "\n";
+  key = Val_UInt64::mk(t->getId());
+  for(size_t i = 0;
+      i < uni_indices.size();
+      i++) {
+    UniqueIndex *ndx = uni_indices.at(i);
+    if (ndx) { 
+      //std::cout << " UNique index at index " << i << "\n";
+      UniqueIndex::iterator iter = ndx->find(key);
+      if (iter == ndx->end()) {
+        exists = false;
+      }
+      else{
+        Entry* theEntry = iter->second;
+        //std::cout << "At index " << i << " Found entry " << theEntry->t->toString() << " and tuple to match " << t->toString() << "\n";
+        return true;
+      }
+    }
+  }
+  assert(!exists);
+  return false;
+}
+
+
+
 //
 // Inserting a tuple..
 //

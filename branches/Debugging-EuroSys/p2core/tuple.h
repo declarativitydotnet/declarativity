@@ -35,6 +35,9 @@ private:
   std::vector< ValuePtr > fields;
   bool		frozen;
 
+  // unique identifier for each tuple
+  uint64_t _id;
+
   /** A sorted map of tag names to optional tag values.  Only
       initialized if there is at least one tag.  Only a single tag of
       each type is allowed; for multi-value tags, store a vector as the
@@ -53,6 +56,17 @@ public:
   /** Append all the fields of the given tuple to the end of this tuple
   */
   void concat(TuplePtr t);
+
+  uint64_t getId(){ return _id;};
+  string getLocalNode() { return _localNode;};
+  string getRemoteNode() { return _remoteNode;};
+  uint64_t getRemoteId() { return _remoteId;};
+
+  void setRemoteNode(string rn) { _remoteNode = rn;};
+  void setRemoteId(uint64_t rid) { _remoteId = rid;};
+  void setLocalNode(string ln) { _localNode = ln;};
+
+
 
   /** Attach a named tag to the tuple. The tuple must not be frozen. To
       store a tag with no value use Val_Null::mk() to return the
@@ -96,6 +110,11 @@ public:
 private:
   /** And the empty initializer object */
   static EmptyInitializer _theEmptyInitializer;
+
+  string _localNode;
+  string _remoteNode;
+  uint64_t _remoteId;
+
 };
 
 #endif /* __TUPLE_H_ */

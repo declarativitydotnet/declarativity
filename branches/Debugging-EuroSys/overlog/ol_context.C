@@ -249,6 +249,13 @@ void OL_Context::watch(Parse_Expr *w)
 }
 
 
+void OL_Context::traceTuple(Parse_Expr *w)
+{
+  std::cout << "Add tracing variable " << w->toString() << "\n";
+  traceTables.insert(w->v->toString());
+}
+
+
 void OL_Context::table(Parse_Expr *name, Parse_Expr *ttl, 
                        Parse_Expr *size, Parse_ExprList *keys) {
   TableInfo  *tableInfo = new TableInfo();
