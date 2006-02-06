@@ -18,7 +18,6 @@ $(PROGRAMS): $(LDEPS)
 bin_PROGRAMS 	=  	tuples \
 			benchmark \
 			overlog \
-			IDs \
 			runManyChords \
 			runChord \
 			runOverLog \
@@ -142,11 +141,6 @@ lookupGenerator_LDADD = \
 #	$(top_builddir)/net/.libs/libp2net.a \
 #	$(top_builddir)/elements/.libs/libp2elements.a \
 #	$(top_builddir)/p2core/.libs/libp2core.a 
-
-IDs_SOURCES = IDs.C
-IDs_LDADD = \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
-	$(top_builddir)/p2core/.libs/libp2core.a
 
 net_SOURCES = net.C
 net_LDADD = \

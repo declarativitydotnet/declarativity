@@ -12,7 +12,9 @@ $(PROGRAMS): $(LDEPS) \
 			testFdbufs.C \
 			testMarshal.C \
 			testPel.C \
-			testValues.C
+			testValues.C \
+			testTables.C \
+			testIDs.C
 
 bin_PROGRAMS = p2Test
 

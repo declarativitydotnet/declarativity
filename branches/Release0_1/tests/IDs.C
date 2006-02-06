@@ -17,22 +17,6 @@
 #include "val_id.h"
 
 
-#define CMPTST(_lword0, _lword1, _lword2, _lword3, _lword4, _rword0, _rword1, _rword2, _rword3, _rword4, _result) {__LINE__, _lword0, _lword1, _lword2, _lword3, _lword4, _rword0, _rword1, _rword2, _rword3, _rword4, _result}
-struct CmpTest {
-  int	line;		// Line number of test
-  uint32_t lw0;
-  uint32_t lw1;
-  uint32_t lw2;
-  uint32_t lw3;
-  uint32_t lw4;
-  uint32_t rw0;
-  uint32_t rw1;
-  uint32_t rw2;
-  uint32_t rw3;
-  uint32_t rw4;
-  int result;
-};
-
 #define BETWEENTEST(_mword0, _mword1, _mword2, _mword3, _mword4, _lword0, _lword1, _lword2, _lword3, _lword4, _rword0, _rword1, _rword2, _rword3, _rword4, _ooresult, _ocresult, _coresult, _ccresult) {__LINE__, _mword0, _mword1, _mword2, _mword3, _mword4, _lword0, _lword1, _lword2, _lword3, _lword4, _rword0, _rword1, _rword2, _rword3, _rword4, _ooresult, _ocresult, _coresult, _ccresult}
 struct BetweenTest {
   int	line;		// Line number of test
