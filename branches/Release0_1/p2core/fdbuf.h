@@ -43,7 +43,7 @@ private:
   size_t len;		// Number of bytes actually held.
   size_t start;		// Offset of first valid byte
   int	 err;		// Last value of errno. 
-  char	*data;		// Data itself
+  char	 *data;		// Data itself
   bool	 safe;		// Zero any data before deleting
 
   // Used by write, send, sendto...
@@ -79,7 +79,7 @@ public:
     BUF_SIZE_MAX = (2 << (sizeof(size_t) - 1) - 1)
   };
 
-  Fdbuf( int init_capacity = BUF_DFLT_CAP, bool is_safe=false );
+  Fdbuf( int init_capacity = BUF_DFLT_CAP, bool is_safe = false);
   ~Fdbuf();
   
   //
@@ -97,7 +97,7 @@ public:
   ssize_t recvfrom(int sd, ssize_t max_read = BUF_DFLT_READ, int flags=0,
 		   struct sockaddr *from=NULL, socklen_t *fromlen=0);
   
-  Fdbuf &pushFdbuf(const Fdbuf &fb, size_t max_len = BUF_SIZE_MAX );
+  Fdbuf &pushFdbuf(const Fdbuf &fb, size_t max_len = BUF_SIZE_MAX);
 
   Fdbuf &pushString(const std::string &s);
 
