@@ -16,6 +16,8 @@
 #include "tuple.h"
 #include <assert.h>
 
+uint64_t Tuple::uniqueId = 0;
+
 //
 // Serialize a Tuple into an XDR
 //

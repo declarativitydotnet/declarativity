@@ -21,6 +21,7 @@
 #define DEBUG_OFF
 #include "trace.h"
 
+int OL_Context::ruleCount = 0;
 /**********************************************************************
  *
  * Rule methods

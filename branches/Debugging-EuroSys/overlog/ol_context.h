@@ -25,10 +25,12 @@
 
 #include "parser_util.h"
 
+
+
 class OL_Context {
 
 public:
-
+  static int ruleCount;
   struct Error {
     int  line_num;      // Line number
     string  msg;           // What?
@@ -37,14 +39,16 @@ public:
   
   struct Rule {
     Rule(string r, Parse_Functor *h, bool d) 
-      : ruleID(r), head(h), deleteFlag(d) {};
+      : ruleID(r), head(h), deleteFlag(d), ruleNum(OL_Context::ruleCount++) {};
 
     string toString();
-
+      
     string           ruleID;
     Parse_Functor *head;
     bool          deleteFlag;
-    std::vector<Parse_Term*> terms; 	// List of terms in the left hand side.
+      std::vector<Parse_Term*> terms; 	// List of terms in the left hand side.
+      int ruleNum;
+
   };
 
   // create a ECA_Rule struct

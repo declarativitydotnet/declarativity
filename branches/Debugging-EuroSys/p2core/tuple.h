@@ -46,7 +46,7 @@ private:
 
 public:
 
-  Tuple() : fields(), frozen(false), _tags(0) {};
+  Tuple() : fields(), frozen(false), _tags(0), _id(uniqueId++) {};
   ~Tuple();
 
   static TuplePtr mk() { TuplePtr p(new Tuple()); return p; };
@@ -106,6 +106,8 @@ public:
       EMPTY->freeze();
     }
   };
+
+  static uint64_t uniqueId;
 
 private:
   /** And the empty initializer object */

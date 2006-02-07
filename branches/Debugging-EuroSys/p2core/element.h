@@ -102,22 +102,26 @@ public:
   static int nelements_allocated;
   static int elementCounter;
 
-  void enableLogging(bool start, bool end){ 
-    std::cout << "Called enable logging at " << name() << " startOrEnd "<< start
- << "\n"; _doLogging = true; 
-    //_start = start; _end = end; 
-    return;};
   void countRule(bool x) { _doCounting = x;};
   void precondOrder(int x){ _preConditionOrder = x;};
   void initDebugParams();
 
-  string getRule(){ return _ruleId;};
+  string getRuleId(){ return _ruleId;};
   string getAction(){ return _action;};
-  string getStatus(){ return _status;};
+  int getStatus(){ return _status;};
   int getRuleNum(){ return _ruleNum;};
   string getNodeId(){ return _nodeId;};
   int getPrecondOrder(){ return _preConditionOrder;};
- 
+  void enableLogging() {_doLogging = true;}
+
+  void setDebugParams(int where, string ruleId, string nodeId, int ruleNum){
+    std::cout << "At " << _name << " where " << where << " ruleId " << ruleId << " nodeId " << nodeId << " ruleNum " << ruleNum << "\n";
+    _status = where;
+    _ruleId = ruleId; 
+    _nodeId = nodeId; 
+    _ruleNum = ruleNum;
+  };
+
   //
   // RUNTIME
   //
@@ -318,7 +322,7 @@ protected:
   string _nodeId;
   string _action; // what does this element do?
   string _ruleId;
-  string _status; // which part of the rule, start or end
+  int _status; // which part of the rule, start(0) or end(1)
   int _ruleNum;
 
 

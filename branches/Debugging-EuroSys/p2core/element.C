@@ -126,7 +126,7 @@ Element::initDebugParams()
   _doCounting = false;
   _ruleId = "$";
   _action = "-";
-  _status = "-";
+  _status = -1;
   _nodeId = "-";
   _ruleNum = -1;
   _preConditionOrder = -1;
@@ -334,18 +334,25 @@ REMOVABLE_INLINE TuplePtr Element::Port::pull(b_cbv cb) const
 
 REMOVABLE_INLINE int Element::Port::push_incoming(int port, TuplePtr p, b_cbv cb) const
 {
-  if(p && _owner->_doLogging && port == 0)
-    _owner->_debuggingLogger->put(p, _owner, "START_RULE");
+  // status ==> where in the rule strand does this element stand
+  // status == 0 ==> start of the rule
+  // this is based on the assumption that tuples are pushed at the beg. of rule 
+
+  if(p && _owner->_doLogging && port == 0 && _owner->_status == 0)
+    _owner->_debuggingLogger->put(p, _owner, 0);
 
   return _owner->push(port, p, cb);
 }
 
 REMOVABLE_INLINE TuplePtr Element::Port::pull_outgoing(int port, b_cbv cb ) const
 {
+  // status ==> where in the rule strand does this element stand
+  // status == 1 ==> end of the rule
+  // this is based on the assumption that tuples are pulled from the end of the rule
 
   TuplePtr t = _owner->pull(port, cb);
-  if(t && _owner->_doLogging && port == 0)
-    _owner->_debuggingLogger->put(t, _owner, "END_RULE");
+  if(t && _owner->_doLogging && port == 0 && _owner->_status == 1)
+    _owner->_debuggingLogger->put(t, _owner, 1);
 
   return t;
 }

@@ -206,7 +206,7 @@ void Plmb_ConfGen::processRule(OL_Context::Rule *r,
     hookUp(deleteElement, 0);
     
     if (_isPeriodic == false && _pendingReceiverSpec) {
-      registerReceiver(_pendingReceiverTable, _pendingReceiverSpec);
+      registerReceiver(_pendingReceiverTable, _pendingReceiverSpec, r, nodeID);
     }
     return; // discard. deleted tuples not sent anywhere
   } else {    
@@ -233,7 +233,7 @@ void Plmb_ConfGen::processRule(OL_Context::Rule *r,
   }
 
   if (_isPeriodic == false && _pendingReceiverSpec) {
-    registerReceiver(_pendingReceiverTable, _pendingReceiverSpec);
+    registerReceiver(_pendingReceiverTable, _pendingReceiverSpec, r, nodeID);
   }
 
   // anything at this point needs to be hookup with senders
@@ -362,6 +362,7 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
     // connect the duplicator to elements for this name
     for (uint k = 0; k < ri._receivers.size(); k++) {
       ElementSpecPtr nextElementSpec = ri._receivers.at(k);
+      nextElementSpec->element()->enableLogging();
 
       if (_debug) {
 	ElementSpecPtr printDuplicator = 
@@ -530,13 +531,17 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
 // register an elementSpec that needs that data
 void 
 Plmb_ConfGen::registerReceiver(string tableName, 
-			      ElementSpecPtr elementSpecPtr)
+			       ElementSpecPtr elementSpecPtr,
+			       OL_Context::Rule* curRule,
+			       string nodeid)
 {
   // add to the right receiver
   ReceiverInfoMap::iterator _iterator = _udpReceivers.find(tableName);
   if (_iterator != _udpReceivers.end()) {
     _iterator->second.addReceiver(elementSpecPtr);
   }
+  elementSpecPtr->element()->setDebugParams(0, curRule->ruleID, nodeid, curRule->ruleNum);
+
 }
 
 
@@ -1042,6 +1047,16 @@ void Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
   ElementSpecPtr projectHeadPelTransform =
     _conf->addElement(ElementPtr(new PelTransform("ProjectHead:"+ curRule->ruleID + ":" + nodeID,
 						     pelTransformStr)));
+
+  /**
+   * Debugging instrumentation here...
+   * Since projectHeadPelTrans element is at the end of the rule
+   * we want to tap its outgoing port
+   */
+  instrumentElement(projectHeadPelTransform->element(), 1, curRule->ruleID, nodeID, curRule->ruleNum);
+  projectHeadPelTransform->element()->enableLogging();
+
+
   if (_isPeriodic == false && _pendingRegisterReceiver) {
     _pendingReceiverSpec = projectHeadPelTransform;
     _currentElementChain.push_back(projectHeadPelTransform); 
@@ -1054,7 +1069,11 @@ void Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
   genPrintElement("PrintHead:"+ curRule->ruleID + ":" + nodeID);  
 }
 
-
+void Plmb_ConfGen::instrumentElement(ElementPtr elem, int where, string ruleId, string nodeId, int ruleNum)
+{
+  elem->setDebugParams(where, ruleId, nodeId, ruleNum);
+  return;
+}
 void Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule, 
 				   Parse_Functor* eventFunctor, 
 				   Parse_Term* baseTableTerm, 
@@ -1454,7 +1473,7 @@ void Plmb_ConfGen::genSingleTermElement(OL_Context::Rule* curRule,
     Parse_Functor* pf = dynamic_cast<Parse_Functor*>(curTerm);
     if (pf == NULL) { continue; }
     registerReceiverTable(curRule, pf->fn->name); 
-    registerReceiver(pf->fn->name, slotElement);
+    registerReceiver(pf->fn->name, slotElement, curRule, nodeID);
     _currentElementChain.push_back(slotElement);
 
     curNamesTracker->initialize(pf);    
