@@ -181,7 +181,9 @@ private:
 			     string tableName);
 
   void registerReceiver(string tableName, 
-			ElementSpecPtr elementSpecPtr);
+			ElementSpecPtr elementSpecPtr,
+			OL_Context::Rule* curRule,
+			string nodeid);
 
 
 
@@ -292,6 +294,15 @@ private:
       _receivers.push_back(elementSpecPtr);
     }
   };
+
+  // Debugging related functions here
+  // different parameters to set are:
+  // 1. start or end of rule
+  // 2. ruleId
+  // 3. ruleNum
+  // 4. nodeId
+
+  void instrumentElement(ElementPtr, int, string, string, int);
 };
 
 #endif /* __OL_RTR_CONFGEN_H_ */
