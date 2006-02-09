@@ -14,12 +14,20 @@
 #
 
 lib_LTLIBRARIES = liboverlog.la
-liboverlog_la_SOURCES = \
-	parser_util.C \
+
+GENERATED_SOURCES = \
+	ol_parser.H \
 	ol_lexer.C \
-	ol_parser.C \
+	ol_parser.C
+
+REAL_SOURCES = \
+	parser_util.C \
 	ol_context.C \
 	plmb_confgen.C
+
+liboverlog_la_SOURCES = \
+	$(REAL_SOURCES) \
+	$(GENERATED_SOURCES)
 
 INCLUDES = @BOOST_INC@ -I../p2core -I../elements -I../net -I../eventLoop
 
@@ -27,7 +35,13 @@ CLEANFILES = core *.core *~ *.gen.h *.gen.txt ol_lexer.C \
 	ol_parser.output ol_parser.H ol_parser.C \
 	*.works
 
-EXTRA_DIST = .cvsignore
+EXTRA_DIST = .cvsignore \
+		$(REAL_SOURCES:.C=.h) \
+		ol_lexer.lex \
+		ol_parser.y \
+		ol_lexer.h
+
+
 MAINTAINERCLEANFILES = Makefile.in 
 
 ol_parser.C: ol_parser.y parser_util.C
@@ -43,6 +57,5 @@ ol_lexer.C: ol_lexer.lex ol_parser.H parser_util.C
 	$(LEX) $(AM_LFLAGS) $(LFLAGS) -ool_lexer.C -8 ol_lexer.lex
 
 
-#	$(top_builddir)/util/fixflex.sh -ool_lexer.C -8 ol_lexer.lex
-#	$(LEX) $(AM_LFLAGS) $(LFLAGS) -ool_lexer.C -8 ol_lexer.lex
+
 

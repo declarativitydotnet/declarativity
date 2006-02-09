@@ -15,6 +15,7 @@
 #
 
 lib_LTLIBRARIES = libp2elements.la
+
 libp2elements_la_SOURCES = \
 	aggwrap.C \
 	slot.C \
@@ -59,7 +60,10 @@ libp2elements_la_SOURCES = \
 INCLUDES = @BOOST_INC@ -I../p2core -I../eventLoop
 
 CLEANFILES = core *.core *~
-EXTRA_DIST = .cvsignore
+
+EXTRA_DIST = .cvsignore \
+		$(libp2elements_la_SOURCES:.C=.h) \
+		lookup.h
 
 MAINTAINERCLEANFILES = Makefile.in
 

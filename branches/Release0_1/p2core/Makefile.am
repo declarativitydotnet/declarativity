@@ -14,6 +14,7 @@
 #
 
 lib_LTLIBRARIES = libp2core.la
+
 libp2core_la_SOURCES = \
 	fdbuf.C \
 	xdrbuf.C \
@@ -43,11 +44,21 @@ libp2core_la_SOURCES = \
 	dot.C
 
 INCLUDES = @BOOST_INC@ -I../eventLoop
+
 LIBS = -lboost_regex
 
 CLEANFILES = core *.core *~ *.gen.h *.gen.txt pel_lexer.C
 
-EXTRA_DIST = .cvsignore
+EXTRA_DIST = .cvsignore \
+		$(libp2core_la_SOURCES:.C=.h) \
+		inlines.h \
+		trace.h \
+		iteratorObj.h \
+		scanIteratorObj.h \
+		aggregateObj.h \
+		pel_lexer.lex \
+		pel_gen.py \
+		pel_program.h
 
 MAINTAINERCLEANFILES = Makefile.in
 
@@ -67,4 +78,3 @@ pel_lexer.C: pel_lexer.lex pel_opcode_tokens.gen.h
 	$(LEX) $(AM_LFLAGS) $(LFLAGS) -opel_lexer.C -8 pel_lexer.lex
 
 
-#	$(top_builddir)/util/fixflex.sh $(AM_LFLAGS) $(LFLAGS) -opel_lexer.C -8 pel_lexer.lex

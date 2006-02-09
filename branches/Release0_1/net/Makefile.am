@@ -34,7 +34,9 @@ libp2net_la_SOURCES = \
 INCLUDES = @BOOST_INC@ -I../p2core -I../eventLoop
 
 CLEANFILES = core *.core *~
-EXTRA_DIST = .cvsignore
+
+EXTRA_DIST = .cvsignore \
+		$(libp2net_la_SOURCES:.C=.h)
 
 MAINTAINERCLEANFILES = Makefile.in
 

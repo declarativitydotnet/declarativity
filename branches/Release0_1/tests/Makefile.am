@@ -204,7 +204,15 @@ udpListen_LDADD = \
 	$(top_builddir)/eventLoop/.libs/libeventLoop.a
 
 CLEANFILES = core *.core *~
-EXTRA_DIST = .cvsignore
+
+EXTRA_DIST = .cvsignore \
+		chord.C \
+		ring.C \
+		symphony.C \
+		testerr.h \
+		chordDatalog.C
+
+
 INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements \
 		-I$(top_builddir)/net -I$(top_builddir)/overlog \
 		-I$(top_builddir)/planner -I$(top_builddir)/eventLoop

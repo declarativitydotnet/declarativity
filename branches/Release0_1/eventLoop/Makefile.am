@@ -22,7 +22,8 @@ INCLUDES = @BOOST_INC@
 
 CLEANFILES = core *.core *~ *.gen.h *.gen.txt pel_lexer.C
 
-EXTRA_DIST = .cvsignore
+EXTRA_DIST = .cvsignore \
+		$(libeventLoop_la_SOURCES:.C=.h)
 
 MAINTAINERCLEANFILES = Makefile.in
 

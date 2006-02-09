@@ -15,3 +15,5 @@
 #
 
 SUBDIRS=eventLoop p2core elements net overlog tests unitTests 
+
+EXTRA_DIST = LICENSE

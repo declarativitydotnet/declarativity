@@ -7,14 +7,18 @@
 # Berkeley, CA,  94707. Attention: P2 Group.
 #
 
+TEST_SOURCES = 	testBasicElementPlumbing.C \
+		testFdbufs.C \
+		testMarshal.C \
+		testPel.C \
+		testValues.C \
+		testTables.C \
+		testIDs.C \
+		testCsv.C
+
+
 $(PROGRAMS): $(LDEPS) \
-		 	testBasicElementPlumbing.C \
-			testFdbufs.C \
-			testMarshal.C \
-			testPel.C \
-			testValues.C \
-			testTables.C \
-			testIDs.C
+		$(TEST_SOURCES)
 
 bin_PROGRAMS = p2Test
 
@@ -31,7 +35,7 @@ p2Test_LDADD = \
 
 CLEANFILES = core *.core *~
 
-EXTRA_DIST = .cvsignore
+EXTRA_DIST = .cvsignore $(p2Test_SOURCES) $(TEST_SOURCES)
 
 INCLUDES =	@BOOST_INC@ \
 		-I$(top_builddir)/p2core \

@@ -1,4 +1,4 @@
-// -*- c-basic-offset: 2; related-file-name: "lookupUnique.C" -*-
+// -*- c-basic-offset: 2; -*-
 /*
  * @(#)$Id$
  * 
