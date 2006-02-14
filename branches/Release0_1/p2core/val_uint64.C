@@ -41,25 +41,35 @@ ValuePtr Val_UInt64::xdr_unmarshal( XDR *x )
 //
 // Casting
 //
-uint64_t Val_UInt64::cast(ValuePtr v) {
+uint64_t
+Val_UInt64::cast(ValuePtr v) {
+  uint64_t returnValue = (uint64_t) ((double) -1.0);
   switch (v->typeCode()) {
   case Value::UINT64:
-    return (static_cast<Val_UInt64 *>(v.get()))->i;
+    returnValue = (static_cast<Val_UInt64 *>(v.get()))->i;
+    break;
   case Value::INT32:
-    return (uint64_t)(Val_Int32::cast(v));
+    returnValue = (uint64_t)(Val_Int32::cast(v));
+    break;
   case Value::UINT32:
-    return (uint64_t)(Val_UInt32::cast(v));
+    returnValue = (uint64_t)(Val_UInt32::cast(v));
+    break;
   case Value::INT64:
-    return (uint64_t)(Val_Int64::cast(v));
+    returnValue = (uint64_t)(Val_Int64::cast(v));
+    break;
   case Value::DOUBLE:
-    return (uint64_t)(Val_Double::cast(v));
+    returnValue = (uint64_t) (Val_Double::cast(v));
+    break;
   case Value::NULLV:
-    return 0;
+    returnValue = 0;
+    break;
   case Value::STR:
-    return strtoull(Val_Str::cast(v).c_str(),(char **)NULL, 0);
+    returnValue = strtoull(Val_Str::cast(v).c_str(),(char **)NULL, 0);
+    break;
   default:
     throw Value::TypeError(v->typeCode(), Value::UINT64 );
   }
+  return returnValue;
 }
 
 int Val_UInt64::compareTo(ValuePtr other) const
