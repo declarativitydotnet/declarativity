@@ -78,7 +78,7 @@ p2_boostlib=`echo $p2_boostlib | sed -e 's!/$!!'`
 
 if test -d "$p2_boostlib"; then
     if ls $p2_boostlib | egrep 'boost_regex*.(la|so|a)$' >/dev/null 2>&1; then
-	BOOST_LIB="-L${p2_boostlib} -lboost_regex"
+	BOOST_LIB="-L${p2_boostlib} -lboost_regex -lboost_date_time"
 	AC_MSG_RESULT([using boost from $p2_boostlib])
     else	
 	AC_MSG_ERROR([Could not find boost in $p2_boostlib])
@@ -357,13 +357,14 @@ else:
     strLibFW = dictConfig.get("PYTHONFRAMEWORKPREFIX")
     if strLibFW and (strLibFW != ""):
         strLinkSpec += " -F%s" % (strLibFW)
-strLinkSpec += " %s" % (dictConfig.get('LINKFORSHARED'))
+    strLinkSpec += " %s" % (dictConfig.get('LINKFORSHARED'))
 print strLinkSpec
         ])
         AC_SUBST([PYTHON_LSPEC], [${az_python_output}])
         AC_MSG_NOTICE([PYTHON_LSPEC=${az_python_output}])
     fi
-])
+]
+)
 
 
 
@@ -586,38 +587,47 @@ AC_DEFUN([AC_PYTHON_DEVEL],[
 	# should allow for checking of python version here...
 	#
 	AC_REQUIRE([AM_PATH_PYTHON])
-
-	# Check for Python include path
-	AC_MSG_CHECKING([for Python include path])
-	python_path=`echo $PYTHON | sed "s,/bin.*$,,"`
-	for i in "$python_path/include/python$PYTHON_VERSION/" "$python_path/include/python/" "$python_path/" ; do
-		python_path=`find $i -type f -name Python.h -print | sed "1q"`
-		if test -n "$python_path" ; then
-			break
-		fi
-	done
-	python_path=`echo $python_path | sed "s,/Python.h$,,"`
-	AC_MSG_RESULT([$python_path])
-	if test -z "$python_path" ; then
-		AC_MSG_ERROR([cannot find Python include path])
-	fi
-	AC_SUBST([PYTHON_CPPFLAGS],[-I$python_path])
+	AC_REQUIRE([AZ_PYTHON_CSPEC])
+###
+### Much of the following is redundant -- and in conflict -- with the
+### above macros for Python.  The ones above do a better job
+### cross-platform, particulalry in dealing with Darwin/OSX. So I
+### modified the below to use the results from above.  -- JMH 1/2006
+###
+# 	# Check for Python include path
+# 	AC_MSG_CHECKING([for Python include path])
+# 	python_path=`echo $PYTHON | sed "s,/bin.*$,,"`
+# 	for i in "$python_path/include/python$PYTHON_VERSION/" "$python_path/include/python/" "$python_path/" ; do
+# 		python_path=`find $i -type f -name Python.h -print | sed "1q"`
+# 		if test -n "$python_path" ; then
+# 			break
+# 		fi
+# 	done
+# 	python_path=`echo $python_path | sed "s,/Python.h$,,"`
+# 	AC_MSG_RESULT([$python_path])
+# 	if test -z "$python_path" ; then
+# 		AC_MSG_ERROR([cannot find Python include path])
+# 	fi
+# 	AC_SUBST([PYTHON_CPPFLAGS],[-I$python_path])
+ 	AC_SUBST([PYTHON_CPPFLAGS],[$PYTHON_CSPEC])
 
 	# Check for Python library path
-	AC_MSG_CHECKING([for Python library path])
-	python_path=`echo $PYTHON | sed "s,/bin.*$,,"`
-	for i in "$python_path/lib/python$PYTHON_VERSION/config/" "$python_path/lib/python$PYTHON_VERSION/" "$python_path/lib/python/config/" "$python_path/lib/python/" "$python_path/" ; do
-		python_path=`find $i -type f -name libpython$PYTHON_VERSION.* -print | sed "1q"`
-		if test -n "$python_path" ; then
-			break
-		fi
-	done
-	python_path=`echo $python_path | sed "s,/libpython.*$,,"`
-	AC_MSG_RESULT([$python_path])
-	if test -z "$python_path" ; then
-		AC_MSG_ERROR([cannot find Python library path])
-	fi
-	AC_SUBST([PYTHON_LDFLAGS],["-L$python_path -lpython$PYTHON_VERSION"])
+#	AC_MSG_CHECKING([for Python library path])
+    AC_REQUIRE([AZ_PYTHON_LSPEC])
+ 	python_path=`echo $PYTHON | sed "s,/bin.*$,,"`
+# 	for i in "$python_path/lib/python$PYTHON_VERSION/config/" "$python_path/lib/python$PYTHON_VERSION/" "$python_path/lib/python/config/" "$python_path/lib/python/" "$python_path/" ; do
+# 		python_path=`find $i -type f -name libpython$PYTHON_VERSION.* -print | sed "1q"`
+# 		if test -n "$python_path" ; then
+# 			break
+# 		fi
+# 	done
+ 	python_path=`echo $python_path | sed "s,/libpython.*$,,"`
+# 	AC_MSG_RESULT([$python_path])
+# 	if test -z "$python_path" ; then
+# 		AC_MSG_ERROR([cannot find Python library path])
+# 	fi
+# 	AC_SUBST([PYTHON_LDFLAGS],["-L$python_path -lpython$PYTHON_VERSION"])
+ 	AC_SUBST([PYTHON_LDFLAGS],[$PYTHON_LSPEC])
 	#
 	python_site=`echo $python_path | sed "s/config/site-packages/"`
 	AC_SUBST([PYTHON_SITE_PKG],[$python_site])
@@ -627,8 +637,8 @@ AC_DEFUN([AC_PYTHON_DEVEL],[
 	AC_MSG_CHECKING(python extra libraries)
 	PYTHON_EXTRA_LIBS=`$PYTHON -c "import distutils.sysconfig; \
                 conf = distutils.sysconfig.get_config_var; \
-                print conf('LOCALMODLIBS')+' '+conf('LIBS')"
-	AC_MSG_RESULT($PYTHON_EXTRA_LIBS)`
+                print conf('LOCALMODLIBS')+' '+conf('LIBS')"`
+	AC_MSG_RESULT($PYTHON_EXTRA_LIBS)
 	AC_SUBST(PYTHON_EXTRA_LIBS)
 ])
 dnl @synopsis AC_PROG_SWIG([major.minor.micro])
@@ -767,7 +777,8 @@ dnl This macro searches for installed WAD library.
 dnl
 AC_DEFUN([AC_LIB_WAD],
 [
-        AC_REQUIRE([AC_PYTHON_DEVEL])
+#        AC_REQUIRE([AC_PYTHON_DEVEL])
+        AC_REQUIRE([AZ_PYTHON_CSPEC])
         AC_ARG_ENABLE(wad,
         AC_HELP_STRING([--enable-wad], [enable wad module]),
         [
