@@ -76,7 +76,9 @@ AC_HEADER_STDC
 P2_BOOSTINC
 
 AC_LANG_PUSH(C++)
-AC_CHECK_HEADERS([rpc/xdr.h rpc/rpc.h])
+AC_CHECK_HEADERS([rpc/rpc.h])
+AC_CHECK_HEADERS([rpc/xdr.h], [], [],
+[# include <rpc/rpc.h>])
 AC_CHECK_FUNCS([xdr_uint32_t xdr_u_int32_t],[],[],[#include <rpc/xdr.h>])
 AC_LANG_POP(C++)
 
