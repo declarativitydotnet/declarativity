@@ -218,11 +218,6 @@ public:
     /** A pull is called on the output port of an element **/
     TuplePtr pull_outgoing(int port, b_cbv cb) const;
 
-#if P2_STATS >= 1
-    unsigned ntuples() const		{ return _tuples; }
-#endif
-
-
   private:
     
     /** With whom am I connecting my owner element? */
@@ -236,13 +231,8 @@ public:
 
     /** My callback */
     b_cbv _cb;
-    
-#if P2_STATS >= 1
-    mutable unsigned _tuples;		// How many tuples have we moved?
-#endif
-    //#if P2_STATS >= 2
+
     Element *_owner;			// Whose input or output are we?
-    //#endif
   };
 
   typedef boost::shared_ptr< Port > PortPtr;
@@ -288,17 +278,6 @@ protected:
   string _IDstr;
 
 };
-
-
-#if P2_STATS >= 2
-# define PORT_CTOR_INIT(o) , _tuples(0), _owner(o)
-#else
-# if P2_STATS >= 1
-#  define PORT_CTOR_INIT(o) , _tuples(0), _owner(o)
-# else
-#  define PORT_CTOR_INIT(o) , _owner(o)
-# endif
-#endif
 
 /** A handy dandy pointer to elements */
 typedef boost::shared_ptr< Element > ElementPtr;
