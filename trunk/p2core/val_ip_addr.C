@@ -31,7 +31,12 @@ void Val_IP_ADDR::xdr_marshal_subtype( XDR *x )
   return;
 }
 
-
+ValuePtr Val_IP_ADDR::xdr_unmarshal( XDR *x )
+{
+  exit(-1);
+  ValuePtr v;
+  return v;
+}
 
 //
 // Casting

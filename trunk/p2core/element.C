@@ -308,7 +308,7 @@ REMOVABLE_INLINE void Element::logDefault(string instanceName,
                                           int errnum,
                                           string explanation)
 {
-  struct timespec now;
+  boost::posix_time::ptime now;
   getTime(now);
   
   TuplePtr t = Tuple::mk();

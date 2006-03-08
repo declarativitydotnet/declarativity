@@ -82,7 +82,7 @@ Table::AggregateObj< _Index >::update(TuplePtr t)
 
   if (!started) {
     // This was a removal that left no aggregate.
-    assert(aMatchingTuple == NULL);
+    assert(aMatchingTuple.get() == NULL);
 
     // Remove the remembered aggregate for these group-by values
     _currentAggregates.erase(t);
@@ -90,7 +90,7 @@ Table::AggregateObj< _Index >::update(TuplePtr t)
     // And notify no one
   } else {
     ValuePtr result = _aggregateFn->result();
-    assert(result != NULL);
+    assert(result.get() != NULL);
 
     // Is this a new aggregate for these group-by values?
     typename AggMap::iterator remembered = _currentAggregates.find(t);

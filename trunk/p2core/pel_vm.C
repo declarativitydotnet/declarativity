@@ -186,16 +186,29 @@ string Pel_VM::pop_string()
 //
 // Pull a time off the stack
 //  
-struct timespec Pel_VM::pop_time() 
+boost::posix_time::ptime Pel_VM::pop_time() 
 {
   ValuePtr t = stackTop(); stackPop();
   try {
     return Val_Time::cast(t);
   } catch (Value::TypeError) {
     error = PE_TYPE_CONVERSION;
-    struct timespec t;
-    t.tv_sec = 0;
-    t.tv_nsec = 0;
+    boost::posix_time::ptime t;
+    return t;
+  }
+}
+
+//
+// Pull a time_duration off the stack
+//  
+boost::posix_time::time_duration Pel_VM::pop_time_duration() 
+{
+  ValuePtr t = stackTop(); stackPop();
+  try {
+    return Val_Time_Duration::cast(t);
+  } catch (Value::TypeError) {
+    error = PE_TYPE_CONVERSION;
+    boost::posix_time::time_duration t;
     return t;
   }
 }
@@ -741,44 +754,74 @@ DEF_OP(INCC) {
 // about operand order on the stack!
 //
 DEF_OP(TIME_LT) { 
-  struct timespec s1 = pop_time();
-  struct timespec s2 = pop_time();
+  boost::posix_time::ptime s1 = pop_time();
+  boost::posix_time::ptime s2 = pop_time();
   stackPush(Val_Int32::mk(s2 < s1));
 }
 DEF_OP(TIME_LTE) { 
-  struct timespec s1 = pop_time();
-  struct timespec s2 = pop_time();
+  boost::posix_time::ptime s1 = pop_time();
+  boost::posix_time::ptime s2 = pop_time();
   stackPush(Val_Int32::mk(s2 <= s1));
 }
 DEF_OP(TIME_GT) { 
-  struct timespec s1 = pop_time();
-  struct timespec s2 = pop_time();
+  boost::posix_time::ptime s1 = pop_time();
+  boost::posix_time::ptime s2 = pop_time();
   stackPush(Val_Int32::mk(s2 > s1));
 }
 DEF_OP(TIME_GTE) { 
-  struct timespec s1 = pop_time();
-  struct timespec s2 = pop_time();
+  boost::posix_time::ptime s1 = pop_time();
+  boost::posix_time::ptime s2 = pop_time();
   stackPush(Val_Int32::mk(s2 >= s1));
 }
 DEF_OP(TIME_EQ) { 
-  struct timespec s1 = pop_time();
-  struct timespec s2 = pop_time();
+  boost::posix_time::ptime s1 = pop_time();
+  boost::posix_time::ptime s2 = pop_time();
   stackPush(Val_Int32::mk(s2 == s1));
 }
 DEF_OP(TIME_NOW) { 
-  struct timespec t;
+  boost::posix_time::ptime t;
   getTime(t);
   stackPush(Val_Time::mk(t));
 }
-DEF_OP(TIME_PLUS) {
-  stackPush(Val_Time::mk(pop_time()+pop_time()));
+
+//
+// Time_Duration operations.  Note that the '>' and '<' are reversed: think
+// about operand order on the stack!
+//
+DEF_OP(TIME_DURATION_LT) { 
+  boost::posix_time::time_duration s1 = pop_time_duration();
+  boost::posix_time::time_duration s2 = pop_time_duration();
+  stackPush(Val_Int32::mk(s2 < s1));
 }
-DEF_OP(TIME_MINUS) {
-  // Be careful of undefined evaluation order in C++!
-  struct timespec v1 = pop_time();
-  struct timespec v2 = pop_time();
-  stackPush(Val_Time::mk(v2-v1));
+DEF_OP(TIME_DURATION_LTE) { 
+  boost::posix_time::time_duration s1 = pop_time_duration();
+  boost::posix_time::time_duration s2 = pop_time_duration();
+  stackPush(Val_Int32::mk(s2 <= s1));
 }
+DEF_OP(TIME_DURATION_GT) { 
+  boost::posix_time::time_duration s1 = pop_time_duration();
+  boost::posix_time::time_duration s2 = pop_time_duration();
+  stackPush(Val_Int32::mk(s2 > s1));
+}
+DEF_OP(TIME_DURATION_GTE) { 
+  boost::posix_time::time_duration s1 = pop_time_duration();
+  boost::posix_time::time_duration s2 = pop_time_duration();
+  stackPush(Val_Int32::mk(s2 >= s1));
+}
+DEF_OP(TIME_DURATION_EQ) { 
+  boost::posix_time::time_duration s1 = pop_time_duration();
+  boost::posix_time::time_duration s2 = pop_time_duration();
+  stackPush(Val_Int32::mk(s2 == s1));
+}
+DEF_OP(TIME_DURATION_PLUS) {
+   stackPush(Val_Time_Duration::mk(pop_time_duration()+pop_time_duration()));
+ }
+DEF_OP(TIME_DURATION_MINUS) {
+   // Be careful of undefined evaluation order in C++!
+   boost::posix_time::time_duration v1 = pop_time_duration();
+   boost::posix_time::time_duration v2 = pop_time_duration();
+   stackPush(Val_Time_Duration::mk(v2-v1));
+ }
 
 //
 // ID operations.  Note that the '>' and '<' are reversed: think
@@ -1071,7 +1114,11 @@ DEF_OP(CONV_ID) {
   stackPop();
   stackPush(Val_ID::mk(Val_ID::cast(top)));
 }
-
+DEF_OP(CONV_TIME_DURATION) {
+  ValuePtr top = stackTop();
+  stackPop();
+  stackPush(Val_Time_Duration::mk(Val_Time_Duration::cast(top)));
+}
 
 //
 // Extra hacks for Symphony...

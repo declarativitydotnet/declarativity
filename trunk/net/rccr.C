@@ -30,7 +30,7 @@
 class TupleInfo {
 public:
   TupleInfo(SeqNum s) : seq_(s), rtt_(0) {};
-  TupleInfo(SeqNum s, uint r, timespec ts) 
+  TupleInfo(SeqNum s, uint r, boost::posix_time::time_duration ts) 
     : seq_(s), rtt_(r), ts_(ts) {} 
 
   /**
@@ -48,23 +48,12 @@ public:
 
   /** Returns the delay in milliseconds between this tuple and t */
   int delay(TupleInfo* t) {
-    if (t->ts_.tv_nsec < ts_.tv_nsec) { 
-      if (t->ts_.tv_nsec + 1000000000 < 0) {
-        ts_.tv_nsec -= 1000000000;
-        ts_.tv_sec++;
-      }
-      else {
-        t->ts_.tv_nsec += 1000000000;
-        t->ts_.tv_sec--; 
-      }
-    } 
-    return (((t->ts_.tv_sec  - ts_.tv_sec)*1000) + 
-            ((t->ts_.tv_nsec - ts_.tv_nsec)/1000000)); // Delay in milliseconds
+	return((t->ts_ - ts_).total_milliseconds());
   };
 
   SeqNum   seq_;
   uint     rtt_;
-  timespec ts_;
+  boost::posix_time::time_duration ts_;
 };
 
 class LossRec {
@@ -108,8 +97,7 @@ private:
   {
     uint32_t offset = (uint32_t) 
                       (b->delay(a)*((t->seq_-b->seq_)/double(a->seq_-b->seq_)));
-    t->ts_.tv_sec  = b->ts_.tv_sec + (offset / 1000);
-    t->ts_.tv_nsec = b->ts_.tv_nsec + ((offset % 1000) * 1000000);
+	t->ts_ = boost::posix_time::milliseconds(offset);
   }
 
   uint length_;
@@ -129,7 +117,7 @@ public:
   }
 
   // Computes loss event rate from intervals
-  REMOVABLE_INLINE void handle_tuple(SeqNum, uint, timespec);
+  REMOVABLE_INLINE void handle_tuple(SeqNum, uint, boost::posix_time::time_duration);
   
   double  lossRate()    { return loss_rate_; }
   uint    receiveRate() { return rate_; }
@@ -143,14 +131,14 @@ private:
   uint                    order_;
   uint                    rate_; 	// Receiver rate
   SeqNum                  seq_miss_;    // Missing sequence number
-  timespec                active_ts_;   // Last time we heard from this connection
+  boost::posix_time::ptime                active_ts_;   // Last time we heard from this connection
   std::vector<TupleInfo*> history_;     // Tuple history
   std::deque<LossRec*>    loss_recs_;   // The last n loss intervals
   std::vector <double>    i_weights_;   // Interval weights
 
 };
 
-REMOVABLE_INLINE void RateCCR::Connection::handle_tuple(SeqNum seq, uint rtt, timespec ts)
+REMOVABLE_INLINE void RateCCR::Connection::handle_tuple(SeqNum seq, uint rtt, boost::posix_time::time_duration ts)
 {
   getTime(active_ts_);
 
@@ -256,7 +244,7 @@ TuplePtr RateCCR::simple_action(TuplePtr tp)
   ValuePtr  port;
   SeqNum    seq  = 0;
   int       rtt  = -1;
-  timespec  ts;
+  boost::posix_time::time_duration  ts;
 
   for (uint i = 0; i < tp->size(); i++) {
     try {
@@ -268,7 +256,7 @@ TuplePtr RateCCR::simple_action(TuplePtr tp)
       }
       else if (Val_Str::cast((*t)[0]) == "TINFO") {
         rtt = (int) Val_UInt32::cast((*t)[1]);
-        ts  = Val_Time::cast((*t)[2]);
+        ts  = Val_Time_Duration::cast((*t)[2]);
       }
     }
     catch (Value::TypeError e) { } 
@@ -298,7 +286,7 @@ TuplePtr RateCCR::simple_action(TuplePtr tp)
   ack->append(Val_UInt64::mk(seq));		// The sequence number
   ack->append(Val_UInt32::mk(c->receiveRate()));// Rate observed in past rtt
   ack->append(Val_Double::mk(c->lossRate()));	// Loss event rate
-  ack->append(Val_Time::mk(ts));		// Send time
+  ack->append(Val_Time_Duration::mk(ts));		// Send time
   ack->freeze();
   ack_q_.push_back(ack);			// Append to ack queue
 

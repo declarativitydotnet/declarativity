@@ -23,6 +23,7 @@
 #include "val_uint64.h"
 #include "val_str.h"
 #include "val_int32.h"
+#include "val_time.h"
 
 //
 // One global sequence number
@@ -42,12 +43,11 @@ void Logger::log( string classname,
 		  string explanation )
 {
   if (severity >= plumber()->loggingLevel) {
-    timespec now_ts;
+    boost::posix_time::ptime now_ts;
     
     getTime(now_ts);
     TuplePtr t = Tuple::mk();
-    t->append(Val_UInt64::mk(now_ts.tv_sec));
-    t->append(Val_UInt64::mk(now_ts.tv_nsec));
+    t->append(Val_Time::mk(now_ts));
     t->append(Val_UInt64::mk(seq++));
     t->append(Val_Str::mk(classname));
     t->append(Val_Str::mk(instancename));

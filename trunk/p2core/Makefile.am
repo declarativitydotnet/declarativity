@@ -78,3 +78,5 @@ pel_lexer.C: pel_lexer.lex pel_opcode_tokens.gen.h
 	$(LEX) $(AM_LFLAGS) $(LFLAGS) -opel_lexer.C -8 pel_lexer.lex
 
 
+CXXFLAGS="-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG" @CXXFLAGS@
+LDFLAGS=@BOOST_LIB@ @LDFLAGS@

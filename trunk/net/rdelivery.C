@@ -52,19 +52,12 @@ public:
     getTime (timer_); 
   }
   int32_t delay() {
-    timespec  now;
+	boost::posix_time::ptime  now;
     getTime(now);
-
-    if (now.tv_nsec < timer_.tv_nsec) { 
-      now.tv_nsec += 1000000000;
-      now.tv_sec--; 
-    } 
-
-    return (((now.tv_sec - timer_.tv_sec)*1000) + 
-            ((now.tv_nsec - timer_.tv_nsec)/1000000)); // Delay in milliseconds
+    return((now - timer_).total_milliseconds());
   }
 
-  timespec  timer_;		// Transmit time
+  boost::posix_time::ptime  timer_;		// Transmit time
   uint32_t  retry_cnt_;		// Transmit counter.
   TuplePtr  tp_;		// The tuple.
 };

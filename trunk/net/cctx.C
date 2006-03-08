@@ -36,7 +36,7 @@ public:
   void resetTime() { getTime (CLOCK_REALTIME, &tt_); }
   int32_t delay();
 
-  timespec  tt_;		// Transmit time
+  boost::time::ptime  tt_;		// Transmit time
   timecb_t  *tcb_;		// Used to cancel retransmit timer
   bool      wnd_;		// If true then window updated on timeout.
   TuplePtr  tp_;		// The tuple.
@@ -49,16 +49,10 @@ void CCTuple::operator()(std::pair<const SeqNum, CCTuple*>& entry)
 
 int32_t CCTuple::delay()
 {
-  timespec  now;
+  boost::posix_time::ptime  now;
   getTime(CLOCK_REALTIME, &now);
 
-  if (now.tv_nsec < tt_.tv_nsec) { 
-    now.tv_nsec += 1000000000;
-    now.tv_sec--; 
-  } 
-
-  return (((now.tv_sec - tt_.tv_sec)*1000) + 
-          ((now.tv_nsec - tt_.tv_nsec)/1000000));	// Delay in milliseconds
+  return((now - tt_).total_milliseconds());
 }
 
 /////////////////////////////////////////////////////////////////////

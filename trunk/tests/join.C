@@ -137,7 +137,7 @@ void testSimpleJoin(LoggerI::Level level)
   plumber->activate();
 
   // Schedule kill
-  //delayCB(10, wrap(&killJoin));
+  //delayCB(10.0, wrap(&killJoin));
 
   // Run the plumber
   eventLoop();

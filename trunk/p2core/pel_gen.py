@@ -71,9 +71,15 @@ for op, ar, va, desc in [
   (">time",2,      "TIME_GT",       "Time greater-than comparison"),
   (">=time",2,     "TIME_GTE",      "Time greater-than-or-eq comparison"),
   ("==time",2,     "TIME_EQ",       "Time compare equality"),
-  ("+time",2,      "TIME_PLUS",     "Time addition"),
-  ("-time",2,      "TIME_MINUS",    "Time subtraction"),
   ("now",0,        "TIME_NOW",      "The current time token"),
+
+  ("<time_duration",2,      "TIME_DURATION_LT",       "Time_Duration less-than comparison"),
+  ("<=time_duration",2,     "TIME_DURATION_LTE",      "Time_Duration less-than-or-eq comparison"),
+  (">time_duration",2,      "TIME_DURATION_GT",       "Time_Duration greater-than comparison"),
+  (">=time_duration",2,     "TIME_DURATION_GTE",      "Time_Duration greater-than-or-eq comparison"),
+  ("==time_duration",2,     "TIME_DURATION_EQ",       "Time_Duration compare equality"),
+  ("+time_duration",2,      "TIME_DURATION_PLUS",     "Time_Duration addition"),
+  ("-time_duration",2,      "TIME_DURATION_MINUS",    "Time_Duration subtraction"),
 
   ("<id",2,      "ID_LT",       "ID less-than comparison"),
   ("<=id",2,     "ID_LTE",      "ID less-than-or-eq comparison"),
@@ -137,7 +143,7 @@ for op, ar, va, desc in [
 
 
 
-for i in [ "i32", "u32", "i64", "u64", "dbl", "str", "time", "id" ]:
+for i in [ "i32", "u32", "i64", "u64", "dbl", "str", "time", "time_duration", "id" ]:
   emit_opcode("->"+i, 1, "CONV_" + i.upper(), "Convert to type "+i)
 
 warning="""

@@ -70,7 +70,7 @@ private:
 
 
   // Time between reconnects
-  uint32_t	delay;
+  double	delay;
 
   // The request string
   Fdbuf		reqtmpl;

@@ -18,6 +18,8 @@
 
 #include "value.h"
 #include "oper.h"
+#include "boost/date_time/posix_time/posix_time.hpp"
+#include "boost/date_time/gregorian/gregorian.hpp"
 
 
 class Val_Time : public Value {
@@ -32,10 +34,10 @@ public:
 
   virtual string toString() const {
     ostringstream sb;
-    sb << "[" << t.tv_sec << "," << t.tv_nsec << "]";
+    sb << "[" << to_simple_string(t) << "]";
     return sb.str();
   }
-  virtual unsigned int size() const { return sizeof(struct timespec); }
+  virtual unsigned int size() const { return sizeof(boost::posix_time::ptime); }
 
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );
@@ -43,24 +45,70 @@ public:
   static ValuePtr xdr_unmarshal( XDR *x );
 
   // Constructors
-  Val_Time(struct timespec theTime) : t(theTime) {};
+  Val_Time(boost::posix_time::ptime theTime) : t(theTime) {};
+  Val_Time(struct timespec theTime);
 
   // Factory
-  static ValuePtr mk(struct timespec theTime) { return ValuePtr(new Val_Time(theTime)); };
+  static ValuePtr mk(boost::posix_time::ptime theTime) { return ValuePtr(new Val_Time(theTime)); };
+  static ValuePtr mk(struct timespec ts) { return ValuePtr(new Val_Time(ts)); };
 
   // Strict comparison
   int compareTo(ValuePtr) const;
 
   // Casting
-  static struct timespec cast(ValuePtr v);
+  static boost::posix_time::ptime cast(ValuePtr v);
 
   static const opr::Oper* oper_;
 private:
   /** The time */
-  struct timespec t;
+  boost::posix_time::ptime t;
 
   /** A double to be used with modf */
   static double _theDouble;
+   
+};
+
+class Val_Time_Duration : public Value {
+
+public:  
+  // Required fields for all concrete types.
+
+  const Value::TypeCode typeCode() const { return Value::TIME_DURATION; };
+
+  // The type name
+  const char *typeName() const { return "time_duration"; };
+
+  virtual string toString() const {
+    ostringstream sb;
+    sb << "[" << to_simple_string(td) << "]";
+    return sb.str();
+  }
+  virtual unsigned int size() const { return sizeof(boost::posix_time::time_duration);};
+
+  // Marshalling and unmarshallng
+  void xdr_marshal_subtype( XDR *x );
+
+  static ValuePtr xdr_unmarshal( XDR *x );
+
+  // Constructors
+  Val_Time_Duration(boost::posix_time::time_duration theDuration) : td(theDuration) {};
+
+  // Factory
+  static ValuePtr mk(boost::posix_time::time_duration theDuration) { return ValuePtr(new Val_Time_Duration(theDuration)); };
+
+  // Strict comparison
+  int compareTo(ValuePtr) const;
+
+  // Casting
+  static boost::posix_time::time_duration cast(ValuePtr v);
+
+  static const opr::Oper* oper_;
+private:
+  /** The duration */
+  boost::posix_time::time_duration td;
+  /** A double to be used with modf */
+  static double _theDouble;
+  
 };
 
 #endif /* __VAL_TIME_H_ */

@@ -28,7 +28,12 @@
 #include <netinet/in.h>
 
 #include <p2Time.h>
-#include <time.h>
+#include "boost/date_time/posix_time/posix_time.hpp"
+
+extern "C" {
+#include <rpc/rpc.h>
+#include <rpc/xdr.h>
+}
 
 using std::string;
 using std::ostringstream;
@@ -63,7 +68,7 @@ extern long callbackID;
 struct timeCBHandle {
 public:
   /** What was my time target? */
-  struct timespec time;
+  boost::posix_time::ptime time;
   
   /** What was my callback? */
   const b_cbv callback;
@@ -72,11 +77,9 @@ public:
   long ID;
 
   /** Construct me */
-  timeCBHandle(struct timespec& t, const b_cbv& cb)
+  timeCBHandle(boost::posix_time::ptime& t, const b_cbv& cb)
     : time(t), callback(cb), ID(callbackID++)
-  {
-    assert((t.tv_nsec >=0) && (t.tv_nsec < 1000 * 1000 * 1000));
-  }
+  {}
 };
 
 
@@ -101,8 +104,8 @@ struct timeCBHandleLess
   bool operator()(const timeCBHandle* first,
                   const timeCBHandle* second) const
   {
-    return ((compare_timespec(first->time, second->time) < 0) ||
-            ((compare_timespec(first->time, second->time) == 0) &&
+    return ((first->time < second->time) ||
+            ((first->time == second->time) &&
              (first->ID < second->ID)));
   }
 };
@@ -249,16 +252,14 @@ tcpConnect(in_addr addr, u_int16_t port, b_cbi cb);
 
 
 
-/** The main loop function.  Does not return. */
-void
-eventLoop();
-
-
 /** The initialization function for the event loop. Must be called
     before any code that affect the event loop (e.g., before any
     callbacks are registered, non-blocking sockets have opened, etc.) */
 void
 eventLoopInitialize();
 
+/** The main loop function.  Does not return. */
+void
+eventLoop();
 
 #endif /* __LOOP_H_ */

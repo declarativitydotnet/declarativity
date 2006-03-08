@@ -19,7 +19,9 @@
 
 
 #include <time.h>
+#include "boost/date_time/posix_time/posix_time.hpp"
 #include "assert.h"
+#include "p2core/value.h"
 
 /** Clock facilities */
 enum
@@ -35,33 +37,8 @@ clockT {
     or the default if no facility is specified.
     */
 void
-getTime(struct timespec& time,
+getTime(boost::posix_time::ptime& time,
         clockT clockDescriptor = LOOP_TIME_DEFAULT);
-
-/** Subtract two timespecs and store the difference */
-void
-subtract_timespec(struct timespec& difference,
-                  struct timespec& minuend,
-                  struct timespec& subtrahend);
-
-
-/** Compare two timespecs, and return -1 if the first is less, 0 if they
-    are equal, +1 if the first is greater. They are assumed well formed,
-    that is, their tv_nsec fields contain fewer than 10^9
-    nanoseconds. */
-int
-compare_timespec(const struct timespec& first,
-                 const struct timespec& second);
-
-
-/** Increment (in place) a timespec by a given number (floating-point)
-    of seconds
-    */
-void
-increment_timespec(struct timespec& ts,
-                   double seconds);
-
-
 
 /** Set the default clock facility */
 void

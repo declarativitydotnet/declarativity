@@ -13,7 +13,7 @@
  * DESCRIPTION: Tuple fields and Tuple implementations
  *
  */
-
+#include "value.h"
 #include "tuple.h"
 #include <assert.h>
 
@@ -23,10 +23,15 @@
 void Tuple::xdr_marshal( XDR *x ) 
 {
   assert(frozen);
+  // we used to pass a pointer to a size_t into xdr_uint32_t, hence
+  // the following assertion.  However, gcc 4.0 forbids that anyway,
+  // so we now do the cast and copy, and this assertion may be
+  // unnecessary. -- JMH 1/10/06
   assert(sizeof(size_t) == sizeof(u_int32_t));
   // Tuple size overall
   size_t sz = fields.size();
-  xdr_uint32_t(x, &sz);
+  u_int32_t i = (u_int32_t)sz;
+  xdr_uint32_t(x, &i);
   // Marshal the fields
   for(size_t i=0; i < fields.size(); i++) {
     fields[i]->xdr_marshal(x);
@@ -39,11 +44,16 @@ void Tuple::xdr_marshal( XDR *x )
 TuplePtr Tuple::xdr_unmarshal(XDR* x) 
 {
   TuplePtr t = Tuple::mk();
+  // we used to pass a pointer to a size_t into xdr_uint32_t, hence
+  // the following assertion.  However, gcc 4.0 forbids that anyway,
+  // so we now do the cast and copy, and this assertion may be
+  // unnecessary. -- JMH 1/10/06
   assert(sizeof(size_t) == sizeof(u_int32_t));
   // Tuple size overall
-  size_t sz;
-  xdr_uint32_t(x, &sz);
+  u_int32_t ui;
+  xdr_uint32_t(x, &ui);
   // Marshal the fields
+  size_t sz = ui;
   for(size_t i=0; i < sz; i++) {
     t->append(Value::xdr_unmarshal(x));
   }

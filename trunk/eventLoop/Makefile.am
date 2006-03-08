@@ -27,6 +27,8 @@ EXTRA_DIST = .cvsignore \
 
 MAINTAINERCLEANFILES = Makefile.in
 
+CXXFLAGS="-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG" @CXXFLAGS@
+
 # End of File
 ############################################################
 

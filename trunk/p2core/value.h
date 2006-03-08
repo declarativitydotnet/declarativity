@@ -57,7 +57,6 @@
 #ifndef __VALUE_H__
 #define __VALUE_H__
 
-#include <rpc/xdr.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <string>
@@ -66,6 +65,24 @@
 
 #include <assert.h>
 #include "inlines.h"
+#include "config.h"
+
+extern "C" {
+#include <rpc/rpc.h>
+#include <rpc/xdr.h>
+}
+
+// deal with xdr portability issues (originally found on OS X 10.4)
+#ifdef HAVE_XDR_U_INT32_T
+#define xdr_uint32_t xdr_u_int32_t
+#define xdr_uint64_t xdr_u_int64_t
+#endif
+
+// deal with exp10 portability issues (missing from gcc4 on OS X 10.4)
+#ifndef HAVE_EXP10
+#define exp10(n) 	pow(10.0,(n))
+#endif /* NO_EXP10 */
+
 
 using std::string;
 using std::ostringstream;
@@ -96,7 +113,9 @@ public:
     TIME,
     ID,
     IP_ADDR,
-    /* NEW TYPE DEFINITIONS GO HERE */
+    /* NEW TYPE DEFINITIONS GO UNDER HERE */
+    TIME_DURATION,
+    /* NEW TYPE DEFINITIONS GO ABOVE HERE */    
     TYPES
   };
 

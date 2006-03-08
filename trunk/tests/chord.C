@@ -1737,9 +1737,7 @@ void createNode(string myAddress,
                 double delay = 0)
 {
 #ifdef __P2__WITH_CHURN__
-  timespec fingerExpiration;
-  fingerExpiration.tv_sec = FINGEREXPIRATION;
-  fingerExpiration.tv_nsec = 0;
+  boost::posix_time::time_duration fingerExpiration = boost::posix_time::seconds(FINGEREXPIRATION);
   TablePtr fingerTable(new Table(string("fingerTable"), FINGERSIZE, fingerExpiration));
 #else
   TablePtr fingerTable(new Table(string("fingerTable"), FINGERSIZE));
@@ -1774,9 +1772,8 @@ void createNode(string myAddress,
   bestSuccessorTable->add_unique_index(1);
   
 #ifdef __P2__WITH_CHURN__
-  timespec successorExpiration;
-  successorExpiration.tv_sec = SUCCEXPIRATION;
-  successorExpiration.tv_nsec = 0;
+  boost::posix_time::time_duration successorExpiration 
+	= boost::posix_time::seconds(SUCCEXPIRATION);
   TablePtr successorTable(new Table(string("successorTable"), 100,
                                     successorExpiration)); // let the
                                                    // replacement policy

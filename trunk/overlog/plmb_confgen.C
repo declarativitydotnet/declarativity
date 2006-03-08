@@ -1581,9 +1581,7 @@ void Plmb_ConfGen::createTables(string nodeID)
       string newTableName = nodeID + ":" + tableInfo->tableName;
       TablePtr newTable(new Table(tableInfo->tableName, tableInfo->size));
       if (tableInfo->timeout != -1) {
-	timespec expiration;
-	expiration.tv_sec = tableInfo->timeout;
-	expiration.tv_nsec = 0;
+	boost::posix_time::time_duration expiration(0,0,tableInfo->timeout, 0);
 	newTable.reset(new Table(tableInfo->tableName, tableInfo->size, expiration));
       }
 

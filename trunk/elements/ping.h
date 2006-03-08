@@ -31,7 +31,7 @@
 class Ping : public Element {
 public:
 
-  Ping(string name, int numRetries, int seconds, double retry_interval);
+  Ping(string name, int numRetries, double seconds, double retry_interval);
   int push(int port, TuplePtr p, b_cbv cb);     
   int initialize();
   
@@ -64,7 +64,7 @@ private:
   void generatePingFailure(TuplePtr p);
 
   /** The interval in seconds */
-  uint _seconds;
+  double _seconds;
 
   /** My time callback ID. */
   timeCBHandle * _timeCallback;

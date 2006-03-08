@@ -18,6 +18,7 @@
 #endif /* HAVE_CONFIG_H */
 #include <iostream>
 #include <errno.h>
+#include <math.h>
 
 #include "loop.h"
 #include "tuple.h"
@@ -35,18 +36,19 @@ using namespace opr;
 
 double time_fn(b_cbv cb) 
 {
-  timespec before_ts;
-  timespec after_ts;
+  boost::posix_time::ptime before_ts;
+  boost::posix_time::ptime after_ts;
+  boost::posix_time::time_duration tdiff;
   double elapsed;
   
   getTime(before_ts);
   (cb)();
   getTime(after_ts);
   
-  after_ts = after_ts - before_ts;
-  elapsed = after_ts.tv_sec + (1.0 / 1000 / 1000 / 1000 * after_ts.tv_nsec);
+  tdiff = after_ts - before_ts;
+  elapsed = tdiff.total_seconds() + tdiff.fractional_seconds()/(exp10(tdiff.num_fractional_digits()));
   std::cout << elapsed << " secs (";
-  std::cout << after_ts.tv_sec << " secs " << (after_ts.tv_nsec/1000) << " usecs)\n";
+  std::cout << tdiff.total_seconds() << " secs " << elapsed - (tdiff.seconds()/1000) << " usecs)\n";
   return elapsed;
 }
 

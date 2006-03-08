@@ -39,7 +39,7 @@ public:
   void operator()(std::pair<const SeqNum, OTuple*>& entry); 
   void resetTime() { getTime (tt_); }
 
-  timespec  tt_;		// Transmit time
+  boost::posix_time::ptime  tt_;		// Transmit time
   timeCBHandle *tcb_;		// Used to cancel retransmit timer
   bool      wnd_;		// If true then window updated on timeout.
   uint32_t  tran_cnt_;		// Transmit counter.
@@ -64,18 +64,12 @@ void OTuple::operator()(std::pair<const SeqNum, OTuple*>& entry)
 // Helper Functions
 //
 
-int32_t delay(timespec *ts)
+int32_t delay(boost::posix_time::ptime *ts)
 {
-  timespec  now;
+  boost::posix_time::ptime  now;
   getTime(now);
 
-  if (now.tv_nsec < ts->tv_nsec) { 
-    now.tv_nsec += 1000000000;
-    now.tv_sec--; 
-  } 
-
-  return (((now.tv_sec - ts->tv_sec)*1000) + 
-          ((now.tv_nsec - ts->tv_nsec)/1000000));	// Delay in milliseconds
+  return((now-*ts).total_milliseconds());
 }
 
 /////////////////////////////////////////////////////////////////////

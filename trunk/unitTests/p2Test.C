@@ -20,7 +20,6 @@ using boost::unit_test_framework::test_suite;
 #include "testTables.C"
 #include "testIDs.C"
 
-
 test_suite* init_unit_test_suite(int, char**)
 {
   test_suite *top = BOOST_TEST_SUITE("P2 Unit Test Suite");

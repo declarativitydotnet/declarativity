@@ -45,10 +45,9 @@ void Catalog::createTable(OL_Context::TableInfo* tableInfo)
       }
       TablePtr newTable(new Table(tableInfo->tableName, tableInfo->size));
       if (tableInfo->timeout != -1) {
-	timespec expiration;
-	expiration.tv_sec = tableInfo->timeout;
-	expiration.tv_nsec = 0;
-	newTable.reset(new Table(tableInfo->tableName, tableInfo->size, expiration));
+		boost::posix_time::time_duration expiration 
+		  = boost::posix_time::seconds(tableInfo->timeout);
+		newTable.reset(new Table(tableInfo->tableName, tableInfo->size, expiration));
       }
 
       TableInfo* newTableInfo = new TableInfo(tableInfo, newTable);

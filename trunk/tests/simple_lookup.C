@@ -129,7 +129,7 @@ void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> looku
   eventLoop();
 
   // Schedule kill
-  delayCB(10, boost::bind(&killJoin));
+  delayCB(10.0, boost::bind(&killJoin));
 }
 
 int main(int argc, char **argv)

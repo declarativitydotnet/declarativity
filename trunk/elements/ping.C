@@ -37,7 +37,7 @@
 /// retry_interval is the interval between retries (in seconds). Assuming that after retry_interval,
 /// the previous ping is lost or dead
 /////////////////////////////////
-Ping::Ping(string name, int numPings, int seconds, double retry_interval)
+Ping::Ping(string name, int numPings, double seconds, double retry_interval)
   : Element(name, 2, 2),
     _seconds(seconds),
     _wakeupCB(boost::bind(&Ping::wakeup, this)),

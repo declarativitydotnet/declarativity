@@ -74,7 +74,7 @@ public:
        is how long to keep tuples for before discarding; if it has
        negative seconds, it means tuples never expire. */
   Table(string tableName, size_t max_size,
-        struct timespec& lifetime);
+        boost::posix_time::time_duration& lifetime);
   
   /** Create a new table with tuples that do not expire. */
   Table(string tableName, size_t max_size);
@@ -95,8 +95,8 @@ public:
 
 
   // Setting and removing the expiry time
-  void set_tuple_lifetime(struct timespec& newLifetime);
-  void unset_tuple_lifetime() { max_lifetime.tv_sec = -1; max_lifetime.tv_nsec = 0; };
+  void set_tuple_lifetime(boost::posix_time::time_duration& newLifetime);
+  void unset_tuple_lifetime() { max_lifetime = boost::posix_time::seconds(-1); };
 
   // Insert a tuple
   void insert(TuplePtr t);
@@ -110,11 +110,11 @@ public:
   size_t	max_tbl_size;
 
   /** For how long do I keep each entry? */
-  struct timespec max_lifetime;
+  boost::posix_time::time_duration max_lifetime;
 
   struct Entry {
     TuplePtr t;
-    struct timespec ts;
+    boost::posix_time::ptime ts;
     Entry(TuplePtr tp) : t(tp) { getTime(ts); };
   };
   std::deque<Entry *> els;

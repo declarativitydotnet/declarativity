@@ -28,7 +28,7 @@ using namespace opr;
 // Constructor
 //
 Table::Table(string table_name, size_t max_size,
-             struct timespec& lifetime)
+             boost::posix_time::time_duration& lifetime)
   : name(table_name),
     max_tbl_size(max_size),
     max_lifetime(lifetime),
@@ -43,8 +43,7 @@ Table::Table(string table_name, size_t max_size)
     _uniqueAggregates(),
     _multAggregates()
 {
-  max_lifetime.tv_sec = -1;
-  max_lifetime.tv_nsec = 0;
+  max_lifetime = boost::posix_time::seconds(-1);
 }
 
 Table::~Table()
@@ -161,7 +160,7 @@ Table::add_mult_groupBy_agg(unsigned keyFieldNo,
 //
 // Setting the expiry time for tuples
 //
-void Table::set_tuple_lifetime(struct timespec& lifetime)
+void Table::set_tuple_lifetime(boost::posix_time::time_duration& lifetime)
 {
   max_lifetime = lifetime;
   garbage_collect();
@@ -187,7 +186,7 @@ void Table::insert(TuplePtr t)
       // aggregates
       TuplePtr removedEntry = remove(i, (*t)[i]);
 
-      if (removedEntry == NULL || (max_lifetime.tv_sec >= 0) ||
+      if (removedEntry == NULL || (max_lifetime >= boost::posix_time::seconds(0)) ||
 	  t->compareTo(removedEntry) != 0) {
 	// inform the scan listeners
 	for (unsigned i = 0; i < _uni_scans.size(); i++) {
@@ -338,18 +337,18 @@ void Table::remove_from_aggregates(TuplePtr t)
 //
 void Table::garbage_collect()
 {
-  if (max_lifetime.tv_sec >= 0) {
+  if (max_lifetime.seconds() >= 0) {
     // Remove everything that has timed out. 
-    struct timespec now;
+    boost::posix_time::ptime now;
     getTime(now);
     
-    struct timespec expiryTime;
-    subtract_timespec(expiryTime, now, max_lifetime);
+    boost::posix_time::ptime expiryTime;
+    expiryTime = now - max_lifetime;
     while (els.size() > 0) {
       Entry * back = els.back();
       
       // is the last one to be dumped?
-      if (compare_timespec(back->ts, expiryTime) < 0) {
+      if (back->ts < expiryTime) {
         // Kick it.
         remove_from_indices(back);
         remove_from_aggregates(back->t);

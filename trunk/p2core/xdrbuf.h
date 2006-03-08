@@ -17,6 +17,7 @@
 #define __XDRBUF_H__
 
 #include "fdbuf.h"
+#include <rpc/rpc.h>
 #include <rpc/xdr.h>
 
 //

@@ -22,6 +22,7 @@ AC_CONFIG_SRCDIR(p2core/element.h)
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE(p2,0.5)
 
+
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
@@ -48,12 +49,14 @@ AC_CHECK_HEADERS([rpc/rpc.h])
 AC_CHECK_HEADERS([rpc/xdr.h], [], [],
 [# include <rpc/rpc.h>])
 AC_CHECK_FUNCS([xdr_uint32_t xdr_u_int32_t],[],[],[#include <rpc/xdr.h>])
+AC_CHECK_FUNCS([exp10],[],[],[#include <math.h>])
 AC_LANG_POP(C++)
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
+AC_CHECK_TYPE([socklen_t],[],[],[#include <sys/socket.h>])
 
 
 # Checks for library functions.

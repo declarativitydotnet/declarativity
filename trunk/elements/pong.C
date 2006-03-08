@@ -29,7 +29,7 @@
 /////////////////////////////
 /// Pong 
 ////////////////////////////
-Pong::Pong(string name, int seconds)
+Pong::Pong(string name, double seconds)
   : Element(name, 1, 1),
     _seconds(seconds),
     _wakeupCB(boost::bind(&Pong::wakeup, this)),

@@ -32,7 +32,7 @@ class Val_IP_ADDR : public Value {
   
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );
-  //static ValuePtr xdr_unmarshal( XDR *x );
+  static ValuePtr xdr_unmarshal( XDR *x );
   
   // Constructor
   // takes in a string of format "xx.xx.xx.xx:port"

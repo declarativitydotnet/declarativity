@@ -31,7 +31,7 @@ public:
   TuplePtr pull(int port, b_cbv cb);
 
   // Difference between current time and that given in timespec
-  static REMOVABLE_INLINE uint32_t delay(timespec*);	
+  static REMOVABLE_INLINE uint32_t delay(boost::posix_time::ptime*);	
 private:
   void data_ready();			// Callback for tuple output ready
   void tuple_timeout(SeqNum);		// Callback indicating tuple timeout
@@ -49,7 +49,7 @@ private:
   uint32_t  rtt_;			// Estimated round trip time
   uint32_t  rto_;			// The round-trip timeout
   timeCBHandle  *nofeedback_;		// No feedback timer
-  timespec  tld_;			// Time last doubled (for slow start)
+  boost::posix_time::ptime  tld_;			// Time last doubled (for slow start)
   bool      tstat_;
 
   typedef std::map<SeqNum, timeCBHandle*> TupleTOIndex;

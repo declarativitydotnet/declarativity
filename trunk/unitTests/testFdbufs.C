@@ -30,6 +30,9 @@
 
 
 
+  using namespace boost::gregorian;
+  using namespace boost::posix_time;
+
 class testFdbufs
 {
 private:
@@ -75,6 +78,7 @@ public:
   void
   xdrTest(ValuePtr in)
   {
+  	std::cout << "=== Begin xdrTest ===\n";
     Fdbuf fin(0);
     XDR xe;
     xdrfdbuf_create(&xe, &fin, false, XDR_ENCODE);
@@ -85,11 +89,21 @@ public:
     fout.pushFdbuf(fin, fin.length());
     xdrfdbuf_create(&xd, &fout, false, XDR_DECODE);
     ValuePtr out = Value::xdr_unmarshal(&xd);
+	
+	std::cout << "out: " << out->toString() << ", in: " << in->toString() << "\n";
 
     BOOST_CHECK_MESSAGE(out->compareTo(in) == 0,
-                        "Marshalled/unmarshalled mismatch");
+                        "Marshalled/unmarshalled mismatch!\n");
+    
+    if (out->compareTo(in) != 0) {
+      std::cout << "compareTo's result:" << out->compareTo(in) << "\n";
+      char mybuf[1024];
+      char *bufptr = (char *)mybuf;
+      std::cout << "out: " << out << ", in: " << in << "\n";
+      BOOST_CHECK_MESSAGE(1, mybuf);
+    }
+   	std::cout << "=== End xdrTest ===\n\n";
   }
-
   
   void
   xdrTests()
@@ -108,10 +122,19 @@ public:
     t->freeze();  
     xdrTest(Val_Tuple::mk(t));
 
-    struct timespec time;
-    time.tv_sec = 5;
-    time.tv_nsec = 1020430;
+//	boost::posix_time::ptime time = boost::posix_time::second_clock::universal_time();
+	//getTime(time);
+	
+	boost::posix_time::ptime time(date(1970, Jan, 1), 
+								  hours(2) + seconds(25) + nanoseconds(50203));
+	
+	std::cout << "Testing current time as ptime marshal w/ fdbufs.\n";
     xdrTest(Val_Time::mk(time));
+
+	boost::posix_time::time_duration td(0,0,5,0);
+    td += boost::posix_time::nanoseconds(1020430);
+    std::cout << "Testing time duration marshal w/ fdbufs.\n";
+	xdrTest(Val_Time_Duration::mk(td));
 
     IDPtr id(new ID((uint32_t) 102040));
     xdrTest(Val_ID::mk(id));

@@ -59,3 +59,4 @@ ol_lexer.C: ol_lexer.lex ol_parser.H parser_util.C
 
 
 
+CXXFLAGS="-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG" @CXXFLAGS@

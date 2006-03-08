@@ -12,7 +12,6 @@
  */
 
 #include "loop.h"
-#include <time.h>
 #include "math.h"
 #include "assert.h"
 #include <sys/types.h>
@@ -27,10 +26,14 @@ delayCB(double secondDelay, b_cbv cb)
 {
   assert(secondDelay >= 0.0);
 
+  unsigned long secs = (unsigned long)secondDelay; 
+  boost::posix_time::ptime expiration;
+  boost::posix_time::time_duration dlay(0,0,secs,(int32_t)((secondDelay-secs)
+							   *(double)boost::posix_time::time_duration::ticks_per_second()));
+
   // When will this expire?
-  struct timespec expiration;
-  getTime(expiration);          // now
-  increment_timespec(expiration, secondDelay);
+  getTime(expiration);
+  expiration += dlay;
   
   // Create handle for this request
   timeCBHandle* handle = new timeCBHandle(expiration, cb);
@@ -58,9 +61,9 @@ tcpConnect(in_addr addr, u_int16_t port, b_cbi cb)
 /** Go up to current time and empty out the expired elements from the
     callback queue */
 void
-timeCBCatchup(struct timespec& waitDuration)
+timeCBCatchup(boost::posix_time::time_duration& waitDuration)
 {
-  struct timespec now;
+  boost::posix_time::ptime now;
   getTime(now);
 
   ////////////////////////////////////////////////////////////
@@ -68,7 +71,7 @@ timeCBCatchup(struct timespec& waitDuration)
 
   callbackQueueT::iterator iter = callbacks.begin();
   while ((iter != callbacks.end()) &&
-         (compare_timespec((*iter)->time, now) <= 0)) {
+         ((*iter)->time <= now)) {
     // Remove this callback from the queue
     timeCBHandle* theCallback = *iter;
     callbacks.erase(iter);
@@ -91,20 +94,17 @@ timeCBCatchup(struct timespec& waitDuration)
   // Get first waiting time
   if (callbacks.empty()) {
     // Nothing to worry about. Set it to a minute
-    waitDuration.tv_sec = 60;
-    waitDuration.tv_nsec = 0;
-
+    waitDuration = boost::posix_time::minutes(1);
   } else {
     iter = callbacks.begin();
     assert(iter != callbacks.end()); // since it's not empty
 
-    if (compare_timespec((*iter)->time, now) < 0) {
+    if ((*iter)->time < now) {
       // Oops, the first callback has already expired. Don't wait, just
       // poll
-      waitDuration.tv_sec = 0;
-      waitDuration.tv_nsec = 0;
+      waitDuration = boost::posix_time::minutes(0);
     } else {
-      subtract_timespec(waitDuration, (*iter)->time, now);
+      waitDuration = (*iter)->time - now;
     }
   }
 }
@@ -263,16 +263,24 @@ removeFileDescriptorCB(int fileDescriptor,
 /** Wait for any pending file descriptor actions for the given time
     period. */
 void
-fileDescriptorCatchup(struct timespec& waitDuration)
+fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
 {
   // Copy the bit sets over
   static fd_set readResultBits;
   static fd_set writeResultBits;
   memcpy(&readResultBits, &readBits, sizeof(fd_set));
   memcpy(&writeResultBits, &writeBits, sizeof(fd_set));
+  timespec td_ts;
+
+  td_ts.tv_sec = waitDuration.total_seconds();
+  // ensure we compute nanosecs (1/(10^9) sec) even if boost is compiled to lower 
+  // precision 
+  td_ts.tv_nsec= waitDuration.fractional_seconds()
+                 * (long) exp10(9 - (boost::posix_time::time_duration::num_fractional_digits()));
+  assert(td_ts.tv_nsec >= 0);
 
   int result = pselect(nextFD, &readResultBits, &writeResultBits,
-                       NULL, &waitDuration, NULL);
+                       NULL, &td_ts, NULL);
   if (result == -1) {
     // Ooops, error
     fatal << "pselect failed";
@@ -345,7 +353,7 @@ eventLoop()
   // The wait duration for file descriptor waits. It is set by
   // timeCBCatchup and used by fileDescriptorCatchup.  Equivalent to
   // selwait in libasync
-  struct timespec waitDuration;
+  boost::posix_time::time_duration waitDuration;
 
   while (1) {
     timeCBCatchup(waitDuration);

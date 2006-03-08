@@ -50,14 +50,26 @@
   } \
 }
 
-#define TEST_TIMEVAL(_mkt, _mks, _mkns, _mktc, _mktn) \
+#define TEST_TIMEVAL(_mkt, _mks, _mktc, _mktn)	\
 { \
-  std::cout << "Making Val_" << #_mkt << "(" << #_mks << "," << #_mkns << ")\n"; \
-  struct timespec t; \
-  t.tv_sec = _mks; \
-  t.tv_nsec = _mkns; \
+  std::cout << "Making Val_" << #_mkt << "(" << #_mks << ")\n"; \
+  boost::posix_time::ptime t = boost::posix_time::time_from_string(_mks); \
   ValuePtr v = Val_##_mkt::mk(t); \
   if ( v->typeCode() != Value::TIME ) { \
+    FAIL << "Bad typeCode from " #_mkt ", expected " #_mktc " but got " << v->typeCode() << "\n"; \
+  } \
+  string mktn(_mktn); \
+  if (mktn != v->typeName()) { \
+    FAIL << "Bad typeName from " #_mkt ", expected " #_mktn " but got " << v->typeName() << "\n"; \
+  } \
+}
+
+#define TEST_TIME_DURATIONVAL(_mkt, _mks, _mktc, _mktn)	\
+{ \
+  std::cout << "Making Val_" << #_mkt << "(" << #_mks << ")\n"; \
+  boost::posix_time::time_duration td = boost::posix_time::duration_from_string(_mks); \
+  ValuePtr v = Val_##_mkt::mk(td); \
+  if ( v->typeCode() != Value::TIME_DURATION ) { \
     FAIL << "Bad typeCode from " #_mkt ", expected " #_mktc " but got " << v->typeCode() << "\n"; \
   } \
   string mktn(_mktn); \
@@ -81,19 +93,38 @@
   } \
 }
 
-#define TEST_TIMEVAL_CAST(_mkt, _mkv, _castt, _casts, _castns) \
+#define TEST_TIMEVAL_CAST(_mkt, _mkv, _castt, _casty, _castm, _castd, _casts, _castns) \
 { \
-  struct timespec t; \
-  t.tv_sec = _casts; \
-  t.tv_nsec = _castns; \
+  boost::posix_time::ptime t = \
+    boost::posix_time::ptime(boost::gregorian::date(_casty,_castm,_castd), \
+                             boost::posix_time::seconds(_casts) \
+                             + boost::posix_time::nanoseconds(_castns)); \
   std::cout << "Casting Val_" #_mkt "(" #_mkv ") -> " #_castt "\n"; \
   ValuePtr v = Val_##_mkt::mk(_mkv);  \
   try { \
-    struct timespec cv = Val_##_castt::cast(v); \
-    if ( compare_timespec(cv, t) ) { \
+	boost::posix_time::ptime cv = Val_##_castt::cast(v);	\
+    if ( cv != t ) { \
       FAIL << "Bad cast value from Val_" #_mkt "(" #_mkv ")->Val_" #_castt \
-                << "; expected " << t.tv_sec << "s " << t.tv_nsec << "ns " \
-                << " but got " << cv.tv_sec << "s " << cv.tv_nsec << "ns" \
+		        << "; expected " << boost::posix_time::to_simple_string(t)	\
+                << " but got " << boost::posix_time::to_simple_string(cv) \
+                << "\n"; \
+    } \
+  } catch (Value::TypeError) { \
+    FAIL << "Type exception casting Val_" #_mkt "(" #_mkv ")->Val_" #_castt "\n"; \
+  } \
+}
+
+#define TEST_TIME_DURATIONVAL_CAST(_mkt, _mkv, _castt, _casts, _castns) \
+{ \
+  boost::posix_time::time_duration td = (boost::posix_time::seconds(_casts) + boost::posix_time::nanoseconds(_castns)); \
+  std::cout << "Casting Val_" #_mkt "(" #_mkv ") -> " #_castt "\n"; \
+  ValuePtr v = Val_##_mkt::mk(_mkv);  \
+  try { \
+	boost::posix_time::time_duration cv = Val_##_castt::cast(v);	\
+    if ( cv != td ) { \
+      FAIL << "Bad cast value from Val_" #_mkt "(" #_mkv ")->Val_" #_castt \
+		        << "; expected " << boost::posix_time::to_simple_string(td)	\
+                << " but got " << boost::posix_time::to_simple_string(cv) \
                 << "\n"; \
     } \
   } catch (Value::TypeError) { \
@@ -152,11 +183,13 @@ int main(int argc, char **argv)
   // First, make sure that typecodes and typenames are assigned
   // correctly.
   //
-  TEST_TIMEVAL( Time,  0,  0, TIME, "time");
-  TEST_TIMEVAL( Time, 10, 10, TIME, "time");
-  TEST_TIMEVAL( Time, -1,  0, TIME, "time");
-  TEST_TIMEVAL( Time,  0, -1, TIME, "time");
-  TEST_TIMEVAL( Time, -2, -2, TIME, "time");
+  TEST_TIMEVAL( Time, (string)"2006-01-05 00:00:00.000", TIME, "time");
+  TEST_TIMEVAL( Time, (string)"1960-01-01 00:00:00.000", TIME, "time");
+  TEST_TIMEVAL( Time, (string)"2006-01-01 23:59:99.999", TIME, "time");
+
+  TEST_TIME_DURATIONVAL( Time_Duration, (string)"1:02:03.123456999", TIME_DURATION, "time_duration");
+  TEST_TIME_DURATIONVAL( Time_Duration, (string)"-1", TIME_DURATION, "time_duration");
+  TEST_TIME_DURATIONVAL( Time_Duration, (string)"-1:0:0", TIME_DURATION, "time_duration");  TEST_TIME_DURATIONVAL( Time_Duration, (string)"-1:0:0", TIME_DURATION, "time_duration");  TEST_TIME_DURATIONVAL( Time_Duration, (string)"-1.2", TIME_DURATION, "time_duration");
 
   TEST_VAL( Null, , NULLV, "null");
   
@@ -627,11 +660,16 @@ int main(int argc, char **argv)
   TEST_BADCAST_T( Double, 0 );
   TEST_BADCAST_T( Opaque, u2);
 
-
-  // Test casting to Time, time_t.tv_sec is of type int32
-  #undef TEST_CAST_T
-  #define TEST_CAST_T(_t,_v,_s,_ns) TEST_TIMEVAL_CAST(_t,_v,Time,_s,_ns)
-
+  // Test casting to Time
+  // #undef TEST_CAST_T
+  // #define TEST_CAST_T(_t,_v,_y,_m,_d,_s,_ns) TEST_TIMEVAL_CAST(_t,_v,Time,_y,_m,_d,_s,_ns)
+ 
+	//  TEST_CAST_T( Int32, 2000, 2000, 1, 1, 0, 0 );
+  
+  // Test casting to Time_Duration
+#undef TEST_CAST_T
+#define TEST_CAST_T(_t,_v,_s,_ns) TEST_TIME_DURATIONVAL_CAST(_t,_v,Time_Duration,_s,_ns)
+ 
   TEST_CAST_T( Null, , 0, 0 );
 
   TEST_CAST_T( Int32, 0, 0, 0 );

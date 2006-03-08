@@ -80,11 +80,11 @@ static int seed;
 static int duration;
 static double periodicPush;
 static int metric;
-static std::vector<int> updatePeriodSeconds;
+static std::vector<double> updatePeriodSeconds;
 static double percentUpdate;
 static int updateTimes = 0;
 static int correlate; // 0 - not correlated, 1 - correlated no share, 2 - correlated share
-static int magicIntervalSeconds;
+static double magicIntervalSeconds;
 static int magicNumQueries;
 static int magicCache; // 0 - no use cache, 1 - use cache
 static double percentMagicDsts;
@@ -535,10 +535,10 @@ void runPathQuery(Plumber::ConfigurationPtr conf,
 
   
   // set timer on quitting, initialize link table, periodic updates
-  delayCB(duration, boost::bind(quit));
-  delayCB(10, boost::bind(initializeLinkTable, catalog.get(), address, inputGraph));
-  if (updatePeriodSeconds.at(0) != -1) {
-    delayCB(10 + updatePeriodSeconds.at(updateRoundRobin % updatePeriodSeconds.size()), boost::bind(updateLinks, catalog));
+  delayCB((double)duration, boost::bind(quit));
+  delayCB(10.0, boost::bind(initializeLinkTable, catalog.get(), address, inputGraph));
+  if (updatePeriodSeconds.at(0) != -1.0) {
+    delayCB(10.0 + updatePeriodSeconds.at(updateRoundRobin % updatePeriodSeconds.size()), boost::bind(updateLinks, catalog));
     updateRoundRobin++;
   }
 
@@ -621,7 +621,7 @@ void runPathQuery(Plumber::ConfigurationPtr conf,
     generateCacheElement(conf, catalog);
   }
     
-  if (magicIntervalSeconds != -1) {
+  if (magicIntervalSeconds != -1.0) {
     generateReversePathElement(conf, catalog);
   }
   */
@@ -634,8 +634,8 @@ void runPathQuery(Plumber::ConfigurationPtr conf,
     exit(-1);
   }
 
-  if (magicIntervalSeconds != -1) {
-    delayCB(10 + magicIntervalSeconds, boost::bind(insertMagicSource, catalog, address));
+  if (magicIntervalSeconds != -1.0) {
+    delayCB(10.0 + magicIntervalSeconds, boost::bind(insertMagicSource, catalog, address));
   }
 
   // Activate the plumber
@@ -673,13 +673,13 @@ int main(int argc, char **argv)
   // put the update periods into an array
   char* st = strtok(argv[13],",");
   while (st != NULL) {
-    updatePeriodSeconds.push_back(atoi(st));
+    updatePeriodSeconds.push_back(atof(st));
     st = strtok(NULL,",");    
   }
    
   percentUpdate = atof(argv[14]);
   correlate = atoi(argv[15]);
-  magicIntervalSeconds = atoi(argv[16]);
+  magicIntervalSeconds = atof(argv[16]);
   magicNumQueries = atoi(argv[17]);
   magicCache = atoi(argv[18]);
   percentMagicDsts = atof(argv[19]);

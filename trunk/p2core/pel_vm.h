@@ -61,7 +61,8 @@ private:
   int64_t pop_signed();
   std::string pop_string();
   double pop_double();
-  struct timespec pop_time();
+  boost::posix_time::ptime pop_time();
+  boost::posix_time::time_duration pop_time_duration();
   IDPtr pop_ID();
 
 

@@ -49,15 +49,13 @@ TuplePtr PrintWatch::simple_action(TuplePtr p)
   }
 
 
-  timespec now_ts;
+  boost::posix_time::ptime now_ts;
   
   getTime(now_ts);
   ostringstream b;
   b << "Print[" << _prefix
     << ", "
-    << now_ts.tv_sec
-    << ", "
-    << now_ts.tv_nsec
+    << boost::posix_time::to_simple_string(now_ts)
     << "]:  [" << (int) bytes << ", " << p->toString() << "]\n";
   
   if (_output != NULL) {

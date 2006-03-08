@@ -23,7 +23,7 @@
 
 TrafficManager::TrafficManager(string n, string a, uint k, uint r, double s)
   : Element(n, 1, 2),
-    _seconds((uint) s), 
+    _seconds(s), 
     _wakeupCB(boost::bind(&TrafficManager::wakeup, this)),
     _runTimerCB(boost::bind(&TrafficManager::runTimer, this)),
     my_addr_(a),
@@ -63,7 +63,7 @@ void TrafficManager::runTimer()
   // remove the timer id
   _timeCallback = NULL;
 
-  timespec now;
+  boost::posix_time::ptime now;
   getTime(now);
 
   // Create a tuple
@@ -120,7 +120,7 @@ REMOVABLE_INLINE bool TrafficManager::processResponse(TuplePtr tp) {
   for (uint i = 0; i < tp->size(); i++) {
     try {
       if (Val_Str::cast((*tp)[i]) == "RESPONSE") {
-        timespec t = Val_Time::cast((*tp)[i+2]); 
+		boost::posix_time::ptime t = Val_Time::cast((*tp)[i+2]); 
         uint    hc = Val_UInt32::cast((*tp)[i+3]);
         uint    rc = Val_UInt32::cast((*tp)[i+4]);
         std::cerr << "RECEIVE RESPONSE: delay " << delay(&t) << ", hop count " << hc << ", retry count " << rc << std::endl;
@@ -156,21 +156,10 @@ REMOVABLE_INLINE TuplePtr TrafficManager::mkResponse(TuplePtr tp) {
 
 }
 
-REMOVABLE_INLINE uint32_t TrafficManager::delay(timespec *ts)
+REMOVABLE_INLINE uint32_t TrafficManager::delay(boost::posix_time::ptime *ts)
 {
-  timespec  now;
+  boost::posix_time::ptime now;
   getTime(now);
-  if (now.tv_nsec < ts->tv_nsec) { 
-    if (now.tv_nsec + 1000000000 < 0) {
-      now.tv_nsec -= 1000000000;
-      now.tv_sec++;
-    }
-    else {
-      now.tv_nsec += 1000000000;
-      now.tv_sec--; 
-    }
-  } 
 
-  return (((now.tv_sec - ts->tv_sec)*1000) + 
-          ((now.tv_nsec - ts->tv_nsec)/1000000)); // Delay in milliseconds
+  return((uint32_t)(now - *ts).total_milliseconds());
 }

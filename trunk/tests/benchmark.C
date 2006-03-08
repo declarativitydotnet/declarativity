@@ -48,8 +48,9 @@ static ValuePtr vf;
 
 static double time_fn(b_cbv cb) 
 {
-  timespec before_ts;
-  timespec after_ts;
+  boost::posix_time::ptime before_ts;
+  boost::posix_time::ptime after_ts;
+  boost::posix_time::time_duration tdiff;
   double elapsed;
   double past_average = 0;
   double average = 0;
@@ -66,8 +67,10 @@ static double time_fn(b_cbv cb)
 
     getTime(after_ts, LOOP_TIME_WALLCLOCK);
 
-    after_ts = after_ts - before_ts; 
-    elapsed = after_ts.tv_sec + (1.0 / 1000 / 1000 / 1000 * after_ts.tv_nsec);
+    tdiff = after_ts - before_ts; 
+    // ensure we compute nanosecs (1/(10^9) sec) 
+    // even if boost is compiled to lower precision 
+    elapsed = tdiff.fractional_seconds() * (long)exp10(9 - (boost::posix_time::time_duration::num_fractional_digits()));
     average = elapsed / iter;
     sum = (average - past_average);
     if (sum > 0) 
@@ -81,8 +84,8 @@ static double time_fn(b_cbv cb)
   std::cout << " Total numbers of values: " << iter << " * " << FIELD_TST_SZ << " = " << FIELD_TST_SZ * iter;
   std::cout << "\n";
   std::cout << "average: " << average * 1000 << " msecs, ";
-  std::cout << "elasped: " << elapsed * 1000 << " msecs (";
-  std::cout << after_ts.tv_sec << " secs " << (after_ts.tv_nsec/1000) << " usecs)\n";
+  std::cout << "elapsed: " << elapsed * 1000 << " msecs (";
+  std::cout << tdiff.seconds() << " secs " << elapsed - (tdiff.seconds()/1000) << " usecs)\n";
   return elapsed;
 }
 

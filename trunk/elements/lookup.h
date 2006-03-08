@@ -176,10 +176,10 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::push(int port,
   } else {
     // We already have a lookup pending
     assert(_pushCallback);
-    assert(_key != NULL);
+    assert(_key.get() != NULL);
     assert(_iterator != NULL);
-    assert(_lookupTuple != NULL);
-    assert(_lookupTupleValue != NULL);
+    assert(_lookupTuple.get() != NULL);
+    assert(_lookupTupleValue.get() != NULL);
     log(LoggerI::WARN, 0, "push: lookup overrun");
     return 0;
   }

@@ -45,7 +45,11 @@ INCLUDES =	@BOOST_INC@ \
 		-I$(top_builddir)/planner \
 		-I$(top_builddir)/eventLoop
 
-LIBS = @BOOST_LIB@ -lrt
+CXXFLAGS="-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG" @CXXFLAGS@
+
+LDFLAGS=@BOOST_LIB@ @LDFLAGS@
+
+LIBS = @BOOST_LIB@
 
 MAINTAINERCLEANFILES = aclocal.m4 install-sh mkinstalldirs \
 	missing configure config.guess config.sub config.h.in \

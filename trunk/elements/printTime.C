@@ -28,14 +28,12 @@ PrintTime::~PrintTime()
 
 TuplePtr PrintTime::simple_action(TuplePtr p)
 {
-  timespec now_ts;
+  boost::posix_time::ptime now_ts;
   
   getTime(now_ts);
   warn << "Print[" << _prefix
        << ", "
-       << now_ts.tv_sec
-       << ", "
-       << now_ts.tv_nsec
+       << boost::posix_time::to_simple_string(now_ts)
        << "]:  [" << p->toString() << "]\n";
   return p;
 }

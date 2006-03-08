@@ -15,6 +15,7 @@
 #include <timestampSource.h>
 #include "val_str.h"
 #include "val_uint64.h"
+#include "val_time.h"
 
 TimestampSource::TimestampSource(string name)
   : Element(name, 0, 1)
@@ -25,13 +26,12 @@ TuplePtr TimestampSource::pull(int port, b_cbv cb)
 {
   // Always produce a result, never block
 
-  struct timespec t;
+  boost::posix_time::ptime t;
   getTime(t);
   
   TuplePtr tuple = Tuple::mk();
   tuple->append(Val_Str::mk("Time"));
-  tuple->append(Val_UInt64::mk(t.tv_sec));
-  tuple->append(Val_UInt64::mk(t.tv_nsec));
+  tuple->append(Val_Time::mk(t));
   tuple->append(Val_Str::mk("End of time"));
   tuple->freeze();
 

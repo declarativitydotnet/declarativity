@@ -20,12 +20,15 @@ bin_PROGRAMS 	= phid
 noinst_HEADERS	= phid.h
 phid_SOURCES	= phid.C
 phid_LDADD = \
+	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
-	$(top_builddir)/net/.libs/libp2net.a
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a 
 
-LIBS = @BOOST_LIB@ -lrt
+LIBS = @BOOST_LIB@
+
+CXXFLAGS="-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG" @CXXFLAGS@
+LDFLAGS=@BOOST_LIB@ @LDFLAGS@
 
 CLEANFILES = core *.core *~
 EXTRA_DIST = .cvsignore

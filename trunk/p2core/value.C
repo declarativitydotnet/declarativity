@@ -44,7 +44,9 @@ static _unmarshal_fn jump_tab[] = {
   Val_Opaque::xdr_unmarshal,
   Val_Tuple::xdr_unmarshal,
   Val_Time::xdr_unmarshal,
-  Val_ID::xdr_unmarshal
+  Val_ID::xdr_unmarshal,
+  Val_IP_ADDR::xdr_unmarshal,
+  Val_Time_Duration::xdr_unmarshal
 };
 
 //

@@ -111,7 +111,7 @@ int RateCCT::push(int port, TuplePtr tp, b_cbv cb)
       SeqNum  seq = Val_UInt64::cast((*tp)[ACK_SEQ]);
       uint32_t rr = Val_UInt32::cast((*tp)[ACK_RATE]);
       double   p  = Val_Double::cast((*tp)[ACK_LOSS]);
-      timespec ts = Val_Time::cast(  (*tp)[ACK_TIME]);
+      boost::posix_time::ptime ts = Val_Time::cast(  (*tp)[ACK_TIME]);
 
       UNMAP(seq, true);
       ACK("SUCCESS", seq);
@@ -177,30 +177,18 @@ void RateCCT::feedback_timeout()
   feedback(rtt_, rrate_, 0);
 }
 
-REMOVABLE_INLINE uint32_t RateCCT::delay(timespec *ts)
+REMOVABLE_INLINE uint32_t RateCCT::delay(boost::posix_time::ptime *ts)
 {
-  timespec  now;
+  boost::posix_time::ptime  now;
   getTime(now);
-  if (now.tv_nsec < ts->tv_nsec) { 
-    if (now.tv_nsec + 1000000000 < 0) {
-      now.tv_nsec -= 1000000000;
-      now.tv_sec++;
-    }
-    else {
-      now.tv_nsec += 1000000000;
-      now.tv_sec--; 
-    }
-  } 
-
-  return (((now.tv_sec - ts->tv_sec)*1000) + 
-          ((now.tv_nsec - ts->tv_nsec)/1000000)); // Delay in milliseconds
+  return((now - *ts).total_milliseconds());
 }
 
 REMOVABLE_INLINE TuplePtr RateCCT::package(TuplePtr tp)
 {
   string   cid = "";
   SeqNum   seq = 0;
-  timespec now;
+  boost::posix_time::ptime now;
   getTime(now);
   for (uint i = 0; i < tp->size(); i++) {
     try {

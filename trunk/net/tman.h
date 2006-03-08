@@ -40,15 +40,12 @@ class TrafficManager : public Element {
   REMOVABLE_INLINE int getKey(TuplePtr tp);
   REMOVABLE_INLINE TuplePtr mkResponse(TuplePtr tp);
   REMOVABLE_INLINE bool processResponse(TuplePtr tp);
-  REMOVABLE_INLINE uint32_t delay(timespec *ts);
+  REMOVABLE_INLINE uint32_t delay(boost::posix_time::ptime *ts);
 
   /** My wakeup method */
   void wakeup();
 
-  /** The integer seconds portion of the interval */
-  uint                  _seconds;
-  /** The nsec portion of the interval */
-  uint                  _nseconds;
+  double                  _seconds;
   /** My wakeup callback */
   b_cbv                   _wakeupCB;
   /** Callback to my runTimer() */

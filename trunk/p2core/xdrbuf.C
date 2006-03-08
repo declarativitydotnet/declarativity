@@ -1,6 +1,7 @@
 /*
  * @(#)$Id$
  *
+ *
  * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
@@ -25,17 +26,38 @@ static bool_t	fd_getlong(XDR *xdrs, long *lp);
 static bool_t	fd_putlong(XDR *xdrs, const long *lp);
 static bool_t	fd_getbytes(XDR *xdrs, caddr_t addr, u_int len);
 static bool_t	fd_putbytes(XDR *xdrs, const char *addr, u_int len);
-static u_int	fd_getpostn(const XDR *xdrs);
+static u_int    fd_getpostn(
+#ifndef __APPLE__
+                            const
+#endif
+                            XDR *xdrs);
 static bool_t	fd_setpostn(XDR *xdrs, u_int pos);
 static int32_t *fd_inline(XDR *xdrs, u_int len);
 static void	fd_destroy(XDR *xdrs);
 static bool_t	fd_getint32(XDR *xdrs, int32_t *lp);
 static bool_t	fd_putint32(XDR *xdrs, const int32_t *lp);
+static bool_t	fd_control(XDR *xdrs, int c, void *ch);
 
 //
 // XDR ops table
 //
+#ifdef __APPLE__
 static XDR::xdr_ops ops = {
+  fd_getlong,
+  fd_putlong,
+  fd_getbytes,
+  fd_putbytes,
+  fd_getpostn,
+  fd_setpostn,
+  fd_inline,
+  fd_destroy,
+  fd_control
+};
+#else
+//
+// XDR ops table
+//
+static XDR::xdr_ops ops = (const XDR::xdr_ops){
   fd_getlong,
   fd_putlong,
   fd_getbytes,
@@ -47,6 +69,7 @@ static XDR::xdr_ops ops = {
   fd_getint32,
   fd_putint32
 };
+#endif
 
 //
 // Convert to an Fdbuf...
@@ -92,9 +115,12 @@ fd_putbytes(XDR *xdrs, const char *addr, u_int len)
   fdb(xdrs)->push_bytes(addr, len);
   return true;
 }
-
-static u_int
-fd_getpostn(const XDR *xdrs)
+/** Removed const for MAC build */
+static u_int fd_getpostn(
+#ifndef __APPLE__
+const
+#endif
+XDR *xdrs)
 {
   if (xdrs->x_op == XDR_ENCODE) {
     return fdb(xdrs)->length();
@@ -151,6 +177,11 @@ fd_putint32(XDR *xdrs, const int32_t *lp)
   return true;
 }
 
+/** Function specific to the Mac version of xdr_ops */
+static bool_t   fd_control(XDR *xdrs, int c, void *ch)
+{
+  return false;
+}
 
 ////////////////////////////////////////////////////////////
 // End of Ops Table Functions

@@ -26,7 +26,7 @@
 /* Accepts ping requests, generate ping responses */
 class Pong : public Element {
 public:
-  Pong(string name, int seconds);
+  Pong(string name, double seconds);
   int push(int port, TuplePtr p, b_cbv cb);      
   int initialize();  
 
@@ -40,7 +40,7 @@ private:
   void runTimer();
 
  /** The the interval in seconds */
-  uint _seconds;
+  double _seconds;
 
   /** My time callback ID. */
   timeCBHandle * _timeCallback;

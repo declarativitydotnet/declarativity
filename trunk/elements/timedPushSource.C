@@ -18,6 +18,7 @@
 
 #include "val_str.h"
 #include "val_uint64.h"
+#include "val_time.h"
 
 TimedPushSource::TimedPushSource(string name,
                                  double seconds)
@@ -53,12 +54,11 @@ void TimedPushSource::runTimer()
 
   log(LoggerI::INFO, 0, "runTimer: Creating new tuple");
   // Fill it up with the current timeval
-  struct timespec t;
+  boost::posix_time::ptime t;
   getTime(t);
   
   tuple->append(Val_Str::mk("Time"));
-  tuple->append(Val_UInt64::mk(t.tv_sec));
-  tuple->append(Val_UInt64::mk(t.tv_nsec));
+  tuple->append(Val_Time::mk(t));
   tuple->append(Val_Str::mk("End of time"));
   tuple->freeze();
 
