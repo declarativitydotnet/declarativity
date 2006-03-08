@@ -1,4 +1,4 @@
-/*
+/* 
  * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
@@ -7,7 +7,6 @@
  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
  * Berkeley, CA,  94707. Attention: P2 Group.
  */
-
 #include "boost/test/unit_test.hpp"
 
 #include "tuple.h"

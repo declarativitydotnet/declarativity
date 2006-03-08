@@ -1,4 +1,4 @@
-/*
+/* 
  * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
@@ -28,12 +28,6 @@
 #include "val_time.h"
 #include "val_id.h"
 
-// The test macro
-#define TST(_e,_l,_s,_c) { _c;                                          \
-    BOOST_CHECK_MESSAGE(fb.length() == _l, "Bad fdbuf length");         \
-    BOOST_CHECK_MESSAGE(fb.last_errno() == _e, "Bad errno");            \
-    BOOST_CHECK_MESSAGE(fb.str() == _s, "Bad fdbuf contents");          \
-}
 
 
 class testFdbufs
@@ -51,6 +45,15 @@ public:
   originalTests()
   {
     Fdbuf fb(0);
+
+
+    // The test macro
+#define TST(_e,_l,_s,_c) { _c;                                          \
+      BOOST_CHECK_MESSAGE(fb.length() == _l, "Bad fdbuf length");       \
+      BOOST_CHECK_MESSAGE(fb.last_errno() == _e, "Bad errno");          \
+      BOOST_CHECK_MESSAGE(fb.str() == _s, "Bad fdbuf contents");        \
+    }
+    
     TST(0,0,"",);
     TST(0,0,"",fb.clear());
     TST(0,1,"1",fb.pushBack(1));
@@ -64,6 +67,8 @@ public:
     TST(0,6,"1.234a",fb.pushBack('a'));
     TST(0,0,"",fb.clear());
     TST(0,5,"This ",fb.push_bytes("This is a string",5));
+
+#undef TST
   }
 
 
