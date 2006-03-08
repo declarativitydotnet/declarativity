@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 2; related-file-name: "pel_vm.h" -*-
 /*
  * @(#)$Id$
  *
@@ -57,6 +58,7 @@ const char *Pel_VM::err_msgs[] = {
   "ER:Bad type conversion",
   "ER:Bad opcode",
   "ER:Divide by zero",
+  "ER:Bad string operation",
   "ER:Invalid Errno",
   "ER:Unknown Error"
 };
@@ -130,7 +132,7 @@ const char *Pel_VM::strerror(Pel_VM::Error e) {
 }
 
 //
-// Type conversion to an unsigned number with no checkng
+// Pure extraction of a ValuePtr
 //
 ValuePtr Pel_VM::pop() 
 {
@@ -171,7 +173,8 @@ int64_t Pel_VM::pop_signed()
 //  
 string Pel_VM::pop_string() 
 {
-  ValuePtr t = stackTop(); stackPop();
+  ValuePtr t = stackTop();
+  stackPop();
   try {
     return Val_Str::cast(t);
   } catch (Value::TypeError) {
@@ -336,12 +339,18 @@ DEF_OP(DUP) {
 }
 DEF_OP(PUSH_CONST) { 
   uint ndx = (inst >> 16);
-  if (ndx > prg->const_pool.size() ) { error = PE_BAD_CONSTANT; return; }
+  if (ndx > prg->const_pool.size()) {
+    error = PE_BAD_CONSTANT;
+    return;
+  }
   stackPush(prg->const_pool[ndx]);
 }
 DEF_OP(PUSH_FIELD) { 
   uint ndx = (inst >> 16);
-  if (ndx > operand->size() ) { error = PE_BAD_FIELD; return; }
+  if (ndx > operand->size()) {
+    error = PE_BAD_FIELD;
+    return;
+  }
   stackPush((*operand)[ndx]);
 }
 DEF_OP(POP) {
@@ -604,16 +613,16 @@ DEF_OP(BIT_NOT) {
 //
 DEF_OP(NEG) {
   try {
-    ValuePtr neg = Val_Int32::mk(-1);
-    stackPush((neg * pop()));
-  } catch (opr::Oper::Exception *e) {
+    ValuePtr neg = Val_Int64::mk(-1);
+    stackPush(pop() * neg);
+  } catch (opr::Oper::OperException e) {
     error = PE_OPER_UNSUP;
   }
 }
 DEF_OP(PLUS) {
   try {
     stackPush((pop()+pop()));
-  } catch (opr::Oper::Exception *e) {
+  } catch (opr::Oper::OperException e) {
     error = PE_OPER_UNSUP;
   }
 }
@@ -623,7 +632,7 @@ DEF_OP(MINUS) {
   ValuePtr v2 = pop();
   try {
     stackPush((v2-v1));
-  } catch (opr::Oper::Exception *e) {
+  } catch (opr::Oper::OperException e) {
     error = PE_OPER_UNSUP;
   }
 }
@@ -631,7 +640,7 @@ DEF_OP(MINUSMINUS) {
   ValuePtr v1 = pop();
   try {
     stackPush(--v1);
-  } catch (opr::Oper::Exception *e) {
+  } catch (opr::Oper::OperException e) {
     error = PE_OPER_UNSUP;
   }
 }
@@ -639,14 +648,14 @@ DEF_OP(PLUSPLUS) {
   ValuePtr v1 = pop();
   try {
     stackPush(++v1);
-  } catch (opr::Oper::Exception *e) {
+  } catch (opr::Oper::OperException e) {
     error = PE_OPER_UNSUP;
   }
 }
 DEF_OP(MUL) {
   try {
     stackPush((pop()*pop()));
-  } catch (opr::Oper::Exception *e) {
+  } catch (opr::Oper::OperException e) {
     error = PE_OPER_UNSUP;
   }
 }
@@ -657,7 +666,7 @@ DEF_OP(DIV) {
   if (v1 != Val_UInt64::mk(0)) { 
     try {
       stackPush((v2 / v1));
-    } catch (opr::Oper::Exception *e) {
+    } catch (opr::Oper::OperException e) {
       error = PE_OPER_UNSUP;
     }
   } else if (error == PE_SUCCESS) {
@@ -671,7 +680,7 @@ DEF_OP(MOD) {
   if (v1 != Val_UInt64::mk(0)) { 
     try {
       stackPush((v2 % v1));
-    } catch (opr::Oper::Exception *e) {
+    } catch (opr::Oper::OperException e) {
       error = PE_OPER_UNSUP;
     }
   } else if (error == PE_SUCCESS) {
@@ -904,10 +913,21 @@ DEF_OP(STR_LOWER) {
   stackPush(Val_Str::mk(result));
 }
 DEF_OP(STR_SUBSTR) {
-  int len = pop_unsigned();
-  int pos = pop_unsigned();
+  uint len = pop_unsigned();
+  uint pos = pop_unsigned();
   string s = pop_string();
-  stackPush(Val_Str::mk(s.substr(pos,pos+len)));
+
+  // Sanity check parameters
+  if ((pos < 0) ||
+      (len <= 0) ||             // no reason to run substr with 0
+                                // length!
+      (pos + len > s.length())) {
+    // Invalid substring request
+    error = PE_BAD_STRING_OP;
+    return;
+  } else {
+    stackPush(Val_Str::mk(s.substr(pos, len)));
+  }
 }
 DEF_OP(STR_MATCH) {
   // XXX This is slow!!! For better results, memoize each regexp in a

@@ -1,9 +1,8 @@
 /*
  * @(#)$Id$
  *
- *
- * This file is distributed under the terms in the attached INTEL-LICENSE file.
- * If you do not find these files, copies can be found by writing to:
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * Or
@@ -98,7 +97,10 @@ public:
   static IDPtr mk(uint32_t w[WORDS]) { IDPtr p(new ID(w)); return p; }
   static IDPtr mk(uint32_t u)        { IDPtr p(new ID(u)); return p; }
   static IDPtr mk(uint64_t u)        { IDPtr p(new ID(u)); return p; }
-
 };
+
+/** The stream operator */
+std::ostream&
+operator <<(std::ostream& os, const ID& object);
 
 #endif /* __ID_H_ */

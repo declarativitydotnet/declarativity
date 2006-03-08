@@ -2,24 +2,6 @@
 /*
  * @(#)$Id$
  *
- * Modified from the Click Element base class by Eddie Kohler
- * statistics: Robert Morris
- * P2 version: Timothy Roscoe
- * 
- * Copyright (c) 1999-2000 Massachusetts Institute of Technology
- * Copyright (c) 2004 Regents of the University of California
- * Copyright (c) 2004 Intel Corporation
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software")
- * to deal in the Software without restriction, subject to the conditions
- * listed in the Click LICENSE file. These conditions include: you must
- * preserve this copyright notice, and you cannot mention the copyright
- * holders in advertising related to the Software without their permission.
- * The Software is provided WITHOUT ANY WARRANTY, EXPRESS OR IMPLIED. This
- * notice is a summary of the Click LICENSE file; the license in that file is
- * legally binding.
- * 
  * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
@@ -28,20 +10,6 @@
  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
  * Berkeley, CA,  94707. Attention: P2 Group.
  * 
- * DESCRIPTION: Base class for P2 elements
- *
- * Note to P2 hackers: much has been removed from the original Click
- * class.  Much of that may well find its way back in, but for now
- * let's put stuff back in when we understand why we need it.  That
- * way we'll all develop a better understanding of why Click (and P2)
- * are the way they are. 
- *
- * An element may be in one of two states: CONFIGURATION and RUNNING.
- * During configuration, the element maintains data about its ports
- * (including personalities, flow codes, etc.) that faciliate with
- * static analysis of the big picture of the forwarding engine.  Since
- * all those data aare not useful once the element is up and running, we
- * only keep them during configuration and discard them thereafter.
  */
 
 #include <errno.h>
@@ -65,10 +33,14 @@ const char * const Element::PULL_TO_PUSH = "l/h";
 const char * const Element::COMPLETE_FLOW = "x/x";
 
 // For use in default-logger sequencing
-uint64_t Element::seq=0;
+uint64_t
+Element::seq=0;
 
-int Element::nelements_allocated = 0;
-int Element::elementCounter = 0;
+int
+Element::elementsLive = 0;
+
+int
+Element::elementCounter = 0;
 
 static inline string mk_id_str(long id)
 {
@@ -78,70 +50,63 @@ static inline string mk_id_str(long id)
 }
 
 Element::Element(string instanceName) :
-  _ninputs(0),
-  _noutputs(0),
+  _ninputs(1),
+  _noutputs(1),
   _ID(elementCounter++),
   _name(instanceName),
   _IDstr(mk_id_str(_ID))
 {
-  nelements_allocated++;
+  commonConstruction();
 }
 
 Element::Element(string instanceName, int ninputs, int noutputs) :
-  _ninputs(0),
-  _noutputs(0),
+  _ninputs(ninputs),
+  _noutputs(noutputs),
   _ID(elementCounter++),
   _name(instanceName),
   _IDstr(mk_id_str(_ID))
 {
-  set_nports(ninputs, noutputs);
-  nelements_allocated++;
+  commonConstruction();
 }
 
 Element::~Element()
 {
-  nelements_allocated--;
+  elementsLive--;
+}
+
+void
+Element::commonConstruction()
+{
+  portSetup();
+  elementsLive++;
 }
 
 // INPUTS AND OUTPUTS
 
 void
-Element::set_nports(int new_ninputs, int new_noutputs)
+Element::portSetup()
 {
   // exit on bad counts, or if already initialized
-  // XXX initialized flag for element
-  if (new_ninputs < 0 || new_noutputs < 0)
+  if (_ninputs < 0 || _noutputs < 0) {
     return;
+  }
   
   // Enlarge port arrays if necessary
-  _inputs.resize(new_ninputs);
-  _ninputs = new_ninputs;
+  _inputs.resize(_ninputs);
   for (int i = 0;
-       i < new_ninputs;
+       i < _ninputs;
        i++) {
     _inputs[i].reset(new Port());
   }
 
-  _outputs.resize(new_noutputs);
-  _noutputs = new_noutputs;
+  _outputs.resize(_noutputs);
   for (int i = 0;
-       i < new_noutputs;
+       i < _noutputs;
        i++) {
     _outputs[i].reset(new Port());
   }
 }
 
-void
-Element::set_ninputs(int count)
-{
-  set_nports(count, _noutputs);
-}
-
-void
-Element::set_noutputs(int count)
-{
-  set_nports(_ninputs, count);
-}
 
 bool
 Element::ports_frozen() const

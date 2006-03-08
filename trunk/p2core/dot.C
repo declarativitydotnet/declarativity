@@ -1,4 +1,4 @@
-// -*- c-basic-offset: 2; -*-
+// -*- c-basic-offset: 2; related-file-name: "dot.h" -*-
 /*
  * @(#)$Id$
  *
@@ -10,10 +10,6 @@
  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
  * Berkeley, CA,  94707. Attention: P2 Group.
  *
- *  Utility functions to produce a DOT description of a plumber
- *  configuration.
- *
- *  Petros Maniatis.
  */
 
 #include <plumber.h>

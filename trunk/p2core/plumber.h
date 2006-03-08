@@ -1,32 +1,19 @@
 // -*- c-basic-offset: 2; related-file-name: "plumber.C" -*-
 /*
  * @(#)$Id$
- * Loosely inspired from the Click Plumber class, by Eddie Kohler
  * 
- * Copyright (c) 1999-2000 Massachusetts Institute of Technology
- * Copyright (c) 2000 Mazu Networks, Inc.
- * Copyright (c) 2004 Regents of the University of California
- * Copyright (c) 2004 Intel Corporation
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software")
- * to deal in the Software without restriction, subject to the conditions
- * listed in the Click LICENSE file. These conditions include: you must
- * preserve this copyright notice, and you cannot mention the copyright
- * holders in advertising related to the Software without their permission.
- * The Software is provided WITHOUT ANY WARRANTY, EXPRESS OR IMPLIED. This
- * notice is a summary of the Click LICENSE file; the license in that file is
- * legally binding.
- * 
- * This file is distributed under the terms in the attached INTEL-LICENSE file.
- * If you do not find these files, copies can be found by writing to:
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * Or
  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
  * Berkeley, CA,  94707. Attention: P2 Group.
  * 
- * DESCRIPTION: The plumber shell providing plumbing functionality.
+ * Loosely inspired from the Click Router class, by Eddie Kohler
+ *
+ * DESCRIPTION: The plumber shell providing plumbing functionality among
+ * elements.
  */
 
 #ifndef __PLUMBER_H__
@@ -161,14 +148,13 @@ private:
   int check_hookup_range();
 
   /** Is personality semantics correctly applied to hookups?  This only
-      checks that the end-points of a hookup are consistent.  Unlike
-      Click, it does not follow flow codes through elements. */
+      checks that the end-points of a hookup are consistent.  It does
+      not follow flow codes through elements. */
   int check_push_and_pull();
 
   /** Are any ports multiply connected?  Are all ports attached to
-      something?  Unlike Click, we require all ports to be attached to
-      something (exactly one something), even pull outputs and push
-      inputs. */
+      something?  We require all ports to be attached to something
+      (exactly one something), even pull outputs and push inputs. */
   int check_hookup_completeness();
 
   /** Perform the actual hooking up of real elements from the specs. No

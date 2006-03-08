@@ -2,17 +2,19 @@
 #
 #  @(#)$Id$
 #
-# Copyright (c) 2005 Intel Corporation. All rights reserved.
-#
-# This file is distributed under the terms in the attached INTEL-LICENSE file.
-# If you do not find these files, copies can be found by writing to:
+# This file is distributed under the terms in the attached LICENSE file.
+# If you do not find this file, copies can be found by writing to:
 # Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
 # Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+# Or
+# UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+# Berkeley, CA,  94707. Attention: P2 Group.
 #
 # DESCRIPTION: Makefile for the P2 core library
 #
 
 lib_LTLIBRARIES = libp2core.la
+
 libp2core_la_SOURCES = \
 	fdbuf.C \
 	xdrbuf.C \
@@ -42,11 +44,21 @@ libp2core_la_SOURCES = \
 	dot.C
 
 INCLUDES = @BOOST_INC@ -I../eventLoop
+
 LIBS = -lboost_regex
 
 CLEANFILES = core *.core *~ *.gen.h *.gen.txt pel_lexer.C
 
-EXTRA_DIST = .cvsignore
+EXTRA_DIST = .cvsignore \
+		$(libp2core_la_SOURCES:.C=.h) \
+		inlines.h \
+		trace.h \
+		iteratorObj.h \
+		scanIteratorObj.h \
+		aggregateObj.h \
+		pel_lexer.lex \
+		pel_gen.py \
+		pel_program.h
 
 MAINTAINERCLEANFILES = Makefile.in
 
@@ -66,4 +78,3 @@ pel_lexer.C: pel_lexer.lex pel_opcode_tokens.gen.h
 	$(LEX) $(AM_LFLAGS) $(LFLAGS) -opel_lexer.C -8 pel_lexer.lex
 
 
-#	$(top_builddir)/util/fixflex.sh $(AM_LFLAGS) $(LFLAGS) -opel_lexer.C -8 pel_lexer.lex

@@ -1,23 +1,7 @@
 // -*- c-basic-offset: 2; related-file-name: "plumber.h" -*-
 /*
  * @(#)$Id$
- * Modified from the Click Element base class by Eddie Kohler
- * 
- * Copyright (c) 1999-2000 Massachusetts Institute of Technology
- * Copyright (c) 2000 Mazu Networks, Inc.
- * Copyright (c) 2004 Regents of the University of California
- * Copyright (c) 2004 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software")
- * to deal in the Software without restriction, subject to the conditions
- * listed in the Click LICENSE file. These conditions include: you must
- * preserve this copyright notice, and you cannot mention the copyright
- * holders in advertising related to the Software without their permission.
- * The Software is provided WITHOUT ANY WARRANTY, EXPRESS OR IMPLIED. This
- * notice is a summary of the Click LICENSE file; the license in that file is
- * legally binding.
- * 
  * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
@@ -28,77 +12,6 @@
  * 
  * DESCRIPTION: The plumber class, for creating dataflow graphs
  * 
- * Machinery works as follows:
- *
- *  Lexer finds all distinct elements and their interconnections
- *
- *  For every found element, a default constructor is called and the
- *  element is added into the plumber (as a singleton object)
- *
- *  For every found connection, the plumber adds a connection spec
- *  (called a "hookup") from the source element to the destination
- *  element to a queue of new connections to be created.
- *
- *  The plumber is "initialized."
- *
- *    The queued hookups are checked for sanity (they connect existing
- *    elements and existing port numbers).  Incorrect hookups are
- *    dropped. Any errors in the hookups cause the initialization to
- *    fail.
- *
- *    Elements are sorted by the order in which they wish to be
- *    configured (from 4 distinct phases).  Then they are notified about
- *    when they should expect to be configured and how many of their
- *    ports have clients (i.e., other elements connecting to them).
- *   
- *    In sorted order, every element is configured with its
- *    configuration data (arguments, parameters, etc.).  If any of the
- *    elements failed its configuration, the initialization stops.
- *
- *    After element configuration, all hookups are checked again to
- *    ensure that port numbers used are consistent with the fully
- *    configured elements.
- *
- *    Next, hookups are checked for semantic correctness in terms of
- *    push/pull personality.  According to connectivity, agnostic elements
- *    are assigned a personality, e.g., if a push output port is
- *    connected to an agnostic input port, then the input port is
- *    instantiated as a push port.  The ports are created and
- *    initialized, making appropriate ports not connectable (i.e., pull
- *    outputs or push inputs).
- *
- *    Next, hookups are checked for duplication.  Connectable ports
- *    (i.e., push outputs and pull inputs) can only be connected to a
- *    single counterpart.  Also unused ports are identified.  Neither
- *    condition permits initialization to continue.
- *
- *    Next the actual plumbing occurs.  Actual element objects are
- *    introduced to each other and connected at the appropriate ports.
- *
- *    Once connected, elements are themselves initialized in their
- *    configuration order.  Initialization consists of the creation of
- *    their handlers (introspection interfaces) and any element-specific
- *    other initialization.  This is the stage at which "active"
- *    elements place themselves in the run queue.
- *
- *
- * Synchronization machinery:
- *  
- *  Each plumber has a runcount used as a semaphore (it's an integer
- *  protected by a global lock stored at the master).
- *
- *  The master also have a runcount which is the minimum of all plumber
- *  runcount values.
- *
- *  Correctly initialized plumbers have runcount of at least
- *  1. Incorrectly initialized plumber have non-positive runcounts.
- *
- *  A plumber thread runs continuously, as long as the master runcount
- *  remains positive.  When a plumber thread detects that the master
- *  runcount is no longer positive, it kicks the master to clean up its
- *  plumbers. If after the cleanup the master reports there's more
- *  running to be had by all, the driver method of the plumber thread
- *  continues the loop.
  */
 
 
@@ -345,32 +258,6 @@ int Plumber::check_push_and_pull()
     }
   } 
 
-  // Original Click flow code checker does the following:
-  //
-  // For every agnostic input port
-  //   Find all output ports to which the input port is linked with a
-  //     flow code (see below how this is done).
-  //   For every such output port
-  //     Create a false hookup from the input port to the output port
-  // Forever
-  //   For every hookup
-  //     Check semantic consistency and push unifications
-  //   If no changes made, exit loop
-  // 
-  // For a given agnostic input port, the original Click flow code
-  // finds all associated output ports as follows:
-  // 
-  // Find the flow code for the input port
-  // Set all flow codes that match that of the input port
-  // For all output ports
-  //   Find the appropriate flow code
-  //   Set all flow codes that match that of the output port
-  //   If the output code matches have an intersection with the input
-  //     Set the output port as a linked port to the input
-  //
-  // In the P2 implementation, flow codes are much simpler (single
-  // character only)
-
   if (errors > 0) {
     return -1;
   } else {
@@ -436,8 +323,7 @@ Plumber::~Plumber()
 /**
  * initialize
  *
- * This performs a simplified (compared to Click) initialization of the
- * element topology:
+ * This performs a simplified initialization of the element topology:
  *
  * - Check that connections refer to correct elements
  *

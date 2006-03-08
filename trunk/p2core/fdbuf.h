@@ -1,9 +1,9 @@
+// -*- c-basic-offset: 2; related-file-name: "fdbuf.C" -*-
 /*
  * @(#)$Id$
  *
- *
- * This file is distributed under the terms in the attached INTEL-LICENSE file.
- * If you do not find these files, copies can be found by writing to:
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * Or
@@ -44,7 +44,7 @@ private:
   size_t len;		// Number of bytes actually held.
   size_t start;		// Offset of first valid byte
   int	 err;		// Last value of errno. 
-  char	*data;		// Data itself
+  char	 *data;		// Data itself
   bool	 safe;		// Zero any data before deleting
 
   // Used by write, send, sendto...
@@ -80,7 +80,7 @@ public:
     BUF_SIZE_MAX = (2 << (sizeof(size_t) - 1) - 1)
   };
 
-  Fdbuf( int init_capacity = BUF_DFLT_CAP, bool is_safe=false );
+  Fdbuf( int init_capacity = BUF_DFLT_CAP, bool is_safe = false);
   ~Fdbuf();
   
   //
@@ -98,7 +98,7 @@ public:
   ssize_t recvfrom(int sd, ssize_t max_read = BUF_DFLT_READ, int flags=0,
 		   struct sockaddr *from=NULL, socklen_t *fromlen=0);
   
-  Fdbuf &pushFdbuf(const Fdbuf &fb, size_t max_len = BUF_SIZE_MAX );
+  Fdbuf &pushFdbuf(const Fdbuf &fb, size_t max_len = BUF_SIZE_MAX);
 
   Fdbuf &pushString(const std::string &s);
 

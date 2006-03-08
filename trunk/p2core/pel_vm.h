@@ -1,9 +1,9 @@
+// -*- c-basic-offset: 2; related-file-name: "pel_vm.C" -*-
 /*
  * @(#)$Id$
  *
- *
- * This file is distributed under the terms in the attached INTEL-LICENSE file.
- * If you do not find these files, copies can be found by writing to:
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * Or
@@ -37,6 +37,7 @@ public:
     PE_TYPE_CONVERSION,
     PE_BAD_OPCODE,
     PE_DIVIDE_BY_ZERO,
+    PE_BAD_STRING_OP,
     PE_INVALID_ERRNO,
     PE_STOP,
     PE_UNKNOWN // Must be the last error

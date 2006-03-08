@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 2; related-file-name: "fdbuf.h" -*-
 /*
  * @(#)$Id$
  *
@@ -24,12 +25,12 @@
 //
 // Constructor
 //
-Fdbuf::Fdbuf( int init_capacity, bool is_safe )
+Fdbuf::Fdbuf(int init_capacity, bool is_safe)
   : capacity(align(init_capacity)),
     len(0),
     start(0),
     err(0),
-    data( new char[capacity] ),
+    data(new char[capacity]),
     safe(is_safe)
 {
 }
@@ -41,9 +42,9 @@ Fdbuf::~Fdbuf()
 {
   if (data) {
     if (safe) {
-      memset(data, 0, capacity );
+      memset(data, 0, capacity);
     }
-    delete data;
+    delete[] data;
   }
 }
 
@@ -56,18 +57,18 @@ Fdbuf::~Fdbuf()
 //
 ssize_t Fdbuf::read(int fd, size_t max_read)
 {
-  ensure_additional( max_read );
+  ensure_additional(max_read);
   return post_read(::read(fd, data + start + len, max_read));
 }
 ssize_t Fdbuf::recv(int fd, size_t max_read, int flags)
 {
-  ensure_additional( max_read );
+  ensure_additional(max_read);
   return post_read(::recv(fd, data + start + len, max_read, flags));
 }
 ssize_t Fdbuf::recvfrom(int sd, ssize_t max_read, int flags,
 			struct sockaddr *from, socklen_t *fromlen)
 {
-  ensure_additional( max_read );
+  ensure_additional(max_read);
   return post_read(::recvfrom(sd, data + start + len, max_read, 0, from, fromlen));
 }
 
@@ -75,7 +76,7 @@ ssize_t Fdbuf::recvfrom(int sd, ssize_t max_read, int flags,
 Fdbuf &Fdbuf::pushString(const std::string &s)
 {
   ensure_additional(s.length());
-  s.copy( data + start + len, s.length(), 0 );
+  s.copy(data + start + len, s.length(), 0);
   len += s.length();
   return *this;
 }
@@ -109,16 +110,16 @@ ssize_t Fdbuf::send(int sd, ssize_t max_write, int flags)
 {
   return post_write(::send(sd, data + start, 
 			   max_write<0 ? len : std::min(len,(size_t)max_write),
-			   flags ));
+			   flags));
 }
 ssize_t Fdbuf::sendto(int sd, ssize_t max_write, int flags,
-		      const struct sockaddr *to, socklen_t tolen )
+		      const struct sockaddr *to, socklen_t tolen)
 {
   return post_write(::sendto(sd, data + start, 
 			     ((max_write < 0)
                               ? len
                               : std::min(len, (size_t) max_write)),
-			     flags, to, tolen ));
+			     flags, to, tolen));
 }
 
 //
@@ -171,7 +172,7 @@ Fdbuf::push_bytes(const char *buf, size_t sz)
 
 
 size_t
-Fdbuf::pop_to_fdbuf( Fdbuf &fb, size_t to_write)
+Fdbuf::pop_to_fdbuf(Fdbuf &fb, size_t to_write)
 {
   to_write = std::min(to_write, len);
   fb.pushFdbuf(*this, to_write);
@@ -187,24 +188,24 @@ void Fdbuf::ensure(size_t new_capacity)
 {
   // Always give us aligned headroom.
   new_capacity = align(new_capacity);
-  if ( capacity < new_capacity ) {
+  if (capacity < new_capacity) {
     size_t new_size = (new_capacity + BUF_INCREMENT - 1) / BUF_INCREMENT * BUF_INCREMENT;
     char *old_buf = data;
     char *new_buf = new char[new_size];
-    memcpy( new_buf, old_buf + start, len );
+    memcpy(new_buf, old_buf + start, len);
     if (safe) {
-      memset(new_buf + len, 0, new_size -len );
-      memset(old_buf, 0, capacity );
+      memset(new_buf + len, 0, new_size -len);
+      memset(old_buf, 0, capacity);
     }
     data = new_buf;
     capacity = new_size;
     start = 0;
-    delete old_buf;
+    delete[] old_buf;
   } 
-  if ( capacity - start < new_capacity ) {
-    memcpy( data, data + start, len );
+  if (capacity - start < new_capacity) {
+    memcpy(data, data + start, len);
   }
-  assert( capacity >= start + len );
+  assert(capacity >= start + len);
 }
 
 

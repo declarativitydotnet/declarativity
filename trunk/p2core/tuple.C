@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 2; related-file-name: "tuple.h" -*-
 /*
  * @(#)$Id$
  *

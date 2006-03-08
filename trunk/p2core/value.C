@@ -1,7 +1,6 @@
 /*
  * @(#)$Id$
  *
- *
  * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
@@ -30,6 +29,7 @@
 #include "val_tuple.h"
 #include "val_time.h"
 #include "val_id.h"
+#include "val_ip_addr.h"
 
 typedef ValuePtr (*_unmarshal_fn)( XDR *);
 

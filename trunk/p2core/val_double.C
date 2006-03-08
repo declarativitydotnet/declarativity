@@ -75,26 +75,36 @@ ValuePtr Val_Double::xdr_unmarshal( XDR *x )
 //
 // Casting
 //
-double Val_Double::cast(ValuePtr v)
+double
+Val_Double::cast(ValuePtr v)
 {
+  double returnValue;
   switch (v->typeCode()) {
   case Value::DOUBLE:
-    return (static_cast<Val_Double *>(v.get()))->d;
+    returnValue = (static_cast<Val_Double *>(v.get()))->d;
+    break;
   case Value::INT32:
-    return (double)(Val_Int32::cast(v));
+    returnValue = (double)(Val_Int32::cast(v));
+    break;
   case Value::UINT32:
-    return (double)(Val_UInt32::cast(v));
+    returnValue = (double)(Val_UInt32::cast(v));
+    break;
   case Value::INT64:
-    return (double)(Val_Int64::cast(v));
+    returnValue = (double)(Val_Int64::cast(v));
+    break;
   case Value::UINT64:
-    return (double)(Val_UInt64::cast(v));
+    returnValue = (double)(Val_UInt64::cast(v));
+    break;
   case Value::NULLV:
-    return 0;
+    returnValue = 0;
+    break;
   case Value::STR:
-    return strtod(Val_Str::cast(v).c_str(),NULL);
+    returnValue = strtod(Val_Str::cast(v).c_str(),NULL);
+    break;
   default:
     throw Value::TypeError(v->typeCode(), Value::DOUBLE );
   }
+  return returnValue;
 }
 
 int Val_Double::compareTo(ValuePtr other) const
