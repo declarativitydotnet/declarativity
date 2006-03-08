@@ -77,7 +77,7 @@ unset BOOST_LIB
 p2_boostlib=`echo $p2_boostlib | sed -e 's!/$!!'`
 
 if test -d "$p2_boostlib"; then
-    if ls $p2_boostlib | egrep 'boost_regex*.(la|so|a)$' >/dev/null 2>&1; then
+    if ls $p2_boostlib | egrep 'boost_regex.*\.(la|so|a)$' >/dev/null 2>&1; then
 	BOOST_LIB="-L${p2_boostlib} -lboost_regex -lboost_date_time"
 	AC_MSG_RESULT([using boost from $p2_boostlib])
     else	
@@ -131,7 +131,7 @@ unset PCAP_LIB
 p2_pcaplib=`echo $p2_pcaplib | sed -e 's!/$!!'`
 
 if test -d "$p2_pcaplib"; then
-    if ls $p2_pcaplib | egrep 'libpcap*.(la|so|a)$' >/dev/null 2>&1; then
+    if ls $p2_pcaplib | egrep 'libpcap.*\.(la|so|a)$' >/dev/null 2>&1; then
 	PCAP_LIB="-L${p2_pcaplib} -lpcap"
 	AC_MSG_RESULT([using libpcap from $p2_pcaplib])
     else
