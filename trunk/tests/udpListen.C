@@ -2,7 +2,6 @@
 /*
  * @(#)$Id$
  *
- *
  * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
@@ -41,8 +40,6 @@
 #include "unmarshal.h"
 #include "tupleSource.h"
 #include "timedPullSink.h"
-#include "ping.h"
-#include "pong.h"
 #include "slot.h"
 #include "val_str.h"
 #include "val_tuple.h"

@@ -2,25 +2,22 @@
 #
 #  @(#)$Id$
 #
-# Copyright (c) 2005 Intel Corporation. All rights reserved.
-#
-# This file is distributed under the terms in the attached INTEL-LICENSE file.
-# If you do not find these files, copies can be found by writing to:
+# This file is distributed under the terms in the attached LICENSE file.
+# If you do not find this file, copies can be found by writing to:
 # Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
 # Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+# Or
+# UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+# Berkeley, CA,  94707. Attention: P2 Group.
 #
 # DESCRIPTION: Makefile for the P2 tests
 #
 
 $(PROGRAMS): $(LDEPS)
 
-bin_PROGRAMS 	= 	values \
-			tuples \
+bin_PROGRAMS 	=  	tuples \
 			benchmark \
 			overlog \
-			tables \
-			pel \
-			IDs \
 			runManyChords \
 			runChord \
 			runOverLog \
@@ -38,19 +35,10 @@ bin_PROGRAMS 	= 	values \
 			netcc2 \
 			perfectChord \
 			logger \
-			csv \
 			testQueue \
-			agg \
-			pingpong \
 			udpMessage \
-			udpListen \
-			paths \
-			testPlanner
+			udpListen
 
-
-values_SOURCES	= values.C
-values_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
-		$(top_builddir)/eventLoop/.libs/libeventLoop.a
 
 tuples_SOURCES	= tuples.C
 tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
@@ -59,14 +47,6 @@ tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
 benchmark_SOURCES	= benchmark.C
 benchmark_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
 		  $(top_builddir)/eventLoop/.libs/libeventLoop.a
-
-tables_SOURCES	= tables.C
-tables_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
-		$(top_builddir)/eventLoop/.libs/libeventLoop.a
-
-pel_SOURCES	= pel.C
-pel_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
-		$(top_builddir)/eventLoop/.libs/libeventLoop.a
 
 
 logger_SOURCES  = logger.C
@@ -89,15 +69,6 @@ demultiplex_LDADD = \
 
 join_SOURCES = join.C
 join_LDADD = \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a
-
-paths_SOURCES = paths.C
-paths_LDADD = \
-	$(top_builddir)/planner/.libs/libp2planner.a \
-	$(top_builddir)/overlog/.libs/liboverlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/eventLoop/.libs/libeventLoop.a
@@ -171,11 +142,6 @@ lookupGenerator_LDADD = \
 #	$(top_builddir)/elements/.libs/libp2elements.a \
 #	$(top_builddir)/p2core/.libs/libp2core.a 
 
-IDs_SOURCES = IDs.C
-IDs_LDADD = \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
-	$(top_builddir)/p2core/.libs/libp2core.a
-
 net_SOURCES = net.C
 net_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
@@ -223,25 +189,6 @@ testQueue_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/eventLoop/.libs/libeventLoop.a
 
-agg_SOURCES	= agg.C
-agg_LDADD = \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
-	$(top_builddir)/p2core/.libs/libp2core.a
-
-csv_SOURCES	= csv.C
-csv_LDADD = \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a
-
-pingpong_SOURCES	= pingpong.C
-pingpong_LDADD = \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a
-
 udpMessage_SOURCES	= udpMessage.C
 udpMessage_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
@@ -256,17 +203,16 @@ udpListen_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/eventLoop/.libs/libeventLoop.a
 
-testPlanner_SOURCES	= testPlanner.C
-testPlanner_LDADD = \
-	$(top_builddir)/planner/.libs/libp2planner.a \
-	$(top_builddir)/overlog/.libs/liboverlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a
-
 CLEANFILES = core *.core *~
-EXTRA_DIST = .cvsignore
+
+EXTRA_DIST = .cvsignore \
+		chord.C \
+		ring.C \
+		symphony.C \
+		testerr.h \
+		chordDatalog.C
+
+
 INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements \
 		-I$(top_builddir)/net -I$(top_builddir)/overlog \
 		-I$(top_builddir)/planner -I$(top_builddir)/eventLoop
