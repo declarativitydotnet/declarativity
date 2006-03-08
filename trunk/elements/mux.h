@@ -2,8 +2,8 @@
 /*
  * @(#)$Id$
  * 
- * This file is distributed under the terms in the attached INTEL-LICENSE file.
- * If you do not find these files, copies can be found by writing to:
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
  * Or
@@ -42,15 +42,7 @@ public:
   /** My catch up method, to handle callbacks off the callback thread */
   void catchUp();
 
-  /** Add a new input port, and return the port number */
-  int add_input();
-
-  /** Remove port (will not affect other port positions) */
-  void remove_input(int);
-
 private:
-  bool isUnusedPort(int port);
-
   /** Is my output blocked? */
   bool _blocked;
 

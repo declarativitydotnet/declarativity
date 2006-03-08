@@ -1,4 +1,4 @@
-
+// -*- c-basic-offset: 2; related-file-name: "aggregate.h" -*-
 /*
  * @(#)$Id$
  * 
@@ -9,6 +9,7 @@
  * Or
  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
  * Berkeley, CA,  94707. Attention: P2 Group.
+ * 
  *
  */
 

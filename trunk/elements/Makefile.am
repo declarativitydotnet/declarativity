@@ -2,17 +2,20 @@
 #
 #  @(#)$Id$
 #
-# Copyright (c) 2005 Intel Corporation. All rights reserved.
-#
-# This file is distributed under the terms in the attached INTEL-LICENSE file.
-# If you do not find these files, copies can be found by writing to:
+# This file is distributed under the terms in the attached LICENSE file.
+# If you do not find this file, copies can be found by writing to:
 # Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
 # Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+# Or
+# UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+# Berkeley, CA,  94707. Attention: P2 Group.
+#  
 #
 # DESCRIPTION: Makefile for the P2 core elements library
 #
 
 lib_LTLIBRARIES = libp2elements.la
+
 libp2elements_la_SOURCES = \
 	aggwrap.C \
 	slot.C \
@@ -31,7 +34,6 @@ libp2elements_la_SOURCES = \
 	unmarshal.C \
 	unmarshalField.C \
 	route.C \
-	ddemux.C \
 	demux.C \
 	mux.C \
 	roundRobin.C \
@@ -42,14 +44,9 @@ libp2elements_la_SOURCES = \
 	store.C \
 	insert.C \
 	delete.C \
-	joiner.C \
 	timedPullPush.C \
 	strToSockaddr.C \
 	queue.C \
-	groupby.C \
-	randomPushSource.C \
-	ping.C \
-	pong.C \
 	pelScan.C \
 	functorSource.C \
 	tupleSource.C \
@@ -58,13 +55,15 @@ libp2elements_la_SOURCES = \
 	unboxField.C \
 	printWatch.C \
 	aggregate.C \
-	scan.C \
-	agg.C 
+	scan.C
 
 INCLUDES = @BOOST_INC@ -I../p2core -I../eventLoop
 
 CLEANFILES = core *.core *~
-EXTRA_DIST = .cvsignore
+
+EXTRA_DIST = .cvsignore \
+		$(libp2elements_la_SOURCES:.C=.h) \
+		lookup.h
 
 MAINTAINERCLEANFILES = Makefile.in
 
