@@ -14,6 +14,7 @@
 
 #include "ccr.h"
 #include "val_uint64.h"
+#include "val_uint32.h"
 #include "val_double.h"
 #include "val_str.h"
 #include "val_tuple.h"
@@ -44,26 +45,29 @@ CCR::CCR(string name, double rwnd, uint src, bool flow)
  */
 TuplePtr CCR::simple_action(TuplePtr p) 
 {
-  uint64_t seq  = 0;
-  ValuePtr src; 
-  ValuePtr port;
+  uint64_t seq    = 0;
+  uint32_t offset = 0;
+  ValuePtr src    = (*p)[0]; 
 
+  p = Val_Tuple::cast((*p)[1]);
   for (uint i = 0; i < p->size(); i++) {
     try {
       TuplePtr t = Val_Tuple::cast((*p)[i]); 
       if (Val_Str::cast((*t)[0]) == "SEQ") {
-        seq  = Val_UInt64::cast((*t)[1]);
-        src  = (*t)[2];
-        port = (*t)[3];
+        seq    = Val_UInt64::cast((*t)[1]);
+        offset = Val_UInt32::cast((*t)[2]);
       }
     }
     catch (Value::TypeError e) { } 
   }
-  if (!src || !port) return p;		// Punt
+  if (!src) {
+    log(LoggerI::WARN, 0, "CCR::simple_action NO SOURCE ADDRESS"); 
+    return p;			// Punt
+  }
+  else std::cerr << "SOURCE ADDRESS: " << src->toString() << std::endl;
 
   TuplePtr ack  = Tuple::mk();
   ack->append(src);			// Source location
-  ack->append(port);			// Source location
   ack->append(Val_Str::mk("ACK"));
   ack->append(Val_UInt64::mk(seq));	// The sequence number
   ack->append(Val_Double::mk(rwnd_));	// Receiver window size

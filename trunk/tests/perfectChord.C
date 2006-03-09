@@ -63,7 +63,7 @@ void hookupSend_RCC(Plumber::ConfigurationPtr conf, string src, bool do_retry,
                     ElementSpecPtr rr_out,    int pmo, ElementSpecPtr mux_in,  int pmi) {
   // SENDER
   ElementSpecPtr dataq  = conf->addElement(ElementPtr(new Queue("Data Q", 1000)));
-  ElementSpecPtr seq    = conf->addElement(ElementPtr(new Sequence("Sequence", src, pdi)));
+  ElementSpecPtr seq    = conf->addElement(ElementPtr(new Sequence("Sequence")));
   ElementSpecPtr retry  = conf->addElement(ElementPtr(new RDelivery("RETRY", false)));
   ElementSpecPtr rcct   = conf->addElement(ElementPtr(new RateCCT("RateCCT")));
   ElementSpecPtr addr   = conf->addElement(ElementPtr(new PelTransform("ADDRESS", 
@@ -139,7 +139,7 @@ void hookupSend_CC(Plumber::ConfigurationPtr conf, string src, bool do_retry,
                    ElementSpecPtr rr_out,    int pmo, ElementSpecPtr mux_in,  int pmi) {
   // SENDER
   ElementSpecPtr dataq  = conf->addElement(ElementPtr(new Queue("Data Q", 1000)));
-  ElementSpecPtr seq    = conf->addElement(ElementPtr(new Sequence("Sequence", src, pdi)));
+  ElementSpecPtr seq    = conf->addElement(ElementPtr(new Sequence("Sequence")));
   ElementSpecPtr retry  = conf->addElement(ElementPtr(new RDelivery("RETRY", do_retry)));
   ElementSpecPtr rcount  = conf->addElement(ElementPtr(new PelTransform("RETRY ADD", 
                                                                           "$0 pop $1 pop $2 pop \

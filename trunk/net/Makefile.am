@@ -20,6 +20,7 @@ libp2net_la_SOURCES = \
 	tman.C \
 	plsensor.C \
 	udp.C \
+	udp2.C \
 	tupleseq.C \
 	cc.C \
 	cct.C \

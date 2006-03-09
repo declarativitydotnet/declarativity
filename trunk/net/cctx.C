@@ -76,7 +76,7 @@ int32_t CCTuple::delay()
  */
 CCTx::CCTx(str name, double init_wnd, double max_wnd, 
            uint32_t seq_field, uint32_t ack_seq_field, uint32_t ack_rwnd_field) 
-  : Element(name, 2, 1), _dout_cb(b_cbv_null), data_on_(true), sa_(-1), sv_(0)
+  : Element(name, 2, 2), _dout_cb(b_cbv_null), data_on_(true), sa_(-1), sv_(0)
 {
   rto_            = MAX_RTO;
   max_wnd_        = max_wnd;

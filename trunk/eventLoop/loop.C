@@ -66,6 +66,7 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
   boost::posix_time::ptime now;
   getTime(now);
 
+
   ////////////////////////////////////////////////////////////
   // Empty the queue prefix that has already expired
 

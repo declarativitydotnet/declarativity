@@ -142,10 +142,6 @@ public:
   int ninputs() const				{ return _ninputs; }
   int noutputs() const				{ return _noutputs; }
   
-  // Setters
-  void ninputs(int);
-  void noutputs(int);
-
   bool ports_frozen() const;
 
   // CONFIGURATION

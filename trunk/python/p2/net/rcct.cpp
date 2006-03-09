@@ -1,0 +1,6 @@
+class_<RateCCT, bases<Element>, boost::shared_ptr<RateCCT>, boost::noncopyable>
+      ("RateCCT", init<std::string, optional<bool> >())
+  .def("class_name", &RateCCT::class_name)
+  .def("processing", &RateCCT::processing)
+  .def("flow_code",  &RateCCT::flow_code)
+;

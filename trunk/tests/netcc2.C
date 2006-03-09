@@ -50,10 +50,13 @@ Plumber::ConfigurationPtr UdpCC_source(Udp *udp, string src, string dest, double
 
   ElementSpecPtr data     = conf->addElement(ElementPtr(new TimedPushSource("source", .01)));
   ElementSpecPtr dqueue   = conf->addElement(ElementPtr(new Queue("Source Data Q", 1000)));
-  ElementSpecPtr seq      = conf->addElement(ElementPtr(new Sequence("Sequence", src, 1)));
+  ElementSpecPtr seq      = conf->addElement(ElementPtr(new Sequence("Sequence", 1)));
   ElementSpecPtr retry    = conf->addElement(ElementPtr(new RDelivery("Retry")));
   ElementSpecPtr retryMux = conf->addElement(ElementPtr(new Mux("Retry Mux", 2)));
   ElementSpecPtr cct      = conf->addElement(ElementPtr(new CCT("Transmit CC", 1, 2048)));
+  ElementSpecPtr srcAddr  = conf->addElement(ElementPtr(new PelTransform(string("SRC: ").append(src),
+                                                                            "\"" + src + "\""
+									    + " pop swallow pop")));
   ElementSpecPtr destAddr = conf->addElement(ElementPtr(new PelTransform(string("DEST: ").append(dest),
                                                                             "\"" + dest + "\""
 									    + " pop swallow pop")));
@@ -66,6 +69,7 @@ Plumber::ConfigurationPtr UdpCC_source(Udp *udp, string src, string dest, double
   // The receiving data flow
   ElementSpecPtr udpRx     = conf->addElement(udp->get_rx());
   ElementSpecPtr unmarshal = conf->addElement(ElementPtr(new UnmarshalField("unmarshal ack", 1)));
+  ElementSpecPtr printRA   = conf->addElement(ElementPtr(new Print("Print Receive ACK")));
   ElementSpecPtr unbox     = conf->addElement(ElementPtr(new PelTransform("unRoute", "$1 unboxPop")));
   ElementSpecPtr discard   = conf->addElement(ElementPtr(new Discard("DISCARD")));
 
@@ -74,7 +78,8 @@ Plumber::ConfigurationPtr UdpCC_source(Udp *udp, string src, string dest, double
   conf->hookUp(dqueue, 0, seq, 0);
   conf->hookUp(seq, 0, retry, 0);
   conf->hookUp(retry, 0, cct, 0);
-  conf->hookUp(cct, 0, destAddr, 0);
+  conf->hookUp(cct, 0, srcAddr, 0);
+  conf->hookUp(srcAddr, 0, destAddr, 0);
   conf->hookUp(destAddr, 0, marshal, 0);
   conf->hookUp(marshal, 0, route, 0);
   conf->hookUp(route, 0, netsim, 0);
@@ -83,7 +88,8 @@ Plumber::ConfigurationPtr UdpCC_source(Udp *udp, string src, string dest, double
   // The local ack flow
   conf->hookUp(udpRx, 0, unmarshal, 0);
   conf->hookUp(unmarshal, 0, unbox, 0);
-  conf->hookUp(unbox, 0, cct, 1);
+  conf->hookUp(unbox, 0, printRA, 0);
+  conf->hookUp(printRA, 0, cct, 1);
   conf->hookUp(cct, 1, retry, 1);
   conf->hookUp(retry, 1, retryMux, 0);
   conf->hookUp(retry, 2, retryMux, 1);

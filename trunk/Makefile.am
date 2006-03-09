@@ -14,7 +14,7 @@
 # 
 #
 
-SUBDIRS=eventLoop p2core elements net overlog tests unitTests 
+SUBDIRS=eventLoop p2core elements net overlog tests unitTests python
 
 EXTRA_DIST = LICENSE
 CXXFLAGS="-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG" @CXXFLAGS@

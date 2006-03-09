@@ -101,13 +101,15 @@ int CCT::push(int port, TuplePtr tp, b_cbv cb)
   assert(port == 1);
 
   try {
-    if (Val_Str::cast((*tp)[2]) == "ACK") {
-      // Acknowledge tuple and update measurements.
-      SeqNum seq  = Val_UInt64::cast((*tp)[3]);	// Sequence number
-      //TODO: Use timestamps to track the latest rwnd value.
-      rwnd_ = Val_Double::cast((*tp)[4]);	// Receiver window
-      add_rtt_meas(dealloc(seq, "SUCCESS"));
-      return 1;
+    for (int i = 0; i < tp->size(); i++) {
+      if ((*tp)[i]->typeCode() == Value::STR && Val_Str::cast((*tp)[i]) == "ACK") {
+        // Acknowledge tuple and update measurements.
+        SeqNum seq  = Val_UInt64::cast((*tp)[i+1]);	// Sequence number
+        //TODO: Use timestamps to track the latest rwnd value.
+        rwnd_ = Val_Double::cast((*tp)[i+2]);	// Receiver window
+        add_rtt_meas(dealloc(seq, "SUCCESS"));
+        return 1;
+      }
     }
   }
   catch (Value::TypeError e) { } 

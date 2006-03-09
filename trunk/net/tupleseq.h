@@ -20,7 +20,7 @@
 
 class Sequence : public Element {
 public:
-  Sequence(string n="Sequence", string src="", uint32_t port=0, uint64_t s=1);
+  Sequence(string n="Sequence", uint64_t s=1);
   const char *class_name() const { return "Sequence";};
   const char *processing() const { return "a/a"; };
   const char *flow_code() const	 { return "-/-"; };
@@ -30,8 +30,6 @@ public:
 private:
   REMOVABLE_INLINE bool isSeq(ValuePtr);
 
-  string      src_;
-  uint32_t port_;
   uint64_t seq_;
 };
 

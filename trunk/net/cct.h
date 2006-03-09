@@ -9,8 +9,8 @@
  * 
  */
 
-#ifndef __CCTX_H__
-#define __CCTX_H__
+#ifndef __CCT_H__
+#define __CCT_H__
 
 #include <map>
 #include <deque>

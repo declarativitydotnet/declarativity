@@ -51,7 +51,7 @@ Plumber::ConfigurationPtr UdpCC_source(Udp *udp, string src, string dest, double
   ElementSpecPtr data     = conf->addElement(ElementPtr(new TimedPushSource("source", .01)));
   ElementSpecPtr dataq    = conf->addElement(ElementPtr(new Queue("Data Q", 100)));
   ElementSpecPtr rr       = conf->addElement(ElementPtr(new RoundRobin("RR", 2)));
-  ElementSpecPtr seq      = conf->addElement(ElementPtr(new Sequence("Sequence", src, 1)));
+  ElementSpecPtr seq      = conf->addElement(ElementPtr(new Sequence("Sequence", 1)));
   ElementSpecPtr retry    = conf->addElement(ElementPtr(new RDelivery("Retry", false)));
   ElementSpecPtr rcct     = conf->addElement(ElementPtr(new RateCCT("RateCCT")));
   ElementSpecPtr destAddr = conf->addElement(ElementPtr(new PelTransform("dest:"+dest,
