@@ -1,5 +1,5 @@
 $Id$
-To build P2 on Mac OS X Tiger (as of Version 10.4.5):
+To build P2 on Mac OS X Tiger (PPC architecture, OSX Version 10.4.5):
 
 1) Tiger ships with Python 2.3.  You need to install Python 2.4.1.
    (e.g. from http://undefined.org/python/MacPython-OSX-2.4.1-1.dmg)
