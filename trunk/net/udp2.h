@@ -99,6 +99,7 @@ public:
   virtual int initialize() {
      tx->initialize();
      rx->initialize();
+     return 0;
   };
 
   // Accessing the individual elements
