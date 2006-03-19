@@ -98,7 +98,6 @@ public:
     if (out->compareTo(in) != 0) {
       std::cout << "compareTo's result:" << out->compareTo(in) << "\n";
       char mybuf[1024];
-      char *bufptr = (char *)mybuf;
       std::cout << "out: " << out << ", in: " << in << "\n";
       BOOST_CHECK_MESSAGE(1, mybuf);
     }

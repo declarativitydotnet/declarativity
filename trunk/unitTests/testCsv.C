@@ -15,6 +15,7 @@
 #include "csvparser.h"
 #include "val_str.h"
 
+char *null_str = "__null_tuple";
 
 class testCsv
 {
@@ -61,18 +62,31 @@ public:
 
 
       // Did I get an output?
-      {
-        std::ostringstream message;
-        message << "CSV test "
-                << i
-                << " at line "
-                << test->line
-                << ".  Got no output.";
-        BOOST_CHECK_MESSAGE(t_out == NULL,
-                            message.str().c_str());
-      }
-      
-      if (t_out != NULL) {
+      if (t_out == NULL) {
+        // Did I expect no output?
+        {
+          std::ostringstream message;
+          message << "CSV test "
+                  << i
+                  << " at line "
+                  << test->line
+                  << ".  Got no output.";
+          BOOST_CHECK_MESSAGE(test->out == null_str,
+                              message.str().c_str());
+        }
+      } else {
+        // We have an output. Should we?
+        {
+          std::ostringstream message;
+          message << "CSV test "
+                  << i
+                  << " at line "
+                  << test->line
+                  << ".  Received null tuple.";
+          BOOST_CHECK_MESSAGE(test->out != null_str,
+                              message.str().c_str());
+        }
+
         // We have an output. Is it right?
         {
           std::ostringstream message;
@@ -97,7 +111,6 @@ public:
 // Test definitions
 ////////////////////////////////////////////////////////////
 
-char *null_str = "__null_tuple";
 
 const testCsv::csv_test
 testCsv::ctests[] = {

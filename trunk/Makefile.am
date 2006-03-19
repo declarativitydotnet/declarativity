@@ -20,7 +20,7 @@ EXTRA_DIST = LICENSE \
 		doc/chord.plg doc/narada.plg doc/ping.plg \
 		doc/reachable.plg doc/types.txt
 
-CXXFLAGS="-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG -Wall " @CXXFLAGS@
+CXXFLAGS=-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG -Wall @CXXFLAGS@
 
 LDFLAGS=@BOOST_LIB@ @PYTHON_LSPEC@ @LDFLAGS@
 
