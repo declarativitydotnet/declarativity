@@ -44,6 +44,8 @@ public:
   public:
     Rx(string, Udp2 &udp);
 
+    virtual ~Rx() {};
+
     void socket_on()
     {
       fileDescriptorCB(u->sd, b_selread,
@@ -72,6 +74,8 @@ public:
   class Tx {
   public:
     Tx(string, Udp2 &udp);
+
+    virtual ~Tx() {};
 
     void socket_on() { fileDescriptorCB(u->sd, b_selwrite, boost::bind(&Udp2::Tx::socket_cb, this));};
     void socket_off() { removeFileDescriptorCB(u->sd, b_selwrite); };

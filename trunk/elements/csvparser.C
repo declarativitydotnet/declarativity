@@ -43,12 +43,10 @@ CSVParser::CSVParser(string name)
     _push_cb(0), 
     _push_blocked(false), 
     _pull_cb(0),
-/*
     _re_line("^([^\\r\\n]*)\\r?\\n"),
     _re_comm("(^$|#.*)"),
     _re_qstr("^\\s*\\\"(([^\\n\\\"]*(\\\\(.|\\n))?)+)\\\"\\s*(,|$)"),
     _re_tokn("^\\s*([^,\\s\"\']+)\\s*(,|$)"),
-*/
     _acc("")
 {
 }  
