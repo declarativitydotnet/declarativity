@@ -1,18 +1,11 @@
 
 ELEMENTS
 
- - Storage element (push): takes a tuple and stores it in a "table"
-   (see below) under a key.  Convention: the key is the first element
-   of the tuple. 
-
  - A TCP connect element pair: analogous to UDP element.  Some kind of
    reconnection policy.   Rx is push output, Tx is pull input. 
 
  - Make plsensor more a generic HTTP sensor.  This amounts to just
    making it understand hostnames other than localhost. 
-
- - UDPCC elements: packets flow in both directions, and congestion
-   control is applied. 
 
  - Element to demultiplex packets based on peer IP address.  push-in,
    push-out. 
@@ -22,9 +15,6 @@ ELEMENTS
 
  - Element to demultiplex a (query, tuple list) into a set of tuples
    to be pushed to different dataflow arguments. 
-
- - Tuple filter element: tuple expression is evaluated to boolean
-   which lets tuple through or not.  push-push or pull-pull. 
 
 OTHER OBJECTS / FACILTIES
 
@@ -48,13 +38,6 @@ OTHER OBJECTS / FACILTIES
     2) Time-based FIFO: every tuple for the last n seconds
     3) Fixed-size FIFO: the last n tuples. 
 
- - Unit testing library: put useful test functions/classes into a
-   library, built in the tests directory. 
-
- - Framework for each unit test program: convention for output,
-   etc. together with a coherent way to run all the tests and collate
-   the failures. 
-
  - Adding microbenchmarks to the framework above.
 
  - Cron job to checkout a fresh tree on grumpy each night, build P2,
@@ -66,3 +49,7 @@ OTHER OBJECTS / FACILTIES
  - Autoconf should check for correct version of automake (1.9)
  - Autoconf should check for correct version of flex 
  - Autoconf should check for correct version of bison
+
+ - Dynamic or static schema checker. Do all instances of foo(X, Y, Z) in
+   your OverLog use the same arity, types?
+

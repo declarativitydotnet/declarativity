@@ -269,7 +269,6 @@ public:
               << ">."; \
       BOOST_CHECK_MESSAGE(testAgainst == cValue, \
                           message.str().c_str()); \
-      std::cout << "(" << dstSec << "," << dstNsec << ") -> " << to_simple_string(cValue) << "\n";\
     } catch (Value::TypeError) {                  \
       std::ostringstream message; \
       message << testID \
