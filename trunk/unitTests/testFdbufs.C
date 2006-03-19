@@ -30,8 +30,8 @@
 
 
 
-  using namespace boost::gregorian;
-  using namespace boost::posix_time;
+using namespace boost::gregorian;
+using namespace boost::posix_time;
 
 class testFdbufs
 {
@@ -82,13 +82,13 @@ public:
     XDR xe;
     xdrfdbuf_create(&xe, &fin, false, XDR_ENCODE);
     in->xdr_marshal(&xe);
-
+    
     XDR xd;
     Fdbuf fout(0);
     fout.pushFdbuf(fin, fin.length());
     xdrfdbuf_create(&xd, &fout, false, XDR_DECODE);
     ValuePtr out = Value::xdr_unmarshal(&xd);
-	
+    
     BOOST_CHECK_MESSAGE(out->compareTo(in) == 0,
                         "Marshalled/unmarshalled mismatch!\n");
     
@@ -114,19 +114,19 @@ public:
     t->append(Val_UInt64::mk(13500975));
     t->freeze();  
     xdrTest(Val_Tuple::mk(t));
-
-//	boost::posix_time::ptime time = boost::posix_time::second_clock::universal_time();
-	//getTime(time);
-	
-	boost::posix_time::ptime time(date(1970, Jan, 1), 
-								  hours(2) + seconds(25) + nanoseconds(50203));
+    
+    //	boost::posix_time::ptime time = boost::posix_time::second_clock::universal_time();
+    //getTime(time);
+    
+    boost::posix_time::ptime time(date(1970, Jan, 1), 
+                                  hours(2) + seconds(25) + nanoseconds(50203));
 	
     xdrTest(Val_Time::mk(time));
-
-	boost::posix_time::time_duration td(0,0,5,0);
+    
+    boost::posix_time::time_duration td(0,0,5,0);
     td += boost::posix_time::nanoseconds(1020430);
-	xdrTest(Val_Time_Duration::mk(td));
-
+    xdrTest(Val_Time_Duration::mk(td));
+    
     IDPtr id(new ID((uint32_t) 102040));
     xdrTest(Val_ID::mk(id));
   }
