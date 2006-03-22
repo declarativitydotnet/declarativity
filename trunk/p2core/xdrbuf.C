@@ -178,7 +178,8 @@ fd_putint32(XDR *xdrs, const int32_t *lp)
 }
 
 /** Function specific to the Mac version of xdr_ops */
-static bool_t   fd_control(XDR *xdrs, int c, void *ch)
+static bool_t
+fd_control(XDR *xdrs, int c, void *ch)
 {
   return false;
 }

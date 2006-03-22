@@ -118,8 +118,8 @@ public:
     //	boost::posix_time::ptime time = boost::posix_time::second_clock::universal_time();
     //getTime(time);
     
-    boost::posix_time::ptime time(date(1970, Jan, 1), 
-                                  hours(2) + seconds(25) + nanoseconds(50203));
+    boost::posix_time::ptime time(date(1970, Jan, 1));
+    time += hours(2) + seconds(25) + nanoseconds(50203);
 	
     xdrTest(Val_Time::mk(time));
     

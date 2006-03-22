@@ -49,7 +49,8 @@ void Val_Time::xdr_marshal_subtype( XDR *x )
   long hours = d.hours();
   long mins = d.minutes();
   long secs = d.seconds();
-  long frac_secs = d.fractional_seconds() * (long)exp10(9 - (time_duration::num_fractional_digits()));
+  long frac_secs = d.fractional_seconds() *
+    (long) exp10(9 - (time_duration::num_fractional_digits()));
   
   xdr_long(x, &hours);
   xdr_long(x, &mins);

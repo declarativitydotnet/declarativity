@@ -101,7 +101,9 @@ int CCT::push(int port, TuplePtr tp, b_cbv cb)
   assert(port == 1);
 
   try {
-    for (int i = 0; i < tp->size(); i++) {
+    for (uint i = 0;
+         i < tp->size();
+         i++) {
       if ((*tp)[i]->typeCode() == Value::STR && Val_Str::cast((*tp)[i]) == "ACK") {
         // Acknowledge tuple and update measurements.
         SeqNum seq  = Val_UInt64::cast((*tp)[i+1]);	// Sequence number

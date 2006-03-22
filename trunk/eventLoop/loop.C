@@ -26,10 +26,13 @@ delayCB(double secondDelay, b_cbv cb)
 {
   assert(secondDelay >= 0.0);
 
-  unsigned long secs = (unsigned long)secondDelay; 
+  unsigned long secs = (unsigned long) secondDelay; 
   boost::posix_time::ptime expiration;
-  boost::posix_time::time_duration dlay(0,0,secs,(int32_t)((secondDelay-secs)
-							   *(double)boost::posix_time::time_duration::ticks_per_second()));
+  boost::posix_time::
+    time_duration dlay(0, 0, secs,
+                       (long) ((secondDelay-secs)
+                               * exp10(boost::posix_time::
+                                       time_duration::num_fractional_digits())));
 
   // When will this expire?
   getTime(expiration);
