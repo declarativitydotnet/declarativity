@@ -36,7 +36,9 @@ static int32_t *fd_inline(XDR *xdrs, u_int len);
 static void	fd_destroy(XDR *xdrs);
 static bool_t	fd_getint32(XDR *xdrs, int32_t *lp);
 static bool_t	fd_putint32(XDR *xdrs, const int32_t *lp);
+#ifdef __APPLE__
 static bool_t	fd_control(XDR *xdrs, int c, void *ch);
+#endif
 
 //
 // XDR ops table
@@ -177,12 +179,14 @@ fd_putint32(XDR *xdrs, const int32_t *lp)
   return true;
 }
 
+#ifdef __APPLE__
 /** Function specific to the Mac version of xdr_ops */
 static bool_t
 fd_control(XDR *xdrs, int c, void *ch)
 {
   return false;
 }
+#endif
 
 ////////////////////////////////////////////////////////////
 // End of Ops Table Functions
