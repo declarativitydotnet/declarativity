@@ -7,4 +7,4 @@
 all:
 	cp p2/.libs/libp2python.so ./lib/p2python.so
 
-SUBDIRS=p2
+SUBDIRS=p2 dfparser

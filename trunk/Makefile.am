@@ -16,7 +16,7 @@
 
 SUBDIRS=eventLoop p2core elements net overlog tests unitTests python
 
-EXTRA_DIST = LICENSE \
+EXTRA_DIST = LICENSE setup \
 		doc/chord.plg doc/narada.plg doc/ping.plg \
 		doc/reachable.plg doc/types.txt
 
