@@ -18,7 +18,7 @@ libp2python_la_LIBADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
-       -lboost_python -lrt -lp2core -lp2elements -leventLoop
+       -lboost_python -lp2core -lp2elements -leventLoop
 
 INCLUDES = $(PYTHON_CPPFLAGS) $(BOOST_INC) \
            -I$(top_builddir)/net -I$(top_builddir)/elements \
