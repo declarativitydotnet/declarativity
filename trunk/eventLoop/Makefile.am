@@ -18,7 +18,7 @@ libeventLoop_la_SOURCES = \
 	loop.C \
 	p2Time.C
 
-INCLUDES = @BOOST_INC@
+INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core
 
 CLEANFILES = core *.core *~ *.gen.h *.gen.txt pel_lexer.C
 

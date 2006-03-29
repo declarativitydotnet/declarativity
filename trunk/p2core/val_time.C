@@ -49,8 +49,7 @@ void Val_Time::xdr_marshal_subtype( XDR *x )
   long hours = d.hours();
   long mins = d.minutes();
   long secs = d.seconds();
-  long frac_secs = d.fractional_seconds() *
-    (long) exp10(9 - (time_duration::num_fractional_digits()));
+  long frac_secs = d.fractional_seconds() * PTIME_SECS_FACTOR;
   
   xdr_long(x, &hours);
   xdr_long(x, &mins);
@@ -85,8 +84,8 @@ double Val_Time::_theDouble = 0;
 
 Val_Time::Val_Time(struct timespec theTime) {
 	ptime epoch(date(1970,Jan,1));
-	time_duration td(0,0,theTime.tv_sec, (long) round(theTime.tv_nsec / 
-					 (long) exp10(9 - time_duration::num_fractional_digits())));
+	time_duration td(0,0,theTime.tv_sec, 
+					 (long) round(theTime.tv_nsec / PTIME_SECS_FACTOR));
 	t = epoch + td;
 }
 
@@ -149,7 +148,7 @@ boost::posix_time::ptime Val_Time::cast(ValuePtr v) {
 			// ensure we interpret this fractional part appropriately
 			// regardless of how much precision boost is compiled for
 			long frac_secs = (long) round(modf(d, &Val_Time::_theDouble)  
-					   * (long) exp10(time_duration::num_fractional_digits()));
+										  * PTIME_FRACTIONAL_FACTOR);
 			
 			time_duration elapsed(0,0,secs,frac_secs);       
 			ptime pt = epoch + elapsed;
@@ -230,8 +229,7 @@ void Val_Time_Duration::xdr_marshal_subtype( XDR *x )
   long hours = td.hours();
   long mins = td.minutes();
   long secs = td.seconds();
-  long frac_secs = td.fractional_seconds() 
-                  * (long)exp10(9 - (time_duration::num_fractional_digits())) ;
+  long frac_secs = td.fractional_seconds() * PTIME_SECS_FACTOR;
   xdr_long(x, &hours);
   xdr_long(x, &mins);
   xdr_long(x, &secs);
@@ -252,7 +250,8 @@ ValuePtr Val_Time_Duration::xdr_unmarshal( XDR *x )
 
   // ensure we interpret this as nanosecs (1/(10^9) sec) 
   // even if boost is compiled to lower precision 
-  boost::posix_time::time_duration td1(hours, mins, secs, frac_secs / (long) exp10(9 - time_duration::num_fractional_digits()));
+  boost::posix_time::time_duration td1(hours, mins, secs, 
+									   frac_secs / PTIME_SECS_FACTOR);
   
   
   
@@ -300,7 +299,7 @@ boost::posix_time::time_duration Val_Time_Duration::cast(ValuePtr v) {
        // ensure we interpret this fractional part appropriately
        // regardless of how much precision boost is compiled for
        long frac_secs = (long) round(modf(d, &Val_Time_Duration::_theDouble) 
-			       * exp10(time_duration::num_fractional_digits()));
+									 * PTIME_FRACTIONAL_FACTOR);
        time_duration td(0,0,secs,frac_secs);       
        return td;
      }
@@ -319,7 +318,7 @@ boost::posix_time::time_duration Val_Time_Duration::cast(ValuePtr v) {
 	 // ensure we interpret this as nanosecs (1/(10^9) sec) 
 	 // even if boost is compiled to lower precision 
 	 long nsecs = (long) round((Val_Int32::cast((*theTuple)[1]))
-				      / exp10(9.0 - time_duration::num_fractional_digits()));
+							   / PTIME_SECS_FACTOR);
 	 td = time_duration(0,0,secs,nsecs);
        } 
        return td;

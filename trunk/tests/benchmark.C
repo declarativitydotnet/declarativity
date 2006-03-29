@@ -32,6 +32,7 @@
 #include "val_int64.h"
 #include "val_uint64.h"
 #include "val_double.h"
+#include "val_time.h"
 #include "testerr.h"
 
 using namespace opr;
@@ -70,7 +71,7 @@ static double time_fn(b_cbv cb)
     tdiff = after_ts - before_ts; 
     // ensure we compute nanosecs (1/(10^9) sec) 
     // even if boost is compiled to lower precision 
-    elapsed = tdiff.fractional_seconds() * (long)exp10(9 - (boost::posix_time::time_duration::num_fractional_digits()));
+    elapsed = tdiff.fractional_seconds() * PTIME_SECS_FACTOR;
     average = elapsed / iter;
     sum = (average - past_average);
     if (sum > 0) 

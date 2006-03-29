@@ -16,11 +16,16 @@
 #ifndef __VAL_TIME_H__
 #define __VAL_TIME_H__
 
+#include "math.h"
 #include "value.h"
 #include "oper.h"
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "boost/date_time/gregorian/gregorian.hpp"
 
+static const long PTIME_FRACTIONAL_FACTOR 
+    = (long)exp10(boost::posix_time::time_duration::num_fractional_digits());
+static const long PTIME_SECS_FACTOR 
+    = (long)exp10(9 - boost::posix_time::time_duration::num_fractional_digits());
 
 class Val_Time : public Value {
 

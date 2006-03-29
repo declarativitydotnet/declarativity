@@ -349,7 +349,7 @@ public:
     TEST_CAST_T(Double, 1.0, 1);
     TEST_CAST_T(Double, -1.0, -1);
     TEST_CAST_T(Double, -1.79769E+308, INT_MIN);
-    TEST_CAST_T(Double, 1.79769E+308, INT_MIN);
+	//    TEST_CAST_T(Double, 1.79769E+308, INT_MIN); // not robust cross-platform
     TEST_CAST_T(Double, 2.225E-307, 0);
     TEST_CAST_T(Double, -2.225E-307, 0);
   
@@ -399,8 +399,8 @@ public:
   TEST_CAST_T(Double, 0, 0);
   TEST_CAST_T(Double, 1.0, 1);
   TEST_CAST_T(Double, -1.0, UINT_MAX);
-  TEST_CAST_T(Double, -1.79769E+308, 0);
-  TEST_CAST_T(Double, 1.79769E+308, 0);
+  // TEST_CAST_T(Double, -1.79769E+308, 0); // not robust cross-platform
+  // TEST_CAST_T(Double, 1.79769E+308, 0); // not robust cross-platform
   TEST_CAST_T(Double, 2.225E-307, 0);
   TEST_CAST_T(Double, -2.225E-307, 0);
   
@@ -450,8 +450,8 @@ public:
   TEST_CAST_T(Double, 0, 0);
   TEST_CAST_T(Double, 1.0, 1);
   TEST_CAST_T(Double, -1.0, -1);
-  TEST_CAST_T(Double, -1.79769E+308, LONG_LONG_MIN);
-  TEST_CAST_T(Double, 1.79769E+308, LONG_LONG_MIN);
+  // TEST_CAST_T(Double, -1.79769E+308, LONG_LONG_MIN); // not robust cross-platform
+  // TEST_CAST_T(Double, 1.79769E+308, LONG_LONG_MIN); // not robust cross-platform
   TEST_CAST_T(Double, 2.225E-307, 0);
   TEST_CAST_T(Double, -2.225E-307, 0);
   
@@ -503,8 +503,8 @@ public:
      Removed due to GCC casting bug
      TEST_CAST_T(Double, -1.0, ULONG_LONG_MAX);
   */
-  TEST_CAST_T(Double, -1.79769E+308, 0);
-  TEST_CAST_T(Double, 1.79769E+308, 0);
+  // TEST_CAST_T(Double, -1.79769E+308, 0); // not robust cross-platform
+  // TEST_CAST_T(Double, 1.79769E+308, 0); // not robust cross-platform
   TEST_CAST_T(Double, 2.225E-307, 0);
   TEST_CAST_T(Double, -2.225E-307, 0);
   
@@ -684,7 +684,7 @@ public:
   TEST_CAST_T(Double, 1.0, 1, 0);
   TEST_CAST_T(Double, -1.0, -1, 0);
   TEST_CAST_T(Double, -1.79769E+308, INT_MIN, 0);
-  TEST_CAST_T(Double, 1.79769E+308, INT_MIN, 0);
+  // TEST_CAST_T(Double, 1.79769E+308, INT_MIN, 0); // not robust cross-platform
   TEST_CAST_T(Double, 2.225E-307, 0, 0);
   TEST_CAST_T(Double, -2.225E-307, 0, 0);
   

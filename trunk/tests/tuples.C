@@ -30,6 +30,7 @@
 #include "val_int64.h"
 #include "val_uint64.h"
 #include "val_double.h"
+#include "val_time.h"
 #include "oper.h"
 
 using namespace opr;
@@ -46,7 +47,8 @@ double time_fn(b_cbv cb)
   getTime(after_ts);
   
   tdiff = after_ts - before_ts;
-  elapsed = tdiff.total_seconds() + tdiff.fractional_seconds()/(exp10(tdiff.num_fractional_digits()));
+  elapsed = tdiff.total_seconds() + 
+	tdiff.fractional_seconds()/PTIME_FRACTIONAL_FACTOR;;
   std::cout << elapsed << " secs (";
   std::cout << tdiff.total_seconds() << " secs " << elapsed - (tdiff.seconds()/1000) << " usecs)\n";
   return elapsed;

@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include "fcntl.h"
+#include "val_time.h"
 
 callbackQueueT callbacks;
 long callbackID = 0;
@@ -30,9 +31,7 @@ delayCB(double secondDelay, b_cbv cb)
   boost::posix_time::ptime expiration;
   boost::posix_time::
     time_duration dlay(0, 0, secs,
-                       (long) ((secondDelay-secs)
-                               * exp10(boost::posix_time::
-                                       time_duration::num_fractional_digits())));
+                       (long) ((secondDelay-secs) * PTIME_FRACTIONAL_FACTOR));
 
   // When will this expire?
   getTime(expiration);
@@ -279,8 +278,7 @@ fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
   td_ts.tv_sec = waitDuration.total_seconds();
   // ensure we compute nanosecs (1/(10^9) sec) even if boost is compiled to lower 
   // precision 
-  td_ts.tv_nsec= waitDuration.fractional_seconds()
-                 * (long) exp10(9 - (boost::posix_time::time_duration::num_fractional_digits()));
+  td_ts.tv_nsec= waitDuration.fractional_seconds() * PTIME_SECS_FACTOR;
   assert(td_ts.tv_nsec >= 0);
 
   int result = pselect(nextFD, &readResultBits, &writeResultBits,
