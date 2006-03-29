@@ -18,16 +18,20 @@ libp2python_la_LIBADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
-       -lboost_python -lp2core -lp2elements -leventLoop
+	./elements/.libs/libp2pythonelements.a \
+	./p2core/.libs/libp2pythoncore.a \
+	./net/.libs/libp2pythonnet.a \
+	./eventLoop/.libs/libp2pythoneventloop.a \
+       -lboost_python -lp2core -lp2elements -leventLoop -lp2net
 
-INCLUDES = $(PYTHON_CPPFLAGS) $(BOOST_INC) \
-           -I$(top_builddir)/net -I$(top_builddir)/elements \
-           -I$(top_builddir)/p2core -I$(top_builddir)/eventLoop
+INCLUDES = $(PYTHON_CPPFLAGS) $(BOOST_INC)
 
 LIBS = $(BOOST_LIB) $(PYTHON_LDFLAGS) \
-       -L$(top_builddir)/elements -L$(top_builddir)/p2core -L$(top_builddir)/eventLoop
+       -L$(top_builddir)/elements -L$(top_builddir)/p2core -L$(top_builddir)/eventLoop -L$(top_builddir)/net \
+       -L./elements -L./p2core -L./eventLoop -L./net
 
 CLEANFILES = core *.core *~
 EXTRA_DIST = .cvsignore
 
 MAINTAINERCLEANFILES = Makefile.in
+SUBDIRS=eventLoop p2core elements net

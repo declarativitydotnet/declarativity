@@ -42,7 +42,7 @@ void Logger::log( string classname,
 		  int errnum,
 		  string explanation )
 {
-  if (severity >= plumber()->loggingLevel) {
+  if (severity >= _loggingLevel) {
     boost::posix_time::ptime now_ts;
     
     getTime(now_ts);

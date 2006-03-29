@@ -44,9 +44,9 @@
 #include "discard.h"
 #include "mux.h"
 
-Plumber::ConfigurationPtr UdpCC_source(Udp *udp, string src, string dest, double drop) {
+Plumber::DataflowPtr UdpCC_source(PlumberPtr plumber, Udp *udp, string src, string dest, double drop) {
   // The sending data flow
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
 
   ElementSpecPtr data     = conf->addElement(ElementPtr(new TimedPushSource("source", .01)));
   ElementSpecPtr dqueue   = conf->addElement(ElementPtr(new Queue("Source Data Q", 1000)));
@@ -98,8 +98,8 @@ Plumber::ConfigurationPtr UdpCC_source(Udp *udp, string src, string dest, double
   return conf;
 }
 
-Plumber::ConfigurationPtr UdpCC_sink(Udp *udp, double drop) {
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+Plumber::DataflowPtr UdpCC_sink(PlumberPtr plumber, Udp *udp, double drop) {
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
 
   // The remote data elements
   ElementSpecPtr udpRx     = conf->addElement(udp->get_rx());
@@ -138,17 +138,13 @@ Plumber::ConfigurationPtr UdpCC_sink(Udp *udp, double drop) {
   return conf;
 }
 
-void testUdpCC(Plumber::ConfigurationPtr conf)
+void testUdpCC(PlumberPtr plumber, Plumber::DataflowPtr conf)
 {
-  PlumberPtr plumber(new Plumber(conf, LoggerI::WARN));
-  if (plumber->initialize(plumber) == 0) {
+  if (plumber->install(conf) == 0) {
     std::cout << "Correctly initialized.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();
@@ -165,18 +161,19 @@ int main(int argc, char **argv)
   int    port = atoi(argv[2]);
   double drop = 0.;
   eventLoopInitialize();
+  PlumberPtr plumber(new Plumber());
 
   if (type == "source") {
       Udp *src = new Udp("SOURCE", port);
       ostringstream oss;
       oss << string(argv[3]) << ":" << port;
       if (argc == 6) drop = atof(argv[5]);
-      testUdpCC(UdpCC_source(src, oss.str(), string(argv[4]), drop));
+      testUdpCC(plumber, UdpCC_source(plumber, src, oss.str(), string(argv[4]), drop));
   }
   else if (type == "sink") {
       Udp *sink = new Udp("SINK", port);
       if (argc == 4) drop = atof(argv[3]);
-      testUdpCC(UdpCC_sink(sink, drop));
+      testUdpCC(plumber, UdpCC_sink(plumber, sink, drop));
   }
 
   return 0;

@@ -4,165 +4,131 @@
 *
 */
 
-#include <boost/python/class.hpp>
-#include <boost/python/scope.hpp>
-
 #include <boost/python.hpp>
 using namespace boost::python;
 
-#include "element.h"
-
-class ElementWrap : public Element, public wrapper<Element>
-{
-public:
-  ElementWrap(std::string n) : Element(n) {};
-  ElementWrap(std::string n, int i, int o) : Element(n, i, o) {};
-
-  virtual const char* class_name() const {
-    return this->get_override("class_name")();
-  };
-
-};
-
-/* P2CORE */
-#include "plumber.h"
-#include "elementSpec.h"
-#include "loggerI.h"
-#include "tuple.h"
-
-class LoggerIWrap : public LoggerI, public wrapper<LoggerI>
-{
-public:
-  void log(string classname, string instancename,
-           Level severity, int errnum, string explanation) {
-    this->get_override("log")(classname, instancename, severity, 
-                              errnum, explanation);
-  };
-};
-
-/* ELEMENTS */
-#include "aggregate.h"
-#include "aggwrap.h"
-#include "csvparser.h"
-// #include "ddemux.h"
-#include "delete.h"
-#include "demux.h"
-#include "discard.h"
-#include "dupElim.h"
-#include "duplicateConservative.h"
-#include "duplicate.h"
-#include "filter.h"
-#include "functorSource.h"
-#include "hexdump.h"
-#include "insert.h"
-// #include "joiner.h"
-#include "logger.h"
-#include "../elements/marshal.h"
-#include "marshalField.h"
-#include "mux.h"
-#include "noNull.h"
-#include "noNullField.h"
-#include "pelScan.h"
-#include "pelTransform.h"
-#include "print.h"
-#include "printTime.h"
-#include "printWatch.h"
-#include "queue.h"
-// #include "randomPushSource.h"
-#include "roundRobin.h"
-#include "scan.h"
-#include "slot.h"
-#include "strToSockaddr.h"
-#include "timedPullPush.h"
-#include "timedPullSink.h"
-#include "timedPushSource.h"
-#include "timestampSource.h"
-#include "tupleSource.h"
-#include "unboxField.h"
-#include "unmarshal.h"
-#include "unmarshalField.h"
-
-/* NETWORK ELEMENTS */
-#include "bw.h"
-#include "ccr.h"
-#include "cct.h"
-#include "defrag.h"
-#include "frag.h"
-#include "plsensor.h"
-#include "rccr.h"
-#include "rcct.h"
-#include "rdelivery.h"
-#include "skr.h"
-#include "snetsim.h"
-#include "tman.h"
-#include "tupleseq.h"
-#include "udp2.h"
-
-/* EVENT LOOP */
-#include "loop.h"
+void export_aggregate();
+void export_aggwrap();
+void export_csvparser();
+void export_dataflowInstaller();
+// void export_ddemux();
+void export_delete();
+void export_demux();
+void export_discard();
+void export_dupElim();
+void export_duplicateConservative();
+void export_duplicate();
+void export_element();
+void export_filter();
+void export_functorSource();
+void export_hexdump();
+void export_insert();
+// void export_joiner();
+void export_logger();
+void export_marshal();
+void export_marshalField();
+void export_mux();
+void export_noNull();
+void export_noNullField();
+void export_pelScan();
+void export_pelTransform();
+void export_print();
+void export_printTime();
+void export_printWatch();
+void export_queue();
+void export_roundRobin();
+void export_scan();
+void export_slot();
+void export_strToSockkaddr();
+void export_timedPullPush();
+void export_timedPullSink();
+void export_timedPushSource();
+void export_timestampSource();
+void export_tupleSource();
+void export_unboxField();
+void export_unmarshal();
+void export_unmarshalField();
+void export_eventLoop();
+void export_bw();
+void export_ccr();
+void export_cct();
+void export_defrag();
+void export_frag();
+void export_plsensor();
+void export_rccr();
+void export_rcct();
+void export_rdelivery();
+void export_skr();
+void export_snetsim();
+void export_tman();
+void export_tupleseq();
+void export_udp2();
+void export_elementSpec();
+void export_loggerI();
+void export_plumber();
+void export_tuple();
 
 BOOST_PYTHON_MODULE(p2python)
 {
-  #include "p2core/plumber.cpp"
-  #include "p2core/elementSpec.cpp"
-  #include "p2core/loggerI.cpp"
-  #include "p2core/tuple.cpp"
+  export_element();
+  export_elementSpec();
+  export_loggerI();
+  export_plumber();
+  export_tuple();
 
-  #include "eventLoop/eventLoop.cpp"
-  #include "elements/element.cpp"
-  #include "elements/aggregate.cpp"
-  #include "elements/aggwrap.cpp"
-  #include "elements/csvparser.cpp"
-  // #include "elements/ddemux.cpp"
-  #include "elements/delete.cpp"
-  #include "elements/demux.cpp"
-  #include "elements/discard.cpp"
-  #include "elements/dupElim.cpp"
-  #include "elements/duplicateConservative.cpp"
-  #include "elements/duplicate.cpp"
-  #include "elements/filter.cpp"
-  #include "elements/functorSource.cpp"
-  #include "elements/hexdump.cpp"
-  #include "elements/insert.cpp"
-  // #include "elements/joiner.cpp"
-  #include "elements/logger.cpp"
-  #include "elements/marshal.cpp"
-  #include "elements/marshalField.cpp"
-  #include "elements/mux.cpp"
-  #include "elements/noNull.cpp"
-  #include "elements/noNullField.cpp"
-  #include "elements/pelScan.cpp"
-  #include "elements/pelTransform.cpp"
-  #include "elements/print.cpp"
-  #include "elements/printTime.cpp"
-  #include "elements/printWatch.cpp"
-  #include "elements/queue.cpp"
-  // #include "elements/randomPushSource.cpp"
-  #include "elements/roundRobin.cpp"
-  #include "elements/scan.cpp"
-  #include "elements/slot.cpp"
-  #include "elements/strToSockaddr.cpp"
-  #include "elements/timedPullPush.cpp"
-  #include "elements/timedPullSink.cpp"
-  #include "elements/timedPushSource.cpp"
-  #include "elements/timestampSource.cpp"
-  #include "elements/tupleSource.cpp"
-  #include "elements/unboxField.cpp"
-  #include "elements/unmarshal.cpp"
-  #include "elements/unmarshalField.cpp"
-
-  #include "net/bw.cpp"
-  #include "net/ccr.cpp"
-  #include "net/cct.cpp"
-  #include "net/defrag.cpp"
-  #include "net/frag.cpp"
-  #include "net/plsensor.cpp"
-  #include "net/rccr.cpp"
-  #include "net/rcct.cpp"
-  #include "net/rdelivery.cpp"
-  #include "net/skr.cpp"
-  #include "net/snetsim.cpp"
-  #include "net/tman.cpp"
-  #include "net/tupleseq.cpp"
-  #include "net/udp2.cpp"
+  export_aggregate();
+  export_aggwrap();
+  export_csvparser();
+  export_dataflowInstaller();
+  // export_ddemux();
+  export_delete();
+  export_demux();
+  export_discard();
+  export_dupElim();
+  export_duplicateConservative();
+  export_duplicate();
+  export_filter();
+  export_functorSource();
+  export_hexdump();
+  export_insert();
+  // export_joiner();
+  export_logger();
+  export_marshal();
+  export_marshalField();
+  export_mux();
+  export_noNull();
+  export_noNullField();
+  export_pelScan();
+  export_pelTransform();
+  export_print();
+  export_printTime();
+  export_printWatch();
+  export_queue();
+  export_roundRobin();
+  export_scan();
+  export_slot();
+  export_strToSockkaddr();
+  export_timedPullPush();
+  export_timedPullSink();
+  export_timedPushSource();
+  export_timestampSource();
+  export_tupleSource();
+  export_unboxField();
+  export_unmarshal();
+  export_unmarshalField();
+  export_eventLoop();
+  export_bw();
+  export_ccr();
+  export_cct();
+  export_defrag();
+  export_frag();
+  export_plsensor();
+  export_rccr();
+  export_rcct();
+  export_rdelivery();
+  export_skr();
+  export_snetsim();
+  export_tman();
+  export_tupleseq();
+  export_udp2();
 }

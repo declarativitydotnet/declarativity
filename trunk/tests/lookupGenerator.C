@@ -87,7 +87,8 @@ void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> looku
                   double delay, int times)
 {
   eventLoopInitialize();
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  PlumberPtr plumber(new Plumber(level));
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
 
   ElementSpecPtr func    = conf->addElement(ElementPtr(new FunctorSource(string("Source"), lookup.get())));
   ElementSpecPtr print   = conf->addElement(ElementPtr(new Print(string("lookup"))));
@@ -118,14 +119,10 @@ void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> looku
   conf->hookUp(marshal, 0, route, 0);
   conf->hookUp(route, 0, udpTx, 0);
    
-  PlumberPtr plumber(new Plumber(conf, level));
-  if (plumber->initialize(plumber) != 0) {
+  if (plumber->install(conf) != 0) {
     std::cout << "** Failed to initialize correct spec\n";
     return;
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();

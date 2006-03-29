@@ -79,7 +79,7 @@ class Plmb_ConfGen {
   struct ReceiverInfo;
 
  public:
-  Plmb_ConfGen(OL_Context* ctxt, Plumber::ConfigurationPtr conf, 
+  Plmb_ConfGen(OL_Context* ctxt, Plumber::DataflowPtr conf, 
 	      bool _dups, bool debug, bool cc, string filename);
   Plmb_ConfGen::~Plmb_ConfGen();
 
@@ -107,7 +107,7 @@ private:
   bool _debug; // do we stick debug elements in?
   bool _cc; // are we using congestion control
   FILE *_output;
-  Plumber::ConfigurationPtr _conf; 
+  Plumber::DataflowPtr _conf; 
   std::map<string, string> _multTableIndices;
 
   // counter to determine how many muxers and demuxers are needed

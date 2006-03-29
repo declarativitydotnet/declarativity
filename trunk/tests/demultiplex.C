@@ -35,7 +35,8 @@ void testStaticDemux()
 {
   std::cout << "\nCHECK STATIC DEMUX\n";
 
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  PlumberPtr plumber(new Plumber());
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
 
   // The source dataflow
   ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 1)));
@@ -77,16 +78,12 @@ void testStaticDemux()
   conf->hookUp(demuxS, 2, sinkPrintOtherS, 0);
   
   
-  PlumberPtr plumber(new Plumber(conf));
-  if (plumber->initialize(plumber) == 0) {
+  if (plumber->install(conf) == 0) {
     std::cout << "Correctly initialized static demux.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
     return;
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();

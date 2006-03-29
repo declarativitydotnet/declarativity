@@ -1,8 +1,15 @@
+#include <tuple.h>
+#include <boost/python.hpp>
+
+using namespace boost::python;
+
 ValuePtr (Tuple::*tag1)(string)           = &Tuple::tag;
 void     (Tuple::*tag2)(string, ValuePtr) = &Tuple::tag;
 
-class_<Tuple, boost::shared_ptr<Tuple> >
-      ("Tuple", init<>())
+void export_tuple()
+{
+  class_<Tuple, boost::shared_ptr<Tuple> >
+        ("Tuple", init<>())
    .def("mk",       &Tuple::mk)
    .def("append",   &Tuple::append)
    .def("concat",   &Tuple::concat)
@@ -11,4 +18,5 @@ class_<Tuple, boost::shared_ptr<Tuple> >
    .def("freeze",   &Tuple::freeze)
    .def("size",     &Tuple::size)
    .def("toString", &Tuple::toString)
-;
+  ;
+}

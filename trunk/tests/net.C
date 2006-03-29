@@ -60,7 +60,8 @@ void testUdpTx()
 
   // The sending data flow
 
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  PlumberPtr plumber(new Plumber());
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
   ElementSpecPtr sourceS =
     conf->addElement(ElementPtr(new TimedPushSource("source", .5)));
   ElementSpecPtr sourcePrintS =
@@ -105,15 +106,11 @@ void testUdpTx()
   conf->hookUp(sinkPrintS, 0, slotRxS, 0);
   conf->hookUp(slotRxS, 0, sinkS, 0);
 
-  PlumberPtr plumber(new Plumber(conf));
-  if (plumber->initialize(plumber) == 0) {
+  if (plumber->install(conf) == 0) {
     std::cout << "Correctly initialized.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();
@@ -126,21 +123,18 @@ void testPLSensor()
   std::cout << "\nCHECK PL SENSOR\n";
 
   boost::shared_ptr<PlSensor> pl(new PlSensor("Sensor", (uint16_t)80,"/", 5));
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  PlumberPtr plumber(new Plumber());
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
   ElementSpecPtr plSpec = conf->addElement(pl);
   ElementSpecPtr printSpec = conf->addElement(ElementPtr(new Print("PRINT SPEC")));
   conf->hookUp(plSpec,0,printSpec,0);
 
   // Create the plumber and check it statically
-  PlumberPtr plumber(new Plumber(conf));
-  if (plumber->initialize(plumber) == 0) {
+  if (plumber->install(conf) == 0) {
     std::cout << "Correctly initialized PlSensor to push print spec.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();

@@ -16,7 +16,7 @@
 #include "trace.h"
 
 Plmb_ConfGen::Plmb_ConfGen(OL_Context* ctxt, 
-			 Plumber::ConfigurationPtr conf, 
+			 Plumber::DataflowPtr conf, 
 			 bool dups, 
 			 bool debug, 
 			 bool cc,

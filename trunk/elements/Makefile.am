@@ -55,7 +55,8 @@ libp2elements_la_SOURCES = \
 	unboxField.C \
 	printWatch.C \
 	aggregate.C \
-	scan.C
+	scan.C \
+	dataflowInstaller.C
 
 INCLUDES = @BOOST_INC@ -I../p2core -I../eventLoop
 
@@ -67,4 +68,4 @@ EXTRA_DIST = .cvsignore \
 
 MAINTAINERCLEANFILES = Makefile.in
 
-CXXFLAGS="-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG" @CXXFLAGS@
+CXXFLAGS="-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG" @CXXFLAGS@ ${PYTHON_CPPFLAGS}

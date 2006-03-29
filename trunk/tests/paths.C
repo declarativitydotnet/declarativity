@@ -489,7 +489,7 @@ void generateCacheElement(Plumber::ConfigurationPtr conf, ptr< Catalog> catalog)
 #endif
 
 /** Build a symmetric link transitive closure. */
-void runPathQuery(Plumber::ConfigurationPtr conf, 
+void runPathQuery(PlumberPtr plumber, Plumber::DataflowPtr conf, 
 		  LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt, 
 		  string address, std::vector<string> filenames, 
 		  string inputGraph, string debugFile)
@@ -626,8 +626,7 @@ void runPathQuery(Plumber::ConfigurationPtr conf,
   }
   */
 
-  PlumberPtr plumber(new Plumber(conf, level));
-  if (plumber->initialize(plumber) == 0) {
+  if (plumber->install(conf) == 0) {
     warn << "Correctly initialized network of reachability flows.\n";
   } else {
     warn << "** Failed to initialize correct spec\n";
@@ -637,9 +636,6 @@ void runPathQuery(Plumber::ConfigurationPtr conf,
   if (magicIntervalSeconds != -1.0) {
     delayCB(10.0 + magicIntervalSeconds, boost::bind(insertMagicSource, catalog, address));
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();
@@ -703,18 +699,19 @@ int main(int argc, char **argv)
   std::cout << "Finish parsing (functors / tableInfos) " << ctxt->getRules()->size() 
 	    << " " << ctxt->getTableInfos()->size() << "\n";
 
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  PlumberPtr plumber(new Plumber());
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
 
   if (correlate != 0) {
     std::vector<string> filenames;
     filenames.push_back(datalogFile);
     // for each datalogFile, call runPathQuery
-    runPathQuery(conf, level, ctxt, address, filenames, inputGraph, debugFile);
+    runPathQuery(plumber, conf, level, ctxt, address, filenames, inputGraph, debugFile);
   } else {
     std::vector<string> filenames;
     filenames.push_back(datalogFile);
     // for each datalogFile, call runPathQuery
-    runPathQuery(conf, level, ctxt, address, filenames, inputGraph, debugFile);
+    runPathQuery(plumber, conf, level, ctxt, address, filenames, inputGraph, debugFile);
   }
 
   return 0;

@@ -1,16 +1,24 @@
-class_<timeCBHandle>
-      ("timeCBHandle", init<boost::posix_time::ptime&, const b_cbv&>())
-;
+#include <loop.h>
+#include <boost/python.hpp>
 
-enum_<b_selop>("b_selop")
-  .value("b_selread", b_selread)
-  .value("b_selwrite", b_selwrite)
-;
+using namespace boost::python;
 
-def("eventLoop", eventLoop);
-def("eventLoopInitialize", eventLoopInitialize);
-def("delayCB", delayCB, return_internal_reference<>());
-def("timeCBRemove", timeCBRemove);
-def("networkSocket", networkSocket);
-def("fileDescriptorCB", fileDescriptorCB);
-def("removeFileDescriptorCB", removeFileDescriptorCB);
+void export_eventLoop()
+{
+  class_<timeCBHandle>
+        ("timeCBHandle", init<boost::posix_time::ptime&, const b_cbv&>())
+  ;
+  
+  enum_<b_selop>("b_selop")
+    .value("b_selread", b_selread)
+    .value("b_selwrite", b_selwrite)
+  ;
+  
+  def("eventLoop", eventLoop);
+  def("eventLoopInitialize", eventLoopInitialize);
+  def("delayCB", delayCB, return_internal_reference<>());
+  def("timeCBRemove", timeCBRemove);
+  def("networkSocket", networkSocket);
+  def("fileDescriptorCB", fileDescriptorCB);
+  def("removeFileDescriptorCB", removeFileDescriptorCB);
+}

@@ -31,11 +31,13 @@ extern int ol_parser_debug;
 
 int main(int argc, char **argv)
 {
+  LoggerI::Level level = LoggerI::NONE;
   std::cout << "OVERLOG\n";
   boost::shared_ptr< OL_Context > ctxt(new OL_Context());
   bool route = false;
   bool builtin = false;
   string filename("");
+  PlumberPtr plumber(new Plumber(level));
 
   for( int i=1; i<argc; i++) { 
     std::string arg(argv[i]);
@@ -59,17 +61,22 @@ int main(int argc, char **argv)
     } else if (arg == "-") {
       ctxt->parse_stream(&std::cin);
     } else if (arg == "-g") {
+      Plumber::DataflowPtr conf = plumber->new_dataflow("overlog");
       filename = argv[i+1];
       std::ifstream istr(filename.c_str());
-      std::ofstream ostr("overlog.dot");
       ctxt->parse_stream(&istr);
-      Plumber::ConfigurationPtr conf(new Plumber::Configuration());
       Plmb_ConfGen gen(ctxt.get(), conf, false, false, true, filename);
       gen.createTables("127.0.0.1:10000");
       
       boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));
       gen.configurePlumber(udp, "127.0.0.1:10000");
-      toDot(&ostr, conf);
+
+      if (plumber->install(conf) == 0) {
+        std::cout << "Correctly initialized network of reachability flows.\n";
+      } else {
+        std::cout << "** Failed to initialize correct spec\n";
+      }
+      plumber->toDot("overlog.dot");
       exit (0);
     } else { 
       filename = argv[i];
@@ -93,16 +100,14 @@ int main(int argc, char **argv)
 
   if (route) {
     // test a configuration of a plumber
-    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+    Plumber::DataflowPtr conf = plumber->new_dataflow("overlog");
     Plmb_ConfGen gen(ctxt.get(), conf, false, false, true, filename);
     gen.createTables("127.0.0.1:10000");
     
     boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));
     gen.configurePlumber(udp, "127.0.0.1:10000");
     
-    LoggerI::Level level = LoggerI::NONE;
-    PlumberPtr plumber(new Plumber(conf, level));
-    if (plumber->initialize(plumber) == 0) {
+    if (plumber->install(conf) == 0) {
       std::cout << "Correctly initialized network of reachability flows.\n";
     } else {
       std::cout << "** Failed to initialize correct spec\n";

@@ -86,22 +86,19 @@ void testNetworked(LoggerI::Level level,
   eventLoopInitialize();
 
   // Create the data flow
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  PlumberPtr plumber(new Plumber(level));
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
   Udp udp(string(myAddress) + ":Udp", port);
 
   createNode(myAddress, landmarkAddress,
              conf, &udp, delay);
 
-  PlumberPtr plumber(new Plumber(conf, level));
-  if (plumber->initialize(plumber) == 0) {
+  if (plumber->install(conf) == 0) {
     std::cout << "Correctly initialized network of chord lookup flows.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
     return;
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();

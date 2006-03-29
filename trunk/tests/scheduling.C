@@ -33,7 +33,8 @@ void testFastSourcePush()
 {
   std::cout << "\nCHECK FAST SOURCE PUSH\n";
 
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  PlumberPtr plumber(new Plumber());
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
   ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0.2)));
   ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 1)));
   ElementSpecPtr slotS = conf->addElement(ElementPtr(new Slot("slot")));
@@ -47,15 +48,11 @@ void testFastSourcePush()
   conf->hookUp(slotS, 0, sinkPrintS, 0);
   conf->hookUp(sinkPrintS, 0, sinkS, 0);
   
-  PlumberPtr plumber(new Plumber(conf));
-  if (plumber->initialize(plumber) == 0) {
+  if (plumber->install(conf) == 0) {
     std::cout << "Correctly initialized fast source push.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();
@@ -66,8 +63,9 @@ void testFastSinkPush()
 {
   std::cout << "\nCHECK FAST SINK PUSH\n";
   eventLoopInitialize();
+  PlumberPtr plumber(new Plumber());
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
 
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
   ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 1)));
   ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", .2)));
   ElementSpecPtr slotS = conf->addElement(ElementPtr(new Slot("slot")));
@@ -81,15 +79,11 @@ void testFastSinkPush()
   conf->hookUp(slotS, 0, sinkPrintS, 0);
   conf->hookUp(sinkPrintS, 0, sinkS, 0);
   
-  PlumberPtr plumber(new Plumber(conf));
-  if (plumber->initialize(plumber) == 0) {
+  if (plumber->install(conf) == 0) {
     std::cout << "Correctly initialized fast sink push.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();
@@ -100,7 +94,8 @@ void testFastSinkPull()
 {
   std::cout << "\nCHECK FAST SINK PULL\n";
 
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  PlumberPtr plumber(new Plumber());
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
   ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 1)));
   ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", .2)));
   ElementSpecPtr slotS = conf->addElement(ElementPtr(new Slot("slot")));
@@ -114,15 +109,11 @@ void testFastSinkPull()
   conf->hookUp(transS, 0, sinkPrintS, 0);
   conf->hookUp(sinkPrintS, 0, sinkS, 0);
   
-  PlumberPtr plumber(new Plumber(conf));
-  if (plumber->initialize(plumber) == 0) {
+  if (plumber->install(conf) == 0) {
     std::cout << "Correctly initialized fast sink pull.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();
@@ -133,7 +124,8 @@ void testFastSourcePull()
 {
   std::cout << "\nCHECK FAST SOURCE PULL\n";
 
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  PlumberPtr plumber(new Plumber());
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
   ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", .2)));
   ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 1)));
   ElementSpecPtr slotS = conf->addElement(ElementPtr(new Slot("slot")));
@@ -147,15 +139,11 @@ void testFastSourcePull()
   conf->hookUp(transS, 0, sinkPrintS, 0);
   conf->hookUp(sinkPrintS, 0, sinkS, 0);
   
-  PlumberPtr plumber(new Plumber(conf));
-  if (plumber->initialize(plumber) == 0) {
+  if (plumber->install(conf) == 0) {
     std::cout << "Correctly initialized fast sink pull.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();

@@ -12,24 +12,23 @@
  *
  */
 
-#include <plumber.h>
 #include <element.h>
 #include <elementSpec.h>
 #include <iostream>
 
 void
 toDot(std::ostream * ostr,
-      Plumber::ConfigurationPtr configuration)
+      const std::set<ElementSpecPtr>& elements, 
+      const std::set<ElementSpec::HookupPtr>& hookups)
 {
   *ostr << "digraph G {\n"
         << "rankdir=LR;\n"
         << "node [shape=record];\n";
 
   // Delcare all elements.
-  for (uint e = 0;
-       e < configuration->elements.size();
-       e++) {
-    ElementPtr element = configuration->elements[e]->element();
+  for (std::set<ElementSpecPtr>::const_iterator i = elements.begin();
+       i != elements.end(); i++) {
+    const ElementPtr element = (*i)->element();
     *ostr << element->ID()      // unique element ID
           << " [ label=\"{";
 
@@ -64,10 +63,9 @@ toDot(std::ostream * ostr,
     *ostr << "}\" ];\n";
   }
 
-  for (uint i = 0;
-       i < configuration->hookups.size();
-       i++) {
-    Plumber::HookupPtr hookup = configuration->hookups[i];
+  for (std::set<ElementSpec::HookupPtr>::const_iterator i = hookups.begin();
+       i != hookups.end(); i++) {
+    const ElementSpec::HookupPtr hookup = *i;
     ElementSpecPtr fromElement = hookup->fromElement;
     ElementSpecPtr toElement = hookup->toElement;
     int fromPort = hookup->fromPortNumber;

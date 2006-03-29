@@ -1,6 +1,14 @@
-class_<Demux, bases<Element>, boost::shared_ptr<Demux>, boost::noncopyable>
-      ("Demux", init<std::string, boost::shared_ptr<std::vector<ValuePtr> >, optional<unsigned> >())
-  .def("class_name", &Demux::class_name)
-  .def("processing", &Demux::processing)
-  .def("flow_code",  &Demux::flow_code)
-;
+#include <demux.h>
+#include <boost/python.hpp>
+
+using namespace boost::python;
+
+void export_demux()
+{
+  class_<Demux, bases<Element>, boost::shared_ptr<Demux>, boost::noncopyable>
+        ("Demux", init<std::string, boost::shared_ptr<std::vector<ValuePtr> >, optional<unsigned> >())
+    .def("class_name", &Demux::class_name)
+    .def("processing", &Demux::processing)
+    .def("flow_code",  &Demux::flow_code)
+  ;
+}

@@ -54,6 +54,8 @@ Element::Element(string instanceName) :
   _noutputs(1),
   _ID(elementCounter++),
   _name(instanceName),
+  _loggingLevel(LoggerI::NONE),
+  _logger(NULL),
   _IDstr(mk_id_str(_ID))
 {
   commonConstruction();
@@ -64,6 +66,8 @@ Element::Element(string instanceName, int ninputs, int noutputs) :
   _noutputs(noutputs),
   _ID(elementCounter++),
   _name(instanceName),
+  _loggingLevel(LoggerI::NONE),
+  _logger(NULL),
   _IDstr(mk_id_str(_ID))
 {
   commonConstruction();
@@ -270,7 +274,7 @@ REMOVABLE_INLINE void Element::log(LoggerI::Level severity,
 {
   // Even this is a shortcut, cut off the process here as well, since
   // creating the instance name is expensive
-  if ((_plumber && (severity >= _plumber->loggingLevel)) || (!_plumber)) {
+  if (severity >= _loggingLevel) {
     ostringstream n;
     n << _name << ":" << _IDstr;
     log(n.str(), severity, errnum, explanation);
@@ -283,23 +287,16 @@ REMOVABLE_INLINE void Element::log(string instanceName,
                                    string explanation)
 {
   // Check logging level first
-  if (_plumber != 0) {
-    if (severity >= _plumber->loggingLevel) {
-      LoggerI* l = _plumber->logger();
-      if (l != 0) {
-        l->log(class_name(),
-               instanceName,
-               severity,
-               errnum,
-               explanation); 
-      } else {
-        logDefault(instanceName, severity, errnum, explanation);
-      }
+  if (severity >= _loggingLevel) {
+    if (_logger) {
+      _logger->log(class_name(),
+                   instanceName,
+                   severity,
+                   errnum,
+                   explanation); 
     } else {
       logDefault(instanceName, severity, errnum, explanation);
     }
-  } else {
-    logDefault(instanceName, severity, errnum, explanation);
   }
 }
 

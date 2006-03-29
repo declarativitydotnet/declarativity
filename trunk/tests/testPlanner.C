@@ -40,6 +40,7 @@ int main(int argc, char **argv)
   bool route = false;
   bool builtin = false;
   string filename("");
+  PlumberPtr plumber(new Plumber());
 
   for( int i=1; i<argc; i++) { 
     std::string arg(argv[i]);
@@ -67,7 +68,7 @@ int main(int argc, char **argv)
       std::ifstream istr(filename.c_str());
       std::ofstream ostr(string(filename + ".dot").c_str());
       ctxt->parse_stream(&istr);
-      Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+      Plumber::DataflowPtr conf = plumber->new_dataflow("test");
       boost::shared_ptr< Catalog > catalog(new Catalog());  
       catalog->initTables(ctxt.get()); 
       boost::shared_ptr< ECA_Context > ectxt(new ECA_Context()); 
@@ -80,7 +81,7 @@ int main(int argc, char **argv)
       planner->setupNetwork(udp);
       planner->registerAllRuleStrands(ruleStrands);
 
-      toDot(&ostr, conf);
+      // conf->toDot(&ostr);
       exit (0);
     } else { 
       filename = argv[i];
@@ -103,7 +104,7 @@ int main(int argc, char **argv)
   std::cout << ctxt->toString() << "\n";
 
   if (route) {
-    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+    Plumber::DataflowPtr conf = plumber->new_dataflow("test");
     boost::shared_ptr< Catalog > catalog(new Catalog());  
     catalog->initTables(ctxt.get()); 
     boost::shared_ptr< ECA_Context > ectxt(new ECA_Context()); 
@@ -121,9 +122,7 @@ int main(int argc, char **argv)
     planner->registerAllRuleStrands(ruleStrands);
     std::cout << planner->getNetPlanner()->toString() << "\n";
 
-    LoggerI::Level level = LoggerI::NONE;
-    PlumberPtr plumber(new Plumber(conf, level));
-    if (plumber->initialize(plumber) == 0) {
+    if (plumber->install(conf) == 0) {
       std::cout << "Correctly initialized network of reachability flows.\n";
     } else {
       std::cout << "** Failed to initialize correct spec\n";

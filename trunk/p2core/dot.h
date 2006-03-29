@@ -19,11 +19,10 @@
 #ifndef __DOT_H__
 #define __DOT_H__
 
-#include <plumber.h>
 #include <iostream>
 
 void
-toDot(std::ostream*, Plumber::ConfigurationPtr);
+toDot(std::ostream*, const std::set<ElementSpecPtr>&, const std::set<ElementSpec::HookupPtr>&);
 
 #endif /* __DOT_H__ */
 

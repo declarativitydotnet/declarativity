@@ -64,7 +64,7 @@ static const int nodes = 4;
 
 
 /* Initial sending of links into the p2 dataflow */
-void bootstrapData(Plumber::ConfigurationPtr conf,
+void bootstrapData(Plumber::DataflowPtr conf,
                    string name,
                    TablePtr linkTable,
  		   boost::shared_ptr< Udp > udp)
@@ -110,7 +110,9 @@ void testReachability(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt,
   std::cout << "\nCHECK TRANSITIVE REACHABILITY\n";
   eventLoopInitialize();
 
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  PlumberPtr plumber(new Plumber(level));
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+
   Plmb_ConfGen plumberConfigGenerator(ctxt, conf, false, false, false, filename);
 
   // Create one data flow per "node"
@@ -191,16 +193,12 @@ void testReachability(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt,
 
   // add extra here to initialize the tables
 
-  PlumberPtr plumber(new Plumber(conf, level));
-  if (plumber->initialize(plumber) == 0) {
+  if (plumber->install(conf) == 0) {
     std::cout << "Correctly initialized network of reachability flows.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
     return;
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();

@@ -48,7 +48,8 @@ void testSimpleJoin(LoggerI::Level level)
   std::cout << "\nCHECK SIMPLE JOIN\n";
   eventLoopInitialize();
 
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  PlumberPtr plumber(new Plumber(level));
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
 
   // TUPLESOURCE
   // The source dataflow.  Produce random tuples.
@@ -125,16 +126,12 @@ void testSimpleJoin(LoggerI::Level level)
 
 
 
-  PlumberPtr plumber(new Plumber(conf, level));
-  if (plumber->initialize(plumber) == 0) {
+  if (plumber->install(conf) == 0) {
     std::cout << "Correctly initialized simple join.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
     return;
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Schedule kill
   //delayCB(10.0, wrap(&killJoin));

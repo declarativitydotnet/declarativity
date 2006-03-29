@@ -37,7 +37,8 @@ void agg()
 {
     std::cout << "\n[Agg]\n";
 
-    Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+    PlumberPtr plumber(new Plumber());
+    Plumber::DataflowPtr conf = plumber->new_dataflow("agg");
 
     ElementSpecPtr randomPushSourceSpec = conf->addElement(ElementPtr(new RandomPushSource("randSource", 3, 0, 5)));
     ElementSpecPtr sourcePrintS = conf->addElement(ElementPtr(new Print("AfterSource")));
@@ -61,16 +62,13 @@ void agg()
     conf->hookUp(queueSpec, 0, sinkPrintS, 0);
     conf->hookUp(sinkPrintS, 0, sinkS, 0);   
 
-    PlumberPtr plumber(new Plumber(conf));
 
-    if (plumber->initialize(plumber) == 0) {
+    if (plumber->install(conf) == 0) {
 	std::cout << "Correctly initialized configuration.\n";
     } else {
 	std::cout << "** Failed to initialize correct spec\n";
     }
     
-    // Activate the plumber
-    plumber->activate();    
 }
 
 int main(int argc, char **argv)

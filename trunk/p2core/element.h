@@ -132,10 +132,6 @@ public:
   /** A descriptive name for the element */
   string name() const				{ return _name; }
   
-  /** Return the plumber that contains me */
-  PlumberPtr plumber() const			{ return _plumber; }
-  
-  
   // INPUTS AND OUTPUTS
   
   // Getters
@@ -174,11 +170,9 @@ public:
                                    int errnum,
                                    string explanation);
 
-  // METHODS USED BY `PLUMBER'
-  
-  /** Attach me to a plumber */
-  void attach_plumber(PlumberPtr r)		{ _plumber = r; }
-  
+  void loggingLevel(LoggerI::Level l) { _loggingLevel = l; }
+  void logger(LoggerI* l)             { _logger = l; }
+
   /** A nested class encapsulating connection stubs into and out of an
       element. */
   class Port { 
@@ -251,9 +245,6 @@ public:
   const PortPtr input(int) const;
   const PortPtr output(int) const;
 
-  /** My plumber */
-  PlumberPtr _plumber;
-
   /** My input ports */
   PortVec _inputs;
 
@@ -277,6 +268,9 @@ public:
 
   /** My instance name */
   string _name;
+
+  LoggerI::Level _loggingLevel;
+  LoggerI*       _logger;
 
 protected:
   

@@ -1,0 +1,15 @@
+dataflow Main {
+  let udp := Udp2("udp", 10001);
+  let ccr := CCR("ccr", 2048);
+  
+  udp -> Bandwidth("bandwidth") ->
+  UnmarshalField("unmarshal", 1) ->
+  PelTransform("unRoute", "$1 unboxPop") ->
+  ccr -> Discard("discard");
+  
+  ccr[1] -> PelTransform("response_address", "$0 pop swallow pop") ->
+  Print("print_ack") -> MarshalField("marshal", 1) -> 
+  StrToSockaddr("addr_convert", 0) -> 
+  SimpleNetSim("net_sim", 10, 100) -> udp;
+}
+.

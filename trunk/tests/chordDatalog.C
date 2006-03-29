@@ -179,7 +179,7 @@ void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr
 }
 
 
-void sendSuccessorStream(boost::shared_ptr< Udp> udp, boost::shared_ptr< Plumber::Configuration > conf, string localAddress)
+void sendSuccessorStream(boost::shared_ptr< Udp> udp, boost::shared_ptr< Plumber::Dataflow > conf, string localAddress)
 {
   // have something that populates the table of successors. For testing purposes
   SuccessorGenerator* successorGenerator = new SuccessorGenerator();
@@ -217,7 +217,7 @@ void sendSuccessorStream(boost::shared_ptr< Udp> udp, boost::shared_ptr< Plumber
 
 
 void initiateJoinRequest(boost::shared_ptr< Plmb_ConfGen > plumberConfigGenerator, 
-                         boost::shared_ptr< Plumber::Configuration > conf, 
+                         boost::shared_ptr< Plumber::Dataflow > conf, 
 			 string localAddress, double delay)
 {
 
@@ -258,7 +258,8 @@ void startChordInDatalog(LoggerI::Level level, boost::shared_ptr< OL_Context> ct
   eventLoopInitialize();
 
   // create dataflow for translated chord lookup rules
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  PlumberPtr plumber(new Plumber(level));
+  Plumber::DataflowPtr conf = plumber->new_dataflow("chord");
   boost::shared_ptr< Plmb_ConfGen > plumberConfigGenerator(new Plmb_ConfGen(ctxt.get(), conf, false, DEBUG, CC, datalogFile));
 
   plumberConfigGenerator->createTables(localAddress);
@@ -277,16 +278,12 @@ void startChordInDatalog(LoggerI::Level level, boost::shared_ptr< OL_Context> ct
     sendSuccessorStream(bootstrapUdp, conf, localAddress);
   }
 
-  PlumberPtr plumber(new Plumber(conf, level));
-  if (plumber->initialize(plumber) == 0) {
+  if (plumber->install(conf) == 0) {
     warn << "Correctly initialized network of chord lookup flows.\n";
   } else {
     warn << "** Failed to initialize correct spec\n";
     return;
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();

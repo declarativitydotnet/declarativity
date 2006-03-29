@@ -7,13 +7,21 @@ import getopt
 p = p2python.Plumber(p2python.LoggerI.Level.ERROR)
 p2python.eventLoopInitialize()
 
+def print_usage():
+    print "USAGE: make sure your PYTHONPATH environment variable is set as follows:"
+    print "export PYTHONPATH=(top_buiddir)/python/dfparser:(top_builddir)/python/dfparser/yapps:(top_builddir)/python/lib"
+    print "Where top_builddir is the top level P2 directory e.g., /../../phi/phi"
+    print "EXEC: python dfrun.py [-d] <dataflow file>" 
+
 def parse_cmdline(argv): 
     shortopts = "d"
     flags = {"debug" : False}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
-        if   o == "-d": flags["debug"]     = True
-        else: exit(3)
+        if   o == "-d": flags["debug"] = True
+        else:
+            print_usage()
+            sys.exit(1)
     return flags, args
 
 def run():
@@ -44,21 +52,23 @@ def install_config(conf):
 def dump(f):
     p.toDot(f + ".dot")
     os.system("dot -Tps "+f+".dot -o "+f+".ps")
+    os.remove(f+".dot")
 
 if __name__=='__main__':
     try:
         flags, args = parse_cmdline(sys.argv)
         if len(args) < 1: 
-            # print_usage()
-            sys.exit(0)
+            sys.exit(1)
     except:
-        print "EXCEPTION"
-        # print_usage()
-        sys.exit(0)
+        print_usage()
+        sys.exit(1)
 
-    install(args[0])
+    dataflowFile = args[0]
+    if dataflowFile[-3:] == ".df":
+        dataflowFile = dataflowFile[:-3]    
+    install(dataflowFile)
 
     if flags["debug"]:
-      dump("debug")
+      dump(dataflowFile)
     else: # Run the plumber
       run()

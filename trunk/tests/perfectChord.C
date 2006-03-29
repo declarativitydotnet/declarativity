@@ -58,7 +58,7 @@
 
 #define START_PORT 10000
 
-void hookupSend_RCC(Plumber::ConfigurationPtr conf, string src, bool do_retry,
+void hookupSend_RCC(Plumber::DataflowPtr conf, string src, bool do_retry,
                     ElementSpecPtr dmux_out,  int pdo, ElementSpecPtr dmux_in, int pdi,
                     ElementSpecPtr rr_out,    int pmo, ElementSpecPtr mux_in,  int pmi) {
   // SENDER
@@ -112,7 +112,7 @@ void hookupSend_RCC(Plumber::ConfigurationPtr conf, string src, bool do_retry,
   conf->hookUp(rcct,    1,   retry, 1);
 }
 
-void hookupRecv_RCC(Plumber::ConfigurationPtr conf, ElementSpecPtr udprx, 
+void hookupRecv_RCC(Plumber::DataflowPtr conf, ElementSpecPtr udprx, 
                 ElementSpecPtr dmux_in, ElementSpecPtr rr_out)
 {
 
@@ -134,7 +134,7 @@ void hookupRecv_RCC(Plumber::ConfigurationPtr conf, ElementSpecPtr udprx,
   conf->hookUp(respAddr, 0, rr_out, 1);
 }
 
-void hookupSend_CC(Plumber::ConfigurationPtr conf, string src, bool do_retry,
+void hookupSend_CC(Plumber::DataflowPtr conf, string src, bool do_retry,
                    ElementSpecPtr dmux_out,  int pdo, ElementSpecPtr dmux_in, int pdi,
                    ElementSpecPtr rr_out,    int pmo, ElementSpecPtr mux_in,  int pmi) {
   // SENDER
@@ -176,7 +176,7 @@ void hookupSend_CC(Plumber::ConfigurationPtr conf, string src, bool do_retry,
   conf->hookUp(rm,     0,    mux_in, pmi); 	// Merge up to the router
 }
 
-void hookupRecv_CC(Plumber::ConfigurationPtr conf, ElementSpecPtr udprx, 
+void hookupRecv_CC(Plumber::DataflowPtr conf, ElementSpecPtr udprx, 
                    ElementSpecPtr dmux_in, ElementSpecPtr rr_out)
 {
 
@@ -201,7 +201,8 @@ void hookupRecv_CC(Plumber::ConfigurationPtr conf, ElementSpecPtr udprx,
 void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
 {
   eventLoopInitialize();
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  PlumberPtr plumber(new Plumber());
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
   string my_addr;
   ostringstream oss;
   oss << "localhost:" << (START_PORT + nodeid);
@@ -288,14 +289,11 @@ void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
 
 
   // Create plumber and run.
-  PlumberPtr plumber(new Plumber(conf, LoggerI::WARN));
-  if (plumber->initialize(plumber) == 0) {
+  if (plumber->install(conf) == 0) {
     std::cout << "Correctly initialized.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();

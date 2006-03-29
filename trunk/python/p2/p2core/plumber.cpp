@@ -1,18 +1,26 @@
+#include <plumber.h>
+#include <boost/python.hpp>
+
+using namespace boost::python;
+
+ElementSpecPtr (Plumber::Dataflow::*add1)(ElementPtr)     = &Plumber::Dataflow::addElement;
+ElementSpecPtr (Plumber::Dataflow::*add2)(string, string) = &Plumber::Dataflow::addElement;
+
+void export_plumber()
 {
   scope outer = 
-    class_<Plumber>("Plumber", init<Plumber::ConfigurationPtr, optional<LoggerI::Level> >())
+    class_<Plumber, PlumberPtr>
+          ("Plumber", init<optional<LoggerI::Level> >())
       /** Initialize the engine from the configuration */
-      .def("initialize", &Plumber::initialize)
-  
-      /** Start the plumber */
-      .def("activate", &Plumber::activate)
+      .def("new_dataflow", &Plumber::new_dataflow)
+      .def("install", &Plumber::install)
+      .def("toDot", &Plumber::toDot)
     ;
   
-    class_<Plumber::Configuration>("Configuration", init<>())
-      .def(init<boost::shared_ptr<std::vector<ElementSpecPtr> >,
-                boost::shared_ptr<std::vector<Plumber::HookupPtr> > >())
-  
-      .def("addElement", &Plumber::Configuration::addElement)
-      .def("hookUp", &Plumber::Configuration::hookUp)
+    class_<Plumber::Dataflow, Plumber::DataflowPtr>
+          ("Dataflow", no_init)
+      .def("addElement", add1)
+      .def("addElement", add2)
+      .def("hookUp", &Plumber::Dataflow::hookUp)
     ;
 }

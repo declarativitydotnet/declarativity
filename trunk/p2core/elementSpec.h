@@ -17,24 +17,69 @@
 #ifndef __ELEMENT_SPEC_H__
 #define __ELEMENT_SPEC_H__
 
+#include <set>
 #include "inlines.h"
 #include "element.h"
 
+class ElementSpec;
+/** A handy dandy reference to element specs */
+typedef boost::shared_ptr< ElementSpec > ElementSpecPtr;
+
 class ElementSpec { 
  public:
-  class PortSpec;
-
   enum UnificationResult {
     PROGRESS,
     UNCHANGED,
     CONFLICT
   };
 
+  /** An auxilliary structure to help pass around element connection
+      specifications */
+  struct Hookup {
+    string toString() {
+      ostringstream oss;
+      oss << ((fromElement->element()) ? fromElement->element()->class_name() : "None")
+          << "[" << fromPortNumber << "]" << " -> "
+          << "[" << toPortNumber << "]"
+          << ((toElement->element()) ? toElement->element()->class_name() : "None")
+          << std::endl;
+      return oss.str();
+    };
+
+    /** The dataflow name that owns this hookup (there can be only 1). */
+    string _dataflow;
+
+    /** The element from which this hookup originates */
+    ElementSpecPtr fromElement;
+
+    /** The port number at the fromElement */
+    int fromPortNumber;
+
+    /**  The element to which this hookup goes */
+    ElementSpecPtr toElement;
+
+    /** The port number at the toElement */
+    int toPortNumber;
+
+    Hookup(string d, 
+           ElementSpecPtr fe, int fp,
+           ElementSpecPtr te, int tp)
+      : _dataflow(d), fromElement(fe), fromPortNumber(fp),
+        toElement(te), toPortNumber(tp) {};
+  };
+  typedef boost::shared_ptr< Hookup > HookupPtr;
+
   
   ElementSpec(ElementPtr element);
 
   /** My real element */
   const ElementPtr element();
+
+  /** Add to the list of dataflows that reference this element */
+  void dataflowRef(string name) { _dataflowRefs->insert(name); }
+  
+  /** Return my dataflow ref vector */
+  const std::set<string>* dataflowRefs() { return _dataflowRefs.get(); }
 
   /** An internal structure for tracking unification groups */
   struct UniGroup {
@@ -69,17 +114,22 @@ class ElementSpec {
         made to this port. */
     UnificationResult unify(Element::Processing);
 
+    /** Reset the port */
+    void reset() { _counterpart.reset(); }
+
     /** Turn to string */
     string toString() const;
     
     /** My counterpart element */
-    ElementPtr counterpart() const;
+    ElementSpecPtr counterpart() const;
 
     /** Set my counterpart element.  Assumes the counterpart is not
         set. Return 1 if the counterpart was already set (without
         changing the counterpart), 0 otherwise. */
-    int counterpart(ElementPtr);
+    int counterpart(ElementSpecPtr, HookupPtr);
 
+    /** Return the hookup that made this port */
+    HookupPtr hookup() const { return _hookup; }
 
   private:
     /** What's my personality? */
@@ -90,9 +140,11 @@ class ElementSpec {
 
     /** What's my counterpart element? I should have no more, no less
         than one. */
-    ElementPtr _counterpart;
-  };
+    ElementSpecPtr _counterpart;
 
+    /** The hookup that made this connection */
+    HookupPtr _hookup;
+  };
   typedef boost::shared_ptr< Port > PortPtr;
 
   /** My input */
@@ -138,10 +190,13 @@ class ElementSpec {
 
   /** My input ports. No need for reference count since these do not move
       around at all but die with the object. */
-  std::vector< PortPtr > _inputs;
+  boost::shared_ptr<std::vector< PortPtr > > _inputs;
 
   /** My output ports */
-  std::vector< PortPtr > _outputs;
+  boost::shared_ptr<std::vector< PortPtr > > _outputs;
+
+  /** This vector holds the dataflow names that contain this object */
+  boost::shared_ptr<std::set< string > > _dataflowRefs;
 
   ElementSpec(const Element &);
   ElementSpec &operator=(const Element &);
@@ -153,9 +208,5 @@ class ElementSpec {
       of unification groups, one per flow code character.  */
   static std::vector< UniGroupPtr > _scratchUniGroups;
 };
-
-
-/** A handy dandy reference to element specs */
-typedef boost::shared_ptr< ElementSpec > ElementSpecPtr;
 
 #endif /* __ELEMENT_SPEC_H_ */

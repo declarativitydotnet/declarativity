@@ -125,7 +125,8 @@ startOverLogDataflow(LoggerI::Level level,
 {
   eventLoopInitialize();
   // create dataflow for translated OverLog
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  PlumberPtr plumber(new Plumber(level));
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
   boost::shared_ptr< Plmb_ConfGen > 
     plumberConfigGenerator(new Plmb_ConfGen(ctxt.get(), conf, false, DEBUG, CC, overLogFile));
 
@@ -137,16 +138,12 @@ startOverLogDataflow(LoggerI::Level level,
 
   initializeBaseTables(ctxt, plumberConfigGenerator, localAddress, environment);
    
-  PlumberPtr plumber(new Plumber(conf, level));
-  if (plumber->initialize(plumber) == 0) {
+  if (plumber->install(conf) == 0) {
     warn << "Correctly initialized network of chord lookup flows.\n";
   } else {
     warn << "** Failed to initialize correct spec\n";
     return;
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();

@@ -58,7 +58,8 @@ sendMessages(std::string udpAddress)
   eventLoopInitialize();
 
   // The sending data flow
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());    
+  PlumberPtr plumber(new Plumber());
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
 
   Udp udpOut("9999", 9999); // port of the sender    
   std::vector<TuplePtr> buffer;
@@ -98,15 +99,11 @@ sendMessages(std::string udpAddress)
   
 
   // Put the plumber together
-  PlumberPtr plumber(new Plumber(conf, LoggerI::ALL));
-  if (plumber->initialize(plumber) == 0) {
+  if (plumber->install(conf) == 0) {
     std::cout << "Correctly initialized.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();

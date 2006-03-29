@@ -74,7 +74,8 @@ struct LookupGenerator : public FunctorSource::Generator
 
 void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> lookup)
 {
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());
+  PlumberPtr plumber(new Plumber(level));
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
 
   // sending result
   ElementSpecPtr func    = conf->addElement(ElementPtr(new FunctorSource(string("Source"), lookup.get())));
@@ -116,14 +117,10 @@ void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> looku
   conf->hookUp(recv, 0, slot, 0);
   conf->hookUp(slot, 0, sinkS, 0);
    
-  PlumberPtr plumber(new Plumber(conf, level));
-  if (plumber->initialize(plumber) != 0) {
+  if (plumber->install(conf) != 0) {
     std::cout << "** Failed to initialize correct spec\n";
     return;
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();

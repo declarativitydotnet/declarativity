@@ -81,7 +81,8 @@ void testPingPong(int mode, string targetHost, LoggerI::Level level)
   boost::shared_ptr< Store > pingNodeStore(new Store("PingNodes", 2));
 
   // The sending data flow
-  Plumber::ConfigurationPtr conf(new Plumber::Configuration());    
+  PlumberPtr plumber(new Plumber());
+  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
 
   // to add a demuxer to differentiate ping and pingresponse
   Udp udpOut("9999", 9999); // port of the sender    
@@ -180,15 +181,11 @@ void testPingPong(int mode, string targetHost, LoggerI::Level level)
   conf->hookUp(pingResultPrint, 0, slotRxS1, 0);
   conf->hookUp(slotRxS1, 0, sinkS, 0);   
  
-  PlumberPtr plumber(new Plumber(conf, level));
-  if (plumber->initialize(plumber) == 0) {
+  if (plumber->install(conf) == 0) {
     std::cout << "Correctly initialized.\n";
   } else {
     std::cout << "** Failed to initialize correct spec\n";
   }
-
-  // Activate the plumber
-  plumber->activate();
 
   // Run the plumber
   eventLoop();
