@@ -6,32 +6,15 @@ import copy
 from p2python import *
 from string import strip
 
-conf       = Plumber.Configuration()
-globalvars = {}       # We will store global variables here
-macros    = []
-dataflows  = []
+plumber    = None
+dataflows  = {}
+macros     = []
+local      = []
 flags      = {"debug" : False}
 
-def install():
-    for d in dataflows:
-        d.install()
-    return conf
-
-def eval_element(type, args):
-    cmd = type + "("
-    # Take care of all but the last arguement
-    if len(args) > 1:
-       for a in args[:-1]: cmd += a + ", " 
-    if args: cmd += args[-1]  # Get the last one
-    cmd += ")" 
-    if flags["debug"]: return cmd
-    else: return conf.addElement(eval(cmd))
-
-def lookup(map, name):
-    for x,v,a in map:  
-        if x == name: return v
-    if not globalvars.has_key(name): print 'Undefined (defaulting to 0):', name
-    return globalvars.get(name, 0)
+def error(e):
+    print "ERROR: ", e
+    sys.exit(1)
 
 def parse_cmdline(argv): 
     shortopts = "d"
@@ -41,19 +24,55 @@ def parse_cmdline(argv):
         else: exit(3)
     return flags, args
 
-class DataflowMacro:
+class Dataflow:
+    def __init__(self, name):
+        self.globalvars = {}       # We will store global variables here
+        self.strands    = []
+        if not plumber:
+            error("PLUMBER NOT SET")
+        self.conf = plumber.new_dataflow(name)
+    def eval_dataflow(self):
+        for s in self.strands:
+            s.eval_strand(self)
+        return self.conf
+    def print_dataflow(self):
+        print "\n************* DATAFLOW PRINT *************"
+        print "DATAFLOW GLOBAL CONTEXT:  ", self.globalvars
+        for s in self.strands:
+            s.print_strand()
+    def eval_element(self, type, args):
+        cmd = type + "("
+        # Take care of all but the last arguement
+        if len(args) > 1:
+           for a in args[:-1]: cmd += a + ", " 
+        if args: cmd += args[-1]  # Get the last one
+        cmd += ")" 
+        if flags["debug"]: return cmd
+        else: return self.conf.addElement(eval(cmd))
+    def eval_ref(self, d, r):
+        if flags["debug"]: return "REF(" + d + "." + r + ")"
+        else: return self.conf.addElement(d, r)
+    def lookup(self, map, name):
+        for x,v,a in map:  
+            if x == name: return v
+        for x,v,a in macros:  
+            if x == name: return v
+        return self.globalvars.get(name, 0)
+    def strand(self, s):
+        self.strands.append(s)
+
+class Macro:
     def __init__(self, n):
         self.name      = n
         self.input     = None
         self.output    = None
         self.context   = []
-        self.dataflows = []
+        self.strands   = []
         self.formals   = []
         self.evaluated = False
-        self.installed = False
 
-    def add_dataflow(self, d):
-        self.dataflows.append(d) 
+    def strand(self, s):
+        self.strands.append(s) 
 
     def print_macro(self):
         print "[DATAFLOW CLASS"
@@ -62,8 +81,8 @@ class DataflowMacro:
         print "CLASS INPUT: ", self.input
         print "CLASS OUTPUT: ", self.output
         print "CLASS FORMALS: ", self.formals
-        for d in self.dataflows: 
-            for e in d.elements:
+        for s in self.strands: 
+            for e in s.elements:
                 print e, "->",
             print "END LOCAL DATAFLOW"
         print "END DATAFLOW CLASS %s]" % self.name
@@ -74,87 +93,78 @@ class DataflowMacro:
                 if self.formals[j] == args[i]:
                     args[i] = actuals[j]
 
-    def eval_macro(self, actuals):
+    def eval_macro(self, actuals, d):
         if self.evaluated: return
         assert(len(actuals) == len(self.formals))
         self.context   = copy.deepcopy(self.context)
-        self.dataflows = copy.deepcopy(self.dataflows)
-        # Evaluate the local context
+        self.strands = copy.deepcopy(self.strands)
+        # Evaluate the local context (Can only be a macro or local variable)
         for c in self.context:
-            if isinstance(c[1], DataflowMacro):
-                assert(c[1].name != self.name)
+            if isinstance(c[1], Macro):
+                if c[1].name == self.name:
+                    error("Macro class self reference.")
                 self.apply_args(c[2], actuals)
-                c[1].eval_macro(c[2])
+                c[1].eval_macro(c[2], d)
             else: 
                 self.apply_args(c[2], actuals)
-                c[1] = eval_element(c[1],c[2])
-        # Evaluate the local dataflows
-        for d in self.dataflows:
+                c[1] = d.eval_element(c[1],c[2])
+        # Evaluate the local strands
+        for s in self.strands:
             # Apply actuals to elements and dataflow macros
-            d.context = self.context	# Copy evaluated context into dataflow
+            s.context = self.context	# Copy evaluated context into strand
             # Apply actuals to elements
-            for i,e,o in d.elements:
+            for i,e,o in s.elements:
                 # Apply macro arguments where appropriate
                 if e[0] == 'new':
+                    if e[1] == self.name:
+                       error("Macro class self reference.")
                     self.apply_args(e[2], actuals)
-                elif e[0] == 'macro':
-                    assert(e[1].name != self.name)
-                    self.apply_args(e[2], actuals)
-            d.eval_dataflow()
+            s.eval_strand(d)
         self.evaluated = True
 
-    def install(self, actuals):
-        if self.installed: return
-        self.eval_macro(actuals)
-        for d in self.dataflows:
-            d.install()
-        self.installed = True
-
-class Dataflow:
+class Strand:
     def __init__(self, c):
         self.elements = []
         self.context  = c 
         self.evaluated = False
     def element(self, e):
         self.elements.append(e)
-    def print_dataflow(self):
-        print "\n************* DATAFLOW PRINT *************"
-        print "DATAFLOW CONTEXT:  ", self.context
-        print "ELEMENTS"
+    def print_strand(self):
+        print "STRAND ELEMENTS: "
         for e in self.elements:
-            if isinstance(e[1], DataflowMacro):
+            if isinstance(e[1], Macro):
                 e[1].print_macro()    
             else: print e,
             print "->"
         print "END"
-    def eval_dataflow(self):
+
+    def eval_strand(self, d):
         if self.evaluated: return
         elements = []
         for i,e,o in self.elements:
             if e[0] == 'new':
-                elements.append([i, eval_element(e[1],e[2]), o])
+                macro = d.lookup(self.context, e[1])
+                if macro:
+                    macro.eval_macro(e[2], d)
+                    elements.append([i, macro, o]) 
+                else:
+                    elements.append([i, d.eval_element(e[1],e[2]), o])
             elif e[0] == 'var':
-                elements.append([i, lookup(self.context, e[1]), o])
-            elif e[0] == 'macro':
-                c = lookup(self.context, e[1])
-                assert(c)
-                c.eval_macro(e[2])
-                elements.append([i, c, o]) 
+                elements.append([i, d.lookup(self.context, e[1]), o])
+            elif e[0] == 'ref':
+                elements.append([i, d.eval_ref(e[1], e[2]), o])
         self.elements = elements
-        self.evaluated = True
-    def install(self):
-        self.eval_dataflow()
         # Hook everyone together
-        for i in range(len(self.elements)-1):
-            f = self.elements[i]
-            t = self.elements[i+1]
-            if isinstance(f, DataflowMacro): 
-                f.install()
-                f = f.output
-            if isinstance(t, DataflowMacro): 
-                t.install()
-                t = t.input
-            conf.hookUp(f[1], f[2], t[1], t[0])
+        if not flags["debug"]:
+            for i in range(len(self.elements)-1):
+                f = self.elements[i]
+                t = self.elements[i+1]
+                if isinstance(f, Macro): 
+                    f = f.output
+                if isinstance(t, Macro): 
+                    t = t.input
+                d.conf.hookUp(f[1], f[2], t[1], t[0])
+        self.evaluated = True
 
 %%
 parser P2Dataflow:
@@ -162,61 +172,60 @@ parser P2Dataflow:
     token NUM:   "[0-9]+"
     token VAR:   "[a-z][a-zA-Z0-9_]*"
     token TYPE:  "[A-Z][a-zA-Z0-9_]*"
-    token DNAME: "_[a-zA-Z0-9]*"
     token LINK:  r"->"
     token ARG:   "[^ ][ \"'\$\._A-Za-z0-9\\\:]*"
     ignore:      "[ \r\t\n]+"
 
-    rule program: (global_def<<macros>> {{ pass }}
-                   |
-                   macro                {{ macros.append(macro) }}
-                   |
-                   dataflow<<macros>>   {{ dataflows.append(dataflow) }}
-                  )* END
+    rule module:      ("dataflow" TYPE "{" {{ d = Dataflow(TYPE) }}
+                       dataflow<<d>> "}"   {{ dataflows[TYPE] = d }}
+                       |
+                       macro               {{ macros.append(macro) }}
+                      )* END
 
-    rule global_def<<V>>: "let" VAR ":=" 
+    rule local_def<<C>>: "let" VAR ":=" TYPE args ";" {{ C.append([VAR, TYPE, args]) }}
+
+    rule macro: "macro" TYPE {{ m = Macro(TYPE) }}
+                  [formals {{ m.formals = formals }}] "{"                            
+                  (local_def<<m.context>>       {{ pass }})* 
+                  (  "input"  VAR ";"           {{ m.input = VAR }} 
+                   | "output" VAR ";"           {{ m.output = VAR }} )*
+                  (strand<<m.context>>          {{ m.strand(strand) }} )*
+                  "}"                           {{ return [m.name, m, []] }}
+
+    rule dataflow<<D>>: (global_def<<D>> {{ pass }}
+                         |
+                         strand<<[]>>    {{ D.strand(strand) }}
+                        )*
+
+    rule global_def<<D>>: "let" VAR ":=" 
                           (TYPE args
-                               {{ globalvars[VAR] = eval_element(TYPE,args) }}
-                           |
-                           DNAME args 
-                               {{ d = lookup(V, DNAME) }}
-                               {{ d.eval_macro(args)   }}
-                               {{ globalvars[VAR] = d  }}
+                               {{ e = D.lookup([], TYPE) }}
+                               {{ if e:     e.eval_macro(args, D)   }}
+                               {{ if not e: e = D.eval_element(TYPE,args) }}
+                               {{ D.globalvars[VAR] = e }}
                           ) ";" 
 
-    rule local_def<<V>>: "let" VAR ":=" TYPE args ";" {{ V.append([VAR, TYPE, args]) }}
+    rule strand<<C>>: term                                    {{ outp = 0 }} 
+                                                              {{ s = Strand(C) }}
+                     [port {{ outp = port }}]                 {{ s.element([-1, term, outp]) }}
+                   (LINK
+                    (term                                     {{ outp = 0 }}
+                       [";" {{ s.element([0, term, -1]) }}    {{ return s }} ]
+                       [port                                  {{ outp = port }} ]        
+                                                              {{ s.element([0, term, outp]) }}
+                     | port term                              {{ inp = port }}
+                                                              {{ outp = 0    }}
+                       [";"  {{ s.element([inp, term, -1]) }} 
+                             {{ return s }} ]
+                       [port {{ outp = port }} ]  
+                                                              {{ s.element([inp, term, outp]) }}
+                    )
+                 )+                            
 
-    rule macro: "macro" DNAME {{ d = DataflowMacro(DNAME) }}
-                  [formals {{ d.formals = formals }}] "{"                            
-                  (local_def<<d.context>>       {{ pass }})* 
-                  (  "input"  VAR ";"           {{ d.input = VAR }} 
-                   | "output" VAR ";"           {{ d.output = VAR }} )*
-                  (dataflow<<d.context>>        {{ d.add_dataflow(dataflow) }} )*
-                  "}"                           {{ return [d.name, d, []] }}
-
-    rule dataflow<<V>>: term                                       {{ outp = 0 }} 
-                                                                   {{ d = Dataflow(V) }}
-                          [port {{ outp = port }}]                 {{ d.element([-1, term, outp]) }}
-                        (LINK
-                         (term                                     {{ outp = 0 }}
-                            [";" {{ d.element([0, term, -1]) }}    {{ return d }} ]
-                            [port                                  {{ outp = port }} ]        
-                                                                   {{ d.element([0, term, outp]) }}
-                          | port term                              {{ inp = port }}
-                                                                   {{ outp = 0    }}
-                            [";"  {{ d.element([inp, term, -1]) }} 
-                                  {{ return d }} ]
-                            [port {{ outp = port }} ]  
-                                                                   {{ d.element([inp, term, outp]) }}
-                         )
-                      )+                            
-
-    rule term:   
-                 TYPE    [args {{ return ['new', TYPE, args] }} ]
-                         {{ return ['new', TYPE, []] }}
+    rule term: TYPE  (args {{ return ['new', TYPE, args] }}
+                      |
+                      "\." VAR {{ return ['ref', TYPE, VAR] }} )
                | VAR     {{ return ['var', VAR] }}
-               | DNAME   [args {{ return ['macro', DNAME, args] }}]
-                         {{ return ['macro', DNAME, []] }}
 
     rule port: "\[" NUM+ "\]" {{ return int(NUM) }}
 
@@ -231,18 +240,23 @@ parser P2Dataflow:
                 "\)"          {{ return f}}
 
 %%
+
+def compile(p, s):
+    global plumber
+    plumber = p
+    parse('module', s)
+    return dataflows
+
 def debug():
     if flags["debug"]:
-        print "\n================= GLOBAL VARIABLES ================="
-        print globalvars
-        print "\n================= DATAFLOW CLASSES ================="
+        print "\n================= DATAFLOW MACROS ================="
         for n,c,a in macros: c.print_macro()
         print "\n===================================================="
         print "\n================= GLOBAL DATAFLOWS ================="
-        for d in dataflows: d.eval_dataflow()
-        for d in dataflows: 
-            print d.context
-            d.print_dataflow()
+        for d in dataflows.values(): d.eval_dataflow()
+        for k in dataflows.keys(): 
+            print "DATAFLOW: ", k
+            dataflows[k].print_dataflow()
         print "\n===================================================="
 
 if __name__=='__main__':
@@ -259,11 +273,11 @@ if __name__=='__main__':
             try: s = raw_input('>>> ')
 	    except EOFError: break
             if not strip(s): break
-            parse('dataflow', s)
+            parse('strand', s)
     else:
         try: s = open(args[0], 'r').read()
 	except EOFError: print "FILE READ ERROR"
-        parse('program', s)
+        parse('module', s)
         if flags["debug"]: debug()
     print 'Bye.'
     sys.exit(0)

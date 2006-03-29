@@ -11,12 +11,12 @@
 #
 #
 
-export PYTHONPATH=$(top_builddir)/python/yapps:$(top_builddir)/python/lib
+export PYTHONPATH=$(top_builddir)/python/dfparser/yapps:$(top_builddir)/python/lib
 
 all: dataflow.g
-	python $(top_builddir)/python/yapps/yapps2.py dataflow.g dfparser.py
+	python $(top_builddir)/python/dfparser/yapps/yapps2.py dataflow.g dfparser.py
 
-CLEANFILES = core *.core *.pyc dfparser.py
+CLEANFILES = core *.core *.pyc dfparser.py *.dot *.ps
 EXTRA_DIST = .cvsignore
 
 MAINTAINERCLEANFILES = Makefile.in
