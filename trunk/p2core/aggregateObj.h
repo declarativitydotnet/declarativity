@@ -1,13 +1,12 @@
 /*
  * @(#)$Id$
  *
- * This file is distributed under the terms in the attached LICENSE file.
- * If you do not find this file, copies can be found by writing to:
+ * Copyright (c) 2005 Intel Corporation. All rights reserved.
+ *
+ * This file is distributed under the terms in the attached INTEL-LICENSE file.
+ * If you do not find these files, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
- * Or
- * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
- * Berkeley, CA,  94707. Attention: P2 Group.
  * 
  * DESCRIPTION: Aggregate object template
  *
@@ -18,12 +17,12 @@
 
 
 template< typename _Index >
-Table::AggregateObj< _Index >::AggregateObj(unsigned keyField,
+Table::AggregateObj< _Index >::AggregateObj(std::vector< unsigned > keyFields,
                                             _Index* index,
                                             std::vector< unsigned > groupByFields,
                                             unsigned aggField,
                                             Table::AggregateFunction* aggregateFn)
-  : _keyField(keyField),
+  : _keyFields(keyFields),
     _uIndex(index),
     _groupByFields(groupByFields),
     _aggField(aggField),
@@ -32,6 +31,11 @@ Table::AggregateObj< _Index >::AggregateObj(unsigned keyField,
     _groupByComparator(groupByFields),
     _currentAggregates(_groupByComparator)
 {
+  // index key fields must be a prefix of the groupByFields
+  assert(keyFields.size() <= groupByFields.size());
+  for (int i = 0; i < keyFields.size(); i++) {
+    assert(keyFields[i] == groupByFields[i]);
+  }
 }
 
 template< typename _Index >
@@ -48,12 +52,16 @@ void
 Table::AggregateObj< _Index >::update(TuplePtr t)
 {
   // Go through the portions of the index affected by this insertion
-  ValuePtr key = (*t)[_keyField];
+  std::vector<ValuePtr> vkey;
+  for (std::vector<unsigned>::iterator iter = _keyFields.begin();
+       iter != _keyFields.end(); iter++)
+    vkey.push_back((*t)[*iter]);
+
   bool started = false;
   TuplePtr aMatchingTuple = TuplePtr();
   _aggregateFn->reset();
-  for (_Iterator i = _uIndex->lower_bound(key);
-       i != _uIndex->upper_bound(key);
+  for (_Iterator i = _uIndex->lower_bound(vkey);
+       i != _uIndex->upper_bound(vkey);
        i++) {
     // Fetch the next tuple
     TuplePtr tuple = i->second->t;
@@ -64,9 +72,8 @@ Table::AggregateObj< _Index >::update(TuplePtr t)
          f < _groupByFields.size() && groupByMatch;
          f++) {
       unsigned fieldNo = _groupByFields[f];
-      groupByMatch = groupByMatch &&
-        ((fieldNo == _keyField) ||
-         ((*t)[fieldNo]->compareTo((*tuple)[fieldNo]) == 0));
+      groupByMatch = groupByMatch && 
+                     ((*t)[fieldNo]->compareTo((*tuple)[fieldNo]) == 0);
     }
     if (groupByMatch) {
       if (!started) {
