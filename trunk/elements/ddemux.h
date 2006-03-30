@@ -45,7 +45,6 @@ public:
   int add_output(ValuePtr);
 
   /** Remove output port, by port # or key */
-  void remove_output(int);
   void remove_output(ValuePtr);
 
 private:

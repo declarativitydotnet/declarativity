@@ -20,7 +20,9 @@ libp2pythoncore_la_SOURCES = \
 	elementSpec.cpp \
 	loggerI.cpp \
 	plumber.cpp \
-	tuple.cpp
+	tuple.cpp \
+	value.cpp \
+	val_double.cpp
 
 INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/net -I$(top_builddir)/eventLoop
 

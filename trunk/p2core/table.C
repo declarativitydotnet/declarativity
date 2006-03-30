@@ -23,18 +23,6 @@
 
 using namespace opr;
 
-#define FIND_MUL_INDEX(ndx, fields) do { \
-  ndx = NULL; \
-  for (unsigned i = 0; i < mul_indices_keys.size(); i++) \
-    if (mul_indices_keys[i] == (fields)) ndx = mul_indices[i]; \
-} while (0)
-
-#define FIND_UNI_INDEX(ndx, fields) do { \
-  ndx = NULL; \
-  for (unsigned i = 0; i < uni_indices_keys.size(); i++) \
-    if (uni_indices_keys[i] == (fields)) ndx = uni_indices[i]; \
-} while (0)
-
 //
 // Constructor
 //
@@ -175,8 +163,7 @@ Table::add_unique_groupBy_agg(std::vector< unsigned > keyFields,
                               Table::AggregateFunction* aggregate)
 {
   // Get the index
-  UniqueIndex* uI = NULL;
-  FIND_UNI_INDEX(uI, keyFields);
+  UniqueIndex* uI = find_uni_index(keyFields);
   assert(uI != NULL);
   Table::UniqueAggregate uA =
     Table::UniqueAggregate(new Table::UniqueAggregateObj(keyFields,
@@ -209,8 +196,7 @@ Table::add_mult_groupBy_agg(std::vector< unsigned > keyFields,
                             Table::AggregateFunction* aggregate)
 {
   // Get the index
-  MultIndex* mI = NULL;
-  FIND_MUL_INDEX(mI, keyFields);
+  MultIndex* mI = find_mul_index(keyFields);
   assert(mI != NULL);
   Table::MultAggregate mA =
     Table::MultAggregate(new Table::MultAggregateObj(keyFields,
@@ -340,10 +326,9 @@ TuplePtr Table::remove(unsigned field, ValuePtr key)
  */
 TuplePtr Table::remove(std::vector<unsigned> fields, std::vector<ValuePtr> keys)
 {
-  UniqueIndex *ndx = NULL;
-  FIND_UNI_INDEX(ndx, fields);	// Locate the index based on supported fields (order matters)
-
-  if (!ndx) {
+  // Locate the index based on supported fields (order matters)
+  UniqueIndex *ndx = find_uni_index(fields);	
+  if (ndx == NULL) {
     // This index does not exist
     warn << "Requesting removal from non-existent unique index "
          << " in table " << name << "\n";
@@ -482,6 +467,26 @@ void Table::garbage_collect()
   }
 }
 
+Table::MultIndex* Table::find_mul_index(std::vector<unsigned>& fields)
+{
+  for (int i = 0; i < mul_indices_keys.size(); i++) {
+    if (mul_indices_keys[i] == fields) { 
+      return mul_indices[i];
+    }
+  }
+  return NULL;
+}
+
+Table::UniqueIndex* Table::find_uni_index(std::vector<unsigned>& fields) 
+{
+  for (int i = 0; i < uni_indices_keys.size(); i++) {
+    if (uni_indices_keys[i] == fields) {
+      return uni_indices[i];
+    }
+  }
+  return NULL;
+}
+
 
 Table::MultIterator
 Table::lookupAll(unsigned field, ValuePtr key)
@@ -497,8 +502,7 @@ Table::MultIterator
 Table::lookupAll(std::vector<unsigned> fields, std::vector<ValuePtr> keys)
 {
   garbage_collect();
-  Table::MultIndex *ndx = NULL;
-  FIND_MUL_INDEX(ndx, fields);
+  Table::MultIndex *ndx = find_mul_index(fields);
 
   if (ndx) {
     return Table::MultIterator(new Table::MultIteratorObj(ndx, keys));
@@ -520,8 +524,7 @@ Table::MultScanIterator
 Table::scanAll(std::vector<unsigned> fields)
 {
   garbage_collect();
-  Table::MultIndex *ndx = NULL;
-  FIND_MUL_INDEX(ndx, fields);
+  Table::MultIndex *ndx = find_mul_index(fields);
 
   if (ndx) {
     return Table::MultScanIterator(new Table::MultScanIteratorObj(ndx));
@@ -542,8 +545,7 @@ Table::UniqueScanIterator
 Table::uniqueScanAll(std::vector<unsigned> fields, bool continuous)
 {
   garbage_collect();
-  UniqueIndex *ndx = NULL;
-  FIND_UNI_INDEX(ndx, fields);
+  UniqueIndex *ndx = find_uni_index(fields);
 
   if (ndx) {
     Table::UniqueScanIterator scanIterator 
@@ -571,8 +573,7 @@ Table::UniqueIterator
 Table::lookup(std::vector<unsigned> fields, std::vector<ValuePtr> keys)  
 {
   garbage_collect();
-  UniqueIndex *ndx = NULL;
-  FIND_UNI_INDEX(ndx, fields);
+  UniqueIndex *ndx = find_uni_index(fields);
 
   if (ndx) {
     return Table::UniqueIterator(new Table::UniqueIteratorObj(ndx, keys));

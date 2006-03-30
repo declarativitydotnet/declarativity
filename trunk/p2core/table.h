@@ -480,6 +480,12 @@ private:
 
   void garbage_collect();
 
+  /** Locate the index with the specific key fields 
+   *  Return: the index or NULL if it does not exist
+   */
+  UniqueIndex* find_uni_index(std::vector<unsigned>&); 
+  MultIndex*   find_mul_index(std::vector<unsigned>&); 
+
 public:
   /** Lookup in a unique index */
   UniqueIterator lookup(unsigned field, ValuePtr key);

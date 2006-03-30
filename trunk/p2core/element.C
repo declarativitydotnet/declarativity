@@ -119,6 +119,44 @@ Element::ports_frozen() const
   return false;
 }
 
+int Element::add_input() 
+{
+  for (int port=0; port < ninputs(); port++) {
+    if (_inputs[port] == 0) {
+      _inputs[port].reset(new Port());
+      return port;
+    }
+  }
+  _inputs.push_back(PortPtr(new Port())); 
+  _ninputs = _inputs.size();
+  return _ninputs - 1;
+}
+
+int Element::add_output()
+{
+  for (int port=0; port < noutputs(); port++) {
+    if (_outputs[port] == 0) {
+      _outputs[port].reset(new Port());
+      return port;
+    }
+  }
+  _outputs.push_back(PortPtr(new Port())); 
+  _noutputs = _outputs.size();
+  return _noutputs - 1;
+}
+
+void Element::remove_input(int port)
+{
+  if (port >= 0 && port < ninputs())
+    _inputs[port].reset();
+}
+
+void Element::remove_output(int port)
+{
+  if (port >= 0 && port < noutputs())
+    _outputs[port].reset();
+}
+
 int Element::connect_input(int i, Element *f, int port)
 {
   if (i >= 0 && i < ninputs()) {

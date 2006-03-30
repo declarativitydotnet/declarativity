@@ -3,9 +3,6 @@
 
 using namespace boost::python;
 
-void (DDemux::*ro_int)(int)       = &DDemux::remove_output;
-void (DDemux::*ro_vptr)(ValuePtr) = &DDemux::remove_output;
-
 void export_ddemux()
 {
   class_<DDemux, bases<Element>, boost::shared_ptr<DDemux>, boost::noncopyable>
@@ -14,8 +11,6 @@ void export_ddemux()
     .def("processing", &DDemux::processing)
     .def("flow_code",  &DDemux::flow_code)
     .def("add_output", &DDemux::add_output)
-  
-    .def("remove_output", ro_int)
-    .def("remove_output", ro_vptr)
+    .def("remove_output", &DDemux::remove_output)
   ;
 }

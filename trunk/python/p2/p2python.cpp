@@ -67,6 +67,8 @@ void export_elementSpec();
 void export_loggerI();
 void export_plumber();
 void export_tuple();
+void export_value();
+void export_val_double();
 
 BOOST_PYTHON_MODULE(p2python)
 {
@@ -75,6 +77,8 @@ BOOST_PYTHON_MODULE(p2python)
   export_loggerI();
   export_plumber();
   export_tuple();
+  export_value();
+  export_val_double();
 
   export_aggregate();
   export_aggwrap();

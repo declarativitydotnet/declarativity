@@ -54,6 +54,16 @@ private:
   portSetup();
 
 public:
+  /**
+   * Thrown when an element operation is not supported
+   */ 
+  class Exception {
+    public:
+      Exception(string d) : desc_(d) {};
+      operator string() { return desc_; };
+    private:
+      string desc_;
+  };
   
   // Two shorthand processing signatures.  
   static const char * const PUSH_TO_PULL;
@@ -137,12 +147,24 @@ public:
   // Getters
   int ninputs() const				{ return _ninputs; }
   int noutputs() const				{ return _noutputs; }
-  
+
   bool ports_frozen() const;
 
   // CONFIGURATION
+  /** Static port connection */
   int connect_input(int i, Element *f, int port);
   int connect_output(int o, Element *f, int port);
+
+  /** Dynamic port connection 
+   *  Return: port number allocated to this connection.
+   *  Throws: Element::Exception if element does not support this functionality
+   */
+  virtual int connect_input(Element *f, int port) 
+    { throw Exception("Dynamic ports not supported"); return -1; }
+  virtual int connect_output(Element *f, int port) 
+    { throw Exception("Dynamic ports not supported"); return -1; }
+
+  // Called by the plumber before running 
   virtual int initialize();
   
   // PROCESSING, FLOW, AND FLAGS
@@ -273,6 +295,14 @@ public:
   LoggerI*       _logger;
 
 protected:
+
+  /** Dynamic allocation of ports */
+  int add_input();
+  int add_output();
+
+  /** Remove the port indicated by port number */
+  void remove_input(int);
+  void remove_output(int);
   
   /** My ID in text */
   string _IDstr;
