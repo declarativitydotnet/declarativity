@@ -379,8 +379,8 @@ void Plumber::Dataflow::finalize() {
 
 Plumber::Plumber(LoggerI::Level loggingLevel)
   : loggingLevel(loggingLevel),
-    _logger(0),
-    _dataflows(new std::map<string, DataflowPtr>())
+    _dataflows(new std::map<string, DataflowPtr>()),
+    _logger(0)
 {
 }
 
@@ -528,9 +528,9 @@ int Plumber::check_hookup_completeness(string installedDataflowName) {
            i != garbage.end(); i++) {
         remove(*i);	// Garbage collect the element
       }
-      return 0;
     }
   }
+  return 0;
 }
 
 void Plumber::remove(ElementSpecPtr e) {
@@ -551,10 +551,10 @@ void Plumber::toDot(string f) {
        iter != _dataflows->end(); iter++) {
     std::vector<ElementSpec::HookupPtr>& h = iter->second->hookups_;
     std::vector<ElementSpecPtr>&         e = iter->second->elements_;
-    for (int i = 0; i < e.size(); i++) {
+    for (unsigned i = 0; i < e.size(); i++) {
       elements.insert(e[i]);
     }
-    for (int i = 0; i < h.size(); i++) {
+    for (unsigned i = 0; i < h.size(); i++) {
       hookups.insert(h[i]);
     }
   }

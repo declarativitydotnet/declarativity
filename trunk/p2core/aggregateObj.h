@@ -33,7 +33,7 @@ Table::AggregateObj< _Index >::AggregateObj(std::vector< unsigned > keyFields,
 {
   // index key fields must be a prefix of the groupByFields
   assert(keyFields.size() <= groupByFields.size());
-  for (int i = 0; i < keyFields.size(); i++) {
+  for (unsigned i = 0; i < keyFields.size(); i++) {
     assert(keyFields[i] == groupByFields[i]);
   }
 }

@@ -25,13 +25,13 @@ using namespace opr;
 
 #define FIND_MUL_INDEX(ndx, fields) do { \
   ndx = NULL; \
-  for (int i = 0; i < mul_indices_keys.size(); i++) \
+  for (unsigned i = 0; i < mul_indices_keys.size(); i++) \
     if (mul_indices_keys[i] == (fields)) ndx = mul_indices[i]; \
 } while (0)
 
 #define FIND_UNI_INDEX(ndx, fields) do { \
   ndx = NULL; \
-  for (int i = 0; i < uni_indices_keys.size(); i++) \
+  for (unsigned i = 0; i < uni_indices_keys.size(); i++) \
     if (uni_indices_keys[i] == (fields)) ndx = uni_indices[i]; \
 } while (0)
 
