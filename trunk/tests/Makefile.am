@@ -217,7 +217,7 @@ INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements \
 		-I$(top_builddir)/net -I$(top_builddir)/overlog \
 		-I$(top_builddir)/planner -I$(top_builddir)/eventLoop
 
-CXXFLAGS="-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG" @CXXFLAGS@
+CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@
 
 LDFLAGS=@BOOST_LIB@ @LDFLAGS@
 
