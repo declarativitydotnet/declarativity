@@ -31,7 +31,7 @@ def install(f):
     try: s = open(f + ".df", 'r').read()
     except EOFError: print "FILE READ ERROR"
     dfparser.dataflows = {}
-    dfparser.compile(p, s)
+    dfparser.compile(p, p2python, s)
 
     if dfparser.dataflows.has_key("Main"):
       m = dfparser.dataflows["Main"]

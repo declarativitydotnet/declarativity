@@ -17,6 +17,8 @@ all: dataflow.g
 	python $(top_builddir)/python/dfparser/yapps/yapps2.py dataflow.g dfparser.py
 
 CLEANFILES = core *.core *.pyc dfparser.py *.dot *.ps
-EXTRA_DIST = .cvsignore
+EXTRA_DIST = dataflow.g \
+             yapps/LICENSE yapps/Makefile yapps/parsedesc.g \
+             yapps/yapps2.py yapps/yappsrt.py
 
 MAINTAINERCLEANFILES = Makefile.in

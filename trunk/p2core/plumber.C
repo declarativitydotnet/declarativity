@@ -24,6 +24,15 @@
  * is to be installed into the plumber. 
  */
 
+std::string Plumber::Dataflow::toString() const {
+    ostringstream oss;
+    for (std::vector<ElementSpecPtr>::const_iterator i = elements_.begin();
+         i != elements_.end(); i++) {
+      oss << (*i)->toString() << std::endl;
+    }
+    return oss.str();
+}
+
 ElementSpecPtr Plumber::Dataflow::addElement(ElementPtr e) {
   ElementSpecPtr s(new ElementSpec(e));
   s->dataflowRef(name());	// Add my dataflow name
@@ -66,7 +75,9 @@ ElementSpecPtr Plumber::Dataflow::find(string name)
   for (std::vector<ElementSpecPtr>::iterator i = elements_.begin();
        i != elements_.end(); i++) {
     assert((*i)->element());
-    if ((*i)->element()->name() == name) return *i;
+    if ((*i)->element()->name() == name) {
+      return *i;
+    }
   }
   return ElementSpecPtr();
 }

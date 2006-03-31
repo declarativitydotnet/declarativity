@@ -3,10 +3,10 @@
 import sys
 import getopt
 import copy
-from p2python import *
 from string import strip
 
 plumber    = None
+module     = None
 dataflows  = {}
 macros     = []
 local      = []
@@ -24,6 +24,15 @@ def parse_cmdline(argv):
         else: exit(3)
     return flags, args
 
+def eval_value(val, args):
+    arguments = []
+    for a in args: 
+        if a[0] == 'var':
+            error("Value types do not take variable arguments.")
+        arguments.append(a[1])
+    if flags["debug"]: return val + str(arguments)
+    else: return apply(getattr(getattr(module,val), 'mk'), tuple(arguments))
+
 class Dataflow:
     def __init__(self, name):
         self.globalvars = {}       # We will store global variables here
@@ -40,15 +49,24 @@ class Dataflow:
         print "DATAFLOW GLOBAL CONTEXT:  ", self.globalvars
         for s in self.strands:
             s.print_strand()
+    def eval_arg(self, arg):
+        if arg[0] == 'var':
+            arg = self.lookup([], arg[1])
+            if not arg: 
+                error("Variable arguement does not exist")
+            if not flags["debug"] and not isinstance(arg, ValueVec):
+                error("Variable arguement must be of type ValueVec")
+            return arg
+        elif not arg[0] == 'arg': error("Unknown argument type")
+        return arg[1]
     def eval_element(self, type, args):
-        cmd = type + "("
+        arguments = []
         # Take care of all but the last arguement
-        if len(args) > 1:
-           for a in args[:-1]: cmd += a + ", " 
-        if args: cmd += args[-1]  # Get the last one
-        cmd += ")" 
-        if flags["debug"]: return cmd
-        else: return self.conf.addElement(eval(cmd))
+        for a in args: 
+            arguments.append(self.eval_arg(a)) 
+        if flags["debug"]: return type + str(arguments)
+        else: 
+            return self.conf.addElement(apply(getattr(module, type), tuple(arguments)))
     def eval_ref(self, d, r):
         if flags["debug"]: return "REF(" + d + "." + r + ")"
         else: return self.conf.addElement(d, r)
@@ -170,10 +188,11 @@ class Strand:
 parser P2Dataflow:
     token END:   "\."
     token NUM:   "[0-9]+"
+    token VAL:   "Val_[a-zA-Z0-9_]*"
     token VAR:   "[a-z][a-zA-Z0-9_]*"
     token TYPE:  "[A-Z][a-zA-Z0-9_]*"
     token LINK:  r"->"
-    token ARG:   "[^ ][ \"'\$\._A-Za-z0-9\\\:]*"
+    token STR:   "\"[^ ][ '\$\._A-Za-z0-9\\\:]*\""
     ignore:      "[ \r\t\n]+"
 
     rule module:      ("dataflow" TYPE "{" {{ d = Dataflow(TYPE) }}
@@ -203,7 +222,10 @@ parser P2Dataflow:
                                {{ if e:     e.eval_macro(args, D)   }}
                                {{ if not e: e = D.eval_element(TYPE,args) }}
                                {{ D.globalvars[VAR] = e }}
-                          ) ";" 
+                           |
+                           values {{ D.globalvars[VAR] = values }}
+                          ) 
+                          ";" 
 
     rule strand<<C>>: term                                    {{ outp = 0 }} 
                                                               {{ s = Strand(C) }}
@@ -230,20 +252,33 @@ parser P2Dataflow:
     rule port: "\[" NUM+ "\]" {{ return int(NUM) }}
 
     rule args: "\("           {{ a = [] }}
-                 [ARG         {{ a.append(ARG) }}           
-                   (',' ARG   {{ a.append(ARG) }})*]
+                 [arg         {{ a.append(arg) }}           
+                   (',' arg   {{ a.append(arg) }})*]
                 "\)"          {{ return a }}
+
+    rule arg: (STR {{ return ['arg', str(STR[1:-1])] }}
+               |
+               NUM {{ return ['arg', int(NUM)] }} 
+               |
+               VAR {{ return ['var', VAR] }} )
 
     rule formals: "\("        {{ f = [] }}
                  [VAR         {{ f.append(VAR) }}           
                    (',' VAR   {{ f.append(VAR) }})*]
                 "\)"          {{ return f}}
 
+    rule values: "{"             {{ v = module.ValueVec() }}
+                 [VAL args       {{ v.append(eval_value(VAL, args)) }}           
+                   (',' VAL args {{ v.append(eval_value(VAL, args)) }})*]
+                 "}"             {{ return v}}
+
 %%
 
-def compile(p, s):
+def compile(p, m, s):
     global plumber
+    global module
     plumber = p
+    module  = m
     parse('module', s)
     return dataflows
 

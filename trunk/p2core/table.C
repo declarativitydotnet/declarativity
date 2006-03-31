@@ -469,7 +469,7 @@ void Table::garbage_collect()
 
 Table::MultIndex* Table::find_mul_index(std::vector<unsigned>& fields)
 {
-  for (int i = 0; i < mul_indices_keys.size(); i++) {
+  for (unsigned i = 0; i < mul_indices_keys.size(); i++) {
     if (mul_indices_keys[i] == fields) { 
       return mul_indices[i];
     }
@@ -479,7 +479,7 @@ Table::MultIndex* Table::find_mul_index(std::vector<unsigned>& fields)
 
 Table::UniqueIndex* Table::find_uni_index(std::vector<unsigned>& fields) 
 {
-  for (int i = 0; i < uni_indices_keys.size(); i++) {
+  for (unsigned i = 0; i < uni_indices_keys.size(); i++) {
     if (uni_indices_keys[i] == fields) {
       return uni_indices[i];
     }

@@ -17,12 +17,24 @@
 lib_LTLIBRARIES = libp2pythoncore.la
 
 libp2pythoncore_la_SOURCES = \
-	elementSpec.cpp \
-	loggerI.cpp \
-	plumber.cpp \
-	tuple.cpp \
-	value.cpp \
-	val_double.cpp
+	element.cpp          \
+	elementSpec.cpp      \
+	loggerI.cpp          \
+	plumber.cpp          \
+	tuple.cpp            \
+	value.cpp            \
+	val_double.cpp       \
+	val_id.cpp           \
+	val_int32.cpp        \
+	val_int64.cpp        \
+	val_ip_addr.cpp      \
+	val_null.cpp         \
+	val_opaque.cpp       \
+	val_str.cpp          \
+	val_time.cpp         \
+	val_tuple.cpp        \
+	val_uint32.cpp       \
+	val_uint64.cpp
 
 INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/net -I$(top_builddir)/eventLoop
 

@@ -38,6 +38,10 @@ public:
       /** The name of this dataflow */
       string name() const { return name_; }
 
+      /** The string representation of each element that is part 
+       *  of this dataflow */
+      string toString() const;
+
       /** Validate this dataflow. These checks are local to
           this dataflow (they don't require info from other dataflows). */
       int validate() const;

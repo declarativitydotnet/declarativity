@@ -28,7 +28,6 @@ libp2pythonelements_la_SOURCES = \
 	dupElim.cpp \
 	duplicateConservative.cpp \
 	duplicate.cpp \
-	element.cpp \
 	filter.cpp \
 	functorSource.cpp \
 	hexdump.cpp \

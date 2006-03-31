@@ -69,6 +69,17 @@ void export_plumber();
 void export_tuple();
 void export_value();
 void export_val_double();
+void export_val_id();
+void export_val_int32();
+void export_val_int64();
+void export_val_ip_addr();
+void export_val_null();
+void export_val_opaque();
+void export_val_str();
+void export_val_time();
+void export_val_tuple();
+void export_val_uint32();
+void export_val_uint64();
 
 BOOST_PYTHON_MODULE(p2python)
 {
@@ -79,6 +90,17 @@ BOOST_PYTHON_MODULE(p2python)
   export_tuple();
   export_value();
   export_val_double();
+  export_val_id();
+  export_val_int32();
+  export_val_int64();
+  export_val_ip_addr();
+  export_val_null();
+  export_val_opaque();
+  export_val_str();
+  export_val_time();
+  export_val_tuple();
+  export_val_uint32();
+  export_val_uint64();
 
   export_aggregate();
   export_aggwrap();
