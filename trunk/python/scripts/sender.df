@@ -1,23 +1,30 @@
+macro UdpMarshal(name, port, field) {
+  let udp = Udp2("udp", port);
+  let unroute = PelTransform("unRoute", "$1 unboxPop");
+  let marshal = MarshalField("marshal", 1);
+
+  input marshal; output unroute;
+
+  marshal -> StrToSockaddr("addr_conv", field) -> udp;
+  udp -> UnmarshalField("unmarshal", 1) -> unroute;
+}
+
+
 dataflow Main {
-  let cct := CCT("Transmit CC", 1, 20);
-  let retry := RDelivery("Retry");
-  let retryMux := Mux("Retry Mux", 2);
-  let srcAddr := PelTransform("SOURCE ADDRESS", "\"localhost:10000\" pop swallow pop");
-  let destAddr := PelTransform("DEST ADDRESS", "\"localhost:10001\" pop swallow pop");
-  let udp := Udp2("SOURCE", 10000);
+  let cct = CCT("transmit_cc", 1, 20);
+  let retry = RDelivery("retry");
+  let retryMux = Mux("retry_mux", 2);
+  let srcAddr = PelTransform("source_address", ""localhost:10000" pop swallow unboxPop");
+  let destAddr = PelTransform("destAddr", ""localhost:10001" pop swallow unboxPop");
+  let conn = UdpMarshal("conn", 10000, 0);
   
-  TimedPushSource("source", .01)         ->
-  Queue("Source Data Q", 1000)           ->
-  Sequence("Sender Sequence", 1)         ->
-  retry -> cct -> srcAddr -> destAddr    ->
-  Print("print_send")                    ->
-  MarshalField("marshal data", 1)        ->
-  StrToSockaddr("Convert dest addr", 0)  ->
-  SimpleNetSim("Simple Net Sim Sender", 10, 100) -> udp;
+  TimedPushSource("source", .01)  -> Queue ->
+  Sequence -> retry -> cct -> srcAddr -> destAddr ->
+  Print("print_send")             ->
+  conn;
   
-  udp -> UnmarshalField("unmarshal ack", 1) -> 
-  PelTransform("unRoute", "$1 unboxPop")    ->
-  [1]cct[1] -> [1]retry[1] -> retryMux -> Discard("DISCARD");
+  conn -> 
+  [1]cct[1] -> [1]retry[1] -> retryMux -> Discard("discard");
   
   retry[2] -> [1]retryMux;
 }

@@ -81,7 +81,7 @@ void export_val_tuple();
 void export_val_uint32();
 void export_val_uint64();
 
-BOOST_PYTHON_MODULE(p2python)
+BOOST_PYTHON_MODULE(libp2python)
 {
   export_element();
   export_elementSpec();

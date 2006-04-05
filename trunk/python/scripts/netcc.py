@@ -1,7 +1,7 @@
 import sys;
 import getopt;
 
-import p2python;
+import libp2python;
 
 
 def print_usage():

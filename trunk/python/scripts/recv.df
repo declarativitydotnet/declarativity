@@ -1,7 +1,7 @@
 dataflow Main {
-  let udp := Udp2("udp", 10001);
-  let ccr := CCR("ccr", 2048);
-  let vec := {Val_IP_ADDR("127.0.0.1"), Val_IP_ADDR("127.0.0.2")};
+  let udp = Udp2("udp", 10001);
+  let ccr = CCR("ccr", 2048);
+  let vec = {Val_IP_ADDR("127.0.0.1"), Val_IP_ADDR("127.0.0.2")};
   
   udp -> Bandwidth("bandwidth") ->
   UnmarshalField("unmarshal", 1) ->

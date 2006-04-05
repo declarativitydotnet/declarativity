@@ -1,11 +1,11 @@
 import dfparser
-import p2python
+import libp2python
 import sys
 import os
 import getopt
 
-p = p2python.Plumber(p2python.LoggerI.Level.ERROR)
-p2python.eventLoopInitialize()
+p = libp2python.Plumber(libp2python.LoggerI.Level.ERROR)
+libp2python.eventLoopInitialize()
 
 def print_usage():
     print "USAGE: make sure your PYTHONPATH environment variable is set as follows:"
@@ -25,13 +25,13 @@ def parse_cmdline(argv):
     return flags, args
 
 def run():
-    p2python.eventLoop()
+    libp2python.eventLoop()
 
 def install(f):
     try: s = open(f + ".df", 'r').read()
     except EOFError: print "FILE READ ERROR"
     dfparser.dataflows = {}
-    dfparser.compile(p, p2python, s)
+    dfparser.compile(p, libp2python, s)
 
     if dfparser.dataflows.has_key("Main"):
       m = dfparser.dataflows["Main"]

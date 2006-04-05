@@ -49,6 +49,15 @@ class Dataflow:
         print "DATAFLOW GLOBAL CONTEXT:  ", self.globalvars
         for s in self.strands:
             s.print_strand()
+    def operation(self, oper, dataflow, name, port):
+          element = conf.addElement(dataflow, name)
+          if oper == "add_input" or oper == "add_output": 
+            if port: return element.attr(oper)(port)
+            else: return element.attr(oper)()
+          elif oper == "remove_input" or oper == "remove_output":
+            element.attr(oper)(port)
+          else: error("Unknown dataflow operation.")
+          return -1
     def eval_arg(self, arg):
         if arg[0] == 'var':
             arg = self.lookup([], arg[1])
@@ -57,11 +66,9 @@ class Dataflow:
             if not flags["debug"] and not isinstance(arg, ValueVec):
                 error("Variable arguement must be of type ValueVec")
             return arg
-        elif not arg[0] == 'arg': error("Unknown argument type")
         return arg[1]
     def eval_element(self, type, args):
         arguments = []
-        # Take care of all but the last arguement
         for a in args: 
             arguments.append(self.eval_arg(a)) 
         if flags["debug"]: return type + str(arguments)
@@ -106,15 +113,18 @@ class Macro:
         print "END DATAFLOW CLASS %s]" % self.name
 
     def apply_args(self, args, actuals):
+        assert(self.formals[0] == 'name')
+        if len(args) > 0 and args[0] != 'name':
+            args[0][1] = actuals[0][1] + "_" + args[0][1]
         for i in range(len(args)):
             for j in range(len(self.formals)):
-                if self.formals[j] == args[i]:
+                if args[i][0] == 'var' and self.formals[j] == args[i][1]:
                     args[i] = actuals[j]
 
     def eval_macro(self, actuals, d):
         if self.evaluated: return
         assert(len(actuals) == len(self.formals))
-        self.context   = copy.deepcopy(self.context)
+        self.context = copy.deepcopy(self.context)
         self.strands = copy.deepcopy(self.strands)
         # Evaluate the local context (Can only be a macro or local variable)
         for c in self.context:
@@ -126,6 +136,8 @@ class Macro:
             else: 
                 self.apply_args(c[2], actuals)
                 c[1] = d.eval_element(c[1],c[2])
+            if self.input and self.input == c[0]: self.input = c[1]
+            if self.output and self.output == c[0]: self.output = c[1]
         # Evaluate the local strands
         for s in self.strands:
             # Apply actuals to elements and dataflow macros
@@ -172,27 +184,42 @@ class Strand:
             elif e[0] == 'ref':
                 elements.append([i, d.eval_ref(e[1], e[2]), o])
         self.elements = elements
+
         # Hook everyone together
         if not flags["debug"]:
             for i in range(len(self.elements)-1):
                 f = self.elements[i]
                 t = self.elements[i+1]
-                if isinstance(f, Macro): 
-                    f = f.output
-                if isinstance(t, Macro): 
-                    t = t.input
+                if isinstance(f[1], Macro): 
+                    f[1] = f[1].output
+                if isinstance(t[1], Macro): 
+                    t[1] = t[1].input
+                # Make sure ports are numbers and not keys
+                if not isinstance(f[2], int):
+                  try:
+                    f[2] = f[1].element().input(f[2])
+                  except: 
+                    print "EXCEPTION: %s\n" % str(sys.exc_info()[:2])
+                    print "Unable to resolve value %s to a port number." % f[2].toString()
+                if not isinstance(t[0], int):
+                  try:
+                    t[0] = t[1].element().input(t[0])
+                  except: 
+                    print "EXCEPTION: %s\n" % str(sys.exc_info()[:2])
+                    print "Unable to resolve value %s to a port number." % t[0].toString()
                 d.conf.hookUp(f[1], f[2], t[1], t[0])
         self.evaluated = True
 
 %%
 parser P2Dataflow:
     token END:   "\."
+    token FLOAT: "[0-9]*\.[0-9]+"
     token NUM:   "[0-9]+"
     token VAL:   "Val_[a-zA-Z0-9_]*"
     token VAR:   "[a-z][a-zA-Z0-9_]*"
     token TYPE:  "[A-Z][a-zA-Z0-9_]*"
     token LINK:  r"->"
-    token STR:   "\"[^ ][ '\$\._A-Za-z0-9\\\:]*\""
+    token STR:   "[^ ][\" '\$\._A-Za-z0-9\\\:]*"
     ignore:      "[ \r\t\n]+"
 
     rule module:      ("dataflow" TYPE "{" {{ d = Dataflow(TYPE) }}
@@ -201,10 +228,9 @@ parser P2Dataflow:
                        macro               {{ macros.append(macro) }}
                       )* END
 
-    rule local_def<<C>>: "let" VAR ":=" TYPE args ";" {{ C.append([VAR, TYPE, args]) }}
-
     rule macro: "macro" TYPE {{ m = Macro(TYPE) }}
-                  [formals {{ m.formals = formals }}] "{"                            
+                  formals {{ if len(formals) == 0 or formals[0] != 'name': error("MACRO %s: First formal of  must be 'name'." % TYPE) }} 
+                          {{ m.formals = formals }} "{"                            
                   (local_def<<m.context>>       {{ pass }})* 
                   (  "input"  VAR ";"           {{ m.input = VAR }} 
                    | "output" VAR ";"           {{ m.output = VAR }} )*
@@ -213,10 +239,14 @@ parser P2Dataflow:
 
     rule dataflow<<D>>: (global_def<<D>> {{ pass }}
                          |
+                         operation<<D>>  {{ pass }}
+                         | 
                          strand<<[]>>    {{ D.strand(strand) }}
                         )*
 
-    rule global_def<<D>>: "let" VAR ":=" 
+    rule local_def<<C>>: "let" VAR "=" TYPE args ";" {{ C.append([VAR, TYPE, args]) }}
+
+    rule global_def<<D>>: "let" VAR "=" 
                           (TYPE args
                                {{ e = D.lookup([], TYPE) }}
                                {{ if e:     e.eval_macro(args, D)   }}
@@ -227,47 +257,68 @@ parser P2Dataflow:
                           ) 
                           ";" 
 
-    rule strand<<C>>: term                                    {{ outp = 0 }} 
-                                                              {{ s = Strand(C) }}
-                     [port {{ outp = port }}]                 {{ s.element([-1, term, outp]) }}
-                   (LINK
-                    (term                                     {{ outp = 0 }}
-                       [";" {{ s.element([0, term, -1]) }}    {{ return s }} ]
-                       [port                                  {{ outp = port }} ]        
-                                                              {{ s.element([0, term, outp]) }}
-                     | port term                              {{ inp = port }}
-                                                              {{ outp = 0    }}
-                       [";"  {{ s.element([inp, term, -1]) }} 
-                             {{ return s }} ]
-                       [port {{ outp = port }} ]  
-                                                              {{ s.element([inp, term, outp]) }}
-                    )
-                 )+                            
+    rule operation<<D>>: "add"    (port TYPE "\." VAR {{ return D.operation('add_input', TYPE, VAR, port) }}
+                                   |
+                                   TYPE "\." VAR port {{ return D.operation('add_output', TYPE, VAR, port) }}) 
+                         "remove" (port TYPE "\." VAR {{ return D.operation('remove_input', TYPE, VAR, port) }}
+                                   |
+                                   TYPE "\." VAR port {{ return D.operation('remove_output', TYPE, VAR, port) }}) 
+                         ";"
 
-    rule term: TYPE  (args {{ return ['new', TYPE, args] }}
+    rule strand<<C>>: term {{ outp = 0 }} {{ s = Strand(C) }}
+                           [port {{ outp = port }}] {{ s.element([-1, term, outp]) }}
+                      (LINK
+                        (term  {{ outp = 0 }}
+                             [";" {{ s.element([0, term, -1]) }} {{ return s }} ]
+                             [port {{ outp = port }} ] 
+                             {{ s.element([0, term, outp]) }}
+                         | 
+                         port term {{ inp = port }} {{ outp = 0    }}
+                             [";"      {{ s.element([inp, term, -1]) }} {{ return s }} ]
+                             [port     {{ outp = port }} ]  
+                             {{ s.element([inp, term, outp]) }}
+                        )
+                      )+
+
+    rule term: (TYPE  ([args {{ return ['new', TYPE, args] }} ]
+                       {{ return ['new', TYPE, []] }}
                       |
                       "\." VAR {{ return ['ref', TYPE, VAR] }} )
-               | VAR     {{ return ['var', VAR] }}
+                | 
+                VAR {{ return ['var', VAR] }})
 
-    rule port: "\[" NUM+ "\]" {{ return int(NUM) }}
+    rule port: "\["       {{ port = None }}
+               [(NUM      {{ port = int(NUM) }}
+                |
+                VAL args  {{ port = eval_value(VAL, args) }} )]
+               "\]"       {{ return port }}
 
     rule args: "\("           {{ a = [] }}
                  [arg         {{ a.append(arg) }}           
                    (',' arg   {{ a.append(arg) }})*]
                 "\)"          {{ return a }}
 
-    rule arg: (STR {{ return ['arg', str(STR[1:-1])] }}
+    rule arg: (STR      {{ if STR[0] == "\"": STR = STR[1:] }} 
+                        {{ if STR[-1]== "\"": STR = STR[:-1] }}
+                        {{ return ['str', str(STR)] }}
                |
-               NUM {{ return ['arg', int(NUM)] }} 
+               NUM      {{ return ['num', int(NUM)] }} 
                |
-               VAR {{ return ['var', VAR] }} )
+               FLOAT    {{ return ['float', float(FLOAT)] }} 
+               |
+               VAL args {{ return ['val', eval_value(VAL, args)] }} 
+               |
+               values   {{ return ['vals', values] }} 
+               |
+               VAR      {{ return ['var', VAR] }} )
 
     rule formals: "\("        {{ f = [] }}
                  [VAR         {{ f.append(VAR) }}           
                    (',' VAR   {{ f.append(VAR) }})*]
                 "\)"          {{ return f}}
 
-    rule values: "{"             {{ v = module.ValueVec() }}
+    rule values: "{"             {{ if flags["debug"]: v = [] }} 
+                                 {{ if not flags["debug"]: v = module.ValueVec() }}
                  [VAL args       {{ v.append(eval_value(VAL, args)) }}           
                    (',' VAL args {{ v.append(eval_value(VAL, args)) }})*]
                  "}"             {{ return v}}
@@ -312,7 +363,9 @@ if __name__=='__main__':
     else:
         try: s = open(args[0], 'r').read()
 	except EOFError: print "FILE READ ERROR"
-        parse('module', s)
+        import p2python
+        p = p2python.Plumber()
+        compile(p, p2python, s)
         if flags["debug"]: debug()
     print 'Bye.'
     sys.exit(0)
