@@ -1,0 +1,31 @@
+macro UdpMarshal(name, port, field) {
+  let udp = Udp2("udp", port);
+  let unroute = PelTransform("unRoute", "$1 unboxPop");
+  let marshal = MarshalField("marshal", 1);
+
+  input marshal; output unroute;
+
+  marshal -> StrToSockaddr("addr_conv", field) -> udp;
+  udp -> UnmarshalField("unmarshal", 1) -> unroute;
+}
+
+
+dataflow Main {
+  let cct = CCT("transmit_cc", 1, 20);
+  let retry = RDelivery("retry");
+  let retryMux = Mux("retry_mux", 2);
+  let srcAddr = PelTransform("source_address", ""localhost:10000" pop swallow unboxPop");
+  let destAddr = PelTransform("destAddr", ""localhost:10001" pop swallow unboxPop");
+  let conn = UdpMarshal("conn", 10000, 0);
+  
+  TimedPushSource("source", .01)  -> Queue("queue", 1000) ->
+  Sequence("sequence_number") -> retry -> cct -> srcAddr -> destAddr ->
+  Print("print_send")             ->
+  conn;
+  
+  conn -> 
+  [1]cct[1] -> [1]retry[1] -> retryMux -> Discard("discard");
+  
+  retry[2] -> [1]retryMux;
+}
+.

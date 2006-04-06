@@ -1,0 +1,109 @@
+This is pdfTeX, Version 3.14159-1.10b (Web2C 7.4.5) (format=pdfjadetex 2005.2.9)  17 MAR 2005 11:32
+**DART-HOWTO.tex
+(/home-local/tcondie/workspace/phi/phi/dart/doc/DART-HOWTO.tex{/usr/share/texmf
+/pdftex/config/pdftex.cfg}
+JadeTeX 2002/01/25: 3.12
+LaTeX Font Info:    Try loading font information for T1+ptm on input line 1.
+(/usr/share/texmf/tex/latex/psnfss/t1ptm.fd
+File: t1ptm.fd 2001/06/04 font definitions for T1/ptm.
+)
+Elements will be labelled
+
+! LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.8 {2}}D
+         ART HOWTO\endNode{}\Node%
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+Underfull \hbox (badness 5274) in paragraph at lines 8--277
+/ptmr8t/<topology> <project>planetlab</project> <experiment>pier0032</experimen
+t> <nsfile>pier0032.ns</nsfile> <eipsfile>pier0032.eips</eipsfile>
+ []
+
+
+Underfull \hbox (badness 3199) in paragraph at lines 8--277
+/ptmr8t/</dir> <dir> <src>/homes/bnc/pier/client</src> <dst>$DART_COMMON_DIR/cl
+ient</dst> </dir> <dir> <src>/homes/bnc/pier/sensors</src>
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 8--277
+/ptmr8t/<dst>$DART_COMMON_DIR/sensors</dst> </dir> <dir> <src>/homes/bnc/pier/s
+cripts</src> <dst>$DART_COMMON_DIR/scripts</dst>
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 8--277
+/ptmr8t/type="remote">/proj/planetlab/rpms/j2sdk-1_4_2_03-linux-i586.rpm</src> 
+<dst>$DART_COMMON_DIR/j2sdk-1_4_2_03-linux-i586.rpm</dst>
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 8--277
+/ptmr8t/</file> </commonfiles> <preexecution> <script>$DART_COMMON_DIR/scripts/
+preexecution</script> </preexecution> <execution
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 8--277
+/ptmr8t/du-ra-tion="700"> <nodegroup> <nodes>*</nodes> <cmd>$DART_COMMON_DIR/sc
+ripts/startPier</cmd> </nodegroup> <nodegroup>
+ []
+
+
+Underfull \hbox (badness 1975) in paragraph at lines 8--277
+/ptmr8t/<nodes>*</nodes> <cmd>$DART_COMMON_DIR/scripts/startsensors</cmd> </nod
+egroup> <!-- Wait 120 sec-onds for PIER, 10 sec-onds
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 8--277
+/ptmr8t/</nodegroup> <nodegroup> <nodes>0</nodes> <cmd time="250">$DART_COMMON_
+DIR/scripts/sq.selectall/runclient -b 4 1</cmd>
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 8--277
+/ptmr8t/</nodegroup> <nodegroup> <nodes>0</nodes> <cmd time="380">$DART_COMMON_
+DIR/scripts/sq.selectall/runclient -b 16 1</cmd>
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 8--277
+/ptmr8t/</nodegroup> <nodegroup> <nodes>0</nodes> <cmd time="510">$DART_COMMON_
+DIR/scripts/sq.selectall/runclient -b 64 1</cmd>
+ []
+
+[1.0.23{/usr/share/texmf/dvips/config/pdftex.map}]
+! I can't find file `DART-HOWTO.aux'.
+\enddocument ...makeatletter \input \jobname .aux 
+                                                  \fi \@dofilelist \ifdim \f...
+l.277 ...de{}\endNode{}\endNode{}\endNode{}\endFOT
+                                                  {}
+Please type another input file name
+! Emergency stop.
+\enddocument ...makeatletter \input \jobname .aux 
+                                                  \fi \@dofilelist \ifdim \f...
+l.277 ...de{}\endNode{}\endNode{}\endNode{}\endFOT
+                                                  {}
+*** (job aborted, file error in nonstop mode)
+
+ 
+Here is how much of TeX's memory you used:
+ 50 strings out of 85457
+ 842 string characters out of 1090154
+ 168903 words of memory out of 1000001
+ 12963 multiletter control sequences out of 10000+50000
+ 7921 words of font info for 20 fonts, out of 500000 for 1000
+ 14 hyphenation exceptions out of 1000
+ 16i,11n,42p,149b,297s stack positions out of 1500i,500n,5000p,200000b,5000s
+ 7 PDF objects out of 300000
+ 1 named destinations out of 131072
+ 0 words of extra memory for PDF output out of 65536
+!  ==> Fatal error occurred, the output PDF file is not finished!

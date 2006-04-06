@@ -1,0 +1,26 @@
+#####################################################################
+#
+# This file is distributed under the terms in the attached LICENSE file.
+# If you do not find this file, copies can be found by writing to:
+# Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+# Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+# Or
+# UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+# Berkeley, CA,  94707. Attention: P2 Group.
+# 
+# DESCRIPTION: Makefile P2
+# 
+#   $Id$
+# 
+#
+
+SUBDIRS=eventLoop p2core elements net overlog tests unitTests python
+
+EXTRA_DIST = LICENSE setup \
+		doc/chord.plg doc/narada.plg doc/ping.plg \
+		doc/reachable.plg doc/types.txt README README.OSX
+
+CXXFLAGS=-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG -Wall @CXXFLAGS@
+
+LDFLAGS=@BOOST_LIB@ @PYTHON_LSPEC@ @LDFLAGS@
+
