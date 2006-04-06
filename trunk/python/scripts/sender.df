@@ -18,8 +18,8 @@ dataflow Main {
   let destAddr = PelTransform("destAddr", ""localhost:10001" pop swallow unboxPop");
   let conn = UdpMarshal("conn", 10000, 0);
   
-  TimedPushSource("source", .01)  -> Queue ->
-  Sequence -> retry -> cct -> srcAddr -> destAddr ->
+  TimedPushSource("source", .01)  -> Queue("queue", 1000) ->
+  Sequence("sequence_number") -> retry -> cct -> srcAddr -> destAddr ->
   Print("print_send")             ->
   conn;
   

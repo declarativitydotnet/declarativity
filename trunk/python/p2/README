@@ -45,10 +45,44 @@ execute this script ('python netcc.py') to look at the arguements that it expect
 The script is a python replica of the netcc.C test found in the 'tests/' directory.
 It will show you how to create a Plumber class and a Dataflow class. From there
 you can create various elements and hook them together using the same Dataflow 
-class methods. Here is an example run:
+class methods. Here is an example run (you must first start a destination node
+before starting a source node.):
+
+>>>> Start up a destination node, which will listen on port 10001
+[tcondie@grouchy scripts]$ python netcc.py -d 10001
+['10001']
+INSTALL THE DATAFLOW
+Correctly initialized.
+
+>>>> Start up a source node with address localhost:10000 that will packets to
+>>>> the destination node at localhost:10001
+[tcondie@grouchy scripts]$ python netcc.py -s 10000 localhost localhost:10001
+['10000', 'localhost', 'localhost:10001']
+INSTALL THE DATAFLOW
+Correctly initialized.
+
+>>>> Tuple output (of what is being sent and received) should now occur on both 
+>>>> the sender and receiver.
 
 For the interested party we have began to build a new dataflow language (found in
 'python/dfparser'). The python script 'python/scripts/dfrun.py' will read in a
-file containing a description of the dataflow that should be created. Example 
-dataflow descriptions can also be found in the 'python/scripts' directory, and have
+file containing a description of the dataflow that should be created. If you want
+to use the dataflow language you'll need to add a couple of paths to the PYTHONPATH
+environment variable. The paths are 'python/dfparser' and 'python/dfparser/yapps'.
+   e.g., `export PYTHONPATH=/home/tcondie/phi/phi/python/p2/.libs:/home/tcondie/phi/phi/python/dfparser:/home/tcondie/phi/phi/python/dfparser/yapps`
+
+Example dataflow descriptions can also be found in the 'python/scripts' directory, and have
 been given the '.df' file extension. Here is an example run:
+
+[tcondie@grouchy scripts]$ python
+Python 2.3.4 (#1, Feb  2 2005, 12:11:53)
+[GCC 3.4.2 20041017 (Red Hat 3.4.2-6.fc3)] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import dfrun
+>>> dfrun.install("sender") 	# This will install the dataflow description in 'sender.df'
+Correctly initialized.
+
+>>> dfrun.dump("sender")	# This will create a graph in postscript (titled 'sender.ps') of the dataflow.
+>>> dfrun.run()			# This will run the dataflow (in this case the sender part of netcc.py).
+Print[print_send]:  [<localhost:10001, localhost:10000, <SEQ, 1, 0>, Time, [2006-Apr-05 17:34:55.694181000], End of time>]
+

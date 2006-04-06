@@ -38,6 +38,7 @@ def UdpCC_source(udp, src, dest, drop):
   marshal  = conf.addElement(libp2python.MarshalField("marshal data", 1))
   route    = conf.addElement(libp2python.StrToSockaddr("Convert dest addr", 0))
   netsim   = conf.addElement(libp2python.SimpleNetSim("Simple Net Sim (Sender)", 10, 100, drop))
+  printer  = conf.addElement(libp2python.Print("Printer"))
 
   # The receiving data flow
   unmarshal = conf.addElement(libp2python.UnmarshalField("unmarshal ack", 1))
@@ -51,7 +52,8 @@ def UdpCC_source(udp, src, dest, drop):
   conf.hookUp(retry, 0, cct, 0)
   conf.hookUp(cct, 0, srcAddr, 0)
   conf.hookUp(srcAddr, 0, destAddr, 0)
-  conf.hookUp(destAddr, 0, marshal, 0)
+  conf.hookUp(destAddr, 0, printer, 0)
+  conf.hookUp(printer, 0, marshal, 0)
   conf.hookUp(marshal, 0, route, 0)
   conf.hookUp(route, 0, netsim, 0)
   conf.hookUp(netsim, 0, udp, 0)
