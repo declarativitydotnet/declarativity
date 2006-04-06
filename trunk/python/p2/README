@@ -18,6 +18,16 @@ the libp2python module are as follows:
 3. Import 'libp2python' in your python script. 
    Here is an example session:
 
+[tcondie@grouchy scripts]$ python
+Python 2.3.4 (#1, Feb  2 2005, 12:11:53)
+[GCC 3.4.2 20041017 (Red Hat 3.4.2-6.fc3)] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import libp2python
+>>> plumber = libp2python.Plumber()
+>>> dataflow = plumber.new_dataflow("test")
+>>> elementSpec = dataflow.addElement(libp2python.Queue())
+>>> elementSpec = dataflow.addElement(libp2python.Queue("queue", 1000))
+
 
 ADDING NEW P2 ELEMENTS TO PYTHON:
 

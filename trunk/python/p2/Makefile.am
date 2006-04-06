@@ -31,7 +31,7 @@ LIBS = $(BOOST_LIB) $(PYTHON_LDFLAGS) \
        -L./elements -L./p2core -L./eventLoop -L./net
 
 CLEANFILES = core *.core *~
-EXTRA_DIST = .cvsignore
+EXTRA_DIST = .cvsignore README
 
 MAINTAINERCLEANFILES = Makefile.in
 SUBDIRS=eventLoop p2core elements net
