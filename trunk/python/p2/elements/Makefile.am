@@ -32,7 +32,6 @@ libp2pythonelements_la_SOURCES = \
 	functorSource.cpp \
 	hexdump.cpp \
 	insert.cpp \
-	joiner.cpp \
 	logger.cpp \
 	marshal.cpp \
 	marshalField.cpp \
