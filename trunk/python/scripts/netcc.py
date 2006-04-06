@@ -3,6 +3,7 @@ import getopt;
 
 import libp2python;
 
+plumber = libp2python.Plumber(libp2python.LoggerI.Level.WARN)
 
 def print_usage():
     print
@@ -23,25 +24,25 @@ def parse_cmdline(argv):
 
 
 def UdpCC_source(udp, src, dest, drop):
-  conf = p2python.Plumber.Dataflow()
+  conf = plumber.new_dataflow("source")
 
   udp      = conf.addElement(udp)
-  data     = conf.addElement(p2python.TimedPushSource("source", .01))
-  dqueue   = conf.addElement(p2python.Queue("Source Data Q", 1000))
-  seq      = conf.addElement(p2python.Sequence("Sequence", 1))
-  retry    = conf.addElement(p2python.RDelivery("Retry"))
-  retryMux = conf.addElement(p2python.Mux("Retry Mux", 2))
-  cct      = conf.addElement(p2python.CCT("Transmit CC", 1, 2048))
-  srcAddr  = conf.addElement(p2python.PelTransform("SRC: " + src, "\""+src+"\""+" pop swallow pop"))
-  destAddr = conf.addElement(p2python.PelTransform("DEST: " + dest, "\""+dest+"\""+" pop swallow pop"))
-  marshal  = conf.addElement(p2python.MarshalField("marshal data", 1))
-  route    = conf.addElement(p2python.StrToSockaddr("Convert dest addr", 0))
-  netsim   = conf.addElement(p2python.SimpleNetSim("Simple Net Sim (Sender)", 10, 100, drop))
+  data     = conf.addElement(libp2python.TimedPushSource("source", .01))
+  dqueue   = conf.addElement(libp2python.Queue("Source Data Q", 1000))
+  seq      = conf.addElement(libp2python.Sequence("Sequence", 1))
+  retry    = conf.addElement(libp2python.RDelivery("Retry"))
+  retryMux = conf.addElement(libp2python.Mux("Retry Mux", 2))
+  cct      = conf.addElement(libp2python.CCT("Transmit CC", 1, 2048))
+  srcAddr  = conf.addElement(libp2python.PelTransform("SRC: " + src, "\""+src+"\""+" pop swallow pop"))
+  destAddr = conf.addElement(libp2python.PelTransform("DEST: " + dest, "\""+dest+"\""+" pop swallow pop"))
+  marshal  = conf.addElement(libp2python.MarshalField("marshal data", 1))
+  route    = conf.addElement(libp2python.StrToSockaddr("Convert dest addr", 0))
+  netsim   = conf.addElement(libp2python.SimpleNetSim("Simple Net Sim (Sender)", 10, 100, drop))
 
   # The receiving data flow
-  unmarshal = conf.addElement(p2python.UnmarshalField("unmarshal ack", 1))
-  unbox     = conf.addElement(p2python.PelTransform("unRoute", "$1 unboxPop"))
-  discard   = conf.addElement(p2python.Discard("DISCARD"))
+  unmarshal = conf.addElement(libp2python.UnmarshalField("unmarshal ack", 1))
+  unbox     = conf.addElement(libp2python.PelTransform("unRoute", "$1 unboxPop"))
+  discard   = conf.addElement(libp2python.Discard("DISCARD"))
 
   # The local data flow
   conf.hookUp(data, 0, dqueue, 0)
@@ -67,23 +68,23 @@ def UdpCC_source(udp, src, dest, drop):
   return conf
 
 def UdpCC_sink(udp, drop):
-  conf = p2python.Plumber.Dataflow()
+  conf = plumber.new_dataflow("sink")
 
   udp      = conf.addElement(udp)
   # The remote data elements
-  bw        = conf.addElement(p2python.Bandwidth("Destination Bandwidth"))
-  unmarshal = conf.addElement(p2python.UnmarshalField("unmarshal", 1))
-  unroute   = conf.addElement(p2python.PelTransform("unRoute", "$1 unboxPop"))
-  printS    = conf.addElement(p2python.Print("Print Sink"))
-  ccr       = conf.addElement(p2python.CCR("CC Receive", 2048))
-  discard   = conf.addElement(p2python.Discard("DISCARD"))
+  bw        = conf.addElement(libp2python.Bandwidth("Destination Bandwidth"))
+  unmarshal = conf.addElement(libp2python.UnmarshalField("unmarshal", 1))
+  unroute   = conf.addElement(libp2python.PelTransform("unRoute", "$1 unboxPop"))
+  printS    = conf.addElement(libp2python.Print("Print Sink"))
+  ccr       = conf.addElement(libp2python.CCR("CC Receive", 2048))
+  discard   = conf.addElement(libp2python.Discard("DISCARD"))
 
   # The remote ack elements
-  netsim   = conf.addElement(p2python.SimpleNetSim("Simple Net Sim (Sender)", 10, 100, drop))
-  printR    = conf.addElement(p2python.Print("Print ACK"))
-  route    = conf.addElement(p2python.StrToSockaddr("Convert src addr", 0))
-  marshal  = conf.addElement(p2python.MarshalField("marshal ack", 1))
-  destAddr = conf.addElement(p2python.PelTransform("RESPONSE ADDRESS", "$0 pop swallow pop"))
+  netsim   = conf.addElement(libp2python.SimpleNetSim("Simple Net Sim (Sender)", 10, 100, drop))
+  printR    = conf.addElement(libp2python.Print("Print ACK"))
+  route    = conf.addElement(libp2python.StrToSockaddr("Convert src addr", 0))
+  marshal  = conf.addElement(libp2python.MarshalField("marshal ack", 1))
+  destAddr = conf.addElement(libp2python.PelTransform("RESPONSE ADDRESS", "$0 pop swallow pop"))
 
 
   # PACKET RECEIVE DATA FLOW
@@ -105,18 +106,14 @@ def UdpCC_sink(udp, drop):
   return conf
 
 def testUdpCC(conf):
-  plumber = p2python.Plumber(p2python.LoggerI.Level.WARN)
   print "INSTALL THE DATAFLOW"
   if plumber.install(conf) == 0:
     print "Correctly initialized.\n"
   else:
     print "** Failed to initialize correct spec\n"
 
-  # Activate the plumber
-  plumber.activate()
-
   # Run the plumber
-  p2python.eventLoop()
+  libp2python.eventLoop()
 
 if __name__ == "__main__":
   try:
@@ -131,15 +128,15 @@ if __name__ == "__main__":
 
   print args
 
-  p2python.eventLoopInitialize()
+  libp2python.eventLoopInitialize()
 
   port = int(args[0])
   drop = 0.
   if flags["source"]:
-      src = p2python.Udp2("SOURCE", port)
+      src = libp2python.Udp2("SOURCE", port)
       if len(args) == 4: drop = float(args[3])
       testUdpCC(UdpCC_source(src, args[1]+":"+str(port), args[2], drop))
   elif flags["destination"]:
-      dest = p2python.Udp2("DESTINATION", port)
+      dest = libp2python.Udp2("DESTINATION", port)
       if len(args) == 2: drop = float(args[1])
       testUdpCC(UdpCC_sink(dest, drop))
