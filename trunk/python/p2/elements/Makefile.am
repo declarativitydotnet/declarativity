@@ -21,7 +21,6 @@ libp2pythonelements_la_SOURCES = \
 	aggwrap.cpp \
 	csvparser.cpp \
 	dataflowInstaller.cpp \
-	ddemux.cpp \
 	delete.cpp \
 	demux.cpp \
 	discard.cpp \
