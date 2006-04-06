@@ -210,7 +210,25 @@ EXTRA_DIST = .cvsignore \
 		ring.C \
 		symphony.C \
 		testerr.h \
-		chordDatalog.C
+		chordDatalog.C \
+		scripts/buildCDF.pl \
+		scripts/plookups.py \
+		scripts/pout.py \
+		scripts/process_output.py \
+		scripts/reset.sh \
+		scripts/rnode.py \
+		scripts/runLocalHostChords.pl \
+		scripts/runLocalHostSymphony.pl \
+		scripts/run_lookups.py \
+		scripts/run_node.py \
+		scripts/crunch/buildCDF.pl \
+		scripts/crunch/consistency.pl \
+		scripts/crunch/crunch.sh \
+		scripts/crunch/hopDist.pl \
+		scripts/crunch/messages.pl \
+		scripts/crunch/stripResults.sh
+
+
 
 
 INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements \

@@ -12,7 +12,13 @@ macros, first run setup to configure your new source tree:
 Then configure:
 
    # ./configure
+
+Typically, we expect the distribution to run with the following
+configure invocation:
+
+   # ./configure CXXFLAGS="-g -Wall -DTRACE_OFF"
   
+
 Finally build: 
 
    # make
