@@ -56,7 +56,10 @@ ol_parser.H: ol_parser.C
 ol_lexer.C: ol_lexer.lex
 	$(LEX) $(AM_LFLAGS) $(LFLAGS) -ool_lexer.C -8 ol_lexer.lex
 
+ol_context.C: ol_parser.H
+
 
 
 
 CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@
+
