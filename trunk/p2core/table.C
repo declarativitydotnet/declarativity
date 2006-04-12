@@ -319,10 +319,10 @@ TuplePtr Table::remove(unsigned field, ValuePtr key)
 }
 
 /**
- * Removing a tuple from an index.  It finds the entry in the index and,
- * if it exists, removes it from all indices and aggregates.  XXX This
- * doesn't remove an entry from the queue; the entry will expire in
- * time.
+ * Removing a tuple from a unique index.  It finds the entry in the
+ * index and, if it exists, removes it from all indices and aggregates.
+ * XXX This doesn't remove an entry from the queue; the entry will
+ * expire in time.
  */
 TuplePtr Table::remove(std::vector<unsigned> fields, std::vector<ValuePtr> keys)
 {
@@ -366,9 +366,11 @@ void Table::remove_from_indices(Entry *e)
     UniqueIndex*          ndx  = uni_indices[i];
     std::vector<unsigned> keys = uni_indices_keys[i];
     std::vector<ValuePtr> vkey;
-    for (std::vector<unsigned>::iterator iter = keys.begin();
-         iter != keys.end(); iter++) 
+    for (std::vector< unsigned >::iterator iter = keys.begin();
+         iter != keys.end();
+         iter++) {
       vkey.push_back((*e->t)[*iter]);
+    }
 
     // Removal must be identical to how it happens for multiple
     // indices, because an entry in the queue might not in fact still
@@ -393,12 +395,17 @@ void Table::remove_from_indices(Entry *e)
     MultIndex*            ndx  = mul_indices[i];
     std::vector<unsigned> keys = mul_indices_keys[i];
     std::vector<ValuePtr> vkey;
-    for (std::vector<unsigned>::iterator iter = keys.begin();
-         iter != keys.end(); iter++) 
+    for (std::vector< unsigned >::iterator iter = keys.begin();
+         iter != keys.end();
+         iter++) {
       vkey.push_back((*e->t)[*iter]);
+    }
 
-    for (MultIndex::iterator pos = ndx->find(vkey); 
-         (pos != ndx->end()) && (pos->first == vkey); 
+    MultIndex::iterator pos = ndx->find(vkey);    
+
+    for (; 
+         (pos != ndx->end()) &&
+           (pos->first == vkey); 
          pos++) {
       if (pos->second == e) {
         ndx->erase(pos);
@@ -410,14 +417,14 @@ void Table::remove_from_indices(Entry *e)
 
 void Table::remove_from_aggregates(TuplePtr t)
 {
-  // And update the unique aggregates
+  // Update the unique aggregates
   for (size_t i = 0;
        i < _uniqueAggregates.size();
        i++) {
     UniqueAggregate uA = _uniqueAggregates[i];
     uA->update(t);
   }
-  // And update the mult aggregates
+  // Update the multiple aggregates
   for (size_t i = 0;
        i < _multAggregates.size();
        i++) {

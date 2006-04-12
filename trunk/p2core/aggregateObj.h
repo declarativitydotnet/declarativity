@@ -54,9 +54,9 @@ Table::AggregateObj< _Index >::update(TuplePtr t)
   // Go through the portions of the index affected by this insertion
   std::vector<ValuePtr> vkey;
   for (std::vector<unsigned>::iterator iter = _keyFields.begin();
-       iter != _keyFields.end(); iter++)
+       iter != _keyFields.end(); iter++) {
     vkey.push_back((*t)[*iter]);
-
+  }
   bool started = false;
   TuplePtr aMatchingTuple = TuplePtr();
   _aggregateFn->reset();
