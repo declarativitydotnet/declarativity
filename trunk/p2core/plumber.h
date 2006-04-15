@@ -111,12 +111,14 @@ public:
 
   class DataflowEdit : public Dataflow {
     public:
-      /** Locate the element with a given string name 
-       * Return: ElementSpecPtr to element on success or
-       *         an empty ElementSpecPtr object.
-       */
+
+      /** Locate an element with a given string name 
+       *  that exists in the dataflow being edited.
+       *  Return: ElementSpecPtr to element on success or
+       *          an empty ElementSpecPtr object. */
       ElementSpecPtr find(string);
 
+      /** Adds *new* elements to the dataflow graph */
       ElementSpecPtr addElement(ElementPtr);
 
       /** Add hookup to this dataflow */
@@ -125,17 +127,27 @@ public:
 
     private:
       friend class Plumber;
+      /** Plumber is the factory class for DataflowEdit.
+          See method Plumber::new_dataflow_edit(name) */
       DataflowEdit(DataflowPtr dpt);
 
+      /** Completely overrides Dataflow method to perform
+          connection setup using only the hookups added to
+          this edit. That is, prior hookups are not reapllied */
       void set_connections();
 
       /** Remove the element spec from this dataflow */
       void remove(ElementSpecPtr);
 
+      /** Adds all new elements and hookups to the dataflow
+          before actual validation */
       int validate();
 
+      /** As new hookups come in old hookups get invalidated.
+          This bad boy searches and destroys old hookups. */
       void remove_old_hookups(ElementSpec::HookupPtr);
 
+      /** Segregates new elements and hookups from old ones */
       std::vector<ElementSpecPtr>         new_elements_;
       std::vector<ElementSpec::HookupPtr> new_hookups_;
   };
