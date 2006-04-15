@@ -82,7 +82,7 @@ void testPingPong(int mode, string targetHost, LoggerI::Level level)
 
   // The sending data flow
   PlumberPtr plumber(new Plumber());
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
 
   // to add a demuxer to differentiate ping and pingresponse
   Udp udpOut("9999", 9999); // port of the sender    

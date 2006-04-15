@@ -19,55 +19,28 @@
 #include "val_tuple.h"
 
 
-#define MAP(s, t) \
-do { \
-  if (max_seq_ && s != max_seq_+1) \
-    std::cerr << "MAX SEQ ERROR: " << max_seq_ << ", NEXT SEQ: " << s << std::endl; \
-  max_seq_ = s; \
-  tmap_.insert(std::make_pair((s), new RTuple((t)))); \
-} while (0)
-
-#define UNMAP(s) \
-do { \
-  RTupleIndex::iterator i = tmap_.find((s)); \
-  if (i != tmap_.end()) { \
-    delete i->second; \
-    tmap_.erase(i); \
-  } \
-} while (0)
-
-
 ///////////////////////////////////////////////////////////////////////////////
 //
-// OTuple: Private Class 
+// RTuple: Private Class 
 //
-class RTuple
-{
-public:
-  RTuple(TuplePtr tp) : retry_cnt_(0), tp_(tp) { resetTime(); } 
+void RDelivery::RTuple::resetTime() { 
+  getTime (timer_); 
+}
 
-  ~RTuple() { tp_.reset(); }
+int32_t RDelivery::RTuple::delay() {
+  boost::posix_time::ptime  now;
+  getTime(now);
+  return((now - timer_).total_milliseconds());
+}
 
-  void resetTime() { 
-    getTime (timer_); 
-  }
-  int32_t delay() {
-	boost::posix_time::ptime  now;
-    getTime(now);
-    return((now - timer_).total_milliseconds());
-  }
 
-  boost::posix_time::ptime  timer_;		// Transmit time
-  uint32_t  retry_cnt_;		// Transmit counter.
-  TuplePtr  tp_;		// The tuple.
-};
-
-RDelivery::RDelivery(string n, bool r, uint32_t m)
+RDelivery::RDelivery(string n, int m, int dest, int seq)
   : Element(n, 2, 3),
     _out_cb(0),
     in_on_(true),
-    retry_(r),
-    max_retry_(m)
+    max_retry_(m),
+    dest_field_(dest),
+    seq_field_(seq)
 {
   max_seq_ = 0;
 }
@@ -83,14 +56,18 @@ TuplePtr RDelivery::pull(int port, b_cbv cb)
   if (rtran_q_.empty() && in_on_ && 
       (in_on_ = ((tp = input(0)->pull(boost::bind(&RDelivery::input_cb,this))) != NULL))) {
     /* Store the tuple for retry, if failure */
-    SeqNum seq = getSeq(tp); 
-    MAP(seq, tp);
+    ValuePtr dest = (*tp)[dest_field_];
+    SeqNum   seq  = Val_UInt64::cast((*tp)[seq_field_]);
+    RTuplePtr rtp(new RTuple(tp));
+    map(dest, seq, rtp);
     return tp;			// forward tuple along
   }
   else if (!rtran_q_.empty()) {
-    RTuple *rt = rtran_q_.front();
+    RTuplePtr rtp = rtran_q_.front();
+    ValuePtr dest = (*rtp->tp_)[dest_field_];
+    SeqNum   seq  = Val_UInt64::cast((*rtp->tp_)[seq_field_]);
     rtran_q_.pop_front();
-    return rt->tp_;
+    return rtp->tp_;	// Already memoized, so just return it.
   }
 
   _out_cb = cb;
@@ -105,25 +82,26 @@ int RDelivery::push(int port, TuplePtr tp, b_cbv cb)
 {
   assert(port == 1);
 
-  string type  = Val_Str::cast((*tp)[0]);	// Tuple Type
-  SeqNum seq  = Val_UInt64::cast((*tp)[1]);	// Sequence number
+  string   type = Val_Str::cast((*tp)[0]);	// Tuple Type
+  ValuePtr dest = (*tp)[1];			// Destination address
+  SeqNum   seq  = Val_UInt64::cast((*tp)[2]);	// Sequence number
 
   if (type == "FAIL") {
-    handle_failure(seq);
+    handle_failure(dest, seq);
   }
   else if (type == "SUCCESS") {
-    UNMAP(seq);					// And that's all folks.
+    unmap(dest, seq);				// And that's all folks.
   } else return output(1)->push(tp, cb);	// DATA DELIVERY
 
   return 1;
 }
 
-REMOVABLE_INLINE void RDelivery::handle_failure(SeqNum seq) 
+REMOVABLE_INLINE void RDelivery::handle_failure(ValuePtr dest, SeqNum seq) 
 {
-  RTuple *rt = tmap_.find(seq)->second;
+  RTuplePtr rtp = lookup(dest, seq);
   
-  if (retry_ && rt->retry_cnt_ < max_retry_) {
-    rtran_q_.push_back(rt);
+  if (rtp->retry_cnt_ < max_retry_) {
+    rtran_q_.push_back(rtp);
     if (_out_cb) {
       _out_cb();
       _out_cb = 0;
@@ -132,11 +110,50 @@ REMOVABLE_INLINE void RDelivery::handle_failure(SeqNum seq)
   else {
     TuplePtr f = Tuple::mk();
     f->append(Val_Str::mk("FAIL"));
-    f->append(Val_Tuple::mk(rt->tp_));
+    f->append(Val_Tuple::mk(rtp->tp_));
     f->freeze();
     // Push failed tuple upstream.
     assert(output(2)->push(f, 0));
-    UNMAP(seq);
+    unmap(dest, seq);
+  }
+}
+
+RDelivery::RTuplePtr RDelivery::lookup(ValuePtr dest, SeqNum seq)
+{
+  ValueSeqRTupleMap::iterator iter_map = index_.find(dest);
+  if (iter_map != index_.end()) {
+    SeqRTupleMap::iterator iter_rtuple = iter_map->second->find(seq);
+    if (iter_rtuple != iter_map->second->end()) {
+      return iter_rtuple->second;	// Found it.
+    }
+  }
+  return RTuplePtr();			// Didn't find it. 
+}
+
+void RDelivery::map(ValuePtr dest, SeqNum seq, RTuplePtr rtp) 
+{
+  ValueSeqRTupleMap::iterator iter_map = index_.find(dest);
+  if (iter_map != index_.end()) {
+    iter_map->second->insert(std::make_pair(seq, rtp));
+  }
+  else {
+    boost::shared_ptr<SeqRTupleMap> tuple_map(new SeqRTupleMap);
+    tuple_map->insert(std::make_pair(seq, rtp));
+    index_.insert(std::make_pair(dest,tuple_map)); 
+  }
+}
+
+void RDelivery::unmap(ValuePtr dest, SeqNum seq)
+{
+  ValueSeqRTupleMap::iterator iter_map = index_.find(dest);
+  if (iter_map != index_.end()) {
+    SeqRTupleMap::iterator iter_rtuple = iter_map->second->find(seq);
+    if (iter_rtuple != iter_map->second->end()) {
+      iter_map->second->erase(iter_rtuple);	// Remove outstanding tuple.
+    }
+    if (iter_map->second->size() == 0) {
+      index_.erase(iter_map);		// No more outstanding tuples
+    }
   }
 }
 
@@ -147,19 +164,4 @@ void RDelivery::input_cb()
     _out_cb();
     _out_cb = 0;
   }
-}
-
-REMOVABLE_INLINE SeqNum RDelivery::getSeq(TuplePtr tp) {
-  for (uint i = 0; i < tp->size(); i++) {
-    try {
-      TuplePtr t = Val_Tuple::cast((*tp)[i]); 
-      if (Val_Str::cast((*t)[0]) == "SEQ") {
-         if (Val_Str::cast((*t)[2]) == "localhost:10000" && Val_UInt32::cast((*t)[3]) == 0) 
-           std::cerr << "SEQ NUMBER: " << (*t)[1]->toString() << std::endl;
-         return Val_UInt64::cast((*t)[1]);
-      }
-    }
-    catch (Value::TypeError e) { } 
-  }
-  return 0;
 }

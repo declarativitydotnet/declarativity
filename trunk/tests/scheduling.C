@@ -34,7 +34,7 @@ void testFastSourcePush()
   std::cout << "\nCHECK FAST SOURCE PUSH\n";
 
   PlumberPtr plumber(new Plumber());
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
   ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0.2)));
   ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 1)));
   ElementSpecPtr slotS = conf->addElement(ElementPtr(new Slot("slot")));
@@ -64,7 +64,7 @@ void testFastSinkPush()
   std::cout << "\nCHECK FAST SINK PUSH\n";
   eventLoopInitialize();
   PlumberPtr plumber(new Plumber());
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
 
   ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 1)));
   ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", .2)));
@@ -95,7 +95,7 @@ void testFastSinkPull()
   std::cout << "\nCHECK FAST SINK PULL\n";
 
   PlumberPtr plumber(new Plumber());
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
   ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 1)));
   ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", .2)));
   ElementSpecPtr slotS = conf->addElement(ElementPtr(new Slot("slot")));
@@ -125,7 +125,7 @@ void testFastSourcePull()
   std::cout << "\nCHECK FAST SOURCE PULL\n";
 
   PlumberPtr plumber(new Plumber());
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
   ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", .2)));
   ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 1)));
   ElementSpecPtr slotS = conf->addElement(ElementPtr(new Slot("slot")));

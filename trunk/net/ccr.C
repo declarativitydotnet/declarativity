@@ -18,6 +18,7 @@
 #include "val_double.h"
 #include "val_str.h"
 #include "val_tuple.h"
+#include "val_null.h"
 
 
 /////////////////////////////////////////////////////////////////////
@@ -30,12 +31,13 @@
  * name: The name given to this element.
  * rwnd: Initial receiver window size (default given in ccrx.h).
  */
-CCR::CCR(string name, double rwnd, uint src, bool flow) 
-  : Element(name, (flow ? 2 : 1), 2),
+CCR::CCR(string name, double rwnd, int dest, int src, int seq) 
+  : Element(name, 1, 2),
     _ack_cb(0),
     rwnd_(rwnd),
     src_field_(src),
-    flow_(flow)
+    dest_field_(dest),
+    seq_field_(seq)
 {
 }
 
@@ -45,37 +47,31 @@ CCR::CCR(string name, double rwnd, uint src, bool flow)
  */
 TuplePtr CCR::simple_action(TuplePtr p) 
 {
-  uint64_t seq    = 0;
-  uint32_t offset = 0;
-  ValuePtr src    = (*p)[0]; 
+  ValuePtr src    = (*p)[src_field_]; 
+  ValuePtr dest   = (dest_field_ < 0) ? Val_Null::mk() : (*p)[dest_field_]; 
+  ValuePtr seq    = (*p)[seq_field_];
 
-  p = Val_Tuple::cast((*p)[1]);
-  for (uint i = 0; i < p->size(); i++) {
-    try {
-      TuplePtr t = Val_Tuple::cast((*p)[i]); 
-      if (Val_Str::cast((*t)[0]) == "SEQ") {
-        seq    = Val_UInt64::cast((*t)[1]);
-        offset = Val_UInt32::cast((*t)[2]);
-      }
-    }
-    catch (Value::TypeError e) { } 
+  if (!seq) {
+    log(LoggerI::ERROR, 0, "CCR::simple_action NO SEQUENCE NUMBER WITH TUPLE!!"); 
+    return p;
   }
+
   if (!src) {
-    log(LoggerI::WARN, 0, "CCR::simple_action NO SOURCE ADDRESS"); 
+    log(LoggerI::ERROR, 0, "CCR::simple_action NO SOURCE ADDRESS"); 
     return p;			// Punt
   }
-  else std::cerr << "SOURCE ADDRESS: " << src->toString() << std::endl;
 
   TuplePtr ack  = Tuple::mk();
   ack->append(src);			// Source location
   ack->append(Val_Str::mk("ACK"));
-  ack->append(Val_UInt64::mk(seq));	// The sequence number
+  ack->append(dest);			// Destination address
+  ack->append(seq);			// The sequence number
   ack->append(Val_Double::mk(rwnd_));	// Receiver window size
   ack->freeze();
   ack_q_.push_back(ack);		// Append to ack queue
 
   if (_ack_cb) {
-    _ack_cb();			// Notify new ack
+    _ack_cb();				// Notify new ack
     _ack_cb = 0;
   } 
   return p;				// Forward data tuple

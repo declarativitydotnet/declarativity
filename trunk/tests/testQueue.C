@@ -43,7 +43,7 @@ void testQueue()
     std::cout << "\n[Test Queue]\n";
 
     PlumberPtr plumber(new Plumber());
-    Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
 
     ElementSpecPtr timedPushSourceSpec = conf->addElement(ElementPtr(new TimedPushSource("source", 1)));
     ElementSpecPtr sourcePrintS = conf->addElement(ElementPtr(new Print("AfterSource")));

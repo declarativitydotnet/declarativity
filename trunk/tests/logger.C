@@ -35,7 +35,7 @@ void testLogger()
 
   boost::shared_ptr<Logger> log(new Logger("theLogger"));
   PlumberPtr plumber(new Plumber());
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
 
   ElementSpecPtr logSpec = conf->addElement(log);
   ElementSpecPtr sinkPrintS = conf->addElement(ElementPtr(new Print("BeforeSink")));

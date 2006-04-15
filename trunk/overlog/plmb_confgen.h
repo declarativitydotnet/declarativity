@@ -70,7 +70,6 @@
 #include "duplicateConservative.h"
 #include "aggwrap.h"
 #include "tupleseq.h"
-#include "cc.h"
 #include "loop.h"
 
 class Plmb_ConfGen {

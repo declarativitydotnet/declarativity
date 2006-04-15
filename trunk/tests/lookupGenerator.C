@@ -88,7 +88,7 @@ void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> looku
 {
   eventLoopInitialize();
   PlumberPtr plumber(new Plumber(level));
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
 
   ElementSpecPtr func    = conf->addElement(ElementPtr(new FunctorSource(string("Source"), lookup.get())));
   ElementSpecPtr print   = conf->addElement(ElementPtr(new Print(string("lookup"))));

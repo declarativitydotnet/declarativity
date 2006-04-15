@@ -39,10 +39,10 @@ typedef uint64_t SeqNum;
  */
 class CCR : public Element {
 public:
-  CCR(string name, double rwnd=512., uint src=0, bool flow=false);
+  CCR(string name, double rwnd=512., int dest=0, int src=1, int seq=2);
   const char *class_name() const { return "CCR";};
-  const char *processing() const { return flow_ ? "ah/al" : "a/al"; };
-  const char *flow_code() const	 { return flow_ ? "--/--" : "-/--"; };
+  const char *processing() const { return "a/al"; };
+  const char *flow_code() const	 { return "-/--"; };
 
   TuplePtr simple_action(TuplePtr p);		// Ack on output1 before passing to output0.
 
@@ -51,11 +51,12 @@ public:
   int push(int port, TuplePtr tp, b_cbv cb);	// Flow control input
 
 private:
-  b_cbv _ack_cb; 					// Callback to send an ack 
+  b_cbv _ack_cb; 				// Callback to send an ack 
 
   double   rwnd_;				// Receiver window size
-  uint     src_field_;
-  bool     flow_;
+  int      src_field_;
+  int      dest_field_;
+  int      seq_field_;
   std::deque <TuplePtr> ack_q_;			// Output ack queue
 };
   

@@ -61,7 +61,7 @@ void testUdpTx()
   // The sending data flow
 
   PlumberPtr plumber(new Plumber());
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
   ElementSpecPtr sourceS =
     conf->addElement(ElementPtr(new TimedPushSource("source", .5)));
   ElementSpecPtr sourcePrintS =
@@ -124,7 +124,7 @@ void testPLSensor()
 
   boost::shared_ptr<PlSensor> pl(new PlSensor("Sensor", (uint16_t)80,"/", 5));
   PlumberPtr plumber(new Plumber());
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
   ElementSpecPtr plSpec = conf->addElement(pl);
   ElementSpecPtr printSpec = conf->addElement(ElementPtr(new Print("PRINT SPEC")));
   conf->hookUp(plSpec,0,printSpec,0);

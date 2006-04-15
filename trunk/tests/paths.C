@@ -700,7 +700,7 @@ int main(int argc, char **argv)
 	    << " " << ctxt->getTableInfos()->size() << "\n";
 
   PlumberPtr plumber(new Plumber());
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
 
   if (correlate != 0) {
     std::vector<string> filenames;

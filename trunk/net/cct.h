@@ -39,10 +39,10 @@ typedef uint64_t SeqNum;
  */
 class CCT : public Element {
 public:
-  CCT(string name, double init_wnd, double max_wnd, bool tstat=true, bool stat=false);
+  CCT(string name, double init_wnd, double max_wnd, int dest_field=0, int seq_field=2);
   const char *class_name() const { return "CCT";};
-  const char *processing() const { return stat_ ? "lh/lhl" : "lh/lh"; };
-  const char *flow_code() const	 { return stat_ ? "--/---" : "--/--"; };
+  const char *processing() const { return "lh/lh"; };
+  const char *flow_code() const	 { return "--/--"; };
 
   int push(int port, TuplePtr tp, b_cbv cb);	// Incoming, either add to send_q or ack
   TuplePtr pull(int port, b_cbv cb);		// Rate limited output tuple stream
@@ -50,13 +50,12 @@ public:
 private:
   void timeout_cb(CCTuple*);			// Callback for to retry sending a tuple
   void data_ready();				// Callback for input data ready
-  REMOVABLE_INLINE int32_t dealloc(SeqNum,string);	// Remove CCTuple from map
-  REMOVABLE_INLINE void map(SeqNum, CCTuple*);	// Map tuple and set timeout
+  REMOVABLE_INLINE int32_t dealloc(ValuePtr,SeqNum,string);	// Remove CCTuple from map
+  REMOVABLE_INLINE void map(CCTuple*);		// Map tuple and set timeout
   REMOVABLE_INLINE void add_rtt_meas(int32_t);	// Update sa, sv, and rto based on m
   REMOVABLE_INLINE void timeout();		// Update sa, sv, and rto based on m
   REMOVABLE_INLINE int  current_window();	// Returns the current window size
   REMOVABLE_INLINE int  max_window();		// Returns the current window size
-  REMOVABLE_INLINE SeqNum getSeq(TuplePtr);
 
   b_cbv     _data_cb; 				// Callback for data output ready
   bool    data_on_;
@@ -68,10 +67,10 @@ private:
   double    rwnd_;				// Receiver window size
   double    cwnd_;				// Current congestion window size
   double    ssthresh_;				// Slow start threshold
-  bool      stat_;
-  bool      tstat_;
+  int       dest_field_;
+  int       seq_field_;
 
-  typedef std::map<SeqNum, CCTuple*> CCTupleIndex;
+  typedef std::map<ValuePtr, boost::shared_ptr<std::map<SeqNum, CCTuple*> >, Value::Less> CCTupleIndex;
   CCTupleIndex tmap_;			// Map containing unacked in transit tuples
 };
   

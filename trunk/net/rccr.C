@@ -21,6 +21,7 @@
 #include "val_str.h"
 #include "val_time.h"
 #include "val_tuple.h"
+#include "tupleseq.h"
 
 #define RF        0.9
 #define HIST_SIZE 100000
@@ -30,7 +31,7 @@
 class TupleInfo {
 public:
   TupleInfo(SeqNum s) : seq_(s), rtt_(0) {};
-  TupleInfo(SeqNum s, uint r, boost::posix_time::time_duration ts) 
+  TupleInfo(SeqNum s, uint r, boost::posix_time::ptime ts) 
     : seq_(s), rtt_(r), ts_(ts) {} 
 
   /**
@@ -40,27 +41,29 @@ public:
    * case -1: t comes before this tuple
    */
   int compare(TupleInfo* t) {
-    int d = delay(t);
+    long d = delay(t);
     if (d < 0)      return -1;
     else if (d > 0) return  1;
     return 0;
   };
 
   /** Returns the delay in milliseconds between this tuple and t */
-  int delay(TupleInfo* t) {
+  long delay(TupleInfo* t) {
 	return((t->ts_ - ts_).total_milliseconds());
   };
 
   SeqNum   seq_;
   uint     rtt_;
-  boost::posix_time::time_duration ts_;
+  boost::posix_time::ptime ts_;	/* This timestame comes from the source machine
+                                 * I will only use it to compute durations relative
+                                 * to the source machines timestamps. */
 };
 
 class LossRec {
 public:
   LossRec(std::vector<TupleInfo*> history, SeqNum miss) : length_(history.size()) {
-    TupleInfo *a = NULL;
-    TupleInfo *b = NULL;
+    TupleInfo *a = NULL;	// The tuple after the miss
+    TupleInfo *b = NULL;	// The tuple just before the miss
     for (std::vector<TupleInfo*>::iterator i = history.begin();
          b == NULL && i != history.end(); i++) {
       if ((*i)->seq_ + 1 == miss) b = *i;
@@ -68,7 +71,9 @@ public:
     }
     assert(a->seq_ - b->seq_ > 0);
     for (SeqNum s = b->seq_+1; s < a->seq_; s++) {
-      TupleInfo* l = new TupleInfo(s);
+      // Create a missing record for each missing seqeuence number
+      TupleInfo* l = new TupleInfo(s);	
+      // Determine when we should have heard from the missing tuple
       nominal_time(l, b, a);
       loss_tuples_.push_back(l); 
     }
@@ -95,9 +100,8 @@ public:
 private:
   void nominal_time(TupleInfo* t, TupleInfo* b, TupleInfo* a)
   {
-    uint32_t offset = (uint32_t) 
-                      (b->delay(a)*((t->seq_-b->seq_)/double(a->seq_-b->seq_)));
-	t->ts_ = boost::posix_time::milliseconds(offset);
+    long offset = long(b->delay(a)*(double(t->seq_-b->seq_)/double(a->seq_-b->seq_)));
+    t->ts_ = b->ts_ + boost::posix_time::milliseconds(offset);
   }
 
   uint length_;
@@ -117,28 +121,38 @@ public:
   }
 
   // Computes loss event rate from intervals
-  REMOVABLE_INLINE void handle_tuple(SeqNum, uint, boost::posix_time::time_duration);
+  REMOVABLE_INLINE void handle_tuple(SeqNum, uint, boost::posix_time::ptime);
   
   double  lossRate()    { return loss_rate_; }
   uint    receiveRate() { return rate_; }
   bool    active()      { return RateCCT::delay(&active_ts_) < MAX_CTIME; }
 
+  string toString() {
+    ostringstream oss;
+    oss << "LOSS RATE: " << loss_rate_ << "\t";
+    oss << "RATE: " << rate_ << "\t";
+    oss << "SEQ MISS: " << seq_miss_ << "\t";
+    oss << "ACTIVE TS: " << active_ts_ << "\t";
+    return oss.str();
+  };
 private:
   REMOVABLE_INLINE void compute_loss_rate();
   REMOVABLE_INLINE void clearHistory();
 
-  double                  loss_rate_;   // Cached loss event rate
-  uint                    order_;
-  uint                    rate_; 	// Receiver rate
-  SeqNum                  seq_miss_;    // Missing sequence number
-  boost::posix_time::ptime                active_ts_;   // Last time we heard from this connection
-  std::vector<TupleInfo*> history_;     // Tuple history
-  std::deque<LossRec*>    loss_recs_;   // The last n loss intervals
-  std::vector <double>    i_weights_;   // Interval weights
+  double                   loss_rate_;   // Cached loss event rate
+  uint                     order_;
+  uint                     rate_; 	 // Receiver rate
+  SeqNum                   seq_miss_;    // Missing sequence number
+  boost::posix_time::ptime active_ts_;   // Last time we heard from this connection
+  std::vector<TupleInfo*>  history_;     // Tuple history
+  std::deque<LossRec*>     loss_recs_;   // The last n loss intervals
+  std::vector <double>     i_weights_;   // Interval weights
 
 };
 
-REMOVABLE_INLINE void RateCCR::Connection::handle_tuple(SeqNum seq, uint rtt, boost::posix_time::time_duration ts)
+REMOVABLE_INLINE void RateCCR::Connection::handle_tuple(SeqNum seq, 
+                                                        uint rtt, 
+                                                        boost::posix_time::ptime ts)
 {
   getTime(active_ts_);
 
@@ -147,8 +161,8 @@ REMOVABLE_INLINE void RateCCR::Connection::handle_tuple(SeqNum seq, uint rtt, bo
   for (std::vector<TupleInfo*>::iterator i = history_.begin();
        i != history_.end(); i++) {
     if ((*i)->compare(tip) >= 0) {
-      if ((*i)->delay(tip) < int(rtt)) rate_++;
-      else if ((*i)->delay(tip) > 2 * int(rtt)) break;
+      if ((*i)->delay(tip) < long(rtt)) rate_++;	// Count all tuples within a RTT
+      else if ((*i)->delay(tip) > 2 * long(rtt)) break;	// Stop after 2*RTT
     }
   }
 
@@ -194,6 +208,7 @@ REMOVABLE_INLINE void RateCCR::Connection::handle_tuple(SeqNum seq, uint rtt, bo
     }
     if (seq_miss_ == tip->seq_) {
       seq_miss_ = 0;
+      // Look for a new missed sequence number
       for (std::vector<TupleInfo*>::iterator i = history_.begin() + 1; 
            i != history_.end() && (*i)->seq_ != tip->seq_; i++) {
          if ((*(i-1))->seq_ != (*i)->seq_+1) seq_miss_ = (*i)->seq_ + 1;
@@ -227,9 +242,14 @@ REMOVABLE_INLINE void RateCCR::Connection::clearHistory() {
 // Receive element
 //
 
-RateCCR::RateCCR(string name) 
+RateCCR::RateCCR(string name, int dest, int src, int seq, int rtt, int ts) 
   : Element(name, 1, 2),
-    _ack_cb(0)
+    _ack_cb(0),
+    dest_field_(dest),
+    src_field_(src),
+    seq_field_(seq),
+    rtt_field_(rtt),
+    ts_field_(ts)
 {
 }
 
@@ -240,27 +260,12 @@ RateCCR::RateCCR(string name)
 TuplePtr RateCCR::simple_action(TuplePtr tp) 
 {
   Connection *c  = NULL;
-  ValuePtr  src;
-  ValuePtr  port;
-  SeqNum    seq  = 0;
-  int       rtt  = -1;
-  boost::posix_time::time_duration  ts;
+  ValuePtr  src  = (*tp)[src_field_];
+  ValuePtr  dest = (*tp)[dest_field_];
+  SeqNum    seq  = Val_UInt64::cast((*tp)[seq_field_]);
+  int       rtt  = Val_UInt32::cast((*tp)[rtt_field_]);
+  boost::posix_time::ptime ts = Val_Time::cast((*tp)[ts_field_]);
 
-  for (uint i = 0; i < tp->size(); i++) {
-    try {
-      TuplePtr t = Val_Tuple::cast((*tp)[i]); 
-      if (Val_Str::cast((*t)[0]) == "SEQ") {
-        seq  = Val_UInt64::cast((*t)[1]);
-        src  = (*t)[2];
-        port = (*t)[3];
-      }
-      else if (Val_Str::cast((*t)[0]) == "TINFO") {
-        rtt = (int) Val_UInt32::cast((*t)[1]);
-        ts  = Val_Time_Duration::cast((*t)[2]);
-      }
-    }
-    catch (Value::TypeError e) { } 
-  }
   if (seq == 0 || rtt < 0) {
     log(LoggerI::INFO, 0, "NON-RateCC Tuple: " + tp->toString()); 
     return tp;
@@ -270,23 +275,26 @@ TuplePtr RateCCR::simple_action(TuplePtr tp)
     c = new Connection(); 
     cmap_.insert(std::make_pair(src->toString(), c));
   } else c = cmap_.find(src->toString())->second;
+  assert(c);
 
+/*
   if (!c->active()) { 
     log(LoggerI::WARN, 0, "REMOVING INACTIVE CONNECTION FROM SOURCE: " + src->toString()); 
     cmap_.erase(cmap_.find(src->toString()));
     c = new Connection(); 
     cmap_.insert(std::make_pair(src->toString(), c));
   }
+*/
   c->handle_tuple(seq, rtt, ts);
 
   TuplePtr ack = Tuple::mk();
   ack->append(src);				// Source location
-  ack->append(port);				// Port
   ack->append(Val_Str::mk("ACK"));		// Acknowledgement name
+  ack->append(dest);				// Destination location
   ack->append(Val_UInt64::mk(seq));		// The sequence number
   ack->append(Val_UInt32::mk(c->receiveRate()));// Rate observed in past rtt
   ack->append(Val_Double::mk(c->lossRate()));	// Loss event rate
-  ack->append(Val_Time_Duration::mk(ts));		// Send time
+  ack->append(Val_Time::mk(ts));		// Echo the timestamp
   ack->freeze();
   ack_q_.push_back(ack);			// Append to ack queue
 

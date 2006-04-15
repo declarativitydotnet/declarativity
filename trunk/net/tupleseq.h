@@ -13,14 +13,17 @@
 #ifndef __TupleSeq_H__
 #define __TupleSeq_H__
 
+#include <map>
 #include "element.h"
 #include "val_uint64.h"
 
-#define SEQ_FIELD 1
+typedef uint64_t SeqNum;
+#define SEQ_FIELD    1
+#define OFFSET_FIELD 2
 
 class Sequence : public Element {
 public:
-  Sequence(string n="Sequence", uint64_t s=1);
+  Sequence(string n="sequence", SeqNum b=1, int d=-1, int s=2);
   const char *class_name() const { return "Sequence";};
   const char *processing() const { return "a/a"; };
   const char *flow_code() const	 { return "-/-"; };
@@ -28,9 +31,10 @@ public:
   TuplePtr simple_action(TuplePtr p);
 
 private:
-  REMOVABLE_INLINE bool isSeq(ValuePtr);
-
-  uint64_t seq_;
+  SeqNum seq_;
+  int    dest_field_;
+  int    seq_field_;
+  std::map<ValuePtr, SeqNum> seq_nums_;
 };
 
 #endif /* __TupleSeq_H_ */

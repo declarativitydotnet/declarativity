@@ -19,35 +19,28 @@
 
 #define MAX_INIT_SEQ 2048
 
-Sequence::Sequence(string n, uint64_t s)
-  : Element(n,1,1), seq_(s)
+Sequence::Sequence(string n, SeqNum b, int d, int s)
+  : Element(n,1,1), seq_(b), dest_field_(d), seq_field_(s)
 {
-  if (!seq_) seq_ = uint64_t(rand() * MAX_INIT_SEQ);
+  if (!seq_) seq_ = SeqNum(rand() * MAX_INIT_SEQ);
 }
 
 
 TuplePtr Sequence::simple_action(TuplePtr p)
 {
-  TuplePtr n = Tuple::mk();
-  TuplePtr s = Tuple::mk();
+  SeqNum next_seq = seq_;
 
-  s->append(Val_Str::mk("SEQ"));	// Indicates sequence number tuple
-  s->append(Val_UInt64::mk(seq_++));	// The sequence number
-  s->append(Val_UInt32::mk(0));		// The offset (for fragmenting)
-  s->freeze();
-
-  n->append(Val_Tuple::mk(s));		// Prepend the sequence number
-  for (uint i = 0; i < p->size(); i++)	// Append the original tuple
-    if (!isSeq((*p)[i])) n->append((*p)[i]); 
-  n->freeze();
-  return n;
-}
-
-REMOVABLE_INLINE bool Sequence::isSeq(ValuePtr vp) {
-  try {
-    TuplePtr t = Val_Tuple::cast(vp);
-    if (Val_Str::cast((*t)[0]) == "SEQ") return true;
+  if (dest_field_ < 0) {
+    next_seq = seq_++;
   }
-  catch (Value::TypeError e) { } 
-  return false;
+  else {
+    std::map<ValuePtr, SeqNum>::iterator i = seq_nums_.find((*p)[dest_field_]);
+    if (i != seq_nums_.end()) {
+      next_seq = i->second + 1;
+    }
+    seq_nums_[(*p)[dest_field_]] = next_seq;
+  }
+
+  (*p)[seq_field_] = Val_UInt64::mk(next_seq);
+  return p;
 }

@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     } else if (arg == "-") {
       ctxt->parse_stream(&std::cin);
     } else if (arg == "-g") {
-      Plumber::DataflowPtr conf = plumber->new_dataflow("overlog");
+      Plumber::DataflowPtr conf(new Plumber::Dataflow("overlog"));
       filename = argv[i+1];
       std::ifstream istr(filename.c_str());
       ctxt->parse_stream(&istr);
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
 
   if (route) {
     // test a configuration of a plumber
-    Plumber::DataflowPtr conf = plumber->new_dataflow("overlog");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("overlog"));
     Plmb_ConfGen gen(ctxt.get(), conf, false, false, true, filename);
     gen.createTables("127.0.0.1:10000");
     

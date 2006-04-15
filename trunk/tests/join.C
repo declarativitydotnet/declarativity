@@ -49,7 +49,7 @@ void testSimpleJoin(LoggerI::Level level)
   eventLoopInitialize();
 
   PlumberPtr plumber(new Plumber(level));
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
 
   // TUPLESOURCE
   // The source dataflow.  Produce random tuples.

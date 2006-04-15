@@ -32,9 +32,7 @@ TuplePtr Bandwidth::simple_action(TuplePtr p)
   } else return p;
 
   prev_t_ = cur_t;
-
-  std::cout << "Bandwidth " << bw_ << " Bps" << std::endl;
-
+  warn << "Bandwidth[" << name() << "]:  [" << bw_ << " Bps]\n";
   return p;
 }
 

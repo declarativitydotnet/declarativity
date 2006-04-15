@@ -30,7 +30,6 @@ bin_PROGRAMS 	=  	tuples \
 			demultiplex \
 			join \
 			net \
-			netcc \
 			netrcc \
 			netcc2 \
 			perfectChord \
@@ -148,13 +147,6 @@ net_LDADD = \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/eventLoop/.libs/libeventLoop.a
-
-netcc_SOURCES = netcc.C
-netcc_LDADD = \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
-	$(top_builddir)/p2core/.libs/libp2core.a
 
 netrcc_SOURCES = netrcc.C
 netrcc_LDADD = \

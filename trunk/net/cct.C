@@ -17,7 +17,7 @@
 #include "val_double.h"
 #include "val_str.h"
 #include "val_tuple.h"
-#include "tupleseq.h"
+#include "val_null.h"
 
 
 /////////////////////////////////////////////////////////////////////
@@ -28,13 +28,15 @@ class CCTuple
 {
 public:
   CCTuple() {}
-  CCTuple(SeqNum seq) : seq_(seq), tcb_(NULL), wnd_(true) { resetTime(); }
+  CCTuple(ValuePtr dest, SeqNum seq) 
+    : dest_(dest), seq_(seq), tcb_(NULL), wnd_(true) { resetTime(); }
 
   void operator()(std::pair<const SeqNum, CCTuple*>& entry); 
   void resetTime() { getTime (tt_); }
   int32_t delay();
 
   boost::posix_time::ptime tt_;	// Transmit time
+  ValuePtr  dest_;
   SeqNum    seq_;	// Tuple sequence number
   timeCBHandle *tcb_;	// Used to cancel retransmit timer
   bool      wnd_;	// If true then window updated on timeout.
@@ -75,20 +77,20 @@ int32_t CCTuple::delay()
  * Optional:
  * Output 2 (pull): Status of the CC element.
  */
-CCT::CCT(string name, double init_wnd, double max_wnd, bool tstat, bool stat) 
-  : Element(name, 2, (stat ? 3 : 2)),
+CCT::CCT(string name, double init_wnd, double max_wnd, int dest_field, int seq_field) 
+  : Element(name, 2, 2),
     _data_cb(0),
     data_on_(true),
     sa_(-1),
-    sv_(0)
+    sv_(0),
+    dest_field_(dest_field),
+    seq_field_(seq_field)
 {
   rto_            = MAX_RTO;
   max_wnd_        = max_wnd;
   cwnd_           = init_wnd;
   ssthresh_       = max_wnd;
   rwnd_           = max_wnd;
-  tstat_          = tstat;
-  stat_           = stat;
 }
 
 /**
@@ -106,17 +108,16 @@ int CCT::push(int port, TuplePtr tp, b_cbv cb)
          i++) {
       if ((*tp)[i]->typeCode() == Value::STR && Val_Str::cast((*tp)[i]) == "ACK") {
         // Acknowledge tuple and update measurements.
-        SeqNum seq  = Val_UInt64::cast((*tp)[i+1]);	// Sequence number
+        ValuePtr dest = (*tp)[i+1];			// Destination address
+        SeqNum   seq  = Val_UInt64::cast((*tp)[i+2]);	// Sequence number
         //TODO: Use timestamps to track the latest rwnd value.
-        rwnd_ = Val_Double::cast((*tp)[i+2]);	// Receiver window
-        add_rtt_meas(dealloc(seq, "SUCCESS"));
+        rwnd_ = Val_Double::cast((*tp)[i+3]);		// Receiver window
+        add_rtt_meas(dealloc(dest, seq, "SUCCESS"));
         return 1;
       }
     }
   }
   catch (Value::TypeError e) { } 
-
-  assert(output(1)->push(tp, 0)); // Pass data tuple through
   return 1;
 }
 
@@ -129,62 +130,66 @@ TuplePtr CCT::pull(int port, b_cbv cb)
 {
   TuplePtr tp;
 
-  switch (port) {
-    case 0:
-      assert (rto_ >= MIN_RTO && rto_ <= MAX_RTO);
-      if (current_window() < max_window() && 
-          (data_on_ = (tp = input(0)->pull(boost::bind(&CCT::data_ready, this))) != NULL)) {
-        SeqNum   seq = getSeq(tp);
-        CCTuple *otp = new CCTuple(seq);
-        map(seq, otp);
-      } else _data_cb = cb;
-      break;
-    case 2:
-      // Package up a Tuple containing my current CC state
-      tp = Tuple::mk();
-      tp->append(Val_Double::mk(rwnd_));		// Receiver window size (flow control)
-      tp->append(Val_Double::mk(cwnd_));		// Current congestion window size
-      tp->append(Val_Double::mk(ssthresh_));		// Slow start threshold
-      tp->append(Val_UInt32::mk(rto_));			// Retransmit timeout
-      tp->append(Val_UInt32::mk(current_window()));	// Current window size (# unacked tuples)
-      break;
-    default: assert(0);
-  } 
+  assert (port == 0);
+  assert (rto_ >= MIN_RTO && rto_ <= MAX_RTO);
+
+  if (current_window() < max_window() && 
+      (data_on_ = (tp = input(0)->pull(boost::bind(&CCT::data_ready, this))) != NULL)) {
+    SeqNum   seq  = Val_UInt64::cast((*tp)[seq_field_]);
+    ValuePtr dest = (dest_field_ < 0) ? Val_Null::mk() : (*tp)[dest_field_];
+    CCTuple  *otp = new CCTuple(dest, seq);
+    map(otp);
+  } else _data_cb = cb;
   return tp;
 }
 
-void CCT::map(SeqNum seq, CCTuple *otp) 
+void CCT::map(CCTuple *otp) 
 {
-  tmap_.insert(std::make_pair(seq, otp));
+  boost::shared_ptr<std::map<SeqNum, CCTuple*> > m;
+  CCTupleIndex::iterator i = tmap_.find(otp->dest_);
+  if (i == tmap_.end()) {
+    m.reset(new std::map<SeqNum, CCTuple*>);
+    tmap_.insert(std::make_pair(otp->dest_, m));
+  }
+  else 
+    m = i->second;
+  m->insert(std::make_pair(otp->seq_, otp));
+
   otp->tcb_ =
     delayCB((0.0 + rto_) / 1000.0,
             boost::bind(&CCT::timeout_cb, this, otp)); 
 }
 
-int32_t CCT::dealloc(SeqNum seq, string status)
+int32_t CCT::dealloc(ValuePtr dest, SeqNum seq, string status)
 {
   int32_t d = -1;
-  CCTupleIndex::iterator iter = tmap_.find(seq);
+  CCTupleIndex::iterator iter = tmap_.find(dest);
   if (iter != tmap_.end()) { 
-    d = iter->second->delay();
+    std::map<SeqNum, CCTuple*>::iterator record_iter = iter->second->find(seq); 
+    if (record_iter != iter->second->end()) {
+      CCTuple *record = record_iter->second;
+      d = record->delay();
 
-    if (iter->second->tcb_ != NULL) {
-      timeCBRemove((iter->second)->tcb_);
-    }
+      if (record->tcb_ != NULL) {
+        timeCBRemove(record->tcb_);
+      }
 
-    delete iter->second;
-    tmap_.erase(iter);
-    if (current_window() < max_window() && data_on_ && _data_cb) {
-      _data_cb();
-      _data_cb = 0;
-    }
-
-    if (tstat_) {
       TuplePtr tp = Tuple::mk();
       tp->append(Val_Str::mk(status));		// Signal drop
+      tp->append(record->dest_);		// Destination address 
       tp->append(Val_UInt64::mk(seq));		// Sequence number 
       tp->freeze();
       assert(output(1)->push(tp, 0));
+
+      delete record;
+      iter->second->erase(record_iter);
+      if (iter->second->size() == 0)
+        tmap_.erase(iter);
+ 
+      if (current_window() < max_window() && data_on_ && _data_cb) {
+        _data_cb();
+        _data_cb = 0;
+      }
     }
   }
   else {
@@ -209,16 +214,16 @@ void CCT::data_ready() {
  */
 void CCT::timeout_cb(CCTuple *otp)
 {
-  SeqNum seq = otp->seq_;
-
   if (otp->wnd_ == true) {
-    // Update window sizes and enter slow start
     timeout(); 		
-    for_each(tmap_.begin(), tmap_.end(), CCTuple());
+    for (CCTupleIndex::iterator i = tmap_.begin(); i != tmap_.end(); i++) {
+      // Update window sizes and enter slow start
+      for_each(i->second->begin(), i->second->end(), CCTuple());
+    }
   }
 
   otp->tcb_ = NULL;
-  dealloc(seq, "FAIL");
+  dealloc(otp->dest_, otp->seq_, "FAIL");
 }
 
 /**
@@ -278,18 +283,4 @@ REMOVABLE_INLINE int CCT::current_window() {
 
 REMOVABLE_INLINE int CCT::max_window() {
   return (cwnd_ < rwnd_) ? int(cwnd_) : int(rwnd_);
-}
-
-REMOVABLE_INLINE SeqNum CCT::getSeq(TuplePtr tp) {
-  SeqNum seq = 0;
-  for (uint i = 0; i < tp->size(); i++) {
-    try {
-      TuplePtr t = Val_Tuple::cast((*tp)[i]); 
-      if (Val_Str::cast((*t)[0]) == "SEQ") {
-        seq = Val_UInt64::cast((*t)[SEQ_FIELD]);
-      }
-    }
-    catch (Value::TypeError e) { } 
-  }
-  return seq;
 }

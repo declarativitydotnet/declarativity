@@ -22,7 +22,7 @@
 class Queue : public Element { 
 public:
 
-  Queue(string name, unsigned int queueSize);
+  Queue(string name="queue", unsigned int queueSize=0);
 
   ~Queue();
   

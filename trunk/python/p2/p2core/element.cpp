@@ -13,11 +13,6 @@ public:
   };
 };
 
-int (Element::*_cis)(int, Element*, int) = &Element::connect_input; 
-int (Element::*_cid)(Element*, int)      = &Element::connect_input; 
-int (Element::*_cos)(int, Element*, int) = &Element::connect_output; 
-int (Element::*_cod)(Element*, int)      = &Element::connect_output; 
-
 void export_element()
 {
   class_<ElementWrap, boost::shared_ptr<ElementWrap>, boost::noncopyable>
@@ -35,10 +30,8 @@ void export_element()
     .def("ports_frozen",   &Element::ports_frozen)
   
     // CONFIGURATION
-    .def("connect_input",  _cis)
-    .def("connect_input",  _cid)
-    .def("connect_output", _cos)
-    .def("connect_output", _cod)
+    .def("connect_input",  &Element::connect_input)
+    .def("connect_output", &Element::connect_output)
     .def("initialize",     &Element::initialize)
     
     // PROCESSING, FLOW, AND FLAGS

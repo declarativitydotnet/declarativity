@@ -46,7 +46,7 @@
 
 Plumber::DataflowPtr UdpCC_source(PlumberPtr plumber, Udp *udp, string src, string dest, double drop) {
   // The sending data flow
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
 
   ElementSpecPtr data     = conf->addElement(ElementPtr(new TimedPushSource("source", .01)));
   ElementSpecPtr dqueue   = conf->addElement(ElementPtr(new Queue("Source Data Q", 1000)));
@@ -99,7 +99,7 @@ Plumber::DataflowPtr UdpCC_source(PlumberPtr plumber, Udp *udp, string src, stri
 }
 
 Plumber::DataflowPtr UdpCC_sink(PlumberPtr plumber, Udp *udp, double drop) {
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
 
   // The remote data elements
   ElementSpecPtr udpRx     = conf->addElement(udp->get_rx());

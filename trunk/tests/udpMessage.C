@@ -59,7 +59,7 @@ sendMessages(std::string udpAddress)
 
   // The sending data flow
   PlumberPtr plumber(new Plumber());
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
 
   Udp udpOut("9999", 9999); // port of the sender    
   std::vector<TuplePtr> buffer;

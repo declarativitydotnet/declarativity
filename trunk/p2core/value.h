@@ -99,6 +99,12 @@ protected:
 
 public:  
 
+  struct Less
+  {
+    bool operator()(const ValuePtr first, const ValuePtr second) const
+    { return first->compareTo(second) < 0; }
+  };
+
   // Type codes
   enum TypeCode { 
     NULLV=0,

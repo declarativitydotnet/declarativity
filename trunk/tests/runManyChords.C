@@ -79,7 +79,7 @@ void testNetworked(LoggerI::Level level,
   PlumberPtr plumber(new Plumber(level));
 
   // Create the data flow
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
 
 
 

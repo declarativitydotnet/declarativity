@@ -68,7 +68,7 @@ int main(int argc, char **argv)
       std::ifstream istr(filename.c_str());
       std::ofstream ostr(string(filename + ".dot").c_str());
       ctxt->parse_stream(&istr);
-      Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+      Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
       boost::shared_ptr< Catalog > catalog(new Catalog());  
       catalog->initTables(ctxt.get()); 
       boost::shared_ptr< ECA_Context > ectxt(new ECA_Context()); 
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
   std::cout << ctxt->toString() << "\n";
 
   if (route) {
-    Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
     boost::shared_ptr< Catalog > catalog(new Catalog());  
     catalog->initTables(ctxt.get()); 
     boost::shared_ptr< ECA_Context > ectxt(new ECA_Context()); 

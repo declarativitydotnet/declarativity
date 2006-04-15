@@ -259,7 +259,7 @@ void startChordInDatalog(LoggerI::Level level, boost::shared_ptr< OL_Context> ct
 
   // create dataflow for translated chord lookup rules
   PlumberPtr plumber(new Plumber(level));
-  Plumber::DataflowPtr conf = plumber->new_dataflow("chord");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("chord"));
   boost::shared_ptr< Plmb_ConfGen > plumberConfigGenerator(new Plmb_ConfGen(ctxt.get(), conf, false, DEBUG, CC, datalogFile));
 
   plumberConfigGenerator->createTables(localAddress);

@@ -32,37 +32,32 @@ DDemux::DDemux(string name, std::vector<ValuePtr> keys,
  */
 int DDemux::add_output(ValuePtr key) {
   PortMap::iterator miter = _port_map.find(key);
-  assert (miter == _port_map.end());
+  if (miter != _port_map.end())
+    return -1;	// Port with key already allocated
 
-  int port = -1;
-  if (_unusedPorts.size() > 0) {
-    port = _unusedPorts.front();
-    _unusedPorts.erase(_unusedPorts.begin());
-    _block_flags[port] = false;
-  }
-  else {
-    this->Element::add_output();
-    port = noutputs() - 1;
-    _block_flags.push_back(false);
-  }
+  int port = addOutputPort();
   _port_map.insert(std::make_pair(key, port));
   return port;
 }
 
-void DDemux::remove_output(int port) {
+int DDemux::remove_output(int port) {
   for (PortMap::iterator miter = _port_map.begin();
        miter != _port_map.end(); miter++)
     if (miter->second == port)
-      remove_output(miter->first);
+      return remove_output(miter->first);
+  return -1;
 }
 
-void DDemux::remove_output(ValuePtr key) {
+int DDemux::remove_output(ValuePtr key) {
   PortMap::iterator miter = _port_map.find(key);
-  assert (miter != _port_map.end());
+  if (miter != _port_map.end())
+    return -1;
+
   int port = miter->second;
+  if (deleteOutputPort(port) != port)
+    return -1;
   _port_map.erase(miter);
-  _block_flags[port] = false;
-  _unusedPorts.push_back(port);
+  return port;
 }
 
 void DDemux::unblock(int output)

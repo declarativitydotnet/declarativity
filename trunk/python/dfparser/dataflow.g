@@ -3,11 +3,12 @@
 import sys
 import getopt
 import copy
+import libp2python
 from string import strip
 
 plumber    = None
-module     = None
 dataflows  = {}
+edits      = []
 macros     = []
 local      = []
 flags      = {"debug" : False}
@@ -31,7 +32,10 @@ def eval_value(val, args):
             error("Value types do not take variable arguments.")
         arguments.append(a[1])
     if flags["debug"]: return val + str(arguments)
-    else: return apply(getattr(getattr(module,val), 'mk'), tuple(arguments))
+    else: 
+        v = apply(getattr(getattr(libp2python,val), 'mk'), tuple(arguments))
+        if not v: error("Unable to evaluate value %s" % val)
+        return v
 
 class Dataflow:
     def __init__(self, name):
@@ -39,7 +43,8 @@ class Dataflow:
         self.strands    = []
         if not plumber:
             error("PLUMBER NOT SET")
-        self.conf = plumber.new_dataflow(name)
+        self.conf = libp2python.Plumber.Dataflow(name)
+        self.name = name
     def eval_dataflow(self):
         for s in self.strands:
             s.eval_strand(self)
@@ -49,21 +54,12 @@ class Dataflow:
         print "DATAFLOW GLOBAL CONTEXT:  ", self.globalvars
         for s in self.strands:
             s.print_strand()
-    def operation(self, oper, dataflow, name, port):
-          element = conf.addElement(dataflow, name)
-          if oper == "add_input" or oper == "add_output": 
-            if port: return element.attr(oper)(port)
-            else: return element.attr(oper)()
-          elif oper == "remove_input" or oper == "remove_output":
-            element.attr(oper)(port)
-          else: error("Unknown dataflow operation.")
-          return -1
     def eval_arg(self, arg):
         if arg[0] == 'var':
             arg = self.lookup([], arg[1])
             if not arg: 
                 error("Variable arguement does not exist")
-            if not flags["debug"] and not isinstance(arg, ValueVec):
+            if not flags["debug"] and not isinstance(arg, libp2python.ValueVec):
                 error("Variable arguement must be of type ValueVec")
             return arg
         return arg[1]
@@ -73,10 +69,15 @@ class Dataflow:
             arguments.append(self.eval_arg(a)) 
         if flags["debug"]: return type + str(arguments)
         else: 
-            return self.conf.addElement(apply(getattr(module, type), tuple(arguments)))
+            element = apply(getattr(libp2python, type), tuple(arguments))
+            if not element: error("Unable to create element %s %s" % (type, str(arguments)))
+            elementSpec = self.conf.addElement(element)
+            if not elementSpec: error("Unable to add element %s %s" % (type, str(arguments)))
+            return elementSpec
+    def operation(self, oper, name, port):
+        error("Operations only supported under edits.")
     def eval_ref(self, d, r):
-        if flags["debug"]: return "REF(" + d + "." + r + ")"
-        else: return self.conf.addElement(d, r)
+        error("Basic Dataflows can't reference other dataflow elements.")
     def lookup(self, map, name):
         for x,v,a in map:  
             if x == name: return v
@@ -85,6 +86,30 @@ class Dataflow:
         return self.globalvars.get(name, 0)
     def strand(self, s):
         self.strands.append(s)
+
+class Edit(Dataflow):
+    def __init__(self, name):
+        Dataflow.__init__(self, name)
+        self.conf = plumber.new_dataflow_edit(name)
+        if not self.conf:
+            error("Unable to create a dataflow edit on %s." % name)
+    def operation(self, oper, name, port):
+          element = conf.find(name)
+          if oper == "add_input" or oper == "add_output": 
+            if port: return element.attr(oper)(port)
+            else: return element.attr(oper)()
+          elif oper == "remove_input" or oper == "remove_output":
+            element.attr(oper)(port)
+          else: error("Unknown dataflow operation.")
+          return -1
+    def eval_ref(self, r):
+        if flags["debug"]: return "REF(" + d + "." + r + ")"
+        else: 
+            ref = self.conf.find(r)
+            if not ref: 
+                error("Unable to resolve reference %s in dataflow %s" %
+                      (r, self.name))
+            return ref
 
 class Macro:
     def __init__(self, n):
@@ -113,9 +138,8 @@ class Macro:
         print "END DATAFLOW CLASS %s]" % self.name
 
     def apply_args(self, args, actuals):
-        assert(self.formals[0] == 'name')
         if len(args) > 0 and args[0] != 'name':
-            args[0][1] = actuals[0][1] + "_" + args[0][1]
+            args[0][1] = actuals[0][1] + "." + args[0][1]
         for i in range(len(args)):
             for j in range(len(self.formals)):
                 if args[i][0] == 'var' and self.formals[j] == args[i][1]:
@@ -123,21 +147,31 @@ class Macro:
 
     def eval_macro(self, actuals, d):
         if self.evaluated: return
-        assert(len(actuals) == len(self.formals))
-        self.context = copy.deepcopy(self.context)
-        self.strands = copy.deepcopy(self.strands)
-        # Evaluate the local context (Can only be a macro or local variable)
+        if len(actuals) != len(self.formals):
+            error("Wrong number of arguements to macro %s" % self.name)
+        # Evaluate the local context (Can only be another macro or local variable)
+        input_resolved = False
+        output_resolved = False
         for c in self.context:
             if isinstance(c[1], Macro):
                 if c[1].name == self.name:
                     error("Macro class self reference.")
                 self.apply_args(c[2], actuals)
-                c[1].eval_macro(c[2], d)
+                macro = copy.deepcopy(c[1])
+                macro.eval_macro(c[2], d)
             else: 
                 self.apply_args(c[2], actuals)
                 c[1] = d.eval_element(c[1],c[2])
-            if self.input and self.input == c[0]: self.input = c[1]
-            if self.output and self.output == c[0]: self.output = c[1]
+            if self.input and self.input == c[0]: 
+                self.input = c[1]
+                input_resolved = True
+            if self.output and self.output == c[0]: 
+                self.output = c[1]
+                output_resolved = True
+        if self.input and not input_resolved: 
+            error("Input \"%s\" was not resolved in macro \"%s\"" % (self.input, self.name))
+        if self.output and not output_resolved: 
+            error("Output \"%s\" was not resolved in macro \"%s\"" % (self.output, self.name))
         # Evaluate the local strands
         for s in self.strands:
             # Apply actuals to elements and dataflow macros
@@ -175,14 +209,17 @@ class Strand:
             if e[0] == 'new':
                 macro = d.lookup(self.context, e[1])
                 if macro:
+                    macro = copy.deepcopy(macro)
                     macro.eval_macro(e[2], d)
                     elements.append([i, macro, o]) 
                 else:
                     elements.append([i, d.eval_element(e[1],e[2]), o])
             elif e[0] == 'var':
-                elements.append([i, d.lookup(self.context, e[1]), o])
+                var = d.lookup(self.context, e[1])
+                if not var: error("Unable to resolve variable %s in dataflow %s." % (e[1], d.name))
+                elements.append([i, var, o])
             elif e[0] == 'ref':
-                elements.append([i, d.eval_ref(e[1], e[2]), o])
+                elements.append([i, d.eval_ref(e[1]), o])
         self.elements = elements
 
         # Hook everyone together
@@ -221,11 +258,13 @@ parser P2Dataflow:
     token LINK:  r"->"
     token STR:   "[^ ][\" '\$\._A-Za-z0-9\\\:]*"
     ignore:      "[ \r\t\n]+"
+    ignore:      r'#.*\r?\n'    # DL comments; sh/perl style
 
-    rule module:      ("dataflow" TYPE "{" {{ d = Dataflow(TYPE) }}
-                       dataflow<<d>> "}"   {{ dataflows[TYPE] = d }}
+    rule module:      (dataflow {{ pass }}
                        |
-                       macro               {{ macros.append(macro) }}
+                       macro    {{ pass }}
+                       |
+                       edit     {{ pass }}
                       )* END
 
     rule macro: "macro" TYPE {{ m = Macro(TYPE) }}
@@ -235,20 +274,30 @@ parser P2Dataflow:
                   (  "input"  VAR ";"           {{ m.input = VAR }} 
                    | "output" VAR ";"           {{ m.output = VAR }} )*
                   (strand<<m.context>>          {{ m.strand(strand) }} )*
-                  "}"                           {{ return [m.name, m, []] }}
+                  "}"                           {{ macros.append([m.name, m, []]) }}
 
-    rule dataflow<<D>>: (global_def<<D>> {{ pass }}
+    rule dataflow: "dataflow" TYPE "{"   {{ d = Dataflow(TYPE) }} 
+                        (global_def<<d>> {{ pass }}
                          |
-                         operation<<D>>  {{ pass }}
-                         | 
-                         strand<<[]>>    {{ D.strand(strand) }}
+                         strand<<[]>>    {{ d.strand(strand) }}
                         )*
+                    "}"                  {{ dataflows[TYPE] = d }}
+
+    rule edit: "edit" TYPE "{"           {{ e = Edit(TYPE) }}
+                        (global_def<<e>> {{ pass }}
+                         |
+                         operation<<e>>  {{ pass }}
+                         | 
+                         strand<<[]>>    {{ e.strand(strand) }}
+                        )*
+                    "}"                  {{ edits.append(e) }}
 
     rule local_def<<C>>: "let" VAR "=" TYPE args ";" {{ C.append([VAR, TYPE, args]) }}
 
     rule global_def<<D>>: "let" VAR "=" 
                           (TYPE args
                                {{ e = D.lookup([], TYPE) }}
+                               {{ if e:     e = copy.deepcopy(e) }}
                                {{ if e:     e.eval_macro(args, D)   }}
                                {{ if not e: e = D.eval_element(TYPE,args) }}
                                {{ D.globalvars[VAR] = e }}
@@ -257,35 +306,35 @@ parser P2Dataflow:
                           ) 
                           ";" 
 
-    rule operation<<D>>: "add"    (port TYPE "\." VAR {{ return D.operation('add_input', TYPE, VAR, port) }}
+    rule operation<<D>>: "add"    (port VAR {{ return D.operation('add_input', VAR, port) }}
                                    |
-                                   TYPE "\." VAR port {{ return D.operation('add_output', TYPE, VAR, port) }}) 
-                         "remove" (port TYPE "\." VAR {{ return D.operation('remove_input', TYPE, VAR, port) }}
+                                   VAR port {{ return D.operation('add_output', VAR, port) }}) 
+                         "remove" (port VAR {{ return D.operation('remove_input', VAR, port) }}
                                    |
-                                   TYPE "\." VAR port {{ return D.operation('remove_output', TYPE, VAR, port) }}) 
+                                   VAR port {{ return D.operation('remove_output', VAR, port) }}) 
                          ";"
 
     rule strand<<C>>: term {{ outp = 0 }} {{ s = Strand(C) }}
                            [port {{ outp = port }}] {{ s.element([-1, term, outp]) }}
                       (LINK
                         (term  {{ outp = 0 }}
-                             [";" {{ s.element([0, term, -1]) }} {{ return s }} ]
                              [port {{ outp = port }} ] 
                              {{ s.element([0, term, outp]) }}
                          | 
                          port term {{ inp = port }} {{ outp = 0    }}
-                             [";"      {{ s.element([inp, term, -1]) }} {{ return s }} ]
                              [port     {{ outp = port }} ]  
                              {{ s.element([inp, term, outp]) }}
                         )
                       )+
+                      ";" {{ return s }}
 
-    rule term: (TYPE  ([args {{ return ['new', TYPE, args] }} ]
+    rule term: (TYPE  [args {{ return ['new', TYPE, args] }} ]
                        {{ return ['new', TYPE, []] }}
-                      |
-                      "\." VAR {{ return ['ref', TYPE, VAR] }} )
                 | 
-                VAR {{ return ['var', VAR] }})
+                "\." VAR {{ ref = VAR }}
+                  ("\." VAR {{ ref = ref + "." + VAR }})* {{ return ['ref', ref] }}
+                |
+                VAR      {{ return ['var', VAR] }})
 
     rule port: "\["       {{ port = None }}
                [(NUM      {{ port = int(NUM) }}
@@ -318,18 +367,16 @@ parser P2Dataflow:
                 "\)"          {{ return f}}
 
     rule values: "{"             {{ if flags["debug"]: v = [] }} 
-                                 {{ if not flags["debug"]: v = module.ValueVec() }}
+                                 {{ if not flags["debug"]: v = libp2python.ValueVec() }}
                  [VAL args       {{ v.append(eval_value(VAL, args)) }}           
                    (',' VAL args {{ v.append(eval_value(VAL, args)) }})*]
                  "}"             {{ return v}}
 
 %%
 
-def compile(p, m, s):
+def compile(p, s):
     global plumber
-    global module
     plumber = p
-    module  = m
     parse('module', s)
     return dataflows
 
@@ -363,9 +410,9 @@ if __name__=='__main__':
     else:
         try: s = open(args[0], 'r').read()
 	except EOFError: print "FILE READ ERROR"
-        import p2python
-        p = p2python.Plumber()
-        compile(p, p2python, s)
+        import libp2python
+        p = libp2python.Plumber()
+        compile(p, libp2python, s)
         if flags["debug"]: debug()
     print 'Bye.'
     sys.exit(0)

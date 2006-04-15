@@ -22,7 +22,7 @@ typedef uint64_t SeqNum;
 
 class RateCCT : public Element {
 public:
-  RateCCT(string name, bool tstat=true);
+  RateCCT(string name, int dest=0, int seq=2, int rtt=3, int ts=4);
   const char *class_name() const { return "RateCCT";};
   const char *processing() const { return "lh/lh"; };
   const char *flow_code() const	 { return "--/--"; };
@@ -33,8 +33,11 @@ public:
   // Difference between current time and that given in timespec
   static REMOVABLE_INLINE uint32_t delay(boost::posix_time::ptime*);	
 private:
+  int tuplesInFlight() const;
+  void map(ValuePtr dest, SeqNum seq);
+  void unmap(ValuePtr dest, SeqNum seq);
   void data_ready();			// Callback for tuple output ready
-  void tuple_timeout(SeqNum);		// Callback indicating tuple timeout
+  void tuple_timeout(ValuePtr,SeqNum);	// Callback indicating tuple timeout
   void feedback_timeout();
 
   REMOVABLE_INLINE TuplePtr package(TuplePtr);		
@@ -49,11 +52,15 @@ private:
   uint32_t  rtt_;			// Estimated round trip time
   uint32_t  rto_;			// The round-trip timeout
   timeCBHandle  *nofeedback_;		// No feedback timer
-  boost::posix_time::ptime  tld_;			// Time last doubled (for slow start)
-  bool      tstat_;
+  boost::posix_time::ptime  tld_;	// Time last doubled (for slow start)
+  int       dest_field_;
+  int       seq_field_;
+  int       rtt_field_;
+  int       ts_field_;
 
-  typedef std::map<SeqNum, timeCBHandle*> TupleTOIndex;
-  TupleTOIndex tmap_;			// Map containing unacked in transit tuples
+  typedef std::map<SeqNum, timeCBHandle*> SeqTimeCBMap;
+  typedef std::map<ValuePtr, boost::shared_ptr<SeqTimeCBMap>, Value::Less> ValueSeqTimeCBMap;
+  ValueSeqTimeCBMap index_;		// Map containing unacked in transit tuples
 };
   
 #endif /* __RCCT_H_ */

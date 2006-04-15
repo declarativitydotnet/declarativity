@@ -1,31 +1,64 @@
-macro UdpMarshal(name, port, field) {
-  let udp = Udp2("udp", port);
-  let unroute = PelTransform("unRoute", "$1 unboxPop");
-  let marshal = MarshalField("marshal", 1);
-
-  input marshal; output unroute;
-
-  marshal -> StrToSockaddr("addr_conv", field) -> udp;
-  udp -> UnmarshalField("unmarshal", 1) -> unroute;
-}
-
-
-dataflow Main {
+macro Conn(name, port) {
   let cct = CCT("transmit_cc", 1, 20);
   let retry = RDelivery("retry");
   let retryMux = Mux("retry_mux", 2);
-  let srcAddr = PelTransform("source_address", ""localhost:10000" pop swallow unboxPop");
-  let destAddr = PelTransform("destAddr", ""localhost:10001" pop swallow unboxPop");
-  let conn = UdpMarshal("conn", 10000, 0);
-  
-  TimedPushSource("source", .01)  -> Queue("queue", 1000) ->
-  Sequence("sequence_number") -> retry -> cct -> srcAddr -> destAddr ->
-  Print("print_send")             ->
-  conn;
-  
-  conn -> 
+  let udp = Udp2("udp", port);
+
+  input retry; 
+
+  retry -> cct ->
+  PelTransform("package", "$0 swallow swap pop pop") ->
+  # Print("packaged_tuple") ->
+  MarshalField("marshal", 1) -> 
+  StrToSockaddr("addr_conv", 0) -> udp;
+
+  udp -> UnmarshalField("unmarshal", 1) ->
+  PelTransform("unRoute", "$1 unboxPop") ->
   [1]cct[1] -> [1]retry[1] -> retryMux -> Discard("discard");
-  
+
   retry[2] -> [1]retryMux;
 }
+
+macro RateConn(name, port) {
+  let rcct = RateCCT("transmit_rcc");
+  let retry = RDelivery("retry");
+  let retryMux = Mux("retry_mux", 2);
+  let udp = Udp2("udp", port);
+
+  input retry; 
+
+  retry -> rcct ->
+  PelTransform("package", "$0 swallow swap pop pop") ->
+  # Print("packaged_tuple") ->
+  MarshalField("marshal", 1) -> 
+  StrToSockaddr("addr_conv", 0) -> udp;
+
+  udp -> UnmarshalField("unmarshal", 1) ->
+  PelTransform("unRoute", "$1 unboxPop") ->
+  [1]rcct[1] -> [1]retry[1] -> retryMux -> Discard("discard");
+
+  retry[2] -> [1]retryMux;
+}
+
+
+dataflow Send1 {
+  TimedPushSource("source", 1)                                           -> 
+  PelTransform("sequence_slot", "0 pop 0 pop swallow unboxPop")            ->
+  PelTransform("source_address", ""localhost:10001" pop swallow unboxPop") ->
+  PelTransform("destAddr", ""localhost:10000" pop swallow unboxPop")       ->
+  Queue -> Sequence -> 
+  Print("print_send") ->
+  RateConn("conn", 10001);
+}
+
+dataflow Send2 {
+  TimedPushSource("source", 1)                                             -> 
+  PelTransform("sequence_slot", "0 pop 0 pop swallow unboxPop")            ->
+  PelTransform("source_address", ""localhost:10002" pop swallow unboxPop") ->
+  PelTransform("destAddr", ""localhost:10000" pop swallow unboxPop")       ->
+  Queue -> Sequence -> 
+  Print("print_send") ->
+  RateConn("conn", 10002);
+}
+
 .

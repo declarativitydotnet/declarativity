@@ -24,7 +24,7 @@ typedef uint64_t SeqNum;
 
 class RDelivery : public Element {
 public:
-  RDelivery(string name, bool retry=true, uint32_t max_retry=5);
+  RDelivery(string name, int max_retry=5, int dest=0, int seq=2);
   const char *class_name() const { return "RDelivery";};
   const char *processing() const { return "lh/lhh"; };
   const char *flow_code() const	 { return "--/--"; };
@@ -33,20 +33,41 @@ public:
   int push(int port, TuplePtr tp, b_cbv cb);	// Incoming ack or timeout
 
 private:
-  REMOVABLE_INLINE SeqNum getSeq(TuplePtr tp);
-  REMOVABLE_INLINE void handle_failure(SeqNum);		// Handles a failure to deliver a tuple
+  struct RTuple
+  {
+    RTuple(TuplePtr tp) : retry_cnt_(0), tp_(tp) { resetTime(); } 
+
+    void resetTime();
+    int32_t delay();
+    boost::posix_time::ptime  timer_;	// Transmit time
+    int       retry_cnt_;		// Transmit counter.
+    TuplePtr  tp_;			// The tuple.
+  };
+  typedef boost::shared_ptr<RTuple> RTuplePtr;
+
+  // Helper methods to manipulate memorized tuples
+  RTuplePtr lookup(ValuePtr dest, SeqNum seq);
+  void      map(ValuePtr, SeqNum, RTuplePtr rtp);
+  void      unmap(ValuePtr, SeqNum);
+
+  // Handles a failure to deliver a tuple
+  REMOVABLE_INLINE void handle_failure(ValuePtr, SeqNum);
   void input_cb();
   b_cbv _out_cb;
 
   bool      in_on_;
-  bool      retry_;
-  uint32_t  max_retry_;					// Max number of retries for a tuple
+  uint32_t  max_retry_;			// Max number of retries for a tuple
   uint64_t  max_seq_;
+  int       dest_field_;
+  int       seq_field_;
 
-  std::deque <RTuple*>  rtran_q_;			// Retransmit queue 
+  std::deque <RTuplePtr>  rtran_q_;	// Retransmit queue 
 
-  typedef std::map<SeqNum, RTuple*> RTupleIndex;
-  RTupleIndex tmap_;					// Map containing unacked in transit tuples
+  typedef std::map<SeqNum, RTuplePtr> SeqRTupleMap;
+  typedef std::map<ValuePtr, 
+                   boost::shared_ptr<SeqRTupleMap>, 
+                   Value::Less> ValueSeqRTupleMap;
+  ValueSeqRTupleMap index_;		// Map containing unacked in transit tuples
 };
   
 #endif /* __RDELIVERY_H_ */

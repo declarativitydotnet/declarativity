@@ -46,9 +46,6 @@ class ElementSpec {
       return oss.str();
     };
 
-    /** The dataflow name that owns this hookup (there can be only 1). */
-    string _dataflow;
-
     /** The element from which this hookup originates */
     ElementSpecPtr fromElement;
 
@@ -61,10 +58,9 @@ class ElementSpec {
     /** The port number at the toElement */
     int toPortNumber;
 
-    Hookup(string d, 
-           ElementSpecPtr fe, int fp,
-           ElementSpecPtr te, int tp)
-      : _dataflow(d), fromElement(fe), fromPortNumber(fp),
+    Hookup(ElementSpecPtr fe, int fp,
+           ElementSpecPtr te, int tp) 
+      : fromElement(fe), fromPortNumber(fp),
         toElement(te), toPortNumber(tp) {};
   };
   typedef boost::shared_ptr< Hookup > HookupPtr;
@@ -74,12 +70,6 @@ class ElementSpec {
 
   /** My real element */
   const ElementPtr element();
-
-  /** Add to the list of dataflows that reference this element */
-  void dataflowRef(string name) { _dataflowRefs->insert(name); }
-  
-  /** Return my dataflow ref vector */
-  const std::set<string>* dataflowRefs() { return _dataflowRefs.get(); }
 
   /** An internal structure for tracking unification groups */
   struct UniGroup {
@@ -152,6 +142,22 @@ class ElementSpec {
 
   /** My output */
   PortPtr output(int pno);
+
+  /** Add input/output port 
+   *  param portKey: The port key of the new port.
+   *  Return: the port number allocated or -1 on failure.
+   */
+  int add_input(ValuePtr portKey=ValuePtr());
+  int add_output(ValuePtr portKey=ValuePtr());
+
+  /** Remove input/output port 
+   *  param port:    the port to remove
+   *  param portKey: portKey will determine the port to remove.
+   */
+  void remove_input(int port);
+  void remove_input(ValuePtr portKey);
+  void remove_output(int port);
+  void remove_output(ValuePtr portKey);
   
   /** A place holder exception for this class */
   struct ElementSpecError {};
@@ -194,9 +200,6 @@ class ElementSpec {
 
   /** My output ports */
   boost::shared_ptr<std::vector< PortPtr > > _outputs;
-
-  /** This vector holds the dataflow names that contain this object */
-  boost::shared_ptr<std::set< string > > _dataflowRefs;
 
   ElementSpec(const Element &);
   ElementSpec &operator=(const Element &);

@@ -27,41 +27,23 @@
 //
 
 #define MAX_MBI     (64000)
-#define ACK_SIG     2
-#define ACK_SEQ     ACK_SIG + 1
-#define ACK_RATE    ACK_SIG + 2
-#define ACK_LOSS    ACK_SIG + 3
-#define ACK_TIME    ACK_SIG + 4
+#define ACK_SIG     1
+#define ACK_DEST    ACK_SIG + 1
+#define ACK_SEQ     ACK_SIG + 2
+#define ACK_RATE    ACK_SIG + 3
+#define ACK_LOSS    ACK_SIG + 4
+#define ACK_TIME    ACK_SIG + 5
 #define MAX_SURPLUS 10
 #define RTT_FILTER  0.9
 
-#define MAP(key) \
+#define ACK(status, d, s) \
 do { \
-  timeCBHandle *t = delayCB((0.0 + rto_) / 1000.0, boost::bind(&RateCCT::tuple_timeout, this, (key))); \
-  tmap_.insert(std::make_pair((key), t)); \
-} while (0)
-
-#define UNMAP(key, c) \
-do { \
-  TupleTOIndex::iterator i = tmap_.find((key)); \
-  if (i != tmap_.end()) { \
-    if (c) timeCBRemove(i->second); \
-    tmap_.erase(i); \
-  } \
-  if (tmap_.size() < trate_ && data_cbv_) { \
-      data_cbv_(); \
-      data_cbv_ = 0; \
-    } \
-} while (0)
-
-#define ACK(status, s) \
-do { \
-  if (tstat_) { \
-    TuplePtr tp = Tuple::mk(); \
-    tp->append(Val_Str::mk((status))); \
-    tp->append(Val_UInt64::mk(s)); \
-    assert(output(1)->push(tp, 0)); \
-  } \
+  TuplePtr tp = Tuple::mk(); \
+  tp->append(Val_Str::mk((status))); \
+  tp->append((d)); \
+  tp->append(Val_UInt64::mk(s)); \
+  tp->freeze(); \
+  assert(output(1)->push(tp, 0)); \
 } while (0)
 
 #undef MAX
@@ -80,9 +62,8 @@ do { \
  * Input  1 (push): Feedback packet
  * Output 0 (push): Tuple to send with cc info wrapper.
  * Output 1 (push): Status of a tuple that was recently sent.
- * Output 2 (pull): Status of the CC element. (Optional)
  */
-RateCCT::RateCCT(string name, bool tstat) 
+RateCCT::RateCCT(string name, int dest, int seq, int rtt, int ts) 
   : Element(name, 2, 2),
     data_on_(true),
     data_cbv_(0), 
@@ -90,7 +71,10 @@ RateCCT::RateCCT(string name, bool tstat)
     rtt_(100),
     rto_(4000),
     nofeedback_(NULL),
-    tstat_(tstat)
+    dest_field_(dest),
+    seq_field_(seq),
+    rtt_field_(rtt),
+    ts_field_(ts)
 {
   getTime(tld_);
 }
@@ -105,16 +89,16 @@ int RateCCT::push(int port, TuplePtr tp, b_cbv cb)
   assert(port == 1);
 
   try {
-    string name  = Val_Str::cast((*tp)[ACK_SIG]);
-    if (name == "ACK") {
+    if (Val_Str::cast((*tp)[ACK_SIG]) == "ACK") {
       // Acknowledge tuple with rate feedback.
-      SeqNum  seq = Val_UInt64::cast((*tp)[ACK_SEQ]);
-      uint32_t rr = Val_UInt32::cast((*tp)[ACK_RATE]);
-      double   p  = Val_Double::cast((*tp)[ACK_LOSS]);
+      ValuePtr dest = (*tp)[ACK_DEST];
+      SeqNum   seq  = Val_UInt64::cast((*tp)[ACK_SEQ]);
+      uint32_t rr   = Val_UInt32::cast((*tp)[ACK_RATE]);
+      double   p    = Val_Double::cast((*tp)[ACK_LOSS]);
       boost::posix_time::ptime ts = Val_Time::cast(  (*tp)[ACK_TIME]);
 
-      UNMAP(seq, true);
-      ACK("SUCCESS", seq);
+      unmap(dest, seq);
+      ACK("SUCCESS", dest, seq);
       feedback(delay(&ts), rr, p);
       return 1;
     }
@@ -133,21 +117,60 @@ TuplePtr RateCCT::pull(int port, b_cbv cb)
   TuplePtr tp;
 
   if (port == 0) {
-    if (tmap_.size() < trate_ && 
+    if (tuplesInFlight() < trate_ && 
         (data_on_ = (tp = input(0)->pull(boost::bind(&RateCCT::data_ready, this))) != NULL)) {
       return package(tp);
     }
     data_cbv_ = cb;
   }
-  else if (port == 2) {
-    tp = Tuple::mk();
-    tp->append(Val_Double::mk(trate_));		// Transmit rate
-    tp->append(Val_Double::mk(rrate_));		// Receiver rate
-    tp->append(Val_UInt32::mk(rtt_));		// Round trip time
-    tp->append(Val_UInt32::mk(rto_));		// Retransmit timeout
-    return tp;
-  } else assert (0);
   return TuplePtr();
+}
+
+void RateCCT::map(ValuePtr dest, SeqNum seq)
+{
+  timeCBHandle *tcb = delayCB((0.0 + rto_) / 1000.0, 
+                              boost::bind(&RateCCT::tuple_timeout, this, dest, seq));
+
+  ValueSeqTimeCBMap::iterator iter_map = index_.find(dest);
+  boost::shared_ptr<SeqTimeCBMap> time_map;
+  if (iter_map != index_.end()) {
+    time_map = iter_map->second;
+  }
+  else {
+    time_map.reset(new SeqTimeCBMap);
+    index_.insert(std::make_pair(dest, time_map));
+  }
+  time_map->insert(std::make_pair(seq, tcb));
+}
+
+void RateCCT::unmap(ValuePtr dest, SeqNum seq)
+{
+  ValueSeqTimeCBMap::iterator iter_map = index_.find(dest);
+  if (iter_map != index_.end()) { \
+    SeqTimeCBMap::iterator iter_time = iter_map->second->find(seq);
+    if (iter_time != iter_map->second->end()) {
+      timeCBRemove(iter_time->second);
+      iter_map->second->erase(iter_time);
+      if (iter_map->second->size() == 0) {
+        index_.erase(iter_map); 
+      }
+    }
+  }
+
+  if (tuplesInFlight() < trate_ && data_cbv_) {
+    data_cbv_();
+    data_cbv_ = 0;
+  }
+
+}
+
+int RateCCT::tuplesInFlight() const {
+  ValueSeqTimeCBMap::const_iterator iter_map = index_.begin();
+  int total = 0;
+  for (iter_map = index_.begin(); iter_map != index_.end(); iter_map++) {
+    total += iter_map->second->size();
+  }
+  return total;
 }
 
 void RateCCT::data_ready()
@@ -159,10 +182,10 @@ void RateCCT::data_ready()
   }
 }
 
-void RateCCT::tuple_timeout(SeqNum s) 
+void RateCCT::tuple_timeout(ValuePtr d, SeqNum s) 
 {
-  ACK("FAIL", s);
-  UNMAP(s, false);
+  ACK("FAIL", d, s);
+  unmap(d, s);
 }
 
 void RateCCT::feedback_timeout() 
@@ -186,34 +209,16 @@ REMOVABLE_INLINE uint32_t RateCCT::delay(boost::posix_time::ptime *ts)
 
 REMOVABLE_INLINE TuplePtr RateCCT::package(TuplePtr tp)
 {
-  string   cid = "";
-  SeqNum   seq = 0;
+  ValuePtr dest = (*tp)[dest_field_];
+  SeqNum   seq  = Val_UInt64::cast((*tp)[seq_field_]);
   boost::posix_time::ptime now;
   getTime(now);
-  for (uint i = 0; i < tp->size(); i++) {
-    try {
-      TuplePtr t = Val_Tuple::cast((*tp)[i]); 
-      if (Val_Str::cast((*t)[0]) == "SEQ") {
-        seq = Val_UInt64::cast((*t)[1]);
-        if (t->size() == 3) cid = Val_Str::cast((*t)[2]);
-      }
-    }
-    catch (Value::TypeError e) { } 
-  }
    
-  MAP(seq);
+  map(dest, seq);	// Set a timer for this tuple
 
-  TuplePtr otp   = Tuple::mk();
-  TuplePtr tinfo = Tuple::mk();
-  tinfo->append(Val_Str::mk("TINFO"));
-  tinfo->append(Val_UInt32::mk(rtt_));	// Round trip time
-  tinfo->append(Val_Time::mk(now));	// Time stamp
-  tinfo->freeze();
-  otp->append(Val_Tuple::mk(tinfo));
-  for (uint i = 0; i < tp->size(); i++)
-    otp->append((*tp)[i]);
-  otp->freeze();
-  return otp;
+  (*tp)[rtt_field_] = Val_UInt32::mk(rtt_);
+  (*tp)[ts_field_]  = Val_Time::mk(now); 
+  return tp;
 }
 
 /**

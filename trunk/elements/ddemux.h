@@ -45,7 +45,8 @@ public:
   int add_output(ValuePtr);
 
   /** Remove output port, by port # or key */
-  void remove_output(ValuePtr);
+  int remove_output(int);
+  int remove_output(ValuePtr);
 
 private:
   /** The callback for my input */
@@ -53,9 +54,6 @@ private:
 
   typedef std::map<ValuePtr, int> PortMap;
   PortMap _port_map;
-
-  /** Place holder for removed ports */
-  std::vector<int> _unusedPorts;
 
   /** My block flags, one per output port */
   std::vector<bool> _block_flags;

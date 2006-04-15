@@ -111,7 +111,7 @@ void testReachability(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt,
   eventLoopInitialize();
 
   PlumberPtr plumber(new Plumber(level));
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
 
   Plmb_ConfGen plumberConfigGenerator(ctxt, conf, false, false, false, filename);
 

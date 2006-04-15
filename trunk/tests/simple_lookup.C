@@ -75,7 +75,7 @@ struct LookupGenerator : public FunctorSource::Generator
 void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> lookup)
 {
   PlumberPtr plumber(new Plumber(level));
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
 
   // sending result
   ElementSpecPtr func    = conf->addElement(ElementPtr(new FunctorSource(string("Source"), lookup.get())));

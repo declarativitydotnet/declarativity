@@ -126,7 +126,7 @@ startOverLogDataflow(LoggerI::Level level,
   eventLoopInitialize();
   // create dataflow for translated OverLog
   PlumberPtr plumber(new Plumber(level));
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
   boost::shared_ptr< Plmb_ConfGen > 
     plumberConfigGenerator(new Plmb_ConfGen(ctxt.get(), conf, false, DEBUG, CC, overLogFile));
 

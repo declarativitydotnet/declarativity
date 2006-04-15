@@ -86,7 +86,7 @@ TuplePtr Defrag::pull(int port, b_cbv cb)
 void Defrag::defragment(TuplePtr t)
 {
   uint64_t seq_num = Val_UInt64::cast((*t)[SEQ_FIELD]);
-  int      offset  = Val_UInt64::cast((*t)[SEQ_FIELD]);
+  int      offset  = Val_UInt32::cast((*t)[OFFSET_FIELD]);
   uint32_t chunks  = Val_UInt32::cast(t->tag(NUM_CHUNKS));
 
   if (chunks == 1) {

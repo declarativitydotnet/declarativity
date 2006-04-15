@@ -20,11 +20,11 @@ libp2pythonnet_la_SOURCES = \
 	bw.cpp \
 	ccr.cpp \
 	cct.cpp \
+	rccr.cpp \
+	rcct.cpp \
 	defrag.cpp \
 	frag.cpp \
 	plsensor.cpp \
-	rccr.cpp \
-	rcct.cpp \
 	rdelivery.cpp \
 	skr.cpp \
 	snetsim.cpp \

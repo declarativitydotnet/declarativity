@@ -202,7 +202,7 @@ void runNode(int nodeid, int ltime, int nodes, double drop, bool emulab)
 {
   eventLoopInitialize();
   PlumberPtr plumber(new Plumber());
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
   string my_addr;
   ostringstream oss;
   oss << "localhost:" << (START_PORT + nodeid);

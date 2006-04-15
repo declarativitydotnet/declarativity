@@ -68,7 +68,7 @@ public:
 
   size_t size() const { return fields.size(); };
 
-  ValuePtr operator[] (ptrdiff_t i) { return fields[i]; };
+  ValuePtr& operator[] (ptrdiff_t i) { return fields[i]; };
   const ValuePtr operator[] (ptrdiff_t i) const { return fields[i]; };
 
   void xdr_marshal( XDR *xdrs );

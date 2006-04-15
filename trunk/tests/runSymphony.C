@@ -84,7 +84,7 @@ void testNetworked(LoggerI::Level level,
 
   // Create the data flow
   PlumberPtr plumber(new Plumber(level));
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
   Udp udp(myAddress+":Udp", port);
 
   // FIX ME createSymNode(myAddress, landmarkAddress, conf, &udp, networkSize, delay);

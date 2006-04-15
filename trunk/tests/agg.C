@@ -38,7 +38,7 @@ void agg()
     std::cout << "\n[Agg]\n";
 
     PlumberPtr plumber(new Plumber());
-    Plumber::DataflowPtr conf = plumber->new_dataflow("agg");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("agg"));
 
     ElementSpecPtr randomPushSourceSpec = conf->addElement(ElementPtr(new RandomPushSource("randSource", 3, 0, 5)));
     ElementSpecPtr sourcePrintS = conf->addElement(ElementPtr(new Print("AfterSource")));

@@ -14,6 +14,8 @@
 
 #include "plmb_confgen.h"
 #include "trace.h"
+#include "cct.h"
+#include "ccr.h"
 
 Plmb_ConfGen::Plmb_ConfGen(OL_Context* ctxt, 
 			 Plumber::DataflowPtr conf, 
@@ -50,9 +52,9 @@ void Plmb_ConfGen::configurePlumber(boost::shared_ptr< Udp > udp, string nodeID)
     _ccRx.reset();
   } else {
     _ccTx 
-      = _conf->addElement(ElementPtr(new CCTx("Transmit CC" + nodeID, 1, 2048, 0, 1, 1, 2)));
+      = _conf->addElement(ElementPtr(new CCT("Transmit CC" + nodeID, 1, 2048)));
     _ccRx 
-      = _conf->addElement(ElementPtr(new CCRx("CC Receive" + nodeID, 2048, 1, 2)));
+      = _conf->addElement(ElementPtr(new CCR("CC Receive" + nodeID, 2048, 1)));
   }
 
   // iterate through all the rules and process them

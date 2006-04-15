@@ -31,6 +31,9 @@ dataflow Foobar {
   let b     := TimedPushSource("Data Generator", .01);
   let tcp   := TCP(129.0.0.1, 80);
 
+  add ["foobar"]Main.ddemux;
+
+  a -> ["foobar"]Main.demux;
   a[0] -> Foobar.demux -> UdpCC(129.0.0.1, 10000) -> Queue("Q", 1);
   b[0] -> tcp -> Queue("Q", 1);
 }

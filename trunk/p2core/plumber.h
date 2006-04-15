@@ -35,6 +35,10 @@ class Plumber {
 public:
   class Dataflow {
     public:
+      Dataflow(string name="dataflow") : name_(name) {};
+
+      virtual ~Dataflow() {};
+
       /** The name of this dataflow */
       string name() const { return name_; }
 
@@ -44,7 +48,7 @@ public:
 
       /** Validate this dataflow. These checks are local to
           this dataflow (they don't require info from other dataflows). */
-      int validate() const;
+      virtual int validate();
 
       /** Finalize this dataflow */
       void finalize();
@@ -52,53 +56,12 @@ public:
       /** Add a new element to this dataflow by creating a
           new ElementSpecPtr that references the passed in element.
        */
-      ElementSpecPtr addElement(ElementPtr);
-
-      /** Resolve dataflow and element strings to an ElementSpecPtr
-       *  then add it to the list of elementSpecs owned by this dataflow
-       *  Return: resolved elementSpec on success or empty ElementSpecPtr 
-       *          on failure.
-       */
-      ElementSpecPtr addElement(string, string);
+      virtual ElementSpecPtr addElement(ElementPtr);
 
       /** Add hookup to this dataflow */
-      void hookUp(ElementSpecPtr src, int src_port,
-                  ElementSpecPtr dst, int dst_port );
-
-      /** Remove the hookup from this dataflow */
-      void remove(ElementSpec::HookupPtr);
-
-      /** Remove the element spec from this dataflow */
-      void remove(ElementSpecPtr);
-
-      /** Locate the element with a given string name 
-       * Return: ElementSpecPtr to element on success or
-       *         an empty ElementSpecPtr object.
-       */
-      ElementSpecPtr find(string);
-
-    private:
-      /** Are the configuration hookups refering to existing elements and
-          non-negative ports? */
-      int check_hookup_elements() const;
-    
-      /** Are the port numbers within the attached element's range? */
-      int check_hookup_range() const;
-    
-      /** Is personality semantics correctly applied to hookups?  This only
-          checks that the end-points of a hookup are consistent.  It does
-          not follow flow codes through elements. */
-      int check_push_and_pull() const;
-
-      /** Perform the actual hooking up of real elements from the specs. No
-          error checking at this point.  */
-      void set_connections();
-    
-      /** The plumber that this dataflow was installed under. */
-      Plumber* plumber_;
-
-      /** The root name of the dataflow */
-      string name_;
+      virtual void
+              hookUp(ElementSpecPtr src, int src_port,
+                     ElementSpecPtr dst, int dst_port );
 
       /**
        *  All elements are local to this dataflow regardless of operation.
@@ -110,18 +73,84 @@ public:
       /** The hookups */
       std::vector< ElementSpec::HookupPtr > hookups_;
 
-      friend class Plumber;
-      Dataflow(Plumber *p, string name="dataflow") : plumber_(p), name_(name) {};
+    protected:
+
+      /** Are the configuration hookups refering to existing elements and
+          non-negative ports? */
+      int check_hookup_elements();
+    
+      /** Are the port numbers within the attached element's range? */
+      int check_hookup_range();
+    
+      /** Is personality semantics correctly applied to hookups?  This only
+          checks that the end-points of a hookup are consistent.  It does
+          not follow flow codes through elements. */
+      int check_push_and_pull();
+
+      /** Run over all dataflow element specs and check for 
+       *  hookup completeness. Completely disconnect elements from
+       *  the 'installedDataflowName' Dataflow will cause an error. 
+       *  Disconnected elements in other dataflows will be automatically
+       *  garbage collected.
+       */
+      virtual int check_hookup_completeness();
+
+      /** Are any ports multiply connected?  Are all ports attached to
+        * something?  We require all ports to be attached to something
+        * (exactly one something), even pull outputs and push inputs. */
+      virtual int eval_hookups();
+
+      /** Perform the actual hooking up of real elements from the specs. No
+          error checking at this point.  */
+      virtual void set_connections();
+
+      /** The root name of the dataflow */
+      string name_;
   };
   typedef boost::shared_ptr< Dataflow > DataflowPtr;
+
+  class DataflowEdit : public Dataflow {
+    public:
+      /** Locate the element with a given string name 
+       * Return: ElementSpecPtr to element on success or
+       *         an empty ElementSpecPtr object.
+       */
+      ElementSpecPtr find(string);
+
+      ElementSpecPtr addElement(ElementPtr);
+
+      /** Add hookup to this dataflow */
+      void hookUp(ElementSpecPtr src, int src_port,
+                  ElementSpecPtr dst, int dst_port);
+
+    private:
+      friend class Plumber;
+      DataflowEdit(DataflowPtr dpt);
+
+      void set_connections();
+
+      /** Remove the element spec from this dataflow */
+      void remove(ElementSpecPtr);
+
+      int validate();
+
+      void remove_old_hookups(ElementSpec::HookupPtr);
+
+      std::vector<ElementSpecPtr>         new_elements_;
+      std::vector<ElementSpec::HookupPtr> new_hookups_;
+  };
+  typedef boost::shared_ptr< DataflowEdit > DataflowEditPtr;
 
   /** Create a new plumber given a configuration of constructed but not
       necessarily configured elements. */
   Plumber(LoggerI::Level loggingLevel = LoggerI::NONE);
 
   /** Return a reference to a new dataflow object */
-  DataflowPtr new_dataflow(string name) { 
-    return DataflowPtr(new Dataflow(this, name)); 
+  DataflowEditPtr new_dataflow_edit(string name) { 
+    DataflowPtr dpt = dataflow(name);
+    if (dpt == 0) 
+      return DataflowEditPtr();
+    return DataflowEditPtr(new DataflowEdit(dpt)); 
   }
 
   /** Install the dataflow in this plumber. 
@@ -154,28 +183,6 @@ public:
   LoggerI::Level loggingLevel;
 
 private:
-  /** Locate the element spec in dataflow 'd' with name 'n' */ 
-  ElementSpecPtr resolve(string d, string n);
-
-  /** Remove ElementSpecPtr from all referencing dataflows */
-  void remove(ElementSpecPtr);
-
-  /** Disconnect the port referred to by the hookup */
-  void disconnect(ElementSpec::HookupPtr);
-
-  /** Are any ports multiply connected?  Are all ports attached to
-      something?  We require all ports to be attached to something
-      (exactly one something), even pull outputs and push inputs. */
-  int eval_hookups(DataflowPtr d);
-
-  /** Run over all dataflow element specs and check for 
-   *  hookup completeness. Completely disconnect elements from
-   *  the 'installedDataflowName' Dataflow will cause an error. 
-   *  Disconnected elements in other dataflows will be automatically
-   *  garbage collected.
-   */
-  int check_hookup_completeness(string installedDataflowName="");
-
   /** The list of installed dataflows */
   boost::shared_ptr<std::map< string, DataflowPtr > > _dataflows;
 

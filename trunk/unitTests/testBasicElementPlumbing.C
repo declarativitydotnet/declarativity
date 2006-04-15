@@ -60,7 +60,7 @@ public:
   void testCheckHookupElements_NonExistentToElement()
   {
     PlumberPtr plumber(new Plumber());
-    Plumber::DataflowPtr conf = plumber->new_dataflow("testCheckHookupElements_NonExistentToElement");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("testCheckHookupElements_NonExistentToElement"));
     ElementSpecPtr sourceS =
       conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS(new ElementSpec(ElementPtr(new TimedPullSink("sink", 0))));
@@ -74,7 +74,7 @@ public:
   void testCheckHookupElements_NonExistentFromElement()
   {
     PlumberPtr plumber(new Plumber());
-    Plumber::DataflowPtr conf = plumber->new_dataflow("testCheckHookupElements_NonExistentFromElement");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("testCheckHookupElements_NonExistentFromElement"));
     ElementSpecPtr sourceS(new ElementSpec(ElementPtr(new TimedPushSource("source", 0))));
     ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     conf->hookUp(sourceS, 0, sinkS, 0);
@@ -88,7 +88,7 @@ public:
   void testCheckHookupElements_NegativeFromPort()
   {
     PlumberPtr plumber(new Plumber());
-    Plumber::DataflowPtr conf = plumber->new_dataflow("testCheckHookupElements_NegativeFromPort");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("testCheckHookupElements_NegativeFromPort"));
     ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     conf->hookUp(sourceS, -1, sinkS, 0);
@@ -102,7 +102,7 @@ public:
   void testCheckHookupElements_NegativeToPort()
   {
     PlumberPtr plumber(new Plumber());
-    Plumber::DataflowPtr conf = plumber->new_dataflow("testCheckHookupElements_NegativeToPort");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("testCheckHookupElements_NegativeToPort"));
     ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     conf->hookUp(sourceS, 0, sinkS, -1);
@@ -126,7 +126,7 @@ public:
   void testCheckHookupRange_IncorrectFromPort()
   {
     PlumberPtr plumber(new Plumber());
-    Plumber::DataflowPtr conf = plumber->new_dataflow("testCheckHookupRange_IncorrectFromPort");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("testCheckHookupRange_IncorrectFromPort"));
     ElementSpecPtr sourceS =
       conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS =
@@ -142,7 +142,7 @@ public:
   void testCheckHookupRange_IncorrectToPort()
   {
     PlumberPtr plumber(new Plumber());
-    Plumber::DataflowPtr conf = plumber->new_dataflow("testCheckHookupRange_IncorrectToPort");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("testCheckHookupRange_IncorrectToPort"));
     ElementSpecPtr sourceS =
       conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS =
@@ -158,7 +158,7 @@ public:
   void testCheckHookupRange_IncorrectPorts()
   {
     PlumberPtr plumber(new Plumber());
-    Plumber::DataflowPtr conf = plumber->new_dataflow("testCheckHookupRange_IncorrectPorts");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("testCheckHookupRange_IncorrectPorts"));
     ElementSpecPtr sourceS =
       conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS =
@@ -174,7 +174,7 @@ public:
   void testCheckHookupRange_Portless()
   {
     PlumberPtr plumber(new Plumber());
-    Plumber::DataflowPtr conf = plumber->new_dataflow("testCheckHookupRange_Portless");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("testCheckHookupRange_Portless"));
     ElementSpecPtr sourceS =
       conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS =
@@ -220,7 +220,7 @@ public:
   void testCheckPushPull_PullToPush()
   {
     PlumberPtr plumber(new Plumber());
-    Plumber::DataflowPtr conf = plumber->new_dataflow("testCheckPushPull_PullToPush");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("testCheckPushPull_PullToPush"));
     ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     ElementSpecPtr slot1S = conf->addElement(ElementPtr(new Slot("slot1")));
@@ -238,7 +238,7 @@ public:
   void testCheckPushPull_PullToPushHop()
   {
     PlumberPtr plumber(new Plumber());
-    Plumber::DataflowPtr conf = plumber->new_dataflow("testCheckPushPull_PullToPushHop");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("testCheckPushPull_PullToPushHop"));
     ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     ElementSpecPtr slot1S = conf->addElement(ElementPtr(new Slot("slot1")));
@@ -259,7 +259,7 @@ public:
   void testCheckPushPull_PullToPushMultiHop()
   {
     PlumberPtr plumber(new Plumber());
-    Plumber::DataflowPtr conf = plumber->new_dataflow("testCheckPushPull_PullToPushMultiHop");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("testCheckPushPull_PullToPushMultiHop"));
     ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     ElementSpecPtr slot1S = conf->addElement(ElementPtr(new Slot("slot1")));
@@ -282,7 +282,7 @@ public:
   void testCheckPushPull_PullToPullMultiHop()
   {
     PlumberPtr plumber(new Plumber());
-    Plumber::DataflowPtr conf = plumber->new_dataflow("testCheckPushPull_PullToPullMultihop");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("testCheckPushPull_PullToPullMultihop"));
     ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS = conf->addElement(ElementPtr(new TimedPullSink("sink", 0)));
     ElementSpecPtr slot1S = conf->addElement(ElementPtr(new Slot("slot")));
@@ -321,7 +321,7 @@ public:
   void testDuplicates_UnusedPort()
   {
     PlumberPtr plumber(new Plumber());
-    Plumber::DataflowPtr conf = plumber->new_dataflow("testDuplicates_UnusedPort");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("testDuplicates_UnusedPort"));
     ElementSpecPtr sourceS =
       conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS =
@@ -334,7 +334,7 @@ public:
     conf->hookUp(slot1S, 0, print2S, 0);
     conf->hookUp(print2S, 0, sinkS, 0);
   
-    BOOST_CHECK_MESSAGE(plumber->install(conf) == 0,
+    BOOST_CHECK_MESSAGE(plumber->install(conf) < 0,
                         "Incorrectly allowed unused port of an element");
   }
 
@@ -343,7 +343,7 @@ public:
   void testDuplicates_ReusedPort()
   {
     PlumberPtr plumber(new Plumber());
-    Plumber::DataflowPtr conf = plumber->new_dataflow("testDuplicates_ReusedPort");
+    Plumber::DataflowPtr conf(new Plumber::Dataflow("testDuplicates_ReusedPort"));
     ElementSpecPtr sourceS =
       conf->addElement(ElementPtr(new TimedPushSource("source", 0)));
     ElementSpecPtr sinkS =

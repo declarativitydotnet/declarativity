@@ -230,7 +230,7 @@ void testMakeReach(LoggerI::Level level)
   std::cout << "\nCHECK MAKE REACH FLOWCHUNK\n";
 
   PlumberPtr plumber(new Plumber(level));
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
 
   // Create one data flow per "node"
   const int nodes = 10;

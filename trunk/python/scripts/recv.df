@@ -1,16 +1,39 @@
-dataflow Main {
-  let udp = Udp2("udp", 10001);
+macro UdpRecv(name, port) {
+  let udp = Udp2("udp", port);
   let ccr = CCR("ccr", 2048);
-  let vec = {Val_IP_ADDR("127.0.0.1"), Val_IP_ADDR("127.0.0.2")};
-  
-  udp -> Bandwidth("bandwidth") ->
-  UnmarshalField("unmarshal", 1) ->
+
+  output ccr;
+
+  udp -> UnmarshalField("unmarshal", 1) ->
   PelTransform("unRoute", "$1 unboxPop") ->
-  ccr -> Discard("discard");
+  ccr;
   
-  ccr[1] -> PelTransform("response_address", "$0 pop swallow pop") ->
-  Print("print_ack") -> MarshalField("marshal", 1) -> 
-  StrToSockaddr("addr_convert", 0) -> 
-  SimpleNetSim("net_sim", 10, 100) -> udp;
+  ccr[1] -> PelTransform("response_address", "$0 swallow swap pop pop") ->
+  MarshalField("marshal", 1) -> StrToSockaddr("addr_convert", 0) -> udp;
+}
+
+macro RecvRateCC(name, port) {
+  let udp = Udp2("udp", port);
+  let rccr = RateCCR("rccr");
+
+  output rccr;
+
+  udp -> UnmarshalField("unmarshal", 1) ->
+  PelTransform("unRoute", "$1 unboxPop") ->
+  rccr;
+  
+  rccr[1] -> Print("ack") -> PelTransform("response_address", "$0 swallow swap pop pop") ->
+  MarshalField("marshal", 1) -> StrToSockaddr("addr_convert", 0) -> udp;
+}
+
+dataflow Main {
+  let vec = {Val_Str("localhost:10001"), Val_Str("localhost:10002")};
+  let demux = Demux("ip_demux", vec, 1);
+
+  RecvRateCC("receive", 10000) -> demux;
+ 
+  demux[0] -> Print("receive_10001") -> Discard;
+  demux[1] -> Print("receive_10002") -> Discard;
+  demux[2] -> Print("receive_unknown_port") -> Discard;
 }
 .

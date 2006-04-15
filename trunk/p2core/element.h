@@ -155,15 +155,6 @@ public:
   int connect_input(int i, Element *f, int port);
   int connect_output(int o, Element *f, int port);
 
-  /** Dynamic port connection 
-   *  Return: port number allocated to this connection.
-   *  Throws: Element::Exception if element does not support this functionality
-   */
-  virtual int connect_input(Element *f, int port) 
-    { throw Exception("Dynamic ports not supported"); return -1; }
-  virtual int connect_output(Element *f, int port) 
-    { throw Exception("Dynamic ports not supported"); return -1; }
-
   // Called by the plumber before running 
   virtual int initialize();
   
@@ -267,6 +258,38 @@ public:
   const PortPtr input(int) const;
   const PortPtr output(int) const;
 
+  /** Get the port number based on the port key */
+  virtual int input(ValuePtr key) 
+    { throw Exception("Port keys not supported on input."); return -1; }
+  virtual int output(ValuePtr key) 
+    { throw Exception("Port keys not supported on output."); return -1; }
+
+  /** Dynamic allocation of ports */
+  virtual int add_input()
+    { throw Exception("Dynamic input ports not supported."); return -1; }
+  virtual int add_output()
+    { throw Exception("Dynamic output ports not supported."); return -1; }
+
+  /** Dynamic allocation of ports based on port keys */
+  virtual int add_input(ValuePtr key)
+    { throw Exception("Port keys not supported on input."); return -1; }
+  virtual int add_output(ValuePtr key)
+    { throw Exception("Port keys not supported on input."); return -1; }
+
+  /** Remove the port indicated by port number */
+  virtual int remove_input(int p)
+    { throw Exception("Dynamic input ports not supported."); return -1; }
+  virtual int remove_output(int p)
+    { throw Exception("Dynamic output ports not supported."); return -1; }
+
+  /** Remove the port indicated by port keys 
+   *  Return: The port number that was removed
+   */
+  virtual int remove_input(ValuePtr key)
+    { throw Exception("Port keys not supported on input."); return -1; }
+  virtual int remove_output(ValuePtr key)
+    { throw Exception("Port keys not supported on input."); return -1; }
+
   /** My input ports */
   PortVec _inputs;
 
@@ -295,15 +318,11 @@ public:
   LoggerI*       _logger;
 
 protected:
+  int addInputPort();
+  int addOutputPort();
+  int deleteInputPort(int);
+  int deleteOutputPort(int);
 
-  /** Dynamic allocation of ports */
-  int add_input();
-  int add_output();
-
-  /** Remove the port indicated by port number */
-  void remove_input(int);
-  void remove_output(int);
-  
   /** My ID in text */
   string _IDstr;
   

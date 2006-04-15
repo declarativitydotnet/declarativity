@@ -36,7 +36,7 @@ void testStaticDemux()
   std::cout << "\nCHECK STATIC DEMUX\n";
 
   PlumberPtr plumber(new Plumber());
-  Plumber::DataflowPtr conf = plumber->new_dataflow("test");
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
 
   // The source dataflow
   ElementSpecPtr sourceS = conf->addElement(ElementPtr(new TimedPushSource("source", 1)));

@@ -119,7 +119,7 @@ Element::ports_frozen() const
   return false;
 }
 
-int Element::add_input() 
+int Element::addInputPort() 
 {
   for (int port=0; port < ninputs(); port++) {
     if (_inputs[port] == 0) {
@@ -132,7 +132,7 @@ int Element::add_input()
   return _ninputs - 1;
 }
 
-int Element::add_output()
+int Element::addOutputPort()
 {
   for (int port=0; port < noutputs(); port++) {
     if (_outputs[port] == 0) {
@@ -145,16 +145,22 @@ int Element::add_output()
   return _noutputs - 1;
 }
 
-void Element::remove_input(int port)
+int Element::deleteInputPort(int port)
 {
-  if (port >= 0 && port < ninputs())
+  if (port >= 0 && port < ninputs()) {
     _inputs[port].reset();
+    return port;
+  }
+  return -1;
 }
 
-void Element::remove_output(int port)
+int Element::deleteOutputPort(int port)
 {
-  if (port >= 0 && port < noutputs())
+  if (port >= 0 && port < noutputs()) {
     _outputs[port].reset();
+    return port;
+  }
+  return -1;
 }
 
 int Element::connect_input(int i, Element *f, int port)

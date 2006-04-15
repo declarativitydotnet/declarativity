@@ -17,8 +17,7 @@
 ElementSpec::ElementSpec(ElementPtr e)
   : _element(e),
     _inputs(new std::vector<PortPtr>()),
-    _outputs(new std::vector<PortPtr>()),
-    _dataflowRefs(new std::set<string>())
+    _outputs(new std::vector<PortPtr>())
 {
   initializePorts();
 }
@@ -177,6 +176,66 @@ ElementSpec::PortPtr ElementSpec::output(int pno)
 {
   return (*_outputs)[pno];
 }
+
+int ElementSpec::add_input(ValuePtr portKey)
+{
+  Element::Processing proc = (Element::Processing) *_element->processing();
+  unsigned port = element()->add_input(portKey);
+  if (port >= 0) {
+    while (_inputs->size() < port) {
+      _inputs->push_back(PortPtr(new Port(proc)));
+    }
+    return port;
+  }
+  return -1;
+}
+
+int ElementSpec::add_output(ValuePtr portKey)
+{
+  if (*(_element->processing()+1) != '/') {
+    return -1;
+  }
+  Element::Processing proc = (Element::Processing) *(_element->processing()+2);
+  unsigned port = element()->add_output(portKey);
+  if (port >= 0) {
+    while (_outputs->size() < port) {
+      _outputs->push_back(PortPtr(new Port(proc)));
+    }
+    return port;
+  }
+  return -1;
+}
+
+void ElementSpec::remove_input(int port)
+{
+  if (_element->remove_input(port) == port) {
+    (*_inputs)[port]->reset();
+  }
+}
+
+void ElementSpec::remove_output(int port)
+{
+  if (_element->remove_output(port) == port) {
+    (*_outputs)[port]->reset();
+  }
+}
+
+void ElementSpec::remove_input(ValuePtr portKey)
+{
+  int port = _element->remove_input(portKey);
+  if (port >= 0) {
+    (*_inputs)[port]->reset();
+  }
+}
+
+void ElementSpec::remove_output(ValuePtr portKey)
+{
+  int port = _element->remove_output(portKey);
+  if (port >= 0) {
+    (*_outputs)[port]->reset();
+  }
+}
+
 
 ElementSpec::Port::Port(Element::Processing personality)
   : _processing(personality)
@@ -374,5 +433,3 @@ int ElementSpec::Port::counterpart(ElementSpecPtr element, HookupPtr hookup)
     return 1;
   }
 }
-
-
