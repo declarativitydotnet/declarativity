@@ -42,6 +42,7 @@ public:
 
   // Casting: more for completeness than anything else...
   static void cast(ValuePtr v);
+  const ValuePtr toMe(ValuePtr other) const { cast(other); return mk(); }
   
   static const opr::Oper* oper_;
 private:

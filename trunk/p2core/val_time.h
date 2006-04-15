@@ -62,6 +62,7 @@ public:
 
   // Casting
   static boost::posix_time::ptime cast(ValuePtr v);
+  const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
 
   static const opr::Oper* oper_;
 private:
@@ -106,6 +107,8 @@ public:
 
   // Casting
   static boost::posix_time::time_duration cast(ValuePtr v);
+  const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
+
 
   static const opr::Oper* oper_;
 private:

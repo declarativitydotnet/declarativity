@@ -16,6 +16,8 @@
 lib_LTLIBRARIES = libp2core.la
 
 libp2core_la_SOURCES = \
+	val_str.C \
+	value.C \
 	fdbuf.C \
 	xdrbuf.C \
 	ID.C \
@@ -25,8 +27,6 @@ libp2core_la_SOURCES = \
 	elementSpec.C \
 	pel_lexer.C \
 	pel_vm.C \
-	value.C \
-	val_str.C \
 	val_null.C \
 	val_int32.C \
 	val_uint32.C \

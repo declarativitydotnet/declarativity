@@ -203,6 +203,34 @@ int Val_Time::compareTo(ValuePtr other) const
   }
 }
 
+
+
+
+
+
+////////////////////////////////////////////////////////////
+// Time Duration
+// XXX Move to its own file
+////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class OperTime_Duration : public opr::OperCompare<Val_Time_Duration> {
    virtual ValuePtr _plus (const ValuePtr& v1, const ValuePtr& v2) const {
      boost::posix_time::time_duration t1 = Val_Time_Duration::cast(v1);

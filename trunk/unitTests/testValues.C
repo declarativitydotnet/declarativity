@@ -16,6 +16,12 @@
 
 #include "value.h"
 #include "val_ip_addr.h"
+#include "oper.h"
+#include "val_int32.h"
+#include "val_str.h"
+
+using namespace opr;
+
 
 class testValues
 {
@@ -851,7 +857,41 @@ testBadCasts()
   TEST_BADCAST(Double, 0, Tuple);
 }
 #undef TEST_BADCAST
+
+
+void
+testImplicitConversions()
+{
+  {
+    ValuePtr i1 = Val_Int32::mk(5);
+    ValuePtr i2 = Val_Str::mk("10");
+    ValuePtr r1 = i1 + i2;
+    BOOST_CHECK_MESSAGE(r1->typeCode() == Value::INT32,
+                        "int32 "
+                        << i1->toString()
+                        << " + str "
+                        << i2->toString()
+                        << " = not int32 "
+                        << r1->toString());
+  }
+
+  {
+    ValuePtr i1 = Val_Int32::mk(5);
+    ValuePtr i2 = Val_Str::mk("10");
+    ValuePtr r1 = i2 + i1;
+    BOOST_CHECK_MESSAGE(r1->typeCode() == Value::STR,
+                        "str "
+                        << i2->toString()
+                        << " + int32 "
+                        << i1->toString()
+                        << " = not str "
+                        << r1->toString());
+  }
+}
+
 };
+
+
 
 
 
@@ -875,6 +915,8 @@ public:
                               instance));
     */
     add(BOOST_CLASS_TEST_CASE(&testValues::testBadCasts,
+                              instance));
+    add(BOOST_CLASS_TEST_CASE(&testValues::testImplicitConversions,
                               instance));
   }
 };

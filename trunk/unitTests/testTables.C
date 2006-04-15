@@ -550,7 +550,7 @@ Tracker::listener(TuplePtr t)
     }
   } else {
     // I should have an update in there
-    BOOST_ERROR("Semantic error in test line "
+    BOOST_ERROR("Error in test line "
                 << _test._line
                 << " with suffix "
                 << "\""
@@ -598,7 +598,7 @@ Tracker::test()
         break;
       default:
         // I should not receive anything else
-        BOOST_ERROR("Semantic error in test line "
+        BOOST_ERROR("Error in test line "
                     << _test._line
                     << " with suffix "
                     << "\""

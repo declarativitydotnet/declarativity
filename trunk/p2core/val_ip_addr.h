@@ -55,6 +55,7 @@ class Val_IP_ADDR : public Value {
 
   // Casting
   static string cast(ValuePtr v);
+  const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
 
 #ifndef SWIG
   FdbufPtr getAddress();

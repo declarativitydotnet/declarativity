@@ -50,6 +50,7 @@ public:
 
   // Casting
   static IDPtr cast(ValuePtr v);
+  const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
 
   static const opr::Oper* oper_;
 private:

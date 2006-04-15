@@ -45,6 +45,7 @@ public:
 
   // Casting
   static int32_t cast(ValuePtr v);
+  const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
 
   // The ZERO
   static ValuePtr ZERO;

@@ -131,6 +131,10 @@ public:
   virtual const TypeCode typeCode() const =0;
   virtual const char *typeName() const =0;
 
+  // Conversion to my type.  Should run the local static in the
+  // implementations
+  virtual const ValuePtr toMe(ValuePtr other) const = 0;
+
   // Conversions to strings: mandatory. 
   virtual std::string toString() const =0;
   string toTypeString() {
@@ -158,7 +162,7 @@ public:
   static ValuePtr xdr_unmarshal( XDR *x );
 
 protected:
-  virtual void xdr_marshal_subtype( XDR *x )=0;
+  virtual void xdr_marshal_subtype( XDR *x ) = 0;
 };
 
  

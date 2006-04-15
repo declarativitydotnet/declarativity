@@ -27,7 +27,6 @@ libp2net_la_SOURCES = \
 	rcct.C \
 	rccr.C \
 	rdelivery.C \
-	odelivery.C \
 	bw.C \
 	frag.C \
 	defrag.C

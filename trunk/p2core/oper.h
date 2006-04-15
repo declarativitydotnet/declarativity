@@ -103,6 +103,18 @@ namespace opr {
     };
   
     /**
+     * Thrown when a division by zero occurs. Contains the value that
+     * was (or was cast to) 0.
+     */ 
+    class DivisionByZeroException {
+    public:
+      DivisionByZeroException(ValuePtr v) : value_(v) {};
+      
+    private:
+      ValuePtr value_;
+    };
+  
+    /**
      * OPERATOR FUNCTIONS
      * An operator function is where the functionality of the operator
      * exists. The default operator functions listed below will throw
@@ -332,7 +344,12 @@ namespace opr {
       return T::mk(T::cast(v1) * T::cast(v2));
     };
     virtual ValuePtr _divide (const ValuePtr& v1, const ValuePtr& v2) const {
-      return T::mk(T::cast(v1) / T::cast(v2));
+      if (T::cast(v2) == T::cast(T::mk(0))) {
+        // Dividing by zero
+        throw Oper::DivisionByZeroException(v2);
+      } else {
+        return T::mk(T::cast(v1) / T::cast(v2));
+      }
     };
     virtual ValuePtr _dec (const ValuePtr& v1) const {
       return T::mk((T::cast(v1)) - 1);

@@ -41,14 +41,14 @@ public:
   virtual ~Val_Opaque() {};
 
   // Factory
-  static ValuePtr mk(FdbufPtr fb) {
-    return ValuePtr(new Val_Opaque(fb)); };
+  static ValuePtr mk(FdbufPtr fb) { return ValuePtr(new Val_Opaque(fb)); };
 
   // Strict comparison
   int compareTo(ValuePtr) const;
 
   // Casting
   static FdbufPtr cast(ValuePtr v);
+  const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
   
   static const opr::Oper* oper_;
 private:

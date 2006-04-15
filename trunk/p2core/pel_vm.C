@@ -494,13 +494,13 @@ DEF_OP(NOT) {
   stackPush(Val_Int32::mk(!v));
 }
 DEF_OP(AND) {
-  u_int64_t v1 = pop_unsigned();
   u_int64_t v2 = pop_unsigned();
+  u_int64_t v1 = pop_unsigned();
   stackPush(Val_Int32::mk(v1 && v2));
 }
 DEF_OP(OR) {
-  u_int64_t v1 = pop_unsigned();
   u_int64_t v2 = pop_unsigned();
+  u_int64_t v1 = pop_unsigned();
   stackPush(Val_Int32::mk(v1 || v2));
 }
 DEF_OP(RAND) {
@@ -633,8 +633,11 @@ DEF_OP(NEG) {
   }
 }
 DEF_OP(PLUS) {
+  ValuePtr v2 = pop();
+  ValuePtr v1 = pop();
   try {
-    stackPush((pop()+pop()));
+    ValuePtr r = v1 + v2;
+    stackPush(r);
   } catch (opr::Oper::OperException e) {
     error = PE_OPER_UNSUP;
   }
@@ -644,7 +647,7 @@ DEF_OP(MINUS) {
   ValuePtr v1 = pop();
   ValuePtr v2 = pop();
   try {
-    stackPush((v2-v1));
+    stackPush(v2 - v1);
   } catch (opr::Oper::OperException e) {
     error = PE_OPER_UNSUP;
   }
@@ -666,8 +669,10 @@ DEF_OP(PLUSPLUS) {
   }
 }
 DEF_OP(MUL) {
+  ValuePtr v2 = pop();
+  ValuePtr v1 = pop();
   try {
-    stackPush((pop()*pop()));
+    stackPush(v1 * v2);
   } catch (opr::Oper::OperException e) {
     error = PE_OPER_UNSUP;
   }
@@ -681,6 +686,8 @@ DEF_OP(DIV) {
       stackPush((v2 / v1));
     } catch (opr::Oper::OperException e) {
       error = PE_OPER_UNSUP;
+    } catch (opr::Oper::DivisionByZeroException e) {
+      error = PE_DIVIDE_BY_ZERO;
     }
   } else if (error == PE_SUCCESS) {
     error = PE_DIVIDE_BY_ZERO;
@@ -820,7 +827,7 @@ DEF_OP(TIME_DURATION_MINUS) {
    // Be careful of undefined evaluation order in C++!
    boost::posix_time::time_duration v1 = pop_time_duration();
    boost::posix_time::time_duration v2 = pop_time_duration();
-   stackPush(Val_Time_Duration::mk(v2-v1));
+   stackPush(Val_Time_Duration::mk(v2 - v1));
  }
 
 //
@@ -1002,7 +1009,7 @@ DEF_OP(INT_MINUS) {
   // Be careful of undefined evaluation order in C++!
   int64_t v1 = pop_signed();
   int64_t v2 = pop_signed();
-  stackPush(Val_Int64::mk(v2-v1));
+  stackPush(Val_Int64::mk(v2 - v1));
 }
 DEF_OP(INT_MUL) {
   stackPush(Val_Int64::mk(pop_signed()*pop_signed()));
@@ -1050,7 +1057,7 @@ DEF_OP(DBL_MINUS) {
   // Be careful of undefined evaluation order in C++!
   double v1 = pop_double();
   double v2 = pop_double();
-  stackPush(Val_Double::mk(v2-v1));
+  stackPush(Val_Double::mk(v2 - v1));
 }
 DEF_OP(DBL_MUL) {
   stackPush(Val_Double::mk(pop_double()*pop_double()));

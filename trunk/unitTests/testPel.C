@@ -168,20 +168,17 @@ private:
     }
 
     // Check matching return conditions
-    {
-      std::ostringstream message;
-      message << testID
-              << ". Return condition mismatch on '"
-              << t->src
-              << "'; '"
-              << Pel_VM::strerror(e)
-              << "'("
-              << e
-              << ") instead of expected '"
-              << Pel_VM::strerror(t->err);
-      BOOST_CHECK_MESSAGE(e == t->err,
-                          message.str().c_str());
-    }
+    BOOST_CHECK_MESSAGE(e == t->err,
+                        testID
+                        << ". Return condition mismatch on '"
+                        << t->src
+                        << "'; '"
+                        << Pel_VM::strerror(e)
+                        << "'("
+                        << e
+                        << ") instead of expected '"
+                        << Pel_VM::strerror(t->err));
+    
     if (t->err != Pel_VM::PE_SUCCESS || e != Pel_VM::PE_SUCCESS) {
       return;
     }
@@ -195,8 +192,10 @@ private:
               << ". Mismatched result type for '"
               << t->src
               << "'; '"
+              << top->typeName()
+              << "("
               << top->typeCode()
-              << "' instead of expected '"
+              << ")' instead of expected '"
               << t->t
               << "'";
       BOOST_CHECK_MESSAGE(top->typeCode() == t->t,
@@ -375,7 +374,7 @@ testPel::vtests[] = {
   TST(INT64, SUCCESS, "1",	"2 1 >>" ),
   TST(INT64, SUCCESS, "4",	"16 2 >>" ),
   TST(UINT64, SUCCESS, "0x7fffffffffffffff","0xffffffffffffffffU 1 >>" ),
-  TST(UINT64, SUCCESS, "0x3fffffffffffffffU","-1 2U >>" ),
+  TST(INT64, SUCCESS, "0x3fffffffffffffffU","-1 2U >>" ),
 
   // >> (arithmetic shift right)
   TST(INT64, STACK_UNDERFLOW, "",	">>" ),
@@ -683,7 +682,7 @@ testPel::vtests[] = {
   TST(INT64, STACK_UNDERFLOW, "", "neg" ),
   TST(INT64, OPER_UNSUP, "0", "\"A\" neg" ), // turns A into 0
   TST(DOUBLE, SUCCESS, "-1.0", "1.0 neg" ),
-  TST(INT64, SUCCESS, "0",	"null neg" ),
+  TST(INT64, OPER_UNSUP, "0",	"null neg" ),
   TST(INT64, SUCCESS, "-1",	"1 neg" ),
   TST(INT64, SUCCESS, "1",	"-1 neg" ),
   TST(INT64, SUCCESS, "-2000","2000 neg" ),
@@ -703,10 +702,10 @@ testPel::vtests[] = {
   // + (integer addition)
   TST(INT64, STACK_UNDERFLOW, "", "+" ),
   TST(INT64, STACK_UNDERFLOW, "", "1 +" ),
-  TST(STR, SUCCESS, "1Hello", "1 \"Hello\" +" ),
+  TST(INT64, SUCCESS, "1Hello", "1 \"Hello\" +" ),
   TST(STR, SUCCESS, "Hello1", "\"Hello\"  1 +" ),
   TST(DOUBLE, SUCCESS, "2", "1.0 1 +" ),
-  TST(DOUBLE, SUCCESS, "2", "1 1.0 +" ),
+  TST(INT64, SUCCESS, "2", "1 1.0 +" ),
   TST(INT64, SUCCESS, "3", "1 2 +" ),
   TST(INT64, SUCCESS, "0", "1 -1 +" ),
   TST(INT64, SUCCESS, "0x100000000","0xffffffff 1 +" ),
@@ -724,10 +723,10 @@ testPel::vtests[] = {
   // - (integer subtraction)
   TST(INT64, STACK_UNDERFLOW, "",	"-" ),
   TST(INT64, STACK_UNDERFLOW, "",	"1 -" ),
-  TST(INT64, OPER_UNSUP, "1",	"1 \"Hello\" -" ),
+  TST(INT64, SUCCESS, "1",	"1 \"Hello\" -" ),
   TST(INT64, OPER_UNSUP, "-1",	"\"Hello\"  1 -" ),
   TST(DOUBLE, SUCCESS, "0",	"1.0 1 -" ),
-  TST(DOUBLE, SUCCESS, "0",	"1 1.0 -" ),
+  TST(INT64, SUCCESS, "0",	"1 1.0 -" ),
   TST(INT64, SUCCESS, "-1",	"1 2 -" ),
   TST(INT64, SUCCESS, "2",	"1 -1 -" ),
   TST(INT64, SUCCESS, "-2",	"-1 1 -" ),
@@ -745,10 +744,10 @@ testPel::vtests[] = {
   // * (integer multiplication)
   TST(INT64, STACK_UNDERFLOW, "",	"*" ),
   TST(INT64, STACK_UNDERFLOW, "",	"1 *" ),
-  TST(INT64, OPER_UNSUP, "0",	"1 \"Hello\" *" ),
+  TST(INT64, SUCCESS, "0",	"1 \"Hello\" *" ),
   TST(INT64, OPER_UNSUP, "0",	"\"Hello\"  1 *" ),
   TST(DOUBLE, SUCCESS, "1",	"1.0 1 *" ),
-  TST(DOUBLE, SUCCESS, "1",	"1 1.0 *" ),
+  TST(INT64, SUCCESS, "1",	"1 1.0 *" ),
   TST(INT64, SUCCESS, "2",	"1 2 *" ),
   TST(INT64, SUCCESS, "1",	"-1 -1 *" ),
   TST(INT64, SUCCESS, "-2",	"0xffffffffffffffffU ->i64 2 *" ),
@@ -767,10 +766,10 @@ testPel::vtests[] = {
   // / (integer division)
   TST(INT64, STACK_UNDERFLOW, "",	"/" ),
   TST(INT64, STACK_UNDERFLOW, "",	"1 /" ),
-  TST(INT64, OPER_UNSUP, "",	"1 \"Hello\" /" ),
+  TST(INT64, DIVIDE_BY_ZERO, "",	"1 \"Hello\" /" ),
   TST(INT64, OPER_UNSUP, "0",	"\"Hello\"  1 /" ),
   TST(DOUBLE, SUCCESS, "1",	"1.0 1 /" ),
-  TST(DOUBLE, SUCCESS, "1",	"1 1.0 /" ),
+  TST(INT64, SUCCESS, "1",	"1 1.0 /" ),
   TST(INT64, DIVIDE_BY_ZERO, "",	"2 0 /" ),
   TST(INT64, SUCCESS, "4",	"8 2 /" ),
   TST(INT64, SUCCESS, "5",	"11 2 /" ),
@@ -1009,55 +1008,65 @@ testPel::vtests[] = {
   TST(INT32, SUCCESS, "1",	"1.2 1.2 <=f" ),
   TST(INT32, SUCCESS, "0",	"-1.34 -2.45 <=f" ),
   TST(INT32, SUCCESS, "1",	"-2.78 -1.003  <=f" ),
-  // neg (floating-point unary negation)
+  // neg (unary negation, of the operand's type)
   TST(DOUBLE, STACK_UNDERFLOW, "",	"neg" ),
   TST(DOUBLE, SUCCESS, "-1.0",	"1.0 neg" ),
   TST(DOUBLE, SUCCESS, "1.0",	"-1.0 neg" ),
   TST(DOUBLE, SUCCESS, "-2000.5","2000.5 neg" ),
   TST(DOUBLE, SUCCESS, "2000.5", "-2000.5 neg" ),
   TST(DOUBLE, SUCCESS, "0",	"0.0 neg" ),
+  TST(INT64, SUCCESS, "-1",	"1 neg" ),
+  TST(INT64, SUCCESS, "1",	"-1 neg" ),
+  TST(INT64, SUCCESS, "-2000","2000 neg" ),
+  TST(INT64, SUCCESS, "2000", "-2000 neg" ),
+  TST(INT64, SUCCESS, "0",	"0 neg" ),
+  TST(INT32, SUCCESS, "-1",	"1 ->i32 neg" ),
+  TST(INT32, SUCCESS, "1",	"-1 ->i32 neg" ),
+  TST(INT32, SUCCESS, "-2000","2000 ->i32 neg" ),
+  TST(INT32, SUCCESS, "2000", "-2000 ->i32 neg" ),
+  TST(INT32, SUCCESS, "0",	"0 ->i32 neg" ),
   // + (floating-point addition)
-  TST(STR, SUCCESS, "0x1p+0Hello",	"1.0 \"Hello\" +" ),
+  TST(DOUBLE, SUCCESS, "1.0",	"1.0 \"Hello\" +" ),
   TST(STR, SUCCESS, "Hello0x1p+0",	"\"Hello\"  1.0 +" ),
   TST(DOUBLE, SUCCESS, "2.0",	"1.0 1 +" ),
-  TST(DOUBLE, SUCCESS, "2.0",	"1 1.0 +" ),
+  TST(INT64, SUCCESS, "2",	"1 1.0 +" ),
   TST(DOUBLE, SUCCESS, "3.0",	"1.0 2.0 +" ),
   TST(DOUBLE, SUCCESS, "0",	"1.5 -1.5 +" ),
   TST(DOUBLE, SUCCESS, "10000.00005",	"10000.0 0.00005 +" ),
-  // - (floating-point subtraction)
-  TST(DOUBLE, OPER_UNSUP, "1.0",	"1 \"Hello\" -" ),
+  // - (polymorphic subtraction)
+  TST(INT64, SUCCESS, "1",	"1 \"Hello\" -" ),
   TST(DOUBLE, OPER_UNSUP, "-1.0",	"\"Hello\"  1 -" ),
   TST(DOUBLE, SUCCESS, "0.0",	"1.0 1 -" ),
-  TST(DOUBLE, SUCCESS, "0.0",	"1 1.0 -" ),
+  TST(INT64, SUCCESS, "0",	"1 1.0 -" ),
   TST(DOUBLE, SUCCESS, "-1.0",	"1.0 2.0 -" ),
-  TST(DOUBLE, SUCCESS, "3",	"1.5 -1.5 -" ),
+  TST(DOUBLE, SUCCESS, "3.0",	"1.5 -1.5 -" ),
   TST(DOUBLE, SUCCESS, "9999.99995",	"10000.0 0.00005 -" ),
-  // * (floating-point multiplication)
-  TST(DOUBLE, OPER_UNSUP, "0.0",	"1 \"Hello\" *" ),
-  TST(DOUBLE, OPER_UNSUP, "0.0",	"\"Hello\"  1 *" ),
+  // * (polymorphic multiplication)
+  TST(INT64, SUCCESS, "0",	"1 \"Hello\" *" ),
+  TST(STR, OPER_UNSUP, "0.0",	"\"Hello\"  1 *" ),
   TST(DOUBLE, SUCCESS, "1.0",	"1.0 1 *" ),
-  TST(DOUBLE, SUCCESS, "1.0",	"1 1.0 *" ),
+  TST(INT64, SUCCESS, "1",	"1 1.0 *" ),
   TST(DOUBLE, SUCCESS, "2",	"1.0 2.0 *" ),
   TST(DOUBLE, SUCCESS, "1",	"-1.0 -1.0 *" ),
   TST(DOUBLE, SUCCESS, "6.5",	"13.0 0.5 *" ),
   TST(DOUBLE, SUCCESS, "0",	"-1.4553 0.0 *" ),
-  // / (floating-point division)
-  TST(DOUBLE, OPER_UNSUP, "inf",	"1 \"Hello\" /" ),
+  // / (polymorphic division)
+  TST(INT64, DIVIDE_BY_ZERO, "inf",	"1 \"Hello\" /" ),
   TST(DOUBLE, OPER_UNSUP, "0",	"\"Hello\"  1 /" ),
   TST(DOUBLE, SUCCESS, "1",	"1.0 1 /" ),
-  TST(DOUBLE, SUCCESS, "1",	"1 1.0 /" ),
+  TST(INT64, SUCCESS, "1",	"1 1.0 /" ),
   TST(DOUBLE, DIVIDE_BY_ZERO, "inf",	"2.0 0.0 /" ),
   TST(DOUBLE, SUCCESS, "4",	"8.0 2.0 /" ),
   TST(DOUBLE, SUCCESS, "5.5",	"11.0 2.0 /" ),
   TST(DOUBLE, SUCCESS, "0",	"0.0 30.0 /" ),
-  // == (floating-point equal)
+  // == (polymorphic equal)
   TST(INT32, SUCCESS, "0",	"1 \"Hello\" ==" ),
   TST(INT32, SUCCESS, "0",	"\"Hello\"  1 ==" ),
   TST(INT32, SUCCESS, "1",	"1.0 1 ==" ),
   TST(INT32, SUCCESS, "1",	"1 1.0 ==" ),
   TST(INT32, SUCCESS, "0",	"1.0 2.0 ==" ),
   TST(INT32, SUCCESS, "1",	"1.0 1.0 ==" ),
-  // > (floating-point greater-than)
+  // > (polymorphic greater-than)
   TST(INT32, SUCCESS, "0",	"1.0 \"Hello\" >" ),
   TST(INT32, SUCCESS, "1",	"\"Hello\"  1.0 >" ),
   TST(INT32, SUCCESS, "0",	"1.0 1 >" ),

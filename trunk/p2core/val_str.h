@@ -46,6 +46,7 @@ public:
 
   // Casting
   static string cast(ValuePtr v);
+  const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
   
   static const opr::Oper *oper_;
 private:
