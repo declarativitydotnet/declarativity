@@ -51,6 +51,7 @@ int main(int argc, char **argv)
 		<< "\t-r: try to instantiate a plumber config\n"
                 << "\t-g: produce a DOT graph spec\n"
 		<< "\t-h: print this help text\n"
+		<< "\t-l: Produce dataflow language spec\n"
 		<< "\t- : read from stdin\n";
       exit(0);
     } else if (arg == "-c") { 
@@ -60,6 +61,27 @@ int main(int argc, char **argv)
       builtin = false;
     } else if (arg == "-") {
       ctxt->parse_stream(&std::cin);
+    } else if (arg == "-l") {
+      Plumber::DataflowPtr conf(new Plumber::Dataflow("Overlog"));
+      filename = argv[i+1];
+      string specFileName = "./p2dl.df";
+      std::fstream istr(filename.c_str());
+      std::fstream fstr;
+      fstr.open(specFileName.c_str(), std::fstream::out);
+      ctxt->parse_stream(&istr);
+      Plmb_ConfGen gen(ctxt.get(), conf, false, false, false, filename, fstr);
+      gen.createTables("127.0.0.1:10000");
+      
+      boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));
+      gen.configurePlumber(udp, "127.0.0.1:10000");
+
+      fstr.close(); 
+      if (plumber->install(conf) == 0) {
+        std::cout << "Correctly initialized network of reachability flows.\n";
+      } else {
+        std::cout << "** Failed to initialize correct spec\n";
+      }
+      exit (0);
     } else if (arg == "-g") {
       Plumber::DataflowPtr conf(new Plumber::Dataflow("overlog"));
       filename = argv[i+1];

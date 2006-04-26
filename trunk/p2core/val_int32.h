@@ -28,6 +28,7 @@ public:
   const Value::TypeCode typeCode() const { return Value::INT32; };
   const char *typeName() const { return "int32"; };
   virtual string toString() const { ostringstream s; s << i; return s.str(); };
+  virtual string toConfString() const;
   virtual unsigned int size() const { return sizeof(int32_t); }
 
   // Marshalling and unmarshallng

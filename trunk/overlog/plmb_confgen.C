@@ -17,12 +17,226 @@
 #include "cct.h"
 #include "ccr.h"
 
+
+static std::map<void*, string> variables;
+
+static string conf_comment(string comment)
+{
+  ostringstream oss;
+  oss << "\t# " << comment << std::endl;
+  return oss.str();
+}
+
+static string conf_valueVec(std::vector<ValuePtr>& values)
+{
+  ostringstream oss;
+  oss << "{";
+  for (std::vector<ValuePtr>::iterator iter = values.begin(); 
+       iter != values.end(); iter++) {
+    oss << (*iter)->toConfString();
+    if (iter + 1 != values.end())
+      oss << ", ";
+  }
+  oss << "}";
+  return oss.str(); 
+}
+
+static string conf_StrVec(std::set<string> values)
+{
+  ostringstream oss;
+  oss << "{";
+  for (std::set<string>::iterator iter = values.begin(); 
+       iter != values.end(); iter++) {
+    oss << "\"" << *iter << "\"" ;
+    if (++iter  != values.end())
+      oss << ", ";
+    --iter;
+  }
+  oss << "}";
+  return oss.str(); 
+}
+
+static string conf_UIntVec(std::vector<unsigned>& values)
+{
+  ostringstream oss;
+  oss << "{";
+  for (std::vector<unsigned>::iterator iter = values.begin(); 
+       iter != values.end(); iter++) {
+    oss << *iter;
+    if (iter + 1  != values.end())
+      oss << ", ";
+  }
+  oss << "}";
+  return oss.str(); 
+}
+
+template <typename T>
+static string conf_var(T *key) {
+  std::map<void*, string>::iterator iter = variables.find((void*)key);
+  if (iter == variables.end())
+    return "unknown";
+  return iter->second;
+}
+
+template <typename T>
+static string conf_assign(T *e, string obj)
+{
+  ostringstream oss;
+  ostringstream var;
+  string v;
+  var << "variable_" << variables.size();
+
+  // std::cout << "CONF ASSIGN: " << var.str() << " = " << obj << std::endl;
+  std::map<void*, string>::iterator iter = variables.find((void*)e);
+  if (iter == variables.end()) {
+    variables.insert(std::make_pair((void*)e, var.str()));  
+    v = var.str();
+  } else v = iter->second;
+
+  oss << "\tlet " << v << " = " << obj << ";" << std::endl;
+  return oss.str();
+}
+
+template <typename T>
+static string conf_call(T *obj, string fn, bool element=true) {
+  ostringstream oss;
+  string obj_var = conf_var((void*) obj);
+  
+  oss << "\tcall " << obj_var;
+  if (element)
+    oss << ".element()." << fn;
+  else
+    oss << "." << fn;
+  return oss.str();
+}
+
+static string conf_hookup(ElementSpecPtr to, int toPort, ElementSpecPtr from, int fromPort)
+{
+  ostringstream oss;
+  string toVar   = conf_var(to.get());
+  string fromVar = conf_var(from.get());
+  
+  oss << "\t" << toVar << "[" << toPort << "] -> [" << fromPort << "]" << fromVar << ";" 
+      << std::endl; 
+  return oss.str();
+}
+
+static string conf_function(string fn)
+{
+  ostringstream oss;
+  // std::cerr << "CONF FUNCTION CREATE: " << fn << std::endl;
+  oss << fn << "()";
+  return oss.str(); 
+}
+
+static bool checkString(string check) {
+  if (check.compare(0, 9, "variable_") == 0) {
+    return false;	// P2DL variable
+  }
+  else if (check.compare(0, 1, string("{")) == 0) {
+    return false;	// Vector of values, int, or strings
+  }
+  else if (check.compare(0, 1, string("<")) == 0) {
+    return false;	// A tuple of some sort.
+  }
+  return true;		// This is a string
+}
+
+template <typename A>
+static string conf_function(string fn, A arg0) 
+{
+  ostringstream oss;
+  ostringstream arg_ss;
+  arg_ss << arg0;
+
+  string s = conf_function(fn);
+  s.erase(s.end()-1);
+  if ((typeid(arg0) == typeid(string) || 
+       typeid(arg0) == typeid(const char*)) && 
+      checkString(arg_ss.str()))
+    oss << s << "\"" << arg0 << "\"" << ")";
+  else
+    oss << s << arg0 << ")";
+  return oss.str();
+}
+template <typename A, typename B>
+static string conf_function(string fn, A arg0, B arg1) 
+{
+  ostringstream oss;
+  ostringstream arg_ss;
+  arg_ss << arg1;
+
+  string s = conf_function(fn, arg0);
+  s.erase(s.end()-1);
+  if ((typeid(arg1) == typeid(string) || 
+       typeid(arg1) == typeid(const char*)) && 
+      checkString(arg_ss.str()))
+    oss << s << ", \"" << arg1 << "\"" << ")";
+  else
+    oss << s << ", " << arg1 << ")";
+  return oss.str();
+}
+template <typename A, typename B, typename C>
+static string conf_function(string fn, A arg0, B arg1, C arg2) 
+{
+  ostringstream oss;
+  ostringstream arg_ss;
+  arg_ss << arg2;
+
+  std::cerr << "CONF FUNCTION ARG2: " << arg2 << std::endl;
+  string s = conf_function(fn, arg0, arg1);
+  s.erase(s.end()-1);
+  if ((typeid(arg2) == typeid(string) || 
+       typeid(arg2) == typeid(const char*)) && 
+      checkString(arg_ss.str()))
+    oss << s << ", \"" << arg2 << "\"" << ")";
+  else
+    oss << s << ", " << arg2 << ")";
+  return oss.str();
+}
+template <typename A, typename B, typename C, typename D>
+static string conf_function(string fn, A arg0, B arg1, C arg2, D arg3) 
+{
+  ostringstream oss;
+  ostringstream arg_ss;
+  arg_ss << arg3;
+
+  string s = conf_function(fn, arg0, arg1, arg2);
+  s.erase(s.end()-1);
+  if ((typeid(arg3) == typeid(string) || 
+       typeid(arg3) == typeid(const char*)) && 
+      checkString(arg_ss.str()))
+    oss << s << ", \"" << arg3 << "\"" << ")";
+  else
+    oss << s << ", " << arg3 << ")";
+  return oss.str();
+}
+
+template <typename A, typename B, typename C, typename D, typename E>
+static string conf_function(string fn, A arg0, B arg1, C arg2, D arg3, E arg4) 
+{
+  ostringstream oss;
+  ostringstream arg_ss;
+  arg_ss << arg4;
+
+  string s = conf_function(fn, arg0, arg1, arg2, arg3);
+  s.erase(s.end()-1);
+  if ((typeid(arg4) == typeid(string) || 
+       typeid(arg4) == typeid(const char*)) && 
+      checkString(arg_ss.str()))
+    oss << s << ", \"" << arg4 << "\"" << ")";
+  else
+    oss << s << ", " << arg4 << ")";
+  return oss.str();
+}
+
 Plmb_ConfGen::Plmb_ConfGen(OL_Context* ctxt, 
 			 Plumber::DataflowPtr conf, 
 			 bool dups, 
 			 bool debug, 
 			 bool cc,
-			 string filename) :_conf(conf)
+			 string filename,
+                         std::ostream &s) :_conf(conf), _p2dl(s)
 {
   _ctxt = ctxt;
   _dups = dups;
@@ -33,6 +247,8 @@ Plmb_ConfGen::Plmb_ConfGen(OL_Context* ctxt,
   _pendingRegisterReceiver = false;  
   _isPeriodic = false;
   _currentPositionIndex = -1;
+
+  _p2dl << "dataflow " << conf->name() << " {\n";
 }
 
 
@@ -46,6 +262,7 @@ Plmb_ConfGen::~Plmb_ConfGen()
 // if running only one, nodeID is the local host name,
 void Plmb_ConfGen::configurePlumber(boost::shared_ptr< Udp > udp, string nodeID)
 {
+  conf_assign(udp.get(), udp->toConfString()); 
 
   if (!_cc) {
     _ccTx.reset();
@@ -53,8 +270,12 @@ void Plmb_ConfGen::configurePlumber(boost::shared_ptr< Udp > udp, string nodeID)
   } else {
     _ccTx 
       = _conf->addElement(ElementPtr(new CCT("Transmit CC" + nodeID, 1, 2048)));
+    _p2dl << conf_assign(_ccTx.get(), 
+                         conf_function("CCT", "transmitCC", 1, 2048));
     _ccRx 
       = _conf->addElement(ElementPtr(new CCR("CC Receive" + nodeID, 2048, 1)));
+    _p2dl << conf_assign(_ccRx.get(), 
+                         conf_function("CCR", "receiveCC", 2048, 1));
   }
 
   // iterate through all the rules and process them
@@ -80,10 +301,13 @@ void Plmb_ConfGen::configurePlumber(boost::shared_ptr< Udp > udp, string nodeID)
     _currentRule = _ctxt->getRules()->at(k);    
     processRule(_currentRule, nodeID);
   }
+  _p2dl << conf_assign(udp.get(), udp->toConfString());
 
   ElementSpecPtr receiveMux = genSendElements(udp, nodeID); 
   _currentElementChain.clear();
   genReceiveElements(udp, nodeID, receiveMux);
+
+  _p2dl << "\n} # End of dataflow " << _conf->name() << "\n.";
 }
 
 void Plmb_ConfGen::clear()
@@ -135,6 +359,10 @@ void Plmb_ConfGen::processRule(OL_Context::Rule *r,
       oss << "Aggwrap:" << r->ruleID << ":" << nodeID;
       agg_el.reset(new Aggwrap(oss.str(), aggExpr->aggName(), 
 			       aggField + 1, r->head->fn->name));
+      agg_spec = _conf->addElement(agg_el);
+      _p2dl << conf_assign(agg_spec.get(), 
+                           conf_function("Aggwrap", "aggwrap_"+r->ruleID, aggExpr->aggName(), 
+                                         aggField + 1, r->head->fn->name));
       for (int k = 0; k < r->head->args(); k++) {
 	if (k != aggField) {
 	  // for each groupby value, figure out it's 
@@ -143,6 +371,8 @@ void Plmb_ConfGen::processRule(OL_Context::Rule *r,
 	  for (int j = 0; j < eventTerm->args(); j++) {
 	    if (r->head->arg(k)->toString() == eventTerm->arg(j)->toString()) {
 	      agg_el->registerGroupbyField(j);
+              _p2dl << conf_call(agg_spec.get(), conf_function("registerGroupbyField", j))
+                    << ";" << std::endl;
 	    }
 	  }
 	}
@@ -197,6 +427,8 @@ void Plmb_ConfGen::processRule(OL_Context::Rule *r,
     
     ElementSpecPtr pullPush = 
       _conf->addElement(ElementPtr(new TimedPullPush("DeletePullPush", 0)));
+    _p2dl << conf_assign(pullPush.get(), 
+                         conf_function("TimedPullPush", "deletePullPush", 0));
     hookUp(pullPush, 0);
     
     ElementSpecPtr deleteElement =
@@ -204,6 +436,11 @@ void Plmb_ConfGen::processRule(OL_Context::Rule *r,
 						 tableToDelete, 
 						 ti->primaryKeys.at(0), 
 						 ti->primaryKeys.at(0))));
+    _p2dl << conf_assign(deleteElement.get(), 
+                         conf_function("Delete", "delete_"+r->ruleID,
+						 conf_var(tableToDelete.get()), 
+						 ti->primaryKeys.at(0), 
+						 ti->primaryKeys.at(0) ));
     hookUp(deleteElement, 0);
     
     if (_isPeriodic == false && _pendingReceiverSpec) {
@@ -215,7 +452,12 @@ void Plmb_ConfGen::processRule(OL_Context::Rule *r,
       ElementSpecPtr aggWrapSlot 
 	= _conf->addElement(ElementPtr(new Slot("aggWrapSlot:" + r->ruleID 
 						 + ":" + nodeID)));
-      ElementSpecPtr agg_spec = _conf->addElement(agg_el);
+      _p2dl << conf_assign(aggWrapSlot.get(), 
+                           conf_function("Slot", "aggWrapSlot_"+r->ruleID));
+
+      // BOON CHECK: MOVED THIS UP TO BE COMPATIBLE WITH THE DATAFLOW LANGUAGE.
+      // ElementSpecPtr agg_spec = _conf->addElement(agg_el);
+
       // hook up the internal output to most recent element 
       hookUp(agg_spec, 1); 
       // hookup the internal input      
@@ -252,10 +494,15 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
 
   // network in
   ElementSpecPtr udpReceive = _conf->addElement(udp->get_rx());  
+  _p2dl << conf_assign(udpReceive.get(), conf_call(udp.get(), "get_rx()", false));
   ElementSpecPtr unmarshalS =
     _conf->addElement(ElementPtr(new UnmarshalField ("ReceiveUnmarshal:" + nodeID, 1)));
+  _p2dl << conf_assign(unmarshalS.get(), 
+                       conf_function("UnmarshalField", "receiveUnmarshal", 1));
   ElementSpecPtr unBoxS =
     _conf->addElement(ElementPtr(new  UnboxField ("ReceiveUnBox:" + nodeID, 1)));
+  _p2dl << conf_assign(unBoxS.get(), 
+                       conf_function("UnboxField", "receiveUnBox", 1));
 
   hookUp(udpReceive, 0, unmarshalS, 0);
   hookUp(unmarshalS, 0, unBoxS, 0);
@@ -263,6 +510,8 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
   ElementSpecPtr wrapAroundMux;
   if (_cc) {
     wrapAroundMux = _conf->addElement(ElementPtr(new Mux ("wrapAroundSendMux:"+ nodeID, 3)));
+    _p2dl << conf_assign(wrapAroundMux.get(), 
+                         conf_function("Mux", "wrapAroundSendMux", 3));
 
     boost::shared_ptr< std::vector< ValuePtr > > demuxKeysCC(new std::vector< ValuePtr > );
     demuxKeysCC->push_back(ValuePtr(new Val_Str ("ack")));
@@ -270,6 +519,8 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
 
     ElementSpecPtr demuxRxCC 
       = _conf->addElement(ElementPtr(new Demux ("receiveDemuxCC", demuxKeysCC)));
+    _p2dl << conf_assign(demuxRxCC.get(), 
+                         conf_function("Demux", "receiveDemuxCC", conf_valueVec(*demuxKeysCC)));
 
     genPrintElement("PrintBeforeReceiveDemuxCC:" + nodeID);
     hookUp(demuxRxCC, 0);
@@ -279,6 +530,8 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
     // handle CC data. <ccdata, seq, src, <t>>
     ElementSpecPtr unpackCC =  
       _conf->addElement(ElementPtr(new UnboxField ("ReceiveUnBoxCC:" + nodeID, 3)));
+    _p2dl << conf_assign(unpackCC.get(), 
+                         conf_function("UnboxField", "receiveUnBoxCC", 3));
     hookUp(demuxRxCC, 1, _ccRx, 0);  // regular CC data    
     hookUp(unpackCC, 0);
     genPrintElement("PrintReceiveUnpackCC:"+ nodeID);
@@ -286,6 +539,8 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
 
   } else {
     wrapAroundMux = _conf->addElement(ElementPtr(new Mux("wrapAroundSendMux:"+ nodeID, 2)));
+    _p2dl << conf_assign(wrapAroundMux.get(), 
+                         conf_function("Mux", "wrapAroundSendMux", 2));
     hookUp(unBoxS, 0, wrapAroundMux, 0);
   }
 
@@ -301,6 +556,8 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
 
   ElementSpecPtr demuxS 
     = _conf->addElement(ElementPtr(new Demux("receiveDemux", demuxKeys)));
+  _p2dl << conf_assign(demuxS.get(), 
+                       conf_function("Demux", "receiveDemux", conf_valueVec(*demuxKeys)));
  
   genPrintElement("PrintReceivedBeforeDemux:"+nodeID);
   genDupElimElement("ReceiveDupElimBeforeDemux:"+ nodeID); 
@@ -308,8 +565,12 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
 
   ElementSpecPtr bufferQueue = 
     _conf->addElement(ElementPtr(new Queue("ReceiveQueue:"+nodeID, 1000)));
+  _p2dl << conf_assign(bufferQueue.get(), 
+                       conf_function("Queue", "receiveQueue", 1000));
   ElementSpecPtr pullPush = 
     _conf->addElement(ElementPtr(new TimedPullPush("ReceiveQueuePullPush", 0)));
+  _p2dl << conf_assign(pullPush.get(), 
+                       conf_function("TimedPullPush", "receiveQueuePullPush", 0));
 
   hookUp(bufferQueue, 0);
   hookUp(pullPush, 0);
@@ -332,9 +593,14 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
     ElementSpecPtr bufferQueue = 
       _conf->addElement(ElementPtr(new Queue("DemuxQueue:"+ nodeID + ":" + tableName, 
 						1000)));
+    _p2dl << conf_assign(bufferQueue.get(), 
+              conf_function("Queue", "demuxQueue_" + tableName, 1000));
     ElementSpecPtr pullPush = 
       _conf->addElement(ElementPtr(new TimedPullPush("DemuxQueuePullPush" + nodeID 
 				       + ":" + tableName, 0)));
+    _p2dl << conf_assign(pullPush.get(), 
+              conf_function("TimedPullPush", 
+                            "demuxQueuePullPush_" + tableName, 0));
     
     hookUp(demuxS, counter++, bufferQueue, 0);
     hookUp(bufferQueue, 0, pullPush, 0);
@@ -343,6 +609,9 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
     ElementSpecPtr duplicator = 
       _conf->addElement(ElementPtr(new DuplicateConservative("DuplicateConservative:"
 			  + tableName + ":" + nodeID, numElementsToReceive)));    
+    _p2dl << conf_assign(duplicator.get(), 
+             conf_function("DuplicateConservative", "dupCons", 
+                           numElementsToReceive));
     // materialize table only if it is declared and has lifetime>0
     OL_Context::TableInfoMap::iterator _iterator 
       = _ctxt->getTableInfos()->find(tableName);
@@ -351,6 +620,9 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
       ElementSpecPtr insertS 
 	= _conf->addElement(ElementPtr(new Insert("Insert:"+ tableName + ":" + nodeID,  
 				     getTableByName(nodeID, tableName))));
+      _p2dl << conf_assign(insertS.get(), 
+               conf_function("Insert", "insert", 
+                             conf_var(getTableByName(nodeID, tableName).get())));
       
       hookUp(pullPush, 0, insertS, 0);
       genPrintWatchElement("PrintWatchInsert:"+nodeID);
@@ -368,6 +640,8 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
 	ElementSpecPtr printDuplicator = 
 	  _conf->addElement(ElementPtr(new PrintTime("PrintAfterDuplicator:"
 					       + tableName + ":" + nodeID)));
+        _p2dl << conf_assign(printDuplicator.get(), 
+                 conf_function("PrintTime", "printAfterDuplicator"));
 	hookUp(duplicator, k, printDuplicator, 0);
 	hookUp(printDuplicator, 0, nextElementSpec, 0);
 	continue;
@@ -379,6 +653,8 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
   // connect the acknowledgement port to ccTx
   ElementSpecPtr sinkS 
     = _conf->addElement(ElementPtr(new Discard("discard")));
+  _p2dl << conf_assign(sinkS.get(), 
+                       conf_function("Discard", "discard"));
   hookUp(demuxS, _udpReceivers.size(), sinkS, 0); 
   
 
@@ -404,6 +680,7 @@ ElementSpecPtr
 Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
 {
   ElementSpecPtr udpSend = _conf->addElement(udp->get_tx());  
+  _p2dl << conf_assign(udpSend.get(), conf_call(udp.get(), "get_tx()", false));
 
   // prepare to send. Assume all tuples send by first tuple
   
@@ -411,9 +688,14 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
   ElementSpecPtr roundRobin =
     _conf->addElement(ElementPtr(new RoundRobin("roundRobinSender:" + nodeID, 
 						   _udpSenders.size()))); 
+  _p2dl << conf_assign(roundRobin.get(), 
+                       conf_function("RoundRobin", "roundRobin", 
+                                     _udpSenders.size()));
 
   ElementSpecPtr pullPush =
       _conf->addElement(ElementPtr(new TimedPullPush("SendPullPush:"+nodeID, 0)));
+  _p2dl << conf_assign(pullPush.get(), 
+                       conf_function("TimedPullPush", "sendPulllPush", 0));
   hookUp(roundRobin, 0, pullPush, 0);
 
   // check here for the wrap around
@@ -421,16 +703,23 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
   wrapAroundDemuxKeys->push_back(ValuePtr(new Val_Str(nodeID)));
   ElementSpecPtr wrapAroundDemux 
     = _conf->addElement(ElementPtr(new Demux("wrapAroundSendDemux", wrapAroundDemuxKeys, 0)));  
+  _p2dl << conf_assign(wrapAroundDemux.get(), 
+                       conf_function("Demux", "wrapAroundSendDemux", 
+                                     conf_valueVec(*wrapAroundDemuxKeys), 0));
 
   hookUp(wrapAroundDemux, 0); // connect to the wrap around
 
   ElementSpecPtr unBoxWrapAround =
     _conf->addElement(ElementPtr(new UnboxField("UnBoxWrapAround:"+nodeID, 1)));
+  _p2dl << conf_assign(unBoxWrapAround.get(), 
+                       conf_function("UnboxField", "unboxWrapAround", 1));
 
   hookUp(wrapAroundDemux, 0, unBoxWrapAround, 0);
 
   ElementSpecPtr sendQueue = 
     _conf->addElement(ElementPtr(new Queue("SendQueue:"+nodeID, 1000)));
+  _p2dl << conf_assign(sendQueue.get(), 
+                       conf_function("Queue", "sendQueue", 1000));
   hookUp(wrapAroundDemux, 1, sendQueue, 0); 
 
   // connect to send queue
@@ -443,8 +732,12 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
     oss << "\"" << nodeID << "\" pop swallow pop";
     ElementSpecPtr srcAddress  = 
       _conf->addElement(ElementPtr(new PelTransform("AddSrcAddressCC:"+nodeID, oss.str())));
+    _p2dl << conf_assign(srcAddress.get(), 
+                         conf_function("PelTransform", "addSrcAddrCC", oss.str()));
     ElementSpecPtr seq 
       = _conf->addElement(ElementPtr(new Sequence("SequenceCC" + nodeID)));
+    _p2dl << conf_assign(seq.get(), 
+                         conf_function("Sequence", "seqCC"));
     hookUp(srcAddress, 0);
     hookUp(seq, 0);
 
@@ -452,12 +745,17 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
     ElementSpecPtr tagData  = 
       _conf->addElement(ElementPtr(new PelTransform("TagData:" + nodeID, 
 						       "\"ccdata\" pop $0 pop $1 pop $2 pop")));
+    _p2dl << conf_assign(tagData.get(), 
+                         conf_function("PelTransform", "tagData", 
+                                       "\"ccdata\" pop $0 pop $1 pop $2 pop"));
     hookUp(tagData, 0);
 
     genPrintElement("PrintRemoteSendCCOne:"+nodeID);
 
     ElementSpecPtr pullPushCC =
       _conf->addElement(ElementPtr(new TimedPullPush("SendPullPushCC:"+nodeID, 0)));
+    _p2dl << conf_assign(pullPushCC.get(), 
+                         conf_function("TimedPullPush", "sendPullPushCC", 0));
 
     hookUp(pullPushCC, 0);
     hookUp(_ccTx, 0); // <seq, addr, <t>>
@@ -466,18 +764,27 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
     ElementSpecPtr encapSendCC =
       _conf->addElement(ElementPtr(new PelTransform("encapSendCC:"+nodeID, 
 						    "$3 1 field pop swallow pop"))); 
+    _p2dl << conf_assign(encapSendCC.get(), 
+                         conf_function("PelTransform", "encapSendCC",
+                                       "$3 1 field pop swallow pop"));
     hookUp(_ccTx, 0, encapSendCC, 0);
 
     genPrintElement("PrintRemoteSendCCTwo:"+nodeID);
     
     _roundRobinCC =
        _conf->addElement(ElementPtr(new RoundRobin("roundRobinSenderCC:" + nodeID, 2))); 
+    _p2dl << conf_assign(_roundRobinCC.get(), 
+                         conf_function("RoundRobin",  
+                                       "roundRobinSenderCC", 2));
      hookUp(_roundRobinCC, 0);
 
     // acknowledgements. <dst, <ack, seq, windowsize>>
     ElementSpecPtr ackPelTransform
       = _conf->addElement(ElementPtr(new PelTransform("ackPelTransformCC" + nodeID,
 							"$0 pop \"ack\" ->t $1 append $2 append pop")));
+    _p2dl << conf_assign(ackPelTransform.get(), 
+                       conf_function("PelTransform", "ackPel",
+                                     "$0 pop \"ack\" ->t $1 append $2 append pop"));
     
     hookUp(_ccRx, 1, ackPelTransform, 0);
     genPrintElement("PrintSendAck:"+nodeID);
@@ -488,6 +795,8 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
      // <dst, marshalled>
      ElementSpecPtr marshalSendCC = 
        _conf->addElement(ElementPtr(new MarshalField("marshalCC:" + nodeID, 1)));
+     _p2dl << conf_assign(marshalSendCC.get(), 
+                          conf_function("MarshalField", "marshalCC", 1));
      genPrintElement("PrintRemoteSendCCMarshal:"+nodeID);
      hookUp(marshalSendCC, 0); 
 
@@ -496,11 +805,15 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
     // Now marshall the payload (second field)
     ElementSpecPtr marshalSend = 
       _conf->addElement(ElementPtr(new MarshalField("marshal:" + nodeID, 1)));  
+    _p2dl << conf_assign(marshalSend.get(), 
+                         conf_function("MarshalField", "marshal", 1));
     hookUp(marshalSend, 0);  
   }
    
   ElementSpecPtr routeSend =
     _conf->addElement(ElementPtr(new StrToSockaddr("plumber:" + nodeID, 0)));
+  _p2dl << conf_assign(routeSend.get(), 
+                       conf_function("StrToSockaddr", "plumber", 0));
 
   hookUp(routeSend, 0);
   hookUp(udpSend, 0);
@@ -515,6 +828,8 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
     oss << "$"<< _udpSendersPos.at(k) << " pop swallow pop";
     ElementSpecPtr encapSend =
       _conf->addElement(ElementPtr(new PelTransform("encapSend:" + nodeID, oss.str())));
+    _p2dl << conf_assign(encapSend.get(), 
+                       conf_function("PelTransform", "encapSend", oss.str()));
     
     // for now, assume addr field is the put here
     //hookUp(nextElementSpec, 0, roundRobin, k);
@@ -832,11 +1147,12 @@ Plmb_ConfGen::pelSelect(OL_Context::Rule* rule, FieldNamesTracker* names,
                   " " + names->toString() + "\n");
  
   ostringstream oss;
-  oss << "Selection:" << rule->ruleID << ":" << selectionID << ":"
-      << nodeID;
+  oss << "selection_" << selectionID;
 
   ElementSpecPtr sPelTrans =
     _conf->addElement(ElementPtr(new PelTransform(oss.str(), sPel.str())));
+  _p2dl << conf_assign(sPelTrans.get(), 
+                       conf_function("PelTransform", "p_"+oss.str(), sPel.str()));
   
   if (_isPeriodic == false &&_pendingRegisterReceiver) {
     _pendingReceiverSpec = sPelTrans;
@@ -847,7 +1163,7 @@ Plmb_ConfGen::pelSelect(OL_Context::Rule* rule, FieldNamesTracker* names,
     hookUp(sPelTrans, 0);
   }
 
-  genPrintElement(string("PrintAfterSelection:")+":"+nodeID);
+  genPrintElement(string("printSelect")+"_"+nodeID);
 }
 
 void 
@@ -938,6 +1254,8 @@ void Plmb_ConfGen::pelAssign(OL_Context::Rule* rule,
   ElementSpecPtr assignPelTrans =
     _conf->addElement(ElementPtr(new PelTransform(oss1.str(),
 						  pel.str())));
+  _p2dl << conf_assign(assignPelTrans.get(), 
+                       conf_function("PelTransform", "pel_assignemnt", pel.str()));
 
   if (_isPeriodic == false &&_pendingRegisterReceiver) {
     _pendingReceiverSpec = assignPelTrans;
@@ -1043,6 +1361,10 @@ void Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
   ElementSpecPtr projectHeadPelTransform =
     _conf->addElement(ElementPtr(new PelTransform("ProjectHead:"+ curRule->ruleID + ":" + nodeID,
 						     pelTransformStr)));
+  _p2dl << conf_assign(projectHeadPelTransform.get(), 
+                       conf_function("PelTransform", 
+                                     "projectHead", 
+                                     pelTransformStr));
   if (_isPeriodic == false && _pendingRegisterReceiver) {
     _pendingReceiverSpec = projectHeadPelTransform;
     _currentElementChain.push_back(projectHeadPelTransform); 
@@ -1063,7 +1385,7 @@ void Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 				   FieldNamesTracker* probeNames, 
 				   FieldNamesTracker* baseProbeNames, 
 				   int joinOrder,
-				   b_cbv comp_cb)
+				   b_cbv *comp_cb)
 {
   // probe the right hand side
   // Here's where the join happens 
@@ -1107,6 +1429,8 @@ void Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 
   ElementSpecPtr noNull 
     = _conf->addElement(ElementPtr(new NoNullField(oss.str(), 1)));
+  _p2dl << conf_assign(noNull.get(), 
+                       conf_function("NoNullField", "n_noNull", 1));
 
   ElementSpecPtr last_el(new ElementSpec(ElementPtr(new Slot("dummySlotProbeElements"))));
  
@@ -1120,7 +1444,18 @@ void Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 						    probeTable,
 						    leftJoinKey, 
 						    rightJoinKey, 
-						    comp_cb)));
+						    *comp_cb)));
+    if (conf_var(comp_cb) == "unknown") {
+      _p2dl << conf_assign(last_el.get(), 
+                conf_function("UniqueLookup", "uniqueLookup", conf_var(probeTable.get()),
+                              leftJoinKey, rightJoinKey));
+    }
+    else {
+      _p2dl << conf_assign(last_el.get(), 
+                conf_function("UniqueLookup", "uniqueLookup", conf_var(probeTable.get()),
+                              leftJoinKey, rightJoinKey, conf_var(comp_cb)));
+    }
+    std::cout << "CALLBACK VARIABLE LOOKUP: " << comp_cb << std::endl;
   } else {
     ostringstream oss;
     oss << "MultLookup:" << curRule->ruleID << ":" << joinOrder << ":" << nodeID; 
@@ -1128,7 +1463,17 @@ void Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
       _conf->addElement(ElementPtr(new MultLookup(oss.str(),
 						  probeTable,
 						  leftJoinKey, 
-						  rightJoinKey, comp_cb)));
+						  rightJoinKey, *comp_cb)));
+    if (conf_var(comp_cb) == "unknown") {
+      _p2dl << conf_assign(last_el.get(), 
+                conf_function("MultLookup", "multLookup", conf_var(probeTable.get()),
+                              leftJoinKey, rightJoinKey, 0));
+    }
+    else {
+      _p2dl << conf_assign(last_el.get(), 
+                conf_function("MultLookup", "multLookup", conf_var(probeTable.get()),
+                              leftJoinKey, rightJoinKey, conf_var(comp_cb)));
+    }
     
     addMultTableIndex(probeTable, rightJoinKey, nodeID);
   }
@@ -1160,13 +1505,14 @@ void Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
     debugRule(curRule, "Join selections " + selectionPel.str() + "\n");
 
     ostringstream oss;
-    oss << "JoinSelections:" << curRule->ruleID << ":"
-	<< joinOrder << ":"
-	<< k << ":" << nodeID;
+    oss << "joinSelections_" << curRule->ruleID << "_"
+	<< joinOrder << "_" << k;
     
     ElementSpecPtr joinSelections =
       _conf->addElement(ElementPtr(new PelTransform(oss.str(), 
 				                    selectionPel.str())));    
+    _p2dl << conf_assign(joinSelections.get(), 
+                conf_function("PelTransform", "joinSelections", selectionPel.str()));
     hookUp(joinSelections, 0);
   }
 
@@ -1194,12 +1540,13 @@ void Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 
   string pelProjectStr = pelProject.str();
   ostringstream oss1; 
-  oss1 << "JoinPelTransform:"
-      << curRule->ruleID << ":"
-      << joinOrder << ":" << nodeID;
+  oss1 << "joinPel_" << curRule->ruleID << "_"
+      << joinOrder << "_" << nodeID;
 
   ElementSpecPtr transS 
     = _conf->addElement(ElementPtr(new PelTransform(oss1.str(), pelProjectStr)));
+  _p2dl << conf_assign(transS.get(), 
+              conf_function("PelTransform", "joinPel", pelProjectStr));
 
   delete baseProbeNames;
 
@@ -1295,6 +1642,8 @@ void Plmb_ConfGen::genJoinElements(OL_Context::Rule* curRule,
     b_cbv comp_cb = 0;
     if (agg_el) {
       comp_cb = agg_el->get_comp_cb();
+      _p2dl << conf_assign(&comp_cb, 
+                           conf_call(agg_spec.get(), conf_function("get_comp_cb")));
     }
     
     FieldNamesTracker* baseProbeNames 
@@ -1307,7 +1656,7 @@ void Plmb_ConfGen::genJoinElements(OL_Context::Rule* curRule,
     }
 
     genProbeElements(curRule, eventFunctor, baseFunctors.at(k), 
-		     nodeID, namesTracker, baseProbeNames, k, comp_cb);
+		     nodeID, namesTracker, baseProbeNames, k, &comp_cb);
 
     if (agg_el || baseFunctors.size() - 1 != k) {
       // Change from pull to push
@@ -1316,6 +1665,8 @@ void Plmb_ConfGen::genJoinElements(OL_Context::Rule* curRule,
 	  << nodeID << ":" << k;
       ElementSpecPtr pullPush =
 	_conf->addElement(ElementPtr(new TimedPullPush(oss.str(), 0)));
+      _p2dl << conf_assign(pullPush.get(), 
+                  conf_function("TimedPullPush", "joinPullPush", 0));
       hookUp(pullPush, 0);
     }
   }
@@ -1329,6 +1680,8 @@ void Plmb_ConfGen::addMultTableIndex(TablePtr table, int fn, string nodeID)
   if (_multTableIndices.find(uniqStr.str()) == _multTableIndices.end()) {
     // not there yet
     table->add_multiple_index(fn);
+    _p2dl << conf_call(table.get(), conf_function("add_multiple_index", fn), false)
+          << ";" << std::endl;
     _multTableIndices.insert(std::make_pair(uniqStr.str(), uniqStr.str()));
     std::cout << "AddMultTableIndex: Mult index added " << uniqStr.str() 
 	      << "\n";
@@ -1381,23 +1734,26 @@ Plmb_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
 
   aggregateNamesTracker->fieldNames.push_back(aggVarname);      
   int aggFieldBaseTable = -1;
-  Table::AggregateFunction* af = 0;
+  Table::AggregateFunction& af = Table::agg_min();
   
   if (pa->oper == Parse_Agg::MIN) {
     // aggregate for min
     aggFieldBaseTable = baseNamesTracker->fieldPosition(aggVarname) + 1;
-    af = &Table::AGG_MIN;
+    af = Table::agg_min();
+    _p2dl << conf_assign(&af, "call Table.agg_min()");
   } 
   if (pa->oper == Parse_Agg::MAX) {
     // aggregate for min
     aggFieldBaseTable = baseNamesTracker->fieldPosition(aggVarname) + 1;
-    af = &Table::AGG_MAX;
+    af = Table::agg_max();
+    _p2dl << conf_assign(&af, "call Table.agg_max()");
   } 
 
   if (pa->oper == Parse_Agg::COUNT) {
     // aggregate for min
     aggFieldBaseTable = groupByFields.at(0);
-    af = &Table::AGG_COUNT;
+    af = Table::agg_count();
+    _p2dl << conf_assign(&af, "call Table.agg_count()");
   } 
   
   // get the table, create the index
@@ -1408,9 +1764,20 @@ Plmb_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
 				     groupByFields,
 				     aggFieldBaseTable, // the agg field
 				     af);
+  _p2dl << conf_assign(tableAgg.get(), 
+                       conf_call(aggTable.get(), 
+                                 conf_function("add_mult_groupBy_agg", groupByFields.at(0),
+                                               conf_UIntVec(groupByFields), 
+                                               aggFieldBaseTable, conf_var(&af)), false));
+
+
   ElementSpecPtr aggElement =
     _conf->addElement(ElementPtr(new Aggregate("Agg:"+currentRule->ruleID +
 					       ":" + nodeID, tableAgg)));
+  _p2dl << conf_assign(aggElement.get(), 
+              conf_function("Aggregate", 
+                            "agg_rule_"+currentRule->ruleID, 
+                            conf_var(tableAgg.get())));
    
   ostringstream pelTransformStr;
   pelTransformStr << "\"" << "aggResult:" << currentRule->ruleID << "\" pop";
@@ -1423,6 +1790,10 @@ Plmb_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
     _conf->addElement(ElementPtr(new PelTransform("Aggregation:"+currentRule->ruleID 
 						     + ":" + nodeID, 
 						     pelTransformStr.str())));
+  _p2dl << conf_assign(addTableName.get(), 
+                       conf_function("PelTransform", 
+                                     "agg_rule_"+currentRule->ruleID, 
+                                     pelTransformStr.str()));
 
   hookUp(aggElement, 0, addTableName, 0);
 
@@ -1446,6 +1817,8 @@ void Plmb_ConfGen::genSingleTermElement(OL_Context::Rule* curRule,
     = _conf->addElement(ElementPtr(new Slot("singleTermSlot:" 
 					     + curRule->ruleID + ":" 
 					     + nodeID)));
+  _p2dl << conf_assign(slotElement.get(), 
+                       conf_function("Slot", "singleTermSlot"));
 
   //std::cout << "Number of terms " << curRule->terms.size() << "\n";
   for (unsigned int j = 0; j < curRule->terms.size(); j++) {
@@ -1476,6 +1849,9 @@ void Plmb_ConfGen::genFunctorSource(OL_Context::Rule* rule,
   ElementSpecPtr source =
     _conf->addElement(ElementPtr(new TupleSource("FunctorSource:"+rule->ruleID+nodeID,
                                                    functorTuple)));
+  _p2dl << conf_assign(source.get(), 
+                       conf_function("TupleSource", "functorSource", 
+                                     functorTuple->toConfString()));
   _currentElementChain.push_back(source);
 
   genPrintElement("PrintFunctorSource:"+rule->ruleID+":"+nodeID);
@@ -1495,6 +1871,9 @@ void Plmb_ConfGen::genFunctorSource(OL_Context::Rule* rule,
   ElementSpecPtr pelRand = 
     _conf->addElement(ElementPtr(new PelTransform("FunctorSourcePel:" + rule->ruleID +
                                                   ":" + nodeID, "$0 pop $1 pop rand pop")));
+  _p2dl << conf_assign(pelRand.get(), 
+                       conf_function("PelTransform", "functorSourcePel",
+                                     "$0 pop $1 pop rand pop"));
  
   hookUp(pelRand, 0);
 
@@ -1502,6 +1881,9 @@ void Plmb_ConfGen::genFunctorSource(OL_Context::Rule* rule,
   ElementSpecPtr pushFunctor =
     _conf->addElement(ElementPtr(new TimedPullPush("FunctorPush:" +rule->ruleID+ ":"+ nodeID,
 						      atof(period.c_str()), count)));
+  _p2dl << conf_assign(pushFunctor.get(), 
+                       conf_function("TimedPullPush", "functorPush", 
+                                     atof(period.c_str()), count));
 
   hookUp(pushFunctor, 0);
 
@@ -1509,6 +1891,8 @@ void Plmb_ConfGen::genFunctorSource(OL_Context::Rule* rule,
   if (numFunctors(rule) <= 1) {
     ElementSpecPtr functorSlot 
       = _conf->addElement(ElementPtr(new Slot("functorSlot:" + rule->ruleID + ":" + nodeID)));      
+    _p2dl << conf_assign(functorSlot.get(), 
+                         conf_function("Slot", "functorSlot"));
     hookUp(functorSlot, 0);
   }
 }
@@ -1519,6 +1903,7 @@ void Plmb_ConfGen::genDupElimElement(string header)
    if (_dups) {
      ElementSpecPtr dupElim 
        = _conf->addElement(ElementPtr(new DupElim(header)));
+     _p2dl << conf_assign(dupElim.get(), conf_function("DupElim", header));
      hookUp(dupElim, 0);
   }
 }
@@ -1529,6 +1914,7 @@ void Plmb_ConfGen::genPrintElement(string header)
   if (_debug) {
     ElementSpecPtr print = 
       _conf->addElement(ElementPtr(new PrintTime(header)));
+    _p2dl << conf_assign(print.get(), conf_function("PrintTime", header));
     hookUp(print, 0);
   }
 }
@@ -1537,6 +1923,9 @@ void Plmb_ConfGen::genPrintWatchElement(string header)
 {
   ElementSpecPtr printWatchElement = 
       _conf->addElement(ElementPtr(new PrintWatch(header, _ctxt->getWatchTables())));
+  _p2dl << conf_assign(printWatchElement.get(), 
+                       conf_function("PrintWatch", header, 
+                                     conf_StrVec(_ctxt->getWatchTables())));
   hookUp(printWatchElement, 0);
 }
 
@@ -1564,6 +1953,7 @@ TablePtr Plmb_ConfGen::getTableByName(string nodeID, string tableName)
 
 void Plmb_ConfGen::createTables(string nodeID)
 {
+  _p2dl << conf_comment("CREATING TABLE VARIABLES");
   // have to decide where joins are possibly performed, and on what fields
   // create appropriate indices for them
   OL_Context::TableInfoMap::iterator _iterator;
@@ -1585,12 +1975,22 @@ void Plmb_ConfGen::createTables(string nodeID)
       if (tableInfo->timeout != -1) {
 	boost::posix_time::time_duration expiration(0,0,tableInfo->timeout, 0);
 	newTable.reset(new Table(tableInfo->tableName, tableInfo->size, expiration));
+        _p2dl << conf_assign(newTable.get(), 
+                    conf_function("Table", "t_name_" + tableInfo->tableName, 
+                                  tableInfo->size, boost::posix_time::to_simple_string(expiration)));
+      }
+      else {
+        _p2dl << conf_assign(newTable.get(), 
+                    conf_function("Table", "t_name_" + tableInfo->tableName, tableInfo->size)); 
       }
 
       // first create unique indexes
       std::vector<int> primaryKeys = tableInfo->primaryKeys;
       for (uint k = 0; k < primaryKeys.size(); k++) {
 	newTable->add_unique_index(primaryKeys.at(k));
+        _p2dl << conf_call(newTable.get(), 
+                           conf_function("add_unique_index", primaryKeys.at(k)), false)
+              << ";" << std::endl;
 	std::cout << "Create Tables: Add unique index " 
 		  << newTableName << " " << 
 	  primaryKeys.at(k) << " " << tableInfo->timeout << "\n";
@@ -1611,7 +2011,12 @@ void Plmb_ConfGen::createTables(string nodeID)
     std::cout << "Tuple inserted: " << tr->toString() 
 	      << " into table " << vr->toString() 
 	      << " " << tr->size() << "\n";
+    _p2dl << conf_call(tableToInsert.get(),
+                       conf_function("insert", tr->toConfString()))
+          << ";" << std::endl;
   }
+  _p2dl << conf_comment("END OF CREATING TABLE VARIABLES");
+  _p2dl << std::endl;
 }
 
 /////////////////////////////////////////////
@@ -1629,6 +2034,7 @@ void Plmb_ConfGen::hookUp(ElementSpecPtr firstElement, int firstPort,
   fflush(_output);
   
   _conf->hookUp(firstElement, firstPort, secondElement, secondPort);
+  _p2dl << conf_hookup(firstElement, firstPort, secondElement, secondPort);
 
   if (_currentElementChain.size() == 0) {
     // first time

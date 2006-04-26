@@ -25,6 +25,7 @@
 #include <list>
 #include <map>
 #include <iostream>
+#include <ostream>
 #include <stdlib.h>
 #include <fstream>
 
@@ -79,7 +80,7 @@ class Plmb_ConfGen {
 
  public:
   Plmb_ConfGen(OL_Context* ctxt, Plumber::DataflowPtr conf, 
-	      bool _dups, bool debug, bool cc, string filename);
+	      bool _dups, bool debug, bool cc, string filename, std::ostream& s=*(new ostringstream()));
   Plmb_ConfGen::~Plmb_ConfGen();
 
   void configurePlumber(boost::shared_ptr< Udp > udp, string nodeID);
@@ -107,6 +108,7 @@ private:
   bool _cc; // are we using congestion control
   FILE *_output;
   Plumber::DataflowPtr _conf; 
+  std::ostream& _p2dl;
   std::map<string, string> _multTableIndices;
 
   // counter to determine how many muxers and demuxers are needed
@@ -123,6 +125,7 @@ private:
   ElementSpecPtr _ccTx, _ccRx, _roundRobinCC;
   bool _isPeriodic;
   int _currentPositionIndex;
+  ElementSpecPtr agg_spec;
   
   // Relational -> P2 elements
   void processRule(OL_Context::Rule *r, string nodeID);
@@ -139,7 +142,7 @@ private:
 			FieldNamesTracker* probeNames, 
 			FieldNamesTracker* baseProbeNames, 
 			int joinOrder,
-			b_cbv comp_cb);
+			b_cbv *comp_cb);
 
   void genProjectHeadElements(OL_Context::Rule* curRule,
  			      string nodeID,

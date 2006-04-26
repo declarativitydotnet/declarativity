@@ -30,6 +30,7 @@ libp2pythonnet_la_SOURCES = \
 	snetsim.cpp \
 	tman.cpp \
 	tupleseq.cpp \
+	udp.cpp \
 	udp2.cpp
 
 INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/net -I$(top_builddir)/eventLoop

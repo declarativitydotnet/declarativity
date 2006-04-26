@@ -28,6 +28,7 @@ public:
   const Value::TypeCode typeCode() const { return Value::STR; };
   const char *typeName() const { return "str"; };
   string toString() const { return s; };
+  virtual string toConfString() const;
   virtual unsigned int size() const { return s.size(); }
 
   // Marshalling and unmarshallng

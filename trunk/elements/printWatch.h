@@ -19,11 +19,13 @@
 
 #include "element.h"
 #include <set>
+#include <vector>
 
 class PrintWatch : public Element { 
 public:
 
   PrintWatch(string prefix, std::set<string> tableNames,  FILE*output=NULL);
+  PrintWatch(string prefix, std::vector<string> tableNames,  FILE*output=NULL);
 
   ~PrintWatch();
   

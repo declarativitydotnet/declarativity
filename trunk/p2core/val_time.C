@@ -33,6 +33,13 @@ class OperTime : public opr::OperCompare<Val_Time> {
 };
 const opr::Oper* Val_Time::oper_ = new OperTime();
 
+string Val_Time::toConfString() const
+{
+  ostringstream conf;
+  conf << "Val_Time(" << to_simple_string(t)<< ")";
+  return conf.str();
+}
+
 //
 // Marshalling and unmarshallng
 //
@@ -245,6 +252,13 @@ class OperTime_Duration : public opr::OperCompare<Val_Time_Duration> {
    };
 };
 const opr::Oper* Val_Time_Duration::oper_ = new OperTime_Duration();
+
+string Val_Time_Duration::toConfString() const
+{
+  ostringstream conf;
+  conf << "Val_Time(" << to_simple_string(td)<< ")";
+  return conf.str();
+}
 
 //
 // Marshalling and unmarshallng

@@ -31,6 +31,7 @@ public:
   const char *typeName() const { return "ID"; };
 
   virtual string toString() const { return i->toString(); };
+  virtual string toConfString() const;
   virtual unsigned int size() const { return sizeof(ID); }
 
   // Marshalling and unmarshallng
@@ -40,10 +41,21 @@ public:
 
   // Constructors
   Val_ID(IDPtr theID) : i(theID) {};
+  Val_ID(std::vector<uint32_t> theID);
+  Val_ID(uint32_t theID);
+  Val_ID(uint64_t theID);
+
   virtual ~Val_ID() {};
 
   // Factory
-  static ValuePtr mk(IDPtr theID) { ValuePtr p(new Val_ID(theID)); return p; };
+  static ValuePtr mk(IDPtr theID) 
+    { ValuePtr p(new Val_ID(theID)); return p; };
+  static ValuePtr mk(std::vector<uint32_t> theID) 
+    { ValuePtr p(new Val_ID(theID)); return p; };
+  static ValuePtr mk(uint32_t theID)              
+    { ValuePtr p(new Val_ID(theID)); return p; };
+  static ValuePtr mk(uint64_t theID) 
+    { ValuePtr p(new Val_ID(theID)); return p; };
 
   // Strict comparison
   int compareTo(ValuePtr) const;

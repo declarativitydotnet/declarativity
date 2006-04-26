@@ -31,6 +31,7 @@ public:
   const Value::TypeCode typeCode() const { return Value::OPAQUE; };
   const char *typeName() const { return "opaque"; };
   string toString() const { return b->str(); };
+  virtual string toConfString() const;
   virtual unsigned int size() const { return (b ? b->length() : 0); }
 
   // Marshalling and unmarshallng

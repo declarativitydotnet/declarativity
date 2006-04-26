@@ -23,6 +23,19 @@
 
 using namespace opr;
 
+static string vec_to_string(std::vector<unsigned>& vec)
+{
+  ostringstream oss;
+  oss << "["; 
+  for (std::vector<unsigned>::iterator iter = vec.begin();
+       iter != vec.end(); iter++) {
+    oss << *iter;
+    if (iter + 1 != vec.end()) oss << ", ";
+  }
+  oss << "]";
+  return oss.str();
+}
+
 //
 // Constructor
 //
@@ -31,6 +44,15 @@ Table::Table(string table_name, size_t max_size,
   : name(table_name),
     max_tbl_size(max_size),
     max_lifetime(lifetime),
+    _uniqueAggregates(),
+    _multAggregates()
+{
+}
+
+Table::Table(string table_name, size_t max_size, string lifetime)
+  : name(table_name),
+    max_tbl_size(max_size),
+    max_lifetime(boost::posix_time::duration_from_string(lifetime)),
     _uniqueAggregates(),
     _multAggregates()
 {
@@ -149,7 +171,7 @@ Table::UniqueAggregate
 Table::add_unique_groupBy_agg(unsigned keyFieldNo,
                               std::vector< unsigned > groupByFieldNos,
                               unsigned aggFieldNo,
-                              Table::AggregateFunction* aggregate)
+                              Table::AggregateFunction& aggregate)
 {
   std::vector< unsigned > keyFields;
   keyFields.push_back(keyFieldNo);
@@ -160,7 +182,7 @@ Table::UniqueAggregate
 Table::add_unique_groupBy_agg(std::vector< unsigned > keyFields,
                               std::vector< unsigned > groupByFieldNos,
                               unsigned aggFieldNo,
-                              Table::AggregateFunction* aggregate)
+                              Table::AggregateFunction& aggregate)
 {
   // Get the index
   UniqueIndex* uI = find_uni_index(keyFields);
@@ -182,7 +204,7 @@ Table::MultAggregate
 Table::add_mult_groupBy_agg(unsigned keyFieldNo,
                             std::vector< unsigned > groupByFieldNos,
                             unsigned aggFieldNo,
-                            Table::AggregateFunction* aggregate)
+                            Table::AggregateFunction& aggregate)
 {
   std::vector< unsigned > keyFields;
   keyFields.push_back(keyFieldNo);
@@ -193,7 +215,7 @@ Table::MultAggregate
 Table::add_mult_groupBy_agg(std::vector< unsigned > keyFields,
                             std::vector< unsigned > groupByFieldNos,
                             unsigned aggFieldNo,
-                            Table::AggregateFunction* aggregate)
+                            Table::AggregateFunction& aggregate)
 {
   // Get the index
   MultIndex* mI = find_mul_index(keyFields);

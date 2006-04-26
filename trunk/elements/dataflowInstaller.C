@@ -45,20 +45,31 @@ void DataflowInstaller::install(string fileName) {
   std::cerr << "INSTALLING: " << fileName << std::endl;
         
   string script = readScript(fileName);
-  dict result = extract<dict>(parser_.attr("compile")(plumber_, script));
+  tuple result   = extract<tuple>(parser_.attr("compile")(plumber_, script));
+  dict dataflows = extract<dict>(result[0]);
+  list edits     = extract<list>(result[1]);
 
-  int len = extract<int>(result.attr("__len__")());
+  int ndataflows = extract<int>(dataflows.attr("__len__")());
+  int nedits = extract<int>(edits.attr("__len__")());
 
-  std::cerr << "PARSED " << len << " DATAFLOWS\n";
+  std::cerr << "PARSED " << ndataflows << " DATAFLOWS\n";
+  std::cerr << "PARSED " << nedits << " EDITS\n";
 
-  for (int i = 0; i < len; i++) {
-    tuple t = result.popitem();
+  for (int i = 0; i < ndataflows; i++) {
+    tuple t = dataflows.popitem();
     char* name = extract<char*>(t[0]);
     std::cerr << "DATAFLOW " << i << ": " << name << std::endl;
     t[1].attr("eval_dataflow")();
     Plumber::DataflowPtr d = extract<Plumber::DataflowPtr>(t[1].attr("conf"));
     if (plumber_->install(d) < 0) {
       std::cerr << "DATAFLOW INSTALLATION FAILURE FOR " << name << std::endl;
+      exit(0);
+    }
+  }
+  for (int i = 0; i < nedits; i++) {
+    Plumber::DataflowEditPtr e = extract<Plumber::DataflowEditPtr>(edits[i]);
+    if (plumber_->install(e) < 0) {
+      std::cerr << "EDIT INSTALLATION FAILURE FOR " << e->name() << std::endl;
       exit(0);
     }
   }

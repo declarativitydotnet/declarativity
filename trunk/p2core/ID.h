@@ -56,6 +56,8 @@ public:
 
   string toString() const;
 
+  string toConfString() const;
+
   /** Strict equality */
   REMOVABLE_INLINE bool equals(IDPtr other) const { return compareTo(other) == 0; }
 

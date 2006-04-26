@@ -24,6 +24,13 @@ class OperStr : public opr::OperCompare<Val_Str> {
 };
 const opr::Oper* Val_Str::oper_ = new OperStr();
 
+string Val_Str::toConfString() const
+{
+  ostringstream conf;
+  conf << "Val_Str(\"" << s << "\")";
+  return conf.str();
+}
+
 //
 // Marshal a string
 // 

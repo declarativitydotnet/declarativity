@@ -38,6 +38,13 @@ ValuePtr Val_Int64::xdr_unmarshal( XDR *x )
   return mk(i);
 }
 
+string Val_Int64::toConfString() const
+{
+  ostringstream conf;
+  conf << "Val_Int64(" << i << ")";
+  return conf.str();
+}
+
 //
 // Casting
 //

@@ -76,6 +76,8 @@ public:
 
   string toString() const;
 
+  string toConfString() const;
+
   /** Strict comparison, one field at a time.  Only compare user-visible
       (i.e., enumerable via tuple[fieldNo]) fields. For instance, do not
       compare pointers, and do not compare tuple IDs.  For tuples of

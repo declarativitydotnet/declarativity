@@ -161,6 +161,8 @@ int Udp::Tx::initialize()
 Udp::Udp(string name,
          u_int16_t port, u_int32_t addr) 
   : _name(name),
+    _port(port),
+    _addr(addr),
     rx(new Udp::Rx(_name, *this)),
     tx(new Udp::Tx(_name, *this))
 {

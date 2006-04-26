@@ -37,6 +37,7 @@ public:
   // The type name
   const char *typeName() const { return "time"; };
 
+  virtual string toConfString() const;
   virtual string toString() const {
     ostringstream sb;
     sb << "[" << to_simple_string(t) << "]";
@@ -50,12 +51,18 @@ public:
   static ValuePtr xdr_unmarshal( XDR *x );
 
   // Constructors
+  Val_Time(string theTime) : 
+    t(boost::posix_time::time_from_string(theTime)) {};
   Val_Time(boost::posix_time::ptime theTime) : t(theTime) {};
   Val_Time(struct timespec theTime);
 
   // Factory
-  static ValuePtr mk(boost::posix_time::ptime theTime) { return ValuePtr(new Val_Time(theTime)); };
-  static ValuePtr mk(struct timespec ts) { return ValuePtr(new Val_Time(ts)); };
+  static ValuePtr mk(boost::posix_time::ptime theTime) 
+    { return ValuePtr(new Val_Time(theTime)); };
+  static ValuePtr mk(struct timespec ts) 
+    { return ValuePtr(new Val_Time(ts)); };
+  static ValuePtr mk(string ts) 
+    { return ValuePtr(new Val_Time(ts)); };
 
   // Strict comparison
   int compareTo(ValuePtr) const;
@@ -84,6 +91,8 @@ public:
   // The type name
   const char *typeName() const { return "time_duration"; };
 
+  virtual string toConfString() const;
+
   virtual string toString() const {
     ostringstream sb;
     sb << "[" << to_simple_string(td) << "]";
@@ -100,7 +109,8 @@ public:
   Val_Time_Duration(boost::posix_time::time_duration theDuration) : td(theDuration) {};
 
   // Factory
-  static ValuePtr mk(boost::posix_time::time_duration theDuration) { return ValuePtr(new Val_Time_Duration(theDuration)); };
+  static ValuePtr mk(boost::posix_time::time_duration theDuration) 
+    { return ValuePtr(new Val_Time_Duration(theDuration)); };
 
   // Strict comparison
   int compareTo(ValuePtr) const;

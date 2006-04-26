@@ -58,6 +58,13 @@ string Val_Double::toString() const
   return sb.str();
 }
 
+string Val_Double::toConfString() const
+{
+  ostringstream conf;
+  conf << "Val_Double(" << d << ")";
+  return conf.str();
+}
+
 //
 // Marshalling and unmarshallng
 //

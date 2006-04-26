@@ -78,6 +78,21 @@ string Tuple::toString() const
   return sb.str();
 }
 
+string Tuple::toConfString() const
+{ 
+  ostringstream sb;
+  
+  sb << "<"; 
+  for(size_t i=0; i < fields.size(); i++) {
+    sb << fields[i]->toConfString();
+    if (i != fields.size() - 1) {
+      sb << ", ";
+    }
+  }
+  sb << ">";
+  return sb.str();
+}
+
 /** Compare this tuple to another.  If we have different numbers of
     fields, compare the field counts.  If we have the same numbers of
     fields, compare individual fields from first onwards. */

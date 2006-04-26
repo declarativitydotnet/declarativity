@@ -28,6 +28,7 @@ class Val_IP_ADDR : public Value {
   const Value::TypeCode typeCode() const { return Value::IP_ADDR; };
   const char *typeName() const { return "ip_addr"; };
   string toString() const { return _s; };
+  virtual string toConfString() const;
   virtual unsigned int size() const { return _s.length(); }
   
   // Marshalling and unmarshallng

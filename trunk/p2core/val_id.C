@@ -47,6 +47,25 @@ class OperID : public opr::OperCompare<Val_ID> {
 };
 const opr::Oper* Val_ID::oper_ = new OperID();
 
+Val_ID::Val_ID(std::vector<uint32_t> theID)
+{
+  uint32_t w[ID::WORDS];
+  assert (theID.size() == ID::WORDS);
+  for (unsigned j = 0; j < ID::WORDS; j++) {
+    w[j] = theID.at(j);
+  }
+  i = ID::mk(w);
+}
+
+Val_ID::Val_ID(uint32_t theID) 
+{
+  i = ID::mk(theID);
+}
+
+Val_ID::Val_ID(uint64_t theID)
+{
+  i = ID::mk(theID);
+}
 //
 // Marshalling and unmarshallng
 //
@@ -58,6 +77,13 @@ void Val_ID::xdr_marshal_subtype( XDR *x )
 ValuePtr Val_ID::xdr_unmarshal( XDR *x )
 {
   return Val_ID::mk(ID::xdr_unmarshal(x));
+}
+
+string Val_ID::toConfString() const
+{
+  ostringstream conf;
+  conf << "Val_ID(" << i->toConfString() << ")";
+  return conf.str();
 }
 
 

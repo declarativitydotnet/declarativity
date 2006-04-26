@@ -27,6 +27,12 @@ void Val_Opaque::xdr_marshal_subtype( XDR *x )
   warn << "Cannot marshal an OPAQUE value\n";
 }
 
+string Val_Opaque::toConfString() const
+{
+  warn << "Cannot get conf string for an OPAQUE value\n";
+  return "";
+}
+
 //
 // Casting
 //

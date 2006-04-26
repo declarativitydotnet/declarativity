@@ -403,19 +403,19 @@ class intAggTest {
 public:
   intAggTest(std::string,
              int, int,
-             Table::AggregateFunction*,
+             Table::AggregateFunction&,
              int);
   std::string _script;
   int _keyFieldNo;
   int _aggFieldNo;
-  Table::AggregateFunction * _function;
+  Table::AggregateFunction& _function;
   int _line;
 };
 
 intAggTest::intAggTest(std::string script,
                        int keyFieldNo,
                        int aggFieldNo,
-                       Table::AggregateFunction * function,
+                       Table::AggregateFunction&  function,
                        int line)
   : _script(script),
     _keyFieldNo(keyFieldNo),
@@ -760,7 +760,7 @@ testTables::testAggregates()
     intAggTest("i<0,10>;u<0,10>;i<0,15>;i<0,5>;u<0,5>;d<0,5>;u<0,10>;",
                0, // first field is indexed
                1, // second field is aggregated
-               &Table::AGG_MIN, // aggregate function is MIN
+               Table::agg_min(), // aggregate function is MIN
                __LINE__),
 
     // The following tests script for MIN expects the sequence
@@ -770,15 +770,15 @@ testTables::testAggregates()
     // UPDATE <0, 5>
     // First field is indexed, second field is aggregated
     intAggTest("i<0,10>;u<0,10>;i<0,5>;u<0,5>;",
-               0, 1, &Table::AGG_MIN,
+               0, 1, Table::agg_min(),
                __LINE__),
 
     intAggTest("i<0,10>;u<0,10>;i<0,5>;u<0,5>;i<0,20>;i<0,30>;",
-               0, 1, &Table::AGG_MIN,
+               0, 1, Table::agg_min(),
                __LINE__),
 
     intAggTest("i<0,10>;u<0,10>;i<0,5>;u<0,5>;i<0,20>;i<0,3>;u<0,3>;i<0,4>;",
-               0, 1, &Table::AGG_MIN,
+               0, 1, Table::agg_min(),
                __LINE__),
 
 
@@ -786,19 +786,19 @@ testTables::testAggregates()
     // MAX
 
     intAggTest("i<0,10>;u<0,10>;i<0,5>;",
-               0, 1, &Table::AGG_MAX,
+               0, 1, Table::agg_max(),
                __LINE__),
 
     intAggTest("i<0,10>;u<0,10>;i<0,15>;u<0,15>;i<0,3>;",
-               0, 1, &Table::AGG_MAX,
+               0, 1, Table::agg_max(),
                __LINE__),
 
     intAggTest("i<0,10>;u<0,10>;i<0,5>;i<0,15>;u<0,15>;",
-               0, 1, &Table::AGG_MAX,
+               0, 1, Table::agg_max(),
                __LINE__),
 
     intAggTest("i<0,10>;u<0,10>;i<0,10>;u<0,10>;",
-               0, 1, &Table::AGG_MAX,
+               0, 1, Table::agg_max(),
                __LINE__)
 
   };

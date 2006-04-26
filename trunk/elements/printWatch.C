@@ -25,6 +25,18 @@ PrintWatch::PrintWatch(string prefix, std::set<string> tableNames,
   _tableNames = tableNames;  
 }
 
+PrintWatch::PrintWatch(string prefix, std::vector<string> tableNames, 
+		       FILE* output)
+  : Element(prefix, 1, 1),
+    _prefix(prefix), _output(output)
+{
+  for (std::vector<string>::iterator iter = tableNames.begin();
+       iter != tableNames.end(); iter++) {
+    _tableNames.insert(*iter);
+  }
+}
+
+
 PrintWatch::~PrintWatch()
 {
 }

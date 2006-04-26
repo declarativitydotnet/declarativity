@@ -135,6 +135,10 @@ public:
   // implementations
   virtual const ValuePtr toMe(ValuePtr other) const = 0;
 
+  /** Method should return a string representation of the
+   *  value's constructor and initialization arguments. */
+  virtual std::string toConfString() const =0;
+
   // Conversions to strings: mandatory. 
   virtual std::string toString() const =0;
   string toTypeString() {

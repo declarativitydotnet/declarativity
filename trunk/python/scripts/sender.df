@@ -42,11 +42,14 @@ macro RateConn(name, port) {
 
 
 dataflow Send1 {
+  let q = Queue();
+  let n = call q.element( ).class_name( );
+
   TimedPushSource("source", 1)                                           -> 
   PelTransform("sequence_slot", "0 pop 0 pop swallow unboxPop")            ->
   PelTransform("source_address", ""localhost:10001" pop swallow unboxPop") ->
   PelTransform("destAddr", ""localhost:10000" pop swallow unboxPop")       ->
-  Queue -> Sequence -> 
+  q -> Sequence -> 
   Print("print_send") ->
   RateConn("conn", 10001);
 }

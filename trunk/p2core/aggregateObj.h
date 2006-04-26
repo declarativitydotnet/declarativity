@@ -21,7 +21,7 @@ Table::AggregateObj< _Index >::AggregateObj(std::vector< unsigned > keyFields,
                                             _Index* index,
                                             std::vector< unsigned > groupByFields,
                                             unsigned aggField,
-                                            Table::AggregateFunction* aggregateFn)
+                                            Table::AggregateFunction& aggregateFn)
   : _keyFields(keyFields),
     _uIndex(index),
     _groupByFields(groupByFields),
@@ -59,7 +59,7 @@ Table::AggregateObj< _Index >::update(TuplePtr t)
   }
   bool started = false;
   TuplePtr aMatchingTuple = TuplePtr();
-  _aggregateFn->reset();
+  _aggregateFn.reset();
   for (_Iterator i = _uIndex->lower_bound(vkey);
        i != _uIndex->upper_bound(vkey);
        i++) {
@@ -78,11 +78,11 @@ Table::AggregateObj< _Index >::update(TuplePtr t)
     if (groupByMatch) {
       if (!started) {
         // Tuple matches group by fields.  Process it
-        _aggregateFn->first((*tuple)[_aggField]);
+        _aggregateFn.first((*tuple)[_aggField]);
         aMatchingTuple = tuple;
         started = true;
       } else {
-        _aggregateFn->process((*tuple)[_aggField]);
+        _aggregateFn.process((*tuple)[_aggField]);
       }
     }
   }
@@ -96,7 +96,7 @@ Table::AggregateObj< _Index >::update(TuplePtr t)
     
     // And notify no one
   } else {
-    ValuePtr result = _aggregateFn->result();
+    ValuePtr result = _aggregateFn.result();
     assert(result.get() != NULL);
 
     // Is this a new aggregate for these group-by values?

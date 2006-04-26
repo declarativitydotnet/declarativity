@@ -1790,7 +1790,7 @@ void createNode(string myAddress,
   std::vector< unsigned > groupBy;
   groupBy.push_back(1);
   Table::MultAggregate successorCountAggregate =
-    successorTable->add_mult_groupBy_agg(1, groupBy, 1, &Table::AGG_COUNT);
+    successorTable->add_mult_groupBy_agg(1, groupBy, 1, Table::agg_count());
 
   // The next finger fix table starts out with a single tuple that never
   // expires and is only replaced

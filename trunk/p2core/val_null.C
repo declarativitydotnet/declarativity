@@ -34,6 +34,13 @@ const opr::Oper* Val_Null::oper_ = new OperNull();
 //
 ValuePtr Val_Null::singleton = ValuePtr(new Val_Null());
 
+string Val_Null::toConfString() const
+{
+  ostringstream conf;
+  conf << "Val_Null()";
+  return conf.str();
+}
+
 //
 // Marshalling and unmarshallng
 //

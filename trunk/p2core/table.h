@@ -73,6 +73,8 @@ public:
        negative seconds, it means tuples never expire. */
   Table(string tableName, size_t max_size,
         boost::posix_time::time_duration& lifetime);
+
+  Table(string tableName, size_t max_size, string lifetime);
   
   /** Create a new table with tuples that do not expire. */
   Table(string tableName, size_t max_size);
@@ -266,7 +268,7 @@ public:
                  _Index*,
                  std::vector< unsigned >,
                  unsigned,
-                 AggregateFunction*);
+                 AggregateFunction&);
     
     void addListener(Listener);
     
@@ -290,7 +292,7 @@ public:
     unsigned _aggField;
 
     /** Which aggregate function? */
-    AggregateFunction* _aggregateFn;
+    AggregateFunction& _aggregateFn;
 
     /** My listeners */
     std::vector< Listener > _listeners;
@@ -350,12 +352,12 @@ public:
   UniqueAggregate add_unique_groupBy_agg(unsigned keyFieldNo,
                                          std::vector< unsigned > groupByFieldNos,
                                          unsigned aggFieldNo,
-                                         AggregateFunction* aggregate);
+                                         AggregateFunction& aggregate);
 
   UniqueAggregate add_unique_groupBy_agg(std::vector< unsigned >,
                                          std::vector< unsigned >,
                                          unsigned,
-                                         AggregateFunction*);
+                                         AggregateFunction&);
 
   /** Create a group-by aggregation on a mult index.  Every time the
       table is updated, the aggregate is updated as well, creating
@@ -363,12 +365,12 @@ public:
   MultAggregate add_mult_groupBy_agg(unsigned,
                                      std::vector< unsigned >,
                                      unsigned,
-                                     AggregateFunction*);
+                                     AggregateFunction&);
 
   MultAggregate add_mult_groupBy_agg(std::vector< unsigned >,
                                      std::vector< unsigned >,
                                      unsigned,
-                                     AggregateFunction*);
+                                     AggregateFunction&);
 
 
 
@@ -486,6 +488,11 @@ private:
   UniqueIndex* find_uni_index(std::vector<unsigned>&); 
   MultIndex*   find_mul_index(std::vector<unsigned>&); 
 
+  /** My aggregator functions */
+  static AggregateFunctionMIN AGG_MIN;
+  static AggregateFunctionMAX AGG_MAX;
+  static AggregateFunctionCOUNT AGG_COUNT;
+
 public:
   /** Lookup in a unique index */
   UniqueIterator lookup(unsigned field, ValuePtr key);
@@ -506,11 +513,9 @@ public:
   TuplePtr remove(unsigned field, ValuePtr key);
   TuplePtr remove(std::vector<unsigned> fields, std::vector<ValuePtr> keys);
 
-  /** My aggregator functions */
-  static AggregateFunctionMIN AGG_MIN;
-  static AggregateFunctionMAX AGG_MAX;
-  static AggregateFunctionCOUNT AGG_COUNT;
-
+  static AggregateFunction& agg_min()   { return AGG_MIN; }
+  static AggregateFunction& agg_max()   { return AGG_MAX; }
+  static AggregateFunction& agg_count() { return AGG_COUNT; }
   
 };
 

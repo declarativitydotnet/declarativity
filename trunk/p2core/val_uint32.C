@@ -24,6 +24,13 @@
 
 const opr::Oper* Val_UInt32::oper_ = new opr::OperImpl<Val_UInt32>();
 
+string Val_UInt32::toConfString() const
+{
+  ostringstream conf;
+  conf << "Val_UInt32(" << i << ")";
+  return conf.str();
+}
+
 //
 // Marshalling and unmarshallng
 //

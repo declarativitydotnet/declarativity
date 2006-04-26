@@ -22,6 +22,7 @@ libp2pythonelements_la_SOURCES = \
 	csvparser.cpp \
 	dataflowInstaller.cpp \
 	delete.cpp \
+	lookup.cpp \
 	demux.cpp \
 	discard.cpp \
 	dupElim.cpp \

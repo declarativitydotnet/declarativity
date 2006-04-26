@@ -31,6 +31,7 @@ public:
   const Value::TypeCode typeCode() const { return Value::TUPLE; };
   const char *typeName() const { return "tuple"; };
   string toString() const { return t->toString(); };
+  virtual string toConfString() const;
   virtual unsigned int size() const { return (t ? t->size() : 0); }
 
   // Marshalling and unmarshallng

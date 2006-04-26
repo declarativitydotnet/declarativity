@@ -98,6 +98,12 @@ public:
   //
   Udp(string, u_int16_t port=0, u_int32_t addr = INADDR_ANY);
 
+  string toConfString() const { 
+    ostringstream oss;
+    oss << "Udp(\""<<_name<<"\", "<<_port<<", "<<_addr<<")"; 
+    return oss.str();
+  }
+
   // Accessing the individual elements
   boost::shared_ptr< Udp::Rx > get_rx() { return rx; };
   boost::shared_ptr< Udp::Tx > get_tx() { return tx; };
@@ -108,6 +114,9 @@ private:
 
   // My name
   string _name;
+
+  u_int16_t _port;
+  u_int32_t _addr;
 
   // Elements 
   boost::shared_ptr< Rx > rx;

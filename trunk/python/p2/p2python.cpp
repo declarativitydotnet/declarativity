@@ -4,7 +4,11 @@
 *
 */
 
+#include <vector>
+#include <string>
 #include <boost/python.hpp>
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+
 using namespace boost::python;
 
 void export_aggregate();
@@ -13,6 +17,7 @@ void export_csvparser();
 void export_dataflowInstaller();
 // void export_ddemux();
 void export_delete();
+void export_lookup();
 void export_demux();
 void export_discard();
 void export_dupElim();
@@ -62,11 +67,13 @@ void export_skr();
 void export_snetsim();
 void export_tman();
 void export_tupleseq();
+void export_udp();
 void export_udp2();
 void export_elementSpec();
 void export_loggerI();
 void export_plumber();
 void export_tuple();
+void export_table();
 void export_value();
 void export_val_double();
 void export_val_id();
@@ -83,11 +90,22 @@ void export_val_uint64();
 
 BOOST_PYTHON_MODULE(libp2python)
 {
+  class_<std::vector<std::string>, boost::shared_ptr<std::vector<std::string> > >("StrVec")
+    .def(vector_indexing_suite<std::vector<std::string> >())
+  ;
+  class_<std::vector<unsigned>, boost::shared_ptr<std::vector<unsigned> > >("IntVec")
+    .def(vector_indexing_suite<std::vector<unsigned> >())
+  ;
+
+  class_<boost::function<void (void)> >("b_cbv", no_init)
+  ;
+
   export_element();
   export_elementSpec();
   export_loggerI();
   export_plumber();
   export_tuple();
+  export_table();
   export_value();
   export_val_double();
   export_val_id();
@@ -108,6 +126,7 @@ BOOST_PYTHON_MODULE(libp2python)
   export_dataflowInstaller();
   // export_ddemux();
   export_delete();
+  export_lookup();
   export_demux();
   export_discard();
   export_dupElim();
@@ -156,5 +175,6 @@ BOOST_PYTHON_MODULE(libp2python)
   export_snetsim();
   export_tman();
   export_tupleseq();
+  export_udp();
   export_udp2();
 }

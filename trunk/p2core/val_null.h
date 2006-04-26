@@ -28,6 +28,7 @@ public:
   const Value::TypeCode typeCode() const { return Value::NULLV; };
   const char *typeName() const { return "null"; };
   string toString() const { return "NULL"; };
+  virtual string toConfString() const;
   virtual unsigned int size() const { return sizeof(singleton); }
 
   // Marshalling and unmarshallng

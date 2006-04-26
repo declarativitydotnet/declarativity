@@ -10,5 +10,6 @@ void export_aggwrap()
      .def("processing", &Aggwrap::processing)
      .def("flow_code",  &Aggwrap::flow_code)
      .def("registerGroupbyField", &Aggwrap::registerGroupbyField)
+     .def("get_comp_cb", &Aggwrap::get_comp_cb)
    ;
 }

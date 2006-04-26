@@ -58,22 +58,49 @@ class Dataflow:
         if arg[0] == 'var':
             arg = self.lookup([], arg[1])
             if not arg: 
-                error("Variable arguement does not exist")
-            if not flags["debug"] and not isinstance(arg, libp2python.ValueVec):
-                error("Variable arguement must be of type ValueVec")
+                error("Variable argument does not exist")
             return arg
         return arg[1]
-    def eval_element(self, type, args):
+    def eval_function(self, var, functions):
+        if flags["debug"]: 
+            fn_str = ""
+            for f in functions:
+                fn_str.append(self.eval_function_helper(var, f[0], f[1])) 
+                var = ""
+            return fn_str
+        obj = self.lookup([], var) 
+        if not obj: 
+            obj = getattr(libp2python, var)	# static class method? 
+        if not obj: 
+            error("Unable to locate object variable %s" % var)	# Give up
+        for f in functions:
+            obj = self.eval_function_helper(obj, f[0], f[1])
+        if isinstance(obj, libp2python.Element):
+            elementSpec = self.conf.addElement(obj)
+            if not elementSpec: error("Unable to add element %s" % (obj.class_name()))
+            return elementSpec
+        return obj
+    def eval_function_helper(self, context, func, args):
+        arguments = []
+        for a in args: 
+            arguments.append(self.eval_arg(a)) 
+        if flags["debug"]: 
+            return context + "." + func + str(arguments)
+        else: 
+            return apply(getattr(context, func), tuple(arguments))
+    def eval_object(self, type, args):
         arguments = []
         for a in args: 
             arguments.append(self.eval_arg(a)) 
         if flags["debug"]: return type + str(arguments)
         else: 
-            element = apply(getattr(libp2python, type), tuple(arguments))
-            if not element: error("Unable to create element %s %s" % (type, str(arguments)))
-            elementSpec = self.conf.addElement(element)
-            if not elementSpec: error("Unable to add element %s %s" % (type, str(arguments)))
-            return elementSpec
+            obj = apply(getattr(libp2python, type), tuple(arguments))
+            if not obj: error("Unable to create object %s %s" % (type, str(arguments)))
+            if isinstance(obj, libp2python.Element):
+                elementSpec = self.conf.addElement(obj)
+                if not elementSpec: error("Unable to add element %s %s" % (type, str(arguments)))
+                return elementSpec
+            return obj
     def operation(self, oper, name, port):
         error("Operations only supported under edits.")
     def eval_ref(self, d, r):
@@ -161,7 +188,7 @@ class Macro:
                 macro.eval_macro(c[2], d)
             else: 
                 self.apply_args(c[2], actuals)
-                c[1] = d.eval_element(c[1],c[2])
+                c[1] = d.eval_object(c[1],c[2])
             if self.input and self.input == c[0]: 
                 self.input = c[1]
                 input_resolved = True
@@ -194,7 +221,6 @@ class Strand:
     def element(self, e):
         self.elements.append(e)
     def print_strand(self):
-        print "STRAND ELEMENTS: "
         for e in self.elements:
             if isinstance(e[1], Macro):
                 e[1].print_macro()    
@@ -213,7 +239,7 @@ class Strand:
                     macro.eval_macro(e[2], d)
                     elements.append([i, macro, o]) 
                 else:
-                    elements.append([i, d.eval_element(e[1],e[2]), o])
+                    elements.append([i, d.eval_object(e[1],e[2]), o])
             elif e[0] == 'var':
                 var = d.lookup(self.context, e[1])
                 if not var: error("Unable to resolve variable %s in dataflow %s." % (e[1], d.name))
@@ -225,8 +251,8 @@ class Strand:
         # Hook everyone together
         if not flags["debug"]:
             for i in range(len(self.elements)-1):
-                f = self.elements[i]
-                t = self.elements[i+1]
+                f = copy.copy(self.elements[i])
+                t = copy.copy(self.elements[i+1])
                 if isinstance(f[1], Macro): 
                     f[1] = f[1].output
                 if isinstance(t[1], Macro): 
@@ -251,12 +277,13 @@ class Strand:
 parser P2Dataflow:
     token END:   "\."
     token FLOAT: "[0-9]*\.[0-9]+"
-    token NUM:   "[0-9]+"
+    token NUM:   "-?[0-9]+"
+    token HEX:   "0x[a-fA-F0-9]+"
     token VAL:   "Val_[a-zA-Z0-9_]*"
-    token VAR:   "[a-z][a-zA-Z0-9_]*"
-    token TYPE:  "[A-Z][a-zA-Z0-9_]*"
+    token VAR:   "[a-z][a-zA-Z0-9\_]*"
+    token TYPE:  "[A-Z][a-zA-Z0-9\_]*"
     token LINK:  r"->"
-    token STR:   "[^ ][\" '\$\._A-Za-z0-9\\\:]*"
+    token STR:   "\"[\" \(\)\[\]'\$\._A-Za-z0-9\\\:\-\+\*=<>]*\""
     ignore:      "[ \r\t\n]+"
     ignore:      r'#.*\r?\n'    # DL comments; sh/perl style
 
@@ -270,7 +297,7 @@ parser P2Dataflow:
     rule macro: "macro" TYPE {{ m = Macro(TYPE) }}
                   formals {{ if len(formals) == 0 or formals[0] != 'name': error("MACRO %s: First formal of  must be 'name'." % TYPE) }} 
                           {{ m.formals = formals }} "{"                            
-                  (local_def<<m.context>>       {{ pass }})* 
+                  (macro_def<<m.context>>       {{ pass }})* 
                   (  "input"  VAR ";"           {{ m.input = VAR }} 
                    | "output" VAR ";"           {{ m.output = VAR }} )*
                   (strand<<m.context>>          {{ m.strand(strand) }} )*
@@ -280,6 +307,8 @@ parser P2Dataflow:
                         (global_def<<d>> {{ pass }}
                          |
                          strand<<[]>>    {{ d.strand(strand) }}
+                         |
+                         call<<d>> ";"   {{ pass }}
                         )*
                     "}"                  {{ dataflows[TYPE] = d }}
 
@@ -289,22 +318,28 @@ parser P2Dataflow:
                          operation<<e>>  {{ pass }}
                          | 
                          strand<<[]>>    {{ e.strand(strand) }}
+                         |
+                         call<<e>> ";"   {{ pass }}
                         )*
                     "}"                  {{ edits.append(e) }}
 
-    rule local_def<<C>>: "let" VAR "=" TYPE args ";" {{ C.append([VAR, TYPE, args]) }}
+    rule macro_def<<C>>: "let" VAR "=" TYPE args ";" {{ C.append([VAR, TYPE, args]) }}
 
     rule global_def<<D>>: "let" VAR "=" 
                           (TYPE args
                                {{ e = D.lookup([], TYPE) }}
                                {{ if e:     e = copy.deepcopy(e) }}
                                {{ if e:     e.eval_macro(args, D)   }}
-                               {{ if not e: e = D.eval_element(TYPE,args) }}
+                               {{ if not e: e = D.eval_object(TYPE,args) }}
                                {{ D.globalvars[VAR] = e }}
                            |
-                           values {{ D.globalvars[VAR] = values }}
+                           vector    {{ D.globalvars[VAR] = vector }}
+                           |
+                           tuple     {{ D.globalvars[VAR] = tuple }}
+                           |
+                           call<<D>> {{ D.globalvars[VAR] = call }}
                           ) 
-                          ";" 
+                          ";"
 
     rule operation<<D>>: "add"    (port VAR {{ return D.operation('add_input', VAR, port) }}
                                    |
@@ -313,6 +348,12 @@ parser P2Dataflow:
                                    |
                                    VAR port {{ return D.operation('remove_output', VAR, port) }}) 
                          ";"
+
+    rule call<<D>>: "call" callType     {{ obj = callType }} {{ functions = [] }}
+                    ("\." callType args {{ functions.append([callType, args]) }})+
+                                        {{ return D.eval_function(obj, functions) }}
+
+    rule callType: (VAR {{ return VAR }} | TYPE {{ return TYPE}})
 
     rule strand<<C>>: term {{ outp = 0 }} {{ s = Strand(C) }}
                            [port {{ outp = port }}] {{ s.element([-1, term, outp]) }}
@@ -344,33 +385,54 @@ parser P2Dataflow:
 
     rule args: "\("           {{ a = [] }}
                  [arg         {{ a.append(arg) }}           
-                   (',' arg   {{ a.append(arg) }})*]
+                   ("," arg   {{ a.append(arg) }})*]
                 "\)"          {{ return a }}
 
-    rule arg: (STR      {{ if STR[0] == "\"": STR = STR[1:] }} 
-                        {{ if STR[-1]== "\"": STR = STR[:-1] }}
-                        {{ return ['str', str(STR)] }}
+    rule arg: (STR        {{ if STR[0] == "\"": STR = STR[1:] }} 
+                          {{ if STR[-1]== "\"": STR = STR[:-1] }}
+                          {{ return ['str', str(STR)] }}
                |
-               NUM      {{ return ['num', int(NUM)] }} 
+               NUM        {{ return ['num', int(NUM)] }} 
                |
-               FLOAT    {{ return ['float', float(FLOAT)] }} 
+               HEX        {{ return ['hex', HEX] }} 
                |
-               VAL args {{ return ['val', eval_value(VAL, args)] }} 
+               FLOAT      {{ return ['float', float(FLOAT)] }} 
                |
-               values   {{ return ['vals', values] }} 
+               VAL args   {{ return ['val', eval_value(VAL, args)] }} 
                |
-               VAR      {{ return ['var', VAR] }} )
+               vector     {{ return ['vec', vector] }} 
+               |
+               tuple      {{ return ['tup', tuple] }} 
+               |
+               VAR        {{ return ['var', VAR] }} )
 
     rule formals: "\("        {{ f = [] }}
                  [VAR         {{ f.append(VAR) }}           
                    (',' VAR   {{ f.append(VAR) }})*]
                 "\)"          {{ return f}}
 
-    rule values: "{"             {{ if flags["debug"]: v = [] }} 
-                                 {{ if not flags["debug"]: v = libp2python.ValueVec() }}
-                 [VAL args       {{ v.append(eval_value(VAL, args)) }}           
-                   (',' VAL args {{ v.append(eval_value(VAL, args)) }})*]
-                 "}"             {{ return v}}
+    rule vector: "{" {{ v = [] }} 
+                 [
+                   (VAL args       {{ if not flags["debug"]: v = libp2python.ValueVec() }}
+                                   {{ v.append(eval_value(VAL, args)) }}           
+                     (',' VAL args {{ v.append(eval_value(VAL, args)) }})*
+                    |
+                    NUM       {{ if not flags["debug"]: v = libp2python.IntVec() }}
+                              {{ v.append(int(NUM)) }}
+                     (',' NUM {{ v.append(int(NUM)) }})*
+                    |
+                    STR       {{ if not flags["debug"]: v = libp2python.StrVec() }}
+                              {{ v.append(STR) }}           
+                     (',' STR {{ v.append(STR) }})*
+                   )
+                 ]
+                 "}" {{ return v}}
+
+    rule tuple: "<"              {{ if flags["debug"]:     t = [] }} 
+                                 {{ if not flags["debug"]: t = libp2python.Tuple() }}
+                 [VAL args       {{ t.append(eval_value(VAL, args)) }}           
+                   (',' VAL args {{ t.append(eval_value(VAL, args)) }})*]
+                 ">"             {{ return t}}
 
 %%
 
@@ -378,7 +440,7 @@ def compile(p, s):
     global plumber
     plumber = p
     parse('module', s)
-    return dataflows
+    return dataflows, edits
 
 def debug():
     if flags["debug"]:
