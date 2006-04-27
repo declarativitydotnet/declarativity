@@ -238,7 +238,7 @@ void ElementSpec::remove_output(ValuePtr portKey)
 
 
 ElementSpec::Port::Port(Element::Processing personality)
-  : _processing(personality)
+  : _processing(personality), _check(true)
 {
   assert(ElementSpec::processingCodeString(_processing)[0] != 'I');
 }
@@ -423,11 +423,10 @@ ElementSpecPtr ElementSpec::Port::counterpart() const
   return _counterpart;
 }
 
-int ElementSpec::Port::counterpart(ElementSpecPtr element, HookupPtr hookup) 
+int ElementSpec::Port::counterpart(ElementSpecPtr element) 
 {
   if (_counterpart == 0) {
     _counterpart = element;
-    _hookup = hookup;
     return 0;
   } else {
     return 1;

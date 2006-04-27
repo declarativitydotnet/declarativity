@@ -110,11 +110,10 @@ static string conf_call(T *obj, string fn, bool element=true) {
   return oss.str();
 }
 
-static string conf_hookup(ElementSpecPtr to, int toPort, ElementSpecPtr from, int fromPort)
+template <typename P1, typename P2>
+static string conf_hookup(string toVar, P1 toPort, string fromVar, P2 fromPort)
 {
   ostringstream oss;
-  string toVar   = conf_var(to.get());
-  string fromVar = conf_var(from.get());
   
   oss << "\t" << toVar << "[" << toPort << "] -> [" << fromPort << "]" << fromVar << ";" 
       << std::endl; 
@@ -236,7 +235,7 @@ Plmb_ConfGen::Plmb_ConfGen(OL_Context* ctxt,
 			 bool debug, 
 			 bool cc,
 			 string filename,
-                         std::ostream &s) :_conf(conf), _p2dl(s)
+                         std::ostream &s, bool e) :_conf(conf), _p2dl(s), _edit(e)
 {
   _ctxt = ctxt;
   _dups = dups;
@@ -248,7 +247,12 @@ Plmb_ConfGen::Plmb_ConfGen(OL_Context* ctxt,
   _isPeriodic = false;
   _currentPositionIndex = -1;
 
-  _p2dl << "dataflow " << conf->name() << " {\n";
+  if (_edit) {
+    _p2dl << "edit " << conf->name() << " {\n";
+  }
+  else {
+    _p2dl << "dataflow " << conf->name() << " {\n";
+  }
 }
 
 
@@ -262,20 +266,20 @@ Plmb_ConfGen::~Plmb_ConfGen()
 // if running only one, nodeID is the local host name,
 void Plmb_ConfGen::configurePlumber(boost::shared_ptr< Udp > udp, string nodeID)
 {
-  conf_assign(udp.get(), udp->toConfString()); 
-
-  if (!_cc) {
-    _ccTx.reset();
-    _ccRx.reset();
-  } else {
-    _ccTx 
-      = _conf->addElement(ElementPtr(new CCT("Transmit CC" + nodeID, 1, 2048)));
-    _p2dl << conf_assign(_ccTx.get(), 
-                         conf_function("CCT", "transmitCC", 1, 2048));
-    _ccRx 
-      = _conf->addElement(ElementPtr(new CCR("CC Receive" + nodeID, 2048, 1)));
-    _p2dl << conf_assign(_ccRx.get(), 
-                         conf_function("CCR", "receiveCC", 2048, 1));
+  if (!_edit) {
+    if (!_cc) {
+      _ccTx.reset();
+      _ccRx.reset();
+    } else {
+      _ccTx 
+        = _conf->addElement(ElementPtr(new CCT("Transmit CC" + nodeID, 1, 2048)));
+      _p2dl << conf_assign(_ccTx.get(), 
+                           conf_function("CCT", "transmitCC", 1, 2048));
+      _ccRx 
+        = _conf->addElement(ElementPtr(new CCR("CC Receive" + nodeID, 2048, 1)));
+      _p2dl << conf_assign(_ccRx.get(), 
+                           conf_function("CCR", "receiveCC", 2048, 1));
+    }
   }
 
   // iterate through all the rules and process them
@@ -301,11 +305,17 @@ void Plmb_ConfGen::configurePlumber(boost::shared_ptr< Udp > udp, string nodeID)
     _currentRule = _ctxt->getRules()->at(k);    
     processRule(_currentRule, nodeID);
   }
-  _p2dl << conf_assign(udp.get(), udp->toConfString());
 
-  ElementSpecPtr receiveMux = genSendElements(udp, nodeID); 
-  _currentElementChain.clear();
-  genReceiveElements(udp, nodeID, receiveMux);
+  if (!_edit) {
+    _p2dl << conf_assign(udp.get(), udp->toConfString());
+
+    ElementSpecPtr receiveMux = genSendElements(udp, nodeID); 
+    _currentElementChain.clear();
+    genReceiveElements(udp, nodeID, receiveMux);
+  }
+  else {
+    genEditFinalize(nodeID); 
+  }
 
   _p2dl << "\n} # End of dataflow " << _conf->name() << "\n.";
 }
@@ -484,7 +494,106 @@ void Plmb_ConfGen::processRule(OL_Context::Rule *r,
   _udpSendersPos.push_back(_currentPositionIndex); 
 }
 
+//////////////////// Dataflow Edit Finalizer /////////////////////
+void
+Plmb_ConfGen::genEditFinalize(string nodeID) 
+{
+  _p2dl << conf_comment("");
+  _p2dl << conf_comment("");
+  _p2dl << conf_comment("CONNECT THE SEND SIDE TO THE DYNAMIC ROUND ROBIN");
+  _p2dl << conf_comment("");
+  _p2dl << conf_comment("");
+  for (unsigned int k = 0; k < _udpSenders.size(); k++) {
+    ElementSpecPtr nextElementSpec = _udpSenders.at(k);
+    nextElementSpec->output(0)->check(false);
+    _p2dl << conf_hookup(conf_var(nextElementSpec.get()), 0, string("roundRobin_out"), string("+"));
+  }
+  _p2dl << conf_comment("=================================================");
 
+
+  _p2dl << conf_comment("");
+  _p2dl << conf_comment("");
+  _p2dl << conf_comment("CONNECT THE RECEIVE SIDE TO THE DYNAMIC DEMUX");
+  _p2dl << conf_comment("");
+  _p2dl << conf_comment("");
+
+  // connect to all the pending udp receivers. Assume all 
+  // receivers are connected to elements with push input ports for now 
+  int counter = 0;
+  for (ReceiverInfoMap::iterator _iterator = _udpReceivers.begin(); 
+       _iterator != _udpReceivers.end(); 
+       _iterator++) {
+    ostringstream oss_comment;
+    ReceiverInfo ri = _iterator->second;
+    int numElementsToReceive = ri._receivers.size(); 
+    string tableName = ri._name;
+
+    oss_comment << "Add demux port for " << tableName << " for " 
+	        << numElementsToReceive << " elements";
+    _p2dl << conf_comment("");
+    _p2dl << conf_comment("");
+    _p2dl << conf_comment(oss_comment.str());
+    _p2dl << conf_comment("");
+
+    // DupElim -> DemuxS -> Insert -> Duplicator -> Fork
+    ElementSpecPtr bufferQueue = 
+      _conf->addElement(ElementPtr(new Queue("demuxQueue", 1000)));
+    _p2dl << conf_assign(bufferQueue.get(), 
+              conf_function("Queue", "demuxQueue_" + tableName, 1000));
+    ElementSpecPtr pullPush = 
+      _conf->addElement(ElementPtr(new TimedPullPush("DemuxQueuePullPush", 0)));
+    _p2dl << conf_assign(pullPush.get(), 
+              conf_function("TimedPullPush", 
+                            "demuxQueuePullPush_" + tableName, 0));
+    
+    bufferQueue->input(0)->check(false);
+    _p2dl << conf_hookup(string("ddemux_in"), Val_Str(_iterator->second._name).toConfString(), 
+                         conf_var(bufferQueue.get()), 0);
+    hookUp(bufferQueue, 0, pullPush, 0);
+    
+    // duplicator
+    ElementSpecPtr duplicator = 
+      _conf->addElement(ElementPtr(new DuplicateConservative("dc", numElementsToReceive)));    
+    _p2dl << conf_assign(duplicator.get(), conf_function("DuplicateConservative", "dupCons", 
+                                                         numElementsToReceive));
+    // materialize table only if it is declared and has lifetime>0
+    OL_Context::TableInfoMap::iterator _iterator 
+      = _ctxt->getTableInfos()->find(tableName);
+    if (_iterator != _ctxt->getTableInfos()->end() 
+	&& _iterator->second->timeout != 0) {
+      ElementSpecPtr insertS 
+	= _conf->addElement(ElementPtr(new Insert("insert",  getTableByName(nodeID, tableName))));
+      _p2dl << conf_assign(insertS.get(), 
+               conf_function("Insert", "insert", 
+                             conf_var(getTableByName(nodeID, tableName).get())));
+      
+      hookUp(pullPush, 0, insertS, 0);
+      genPrintWatchElement("PrintWatchInsert:"+nodeID);
+
+      hookUp(duplicator, 0);
+    } else {
+      hookUp(pullPush, 0, duplicator, 0);
+    }
+
+    // connect the duplicator to elements for this name
+    for (uint k = 0; k < ri._receivers.size(); k++) {
+      ElementSpecPtr nextElementSpec = ri._receivers.at(k);
+
+      if (_debug) {
+	ElementSpecPtr printDuplicator = 
+	  _conf->addElement(ElementPtr(new PrintTime("PrintAfterDuplicator:"
+					       + tableName + ":" + nodeID)));
+        _p2dl << conf_assign(printDuplicator.get(), 
+                 conf_function("PrintTime", "printAfterDuplicator"));
+	hookUp(duplicator, k, printDuplicator, 0);
+	hookUp(printDuplicator, 0, nextElementSpec, 0);
+	continue;
+      }
+      hookUp(duplicator, k, nextElementSpec, 0);
+    }
+  }
+  _p2dl << conf_comment("=================================================");
+}
 
 //////////////////// Transport layer //////////////////////////////
 void 
@@ -2034,7 +2143,8 @@ void Plmb_ConfGen::hookUp(ElementSpecPtr firstElement, int firstPort,
   fflush(_output);
   
   _conf->hookUp(firstElement, firstPort, secondElement, secondPort);
-  _p2dl << conf_hookup(firstElement, firstPort, secondElement, secondPort);
+  _p2dl << conf_hookup(conf_var(firstElement.get()), firstPort, 
+                       conf_var(secondElement.get()), secondPort);
 
   if (_currentElementChain.size() == 0) {
     // first time

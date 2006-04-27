@@ -303,7 +303,7 @@ int Plumber::Dataflow::eval_hookups()
     int toPort = hookup->toPortNumber;
 
     int dup =
-      fromElement->output(fromPort)->counterpart(toElement, hookup);
+      fromElement->output(fromPort)->counterpart(toElement);
     if (dup > 0) {
       std::cerr << "Output port " << fromPort << " of element "
                 << fromElement->toString()
@@ -311,7 +311,7 @@ int Plumber::Dataflow::eval_hookups()
     }
     duplicates += dup;
     dup =
-      toElement->input(toPort)->counterpart(fromElement, hookup);
+      toElement->input(toPort)->counterpart(fromElement);
     if (dup > 0) {
       std::cerr << "Input port " << toPort << " of element "
                 << toElement->toString()
@@ -337,7 +337,8 @@ int Plumber::Dataflow::check_hookup_completeness() {
     for (int in = 0;
          in < element->element()->ninputs();
          in++) {
-      if (element->input(in)->counterpart() == 0) {
+      if (element->input(in)->check() && 
+          element->input(in)->counterpart() == 0) {
         unuseds++;
         oss << "Input port " << in << " of element "
             << element->toString()
@@ -345,7 +346,8 @@ int Plumber::Dataflow::check_hookup_completeness() {
       }
     }
     for (int out = 0; out < element->element()->noutputs(); out++) {
-      if (element->output(out)->counterpart() == 0) {
+      if (element->output(out)->check() && 
+          element->output(out)->counterpart() == 0) {
         unuseds++;
         oss << "Output port " << out << " of element "
             << element->toString()

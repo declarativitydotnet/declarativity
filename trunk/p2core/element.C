@@ -121,60 +121,66 @@ Element::ports_frozen() const
 
 int Element::addInputPort() 
 {
-  for (int port=0; port < ninputs(); port++) {
+  for (unsigned port=0; port < _inputs.size(); port++) {
     if (_inputs[port] == 0) {
       _inputs[port].reset(new Port());
+      _ninputs++;
       return port;
     }
   }
   _inputs.push_back(PortPtr(new Port())); 
-  _ninputs = _inputs.size();
-  return _ninputs - 1;
+  _ninputs++;
+  assert (_ninputs == int(_inputs.size()));
+  return _ninputs - 1;	// Return the last port number
 }
 
 int Element::addOutputPort()
 {
-  for (int port=0; port < noutputs(); port++) {
+  for (unsigned port=0; port < _outputs.size(); port++) {
     if (_outputs[port] == 0) {
       _outputs[port].reset(new Port());
+      _noutputs++;
       return port;
     }
   }
   _outputs.push_back(PortPtr(new Port())); 
-  _noutputs = _outputs.size();
-  return _noutputs - 1;
+  _noutputs++;
+  assert (_noutputs == int(_outputs.size()));
+  return _noutputs - 1;	// Return the last port number
 }
 
-int Element::deleteInputPort(int port)
+int Element::deleteInputPort(unsigned port)
 {
-  if (port >= 0 && port < ninputs()) {
+  if (port < _inputs.size()) {
     _inputs[port].reset();
+    _ninputs--;
     return port;
   }
   return -1;
 }
 
-int Element::deleteOutputPort(int port)
+int Element::deleteOutputPort(unsigned port)
 {
-  if (port >= 0 && port < noutputs()) {
+  if (port < _outputs.size()) {
     _outputs[port].reset();
+    _noutputs--;
     return port;
   }
   return -1;
 }
 
-int Element::connect_input(int i, Element *f, int port)
+int Element::connect_input(unsigned i, Element *f, unsigned port)
 {
-  if (i >= 0 && i < ninputs()) {
+  if (i >= 0 && i < _inputs.size() && _inputs[i] == 0) {
     _inputs[i].reset(new Port(this, f, port));
     return 0;
   } else
     return -1;
 }
 
-int Element::connect_output(int o, Element *f, int port)
+int Element::connect_output(unsigned o, Element *f, unsigned port)
 {
-  if (o >= 0 && o < noutputs()) {
+  if (o >= 0 && o < _outputs.size() && _outputs[o] == 0) {
     _outputs[o].reset(new Port(this, f, port));
     return 0;
   } else
@@ -245,15 +251,15 @@ TuplePtr Element::simple_action(TuplePtr p)
   return p;
 }
 
-REMOVABLE_INLINE const Element::PortPtr Element::input(int i) const
+REMOVABLE_INLINE const Element::PortPtr Element::input(unsigned i) const
 {
-  assert(i >= 0 && i < ninputs());
+  assert(i < _inputs.size());
   return _inputs[i];
 }
 
-REMOVABLE_INLINE const Element::PortPtr Element::output(int o) const
+REMOVABLE_INLINE const Element::PortPtr Element::output(unsigned o) const
 {
-  assert(o >= 0 && o < noutputs());
+  assert(o < _inputs.size());
   return _outputs[o];
 }
 

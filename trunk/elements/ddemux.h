@@ -49,6 +49,8 @@ public:
   int remove_output(ValuePtr);
 
 private:
+  void remove_block_flag(int port);
+
   /** The callback for my input */
   b_cbv	_push_cb;
 

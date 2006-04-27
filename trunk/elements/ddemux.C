@@ -37,14 +37,28 @@ int DDemux::add_output(ValuePtr key) {
 
   int port = addOutputPort();
   _port_map.insert(std::make_pair(key, port));
+
+  if (port == _block_flags.size()) {
+    _block_flags.push_back(false);
+  }
+  else {
+    // Must be set to unblocked, when removed.
+    assert(!_block_flags[port]);	
+  }
   return port;
 }
 
 int DDemux::remove_output(int port) {
+  assert(port != 0);	// Never remove the default port
+
   for (PortMap::iterator miter = _port_map.begin();
-       miter != _port_map.end(); miter++)
-    if (miter->second == port)
-      return remove_output(miter->first);
+       miter != _port_map.end(); miter++) {
+    if (miter->second == port) {
+      _port_map.erase(miter); 
+      remove_block_flag(port);
+      return remove_output(port);
+    }
+  }
   return -1;
 }
 
@@ -54,16 +68,25 @@ int DDemux::remove_output(ValuePtr key) {
     return -1;
 
   int port = miter->second;
-  if (deleteOutputPort(port) != port)
-    return -1;
   _port_map.erase(miter);
-  return port;
+  remove_block_flag(port);
+  return deleteOutputPort(port);
+}
+
+void DDemux::remove_block_flag(int port) {
+  if (_block_flags[port]) {
+     _block_flags[port] = false;
+     _block_flag_count--;
+  }
+  if (port + 1 == _block_flags.size()) {
+    _block_flags.pop_back();
+  }
 }
 
 void DDemux::unblock(int output)
 {
   assert((output >= 0) &&
-         (output <= noutputs()));
+         (output <= _block_flags.size()));
   
   // Unset a blocked output
   if (_block_flags[output]) {
@@ -75,7 +98,7 @@ void DDemux::unblock(int output)
   }
 
   // If I have a push callback, call it and remove it
-  if (_push_cb) {
+  if (_push_cb && this->output(output) != 0) {
     log(LoggerI::INFO, -1, "unblock: propagating aggregate unblock");
     _push_cb();
     _push_cb = 0;
@@ -137,7 +160,7 @@ int DDemux::push(int port, TuplePtr p, b_cbv cb)
   else {
 
     // The input matched none of the keys.  
-    // Send it to the default output (the first)
+    // Send it to the default output (port 0 always)
     if (_block_flags[0]) {
       // No can do. 
       // Drop the tuple and return 0 if all outputs are blocked

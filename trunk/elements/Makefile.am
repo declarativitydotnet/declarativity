@@ -38,6 +38,7 @@ libp2elements_la_SOURCES = \
 	ddemux.C \
 	mux.C \
 	roundRobin.C \
+	dRoundRobin.C \
 	duplicate.C \
 	duplicateConservative.C \
 	dupElim.C \

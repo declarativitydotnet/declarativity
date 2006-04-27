@@ -152,8 +152,8 @@ public:
 
   // CONFIGURATION
   /** Static port connection */
-  int connect_input(int i, Element *f, int port);
-  int connect_output(int o, Element *f, int port);
+  int connect_input(unsigned i, Element *f, unsigned port);
+  int connect_output(unsigned o, Element *f, unsigned port);
 
   // Called by the plumber before running 
   virtual int initialize();
@@ -255,8 +255,8 @@ public:
   typedef boost::shared_ptr< Port > PortPtr;
   typedef std::vector< PortPtr > PortVec;
 
-  const PortPtr input(int) const;
-  const PortPtr output(int) const;
+  const PortPtr input(unsigned) const;
+  const PortPtr output(unsigned) const;
 
   /** Get the port number based on the port key */
   virtual int input(ValuePtr key) 
@@ -320,8 +320,8 @@ public:
 protected:
   int addInputPort();
   int addOutputPort();
-  int deleteInputPort(int);
-  int deleteOutputPort(int);
+  int deleteInputPort(unsigned);
+  int deleteOutputPort(unsigned);
 
   /** My ID in text */
   string _IDstr;

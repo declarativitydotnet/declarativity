@@ -113,13 +113,14 @@ class ElementSpec {
     /** My counterpart element */
     ElementSpecPtr counterpart() const;
 
+    void check(bool c) { _check = c; }
+    bool check() { return _check; }
+
     /** Set my counterpart element.  Assumes the counterpart is not
         set. Return 1 if the counterpart was already set (without
-        changing the counterpart), 0 otherwise. */
-    int counterpart(ElementSpecPtr, HookupPtr);
+        changing the counterpart), 0 otherwise. */ 
+    int counterpart(ElementSpecPtr);
 
-    /** Return the hookup that made this port */
-    HookupPtr hookup() const { return _hookup; }
 
   private:
     /** What's my personality? */
@@ -132,8 +133,12 @@ class ElementSpec {
         than one. */
     ElementSpecPtr _counterpart;
 
-    /** The hookup that made this connection */
+    /** The hookup that made this connection 
     HookupPtr _hookup;
+    */
+
+    /** Check this port for hookup? */ 
+    bool _check;
   };
   typedef boost::shared_ptr< Port > PortPtr;
 

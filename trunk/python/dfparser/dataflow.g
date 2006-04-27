@@ -121,7 +121,9 @@ class Edit(Dataflow):
         if not self.conf:
             error("Unable to create a dataflow edit on %s." % name)
     def operation(self, oper, name, port):
-          element = conf.find(name)
+          if not isinstance(name, libp2python.ElementSpec):
+            element = self.eval_ref(name)
+          else: element = name
           if oper == "add_input" or oper == "add_output": 
             if port: return element.attr(oper)(port)
             else: return element.attr(oper)()
@@ -258,18 +260,27 @@ class Strand:
                 if isinstance(t[1], Macro): 
                     t[1] = t[1].input
                 # Make sure ports are numbers and not keys
-                if not isinstance(f[2], int):
+                if not f[2]:
+                    # Try to add a port (will throw if not supported or not an edit)
+                    f[2] = d.operation("add_input", f[1], None)
+                elif not isinstance(f[2], int):
                   try:
-                    f[2] = f[1].element().input(f[2])
+                    # See if port already exists
+                    f[2] = f[1].attr(element)().attr(input)(f[2])
                   except: 
-                    print "EXCEPTION: %s\n" % str(sys.exc_info()[:2])
-                    print "Unable to resolve value %s to a port number." % f[2].toString()
+                    # Try to add the port (will throw if not supported or not an edit)
+                    f[2] = d.operation("add_output", f[1], f[2])
+
+                if not t[0]:
+                    # Try to add a port (will throw if not supported or not an edit)
+                    t[0] = d.operation("add_input", t[1], None)
                 if not isinstance(t[0], int):
                   try:
-                    t[0] = t[1].element().input(t[0])
+                    # See if port already exists
+                    t[0] = t[1].attr(element)().attr(input)(t[0])
                   except: 
-                    print "EXCEPTION: %s\n" % str(sys.exc_info()[:2])
-                    print "Unable to resolve value %s to a port number." % t[0].toString()
+                    # Try to add the port (will throw if not supported or not an edit)
+                    t[0] = d.operation("add_input", t[1], t[0])
                 d.conf.hookUp(f[1], f[2], t[1], t[0])
         self.evaluated = True
 
@@ -379,6 +390,8 @@ parser P2Dataflow:
 
     rule port: "\["       {{ port = None }}
                [(NUM      {{ port = int(NUM) }}
+                |
+                "+"       {{ pass }}
                 |
                 VAL args  {{ port = eval_value(VAL, args) }} )]
                "\]"       {{ return port }}

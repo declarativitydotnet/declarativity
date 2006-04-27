@@ -80,7 +80,8 @@ class Plmb_ConfGen {
 
  public:
   Plmb_ConfGen(OL_Context* ctxt, Plumber::DataflowPtr conf, 
-	      bool _dups, bool debug, bool cc, string filename, std::ostream& s=*(new ostringstream()));
+	      bool _dups, bool debug, bool cc, string filename, 
+              std::ostream& s=*(new ostringstream()), bool edit=false);
   Plmb_ConfGen::~Plmb_ConfGen();
 
   void configurePlumber(boost::shared_ptr< Udp > udp, string nodeID);
@@ -109,6 +110,7 @@ private:
   FILE *_output;
   Plumber::DataflowPtr _conf; 
   std::ostream& _p2dl;
+  bool          _edit;
   std::map<string, string> _multTableIndices;
 
   // counter to determine how many muxers and demuxers are needed
@@ -129,6 +131,7 @@ private:
   
   // Relational -> P2 elements
   void processRule(OL_Context::Rule *r, string nodeID);
+  void genEditFinalize(string); 
   
   void genJoinElements(OL_Context::Rule* curRule, 
 		       string nodeID,
