@@ -17,7 +17,7 @@ class Terminal(Element):
       print "INITIALIZE CALLED"
       self.set_delay(0) 
       return 0
-  def callback(self):
+  def callback(self, port):
       self.set_delay(0) 
   def delay_callback(self):
       # Read string from terminal and send it in a tuple

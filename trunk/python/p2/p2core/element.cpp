@@ -18,11 +18,11 @@ public:
   ElementWrap(std::string n, int i, int o) : Element(n, i, o), tHandle_(NULL) {};
 
   int py_push(int port, TuplePtr tp) {
-    return output(port)->push(tp, boost::bind(&ElementWrap::callback, this));
+    return output(port)->push(tp, boost::bind(&ElementWrap::callback, this, port));
   }
 
   TuplePtr py_pull(int port) {
-    return input(port)->pull(boost::bind(&ElementWrap::callback, this));
+    return input(port)->pull(boost::bind(&ElementWrap::callback, this, port));
   }
 
   virtual const char *processing() const {
@@ -71,9 +71,9 @@ public:
     return Element::simple_action(p);
   }
 
-  virtual void callback() {
+  virtual void callback(int port) {
     if (override f = this->get_override("callback")) {
-      f();
+      f(port);
     }
   }
   virtual void delay_callback() {
