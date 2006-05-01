@@ -11,6 +11,8 @@ void export_tuple()
   class_<Tuple, boost::shared_ptr<Tuple> >
         ("Tuple", init<>())
    .def("mk",       &Tuple::mk)
+   .staticmethod("mk")
+
    .def("append",   &Tuple::append)
    .def("concat",   &Tuple::concat)
    .def("tag",      tag1)

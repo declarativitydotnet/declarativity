@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <iostream>
+#include "loop.h"
 
 #include "pong.h"
 #include "val_null.h"
@@ -42,8 +43,7 @@ int Pong::initialize()
 {
   log(LoggerI::INFO, 0, "initialize");
   // Schedule my timer
-  _timeCallback = delayCB(_seconds,
-                          _runTimerCB);
+  _timeCallback = delayCB(_seconds, _runTimerCB, this);
 
   return 0;
 }
@@ -79,8 +79,7 @@ void Pong::wakeup()
   log(LoggerI::INFO, 0, "wakeup");
 
   // Okey dokey.  Reschedule me into the future
-  _timeCallback = delayCB(_seconds,
-                          _runTimerCB);
+  _timeCallback = delayCB(_seconds, _runTimerCB, this);
 }
 
 
@@ -104,7 +103,6 @@ void Pong::runTimer()
 
   // Reschedule me into the future
   //log(LoggerI::INFO, 0, "runTimer: rescheduling");
-  _timeCallback = delayCB(_seconds,
-			  _runTimerCB);  
+  _timeCallback = delayCB(_seconds, _runTimerCB, this);  
 }
 

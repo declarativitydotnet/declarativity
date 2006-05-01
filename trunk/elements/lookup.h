@@ -31,7 +31,6 @@
 #include "table.h"
 #include "val_tuple.h"
 #include "val_null.h"
-#include "loop.h"
 
 template < typename _EncapsulatedIterator, typename _LookupGenerator >
 class Lookup : public Element {

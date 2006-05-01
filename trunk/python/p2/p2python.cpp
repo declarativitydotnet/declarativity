@@ -15,10 +15,10 @@ void export_aggregate();
 void export_aggwrap();
 void export_csvparser();
 void export_dataflowInstaller();
-// void export_ddemux();
 void export_delete();
 void export_lookup();
 void export_demux();
+void export_ddemux();
 void export_discard();
 void export_dupElim();
 void export_duplicateConservative();
@@ -28,7 +28,6 @@ void export_filter();
 void export_functorSource();
 void export_hexdump();
 void export_insert();
-// void export_joiner();
 void export_logger();
 void export_marshal();
 void export_marshalField();
@@ -42,6 +41,7 @@ void export_printTime();
 void export_printWatch();
 void export_queue();
 void export_roundRobin();
+void export_dRoundRobin();
 void export_scan();
 void export_slot();
 void export_strToSockkaddr();
@@ -87,6 +87,7 @@ void export_val_time();
 void export_val_tuple();
 void export_val_uint32();
 void export_val_uint64();
+void export_overlogCompiler();
 
 BOOST_PYTHON_MODULE(libp2python)
 {
@@ -124,10 +125,10 @@ BOOST_PYTHON_MODULE(libp2python)
   export_aggwrap();
   export_csvparser();
   export_dataflowInstaller();
-  // export_ddemux();
   export_delete();
   export_lookup();
   export_demux();
+  export_ddemux();
   export_discard();
   export_dupElim();
   export_duplicateConservative();
@@ -136,7 +137,6 @@ BOOST_PYTHON_MODULE(libp2python)
   export_functorSource();
   export_hexdump();
   export_insert();
-  // export_joiner();
   export_logger();
   export_marshal();
   export_marshalField();
@@ -150,6 +150,7 @@ BOOST_PYTHON_MODULE(libp2python)
   export_printWatch();
   export_queue();
   export_roundRobin();
+  export_dRoundRobin();
   export_scan();
   export_slot();
   export_strToSockkaddr();
@@ -177,4 +178,6 @@ BOOST_PYTHON_MODULE(libp2python)
   export_tupleseq();
   export_udp();
   export_udp2();
+
+  export_overlogCompiler();
 }

@@ -23,7 +23,7 @@ typedef uint64_t SeqNum;
 
 class Sequence : public Element {
 public:
-  Sequence(string n="sequence", SeqNum b=1, int d=-1, int s=2);
+  Sequence(string n="sequence", SeqNum b=1, int s=0, int d=-1);
   const char *class_name() const { return "Sequence";};
   const char *processing() const { return "a/a"; };
   const char *flow_code() const	 { return "-/-"; };
@@ -32,8 +32,8 @@ public:
 
 private:
   SeqNum seq_;
-  int    dest_field_;
   int    seq_field_;
+  int    dest_field_;
   std::map<ValuePtr, SeqNum> seq_nums_;
 };
 

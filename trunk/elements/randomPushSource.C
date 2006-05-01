@@ -19,6 +19,7 @@
 
 #include "val_str.h"
 #include "val_double.h"
+#include "loop.h"
 
 RandomPushSource::RandomPushSource(string name, double seconds, int randSeed, int max)
   : Element(name, 0, 1),
@@ -34,7 +35,7 @@ int RandomPushSource::initialize()
 {
   log(LoggerI::INFO, 0, "initialize");
   // Schedule my timer
-  _timeCallback = delayCB(_seconds, _runTimerCB);
+  _timeCallback = delayCB(_seconds, _runTimerCB, this);
 
   return 0;
 }
@@ -72,8 +73,7 @@ void RandomPushSource::runTimer()
   } else {
     // Reschedule me into the future
     log(LoggerI::INFO, 0, "runTimer: rescheduling");
-    _timeCallback = delayCB(_seconds,
-                            _runTimerCB);
+    _timeCallback = delayCB(_seconds, _runTimerCB, this);
   }
 }
 
@@ -85,6 +85,5 @@ void RandomPushSource::wakeup()
   log(LoggerI::INFO, 0, "wakeup");
 
   // Okey dokey.  Reschedule me into the future
-  _timeCallback = delayCB(_seconds,
-                          _runTimerCB);
+  _timeCallback = delayCB(_seconds, _runTimerCB, this);
 }

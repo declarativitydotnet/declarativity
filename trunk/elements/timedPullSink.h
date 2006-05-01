@@ -20,7 +20,8 @@
 #define __TIMED_PULL_SINK_H__
 
 #include <element.h>
-#include "loop.h"
+
+struct timeCBHandle;
 
 class TimedPullSink : public Element { 
  public:

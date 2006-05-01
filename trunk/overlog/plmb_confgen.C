@@ -506,7 +506,7 @@ Plmb_ConfGen::genEditFinalize(string nodeID)
   for (unsigned int k = 0; k < _udpSenders.size(); k++) {
     ElementSpecPtr nextElementSpec = _udpSenders.at(k);
     nextElementSpec->output(0)->check(false);
-    _p2dl << conf_hookup(conf_var(nextElementSpec.get()), 0, string("roundRobin_out"), string("+"));
+    _p2dl << conf_hookup(conf_var(nextElementSpec.get()), 0, string("dRoundRobin"), string("+"));
   }
   _p2dl << conf_comment("=================================================");
 
@@ -535,7 +535,6 @@ Plmb_ConfGen::genEditFinalize(string nodeID)
     _p2dl << conf_comment(oss_comment.str());
     _p2dl << conf_comment("");
 
-    // DupElim -> DemuxS -> Insert -> Duplicator -> Fork
     ElementSpecPtr bufferQueue = 
       _conf->addElement(ElementPtr(new Queue("demuxQueue", 1000)));
     _p2dl << conf_assign(bufferQueue.get(), 

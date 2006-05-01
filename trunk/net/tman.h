@@ -19,6 +19,8 @@
 #include <element.h>
 #include <deque>
 
+struct timeCBHandle;
+
 class TrafficManager : public Element { 
  public:
   

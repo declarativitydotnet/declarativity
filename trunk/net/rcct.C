@@ -13,6 +13,7 @@
 #include <iostream>
 #include <math.h>
 #include "rcct.h"
+#include "loop.h"
 #include "val_uint64.h"
 #include "val_uint32.h"
 #include "val_double.h"
@@ -129,7 +130,7 @@ TuplePtr RateCCT::pull(int port, b_cbv cb)
 void RateCCT::map(ValuePtr dest, SeqNum seq)
 {
   timeCBHandle *tcb = delayCB((0.0 + rto_) / 1000.0, 
-                              boost::bind(&RateCCT::tuple_timeout, this, dest, seq));
+                              boost::bind(&RateCCT::tuple_timeout, this, dest, seq), this);
 
   ValueSeqTimeCBMap::iterator iter_map = index_.find(dest);
   boost::shared_ptr<SeqTimeCBMap> time_map;
@@ -253,5 +254,5 @@ REMOVABLE_INLINE void RateCCT::feedback(uint32_t rt, uint32_t X_recv, double p)
   rrate_ = X_recv;		// Save the receiver rate
   uint32_t tms = MAX(rto_, 8000/trate_);
   nofeedback_ = delayCB((0.0 + tms) / 1000.0,
-                        boost::bind(&RateCCT::feedback_timeout, this));
+                        boost::bind(&RateCCT::feedback_timeout, this), this);
 }

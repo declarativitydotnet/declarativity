@@ -60,7 +60,7 @@ libp2elements_la_SOURCES = \
 	scan.C \
 	dataflowInstaller.C
 
-INCLUDES = @BOOST_INC@ -I../p2core -I../eventLoop
+INCLUDES = @BOOST_INC@ -I../p2core -I../eventLoop -I../overlog -I../net
 
 CLEANFILES = core *.core *~
 

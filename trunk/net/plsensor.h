@@ -19,6 +19,7 @@
 #include "config.h"
 #include "element.h"
 #include "fdbuf.h"
+#include "loop.h"
 
 #include <boost/regex.hpp>
 

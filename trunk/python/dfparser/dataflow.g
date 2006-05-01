@@ -260,7 +260,7 @@ class Strand:
                 if isinstance(t[1], Macro): 
                     t[1] = t[1].input
                 # Make sure ports are numbers and not keys
-                if not f[2]:
+                if f[2] == None:
                     # Try to add a port (will throw if not supported or not an edit)
                     f[2] = d.operation("add_input", f[1], None)
                 elif not isinstance(f[2], int):
@@ -271,7 +271,7 @@ class Strand:
                     # Try to add the port (will throw if not supported or not an edit)
                     f[2] = d.operation("add_output", f[1], f[2])
 
-                if not t[0]:
+                if t[0] == None:
                     # Try to add a port (will throw if not supported or not an edit)
                     t[0] = d.operation("add_input", t[1], None)
                 if not isinstance(t[0], int):
@@ -288,13 +288,13 @@ class Strand:
 parser P2Dataflow:
     token END:   "\."
     token FLOAT: "[0-9]*\.[0-9]+"
-    token NUM:   "-?[0-9]+"
+    token NUM:   "\-?[0-9]+"
     token HEX:   "0x[a-fA-F0-9]+"
     token VAL:   "Val_[a-zA-Z0-9_]*"
-    token VAR:   "[a-z][a-zA-Z0-9\_]*"
-    token TYPE:  "[A-Z][a-zA-Z0-9\_]*"
+    token VAR:   "[a-z][a-zA-Z0-9_]*"
+    token TYPE:  "[A-Z][a-zA-Z0-9_]*"
     token LINK:  r"->"
-    token STR:   "\"[\" \(\)\[\]'\$\._A-Za-z0-9\\\:\-\+\*=<>]*\""
+    token STR:   "\"[\" \(\[\]'\$\._A-Za-z0-9\\:\-\+\*=<>]*\""
     ignore:      "[ \r\t\n]+"
     ignore:      r'#.*\r?\n'    # DL comments; sh/perl style
 
@@ -391,7 +391,7 @@ parser P2Dataflow:
     rule port: "\["       {{ port = None }}
                [(NUM      {{ port = int(NUM) }}
                 |
-                "+"       {{ pass }}
+                '\+'      {{ pass }}
                 |
                 VAL args  {{ port = eval_value(VAL, args) }} )]
                "\]"       {{ return port }}
@@ -487,7 +487,7 @@ if __name__=='__main__':
 	except EOFError: print "FILE READ ERROR"
         import libp2python
         p = libp2python.Plumber()
-        compile(p, libp2python, s)
+        compile(p, s)
         if flags["debug"]: debug()
     print 'Bye.'
     sys.exit(0)

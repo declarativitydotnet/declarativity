@@ -25,17 +25,15 @@ public:
   DataflowInstaller(string, PlumberPtr, 
                     boost::python::api::object=boost::python::api::object());
 
-  const char *class_name() const		{ return "Discard";}
-  const char *processing() const		{ return "h/"; }
-  const char *flow_code() const			{ return "-/"; }
+  const char *class_name() const		{ return "DataflowInstaller";}
+  const char *processing() const		{ return "h/h"; }
+  const char *flow_code() const			{ return "-/-"; }
 
   /** Overridden since I have no outputs */
   int push(int port, TuplePtr, b_cbv cb);
 
-  void install(string);
-  void install(Plumber::DataflowPtr);
-
 private:
+  int install(string, ostringstream&);
   string readScript( string fileName );
 
   PlumberPtr                 plumber_;

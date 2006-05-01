@@ -13,12 +13,14 @@
 #include "dataflowInstaller.h"
 #include <iostream>
 #include <fstream>
+#include "val_str.h"
+#include "val_int32.h"
 
 using namespace boost::python;
 using namespace boost::python::api;
 
 DataflowInstaller::DataflowInstaller(string n, PlumberPtr p, object o) 
-  : Element(n, 1,0), plumber_(p), parser_(o)
+  : Element(n, 1, 1), plumber_(p), parser_(o)
 {
   // Start python and instantiate dfparser object I'm not given one
   if (o.ptr() == object().ptr()) {
@@ -31,20 +33,26 @@ DataflowInstaller::DataflowInstaller(string n, PlumberPtr p, object o)
     std::cerr << "UNABLE TO IMPORT DFPARSER" << std::endl;
 }
 
-int DataflowInstaller::push(int port, TuplePtr, b_cbv cb)
+int DataflowInstaller::push(int port, TuplePtr tp, b_cbv cb)
 {
-  // Send as many more tuples as you want
-  return 1;
+  if (tp->size() > 2 && (*tp)[1]->typeCode() == Value::STR &&
+      Val_Str::cast((*tp)[1]) == "overlog") {
+    ostringstream mesg;
+    ValuePtr source = (*tp)[2];
+    string   script = Val_Str::cast((*tp)[2]);
+    int      result = install(script, mesg);
+
+    TuplePtr status = Tuple::mk();
+    status->append(source);
+    status->append(Val_Int32::mk(result));
+    status->append(Val_Str::mk(mesg.str())); 
+    status->freeze();
+    return output(0)->push(status, cb);
+  }
+  return output(0)->push(tp, cb);
 }
 
-void DataflowInstaller::install(Plumber::DataflowPtr dataflow) {
-
-}
-
-void DataflowInstaller::install(string fileName) {
-  std::cerr << "INSTALLING: " << fileName << std::endl;
-        
-  string script = readScript(fileName);
+int DataflowInstaller::install(string script, ostringstream& status) {
   tuple result   = extract<tuple>(parser_.attr("compile")(plumber_, script));
   dict dataflows = extract<dict>(result[0]);
   list edits     = extract<list>(result[1]);
@@ -52,8 +60,8 @@ void DataflowInstaller::install(string fileName) {
   int ndataflows = extract<int>(dataflows.attr("__len__")());
   int nedits = extract<int>(edits.attr("__len__")());
 
-  std::cerr << "PARSED " << ndataflows << " DATAFLOWS\n";
-  std::cerr << "PARSED " << nedits << " EDITS\n";
+  status << "PARSED " << ndataflows << " DATAFLOWS\n";
+  status << "PARSED " << nedits << " EDITS\n";
 
   for (int i = 0; i < ndataflows; i++) {
     tuple t = dataflows.popitem();
@@ -62,18 +70,19 @@ void DataflowInstaller::install(string fileName) {
     t[1].attr("eval_dataflow")();
     Plumber::DataflowPtr d = extract<Plumber::DataflowPtr>(t[1].attr("conf"));
     if (plumber_->install(d) < 0) {
-      std::cerr << "DATAFLOW INSTALLATION FAILURE FOR " << name << std::endl;
-      exit(0);
+      status << "DATAFLOW INSTALLATION FAILURE FOR " << name << std::endl;
+      return -1;
     }
   }
   for (int i = 0; i < nedits; i++) {
     Plumber::DataflowEditPtr e = extract<Plumber::DataflowEditPtr>(edits[i]);
     if (plumber_->install(e) < 0) {
-      std::cerr << "EDIT INSTALLATION FAILURE FOR " << e->name() << std::endl;
-      exit(0);
+      status << "EDIT INSTALLATION FAILURE FOR " << e->name() << std::endl;
+      return -1;
     }
   }
-  plumber_->toDot("dataflowInstaller.dot");
+  // plumber_->toDot("dataflowInstaller.dot");
+  return 0;
 }
 
 string DataflowInstaller::readScript( string fileName )

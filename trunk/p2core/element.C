@@ -12,6 +12,7 @@
  * 
  */
 
+#include <iostream>
 #include <errno.h>
 #include "element.h"
 #include "plumber.h"
@@ -56,7 +57,8 @@ Element::Element(string instanceName) :
   _name(instanceName),
   _loggingLevel(LoggerI::NONE),
   _logger(NULL),
-  _IDstr(mk_id_str(_ID))
+  _IDstr(mk_id_str(_ID)),
+  _state(Element::INACTIVE)
 {
   commonConstruction();
 }
@@ -68,7 +70,8 @@ Element::Element(string instanceName, int ninputs, int noutputs) :
   _name(instanceName),
   _loggingLevel(LoggerI::NONE),
   _logger(NULL),
-  _IDstr(mk_id_str(_ID))
+  _IDstr(mk_id_str(_ID)),
+  _state(Element::INACTIVE)
 {
   commonConstruction();
 }
@@ -171,7 +174,7 @@ int Element::deleteOutputPort(unsigned port)
 
 int Element::connect_input(unsigned i, Element *f, unsigned port)
 {
-  if (i >= 0 && i < _inputs.size() && _inputs[i] == 0) {
+  if (i >= 0 && i < _inputs.size()) {
     _inputs[i].reset(new Port(this, f, port));
     return 0;
   } else
@@ -180,7 +183,7 @@ int Element::connect_input(unsigned i, Element *f, unsigned port)
 
 int Element::connect_output(unsigned o, Element *f, unsigned port)
 {
-  if (o >= 0 && o < _outputs.size() && _outputs[o] == 0) {
+  if (o >= 0 && o < _outputs.size()) {
     _outputs[o].reset(new Port(this, f, port));
     return 0;
   } else
@@ -259,7 +262,7 @@ REMOVABLE_INLINE const Element::PortPtr Element::input(unsigned i) const
 
 REMOVABLE_INLINE const Element::PortPtr Element::output(unsigned o) const
 {
-  assert(o < _inputs.size());
+  assert(o < _outputs.size());
   return _outputs[o];
 }
 

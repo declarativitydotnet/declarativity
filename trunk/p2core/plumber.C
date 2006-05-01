@@ -47,6 +47,23 @@ void Plumber::Dataflow::hookUp(ElementSpecPtr src, int src_port,
   hookups_.push_back(p);
 }
 
+TablePtr Plumber::Dataflow::table(string name, size_t max_size, string lifetime)
+{
+  std::map<string, TablePtr>::iterator iter = tables_.find(name);
+  if (iter != tables_.end()) {
+    return iter->second;
+  }
+  TablePtr tp;
+  if (lifetime != "0") {
+    tp.reset(new Table(name, max_size, lifetime));
+  }
+  else {
+    tp.reset(new Table(name, max_size));
+  }
+  tables_[name] = tp;
+  return tp;
+}
+
 int Plumber::Dataflow::check_hookup_elements()
 {
   // Put all (real not spec) elements in a set to be searchable
@@ -434,11 +451,23 @@ int Plumber::Dataflow::validate()
   return 0;
 }
 
-void Plumber::Dataflow::finalize() {
+int Plumber::Dataflow::finalize() {
   set_connections();
+
+  int failures = 0;
   for (std::vector<ElementSpecPtr>::iterator iter = elements_.begin();
-       iter != elements_.end(); iter++)
-    (*iter)->element()->initialize();
+       iter != elements_.end(); iter++) {
+    if ((*iter)->element()->initialize() < 0) {
+      std::cerr << "** Initialize element " 
+                << (*iter)->element()->name() 
+                << " failure.\n";
+      failures++;
+    }
+    else {
+      (*iter)->element()->state(Element::ACTIVE);
+    }
+  }
+  return (failures == 0) ? 0 : -1;
 }
 
 /****************************************************
@@ -447,6 +476,11 @@ void Plumber::Dataflow::finalize() {
 
 Plumber::DataflowEdit::DataflowEdit(DataflowPtr d) : Dataflow(d->name()) 
 {
+  for (std::vector<ElementSpecPtr>::iterator iter = d->garbage_elements_.begin();
+       iter != d->garbage_elements_.end(); iter++) {
+    garbage_elements_.push_back((*iter));
+  }
+
   for (std::vector<ElementSpecPtr>::iterator iter = d->elements_.begin();
        iter != d->elements_.end(); iter++) {
     this->Dataflow::addElement((*iter)->element());
@@ -530,8 +564,10 @@ int Plumber::DataflowEdit::validate() {
       } 
     }
     if (!element_referenced_in_hookup) {
-      elements_.erase(eiter);
-    } eiter++;
+      (*eiter)->element()->state(Element::INACTIVE);
+      garbage_elements_.push_back(*eiter);
+      eiter = elements_.erase(eiter);
+    } else eiter++;
   }
   
 
@@ -592,12 +628,11 @@ Plumber::Plumber(LoggerI::Level loggingLevel)
  */
 int Plumber::install(DataflowPtr d)
 {
-  if (d->validate() < 0) {
+  if (d->validate() < 0 || d->finalize() < 0) {
     std::cerr << "** Dataflow installation failure\n";
     return -1;
   }
 
-  d->finalize();
   std::map<string, DataflowPtr>::iterator iter = _dataflows->find(d->name());
   if (iter != _dataflows->end()) {
     _dataflows->erase(iter);

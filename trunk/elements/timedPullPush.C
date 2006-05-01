@@ -16,6 +16,7 @@
 #include <element.h>
 #include <math.h>
 
+#include "loop.h"
 #include "val_str.h"
 #include "val_uint64.h"
 
@@ -101,8 +102,7 @@ TimedPullPush::reschedule()
 
     log(LoggerI::INFO, 0, "reschedule: rescheduling");
     // Okey dokey.  Reschedule me into the future
-    _timeCallback = delayCB(_seconds,
-                            _runTimerCB);
+    _timeCallback = delayCB(_seconds, _runTimerCB, this);
   } else {
     log(LoggerI::INFO, 0, "reschedule: DONE!");
   }

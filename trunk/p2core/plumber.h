@@ -26,6 +26,7 @@
 #include <elementSpec.h>
 #include <loggerI.h>
 #include <dot.h>
+#include <table.h>
 
 /** A handy dandy type for plumber references */
 class Plumber;
@@ -51,7 +52,7 @@ public:
       virtual int validate();
 
       /** Finalize this dataflow */
-      void finalize();
+      int finalize();
 
       /** Add a new element to this dataflow by creating a
           new ElementSpecPtr that references the passed in element.
@@ -63,6 +64,11 @@ public:
               hookUp(ElementSpecPtr src, int src_port,
                      ElementSpecPtr dst, int dst_port );
 
+      /** If table exists, return it, otherwise create a 
+        * new table and return that */
+      virtual TablePtr table(string name, size_t max_size=0, 
+                             string lifetime="0"); 
+   
       /**
        *  All elements are local to this dataflow regardless of operation.
        *  Elements in other dataflows under INSERT and REMOVE operations
@@ -72,6 +78,14 @@ public:
 
       /** The hookups */
       std::vector< ElementSpec::HookupPtr > hookups_;
+
+      /** Tables referenced by this dataflow */
+      std::map<string, TablePtr> tables_;
+
+      /** Garbage elements removed from the dataflow. We need to do this
+          given that these elements may have outstanding callbacks and therefore
+          can't be destroyed. A fix for this is in the pipe. */
+      std::vector< ElementSpecPtr > garbage_elements_;
 
     protected:
 
@@ -106,6 +120,7 @@ public:
 
       /** The root name of the dataflow */
       string name_;
+
   };
   typedef boost::shared_ptr< Dataflow > DataflowPtr;
 

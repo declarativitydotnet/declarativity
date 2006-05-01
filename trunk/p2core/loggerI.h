@@ -21,7 +21,7 @@
 #define __LOGGERI_H__
 
 #include <map>
-#include "loop.h"
+#include <string>
 
 
 class LoggerI { 
@@ -33,14 +33,14 @@ public:
 
   
   /** Create a log tuple. */
-  virtual void log( string classname,
-                    string instancename,
+  virtual void log( std::string classname,
+                    std::string instancename,
                     Level severity,
                     int errnum,
-                    string explanation ) = 0;
+                    std::string explanation ) = 0;
 
-  static std::map< string, LoggerI::Level > levelFromName;
-  static std::map< LoggerI::Level, string > levelToName;
+  static std::map< std::string, LoggerI::Level > levelFromName;
+  static std::map< LoggerI::Level, std::string > levelToName;
 
   class Initializer {
   public:

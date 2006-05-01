@@ -38,7 +38,7 @@ void Mux::callback()
   // Wake up immediately after and push out all pending tuples.  Remain
   // blocked however.
   assert(_timeCallback == NULL);
-  _timeCallback = delayCB(0.0, _catchUp);
+  _timeCallback = delayCB(0.0, _catchUp, this);
 }
 
 void Mux::catchUp()

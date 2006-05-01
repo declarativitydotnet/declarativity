@@ -30,14 +30,35 @@
 #ifndef __ELEMENT_H__
 #define __ELEMENT_H__
 
+#include <string>
+#include <sstream>
+#include <iostream>
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
+#include "boost/date_time/posix_time/posix_time.hpp"
 #include "inlines.h"
 #include "tuple.h"
 #include "loggerI.h"
-#include "loop.h"
   
 #define ELEM_LOG(_sev,_errnum,_rest) do { ostringstream _sb; _sb << _rest; log(_sev,_errnum,_sb.str()); } while (false)
 #define ELEM_INFO(_rest) ELEM_LOG(LoggerI::INFO, 0, _rest)
 
+#undef warn
+#define warn std::cerr
+#undef fatal
+#define fatal std::cerr
+
+using std::string;
+using std::ostringstream;
+
+////////////////////////////////////////////////////////////
+// Callbacks
+////////////////////////////////////////////////////////////
+
+typedef boost::function<void (void)>        b_cbv;
+typedef boost::function<void (int)>         b_cbi;
+typedef boost::function<void (std::string)> b_cbs;
+typedef boost::function<void (bool)>        b_cbb;
 
 class Plumber;
 typedef boost::shared_ptr< Plumber > PlumberPtr;
@@ -54,6 +75,10 @@ private:
   portSetup();
 
 public:
+  /** The possible states of an element. 
+    * An element first becomes ACTIVE after a initialize() call. */
+  enum State {INACTIVE=0, ACTIVE}; 
+
   /**
    * Thrown when an element operation is not supported
    */ 
@@ -157,6 +182,11 @@ public:
 
   // Called by the plumber before running 
   virtual int initialize();
+
+  /** Set and get the state of this element to s 
+    * (caller == Plumber) */
+  virtual void state(State s) { _state = s;    }
+  virtual State state() const { return _state; }
   
   // PROCESSING, FLOW, AND FLAGS
   virtual const char *processing() const;
@@ -323,8 +353,12 @@ protected:
   int deleteInputPort(unsigned);
   int deleteOutputPort(unsigned);
 
+private:
   /** My ID in text */
   string _IDstr;
+
+  /** State of this element */
+  State _state; 
   
 };
 

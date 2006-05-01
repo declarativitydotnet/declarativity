@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include "snetsim.h"
+#include "loop.h"
 
 SimpleNetSim::SimpleNetSim(string name, uint32_t min, uint32_t max, double p)
   : Element(name,1, 1),
@@ -44,15 +45,15 @@ void SimpleNetSim::grab() {
 
   TuplePtr t = TuplePtr(); 
   do {
-    t = input(0)->pull(boost::bind(&SimpleNetSim::element_cb, this)); 	// Grab the next one and delay it
+    // Grab the next one and delay it
+    t = input(0)->pull(boost::bind(&SimpleNetSim::element_cb, this)); 	
   } while (t != NULL && (rand()/double(RAND_MAX)) < drop_prob_);
 
   if (t) {
     uint32_t d = min_delay_ + uint32_t((max_delay_ - min_delay_)*(rand()/double(RAND_MAX)));
     // log(LoggerI::INFO, 0, strbuf() << "SimpleNetSim: Delaying for " << d << "(ms)"); 
 
-    delayCB((0.0 + d) / 1000.0, boost::bind(&SimpleNetSim::tuple_ready,
-                                            this, t));
+    delayCB((0.0 + d) / 1000.0, boost::bind(&SimpleNetSim::tuple_ready, this, t), this);
   } else {
     pull_pending = false; 
   }
@@ -60,7 +61,7 @@ void SimpleNetSim::grab() {
 
 void SimpleNetSim::element_cb() {
   if (!pull_pending) {
-    delayCB(0.0, boost::bind(&SimpleNetSim::grab, this));
+    delayCB(0.0, boost::bind(&SimpleNetSim::grab, this), this);
   }
   pull_pending = true;
 }

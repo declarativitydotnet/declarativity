@@ -27,7 +27,8 @@ REAL_SOURCES = \
 
 liboverlog_la_SOURCES = \
 	$(REAL_SOURCES) \
-	$(GENERATED_SOURCES)
+	$(GENERATED_SOURCES) \
+	overlogCompiler.C
 
 INCLUDES = @BOOST_INC@ -I../p2core -I../elements -I../net -I../eventLoop
 

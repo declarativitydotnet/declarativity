@@ -18,6 +18,7 @@
 #include "tuple.h"
 #include "val_str.h"
 #include "math.h"
+#include "loop.h"
 
 
 const int GroupBy::MIN_AGG = 0;
@@ -52,7 +53,7 @@ int GroupBy::initialize()
 {
   log(LoggerI::INFO, 0, "initialize");
   // Schedule my timer
-  _timeCallback = delayCB(_seconds, _runTimerCB);
+  _timeCallback = delayCB(_seconds, _runTimerCB, this);
 
   return 0;
 }
@@ -199,8 +200,7 @@ void GroupBy::runTimer()
 
   // Reschedule me into the future
   //log(LoggerI::INFO, 0, "runTimer: rescheduling");
-  _timeCallback = delayCB(_seconds,
-			  _runTimerCB);  
+  _timeCallback = delayCB(_seconds, _runTimerCB, this);  
 }
 
 void GroupBy::wakeup()
@@ -211,8 +211,7 @@ void GroupBy::wakeup()
   log(LoggerI::INFO, 0, "wakeup");
 
   // Okey dokey.  Reschedule me into the future
-  _timeCallback = delayCB(_seconds,
-                          _runTimerCB);
+  _timeCallback = delayCB(_seconds, _runTimerCB, this);
 }
 
 

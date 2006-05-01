@@ -23,7 +23,7 @@ callbackQueueT callbacks;
 long callbackID = 0;
 
 timeCBHandle*
-delayCB(double secondDelay, b_cbv cb)
+delayCB(double secondDelay, b_cbv cb, Element* owner)
 {
   assert(secondDelay >= 0.0);
 
@@ -38,7 +38,7 @@ delayCB(double secondDelay, b_cbv cb)
   expiration += dlay;
   
   // Create handle for this request
-  timeCBHandle* handle = new timeCBHandle(expiration, cb);
+  timeCBHandle* handle = new timeCBHandle(expiration, cb, owner);
 
   // Place it into the priority queue
   callbacks.insert(handle);
@@ -81,7 +81,10 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
     iter++;
     
     // Run it
-    (theCallback->callback)();
+    if (theCallback->owner == NULL || 
+        theCallback->owner->state() == Element::ACTIVE) {
+      (theCallback->callback)();
+    }
     
     // And erase it
     delete theCallback;
@@ -185,19 +188,20 @@ static int nextFD = 0;
 bool
 fileDescriptorCB(int fileDescriptor,
                  b_selop op,
-                 b_cbv callback)
+                 b_cbv callback,
+                 Element* owner)
 {
   assert(fileDescriptor >= 0);
   assert(callback);
 
   // Do I have the entry already?
-  fileDescriptorCBHandle handle(fileDescriptor, op, callback);
+  fileDescriptorCBHandle handle(fileDescriptor, op, callback, owner);
   fileDescriptorCallbackDirectoryT::iterator iter =
     fileDescriptorCallbacks.find(&handle);
   if (iter == fileDescriptorCallbacks.end()) {
     // Nope, none exists. Just create and insert it
     fileDescriptorCBHandle* newHandle =
-      new fileDescriptorCBHandle(fileDescriptor, op, callback);
+      new fileDescriptorCBHandle(fileDescriptor, op, callback, owner);
     fileDescriptorCallbacks.insert(newHandle);
 
     // And turn on the appropriate bit
@@ -220,7 +224,7 @@ fileDescriptorCB(int fileDescriptor,
     return true;
   } else {
     // It already exists. Just replace its callback
-    (*iter)->setCallback(callback);
+    (*iter)->setCallback(callback, owner);
     return false;
   }
 }
@@ -308,7 +312,10 @@ fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
         assert((*iter)->operation == b_selwrite);
 
         // Call the callback
-        ((*iter)->callback)();
+        if ((*iter)->owner == NULL || 
+            (*iter)->owner->state() == Element::ACTIVE)
+          ((*iter)->callback)();
+        else std::cerr << "NOT RUNNING CALLBACK: element not active\n";
       }
     }
     for (int i = 0;
@@ -326,7 +333,10 @@ fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
         assert((*iter)->operation == b_selread);
 
         // Call the callback
-        ((*iter)->callback)();
+        if ((*iter)->owner == NULL || 
+            (*iter)->owner->state() == Element::ACTIVE)
+          ((*iter)->callback)();
+        else std::cerr << "NOT RUNNING CALLBACK: element not active\n";
       }
     }
   }

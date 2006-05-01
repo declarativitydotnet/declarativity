@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include "loop.h"
 #include "cct.h"
 #include "val_uint64.h"
 #include "val_uint32.h"
@@ -157,7 +158,7 @@ void CCT::map(CCTuple *otp)
 
   otp->tcb_ =
     delayCB((0.0 + rto_) / 1000.0,
-            boost::bind(&CCT::timeout_cb, this, otp)); 
+            boost::bind(&CCT::timeout_cb, this, otp), this); 
 }
 
 int32_t CCT::dealloc(ValuePtr dest, SeqNum seq, string status)

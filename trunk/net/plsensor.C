@@ -11,7 +11,6 @@
  * DESCRIPTION: PlanetLab sensor element
  */
 
-#include "loop.h"
 #include "plsensor.h"
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -86,7 +85,7 @@ void PlSensor::enter_waiting()
     sd = -1;
   }
   state = ST_WAITING;
-  wait_delaycb = delayCB(delay, boost::bind(&PlSensor::enter_connecting,this));
+  wait_delaycb = delayCB(delay, boost::bind(&PlSensor::enter_connecting,this), this);
 }
 
 //
@@ -119,7 +118,7 @@ void PlSensor::connect_cb(int fd)
     // Enter SENDING
     TRC( "socket descriptor is " << sd);
     state = ST_SENDING;
-    fileDescriptorCB(sd, b_selwrite, boost::bind(&PlSensor::write_cb,this));
+    fileDescriptorCB(sd, b_selwrite, boost::bind(&PlSensor::write_cb,this), this);
   }
 }
 
@@ -145,7 +144,7 @@ void PlSensor::write_cb()
     // Enter RX_HEADERS state
     removeFileDescriptorCB(sd, b_selwrite);
     state = ST_RX_HEADERS;
-    fileDescriptorCB(sd, b_selread, boost::bind(&PlSensor::rx_hdr_cb,this));
+    fileDescriptorCB(sd, b_selread, boost::bind(&PlSensor::rx_hdr_cb,this), this);
   }
 }
 

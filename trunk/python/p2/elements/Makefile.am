@@ -24,6 +24,7 @@ libp2pythonelements_la_SOURCES = \
 	delete.cpp \
 	lookup.cpp \
 	demux.cpp \
+	ddemux.cpp \
 	discard.cpp \
 	dupElim.cpp \
 	duplicateConservative.cpp \
@@ -45,6 +46,7 @@ libp2pythonelements_la_SOURCES = \
 	printWatch.cpp \
 	queue.cpp \
 	roundRobin.cpp \
+	dRoundRobin.cpp \
 	scan.cpp \
 	slot.cpp \
 	strToSockaddr.cpp \

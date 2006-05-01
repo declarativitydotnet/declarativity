@@ -11,14 +11,15 @@ void export_plumber()
       /** Initialize the engine from the configuration */
       .def("new_dataflow_edit", &Plumber::new_dataflow_edit)
       .def("install", &Plumber::install)
-      .def("toDot", &Plumber::toDot)
+      .def("toDot",   &Plumber::toDot)
     ;
   
     class_<Plumber::Dataflow, Plumber::DataflowPtr>
           ("Dataflow", init<optional<string> >())
-      .def("name", &Plumber::Dataflow::name) 
+      .def("name",       &Plumber::Dataflow::name) 
       .def("addElement", &Plumber::Dataflow::addElement)
-      .def("hookUp", &Plumber::Dataflow::hookUp)
+      .def("hookUp",     &Plumber::Dataflow::hookUp)
+      .def("table",      &Plumber::Dataflow::table)
     ;
 
     class_<Plumber::DataflowEdit, bases<Plumber::Dataflow>, Plumber::DataflowEditPtr>

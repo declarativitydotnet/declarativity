@@ -15,6 +15,7 @@
 #include <timedPullSink.h>
 #include <element.h>
 #include <math.h>
+#include "loop.h"
 
 TimedPullSink::TimedPullSink(string name,
                              double seconds)
@@ -29,7 +30,7 @@ int TimedPullSink::initialize()
 {
   log(LoggerI::INFO, 0, "initialize: TIMEDPULLSINK/init");
   // Schedule my timer
-  _timeCallback = delayCB(_seconds, _runTimerCB);
+  _timeCallback = delayCB(_seconds, _runTimerCB, this);
 
   return 0;
 }
@@ -48,8 +49,7 @@ void TimedPullSink::runTimer()
     log(LoggerI::INFO, 0, "runTimer: sleeping");
   } else {
     // Reschedule me into the future
-    _timeCallback = delayCB(_seconds,
-                            _runTimerCB);
+    _timeCallback = delayCB(_seconds, _runTimerCB, this);
     log(LoggerI::INFO, 0, "runTimer: rescheduling");
   }
 }
@@ -62,8 +62,7 @@ void TimedPullSink::wakeup()
   log(LoggerI::INFO, 0, "wakeup");
 
   // Okey dokey.  Reschedule me into the future
-  _timeCallback = delayCB(_seconds,
-                          _runTimerCB);
+  _timeCallback = delayCB(_seconds, _runTimerCB, this);
 }
 
 

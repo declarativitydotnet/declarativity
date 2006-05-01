@@ -13,6 +13,7 @@
  */
 
 #include <timestampSource.h>
+#include "loop.h"
 #include "val_str.h"
 #include "val_uint64.h"
 #include "val_time.h"

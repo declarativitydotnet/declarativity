@@ -6,8 +6,8 @@ using namespace boost::python;
 class LoggerIWrap : public LoggerI, public wrapper<LoggerI>
 {
 public:
-  void log(string classname, string instancename,
-           Level severity, int errnum, string explanation) {
+  void log(std::string classname, std::string instancename,
+           Level severity, int errnum, std::string explanation) {
     this->get_override("log")(classname, instancename, severity, 
                               errnum, explanation);
   };

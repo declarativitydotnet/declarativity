@@ -24,7 +24,6 @@
 #define __DEMUX_H__
 
 #include "element.h"
-#include "loop.h"
 
 class Demux : public Element { 
 public:

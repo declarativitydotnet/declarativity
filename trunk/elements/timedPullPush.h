@@ -22,7 +22,7 @@
 #define __TIMED_PULL_PUSH_H__
 
 #include <element.h>
-#include "loop.h"
+struct timeCBHandle;
 
 class TimedPullPush : public Element { 
  public:

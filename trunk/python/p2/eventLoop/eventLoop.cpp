@@ -6,7 +6,7 @@ using namespace boost::python;
 void export_eventLoop()
 {
   class_<timeCBHandle>
-        ("timeCBHandle", init<boost::posix_time::ptime&, const b_cbv&>())
+        ("timeCBHandle", init<boost::posix_time::ptime&, const b_cbv&, Element*>())
   ;
   
   enum_<b_selop>("b_selop")

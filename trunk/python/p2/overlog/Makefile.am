@@ -14,12 +14,15 @@
 # DESCRIPTION: Makefile for the P2 core elements python library
 #
 
-lib_LTLIBRARIES = libp2pythoneventloop.la
+lib_LTLIBRARIES = libp2pythonoverlog.la
 
-libp2pythoneventloop_la_SOURCES = \
-	eventLoop.cpp
+libp2pythonoverlog_la_SOURCES = \
+	overlogCompiler.cpp
 
-INCLUDES = @BOOST_INC@ -I$(top_builddir)/eventLoop -I$(top_builddir)/p2core
+INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core \
+                       -I$(top_builddir)/elements \
+                       -I$(top_builddir)/eventLoop \
+                       -I$(top_builddir)/overlog 
 
 CLEANFILES = core *.core *~
 

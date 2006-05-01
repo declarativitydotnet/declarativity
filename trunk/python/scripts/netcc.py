@@ -24,7 +24,7 @@ def parse_cmdline(argv):
 
 
 def UdpCC_source(udp, src, dest, drop):
-  conf = plumber.new_dataflow("source")
+  conf = libp2python.Plumber.Dataflow("source")
 
   udp      = conf.addElement(udp)
   data     = conf.addElement(libp2python.TimedPushSource("source", .01))
@@ -70,7 +70,7 @@ def UdpCC_source(udp, src, dest, drop):
   return conf
 
 def UdpCC_sink(udp, drop):
-  conf = plumber.new_dataflow("sink")
+  conf = libp2python.Plumber.Dataflow("sink")
 
   udp      = conf.addElement(udp)
   # The remote data elements

@@ -18,6 +18,8 @@
 #include "element.h"
 #include "inlines.h"
 
+struct timeCBHandle;
+
 typedef uint64_t SeqNum;
 
 class RateCCT : public Element {

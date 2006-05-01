@@ -24,6 +24,8 @@
 #include "element.h"
 #include <vector>
 
+struct timeCBHandle;
+
 class Mux : public Element { 
 public:
   

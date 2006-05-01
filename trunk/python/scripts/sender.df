@@ -46,20 +46,18 @@ dataflow Send1 {
   let n = call q.element( ).class_name( );
 
   TimedPushSource("source", 1)                                           -> 
-  PelTransform("sequence_slot", "0 pop 0 pop swallow unboxPop")            ->
   PelTransform("source_address", ""localhost:10001" pop swallow unboxPop") ->
   PelTransform("destAddr", ""localhost:10000" pop swallow unboxPop")       ->
-  q -> Sequence -> 
+  q -> Sequence("sequence", 1, 2) -> 
   Print("print_send") ->
   RateConn("conn", 10001);
 }
 
 dataflow Send2 {
   TimedPushSource("source", 1)                                             -> 
-  PelTransform("sequence_slot", "0 pop 0 pop swallow unboxPop")            ->
   PelTransform("source_address", ""localhost:10002" pop swallow unboxPop") ->
   PelTransform("destAddr", ""localhost:10000" pop swallow unboxPop")       ->
-  Queue -> Sequence -> 
+  Queue -> Sequence("sequence", 1, 2) -> 
   Print("print_send") ->
   RateConn("conn", 10002);
 }

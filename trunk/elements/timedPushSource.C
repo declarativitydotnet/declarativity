@@ -16,6 +16,7 @@
 #include <element.h>
 #include <math.h>
 
+#include "loop.h"
 #include "val_str.h"
 #include "val_uint64.h"
 #include "val_time.h"
@@ -33,7 +34,7 @@ int TimedPushSource::initialize()
 {
   log(LoggerI::INFO, 0, "initialize");
   // Schedule my timer
-  _timeCallback = delayCB(_seconds, _runTimerCB);
+  _timeCallback = delayCB(_seconds, _runTimerCB, this);
   
   return 0;
 }
@@ -70,8 +71,7 @@ void TimedPushSource::runTimer()
   } else {
     // Reschedule me into the future
     log(LoggerI::INFO, 0, "runTimer: rescheduling");
-    _timeCallback = delayCB(_seconds,
-                            _runTimerCB);
+    _timeCallback = delayCB(_seconds, _runTimerCB, this);
   }
 }
 
@@ -83,6 +83,5 @@ void TimedPushSource::wakeup()
   log(LoggerI::INFO, 0, "wakeup");
 
   // Okey dokey.  Reschedule me into the future
-  _timeCallback = delayCB(_seconds,
-                          _runTimerCB);
+  _timeCallback = delayCB(_seconds, _runTimerCB, this);
 }

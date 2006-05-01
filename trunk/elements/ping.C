@@ -19,6 +19,7 @@
 #include <iostream>
 #include <time.h>
 #include "math.h"
+#include "loop.h"
 
 #include "ping.h"
 #include "val_null.h"
@@ -52,7 +53,7 @@ int Ping::initialize()
 {
   log(LoggerI::INFO, 0, "initialize");
   // Schedule my timer
-  _timeCallback = delayCB(_seconds, _runTimerCB);
+  _timeCallback = delayCB(_seconds, _runTimerCB, this);
 
   return 0;
 }

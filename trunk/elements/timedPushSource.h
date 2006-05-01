@@ -20,7 +20,8 @@
 #define __TIMED_PUSH_SOURCE_H__
 
 #include <element.h>
-#include "loop.h"
+
+struct timeCBHandle;
 
 class TimedPushSource : public Element { 
  public:

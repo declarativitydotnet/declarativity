@@ -17,11 +17,6 @@
 #ifndef __LOOP_H__
 #define __LOOP_H__
 
-#include <string>
-#include <sstream>
-#include <iostream>
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
 #include <set>
 
 // For in_addr
@@ -29,31 +24,12 @@
 
 #include <p2Time.h>
 #include "boost/date_time/posix_time/posix_time.hpp"
+#include "element.h"
 
 extern "C" {
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 }
-
-using std::string;
-using std::ostringstream;
-
-#undef warn
-#define warn std::cerr
-#undef fatal
-#define fatal std::cerr
-
-
-
-////////////////////////////////////////////////////////////
-// Callbacks
-////////////////////////////////////////////////////////////
-
-typedef boost::function<void (void)>        b_cbv;
-typedef boost::function<void (int)>         b_cbi;
-typedef boost::function<void (std::string)> b_cbs;
-typedef boost::function<void (bool)>        b_cbb;
-
 
 /** The global counter of callbacks */
 extern long callbackID;
@@ -63,10 +39,14 @@ extern long callbackID;
 ////////////////////////////////////////////////////////////
 // Timed callbacks 
 ////////////////////////////////////////////////////////////
+class Element;
 
 /** A callback record */
 struct timeCBHandle {
 public:
+  /** The element that owns the callback */
+  Element* owner;
+
   /** What was my time target? */
   boost::posix_time::ptime time;
   
@@ -77,8 +57,8 @@ public:
   long ID;
 
   /** Construct me */
-  timeCBHandle(boost::posix_time::ptime& t, const b_cbv& cb)
-    : time(t), callback(cb), ID(callbackID++)
+  timeCBHandle(boost::posix_time::ptime& t, const b_cbv& cb, Element* e)
+    : owner(e), time(t), callback(cb), ID(callbackID++)
   {}
 };
 
@@ -88,7 +68,7 @@ public:
     non-positive, it is interpreted as a delayed callback, to be invoked
     as soon as possible. */
 timeCBHandle*
-delayCB(double secondDelay, b_cbv cb);
+delayCB(double secondDelay, b_cbv cb, Element* owner=NULL);
 
 
 /** Unschedule a scheduled callback */
@@ -149,12 +129,15 @@ public:
   /** What's my callback? */
   b_cbv callback;
 
+  /** What is the element to be called */
+  Element* owner;
   
   /** Construct me */
   fileDescriptorCBHandle(int fd,
                          b_selop op,
-                         b_cbv& cb)
-    : fileDescriptor(fd), operation(op), callback(cb)
+                         b_cbv& cb,
+                         Element* o)
+    : fileDescriptor(fd), operation(op), callback(cb), owner(o)
   { 
     assert(fd > 0);
   }
@@ -169,10 +152,11 @@ public:
   }
                          
 
-  /** Change my callback. It's OK to mutate me because the callback does
-      not participate in the sorting function. */
+  /** Change my callback and owner. It's OK to mutate me because the 
+      callback and owner do not participate in the sorting function. */
   void
-  setCallback(const b_cbv& cb) { callback = cb; }
+  setCallback(const b_cbv& cb, Element* o) 
+  { callback = cb; owner = o; }
 };
 
 
@@ -212,7 +196,8 @@ networkSocket(int type, u_int16_t port, u_int32_t addr);
 bool
 fileDescriptorCB(int fileDescriptor,
                  b_selop operation,
-                 b_cbv callback);
+                 b_cbv callback,
+                 Element* owner=NULL);
 
 
 /** Remove a callback from asynchronous operations of a given type

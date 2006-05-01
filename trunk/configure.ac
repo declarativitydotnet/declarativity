@@ -75,6 +75,7 @@ AC_CONFIG_FILES([
 	python/p2/eventLoop/Makefile
 	python/p2/p2core/Makefile
 	python/p2/net/Makefile
+	python/p2/overlog/Makefile
 	python/dfparser/Makefile
 	elements/Makefile 
 	net/Makefile 

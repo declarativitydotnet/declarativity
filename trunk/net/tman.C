@@ -16,6 +16,7 @@
 #include <iostream>
 #include <math.h>
 #include "tman.h"
+#include "loop.h"
 #include "val_str.h"
 #include "val_uint32.h"
 #include "val_tuple.h"
@@ -53,7 +54,7 @@ int TrafficManager::initialize()
   log(LoggerI::INFO, 0, "initialize");
   // Schedule my timer
   if (_seconds != 0.0)
-    _timeCallback = delayCB(_seconds, _runTimerCB);
+    _timeCallback = delayCB(_seconds, _runTimerCB, this);
   return 0;
 }
 
@@ -83,7 +84,7 @@ void TrafficManager::runTimer()
   } else {
     // Reschedule me into the future
     log(LoggerI::INFO, 0, "runTimer: rescheduling");
-    _timeCallback = delayCB(_seconds, _runTimerCB);
+    _timeCallback = delayCB(_seconds, _runTimerCB, this);
   }
 }
 
@@ -95,7 +96,7 @@ void TrafficManager::wakeup()
   log(LoggerI::INFO, 0, "wakeup");
 
   // Okey dokey.  Reschedule me into the future
-  _timeCallback = delayCB(_seconds, _runTimerCB);
+  _timeCallback = delayCB(_seconds, _runTimerCB, this);
 }
 
 REMOVABLE_INLINE uint TrafficManager::genLookupKey() {
