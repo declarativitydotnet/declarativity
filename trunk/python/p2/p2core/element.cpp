@@ -11,18 +11,20 @@ class ElementWrap : public Element, public wrapper<Element>
 {
 public:
   ElementWrap(std::string n) 
-    : Element(n), _tHandle(NULL) {};
+    : Element(n), _self(NULL), _tHandle(NULL) {};
   ElementWrap(std::string n, int i, int o) 
-    : Element(n, i, o), _tHandle(NULL) {};
+    : Element(n, i, o), _self(NULL), _tHandle(NULL) {};
 
-  int py_push(int port, TuplePtr tp, PyObject* self, string callback) {
+  void self(PyObject* s) { _self = s; }
+
+  int py_push(int port, TuplePtr tp, string callback) {
     return output(port)->push(tp, boost::bind(&ElementWrap::dispatch, 
-                                              this, self, callback));
+                                              this, callback));
   }
 
-  TuplePtr py_pull(int port, PyObject* self, string callback) {
+  TuplePtr py_pull(int port, string callback) {
     return input(port)->pull(boost::bind(&ElementWrap::dispatch, 
-                                         this, self, callback));
+                                         this, callback));
   }
 
   virtual const char *processing() const {
@@ -71,11 +73,11 @@ public:
     return Element::simple_action(p);
   }
 
-  void set_delay(double secondDelay, PyObject* self, string callback) {
+  void set_delay(double secondDelay, string callback) {
     if (_tHandle) cancel_delay();
     _tHandle = delayCB(secondDelay, 
                        boost::bind(&ElementWrap::dispatch, 
-                                   this, self, callback));
+                                   this, callback));
   }
 
   void cancel_delay() {
@@ -84,15 +86,26 @@ public:
   }
 
 private:
-  void dispatch(PyObject* self, string method) {
-    call_method<void>(self, method.c_str());
+  void dispatch(string method) {
+    call_method<void>(_self, method.c_str());
   }
 
+  PyObject*     _self;
   timeCBHandle* _tHandle;
 };
 
+// Tell Boost.Python that I want to see the self object in the constructor
+/*
+namespace boost { namespace python
+{
+  template <>
+  struct has_back_reference<ElementWrap> : mpl::true_ {};
+}}
+*/
+
 void export_element()
 {
+
   class_<ElementWrap, boost::shared_ptr<ElementWrap>, boost::noncopyable>
         ("Element", init<std::string>())
     .def(init<std::string, int, int>())
@@ -118,6 +131,7 @@ void export_element()
     .def("flags",          &Element::flags)
 
     // PYTHON SUPPORT FOR ELEMENTS
+    .def("self",           &ElementWrap::self)
     .def("push",           &ElementWrap::push)
     .def("pull",           &ElementWrap::pull)
     .def("simple_action",  &ElementWrap::simple_action)
