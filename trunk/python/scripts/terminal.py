@@ -8,30 +8,27 @@ DATAFLOW_NAME = "Terminal"
 
 class Terminal(Element):
   def __init__(self, name, address):
-      Element.__init__(self, name, 1, 1)
+      Element.__init__(self,name, 1, 1)
       self.address = address
   def class_name(self): return "Terminal"
   def processing(self): return "h/h"
   def flow_code(self):  return "-/-"
   def initialize(self): 
       print "INITIALIZE CALLED"
-      self.set_delay(0) 
+      self.set_delay(0, self, "delay_callback") 
       return 0
   def callback(self, port):
-      self.set_delay(0) 
+      self.set_delay(0, self, "delay_callback") 
   def delay_callback(self):
       # Read string from terminal and send it in a tuple
-      text = ""
       line = raw_input("P2 Terminal >> ") 
-      print "YOU TYPED: ", line
-      text += line
       t = Tuple.mk()
       t.append(Val_Str.mk("overlog"))
       t.append(Val_Str.mk(address))
-      t.append(Val_Str.mk(text))
+      t.append(Val_Str.mk(line))
       t.freeze()
-      if self.py_push(0, t) > 0:
-        self.set_delay(1) 
+      if self.py_push(0, t, self, "callback") > 0:
+        self.set_delay(1, self, "delay_callback") 
   def push(self, port, tp, cb):
       # Received status of some sent tuple
       return 0

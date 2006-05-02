@@ -1,28 +1,28 @@
 #include <element.h>
 #include <loop.h>
 #include <boost/python.hpp>
+#include <boost/python/module.hpp>
+#include <boost/python/class.hpp>
+#include <boost/utility.hpp>
 using namespace boost::python;
 using namespace boost::python::api;
 
 class ElementWrap : public Element, public wrapper<Element>
 {
 public:
-/*
-  ElementWrap(std::string n) : Element(n) {};
-  ElementWrap(std::string n, int i, int o) : Element(n, i, o) {};
-  virtual const char* class_name() const {
-    return this->get_override("class_name")();
-  }
-*/
-  ElementWrap(std::string n) : Element(n), tHandle_(NULL) {};
-  ElementWrap(std::string n, int i, int o) : Element(n, i, o), tHandle_(NULL) {};
+  ElementWrap(std::string n) 
+    : Element(n), _tHandle(NULL) {};
+  ElementWrap(std::string n, int i, int o) 
+    : Element(n, i, o), _tHandle(NULL) {};
 
-  int py_push(int port, TuplePtr tp) {
-    return output(port)->push(tp, boost::bind(&ElementWrap::callback, this, port));
+  int py_push(int port, TuplePtr tp, PyObject* self, string callback) {
+    return output(port)->push(tp, boost::bind(&ElementWrap::dispatch, 
+                                              this, self, callback));
   }
 
-  TuplePtr py_pull(int port) {
-    return input(port)->pull(boost::bind(&ElementWrap::callback, this, port));
+  TuplePtr py_pull(int port, PyObject* self, string callback) {
+    return input(port)->pull(boost::bind(&ElementWrap::dispatch, 
+                                         this, self, callback));
   }
 
   virtual const char *processing() const {
@@ -71,28 +71,24 @@ public:
     return Element::simple_action(p);
   }
 
-  virtual void callback(int port) {
-    if (override f = this->get_override("callback")) {
-      f(port);
-    }
-  }
-  virtual void delay_callback() {
-    if (override f = this->get_override("delay_callback")) {
-      f();
-    }
+  void set_delay(double secondDelay, PyObject* self, string callback) {
+    if (_tHandle) cancel_delay();
+    _tHandle = delayCB(secondDelay, 
+                       boost::bind(&ElementWrap::dispatch, 
+                                   this, self, callback));
   }
 
-  void set_delay(double secondDelay) {
-    if (tHandle_) cancel_delay();
-    delayCB(secondDelay, boost::bind(&ElementWrap::delay_callback, this));
-  }
   void cancel_delay() {
-    if (tHandle_) timeCBRemove(tHandle_);
-    tHandle_ = NULL;
+    if (_tHandle) timeCBRemove(_tHandle);
+    _tHandle = NULL;
   }
 
 private:
-  timeCBHandle* tHandle_;
+  void dispatch(PyObject* self, string method) {
+    call_method<void>(self, method.c_str());
+  }
+
+  timeCBHandle* _tHandle;
 };
 
 void export_element()
@@ -127,8 +123,6 @@ void export_element()
     .def("simple_action",  &ElementWrap::simple_action)
     .def("py_push",        &ElementWrap::py_push)
     .def("py_pull",        &ElementWrap::py_pull)
-    .def("callback",       &ElementWrap::callback)
-    .def("delay_callback", &ElementWrap::delay_callback)
     .def("set_delay",      &ElementWrap::set_delay)
     .def("cancel_delay",   &ElementWrap::cancel_delay)
   ; 
