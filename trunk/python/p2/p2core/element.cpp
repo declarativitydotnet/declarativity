@@ -70,7 +70,8 @@ public:
   }
 
   timeCBHandle* set_delay(double secondDelay, object callback) {
-    return delayCB(secondDelay, boost::function<void (void)>(callback)); 
+    return delayCB(secondDelay, 
+                   boost::function<void (void)>(callback)); 
   }
 
   void cancel_delay(timeCBHandle* handle) {

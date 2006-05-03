@@ -425,9 +425,9 @@ parser P2Dataflow:
                 "\)"          {{ return f}}
 
     rule vector: "{" {{ v = [] }} 
+                     {{ if not flags["debug"]: v = libp2python.ValueVec() }} 
                  [
-                   (VAL args       {{ if not flags["debug"]: v = libp2python.ValueVec() }}
-                                   {{ v.append(eval_value(VAL, args)) }}           
+                   (VAL args       {{ v.append(eval_value(VAL, args)) }}           
                      (',' VAL args {{ v.append(eval_value(VAL, args)) }})*
                     |
                     NUM       {{ if not flags["debug"]: v = libp2python.IntVec() }}

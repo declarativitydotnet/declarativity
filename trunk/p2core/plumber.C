@@ -547,30 +547,67 @@ void Plumber::DataflowEdit::set_connections()
 }
 
 int Plumber::DataflowEdit::validate() {
+  // Toss all the new hookups into the mix
   for(std::vector<ElementSpec::HookupPtr>::iterator iter = new_hookups_.begin();
       iter != new_hookups_.end(); iter++) {
     hookups_.push_back(*iter);
   }
 
-  // Remove all OLD elements that are no longer referenced by some hookup
-  for(std::vector<ElementSpecPtr>::iterator eiter = elements_.begin();
-      eiter != elements_.end(); ) {
-    bool element_referenced_in_hookup = false;
-    for(std::vector<ElementSpec::HookupPtr>::iterator hiter = hookups_.begin();
-        hiter != hookups_.end(); hiter++) {
-      if ((*hiter)->fromElement == *eiter || (*hiter)->toElement == *eiter) {
-        element_referenced_in_hookup = true;
-        break;
-      } 
+  /* If an *old* element does not have any hookups referencing an input, 
+   * or if it doesn't have inputs then any hookups referencing an output, 
+   * then it was part of some edit. Given that we've put the new hookups in 
+   * the mix, if this Element still has 0 input hookups then it will be removed
+   * from the dataflow. Any output hookups that reference the element deemed
+   * to be removed will also be taken out so that the element removal process
+   * can occur transitively. */ 
+  bool fully_connected;
+  do {
+    fully_connected = true;	// Assume everyone is fully connected
+    for(std::vector<ElementSpecPtr>::iterator eiter = elements_.begin();
+        eiter != elements_.end(); ) {
+      bool element_referenced_in_hookup = false;
+      if ((*eiter)->element()->ninputs() > 0) {
+        // Check the inputs for a hookup reference
+        for(std::vector<ElementSpec::HookupPtr>::iterator hiter = hookups_.begin();
+            hiter != hookups_.end(); hiter++) {
+          if ((*hiter)->toElement == *eiter) {
+            element_referenced_in_hookup = true;
+            break;
+          } 
+        }
+      }
+      if ((*eiter)->element()->ninputs() == 0 && (*eiter)->element()->noutputs() > 0) {
+        /* It doesn't have inputs so check so ensure some output 
+         * has a hookup reference. */
+        for(std::vector<ElementSpec::HookupPtr>::iterator hiter = hookups_.begin();
+            hiter != hookups_.end(); hiter++) {
+          if ((*hiter)->fromElement == *eiter) {
+            element_referenced_in_hookup = true;
+            break;
+          } 
+        }
+      }
+      if (!element_referenced_in_hookup) {
+        fully_connected = false;
+        /* Remove any hookups that this element has that may not have been part of
+         * the actual edit. This could be an element within a subgraph of an edit. */
+        for(std::vector<ElementSpec::HookupPtr>::iterator hiter = hookups_.begin();
+            hiter != hookups_.end(); ) {
+          if ((*hiter)->toElement == *eiter || (*hiter)->fromElement == *eiter) {
+            hiter = hookups_.erase(hiter);
+          }  else hiter++;
+        }
+        /* Erase this element from the dataflow (but make sure it is not deleted
+         * in case it has any outstanding callbacks) */
+        (*eiter)->element()->state(Element::INACTIVE);
+        garbage_elements_.push_back(*eiter);	// Don't deleted from memory
+        eiter = elements_.erase(eiter);
+      } else eiter++;
     }
-    if (!element_referenced_in_hookup) {
-      (*eiter)->element()->state(Element::INACTIVE);
-      garbage_elements_.push_back(*eiter);
-      eiter = elements_.erase(eiter);
-    } else eiter++;
-  }
+  } while (!fully_connected);
   
 
+  /** At this point I add the *new* elements into the mix */
   for(std::vector<ElementSpecPtr>::iterator iter = new_elements_.begin();
       iter != new_elements_.end(); iter++) {
     elements_.push_back(*iter);
