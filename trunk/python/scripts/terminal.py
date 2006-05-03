@@ -16,15 +16,36 @@ class Terminal(Element):
   def initialize(self): 
       self.set_delay(0, self.delay_callback) 
       return 0
-  def callback(self, port):
+  def callback(self):
       self.set_delay(0, self.delay_callback) 
   def delay_callback(self):
       # Read string from terminal and send it in a tuple
-      line = raw_input("P2 Terminal >> ") 
+      program = r"""
+/*
+ * Copyright (c) 2005 Intel Corporation
+ * This file is distributed under the terms in the attached INTEL-LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ *
+ * DESCRIPTION: P2 Overlog Program to Dataflow %s
+ */
+""" % self.name()
+      while True:
+          line = raw_input("P2 Overlog Terminal >> ") 
+          if line == ".": break
+          if line[0:5] == "input":
+             try:
+                 file = open(line[6:], 'r') 
+                 while l in file:
+                     program += line + "\n"
+             except:
+                 print "ERROR: open file error on file", line[6:]
+          else: program += line + "\n" 
       t = Tuple.mk()
       t.append(Val_Str.mk("overlog"))
       t.append(Val_Str.mk(address))
-      t.append(Val_Str.mk(line))
+      t.append(Val_Str.mk(program))
       t.freeze()
       if self.py_push(0, t, self.callback) > 0:
         self.set_delay(1, self.delay_callback) 
@@ -35,11 +56,11 @@ class Terminal(Element):
 
 def print_usage():
     print
-    print "Usage: terminal.py -d <address> <port>\n"
+    print "Usage: terminal.py [-d] <dataflow_edit_name> <node_address> <port>\n"
     print
 
 def parse_cmdline(argv):
-    shortopts = "d"
+    shortopts = "df:"
     flags = {"debug" : False}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
@@ -76,7 +97,6 @@ def get_stub(address, port):
 def gen_stub(plumber, address, port):
     stub = get_test_stub() 
 
-    print "COMPILING: ", stub
     dfparser.compile(plumber, stub)
 
     if dfparser.dataflows.has_key(DATAFLOW_NAME):
@@ -99,31 +119,26 @@ if __name__ == "__main__":
   
     eventLoopInitialize()
   
-    address = args[0]
-    port    = int(args[1])
+    dataflow = args[0]
+    address  = args[1]
+    port     = int(args[2])
   
     plumber = Plumber()
     stub    = gen_stub(plumber, address, port)
   
-    print "INSTALL THE DATAFLOW"
-    if plumber.install(stub) == 0:
-      print "Stub Correctly initialized.\n"
-    else:
+    if plumber.install(stub) != 0:
       print "** Stub Failed to initialize correct spec\n"
   
     edit   = plumber.new_dataflow_edit(DATAFLOW_NAME);
     input  = edit.find("input");
     output = edit.find("output");
   
-    term = edit.addElement(Terminal("terminal", address+":"+str(port)))
+    term = edit.addElement(Terminal(dataflow, address+":"+str(port)))
     edit.hookUp(input, 0, term, 0)
     edit.hookUp(term, 0, output, 0)
   
-    print "INSTALL THE EDIT"
-    if plumber.install(edit) == 0:
+    if plumber.install(edit) != 0:
       print "Edit Correctly initialized.\n"
-    else:
-      print "** Edit Failed to initialize correct spec\n"
 
     # plumber.toDot("terminal.dot")
     # os.system("dot -Tps terminal.dot -o terminal.ps")

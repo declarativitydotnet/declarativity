@@ -16,13 +16,11 @@ public:
     : Element(n, i, o) {};
 
   int py_push(int port, TuplePtr tp, object callback) {
-    return output(port)->push(tp, boost::bind(&ElementWrap::dispatch, 
-                                              this, callback));
+    return output(port)->push(tp, boost::function<void (void)>(callback));
   }
 
   TuplePtr py_pull(int port, object callback) {
-    return input(port)->pull(boost::bind(&ElementWrap::dispatch, 
-                                         this, callback));
+    return input(port)->pull(boost::function<void (void)>(callback));
   }
 
   virtual const char *processing() const {
@@ -72,17 +70,11 @@ public:
   }
 
   timeCBHandle* set_delay(double secondDelay, object callback) {
-    return delayCB(secondDelay, 
-                   boost::bind(&ElementWrap::dispatch, this, callback));
+    return delayCB(secondDelay, boost::function<void (void)>(callback)); 
   }
 
   void cancel_delay(timeCBHandle* handle) {
     timeCBRemove(handle);
-  }
-
-private:
-  void dispatch(object method) {
-    method();
   }
 };
 
@@ -95,6 +87,7 @@ void export_element()
   
     .def("class_name", pure_virtual(&Element::class_name))
   
+    .def("name",           &Element::name)
     .def("push",           &Element::push)
     .def("pull",           &Element::pull)
     .def("simple_action",  &Element::simple_action)
