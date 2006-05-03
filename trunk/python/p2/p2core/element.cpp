@@ -11,18 +11,16 @@ class ElementWrap : public Element, public wrapper<Element>
 {
 public:
   ElementWrap(std::string n) 
-    : Element(n), _self(NULL), _tHandle(NULL) {};
+    : Element(n) {};
   ElementWrap(std::string n, int i, int o) 
-    : Element(n, i, o), _self(NULL), _tHandle(NULL) {};
+    : Element(n, i, o) {};
 
-  void self(PyObject* s) { _self = s; }
-
-  int py_push(int port, TuplePtr tp, string callback) {
+  int py_push(int port, TuplePtr tp, object callback) {
     return output(port)->push(tp, boost::bind(&ElementWrap::dispatch, 
                                               this, callback));
   }
 
-  TuplePtr py_pull(int port, string callback) {
+  TuplePtr py_pull(int port, object callback) {
     return input(port)->pull(boost::bind(&ElementWrap::dispatch, 
                                          this, callback));
   }
@@ -73,35 +71,20 @@ public:
     return Element::simple_action(p);
   }
 
-  void set_delay(double secondDelay, string callback) {
-    if (_tHandle) cancel_delay();
-    _tHandle = delayCB(secondDelay, 
-                       boost::bind(&ElementWrap::dispatch, 
-                                   this, callback));
+  timeCBHandle* set_delay(double secondDelay, object callback) {
+    return delayCB(secondDelay, 
+                   boost::bind(&ElementWrap::dispatch, this, callback));
   }
 
-  void cancel_delay() {
-    if (_tHandle) timeCBRemove(_tHandle);
-    _tHandle = NULL;
+  void cancel_delay(timeCBHandle* handle) {
+    timeCBRemove(handle);
   }
 
 private:
-  void dispatch(string method) {
-    call_method<void>(_self, method.c_str());
+  void dispatch(object method) {
+    method();
   }
-
-  PyObject*     _self;
-  timeCBHandle* _tHandle;
 };
-
-// Tell Boost.Python that I want to see the self object in the constructor
-/*
-namespace boost { namespace python
-{
-  template <>
-  struct has_back_reference<ElementWrap> : mpl::true_ {};
-}}
-*/
 
 void export_element()
 {
@@ -131,13 +114,12 @@ void export_element()
     .def("flags",          &Element::flags)
 
     // PYTHON SUPPORT FOR ELEMENTS
-    .def("self",           &ElementWrap::self)
     .def("push",           &ElementWrap::push)
     .def("pull",           &ElementWrap::pull)
     .def("simple_action",  &ElementWrap::simple_action)
     .def("py_push",        &ElementWrap::py_push)
     .def("py_pull",        &ElementWrap::py_pull)
-    .def("set_delay",      &ElementWrap::set_delay)
+    .def("set_delay",      &ElementWrap::set_delay, return_internal_reference<>())
     .def("cancel_delay",   &ElementWrap::cancel_delay)
   ; 
 }

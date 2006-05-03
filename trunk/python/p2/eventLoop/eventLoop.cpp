@@ -5,7 +5,7 @@ using namespace boost::python;
 
 void export_eventLoop()
 {
-  class_<timeCBHandle>
+  class_<timeCBHandle, timeCBHandle*>
         ("timeCBHandle", init<boost::posix_time::ptime&, const b_cbv&, Element*>())
   ;
   
@@ -16,9 +16,11 @@ void export_eventLoop()
   
   def("eventLoop", eventLoop);
   def("eventLoopInitialize", eventLoopInitialize);
-  def("delayCB", delayCB, return_internal_reference<>());
-  def("timeCBRemove", timeCBRemove);
-  def("networkSocket", networkSocket);
-  def("fileDescriptorCB", fileDescriptorCB);
-  def("removeFileDescriptorCB", removeFileDescriptorCB);
+/*
+  def("delayCB", delayCB, return_internal_reference<>())
+  def("timeCBRemove", timeCBRemove)
+  def("networkSocket", networkSocket)
+  def("fileDescriptorCB", fileDescriptorCB)
+  def("removeFileDescriptorCB", removeFileDescriptorCB)
+*/
 }
