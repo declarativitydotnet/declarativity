@@ -21,7 +21,7 @@
 class OverlogCompiler : public Element { 
 public:
   
-  OverlogCompiler(string, string, string);
+  OverlogCompiler(string, string);
 
   const char *class_name() const { return "OverlogCompiler";}
   const char *processing() const { return "h/h"; }
@@ -30,10 +30,9 @@ public:
   int push(int port, TuplePtr, b_cbv cb);
 
 private:
-  void compile(string, std::ostringstream&);
+  void compile(string, string, std::ostringstream&);
   string readScript( string fileName );
 
-  string _dataflowName;
   string _id;
 };
 

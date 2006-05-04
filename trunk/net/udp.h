@@ -50,7 +50,7 @@ public:
     void socket_on()
     {
       fileDescriptorCB(u->sd, b_selread,
-                       boost::bind(&Udp::Rx::socket_cb, this));
+                       boost::bind(&Udp::Rx::socket_cb, this), this);
     };
     void socket_off()
     {

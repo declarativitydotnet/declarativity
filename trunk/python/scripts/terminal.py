@@ -12,7 +12,8 @@ class Terminal(Element):
       self.mode    = "terminal"
       self.address = None 
       self.program_header = r"""
-/** DESCRIPTION: P2 Overlog Program to edit Dataflow %s */ """ % name
+/** DESCRIPTION: P2 Overlog Program to edit Dataflow %s */
+      """ % name
       self.program = self.program_header
   def class_name(self): return "Terminal"
   def processing(self): return "h/h"
@@ -80,12 +81,12 @@ class Terminal(Element):
               self.mode = "address" 
           elif self.mode == "input":
               try:
-                  file = open(line[6:], 'r') 
-                  while l in file:
-                      self.program += line + "\n"
+                  file = open(line, 'r') 
+                  self.program += file.read()
               except:
-                  print "ERROR: open file error on file", line[6:]
-              print "File %s text added to overlog program." % line[6:]
+                  print "ERROR: open file error on file", line
+                  continue
+              print "File %s text added to overlog program." % line
           elif self.mode == "address":
               self.address = line
               print "Address entered: ", self.address
@@ -133,7 +134,8 @@ def get_stub(address, port):
       PelTransform("package", "$3 pop swallow pop") ->
       Print("packaged_tuple") ->
       MarshalField("marshal", 1) -> StrToSockaddr("addr_conv", 0) -> 
-      udp -> UnmarshalField("unmarshal", 1) -> PelTransform("unRoute", "$1 unboxPop") ->
+      udp -> UnmarshalField("unmarshal", 1) -> 
+      PelTransform("unRoute", "$1 unbox drop drop pop pop pop") ->
       Print("input") -> Discard("dummy_discard");
       }
       .   # END OF DATAFLOW DEFINITION""" % (DATAFLOW_NAME, port, address, port)

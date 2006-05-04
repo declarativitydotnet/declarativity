@@ -36,14 +36,16 @@ DataflowInstaller::DataflowInstaller(string n, PlumberPtr p, object o)
 int DataflowInstaller::push(int port, TuplePtr tp, b_cbv cb)
 {
   if (tp->size() > 2 && (*tp)[1]->typeCode() == Value::STR &&
-      Val_Str::cast((*tp)[1]) == "overlog") {
+      Val_Str::cast((*tp)[1]) == "script") {
     ostringstream mesg;
-    ValuePtr source = (*tp)[2];
-    string   script = Val_Str::cast((*tp)[2]);
+    ValuePtr source = (*tp)[0];
+    ValuePtr dest   = (*tp)[2];
+    string   script = Val_Str::cast((*tp)[3]);
     int      result = install(script, mesg);
 
     TuplePtr status = Tuple::mk();
     status->append(source);
+    status->append(dest);
     status->append(Val_Int32::mk(result));
     status->append(Val_Str::mk(mesg.str())); 
     status->freeze();
@@ -53,6 +55,7 @@ int DataflowInstaller::push(int port, TuplePtr tp, b_cbv cb)
 }
 
 int DataflowInstaller::install(string script, ostringstream& status) {
+  parser_.attr("clear")();
   tuple result   = extract<tuple>(parser_.attr("compile")(plumber_, script));
   dict dataflows = extract<dict>(result[0]);
   list edits     = extract<list>(result[1]);
@@ -60,28 +63,35 @@ int DataflowInstaller::install(string script, ostringstream& status) {
   int ndataflows = extract<int>(dataflows.attr("__len__")());
   int nedits = extract<int>(edits.attr("__len__")());
 
-  status << "PARSED " << ndataflows << " DATAFLOWS\n";
-  status << "PARSED " << nedits << " EDITS\n";
+  status << "Dataflow Installer Status" << std::endl;
+  if (ndataflows) status << "SUCCESSFULLY PARSED " << ndataflows << " DATAFLOWS\n";
+  if (ndataflows) status << "SUCCESSFULLY PARSED " << nedits << " EDITS\n";
 
   for (int i = 0; i < ndataflows; i++) {
     tuple t = dataflows.popitem();
     char* name = extract<char*>(t[0]);
-    std::cerr << "DATAFLOW " << i << ": " << name << std::endl;
     t[1].attr("eval_dataflow")();
     Plumber::DataflowPtr d = extract<Plumber::DataflowPtr>(t[1].attr("conf"));
     if (plumber_->install(d) < 0) {
       status << "DATAFLOW INSTALLATION FAILURE FOR " << name << std::endl;
       return -1;
     }
+    else {
+      status << "SUCCESSFUL INSTALLATION FOR DATAFLOW: " << name << std::endl;
+    }
   }
   for (int i = 0; i < nedits; i++) {
-    Plumber::DataflowEditPtr e = extract<Plumber::DataflowEditPtr>(edits[i]);
+    edits[i].attr("eval_dataflow")();
+    Plumber::DataflowEditPtr e = extract<Plumber::DataflowEditPtr>(edits[i].attr("conf"));
     if (plumber_->install(e) < 0) {
       status << "EDIT INSTALLATION FAILURE FOR " << e->name() << std::endl;
       return -1;
     }
+    else {
+      status << "SUCCESSFUL INSTALLATION FOR DATAFLOW EDIT: " << e->name() << std::endl;
+    }
   }
-  // plumber_->toDot("dataflowInstaller.dot");
+  plumber_->toDot("dataflowInstaller.dot");
   return 0;
 }
 

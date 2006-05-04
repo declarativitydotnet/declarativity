@@ -27,11 +27,9 @@ def get_test_stub(name, address, port):
 
       udp -> UnmarshalField("unmarshal", 1) ->
       PelTransform("unRoute", "$1 unboxPop") ->
-      Print("unRoute_tuple") ->
       PelTransform("unPackage", "swallow unbox drop pop pop pop pop pop")  ->
-      Print("before_ddemux") ->
-      DDemux("dDemux", {}, 1) ->
-      Print("overlog_input") ->
+      DDemux("dDemux", {value}, 1) ->
+      Print("printer") ->
       Queue("install_result_queue") ->
       DRoundRobin("dRoundRobin", 1) ->  
       Sequence -> 
@@ -112,15 +110,18 @@ if __name__ == "__main__":
   else:
     print "** Stub Failed to initialize correct spec\n"
 
-  edit   = plumber.new_dataflow_edit("Main")
-  input  = edit.find("overlog_input")
-  output = edit.find("install_result_queue")
+  edit    = plumber.new_dataflow_edit("Main")
+  ddemux  = edit.find("dDemux")
+  printer = edit.find("printer")
+  resultq = edit.find("install_result_queue")
+  drr     = edit.find("dRoundRobin")
 
-  oc = edit.addElement(libp2python.OverlogCompiler("ocompiler", "Main", address+":"+str(port))) 
+  oc = edit.addElement(libp2python.OverlogCompiler("ocompiler", address+":"+str(port))) 
   di = edit.addElement(libp2python.DataflowInstaller("dinstaller", plumber, dfparser))
-  edit.hookUp(input, 0, oc, 0)
-  edit.hookUp(oc, 0, di, 0)
-  edit.hookUp(di, 0, output, 0)
+  edit.hookUp(ddemux, 0, oc, 0)
+  edit.hookUp(oc, 0, printer, 0)
+  edit.hookUp(printer, 0, di, 0)
+  edit.hookUp(di, 0, resultq, 0)
 
   print "INSTALL THE EDIT"
   if plumber.install(edit) == 0:

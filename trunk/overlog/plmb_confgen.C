@@ -37,6 +37,7 @@ static string conf_valueVec(std::vector<ValuePtr>& values)
     if (iter + 1 != values.end())
       oss << ", ";
   }
+  if (values.size() == 0) oss << "value";
   oss << "}";
   return oss.str(); 
 }
@@ -52,6 +53,7 @@ static string conf_StrVec(std::set<string> values)
       oss << ", ";
     --iter;
   }
+  if (values.size() == 0) oss << "str";
   oss << "}";
   return oss.str(); 
 }
@@ -66,6 +68,7 @@ static string conf_UIntVec(std::vector<unsigned>& values)
     if (iter + 1  != values.end())
       oss << ", ";
   }
+  if (values.size() == 0) oss << "int";
   oss << "}";
   return oss.str(); 
 }
@@ -506,7 +509,7 @@ Plmb_ConfGen::genEditFinalize(string nodeID)
   for (unsigned int k = 0; k < _udpSenders.size(); k++) {
     ElementSpecPtr nextElementSpec = _udpSenders.at(k);
     nextElementSpec->output(0)->check(false);
-    _p2dl << conf_hookup(conf_var(nextElementSpec.get()), 0, string("dRoundRobin"), string("+"));
+    _p2dl << conf_hookup(conf_var(nextElementSpec.get()), 0, string(".dRoundRobin"), string("+"));
   }
   _p2dl << conf_comment("=================================================");
 
@@ -546,7 +549,7 @@ Plmb_ConfGen::genEditFinalize(string nodeID)
                             "demuxQueuePullPush_" + tableName, 0));
     
     bufferQueue->input(0)->check(false);
-    _p2dl << conf_hookup(string("ddemux_in"), Val_Str(_iterator->second._name).toConfString(), 
+    _p2dl << conf_hookup(string(".dDemux"), Val_Str(_iterator->second._name).toConfString(), 
                          conf_var(bufferQueue.get()), 0);
     hookUp(bufferQueue, 0, pullPush, 0);
     
@@ -1575,7 +1578,7 @@ void Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
     if (conf_var(comp_cb) == "unknown") {
       _p2dl << conf_assign(last_el.get(), 
                 conf_function("MultLookup", "multLookup", conf_var(probeTable.get()),
-                              leftJoinKey, rightJoinKey, 0));
+                              leftJoinKey, rightJoinKey));
     }
     else {
       _p2dl << conf_assign(last_el.get(), 
@@ -2079,6 +2082,7 @@ void Plmb_ConfGen::createTables(string nodeID)
 	tableSize = UINT_MAX; // consider this infinity
       }
       string newTableName = nodeID + ":" + tableInfo->tableName;
+      std::cerr << "CREATING TABLE: " << tableInfo->tableName << std::endl;
       TablePtr newTable(new Table(tableInfo->tableName, tableInfo->size));
       if (tableInfo->timeout != -1) {
 	boost::posix_time::time_duration expiration(0,0,tableInfo->timeout, 0);

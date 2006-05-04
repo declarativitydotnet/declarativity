@@ -71,6 +71,8 @@ public:
   ValuePtr operator[] (ptrdiff_t i) { return fields[i]; };
   const ValuePtr operator[] (ptrdiff_t i) const { return fields[i]; };
 
+  ValuePtr at(ptrdiff_t i) { return fields[i]; };
+
   void xdr_marshal( XDR *xdrs );
   static TuplePtr xdr_unmarshal( XDR *xdrs );
 

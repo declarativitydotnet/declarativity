@@ -124,11 +124,15 @@ class Edit(Dataflow):
           if not isinstance(name, libp2python.ElementSpec):
             element = self.eval_ref(name)
           else: element = name
+          # fn = getattr(apply(getattr(element, "element"), ()), oper)
+          fn = getattr(element, oper)
           if oper == "add_input" or oper == "add_output": 
-            if port: return element.attr(oper)(port)
-            else: return element.attr(oper)()
+            if port: 
+                return apply(fn, tuple([port]))
+            else: 
+                return apply(fn, ())
           elif oper == "remove_input" or oper == "remove_output":
-            element.attr(oper)(port)
+            apply(fn, tuple(port))
           else: error("Unknown dataflow operation.")
           return -1
     def eval_ref(self, r):
@@ -244,7 +248,7 @@ class Strand:
                     elements.append([i, d.eval_object(e[1],e[2]), o])
             elif e[0] == 'var':
                 var = d.lookup(self.context, e[1])
-                if not var: error("Unable to resolve variable %s in dataflow %s." % (e[1], d.name))
+                if not var: error("Unable to resolve p2dl variable %s in dataflow %s." % (e[1], d.name))
                 elements.append([i, var, o])
             elif e[0] == 'ref':
                 elements.append([i, d.eval_ref(e[1]), o])
@@ -383,7 +387,7 @@ parser P2Dataflow:
     rule term: (TYPE  [args {{ return ['new', TYPE, args] }} ]
                        {{ return ['new', TYPE, []] }}
                 | 
-                "\." VAR {{ ref = VAR }}
+                "\." VAR    {{ ref = VAR }}
                   ("\." VAR {{ ref = ref + "." + VAR }})* {{ return ['ref', ref] }}
                 |
                 VAR      {{ return ['var', VAR] }})
@@ -424,21 +428,23 @@ parser P2Dataflow:
                    (',' VAR   {{ f.append(VAR) }})*]
                 "\)"          {{ return f}}
 
-    rule vector: "{" {{ v = [] }} 
-                     {{ if not flags["debug"]: v = libp2python.ValueVec() }} 
-                 [
-                   (VAL args       {{ v.append(eval_value(VAL, args)) }}           
+    rule vector: "{"          {{ v = [] }} 
+                   (  "str"   {{ v = libp2python.StrVec()   }}
+                    | "int"   {{ v = libp2python.IntVec()   }}
+                    | "value" {{ v = libp2python.ValueVec() }}
+                    |
+                    (VAL args      {{ if not flags["debug"]: v = libp2python.ValueVec() }} 
+                                   {{ v.append(eval_value(VAL, args)) }}           
                      (',' VAL args {{ v.append(eval_value(VAL, args)) }})*
-                    |
-                    NUM       {{ if not flags["debug"]: v = libp2python.IntVec() }}
-                              {{ v.append(int(NUM)) }}
-                     (',' NUM {{ v.append(int(NUM)) }})*
-                    |
-                    STR       {{ if not flags["debug"]: v = libp2python.StrVec() }}
-                              {{ v.append(STR) }}           
-                     (',' STR {{ v.append(STR) }})*
+                     |
+                     NUM       {{ if not flags["debug"]: v = libp2python.IntVec() }}
+                               {{ v.append(int(NUM)) }}
+                      (',' NUM {{ v.append(int(NUM)) }})*
+                     |
+                     STR       {{ if not flags["debug"]: v = libp2python.StrVec() }}
+                               {{ v.append(STR) }}           
+                      (',' STR {{ v.append(STR) }})*)
                    )
-                 ]
                  "}" {{ return v}}
 
     rule tuple: "<"              {{ if flags["debug"]:     t = [] }} 
@@ -454,6 +460,12 @@ def compile(p, s):
     plumber = p
     parse('module', s)
     return dataflows, edits
+
+def clear():
+    global dataflows
+    global edits
+    dataflows = {}
+    edits     = []
 
 def debug():
     if flags["debug"]:

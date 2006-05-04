@@ -22,6 +22,7 @@ DDemux::DDemux(string name, std::vector<ValuePtr> keys,
   for (std::vector<ValuePtr>::iterator i = keys.begin(); 
        i != keys.end(); i++) 
     assert(add_output(*i) > 0);
+  _block_flags.resize(noutputs());
 }
 
 /**

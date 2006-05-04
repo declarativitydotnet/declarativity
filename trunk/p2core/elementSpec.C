@@ -180,30 +180,32 @@ ElementSpec::PortPtr ElementSpec::output(int pno)
 int ElementSpec::add_input(ValuePtr portKey)
 {
   Element::Processing proc = (Element::Processing) *_element->processing();
-  unsigned port = element()->add_input(portKey);
-  if (port >= 0) {
-    while (_inputs->size() < port) {
-      _inputs->push_back(PortPtr(new Port(proc)));
-    }
-    return port;
+  unsigned port = (portKey == 0) ? element()->add_input() : element()->add_input(portKey);
+  if (port < _inputs->size()) {
+    (*_inputs)[port] = PortPtr(new Port(proc));
   }
-  return -1;
+  else {
+    assert(port == _inputs->size());
+    _inputs->push_back(PortPtr(new Port(proc)));
+  }
+  return port;
 }
 
 int ElementSpec::add_output(ValuePtr portKey)
 {
-  if (*(_element->processing()+1) != '/') {
-    return -1;
+  const char* proc = _element->processing();
+  for ( ; *proc != '/'; proc++) 
+    ;
+  proc++;
+  unsigned port = (portKey == 0) ? element()->add_output() : element()->add_output(portKey);
+  if (_outputs->size() < port) {
+    (*_outputs)[port] = PortPtr(new Port((Element::Processing) *proc));
   }
-  Element::Processing proc = (Element::Processing) *(_element->processing()+2);
-  unsigned port = element()->add_output(portKey);
-  if (port >= 0) {
-    while (_outputs->size() < port) {
-      _outputs->push_back(PortPtr(new Port(proc)));
-    }
-    return port;
+  else {
+    assert(port == _outputs->size());
+    _outputs->push_back(PortPtr(new Port((Element::Processing) *proc)));
   }
-  return -1;
+  return port;
 }
 
 void ElementSpec::remove_input(int port)

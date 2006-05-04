@@ -79,9 +79,18 @@ public:
   }
 };
 
+int (Element::*ai_void)(void)      = &Element::add_input;
+int (Element::*ai_value)(ValuePtr) = &Element::add_input;
+int (Element::*ao_void)(void)      = &Element::add_output;
+int (Element::*ao_value)(ValuePtr) = &Element::add_output;
+int (Element::*ri_int)(int)        = &Element::remove_input;
+int (Element::*ri_value)(ValuePtr) = &Element::remove_input;
+int (Element::*ro_int)(int)        = &Element::remove_output;
+int (Element::*ro_value)(ValuePtr) = &Element::remove_output;
+
 void export_element()
 {
-
+scope outer =
   class_<ElementWrap, boost::shared_ptr<ElementWrap>, boost::noncopyable>
         ("Element", init<std::string>())
     .def(init<std::string, int, int>())
@@ -97,6 +106,15 @@ void export_element()
     .def("noutputs",       &Element::noutputs)
     .def("ports_frozen",   &Element::ports_frozen)
   
+    .def("add_input",     ai_void)
+    .def("add_input",     ai_value)
+    .def("add_output",    ao_void)
+    .def("add_output",    ao_value)
+    .def("remove_input",  ri_int)
+    .def("remove_input",  ri_value)
+    .def("remove_output", ro_int)
+    .def("remove_output", ro_value)
+
     // CONFIGURATION
     .def("connect_input",  &Element::connect_input)
     .def("connect_output", &Element::connect_output)
@@ -116,4 +134,7 @@ void export_element()
     .def("set_delay",      &ElementWrap::set_delay, return_internal_reference<>())
     .def("cancel_delay",   &ElementWrap::cancel_delay)
   ; 
+
+  class_<Element::Exception, Element::Exception*> ("Exception", init<string>())
+  ;
 }
