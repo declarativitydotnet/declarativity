@@ -8,7 +8,8 @@
 # UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
 # Berkeley, CA,  94707. Attention: P2 Group.
 # 
-# DESCRIPTION: TODO file for P2 development
+# DESCRIPTION: TODO file for P2 development.  If you start working on
+# something, put your name after it.
 # 
 #   $Id$
 #
