@@ -11,6 +11,8 @@
 #
 #
 
+SUBDIRS=eventLoop p2core elements net overlog
+
 lib_LTLIBRARIES = libp2python.la
 libp2python_la_SOURCES = p2python.cpp
 libp2python_la_LIBADD = \
@@ -35,7 +37,9 @@ LIBS = $(BOOST_LIB) $(PYTHON_LDFLAGS) \
        -L./elements -L./p2core -L./eventLoop -L./net -L./overlog
 
 CLEANFILES = core *.core *~
+
 EXTRA_DIST = .cvsignore README
 
 MAINTAINERCLEANFILES = Makefile.in
-SUBDIRS=eventLoop p2core elements net overlog
+
+

@@ -96,7 +96,7 @@ public:
   // 
   ssize_t read(int fd, size_t max_read = BUF_DFLT_READ);
   ssize_t recv(int sd, size_t max_read = BUF_DFLT_READ, int flags=0);
-  ssize_t recvfrom(int sd, ssize_t max_read = BUF_DFLT_READ, int flags=0,
+  ssize_t recvfrom(int sd, size_t max_read = BUF_DFLT_READ, int flags=0,
 		   struct sockaddr *from=NULL, socklen_t *fromlen=0);
   
   Fdbuf &pushFdbuf(const Fdbuf &fb, size_t max_len = BUF_SIZE_MAX);

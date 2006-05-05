@@ -65,11 +65,13 @@ ssize_t Fdbuf::recv(int fd, size_t max_read, int flags)
   ensure_additional(max_read);
   return post_read(::recv(fd, data + start + len, max_read, flags));
 }
-ssize_t Fdbuf::recvfrom(int sd, ssize_t max_read, int flags,
+ssize_t Fdbuf::recvfrom(int sd, size_t max_read, int flags,
 			struct sockaddr *from, socklen_t *fromlen)
 {
   ensure_additional(max_read);
-  return post_read(::recvfrom(sd, data + start + len, max_read, 0, from, fromlen));
+  ssize_t result = ::recvfrom(sd, data + start + len, max_read,
+                              0, from, fromlen);
+  return post_read(result);
 }
 
 // Appending a string
