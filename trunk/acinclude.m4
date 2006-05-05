@@ -797,3 +797,13 @@ AC_DEFUN([AC_LIB_WAD],
                 AC_SUBST(WADPY)
         fi
 ])
+
+dnl
+dnl Find out whether we have sockaddr_in.sin_len
+dnl
+AC_DEFUN([AC_CHECK_SOCKADDR_IN_SIN_LEN],
+[
+	AC_CHECK_MEMBERS([struct sockaddr_in.sin_len])
+])
+
+
