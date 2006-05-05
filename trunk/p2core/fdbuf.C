@@ -103,21 +103,22 @@ Fdbuf::write(int fd, ssize_t max_write)
 {
   return post_write(::write(fd,
                             data + start, 
-			    (max_write < 0) ? len : std::min(len, (size_t) max_write)));
+			    (max_write < 0) ? len
+                            : std::min(len, (size_t) max_write)));
 }
 
 ssize_t Fdbuf::send(int sd, ssize_t max_write, int flags)
 {
   return post_write(::send(sd, data + start, 
-			   max_write<0 ? len : std::min(len,(size_t)max_write),
+			   (max_write < 0) ? len
+                           : std::min(len, (size_t) max_write),
 			   flags));
 }
 ssize_t Fdbuf::sendto(int sd, ssize_t max_write, int flags,
 		      const struct sockaddr *to, socklen_t tolen)
 {
   return post_write(::sendto(sd, data + start, 
-			     ((max_write < 0)
-                              ? len
+			     ((max_write < 0) ? len
                               : std::min(len, (size_t) max_write)),
 			     flags, to, tolen));
 }
