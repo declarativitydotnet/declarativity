@@ -76,9 +76,6 @@
 
  - Add a "getting started with P2" document (Joe)
 
- - Fix the BUF_UNBOUNDED constant for fdbufs so as not to be set to
-   -1. Perhaps remove BUF_UNBOUNDED altogether?
-
  - Install bugzilla (Alex)
 
  - Install wiki (Alex)
