@@ -58,7 +58,7 @@ AC_C_CONST
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_CHECK_TYPE([socklen_t],[],[],[#include <sys/socket.h>])
-
+AC_CHECK_SOCKADDR_IN_SIN_LEN
 
 # Checks for library functions.
 AC_FUNC_FORK
