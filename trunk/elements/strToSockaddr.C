@@ -72,7 +72,9 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
   // Now construct the sockaddr
   struct sockaddr_in addr;
   bzero(&addr, sizeof(addr));
+#ifdef HAVE_SOCKADDR_IN_SIN_LEN
   addr.sin_len = sizeof(sockaddr_in);
+#endif // HAVE_SOCKADDR_IN_SIN_LEN
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
   inet_pton(AF_INET, theAddress.c_str(), &addr.sin_addr);
