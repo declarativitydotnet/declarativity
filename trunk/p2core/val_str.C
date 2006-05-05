@@ -72,10 +72,13 @@ ValuePtr Val_Str::xdr_unmarshal( XDR *x )
 
 int Val_Str::compareTo(ValuePtr other) const
 {
-  if (other->typeCode() != Value::STR) {
-    return false;
+  if (Value::STR < other->typeCode() ) {
+    return -1;
+  } else if(Value::STR > other->typeCode() ) {
+    return 1;
+  } else {
+    return s.compare(cast(other));
   }
-  return s.compare(cast(other));
 }
 
 //

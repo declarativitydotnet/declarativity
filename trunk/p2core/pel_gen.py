@@ -26,11 +26,11 @@ def emit_opcode( op, ar, va, desc ):
   curop += 1
   
 for op, ar, va, desc in [
-  ("drop",1,    "DROP",         "Discard the top of stack"),
-  ("swap",2,	"SWAP",         "Swap top two stack values"),
-  ("dup",1,	"DUP",          "Duplicate the top stack value"),
-  ("",0,        "PUSH_CONST",   "Push a constant"),
-  ("",0,        "PUSH_FIELD",   "Push a field of the tuple"),
+  ("drop",  1, "DROP",  "Discard the top of stack"),
+  ("swap",  2, "SWAP",  "Swap top two stack values"),
+  ("dup",   1, "DUP",   "Duplicate the top stack value"),
+  (""      ,0, "PUSH_CONST",  "Push a constant"),
+  ("" , 0,        "PUSH_FIELD",   "Push a field of the tuple"),
   ("pop",1,     "POP",          "Pop result tuple field"),
   ("peek", 1,   "PEEK",         "Push a duplicate of a stack element"),
   ("ifelse",3,  "IFELSE",       "If first arg, then return second, else third"),
@@ -45,6 +45,12 @@ for op, ar, va, desc in [
   ("unboxPop",1,"T_UNBOXPOP",   "Pops the fields of the argument tuple value in order"),
   ("field", 2,  "T_FIELD",      "Extracts a field of a tuple value"),
   ("swallow", 0,"T_SWALLOW",    "Swallows the entire input tuple into a single tuple value in the stack"),
+  
+  ("lappend", 2, "L_APPEND", "Insert first element into second list, or create list if second list is null"),
+  ("concat", 2, "L_CONCAT", "Insert all elements of first list into second list"),
+  ("member", 2, "L_MEMBER", "Push 1 if first arg is in second list, 0 otherwise"),
+  ("intersect", 2, "L_INTERSECT", "Intersects first list with second, using Lisp intersection rules"),
+  ("msintersect", 2, "L_MULTISET_INTERSECT", "Intersects first list with second, using multiset intersection rules"),
   
   ("not",1, 	"NOT",          "Boolean negation"),
   ("and",2,	"AND",          "Boolean AND"),

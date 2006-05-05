@@ -20,6 +20,7 @@
 #include <deque>
 #include <vector>
 
+#include "val_list.h"
 #include "tuple.h"
 #include "pel_program.h"
 #include "ID.h"

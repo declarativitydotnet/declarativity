@@ -19,6 +19,7 @@ using boost::unit_test_framework::test_suite;
 #include "testCsv.C"
 #include "testTables.C"
 #include "testIDs.C"
+#include "testLists.C"
 
 test_suite* init_unit_test_suite(int, char**)
 {
@@ -32,6 +33,6 @@ test_suite* init_unit_test_suite(int, char**)
   top->add(new testCsv_testSuite());
   top->add(new testTables_testSuite());
   top->add(new testIDs_testSuite());
-
+  top->add(new testLists_testSuite());
   return top;
 }

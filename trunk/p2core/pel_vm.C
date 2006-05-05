@@ -1,4 +1,3 @@
-// -*- c-basic-offset: 2; related-file-name: "pel_vm.h" -*-
 /*
  * @(#)$Id$
  *
@@ -439,12 +438,14 @@ DEF_OP(T_MKTUPLE) {
   ValuePtr tuple = Val_Tuple::mk(t);
   stackPush(tuple);
 }
+
 DEF_OP(T_APPEND) {
   ValuePtr value = stackTop(); stackPop();
-  ValuePtr tuple = stackTop();
-  TuplePtr t = Val_Tuple::cast(tuple);
+  ValuePtr obj = stackTop();
+  TuplePtr t = Val_Tuple::cast(obj);
   t->append(value);
 }
+
 DEF_OP(T_UNBOX) {
   ValuePtr tuple = stackTop(); stackPop();
   TuplePtr t = Val_Tuple::cast(tuple);
@@ -482,6 +483,61 @@ DEF_OP(T_FIELD) {
 DEF_OP(T_SWALLOW) { 
   ValuePtr swallowed = Val_Tuple::mk(operand);
   stackPush(swallowed);
+}
+
+
+/**
+ * List operations
+ *
+ */
+
+DEF_OP(L_CONCAT) {
+   ValuePtr val1 = stackTop(); stackPop();
+   ValuePtr val2 = stackTop(); stackPop();
+   ListPtr list1 = Val_List::cast(val1);
+   ListPtr list2 = Val_List::cast(val2);
+   
+   stackPush(Val_List::mk(list1->concat(list2)));
+}
+
+DEF_OP(L_APPEND) {
+   ValuePtr value = stackTop(); stackPop();
+   ValuePtr listVal = stackTop(); stackPop();
+   ListPtr list = Val_List::cast(listVal);
+   
+   if(list->size() == 0) {
+      stackPush(Val_List::mk(ListPtr(new List(value))));
+   } else {
+      list->append(value);
+      stackPush(Val_List::mk(list));
+   }
+}
+
+DEF_OP(L_MEMBER) {
+   ValuePtr value = stackTop(); stackPop();
+   ValuePtr listVal = stackTop();
+   ListPtr list = Val_List::cast(listVal);
+   
+   int isMember = list->member(value);
+   stackPush(Val_Int32::mk(isMember));
+}
+
+DEF_OP(L_INTERSECT) {
+   ValuePtr val1 = stackTop(); stackPop();
+   ValuePtr val2 = stackTop(); stackPop();
+   ListPtr l1 = Val_List::cast(val1);
+   ListPtr l2 = Val_List::cast(val2);
+   
+   stackPush(Val_List::mk(l1->intersect(l2)));
+}
+
+DEF_OP(L_MULTISET_INTERSECT) {
+   ValuePtr val1 = stackTop(); stackPop();
+   ValuePtr val2 = stackTop(); stackPop();
+   ListPtr l1 = Val_List::cast(val1);
+   ListPtr l2 = Val_List::cast(val2);
+   
+   stackPush(Val_List::mk(l1->multiset_intersect(l2)));
 }
 
 

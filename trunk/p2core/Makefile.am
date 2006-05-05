@@ -41,7 +41,9 @@ libp2core_la_SOURCES = \
 	loggerI.C \
 	oper.C \
 	val_ip_addr.C \
-	dot.C
+	dot.C \
+	list.C \
+	val_list.C 
 
 INCLUDES = @BOOST_INC@ -I../eventLoop
 

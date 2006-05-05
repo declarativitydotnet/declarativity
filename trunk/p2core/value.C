@@ -28,8 +28,10 @@
 #include "val_opaque.h"
 #include "val_tuple.h"
 #include "val_time.h"
+#include "val_list.h"
 #include "val_id.h"
 #include "val_ip_addr.h"
+
 
 typedef ValuePtr (*_unmarshal_fn)( XDR *);
 
@@ -46,7 +48,8 @@ static _unmarshal_fn jump_tab[] = {
   Val_Time::xdr_unmarshal,
   Val_ID::xdr_unmarshal,
   Val_IP_ADDR::xdr_unmarshal,
-  Val_Time_Duration::xdr_unmarshal
+  Val_Time_Duration::xdr_unmarshal,
+  Val_List::xdr_unmarshal
 };
 
 //

@@ -27,7 +27,7 @@
 #include "val_tuple.h"
 #include "val_time.h"
 #include "val_id.h"
-
+#include "val_list.h"
 
 
 using namespace boost::gregorian;
@@ -114,6 +114,15 @@ public:
     t->append(Val_UInt64::mk(13500975));
     t->freeze();  
     xdrTest(Val_Tuple::mk(t));
+    
+    xdrTest(Val_List::mk(List::mk()));
+    
+    ListPtr l = List::mk();
+    l->append(Val_Str::mk("Foo"));
+    l->append(Val_UInt64::mk(13117));
+    l->append(Val_Int32::mk(42));
+    
+    xdrTest(Val_List::mk(l));
     
     //	boost::posix_time::ptime time = boost::posix_time::second_clock::universal_time();
     //getTime(time);

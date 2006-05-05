@@ -14,7 +14,8 @@ TEST_SOURCES = 	testBasicElementPlumbing.C \
 		testValues.C \
 		testTables.C \
 		testIDs.C \
-		testCsv.C
+		testCsv.C \
+		testLists.C
 
 
 $(PROGRAMS): $(LDEPS) \

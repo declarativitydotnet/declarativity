@@ -15,10 +15,22 @@
 #include <sstream>
 
 #include "value.h"
+#include "val_null.h"
+#include "val_str.h"
+#include "val_int32.h"
+#include "val_uint32.h"
+#include "val_int64.h"
+#include "val_uint64.h"
+#include "val_double.h"
+#include "val_opaque.h"
+#include "val_tuple.h"
+#include "val_time.h"
+#include "val_id.h"
 #include "val_ip_addr.h"
 #include "oper.h"
 #include "val_int32.h"
 #include "val_str.h"
+#include "val_list.h"
 
 using namespace opr;
 
@@ -855,6 +867,12 @@ testBadCasts()
   TEST_BADCAST(Int32, 0, Tuple);
   TEST_BADCAST(UInt64, 0, Tuple);
   TEST_BADCAST(Double, 0, Tuple);
+  
+  TEST_BADCAST(Int32, 0, List);
+  TEST_BADCAST(UInt64, 0, List);
+  TEST_BADCAST(Int32, 0, List);
+  TEST_BADCAST(UInt64, 0, List);
+  TEST_BADCAST(Double, 0, List);
 }
 #undef TEST_BADCAST
 
@@ -891,10 +909,6 @@ testImplicitConversions()
 
 };
 
-
-
-
-
 class testValues_testSuite
   : public boost::unit_test_framework::test_suite
 {
@@ -916,6 +930,7 @@ public:
     */
     add(BOOST_CLASS_TEST_CASE(&testValues::testBadCasts,
                               instance));
+    
     add(BOOST_CLASS_TEST_CASE(&testValues::testImplicitConversions,
                               instance));
   }

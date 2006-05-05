@@ -23,7 +23,7 @@
 #include "val_uint64.h"
 #include "val_double.h"
 #include "val_opaque.h"
-
+#include "val_list.h"
 
 class testPel
 {
@@ -200,7 +200,7 @@ private:
               << "'";
       BOOST_CHECK_MESSAGE(top->typeCode() == t->t,
                           message.str().c_str());
-      return;
+      //return;
     }
 
 
@@ -233,6 +233,8 @@ private:
       case Value::STR:
         eq = (Val_Str::cast(top) == t->val);
         break;
+      case Value::LIST:
+        eq = (Val_Str::cast(top).compare(t->val) == 0) ? 1 : 0;
       default:
         // Ignore remaining values XXX
         break;
@@ -243,12 +245,13 @@ private:
                 << ". Mismatching stack top for '"
                 << t->src
                 << "'; expected '"
-                << top->toTypeString()
-                << "' but received '"
                 << t->val
+                << "' but received '"
+                << top->toTypeString()
                 << "'";
         BOOST_CHECK_MESSAGE(eq, 
                             message.str().c_str());
+        return;
       }
     }
   }
@@ -592,9 +595,11 @@ testPel::vtests[] = {
   // strcat (string concatenation)
   TST(STR, STACK_UNDERFLOW, "",	"strcat" ),
   TST(STR, STACK_UNDERFLOW, "",	"1 strcat" ),
+  // Since 1.0 seems to print as 1, I'm going to add some tests that 
+  // will exercise PEL with the existing checking system. --ACR
   TST(STR, SUCCESS, "0x1p+0Hello",	"1.0 \"Hello\" strcat" ),
-  TST(STR, SUCCESS, "1Hello",	"1 \"Hello\" strcat" ),
   TST(STR, SUCCESS, "Hello0x1p+0",	"\"Hello\" 1.0 strcat" ),
+  TST(STR, SUCCESS, "1Hello",	"1 \"Hello\" strcat" ),
   TST(STR, SUCCESS, "Hello1",	"\"Hello\" 1 strcat" ),
   TST(STR, SUCCESS, "AB",	"\"A\" \"B\" strcat" ),
   TST(STR, SUCCESS, "B",	"\"B\" \"\" strcat" ),
@@ -1202,8 +1207,34 @@ testPel::vtests[] = {
   // append
   TST(TUPLE, STACK_UNDERFLOW, "",	"append"),
   TST(TUPLE, STACK_UNDERFLOW, "",	"6 append"),
-  TST(TUPLE, SUCCESS, "",		"0 ->t 7 append")
+  TST(TUPLE, SUCCESS, "",		"0 ->t 7 append"),
 
+// Insert list tests here.
+
+  TST(LIST, STACK_UNDERFLOW, "", "concat"),
+  TST(LIST, STACK_UNDERFLOW, "", "null 7 lappend concat"),
+  TST(LIST, SUCCESS, "(6, 7)", "null 7 lappend null 6 lappend concat"),
+  TST(LIST, SUCCESS, "(6)", "null 6 lappend null concat"),
+  TST(LIST, SUCCESS, "(6)", "null null 6 lappend concat"),
+  TST(LIST, STACK_UNDERFLOW, "", "lappend"),
+  TST(LIST, STACK_UNDERFLOW, "", "6 lappend"),
+  TST(LIST, SUCCESS, "(6)", "null 6 lappend"),
+  TST(LIST, SUCCESS, "(6, 5)", "null 6 lappend 5 lappend"),
+  TST(LIST, SUCCESS, "(6, 5, 4)", "null 6 lappend 5 lappend 4 lappend"),
+  TST(LIST, STACK_UNDERFLOW, "", "member"),
+  TST(LIST, STACK_UNDERFLOW, "", "6 member"),
+  TST(INT32, SUCCESS, "1", "null 6 lappend 6 member"),
+  TST(INT32, SUCCESS, "0", "null 6 lappend 4 member"),
+  TST(LIST, STACK_UNDERFLOW, "", "intersect"), 
+  TST(LIST, STACK_UNDERFLOW, "", "null 6 lappend intersect"),
+  TST(LIST, SUCCESS, "(6)", "null 6 lappend 4 lappend 3 lappend null 5 lappend 6 lappend 7 lappend intersect"),
+  TST(LIST, SUCCESS, "()", "null 8 lappend 7 lappend 6 lappend null intersect"),
+  TST(LIST, SUCCESS, "()", "null null 8 lappend 7 lappend 6 lappend intersect"),
+  TST(LIST, SUCCESS, "(2, 3, 3, 4, 4)", "null 1 lappend 2 lappend 3 lappend 2 lappend 3 lappend 4 lappend 2 lappend 4 lappend 2 lappend 4 lappend null 2 lappend 3 lappend 3 lappend 3 lappend 3 lappend 3 lappend 4 lappend 4 lappend msintersect"),
+  TST(LIST, SUCCESS, "()", "null null msintersect"), 
+  TST(LIST, SUCCESS, "()", "null null 6 lappend msintersect"),
+  TST(LIST, SUCCESS, "(1, 1, 1)", "null 1 lappend 1 lappend 1 lappend 1 lappend null 1 lappend 1 lappend 1 lappend msintersect"),
+  TST(LIST, SUCCESS, "(1, 1, 1)", "null 1 lappend 1 lappend 1 lappend null 1 lappend 1 lappend 1 lappend 1 lappend msintersect")
 };
 #undef TST
 
