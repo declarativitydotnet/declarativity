@@ -47,7 +47,7 @@ void Udp2::Rx::socket_cb()
   struct sockaddr sa;
   bzero(&sa, sizeof(sa));
   socklen_t sa_len = 0;
-  int result = fb->recvfrom(u->sd, Fdbuf::BUF_UNLIMITED, 0, &sa, &sa_len);
+  int result = fb->recvfrom(u->sd, Fdbuf::BUF_DFLT_READ, 0, &sa, &sa_len);
   if (result <= 0) {
     // Error! 
     int error = errno;
