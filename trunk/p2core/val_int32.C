@@ -72,14 +72,11 @@ int32_t Val_Int32::cast(ValuePtr v) {
 
 int Val_Int32::compareTo(ValuePtr other) const
 {
-  if (other->typeCode() != Value::INT32) {
-    if (Value::INT32 < other->typeCode()) {
-      return -1;
-    } else if (Value::INT32 > other->typeCode()) {
-      return 1;
-    }
-  }
-  if (i < cast(other)) {
+  if (Value::INT32 < other->typeCode()) {
+    return -1;
+  } else if (Value::INT32 > other->typeCode()) {
+    return 1;
+  } else if (i < cast(other)) {
     return -1;
   } else if (i > cast(other)) {
     return 1;

@@ -71,14 +71,11 @@ int64_t Val_Int64::cast(ValuePtr v) {
 
 int Val_Int64::compareTo(ValuePtr other) const
 {
-  if (other->typeCode() != Value::INT64) {
-    if (Value::INT64 < other->typeCode()) {
-      return -1;
-    } else if (Value::INT64 > other->typeCode()) {
-      return 1;
-    }
-  }
-  if (i < cast(other)) {
+  if (Value::INT64 < other->typeCode()) {
+    return -1;
+  } else if (Value::INT64 > other->typeCode()) {
+    return 1;
+  } else if (i < cast(other)) {
     return -1;
   } else if (i > cast(other)) {
     return 1;

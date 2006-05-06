@@ -152,7 +152,14 @@ public:
   REMOVABLE_INLINE bool equals( ValuePtr other ) const { return compareTo(other) == 0; }
 
   /** Am I less than, equal or greater than the other value?  -1 means
-      less, 0 means equal, +1 means greater. */
+      less, 0 means equal, +1 means greater.  This is intended to
+      provide a symmetric comparison operator that imposes a total order
+      over objects from all subclasses of Value.  This is not intended
+      as a method that implements the common less than operator; as such
+      it is not doing the intuitive thing, for example, when comparing
+      two numbers of different types.  Common comparison operators are
+      implemented by the oper template functions, performing appropriate
+      implicit casts as they go. */
   virtual int compareTo( ValuePtr other ) const = 0;
 
   // Thrown when an invalid type conversion is attempted. 
