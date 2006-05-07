@@ -66,7 +66,6 @@ TuplePtr RDelivery::pull(int port, b_cbv cb)
   else if (!rtran_q_.empty()) {
     RTuplePtr rtp = rtran_q_.front();
     ValuePtr dest = (*rtp->tp_)[dest_field_];
-    SeqNum   seq  = Val_UInt64::cast((*rtp->tp_)[seq_field_]);
     rtran_q_.pop_front();
     return rtp->tp_;	// Already memoized, so just return it.
   }

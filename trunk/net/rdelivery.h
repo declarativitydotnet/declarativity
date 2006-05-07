@@ -40,7 +40,7 @@ private:
     void resetTime();
     int32_t delay();
     boost::posix_time::ptime  timer_;	// Transmit time
-    int       retry_cnt_;		// Transmit counter.
+    uint       retry_cnt_;		// Transmit counter.
     TuplePtr  tp_;			// The tuple.
   };
   typedef boost::shared_ptr<RTuple> RTuplePtr;

@@ -522,7 +522,6 @@ Plmb_ConfGen::genEditFinalize(string nodeID)
 
   // connect to all the pending udp receivers. Assume all 
   // receivers are connected to elements with push input ports for now 
-  int counter = 0;
   for (ReceiverInfoMap::iterator _iterator = _udpReceivers.begin(); 
        _iterator != _udpReceivers.end(); 
        _iterator++) {

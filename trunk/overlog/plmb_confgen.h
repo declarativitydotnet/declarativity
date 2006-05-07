@@ -82,7 +82,7 @@ class Plmb_ConfGen {
   Plmb_ConfGen(OL_Context* ctxt, Plumber::DataflowPtr conf, 
 	      bool _dups, bool debug, bool cc, string filename, 
               std::ostream& s=*(new ostringstream()), bool edit=false);
-  Plmb_ConfGen::~Plmb_ConfGen();
+  ~Plmb_ConfGen();
 
   void configurePlumber(boost::shared_ptr< Udp > udp, string nodeID);
 

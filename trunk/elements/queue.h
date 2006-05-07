@@ -27,7 +27,7 @@ public:
   ~Queue();
   
   /** Overridden to perform the printing */
-  int Queue::push(int port, TuplePtr p, b_cbv cb);
+  int push(int port, TuplePtr p, b_cbv cb);
   TuplePtr pull(int port, b_cbv cb);  
 
 

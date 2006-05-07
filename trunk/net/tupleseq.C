@@ -42,7 +42,7 @@ TuplePtr Sequence::simple_action(TuplePtr p)
   }
 
   TuplePtr tp = Tuple::mk();
-  for (unsigned i = 0; i < seq_field_; i++) {
+  for (int i = 0; i < seq_field_; i++) {
     tp->append((*p)[i]);
   }
   tp->append(Val_UInt64::mk(next_seq));

@@ -118,7 +118,7 @@ TuplePtr RateCCT::pull(int port, b_cbv cb)
   TuplePtr tp;
 
   if (port == 0) {
-    if (tuplesInFlight() < trate_ && 
+    if ((tuplesInFlight() < trate_) && 
         (data_on_ = (tp = input(0)->pull(boost::bind(&RateCCT::data_ready, this))) != NULL)) {
       return package(tp);
     }
@@ -158,14 +158,15 @@ void RateCCT::unmap(ValuePtr dest, SeqNum seq)
     }
   }
 
-  if (tuplesInFlight() < trate_ && data_cbv_) {
+  if ((tuplesInFlight() < trate_) && data_cbv_) {
     data_cbv_();
     data_cbv_ = 0;
   }
 
 }
 
-int RateCCT::tuplesInFlight() const {
+uint
+RateCCT::tuplesInFlight() const {
   ValueSeqTimeCBMap::const_iterator iter_map = index_.begin();
   int total = 0;
   for (iter_map = index_.begin(); iter_map != index_.end(); iter_map++) {
@@ -174,7 +175,8 @@ int RateCCT::tuplesInFlight() const {
   return total;
 }
 
-void RateCCT::data_ready()
+void
+RateCCT::data_ready()
 {
   data_on_ = true;
   if (data_cbv_) {
