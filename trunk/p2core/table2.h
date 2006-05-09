@@ -30,6 +30,25 @@
 class Table2 {
 public:
   ////////////////////////////////////////////////////////////
+  // Secondary indices
+  ////////////////////////////////////////////////////////////
+
+  /** A comparator of keys */
+  std::set::key_compare keyCompare;
+
+
+  /** A key is a vector of unsigned field numbers */
+  typedef std::vector< unsigned > Key;
+
+  /** Create a secondary index on the given sequence of field
+      numbers. The sequence must not be empty.  */
+  void
+  secondaryIndex(Key key);
+  
+  
+
+
+  ////////////////////////////////////////////////////////////
   // Constructors
   ////////////////////////////////////////////////////////////
 
@@ -42,37 +61,27 @@ public:
        discarding and must be a positive time duration; a lifetime that
        is not a date and time means tuples never expire. */
   Table(string tableName,
-        std::vector< uint > key,
+        Key key,
         size_t max_size,
         boost::posix_time::time_duration& lifetime);
 
   /** A convenience constructor that allows the use of string
       representations for maximum tuple lifetime. */
   Table(string tableName,
-        std::vector< uint > key,
+        Key key,
         size_t max_size,
         string lifetime);
   
   /** A convenience constructor that does not expire tuples. */
   Table(string tableName,
-        std::vector< uint > key,
+        Key key,
         size_t max_size);
   
+
+  /** A destructor. It empties out the table and then destructs it. */
   ~Table();
 
 
-
-
-  ////////////////////////////////////////////////////////////
-  // Secondary indices
-  ////////////////////////////////////////////////////////////
-
-  /** Create a secondary index on the given sequence of field
-      numbers. The sequence must not be empty.  */
-  void
-  secondaryIndex(std::vector<unsigned> key);
-  
-  
 
 
   ////////////////////////////////////////////////////////////
@@ -99,7 +108,12 @@ public:
       comparison) to an existing tuple. Insertion time, for the purposes
       of tuple expiration, indicates the first time a particular tuple
       was inserted; any attempts to reinsert that tuple do not update
-      the original insertion time. */
+      the original insertion time.
+
+      The semantics is as follows: find the tuple by the same primary
+      key. If it's equal (as per compareTo) do nothing. If it's
+      different, replace it. If it doesn't exist, insert the new one
+      in. */
   bool
   insert(TuplePtr t);
 
@@ -115,4 +129,27 @@ public:
   remove(TuplePtr t);
 
 
+
+
+private:
+  /** My name (human readable). */
+  string _name;
+
+
+  /** My primary key. If empty, use the tuple ID. */
+  Key _key;
+
+
+  /** My maximum size in tuples. If 0, size is unlimited. */
+  size_t _maximumSize;
+
+  
+  /** My maximum lifetime. If not a date or time (as per
+      is_not_a_date_time()), lifetime is unlimited. */
+  boost::posix_time::time_duration _maximumLifetime;
+
+
+  /** My secondary indices, indexed by index key.  Recall that index
+      keys are represented as sequences of field numbers. */
+  std::set< Key, valueRefVectorLess> _indices;
 }
