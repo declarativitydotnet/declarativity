@@ -27,7 +27,7 @@
    create an update signal.
 
  - Revamp the table facility. Concretize semantics and reimplement using
-   same interfaces if possible.
+   same interfaces if possible. (Petros)
 
  - Fix delete in tables to work for arbitrary tuples, not just for a
    given unique index.
@@ -90,7 +90,4 @@
  - Collect a list of known bugs, e.g., for the parser. Subsumed by
    bugzilla.
 
- - Write up comments about the differences between comparison operators
-   and the compareTo virtual methods of value objects. (Petros)
 
- - Fix Val_Str compareTo method. (Petros)
