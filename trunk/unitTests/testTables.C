@@ -46,6 +46,9 @@ public:
 
   void
   testAggregates();
+
+  void
+  testMultiFieldKeys();
 };
 
 // Add tests for flushing due to length
@@ -382,60 +385,38 @@ testTables::testSuperimposedIndexRemoval()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////////////
-// Aggregate Testing
+// Tracker Superclass
 ////////////////////////////////////////////////////////////
 
-class intAggTest {
+
+class tableTest {
 public:
-  intAggTest(std::string,
-             int, int,
-             Table::AggregateFunction&,
-             int);
+  tableTest(std::string,
+            int);
   std::string _script;
-  int _keyFieldNo;
-  int _aggFieldNo;
-  Table::AggregateFunction& _function;
   int _line;
 };
 
-intAggTest::intAggTest(std::string script,
-                       int keyFieldNo,
-                       int aggFieldNo,
-                       Table::AggregateFunction&  function,
-                       int line)
+tableTest::tableTest(std::string script,
+                     int line)
   : _script(script),
-    _keyFieldNo(keyFieldNo),
-    _aggFieldNo(aggFieldNo),
-    _function(function),
     _line(line)
 {
 }
 
+
 /**
- * This object tracks a single integer aggregate test for a single
- * script. It creates an empty table, parses the script, applies it to
- * the table, and evaluates the result. If the script is executed
- * without mismatch, the test is a success.  Otherwise, an error is
- * generated and the rest of the test is aborted.
+ * This object tracks a single interactive test for a single script. It
+ * creates an empty table, prepares it accordingly, parses the script,
+ * applies it to the table, and evaluates the result. If the script is
+ * executed without mismatch, the test is a success.  Otherwise, an
+ * error is generated and the rest of the test is aborted.
  */
 class Tracker {
 public:
-  /** Create the new tracker, parse the script */
-  Tracker(intAggTest & test);
+  /** Create the new tracker */
+  Tracker(tableTest &);
 
   /** Execute the tracked script */
   void
@@ -446,12 +427,8 @@ public:
   bool
   fetchCommand();
 
-  /** Listener for aggregate updates */
-  void
-  listener(TuplePtr t);
-
   /** My test */
-  intAggTest & _test;
+  tableTest & _test;
   
   /** My table */
   Table _table;
@@ -470,99 +447,6 @@ public:
 };
 
 
-Tracker::Tracker(intAggTest & test)
-  : _test(test),
-    // Create a very simple table with the following schema
-    // Schema is <A int, B int>
-    // No maximum lifetime or size
-    _table("intAggTest", INT_MAX)
-{
-  // Create a multiple index on the first field
-  _table.add_multiple_index(test._keyFieldNo);
-
-  // Create a unique index on all fields to enable removal of entire
-  // tuples
-  _allFields.push_back(0);
-  _allFields.push_back(1);
-  _table.add_unique_index(_allFields);
-                                                
-  // My group-by field is the indexed field
-  std::vector< unsigned > groupBy;
-  groupBy.push_back(test._keyFieldNo);
-
-  // Create a multiple-value aggregate with the given function
-  Table::MultAggregate u =
-    _table.add_mult_groupBy_agg(test._keyFieldNo,
-                                groupBy,
-                                test._aggFieldNo,
-                                test._function);
-
-  u->addListener(boost::bind(&Tracker::listener, this, _1));
-}
-
-
-void
-Tracker::listener(TuplePtr t)
-{
-//   std::cout << "Aggregate received \""
-//             << t->toString()
-//             << "\"\n";
-
-  // Fetch a command
-  if (!_remainder.empty()) {
-    bool result = fetchCommand();
-
-    if (result) {
-      // Is it an update?
-      if (_command != 'u') {
-        // I should have an update in there
-        BOOST_ERROR("Semantic error in test line "
-                    << _test._line
-                    << " with suffix "
-                    << "\""
-                    << _remainder
-                    << "\". Script should expect an update with '"
-                    << t->toString()
-                    << "' but contained a '"
-                    << _command
-                    << "' instead.");
-        _remainder = std::string();
-        return;
-      }
-
-      // Compare the tuples
-      if (t->compareTo(_tuple) != 0) {
-        BOOST_ERROR("Error in test line "
-                    << _test._line
-                    << " with suffix "
-                    << "\""
-                    << _remainder
-                    << "\". Script expected tuple '"
-                    << _tuple->toString()
-                    << "' but received '"
-                    << t->toString()
-                    << "' instead.");
-        _remainder = std::string();
-      }
-    } else {
-      // Something went wrong. Just exist zeroing out the remainder
-      _remainder = std::string();
-    }
-  } else {
-    // I should have an update in there
-    BOOST_ERROR("Error in test line "
-                << _test._line
-                << " with suffix "
-                << "\""
-                << _remainder
-                << "\". Script should expect an update with '"
-                << t->toString()
-                << "' but didn't.");
-    _remainder = std::string();
-  }
-}
-
-
 /**
  * Execute the script.  First parse the script string.  Then execute it.
  * Parse errors abort the current test.
@@ -570,14 +454,14 @@ Tracker::listener(TuplePtr t)
 void
 Tracker::test()
 {
-//   std::cout << "Testing aggregate script \""
+//   std::cout << "Testing script \""
 //             << _test._script
 //             << "\"\n";
   _remainder = std::string(_test._script);
-
+  
   while (!_remainder.empty()) {
     bool result = fetchCommand();
-
+    
     if (result) {
       switch(_command) {
       case 'i':
@@ -596,6 +480,15 @@ Tracker::test()
           _table.remove(_allFields, fields);
         }
         break;
+      case 'f':
+        // Find in table (lookup successfully)
+        {
+          // Lookup the tuple in the command and ensure it was found.
+        }
+        break;
+      case 'm':
+        // Miss in table (lookup unsuccessfully)
+        break;
       default:
         // I should not receive anything else
         BOOST_ERROR("Error in test line "
@@ -609,7 +502,7 @@ Tracker::test()
         return;
       }
     } else {
-//       std::cout << "Aborting aggregate script \""
+//       std::cout << "Aborting script \""
 //                 << _test._script
 //                 << "\"\n";
       return;
@@ -620,9 +513,9 @@ Tracker::test()
 
 
 /**
- * Fetch another command from the beginning of the _remainder.  The
- * command is placed in the _command field.  The tuple argument of the
- * command is placed in the _tuple field.  The _remainder string is
+ * Fetch another command from the beginning of the _remainder script.
+ * The command is placed in the _command field.  The tuple argument of
+ * the command is placed in the _tuple field.  The _remainder string is
  * shrunk by the removed command.
  *
  * This assumes that _remainder is not empty.
@@ -662,6 +555,8 @@ Tracker::fetchCommand()
   case 'i':
   case 'd':
   case 'u':
+  case 'f':
+  case 'm':
     break;
   default:
     BOOST_ERROR("Syntax error in test line "
@@ -730,6 +625,174 @@ Tracker::fetchCommand()
 
 
 
+
+
+Tracker::Tracker(tableTest & test)
+  : _test(test),
+    // Create a very simple table with the following schema
+    // Schema is <A int, B int>
+    // No maximum lifetime or size
+    _table("trackerTest", INT_MAX)
+{
+  // Create a unique index on all fields to enable removal of entire
+  // tuples
+  _allFields.push_back(0);
+  _allFields.push_back(1);
+  _table.add_unique_index(_allFields);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////
+// Aggregate Testing
+////////////////////////////////////////////////////////////
+
+class intAggTest : public tableTest {
+public:
+  intAggTest(std::string,
+             int, int,
+             Table::AggregateFunction&,
+             int);
+  int _keyFieldNo;
+  int _aggFieldNo;
+  Table::AggregateFunction& _function;
+};
+
+intAggTest::intAggTest(std::string script,
+                       int keyFieldNo,
+                       int aggFieldNo,
+                       Table::AggregateFunction&  function,
+                       int line)
+  : tableTest(script, line),
+    _keyFieldNo(keyFieldNo),
+    _aggFieldNo(aggFieldNo),
+    _function(function)
+{
+}
+
+
+
+/**
+ * This object tracks a single integer aggregate test for a single
+ * script. It creates an empty table, parses the script, applies it to
+ * the table, and evaluates the result. If the script is executed
+ * without mismatch, the test is a success.  Otherwise, an error is
+ * generated and the rest of the test is aborted.
+ */
+class AggTracker : public Tracker {
+public:
+  /** Create the new tracker, parse the script */
+  AggTracker(intAggTest & test);
+
+  /** Listener for aggregate updates */
+  void
+  listener(TuplePtr t);
+};
+
+
+AggTracker::AggTracker(intAggTest & test)
+  : Tracker(test)
+{
+  // Create a multiple index on the first field
+  _table.add_multiple_index(test._keyFieldNo);
+
+  // My group-by field is the indexed field
+  std::vector< unsigned > groupBy;
+  groupBy.push_back(test._keyFieldNo);
+
+  // Create a multiple-value aggregate with the given function
+  Table::MultAggregate u =
+    _table.add_mult_groupBy_agg(test._keyFieldNo,
+                                groupBy,
+                                test._aggFieldNo,
+                                test._function);
+
+  u->addListener(boost::bind(&AggTracker::listener, this, _1));
+}
+
+
+void
+AggTracker::listener(TuplePtr t)
+{
+//   std::cout << "Aggregate received \""
+//             << t->toString()
+//             << "\"\n";
+
+  // Fetch a command
+  if (!_remainder.empty()) {
+    bool result = fetchCommand();
+
+    if (result) {
+      // Is it an update?
+      if (_command != 'u') {
+        // I should have an update in there
+        BOOST_ERROR("Semantic error in test line "
+                    << _test._line
+                    << " with suffix "
+                    << "\""
+                    << _remainder
+                    << "\". Script should expect an update with '"
+                    << t->toString()
+                    << "' but contained a '"
+                    << _command
+                    << "' instead.");
+        _remainder = std::string();
+        return;
+      }
+
+      // Compare the tuples
+      if (t->compareTo(_tuple) != 0) {
+        BOOST_ERROR("Error in test line "
+                    << _test._line
+                    << " with suffix "
+                    << "\""
+                    << _remainder
+                    << "\". Script expected tuple '"
+                    << _tuple->toString()
+                    << "' but received '"
+                    << t->toString()
+                    << "' instead.");
+        _remainder = std::string();
+      }
+    } else {
+      // Something went wrong. Just exist zeroing out the remainder
+      _remainder = std::string();
+    }
+  } else {
+    // I should have an update in there
+    BOOST_ERROR("Error in test line "
+                << _test._line
+                << " with suffix "
+                << "\""
+                << _remainder
+                << "\". Script should expect an update with '"
+                << t->toString()
+                << "' but didn't.");
+    _remainder = std::string();
+  }
+}
+
+
+
+
+
+
+
+
 /** 
  * The purpose of this test is to check that table aggregates work
  * correctly.  The way we implement the test is to submit to the table a
@@ -752,11 +815,11 @@ testTables::testAggregates()
     // UPDATE <0, 5>
     // DELETE <0, 5>
     // UPDATE <0, 10>
-    // Scripts must always send with a semicolon!!!!!!!!!
-    // Scripts must always send with a semicolon!!!!!!!!!
-    // Scripts must always send with a semicolon!!!!!!!!!
-    // Scripts must always send with a semicolon!!!!!!!!!
-    // Scripts must always send with a semicolon!!!!!!!!!
+    // Scripts must always end with a semicolon!!!!!!!!!
+    // Scripts must always end with a semicolon!!!!!!!!!
+    // Scripts must always end with a semicolon!!!!!!!!!
+    // Scripts must always end with a semicolon!!!!!!!!!
+    // Scripts must always end with a semicolon!!!!!!!!!
     intAggTest("i<0,10>;u<0,10>;i<0,15>;i<0,5>;u<0,5>;d<0,5>;u<0,10>;",
                0, // first field is indexed
                1, // second field is aggregated
@@ -808,11 +871,95 @@ testTables::testAggregates()
        i < noIntAggTests;
        i++) {
     // Create a script tracker
-    Tracker tracker(intAggTests[i]);
+    AggTracker tracker(intAggTests[i]);
     // Run it
     tracker.test();
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////
+// Multi-field Key Testing
+////////////////////////////////////////////////////////////
+
+class multiTest : public tableTest {
+public:
+  multiTest(std::string,
+            std::vector< uint >,
+            uint);
+  std::vector< uint > _key;
+};
+
+multiTest::multiTest(std::string script,
+                     std::vector< uint > key,
+                     uint line)
+  : tableTest(script, line),
+    _key(key)
+{
+}
+
+class MultiTracker : public Tracker {
+public:
+  MultiTracker(multiTest & test);
+};
+
+
+MultiTracker::MultiTracker(multiTest & test)
+  : Tracker(test)
+{
+  // Create a multiple index on the key fields
+  _table.add_unique_index(test._key);
+}
+
+
+
+/** 
+ * The purpose of this test is to check that primary keys containing
+ * multiple fields work correctly.  The way we implement the test is to
+ * submit to the table a particular sequence of insertions, deletions,
+ * successful lookups, and unsuccessful lookups. If the sequences match,
+ * then the test has succeeded.
+ *
+ * We define each test as an EXPECT-like script, made up of insertions,
+ * deletions, and successful/unsuccessful lookups.
+ */
+void
+testTables::testMultiFieldKeys()
+{
+  multiTest multiTests[] = {
+    multiTest("i<0,1>;i<0,2>;i<0,3>;f<0,2>;",
+              std::vector<unsigned> (0, 1),
+              __LINE__),
+    
+
+    multiTest("i<0,1>;i<0,2>;i<0,3>;f<0,2>;",
+              std::vector<unsigned> (0, 1),
+              __LINE__)
+  };
+  uint noIntMultiFieldTests = sizeof(multiTests) / sizeof(multiTest);
+
+  for (uint i = 0;
+       i < noIntMultiFieldTests;
+       i++) {
+    // Create a script tracker
+    MultiTracker tracker(multiTests[i]);
+    // Run it
+    tracker.test();
+  }
+}
+
 
 
 
@@ -833,5 +980,6 @@ public:
     add(BOOST_CLASS_TEST_CASE(&testTables::testUniqueTupleRemovals, instance));
     add(BOOST_CLASS_TEST_CASE(&testTables::testSuperimposedIndexRemoval, instance));
     add(BOOST_CLASS_TEST_CASE(&testTables::testAggregates, instance));
+    add(BOOST_CLASS_TEST_CASE(&testTables::testMultiFieldKeys, instance));
   }
 };

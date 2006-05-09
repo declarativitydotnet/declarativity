@@ -17,10 +17,9 @@
 #include "tuple.h"
 #include <assert.h>
 
-//
-// Serialize a Tuple into an XDR
-//
-void Tuple::xdr_marshal( XDR *x ) 
+
+void
+Tuple::xdr_marshal( XDR *x ) 
 {
   assert(frozen);
   // we used to pass a pointer to a size_t into xdr_uint32_t, hence
@@ -38,10 +37,9 @@ void Tuple::xdr_marshal( XDR *x )
   };
 }
 
-//
-// Deserialize a Tuple from an XDR
-//
-TuplePtr Tuple::xdr_unmarshal(XDR* x) 
+
+TuplePtr
+Tuple::xdr_unmarshal(XDR* x) 
 {
   TuplePtr t = Tuple::mk();
   // we used to pass a pointer to a size_t into xdr_uint32_t, hence
@@ -60,10 +58,9 @@ TuplePtr Tuple::xdr_unmarshal(XDR* x)
   return t;
 }
 
-//
-// Format as a string
-//
-string Tuple::toString() const
+
+string
+Tuple::toString() const
 { 
   ostringstream sb;
   
@@ -78,7 +75,9 @@ string Tuple::toString() const
   return sb.str();
 }
 
-string Tuple::toConfString() const
+
+string
+Tuple::toConfString() const
 { 
   ostringstream sb;
   
@@ -93,10 +92,9 @@ string Tuple::toConfString() const
   return sb.str();
 }
 
-/** Compare this tuple to another.  If we have different numbers of
-    fields, compare the field counts.  If we have the same numbers of
-    fields, compare individual fields from first onwards. */
-int Tuple::compareTo(TuplePtr other) const
+
+int
+Tuple::compareTo(TuplePtr other) const
 {
   if (size() == other->size()) {
     for (size_t i = 0;
@@ -123,8 +121,9 @@ int Tuple::compareTo(TuplePtr other) const
 }
 
 
-void Tuple::tag(string key,
-                ValuePtr value)
+void
+Tuple::tag(string key,
+           ValuePtr value)
 {
   assert(!frozen);
 
@@ -140,7 +139,9 @@ void Tuple::tag(string key,
   _tags->insert(std::make_pair(key, value));
 }
 
-ValuePtr Tuple::tag(string key)
+
+ValuePtr
+Tuple::tag(string key)
 {
   // Do we have a tag map?
   if (_tags == 0) {
@@ -160,13 +161,21 @@ ValuePtr Tuple::tag(string key)
   }
 }
 
-TuplePtr Tuple::EMPTY = Tuple::mk();
+
+TuplePtr
+Tuple::EMPTY = Tuple::mk();
+
+
+uint
+Tuple::_tupleIDCounter = 0;
 
 // Create an empty initializer object so that the EMPTY tuple is fully
 // initialized.
-Tuple::EmptyInitializer _theEmptyInitializer;
+Tuple::EmptyInitializer
+_theEmptyInitializer;
 
-void Tuple::concat(TuplePtr tf)
+void
+Tuple::concat(TuplePtr tf)
 {
   assert(!frozen);
 
@@ -177,6 +186,7 @@ void Tuple::concat(TuplePtr tf)
     append((*tf)[i]);
   }
 };
+
 
 Tuple::~Tuple()
 {

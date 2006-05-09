@@ -32,8 +32,11 @@ typedef boost::shared_ptr<Tuple> TuplePtr;
 class Tuple {
 
 private:
+  /** A vector of the fields of this tuple */
   std::vector< ValuePtr > fields;
-  bool		frozen;
+
+  /** Is this tuple frozen, i.e., made immutable yet? */
+  bool frozen;
 
   /** A sorted map of tag names to optional tag values.  Only
       initialized if there is at least one tag.  Only a single tag of
@@ -41,9 +44,18 @@ private:
       value. */
   std::map< string, ValuePtr > * _tags;
 
+  /** The static counter of tuple IDs, unique to a process */
+  static uint
+  _tupleIDCounter;
+
+  /** My ID */
+  uint _ID;
+
+
+
 public:
 
-  Tuple() : fields(), frozen(false), _tags(0) {};
+  Tuple() : fields(), frozen(false), _tags(0), _ID(_tupleIDCounter++) {};
   ~Tuple();
 
   static TuplePtr mk() { TuplePtr p(new Tuple()); return p; };
@@ -80,7 +92,7 @@ public:
 
   string toConfString() const;
 
-  /** Strict comparison, one field at a time.  Only compare user-visible
+  /** Compare tuples, one field at a time.  Only compare user-visible
       (i.e., enumerable via tuple[fieldNo]) fields. For instance, do not
       compare pointers, and do not compare tuple IDs.  For tuples of
       different field counts, compare their field counts instead.  */
