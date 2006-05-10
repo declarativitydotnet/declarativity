@@ -63,7 +63,7 @@ Element::Element(string instanceName) :
   commonConstruction();
 }
 
-Element::Element(string instanceName, int ninputs, int noutputs) :
+Element::Element(string instanceName, unsigned ninputs, unsigned noutputs) :
   _ninputs(ninputs),
   _noutputs(noutputs),
   _ID(elementCounter++),
@@ -100,14 +100,14 @@ Element::portSetup()
   
   // Enlarge port arrays if necessary
   _inputs.resize(_ninputs);
-  for (int i = 0;
+  for (unsigned i = 0;
        i < _ninputs;
        i++) {
     _inputs[i].reset(new Port());
   }
 
   _outputs.resize(_noutputs);
-  for (int i = 0;
+  for (unsigned i = 0;
        i < _noutputs;
        i++) {
     _outputs[i].reset(new Port());
@@ -122,7 +122,7 @@ Element::ports_frozen() const
   return false;
 }
 
-int Element::addInputPort() 
+unsigned Element::addInputPort() 
 {
   for (unsigned port=0; port < _inputs.size(); port++) {
     if (_inputs[port] == 0) {
@@ -133,11 +133,11 @@ int Element::addInputPort()
   }
   _inputs.push_back(PortPtr(new Port())); 
   _ninputs++;
-  assert (_ninputs == int(_inputs.size()));
+  assert (_ninputs == _inputs.size());
   return _ninputs - 1;	// Return the last port number
 }
 
-int Element::addOutputPort()
+unsigned Element::addOutputPort()
 {
   for (unsigned port=0; port < _outputs.size(); port++) {
     if (_outputs[port] == 0) {
@@ -148,7 +148,7 @@ int Element::addOutputPort()
   }
   _outputs.push_back(PortPtr(new Port())); 
   _noutputs++;
-  assert (_noutputs == int(_outputs.size()));
+  assert (_noutputs == _outputs.size());
   return _noutputs - 1;	// Return the last port number
 }
 

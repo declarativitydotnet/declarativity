@@ -24,10 +24,9 @@ Duplicate::Duplicate(string name, int outputs)
   _block_flags.resize(noutputs());
 }
 
-void Duplicate::unblock(int output)
+void Duplicate::unblock(unsigned output)
 {
-  assert((output >= 0) &&
-         (output <= noutputs()));
+  assert(output <= noutputs());
   
   // Unset a blocked output
   if (_block_flags[output]) {
@@ -65,7 +64,7 @@ int Duplicate::push(int port, TuplePtr p, b_cbv cb)
   }
 
   // For every output
-  for (int i = 0;
+  for (unsigned i = 0;
        i < noutputs();
        i++) {
     // Is the output blocked?

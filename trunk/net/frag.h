@@ -17,18 +17,13 @@
 #include "tuple.h"
 #include "element.h"
 
-#define PLD_FIELD  1
-#define NUM_CHUNKS "chunks"
-#define CHUNK_SIZE (block_size_ - sizeof(uint64_t))
-
-
 class Frag : public Element { 
 public:
 
-  Frag(string name, uint32_t block_size);
-  const char *class_name() const	{ return "Frag";};
-  const char *processing() const	{ return PUSH_TO_PULL; };
-  const char *flow_code()  const	{ return "-/-"; };
+  Frag(string name="fragment", unsigned sf=0, unsigned bs=1024, unsigned mqs=1000);
+  const char *class_name() const { return "Frag";};
+  const char *processing() const { return PUSH_TO_PULL; };
+  const char *flow_code()  const { return "-/-"; };
 
   int push(int port, TuplePtr t, b_cbv cb);
 
@@ -40,7 +35,10 @@ public:
   b_cbv _push_cb;
   b_cbv _pull_cb;
 
-  const uint32_t block_size_;
+  const unsigned seq_field_;
+  const unsigned block_size_;
+  const unsigned max_queue_size_;
+  
   std::deque <TuplePtr> fragments_;
 };
 

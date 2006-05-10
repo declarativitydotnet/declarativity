@@ -24,7 +24,7 @@ typedef uint64_t SeqNum;
 
 class RDelivery : public Element {
 public:
-  RDelivery(string name, int max_retry=5, int dest=0, int seq=2);
+  RDelivery(string name, unsigned max_retry=5, int dest=0, int seq=2);
   const char *class_name() const { return "RDelivery";};
   const char *processing() const { return "lh/lhh"; };
   const char *flow_code() const	 { return "--/--"; };
@@ -40,7 +40,7 @@ private:
     void resetTime();
     int32_t delay();
     boost::posix_time::ptime  timer_;	// Transmit time
-    uint       retry_cnt_;		// Transmit counter.
+    unsigned  retry_cnt_;		// Transmit counter.
     TuplePtr  tp_;			// The tuple.
   };
   typedef boost::shared_ptr<RTuple> RTuplePtr;

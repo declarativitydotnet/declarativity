@@ -129,7 +129,7 @@ public:
   Element(string instanceName);
 
   /** Create an element of arbitrary inputs/outputs */
-  Element(string instanceName, int ninputs, int noutputs);
+  Element(string instanceName, unsigned ninputs, unsigned noutputs);
 
   virtual ~Element();
 
@@ -170,8 +170,8 @@ public:
   // INPUTS AND OUTPUTS
   
   // Getters
-  int ninputs() const				{ return _ninputs; }
-  int noutputs() const				{ return _noutputs; }
+  unsigned ninputs() const			{ return _ninputs; }
+  unsigned noutputs() const			{ return _noutputs; }
 
   bool ports_frozen() const;
 
@@ -295,21 +295,21 @@ public:
     { throw Exception("Port keys not supported on output."); return -1; }
 
   /** Dynamic allocation of ports */
-  virtual int add_input()
-    { throw Exception("Dynamic input ports not supported."); return -1; }
-  virtual int add_output()
-    { throw Exception("Dynamic output ports not supported."); return -1; }
+  virtual unsigned add_input()
+    { throw Exception("Dynamic input ports not supported."); return 0; }
+  virtual unsigned add_output()
+    { throw Exception("Dynamic output ports not supported."); return 0; }
 
   /** Dynamic allocation of ports based on port keys */
-  virtual int add_input(ValuePtr key)
-    { throw Exception("Port keys not supported on input."); return -1; }
-  virtual int add_output(ValuePtr key)
-    { throw Exception("Port keys not supported on input."); return -1; }
+  virtual unsigned add_input(ValuePtr key)
+    { throw Exception("Port keys not supported on input."); return 0; }
+  virtual unsigned add_output(ValuePtr key)
+    { throw Exception("Port keys not supported on input."); return 0; }
 
   /** Remove the port indicated by port number */
-  virtual int remove_input(int p)
+  virtual int remove_input(unsigned p)
     { throw Exception("Dynamic input ports not supported."); return -1; }
-  virtual int remove_output(int p)
+  virtual int remove_output(unsigned p)
     { throw Exception("Dynamic output ports not supported."); return -1; }
 
   /** Remove the port indicated by port keys 
@@ -327,10 +327,10 @@ public:
   PortVec _outputs;
 
   /** How many inputs do I have? */
-  int _ninputs;
+  unsigned _ninputs;
 
   /** How many outputs do I have? */
-  int _noutputs;
+  unsigned _noutputs;
 
   /** My ID */
   long _ID;
@@ -348,8 +348,8 @@ public:
   LoggerI*       _logger;
 
 protected:
-  int addInputPort();
-  int addOutputPort();
+  unsigned addInputPort();
+  unsigned addOutputPort();
   int deleteInputPort(unsigned);
   int deleteOutputPort(unsigned);
 

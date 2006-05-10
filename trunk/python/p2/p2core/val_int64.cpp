@@ -10,5 +10,8 @@ void export_val_int64()
 
     .def("mk",  &Val_Int64::mk)
     .staticmethod("mk")
+
+    .def("cast",  &Val_Int64::cast)
+    .staticmethod("cast")
   ; 
 }

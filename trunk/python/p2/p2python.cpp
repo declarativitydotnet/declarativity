@@ -22,6 +22,7 @@ void export_ddemux();
 void export_discard();
 void export_dupElim();
 void export_duplicateConservative();
+void export_dDuplicateConservative();
 void export_duplicate();
 void export_element();
 void export_filter();
@@ -132,6 +133,7 @@ BOOST_PYTHON_MODULE(libp2python)
   export_discard();
   export_dupElim();
   export_duplicateConservative();
+  export_dDuplicateConservative();
   export_duplicate();
   export_filter();
   export_functorSource();

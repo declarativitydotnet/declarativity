@@ -147,6 +147,29 @@ HEXDIGIT	[0-9a-fA-F]
   add_const_str(b.str());
 }
 
+'([^\n\\"']*(\\(.|\n))?)+'  {
+  // C-style string literal
+  ostringstream b;
+  const char *text = yytext + 1;
+  char c = '\0';
+  while (text[1]) {
+    if (*text == '\\' && text[1]) {
+      switch (text[1]) 	{
+      case '\n': break;
+      case 'n': c = '\n'; break;
+      case 'r': c = '\r'; break;
+      case 't': c = '\t'; break;
+      default: c = text[1]; break;
+      }
+      text += 2;
+    } else {
+      c = *text++;
+    }
+    b << c; // b.fmt("%c",c);
+  }
+  add_const_str(b.str());
+}
+
 null|NULL { 
   add_const(Val_Null::mk());
 }

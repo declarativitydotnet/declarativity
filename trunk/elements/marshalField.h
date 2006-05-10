@@ -17,11 +17,13 @@
 #ifndef __MARSHALFIELD_H__
 #define __MARSHALFIELD_H__
 
+#include <vector>
 #include "element.h"
 
 class MarshalField : public Element { 
 public:
   MarshalField(string, unsigned);
+  MarshalField(string, std::vector<unsigned>);
 
   ~MarshalField();
   
@@ -34,8 +36,8 @@ public:
 
 
 private:
-  /** The field number I'm marshalling */
-  unsigned _fieldNo;
+  /** The field(s) number I'm marshalling */
+  std::vector<unsigned> _fieldNos;
 };
 
 

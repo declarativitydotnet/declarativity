@@ -34,10 +34,10 @@ public:
   const char *flow_code() const			{ return "x/x"; }
 
   /** Add an input port to the round robin */
-  int add_input();
+  unsigned add_input();
 
   /** Remove an input port to the round robin */
-  int remove_input(int);
+  int remove_input(unsigned);
 
   /** A tuple may be dropped without notification if it resolves to an
       output that's held back. */
@@ -48,19 +48,19 @@ private:
   b_cbv	_pull_cb;
 
   /** My block flags, one per input port */
-  std::vector<int> _block_flags;
+  std::vector<unsigned> _block_flags;
 
   /** List of free ports (holes) */
-  std::deque<int> _free_ports;
+  std::deque<unsigned> _free_ports;
 
   /** My block flag count. */
-  int _block_flag_count;
+  unsigned _block_flag_count;
 
   /** My current input pointer */
-  int _nextInput;
+  unsigned _nextInput;
 
   /** My block callback function for a given input */
-  void unblock(int input);
+  void unblock(unsigned input);
 };
 
 

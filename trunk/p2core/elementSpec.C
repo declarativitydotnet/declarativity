@@ -316,7 +316,7 @@ ElementSpec::UnificationResult ElementSpec::Port::unify(Element::Processing p)
   }
 }
 
-ElementSpec::UnificationResult ElementSpec::unifyInput(int portNumber)
+ElementSpec::UnificationResult ElementSpec::unifyInput(unsigned portNumber)
 {
   assert(portNumber < _element->ninputs());
   UnificationResult entireResult = UNCHANGED;
@@ -328,7 +328,7 @@ ElementSpec::UnificationResult ElementSpec::unifyInput(int portNumber)
     // Only unify if there's a unification group associated
     if (u != 0) {
       // First other inputs
-      for (int i = 0;
+      for (unsigned i = 0;
            i < portNumber;
            i++) {
         ElementSpec::PortPtr otherPort = (*_inputs)[u->inputs[i]];
@@ -368,7 +368,7 @@ ElementSpec::UnificationResult ElementSpec::unifyInput(int portNumber)
   return entireResult;
 }
 
-ElementSpec::UnificationResult ElementSpec::unifyOutput(int portNumber)
+ElementSpec::UnificationResult ElementSpec::unifyOutput(unsigned portNumber)
 {
   assert(portNumber < _element->noutputs());
   UnificationResult entireResult = UNCHANGED;
@@ -380,7 +380,7 @@ ElementSpec::UnificationResult ElementSpec::unifyOutput(int portNumber)
     // Only unify if there's a unification group associated
     if (u != 0) {
       // First other outputs
-      for (int i = 0;
+      for (unsigned i = 0;
            i < portNumber;
            i++) {
         ElementSpec::PortPtr otherPort = (*_outputs)[u->outputs[i]];

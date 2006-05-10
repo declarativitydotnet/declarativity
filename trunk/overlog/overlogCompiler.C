@@ -18,8 +18,8 @@
 #include "plmb_confgen.h"
 #include "val_str.h"
 
-OverlogCompiler::OverlogCompiler(string n, string id) 
-  : Element(n, 1, 1), _id(id)
+OverlogCompiler::OverlogCompiler(string n, PlumberPtr p, string id) 
+  : Element(n, 1, 1), _plumber(p), _id(id)
 {
 }
 
@@ -50,7 +50,7 @@ void OverlogCompiler::compile(string name, string overlog, std::ostringstream& s
   boost::shared_ptr< OL_Context > ctxt(new OL_Context());
   ctxt->parse_stream(&overlog_iss);
 
-  Plumber::DataflowPtr conf(new Plumber::Dataflow(name));
+  Plumber::DataflowEditPtr conf = _plumber->new_dataflow_edit(name);
   Plmb_ConfGen *gen = new Plmb_ConfGen(ctxt.get(), conf, false, false, false, 
                                        string("overlogCompiler"), script, true);
   gen->createTables(_id);

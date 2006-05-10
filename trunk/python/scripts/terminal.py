@@ -7,10 +7,11 @@ import getopt
 DATAFLOW_NAME = "Terminal"
 
 class Terminal(Element):
-  def __init__(self, name):
+  def __init__(self, name, myaddress):
       Element.__init__(self,name, 1, 1)
-      self.mode    = "terminal"
-      self.address = None 
+      self.mode      = "terminal"
+      self.myaddress = myaddress
+      self.address   = None 
       self.program_header = r"""
 /** DESCRIPTION: P2 Overlog Program to edit Dataflow %s */
       """ % name
@@ -49,55 +50,63 @@ class Terminal(Element):
       self.set_delay(0, self.delay_callback) 
   def delay_callback(self):
       # Read string from terminal and send it in a tuple
-      while True:
-          line = raw_input("%s >> " % self.mode) 
-          if   line[0:5] == "print":
-              print self.program
-          elif line[0:5] == "clear":
-              self.program = self.program_header
-          elif line[0:4] == "send":
-              if not self.address:
-                  print "ERROR: no address entered!!!"
-                  self.print_usage()
-                  continue
+      line = raw_input("%s >> " % self.mode) 
+      if   line[0:5] == "print":
+          print self.program
+      elif line[0:5] == "clear":
+          self.program = self.program_header
+      elif line[0:4] == "send":
+          if not self.address:
+              print "ERROR: no address entered!!!"
+              self.print_usage()
+          else:
               t = Tuple.mk()
-              t.append(Val_Str.mk("overlog"))
               t.append(Val_Str.mk(self.address))
+              t.append(Val_Str.mk("overlog"))
+              t.append(Val_Str.mk(self.myaddress))
               t.append(Val_Str.mk(self.name()))
               t.append(Val_Str.mk(self.program))
               t.freeze()
               if self.py_push(0, t, self.callback) > 0:
                   self.set_delay(1, self.delay_callback) 
               return
-          elif line[0:4] == "exit":
-              sys.exit(0)
-          elif line == "." and self.mode != "terminal": 
-              self.mode = "terminal" 
-          elif self.mode == "terminal" and line[0:7] == "overlog":
-              self.mode = "overlog" 
-          elif self.mode == "terminal" and line[0:5] == "input":
-              self.mode = "input" 
-          elif self.mode == "terminal" and line[0:7] == "address":
-              self.mode = "address" 
-          elif self.mode == "input":
-              try:
-                  file = open(line, 'r') 
-                  self.program += file.read()
-              except:
-                  print "ERROR: open file error on file", line
-                  continue
+      elif line[0:4] == "exit":
+          sys.exit(0)
+      elif line == "." and self.mode != "terminal": 
+          self.mode = "terminal" 
+      elif self.mode == "terminal" and line[0:7] == "overlog":
+          self.mode = "overlog" 
+      elif self.mode == "terminal" and line[0:5] == "input":
+          self.mode = "input" 
+      elif self.mode == "terminal" and line[0:7] == "address":
+          self.mode = "address" 
+      elif self.mode == "input":
+          try:
+              file = open(line, 'r') 
+              self.program += file.read()
               print "File %s text added to overlog program." % line
-          elif self.mode == "address":
-              self.address = line
-              print "Address entered: ", self.address
-          elif self.mode == "overlog":
-              self.program += line + "\n" 
-          else:
-              print "ERROR: unknown command or mode entered."
-              self.print_usage()
+          except:
+              print "ERROR: open file error on file", line
+      elif self.mode == "address":
+          self.address = line
+          print "Address entered: ", self.address
+      elif self.mode == "overlog":
+          self.program += line + "\n" 
+      else:
+          print "ERROR: unknown command or mode entered."
+          self.print_usage()
+      self.set_delay(0.1, self.delay_callback) 
   def push(self, port, tp, cb):
       # Received status of some sent tuple
-      return 0
+      nodeID = Val_Str.cast(tp.at(1))
+      status = Val_Int32.cast(tp.at(2))
+      mesg   = Val_Str.cast(tp.at(3))
+
+      print "=== RECEIVED STATUS FROM NODE %s ===" % nodeID
+      if status == 0: print "Overlog installation successful!"
+      else: print "Overlog installation failure!"
+      print mesg
+      return 1
   
 
 def print_usage():
@@ -124,25 +133,30 @@ def get_test_stub():
       .   # END OF DATAFLOW DEFINITION""" % DATAFLOW_NAME
     return stub
 
-def get_stub(address, port):
+def get_stub(port):
     stub = r"""dataflow %s {
       let udp = Udp2("udp", %s);
 
-      TimedPushSource("dummy_source", 0) -> Queue("output") -> 
-      PelTransform("source_address", ""%s:%s" pop swallow unboxPop") ->
-      Sequence ->
-      PelTransform("package", "$3 pop swallow pop") ->
-      Print("packaged_tuple") ->
-      MarshalField("marshal", 1) -> StrToSockaddr("addr_conv", 0) -> 
-      udp -> UnmarshalField("unmarshal", 1) -> 
-      PelTransform("unRoute", "$1 unbox drop drop pop pop pop") ->
-      Print("input") -> Discard("dummy_discard");
+      TimedPushSource("dummy_source", 0)            ->
+      PelTransform("output", "$0 pop swallow pop")  ->
+      Sequence("sequence", 1, 1)                    ->
+      Frag("fragment", 1)                           ->
+      PelTransform("package", "$0 pop swallow pop") ->
+      MarshalField("marshal", 1)                    ->
+      StrToSockaddr("addr_conv", 0)                 -> 
+      udp -> Print("udp_in") -> UnmarshalField("unmarshal", 1) ->
+      PelTransform("unpackage", "$1 unboxPop") ->
+      Print("before_defrag") ->
+      Defrag("defragment", 1) ->
+      PelTransform("get_payload", "$2 unboxPop") ->
+      TimedPullPush("input", 0) ->
+      Discard("dummy_discard");
       }
-      .   # END OF DATAFLOW DEFINITION""" % (DATAFLOW_NAME, port, address, port)
+      .   # END OF DATAFLOW DEFINITION""" % (DATAFLOW_NAME, port)
     return stub
 
-def gen_stub(plumber, address, port):
-    stub = get_stub(address, port) 
+def gen_stub(plumber, port):
+    stub = get_stub(port) 
 
     dfparser.compile(plumber, stub)
 
@@ -171,7 +185,7 @@ if __name__ == "__main__":
     port     = int(args[2])
   
     plumber = Plumber()
-    stub    = gen_stub(plumber, address, port)
+    stub    = gen_stub(plumber, port)
   
     if plumber.install(stub) != 0:
       print "** Stub Failed to initialize correct spec\n"
@@ -180,7 +194,7 @@ if __name__ == "__main__":
     input  = edit.find("input");
     output = edit.find("output");
   
-    term = edit.addElement(Terminal(dataflow))
+    term = edit.addElement(Terminal(dataflow, address+":"+str(port)))
     edit.hookUp(input, 0, term, 0)
     edit.hookUp(term, 0, output, 0)
   

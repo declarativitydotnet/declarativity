@@ -28,7 +28,7 @@ Demux::Demux(string name,
   _block_flags.resize(noutputs());
 }
 
-void Demux::unblock(int output)
+void Demux::unblock(unsigned output)
 {
   assert((output >= 0) &&
          (output <= noutputs()));
@@ -74,7 +74,7 @@ int Demux::push(int port, TuplePtr p, b_cbv cb)
   // XXX Slow version for now.  Use a hash table eventually
 
   // Which of the demux keys does it match?
-  for (int i = 0;
+  for (unsigned i = 0;
        i < noutputs() - 1;
        i++) {
     ValuePtr key = (*_demuxKeys)[i];

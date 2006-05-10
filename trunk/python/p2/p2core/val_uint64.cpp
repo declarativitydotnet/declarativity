@@ -9,5 +9,8 @@ void export_val_uint64()
     .def("toConfString", &Val_UInt64::toConfString)
     .def("mk",  &Val_UInt64::mk)
     .staticmethod("mk")
+
+    .def("cast",  &Val_UInt64::cast)
+    .staticmethod("cast")
   ; 
 }

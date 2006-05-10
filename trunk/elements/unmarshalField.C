@@ -20,10 +20,17 @@
 
 UnmarshalField::UnmarshalField(string name,
                                unsigned fieldNo)
-  : Element(name, 1, 1),
-    _fieldNo(fieldNo)
+  : Element(name, 1, 1)
+{
+  _fieldNos.push_back(fieldNo);
+}
+
+UnmarshalField::UnmarshalField(string name,
+                               std::vector<unsigned> fieldNos)
+  : Element(name, 1, 1), _fieldNos(fieldNos)
 {
 }
+
 
 UnmarshalField::~UnmarshalField()
 {
@@ -31,16 +38,21 @@ UnmarshalField::~UnmarshalField()
 
 TuplePtr UnmarshalField::simple_action(TuplePtr p)
 {
-  // Get the field in question
-  ValuePtr value = (*p)[_fieldNo];
+  TuplePtr newTuple = Tuple::mk();
+  // Take out the appropriate field
+  for (unsigned field = 0; field < p->size(); field++) {
+    ValuePtr value = (*p)[field];
 
-  // Does this field exist?
-  if (value == NULL) {
-    // Nope.  Return nothing
-    return TuplePtr();
-  } else {
+    if (std::find(_fieldNos.begin(), _fieldNos.end(), field) 
+        == _fieldNos.end()) {
+      newTuple->append((*p)[field]);	// Just add it
+    }
+    else if (value == NULL) {
+      // Nope.  Return nothing
+      return TuplePtr();
+    } 
     // Is this a field of type OPAQUE?
-    if (value->typeCode() == Value::OPAQUE) {
+    else if (value->typeCode() == Value::OPAQUE) {
       // Goodie. Unmarshal the field
       FdbufPtr fb = Val_Opaque::cast(value);
       XDR xd;
@@ -48,21 +60,7 @@ TuplePtr UnmarshalField::simple_action(TuplePtr p)
       ValuePtr unmarshalled = Value::xdr_unmarshal(&xd);
       xdr_destroy(&xd);
 
-      // Now create a tuple copy replacing the unmarshalled field
-      TuplePtr newTuple = Tuple::mk();
-      for (unsigned field = 0;
-           field < _fieldNo;
-           field++) {
-        newTuple->append((*p)[field]);
-      }
       newTuple->append(unmarshalled);
-      for (unsigned field = _fieldNo + 1;
-           field < p->size();
-           field++) {
-        newTuple->append((*p)[field]);
-      }
-      newTuple->freeze();
-      return newTuple;
     } else {
       // Numbered field is un-unmarshallable.  Just return the same
       // tuple and log a warning
@@ -70,6 +68,6 @@ TuplePtr UnmarshalField::simple_action(TuplePtr p)
       return p;
     }
   }
-  
-
+  newTuple->freeze();
+  return newTuple;
 }

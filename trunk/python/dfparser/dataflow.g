@@ -56,9 +56,10 @@ class Dataflow:
             s.print_strand()
     def eval_arg(self, arg):
         if arg[0] == 'var':
+            n = arg[1]
             arg = self.lookup([], arg[1])
             if not arg: 
-                error("Variable argument does not exist")
+                error("Variable argument does not exist: argument name %s" % n)
             return arg
         return arg[1]
     def eval_function(self, var, functions):
@@ -94,12 +95,15 @@ class Dataflow:
             arguments.append(self.eval_arg(a)) 
         if flags["debug"]: return type + str(arguments)
         else: 
-            obj = apply(getattr(libp2python, type), tuple(arguments))
-            if not obj: error("Unable to create object %s %s" % (type, str(arguments)))
-            if isinstance(obj, libp2python.Element):
-                elementSpec = self.conf.addElement(obj)
-                if not elementSpec: error("Unable to add element %s %s" % (type, str(arguments)))
-                return elementSpec
+            if type == "Table":
+                obj = apply(getattr(self.conf, "table"), tuple(arguments))    
+            else:
+                obj = apply(getattr(libp2python, type), tuple(arguments))
+                if not obj: error("Unable to create object %s %s" % (type, str(arguments)))
+                if isinstance(obj, libp2python.Element):
+                    elementSpec = self.conf.addElement(obj)
+                    if not elementSpec: error("Unable to add element %s %s" % (type, str(arguments)))
+                    return elementSpec
             return obj
     def operation(self, oper, name, port):
         error("Operations only supported under edits.")
@@ -124,7 +128,6 @@ class Edit(Dataflow):
           if not isinstance(name, libp2python.ElementSpec):
             element = self.eval_ref(name)
           else: element = name
-          # fn = getattr(apply(getattr(element, "element"), ()), oper)
           fn = getattr(element, oper)
           if oper == "add_input" or oper == "add_output": 
             if port: 
@@ -266,7 +269,7 @@ class Strand:
                 # Make sure ports are numbers and not keys
                 if f[2] == None:
                     # Try to add a port (will throw if not supported or not an edit)
-                    f[2] = d.operation("add_input", f[1], None)
+                    f[2] = d.operation("add_output", f[1], None)
                 elif not isinstance(f[2], int):
                   try:
                     # See if port already exists
@@ -298,7 +301,7 @@ parser P2Dataflow:
     token VAR:   "[a-z][a-zA-Z0-9_]*"
     token TYPE:  "[A-Z][a-zA-Z0-9_]*"
     token LINK:  r"->"
-    token STR:   "\"[\" \(\[\]'\$\._A-Za-z0-9\\:\-\+\*=<>]*\""
+    token STR:   "\"[' \(\)\[\]'\$\._A-Za-z0-9\\:\-\+\*=<>]*\""
     ignore:      "[ \r\t\n]+"
     ignore:      r'#.*\r?\n'    # DL comments; sh/perl style
 
@@ -407,7 +410,7 @@ parser P2Dataflow:
 
     rule arg: (STR        {{ if STR[0] == "\"": STR = STR[1:] }} 
                           {{ if STR[-1]== "\"": STR = STR[:-1] }}
-                          {{ return ['str', str(STR)] }}
+                          {{ return ['str', STR.replace("'", "\"")] }}
                |
                NUM        {{ return ['num', int(NUM)] }} 
                |

@@ -38,14 +38,16 @@ int DataflowInstaller::push(int port, TuplePtr tp, b_cbv cb)
   if (tp->size() > 2 && (*tp)[1]->typeCode() == Value::STR &&
       Val_Str::cast((*tp)[1]) == "script") {
     ostringstream mesg;
-    ValuePtr source = (*tp)[0];
-    ValuePtr dest   = (*tp)[2];
+    ValuePtr my_addr    = (*tp)[0];
+    ValuePtr other_addr = (*tp)[2];
     string   script = Val_Str::cast((*tp)[3]);
     int      result = install(script, mesg);
 
+    std::cerr << mesg.str() << std::endl;
+
     TuplePtr status = Tuple::mk();
-    status->append(source);
-    status->append(dest);
+    status->append(other_addr);
+    status->append(my_addr);
     status->append(Val_Int32::mk(result));
     status->append(Val_Str::mk(mesg.str())); 
     status->freeze();
@@ -65,7 +67,7 @@ int DataflowInstaller::install(string script, ostringstream& status) {
 
   status << "Dataflow Installer Status" << std::endl;
   if (ndataflows) status << "SUCCESSFULLY PARSED " << ndataflows << " DATAFLOWS\n";
-  if (ndataflows) status << "SUCCESSFULLY PARSED " << nedits << " EDITS\n";
+  if (nedits) status << "SUCCESSFULLY PARSED " << nedits << " EDITS\n";
 
   for (int i = 0; i < ndataflows; i++) {
     tuple t = dataflows.popitem();

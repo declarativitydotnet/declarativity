@@ -61,7 +61,7 @@ TablePtr Plumber::Dataflow::table(string name, size_t max_size, string lifetime)
     tp.reset(new Table(name, max_size));
   }
   tables_[name] = tp;
-  return tp;
+  return tp;		// Allocated new table
 }
 
 int Plumber::Dataflow::check_hookup_elements()
@@ -136,8 +136,8 @@ int Plumber::Dataflow::check_push_and_pull()
       
       ElementSpecPtr fromElement = hookup->fromElement;
       ElementSpecPtr toElement = hookup->toElement;
-      int fromPort = hookup->fromPortNumber;
-      int toPort = hookup->toPortNumber;
+      unsigned fromPort = hookup->fromPortNumber;
+      unsigned toPort = hookup->toPortNumber;
       // By now, the ports should be acceptable
       assert((fromPort < fromElement->element()->noutputs()) &&
              (toPort < toElement->element()->ninputs()));
@@ -351,7 +351,7 @@ int Plumber::Dataflow::check_hookup_completeness() {
        iter != elements_.end(); iter++) {
     ElementSpecPtr element = *iter;
     int unuseds = 0;
-    for (int in = 0;
+    for (unsigned in = 0;
          in < element->element()->ninputs();
          in++) {
       if (element->input(in)->check() && 
@@ -362,7 +362,7 @@ int Plumber::Dataflow::check_hookup_completeness() {
             << " unused\n";
       }
     }
-    for (int out = 0; out < element->element()->noutputs(); out++) {
+    for (unsigned out = 0; out < element->element()->noutputs(); out++) {
       if (element->output(out)->check() && 
           element->output(out)->counterpart() == 0) {
         unuseds++;
@@ -457,7 +457,8 @@ int Plumber::Dataflow::finalize() {
   int failures = 0;
   for (std::vector<ElementSpecPtr>::iterator iter = elements_.begin();
        iter != elements_.end(); iter++) {
-    if ((*iter)->element()->initialize() < 0) {
+    if ((*iter)->element()->state()  == Element::INACTIVE && 
+        (*iter)->element()->initialize() < 0) {
       std::cerr << "** Initialize element " 
                 << (*iter)->element()->name() 
                 << " failure.\n";
@@ -476,16 +477,18 @@ int Plumber::Dataflow::finalize() {
 
 Plumber::DataflowEdit::DataflowEdit(DataflowPtr d) : Dataflow(d->name()) 
 {
-  for (std::vector<ElementSpecPtr>::iterator iter = d->garbage_elements_.begin();
-       iter != d->garbage_elements_.end(); iter++) {
-    garbage_elements_.push_back((*iter));
-  }
+  tables_           = d->tables_;		// Copy over the tables
+  garbage_elements_ = d->garbage_elements_;	// Copy over the garbage elements
 
+  /** I really need to call the 'addElement' method here so that a new
+    * ElementSpectPtr is created around the old Element structure */
   for (std::vector<ElementSpecPtr>::iterator iter = d->elements_.begin();
        iter != d->elements_.end(); iter++) {
     this->Dataflow::addElement((*iter)->element());
   }
 
+  /** I also want new Hookups (without the old counterparts) so that the
+    * validation step does not think I'm reusing ports */
   for (std::vector<ElementSpec::HookupPtr>::iterator iter = d->hookups_.begin();
        iter != d->hookups_.end(); iter++) {
     ElementSpec::HookupPtr hookup = *iter;

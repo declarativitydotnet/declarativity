@@ -44,13 +44,13 @@ private:
   std::vector<int> _block_flags;
 
   /** My block flag count. */
-  int _block_flag_count;
+  unsigned _block_flag_count;
 
   /** My current input pointer */
-  int _nextInput;
+  unsigned _nextInput;
 
   /** My block callback function for a given input */
-  void unblock(int input);
+  void unblock(unsigned input);
 };
 
 

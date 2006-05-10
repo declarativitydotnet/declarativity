@@ -22,7 +22,7 @@
 class Defrag : public Element { 
 public:
 
-  Defrag(string name);
+  Defrag(string name="defragment", unsigned sf=0);
   const char *class_name() const	{ return "Defrag";};
   const char *processing() const	{ return PUSH_TO_PULL; };
   const char *flow_code()  const	{ return "-/-"; };
@@ -32,8 +32,9 @@ public:
   TuplePtr pull(int port, b_cbv cb);
 
  private:
-  b_cbv _push_cb;
   b_cbv _pull_cb;
+
+  unsigned seq_field_;
 
   void defragment(TuplePtr t);
 

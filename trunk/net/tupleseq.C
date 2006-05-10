@@ -19,7 +19,7 @@
 
 #define MAX_INIT_SEQ 2048
 
-Sequence::Sequence(string n, SeqNum b, int s, int d)
+Sequence::Sequence(string n, SeqNum b, unsigned s, int d)
   : Element(n,1,1), seq_(b), seq_field_(s), dest_field_(d)
 {
   if (!seq_) seq_ = SeqNum(rand() * MAX_INIT_SEQ);
@@ -42,13 +42,13 @@ TuplePtr Sequence::simple_action(TuplePtr p)
   }
 
   TuplePtr tp = Tuple::mk();
-  for (int i = 0; i < seq_field_; i++) {
+  for (unsigned i = 0; i < seq_field_; i++) {
     tp->append((*p)[i]);
   }
   tp->append(Val_UInt64::mk(next_seq));
   for (unsigned i = seq_field_; i < p->size(); i++) {
     tp->append((*p)[i]);
   }
-
+  tp->freeze();
   return tp;
 }

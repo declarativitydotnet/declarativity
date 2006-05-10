@@ -24,10 +24,9 @@ DuplicateConservative::DuplicateConservative(string name, int outputs)
   _block_flags.resize(noutputs());
 }
 
-void DuplicateConservative::unblock(int output)
+void DuplicateConservative::unblock(unsigned output)
 {
-  assert((output >= 0) &&
-         (output <= noutputs()));
+  assert(output <= noutputs());
   
   // Unset a blocked output
   if (_block_flags[output]) {
@@ -64,7 +63,7 @@ int DuplicateConservative::push(int port, TuplePtr p, b_cbv cb)
   assert(!_push_cb);
 
   // For every output
-  for (int i = 0;
+  for (unsigned i = 0;
        i < noutputs();
        i++) {
     // Send it with the appropriate callback

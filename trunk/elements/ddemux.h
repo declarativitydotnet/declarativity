@@ -42,29 +42,29 @@ public:
   int push(TuplePtr p, b_cbv cb) const;
 
   /** Add output port keyed off ValuePtr argument, returns allocated port # */
-  int add_output(ValuePtr);
+  unsigned add_output(ValuePtr);
 
   /** Remove output port, by port # or key */
-  int remove_output(int);
+  int remove_output(unsigned);
   int remove_output(ValuePtr);
 
 private:
-  void remove_block_flag(int port);
+  void remove_block_flag(unsigned port);
 
   /** The callback for my input */
   b_cbv	_push_cb;
 
-  typedef std::map<ValuePtr, int> PortMap;
+  typedef std::map<ValuePtr, unsigned> PortMap;
   PortMap _port_map;
 
   /** My block flags, one per output port */
   std::vector<bool> _block_flags;
 
   /** My block flag count. */
-  int _block_flag_count;
+  unsigned _block_flag_count;
 
   /** My block callback function for a given output */
-  void unblock(int output);
+  void unblock(unsigned output);
 
   /** The input field on which I perform the demultiplexing */
   unsigned _inputFieldNo;

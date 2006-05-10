@@ -375,6 +375,17 @@ DEF_OP(POP) {
   }
   result->append(top);
 }
+DEF_OP(POP_ALL) {
+  if (!result) { result = Tuple::mk(); }
+  while (_st.size() > 0) {
+    ValuePtr top = pop();
+    if (top->typeCode() == Value::TUPLE) {
+      // Freeze it before taking it out
+      Val_Tuple::cast(top)->freeze();
+    }
+    result->append(top);
+  }
+}
 DEF_OP(PEEK) {
   uint stackPosition = pop_unsigned();
   if (stackPosition >= _st.size()) {

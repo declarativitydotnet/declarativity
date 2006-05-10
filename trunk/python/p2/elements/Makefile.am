@@ -28,6 +28,7 @@ libp2pythonelements_la_SOURCES = \
 	discard.cpp \
 	dupElim.cpp \
 	duplicateConservative.cpp \
+	dDuplicateConservative.cpp \
 	duplicate.cpp \
 	filter.cpp \
 	functorSource.cpp \

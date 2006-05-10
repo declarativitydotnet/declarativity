@@ -165,10 +165,9 @@ void RateCCT::unmap(ValuePtr dest, SeqNum seq)
 
 }
 
-uint
-RateCCT::tuplesInFlight() const {
+unsigned RateCCT::tuplesInFlight() const {
   ValueSeqTimeCBMap::const_iterator iter_map = index_.begin();
-  int total = 0;
+  unsigned total = 0;
   for (iter_map = index_.begin(); iter_map != index_.end(); iter_map++) {
     total += iter_map->second->size();
   }

@@ -530,50 +530,65 @@ Plmb_ConfGen::genEditFinalize(string nodeID)
     int numElementsToReceive = ri._receivers.size(); 
     string tableName = ri._name;
 
-    oss_comment << "Add demux port for " << tableName << " for " 
-	        << numElementsToReceive << " elements";
-    _p2dl << conf_comment("");
-    _p2dl << conf_comment("");
-    _p2dl << conf_comment(oss_comment.str());
-    _p2dl << conf_comment("");
+    ElementSpecPtr duplicator; 
+    string dup_name = "dc_" + tableName;
+    bool found_previous_duplicator = false;
+    // CHECK FOR PREVIOUS DUPLICATOR
+    if (dynamic_cast<Plumber::DataflowEdit*>(_conf.get()) != NULL &&
+        (duplicator = dynamic_cast<Plumber::DataflowEdit*>(_conf.get())->find(dup_name)) != 0) {
+      oss_comment << "Found Dynamic Duplicator for table " << tableName << " adding " 
+                  << numElementsToReceive << " more elements";
+      _p2dl << conf_comment("");
+      _p2dl << conf_comment(oss_comment.str());
+      _p2dl << conf_comment("");
+      found_previous_duplicator = true;
+    }
+    else {
+      oss_comment << "Add demux port for " << tableName << " for " 
+                  << numElementsToReceive << " elements";
+      _p2dl << conf_comment("");
+      _p2dl << conf_comment(oss_comment.str());
+      _p2dl << conf_comment("");
 
-    ElementSpecPtr bufferQueue = 
-      _conf->addElement(ElementPtr(new Queue("demuxQueue", 1000)));
-    _p2dl << conf_assign(bufferQueue.get(), 
-              conf_function("Queue", "demuxQueue_" + tableName, 1000));
-    ElementSpecPtr pullPush = 
-      _conf->addElement(ElementPtr(new TimedPullPush("DemuxQueuePullPush", 0)));
-    _p2dl << conf_assign(pullPush.get(), 
-              conf_function("TimedPullPush", 
-                            "demuxQueuePullPush_" + tableName, 0));
+      ElementSpecPtr bufferQueue = 
+        _conf->addElement(ElementPtr(new Queue("demuxQueue", 1000)));
+      _p2dl << conf_assign(bufferQueue.get(), 
+                conf_function("Queue", "demuxQueue_" + tableName, 1000));
+      ElementSpecPtr pullPush = 
+        _conf->addElement(ElementPtr(new TimedPullPush("DemuxQueuePullPush", 0)));
+      _p2dl << conf_assign(pullPush.get(), 
+                conf_function("TimedPullPush", 
+                              "demuxQueuePullPush_" + tableName, 0));
     
-    bufferQueue->input(0)->check(false);
-    _p2dl << conf_hookup(string(".dDemux"), Val_Str(_iterator->second._name).toConfString(), 
-                         conf_var(bufferQueue.get()), 0);
-    hookUp(bufferQueue, 0, pullPush, 0);
+      bufferQueue->input(0)->check(false);
+      _p2dl << conf_hookup(string(".dDemux"), Val_Str(_iterator->second._name).toConfString(), 
+                           conf_var(bufferQueue.get()), 0);
+      hookUp(bufferQueue, 0, pullPush, 0);
     
-    // duplicator
-    ElementSpecPtr duplicator = 
-      _conf->addElement(ElementPtr(new DuplicateConservative("dc", numElementsToReceive)));    
-    _p2dl << conf_assign(duplicator.get(), conf_function("DuplicateConservative", "dupCons", 
-                                                         numElementsToReceive));
-    // materialize table only if it is declared and has lifetime>0
-    OL_Context::TableInfoMap::iterator _iterator 
-      = _ctxt->getTableInfos()->find(tableName);
-    if (_iterator != _ctxt->getTableInfos()->end() 
-	&& _iterator->second->timeout != 0) {
-      ElementSpecPtr insertS 
-	= _conf->addElement(ElementPtr(new Insert("insert",  getTableByName(nodeID, tableName))));
-      _p2dl << conf_assign(insertS.get(), 
-               conf_function("Insert", "insert", 
-                             conf_var(getTableByName(nodeID, tableName).get())));
+      duplicator = _conf->addElement(ElementPtr(
+         new DuplicateConservative(dup_name, numElementsToReceive)));    
+      _p2dl << conf_assign(duplicator.get(), 
+                           conf_function("DDuplicateConservative", 
+                                         dup_name,
+                                         numElementsToReceive));
+      // materialize table only if it is declared and has lifetime>0
+      OL_Context::TableInfoMap::iterator _iterator 
+        = _ctxt->getTableInfos()->find(tableName);
+      if (_iterator != _ctxt->getTableInfos()->end() 
+          && _iterator->second->timeout != 0) {
+        ElementSpecPtr insertS = _conf->addElement(
+          ElementPtr(new Insert("insert",  getTableByName(nodeID, tableName))));
+        _p2dl << conf_assign(insertS.get(), 
+                   conf_function("Insert", "insert", 
+                     conf_var(getTableByName(nodeID, tableName).get())));
       
-      hookUp(pullPush, 0, insertS, 0);
-      genPrintWatchElement("PrintWatchInsert:"+nodeID);
+        hookUp(pullPush, 0, insertS, 0);
+        genPrintWatchElement("PrintWatchInsert:"+nodeID);
 
-      hookUp(duplicator, 0);
-    } else {
-      hookUp(pullPush, 0, duplicator, 0);
+        hookUp(duplicator, 0);
+      } else {
+        hookUp(pullPush, 0, duplicator, 0);
+      }
     }
 
     // connect the duplicator to elements for this name
@@ -586,11 +601,18 @@ Plmb_ConfGen::genEditFinalize(string nodeID)
 					       + tableName + ":" + nodeID)));
         _p2dl << conf_assign(printDuplicator.get(), 
                  conf_function("PrintTime", "printAfterDuplicator"));
-	hookUp(duplicator, k, printDuplicator, 0);
+	if (found_previous_duplicator)
+          _p2dl << conf_hookup("." + dup_name, string("+"), 
+                               conf_var(printDuplicator.get()), 0);
+        else hookUp(duplicator, k, printDuplicator, 0);
 	hookUp(printDuplicator, 0, nextElementSpec, 0);
-	continue;
       }
-      hookUp(duplicator, k, nextElementSpec, 0);
+      else {
+        if (found_previous_duplicator)
+          _p2dl << conf_hookup("." + dup_name, string("+"), 
+                               conf_var(nextElementSpec.get()), 0);
+        else hookUp(duplicator, k, nextElementSpec, 0);
+      }
     }
   }
   _p2dl << conf_comment("=================================================");
@@ -839,7 +861,7 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
   ///////// Network Out ///////////////
   if (_cc) {
     ostringstream oss;
-    oss << "\"" << nodeID << "\" pop swallow pop";
+    oss << "'" << nodeID << "\' pop swallow pop";
     ElementSpecPtr srcAddress  = 
       _conf->addElement(ElementPtr(new PelTransform("AddSrcAddressCC:"+nodeID, oss.str())));
     _p2dl << conf_assign(srcAddress.get(), 
@@ -854,10 +876,10 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
     // <data, seq, src, <t>>
     ElementSpecPtr tagData  = 
       _conf->addElement(ElementPtr(new PelTransform("TagData:" + nodeID, 
-						       "\"ccdata\" pop $0 pop $1 pop $2 pop")));
+						       "'ccdata' pop $0 pop $1 pop $2 pop")));
     _p2dl << conf_assign(tagData.get(), 
                          conf_function("PelTransform", "tagData", 
-                                       "\"ccdata\" pop $0 pop $1 pop $2 pop"));
+                                       "'ccdata' pop $0 pop $1 pop $2 pop"));
     hookUp(tagData, 0);
 
     genPrintElement("PrintRemoteSendCCOne:"+nodeID);
@@ -891,10 +913,10 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
     // acknowledgements. <dst, <ack, seq, windowsize>>
     ElementSpecPtr ackPelTransform
       = _conf->addElement(ElementPtr(new PelTransform("ackPelTransformCC" + nodeID,
-							"$0 pop \"ack\" ->t $1 append $2 append pop")));
+							"$0 pop 'ack' ->t $1 append $2 append pop")));
     _p2dl << conf_assign(ackPelTransform.get(), 
                        conf_function("PelTransform", "ackPel",
-                                     "$0 pop \"ack\" ->t $1 append $2 append pop"));
+                                     "$0 pop 'ack' ->t $1 append $2 append pop"));
     
     hookUp(_ccRx, 1, ackPelTransform, 0);
     genPrintElement("PrintSendAck:"+nodeID);
@@ -1013,7 +1035,7 @@ string Plmb_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr,
   }
   else if ((val = dynamic_cast<Parse_Val*>(expr->lhs)) != NULL) {
     if (val->v->typeCode() == Value::STR)
-      pel << "\"" << val->toString() << "\"" << " "; 
+      pel << "'" << val->toString() << "'" << " "; 
     else pel << val->toString() << " "; 
 
     if (val->id()) pel << "->u32 ->id "; 
@@ -1039,7 +1061,7 @@ string Plmb_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr,
   }
   else if ((val = dynamic_cast<Parse_Val*>(expr->rhs)) != NULL) {    
     if (val->v->typeCode() == Value::STR)
-      pel << "\"" << val->toString() << "\"" << " "; 
+      pel << "'" << val->toString() << "'" << " "; 
     else pel << val->toString() << " "; 
 
     if (val->id()) pel << "->u32 ->id "; 
@@ -1173,7 +1195,7 @@ string Plmb_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr,
   else if ((val = dynamic_cast<Parse_Val*>(expr->lhs)) != NULL) {
     if (val->v->typeCode() == Value::STR) { 
       strCompare = true; 
-      pel << "\"" << val->toString() << "\" "; 
+      pel << "'" << val->toString() << "' "; 
     } else {
       strCompare = false;
       pel << val->toString() << " "; 
@@ -1204,7 +1226,7 @@ string Plmb_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr,
     else if ((val = dynamic_cast<Parse_Val*>(expr->rhs)) != NULL) {      
       if (val->v->typeCode() == Value::STR) { 
 	strCompare = true; 
-	pel << "\"" << val->toString() << "\" "; 
+	pel << "'" << val->toString() << "' "; 
       } else {
 	strCompare = false;
 	pel << val->toString() << " "; 
@@ -1332,7 +1354,7 @@ void Plmb_ConfGen::pelAssign(OL_Context::Rule* rule,
   }
   else if ((val=dynamic_cast<Parse_Val*>(expr->assign)) != NULL) {
     if (val->v->typeCode() == Value::STR) { 
-      pelAssign << "\"" << val->toString() << "\" ";
+      pelAssign << "'" << val->toString() << "' ";
     } else {
       pelAssign << val->toString() << " ";
     }
@@ -1439,10 +1461,10 @@ void Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
   } // default
 
   ostringstream pelTransformStrbuf;
-  pelTransformStrbuf << "\"" << pf->fn->name << "\" pop";
+  pelTransformStrbuf << "'" << pf->fn->name << "' pop";
 
   if (pf->aggregate() != -1 && pf->fn->loc == "") {
-    pelTransformStrbuf << " \"" << nodeID << "\" pop";
+    pelTransformStrbuf << " '" << nodeID << "' pop";
   }
 
   for (unsigned int k = 0; k < indices.size(); k++) {
@@ -1555,7 +1577,7 @@ void Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 						    leftJoinKey, 
 						    rightJoinKey, 
 						    *comp_cb)));
-    if (conf_var(comp_cb) == "unknown") {
+    if (*comp_cb == 0 || conf_var(comp_cb) == "unknown") {
       _p2dl << conf_assign(last_el.get(), 
                 conf_function("UniqueLookup", "uniqueLookup", conf_var(probeTable.get()),
                               leftJoinKey, rightJoinKey));
@@ -1565,7 +1587,7 @@ void Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
                 conf_function("UniqueLookup", "uniqueLookup", conf_var(probeTable.get()),
                               leftJoinKey, rightJoinKey, conf_var(comp_cb)));
     }
-    std::cout << "CALLBACK VARIABLE LOOKUP: " << comp_cb << std::endl;
+    std::cout << "CALLBACK VARIABLE LOOKUP: " << *comp_cb << std::endl;
   } else {
     ostringstream oss;
     oss << "MultLookup:" << curRule->ruleID << ":" << joinOrder << ":" << nodeID; 
@@ -1574,7 +1596,7 @@ void Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 						  probeTable,
 						  leftJoinKey, 
 						  rightJoinKey, *comp_cb)));
-    if (conf_var(comp_cb) == "unknown") {
+    if (*comp_cb == 0 || conf_var(comp_cb) == "unknown") {
       _p2dl << conf_assign(last_el.get(), 
                 conf_function("MultLookup", "multLookup", conf_var(probeTable.get()),
                               leftJoinKey, rightJoinKey));
@@ -1630,8 +1652,8 @@ void Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
   // form the pel projection. 
   //Keep all fields on left, all fields on right except the join keys
   ostringstream pelProject;
-  pelProject << "\"join:" << eventFunctor->fn->name << ":" << baseTableName << ":" 
-	     << curRule->ruleID << ":" << nodeID << "\" pop "; // table name
+  pelProject << "'join:" << eventFunctor->fn->name << ":" << baseTableName << ":" 
+	     << curRule->ruleID << ":" << nodeID << "' pop "; // table name
   for (int k = 0; k < numFieldsProbe; k++) {
     pelProject << "$0 " << k+1 << " field pop ";
   }
@@ -1890,7 +1912,7 @@ Plmb_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
                             conf_var(tableAgg.get())));
    
   ostringstream pelTransformStr;
-  pelTransformStr << "\"" << "aggResult:" << currentRule->ruleID << "\" pop";
+  pelTransformStr << "'" << "aggResult:" << currentRule->ruleID << "' pop";
   for (uint k = 0; k < aggregateNamesTracker->fieldNames.size(); k++) {
     pelTransformStr << " $" << k << " pop";
   }
@@ -2087,12 +2109,13 @@ void Plmb_ConfGen::createTables(string nodeID)
 	boost::posix_time::time_duration expiration(0,0,tableInfo->timeout, 0);
 	newTable.reset(new Table(tableInfo->tableName, tableInfo->size, expiration));
         _p2dl << conf_assign(newTable.get(), 
-                    conf_function("Table", "t_name_" + tableInfo->tableName, 
-                                  tableInfo->size, boost::posix_time::to_simple_string(expiration)));
+                    conf_function("Table", tableInfo->tableName, 
+                                  tableInfo->size, 
+                                  boost::posix_time::to_simple_string(expiration)));
       }
       else {
         _p2dl << conf_assign(newTable.get(), 
-                    conf_function("Table", "t_name_" + tableInfo->tableName, tableInfo->size)); 
+                    conf_function("Table", tableInfo->tableName, tableInfo->size)); 
       }
 
       // first create unique indexes

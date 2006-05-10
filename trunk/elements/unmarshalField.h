@@ -22,6 +22,7 @@
 class UnmarshalField : public Element { 
 public:
   UnmarshalField(string, unsigned);
+  UnmarshalField(string, std::vector<unsigned>);
 
   ~UnmarshalField();
   
@@ -34,7 +35,7 @@ public:
 
 private:
   /** The field number I'm unmarshalling */
-  unsigned _fieldNo;
+  std::vector<unsigned> _fieldNos;
 };
 
 

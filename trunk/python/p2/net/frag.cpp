@@ -6,7 +6,7 @@ using namespace boost::python;
 void export_frag()
 {
   class_<Frag, bases<Element>, boost::shared_ptr<Frag>, boost::noncopyable>
-        ("Frag", init<string, uint32_t>())
+        ("Frag", init<optional<string, unsigned, unsigned, unsigned> >())
     .def("class_name", &Frag::class_name)
     .def("processing", &Frag::processing)
     .def("flow_code",  &Frag::flow_code)

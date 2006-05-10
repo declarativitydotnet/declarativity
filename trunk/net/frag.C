@@ -11,17 +11,20 @@
  */
 
 #include "frag.h"
+#include "val_tuple.h"
+#include "val_null.h"
 #include "val_uint64.h"
 #include "val_uint32.h"
 #include "val_opaque.h"
-#include "tupleseq.h"
 #include "math.h"
+#include "xdrbuf.h"
 
-Frag::Frag(string name, uint32_t block_size)
+Frag::Frag(string name, unsigned sf, unsigned bs, unsigned mqs)
   : Element(name, 1, 1),
     _push_cb(0), _pull_cb(0),
-    block_size_(block_size)
+    seq_field_(sf), block_size_(bs), max_queue_size_(mqs)
 {
+  assert (bs % 4 == 0);
 }
 
 
@@ -33,29 +36,23 @@ int Frag::push(int port, TuplePtr t, b_cbv cb)
   if (_push_cb != 0) {
     // Complain and do nothing
     ELEM_INFO( "push: callback overrun"); 
-  } else {
-    // Accept the callback
+  } 
+
+  ELEM_INFO( "push: put accepted");
+  fragment(t);
+
+  // Unblock the puller if one is waiting
+  if (fragments_.size() > 0 && _pull_cb != 0) {
+    ELEM_INFO( "push: wakeup puller");
+    _pull_cb();
+    _pull_cb = 0;
+  }
+
+  if (fragments_.size() >= max_queue_size_) {
     _push_cb = cb;
-    ELEM_INFO( "push: raincheck");
+    return 0;
   }
-
-  // Do I have fragments?
-  if (fragments_.size() > 0) {
-    // Nope, accept and fragment the tuple
-    ELEM_INFO( "push: put accepted");
-    fragment(t);
-
-    // Unblock the puller if one is waiting
-    if (_pull_cb != 0) {
-      ELEM_INFO( "push: wakeup puller");
-      _pull_cb();
-      _pull_cb = 0;
-    }
-  } else {
-    // I already have a tuple so the one I just accepted is dropped
-    ELEM_INFO( "push: tuple overrun");
-  }
-  return 0;
+  return 1;
 }
 
 TuplePtr Frag::pull(int port, b_cbv cb) 
@@ -64,17 +61,17 @@ TuplePtr Frag::pull(int port, b_cbv cb)
   assert(port == 0);
 
   // Do I have a fragment?
-  if (!fragments_.empty()) {
+  if (fragments_.size() > 0) {
     ELEM_INFO( "pull: will succeed");
     TuplePtr t = fragments_.front();
     fragments_.pop_front();
 
-    if (fragments_.empty() && _push_cb != 0) {
+    if (fragments_.size() < max_queue_size_ && 
+        _push_cb != 0) {
       ELEM_INFO( "pull: wakeup pusher");
       _push_cb();
       _push_cb = 0;
     }
-
     return t;
   } else {
     // I don't have a tuple.  Do I have a pull callback already?
@@ -92,25 +89,33 @@ TuplePtr Frag::pull(int port, b_cbv cb)
 
 void Frag::fragment(TuplePtr t)
 {
-  uint64_t seq_num = Val_UInt64::cast((*t)[SEQ_FIELD]);
-  FdbufPtr pfb = Val_Opaque::cast((*t)[PLD_FIELD]);
-
-  if (pfb->length() <= CHUNK_SIZE) {
-    // No need to fragment.
-    t->tag(NUM_CHUNKS, Val_UInt32::mk(1));
-    fragments_.push_back(t);
+  TuplePtr payload = Tuple::mk();
+  for (unsigned i = seq_field_+1; i < t->size(); i++) {
+    payload->append((*t)[i]);
   }
-  else {
-    size_t num_chunks = (pfb->length() + CHUNK_SIZE - 1) / CHUNK_SIZE; 
-    size_t offset = 0;
-    while( pfb->length() ) {
-      TuplePtr p = Tuple::mk();
-      p->append(Val_UInt64::mk(seq_num));
-      FdbufPtr fb(new Fdbuf());
-      offset += pfb->pop_to_fdbuf(*fb, CHUNK_SIZE);
-      p->append(Val_Opaque::mk(fb));
-      p->tag(NUM_CHUNKS, Val_UInt32::mk(num_chunks));
-      fragments_.push_back(p);
+  payload->freeze();
+
+  FdbufPtr payload_fb(new Fdbuf());
+  XDR xe;
+  xdrfdbuf_create(&xe, payload_fb.get(), false, XDR_ENCODE);
+  payload->xdr_marshal(&xe);
+  xdr_destroy(&xe);
+
+  unsigned num_chunks = 
+    static_cast<unsigned>(ceil((double)payload_fb->length() / block_size_)); 
+  for(uint32_t bn=0; payload_fb->length(); bn++) {
+    TuplePtr p = Tuple::mk();
+    // Get everything up to and including the sequence number
+    for (unsigned i = 0; i <= seq_field_; i++) {
+      p->append((*t)[i]);
     }
+
+    FdbufPtr fb(new Fdbuf());
+    payload_fb->pop_to_fdbuf(*fb, block_size_);
+    p->append(Val_UInt32::mk(bn));		// Block Number
+    p->append(Val_UInt32::mk(num_chunks));	// Total blocks
+    p->append(Val_Opaque::mk(fb));		// The payload
+    p->freeze();
+    fragments_.push_back(p);
   }
 }

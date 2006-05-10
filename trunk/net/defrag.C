@@ -11,17 +11,16 @@
  */
 
 #include "defrag.h"
-#include "frag.h"
+#include "val_tuple.h"
+#include "val_null.h"
 #include "val_uint64.h"
 #include "val_uint32.h"
 #include "val_opaque.h"
-#include "tupleseq.h"
+#include "xdrbuf.h"
 
-#define PLD_FIELD 1
-
-Defrag::Defrag(string name)
+Defrag::Defrag(string name, unsigned sf)
   : Element(name, 1, 1),
-    _push_cb(0), _pull_cb(0)
+    _pull_cb(0), seq_field_(sf)
 {
 }
 
@@ -31,25 +30,15 @@ int Defrag::push(int port, TuplePtr t, b_cbv cb)
   // Is this the right port?
   assert(port == 0);
 
-  if (_push_cb != 0) {
-    // Complain and do nothing
-    ELEM_INFO( "push: callback overrun"); 
-  } else {
-    // Accept the callback
-    _push_cb = cb;
-    ELEM_INFO( "push: raincheck");
-  }
-
-  ELEM_INFO( "push: put accepted");
   defragment(t);
 
   // Unblock the puller if one is waiting
-  if (_pull_cb != 0) {
+  if (tuples_.size() > 0 && _pull_cb != 0) {
     ELEM_INFO( "push: wakeup puller");
     _pull_cb();
     _pull_cb = 0;
   }
-  return 0;
+  return 1;
 }
 
 TuplePtr Defrag::pull(int port, b_cbv cb) 
@@ -58,24 +47,21 @@ TuplePtr Defrag::pull(int port, b_cbv cb)
   assert(port == 0);
 
   // Do I have a fragment?
-  if (!tuples_.empty()) {
+  if (tuples_.size() > 0) {
     ELEM_INFO( "pull: will succeed");
     TuplePtr t = tuples_.front();
     tuples_.pop_front();
 
-    if (tuples_.empty() && _push_cb != 0) {
-      ELEM_INFO( "pull: wakeup pusher");
-      _push_cb();
-      _push_cb = 0;
-    }
     return t;
-  } else {
+  } 
+  else {
     // I don't have a tuple.  Do I have a pull callback already?
     if (_pull_cb == 0) {
       // Accept the callback
       ELEM_INFO( "pull: raincheck");
       _pull_cb = cb;
-    } else {
+    } 
+    else {
       // I already have a pull callback
       ELEM_INFO( "pull: underrun");
     }
@@ -85,45 +71,61 @@ TuplePtr Defrag::pull(int port, b_cbv cb)
 
 void Defrag::defragment(TuplePtr t)
 {
-  uint64_t seq_num = Val_UInt64::cast((*t)[SEQ_FIELD]);
-  int      offset  = Val_UInt32::cast((*t)[OFFSET_FIELD]);
-  uint32_t chunks  = Val_UInt32::cast(t->tag(NUM_CHUNKS));
+  uint64_t seq_num = Val_UInt64::cast((*t)[seq_field_]);
+  unsigned offset  = Val_UInt32::cast((*t)[seq_field_+1]);
+  unsigned chunks  = Val_UInt32::cast((*t)[seq_field_+2]);
 
-  if (chunks == 1) {
-    tuples_.push_back(t);
+  for (FragMap::iterator iter = fragments_.find(seq_num); 
+       iter != fragments_.end(); iter++) {
+    if (Val_UInt32::cast((*iter->second)[seq_field_+1]) == offset) {
+      ELEM_INFO( "defragment: duplicate offset");
+      return;
+    }
   }
-  else {
-    for (FragMap::iterator iter = fragments_.find(seq_num); iter != fragments_.end(); iter++) {
-      if (Val_UInt64::cast((*iter->second)[SEQ_FIELD]) == (uint64_t) offset) {
-        ELEM_INFO( "defragment: duplicate offset");
-        return;
-      }
-    }
 
-    fragments_.insert(std::make_pair(seq_num, t));
+  fragments_.insert(std::make_pair(seq_num, t));
 
-    if (fragments_.count(seq_num) == chunks) {  
-      // Put fragments back together
-      FdbufPtr fb(new Fdbuf());
-      for (uint64_t i = 0;
-           i < chunks;
-           i++) {
-        TuplePtr p;
-        for (FragMap::iterator iter = fragments_.find(seq_num); iter != fragments_.end(); iter++) {
-          if (Val_UInt64::cast((*iter->second)[SEQ_FIELD]) == i) {
-            p = iter->second;
-            fragments_.erase(iter);
-            break;
-          }
+  if (fragments_.count(seq_num) == chunks) {  
+    // Put fragments back together
+    std::cerr << "OK PUT THE FRAGMENTS BACK TOGETHER" << std::endl;
+    FdbufPtr fb(new Fdbuf());
+    for (unsigned i = 0; i < chunks; i++) {
+      TuplePtr p;
+      for (FragMap::iterator iter = fragments_.find(seq_num); 
+           iter != fragments_.end(); iter++) {
+        if (Val_UInt32::cast((*iter->second)[seq_field_+1]) == i) {
+          p = iter->second;
+          fragments_.erase(iter);
+          break;
         }
-        assert(p);
-        FdbufPtr payload = Val_Opaque::cast((*p)[PLD_FIELD]);
-        fb->push_bytes(payload->cstr(), payload->length());
       }
-      TuplePtr defraged = Tuple::mk();
-      defraged->append(Val_UInt64::mk(seq_num));
-      defraged->append(Val_Opaque::mk(fb));
-      tuples_.push_back(defraged); 
+      assert(p);
+      std::cerr << "\tSTICHING PAYLOAD: " << p->toString() << std::endl;
+      FdbufPtr payload = Val_Opaque::cast((*p)[seq_field_+3]);
+      fb->push_bytes(payload->cstr(), payload->length());
     }
+
+    // Unmarhsal and expand the packaged tuple
+    std::cerr << "Unmarhsal and expand the packaged tuple" << std::endl;
+    XDR xd;
+    xdrfdbuf_create(&xd, fb.get(), false, XDR_DECODE);
+    TuplePtr unmarshal = Tuple::xdr_unmarshal(&xd);
+    xdr_destroy(&xd);
+
+    TuplePtr defraged = Tuple::mk();
+    for (unsigned i = 0 ; i < t->size(); ) {
+      if (i == seq_field_) {
+        defraged->append((*t)[i]);	// Add the sequence number
+        for (unsigned j = 0; j < unmarshal->size(); j++) {
+          defraged->append((*unmarshal)[j]);
+        }
+        i += 4;	// Move all the way pass the marshal field
+      }
+      else {
+        defraged->append((*t)[i++]);
+      }
+    }
+    std::cerr << "FINISHED WITH DEFRAG: " << defraged->toString() << std::endl;
+    tuples_.push_back(defraged); 
   }
 }

@@ -222,7 +222,7 @@ WHITESPACE	[ \t\r\n]+
 
 // Default: yyin == std::cin.
 OL_Lexer::OL_Lexer(std::istream *str) 
-  : comment_depth(0) 
+  : comment_depth(0), cstring(NULL) 
 {
   bufstate = yy_create_buffer( str , YY_BUF_SIZE);
   bufstate->yy_is_our_buffer = 0;
@@ -231,7 +231,7 @@ OL_Lexer::OL_Lexer(std::istream *str)
 
 // Give it a string...
 OL_Lexer::OL_Lexer(const char *prog) 
-  : comment_depth(0), strb(prog)
+  : comment_depth(0), cstring(NULL), strb(prog)
 {
   bufstate = yy_create_buffer( &strb, strlen(prog));
   yy_switch_to_buffer( bufstate );

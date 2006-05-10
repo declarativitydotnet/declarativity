@@ -19,8 +19,13 @@
 
 MarshalField::MarshalField(string name,
                            unsigned fieldNo)
-  : Element(name, 1, 1),
-    _fieldNo(fieldNo)
+  : Element(name, 1, 1)
+{
+  _fieldNos.push_back(fieldNo);
+}
+
+MarshalField::MarshalField(string name, std::vector<unsigned> fieldNos)
+  : Element(name, 1, 1), _fieldNos(fieldNos)
 {
 }
 
@@ -30,18 +35,24 @@ MarshalField::~MarshalField()
 
 TuplePtr MarshalField::simple_action(TuplePtr p)
 {
+  TuplePtr newTuple = Tuple::mk();
   // Take out the appropriate field
-  ValuePtr value = (*p)[_fieldNo];
+  for (unsigned field = 0; field < p->size(); field++) {
+    ValuePtr value = (*p)[field];
 
-  // Does this field exist?
-  if (value == NULL) {
-    // Nope.  Return nothing
-    return TuplePtr();
-  } else {
-    // Is this a field of type TUPLE?
-    if (value->typeCode() == Value::TUPLE) {
+    if (std::find(_fieldNos.begin(), _fieldNos.end(), field) 
+        == _fieldNos.end()) {
+      newTuple->append((*p)[field]);	// Just add it
+    }
+    else if (value == NULL) {
+      // Nope.  Return nothing
+      return TuplePtr();
+    } 
+    else if (value->typeCode() == Value::OPAQUE) {
+      newTuple->append((*p)[field]);	// Just add it
+    }
+    else if (value->typeCode() == Value::TUPLE) {
       // Goodie. Marshal the field
-
       FdbufPtr fb(new Fdbuf());
       XDR xe;
       xdrfdbuf_create(&xe, fb.get(), false, XDR_ENCODE);
@@ -51,26 +62,15 @@ TuplePtr MarshalField::simple_action(TuplePtr p)
       // Now create the opaque
       ValuePtr marshalled = Val_Opaque::mk(fb);
 
-      // Now create a tuple copy replacing the marshalled field
-      TuplePtr newTuple = Tuple::mk();
-      for (unsigned field = 0;
-           field < _fieldNo;
-           field++) {
-        newTuple->append((*p)[field]);
-      }
       newTuple->append(marshalled);
-      for (unsigned field = _fieldNo + 1;
-           field < p->size();
-           field++) {
-        newTuple->append((*p)[field]);
-      }
-      newTuple->freeze();
-      return newTuple;
-    } else {
+    }  
+    else {
       // Numbered field is unmarshallable.  Just return the same tuple
       // and log a warning
       log(LoggerI::WARN, -1, "Cannot marshal a non-tuple field");
       return p;
     }
   }
+  newTuple->freeze();
+  return newTuple;
 }

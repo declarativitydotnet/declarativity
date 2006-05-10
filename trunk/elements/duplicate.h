@@ -43,10 +43,10 @@ private:
   std::vector<int> _block_flags;
 
   /** My block flag count. */
-  int _block_flag_count;
+  unsigned _block_flag_count;
 
   /** My block callback function for a given output */
-  void unblock(int output);
+  void unblock(unsigned output);
 };
 
 

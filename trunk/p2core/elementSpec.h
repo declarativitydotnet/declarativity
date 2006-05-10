@@ -50,16 +50,16 @@ class ElementSpec {
     ElementSpecPtr fromElement;
 
     /** The port number at the fromElement */
-    int fromPortNumber;
+    unsigned fromPortNumber;
 
     /**  The element to which this hookup goes */
     ElementSpecPtr toElement;
 
     /** The port number at the toElement */
-    int toPortNumber;
+    unsigned toPortNumber;
 
-    Hookup(ElementSpecPtr fe, int fp,
-           ElementSpecPtr te, int tp) 
+    Hookup(ElementSpecPtr fe, unsigned fp,
+           ElementSpecPtr te, unsigned tp) 
       : fromElement(fe), fromPortNumber(fp),
         toElement(te), toPortNumber(tp) {};
   };
@@ -187,12 +187,12 @@ class ElementSpec {
   /** Apply unification to a single input port.  If the input port is
       agnostic, stop with no changes (i.e., don't back propagate from
       other ports to this one). */
-  UnificationResult unifyInput(int portNumber);
+  UnificationResult unifyInput(unsigned portNumber);
 
   /** Apply unification to a single output port.  If the output port is
       agnostic, stop with no changes (i.e., don't back propagate from
       other ports to this one). */
-  UnificationResult unifyOutput(int portNumber);
+  UnificationResult unifyOutput(unsigned portNumber);
 
  private:
 

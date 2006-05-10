@@ -23,6 +23,20 @@
 
 using namespace opr;
 
+/*
+static string vec_to_string(std::vector<unsigned>& vec)
+{
+  ostringstream oss;
+  oss << "["; 
+  for (std::vector<unsigned>::iterator iter = vec.begin();
+       iter != vec.end(); iter++) {
+    oss << *iter;
+    if (iter + 1 != vec.end()) oss << ", ";
+  }
+  oss << "]";
+  return oss.str();
+}
+*/
 
 Table::Table(string table_name, size_t max_size,
              boost::posix_time::time_duration& lifetime)

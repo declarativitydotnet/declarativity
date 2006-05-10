@@ -3,6 +3,8 @@
 
 using namespace boost::python;
 
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(table_overload, table, 2, 3)
+
 void export_plumber()
 {
   scope outer = 
@@ -19,7 +21,7 @@ void export_plumber()
       .def("name",       &Plumber::Dataflow::name) 
       .def("addElement", &Plumber::Dataflow::addElement)
       .def("hookUp",     &Plumber::Dataflow::hookUp)
-      .def("table",      &Plumber::Dataflow::table)
+      .def("table",      &Plumber::Dataflow::table, table_overload())
     ;
 
     class_<Plumber::DataflowEdit, bases<Plumber::Dataflow>, Plumber::DataflowEditPtr>

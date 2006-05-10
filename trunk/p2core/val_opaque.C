@@ -24,7 +24,36 @@ const opr::Oper* Val_Opaque::oper_ = new opr::OperCompare<Val_Opaque>();
 // 
 void Val_Opaque::xdr_marshal_subtype( XDR *x ) 
 {
-  warn << "Cannot marshal an OPAQUE value\n";
+  uint32_t l = b->length();
+  xdr_uint32_t(x, &l);
+  xdr_opaque(x, b->raw_inline(l), l);
+}
+
+ValuePtr Val_Opaque::xdr_unmarshal( XDR *x )
+{
+  FdbufPtr fb(new Fdbuf());
+  uint32_t l;
+  xdr_uint32_t(x, &l);
+  static const unsigned STATIC_BYTE_BUFFER = 10000;
+
+  if (l < STATIC_BYTE_BUFFER) {
+    // We can use the static buffer
+    static char byteBuffer[STATIC_BYTE_BUFFER];
+    static char* bb = &(byteBuffer[0]);
+    memset(bb, 0, STATIC_BYTE_BUFFER);
+    xdr_opaque(x, bb, l);
+    fb->push_bytes(bb, l);
+  }  else {
+    // We can't use the static buffer. We must allocate a one-shot
+    // buffer
+    char * localBuffer = new char[l+1];
+    memset(localBuffer, 0, STATIC_BYTE_BUFFER);
+    xdr_opaque(x, localBuffer, l);
+    fb->push_bytes(localBuffer, l);
+    delete localBuffer;
+  }
+
+  return mk(fb);
 }
 
 string Val_Opaque::toConfString() const

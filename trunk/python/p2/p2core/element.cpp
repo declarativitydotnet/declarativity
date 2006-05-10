@@ -79,14 +79,14 @@ public:
   }
 };
 
-int (Element::*ai_void)(void)      = &Element::add_input;
-int (Element::*ai_value)(ValuePtr) = &Element::add_input;
-int (Element::*ao_void)(void)      = &Element::add_output;
-int (Element::*ao_value)(ValuePtr) = &Element::add_output;
-int (Element::*ri_int)(int)        = &Element::remove_input;
-int (Element::*ri_value)(ValuePtr) = &Element::remove_input;
-int (Element::*ro_int)(int)        = &Element::remove_output;
-int (Element::*ro_value)(ValuePtr) = &Element::remove_output;
+unsigned (Element::*ai_void)(void)      = &Element::add_input;
+unsigned (Element::*ai_value)(ValuePtr) = &Element::add_input;
+unsigned (Element::*ao_void)(void)      = &Element::add_output;
+unsigned (Element::*ao_value)(ValuePtr) = &Element::add_output;
+int      (Element::*ri_int)(unsigned)   = &Element::remove_input;
+int      (Element::*ri_value)(ValuePtr) = &Element::remove_input;
+int      (Element::*ro_int)(unsigned)   = &Element::remove_output;
+int      (Element::*ro_value)(ValuePtr) = &Element::remove_output;
 
 void export_element()
 {

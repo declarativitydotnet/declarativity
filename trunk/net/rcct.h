@@ -35,7 +35,7 @@ public:
   // Difference between current time and that given in timespec
   static REMOVABLE_INLINE uint32_t delay(boost::posix_time::ptime*);	
 private:
-  uint tuplesInFlight() const;
+  unsigned tuplesInFlight() const;
   void map(ValuePtr dest, SeqNum seq);
   void unmap(ValuePtr dest, SeqNum seq);
   void data_ready();			// Callback for tuple output ready

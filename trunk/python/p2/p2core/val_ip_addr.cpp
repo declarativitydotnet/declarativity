@@ -10,5 +10,8 @@ void export_val_ip_addr()
 
     .def("mk",  &Val_IP_ADDR::mk)
     .staticmethod("mk")
+
+    .def("cast",  &Val_IP_ADDR::cast)
+    .staticmethod("cast")
   ; 
 }

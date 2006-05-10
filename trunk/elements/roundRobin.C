@@ -26,16 +26,15 @@ RoundRobin::RoundRobin(string name,
   _block_flags.resize(ninputs());
 }
 
-void RoundRobin::unblock(int input)
+void RoundRobin::unblock(unsigned input)
 {
-  assert((input >= 0) &&
-         (input <= ninputs()));
+  assert(input <= ninputs());
   
   // Unset a blocked input
   if (_block_flags[input]) {
     _block_flags[input] = false;
+    assert(_block_flag_count > 0);
     _block_flag_count--;
-    assert(_block_flag_count >= 0);
   }
 
   // If I have a pull callback, call it and remove it
@@ -63,7 +62,7 @@ TuplePtr RoundRobin::pull(int port, b_cbv cb)
   assert(!_pull_cb);
 
   // Fetch the next unblocked input
-  for (int i = 0;
+  for (unsigned i = 0;
        i < ninputs();
        i++) {
     int currentInput = (_nextInput + i) % ninputs();

@@ -41,6 +41,7 @@ libp2elements_la_SOURCES = \
 	dRoundRobin.C \
 	duplicate.C \
 	duplicateConservative.C \
+	dDuplicateConservative.C \
 	dupElim.C \
 	filter.C \
 	store.C \

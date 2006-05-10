@@ -65,8 +65,8 @@ public:
                      ElementSpecPtr dst, int dst_port );
 
       /** If table exists, return it, otherwise create a 
-        * new table and return that */
-      virtual TablePtr table(string name, size_t max_size=0, 
+        * new table and return that. */ 
+      virtual TablePtr table(string, size_t max_size=0, 
                              string lifetime="0"); 
    
       /**

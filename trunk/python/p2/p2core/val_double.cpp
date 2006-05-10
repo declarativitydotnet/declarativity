@@ -10,5 +10,8 @@ void export_val_double()
 
     .def("mk",  &Val_Double::mk)
     .staticmethod("mk")
+
+    .def("cast",  &Val_Double::cast)
+    .staticmethod("cast")
   ; 
 }

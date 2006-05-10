@@ -32,6 +32,7 @@ for op, ar, va, desc in [
   (""      ,0, "PUSH_CONST",  "Push a constant"),
   ("" , 0,        "PUSH_FIELD",   "Push a field of the tuple"),
   ("pop",1,     "POP",          "Pop result tuple field"),
+  ("popall",1,  "POP_ALL",      "Pop remaining stack to result tuple"),
   ("peek", 1,   "PEEK",         "Push a duplicate of a stack element"),
   ("ifelse",3,  "IFELSE",       "If first arg, then return second, else third"),
   ("ifpop",2,   "IFPOP",        "If first arg, then pop second, else nothing"),

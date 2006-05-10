@@ -17,6 +17,7 @@
 #include "fdbuf.h"
 
 #include <cerrno>
+#include <iostream>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -90,7 +91,7 @@ Fdbuf &Fdbuf::pushString(const char *str)
 
 Fdbuf &Fdbuf::pushFdbuf(const Fdbuf &fb, size_t max_size)
 {
-  return push_bytes(fb.data + start, std::min(fb.len, max_size));
+  return push_bytes(fb.data + fb.start, std::min(fb.len, max_size));
 }
 
 //

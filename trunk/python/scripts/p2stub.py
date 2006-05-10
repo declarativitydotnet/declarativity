@@ -20,63 +20,44 @@ def parse_cmdline(argv):
             exit(3)
     return flags, args
 
-def get_test_stub(name, address, port):
-  stub = """ 
-    dataflow %s {
-      let udp = Udp2("udp", %s);
-
-      udp -> UnmarshalField("unmarshal", 1) ->
-      PelTransform("unRoute", "$1 unboxPop") ->
-      PelTransform("unPackage", "swallow unbox drop pop pop pop pop pop")  ->
-      DDemux("dDemux", {value}, 1) ->
-      Print("printer") ->
-      Queue("install_result_queue") ->
-      DRoundRobin("dRoundRobin", 1) ->  
-      Sequence -> 
-      PelTransform("source_address", ""%s:%s" pop swallow unboxPop") ->
-      PelTransform("package", "$2 pop swallow pop") ->
-      MarshalField("marshal", 1) -> StrToSockaddr("addr_conv", 0) -> udp; 
-    }
-    .
-  """ % (name, port, address, port)
-  return stub
-
 def get_stub(name, address, port):
   stub = """ 
     dataflow %s {
       let udp = Udp2("udp", %s);
-      let wrapAroundDemux = Demux("wrapAroundSendDemux", {Val_Str(%s)}, 0);
-      let unBoxWrapAround = UnboxField("unboxWrapAround", 1);
+      let wrapAroundDemux = Demux("wrapAroundSendDemux", {Val_Str("%s")}, 0);
+      let wrapAroundMux = Mux("wrapAroundSendMux", 2);
 
-      DRoundRobin("dRoundRobin", 1) -> TimedPullPush("wrapPullPush", 0) ->
-      wrapAroundDemux -> unBoxWrapAround;
+      udp-> UnmarshalField("unmarshal", 1)      -> 
+      PelTransform("unRoute", "$1 unboxPop")    ->
+      Defrag("defragment", 1)                   -> 
+      TimedPullPush("demux_in_pullPush", 0)     -> 
+      PelTransform("unPackage", "$2 unboxPop")  ->
+      wrapAroundMux ->
+      DDemux("dDemux", {value}, 1) -> 
+      Queue("install_result_queue") ->
+      DRoundRobin("dRoundRobin", 1) ->  
+      TimedPullPush("rr_out_pullPush", 0) -> 
+      wrapAroundDemux -> 
+      # UnboxField("unboxWrapAround", 1) -> 
+      Print("wrap_around_print") -> [1]wrapAroundMux;
 
-      wrapAroundDemux[1] -> Queue("sendQueue", 1000) -> Print("print_remote_send") ->
-      PelTransform("package", "$1 pop swallow pop") ->
-      PelTransform("source_address", ""%s:%s" pop swallow unboxPop") ->
-      Sequence -> 
-      PelTransform("package", "$2 pop swallow pop") ->
-      MarshalField("marshal", 1) -> StrToSockaddr("addr_conv", 0) -> udp; 
+      wrapAroundDemux[1] -> 
+      Print("transport_out") ->
+      PelTransform("package_payload", "$0 pop swallow pop") ->
+      Sequence("terminal_sequence", 1, 1)          ->
+      Frag("fragment", 1)                          ->
+      PelTransform("package", "$0 pop swallow pop") ->
+      MarshalField("marshalField", 1)              ->
+      StrToSockaddr("addr_conv", 0)                ->
+      udp; 
 
-      # Generate the receiver side
-      let wrapAroundMux = Mux("wrapAroundSendMux", 2)
-      let ddemux        = DDemux("dDemux", 0)
-
-      udp-> UnmarshalField("unmarshal", 1)         -> 
-      PelTransform("unRoute", "$1 unboxPop")       ->
-      PelTransform("unPackage", $3, unboxPop")     ->
-      wrapAroundMux -> Queue("receiveQueue", 1000) -> 
-      TimedPullPush("pullPush", 0) -> ddemux       -> 
-      Discard("dummy_discard"); 
- 
-      wrapAroundDemux -> [1]wrapAroundMux;
     }
     .	# END OF DATAFLOW DEFINITION
-  """ % (name, port, address, address, port)
+  """ % (name, port, address)
   return stub
 
 def gen_stub(plumber, name, address, port):
-    stub  = get_test_stub(name, address, port)
+    stub  = get_stub(name, address, port)
 
     dfparser.compile(plumber, stub)
 
@@ -111,17 +92,15 @@ if __name__ == "__main__":
     print "** Stub Failed to initialize correct spec\n"
 
   edit    = plumber.new_dataflow_edit("Main")
-  ddemux  = edit.find("dDemux")
-  printer = edit.find("printer")
-  resultq = edit.find("install_result_queue")
-  drr     = edit.find("dRoundRobin")
+  # ddemux  = edit.find("dDemux")
+  ddemux = edit.find("dDemux")
+  rqueue = edit.find("install_result_queue")
 
-  oc = edit.addElement(libp2python.OverlogCompiler("ocompiler", address+":"+str(port))) 
+  oc = edit.addElement(libp2python.OverlogCompiler("ocompiler", plumber, address+":"+str(port))) 
   di = edit.addElement(libp2python.DataflowInstaller("dinstaller", plumber, dfparser))
   edit.hookUp(ddemux, 0, oc, 0)
-  edit.hookUp(oc, 0, printer, 0)
-  edit.hookUp(printer, 0, di, 0)
-  edit.hookUp(di, 0, resultq, 0)
+  edit.hookUp(oc, 0, di, 0)
+  edit.hookUp(di, 0, rqueue, 0)
 
   print "INSTALL THE EDIT"
   if plumber.install(edit) == 0:

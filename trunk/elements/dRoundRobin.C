@@ -26,7 +26,7 @@ DRoundRobin::DRoundRobin(string name,
   _block_flags.resize(ninputs());
 }
 
-void DRoundRobin::unblock(int input)
+void DRoundRobin::unblock(unsigned input)
 {
   assert(input >= 0 && input < _block_flags.size());
 
@@ -62,10 +62,10 @@ TuplePtr DRoundRobin::pull(int port, b_cbv cb)
   assert(!_pull_cb);
 
   // Fetch the next unblocked input
-  for (int i = 0;
+  for (unsigned i = 0;
        i < ninputs();
        i++) {
-    int currentInput = (_nextInput + i) % ninputs();
+    unsigned currentInput = (_nextInput + i) % ninputs();
 
     // Is this input blocked?
     if (_block_flags[currentInput] || this->input(currentInput) == 0) {
@@ -103,9 +103,9 @@ TuplePtr DRoundRobin::pull(int port, b_cbv cb)
   return TuplePtr();
 }
 
-int DRoundRobin::add_input()
+unsigned DRoundRobin::add_input()
 {
-  int port = addInputPort();	// Just add the port
+  unsigned port = addInputPort();	// Just add the port
   if (port == _block_flags.size()) {
     _block_flags.push_back(false);
   } 
@@ -115,10 +115,9 @@ int DRoundRobin::add_input()
   return port;
 }
 
-int DRoundRobin::remove_input(int port) 
+int DRoundRobin::remove_input(unsigned port) 
 {
-  port = deleteInputPort(port);	// Simply delete the port
-  if (port >= 0) {
+  if (deleteInputPort(port) >= 0) {
     if (_block_flags[port]) {
       // This port was blocked, but now does not exist
       _block_flags[port] = false;
@@ -128,6 +127,7 @@ int DRoundRobin::remove_input(int port)
     if (port + 1 == _block_flags.size()) {
       _block_flags.pop_back();
     }
-  }
+  } 
+  else return -1;
   return port;
 }

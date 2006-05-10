@@ -35,7 +35,7 @@ toDot(std::ostream * ostr,
     // Now figure out how many input ports
     if (element->ninputs() > 0) {
       *ostr << "{<i0> 0";
-      for (int p = 1;
+      for (unsigned p = 1;
            p < element->ninputs();
            p++) {
         *ostr << "| <i" << p << "> " << p << " ";
@@ -51,7 +51,7 @@ toDot(std::ostream * ostr,
     // And figure out the output ports
     if (element->noutputs() > 0) {
       *ostr << "|{<o0> 0";
-      for (int p = 1;
+      for (unsigned p = 1;
            p < element->noutputs();
            p++) {
         *ostr << "| <o" << p << "> " << p << " ";

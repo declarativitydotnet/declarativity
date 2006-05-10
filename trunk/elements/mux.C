@@ -25,7 +25,7 @@ Mux::Mux(string name,
     _timeCallback(NULL),
     _callback(boost::bind(&Mux::callback, this))
 {
-  for (int i = 0;
+  for (unsigned i = 0;
        i < ninputs();
        i++) {
     _pushCallbacks.push_back(0);
@@ -48,7 +48,7 @@ void Mux::catchUp()
   _timeCallback = NULL;
 
   // Go through all pending tuples
-  for (int i = 0; i < ninputs(); i++) {
+  for (unsigned i = 0; i < ninputs(); i++) {
     if (_inputTuples[i] != NULL) {
       // Found one.  Push it out
       assert(_pushCallbacks[i]);
@@ -67,7 +67,7 @@ void Mux::catchUp()
 
   // Wunderbar, we have gotten rid of all of our pending tuples.  Go
   // through and wake up everybody
-  for (int i = 0;
+  for (unsigned i = 0;
        i < ninputs();
        i++) {
     if (_pushCallbacks[i]) {
@@ -84,7 +84,7 @@ void Mux::catchUp()
 
 int Mux::push(int port, TuplePtr p, b_cbv cb)
 {
-  assert((port >= 0) && (port < ninputs()));
+  assert((port >= 0) && (unsigned(port) < ninputs()));
 
   // Is my output blocked?
   if (_blocked) {

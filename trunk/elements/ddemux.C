@@ -31,12 +31,12 @@ DDemux::DDemux(string name, std::vector<ValuePtr> keys,
  * will be raised. 
  * RETURN: port allocated to this key.
  */
-int DDemux::add_output(ValuePtr key) {
+unsigned DDemux::add_output(ValuePtr key) {
   PortMap::iterator miter = _port_map.find(key);
   if (miter != _port_map.end())
-    return -1;	// Port with key already allocated
+    return miter->second;	// Port with key already allocated
 
-  int port = addOutputPort();
+  unsigned port = addOutputPort();
   _port_map.insert(std::make_pair(key, port));
 
   if (port == _block_flags.size()) {
@@ -49,7 +49,7 @@ int DDemux::add_output(ValuePtr key) {
   return port;
 }
 
-int DDemux::remove_output(int port) {
+int DDemux::remove_output(unsigned port) {
   assert(port != 0);	// Never remove the default port
 
   for (PortMap::iterator miter = _port_map.begin();
@@ -74,7 +74,7 @@ int DDemux::remove_output(ValuePtr key) {
   return deleteOutputPort(port);
 }
 
-void DDemux::remove_block_flag(int port) {
+void DDemux::remove_block_flag(unsigned port) {
   if (_block_flags[port]) {
      _block_flags[port] = false;
      _block_flag_count--;
@@ -84,7 +84,7 @@ void DDemux::remove_block_flag(int port) {
   }
 }
 
-void DDemux::unblock(int output)
+void DDemux::unblock(unsigned output)
 {
   assert((output >= 0) &&
          (output <= _block_flags.size()));
