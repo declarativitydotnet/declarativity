@@ -30,7 +30,7 @@ protected:
 
 void export_value()
 {
-  class_<ValueWrap, boost::shared_ptr<ValueWrap>, boost::noncopyable>
+  class_<ValueWrap, boost::shared_ptr<Value>, boost::noncopyable>
         ("Value", no_init)
     .def("size",      &Value::size)
     .def("typeCode",  &Value::typeCode)
