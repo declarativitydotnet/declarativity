@@ -1,0 +1,174 @@
+\documentclass{article}
+\usepackage{color}
+\usepackage{xspace}
+\usepackage{listings}
+
+\title{Getting Started with Overlog and P2}
+\author{Joe Hellerstein}
+
+\begin{document}
+\date{}
+\maketitle
+
+%% Overlog definition adapted from 
+%% Prolog definition (c) 1997 Dominique de Waleffe
+%%
+\lstdefinelanguage{Overlog}%
+  {morekeywords={materialize,periodic,insert,delete},%
+   sensitive=f,%
+   morecomment=[s]{/*}{*/},%
+   morestring=[bd]",%
+   morestring=[bd]'%
+  }[keywords,comments,strings]%
+
+\lstset{language=Overlog,
+        basicstyle=\small\sffamily,
+%        stringstyle=\ttfamily,
+        keywordstyle=\color{blue}\bfseries,
+%        numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=5pt
+}
+
+
+\section{Introduction}
+Overlog is a logic programming language designed for specifying
+distributed protocols and algorithms.  As with other logic languages,
+the most basic concept in Overlog is the {\em relation}, which is like
+a database table: it is a set of (unordered) but similarly-structured
+rows called {\em tuples}.  A relation is described by a list of typed
+fields, and a tuple in the relation is an assignment of values to each
+of the fields.  Data types for the fields are simple scalars like
+integers, floats, and so on. It is not possible to have a fields with
+``structured'' types, like nested tuples or relations.
+
+In Overlog, relations can be either streaming or ``materialized''
+(stored).  Tuples in a streaming relation can be thought of as events
+-- y are handled by Overlog logic as they are generated, but
+are not retained for future use.  Tuples in a materialized relation
+are stored for subsequent use; materialized relations can be
+configured either for long-term storage, or as ``soft state'', with a
+lifetime for each tuple before it expires and is deleted.
+
+Finally, Overlog requires a specification of the network address for
+each tuple in each relation.  This is done by requiring that the first
+field of each relation be of an address type (a string of the form
+``IP:port'' in the current version); each tuple is sent to the address
+specified in the first field of the tuple.  This first field is called
+the {\em location specifier} of the relation.  As a matter of convention,
+Overlog currently also requires that the location specifier be
+appended to the relation name with an '@' sign. 
+
+As an example, an Overlog program might define a network link relation
+named \lstinline$link$ with two string-valued fields for the source
+IP:port, and destination IP:port.  An example tuple from this relation
+would be notated in Overlog as follows:
+\begin{lstlisting}
+link@127.0.0.1:10000('127.0.0.1:10000', '127.0.0.1:10001').
+\end{lstlisting}
+
+\section{Overlog for Ping-Pong}
+Our first Overlog program will be to simply get two machines to
+``ping'' each other periodically at application level, and acknowledge
+the pings with ``pong'' messages.
+
+Overlog programs are constructed from {\em rules}, which specify how
+tuples are generated from each other.  The first rule we'll look at in
+our ping-pong program is one that generates a pong on the arrival of a
+ping.  It looks like this:
+\begin{lstlisting}
+r1 pong@J(J, I) :- ping@I(I, J).
+\end{lstlisting}
+Like all Overlog rules, \lstinline$r1$ has three parts from left to
+right: a name, a {\em head}, and a {\em body}; the head and body are
+separated by the delimiter \lstinline$:-$.  This rule is named
+\lstinline$r1$.  It is most easily read from right to left,
+interpreted as ``body implies head''.  Informally, it says that if a
+\lstinline$ping$ tuple arrives at node \lstinline$I$, then a
+\lstinline$pong$ tuple should be made to arrive at the node
+\lstinline$J$ whose address appeared in the second field of the
+\lstinline$ping$ tuple.  Note how the reuse of the variables
+\lstinline$I$ and \lstinline$J$ tie the two relations in the rule
+together.  The specifics of {\em how} the \lstinline$pong$ tuple is
+made to arrive (transport protocols, etc.)  are not specified
+-- Overlog is a {\em declarative} language in which you specify {\em
+  what} data should get generated, and the system works out {\em how} to make
+that happen.  So while it is a language for specifying networks, it
+has no constructs for explicitly sending messages!  It just provides
+rules for specifying the generation of tuples at addresses.
+
+
+% Statements in Overlog end in periods.  The first two statements of the
+% program declare names and some required parameters for two small
+% stored (``materialized'') tables to be used in the program --
+% \lstinline$env$ and \lstinline$link$.  We will return to the details
+% of the \lstinline$materialize$ statement shortly.
+
+The \lstinline$ping$ and \lstinline$pong$ relations above are
+streaming relations, which we will often use for transient data like
+network messages.  The next step in our example is to specify network
+routing tables, which are materialized (stored) relations.  To do
+this, we specify a materialized table called \lstinline$link$ using a
+special construct in Overlog:
+
+\begin{lstlisting}
+materialize(link, infinity, infinity, keys(1,2)).
+\end{lstlisting}
+This is not a relation, it is an Overlog command specifying that
+\lstinline$link$ is the name of a materialized relation (by default,
+relations are assumed to be streaming).  The second field of the
+\lstinline$materialize$ command defines the maximum number of rows in
+the table, the third field specifies the lifetime of tuples in the
+table before the system should discard them, and the last field
+specifies the {\em primary
+  key} for the table in terms of the positions of fields in the table.
+(If you are not familiar with primary keys from relational databases,
+you can ignore this point for now.)  The \lstinline$materialize$ statement does
+not actually specify the fields of the table.  Instead, Overlog works
+like a scripting language, detecting the number and types of fields
+automatically by the way the table is used in the program.
+
+Given the definition of \lstinline$link$, we are now ready to specify
+the automatic generation of \lstinline$ping$ tuples to begin our
+ping-pong process.  This is done by the following rule:
+\begin{lstlisting}
+r2 ping@J(J, I) :- periodic@I(I,E,1,20), link@I(I,J).
+\end{lstlisting}
+This rule contains two features we have not seen before.  First, it
+uses a special ``built-in'' Overlog relation \lstinline$periodic$,
+which is only allowed in the body of rules, and which has a tuple
+automatically arrive at fixed intervals in time.  Second, it has
+multiple relations in the body.  We will go over each of these
+details.  Intuitively, though, the rule can be read as saying
+``periodically, all nodes at the destination end of a link should
+receive a \lstinline$ping$ tuple containing the address of the source
+end of the link.'' In effect, this causes all nodes to send a ping
+message to their neighbors in the link table.  This in turn causes rule
+\lstinline$r1$ to generate a \lstinline$ping$.
+
+{\em Describe periodic}
+
+{\em Describe how joins work.}
+
+% Overlog rules have the general form 
+% \begin{quote}
+%   [{\it $<$name$>$}] {\it $<$head$>$} :- {\it $<$body$>$}
+% \end{quote}
+
+
+\subsection{Playing Ping-Pong with P2}
+{\em describe how to use runOverlog to test out the ping-pong
+example.}
+
+\section{The Narada Multicast Mesh}
+{\em should exercise insert/delete events, and at a conceptual level
+illustrate timeouts/churn handling.}
+
+\section{Language and System Limitations}
+\begin{itemize}
+\item replication of location specifier as 1st attribute
+\item exactly one event per rule (not 0, not 2).  workaround for 0 is
+      a periodic rule
+\item data import
+\item periodic should be the first term
+\end{itemize}
+\section{Further Reading}
+\end{document}
