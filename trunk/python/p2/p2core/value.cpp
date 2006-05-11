@@ -30,7 +30,7 @@ protected:
 
 void export_value()
 {
-  class_<ValueWrap, ValuePtr, boost::noncopyable>
+  class_<ValueWrap, boost::shared_ptr<ValueWrap>, boost::noncopyable>
         ("Value", no_init)
     .def("size",      &Value::size)
     .def("typeCode",  &Value::typeCode)
@@ -41,6 +41,6 @@ void export_value()
   ; 
 
   class_<std::vector<ValuePtr>, boost::shared_ptr<std::vector<ValuePtr> > >("ValueVec")
-    .def(vector_indexing_suite<std::vector<ValuePtr> >())
+    .def(vector_indexing_suite<std::vector<ValuePtr>, true>())
   ;
 }

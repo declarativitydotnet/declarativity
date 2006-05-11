@@ -75,7 +75,7 @@ public:
   }
 
   void cancel_delay(timeCBHandle* handle) {
-    timeCBRemove(handle);
+    ::timeCBRemove(handle);
   }
 };
 

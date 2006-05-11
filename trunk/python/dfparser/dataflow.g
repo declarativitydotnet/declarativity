@@ -445,8 +445,10 @@ parser P2Dataflow:
                       (',' NUM {{ v.append(int(NUM)) }})*
                      |
                      STR       {{ if not flags["debug"]: v = libp2python.StrVec() }}
-                               {{ v.append(STR) }}           
-                      (',' STR {{ v.append(STR) }})*)
+                               {{ if len(STR) >  0: v.append(STR[0:-1]) }}           
+                               {{ if len(STR) == 0: v.append(STR) }}           
+                      (',' STR {{ if len(STR) >  0: v.append(STR[0:-1]) }}
+                               {{ if len(STR) == 0: v.append(STR) }})*)
                    )
                  "}" {{ return v}}
 

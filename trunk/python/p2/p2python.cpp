@@ -93,7 +93,7 @@ void export_overlogCompiler();
 BOOST_PYTHON_MODULE(libp2python)
 {
   class_<std::vector<std::string>, boost::shared_ptr<std::vector<std::string> > >("StrVec")
-    .def(vector_indexing_suite<std::vector<std::string> >())
+    .def(vector_indexing_suite<std::vector<std::string>, true>())
   ;
   class_<std::vector<unsigned>, boost::shared_ptr<std::vector<unsigned> > >("IntVec")
     .def(vector_indexing_suite<std::vector<unsigned> >())
