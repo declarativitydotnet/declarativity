@@ -31,10 +31,13 @@ ValuePtr Val_Tuple::xdr_unmarshal( XDR *x )
   
 int Val_Tuple::compareTo(ValuePtr other) const
 {
-  if (other->typeCode() != Value::TUPLE) {
-    return false;
-  }
-  return t->compareTo(cast(other));
+   if(Value::TUPLE < other->typeCode()) {
+      return -1;
+   } else if(Value::TUPLE > other->typeCode()) {
+      return 1;
+   } else {
+      return t->compareTo(cast(other));
+   }
 }
 
 
