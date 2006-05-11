@@ -467,8 +467,8 @@ testPel::vtests[] = {
   // < (string less-than)
   TST(INT32, STACK_UNDERFLOW, "",	"<" ),
   TST(INT32, STACK_UNDERFLOW, "",	"1 <" ),
-  TST(INT32, SUCCESS, "1",	"1.0 \"Hello\" <" ),
-  TST(INT32, SUCCESS, "1",	"1 \"Hello\" <" ),
+  TST(INT32, SUCCESS, "0",	"1.0 \"Hello\" <" ),
+  TST(INT32, SUCCESS, "0",	"1 \"Hello\" <" ),
   TST(INT32, SUCCESS, "0",	"\"Hello\" 1.0 <" ),
   TST(INT32, SUCCESS, "0",	"\"Hello\" 1 <" ),
   TST(INT32, SUCCESS, "1",	"\"A\" \"B\" <" ),
@@ -495,8 +495,8 @@ testPel::vtests[] = {
   // <= (string less-than-or-equal)
   TST(INT32, STACK_UNDERFLOW, "",	"<=" ),
   TST(INT32, STACK_UNDERFLOW, "",	"1 <=" ),
-  TST(INT32, SUCCESS, "1",	"1.0 \"Hello\" <=" ),
-  TST(INT32, SUCCESS, "1",	"1 \"Hello\" <=" ),
+  TST(INT32, SUCCESS, "0",	"1.0 \"Hello\" <=" ),
+  TST(INT32, SUCCESS, "0",	"1 \"Hello\" <=" ),
   TST(INT32, SUCCESS, "0",	"\"Hello\" 1.0 <=" ),
   TST(INT32, SUCCESS, "0",	"\"Hello\" 1 <=" ),
   TST(INT32, SUCCESS, "1",	"\"A\" \"B\" <=" ),
@@ -523,8 +523,8 @@ testPel::vtests[] = {
   // > (string greater-than)
   TST(INT32, STACK_UNDERFLOW, "",	">" ),
   TST(INT32, STACK_UNDERFLOW, "",	"1 >" ),
-  TST(INT32, SUCCESS, "0",	"1.0 \"Hello\" >" ),
-  TST(INT32, SUCCESS, "0",	"1 \"Hello\" >" ),
+  TST(INT32, SUCCESS, "1",	"1.0 \"Hello\" >" ),
+  TST(INT32, SUCCESS, "1",	"1 \"Hello\" >" ),
   TST(INT32, SUCCESS, "1",	"\"Hello\" 1.0 >" ),
   TST(INT32, SUCCESS, "1",	"\"Hello\" 1 >" ),
   TST(INT32, SUCCESS, "0",	"\"A\" \"B\" >" ),
@@ -551,8 +551,8 @@ testPel::vtests[] = {
   // >= (string greater-than-or-equal)
   TST(INT32, STACK_UNDERFLOW, "",	">=" ),
   TST(INT32, STACK_UNDERFLOW, "",	"1 >=" ),
-  TST(INT32, SUCCESS, "0",	"1.0 \"Hello\" >=" ),
-  TST(INT32, SUCCESS, "0",	"1 \"Hello\" >=" ),
+  TST(INT32, SUCCESS, "1",	"1.0 \"Hello\" >=" ),
+  TST(INT32, SUCCESS, "1",	"1 \"Hello\" >=" ),
   TST(INT32, SUCCESS, "1",	"\"Hello\" 1.0 >=" ),
   TST(INT32, SUCCESS, "1",	"\"Hello\" 1 >=" ),
   TST(INT32, SUCCESS, "0",	"\"A\" \"B\" >=" ),
@@ -822,7 +822,7 @@ testPel::vtests[] = {
   // > (integer greater-than)
   TST(INT32, STACK_UNDERFLOW, "",	">" ),
   TST(INT32, STACK_UNDERFLOW, "",	"1 >" ),
-  TST(INT32, SUCCESS, "0",	"1 \"Hello\" >" ),
+  TST(INT32, SUCCESS, "1",	"1 \"Hello\" >" ),
   TST(INT32, SUCCESS, "1",	"\"Hello\"  1 >" ),
   TST(INT32, SUCCESS, "0",	"1.0 1 >" ),
   TST(INT32, SUCCESS, "0",	"1 1.0 >" ),
@@ -848,7 +848,7 @@ testPel::vtests[] = {
   // >= (integer greater-than-or-equal)
   TST(INT32, STACK_UNDERFLOW, "",	">=" ),
   TST(INT32, STACK_UNDERFLOW, "",	"1 >=" ),
-  TST(INT32, SUCCESS, "0",	"1 \"Hello\" >=" ),
+  TST(INT32, SUCCESS, "1",	"1 \"Hello\" >=" ),
   TST(INT32, SUCCESS, "1",	"\"Hello\"  1 >=" ),
   TST(INT32, SUCCESS, "1",	"1.0 1 >=" ),
   TST(INT32, SUCCESS, "1",	"1 1.0 >=" ),
@@ -874,7 +874,7 @@ testPel::vtests[] = {
   // < (integer less-than)
   TST(INT32, STACK_UNDERFLOW, "",	"<" ),
   TST(INT32, STACK_UNDERFLOW, "",	"1 <" ),
-  TST(INT32, SUCCESS, "1",	"1 \"Hello\" <" ),
+  TST(INT32, SUCCESS, "0",	"1 \"Hello\" <" ),
   TST(INT32, SUCCESS, "0",	"\"Hello\"  1 <" ),
   TST(INT32, SUCCESS, "0",	"1.0 1 <" ),
   TST(INT32, SUCCESS, "0",	"1 1.0 <" ),
@@ -900,7 +900,7 @@ testPel::vtests[] = {
   // <= (integer less-than-or-equal)
   TST(INT32, STACK_UNDERFLOW, "",	"<=" ),
   TST(INT32, STACK_UNDERFLOW, "",	"1 <=" ),
-  TST(INT32, SUCCESS, "1",	"1 \"Hello\" <=" ),
+  TST(INT32, SUCCESS, "0",	"1 \"Hello\" <=" ),
   TST(INT32, SUCCESS, "0",	"\"Hello\"  1 <=" ),
   TST(INT32, SUCCESS, "1",	"1.0 1 <=" ),
   TST(INT32, SUCCESS, "1",	"1 1.0 <=" ),
@@ -1080,7 +1080,7 @@ testPel::vtests[] = {
   TST(INT32, SUCCESS, "0",	"1.0 2.0 ==" ),
   TST(INT32, SUCCESS, "1",	"1.0 1.0 ==" ),
   // > (polymorphic greater-than)
-  TST(INT32, SUCCESS, "0",	"1.0 \"Hello\" >" ),
+  TST(INT32, SUCCESS, "1",	"1.0 \"Hello\" >" ),
   TST(INT32, SUCCESS, "1",	"\"Hello\"  1.0 >" ),
   TST(INT32, SUCCESS, "0",	"1.0 1 >" ),
   TST(INT32, SUCCESS, "0",	"1 1.0 >" ),
@@ -1090,7 +1090,7 @@ testPel::vtests[] = {
   TST(INT32, SUCCESS, "1",	"-1.34 -2.45 >" ),
   TST(INT32, SUCCESS, "0",	"-2.78 -1.003  >" ),
   // >= (floating-point greater-than-or-equal)
-  TST(INT32, SUCCESS, "0",	"1.0 \"Hello\" >=" ),
+  TST(INT32, SUCCESS, "1",	"1.0 \"Hello\" >=" ),
   TST(INT32, SUCCESS, "1",	"\"Hello\"  1.0 >=" ),
   TST(INT32, SUCCESS, "1",	"1.0 1 >=" ),
   TST(INT32, SUCCESS, "1",	"1 1.0 >=" ),
@@ -1100,7 +1100,7 @@ testPel::vtests[] = {
   TST(INT32, SUCCESS, "1",	"-1.34 -2.45 >=" ),
   TST(INT32, SUCCESS, "0",	"-2.78 -1.003  >=" ),
   // < (floating-point less-than)
-  TST(INT32, SUCCESS, "1",	"1.0 \"Hello\" <" ),
+  TST(INT32, SUCCESS, "0",	"1.0 \"Hello\" <" ),
   TST(INT32, SUCCESS, "0",	"\"Hello\"  1.0 <" ),
   TST(INT32, SUCCESS, "0",	"1.0 1 <" ),
   TST(INT32, SUCCESS, "0",	"1 1.0 <" ),
@@ -1110,7 +1110,7 @@ testPel::vtests[] = {
   TST(INT32, SUCCESS, "0",	"-1.34 -2.45 <" ),
   TST(INT32, SUCCESS, "1",	"-2.78 -1.003  <" ),
   // <= (floating-point less-than-or-equal)
-  TST(INT32, SUCCESS, "1",	"1.0 \"Hello\" <=" ),
+  TST(INT32, SUCCESS, "0",	"1.0 \"Hello\" <=" ),
   TST(INT32, SUCCESS, "0",	"\"Hello\"  1.0 <=" ),
   TST(INT32, SUCCESS, "1",	"1.0 1 <=" ),
   TST(INT32, SUCCESS, "1",	"1 1.0 <=" ),
