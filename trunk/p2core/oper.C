@@ -180,29 +180,29 @@ namespace opr {
     // argument casts
     return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_plus(v1, v2);
   };
-  struct timespec operator+(const struct timespec& v1, const struct timespec& v2) { 
-    struct timespec ts = v1;
-    ts.tv_sec  += v2.tv_sec; 
-    ts.tv_nsec += v2.tv_nsec; 
-    return ts;
-  };
+//   struct timespec operator+(const struct timespec& v1, const struct timespec& v2) { 
+//     struct timespec ts = v1;
+//     ts.tv_sec  += v2.tv_sec; 
+//     ts.tv_nsec += v2.tv_nsec; 
+//     return ts;
+//   };
   ValuePtr operator-(const ValuePtr& v1, const ValuePtr& v2) { 
     // Changed to have the first argument determine how the second
     // argument casts
     return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_minus(v1, v2);
   };
-  struct timespec operator-(const struct timespec& v1, const struct timespec& v2) { 
-    struct timespec ts = {0};
-    if (v1 < v2) return ts;
-    ts = v1;
-    while (v1.tv_nsec < v2.tv_nsec) {
-      ts.tv_nsec += 1000000000; 
-      ts.tv_sec--;
-    }
-    ts.tv_sec  -= v2.tv_sec;
-    ts.tv_nsec -= v2.tv_nsec;
-    return ts;
-  };
+//   struct timespec operator-(const struct timespec& v1, const struct timespec& v2) { 
+//     struct timespec ts = {0};
+//     if (v1 < v2) return ts;
+//     ts = v1;
+//     while (v1.tv_nsec < v2.tv_nsec) {
+//       ts.tv_nsec += 1000000000; 
+//       ts.tv_sec--;
+//     }
+//     ts.tv_sec  -= v2.tv_sec;
+//     ts.tv_nsec -= v2.tv_nsec;
+//     return ts;
+//   };
   ValuePtr operator--(const ValuePtr& v1) { 
     return (*Oper::oper_table_[v1->typeCode()][v1->typeCode()])->_dec(v1);
   };
@@ -254,26 +254,26 @@ namespace opr {
     return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_gte(v1, v2);
   };
 
-  bool operator==(const struct timespec& v1, const struct timespec& v2) { 
-    return (v1.tv_sec == v2.tv_sec && v1.tv_nsec == v2.tv_nsec);
-  };
-  bool operator!=(const struct timespec& v1, const struct timespec& v2) { 
-    return (v1.tv_sec != v2.tv_sec || v1.tv_nsec != v2.tv_nsec);
-  };
-  bool operator< (const struct timespec& v1, const struct timespec& v2) { 
-    return ((v1.tv_sec < v2.tv_sec) || 
-            (v1.tv_sec == v2.tv_sec && v1.tv_nsec < v2.tv_nsec));
-  };
-  bool operator<=(const struct timespec& v1, const struct timespec& v2) { 
-    return v1 < v2 || v1 == v2;
-  };
-  bool operator> (const struct timespec& v1, const struct timespec& v2) { 
-    return ((v1.tv_sec > v2.tv_sec) || 
-            (v1.tv_sec == v2.tv_sec && v1.tv_nsec > v2.tv_nsec));
-  };
-  bool operator>=(const struct timespec& v1, const struct timespec& v2) { 
-    return v1 > v2 || v1 == v2;
-  };
+//   bool operator==(const struct timespec& v1, const struct timespec& v2) { 
+//     return (v1.tv_sec == v2.tv_sec && v1.tv_nsec == v2.tv_nsec);
+//   };
+//   bool operator!=(const struct timespec& v1, const struct timespec& v2) { 
+//     return (v1.tv_sec != v2.tv_sec || v1.tv_nsec != v2.tv_nsec);
+//   };
+//   bool operator< (const struct timespec& v1, const struct timespec& v2) { 
+//     return ((v1.tv_sec < v2.tv_sec) || 
+//             (v1.tv_sec == v2.tv_sec && v1.tv_nsec < v2.tv_nsec));
+//   };
+//   bool operator<=(const struct timespec& v1, const struct timespec& v2) { 
+//     return v1 < v2 || v1 == v2;
+//   };
+//   bool operator> (const struct timespec& v1, const struct timespec& v2) { 
+//     return ((v1.tv_sec > v2.tv_sec) || 
+//             (v1.tv_sec == v2.tv_sec && v1.tv_nsec > v2.tv_nsec));
+//   };
+//   bool operator>=(const struct timespec& v1, const struct timespec& v2) { 
+//     return v1 > v2 || v1 == v2;
+//   };
   
   bool inOO(const ValuePtr& v1, const ValuePtr& v2, const ValuePtr& v3) {
     return (*Oper::oper_table_[v2->typeCode()][v3->typeCode()])->_inOO(v1, v2, v3);
