@@ -54,7 +54,7 @@ private:
   /** The callback for my input */
   b_cbv	_push_cb;
 
-  typedef std::map<ValuePtr, unsigned> PortMap;
+  typedef std::map<ValuePtr, unsigned, Value::Less> PortMap;
   PortMap _port_map;
 
   /** My block flags, one per output port */

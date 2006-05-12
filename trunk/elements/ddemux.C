@@ -19,10 +19,10 @@ DDemux::DDemux(string name, std::vector<ValuePtr> keys,
     _block_flag_count(0),
     _inputFieldNo(inputFieldNo)
 {
+  _block_flags.push_back(false);	// The default port block flag
   for (std::vector<ValuePtr>::iterator i = keys.begin(); 
        i != keys.end(); i++) 
     assert(add_output(*i) > 0);
-  _block_flags.resize(noutputs());
 }
 
 /**
