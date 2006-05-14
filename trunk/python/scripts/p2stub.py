@@ -33,8 +33,8 @@ def get_stub(name, address, port):
       Defrag("defragment", 1)                   -> 
       TimedPullPush("demux_in_pullPush", 0)     -> 
       PelTransform("unPackage", "$2 unboxPop")  ->
-      Print("transport_in") ->
       wrapAroundMux ->
+      PrintWatch("PrintWatchReceiveBeforeDemux", {"lookup", "lookupResults"}) ->
       DDemux("dDemux", {value}, 0) -> 
       Queue("install_result_queue") ->
       DRoundRobin("dRoundRobin", 1) ->  

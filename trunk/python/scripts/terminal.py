@@ -12,7 +12,7 @@ class Terminal(Element):
       self.mode      = "terminal"
       self.myaddress = myaddress
       self.address   = None 
-      self.program   = ""
+      self.program   = None
   def class_name(self): return "Terminal"
   def processing(self): return "h/h"
   def flow_code(self):  return "-/-"
@@ -42,9 +42,19 @@ class Terminal(Element):
       print "       entered in the address mode." 
       print "exit:  Exit the terminal"
   def initialize(self): 
-      self.print_usage()
-      self.set_delay(0, self.delay_callback) 
+      if not self.program:
+          self.program = ""
+          self.print_usage()
+          self.set_delay(0, self.delay_callback) 
+      else:
+          self.set_delay(0, self.push_program) 
       return 0
+  def push_program(self):
+      for i in range(self.nodes):
+          print "\tprogram push to node %s:%d" % (self.address, self.port+i)
+          if self.send(self.myaddress, self.address+":"+str(self.port+i), 
+                       "overlog", self.program) == 0:
+              return
   def callback(self):
       self.set_delay(0, self.delay_callback) 
   def delay_callback(self):
@@ -59,20 +69,11 @@ class Terminal(Element):
               print "ERROR: no address entered!!!"
               self.print_usage()
           else:
-              overlog = Tuple.mk()
-              payload = Tuple.mk()
-              overlog.append(Val_Str.mk(self.address))
               if line[0] == "o":
-                payload.append(Val_Str.mk("overlog"))
+                  v = self.send(self.myaddress, self.address, "overlog", self.program)
               else: 
-                payload.append(Val_Str.mk("script"))
-              payload.append(Val_Str.mk(self.address))
-              payload.append(Val_Str.mk(self.myaddress))
-              payload.append(Val_Str.mk(self.program))
-              payload.freeze()
-              overlog.append(Val_Tuple.mk(payload))
-              overlog.freeze()
-              if self.py_push(0, overlog, self.callback) > 0:
+                  v = self.send(self.myaddress, self.address, "script", self.program)
+              if v > 0:
                   self.set_delay(1, self.delay_callback) 
               return
       elif line[0:4] == "exit":
@@ -112,19 +113,35 @@ class Terminal(Element):
       else: print "Overlog installation failure!"
       print mesg
       return 1
+  def send(self, src, dest, type, program):
+      tuple = Tuple.mk()
+      payload = Tuple.mk()
+      tuple.append(Val_Str.mk(dest))
+      payload.append(Val_Str.mk(type))
+      payload.append(Val_Str.mk(dest))
+      payload.append(Val_Str.mk(src))
+      payload.append(Val_Str.mk(program))
+      payload.freeze()
+      tuple.append(Val_Tuple.mk(payload))
+      tuple.freeze()
+      return self.py_push(0, tuple, self.callback)
   
 
 def print_usage():
     print
-    print "Usage: terminal.py [-d] <terminal_ip_address> <terminal_port>\n"
+    print "Usage: terminal.py [-d] [-f <input_file> -n <nodes> -a <ip_address> -p <start_port>] <terminal_ip_address> <terminal_port>\n"
     print
 
 def parse_cmdline(argv):
-    shortopts = "d"
-    flags = {"debug" : False}
+    shortopts = "df:n:a:p:"
+    flags = {"debug" : False, "input" : None, "nodes" : 0, "ip" : None, "port" : 0}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
-        if   o == "-d": flags["debug"]      = True
+        if   o == "-d": flags["debug"] = True
+        elif o == "-f": flags["input"] = v
+        elif o == "-n": flags["nodes"] = int(v)
+        elif o == "-a": flags["ip"]    = v
+        elif o == "-p": flags["port"]  = int(v)
         else:
             print_usage()
             exit(3)
@@ -188,20 +205,31 @@ if __name__ == "__main__":
   
     plumber = Plumber()
     stub    = gen_stub(plumber, port)
-  
+
     if plumber.install(stub) != 0:
-      print "** Stub Failed to initialize correct spec\n"
-  
+        print "** Stub Failed to initialize correct spec\n"
+
     edit   = plumber.new_dataflow_edit(DATAFLOW_NAME);
     input  = edit.find("input");
     output = edit.find("output");
-  
+
     term = edit.addElement(Terminal(DATAFLOW_NAME, address+":"+str(port)))
     edit.hookUp(input, 0, term, 0)
     edit.hookUp(term, 0, output, 0)
-  
+
+    if flags["input"] and flags["nodes"] and flags["ip"] and flags["port"]:
+        try:
+            file = open(flags["input"], 'r') 
+            term.element().program = file.read()
+            print "File %s text added to overlog program." % flags["input"]
+        except:
+            print "ERROR: open file error on file", flags["input"]
+        term.element().nodes   = flags["nodes"]
+        term.element().address = flags["ip"]
+        term.element().port    = flags["port"]
+
     if plumber.install(edit) != 0:
-      print "Edit Correctly initialized.\n"
+        print "Edit Correctly initialized.\n"
 
     # plumber.toDot("terminal.dot")
     # os.system("dot -Tps terminal.dot -o terminal.ps")
