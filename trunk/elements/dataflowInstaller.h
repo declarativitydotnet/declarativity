@@ -23,7 +23,8 @@ class DataflowInstaller : public Element {
 public:
   
   DataflowInstaller(string, PlumberPtr, 
-                    boost::python::api::object=boost::python::api::object());
+                    boost::python::api::object=boost::python::api::object(),
+                    string local="-", string landmark="-");
 
   const char *class_name() const		{ return "DataflowInstaller";}
   const char *processing() const		{ return "h/h"; }
@@ -35,9 +36,12 @@ public:
 private:
   int install(string, ostringstream&);
   string readScript( string fileName );
+  void initializeChordBaseTables(Plumber::DataflowPtr d);
 
   PlumberPtr                 plumber_;
   boost::python::api::object parser_;
+  string                     localAddress_;
+  string                     landmarkAddress_;
 };
 
 

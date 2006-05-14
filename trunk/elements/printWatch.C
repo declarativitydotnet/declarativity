@@ -44,9 +44,19 @@ PrintWatch::~PrintWatch()
 
 TuplePtr PrintWatch::simple_action(TuplePtr p)
 {
+/*
+  std::cerr << "WATCH TABLES: ";
+  for (std::set<string>::iterator iter = _tableNames.begin();
+       iter != _tableNames.end(); iter++) 
+    std::cerr << *iter << " ";
+  std::cerr << std::endl;
+*/
+
   if (_tableNames.find((*p)[0]->toString()) == _tableNames.end()) {
+    // std::cerr << "DID NOT FIND TABLE: " << (*p)[0]->toString() << std::endl;
     return p; // we don't care about print this
   }
+  // std::cerr << "FOUND WATCH TABLE: " << (*p)[0]->toString() << std::endl;
 
   double bytes = 0;
   for (unsigned int i = 0; i < p->size(); i++) {

@@ -3,7 +3,7 @@
 
 using namespace boost::python;
 
-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(table_overload, table, 2, 3)
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(table_overload, table, 1, 4)
 
 void export_plumber()
 {

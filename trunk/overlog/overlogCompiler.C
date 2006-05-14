@@ -18,25 +18,25 @@
 #include "plmb_confgen.h"
 #include "val_str.h"
 
-OverlogCompiler::OverlogCompiler(string n, PlumberPtr p, string id) 
-  : Element(n, 1, 1), _plumber(p), _id(id)
+OverlogCompiler::OverlogCompiler(string n, PlumberPtr p, string id, string d) 
+  : Element(n, 1, 1), _plumber(p), _id(id), _dataflow(d)
 {
 }
 
 int OverlogCompiler::push(int port, TuplePtr tp, b_cbv cb)
 {
   if (tp->size() > 2 && (*tp)[1]->typeCode() == Value::STR &&
-      Val_Str::cast((*tp)[1]) == "overlog") {
+      Val_Str::cast((*tp)[0]) == "overlog") {
     std::ostringstream script;
+    ValuePtr dest    = (*tp)[1];
     ValuePtr source  = (*tp)[2];
-    string   name    = Val_Str::cast((*tp)[3]);
-    string   overlog = Val_Str::cast((*tp)[4]);
+    string   overlog = Val_Str::cast((*tp)[3]);
 
-    compile(name, overlog, script);
+    compile(overlog, script);
 
     TuplePtr script_tuple = Tuple::mk();
-    script_tuple->append((*tp)[0]);
     script_tuple->append(Val_Str::mk("script"));
+    script_tuple->append(dest);
     script_tuple->append(source);
     script_tuple->append(Val_Str::mk(script.str())); 
     script_tuple->freeze();
@@ -45,12 +45,12 @@ int OverlogCompiler::push(int port, TuplePtr tp, b_cbv cb)
   return output(0)->push(tp, cb);
 }
 
-void OverlogCompiler::compile(string name, string overlog, std::ostringstream& script) {
+void OverlogCompiler::compile(string overlog, std::ostringstream& script) {
   std::istringstream overlog_iss(overlog, std::istringstream::in);
   boost::shared_ptr< OL_Context > ctxt(new OL_Context());
   ctxt->parse_stream(&overlog_iss);
 
-  Plumber::DataflowEditPtr conf = _plumber->new_dataflow_edit(name);
+  Plumber::DataflowEditPtr conf = _plumber->new_dataflow_edit(_dataflow);
   Plmb_ConfGen *gen = new Plmb_ConfGen(ctxt.get(), conf, false, false, false, 
                                        string("overlogCompiler"), script, true);
   gen->createTables(_id);

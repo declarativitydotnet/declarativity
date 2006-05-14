@@ -14,13 +14,21 @@
 #include <iostream>
 #include <fstream>
 #include "val_str.h"
+#include "val_tuple.h"
+#include "val_uint32.h"
 #include "val_int32.h"
+#include "ID.h"
+#include "val_id.h"
+
+#define HACK
 
 using namespace boost::python;
 using namespace boost::python::api;
 
-DataflowInstaller::DataflowInstaller(string n, PlumberPtr p, object o) 
-  : Element(n, 1, 1), plumber_(p), parser_(o)
+DataflowInstaller::DataflowInstaller(string n, PlumberPtr p, 
+                                     object o, string local, string landmark) 
+  : Element(n, 1, 1), plumber_(p), parser_(o), 
+    localAddress_(local), landmarkAddress_(landmark)
 {
   // Start python and instantiate dfparser object I'm not given one
   if (o.ptr() == object().ptr()) {
@@ -36,22 +44,26 @@ DataflowInstaller::DataflowInstaller(string n, PlumberPtr p, object o)
 int DataflowInstaller::push(int port, TuplePtr tp, b_cbv cb)
 {
   if (tp->size() > 2 && (*tp)[1]->typeCode() == Value::STR &&
-      Val_Str::cast((*tp)[1]) == "script") {
+      Val_Str::cast((*tp)[0]) == "script") {
     ostringstream mesg;
-    ValuePtr my_addr    = (*tp)[0];
+    ValuePtr my_addr    = (*tp)[1];
     ValuePtr other_addr = (*tp)[2];
     string   script = Val_Str::cast((*tp)[3]);
     int      result = install(script, mesg);
 
     std::cerr << mesg.str() << std::endl;
 
-    TuplePtr status = Tuple::mk();
-    status->append(other_addr);
+    TuplePtr packaged = Tuple::mk();
+    TuplePtr status   = Tuple::mk();
+    packaged->append(other_addr);
+    status->append(Val_Str::mk("status"));
     status->append(my_addr);
     status->append(Val_Int32::mk(result));
     status->append(Val_Str::mk(mesg.str())); 
     status->freeze();
-    return output(0)->push(status, cb);
+    packaged->append(Val_Tuple::mk(status));
+    packaged->freeze();
+    return output(0)->push(packaged, cb);
   }
   return output(0)->push(tp, cb);
 }
@@ -85,6 +97,10 @@ int DataflowInstaller::install(string script, ostringstream& status) {
   for (int i = 0; i < nedits; i++) {
     edits[i].attr("eval_dataflow")();
     Plumber::DataflowEditPtr e = extract<Plumber::DataflowEditPtr>(edits[i].attr("conf"));
+#ifdef HACK
+    initializeChordBaseTables(e);
+#endif
+ 
     if (plumber_->install(e) < 0) {
       status << "EDIT INSTALLATION FAILURE FOR " << e->name() << std::endl;
       return -1;
@@ -129,5 +145,59 @@ string DataflowInstaller::readScript( string fileName )
     pythonFile.close();
 
     return script;
+  }
+}
+
+void DataflowInstaller::initializeChordBaseTables(Plumber::DataflowPtr d) {
+  // create information on the node itself  
+  if (d->table("node", false) != 0 && d->table("node", false)->size() == 0) {
+    uint32_t random[ID::WORDS];
+    for (uint32_t i = 0; i < ID::WORDS; i++) {
+      random[i] = rand();
+    }
+  
+    IDPtr myKey = ID::mk(random);
+    TablePtr nodeTable = d->table("node");
+    TuplePtr tuple = Tuple::mk();
+    tuple->append(Val_Str::mk("node"));
+    tuple->append(Val_Str::mk(localAddress_));
+    tuple->append(Val_ID::mk(myKey));
+    tuple->freeze();
+    nodeTable->insert(tuple);
+    warn << "Node: " << tuple->toString() << "\n";
+  }
+
+  if (d->table("pred", false) != 0 && d->table("pred", false)->size() == 0) {
+    TablePtr predecessorTable = d->table("pred");
+    TuplePtr predecessorTuple = Tuple::mk();
+    predecessorTuple->append(Val_Str::mk("pred"));
+    predecessorTuple->append(Val_Str::mk(localAddress_));
+    predecessorTuple->append(Val_ID::mk(ID::mk()));
+    predecessorTuple->append(Val_Str::mk(string("-"))); 
+    predecessorTuple->freeze();
+    predecessorTable->insert(predecessorTuple);
+    warn << "Initial predecessor " << predecessorTuple->toString() << "\n";
+  }
+
+  if (d->table("nextFingerFix", false) != 0 && d->table("nextFingerFix", false)->size() == 0) {
+    TablePtr nextFingerFixTable = d->table("nextFingerFix");
+    TuplePtr nextFingerFixTuple = Tuple::mk();
+    nextFingerFixTuple->append(Val_Str::mk("nextFingerFix"));
+    nextFingerFixTuple->append(Val_Str::mk(localAddress_));
+    nextFingerFixTuple->append(Val_UInt32::mk(0));
+    nextFingerFixTuple->freeze();
+    nextFingerFixTable->insert(nextFingerFixTuple);
+    warn << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";
+  }
+
+  if (d->table("landmark", false) != 0 && d->table("landmark", false)->size() == 0) {
+    TablePtr landmarkNodeTable = d->table("landmark");  
+    TuplePtr landmark = Tuple::mk();
+    landmark->append(Val_Str::mk("landmark"));
+    landmark->append(Val_Str::mk(localAddress_));
+    landmark->append(Val_Str::mk(landmarkAddress_));
+    landmark->freeze();
+    warn << "Insert landmark node " << landmark->toString() << "\n";
+    landmarkNodeTable->insert(landmark);
   }
 }

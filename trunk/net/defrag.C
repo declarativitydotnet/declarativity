@@ -87,7 +87,6 @@ void Defrag::defragment(TuplePtr t)
 
   if (fragments_.count(seq_num) == chunks) {  
     // Put fragments back together
-    std::cerr << "OK PUT THE FRAGMENTS BACK TOGETHER" << std::endl;
     FdbufPtr fb(new Fdbuf());
     for (unsigned i = 0; i < chunks; i++) {
       TuplePtr p;
@@ -100,13 +99,11 @@ void Defrag::defragment(TuplePtr t)
         }
       }
       assert(p);
-      std::cerr << "\tSTICHING PAYLOAD: " << p->toString() << std::endl;
       FdbufPtr payload = Val_Opaque::cast((*p)[seq_field_+3]);
       fb->push_bytes(payload->cstr(), payload->length());
     }
 
     // Unmarhsal and expand the packaged tuple
-    std::cerr << "Unmarhsal and expand the packaged tuple" << std::endl;
     XDR xd;
     xdrfdbuf_create(&xd, fb.get(), false, XDR_DECODE);
     TuplePtr unmarshal = Tuple::xdr_unmarshal(&xd);
@@ -125,7 +122,6 @@ void Defrag::defragment(TuplePtr t)
         defraged->append((*t)[i++]);
       }
     }
-    std::cerr << "FINISHED WITH DEFRAG: " << defraged->toString() << std::endl;
     tuples_.push_back(defraged); 
   }
 }

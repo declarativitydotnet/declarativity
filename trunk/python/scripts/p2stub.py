@@ -6,15 +6,16 @@ import getopt;
 
 def print_usage():
     print
-    print "Usage: p2stub.py -d <address> <port>\n"
+    print "Usage: p2stub.py [-d] [-n <nodes>=1]  <address> <port> [landmark_address]\n"
     print
 
 def parse_cmdline(argv):
-    shortopts = "d"
-    flags = {"debug" : False}
+    shortopts = "n:d"
+    flags = {"debug" : False, "nodes" : 1}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if   o == "-d": flags["debug"]      = True
+        elif o == "-n": flags["nodes"]      = int(v)
         else:
             print_usage()
             exit(3)
@@ -24,7 +25,7 @@ def get_stub(name, address, port):
   stub = """ 
     dataflow %s {
       let udp = Udp2("udp", %s);
-      let wrapAroundDemux = Demux("wrapAroundSendDemux", {Val_Str("%s")}, 0);
+      let wrapAroundDemux = Demux("wrapAroundSendDemux", {Val_Str("%s:%s")}, 0);
       let wrapAroundMux = Mux("wrapAroundSendMux", 2);
 
       udp-> UnmarshalField("unmarshal", 1)      -> 
@@ -32,18 +33,18 @@ def get_stub(name, address, port):
       Defrag("defragment", 1)                   -> 
       TimedPullPush("demux_in_pullPush", 0)     -> 
       PelTransform("unPackage", "$2 unboxPop")  ->
+      Print("transport_in") ->
       wrapAroundMux ->
-      DDemux("dDemux", {value}, 1) -> 
+      DDemux("dDemux", {value}, 0) -> 
       Queue("install_result_queue") ->
       DRoundRobin("dRoundRobin", 1) ->  
       TimedPullPush("rr_out_pullPush", 0) -> 
       wrapAroundDemux -> 
-      # UnboxField("unboxWrapAround", 1) -> 
-      Print("wrap_around_print") -> [1]wrapAroundMux;
+      UnboxField("unboxWrapAround", 1) -> 
+      [1]wrapAroundMux;
 
       wrapAroundDemux[1] -> 
       Print("transport_out") ->
-      PelTransform("package_payload", "$0 pop swallow pop") ->
       Sequence("terminal_sequence", 1, 1)          ->
       Frag("fragment", 1)                          ->
       PelTransform("package", "$0 pop swallow pop") ->
@@ -53,7 +54,7 @@ def get_stub(name, address, port):
 
     }
     .	# END OF DATAFLOW DEFINITION
-  """ % (name, port, address)
+  """ % (name, port, address, port)
   return stub
 
 def gen_stub(plumber, name, address, port):
@@ -72,44 +73,53 @@ if __name__ == "__main__":
   except:
     print "EXCEPTION"
     print_usage()
-    sys.exit(3)
+    sys.exit(1)
   if len(args) < 2:
     print_usage()
-    sys.exit(3)
+    sys.exit(1)
 
   libp2python.eventLoopInitialize()
 
-  address = args[0]
-  port    = int(args[1])
+  address  = args[0]
+  port     = int(args[1])
+  landmark = "-"
+  if len(args) >= 3: landmark = args[2]
 
   plumber = libp2python.Plumber()
-  stub    = gen_stub(plumber, "Main", address, port)
 
-  print "INSTALL THE DATAFLOW"
-  if plumber.install(stub) == 0:
-    print "Stub Correctly initialized.\n"
-  else:
-    print "** Stub Failed to initialize correct spec\n"
+  for i in range(flags["nodes"]):
+      name = "Dataflow_" + str(i)
+      stub = gen_stub(plumber, name, address, port+i)
 
-  edit    = plumber.new_dataflow_edit("Main")
-  # ddemux  = edit.find("dDemux")
-  ddemux = edit.find("dDemux")
-  rqueue = edit.find("install_result_queue")
+      print "INSTALL DATAFLOW: ", name
+      if plumber.install(stub) == 0:
+          print "Stub Correctly initialized.\n"
+      else:
+          print "** Stub Failed to initialize correct spec\n"
+          sys.exit(1)
 
-  oc = edit.addElement(libp2python.OverlogCompiler("ocompiler", plumber, address+":"+str(port))) 
-  di = edit.addElement(libp2python.DataflowInstaller("dinstaller", plumber, dfparser))
-  edit.hookUp(ddemux, 0, oc, 0)
-  edit.hookUp(oc, 0, di, 0)
-  edit.hookUp(di, 0, rqueue, 0)
+      edit   = plumber.new_dataflow_edit(name)
+      ddemux = edit.find("dDemux")
+      rqueue = edit.find("install_result_queue")
 
-  print "INSTALL THE EDIT"
-  if plumber.install(edit) == 0:
-    print "Edit Correctly initialized.\n"
-  else:
-    print "** Edit Failed to initialize correct spec\n"
+      oc = edit.addElement(libp2python.OverlogCompiler("ocompiler", plumber, 
+                                                       address+":"+str(port+i), name)) 
+      di = edit.addElement(libp2python.DataflowInstaller("dinstaller", plumber, dfparser, 
+                                                         address+":"+str(port+i), landmark))
+      # printer = edit.addElement(libp2python.Print("dataflow_printer"));
+      edit.hookUp(ddemux, 0, oc, 0)
+      edit.hookUp(oc, 0, di, 0)
+      edit.hookUp(di, 0, rqueue, 0)
 
-  plumber.toDot("p2stub.dot")
-  os.system("dot -Tps p2stub.dot -o p2stub.ps")
-  os.remove("p2stub.dot")
+      print "INSTALL THE EDIT"
+      if plumber.install(edit) == 0:
+          print "Edit Correctly initialized.\n"
+      else:
+          print "** Edit Failed to initialize correct spec\n"
+
+      plumber.toDot("p2stub_%s.dot" % name)
+      os.system("dot -Tps p2stub_%s.dot -o p2stub_%s.ps" % (name, name))
+      os.remove("p2stub_%s.dot" % name)
+
   # Run the plumber
   libp2python.eventLoop()

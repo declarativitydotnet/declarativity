@@ -47,12 +47,17 @@ void Plumber::Dataflow::hookUp(ElementSpecPtr src, int src_port,
   hookups_.push_back(p);
 }
 
-TablePtr Plumber::Dataflow::table(string name, size_t max_size, string lifetime)
+TablePtr Plumber::Dataflow::table(string name, bool create, 
+                                  size_t max_size, string lifetime)
 {
   std::map<string, TablePtr>::iterator iter = tables_.find(name);
   if (iter != tables_.end()) {
     return iter->second;
   }
+  else if (!create) {
+    return TablePtr();
+  }
+
   TablePtr tp;
   if (lifetime != "0") {
     tp.reset(new Table(name, max_size, lifetime));

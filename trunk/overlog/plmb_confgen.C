@@ -508,8 +508,30 @@ Plmb_ConfGen::genEditFinalize(string nodeID)
   _p2dl << conf_comment("");
   for (unsigned int k = 0; k < _udpSenders.size(); k++) {
     ElementSpecPtr nextElementSpec = _udpSenders.at(k);
-    nextElementSpec->output(0)->check(false);
-    _p2dl << conf_hookup(conf_var(nextElementSpec.get()), 0, string(".dRoundRobin"), string("+"));
+
+    ostringstream oss;
+    ostringstream oss_name;
+    oss_name << "encapSend_" << k;
+    oss << "$"<< _udpSendersPos.at(k) << " pop swallow pop";
+    ElementSpecPtr encapSend =
+      _conf->addElement(ElementPtr(new PelTransform(oss_name.str(), oss.str())));
+    _p2dl << conf_assign(encapSend.get(), 
+                         conf_function("PelTransform", oss_name.str(), oss.str()));
+    
+/*
+    ElementSpecPtr print = 
+      _conf->addElement(ElementPtr(new Print("print_confgen")));
+    _p2dl << conf_assign(print.get(), conf_function("Print", "print_confgen"));
+    hookUp(encapSend, 0, print, 0);
+*/
+
+    // Turn off the port checks for the port to the round robin
+    // encapSend->output(0)->check(false);	
+
+    // Hookup next element to encapsulator and the encapsulator to the dynamic round robin
+    hookUp(nextElementSpec, 0, encapSend, 0);
+    _p2dl << conf_hookup(conf_var(encapSend.get()), 0, string(".dRoundRobin"), string("+"));
+    // _p2dl << conf_hookup(conf_var(print.get()), 0, string(".dRoundRobin"), string("+"));
   }
   _p2dl << conf_comment("=================================================");
 
@@ -2109,13 +2131,13 @@ void Plmb_ConfGen::createTables(string nodeID)
 	boost::posix_time::time_duration expiration(0,0,tableInfo->timeout, 0);
 	newTable.reset(new Table(tableInfo->tableName, tableInfo->size, expiration));
         _p2dl << conf_assign(newTable.get(), 
-                    conf_function("Table", tableInfo->tableName, 
+                    conf_function("Table", tableInfo->tableName, 1, 
                                   tableInfo->size, 
                                   boost::posix_time::to_simple_string(expiration)));
       }
       else {
         _p2dl << conf_assign(newTable.get(), 
-                    conf_function("Table", tableInfo->tableName, tableInfo->size)); 
+                    conf_function("Table", tableInfo->tableName, 1, tableInfo->size)); 
       }
 
       // first create unique indexes

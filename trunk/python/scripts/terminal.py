@@ -12,25 +12,22 @@ class Terminal(Element):
       self.mode      = "terminal"
       self.myaddress = myaddress
       self.address   = None 
-      self.program_header = r"""
-/** DESCRIPTION: P2 Overlog Program to edit Dataflow %s */
-      """ % name
-      self.program = self.program_header
+      self.program   = ""
   def class_name(self): return "Terminal"
   def processing(self): return "h/h"
   def flow_code(self):  return "-/-"
   def print_usage(self):
-      print "===== Welcome to the P2 Overlog Terminal ====="
+      print "===== Welcome to the P2 Overlog/Dataflow Terminal ====="
       print "This terminal is setup to edit the %s dataflow." % self.name()
-      print "Create an overlog program by accumulating overlog program text"
-      print "from within the \"overlog\" or \"input\" mode (described below)."
+      print "Create an overlog or dataflow program by accumulating overlog/dataflow text"
+      print "from within the \"edit\" or \"input\" mode (described below)."
       print ""
       print "The terminal has the following modes:"
       print "terminal: Accepts commands or mode change commands."
       print "input:    Enter a filename to be read in and"
-      print "          added to the overlog program."
-      print "overlog:  Adds the typed text to the overlog program."
-      print "address:  Enter the node address to which the overlog"
+      print "          added to the program."
+      print "edit:     Adds the typed text to the program."
+      print "address:  Enter the node address to which the"
       print "          program is to be sent." 
       print "The default mode is the terminal mode. To exit a given"
       print "mode back into the terminal type a single \".\" in the prompt." 
@@ -38,8 +35,10 @@ class Terminal(Element):
       print ""
       print "The following commands can be issued in any mode."
       print "print: Print to stdout, the current overlog program."
-      print "clear: Clear the current overlog program."
-      print "send:  Sends the current overlog program to the last node address"
+      print "clear: Clear the current dataflow script."
+      print "osend: Sends the current overlog program to the last node address"
+      print "       entered in the address mode." 
+      print "ssend: Sends the current dataflow scirpt to the last node address"
       print "       entered in the address mode." 
       print "exit:  Exit the terminal"
   def initialize(self): 
@@ -54,28 +53,34 @@ class Terminal(Element):
       if   line[0:5] == "print":
           print self.program
       elif line[0:5] == "clear":
-          self.program = self.program_header
-      elif line[0:4] == "send":
+          self.program = ""
+      elif line[0:5] == "osend" or line[0:5] == "ssend":
           if not self.address:
               print "ERROR: no address entered!!!"
               self.print_usage()
           else:
-              t = Tuple.mk()
-              t.append(Val_Str.mk(self.address))
-              t.append(Val_Str.mk("overlog"))
-              t.append(Val_Str.mk(self.myaddress))
-              t.append(Val_Str.mk(self.name()))
-              t.append(Val_Str.mk(self.program))
-              t.freeze()
-              if self.py_push(0, t, self.callback) > 0:
+              overlog = Tuple.mk()
+              payload = Tuple.mk()
+              overlog.append(Val_Str.mk(self.address))
+              if line[0] == "o":
+                payload.append(Val_Str.mk("overlog"))
+              else: 
+                payload.append(Val_Str.mk("script"))
+              payload.append(Val_Str.mk(self.address))
+              payload.append(Val_Str.mk(self.myaddress))
+              payload.append(Val_Str.mk(self.program))
+              payload.freeze()
+              overlog.append(Val_Tuple.mk(payload))
+              overlog.freeze()
+              if self.py_push(0, overlog, self.callback) > 0:
                   self.set_delay(1, self.delay_callback) 
               return
       elif line[0:4] == "exit":
           sys.exit(0)
       elif line == "." and self.mode != "terminal": 
           self.mode = "terminal" 
-      elif self.mode == "terminal" and line[0:7] == "overlog":
-          self.mode = "overlog" 
+      elif self.mode == "terminal" and line[0:7] == "edit":
+          self.mode = "edit" 
       elif self.mode == "terminal" and line[0:5] == "input":
           self.mode = "input" 
       elif self.mode == "terminal" and line[0:7] == "address":
@@ -90,7 +95,7 @@ class Terminal(Element):
       elif self.mode == "address":
           self.address = line
           print "Address entered: ", self.address
-      elif self.mode == "overlog":
+      elif self.mode == "edit":
           self.program += line + "\n" 
       else:
           print "ERROR: unknown command or mode entered."
@@ -111,11 +116,11 @@ class Terminal(Element):
 
 def print_usage():
     print
-    print "Usage: terminal.py [-d] <dataflow_edit_name> <terminal_ip_address> <terminal_port>\n"
+    print "Usage: terminal.py [-d] <terminal_ip_address> <terminal_port>\n"
     print
 
 def parse_cmdline(argv):
-    shortopts = "df:"
+    shortopts = "d"
     flags = {"debug" : False}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
@@ -138,15 +143,13 @@ def get_stub(port):
       let udp = Udp2("udp", %s);
 
       TimedPushSource("dummy_source", 0)            ->
-      PelTransform("output", "$0 pop swallow pop")  ->
-      Sequence("sequence", 1, 1)                    ->
+      Sequence("output", 1, 1)                      ->
       Frag("fragment", 1)                           ->
       PelTransform("package", "$0 pop swallow pop") ->
       MarshalField("marshal", 1)                    ->
       StrToSockaddr("addr_conv", 0)                 -> 
-      udp -> Print("udp_in") -> UnmarshalField("unmarshal", 1) ->
+      udp -> UnmarshalField("unmarshal", 1) ->
       PelTransform("unpackage", "$1 unboxPop") ->
-      Print("before_defrag") ->
       Defrag("defragment", 1) ->
       PelTransform("get_payload", "$2 unboxPop") ->
       TimedPullPush("input", 0) ->
@@ -180,9 +183,8 @@ if __name__ == "__main__":
   
     eventLoopInitialize()
   
-    dataflow = args[0]
-    address  = args[1]
-    port     = int(args[2])
+    address  = args[0]
+    port     = int(args[1])
   
     plumber = Plumber()
     stub    = gen_stub(plumber, port)
@@ -194,7 +196,7 @@ if __name__ == "__main__":
     input  = edit.find("input");
     output = edit.find("output");
   
-    term = edit.addElement(Terminal(dataflow, address+":"+str(port)))
+    term = edit.addElement(Terminal(DATAFLOW_NAME, address+":"+str(port)))
     edit.hookUp(input, 0, term, 0)
     edit.hookUp(term, 0, output, 0)
   

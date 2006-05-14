@@ -89,7 +89,7 @@ int main(int argc, char **argv)
       filename = argv[i+1];
       std::ifstream istr(filename.c_str());
       ctxt->parse_stream(&istr);
-      Plmb_ConfGen gen(ctxt.get(), conf, false, false, true, filename);
+      Plmb_ConfGen gen(ctxt.get(), conf, false, false, false, filename);
       gen.createTables("127.0.0.1:10000");
       
       boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));
