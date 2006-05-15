@@ -3,6 +3,7 @@ from libp2python import *
 import sys
 import os
 import getopt
+import time
 
 DATAFLOW_NAME = "Terminal"
 
@@ -47,14 +48,16 @@ class Terminal(Element):
           self.print_usage()
           self.set_delay(0, self.delay_callback) 
       else:
-          self.set_delay(0, self.push_program) 
+          self.set_delay(0, lambda: self.push_program(0)) 
       return 0
-  def push_program(self):
-      for i in range(self.nodes):
-          print "\tprogram push to node %s:%d" % (self.address, self.port+i)
-          if self.send(self.myaddress, self.address+":"+str(self.port+i), 
+  def push_program(self, node):
+      if node < self.nodes:
+          print "\tprogram push to node %s:%d" % (self.address, self.port+node)
+          if self.send(self.myaddress, self.address+":"+str(self.port+node), 
                        "overlog", self.program) == 0:
               return
+          if node+1 < self.nodes: 
+              self.set_delay(30, lambda: self.push_program(node+1)) 
   def callback(self):
       self.set_delay(0, self.delay_callback) 
   def delay_callback(self):
