@@ -42,6 +42,7 @@ class Terminal(Element):
       print "ssend: Sends the current dataflow scirpt to the last node address"
       print "       entered in the address mode." 
       print "exit:  Exit the terminal"
+
   def initialize(self): 
       if not self.program:
           self.program = ""

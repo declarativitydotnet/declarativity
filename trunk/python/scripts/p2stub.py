@@ -44,7 +44,7 @@ def get_stub(name, address, port):
       [1]wrapAroundMux;
 
       wrapAroundDemux[1] -> 
-      Print("transport_out") ->
+      # Print("transport_out") ->
       Sequence("terminal_sequence", 1, 1)          ->
       Frag("fragment", 1)                          ->
       PelTransform("package", "$0 pop swallow pop") ->

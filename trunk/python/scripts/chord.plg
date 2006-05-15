@@ -47,9 +47,11 @@ materialize(pendingPing, 10, infinity, keys(2)).
 
 /** Lookups */
 
+/*
 watch(lookupResults).
 watch(lookup).
 watch(bestLookupDist).
+*/
 
 
 l1 lookupResults@R(R,K,S,SI,E) :- node@NI(NI,N),
@@ -169,8 +171,9 @@ f9 nextFingerFix@NI(NI,I) :- node@NI(NI,N),
 /** Churn Handling */
 
 /*watch(joinEvent).
-watch(join).*/
+watch(join).
 watch(joinReq). 
+*/
 
 c1 joinEvent@NI(NI,E) :- join@NI(NI,E).
 
