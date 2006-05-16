@@ -164,6 +164,7 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::push(int port,
         _pullCallback = 0;
       }
 
+      // std::cerr << "LOOKUP KEY: " << _key->toString() << " IN TABLE " << _table->name << std::endl;
       // Fetch the iterator
       _iterator = _LookupGenerator::lookup(_table, _indexFieldNo, _key);
       
@@ -228,10 +229,20 @@ Lookup< _EncapsulatedIterator, _LookupGenerator >::pull(int port,
     if (_iterator->done()) {
       // Empty search. Don't try to dereference the iterator.  Just
       // set the result to the empty tuple, to be tagged later
+/*
+      std::cerr << "\tNO MORE TUPLES IN ITERATOR" << " IN TABLE " << _table->name << " iterator " << _iterator 
+                << " TABLE SIZE = " << _table->size() 
+                << " TABLE ADDRESS " << _table << std::endl;
+*/
       t = Tuple::EMPTY;
     } else {
       // This lookup has at least one result.
       t = _iterator->next();
+/*
+      std::cerr << "\tLOOKUP KEY " << _key->toString() << " IN TABLE " << _table->name << " iterator " << _iterator
+                << " RETURN TUPLE " << t->toString() << " TABLE SIZE = " << _table->size() 
+                << " TABLE ADDRESS " << _table << std::endl;
+*/
     }
     TuplePtr theT = t;
 

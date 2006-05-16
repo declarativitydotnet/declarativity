@@ -469,6 +469,10 @@ void Table::garbage_collect()
     expiryTime = now - max_lifetime;
     while (els.size() > 0) {
       Entry * back = els.back();
+/*
+      std::cerr << "TABLE " << name << " REMOVE EXPIRED TUPLE: " << back->t->toString() 
+                << " MAX LIFETIME " << max_lifetime.seconds() << std::endl;
+*/
       
       // is the last one to be dumped?
       if (back->ts < expiryTime) {
