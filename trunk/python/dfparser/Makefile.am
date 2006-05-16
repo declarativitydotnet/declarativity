@@ -22,3 +22,4 @@ EXTRA_DIST = dataflow.g \
              yapps/yapps2.py yapps/yappsrt.py
 
 MAINTAINERCLEANFILES = Makefile.in
+SUBDIRS=yapps
