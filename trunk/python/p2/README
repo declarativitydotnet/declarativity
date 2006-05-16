@@ -11,8 +11,11 @@ the libp2python module are as follows:
 1. Do a make in the 'python/ directory. This will compile everything 
    under 'python/p2' and creates a shared library at 
    'python/p2/.libs/libp2python.so'.
-2. Define your 'PYTHONPATH' variable to include the 'python/p2/.libs' directory.
-   e.g., `export PYTHONPATH=/home/tcondie/phi/phi/python/p2/.libs`
+2. Define your 'PYTHONPATH' variable to include the 'python/p2/.libs',
+   'python/dfparser', 'python/dfparser/yapps', 'python/scripts' and 
+   directories.
+   e.g., `export PYTHONPATH=<top_dir>/python/scripts:<top_dir>/python/dfparser: \
+                            <top_dir>/python/dfparser/yapps:<top_dir>/python/p2/.libs`
    This environment variable tells python where to look for libraries that you
    wish to import.
 3. Import 'libp2python' in your python script. 
