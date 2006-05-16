@@ -117,7 +117,6 @@ def get_stub(port):
 
       TimedPushSource("dummy_source", 0)            ->
       Sequence("output", 1, 1)                      ->
-      # Print("transport_out") ->
       Frag("fragment", 1)                           ->
       PelTransform("package", "$0 pop swallow pop") ->
       MarshalField("marshal", 1)                    ->
@@ -126,7 +125,6 @@ def get_stub(port):
       PelTransform("unpackage", "$1 unboxPop") ->
       Defrag("defragment", 1) ->
       PelTransform("get_payload", "$2 unboxPop") ->
-      # Print("transport_in") ->
       TimedPullPush("input", 0) ->
       Discard("dummy_discard");
       }

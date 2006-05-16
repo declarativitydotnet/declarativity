@@ -42,7 +42,6 @@ class Terminal(Element):
       print "ssend: Sends the current dataflow scirpt to the last node address"
       print "       entered in the address mode." 
       print "exit:  Exit the terminal"
-
   def initialize(self): 
       if not self.program:
           self.program = ""
@@ -58,7 +57,9 @@ class Terminal(Element):
                        "overlog", self.program) == 0:
               return
           if node+1 < self.nodes: 
-              self.set_delay(30, lambda: self.push_program(node+1)) 
+              self.set_delay(20, lambda: self.push_program(node+1)) 
+          else:
+              self.set_delay(10, lambda: sys.exit(0)) 
   def callback(self):
       self.set_delay(0, self.delay_callback) 
   def delay_callback(self):

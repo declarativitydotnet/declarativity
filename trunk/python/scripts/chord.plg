@@ -32,10 +32,10 @@
 /* The base tuples */
 
 materialize(node, infinity, 1, keys(1)).
-materialize(finger, 180, 160, keys(2)).
+materialize(finger, 10, 160, keys(2)).
 materialize(bestSucc, infinity, 1, keys(1)).
-materialize(succDist, 10, 100, keys(2)).
-materialize(succ, 10, 100, keys(2)).
+materialize(succDist, 2, 100, keys(2)).
+materialize(succ, infinity, 4, keys(2)).
 materialize(pred, infinity, 100, keys(1)).
 materialize(succCount, infinity, 1, keys(1)).
 materialize(join, 10, 5, keys(1)).
@@ -81,7 +81,8 @@ l3 lookup@BI(min<BI>,K,R,E) :- node@NI(NI,N),
 watch(bestSucc).
 watch(succEvent).
 watch(succDist).
-watch(bestSuccDist).*/
+watch(bestSuccDist).
+*/
 
 n1 succEvent@NI(NI,S,SI) :- succ@NI(NI,S,SI).
 
@@ -158,7 +159,7 @@ f7 delete fFix@NI(NI,E,I1) :- eagerFinger@NI(NI,I,B,BI),
 
 
 f8 nextFingerFix@NI(NI,0) :- eagerFinger@NI(NI,I,B,BI), 
-			   ((I == 159) || (BI == NI)).
+			   ((I == 9) || (BI == NI)).
 
 f9 nextFingerFix@NI(NI,I) :- node@NI(NI,N), 
 			   eagerFinger@NI(NI,I1,B,BI), 
@@ -170,7 +171,8 @@ f9 nextFingerFix@NI(NI,I) :- node@NI(NI,N),
 
 /** Churn Handling */
 
-/*watch(joinEvent).
+/*
+watch(joinEvent).
 watch(join).
 watch(joinReq). 
 */
@@ -196,6 +198,7 @@ c6 join@NI(NI, Delay) :- periodic@NI(NI, E, 0, 1), Delay := 0.
 
 /** Stabilization */
 
+watch(succ).
 /*watch(stabilize).
 watch(succ).
 watch(pred).
@@ -232,10 +235,11 @@ sb7 notifyPredecessor@SI(SI,N,NI) :- stabilize@NI(NI,E),
 			      node@NI(NI,N), 
 			      succ@NI(NI,S,SI).
 
+
 sb8 pred@NI(NI,P,PI) :- node@NI(NI,N),
 			notifyPredecessor@NI(NI,P,PI), 
 			pred@NI(NI,P1,PI1),
-			((PI1 == "-") || (P in (P1,N))).
+			((PI1 == "-") || (P1 == N) || (P in (P1,N))).
 
 
 /** Connectivity Monitoring */
