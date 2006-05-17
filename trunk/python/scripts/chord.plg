@@ -57,7 +57,7 @@ watch(bestLookupDist).
 l1 lookupResults@R(R,K,S,SI,E) :- node@NI(NI,N),
 				  lookup@NI(NI,K,R,E), 
 				  bestSucc@NI(NI,S,SI),
-				  K in (N,S].
+				  (K in (N,S] || (N == S)).
 
 
 l2 bestLookupDist@NI(NI,K,R,E,min<D>) :- node@NI(NI,N), 
@@ -198,7 +198,6 @@ c6 join@NI(NI, Delay) :- periodic@NI(NI, E, 0, 1), Delay := 0.
 
 /** Stabilization */
 
-watch(succ).
 /*watch(stabilize).
 watch(succ).
 watch(pred).

@@ -47,7 +47,10 @@ class LookupGenerator(Element):
           for i in range(5):
               vec.append(int(random.random()*sys.maxint)) 
           lookup.append(Val_ID.mk(vec))
-          lookup.append(Val_Str.mk(self.myaddress))
+          if flags["return_address"]:
+              lookup.append(Val_Str.mk(flags["return_address"]))
+          else:
+              lookup.append(Val_Str.mk(self.myaddress))
           lookup.append(Val_Str.mk("lookupGenerator:%s:%d" % (node, random.random()*sys.maxint)))
           lookup.freeze()
           tuple.append(Val_Tuple.mk(lookup))
@@ -96,16 +99,18 @@ class LookupGenerator(Element):
 
 def print_usage():
     print
-    print "Usage: lookupGenerator.py [-d] <local_ip_address> <local_port> [<freq> ",
+    print "Usage: lookupGenerator.py [-d] [-r <return_ip:return_port>] ",
+    print "<local_ip_address> <local_port> [<freq> ",
     print "<node1_ip:node1_port> [node2_ip:node1_port ...]]\n"
     print
 
 def parse_cmdline(argv):
-    shortopts = "d"
-    flags = {"debug" : False}
+    shortopts = "dr:"
+    flags = {"debug" : False, "return_address", None}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
-        if   o == "-d": flags["debug"]      = True
+        if   o == "-d": flags["debug"]          = True
+        elif o == "-r": flags["return_address"] = v
         else:
             print_usage()
             exit(3)
