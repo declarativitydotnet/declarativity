@@ -26,6 +26,8 @@
  */
 
 #include "tuple.h"
+#include <set>
+
 
 class Table2 {
 public:
