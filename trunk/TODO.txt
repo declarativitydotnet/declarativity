@@ -90,4 +90,10 @@
  - Collect a list of known bugs, e.g., for the parser. Subsumed by
    bugzilla.
 
+ - Use causality information, if present, to derive tuples that must be
+   eliminated when a base tuple is deleted.
 
+ - Use shared pointers (or a materialized version thereof) to implement
+   the count algorithm for multiply-derived tuples.
+
+ 
