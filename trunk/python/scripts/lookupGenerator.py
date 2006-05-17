@@ -106,7 +106,7 @@ def print_usage():
 
 def parse_cmdline(argv):
     shortopts = "dr:"
-    flags = {"debug" : False, "return_address", None}
+    flags = {"debug" : False, "return_address" : None}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if   o == "-d": flags["debug"]          = True
