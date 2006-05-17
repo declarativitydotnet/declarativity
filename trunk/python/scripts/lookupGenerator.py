@@ -48,7 +48,7 @@ class LookupGenerator(Element):
               vec.append(int(random.random()*sys.maxint)) 
           lookup.append(Val_ID.mk(vec))
           if flags["return_address"]:
-              lookup.append(Val_Str.mk(flags["return_address"]))
+              lookup.append(Val_Str.mk(node))
           else:
               lookup.append(Val_Str.mk(self.myaddress))
           lookup.append(Val_Str.mk("lookupGenerator:%s:%d" % (node, random.random()*sys.maxint)))
@@ -99,7 +99,7 @@ class LookupGenerator(Element):
 
 def print_usage():
     print
-    print "Usage: lookupGenerator.py [-d] [-r <return_ip:return_port>] ",
+    print "Usage: lookupGenerator.py [-d] [-r] ",
     print "<local_ip_address> <local_port> [<freq> ",
     print "<node1_ip:node1_port> [node2_ip:node1_port ...]]\n"
     print
@@ -110,7 +110,7 @@ def parse_cmdline(argv):
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if   o == "-d": flags["debug"]          = True
-        elif o == "-r": flags["return_address"] = v
+        elif o == "-r": flags["return_address"] = True
         else:
             print_usage()
             exit(3)
