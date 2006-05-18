@@ -63,9 +63,11 @@ def eval_lookups(event_hash):
        event_list = event_hash[src]
        event_list.sort()
        succ = event_list[-1][-1]
-       if succ_hash.has_key(succ):
-           print "SUCCESSOR ALREADY USED!!"
-           print "NODE %s HAS BEST SUCC %s" %(src, succ) 
+       id   = event_list[-1][-2]
+       print "%s -> %s (ID: %s)" % (src, succ, id)
+       #if succ_hash.has_key(succ):
+       #    print "SUCCESSOR ALREADY USED!!"
+       #    print "NODE %s HAS BEST SUCC %s" %(src, succ) 
        succ_hash[succ] = True
 
 if __name__ == "__main__":
