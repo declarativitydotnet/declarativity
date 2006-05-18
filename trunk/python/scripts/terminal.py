@@ -57,7 +57,7 @@ class Terminal(Element):
                        "overlog", self.program) == 0:
               return
           if node+1 < self.nodes: 
-              self.set_delay(20, lambda: self.push_program(node+1)) 
+              self.set_delay(flags["delay"], lambda: self.push_program(node+1)) 
           else:
               self.set_delay(10, lambda: sys.exit(0)) 
   def callback(self):
@@ -134,19 +134,19 @@ class Terminal(Element):
 
 def print_usage():
     print
-    print "Usage: terminal.py [-d] [-f <input_file> -n <nodes> -a <ip_address> -p <start_port>] <terminal_ip_address> <terminal_port>\n"
+    print "Usage: terminal.py [-d delay] [-f <input_file> -n <nodes> -a <ip_address> -p <start_port>] <terminal_ip_address> <terminal_port>\n"
     print
 
 def parse_cmdline(argv):
-    shortopts = "df:n:a:p:"
-    flags = {"debug" : False, "input" : None, "nodes" : 0, "ip" : None, "port" : 0}
+    shortopts = "d:f:n:a:p:"
+    flags = {"delay" : 20, "debug" : False, "input" : None, "nodes" : 0, "ip" : None, "port" : 0}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
-        if   o == "-d": flags["debug"] = True
-        elif o == "-f": flags["input"] = v
+        if o   == "-f": flags["input"] = v
         elif o == "-n": flags["nodes"] = int(v)
         elif o == "-a": flags["ip"]    = v
         elif o == "-p": flags["port"]  = int(v)
+        elif o == "-d": flags["delay"]  = int(v)
         else:
             print_usage()
             exit(3)
