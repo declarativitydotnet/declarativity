@@ -99,9 +99,9 @@ def process_file(file, shash, mhash, rhash):
 
 
 def eval_lookups(shash, mhash, rhash):
-    sht_fh  = open("./simple_hop_time.dat", 'w')
-    sl_fh   = open('./simple_latency.dat', 'w')
-    mht_fh  = open('./maintenance_hop_time.dat', 'w')
+    sht_fh  = open("./lookup_hops.dat", 'w')
+    sl_fh   = open('./lookup_latency.dat', 'w')
+    mht_fh  = open('./maintenance_hops.dat', 'w')
     ml_fh   = open('./maintenance_latency.dat', 'w')
     sim_start    = float(sys.maxint)
     successful   = 0
