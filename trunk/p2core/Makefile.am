@@ -16,6 +16,7 @@
 lib_LTLIBRARIES = libp2core.la
 
 libp2core_la_SOURCES = \
+	table2.C \
 	val_str.C \
 	value.C \
 	fdbuf.C \

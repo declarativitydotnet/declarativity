@@ -20,27 +20,51 @@
 ////////////////////////////////////////////////////////////
 
 /** My comparator for vectors of unsigned integers. */
-struct unsignedVectorLess
+bool
+Table2::unsignedVectorLess::operator()(const Table2::Key first,
+                                       const Table2::Key second) const
 {
-  bool operator()(const Key first,
-                  const Key second) const
-  {
-    if (first.size() < second.size()) {
-      return true; // first < second
-    } else if (first.size() > second.size()) {
-      return false; // second < first
-    } else {
-      std::vector::iterator firstIt = first.begin();
-      std::vector::iterator secondIt = second.begin();
-      while (firstIt != first.end()) {
-        if ((*firstIt) >= (*secondIt)) {
-          // We're done, second >= first
-          return false;
-        }
+  if (first.size() < second.size()) {
+    return true; // first < second
+  } else if (first.size() > second.size()) {
+    return false; // second < first
+  } else {
+    Table2::Key::const_iterator firstIt = first.begin();
+    Table2::Key::const_iterator secondIt = second.begin();
+    while (firstIt != first.end()) {
+      if ((*firstIt) >= (*secondIt)) {
+        // We're done, second >= first
+        return false;
       }
-      // We're done, first < second
-      return true;
     }
+    // We're done, first < second
+    return true;
   }
-};
+}
+
+
+/** My comparator for value ptr vectors. */
+bool
+Table2::valuePtrVectorLess::
+operator()(const Table2::ValuePtrVector first,
+           const Table2::ValuePtrVector second) const
+{
+  if (first.size() < second.size()) {
+    return true; // first < second
+  } else if (first.size() > second.size()) {
+    return false; // second < first
+  } else {
+    Table2::ValuePtrVector::const_iterator firstIt = first.begin();
+    Table2::ValuePtrVector::const_iterator secondIt = second.begin();
+    while (firstIt != first.end()) {
+      if ((*firstIt)->compareTo(*secondIt) >= 0) {
+        // We're done, second >= first
+        return false;
+      }
+    }
+    // We're done, first < second
+    return true;
+  }
+}
+
 

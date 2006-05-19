@@ -25,6 +25,7 @@
  *
  */
 
+#include "value.h"
 #include "tuple.h"
 #include <set>
 #include "boost/date_time/posix_time/posix_time.hpp"
@@ -40,6 +41,11 @@ public:
   typedef std::vector< unsigned > Key;
 
 
+  /** A value ptr vector is a vector of value ptrs (i.e., those in
+      tuples, lists, etc. */
+  typedef std::vector< ValuePtr > ValuePtrVector;
+
+
   /** A comparator of keys */
   std::set< Key >::key_compare keyCompare;
 
@@ -48,7 +54,24 @@ public:
       numbers. The sequence must not be empty.  */
   void
   secondaryIndex(Key key);
-  
+
+
+  /** A comparator object for vectors of unsigneds, i.e., Key specs */
+  struct unsignedVectorLess
+  {
+    bool operator()(const Key first,
+                    const Key second) const;
+  };
+
+
+  /** A comparator object for vectors of value ptrs, i.e., tuples. */
+  struct valuePtrVectorLess
+  {
+    bool operator()(const ValuePtrVector first,
+                    const ValuePtrVector second) const;
+  };
+
+
   
 
 
@@ -155,5 +178,5 @@ private:
 
   /** My secondary indices, indexed by index key.  Recall that index
       keys are represented as sequences of field numbers. */
-  std::set< Key, valueRefVectorLess > _indices;
-}
+  std::set< Key, valuePtrVectorLess > _indices;
+};

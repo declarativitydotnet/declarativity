@@ -160,7 +160,7 @@ public:
       two numbers of different types.  Common comparison operators are
       implemented by the oper template functions, performing appropriate
       implicit casts as they go. */
-  virtual int compareTo( ValuePtr other ) const = 0;
+  virtual int compareTo(ValuePtr other) const = 0;
 
   // Thrown when an invalid type conversion is attempted. 
   struct TypeError { 
