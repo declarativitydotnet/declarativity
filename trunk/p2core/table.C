@@ -38,28 +38,28 @@ static string vec_to_string(std::vector<unsigned>& vec)
 }
 */
 
-Table::Table(string table_name, size_t max_size,
+Table::Table(string table_name, size_t maxSize,
              boost::posix_time::time_duration& lifetime)
   : name(table_name),
-    max_tbl_size(max_size),
+    max_tbl_size(maxSize),
     max_lifetime(lifetime),
     _uniqueAggregates(),
     _multAggregates()
 {
 }
 
-Table::Table(string table_name, size_t max_size, string lifetime)
+Table::Table(string table_name, size_t maxSize, string lifetime)
   : name(table_name),
-    max_tbl_size(max_size),
+    max_tbl_size(maxSize),
     max_lifetime(boost::posix_time::duration_from_string(lifetime)),
     _uniqueAggregates(),
     _multAggregates()
 {
 }
 
-Table::Table(string table_name, size_t max_size)
+Table::Table(string table_name, size_t maxSize)
   : name(table_name),
-    max_tbl_size(max_size),
+    max_tbl_size(maxSize),
     _uniqueAggregates(),
     _multAggregates()
 {

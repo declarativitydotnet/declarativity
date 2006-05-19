@@ -32,8 +32,9 @@ getTime(boost::posix_time::ptime& t,
   
   switch (clockDescriptor) {
   case LOOP_TIME_WALLCLOCK:
-	// note that on some platforms (e.g. Win32) this often does not
-	// achieve microsecond resolution, or says the Boost documentation.
+    // note that on some platforms (e.g. Win32) this often does not
+    // achieve microsecond resolution, or so says the Boost
+    // documentation.
     t = boost::posix_time::microsec_clock::local_time();
     break;
   default:

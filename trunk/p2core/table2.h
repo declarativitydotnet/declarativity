@@ -34,7 +34,23 @@
 class Table2 {
 public:
   ////////////////////////////////////////////////////////////
-  // Secondary indices
+  // Tuple wrapper
+  ////////////////////////////////////////////////////////////
+
+  /** A tuple wrapper contains a tuple and its time of insertion */
+  struct Entry {
+    TuplePtr tuple;
+    
+    boost::posix_time::ptime time;
+    
+    Entry(TuplePtr tp);
+  };
+  
+
+
+
+  ////////////////////////////////////////////////////////////
+  // special vectors
   ////////////////////////////////////////////////////////////
 
   /** A key is a vector of unsigned field numbers */
@@ -46,14 +62,14 @@ public:
   typedef std::vector< ValuePtr > ValuePtrVector;
 
 
+
+
+  ////////////////////////////////////////////////////////////
+  // Comparators
+  ////////////////////////////////////////////////////////////
+
   /** A comparator of keys */
   std::set< Key >::key_compare keyCompare;
-
-
-  /** Create a secondary index on the given sequence of field
-      numbers. The sequence must not be empty.  */
-  void
-  secondaryIndex(Key key);
 
 
   /** A comparator object for vectors of unsigneds, i.e., Key specs */
@@ -70,6 +86,49 @@ public:
     bool operator()(const ValuePtrVector first,
                     const ValuePtrVector second) const;
   };
+
+
+  /** A comparator of value ptr vectors by a given key */
+  struct KeyedComparator
+  {
+    /** What's my key spec? */
+    Key _key;
+    
+    /** Construct me */
+    KeyedComparator(const Key key);
+    
+    
+    /** My comparison operator */
+    bool operator()(const Entry *,
+                    const Entry *) const;
+  };
+
+
+
+
+  ////////////////////////////////////////////////////////////
+  // Primary Index
+  ////////////////////////////////////////////////////////////
+  
+  /** A primary index is a set of Entries sorted by those tuple values
+      indicated by a key designation. The key designation will appear
+      within the particular KeyedComparator objected passed during
+      construction */
+  typedef std::set< Entry *, KeyedComparator > PrimaryIndex;
+
+  
+
+
+  ////////////////////////////////////////////////////////////
+  // Secondary indices
+  ////////////////////////////////////////////////////////////
+
+  /** Create a secondary index on the given sequence of field
+      numbers. The sequence must not be empty.  */
+  void
+  secondaryIndex(Key key);
+
+
 
 
   
@@ -105,7 +164,7 @@ public:
          size_t max_size);
   
 
-  /** A destructor. It empties out the table and then destructs it. */
+  /** A destructor. It empties out the table and then destroys it. */
   ~Table2();
 
 
@@ -160,7 +219,7 @@ public:
 
 private:
   /** My name (human readable). */
-  string _name;
+  std::string _name;
 
 
   /** My primary key. If empty, use the tuple ID. */
@@ -168,15 +227,42 @@ private:
 
 
   /** My maximum size in tuples. If 0, size is unlimited. */
-  size_t _maximumSize;
+  size_t _maxSize;
 
   
   /** My maximum lifetime. If not a date or time (as per
       is_not_a_date_time()), lifetime is unlimited. */
-  boost::posix_time::time_duration _maximumLifetime;
+  boost::posix_time::time_duration _maxLifetime;
 
 
   /** My secondary indices, indexed by index key.  Recall that index
       keys are represented as sequences of field numbers. */
   std::set< Key, valuePtrVectorLess > _indices;
+
+
+  /** My primary index */
+  PrimaryIndex _primaryIndex;
+
+
+
+
+  ////////////////////////////////////////////////////////////
+  // Convenience Functions
+  ////////////////////////////////////////////////////////////
+
+  /** Check if the given tuple appears in the table currently. */
+  bool
+  tupleInTable(TuplePtr t);
+
+
+  /** Insert a brand new tuple into the database including all
+      indices. */
+  void
+  removeTuple(TuplePtr t);
+
+
+  /** Remove an existing tuple from the database including all
+      indices. */
+  bool
+  insertTuple(TuplePtr t);
 };
