@@ -666,9 +666,9 @@ DEF_OP(SIZE) {
 // Integer-only arithmetic operations (mostly bitwise)
 //
 DEF_OP(ASR) {
-  ValuePtr v1 = pop();
-  ValuePtr v2 = pop();
-  stackPush((v2 >> v1));
+  ValuePtr shiftCount = pop();
+  ValuePtr numberToShift = pop();
+  stackPush((numberToShift >> shiftCount));
 }
 DEF_OP(ASL) {
   ValuePtr v1 = pop();

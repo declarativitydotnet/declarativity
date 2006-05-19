@@ -377,7 +377,18 @@ testPel::vtests[] = {
   TST(INT64, SUCCESS, "1",	"2 1 >>" ),
   TST(INT64, SUCCESS, "4",	"16 2 >>" ),
   TST(UINT64, SUCCESS, "0x7fffffffffffffff","0xffffffffffffffffU 1 >>" ),
-  TST(INT64, SUCCESS, "0x3fffffffffffffffU","-1 2U >>" ),
+  TST(INT64, SUCCESS, "-1","-1 2 >>" ), // Recall this
+                                                         // is with sign
+                                                         // extension,
+                                                         // so empty
+                                                         // bits extend
+                                                         // the last bit
+  TST(UINT64, SUCCESS, "0x3fffffffffffffffU","-1 ->u64 2 >>" ), // Recall this
+                                                         // is with sign
+                                                         // extension,
+                                                         // so empty
+                                                         // bits extend
+                                                         // the last bit
 
   // >> (arithmetic shift right)
   TST(INT64, STACK_UNDERFLOW, "",	">>" ),

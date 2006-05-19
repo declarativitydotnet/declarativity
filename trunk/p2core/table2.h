@@ -27,6 +27,7 @@
 
 #include "tuple.h"
 #include <set>
+#include "boost/date_time/posix_time/posix_time.hpp"
 
 
 class Table2 {
@@ -35,12 +36,13 @@ public:
   // Secondary indices
   ////////////////////////////////////////////////////////////
 
-  /** A comparator of keys */
-  std::set::key_compare keyCompare;
-
-
   /** A key is a vector of unsigned field numbers */
   typedef std::vector< unsigned > Key;
+
+
+  /** A comparator of keys */
+  std::set< Key >::key_compare keyCompare;
+
 
   /** Create a secondary index on the given sequence of field
       numbers. The sequence must not be empty.  */
@@ -62,26 +64,26 @@ public:
        non-negative.  lifetime is how long to keep tuples for before
        discarding and must be a positive time duration; a lifetime that
        is not a date and time means tuples never expire. */
-  Table(string tableName,
-        Key key,
-        size_t max_size,
-        boost::posix_time::time_duration& lifetime);
+  Table2(string tableName,
+         Key key,
+         size_t max_size,
+         boost::posix_time::time_duration& lifetime);
 
   /** A convenience constructor that allows the use of string
       representations for maximum tuple lifetime. */
-  Table(string tableName,
-        Key key,
-        size_t max_size,
-        string lifetime);
+  Table2(string tableName,
+         Key key,
+         size_t max_size,
+         string lifetime);
   
   /** A convenience constructor that does not expire tuples. */
-  Table(string tableName,
-        Key key,
-        size_t max_size);
+  Table2(string tableName,
+         Key key,
+         size_t max_size);
   
 
   /** A destructor. It empties out the table and then destructs it. */
-  ~Table();
+  ~Table2();
 
 
 
@@ -153,5 +155,5 @@ private:
 
   /** My secondary indices, indexed by index key.  Recall that index
       keys are represented as sequences of field numbers. */
-  std::set< Key, valueRefVectorLess> _indices;
+  std::set< Key, valueRefVectorLess > _indices;
 }
