@@ -330,3 +330,14 @@ Table2::flush()
 }
 
 
+Table2::Initializer::Initializer()
+{
+  KEY0.push_back(0);
+  KEY1.push_back(1);
+  KEY2.push_back(2);
+}
+
+/** Run the static initialization */
+Table2::Initializer
+Table2::_INITIALIZER;
+

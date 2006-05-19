@@ -58,6 +58,20 @@ public:
   typedef std::vector< unsigned > Key;
 
 
+  /** Some default keys */
+  static Key
+    KEY0;
+
+  static Key
+    KEY1;
+
+  static Key
+    KEY2;
+
+  static Key
+    KEY3;
+
+
   /** A value ptr vector is a vector of value ptrs (i.e., those in
       tuples, lists, etc. */
   typedef std::vector< ValuePtr > ValuePtrVector;
@@ -260,6 +274,21 @@ private:
 
 
   ////////////////////////////////////////////////////////////
+  // Static Initializer
+  ////////////////////////////////////////////////////////////
+
+  /** A static initializer object to initialize static class objects */
+  class Initializer {
+  public:
+    Initializer();
+  };
+  static Initializer
+  _INITIALIZER;
+  
+
+
+
+  ////////////////////////////////////////////////////////////
   // Queue management
   ////////////////////////////////////////////////////////////
 
@@ -296,3 +325,7 @@ private:
   void
   insertTuple(TuplePtr t);
 };
+
+
+/** A pointer to tables */
+typedef boost::shared_ptr< Table2 > Table2Ptr;
