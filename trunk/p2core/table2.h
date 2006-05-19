@@ -29,6 +29,7 @@
 #include "tuple.h"
 #include <set>
 #include "boost/date_time/posix_time/posix_time.hpp"
+#include <deque>
 
 
 class Table2 {
@@ -141,27 +142,28 @@ public:
   /**  Create a new table.  name is an identifying string.  key is a
        vector containing a sequence of field numbers, which make up the
        primary key of the table; an empty key vector means the implicit
-       record number (a counter) is the primary key.  max_size is how
+       record number (a counter) is the primary key.  maxSize is how
        many tuples it will hold before discarding (FIFO) and must be
-       non-negative.  lifetime is how long to keep tuples for before
-       discarding and must be a positive time duration; a lifetime that
-       is not a date and time means tuples never expire. */
+       non-negative.  Max size of 0 means unlimited table size.
+       lifetime is how long to keep tuples for before discarding and
+       must be a positive time duration; a lifetime may be positive
+       infinite, indicating no expiration. */
   Table2(string tableName,
          Key key,
-         size_t max_size,
+         size_t maxSize,
          boost::posix_time::time_duration& lifetime);
 
   /** A convenience constructor that allows the use of string
       representations for maximum tuple lifetime. */
   Table2(string tableName,
          Key key,
-         size_t max_size,
+         size_t maxSize,
          string lifetime);
   
   /** A convenience constructor that does not expire tuples. */
   Table2(string tableName,
          Key key,
-         size_t max_size);
+         size_t maxSize);
   
 
   /** A destructor. It empties out the table and then destroys it. */
@@ -230,8 +232,8 @@ private:
   size_t _maxSize;
 
   
-  /** My maximum lifetime. If not a date or time (as per
-      is_not_a_date_time()), lifetime is unlimited. */
+  /** My maximum lifetime. It must be positive, and may be positive
+      infinity, meaning table entries do not expire. */
   boost::posix_time::time_duration _maxLifetime;
 
 
@@ -244,25 +246,53 @@ private:
   PrimaryIndex _primaryIndex;
 
 
+  /** The time-order queue of entries, for fast garbage collection. This
+      is only initialized if the table has a finite expiration time */
+  std::deque< Entry * > _queue;
+
+
+  /** Are we garbage collecting?  We are only garbage collecting if
+      entries can be auto-flushed, either due to expiration or due to
+      table size limitations. */
+  bool _flushing;
+
+
+
+
+  ////////////////////////////////////////////////////////////
+  // Queue management
+  ////////////////////////////////////////////////////////////
+
+  /** Flush expired or supernumerary entries */
+  void
+  flush();
+
+
 
 
   ////////////////////////////////////////////////////////////
   // Convenience Functions
   ////////////////////////////////////////////////////////////
 
+  /** The common search entry to be used with lookups */
+  static Entry
+  _searchEntry;
+
   /** Check if the given tuple appears in the table currently. */
   bool
   tupleInTable(TuplePtr t);
 
 
-  /** Insert a brand new tuple into the database including all
-      indices. */
+  /** Remove an existing tuple from the database including all
+      indices. This tuple always causes a tuple to be removed from the
+      table and therefore always calls any deletion listeners. */
   void
   removeTuple(TuplePtr t);
 
 
-  /** Remove an existing tuple from the database including all
-      indices. */
-  bool
+  /** Insert a brand new tuple into the database including all
+      indices. This method *always* causes a new tuple to appear within
+      the table and, therefore, always calls any insertion listeners. */
+  void
   insertTuple(TuplePtr t);
 };

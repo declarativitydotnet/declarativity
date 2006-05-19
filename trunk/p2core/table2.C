@@ -146,7 +146,9 @@ Table2::Table2(std::string tableName,
     _key(key),
     _maxSize(maxSize),
     _maxLifetime(lifetime),
-    _primaryIndex(KeyedComparator(key))
+    _primaryIndex(KeyedComparator(key)),
+    _flushing(((_maxSize == 0) &&
+               (_maxLifetime.is_pos_infinity())))
 {
 }
 
@@ -198,19 +200,133 @@ Table2::Entry::Entry(TuplePtr tp)
 // Convenience lookups
 ////////////////////////////////////////////////////////////
 
+/** Set up the static search entry */
+Table2::Entry
+_searchEntry(Tuple::EMPTY);
+
+
+/** Here we isolate what happens within with what will follow (e.g.,
+    replacement or removal).  Perhaps we could return the iterator
+    directly for further processing? */
 bool
 Table2::tupleInTable(TuplePtr t)
 {
+  // Seed the search entry with the tuple to search with. XXX This
+  // should be private to the thread when we migrate to multi-threaded
+  // operation. 
+  _searchEntry.tuple = t;
+
   // Find tuple in primary index
-  
+  PrimaryIndex::iterator found = _primaryIndex.find(&_searchEntry);
+
   // If a tuple exists with same primary key
-
-  //    Is the tuple identical?
-
-  //       Return yes
-  
-  //    Otherwise
- 
-  //       Return no
-  return false;
+  if (found == _primaryIndex.end()) {
+    // No tuple found at all
+    return false;
+  } else {
+    // Is the tuple identical?
+    if ((*found)->tuple->compareTo(t)) {
+      // Return yes
+      return true;
+    } else {
+      return false;
+    }
+  }
 }
+
+
+/** To insert the tuple, create a fresh new entry, assign the current
+    timestamp, and insert into the primary set, all secondaries, and all
+    aggregates. */
+void
+Table2::insertTuple(TuplePtr t)
+{
+  // Create a fresh new entry
+  Entry* newEntry = new Entry(t);
+
+  // Primary index. XXX Here I might be able to use the "hint" from the
+  // findInTable method if that were exported.
+  _primaryIndex.insert(newEntry); // I ignore the return value
+  
+  // Secondary indices. For all indices, insert.
+
+  // Insert into time-ordered queue if we're flushing.
+  if (_flushing) {
+    _queue.push_front(newEntry);
+  }
+  
+  // Aggregates. For all aggregates, insert.
+}
+
+
+void
+Table2::removeTuple(TuplePtr t)
+{
+  // Primary index
+
+  // Secondary indices
+
+  // Aggregates
+}
+
+
+void
+Table2::flush()
+{
+  // If we're not flushing, do nothing
+  if (!_flushing) {
+    return;
+  }
+
+  // Start from the bottom of the queue and keep removing until the
+  // first non-expired entry is found, if tuples do expire.
+  if (!_maxLifetime.is_pos_infinity()) {
+    // We do have a queue
+    boost::posix_time::ptime now;
+    getTime(now);
+    
+    boost::posix_time::ptime expiryTime;
+    expiryTime = now - _maxLifetime;
+
+
+    while (_queue.size() > 0) {
+      // Check this element's insertion time
+      Entry * last = _queue.back();
+      if (last->time < expiryTime) {
+        // Remove the contained tuple from the table
+        removeTuple(last->tuple);
+
+        // Remove the entry from the queue
+        _queue.pop_back();
+
+        // Eliminate the entry
+        delete last;
+      } else {
+        // We've found the first non-expiring entry. Stop the
+        // iteration. 
+        break;
+      }
+    }
+  }
+
+  // Start from the bottom of the queue and keep removing until the size
+  // of the primary index is the maximum table size, if there is a
+  // maximum table size
+  if (_maxSize > 0) {
+    while ((_queue.size() > 0) &&
+           (_primaryIndex.size() > _maxSize)) {
+      Entry * last = _queue.back();
+
+      // Remove the contained tuple from the table
+      removeTuple(last->tuple);
+      
+      // Remove the entry from the queue
+      _queue.pop_back();
+      
+      // Eliminate the entry
+      delete last;
+    }
+  }
+}
+
+
