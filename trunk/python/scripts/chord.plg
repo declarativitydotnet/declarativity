@@ -32,10 +32,10 @@
 /* The base tuples */
 
 materialize(node, infinity, 1, keys(1)).
-materialize(finger, 10, 160, keys(2)).
+materialize(finger, 180, 160, keys(2)).
 materialize(bestSucc, infinity, 1, keys(1)).
 materialize(succDist, 2, 100, keys(2)).
-materialize(succ, infinity, 4, keys(2)).
+materialize(succ, infinity, 100, keys(2)).
 materialize(pred, infinity, 100, keys(1)).
 materialize(succCount, infinity, 1, keys(1)).
 materialize(join, 10, 5, keys(1)).
@@ -52,7 +52,6 @@ watch(lookupResults).
 watch(lookup).
 watch(bestLookupDist).
 */
-
 
 l1 lookupResults@R(R,K,S,SI,E) :- node@NI(NI,N),
 				  lookup@NI(NI,K,R,E), 
@@ -159,7 +158,7 @@ f7 delete fFix@NI(NI,E,I1) :- eagerFinger@NI(NI,I,B,BI),
 
 
 f8 nextFingerFix@NI(NI,0) :- eagerFinger@NI(NI,I,B,BI), 
-			   ((I == 9) || (BI == NI)).
+			   ((I == 0) || (BI == NI)).
 
 f9 nextFingerFix@NI(NI,I) :- node@NI(NI,N), 
 			   eagerFinger@NI(NI,I1,B,BI), 
@@ -198,6 +197,8 @@ c6 join@NI(NI, Delay) :- periodic@NI(NI, E, 0, 1), Delay := 0.
 
 /** Stabilization */
 
+watch(succ).
+watch(bestSucc).
 /*watch(stabilize).
 watch(succ).
 watch(pred).
