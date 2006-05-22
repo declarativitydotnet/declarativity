@@ -7,14 +7,6 @@
 # Berkeley, CA,  94707. Attention: P2 Group.
 #
 
-TEST_SOURCES = 	testMarshal.C \
-		testPel.C \
-		testTables.C \
-		testTable2.C \
-		testIDs.C \
-		testCsv.C \
-		testLists.C
-
 
 lib_LTLIBRARIES = libp2unitTests.la
 
@@ -22,15 +14,18 @@ libp2unitTests_la_SOURCES = \
 	testTable2.C \
 	testBasicElementPlumbing.C \
 	testValues.C \
+	testTables.C \
+	testIDs.C \
 	testFdbufs.C \
+	testCsv.C \
 	testMarshal.C \
-	testPel.C
+	testPel.C \
+	testLists.C
 
 
 
 
-$(PROGRAMS): $(LDEPS) \
-		$(TEST_SOURCES)
+$(PROGRAMS): $(LDEPS) 
 
 bin_PROGRAMS = p2Test p2TestTable2
 
@@ -60,7 +55,7 @@ p2TestTable2_LDADD = \
 
 CLEANFILES = core *.core *~
 
-EXTRA_DIST = .cvsignore $(p2Test_SOURCES) $(TEST_SOURCES)\
+EXTRA_DIST = .cvsignore $(p2Test_SOURCES) \
 		$(libp2unitTests_la_SOURCES:.C=.h)
 
 

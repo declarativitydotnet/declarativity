@@ -27,6 +27,8 @@
 #include "val_ip_addr.h"
 #include "val_list.h"
 
+#include "testLists.h"
+
 class testLists
 {
 public:
@@ -325,16 +327,11 @@ void testConcat()
 
 #undef TEST_LISTMEMBER
 
-class testLists_testSuite
-  : public boost::unit_test_framework::test_suite
+testLists_testSuite::testLists_testSuite() 
+  : boost::unit_test_framework::test_suite("testLists")
 {
-   public:
-      testLists_testSuite() 
-      : boost::unit_test_framework::test_suite("testLists")
-      {
-         boost::shared_ptr<testLists> instance(new testLists());
-         add(BOOST_CLASS_TEST_CASE(&testLists::testIntersection, instance));
-         add(BOOST_CLASS_TEST_CASE(&testLists::testMembership, instance));
-         add(BOOST_CLASS_TEST_CASE(&testLists::testConcat, instance));
-      }
-};
+  boost::shared_ptr<testLists> instance(new testLists());
+  add(BOOST_CLASS_TEST_CASE(&testLists::testIntersection, instance));
+  add(BOOST_CLASS_TEST_CASE(&testLists::testMembership, instance));
+  add(BOOST_CLASS_TEST_CASE(&testLists::testConcat, instance));
+}

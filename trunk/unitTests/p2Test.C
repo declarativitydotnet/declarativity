@@ -17,10 +17,10 @@ using boost::unit_test_framework::test_suite;
 #include "testBasicElementPlumbing.h"
 #include "testFdbufs.h"
 #include "testValues.h"
+#include "testCsv.h"
+#include "testTables.h"
+#include "testIDs.h"
 
-#include "testCsv.C"
-#include "testTables.C"
-#include "testIDs.C"
 #include "testLists.C"
 
 test_suite* init_unit_test_suite(int, char**)
@@ -31,10 +31,10 @@ test_suite* init_unit_test_suite(int, char**)
   top->add(new testTable2_testSuite());
   top->add(new testMarshal_testSuite());
   top->add(new testBasicElementPlumbing_testSuite());
-
   top->add(new testFdbufs_testSuite());
   top->add(new testValues_testSuite());
   top->add(new testCsv_testSuite());
+
   top->add(new testTables_testSuite());
   top->add(new testIDs_testSuite());
   top->add(new testLists_testSuite());

@@ -19,6 +19,8 @@
 
 #include "limits.h" // for INT_MAX
 
+#include "testTables.h"
+
 class testTables
 {
 public:
@@ -966,21 +968,16 @@ testTables::testMultiFieldKeys()
 
 
 
-class testTables_testSuite
-  : public boost::unit_test_framework::test_suite
+testTables_testSuite::testTables_testSuite()
+  : boost::unit_test_framework::test_suite("testTables: Marshaling/Unmarshaling")
 {
-public:
-  testTables_testSuite()
-    : boost::unit_test_framework::test_suite("testTables: Marshaling/Unmarshaling")
-  {
-    boost::shared_ptr<testTables> instance(new testTables());
-
-    add(BOOST_CLASS_TEST_CASE(&testTables::testIndexing, instance));
-    add(BOOST_CLASS_TEST_CASE(&testTables::testBatchRemovals, instance));
-    add(BOOST_CLASS_TEST_CASE(&testTables::testBatchMultikeyRemovals, instance));
-    add(BOOST_CLASS_TEST_CASE(&testTables::testUniqueTupleRemovals, instance));
-    add(BOOST_CLASS_TEST_CASE(&testTables::testSuperimposedIndexRemoval, instance));
-    add(BOOST_CLASS_TEST_CASE(&testTables::testAggregates, instance));
-    add(BOOST_CLASS_TEST_CASE(&testTables::testMultiFieldKeys, instance));
-  }
-};
+  boost::shared_ptr<testTables> instance(new testTables());
+  
+  add(BOOST_CLASS_TEST_CASE(&testTables::testIndexing, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTables::testBatchRemovals, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTables::testBatchMultikeyRemovals, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTables::testUniqueTupleRemovals, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTables::testSuperimposedIndexRemoval, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTables::testAggregates, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTables::testMultiFieldKeys, instance));
+}

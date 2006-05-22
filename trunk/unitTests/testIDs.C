@@ -22,6 +22,7 @@
 #include "val_opaque.h"
 #include "val_id.h"
 
+#include "testIDs.h"
 
 class testIDs
 {
@@ -769,24 +770,20 @@ testIDs::num_addtests =
 
 
 
-class testIDs_testSuite
-  : public boost::unit_test_framework::test_suite
+testIDs_testSuite::testIDs_testSuite()
+  : boost::unit_test_framework::test_suite("testIDs")
 {
-public:
-  testIDs_testSuite()
-    : boost::unit_test_framework::test_suite("testIDs")
-  {
-    boost::shared_ptr<testIDs> instance(new testIDs());
-    
-    add(BOOST_CLASS_TEST_CASE(&testIDs::testComparisons,
-                              instance));
-    add(BOOST_CLASS_TEST_CASE(&testIDs::testBetween,
-                              instance));
-    add(BOOST_CLASS_TEST_CASE(&testIDs::testDistance,
-                              instance));
-    add(BOOST_CLASS_TEST_CASE(&testIDs::testShifts,
-                              instance));
-    add(BOOST_CLASS_TEST_CASE(&testIDs::testAdditions,
-                              instance));
-  }
-};
+  boost::shared_ptr<testIDs> instance(new testIDs());
+  
+  add(BOOST_CLASS_TEST_CASE(&testIDs::testComparisons,
+                            instance));
+  add(BOOST_CLASS_TEST_CASE(&testIDs::testBetween,
+                            instance));
+  add(BOOST_CLASS_TEST_CASE(&testIDs::testDistance,
+                            instance));
+  add(BOOST_CLASS_TEST_CASE(&testIDs::testShifts,
+                            instance));
+  add(BOOST_CLASS_TEST_CASE(&testIDs::testAdditions,
+                            instance));
+}
+

@@ -15,6 +15,8 @@
 #include "csvparser.h"
 #include "val_str.h"
 
+#include "testCsv.h"
+
 char *null_str = "__null_tuple";
 
 class testCsv
@@ -123,24 +125,19 @@ testCsv::ctests[] = {
   { __LINE__, "\r\n",		    null_str }
 };
 
+
 const size_t
 testCsv::num_ctests = sizeof(testCsv::ctests) /
                      sizeof(testCsv::csv_test);
 
 
 
-
-class testCsv_testSuite
-  : public boost::unit_test_framework::test_suite
+testCsv_testSuite::testCsv_testSuite()
+  : boost::unit_test_framework::test_suite("testCsv")
 {
-public:
-  testCsv_testSuite()
-    : boost::unit_test_framework::test_suite("testCsv")
-  {
-    boost::shared_ptr<testCsv> instance(new testCsv());
-    
-    
-    add(BOOST_CLASS_TEST_CASE(&testCsv::tests,
-                              instance));
-  }
-};
+  boost::shared_ptr<testCsv> instance(new testCsv());
+  
+  add(BOOST_CLASS_TEST_CASE(&testCsv::tests,
+                            instance));
+}
+  
