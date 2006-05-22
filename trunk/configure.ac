@@ -12,8 +12,6 @@
 # 
 #   $Id$
 # 
-#
-
 # Process this file with autoconf to produce a configure script.
 
 AC_INIT(p2,0.1)
@@ -77,6 +75,7 @@ AC_CONFIG_FILES([
 	python/p2/net/Makefile
 	python/p2/overlog/Makefile
 	python/dfparser/Makefile
+	python/dfparser/yapps/Makefile
 	elements/Makefile 
 	net/Makefile 
 	tests/Makefile 
