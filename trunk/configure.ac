@@ -20,7 +20,7 @@ AC_INIT(p2,0.1)
 AC_CONFIG_SRCDIR(p2core/element.h)
 # AC_CONFIG_AUX_DIR(config)
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(p2,0.6)
+AM_INIT_AUTOMAKE(p2,0.7)
 
 
 # Checks for programs.

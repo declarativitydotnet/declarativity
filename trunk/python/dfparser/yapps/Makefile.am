@@ -7,8 +7,10 @@
 # Berkeley, CA,  94707. Attention: P2 Group.
 #
 
-EXTRA_DIST = README \
-             scripts/dfrun.py scripts/netcc.py \
-             scripts/recv.df scripts/sender.df
 
-SUBDIRS=p2 dfparser
+all: parsedesc.py
+
+%.py: %.g yapps2.py yappsrt.py
+	@PYTHON@ yapps2.py $<
+
+CLEANFILES = *.pyc

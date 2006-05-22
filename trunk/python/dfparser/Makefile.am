@@ -2,24 +2,26 @@
 #
 #  @(#)$Id$
 #
-# Copyright (c) 2005 Intel Corporation. All rights reserved.
-#
-# This file is distributed under the terms in the attached INTEL-LICENSE file.
-# If you do not find these files, copies can be found by writing to:
+# This file is distributed under the terms in the attached LICENSE file.
+# If you do not find this file, copies can be found by writing to:
 # Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
 # Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
-#
+# Or
+# UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+# Berkeley, CA,  94707. Attention: P2 Group.
 #
 
-export PYTHONPATH=$(top_builddir)/python/dfparser/yapps:$(top_builddir)/python/lib
+PYTHONPATH = $(top_builddir)/python/dfparser/yapps:$(top_builddir)/python/lib
 
 all: dataflow.g
-	python $(top_builddir)/python/dfparser/yapps/yapps2.py dataflow.g dfparser.py
+	@PYTHON@ $(top_builddir)/python/dfparser/yapps/yapps2.py dataflow.g dfparser.py
 
 CLEANFILES = core *.core *.pyc dfparser.py *.dot *.ps
+
 EXTRA_DIST = dataflow.g \
              yapps/Makefile yapps/parsedesc.g \
              yapps/yapps2.py yapps/yappsrt.py
 
 MAINTAINERCLEANFILES = Makefile.in
-SUBDIRS=yapps
+
+SUBDIRS = yapps

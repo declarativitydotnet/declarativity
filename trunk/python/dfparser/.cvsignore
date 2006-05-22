@@ -1,7 +1,6 @@
 *.lo *.la
 Makefile.in
 Makefile
-pel_lexer.C
 .deps .libs
 *.gen.h *.gen.txt
 semantic.cache

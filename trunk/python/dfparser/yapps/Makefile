@@ -4,4 +4,9 @@ all: $(shell echo *.g | sed s/.g/.py/g )
 	python yapps2.py $<
 
 clean:
-	rm *.pyc
+	${RM} -f *.pyc
+
+distclean:
+	${RM} -f *.pyc
+
+
