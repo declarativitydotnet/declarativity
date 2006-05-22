@@ -97,7 +97,6 @@ typedef Lookup< Table::MultIterator, Table::MultLookupGenerator > MultLookup;
 
 
 //////////////////////////////////////////////////////////////////////////////////
-// VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//
 // What would be in the .C file, if this weren't a template                     //
 //////////////////////////////////////////////////////////////////////////////////
 

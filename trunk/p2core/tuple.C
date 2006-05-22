@@ -194,3 +194,10 @@ Tuple::~Tuple()
     delete _tags;
   }
 }
+
+
+uint
+Tuple::ID()
+{
+  return _ID;
+}

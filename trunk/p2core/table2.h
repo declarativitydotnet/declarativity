@@ -59,22 +59,16 @@ public:
 
 
   /** Some default keys */
-  static Key
-    KEY0;
-
-  static Key
-    KEY1;
-
-  static Key
-    KEY2;
-
-  static Key
-    KEY3;
-
-
-  /** A value ptr vector is a vector of value ptrs (i.e., those in
-      tuples, lists, etc. */
-  typedef std::vector< ValuePtr > ValuePtrVector;
+  static Key KEYID;
+  static Key KEY0;
+  static Key KEY1;
+  static Key KEY2;
+  static Key KEY3;
+  static Key KEY01;
+  static Key KEY12;
+  static Key KEY23;
+  static Key KEY13;
+  static Key KEY123;
 
 
 
@@ -83,65 +77,68 @@ public:
   // Comparators
   ////////////////////////////////////////////////////////////
 
-  /** A comparator of keys */
-  std::set< Key >::key_compare keyCompare;
-
-
-  /** A comparator object for vectors of unsigneds, i.e., Key specs */
-  struct unsignedVectorLess
+  /** A comparator object for key specs */
+  struct KeyComparator
   {
-    bool operator()(const Key first,
-                    const Key second) const;
-  };
-
-
-  /** A comparator object for vectors of value ptrs, i.e., tuples. */
-  struct valuePtrVectorLess
-  {
-    bool operator()(const ValuePtrVector first,
-                    const ValuePtrVector second) const;
+    bool
+    operator()(const Key* first,
+               const Key* second) const;
   };
 
 
   /** A comparator of value ptr vectors by a given key */
-  struct KeyedComparator
+  struct KeyedEntryComparator
   {
     /** What's my key spec? */
-    Key _key;
+    const Key& _key;
     
     /** Construct me */
-    KeyedComparator(const Key key);
+    KeyedEntryComparator(const Key& key);
     
     
     /** My comparison operator */
-    bool operator()(const Entry *,
-                    const Entry *) const;
+    bool
+    operator()(const Entry *,
+               const Entry *) const;
   };
 
 
 
 
   ////////////////////////////////////////////////////////////
-  // Primary Index
+  // Indices
   ////////////////////////////////////////////////////////////
   
   /** A primary index is a set of Entries sorted by those tuple values
       indicated by a key designation. The key designation will appear
-      within the particular KeyedComparator objected passed during
+      within the particular KeyedComparator object passed during
       construction */
-  typedef std::set< Entry *, KeyedComparator > PrimaryIndex;
+  typedef std::set< Entry *, KeyedEntryComparator > PrimaryIndex;
 
-  
+
+  /** A secondary index is a multiset of Entries sorted by those tuple
+      values indicated by a key designation. The key designation will
+      appear within the particular KeyedComparator object passed during
+      construction */
+  typedef std::multiset< Entry *, KeyedEntryComparator > SecondaryIndex;
+
+
+  /** An index of indices secondary indices is a map from key
+      designations to secondary indices. */
+  typedef std::map< Key*, SecondaryIndex*, KeyComparator > SecondaryIndexIndex;
+
+
 
 
   ////////////////////////////////////////////////////////////
   // Secondary indices
   ////////////////////////////////////////////////////////////
 
-  /** Create a secondary index on the given sequence of field
-      numbers. The sequence must not be empty.  */
-  void
-  secondaryIndex(Key key);
+  /** Create a secondary index on the given key spec. The key spec must
+      not be empty. If such an index exists already nothing is done and
+      false is returned. Otherwise, true is returned. */
+  bool
+  secondaryIndex(Key& key);
 
 
 
@@ -156,28 +153,34 @@ public:
   /**  Create a new table.  name is an identifying string.  key is a
        vector containing a sequence of field numbers, which make up the
        primary key of the table; an empty key vector means the implicit
-       record number (a counter) is the primary key.  maxSize is how
-       many tuples it will hold before discarding (FIFO) and must be
-       non-negative.  Max size of 0 means unlimited table size.
-       lifetime is how long to keep tuples for before discarding and
-       must be a positive time duration; a lifetime may be positive
-       infinite, indicating no expiration. */
+       tuple ID is the primary key.  maxSize is how many tuples it will
+       hold before discarding (FIFO) and must be non-negative.  Max size
+       of 0 means unlimited table size.  lifetime is how long to keep
+       tuples for before discarding and must be a positive time
+       duration; a lifetime may be positive infinite, indicating no
+       expiration. */
   Table2(string tableName,
-         Key key,
+         Key& key,
          size_t maxSize,
          boost::posix_time::time_duration& lifetime);
 
   /** A convenience constructor that allows the use of string
       representations for maximum tuple lifetime. */
   Table2(string tableName,
-         Key key,
+         Key& key,
          size_t maxSize,
          string lifetime);
   
+
   /** A convenience constructor that does not expire tuples. */
   Table2(string tableName,
-         Key key,
+         Key& key,
          size_t maxSize);
+  
+
+  /** A convenience constructor with no size or time limits. */
+  Table2(string tableName,
+         Key& key);
   
 
   /** A destructor. It empties out the table and then destroys it. */
@@ -195,9 +198,69 @@ public:
       physically removed). */
   size_t
   size();
+  
+  
+  
+  
+  ////////////////////////////////////////////////////////////
+  // Lookup Iterator
+  ////////////////////////////////////////////////////////////
 
+  /** An opaque container for the iterator logic to be used with
+      indices.  It hides details about the underlying STL index, i.e.,
+      whether it's a set or a multiset.  As far as the interface is
+      concerned, an index is an index. */
+  class Iterator {
+  public:
+    /** Fetch the next tuple pointer, or null if no next tuple exists */
+    TuplePtr next();
+    
+    
+    /** Is the iterator done? */
+    bool done();
+    
+    
+    /** The constructor just initializes the iterator */
+    Iterator(std::deque< TuplePtr >* spool);
+
+
+    /** The destructor kills the spool queue */
+    ~Iterator();
+    
+    
+    
+
+  private:
+    /** The iterator's data. This is spooled, instead of read on-line
+        from the table, to deal with the following STL interface
+        concurrency shortcoming: if an iterator still has elements to
+        traverse while the underlying container is concurrently modified
+        (e.g., shrunk), there's no way to tell that the iterator is
+        viewing an inconsistent view of the container (e.g., pointing at
+        a removed element) but instead segfaults. */
+    std::deque< TuplePtr >* _spool;
+  };
+
+
+  /** A pointer to lookup iterators */
+  typedef boost::shared_ptr< Iterator > IteratorPtr;
   
   
+  
+  
+  ////////////////////////////////////////////////////////////
+  // Lookups
+  ////////////////////////////////////////////////////////////
+
+  /** Returns a pointer to a lookup iterator on all elements matching
+      the given tuple on the index specified by the key spec. If no such
+      index exists, a null pointer is returned. */
+  IteratorPtr
+  lookup(Key& key, TuplePtr t);
+  
+
+
+
 
   ////////////////////////////////////////////////////////////
   // Updates
@@ -239,7 +302,7 @@ private:
 
 
   /** My primary key. If empty, use the tuple ID. */
-  Key _key;
+  Key& _key;
 
 
   /** My maximum size in tuples. If 0, size is unlimited. */
@@ -251,11 +314,15 @@ private:
   boost::posix_time::time_duration _maxLifetime;
 
 
-  /** My secondary indices, indexed by index key.  Recall that index
-      keys are represented as sequences of field numbers. */
-  std::set< Key, valuePtrVectorLess > _indices;
+  /** My secondary indices, sorted by key spec. */
+  SecondaryIndexIndex _indices;
 
 
+  /** A queue holding all secondary index comparator objects for
+      elimination during destruction */
+  std::deque< KeyedEntryComparator* > _keyedComparators;
+
+  
   /** My primary index */
   PrimaryIndex _primaryIndex;
 

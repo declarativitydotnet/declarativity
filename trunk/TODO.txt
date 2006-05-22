@@ -96,4 +96,5 @@
  - Use shared pointers (or a materialized version thereof) to implement
    the count algorithm for multiply-derived tuples.
 
- 
+ - Do we need the store.[Ch] files? Are they subsumed by the individual
+   elements?  If so, remove.

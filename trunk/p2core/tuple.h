@@ -48,6 +48,7 @@ private:
   static uint
   _tupleIDCounter;
 
+
   /** My ID */
   uint _ID;
 
@@ -108,6 +109,14 @@ public:
       EMPTY->freeze();
     }
   };
+
+
+  /** My ID */
+  uint
+  ID();
+
+
+
 
 private:
   /** And the empty initializer object */

@@ -13,6 +13,7 @@ TEST_SOURCES = 	testBasicElementPlumbing.C \
 		testPel.C \
 		testValues.C \
 		testTables.C \
+		testTable2.C \
 		testIDs.C \
 		testCsv.C \
 		testLists.C
