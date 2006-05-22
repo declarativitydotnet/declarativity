@@ -8,15 +8,16 @@
  * Berkeley, CA,  94707. Attention: P2 Group.
  */
 
+#ifndef __TESTPEL_H__
+#define __TESTPEL_H__
+
 #include "boost/test/unit_test.hpp"
-using boost::unit_test_framework::test_suite; 
 
-#include "testTable2.h"
-
-test_suite* init_unit_test_suite(int, char**)
+class testPel_testSuite
+  : public boost::unit_test_framework::test_suite
 {
-  test_suite *top = BOOST_TEST_SUITE("P2 Unit Test Suite for Table2");
-  
-  top->add(new testTable2_testSuite());
-  return top;
-}
+public:
+  testPel_testSuite();
+};
+
+#endif

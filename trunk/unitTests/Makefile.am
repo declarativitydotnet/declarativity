@@ -7,11 +7,8 @@
 # Berkeley, CA,  94707. Attention: P2 Group.
 #
 
-TEST_SOURCES = 	testBasicElementPlumbing.C \
-		testFdbufs.C \
-		testMarshal.C \
+TEST_SOURCES = 	testMarshal.C \
 		testPel.C \
-		testValues.C \
 		testTables.C \
 		testTable2.C \
 		testIDs.C \
@@ -19,14 +16,40 @@ TEST_SOURCES = 	testBasicElementPlumbing.C \
 		testLists.C
 
 
+lib_LTLIBRARIES = libp2unitTests.la
+
+libp2unitTests_la_SOURCES = \
+	testTable2.C \
+	testBasicElementPlumbing.C \
+	testValues.C \
+	testFdbufs.C \
+	testMarshal.C \
+	testPel.C
+
+
+
+
 $(PROGRAMS): $(LDEPS) \
 		$(TEST_SOURCES)
 
-bin_PROGRAMS = p2Test
+bin_PROGRAMS = p2Test p2TestTable2
 
 p2Test_SOURCES =	p2Test.C
 
 p2Test_LDADD = \
+	$(top_builddir)/unitTests/.libs/libp2unitTests.a \
+	$(top_builddir)/overlog/.libs/liboverlog.a \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
+	-lboost_unit_test_framework
+
+
+p2TestTable2_SOURCES =	p2TestTable2.C
+
+p2TestTable2_LDADD = \
+	$(top_builddir)/unitTests/.libs/libp2unitTests.a \
 	$(top_builddir)/overlog/.libs/liboverlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
@@ -37,7 +60,9 @@ p2Test_LDADD = \
 
 CLEANFILES = core *.core *~
 
-EXTRA_DIST = .cvsignore $(p2Test_SOURCES) $(TEST_SOURCES)
+EXTRA_DIST = .cvsignore $(p2Test_SOURCES) $(TEST_SOURCES)\
+		$(libp2unitTests_la_SOURCES:.C=.h)
+
 
 INCLUDES =	@BOOST_INC@ \
 		-I$(top_builddir)/p2core \

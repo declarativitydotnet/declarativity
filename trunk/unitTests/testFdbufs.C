@@ -29,6 +29,7 @@
 #include "val_id.h"
 #include "val_list.h"
 
+#include "testFdbufs.h"
 
 using namespace boost::gregorian;
 using namespace boost::posix_time;
@@ -147,19 +148,14 @@ public:
 
 
 
-class testFdbufs_testSuite
-  : public boost::unit_test_framework::test_suite
+testFdbufs_testSuite::testFdbufs_testSuite()
+  : boost::unit_test_framework::test_suite("testFdbufs")
 {
-public:
-  testFdbufs_testSuite()
-    : boost::unit_test_framework::test_suite("testFdbufs")
-  {
-    boost::shared_ptr<testFdbufs> instance(new testFdbufs());
-    
-    
-    add(BOOST_CLASS_TEST_CASE(&testFdbufs::originalTests,
-                              instance));
-    add(BOOST_CLASS_TEST_CASE(&testFdbufs::xdrTests,
-                              instance));
-  }
-};
+  boost::shared_ptr<testFdbufs> instance(new testFdbufs());
+  
+  
+  add(BOOST_CLASS_TEST_CASE(&testFdbufs::originalTests,
+                            instance));
+  add(BOOST_CLASS_TEST_CASE(&testFdbufs::xdrTests,
+                            instance));
+}

@@ -11,14 +11,15 @@
 #include "boost/test/unit_test.hpp"
 using boost::unit_test_framework::test_suite; 
 
-#include "testMarshal.C"
-#include "testBasicElementPlumbing.C"
-#include "testFdbufs.C"
-#include "testPel.C"
-#include "testValues.C"
+#include "testPel.h"
+#include "testTable2.h"
+#include "testMarshal.h"
+#include "testBasicElementPlumbing.h"
+#include "testFdbufs.h"
+#include "testValues.h"
+
 #include "testCsv.C"
 #include "testTables.C"
-#include "testTable2.C"
 #include "testIDs.C"
 #include "testLists.C"
 
@@ -26,14 +27,15 @@ test_suite* init_unit_test_suite(int, char**)
 {
   test_suite *top = BOOST_TEST_SUITE("P2 Unit Test Suite");
   
+  top->add(new testPel_testSuite());
+  top->add(new testTable2_testSuite());
   top->add(new testMarshal_testSuite());
   top->add(new testBasicElementPlumbing_testSuite());
+
   top->add(new testFdbufs_testSuite());
-  top->add(new testPel_testSuite());
   top->add(new testValues_testSuite());
   top->add(new testCsv_testSuite());
   top->add(new testTables_testSuite());
-  top->add(new testTable2_testSuite());
   top->add(new testIDs_testSuite());
   top->add(new testLists_testSuite());
   return top;

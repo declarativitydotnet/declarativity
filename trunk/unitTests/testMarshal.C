@@ -20,6 +20,8 @@
 #include "val_tuple.h"
 #include "val_uint64.h"
 
+#include "testMarshal.h"
+
 class testMarshal
 {
 private:
@@ -107,18 +109,13 @@ public:
 
 };
 
-class testMarshal_testSuite
-  : public boost::unit_test_framework::test_suite
+testMarshal_testSuite::testMarshal_testSuite()
+  : boost::unit_test_framework::test_suite("testMarshal: Marshaling/Unmarshaling")
 {
-public:
-  testMarshal_testSuite()
-    : boost::unit_test_framework::test_suite("testMarshal: Marshaling/Unmarshaling")
-  {
-    boost::shared_ptr<testMarshal> instance(new testMarshal());
-
-    add(BOOST_CLASS_TEST_CASE(&testMarshal::testM, instance));
-    add(BOOST_CLASS_TEST_CASE(&testMarshal::testU, instance));
-    add(BOOST_CLASS_TEST_CASE(&testMarshal::testMF, instance));
-    add(BOOST_CLASS_TEST_CASE(&testMarshal::testUF, instance));
-  }
-};
+  boost::shared_ptr<testMarshal> instance(new testMarshal());
+  
+  add(BOOST_CLASS_TEST_CASE(&testMarshal::testM, instance));
+  add(BOOST_CLASS_TEST_CASE(&testMarshal::testU, instance));
+  add(BOOST_CLASS_TEST_CASE(&testMarshal::testMF, instance));
+  add(BOOST_CLASS_TEST_CASE(&testMarshal::testUF, instance));
+}

@@ -25,6 +25,8 @@
 #include "timedPullSink.h"
 #include "slot.h"
 
+#include "testBasicElementPlumbing.h"
+
 class testBasicElementPlumbing
 {
 private:
@@ -375,56 +377,53 @@ public:
 
 
 
-class testBasicElementPlumbing_testSuite
-  : public boost::unit_test_framework::test_suite
+testBasicElementPlumbing_testSuite::testBasicElementPlumbing_testSuite()
+  : boost::unit_test_framework::
+test_suite("testBasicElementPlumbing: Marshaling/Unmarshaling")
 {
-public:
-  testBasicElementPlumbing_testSuite()
-    : boost::unit_test_framework::test_suite("testBasicElementPlumbing: Marshaling/Unmarshaling")
-  {
-    boost::shared_ptr<testBasicElementPlumbing> instance(new testBasicElementPlumbing());
-    
-    
-    add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckHookupElements_NonExistentToElement,
-                              instance));
+  boost::shared_ptr<testBasicElementPlumbing> instance(new testBasicElementPlumbing());
+  
+  
+  add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckHookupElements_NonExistentToElement,
+                            instance));
+  
+  add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckHookupElements_NonExistentFromElement,
+                            instance));
+  
+  add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckHookupElements_NegativeFromPort,
+                            instance));
+  
+  add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckHookupElements_NegativeToPort,
+                            instance));
+  
+  add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckHookupRange_IncorrectFromPort,
+                            instance));
+  
+  add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckHookupRange_IncorrectToPort,
+                            instance));
+  
+  add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckHookupRange_IncorrectPorts,
+                            instance));
+  
+  add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckHookupRange_Portless,
+                            instance));
+  
+  add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckPushPull_PullToPush,
+                            instance));
+  
+  add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckPushPull_PullToPushHop,
+                            instance));
+  
+  add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckPushPull_PullToPushMultiHop,
+                            instance));
+  
+  add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckPushPull_PullToPullMultiHop,
+                            instance));
+  
+  add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testDuplicates_UnusedPort,
+                            instance));
+  
+  add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testDuplicates_ReusedPort,
+                            instance));
+}
 
-    add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckHookupElements_NonExistentFromElement,
-                              instance));
-
-    add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckHookupElements_NegativeFromPort,
-                              instance));
-
-    add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckHookupElements_NegativeToPort,
-                              instance));
-
-    add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckHookupRange_IncorrectFromPort,
-                              instance));
-
-    add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckHookupRange_IncorrectToPort,
-                              instance));
-
-    add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckHookupRange_IncorrectPorts,
-                              instance));
-
-    add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckHookupRange_Portless,
-                              instance));
-
-    add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckPushPull_PullToPush,
-                              instance));
-
-    add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckPushPull_PullToPushHop,
-                              instance));
-
-    add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckPushPull_PullToPushMultiHop,
-                              instance));
-
-    add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testCheckPushPull_PullToPullMultiHop,
-                              instance));
-
-    add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testDuplicates_UnusedPort,
-                              instance));
-
-    add(BOOST_CLASS_TEST_CASE(&testBasicElementPlumbing::testDuplicates_ReusedPort,
-                              instance));
-  }
-};

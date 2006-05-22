@@ -8,15 +8,31 @@
  * Berkeley, CA,  94707. Attention: P2 Group.
  */
 
+#ifndef __TESTTABLE2_H__
+#define __TESTTABLE2_H__
+
 #include "boost/test/unit_test.hpp"
-using boost::unit_test_framework::test_suite; 
 
-#include "testTable2.h"
-
-test_suite* init_unit_test_suite(int, char**)
+class testTable2
 {
-  test_suite *top = BOOST_TEST_SUITE("P2 Unit Test Suite for Table2");
-  
-  top->add(new testTable2_testSuite());
-  return top;
-}
+public:
+  testTable2()
+  {
+  }
+
+  /** Create table, destroy table, with different primary keys, tuple
+      lifetimes, size limits. */
+  void
+  testCreateDestroy();
+};
+
+
+class testTable2_testSuite
+  : public boost::unit_test_framework::test_suite
+{
+public:
+  testTable2_testSuite();
+};
+
+
+#endif

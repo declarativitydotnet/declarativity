@@ -20,6 +20,7 @@
 #include "val_uint64.h"
 #include "val_double.h"
 #include "val_opaque.h"
+#include "val_id.h"
 
 
 class testIDs

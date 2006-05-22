@@ -25,6 +25,9 @@
  *
  */
 
+#ifndef __TABLE2_H__
+#define __TABLE2_H__
+
 #include "value.h"
 #include "tuple.h"
 #include <set>
@@ -396,3 +399,5 @@ private:
 
 /** A pointer to tables */
 typedef boost::shared_ptr< Table2 > Table2Ptr;
+
+#endif

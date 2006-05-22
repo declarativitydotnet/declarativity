@@ -32,6 +32,8 @@
 #include "val_str.h"
 #include "val_list.h"
 
+#include "testValues.h"
+
 using namespace opr;
 
 
@@ -905,29 +907,24 @@ testImplicitConversions()
 
 };
 
-class testValues_testSuite
-  : public boost::unit_test_framework::test_suite
+testValues_testSuite::testValues_testSuite()
+  : boost::unit_test_framework::test_suite("testValues")
 {
-public:
-  testValues_testSuite()
-    : boost::unit_test_framework::test_suite("testValues")
-  {
-    boost::shared_ptr<testValues> instance(new testValues());
-    
-    
-    add(BOOST_CLASS_TEST_CASE(&testValues::testConstructions,
-                              instance));
-    add(BOOST_CLASS_TEST_CASE(&testValues::testSelfCasts,
-                              instance));
-    add(BOOST_CLASS_TEST_CASE(&testValues::testCorrectCasts,
-                              instance));
-    /*add(BOOST_CLASS_TEST_CASE(&testValues::testIDCasts,
-                              instance));
-    */
-    add(BOOST_CLASS_TEST_CASE(&testValues::testBadCasts,
-                              instance));
-    
-    add(BOOST_CLASS_TEST_CASE(&testValues::testImplicitConversions,
-                              instance));
-  }
-};
+  boost::shared_ptr<testValues> instance(new testValues());
+  
+  
+  add(BOOST_CLASS_TEST_CASE(&testValues::testConstructions,
+                            instance));
+  add(BOOST_CLASS_TEST_CASE(&testValues::testSelfCasts,
+                            instance));
+  add(BOOST_CLASS_TEST_CASE(&testValues::testCorrectCasts,
+                            instance));
+  /*add(BOOST_CLASS_TEST_CASE(&testValues::testIDCasts,
+    instance));
+  */
+  add(BOOST_CLASS_TEST_CASE(&testValues::testBadCasts,
+                            instance));
+  
+  add(BOOST_CLASS_TEST_CASE(&testValues::testImplicitConversions,
+                            instance));
+}

@@ -15,6 +15,7 @@
 #include "val_str.h"
 #include "val_tuple.h"
 #include "val_uint64.h"
+#include "val_int32.h"
 
 #include "limits.h" // for INT_MAX
 

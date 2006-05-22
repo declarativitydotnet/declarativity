@@ -25,6 +25,8 @@
 #include "val_opaque.h"
 #include "val_list.h"
 
+#include "testPel.h"
+
 class testPel
 {
 public:
@@ -1264,19 +1266,14 @@ const size_t testPel::num_vtests =
                   sizeof(testPel::ValTest);
 
 
-class testPel_testSuite
-  : public boost::unit_test_framework::test_suite
+testPel_testSuite::testPel_testSuite()
+  : boost::unit_test_framework::test_suite("testPel")
 {
-public:
-  testPel_testSuite()
-    : boost::unit_test_framework::test_suite("testPel")
-  {
-    boost::shared_ptr<testPel> instance(new testPel());
-    
-    
-    add(BOOST_CLASS_TEST_CASE(&testPel::compilerTests,
-                              instance));
-    add(BOOST_CLASS_TEST_CASE(&testPel::vmTests,
-                              instance));
-  }
-};
+  boost::shared_ptr<testPel> instance(new testPel());
+  
+  
+  add(BOOST_CLASS_TEST_CASE(&testPel::compilerTests,
+                            instance));
+  add(BOOST_CLASS_TEST_CASE(&testPel::vmTests,
+                            instance));
+}

@@ -8,6 +8,7 @@
  * Berkeley, CA,  94707. Attention: P2 Group.
  */
 
+
 #include "boost/test/unit_test.hpp"
 #include "tuple.h"
 #include "table2.h"
@@ -16,45 +17,7 @@
 #include "val_tuple.h"
 #include "val_uint64.h"
 
-#include "limits.h" // for INT_MAX
-
-class testTable2
-{
-public:
-  testTable2()
-  {
-  }
-
-  /** Create table, destroy table, with different primary keys, tuple
-      lifetimes, size limits. */
-  void
-  testCreateDestroy();
-
-
-#if 0
-  void
-  testIndexing();
-
-  void
-  testBatchRemovals();
-
-  void
-  testBatchMultikeyRemovals();
-
-  void
-  testUniqueTupleRemovals();
-
-  void
-  testSuperimposedIndexRemoval();
-
-  void
-  testAggregates();
-
-  void
-  testMultiFieldKeys();
-#endif
-};
-
+#include "testTable2.h"
 
 
 
@@ -1000,24 +963,20 @@ testTable2::testMultiFieldKeys()
 #endif
 
 
-class testTable2_testSuite
-  : public boost::unit_test_framework::test_suite
+testTable2_testSuite::testTable2_testSuite()
+  : boost::unit_test_framework::test_suite("testTable2: Marshaling/Unmarshaling")
 {
-public:
-  testTable2_testSuite()
-    : boost::unit_test_framework::test_suite("testTable2: Marshaling/Unmarshaling")
-  {
-    boost::shared_ptr<testTable2> instance(new testTable2());
-
-    add(BOOST_CLASS_TEST_CASE(&testTable2::testCreateDestroy, instance));
+  boost::shared_ptr<testTable2> instance(new testTable2());
+  
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testCreateDestroy, instance));
 #if 0
-    add(BOOST_CLASS_TEST_CASE(&testTable2::testIndexing, instance));
-    add(BOOST_CLASS_TEST_CASE(&testTable2::testBatchRemovals, instance));
-    add(BOOST_CLASS_TEST_CASE(&testTable2::testBatchMultikeyRemovals, instance));
-    add(BOOST_CLASS_TEST_CASE(&testTable2::testUniqueTupleRemovals, instance));
-    add(BOOST_CLASS_TEST_CASE(&testTable2::testSuperimposedIndexRemoval, instance));
-    add(BOOST_CLASS_TEST_CASE(&testTable2::testAggregates, instance));
-    add(BOOST_CLASS_TEST_CASE(&testTable2::testMultiFieldKeys, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testIndexing, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testBatchRemovals, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testBatchMultikeyRemovals, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testUniqueTupleRemovals, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testSuperimposedIndexRemoval, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testAggregates, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testMultiFieldKeys, instance));
 #endif
-  }
-};
+}
+
