@@ -15,7 +15,7 @@
 
 #include "val_str.h"
 #include "val_tuple.h"
-#include "val_uint64.h"
+#include "val_int32.h"
 
 #include "testTable2.h"
 
@@ -23,6 +23,14 @@
 
 class testTable2
 {
+private:
+  static const uint SIZE = 5;
+
+  static const uint EXTRA_TUPLES = 10;
+
+
+
+
 public:
   testTable2()
   {
@@ -36,9 +44,21 @@ public:
 
 
   /** Length limits. Keep inserting different tuples and ensure the size
-      limit is not violated. */
+      limit is not violated. Use ID as primary key.*/
   void
-  testSizeLimit();
+  testSizeLimitID();
+
+
+  /** Length limits. Keep inserting different tuples and ensure the size
+      limit is not violated. Use a single-field primary key.*/
+  void
+  testSizeLimitSingle();
+
+
+  /** Length limits. Keep inserting different tuples and ensure the size
+      limit is not violated. Use a multi-field primary key.*/
+  void
+  testSizeLimitMulti();
 };
 
 
@@ -76,11 +96,8 @@ testTable2::testCreateDestroy()
 
 
 void
-testTable2::testSizeLimit()
+testTable2::testSizeLimitID()
 {
-  uint SIZE = 10;
-  uint EXTRA_TUPLES = 10;
-
   // A table with a size limit indexed by ID
   Table2 table("LimitedSize", Table2::KEYID, SIZE);
 
@@ -113,6 +130,149 @@ testTable2::testSizeLimit()
     // The insertion should return true
     BOOST_CHECK_MESSAGE(table.insert(t),
                         "Insertion in key-less table did not grow it.");
+
+    // The size of the table should be i
+    BOOST_CHECK_MESSAGE(table.size() == SIZE,
+                        "Table size is not stuck at the maximum.");
+  }
+}
+
+
+void
+testTable2::testSizeLimitSingle()
+{
+  // A table with a size limit indexed by ID
+  Table2 table("LimitedSize", Table2::KEY1, SIZE);
+
+  // Until I reach the maximum size, the table size should keep
+  // increasing with every insertion
+  for (uint i = 1;
+       i <= SIZE;
+       i++) {
+    // Field 1 is the counter
+    TuplePtr t(new Tuple());
+    t->append(Val_Str::mk("testTuple"));
+    t->append(Val_Int32::mk(i));
+    t->freeze();
+
+    // The insertion should return true
+    BOOST_CHECK_MESSAGE(table.insert(t),
+                        "Insertion in single-field key table did not grow it.");
+
+    // The size of the table should be i
+    BOOST_CHECK_MESSAGE(i == table.size(),
+                        "Table size is not growing to its maximum.");
+  }
+
+  // Reinserting the initial tuples should faile and the size should no
+  // longer grow.
+  for (uint i = 1;
+       i <= SIZE;
+       i++) {
+    // Field 1 is the counter
+    TuplePtr t(new Tuple());
+    t->append(Val_Str::mk("testTuple"));
+    t->append(Val_Int32::mk(i));
+    t->freeze();
+
+    // The insertion should return false
+    BOOST_CHECK_MESSAGE(!table.insert(t),
+                        "Reinsertion in single-field key table"
+                        << " grew it.");
+
+    // The size of the table should be i
+    BOOST_CHECK_MESSAGE(SIZE == table.size(),
+                        "Table size is other then maximum.");
+  }
+
+  // Extra tuple insertions should keep the size to the maximum while
+  // insertions still succeed.
+  for (uint i = 1;
+       i <= EXTRA_TUPLES;
+       i++) {
+    TuplePtr t(new Tuple());
+    t->append(Val_Str::mk("testTuple"));
+    t->append(Val_Int32::mk(i + SIZE));
+    t->freeze();
+
+    // The insertion should return true
+    BOOST_CHECK_MESSAGE(table.insert(t),
+                        "Insertion in single-field key table did not grow it.");
+
+    // The size of the table should be i
+    BOOST_CHECK_MESSAGE(table.size() == SIZE,
+                        "Table size is not stuck at the maximum.");
+  }
+}
+
+
+void
+testTable2::testSizeLimitMulti()
+{
+  // A table with a size limit indexed by ID
+  Table2 table("LimitedSize", Table2::KEY13, SIZE);
+
+  // Until I reach the maximum size, the table size should keep
+  // increasing with every insertion
+  for (uint i = 1;
+       i <= SIZE;
+       i++) {
+    // Fields 1 and 3 are the counter
+    TuplePtr t(new Tuple());
+    t->append(Val_Str::mk("testTuple"));
+    t->append(Val_Int32::mk(i));
+    t->append(Val_Str::mk("middle"));
+    t->append(Val_Int32::mk(i));
+    t->freeze();
+
+    // The insertion should return true
+    BOOST_CHECK_MESSAGE(table.insert(t),
+                        "Insertion in multi-field key table did "
+                        << "not grow it.");
+
+    // The size of the table should be i
+    BOOST_CHECK_MESSAGE(i == table.size(),
+                        "Table size is not growing to its maximum.");
+  }
+
+  // Reinsert and enjoy inactivity
+  for (uint i = 1;
+       i <= SIZE;
+       i++) {
+    // Fields 1 and 3 are the counter
+    TuplePtr t(new Tuple());
+    t->append(Val_Str::mk("testTuple"));
+    t->append(Val_Int32::mk(i));
+    t->append(Val_Str::mk("middle"));
+    t->append(Val_Int32::mk(i));
+    t->freeze();
+
+    // The insertion should return false
+    BOOST_CHECK_MESSAGE(!table.insert(t),
+                        "Reinsertion in multi-field key table "
+                        << "grew it.");
+
+    // The size of the table should be i
+    BOOST_CHECK_MESSAGE(SIZE == table.size(),
+                        "Table size is not stuck to maximum during"
+                        << " reinsertion.");
+  }
+
+  // Extra tuple insertions should keep the size to the maximum while
+  // insertions still succeed.
+  for (uint i = 1;
+       i <= EXTRA_TUPLES;
+       i++) {
+    TuplePtr t(new Tuple());
+    t->append(Val_Str::mk("testTuple"));
+    t->append(Val_Int32::mk(i + SIZE));
+    t->append(Val_Str::mk("middle"));
+    t->append(Val_Int32::mk(i + SIZE));
+    t->freeze();
+
+    // The insertion should return true
+    BOOST_CHECK_MESSAGE(table.insert(t),
+                        "Insertion in multi-field key table did not grow it.");
 
     // The size of the table should be i
     BOOST_CHECK_MESSAGE(table.size() == SIZE,
@@ -1059,7 +1219,9 @@ testTable2_testSuite::testTable2_testSuite()
   boost::shared_ptr<testTable2> instance(new testTable2());
   
   add(BOOST_CLASS_TEST_CASE(&testTable2::testCreateDestroy, instance));
-  add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimit, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimitID, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimitSingle, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimitMulti, instance));
 #if 0
   add(BOOST_CLASS_TEST_CASE(&testTable2::testIndexing, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testBatchRemovals, instance));

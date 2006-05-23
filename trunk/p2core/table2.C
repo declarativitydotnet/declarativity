@@ -78,7 +78,7 @@ operator()(const Table2::Entry* fEntry,
     Table2::Key::const_iterator fieldNos = _key.begin();
     while (fieldNos != _key.end()) {
       // The next field number is
-      unsigned fieldNo = (*fieldNos);
+      unsigned fieldNo = *(fieldNos++);
 
       // Does the first have this field?
       if (first->size() > fieldNo) {
@@ -245,14 +245,13 @@ Table2::insert(TuplePtr t)
   // Otherwise, tuple with same primary key exists
   else {
     // Is it identical to given tuple?
-    if ((*found)->tuple->compareTo(t)) {
-      // Nope, it's different.  We won't be replacing the tuple already
-      // there
+    if ((*found)->tuple->compareTo(t) == 0) {
+      // Yes. We won't be replacing the tuple already there
       return false;
     }
     // Otherwise, tuple has same primary key but is different
     else {
-      // Remove existing tuple
+      // We will replace the existing tuple, so remove it first
       removeTuple(t, found);
     }
   }
