@@ -14,3 +14,6 @@ all: parsedesc.py
 	@PYTHON@ yapps2.py $<
 
 CLEANFILES = *.pyc
+
+EXTRA_DIST = parsedesc.g \
+             yapps2.py yappsrt.py

@@ -23,12 +23,12 @@ GENERATED_SOURCES = \
 REAL_SOURCES = \
 	parser_util.C \
 	ol_context.C \
-	plmb_confgen.C
+	plmb_confgen.C \
+	overlogCompiler.C
 
 liboverlog_la_SOURCES = \
 	$(REAL_SOURCES) \
-	$(GENERATED_SOURCES) \
-	overlogCompiler.C
+	$(GENERATED_SOURCES)
 
 INCLUDES = @BOOST_INC@ -I../p2core -I../elements -I../net -I../eventLoop
 

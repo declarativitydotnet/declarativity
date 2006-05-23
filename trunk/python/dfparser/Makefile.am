@@ -18,9 +18,7 @@ all: dataflow.g
 
 CLEANFILES = core *.core *.pyc dfparser.py *.dot *.ps
 
-EXTRA_DIST = dataflow.g \
-             yapps/Makefile yapps/parsedesc.g \
-             yapps/yapps2.py yapps/yappsrt.py
+EXTRA_DIST = dataflow.g
 
 MAINTAINERCLEANFILES = Makefile.in
 
