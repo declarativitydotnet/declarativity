@@ -59,6 +59,13 @@ public:
       limit is not violated. Use a multi-field primary key.*/
   void
   testSizeLimitMulti();
+
+  
+  /** Test case demonstrating problems with delete in tables v1, when a
+      multi-field primary key is combined with a single-field secondary
+      key. */
+  void
+  testSuperimposedIndexRemoval();
 };
 
 
@@ -278,6 +285,82 @@ testTable2::testSizeLimitMulti()
     BOOST_CHECK_MESSAGE(table.size() == SIZE,
                         "Table size is not stuck at the maximum.");
   }
+}
+
+
+/**
+ * This test corresponds on a particular problem encountered with
+ * aggregate testing on Tables v1.  It creates a table whose tuples are
+ * <int, int>.  It creates a unique index on all fields, and a multiple
+ * index on the first field.  It inserts <0, 10>, <0, 15>, <0, 5>, and
+ * then removes <0, 5> from the table.  Then it looks up <0, 5> in the
+ * multiple index.  It should not find it.
+ */
+void
+testTable2::testSuperimposedIndexRemoval()
+{
+  TuplePtr a = Tuple::mk();
+  a->append(Val_Int32::mk(0));
+  a->append(Val_Int32::mk(10));
+  a->freeze();
+  
+  TuplePtr b = Tuple::mk();
+  b->append(Val_Int32::mk(0));
+  b->append(Val_Int32::mk(15));
+  b->freeze();
+  
+  TuplePtr c = Tuple::mk();
+  c->append(Val_Int32::mk(0));
+  c->append(Val_Int32::mk(5));
+  c->freeze();
+  
+
+  // Create a table of unique tuples with a multiple key on its first
+  // field
+  Table2 table("test_table", Table2::KEY01, 200);
+  table.secondaryIndex(Table2::KEY0);
+
+  // Insert the three tuples in that order
+  BOOST_CHECK_MESSAGE(table.insert(a),
+                      "Tuple a '"
+                      << a->toString()
+                      << "' should be newly inserted");
+  BOOST_CHECK_MESSAGE(table.insert(b),
+                      "Tuple b '"
+                      << b->toString()
+                      << "' should be newly inserted");
+  BOOST_CHECK_MESSAGE(table.insert(c),
+                      "Tuple c '"
+                      << c->toString()
+                      << "' should be newly inserted");
+
+  // Remove the last tuple
+  BOOST_CHECK_MESSAGE(table.remove(c),
+                      "Tuple c '"
+                      << c->toString()
+                      << "' should be fully deleted");
+
+  // Lookup the tuple itself in the unique index
+  BOOST_CHECK_MESSAGE(table.lookup(Table2::KEY01, c)->done(),
+                      "Table test. Lookup of removed tuple "
+                      << c->toString()
+                      << " should return no results.");
+
+  // Count the elements matching a on the multiple index (i.e., all
+  // elements). It should contain two elements
+  Table2::IteratorPtr m = table.lookup(Table2::KEY0, a);
+  int count = 0;
+  while (!m->done()) {
+    m->next();
+    count++;
+  }
+  BOOST_CHECK_MESSAGE(count == 2,
+                      "Table test. Lookup of removed tuple "
+                      << c->toString()
+                      << " in multiple index should return "
+                      << " 2 results exactly but returned "
+                      << count
+                      << " instead.");
 }
 
 
@@ -555,76 +638,6 @@ testTable2::testUniqueTupleRemovals()
 }
 
 
-/**
- * This test corresponds on a particular problem encountered with
- * aggregate testing.  It creates a table whose tuples are <int, int>.
- * It creates a unique index on all fields, and a multiple index on the
- * first field.  It inserts <0, 10>, <0, 15>, <0, 5>, and then removes
- * <0, 5> from the table.  Then it looks up <0, 5> in the multiple
- * index.  It should not find it.
- */
-void
-testTable2::testSuperimposedIndexRemoval()
-{
-  TuplePtr a = Tuple::mk();
-  a->append(Val_Int32::mk(0));
-  a->append(Val_Int32::mk(10));
-  a->freeze();
-  
-  TuplePtr b = Tuple::mk();
-  b->append(Val_Int32::mk(0));
-  b->append(Val_Int32::mk(15));
-  b->freeze();
-  
-  TuplePtr c = Tuple::mk();
-  c->append(Val_Int32::mk(0));
-  c->append(Val_Int32::mk(5));
-  c->freeze();
-  
-
-  // Create a table of unique tuples with a multiple key on its first
-  // field
-  Table2Ptr tbl(new Table2("test_table", 200));
-  std::vector< unsigned > keys;
-  keys.push_back(0);
-  keys.push_back(1);
-
-  tbl->add_unique_index(keys);
-  tbl->add_multiple_index(0);
-
-
-  // Insert the three tuples in that order
-  tbl->insert(a);
-  tbl->insert(b);
-  tbl->insert(c);
-
-  // Remove the last tuple
-  std::vector< ValuePtr > keyValues;
-  keyValues.push_back((*c)[0]);
-  keyValues.push_back((*c)[1]);
-  tbl->remove(keys, keyValues);
-
-  // Lookup the tuple itself in the unique index
-  BOOST_CHECK_MESSAGE(tbl->lookup(keys, keyValues)->done(),
-                      "Table test. Lookup of removed tuple "
-                      << c->toString()
-                      << " should return no results.");
-
-  // Count the multiple index. It should contain two elements
-  Table2::MultIterator m = tbl->lookupAll(0, (*c)[0]);
-  int count = 0;
-  while (!m->done()) {
-    m->next();
-    count++;
-  }
-  BOOST_CHECK_MESSAGE(count == 2,
-                      "Table test. Lookup of removed tuple "
-                      << c->toString()
-                      << " in multiple index should return "
-                      << " 2 results exactly but returned "
-                      << count
-                      << " instead.");
-}
 
 
 
@@ -1218,6 +1231,7 @@ testTable2_testSuite::testTable2_testSuite()
 {
   boost::shared_ptr<testTable2> instance(new testTable2());
   
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testSuperimposedIndexRemoval, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testCreateDestroy, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimitID, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimitSingle, instance));
@@ -1227,7 +1241,6 @@ testTable2_testSuite::testTable2_testSuite()
   add(BOOST_CLASS_TEST_CASE(&testTable2::testBatchRemovals, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testBatchMultikeyRemovals, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testUniqueTupleRemovals, instance));
-  add(BOOST_CLASS_TEST_CASE(&testTable2::testSuperimposedIndexRemoval, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testAggregates, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testMultiFieldKeys, instance));
 #endif
