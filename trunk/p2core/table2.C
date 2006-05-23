@@ -27,7 +27,7 @@
 // Sorters
 ////////////////////////////////////////////////////////////
 
-/** This comparator compares key specs. */
+/** This comparator performs first less second for two key specs. */
 bool
 Table2::KeyComparator::
 operator()(const Table2::Key* first,
@@ -38,16 +38,22 @@ operator()(const Table2::Key* first,
   } else if (first->size() > second->size()) {
     return false; // second < first
   } else {
+    // As long as they're equal, keep checking.
     Table2::Key::const_iterator firstIt = first->begin();
     Table2::Key::const_iterator secondIt = second->begin();
     while (firstIt != first->end()) {
-      if ((*firstIt) >= (*secondIt)) {
-        // We're done, second >= first
+      unsigned f = *firstIt++;
+      unsigned s = *secondIt++;
+      if (f < s) {
+        return true;
+      } else if (f > s) {
         return false;
+      } else {
+        // They're equal so far so I have to keep checking
       }
     }
-    // We're done, first < second
-    return true;
+    // They're equal throughout, so the first is not less
+    return false;
   }
 }
 
@@ -84,13 +90,21 @@ operator()(const Table2::Entry* fEntry,
       if (first->size() > fieldNo) {
         // It does. Does the second have this field?
         if (second->size() > fieldNo) {
-          // It does. Compare their values.  If the first is not less,
+          // It does. Compare their values. If they're equal, I must
+          // keep with the next field. If the first is less, stop here
+          // and return true. If the first is greater, stop here and
           // return false.
-          if ((*first)[fieldNo]->compareTo((*second)[fieldNo]) >= 0) {
+          int comp = (*first)[fieldNo]->compareTo((*second)[fieldNo]);
+          if (comp < 0) {
+            // First is less on this field, so it is also less overall
+            return true;
+          } else if (comp > 0) {
+            // First is greater on this field, so it cannot be less
+            // overall
             return false;
           } else {
-            // The first's field is less that the second's field. Keep
-            // checking
+            // The fields are equal, so I must check the next field if
+            // it exists
           }
         } else {
           // The second vector is lacking the field but the first one has
@@ -98,16 +112,23 @@ operator()(const Table2::Entry* fEntry,
           return false;
         }
       } else {
-        // The first vector is lacking the field.  So far, all fields
-        // compared make the first vector less. Whether or not the second
-        // vector has this field, this comparison result won't change. So
-        // just return true.
-        return true;
+        // The vectors are equal this far, but the first vector is
+        // lacking the field. If the second vector has this field, then
+        // the first is less. If the second vector does not have this
+        // field, then since the two vectors are equal, the first vector
+        // is not less.
+        if (second->size() > fieldNo) {
+          // The second vector has it, so the first is less
+          return true;
+        } else {
+          // The two vectors are equal, so the first is not less
+          return false;
+        }
       }
     }
-    // If we got to this point, all key fields of the first vector are
-    // less than the key fields of the second vector, so return true.
-    return true;
+    // If we got to this point, the two vectors are equal, so the first
+    // is not less
+    return false;
   }
 }
 
@@ -179,7 +200,7 @@ Table2::~Table2()
     delete (*iter).second;
 
     // Kill the entry in the index index
-    _indices.erase(iter);
+    _indices.erase(iter++);
   }
 
   // Kill all secondary index keyed comparators
@@ -271,6 +292,39 @@ Table2::insert(TuplePtr t)
 
 
 ////////////////////////////////////////////////////////////
+// Remove tuples
+////////////////////////////////////////////////////////////
+
+bool
+Table2::remove(TuplePtr t)
+{
+  // Ensure we're operating on the correct view of the table as of right
+  // now.
+  flush();
+
+  // Find tuple with same primary key
+  _searchEntry.tuple = t;
+  PrimaryIndex::iterator found = _primaryIndex.find(&_searchEntry);
+
+  // If no tuple exists with same primary key
+  if (found == _primaryIndex.end()) {
+    // No need to do anything. There's nothing to remove
+    return false;
+  }
+  // Otherwise, tuple with same primary key exists
+  else {
+    // Get rid of it, even if it's not identical
+    removeTuple(t, found);
+    
+    // We haven't added new tuples so there's no reason to flush again.
+    return true;
+  }
+}
+
+
+
+
+////////////////////////////////////////////////////////////
 // Tuple wrapper
 ////////////////////////////////////////////////////////////
 
@@ -308,7 +362,7 @@ Table2::insertTuple(TuplePtr t,
   // Secondary indices. For all indices, insert.
   SecondaryIndexIndex::iterator iter = _indices.begin();
   while (iter != _indices.end()) {
-    (*iter).second->insert(newEntry);
+    (*(iter++)).second->insert(newEntry);
   }
 
   // Insert into time-ordered queue if we're flushing.
@@ -333,8 +387,7 @@ Table2::flushTuple(TuplePtr t)
   // Secondary indices
   SecondaryIndexIndex::iterator iter = _indices.begin();
   while (iter != _indices.end()) {
-    (*iter).second->erase(&_searchEntry);
-    iter++;
+    (iter++)->second->erase(&_searchEntry);
   }
   
   // Aggregates
@@ -345,6 +398,10 @@ void
 Table2::removeTuple(TuplePtr t,
                     PrimaryIndex::iterator position)
 {
+  // Set the search entry to the tuple from the primary index. This is
+  // the tuple we want to remove from all secondary indices below.
+  _searchEntry.tuple = (*position)->tuple;
+
   // If I have a queue, then I don't need to delete the entry since it
   // will be flushed sooner or later. Otherwise, I have to delete the
   // entry now.
@@ -356,11 +413,23 @@ Table2::removeTuple(TuplePtr t,
   }
 
   // Secondary indices
-  _searchEntry.tuple = t;
   SecondaryIndexIndex::iterator iter = _indices.begin();
   while (iter != _indices.end()) {
-    (*iter).second->erase(&_searchEntry);
-    iter++;
+    SecondaryIndex& index = *((iter++)->second);
+
+    // Now find the tuple removed from the primary index in this
+    // secondary index and erase it
+    SecondaryIndex::iterator secIter = index.find(&_searchEntry);
+    while (secIter != index.end()) {
+      // Is this tuple identical to the one removed from the primary
+      // index?
+      if ((*secIter)->tuple->ID() == _searchEntry.tuple->ID()) {
+        // It's the exact tuple. erase it
+        index.erase(secIter);
+        break;
+      }
+      secIter++;
+    }
   }
 
   // Aggregates
@@ -507,7 +576,7 @@ Table2::Iterator::next()
 bool
 Table2::Iterator::done()
 {
-  return (_spool->size() > 0);
+  return (_spool->size() == 0);
 }
 
 
@@ -574,7 +643,7 @@ Table2::lookup(Table2::Key& key, TuplePtr t)
       // Create the lookup iterator by spooling all results found into a
       // queue and passing them into the iterator.
       std::deque< TuplePtr >* spool = new std::deque< TuplePtr >();
-      while (tupleIter != _primaryIndex.end()) {
+      while (tupleIter != index.end()) {
         spool->push_front((*(tupleIter++))->tuple);
       }
       IteratorPtr iterPtr = IteratorPtr(new Iterator(spool));
