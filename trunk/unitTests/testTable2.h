@@ -13,20 +13,6 @@
 
 #include "boost/test/unit_test.hpp"
 
-class testTable2
-{
-public:
-  testTable2()
-  {
-  }
-
-  /** Create table, destroy table, with different primary keys, tuple
-      lifetimes, size limits. */
-  void
-  testCreateDestroy();
-};
-
-
 class testTable2_testSuite
   : public boost::unit_test_framework::test_suite
 {

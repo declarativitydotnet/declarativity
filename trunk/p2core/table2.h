@@ -71,6 +71,7 @@ public:
   static Key KEY12;
   static Key KEY23;
   static Key KEY13;
+  static Key KEY012;
   static Key KEY123;
 
 
@@ -200,7 +201,7 @@ public:
       (excluding those that may have been logically deleted but not yet
       physically removed). */
   size_t
-  size();
+  size() const;
   
   
   
@@ -377,23 +378,27 @@ private:
   static Entry
   _searchEntry;
 
-  /** Check if the given tuple appears in the table currently. */
-  bool
-  tupleInTable(TuplePtr t);
-
 
   /** Remove an existing tuple from the database including all
       indices. This tuple always causes a tuple to be removed from the
-      table and therefore always calls any deletion listeners. */
+      table and therefore always calls any deletion listeners. Its
+      position in the primary index is known and given. */
   void
-  removeTuple(TuplePtr t);
+  removeTuple(TuplePtr t,
+              PrimaryIndex::iterator primaryPosition);
+
+
+  /** Remove an existing tuple from all indices during flushing. */
+  void
+  flushTuple(TuplePtr t);
 
 
   /** Insert a brand new tuple into the database including all
       indices. This method *always* causes a new tuple to appear within
       the table and, therefore, always calls any insertion listeners. */
   void
-  insertTuple(TuplePtr t);
+  insertTuple(TuplePtr t,
+              PrimaryIndex::iterator position);
 };
 
 

@@ -23,9 +23,7 @@ libp2unitTests_la_SOURCES = \
 	testLists.C
 
 
-
-
-$(PROGRAMS): $(LDEPS) 
+$(PROGRAMS): $(LDEPS) $(lib_LTLIBRARIES)
 
 bin_PROGRAMS = p2Test p2TestTable2
 

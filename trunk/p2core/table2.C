@@ -128,8 +128,8 @@ Table2::Table2(std::string tableName,
     _maxSize(maxSize),
     _maxLifetime(lifetime),
     _primaryIndex(KeyedEntryComparator(key)),
-    _flushing(((_maxSize == 0) &&
-               (_maxLifetime.is_pos_infinity())))
+    _flushing(((_maxSize > 0) ||
+               (!_maxLifetime.is_pos_infinity())))
 {
 }
 
@@ -141,8 +141,22 @@ Table2::Table2(std::string tableName,
     _maxSize(0),
     _maxLifetime(boost::posix_time::time_duration(boost::date_time::pos_infin)),
     _primaryIndex(KeyedEntryComparator(key)),
-    _flushing(((_maxSize == 0) &&
-               (_maxLifetime.is_pos_infinity())))
+    _flushing(((_maxSize > 0) ||
+               (!_maxLifetime.is_pos_infinity())))
+{
+}
+
+
+Table2::Table2(std::string tableName,
+               Key& key,
+               size_t maxSize)
+  : _name(tableName),
+    _key(key),
+    _maxSize(maxSize),
+    _maxLifetime(boost::posix_time::time_duration(boost::date_time::pos_infin)),
+    _primaryIndex(KeyedEntryComparator(key)),
+    _flushing(((_maxSize > 0) ||
+               (!_maxLifetime.is_pos_infinity())))
 {
 }
 
@@ -220,22 +234,38 @@ Table2::insert(TuplePtr t)
   // now.
   flush();
 
-  // Do I already have the identical tuple?
-  if (tupleInTable(t)) {
-    // I do. Do nothing and return false
-    return false;
-  } else {
-    // I do not.
+  // Find tuple with same primary key
+  _searchEntry.tuple = t;
+  PrimaryIndex::iterator found = _primaryIndex.find(&_searchEntry);
 
-    // Remove any tuple by the same key
-    removeTuple(t);
-
-    // Insert new tuple
-    insertTuple(t);
-
-    // Return true
-    return true;
+  // If no tuple exists with same primary key
+  if (found == _primaryIndex.end()) {
+    // No need to do anything. We'll insert the new tuple below.
   }
+  // Otherwise, tuple with same primary key exists
+  else {
+    // Is it identical to given tuple?
+    if ((*found)->tuple->compareTo(t)) {
+      // Nope, it's different.  We won't be replacing the tuple already
+      // there
+      return false;
+    }
+    // Otherwise, tuple has same primary key but is different
+    else {
+      // Remove existing tuple
+      removeTuple(t, found);
+    }
+  }
+
+  // We've established that by now no tuple with same primary key
+  // exists in the table. Insert the new one and return true.
+  insertTuple(t, found);
+  
+  // Ensure we're still compliant
+  flush();
+
+  // Return true
+  return true;
 }
 
 
@@ -263,48 +293,18 @@ Table2::Entry
 Table2::_searchEntry(Tuple::EMPTY);
 
 
-/** Here we isolate what happens within with what will follow (e.g.,
-    replacement or removal).  Perhaps we could return the iterator
-    directly for further processing? */
-bool
-Table2::tupleInTable(TuplePtr t)
-{
-  // Seed the search entry with the tuple to search with. XXX This
-  // should be private to the thread when we migrate to multi-threaded
-  // operation. 
-  _searchEntry.tuple = t;
-
-  // Find tuple in primary index
-  PrimaryIndex::iterator found = _primaryIndex.find(&_searchEntry);
-
-  // If a tuple exists with same primary key
-  if (found == _primaryIndex.end()) {
-    // No tuple found at all
-    return false;
-  } else {
-    // Is the tuple identical?
-    if ((*found)->tuple->compareTo(t)) {
-      // Return yes
-      return true;
-    } else {
-      return false;
-    }
-  }
-}
-
-
 /** To insert the tuple, create a fresh new entry, assign the current
     timestamp, and insert into the primary set, all secondaries, and all
     aggregates. */
 void
-Table2::insertTuple(TuplePtr t)
+Table2::insertTuple(TuplePtr t,
+                    PrimaryIndex::iterator position)
 {
   // Create a fresh new entry
   Entry* newEntry = new Entry(t);
 
-  // Primary index. XXX Here I might be able to use the "hint" from the
-  // findInTable method if that were exported.
-  _primaryIndex.insert(newEntry); // I ignore the return value
+  // Primary index.
+  _primaryIndex.insert(position, newEntry);
   
   // Secondary indices. For all indices, insert.
   SecondaryIndexIndex::iterator iter = _indices.begin();
@@ -322,23 +322,42 @@ Table2::insertTuple(TuplePtr t)
 
 
 void
-Table2::removeTuple(TuplePtr t)
+Table2::flushTuple(TuplePtr t)
 {
   // Primary index
   _searchEntry.tuple = t;
 
+  // Just remove it from all indices.  The entry will be killed in
+  // flush()
+  _primaryIndex.erase(&_searchEntry);
+
+  // Secondary indices
+  SecondaryIndexIndex::iterator iter = _indices.begin();
+  while (iter != _indices.end()) {
+    (*iter).second->erase(&_searchEntry);
+    iter++;
+  }
+  
+  // Aggregates
+}
+
+
+void
+Table2::removeTuple(TuplePtr t,
+                    PrimaryIndex::iterator position)
+{
   // If I have a queue, then I don't need to delete the entry since it
   // will be flushed sooner or later. Otherwise, I have to delete the
   // entry now.
   if (_flushing) {
-    _primaryIndex.erase(&_searchEntry);
+    _primaryIndex.erase(position);
   } else {
-    PrimaryIndex::iterator iter = _primaryIndex.find(&_searchEntry);
-    delete (*iter);
-    _primaryIndex.erase(iter);
+    delete (*position);
+    _primaryIndex.erase(position);
   }
 
   // Secondary indices
+  _searchEntry.tuple = t;
   SecondaryIndexIndex::iterator iter = _indices.begin();
   while (iter != _indices.end()) {
     (*iter).second->erase(&_searchEntry);
@@ -367,13 +386,12 @@ Table2::flush()
     boost::posix_time::ptime expiryTime;
     expiryTime = now - _maxLifetime;
 
-
     while (_queue.size() > 0) {
       // Check this element's insertion time
       Entry * last = _queue.back();
       if (last->time < expiryTime) {
         // Remove the contained tuple from the table
-        removeTuple(last->tuple);
+        flushTuple(last->tuple);
 
         // Remove the entry from the queue
         _queue.pop_back();
@@ -397,7 +415,7 @@ Table2::flush()
       Entry * last = _queue.back();
 
       // Remove the contained tuple from the table
-      removeTuple(last->tuple);
+      flushTuple(last->tuple);
       
       // Remove the entry from the queue
       _queue.pop_back();
@@ -418,6 +436,7 @@ Table2::Key Table2::KEY01 = Table2::Key();
 Table2::Key Table2::KEY12 = Table2::Key();
 Table2::Key Table2::KEY23 = Table2::Key();
 Table2::Key Table2::KEY13 = Table2::Key();
+Table2::Key Table2::KEY012 = Table2::Key();
 Table2::Key Table2::KEY123 = Table2::Key();
 
 
@@ -425,17 +444,32 @@ Table2::Initializer::Initializer()
 {
   // No need to initialize KEYID. It's already empty.
   Table2::KEY0.push_back(0);
+
   Table2::KEY1.push_back(1);
+
   Table2::KEY2.push_back(2);
+
   Table2::KEY3.push_back(3);
+
   Table2::KEY01.push_back(0);
   Table2::KEY01.push_back(1);
+
   Table2::KEY12.push_back(1);
   Table2::KEY12.push_back(2);
+
   Table2::KEY23.push_back(2);
   Table2::KEY23.push_back(3);
+
   Table2::KEY13.push_back(1);
   Table2::KEY13.push_back(3);
+
+  Table2::KEY012.push_back(0);
+  Table2::KEY012.push_back(1);
+  Table2::KEY012.push_back(2);
+
+  Table2::KEY123.push_back(1);
+  Table2::KEY123.push_back(2);
+  Table2::KEY123.push_back(3);
 }
 
 /** Run the static initialization */
@@ -483,6 +517,14 @@ Table2::Iterator::~Iterator()
   // Delete the queue. Its contents are shared pointers to tuples, so no
   // need to worry about them
   delete _spool;
+}
+
+
+size_t
+Table2::size() const
+{
+  size_t s = _primaryIndex.size();
+  return s;
 }
 
 

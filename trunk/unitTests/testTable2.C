@@ -21,12 +21,102 @@
 
 
 
+class testTable2
+{
+public:
+  testTable2()
+  {
+  }
+
+
+  /** Create table, destroy table, with different primary keys, tuple
+      lifetimes, size limits. */
+  void
+  testCreateDestroy();
+
+
+  /** Length limits. Keep inserting different tuples and ensure the size
+      limit is not violated. */
+  void
+  testSizeLimit();
+};
+
+
+
 void
 testTable2::testCreateDestroy()
 {
-  // Full constructor
+  // Shortest constructor
   {
-    Table2 table("table1", Table2::KEYID);
+    Table2 table1("table1", Table2::KEYID);
+    Table2 table2("table2", Table2::KEY0);
+    Table2 table3("table3", Table2::KEY01);
+    Table2 table4("table4", Table2::KEY012);
+    Table2 table5("table5", Table2::KEY13);
+  }
+
+  // Lifetime-less constructor with 0 size limit
+  {
+    Table2 table1("table1", Table2::KEYID, 0);
+    Table2 table2("table2", Table2::KEY0, 0);
+    Table2 table3("table3", Table2::KEY01, 0);
+    Table2 table4("table4", Table2::KEY012, 0);
+    Table2 table5("table5", Table2::KEY13, 0);
+  }
+
+  // Lifetime-less constructor with non-zero size limit
+  {
+    Table2 table1("table1", Table2::KEYID, 100);
+    Table2 table2("table2", Table2::KEY0, 100);
+    Table2 table3("table3", Table2::KEY01, 100);
+    Table2 table4("table4", Table2::KEY012, 100);
+    Table2 table5("table5", Table2::KEY13, 100);
+  }
+}
+
+
+void
+testTable2::testSizeLimit()
+{
+  uint SIZE = 10;
+  uint EXTRA_TUPLES = 10;
+
+  // A table with a size limit indexed by ID
+  Table2 table("LimitedSize", Table2::KEYID, SIZE);
+
+  // Until I reach the maximum size, the table size should keep
+  // increasing with every insertion
+  for (uint i = 1;
+       i <= SIZE;
+       i++) {
+    // No need for fields. It's just a new tuple
+    TuplePtr t(new Tuple());
+    t->freeze();
+
+    // The insertion should return true
+    BOOST_CHECK_MESSAGE(table.insert(t),
+                        "Insertion in key-less table did not grow it.");
+
+    // The size of the table should be i
+    BOOST_CHECK_MESSAGE(i == table.size(),
+                        "Table size is not growing to its maximum.");
+  }
+
+  // Extra tuple insertions should keep the size to the maximum while
+  // insertions still succeed.
+  for (uint i = 0;
+       i < EXTRA_TUPLES;
+       i++) {
+    TuplePtr t(new Tuple());
+    t->freeze();
+
+    // The insertion should return true
+    BOOST_CHECK_MESSAGE(table.insert(t),
+                        "Insertion in key-less table did not grow it.");
+
+    // The size of the table should be i
+    BOOST_CHECK_MESSAGE(table.size() == SIZE,
+                        "Table size is not stuck at the maximum.");
   }
 }
 
@@ -969,6 +1059,7 @@ testTable2_testSuite::testTable2_testSuite()
   boost::shared_ptr<testTable2> instance(new testTable2());
   
   add(BOOST_CLASS_TEST_CASE(&testTable2::testCreateDestroy, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimit, instance));
 #if 0
   add(BOOST_CLASS_TEST_CASE(&testTable2::testIndexing, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testBatchRemovals, instance));
