@@ -190,6 +190,12 @@ Tuple::concat(TuplePtr tf)
 
 Tuple::~Tuple()
 {
+//   std::cout << "Destroying tuple "
+//             << toString()
+//             << " with ID "
+//             << _ID
+//             << "\n";
+
   if (_tags) {
     delete _tags;
   }
@@ -200,4 +206,41 @@ uint
 Tuple::ID()
 {
   return _ID;
+}
+
+
+Tuple::Tuple()
+  : fields(),
+    frozen(false),
+    _tags(0),
+    _ID(_tupleIDCounter++)
+{
+//   std::cout << "Creating tuple " << toString()
+//             << "with ID " << _ID
+//             << "\n";
+}
+
+
+TuplePtr
+Tuple::mk()
+{
+  TuplePtr p(new Tuple());
+  return p;
+};
+
+
+void
+Tuple::append(ValuePtr tf)
+{
+  assert(!frozen);
+  fields.push_back(tf);
+}
+
+
+void
+Tuple::freeze()
+{
+  frozen = true;
+//   std::cout << "Freezing tuple " << toString()
+//             << "with ID " << _ID << "\n";
 }
