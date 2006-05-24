@@ -55,17 +55,24 @@ private:
 
 
 public:
-
-  Tuple() : fields(), frozen(false), _tags(0), _ID(_tupleIDCounter++) {};
+  
+  Tuple();
+  
+  
   ~Tuple();
+  
+  
+  static TuplePtr
+  mk();
 
-  static TuplePtr mk() { TuplePtr p(new Tuple()); return p; };
-
-  void append(ValuePtr tf) { assert(!frozen); fields.push_back(tf); };
+  
+  void
+  append(ValuePtr tf);
 
   /** Append all the fields of the given tuple to the end of this tuple
   */
-  void concat(TuplePtr t);
+  void
+  concat(TuplePtr t);
 
   /** Attach a named tag to the tuple. The tuple must not be frozen. To
       store a tag with no value use Val_Null::mk() to return the
@@ -77,7 +84,11 @@ public:
       If found, a real ValuePtr is returned. */
   ValuePtr tag(string);
 
-  void freeze() { frozen = true; };
+
+  /** The tuple becomes immutable. It will not allow further appends or
+      concats to itself */
+  void
+  freeze();
 
   size_t size() const { return fields.size(); };
 
