@@ -226,7 +226,7 @@ Table2::~Table2()
   _primaryIndex.clear();
   
 
-  std::cout << "Destroyed table " << _name << "\n";
+  //  std::cout << "Destroyed table " << _name << "\n";
 }
 
 
@@ -362,7 +362,6 @@ Table2::Entry::Entry(TuplePtr tp)
 
 Table2::Entry::~Entry()
 {
-  tuple = Tuple::EMPTY;
   //  std::cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@Destroying entry at address " << this << "\n";
 }
 

@@ -66,6 +66,15 @@ public:
       key. */
   void
   testSuperimposedIndexRemoval();
+
+
+  /** Test insert/remove/lookup scripts */
+  void
+  testInsertRemoveLookupScripts();
+
+  /** A special-case insert, overwrite, lookup sequence. */
+  void
+  testPrimaryOverwrite();
 };
 
 
@@ -364,6 +373,398 @@ testTable2::testSuperimposedIndexRemoval()
 }
 
 
+/**
+ * This test tries a simple tuple overwrite using the primary index.  It
+ * inserts <0,10> and then overwrites it with i<0,15>, expecting to find
+ * f<0,15> when looking up by <0, 15>.  The table's primary key is 0.
+ */
+void
+testTable2::testPrimaryOverwrite()
+{
+  TuplePtr a = Tuple::mk();
+  a->append(Val_Int32::mk(0));
+  a->append(Val_Int32::mk(10));
+  a->freeze();
+  
+  TuplePtr b = Tuple::mk();
+  b->append(Val_Int32::mk(0));
+  b->append(Val_Int32::mk(15));
+  b->freeze();
+  
+  // Create a table with unique first fields.
+  Table2 table("test_table", Table2::KEY0);
+
+  // Insert the first tuples
+  BOOST_CHECK_MESSAGE(table.insert(a),
+                      "Tuple a '"
+                      << a->toString()
+                      << "' should be newly inserted");
+  BOOST_CHECK_MESSAGE(table.insert(b),
+                      "Tuple b '"
+                      << b->toString()
+                      << "' should be newly inserted (overwriting a).");
+
+  // Lookup b in the primary index
+  Table2::IteratorPtr i = table.lookup(Table2::KEY0, b);
+  BOOST_CHECK_MESSAGE(!i->done(),
+                      "Lookup of tuple b '"
+                      << b->toString()
+                      << "' should return results.");
+
+  if (!i->done()) {
+    TuplePtr t = i->next();
+    BOOST_CHECK_MESSAGE(t->compareTo(b) == 0,
+                        "Lookup of tuple b '"
+                        << b->toString()
+                        << "' should return b.");
+
+    BOOST_CHECK_MESSAGE(i->done(),
+                        "Lookup of tuple b '"
+                        << b->toString()
+                        << "' should return exactly and only b.");
+  }
+}
+
+
+
+////////////////////////////////////////////////////////////
+// Insert/Delete/Lookup scripts
+////////////////////////////////////////////////////////////
+
+/** Superclass of script-based tests */
+class table2Test {
+public:
+  table2Test(std::string script,
+             int line,
+             Table2::Key& key);
+  std::string _script;
+  int _line;
+  Table2::Key& _key;
+};
+
+
+table2Test::table2Test(std::string script,
+                       int line,
+                       Table2::Key& key)
+  : _script(script),
+    _line(line),
+    _key(key)
+{
+}
+
+
+/**
+ * This object tracks a single interactive test for a single script. It
+ * creates an empty table, prepares it accordingly, parses the script,
+ * applies it to the table, and evaluates the result. If the script is
+ * executed without mismatch, the test is a success.  Otherwise, an
+ * error is generated and the rest of the test is aborted.
+ */
+class Tracker2 {
+public:
+  /** Create the new tracker */
+  Tracker2(table2Test &);
+
+  /** Execute the tracked script */
+  void
+  test();
+
+  /** Advance the script by a command. Returns false if the tracking is
+      aborted, true otherwise. */
+  bool
+  fetchCommand();
+
+  /** My test */
+  table2Test & _test;
+  
+  /** My table */
+  Table2 _table;
+
+  /** The remainder of my script */
+  std::string _remainder;
+
+  /** The current command type */
+  char _command;
+
+  /** The current tuple */
+  TuplePtr _tuple;
+
+  /** The all-fields key vector */
+  std::vector< unsigned > _allFields;
+};
+
+
+/**
+ * Execute the script.  First parse the script string.  Then execute it.
+ * Parse errors abort the current test.
+ */
+void
+Tracker2::test()
+{
+//   std::cout << "Testing script \""
+//             << _test._script
+//             << "\"\n";
+  _remainder = std::string(_test._script);
+  
+  while (!_remainder.empty()) {
+    bool result = fetchCommand();
+    
+    if (result) {
+      switch(_command) {
+      case 'i':
+        // Insert into table
+//         std::cout << "Tracker:Inserting '"
+//                   << _tuple->toString()
+//                   << "'\n";
+        _table.insert(_tuple);
+        break;
+      case 'd':
+        // Delete from table
+//         std::cout << "Tracker:Removing '"
+//                   << _tuple->toString()
+//                   << "'\n";
+        _table.remove(_tuple);
+        break;
+      case 'f':
+        // Find in table (lookup successfully)
+        {
+          // Lookup the tuple in the command and ensure it was found.
+//           std::cout << "Tracker:Looking up '"
+//                     << _tuple->toString()
+//                     << "'\n";
+          Table2::IteratorPtr i = _table.lookup(_test._key, _tuple);
+          BOOST_CHECK_MESSAGE(!i->done(),
+                              "Did not find results for expected tuple '"
+                              << _tuple->toString()
+                              << "'.");
+          
+          if (i->done()) {
+            // OK, we had no results, so we might as well skip the next
+            //test 
+          } else {
+            // Ensure the results contain the expected tuple exactly
+            bool found = false;
+            while (!i->done()) {
+              TuplePtr t = i->next();
+              if (t->compareTo(_tuple) == 0) {
+                found = true;
+              }
+            }
+            // Ensure we did find it
+            BOOST_CHECK_MESSAGE(found,
+                                "Results did not contain expected tuple '"
+                                << _tuple->toString()
+                                << "'.");
+          }
+        }
+        break;
+      case 'm':
+        // Miss in table (lookup unsuccessfully)
+        break;
+      default:
+        // I should not receive anything else
+        BOOST_ERROR("Error in test line "
+                    << _test._line
+                    << " with suffix "
+                    << "\""
+                    << _remainder
+                    << "\". Unexpected command '"
+                    << _command
+                    << "'.");
+        return;
+      }
+    } else {
+//       std::cout << "Aborting script \""
+//                 << _test._script
+//                 << "\"\n";
+      return;
+    }
+  }
+}
+
+
+
+/**
+ * Fetch another command from the beginning of the _remainder script.
+ * The command is placed in the _command field.  The tuple argument of
+ * the command is placed in the _tuple field.  The _remainder string is
+ * shrunk by the removed command.
+ *
+ * This assumes that _remainder is not empty.
+ *
+ * If the fetch was successful, returns true. False if a syntax error in
+ * the test specification was identified.
+ */
+bool
+Tracker2::fetchCommand()
+{
+//   std::cout << "Fetching command from \""
+//             << _remainder
+//             << "\"\n";
+
+  // This will require a new tuple
+  _tuple = Tuple::mk();
+
+  // Fetch another token
+  std::string::size_type tokenEnd = _remainder.find(';');
+  if (tokenEnd == std::string::npos) {
+    // Syntax error. I should always end with a semicolon
+    BOOST_ERROR("Syntax error in test line "
+                << _test._line
+                << " with suffix "
+                << "\""
+                << _remainder
+                << "\". Missing a trailing semicolon.");
+    return false;
+  }
+  
+  // Take out token, leaving semicolon behind
+  std::string token = _remainder.substr(0, tokenEnd);
+  
+  // Check command
+  _command = token[0];
+  switch(_command) {
+  case 'i':
+  case 'd':
+  case 'u':
+  case 'f':
+  case 'm':
+    break;
+  default:
+    BOOST_ERROR("Syntax error in test line "
+                << _test._line
+                << " with token "
+                << "\""
+                << token
+                << "\". Unknown command '"
+                << _command
+                << "'.");
+    return false;
+  }
+  
+  // Check tuple containers
+  if ((token[1] != '<') ||
+      (token[token.length() - 1] != '>')) {
+    BOOST_ERROR("Syntax error in test line "
+                << _test._line
+                << " with token "
+                << "\""
+                << token
+                << "\". Tuple must be enclosed in '<>'.");
+    return false;
+  }
+  
+  // Parse and construct tuple
+  std::string tuple = token.substr(2, token.length() - 3);
+  
+//   std::cout << "Parsing tuple \""
+//             << tuple
+//             << "\"\n";
+  
+  while (!tuple.empty()) {
+    // Fetch another field delimiter
+    std::string::size_type fieldEnd = tuple.find(',');
+    
+    // Isolate the field
+    std::string field;
+    if (fieldEnd == std::string::npos) {
+      // The rest of the tuple makes up a field
+      field = tuple;
+      tuple = std::string();
+    } else {
+      // Take a field up to the delimiter
+      field = tuple.substr(0, fieldEnd);
+      tuple = tuple.substr(fieldEnd + 1);
+    }
+    
+    // Interpret the field as an int32
+    ValuePtr intField = Val_Int32::mk(Val_Int32::cast(Val_Str::mk(field)));
+    _tuple->append(intField);
+    
+//     std::cout << "Found int32 field \""
+//               << intField->toString()
+//               << "\"\n";
+  }
+  
+  // Shrink remainder
+  _remainder = _remainder.substr(tokenEnd + 1);
+
+  // Freeze the tuple
+  _tuple->freeze();
+
+  return true;
+}
+
+
+Tracker2::Tracker2(table2Test & test)
+  : _test(test),
+    // Create a very simple table with the following schema
+    // Schema is <A int, B int>
+    // No maximum lifetime or size
+    _table("trackerTest", _test._key)
+{
+}
+
+
+
+
+////////////////////////////////////////////////////////////
+// Specific insert/lookup/delete scripts
+////////////////////////////////////////////////////////////
+
+/** 
+ * i<tuple> means insert into the primary key
+ *
+ * d<tuple> means delete from the primary key
+ *
+ * f<tuple> means find the identical tuple looking up into the primary
+ * key
+ *
+ * m<tuple> means do not find this identical tuple looking into the
+ * primary key
+ *
+ * n<tuple> means find nothing looking up this tuple into the primary
+ * key
+ */
+void
+testTable2::testInsertRemoveLookupScripts()
+{
+  table2Test irlTests[] = {
+    table2Test("i<0,10>;i<0,15>;f<0,15>;m<0,15>;",
+               __LINE__,
+               Table2::KEY0),
+
+  };
+  uint noIrlTests = sizeof(irlTests) / sizeof(table2Test);
+  
+  for (uint i = 0;
+       i < noIrlTests;
+       i++) {
+    // Create a script tracker
+    Tracker2 tracker(irlTests[i]);
+    // Run it
+    tracker.test();
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -649,273 +1050,6 @@ testTable2::testUniqueTupleRemovals()
 ////////////////////////////////////////////////////////////
 // Tracker Superclass
 ////////////////////////////////////////////////////////////
-
-
-class table2Test {
-public:
-  table2Test(std::string,
-            int);
-  std::string _script;
-  int _line;
-};
-
-table2Test::table2Test(std::string script,
-                     int line)
-  : _script(script),
-    _line(line)
-{
-}
-
-
-/**
- * This object tracks a single interactive test for a single script. It
- * creates an empty table, prepares it accordingly, parses the script,
- * applies it to the table, and evaluates the result. If the script is
- * executed without mismatch, the test is a success.  Otherwise, an
- * error is generated and the rest of the test is aborted.
- */
-class Tracker2 {
-public:
-  /** Create the new tracker */
-  Tracker2(table2Test &);
-
-  /** Execute the tracked script */
-  void
-  test();
-
-  /** Advance the script by a command. Returns false if the tracking is
-      aborted, true otherwise. */
-  bool
-  fetchCommand();
-
-  /** My test */
-  table2Test & _test;
-  
-  /** My table */
-  Table2 _table;
-
-  /** The remainder of my script */
-  std::string _remainder;
-
-  /** The current command type */
-  char _command;
-
-  /** The current tuple */
-  TuplePtr _tuple;
-
-  /** The all-fields key vector */
-  std::vector< unsigned > _allFields;
-};
-
-
-/**
- * Execute the script.  First parse the script string.  Then execute it.
- * Parse errors abort the current test.
- */
-void
-Tracker2::test()
-{
-//   std::cout << "Testing script \""
-//             << _test._script
-//             << "\"\n";
-  _remainder = std::string(_test._script);
-  
-  while (!_remainder.empty()) {
-    bool result = fetchCommand();
-    
-    if (result) {
-      switch(_command) {
-      case 'i':
-        // Insert into table
-        _table.insert(_tuple);
-        break;
-      case 'd':
-        // Delete from table
-        {
-          std::vector< ValuePtr > fields;
-          for (uint i = 0;
-               i < _tuple->size();
-               i++) {
-            fields.push_back((*_tuple)[i]);
-          }
-          _table.remove(_allFields, fields);
-        }
-        break;
-      case 'f':
-        // Find in table (lookup successfully)
-        {
-          // Lookup the tuple in the command and ensure it was found.
-        }
-        break;
-      case 'm':
-        // Miss in table (lookup unsuccessfully)
-        break;
-      default:
-        // I should not receive anything else
-        BOOST_ERROR("Error in test line "
-                    << _test._line
-                    << " with suffix "
-                    << "\""
-                    << _remainder
-                    << "\". Unexpected command '"
-                    << _command
-                    << "'.");
-        return;
-      }
-    } else {
-//       std::cout << "Aborting script \""
-//                 << _test._script
-//                 << "\"\n";
-      return;
-    }
-  }
-}
-
-
-
-/**
- * Fetch another command from the beginning of the _remainder script.
- * The command is placed in the _command field.  The tuple argument of
- * the command is placed in the _tuple field.  The _remainder string is
- * shrunk by the removed command.
- *
- * This assumes that _remainder is not empty.
- *
- * If the fetch was successful, returns true. False if a syntax error in
- * the test specification was identified.
- */
-bool
-Tracker2::fetchCommand()
-{
-//   std::cout << "Fetching command from \""
-//             << _remainder
-//             << "\"\n";
-
-  // This will require a new tuple
-  _tuple = Tuple::mk();
-
-  // Fetch another token
-  std::string::size_type tokenEnd = _remainder.find(';');
-  if (tokenEnd == std::string::npos) {
-    // Syntax error. I should always end with a semicolon
-    BOOST_ERROR("Syntax error in test line "
-                << _test._line
-                << " with suffix "
-                << "\""
-                << _remainder
-                << "\". Missing a trailing semicolon.");
-    return false;
-  }
-  
-  // Take out token, leaving semicolon behind
-  std::string token = _remainder.substr(0, tokenEnd);
-  
-  // Check command
-  _command = token[0];
-  switch(_command) {
-  case 'i':
-  case 'd':
-  case 'u':
-  case 'f':
-  case 'm':
-    break;
-  default:
-    BOOST_ERROR("Syntax error in test line "
-                << _test._line
-                << " with token "
-                << "\""
-                << token
-                << "\". Unknown command '"
-                << _command
-                << "'.");
-    return false;
-  }
-  
-  // Check tuple containers
-  if ((token[1] != '<') ||
-      (token[token.length() - 1] != '>')) {
-    BOOST_ERROR("Syntax error in test line "
-                << _test._line
-                << " with token "
-                << "\""
-                << token
-                << "\". Tuple must be enclosed in '<>'.");
-    return false;
-  }
-  
-  // Parse and construct tuple
-  std::string tuple = token.substr(2, token.length() - 3);
-  
-//   std::cout << "Parsing tuple \""
-//             << tuple
-//             << "\"\n";
-  
-  while (!tuple.empty()) {
-    // Fetch another field delimiter
-    std::string::size_type fieldEnd = tuple.find(',');
-    
-    // Isolate the field
-    std::string field;
-    if (fieldEnd == std::string::npos) {
-      // The rest of the tuple makes up a field
-      field = tuple;
-      tuple = std::string();
-    } else {
-      // Take a field up to the delimiter
-      field = tuple.substr(0, fieldEnd);
-      tuple = tuple.substr(fieldEnd + 1);
-    }
-    
-    // Interpret the field as an int32
-    ValuePtr intField = Val_Int32::mk(Val_Int32::cast(Val_Str::mk(field)));
-    _tuple->append(intField);
-    
-//     std::cout << "Found int32 field \""
-//               << intField->toString()
-//               << "\"\n";
-  }
-  
-  // Shrink remainder
-  _remainder = _remainder.substr(tokenEnd + 1);
-
-  // Freeze the tuple
-  _tuple->freeze();
-
-  return true;
-}
-
-
-
-
-
-Tracker2::Tracker2(table2Test & test)
-  : _test(test),
-    // Create a very simple table with the following schema
-    // Schema is <A int, B int>
-    // No maximum lifetime or size
-    _table("trackerTest", INT_MAX)
-{
-  // Create a unique index on all fields to enable removal of entire
-  // tuples
-  _allFields.push_back(0);
-  _allFields.push_back(1);
-  _table.add_unique_index(_allFields);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 ////////////////////////////////////////////////////////////
@@ -1231,11 +1365,13 @@ testTable2_testSuite::testTable2_testSuite()
 {
   boost::shared_ptr<testTable2> instance(new testTable2());
   
-  add(BOOST_CLASS_TEST_CASE(&testTable2::testSuperimposedIndexRemoval, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testPrimaryOverwrite, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testCreateDestroy, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimitID, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testSuperimposedIndexRemoval, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimitSingle, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimitMulti, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testInsertRemoveLookupScripts, instance));
 #if 0
   add(BOOST_CLASS_TEST_CASE(&testTable2::testIndexing, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testBatchRemovals, instance));
