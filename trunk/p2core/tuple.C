@@ -244,3 +244,25 @@ Tuple::freeze()
 //   std::cout << "Freezing tuple " << toString()
 //             << "with ID " << _ID << "\n";
 }
+
+
+size_t
+Tuple::size() const
+{
+  return fields.size();
+}
+
+
+ValuePtr
+Tuple::operator[] (ptrdiff_t i)
+{
+  return fields[i];
+}
+
+
+const ValuePtr
+Tuple::operator[] (ptrdiff_t i) const
+{
+  return fields[i];
+}
+

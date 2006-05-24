@@ -62,27 +62,37 @@ public:
   ~Tuple();
   
   
+  /** Create a pointer to a new, empty, unfrozen tuple. This is the
+      preferred way to create new tuples, as opposed to using the
+      constructor.  */
   static TuplePtr
   mk();
 
   
+  /** Append a value pointer to the end of an unfrozen tuple, keeping
+      the tuple unfrozen. */
   void
   append(ValuePtr tf);
 
+
   /** Append all the fields of the given tuple to the end of this tuple
-  */
+   */
   void
   concat(TuplePtr t);
+
 
   /** Attach a named tag to the tuple. The tuple must not be frozen. To
       store a tag with no value use Val_Null::mk() to return the
       (single, static, constant) NULL P2 value, which is different from
       plain old NULL. */
-  void tag(string, ValuePtr);
+  void
+  tag(string, ValuePtr);
+
 
   /** Lookup a name tag in the tuple.  If not found, null is returned.
       If found, a real ValuePtr is returned. */
-  ValuePtr tag(string);
+  ValuePtr
+  tag(string);
 
 
   /** The tuple becomes immutable. It will not allow further appends or
@@ -90,15 +100,26 @@ public:
   void
   freeze();
 
-  size_t size() const { return fields.size(); };
 
-  ValuePtr operator[] (ptrdiff_t i) { return fields[i]; };
-  const ValuePtr operator[] (ptrdiff_t i) const { return fields[i]; };
+  /** Return the number of fields in the tuple, excluding tuple metadata
+      such as the tuple ID, any tags, etc. */
+  size_t
+  size() const;
 
-  ValuePtr at(ptrdiff_t i) { return fields[i]; };
 
-  void xdr_marshal( XDR *xdrs );
-  static TuplePtr xdr_unmarshal( XDR *xdrs );
+  ValuePtr
+  operator[] (ptrdiff_t i);
+
+
+  const ValuePtr
+  operator[] (ptrdiff_t i) const;
+
+
+  //  ValuePtr at(ptrdiff_t i) { return fields[i]; };
+
+  void xdr_marshal(XDR *xdrs);
+
+  static TuplePtr xdr_unmarshal(XDR *xdrs);
 
   string toString() const;
 
