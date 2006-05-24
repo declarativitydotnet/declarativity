@@ -74,8 +74,8 @@ Table2::KeyedEntryComparator::
 operator()(const Table2::Entry* fEntry,
            const Table2::Entry* sEntry) const
 {
-  TuplePtr first = fEntry->tuple;
-  TuplePtr second = sEntry->tuple;
+  TuplePtr first(fEntry->tuple);
+  TuplePtr second(sEntry->tuple);
 
   if (_key.empty()) {
     // Compare tuple IDs only
@@ -191,13 +191,16 @@ Table2::Table2(std::string tableName,
 /** Empty out all indices and kill their heap-allocated components */
 Table2::~Table2()
 {
+  //  std::cout << "Destroying table " << _name << "\n";
+
   ////////////////////////////////////////////////////////////
   // Secondary indices
   SecondaryIndexIndex::iterator iter =
     _indices.begin();
   while (iter != _indices.end()) {
     // Kill the index
-    delete (*iter).second;
+    SecondaryIndex* index = (*iter).second;
+    delete index;
 
     // Kill the entry in the index index
     _indices.erase(iter++);
@@ -209,6 +212,21 @@ Table2::~Table2()
     delete last;
     _keyedComparators.pop_back();
   }
+
+  ////////////////////////////////////////////////////////////
+  // Queue, eliminating entries
+  while (_queue.size() > 0) {
+    Entry * toKill = _queue.back();
+    _queue.pop_back();
+    delete toKill;
+  }
+
+  ////////////////////////////////////////////////////////////
+  // Primary index
+  _primaryIndex.clear();
+  
+
+  std::cout << "Destroyed table " << _name << "\n";
 }
 
 
@@ -256,8 +274,9 @@ Table2::insert(TuplePtr t)
   flush();
 
   // Find tuple with same primary key
-  _searchEntry.tuple = t;
-  PrimaryIndex::iterator found = _primaryIndex.find(&_searchEntry);
+  static Entry searchEntry(Tuple::EMPTY);
+  searchEntry.tuple = t;
+  PrimaryIndex::iterator found = _primaryIndex.find(&searchEntry);
 
   // If no tuple exists with same primary key
   if (found == _primaryIndex.end()) {
@@ -273,7 +292,11 @@ Table2::insert(TuplePtr t)
     // Otherwise, tuple has same primary key but is different
     else {
       // We will replace the existing tuple, so remove it first
-      removeTuple(t, found);
+      removeTuple(found);
+      // Must move the found iterator forward before reaching the
+      // insertTuple statement below, since after the removal this
+      // iterator position will be invalid
+      found++; 
     }
   }
 
@@ -303,8 +326,9 @@ Table2::remove(TuplePtr t)
   flush();
 
   // Find tuple with same primary key
-  _searchEntry.tuple = t;
-  PrimaryIndex::iterator found = _primaryIndex.find(&_searchEntry);
+  static Entry searchEntry(Tuple::EMPTY);
+  searchEntry.tuple = t;
+  PrimaryIndex::iterator found = _primaryIndex.find(&searchEntry);
 
   // If no tuple exists with same primary key
   if (found == _primaryIndex.end()) {
@@ -314,7 +338,7 @@ Table2::remove(TuplePtr t)
   // Otherwise, tuple with same primary key exists
   else {
     // Get rid of it, even if it's not identical
-    removeTuple(t, found);
+    removeTuple(found);
     
     // We haven't added new tuples so there's no reason to flush again.
     return true;
@@ -331,7 +355,15 @@ Table2::remove(TuplePtr t)
 Table2::Entry::Entry(TuplePtr tp)
   : tuple(tp)
 {
+  //  std::cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@Creating entry at address " << this << "\n";
   getTime(time);
+}
+
+
+Table2::Entry::~Entry()
+{
+  tuple = Tuple::EMPTY;
+  //  std::cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@Destroying entry at address " << this << "\n";
 }
 
 
@@ -340,11 +372,6 @@ Table2::Entry::Entry(TuplePtr tp)
 ////////////////////////////////////////////////////////////
 // Convenience lookups
 ////////////////////////////////////////////////////////////
-
-/** Set up the static search entry */
-Table2::Entry
-Table2::_searchEntry(Tuple::EMPTY);
-
 
 /** To insert the tuple, create a fresh new entry, assign the current
     timestamp, and insert into the primary set, all secondaries, and all
@@ -378,16 +405,17 @@ void
 Table2::flushTuple(TuplePtr t)
 {
   // Primary index
-  _searchEntry.tuple = t;
+  static Entry searchEntry(Tuple::EMPTY);
+  searchEntry.tuple = t;
 
   // Just remove it from all indices.  The entry will be killed in
   // flush()
-  _primaryIndex.erase(&_searchEntry);
+  _primaryIndex.erase(&searchEntry);
 
   // Secondary indices
   SecondaryIndexIndex::iterator iter = _indices.begin();
   while (iter != _indices.end()) {
-    (iter++)->second->erase(&_searchEntry);
+    (iter++)->second->erase(&searchEntry);
   }
   
   // Aggregates
@@ -395,12 +423,11 @@ Table2::flushTuple(TuplePtr t)
 
 
 void
-Table2::removeTuple(TuplePtr t,
-                    PrimaryIndex::iterator position)
+Table2::removeTuple(PrimaryIndex::iterator position)
 {
   // Set the search entry to the tuple from the primary index. This is
   // the tuple we want to remove from all secondary indices below.
-  _searchEntry.tuple = (*position)->tuple;
+  TuplePtr toRemove = (*position)->tuple;
 
   // If I have a queue, then I don't need to delete the entry since it
   // will be flushed sooner or later. Otherwise, I have to delete the
@@ -408,8 +435,9 @@ Table2::removeTuple(TuplePtr t,
   if (_flushing) {
     _primaryIndex.erase(position);
   } else {
-    delete (*position);
+    Entry* toKill = *position;
     _primaryIndex.erase(position);
+    delete toKill;
   }
 
   // Secondary indices
@@ -419,11 +447,13 @@ Table2::removeTuple(TuplePtr t,
 
     // Now find the tuple removed from the primary index in this
     // secondary index and erase it
-    SecondaryIndex::iterator secIter = index.find(&_searchEntry);
+    static Entry searchEntry(Tuple::EMPTY);
+    searchEntry.tuple = toRemove;
+    SecondaryIndex::iterator secIter = index.find(&searchEntry);
     while (secIter != index.end()) {
       // Is this tuple identical to the one removed from the primary
       // index?
-      if ((*secIter)->tuple->ID() == _searchEntry.tuple->ID()) {
+      if ((*secIter)->tuple->ID() == toRemove->ID()) {
         // It's the exact tuple. erase it
         index.erase(secIter);
         break;
@@ -584,6 +614,7 @@ Table2::Iterator::~Iterator()
 {
   // Delete the queue. Its contents are shared pointers to tuples, so no
   // need to worry about them
+  _spool->clear();
   delete _spool;
 }
 
@@ -612,8 +643,9 @@ Table2::lookup(Table2::Key& key, TuplePtr t)
   // Find the appropriate index. Is it the primary index?
   if (key == _key) {
     // Create the lookup iterator from all the matches and return it
-    _searchEntry.tuple = t;
-    PrimaryIndex::iterator tupleIter = _primaryIndex.find(&_searchEntry);
+    static Entry searchEntry(Tuple::EMPTY);
+    searchEntry.tuple = t;
+    PrimaryIndex::iterator tupleIter = _primaryIndex.find(&searchEntry);
 
     // Create the lookup iterator by spooling all results found into a
     // queue and passing them into the iterator.
@@ -637,8 +669,9 @@ Table2::lookup(Table2::Key& key, TuplePtr t)
     else {    
       SecondaryIndex& index = *(*indexIter).second;
 
-      _searchEntry.tuple = t;
-      SecondaryIndex::iterator tupleIter = index.find(&_searchEntry);
+      static Entry searchEntry(Tuple::EMPTY);
+      searchEntry.tuple = t;
+      SecondaryIndex::iterator tupleIter = index.find(&searchEntry);
 
       // Create the lookup iterator by spooling all results found into a
       // queue and passing them into the iterator.
