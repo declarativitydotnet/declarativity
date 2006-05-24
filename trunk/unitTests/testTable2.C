@@ -16,6 +16,7 @@
 #include "val_str.h"
 #include "val_tuple.h"
 #include "val_int32.h"
+#include "val_uint32.h"
 
 #include "testTable2.h"
 
@@ -462,6 +463,12 @@ table2Test::table2Test(std::string script,
  */
 class Tracker2 {
 public:
+  /** Process an array of tests */
+  static void
+  process(table2Test[]);
+
+
+private:
   /** Create the new tracker */
   Tracker2(table2Test &);
 
@@ -560,7 +567,45 @@ Tracker2::test()
         break;
       case 'm':
         // Miss in table (lookup unsuccessfully)
+        {
+          // Lookup the tuple in the command and ensure it is not found
+//           std::cout << "Tracker:Looking up '"
+//                     << _tuple->toString()
+//                     << "'\n";
+          Table2::IteratorPtr i = _table.lookup(_test._key, _tuple);
+          
+          // If there were any results
+          if (!i->done()) {
+            // Ensure none match the tuple
+            bool found = false;
+            while (!i->done()) {
+              TuplePtr t = i->next();
+              if (t->compareTo(_tuple) == 0) {
+                found = true;
+              }
+            }
+            // Ensure we did not find it
+            BOOST_CHECK_MESSAGE(!found,
+                                "Results contained expected tuple '"
+                                << _tuple->toString()
+                                << "'.");
+          } else {
+            // We're done. Nothing else to check.
+          }
+        }
         break;
+      case 's':
+        // Create a secondary index
+        {
+          // Turn tuple into key vector
+          Table2::Key k;
+          for (uint i = 0;
+               i < _tuple->size();
+               i++) {
+            k.push_back(Val_UInt32::cast((*_tuple)[i]));
+          }
+          _table.secondaryIndex(k);
+        }
       default:
         // I should not receive anything else
         BOOST_ERROR("Error in test line "
@@ -629,6 +674,7 @@ Tracker2::fetchCommand()
   case 'u':
   case 'f':
   case 'm':
+  case 's':
     break;
   default:
     BOOST_ERROR("Syntax error in test line "
@@ -706,6 +752,22 @@ Tracker2::Tracker2(table2Test & test)
 }
 
 
+void
+Tracker2::process(table2Test tests[])
+{
+  uint noTests = sizeof(tests) / sizeof(table2Test);
+  
+  for (uint i = 0;
+       i < noTests;
+       i++) {
+    // Create a script tracker
+    Tracker2 tracker(tests[i]);
+    // Run it
+    tracker.test();
+  }
+}
+
+
 
 
 ////////////////////////////////////////////////////////////
@@ -723,29 +785,36 @@ Tracker2::Tracker2(table2Test & test)
  * m<tuple> means do not find this identical tuple looking into the
  * primary key
  *
- * n<tuple> means find nothing looking up this tuple into the primary
- * key
+ * s<key> means create the secondary index described by the key
  */
 void
 testTable2::testInsertRemoveLookupScripts()
 {
-  table2Test irlTests[] = {
-    table2Test("i<0,10>;i<0,15>;f<0,15>;m<0,15>;",
-               __LINE__,
-               Table2::KEY0),
+  table2Test t[] =
+    {
+      table2Test("i<0,10>;i<0,15>;f<0,15>;m<0,10>;d<0,15>;m<0,15>;",
+                 __LINE__,
+                 Table2::KEY0),
+      
+      table2Test("i<0,10>;i<0,15>;f<0,15>;f<0,10>;d<0,15>;m<0,15>;"
+                 "f<0,10>;d<0,10>;m<0,15>;m<0,10>;",
+                 __LINE__,
+                 Table2::KEY01),
+      
+      table2Test("i<0,10>;i<0,15>;m<0,10>;m<0,15>;",
+                 __LINE__,
+                 Table2::KEYID),
+      
+      table2Test("i<0,10>;f<0,10>;d<0,10>;m<0,10>;d<0,10>;m<0,10>;"
+                 "i<0,15>;f<0,15>;",
+                 __LINE__,
+                 Table2::KEY0),
+      
+    };
 
-  };
-  uint noIrlTests = sizeof(irlTests) / sizeof(table2Test);
-  
-  for (uint i = 0;
-       i < noIrlTests;
-       i++) {
-    // Create a script tracker
-    Tracker2 tracker(irlTests[i]);
-    // Run it
-    tracker.test();
-  }
+  Tracker2::process(t);
 }
+
 
 
 
