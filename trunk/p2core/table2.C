@@ -252,6 +252,14 @@ Table2::secondaryIndex(Table2::Key& key)
     SecondaryIndex* index = new SecondaryIndex(*comp);
     _indices.insert(std::make_pair(&key, index));
 
+    // Insert all current elements
+    PrimaryIndex::iterator i = _primaryIndex.begin();
+    while (i != _primaryIndex.end()) {
+      Entry* current = *i;
+      index->insert(current);
+      i++;
+    }
+
     return true;
   } else {
     // If so, return false
