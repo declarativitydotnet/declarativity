@@ -22,6 +22,7 @@
 #include "val_null.h"
 #include "val_tuple.h"
 #include "math.h"
+#include "tuple.h"
 
 using namespace opr;
 using namespace boost::gregorian;
