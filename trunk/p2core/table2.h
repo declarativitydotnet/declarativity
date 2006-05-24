@@ -45,9 +45,14 @@ public:
   struct Entry {
     TuplePtr tuple;
     
+    
     boost::posix_time::ptime time;
     
+    
     Entry(TuplePtr tp);
+
+    
+    ~Entry();
   };
   
 
@@ -355,8 +360,8 @@ private:
   };
   static Initializer
   _INITIALIZER;
-  
 
+  
 
 
   ////////////////////////////////////////////////////////////
@@ -374,18 +379,12 @@ private:
   // Convenience Functions
   ////////////////////////////////////////////////////////////
 
-  /** The common search entry to be used with lookups */
-  static Entry
-  _searchEntry;
-
-
-  /** Remove an existing tuple from the database including all
-      indices. This tuple always causes a tuple to be removed from the
-      table and therefore always calls any deletion listeners. Its
-      position in the primary index is known and given. */
+  /** Remove an existing tuple (in the primary index position given)
+      from the database including all indices. This tuple always causes
+      a tuple to be removed from the table and therefore always calls
+      any deletion listeners. */
   void
-  removeTuple(TuplePtr t,
-              PrimaryIndex::iterator primaryPosition);
+  removeTuple(PrimaryIndex::iterator primaryPosition);
 
 
   /** Remove an existing tuple from all indices during flushing. */
