@@ -20,6 +20,7 @@
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <map>
+#include <set>
 #include <utility>
 
 #include <assert.h>
@@ -29,7 +30,8 @@
 class Tuple;
 typedef boost::shared_ptr<Tuple> TuplePtr;
 
-class Tuple {
+class Tuple
+{
 
 private:
   /** A vector of the fields of this tuple */
@@ -148,11 +150,22 @@ public:
   ID();
 
 
+  /** A comparator object for tuples */
+  struct Comparator
+  {
+    bool
+    operator()(const TuplePtr first,
+               const TuplePtr second) const;
+  };
+
+
 
 
 private:
   /** And the empty initializer object */
   static EmptyInitializer _theEmptyInitializer;
 };
+
+typedef std::set< TuplePtr, Tuple::Comparator > TupleSet;
 
 #endif /* __TUPLE_H_ */

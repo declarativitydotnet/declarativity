@@ -266,6 +266,26 @@ public:
       index exists, a null pointer is returned. */
   IteratorPtr
   lookup(Key& key, TuplePtr t);
+
+
+  /** Returns a pointer to a lookup iterator on all elements ordered by
+      the given index.  If no such index exists, a null pointer is
+      returned.  */
+  IteratorPtr
+  scan(Key& key);
+
+
+  /** Returns a pointer to a lookup iterator on all elements matching
+      the given tuple on the primary key.  An iterator is always
+      returned.  */
+  IteratorPtr
+  lookup(TuplePtr t);
+
+
+  /** Returns a pointer to a lookup iterator on all elements ordered by
+      the primary index.*/
+  IteratorPtr
+  scan();
   
 
 
@@ -378,6 +398,16 @@ private:
   ////////////////////////////////////////////////////////////
   // Convenience Functions
   ////////////////////////////////////////////////////////////
+
+  /** Performs a primary key lookup but no flushing. */
+  IteratorPtr
+  lookupPrimary(TuplePtr t);
+
+
+  /** Performs a primary key scan but no flushing. */
+  IteratorPtr
+  scanPrimary();
+
 
   /** Remove an existing tuple (in the primary index position given)
       from the database including all indices. This tuple always causes

@@ -266,3 +266,11 @@ Tuple::operator[] (ptrdiff_t i) const
   return fields[i];
 }
 
+
+
+bool
+Tuple::Comparator::operator()(const TuplePtr first,
+                              const TuplePtr second) const
+{
+  return first->compareTo(second);
+}

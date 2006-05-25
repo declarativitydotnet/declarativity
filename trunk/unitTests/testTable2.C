@@ -73,9 +73,16 @@ public:
   void
   testInsertRemoveLookupScripts();
 
+
   /** A special-case insert, overwrite, lookup sequence. */
   void
   testPrimaryOverwrite();
+
+
+  /** Check that a secondary index search is equivalent to scanning and
+      selecting. */
+  void
+  testSecondaryEquivalence();
 };
 
 
@@ -818,6 +825,73 @@ testTable2::testInsertRemoveLookupScripts()
 
 
 
+////////////////////////////////////////////////////////////
+// Secondary Index completeness
+////////////////////////////////////////////////////////////
+
+void
+testTable2::testSecondaryEquivalence()
+{
+  // Make sure that an index lookup is the same as a full scan with the
+  // appropriate selection (predicate check.)
+
+  Table2 table("secondary equivalence", Table2::KEY0);
+  table.secondaryIndex(Table2::KEY1);
+
+  // Add a bunch of tuples with some replacements
+  uint TUPLES = 1000;
+  uint GROUPS = 5;
+  for (uint i = 0;
+       i < TUPLES;
+       i++) {
+    TuplePtr t = Tuple::mk();
+    t->append(Val_Str::mk(Val_Str::cast(Val_UInt32::mk((i + ((i + 1) % (GROUPS - 1)))/(GROUPS)))));
+    t->append(Val_UInt32::mk(i % GROUPS));
+    t->freeze();
+  }
+
+  // Now for every distinct second field (0, 1, 2, ..., GROUPS-1), get
+  // the secondary index lookup results and store them. Compute the same
+  // thing using a primary scan with selection. Are the two answer sets
+  // identical?
+  ValuePtr emptyString = Val_Str::mk("");
+  for (uint i = 0;
+       i < GROUPS;
+       i++) {
+    ValuePtr iVal = Val_UInt32::mk(i);
+    TuplePtr lookupT = Tuple::mk();
+    lookupT->append(emptyString);
+    lookupT->append(iVal);
+    Table2::IteratorPtr i = table.lookup(Table2::KEY1, lookupT);
+
+    TupleSet sResults;
+    while (!i->done()) {
+      sResults.insert(i->next());
+    }
+
+    // Now scan the whole table and find all tuples whose second field
+    // equals i. Remove every found tuple from the results set, ensuring
+    // that every removal corresponds to a found element. If in the end
+    // the results set is not empty, then we have a problem.
+    Table2::IteratorPtr s = table.scan();
+
+    while (!s->done()) {
+      TuplePtr found = s->next();
+      if ((*found)[1] == iVal) {
+        // we found a result
+        BOOST_CHECK_MESSAGE(sResults.erase(found) == 1,
+                            "A scan result is missing from secondary result");
+      }
+    }
+    BOOST_CHECK_MESSAGE(sResults.size() == 0,
+                        "There are secondary results not found during scan.");
+  }
+}
+
+
+
+
+
 
 
 
@@ -1441,6 +1515,7 @@ testTable2_testSuite::testTable2_testSuite()
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimitSingle, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimitMulti, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testInsertRemoveLookupScripts, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testSecondaryEquivalence, instance));
 #if 0
   add(BOOST_CLASS_TEST_CASE(&testTable2::testIndexing, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testBatchRemovals, instance));

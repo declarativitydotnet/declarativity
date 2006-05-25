@@ -649,19 +649,7 @@ Table2::lookup(Table2::Key& key, TuplePtr t)
 
   // Find the appropriate index. Is it the primary index?
   if (key == _key) {
-    // Create the lookup iterator from all the matches and return it
-    static Entry searchEntry(Tuple::EMPTY);
-    searchEntry.tuple = t;
-    PrimaryIndex::iterator tupleIter = _primaryIndex.find(&searchEntry);
-
-    // Create the lookup iterator by spooling all results found into a
-    // queue and passing them into the iterator.
-    std::deque< TuplePtr >* spool = new std::deque< TuplePtr >();
-    while (tupleIter != _primaryIndex.end()) {
-      spool->push_front((*(tupleIter++))->tuple);
-    }
-    IteratorPtr iterPtr = IteratorPtr(new Iterator(spool));
-    return iterPtr;
+    return lookupPrimary(t);
   } 
   // If not, is it a secondary index?
   else {
@@ -690,5 +678,108 @@ Table2::lookup(Table2::Key& key, TuplePtr t)
       return iterPtr;
     }
   }
+} 
+
+
+Table2::IteratorPtr
+Table2::lookup(TuplePtr t)  
+{
+  // Ensure we're operating on the correct view of the table as of right
+  // now.
+  flush();
+
+  return lookupPrimary(t);
+} 
+
+
+Table2::IteratorPtr
+Table2::lookupPrimary(TuplePtr t)  
+{
+  // Create the lookup iterator from all the matches and return it
+  static Entry searchEntry(Tuple::EMPTY);
+  searchEntry.tuple = t;
+  PrimaryIndex::iterator tupleIter = _primaryIndex.find(&searchEntry);
+
+  // Create the lookup iterator by spooling all results found into a
+  // queue and passing them into the iterator.
+  std::deque< TuplePtr >* spool = new std::deque< TuplePtr >();
+  while (tupleIter != _primaryIndex.end()) {
+    spool->push_front((*(tupleIter++))->tuple);
+  }
+  IteratorPtr iterPtr = IteratorPtr(new Iterator(spool));
+  return iterPtr;
+} 
+
+
+
+
+////////////////////////////////////////////////////////////
+// Scans
+////////////////////////////////////////////////////////////
+
+Table2::IteratorPtr
+Table2::scan(Table2::Key& key)  
+{
+  // Ensure we're operating on the correct view of the table as of right
+  // now.
+  flush();
+
+  // Find the appropriate index. Is it the primary index?
+  if (key == _key) {
+    return scanPrimary();
+  } 
+  // If not, is it a secondary index?
+  else {
+    Table2::SecondaryIndexIndex::iterator indexIter =
+      _indices.find(&key);
+
+    // If not, return null
+    if (indexIter == _indices.end()) {
+      return IteratorPtr();
+    }
+    // Otherwise, create the iterator from all entries and return it
+    else {    
+      SecondaryIndex& index = *(*indexIter).second;
+
+      SecondaryIndex::iterator tupleIter = index.begin();
+
+      // Create the lookup iterator by spooling all results found into a
+      // queue and passing them into the iterator.
+      std::deque< TuplePtr >* spool = new std::deque< TuplePtr >();
+      while (tupleIter != index.end()) {
+        spool->push_front((*(tupleIter++))->tuple);
+      }
+      IteratorPtr iterPtr = IteratorPtr(new Iterator(spool));
+      return iterPtr;
+    }
+  }
+} 
+
+
+Table2::IteratorPtr
+Table2::scan()  
+{
+  // Ensure we're operating on the correct view of the table as of right
+  // now.
+  flush();
+
+  return scanPrimary();
+} 
+
+
+Table2::IteratorPtr
+Table2::scanPrimary()  
+{
+  // Create the lookup iterator from all the matches and return it
+  PrimaryIndex::iterator tupleIter = _primaryIndex.begin();
+
+  // Create the lookup iterator by spooling all results found into a
+  // queue and passing them into the iterator.
+  std::deque< TuplePtr >* spool = new std::deque< TuplePtr >();
+  while (tupleIter != _primaryIndex.end()) {
+    spool->push_front((*(tupleIter++))->tuple);
+  }
+  IteratorPtr iterPtr = IteratorPtr(new Iterator(spool));
+  return iterPtr;
 } 
 
