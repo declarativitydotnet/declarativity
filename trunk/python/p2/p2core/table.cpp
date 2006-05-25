@@ -20,9 +20,6 @@ void (Table::*del_mult_index1)(unsigned)
 void (Table::*del_mult_index2)(std::vector<unsigned>) 
   = &Table::del_multiple_index;
 
-Table::MultAggregate (Table::*amga1)(unsigned, std::vector<unsigned>, 
-                     unsigned, Table::AggregateFunction&) 
-  = &Table::add_mult_groupBy_agg;
 Table::MultAggregate (Table::*amga2)(std::vector<unsigned>, std::vector<unsigned>, 
                      unsigned, Table::AggregateFunction&) 
   = &Table::add_mult_groupBy_agg;
@@ -46,7 +43,6 @@ scope outer =
      .def("del_multiple_index",  del_mult_index1)
      .def("del_multiple_index",  del_mult_index2)
 
-     .def("add_mult_groupBy_agg",   amga1)
      .def("add_mult_groupBy_agg",   amga2)
 
      .def("agg_min",   &Table::agg_min, return_value_policy<reference_existing_object>())

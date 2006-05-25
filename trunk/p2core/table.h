@@ -347,11 +347,6 @@ public:
   /** Create a group-by aggregation on a mult index.  Every time the
       table is updated, the aggregate is updated as well, creating
       notifications to all aggregate listeners. */
-  MultAggregate add_mult_groupBy_agg(unsigned,
-                                     std::vector< unsigned >,
-                                     unsigned,
-                                     AggregateFunction&);
-
   MultAggregate add_mult_groupBy_agg(std::vector< unsigned >,
                                      std::vector< unsigned >,
                                      unsigned,

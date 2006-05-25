@@ -1847,6 +1847,44 @@ void Plmb_ConfGen::addMultTableIndex(TablePtr table, int fn, string nodeID)
 
 
 
+void
+Plmb_ConfGen::addMultTableIndex(TablePtr table,
+                                std::vector< unsigned > key,
+                                string nodeID)
+{
+  ostringstream uniqStr;
+  uniqStr << table->name << ":";
+  std::vector< unsigned >::iterator iter = key.begin();
+  while (iter != key.end()) {
+    uniqStr << (*iter) << "_";
+  }
+  uniqStr << ":" << nodeID;
+  if (_multTableIndices.find(uniqStr.str()) == _multTableIndices.end()) {
+    // not there yet
+    table->add_multiple_index(key);
+
+    ////////////////XXXXXXXXXXXXXXXXXXXXXXx
+    ////////////////This cannot be done correctly right now due to the
+    ////////////////current conf functions.  Doesn't make sense to fix
+    ////////////////this now since this is a stop-gap measure. To make
+    ////////////////do for now, this is only creating a multiple index
+    ////////////////on the first secondary field.
+    _p2dl << conf_call(table.get(), conf_function("add_multiple_index",
+                                                  key.at(0)),
+                       false)
+          << ";"
+          << std::endl;
+    _multTableIndices.insert(std::make_pair(uniqStr.str(), uniqStr.str()));
+    std::cout << "AddMultTableIndex: Mult index added " << uniqStr.str() 
+	      << "\n";
+  } else {
+    std::cout << "AddMultTableIndex: Mult index already exists " 
+	      << uniqStr.str() << "\n";
+  }
+}
+
+
+
 void 
 Plmb_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule, 
 					string nodeID, 
@@ -1859,7 +1897,9 @@ Plmb_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
   for (unsigned int j = 0; j < currentRule->terms.size(); j++) {    
     Parse_Functor* currentFunctor 
       = dynamic_cast<Parse_Functor* > (currentRule->terms.at(j));    
-    if (currentFunctor == NULL) { continue; }
+    if (currentFunctor == NULL) {
+      continue;
+    }
     baseFunctor = currentFunctor;
     checkFunctor(baseFunctor, currentRule);
   }
@@ -1912,12 +1952,17 @@ Plmb_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
   
   // get the table, create the index
   TablePtr aggTable = getTableByName(nodeID, baseFunctor->fn->name);  
-  addMultTableIndex(aggTable, groupByFields.at(0), nodeID);  
+  addMultTableIndex(aggTable, groupByFields, nodeID);  
   Table::MultAggregate tableAgg 
-    = aggTable->add_mult_groupBy_agg(groupByFields.at(0), // groupby field
+    = aggTable->add_mult_groupBy_agg(groupByFields,
 				     groupByFields,
 				     aggFieldBaseTable, // the agg field
 				     af);
+  //////////XXXXXXXXXXXXXXXXXXXXXXXXXXXXXx
+  //////////This creates a configuration string with only the first
+  //////////field of the secondary index, since conf_function does not
+  //////////support vectors apparently
+
   _p2dl << conf_assign(tableAgg.get(), 
                        conf_call(aggTable.get(), 
                                  conf_function("add_mult_groupBy_agg", groupByFields.at(0),

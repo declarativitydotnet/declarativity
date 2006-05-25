@@ -232,6 +232,12 @@ private:
 			 int fn, 
 			 string nodeID);
   
+  /** To accommodate multiple-field keys */
+  void
+  addMultTableIndex(TablePtr table, 
+                    std::vector< unsigned > key, 
+                    string nodeID);
+  
   int numFunctors(OL_Context::Rule* rule);
 
   bool hasEventTerm(OL_Context::Rule* rule);

@@ -710,16 +710,15 @@ public:
 AggTracker::AggTracker(intAggTest & test)
   : Tracker(test)
 {
-  // Create a multiple index on the first field
-  _table.add_multiple_index(test._keyFieldNo);
-
   // My group-by field is the indexed field
   std::vector< unsigned > groupBy;
   groupBy.push_back(test._keyFieldNo);
 
+  _table.add_multiple_index(groupBy);
+
   // Create a multiple-value aggregate with the given function
   Table::MultAggregate u =
-    _table.add_mult_groupBy_agg(test._keyFieldNo,
+    _table.add_mult_groupBy_agg(groupBy,
                                 groupBy,
                                 test._aggFieldNo,
                                 test._function);

@@ -165,17 +165,6 @@ void Table::del_multiple_index(std::vector<unsigned> keys)
 
 
 Table::MultAggregate
-Table::add_mult_groupBy_agg(unsigned keyFieldNo,
-                            std::vector< unsigned > groupByFieldNos,
-                            unsigned aggFieldNo,
-                            Table::AggregateFunction& aggregate)
-{
-  std::vector< unsigned > keyFields;
-  keyFields.push_back(keyFieldNo);
-  return add_mult_groupBy_agg(keyFields, groupByFieldNos, aggFieldNo, aggregate);
-}
-
-Table::MultAggregate
 Table::add_mult_groupBy_agg(std::vector< unsigned > keyFields,
                             std::vector< unsigned > groupByFieldNos,
                             unsigned aggFieldNo,
