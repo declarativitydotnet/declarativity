@@ -13,7 +13,6 @@ void export_tuple()
    .def("mk",       &Tuple::mk)
    .staticmethod("mk")
 
-   .def("at",       &Tuple::at)
    .def("append",   &Tuple::append)
    .def("concat",   &Tuple::concat)
    .def("tag",      tag1)
