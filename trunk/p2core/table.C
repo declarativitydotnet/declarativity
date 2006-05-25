@@ -43,7 +43,6 @@ Table::Table(string table_name, size_t maxSize,
   : name(table_name),
     max_tbl_size(maxSize),
     max_lifetime(lifetime),
-    _uniqueAggregates(),
     _multAggregates()
 {
 }
@@ -52,7 +51,6 @@ Table::Table(string table_name, size_t maxSize, string lifetime)
   : name(table_name),
     max_tbl_size(maxSize),
     max_lifetime(boost::posix_time::duration_from_string(lifetime)),
-    _uniqueAggregates(),
     _multAggregates()
 {
 }
@@ -60,7 +58,6 @@ Table::Table(string table_name, size_t maxSize, string lifetime)
 Table::Table(string table_name, size_t maxSize)
   : name(table_name),
     max_tbl_size(maxSize),
-    _uniqueAggregates(),
     _multAggregates()
 {
   max_lifetime = boost::posix_time::seconds(-1);
@@ -166,38 +163,6 @@ void Table::del_multiple_index(std::vector<unsigned> keys)
   }
 }
 
-Table::UniqueAggregate
-Table::add_unique_groupBy_agg(unsigned keyFieldNo,
-                              std::vector< unsigned > groupByFieldNos,
-                              unsigned aggFieldNo,
-                              Table::AggregateFunction& aggregate)
-{
-  std::vector< unsigned > keyFields;
-  keyFields.push_back(keyFieldNo);
-  return add_unique_groupBy_agg(keyFields, groupByFieldNos, aggFieldNo, aggregate);
-}
-
-Table::UniqueAggregate
-Table::add_unique_groupBy_agg(std::vector< unsigned > keyFields,
-                              std::vector< unsigned > groupByFieldNos,
-                              unsigned aggFieldNo,
-                              Table::AggregateFunction& aggregate)
-{
-  // Get the index
-  UniqueIndex* uI = find_uni_index(keyFields);
-  assert(uI != NULL);
-  Table::UniqueAggregate uA =
-    Table::UniqueAggregate(new Table::UniqueAggregateObj(keyFields,
-                                                         uI,
-                                                         groupByFieldNos,
-                                                         aggFieldNo,
-                                                         aggregate));
-
-  
-  // Store the aggregate
-  _uniqueAggregates.push_back(uA);
-  return uA;
-}
 
 Table::MultAggregate
 Table::add_mult_groupBy_agg(unsigned keyFieldNo,
@@ -307,14 +272,6 @@ void Table::insert(TuplePtr t)
     }
 
     ndx->insert(std::make_pair(keys, e));
-  }
-
-  // And update the aggregates
-  for (size_t i = 0;
-       i < _uniqueAggregates.size();
-       i++) {
-    UniqueAggregate uA = _uniqueAggregates[i];
-    uA->update(t);
   }
 
   for (size_t i = 0;
@@ -438,13 +395,6 @@ void Table::remove_from_indices(Entry *e)
 
 void Table::remove_from_aggregates(TuplePtr t)
 {
-  // Update the unique aggregates
-  for (size_t i = 0;
-       i < _uniqueAggregates.size();
-       i++) {
-    UniqueAggregate uA = _uniqueAggregates[i];
-    uA->update(t);
-  }
   // Update the multiple aggregates
   for (size_t i = 0;
        i < _multAggregates.size();

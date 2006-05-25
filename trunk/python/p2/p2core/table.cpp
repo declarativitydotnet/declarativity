@@ -20,13 +20,6 @@ void (Table::*del_mult_index1)(unsigned)
 void (Table::*del_mult_index2)(std::vector<unsigned>) 
   = &Table::del_multiple_index;
 
-Table::UniqueAggregate (Table::*auga1)(unsigned, std::vector<unsigned>, 
-                     unsigned, Table::AggregateFunction&) 
-  = &Table::add_unique_groupBy_agg;
-Table::UniqueAggregate (Table::*auga2)(std::vector<unsigned>, std::vector<unsigned>, 
-                     unsigned, Table::AggregateFunction&) 
-  = &Table::add_unique_groupBy_agg;
-
 Table::MultAggregate (Table::*amga1)(unsigned, std::vector<unsigned>, 
                      unsigned, Table::AggregateFunction&) 
   = &Table::add_mult_groupBy_agg;
@@ -53,8 +46,6 @@ scope outer =
      .def("del_multiple_index",  del_mult_index1)
      .def("del_multiple_index",  del_mult_index2)
 
-     .def("add_unique_groupBy_agg", auga1)
-     .def("add_unique_groupBy_agg", auga2)
      .def("add_mult_groupBy_agg",   amga1)
      .def("add_mult_groupBy_agg",   amga2)
 
@@ -68,14 +59,6 @@ scope outer =
 
   class_<Table::AggregateFunction, Table::AggregateFunction*, boost::noncopyable>
         ("AggregateFunction", no_init)
-  ;
-
-  class_<Table::AggregateObj<Table::UniqueIndex>, Table::UniqueAggregate>
-        ("UniqueAggregate", init<std::vector<unsigned>, Table::UniqueIndex*, 
-                                 std::vector<unsigned>, 
-                                 unsigned, Table::AggregateFunction&>())
-    .def("addListener", &Table::AggregateObj<Table::UniqueIndex>::addListener)
-    .def("update",      &Table::AggregateObj<Table::UniqueIndex>::update)
   ;
 
   class_<Table::AggregateObj<Table::MultIndex>, Table::MultAggregate>

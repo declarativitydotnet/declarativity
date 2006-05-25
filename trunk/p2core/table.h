@@ -340,24 +340,9 @@ public:
 
 public:
   
-  typedef AggregateObj< UniqueIndex > UniqueAggregateObj;
   typedef AggregateObj< MultIndex > MultAggregateObj;
   
-  typedef boost::shared_ptr< UniqueAggregateObj > UniqueAggregate;
   typedef boost::shared_ptr< MultAggregateObj > MultAggregate;
-
-  /** Create a group-by aggregation on a unique index.  Every time the
-      table is updated, the aggregate is updated as well, creating
-      notifications to all aggregate listeners. */
-  UniqueAggregate add_unique_groupBy_agg(unsigned keyFieldNo,
-                                         std::vector< unsigned > groupByFieldNos,
-                                         unsigned aggFieldNo,
-                                         AggregateFunction& aggregate);
-
-  UniqueAggregate add_unique_groupBy_agg(std::vector< unsigned >,
-                                         std::vector< unsigned >,
-                                         unsigned,
-                                         AggregateFunction&);
 
   /** Create a group-by aggregation on a mult index.  Every time the
       table is updated, the aggregate is updated as well, creating
@@ -465,9 +450,6 @@ private:
   std::vector<UniqueIndex *> uni_indices;
   std::vector<std::vector<unsigned> > uni_indices_keys;
 
-  /** My unique aggregators */
-  std::vector< UniqueAggregate > _uniqueAggregates;
-  
   /** My mult aggregators */
   std::vector< MultAggregate > _multAggregates;
 
