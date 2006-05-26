@@ -28,6 +28,7 @@
 class OL_Context {
 
 public:
+  static int ruleCount;
 
   struct Error {
     int  line_num;      // Line number
@@ -37,7 +38,8 @@ public:
   
   struct Rule {
     Rule(string r, Parse_Functor *h, bool d) 
-      : ruleID(r), head(h), deleteFlag(d) {};
+      : ruleID(r), head(h), deleteFlag(d), 
+	ruleNum(OL_Context::ruleCount++) {};
 
     string toString();
 
@@ -45,6 +47,7 @@ public:
     Parse_Functor *head;
     bool          deleteFlag;
     std::vector<Parse_Term*> terms; 	// List of terms in the left hand side.
+    int ruleNum;
   };
 
   // create a ECA_Rule struct
@@ -97,6 +100,8 @@ public:
 
   void watch( Parse_Expr *t );
 
+  void traceTuple( Parse_Expr *t );
+
   void error(string msg);
 
   OL_Lexer *lexer;
@@ -114,6 +119,7 @@ private:
   std::set<string>      watchTables;
   std::vector<TuplePtr> facts;
   Parse_Functor* singleQuery;
+  std::set<string> tuplesToTrace;
 
 public: 
   ErrorList          errors;
@@ -121,7 +127,7 @@ public:
   TableInfoMap*      getTableInfos()  { return tables;   };
   std::set<string>      getWatchTables() { return watchTables; };
   std::vector<TuplePtr> getFacts()       { return facts; };
-  
+  std::set<string> getTuplesToTrace() { return tuplesToTrace;};  
   
 };
 

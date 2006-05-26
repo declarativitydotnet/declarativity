@@ -80,5 +80,7 @@ AC_CONFIG_FILES([
 	net/Makefile 
 	tests/Makefile 
 	unitTests/Makefile 
-	overlog/Makefile ])
+	overlog/Makefile 
+	debugger/Makefile ])
+
 AC_OUTPUT

@@ -52,7 +52,7 @@ void OverlogCompiler::compile(string overlog, std::ostringstream& script) {
 
   Plumber::DataflowEditPtr conf = _plumber->new_dataflow_edit(_dataflow);
   Plmb_ConfGen *gen = new Plmb_ConfGen(ctxt.get(), conf, false, false, false, 
-                                       string("overlogCompiler"), script, true);
+                                       string("overlogCompiler"), false, script, true);
   gen->createTables(_id);
   gen->configurePlumber(boost::shared_ptr<Udp>(), _id);
 }

@@ -72,6 +72,7 @@
 %token OL_MATERIALIZE
 %token OL_KEYS
 %token OL_WATCH
+%token OL_TRACE
 
 %token OL_RANGEOO
 %token OL_RANGEOC
@@ -118,6 +119,7 @@ clause:		  rule
 		| fact
                 | materialize
                 | watch
+		| trace
                 | query               
 		;
 
@@ -151,6 +153,11 @@ keylist:	OL_VALUE { $$ = new Parse_ExprList(); $$->push_front($1); }
 
 watch:		OL_WATCH OL_LPAR OL_NAME OL_RPAR OL_DOT {
 			ctxt->watch($3);
+		}
+		;
+
+trace:		OL_TRACE OL_LPAR OL_NAME OL_RPAR OL_DOT {
+			ctxt->traceTuple($3);
 		}
 		;
 

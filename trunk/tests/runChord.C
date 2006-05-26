@@ -110,7 +110,8 @@ void testNetworkedDatalog(LoggerI::Level level,
 			  int port,    // extracted from myAddress for convenience
 			  string landmarkAddress, 
 			  string filename,
-			  double delay)
+			  double delay,
+			  bool ifTrace)
 {
   boost::shared_ptr< OL_Context > ctxt(new OL_Context());
   std::ifstream istr(filename.c_str());
@@ -120,8 +121,14 @@ void testNetworkedDatalog(LoggerI::Level level,
     exit(-1);
   }
   ctxt->parse_stream(&istr);
+ 
+  if(ifTrace){
+    string debug_rules = "doc/debugging-rules.olg";
+    std::ifstream dstr(debug_rules.c_str());
+    ctxt->parse_stream(&dstr);
+  }
    
-  startChordInDatalog(level, ctxt, filename, myAddress, port, landmarkAddress, delay);
+  startChordInDatalog(level, ctxt, filename, myAddress, port, landmarkAddress, delay, ifTrace);
 }
 
 
@@ -130,8 +137,8 @@ void testNetworkedDatalog(LoggerI::Level level,
 
 int main(int argc, char **argv)
 {
-  if (argc < 6) {
-    fatal << "Usage:\n\t runChord <datalogFile> <loggingLevel> <seed> <myipaddr:port> <startDelay> [<landmark_ipaddr:port>]\n";
+  if (argc < 7) {
+    fatal << "Usage:\n\t runChord <datalogFile> <loggingLevel> <seed> <myipaddr:port> <startDelay> <TRACE|NO-TRACE> [<landmark_ipaddr:port>]\n";
     exit(-1);
   }
 
@@ -167,23 +174,30 @@ int main(int argc, char **argv)
 
   double delay = atof(argv[5]);
 
+  string ifTrace(argv[6]);
+  bool enableTracing = false;
+  if(ifTrace == "TRACE")
+    enableTracing = true;
+
 
   if (runDatalogVersion) {
-    if (argc > 6) {
-      string landmark(argv[6]);
+    if (argc > 7) {
+      string landmark(argv[7]);
       testNetworkedDatalog(level,
 			   myAddress,
 			   port,
 			   landmark, 
 			   datalogFile, 
-			   delay);
+			   delay,
+			   enableTracing);
     } else {
       testNetworkedDatalog(level,
 			   myAddress,
 			   port,
 			   string("-"),
 			   datalogFile,
-			   delay);
+			   delay,
+			   enableTracing);
     }
     return 0;
   }

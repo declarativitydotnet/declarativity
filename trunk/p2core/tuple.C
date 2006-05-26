@@ -16,11 +16,14 @@
 #include "value.h"
 #include "tuple.h"
 #include <assert.h>
-
+#include "val_uint32.h"
+#include "val_str.h"
+#include "val_int32.h"
 
 void
 Tuple::xdr_marshal( XDR *x ) 
 {
+ 
   assert(frozen);
   // we used to pass a pointer to a size_t into xdr_uint32_t, hence
   // the following assertion.  However, gcc 4.0 forbids that anyway,
@@ -35,6 +38,28 @@ Tuple::xdr_marshal( XDR *x )
   for(size_t i=0; i < fields.size(); i++) {
     fields[i]->xdr_marshal(x);
   };
+
+  // Metadata to handle tuple tracing across wire
+  // Add following bits to the fields
+  // 1. ID of the tuple
+  // 2. ID of local node
+  // this is used during unmarshalling at destination
+  // to set the tags of the newly created tuple
+  int count = 0;
+  if(_tags){
+    count = _tags->size();
+    (Val_Int32::mk(count))->xdr_marshal(x);
+    (Val_Str::mk("sourceNode"))->xdr_marshal(x);
+    tag("localNode")->xdr_marshal(x);
+    (Val_Str::mk("ID"))->xdr_marshal(x);
+    (Val_UInt32::mk(ID()))->xdr_marshal(x);
+    //(Val_UInt32::mk(ID()))->xdr_marshal(x);
+    //(Val_Str::mk(getLocalNode()))->xdr_marshal(x);
+  }
+  else {
+    (Val_Int32::mk(count))->xdr_marshal(x);
+  }
+
 }
 
 
@@ -55,6 +80,23 @@ Tuple::xdr_unmarshal(XDR* x)
   for(size_t i=0; i < sz; i++) {
     t->append(Value::xdr_unmarshal(x));
   }
+
+  // retrieve debugging metadata in the tags
+  int numTags = Val_Int32::cast(Value::xdr_unmarshal(x));
+  if(numTags > 0){
+    // create a tag depending on the tags coming from wire
+    t->tag(Val_Str::cast(Value::xdr_unmarshal(x)), 
+		      Value::xdr_unmarshal(x));
+    t->tag(Val_Str::cast(Value::xdr_unmarshal(x)), 
+		      Value::xdr_unmarshal(x));
+    //uint32_t id = Val_UInt32::cast(Value::xdr_unmarshal(x));
+    //string source = Val_Str::cast(Value::xdr_unmarshal(x));
+  }
+  // set the tags here for the newly created tuple
+  //t->setSourceNode(source);
+  //t->setIdAtSource(id);
+
+
   return t;
 }
 
@@ -125,7 +167,11 @@ void
 Tuple::tag(string key,
            ValuePtr value)
 {
-  assert(!frozen);
+  // Tags could be added later after
+  // constructing the tuple, especially
+  // for debugging purposes -- Atul.
+
+  //assert(!frozen);
 
   // Is the tag map created?
   if (_tags == 0) {
@@ -202,7 +248,7 @@ Tuple::~Tuple()
 }
 
 
-uint
+uint32_t
 Tuple::ID()
 {
   return _ID;

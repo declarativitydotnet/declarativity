@@ -228,6 +228,12 @@ void initiateJoinRequest(boost::shared_ptr< Plmb_ConfGen > plumberConfigGenerato
   joinEventTuple->append(Val_Int32::mk(random()));
   joinEventTuple->freeze();
 
+  // create r rule here for tracing compatibility
+  ostringstream t;
+  t << "$";
+  OL_Context::Rule *r = new OL_Context::Rule(t.str(), 0, false);
+
+
   ElementSpecPtr sourceS =
     conf->addElement(ElementPtr(new TupleSource(string("JoinEventSource:") + localAddress,
                                                    joinEventTuple)));
@@ -246,21 +252,21 @@ void initiateJoinRequest(boost::shared_ptr< Plmb_ConfGen > plumberConfigGenerato
   conf->hookUp(sourceS, 0, onceS, 0);
   conf->hookUp(onceS, 0, slotS, 0);
 
-  plumberConfigGenerator->registerUDPPushSenders(slotS);
+  plumberConfigGenerator->registerUDPPushSenders(slotS, r, localAddress);
 }
 
 
 /** Test lookups. */
 void startChordInDatalog(LoggerI::Level level, boost::shared_ptr< OL_Context> ctxt, string datalogFile, 
 			 string localAddress, int port, string landmarkAddress, 
-			 double delay)
+			 double delay, bool ifTrace)
 {
   eventLoopInitialize();
 
   // create dataflow for translated chord lookup rules
   PlumberPtr plumber(new Plumber(level));
   Plumber::DataflowPtr conf(new Plumber::Dataflow("chord"));
-  boost::shared_ptr< Plmb_ConfGen > plumberConfigGenerator(new Plmb_ConfGen(ctxt.get(), conf, false, DEBUG, CC, datalogFile));
+  boost::shared_ptr< Plmb_ConfGen > plumberConfigGenerator(new Plmb_ConfGen(ctxt.get(), conf, false, DEBUG, CC, datalogFile, ifTrace));
 
   plumberConfigGenerator->createTables(localAddress);
 

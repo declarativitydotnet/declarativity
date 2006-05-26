@@ -34,6 +34,18 @@ std::string Plumber::Dataflow::toString() const {
 }
 
 
+ElementSpecPtr Plumber::Dataflow::find(string name)
+{
+  for (std::vector<ElementSpecPtr>::iterator i = elements_.begin();
+       i != elements_.end(); i++) {
+    if ((*i)->element()->name() == name) {
+      return *i;
+    }
+  }
+  return ElementSpecPtr();
+}
+
+
 ElementSpecPtr Plumber::Dataflow::addElement(ElementPtr e) {
   ElementSpecPtr s(new ElementSpec(e));
   elements_.push_back(s);	// Add element to my dataflow

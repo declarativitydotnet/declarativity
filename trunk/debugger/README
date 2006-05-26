@@ -1,0 +1,122 @@
+README FOR USING RULE-LEVEL TRACING [EuroSys'06]
+================================================
+
+Author: Atul Singh.
+
+================================================
+
+1. Goal: Trace the execution of the system at the rule 
+level, i.e., if rule r1 at node n1 fires, then find
+the causally related rule executions. These causally
+related rule executions could be local or remote.
+
+2. Usage : Suppose we are running runChord.
+Current mode of usage is:
+$./runChord <datalog> <level> <seed> <IP> <bootstrap>
+
+We modify it to following
+$./runChord <datalog> <level> <seed> <IP> <trace> <bootstrap>
+
+Here, trace can take one of following: [TRACE|NO-TRACE]
+with obvious meaning.
+
+When TRACE is provided, a debugging.olg file is automatically
+linked to the orignial chord.olg file. This debugging.olg
+contains the definitions and rules for tracing the causality
+of required tuples in backward direction. Additional rules
+can be written which do it in forward direction. The planner
+automatically modifies the dataflow graph to appropriately
+tap the rules. Currently, all rules are tapped, there is no
+interface to enable tapping one single rule.
+
+The above will enable tracing to happen. To trace a given 
+type of tuple, a keyword "trace" can be used in the base olg
+file, similar to "watch" keyword. So, 
+
+trace(lookup).
+
+will cause lookup tuples to be traced in backward direction.
+
+In standard output, the ruleExec tuples will be printed in 
+the following format depending on the logging level provided:
+<ruleExecTuple, ruleId, localNode, tupleIn, tupleOut, 
+	timeIn, timeOut, EVENT|PRECOND>
+
+Additionally, the tupleTable tuples will also be printed in
+with the following format, agains depending on the logging level:
+<tupleTableTuple, tupleId, idAtSource, Source>
+
+
+One can grep for appropriate ruleId to identify the input
+tuples for a given rule and then do
+another grep for the tupleTable tuples to look at the content.
+However, our rules in debugging-rules.olg will produce tuples
+of following form:
+
+<report, NI, T-Origin, T-Event, Rule-List, Node-List>
+
+here, report is the name of the tuple, NI is the nodeId,
+T-Origin is the first tuple in the causally related tuples
+which started the chain of events which produced tuple with id
+(T-Event) and caused rule tracing to occur. Rule-List is a simple
+concatenation of ruleIds encountered during tracing back and
+similarly Node-List are the nodeIds where these rules were
+tracked. These Lists are string concatenations and do not use
+the "listtype".
+
+
+3. Architecture:
+
+We have added 3 basic classes/elements:
+
+a. Tap: its functionality is similar to duplicator, albeit much
+   simpler. It recieves a tuple and duplicates the tuple to the
+   rule strand and a copy to the ruleTracer (explained below).
+
+b. RuleTracer: its functionality is to aggregate the outputs
+   of different tap elements for a given rule and construct a
+   record which contains information about input, preconditions
+   and output for a given rule. Taps at multiple parts of a rule 
+   strand connect to a single ruleTracer.
+
+c. TupleTracer: its functionality is similar to a duplicator.
+   Depending on the what tuples are being traced, a TupleTracer
+   element is inserted before the rule strand to create a tuple of 
+   form <inTupleTrace, tuple-name, .....> and passed on to a 
+   tupleTraceMux which is connected to the roundRobin scheduler.
+
+
+The dataflow is modified as follows: for each rule, we have
+multiple taps (at beg, middle or end) and one ruleTracer element.
+To handle "trace" keyword, we place a tupleTracer element
+after the demux at the receiving side, the port used being
+dependent on the tuple being traced. All tupleTracer element's
+outputs are connected to a traceMux element and this mux
+finally connects to a designated port of RoundRobin element.
+Note that all this modification of dataflow happens only when
+TRACE is enabled.
+
+
+4. Resource management: 
+
+The invariant we want to ensure is that if a tuple is pointed by
+a tuple in the ruleExecTable, then that tuple should exist in
+the tupleTable. We use reference counting to ensure that. This
+will use the newer table implementation which gives the required upcalls
+whenever an entry in ruleExecTable expires.
+
+5. Limitations and TODO:
+
+a. Currently, we trace tuples arriving at the receiver side. We will
+   shortly add the support for tracing tuples which are produced.
+
+b. Handling aborted rule executions.
+
+c. Debugging a rule. We need a functionality to monitor the different
+   stages a rule exeuction goes through. Note that this is different from
+   from rule tracing, here we are simply interesed in finding the output
+   of every element in the rule strand.
+
+d. Ensure all user visible tuples arrive at the receiver.
+
+e. Better README!

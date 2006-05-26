@@ -30,7 +30,7 @@ liboverlog_la_SOURCES = \
 	$(REAL_SOURCES) \
 	$(GENERATED_SOURCES)
 
-INCLUDES = @BOOST_INC@ -I../p2core -I../elements -I../net -I../eventLoop
+INCLUDES = @BOOST_INC@ -I../p2core -I../elements -I../net -I../eventLoop -I../debugger
 
 CLEANFILES = core *.core *~ *.gen.h *.gen.txt ol_lexer.C \
 	ol_parser.output ol_parser.H ol_parser.C \

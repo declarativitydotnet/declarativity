@@ -156,6 +156,7 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>":-" { return OL_IF; }
 <INITIAL>"period=" { return OL_PERIOD; }
 <INITIAL>"watch" { return OL_WATCH; }
+<INITIAL>"trace" {return OL_TRACE;}
 <INITIAL>"delete" { return OL_DEL; }
 <INITIAL>"range" { return OL_RANGE; }
 <INITIAL>"now" { return OL_NOW; }

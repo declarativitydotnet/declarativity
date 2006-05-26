@@ -17,7 +17,6 @@
 #include "cct.h"
 #include "ccr.h"
 
-
 static std::map<void*, string> variables;
 
 static string conf_comment(string comment)
@@ -238,7 +237,9 @@ Plmb_ConfGen::Plmb_ConfGen(OL_Context* ctxt,
 			 bool debug, 
 			 bool cc,
 			 string filename,
-                         std::ostream &s, bool e) :_conf(conf), _p2dl(s), _edit(e)
+			 bool rTracing,
+                         std::ostream &s, bool e) 
+  :_conf(conf), _p2dl(s), _edit(e)
 {
   _ctxt = ctxt;
   _dups = dups;
@@ -250,18 +251,29 @@ Plmb_ConfGen::Plmb_ConfGen(OL_Context* ctxt,
   _isPeriodic = false;
   _currentPositionIndex = -1;
 
+  initTracingState(rTracing);
+
   if (_edit) {
     _p2dl << "edit " << conf->name() << " {\n";
   }
   else {
     _p2dl << "dataflow " << conf->name() << " {\n";
   }
+
 }
 
 
 Plmb_ConfGen::~Plmb_ConfGen()
 {
   fclose(_output);
+}
+
+void Plmb_ConfGen::initTracingState(bool rTracing)
+{
+  _ruleTracing = rTracing;
+  _needTracingPortAtRR = false;
+  _taps_end = 0;
+  _taps_beg = 0;
 }
 
 
@@ -321,7 +333,192 @@ void Plmb_ConfGen::configurePlumber(boost::shared_ptr< Udp > udp, string nodeID)
   }
 
   _p2dl << "\n} # End of dataflow " << _conf->name() << "\n.";
+
+  if(_ruleTracing){
+    genTappedDataFlow(nodeID);
+  }
 }
+
+void Plmb_ConfGen::genTappedDataFlow(string nodeID)
+{
+  // hookup taps at the beginning and end of the rule strand with the tracer
+  // for a given rule here..
+  int numRuleTracers = 0;
+  
+  // Assumption: the debugging overlog file provide two materialize
+  // for ruleExecTable and tupleTable
+  string table_rule = "ruleExecTable";
+  string table_tuple = "tupleTable";
+
+  TablePtr ruleExecTable = getTableByName(nodeID, table_rule);
+  TablePtr tupleTable = getTableByName(nodeID, table_tuple);
+
+  for (unsigned int k = 0; k < _ctxt->getRules()->size(); k++) {
+    OL_Context::Rule *_cr = _ctxt->getRules()->at(k);
+    std::cout << "Handling rule name " << _cr->ruleID << " ruleNum " << 
+      _cr->ruleNum << "\n";
+    
+    ElementSpecPtr tap_beg = find_tap(_cr->ruleNum, 0);
+    ElementSpecPtr tap_end = find_tap(_cr->ruleNum, 1);
+    int numPrecond;
+    PrecondInfoMap::iterator _iterator = _taps_for_precond.find(_cr->ruleNum);
+    PreconditionInfo p = _iterator->second;
+    if(_iterator == _taps_for_precond.end()){
+      std::cout << "There does not exist any precondition for rule " << 
+	_cr->ruleID << ", beg " << tap_beg << " end " << tap_end << "\n";
+      numPrecond = 0;
+    }
+    else{
+      p = _iterator->second;
+      numPrecond = p._preconds.size();
+    }
+    
+    
+    /** create a ruleTracer element here for each rule **/
+    int numPorts = numPrecond;
+    bool tracerNeeded = true;
+    
+    int port_index = 0;
+    
+    ElementSpecPtr rt;
+    if(tap_beg != NULL && tap_end != NULL)
+      numPorts += 2;
+    else if(tap_beg != NULL || tap_end != NULL)
+      numPorts += 1;
+    else
+      tracerNeeded = false;
+    
+    if(tracerNeeded){
+      
+      if(tap_beg == NULL)
+	rt = _conf->addElement(ElementPtr(
+					  new RuleTracer("RuleTracer:"+
+							 _cr->ruleID, 
+							 _cr->ruleID, 
+							 nodeID,
+							 -1, 
+							 numPorts-1, 
+							 _cr->ruleNum,
+							 ruleExecTable,
+							 tupleTable)));
+      else
+	rt = _conf->addElement(ElementPtr(
+					  new RuleTracer("RuleTracer:"+
+							 _cr->ruleID, 
+							 _cr->ruleID, 
+							 nodeID, 
+							 0, 
+							 numPorts-1, 
+							 _cr->ruleNum,
+							 ruleExecTable,
+							 tupleTable)));
+
+      numRuleTracers ++;
+      _ruleTracers.push_back(rt);
+    }
+    else
+      continue;
+    
+    std::cout << "Rule Tracer " << rt->element()->name() 
+	      << ", tap_beg " << tap_beg << ", tap_end " 
+	      << tap_end << " preconditions " << numPrecond 
+	      << " numPorts " << numPorts << "\n";
+    
+    for(int i = 0; i < numPrecond && numPrecond > 0; i++){
+      ElementSpecPtr t1 = p._preconds.at(i);
+      if(tap_beg != NULL)
+	hookUp(t1, 1, rt, i+1);
+      else
+	hookUp(t1, 1, rt, i);
+    }
+    
+    if(tap_beg != NULL){
+      _conf->hookUp(tap_beg, 1, rt, 0);
+      fprintf(_output, "Connect: \n");
+      fprintf(_output, "  %s %s %d\n", tap_beg->toString().c_str(), 
+	      tap_beg->element()->_name.c_str(), 1);
+      fprintf(_output, "  %s %s %d\n", rt->toString().c_str(), 
+	      rt->element()->_name.c_str(), 0);
+      fflush(_output);
+      port_index ++;
+    }
+    
+    
+    
+    if(tap_end != NULL){
+      _conf->hookUp(tap_end, 1, rt, rt->element()->ninputs() - 1);
+      fprintf(_output, "Connect: \n");
+      fprintf(_output, "  %s %s %d\n", tap_end->toString().c_str(), 
+	      tap_end->element()->_name.c_str(), 1);
+      fprintf(_output, "  %s %s %d\n", rt->toString().c_str(), 
+		rt->element()->_name.c_str(), rt->element()->ninputs() - 1);
+      fflush(_output);
+    }
+  }
+
+  // now connect the port 1 of all the traceTuple elements to 
+  // a traceMux
+  int inputPortSize = _traceTupleElements.size();
+  if(inputPortSize > 0){
+    ElementSpecPtr traceMux = 
+      _conf->addElement(ElementPtr(new Mux("traceMux", 
+					   inputPortSize)));
+    for(int i = 0; i < inputPortSize; i++){
+      ElementSpecPtr t = _traceTupleElements.at(i);
+      ostringstream oss;
+      oss << "$1 pop swallow pop";
+      ElementSpecPtr encapSend =
+	_conf->addElement(ElementPtr(new PelTransform("encapSend:" + nodeID, oss.str())));
+      _conf->hookUp(t, 1, encapSend, 0);
+      _conf->hookUp(encapSend, 0, traceMux, i);
+    }
+    
+    // now hookup the output of the mux to a queue
+    ElementSpecPtr traceQueue = 
+      _conf->addElement(ElementPtr(new Queue("traceQueue", 1000)));
+    _conf->hookUp(traceMux, 0, traceQueue, 0);
+    
+    // obtain a pointer to the roundrobin
+    ElementSpecPtr rr = _conf->find("roundRobinSender:" + nodeID);
+    if(rr == NULL){
+      std::cout << "There does not exist a roundRobin, not possible. Exiting..\n";
+      std::exit(-1);
+    }
+    // hookup output of the queue to the roundrobin's last input port
+    
+    _conf->hookUp(traceQueue, 0, rr, rr->element()->ninputs()-1);
+  }
+}
+
+ElementSpecPtr Plmb_ConfGen::find_tap(int ruleNum, int beg_or_end)
+{
+  std::map<int, ElementSpecPtr>::iterator result;
+  ElementSpecPtr xx;
+  if(_ruleTracing){
+    if(beg_or_end == 0){
+      result = _taps_beg->find(ruleNum);
+      if(result == _taps_beg->end()){
+	return xx;
+      }
+      else{
+	return result->second;
+      }
+    }
+    else{
+      std::cout << "RuleNum " << ruleNum << " taps " 
+		<< _taps_end << " beg " << beg_or_end <<"\n";
+      result = _taps_end->find(ruleNum);
+      if(result == _taps_end->end()){
+	return xx;
+      }
+      else{
+	return result->second;
+      }
+    }
+  }
+  return xx;
+}
+
 
 void Plmb_ConfGen::clear()
 {
@@ -437,7 +634,7 @@ void Plmb_ConfGen::processRule(OL_Context::Rule *r,
     
     genPrintElement("PrintBeforeDelete:" + r->ruleID + ":" +nodeID);
     genPrintWatchElement("PrintWatchDelete:" + r->ruleID + ":" +nodeID);
-    
+        
     ElementSpecPtr pullPush = 
       _conf->addElement(ElementPtr(new TimedPullPush("DeletePullPush", 0)));
     _p2dl << conf_assign(pullPush.get(), 
@@ -457,7 +654,7 @@ void Plmb_ConfGen::processRule(OL_Context::Rule *r,
     hookUp(deleteElement, 0);
     
     if (_isPeriodic == false && _pendingReceiverSpec) {
-      registerReceiver(_pendingReceiverTable, _pendingReceiverSpec);
+      registerReceiver(_pendingReceiverTable, _pendingReceiverSpec, r);
     }
     return; // discard. deleted tuples not sent anywhere
   } else {    
@@ -489,12 +686,13 @@ void Plmb_ConfGen::processRule(OL_Context::Rule *r,
   }
 
   if (_isPeriodic == false && _pendingReceiverSpec) {
-    registerReceiver(_pendingReceiverTable, _pendingReceiverSpec);
+    registerReceiver(_pendingReceiverTable, _pendingReceiverSpec, r);
   }
 
   // anything at this point needs to be hookup with senders
-  _udpSenders.push_back(_currentElementChain.back()); 
-  _udpSendersPos.push_back(_currentPositionIndex); 
+  registerUDPPushSenders(_currentElementChain.back(), r, nodeID);
+  //_udpSenders.push_back(_currentElementChain.back()); 
+  //_udpSendersPos.push_back(_currentPositionIndex); 
 }
 
 //////////////////// Dataflow Edit Finalizer /////////////////////
@@ -615,25 +813,66 @@ Plmb_ConfGen::genEditFinalize(string nodeID)
 
     // connect the duplicator to elements for this name
     for (uint k = 0; k < ri._receivers.size(); k++) {
-      ElementSpecPtr nextElementSpec = ri._receivers.at(k);
-
-      if (_debug) {
-	ElementSpecPtr printDuplicator = 
-	  _conf->addElement(ElementPtr(new PrintTime("PrintAfterDuplicator:"
-					       + tableName + ":" + nodeID)));
-        _p2dl << conf_assign(printDuplicator.get(), 
-                 conf_function("PrintTime", "printAfterDuplicator"));
-	if (found_previous_duplicator)
-          _p2dl << conf_hookup("." + dup_name, string("+"), 
-                               conf_var(printDuplicator.get()), 0);
-        else hookUp(duplicator, k, printDuplicator, 0);
-	hookUp(printDuplicator, 0, nextElementSpec, 0);
+      int ruleNum = ri._ruleNums.at(k);
+      std::cout << "Rule num " << ruleNum << ", ruleTracing " << _ruleTracing << "\n";
+      if(!_ruleTracing){
+	ElementSpecPtr nextElementSpec = ri._receivers.at(k);
+	
+	if (_debug) {
+	  ElementSpecPtr printDuplicator = 
+	    _conf->addElement(ElementPtr(new PrintTime("PrintAfterDuplicator:"
+						       + tableName + ":" + nodeID)));
+	  _p2dl << conf_assign(printDuplicator.get(), 
+			       conf_function("PrintTime", "printAfterDuplicator"));
+	  if (found_previous_duplicator)
+	    _p2dl << conf_hookup("." + dup_name, string("+"), 
+				 conf_var(printDuplicator.get()), 0);
+	  else hookUp(duplicator, k, printDuplicator, 0);
+	  hookUp(printDuplicator, 0, nextElementSpec, 0);
+	}
+	else {
+	  if (found_previous_duplicator)
+	    _p2dl << conf_hookup("." + dup_name, string("+"), 
+				 conf_var(nextElementSpec.get()), 0);
+	  else hookUp(duplicator, k, nextElementSpec, 0);
+	}
       }
       else {
-        if (found_previous_duplicator)
-          _p2dl << conf_hookup("." + dup_name, string("+"), 
-                               conf_var(nextElementSpec.get()), 0);
-        else hookUp(duplicator, k, nextElementSpec, 0);
+
+	// Inserting taps at the beginning
+	
+	ElementSpecPtr nextElementSpec = ri._receivers.at(k);
+	ElementSpecPtr tap_beg = find_tap(ruleNum, 0);
+
+	std::cout << "Receivers " << nextElementSpec->element()->name() << ", taps is " << tap_beg->element()->name() << "\n";
+	std::exit(-1);
+	if (_debug) {
+	  ElementSpecPtr printDuplicator = 
+	    _conf->addElement(ElementPtr(new PrintTime("PrintAfterDuplicator:"
+						       + tableName + ":" + nodeID)));
+	  _p2dl << conf_assign(printDuplicator.get(), 
+			       conf_function("PrintTime", "printAfterDuplicator"));
+	  if (found_previous_duplicator)
+	    _p2dl << conf_hookup("." + dup_name, string("+"), 
+				 conf_var(printDuplicator.get()), 0);
+	  else {
+	    //hookUp(duplicator, k, printDuplicator, 0);
+	    hookUp(duplicator, k, tap_beg, 0);
+	    hookUp(tap_beg, 0, printDuplicator, 0);
+	  }
+	  hookUp(printDuplicator, 0, nextElementSpec, 0);
+	}
+	else {
+	  if (found_previous_duplicator)
+	    _p2dl << conf_hookup("." + dup_name, string("+"), 
+				 conf_var(nextElementSpec.get()), 0);
+	  else {
+	    //hookUp(duplicator, k, nextElementSpec, 0);
+	    hookUp(duplicator, k, tap_beg, 0);
+	    hookUp(tap_beg, 0, nextElementSpec, 0);
+	  }
+	}
+	
       }
     }
   }
@@ -717,6 +956,7 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
   genDupElimElement("ReceiveDupElimBeforeDemux:"+ nodeID); 
   genPrintWatchElement("PrintWatchReceiveBeforeDemux:"+ nodeID);
 
+
   ElementSpecPtr bufferQueue = 
     _conf->addElement(ElementPtr(new Queue("ReceiveQueue:"+nodeID, 1000)));
   _p2dl << conf_assign(bufferQueue.get(), 
@@ -759,6 +999,9 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
     hookUp(demuxS, counter++, bufferQueue, 0);
     hookUp(bufferQueue, 0, pullPush, 0);
     
+    // insert a traceTuple element here if this tuple is being traced
+    genTraceElement(tableName);
+    
     // duplicator
     ElementSpecPtr duplicator = 
       _conf->addElement(ElementPtr(new DuplicateConservative("DuplicateConservative:"
@@ -778,29 +1021,57 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
                conf_function("Insert", "insert", 
                              conf_var(getTableByName(nodeID, tableName).get())));
       
-      hookUp(pullPush, 0, insertS, 0);
+      //hookUp(pullPush, 0, insertS, 0);
+      hookUp(insertS, 0);
       genPrintWatchElement("PrintWatchInsert:"+nodeID);
+
 
       hookUp(duplicator, 0);
     } else {
-      hookUp(pullPush, 0, duplicator, 0);
+      //hookUp(pullPush, 0, duplicator, 0);
+      hookUp(duplicator, 0);
     }
-
+    std::cout << " Number of duplications needed " << ri._receivers.size() << " for table " << tableName << ", ruleTracing " << _ruleTracing << "\n";
     // connect the duplicator to elements for this name
     for (uint k = 0; k < ri._receivers.size(); k++) {
-      ElementSpecPtr nextElementSpec = ri._receivers.at(k);
+      int ruleNum = ri._ruleNums.at(k);
 
-      if (_debug) {
-	ElementSpecPtr printDuplicator = 
-	  _conf->addElement(ElementPtr(new PrintTime("PrintAfterDuplicator:"
-					       + tableName + ":" + nodeID)));
-        _p2dl << conf_assign(printDuplicator.get(), 
-                 conf_function("PrintTime", "printAfterDuplicator"));
-	hookUp(duplicator, k, printDuplicator, 0);
-	hookUp(printDuplicator, 0, nextElementSpec, 0);
-	continue;
+      if(!_ruleTracing){
+	ElementSpecPtr nextElementSpec = ri._receivers.at(k);
+	
+	if (_debug) {
+	  ElementSpecPtr printDuplicator = 
+	    _conf->addElement(ElementPtr(new PrintTime("PrintAfterDuplicator:"
+						       + tableName + ":" + nodeID)));
+	  _p2dl << conf_assign(printDuplicator.get(), 
+			       conf_function("PrintTime", "printAfterDuplicator"));
+	  hookUp(duplicator, k, printDuplicator, 0);
+	  hookUp(printDuplicator, 0, nextElementSpec, 0);
+	  continue;
+	}
+	hookUp(duplicator, k, nextElementSpec, 0);
       }
-      hookUp(duplicator, k, nextElementSpec, 0);
+      else {
+	ElementSpecPtr nextElementSpec = ri._receivers.at(k);
+	ElementSpecPtr tap_beg = find_tap(ruleNum, 0);
+	std::cout << "RuleNum " << ruleNum << " tap is " << tap_beg->element()->name() << "\n";
+	if (_debug) {
+	  ElementSpecPtr printDuplicator = 
+	    _conf->addElement(ElementPtr(new PrintTime("PrintAfterDuplicator:"
+						       + tableName + ":" + nodeID)));
+	  _p2dl << conf_assign(printDuplicator.get(), 
+			       conf_function("PrintTime", "printAfterDuplicator"));
+	  //hookUp(duplicator, k, printDuplicator, 0);
+	  //hookUp(printDuplicator, 0, nextElementSpec, 0);
+	  hookUp(duplicator, k, tap_beg, 0);
+	  hookUp(tap_beg, 0, printDuplicator, 0);
+	  hookUp(printDuplicator, 0, nextElementSpec, 0);
+	  continue;
+	}
+	//hookUp(duplicator, k, nextElementSpec, 0);
+	hookUp(duplicator, k, tap_beg, 0);
+	hookUp(tap_beg, 0, nextElementSpec, 0);
+      }
     }
   }
 
@@ -823,10 +1094,30 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
 
 
 void 
-Plmb_ConfGen::registerUDPPushSenders(ElementSpecPtr elementSpecPtr)
+Plmb_ConfGen::registerUDPPushSenders(ElementSpecPtr elementSpecPtr,
+				     OL_Context::Rule * curRule,
+				     string nodeid)
 {
   _udpSenders.push_back(elementSpecPtr);
   _udpSendersPos.push_back(1);
+  if(curRule->ruleID != "$")
+    std::cout << "Registering sender for " << curRule->head->fn->name << "\n";
+
+  // if ruleTracing, create a tap element here for a given rule
+  if(_ruleTracing){
+    std::cout << "Creating tap_end for rule " << curRule->ruleID << "\n";
+    if(curRule->ruleID == "$")
+      return;
+    ElementSpecPtr tap_end = _conf->addElement(ElementPtr(new Tap("Tap_End:"+curRule->ruleID, curRule->ruleNum)));
+    
+    if(_taps_end == 0)
+      _taps_end = new std::map<int, ElementSpecPtr>();
+    
+    std::cout << "Rule Number " << curRule->ruleNum << ", Rule Name " << curRule->ruleID << "_taps_end " << _taps_end << ", tap " << tap_end << "\n";
+    _taps_end->insert(std::make_pair(curRule->ruleNum, tap_end));
+    
+    _taps_end_vector.push_back(tap_end);
+  }
 }
 
 
@@ -839,17 +1130,23 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
   // prepare to send. Assume all tuples send by first tuple
   
   assert(_udpSenders.size() > 0);
+  int sizeInputPort = _udpSenders.size();
+  
+  // reserve a port for traced tuples
+  if(_needTracingPortAtRR)
+    sizeInputPort ++;
+
   ElementSpecPtr roundRobin =
     _conf->addElement(ElementPtr(new RoundRobin("roundRobinSender:" + nodeID, 
-						   _udpSenders.size()))); 
+						   sizeInputPort))); 
   _p2dl << conf_assign(roundRobin.get(), 
                        conf_function("RoundRobin", "roundRobin", 
                                      _udpSenders.size()));
-
   ElementSpecPtr pullPush =
       _conf->addElement(ElementPtr(new TimedPullPush("SendPullPush:"+nodeID, 0)));
   _p2dl << conf_assign(pullPush.get(), 
                        conf_function("TimedPullPush", "sendPulllPush", 0));
+
   hookUp(roundRobin, 0, pullPush, 0);
 
   // check here for the wrap around
@@ -879,6 +1176,7 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
   // connect to send queue
   genPrintElement("PrintRemoteSend:"+nodeID);
   genPrintWatchElement("PrintWatchRemoteSend:"+nodeID);
+
 
   ///////// Network Out ///////////////
   if (_cc) {
@@ -972,6 +1270,7 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
   hookUp(routeSend, 0);
   hookUp(udpSend, 0);
 
+  unsigned int xx = 0;
   // form the push senders
   for (unsigned int k = 0; k < _udpSenders.size(); k++) {
     ElementSpecPtr nextElementSpec = _udpSenders.at(k);
@@ -988,8 +1287,23 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
     // for now, assume addr field is the put here
     //hookUp(nextElementSpec, 0, roundRobin, k);
 
-    hookUp(nextElementSpec, 0, encapSend, 0);
-    hookUp(encapSend, 0, roundRobin, k);
+    if(!_ruleTracing){
+      hookUp(nextElementSpec, 0, encapSend, 0);
+      hookUp(encapSend, 0, roundRobin, k);
+    }
+    else {
+      if(k > 0 && xx < _taps_end_vector.size()){
+	ElementSpecPtr tap_end = _taps_end_vector.at(xx++);
+	hookUp(nextElementSpec, 0, tap_end, 0);
+	hookUp(tap_end, 0, encapSend, 0);
+	hookUp(encapSend, 0, roundRobin, k);
+      }
+      else {
+	hookUp(nextElementSpec, 0, encapSend, 0);
+	hookUp(encapSend, 0, roundRobin, k);
+      }
+	
+    }
   }
 
   return unBoxWrapAround;
@@ -1000,13 +1314,32 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
 // register an elementSpec that needs that data
 void 
 Plmb_ConfGen::registerReceiver(string tableName, 
-			      ElementSpecPtr elementSpecPtr)
+			      ElementSpecPtr elementSpecPtr,
+			       OL_Context::Rule * _curRule)
 {
   // add to the right receiver
   ReceiverInfoMap::iterator _iterator = _udpReceivers.find(tableName);
   if (_iterator != _udpReceivers.end()) {
-    _iterator->second.addReceiver(elementSpecPtr);
+    _iterator->second.addReceiver(elementSpecPtr, _curRule->ruleNum);
   }
+  std::cout << "RegisterReceiver " << tableName  << "\n";
+  // if rule tracing, add a tap at the end of a rule here
+  if(_ruleTracing){
+    std::set<string> tt = _ctxt->getTuplesToTrace();
+    if(tt.find(tableName) != tt.end()){
+      std::cout << "Enabling needTracing for tuple " << tableName << "\n";
+      _needTracingPortAtRR = true;
+    }
+    
+    if(_taps_beg == 0)
+      _taps_beg = new std::map<int, ElementSpecPtr>();
+    
+    ElementSpecPtr tap_beg = _conf->addElement(ElementPtr(new Tap("Tap_Beg:"+_curRule->ruleID, _curRule->ruleNum)));
+    std::cout << "Reciever is " << elementSpecPtr->element()->name() << ", tap is " << tap_beg->element()->name() << "\n";
+    _taps_beg->insert(std::make_pair(_curRule->ruleNum, tap_beg));
+    _taps_beg_vector.push_back(tap_beg);
+  }
+  
 }
 
 
@@ -1531,6 +1864,17 @@ void Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
   genPrintElement("PrintHead:"+ curRule->ruleID + ":" + nodeID);  
 }
 
+ElementSpecPtr Plmb_ConfGen::createTapElement(OL_Context::Rule *curRule)
+{
+  ElementSpecPtr tap = _conf->addElement(ElementPtr(new Tap("Tap"+curRule->ruleID, curRule->ruleNum)));
+  
+  PrecondInfoMap::iterator _iterator = _taps_for_precond.find(curRule->ruleNum);
+  if(_iterator == _taps_for_precond.end())
+    _taps_for_precond.insert(std::make_pair(curRule->ruleNum, PreconditionInfo(curRule->ruleNum, tap)));
+  else
+    _iterator->second.addPrecondition(tap);
+  return tap;
+}
 
 void Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule, 
 				   Parse_Functor* eventFunctor, 
@@ -1647,7 +1991,15 @@ void Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
     hookUp(last_el, 0);  
   }
 
-  hookUp(last_el, 0, noNull, 0);
+  // ruleTracing: add a tap element for each such join element
+  // to find out the precondition
+  if(_ruleTracing){
+    ElementSpecPtr tap = createTapElement(curRule);
+    hookUp(last_el, 0, tap, 0);
+    hookUp(tap, 0, noNull, 0);
+  }
+  else
+    hookUp(last_el, 0, noNull, 0);
 
   for (uint k = 1; k < leftJoinKeys.size(); k++) {
     int leftField = leftJoinKeys.at(k);
@@ -1857,6 +2209,7 @@ Plmb_ConfGen::addMultTableIndex(TablePtr table,
   std::vector< unsigned >::iterator iter = key.begin();
   while (iter != key.end()) {
     uniqStr << (*iter) << "_";
+    iter++;
   }
   uniqStr << ":" << nodeID;
   if (_multTableIndices.find(uniqStr.str()) == _multTableIndices.end()) {
@@ -1999,9 +2352,11 @@ Plmb_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
   genPrintElement("PrintAgg:" + currentRule->ruleID + ":" + nodeID);
   genPrintWatchElement("PrintWatchAgg:" + currentRule->ruleID + ":" + nodeID);
 
+
   genProjectHeadElements(currentRule, nodeID, aggregateNamesTracker);
-  _udpSenders.push_back(_currentElementChain.back());
-  _udpSendersPos.push_back(1);
+  registerUDPPushSenders(_currentElementChain.back(), currentRule, nodeID);
+  //_udpSenders.push_back(_currentElementChain.back());
+  //_udpSendersPos.push_back(1);
 
   registerReceiverTable(currentRule, headTableName);
 }
@@ -2027,7 +2382,7 @@ void Plmb_ConfGen::genSingleTermElement(OL_Context::Rule* curRule,
     Parse_Functor* pf = dynamic_cast<Parse_Functor*>(curTerm);
     if (pf == NULL) { continue; }
     registerReceiverTable(curRule, pf->fn->name); 
-    registerReceiver(pf->fn->name, slotElement);
+    registerReceiver(pf->fn->name, slotElement, curRule);
     _currentElementChain.push_back(slotElement);
 
     curNamesTracker->initialize(pf);    
@@ -2129,7 +2484,21 @@ void Plmb_ConfGen::genPrintWatchElement(string header)
 }
 
 
-
+void Plmb_ConfGen::genTraceElement(string header)
+{
+  if(_ruleTracing){
+    std::set<string> tt = _ctxt->getTuplesToTrace();
+    if(tt.find(header) != tt.end()){
+    //if(header == "lookup"){
+      std::cout << "Adding a traceTuple element for tuple " << header << ", size " << tt.size() << "\n";
+      ElementSpecPtr traceElement =
+	_conf->addElement(ElementPtr(new TraceTuple("inTrace"+header, header)));
+      
+      hookUp(traceElement, 0);
+      _traceTupleElements.push_back(traceElement);
+    }
+  }
+}
 
 
 

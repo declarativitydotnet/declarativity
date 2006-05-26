@@ -70,8 +70,8 @@ int main(int argc, char **argv)
       fstr.open(specFileName.c_str(), std::fstream::out);
       ctxt->parse_stream(&istr);
       Plmb_ConfGen *gen = (arg == "-l") ? 
-        new Plmb_ConfGen(ctxt.get(), conf, false, false, false, filename, fstr) :
-        new Plmb_ConfGen(ctxt.get(), conf, false, false, false, filename, fstr, true);
+        new Plmb_ConfGen(ctxt.get(), conf, false, false, false, filename, false, fstr) :
+        new Plmb_ConfGen(ctxt.get(), conf, false, false, false, filename, false, fstr, true);
       gen->createTables("127.0.0.1:10000");
       
       boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));

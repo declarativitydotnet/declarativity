@@ -72,15 +72,20 @@
 #include "aggwrap.h"
 #include "tupleseq.h"
 #include "loop.h"
+#include "ruleTracer.h"
+#include "tap.h"
+#include "traceTuple.h"
 
 class Plmb_ConfGen {
  private:
   class FieldNamesTracker;
   struct ReceiverInfo;
+  struct PreconditionInfo;
 
  public:
   Plmb_ConfGen(OL_Context* ctxt, Plumber::DataflowPtr conf, 
 	      bool _dups, bool debug, bool cc, string filename, 
+	       bool rTracing = false,
               std::ostream& s=*(new ostringstream()), bool edit=false);
   ~Plmb_ConfGen();
 
@@ -93,7 +98,9 @@ class Plmb_ConfGen {
   void clear();
 
   // allow driver program to push data into dataflow
-  void registerUDPPushSenders(ElementSpecPtr elementSpecPtr);
+  void registerUDPPushSenders(ElementSpecPtr elementSpecPtr,
+			      OL_Context::Rule * curRule,
+			      string nodeid);
   
 private:
   static const string SEL_PRE, AGG_PRE, ASSIGN_PRE, TABLESIZE;
@@ -129,6 +136,35 @@ private:
   int _currentPositionIndex;
   ElementSpecPtr agg_spec;
   
+  // Data-structures for rule tracing [EuroSys]
+  // start here **
+
+  // a flag to indicate if we need these data structures
+  bool _ruleTracing; 
+
+  // a flag to indicate if we need an input port at the
+  // RoundRobin for handling traced tuples
+  bool _needTracingPortAtRR;
+
+  typedef std::map<int, PreconditionInfo> PrecondInfoMap;
+  
+  std::map<int, ElementSpecPtr> * _taps_beg;
+  std::map<int, ElementSpecPtr> * _taps_end;
+  PrecondInfoMap _taps_for_precond;
+  std::vector<ElementSpecPtr>  _taps_beg_vector;
+  std::vector<ElementSpecPtr>  _taps_end_vector;
+  std::vector<ElementSpecPtr>  _ruleTracers;
+
+  std::vector<ElementSpecPtr> _traceTupleElements;
+
+  void initTracingState(bool);
+  void genTappedDataFlow(string nodeid);
+  ElementSpecPtr createTapElement(OL_Context::Rule *r);
+  ElementSpecPtr find_tap(int ruleId, int beg_or_end);
+  void genTraceElement(string header);
+
+  // end here **
+
   // Relational -> P2 elements
   void processRule(OL_Context::Rule *r, string nodeID);
   void genEditFinalize(string); 
@@ -186,7 +222,8 @@ private:
 			     string tableName);
 
   void registerReceiver(string tableName, 
-			ElementSpecPtr elementSpecPtr);
+			ElementSpecPtr elementSpecPtr,
+			OL_Context::Rule * _curRule);
 
 
 
@@ -288,16 +325,34 @@ private:
 
   struct ReceiverInfo {
     std::vector<ElementSpecPtr> _receivers;
+    std::vector<int> _ruleNums;
     string _name;
     u_int _arity;
     ReceiverInfo(string name, u_int arity) {
       _name = name;
       _arity = arity;
     }      
-    void addReceiver(ElementSpecPtr elementSpecPtr) { 
+    void addReceiver(ElementSpecPtr elementSpecPtr, int ruleNum) { 
       _receivers.push_back(elementSpecPtr);
+      _ruleNums.push_back(ruleNum);
+      std::cout << "Pushing ruleNum " << ruleNum << " for element " << elementSpecPtr->element()->name() << "\n";
     }
   };
+
+  // rule tracing: data structure to hold precondition info [EuroSys]
+
+  struct PreconditionInfo{
+    std::vector<ElementSpecPtr> _preconds;
+    int ruleNum;
+    PreconditionInfo(int rNum, ElementSpecPtr t){
+      ruleNum = rNum;
+      addPrecondition(t);
+    }
+    void addPrecondition(ElementSpecPtr tap){
+      _preconds.push_back(tap);
+    }
+  };
+
 };
 
 #endif /* __OL_RTR_CONFGEN_H_ */

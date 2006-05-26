@@ -78,7 +78,8 @@ runOverLog_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
+	$(top_builddir)/debugger/.libs/libdebugger.a
 
 runSymphony_SOURCES = runSymphony.C
 runSymphony_LDADD = \
@@ -86,7 +87,8 @@ runSymphony_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a\
+	$(top_builddir)/debugger/.libs/libdebugger.a
 
 runSymphonicChord_SOURCES = runSymphonicChord.C
 runSymphonicChord_LDADD = \
@@ -94,7 +96,8 @@ runSymphonicChord_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a\
+	$(top_builddir)/debugger/.libs/libdebugger.a
 
 runChord_SOURCES = runChord.C
 runChord_LDADD = \
@@ -102,7 +105,8 @@ runChord_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
+	$(top_builddir)/debugger/.libs/libdebugger.a
 
 runManyChords_SOURCES = runManyChords.C
 runManyChords_LDADD = \
@@ -110,7 +114,8 @@ runManyChords_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
+	$(top_builddir)/debugger/.libs/libdebugger.a
 
 overlog_SOURCES	= overlog.C
 overlog_LDADD = \
@@ -118,7 +123,8 @@ overlog_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a 
+	$(top_builddir)/eventLoop/.libs/libeventLoop.a \
+	$(top_builddir)/debugger/.libs/libdebugger.a
 
 simple_lookup_SOURCES = simple_lookup.C
 simple_lookup_LDADD = \
@@ -225,7 +231,8 @@ EXTRA_DIST = .cvsignore \
 
 INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements \
 		-I$(top_builddir)/net -I$(top_builddir)/overlog \
-		-I$(top_builddir)/planner -I$(top_builddir)/eventLoop
+		-I$(top_builddir)/planner -I$(top_builddir)/eventLoop \
+		-I$(top_builddir)/debugger
 
 CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@
 

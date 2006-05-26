@@ -54,6 +54,9 @@ public:
       /** Finalize this dataflow */
       int finalize();
 
+      /** Find an element in existing dataflow */
+      ElementSpecPtr find(string name);
+
       /** Add a new element to this dataflow by creating a
           new ElementSpecPtr that references the passed in element.
        */

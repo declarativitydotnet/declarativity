@@ -1,0 +1,169 @@
+materialize(ruleExecTable, 100, 500).
+materialize(tupleTable, 100, 1000, keys(2)).
+materialize(traceTable, infinity, 1, keys(1)).
+
+trace(lookup).
+/*
+watch(inTracelookup).
+watch(collect1).
+watch(tupleTable).
+watch(ruleExecTable).
+
+watch(collect3).
+watch(collect4).
+*/
+watch(report).
+
+x1 collect1@NI(NI, Tin, R, Tout, E) :- inTracelookup@NI(NI, K, S, E, Tout),
+				     ruleExecTable@NI(NI, R, Tin, Tout, Sout, LTIN, LTOUT, TYPE),
+					TYPE == "EVENT".
+
+
+x2 collect3@S(S, E, Tin, R, Tout, NI, D) :- collect1@NI(NI, T, R, Tout, E),
+					  tupleTable@NI(NI, T, S, Tin),
+					  D := NI.
+
+
+x3 collect4@S(S, E, T1, T, R2, NI, D1) :- collect3@S(S, E, Tin, R1, T, NI, D),
+				ruleExecTable@S(S, R, T1, T2, Sout, LTIN, LTOUT, TYPE),
+				TYPE == "EVENT",
+				R2 := R + R1,
+				R != "$",
+				T2 == Tin,
+				T1 != 0,
+				D1 := S + D.
+
+
+x4 collect3@S(S, E, Tin, R1, T, NI, D) :- collect4@F(F, E, T1, T, R1, NI, D),
+					     tupleTable@F(F, T1, S, Tin).
+
+
+
+x5 report@NI(NI, T1, T, R, D) :- collect3@S(S, E, Tin, R2, T, NI, D),
+				ruleExecTable@S(S, R1, T1, T2, Sout, LTIN,LTOUT, TYPE),
+				T2 == Tin,
+				T1 == 0,
+				R := R1 + R2.
+
+
+x6 report@NI(NI, T1, T, R, D) :- collect4@S(S, E, Tin, T, R2, NI, D),
+				ruleExecTable@S(S, R1, T1, T2, Sout, LTIN,LTOUT, TYPE),
+				T2 == Tin,
+				T1 == 0,
+				R := R1 + R2.
+
+
+
+
+
+/* These rules additionally keep track of time spent in each rule.
+
+x3 collect1@NI(NI, Tin, R, Tout, E, K, LT, RT, IR, X, Y, N, NL,NR) :- startTrace@NI(NI, Tout, E, K),
+				     ruleExecTable@NI(NI, R, Tin, Tout, Sout, LTIN, LTOUT, TYPE),
+				     TYPE == "EVENT", 
+				     IR := LTOUT - LTIN,
+				     RT := 0, LT := 0, X := LTIN, Y := "LOCAL",
+				     N := 1, NL := 0, NR := 0.
+
+				
+
+x4 collect3@S(S, E, Tin, R, Tout, K, NI, LT, RT, IR, X, Y, N, NL1, NR) :- collect1@NI(NI, T, R, Tout, E, K, LT, RT, IR, X, Y, N, NL, NR),
+					  tupleTable@NI(NI, T, TupleTin, S, Tin),
+					  S == NI, NL1 := NL + 1.
+	      
+x5 collect3@S(S, E, Tin, R, Tout, K, NI, LT, RT, IR, X, Y1, N, NL, NR1) :-  collect1@NI(NI, T, R, Tout, E, K, LT, RT, IR, X, Y, N, NL, NR),
+					  tupleTable@NI(NI, T, TupleTin, S, Tin),
+					  S != NI, Y1 := "REMOTE", NR1 := NR + 1.
+
+
+x6 collect4@S(S, E, T1, T, R2, NI,K, LT2, RT, IR2, X1, Y, N1, NL, NR) :- collect3@S(S, E, Tin, R1, T, K, NI, LT, RT, IR, X, Y, N, NL, NR),
+				ruleExecTable@S(S, R, T1, T2, Sout, LTIN, LTOUT, TYPE),
+				TYPE == "EVENT",
+				R2 := R + R1,
+				R != "$",
+				T2 == Tin,
+				T1 != 0,
+				IR1 := LTOUT - LTIN,
+				IR2 := IR1 + IR,
+				Y == "LOCAL",
+				LT1 := X - LTOUT,
+				LT2 := LT + LT1,
+				X1 := LTIN,
+				N1 := N + 1.
+
+
+x7 collect4@S(S, E, T1, T, R2, NI, K, LT, RT2, IR2, X1, Y, N1, NL, NR) :- collect3@S(S, E, Tin, R1, T, K, NI, LT, RT, IR, X, Y, N, NL, NR),
+				ruleExecTable@S(S, R, T1, T2, Sout, LTIN, LTOUT, TYPE),
+				TYPE == "EVENT",
+				R2 := R + R1,
+				R != "$",
+				T2 == Tin,
+				T1 != 0,
+				IR1 := LTOUT - LTIN,
+				IR2 := IR1 + IR,
+				Y == "REMOTE",
+				RT1 := X - LTOUT,
+				RT2 := RT + RT1,
+				X1 := LTIN,
+				N1 := N + 1.
+
+x8 collect3@S(S, E, Tin, R1, T, K, NI, LT, RT, IR, X, Y1, N, NL, NR1) :- collect4@F(F, E, T1, T, R1, NI, K, LT, RT, IR, X, Y, N, NL, NR),
+					     tupleTable@F(F, T1, Tuple, S, Tin),
+					     S != F, Y1 := "REMOTE", NR1 := NR + 1.
+
+x9 collect3@S(S, E, Tin, R1, T, K, NI, LT, RT, IR, X, Y1, N, NL1, NR) :- collect4@F(F, E, T1, T, R1, NI, K, LT, RT, IR, X, Y, N, NL, NR),
+					     tupleTable@F(F, T1, Tuple, S, Tin),
+					     S == F, Y1 := "LOCAL", NL1 := NL + 1.
+
+
+x10 report@NI(NI, T, E, R, LT, RT1, IR, N, NL, NR1, TOT) :- collect3@S(S, E, Tin, R2, T, K, NI, LT, RT, IR, X, Y, N, NL, NR),
+				ruleExecTable@S(S, R1, T1, T2, Sout, LTIN,LTOUT, TYPE),
+				T2 == Tin,
+				T1 == 0,
+				R := R1 + R2,
+				Y == "REMOTE",
+				RT3 := X - LTOUT,
+				RT2 := RT + RT3,
+				NR1 := NR + 1,
+				RT1 := RT2, 
+				TOT := RT2 + LT + IR.
+
+
+x11 report@NI(NI, T, E, R, LT1, RT, IR, N, NL1, NR, TOT) :- collect3@S(S, E, Tin, R2, T, K, NI, LT, RT, IR, X, Y, N, NL, NR),
+				ruleExecTable@S(S, R1, T1, T2, Sout, LTIN,LTOUT, TYPE),
+				T2 == Tin,
+				T1 == 0,
+				R := R1 + R2,
+				Y == "LOCAL",
+				LT3 := X - LTOUT,
+				LT2 := LT + LT3,
+				NL1 := NL + 1,
+				LT1 := LT2, 
+				TOT := RT + LT2 + IR.
+
+x12 report@NI(NI, T, E, R, LT, RT1, IR, N, NL, NR1, TOT) :- collect4@S(S, E, Tin, T, R2, NI, K, LT, RT, IR, X, Y, N, NL, NR),
+				ruleExecTable@S(S, R1, T1, T2, Sout, LTIN,LTOUT, TYPE),
+				T2 == Tin,
+				T1 == 0,
+				R := R1 + R2,
+				Y == "REMOTE",
+				RT3 := X - LTOUT,
+				RT2 := RT + RT3,
+				NR1 := NR + 1,
+				RT1 := RT2, 
+				TOT := RT2 + LT + IR.
+
+x13 report@NI(NI, T, E, R, LT1, RT, IR, N, NL1, NR, TOT) :- collect4@S(S, E, Tin, T, R2, NI, K, LT, RT, IR, X, Y, N, NL, NR),
+				ruleExecTable@S(S, R1, T1, T2, Sout, LTIN,LTOUT, TYPE),
+				T2 == Tin,
+				T1 == 0,
+				R := R1 + R2,
+				Y == "LOCAL",
+				LT3 := X - LTOUT,
+				LT2 := LT + LT3,
+				NL1 := NL + 1,
+				LT1 := LT2, 
+				TOT := RT + LT2 + IR.
+
+
+*/

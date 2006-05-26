@@ -47,14 +47,12 @@ private:
   std::map< string, ValuePtr > * _tags;
 
   /** The static counter of tuple IDs, unique to a process */
-  static uint
+  static uint32_t
   _tupleIDCounter;
 
 
   /** My ID */
-  uint _ID;
-
-
+  uint32_t _ID;
 
 public:
   
@@ -117,7 +115,7 @@ public:
   operator[] (ptrdiff_t i) const;
 
 
-  //  ValuePtr at(ptrdiff_t i) { return fields[i]; };
+  ValuePtr at(ptrdiff_t i) { return fields[i]; };
 
   void xdr_marshal(XDR *xdrs);
 
@@ -144,9 +142,8 @@ public:
     }
   };
 
-
   /** My ID */
-  uint
+  uint32_t
   ID();
 
 

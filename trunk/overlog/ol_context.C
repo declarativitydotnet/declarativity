@@ -21,6 +21,8 @@
 #define DEBUG_OFF
 #include "trace.h"
 
+int OL_Context::ruleCount = 0;
+
 /**********************************************************************
  *
  * Rule methods
@@ -247,6 +249,13 @@ void OL_Context::watch(Parse_Expr *w)
   std::cout << "Add watch variable " << w->toString() << "\n";
   watchTables.insert(w->v->toString());
 }
+
+void OL_Context::traceTuple(Parse_Expr *w)
+{
+  std::cout << "Add trace variable " << w->toString() << "\n";
+  tuplesToTrace.insert(w->v->toString());
+}
+
 
 
 void OL_Context::table(Parse_Expr *name, Parse_Expr *ttl, 
