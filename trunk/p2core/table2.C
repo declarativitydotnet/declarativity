@@ -133,6 +133,78 @@ operator()(const Table2::Entry* fEntry,
 }
 
 
+/** A keyed comparator is only initialized with its key spec */
+Table2::KeyedTupleComparator::KeyedTupleComparator(const Key& key)
+  : _key(key)
+{
+}
+
+
+/** The comparators checks the fields indicated by the key spec in the
+    order of the key spec. It compares the fields lexicographically.
+    Absence of a field is smaller than existence of a field.  If the key
+    spec is empty, then the comparator compares tuple IDs. */
+bool
+Table2::KeyedTupleComparator::
+operator()(const TuplePtr first,
+           const TuplePtr second) const
+{
+  if (_key.empty()) {
+    // Compare tuple IDs only
+    return (first->ID() < second->ID());
+  } else {
+    Table2::Key::const_iterator fieldNos = _key.begin();
+    while (fieldNos != _key.end()) {
+      // The next field number is
+      unsigned fieldNo = *(fieldNos++);
+
+      // Does the first have this field?
+      if (first->size() > fieldNo) {
+        // It does. Does the second have this field?
+        if (second->size() > fieldNo) {
+          // It does. Compare their values. If they're equal, I must
+          // keep with the next field. If the first is less, stop here
+          // and return true. If the first is greater, stop here and
+          // return false.
+          int comp = (*first)[fieldNo]->compareTo((*second)[fieldNo]);
+          if (comp < 0) {
+            // First is less on this field, so it is also less overall
+            return true;
+          } else if (comp > 0) {
+            // First is greater on this field, so it cannot be less
+            // overall
+            return false;
+          } else {
+            // The fields are equal, so I must check the next field if
+            // it exists
+          }
+        } else {
+          // The second vector is lacking the field but the first one has
+          // it. The first vector is not less.
+          return false;
+        }
+      } else {
+        // The vectors are equal this far, but the first vector is
+        // lacking the field. If the second vector has this field, then
+        // the first is less. If the second vector does not have this
+        // field, then since the two vectors are equal, the first vector
+        // is not less.
+        if (second->size() > fieldNo) {
+          // The second vector has it, so the first is less
+          return true;
+        } else {
+          // The two vectors are equal, so the first is not less
+          return false;
+        }
+      }
+    }
+    // If we got to this point, the two vectors are equal, so the first
+    // is not less
+    return false;
+  }
+}
+
+
 
 
 ////////////////////////////////////////////////////////////
@@ -782,4 +854,137 @@ Table2::scanPrimary()
   IteratorPtr iterPtr = IteratorPtr(new Iterator(spool));
   return iterPtr;
 } 
+
+
+
+
+////////////////////////////////////////////////////////////
+// Aggregation
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+
+Table2::AggregateObj::AggregateObj(Table2::Key& key,
+                                   Table2::SecondaryIndex* index,
+                                   unsigned aggField,
+                                   Table2::AggregateFunction& function)
+  : _key(key),
+    _index(index),
+    _aggField(aggField),
+    _aggregateFn(function),
+    _listeners(),
+    _comparator(key),
+    _currentAggregates(_comparator)
+{
+}
+
+
+/** This method does not check for duplication. If a caller places
+    itself into the listener queue twice, it will receive two calls for
+    every update. */
+void
+Table2::AggregateObj::listener(Table2::Listener listener)
+{
+  _listeners.push_back(listener);
+}
+
+
+void
+Table2::AggregateObj::update(TuplePtr changedTuple)
+{
+  // Start a new computation of the aggregate function
+  _aggregateFn.reset();
+
+  // An exemplar, if necessary
+  TuplePtr aMatchingTuple = TuplePtr();
+
+  // Scan the index on the group-by fields
+  static Entry searchEntry(Tuple::EMPTY);
+  searchEntry.tuple = changedTuple;
+  for (SecondaryIndex::iterator i = _index->lower_bound(&searchEntry);
+       i != _index->upper_bound(&searchEntry);
+       i++) {
+    // Fetch the next tuple. Recall the secondary index lies over Entry
+    // pointers 
+    TuplePtr tuple = (*i)->tuple;
+
+    // It is bound to match the group-by fields since we're still
+    // between the lower bound and the upper bound
+    if (aMatchingTuple.get() == NULL) {
+      // This is the first matching tuple
+      _aggregateFn.first(tuple, _key);
+      aMatchingTuple = tuple;
+    } else {
+      // This is not the first matching tuple
+      _aggregateFn.process(tuple, _key);
+    }
+  }
+  
+  // Handle the newly computed aggregate, if any.  If I have none, then
+  // make sure I erase what I may remember. If I have some, if the new
+  // one is the same, update no one. If I have some, but the new one is
+  // different, update what I remember and send a notice to the listener.
+
+  if (aMatchingTuple.get() == NULL) {
+    // I got no aggregate for this value. Presumably this update was a
+    // removal. Erase any remembered aggregate (for the group-by values
+    // of the changed tuple) and notify no one.
+    _currentAggregates.erase(changedTuple);
+  } else {
+    // We had at least one match so we must have some result.
+    ValuePtr result = _aggregateFn.result();
+    assert(result.get() != NULL);
+    
+    // Is this a new result?
+    AggMap::iterator remembered = _currentAggregates.find(changedTuple);
+    if (remembered == _currentAggregates.end()) {
+      // I didn't remember anything for this group-by value set
+      // No need to erase anything
+    } else {
+      // We have one. Is it the same?
+      if (remembered->second->compareTo(result) == 0) {
+        // Yup, no need to remember anything
+        goto doneRemembering;
+      } else {
+        // Different. we need to forget the old one and remember the new
+        // one
+        _currentAggregates.erase(changedTuple);
+      }
+    }
+    
+    {
+      // If we're here, we need to remember a result and, if necessary,
+      // we've forgotten the old result.
+      _currentAggregates.insert(std::make_pair(changedTuple, result));
+      
+      // Put together an update tuple for listeners
+      TuplePtr updateTuple = Tuple::mk();
+      for (Key::iterator k = _key.begin();
+           k != _key.end();
+           k++) {
+        unsigned fieldNo = *k;
+        updateTuple->append((*changedTuple)[fieldNo]);
+      }
+      updateTuple->append(result);
+      updateTuple->freeze();
+      
+      // We also need to notify listeners for the change
+      for (ListenerVector::iterator i = _listeners.begin();
+           i != _listeners.end();
+           i++) {
+        Listener listener = *i;
+        listener(updateTuple);
+      }
+    }
+  doneRemembering:
+    // Any closing remarks independent on whether I updated listeners
+    // with a new result or not?
+    ;
+  }
+  return;
+}
 

@@ -32,6 +32,8 @@
 #include "tuple.h"
 #include <set>
 #include "boost/date_time/posix_time/posix_time.hpp"
+#include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 #include <deque>
 
 
@@ -95,7 +97,7 @@ public:
   };
 
 
-  /** A comparator of value ptr vectors by a given key */
+  /** A comparator of table entry pointers by a given key */
   struct KeyedEntryComparator
   {
     /** What's my key spec? */
@@ -109,6 +111,26 @@ public:
     bool
     operator()(const Entry *,
                const Entry *) const;
+  };
+
+
+  /** A comparator of tuple pointers by a given key. Operates exactly
+      like the KeyedEntryComparator, except on tuple pointers without
+      the Entry structure indirection. */
+  struct KeyedTupleComparator
+  {
+    /** What's my key spec? */
+    const Key& _key;
+    
+    
+    /** Construct me */
+    KeyedTupleComparator(const Key& key);
+    
+    
+    /** My comparison operator */
+    bool
+    operator()(const TuplePtr,
+               const TuplePtr) const;
   };
 
 
@@ -211,6 +233,142 @@ public:
   
   
   
+  ////////////////////////////////////////////////////////////
+  // Listener type
+  ////////////////////////////////////////////////////////////
+
+  /** A listener */
+  typedef boost::function< void (TuplePtr) > Listener;
+
+
+  /** Listener vector */
+  typedef std::vector< Listener > ListenerVector;
+
+
+
+
+  ////////////////////////////////////////////////////////////
+  // Aggregation
+  ////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////
+
+  /** A container for aggregation functions.  It only contains
+      information about the computation of a single aggregate from all
+      relevant tuples. */
+  class AggregateFunction
+  {
+  public:
+    AggregateFunction();
+    
+    
+    virtual ~AggregateFunction();
+    
+    
+    /** Clear the state of the aggregate function. */
+    virtual void
+    reset() = 0;
+
+    
+    /** Start a new aggregate computation with a new tuple. */
+    virtual void
+    first(TuplePtr tuple,
+          Key& key) = 0;
+    
+
+    /** Process a tuple for this function (not the first one). */
+    virtual void
+    process(TuplePtr tuple,
+            Key& key) = 0;
+
+    
+    /** Retrieve the result for this function. If no tuples have been
+        submitted, return NULL. */
+    virtual ValuePtr
+    result() = 0;
+  };
+  
+
+
+
+  /** An aggregate state record. It contains all relevant state for all
+      aggregated groups within a table (i.e., all seen group-by value
+      sets).  Whenever it sees an update to the table, it scans the
+      relevant secondary index for all tuples with the same group-by
+      values as the updated tuple and uses an AggregateFunction object
+      to compute the new value for the aggregate. If that value is
+      different from the last value computed for this group-by value
+      set, the object remembers it, and sends an update to all
+      listeners. */
+  class AggregateObj
+  {
+  public:
+    /** Create an aggregate given its key (i.e., the group-by fields)
+        a pointer to its table, the aggregated field number (single
+        field for now), and the aggregate function object. */
+    AggregateObj(Key& key,
+                 SecondaryIndex* index,
+                 unsigned aggField,
+                 AggregateFunction& function);
+    
+    
+    /** Add a listener for aggregate updates. */
+    void
+    listener(Listener listener);
+
+    
+    /** Update the aggregate given a newly change tuple.  Specifically,
+        the given tuple was either just removed from or just inserted
+        into the table. */
+    void
+    update(TuplePtr changedTuple);
+
+
+  private:
+    /** My index (and group-by fields). */
+    Key& _key;
+    
+    
+    /** My secondary index. */
+    SecondaryIndex* _index;
+    
+
+    /** My aggregate (single!) field. */
+    unsigned _aggField;
+    
+
+    /** Which aggregate function? */
+    AggregateFunction& _aggregateFn;
+
+
+    /** My listeners */
+    ListenerVector _listeners;
+
+
+    /** My map from a tuple (with a given combination of group-by
+        values) to a value containing the latest result for the
+        aggregate on those group-by values.  Used to determine aggregate
+        changes during updates. */
+    typedef std::map< TuplePtr,
+                      ValuePtr,
+                      KeyedTupleComparator > AggMap;
+
+
+    /** My comparator object, used with my aggregate value map */
+    KeyedTupleComparator _comparator;
+    
+
+    /** My current aggregates */
+    AggMap _currentAggregates;
+  };
+
+
+
+
   ////////////////////////////////////////////////////////////
   // Lookup Iterator
   ////////////////////////////////////////////////////////////
