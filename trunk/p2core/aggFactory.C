@@ -46,10 +46,17 @@ AggFactory::add(std::string aggName,
 }
 
 
+AggFactory::FactorySet
+AggFactory::_factories;
+
+
+AggFactory::Initializer
+AggFactory::_INITIALIZER;
+
+
 AggFactory::Initializer::Initializer()
 {
   // Register all known factories
-  
   add("MIN", &AggMin::mk);
   add("MAX", &AggMax::mk);
   add("COUNT", &AggCount::mk);
