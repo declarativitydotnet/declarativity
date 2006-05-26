@@ -40,16 +40,16 @@ class InsertCLI(Element):
           print "ERROR: unknown command or mode entered."
           self.print_usage()
       self.set_delay(0.5, self.delay_callback) 
-  def push(self, port, tp, cb):
-      # Received status of some sent tuple
-      print "push " + str(self)
-      key    = tp.at(2).toString()
-      nodeID = tp.at(3).toString()
-      nodeIP = tp.at(4).toString()
-
-      print "=== RECEIVED INSERT RESPONSE FOR KEY %s ===" % key
-      print "\tNODE IP %s with KEY %s" % (nodeIP, nodeID)
-      return 1
+#  def push(self, port, tp, cb):
+#      # Received status of some sent tuple
+#      print "push " + str(self)
+#       key    = tp.at(2).toString()
+#       nodeID = tp.at(3).toString()
+#       nodeIP = tp.at(4).toString()
+#
+#       print "=== RECEIVED INSERT RESPONSE FOR KEY %s ===" % key
+#       print "\tNODE IP %s with KEY %s" % (nodeIP, nodeID)
+#      return 1
     
   def parse_insert(self, line):
       tablerest = line.split("@")
@@ -117,14 +117,15 @@ def get_stub(port):
       Sequence("output", 1, 1)                      ->
       Frag("fragment", 1)                           ->
       PelTransform("package", "$0 pop swallow pop") ->
-#      PelTransform("encapRequest", "$1 pop $0 ->t $1 append $2 append $3 append $4 append pop") ->
       MarshalField("marshal", 1)                    ->
       StrToSockaddr("addr_conv", 0)                 -> 
-      udp -> UnmarshalField("unmarshal", 1) ->
+      udp ->
+      UnmarshalField("unmarshal", 1) ->
       PelTransform("unpackage", "$1 unboxPop") ->
       Defrag("defragment", 1) ->
       PelTransform("get_payload", "$2 unboxPop") ->
       TimedPullPush("input", 0) ->
+      Sequence("input", 1, 1) ->
       Discard("dummy_discard");      
       }
       .   # END OF DATAFLOW DEFINITION""" % (DATAFLOW_NAME, port)
