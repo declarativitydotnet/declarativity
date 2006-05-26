@@ -40,16 +40,16 @@ class InsertCLI(Element):
           print "ERROR: unknown command or mode entered."
           self.print_usage()
       self.set_delay(0.5, self.delay_callback) 
-#  def push(self, port, tp, cb):
-#      # Received status of some sent tuple
-#      print "push " + str(self)
-#       key    = tp.at(2).toString()
-#       nodeID = tp.at(3).toString()
-#       nodeIP = tp.at(4).toString()
-#
-#       print "=== RECEIVED INSERT RESPONSE FOR KEY %s ===" % key
-#       print "\tNODE IP %s with KEY %s" % (nodeIP, nodeID)
-#      return 1
+  def push(self, port, tp, cb):
+      # Received status of some sent tuple
+      print "push " + str(self)
+      key    = tp.at(2).toString()
+      nodeID = tp.at(3).toString()
+      nodeIP = tp.at(4).toString()
+
+      print "=== RECEIVED INSERT RESPONSE FOR KEY %s ===" % key
+      print "\tNODE IP %s with KEY %s" % (nodeIP, nodeID)
+      return 1
     
   def parse_insert(self, line):
       tablerest = line.split("@")
