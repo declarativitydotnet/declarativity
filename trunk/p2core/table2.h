@@ -156,9 +156,9 @@ public:
 
   /** An index of indices secondary indices is a map from key
       designations to secondary indices. */
-  typedef std::map< Key*, SecondaryIndex*, KeyComparator > SecondaryIndexIndex;
-
-
+  typedef std::map< Key*, SecondaryIndex*, KeyComparator >
+  SecondaryIndexIndex;
+  
 
 
   ////////////////////////////////////////////////////////////
@@ -311,7 +311,12 @@ public:
     AggregateObj(Key& key,
                  SecondaryIndex* index,
                  unsigned aggField,
-                 AggFunc& function);
+                 AggFunc* function);
+
+
+    /** Destroy the aggregate object.  This just means its aggregate
+        function object */
+    ~AggregateObj();
     
     
     /** Add a listener for aggregate updates. */
@@ -340,7 +345,7 @@ public:
     
 
     /** Which aggregate function? */
-    AggFunc& _aggregateFn;
+    AggFunc* _aggregateFn;
 
 
     /** My listeners */
@@ -363,6 +368,25 @@ public:
     /** My current aggregates */
     AggMap _currentAggregates;
   };
+
+  
+  /** An externally visible aggregate is a pointer to an aggregate
+      object */
+  typedef AggregateObj* Aggregate;
+
+
+  /** My aggregates vector */
+  typedef std::vector< Aggregate > AggregateVector;
+
+
+  /** Install a new aggregate returning a handle to it */
+  Aggregate
+  aggregate(Key& groupBy,
+            uint aggregateFieldNo,
+            std::string functionName);
+
+
+  
 
 
 
@@ -511,6 +535,10 @@ private:
   SecondaryIndexIndex _indices;
 
 
+  /** My aggregates, in a sequence. */
+  AggregateVector _aggregates;
+
+
   /** A queue holding all secondary index comparator objects for
       elimination during destruction */
   std::deque< KeyedEntryComparator* > _keyedComparators;
@@ -592,6 +620,17 @@ private:
   void
   insertTuple(TuplePtr t,
               PrimaryIndex::iterator position);
+
+
+  /** Return a secondary index if it exists, or NULL otherwise */
+  SecondaryIndex*
+  findSecondaryIndex(Key& key);
+
+
+  /** Create a fresh secondary index. It assume the index does not
+      exist */
+  void
+  createSecondaryIndex(Key& key);
 };
 
 
