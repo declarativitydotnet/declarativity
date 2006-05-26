@@ -19,7 +19,8 @@
 #include "val_uint32.h"
 
 #include "testTable2.h"
-
+#include <boost/bind.hpp>
+#include "vector"
 
 
 class testTable2
@@ -83,6 +84,11 @@ public:
       selecting. */
   void
   testSecondaryEquivalence();
+
+
+  /** Test aggregate scripts */
+  void
+  testAggregates();
 };
 
 
@@ -472,39 +478,52 @@ class Tracker2 {
 public:
   /** Process an array of tests */
   static void
-  process(table2Test[]);
+  process(std::vector< table2Test >);
+
+
 
 
 private:
+  /** The all-fields key vector */
+  std::vector< unsigned > _allFields;
+
+
+
+
+protected:
   /** Create the new tracker */
   Tracker2(table2Test &);
 
-  /** Execute the tracked script */
-  void
-  test();
+
+  /** My test */
+  table2Test & _test;
+  
+
+  /** My table */
+  Table2 _table;
+
+
+  /** The remainder of my script */
+  std::string _remainder;
+
 
   /** Advance the script by a command. Returns false if the tracking is
       aborted, true otherwise. */
   bool
   fetchCommand();
 
-  /** My test */
-  table2Test & _test;
-  
-  /** My table */
-  Table2 _table;
-
-  /** The remainder of my script */
-  std::string _remainder;
 
   /** The current command type */
   char _command;
 
+
   /** The current tuple */
   TuplePtr _tuple;
 
-  /** The all-fields key vector */
-  std::vector< unsigned > _allFields;
+
+  /** Execute the tracked script */
+  void
+  test();
 };
 
 
@@ -760,15 +779,13 @@ Tracker2::Tracker2(table2Test & test)
 
 
 void
-Tracker2::process(table2Test tests[])
+Tracker2::process(std::vector< table2Test > tests)
 {
-  uint noTests = sizeof(tests) / sizeof(table2Test);
-  
-  for (uint i = 0;
-       i < noTests;
+  for (std::vector< table2Test >::iterator i = tests.begin();
+       i != tests.end();
        i++) {
     // Create a script tracker
-    Tracker2 tracker(tests[i]);
+    Tracker2 tracker((*i));
     // Run it
     tracker.test();
   }
@@ -818,8 +835,10 @@ testTable2::testInsertRemoveLookupScripts()
                  Table2::KEY0),
       
     };
-
-  Tracker2::process(t);
+  std::vector< table2Test > vec(t,
+                                t + sizeof(t)/sizeof(t[0]));
+  
+  Tracker2::process(vec);
 }
 
 
@@ -892,6 +911,259 @@ testTable2::testSecondaryEquivalence()
 
 
 
+
+////////////////////////////////////////////////////////////
+// Aggregate Testing
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+
+class intAggTest2 : public table2Test {
+public:
+  intAggTest2(std::string script,
+              Table2::Key& key,
+              Table2::Key& groupBy,
+              uint aggField,
+              std::string func,
+              int line);
+
+  Table2::Key& _groupBy;
+
+  uint _aggFieldNo;
+
+  std::string _function;
+};
+
+intAggTest2::intAggTest2(std::string script,
+                         Table2::Key& key,
+                         Table2::Key& groupBy,
+                         uint aggFieldNo,
+                         std::string func,
+                         int line)
+  : table2Test(script, line, key),
+    _groupBy(groupBy),
+    _aggFieldNo(aggFieldNo),
+    _function(func)
+{
+}
+
+
+
+/**
+ * This object tracks a single integer aggregate test for a single
+ * script. It creates an empty table, parses the script, applies it to
+ * the table, and evaluates the result. If the script is executed
+ * without mismatch, the test is a success.  Otherwise, an error is
+ * generated and the rest of the test is aborted.
+ */
+class AggTracker2 : public Tracker2 {
+public:
+  /** Process an array of tests */
+  static void
+  process(std::vector< intAggTest2 >);
+  
+  
+  /** Create the new tracker, parse the script */
+  AggTracker2(intAggTest2 & test);
+  
+
+  /** Listener for aggregate updates */
+  void
+  listener(TuplePtr t);
+};
+
+
+void
+AggTracker2::process(std::vector< intAggTest2 > tests)
+{
+  for (std::vector< intAggTest2 >::iterator i = tests.begin();
+       i != tests.end();
+       i++) {
+    // Create a script tracker
+    AggTracker2 tracker((*i));
+    // Run it
+    tracker.test();
+  }
+}
+
+
+AggTracker2::AggTracker2(intAggTest2 & test)
+  : Tracker2(test)
+{
+  // Create a multiple index on the group by field
+  _table.secondaryIndex(test._groupBy);
+
+  // Create a multiple-value aggregate with the given function
+  Table2::Aggregate u =
+    _table.aggregate(test._groupBy,
+                     test._aggFieldNo,
+                     test._function);
+  u->listener(boost::bind(&AggTracker2::listener, this, _1));
+}
+
+
+void
+AggTracker2::listener(TuplePtr t)
+{
+//   std::cout << "Aggregate received \""
+//             << t->toString()
+//             << "\"\n";
+
+  // Fetch a command
+  if (!_remainder.empty()) {
+    bool result = fetchCommand();
+
+    if (result) {
+      // Is it an update?
+      if (_command != 'u') {
+        // I should have an update in there
+        BOOST_ERROR("Semantic error in test line "
+                    << _test._line
+                    << " with suffix "
+                    << "\""
+                    << _remainder
+                    << "\". Script should expect an update with '"
+                    << t->toString()
+                    << "' but contained a '"
+                    << _command
+                    << "' instead.");
+        _remainder = std::string();
+        return;
+      }
+
+      // Compare the tuples
+      if (t->compareTo(_tuple) != 0) {
+        BOOST_ERROR("Error in test line "
+                    << _test._line
+                    << " with suffix "
+                    << "\""
+                    << _remainder
+                    << "\". Script expected tuple '"
+                    << _tuple->toString()
+                    << "' but received '"
+                    << t->toString()
+                    << "' instead.");
+        _remainder = std::string();
+      }
+    } else {
+      // Something went wrong. Just exist zeroing out the remainder
+      _remainder = std::string();
+    }
+  } else {
+    // I should have an update in there
+    BOOST_ERROR("Error in test line "
+                << _test._line
+                << " with suffix "
+                << "\""
+                << _remainder
+                << "\". Script should expect an update with '"
+                << t->toString()
+                << "' but didn't.");
+    _remainder = std::string();
+  }
+}
+
+
+
+
+
+
+
+
+/** 
+ * The purpose of this test is to check that table aggregates work
+ * correctly.  The way we implement the test is to submit to the table a
+ * particular sequence of insertions and deletions and the corresponding
+ * sequence of aggregates updates.  If the sequences match, then the
+ * test has succeeded.
+ *
+ * We define each test as an EXPECT-like script, made up of insertions,
+ * deletions, and updates.
+ */
+void
+testTable2::testAggregates()
+{
+  intAggTest2 t[] = {
+    // The following tests script expects the sequence
+    // INSERT <0, 10>
+    // UPDATE <0, 10>
+    // INSERT <0, 15>
+    // INSERT <0, 5>
+    // UPDATE <0, 5>
+    // DELETE <0, 5>
+    // UPDATE <0, 10>
+    // Scripts must always end with a semicolon!!!!!!!!!
+    // Scripts must always end with a semicolon!!!!!!!!!
+    // Scripts must always end with a semicolon!!!!!!!!!
+    // Scripts must always end with a semicolon!!!!!!!!!
+    // Scripts must always end with a semicolon!!!!!!!!!
+    intAggTest2("i<0,10>;u<0,10>;i<0,15>;i<0,5>;u<0,5>;d<0,5>;u<0,10>;",
+                Table2::KEY01, // first field is indexed
+                Table2::KEY0, // first field is group-by
+                1, // second field is aggregated
+                "MIN", // aggregate function is MIN
+                __LINE__),
+
+    // Here there's an update for every insert that is not identical to
+    // its preceeding one since the primary key is the first field, so
+    // any new insertion removes the old tuple.  When the last entry is
+    // gone, no update is received.
+    intAggTest2("i<0,10>;u<0,10>;i<0,10>;i<0,15>;u<0,15>;i<0,5>;u<0,5>;d<0,5>;",
+                Table2::KEY0, // first field is indexed
+                Table2::KEY0, // first field is group-by
+                1, // second field is aggregated
+                "MIN", // aggregate function is MIN
+                __LINE__),
+
+    // The following tests script for MIN expects the sequence
+    // INSERT <0, 10>
+    // UPDATE <0, 10>
+    // INSERT <0, 5>
+    // UPDATE <0, 5>
+    intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;",
+                Table2::KEY01, Table2::KEY0,
+                1, "MIN",
+                __LINE__),
+    
+    intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;i<0,20>;i<0,30>;",
+                Table2::KEY01, Table2::KEY0, 1, "MIN",
+                __LINE__),
+    
+    intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;i<0,20>;i<0,3>;u<0,3>;i<0,4>;",
+                Table2::KEY01, Table2::KEY0, 1, "MIN",
+                __LINE__),
+
+
+    ////////////////////////////////////////////////////////////
+    // MAX
+
+    intAggTest2("i<0,10>;u<0,10>;i<0,5>;",
+                Table2::KEY01, Table2::KEY0, 1, "MAX",
+                __LINE__),
+    
+    intAggTest2("i<0,10>;u<0,10>;i<0,15>;u<0,15>;i<0,3>;",
+                Table2::KEY01, Table2::KEY0, 1, "MAX",
+                __LINE__),
+    
+    intAggTest2("i<0,10>;u<0,10>;i<0,5>;i<0,15>;u<0,15>;",
+                Table2::KEY01, Table2::KEY0, 1, "MAX",
+                __LINE__),
+    
+    intAggTest2("i<0,10>;u<0,10>;i<0,10>;",
+                Table2::KEY01, Table2::KEY0, 1, "MAX",
+                __LINE__)
+  };
+
+  std::vector< intAggTest2 > vec(t,
+                                 t + sizeof(t)/sizeof(t[0]));
+  
+  AggTracker2::process(vec);
+}
 
 
 
@@ -1195,226 +1467,6 @@ testTable2::testUniqueTupleRemovals()
 ////////////////////////////////////////////////////////////
 
 
-////////////////////////////////////////////////////////////
-// Aggregate Testing
-////////////////////////////////////////////////////////////
-
-class intAggTest2 : public table2Test {
-public:
-  intAggTest2(std::string,
-             int, int,
-             Table2::AggregateFunction&,
-             int);
-  int _keyFieldNo;
-  int _aggFieldNo;
-  Table2::AggregateFunction& _function;
-};
-
-intAggTest2::intAggTest2(std::string script,
-                       int keyFieldNo,
-                       int aggFieldNo,
-                       Table2::AggregateFunction&  function,
-                       int line)
-  : table2Test(script, line),
-    _keyFieldNo(keyFieldNo),
-    _aggFieldNo(aggFieldNo),
-    _function(function)
-{
-}
-
-
-
-/**
- * This object tracks a single integer aggregate test for a single
- * script. It creates an empty table, parses the script, applies it to
- * the table, and evaluates the result. If the script is executed
- * without mismatch, the test is a success.  Otherwise, an error is
- * generated and the rest of the test is aborted.
- */
-class AggTracker2 : public Tracker2 {
-public:
-  /** Create the new tracker, parse the script */
-  AggTracker2(intAggTest2 & test);
-
-  /** Listener for aggregate updates */
-  void
-  listener(TuplePtr t);
-};
-
-
-AggTracker2::AggTracker2(intAggTest2 & test)
-  : Tracker2(test)
-{
-  // Create a multiple index on the first field
-  _table.add_multiple_index(test._keyFieldNo);
-
-  // My group-by field is the indexed field
-  std::vector< unsigned > groupBy;
-  groupBy.push_back(test._keyFieldNo);
-
-  // Create a multiple-value aggregate with the given function
-  Table2::MultAggregate u =
-    _table.add_mult_groupBy_agg(test._keyFieldNo,
-                                groupBy,
-                                test._aggFieldNo,
-                                test._function);
-
-  u->addListener(boost::bind(&AggTracker2::listener, this, _1));
-}
-
-
-void
-AggTracker2::listener(TuplePtr t)
-{
-//   std::cout << "Aggregate received \""
-//             << t->toString()
-//             << "\"\n";
-
-  // Fetch a command
-  if (!_remainder.empty()) {
-    bool result = fetchCommand();
-
-    if (result) {
-      // Is it an update?
-      if (_command != 'u') {
-        // I should have an update in there
-        BOOST_ERROR("Semantic error in test line "
-                    << _test._line
-                    << " with suffix "
-                    << "\""
-                    << _remainder
-                    << "\". Script should expect an update with '"
-                    << t->toString()
-                    << "' but contained a '"
-                    << _command
-                    << "' instead.");
-        _remainder = std::string();
-        return;
-      }
-
-      // Compare the tuples
-      if (t->compareTo(_tuple) != 0) {
-        BOOST_ERROR("Error in test line "
-                    << _test._line
-                    << " with suffix "
-                    << "\""
-                    << _remainder
-                    << "\". Script expected tuple '"
-                    << _tuple->toString()
-                    << "' but received '"
-                    << t->toString()
-                    << "' instead.");
-        _remainder = std::string();
-      }
-    } else {
-      // Something went wrong. Just exist zeroing out the remainder
-      _remainder = std::string();
-    }
-  } else {
-    // I should have an update in there
-    BOOST_ERROR("Error in test line "
-                << _test._line
-                << " with suffix "
-                << "\""
-                << _remainder
-                << "\". Script should expect an update with '"
-                << t->toString()
-                << "' but didn't.");
-    _remainder = std::string();
-  }
-}
-
-
-
-
-
-
-
-
-/** 
- * The purpose of this test is to check that table aggregates work
- * correctly.  The way we implement the test is to submit to the table a
- * particular sequence of insertions and deletions and the corresponding
- * sequence of aggregates updates.  If the sequences match, then the
- * test has succeeded.
- *
- * We define each test as an EXPECT-like script, made up of insertions,
- * deletions, and updates.
- */
-void
-testTable2::testAggregates()
-{
-  intAggTest2 intAggTest2s[] = {
-    // The following tests script expects the sequence
-    // INSERT <0, 10>
-    // UPDATE <0, 10>
-    // INSERT <0, 15>
-    // INSERT <0, 5>
-    // UPDATE <0, 5>
-    // DELETE <0, 5>
-    // UPDATE <0, 10>
-    // Scripts must always end with a semicolon!!!!!!!!!
-    // Scripts must always end with a semicolon!!!!!!!!!
-    // Scripts must always end with a semicolon!!!!!!!!!
-    // Scripts must always end with a semicolon!!!!!!!!!
-    // Scripts must always end with a semicolon!!!!!!!!!
-    intAggTest2("i<0,10>;u<0,10>;i<0,15>;i<0,5>;u<0,5>;d<0,5>;u<0,10>;",
-               0, // first field is indexed
-               1, // second field is aggregated
-               Table2::agg_min(), // aggregate function is MIN
-               __LINE__),
-
-    // The following tests script for MIN expects the sequence
-    // INSERT <0, 10>
-    // UPDATE <0, 10>
-    // INSERT <0, 5>
-    // UPDATE <0, 5>
-    // First field is indexed, second field is aggregated
-    intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;",
-               0, 1, Table2::agg_min(),
-               __LINE__),
-
-    intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;i<0,20>;i<0,30>;",
-               0, 1, Table2::agg_min(),
-               __LINE__),
-
-    intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;i<0,20>;i<0,3>;u<0,3>;i<0,4>;",
-               0, 1, Table2::agg_min(),
-               __LINE__),
-
-
-    ////////////////////////////////////////////////////////////
-    // MAX
-
-    intAggTest2("i<0,10>;u<0,10>;i<0,5>;",
-               0, 1, Table2::agg_max(),
-               __LINE__),
-
-    intAggTest2("i<0,10>;u<0,10>;i<0,15>;u<0,15>;i<0,3>;",
-               0, 1, Table2::agg_max(),
-               __LINE__),
-
-    intAggTest2("i<0,10>;u<0,10>;i<0,5>;i<0,15>;u<0,15>;",
-               0, 1, Table2::agg_max(),
-               __LINE__),
-
-    intAggTest2("i<0,10>;u<0,10>;i<0,10>;u<0,10>;",
-               0, 1, Table2::agg_max(),
-               __LINE__)
-
-  };
-  int noIntAggTests = sizeof(intAggTest2s) / sizeof(intAggTest2);
-
-  for (int i = 0;
-       i < noIntAggTests;
-       i++) {
-    // Create a script tracker
-    AggTracker2 tracker(intAggTest2s[i]);
-    // Run it
-    tracker.test();
-  }
-}
-
 
 
 
@@ -1508,6 +1560,7 @@ testTable2_testSuite::testTable2_testSuite()
 {
   boost::shared_ptr<testTable2> instance(new testTable2());
   
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testAggregates, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testPrimaryOverwrite, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testCreateDestroy, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimitID, instance));
@@ -1521,7 +1574,6 @@ testTable2_testSuite::testTable2_testSuite()
   add(BOOST_CLASS_TEST_CASE(&testTable2::testBatchRemovals, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testBatchMultikeyRemovals, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testUniqueTupleRemovals, instance));
-  add(BOOST_CLASS_TEST_CASE(&testTable2::testAggregates, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testMultiFieldKeys, instance));
 #endif
 }
