@@ -22,6 +22,7 @@
 
 #include "table2.h"
 #include "p2Time.h"
+#include "aggFactory.h"
 
 ////////////////////////////////////////////////////////////
 // Sorters
@@ -311,31 +312,46 @@ Table2::~Table2()
 bool
 Table2::secondaryIndex(Table2::Key& key)
 {
-  // Is there such an index already?
+  if (findSecondaryIndex(key) == NULL) {
+    createSecondaryIndex(key);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+void
+Table2::createSecondaryIndex(Table2::Key& key)
+{
+  // Create it, update with all existing elements (from the
+  // primary index)
+  KeyedEntryComparator* comp = new KeyedEntryComparator(key);
+  _keyedComparators.push_front(comp);
+  
+  SecondaryIndex* index = new SecondaryIndex(*comp);
+  _indices.insert(std::make_pair(&key, index));
+  
+  // Insert all current elements
+  PrimaryIndex::iterator i = _primaryIndex.begin();
+  while (i != _primaryIndex.end()) {
+    Entry* current = *i;
+    index->insert(current);
+    i++;
+  }
+}
+
+
+Table2::SecondaryIndex*
+Table2::findSecondaryIndex(Table2::Key& key)
+{
   SecondaryIndexIndex::iterator iter =
     _indices.find(&key);
 
   if (iter == _indices.end()) {
-    // If not, create it, update with all existing elements (from the
-    // primary index), and return true
-    KeyedEntryComparator* comp = new KeyedEntryComparator(key);
-    _keyedComparators.push_front(comp);
-
-    SecondaryIndex* index = new SecondaryIndex(*comp);
-    _indices.insert(std::make_pair(&key, index));
-
-    // Insert all current elements
-    PrimaryIndex::iterator i = _primaryIndex.begin();
-    while (i != _primaryIndex.end()) {
-      Entry* current = *i;
-      index->insert(current);
-      i++;
-    }
-
-    return true;
+    return NULL;
   } else {
-    // If so, return false
-    return false;
+    return (*iter).second;
   }
 }
 
@@ -466,17 +482,23 @@ Table2::insertTuple(TuplePtr t,
   _primaryIndex.insert(position, newEntry);
   
   // Secondary indices. For all indices, insert.
-  SecondaryIndexIndex::iterator iter = _indices.begin();
-  while (iter != _indices.end()) {
-    (*(iter++)).second->insert(newEntry);
+  for (SecondaryIndexIndex::iterator iter = _indices.begin();
+       iter != _indices.end();
+       iter++) {
+    (*iter).second->insert(newEntry);
+  }
+
+  // Aggregates. For all aggregates, insert.
+  for (AggregateVector::iterator i = _aggregates.begin();
+       i != _aggregates.end();
+       i++) {
+    (*i)->update(t);
   }
 
   // Insert into time-ordered queue if we're flushing.
   if (_flushing) {
     _queue.push_front(newEntry);
   }
-  
-  // Aggregates. For all aggregates, insert.
 }
 
 
@@ -508,17 +530,6 @@ Table2::removeTuple(PrimaryIndex::iterator position)
   // the tuple we want to remove from all secondary indices below.
   TuplePtr toRemove = (*position)->tuple;
 
-  // If I have a queue, then I don't need to delete the entry since it
-  // will be flushed sooner or later. Otherwise, I have to delete the
-  // entry now.
-  if (_flushing) {
-    _primaryIndex.erase(position);
-  } else {
-    Entry* toKill = *position;
-    _primaryIndex.erase(position);
-    delete toKill;
-  }
-
   // Secondary indices
   SecondaryIndexIndex::iterator iter = _indices.begin();
   while (iter != _indices.end()) {
@@ -541,7 +552,25 @@ Table2::removeTuple(PrimaryIndex::iterator position)
     }
   }
 
+  // I must delete the Entry when no more indices point at it!!!!
+
+  // If I have a queue, then I don't need to delete the entry since it
+  // will be flushed sooner or later. Otherwise, I have to delete the
+  // entry now.
+  if (_flushing) {
+    _primaryIndex.erase(position);
+  } else {
+    Entry* toKill = *position;
+    _primaryIndex.erase(position);
+    delete toKill;
+  }
+
   // Aggregates
+  for (AggregateVector::iterator i = _aggregates.begin();
+       i != _aggregates.end();
+       i++) {
+    (*i)->update(toRemove);
+  }
 }
 
 
@@ -868,10 +897,20 @@ Table2::scanPrimary()
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
 
+Table2::AggFunc::AggFunc()
+{
+}
+
+
+Table2::AggFunc::~AggFunc()
+{
+}
+
+
 Table2::AggregateObj::AggregateObj(Table2::Key& key,
                                    Table2::SecondaryIndex* index,
                                    unsigned aggField,
-                                   Table2::AggFunc& function)
+                                   Table2::AggFunc* function)
   : _key(key),
     _index(index),
     _aggField(aggField),
@@ -880,6 +919,12 @@ Table2::AggregateObj::AggregateObj(Table2::Key& key,
     _comparator(key),
     _currentAggregates(_comparator)
 {
+}
+
+
+Table2::AggregateObj::~AggregateObj()
+{
+  delete _aggregateFn;
 }
 
 
@@ -897,7 +942,7 @@ void
 Table2::AggregateObj::update(TuplePtr changedTuple)
 {
   // Start a new computation of the aggregate function
-  _aggregateFn.reset();
+  _aggregateFn->reset();
 
   // An exemplar, if necessary
   TuplePtr aMatchingTuple = TuplePtr();
@@ -916,11 +961,11 @@ Table2::AggregateObj::update(TuplePtr changedTuple)
     // between the lower bound and the upper bound
     if (aMatchingTuple.get() == NULL) {
       // This is the first matching tuple
-      _aggregateFn.first((*tuple)[_aggField]);
+      _aggregateFn->first((*tuple)[_aggField]);
       aMatchingTuple = tuple;
     } else {
       // This is not the first matching tuple
-      _aggregateFn.process((*tuple)[_aggField]);
+      _aggregateFn->process((*tuple)[_aggField]);
     }
   }
   
@@ -936,7 +981,7 @@ Table2::AggregateObj::update(TuplePtr changedTuple)
     _currentAggregates.erase(changedTuple);
   } else {
     // We had at least one match so we must have some result.
-    ValuePtr result = _aggregateFn.result();
+    ValuePtr result = _aggregateFn->result();
     assert(result.get() != NULL);
     
     // Is this a new result?
@@ -988,3 +1033,29 @@ Table2::AggregateObj::update(TuplePtr changedTuple)
   return;
 }
 
+
+Table2::Aggregate
+Table2::aggregate(Table2::Key& groupBy,
+                  unsigned aggFieldNo,
+                  std::string functionName)
+{
+  // Find the aggregate function
+  AggFunc* function = AggFactory::mk(functionName);
+  if (function == NULL) {
+    // Couldn't create one. Return no aggregate
+    return NULL;
+  } else {
+    // Ensure we have a secondary index. If one already exists, this is
+    // a no-op.
+    secondaryIndex(groupBy);
+    SecondaryIndex* index = findSecondaryIndex(groupBy);
+    
+    // Create the aggregate object
+    Aggregate a = new AggregateObj(groupBy, index, aggFieldNo,
+                                   function);
+    
+    // Store the aggregate
+    _aggregates.push_back(a);
+    return a;
+  }
+}
