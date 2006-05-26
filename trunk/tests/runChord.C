@@ -100,6 +100,7 @@ void testNetworked(LoggerI::Level level,
     return;
   }
 
+  plumber->toDot("overlog.dot");
   // Run the plumber
   eventLoop();
 }
