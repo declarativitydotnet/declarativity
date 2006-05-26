@@ -33,7 +33,6 @@ std::string Plumber::Dataflow::toString() const {
     return oss.str();
 }
 
-
 ElementSpecPtr Plumber::Dataflow::find(string name)
 {
   for (std::vector<ElementSpecPtr>::iterator i = elements_.begin();
