@@ -1,0 +1,185 @@
+import dfparser
+from libp2python import *
+import sys
+import os
+import getopt
+import random
+
+DATAFLOW_NAME = "InsertCLI"
+
+class InsertCLI(Element):
+  def __init__(self, name, myaddress):
+      Element.__init__(self,name, 1, 1)
+      self.myaddress = myaddress
+      self.freq = 1
+  def class_name(self): return "InsertCLI"
+  def processing(self): return "/l"
+  def flow_code(self):  return "/-"
+  def print_usage(self):
+      print "  --  type 'insert table@IP:port(value::type, ...).' or 'exit'  -- "
+  def initialize(self):
+      print "===== Welcome to the P2 Tuple Inserter Command Line Interface ====="
+      print "This program allows you to type in a tuple to be inserted into a table"
+      print "at a particular address (IP:socket).  You will need to correctly"
+      print "specify the types of the fields in the tuple."
+      self.print_usage()
+      self.set_delay(0, self.delay_callback) 
+      return 0
+
+  def callback(self):
+      self.set_delay(0, self.delay_callback)
+
+  def delay_callback(self):
+      # Read string from terminal and send it in a tuple
+      line = raw_input("> ") 
+      if line[0:6] == "insert":
+          outtup = self.parse_insert(line)
+      elif (line[0:4] == "exit" or line[0] ==  "."):
+          sys.exit(0)
+      else:
+          print "ERROR: unknown command or mode entered."
+          self.print_usage()
+      self.set_delay(0.5, self.delay_callback) 
+  def push(self, port, tp, cb):
+      # Received status of some sent tuple
+      print "push " + str(self)
+      key    = tp.at(2).toString()
+      nodeID = tp.at(3).toString()
+      nodeIP = tp.at(4).toString()
+
+      print "=== RECEIVED INSERT RESPONSE FOR KEY %s ===" % key
+      print "\tNODE IP %s with KEY %s" % (nodeIP, nodeID)
+      return 1
+    
+  def parse_insert(self, line):
+      tablerest = line.split("@")
+      tablename = (tablerest[0].split("insert "))[1]
+      print "tablename ", tablename
+      hostrest = tablerest[1].split("(")
+      print "host ", hostrest[0]
+      fields = hostrest[1].split(",")
+      fields[len(fields) - 1] = fields[len(fields) - 1].rstrip('). ')
+      print "fields ", fields
+      outertup = Tuple.mk()
+#      print "outertup.append(Val_Str.mk(" + hostrest[0] + "))"
+      outertup.append(Val_Str.mk(hostrest[0]))
+      payload = Tuple.mk()
+      tableval = Val_Str.mk(str(tablename))
+#      print "payload.append(" +  str(tableval) + "))"
+      payload.append(tableval)
+      for i in fields:
+        parts = i.split("::")
+        if (parts[1] == "Val_ID"):
+          vec = IntVec()
+          for i in range(5):
+            vec.append(int(random.random()*sys.maxint)) 
+          payload.append(Val_ID.mk(vec))
+        else:
+          fnname = parts[1]+".mk("+parts[0]+")"
+          print "fnname = " + fnname
+          value = eval(fnname)
+#          print "payload.append(" + str(value) + ")"
+
+          payload.append(value)
+      payload.freeze()
+#      print "outertup.append(Val_Str.mk(" + str(payload) + "))"
+      outertup.append(Val_Tuple.mk(payload))
+      outertup.freeze()
+      return self.py_push(0, outertup, self.callback)
+    
+  
+
+def print_usage():
+    print
+    print "Usage: insertCLI.py [-d] [-r] ",
+    print "<local_ip_address> <local_port>"
+    print
+
+
+
+def parse_cmdline(argv):
+    shortopts = "dr"
+    flags = {"debug" : False, "return_address" : None}
+    opts, args = getopt.getopt(argv[1:], shortopts)
+    for o, v in opts:
+        if   o == "-d": flags["debug"]          = True
+        elif o == "-r": flags["return_address"] = True
+        else:
+            print_usage()
+            exit(3)
+    return flags, args
+
+def get_stub(port):
+    stub = r"""dataflow %s {
+      let udp = Udp2("udp", %s);
+
+      TimedPushSource("dummy_source", 0)            ->
+      Sequence("output", 1, 1)                      ->
+      Frag("fragment", 1)                           ->
+      PelTransform("package", "$0 pop swallow pop") ->
+#      PelTransform("encapRequest", "$1 pop $0 ->t $1 append $2 append $3 append $4 append pop") ->
+      MarshalField("marshal", 1)                    ->
+      StrToSockaddr("addr_conv", 0)                 -> 
+      udp -> UnmarshalField("unmarshal", 1) ->
+      PelTransform("unpackage", "$1 unboxPop") ->
+      Defrag("defragment", 1) ->
+      PelTransform("get_payload", "$2 unboxPop") ->
+      TimedPullPush("input", 0) ->
+      Discard("dummy_discard");      
+      }
+      .   # END OF DATAFLOW DEFINITION""" % (DATAFLOW_NAME, port)
+    return stub
+
+def gen_stub(plumber, port):
+    stub = get_stub(port) 
+
+    dfparser.compile(plumber, stub)
+
+    if dfparser.dataflows.has_key(DATAFLOW_NAME):
+      m = dfparser.dataflows[DATAFLOW_NAME]
+      m.eval_dataflow()
+      return m.conf
+    print "DATAFLOW COMPILATION PROBLEM"
+    return None
+
+if __name__ == "__main__":
+    try:
+      flags, args = parse_cmdline(sys.argv)
+    except:
+      print "EXCEPTION"
+      print_usage()
+      sys.exit(3)
+    if len(args) < 2:
+      print_usage()
+      sys.exit(3)
+  
+    eventLoopInitialize()
+  
+    address  = args[0]
+    port     = int(args[1])
+
+    plumber = Plumber()
+    stub    = gen_stub(plumber, port)
+  
+    if plumber.install(stub) != 0:
+        print "** Stub Failed to initialize correct spec\n"
+  
+    edit   = plumber.new_dataflow_edit(DATAFLOW_NAME);
+    input  = edit.find("input");
+    output = edit.find("output");
+
+    # get the list of tables in the current dataflow
+    inserter = edit.addElement(InsertCLI("insertCLI", address+":"+str(port)))
+    edit.hookUp(input, 0, inserter, 0)
+    edit.hookUp(inserter, 0, output, 0)
+
+    retval = plumber.install(edit)
+    if retval == 0:
+      print "Edit Correctly initialized.\n"
+    else:
+      print "Edit didn't fly"
+    plumber.toDot("insertCLI.dot")
+    os.system("dot -Tps insertCLI.dot -o insertCLI.ps")
+    # os.remove("insertCLI.dot")
+    # Run the plumber
+    eventLoop()

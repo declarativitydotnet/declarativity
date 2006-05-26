@@ -233,7 +233,7 @@ if __name__ == "__main__":
         term.element().address = flags["ip"]
         term.element().port    = flags["port"]
 
-    if plumber.install(edit) != 0:
+    if plumber.install(edit) == 0:
         print "Edit Correctly initialized.\n"
 
     # plumber.toDot("terminal.dot")
