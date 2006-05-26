@@ -871,7 +871,7 @@ Table2::scanPrimary()
 Table2::AggregateObj::AggregateObj(Table2::Key& key,
                                    Table2::SecondaryIndex* index,
                                    unsigned aggField,
-                                   Table2::AggregateFunction& function)
+                                   Table2::AggFunc& function)
   : _key(key),
     _index(index),
     _aggField(aggField),
@@ -916,11 +916,11 @@ Table2::AggregateObj::update(TuplePtr changedTuple)
     // between the lower bound and the upper bound
     if (aMatchingTuple.get() == NULL) {
       // This is the first matching tuple
-      _aggregateFn.first(tuple, _key);
+      _aggregateFn.first((*tuple)[_aggField]);
       aMatchingTuple = tuple;
     } else {
       // This is not the first matching tuple
-      _aggregateFn.process(tuple, _key);
+      _aggregateFn.process((*tuple)[_aggField]);
     }
   }
   

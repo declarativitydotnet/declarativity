@@ -260,13 +260,13 @@ public:
   /** A container for aggregation functions.  It only contains
       information about the computation of a single aggregate from all
       relevant tuples. */
-  class AggregateFunction
+  class AggFunc
   {
   public:
-    AggregateFunction();
+    AggFunc();
     
     
-    virtual ~AggregateFunction();
+    virtual ~AggFunc();
     
     
     /** Clear the state of the aggregate function. */
@@ -274,16 +274,14 @@ public:
     reset() = 0;
 
     
-    /** Start a new aggregate computation with a new tuple. */
+    /** Start a new aggregate computation with a new value. */
     virtual void
-    first(TuplePtr tuple,
-          Key& key) = 0;
+    first(ValuePtr value) = 0;
     
 
-    /** Process a tuple for this function (not the first one). */
+    /** Process a value for this function (not the first one). */
     virtual void
-    process(TuplePtr tuple,
-            Key& key) = 0;
+    process(ValuePtr value) = 0;
 
     
     /** Retrieve the result for this function. If no tuples have been
@@ -299,7 +297,7 @@ public:
       aggregated groups within a table (i.e., all seen group-by value
       sets).  Whenever it sees an update to the table, it scans the
       relevant secondary index for all tuples with the same group-by
-      values as the updated tuple and uses an AggregateFunction object
+      values as the updated tuple and uses an AggFunc object
       to compute the new value for the aggregate. If that value is
       different from the last value computed for this group-by value
       set, the object remembers it, and sends an update to all
@@ -313,7 +311,7 @@ public:
     AggregateObj(Key& key,
                  SecondaryIndex* index,
                  unsigned aggField,
-                 AggregateFunction& function);
+                 AggFunc& function);
     
     
     /** Add a listener for aggregate updates. */
@@ -342,7 +340,7 @@ public:
     
 
     /** Which aggregate function? */
-    AggregateFunction& _aggregateFn;
+    AggFunc& _aggregateFn;
 
 
     /** My listeners */
