@@ -13,8 +13,8 @@ class InsertCLI(Element):
       self.myaddress = myaddress
       self.freq = 1
   def class_name(self): return "InsertCLI"
-  def processing(self): return "/l"
-  def flow_code(self):  return "/-"
+  def processing(self): return "h/h"
+  def flow_code(self):  return "-/-"
   def print_usage(self):
       print "  --  type 'insert table@IP:port(value::type, ...).' or 'exit'  -- "
   def initialize(self):
@@ -114,18 +114,13 @@ def get_stub(port):
       let udp = Udp2("udp", %s);
 
       TimedPushSource("dummy_source", 0)            ->
-      Sequence("output", 1, 1)                      ->
-      Frag("fragment", 1)                           ->
-      PelTransform("package", "$0 pop swallow pop") ->
+      Slot("output")                                ->
       MarshalField("marshal", 1)                    ->
-      StrToSockaddr("addr_conv", 0)                 -> 
-      udp ->
-      UnmarshalField("unmarshal", 1) ->
-      PelTransform("unpackage", "$1 unboxPop") ->
-      Defrag("defragment", 1) ->
-      PelTransform("get_payload", "$2 unboxPop") ->
-      TimedPullPush("input", 0) ->
-      Sequence("input", 1, 1) ->
+      Print("four")                                 ->      
+      StrToSockaddr("addr_conv", 0)                 ->
+      Print("five")                                 ->      
+      udp                                           ->
+      Sequence("input", 1, 1)                       ->
       Discard("dummy_discard");      
       }
       .   # END OF DATAFLOW DEFINITION""" % (DATAFLOW_NAME, port)
