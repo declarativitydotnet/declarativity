@@ -115,10 +115,9 @@ def get_stub(port):
 
       TimedPushSource("dummy_source", 0)            ->
       Slot("output")                                ->
+      Print("sending")                              ->
       MarshalField("marshal", 1)                    ->
-      Print("four")                                 ->      
       StrToSockaddr("addr_conv", 0)                 ->
-      Print("five")                                 ->      
       udp                                           ->
       Sequence("input", 1, 1)                       ->
       Discard("dummy_discard");      
