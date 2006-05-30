@@ -15,7 +15,7 @@ bin_SCRIPTS = dfparser.py
 
 PYTHONPATH = $(top_builddir)/python/dfparser/yapps:$(top_builddir)/python/lib
 
-all: dataflow.g
+dfparser.py: dataflow.g
 	@PYTHON@ $(top_builddir)/python/dfparser/yapps/yapps2.py dataflow.g dfparser.py
 
 CLEANFILES = core *.core *.pyc dfparser.py *.dot *.ps
