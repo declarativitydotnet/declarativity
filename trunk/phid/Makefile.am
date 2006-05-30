@@ -23,7 +23,7 @@ phid_LDADD = \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/eventLoop/.libs/libeventLoop.a 
+	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a 
 
 LIBS = @BOOST_LIB@
 

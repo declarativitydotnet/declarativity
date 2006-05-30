@@ -14,7 +14,7 @@
 # DESCRIPTION: Makefile for the P2 core elements python library
 #
 
-lib_LTLIBRARIES = libp2pythonelements.la
+noinst_LTLIBRARIES = libp2pythonelements.la
 
 libp2pythonelements_la_SOURCES = \
 	aggregate.cpp \

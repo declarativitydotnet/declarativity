@@ -14,7 +14,7 @@
 # DESCRIPTION: Makefile for the P2 core elements python library
 #
 
-lib_LTLIBRARIES = libp2pythoneventloop.la
+noinst_LTLIBRARIES = libp2pythoneventloop.la
 
 libp2pythoneventloop_la_SOURCES = \
 	eventLoop.cpp

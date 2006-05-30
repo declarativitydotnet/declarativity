@@ -14,9 +14,9 @@
 # DESCRIPTION: Makefile for the P2 debugging library
 #
 
-lib_LTLIBRARIES = libdebugger.la
+lib_LTLIBRARIES = libp2debugger.la
 
-libdebugger_la_SOURCES = \
+libp2debugger_la_SOURCES = \
 	ruleTracer.C \
 	tap.C \
 	execRecord.C \
@@ -27,7 +27,7 @@ INCLUDES = @BOOST_INC@ -I../p2core -I../eventLoop -I../elements
 CLEANFILES = core *.core *~
 
 EXTRA_DIST = .cvsignore \
-		$(libdebugger_la_SOURCES:.C=.h) \
+		$(libp2debugger_la_SOURCES:.C=.h) \
 		lookup.h
 
 MAINTAINERCLEANFILES = Makefile.in

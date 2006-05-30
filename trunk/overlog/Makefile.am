@@ -13,7 +13,7 @@
 # DESCRIPTION: Makefile for the P2 datalog parser
 #
 
-lib_LTLIBRARIES = liboverlog.la
+lib_LTLIBRARIES = libp2overlog.la
 
 GENERATED_SOURCES = \
 	ol_parser.H \
@@ -26,7 +26,7 @@ REAL_SOURCES = \
 	plmb_confgen.C \
 	overlogCompiler.C
 
-liboverlog_la_SOURCES = \
+libp2overlog_la_SOURCES = \
 	$(REAL_SOURCES) \
 	$(GENERATED_SOURCES)
 

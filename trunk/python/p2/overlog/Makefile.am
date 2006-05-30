@@ -14,7 +14,7 @@
 # DESCRIPTION: Makefile for the P2 core elements python library
 #
 
-lib_LTLIBRARIES = libp2pythonoverlog.la
+noinst_LTLIBRARIES = libp2pythonoverlog.la
 
 libp2pythonoverlog_la_SOURCES = \
 	overlogCompiler.cpp

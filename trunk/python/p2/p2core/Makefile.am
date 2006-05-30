@@ -14,7 +14,7 @@
 # DESCRIPTION: Makefile for the P2 core elements python library
 #
 
-lib_LTLIBRARIES = libp2pythoncore.la
+noinst_LTLIBRARIES = libp2pythoncore.la
 
 libp2pythoncore_la_SOURCES = \
 	element.cpp          \

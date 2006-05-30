@@ -7,6 +7,7 @@
 # Berkeley, CA,  94707. Attention: P2 Group.
 #
 
+bin_SCRIPTS = yappsrt.py
 
 all: parsedesc.py
 

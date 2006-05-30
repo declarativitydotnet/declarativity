@@ -77,6 +77,7 @@ AC_CONFIG_FILES([
 	python/p2/overlog/Makefile
 	python/dfparser/Makefile
 	python/dfparser/yapps/Makefile
+	python/scripts/Makefile
 	elements/Makefile 
 	net/Makefile 
 	tests/Makefile 

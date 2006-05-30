@@ -11,6 +11,8 @@
 # Berkeley, CA,  94707. Attention: P2 Group.
 #
 
+bin_SCRIPTS = dfparser.py
+
 PYTHONPATH = $(top_builddir)/python/dfparser/yapps:$(top_builddir)/python/lib
 
 all: dataflow.g

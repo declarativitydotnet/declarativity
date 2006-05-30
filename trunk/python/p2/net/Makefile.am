@@ -14,7 +14,7 @@
 # DESCRIPTION: Makefile for the P2 core elements python library
 #
 
-lib_LTLIBRARIES = libp2pythonnet.la
+noinst_LTLIBRARIES = libp2pythonnet.la
 
 libp2pythonnet_la_SOURCES = \
 	bw.cpp \

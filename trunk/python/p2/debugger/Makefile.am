@@ -14,7 +14,7 @@
 # DESCRIPTION: Makefile for the P2 debugger python library
 #
 
-lib_LTLIBRARIES = libp2pythondebugger.la
+noinst_LTLIBRARIES = libp2pythondebugger.la
 
 libp2pythondebugger_la_SOURCES = \
 	ruleTracer.cpp \
