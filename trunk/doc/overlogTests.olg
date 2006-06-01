@@ -1,0 +1,57 @@
+/*
+ * @(#)$Id$
+ * 
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
+ *
+ * Test cases for the P2 planner. All of the above must parse, plan
+ * successfully, and perhaps even execute.  Add problem cases of rules
+ * that should parse and plan but do not.
+ * 
+ */
+
+materialize(first, 10, infinity, keys(2, 4)).
+materialize(second, infinity, 10, keys(2)).
+materialize(third, infinity, infinity, keys(2)).
+materialize(fourth, 10, 20, keys(2)).
+
+
+r16 l@A(A, B) :- third@A(A, B, E, D), periodic@A(A, E, 5).
+
+r15 l@A(A, B) :- periodic@A(A, E, 5), third@A(A, B, E, D).
+
+r14 k@A(A, B, A) :- periodic@A(A, E, 5), third@A(A, B, E, D).
+
+r13 j@A(A, A) :- periodic@A(A, E, 5).
+
+r1 a@A(A, B) :- first@A(A, B, C, D).
+
+r2 a@A(A, B) :- second@A(A, B, C, D).
+
+r3 a@A(A, B) :- third@A(A, B, C, D).
+
+r4 a@A(A, B) :- fourth@A(A, B, C, D).
+
+r5 a@A(A, B) :- b@A(A), fourth@A(A, B, C, D).
+
+r6 c@A(A, B, E) :- d@A(A, B, C, D, E), first@A(L, B, A, Q).
+
+r7 e@A(A, B, E) :- d@A(A, B, C, D, E), first@A(L, B, A, Q), second@A(A, Q, Q, D).
+
+r8 e@A(A, B, P) :- d@A(A, B, C, D, E), first@A(L, B, A, Q), second@A(A, Q, Q, P).
+
+r9 f@A(A, B, count<*>) :- first@A(A, B, C, D).
+
+r10 g@A(A, F, count<*>) :- e@A(A, B, C), first@A(A, B, F, L).
+
+r11 h@A(A, B, min<C>) :- first@A(A, B, C, D).
+
+r12 i@A(A, F, min<L>) :- e@A(A, B, C), first@A(A, B, F, L).
+
+
+
