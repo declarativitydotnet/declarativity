@@ -62,24 +62,40 @@ Val_ID::Val_ID(uint32_t theID)
   i = ID::mk(theID);
 }
 
+
 Val_ID::Val_ID(uint64_t theID)
 {
   i = ID::mk(theID);
 }
+
+
+Val_ID::Val_ID(std::string theID)
+{
+  i = ID::mk(theID);
+}
+
+
+
+
 //
 // Marshalling and unmarshallng
 //
-void Val_ID::xdr_marshal_subtype( XDR *x )
+void
+Val_ID::xdr_marshal_subtype(XDR *x)
 {
   i->xdr_marshal(x);
 }
 
-ValuePtr Val_ID::xdr_unmarshal( XDR *x )
+
+ValuePtr
+Val_ID::xdr_unmarshal(XDR *x)
 {
   return Val_ID::mk(ID::xdr_unmarshal(x));
 }
 
-string Val_ID::toConfString() const
+
+string
+Val_ID::toConfString() const
 {
   ostringstream conf;
   conf << "Val_ID(" << i->toConfString() << ")";

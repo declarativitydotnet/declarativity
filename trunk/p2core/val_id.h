@@ -30,20 +30,40 @@ public:
   // The type name
   const char *typeName() const { return "ID"; };
 
-  virtual string toString() const { return i->toString(); };
-  virtual string toConfString() const;
-  virtual unsigned int size() const { return sizeof(ID); }
+  virtual string
+  toString() const { return i->toString(); };
+
+
+  virtual string
+  toConfString() const;
+
+
+  virtual unsigned int
+  size() const { return sizeof(ID); }
+
 
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );
 
+
   static ValuePtr xdr_unmarshal( XDR *x );
+
 
   // Constructors
   Val_ID(IDPtr theID) : i(theID) {};
+
+
   Val_ID(std::vector<uint32_t> theID);
+
+
   Val_ID(uint32_t theID);
+
+
   Val_ID(uint64_t theID);
+
+
+  Val_ID(std::string);
+
 
   virtual ~Val_ID() {};
 
@@ -55,6 +75,8 @@ public:
   static ValuePtr mk(uint32_t theID)              
     { ValuePtr p(new Val_ID(theID)); return p; };
   static ValuePtr mk(uint64_t theID) 
+    { ValuePtr p(new Val_ID(theID)); return p; };
+  static ValuePtr mk(std::string theID) 
     { ValuePtr p(new Val_ID(theID)); return p; };
 
   // Strict comparison

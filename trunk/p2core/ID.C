@@ -32,6 +32,7 @@ ID::ID(uint32_t newWords[ID::WORDS])
   }
 }
 
+
 ID::ID(uint32_t word)
 {
   for (unsigned i = 0;
@@ -41,6 +42,7 @@ ID::ID(uint32_t word)
   }
   words[WORDS - 1] = word;
 }
+
 
 ID::ID(uint64_t doubleword)
 {
@@ -53,19 +55,78 @@ ID::ID(uint64_t doubleword)
   words[WORDS - 2] = (doubleword >> 32) & 0xFFFFFFFF;
 }
 
+
+ID::ID(std::string hexString)
+{
+  static const std::string zeros(WORDS * 4, '0');
+  
+  // Read it in in chunks of 4-byte words from right to left. If it's
+  // two long, discard any extraneous prefix to leave WORDS-worth of
+  // suffix characters
+  unsigned position = hexString.length();
+  if (position > (WORDS * 4)) {
+    // This string is too long. Chop it down
+    hexString = hexString.substr(position - (WORDS * 4), WORDS * 4);
+    position = WORDS * 4;
+  }
+
+  // Now we have at most WORDS*4 characters but perhaps fewer.
+  if (position < WORDS * 4) {
+    // I don't have enough characters. Prepend 0's
+    hexString = zeros.substr(0, WORDS * 4 - position) + hexString;
+    position = WORDS * 4;
+  }
+
+  // Now we have exactly WORDS*4 characters.
+  int wordIndex = WORDS - 1;
+  for (;
+       wordIndex >= 0;
+       position -= 4,
+         wordIndex--) {
+    // Pick the last 4-char suffix
+    std::string suffix = hexString.substr(position - 4, 4);
+    char* endPointer;
+    words[wordIndex] = (uint32_t) strtoull(suffix.c_str(),
+                                           &endPointer,
+                                           16);
+    if (*endPointer != '\0') {
+      // Decoding wasn't happy.  As much of a suffix as possible and pad
+      // the rest
+      while (*endPointer != '\0') {
+        words[wordIndex] = (uint32_t) strtoull(endPointer + 1,
+                                               &endPointer,
+                                               16);
+      }
+
+      // Take what we have and stop here. Fill in
+      // the remainder with 0s
+      wordIndex--;
+      while (wordIndex >= 0) {
+        words[wordIndex] = 0;
+        wordIndex--;
+      }
+    }
+  }
+  
+  // Now I've filled in my words array and I can move on with life.
+}
+
+
 /** Turns to hexadecimal */
-string ID::toString() const
+string
+ID::toString() const
 { 
   char buf[30];
   string result;
   for (unsigned i = 0;
        i < WORDS;
        i++) {
-    sprintf(buf, "%08x", words[i]);
+    sprintf(buf, "%04x", words[i]);
     result += buf;
   }
   return result;
 }
+
 
 string ID::toConfString() const
 { 
@@ -73,7 +134,7 @@ string ID::toConfString() const
   char buf[30];
   result << "{";
   for (unsigned i = 0; i < WORDS; i++) {
-    sprintf(buf, "%08x", words[i]);
+    sprintf(buf, "%04x", words[i]);
     result << buf;
     if (i < WORDS-1) 
       result << ", ";

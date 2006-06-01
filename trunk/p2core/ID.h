@@ -23,7 +23,6 @@
 #include <boost/shared_ptr.hpp>
 #include "inlines.h"
 
-using std::string;
 using std::ostringstream;
 
 class ID;
@@ -47,16 +46,26 @@ private:
   
 public:  
   ID();
+
   
   ID(uint32_t[WORDS]);
-
+  
+  
   ID(uint32_t);
-
+  
+  
   ID(uint64_t);
+  
+  
+  ID(std::string);
 
-  string toString() const;
 
-  string toConfString() const;
+  string
+  toString() const;
+
+  
+  string
+  toConfString() const;
 
   /** Strict equality */
   REMOVABLE_INLINE bool equals(IDPtr other) const { return compareTo(other) == 0; }
@@ -99,6 +108,7 @@ public:
   static IDPtr mk(uint32_t w[WORDS]) { IDPtr p(new ID(w)); return p; }
   static IDPtr mk(uint32_t u)        { IDPtr p(new ID(u)); return p; }
   static IDPtr mk(uint64_t u)        { IDPtr p(new ID(u)); return p; }
+  static IDPtr mk(std::string s)     { IDPtr p(new ID(s)); return p; }
 };
 
 /** The stream operator */

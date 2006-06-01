@@ -198,6 +198,39 @@ public:
 
   void
   testAdditions();
+
+
+
+
+  ////////////////////////////////////////////////////////////
+  // String Tests
+  ////////////////////////////////////////////////////////////
+  
+private:
+  struct StringTest {
+    int	line;		// Line number of test
+    std::string str;
+    uint32_t rw0;
+    uint32_t rw1;
+    uint32_t rw2;
+    uint32_t rw3;
+    uint32_t rw4;
+    int result;
+  };
+
+  static const StringTest idStringTests[];
+
+  static const size_t num_stringtests;
+
+public:
+  
+  void
+  testConstructFromString();
+
+
+
+
+
 };
 
 
@@ -767,6 +800,114 @@ testIDs::num_addtests =
 
 
 
+void
+testIDs::testConstructFromString()
+{
+  for (size_t i = 0;
+       i < num_stringtests;
+       i++) {
+    uint32_t right[5];
+    const StringTest * idTest = &idStringTests[i];
+
+    std::string left = std::string(idTest->str);
+
+    right[0] = idTest->rw0;
+    right[1] = idTest->rw1;
+    right[2] = idTest->rw2;
+    right[3] = idTest->rw3;
+    right[4] = idTest->rw4;
+
+    IDPtr leftID = ID::mk(left);
+    IDPtr rightID = ID::mk(right);
+
+    int result = leftID->compareTo(rightID);
+    std::ostringstream message;
+    message << "ID test at line "
+            << idTest->line
+            << ". Comparing ID '"
+            << leftID->toString()
+            << "' from '"
+            << left
+            << "' to ID '"
+            << rightID->toString()
+            << "' from ["
+            << right[4]
+            << ","
+            << right[3]
+            << ","
+            << right[2]
+            << ","
+            << right[1]
+            << ","
+            << right[0]
+            << "]. Expected '"
+            << idTest->result
+            << "' but got '"
+            << result
+            << "'.";
+    BOOST_CHECK_MESSAGE(idTest->result == result,
+                        message.str().c_str());
+  }
+}
+
+
+#define STRTST(_left, _rword0, _rword1, _rword2, _rword3, _rword4,      \
+               _result)                                                 \
+                                                                        \
+  {__LINE__, _left, _rword0, _rword1, _rword2, _rword3, _rword4,        \
+      _result}
+
+
+const testIDs::StringTest
+testIDs::idStringTests[] = {
+  STRTST("0lE400D300C200B100A5",   0xE4,   0xD3,   0xC2,   0xB1,   0xA5, 0),
+  STRTST( "l1200D300C200B100A5",   0x12,   0xD3,   0xC2,   0xB1,   0xA5, 0),
+  STRTST(   "l10D300C200B100A5",   0x00, 0x10D3,   0xC2,   0xB1,   0xA5, 0),
+  STRTST(     "lD300C200B100A5",   0x00,   0xD3,   0xC2,   0xB1,   0xA5, 0),
+  STRTST(       "l11C200B100A5",   0x00,   0x00, 0x11C2,   0xB1,   0xA5, 0),
+  STRTST(         "lC200B100A5",   0x00,   0x00,   0xC2,   0xB1,   0xA5, 0),
+  STRTST(           "l12B100A5",   0x00,   0x00,   0x00, 0x12B1,   0xA5, 0),
+  STRTST(             "lB100A5",   0x00,   0x00,   0x00,   0xB1,   0xA5, 0),
+  STRTST(               "l13A5",   0x00,   0x00,   0x00,   0x00, 0x13A5, 0),
+  STRTST(                 "lA5",   0x00,   0x00,   0x00,   0x00,   0xA5, 0),
+  STRTST(                   "l",   0x00,   0x00,   0x00,   0x00,   0x00, 0),
+  STRTST("00040003000200010005",      4,      3,      2,      1,      5, 0),
+  STRTST("00E400D300C200B100A5",   0xE4,   0xD3,   0xC2,   0xB1,   0xA5, 0),
+  STRTST(  "1200D300C200B100A5",   0x12,   0xD3,   0xC2,   0xB1,   0xA5, 0),
+  STRTST(    "10D300C200B100A5",   0x00, 0x10D3,   0xC2,   0xB1,   0xA5, 0),
+  STRTST(      "D300C200B100A5",   0x00,   0xD3,   0xC2,   0xB1,   0xA5, 0),
+  STRTST(        "11C200B100A5",   0x00,   0x00, 0x11C2,   0xB1,   0xA5, 0),
+  STRTST(          "C200B100A5",   0x00,   0x00,   0xC2,   0xB1,   0xA5, 0),
+  STRTST(            "12B100A5",   0x00,   0x00,   0x00, 0x12B1,   0xA5, 0),
+  STRTST(              "B100A5",   0x00,   0x00,   0x00,   0xB1,   0xA5, 0),
+  STRTST(                "13A5",   0x00,   0x00,   0x00,   0x00, 0x13A5, 0),
+  STRTST(                  "A5",   0x00,   0x00,   0x00,   0x00,   0xA5, 0),
+  STRTST(                    "",   0x00,   0x00,   0x00,   0x00,   0x00, 0),
+
+};
+
+
+const size_t
+testIDs::num_stringtests = (sizeof(testIDs::idStringTests) /
+                            sizeof(testIDs::StringTest));
+
+#undef STRTST
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -775,6 +916,8 @@ testIDs_testSuite::testIDs_testSuite()
 {
   boost::shared_ptr<testIDs> instance(new testIDs());
   
+  add(BOOST_CLASS_TEST_CASE(&testIDs::testConstructFromString,
+                            instance));
   add(BOOST_CLASS_TEST_CASE(&testIDs::testComparisons,
                             instance));
   add(BOOST_CLASS_TEST_CASE(&testIDs::testBetween,

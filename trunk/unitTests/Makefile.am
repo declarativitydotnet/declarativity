@@ -22,7 +22,7 @@ libp2unitTests_la_SOURCES = \
 	testLists.C
 
 
-$(PROGRAMS): $(LDEPS) $(lib_LTLIBRARIES)
+$(noinst_PROGRAMS): $(LDEPS) $(noinst_LTLIBRARIES)
 
 noinst_PROGRAMS = p2Test p2TestTable2
 

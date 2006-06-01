@@ -37,16 +37,16 @@ string Val_Str::toConfString() const
 void Val_Str::xdr_marshal_subtype( XDR *x )
 {
   const char *st = s.c_str();
-  long sl = s.length();
-  xdr_long(x, &sl);
+  int32_t sl = s.length();
+  xdr_int32_t(x, &sl);
   xdr_string(x, const_cast<char **>(&st), sl + 1);
 }
 
 
 ValuePtr Val_Str::xdr_unmarshal( XDR *x )
 {
-  long sl;
-  xdr_long(x, &sl);
+  int32_t sl;
+  xdr_int32_t(x, &sl);
   // Now fetch the string itself
   static const int STATIC_STRING_BUFFER = 10000;
 

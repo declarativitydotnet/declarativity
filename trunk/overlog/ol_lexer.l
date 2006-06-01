@@ -210,9 +210,9 @@ WHITESPACE	[ \t\r\n]+
   return OL_VALUE;
 }
 
-<INITIAL>({DIGIT}+|0[xX]{HEXDIGIT}+)I {
-  // Unsigned integer literal (including octal and/or hex
-  Parse_Val *val = new Parse_Val(Val_ID::mk(ID::mk(strtoull(yytext,NULL,0))));
+<INITIAL>({HEXDIGIT}+)I {
+  // IDs are read in only in hexadecimal with an I appended to the end
+  Parse_Val *val = new Parse_Val(Val_ID::mk(std::string(yytext)));
   val->id(true);
   lvalp->v = val;
   return OL_VALUE;
