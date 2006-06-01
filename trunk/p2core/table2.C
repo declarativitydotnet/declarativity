@@ -32,8 +32,8 @@
 /** This comparator performs first less second for two key specs. */
 bool
 Table2::KeyComparator::
-operator()(const Table2::Key first,
-           const Table2::Key second) const
+operator()(const Table2::Key& first,
+           const Table2::Key& second) const
 {
   if (first.size() < second.size()) {
     return true; // first < second
@@ -215,7 +215,7 @@ operator()(const TuplePtr first,
 
 
 Table2::Table2(std::string tableName,
-               Key key,
+               Key& key,
                size_t maxSize,
                boost::posix_time::time_duration& lifetime)
   : _name(tableName),
@@ -224,26 +224,30 @@ Table2::Table2(std::string tableName,
     _maxLifetime(lifetime),
     _primaryIndex(KeyedEntryComparator(key)),
     _flushing(((_maxSize > 0) ||
-               (!_maxLifetime.is_pos_infinity())))
+               (!_maxLifetime.is_pos_infinity()))),
+    _lookupSearchEntry(Tuple::mk())
 {
+  lookupSearchEntry(key);
 }
 
 
 Table2::Table2(std::string tableName,
-               Key key)
+               Key& key)
   : _name(tableName),
     _key(key),
     _maxSize(0),
     _maxLifetime(DEFAULT_EXPIRATION),
     _primaryIndex(KeyedEntryComparator(key)),
     _flushing(((_maxSize > 0) ||
-               (!_maxLifetime.is_pos_infinity())))
+               (!_maxLifetime.is_pos_infinity()))),
+    _lookupSearchEntry(Tuple::mk())
 {
+  lookupSearchEntry(key);
 }
 
 
 Table2::Table2(std::string tableName,
-               Key key,
+               Key& key,
                size_t maxSize)
   : _name(tableName),
     _key(key),
@@ -251,12 +255,14 @@ Table2::Table2(std::string tableName,
     _maxLifetime(DEFAULT_EXPIRATION),
     _primaryIndex(KeyedEntryComparator(key)),
     _flushing(((_maxSize > 0) ||
-               (!_maxLifetime.is_pos_infinity())))
+               (!_maxLifetime.is_pos_infinity()))),
+    _lookupSearchEntry(Tuple::mk())
 {
+  lookupSearchEntry(key);
 }
 
 Table2::Table2(std::string tableName,
-               Key key,
+               Key& key,
                size_t maxSize,
                string lifetime)
   : _name(tableName),
@@ -265,8 +271,24 @@ Table2::Table2(std::string tableName,
     _maxLifetime(boost::posix_time::duration_from_string(lifetime)),
     _primaryIndex(KeyedEntryComparator(key)),
     _flushing(((_maxSize > 0) ||
-               (!_maxLifetime.is_pos_infinity())))
+               (!_maxLifetime.is_pos_infinity()))),
+    _lookupSearchEntry(Tuple::mk())
 {
+  lookupSearchEntry(key);
+}
+
+
+void
+Table2::lookupSearchEntry(Table2::Key& key)
+{
+  for (Table2::Key::iterator i = key.begin();
+       i != key.end();
+       i++) {
+    unsigned fieldNo = *i;
+    while (fieldNo + 1 > _lookupSearchEntry.tuple->size()) {
+      _lookupSearchEntry.tuple->append(ValuePtr());
+    }
+  }
 }
 
 
@@ -325,7 +347,7 @@ Table2::~Table2()
 ////////////////////////////////////////////////////////////
 
 bool
-Table2::secondaryIndex(Table2::Key key)
+Table2::secondaryIndex(Table2::Key& key)
 {
   if (findSecondaryIndex(key) == NULL) {
     createSecondaryIndex(key);
@@ -337,7 +359,7 @@ Table2::secondaryIndex(Table2::Key key)
 
 
 void
-Table2::createSecondaryIndex(Table2::Key key)
+Table2::createSecondaryIndex(Table2::Key& key)
 {
   // Create it, update with all existing elements (from the
   // primary index)
@@ -354,11 +376,14 @@ Table2::createSecondaryIndex(Table2::Key key)
     index->insert(current);
     i++;
   }
+
+  // And enlarget the lookup entry
+  lookupSearchEntry(key);
 }
 
 
 Table2::SecondaryIndex*
-Table2::findSecondaryIndex(Table2::Key key)
+Table2::findSecondaryIndex(Table2::Key& key)
 {
   SecondaryIndexIndex::iterator iter =
     _indices.find(key);
@@ -543,6 +568,13 @@ Table2::flushTuple(TuplePtr t)
   }
   
   // Aggregates
+  for (AggregateVector::iterator i = _aggregates.begin();
+       i != _aggregates.end();
+       i++) {
+    (*i)->update(searchEntry.tuple);
+  }
+
+  // Delete Listeners
 }
 
 
@@ -783,8 +815,8 @@ Table2::name() const
 ////////////////////////////////////////////////////////////
 
 Table2::Iterator
-Table2::lookup(Table2::Key lookupKey,
-               Table2::Key indexKey,
+Table2::lookup(Table2::Key& lookupKey,
+               Table2::Key& indexKey,
                TuplePtr t)  
 {
   // It is essential that the two keys have the exact number of field
@@ -795,17 +827,14 @@ Table2::lookup(Table2::Key lookupKey,
   // now.
   flush();
 
-  // The search entry.
-  static Entry searchEntry(Tuple::mk());
-    
   // Find the appropriate index. Is it the primary index?
   if (indexKey == _key) {
     // Prepare the search entry.  Project the lookup tuple onto the
     // search tuple along the lookup key to index key projection
-    project(t, lookupKey, searchEntry.tuple, _key);
+    project(t, lookupKey, _lookupSearchEntry.tuple, _key);
     
     // Just perform the lookup on the primary index.
-    return lookupPrimary(&searchEntry);
+    return lookupPrimary(&_lookupSearchEntry);
   } 
   // If not, is it a secondary index?
   else {
@@ -822,15 +851,16 @@ Table2::lookup(Table2::Key lookupKey,
 
       // Project the lookup tuple along the lookup keys onto the search
       // tuple.
-      project(t, lookupKey, searchEntry.tuple, indexKey);
+      project(t, lookupKey, _lookupSearchEntry.tuple, indexKey);
 
-      return lookupSecondary(&searchEntry, index);
+      return lookupSecondary(&_lookupSearchEntry, index);
     }
   }
 } 
 
+
 Table2::Iterator
-Table2::lookup(Table2::Key indexKey,
+Table2::lookup(Table2::Key& indexKey,
                TuplePtr t)  
 {
   // Ensure we're operating on the correct view of the table as of right
@@ -908,9 +938,9 @@ Table2::lookupPrimary(Table2::Entry* searchEntry)
 
 void
 Table2::project(TuplePtr source,
-                Key sourceKey,
+                Key& sourceKey,
                 TuplePtr destination,
-                Key destinationKey)
+                Key& destinationKey)
 {
   Key::iterator s;
   Key::iterator d;
@@ -920,7 +950,7 @@ Table2::project(TuplePtr source,
        s++, d++) {
     uint sourceFieldNo = *s;
     uint destinationFieldNo = *d;
-    (*destination)[destinationFieldNo] = (*source)[sourceFieldNo];
+    destination->set(destinationFieldNo, (*source)[sourceFieldNo]);
   }
 }
 
@@ -932,7 +962,7 @@ Table2::project(TuplePtr source,
 ////////////////////////////////////////////////////////////
 
 Table2::Iterator
-Table2::scan(Table2::Key key)  
+Table2::scan(Table2::Key& key)  
 {
   // Ensure we're operating on the correct view of the table as of right
   // now.
@@ -1041,7 +1071,7 @@ Table2::AggFunc::~AggFunc()
 }
 
 
-Table2::AggregateObj::AggregateObj(Table2::Key key,
+Table2::AggregateObj::AggregateObj(Table2::Key& key,
                                    Table2::SecondaryIndex* index,
                                    unsigned aggField,
                                    Table2::AggFunc* function)
@@ -1169,7 +1199,7 @@ Table2::AggregateObj::update(TuplePtr changedTuple)
 
 
 Table2::Aggregate
-Table2::aggregate(Table2::Key groupBy,
+Table2::aggregate(Table2::Key& groupBy,
                   unsigned aggFieldNo,
                   std::string functionName)
 {
