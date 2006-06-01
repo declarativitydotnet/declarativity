@@ -37,10 +37,16 @@ string OL_Context::Rule::toString() {
   r << ruleID << " ";
   r << head->toString() << " :- ";
 
-  for(std::vector<Parse_Term*>::iterator t = terms.begin(); t!=terms.end(); t++) {
-    r << (*t)->toString();
-    r << (((t+1) != terms.end()) ? ", " : ".");
+  std::list<Parse_Term*>::iterator t = terms.begin();
+  r << (*t)->toString();
+  t++;
+  for(;
+      t != terms.end();
+      t++) {
+    r << "," 
+      << (*t)->toString();
   }
+  r << ".";
 
   return r.str();
 }
@@ -70,8 +76,11 @@ string OL_Context::TableInfo::toString() {
 // all variable references at this point and convert them to
 // positional arguments. 
 // 
-void OL_Context::rule( Parse_Term *lhs, Parse_TermList *rhs, 
-		       bool deleteFlag, Parse_Expr *n ) 
+void
+OL_Context::rule(Parse_Term *lhs,
+                 Parse_TermList *rhs, 
+                 bool deleteFlag,
+                 Parse_Expr *n) 
 {
   TRC_FN;
   Parse_Functor *h    = dynamic_cast<Parse_Functor*>(lhs);
@@ -91,7 +100,7 @@ void OL_Context::rule( Parse_Term *lhs, Parse_TermList *rhs,
   // Next, we canonicalize all the args in the rule head.  We build up
   // a list of argument names - the first 'arity' of these will be the
   // free variables in the rule head.  Literals and duplicate free
-  // variables here are eliminated, by a process of prepending extra
+  // variables here are eliminated, by a process of appending extra
   // "eq" terms to the body, and inventing new free variables.
   for(int i = 0; i < h->args(); i++) {
     Parse_Agg *agg = NULL;

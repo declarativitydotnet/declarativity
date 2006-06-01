@@ -23,6 +23,7 @@
 #include "value.h"
 #include "tuple.h"
 #include "table2.h"
+#include <list>
 
 #include "parser_util.h"
 
@@ -50,7 +51,7 @@ public:
     
     bool deleteFlag;
 
-    std::vector<Parse_Term*> terms; 	// List of terms in the left hand side.
+    std::list<Parse_Term*> terms; 	// List of terms in the left hand side.
 
     int ruleNum;
   };

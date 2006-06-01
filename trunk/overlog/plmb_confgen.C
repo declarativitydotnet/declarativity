@@ -552,7 +552,7 @@ Plmb_ConfGen::clear()
 Parse_Functor*
 Plmb_ConfGen::eventTerm(OL_Context::Rule* curRule)
 {
-  for (std::vector< Parse_Term* >::iterator i =
+  for (std::list< Parse_Term* >::iterator i =
          curRule->terms.begin();
        i != curRule->terms.end();
        i++) {
@@ -787,11 +787,11 @@ Plmb_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
   Parse_Functor* baseFunctor;
   // figure first, which term is the base term. 
   // Assume there is only one for now. Support more in future.
-  for (unsigned int j = 0;
-       j < currentRule->terms.size();
+  for (std::list< Parse_Term* >::iterator j = currentRule->terms.begin();
+       j != currentRule->terms.end();
        j++) {    
-    Parse_Functor* currentFunctor 
-      = dynamic_cast<Parse_Functor* > (currentRule->terms.at(j));
+    Parse_Functor* currentFunctor =
+      dynamic_cast<Parse_Functor* > (*j);
     if (currentFunctor == NULL) {
       continue;
     }
@@ -2107,31 +2107,36 @@ Plmb_ConfGen::pelSelect(OL_Context::Rule* rule, FieldNamesTracker* names,
 
 void 
 Plmb_ConfGen::genAllSelectionAssignmentElements(OL_Context::Rule* curRule,
-					       string nodeID,
-					       FieldNamesTracker* 
-					       curNamesTracker) 
+                                                string nodeID,
+                                                FieldNamesTracker* 
+                                                curNamesTracker) 
 {
-  for (unsigned int j = 0; j < curRule->terms.size(); j++) {
-    Parse_Select* parse_select 
-      = dynamic_cast<Parse_Select *>(curRule->terms.at(j));
+  unsigned counter = 0;
+  for (std::list< Parse_Term* >::iterator j = curRule->terms.begin();
+       j != curRule->terms.end();
+       j++, counter++) {    
+    Parse_Select* parse_select =
+      dynamic_cast<Parse_Select *>(*j);
     if (parse_select != NULL) {
-      debugRule(curRule, "Selection term " + parse_select->toString() + " " 
-			     + curRule->ruleID + "\n");
-      pelSelect(curRule, curNamesTracker, parse_select, nodeID, j); 
+      debugRule(curRule, "Selection term "
+                + parse_select->toString() + " " 
+                + curRule->ruleID + "\n");
+      pelSelect(curRule, curNamesTracker, parse_select, nodeID, counter); 
     }
-    Parse_Assign* parse_assign 
-      = dynamic_cast<Parse_Assign *>(curRule->terms.at(j));
+    Parse_Assign* parse_assign =
+      dynamic_cast<Parse_Assign *> (*j);
     if (parse_assign != NULL) {
-      pelAssign(curRule, curNamesTracker, parse_assign, nodeID, j);
+      pelAssign(curRule, curNamesTracker, parse_assign, nodeID, counter);
     }
   }
 }
 
-void Plmb_ConfGen::pelAssign(OL_Context::Rule* rule, 
-			    FieldNamesTracker* names,
-                            Parse_Assign* expr, 
-			    string nodeID, 
-			    int assignID) 
+void
+Plmb_ConfGen::pelAssign(OL_Context::Rule* rule, 
+                        FieldNamesTracker* names,
+                        Parse_Assign* expr, 
+                        string nodeID, 
+                        int assignID) 
 {
   ostringstream pel;
   ostringstream pelAssign;
@@ -2343,8 +2348,10 @@ Plmb_ConfGen::genJoinElements(OL_Context::Rule* curRule,
   std::vector<Parse_Term*> baseFunctors;
   bool eventFound = false;
 
-  for (unsigned int k = 0; k < curRule->terms.size(); k++) {
-    Parse_Functor* pf = dynamic_cast<Parse_Functor*>(curRule->terms.at(k));
+  for (std::list< Parse_Term* >::iterator j = curRule->terms.begin();
+       j != curRule->terms.end();
+       j++) {    
+    Parse_Functor* pf = dynamic_cast<Parse_Functor*>(*j);
     if (pf != NULL) {
       checkFunctor(pf, curRule);
       string functorName = pf->fn->name;    
@@ -2469,9 +2476,11 @@ Plmb_ConfGen::genSingleTermElement(OL_Context::Rule* curRule,
                        conf_function("Slot", "singleTermSlot"));
 
   //std::cout << "Number of terms " << curRule->terms.size() << "\n";
-  for (unsigned int j = 0; j < curRule->terms.size(); j++) {
+  for (std::list< Parse_Term* >::iterator j = curRule->terms.begin();
+       j != curRule->terms.end();
+       j++) {    
     // skip those that we already decide is going to participate in     
-    Parse_Term* curTerm = curRule->terms.at(j);    
+    Parse_Term* curTerm = (*j);
     // skip the following
     Parse_Functor* pf = dynamic_cast<Parse_Functor*>(curTerm);
     if (pf == NULL) { continue; }
@@ -2503,8 +2512,10 @@ void Plmb_ConfGen::genFunctorSource(OL_Context::Rule* rule,
   _currentElementChain.push_back(source);
 
   genPrintElement("PrintFunctorSource:"+rule->ruleID+":"+nodeID);
-  Parse_Functor* pf = dynamic_cast<Parse_Functor* > (rule->terms.at(0));
-  if (pf == NULL) { return; }
+  Parse_Functor* pf = dynamic_cast<Parse_Functor* > (rule->terms.front());
+  if (pf == NULL) {
+    return;
+  }
   
   string period = pf->arg(2)->toString();
   int count = 0;
@@ -2733,17 +2744,22 @@ void Plmb_ConfGen::hookUp(ElementSpecPtr secondElement, int secondPort)
 }
 
 
-int Plmb_ConfGen::numFunctors(OL_Context::Rule* rule)
+int
+Plmb_ConfGen::numFunctors(OL_Context::Rule* rule)
 {
   int count = 0;
 
-  for (unsigned int k = 0; k < rule->terms.size(); k++) {
-    Parse_Functor* pf = dynamic_cast<Parse_Functor*>(rule->terms.at(k));
-    if (pf != NULL) { count ++; continue; }
+  for (std::list< Parse_Term* >::iterator j = rule->terms.begin();
+       j != rule->terms.end();
+       j++) {    
+    Parse_Functor* pf = dynamic_cast<Parse_Functor*>(*j);
+    if (pf != NULL) {
+      count ++;
+      continue;
+    }
   }
-
+  
   return count;
-
 }
 
 
@@ -2751,14 +2767,24 @@ int Plmb_ConfGen::numFunctors(OL_Context::Rule* rule)
 
 
 
-bool Plmb_ConfGen::hasPeriodicTerm(OL_Context::Rule* curRule)
+bool
+Plmb_ConfGen::hasPeriodicTerm(OL_Context::Rule* curRule)
 {
-  for (uint k = 0; k < curRule->terms.size(); k++) {
-    Parse_Functor* pf = dynamic_cast<Parse_Functor*>(curRule->terms.at(k));
-    if (pf == NULL) { continue;}
+  for (std::list< Parse_Term* >::iterator j = curRule->terms.begin();
+       j != curRule->terms.end();
+       j++) {    
+    Parse_Functor* pf = dynamic_cast<Parse_Functor*>(*j);
+    if (pf == NULL) {
+      continue;
+    }
     checkFunctor(pf, curRule);
     string termName = pf->fn->name;
     if (termName == "periodic") {
+      // Move it to the front if not already there
+      if (j != curRule->terms.begin()) {
+        curRule->terms.push_front(pf);
+        curRule->terms.erase(j);
+      }
       return true;
     }
   }
