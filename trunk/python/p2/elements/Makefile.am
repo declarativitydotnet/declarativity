@@ -35,6 +35,7 @@ libp2pythonelements_la_SOURCES = \
 	hexdump.cpp \
 	insert.cpp \
 	logger.cpp \
+	lookup2.cpp \
 	marshal.cpp \
 	marshalField.cpp \
 	mux.cpp \
