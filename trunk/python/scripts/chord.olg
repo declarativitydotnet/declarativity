@@ -142,7 +142,9 @@ f3 lookup@NI(NI,K,NI,E) :- fFixEvent@NI(NI,E,I),
 f4 eagerFinger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I), 
 				lookupResults@NI(NI,K,B,BI,E).
 
+/*
 f5 finger@NI(NI,I,B,BI) :- eagerFinger@NI(NI,I,B,BI).
+*/
 
 f6 eagerFinger@NI(NI,I,B,BI) :- node@NI(NI,N), 
 				eagerFinger@NI(NI,I1,B,BI), 

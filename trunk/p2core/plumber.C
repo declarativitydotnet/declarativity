@@ -71,9 +71,7 @@ Plumber::Dataflow::table(string name,
     // Already there. Just return it
     return iter->second;
   } else {
-    boost::posix_time::time_duration t(boost::posix_time::
-                                       duration_from_string(lifetime));
-    Table2Ptr tp(new Table2(name, key, max_size, t));
+    Table2Ptr tp(new Table2(name, key, max_size, lifetime));
     tables_[name] = tp;
     return tp;
   }

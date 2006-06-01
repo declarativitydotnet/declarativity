@@ -20,5 +20,6 @@ void export_tuple()
    .def("freeze",   &Tuple::freeze)
    .def("size",     &Tuple::size)
    .def("toString", &Tuple::toString)
+   .def("at",       &Tuple::at)
   ;
 }

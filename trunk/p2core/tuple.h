@@ -115,6 +115,8 @@ public:
   operator[] (ptrdiff_t i) const;
 
 
+  /** This method only exists for Boost.Python. Use the operator[] for all 
+    * other purposes */
   ValuePtr
   at(ptrdiff_t i) { return fields[i]; };
 

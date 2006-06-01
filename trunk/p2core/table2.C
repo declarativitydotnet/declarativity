@@ -268,12 +268,21 @@ Table2::Table2(std::string tableName,
   : _name(tableName),
     _key(key),
     _maxSize(maxSize),
-    _maxLifetime(boost::posix_time::duration_from_string(lifetime)),
+    _maxLifetime(DEFAULT_EXPIRATION),
     _primaryIndex(KeyedEntryComparator(key)),
     _flushing(((_maxSize > 0) ||
                (!_maxLifetime.is_pos_infinity()))),
     _lookupSearchEntry(Tuple::mk())
 {
+  if (lifetime == std::string("+infinity")) {
+    _maxLifetime = boost::posix_time::time_duration(boost::date_time::pos_infin);
+  }
+  else if (lifetime == std::string("-infinity")) {
+    _maxLifetime = boost::posix_time::time_duration(boost::date_time::neg_infin);
+  }
+  else {
+    _maxLifetime = boost::posix_time::duration_from_string(lifetime);
+  }
   lookupSearchEntry(key);
 }
 
