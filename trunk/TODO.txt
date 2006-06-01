@@ -23,20 +23,7 @@
  - Element to demultiplex packets based on peer IP address.  push-in,
    push-out. 
 
- - Fix Insert element so that inserting an existing tuple does not
-   create an update signal.
-
- - Revamp the table facility. Concretize semantics and reimplement using
-   same interfaces if possible. (Petros)
-
- - Fix delete in tables to work for arbitrary tuples, not just for a
-   given unique index.
-
- - Fix multi-field primary keys (Petros)
-
  - Text extensively aggregates, adding to the unit test.
-
- - Write tests for multi-field keys.
 
  - Add a persistent table object, using BerkeleyDB or Rusty's
    transactional store.
@@ -96,9 +83,6 @@
  - Use shared pointers (or a materialized version thereof) to implement
    the count algorithm for multiply-derived tuples.
 
- - Do we need the store.[Ch] files? Are they subsumed by the individual
-   elements?  If so, remove.
-
  - Create a uniform logging infrastructure that can be used outside of
    the dataflow, especially for logging within tables and other non-data
    flow components.
@@ -107,3 +91,6 @@
    traces. Great for replay debugging.
 
  - Go through and fix all n^2 traversals of vectors!!!!!
+
+ - Replace custom aggregate functions within AggWrap with generic
+   functions from factory

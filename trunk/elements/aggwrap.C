@@ -29,11 +29,11 @@ Aggwrap::Aggwrap(string name, string aggfn, int aggfield, string outputTableName
   numJoins = 0;
   _outputTableName = outputTableName;
   ostringstream os;
-  if (aggfn == "min") {
+  if (aggfn == "MIN") {
     os << "min aggregation " << _aggfield;
-  } else if (aggfn == "max") {
+  } else if (aggfn == "MAX") {
     os << "max aggregation " << _aggfield;
-  } else if (aggfn == "count") { 
+  } else if (aggfn == "COUNT") { 
     os << "count aggregation " << _aggfield;
   } else {
     os << "HELP: Don't understand agg function '" << aggfn << "'";
@@ -158,7 +158,7 @@ void Aggwrap::agg_init() {
   TRC_FN;
   curJoin = -1;
   aggState = 1;
-  if ( _aggfn == "count") {
+  if ( _aggfn == "COUNT") {
     count = 0;
   } else {
     aggResult.reset();
@@ -167,7 +167,7 @@ void Aggwrap::agg_init() {
 
 void Aggwrap::agg_accum(TuplePtr t) {
   TRC_FN;
-  if ( _aggfn == "count") {
+  if ( _aggfn == "COUNT") {
     count++;
     aggResult = t;
     ELEM_INFO( "After Agg accumulation: " + aggResult->toString());
@@ -182,7 +182,7 @@ void Aggwrap::agg_accum(TuplePtr t) {
 
   ELEM_INFO( "Before Agg accumulation: " + aggResult->toString());
   int cr = (*t)[_aggfield]->compareTo((*aggResult)[_aggfield]);
-  if ((cr == -1 && _aggfn == "min") || (cr == 1 && _aggfn == "max")) {
+  if ((cr == -1 && _aggfn == "MIN") || (cr == 1 && _aggfn == "MAX")) {
     aggResult = t;
   }
   ELEM_INFO( "After Agg accumulation: " + aggResult->toString()
@@ -192,7 +192,7 @@ void Aggwrap::agg_accum(TuplePtr t) {
 
 void Aggwrap::agg_finalize() {
   TRC_FN; 
-  if (_aggfn == "count") {       
+  if (_aggfn == "COUNT") {       
     if (_incomingTuple) {
       TuplePtr aggResultToRet = Tuple::mk();
       aggResultToRet->append(Val_Str::mk(_outputTableName));

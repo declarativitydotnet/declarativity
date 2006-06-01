@@ -608,21 +608,22 @@ Plmb_ConfGen::processRule(OL_Context::Rule *r,
       }
 
       // there is an aggregate and involves an event, we need an agg wrap      
-      Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(r->head->arg(aggField));
+      Parse_Agg* aggExpr = dynamic_cast< Parse_Agg* >
+        (r->head->arg(aggField));
       if (aggExpr == NULL) {
 	ostringstream oss;
 	oss << "Invalid aggregate field " << aggField
             << " for rule " << r->ruleID; 
 	error(oss.str());
       }
-
+      
       oss << "Aggwrap:" << r->ruleID << ":" << nodeID;
       agg_el.reset(new Aggwrap(oss.str(), aggExpr->aggName(), 
 			       aggField + 1, r->head->fn->name));
       agg_spec = _conf->addElement(agg_el);
       _p2dl << conf_assign(agg_spec.get(), 
                            conf_function("Aggwrap",
-                                         "aggwrap_"+r->ruleID,
+                                         "aggwrap_" + r->ruleID,
                                          aggExpr->aggName(), 
                                          aggField + 1, r->head->fn->name));
       for (int k = 0;
@@ -678,6 +679,7 @@ Plmb_ConfGen::processRule(OL_Context::Rule *r,
   
     // do the selections and assignment, followed by projection
     genAllSelectionAssignmentElements(r, nodeID, &curNamesTracker);    
+
     //std::cout << "NetPlanner: Register receiver at demux " 
     //	      << _pendingRegisterReceiver << "\n";
     genProjectHeadElements(r, nodeID, &curNamesTracker);
