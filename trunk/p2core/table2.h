@@ -110,8 +110,8 @@ public:
   struct KeyComparator
   {
     bool
-    operator()(const Key first,
-               const Key second) const;
+    operator()(const Key& first,
+               const Key& second) const;
   };
 
 
@@ -162,14 +162,14 @@ public:
       indicated by a key designation. The key designation will appear
       within the particular KeyedComparator object passed during
       construction */
-  typedef std::set< Entry *, KeyedEntryComparator > PrimaryIndex;
+  typedef std::set< Entry*, KeyedEntryComparator > PrimaryIndex;
 
 
   /** A secondary index is a multiset of Entries sorted by those tuple
       values indicated by a key designation. The key designation will
       appear within the particular KeyedComparator object passed during
       construction */
-  typedef std::multiset< Entry *, KeyedEntryComparator > SecondaryIndex;
+  typedef std::multiset< Entry*, KeyedEntryComparator > SecondaryIndex;
 
 
   /** An index of indices secondary indices is a map from key
@@ -187,7 +187,7 @@ public:
       not be empty. If such an index exists already nothing is done and
       false is returned. Otherwise, true is returned. */
   bool
-  secondaryIndex(Key key);
+  secondaryIndex(Key& key);
 
 
 
@@ -209,28 +209,35 @@ public:
        duration; a lifetime may be positive infinite, indicating no
        expiration. */
   Table2(string tableName,
-         Key key,
+         Key& key,
          size_t maxSize,
          boost::posix_time::time_duration& lifetime);
 
   /** A convenience constructor that allows the use of string
       representations for maximum tuple lifetime. */
   Table2(string tableName,
-         Key key,
+         Key& key,
          size_t maxSize,
          string lifetime);
   
 
   /** A convenience constructor that does not expire tuples. */
   Table2(string tableName,
-         Key key,
+         Key& key,
          size_t maxSize);
   
 
   /** A convenience constructor with no size or time limits. */
   Table2(string tableName,
-         Key key);
+         Key& key);
   
+  
+  /** A convenience method for initializing the lookup search entry. It
+      ensures the tuple in the entry can accommodate all fields in the
+      given key.  XXXX Carry arity with table definition. */
+  void
+  lookupSearchEntry(Key& key);
+
 
   /** A destructor. It empties out the table and then destroys it. */
   ~Table2();
@@ -338,7 +345,7 @@ public:
     /** Create an aggregate given its key (i.e., the group-by fields)
         a pointer to its table, the aggregated field number (single
         field for now), and the aggregate function object. */
-    AggregateObj(Key key,
+    AggregateObj(Key& key,
                  SecondaryIndex* index,
                  unsigned aggField,
                  AggFunc* function);
@@ -412,7 +419,7 @@ public:
   /** Install a new aggregate returning a handle to it. If the aggregate
       is unknown, return NULL. */
   Aggregate
-  aggregate(Key groupBy,
+  aggregate(Key& groupBy,
             uint aggregateFieldNo,
             std::string functionName);
 
@@ -491,7 +498,7 @@ public:
       lookup(Key, TuplePtr) should be used instead for peformance
       reasons.  */
   Iterator
-  lookup(Key lookupKey, Key indexKey, TuplePtr t);
+  lookup(Key& lookupKey, Key& indexKey, TuplePtr t);
 
 
   /** Looks up tuple t in the index defined by indexKey.  If no such
@@ -505,14 +512,14 @@ public:
       slightly faster than that method since it does not perform the
       projection. */
   Iterator
-  lookup(Key indexKey, TuplePtr t);
+  lookup(Key& indexKey, TuplePtr t);
 
 
   /** Returns a pointer to a lookup iterator on all elements ordered by
       the given index.  If no such index exists, a null pointer is
       returned.  */
   Iterator
-  scan(Key key);
+  scan(Key& key);
 
 
   /** Returns a pointer to a lookup iterator on all elements ordered by
@@ -608,6 +615,11 @@ private:
   ListenerVector _updateListeners;
 
 
+  /** My lookup search entry, used with projecting lookups. It must have
+      as many fields as my largest index field number */
+  Entry _lookupSearchEntry;
+
+
 
 
   ////////////////////////////////////////////////////////////
@@ -679,13 +691,13 @@ private:
 
   /** Return a secondary index if it exists, or NULL otherwise */
   SecondaryIndex*
-  findSecondaryIndex(Key key);
+  findSecondaryIndex(Key& key);
 
 
   /** Create a fresh secondary index. It assume the index does not
       exist */
   void
-  createSecondaryIndex(Key key);
+  createSecondaryIndex(Key& key);
 
   
   /** Project a (potentially frozen) source tuple to an unfrozen
@@ -696,9 +708,9 @@ private:
       the destination tuple is not frozen. */
   void
   project(TuplePtr source,
-          Key sourceKey,
+          Key& sourceKey,
           TuplePtr destination,
-          Key destinationKey);
+          Key& destinationKey);
 };
 
 
