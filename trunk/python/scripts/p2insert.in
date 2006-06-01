@@ -115,8 +115,11 @@ def get_stub(port):
       let udp = Udp2("udp", %s);
 
       TimedPushSource("dummy_source", 0)            ->
-      Slot("output")                                ->
-      Print("sending")                              ->
+      Print("output")                              ->
+      Sequence("sequence", 1, 1)         ->
+      Frag("fragment", 1)                          ->
+      PelTransform("package", "$0 pop swallow pop") ->
+      Print("before_marshal") ->
       MarshalField("marshal", 1)                    ->
       StrToSockaddr("addr_conv", 0)                 ->
       udp                                           ->
