@@ -54,7 +54,7 @@ class InsertCLI(Element):
     
   def parse_insert(self, line):
       tablerest = line.split("@")
-      tablename = (tablerest[0].split("insert "))[1]
+      tablename = (tablerest[0].split("insert "))[1] + "_ins"
       print "tablename ", tablename
       hostrest = tablerest[1].split("(")
       print "host ", hostrest[0]
@@ -167,7 +167,6 @@ if __name__ == "__main__":
     input  = edit.find("input");
     output = edit.find("output");
 
-    # get the list of tables in the current dataflow
     inserter = edit.addElement(InsertCLI("p2insert", address+":"+str(port)))
     edit.hookUp(input, 0, inserter, 0)
     edit.hookUp(inserter, 0, output, 0)
