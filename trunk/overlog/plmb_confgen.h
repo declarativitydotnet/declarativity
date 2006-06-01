@@ -310,8 +310,27 @@ private:
     void initialize(Parse_Term* pf);
 
 
-    Table2::Key matchingJoinKeys(std::vector<string> names);
-
+    /** Generate a lookup key and an index key (as per Table2::lookup())
+        for a join from the probe tuple to my local tuple.
+        Specifically, in order of my fields, find those fields that
+        match an argument of the probe tuple and record for each one of
+        my matching field numbers (in the index key) the matching field
+        number of the probe tuple (in the lookup key). For example, if
+        my arguments are (A, B, C, D) and the probe arguments are (C, L,
+        B), then the index key returned is (2, 3) and the lookup key
+        returned is (3, 1).  That is B, in my position 2 and C in my
+        position 3 match B in the probe's position 3 and C in the
+        probe's position 1. Note that field numbers are offset by one to
+        account for relation names, which always occupy field position
+        0. So indexing starts at 1 here.  The remaining base key
+        contains those base field number that did not participate in the
+        join, or (1, 4) in the example above. */
+    void
+    joinKeys(FieldNamesTracker* probeNames,
+             Table2::Key& lookupKey,
+             Table2::Key& indexKey,
+             Table2::Key& remainingBaseKey);
+    
 
     void mergeWith(std::vector<string> names);
 
@@ -319,7 +338,10 @@ private:
     void mergeWith(std::vector<string> names, int numJoinKeys);
 
 
-    int fieldPosition(string var);
+    /** Which of my arguments matches the given one? If none matches,
+        return 0 */
+    int
+    fieldPosition(string var);
 
 
     string toString();

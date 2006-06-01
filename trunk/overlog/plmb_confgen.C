@@ -903,29 +903,34 @@ Plmb_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
 }
 
 
-/**
-   XXX. Are we maintaining the right order in the join keys?  We should
-   make sure that the join keys of the two relations define a projection
-   from the probe tuple to the base tuple */
-Table2::Key
+void
 Plmb_ConfGen::FieldNamesTracker::
-matchingJoinKeys(std::vector< string > otherArgNames)
+joinKeys(Plmb_ConfGen::FieldNamesTracker* probeNames,
+         Table2::Key& lookupKey,
+         Table2::Key& indexKey,
+         Table2::Key& remainingBaseKey)
 {
-  // figure out the matching on other side. Assuming that
-  // there is only one matching key for now
-  Table2::Key toRet;
-  for (unsigned int k = 0;
-       k < otherArgNames.size();
-       k++) {
-    string nextStr = otherArgNames.at(k);
-    if (fieldPosition(nextStr) != -1) {
-      // exists
-      toRet.push_back(k + 1);   // we always add 1 for the tuple name,
-                                // which always occupies position 0 in a
-                                // tuple's fields.
+  unsigned myFieldNo = 1;       // start at one to skip the table name
+  for (std::vector< string >::iterator i = fieldNames.begin();
+       i != fieldNames.end();
+       i++, myFieldNo++) {
+    string myNextArgument = *i;
+    int probePosition = 
+      probeNames->fieldPosition(myNextArgument);
+
+    // Does my argument match any probe arguments?
+    if (probePosition == -1) {
+      // My argument doesn't match. It's a "remaining" base key
+      remainingBaseKey.push_back(myFieldNo);
+    } else {
+      // My argument myNextArgument at field number myFieldNo matches
+      // the probe's argument at field number probePosition. The lookup
+      // key will project probePosition on the probe tuple onto
+      // myFieldNo.
+      lookupKey.push_back(probePosition + 1); // add 1 for the table name
+      indexKey.push_back(myFieldNo);
     }
   }  
-  return toRet;
 }
 
 
@@ -935,23 +940,20 @@ Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
                                Parse_Term* baseTableTerm, 
                                string nodeID, 	     
                                FieldNamesTracker* probeNames, 
-                               FieldNamesTracker* baseProbeNames, 
+                               FieldNamesTracker* baseNames, 
                                int joinOrder,
                                b_cbv *comp_cb)
 {
-  // probe the right hand side Here's where the join happens. Left join
-  // keys contains the field numbers on the left relation that are to be
-  // matched with their equivalents on the right relation. Similarly,
-  // the right join keys contains the field numbers on the right
-  // relation that are to be matched with their equivalents on the left
-  // relation.  The two vectors are not one-to-one matched (in that the
-  // first left field number may match the third right field
-  // number). But the sizes of the vectors must be the same.
-  Table2::Key leftJoinKeys 
-    = baseProbeNames->matchingJoinKeys(probeNames->fieldNames);
-  Table2::Key rightJoinKeys 
-    = probeNames->matchingJoinKeys(baseProbeNames->fieldNames);
-  
+  // We will be joining the probe (an event or intermediate result
+  // tuple) with the base table.
+  Table2::Key indexKey;         // base matching fields
+  Table2::Key lookupKey;        // and the probe fields they match
+  Table2::Key remainingBaseKey; // Non-index keys in the base table
+  baseNames->joinKeys(probeNames, lookupKey, indexKey, remainingBaseKey);
+
+  // Now we must create a lookup into the base table using these lookup
+  // and index keys (as per Table2::lookup()).
+
   Parse_Functor* pf =
     dynamic_cast<Parse_Functor*>(baseTableTerm);
 
@@ -960,97 +962,71 @@ Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
     baseTableName = pf->fn->name;
     checkFunctor(pf, curRule);
   }
-
   
-
-  if (leftJoinKeys.size() == 0 || rightJoinKeys.size() == 0) {
-    error("No matching join keys " + eventFunctor->fn->name + " " + 
+  if (lookupKey.size() == 0 || indexKey.size() == 0) {
+    error("No join keys " + eventFunctor->fn->name + " " + 
 	  baseTableName + " ", curRule);
   }
-
-  // add one to offset for table name. Join the first matching key.
-  Table2Ptr probeTable = getTableByName(nodeID, baseTableName);
-
-  // should we match on the primary key or on a secondary index?  We'll
-  // match on the primary key if the right join key is the primary key
-  // of the left table.
-  OL_Context::TableInfo* tableInfo 
-    = _ctxt->getTableInfos()->find(baseTableName)->second;
-  ostringstream oss;
-  oss << "NoNull:" << curRule->ruleID << ":" << joinOrder << ":" << nodeID;
   
-  ElementSpecPtr noNull 
-    = _conf->addElement(ElementPtr(new NoNullField(oss.str(), 1)));
+  // Fetch the base table
+  Table2Ptr baseTable = getTableByName(nodeID, baseTableName);
+
+  // The NoNull filter for the join sequence
+  OL_Context::TableInfo* tableInfo =
+    _ctxt->getTableInfos()->find(baseTableName)->second;
+  ostringstream nonulloss;
+  nonulloss << "NoNull:" << curRule->ruleID << ":" << joinOrder << ":" << nodeID;
+  ElementSpecPtr noNull =
+    _conf->addElement(ElementPtr(new NoNullField(nonulloss.str(), 1)));
   _p2dl << conf_assign(noNull.get(), 
                        conf_function("NoNullField", "n_noNull", 1));
   
+  // The connector slot for the output of my join
   ElementSpecPtr last_el(new ElementSpec
                          (ElementPtr(new Slot("dummySlotProbeElements"))));
+
+  // The lookup
+  ostringstream lookuposs;
+  lookuposs << "Lookup2:" << curRule->ruleID
+            << ":" << joinOrder << ":" << nodeID; 
+  last_el =
+    _conf->addElement(ElementPtr(new Lookup2(lookuposs.str(),
+                                             baseTable,
+                                             lookupKey,
+                                             indexKey, 
+                                             *comp_cb)));
+  if (*comp_cb == 0 || conf_var(comp_cb) == "unknown") {
+    _p2dl << conf_assign(last_el.get(), 
+                         conf_function("Lookup2", lookuposs.str(),
+                                       conf_var(baseTable.get()),
+                                       conf_UIntVec(lookupKey),
+                                       conf_UIntVec(indexKey)));
+  }
+  else {
+    _p2dl << conf_assign(last_el.get(), 
+                         conf_function("Lookup2", lookuposs.str(),
+                                       conf_var(baseTable.get()),
+                                       conf_UIntVec(lookupKey),
+                                       conf_UIntVec(indexKey),
+                                       conf_var(comp_cb)));
+  }
+  std::cout << "CALLBACK VARIABLE LOOKUP: " << *comp_cb << std::endl;
   
-  if (tableInfo->primaryKeys == rightJoinKeys) {
-    // use the primary key
-    ostringstream oss;
-    oss << "Lookup2:" << curRule->ruleID << ":" << joinOrder << ":" << nodeID; 
-    last_el =
-      _conf->addElement(ElementPtr(new Lookup2(oss.str(),
-                                               probeTable,
-                                               leftJoinKeys,
-                                               rightJoinKeys, 
-                                               *comp_cb)));
-    if (*comp_cb == 0 || conf_var(comp_cb) == "unknown") {
-      _p2dl << conf_assign(last_el.get(), 
-                           conf_function("Lookup2", oss.str(),
-                                         conf_var(probeTable.get()),
-                                         conf_UIntVec(leftJoinKeys),
-                                         conf_UIntVec(rightJoinKeys)));
-    }
-    else {
-      _p2dl << conf_assign(last_el.get(), 
-                           conf_function("Lookup2", oss.str(),
-                                         conf_var(probeTable.get()),
-                                         conf_UIntVec(leftJoinKeys),
-                                         conf_UIntVec(rightJoinKeys),
-                                         conf_var(comp_cb)));
-    }
-    std::cout << "CALLBACK VARIABLE LOOKUP: " << *comp_cb << std::endl;
+  
+  if (tableInfo->primaryKeys == indexKey) {
+    // This is a primary key join so we don't need a secondary index
   } else {
-    // Can't use the primary key of the left table.  Just use a
-    // secondary and ensure it exists below.
-
-    ostringstream oss;
-    oss << "Lookup2:" << curRule->ruleID << ":" << joinOrder << ":" << nodeID; 
-    last_el =
-      _conf->addElement(ElementPtr(new Lookup2(oss.str(),
-                                               probeTable,
-                                               leftJoinKeys, 
-                                               rightJoinKeys,
-                                               *comp_cb)));
-
-    if (*comp_cb == 0 || conf_var(comp_cb) == "unknown") {
-      _p2dl << conf_assign(last_el.get(), 
-                           conf_function("Lookup2",
-                                         oss.str(),
-                                         conf_var(probeTable.get()),
-                                         conf_UIntVec(leftJoinKeys),
-                                         conf_UIntVec(rightJoinKeys)));
-    }
-    else {
-      _p2dl << conf_assign(last_el.get(), 
-                           conf_function("Lookup2",
-                                         oss.str(),
-                                         conf_var(probeTable.get()),
-                                         conf_UIntVec(leftJoinKeys),
-                                         conf_UIntVec(rightJoinKeys),
-                                         conf_var(comp_cb)));
-    }
-    
-    secondaryIndex(probeTable, rightJoinKeys, nodeID);
+    // Ensure there's a secondary index on the indexKey
+    secondaryIndex(baseTable, indexKey, nodeID);
   }
   
  
+
+
+
   int numFieldsProbe = probeNames->fieldNames.size();
   debugRule(curRule, "Probe before merge " + probeNames->toString() + "\n");
-  probeNames->mergeWith(baseProbeNames->fieldNames); 
+  probeNames->mergeWith(baseNames->fieldNames); 
   debugRule(curRule, "Probe after merge " + probeNames->toString() + "\n");
 
   if (_isPeriodic == false && _pendingRegisterReceiver) {
@@ -1073,60 +1049,71 @@ Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
     hookUp(last_el, 0, noNull, 0);
   }
 
-  for (uint k = 1; k < leftJoinKeys.size(); k++) {
-    int leftField = leftJoinKeys.at(k);
-    int rightField = rightJoinKeys.at(k);
-    ostringstream selectionPel;
-    selectionPel << "$0 " << (leftField+1) << " field " << " $1 " 
-		 << rightField+1 << " field ==s not ifstop $0 pop $1 pop";
 
-    debugRule(curRule, "Join selections " + selectionPel.str() + "\n");
 
-    ostringstream oss;
-    oss << "joinSelections_" << curRule->ruleID << "_"
-	<< joinOrder << "_" << k;
+  // Deal with selections afterwards.  Not necessary since we do
+  // multi-field joins!!!!
+
+//   for (uint k = 1; k < lookupKey.size(); k++) {
+//     int leftField = lookupKey.at(k);
+//     int rightField = indexKey.at(k);
+//     ostringstream selectionPel;
+//     selectionPel << "$0 " << leftField << " field " << " $1 " 
+// 		 << rightField << " field ==s not ifstop $0 pop $1 pop";
+
+//     debugRule(curRule, "Join selections " + selectionPel.str() + "\n");
+
+//     ostringstream oss;
+//     oss << "joinSelections_" << curRule->ruleID << "_"
+// 	<< joinOrder << "_" << k;
     
-    ElementSpecPtr joinSelections =
-      _conf->addElement(ElementPtr(new PelTransform(oss.str(), 
-				                    selectionPel.str())));    
-    _p2dl << conf_assign(joinSelections.get(), 
-                conf_function("PelTransform", "joinSelections", selectionPel.str()));
-    hookUp(joinSelections, 0);
+//     ElementSpecPtr joinSelections =
+//       _conf->addElement(ElementPtr(new PelTransform(oss.str(), 
+// 				                    selectionPel.str())));    
+//     _p2dl << conf_assign(joinSelections.get(), 
+//                 conf_function("PelTransform", "joinSelections", selectionPel.str()));
+//     hookUp(joinSelections, 0);
+//   }
+
+
+
+
+  // Take the joined tuples and produce the resulting path form the pel
+  // projection.  Keep all fields from the probe, and all fields from
+  // the base table that were not join keys.
+  ostringstream pelProject;
+  pelProject << "'join:"
+             << eventFunctor->fn->name
+             << ":" << baseTableName
+             << ":" 
+	     << curRule->ruleID
+             << ":"
+             << nodeID
+             << "' pop "; // table name
+  for (int k = 0; k < numFieldsProbe; k++) {
+    pelProject << "$0 " << k + 1 << " field pop ";
   }
 
-  // Take the joined tuples and produce the resulting path
-  // form the pel projection. 
-  //Keep all fields on left, all fields on right except the join keys
-  ostringstream pelProject;
-  pelProject << "'join:" << eventFunctor->fn->name << ":" << baseTableName << ":" 
-	     << curRule->ruleID << ":" << nodeID << "' pop "; // table name
-  for (int k = 0; k < numFieldsProbe; k++) {
-    pelProject << "$0 " << k+1 << " field pop ";
-  }
-  for (uint k = 0; k < baseProbeNames->fieldNames.size(); k++) {
-    bool joinKey = false;
-    for (uint j = 0; j < rightJoinKeys.size(); j++) {
-      if (k == (uint) rightJoinKeys.at(j)) { // add one for table name
-	joinKey = true;
-	break;
-      }
-    }
-    if (!joinKey) {
-      pelProject << "$1 " << k+1 << " field pop ";
-    }
+  // And also pop all remaining base field numbers (those that did not
+  // participate in the join.
+  for (Table2::Key::iterator i = remainingBaseKey.begin();
+       i != remainingBaseKey.end();
+       i++) {
+    pelProject << "$1 " << (*i) << " field pop ";
   }
 
   string pelProjectStr = pelProject.str();
   ostringstream oss1; 
   oss1 << "joinPel_" << curRule->ruleID << "_"
-      << joinOrder << "_" << nodeID;
+       << joinOrder << "_" << nodeID;
 
-  ElementSpecPtr transS 
-    = _conf->addElement(ElementPtr(new PelTransform(oss1.str(), pelProjectStr)));
+  ElementSpecPtr transS =
+    _conf->addElement(ElementPtr(new PelTransform(oss1.str(),
+                                                  pelProjectStr)));
   _p2dl << conf_assign(transS.get(), 
-              conf_function("PelTransform", "joinPel", pelProjectStr));
-
-  delete baseProbeNames;
+                       conf_function("PelTransform",
+                                     "joinPel", pelProjectStr));
+  delete baseNames;
 
   hookUp(transS, 0);
 }
@@ -2392,9 +2379,12 @@ Plmb_ConfGen::genJoinElements(OL_Context::Rule* curRule,
        k++) {    
     Parse_Functor* pf = dynamic_cast<Parse_Functor*>(baseFunctors.at(k));
     
-    if (pf != NULL && pf->fn->name == eventFunctor->fn->name) { continue; } 
+    if (pf != NULL &&
+        (pf->fn->name == eventFunctor->fn->name)) {
+      continue;
+    } 
     debugRule(curRule, "Probing " + eventFunctor->fn->name + " " + 
-                       baseFunctors.at(k)->toString() + "\n");
+              baseFunctors.at(k)->toString() + "\n");
     b_cbv comp_cb = 0;
     if (agg_el) {
       comp_cb = agg_el->get_comp_cb();
@@ -2447,7 +2437,7 @@ Plmb_ConfGen::secondaryIndex(Table2Ptr table,
     table->secondaryIndex(key);
     
     _p2dl << conf_call(table.get(),
-                       conf_function("add_multiple_index",
+                       conf_function("secondaryIndex",
                                      conf_UIntVec(key)),
                        false)
           << ";"
