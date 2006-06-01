@@ -109,6 +109,11 @@ public:
   /** Old unique tuple removal test from v1 ported */
   void
   testUniqueTupleRemovals();
+
+
+  /** Projected lookups */
+  void
+  testProjectedLookups();
 };
 
 
@@ -456,6 +461,65 @@ testTable2::testPrimaryOverwrite()
                         "Lookup of tuple b '"
                         << b->toString()
                         << "' should return exactly and only b.");
+  }
+}
+
+
+/**
+ * This test exercises projected lookups.  Especially of tuples with
+ * different sizes.
+ */
+void
+testTable2::testProjectedLookups()
+{
+  TuplePtr a = Tuple::mk();
+  a->append(Val_Int32::mk(0));
+  a->append(Val_Int32::mk(10));
+  a->append(Val_Int32::mk(0));
+  a->freeze();
+  
+  TuplePtr b = Tuple::mk();
+  b->append(Val_Int32::mk(1));
+  b->append(Val_Int32::mk(0));
+  b->freeze();
+  
+  // Create a table with unique first fields.
+  Table2 table("table1", Table2::KEY0);
+
+  // Insert the first tuple
+  BOOST_CHECK_MESSAGE(table.insert(a),
+                      "Tuple a '"
+                      << a->toString()
+                      << "' should be newly inserted");
+
+  // Lookup the second tuple with its first field on the primary index
+  Table2::Iterator i = table.lookup(Table2::KEY0, Table2::KEY0, b);
+  BOOST_CHECK_MESSAGE(i->done(),
+                      "Lookup of tuple b '"
+                      << b->toString()
+                      << "' on field 0 should return no results.");
+
+
+  // Lookup the second tuple with its second field on the primary index
+  i = table.lookup(Table2::KEY1, Table2::KEY0, b);
+  BOOST_CHECK_MESSAGE(!i->done(),
+                      "Lookup of tuple b '"
+                      << b->toString()
+                      << "' on field 1 should return results.");
+  
+  if (!i->done()) {
+    TuplePtr t = i->next();
+    BOOST_CHECK_MESSAGE(t->compareTo(a) == 0,
+                        "Lookup of tuple b '"
+                        << b->toString()
+                        << "' on field 1 should return "
+                        << a->toString());
+
+    BOOST_CHECK_MESSAGE(i->done(),
+                        "Lookup of tuple b '"
+                        << b->toString()
+                        << "' on field 1 should return exactly "
+                        << "one result.");
   }
 }
 
@@ -1439,6 +1503,7 @@ testTable2_testSuite::testTable2_testSuite()
 {
   boost::shared_ptr<testTable2> instance(new testTable2());
   
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testProjectedLookups, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSecondaryEquivalence, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testAggregates, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testPrimaryOverwrite, instance));
