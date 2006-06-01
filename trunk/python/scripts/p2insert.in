@@ -92,7 +92,7 @@ class InsertCLI(Element):
 
 def print_usage():
     print
-    print "Usage: insertCLI.py [-d] [-r] ",
+    print "Usage: p2insert.py [-d] [-r] ",
     print "<local_ip_address> <local_port>"
     print
 
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     output = edit.find("output");
 
     # get the list of tables in the current dataflow
-    inserter = edit.addElement(InsertCLI("insertCLI", address+":"+str(port)))
+    inserter = edit.addElement(InsertCLI("p2insert", address+":"+str(port)))
     edit.hookUp(input, 0, inserter, 0)
     edit.hookUp(inserter, 0, output, 0)
 
@@ -177,8 +177,8 @@ if __name__ == "__main__":
       print "Edit Correctly initialized.\n"
     else:
       print "Edit didn't fly"
-    plumber.toDot("insertCLI.dot")
-    os.system("dot -Tps insertCLI.dot -o insertCLI.ps")
-    # os.remove("insertCLI.dot")
+    # plumber.toDot("p2insert.dot")
+    # os.system("dot -Tps p2insert.dot -o p2insert.ps")
+    # os.remove("p2insert.dot")
     # Run the plumber
     eventLoop()
