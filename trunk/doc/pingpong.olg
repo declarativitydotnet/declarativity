@@ -1,8 +1,11 @@
 materialize(env, infinity, infinity, keys(2,3)).
 materialize(link, infinity, infinity, keys(1,2)).
 
+watch(link).
+watch(ping).
+watch(pong).
+
 r1 pong@J(J, I) :- ping@I(I, J).
 r2 ping@J(J, I) :- periodic@I(I,E,1,20), link@I(I,J).
 
-d1 link@I(I, J) :- periodic@I(I,E,5,1), env@I(I, H, J), 
-                   H == "link".
+r3 link@I(I, J) :- linkins@I(I, J).
