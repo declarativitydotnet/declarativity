@@ -27,7 +27,7 @@ Lookup2::Lookup2(string name,
     _indexKey(indexKey)
 {
   // If the two keys are identical, then we need not use projections.
-  _project = (_lookupKey == _indexKey);
+  _project = (_lookupKey != _indexKey);
 }
 
 
