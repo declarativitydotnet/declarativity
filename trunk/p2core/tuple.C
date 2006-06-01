@@ -19,6 +19,7 @@
 #include "val_uint32.h"
 #include "val_str.h"
 #include "val_int32.h"
+#include "val_null.h"
 
 void
 Tuple::xdr_marshal( XDR *x ) 
@@ -321,3 +322,14 @@ Tuple::Comparator::operator()(const TuplePtr first,
 {
   return first->compareTo(second);
 }
+
+
+void
+Tuple::set(size_t i, ValuePtr val)
+{
+  assert(!frozen);
+  assert(size() > i);
+
+  fields[i] = val;
+}
+

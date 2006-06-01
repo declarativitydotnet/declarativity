@@ -115,7 +115,14 @@ public:
   operator[] (ptrdiff_t i) const;
 
 
-  ValuePtr at(ptrdiff_t i) { return fields[i]; };
+  ValuePtr
+  at(ptrdiff_t i) { return fields[i]; };
+
+
+  /** Set the field at given position to a value. The tuple must be
+      unfrozen and have enough room already. */
+  void
+  set(size_t, ValuePtr);
 
   void xdr_marshal(XDR *xdrs);
 
