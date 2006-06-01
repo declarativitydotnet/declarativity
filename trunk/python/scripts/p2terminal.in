@@ -135,7 +135,7 @@ class Terminal(Element):
 
 def print_usage():
     print
-    print "Usage: terminal.py [-d delay] [-f <input_file> -n <nodes> -a <ip_address> -p <start_port>] <terminal_ip_address> <terminal_port>\n"
+    print "Usage: p2terminal.py [-d delay] [-f <input_file> -n <nodes> -a <ip_address> -p <start_port>] <terminal_ip_address> <terminal_port>\n"
     print
 
 def parse_cmdline(argv):
@@ -237,8 +237,8 @@ if __name__ == "__main__":
     if plumber.install(edit) == 0:
         print "Edit Correctly initialized.\n"
 
-    # plumber.toDot("terminal.dot")
-    # os.system("dot -Tps terminal.dot -o terminal.ps")
-    # os.remove("terminal.dot")
+    # plumber.toDot("p2terminal.dot")
+    # os.system("dot -Tps p2terminal.dot -o p2terminal.ps")
+    # os.remove("p2terminal.dot")
     # Run the plumber
     eventLoop()
