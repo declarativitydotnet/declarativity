@@ -2210,9 +2210,10 @@ void Plmb_ConfGen::pelAssign(OL_Context::Rule* rule,
 }
 
 
-void Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
-					 string nodeID,
-					 FieldNamesTracker* curNamesTracker)
+void
+Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
+                                     string nodeID,
+                                     FieldNamesTracker* curNamesTracker)
 {
   Parse_Functor* pf = curRule->head;
   // determine the projection fields, and the first address to return. 
@@ -2242,7 +2243,7 @@ void Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
       if (aggExpr->v->toString() == pf->fn->loc) {	
 	locationIndex = k;
       }
-      if (aggExpr->aggName() != "count") {
+      if (aggExpr->aggName() != "COUNT") {
 	pos = curNamesTracker->fieldPosition(aggExpr->v->toString());
 	if (pos == -1) {
 	  error("Head predicate \"" + pf->fn->name 
@@ -2280,7 +2281,7 @@ void Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
   if (aggField != -1) {
     Parse_Agg* aggExpr 
       = dynamic_cast<Parse_Agg*>(curRule->head->arg(aggField));
-    if (aggExpr->aggName() == "count") {
+    if (aggExpr->aggName() == "COUNT") {
       // output the count
       pelTransformStrbuf << " $" << (aggField + 1) << " pop"; 
     } 
@@ -2843,8 +2844,10 @@ void Plmb_ConfGen::error(string msg)
   exit(-1);
 }
 
-void Plmb_ConfGen::error(string msg, 
-			OL_Context::Rule* rule)
+
+void
+Plmb_ConfGen::error(string msg, 
+                    OL_Context::Rule* rule)
 {
   std::cerr << "PLANNER ERROR: " << msg 
 	    << " for rule " << rule->ruleID << ". Planner exits.\n";
