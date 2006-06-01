@@ -12,7 +12,7 @@
 
 RuleTracer:: RuleTracer(string name, string ruleName, string node, 
 			int startPort, int endPort, int ruleNum,
-			TablePtr ruleExec, TablePtr tupleTable)
+			Table2Ptr ruleExec, Table2Ptr tupleTable)
   : Element(name, endPort+1, 0)
 {
   _ruleName = ruleName;
@@ -236,12 +236,19 @@ int RuleTracer::createExecTupleUsingPrecond(ExecRecord *e,
   return e->numEntries;
 }
 
-TuplePtr RuleTracer::createTupleTableTuple(TuplePtr t)
+
+
+
+
+TuplePtr
+RuleTracer::createTupleTableTuple(TuplePtr t)
 {
   if(t->ID() == 0)
     return TuplePtr();
-  Table::UniqueIterator it = 
-    _tupleTable->lookup(2, Val_UInt32::mk(t->ID()));
+
+  // This assumes that the tuple table has a primary key on field 2.
+  (*TUPLETABLETUPLE)[2] = Val_UInt32::mk(t->ID());
+  Table2::Iterator it = _tupleTable->lookup(Table2::KEY2, TUPLETABLETUPLE);
   int count = 0;
   while(!it->done()){
     it->next();
@@ -320,5 +327,25 @@ void RuleTracer::setLocalNode(TuplePtr t, string ln)
 { 
   t->tag("localNode", Val_Str::mk(ln));
 }
+
+
+
+// Initialize the search tuple table tuple
+TuplePtr
+RuleTracer::TUPLETABLETUPLE = Tuple::mk();
+
+
+RuleTracer::Initializer::Initializer()
+{
+  // The tuple table tuple needs up to field 2
+  TUPLETABLETUPLE->append(Val_Str::mk("tupleTable"));
+  TUPLETABLETUPLE->append(Val_Str::mk("nodeID"));
+  TUPLETABLETUPLE->append(Val_UInt32::mk(0));
+}
+
+
+/** Run the static initialization */
+RuleTracer::Initializer RuleTracer::_INITIALIZER;
+
 
 #endif /* SKIP */

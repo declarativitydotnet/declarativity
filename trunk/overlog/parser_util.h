@@ -21,6 +21,7 @@
 #include <map>
 #include "value.h"
 #include "val_str.h"
+#include <string>
 
 class OL_Lexer;
 
@@ -78,10 +79,13 @@ public:
 
 class Parse_Agg : public Parse_Expr {
 public:
-  enum Operator {MAX, MIN, COUNT};
+  string oper;
+
   static Parse_Expr* DONT_CARE;
 
-  Parse_Agg(Parse_Expr *v, Operator o, ValuePtr p)
+  Parse_Agg(Parse_Expr *v,
+            std::string o,
+            ValuePtr p)
     : Parse_Expr(v), oper(o), parameter(p)
   {};
 
@@ -89,8 +93,6 @@ public:
 
   virtual string toString();
   virtual string aggName();
-
-  Operator oper;
 
   // The parameter of the aggregate, if it's parametric
   ValuePtr parameter;
@@ -239,33 +241,21 @@ public:
   Parse_Bool *select;
 };
 
-class Parse_RangeFunction : public Parse_Term {
-public:
-  Parse_RangeFunction(Parse_Expr *v, Parse_Expr *s, Parse_Expr *e) 
-    : var(v), start(s), end(e) { };
-  virtual ~Parse_RangeFunction() { delete var; delete start; delete end; }
-
-  virtual string toString();
-  
-  Parse_Expr *var;
-  Parse_Expr *start;
-  Parse_Expr *end;
-};
-
-
 class Parse_AggTerm : public Parse_Term {
 public: 
-  Parse_AggTerm(Parse_Agg::Operator oper, 
+  Parse_AggTerm(string oper, 
 		Parse_ExprList *groupByFields, 
 		Parse_ExprList *aggFields, 
-		Parse_Term *baseTerm) :
-    _groupByFields(groupByFields),
-    _aggFields(aggFields), _baseTerm(baseTerm) { _oper = oper;};
+		Parse_Term *baseTerm)
+    : _groupByFields(groupByFields),
+      _aggFields(aggFields), _baseTerm(baseTerm),
+      _oper(oper)
+  { };
 
   Parse_ExprList *_groupByFields;
   Parse_ExprList *_aggFields; 
   Parse_Term *_baseTerm;
-  Parse_Agg::Operator _oper;
+  string _oper;
   virtual string toString();
 };
 

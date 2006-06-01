@@ -16,15 +16,16 @@
 #include "aggregate.h"
 
 Aggregate::Aggregate(string name,
-                     Table::MultAggregate aggregate)
+                     Table2::Aggregate aggregate)
   : Element(name, 0, 1),
     _aggregate(aggregate),
     _pullCallback(0),
     _pending(false)
 {
   // Place myself as a listener on the aggregate
-  _aggregate->addListener(boost::bind(&Aggregate::listener, this, _1));
+  _aggregate->listener(boost::bind(&Aggregate::listener, this, _1));
 }
+
 
 void
 Aggregate::listener(TuplePtr t)

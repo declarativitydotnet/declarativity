@@ -120,3 +120,6 @@ c. Debugging a rule. We need a functionality to monitor the different
 d. Ensure all user visible tuples arrive at the receiver.
 
 e. Better README!
+
+f. Make materializations for tuple table and rule exec table implicit.
+   We shouldn't require users to know how to index tuple tables.

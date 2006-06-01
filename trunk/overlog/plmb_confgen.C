@@ -16,8 +16,13 @@
 #include "trace.h"
 #include "cct.h"
 #include "ccr.h"
+#include "aggFactory.h"
 
 static std::map<void*, string> variables;
+
+////////////////////////////////////////////////////////////
+// Function to output into a dataflow graph specification
+////////////////////////////////////////////////////////////
 
 static string conf_comment(string comment)
 {
@@ -231,14 +236,19 @@ static string conf_function(string fn, A arg0, B arg1, C arg2, D arg3, E arg4)
   return oss.str();
 }
 
+
+
+
+
 Plmb_ConfGen::Plmb_ConfGen(OL_Context* ctxt, 
-			 Plumber::DataflowPtr conf, 
-			 bool dups, 
-			 bool debug, 
-			 bool cc,
-			 string filename,
-			 bool rTracing,
-                         std::ostream &s, bool e) 
+                           Plumber::DataflowPtr conf, 
+                           bool dups, 
+                           bool debug, 
+                           bool cc,
+                           string filename,
+                           bool rTracing,
+                           std::ostream &s,
+                           bool e) 
   :_conf(conf), _p2dl(s), _edit(e)
 {
   _ctxt = ctxt;
@@ -259,7 +269,6 @@ Plmb_ConfGen::Plmb_ConfGen(OL_Context* ctxt,
   else {
     _p2dl << "dataflow " << conf->name() << " {\n";
   }
-
 }
 
 
@@ -268,7 +277,9 @@ Plmb_ConfGen::~Plmb_ConfGen()
   fclose(_output);
 }
 
-void Plmb_ConfGen::initTracingState(bool rTracing)
+
+void
+Plmb_ConfGen::initTracingState(bool rTracing)
 {
   _ruleTracing = rTracing;
   _needTracingPortAtRR = false;
@@ -277,9 +288,10 @@ void Plmb_ConfGen::initTracingState(bool rTracing)
 }
 
 
-// call this for each udp element that we wish to hook up the same dataflow
-// if running only one, nodeID is the local host name,
-void Plmb_ConfGen::configurePlumber(boost::shared_ptr< Udp > udp, string nodeID)
+/** call this for each udp element that we wish to hook up the same
+    dataflow if running only one, nodeID is the local host name */
+void
+Plmb_ConfGen::configurePlumber(boost::shared_ptr< Udp > udp, string nodeID)
 {
   if (!_edit) {
     if (!_cc) {
@@ -301,9 +313,12 @@ void Plmb_ConfGen::configurePlumber(boost::shared_ptr< Udp > udp, string nodeID)
   // check to see if there are any errors in parsing
   if (_ctxt->errors.size() > 0) {
     ostringstream oss;
-    oss << "There are " << _ctxt->errors.size() 
+    oss << "There are "
+        << _ctxt->errors.size() 
 	<< " error(s) accumulated in the parser.\n";
-    for (unsigned int k = 0; k < _ctxt->errors.size(); k++) {
+    for (unsigned int k = 0;
+         k < _ctxt->errors.size();
+         k++) {
       OL_Context::Error* error = _ctxt->errors.at(k);
       oss << " => Parser error at line " << error->line_num 
 	  << " with error message \"" << error->msg << "\".\n";
@@ -311,13 +326,15 @@ void Plmb_ConfGen::configurePlumber(boost::shared_ptr< Udp > udp, string nodeID)
     error(oss.str());
     exit(-1);
   }
-
+  
   if (_ctxt->getRules()->size() == 0) {
     error("There are no rules to plan.\n");
   }
 
-  for (unsigned int k = 0; k < _ctxt->getRules()->size(); k++) {
-    _currentRule = _ctxt->getRules()->at(k);    
+  for (OL_Context::RuleList::iterator i = _ctxt->getRules()->begin();
+       i != _ctxt->getRules()->end();
+       i++) {
+    _currentRule = (*i);
     processRule(_currentRule, nodeID);
   }
 
@@ -339,7 +356,9 @@ void Plmb_ConfGen::configurePlumber(boost::shared_ptr< Udp > udp, string nodeID)
   }
 }
 
-void Plmb_ConfGen::genTappedDataFlow(string nodeID)
+
+void
+Plmb_ConfGen::genTappedDataFlow(string nodeID)
 {
   // hookup taps at the beginning and end of the rule strand with the tracer
   // for a given rule here..
@@ -350,8 +369,8 @@ void Plmb_ConfGen::genTappedDataFlow(string nodeID)
   string table_rule = "ruleExecTable";
   string table_tuple = "tupleTable";
 
-  TablePtr ruleExecTable = getTableByName(nodeID, table_rule);
-  TablePtr tupleTable = getTableByName(nodeID, table_tuple);
+  Table2Ptr ruleExecTable = getTableByName(nodeID, table_rule);
+  Table2Ptr tupleTable = getTableByName(nodeID, table_tuple);
 
   for (unsigned int k = 0; k < _ctxt->getRules()->size(); k++) {
     OL_Context::Rule *_cr = _ctxt->getRules()->at(k);
@@ -490,7 +509,9 @@ void Plmb_ConfGen::genTappedDataFlow(string nodeID)
   }
 }
 
-ElementSpecPtr Plmb_ConfGen::find_tap(int ruleNum, int beg_or_end)
+
+ElementSpecPtr
+Plmb_ConfGen::find_tap(int ruleNum, int beg_or_end)
 {
   std::map<int, ElementSpecPtr>::iterator result;
   ElementSpecPtr xx;
@@ -520,15 +541,43 @@ ElementSpecPtr Plmb_ConfGen::find_tap(int ruleNum, int beg_or_end)
 }
 
 
-void Plmb_ConfGen::clear()
+void
+Plmb_ConfGen::clear()
 {
   _udpReceivers.clear();
   _udpSenders.clear();
 }
 
 
-void Plmb_ConfGen::processRule(OL_Context::Rule *r, 
-			      string nodeID)
+Parse_Functor*
+Plmb_ConfGen::eventTerm(OL_Context::Rule* curRule)
+{
+  for (std::vector< Parse_Term* >::iterator i =
+         curRule->terms.begin();
+       i != curRule->terms.end();
+       i++) {
+    Parse_Functor* pf =
+      dynamic_cast<Parse_Functor*>(*i);
+    if (pf == NULL) {
+      continue;
+    }
+
+    string termName = pf->fn->name;
+    OL_Context::TableInfoMap::iterator _iterator =
+      _ctxt->getTableInfos()->find(termName);
+    if (_iterator == _ctxt->getTableInfos()->end()) {     
+      debugRule(curRule, "Found event term " + termName);
+      // an event
+      return pf;
+    }
+  }
+  return NULL;
+}
+
+
+void
+Plmb_ConfGen::processRule(OL_Context::Rule *r, 
+                          string nodeID)
 {
   debugRule(r, "Process rule " + r->toString() + "\n");  
   std::vector<JoinKey> joinKeys;
@@ -540,21 +589,21 @@ void Plmb_ConfGen::processRule(OL_Context::Rule *r,
   // AGGREGATES
   int aggField = r->head->aggregate(); 
   if (aggField >= 0) {
-    if (hasEventTerm(r)) {
+    // This contains an aggregate
+
+    // get the event term if it exists (i.e., a predicate that is not
+    // materialized).
+    Parse_Functor* theEventTerm = eventTerm(r);
+    if (theEventTerm != NULL) {
+      // We got it
       ostringstream oss;
       
-      // get the event term
-      Parse_Functor* eventTerm = getEventTerm(r);
-      
-      if (eventTerm == NULL) {
-	error("Cannot find event term", r);
-      }
-      checkFunctor(eventTerm, r);
+      checkFunctor(theEventTerm, r);
 
       if (numFunctors(r) <= 1) {
 	ostringstream oss;
 	oss << "Check that " 
-	    << eventTerm->fn->name << " is materialized";
+	    << theEventTerm->fn->name << " is materialized";
 	error(oss.str(), r);
       }
 
@@ -562,7 +611,8 @@ void Plmb_ConfGen::processRule(OL_Context::Rule *r,
       Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(r->head->arg(aggField));
       if (aggExpr == NULL) {
 	ostringstream oss;
-	oss << "Invalid aggregate field " << aggField << " for rule " << r->ruleID; 
+	oss << "Invalid aggregate field " << aggField
+            << " for rule " << r->ruleID; 
 	error(oss.str());
       }
 
@@ -571,17 +621,24 @@ void Plmb_ConfGen::processRule(OL_Context::Rule *r,
 			       aggField + 1, r->head->fn->name));
       agg_spec = _conf->addElement(agg_el);
       _p2dl << conf_assign(agg_spec.get(), 
-                           conf_function("Aggwrap", "aggwrap_"+r->ruleID, aggExpr->aggName(), 
+                           conf_function("Aggwrap",
+                                         "aggwrap_"+r->ruleID,
+                                         aggExpr->aggName(), 
                                          aggField + 1, r->head->fn->name));
-      for (int k = 0; k < r->head->args(); k++) {
+      for (int k = 0;
+           k < r->head->args();
+           k++) {
 	if (k != aggField) {
-	  // for each groupby value, figure out it's 
-	  // location in the initial event tuple, 
-	  // if not present, throw an error
-	  for (int j = 0; j < eventTerm->args(); j++) {
-	    if (r->head->arg(k)->toString() == eventTerm->arg(j)->toString()) {
+	  // for each groupby value, figure out its location in the
+	  // initial event tuple, if not present, throw an error
+	  for (int j = 0;
+               j < theEventTerm->args();
+               j++) {
+	    if (r->head->arg(k)->toString() ==
+                theEventTerm->arg(j)->toString()) {
 	      agg_el->registerGroupbyField(j);
-              _p2dl << conf_call(agg_spec.get(), conf_function("registerGroupbyField", j))
+              _p2dl << conf_call(agg_spec.get(),
+                                 conf_function("registerGroupbyField", j))
                     << ";" << std::endl;
 	    }
 	  }
@@ -628,9 +685,7 @@ void Plmb_ConfGen::processRule(OL_Context::Rule *r,
     
   if (r->deleteFlag == true) {
     debugRule(r, "Delete " + r->head->fn->name + " for rule \n");
-    TablePtr tableToDelete = getTableByName(nodeID, r->head->fn->name);
-    OL_Context::TableInfo* ti 
-      = _ctxt->getTableInfos()->find(r->head->fn->name)->second;
+    Table2Ptr tableToDelete = getTableByName(nodeID, r->head->fn->name);
     
     genPrintElement("PrintBeforeDelete:" + r->ruleID + ":" +nodeID);
     genPrintWatchElement("PrintWatchDelete:" + r->ruleID + ":" +nodeID);
@@ -642,15 +697,12 @@ void Plmb_ConfGen::processRule(OL_Context::Rule *r,
     hookUp(pullPush, 0);
     
     ElementSpecPtr deleteElement =
-      _conf->addElement(ElementPtr(new Delete("Delete:" + r->ruleID + ":" + nodeID,
-						 tableToDelete, 
-						 ti->primaryKeys.at(0), 
-						 ti->primaryKeys.at(0))));
+      _conf->addElement(ElementPtr(new Delete("Delete:" + r->ruleID
+                                              + ":" + nodeID,
+                                              tableToDelete)));
     _p2dl << conf_assign(deleteElement.get(), 
                          conf_function("Delete", "delete_"+r->ruleID,
-						 conf_var(tableToDelete.get()), 
-						 ti->primaryKeys.at(0), 
-						 ti->primaryKeys.at(0) ));
+                                       conf_var(tableToDelete.get())));
     hookUp(deleteElement, 0);
     
     if (_isPeriodic == false && _pendingReceiverSpec) {
@@ -694,6 +746,419 @@ void Plmb_ConfGen::processRule(OL_Context::Rule *r,
   //_udpSenders.push_back(_currentElementChain.back()); 
   //_udpSendersPos.push_back(_currentPositionIndex); 
 }
+
+
+void
+Plmb_ConfGen::checkFunctor(Parse_Functor* functor,
+                           OL_Context::Rule* rule)
+{
+  if (functor->fn->loc == "") {
+    error("\"" + functor->fn->name + "\" lacks a location specifier", rule);
+  }
+
+  if (functor->fn->name == "periodic") { 
+    if (functor->args() < 3) {
+      error("Make sure periodic predicate has at least "
+            "three fields (NI,E,duration)", rule);
+    }
+    return; 
+  }
+
+  bool validLoc = false;
+  for (int k = 0; k < functor->args(); k++) {
+    if (functor->arg(k)->toString() == functor->fn->loc) {
+      validLoc = true;
+    }
+  }
+
+  if (validLoc == false) {
+    error("Invalid location specifier in predicate " + functor->toString(), rule);
+  }
+}
+
+
+void 
+Plmb_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule, 
+                                         string nodeID, 
+                                         FieldNamesTracker* baseNamesTracker)
+{
+  Parse_Functor* baseFunctor;
+  // figure first, which term is the base term. 
+  // Assume there is only one for now. Support more in future.
+  for (unsigned int j = 0;
+       j < currentRule->terms.size();
+       j++) {    
+    Parse_Functor* currentFunctor 
+      = dynamic_cast<Parse_Functor* > (currentRule->terms.at(j));
+    if (currentFunctor == NULL) {
+      continue;
+    }
+    baseFunctor = currentFunctor;
+    checkFunctor(baseFunctor, currentRule);
+  }
+
+  baseNamesTracker->initialize(baseFunctor);
+
+  Table2::Key groupByFields;      
+  
+  FieldNamesTracker* aggregateNamesTracker = new FieldNamesTracker();
+  Parse_Functor* pf = currentRule->head;
+  string headTableName = pf->fn->name;
+
+  for (int k = 0;
+       k < pf->args();
+       k++) {
+    // go through the functor head, but skip the aggField itself    
+    Parse_Var* pv = dynamic_cast< Parse_Var* > (pf->arg(k));
+
+    if (pv == NULL) {
+      continue;
+    }
+    
+    int pos = baseNamesTracker->fieldPosition(pv->toString());
+
+    if (k != -1 && k != pf->aggregate()) {
+      groupByFields.push_back((uint) pos + 1);
+      aggregateNamesTracker->fieldNames.
+        push_back(baseNamesTracker->fieldNames.at(pos));
+    }
+  }
+
+  Parse_Agg* pa = dynamic_cast<Parse_Agg* > (pf->arg(pf->aggregate()));
+
+  string aggVarname = pa->v->toString();
+
+  aggregateNamesTracker->fieldNames.push_back(aggVarname);
+
+  int aggFieldBaseTable =
+    baseNamesTracker->fieldPosition(aggVarname) + 1;
+  // What does this mean for COUNT?
+  // aggFieldBaseTable = groupByFields.at(0);
+
+  // get the table, create the index
+  Table2Ptr aggTable = getTableByName(nodeID, baseFunctor->fn->name);  
+  secondaryIndex(aggTable, groupByFields, nodeID);  
+
+  Table2::Aggregate tableAgg =
+    aggTable->aggregate(groupByFields,
+                        aggFieldBaseTable, // the agg field
+                        pa->oper);
+  if (tableAgg == NULL) {
+    // Ooops, I couldn't create an aggregate. Complain.
+    error("Could not create aggregate '" + pa->oper
+          + "'. I only know aggregates " +
+          AggFactory::aggList());
+    return;
+  }
+
+  _p2dl << conf_assign(tableAgg, 
+                       conf_call(aggTable.get(), 
+                                 conf_function("aggregate",
+                                               conf_UIntVec(groupByFields), 
+                                               aggFieldBaseTable,
+                                               pa->oper), false));
+
+  ElementSpecPtr aggElement =
+    _conf->addElement(ElementPtr(new Aggregate("Agg:"+currentRule->ruleID +
+					       ":" + nodeID, tableAgg)));
+  _p2dl << conf_assign(aggElement.get(), 
+                       conf_function("Aggregate", 
+                                     "agg_rule_" +
+                                     currentRule->ruleID, 
+                                     conf_var(tableAgg)));
+   
+  ostringstream pelTransformStr;
+  pelTransformStr << "'" << "aggResult:" << currentRule->ruleID << "' pop";
+  for (uint k = 0;
+       k < aggregateNamesTracker->fieldNames.size();
+       k++) {
+    pelTransformStr << " $" << k << " pop";
+  }
+  debugRule(currentRule, "Agg Pel Expr " +
+            pelTransformStr.str()+ "\n");
+
+  // apply PEL to add a table name
+  ElementSpecPtr addTableName =
+    _conf->addElement(ElementPtr(new PelTransform("Aggregation:"
+                                                  + currentRule->ruleID
+                                                  + ":" + nodeID,
+                                                  pelTransformStr.str())));
+  _p2dl << conf_assign(addTableName.get(), 
+                       conf_function("PelTransform", 
+                                     "agg_rule_" + currentRule->ruleID, 
+                                     pelTransformStr.str()));
+
+  hookUp(aggElement, 0, addTableName, 0);
+
+  genPrintElement("PrintAgg:" + currentRule->ruleID + ":" + nodeID);
+  genPrintWatchElement("PrintWatchAgg:" + currentRule->ruleID + ":" + nodeID);
+
+
+  genProjectHeadElements(currentRule, nodeID, aggregateNamesTracker);
+  registerUDPPushSenders(_currentElementChain.back(), currentRule, nodeID);
+  //_udpSenders.push_back(_currentElementChain.back());
+  //_udpSendersPos.push_back(1);
+
+  registerReceiverTable(currentRule, headTableName);
+}
+
+
+/**
+   XXX. Are we maintaining the right order in the join keys?  We should
+   make sure that the join keys of the two relations define a projection
+   from the probe tuple to the base tuple */
+Table2::Key
+Plmb_ConfGen::FieldNamesTracker::
+matchingJoinKeys(std::vector< string > otherArgNames)
+{
+  // figure out the matching on other side. Assuming that
+  // there is only one matching key for now
+  Table2::Key toRet;
+  for (unsigned int k = 0;
+       k < otherArgNames.size();
+       k++) {
+    string nextStr = otherArgNames.at(k);
+    if (fieldPosition(nextStr) != -1) {
+      // exists
+      toRet.push_back(k + 1);   // we always add 1 for the tuple name,
+                                // which always occupies position 0 in a
+                                // tuple's fields.
+    }
+  }  
+  return toRet;
+}
+
+
+void
+Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule, 
+                               Parse_Functor* eventFunctor, 
+                               Parse_Term* baseTableTerm, 
+                               string nodeID, 	     
+                               FieldNamesTracker* probeNames, 
+                               FieldNamesTracker* baseProbeNames, 
+                               int joinOrder,
+                               b_cbv *comp_cb)
+{
+  // probe the right hand side Here's where the join happens. Left join
+  // keys contains the field numbers on the left relation that are to be
+  // matched with their equivalents on the right relation. Similarly,
+  // the right join keys contains the field numbers on the right
+  // relation that are to be matched with their equivalents on the left
+  // relation.  The two vectors are not one-to-one matched (in that the
+  // first left field number may match the third right field
+  // number). But the sizes of the vectors must be the same.
+  Table2::Key leftJoinKeys 
+    = baseProbeNames->matchingJoinKeys(probeNames->fieldNames);
+  Table2::Key rightJoinKeys 
+    = probeNames->matchingJoinKeys(baseProbeNames->fieldNames);
+  
+  Parse_Functor* pf =
+    dynamic_cast<Parse_Functor*>(baseTableTerm);
+
+  string baseTableName;
+  if (pf != NULL) {
+    baseTableName = pf->fn->name;
+    checkFunctor(pf, curRule);
+  }
+
+  
+
+  if (leftJoinKeys.size() == 0 || rightJoinKeys.size() == 0) {
+    error("No matching join keys " + eventFunctor->fn->name + " " + 
+	  baseTableName + " ", curRule);
+  }
+
+  // add one to offset for table name. Join the first matching key.
+  Table2Ptr probeTable = getTableByName(nodeID, baseTableName);
+
+  // should we match on the primary key or on a secondary index?  We'll
+  // match on the primary key if the right join key is the primary key
+  // of the left table.
+  OL_Context::TableInfo* tableInfo 
+    = _ctxt->getTableInfos()->find(baseTableName)->second;
+  ostringstream oss;
+  oss << "NoNull:" << curRule->ruleID << ":" << joinOrder << ":" << nodeID;
+  
+  ElementSpecPtr noNull 
+    = _conf->addElement(ElementPtr(new NoNullField(oss.str(), 1)));
+  _p2dl << conf_assign(noNull.get(), 
+                       conf_function("NoNullField", "n_noNull", 1));
+  
+  ElementSpecPtr last_el(new ElementSpec
+                         (ElementPtr(new Slot("dummySlotProbeElements"))));
+  
+  if (tableInfo->primaryKeys == rightJoinKeys) {
+    // use the primary key
+    ostringstream oss;
+    oss << "Lookup2:" << curRule->ruleID << ":" << joinOrder << ":" << nodeID; 
+    last_el =
+      _conf->addElement(ElementPtr(new Lookup2(oss.str(),
+                                               probeTable,
+                                               leftJoinKeys,
+                                               rightJoinKeys, 
+                                               *comp_cb)));
+    if (*comp_cb == 0 || conf_var(comp_cb) == "unknown") {
+      _p2dl << conf_assign(last_el.get(), 
+                           conf_function("Lookup2", oss.str(),
+                                         conf_var(probeTable.get()),
+                                         conf_UIntVec(leftJoinKeys),
+                                         conf_UIntVec(rightJoinKeys)));
+    }
+    else {
+      _p2dl << conf_assign(last_el.get(), 
+                           conf_function("Lookup2", oss.str(),
+                                         conf_var(probeTable.get()),
+                                         conf_UIntVec(leftJoinKeys),
+                                         conf_UIntVec(rightJoinKeys),
+                                         conf_var(comp_cb)));
+    }
+    std::cout << "CALLBACK VARIABLE LOOKUP: " << *comp_cb << std::endl;
+  } else {
+    // Can't use the primary key of the left table.  Just use a
+    // secondary and ensure it exists below.
+
+    ostringstream oss;
+    oss << "Lookup2:" << curRule->ruleID << ":" << joinOrder << ":" << nodeID; 
+    last_el =
+      _conf->addElement(ElementPtr(new Lookup2(oss.str(),
+                                               probeTable,
+                                               leftJoinKeys, 
+                                               rightJoinKeys,
+                                               *comp_cb)));
+
+    if (*comp_cb == 0 || conf_var(comp_cb) == "unknown") {
+      _p2dl << conf_assign(last_el.get(), 
+                           conf_function("Lookup2",
+                                         oss.str(),
+                                         conf_var(probeTable.get()),
+                                         conf_UIntVec(leftJoinKeys),
+                                         conf_UIntVec(rightJoinKeys)));
+    }
+    else {
+      _p2dl << conf_assign(last_el.get(), 
+                           conf_function("Lookup2",
+                                         oss.str(),
+                                         conf_var(probeTable.get()),
+                                         conf_UIntVec(leftJoinKeys),
+                                         conf_UIntVec(rightJoinKeys),
+                                         conf_var(comp_cb)));
+    }
+    
+    secondaryIndex(probeTable, rightJoinKeys, nodeID);
+  }
+  
+ 
+  int numFieldsProbe = probeNames->fieldNames.size();
+  debugRule(curRule, "Probe before merge " + probeNames->toString() + "\n");
+  probeNames->mergeWith(baseProbeNames->fieldNames); 
+  debugRule(curRule, "Probe after merge " + probeNames->toString() + "\n");
+
+  if (_isPeriodic == false && _pendingRegisterReceiver) {
+    // connecting to udp receiver later
+    _pendingReceiverSpec = last_el;
+    _pendingRegisterReceiver = false;
+  } else {
+    // connecting now to prior element
+    hookUp(last_el, 0);  
+  }
+
+  // ruleTracing: add a tap element for each such join element
+  // to find out the precondition
+  if(_ruleTracing){
+    ElementSpecPtr tap = createTapElement(curRule);
+    hookUp(last_el, 0, tap, 0);
+    hookUp(tap, 0, noNull, 0);
+  }
+  else {
+    hookUp(last_el, 0, noNull, 0);
+  }
+
+  for (uint k = 1; k < leftJoinKeys.size(); k++) {
+    int leftField = leftJoinKeys.at(k);
+    int rightField = rightJoinKeys.at(k);
+    ostringstream selectionPel;
+    selectionPel << "$0 " << (leftField+1) << " field " << " $1 " 
+		 << rightField+1 << " field ==s not ifstop $0 pop $1 pop";
+
+    debugRule(curRule, "Join selections " + selectionPel.str() + "\n");
+
+    ostringstream oss;
+    oss << "joinSelections_" << curRule->ruleID << "_"
+	<< joinOrder << "_" << k;
+    
+    ElementSpecPtr joinSelections =
+      _conf->addElement(ElementPtr(new PelTransform(oss.str(), 
+				                    selectionPel.str())));    
+    _p2dl << conf_assign(joinSelections.get(), 
+                conf_function("PelTransform", "joinSelections", selectionPel.str()));
+    hookUp(joinSelections, 0);
+  }
+
+  // Take the joined tuples and produce the resulting path
+  // form the pel projection. 
+  //Keep all fields on left, all fields on right except the join keys
+  ostringstream pelProject;
+  pelProject << "'join:" << eventFunctor->fn->name << ":" << baseTableName << ":" 
+	     << curRule->ruleID << ":" << nodeID << "' pop "; // table name
+  for (int k = 0; k < numFieldsProbe; k++) {
+    pelProject << "$0 " << k+1 << " field pop ";
+  }
+  for (uint k = 0; k < baseProbeNames->fieldNames.size(); k++) {
+    bool joinKey = false;
+    for (uint j = 0; j < rightJoinKeys.size(); j++) {
+      if (k == (uint) rightJoinKeys.at(j)) { // add one for table name
+	joinKey = true;
+	break;
+      }
+    }
+    if (!joinKey) {
+      pelProject << "$1 " << k+1 << " field pop ";
+    }
+  }
+
+  string pelProjectStr = pelProject.str();
+  ostringstream oss1; 
+  oss1 << "joinPel_" << curRule->ruleID << "_"
+      << joinOrder << "_" << nodeID;
+
+  ElementSpecPtr transS 
+    = _conf->addElement(ElementPtr(new PelTransform(oss1.str(), pelProjectStr)));
+  _p2dl << conf_assign(transS.get(), 
+              conf_function("PelTransform", "joinPel", pelProjectStr));
+
+  delete baseProbeNames;
+
+  hookUp(transS, 0);
+}
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+// Clean up boundary
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+
+
+
 
 //////////////////// Dataflow Edit Finalizer /////////////////////
 void
@@ -791,11 +1256,10 @@ Plmb_ConfGen::genEditFinalize(string nodeID)
                            conf_function("DDuplicateConservative", 
                                          dup_name,
                                          numElementsToReceive));
-      // materialize table only if it is declared and has lifetime>0
+      // materialize table only if it is declared
       OL_Context::TableInfoMap::iterator _iterator 
         = _ctxt->getTableInfos()->find(tableName);
-      if (_iterator != _ctxt->getTableInfos()->end() 
-          && _iterator->second->timeout != 0) {
+      if (_iterator != _ctxt->getTableInfos()->end()) {
         ElementSpecPtr insertS = _conf->addElement(
           ElementPtr(new Insert("insert",  getTableByName(nodeID, tableName))));
         _p2dl << conf_assign(insertS.get(), 
@@ -1009,11 +1473,10 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
     _p2dl << conf_assign(duplicator.get(), 
              conf_function("DuplicateConservative", "dupCons", 
                            numElementsToReceive));
-    // materialize table only if it is declared and has lifetime>0
+    // materialize table only if it is declared
     OL_Context::TableInfoMap::iterator _iterator 
       = _ctxt->getTableInfos()->find(tableName);
-    if (_iterator != _ctxt->getTableInfos()->end() 
-	&& _iterator->second->timeout != 0) {
+    if (_iterator != _ctxt->getTableInfos()->end()) {
       ElementSpecPtr insertS 
 	= _conf->addElement(ElementPtr(new Insert("Insert:"+ tableName + ":" + nodeID,  
 				     getTableByName(nodeID, tableName))));
@@ -1347,7 +1810,7 @@ Plmb_ConfGen::registerReceiver(string tableName,
 // regiser a new receiver for a particular table name
 // use to later hook up the demuxer
 void Plmb_ConfGen::registerReceiverTable(OL_Context::Rule* rule, 
-					string tableName)
+                                         string tableName)
 {  
   ReceiverInfoMap::iterator _iterator = _udpReceivers.find(tableName);
   if (_iterator == _udpReceivers.end()) {
@@ -1876,195 +2339,14 @@ ElementSpecPtr Plmb_ConfGen::createTapElement(OL_Context::Rule *curRule)
   return tap;
 }
 
-void Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule, 
-				   Parse_Functor* eventFunctor, 
-				   Parse_Term* baseTableTerm, 
-				   string nodeID, 	     
-				   FieldNamesTracker* probeNames, 
-				   FieldNamesTracker* baseProbeNames, 
-				   int joinOrder,
-				   b_cbv *comp_cb)
-{
-  // probe the right hand side
-  // Here's where the join happens 
-  std::vector<int> leftJoinKeys 
-    = baseProbeNames->matchingJoinKeys(probeNames->fieldNames);
-  std::vector<int> rightJoinKeys 
-    =  probeNames->matchingJoinKeys(baseProbeNames->fieldNames);
-
-  Parse_Functor* pf = dynamic_cast<Parse_Functor*>(baseTableTerm);
-  Parse_RangeFunction* pr 
-    = dynamic_cast<Parse_RangeFunction*>(baseTableTerm);    
-
-  string baseTableName;
-  if (pf != NULL) {
-    baseTableName = pf->fn->name;
-    checkFunctor(pf, curRule);
-  }
-  if (pr != NULL) {
-    baseTableName = "range" + curRule->ruleID;
-  }
-
-  
-
-  if (leftJoinKeys.size() == 0 || rightJoinKeys.size() == 0) {
-    error("No matching join keys " + eventFunctor->fn->name + " " + 
-	  baseTableName + " ", curRule);
-  }
-
-  // add one to offset for table name. Join the first matching key
-  int leftJoinKey = leftJoinKeys.at(0) + 1;
-  int rightJoinKey = rightJoinKeys.at(0) + 1;
-
-  TablePtr probeTable = getTableByName(nodeID, baseTableName);
-
-  // should we use a uniqLookup or a multlookup? 
-  // Check that the rightJoinKey is the primary key
-  OL_Context::TableInfo* tableInfo 
-    = _ctxt->getTableInfos()->find(baseTableName)->second;
-  ostringstream oss;
-  oss << "NoNull:" << curRule->ruleID << ":" << joinOrder << ":" << nodeID;
-
-  ElementSpecPtr noNull 
-    = _conf->addElement(ElementPtr(new NoNullField(oss.str(), 1)));
-  _p2dl << conf_assign(noNull.get(), 
-                       conf_function("NoNullField", "n_noNull", 1));
-
-  ElementSpecPtr last_el(new ElementSpec(ElementPtr(new Slot("dummySlotProbeElements"))));
- 
-  if (tableInfo->primaryKeys.size() == 1 && 
-      tableInfo->primaryKeys.at(0) == rightJoinKey) {
-    // use a unique index
-    ostringstream oss;
-    oss << "UniqueLookup:" << curRule->ruleID << ":" << joinOrder << ":" << nodeID; 
-    last_el =
-      _conf->addElement(ElementPtr(new UniqueLookup(oss.str(),
-						    probeTable,
-						    leftJoinKey, 
-						    rightJoinKey, 
-						    *comp_cb)));
-    if (*comp_cb == 0 || conf_var(comp_cb) == "unknown") {
-      _p2dl << conf_assign(last_el.get(), 
-                conf_function("UniqueLookup", "uniqueLookup", conf_var(probeTable.get()),
-                              leftJoinKey, rightJoinKey));
-    }
-    else {
-      _p2dl << conf_assign(last_el.get(), 
-                conf_function("UniqueLookup", "uniqueLookup", conf_var(probeTable.get()),
-                              leftJoinKey, rightJoinKey, conf_var(comp_cb)));
-    }
-    std::cout << "CALLBACK VARIABLE LOOKUP: " << *comp_cb << std::endl;
-  } else {
-    ostringstream oss;
-    oss << "MultLookup:" << curRule->ruleID << ":" << joinOrder << ":" << nodeID; 
-    last_el =
-      _conf->addElement(ElementPtr(new MultLookup(oss.str(),
-						  probeTable,
-						  leftJoinKey, 
-						  rightJoinKey, *comp_cb)));
-    if (*comp_cb == 0 || conf_var(comp_cb) == "unknown") {
-      _p2dl << conf_assign(last_el.get(), 
-                conf_function("MultLookup", "multLookup", conf_var(probeTable.get()),
-                              leftJoinKey, rightJoinKey));
-    }
-    else {
-      _p2dl << conf_assign(last_el.get(), 
-                conf_function("MultLookup", "multLookup", conf_var(probeTable.get()),
-                              leftJoinKey, rightJoinKey, conf_var(comp_cb)));
-    }
-    
-    addMultTableIndex(probeTable, rightJoinKey, nodeID);
-  }
-  
- 
-  int numFieldsProbe = probeNames->fieldNames.size();
-  debugRule(curRule, "Probe before merge " + probeNames->toString() + "\n");
-  probeNames->mergeWith(baseProbeNames->fieldNames); 
-  debugRule(curRule, "Probe after merge " + probeNames->toString() + "\n");
-
-  if (_isPeriodic == false && _pendingRegisterReceiver) {
-    // connecting to udp receiver later
-    _pendingReceiverSpec = last_el;
-    _pendingRegisterReceiver = false;
-  } else {
-    // connecting now to prior element
-    hookUp(last_el, 0);  
-  }
-
-  // ruleTracing: add a tap element for each such join element
-  // to find out the precondition
-  if(_ruleTracing){
-    ElementSpecPtr tap = createTapElement(curRule);
-    hookUp(last_el, 0, tap, 0);
-    hookUp(tap, 0, noNull, 0);
-  }
-  else
-    hookUp(last_el, 0, noNull, 0);
-
-  for (uint k = 1; k < leftJoinKeys.size(); k++) {
-    int leftField = leftJoinKeys.at(k);
-    int rightField = rightJoinKeys.at(k);
-    ostringstream selectionPel;
-    selectionPel << "$0 " << (leftField+1) << " field " << " $1 " 
-		 << rightField+1 << " field ==s not ifstop $0 pop $1 pop";
-
-    debugRule(curRule, "Join selections " + selectionPel.str() + "\n");
-
-    ostringstream oss;
-    oss << "joinSelections_" << curRule->ruleID << "_"
-	<< joinOrder << "_" << k;
-    
-    ElementSpecPtr joinSelections =
-      _conf->addElement(ElementPtr(new PelTransform(oss.str(), 
-				                    selectionPel.str())));    
-    _p2dl << conf_assign(joinSelections.get(), 
-                conf_function("PelTransform", "joinSelections", selectionPel.str()));
-    hookUp(joinSelections, 0);
-  }
-
-  // Take the joined tuples and produce the resulting path
-  // form the pel projection. 
-  //Keep all fields on left, all fields on right except the join keys
-  ostringstream pelProject;
-  pelProject << "'join:" << eventFunctor->fn->name << ":" << baseTableName << ":" 
-	     << curRule->ruleID << ":" << nodeID << "' pop "; // table name
-  for (int k = 0; k < numFieldsProbe; k++) {
-    pelProject << "$0 " << k+1 << " field pop ";
-  }
-  for (uint k = 0; k < baseProbeNames->fieldNames.size(); k++) {
-    bool joinKey = false;
-    for (uint j = 0; j < rightJoinKeys.size(); j++) {
-      if (k == (uint) rightJoinKeys.at(j)) { // add one for table name
-	joinKey = true;
-	break;
-      }
-    }
-    if (!joinKey) {
-      pelProject << "$1 " << k+1 << " field pop ";
-    }
-  }
-
-  string pelProjectStr = pelProject.str();
-  ostringstream oss1; 
-  oss1 << "joinPel_" << curRule->ruleID << "_"
-      << joinOrder << "_" << nodeID;
-
-  ElementSpecPtr transS 
-    = _conf->addElement(ElementPtr(new PelTransform(oss1.str(), pelProjectStr)));
-  _p2dl << conf_assign(transS.get(), 
-              conf_function("PelTransform", "joinPel", pelProjectStr));
-
-  delete baseProbeNames;
-
-  hookUp(transS, 0);
-}
 
 
 
-void Plmb_ConfGen::genJoinElements(OL_Context::Rule* curRule, 
-				  string nodeID, 
-				  FieldNamesTracker* namesTracker,
-				  boost::shared_ptr<Aggwrap> agg_el)
+void
+Plmb_ConfGen::genJoinElements(OL_Context::Rule* curRule, 
+                              string nodeID, 
+                              FieldNamesTracker* namesTracker,
+                              boost::shared_ptr<Aggwrap> agg_el)
 {
   // identify the events, use that to probe the other matching tables
   Parse_Functor* eventFunctor;
@@ -2089,46 +2371,12 @@ void Plmb_ConfGen::genJoinElements(OL_Context::Rule* curRule,
 	  _pendingReceiverTable = functorName;
 	}
 	if (eventFound == true) {
-	  error("There can be only one event predicate in a rule. Check all the predicates ", curRule);
+	  error("There can be only one event predicate "
+                "in a rule. Check all the predicates ", curRule);
 	}
 	eventFunctor = pf;
 	eventFound = true;
       } 
-    }
-
-    // check if range, if so, create a table, add to baseFunctors
-    Parse_RangeFunction* pr 
-      = dynamic_cast<Parse_RangeFunction*>(curRule->terms.at(k));    
-    if (pr != NULL) {
-      // create table for range. Initialize with values      
-      baseFunctors.push_back(pr);
-
-      int32_t low = 0, high = 0;
-      low = Val_Int32::cast(pr->start->v);
-      high = Val_Int32::cast(pr->end->v);
-
-      OL_Context::TableInfo  *tableInfo = new OL_Context::TableInfo();
-      tableInfo->tableName = "range" + curRule->ruleID;
-      tableInfo->timeout = -1; // never expire
-      tableInfo->size = high - low + 1;
-      tableInfo->primaryKeys.push_back(2);
-      _ctxt->getTableInfos()->insert(std::make_pair(tableInfo->tableName, 
-						    tableInfo));
-      
-      string newRangeTableName = nodeID + ":" + tableInfo->tableName;
-      TablePtr rangeTable(new Table(tableInfo->tableName, (high - low + 1)));
-      rangeTable->add_unique_index(2);
-      addMultTableIndex(rangeTable, 1, nodeID);
-      _tables.insert(std::make_pair(newRangeTableName, rangeTable));         
- 
-      for (int x = low; x <= high; x++) {
-	TuplePtr tuple = Tuple::mk();
-	tuple->append(Val_Str::mk(tableInfo->tableName));
-	tuple->append(Val_Str::mk(nodeID));
-	tuple->append(Val_Int32::mk(x));
-	tuple->freeze();
-	rangeTable->insert(tuple);
-      }
     }
   }
   if (_isPeriodic == false) {
@@ -2139,7 +2387,9 @@ void Plmb_ConfGen::genJoinElements(OL_Context::Rule* curRule,
   } else {
     debugRule(curRule, "Periodic joins " + namesTracker->toString() + "\n");
   }
-  for (uint k = 0; k < baseFunctors.size(); k++) {    
+  for (uint k = 0;
+       k < baseFunctors.size();
+       k++) {    
     Parse_Functor* pf = dynamic_cast<Parse_Functor*>(baseFunctors.at(k));
     
     if (pf != NULL && pf->fn->name == eventFunctor->fn->name) { continue; } 
@@ -2179,33 +2429,13 @@ void Plmb_ConfGen::genJoinElements(OL_Context::Rule* curRule,
 }
 
 
-void Plmb_ConfGen::addMultTableIndex(TablePtr table, int fn, string nodeID)
-{
-  ostringstream uniqStr;
-  uniqStr << table->name << ":" << fn << ":" << nodeID;
-  if (_multTableIndices.find(uniqStr.str()) == _multTableIndices.end()) {
-    // not there yet
-    table->add_multiple_index(fn);
-    _p2dl << conf_call(table.get(), conf_function("add_multiple_index", fn), false)
-          << ";" << std::endl;
-    _multTableIndices.insert(std::make_pair(uniqStr.str(), uniqStr.str()));
-    std::cout << "AddMultTableIndex: Mult index added " << uniqStr.str() 
-	      << "\n";
-  } else {
-    std::cout << "AddMultTableIndex: Mult index already exists " 
-	      << uniqStr.str() << "\n";
-  }
-}
-
-
-
 void
-Plmb_ConfGen::addMultTableIndex(TablePtr table,
-                                std::vector< unsigned > key,
-                                string nodeID)
+Plmb_ConfGen::secondaryIndex(Table2Ptr table,
+                             Table2::Key key,
+                             string nodeID)
 {
   ostringstream uniqStr;
-  uniqStr << table->name << ":";
+  uniqStr << table->name() << ":";
   std::vector< unsigned >::iterator iter = key.begin();
   while (iter != key.end()) {
     uniqStr << (*iter) << "_";
@@ -2214,16 +2444,11 @@ Plmb_ConfGen::addMultTableIndex(TablePtr table,
   uniqStr << ":" << nodeID;
   if (_multTableIndices.find(uniqStr.str()) == _multTableIndices.end()) {
     // not there yet
-    table->add_multiple_index(key);
-
-    ////////////////XXXXXXXXXXXXXXXXXXXXXXx
-    ////////////////This cannot be done correctly right now due to the
-    ////////////////current conf functions.  Doesn't make sense to fix
-    ////////////////this now since this is a stop-gap measure. To make
-    ////////////////do for now, this is only creating a multiple index
-    ////////////////on the first secondary field.
-    _p2dl << conf_call(table.get(), conf_function("add_multiple_index",
-                                                  key.at(0)),
+    table->secondaryIndex(key);
+    
+    _p2dl << conf_call(table.get(),
+                       conf_function("add_multiple_index",
+                                     conf_UIntVec(key)),
                        false)
           << ";"
           << std::endl;
@@ -2238,132 +2463,8 @@ Plmb_ConfGen::addMultTableIndex(TablePtr table,
 
 
 
-void 
-Plmb_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule, 
-					string nodeID, 
-					FieldNamesTracker* baseNamesTracker)
-{
-
-  Parse_Functor* baseFunctor;
-  // figure first, which term is the base term. 
-  // Assume there is only one for now. Support more in future.
-  for (unsigned int j = 0; j < currentRule->terms.size(); j++) {    
-    Parse_Functor* currentFunctor 
-      = dynamic_cast<Parse_Functor* > (currentRule->terms.at(j));    
-    if (currentFunctor == NULL) {
-      continue;
-    }
-    baseFunctor = currentFunctor;
-    checkFunctor(baseFunctor, currentRule);
-  }
-
-  baseNamesTracker->initialize(baseFunctor);
-
-  std::vector<unsigned int> groupByFields;      
-  
-  FieldNamesTracker* aggregateNamesTracker = new FieldNamesTracker();
-  Parse_Functor* pf = currentRule->head;
-  string headTableName = pf->fn->name;
-
-  for (int k = 0; k < pf->args(); k++) {
-    // go through the functor head, but skip the aggField itself    
-    Parse_Var* pv = dynamic_cast<Parse_Var* > (pf->arg(k));
-    if (pv == NULL) { continue; }
-    int pos = baseNamesTracker->fieldPosition(pv->toString());
-    if (k != -1 && k != pf->aggregate()) {
-      groupByFields.push_back((uint) pos + 1);
-      aggregateNamesTracker->fieldNames.push_back(baseNamesTracker->fieldNames.at(pos));
-    }
-  }
-  Parse_Agg* pa = dynamic_cast<Parse_Agg* > (pf->arg(pf->aggregate()));
-
-  string aggVarname = pa->v->toString();
-
-  aggregateNamesTracker->fieldNames.push_back(aggVarname);      
-  int aggFieldBaseTable = -1;
-  Table::AggregateFunction& af = Table::agg_min();
-  
-  if (pa->oper == Parse_Agg::MIN) {
-    // aggregate for min
-    aggFieldBaseTable = baseNamesTracker->fieldPosition(aggVarname) + 1;
-    af = Table::agg_min();
-    _p2dl << conf_assign(&af, "call Table.agg_min()");
-  } 
-  if (pa->oper == Parse_Agg::MAX) {
-    // aggregate for min
-    aggFieldBaseTable = baseNamesTracker->fieldPosition(aggVarname) + 1;
-    af = Table::agg_max();
-    _p2dl << conf_assign(&af, "call Table.agg_max()");
-  } 
-
-  if (pa->oper == Parse_Agg::COUNT) {
-    // aggregate for min
-    aggFieldBaseTable = groupByFields.at(0);
-    af = Table::agg_count();
-    _p2dl << conf_assign(&af, "call Table.agg_count()");
-  } 
-  
-  // get the table, create the index
-  TablePtr aggTable = getTableByName(nodeID, baseFunctor->fn->name);  
-  addMultTableIndex(aggTable, groupByFields, nodeID);  
-  Table::MultAggregate tableAgg 
-    = aggTable->add_mult_groupBy_agg(groupByFields,
-				     groupByFields,
-				     aggFieldBaseTable, // the agg field
-				     af);
-  //////////XXXXXXXXXXXXXXXXXXXXXXXXXXXXXx
-  //////////This creates a configuration string with only the first
-  //////////field of the secondary index, since conf_function does not
-  //////////support vectors apparently
-
-  _p2dl << conf_assign(tableAgg.get(), 
-                       conf_call(aggTable.get(), 
-                                 conf_function("add_mult_groupBy_agg", groupByFields.at(0),
-                                               conf_UIntVec(groupByFields), 
-                                               aggFieldBaseTable, conf_var(&af)), false));
-
-
-  ElementSpecPtr aggElement =
-    _conf->addElement(ElementPtr(new Aggregate("Agg:"+currentRule->ruleID +
-					       ":" + nodeID, tableAgg)));
-  _p2dl << conf_assign(aggElement.get(), 
-              conf_function("Aggregate", 
-                            "agg_rule_"+currentRule->ruleID, 
-                            conf_var(tableAgg.get())));
-   
-  ostringstream pelTransformStr;
-  pelTransformStr << "'" << "aggResult:" << currentRule->ruleID << "' pop";
-  for (uint k = 0; k < aggregateNamesTracker->fieldNames.size(); k++) {
-    pelTransformStr << " $" << k << " pop";
-  }
-  debugRule(currentRule, "Agg Pel Expr " + pelTransformStr.str()+ "\n");
-  // apply PEL to add a table name
-  ElementSpecPtr addTableName =
-    _conf->addElement(ElementPtr(new PelTransform("Aggregation:"+currentRule->ruleID 
-						     + ":" + nodeID, 
-						     pelTransformStr.str())));
-  _p2dl << conf_assign(addTableName.get(), 
-                       conf_function("PelTransform", 
-                                     "agg_rule_"+currentRule->ruleID, 
-                                     pelTransformStr.str()));
-
-  hookUp(aggElement, 0, addTableName, 0);
-
-  genPrintElement("PrintAgg:" + currentRule->ruleID + ":" + nodeID);
-  genPrintWatchElement("PrintWatchAgg:" + currentRule->ruleID + ":" + nodeID);
-
-
-  genProjectHeadElements(currentRule, nodeID, aggregateNamesTracker);
-  registerUDPPushSenders(_currentElementChain.back(), currentRule, nodeID);
-  //_udpSenders.push_back(_currentElementChain.back());
-  //_udpSendersPos.push_back(1);
-
-  registerReceiverTable(currentRule, headTableName);
-}
-
-
-
-void Plmb_ConfGen::genSingleTermElement(OL_Context::Rule* curRule, 
+void
+Plmb_ConfGen::genSingleTermElement(OL_Context::Rule* curRule, 
 				       string nodeID, 
 				       FieldNamesTracker* curNamesTracker)
 {  
@@ -2509,7 +2610,9 @@ void Plmb_ConfGen::genTraceElement(string header)
 
 // Get a handle to the table. Typically used by the driver program to 
 // preload some data.
-TablePtr Plmb_ConfGen::getTableByName(string nodeID, string tableName)
+Table2Ptr
+Plmb_ConfGen::getTableByName(string nodeID,
+                             string tableName)
 {
   //std::cout << "Get table " << nodeID << ":" << tableName << "\n";
   TableMap::iterator _iterator = _tables.find(nodeID + ":" + tableName);
@@ -2519,75 +2622,86 @@ TablePtr Plmb_ConfGen::getTableByName(string nodeID, string tableName)
   return _iterator->second;
 }
 
-void Plmb_ConfGen::createTables(string nodeID)
+
+
+void
+Plmb_ConfGen::createTables(string nodeID)
 {
   _p2dl << conf_comment("CREATING TABLE VARIABLES");
-  // have to decide where joins are possibly performed, and on what fields
-  // create appropriate indices for them
+  // have to decide where joins are possibly performed, and on what
+  // fields to create appropriate indices for them
   OL_Context::TableInfoMap::iterator _iterator;
   for (_iterator = _ctxt->getTableInfos()->begin(); 
-       _iterator != _ctxt->getTableInfos()->end(); _iterator++) {
+       _iterator != _ctxt->getTableInfos()->end();
+       _iterator++) {
     OL_Context::TableInfo* tableInfo = _iterator->second;
     // create the table, add the unique local name, store in hash table
+    
 
-    if (tableInfo->timeout != 0) { 
-      // if timeout is zero, table is never materialized 
-      size_t tableSize;
-      if (tableInfo->size != -1) {
-	tableSize = tableInfo->size;
-      } else {
-	tableSize = UINT_MAX; // consider this infinity
-      }
-      string newTableName = nodeID + ":" + tableInfo->tableName;
-      std::cerr << "CREATING TABLE: " << tableInfo->tableName << std::endl;
-      TablePtr newTable(new Table(tableInfo->tableName, tableInfo->size));
-      if (tableInfo->timeout != -1) {
-	boost::posix_time::time_duration expiration(0,0,tableInfo->timeout, 0);
-	newTable.reset(new Table(tableInfo->tableName, tableInfo->size, expiration));
-        _p2dl << conf_assign(newTable.get(), 
-                    conf_function("Table", tableInfo->tableName, 1, 
-                                  tableInfo->size, 
-                                  boost::posix_time::to_simple_string(expiration)));
-      }
-      else {
-        _p2dl << conf_assign(newTable.get(), 
-                    conf_function("Table", tableInfo->tableName, 1, tableInfo->size)); 
-      }
+    // What's my expiration? -1 in the inputs means no expiration.
+    boost::posix_time::time_duration expiration = tableInfo->timeout;
 
-      // first create unique indexes
-      std::vector<int> primaryKeys = tableInfo->primaryKeys;
-      for (uint k = 0; k < primaryKeys.size(); k++) {
-	newTable->add_unique_index(primaryKeys.at(k));
-        _p2dl << conf_call(newTable.get(), 
-                           conf_function("add_unique_index", primaryKeys.at(k)), false)
-              << ";" << std::endl;
-	std::cout << "Create Tables: Add unique index " 
-		  << newTableName << " " << 
-	  primaryKeys.at(k) << " " << tableInfo->timeout << "\n";
-      }
+    // What's my size? -1 in the inputs means no size
+    size_t tableSize = tableInfo->size;
 
-      _tables.insert(std::make_pair(newTableName, newTable));      
-    }
+    // What's my primary key?
+    Table2::Key key = tableInfo->primaryKeys;
+
+    // What's the table name. This is unique across nodes
+    string newTableName = nodeID + ":" + tableInfo->tableName;
+
+
+    // Create the table
+    Table2Ptr newTable(new Table2(tableInfo->tableName,
+                                  key,
+                                  tableSize,
+                                  expiration));
+
+    _p2dl << conf_assign(newTable.get(), 
+                         conf_function("Table2",
+                                       tableInfo->tableName,
+                                       conf_UIntVec(key), 
+                                       tableSize, 
+                                       boost::posix_time::
+                                       to_simple_string(expiration)));
+    
+    // And store it in the table index
+    _tables.insert(std::make_pair(newTableName, newTable));      
   }
 
-  for (unsigned int k = 0; k < _ctxt->getFacts().size(); k++) {
+
+  // Now handle facts
+  for (unsigned int k = 0;
+       k < _ctxt->getFacts().size();
+       k++) {
     TuplePtr tr = _ctxt->getFacts().at(k);
     ValuePtr vr = (*tr)[0];
-    std::cout << "Insert tuple " << tr->toString() << " into table " 
-	      << vr->toString() << " " << tr->size() << "\n";
-    TablePtr tableToInsert = getTableByName(nodeID, vr->toString());     
-    
+    std::cout << "Insert tuple "
+              << tr->toString()
+              << " into table " 
+	      << vr->toString()
+              << " "
+              << tr->size()
+              << "\n";
+    Table2Ptr tableToInsert = getTableByName(nodeID, vr->toString());     
     tableToInsert->insert(tr);
-    std::cout << "Tuple inserted: " << tr->toString() 
-	      << " into table " << vr->toString() 
-	      << " " << tr->size() << "\n";
+    std::cout << "Tuple inserted: "
+              << tr->toString() 
+	      << " into table "
+              << vr->toString() 
+	      << " "
+              << tr->size()
+              << "\n";
     _p2dl << conf_call(tableToInsert.get(),
                        conf_function("insert", tr->toConfString()))
-          << ";" << std::endl;
+          << ";"
+          << std::endl;
   }
   _p2dl << conf_comment("END OF CREATING TABLE VARIABLES");
   _p2dl << std::endl;
 }
+
+
 
 /////////////////////////////////////////////
 
@@ -2633,11 +2747,6 @@ int Plmb_ConfGen::numFunctors(OL_Context::Rule* rule)
   for (unsigned int k = 0; k < rule->terms.size(); k++) {
     Parse_Functor* pf = dynamic_cast<Parse_Functor*>(rule->terms.at(k));
     if (pf != NULL) { count ++; continue; }
-
-    Parse_RangeFunction* pr 
-      = dynamic_cast<Parse_RangeFunction*>(rule->terms.at(k));
-    if (pr != NULL) { count ++; continue; }
-    
   }
 
   return count;
@@ -2645,38 +2754,7 @@ int Plmb_ConfGen::numFunctors(OL_Context::Rule* rule)
 }
 
 
-bool Plmb_ConfGen::hasEventTerm(OL_Context::Rule* curRule)
-{
-  for (unsigned int k = 0; k < curRule->terms.size(); k++) {
-    Parse_Functor* pf = dynamic_cast<Parse_Functor*>(curRule->terms.at(k));
-    if (pf == NULL) { continue;}
-    string termName = pf->fn->name;
-    OL_Context::TableInfoMap::iterator _iterator 
-      = _ctxt->getTableInfos()->find(termName);
-    if (_iterator == _ctxt->getTableInfos()->end()) {     
-      debugRule(curRule, "Found event term " + termName);
-      // an event
-      return true;
-    }
-  }
-  return false;
-}
 
-
-Parse_Functor* Plmb_ConfGen::getEventTerm(OL_Context::Rule* curRule)
-{
-  for (unsigned int k = 0; k < curRule->terms.size(); k++) {
-    Parse_Functor* pf = dynamic_cast<Parse_Functor*>(curRule->terms.at(k));
-    if (pf == NULL) { continue;}
-    string termName = pf->fn->name;
-    OL_Context::TableInfoMap::iterator _iterator 
-      = _ctxt->getTableInfos()->find(termName);
-    if (_iterator == _ctxt->getTableInfos()->end()) {     
-      return pf;
-    }
-  }
-  return NULL;
-}
 
 
 
@@ -2717,31 +2795,8 @@ Plmb_ConfGen::FieldNamesTracker::initialize(Parse_Term* term)
       fieldNames.push_back(parse_var->toString());
     }  
   }
-
-  Parse_RangeFunction* pr = dynamic_cast<Parse_RangeFunction* > (term);    
-  if (pr != NULL) {
-    fieldNames.push_back(string("NI"));
-    fieldNames.push_back(string(pr->var->toString()));
-  }
 }
 
-
-std::vector<int> 
-Plmb_ConfGen::FieldNamesTracker::matchingJoinKeys(std::vector<string> 
-						 otherArgNames)
-{
-  // figure out the matching on other side. Assuming that
-  // there is only one matching key for now
-  std::vector<int> toRet;
-  for (unsigned int k = 0; k < otherArgNames.size(); k++) {
-    string nextStr = otherArgNames.at(k);
-    if (fieldPosition(nextStr) != -1) {
-      // exists
-      toRet.push_back(k);
-    }
-  }  
-  return toRet;
-}
 
 int 
 Plmb_ConfGen::FieldNamesTracker::fieldPosition(string var)
@@ -2806,24 +2861,4 @@ void Plmb_ConfGen::error(string msg,
   exit(-1);
 }
 
-void Plmb_ConfGen::checkFunctor(Parse_Functor* functor, OL_Context::Rule* rule)
-{
-  if (functor->fn->loc == "") {
-    error("\"" + functor->fn->name + "\" lacks a location specifier", rule);
-  }
-  if (functor->fn->name == "periodic") { 
-    if (functor->args() < 3) {
-      error("Make sure periodic predicate has three fields (NI,E,duration)", rule);
-    }
-    return; 
-  }
-  bool validLoc = false;
-  for (int k = 0; k < functor->args(); k++) {
-    if (functor->arg(k)->toString() == functor->fn->loc) {
-      validLoc = true;
-    }
-  }
-  if (validLoc == false) {
-    error("Invalid location specifier in predicate " + functor->toString(), rule);
-  }
-}
+

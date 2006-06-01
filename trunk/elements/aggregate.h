@@ -18,33 +18,50 @@
 #ifndef __AGGREGATEELEMENT_H__
 #define __AGGREGATEELEMENT_H__
 
-#include "table.h"
+#include "table2.h"
 #include "element.h"
 
 class Aggregate : public Element {
  public:
   Aggregate(string name,
-            Table::MultAggregate aggregate);
+            Table2::Aggregate aggregate);
+
   
-  const char *class_name() const		{ return "Aggregate";}
-  const char *processing() const		{ return "/l"; }
-  const char *flow_code() const			{ return "/-"; }
+  const char*
+  class_name() const {return "Aggregate";}
+
+
+  const char* 
+  processing() const {return "/l";}
+
+
+  const char*
+  flow_code() const {return "/-";}
   
+
   /** Return an updated aggregate. */
-  TuplePtr pull(int port, b_cbv cb);
+  TuplePtr
+  pull(int port, b_cbv cb);
+
+
+
   
  private:
   /** My aggregate */
-  Table::MultAggregate _aggregate;
+  Table2::Aggregate _aggregate;
+
 
   /** My latest aggregate */
   TuplePtr _latest;
 
+
   /** My listener method */
   void listener(TuplePtr t);
 
+
   /** My puller's callback */
   b_cbv _pullCallback;
+
 
   /** Is the latest pending transmission? */
   bool _pending;

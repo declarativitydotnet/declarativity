@@ -72,13 +72,19 @@ struct SuccessorGenerator : public FunctorSource::Generator
 
 
 // this allows us to isolate and test just the finger lookup rules
-void fakeFingersSuccessors(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr<Plmb_ConfGen> plumberConfigGenerator, string localAddress, IDPtr me)
+void fakeFingersSuccessors(boost::shared_ptr< OL_Context> ctxt,
+                           boost::shared_ptr<Plmb_ConfGen>
+                           plumberConfigGenerator,
+                           string localAddress, IDPtr me)
 {
-  TablePtr fingerTable = plumberConfigGenerator->getTableByName(localAddress, "finger");
+  Table2Ptr fingerTable =
+    plumberConfigGenerator->getTableByName(localAddress, "finger");
   OL_Context::TableInfo* fingerTableInfo = ctxt->getTableInfos()->find("finger")->second;  
 
   // Fill up the table with fingers
-  for (int i = 0; i < fingerTableInfo->size; i++) {
+  for (size_t i = 0;
+       i < fingerTableInfo->size;
+       i++) {
     TuplePtr tuple = Tuple::mk();
     tuple->append(Val_Str::mk("finger"));
 
@@ -100,7 +106,8 @@ void fakeFingersSuccessors(boost::shared_ptr< OL_Context> ctxt, boost::shared_pt
 
 
   // fake the best successor table. Only for testing purposes.  
-  TablePtr bestSuccessorTable = plumberConfigGenerator->getTableByName(localAddress, "bestSucc");
+  Table2Ptr bestSuccessorTable =
+    plumberConfigGenerator->getTableByName(localAddress, "bestSucc");
   TuplePtr tuple = Tuple::mk();
   tuple->append(Val_Str::mk("bestSucc"));
   
@@ -138,7 +145,8 @@ void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr
     fakeFingersSuccessors(ctxt, plumberConfigGenerator, localAddress, myKey);  
   }
 
-  TablePtr nodeTable = plumberConfigGenerator->getTableByName(localAddress, "node");
+  Table2Ptr nodeTable =
+    plumberConfigGenerator->getTableByName(localAddress, "node");
   TuplePtr tuple = Tuple::mk();
   tuple->append(Val_Str::mk("node"));
     
@@ -149,7 +157,8 @@ void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr
   nodeTable->insert(tuple);
   warn << "Node: " << tuple->toString() << "\n";
 
-  TablePtr predecessorTable = plumberConfigGenerator->getTableByName(localAddress, "pred");
+  Table2Ptr predecessorTable =
+    plumberConfigGenerator->getTableByName(localAddress, "pred");
   TuplePtr predecessorTuple = Tuple::mk();
   predecessorTuple->append(Val_Str::mk("pred"));
   predecessorTuple->append(Val_Str::mk(localAddress));
@@ -159,7 +168,8 @@ void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr
   predecessorTable->insert(predecessorTuple);
   warn << "Initial predecessor " << predecessorTuple->toString() << "\n";
 
-  TablePtr nextFingerFixTable = plumberConfigGenerator->getTableByName(localAddress, "nextFingerFix");
+  Table2Ptr nextFingerFixTable =
+    plumberConfigGenerator->getTableByName(localAddress, "nextFingerFix");
   TuplePtr nextFingerFixTuple = Tuple::mk();
   nextFingerFixTuple->append(Val_Str::mk("nextFingerFix"));
   nextFingerFixTuple->append(Val_Str::mk(localAddress));
@@ -168,7 +178,8 @@ void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr
   nextFingerFixTable->insert(nextFingerFixTuple);
   warn << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";
 
-  TablePtr landmarkNodeTable = plumberConfigGenerator->getTableByName(localAddress, "landmark");  
+  Table2Ptr landmarkNodeTable =
+    plumberConfigGenerator->getTableByName(localAddress, "landmark");  
   TuplePtr landmark = Tuple::mk();
   landmark->append(Val_Str::mk("landmark"));
   landmark->append(Val_Str::mk(localAddress));

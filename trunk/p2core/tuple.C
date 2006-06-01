@@ -220,6 +220,7 @@ Tuple::_tupleIDCounter = 0;
 Tuple::EmptyInitializer
 _theEmptyInitializer;
 
+
 void
 Tuple::concat(TuplePtr tf)
 {

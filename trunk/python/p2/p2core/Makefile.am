@@ -22,7 +22,7 @@ libp2pythoncore_la_SOURCES = \
 	loggerI.cpp          \
 	plumber.cpp          \
 	tuple.cpp            \
-	table.cpp            \
+	table2.cpp           \
 	value.cpp            \
 	val_double.cpp       \
 	val_id.cpp           \

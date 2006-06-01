@@ -18,7 +18,7 @@
 
 #include "element.h"
 #include "execRecord.h"
-#include "table.h"
+#include "table2.h"
 #include "val_uint32.h"
 #include "val_str.h"
 
@@ -27,7 +27,7 @@ class RuleTracer : public Element {
 
   RuleTracer(string name, string ruleName, string node, 
 	     int startPort, int endPort, int ruleNum,
-	     TablePtr ruleExec, TablePtr tupleTable);
+	     Table2Ptr ruleExec, Table2Ptr tupleTable);
   
   ~RuleTracer();
 
@@ -64,10 +64,10 @@ class RuleTracer : public Element {
   ExecRecord * _records[ExecRecord::MAX_STAGES];
 
   /** table to store the ruleExecTable tuples */
-  TablePtr _ruleExecTable;
+  Table2Ptr _ruleExecTable;
 
   /** table to store the tupleTable tuples */
-  TablePtr _tupleTable;
+  Table2Ptr _tupleTable;
 
   // helper functions
   /** finds the record depending on the port number */
@@ -97,10 +97,18 @@ class RuleTracer : public Element {
   /** creates multiple tuples for the ruleExec table, 
       depending on the number of preconditios */
   int createExecTupleUsingPrecond(ExecRecord *,
-				       std::vector<TuplePtr> *);
+                                  std::vector<TuplePtr> *);
+
 
   /** creates a tuple for the tupleTable for a given tuple */
-  TuplePtr createTupleTableTuple(TuplePtr t);
+  TuplePtr
+  createTupleTableTuple(TuplePtr t);
+
+
+  /** a static helper tuple to help with lookups inside the tuple table
+  */
+  static TuplePtr
+  TUPLETABLETUPLE;
 
 
   /** inserts tuples in respective tables */
@@ -114,6 +122,19 @@ class RuleTracer : public Element {
   string getSourceNode(TuplePtr t);
   void setLocalNode(TuplePtr t, string ln);
 
+
+
+  ////////////////////////////////////////////////////////////
+  // Static Initializer
+  ////////////////////////////////////////////////////////////
+
+  /** A static initializer object to initialize static class objects */
+  class Initializer {
+  public:
+    Initializer();
+  };
+  static Initializer
+  _INITIALIZER;
 };
 
 #endif /** __RULETRACER_H__ **/

@@ -23,6 +23,7 @@
 #include "table2.h"
 #include "p2Time.h"
 #include "aggFactory.h"
+#include "iostream"
 
 ////////////////////////////////////////////////////////////
 // Sorters
@@ -31,18 +32,18 @@
 /** This comparator performs first less second for two key specs. */
 bool
 Table2::KeyComparator::
-operator()(const Table2::Key* first,
-           const Table2::Key* second) const
+operator()(const Table2::Key first,
+           const Table2::Key second) const
 {
-  if (first->size() < second->size()) {
+  if (first.size() < second.size()) {
     return true; // first < second
-  } else if (first->size() > second->size()) {
+  } else if (first.size() > second.size()) {
     return false; // second < first
   } else {
     // As long as they're equal, keep checking.
-    Table2::Key::const_iterator firstIt = first->begin();
-    Table2::Key::const_iterator secondIt = second->begin();
-    while (firstIt != first->end()) {
+    Table2::Key::const_iterator firstIt = first.begin();
+    Table2::Key::const_iterator secondIt = second.begin();
+    while (firstIt != first.end()) {
       unsigned f = *firstIt++;
       unsigned s = *secondIt++;
       if (f < s) {
@@ -60,7 +61,7 @@ operator()(const Table2::Key* first,
 
 
 /** A keyed comparator is only initialized with its key spec */
-Table2::KeyedEntryComparator::KeyedEntryComparator(const Key& key)
+Table2::KeyedEntryComparator::KeyedEntryComparator(const Key key)
   : _key(key)
 {
 }
@@ -135,7 +136,7 @@ operator()(const Table2::Entry* fEntry,
 
 
 /** A keyed comparator is only initialized with its key spec */
-Table2::KeyedTupleComparator::KeyedTupleComparator(const Key& key)
+Table2::KeyedTupleComparator::KeyedTupleComparator(const Key key)
   : _key(key)
 {
 }
@@ -214,7 +215,7 @@ operator()(const TuplePtr first,
 
 
 Table2::Table2(std::string tableName,
-               Key& key,
+               Key key,
                size_t maxSize,
                boost::posix_time::time_duration& lifetime)
   : _name(tableName),
@@ -229,11 +230,11 @@ Table2::Table2(std::string tableName,
 
 
 Table2::Table2(std::string tableName,
-               Key& key)
+               Key key)
   : _name(tableName),
     _key(key),
     _maxSize(0),
-    _maxLifetime(boost::posix_time::time_duration(boost::date_time::pos_infin)),
+    _maxLifetime(DEFAULT_EXPIRATION),
     _primaryIndex(KeyedEntryComparator(key)),
     _flushing(((_maxSize > 0) ||
                (!_maxLifetime.is_pos_infinity())))
@@ -242,12 +243,26 @@ Table2::Table2(std::string tableName,
 
 
 Table2::Table2(std::string tableName,
-               Key& key,
+               Key key,
                size_t maxSize)
   : _name(tableName),
     _key(key),
     _maxSize(maxSize),
-    _maxLifetime(boost::posix_time::time_duration(boost::date_time::pos_infin)),
+    _maxLifetime(DEFAULT_EXPIRATION),
+    _primaryIndex(KeyedEntryComparator(key)),
+    _flushing(((_maxSize > 0) ||
+               (!_maxLifetime.is_pos_infinity())))
+{
+}
+
+Table2::Table2(std::string tableName,
+               Key key,
+               size_t maxSize,
+               string lifetime)
+  : _name(tableName),
+    _key(key),
+    _maxSize(maxSize),
+    _maxLifetime(boost::posix_time::duration_from_string(lifetime)),
     _primaryIndex(KeyedEntryComparator(key)),
     _flushing(((_maxSize > 0) ||
                (!_maxLifetime.is_pos_infinity())))
@@ -310,7 +325,7 @@ Table2::~Table2()
 ////////////////////////////////////////////////////////////
 
 bool
-Table2::secondaryIndex(Table2::Key& key)
+Table2::secondaryIndex(Table2::Key key)
 {
   if (findSecondaryIndex(key) == NULL) {
     createSecondaryIndex(key);
@@ -322,7 +337,7 @@ Table2::secondaryIndex(Table2::Key& key)
 
 
 void
-Table2::createSecondaryIndex(Table2::Key& key)
+Table2::createSecondaryIndex(Table2::Key key)
 {
   // Create it, update with all existing elements (from the
   // primary index)
@@ -330,7 +345,7 @@ Table2::createSecondaryIndex(Table2::Key& key)
   _keyedComparators.push_front(comp);
   
   SecondaryIndex* index = new SecondaryIndex(*comp);
-  _indices.insert(std::make_pair(&key, index));
+  _indices.insert(std::make_pair(key, index));
   
   // Insert all current elements
   PrimaryIndex::iterator i = _primaryIndex.begin();
@@ -343,10 +358,10 @@ Table2::createSecondaryIndex(Table2::Key& key)
 
 
 Table2::SecondaryIndex*
-Table2::findSecondaryIndex(Table2::Key& key)
+Table2::findSecondaryIndex(Table2::Key key)
 {
   SecondaryIndexIndex::iterator iter =
-    _indices.find(&key);
+    _indices.find(key);
 
   if (iter == _indices.end()) {
     return NULL;
@@ -495,6 +510,14 @@ Table2::insertTuple(TuplePtr t,
     (*i)->update(t);
   }
 
+
+  // Update listeners.
+  for (ListenerVector::iterator i = _updateListeners.begin();
+       i != _updateListeners.end();
+       i++) {
+    (*i)(t);
+  }
+
   // Insert into time-ordered queue if we're flushing.
   if (_flushing) {
     _queue.push_front(newEntry);
@@ -539,8 +562,9 @@ Table2::removeTuple(PrimaryIndex::iterator position)
     // secondary index and erase it
     static Entry searchEntry(Tuple::EMPTY);
     searchEntry.tuple = toRemove;
-    SecondaryIndex::iterator secIter = index.find(&searchEntry);
-    while (secIter != index.end()) {
+    SecondaryIndex::iterator secIter = index.lower_bound(&searchEntry);
+    SecondaryIndex::iterator secIterEnd = index.upper_bound(&searchEntry);
+    while (secIter != secIterEnd) {
       // Is this tuple identical to the one removed from the primary
       // index?
       if ((*secIter)->tuple->ID() == toRemove->ID()) {
@@ -638,12 +662,14 @@ Table2::Key Table2::KEY0 = Table2::Key();
 Table2::Key Table2::KEY1 = Table2::Key();
 Table2::Key Table2::KEY2 = Table2::Key();
 Table2::Key Table2::KEY3 = Table2::Key();
+Table2::Key Table2::KEY4 = Table2::Key();
 Table2::Key Table2::KEY01 = Table2::Key();
 Table2::Key Table2::KEY12 = Table2::Key();
 Table2::Key Table2::KEY23 = Table2::Key();
 Table2::Key Table2::KEY13 = Table2::Key();
 Table2::Key Table2::KEY012 = Table2::Key();
 Table2::Key Table2::KEY123 = Table2::Key();
+Table2::Key Table2::KEY01234 = Table2::Key();
 
 
 Table2::Initializer::Initializer()
@@ -656,6 +682,8 @@ Table2::Initializer::Initializer()
   Table2::KEY2.push_back(2);
 
   Table2::KEY3.push_back(3);
+
+  Table2::KEY4.push_back(4);
 
   Table2::KEY01.push_back(0);
   Table2::KEY01.push_back(1);
@@ -676,6 +704,12 @@ Table2::Initializer::Initializer()
   Table2::KEY123.push_back(1);
   Table2::KEY123.push_back(2);
   Table2::KEY123.push_back(3);
+
+  Table2::KEY01234.push_back(0);
+  Table2::KEY01234.push_back(1);
+  Table2::KEY01234.push_back(2);
+  Table2::KEY01234.push_back(3);
+  Table2::KEY01234.push_back(4);
 }
 
 /** Run the static initialization */
@@ -685,20 +719,20 @@ Table2::_INITIALIZER;
 
 
 ////////////////////////////////////////////////////////////
-// Lookup Iterators
+// Lookup IteratorObjs
 ////////////////////////////////////////////////////////////
 
 /** An iterator contains only a queue of tuple pointers, which it
     dispenses when asked. XXX Replace by just returning the queue to the
     caller. */
-Table2::Iterator::Iterator(std::deque< TuplePtr >* spool)
+Table2::IteratorObj::IteratorObj(std::deque< TuplePtr >* spool)
   : _spool(spool)
 {
 }
 
 
 TuplePtr
-Table2::Iterator::next()
+Table2::IteratorObj::next()
 {
   if (_spool->size() > 0) {
     TuplePtr back = _spool->back();
@@ -712,13 +746,13 @@ Table2::Iterator::next()
 
 
 bool
-Table2::Iterator::done()
+Table2::IteratorObj::done()
 {
   return (_spool->size() == 0);
 }
 
 
-Table2::Iterator::~Iterator()
+Table2::IteratorObj::~IteratorObj()
 {
   // Delete the queue. Its contents are shared pointers to tuples, so no
   // need to worry about them
@@ -735,81 +769,160 @@ Table2::size() const
 }
 
 
+std::string
+Table2::name() const
+{
+  return _name;
+}
+
+
 
 
 ////////////////////////////////////////////////////////////
 // Lookups
 ////////////////////////////////////////////////////////////
 
-Table2::IteratorPtr
-Table2::lookup(Table2::Key& key, TuplePtr t)  
+Table2::Iterator
+Table2::lookup(Table2::Key lookupKey,
+               Table2::Key indexKey,
+               TuplePtr t)  
 {
+  // It is essential that the two keys have the exact number of field
+  // numbers
+  assert(lookupKey.size() == indexKey.size());
+
   // Ensure we're operating on the correct view of the table as of right
   // now.
   flush();
 
+  // The search entry.
+  static Entry searchEntry(Tuple::mk());
+    
   // Find the appropriate index. Is it the primary index?
-  if (key == _key) {
-    return lookupPrimary(t);
+  if (indexKey == _key) {
+    // Prepare the search entry.  Project the lookup tuple onto the
+    // search tuple along the lookup key to index key projection
+    project(t, lookupKey, searchEntry.tuple, _key);
+    
+    // Just perform the lookup on the primary index.
+    return lookupPrimary(&searchEntry);
   } 
   // If not, is it a secondary index?
   else {
     Table2::SecondaryIndexIndex::iterator indexIter =
-      _indices.find(&key);
-
+      _indices.find(indexKey);
+    
     // If not, return null
     if (indexIter == _indices.end()) {
-      return IteratorPtr();
+      return Iterator();
     }
     // Otherwise, create the iterator from all the matches and return it
     else {    
       SecondaryIndex& index = *(*indexIter).second;
 
-      static Entry searchEntry(Tuple::EMPTY);
-      searchEntry.tuple = t;
-      SecondaryIndex::iterator tupleIter = index.find(&searchEntry);
+      // Project the lookup tuple along the lookup keys onto the search
+      // tuple.
+      project(t, lookupKey, searchEntry.tuple, indexKey);
 
-      // Create the lookup iterator by spooling all results found into a
-      // queue and passing them into the iterator.
-      std::deque< TuplePtr >* spool = new std::deque< TuplePtr >();
-      while (tupleIter != index.end()) {
-        spool->push_front((*(tupleIter++))->tuple);
-      }
-      IteratorPtr iterPtr = IteratorPtr(new Iterator(spool));
-      return iterPtr;
+      return lookupSecondary(&searchEntry, index);
     }
   }
 } 
 
-
-Table2::IteratorPtr
-Table2::lookup(TuplePtr t)  
+Table2::Iterator
+Table2::lookup(Table2::Key indexKey,
+               TuplePtr t)  
 {
   // Ensure we're operating on the correct view of the table as of right
   // now.
   flush();
 
-  return lookupPrimary(t);
+  // The search entry.  We don't need to project for this one so the
+  // search entry can be initialized with a known tuple.
+  static Entry searchEntry(Tuple::EMPTY);
+
+  // Prepare the search entry by copying the tuple into it (no
+  // projection needed).
+  searchEntry.tuple = t;
+  
+  // Find the appropriate index. Is it the primary index?
+  if (indexKey == _key) {
+    // Just perform the lookup on the primary index.
+    return lookupPrimary(&searchEntry);
+  } 
+  // If not, is it a secondary index?
+  else {
+    Table2::SecondaryIndexIndex::iterator indexIter =
+      _indices.find(indexKey);
+    
+    // If not, return null
+    if (indexIter == _indices.end()) {
+      return Iterator();
+    }
+    // Otherwise, create the iterator from all the matches and return it
+    else {    
+      SecondaryIndex& index = *(*indexIter).second;
+      
+      return lookupSecondary(&searchEntry, index);
+    }
+  }
 } 
 
 
-Table2::IteratorPtr
-Table2::lookupPrimary(TuplePtr t)  
+Table2::Iterator
+Table2::lookupSecondary(Table2::Entry* searchEntry,
+                        Table2::SecondaryIndex& index)  
 {
-  // Create the lookup iterator from all the matches and return it
-  static Entry searchEntry(Tuple::EMPTY);
-  searchEntry.tuple = t;
-  PrimaryIndex::iterator tupleIter = _primaryIndex.find(&searchEntry);
+  SecondaryIndex::iterator tupleIter = index.lower_bound(searchEntry);
+  SecondaryIndex::iterator tupleIterEnd = index.upper_bound(searchEntry);
+  
+  // Create the lookup iterator by spooling all results found into a
+  // queue and passing them into the iterator.
+  std::deque< TuplePtr >* spool = new std::deque< TuplePtr >();
+  for (;
+       tupleIter != tupleIterEnd;
+       tupleIter++) {
+    TuplePtr result = (*tupleIter)->tuple;
+    spool->push_front(result);
+  }
+  Iterator iterPtr = Iterator(new IteratorObj(spool));
+  return iterPtr;
+} 
 
+
+Table2::Iterator
+Table2::lookupPrimary(Table2::Entry* searchEntry)  
+{
+  PrimaryIndex::iterator tupleIter = _primaryIndex.find(searchEntry);
+  
   // Create the lookup iterator by spooling all results found into a
   // queue and passing them into the iterator.
   std::deque< TuplePtr >* spool = new std::deque< TuplePtr >();
   while (tupleIter != _primaryIndex.end()) {
     spool->push_front((*(tupleIter++))->tuple);
   }
-  IteratorPtr iterPtr = IteratorPtr(new Iterator(spool));
+  Iterator iterPtr = Iterator(new IteratorObj(spool));
   return iterPtr;
 } 
+
+
+void
+Table2::project(TuplePtr source,
+                Key sourceKey,
+                TuplePtr destination,
+                Key destinationKey)
+{
+  Key::iterator s;
+  Key::iterator d;
+  for (s = sourceKey.begin(),
+         d = destinationKey.begin();
+       s != sourceKey.end();
+       s++, d++) {
+    uint sourceFieldNo = *s;
+    uint destinationFieldNo = *d;
+    (*destination)[destinationFieldNo] = (*source)[sourceFieldNo];
+  }
+}
 
 
 
@@ -818,8 +931,8 @@ Table2::lookupPrimary(TuplePtr t)
 // Scans
 ////////////////////////////////////////////////////////////
 
-Table2::IteratorPtr
-Table2::scan(Table2::Key& key)  
+Table2::Iterator
+Table2::scan(Table2::Key key)  
 {
   // Ensure we're operating on the correct view of the table as of right
   // now.
@@ -832,11 +945,11 @@ Table2::scan(Table2::Key& key)
   // If not, is it a secondary index?
   else {
     Table2::SecondaryIndexIndex::iterator indexIter =
-      _indices.find(&key);
+      _indices.find(key);
 
     // If not, return null
     if (indexIter == _indices.end()) {
-      return IteratorPtr();
+      return Iterator();
     }
     // Otherwise, create the iterator from all entries and return it
     else {    
@@ -850,14 +963,14 @@ Table2::scan(Table2::Key& key)
       while (tupleIter != index.end()) {
         spool->push_front((*(tupleIter++))->tuple);
       }
-      IteratorPtr iterPtr = IteratorPtr(new Iterator(spool));
+      Iterator iterPtr = Iterator(new IteratorObj(spool));
       return iterPtr;
     }
   }
 } 
 
 
-Table2::IteratorPtr
+Table2::Iterator
 Table2::scan()  
 {
   // Ensure we're operating on the correct view of the table as of right
@@ -868,7 +981,7 @@ Table2::scan()
 } 
 
 
-Table2::IteratorPtr
+Table2::Iterator
 Table2::scanPrimary()  
 {
   // Create the lookup iterator from all the matches and return it
@@ -880,9 +993,30 @@ Table2::scanPrimary()
   while (tupleIter != _primaryIndex.end()) {
     spool->push_front((*(tupleIter++))->tuple);
   }
-  IteratorPtr iterPtr = IteratorPtr(new Iterator(spool));
+  Iterator iterPtr = Iterator(new IteratorObj(spool));
   return iterPtr;
 } 
+
+
+
+
+////////////////////////////////////////////////////////////
+// Update listeners
+////////////////////////////////////////////////////////////
+
+void
+Table2::updateListener(Listener listener)
+{
+  _updateListeners.push_back(listener);
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -907,7 +1041,7 @@ Table2::AggFunc::~AggFunc()
 }
 
 
-Table2::AggregateObj::AggregateObj(Table2::Key& key,
+Table2::AggregateObj::AggregateObj(Table2::Key key,
                                    Table2::SecondaryIndex* index,
                                    unsigned aggField,
                                    Table2::AggFunc* function)
@@ -1035,7 +1169,7 @@ Table2::AggregateObj::update(TuplePtr changedTuple)
 
 
 Table2::Aggregate
-Table2::aggregate(Table2::Key& groupBy,
+Table2::aggregate(Table2::Key groupBy,
                   unsigned aggFieldNo,
                   std::string functionName)
 {
@@ -1059,3 +1193,23 @@ Table2::aggregate(Table2::Key& groupBy,
     return a;
   }
 }
+
+
+/** No expiration is represented as positive infinity. */
+boost::posix_time::time_duration
+Table2::NO_EXPIRATION(boost::date_time::pos_infin);
+
+
+/** Default table expiration time is no expiration */
+boost::posix_time::time_duration
+Table2::DEFAULT_EXPIRATION(Table2::NO_EXPIRATION);
+
+
+/** No size is represented as 0 size. */
+size_t
+Table2::NO_SIZE = 0;
+
+
+/** Default table max size is no max size */
+size_t
+Table2::DEFAULT_SIZE(Table2::NO_SIZE);

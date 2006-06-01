@@ -15,15 +15,12 @@
 #include "delete.h"
 
 Delete::Delete(string name,
-               TablePtr table,
-               unsigned indexFieldNo,
-               unsigned keyFieldNo)
+               Table2Ptr table)
   : Element(name, 1, 0),
-    _table(table),
-    _indexFieldNo(indexFieldNo),
-    _keyFieldNo(keyFieldNo)
+    _table(table)
 {
 }
+
 
 int
 Delete::push(int port, TuplePtr t, b_cbv cb)
@@ -31,19 +28,9 @@ Delete::push(int port, TuplePtr t, b_cbv cb)
   // Is this the right port?
   assert(port == 0);
 
-  // Fetch the search field
-  ValuePtr key = (*t)[_keyFieldNo];
-  if (key == NULL) {
-    // No input field? WTF?
-    log(LoggerI::WARN, 0, "push: tuple without lookup field received");
-    
-    // Didn't work out.  Ask for more.
-    return 1;
-  } else {
-    // Erase the entry by that key
-    _table->remove(_indexFieldNo, key);
+  // Erase the entry by that key
+  _table->remove(t);
 
-    return 1;
-  }
+  return 1;
 }
 

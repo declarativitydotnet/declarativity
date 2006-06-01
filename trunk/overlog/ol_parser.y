@@ -66,7 +66,6 @@
 %token OL_PERIOD
 %token OL_DEL
 %token OL_QUERY
-%token OL_RANGE
 %token OL_NOW
 %token OL_LOCAL
 %token OL_MATERIALIZE
@@ -87,7 +86,7 @@
 %union {
   Parse_Bool::Operator  u_boper;
   Parse_Math::Operator  u_moper;
-  Parse_Agg::Operator   u_aoper;
+  char*                 u_aoper;
   Parse_TermList	*u_termlist;
   Parse_Term		*u_term;
   Parse_FunctorName	*u_functorname;
@@ -99,7 +98,7 @@
 %type<u_termlist>    termlist;
 %type<u_exprlist>    functorbody functorargs functionargs primarykeys keylist; 
 %type<u_functorname> functorname;
-%type<u_term>        term range_function functor assign select;
+%type<u_term>        term functor assign select;
 %type<u_aggterm>     aggview;
 %type<v>             functorarg functionarg tablearg atom rel_atom math_atom function math_expr bool_expr range_expr range_atom aggregate;
 %type<u_boper>       rel_oper;
@@ -127,17 +126,11 @@ fact:		functor OL_DOT { ctxt->fact($1); }
 		;
 
 materialize:	OL_MATERIALIZE OL_LPAR OL_NAME OL_COMMA
-		tablearg OL_COMMA tablearg OL_RPAR OL_DOT 
-			{ ctxt->table($3, $5, $7); } 
-		| 
-		OL_MATERIALIZE OL_LPAR OL_NAME OL_COMMA
 		tablearg OL_COMMA tablearg OL_COMMA primarykeys OL_RPAR OL_DOT 
 			{ ctxt->table($3, $5, $7, $9); } 
 		;
 
-tablearg:	math_expr 
-			{ $$ = $1; }
-		| OL_VALUE
+tablearg:	OL_VALUE
 			{ $$ = $1; }
 		;
 
@@ -185,11 +178,7 @@ termlist:	term { $$ = new Parse_TermList(); $$->push_front($1); }
 		| term OL_COMMA termlist { $3->push_front($1); $$=$3; } 
 		;
 
-term:		range_function | functor | assign | select { $$=$1; }
-		;
-
-range_function:	OL_RANGE OL_LPAR OL_VAR OL_COMMA range_atom OL_COMMA range_atom OL_RPAR
-			{ $$=new Parse_RangeFunction($3, $5, $7); }
+term:		functor | assign | select { $$=$1; }
 		;
 
 functor:	functorname functorbody 
@@ -352,9 +341,9 @@ aggregate:	agg_oper OL_LT OL_VAR OL_GT
 			{ $$ = new Parse_Agg(Parse_Agg::DONT_CARE, $1, ValuePtr()); }
 		;
 
-agg_oper:	  OL_MIN   { $$ = Parse_Agg::MIN; }
-		| OL_MAX   { $$ = Parse_Agg::MAX; }
-		| OL_COUNT { $$ = Parse_Agg::COUNT; }
+agg_oper:	  OL_MIN   { $$ = "MIN"; }
+		| OL_MAX   { $$ = "MAX"; }
+		| OL_COUNT { $$ = "COUNT"; }
 		;
 
 %%

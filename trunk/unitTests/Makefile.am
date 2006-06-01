@@ -14,7 +14,6 @@ libp2unitTests_la_SOURCES = \
 	testTable2.C \
 	testBasicElementPlumbing.C \
 	testValues.C \
-	testTables.C \
 	testIDs.C \
 	testFdbufs.C \
 	testCsv.C \
@@ -38,18 +37,11 @@ p2Test_LDADD = \
 	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a \
 	-lboost_unit_test_framework
 
-
 p2TestTable2_SOURCES =	p2TestTable2.C
 
-p2TestTable2_LDADD = \
-	$(top_builddir)/unitTests/.libs/libp2unitTests.a \
-	$(top_builddir)/overlog/.libs/libp2overlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a \
-	-lboost_unit_test_framework
+p2TestTable2_LDADD = $(p2Test_LDADD)
 
+$(p2Test_LDADD) : $(noinst_LTLIBRARIES)
 
 CLEANFILES = core *.core *~
 

@@ -53,7 +53,7 @@
 #include "table.h"
 #include "lookup.h"
 #include "insert.h"
-#include "scan.h"
+#include "update.h"
 #include "queue.h"
 #include "printTime.h"
 #include "roundRobin.h"
@@ -67,7 +67,6 @@
 //#include "aggwrap.h"
 #include "tupleseq.h"
 #include "cc.h"
-#include "scan.h"
 #include "agg.h"
 #include "ruleStrand.h"
 #include "planContext.h"
@@ -104,7 +103,7 @@ void generateEventElement(PlanContext* pc)
   ECA_Rule* curRule = pc->_ruleStrand->_eca_rule;
   pc->_namesTracker = new PlanContext::FieldNamesTracker(rs->_eca_rule->_event->_pf);
   
-  // update, create a scanner, 
+  // update, create an updater
   if (rs->eventType() == Parse_Event::UPDATE || 
       rs->eventType() == Parse_Event::AGGUPDATE) {
     debugRule(pc, "Update event NamesTracker " + pc->_namesTracker->toString() + "\n");
@@ -115,13 +114,10 @@ void generateEventElement(PlanContext* pc)
       return;
     }
     TablePtr tablePtr = ti->_table;
-          
-    unsigned primaryKey = ti->_tableInfo->primaryKeys.at(0);
-    Table::UniqueScanIterator uniqueIterator = tablePtr->uniqueScanAll(primaryKey, true);
     ElementSpecPtr updateTable =
-       pc->_conf->addElement(ElementPtr(new Scan("ScanUpdate|" + curRule->_ruleID 
-						    + "|" + rs->eventFunctorName()
-						    + "|" + pc->_nodeID, uniqueIterator, true)));
+       pc->_conf->addElement(ElementPtr(new Update("ScanUpdate|" + curRule->_ruleID 
+                                                   + "|" + rs->eventFunctorName()
+                                                   + "|" + pc->_nodeID, tablePtr)));
     rs->addElement(pc->_conf, updateTable);
 
     // add a debug element

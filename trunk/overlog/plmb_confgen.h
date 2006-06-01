@@ -55,10 +55,9 @@
 #include "timedPullSink.h"
 #include "timestampSource.h"
 #include "hexdump.h"
-#include "table.h"
-#include "lookup.h"
+#include "table2.h"
+#include "lookup2.h"
 #include "insert.h"
-#include "scan.h"
 #include "queue.h"
 #include "printTime.h"
 #include "roundRobin.h"
@@ -84,16 +83,20 @@ class Plmb_ConfGen {
 
  public:
   Plmb_ConfGen(OL_Context* ctxt, Plumber::DataflowPtr conf, 
-	      bool _dups, bool debug, bool cc, string filename, 
+               bool _dups, bool debug, bool cc, string filename, 
 	       bool rTracing = false,
-              std::ostream& s=*(new ostringstream()), bool edit=false);
+               std::ostream& s=*(new ostringstream()), bool edit=false);
   ~Plmb_ConfGen();
 
   void configurePlumber(boost::shared_ptr< Udp > udp, string nodeID);
 
-  TablePtr getTableByName(string nodeID, string tableName);
+  Table2Ptr
+  getTableByName(string nodeID, string tableName);
 
-  void createTables(string nodeID);
+
+  /** creates the tables for a given node */
+  void
+  createTables(string nodeID);
 
   void clear();
 
@@ -104,7 +107,7 @@ class Plmb_ConfGen {
   
 private:
   static const string SEL_PRE, AGG_PRE, ASSIGN_PRE, TABLESIZE;
-  typedef std::map<string, TablePtr> TableMap;
+  typedef std::map<string, Table2Ptr> TableMap;
   typedef std::map<string, string> PelFunctionMap;
   typedef std::map<string, ReceiverInfo> ReceiverInfoMap;
 
@@ -265,21 +268,21 @@ private:
   void hookUp(ElementSpecPtr secondElement, 
 	      int secondPort);  
   
-  void addMultTableIndex(TablePtr table, 
-			 int fn, 
-			 string nodeID);
-  
-  /** To accommodate multiple-field keys */
+  /** Create a secondary index in the given table. */
   void
-  addMultTableIndex(TablePtr table, 
-                    std::vector< unsigned > key, 
-                    string nodeID);
+  secondaryIndex(Table2Ptr table, 
+                 Table2::Key key, 
+                 string nodeID);
   
+
   int numFunctors(OL_Context::Rule* rule);
 
-  bool hasEventTerm(OL_Context::Rule* rule);
+  /** Return the parse functor that makes up the vent term of the given
+      rule, if one exists. Otherwise, return null */
+  Parse_Functor*
+  eventTerm(OL_Context::Rule* rule);
   
-  Parse_Functor* getEventTerm(OL_Context::Rule* curRule);
+
 
   bool hasPeriodicTerm(OL_Context::Rule* curRule);
 
@@ -295,15 +298,30 @@ private:
   // convince placeholder to figure out the cur fields in a tuple in flight
   class FieldNamesTracker {
   public:
-    std::vector<string> fieldNames;    
+    std::vector< string > fieldNames;    
+
+
     FieldNamesTracker();   
+
+
     FieldNamesTracker(Parse_Term* pf);
 
+
     void initialize(Parse_Term* pf);
-    std::vector<int> matchingJoinKeys(std::vector<string> names);    
+
+
+    Table2::Key matchingJoinKeys(std::vector<string> names);
+
+
     void mergeWith(std::vector<string> names);
+
+
     void mergeWith(std::vector<string> names, int numJoinKeys);
+
+
     int fieldPosition(string var);
+
+
     string toString();
   };
 

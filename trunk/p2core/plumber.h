@@ -26,7 +26,7 @@
 #include <elementSpec.h>
 #include <loggerI.h>
 #include <dot.h>
-#include <table.h>
+#include <table2.h>
 
 /** A handy dandy type for plumber references */
 class Plumber;
@@ -35,139 +35,152 @@ typedef boost::shared_ptr< Plumber > PlumberPtr;
 class Plumber {
 public:
   class Dataflow {
-    public:
-      Dataflow(string name="dataflow") : name_(name) {};
+  public:
+    Dataflow(string name="dataflow") : name_(name) {};
 
-      virtual ~Dataflow() {};
+    virtual ~Dataflow() {};
 
-      /** The name of this dataflow */
-      string name() const { return name_; }
+    /** The name of this dataflow */
+    string name() const { return name_; }
 
-      /** The string representation of each element that is part 
-       *  of this dataflow */
-      string toString() const;
+    /** The string representation of each element that is part 
+     *  of this dataflow */
+    string toString() const;
 
-      /** Validate this dataflow. These checks are local to
-          this dataflow (they don't require info from other dataflows). */
-      virtual int validate();
+    /** Validate this dataflow. These checks are local to
+        this dataflow (they don't require info from other dataflows). */
+    virtual int validate();
 
-      /** Finalize this dataflow */
-      int finalize();
+    /** Finalize this dataflow */
+    int finalize();
 
-      /** Find an element in existing dataflow */
-      ElementSpecPtr find(string name);
+    /** Find an element in existing dataflow */
+    ElementSpecPtr find(string name);
 
-      /** Add a new element to this dataflow by creating a
-          new ElementSpecPtr that references the passed in element.
-       */
-      virtual ElementSpecPtr addElement(ElementPtr);
+    /** Add a new element to this dataflow by creating a
+        new ElementSpecPtr that references the passed in element.
+    */
+    virtual ElementSpecPtr addElement(ElementPtr);
 
-      /** Add hookup to this dataflow */
-      virtual void
-              hookUp(ElementSpecPtr src, int src_port,
-                     ElementSpecPtr dst, int dst_port );
+    /** Add hookup to this dataflow */
+    virtual void
+    hookUp(ElementSpecPtr src, int src_port,
+           ElementSpecPtr dst, int dst_port );
 
-      /** If table exists, return it, otherwise if create is true then create 
-        * a new table and return that, otherwise return empty TablePtr. */ 
-      virtual TablePtr table(string name, bool create=true, size_t max_size=0, 
-                             string lifetime="0"); 
+
+    /** If table exists, return it, otherwise return empty Table2Ptr */ 
+    virtual Table2Ptr
+    getTable(string name); 
+
    
-      /**
-       *  All elements are local to this dataflow regardless of operation.
-       *  Elements in other dataflows under INSERT and REMOVE operations
-       *  will be indicated in the hookups.
-       */
-      std::vector< ElementSpecPtr > elements_;
+    /** If table exists, return it. Otherwise, create it given the key,
+        maximum size, and lifetime. */ 
+    virtual Table2Ptr
+    table(string name,
+          Table2::Key& key,
+          size_t max_size = 0, 
+          string lifetime = "infinity"); 
 
-      /** The hookups */
-      std::vector< ElementSpec::HookupPtr > hookups_;
+   
+    /**
+     *  All elements are local to this dataflow regardless of operation.
+     *  Elements in other dataflows under INSERT and REMOVE operations
+     *  will be indicated in the hookups.
+     */
+    std::vector< ElementSpecPtr > elements_;
 
-      /** Tables referenced by this dataflow */
-      std::map<string, TablePtr> tables_;
 
-      /** Garbage elements removed from the dataflow. We need to do this
-          given that these elements may have outstanding callbacks and therefore
-          can't be destroyed. A fix for this is in the pipe. */
-      std::vector< ElementSpecPtr > garbage_elements_;
+    /** The hookups */
+    std::vector< ElementSpec::HookupPtr > hookups_;
 
-    protected:
 
-      /** Are the configuration hookups refering to existing elements and
-          non-negative ports? */
-      int check_hookup_elements();
+    /** Tables referenced by this dataflow */
+    std::map<string, Table2Ptr> tables_;
+
+
+    /** Garbage elements removed from the dataflow. We need to do this
+        given that these elements may have outstanding callbacks and therefore
+        can't be destroyed. A fix for this is in the pipe. */
+    std::vector< ElementSpecPtr > garbage_elements_;
+
+  protected:
+
+    /** Are the configuration hookups refering to existing elements and
+        non-negative ports? */
+    int check_hookup_elements();
     
-      /** Are the port numbers within the attached element's range? */
-      int check_hookup_range();
+    /** Are the port numbers within the attached element's range? */
+    int check_hookup_range();
     
-      /** Is personality semantics correctly applied to hookups?  This only
-          checks that the end-points of a hookup are consistent.  It does
-          not follow flow codes through elements. */
-      int check_push_and_pull();
+    /** Is personality semantics correctly applied to hookups?  This only
+        checks that the end-points of a hookup are consistent.  It does
+        not follow flow codes through elements. */
+    int check_push_and_pull();
 
-      /** Run over all dataflow element specs and check for 
-       *  hookup completeness. Completely disconnect elements from
-       *  the 'installedDataflowName' Dataflow will cause an error. 
-       *  Disconnected elements in other dataflows will be automatically
-       *  garbage collected.
-       */
-      virtual int check_hookup_completeness();
+    /** Run over all dataflow element specs and check for 
+     *  hookup completeness. Completely disconnect elements from
+     *  the 'installedDataflowName' Dataflow will cause an error. 
+     *  Disconnected elements in other dataflows will be automatically
+     *  garbage collected.
+     */
+    virtual int check_hookup_completeness();
 
-      /** Are any ports multiply connected?  Are all ports attached to
-        * something?  We require all ports to be attached to something
-        * (exactly one something), even pull outputs and push inputs. */
-      virtual int eval_hookups();
+    /** Are any ports multiply connected?  Are all ports attached to
+     * something?  We require all ports to be attached to something
+     * (exactly one something), even pull outputs and push inputs. */
+    virtual int eval_hookups();
 
-      /** Perform the actual hooking up of real elements from the specs. No
-          error checking at this point.  */
-      virtual void set_connections();
+    /** Perform the actual hooking up of real elements from the specs. No
+        error checking at this point.  */
+    virtual void set_connections();
 
-      /** The root name of the dataflow */
-      string name_;
+    /** The root name of the dataflow */
+    string name_;
 
   };
   typedef boost::shared_ptr< Dataflow > DataflowPtr;
 
   class DataflowEdit : public Dataflow {
-    public:
+  public:
 
-      /** Locate an element with a given string name 
-       *  that exists in the dataflow being edited.
-       *  Return: ElementSpecPtr to element on success or
-       *          an empty ElementSpecPtr object. */
-      ElementSpecPtr find(string);
+    /** Locate an element with a given string name 
+     *  that exists in the dataflow being edited.
+     *  Return: ElementSpecPtr to element on success or
+     *          an empty ElementSpecPtr object. */
+    ElementSpecPtr find(string);
 
-      /** Adds *new* elements to the dataflow graph */
-      ElementSpecPtr addElement(ElementPtr);
+    /** Adds *new* elements to the dataflow graph */
+    ElementSpecPtr addElement(ElementPtr);
 
-      /** Add hookup to this dataflow */
-      void hookUp(ElementSpecPtr src, int src_port,
-                  ElementSpecPtr dst, int dst_port);
+    /** Add hookup to this dataflow */
+    void hookUp(ElementSpecPtr src, int src_port,
+                ElementSpecPtr dst, int dst_port);
 
-    private:
-      friend class Plumber;
-      /** Plumber is the factory class for DataflowEdit.
-          See method Plumber::new_dataflow_edit(name) */
-      DataflowEdit(DataflowPtr dpt);
+  private:
+    friend class Plumber;
+    /** Plumber is the factory class for DataflowEdit.
+        See method Plumber::new_dataflow_edit(name) */
+    DataflowEdit(DataflowPtr dpt);
 
-      /** Completely overrides Dataflow method to perform
-          connection setup using only the hookups added to
-          this edit. That is, prior hookups are not reapllied */
-      void set_connections();
+    /** Completely overrides Dataflow method to perform
+        connection setup using only the hookups added to
+        this edit. That is, prior hookups are not reapllied */
+    void set_connections();
 
-      /** Remove the element spec from this dataflow */
-      void remove(ElementSpecPtr);
+    /** Remove the element spec from this dataflow */
+    void remove(ElementSpecPtr);
 
-      /** Adds all new elements and hookups to the dataflow
-          before actual validation */
-      int validate();
+    /** Adds all new elements and hookups to the dataflow
+        before actual validation */
+    int validate();
 
-      /** As new hookups come in old hookups get invalidated.
-          This bad boy searches and destroys old hookups. */
-      void remove_old_hookups(ElementSpec::HookupPtr);
+    /** As new hookups come in old hookups get invalidated.
+        This bad boy searches and destroys old hookups. */
+    void remove_old_hookups(ElementSpec::HookupPtr);
 
-      /** Segregates new elements and hookups from old ones */
-      std::vector<ElementSpecPtr>         new_elements_;
-      std::vector<ElementSpec::HookupPtr> new_hookups_;
+    /** Segregates new elements and hookups from old ones */
+    std::vector<ElementSpecPtr>         new_elements_;
+    std::vector<ElementSpec::HookupPtr> new_hookups_;
   };
   typedef boost::shared_ptr< DataflowEdit > DataflowEditPtr;
 

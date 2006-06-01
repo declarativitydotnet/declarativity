@@ -74,12 +74,30 @@ public:
   static Key KEY1;
   static Key KEY2;
   static Key KEY3;
+  static Key KEY4;
   static Key KEY01;
   static Key KEY12;
   static Key KEY23;
   static Key KEY13;
   static Key KEY012;
   static Key KEY123;
+  static Key KEY01234;
+
+
+  /** The non-expiring expiration time */
+  static boost::posix_time::time_duration NO_EXPIRATION;
+
+
+  /** The default table expiration time */
+  static boost::posix_time::time_duration DEFAULT_EXPIRATION;
+
+
+  /** The non-size-limited size */
+  static size_t NO_SIZE;
+
+
+  /** The default table size */
+  static size_t DEFAULT_SIZE;
 
 
 
@@ -92,8 +110,8 @@ public:
   struct KeyComparator
   {
     bool
-    operator()(const Key* first,
-               const Key* second) const;
+    operator()(const Key first,
+               const Key second) const;
   };
 
 
@@ -101,10 +119,10 @@ public:
   struct KeyedEntryComparator
   {
     /** What's my key spec? */
-    const Key& _key;
+    const Key _key;
     
     /** Construct me */
-    KeyedEntryComparator(const Key& key);
+    KeyedEntryComparator(const Key key);
     
     
     /** My comparison operator */
@@ -120,11 +138,11 @@ public:
   struct KeyedTupleComparator
   {
     /** What's my key spec? */
-    const Key& _key;
+    const Key _key;
     
     
     /** Construct me */
-    KeyedTupleComparator(const Key& key);
+    KeyedTupleComparator(const Key key);
     
     
     /** My comparison operator */
@@ -156,7 +174,7 @@ public:
 
   /** An index of indices secondary indices is a map from key
       designations to secondary indices. */
-  typedef std::map< Key*, SecondaryIndex*, KeyComparator >
+  typedef std::map< Key, SecondaryIndex*, KeyComparator >
   SecondaryIndexIndex;
   
 
@@ -169,7 +187,7 @@ public:
       not be empty. If such an index exists already nothing is done and
       false is returned. Otherwise, true is returned. */
   bool
-  secondaryIndex(Key& key);
+  secondaryIndex(Key key);
 
 
 
@@ -191,27 +209,27 @@ public:
        duration; a lifetime may be positive infinite, indicating no
        expiration. */
   Table2(string tableName,
-         Key& key,
+         Key key,
          size_t maxSize,
          boost::posix_time::time_duration& lifetime);
 
   /** A convenience constructor that allows the use of string
       representations for maximum tuple lifetime. */
   Table2(string tableName,
-         Key& key,
+         Key key,
          size_t maxSize,
          string lifetime);
   
 
   /** A convenience constructor that does not expire tuples. */
   Table2(string tableName,
-         Key& key,
+         Key key,
          size_t maxSize);
   
 
   /** A convenience constructor with no size or time limits. */
   Table2(string tableName,
-         Key& key);
+         Key key);
   
 
   /** A destructor. It empties out the table and then destroys it. */
@@ -229,12 +247,17 @@ public:
       physically removed). */
   size_t
   size() const;
+
+
+  /** Table name. */
+  std::string
+  name() const;
   
   
   
   
   ////////////////////////////////////////////////////////////
-  // Listener type
+  // Listeners
   ////////////////////////////////////////////////////////////
 
   /** A listener */
@@ -243,6 +266,13 @@ public:
 
   /** Listener vector */
   typedef std::vector< Listener > ListenerVector;
+
+
+  /** Register update listeners. Every registered listener is called
+      whenever a new tuple is inserted into the table.  */
+  void
+  updateListener(Listener);
+  
 
 
 
@@ -308,7 +338,7 @@ public:
     /** Create an aggregate given its key (i.e., the group-by fields)
         a pointer to its table, the aggregated field number (single
         field for now), and the aggregate function object. */
-    AggregateObj(Key& key,
+    AggregateObj(Key key,
                  SecondaryIndex* index,
                  unsigned aggField,
                  AggFunc* function);
@@ -333,7 +363,7 @@ public:
 
   private:
     /** My index (and group-by fields). */
-    Key& _key;
+    Key _key;
     
     
     /** My secondary index. */
@@ -379,9 +409,10 @@ public:
   typedef std::vector< Aggregate > AggregateVector;
 
 
-  /** Install a new aggregate returning a handle to it */
+  /** Install a new aggregate returning a handle to it. If the aggregate
+      is unknown, return NULL. */
   Aggregate
-  aggregate(Key& groupBy,
+  aggregate(Key groupBy,
             uint aggregateFieldNo,
             std::string functionName);
 
@@ -407,7 +438,7 @@ public:
       indices.  It hides details about the underlying STL index, i.e.,
       whether it's a set or a multiset.  As far as the interface is
       concerned, an index is an index. */
-  class Iterator {
+  class IteratorObj {
   public:
     /** Fetch the next tuple pointer, or null if no next tuple exists */
     TuplePtr next();
@@ -418,11 +449,11 @@ public:
     
     
     /** The constructor just initializes the iterator */
-    Iterator(std::deque< TuplePtr >* spool);
+    IteratorObj(std::deque< TuplePtr >* spool);
 
 
     /** The destructor kills the spool queue */
-    ~Iterator();
+    ~IteratorObj();
     
     
     
@@ -440,7 +471,7 @@ public:
 
 
   /** A pointer to lookup iterators */
-  typedef boost::shared_ptr< Iterator > IteratorPtr;
+  typedef boost::shared_ptr< IteratorObj > Iterator;
   
   
   
@@ -449,30 +480,44 @@ public:
   // Lookups
   ////////////////////////////////////////////////////////////
 
-  /** Returns a pointer to a lookup iterator on all elements matching
-      the given tuple on the index specified by the key spec. If no such
-      index exists, a null pointer is returned. */
-  IteratorPtr
-  lookup(Key& key, TuplePtr t);
+  /** Looks up tuple t in the index defined by indexKey.  If no such
+      index exists, a null result is returned.  The lookup finds all
+      elements in the table (searched in the order of the given index)
+      whose index field values match the values of t on the lookup field
+      values.  For example, lookup(<1, 3>, <2, 4>, t) searches the index
+      on key <2, 4>, for all tuples s such that s[2] == t[1] and s[4] ==
+      t[3].  The lookup and index keys are assumed to have the same
+      size.  If the lookup and index keys are known to be identical,
+      lookup(Key, TuplePtr) should be used instead for peformance
+      reasons.  */
+  Iterator
+  lookup(Key lookupKey, Key indexKey, TuplePtr t);
+
+
+  /** Looks up tuple t in the index defined by indexKey.  If no such
+      index exists, a null result is returned.  The lookup finds all
+      elements in the table (searched in the order of the given index)
+      whose index field values match the values of t on the same fields.
+      For example, lookup(<1, 3>, t) searches the index on key <1, 3>,
+      for all tuples s such that s[1] == t[1] and s[3] == t[3].  This is
+      equivalent to lookup(indexKey, indexKey, t), skipping the
+      projection implied in the more complex method, however it is
+      slightly faster than that method since it does not perform the
+      projection. */
+  Iterator
+  lookup(Key indexKey, TuplePtr t);
 
 
   /** Returns a pointer to a lookup iterator on all elements ordered by
       the given index.  If no such index exists, a null pointer is
       returned.  */
-  IteratorPtr
-  scan(Key& key);
-
-
-  /** Returns a pointer to a lookup iterator on all elements matching
-      the given tuple on the primary key.  An iterator is always
-      returned.  */
-  IteratorPtr
-  lookup(TuplePtr t);
+  Iterator
+  scan(Key key);
 
 
   /** Returns a pointer to a lookup iterator on all elements ordered by
       the primary index.*/
-  IteratorPtr
+  Iterator
   scan();
   
 
@@ -519,7 +564,7 @@ private:
 
 
   /** My primary key. If empty, use the tuple ID. */
-  Key& _key;
+  Key _key;
 
 
   /** My maximum size in tuples. If 0, size is unlimited. */
@@ -559,6 +604,10 @@ private:
   bool _flushing;
 
 
+  /** My update listeners */
+  ListenerVector _updateListeners;
+
+
 
 
   ////////////////////////////////////////////////////////////
@@ -592,12 +641,18 @@ private:
   ////////////////////////////////////////////////////////////
 
   /** Performs a primary key lookup but no flushing. */
-  IteratorPtr
-  lookupPrimary(TuplePtr t);
+  Iterator
+  lookupPrimary(Entry* searchEntry);
+
+
+  /** Performs a secondary key lookup but no flushing. */
+  Iterator
+  lookupSecondary(Entry* searchEntry,
+                  SecondaryIndex& index);
 
 
   /** Performs a primary key scan but no flushing. */
-  IteratorPtr
+  Iterator
   scanPrimary();
 
 
@@ -624,13 +679,26 @@ private:
 
   /** Return a secondary index if it exists, or NULL otherwise */
   SecondaryIndex*
-  findSecondaryIndex(Key& key);
+  findSecondaryIndex(Key key);
 
 
   /** Create a fresh secondary index. It assume the index does not
       exist */
   void
-  createSecondaryIndex(Key& key);
+  createSecondaryIndex(Key key);
+
+  
+  /** Project a (potentially frozen) source tuple to an unfrozen
+      destination tuple, by placing all the fields of the source
+      described by the source key into the corresponding fields of the
+      destination described by the destination key.  The method assumes
+      that the source and destination keys have the same size and that
+      the destination tuple is not frozen. */
+  void
+  project(TuplePtr source,
+          Key sourceKey,
+          TuplePtr destination,
+          Key destinationKey);
 };
 
 

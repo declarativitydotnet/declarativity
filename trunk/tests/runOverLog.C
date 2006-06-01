@@ -34,6 +34,8 @@
 #include "plmb_confgen.h"
 
 
+#include "table2.h"
+
 
 bool DEBUG = false;
 bool CC = false;
@@ -42,7 +44,8 @@ bool CC = false;
 /**
    My usage string
 */
-static char * USAGE = "Usage:\n\t runOverLog <overLogFile> <loggingLevel> <seed> <myipaddr:port> <startDelay> <{key=value;}>\n";
+static char * USAGE = "Usage:\n\t runOverLog <overLogFile> <loggingLevel> "
+  "<seed> <myipaddr:port> <startDelay> <{key=value;}>\n";
 
 
 
@@ -56,7 +59,8 @@ initializeBaseTables(boost::shared_ptr< OL_Context> ctxt,
                      string environment)
 {
   // Put in my own address
-  TablePtr envTable = plumberConfigGenerator->getTableByName(localAddress, "env");
+  Table2Ptr envTable =
+    plumberConfigGenerator->getTableByName(localAddress, "env");
   TuplePtr tuple = Tuple::mk();
   ValuePtr envName = Val_Str::mk("env");
   tuple->append(envName);
@@ -127,8 +131,10 @@ startOverLogDataflow(LoggerI::Level level,
   // create dataflow for translated OverLog
   PlumberPtr plumber(new Plumber(level));
   Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
+
   boost::shared_ptr< Plmb_ConfGen > 
-    plumberConfigGenerator(new Plmb_ConfGen(ctxt.get(), conf, false, DEBUG, CC, overLogFile));
+    plumberConfigGenerator(new Plmb_ConfGen(ctxt.get(), conf,
+                                            false, DEBUG, CC, overLogFile));
 
   plumberConfigGenerator->createTables(localAddress);
 
@@ -191,7 +197,8 @@ void testOverLog(LoggerI::Level level,
   }
   ctxt->parse_stream(&istr);
   
-  startOverLogDataflow(level, ctxt, filename, myAddress, port, delay, environment);
+  startOverLogDataflow(level, ctxt, filename, myAddress,
+                       port, delay, environment);
 }
 
 

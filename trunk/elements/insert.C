@@ -13,18 +13,27 @@
  */
 
 #include "insert.h"
+#include "table2.h"
 
 Insert::Insert(string name,
-               TablePtr table)
+               Table2Ptr table)
   : Element(name, 1, 1),
     _table(table)
 {
 }
 
-TuplePtr Insert::simple_action(TuplePtr p)
-{
-  // Nothing to do. Just insert
-  _table->insert(p);
 
-  return p;
+int
+Insert::push(int port, TuplePtr p, b_cbv cb)
+{
+  assert(p != 0);
+  
+  if (_table->insert(p)) {
+    // The table changed. Push the tuple to the output port
+    return output(0)->push(p, cb);
+  } else {
+    // The table didn't change. Take this silently
+    return 1;
+  }
 }
+

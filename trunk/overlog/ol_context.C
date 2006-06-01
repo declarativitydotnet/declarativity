@@ -47,12 +47,9 @@ string OL_Context::Rule::toString() {
 
 string OL_Context::TableInfo::toString() {
   ostringstream t;
-  t << "MATERIALIZE( " << tableName << ", ";
-  if (timeout < 0) t << "infinity, ";
-  else t << timeout << ", ";
-
-  if (size < 0) t << "infinity";
-  else t << size;
+  t << "MATERIALIZE( " << tableName << ", "
+    << timeout << ", "
+    << size;
 
   if (primaryKeys.size() > 0) {
     t << ", " << primaryKeys.at(0);
@@ -142,7 +139,6 @@ void OL_Context::rule( Parse_Term *lhs, Parse_TermList *rhs,
     Parse_Functor       *f  = NULL;
     Parse_Assign        *a  = NULL;
     Parse_Select        *s  = NULL;
-    Parse_RangeFunction *rf = NULL;
 
     if ((f = dynamic_cast<Parse_Functor*>(*iter)) != NULL) {
 
@@ -165,9 +161,6 @@ void OL_Context::rule( Parse_Term *lhs, Parse_TermList *rhs,
 
     }
     else if ((s = dynamic_cast<Parse_Select*>(*iter)) != NULL) {
-
-    }
-    else if ((rf = dynamic_cast<Parse_RangeFunction*>(*iter)) != NULL) {
 
     }
     else error("Internal parse error: unknown term type!");
@@ -258,51 +251,45 @@ void OL_Context::traceTuple(Parse_Expr *w)
 
 
 
-void OL_Context::table(Parse_Expr *name, Parse_Expr *ttl, 
-                       Parse_Expr *size, Parse_ExprList *keys) {
+void
+OL_Context::table(Parse_Expr *name,
+                  Parse_Expr *ttl, 
+                  Parse_Expr *size,
+                  Parse_ExprList *keys)
+{
   TableInfo  *tableInfo = new TableInfo();
-  Parse_Math *math;
-  
   tableInfo->tableName = name->toString();
   
-  
-  if ((math = dynamic_cast<Parse_Math*>(ttl)) == NULL) {
-    tableInfo->timeout = Val_UInt32::cast(ttl->v);
-    if (tableInfo->timeout == 0) {
-      error("bad timeout for materialized table");
-      goto mat_error;
-    }
-  }
-  else {
-    tableInfo->timeout = *math;
+  int myTtl = Val_Int64::cast(ttl->v);
+  if (myTtl == -1) {
+    tableInfo->timeout = Table2::NO_EXPIRATION;
+  } else if (myTtl == 0) {
+    error("bad timeout for materialized table");
+  } else {
+    tableInfo->timeout = boost::posix_time::seconds(myTtl);
   }
 
-  if ((math = dynamic_cast<Parse_Math*>(size)) == NULL) {
-    tableInfo->size = Val_UInt32::cast(size->v);
-    if (tableInfo->size == 0) {
-      error("bad size for materialized table");
-      goto mat_error;
-    }
-  }
-  else {
-    tableInfo->timeout = *math;
+
+  int mySize = Val_Int64::cast(size->v);
+  // Hack because infinity token has a -1 value
+  if (mySize == -1) {
+    tableInfo->size = Table2::NO_SIZE;
+  } else {
+    tableInfo->size = mySize;
   }
 
   if (keys) {
-    for (Parse_ExprList::iterator i = keys->begin(); i != keys->end(); i++)
-	tableInfo->primaryKeys.push_back(Val_UInt32::cast((*i)->v));
+    for (Parse_ExprList::iterator i = keys->begin();
+         i != keys->end();
+         i++)
+      tableInfo->primaryKeys.push_back(Val_UInt32::cast((*i)->v));
   }
-
+  
   tables->insert(std::make_pair(tableInfo->tableName, tableInfo));
   
-  DBG( "Materialize " << tableInfo->tableName << "/"
-       << ", timeout " << tableInfo->timeout << ", size " << tableInfo->size); 
-
- mat_error:
-  delete name;
-  delete ttl;
-  delete size;
-  if (keys) delete keys;
+  DBG("Materialize " << tableInfo->tableName << "/"
+      << ", timeout " << tableInfo->timeout
+      << ", size " << tableInfo->size); 
 }
 
 //

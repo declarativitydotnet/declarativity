@@ -12,7 +12,7 @@
  *
  * The delete element.  It has only a single push input on which tuples
  * to be deleted from the table are sent.  XXX For now all deletes
- * succeed
+ * succeed.
  * 
  */
 
@@ -20,32 +20,33 @@
 #define __DELETE_H__
 
 #include "element.h"
-#include "table.h"
+#include "table2.h"
 
 class Delete : public Element {
- public:
+public:
   Delete(string name,
-         TablePtr table,
-         unsigned indexFieldNo,
-         unsigned keyFieldNo);
+         Table2Ptr table);
   
-  const char *class_name() const		{ return "Delete";}
-  const char *processing() const		{ return "h/"; }
-  const char *flow_code() const			{ return "-/"; }
+  const char*
+  class_name() const {return "Delete";}
+
+
+  const char*
+  processing() const {return "h/";}
+
+
+  const char*
+  flow_code() const {return "-/";}
+
   
   /** Delete a pushed element */
-  int push(int port, TuplePtr, b_cbv cb);
+  int
+  push(int port, TuplePtr, b_cbv cb);
 
   
- private:
+private:
   /** My table */
-  TablePtr _table;
-
-  /** My index field into which I search for the entry to remove */
-  unsigned _indexFieldNo;
-
-  /** The field number of the input tuple field to use for searching */
-  unsigned _keyFieldNo;
+  Table2Ptr _table;
 };
 
 

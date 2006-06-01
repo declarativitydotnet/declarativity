@@ -33,6 +33,11 @@ public:
   static Table2::AggFunc*
   mk(std::string aggName);
 
+
+  /** Returns a string containing all aggregates known to me */
+  static std::string
+  aggList();
+
   
   
 private:
@@ -44,8 +49,8 @@ private:
 
   /** The actual directory */
   static FactorySet _factories;
-  
-  
+
+
   /** A static initializer object to initialize static class objects */
   class Initializer {
   public:

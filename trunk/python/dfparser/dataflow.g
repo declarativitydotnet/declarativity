@@ -95,7 +95,7 @@ class Dataflow:
             arguments.append(self.eval_arg(a)) 
         if flags["debug"]: return type + str(arguments)
         else: 
-            if type == "Table":
+            if type == "Table2":
                 obj = apply(getattr(self.conf, "table"), tuple(arguments))    
             else:
                 obj = apply(getattr(libp2python, type), tuple(arguments))

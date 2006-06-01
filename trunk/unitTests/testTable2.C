@@ -26,9 +26,9 @@
 class testTable2
 {
 private:
-  static const uint SIZE = 5;
+  static const uint SIZE = 100 / 4 * 4;
 
-  static const uint EXTRA_TUPLES = 10;
+  static const uint EXTRA_TUPLES = 1000;
 
 
 
@@ -89,6 +89,26 @@ public:
   /** Test aggregate scripts */
   void
   testAggregates();
+
+
+  /** Old indexing test from v1 ported. */
+  void
+  testIndexing();
+
+  
+  /** Old batch removal test from v1 ported. */
+  void
+  testBatchRemovals();
+
+
+  /** Old batch removal from multi-field keys */
+  void
+  testBatchMultikeyRemovals();
+
+  
+  /** Old unique tuple removal test from v1 ported */
+  void
+  testUniqueTupleRemovals();
 };
 
 
@@ -371,7 +391,7 @@ testTable2::testSuperimposedIndexRemoval()
 
   // Count the elements matching a on the multiple index (i.e., all
   // elements). It should contain two elements
-  Table2::IteratorPtr m = table.lookup(Table2::KEY0, a);
+  Table2::Iterator m = table.lookup(Table2::KEY0, a);
   int count = 0;
   while (!m->done()) {
     m->next();
@@ -419,7 +439,7 @@ testTable2::testPrimaryOverwrite()
                       << "' should be newly inserted (overwriting a).");
 
   // Lookup b in the primary index
-  Table2::IteratorPtr i = table.lookup(Table2::KEY0, b);
+  Table2::Iterator i = table.lookup(Table2::KEY0, b);
   BOOST_CHECK_MESSAGE(!i->done(),
                       "Lookup of tuple b '"
                       << b->toString()
@@ -565,7 +585,7 @@ Tracker2::test()
 //           std::cout << "Tracker:Looking up '"
 //                     << _tuple->toString()
 //                     << "'\n";
-          Table2::IteratorPtr i = _table.lookup(_test._key, _tuple);
+          Table2::Iterator i = _table.lookup(_test._key, _tuple);
           BOOST_CHECK_MESSAGE(!i->done(),
                               "Did not find results for expected tuple '"
                               << _tuple->toString()
@@ -598,7 +618,7 @@ Tracker2::test()
 //           std::cout << "Tracker:Looking up '"
 //                     << _tuple->toString()
 //                     << "'\n";
-          Table2::IteratorPtr i = _table.lookup(_test._key, _tuple);
+          Table2::Iterator i = _table.lookup(_test._key, _tuple);
           
           // If there were any results
           if (!i->done()) {
@@ -881,7 +901,7 @@ testTable2::testSecondaryEquivalence()
     TuplePtr lookupT = Tuple::mk();
     lookupT->append(emptyString);
     lookupT->append(iVal);
-    Table2::IteratorPtr i = table.lookup(Table2::KEY1, lookupT);
+    Table2::Iterator i = table.lookup(Table2::KEY1, lookupT);
 
     TupleSet sResults;
     while (!i->done()) {
@@ -892,7 +912,7 @@ testTable2::testSecondaryEquivalence()
     // equals i. Remove every found tuple from the results set, ensuring
     // that every removal corresponds to a found element. If in the end
     // the results set is not empty, then we have a problem.
-    Table2::IteratorPtr s = table.scan();
+    Table2::Iterator s = table.scan();
 
     while (!s->done()) {
       TuplePtr found = s->next();
@@ -1168,44 +1188,6 @@ testTable2::testAggregates()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#if 0
-
 // Add tests for flushing due to length
 
 // Add tests for flushing due to time
@@ -1217,77 +1199,100 @@ testTable2::testAggregates()
 void
 testTable2::testIndexing()
 {
+  TuplePtr tpls[SIZE];
+
   // Create our test set of tuples
-  for(int i = 0;
-      i < N_TPLS;
+  for(uint i = 0;
+      i < SIZE;
       i++) {
     TuplePtr t = Tuple::mk();
-    t->append(Val_Int32::mk(i));
-    t->append(Val_Int32::mk(i/2));
-    t->append(Val_Int32::mk(i/4));
-    t->append(Val_Int32::mk(i % (N_TPLS/2)));
-    t->append(Val_Int32::mk(i % (N_TPLS/4)));
+    t->append(Val_UInt32::mk(i));
+    t->append(Val_UInt32::mk(i/2));
+    t->append(Val_UInt32::mk(i/4));
+    t->append(Val_UInt32::mk(i % (SIZE/2)));
+    t->append(Val_UInt32::mk(i % (SIZE/4)));
     t->freeze();
     tpls[i] = t;
   }
   
   //  First: tuples inserted can be looked up.  Tuples not inserted
   // cannot be looked up.  Create a very simple table
-  Table2Ptr tbl(new Table2("test_table", Table2::KEY0,
-                           200));
-  for( int i=0; i < N_TPLS/2; i++) { 
+  Table2Ptr tbl(new Table2("test_table", Table2::KEY0));
+  for(uint i=0;
+      i < SIZE/2;
+      i++) { 
     tbl->insert(tpls[i]);
   }
   
   
-  for( int i=0; i< N_TPLS/2; i++) { 
-    BOOST_CHECK_MESSAGE(!tbl->lookup(Table2::KEY0, Val_Int32::mk(i))->done(),
+  for(uint i = 0;
+      i< SIZE/2;
+      i++) { 
+    TuplePtr t = Tuple::mk();
+    t->append(Val_UInt32::mk(i));
+    t->append(Val_UInt32::mk(i/2));
+    t->append(Val_UInt32::mk(i/4));
+    t->append(Val_UInt32::mk(i % (SIZE/2)));
+    t->append(Val_UInt32::mk(i));
+    t->freeze();
+    BOOST_CHECK_MESSAGE(!tbl->lookup(Table2::KEY0, t)->done(),
                         "Table test. Lookup "
                         << i
                         << ".  Tuple is not in the table but should.");
     
-    BOOST_CHECK_MESSAGE(tbl->lookup(Table2::KEY0,Val_Int32::mk(i + N_TPLS/2))->done(),
+    t = Tuple::mk();
+    t->append(Val_UInt32::mk(i + SIZE/2));
+    t->append(Val_UInt32::mk(i/2));
+    t->append(Val_UInt32::mk(i/4));
+    t->append(Val_UInt32::mk(i % (SIZE/2)));
+    t->append(Val_UInt32::mk(i));
+    t->freeze();
+    BOOST_CHECK_MESSAGE(tbl->lookup(Table2::KEY0, t)->done(),
                         "Table test. Lookup "
-                        << (i + N_TPLS/2)
+                        << (i + SIZE/2)
                         << ".  Tuple is in the table but shouldn't");
   }
   
   
   // Check secondary indices
-  tbl.reset(new Table2("test_table", Table2::KEY0, 200));
-  tbl->add_multiple_index(4);
-  for( int i=0; i < N_TPLS; i++) { 
+  tbl.reset(new Table2("test_table", Table2::KEY0, SIZE));
+  tbl->secondaryIndex(Table2::KEY4);
+  for(uint i = 0;
+      i < SIZE;
+      i++) { 
     tbl->insert(tpls[i]);
   }
   
-  // Now every key we find in the first quarter must have four
-  // distinct instances in the index
-  for( int i=0; i < N_TPLS / 4; i++) { 
-    Table2::MultIterator iter = tbl->lookupAll(4, Val_Int32::mk(i));
-    for (int counter = 0;
+  // Now every tuple we find with the first quarter of counters in field
+  // 4 must have four exactly distinct instances in the index
+  for(uint i = 0;
+      i < SIZE / 4;
+      i++) { 
+    TuplePtr t = Tuple::mk();
+    t->append(Val_UInt32::mk(i));
+    t->append(Val_UInt32::mk(i));
+    t->append(Val_UInt32::mk(i));
+    t->append(Val_UInt32::mk(i));
+    t->append(Val_UInt32::mk(i));
+    t->freeze();
+    Table2::Iterator iter = tbl->lookup(Table2::KEY4, t);
+    for (uint counter = 0;
          counter < 4;
          counter++) {
       TuplePtr result = iter->next();
-      {
-        std::ostringstream message;
-        message << "Table test. Key "
-                << i
-                << " seems to have too few tuples in the mult index";
-        BOOST_CHECK_MESSAGE(result != NULL,
-                            message.str().c_str());
-      }
+      BOOST_CHECK_MESSAGE(result != NULL,
+                          "Table test. Key "
+                          << i
+                          << " seems to have too few "
+                          << "tuples in the secondary index");
     }
-    {
-      std::ostringstream message;
-      message << "Table test. Key "
-              << i
-              << " seems to have too many tuples in the mult index";
-      BOOST_CHECK_MESSAGE(iter->next() == NULL,
-                          message.str().c_str());
-    }
+    
+    BOOST_CHECK_MESSAGE(iter->done() == true,
+                        "Table test. Key "
+                        << i
+                        << " seems to have too many tuples "
+                        << "in the secondary index");
   }
-  
-  
 }
 
 
@@ -1295,40 +1300,40 @@ testTable2::testIndexing()
 void
 testTable2::testBatchRemovals()
 {
+  TuplePtr tpls[SIZE];
   // Create our test set of tuples
-  for(int i = 0;
-      i < N_TPLS;
+  for(uint i = 0;
+      i < SIZE;
       i++) {
     TuplePtr t = Tuple::mk();
     t->append(Val_Int32::mk(i));
     t->append(Val_Int32::mk(i/2));
     t->append(Val_Int32::mk(i/4));
-    t->append(Val_Int32::mk(i % (N_TPLS/2)));
-    t->append(Val_Int32::mk(i % (N_TPLS/4)));
+    t->append(Val_Int32::mk(i % (SIZE/2)));
+    t->append(Val_Int32::mk(i % (SIZE/4)));
     t->freeze();
     tpls[i] = t;
   }
   
   // Create a unique index on first field
-  Table2Ptr tbl(new Table2("test_table", 200));
-  tbl->add_unique_index(0);
-  for(int i = 0;
-      i < N_TPLS;
+  Table2Ptr tbl(new Table2("test_table", Table2::KEY0, SIZE));
+  for(uint i = 0;
+      i < SIZE;
       i++) { 
     tbl->insert(tpls[i]);
   }
-
-  for(int i = 0;
-      i < N_TPLS;
+  
+  for(uint i = 0;
+      i < SIZE;
       i++) { 
-    tbl->remove(0, (*tpls[i])[0]);
+    tbl->remove(tpls[i]);
   }
-
+  
   // I should be unable to look up any elements at all
-  for(int i = 0;
-      i< N_TPLS;
+  for(uint i = 0;
+      i< SIZE;
       i++) { 
-    BOOST_CHECK_MESSAGE(tbl->lookup(0, (*tpls[i])[0])->done(),
+    BOOST_CHECK_MESSAGE(tbl->lookup(Table2::KEY0, tpls[i])->done(),
                         "Table test. Lookup of removed tuple "
                         << tpls[i]->toString()
                         << " should return no results.");
@@ -1339,50 +1344,40 @@ testTable2::testBatchRemovals()
 void
 testTable2::testBatchMultikeyRemovals()
 {
+  TuplePtr tpls[SIZE];
   // Create our test set of tuples
-  for(int i = 0;
-      i < N_TPLS;
+  for(uint i = 0;
+      i < SIZE;
       i++) {
     TuplePtr t = Tuple::mk();
     t->append(Val_Int32::mk(i));
     t->append(Val_Int32::mk(i/2));
     t->append(Val_Int32::mk(i/4));
-    t->append(Val_Int32::mk(i % (N_TPLS/2)));
-    t->append(Val_Int32::mk(i % (N_TPLS/4)));
+    t->append(Val_Int32::mk(i % (SIZE/2)));
+    t->append(Val_Int32::mk(i % (SIZE/4)));
     t->freeze();
     tpls[i] = t;
   }
   
-  // Create a unique index on first field
-  Table2Ptr tbl(new Table2("test_table", 200));
-  std::vector< unsigned > keys;
-  keys.push_back(0);
-  keys.push_back(1);
-
-  tbl->add_unique_index(keys);
-  for(int i = 0;
-      i < N_TPLS;
+  // Create a unique index on first two fields
+  Table2Ptr tbl(new Table2("test_table", Table2::KEY01, 200));
+  for(uint i = 0;
+      i < SIZE;
       i++) { 
     tbl->insert(tpls[i]);
   }
-
-  for(int i = 0;
-      i < N_TPLS;
+  
+  for(uint i = 0;
+      i < SIZE;
       i++) { 
-    std::vector< ValuePtr > keyValues;
-    keyValues.push_back((*tpls[i])[0]);
-    keyValues.push_back((*tpls[i])[1]);
-    tbl->remove(keys, keyValues);
+    tbl->remove(tpls[i]);
   }
 
   // I should be unable to look up any elements at all
-  for(int i = 0;
-      i< N_TPLS;
+  for(uint i = 0;
+      i< SIZE;
       i++) { 
-    std::vector< ValuePtr > keyValues;
-    keyValues.push_back((*tpls[i])[0]);
-    keyValues.push_back((*tpls[i])[1]);
-    BOOST_CHECK_MESSAGE(tbl->lookup(keys, keyValues)->done(),
+    BOOST_CHECK_MESSAGE(tbl->lookup(Table2::KEY01, tpls[i])->done(),
                         "Table test. Lookup of removed tuple "
                         << tpls[i]->toString()
                         << " should return no results.");
@@ -1393,60 +1388,42 @@ testTable2::testBatchMultikeyRemovals()
 void
 testTable2::testUniqueTupleRemovals()
 {
+  TuplePtr tpls[SIZE];
+
   // Create our test set of tuples
-  for(int i = 0;
-      i < N_TPLS;
+  for(uint i = 0;
+      i < SIZE;
       i++) {
     TuplePtr t = Tuple::mk();
     t->append(Val_Int32::mk(i));
     t->append(Val_Int32::mk(i/2));
     t->append(Val_Int32::mk(i/4));
-    t->append(Val_Int32::mk(i % (N_TPLS/2)));
-    t->append(Val_Int32::mk(i % (N_TPLS/4)));
+    t->append(Val_Int32::mk(i % (SIZE/2)));
+    t->append(Val_Int32::mk(i % (SIZE/4)));
     t->freeze();
     tpls[i] = t;
   }
   
-  // Create a unique index on first field
-  Table2Ptr tbl(new Table2("test_table", 200));
-  std::vector< unsigned > keys;
-  keys.push_back(0);
-  keys.push_back(1);
-  keys.push_back(2);
-  keys.push_back(3);
-  keys.push_back(4);
-
-  tbl->add_multiple_index(1);
-  tbl->add_unique_index(keys);
-  for(int i = 0;
-      i < N_TPLS;
+  // Create a unique index on all five fields
+  Table2Ptr tbl(new Table2("test_table", Table2::KEY01234, SIZE));
+  tbl->secondaryIndex(Table2::KEY1);
+  for(uint i = 0;
+      i < SIZE;
       i++) { 
     tbl->insert(tpls[i]);
   }
-
-  for(int i = 0;
-      i < N_TPLS;
+  
+  for(uint i = 0;
+      i < SIZE;
       i++) { 
-    std::vector< ValuePtr > keyValues;
-    keyValues.push_back((*tpls[i])[0]);
-    keyValues.push_back((*tpls[i])[1]);
-    keyValues.push_back((*tpls[i])[2]);
-    keyValues.push_back((*tpls[i])[3]);
-    keyValues.push_back((*tpls[i])[4]);
-    tbl->remove(keys, keyValues);
+    tbl->remove(tpls[i]);
   }
 
   // I should be unable to look up any elements at all
-  for(int i = 0;
-      i< N_TPLS;
+  for(uint i = 0;
+      i< SIZE;
       i++) { 
-    std::vector< ValuePtr > keyValues;
-    keyValues.push_back((*tpls[i])[0]);
-    keyValues.push_back((*tpls[i])[1]);
-    keyValues.push_back((*tpls[i])[2]);
-    keyValues.push_back((*tpls[i])[3]);
-    keyValues.push_back((*tpls[i])[4]);
-    BOOST_CHECK_MESSAGE(tbl->lookup(keys, keyValues)->done(),
+    BOOST_CHECK_MESSAGE(tbl->lookup(Table2::KEY01234, tpls[i])->done(),
                         "Table test. Lookup of removed tuple "
                         << tpls[i]->toString()
                         << " should return no results.");
@@ -1457,109 +1434,12 @@ testTable2::testUniqueTupleRemovals()
 
 
 
-
-
-
-
-
-////////////////////////////////////////////////////////////
-// Tracker Superclass
-////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-////////////////////////////////////////////////////////////
-// Multi-field Key Testing
-////////////////////////////////////////////////////////////
-
-class multiTest2 : public table2Test {
-public:
-  multiTest2(std::string,
-            std::vector< uint >,
-            uint);
-  std::vector< uint > _key;
-};
-
-multiTest2::multiTest2(std::string script,
-                     std::vector< uint > key,
-                     uint line)
-  : table2Test(script, line),
-    _key(key)
-{
-}
-
-class MultiTracker2 : public Tracker2 {
-public:
-  MultiTracker2(multiTest2 & test);
-};
-
-
-MultiTracker2::MultiTracker2(multiTest2 & test)
-  : Tracker2(test)
-{
-  // Create a multiple index on the key fields
-  _table.add_unique_index(test._key);
-}
-
-
-
-/** 
- * The purpose of this test is to check that primary keys containing
- * multiple fields work correctly.  The way we implement the test is to
- * submit to the table a particular sequence of insertions, deletions,
- * successful lookups, and unsuccessful lookups. If the sequences match,
- * then the test has succeeded.
- *
- * We define each test as an EXPECT-like script, made up of insertions,
- * deletions, and successful/unsuccessful lookups.
- */
-void
-testTable2::testMultiFieldKeys()
-{
-  multiTest2 multiTest2s[] = {
-    multiTest2("i<0,1>;i<0,2>;i<0,3>;f<0,2>;",
-              std::vector<unsigned> (0, 1),
-              __LINE__),
-    
-
-    multiTest2("i<0,1>;i<0,2>;i<0,3>;f<0,2>;",
-              std::vector<unsigned> (0, 1),
-              __LINE__)
-  };
-  uint noIntMultiFieldTests = sizeof(multiTest2s) / sizeof(multiTest2);
-
-  for (uint i = 0;
-       i < noIntMultiFieldTests;
-       i++) {
-    // Create a script tracker
-    MultiTracker2 tracker(multiTest2s[i]);
-    // Run it
-    tracker.test();
-  }
-}
-
-
-
-#endif
-
-
 testTable2_testSuite::testTable2_testSuite()
   : boost::unit_test_framework::test_suite("testTable2: Marshaling/Unmarshaling")
 {
   boost::shared_ptr<testTable2> instance(new testTable2());
   
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testSecondaryEquivalence, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testAggregates, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testPrimaryOverwrite, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testCreateDestroy, instance));
@@ -1568,13 +1448,9 @@ testTable2_testSuite::testTable2_testSuite()
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimitSingle, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimitMulti, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testInsertRemoveLookupScripts, instance));
-  add(BOOST_CLASS_TEST_CASE(&testTable2::testSecondaryEquivalence, instance));
-#if 0
   add(BOOST_CLASS_TEST_CASE(&testTable2::testIndexing, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testBatchRemovals, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testBatchMultikeyRemovals, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testUniqueTupleRemovals, instance));
-  add(BOOST_CLASS_TEST_CASE(&testTable2::testMultiFieldKeys, instance));
-#endif
 }
 

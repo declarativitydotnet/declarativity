@@ -18,17 +18,13 @@ $(PROGRAMS): $(LDEPS)
 noinst_PROGRAMS 	=  	tuples \
 			benchmark \
 			overlog \
-			runManyChords \
 			runChord \
 			runOverLog \
-			runSymphony \
-			runSymphonicChord \
 			simple_lookup \
 			lookupGenerator \
 			basicelements \
 			scheduling \
 			demultiplex \
-			join \
 			net \
 			netrcc \
 			netcc2 \
@@ -66,12 +62,6 @@ demultiplex_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a
 
-join_SOURCES = join.C
-join_LDADD = \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a
-
 runOverLog_SOURCES = runOverLog.C
 runOverLog_LDADD = \
 	$(top_builddir)/overlog/.libs/libp2overlog.a \
@@ -81,35 +71,8 @@ runOverLog_LDADD = \
 	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a \
 	$(top_builddir)/debugger/.libs/libp2debugger.a
 
-runSymphony_SOURCES = runSymphony.C
-runSymphony_LDADD = \
-	$(top_builddir)/overlog/.libs/libp2overlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a\
-	$(top_builddir)/debugger/.libs/libp2debugger.a
-
-runSymphonicChord_SOURCES = runSymphonicChord.C
-runSymphonicChord_LDADD = \
-	$(top_builddir)/overlog/.libs/libp2overlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a\
-	$(top_builddir)/debugger/.libs/libp2debugger.a
-
 runChord_SOURCES = runChord.C
 runChord_LDADD = \
-	$(top_builddir)/overlog/.libs/libp2overlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a \
-	$(top_builddir)/debugger/.libs/libp2debugger.a
-
-runManyChords_SOURCES = runManyChords.C
-runManyChords_LDADD = \
 	$(top_builddir)/overlog/.libs/libp2overlog.a \
 	$(top_builddir)/net/.libs/libp2net.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
@@ -139,13 +102,6 @@ lookupGenerator_LDADD = \
 	$(top_builddir)/elements/.libs/libp2elements.a \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a 
-
-#chordDatalog_SOURCES = chordDatalog.C
-#chordDatalog_LDADD = \
-#	$(top_builddir)/overlog/.libs/libp2overlog.a \
-#	$(top_builddir)/net/.libs/libp2net.a \
-#	$(top_builddir)/elements/.libs/libp2elements.a \
-#	$(top_builddir)/p2core/.libs/libp2core.a 
 
 net_SOURCES = net.C
 net_LDADD = \
@@ -204,9 +160,6 @@ udpListen_LDADD = \
 CLEANFILES = core *.core *~
 
 EXTRA_DIST = .cvsignore \
-		chord.C \
-		ring.C \
-		symphony.C \
 		testerr.h \
 		chordDatalog.C \
 		scripts/buildCDF.pl \
@@ -216,7 +169,6 @@ EXTRA_DIST = .cvsignore \
 		scripts/reset.sh \
 		scripts/rnode.py \
 		scripts/runLocalHostChords.pl \
-		scripts/runLocalHostSymphony.pl \
 		scripts/run_lookups.py \
 		scripts/run_node.py \
 		scripts/crunch/buildCDF.pl \

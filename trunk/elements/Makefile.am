@@ -44,14 +44,12 @@ libp2elements_la_SOURCES = \
 	dDuplicateConservative.C \
 	dupElim.C \
 	filter.C \
-	store.C \
 	insert.C \
 	lookup2.C \
 	delete.C \
 	timedPullPush.C \
 	strToSockaddr.C \
 	queue.C \
-	pelScan.C \
 	functorSource.C \
 	tupleSource.C \
 	noNull.C \
@@ -59,7 +57,7 @@ libp2elements_la_SOURCES = \
 	unboxField.C \
 	printWatch.C \
 	aggregate.C \
-	scan.C \
+	update.C \
 	dataflowInstaller.C
 
 INCLUDES = @BOOST_INC@ -I../p2core -I../eventLoop -I../overlog -I../net
@@ -67,8 +65,7 @@ INCLUDES = @BOOST_INC@ -I../p2core -I../eventLoop -I../overlog -I../net
 CLEANFILES = core *.core *~
 
 EXTRA_DIST = .cvsignore \
-		$(libp2elements_la_SOURCES:.C=.h) \
-		lookup.h
+		$(libp2elements_la_SOURCES:.C=.h)
 
 MAINTAINERCLEANFILES = Makefile.in
 

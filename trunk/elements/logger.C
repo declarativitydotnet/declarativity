@@ -18,6 +18,7 @@
 #include <tuple.h>
 #include <plumber.h>
 #include <errno.h>
+#include "p2Time.h"
 
 #include "val_double.h"
 #include "val_uint64.h"
@@ -36,11 +37,12 @@ uint64_t Logger::seq=0;
 //
 Logger::Logger(string name) : Element(name, 0, 1) { }
 
-void Logger::log( string classname, 
-		  string instancename,
-		  Level severity,
-		  int errnum,
-		  string explanation )
+void
+Logger::log(string classname, 
+            string instancename,
+            Level severity,
+            int errnum,
+            string explanation )
 {
   if (severity >= _loggingLevel) {
     boost::posix_time::ptime now_ts;

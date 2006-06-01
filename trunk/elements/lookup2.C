@@ -15,17 +15,19 @@
 
 Lookup2::Lookup2(string name,
                  Table2Ptr table,
-                 Table2::Key inputKey,
                  Table2::Key lookupKey,
+                 Table2::Key indexKey,
                  b_cbv completion_cb)
   : Element(name, 1, 1),
     _table(table),
     _pushCallback(0),
     _pullCallback(0),
     _compCallback(completion_cb),
-    _inputKey(inputKey),
-    _indexKey(lookupKey)
+    _lookupKey(lookupKey),
+    _indexKey(indexKey)
 {
+  // If the two keys are identical, then we need not use projections.
+  _project = (_lookupKey == _indexKey);
 }
 
 
@@ -65,8 +67,12 @@ Lookup2::push(int port,
       _pullCallback = 0;
     }
     
-    // Fetch the iterator
-    _iterator = _table->lookup(_indexKey, _lookupTuple);
+    // Fetch the iterator.
+    if (_project) {
+      _iterator = _table->lookup(_lookupKey, _indexKey, _lookupTuple);
+    } else {
+      _iterator = _table->lookup(_indexKey, _lookupTuple);
+    }
     
     // And stop the pusher since we have to wait until the iterator is
     // flushed one way or another

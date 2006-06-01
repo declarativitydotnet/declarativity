@@ -13,7 +13,7 @@
 #include "aggFactory.h"
 #include <boost/function.hpp>
 
-// Aggregate functions
+// Agg functions
 #include "aggMin.h"
 #include "aggMax.h"
 #include "aggCount.h"
@@ -43,6 +43,21 @@ AggFactory::add(std::string aggName,
   bool succeeded = _factories.insert(std::make_pair(aggName, factory)).second;
 
   return succeeded;
+}
+
+
+std::string
+AggFactory::aggList()
+{
+  std::string aggList;
+  for (FactorySet::iterator i = _factories.begin();
+       i != _factories.end();
+       i++) {
+    std::string currentName = (*i).first;
+    aggList += currentName + ";";
+  }
+  
+  return aggList;
 }
 
 

@@ -22,6 +22,7 @@
 #include <set>
 #include "value.h"
 #include "tuple.h"
+#include "table2.h"
 
 #include "parser_util.h"
 
@@ -40,13 +41,17 @@ public:
     Rule(string r, Parse_Functor *h, bool d) 
       : ruleID(r), head(h), deleteFlag(d), 
 	ruleNum(OL_Context::ruleCount++) {};
-
+    
     string toString();
+    
+    string ruleID;
 
-    string           ruleID;
     Parse_Functor *head;
-    bool          deleteFlag;
+    
+    bool deleteFlag;
+
     std::vector<Parse_Term*> terms; 	// List of terms in the left hand side.
+
     int ruleNum;
   };
 
@@ -57,9 +62,12 @@ public:
     string toString();
 
     string tableName;
-    int timeout;
-    int size;
-    std::vector<int> primaryKeys;
+
+    boost::posix_time::time_duration timeout;
+
+    size_t size;
+
+    Table2::Key primaryKeys;
   };
   
   struct WatchDef {
@@ -108,8 +116,10 @@ public:
 
   string toString();
   
-  typedef std::vector<Rule*>                      RuleList;
+  typedef std::vector<Rule*> RuleList;
+
   typedef std::map<string, OL_Context::TableInfo *>  TableInfoMap;
+
   typedef std::vector<OL_Context::Error *> ErrorList;
 
 

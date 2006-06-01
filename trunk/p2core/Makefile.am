@@ -42,7 +42,6 @@ libp2core_la_SOURCES = \
 	val_tuple.C \
 	val_time.C \
 	val_id.C \
-	table.C \
 	loggerI.C \
 	oper.C \
 	val_ip_addr.C \

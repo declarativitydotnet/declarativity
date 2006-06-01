@@ -39,23 +39,16 @@ bool Parse_Agg::operator==(const Parse_Expr &e){
 
 string Parse_Agg::toString() {
   ostringstream a;
-  switch(oper) {
-    case MIN:   a << "min< "; break;
-    case MAX:   a << "max< "; break;
-    case COUNT: a << "count< "; break;
-  }
+  a << oper << "< ";
   a << v->toString() << " >";
   return a.str();
 }
 
-string Parse_Agg::aggName() {
-  switch(oper) {
-    case MIN:   return "min";
-    case MAX:   return "max";
-    case COUNT: return "count";
-  }
-  return "bad";
+string
+Parse_Agg::aggName() {
+  return oper;
 }
+
 
 Parse_Bool::Parse_Bool(Parse_Bool::Operator o, Parse_Expr *l, Parse_Expr *r, bool id) 
   : oper(o), lhs(l), rhs(r), id_(id) {
@@ -267,11 +260,6 @@ string Parse_Function::toString() {
   return f.str();
 }
 
-string Parse_RangeFunction::toString() {
-  return "RANGE( " + var->toString() + ", " + start->toString() 
-         + ", " + end->toString() + " )";
-}
-
 string Parse_AggTerm::toString() {
 
   ostringstream aggFieldStr;
@@ -297,22 +285,13 @@ string Parse_AggTerm::toString() {
   }
   aggFieldStr << ")";
   
-
-  if (_oper == Parse_Agg::MIN) {
-    return "min( " + groupByFieldStr.str() + 
-      ", " + aggFieldStr.str() + ", " + _baseTerm->toString() + " )";    
-  }
-
-  if (_oper == Parse_Agg::MAX) {
-    return "max( " + groupByFieldStr.str() + 
-      ", " + aggFieldStr.str() + ", " + _baseTerm->toString() + " )";    
-  }
-
-  if (_oper == Parse_Agg::COUNT) {
-    return "count( " + groupByFieldStr.str() + 
-      ", " + aggFieldStr.str() + ", " + _baseTerm->toString() + " )";    
-  }
-  return "BAD";  
+  return _oper + "( "
+    + groupByFieldStr.str()
+    + ", "
+    + aggFieldStr.str()
+    + ", "
+    + _baseTerm->toString()
+    + " )";    
 }
 
 

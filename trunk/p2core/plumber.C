@@ -18,6 +18,7 @@
 #include <plumber.h>
 #include <iostream>
 #include <set>
+#include "table2.h"
 
 /**************************************************************
  * Plumber::Dataflow is responsible for a dataflow that
@@ -58,27 +59,39 @@ void Plumber::Dataflow::hookUp(ElementSpecPtr src, int src_port,
   hookups_.push_back(p);
 }
 
-TablePtr Plumber::Dataflow::table(string name, bool create, 
-                                  size_t max_size, string lifetime)
+
+Table2Ptr
+Plumber::Dataflow::table(string name,
+                         Table2::Key& key,
+                         size_t max_size,
+                         string lifetime)
 {
-  std::map<string, TablePtr>::iterator iter = tables_.find(name);
+  std::map<string, Table2Ptr>::iterator iter = tables_.find(name);
+  if (iter != tables_.end()) {
+    // Already there. Just return it
+    return iter->second;
+  } else {
+    boost::posix_time::time_duration t(boost::posix_time::
+                                       duration_from_string(lifetime));
+    Table2Ptr tp(new Table2(name, key, max_size, t));
+    tables_[name] = tp;
+    return tp;
+  }
+}
+
+
+Table2Ptr
+Plumber::Dataflow::getTable(string name)
+{
+  std::map<string, Table2Ptr>::iterator iter = tables_.find(name);
   if (iter != tables_.end()) {
     return iter->second;
   }
-  else if (!create) {
-    return TablePtr();
-  }
-
-  TablePtr tp;
-  if (lifetime != "0") {
-    tp.reset(new Table(name, max_size, lifetime));
-  }
   else {
-    tp.reset(new Table(name, max_size));
+    return Table2Ptr();
   }
-  tables_[name] = tp;
-  return tp;		// Allocated new table
 }
+
 
 int Plumber::Dataflow::check_hookup_elements()
 {

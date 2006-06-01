@@ -20,16 +20,16 @@ libp2pythonelements_la_SOURCES = \
 	aggregate.cpp \
 	aggwrap.cpp \
 	csvparser.cpp \
+	dDuplicateConservative.cpp \
+	dRoundRobin.cpp \
 	dataflowInstaller.cpp \
-	delete.cpp \
-	lookup.cpp \
-	demux.cpp \
 	ddemux.cpp \
+	delete.cpp \
+	demux.cpp \
 	discard.cpp \
 	dupElim.cpp \
-	duplicateConservative.cpp \
-	dDuplicateConservative.cpp \
 	duplicate.cpp \
+	duplicateConservative.cpp \
 	filter.cpp \
 	functorSource.cpp \
 	hexdump.cpp \
@@ -40,15 +40,12 @@ libp2pythonelements_la_SOURCES = \
 	mux.cpp \
 	noNull.cpp \
 	noNullField.cpp \
-	pelScan.cpp \
 	pelTransform.cpp \
 	print.cpp \
 	printTime.cpp \
 	printWatch.cpp \
 	queue.cpp \
 	roundRobin.cpp \
-	dRoundRobin.cpp \
-	scan.cpp \
 	slot.cpp \
 	strToSockaddr.cpp \
 	timedPullPush.cpp \
@@ -58,7 +55,8 @@ libp2pythonelements_la_SOURCES = \
 	tupleSource.cpp \
 	unboxField.cpp \
 	unmarshal.cpp \
-	unmarshalField.cpp 
+	unmarshalField.cpp \
+	update.cpp
 
 INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements -I$(top_builddir)/eventLoop
 

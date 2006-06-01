@@ -148,16 +148,17 @@ string DataflowInstaller::readScript( string fileName )
   }
 }
 
-void DataflowInstaller::initializeChordBaseTables(Plumber::DataflowPtr d) {
+void
+DataflowInstaller::initializeChordBaseTables(Plumber::DataflowPtr d) {
   // create information on the node itself  
-  if (d->table("node", false) != 0 && d->table("node", false)->size() == 0) {
+  if (d->getTable("node") != 0 && d->getTable("node")->size() == 0) {
     uint32_t random[ID::WORDS];
     for (uint32_t i = 0; i < ID::WORDS; i++) {
       random[i] = rand();
     }
   
     IDPtr myKey = ID::mk(random);
-    TablePtr nodeTable = d->table("node");
+    Table2Ptr nodeTable = d->table("node", Table2::KEY1);
     TuplePtr tuple = Tuple::mk();
     tuple->append(Val_Str::mk("node"));
     tuple->append(Val_Str::mk(localAddress_));
@@ -167,8 +168,8 @@ void DataflowInstaller::initializeChordBaseTables(Plumber::DataflowPtr d) {
     warn << "Node: " << tuple->toString() << "\n";
   }
 
-  if (d->table("pred", false) != 0 && d->table("pred", false)->size() == 0) {
-    TablePtr predecessorTable = d->table("pred");
+  if (d->getTable("pred") != 0 && d->getTable("pred")->size() == 0) {
+    Table2Ptr predecessorTable = d->table("pred", Table2::KEY1);
     TuplePtr predecessorTuple = Tuple::mk();
     predecessorTuple->append(Val_Str::mk("pred"));
     predecessorTuple->append(Val_Str::mk(localAddress_));
@@ -179,8 +180,8 @@ void DataflowInstaller::initializeChordBaseTables(Plumber::DataflowPtr d) {
     warn << "Initial predecessor " << predecessorTuple->toString() << "\n";
   }
 
-  if (d->table("nextFingerFix", false) != 0 && d->table("nextFingerFix", false)->size() == 0) {
-    TablePtr nextFingerFixTable = d->table("nextFingerFix");
+  if (d->getTable("nextFingerFix") != 0 && d->getTable("nextFingerFix")->size() == 0) {
+    Table2Ptr nextFingerFixTable = d->table("nextFingerFix", Table2::KEY1);
     TuplePtr nextFingerFixTuple = Tuple::mk();
     nextFingerFixTuple->append(Val_Str::mk("nextFingerFix"));
     nextFingerFixTuple->append(Val_Str::mk(localAddress_));
@@ -190,8 +191,8 @@ void DataflowInstaller::initializeChordBaseTables(Plumber::DataflowPtr d) {
     warn << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";
   }
 
-  if (d->table("landmark", false) != 0 && d->table("landmark", false)->size() == 0) {
-    TablePtr landmarkNodeTable = d->table("landmark");  
+  if (d->getTable("landmark") != 0 && d->getTable("landmark")->size() == 0) {
+    Table2Ptr landmarkNodeTable = d->table("landmark", Table2::KEY1);  
     TuplePtr landmark = Tuple::mk();
     landmark->append(Val_Str::mk("landmark"));
     landmark->append(Val_Str::mk(localAddress_));

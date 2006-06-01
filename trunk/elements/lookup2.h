@@ -11,16 +11,19 @@
  * Berkeley, CA,  94707. Attention: P2 Group.
  *
  * The lookup element for the new table structure.  It has a single
- * input where a lookup tuple arrives; the inputKey determines the key
- * used for this lookup.  The search of the table is performed according
- * to the index (if any) held for the table's lookupKey.  On the output
- * all matches for the lookup are returned with successive pulls.
- * Outputs consist of tuples that contain two embedded tuples, the first
- * holding the lookup tuple and the second holding the result if any.
- * The last output tuple to be returned for a given search is tagged
- * with END_OF_SEARCH.  If a lookup yields no results, an output tuple
- * with the lookup tuple as the first value and an empty tuple as the
- * second value is returned (also tagged with END_OF_SEARCH).
+ * input where a lookup tuple arrives. The search of the table is
+ * performed according to the index (if any) held for the table's
+ * indexKey.  The lookup tuple is matched according to a 1-1 mapping
+ * from its fields described by the lookupKey to the table's field
+ * described by the index key (as per the definition of
+ * Table2::lookup()).  On the output all matches for the lookup are
+ * returned with successive pulls.  Outputs consist of tuples that
+ * contain two embedded tuples, the first holding the lookup tuple and
+ * the second holding the result if any.  The last output tuple to be
+ * returned for a given search is tagged with END_OF_SEARCH.  If a
+ * lookup yields no results, an output tuple with the lookup tuple as
+ * the first value and an empty tuple as the second value is returned
+ * (also tagged with END_OF_SEARCH).
  */
 
 #ifndef __LOOKUP2_H__
@@ -35,8 +38,8 @@ class Lookup2 : public Element {
 public:
   Lookup2(string name,
           Table2Ptr table,
-          Table2::Key inputKey,
           Table2::Key lookupKey,
+          Table2::Key indexKey,
           b_cbv completion_cb = 0);
   ~Lookup2();
   
@@ -88,15 +91,21 @@ private:
 
   
   /** My current iterator */
-  Table2::IteratorPtr _iterator;
+  Table2::Iterator _iterator;
 
 
-  /** My input key */
-  Table2::Key _inputKey;
+  /** My lookup key */
+  Table2::Key _lookupKey;
   
   
   /** My index key */
   Table2::Key _indexKey;
+
+
+  /** Are my lookup key and index key different?  If so, I need to
+      project before matching (from the lookup tuple to the schema of
+      the looked-up table). Otherwise I don't need to project. */
+  bool _project;
 };
 
 #endif /* __LOOKUP2_H_ */

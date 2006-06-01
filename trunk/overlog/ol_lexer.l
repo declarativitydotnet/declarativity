@@ -158,7 +158,6 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>"watch" { return OL_WATCH; }
 <INITIAL>"trace" {return OL_TRACE;}
 <INITIAL>"delete" { return OL_DEL; }
-<INITIAL>"range" { return OL_RANGE; }
 <INITIAL>"now" { return OL_NOW; }
 <INITIAL>"Query" { return OL_QUERY; }
 <INITIAL>[Mm][Aa][Xx] { return OL_MAX; }
@@ -183,7 +182,7 @@ WHITESPACE	[ \t\r\n]+
   return OL_VAR; }
 
 <INITIAL>infinity {
-  // Unsigned integer literal (including octal and/or hex
+  // Unsigned integer literal (including octal and/or hex)
   lvalp->v = new Parse_Val(Val_Int64::mk(-1));
   return OL_VALUE;
 }
