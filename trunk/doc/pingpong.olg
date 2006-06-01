@@ -8,4 +8,4 @@ watch(pong).
 r1 pong@J(J, I) :- ping@I(I, J).
 r2 ping@J(J, I) :- periodic@I(I,E,1,20), link@I(I,J).
 
-r3 link@I(I, J) :- linkins@I(I, J).
+r3 link@I(I, J) :- link_ins@I(I, J).
