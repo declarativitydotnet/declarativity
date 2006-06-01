@@ -11,7 +11,7 @@
 # Berkeley, CA,  94707. Attention: P2 Group.
 #
 
-bin_SCRIPTS = p2stub.py p2terminal.py
+bin_SCRIPTS = p2stub.py p2terminal.py p2insert.py
 
 do_subst = sed -e 's,[@]PYTHON[@],$(PYTHON),g'
 
@@ -20,5 +20,8 @@ p2stub.py: p2stub.in Makefile
 
 p2terminal.py: p2terminal.in Makefile
 		   $(do_subst) < $(srcdir)/p2terminal.in > p2terminal.py
+
+p2insert.py: p2insert.in Makefile
+		   $(do_subst) < $(srcdir)/p2insert.in > p2insert.py
 
 CLEANFILES = $(bin_SCRIPTS)
