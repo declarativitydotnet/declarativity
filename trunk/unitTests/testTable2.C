@@ -1543,44 +1543,137 @@ testTable2::testPseudoRandomInsertDeleteSequences()
 {
   srand(0);
 
-  // Create a table
-  Table2 t("succ", Table2::KEY2, 100, Table2::NO_EXPIRATION);
-  for (uint i = 0;
-       i < 100000;
-       i++) {
-    // Make a random tuple
-    TuplePtr tup = Tuple::mk();
+  {
+    // Create a table with fixed size but not lifetime
+    Table2 t("succ", Table2::KEY2, 100, Table2::NO_EXPIRATION);
+    for (uint i = 0;
+         i < SIZE + EXTRA_TUPLES;
+         i++) {
+      // Make a random tuple
+      TuplePtr tup = Tuple::mk();
+      
+      // My tuple name
+      tup->append(Val_Str::mk("succ"));
+      
+      // My node address
+      ostringstream nodeID;
+      nodeID << "127.0.0.1:";
+      int port = rand() % 5;
+      nodeID << port;
+      tup->append(Val_Str::mk(nodeID.str()));
     
-    // My tuple name
-    tup->append(Val_Str::mk("succ"));
+      // My Node identifier
+      unsigned int nestedSeed = rand() % 5;
+      uint32_t words[ID::WORDS];
+      for (uint w = 0;
+           w < ID::WORDS;
+           w++) {
+        words[w] = rand_r(&nestedSeed);
+      }
+      tup->append(Val_ID::mk(ID::mk(words)));
     
-    // My node address
-    ostringstream nodeID;
-    nodeID << "127.0.0.1:";
-    int port = rand() % 5;
-    nodeID << port;
-    tup->append(Val_Str::mk(nodeID.str()));
+      tup->freeze();
     
-    // My Node identifier
-    unsigned int nestedSeed = rand() % 5;
-    uint32_t words[ID::WORDS];
-    for (uint w = 0;
-         w < ID::WORDS;
-         w++) {
-      words[w] = rand_r(&nestedSeed);
+      // Choose between insert and delete
+      int r = rand();
+      //    std::cout << "Random number " << r << "\n";
+      if ((r & 1) == 0) {
+        //      std::cout << "Inserting " << tup->toString() << "\n";
+        t.insert(tup);
+      } else {
+        //      std::cout << "Deleting " << tup->toString() << "\n";
+        t.remove(tup);
+      }
     }
-    tup->append(Val_ID::mk(ID::mk(words)));
+  }
+  {
+    // Create a table with fixed lifetime but no size
+    boost::posix_time::
+      time_duration expiration(boost::posix_time::milliseconds(200));
+    Table2 t("succ", Table2::KEY2, Table2::NO_SIZE, expiration);
+    for (uint i = 0;
+         i < SIZE + EXTRA_TUPLES;
+         i++) {
+      // Make a random tuple
+      TuplePtr tup = Tuple::mk();
+      
+      // My tuple name
+      tup->append(Val_Str::mk("succ"));
+      
+      // My node address
+      ostringstream nodeID;
+      nodeID << "127.0.0.1:";
+      int port = rand() % 5;
+      nodeID << port;
+      tup->append(Val_Str::mk(nodeID.str()));
     
-    tup->freeze();
+      // My Node identifier
+      unsigned int nestedSeed = rand() % 5;
+      uint32_t words[ID::WORDS];
+      for (uint w = 0;
+           w < ID::WORDS;
+           w++) {
+        words[w] = rand_r(&nestedSeed);
+      }
+      tup->append(Val_ID::mk(ID::mk(words)));
     
-    // Choose between insert and delete
-    int r = rand();
-    if (r & 1 == 0) {
-      std::cout << "Inserting " << tup->toString() << "\n";
-      t.insert(tup);
-    } else {
-      std::cout << "Deleting " << tup->toString() << "\n";
-      t.remove(tup);
+      tup->freeze();
+    
+      // Choose between insert and delete
+      int r = rand();
+      //    std::cout << "Random number " << r << "\n";
+      if ((r & 1) == 0) {
+        //      std::cout << "Inserting " << tup->toString() << "\n";
+        t.insert(tup);
+      } else {
+        //      std::cout << "Deleting " << tup->toString() << "\n";
+        t.remove(tup);
+      }
+    }
+  }
+  {
+    // Create a table with fixed lifetime and size
+    boost::posix_time::
+      time_duration expiration(boost::posix_time::milliseconds(200));
+    Table2 t("succ", Table2::KEY2, 100, expiration);
+    for (uint i = 0;
+         i < SIZE + EXTRA_TUPLES;
+         i++) {
+      // Make a random tuple
+      TuplePtr tup = Tuple::mk();
+      
+      // My tuple name
+      tup->append(Val_Str::mk("succ"));
+      
+      // My node address
+      ostringstream nodeID;
+      nodeID << "127.0.0.1:";
+      int port = rand() % 5;
+      nodeID << port;
+      tup->append(Val_Str::mk(nodeID.str()));
+    
+      // My Node identifier
+      unsigned int nestedSeed = rand() % 5;
+      uint32_t words[ID::WORDS];
+      for (uint w = 0;
+           w < ID::WORDS;
+           w++) {
+        words[w] = rand_r(&nestedSeed);
+      }
+      tup->append(Val_ID::mk(ID::mk(words)));
+    
+      tup->freeze();
+    
+      // Choose between insert and delete
+      int r = rand();
+      //    std::cout << "Random number " << r << "\n";
+      if ((r & 1) == 0) {
+        //      std::cout << "Inserting " << tup->toString() << "\n";
+        t.insert(tup);
+      } else {
+        //      std::cout << "Deleting " << tup->toString() << "\n";
+        t.remove(tup);
+      }
     }
   }
 }
