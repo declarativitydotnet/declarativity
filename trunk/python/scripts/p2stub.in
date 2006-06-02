@@ -7,16 +7,17 @@ import getopt;
 
 def print_usage():
     print
-    print "Usage: p2stub.py [-d] [-n <nodes>=1]  <address> <port> [landmark_address]\n"
+    print "Usage: p2stub.py [-s seed] [-n <nodes>=1]  <address> <port> [landmark_address]\n"
     print
 
 def parse_cmdline(argv):
-    shortopts = "n:d"
+    shortopts = "dn:s:"
     flags = {"debug" : False, "nodes" : 1}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
-        if   o == "-d": flags["debug"]      = True
-        elif o == "-n": flags["nodes"]      = int(v)
+        if   o == "-d": flags["debug"] = True
+        elif o == "-n": flags["nodes"] = int(v)
+        elif o == "-s": libp2python.srand(int(v))
         else:
             print_usage()
             exit(3)
@@ -69,6 +70,7 @@ def gen_stub(plumber, name, address, port):
       return m.conf
 
 if __name__ == "__main__":
+  libp2python.srand(libp2python.time())
   try:
     flags, args = parse_cmdline(sys.argv)
   except:

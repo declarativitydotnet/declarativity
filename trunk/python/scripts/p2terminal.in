@@ -94,8 +94,14 @@ class Terminal(Element):
           self.mode = "address" 
       elif self.mode == "input":
           try:
-              file = open(line, 'r') 
+              if flags["env"]:
+                  os.system("cpp -P %s %s %s.processed" % (flags["env"], line, line))
+              else:
+                  os.system("cpp -P %s %s.processed" % (line, line))
+              file = open(line + ".processed", 'r') 
               self.program += file.read()
+              file.close()
+              os.remove("%s.processed" % line)
               print "File %s text added to overlog program." % line
           except:
               print "ERROR: open file error on file", line
@@ -135,31 +141,24 @@ class Terminal(Element):
 
 def print_usage():
     print
-    print "Usage: p2terminal.py [-d delay] [-f <input_file> -n <nodes> -a <ip_address> -p <start_port>] <terminal_ip_address> <terminal_port>\n"
+    print "Usage: p2terminal.py [-e \"-Dvar=<value> ...\"] [-d delay] [-f <input_file> -n <nodes> -a <ip_address> -p <start_port>] <terminal_ip_address> <terminal_port>\n"
     print
 
 def parse_cmdline(argv):
-    shortopts = "d:f:n:a:p:"
-    flags = {"delay" : 20, "debug" : False, "input" : None, "nodes" : 0, "ip" : None, "port" : 0}
+    shortopts = "d:f:n:a:p:e:"
+    flags = {"env" : None, "delay" : 20, "debug" : False, "input" : None, "nodes" : 0, "ip" : None, "port" : 0}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if o   == "-f": flags["input"] = v
         elif o == "-n": flags["nodes"] = int(v)
         elif o == "-a": flags["ip"]    = v
         elif o == "-p": flags["port"]  = int(v)
-        elif o == "-d": flags["delay"]  = int(v)
+        elif o == "-d": flags["delay"] = int(v)
+        elif o == "-e": flags["env"]   = v
         else:
             print_usage()
             exit(3)
     return flags, args
-
-def get_test_stub():
-    stub = r"""dataflow %s {
-      TimedPushSource("source", 0) -> Print("output") -> Discard("output_discard");
-      TimedPushSource("input", 0) -> Discard("input_discard");
-      }
-      .   # END OF DATAFLOW DEFINITION""" % DATAFLOW_NAME
-    return stub
 
 def get_stub(port):
     stub = r"""dataflow %s {
@@ -225,8 +224,15 @@ if __name__ == "__main__":
 
     if flags["input"] and flags["nodes"] and flags["ip"] and flags["port"]:
         try:
-            file = open(flags["input"], 'r') 
+            if flags["env"]:
+                os.system("cpp -P %s %s %s.processed" % \
+                          (flags["env"], flags["input"], flags["input"]))
+            else:
+                os.system("cpp -P %s %s.processed" % (flags["input"], flags["input"]))
+            file = open(flags["input"]+".processed", 'r') 
             term.element().program = file.read()
+            file.close()
+            os.remove("%s.processed" % flags["input"])
             print "File %s text added to overlog program." % flags["input"]
         except:
             print "ERROR: open file error on file", flags["input"]
