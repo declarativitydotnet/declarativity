@@ -14,6 +14,7 @@
 #include "val_id.h"
 #include "val_uint32.h"
 #include "val_uint64.h"
+#include "val_str.h"
 
 class OperID : public opr::OperCompare<Val_ID> {
   virtual ValuePtr _lshift (const ValuePtr& v1, const ValuePtr& v2) const {
@@ -125,6 +126,8 @@ IDPtr Val_ID::cast(ValuePtr v) {
     return ID::mk(Val_UInt32::cast(v));
   case Value::UINT64:
     return ID::mk(Val_UInt64::cast(v));
+  case Value::STR:
+    return ID::mk(Val_Str::cast(v));
   default:
     throw Value::TypeError(v->typeCode(), Value::ID );
   }

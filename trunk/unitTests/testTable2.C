@@ -17,11 +17,14 @@
 #include "val_tuple.h"
 #include "val_int32.h"
 #include "val_uint32.h"
+#include "val_id.h"
+#include "ID.h"
 
 #include "testTable2.h"
 #include <boost/bind.hpp>
 #include "vector"
 
+#include "stdlib.h"
 
 class testTable2
 {
@@ -114,6 +117,11 @@ public:
   /** Projected lookups */
   void
   testProjectedLookups();
+
+  
+  /** Random inserts/deletes */
+  void
+  testPseudoRandomInsertDeleteSequences();
 };
 
 
@@ -534,21 +542,35 @@ class table2Test {
 public:
   table2Test(std::string script,
              int line,
-             Table2::Key& key);
+             Table2::Key& key,
+             size_t size);
+
+
   std::string _script;
+
+
   int _line;
+
+
   Table2::Key& _key;
+
+  
+  size_t _size;
 };
 
 
 table2Test::table2Test(std::string script,
                        int line,
-                       Table2::Key& key)
+                       Table2::Key& key,
+                       size_t size = Table2::DEFAULT_SIZE)
   : _script(script),
     _line(line),
-    _key(key)
+    _key(key),
+    _size(size)
 {
 }
+
+
 
 
 /**
@@ -857,7 +879,7 @@ Tracker2::Tracker2(table2Test & test)
     // Create a very simple table with the following schema
     // Schema is <A int, B int>
     // No maximum lifetime or size
-    _table("trackerTest", _test._key)
+    _table("trackerTest", _test._key, _test._size)
 {
 }
 
@@ -917,6 +939,27 @@ testTable2::testInsertRemoveLookupScripts()
                  "i<0,15>;f<0,15>;",
                  __LINE__,
                  Table2::KEY0),
+      
+      table2Test("i<0,10>;i<0,15>;i<0,20>;i<0,25>;i<0,30>;"
+                 "i<0,15>;f<0,15>;",
+                 __LINE__,
+                 Table2::KEY0, 3),
+      
+      table2Test("i<0,10>;i<0,15>;i<0,20>;i<0,25>;i<0,30>;"
+                 "d<0,15>;m<0,15>;",
+                 __LINE__,
+                 Table2::KEY0, 3),
+      
+      table2Test("i<0,10>;i<0,15>;i<0,20>;i<0,25>;i<0,30>;"
+                 "i<0,15>;d<0,15>;m<0,15>;",
+                 __LINE__,
+                 Table2::KEY0, 3),
+      
+      table2Test("i<0,10>;d<0,10>;i<0,10>;"
+                 "i<0,15>;i<0,20>;i<0,25>;i<0,30>;"
+                 "i<0,15>;d<0,15>;m<0,15>;",
+                 __LINE__,
+                 Table2::KEY0, 3),
       
     };
   std::vector< table2Test > vec(t,
@@ -1495,6 +1538,54 @@ testTable2::testUniqueTupleRemovals()
 }
 
 
+void
+testTable2::testPseudoRandomInsertDeleteSequences()
+{
+  srand(0);
+
+  // Create a table
+  Table2 t("succ", Table2::KEY2, 100, Table2::NO_EXPIRATION);
+  for (uint i = 0;
+       i < 100000;
+       i++) {
+    // Make a random tuple
+    TuplePtr tup = Tuple::mk();
+    
+    // My tuple name
+    tup->append(Val_Str::mk("succ"));
+    
+    // My node address
+    ostringstream nodeID;
+    nodeID << "127.0.0.1:";
+    int port = rand() % 5;
+    nodeID << port;
+    tup->append(Val_Str::mk(nodeID.str()));
+    
+    // My Node identifier
+    unsigned int nestedSeed = rand() % 5;
+    uint32_t words[ID::WORDS];
+    for (uint w = 0;
+         w < ID::WORDS;
+         w++) {
+      words[w] = rand_r(&nestedSeed);
+    }
+    tup->append(Val_ID::mk(ID::mk(words)));
+    
+    tup->freeze();
+    
+    // Choose between insert and delete
+    int r = rand();
+    if (r & 1 == 0) {
+      std::cout << "Inserting " << tup->toString() << "\n";
+      t.insert(tup);
+    } else {
+      std::cout << "Deleting " << tup->toString() << "\n";
+      t.remove(tup);
+    }
+  }
+}
+
+
 
 
 
@@ -1503,6 +1594,7 @@ testTable2_testSuite::testTable2_testSuite()
 {
   boost::shared_ptr<testTable2> instance(new testTable2());
   
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testPseudoRandomInsertDeleteSequences, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testProjectedLookups, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSecondaryEquivalence, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testAggregates, instance));
