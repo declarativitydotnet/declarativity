@@ -134,7 +134,7 @@ string ID::toConfString() const
   char buf[30];
   result << "{";
   for (unsigned i = 0; i < WORDS; i++) {
-    sprintf(buf, "%04x", words[i]);
+    sprintf(buf, "%d", words[i]);
     result << buf;
     if (i < WORDS-1) 
       result << ", ";

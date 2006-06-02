@@ -126,6 +126,8 @@ IDPtr Val_ID::cast(ValuePtr v) {
     return ID::mk(Val_UInt32::cast(v));
   case Value::UINT64:
     return ID::mk(Val_UInt64::cast(v));
+  case Value::DOUBLE:
+    return ID::mk(Val_UInt64::cast(v));
   case Value::STR:
     return ID::mk(Val_Str::cast(v));
   default:
