@@ -7,7 +7,7 @@ import getopt;
 
 def print_usage():
     print
-    print "Usage: p2stub.py [-s seed] [-n <nodes>=1]  <address> <port> [landmark_address]\n"
+    print "Usage: p2stub.py [-s <seed>] [-n <nodes>=1]  <address> <port>\n"
     print
 
 def parse_cmdline(argv):
@@ -85,8 +85,6 @@ if __name__ == "__main__":
 
   address  = args[0]
   port     = int(args[1])
-  landmark = "-"
-  if len(args) >= 3: landmark = args[2]
 
   plumber = libp2python.Plumber()
 
@@ -107,8 +105,7 @@ if __name__ == "__main__":
 
       oc = edit.addElement(libp2python.OverlogCompiler("ocompiler", plumber, 
                                                        address+":"+str(port+i), name)) 
-      di = edit.addElement(libp2python.DataflowInstaller("dinstaller", plumber, dfparser, 
-                                                         address+":"+str(port+i), landmark))
+      di = edit.addElement(libp2python.DataflowInstaller("dinstaller", plumber, dfparser))
       # printer = edit.addElement(libp2python.Print("dataflow_printer"));
       edit.hookUp(ddemux, 0, oc, 0)
       edit.hookUp(oc, 0, di, 0)

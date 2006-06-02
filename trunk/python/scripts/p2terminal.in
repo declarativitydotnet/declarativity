@@ -95,7 +95,11 @@ class Terminal(Element):
       elif self.mode == "input":
           try:
               if flags["env"]:
-                  os.system("cpp -P %s %s %s.processed" % (flags["env"], line, line))
+                  envs = ""
+                  env = flags["env"]
+                  for var in env:
+                      envs += "-D" + var + "=" + env[var] 
+                  os.system("cpp -P %s %s %s.processed" % (envs, line, line))
               else:
                   os.system("cpp -P %s %s.processed" % (line, line))
               file = open(line + ".processed", 'r') 
@@ -141,12 +145,12 @@ class Terminal(Element):
 
 def print_usage():
     print
-    print "Usage: p2terminal.py [-e \"-Dvar=<value> ...\"] [-d delay] [-f <input_file> -n <nodes> -a <ip_address> -p <start_port>] <terminal_ip_address> <terminal_port>\n"
+    print "Usage: p2terminal.py [-Dvar=<value> [-Dvar=<value> [...]]] [-d <sec_delay>] [-f <input_file> -n <nodes> -a <ip_address> -p <start_port>] <terminal_ip_address> <terminal_port>\n"
     print
 
 def parse_cmdline(argv):
-    shortopts = "d:f:n:a:p:e:"
-    flags = {"env" : None, "delay" : 20, "debug" : False, "input" : None, "nodes" : 0, "ip" : None, "port" : 0}
+    shortopts = "d:f:n:a:p:D:"
+    flags = {"env" : {}, "delay" : 20, "debug" : False, "input" : None, "nodes" : 0, "ip" : None, "port" : 0}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if o   == "-f": flags["input"] = v
@@ -154,7 +158,9 @@ def parse_cmdline(argv):
         elif o == "-a": flags["ip"]    = v
         elif o == "-p": flags["port"]  = int(v)
         elif o == "-d": flags["delay"] = int(v)
-        elif o == "-e": flags["env"]   = v
+        elif o == "-D": 
+            d = v.split("=", 1)
+            flags["env"][d[0]] = d[1].replace("\"", "\\\"")
         else:
             print_usage()
             exit(3)
@@ -225,8 +231,12 @@ if __name__ == "__main__":
     if flags["input"] and flags["nodes"] and flags["ip"] and flags["port"]:
         try:
             if flags["env"]:
+                envs = ""
+                env = flags["env"]
+                for var in env:
+                    envs += "-D" + var + "=" + env[var] + " "
                 os.system("cpp -P %s %s %s.processed" % \
-                          (flags["env"], flags["input"], flags["input"]))
+                          (envs, flags["input"], flags["input"]))
             else:
                 os.system("cpp -P %s %s.processed" % (flags["input"], flags["input"]))
             file = open(flags["input"]+".processed", 'r') 

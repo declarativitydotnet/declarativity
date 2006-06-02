@@ -187,6 +187,10 @@ WHITESPACE	[ \t\r\n]+
   return OL_VALUE;
 }
 
+<INITIAL>fact { 
+  return OL_FACT; 
+}
+
 <INITIAL>[a-z]{ALNUM}* { 
   lvalp->v = new Parse_Val(Val_Str::mk(yytext)); 
   return OL_NAME; 

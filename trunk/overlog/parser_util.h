@@ -63,7 +63,7 @@ public:
     return v->toString(); 
   };
 
-  virtual operator int();
+  virtual ValuePtr value() { return v; };
 
 private:
   bool id_;
@@ -143,7 +143,7 @@ public:
 
   virtual string toString();
 
-  virtual operator int();
+  virtual ValuePtr value();
 
   Operator   oper;
   bool       id;

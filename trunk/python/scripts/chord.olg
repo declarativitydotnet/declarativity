@@ -45,7 +45,10 @@ materialize(nextFingerFix, infinity, 1, keys(1)).
 materialize(pingNode, 10, infinity, keys(2)).  
 materialize(pendingPing, 10, infinity, keys(2)).  
 
-/* landmark("landmark", "localhost:10000", "-"). */
+fact node(MYADDRESS, 0I + MYNODEID).
+fact pred(MYADDRESS, 0I, "-").
+fact nextFingerFix(MYADDRESS, 0).
+fact landmark(MYADDRESS, MYLANDMARK).
 
 /** Lookups */
 

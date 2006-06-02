@@ -304,30 +304,34 @@ OL_Context::table(Parse_Expr *name,
 //
 // Adding a fact
 //
-void OL_Context::fact(Parse_Term *t)
+void OL_Context::fact(Parse_Expr *name, Parse_ExprList *args)
 {
-  Parse_Functor *f = dynamic_cast<Parse_Functor*>(t);
-
   TuplePtr tpl = Tuple::mk();
-  tpl->append(Val_Str::mk(f->fn->name));
-  for (int i = 0; i < f->args(); i++) {
-    Parse_Val  *val = dynamic_cast<Parse_Val*>(f->arg(i));
-    if (val != NULL) {
-      tpl->append(val->v);
+  tpl->append(name->v);
+  for (Parse_ExprList::iterator iter = args->begin(); 
+       iter != args->end(); iter++) {
+    Parse_Val  *v = dynamic_cast<Parse_Val*>(*iter);
+    Parse_Math *m = dynamic_cast<Parse_Math*>(*iter);
+    if (v != NULL) {
+      tpl->append(v->value());
     } 
+    else if (m != NULL) {
+      tpl->append(m->value());
+    }
     else {
       error("free variables and don't-cares not allowed in facts:" 
-	    + f->arg(i)->toString());
+	    + (*iter)->toString());
       goto fact_error;
     }
   }
   tpl->freeze();
   facts.push_back(tpl);
 
-  DBG("Fact: " << tblname << " <- " << tpl->toString());
+  DBG("Fact: " << name->v->toString() << " <- " << tpl->toString());
     
   fact_error:
-    delete f;
+    delete name;
+    delete args;
 }
 
 

@@ -20,15 +20,11 @@
 #include "ID.h"
 #include "val_id.h"
 
-#define HACK
-
 using namespace boost::python;
 using namespace boost::python::api;
 
-DataflowInstaller::DataflowInstaller(string n, PlumberPtr p, 
-                                     object o, string local, string landmark) 
-  : Element(n, 1, 1), plumber_(p), parser_(o), 
-    localAddress_(local), landmarkAddress_(landmark)
+DataflowInstaller::DataflowInstaller(string n, PlumberPtr p, object o) 
+  : Element(n, 1, 1), plumber_(p), parser_(o)
 {
   // Start python and instantiate dfparser object I'm not given one
   if (o.ptr() == object().ptr()) {
@@ -97,10 +93,6 @@ int DataflowInstaller::install(string script, ostringstream& status) {
   for (int i = 0; i < nedits; i++) {
     edits[i].attr("eval_dataflow")();
     Plumber::DataflowEditPtr e = extract<Plumber::DataflowEditPtr>(edits[i].attr("conf"));
-#ifdef HACK
-    initializeChordBaseTables(e);
-#endif
- 
     if (plumber_->install(e) < 0) {
       status << "EDIT INSTALLATION FAILURE FOR " << e->name() << std::endl;
       return -1;
@@ -148,6 +140,7 @@ string DataflowInstaller::readScript( string fileName )
   }
 }
 
+/*
 void
 DataflowInstaller::initializeChordBaseTables(Plumber::DataflowPtr d) {
   // create information on the node itself  
@@ -191,7 +184,6 @@ DataflowInstaller::initializeChordBaseTables(Plumber::DataflowPtr d) {
     warn << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";
   }
 
-/*
   if (d->getTable("landmark") != 0 && d->getTable("landmark")->size() == 0) {
     Table2Ptr landmarkNodeTable = d->table("landmark", Table2::KEY1);  
     TuplePtr landmark = Tuple::mk();
@@ -202,5 +194,5 @@ DataflowInstaller::initializeChordBaseTables(Plumber::DataflowPtr d) {
     warn << "Insert landmark node " << landmark->toString() << "\n";
     landmarkNodeTable->insert(landmark);
   }
-*/
 }
+*/

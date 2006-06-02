@@ -2674,6 +2674,7 @@ Plmb_ConfGen::createTables(string nodeID)
   }
 
 
+  _p2dl << conf_comment("CREATE ALL TABLE FACTS");
   // Now handle facts
   for (unsigned int k = 0;
        k < _ctxt->getFacts().size();
@@ -2696,12 +2697,12 @@ Plmb_ConfGen::createTables(string nodeID)
 	      << " "
               << tr->size()
               << "\n";
-    std::cerr << "GEN FACT: " << tr->toConfString() << std::endl;
     _p2dl << conf_call(tableToInsert.get(),
-                       conf_function("insert", tr->toConfString()))
+                       conf_function("insert", tr->toConfString()), false)
           << ";"
           << std::endl;
   }
+  _p2dl << conf_comment("END OF TABLE FACTS");
   _p2dl << conf_comment("END OF CREATING TABLE VARIABLES");
   _p2dl << std::endl;
 }

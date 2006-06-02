@@ -16,13 +16,11 @@
 
 #include "parser_util.h"
 #include "val_int32.h"
+#include "oper.h"
 
+using namespace opr;
 
 //=====================================
-
-Parse_Val::operator int() {
-  return Val_Int32::cast(v);
-}
 
 Parse_Expr* Parse_Agg::DONT_CARE = new Parse_Var(Val_Str::mk("*"));
 Parse_Expr* Parse_Expr::Now = new Parse_Var(Val_Str::mk("now"));
@@ -121,25 +119,27 @@ string Parse_Range::toString() {
 }
 
 
-Parse_Math::operator int() {
+ValuePtr Parse_Math::value() {
   Parse_Math *m;
   Parse_Val  *v;
-  int l = 0;
-  int r = 0;
+  ValuePtr l;
+  ValuePtr r;
   
   if ((m=dynamic_cast<Parse_Math*>(lhs)) != NULL) 
-    l = int(*m);
+    l = m->value();
   else if ((v=dynamic_cast<Parse_Val*>(lhs)) != NULL) 
-    l = int(*v);
+    l = v->value();
   else
-    return 0;	// TODO: throw some kind of exception.
+    return ValuePtr();
 
   if ((m=dynamic_cast<Parse_Math*>(rhs)) != NULL) 
-    r = int(*m);
+    r = m->value();
   else if ((v=dynamic_cast<Parse_Val*>(rhs)) != NULL) 
-    r = int(*v);
+    r = v->value();
   else
-    return 0;	// TODO: throw some kind of exception.
+    return ValuePtr();	// TODO: throw some kind of exception.
+
+  if (!l || !r) return ValuePtr();
 
   switch (oper) {
     case LSHIFT:  return l << r;
