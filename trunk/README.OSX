@@ -1,43 +1,47 @@
 $Id$
-To build P2 on Mac OS X Tiger (PPC architecture, OSX Version 10.4.5):
 
-1) Tiger ships with Python 2.3.  You need to install Python 2.4.1.
-   (e.g. from http://undefined.org/python/MacPython-OSX-2.4.1-1.dmg)
-2) Install the TigerPython24Fix.  (e.g. from
-   http://pythonmac.org/packages/TigerPython24Fix-r2.zip)
-3) It's a good idea to get the latest version of Xcode from
+To build P2 on Mac OS X Tiger (OSX Version 10.4.6, either PPC
+or Intel processor):
+
+1) Tiger ships with Python 2.3.  THIS SHOULD WORK FINE, there is no
+   need to install Python 2.4.1, contrary to prior versions of this file.
+2) It's a good idea to get the latest version of Xcode from
    http://developer.apple.com. 
-4) Download the Boost libraries from http://www.boost.org, and read the
+3) Download the Boost libraries from http://www.boost.org, and read the
    instructions at http://www.boost.org/more/getting_started.html for
    building on Darwin.  You will need to download a prebuilt version
    of the bjam tool as part of that process (as documented at
    http://www.boost.org/more/getting_started.html#Preparation).
-5) To build boost, you will need to point it at the Python 2.4
-   installation by setting the environment variable PYTHON_ROOT to be
-   "/Library/Frameworks/Python.framework/Versions/2.4".  Since you'll
-   be using Python again in P2, you should probably do this in your
-   shell configuration file (~/.bashrc or ~/.cshrc).
-6) You are now ready to run 
+4) You are now ready to run 
    	   bjam "-sTOOLS=darwin" install 
    in the boost source directory.  You should run it as root (via su
-   or sudo).  This takes quite a while; get some sleep.
-7) find boost-1_33_1 -type d -exec chmod 755 {} \;
-8) The version of bison included in the latest Xcode is still 1.2.8.
+   or sudo).  This may take quite a while on an older machine; get some sleep.
+5) Sometimes the boost installation scripts does not make its
+   subdirectories world-readable.  To fix this run:
+       find /usr/local/include/boost-1_33_1 -type d -exec chmod 755 {} \;
+6) The version of bison included in the latest Xcode is still 1.2.8.
    You will need to download and build bison 2.1, e.g. from 
    http://ftp.gnu.org/pub/gnu/bison/bison-2.1.tar.gz
    It should build cleanly.  You will want to type "make install" as
    root (su or sudo).  Make sure that you are picking up the right
    version of bison after you do the install (by default this should
    be /usr/local/bin/bison) by running "bison --version".
-9) When that's done you should be set to build p2.
+7) When that's done you should be set to build p2.
        ./setup
        ./configure --with-boostlib=/usr/local/lib \
-                   --with-boostinc=/usr/local/include/boost-1_33_1/
+                   --with-boostinc=/usr/local/include/boost-1_33_1/ \
        make
    This will take quite a while as well.  We've found you can
    parallelize the make at a factor of about 4 per processor, so on a
-   uniprocessor machine saying "make -j4" is beneficial.
-
+   uniprocessor machine saying "make -j4" is beneficial; on a
+   dual-core machine you might try "make -j8".
+8) Assuming everything built correctly you should be ready to install
+   the libraries and scripts.  You will have to run this command as root:
+       make install
+9) Ensure that the "/usr/local/bin" directory is in your path.
+10) Add the "/usr/local/bin" and "/usr/local/lib" directories are in
+   your PYTHONPATH variable 
+  
 ---
 NOTE: There are prebuilt boost distributions in the fink (unstable)
 and darwinports distributions. The fink version is somewhat out of
@@ -45,4 +49,4 @@ date, and while it works, it does produce various warnings.  I have
 not worked with darwinports, so can't comment on that one.
 
 
--- Joe Hellerstein, 3/8/2006
+-- Joe Hellerstein, 6/1/2006
