@@ -41,6 +41,9 @@ or Intel processor):
 9) Ensure that the "/usr/local/bin" directory is in your path.
 10) Add the "/usr/local/bin" and "/usr/local/lib" directories are in
    your PYTHONPATH variable 
+11) Due to libtool weirdness (if someone has a fix, let us know!) you
+   have to type (as root):
+       cd /usr/local/lib; ln -s libp2python.0 libp2python.so
   
 ---
 NOTE: There are prebuilt boost distributions in the fink (unstable)
