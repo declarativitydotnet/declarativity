@@ -218,7 +218,7 @@ computer, using two different network ports for the two instances of
 the system.
 
 We assume you have already successfully run ``make install'' on the P2
-source code.  You also need to set your PYTHONPATH environment
+source code.  You also need to set your \lstinline$PYTHONPATH$ environment
 variable to point to the \lstinline$lib$ and \lstinline$bin$
 subdirectories of your installation point (by default,
 \lstinline$/usr/local/lib$ and \lstinline$/usr/local/bin$), and your
@@ -233,43 +233,39 @@ each of the two instances.  This is done by running the command:
 which specifies that two stub processes should be run at addresses
 \lstinline$localhost:10050$ and \lstinline$localhost:10051$.
 
-Next, we will run the P2 terminal to load and install our overlog
-program:
+Next, we will use the P2 terminal to load and install our overlog
+program.  The p2terminal script supports an interactive mode, but
+we'll put all our arguments on the command line.  Be sure to change
+directory to the location of this document so that it can find the
+file pingpong.olg
 \begin{verbatim}
-% p2terminal.py localhost 10049
+% p2terminal.py -f pingpong.olg -n 2 -a localhost -p 10050 \
+  localhost 10049
 \end{verbatim}
-The terminal will print a welcome message, and then a prompt.  Switch
-to the ``address'' mode to tell the terminal the address of the P2
-stubs we will be sending our overlog to; switch back to the main
-terminal mode by typing '.':
+Wait for a few seconds until the p2terminal.py script completes.  At
+this point we have two instances of the pingpong.olg script listening
+on two different ports.  As of yet, there is no communication because
+the \lstinline$link$ relation at the two nodes is still empty.  We
+initialize the \lstinline$link$ relation with two links, one from each
+port to the other:
 \begin{verbatim}
-terminal >> address
-address >> localhost:10050
-Address entered:  localhost:10050
-address >> localhost:10051
-Address entered:  localhost:10051
-address >> .
-terminal >> 
+% echo "insert link@localhost:10050(\"localhost:10050\"::Val_Str, \
+  \"localhost:10051\"::Val_Str)." | p2insert.py localhost 10048
+% echo "insert link@localhost:10051(\"localhost:10051\"::Val_Str, \
+  \"localhost:10050\"::Val_Str)." | p2insert.py localhost 10047
 \end{verbatim}
-Now that we have set up the destinations for our overload code, it's
-time to load that code into the terminal.  Switch into ``input'' mode
-to specify an overlog file to load.  We have included a file
-pingpong.olg in the same directory as this manual in the installation,
-and we assume that you have run the P2terminal in that directory here:
-\begin{verbatim}
-terminal >> input
-input >> pingpong.olg
-input >>
-\end{verbatim}
-The next step is to send the overlog to each of the addresses we
-previously specified:
-\begin{verbatim}
-input >> osend
-\end{verbatim}
+At this point the stub.py script should be producing debugging output
+on the screen you started it on, showing the arrival of
+\lstinline$ping$ and \lstinline$pong$ tuples at the different nodes
+once per second.  Look at the debugging output and see if makes sense
+to you.
 
-
+When you are ready, you can kill the stub.py process to end the
+experiment.
 
 \section{A Content-Addressable Ring}
+{\bf The remainder of this document is under construction!}
+
 It's time to implement something a bit more sophisticated.  In the
 next example, we will implement a very simple ``content-addressable''
 overlay network.  The idea of a content-addressable network is to
