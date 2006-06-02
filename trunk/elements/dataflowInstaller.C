@@ -191,6 +191,7 @@ DataflowInstaller::initializeChordBaseTables(Plumber::DataflowPtr d) {
     warn << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";
   }
 
+/*
   if (d->getTable("landmark") != 0 && d->getTable("landmark")->size() == 0) {
     Table2Ptr landmarkNodeTable = d->table("landmark", Table2::KEY1);  
     TuplePtr landmark = Tuple::mk();
@@ -201,4 +202,5 @@ DataflowInstaller::initializeChordBaseTables(Plumber::DataflowPtr d) {
     warn << "Insert landmark node " << landmark->toString() << "\n";
     landmarkNodeTable->insert(landmark);
   }
+*/
 }

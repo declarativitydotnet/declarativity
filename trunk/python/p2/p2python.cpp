@@ -5,6 +5,7 @@
 */
 
 #include <vector>
+#include <ctime>
 #include <string>
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
@@ -89,8 +90,16 @@ void export_val_uint32();
 void export_val_uint64();
 void export_overlogCompiler();
 
+time_t time_v(void)
+{
+  return time(NULL);
+}
+
 BOOST_PYTHON_MODULE(libp2python)
 {
+  def("srand", srand);
+  def("time",  time_v);
+
   class_<std::vector<std::string>, boost::shared_ptr<std::vector<std::string> > >("StrVec")
     .def(vector_indexing_suite<std::vector<std::string>, true>())
   ;

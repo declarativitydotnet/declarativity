@@ -2696,6 +2696,7 @@ Plmb_ConfGen::createTables(string nodeID)
 	      << " "
               << tr->size()
               << "\n";
+    std::cerr << "GEN FACT: " << tr->toConfString() << std::endl;
     _p2dl << conf_call(tableToInsert.get(),
                        conf_function("insert", tr->toConfString()))
           << ";"

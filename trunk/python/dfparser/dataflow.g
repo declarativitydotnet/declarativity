@@ -96,10 +96,7 @@ class Dataflow:
         if flags["debug"]: return type + str(arguments)
         else: 
             if type == "Table2":
-                print "Table2 arguments ", arguments
-                print "Method: ", getattr(self.conf, "table")
                 obj = apply(getattr(self.conf, "table"), tuple(arguments))    
-                print "TABLE: ", obj
             else:
                 obj = apply(getattr(libp2python, type), tuple(arguments))
                 if not obj: error("Unable to create object %s %s" % (type, str(arguments)))

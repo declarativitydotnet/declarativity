@@ -58,17 +58,21 @@ def process_file(file, event, event_hash):
 def eval_lookups(event_hash):
     last_event = open("./last_event.dat", 'w')
 
+    elist     = []
     succ_hash = {}
     for src in event_hash.keys():
        event_list = event_hash[src]
        event_list.sort()
        succ = event_list[-1][-1]
        id   = event_list[-1][-2]
-       print "%s -> %s (ID: %s)" % (src, succ, id)
+       elist.append([id, succ, src])
        #if succ_hash.has_key(succ):
        #    print "SUCCESSOR ALREADY USED!!"
        #    print "NODE %s HAS BEST SUCC %s" %(src, succ) 
        succ_hash[succ] = True
+    elist.sort()
+    for e in elist:
+        print "%s -> %s (ID: %s)" % (e[2], e[1], e[0])
 
 if __name__ == "__main__":
     try:
