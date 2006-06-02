@@ -163,7 +163,7 @@ void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr
   predecessorTuple->append(Val_Str::mk("pred"));
   predecessorTuple->append(Val_Str::mk(localAddress));
   predecessorTuple->append(Val_ID::mk(ID::mk()));
-  predecessorTuple->append(Val_Str::mk(string("-"))); 
+  predecessorTuple->append(Val_Str::mk(string("NIL"))); 
   predecessorTuple->freeze();
   predecessorTable->insert(predecessorTuple);
   warn << "Initial predecessor " << predecessorTuple->toString() << "\n";

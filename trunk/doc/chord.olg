@@ -177,12 +177,12 @@ c1 joinEvent@NI(NI,E) :- join@NI(NI,E).
 c2 joinReq@LI(LI,N,NI,E) :- joinEvent@NI(NI,E),
 			 node@NI(NI,N), 
 			 landmark@NI(NI,LI),
-			 LI != "-".
+			 LI != "NIL".
 
 c3 succ@NI(NI,N,NI) :- landmark@NI(NI,LI),
 		       joinEvent@NI(NI,E),
 		       node@NI(NI,N), 
-		       LI == "-".
+		       LI == "NIL".
 
 c4 lookup@LI(LI,N,NI,E) :- joinReq@LI(LI,N,NI,E).
 
@@ -208,7 +208,7 @@ sb2 stabilizeRequest@SI(SI,NI) :- stabilize@NI(NI,E),
 
 sb3 sendPredecessor@PI1(PI1,P,PI) :- stabilizeRequest@NI(NI,PI1),
 				pred@NI(NI,P,PI), 
-				PI != "-".
+				PI != "NIL".
 
 sb4 succ@NI(NI,P,PI) :- node@NI(NI,N),
 		     	sendPredecessor@NI(NI,P,PI),
@@ -230,7 +230,7 @@ sb7 notifyPredecessor@SI(SI,N,NI) :- stabilize@NI(NI,E),
 sb8 pred@NI(NI,P,PI) :- node@NI(NI,N),
 			notifyPredecessor@NI(NI,P,PI), 
 			pred@NI(NI,P1,PI1),
-			((PI1 == "-") || (P in (P1,N))).
+			((PI1 == "NIL") || (P in (P1,N))).
 
 
 /** Connectivity Monitoring */
@@ -257,7 +257,7 @@ cm5 pingNode@NI(NI,SI) :- succ@NI(NI,S,SI),
 
 cm6 pingNode@NI(NI,PI) :- pred@NI(NI,P,PI), 
 		       PI != NI, 
-		       PI != "-".
+		       PI != "NIL".
 
 cm7 succ@NI(NI,S,SI) :- succ@NI(NI,S,SI),
 		     pingResp@NI(NI,SI,E).
@@ -265,7 +265,7 @@ cm7 succ@NI(NI,S,SI) :- succ@NI(NI,S,SI),
 cm8 pred@NI(NI,P,PI) :- pred@NI(NI,P,PI),
 		     pingResp@NI(NI,PI,E).
 
-cm9 pred@NI(NI,"-","-") :- pingEvent@NI(NI,E), 
+cm9 pred@NI(NI,"NIL","NIL") :- pingEvent@NI(NI,E), 
 			pendingPing@NI(NI,PI,E), 
 			pred@NI(NI,P,PI).
 
