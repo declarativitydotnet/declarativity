@@ -17,6 +17,7 @@
 lib_LTLIBRARIES = libp2debugger.la
 
 libp2debugger_la_SOURCES = \
+	tableTracer.C \
 	ruleTracer.C \
 	tap.C \
 	execRecord.C \

@@ -7,6 +7,9 @@
  * If you do not find these files, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
  * 
  * DESCRIPTION: Second-generation in-memory table implementation.
  *
@@ -38,7 +41,7 @@
 
 
 class Table2 {
-public:
+private:
   ////////////////////////////////////////////////////////////
   // Tuple wrapper
   ////////////////////////////////////////////////////////////
@@ -56,10 +59,11 @@ public:
     
     ~Entry();
   };
-  
 
 
 
+
+public:
   ////////////////////////////////////////////////////////////
   // special vectors
   ////////////////////////////////////////////////////////////
@@ -102,6 +106,7 @@ public:
 
 
 
+private:
   ////////////////////////////////////////////////////////////
   // Comparators
   ////////////////////////////////////////////////////////////
@@ -179,6 +184,7 @@ public:
   
 
 
+public:
   ////////////////////////////////////////////////////////////
   // Secondary indices
   ////////////////////////////////////////////////////////////
@@ -232,6 +238,11 @@ public:
          Key& key);
   
   
+  /** A destructor. It empties out the table and then destroys it. */
+  ~Table2();
+
+
+private:
   /** A convenience method for initializing the lookup search entry. It
       ensures the tuple in the entry can accommodate all fields in the
       given key.  XXXX Carry arity with table definition. */
@@ -239,12 +250,9 @@ public:
   lookupSearchEntry(Key& key);
 
 
-  /** A destructor. It empties out the table and then destroys it. */
-  ~Table2();
 
 
-
-
+public:
   ////////////////////////////////////////////////////////////
   // Metadata checks
   ////////////////////////////////////////////////////////////
@@ -271,10 +279,12 @@ public:
   typedef boost::function< void (TuplePtr) > Listener;
 
 
+private:
   /** Listener vector */
   typedef std::vector< Listener > ListenerVector;
 
 
+public:
   /** Register update listeners. Every registered listener is called
       whenever a new tuple is inserted into the table.  */
   void
@@ -412,10 +422,6 @@ public:
   typedef AggregateObj* Aggregate;
 
 
-  /** My aggregates vector */
-  typedef std::vector< Aggregate > AggregateVector;
-
-
   /** Install a new aggregate returning a handle to it. If the aggregate
       is unknown, return NULL. */
   Aggregate
@@ -424,11 +430,16 @@ public:
             std::string functionName);
 
 
+private:
+  /** My aggregates vector */
+  typedef std::vector< Aggregate > AggregateVector;
+
+
   
 
 
 
-
+public:
   ////////////////////////////////////////////////////////////
   // Lookup Iterator
   ////////////////////////////////////////////////////////////

@@ -17,6 +17,7 @@
 #include "cct.h"
 #include "ccr.h"
 #include "aggFactory.h"
+#include "tableTracer.h"
 
 static std::map<void*, string> variables;
 
@@ -2656,7 +2657,7 @@ Plmb_ConfGen::createTables(string nodeID)
 
 
     // Create the table
-    Table2Ptr newTable(new Table2(tableInfo->tableName,
+    Table2Ptr newTable(new TableTracer(tableInfo->tableName,
                                   key,
                                   tableSize,
                                   expiration));
