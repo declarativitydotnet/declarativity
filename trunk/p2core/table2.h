@@ -19,7 +19,8 @@
  *
  * It has a maximum lifetime of tuples and a maximum size.
  *
- * Insertions of existing tuples are no-ops.
+ * Insertions of existing tuples change no content, but do update the
+ * insertion time of the existing tuple.
  *
  * Deletions are always with regards to the primary key.
  *
@@ -46,14 +47,28 @@ private:
   // Tuple wrapper
   ////////////////////////////////////////////////////////////
 
-  /** A tuple wrapper contains a tuple and its time of insertion */
+  /** A tuple wrapper contains a tuple and its time of insertion.  It is
+      used to place tuples in all indices and in the flushing queue,
+      when one is maintained.  It may appear multiple times in the
+      flushing queue, once for every reinsertion of the contained
+      tuple. */
   struct Entry {
+    /** Which tuple am I wrapping? */
     TuplePtr tuple;
     
     
+    /** What is the latest time this tuple was inserted (or reinserted)
+        into the table? */
     boost::posix_time::ptime time;
+
+
+    /** How many times does this entry appear in the table queue?  Until
+        this count is 0, the entry should not be deleted from the
+        heap. */
+    uint32_t refCount;
     
     
+    /** Create a new entry with the current time */
     Entry(TuplePtr tp);
 
     
@@ -550,15 +565,16 @@ public:
       modified the table, by growing by a tuple or replacing an existing
       tuple. Return false if the insertion did not affect the table at
       all, e.g., it corresponded to a tuple equal (as per tuple
-      comparison) to an existing tuple. Insertion time, for the purposes
-      of tuple expiration, indicates the first time a particular tuple
-      was inserted; any attempts to reinsert that tuple do not update
-      the original insertion time.
+      comparison) to an existing tuple. However, reinsertion of an
+      existing tuple does update the insertion time of that tuple with
+      the time of reinsertion.  No update is generated due to insertion
+      time updates though.
 
       The semantics is as follows: find the tuple by the same primary
-      key. If it's equal (as per compareTo) do nothing. If it's
-      different, replace it. If it doesn't exist, insert the new one
-      in. */
+      key. If it's equal (as per compareTo) do, update the insertion
+      time but otherwise do nothing (i.e., update no aggregates or
+      listeners, and return false). If it's different, replace it. If it
+      doesn't exist, insert the new one in. */
   bool
   insert(TuplePtr t);
 
@@ -572,6 +588,15 @@ public:
       the same or equal in terms of Tuple::compareTo. */
   bool
   remove(TuplePtr t);
+
+
+  ////////////////////////////////////////////////////////////
+  // To string
+  ////////////////////////////////////////////////////////////
+
+  /** Turn the table into a string of tuples along the primary key */
+  std::string
+  toString();
 
 
 
@@ -612,7 +637,18 @@ private:
 
 
   /** The time-order queue of entries, for fast garbage collection. This
-      is only initialized if the table has a finite expiration time */
+      is only initialized if the table has a finite expiration time.  A
+      given entry may appear multiple times in the queue, once for every
+      reinsertion of the tuple.  Specifically, if an existing tuple is
+      inserted again, the entry containing that tuple is reinserted in
+      the beginning of this queue, with its time updated and its
+      refcount incremented by one.  Any other existing instances of the
+      entry in the queue remained untouched until they appear in the
+      back during flushing.  During flushing, if an entry has a 0
+      refcount, it is removed from the queue, from the indices, and from
+      the memory heap.  If it has a non-zero refcount, its refcount is
+      removed, its instance found is flushed from the queue, but the
+      entry and its contained tuple are left alone.*/
   std::deque< Entry * > _queue;
 
 
@@ -687,9 +723,22 @@ private:
   removeTuple(PrimaryIndex::iterator primaryPosition);
 
 
-  /** Remove an existing tuple from all indices during flushing. */
+  /** Flush an entry with an existing tuple from the table and all
+      indices. */
   void
-  flushTuple(TuplePtr t);
+  flushEntry(Entry* e);
+
+  
+  /** Remove a tuple from derivative constructs, including secondary
+      indices and aggregates, and update any delete listeners. The
+      primary or queue are not touched. */
+  void
+  removeDerivatives(TuplePtr t);
+
+
+  /** Updates the insertion time of an existing tuple in the table. */
+  void
+  updateTime(Entry* e);
 
 
   /** Insert a brand new tuple into the database including all

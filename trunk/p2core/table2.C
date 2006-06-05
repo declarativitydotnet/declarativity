@@ -332,12 +332,42 @@ Table2::~Table2()
     _keyedComparators.pop_back();
   }
 
-  ////////////////////////////////////////////////////////////
-  // Queue, eliminating entries
-  while (_queue.size() > 0) {
-    Entry * toKill = _queue.back();
-    _queue.pop_back();
-    delete toKill;
+  // Kill all aggregate objects
+  while (_aggregates.size() > 0) {
+    AggregateObj* o = _aggregates.back();
+    _aggregates.pop_back();
+
+    delete o;
+  }
+
+
+  // And all listeners
+  _updateListeners.clear();
+  
+
+  // Now empty out actual entries.  If flushing, flush the
+  // queue. Otherwise, go over the primary index and delete the entries.
+  if (_flushing) {
+    while (_queue.size() > 0) {
+      Entry* toKill = _queue.back();
+      _queue.pop_back();
+      if (toKill->refCount > 0) {
+        toKill->refCount--;
+      } else {
+        delete toKill;
+      }
+    }
+  } else {
+    while (_primaryIndex.size() > 0) {
+      // Fetch the first entry
+      Entry* toKill = *(_primaryIndex.begin());
+      
+      // erase it from the index
+      _primaryIndex.erase(toKill);
+      
+      // And delete it from the heap
+      delete toKill;
+    }
   }
 
   ////////////////////////////////////////////////////////////
@@ -432,6 +462,11 @@ Table2::insert(TuplePtr t)
     // Is it identical to given tuple?
     if ((*found)->tuple->compareTo(t) == 0) {
       // Yes. We won't be replacing the tuple already there
+
+      // Update insertion time if we're flushing tuples
+      if (_flushing) {
+        updateTime(*found);
+      }
       return false;
     }
     // Otherwise, tuple has same primary key but is different
@@ -491,6 +526,27 @@ Table2::remove(TuplePtr t)
 }
 
 
+std::string
+Table2::toString()
+{
+  ostringstream oss;
+  oss << "Table '" << _name << "':";
+  if (_primaryIndex.size() > 0) {
+    PrimaryIndex::iterator i = _primaryIndex.begin();
+    oss << (*i)->tuple->toString();
+    for (i++;
+         i != _primaryIndex.end();
+         i++) {
+      oss << ", " << (*i)->tuple->toString();
+    }
+    oss << ".";
+  } else {
+    oss << "Empty.";
+  }
+  return oss.str();
+}
+
+
 
 
 ////////////////////////////////////////////////////////////
@@ -502,6 +558,7 @@ Table2::Entry::Entry(TuplePtr tp)
 {
   //  std::cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@Creating entry at address " << this << "\n";
   getTime(time);
+  refCount = 0;
 }
 
 
@@ -560,30 +617,70 @@ Table2::insertTuple(TuplePtr t,
 
 
 void
-Table2::flushTuple(TuplePtr t)
+Table2::removeDerivatives(TuplePtr t)
 {
-  // Primary index
-  static Entry searchEntry(Tuple::EMPTY);
-  searchEntry.tuple = t;
-
-  // Just remove it from all indices.  The entry will be killed in
-  // flush()
-  _primaryIndex.erase(&searchEntry);
-
   // Secondary indices
   SecondaryIndexIndex::iterator iter = _indices.begin();
   while (iter != _indices.end()) {
-    (iter++)->second->erase(&searchEntry);
+    SecondaryIndex& index = *((iter++)->second);
+    
+    // Now find the tuple removed from the primary index in this
+    // secondary index and erase it
+    static Entry searchEntry(Tuple::EMPTY);
+    searchEntry.tuple = t;
+    SecondaryIndex::iterator secIter = index.lower_bound(&searchEntry);
+    SecondaryIndex::iterator secIterEnd = index.upper_bound(&searchEntry);
+    while (secIter != secIterEnd) {
+      // Is this tuple identical to the one removed from the primary
+      // index?
+      if ((*secIter)->tuple->ID() == t->ID()) {
+        // It's the exact tuple. erase it
+        index.erase(secIter);
+        break;
+      }
+      secIter++;
+    }
   }
-  
+
   // Aggregates
   for (AggregateVector::iterator i = _aggregates.begin();
        i != _aggregates.end();
        i++) {
-    (*i)->update(searchEntry.tuple);
+    (*i)->update(t);
   }
 
   // Delete Listeners
+
+}
+
+
+void
+Table2::flushEntry(Entry* e)
+{
+  // Is this entry the last instance in the queue?
+  if (e->refCount > 0) {
+    // Nope, it is not. Decrement the ref count, pop the entry, and be
+    // gone 
+    e->refCount--;
+    _queue.pop_back();
+  } else {
+    // Ah! This is the last instance of this entry in the queue, so
+    // we're doing a real removal from the table.
+
+    // Remove it from all derivatives (secondaries, aggs)
+    removeDerivatives(e->tuple);
+
+    // Primary index
+    static Entry searchEntry(Tuple::EMPTY);
+    searchEntry.tuple = e->tuple;
+    _primaryIndex.erase(&searchEntry);
+ 
+    // Pop the tuple from the queue
+    _queue.pop_back();
+    
+    // And delete the entry from the heap
+    delete e;
+  }
 }
 
 
@@ -594,30 +691,10 @@ Table2::removeTuple(PrimaryIndex::iterator position)
   // the tuple we want to remove from all secondary indices below.
   TuplePtr toRemove = (*position)->tuple;
 
-  // Secondary indices
-  SecondaryIndexIndex::iterator iter = _indices.begin();
-  while (iter != _indices.end()) {
-    SecondaryIndex& index = *((iter++)->second);
+  // Remove from derivatives
+  removeDerivatives(toRemove);
 
-    // Now find the tuple removed from the primary index in this
-    // secondary index and erase it
-    static Entry searchEntry(Tuple::EMPTY);
-    searchEntry.tuple = toRemove;
-    SecondaryIndex::iterator secIter = index.lower_bound(&searchEntry);
-    SecondaryIndex::iterator secIterEnd = index.upper_bound(&searchEntry);
-    while (secIter != secIterEnd) {
-      // Is this tuple identical to the one removed from the primary
-      // index?
-      if ((*secIter)->tuple->ID() == toRemove->ID()) {
-        // It's the exact tuple. erase it
-        index.erase(secIter);
-        break;
-      }
-      secIter++;
-    }
-  }
-
-  // I must delete the Entry when no more indices point at it!!!!
+  // Finish it off
 
   // If I have a queue, then I don't need to delete the entry since it
   // will be flushed sooner or later. Otherwise, I have to delete the
@@ -629,13 +706,18 @@ Table2::removeTuple(PrimaryIndex::iterator position)
     _primaryIndex.erase(position);
     delete toKill;
   }
+}
 
-  // Aggregates
-  for (AggregateVector::iterator i = _aggregates.begin();
-       i != _aggregates.end();
-       i++) {
-    (*i)->update(toRemove);
-  }
+
+/** Increment the copy count of the entry by one, and reinsert it at the
+    beginning of the queue with the current time.  This method is only
+    called if a queue is being maintained. */
+void
+Table2::updateTime(Entry* e)
+{
+  e->refCount++;
+  getTime(e->time);
+  _queue.push_front(e);
 }
 
 
@@ -661,14 +743,8 @@ Table2::flush()
       // Check this element's insertion time
       Entry * last = _queue.back();
       if (last->time < expiryTime) {
-        // Remove the contained tuple from the table
-        flushTuple(last->tuple);
-
-        // Remove the entry from the queue
-        _queue.pop_back();
-
-        // Eliminate the entry
-        delete last;
+        // Flush the entry from the table
+        flushEntry(last);
       } else {
         // We've found the first non-expiring entry. Stop the
         // iteration. 
@@ -685,14 +761,8 @@ Table2::flush()
            (_primaryIndex.size() > _maxSize)) {
       Entry * last = _queue.back();
 
-      // Remove the contained tuple from the table
-      flushTuple(last->tuple);
-      
-      // Remove the entry from the queue
-      _queue.pop_back();
-      
-      // Eliminate the entry
-      delete last;
+      // Remove the entry from the table
+      flushEntry(last);
     }
   }
 }
