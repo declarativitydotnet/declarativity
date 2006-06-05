@@ -691,7 +691,13 @@ Tracker2::test()
             }
             // Ensure we did find it
             BOOST_CHECK_MESSAGE(found,
-                                "Results did not contain expected tuple '"
+                                "Error in test line "
+                                << _test._line
+                                << " with suffix "
+                                << "\""
+                                << _remainder
+                                << "\". Results did not contain "
+                                << "expected tuple '"
                                 << _tuple->toString()
                                 << "'.");
           }
@@ -922,6 +928,16 @@ testTable2::testInsertRemoveLookupScripts()
 {
   table2Test t[] =
     {
+      table2Test("i<0,10>;i<0,15>;i<0,20>;i<0,25>;m<0,10>;" // first one flushed
+                 //      >----------------------->  
+                 "i<0,15>;"
+                 //      >20, 25, 15>
+                 "i<0,30>;f<0,15>;m<0,20>;" // 15 refreshed, 20 not
+                 //      >25, 15, 30>
+                 "i<0,15>;i<0,15>;i<0,35>;m<0,25>;",
+                 __LINE__,
+                 Table2::KEY01, 3),
+      
       table2Test("i<0,10>;i<0,15>;f<0,15>;m<0,10>;d<0,15>;m<0,15>;",
                  __LINE__,
                  Table2::KEY0),
@@ -1054,6 +1070,7 @@ class intAggTest2 : public table2Test {
 public:
   intAggTest2(std::string script,
               Table2::Key& key,
+              uint32_t size,
               Table2::Key& groupBy,
               uint aggField,
               std::string func,
@@ -1068,11 +1085,12 @@ public:
 
 intAggTest2::intAggTest2(std::string script,
                          Table2::Key& key,
+                         uint32_t size,
                          Table2::Key& groupBy,
                          uint aggFieldNo,
                          std::string func,
                          int line)
-  : table2Test(script, line, key),
+  : table2Test(script, line, key, size),
     _groupBy(groupBy),
     _aggFieldNo(aggFieldNo),
     _function(func)
@@ -1156,9 +1174,9 @@ AggTracker2::listener(TuplePtr t)
                     << _remainder
                     << "\". Script should expect an update with '"
                     << t->toString()
-                    << "' but contained a '"
+                    << "' but contained the '"
                     << _command
-                    << "' instead.");
+                    << "' command instead.");
         _remainder = std::string();
         return;
       }
@@ -1216,6 +1234,36 @@ void
 testTable2::testAggregates()
 {
   intAggTest2 t[] = {
+    // Test reinsertion without update but with time upate
+    intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;i<0,20>;"
+                // <10, 5, 20<
+                "i<0,3>;u<0,3>;m<0,10>;"
+                // <5, 20, 3<
+                "i<0,8>;i<0,15>;m<0,20>;"
+                // <3, 8, 15<
+                "i<0,4>;u<0,4>;"
+                // <8, 15, 4<
+                "i<0,8>;i<0,20>;"
+                // <4, 8, 20<
+                "i<0,30>;u<0,8>;",
+                // <8, 20, 30<
+                Table2::KEY01, 3,
+                Table2::KEY0, 1, "MIN",
+                __LINE__),
+
+
+    // Here there's an update for every insert that is not identical to
+    // its preceeding one since the primary key is the first field, so
+    // any new insertion removes the old tuple.  When the last entry is
+    // gone, no update is received.
+    intAggTest2("i<0,10>;u<0,10>;i<0,10>;i<0,15>;u<0,15>;i<0,5>;u<0,5>;d<0,5>;",
+                Table2::KEY0, // first field is indexed
+                Table2::DEFAULT_SIZE, // use default max size
+                Table2::KEY0, // first field is group-by
+                1, // second field is aggregated
+                "MIN", // aggregate function is MIN
+                __LINE__),
+
     // The following tests script expects the sequence
     // INSERT <0, 10>
     // UPDATE <0, 10>
@@ -1224,24 +1272,9 @@ testTable2::testAggregates()
     // UPDATE <0, 5>
     // DELETE <0, 5>
     // UPDATE <0, 10>
-    // Scripts must always end with a semicolon!!!!!!!!!
-    // Scripts must always end with a semicolon!!!!!!!!!
-    // Scripts must always end with a semicolon!!!!!!!!!
-    // Scripts must always end with a semicolon!!!!!!!!!
-    // Scripts must always end with a semicolon!!!!!!!!!
     intAggTest2("i<0,10>;u<0,10>;i<0,15>;i<0,5>;u<0,5>;d<0,5>;u<0,10>;",
                 Table2::KEY01, // first field is indexed
-                Table2::KEY0, // first field is group-by
-                1, // second field is aggregated
-                "MIN", // aggregate function is MIN
-                __LINE__),
-
-    // Here there's an update for every insert that is not identical to
-    // its preceeding one since the primary key is the first field, so
-    // any new insertion removes the old tuple.  When the last entry is
-    // gone, no update is received.
-    intAggTest2("i<0,10>;u<0,10>;i<0,10>;i<0,15>;u<0,15>;i<0,5>;u<0,5>;d<0,5>;",
-                Table2::KEY0, // first field is indexed
+                Table2::DEFAULT_SIZE, // use default max size
                 Table2::KEY0, // first field is group-by
                 1, // second field is aggregated
                 "MIN", // aggregate function is MIN
@@ -1253,16 +1286,19 @@ testTable2::testAggregates()
     // INSERT <0, 5>
     // UPDATE <0, 5>
     intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;",
-                Table2::KEY01, Table2::KEY0,
+                Table2::KEY01, Table2::DEFAULT_SIZE,
+                Table2::KEY0,
                 1, "MIN",
                 __LINE__),
     
     intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;i<0,20>;i<0,30>;",
-                Table2::KEY01, Table2::KEY0, 1, "MIN",
+                Table2::KEY01, Table2::DEFAULT_SIZE,
+                Table2::KEY0, 1, "MIN",
                 __LINE__),
     
     intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;i<0,20>;i<0,3>;u<0,3>;i<0,4>;",
-                Table2::KEY01, Table2::KEY0, 1, "MIN",
+                Table2::KEY01, Table2::DEFAULT_SIZE,
+                Table2::KEY0, 1, "MIN",
                 __LINE__),
 
 
@@ -1270,19 +1306,23 @@ testTable2::testAggregates()
     // MAX
 
     intAggTest2("i<0,10>;u<0,10>;i<0,5>;",
-                Table2::KEY01, Table2::KEY0, 1, "MAX",
+                Table2::KEY01, Table2::DEFAULT_SIZE,
+                Table2::KEY0, 1, "MAX",
                 __LINE__),
     
     intAggTest2("i<0,10>;u<0,10>;i<0,15>;u<0,15>;i<0,3>;",
-                Table2::KEY01, Table2::KEY0, 1, "MAX",
+                Table2::KEY01, Table2::DEFAULT_SIZE,
+                Table2::KEY0, 1, "MAX",
                 __LINE__),
     
     intAggTest2("i<0,10>;u<0,10>;i<0,5>;i<0,15>;u<0,15>;",
-                Table2::KEY01, Table2::KEY0, 1, "MAX",
+                Table2::KEY01, Table2::DEFAULT_SIZE,
+                Table2::KEY0, 1, "MAX",
                 __LINE__),
     
     intAggTest2("i<0,10>;u<0,10>;i<0,10>;",
-                Table2::KEY01, Table2::KEY0, 1, "MAX",
+                Table2::KEY01, Table2::DEFAULT_SIZE,
+                Table2::KEY0, 1, "MAX",
                 __LINE__)
   };
 
@@ -1321,87 +1361,88 @@ testTable2::testIndexing()
     t->freeze();
     tpls[i] = t;
   }
-  
-  //  First: tuples inserted can be looked up.  Tuples not inserted
-  // cannot be looked up.  Create a very simple table
-  Table2Ptr tbl(new Table2("test_table", Table2::KEY0));
-  for(uint i=0;
-      i < SIZE/2;
-      i++) { 
-    tbl->insert(tpls[i]);
-  }
-  
-  
-  for(uint i = 0;
-      i< SIZE/2;
-      i++) { 
-    TuplePtr t = Tuple::mk();
-    t->append(Val_UInt32::mk(i));
-    t->append(Val_UInt32::mk(i/2));
-    t->append(Val_UInt32::mk(i/4));
-    t->append(Val_UInt32::mk(i % (SIZE/2)));
-    t->append(Val_UInt32::mk(i));
-    t->freeze();
-    BOOST_CHECK_MESSAGE(!tbl->lookup(Table2::KEY0, t)->done(),
-                        "Table test. Lookup "
-                        << i
-                        << ".  Tuple is not in the table but should.");
-    
-    t = Tuple::mk();
-    t->append(Val_UInt32::mk(i + SIZE/2));
-    t->append(Val_UInt32::mk(i/2));
-    t->append(Val_UInt32::mk(i/4));
-    t->append(Val_UInt32::mk(i % (SIZE/2)));
-    t->append(Val_UInt32::mk(i));
-    t->freeze();
-    BOOST_CHECK_MESSAGE(tbl->lookup(Table2::KEY0, t)->done(),
-                        "Table test. Lookup "
-                        << (i + SIZE/2)
-                        << ".  Tuple is in the table but shouldn't");
-  }
-  
-  
-  // Check secondary indices
-  tbl.reset(new Table2("test_table", Table2::KEY0, SIZE));
-  tbl->secondaryIndex(Table2::KEY4);
-  for(uint i = 0;
-      i < SIZE;
-      i++) { 
-    tbl->insert(tpls[i]);
-  }
-  
-  // Now every tuple we find with the first quarter of counters in field
-  // 4 must have four exactly distinct instances in the index
-  for(uint i = 0;
-      i < SIZE / 4;
-      i++) { 
-    TuplePtr t = Tuple::mk();
-    t->append(Val_UInt32::mk(i));
-    t->append(Val_UInt32::mk(i));
-    t->append(Val_UInt32::mk(i));
-    t->append(Val_UInt32::mk(i));
-    t->append(Val_UInt32::mk(i));
-    t->freeze();
-    Table2::Iterator iter = tbl->lookup(Table2::KEY4, t);
-    for (uint counter = 0;
-         counter < 4;
-         counter++) {
-      TuplePtr result = iter->next();
-      BOOST_CHECK_MESSAGE(result != NULL,
-                          "Table test. Key "
-                          << i
-                          << " seems to have too few "
-                          << "tuples in the secondary index");
+
+  {
+    //  First: tuples inserted can be looked up.  Tuples not inserted
+    // cannot be looked up.  Create a very simple table
+    Table2 tbl("test_table", Table2::KEY0);
+    for(uint i=0;
+        i < SIZE/2;
+        i++) { 
+      tbl.insert(tpls[i]);
     }
     
-    BOOST_CHECK_MESSAGE(iter->done() == true,
-                        "Table test. Key "
-                        << i
-                        << " seems to have too many tuples "
-                        << "in the secondary index");
+    
+    for(uint i = 0;
+        i< SIZE/2;
+        i++) { 
+      TuplePtr t = Tuple::mk();
+      t->append(Val_UInt32::mk(i));
+      t->append(Val_UInt32::mk(i/2));
+      t->append(Val_UInt32::mk(i/4));
+      t->append(Val_UInt32::mk(i % (SIZE/2)));
+      t->append(Val_UInt32::mk(i));
+      t->freeze();
+      BOOST_CHECK_MESSAGE(!tbl.lookup(Table2::KEY0, t)->done(),
+                          "Table test. Lookup "
+                          << i
+                          << ".  Tuple is not in the table but should.");
+      
+      t = Tuple::mk();
+      t->append(Val_UInt32::mk(i + SIZE/2));
+      t->append(Val_UInt32::mk(i/2));
+      t->append(Val_UInt32::mk(i/4));
+      t->append(Val_UInt32::mk(i % (SIZE/2)));
+      t->append(Val_UInt32::mk(i));
+      t->freeze();
+      BOOST_CHECK_MESSAGE(tbl.lookup(Table2::KEY0, t)->done(),
+                          "Table test. Lookup "
+                          << (i + SIZE/2)
+                          << ".  Tuple is in the table but shouldn't");
+    }
+  }
+  {
+    // Check secondary indices
+    Table2 tbl("test_table", Table2::KEY0, SIZE);
+    tbl.secondaryIndex(Table2::KEY4);
+    for(uint i = 0;
+        i < SIZE;
+        i++) { 
+      tbl.insert(tpls[i]);
+    }
+    
+    // Now every tuple we find with the first quarter of counters in field
+    // 4 must have four exactly distinct instances in the index
+    for(uint i = 0;
+        i < SIZE / 4;
+        i++) { 
+      TuplePtr t = Tuple::mk();
+      t->append(Val_UInt32::mk(i));
+      t->append(Val_UInt32::mk(i));
+      t->append(Val_UInt32::mk(i));
+      t->append(Val_UInt32::mk(i));
+      t->append(Val_UInt32::mk(i));
+      t->freeze();
+      Table2::Iterator iter = tbl.lookup(Table2::KEY4, t);
+      for (uint counter = 0;
+           counter < 4;
+           counter++) {
+        TuplePtr result = iter->next();
+        BOOST_CHECK_MESSAGE(result != NULL,
+                            "Table test. Key "
+                            << i
+                            << " seems to have too few "
+                            << "tuples in the secondary index");
+      }
+      
+      BOOST_CHECK_MESSAGE(iter->done() == true,
+                          "Table test. Key "
+                          << i
+                          << " seems to have too many tuples "
+                          << "in the secondary index");
+    }
   }
 }
-
 
 
 void
@@ -1423,24 +1464,24 @@ testTable2::testBatchRemovals()
   }
   
   // Create a unique index on first field
-  Table2Ptr tbl(new Table2("test_table", Table2::KEY0, SIZE));
+  Table2 tbl("test_table", Table2::KEY0, SIZE);
   for(uint i = 0;
       i < SIZE;
       i++) { 
-    tbl->insert(tpls[i]);
+    tbl.insert(tpls[i]);
   }
   
   for(uint i = 0;
       i < SIZE;
       i++) { 
-    tbl->remove(tpls[i]);
+    tbl.remove(tpls[i]);
   }
   
   // I should be unable to look up any elements at all
   for(uint i = 0;
       i< SIZE;
       i++) { 
-    BOOST_CHECK_MESSAGE(tbl->lookup(Table2::KEY0, tpls[i])->done(),
+    BOOST_CHECK_MESSAGE(tbl.lookup(Table2::KEY0, tpls[i])->done(),
                         "Table test. Lookup of removed tuple "
                         << tpls[i]->toString()
                         << " should return no results.");
@@ -1467,24 +1508,24 @@ testTable2::testBatchMultikeyRemovals()
   }
   
   // Create a unique index on first two fields
-  Table2Ptr tbl(new Table2("test_table", Table2::KEY01, 200));
+  Table2 tbl("test_table", Table2::KEY01, 200);
   for(uint i = 0;
       i < SIZE;
       i++) { 
-    tbl->insert(tpls[i]);
+    tbl.insert(tpls[i]);
   }
   
   for(uint i = 0;
       i < SIZE;
       i++) { 
-    tbl->remove(tpls[i]);
+    tbl.remove(tpls[i]);
   }
 
   // I should be unable to look up any elements at all
   for(uint i = 0;
       i< SIZE;
       i++) { 
-    BOOST_CHECK_MESSAGE(tbl->lookup(Table2::KEY01, tpls[i])->done(),
+    BOOST_CHECK_MESSAGE(tbl.lookup(Table2::KEY01, tpls[i])->done(),
                         "Table test. Lookup of removed tuple "
                         << tpls[i]->toString()
                         << " should return no results.");
@@ -1512,25 +1553,25 @@ testTable2::testUniqueTupleRemovals()
   }
   
   // Create a unique index on all five fields
-  Table2Ptr tbl(new Table2("test_table", Table2::KEY01234, SIZE));
-  tbl->secondaryIndex(Table2::KEY1);
+  Table2 tbl("test_table", Table2::KEY01234, SIZE);
+  tbl.secondaryIndex(Table2::KEY1);
   for(uint i = 0;
       i < SIZE;
       i++) { 
-    tbl->insert(tpls[i]);
+    tbl.insert(tpls[i]);
   }
   
   for(uint i = 0;
       i < SIZE;
       i++) { 
-    tbl->remove(tpls[i]);
+    tbl.remove(tpls[i]);
   }
 
   // I should be unable to look up any elements at all
   for(uint i = 0;
       i< SIZE;
       i++) { 
-    BOOST_CHECK_MESSAGE(tbl->lookup(Table2::KEY01234, tpls[i])->done(),
+    BOOST_CHECK_MESSAGE(tbl.lookup(Table2::KEY01234, tpls[i])->done(),
                         "Table test. Lookup of removed tuple "
                         << tpls[i]->toString()
                         << " should return no results.");
@@ -1544,8 +1585,10 @@ testTable2::testPseudoRandomInsertDeleteSequences()
   srand(0);
 
   {
-    // Create a table with fixed size but not lifetime
-    Table2 t("succ", Table2::KEY2, 100, Table2::NO_EXPIRATION);
+    // Create a table with fixed lifetime but no size
+    boost::posix_time::
+      time_duration expiration(boost::posix_time::milliseconds(200));
+    Table2 t("succ", Table2::KEY2, Table2::NO_SIZE, expiration);
     for (uint i = 0;
          i < SIZE + EXTRA_TUPLES;
          i++) {
@@ -1587,10 +1630,8 @@ testTable2::testPseudoRandomInsertDeleteSequences()
     }
   }
   {
-    // Create a table with fixed lifetime but no size
-    boost::posix_time::
-      time_duration expiration(boost::posix_time::milliseconds(200));
-    Table2 t("succ", Table2::KEY2, Table2::NO_SIZE, expiration);
+    // Create a table with fixed size but not lifetime
+    Table2 t("succ", Table2::KEY2, 100, Table2::NO_EXPIRATION);
     for (uint i = 0;
          i < SIZE + EXTRA_TUPLES;
          i++) {
@@ -1687,20 +1728,20 @@ testTable2_testSuite::testTable2_testSuite()
 {
   boost::shared_ptr<testTable2> instance(new testTable2());
   
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testAggregates, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testInsertRemoveLookupScripts, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testBatchMultikeyRemovals, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testPseudoRandomInsertDeleteSequences, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testProjectedLookups, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSecondaryEquivalence, instance));
-  add(BOOST_CLASS_TEST_CASE(&testTable2::testAggregates, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testPrimaryOverwrite, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testCreateDestroy, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimitID, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSuperimposedIndexRemoval, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimitSingle, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimitMulti, instance));
-  add(BOOST_CLASS_TEST_CASE(&testTable2::testInsertRemoveLookupScripts, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testIndexing, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testBatchRemovals, instance));
-  add(BOOST_CLASS_TEST_CASE(&testTable2::testBatchMultikeyRemovals, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testUniqueTupleRemovals, instance));
 }
 
