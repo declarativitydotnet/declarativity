@@ -2657,11 +2657,11 @@ Plmb_ConfGen::createTables(string nodeID)
 
 
     // Create the table
-    Table2Ptr newTable(new TableTracer(tableInfo->tableName,
+    Table2Ptr newTable(new Table2(tableInfo->tableName,
                                   key,
                                   tableSize,
                                   expiration));
-
+    
     _p2dl << conf_assign(newTable.get(), 
                          conf_function("Table2",
                                        tableInfo->tableName,
