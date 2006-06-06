@@ -216,7 +216,10 @@ WHITESPACE	[ \t\r\n]+
 
 <INITIAL>({HEXDIGIT}+)I {
   // IDs are read in only in hexadecimal with an I appended to the end
-  Parse_Val *val = new Parse_Val(Val_ID::mk(std::string(yytext)));
+  std::string hex(yytext);
+  std::string choppedString = hex.substr(0, hex.size() - 1);
+  Parse_Val *val =
+    new Parse_Val(Val_ID::mk(choppedString));
   val->id(true);
   lvalp->v = val;
   return OL_VALUE;
