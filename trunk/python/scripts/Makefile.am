@@ -24,4 +24,12 @@ p2terminal.py: p2terminal.in Makefile
 p2insert.py: p2insert.in Makefile
 		   $(do_subst) < $(srcdir)/p2insert.in > p2insert.py
 
+loadManyChords.py: loadManyChords.in Makefile
+		   $(do_subst) < $(srcdir)/loadManyChords.in > loadManyChords.py
+
 CLEANFILES = $(bin_SCRIPTS)
+
+EXTRA_DIST = README \
+             p2stub.in p2terminal.in p2insert.in loadManyChords.in \
+             dfrun.py netcc.py \
+             recv.df sender.df
