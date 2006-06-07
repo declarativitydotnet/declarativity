@@ -38,7 +38,7 @@ materialize(succ, 10, 100, keys(2)).
 materialize(pred, infinity, 100, keys(1)).
 materialize(succCount, infinity, 1, keys(1)).
 materialize(bestSuccCount, infinity, 1, keys(1)).
-materialize(join, 30, 10, keys(1,2)).
+materialize(join, 60, 10, keys(1)).
 materialize(landmark, infinity, 1, keys(1)).
 materialize(fFix, infinity, 160, keys(2)).  
 materialize(nextFingerFix, infinity, 1, keys(1)).  
@@ -188,14 +188,14 @@ c4 lookup@LI(LI,N,NI,E) :- joinReq@LI(LI,N,NI,E).
 c5 succ@NI(NI,S,SI) :- join@NI(NI,E),
 		    lookupResults@NI(NI,K,S,SI,E).
 
-/*
-c6 bestSuccCount@NI(NI,E,count<*>) :- stabilize@NI(NI,E),
+cb1 joinCheck@NI(NI,E) :- periodic@NI(NI,E,120).
+
+c6 bestSuccCount@NI(NI,E,count<*>) :- joinCheck@NI(NI,E),
 		                      node@NI(NI,N), 
                                       succ@NI(NI,S,SI),
                                       N != S.
 
 c7 join@NI(NI, E) :- bestSuccCount@NI(NI,E,C), C == 0.
-*/
 
 c8 join@NI(NI, E) :- periodic@NI(NI, E, 0, 1).
 
