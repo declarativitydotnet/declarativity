@@ -1,0 +1,198 @@
+This directory contains a number of python scripts that setup and run 
+various P2 configurations. In this README file we describe these
+these scripts. All scripts rely on the P2 Python library. You must
+have your PYTHONPATH variable properly defined (see python/p2/README)
+in order to run most of the scripts in this directory. 
+
+There are a set of general purpose python scripts for running arbitrary
+overlog, and there are scripts specific to running the Chord version
+of overlog. The primary difference in these scripts are the way in
+which environment variables are provided to the C pre-processor, and
+how the script is disseminated to the various nodes. 
+
+The scripts provided in this directory make use of the new dynamic
+overlog installation capability recently added to P2. The previous
+way one would install an overlog program is to run the overlog 
+compiler (in the overlog/ directory) on a complete overlog program. 
+The compiler would generate the complete dataflow graph (including
+network in and out) and the main program (i.e., runOverlog.C) would
+install the resulting dataflow instance. No further modifications 
+are permitted to the running overlog program instance.  
+
+In this release we have provided the ability to install edits into 
+a running dataflow instance. What this means is that one can
+add or remove elements in a running dataflow graph. This can
+be done with either C++ code or Python code. The scripts
+in this directory make use of the edit interface, supported by
+the Python interface, which makes use of two new elements. The
+first is the OverlogCompiler (overlog/overlogCompiler.C) element,
+and the second is the DataflowInstaller (elements/dataflowInstaller.C).
+These element assume the existence of a skeleton dataflow graph upon
+which edits are made through the overlog submitted by the user. 
+
+It is recommended that any user of these features read the SOSP 2005
+P2 paper. In it we describe the general layout of a P2 dataflow. 
+The P2 dataflow architecture paper (located in ???)
+provides a graphical representation, and description, of the initial 
+dataflow assumed by the scripts in this directory. The "p2stub"
+script is in fact the script that sets up the initial dataflow that 
+receives overlog programs and dynamically installs them. But before
+we get into such details we provide a little background on overlog
+program compilation/installation.  
+
+Any overlog program compiled and installed through the C++ interface
+(i.e. runOverlog.C) will result in a network in and out being generated.
+The network in is connected to a Demux element that is been given 
+the names of all events anticipated by the overlog rules. The end of
+each rule strand is connected to a RoundRobin element, which in turn
+is connected to a dataflow representing the out bound (egress) network.
+Only the rule strands themselves differ along various overlog programs.
+Therefore, we have created a generic script (entitled "p2stub.py") that
+creates a network in and out, and connects the ingress to a Dynamic
+Demux element and the egress to a Dynamic Round Robin element. The 
+"Dynamic" term of the Demux and Round Robin means that we can perform
+additions to the ports of these elements. These additions will be the
+rule strands that are compiled by the OverlogCompiler and DataflowInstaller 
+elements upon receipt of some overlog program. Further details 
+on this topic are given in the P2 dataflow architecture paper. We
+now describe our first Python script, which sets up the aforementioned
+initial dataflow.
+
+===== P2STUB =====
+
+The p2stub.py script establishes an initial dataflow that supports the compilation
+and installation of *any* overlog program sent to it. The arguments to
+the p2stub.py script are accurately described by a usage statement printed
+when the script is executed without any arguments. The usage statement reads
+as such:
+Usage: p2stub.py [-s <seed>] [-n <nodes>=1]  <address> <port>
+
+The optional arguments are given in square brackets '[]' and the required 
+arguments in '<>'. This is the convention followed by all scripts. 
+The optional 'seed' argument initializes the random number generated with
+the provided seed (i.e., srand(seed)). If this argument is not provided
+then the random number generated is seeded with the current system time.
+The number of stubs to be installed is indicated by the 'nodes' argument.
+The script will install the desired number of initial *dataflow* instances
+into a single plumber. For example, if you desire the installation of
+5 stubs you would indicated this by '-n 5', and 5 separate dataflows would
+be created each containing a network in and out, Dynamic Demux, and Dynamic
+Round Robin. The only required arguments are the address of the node (in
+either IP or hostname format) and the port on which to send/receive packets.
+Support for more than 1 node is given by incrementing the port number by one
+for each additional node dataflow. Here are a couple of example executions:
+
+1. Run a single stub node that sends and receives its data on port 10000.
+	python p2stub.py gumpy.intel-research.berkeley.net 10000
+
+2. Run 5 stub nodes that send and receive data on port 10001, 10002, ..., 
+   10004.
+	python p2stub.py -n 5 grumpy.intel-research.berkeley.net 10000
+
+==== P2TERMINAL ====
+
+The purpose of the p2terminal.py script is to accumulate an arbitrary overlog
+program and send it to the address of some running p2stub node instance.
+There are a couple ways in which the terminal obtains the input overlog program.
+The first is through an interactive interface, wherein the user is presented
+with a terminal like interface takes input in the form of commands or
+overlog program text. The second way in which to execute the p2terminal is
+through the unix command line interface. We next describe these two operation
+modes. It is important to note that this script will run the C pre-processor
+on any overlog program read in from a file. The ability to read from a file
+is provided by both operation modes. 
+
+**** Unix command line ****
+
+The purpose of this mode of operation is to provide an interface through which
+one can quickly load in an overlog program from a file and push it to an
+arbitrary number of nodes.
+We first describe the command line interface to the p2terminal script. As
+always executing the script without any arguments prints the following
+usage statement:
+Usage: p2terminal.py [-Dvar=<value> [-Dvar=<value> [...]]] 
+                     [[-d <sec_delay>=20] -f <input_file> -n <nodes> -a <ip_address> -p <start_port>] \
+                     <terminal_ip_address> <terminal_port>
+
+The only required arguments to the p2terminal script are the address and port
+on which the terminal can send and receive packets. The script can be executed
+with any number of '-D' switch arguments, which define environment variables
+that are passed to the C pre-processor. The format for defining a variable
+is variable name, followed by '=', followed by the variable value. Every 
+instance of the variable name in an overlog program read in from a file will
+be substituted with the given value. The '-d' argument represents a second
+delay between pushing an overlog program to separate nodes. The '-f' argument
+specifies the file containing the overlog program to be read in, pre-processed
+by 'cpp', and pushed out to all the nodes. The number of nodes is indicated by
+the '-n' argument. It is assumed all nodes are located at the address (IP or
+hostname) indicated by the '-a' argument. It is also assumed that the ports
+on which these nodes are listening start at the port indicated by the '-p'
+argument and increase by one for each node. The following provides a few
+example runs of the p2terminal script.
+
+1. Execute the python script to send and receive on the machine grumpy...
+   on port 9999. The script reads the overlog program in chord.olg and
+   pushes it to the single node on host grumpy listening on port 10000. 
+   NOTE: This node represents a landmark node and thus has its LANDMARK
+         env variable defined to "--".
+   ALSO NOTE: All environment variables with type string must be wrapped 
+              in double quotes with a backslash so 'cpp' does not remove 
+              the quotes during 
+   The second environment variable is the IPADDRESS of the node.
+   The third env variable is the NODEID, which is an integer 
+   argument and therefore not wrapped in *escaped* double quotes.  
+python p2terminal.py -D LANDMARK=\"--\" -D IPADDRESS=\"grumpy:10000\" -D NODEID=2 
+                     -f chord.olg -n 1 \
+                     -a grumpy.intel-research.berkeley.net -p 10000 \
+                     gumpy.intel-reserch.berkeley.net 9999 
+
+1. Same as example 1 passing the a different LANDMARK environment variable 
+   to the C pre-processor. This chord node will use the node established in
+   example 1 as the landmark. 
+python p2terminal.py -D LANDMARK=\"grumpy:10000\" -D NODEID=16 \
+                     -d 10 -f chord.olg -n 1 \
+                     -a grumpy.intel-research.berkeley.net -p 10001 \
+                     gumpy.intel-reserch.berkeley.net 9999 
+
+**** Interactive mode ****
+
+Executing the p2terminal script with nothing but the p2terminal address and port,
+and possibly some environments variables, will cause it to enter the interactive mode. 
+A description of the various commands will be displayed on stdout. This description
+should provide sufficient information on how one operates in this mode. The only
+thing I will note here is that you must provide a destination address in the 
+following format: hostname:port or ip_address:port.
+This must be entered in the 'address' mode before sending out the overlog
+program. 
+
+
+==== LOADMANYCHORDS ====
+
+The script loadManyChords.py was written to easily distribute the Chord overlog 
+program (with proper environment variables) to a set of p2stub nodes running
+on a single machine, listening on successive ports. The 'python/scripts/chord.olg'
+version of Chord defines the environment variables that this script assumes. They
+are IPADDRESS, NODEID, and LANDMARK. The script will pass the proper values
+to the C pre-processor for each target p2stub node. The usage statement for this
+script is as follows:
+Usage: loadManyChords.py [-d <sec_delay>=20] 
+                         -f <input_file> -n <nodes> 
+                         -a <ip_address> -p <start_port> -l <landmark>
+
+The '-d' gives the second delay between pushing out the overlog program to the
+next node. The '-f' indicates the Chord overlog program (e.g., python/scripts/chord.olg)
+that is read in, pre-processed with 'cpp', and pushed to each node. The chord.olg
+will be passed to 'cpp' for each node along with the proper environment variable
+definitions. The '-n' indicates the number of nodes to be loaded. The '-a' indicates
+the address (hostname or IP format) of where the nodes reside. The '-p' argument
+indicates the lowest port number of all the nodes, further port numbers are assumed
+to be increments of 1 away from the start port.  Here is an example execution of
+the script.
+
+1. Distribute chord.olg to 5 nodes on the localhost starting at port 10000, and
+   designate the node at localhost:10000 to be the landmark.
+       python loadManyChords.py -f chord.olg -n 5 -a localhost -p 10000 -l localhost:10000
+
+
+
+
