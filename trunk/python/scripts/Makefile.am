@@ -30,6 +30,6 @@ loadManyChords.py: loadManyChords.in Makefile
 CLEANFILES = $(bin_SCRIPTS)
 
 EXTRA_DIST = README \
-             p2stub.in p2terminal.in p2insert.in loadManyChords.in \
+             p2stub.in p2terminal.in loadManyChords.in \
              sanity.py dfrun.py netcc.py \
              recv.df sender.df

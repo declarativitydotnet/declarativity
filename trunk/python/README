@@ -1,12 +1,11 @@
-The purpose of this directory is to provide python support for P2.
+This module represents the python support for P2.
 All python extension modules can be found under the 'python/p2' 
 directory. Please refer to the README in that directory for further
 information. 
 
-The next generation dataflow language is located in
-'python/dfparser'. At this time there is no documentation for the
-dataflow langauge. The interested party should post question to
-the p2devel@yahoogroups.com list regarding any early assistance
-with the dataflow language. The dataflow language does have limited
-operation, and examples can be found in the 'python/scripts' directory.
+The dataflow language compilier is located in 'python/dfparser'. Documentation 
+for the dataflow langauge can be viewed in the dataflow document included in
+this directory. Any questions should be posted to p2devel@yahoogroups.com. 
+The dataflow language can be used to install a complete dataflow, and examples can 
+be found in the 'python/scripts' directory.
 

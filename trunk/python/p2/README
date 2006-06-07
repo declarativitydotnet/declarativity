@@ -12,7 +12,7 @@ the libp2python module are as follows:
    under 'python/p2' and creates a shared library at 
    'python/p2/.libs/libp2python.so'.
 2. Define your 'PYTHONPATH' variable to include the 'python/p2/.libs',
-   'python/dfparser', 'python/dfparser/yapps', 'python/scripts' and 
+   'python/dfparser', 'python/dfparser/yapps', 'python/scripts'
    directories.
    e.g., `export PYTHONPATH=<top_dir>/python/scripts:<top_dir>/python/dfparser: \
                             <top_dir>/python/dfparser/yapps:<top_dir>/python/p2/.libs`
@@ -37,7 +37,9 @@ The first thing one should do is read the Boost.Python tutorial, which can be
 found at http://www.boost.org/libs/python/doc/tutorial/doc/html/index.html
 
 After reading through this tutorial and looking at preexisting extensions, it
-should be clear how to include your new element in libp2python. 
+should be clear how to include your new element in libp2python. Further
+instructions can be found in the P2 Python library section of the P2 Dataflow
+Architecture docuement. 
 
 EXAMPLES:
 
@@ -46,7 +48,7 @@ the P2 python library to create a network sender and reciever dataflow. Simply
 execute this script ('python netcc.py') to look at the arguements that it expects.
 The script is a python replica of the netcc.C test found in the 'tests/' directory.
 It will show you how to create a Plumber class and a Dataflow class. From there
-you can create various elements and hook them together using the same Dataflow 
+you can create various elements and hook them together using the Dataflow 
 class methods. Here is an example run (you must first start a destination node
 before starting a source node.):
 
@@ -71,7 +73,10 @@ For the interested party we have began to build a new dataflow language (found i
 file containing a description of the dataflow that should be created. If you want
 to use the dataflow language you'll need to add a couple of paths to the PYTHONPATH
 environment variable. The paths are 'python/dfparser' and 'python/dfparser/yapps'.
-   e.g., `export PYTHONPATH=/home/tcondie/phi/phi/python/p2/.libs:/home/tcondie/phi/phi/python/dfparser:/home/tcondie/phi/phi/python/dfparser/yapps`
+   e.g., `export PYTHONPATH=/home/tcondie/phi/phi/python/p2/.libs: \
+                            /home/tcondie/phi/phi/python/dfparser: \
+                            /home/tcondie/phi/phi/python/dfparser/yapps: \
+                            /home/tcondie/phi/phi/python/scripts'
 
 Example dataflow descriptions can also be found in the 'python/scripts' directory, and have
 been given the '.df' file extension. Here is an example run:
