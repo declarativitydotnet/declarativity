@@ -58,9 +58,6 @@ CLEANFILES = core *.core *~ *.gen.h *.gen.txt pel_lexer.C
 EXTRA_DIST = 	$(libp2core_la_SOURCES:.C=.h) \
 		inlines.h \
 		trace.h \
-		iteratorObj.h \
-		scanIteratorObj.h \
-		aggregateObj.h \
 		pel_lexer.lex \
 		pel_gen.py \
 		pel_program.h
