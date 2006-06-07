@@ -28,8 +28,7 @@ INCLUDES = @BOOST_INC@ -I../p2core -I../eventLoop -I../elements
 CLEANFILES = core *.core *~
 
 EXTRA_DIST = .cvsignore \
-		$(libp2debugger_la_SOURCES:.C=.h) \
-		lookup.h
+		$(libp2debugger_la_SOURCES:.C=.h)
 
 MAINTAINERCLEANFILES = Makefile.in
 

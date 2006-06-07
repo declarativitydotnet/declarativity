@@ -17,8 +17,9 @@
 SUBDIRS=eventLoop p2core elements net overlog debugger tests unitTests python
 
 EXTRA_DIST = LICENSE setup \
-		doc/chord.plg doc/narada.plg doc/ping.plg \
-		doc/reachable.plg doc/types.txt README README.OSX
+		doc/chord.olg doc/narada.olg doc/ping.olg \
+		doc/reachable.olg doc/types.txt README README.OSX \
+		doc/dataflow.ps doc/dataflow.pdf
 
 CXXFLAGS=-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG -Wall @PYTHON_CSPEC@ @CXXFLAGS@
 
