@@ -11,7 +11,7 @@
 # Berkeley, CA,  94707. Attention: P2 Group.
 #
 
-bin_SCRIPTS = p2stub.py p2terminal.py p2insert.py
+bin_SCRIPTS = p2stub.py p2terminal.py p2insert.py loadManyChords.py
 
 do_subst = sed -e 's,[@]PYTHON[@],$(PYTHON),g'
 
