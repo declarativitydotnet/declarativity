@@ -1,4 +1,4 @@
-#!@PYTHON@
+#!/usr/bin/python
 import dfparser
 from libp2python import *
 import sys
