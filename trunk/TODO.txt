@@ -94,3 +94,5 @@
 
  - Replace custom aggregate functions within AggWrap with generic
    functions from factory
+
+ - Split planning of periodics from arbitrary rule bodies. 

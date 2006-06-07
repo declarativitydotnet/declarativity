@@ -187,10 +187,6 @@ WHITESPACE	[ \t\r\n]+
   return OL_VALUE;
 }
 
-<INITIAL>fact { 
-  return OL_FACT; 
-}
-
 <INITIAL>[a-z]{ALNUM}* { 
   lvalp->v = new Parse_Val(Val_Str::mk(yytext)); 
   return OL_NAME; 
@@ -214,10 +210,10 @@ WHITESPACE	[ \t\r\n]+
   return OL_VALUE;
 }
 
-<INITIAL>({HEXDIGIT}+)I {
+<INITIAL>0[xX]{HEXDIGIT}+I {
   // IDs are read in only in hexadecimal with an I appended to the end
   std::string hex(yytext);
-  std::string choppedString = hex.substr(0, hex.size() - 1);
+  std::string choppedString = hex.substr(2, hex.size() - 3);
   Parse_Val *val =
     new Parse_Val(Val_ID::mk(choppedString));
   val->id(true);

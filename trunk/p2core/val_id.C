@@ -99,7 +99,7 @@ string
 Val_ID::toConfString() const
 {
   ostringstream conf;
-  conf << "Val_ID(" << i->toConfString() << ")";
+  conf << "Val_ID(\"" << i->toConfString() << "\")";
   return conf.str();
 }
 

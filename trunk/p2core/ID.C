@@ -132,14 +132,10 @@ string ID::toConfString() const
 { 
   ostringstream result;
   char buf[30];
-  result << "{";
   for (unsigned i = 0; i < WORDS; i++) {
-    sprintf(buf, "%d", words[i]);
+    sprintf(buf, "%04x", words[i]);
     result << buf;
-    if (i < WORDS-1) 
-      result << ", ";
   }
-  result << "}";
   return result.str();
 }
 

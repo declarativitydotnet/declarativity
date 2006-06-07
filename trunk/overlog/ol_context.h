@@ -105,7 +105,7 @@ public:
 
   void query( Parse_Term *term);
 
-  void fact( Parse_Expr *name, Parse_ExprList *args );
+  void fact( Parse_Term *term);
 
   void watch( Parse_Expr *t );
 

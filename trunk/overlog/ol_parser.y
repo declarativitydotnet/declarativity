@@ -44,7 +44,6 @@
 %left OL_ID
 %nonassoc OL_ASSIGN
 
-%token OL_FACT 
 %token OL_AT 
 %token<v> OL_NAME 
 %token OL_MAX
@@ -97,11 +96,11 @@
 }
 
 %type<u_termlist>    termlist;
-%type<u_exprlist>    factargs functorbody functorargs functionargs primarykeys keylist; 
+%type<u_exprlist>    functorbody functorargs functionargs primarykeys keylist; 
 %type<u_functorname> functorname;
 %type<u_term>        term functor assign select;
 %type<u_aggterm>     aggview;
-%type<v>             factarg functorarg functionarg tablearg atom rel_atom math_atom function math_expr bool_expr range_expr range_atom aggregate;
+%type<v>             functorarg functionarg tablearg atom rel_atom math_atom function math_expr bool_expr range_expr range_atom aggregate;
 %type<u_boper>       rel_oper;
 %type<u_moper>       math_oper;
 %type<u_aoper>       agg_oper;
@@ -121,22 +120,6 @@ clause:		  rule
                 | watch
 		| trace
                 | query               
-		;
-
-fact:		OL_FACT OL_NAME OL_LPAR factargs OL_RPAR OL_DOT 
-		{ ctxt->fact($2, $4); } 
-		;
-
-factargs:	factarg { 
-			$$ = new Parse_ExprList(); 
-			$$->push_front($1); }
-		| factarg OL_COMMA factargs {
-			$3->push_front($1); 
-			$$=$3; }
-		;
-
-factarg: 	OL_VALUE | OL_STRING | OL_NULL | math_expr
-		{ $$ = $1; }
 		;
 
 materialize:	OL_MATERIALIZE OL_LPAR OL_NAME OL_COMMA
@@ -167,6 +150,8 @@ trace:		OL_TRACE OL_LPAR OL_NAME OL_RPAR OL_DOT {
 			ctxt->traceTuple($3);
 		}
 		;
+
+fact:           functor OL_DOT { ctxt->fact($1); }
 
 rule:	        OL_NAME functor OL_IF termlist OL_DOT { 
                     ctxt->rule($2, $4, false, $1); } 

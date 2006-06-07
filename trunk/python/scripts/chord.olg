@@ -34,21 +34,21 @@
 materialize(node, infinity, 1, keys(1)).
 materialize(finger, 180, 160, keys(2)).
 materialize(bestSucc, infinity, 1, keys(1)).
-materialize(succDist, 2, 100, keys(2)).
-materialize(succ, infinity, 100, keys(2)).
+materialize(succ, 10, 100, keys(2)).
 materialize(pred, infinity, 100, keys(1)).
 materialize(succCount, infinity, 1, keys(1)).
-materialize(join, 10, 5, keys(1)).
+materialize(bestSuccCount, infinity, 1, keys(1)).
+materialize(join, 30, 10, keys(1,2)).
 materialize(landmark, infinity, 1, keys(1)).
 materialize(fFix, infinity, 160, keys(2)).  
 materialize(nextFingerFix, infinity, 1, keys(1)).  
 materialize(pingNode, 10, infinity, keys(2)).  
 materialize(pendingPing, 10, infinity, keys(2)).  
 
-fact node(IPADDRESS, 0I + NODEID).
-fact pred(IPADDRESS, 0I, "--").
-fact nextFingerFix(IPADDRESS, 0).
-fact landmark(IPADDRESS, LANDMARK).
+node(IPADDRESS, NODEID).
+pred(IPADDRESS, 0x0I, "--").
+nextFingerFix(IPADDRESS, 0).
+landmark(IPADDRESS, LANDMARK).
 
 /** Lookups */
 
@@ -83,23 +83,17 @@ l3 lookup@BI(min<BI>,K,R,E) :- node@NI(NI,N),
 
 /*
 watch(bestSucc).
-watch(succEvent).
-watch(succDist).
 watch(bestSuccDist).
 */
 
-n1 succEvent@NI(NI,S,SI) :- succ@NI(NI,S,SI).
+n2 succEvent@NI(NI, S, SI) :- succ@NI(NI, S, SI).
 
-n2 succDist@NI(NI,S,D) :- node@NI(NI,N),
-			  succEvent@NI(NI,S,SI), 
-			  D:=S - N - 1.
+n3 bestSuccDist@NI(NI,S,SI,min<D>) :- node@NI(NI,N),
+			              succ@NI(NI,S,SI), 
+			              succEvent@NI(NI,SS,SII), 
+			              D:=S - N - 1.
 
-n3 bestSuccDist@NI(NI,min<D>) :- succDist@NI(NI,S,D).
-
-n4 bestSucc@NI(NI,S,SI) :- succ@NI(NI,S,SI),
-			   bestSuccDist@NI(NI,D), 
-			   node@NI(NI,N),
-			   D == S - N - 1.
+n4 bestSucc@NI(NI,S,SI) :- bestSuccDist@NI(NI,S,SI,D). 
 
 n5 finger@NI(NI,0,S,SI) :- bestSucc@NI(NI,S,SI).
 
@@ -142,19 +136,17 @@ f2 fFixEvent@NI(NI,E,I) :- fFix@NI(NI,E,I).
 
 f3 lookup@NI(NI,K,NI,E) :- fFixEvent@NI(NI,E,I),
 			   node@NI(NI,N), 
-			   K:=1I << I + N.
+			   K:=0x1I << I + N.
 
 f4 eagerFinger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I), 
 				lookupResults@NI(NI,K,B,BI,E).
 
-/*
 f5 finger@NI(NI,I,B,BI) :- eagerFinger@NI(NI,I,B,BI).
-*/
 
 f6 eagerFinger@NI(NI,I,B,BI) :- node@NI(NI,N), 
 				eagerFinger@NI(NI,I1,B,BI), 
 				I:=I1 + 1, 
-				K:=1I << I + N, 
+				K:=0x1I << I + N, 
 				K in (N,B), 
 				BI != NI.
 
@@ -165,23 +157,19 @@ f7 delete fFix@NI(NI,E,I1) :- eagerFinger@NI(NI,I,B,BI),
 
 
 f8 nextFingerFix@NI(NI,0) :- eagerFinger@NI(NI,I,B,BI), 
-			   ((I == 0) || (BI == NI)).
+			   ((I == 159) || (BI == NI)).
 
 f9 nextFingerFix@NI(NI,I) :- node@NI(NI,N), 
 			   eagerFinger@NI(NI,I1,B,BI), 
 			   I:=I1 + 1, 
-			   K:=1I << I + N, 
+			   K:=0x1I << I + N, 
 			   K in (B,N), 
 			   NI != BI.
 
 
 /** Churn Handling */
 
-/*
-watch(joinEvent).
 watch(join).
-watch(joinReq). 
-*/
 
 c1 joinEvent@NI(NI,E) :- join@NI(NI,E).
 
@@ -200,13 +188,23 @@ c4 lookup@LI(LI,N,NI,E) :- joinReq@LI(LI,N,NI,E).
 c5 succ@NI(NI,S,SI) :- join@NI(NI,E),
 		    lookupResults@NI(NI,K,S,SI,E).
 
-c6 join@NI(NI, Delay) :- periodic@NI(NI, E, 0, 1), Delay := 0.
+/*
+c6 bestSuccCount@NI(NI,E,count<*>) :- stabilize@NI(NI,E),
+		                      node@NI(NI,N), 
+                                      succ@NI(NI,S,SI),
+                                      N != S.
+
+c7 join@NI(NI, E) :- bestSuccCount@NI(NI,E,C), C == 0.
+*/
+
+c8 join@NI(NI, E) :- periodic@NI(NI, E, 0, 1).
 
 /** Stabilization */
 
-watch(succ).
 watch(bestSucc).
-/*watch(stabilize).
+watch(succ).
+/*
+watch(stabilize).
 watch(succ).
 watch(pred).
 watch(stabilizeRequest).
@@ -250,7 +248,8 @@ sb8 pred@NI(NI,P,PI) :- node@NI(NI,N),
 
 
 /** Connectivity Monitoring */
-/*watch(pingEvent).
+/*
+watch(pingEvent).
 watch(pingReq).
 watch(pingResp).
 watch(pingNode).

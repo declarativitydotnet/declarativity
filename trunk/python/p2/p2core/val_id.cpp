@@ -6,6 +6,7 @@ ValuePtr (*mk_id)   (IDPtr)                 = &Val_ID::mk;
 ValuePtr (*mk_vec)  (std::vector<uint32_t>) = &Val_ID::mk;
 ValuePtr (*mk_int32)(uint32_t)              = &Val_ID::mk;
 ValuePtr (*mk_int64)(uint64_t)              = &Val_ID::mk;
+ValuePtr (*mk_str)(std::string)             = &Val_ID::mk;
 
 void export_val_id()
 {
@@ -16,6 +17,7 @@ void export_val_id()
     .def("mk", mk_vec)
     .def("mk", mk_int32)
     .def("mk", mk_int64)
+    .def("mk", mk_str)
     .staticmethod("mk")
   ; 
 }

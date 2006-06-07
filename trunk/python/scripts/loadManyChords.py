@@ -41,13 +41,18 @@ class ChordLoader(Element):
       print mesg
       return 1
   def send(self, dest, node):
+      id = "0x"
+      for i in range(20):
+          id += random.choice(["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"])
+      id += "I"
       try:
+          print "NODE %d ID: %s" % (node, id)
           if dest == flags["landmark"]:
               os.system("cpp -P -DLANDMARK=\\\"--\\\" -DIPADDRESS=\\\"%s\\\" -DNODEID=%s %s %s.processed" % \
-                        (dest, random.uniform(0, 2**64), self.input, self.input))
+                        (dest, id, self.input, self.input))
           else:
               os.system("cpp -P -DLANDMARK=\\\"%s\\\" -DIPADDRESS=\\\"%s\\\" -DNODEID=%s %s %s.processed" % \
-                        (flags["landmark"], dest, random.uniform(0, 2**64), self.input, self.input))
+                        (flags["landmark"], dest, id, self.input, self.input))
           file = open(self.input+".processed", 'r') 
           program = file.read()
           file.close()
@@ -70,9 +75,10 @@ class ChordLoader(Element):
   
 
 def print_usage():
-    print
-    print "Usage: loadManyChords.py [-d <sec_delay>] -f <input_file> -n <nodes> -a <ip_address> -p <start_port> -l <landmark>\n"
-    print
+    print r"""
+Usage: loadManyChords.py [-d <sec_delay>=20] \
+                         -f <input_file> -n <nodes> \
+                         -a <ip_address> -p <start_port> -l <landmark>"""
 
 def parse_cmdline(argv):
     shortopts = "d:f:n:a:p:l:"

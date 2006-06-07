@@ -444,6 +444,12 @@ Table2::findSecondaryIndex(Table2::Key& key)
 bool
 Table2::insert(TuplePtr t)
 {
+/*
+  boost::posix_time::ptime now_ts;
+  getTime(now_ts);
+  std::cerr << "INSERT TUPLE current time = " << boost::posix_time::to_simple_string(now_ts)
+            << ", TUPLE = " << t->toString() << std::endl;
+*/
   // Ensure we're operating on the correct view of the table as of right
   // now.
   flush();
@@ -465,7 +471,12 @@ Table2::insert(TuplePtr t)
 
       // Update insertion time if we're flushing tuples
       if (_flushing) {
+/*
+        std::cerr << "UPDATING TUPLE TIME" << std::endl; 
+        std::cerr << "\tOLD: " << boost::posix_time::to_simple_string((*found)->time) << std::endl;
+*/
         updateTime(*found);
+        // std::cerr << "\tNEW: " << boost::posix_time::to_simple_string((*found)->time) << std::endl;
       }
       return false;
     }
@@ -666,6 +677,14 @@ Table2::flushEntry(Entry* e)
   } else {
     // Ah! This is the last instance of this entry in the queue, so
     // we're doing a real removal from the table.
+/*
+    boost::posix_time::ptime now_ts;
+    getTime(now_ts);
+    std::cerr << "FLUSHING TUPLE: current time = " 
+              << boost::posix_time::to_simple_string(now_ts)
+              << ", tuple time = " << boost::posix_time::to_simple_string(e->time)
+       << ", " << e->tuple->toString() << std::endl;
+*/
 
     // Remove it from all derivatives (secondaries, aggs)
     removeDerivatives(e->tuple);

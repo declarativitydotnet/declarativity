@@ -304,10 +304,13 @@ OL_Context::table(Parse_Expr *name,
 //
 // Adding a fact
 //
-void OL_Context::fact(Parse_Expr *name, Parse_ExprList *args)
+void OL_Context::fact(Parse_Term *term)
 {
+  Parse_Functor     *functor = dynamic_cast<Parse_Functor*>(term);
+  Parse_FunctorName *name    = functor->fn;
+  Parse_ExprList    *args    = functor->args_;
   TuplePtr tpl = Tuple::mk();
-  tpl->append(name->v);
+  tpl->append(Val_Str::mk(name->name));
   for (Parse_ExprList::iterator iter = args->begin(); 
        iter != args->end(); iter++) {
     Parse_Val  *v = dynamic_cast<Parse_Val*>(*iter);
