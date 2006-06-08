@@ -1,0 +1,98 @@
+#####################################################################
+#
+# This file is distributed under the terms in the attached LICENSE file.
+# If you do not find this file, copies can be found by writing to:
+# Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+# Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+# Or
+# UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+# Berkeley, CA,  94707. Attention: P2 Group.
+# 
+# DESCRIPTION: TODO file for P2 development.  If you start working on
+# something, put your name after it.
+# 
+#   $Id$
+#
+
+
+
+
+ - A TCP connect element pair: analogous to UDP element.  Some kind of
+   reconnection policy.   Rx is push output, Tx is pull input. 
+
+ - Element to demultiplex packets based on peer IP address.  push-in,
+   push-out. 
+
+ - Text extensively aggregates, adding to the unit test.
+
+ - Add a persistent table object, using BerkeleyDB or Rusty's
+   transactional store.
+
+ - Adding microbenchmarks to the framework above.
+
+ - Cron job to checkout a fresh tree on grumpy each night, build P2,
+   run all the regression tests, archive the benchmark timings, and
+   send any errors to p2devel. 
+
+ - Message-level simulation
+
+ - Autoconf should check for correct version of automake (1.9)
+
+ - Autoconf should check for correct version of flex 
+
+ - Autoconf should check for correct version of bison
+
+ - Dynamic or static schema checker. Do all instances of foo(X, Y, Z) in
+   your OverLog use the same arity, types?
+
+ - Fix OverLog parser and planner so that location specifier need not be
+   mentioned explicitly in the tuple fields.  Every tuple should have
+   (internally) a location specifier.  The location specifier, if at
+   all, appears in OverLog using the @ notation.  No field within the
+   tuple (in OverLog notation) need match the location specifier.
+
+ - Create an AND barrier.  It has a variable number of push inputs and a
+   push output.  It remembers inputs it receives until it is
+   reset. Waits until all received inputs have received a tuple with
+   "true".  When all have received true inputs, it pushes out a signal
+   tuple on its output port and resets all input ports to false.
+
+ - Add aggregation to SIGMOD planner (Boon)
+
+ - Add periodics to SIGMOD planner (Boon)
+
+ - Add a "getting started with P2" document (Joe)
+
+ - Install bugzilla (Alex)
+
+ - Install wiki (Alex)
+
+ - Rewrite OverLog parser, fix off-by-one errors in error reporting,
+   engineer a consistent error handling policy.
+
+ - Write a dataflow manual for the new Python interface. (Tyson)
+
+ - Write an OverLog manual. (Joe)
+
+ - Collect a list of known bugs, e.g., for the parser. Subsumed by
+   bugzilla.
+
+ - Use causality information, if present, to derive tuples that must be
+   eliminated when a base tuple is deleted.
+
+ - Use shared pointers (or a materialized version thereof) to implement
+   the count algorithm for multiply-derived tuples.
+
+ - Create a uniform logging infrastructure that can be used outside of
+   the dataflow, especially for logging within tables and other non-data
+   flow components.
+
+ - Create a replay facility for element, rule strand, and dataflow
+   traces. Great for replay debugging.
+
+ - Go through and fix all n^2 traversals of vectors!!!!!
+
+ - Replace custom aggregate functions within AggWrap with generic
+   functions from factory
+
+ - Split planning of periodics from arbitrary rule bodies. 
