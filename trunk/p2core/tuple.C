@@ -54,8 +54,6 @@ Tuple::xdr_marshal( XDR *x )
     tag("localNode")->xdr_marshal(x);
     (Val_Str::mk("ID"))->xdr_marshal(x);
     (Val_UInt32::mk(ID()))->xdr_marshal(x);
-    //(Val_UInt32::mk(ID()))->xdr_marshal(x);
-    //(Val_Str::mk(getLocalNode()))->xdr_marshal(x);
   }
   else {
     (Val_Int32::mk(count))->xdr_marshal(x);
@@ -86,17 +84,15 @@ Tuple::xdr_unmarshal(XDR* x)
   int numTags = Val_Int32::cast(Value::xdr_unmarshal(x));
   if(numTags > 0){
     // create a tag depending on the tags coming from wire
-    t->tag(Val_Str::cast(Value::xdr_unmarshal(x)), 
-		      Value::xdr_unmarshal(x));
-    t->tag(Val_Str::cast(Value::xdr_unmarshal(x)), 
-		      Value::xdr_unmarshal(x));
-    //uint32_t id = Val_UInt32::cast(Value::xdr_unmarshal(x));
-    //string source = Val_Str::cast(Value::xdr_unmarshal(x));
-  }
-  // set the tags here for the newly created tuple
-  //t->setSourceNode(source);
-  //t->setIdAtSource(id);
+    ValuePtr sourceNodeTag = Value::xdr_unmarshal(x);
+    ValuePtr sn = Value::xdr_unmarshal(x);
+    ValuePtr idTag = Value::xdr_unmarshal(x);
+    ValuePtr idt = Value::xdr_unmarshal(x);
 
+    t->tag(sourceNodeTag->toString(), sn);
+    t->tag(idTag->toString(), idt);
+
+  }
 
   return t;
 }

@@ -1,3 +1,18 @@
+/***
+ *
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776,
+ * Berkeley, CA,  94707. Attention: P2 Group.
+ *
+ *
+ */
+
+
+
 #include <p2Time.h>
 #include "ruleTracer.h"
 #include "execRecord.h"
@@ -5,7 +20,7 @@
 #include "val_time.h"
 #include "val_str.h"
 #include "val_uint32.h"
-
+#include <math.h>
 
 #ifndef SKIP
 #define SKIP 
@@ -44,6 +59,12 @@ int RuleTracer::push(int port, TuplePtr p, b_cbv cb)
   // set the local node for a given tuple
   setLocalNode(p);
 
+  TuplePtr t_tupleTable = createTupleTableTuple(p);
+  
+  if(t_tupleTable)
+    insertInTupleTable(t_tupleTable);
+
+  //std::cout << " INSERTED " << t_tupleTable->toString() << "\n";
 #ifdef SKIP
   // undefine the SKIP at the beginning if you want
   // to trace the debugging rules too
@@ -129,8 +150,6 @@ void RuleTracer::startRule(TuplePtr t, int port)
   e->finished = false;
   //std::cout << e->toString();
   
-  TuplePtr t_tupleTable = createTupleTableTuple(t);
-
   return;
 }
 
@@ -157,10 +176,7 @@ void RuleTracer::endRule(TuplePtr t, int port)
     insertInRuleTable(vv->at(i));
   }
 
-  TuplePtr t_tupleTable = createTupleTableTuple(t);
   
-  if(t_tupleTable)
-    insertInTupleTable(t_tupleTable);
  
 
   // create the exec tuple and send it to the insert element
@@ -270,6 +286,10 @@ RuleTracer::createTupleTableTuple(TuplePtr t)
     t_new->append(Val_UInt32::mk(getIdAtSource(t)));
   else
     t_new->append(Val_UInt32::mk(t->ID()));
+
+  //boost::posix_time::ptime timedd;
+  //getTime(timedd);
+  //t_new->append(Val_Time::mk(timedd));
 
   log(LoggerI::INFO, -1, t_new->toString() + "\n");
   //std::cout<< t_new->toString() << "\n";
