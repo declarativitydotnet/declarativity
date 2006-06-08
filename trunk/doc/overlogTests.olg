@@ -20,6 +20,8 @@ materialize(second, infinity, 10, keys(2)).
 materialize(third, infinity, infinity, keys(2)).
 materialize(fourth, 10, 20, keys(2)).
 
+fact node("blah", 123ABCI).
+
 
 r16 l@A(A, B) :- third@A(A, B, E, D), periodic@A(A, E, 5).
 
