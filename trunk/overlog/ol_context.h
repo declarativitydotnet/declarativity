@@ -135,7 +135,7 @@ private:
   std::set<string>      watchTables;
   std::vector<TuplePtr> facts;
   Parse_Functor* singleQuery;
-  std::set<string> tuplesToTrace;
+  std::set< string, std::less< string > > tuplesToTrace;
 
 
   /** A set of table names for those tables we wish to trace during

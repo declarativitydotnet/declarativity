@@ -19,6 +19,8 @@ materialize(first, 10, infinity, keys(2, 4)).
 materialize(second, infinity, 10, keys(2)).
 materialize(third, infinity, infinity, keys(2)).
 materialize(fourth, 10, 20, keys(2)).
+materialize(ruleExecTable, infinity, infinity, keys(1)).
+materialize(tupleTable, infinity, infinity, keys(1)).
 
 trace(l).
 traceTable(fourth).
@@ -65,5 +67,6 @@ r12 i@A(A, F, min<L>) :- e@A(A, B, C), first@A(A, B, F, L).
 
 
 
-r19 first@A(A, B, C, D) :- second@A(A, B, C, D), third@A(A, B, C, D).
+/* r19 first@A(A, B, C, D) :- second@A(A, B, C, D), third@A(A, B, C,
+D). */
 

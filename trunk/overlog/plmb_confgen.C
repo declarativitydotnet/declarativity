@@ -505,7 +505,7 @@ Plmb_ConfGen::genTappedDataFlow(string nodeID)
       oss << "$1 pop swallow pop";
       ElementSpecPtr encapSend =
 	_conf->addElement(ElementPtr(new PelTransform("encapSend:" + nodeID, oss.str())));
-      _conf->hookUp(t, 1, encapSend, 0);
+      _conf->hookUp(t, 0, encapSend, 0);
       _conf->hookUp(encapSend, 0, traceMux, portCounter);
     }
     
@@ -1783,7 +1783,7 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
 // register an elementSpec that needs that data
 void 
 Plmb_ConfGen::registerReceiver(string tableName, 
-			      ElementSpecPtr elementSpecPtr,
+                               ElementSpecPtr elementSpecPtr,
 			       OL_Context::Rule * _curRule)
 {
   // add to the right receiver
@@ -2687,10 +2687,15 @@ Plmb_ConfGen::createTables(string nodeID)
 
     // Create the table. Should this table be traced?
     Table2Ptr newTable;
+
+    std::set< string, std::less< string > > tablesToTrace =
+      _ctxt->getTablesToTrace();
+    std::set< string, std::less< string > >::iterator i =
+      tablesToTrace.find(tableInfo->tableName);
+    
     if (_ruleTracing &&
-        (_ctxt->getTuplesToTrace().
-         find(tableInfo->tableName) !=
-         _ctxt->getTuplesToTrace().end())) {
+        (i != tablesToTrace.end())) {
+      _needTracingPortAtRR = true;
       TableTracer* tracer = new TableTracer(tableInfo->tableName,
                                             key,
                                             tableSize,

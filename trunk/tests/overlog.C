@@ -36,6 +36,7 @@ int main(int argc, char **argv)
   boost::shared_ptr< OL_Context > ctxt(new OL_Context());
   bool route = false;
   bool builtin = false;
+  bool tracing = false;
   string filename("");
   PlumberPtr plumber(new Plumber(level));
 
@@ -52,6 +53,7 @@ int main(int argc, char **argv)
                 << "\t-g: produce a DOT graph spec\n"
 		<< "\t-h: print this help text\n"
 		<< "\t-l: Produce dataflow language spec\n"
+                << "\t-t: Enable tracing (default: off)\n"
 		<< "\t- : read from stdin\n";
       exit(0);
     } else if (arg == "-c") { 
@@ -61,6 +63,8 @@ int main(int argc, char **argv)
       builtin = false;
     } else if (arg == "-") {
       ctxt->parse_stream(&std::cin);
+    } else if (arg == "-t") {
+      tracing = true;
     } else if (arg == "-l" || arg == "-e") {
       Plumber::DataflowPtr conf(new Plumber::Dataflow("Overlog"));
       filename = argv[i+1];
@@ -70,8 +74,15 @@ int main(int argc, char **argv)
       fstr.open(specFileName.c_str(), std::fstream::out);
       ctxt->parse_stream(&istr);
       Plmb_ConfGen *gen = (arg == "-l") ? 
-        new Plmb_ConfGen(ctxt.get(), conf, false, false, false, filename, false, fstr) :
-        new Plmb_ConfGen(ctxt.get(), conf, false, false, false, filename, false, fstr, true);
+        new Plmb_ConfGen(ctxt.get(), conf, false, false, false,
+                         filename,
+                         tracing, // tracing
+                         fstr) :
+        new Plmb_ConfGen(ctxt.get(), conf, false, false, false,
+                         filename,
+                         tracing, // Tracing
+                         fstr,
+                         true); // Editing
       gen->createTables("127.0.0.1:10000");
       
       boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));
