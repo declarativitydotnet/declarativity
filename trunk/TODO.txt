@@ -96,3 +96,7 @@
    functions from factory
 
  - Split planning of periodics from arbitrary rule bodies. 
+
+ - Implement views correctly, linking them to both update and remove
+   events on the underlying tables.
+

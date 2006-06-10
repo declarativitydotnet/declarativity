@@ -343,6 +343,7 @@ Table2::~Table2()
 
   // And all listeners
   _updateListeners.clear();
+  _removalListeners.clear();
   
 
   // Now empty out actual entries.  If flushing, flush the
@@ -661,7 +662,11 @@ Table2::removeDerivatives(TuplePtr t)
   }
 
   // Delete Listeners
-
+  for (ListenerVector::iterator i = _removalListeners.begin();
+       i != _removalListeners.end();
+       i++) {
+    (*i)(t);
+  }
 }
 
 
@@ -1136,6 +1141,13 @@ void
 Table2::updateListener(Listener listener)
 {
   _updateListeners.push_back(listener);
+}
+
+
+void
+Table2::removalListener(Listener listener)
+{
+  _removalListeners.push_back(listener);
 }
 
 

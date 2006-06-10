@@ -58,6 +58,7 @@ libp2elements_la_SOURCES = \
 	printWatch.C \
 	aggregate.C \
 	update.C \
+	removed.C \
 	dataflowInstaller.C
 
 INCLUDES = @BOOST_INC@ -I../p2core -I../eventLoop -I../overlog -I../net

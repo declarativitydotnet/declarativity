@@ -21,6 +21,8 @@ materialize(third, infinity, infinity, keys(2)).
 materialize(fourth, 10, 20, keys(2)).
 
 
+r19 first@A(A, B, C, D) :- second@A(A, B, C, D), third@A(A, B, C, D).
+
 
 r18 l@A(A, B) :- periodic@A(A, E, 5), B := "--" + E.
 

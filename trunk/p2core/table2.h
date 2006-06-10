@@ -304,6 +304,13 @@ public:
       whenever a new tuple is inserted into the table.  */
   void
   updateListener(Listener);
+
+
+  /** Register delete listeners. Every registered listener is called
+      whenever a tuple is removed from the table, through explicit
+      deletion or due to garbage collection.  */
+  void
+  removalListener(Listener);
   
 
 
@@ -660,6 +667,10 @@ private:
 
   /** My update listeners */
   ListenerVector _updateListeners;
+
+
+  /** My remove listeners */
+  ListenerVector _removalListeners;
 
 
   /** My lookup search entry, used with projecting lookups. It must have
