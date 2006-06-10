@@ -252,10 +252,19 @@ void OL_Context::watch(Parse_Expr *w)
   watchTables.insert(w->v->toString());
 }
 
-void OL_Context::traceTuple(Parse_Expr *w)
+void
+OL_Context::traceTuple(Parse_Expr *w)
 {
   std::cout << "Add trace variable " << w->toString() << "\n";
   tuplesToTrace.insert(w->v->toString());
+}
+
+
+void
+OL_Context::traceTable(Parse_Expr *w)
+{
+  std::cout << "Add traced table " << w->toString() << "\n";
+  tablesToTrace.insert(w->v->toString());
 }
 
 

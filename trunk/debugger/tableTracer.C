@@ -21,7 +21,7 @@ TableTracer::TableTracer(string tableName,
                          size_t maxSize,
                          boost::posix_time::time_duration& lifetime)
   : Table2(tableName, key, maxSize, lifetime),
-    Element(tableName + ".tracer", 0, 1)
+    _e(new TableTracerElement(tableName + ".tracer", 0, 1, this))
 {
 }
 
@@ -31,7 +31,7 @@ TableTracer::TableTracer(string tableName,
                          size_t maxSize,
                          string lifetime)
   : Table2(tableName, key, maxSize, lifetime),
-    Element(tableName + ".tracer", 0, 1)
+    _e(new TableTracerElement(tableName + ".tracer", 0, 1, this))
 {
 }
   
@@ -40,7 +40,7 @@ TableTracer::TableTracer(string tableName,
                          Table2::Key& key,
                          size_t maxSize)
   : Table2(tableName, key, maxSize),
-    Element(tableName + ".tracer", 0, 1)
+    _e(new TableTracerElement(tableName + ".tracer", 0, 1, this))
 {
 }
   
@@ -48,7 +48,7 @@ TableTracer::TableTracer(string tableName,
 TableTracer::TableTracer(string tableName,
                          Table2::Key& key)
   : Table2(tableName, key),
-    Element(tableName + ".tracer", 0, 1)
+    _e(new TableTracerElement(tableName + ".tracer", 0, 1, this))
 {
 }
   
@@ -77,3 +77,19 @@ TableTracer::lookup(Key& indexKey, TuplePtr t)
   return Table2::lookup(indexKey, t);
 }
 
+
+TableTracer::TableTracerElement::TableTracerElement(string instanceName,
+                                                    unsigned ninputs,
+                                                    unsigned noutputs,
+                                                    TableTracer* tt)
+  : Element(instanceName, ninputs, noutputs),
+    _tt(tt)
+{
+}
+  
+
+ElementPtr
+TableTracer::getElementPtr()
+{
+  return _e;
+}

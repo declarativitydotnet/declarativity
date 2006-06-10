@@ -20,8 +20,8 @@ materialize(second, infinity, 10, keys(2)).
 materialize(third, infinity, infinity, keys(2)).
 materialize(fourth, 10, 20, keys(2)).
 
-
-r19 first@A(A, B, C, D) :- second@A(A, B, C, D), third@A(A, B, C, D).
+trace(l).
+traceTable(fourth).
 
 
 r18 l@A(A, B) :- periodic@A(A, E, 5), B := "--" + E.
@@ -64,4 +64,6 @@ r11 h@A(A, B, min<C>) :- first@A(A, B, C, D).
 r12 i@A(A, F, min<L>) :- e@A(A, B, C), first@A(A, B, F, L).
 
 
+
+r19 first@A(A, B, C, D) :- second@A(A, B, C, D), third@A(A, B, C, D).
 

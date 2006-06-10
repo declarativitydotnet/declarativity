@@ -111,6 +111,11 @@ public:
 
   void traceTuple( Parse_Expr *t );
 
+
+  /** Keep track of tables to be traced */
+  void
+  traceTable(Parse_Expr *t);
+
   void error(string msg);
 
   OL_Lexer *lexer;
@@ -132,13 +137,19 @@ private:
   Parse_Functor* singleQuery;
   std::set<string> tuplesToTrace;
 
+
+  /** A set of table names for those tables we wish to trace during
+      execution */
+  std::set< string > tablesToTrace;
+
 public: 
   ErrorList          errors;
   RuleList*          getRules()       { return rules; };
   TableInfoMap*      getTableInfos()  { return tables;   };
   std::set<string>      getWatchTables() { return watchTables; };
   std::vector<TuplePtr> getFacts()       { return facts; };
-  std::set<string> getTuplesToTrace() { return tuplesToTrace;};  
+  std::set< string > getTuplesToTrace() { return tuplesToTrace;};  
+  std::set< string > getTablesToTrace() { return tablesToTrace;};  
   
 };
 

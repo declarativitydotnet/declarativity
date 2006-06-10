@@ -159,6 +159,7 @@ private:
   std::vector<ElementSpecPtr>  _ruleTracers;
 
   std::vector<ElementSpecPtr> _traceTupleElements;
+  std::vector<ElementSpecPtr> _tableTracers;
 
   void initTracingState(bool);
   void genTappedDataFlow(string nodeid);

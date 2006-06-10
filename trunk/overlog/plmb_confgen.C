@@ -476,21 +476,37 @@ Plmb_ConfGen::genTappedDataFlow(string nodeID)
     }
   }
 
-  // now connect the port 1 of all the traceTuple elements to 
-  // a traceMux
-  int inputPortSize = _traceTupleElements.size();
+  // now connect the port 1 of all the traceTuple and tableTracer
+  // elements to a traceMux
+  int inputPortSize = _traceTupleElements.size() +
+    _tableTracers.size();
   if(inputPortSize > 0){
     ElementSpecPtr traceMux = 
       _conf->addElement(ElementPtr(new Mux("traceMux", 
 					   inputPortSize)));
-    for(int i = 0; i < inputPortSize; i++){
-      ElementSpecPtr t = _traceTupleElements.at(i);
+    uint32_t portCounter = 0;
+    for(std::vector< ElementSpecPtr >::iterator i = _traceTupleElements.begin();
+        i != _traceTupleElements.end();
+        i++, portCounter++){
+      ElementSpecPtr t = (*i);
       ostringstream oss;
       oss << "$1 pop swallow pop";
       ElementSpecPtr encapSend =
 	_conf->addElement(ElementPtr(new PelTransform("encapSend:" + nodeID, oss.str())));
       _conf->hookUp(t, 1, encapSend, 0);
-      _conf->hookUp(encapSend, 0, traceMux, i);
+      _conf->hookUp(encapSend, 0, traceMux, portCounter);
+    }
+
+    for(std::vector< ElementSpecPtr >::iterator i = _tableTracers.begin();
+        i != _tableTracers.end();
+        i++, portCounter++){
+      ElementSpecPtr t = (*i);
+      ostringstream oss;
+      oss << "$1 pop swallow pop";
+      ElementSpecPtr encapSend =
+	_conf->addElement(ElementPtr(new PelTransform("encapSend:" + nodeID, oss.str())));
+      _conf->hookUp(t, 1, encapSend, 0);
+      _conf->hookUp(encapSend, 0, traceMux, portCounter);
     }
     
     // now hookup the output of the mux to a queue
@@ -506,7 +522,7 @@ Plmb_ConfGen::genTappedDataFlow(string nodeID)
     }
     // hookup output of the queue to the roundrobin's last input port
     
-    _conf->hookUp(traceQueue, 0, rr, rr->element()->ninputs()-1);
+    _conf->hookUp(traceQueue, 0, rr, rr->element()->ninputs() - 1);
   }
 }
 
@@ -2378,10 +2394,17 @@ Plmb_ConfGen::genJoinElements(OL_Context::Rule* curRule,
     }
   }
   if (_isPeriodic == false) {
-    debugRule(curRule, "Event term " + eventFunctor->fn->name + "\n");
-    // for all the base tuples, use the join to probe. 
-    // keep track also the cur ordering of variables
-    namesTracker->initialize(eventFunctor);
+    // Is there an event functor?
+    if (!eventFound) {
+      error("I don't seem to have an event. Is this a static view?",
+            curRule);
+      return;
+    } else {
+      debugRule(curRule, "Event term " + eventFunctor->fn->name + "\n");
+      // for all the base tuples, use the join to probe. 
+      // keep track also the cur ordering of variables
+      namesTracker->initialize(eventFunctor);
+    }
   } else {
     debugRule(curRule, "Periodic joins " + namesTracker->toString() + "\n");
   }
@@ -2590,15 +2613,21 @@ void Plmb_ConfGen::genPrintWatchElement(string header)
 }
 
 
-void Plmb_ConfGen::genTraceElement(string header)
+void
+Plmb_ConfGen::genTraceElement(string header)
 {
   if(_ruleTracing){
     std::set<string> tt = _ctxt->getTuplesToTrace();
     if(tt.find(header) != tt.end()){
-    //if(header == "lookup"){
-      std::cout << "Adding a traceTuple element for tuple " << header << ", size " << tt.size() << "\n";
+      //if(header == "lookup"){
+      std::cout << "Adding a traceTuple element for tuple "
+                << header
+                << ", size "
+                << tt.size()
+                << "\n";
       ElementSpecPtr traceElement =
-	_conf->addElement(ElementPtr(new TraceTuple("inTrace"+header, header)));
+	_conf->addElement(ElementPtr(new TraceTuple("inTrace" + header,
+                                                    header)));
       
       hookUp(traceElement, 0);
       _traceTupleElements.push_back(traceElement);
@@ -2656,19 +2685,43 @@ Plmb_ConfGen::createTables(string nodeID)
     string newTableName = nodeID + ":" + tableInfo->tableName;
 
 
-    // Create the table
-    Table2Ptr newTable(new Table2(tableInfo->tableName,
-                                  key,
-                                  tableSize,
-                                  expiration));
-    
-    _p2dl << conf_assign(newTable.get(), 
-                         conf_function("Table2",
-                                       tableInfo->tableName,
-                                       conf_UIntVec(key), 
-                                       tableSize, 
-                                       boost::posix_time::
-                                       to_simple_string(expiration)));
+    // Create the table. Should this table be traced?
+    Table2Ptr newTable;
+    if (_ruleTracing &&
+        (_ctxt->getTuplesToTrace().
+         find(tableInfo->tableName) !=
+         _ctxt->getTuplesToTrace().end())) {
+      TableTracer* tracer = new TableTracer(tableInfo->tableName,
+                                            key,
+                                            tableSize,
+                                            expiration);
+      newTable.reset(tracer);
+      _p2dl << conf_assign(newTable.get(), 
+                           conf_function("TableTracer",
+                                         tableInfo->tableName,
+                                         conf_UIntVec(key), 
+                                         tableSize, 
+                                         boost::posix_time::
+                                         to_simple_string(expiration)));
+      
+      // Insert the tracer element into the table tracers, so that it
+      // can be connected to the demux eventually
+      ElementSpecPtr tableTraceElement =
+	_conf->addElement(tracer->getElementPtr());
+      _tableTracers.push_back(tableTraceElement);
+    } else {
+      newTable.reset(new Table2(tableInfo->tableName,
+                                key,
+                                tableSize,
+                                expiration));
+      _p2dl << conf_assign(newTable.get(), 
+                           conf_function("Table2",
+                                         tableInfo->tableName,
+                                         conf_UIntVec(key), 
+                                         tableSize, 
+                                         boost::posix_time::
+                                         to_simple_string(expiration)));
+    }
     
     // And store it in the table index
     _tables.insert(std::make_pair(newTableName, newTable));      

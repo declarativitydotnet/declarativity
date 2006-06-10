@@ -28,7 +28,8 @@
 #include "table2.h"
 #include "val_tuple.h"
 
-class TableTracer : public Table2, Element {
+class TableTracer : public Table2
+{
 public:
   TableTracer(string tableName,
               Key& key,
@@ -54,18 +55,6 @@ public:
   ~TableTracer();
   
   
-  const char*
-  class_name() const {return "TableTracer";}
-  
-
-  const char*
-  processing() const {return "/h";}
-  
-
-  const char*
-  flow_code() const {return "/-"; }
-
-
   /** Lookup overload. Pushes out all requests. */
   Iterator
   lookup(Key& lookupKey, Key& indexKey, TuplePtr t);
@@ -75,9 +64,46 @@ public:
   Iterator
   lookup(Key& indexKey, TuplePtr t);
   
-  
+
+  /** My element interface */
+  class TableTracerElement : public Element
+  {
+  public:
+    /** My typical element constructor */
+    TableTracerElement(string instanceName,
+                       unsigned ninputs,
+                       unsigned noutputs,
+                       TableTracer* tt);
+
+    const char*
+    class_name() const {return "TableTracerElement";}
+    
+    
+    const char*
+    processing() const {return "/h";}
+    
+    
+    const char*
+    flow_code() const {return "/-"; }
+    
+    
+  private:
+    /** My containing table tracer */
+    TableTracer* _tt;
+  };
+
+
+  /** Fetch my element face */
+  ElementPtr
+  getElementPtr();
+
+
+
 
 private:
+  
+  /** My actual element */
+  ElementPtr _e;
 };
 
 #endif /* __TABLETRACER_H_ */

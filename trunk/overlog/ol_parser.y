@@ -72,6 +72,7 @@
 %token OL_KEYS
 %token OL_WATCH
 %token OL_TRACE
+%token OL_TRACETABLE
 
 %token OL_RANGEOO
 %token OL_RANGEOC
@@ -119,6 +120,7 @@ clause:		  rule
                 | materialize
                 | watch
 		| trace
+                | traceTable
                 | query               
 		;
 
@@ -148,6 +150,11 @@ watch:		OL_WATCH OL_LPAR OL_NAME OL_RPAR OL_DOT {
 
 trace:		OL_TRACE OL_LPAR OL_NAME OL_RPAR OL_DOT {
 			ctxt->traceTuple($3);
+		}
+		;
+
+traceTable:	OL_TRACETABLE OL_LPAR OL_NAME OL_RPAR OL_DOT {
+			ctxt->traceTable($3);
 		}
 		;
 
