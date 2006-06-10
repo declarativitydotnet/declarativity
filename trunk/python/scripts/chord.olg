@@ -86,17 +86,19 @@ watch(bestSucc).
 watch(bestSuccDist).
 */
 
-n2 succEvent@NI(NI, S, SI) :- succ@NI(NI, S, SI).
+n1 succEvent@NI(NI) :- periodic@NI(NI,E,5).
 
-n3 bestSuccDist@NI(NI,S,SI,min<D>) :- node@NI(NI,N),
-			              succ@NI(NI,S,SI), 
-			              succEvent@NI(NI,SS,SII), 
-			              D:=S - N - 1.
+n2 bestSuccDist@NI(NI,min<D>) :- succEvent@NI(NI),
+  			         node@NI(NI,N),
+			         succ@NI(NI,S,SI), 
+			         D:=S - N - 1.
 
-n4 bestSucc@NI(NI,S,SI) :- bestSuccDist@NI(NI,S,SI,D). 
+n3 bestSucc@NI(NI,S,SI) :- succ@NI(NI,S,SI),
+			   bestSuccDist@NI(NI,D), 
+			   node@NI(NI,N),
+			   D == S - N - 1.
 
-n5 finger@NI(NI,0,S,SI) :- bestSucc@NI(NI,S,SI).
-
+n4 finger@NI(NI,0,S,SI) :- bestSucc@NI(NI,S,SI).
 
 /** Successor eviction */
 
