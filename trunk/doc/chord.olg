@@ -76,26 +76,23 @@ l3 lookup@BI(min<BI>,K,R,E) :- node@NI(NI,N),
 /** Neighbor Selection */
 
 watch(bestSucc).
-
-/*
-watch(succEvent).
+/*watch(succEvent).
 watch(succDist).
 watch(bestSuccDist).*/
 
-n1 succEvent@NI(NI,S,SI) :- succ@NI(NI,S,SI).
+n1 succEvent@NI(NI) :- periodic@NI(NI,E,5).
 
-n2 succDist@NI(NI,S,D) :- node@NI(NI,N),
-			  succEvent@NI(NI,S,SI), 
-			  D:=S - N - 1.
+n2 bestSuccDist@NI(NI,min<D>) :- succEvent@NI(NI),
+  			         node@NI(NI,N),
+			         succ@NI(NI,S,SI), 
+			         D:=S - N - 1.
 
-n3 bestSuccDist@NI(NI,min<D>) :- succDist@NI(NI,S,D).
-
-n4 bestSucc@NI(NI,S,SI) :- succ@NI(NI,S,SI),
+n3 bestSucc@NI(NI,S,SI) :- succ@NI(NI,S,SI),
 			   bestSuccDist@NI(NI,D), 
 			   node@NI(NI,N),
 			   D == S - N - 1.
 
-n5 finger@NI(NI,0,S,SI) :- bestSucc@NI(NI,S,SI).
+n4 finger@NI(NI,0,S,SI) :- bestSucc@NI(NI,S,SI).
 
 
 /** Successor eviction */
@@ -135,7 +132,7 @@ f2 fFixEvent@NI(NI,E,I) :- fFix@NI(NI,E,I).
 
 f3 lookup@NI(NI,K,NI,E) :- fFixEvent@NI(NI,E,I),
 			   node@NI(NI,N), 
-			   K:=1I << I + N.
+			   K:=0x1I << I + N.
 
 f4 eagerFinger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I), 
 				lookupResults@NI(NI,K,B,BI,E).
@@ -145,7 +142,7 @@ f5 finger@NI(NI,I,B,BI) :- eagerFinger@NI(NI,I,B,BI).
 f6 eagerFinger@NI(NI,I,B,BI) :- node@NI(NI,N), 
 				eagerFinger@NI(NI,I1,B,BI), 
 				I:=I1 + 1, 
-				K:=1I << I + N, 
+				K:=0x1I << I + N, 
 				K in (N,B), 
 				BI != NI.
 
@@ -161,7 +158,7 @@ f8 nextFingerFix@NI(NI,0) :- eagerFinger@NI(NI,I,B,BI),
 f9 nextFingerFix@NI(NI,I) :- node@NI(NI,N), 
 			   eagerFinger@NI(NI,I1,B,BI), 
 			   I:=I1 + 1, 
-			   K:=1I << I + N, 
+			   K:=0x1I << I + N, 
 			   K in (B,N), 
 			   NI != BI.
 
