@@ -9,4 +9,6 @@
 
 EXTRA_DIST = README
 
+CXXFLAGS=${CXXFLAGS}  " -static"
+
 SUBDIRS=p2 dfparser scripts

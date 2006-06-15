@@ -57,6 +57,8 @@ libp2pythonelements_la_SOURCES = \
 	unboxField.cpp \
 	unmarshal.cpp \
 	unmarshalField.cpp \
+	tupleListener.cpp \
+	tupleSourceInterface.cpp \
 	update.cpp
 
 INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements -I$(top_builddir)/eventLoop
@@ -65,4 +67,4 @@ CLEANFILES = core *.core *~
 
 MAINTAINERCLEANFILES = Makefile.in
 
-CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@ ${PYTHON_CPPFLAGS}
+CXXFLAGS= -static -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@ ${PYTHON_CPPFLAGS}

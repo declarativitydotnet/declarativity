@@ -9,20 +9,26 @@
 # Or
 # UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
 # Berkeley, CA,  94707. Attention: P2 Group.
-#  
 #
-# DESCRIPTION: Makefile for the P2 core elements python library
+# DESCRIPTION: Makefile for the P2 event loop library
 #
 
-noinst_LTLIBRARIES = libp2pythoneventloop.la
+lib_LTLIBRARIES = libp2cpp.la
+libp2cpp_la_SOURCES = \
+	p2.C
 
-libp2pythoneventloop_la_SOURCES = \
-	eventLoop.cpp
 
-INCLUDES = @BOOST_INC@ -I$(top_builddir)/eventLoop -I$(top_builddir)/p2core
+INCLUDES = @BOOST_INC@ -I../p2core -I../elements \
+           -I../eventLoop -I../overlog -I../net -I../debugger
 
 CLEANFILES = core *.core *~
 
+EXTRA_DIST = .cvsignore
+
 MAINTAINERCLEANFILES = Makefile.in
 
-CXXFLAGS= -static -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@ ${PYTHON_CPPFLAGS}
+CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG @CXXFLAGS@ ${PYTHON_CPPFLAGS}
+
+# End of File
+############################################################
+

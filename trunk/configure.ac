@@ -37,7 +37,7 @@ AM_PATH_PYTHON(2.3)
 
 # Checks for libraries.
 P2_BOOSTLIB
-AC_PYTHON_DEVEL
+AC_PYTHON_DEVEL(2.3)
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -67,6 +67,7 @@ AC_CONFIG_FILES([
 	Makefile 
 	eventLoop/Makefile
 	p2core/Makefile 
+	p2cpp/Makefile 
 	python/Makefile
 	python/p2/Makefile
 	python/p2/debugger/Makefile

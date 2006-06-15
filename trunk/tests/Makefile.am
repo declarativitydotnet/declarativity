@@ -20,6 +20,7 @@ noinst_PROGRAMS 	=  	tuples \
 			overlog \
 			runChord \
 			runOverLog \
+			runPingPong \
 			simple_lookup \
 			lookupGenerator \
 			basicelements \
@@ -79,6 +80,18 @@ runChord_LDADD = \
 	$(top_builddir)/p2core/.libs/libp2core.a \
 	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a \
 	$(top_builddir)/debugger/.libs/libp2debugger.a
+
+runPingPong_SOURCES = runPingPong.C
+runPingPong_LDADD = \
+	-lboost_python -lp2core -lp2debugger -lp2elements \
+	-lp2eventLoop -lp2net -lp2overlog -lp2cpp \
+	$(top_builddir)/overlog/.libs/libp2overlog.a \
+	$(top_builddir)/net/.libs/libp2net.a \
+	$(top_builddir)/elements/.libs/libp2elements.a \
+	$(top_builddir)/p2core/.libs/libp2core.a \
+	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a \
+	$(top_builddir)/p2cpp/.libs/libp2cpp.a
+
 
 overlog_SOURCES	= overlog.C
 overlog_LDADD = \
@@ -184,13 +197,17 @@ EXTRA_DIST = .cvsignore \
 INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements \
 		-I$(top_builddir)/net -I$(top_builddir)/overlog \
 		-I$(top_builddir)/planner -I$(top_builddir)/eventLoop \
-		-I$(top_builddir)/debugger
+		-I$(top_builddir)/debugger -I$(top_builddir)/p2cpp
 
-CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@
+CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@ ${PYTHON_CPPFLAGS}
 
-LDFLAGS=@BOOST_LIB@ @LDFLAGS@
+LDFLAGS=@BOOST_LIB@ @LDFLAGS@ @PYTHON_LDFLAGS@
 
-LIBS = @BOOST_LIB@
+LIBS = @BOOST_LIB@ \
+       -L$(top_builddir)/elements -L$(top_builddir)/p2core \
+       -L$(top_builddir)/eventLoop -L$(top_builddir)/net \
+       -L$(top_builddir)/overlog -L$(top_builddir)/debugger \
+       -L$(top_builddir)/p2cpp
 
 MAINTAINERCLEANFILES = aclocal.m4 install-sh mkinstalldirs \
 	missing configure config.guess config.sub config.h.in \

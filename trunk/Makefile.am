@@ -14,7 +14,7 @@
 # 
 #
 
-SUBDIRS=eventLoop p2core elements net overlog debugger tests unitTests python
+SUBDIRS=eventLoop p2core elements net overlog p2cpp debugger tests unitTests python
 
 EXTRA_DIST = LICENSE setup \
 		doc/chord.olg doc/narada.olg doc/ping.olg \

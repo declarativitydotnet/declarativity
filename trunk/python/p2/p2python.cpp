@@ -89,6 +89,8 @@ void export_val_tuple();
 void export_val_uint32();
 void export_val_uint64();
 void export_overlogCompiler();
+void export_tupleListener();
+void export_tupleSourceInterface();
 
 time_t time_v(void)
 {
@@ -189,4 +191,6 @@ BOOST_PYTHON_MODULE(libp2python)
   export_udp2();
 
   export_overlogCompiler();
+  export_tupleListener();
+  export_tupleSourceInterface();
 }
