@@ -25,6 +25,9 @@
 #include "tuple.h"
 #include "p2.h"
 
+P2::CallbackHandlePtr ping_handle;
+P2 *p2;
+
 string readScript( string fileName )
 {
   string script = "";
@@ -62,6 +65,8 @@ string readScript( string fileName )
 void ping_cb(TuplePtr tp)
 {
   std::cerr << "RECEIVED PING TUPLE: " << tp->toString() << std::endl;
+  std::cerr << "CANCELING CALLBACK: " << std::endl;
+  p2->unsubscribe(ping_handle); 
 }
 
 int main(int argc, char **argv)
@@ -74,12 +79,12 @@ int main(int argc, char **argv)
   string ping(readScript(argv[1]));
   string hostname(argv[2]);
   string port(argv[3]);
-  P2 p2(hostname, port);
+  p2 = new P2(hostname, port);
 
-  p2.install("overlog", ping);
+  p2->install("overlog", ping);
   std::cerr << "INSTALLED OVERLOG" << std::endl;
-  p2.callback("ping", boost::bind(&ping_cb, _1));
-  p2.run();
+  ping_handle = p2->subscribe("ping", boost::bind(&ping_cb, _1));
+  p2->run();
 
   return 0;
 }

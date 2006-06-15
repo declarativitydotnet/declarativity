@@ -87,29 +87,73 @@ void P2::run()
   eventLoop();
 }
 
-int P2::callback(string tupleName, cb_tp callback)
+P2::CallbackHandlePtr P2::subscribe(string tupleName, cb_tp callback)
 {
+  int port = -1;	// The port that the listener sits on
+  // Create a new edit 
   Plumber::DataflowEditPtr edit = _plumber->new_dataflow_edit("P2");
   ElementSpecPtr listener = 
     edit->addElement(ElementPtr(new TupleListener("listener_"+tupleName, callback)));
+
+  // The planner creates the duplicator name, see if one already exists 
   ElementSpecPtr duplicator = edit->find("dc_"+tupleName);
   if (!duplicator) {
+    /** We want to listen for something that has no rule strand
+     *  We first need to register it with the demux then hang a duplicator off of the demux
+     *  A rule strand that is installed later, and assumes the tuple name is an event,
+     *  will find this duplicator and install the strand properly. At this point this
+     *  event can no longer be materialized */
     ElementSpecPtr ddemux = edit->find("ddemux");
     duplicator = edit->addElement(ElementPtr(new DDuplicateConservative("dc_"+tupleName, 0)));
     edit->hookUp(ddemux, ddemux->add_output(Val_Str::mk(tupleName)), 
                  duplicator, 0);
   }
-  edit->hookUp(duplicator, duplicator->add_output(), listener, 0);
+  // Not hookup the listener to the duplicator output
+  port = duplicator->add_output();
+  edit->hookUp(duplicator, port, listener, 0);
   if (_plumber->install(edit) < 0) {
     std::cerr << "ERROR: Couldn't install listener" << std::endl;
-    return -1;
+    return P2::CallbackHandlePtr();
   }
+#ifdef DEBUG
   _plumber->toDot("p2.dot");
-  return 0;
+#endif
+  // Return a handle to the caller for unsubscribing to the listener.
+  return P2::CallbackHandlePtr(new P2::CallbackHandle(tupleName, port));	
+}
+
+void P2::unsubscribe(P2::CallbackHandlePtr handle)
+{
+  if (!handle || handle->_valid == false) {
+    std::cerr << "ERROR: invalid callback handle." << std::endl;
+  } 
+  else {
+    // Invalidate the handle
+    handle->_valid = false;
+  }
+  unsigned port    = handle->_port;
+  string tupleName = handle->_name;
+
+  /* All this routine does it take out an edit, uses it to locate the
+   * duplicator, and removes the port. */
+  Plumber::DataflowEditPtr edit = _plumber->new_dataflow_edit("P2");
+  ElementSpecPtr     duplicator = edit->find("dc_"+tupleName);
+  if (!duplicator) {
+    std::cerr << "ERROR: no listener registered for " << tupleName << std::endl;
+    return;
+  }
+  edit->disconnect_output(duplicator, port);
+  if (_plumber->install(edit) < 0) {
+    std::cerr << "ERROR: uninstall listener" << std::endl;
+    return;
+  }
+
 }
 
 int P2::tuple(TuplePtr tp)
 {
+  /* Using the tupleSourceInterface, attached right before the demux, to 
+   * inject a tuple into the system. */
   return _tupleSourceInterface->tuple(tp);
 }
 

@@ -156,13 +156,15 @@ class ElementSpec {
   int add_output(ValuePtr portKey=ValuePtr());
 
   /** Remove input/output port 
+   *  If this element is hooked up to a dataflow then you should
+   *  use the DataflowEdit disconnect routines to remove ports.
    *  param port:    the port to remove
    *  param portKey: portKey will determine the port to remove.
    */
-  void remove_input(int port);
-  void remove_input(ValuePtr portKey);
-  void remove_output(int port);
-  void remove_output(ValuePtr portKey);
+  int remove_input(int port);
+  int remove_input(ValuePtr portKey);
+  int remove_output(int port);
+  int remove_output(ValuePtr portKey);
   
   /** A place holder exception for this class */
   struct ElementSpecError {};

@@ -36,6 +36,7 @@ public:
   int push(TuplePtr p, b_cbv cb) const;
 
   unsigned add_output();
+  int remove_output(unsigned);
 
 private:
   /** The callback for my input */

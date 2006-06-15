@@ -97,3 +97,8 @@ unsigned DDuplicateConservative::add_output() {
   
   return port;
 }
+
+int DDuplicateConservative::remove_output(unsigned port)
+{
+  return deleteOutputPort(port);
+}

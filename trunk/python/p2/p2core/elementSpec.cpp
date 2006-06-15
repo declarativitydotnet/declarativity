@@ -6,10 +6,10 @@ using namespace boost::python;
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(add_inputs, add_input, 0, 1)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(add_outputs, add_output, 0, 1)
 
-void (ElementSpec::*ri_i)(int)      = &ElementSpec::remove_input;
-void (ElementSpec::*ri_v)(ValuePtr) = &ElementSpec::remove_input;
-void (ElementSpec::*ro_i)(int)      = &ElementSpec::remove_output;
-void (ElementSpec::*ro_v)(ValuePtr) = &ElementSpec::remove_output;
+int (ElementSpec::*ri_i)(int)      = &ElementSpec::remove_input;
+int (ElementSpec::*ri_v)(ValuePtr) = &ElementSpec::remove_input;
+int (ElementSpec::*ro_i)(int)      = &ElementSpec::remove_output;
+int (ElementSpec::*ro_v)(ValuePtr) = &ElementSpec::remove_output;
 
 void export_elementSpec()
 {

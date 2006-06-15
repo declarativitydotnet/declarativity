@@ -156,6 +156,14 @@ public:
     void hookUp(ElementSpecPtr src, int src_port,
                 ElementSpecPtr dst, int dst_port);
 
+    /** Disconnect the element output port */
+    void disconnect_output(ElementSpecPtr e, int port);
+    void disconnect_output(ElementSpecPtr e, ValuePtr portKey);
+
+    /** Disconnect the element input port */
+    void disconnect_input(ElementSpecPtr e, int port);
+    void disconnect_input(ElementSpecPtr e, ValuePtr portKey);
+
   private:
     friend class Plumber;
     /** Plumber is the factory class for DataflowEdit.

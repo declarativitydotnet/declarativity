@@ -556,6 +556,52 @@ void Plumber::DataflowEdit::hookUp(ElementSpecPtr src, int src_port,
   remove_old_hookups(p);
 }
 
+void Plumber::DataflowEdit::disconnect_output(ElementSpecPtr e, int port)
+{
+  port = e->remove_output(port);
+  if (port < 0)
+    return;
+
+  for(std::vector<ElementSpec::HookupPtr>::iterator iter = hookups_.begin();
+      iter != hookups_.end(); iter++) {
+    if ((*iter)->fromElement    == e && 
+        (*iter)->fromPortNumber == unsigned(port)) {
+      hookups_.erase(iter);
+      return;
+    }
+  }
+}
+
+void Plumber::DataflowEdit::disconnect_output(ElementSpecPtr e, ValuePtr portKey)
+{
+  int port = e->element()->output(portKey);
+  if (port >= 0)
+    disconnect_output(e, port);
+}
+
+void Plumber::DataflowEdit::disconnect_input(ElementSpecPtr e, int port)
+{
+  port = e->remove_input(port);
+  if (port < 0)
+    return;
+
+  for(std::vector<ElementSpec::HookupPtr>::iterator iter = hookups_.begin();
+      iter != hookups_.end(); iter++) {
+    if ((*iter)->toElement    == e && 
+        (*iter)->toPortNumber == unsigned(port)) {
+      hookups_.erase(iter);
+      return;
+    }
+  }
+}
+
+void Plumber::DataflowEdit::disconnect_input(ElementSpecPtr e, ValuePtr portKey)
+{
+  int port = e->element()->input(portKey);
+  if (port >= 0)
+    disconnect_input(e, port);
+}
+
 void Plumber::DataflowEdit::set_connections()
 {
   // actually assign ports

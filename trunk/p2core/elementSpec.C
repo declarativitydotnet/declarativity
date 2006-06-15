@@ -208,34 +208,44 @@ int ElementSpec::add_output(ValuePtr portKey)
   return port;
 }
 
-void ElementSpec::remove_input(int port)
+int ElementSpec::remove_input(int port)
 {
   if (_element->remove_input(port) == port) {
     (*_inputs)[port]->reset();
   }
+  else {
+    return -1;
+  }
+  return port;
 }
 
-void ElementSpec::remove_output(int port)
+int ElementSpec::remove_output(int port)
 {
   if (_element->remove_output(port) == port) {
     (*_outputs)[port]->reset();
   }
+  else {
+    return -1;
+  }
+  return port;
 }
 
-void ElementSpec::remove_input(ValuePtr portKey)
+int ElementSpec::remove_input(ValuePtr portKey)
 {
   int port = _element->remove_input(portKey);
   if (port >= 0) {
     (*_inputs)[port]->reset();
   }
+  return port;
 }
 
-void ElementSpec::remove_output(ValuePtr portKey)
+int ElementSpec::remove_output(ValuePtr portKey)
 {
   int port = _element->remove_output(portKey);
   if (port >= 0) {
     (*_outputs)[port]->reset();
   }
+  return port;
 }
 
 
