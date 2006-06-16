@@ -19,5 +19,5 @@ TupleListener::TupleListener(string name, cb_tp callback)
 int TupleListener::push(int port, TuplePtr tp, b_cbv cb)
 {
   _callback(tp);
-  return 0;
+  return 1;
 }

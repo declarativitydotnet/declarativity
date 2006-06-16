@@ -101,7 +101,7 @@ string readScript( string fileName, char* args[] )
 
 void watch(TuplePtr tp)
 {
-  std::cerr << "RECEIVED TUPLE: " << tp->toString() << std::endl;
+  std::cerr << tp->toString() << std::endl;
 }
 
 void print_usage()
@@ -133,17 +133,20 @@ int main(int argc, char **argv)
       args[a++] = argv[0];  
     }
     else if (argv[0][1] == 'w') {
-      int i = 2;
-      while (argv[0][i] == ' ' && !argv[0][i] == '\0')
-        i++;
-      watchTuples.push_back(string(&argv[0][i]));      
+      if (argv[0][2] == '\0') {
+        argc--; argv++;
+        watchTuples.push_back(string(&argv[0][0]));      
+      }
+      else {
+        watchTuples.push_back(string(&argv[0][2]));      
+      }
     }
     else {
       print_usage();
       exit(-1);
     }
   }
-   
+
   string program(readScript(argv[0], &args[0]));
   string hostname(argv[1]);
   string port(argv[2]);

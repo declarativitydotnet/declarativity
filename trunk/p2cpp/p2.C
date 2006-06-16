@@ -21,6 +21,8 @@
 #include "val_str.h"
 #include <iostream>
 
+#define DEBUG
+
 P2::P2(string hostname, string port) 
   : _plumber(new Plumber()), _id(hostname+":"+port)
 {
@@ -77,7 +79,9 @@ int P2::install(string type, string program)
         return -1;
       }
     }
+#ifdef DEBUG
     _plumber->toDot("p2.dot");
+#endif
   }
   return 0;
 }
