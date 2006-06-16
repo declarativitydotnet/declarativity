@@ -15,6 +15,8 @@
 #include "loop.h"
 #include "udp.h"
 #include "dDuplicateConservative.h"
+#include "timedPullPush.h"
+#include "queue.h"
 #include "ol_lexer.h"
 #include "ol_context.h"
 #include "plmb_confgen.h"
@@ -107,10 +109,18 @@ P2::CallbackHandlePtr P2::subscribe(string tupleName, cb_tp callback)
      *  A rule strand that is installed later, and assumes the tuple name is an event,
      *  will find this duplicator and install the strand properly. At this point this
      *  event can no longer be materialized */
-    ElementSpecPtr ddemux = edit->find("ddemux");
-    duplicator = edit->addElement(ElementPtr(new DDuplicateConservative("dc_"+tupleName, 0)));
-    edit->hookUp(ddemux, ddemux->add_output(Val_Str::mk(tupleName)), 
-                 duplicator, 0);
+    ElementSpecPtr ddemux   = edit->find("dDemux");
+    ElementSpecPtr queue    = edit->addElement(
+      ElementPtr(new Queue("demuxQueue_"+tupleName, 100)));
+    ElementSpecPtr pullPush = edit->addElement(
+      ElementPtr(new TimedPullPush("demuxTimedPullPush_"+tupleName, 0)));
+    duplicator = edit->addElement(
+      ElementPtr(new DDuplicateConservative("dc_"+tupleName, 0)));
+
+    // Hook everything up except duplicator output
+    edit->hookUp(ddemux, ddemux->add_output(Val_Str::mk(tupleName)), queue, 0);
+    edit->hookUp(queue, 0, pullPush, 0);
+    edit->hookUp(pullPush, 0, duplicator, 0);
   }
   // Not hookup the listener to the duplicator output
   port = duplicator->add_output();

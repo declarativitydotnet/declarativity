@@ -76,6 +76,7 @@ AC_CONFIG_FILES([
 	python/p2/p2core/Makefile
 	python/p2/net/Makefile
 	python/p2/overlog/Makefile
+	python/p2/p2cpp/Makefile
 	python/dfparser/Makefile
 	python/dfparser/yapps/Makefile
 	python/scripts/Makefile

@@ -1,7 +1,5 @@
 ########################################################################
 #
-#  @(#)$Id$
-#
 # This file is distributed under the terms in the attached LICENSE file.
 # If you do not find this file, copies can be found by writing to:
 # Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
@@ -11,17 +9,17 @@
 # Berkeley, CA,  94707. Attention: P2 Group.
 #  
 #
-# DESCRIPTION: Makefile for the P2 debugger python library
-#
 
-noinst_LTLIBRARIES = libp2pythondebugger.la
+noinst_LTLIBRARIES = libp2pythoncpp.la
 
-libp2pythondebugger_la_SOURCES = \
-	ruleTracer.cpp \
-	tap.cpp \
-	traceTuple.cpp
+libp2pythoncpp_la_SOURCES = \
+	p2.cpp
 
-INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/debugger -I$(top_builddir)/eventLoop
+INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core \
+                       -I$(top_builddir)/elements \
+                       -I$(top_builddir)/p2cpp \
+                       -I$(top_builddir)/eventLoop \
+                       -I$(top_builddir)/overlog 
 
 CLEANFILES = core *.core *~
 

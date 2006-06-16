@@ -92,6 +92,8 @@ void export_overlogCompiler();
 void export_tupleListener();
 void export_tupleSourceInterface();
 
+void export_p2();
+
 time_t time_v(void)
 {
   return time(NULL);
@@ -193,4 +195,6 @@ BOOST_PYTHON_MODULE(libp2python)
   export_overlogCompiler();
   export_tupleListener();
   export_tupleSourceInterface();
+
+  export_p2();
 }
