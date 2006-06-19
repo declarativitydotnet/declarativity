@@ -11,7 +11,7 @@
 # Berkeley, CA,  94707. Attention: P2 Group.
 #
 
-bin_SCRIPTS = p2stub.py p2terminal.py p2insert.py loadManyChords.py
+bin_SCRIPTS = p2stub.py p2terminal.py p2insert.py loadManyChords.py dfrun.py
 
 do_subst = sed -e 's,[@]PYTHON[@],$(PYTHON),g'
 
@@ -30,6 +30,6 @@ loadManyChords.py: loadManyChords.in Makefile
 CLEANFILES = $(bin_SCRIPTS)
 
 EXTRA_DIST = README \
-             p2stub.in p2terminal.in loadManyChords.in p2insert.in \
+             p2stub.in p2terminal.in loadManyChords.in p2insert.in dfrun.in \
              sanity.py dfrun.py netcc.py chord.olg \
              recv.df sender.df
