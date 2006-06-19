@@ -27,6 +27,9 @@ p2insert.py: p2insert.in Makefile
 loadManyChords.py: loadManyChords.in Makefile
 		   $(do_subst) < $(srcdir)/loadManyChords.in > loadManyChords.py
 
+dfrun.py: dfrun.in Makefile
+		   $(do_subst) < $(srcdir)/dfrun.in > dfrun.py
+
 CLEANFILES = $(bin_SCRIPTS)
 
 EXTRA_DIST = README \
