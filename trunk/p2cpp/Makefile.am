@@ -23,7 +23,8 @@ INCLUDES = @BOOST_INC@ -I../p2core -I../elements \
 
 CLEANFILES = core *.core *~
 
-EXTRA_DIST = .cvsignore
+EXTRA_DIST = .cvsignore \
+		$(libp2cpp_la_SOURCES:.C=.h)
 
 MAINTAINERCLEANFILES = Makefile.in
 
