@@ -14,7 +14,9 @@
 SUBDIRS=debugger eventLoop p2core elements net overlog p2cpp
 
 lib_LTLIBRARIES = libp2python.la
+
 libp2python_la_SOURCES = p2python.cpp
+
 libp2python_la_LIBADD = \
 	$(top_builddir)/debugger/.libs/libp2debugger.a \
 	$(top_builddir)/elements/.libs/libp2elements.a \
@@ -42,8 +44,7 @@ LIBS = $(BOOST_LIB) $(PYTHON_LDFLAGS) \
 
 CLEANFILES = core *.core *~
 
-EXTRA_DIST = .cvsignore README
+EXTRA_DIST = .cvsignore README \
+		$(libp2python_la_SOURCES:.cpp)
 
 MAINTAINERCLEANFILES = Makefile.in
-
-
