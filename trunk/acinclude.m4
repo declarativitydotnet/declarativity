@@ -313,6 +313,7 @@ AC_DEFUN([AZ_PYTHON_PATH],
 
 
 
+
 # AZ_PYTHON_LSPEC( )
 # -----------------
 # Set up the linker options to link Python embedded
@@ -357,7 +358,9 @@ else:
     strLibFW = dictConfig.get("PYTHONFRAMEWORKPREFIX")
     if strLibFW and (strLibFW != ""):
         strLinkSpec += " -F%s" % (strLibFW)
-    strLinkSpec += " %s" % (dictConfig.get('LINKFORSHARED'))
+# LINKFORSHARED is broken in OS X 10.4, so we'll do it explicitly
+#    strLinkSpec += " %s" % (dictConfig.get("LINKFORSHARED"))
+    strLinkSpec += " -u __dummy -u _PyMac_Error -framework System -framework Python -framework CoreServices -framework Foundation"
 print strLinkSpec
         ])
         AC_SUBST([PYTHON_LSPEC], [${az_python_output}])
