@@ -12,36 +12,39 @@ or Intel processor):
    building on Darwin.  You will need a version
    of the bjam tool as part of that process (as documented at
    http://www.boost.org/more/getting_started.html#Preparation).
-4) You are now ready to run 
+4) Set the environment variable PYTHON_VERSION to be 2.3.  This is
+   required for boost to build its python libraries.
+5) You are now ready to run 
    	   bjam "-sTOOLS=darwin" install 
    in the boost source directory.  You should run it as root (via su
    or sudo).  This may take quite a while on an older machine; get some sleep.
-5) Sometimes the boost installation script does not make its
+6) Sometimes the boost installation script does not make its
    subdirectories world-readable.  To fix this run the following as root:
        find /usr/local/include/boost-1_33_1 -type d -exec chmod 755 {} \;
-6) The version of bison included in the latest Xcode is still 1.2.8.
+7) The version of bison included in the latest Xcode is still 1.2.8.
    You will need to download and build bison 2.1, e.g. from 
    http://ftp.gnu.org/pub/gnu/bison/bison-2.1.tar.gz
    It should build cleanly.  You will want to type "make install" as
    root (su or sudo).  Make sure that your path is picking up the right
    version of bison after you do the install (by default this should
    be /usr/local/bin/bison) by running "bison --version".
-7) When that's done you should be set to build p2.
+8) When that's done you should be set to build p2.
        ./setup
        ./configure --with-boostlib=/usr/local/lib \
-                   --with-boostinc=/usr/local/include/boost-1_33_1/ 
+                   --with-boostinc=/usr/local/include/boost-1_33_1/ \
+                   CXXFLAGS="-g -Wall -DTRACE_OFF"
        make
    This may take a while as well.  We've found you can
    parallelize the make at a factor of about 4 per processor, so on a
    uniprocessor machine saying "make -j4" is beneficial; on a
    dual-core machine you might try "make -j8".
-8) Assuming everything built correctly you should be ready to install
+9) Assuming everything built correctly you should be ready to install
    the libraries and scripts.  You will have to run this command as root:
        make install
-9) Ensure that the "/usr/local/bin" directory is in your path.
-10) Add the "/usr/local/bin" and "/usr/local/lib" directories to
+10) Ensure that the "/usr/local/bin" directory is in your path.
+11) Add the "/usr/local/bin" and "/usr/local/lib" directories to
    the PYTHONPATH environment variable (via "export" in bash, or "setenv" in tcsh)
-11) Due to libtool weirdness (if someone has a fix, let us know!) 
+12) Due to libtool weirdness (if someone has a fix, let us know!) 
    "make install" may not create the file /usr/local/lib/libp2python.so which
    is needed to run the P2 Python scripts.  To fix this simply type
        cd /usr/local/lib; ln -s libp2python.0 libp2python.so
