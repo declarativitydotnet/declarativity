@@ -45,6 +45,6 @@ LIBS = $(BOOST_LIB) $(PYTHON_LDFLAGS) \
 CLEANFILES = core *.core *~
 
 EXTRA_DIST = .cvsignore README \
-		$(libp2python_la_SOURCES):.cpp
+		$(libp2python_la_SOURCES)
 
 MAINTAINERCLEANFILES = Makefile.in
