@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import dfparser
 import libp2python
 import sys

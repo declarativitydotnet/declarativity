@@ -10,9 +10,10 @@ BuildRoot: %{_builddir}/%{name}-root
 P2
 %prep
 %setup -q
+./setup
 %build
 ./configure CXXFLAGS="-O3 -DTRACE_OFF"
-make -j 8
+make -j 16
 %install
 rm -rf $RPM_BUILD_ROOT
 make DESTDIR=$RPM_BUILD_ROOT install
