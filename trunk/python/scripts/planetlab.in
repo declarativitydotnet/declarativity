@@ -29,14 +29,13 @@ def sliceEventHandler(event):
   auth['AuthMethod'] = "anonymous"
   nodes = server.AnonSliceNodesList(auth, flags["slice"])
 
-  print "SLICE NODES\n", nodes
   for n in nodes:
     if n == host:
       continue	# Ignore myself
     tp = libp2python.Tuple.mk()
-    tp.append(Val_Str.mk("sliceNodeEvent"))	# Event name
-    tp.append(event.at(0)) 			# Local IP address
-    tp.append(Val_Str.mk(n + ":" + port))	# PlanetLab node address
+    tp.append(libp2python.Val_Str.mk("sliceNodeEvent"))	# Event name
+    tp.append(event.at(1)) 			 	# Local IP address
+    tp.append(libp2python.Val_Str.mk(n + ":" + port))	# PlanetLab node address
     tp.freeze()
     p2.tuple(tp) 
 

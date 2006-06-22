@@ -10,7 +10,7 @@
 
 start() {
 	export PYTHONPATH=/usr/local/lib:/usr/local/bin
-	python /home/irb_p2/planetlab.py -n irb_p2 10000 &
+	python /home/irb_p2/planetlab.py -n irb_p2 10000 >& /home/irb_p2/planetlab.out &
 }
 
 stop() {

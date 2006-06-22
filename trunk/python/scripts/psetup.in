@@ -15,19 +15,22 @@ sudo rpm -i --force boost-1.32.0-6.i386.rpm; \
 sudo rpm -i --force python-2.3.4-11.i386.rpm; \
 sudo rpm -i --force p2-0.7-2.i386.rpm; \
 sudo mv ~/p2 /etc/rc.d/init.d/"""
-startup =  "/sbin/service p2 restart"
+startup =  "sudo /sbin/service p2 restart"
+stop    =  "sudo /sbin/service p2 stop"
 
 def print_usage():
-    print """Usage: psetup.py [-j <parallel>] [-i] [-u <username> -p <password>] -n <slice_name> [<planetLabNode>]"""
+    print """Usage: psetup.py [-j <parallel>] [-i] [-k] [-u <username> -p <password>] -n <slice_name> [<planetLabNode>]"""
 
 def parse_cmdline(argv):
-    shortopts = "in:j:u:p:"
-    flags = {"slice" : None, "parallel" : 1, "install" : False, "email" : None, "password" : None}
+    shortopts = "ikn:j:u:p:"
+    flags = {"kill" : False, "slice" : None, "parallel" : 1, \
+             "install" : False, "email" : None, "password" : None}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if   o == "-n": flags["slice"]    = v
         elif o == "-j": flags["parallel"] = int(v)
         elif o == "-i": flags["install"]  = True
+        elif o == "-k": flags["kill"]  = True
         elif o == "-u": flags["email"]    = v
         elif o == "-p": flags["password"] = v
         else:
@@ -79,6 +82,13 @@ def startNode(node):
     sys.exit(0)
   return pid
 
+def stopNode(node):
+  pid = os.fork()
+  if pid == 0:
+    os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % (flags["slice"], node, stop))
+    sys.exit(0)
+  return pid
+
 if __name__ == "__main__":
   global flags, server
   libp2python.srand(libp2python.time())
@@ -94,22 +104,29 @@ if __name__ == "__main__":
   server = xmlrpclib.Server('https://www.planet-lab.org/PLCAPI/')
 
   if len(args) > 0:
-    pid = startNode(args[0])
+    if flags["kill"]:
+      pid = stopNode(args[0])
+    else:
+      pid = startNode(args[0])
     p, s = os.wait()
     del pids[p]
   else:
     pids  = {}
     nodes = getNodes()
     for n in nodes:
-      print "PlanetLab P2 install on node", n
-      pids[startNode(n)] = n
+      if flags["kill"]:
+        print "PlanetLab P2 kill on node", n
+        pids[stopNode(n)] = n
+      else:
+        print "PlanetLab P2 install on node", n
+        pids[startNode(n)] = n
       if len(pids) >= flags["parallel"]:
         p, s = os.wait()
-        print "\tPlanetLab node %s started!" % pids[p]
+        print "\tJob finished on planetLab node %s!" % pids[p]
         del pids[p]
 
     # Wait until everyone is done
     while pids:
       p, s = os.wait()
-      print "\tPlanetLab node %s started!" % pids[p]
+      print "\tJob finished on planetLab node %s!" % pids[p]
       del pids[p]
