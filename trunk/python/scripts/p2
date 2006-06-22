@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+# chkconfig: - 50 01
+#
+# p2 This shell script enables the automatic use of P2 on port 10000
+#
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+start() {
+	export PYTHONPATH=/usr/local/lib:/usr/local/bin
+	python /home/irb_p2/planetlab.py -n irb_p2 10000 &
+}
+
+stop() {
+	echo `ps -ef | grep planetlab.py | awk '{print $2}'`
+	kill -9 `ps -ef | grep planetlab.py | awk '{print $2}'`
+}
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop) 
+	stop
+	;;
+  restart)
+	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
