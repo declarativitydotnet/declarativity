@@ -1,0 +1,115 @@
+#!@PYTHON@
+import xmlrpclib
+import libp2python
+import sys
+import os
+import getopt
+import socket
+
+files   = ["~/boost-1.32.0-6.i386.rpm", "~/libstdc++-4.0.0-8.i386.rpm",
+           "~/p2-0.7-2.i386.rpm", "~/python-2.3.4-11.i386.rpm", "./planetlab.py", 
+           "./p2"]
+install = """\
+sudo rpm -i --force libstdc++-4.0.0-8.i386.rpm; \
+sudo rpm -i --force boost-1.32.0-6.i386.rpm; \
+sudo rpm -i --force python-2.3.4-11.i386.rpm; \
+sudo rpm -i --force p2-0.7-2.i386.rpm; \
+sudo mv ~/p2 /etc/rc.d/init.d/"""
+startup =  "/sbin/service p2 restart"
+
+def print_usage():
+    print """Usage: psetup.py [-j <parallel>] [-i] [-u <username> -p <password>] -n <slice_name> [<planetLabNode>]"""
+
+def parse_cmdline(argv):
+    shortopts = "in:j:u:p:"
+    flags = {"slice" : None, "parallel" : 1, "install" : False, "email" : None, "password" : None}
+    opts, args = getopt.getopt(argv[1:], shortopts)
+    for o, v in opts:
+        if   o == "-n": flags["slice"]    = v
+        elif o == "-j": flags["parallel"] = int(v)
+        elif o == "-i": flags["install"]  = True
+        elif o == "-u": flags["email"]    = v
+        elif o == "-p": flags["password"] = v
+        else:
+            print_usage()
+            exit(3)
+    return flags, args
+
+def getNodes():
+  auth  = {}
+  auth['AuthMethod'] = "anonymous"
+  nodes = server.AnonSliceNodesList(auth, flags["slice"])
+  sliceNodes = {}
+  for n in nodes:
+    sliceNodes[n] = True
+
+  if flags["email"] and flags["password"]:
+    auth['Username'] = flags["email"] 
+    # always 'password', for password based authentication
+    auth['AuthMethod'] = "password"
+    auth['AuthString'] = flags["password"]
+    # valid roles include, 'user', 'tech', 'pi', 'admin'
+    auth['Role'] = "user"
+    authorized = server.AdmAuthCheck( auth )
+    if not authorized:
+      print "You are not authorized on planetlab!"
+      sys.exit(1)
+    # an array of which fields to return from the node records.
+    return_fields= ['hostname','boot_state']
+
+    # get the all the nodes, regardless of current boot state
+    all_nodes = server.AdmGetNodes(auth, [], return_fields)
+    nodes = []
+    for node_record in all_nodes:
+      if node_record['boot_state'] == 'boot' and sliceNodes.has_key(node_record['hostname']):
+        nodes.append(node_record['hostname'])
+      elif sliceNodes.has_key(node_record['hostname']):
+        print "ERROR: planetlab node %s is in state %s.\nRemoving %s from installation!\n" % \
+              (node_record['hostname'], node_record['boot_state'], node_record['hostname'])
+  return nodes
+
+def startNode(node):
+  pid = os.fork()
+  if pid == 0:
+    if flags["install"]:
+      for f in files:
+        os.system("scp %s %s@%s: >& /dev/null" % (f, flags["slice"], node))  
+      os.system("ssh -l %s %s \"%s\" >& /dev/null" % (flags["slice"], node, install))
+    os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % (flags["slice"], node, startup))
+    sys.exit(0)
+  return pid
+
+if __name__ == "__main__":
+  global flags, server
+  libp2python.srand(libp2python.time())
+  try:
+    flags, args = parse_cmdline(sys.argv)
+  except:
+    print "EXCEPTION"
+    print_usage()
+    sys.exit(1)
+  if not flags["slice"]:
+    print_usage()
+    sys.exit(1)
+  server = xmlrpclib.Server('https://www.planet-lab.org/PLCAPI/')
+
+  if len(args) > 0:
+    pid = startNode(args[0])
+    p, s = os.wait()
+    del pids[p]
+  else:
+    pids  = {}
+    nodes = getNodes()
+    for n in nodes:
+      print "PlanetLab P2 install on node", n
+      pids[startNode(n)] = n
+      if len(pids) >= flags["parallel"]:
+        p, s = os.wait()
+        print "\tPlanetLab node %s started!" % pids[p]
+        del pids[p]
+
+    # Wait until everyone is done
+    while pids:
+      p, s = os.wait()
+      print "\tPlanetLab node %s started!" % pids[p]
+      del pids[p]

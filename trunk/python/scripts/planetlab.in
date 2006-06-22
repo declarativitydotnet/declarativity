@@ -1,0 +1,72 @@
+#!@PYTHON@
+import xmlrpclib
+import libp2python
+import sys
+import os
+import getopt
+import socket
+
+def print_usage():
+    print """Usage: planetlab.py [-s <seed>] [-o <overlog>] \\
+                    -n <slice_name> <port>"""
+
+def parse_cmdline(argv):
+    shortopts = "s:o:n:"
+    flags = {"overlog" : None, "slice" : None}
+    opts, args = getopt.getopt(argv[1:], shortopts)
+    for o, v in opts:
+        if   o == "-o": flags["overlog"]  = v
+        elif o == "-n": flags["slice"]    = v
+        elif o == "-s": libp2python.srand(int(v))
+        else:
+            print_usage()
+            exit(3)
+    return flags, args
+
+def sliceEventHandler(event):
+  # Get the list of nodes in the slice
+  auth= {}
+  auth['AuthMethod'] = "anonymous"
+  nodes = server.AnonSliceNodesList(auth, flags["slice"])
+
+  print "SLICE NODES\n", nodes
+  for n in nodes:
+    if n == host:
+      continue	# Ignore myself
+    tp = libp2python.Tuple.mk()
+    tp.append(Val_Str.mk("sliceNodeEvent"))	# Event name
+    tp.append(event.at(0)) 			# Local IP address
+    tp.append(Val_Str.mk(n + ":" + port))	# PlanetLab node address
+    tp.freeze()
+    p2.tuple(tp) 
+
+if __name__ == "__main__":
+  global flags, p2, server, host, port
+  libp2python.srand(libp2python.time())
+  try:
+    flags, args = parse_cmdline(sys.argv)
+  except:
+    print_usage()
+    sys.exit(1)
+  if len(args) < 1 or not flags["slice"]:
+    print_usage()
+    sys.exit(1)
+
+  host   = socket.gethostname()
+  port   = args[0]
+  server = xmlrpclib.Server('https://www.planet-lab.org/PLCAPI/')
+  p2     = libp2python.P2(host, port)
+
+  if flags["overlog"]:
+    # Read in the optional overlog program 
+    file = open(flags["overlog"], 'r') 
+    overlog = file.read()
+    file.close()
+    # Install the bootstrap overlog
+    p2.install("overlog", overlog)
+
+  # Install dissemination event trigger
+  p2.subscribe("sliceEvent", sliceEventHandler)
+
+  # Run the system
+  p2.run()
