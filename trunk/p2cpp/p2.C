@@ -15,6 +15,8 @@
 #include "loop.h"
 #include "udp.h"
 #include "dDuplicateConservative.h"
+#include "overlogCompiler.h"
+#include "dataflowInstaller.h"
 #include "timedPullPush.h"
 #include "queue.h"
 #include "ol_lexer.h"
@@ -37,6 +39,36 @@ P2::P2(string hostname, string port)
   install("dataflow", stub(hostname, port));
   _tupleSourceInterface = dynamic_cast<TupleSourceInterface*>( 
     _plumber->dataflow("P2")->find("tupleSourceInterface")->element().get());
+  _plumber->toDot("p2.dot");
+
+  Plumber::DataflowEditPtr edit = _plumber->new_dataflow_edit("P2");
+  ElementSpecPtr dDemux      = edit->find("dDemux");
+  ElementSpecPtr dRoundRobin = edit->find("dRoundRobin");
+  ElementSpecPtr qinput      = edit->addElement(
+    ElementPtr(new Queue("demuxQueue_overlog", 100)));
+  ElementSpecPtr qoutput     = edit->addElement(
+    ElementPtr(new Queue("output_queue", 100)));
+  ElementSpecPtr pullPush    = edit->addElement(
+    ElementPtr(new TimedPullPush("demuxTimedPullPush_overlog", 0)));
+  ElementSpecPtr duplicator  = edit->addElement(
+    ElementPtr(new DDuplicateConservative("dc_overlog", 1)));
+  ElementSpecPtr overlogCompiler = edit->addElement(
+    ElementPtr(new OverlogCompiler("overlogCompiler", _plumber, _id, "P2")));
+  ElementSpecPtr dataflowInstaller = edit->addElement(
+    ElementPtr(new DataflowInstaller("dataflowInstaller", _plumber, _parser)));
+
+  edit->hookUp(dDemux, dDemux->add_output(Val_Str::mk("overlog")), qinput, 0);
+  edit->hookUp(qinput, 0, pullPush, 0);
+  edit->hookUp(pullPush, 0, duplicator, 0);
+  edit->hookUp(duplicator, 0, overlogCompiler, 0);
+  edit->hookUp(overlogCompiler, 0, dataflowInstaller, 0);
+  edit->hookUp(dataflowInstaller, 0, qoutput, 0);
+  edit->hookUp(qoutput, 0, dRoundRobin, dRoundRobin->add_input());
+  if (_plumber->install(edit) < 0) {
+    std::cerr << "OVERLOG AND DATAFLOW INSTALLER FAILURE" << std::endl;
+    exit(1);
+  }
+  _plumber->toDot("p2.dot");
 }
 
 
@@ -198,8 +230,8 @@ string P2::stub(string hostname, string port)
       PelTransform(\"unPackage\", \"$2 unboxPop\")  -> \
       wrapAroundMux -> \
       DDemux(\"dDemux\", {value}, 0) ->  \
-      Queue(\"install_result_queue\") -> \
-      DRoundRobin(\"dRoundRobin\", 1) -> \
+      Discard(\"discard\"); \
+      DRoundRobin(\"dRoundRobin\", 0) -> \
       TimedPullPush(\"rrout_pullPush\", 0) -> \
       wrapAroundDemux -> \
       UnboxField(\"unboxWrapAround\", 1) -> \

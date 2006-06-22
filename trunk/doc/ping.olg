@@ -4,7 +4,7 @@
 	telling me that someone at NodeID wants to monitor PingNodeID
 	every PingInterval.  This expires after PINGREGTTL. */
 
-materialize(pingReg, 3, PINGREGTTL, infinity).
+materialize(pingReg, 3, PINGREGTTL, keys(1)).
 
 
 /** pingRecord@NI(NodeID, PingNodeID, PingInterval) is a record of the
@@ -12,32 +12,30 @@ current rate at which we monitor PingNodeID at NodeID. It expires after
 time PINGREGTTL*2, i.e., a whole PINGREGTTL after the last PINGREG has
 expired */
 
-materialize(pingRecord, 3, PINGREGTTL*2, infinity).
+materialize(pingRecord, 3, PINGREGTTL, keys(1)).
 
 
 /** The current inter-ping interval for PI is the min of all registered
 ping interests */
 
-rule C0 pingCounter@NI(NI, 0).
-
 /** The minimum time granularity at which we perform pings is MINPING,
 	so we express all other pings in terms of those. */
 
-rule C0a pingRecord@NI(NI,PI,min<I>) :- pingReg@NI(NI,PI,T), I =
+rule c0a pingRecord@NI(NI,PI,min<I>) :- pingReg@NI(NI,PI,T), I =
 T/MINNPING.
 
 
-rule C1 pingEvent@NI(NI, E) :- periodic@NI(NI, E, MINPING).
+rule c1 pingEvent@NI(NI, E) :- periodic@NI(NI, E, MINPING).
 
-rule C2 pingReqEvent@NI(NI, E, C) :- pingEvent@NI(NI, E),
+rule c2 pingReqEvent@NI(NI, E, C) :- pingEvent@NI(NI, E),
 	pingCounter@NI(NI, C).
 
-rule C3 pingReq@NI(NI, RI, E, TS) :- pingReqEvent@RI(RI, NI, C),
+rule c3 pingReq@NI(NI, RI, E, TS) :- pingReqEvent@RI(RI, NI, C),
 	pingRecord@RI(RI, NI, T), C % T == 0, TS = now.
 
-rule C4 pingCounter@NI(NI, C) :- pingCounter@NI(NI, C1), C = C1 + 1.
+rule c4 pingCounter@NI(NI, C) :- pingCounter@NI(NI, C1), C = C1 + 1.
 
-rule C5 pingReply@RI(RI, NI, E, TS) :- pingReq@NI(NI, RI, E, TS).
+rule c5 pingReply@RI(RI, NI, E, TS) :- pingReq@NI(NI, RI, E, TS).
 
-rule C6 latency@NI(NI, PI, L) :- pingReply@NI(NI, PI, E, TS),
+rule c6 latency@NI(NI, PI, L) :- pingReply@NI(NI, PI, E, TS),
 	pingReq@NI(NI, PI, E, TS1), TS2 = now, L = TS2 - TS1.

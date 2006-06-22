@@ -179,8 +179,8 @@ ElementSpec::PortPtr ElementSpec::output(int pno)
 
 int ElementSpec::add_input(ValuePtr portKey)
 {
-  Element::Processing proc = (Element::Processing) *_element->processing();
   unsigned port = (portKey == 0) ? element()->add_input() : element()->add_input(portKey);
+  Element::Processing proc = (Element::Processing) *_element->processing();
   if (port < _inputs->size()) {
     (*_inputs)[port] = PortPtr(new Port(proc));
   }
@@ -193,11 +193,11 @@ int ElementSpec::add_input(ValuePtr portKey)
 
 int ElementSpec::add_output(ValuePtr portKey)
 {
+  unsigned port = (portKey == 0) ? element()->add_output() : element()->add_output(portKey);
   const char* proc = _element->processing();
   for ( ; *proc != '/'; proc++) 
     ;
   proc++;
-  unsigned port = (portKey == 0) ? element()->add_output() : element()->add_output(portKey);
   if (_outputs->size() < port) {
     (*_outputs)[port] = PortPtr(new Port((Element::Processing) *proc));
   }

@@ -29,8 +29,8 @@ public:
   int push(int port, TuplePtr t, b_cbv cb);
 
   const char *class_name() const		{ return "DDuplicateConservative";}
-  const char *processing() const		{ return "h/h"; }
-  const char *flow_code() const			{ return "x/x"; }
+  const char *processing() const		{ return noutputs() > 0 ? "h/h" : "h/"; }
+  const char *flow_code() const			{ return noutputs() > 0 ? "x/x" : "-/"; }
 
   /** Push back only if all outputs have pushed back. */
   int push(TuplePtr p, b_cbv cb) const;

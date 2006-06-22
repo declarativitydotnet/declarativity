@@ -30,8 +30,8 @@ public:
   TuplePtr pull(int port, b_cbv cb);
 
   const char *class_name() const		{ return "DRoundRobin";}
-  const char *processing() const		{ return "l/l"; }
-  const char *flow_code() const			{ return "x/x"; }
+  const char *processing() const		{ return ninputs() > 0 ? "l/l" : "/l"; }
+  const char *flow_code() const			{ return ninputs() > 0 ? "x/x" : "/-"; }
 
   /** Add an input port to the round robin */
   unsigned add_input();
