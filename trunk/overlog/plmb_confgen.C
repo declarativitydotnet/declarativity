@@ -152,7 +152,7 @@ static bool checkString(string check) {
 static string switchQuotes(string s) {
   for (string::size_type loc = s.find("\"", 0);
        loc != string::npos; loc = s.find("\"", loc+2))
-    s.replace(loc, 1, "'");
+    s.replace(loc, 1, "\\\"");
   return s;
 }
 
