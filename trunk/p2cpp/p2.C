@@ -45,19 +45,19 @@ P2::P2(string hostname, string port)
   ElementSpecPtr dDemux      = edit->find("dDemux");
   ElementSpecPtr dRoundRobin = edit->find("dRoundRobin");
   ElementSpecPtr qinput      = edit->addElement(
-    ElementPtr(new Queue("demuxQueue_overlog", 100)));
+    ElementPtr(new Queue("demuxQueue_overlogInstall", 100)));
   ElementSpecPtr qoutput     = edit->addElement(
     ElementPtr(new Queue("output_queue", 100)));
   ElementSpecPtr pullPush    = edit->addElement(
-    ElementPtr(new TimedPullPush("demuxTimedPullPush_overlog", 0)));
+    ElementPtr(new TimedPullPush("demuxTimedPullPush_overlogInstall", 0)));
   ElementSpecPtr duplicator  = edit->addElement(
-    ElementPtr(new DDuplicateConservative("dc_overlog", 1)));
+    ElementPtr(new DDuplicateConservative("dc_overlogInstall", 1)));
   ElementSpecPtr overlogCompiler = edit->addElement(
     ElementPtr(new OverlogCompiler("overlogCompiler", _plumber, _id, "P2")));
   ElementSpecPtr dataflowInstaller = edit->addElement(
     ElementPtr(new DataflowInstaller("dataflowInstaller", _plumber, _parser)));
 
-  edit->hookUp(dDemux, dDemux->add_output(Val_Str::mk("overlog")), qinput, 0);
+  edit->hookUp(dDemux, dDemux->add_output(Val_Str::mk("overlogInstall")), qinput, 0);
   edit->hookUp(qinput, 0, pullPush, 0);
   edit->hookUp(pullPush, 0, duplicator, 0);
   edit->hookUp(duplicator, 0, overlogCompiler, 0);
