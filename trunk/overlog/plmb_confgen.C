@@ -145,8 +145,15 @@ static bool checkString(string check) {
   }
   else if (check.compare(0, 1, string("<")) == 0) {
     return false;	// A tuple of some sort.
-  }
+ }
   return true;		// This is a string
+}
+
+static string switchQuotes(string s) {
+  for (string::size_type loc = s.find("\"", 0);
+       loc != string::npos; loc = s.find("\"", loc+2))
+    s.replace(loc, 1, "'");
+  return s;
 }
 
 template <typename A>
@@ -161,7 +168,7 @@ static string conf_function(string fn, A arg0)
   if ((typeid(arg0) == typeid(string) || 
        typeid(arg0) == typeid(const char*)) && 
       checkString(arg_ss.str()))
-    oss << s << "\"" << arg0 << "\"" << ")";
+    oss << s << "\"" << switchQuotes(arg_ss.str()) << "\"" << ")";
   else
     oss << s << arg0 << ")";
   return oss.str();
@@ -178,7 +185,7 @@ static string conf_function(string fn, A arg0, B arg1)
   if ((typeid(arg1) == typeid(string) || 
        typeid(arg1) == typeid(const char*)) && 
       checkString(arg_ss.str()))
-    oss << s << ", \"" << arg1 << "\"" << ")";
+    oss << s << ", \"" << switchQuotes(arg_ss.str()) << "\"" << ")";
   else
     oss << s << ", " << arg1 << ")";
   return oss.str();
@@ -196,7 +203,7 @@ static string conf_function(string fn, A arg0, B arg1, C arg2)
   if ((typeid(arg2) == typeid(string) || 
        typeid(arg2) == typeid(const char*)) && 
       checkString(arg_ss.str()))
-    oss << s << ", \"" << arg2 << "\"" << ")";
+    oss << s << ", \"" << switchQuotes(arg_ss.str()) << "\"" << ")";
   else
     oss << s << ", " << arg2 << ")";
   return oss.str();
@@ -213,7 +220,7 @@ static string conf_function(string fn, A arg0, B arg1, C arg2, D arg3)
   if ((typeid(arg3) == typeid(string) || 
        typeid(arg3) == typeid(const char*)) && 
       checkString(arg_ss.str()))
-    oss << s << ", \"" << arg3 << "\"" << ")";
+    oss << s << ", \"" << switchQuotes(arg_ss.str()) << "\"" << ")";
   else
     oss << s << ", " << arg3 << ")";
   return oss.str();
@@ -231,7 +238,7 @@ static string conf_function(string fn, A arg0, B arg1, C arg2, D arg3, E arg4)
   if ((typeid(arg4) == typeid(string) || 
        typeid(arg4) == typeid(const char*)) && 
       checkString(arg_ss.str()))
-    oss << s << ", \"" << arg4 << "\"" << ")";
+    oss << s << ", \"" << switchQuotes(arg_ss.str()) << "\"" << ")";
   else
     oss << s << ", " << arg4 << ")";
   return oss.str();
@@ -864,8 +871,8 @@ Plmb_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
                         pa->oper);
   if (tableAgg == NULL) {
     // Ooops, I couldn't create an aggregate. Complain.
-    error("Could not create aggregate '" + pa->oper
-          + "'. I only know aggregates " +
+    error("Could not create aggregate \"" + pa->oper
+          + "\". I only know aggregates " +
           AggFactory::aggList());
     return;
   }
@@ -887,7 +894,7 @@ Plmb_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
                                      conf_var(tableAgg)));
    
   ostringstream pelTransformStr;
-  pelTransformStr << "'" << "aggResult:" << currentRule->ruleID << "' pop";
+  pelTransformStr << "\"" << "aggResult:" << currentRule->ruleID << "\" pop";
   for (uint k = 0;
        k < aggregateNamesTracker->fieldNames.size();
        k++) {
@@ -1101,14 +1108,14 @@ Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
   // projection.  Keep all fields from the probe, and all fields from
   // the base table that were not join keys.
   ostringstream pelProject;
-  pelProject << "'join:"
+  pelProject << "\"join:"
              << eventFunctor->fn->name
              << ":" << baseTableName
              << ":" 
 	     << curRule->ruleID
              << ":"
              << nodeID
-             << "' pop "; // table name
+             << "\" pop "; // table name
   for (int k = 0; k < numFieldsProbe; k++) {
     pelProject << "$0 " << k + 1 << " field pop ";
   }
@@ -1650,7 +1657,7 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
   ///////// Network Out ///////////////
   if (_cc) {
     ostringstream oss;
-    oss << "'" << nodeID << "\' pop swallow pop";
+    oss << "\"" << nodeID << "\" pop swallow pop";
     ElementSpecPtr srcAddress  = 
       _conf->addElement(ElementPtr(new PelTransform("AddSrcAddressCC:"+nodeID, oss.str())));
     _p2dl << conf_assign(srcAddress.get(), 
@@ -1665,10 +1672,10 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
     // <data, seq, src, <t>>
     ElementSpecPtr tagData  = 
       _conf->addElement(ElementPtr(new PelTransform("TagData:" + nodeID, 
-						       "'ccdata' pop $0 pop $1 pop $2 pop")));
+						       "\"ccdata\" pop $0 pop $1 pop $2 pop")));
     _p2dl << conf_assign(tagData.get(), 
                          conf_function("PelTransform", "tagData", 
-                                       "'ccdata' pop $0 pop $1 pop $2 pop"));
+                                       "\"ccdata\" pop $0 pop $1 pop $2 pop"));
     hookUp(tagData, 0);
 
     genPrintElement("PrintRemoteSendCCOne:"+nodeID);
@@ -1702,10 +1709,10 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
     // acknowledgements. <dst, <ack, seq, windowsize>>
     ElementSpecPtr ackPelTransform
       = _conf->addElement(ElementPtr(new PelTransform("ackPelTransformCC" + nodeID,
-							"$0 pop 'ack' ->t $1 append $2 append pop")));
+							"$0 pop \"ack\" ->t $1 append $2 append pop")));
     _p2dl << conf_assign(ackPelTransform.get(), 
                        conf_function("PelTransform", "ackPel",
-                                     "$0 pop 'ack' ->t $1 append $2 append pop"));
+                                     "$0 pop \"ack\" ->t $1 append $2 append pop"));
     
     hookUp(_ccRx, 1, ackPelTransform, 0);
     genPrintElement("PrintSendAck:"+nodeID);
@@ -1859,7 +1866,7 @@ string Plmb_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr,
   }
   else if ((val = dynamic_cast<Parse_Val*>(expr->lhs)) != NULL) {
     if (val->v->typeCode() == Value::STR)
-      pel << "'" << val->toString() << "'" << " "; 
+      pel << "\"" << val->toString() << "\"" << " "; 
     else pel << val->toString() << " "; 
 
     if (val->id()) pel << "->u32 ->id "; 
@@ -1885,7 +1892,7 @@ string Plmb_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr,
   }
   else if ((val = dynamic_cast<Parse_Val*>(expr->rhs)) != NULL) {    
     if (val->v->typeCode() == Value::STR)
-      pel << "'" << val->toString() << "'" << " "; 
+      pel << "\"" << val->toString() << "\"" << " "; 
     else pel << val->toString() << " "; 
 
     if (val->id()) pel << "->u32 ->id "; 
@@ -2019,7 +2026,7 @@ string Plmb_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr,
   else if ((val = dynamic_cast<Parse_Val*>(expr->lhs)) != NULL) {
     if (val->v->typeCode() == Value::STR) { 
       strCompare = true; 
-      pel << "'" << val->toString() << "' "; 
+      pel << "\"" << val->toString() << "\" "; 
     } else {
       strCompare = false;
       pel << val->toString() << " "; 
@@ -2050,7 +2057,7 @@ string Plmb_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr,
     else if ((val = dynamic_cast<Parse_Val*>(expr->rhs)) != NULL) {      
       if (val->v->typeCode() == Value::STR) { 
 	strCompare = true; 
-	pel << "'" << val->toString() << "' "; 
+	pel << "\"" << val->toString() << "\" "; 
       } else {
 	strCompare = false;
 	pel << val->toString() << " "; 
@@ -2183,7 +2190,7 @@ Plmb_ConfGen::pelAssign(OL_Context::Rule* rule,
   }
   else if ((val=dynamic_cast<Parse_Val*>(expr->assign)) != NULL) {
     if (val->v->typeCode() == Value::STR) { 
-      pelAssign << "'" << val->toString() << "' ";
+      pelAssign << "\"" << val->toString() << "\" ";
     } else {
       pelAssign << val->toString() << " ";
     }
@@ -2291,10 +2298,10 @@ Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
   } // default
 
   ostringstream pelTransformStrbuf;
-  pelTransformStrbuf << "'" << pf->fn->name << "' pop";
+  pelTransformStrbuf << "\"" << pf->fn->name << "\" pop";
 
   if (pf->aggregate() != -1 && pf->fn->loc == "") {
-    pelTransformStrbuf << " '" << nodeID << "' pop";
+    pelTransformStrbuf << " \"" << nodeID << "\" pop";
   }
 
   for (unsigned int k = 0; k < indices.size(); k++) {
