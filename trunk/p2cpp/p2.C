@@ -25,8 +25,6 @@
 #include "val_str.h"
 #include <iostream>
 
-#define DEBUG
-
 P2::P2(string hostname, string port) 
   : _plumber(new Plumber()), _id(hostname+":"+port)
 {
@@ -68,7 +66,9 @@ P2::P2(string hostname, string port)
     std::cerr << "OVERLOG AND DATAFLOW INSTALLER FAILURE" << std::endl;
     exit(1);
   }
+#ifdef DEBUG
   _plumber->toDot("p2.dot");
+#endif
 }
 
 

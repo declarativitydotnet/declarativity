@@ -23,9 +23,11 @@ public:
   const char *processing() const	{ return "/h"; }
   const char *flow_code() const		{ return "/-"; }
 
+  /** Registers a 0 sec. callback to push the tuple along output port 0 */
   int tuple(TuplePtr);
 
 private:
+  void send(TuplePtr);
   void unblock();
 
   int _notBlocked;

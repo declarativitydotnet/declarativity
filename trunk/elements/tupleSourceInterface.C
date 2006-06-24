@@ -10,6 +10,7 @@
  */
 
 #include "tupleSourceInterface.h"
+#include "loop.h"
 
 TupleSourceInterface::TupleSourceInterface(string name)
   : Element(name, 0, 1), _notBlocked(1)
@@ -19,10 +20,15 @@ TupleSourceInterface::TupleSourceInterface(string name)
 int TupleSourceInterface::tuple(TuplePtr tp)
 {
   if (_notBlocked) {
-    _notBlocked = 
-      output(0)->push(tp, boost::bind(&TupleSourceInterface::unblock, this));
+    delayCB(0, boost::bind(&TupleSourceInterface::send, this, tp), this);
   }
   return _notBlocked;
+}
+
+void TupleSourceInterface::send(TuplePtr tp)
+{
+  _notBlocked = 
+    output(0)->push(tp, boost::bind(&TupleSourceInterface::unblock, this));
 }
 
 void TupleSourceInterface::unblock()

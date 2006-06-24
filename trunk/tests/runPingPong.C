@@ -23,6 +23,7 @@
 #include <fstream>
 
 #include "tuple.h"
+#include "val_str.h"
 #include "p2.h"
 
 P2::CallbackHandlePtr ping_handle;
@@ -62,11 +63,27 @@ string readScript( string fileName )
   }
 }
 
+TuplePtr tup()
+{
+  TuplePtr tp = Tuple::mk();
+  tp->append(Val_Str::mk("test"));
+  tp->append(Val_Str::mk("THIS IS A TEST"));
+  tp->freeze();
+  return tp;
+}
+
 void ping_cb(TuplePtr tp)
 {
   std::cerr << "RECEIVED PING TUPLE: " << tp->toString() << std::endl;
   std::cerr << "CANCELING CALLBACK: " << std::endl;
   p2->unsubscribe(ping_handle); 
+  p2->tuple(tup());
+}
+
+void test_cb(TuplePtr tp)
+{
+  std::cerr << "RECEIVED TEST TUPLE: " << tp->toString() << std::endl;
+  ping_handle = p2->subscribe("ping", boost::bind(&ping_cb, _1));
 }
 
 int main(int argc, char **argv)
@@ -84,6 +101,7 @@ int main(int argc, char **argv)
   p2->install("overlog", ping);
   std::cerr << "INSTALLED OVERLOG" << std::endl;
   ping_handle = p2->subscribe("ping", boost::bind(&ping_cb, _1));
+  p2->subscribe("test", boost::bind(&test_cb, _1));
   p2->run();
 
   return 0;

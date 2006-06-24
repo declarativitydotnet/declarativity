@@ -1,0 +1,34 @@
+This directory contains the C++ interface to P2. This interface provides
+four main functions. The first is starting up a P2 instance and instantiating
+a stub dataflow. The second is installing overlog programs into the running
+system. The third is registering callbacks to arbitrary C++ functions upon
+receipt of a particular tuple. Finally, the C++ interface provides a way for
+an application to inject tuples into the running P2 instance. 
+
+The interface to this functionality is located in p2.h, defined by the
+P2 class. Creating an instance of a P2 class requires a hostname or ip
+address, and a port number. The P2 instance will send and receive tuples
+over UDP on this address and port. The transport layer provides no congestion
+control, reliable delivery, or ordered delivery. Transport layer customization, 
+including prior mentioned options, will be supported in future releases. If
+you require the use of TCP like functionality you will need to modify the 
+transport layer dataflow script in p2.C to include the desired transport layer
+elements. For assistance with this please post questions to p2devel@yahoogroups.com.
+
+The test files runPingPong.C and runOverLog2.C, found in the '/tests' directory,
+make use of the C++ interface. In runPingPong.C, the code reads in the overlog
+for the 'pingpong.olg' program (found in the '/doc' directory), installs it into
+the P2 instance, and registers a callback that prints the first ping tuple,
+immediately unregisters the callback and pushes a "test" tuple into P2. When
+the test callback is called the ping callback is again registered, and the 
+process repeats. The runOverLog2.C test is a more general purpose test, which
+follows the functionality of runOverLog.C but contains much less code. The 
+test reads in an arbitrary overlog program and installs it in the P2 instance.
+It also registers echo callbacks to tuple names given in the '-w' command line
+argument(s). Finally, before installing the overlog program it will run the C
+pre-processor on the overlog text, passing any environment variables given
+in the '-D' command line argument(s). 
+
+On a final note, the C++ interface makes use of the P2 Python library. You will
+need to ensure that your PYTHONPATH variable is defined properly. Please see
+the README file in 'python/p2' for further details regarding environment setup.
