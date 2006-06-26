@@ -15,6 +15,7 @@ class Terminal(Element):
       self.myaddress = myaddress
       self.address   = None 
       self.program   = None
+      self.program_name = None
   def class_name(self): return "Terminal"
   def processing(self): return "h/h"
   def flow_code(self):  return "-/-"
@@ -38,10 +39,8 @@ class Terminal(Element):
       print "The following commands can be issued in any mode."
       print "print: Print to stdout, the current overlog program."
       print "clear: Clear the current dataflow script."
-      print "osend: Sends the current overlog program to the last node address"
-      print "       entered in the address mode." 
-      print "ssend: Sends the current dataflow scirpt to the last node address"
-      print "       entered in the address mode." 
+      print "send: Sends the current overlog program to the last node address"
+      print "      entered in the address mode." 
       print "exit:  Exit the terminal"
   def initialize(self): 
       if not self.program:
@@ -55,7 +54,7 @@ class Terminal(Element):
       if node < self.nodes:
           print "\tprogram push to node %s:%d" % (self.address, self.port+node)
           if self.send(self.myaddress, self.address+":"+str(self.port+node), 
-                       "overlog", self.program) == 0:
+                       self.program_name, self.program) == 0:
               return
           if node+1 < self.nodes: 
               self.set_delay(flags["delay"], lambda: self.push_program(node+1)) 
@@ -70,15 +69,12 @@ class Terminal(Element):
           print self.program
       elif line[0:5] == "clear":
           self.program = ""
-      elif line[0:5] == "osend" or line[0:5] == "ssend":
+      elif line[0:5] == "send":
           if not self.address:
               print "ERROR: no address entered!!!"
               self.print_usage()
           else:
-              if line[0] == "o":
-                  v = self.send(self.myaddress, self.address, "overlog", self.program)
-              else: 
-                  v = self.send(self.myaddress, self.address, "script", self.program)
+              v = self.send(self.myaddress, self.address, self.program_name, self.program)
               if v > 0:
                   self.set_delay(1, self.delay_callback) 
               return
@@ -90,6 +86,8 @@ class Terminal(Element):
           self.mode = "edit" 
       elif self.mode == "terminal" and line[0:5] == "input":
           self.mode = "input" 
+      elif self.mode == "terminal" and line[0:5] == "name":
+          self.mode = "name" 
       elif self.mode == "terminal" and line[0:7] == "address":
           self.mode = "address" 
       elif self.mode == "input":
@@ -112,6 +110,9 @@ class Terminal(Element):
       elif self.mode == "address":
           self.address = line
           print "Address entered: ", self.address
+      elif self.mode == "name":
+          self.program_name = line
+          print "Program name entered: ", self.program_name
       elif self.mode == "edit":
           self.program += line + "\n" 
       else:
@@ -129,13 +130,14 @@ class Terminal(Element):
       else: print "Overlog installation failure!"
       print mesg
       return 1
-  def send(self, src, dest, type, program):
+  def send(self, src, dest, name, program):
       tuple = Tuple.mk()
       payload = Tuple.mk()
       tuple.append(Val_Str.mk(dest))
-      payload.append(Val_Str.mk(type))
+      payload.append(Val_Str.mk("overlogEvent"))
       payload.append(Val_Str.mk(dest))
       payload.append(Val_Str.mk(src))
+      payload.append(Val_Str.mk(name))
       payload.append(Val_Str.mk(program))
       payload.freeze()
       tuple.append(Val_Tuple.mk(payload))
@@ -144,13 +146,15 @@ class Terminal(Element):
   
 
 def print_usage():
-    print
-    print "Usage: p2terminal.py [-Dvar=<value> [-Dvar=<value> [...]]] [-d <sec_delay>] [-f <input_file> -n <nodes> -a <ip_address> -p <start_port>] <terminal_ip_address> <terminal_port>\n"
-    print
+    print """
+Usage: p2terminal.py [-Dvar=<value> [-Dvar=<value> [...]]] [-d <sec_delay>] \
+           [-t <program_name> -f <input_file> -n <nodes> -a <ip_address> -p <start_port>] \
+           <terminal_ip_address> <terminal_port>"""
 
 def parse_cmdline(argv):
-    shortopts = "d:f:n:a:p:D:"
-    flags = {"env" : {}, "delay" : 20, "debug" : False, "input" : None, "nodes" : 0, "ip" : None, "port" : 0}
+    shortopts = "t:d:f:n:a:p:D:"
+    flags = {"name" : None, "env" : {}, "delay" : 20, "debug" : False, 
+             "input" : None, "nodes" : 0, "ip" : None, "port" : 0}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if o   == "-f": flags["input"] = v
@@ -158,6 +162,7 @@ def parse_cmdline(argv):
         elif o == "-a": flags["ip"]    = v
         elif o == "-p": flags["port"]  = int(v)
         elif o == "-d": flags["delay"] = int(v)
+        elif o == "-t": flags["name"] = v
         elif o == "-D": 
             d = v.split("=", 1)
             flags["env"][d[0]] = d[1].replace("\"", "\\\"")
@@ -228,7 +233,7 @@ if __name__ == "__main__":
     edit.hookUp(input, 0, term, 0)
     edit.hookUp(term, 0, output, 0)
 
-    if flags["input"] and flags["nodes"] and flags["ip"] and flags["port"]:
+    if flags["name"] and flags["input"] and flags["nodes"] and flags["ip"] and flags["port"]:
         try:
             if flags["env"]:
                 envs = ""
@@ -246,9 +251,10 @@ if __name__ == "__main__":
             print "File %s text added to overlog program." % flags["input"]
         except:
             print "ERROR: open file error on file", flags["input"]
-        term.element().nodes   = flags["nodes"]
-        term.element().address = flags["ip"]
-        term.element().port    = flags["port"]
+        term.element().nodes        = flags["nodes"]
+        term.element().address      = flags["ip"]
+        term.element().port         = flags["port"]
+        term.element().program_name = flags["name"]
 
     if plumber.install(edit) == 0:
         print "Edit Correctly initialized.\n"
