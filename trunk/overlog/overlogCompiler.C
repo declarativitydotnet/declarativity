@@ -30,7 +30,8 @@ int OverlogCompiler::push(int port, TuplePtr tp, b_cbv cb)
     std::ostringstream script;
     ValuePtr dest    = (*tp)[1];
     ValuePtr source  = (*tp)[2];
-    string   overlog = Val_Str::cast((*tp)[3]);
+    string   name    = Val_Str::cast((*tp)[3]);
+    string   overlog = Val_Str::cast((*tp)[4]);
 
     compile(overlog, script);
 
