@@ -78,7 +78,7 @@ public:
     virtual Table2Ptr
     table(string name,
           Table2::Key& key,
-          size_t max_size = 0, 
+          uint32_t max_size = 0, 
           string lifetime = "infinity"); 
 
    

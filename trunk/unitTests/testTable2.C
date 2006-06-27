@@ -543,7 +543,7 @@ public:
   table2Test(std::string script,
              int line,
              Table2::Key& key,
-             size_t size);
+             uint32_t size);
 
 
   std::string _script;
@@ -555,14 +555,14 @@ public:
   Table2::Key& _key;
 
   
-  size_t _size;
+  uint32_t _size;
 };
 
 
 table2Test::table2Test(std::string script,
                        int line,
                        Table2::Key& key,
-                       size_t size = Table2::DEFAULT_SIZE)
+                       uint32_t size = Table2::DEFAULT_SIZE)
   : _script(script),
     _line(line),
     _key(key),

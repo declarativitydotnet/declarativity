@@ -132,7 +132,7 @@ void PlSensor::write_cb()
   assert(state == ST_SENDING);
   if (req_buf.length()) {
     // Still stuff to send
-    size_t s = req_buf.write(sd);
+    uint32_t s = req_buf.write(sd);
     TRC( "wrote " << s);
     if ( s < 0 && errno != EAGAIN && errno !=0) {
       error_cleanup(errno, string("Writing request:") + strerror(errno));

@@ -112,11 +112,11 @@ public:
 
 
   /** The non-size-limited size */
-  static size_t NO_SIZE;
+  static uint32_t NO_SIZE;
 
 
   /** The default table size */
-  static size_t DEFAULT_SIZE;
+  static uint32_t DEFAULT_SIZE;
 
 
 
@@ -231,21 +231,21 @@ public:
        expiration. */
   Table2(string tableName,
          Key& key,
-         size_t maxSize,
+         uint32_t maxSize,
          boost::posix_time::time_duration& lifetime);
 
   /** A convenience constructor that allows the use of string
       representations for maximum tuple lifetime. */
   Table2(string tableName,
          Key& key,
-         size_t maxSize,
+         uint32_t maxSize,
          string lifetime);
   
 
   /** A convenience constructor that does not expire tuples. */
   Table2(string tableName,
          Key& key,
-         size_t maxSize);
+         uint32_t maxSize);
   
 
   /** A convenience constructor with no size or time limits. */
@@ -275,7 +275,7 @@ public:
   /** Table size. It returns the number of tuples within the table
       (excluding those that may have been logically deleted but not yet
       physically removed). */
-  size_t
+  uint32_t
   size() const;
 
 
@@ -618,7 +618,7 @@ private:
 
 
   /** My maximum size in tuples. If 0, size is unlimited. */
-  size_t _maxSize;
+  uint32_t _maxSize;
 
   
   /** My maximum lifetime. It must be positive, and may be positive

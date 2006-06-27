@@ -41,7 +41,7 @@ private:
 
   static const csv_test ctests[];
   
-  static const size_t num_ctests;
+  static const uint32_t num_ctests;
 
 public:
   
@@ -50,7 +50,7 @@ public:
   {
     CSVParser cp("CSV");
     
-    for(size_t i = 0;
+    for(uint32_t i = 0;
         i < num_ctests;
         i++) {
       const csv_test *test = &ctests[i];
@@ -126,7 +126,7 @@ testCsv::ctests[] = {
 };
 
 
-const size_t
+const uint32_t
 testCsv::num_ctests = sizeof(testCsv::ctests) /
                      sizeof(testCsv::csv_test);
 

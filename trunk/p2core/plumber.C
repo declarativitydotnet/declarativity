@@ -63,7 +63,7 @@ void Plumber::Dataflow::hookUp(ElementSpecPtr src, int src_port,
 Table2Ptr
 Plumber::Dataflow::table(string name,
                          Table2::Key& key,
-                         size_t max_size,
+                         uint32_t max_size,
                          string lifetime)
 {
   std::map<string, Table2Ptr>::iterator iter = tables_.find(name);

@@ -41,15 +41,15 @@
 class Fdbuf {
 
 private:
-  size_t capacity;	// Capacity of the buffer so far.
-  size_t len;		// Number of bytes actually held.
-  size_t start;		// Offset of first valid byte
+  uint32_t capacity;	// Capacity of the buffer so far.
+  uint32_t len;		// Number of bytes actually held.
+  uint32_t start;		// Offset of first valid byte
   int	 err;		// Last value of errno. 
   char	 *data;		// Data itself
   bool	 safe;		// Zero any data before deleting
 
   // Used by write, send, sendto...
-  inline ssize_t post_write(size_t w) {
+  inline ssize_t post_write(uint32_t w) {
     err = errno;
     if (w > 0) {
       start += w;
@@ -59,7 +59,7 @@ private:
   };
   
   // Used by read, recv, recvfrom...
-  inline ssize_t post_read(size_t r) {
+  inline ssize_t post_read(uint32_t r) {
     err = errno;
     if (r > 0) {
       len += r;
@@ -68,7 +68,7 @@ private:
   };
   
   // Alignment calculation to 32-bit boundaries
-  inline size_t align(size_t x) { return ((x)+3)&(~3); };
+  inline uint32_t align(uint32_t x) { return ((x)+3)&(~3); };
 
 public:
 
@@ -78,7 +78,7 @@ public:
     BUF_DFLT_READ = 1500,	// Default quantity to read.
     BUF_UNLIMITED = -1,		// Unlimited capacity.
     BUF_INCREMENT = 0x80,	// Granularity of buffer growing.
-    BUF_SIZE_MAX = (2 << (sizeof(size_t) - 1) - 1)
+    BUF_SIZE_MAX = (2 << (sizeof(uint32_t) - 1) - 1)
   };
 
   Fdbuf( int init_capacity = BUF_DFLT_CAP, bool is_safe = false);
@@ -94,12 +94,12 @@ public:
   // read(1), return the number of bytes read this time, 0 if EOF, or
   // -1 if there was some "real" error (including EAGAIN).
   // 
-  ssize_t read(int fd, size_t max_read = BUF_DFLT_READ);
-  ssize_t recv(int sd, size_t max_read = BUF_DFLT_READ, int flags=0);
-  ssize_t recvfrom(int sd, size_t max_read = BUF_DFLT_READ, int flags=0,
+  ssize_t read(int fd, uint32_t max_read = BUF_DFLT_READ);
+  ssize_t recv(int sd, uint32_t max_read = BUF_DFLT_READ, int flags=0);
+  ssize_t recvfrom(int sd, uint32_t max_read = BUF_DFLT_READ, int flags=0,
 		   struct sockaddr *from=NULL, socklen_t *fromlen=0);
   
-  Fdbuf &pushFdbuf(const Fdbuf &fb, size_t max_len = BUF_SIZE_MAX);
+  Fdbuf &pushFdbuf(const Fdbuf &fb, uint32_t max_len = BUF_SIZE_MAX);
 
   Fdbuf &pushString(const std::string &s);
 
@@ -147,9 +147,9 @@ public:
   // Member functions: stuff removing data from the head of the buffer
   u_int32_t pop_uint32();
   Fdbuf& push_uint32(const u_int32_t);
-  bool pop_bytes(char *buf, size_t len);
-  Fdbuf& push_bytes(const char *buf, size_t len);
-  size_t pop_to_fdbuf(Fdbuf &fb, size_t len);
+  bool pop_bytes(char *buf, uint32_t len);
+  Fdbuf& push_bytes(const char *buf, uint32_t len);
+  uint32_t pop_to_fdbuf(Fdbuf &fb, uint32_t len);
 
   //
   // ACCESS FUNCTIONS: those that aren't quite INPUT or OUTPUT. 
@@ -162,10 +162,10 @@ public:
   void clear() { len = 0; start = 0; };
   
   // How much valid data is in the buffer?
-  size_t length() { return len; };
+  uint32_t length() { return len; };
 
   // How much have we written?
-  size_t removed() { return start; };
+  uint32_t removed() { return start; };
   
   // Return the buffer as a C++ string - the whole length contents of
   // the buffer.
@@ -178,14 +178,14 @@ public:
 
   // Access to the buffer as a byte array.  Fairly dangerous, but used
   // by xdr_inline, among other things. 
-  char *raw_inline(size_t sz) { ensure(sz); return data+start; };
+  char *raw_inline(uint32_t sz) { ensure(sz); return data+start; };
 
   // Make sure the buffer has sufficient capacity
-  void ensure(size_t new_capacity);
-  void ensure_additional(size_t extra) { ensure(extra + len + start); };
+  void ensure(uint32_t new_capacity);
+  void ensure_additional(uint32_t extra) { ensure(extra + len + start); };
 
   void align_read() { 
-    size_t new_start = align(start); 
+    uint32_t new_start = align(start); 
     len -= (new_start - start);
     start = new_start;
   };

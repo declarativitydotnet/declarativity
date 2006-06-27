@@ -2683,7 +2683,7 @@ Plmb_ConfGen::createTables(string nodeID)
     boost::posix_time::time_duration expiration = tableInfo->timeout;
 
     // What's my size? -1 in the inputs means no size
-    size_t tableSize = tableInfo->size;
+    uint32_t tableSize = tableInfo->size;
 
     // What's my primary key?
     Table2::Key key = tableInfo->primaryKeys;

@@ -33,19 +33,19 @@ class TableTracer : public Table2
 public:
   TableTracer(string tableName,
               Key& key,
-              size_t maxSize,
+              uint32_t maxSize,
               boost::posix_time::time_duration& lifetime);
 
   
   TableTracer(string tableName,
               Key& key,
-              size_t maxSize,
+              uint32_t maxSize,
               string lifetime);
   
 
   TableTracer(string tableName,
               Key& key,
-              size_t maxSize);
+              uint32_t maxSize);
   
   
   TableTracer(string tableName,

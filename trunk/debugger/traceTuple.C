@@ -69,7 +69,7 @@ int TraceTuple::push(int port, TuplePtr p, b_cbv cb)
   t->append(Val_Str::mk(name()));
 
   // append the fields
-  for(size_t i = 1; i < p->size(); i++)
+  for(uint32_t i = 1; i < p->size(); i++)
     t->append((*p)[i]);
   t->append(Val_UInt32::mk(p->ID()));
   t->freeze();

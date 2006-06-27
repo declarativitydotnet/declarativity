@@ -48,7 +48,7 @@ private:
   void socket_off() { removeFileDescriptorCB(sd, b_selread); };
   void element_cb();
   
-  static const size_t MAX_REQUEST_SIZE = 10000;
+  static const uint32_t MAX_REQUEST_SIZE = 10000;
   
   // States
   enum State { ST_CONNECTING, 

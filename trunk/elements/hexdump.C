@@ -52,9 +52,11 @@ TuplePtr Hexdump::simple_action(TuplePtr p)
   // Hexdump and return new tuple
   FdbufPtr u = Val_Opaque::cast(first);
   char *buf = u->cstr();
-  size_t sz = u->length();
+  uint32_t sz = u->length();
   ostringstream sb;
-  for (size_t i=0; i<sz; i++) {
+  for (uint32_t i = 0;
+       i<sz;
+       i++) {
     char b[4]; 
     sprintf(b,"%02x", buf[i]);
     sb << b;

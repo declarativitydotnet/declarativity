@@ -82,7 +82,7 @@ void fakeFingersSuccessors(boost::shared_ptr< OL_Context> ctxt,
   OL_Context::TableInfo* fingerTableInfo = ctxt->getTableInfos()->find("finger")->second;  
 
   // Fill up the table with fingers
-  for (size_t i = 0;
+  for (uint32_t i = 0;
        i < fingerTableInfo->size;
        i++) {
     TuplePtr tuple = Tuple::mk();

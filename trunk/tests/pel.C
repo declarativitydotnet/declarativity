@@ -959,7 +959,7 @@ static const ValTest vtests[] = {
   TST(TUPLE, SUCCESS, "",		"0 ->t 7 append")
 
 };
-static const size_t num_vtests = sizeof(vtests) / sizeof(ValTest);
+static const uint32_t num_vtests = sizeof(vtests) / sizeof(ValTest);
 
 
 //
@@ -982,7 +982,7 @@ static const CompilerTest ctests[] = {
   { "1 ifpoptuple", "1 ifpoptuple ", 1, 2},
   { "1 2 /* This is a comment */ pop pop", "1 2 pop pop ", 2, 4}
 };
-static const size_t num_ctests = sizeof(ctests) / sizeof(CompilerTest);
+static const uint32_t num_ctests = sizeof(ctests) / sizeof(CompilerTest);
 
 
 #if 0

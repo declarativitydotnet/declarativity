@@ -18,7 +18,7 @@
 
 TableTracer::TableTracer(string tableName,
                          Table2::Key& key,
-                         size_t maxSize,
+                         uint32_t maxSize,
                          boost::posix_time::time_duration& lifetime)
   : Table2(tableName, key, maxSize, lifetime),
     _e(new TableTracerElement(tableName + ".tracer", 0, 1, this))
@@ -28,7 +28,7 @@ TableTracer::TableTracer(string tableName,
   
 TableTracer::TableTracer(string tableName,
                          Table2::Key& key,
-                         size_t maxSize,
+                         uint32_t maxSize,
                          string lifetime)
   : Table2(tableName, key, maxSize, lifetime),
     _e(new TableTracerElement(tableName + ".tracer", 0, 1, this))
@@ -38,7 +38,7 @@ TableTracer::TableTracer(string tableName,
 
 TableTracer::TableTracer(string tableName,
                          Table2::Key& key,
-                         size_t maxSize)
+                         uint32_t maxSize)
   : Table2(tableName, key, maxSize),
     _e(new TableTracerElement(tableName + ".tracer", 0, 1, this))
 {

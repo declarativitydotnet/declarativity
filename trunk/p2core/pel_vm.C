@@ -474,7 +474,7 @@ DEF_OP(T_UNBOXPOP) {
   if (!result) {
     result = Tuple::mk();
   }
-  for (size_t i = 0;
+  for (uint32_t i = 0;
        i < t->size();
        i++) {
     result->append((*t)[i]);

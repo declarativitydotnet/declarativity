@@ -57,14 +57,14 @@ private:
 
   static const CompilerTest ctests[];
   
-  static const size_t num_ctests;
+  static const uint32_t num_ctests;
 
 public:
   
   void
   compilerTests()
   {
-    for(size_t i = 0;
+    for(uint32_t i = 0;
         i < num_ctests;
         i++) {
       const CompilerTest *t = &ctests[i];
@@ -146,7 +146,7 @@ private:
     char *src;		
   };
   
-  const static size_t num_vtests;
+  const static uint32_t num_vtests;
 
   const static ValTest vtests[];
 
@@ -265,7 +265,7 @@ public:
   {
     Pel_VM vm;
     TuplePtr tpl = Tuple::mk();
-    for(size_t i = 0;
+    for(uint32_t i = 0;
         i < num_vtests;
         i++) {
       vmTest(vm, tpl, i);
@@ -288,7 +288,7 @@ testPel::ctests[] = {
   { "1 2 /* This is a comment */ pop pop", "1 2 pop pop ", 2, 4}
 };
   
-const size_t
+const uint32_t
 testPel::num_ctests = sizeof(testPel::ctests) /
                   sizeof(testPel::CompilerTest);
 
@@ -1261,7 +1261,7 @@ testPel::vtests[] = {
 #undef TST
 
 
-const size_t testPel::num_vtests =
+const uint32_t testPel::num_vtests =
                   sizeof(testPel::vtests) /
                   sizeof(testPel::ValTest);
 

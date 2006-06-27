@@ -169,7 +169,7 @@ f.write(warning)
 f.write('public:\n')
 map(lambda (n,o,a,v,d): f.write("  static const u_int32_t OP_%s = %d;\n" % (v, n)),
     decls)
-f.write('  static const size_t NUM_OPCODES= %d;\n' % curop)
+f.write('  static const uint32_t NUM_OPCODES= %d;\n' % curop)
 
 # f.write('private:\n')
 map(lambda (n,o,a,v,d): f.write("  void op_%s(u_int32_t inst);\n" % v ),decls)

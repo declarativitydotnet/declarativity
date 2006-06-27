@@ -103,7 +103,7 @@ public:
 
   /** Return the number of fields in the tuple, excluding tuple metadata
       such as the tuple ID, any tags, etc. */
-  size_t
+  uint32_t
   size() const;
 
 
@@ -124,7 +124,7 @@ public:
   /** Set the field at given position to a value. The tuple must be
       unfrozen and have enough room already. */
   void
-  set(size_t, ValuePtr);
+  set(uint32_t, ValuePtr);
 
   void xdr_marshal(XDR *xdrs);
 

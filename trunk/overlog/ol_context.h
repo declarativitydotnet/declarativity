@@ -66,7 +66,7 @@ public:
 
     boost::posix_time::time_duration timeout;
 
-    size_t size;
+    uint32_t size;
 
     Table2::Key primaryKeys;
   };

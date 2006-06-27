@@ -43,7 +43,7 @@ private:
     u_int32_t	code;
   };
   static opcode_token tokens[];
-  static const size_t num_tokens;
+  static const uint32_t num_tokens;
 
   yy_buffer_state *bufstate;
   std::istringstream strb;

@@ -51,8 +51,8 @@
 Pel_Lexer::opcode_token Pel_Lexer::tokens[] = {
 #include "pel_opcode_tokens.gen.h"
 };
-const size_t Pel_Lexer::num_tokens = 
-	(sizeof(Pel_Lexer::tokens) / sizeof(Pel_Lexer::opcode_token));
+const uint32_t Pel_Lexer::num_tokens = 
+(sizeof(Pel_Lexer::tokens) / sizeof(Pel_Lexer::opcode_token));
 
 %}
 

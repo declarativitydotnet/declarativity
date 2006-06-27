@@ -24,19 +24,16 @@
 void
 Tuple::xdr_marshal( XDR *x ) 
 {
- 
   assert(frozen);
-  // we used to pass a pointer to a size_t into xdr_uint32_t, hence
-  // the following assertion.  However, gcc 4.0 forbids that anyway,
-  // so we now do the cast and copy, and this assertion may be
-  // unnecessary. -- JMH 1/10/06
-  assert(sizeof(size_t) == sizeof(u_int32_t));
+
   // Tuple size overall
-  size_t sz = fields.size();
+  uint32_t sz = fields.size();
   u_int32_t i = (u_int32_t)sz;
   xdr_uint32_t(x, &i);
   // Marshal the fields
-  for(size_t i=0; i < fields.size(); i++) {
+  for(uint32_t i = 0;
+      i < fields.size();
+      i++) {
     fields[i]->xdr_marshal(x);
   };
 
@@ -66,17 +63,14 @@ TuplePtr
 Tuple::xdr_unmarshal(XDR* x) 
 {
   TuplePtr t = Tuple::mk();
-  // we used to pass a pointer to a size_t into xdr_uint32_t, hence
-  // the following assertion.  However, gcc 4.0 forbids that anyway,
-  // so we now do the cast and copy, and this assertion may be
-  // unnecessary. -- JMH 1/10/06
-  assert(sizeof(size_t) == sizeof(u_int32_t));
   // Tuple size overall
   u_int32_t ui;
   xdr_uint32_t(x, &ui);
   // Marshal the fields
-  size_t sz = ui;
-  for(size_t i=0; i < sz; i++) {
+  uint32_t sz = ui;
+  for(uint32_t i = 0;
+      i < sz;
+      i++) {
     t->append(Value::xdr_unmarshal(x));
   }
 
@@ -104,7 +98,9 @@ Tuple::toString() const
   ostringstream sb;
   
   sb << "<"; 
-  for(size_t i=0; i < fields.size(); i++) {
+  for(uint32_t i = 0;
+      i < fields.size();
+      i++) {
     sb << fields[i]->toString();
     if (i != fields.size() - 1) {
       sb << ", ";
@@ -121,7 +117,9 @@ Tuple::toConfString() const
   ostringstream sb;
   
   sb << "<"; 
-  for(size_t i=0; i < fields.size(); i++) {
+  for(uint32_t i = 0;
+      i < fields.size();
+      i++) {
     sb << fields[i]->toConfString();
     if (i != fields.size() - 1) {
       sb << ", ";
@@ -136,7 +134,7 @@ int
 Tuple::compareTo(TuplePtr other) const
 {
   if (size() == other->size()) {
-    for (size_t i = 0;
+    for (uint32_t i = 0;
          i < size();
          i++) {
       ValuePtr mine = fields[i];
@@ -224,7 +222,7 @@ Tuple::concat(TuplePtr tf)
   assert(!frozen);
 
   // Copy fields
-  for (size_t i = 0;
+  for (uint32_t i = 0;
        i < tf->size();
        i++) {
     append((*tf)[i]);
@@ -290,7 +288,7 @@ Tuple::freeze()
 }
 
 
-size_t
+uint32_t
 Tuple::size() const
 {
   return fields.size();
@@ -321,7 +319,7 @@ Tuple::Comparator::operator()(const TuplePtr first,
 
 
 void
-Tuple::set(size_t i, ValuePtr val)
+Tuple::set(uint32_t i, ValuePtr val)
 {
   assert(!frozen);
   assert(size() > i);

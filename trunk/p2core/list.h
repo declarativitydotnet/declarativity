@@ -51,7 +51,7 @@ public:
    
    ListPtr multiset_intersect(ListPtr l) const;
    
-   size_t size() const { return vpl.size(); };
+   uint32_t size() const { return vpl.size(); };
    
    // Appends a value to a list.
    void append(ValuePtr val);

@@ -127,7 +127,7 @@ void Udp::Tx::socket_cb()
   FdbufPtr fbp = Val_Opaque::cast((*t)[1]);
   ssize_t s = fbp->sendto(u->sd, fbp->length(), 0, &address, sizeof(address));
   // 's' is signed, whereas the payload.len() isn't. Hence the following:
-  if (s <= 0 || (size_t)s < fbp->length() ) {
+  if (s <= 0 || (uint32_t) s < fbp->length() ) {
     // Error!  Technically, this can happen if the payload is larger
     //  than the socket buffer (in which case errno=EAGAIN).  We treat
     //  this as an error, nevertheless, and leave it up to the

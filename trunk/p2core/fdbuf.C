@@ -56,17 +56,17 @@ Fdbuf::~Fdbuf()
 //
 // Read data in from a file descriptor
 //
-ssize_t Fdbuf::read(int fd, size_t max_read)
+ssize_t Fdbuf::read(int fd, uint32_t max_read)
 {
   ensure_additional(max_read);
   return post_read(::read(fd, data + start + len, max_read));
 }
-ssize_t Fdbuf::recv(int fd, size_t max_read, int flags)
+ssize_t Fdbuf::recv(int fd, uint32_t max_read, int flags)
 {
   ensure_additional(max_read);
   return post_read(::recv(fd, data + start + len, max_read, flags));
 }
-ssize_t Fdbuf::recvfrom(int sd, size_t max_read, int flags,
+ssize_t Fdbuf::recvfrom(int sd, uint32_t max_read, int flags,
 			struct sockaddr *from, socklen_t *fromlen)
 {
   ensure_additional(max_read);
@@ -89,7 +89,7 @@ Fdbuf &Fdbuf::pushString(const char *str)
   return push_bytes(str, strlen(str));
 }
 
-Fdbuf &Fdbuf::pushFdbuf(const Fdbuf &fb, size_t max_size)
+Fdbuf &Fdbuf::pushFdbuf(const Fdbuf &fb, uint32_t max_size)
 {
   return push_bytes(fb.data + fb.start, std::min(fb.len, max_size));
 }
@@ -107,14 +107,14 @@ Fdbuf::write(int fd, ssize_t max_write)
   return post_write(::write(fd,
                             data + start, 
 			    (max_write < 0) ? len
-                            : std::min(len, (size_t) max_write)));
+                            : std::min(len, (uint32_t) max_write)));
 }
 
 ssize_t Fdbuf::send(int sd, ssize_t max_write, int flags)
 {
   return post_write(::send(sd, data + start, 
 			   (max_write < 0) ? len
-                           : std::min(len, (size_t) max_write),
+                           : std::min(len, (uint32_t) max_write),
 			   flags));
 }
 ssize_t Fdbuf::sendto(int sd, ssize_t max_write, int flags,
@@ -122,7 +122,7 @@ ssize_t Fdbuf::sendto(int sd, ssize_t max_write, int flags,
 {
   return post_write(::sendto(sd, data + start, 
 			     ((max_write < 0) ? len
-                              : std::min(len, (size_t) max_write)),
+                              : std::min(len, (uint32_t) max_write)),
 			     flags, to, tolen));
 }
 
@@ -152,7 +152,7 @@ Fdbuf::push_uint32(const u_int32_t l)
 }
 
 
-bool Fdbuf::pop_bytes(char *buf, size_t sz)
+bool Fdbuf::pop_bytes(char *buf, uint32_t sz)
 {
   if (len >= sz) {
     memcpy(buf, data + start, sz);
@@ -166,7 +166,7 @@ bool Fdbuf::pop_bytes(char *buf, size_t sz)
 
 
 Fdbuf&
-Fdbuf::push_bytes(const char *buf, size_t sz)
+Fdbuf::push_bytes(const char *buf, uint32_t sz)
 {
   ensure_additional(sz);
   memcpy(data + start + len, buf, sz);
@@ -175,8 +175,8 @@ Fdbuf::push_bytes(const char *buf, size_t sz)
 }
 
 
-size_t
-Fdbuf::pop_to_fdbuf(Fdbuf &fb, size_t to_write)
+uint32_t
+Fdbuf::pop_to_fdbuf(Fdbuf &fb, uint32_t to_write)
 {
   to_write = std::min(to_write, len);
   fb.pushFdbuf(*this, to_write);
@@ -188,12 +188,12 @@ Fdbuf::pop_to_fdbuf(Fdbuf &fb, size_t to_write)
 //
 // Make sure the buffer is big enough
 //
-void Fdbuf::ensure(size_t new_capacity)
+void Fdbuf::ensure(uint32_t new_capacity)
 {
   // Always give us aligned headroom.
   new_capacity = align(new_capacity);
   if (capacity < new_capacity) {
-    size_t new_size = (new_capacity + BUF_INCREMENT - 1) / BUF_INCREMENT * BUF_INCREMENT;
+    uint32_t new_size = (new_capacity + BUF_INCREMENT - 1) / BUF_INCREMENT * BUF_INCREMENT;
     char *old_buf = data;
     char *new_buf = new char[new_size];
     memcpy(new_buf, old_buf + start, len);

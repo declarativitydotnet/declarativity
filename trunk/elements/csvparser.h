@@ -40,8 +40,8 @@ public:
 private:
   int try_to_parse_line();
   
-  static const size_t MIN_Q_SIZE;	// See csvparser.C...
-  static const size_t MAX_Q_SIZE;
+  static const uint32_t MIN_Q_SIZE;	// See csvparser.C...
+  static const uint32_t MAX_Q_SIZE;
 
   std::queue<TuplePtr> _q;
 

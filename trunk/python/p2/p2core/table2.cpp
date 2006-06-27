@@ -8,8 +8,8 @@ void export_table2()
   scope outer =
     class_<Table2, Table2Ptr>
     ("Table2", init<string, Table2::Key&>())
-    .def(init<string, Table2::Key&, size_t>())
-    .def(init<string, Table2::Key&, size_t, string>())
+    .def(init<string, Table2::Key&, uint32_t>())
+    .def(init<string, Table2::Key&, uint32_t, string>())
     
     .def("insert", &Table2::insert)
     .def("size",   &Table2::size)

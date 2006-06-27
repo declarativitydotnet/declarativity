@@ -35,32 +35,32 @@ string Catalog::nextQueryID() {
 void Catalog::createTable(OL_Context::TableInfo* tableInfo)
 {
   if (tableInfo->timeout != 0) { 
-      warn << "Create table " << tableInfo->toString() << "\n";
-      // if timeout is zero, table is never materialized 
-      size_t tableSize;
-      if (tableInfo->size != -1) {
-	tableSize = tableInfo->size;
-      } else {
-	tableSize = UINT_MAX; // consider this infinity
-      }
-      TablePtr newTable(new Table(tableInfo->tableName, tableInfo->size));
-      if (tableInfo->timeout != -1) {
-		boost::posix_time::time_duration expiration 
-		  = boost::posix_time::seconds(tableInfo->timeout);
-		newTable.reset(new Table(tableInfo->tableName, tableInfo->size, expiration));
-      }
-
-      TableInfo* newTableInfo = new TableInfo(tableInfo, newTable);
-      tables->insert(std::make_pair(tableInfo->tableName, newTableInfo));
-      
-      // first create unique indexes
-      std::vector<int> primaryKeys = tableInfo->primaryKeys;
-      for (uint k = 0; k < primaryKeys.size(); k++) {
-	newTable->add_unique_index(primaryKeys.at(k));
-	warn << "Create index " << tableInfo->tableName 
-	     << " " << primaryKeys.at(k) << "\n";
-      } 
+    warn << "Create table " << tableInfo->toString() << "\n";
+    // if timeout is zero, table is never materialized 
+    uint32_t tableSize;
+    if (tableInfo->size != -1) {
+      tableSize = tableInfo->size;
+    } else {
+      tableSize = UINT_MAX; // consider this infinity
     }
+    TablePtr newTable(new Table(tableInfo->tableName, tableInfo->size));
+    if (tableInfo->timeout != -1) {
+      boost::posix_time::time_duration expiration 
+        = boost::posix_time::seconds(tableInfo->timeout);
+      newTable.reset(new Table(tableInfo->tableName, tableInfo->size, expiration));
+    }
+
+    TableInfo* newTableInfo = new TableInfo(tableInfo, newTable);
+    tables->insert(std::make_pair(tableInfo->tableName, newTableInfo));
+      
+    // first create unique indexes
+    std::vector<int> primaryKeys = tableInfo->primaryKeys;
+    for (uint k = 0; k < primaryKeys.size(); k++) {
+      newTable->add_unique_index(primaryKeys.at(k));
+      warn << "Create index " << tableInfo->tableName 
+           << " " << primaryKeys.at(k) << "\n";
+    } 
+  }
 }
 
 void Catalog::initTables(OL_Context* ctxt)
@@ -84,11 +84,11 @@ Catalog::TableInfo* Catalog::getTableInfo(string tableName)
 }
 
 void Catalog::createMultIndex(string tableName, int key) {
-    TableInfo* ti = getTableInfo(tableName);
-    if (ti->isSecondaryKey(key)) { return; }
-    ti->_table->add_multiple_index(key);
-    ti->secondaryKeys.push_back(key);
-  }
+  TableInfo* ti = getTableInfo(tableName);
+  if (ti->isSecondaryKey(key)) { return; }
+  ti->_table->add_multiple_index(key);
+  ti->secondaryKeys.push_back(key);
+}
 
 
 bool Catalog::TableInfo::isPrimaryKey(int c) 

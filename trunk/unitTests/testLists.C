@@ -39,7 +39,7 @@ public:
    
 public:
 
-void testListSize(List theList, size_t expected) 
+void testListSize(List theList, uint32_t expected) 
 {
    std::string testID;
    {
@@ -48,7 +48,7 @@ void testListSize(List theList, size_t expected)
       testID = ID.str();
    }
    
-   size_t listsize = theList.size();
+   uint32_t listsize = theList.size();
    
    std::ostringstream message;
    message << testID

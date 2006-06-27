@@ -216,7 +216,7 @@ operator()(const TuplePtr first,
 
 Table2::Table2(std::string tableName,
                Key& key,
-               size_t maxSize,
+               uint32_t maxSize,
                boost::posix_time::time_duration& lifetime)
   : _name(tableName),
     _key(key),
@@ -248,7 +248,7 @@ Table2::Table2(std::string tableName,
 
 Table2::Table2(std::string tableName,
                Key& key,
-               size_t maxSize)
+               uint32_t maxSize)
   : _name(tableName),
     _key(key),
     _maxSize(maxSize),
@@ -263,7 +263,7 @@ Table2::Table2(std::string tableName,
 
 Table2::Table2(std::string tableName,
                Key& key,
-               size_t maxSize,
+               uint32_t maxSize,
                string lifetime)
   : _name(tableName),
     _key(key),
@@ -896,10 +896,10 @@ Table2::IteratorObj::~IteratorObj()
 }
 
 
-size_t
+uint32_t
 Table2::size() const
 {
-  size_t s = _primaryIndex.size();
+  uint32_t s = _primaryIndex.size();
   return s;
 }
 
@@ -1346,10 +1346,10 @@ Table2::DEFAULT_EXPIRATION(Table2::NO_EXPIRATION);
 
 
 /** No size is represented as 0 size. */
-size_t
+uint32_t
 Table2::NO_SIZE = 0;
 
 
 /** Default table max size is no max size */
-size_t
+uint32_t
 Table2::DEFAULT_SIZE(Table2::NO_SIZE);

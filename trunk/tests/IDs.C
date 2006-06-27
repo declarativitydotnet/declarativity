@@ -177,7 +177,7 @@ static const CmpTest idCmpTests[] = {
 
   CMPTST(0, 0, 0, 0, 0,            0, 0, 0, 0, 0,          0)
 };
-static const size_t num_cmptests = sizeof(idCmpTests) / sizeof(CmpTest);
+static const uint32_t num_cmptests = sizeof(idCmpTests) / sizeof(CmpTest);
 
 static const BetweenTest idBetweenTests[] = {
   // Least significant comparisons ////////////////////////////////////////////////oo////oc////co////cc
@@ -190,7 +190,7 @@ static const BetweenTest idBetweenTests[] = {
 
   BETWEENTEST(0, 0, 0, 0, 2,            0, 0, 0, 0, 0,            0, 0, 0, 0, 2,        false, true, false, true)
 };
-static const size_t num_betweentests = sizeof(idBetweenTests) / sizeof(BetweenTest);
+static const uint32_t num_betweentests = sizeof(idBetweenTests) / sizeof(BetweenTest);
 
 static const DistTest idDistTests[] = {
   // Least significant comparisons ////////////////////////////////////////////////oo////oc////co////cc
@@ -203,7 +203,7 @@ static const DistTest idDistTests[] = {
 
   DISTTEST(0, 0, 0, 0, 0xffffffff,   0, 0, 0, 1, 1,            0, 0, 0, 0, 2)
 };
-static const size_t num_disttests = sizeof(idDistTests) / sizeof(DistTest);
+static const uint32_t num_disttests = sizeof(idDistTests) / sizeof(DistTest);
 
 static const ShiftTest idShiftTests[] = {
   // Least significant comparisons
@@ -227,7 +227,7 @@ static const ShiftTest idShiftTests[] = {
 
   SHIFTTST(0, 0, 0, 0, 0,            0, 0, 0, 0, 0,        100)
 };
-static const size_t num_shiftTests = sizeof(idShiftTests) / sizeof(ShiftTest);
+static const uint32_t num_shiftTests = sizeof(idShiftTests) / sizeof(ShiftTest);
 
 static const AddTest idAddTests[] = {
   // Least significant comparisons ////////////////////////////////////////////////oo////oc////co////cc
@@ -241,14 +241,14 @@ static const AddTest idAddTests[] = {
 
   ADDTEST(0, 0, 0, 0, 0xffffffff,   0, 0, 0, 1, 1,            0, 0, 0, 2, 0)
 };
-static const size_t num_addtests = sizeof(idAddTests) / sizeof(AddTest);
+static const uint32_t num_addtests = sizeof(idAddTests) / sizeof(AddTest);
 
 
 int main(int argc, char **argv)
 {
   std::cout << "IDs \n";
 
-  for (size_t i = 0;
+  for (uint32_t i = 0;
        i < num_cmptests;
        i++) {
     uint32_t left[5];
@@ -281,7 +281,7 @@ int main(int argc, char **argv)
     }
   }
 
-  for (size_t i = 0;
+  for (uint32_t i = 0;
        i < num_betweentests;
        i++) {
     uint32_t left[5];
@@ -354,7 +354,7 @@ int main(int argc, char **argv)
     }
   }
 
-  for (size_t i = 0;
+  for (uint32_t i = 0;
        i < num_disttests;
        i++) {
     uint32_t middle[5];
@@ -396,7 +396,7 @@ int main(int argc, char **argv)
   }
 
 
-  for (size_t i = 0;
+  for (uint32_t i = 0;
        i < num_addtests;
        i++) {
     uint32_t middle[5];
@@ -438,7 +438,7 @@ int main(int argc, char **argv)
   }
 
 
-  for (size_t i = 0;
+  for (uint32_t i = 0;
        i < num_shiftTests;
        i++) {
     uint32_t left[5];

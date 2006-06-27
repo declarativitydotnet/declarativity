@@ -55,7 +55,7 @@ private:
 
   static const CmpTest idCmpTests[];
 
-  static const size_t num_cmptests;
+  static const uint32_t num_cmptests;
 
 public:
   
@@ -96,7 +96,7 @@ private:
 
   static const BetweenTest idBetweenTests[];
 
-  static const size_t num_betweentests;
+  static const uint32_t num_betweentests;
 
 public:
   void
@@ -128,7 +128,7 @@ private:
 
   static const DistTest idDistTests[];
 
-  static const size_t num_disttests;
+  static const uint32_t num_disttests;
 
 public:
 
@@ -159,7 +159,7 @@ private:
 
   static const ShiftTest idShiftTests[];
   
-  static const size_t num_shiftTests;
+  static const uint32_t num_shiftTests;
 
 public:
 
@@ -193,7 +193,7 @@ private:
 
   static const AddTest idAddTests[];
 
-  static const size_t num_addtests;
+  static const uint32_t num_addtests;
 public:
 
   void
@@ -220,7 +220,7 @@ private:
 
   static const StringTest idStringTests[];
 
-  static const size_t num_stringtests;
+  static const uint32_t num_stringtests;
 
 public:
   
@@ -238,7 +238,7 @@ public:
 void
 testIDs::testComparisons()
 {
-  for (size_t i = 0;
+  for (uint32_t i = 0;
        i < num_cmptests;
        i++) {
     uint32_t left[5];
@@ -367,7 +367,7 @@ testIDs::idCmpTests[] = {
 };
 
 
-const size_t
+const uint32_t
 testIDs::num_cmptests = (sizeof(testIDs::idCmpTests) /
                          sizeof(testIDs::CmpTest));
 
@@ -391,7 +391,7 @@ testIDs::num_cmptests = (sizeof(testIDs::idCmpTests) /
 void
 testIDs::testBetween()
 {
-  for (size_t i = 0;
+  for (uint32_t i = 0;
        i < num_betweentests;
        i++) {
     uint32_t left[5];
@@ -525,7 +525,7 @@ testIDs::idBetweenTests[] = {
   BETWEENTEST(0, 0, 0, 0, 2,            0, 0, 0, 0, 0,            0, 0, 0, 0, 2,        false, true, false, true)
 };
 
-const size_t testIDs::num_betweentests =
+const uint32_t testIDs::num_betweentests =
                sizeof(testIDs::idBetweenTests) /
                sizeof(testIDs::BetweenTest);
 
@@ -541,7 +541,7 @@ const size_t testIDs::num_betweentests =
 void
 testIDs::testDistance()
 {
-  for (size_t i = 0;
+  for (uint32_t i = 0;
        i < num_disttests;
        i++) {
     uint32_t middle[5];
@@ -604,7 +604,7 @@ testIDs::idDistTests[] = {
   DISTTEST(0, 0, 0, 0, 0xffffffff,   0, 0, 0, 1, 1,            0, 0, 0, 0, 2)
 };
 
-const size_t
+const uint32_t
 testIDs::num_disttests =
                  sizeof(testIDs::idDistTests) /
                  sizeof(testIDs::DistTest);
@@ -632,7 +632,7 @@ void
 testIDs::testShifts()
 {
 
-  for (size_t i = 0;
+  for (uint32_t i = 0;
        i < num_shiftTests;
        i++) {
     uint32_t left[5];
@@ -699,7 +699,7 @@ testIDs::idShiftTests[] = {
   SHIFTTST(0, 0, 0, 0, 0,            0, 0, 0, 0, 0,        100)
 };
 
-const size_t
+const uint32_t
 testIDs::num_shiftTests =
                  sizeof(testIDs::idShiftTests) /
                  sizeof(testIDs::ShiftTest);
@@ -722,7 +722,7 @@ testIDs::num_shiftTests =
 void
 testIDs::testAdditions()
 {
-  for (size_t i = 0;
+  for (uint32_t i = 0;
        i < num_addtests;
        i++) {
     uint32_t middle[5];
@@ -787,7 +787,7 @@ testIDs::idAddTests[] = {
   ADDTEST(0, 0, 0, 0, 0xffffffff,   0, 0, 0, 1, 1,            0, 0, 0, 2, 0)
 };
 
-const size_t
+const uint32_t
 testIDs::num_addtests =
                  sizeof(testIDs::idAddTests) /
                  sizeof(testIDs::AddTest);
@@ -803,7 +803,7 @@ testIDs::num_addtests =
 void
 testIDs::testConstructFromString()
 {
-  for (size_t i = 0;
+  for (uint32_t i = 0;
        i < num_stringtests;
        i++) {
     uint32_t right[5];
@@ -887,7 +887,7 @@ testIDs::idStringTests[] = {
 };
 
 
-const size_t
+const uint32_t
 testIDs::num_stringtests = (sizeof(testIDs::idStringTests) /
                             sizeof(testIDs::StringTest));
 
