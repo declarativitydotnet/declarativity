@@ -1177,6 +1177,15 @@ Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
 void
 Plmb_ConfGen::genEditFinalize(string nodeID) 
 {
+  ElementSpecPtr watchSpec = _conf->find("printWatch");
+  if (watchSpec) {
+    std::set<string> watches = _ctxt->getWatchTables();
+    PrintWatch *pwatch= dynamic_cast<PrintWatch*>(watchSpec->element().get());
+    for (std::set<string>::iterator iter = watches.begin(); 
+         iter != watches.end(); iter++) {
+      pwatch->watch(*iter);
+    } 
+  }
   _p2dl << conf_comment("");
   _p2dl << conf_comment("");
   _p2dl << conf_comment("CONNECT THE SEND SIDE TO THE DYNAMIC ROUND ROBIN");
@@ -2611,12 +2620,14 @@ void Plmb_ConfGen::genPrintElement(string header)
 
 void Plmb_ConfGen::genPrintWatchElement(string header)
 {
-  ElementSpecPtr printWatchElement = 
+  if (!_edit) {
+    ElementSpecPtr printWatchElement = 
       _conf->addElement(ElementPtr(new PrintWatch(header, _ctxt->getWatchTables())));
-  _p2dl << conf_assign(printWatchElement.get(), 
-                       conf_function("PrintWatch", header, 
-                                     conf_StrVec(_ctxt->getWatchTables())));
-  hookUp(printWatchElement, 0);
+    _p2dl << conf_assign(printWatchElement.get(), 
+                         conf_function("PrintWatch", header, 
+                                       conf_StrVec(_ctxt->getWatchTables())));
+    hookUp(printWatchElement, 0);
+  }
 }
 
 

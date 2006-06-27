@@ -229,6 +229,7 @@ string P2::stub(string hostname, string port)
       TimedPullPush(\"demux_in_pullPush\", 0)     -> \
       PelTransform(\"unPackage\", \"$2 unboxPop\")  -> \
       wrapAroundMux -> \
+      PrintWatch(\"printWatch\", {str}) -> \
       DDemux(\"dDemux\", {value}, 0) ->  \
       Discard(\"discard\"); \
       DRoundRobin(\"dRoundRobin\", 0) -> \

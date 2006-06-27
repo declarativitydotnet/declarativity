@@ -5,10 +5,11 @@ import sys
 import os
 import getopt
 import socket
+import getpass
 
 files   = ["~/boost-1.32.0-6.i386.rpm", "~/libstdc++-4.0.0-8.i386.rpm",
            "~/p2-0.7-2.i386.rpm", "~/python-2.3.4-11.i386.rpm", "./planetlab.py", 
-           "./p2"]
+           "./p2", "bootstrap.olg"]
 install = """\
 sudo rpm -i --force libstdc++-4.0.0-8.i386.rpm; \
 sudo rpm -i --force boost-1.32.0-6.i386.rpm; \
@@ -19,10 +20,12 @@ startup =  "sudo /sbin/service p2 restart"
 stop    =  "sudo /sbin/service p2 stop"
 
 def print_usage():
-    print """Usage: psetup.py [-j <parallel>] [-i] [-k] [-u <username> -p <password>] -n <slice_name> [<planetLabNode>]"""
+    print """
+Usage: psetup.py [-j <parallel>] [-i] [-k] \\
+                 -n <slice_name> [<planetLabNode>]"""
 
 def parse_cmdline(argv):
-    shortopts = "ikn:j:u:p:"
+    shortopts = "ikn:j:o:"
     flags = {"kill" : False, "slice" : None, "parallel" : 1, \
              "install" : False, "email" : None, "password" : None}
     opts, args = getopt.getopt(argv[1:], shortopts)
@@ -31,8 +34,6 @@ def parse_cmdline(argv):
         elif o == "-j": flags["parallel"] = int(v)
         elif o == "-i": flags["install"]  = True
         elif o == "-k": flags["kill"]  = True
-        elif o == "-u": flags["email"]    = v
-        elif o == "-p": flags["password"] = v
         else:
             print_usage()
             exit(3)
@@ -78,7 +79,10 @@ def startNode(node):
       for f in files:
         os.system("scp %s %s@%s: >& /dev/null" % (f, flags["slice"], node))  
       os.system("ssh -l %s %s \"%s\" >& /dev/null" % (flags["slice"], node, install))
-    os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % (flags["slice"], node, startup))
+    else:
+      os.system("scp bootstrap.olg %s@%s: >& /dev/null" % (flags["slice"], node))  
+    os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % \
+              (flags["slice"], node, startup))
     sys.exit(0)
   return pid
 
@@ -102,6 +106,8 @@ if __name__ == "__main__":
     print_usage()
     sys.exit(1)
   server = xmlrpclib.Server('https://www.planet-lab.org/PLCAPI/')
+  flags["email"]    = raw_input("PlanetLab Login: ") 
+  flags["password"] = getpass.getpass() 
 
   if len(args) > 0:
     if flags["kill"]:

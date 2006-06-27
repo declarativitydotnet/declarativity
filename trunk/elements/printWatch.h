@@ -32,10 +32,11 @@ public:
   /** Overridden to perform the printing */
   TuplePtr simple_action(TuplePtr p);
 
-  const char *class_name() const		{ return "PrintWatch";}
-  const char *processing() const		{ return "a/a"; }
-  const char *flow_code() const			{ return "x/x"; }
+  const char *class_name() const	{ return "PrintWatch";}
+  const char *processing() const	{ return "a/a"; }
+  const char *flow_code() const		{ return "x/x"; }
 
+  void watch(string name) 	{ _tableNames.insert(name); }
 private:
   /** The prefix to be placed on every printout by this element */
   string _prefix;
