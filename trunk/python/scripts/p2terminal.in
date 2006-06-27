@@ -147,8 +147,8 @@ class Terminal(Element):
 
 def print_usage():
     print """
-Usage: p2terminal.py [-Dvar=<value> [-Dvar=<value> [...]]] [-d <sec_delay>] \
-           [-t <program_name> -f <input_file> -n <nodes> -a <ip_address> -p <start_port>] \
+Usage: p2terminal.py [-Dvar=<value> [-Dvar=<value> [...]]] [-d <sec_delay>] \\
+           [-t <program_name> -f <input_file> -n <nodes> -a <ip_address> -p <start_port>] \\
            <terminal_ip_address> <terminal_port>"""
 
 def parse_cmdline(argv):
