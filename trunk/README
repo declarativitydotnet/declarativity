@@ -43,12 +43,30 @@ folks on p2devel@yahoogroups.com.
 NOTE ABOUT FLEX:
 
 Make sure to have flex version 2.5.31 or greater installed before
-building the project.
+building the project.  Note that current Fedora Core distributions (up
+to FC5) come with flex version 2.5.4, which is much older. You should
+install a newer flex package. For instance, prebuilt binaries for
+2.5.31-5 are available on the web.
 
 NOTE ABOUT AUTOMAKE:
 
 If you want to run automake (i.e., if you want to run ./setup), make
 sure you have automake version 1.9 or greater.
+
+NOTE ABOUT GCC:
+
+Please use gcc version 4.0 and later to compile P2. Make sure that the
+same major version is used to compile the boost binaries you are
+using. When compiling on a current version of Fedora Core (e.g., FC5)
+this is usually the case.
+
+NOTE ABOUT BOOST:
+
+This release is known to work with Boost version 1.32.0.
+
+NOTE ABOUT libtool:
+
+This release is known to work with libtool version 1.5.16.
 
 
 
