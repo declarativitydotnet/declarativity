@@ -301,7 +301,7 @@ parser P2Dataflow:
     token VAR:   "[a-z][a-zA-Z0-9_]*"
     token TYPE:  "[A-Z][a-zA-Z0-9_]*"
     token LINK:  r"->"
-    token STR:   "\"(?:[ \(\)\[\]'\$\._A-Za-z0-9:\-\+\*=<>]|\\\\\")*\""
+    token STR:   "\"(?:[ \%\(\)\[\]'\$\._A-Za-z0-9:\-\+\*=<>]|\\\\\")*\""
     ignore:      "[ \r\t\n]+"
     ignore:      r'#.*\r?\n'    # DL comments; sh/perl style
 
