@@ -25,25 +25,21 @@ OverlogCompiler::OverlogCompiler(string n, PlumberPtr p, string id, string d)
 
 int OverlogCompiler::push(int port, TuplePtr tp, b_cbv cb)
 {
-  if (tp->size() > 2 && (*tp)[1]->typeCode() == Value::STR &&
-      Val_Str::cast((*tp)[0]) == "overlogInstall") {
-    std::ostringstream script;
-    ValuePtr dest    = (*tp)[1];
-    ValuePtr source  = (*tp)[2];
-    string   name    = Val_Str::cast((*tp)[3]);
-    string   overlog = Val_Str::cast((*tp)[4]);
+  std::ostringstream script;
+  ValuePtr dest    = (*tp)[1];
+  ValuePtr source  = (*tp)[2];
+  string   name    = Val_Str::cast((*tp)[3]);
+  string   overlog = Val_Str::cast((*tp)[4]);
 
-    compile(overlog, script);
+  compile(overlog, script);
 
-    TuplePtr script_tuple = Tuple::mk();
-    script_tuple->append(Val_Str::mk("script"));
-    script_tuple->append(dest);
-    script_tuple->append(source);
-    script_tuple->append(Val_Str::mk(script.str())); 
-    script_tuple->freeze();
-    return output(0)->push(script_tuple, cb);
-  }
-  return output(0)->push(tp, cb);
+  TuplePtr script_tuple = Tuple::mk();
+  script_tuple->append(Val_Str::mk("script"));
+  script_tuple->append(dest);
+  script_tuple->append(source);
+  script_tuple->append(Val_Str::mk(script.str())); 
+  script_tuple->freeze();
+  return output(0)->push(script_tuple, cb);
 }
 
 void OverlogCompiler::compile(string overlog, std::ostringstream& script) {
