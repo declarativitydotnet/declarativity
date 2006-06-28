@@ -8,8 +8,7 @@ import socket
 import getpass
 
 files   = ["~/boost-1.32.0-6.i386.rpm", "~/libstdc++-4.0.0-8.i386.rpm",
-           "~/p2-0.7-2.i386.rpm", "~/python-2.3.4-11.i386.rpm", "./planetlab.py", 
-           "./p2", "bootstrap.olg"]
+           "~/p2-0.7-2.i386.rpm", "~/python-2.3.4-11.i386.rpm", "./planetlab.py", "./p2"]
 install = """\
 sudo rpm -i --force libstdc++-4.0.0-8.i386.rpm; \
 sudo rpm -i --force boost-1.32.0-6.i386.rpm; \
@@ -22,18 +21,23 @@ stop    =  "sudo /sbin/service p2 stop"
 def print_usage():
     print """
 Usage: psetup.py [-j <parallel>] [-i] [-k] \\
+                 [-Dvar=<value> [-Dvar=<value> [...]] -o <overlog>] \\
                  -n <slice_name> [<planetLabNode>]"""
 
 def parse_cmdline(argv):
-    shortopts = "ikn:j:o:"
-    flags = {"kill" : False, "slice" : None, "parallel" : 1, \
-             "install" : False, "email" : None, "password" : None}
+    shortopts = "ikn:j:o:D:"
+    flags = {"overlog" : "", "kill" : False, "slice" : None, "parallel" : 1, \
+             "env" : {}, "install" : False, "email" : None, "password" : None}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if   o == "-n": flags["slice"]    = v
         elif o == "-j": flags["parallel"] = int(v)
         elif o == "-i": flags["install"]  = True
-        elif o == "-k": flags["kill"]  = True
+        elif o == "-k": flags["kill"]     = True
+        elif o == "-o": flags["overlog"]  = v
+        elif o == "-D": 
+            d = v.split("=", 1)
+            flags["env"][d[0]] = d[1].replace("\"", "\\\"")
         else:
             print_usage()
             exit(3)
@@ -79,10 +83,13 @@ def startNode(node):
       for f in files:
         os.system("scp %s %s@%s: >& /dev/null" % (f, flags["slice"], node))  
       os.system("ssh -l %s %s \"%s\" >& /dev/null" % (flags["slice"], node, install))
+    if flags["overlog"]:
+      os.system("scp %s %s@%s: >& /dev/null" % (flags["overlog"], flags["slice"], node))  
+      os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % \
+                (flags["slice"], node, startup+" "+flags["overlog"].split("/")[-1]))
     else:
-      os.system("scp bootstrap.olg %s@%s: >& /dev/null" % (flags["slice"], node))  
-    os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % \
-              (flags["slice"], node, startup))
+      os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % \
+                (flags["slice"], node, startup))
     sys.exit(0)
   return pid
 
@@ -109,13 +116,27 @@ if __name__ == "__main__":
   flags["email"]    = raw_input("PlanetLab Login: ") 
   flags["password"] = getpass.getpass() 
 
+  if flags["overlog"]:
+    try:
+      if flags["env"]:
+        envs = ""
+        env = flags["env"]
+        for var in env:
+            envs += "-D" + var + "=" + env[var] + " "
+        os.system("cpp -P %s %s %s.processed" % \
+                  (envs, flags["overlog"], flags["overlog"]))
+      else:
+        os.system("cpp -P %s %s.processed" % (flags["overlog"], flags["overlog"]))
+      flags["overlog"] = "%s.processed" % flags["overlog"]
+    except:
+      print "ERROR: open file error on file", flags["overlog"]
+
   if len(args) > 0:
     if flags["kill"]:
       pid = stopNode(args[0])
     else:
       pid = startNode(args[0])
     p, s = os.wait()
-    del pids[p]
   else:
     pids  = {}
     nodes = getNodes()
