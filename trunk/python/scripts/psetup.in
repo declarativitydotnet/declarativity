@@ -8,12 +8,13 @@ import socket
 import getpass
 
 files   = ["~/boost-1.32.0-6.i386.rpm", "~/libstdc++-4.0.0-8.i386.rpm",
-           "~/p2-0.7-2.i386.rpm", "~/python-2.3.4-11.i386.rpm", "./planetlab.py", "./p2"]
+           "~/p2-0.7.2-0.i386.rpm", "~/python-2.3.4-11.i386.rpm", "./planetlab.py", 
+           "./p2"]
 install = """\
 sudo rpm -i --force libstdc++-4.0.0-8.i386.rpm; \
 sudo rpm -i --force boost-1.32.0-6.i386.rpm; \
 sudo rpm -i --force python-2.3.4-11.i386.rpm; \
-sudo rpm -i --force p2-0.7-2.i386.rpm; \
+sudo rpm -i --force p2-0.7.2-0.i386.rpm; \
 sudo mv ~/p2 /etc/rc.d/init.d/"""
 startup =  "sudo /sbin/service p2 restart"
 stop    =  "sudo /sbin/service p2 stop"

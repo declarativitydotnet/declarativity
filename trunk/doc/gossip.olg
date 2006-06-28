@@ -15,28 +15,28 @@ r0a sliceEvent@J(J, E)    :- periodic@J(J, E, 1, 1).
 r0b sliceNodes@J(J, N, C) :- sliceNodeEvent@J(J, N), nodeCount@J(J, C).
 r0c nodeCount@J(J, C2)    :- sliceNodes@J(J, N, C), C2:=C+1.
 
-g0 overlogEvent@N(N, J, T, P) :- gossipEvent@J(J, I, T, P, C), 
+g0 overlogEvent@N(N, S, T, P) :- gossipEvent@J(J, I, S, T, P, C), 
                                  sliceNodes@J(J, N, I),
                                  C < NUM_GOSSIP.
 
-g1 gossipEvent@J(J, I2, T, P, C2) :- gossipEvent@J(J, I, T, P, C), 
-                                     nodeCount@J(J, A), 
-                                     C < NUM_GOSSIP, 
-                                     C2:=C+1, I2 := f_rand() % A.
+g1 gossipEvent@J(J, I2, S, T, P, C2) :- gossipEvent@J(J, I, S, T, P, C), 
+                                        nodeCount@J(J, A), 
+                                        C < NUM_GOSSIP, 
+                                        C2:=C+1, I2 := f_rand() % A.
 
 /** Overlog installation rules */
-p0 overlog@J(J, T, P)           :- overlogEvent@J(J, S, T, P).
-p1 overlogInstall@J(J, J, T, P) :- overlog@J(J, T, P).
+p0 overlog@J(J, S, T, P)        :- overlogEvent@J(J, S, T, P).
+p1 overlogInstall@J(J, S, T, P) :- overlog@J(J, S, T, P).
 
 /** Tell some folks about the new install */
-p2 gossipEvent@J(J, I, T, P, C) :- overlogInstall@J(J, S, T, P),
-                                   nodeCount@J(J, A), 
-                                   C:=0, I:=f_rand() % A.
+p2 gossipEvent@J(J, I, S, T, P, C) :- overlogInstall@J(J, S, T, P),
+                                      nodeCount@J(J, A), 
+                                      C:=0, I:=f_rand() % A.
 
-/** Periodically tell someone what i have installed */
-p3a gossipEvent@J(J, I, T, P, C) :- gossipOverlog@J(J, I), 
-                                    overlog@J(J, T, P), C:=NUM_GOSSIP-1.
+/** Periodically tell folks what i have installed */
+p3a gossipEvent@J(J, I, S, T, P, C) :- gossipOverlog@J(J, I), 
+                                       overlog@J(J, S, T, P), C:=0.
 
-p3b gossipOverlog@J(J, I) :- periodic@J(J, E, 120),
+p3b gossipOverlog@J(J, I) :- periodic@J(J, E, 240),
                              nodeCount@J(J, A), 
                              I := f_rand() % A.
