@@ -4,19 +4,19 @@
  */
 
 materialize(overlog, infinity, infinity, keys(3)).
-materialize(sliceNodes, infinity, infinity, keys(2)).
+materialize(sliceNodes, infinity, infinity, keys(2,3)).
 materialize(nodeCount, infinity, 1, keys(2)).
 
-watch(overlogInstall).
+watch(status).
 
 i0  nodeCount@J(J, C) :- periodic@J(J, E, 0, 1), C:=0.
 
 r0a sliceEvent@J(J, E)    :- periodic@J(J, E, 1, 1).
 r0b sliceNodes@J(J, N, C) :- sliceNodeEvent@J(J, N), nodeCount@J(J, C).
-r0c nodeCount@J(J, C2)    :- sliceNodes@J(J, N, C), C2:=C+1.
+r0c nodeCount@J(J, C2)    :- sliceNodeEvent@J(J, N), nodeCount@J(J, C), C2:=C+1.
 
 g0 overlogEvent@N(N, S, T, P) :- gossipEvent@J(J, I, S, T, P, C), 
-                                 sliceNodes@J(J, N, I),
+                                 sliceNodes@J(J, N, X), I==X,
                                  C < NUM_GOSSIP.
 
 g1 gossipEvent@J(J, I2, S, T, P, C2) :- gossipEvent@J(J, I, S, T, P, C), 

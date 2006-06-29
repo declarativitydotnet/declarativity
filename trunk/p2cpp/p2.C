@@ -222,13 +222,13 @@ string P2::stub(string hostname, string port)
       let udp = Udp2(\"udp\"," << port << "); \
       let wrapAroundDemux = Demux(\"wrapAroundSendDemux\", \
                                   {Val_Str(\""<<hostname<<":"<<port<< "\")}, 0); \
-      let wrapAroundMux = Mux(\"wrapAroundSendMux\", 3); \
+      let inputRR = RoundRobin(\"inputRR\", 3); \
       udp-> UnmarshalField(\"unmarshal\", 1)      -> \
       PelTransform(\"unRoute\", \"$1 unboxPop\")    -> \
       Defrag(\"defragment\", 1)                   -> \
-      TimedPullPush(\"demux_in_pullPush\", 0)     -> \
       PelTransform(\"unPackage\", \"$2 unboxPop\")  -> \
-      wrapAroundMux -> \
+      inputRR -> \
+      TimedPullPush(\"pullDriver\", 0)     -> \
       PrintWatch(\"printWatch\", {str}) -> \
       DDemux(\"dDemux\", {value}, 0) ->  \
       Discard(\"discard\"); \
@@ -236,7 +236,8 @@ string P2::stub(string hostname, string port)
       TimedPullPush(\"rrout_pullPush\", 0) -> \
       wrapAroundDemux -> \
       UnboxField(\"unboxWrapAround\", 1) -> \
-      [1]wrapAroundMux;\
+      Queue(\"wrapAroundQueue\", 1000) -> \
+      [1]inputRR;\
       wrapAroundDemux[1] -> \
       Sequence(\"terminal_sequence\", 1, 1)          -> \
       Frag(\"fragment\", 1)                          -> \
@@ -244,8 +245,8 @@ string P2::stub(string hostname, string port)
       MarshalField(\"marshalField\", 1)              -> \
       StrToSockaddr(\"addr_conv\", 0)                -> \
       udp;  \
-      TupleSourceInterface(\"tupleSourceInterface\") -> Queue(\"injectQueue\",1000)-> \
-      TimedPullPush(\"injectPullPush\", 0) -> [2]wrapAroundMux; \
+      TupleSourceInterface(\"tupleSourceInterface\") -> \
+      Queue(\"injectQueue\",1000)-> [2]inputRR; \
     } \
     .	# END OF DATAFLOW DEFINITION"; 
   return stub.str();
