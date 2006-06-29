@@ -1,6 +1,14 @@
 /**
- * Construct a gossip overlog based on planetlab node events
- * the provide the set of nodes in a planetlab slice.
+ * This program instructs nodes to gossip the overlog programs it
+ * knows about with other planetlab nodes. The program assumes 
+ * a sliceNodeEvent, triggered by a sliceEvent, that provides the set 
+ * of nodes in a planetlab slice. Such event support is provided by the
+ * planetlab.py scripts located in the 'python/scripts' directory.
+ * The p2terminal.py script will send an overlog program as an
+ * overlogEvent, which will tigger an insertion into the overlog
+ * table followed by an overlogInstall event. The overlogInstall event
+ * is picked up by the overlog compile and install strand created by
+ * the P2 C++ stub interface.
  */
 
 materialize(overlog, infinity, infinity, keys(3)).

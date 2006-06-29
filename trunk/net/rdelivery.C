@@ -36,7 +36,7 @@ int32_t RDelivery::RTuple::delay() {
 
 
 RDelivery::RDelivery(string n, unsigned m, int dest, int seq)
-  : Element(n, 2, 3),
+  : Element(n, 2, 2),
     _out_cb(0),
     in_on_(true),
     max_retry_(m),

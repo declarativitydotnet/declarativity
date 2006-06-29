@@ -35,7 +35,6 @@ typedef uint64_t SeqNum;
  * Input  1 (push)    : Acknowledgement of some (possibly) outstanding tuple.
  * Output 0 (agnostic): Tuple to send with cc info wrapper.
  * Output 1 (push)    : Status of a tuple that was recently sent.
- * Output 2 (pull)    : Status of the CC element. (Optional)
  */
 class CCT : public Element {
 public:

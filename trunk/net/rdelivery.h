@@ -26,7 +26,7 @@ class RDelivery : public Element {
 public:
   RDelivery(string name, unsigned max_retry=5, int dest=0, int seq=2);
   const char *class_name() const { return "RDelivery";};
-  const char *processing() const { return "lh/lhh"; };
+  const char *processing() const { return "lh/lh"; };
   const char *flow_code() const	 { return "--/--"; };
 
   TuplePtr pull(int port, b_cbv cb);
