@@ -57,7 +57,7 @@ ValuePtr Val_Vector::xdr_unmarshal( XDR *x )
   for (uint32_t i = 0;
 	   i < sz;
 	   i++){
-	vp->insert_element(i, Value::xdr_unmarshal(x));
+	vp->insert(i, Value::xdr_unmarshal(x));
   }
   return mk(vp);
 }
