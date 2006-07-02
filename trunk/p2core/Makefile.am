@@ -47,7 +47,9 @@ libp2core_la_SOURCES = \
 	val_ip_addr.C \
 	dot.C \
 	list.C \
-	val_list.C 
+	val_list.C \
+	val_vector.C \
+	val_matrix.C
 
 INCLUDES = @BOOST_INC@ -I../eventLoop
 

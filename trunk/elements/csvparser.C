@@ -32,8 +32,8 @@
 //  - push-in will be reenabled when there are less than MIN_Q_SIZE
 //    tuples in the output queue. 
 //
-const size_t CSVParser::MIN_Q_SIZE = 100;
-const size_t CSVParser::MAX_Q_SIZE = 100;
+const uint32_t CSVParser::MIN_Q_SIZE = 100;
+const uint32_t CSVParser::MAX_Q_SIZE = 100;
 
 // 
 // Constructor. 

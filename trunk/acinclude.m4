@@ -810,3 +810,8 @@ AC_DEFUN([AC_CHECK_SOCKADDR_IN_SIN_LEN],
 ])
 
 
+dnl Try to get dynamic linking working right on OS X
+DLOPEN="-dlopen"
+AC_SUBST(DLOPEN)
+DLPREOPEN="-dlpreopen"
+AC_SUBST(DLPREOPEN)

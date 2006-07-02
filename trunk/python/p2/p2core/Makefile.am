@@ -35,7 +35,9 @@ libp2pythoncore_la_SOURCES = \
 	val_time.cpp         \
 	val_tuple.cpp        \
 	val_uint32.cpp       \
-	val_uint64.cpp
+	val_uint64.cpp       \
+	val_vector.cpp       \
+	val_matrix.cpp
 
 INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/net -I$(top_builddir)/eventLoop
 
