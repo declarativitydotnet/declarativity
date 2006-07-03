@@ -49,6 +49,15 @@ AC_CHECK_HEADERS([rpc/xdr.h], [], [],
 [# include <rpc/rpc.h>])
 AC_CHECK_FUNCS([xdr_uint32_t xdr_u_int32_t],[],[],[#include <rpc/xdr.h>])
 AC_CHECK_FUNCS([exp10],[],[],[#include <math.h>])
+AC_COMPILE_IFELSE(
+  [#include <boost/numeric/ublas/vector.hpp>
+   int main() {
+     boost::numeric::ublas::vector<int> v[10];  
+     v->insert(0, 0);
+     return(0);
+   }
+  ], [AC_DEFINE(BOOST_VEC_INSERT,32,"Boost vector insert version")],
+  [AC_DEFINE(BOOST_VEC_INSERT,33,"Boost vector insert version")])
 AC_LANG_POP(C++)
 
 # Checks for typedefs, structures, and compiler characteristics.
