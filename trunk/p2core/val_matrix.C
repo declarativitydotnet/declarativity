@@ -65,7 +65,7 @@ ValuePtr Val_Matrix::xdr_unmarshal( XDR *x )
   uint32_t sz2 = ui2;
   for (uint32_t i1 = 0; i1 < sz1; i1++) {
 	for (uint32_t i2 = 0; i2 < sz2; i2++) {
-	  mp->insert_element(i1, i2, Value::xdr_unmarshal(x));
+	  (*mp)(i1,i2) = Value::xdr_unmarshal(x);
 	}
   }
   return mk(mp);

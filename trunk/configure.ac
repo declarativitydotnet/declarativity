@@ -49,15 +49,28 @@ AC_CHECK_HEADERS([rpc/xdr.h], [], [],
 [# include <rpc/rpc.h>])
 AC_CHECK_FUNCS([xdr_uint32_t xdr_u_int32_t],[],[],[#include <rpc/xdr.h>])
 AC_CHECK_FUNCS([exp10],[],[],[#include <math.h>])
-AC_COMPILE_IFELSE(
-  [#include <boost/numeric/ublas/vector.hpp>
-   int main() {
-     boost::numeric::ublas::vector<int> v[10];  
-     v->insert(0, 0);
-     return(0);
-   }
-  ], [AC_DEFINE(BOOST_VEC_INSERT,32,"Boost vector insert version")],
-  [AC_DEFINE(BOOST_VEC_INSERT,33,"Boost vector insert version")])
+# Check Boost's vector and matrix insertion, which changed at v. 1_33
+## XXX This hard-earned test, while accurate, is no longer used since
+## we don't need to call the insert methods for vector and matrix.
+## I'll comment it out for now to speed builds, but save it for future
+## use in case it's needed.  -- JMH
+## save_CPPFLAGS="$CPPFLAGS"
+## CPPFLAGS="$CPPFLAGS $BOOST_INC"
+## AC_COMPILE_IFELSE([
+##   AC_LANG_PROGRAM([#include <boost/numeric/ublas/vector.hpp>],
+##    [[boost::numeric::ublas::vector<int> v(3);  
+##      v.insert_element(0, 0);
+##   ]]) ], [AC_DEFINE(BOOST_VEC_INSERT,33,[Boost vector insert version])],
+##         [AC_DEFINE(BOOST_VEC_INSERT,32,[Boost vector insert version])]
+## )
+## AC_COMPILE_IFELSE([
+##   AC_LANG_PROGRAM([#include <boost/numeric/ublas/matrix.hpp>],
+##    [[boost::numeric::ublas::matrix<int> m(3,3);  
+##      m.insert_element(0, 0, 0);
+##   ]]) ], [AC_DEFINE(BOOST_MAT_INSERT,33,[Boost matrix insert version])],
+##         [AC_DEFINE(BOOST_MAT_INSERT,32,[Boost matrix insert version])]
+## )
+## CPPFLAGS="$save_CPPFLAGS"
 AC_LANG_POP(C++)
 
 # Checks for typedefs, structures, and compiler characteristics.
