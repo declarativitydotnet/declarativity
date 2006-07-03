@@ -30,11 +30,24 @@ Typically, we expect the distribution to run with the following
 configure invocation:
 
    # ./configure CXXFLAGS="-g -Wall -DTRACE_OFF"
-  
+
+For running "make install", you may want to pass a "prefix" to
+configure; otherwise libraries and binaries will be installed under /usr/local.
+
+   # ./configure --prefix /path/to/your/spot CXXFLAGS="-g -Wall -DTRACE_OFF"
+
+(and of course replace "/path/to/your/spot" with a path of your choice.)
 
 Finally build: 
 
    # make
+
+and if that goes well, install:
+
+   # make install
+
+If you install into /usr/local or another shared prefix, you may need
+to run the "make install" command as root.
 
 Remember never to edit Makefile or Makefile.in.  Instead, make your
 changes to Makefile.am.  If you're still having problems, ask the nice
