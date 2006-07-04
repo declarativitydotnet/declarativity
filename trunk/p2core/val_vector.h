@@ -43,10 +43,12 @@ public:
 
   // Constructors
   Val_Vector(VectorPtr vp) : V(vp) {};
+  Val_Vector(size_t size) { VectorPtr p(new ValPtrVector(size)); V = p;}
   virtual ~Val_Vector() {};
 
   // Factory
   static ValuePtr mk(VectorPtr vp) { ValuePtr p(new Val_Vector(vp)); return p; };
+  static ValuePtr mk2(size_t size) { ValuePtr p(new Val_Vector(size)); return p; };
   
   // strict comparison
   int compareTo(ValuePtr v) const;
@@ -57,6 +59,10 @@ public:
   // Casting methods; only relevant to extract underlying vector.
   static VectorPtr cast(ValuePtr v);
   const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
+
+  // manipulate vector entries
+  void insert(size_t i, ValuePtr vp) { (*V)[i] = vp; };
+  void erase(size_t i) { (*V)[i].reset(); };
       
   static const opr::Oper* oper_;
    

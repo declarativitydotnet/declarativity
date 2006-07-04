@@ -31,6 +31,8 @@
 #include "val_list.h"
 #include "val_id.h"
 #include "val_ip_addr.h"
+#include "val_vector.h"
+#include "val_matrix.h"
 
 
 typedef ValuePtr (*_unmarshal_fn)( XDR *);
@@ -49,7 +51,9 @@ static _unmarshal_fn jump_tab[] = {
   Val_ID::xdr_unmarshal,
   Val_IP_ADDR::xdr_unmarshal,
   Val_Time_Duration::xdr_unmarshal,
-  Val_List::xdr_unmarshal
+  Val_List::xdr_unmarshal,
+  Val_Vector::xdr_unmarshal,
+  Val_Matrix::xdr_unmarshal
 };
 
 //
