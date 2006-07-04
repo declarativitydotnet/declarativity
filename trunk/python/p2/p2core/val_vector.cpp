@@ -7,10 +7,12 @@ using namespace boost::numeric::ublas;
 
 void export_val_vector()
 {
-  class_<Val_Vector, bases< vector< ValuePtr > >, boost::shared_ptr<Val_Vector> >
-        ("Val_Vector", no_init)
+  class_<Val_Vector, bases< Value >, boost::shared_ptr<Val_Vector> >
+	    ("Val_Vector", init<size_t>())
     .def("toConfString", &Val_Vector::toConfString)
-    .def("mk",  &Val_Vector::mk)
-    .staticmethod("mk")
+	.def("insert", &Val_Vector::insert)
+	.def("erase", &Val_Vector::erase)
+    .def("mk2",  &Val_Vector::mk2)
+    .staticmethod("mk2")
   ; 
 }

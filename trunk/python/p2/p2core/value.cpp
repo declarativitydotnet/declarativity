@@ -60,6 +60,8 @@ scope outer =
     .value("IP_ADDR",       Value::IP_ADDR)
     .value("TIME_DURATION", Value::TIME_DURATION)
     .value("LIST",          Value::LIST)
+    .value("VECTOR",        Value::VECTOR)
+    .value("MATRIX",        Value::MATRIX)
     .value("TYPES",         Value::TYPES)
   ;
 
