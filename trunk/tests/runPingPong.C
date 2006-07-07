@@ -75,9 +75,9 @@ TuplePtr tup()
 void ping_cb(TuplePtr tp)
 {
   std::cerr << "RECEIVED PING TUPLE: " << tp->toString() << std::endl;
-  std::cerr << "CANCELING CALLBACK: " << std::endl;
-  p2->unsubscribe(ping_handle); 
-  p2->tuple(tup());
+  // std::cerr << "CANCELING CALLBACK: " << std::endl;
+  // p2->unsubscribe(ping_handle); 
+  // p2->tuple(tup());
 }
 
 void test_cb(TuplePtr tp)
@@ -96,7 +96,7 @@ int main(int argc, char **argv)
   string ping(readScript(argv[1]));
   string hostname(argv[2]);
   string port(argv[3]);
-  p2 = new P2(hostname, port);
+  p2 = new P2(hostname, port, P2::CC | P2::RELIABLE | P2::ORDERED);
 
   p2->install("overlog", ping);
   std::cerr << "INSTALLED OVERLOG" << std::endl;

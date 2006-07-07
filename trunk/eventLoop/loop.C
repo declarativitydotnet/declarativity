@@ -50,7 +50,8 @@ delayCB(double secondDelay, b_cbv cb, Element* owner)
 void
 timeCBRemove(timeCBHandle* handle)
 {
-  callbacks.erase(handle);
+  // Do not remove this callback outside of the main loop.
+  handle->active = false;
 }
 
 tcpHandle*
@@ -73,6 +74,7 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
   // Empty the queue prefix that has already expired
 
   callbackQueueT::iterator iter = callbacks.begin();
+ 
   while ((iter != callbacks.end()) &&
          ((*iter)->time <= now)) {
     // Remove this callback from the queue
@@ -81,13 +83,23 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
     iter++;
     
     // Run it
-    if (theCallback->owner == NULL || 
-        theCallback->owner->state() == Element::ACTIVE) {
+    if (theCallback->active &&
+        (theCallback->owner == NULL || 
+         theCallback->owner->state() == Element::ACTIVE)) {
       (theCallback->callback)();
     }
     
     // And erase it
     delete theCallback;
+  }
+
+  /** Time to clean house: remove all inactive callbacks */
+  for (iter = callbacks.begin(); iter != callbacks.end(); iter++) {
+    if ((*iter)->active == false) {
+      timeCBHandle* theCallback = *iter;
+      callbacks.erase(iter);
+      delete theCallback;
+    }
   }
 
   ////////////////////////////////////////////////////////////

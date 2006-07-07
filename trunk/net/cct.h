@@ -17,10 +17,10 @@
 #include "tuple.h"
 #include "element.h"
 #include "inlines.h"
+#include "tupleseq.h"
 
 
 class CCTuple;
-typedef uint64_t SeqNum; 
 
 /**
  * The Tx element pulls tuples from input0, wraps them in a
@@ -38,7 +38,8 @@ typedef uint64_t SeqNum;
  */
 class CCT : public Element {
 public:
-  CCT(string name, double init_wnd, double max_wnd, int dest_field=0, int seq_field=2);
+  CCT(string name, double init_wnd=1., double max_wnd=2048., 
+      uint dest_field=0, uint rto_field=2, uint seq_field=3);
   const char *class_name() const { return "CCT";};
   const char *processing() const { return "lh/lh"; };
   const char *flow_code() const	 { return "--/--"; };
@@ -49,25 +50,23 @@ public:
 private:
   void timeout_cb(CCTuple*);			// Callback for to retry sending a tuple
   void data_ready();				// Callback for input data ready
-  REMOVABLE_INLINE int32_t dealloc(ValuePtr,SeqNum,string);	// Remove CCTuple from map
-  REMOVABLE_INLINE void map(CCTuple*);		// Map tuple and set timeout
-  REMOVABLE_INLINE void add_rtt_meas(int32_t);	// Update sa, sv, and rto based on m
-  REMOVABLE_INLINE void timeout();		// Update sa, sv, and rto based on m
+  REMOVABLE_INLINE void dealloc(ValuePtr,SeqNum); // Remove CCTuple from map
+  REMOVABLE_INLINE void map(CCTuple*, double);	// Map tuple and set timeout
+  REMOVABLE_INLINE void successTransmit();	// Successful tuple transmission 
+  REMOVABLE_INLINE void failureTransmit();	// Failed tuple transmission 
   REMOVABLE_INLINE int  current_window();	// Returns the current window size
-  REMOVABLE_INLINE int  max_window();		// Returns the current window size
+  REMOVABLE_INLINE int  max_window();		// Returns the max window size
 
-  b_cbv     _data_cb; 				// Callback for data output ready
+  b_cbv   _data_cb; 				// Callback for data output ready
   bool    data_on_;
-  int32_t sa_;					// Scaled avg. RTT (ms) scaled by 8
-  int32_t sv_;					// Scaled variance RTT (ms) scaled by 4
-  int32_t rto_;					// The round-trip timeout
 
   double    max_wnd_;				// Max window size
   double    rwnd_;				// Receiver window size
   double    cwnd_;				// Current congestion window size
   double    ssthresh_;				// Slow start threshold
-  int       dest_field_;
-  int       seq_field_;
+  uint      dest_field_;
+  uint      rto_field_;
+  uint      seq_field_;
 
   typedef std::map<ValuePtr, boost::shared_ptr<std::map<SeqNum, CCTuple*> >, Value::Less> CCTupleIndex;
   CCTupleIndex tmap_;			// Map containing unacked in transit tuples

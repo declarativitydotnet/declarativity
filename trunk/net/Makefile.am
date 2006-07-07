@@ -22,14 +22,17 @@ libp2net_la_SOURCES = \
 	udp.C \
 	udp2.C \
 	tupleseq.C \
+	basicAck.C \
 	cct.C \
 	ccr.C \
 	rcct.C \
 	rccr.C \
 	rdelivery.C \
+	odelivery.C \
 	bw.C \
 	frag.C \
-	defrag.C
+	defrag.C \
+	roundTripTimer.C
 
 INCLUDES = @BOOST_INC@ -I../p2core -I../eventLoop
 

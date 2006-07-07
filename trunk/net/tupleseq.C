@@ -19,8 +19,8 @@
 
 #define MAX_INIT_SEQ 2048
 
-Sequence::Sequence(string n, SeqNum b, unsigned s, int d)
-  : Element(n,1,1), seq_(b), seq_field_(s), dest_field_(d)
+Sequence::Sequence(string name, SeqNum start, unsigned seq_field, int dest_field)
+  : Element(name,1,1), seq_(start), seq_field_(seq_field), dest_field_(dest_field)
 {
   if (!seq_) seq_ = SeqNum(rand() * MAX_INIT_SEQ);
 }

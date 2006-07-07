@@ -39,7 +39,7 @@ typedef uint64_t SeqNum;
  */
 class CCR : public Element {
 public:
-  CCR(string name, double rwnd=512., int dest=0, int src=1, int seq=2);
+  CCR(string name, double rwnd=512., int dest=0, int src=1, int seq=3);
   const char *class_name() const { return "CCR";};
   const char *processing() const { return "a/al"; };
   const char *flow_code() const	 { return "-/--"; };
@@ -48,7 +48,7 @@ public:
 
   TuplePtr pull(int port, b_cbv cb);		// Pull next acknowledgement from ack_q
 
-  int push(int port, TuplePtr tp, b_cbv cb);	// Flow control input
+  // int push(int port, TuplePtr tp, b_cbv cb);
 
 private:
   b_cbv _ack_cb; 				// Callback to send an ack 

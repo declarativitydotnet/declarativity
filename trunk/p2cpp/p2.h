@@ -25,6 +25,7 @@
 
 class P2 { 
 public:
+  enum TransportConf {NONE=0, RELIABLE=1, ORDERED=2, CC=4};
 
   /** A handle to return to a subscriber of an event */
   class CallbackHandle {
@@ -42,7 +43,7 @@ public:
   /**
    * Creates a stub P2 installation that receives and
    * sends tuple on hostname:port */
-  P2(string hostname, string port);
+  P2(string hostname, string port, uint transport_conf=NONE);
 
   /**
    * Run the event loop. This call will block the main
@@ -85,6 +86,7 @@ private:
 
   PlumberPtr _plumber;
   string     _id;
+  uint       _transport_conf;
 
   TupleSourceInterface* _tupleSourceInterface;
 

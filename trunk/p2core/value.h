@@ -151,7 +151,13 @@ public:
   };
 
   /** Strict equality */
-  REMOVABLE_INLINE bool equals( ValuePtr other ) const { return compareTo(other) == 0; }
+  REMOVABLE_INLINE bool equals( ValuePtr other ) const { 
+    try { 
+      return compareTo(other) == 0; 
+    } catch (Value::TypeError e) {
+      return false;
+    }
+  }
 
   /** Am I less than, equal or greater than the other value?  -1 means
       less, 0 means equal, +1 means greater.  This is intended to

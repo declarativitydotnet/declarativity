@@ -70,6 +70,9 @@ void export_tman();
 void export_tupleseq();
 void export_udp();
 void export_udp2();
+void export_odelivery();
+void export_roundTripTimer();
+void export_basicAck();
 void export_elementSpec();
 void export_loggerI();
 void export_plumber();
@@ -195,6 +198,9 @@ BOOST_PYTHON_MODULE(libp2python)
   export_tupleseq();
   export_udp();
   export_udp2();
+  export_odelivery();
+  export_roundTripTimer();
+  export_basicAck();
 
   export_overlogCompiler();
   export_tupleListener();

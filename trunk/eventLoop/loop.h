@@ -47,6 +47,9 @@ public:
   /** The element that owns the callback */
   Element* owner;
 
+  /** Is this callback active? */
+  bool active;
+
   /** What was my time target? */
   boost::posix_time::ptime time;
   
@@ -58,7 +61,7 @@ public:
 
   /** Construct me */
   timeCBHandle(boost::posix_time::ptime& t, const b_cbv& cb, Element* e)
-    : owner(e), time(t), callback(cb), ID(callbackID++)
+    : owner(e), active(true), time(t), callback(cb), ID(callbackID++)
   {}
 };
 

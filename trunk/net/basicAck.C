@@ -12,14 +12,11 @@
 
 #include <algorithm>
 #include <stdlib.h>
-
-#include "ccr.h"
+#include "basicAck.h"
 #include "val_uint64.h"
 #include "val_uint32.h"
-#include "val_double.h"
 #include "val_str.h"
 #include "val_tuple.h"
-#include "val_null.h"
 
 
 /////////////////////////////////////////////////////////////////////
@@ -30,14 +27,12 @@
 /**
  * Constructor: 
  * name: The name given to this element.
- * rwnd: Initial receiver window size (default given in ccrx.h).
  */
-CCR::CCR(string name, double rwnd, int dest, int src, int seq) 
+BasicAck::BasicAck(string name, uint dest, uint src, uint seq) 
   : Element(name, 1, 2),
     _ack_cb(0),
-    rwnd_(rwnd),
-    src_field_(src),
     dest_field_(dest),
+    src_field_(src),
     seq_field_(seq)
 {
 }
@@ -46,18 +41,20 @@ CCR::CCR(string name, double rwnd, int dest, int src, int seq)
  * Acknowledge tuple p if ack_q is empty and output1 is open.
  * Otherwise, add to ack_q and enable callback.
  */
-TuplePtr CCR::simple_action(TuplePtr p) 
+TuplePtr BasicAck::simple_action(TuplePtr p) 
 {
-  ValuePtr src    = (*p)[src_field_]; 
-  ValuePtr dest   = (*p)[dest_field_]; 
-  ValuePtr seq    = (*p)[seq_field_];
+  ValuePtr src  = (*p)[src_field_]; 
+  ValuePtr dest = (*p)[dest_field_]; 
+  ValuePtr seq  = (*p)[seq_field_];
+
+  if ((rand() / (float)RAND_MAX) < 0.5)
+    return p;
 
   TuplePtr ack  = Tuple::mk();
   ack->append(src);			// Source location
   ack->append(Val_Str::mk("ACK"));
   ack->append(dest);			// Destination address
   ack->append(seq);			// The sequence number
-  ack->append(Val_Double::mk(rwnd_));	// Receiver window size
   ack->freeze();
   ack_q_.push_back(ack);		// Append to ack queue
 
@@ -68,11 +65,20 @@ TuplePtr CCR::simple_action(TuplePtr p)
   return p;				// Forward data tuple
 }
 
+/*
+int BasicAck::push(int port, TuplePtr p, b_cbv cb)
+{
+  if ((rand() / (float)RAND_MAX) < 0.5)
+    return this->Element::push(port, p, cb); 	
+  return 1;
+}
+*/
+
 /**
  * Pulls the next acknowledgement in ack_q_ to send to the
  * receiver.
  */
-TuplePtr CCR::pull(int port, b_cbv cb)
+TuplePtr BasicAck::pull(int port, b_cbv cb)
 {
   if (port == 1) {
     if (!ack_q_.empty()) {
@@ -84,15 +90,6 @@ TuplePtr CCR::pull(int port, b_cbv cb)
     return TuplePtr();
   } 
 
-  // Need this to go through regular pull
+  // Need this to go through regular pull to call simple_action
   return this->Element::pull(port, cb); 	
 }
-
-/*
-int CCR::push(int port, TuplePtr p, b_cbv cb)
-{
-  if ((rand() / (float)RAND_MAX) < 0.5)
-    return this->Element::push(port, p, cb); 	
-  return 1;
-}
-*/

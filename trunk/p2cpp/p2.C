@@ -25,8 +25,8 @@
 #include "val_str.h"
 #include <iostream>
 
-P2::P2(string hostname, string port) 
-  : _plumber(new Plumber()), _id(hostname+":"+port)
+P2::P2(string hostname, string port, uint tc) 
+  : _plumber(new Plumber()), _id(hostname+":"+port), _transport_conf(tc)
 {
   eventLoopInitialize();
   Py_Initialize();
@@ -219,35 +219,122 @@ string P2::stub(string hostname, string port)
 {
   ostringstream stub;
   stub << "dataflow P2 { \
-      let udp = Udp2(\"udp\"," << port << "); \
-      let wrapAroundDemux = Demux(\"wrapAroundSendDemux\", \
-                                  {Val_Str(\""<<hostname<<":"<<port<< "\")}, 0); \
-      let inputRR = RoundRobin(\"inputRR\", 3); \
-      udp-> UnmarshalField(\"unmarshal\", 1)      -> \
-      PelTransform(\"unRoute\", \"$1 unboxPop\")    -> \
-      Defrag(\"defragment\", 1)                   -> \
-      PelTransform(\"unPackage\", \"$2 unboxPop\")  -> \
-      inputRR -> \
-      TimedPullPush(\"pullDriver\", 0)     -> \
-      PrintWatch(\"printWatch\", {str}) -> \
-      DDemux(\"dDemux\", {value}, 0) ->  \
-      Discard(\"discard\"); \
-      DRoundRobin(\"dRoundRobin\", 0) -> \
-      TimedPullPush(\"rrout_pullPush\", 0) -> \
-      wrapAroundDemux -> \
-      UnboxField(\"unboxWrapAround\", 1) -> \
-      Queue(\"wrapAroundQueue\", 1000) -> \
-      [1]inputRR;\
-      wrapAroundDemux[1] -> \
-      Sequence(\"terminal_sequence\", 1, 1)          -> \
-      Frag(\"fragment\", 1)                          -> \
-      PelTransform(\"package\", \"$0 pop swallow pop\") -> \
-      MarshalField(\"marshalField\", 1)              -> \
-      StrToSockaddr(\"addr_conv\", 0)                -> \
-      udp;  \
-      TupleSourceInterface(\"tupleSourceInterface\") -> \
-      Queue(\"injectQueue\",1000)-> [2]inputRR; \
-    } \
-    .	# END OF DATAFLOW DEFINITION"; 
+           let udp = Udp2(\"udp\"," << port << "); \
+           let wrapAroundDemux = Demux(\"wrapAroundSendDemux\", \{Val_Str(\""
+                                                                << hostname << ":" << port
+                                                                << "\")}, 0); \
+           let inputRR = RoundRobin(\"inputRR\", 3); \
+           let srcAddr = PelTransform(\"source\", \"$0 pop \\\""
+                                      << hostname <<":" << port 
+                                      << "\\\" pop swallow unbox drop popall\"); ";
+
+
+  if (_transport_conf & (RELIABLE | CC | ORDERED)) {
+    stub << "let rtt      = RoundTripTimer(\"rtt_timer\"); ";
+    stub << "let ackDemux = Demux(\"ackDemux\", {Val_Str(\"ACK\")}, 1); ";
+    stub << "let netoutRR = RoundRobin(\"netoutRR\", 2); ";
+
+    if (_transport_conf & CC) {
+      stub << "let cct = CCT(\"cct\"); ";
+      stub << "let ccr = CCR(\"ccr\"); ";
+    }
+    else {
+      stub << "let ack = BasicAck(\"acknowledge\"); ";
+    }
+
+    if (_transport_conf & RELIABLE)  {
+    stub << "let rdelv = RDelivery(\"reliable_delivery\"); ";
+    }
+    if (_transport_conf & ORDERED)  {
+      stub << "let odevl = ODelivery(\"order\"); ";
+    }
+  }
+
+  stub << "udp-> UnmarshalField(\"unmarshal\", 1) -> \
+           PelTransform(\"unRoute\", \"$1 unboxPop\") ->";
+
+  if (_transport_conf & (CC | RELIABLE | ORDERED)) {
+    stub << "ackDemux[1] -> ";
+    if (_transport_conf & CC) {
+      stub << "ccr ->";
+    }
+    else { 
+      stub << "ack ->";
+    }
+  }
+
+  if (_transport_conf & (RELIABLE | CC | ORDERED)) {
+    stub << "Defrag(\"defragment\", 3) -> ";
+    if (_transport_conf & ORDERED) {
+      stub << "TimedPullPush(\"pullDriver\", 0) -> \
+               odevl -> Queue ->";
+    }
+    stub << "PelTransform(\"unPackage\", \"$4 unboxPop\")->";
+  }
+  else {
+    stub << "Defrag(\"defragment\", 2) -> ";
+    stub << "PelTransform(\"unPackage\", \"$3 unboxPop\")->";
+  }
+
+  stub << "inputRR -> \
+           TimedPullPush(\"pullDriver\", 0)     -> \
+           PrintWatch(\"printWatch\", {str}) -> \
+           DDemux(\"dDemux\", {value}, 0) ->  \
+           Discard(\"discard\"); \
+           DRoundRobin(\"dRoundRobin\", 0) -> \
+           TimedPullPush(\"rrout_pullPush\", 0) -> \
+           wrapAroundDemux -> \
+           UnboxField(\"unboxWrapAround\", 1) -> \
+           Queue(\"wrapAroundQueue\", 1000) -> \
+           [1]inputRR; \
+           wrapAroundDemux[1] -> \
+           srcAddr -> \
+           Sequence(\"terminal_sequence\", 1, 2) -> \
+           Frag(\"fragment\", 2) ->";
+
+
+  /** Send side reliable delivery and congestion control */
+  if (_transport_conf & (RELIABLE | CC | ORDERED)) {
+    stub << "rtt ->";
+    if (_transport_conf & RELIABLE) {
+      stub << "rdelv ->";
+    }
+    if (_transport_conf & CC) {
+      stub << "cct ->";
+    }
+  }
+
+   stub << "netoutRR -> \
+            PelTransform(\"package\", \"$0 pop swallow pop\") -> \
+            MarshalField(\"marshalField\", 1)              -> \
+            StrToSockaddr(\"addr_conv\", 0)                -> \
+            udp;  \
+            TupleSourceInterface(\"tupleSourceInterface\") -> \
+            Queue(\"injectQueue\",1000)-> [2]inputRR; ";
+
+  /** Ack packet send dataflow */
+  if (_transport_conf & (CC | RELIABLE | ORDERED)) {
+    if (_transport_conf & CC) {
+      stub << "ccr[1] ->";
+    }
+    else { 
+      stub << "ack[1] ->";
+    }
+    stub << "[1]netoutRR; ";
+  }
+
+  /** Ack packet receive dataflow */
+  if (_transport_conf & (RELIABLE | CC | ORDERED)) {
+    stub << "ackDemux ->";
+    if (_transport_conf & CC) {
+      stub << "[1]cct[1] ->";
+    }
+    if (_transport_conf & RELIABLE) {
+      stub << "[1]rdelv[1] ->";
+    }
+    stub << "[1]rtt; ";
+  }
+
+  stub << "}\n.	# END OF DATAFLOW DEFINITION"; 
   return stub.str();
 }

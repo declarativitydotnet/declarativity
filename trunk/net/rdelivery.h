@@ -16,15 +16,14 @@
 #include <deque>
 #include "tuple.h"
 #include "element.h"
+#include "loop.h"
 #include "inlines.h"
+#include "tupleseq.h"
 
-
-class RTuple;
-typedef uint64_t SeqNum; 
 
 class RDelivery : public Element {
 public:
-  RDelivery(string name, unsigned max_retry=5, int dest=0, int seq=2);
+  RDelivery(string name, uint max_retry=5, uint dest=0, uint rto=2, uint seq=3);
   const char *class_name() const { return "RDelivery";};
   const char *processing() const { return "lh/lh"; };
   const char *flow_code() const	 { return "--/--"; };
@@ -35,13 +34,15 @@ public:
 private:
   struct RTuple
   {
-    RTuple(TuplePtr tp) : retry_cnt_(0), tp_(tp) { resetTime(); } 
+    RTuple(ValuePtr dest, SeqNum seq, double rto, TuplePtr tp) 
+      : dest_(dest), seq_(seq), rto_(rto), tp_(tp), tcb_(NULL), retry_cnt_(0) { } 
 
-    void resetTime();
-    int32_t delay();
-    boost::posix_time::ptime  timer_;	// Transmit time
-    unsigned  retry_cnt_;		// Transmit counter.
-    TuplePtr  tp_;			// The tuple.
+    ValuePtr      dest_;
+    SeqNum        seq_;
+    double        rto_;		// Round trip time
+    TuplePtr      tp_;		// The tuple.
+    timeCBHandle* tcb_;       	// Used to cancel retransmit timer
+    uint          retry_cnt_;	// Transmit counter.
   };
   typedef boost::shared_ptr<RTuple> RTuplePtr;
 
@@ -52,14 +53,15 @@ private:
 
   // Handles a failure to deliver a tuple
   REMOVABLE_INLINE void handle_failure(ValuePtr, SeqNum);
+
   void input_cb();
   b_cbv _out_cb;
 
   bool      in_on_;
-  uint32_t  max_retry_;			// Max number of retries for a tuple
-  uint64_t  max_seq_;
-  int       dest_field_;
-  int       seq_field_;
+  uint      max_retry_;			// Max number of retries for a tuple
+  uint      dest_field_;
+  uint      seq_field_;
+  uint      rto_field_;
 
   std::deque <RTuplePtr>  rtran_q_;	// Retransmit queue 
 

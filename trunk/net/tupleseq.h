@@ -23,7 +23,7 @@ typedef uint64_t SeqNum;
 
 class Sequence : public Element {
 public:
-  Sequence(string n="sequence", SeqNum b=1, unsigned s=0, int d=-1);
+  Sequence(string name="sequence", SeqNum start=1, unsigned seq_field=0, int dest_field=-1);
   const char *class_name() const { return "Sequence";};
   const char *processing() const { return "a/a"; };
   const char *flow_code() const	 { return "-/-"; };
