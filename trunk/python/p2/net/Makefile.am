@@ -19,6 +19,7 @@ noinst_LTLIBRARIES = libp2pythonnet.la
 libp2pythonnet_la_SOURCES = \
 	bw.cpp \
 	basicAck.cpp \
+	cumulativeAck.cpp \
 	ccr.cpp \
 	cct.cpp \
 	rccr.cpp \
@@ -28,6 +29,7 @@ libp2pythonnet_la_SOURCES = \
 	plsensor.cpp \
 	rdelivery.cpp \
 	odelivery.cpp \
+	dupRemove.cpp \
 	skr.cpp \
 	snetsim.cpp \
 	tman.cpp \

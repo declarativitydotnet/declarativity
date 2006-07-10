@@ -6,7 +6,7 @@ using namespace boost::python;
 void export_cct()
 {
   class_<CCT, bases<Element>, boost::shared_ptr<CCT>, boost::noncopyable>
-      ("CCT", init<string, optional<double, double, uint, uint, uint> >())
+      ("CCT", init<string, optional<double, double> >())
 
     .def("class_name", &CCT::class_name)
     .def("processing", &CCT::processing)

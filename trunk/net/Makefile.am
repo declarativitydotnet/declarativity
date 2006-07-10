@@ -23,12 +23,14 @@ libp2net_la_SOURCES = \
 	udp2.C \
 	tupleseq.C \
 	basicAck.C \
+	cumulativeAck.C \
 	cct.C \
 	ccr.C \
 	rcct.C \
 	rccr.C \
 	rdelivery.C \
 	odelivery.C \
+	dupRemove.C \
 	bw.C \
 	frag.C \
 	defrag.C \

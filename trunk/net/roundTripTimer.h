@@ -23,8 +23,7 @@ class TupleTimestamp;
 
 class RoundTripTimer : public Element {
 public:
-  RoundTripTimer(string name, uint dest_field=0, 
-                 uint seq_field=2, uint rto_field=2);
+  RoundTripTimer(string name); 
 
   const char *class_name() const { return "RoundTripTimer";};
   const char *processing() const { return "ah/a"; };
@@ -50,10 +49,6 @@ private:
     int32_t sv_;	// Scaled variance RTT (ms) scaled by 4
     int32_t rto_;	// The round-trip timeout
   };
-
-  uint    dest_field_;
-  uint    seq_field_;
-  uint    rto_field_;
 
   typedef std::map<ValuePtr, boost::shared_ptr<RTTRec>, 
                    Value::Less> RTTIndex;

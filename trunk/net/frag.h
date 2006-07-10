@@ -20,7 +20,7 @@
 class Frag : public Element { 
 public:
 
-  Frag(string name="fragment", unsigned sf=0, unsigned bs=1024, unsigned mqs=1000);
+  Frag(string name="fragment", unsigned bs=1024, unsigned mqs=1000);
   const char *class_name() const { return "Frag";};
   const char *processing() const { return PUSH_TO_PULL; };
   const char *flow_code()  const { return "-/-"; };
@@ -35,7 +35,6 @@ public:
   b_cbv _push_cb;
   b_cbv _pull_cb;
 
-  const unsigned seq_field_;
   const unsigned block_size_;
   const unsigned max_queue_size_;
   

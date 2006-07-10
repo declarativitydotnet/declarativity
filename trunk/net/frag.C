@@ -18,11 +18,12 @@
 #include "val_opaque.h"
 #include "math.h"
 #include "xdrbuf.h"
+#include "netglobals.h"
 
-Frag::Frag(string name, unsigned sf, unsigned bs, unsigned mqs)
+Frag::Frag(string name, unsigned bs, unsigned mqs)
   : Element(name, 1, 1),
     _push_cb(0), _pull_cb(0),
-    seq_field_(sf), block_size_(bs), max_queue_size_(mqs)
+    block_size_(bs), max_queue_size_(mqs)
 {
   assert (bs % 4 == 0);
 }
@@ -90,7 +91,7 @@ TuplePtr Frag::pull(int port, b_cbv cb)
 void Frag::fragment(TuplePtr t)
 {
   TuplePtr payload = Tuple::mk();
-  for (unsigned i = seq_field_+1; i < t->size(); i++) {
+  for (unsigned i = SEQ+1; i < t->size(); i++) {
     payload->append((*t)[i]);
   }
   payload->freeze();
@@ -106,7 +107,7 @@ void Frag::fragment(TuplePtr t)
   for(uint32_t bn=0; payload_fb->length(); bn++) {
     TuplePtr p = Tuple::mk();
     // Get everything up to and including the sequence number
-    for (unsigned i = 0; i <= seq_field_; i++) {
+    for (unsigned i = 0; i <= SEQ; i++) {
       p->append((*t)[i]);
     }
 

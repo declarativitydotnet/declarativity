@@ -16,38 +16,36 @@
 #include "val_uint32.h"
 #include "val_str.h"
 #include "val_tuple.h"
+#include "netglobals.h"
 
 #define MAX_INIT_SEQ 2048
 
-Sequence::Sequence(string name, SeqNum start, unsigned seq_field, int dest_field)
-  : Element(name,1,1), seq_(start), seq_field_(seq_field), dest_field_(dest_field)
-{
-  if (!seq_) seq_ = SeqNum(rand() * MAX_INIT_SEQ);
-}
+Sequence::Sequence(string name, SeqNum start)
+  : Element(name,1,1), _start_seq(start) { }
 
 
 TuplePtr Sequence::simple_action(TuplePtr p)
 {
-  SeqNum next_seq = seq_;
+  SeqNum seq = _start_seq;
 
-  if (dest_field_ < 0) {
-    next_seq = seq_++;
+  ValueSeqMap::iterator iter = _seq_map.find((*p)[DEST]);
+  if (iter != _seq_map.end()) {
+    seq = iter->second + 1;
   }
   else {
-    std::map<ValuePtr, SeqNum>::iterator i = seq_nums_.find((*p)[dest_field_]);
-    if (i != seq_nums_.end()) {
-      next_seq = i->second + 1;
-    }
-    seq_nums_[(*p)[dest_field_]] = next_seq;
+    seq = SeqNum(((double)rand()/RAND_MAX) * MAX_INIT_SEQ);
+    _seq_map.insert(std::make_pair((*p)[DEST], seq));
   }
+  _seq_map[(*p)[DEST]] = seq;
 
   TuplePtr tp = Tuple::mk();
-  for (unsigned i = 0; i < seq_field_; i++) {
-    tp->append((*p)[i]);
-  }
-  tp->append(Val_UInt64::mk(next_seq));
-  for (unsigned i = seq_field_; i < p->size(); i++) {
-    tp->append((*p)[i]);
+  for (unsigned i = 0; i < p->size(); i++) {
+    if (i == SEQ) {
+      tp->append(Val_UInt64::mk(seq));
+    }
+    else {
+      tp->append((*p)[i]);
+    }
   }
   tp->freeze();
   return tp;

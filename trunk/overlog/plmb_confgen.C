@@ -311,9 +311,9 @@ Plmb_ConfGen::configurePlumber(boost::shared_ptr< Udp > udp, string nodeID)
       _p2dl << conf_assign(_ccTx.get(), 
                            conf_function("CCT", "transmitCC", 1, 2048));
       _ccRx 
-        = _conf->addElement(ElementPtr(new CCR("CC Receive" + nodeID, 2048, 1)));
+        = _conf->addElement(ElementPtr(new CCR("CC Receive" + nodeID, 2048)));
       _p2dl << conf_assign(_ccRx.get(), 
-                           conf_function("CCR", "receiveCC", 2048, 1));
+                           conf_function("CCR", "receiveCC", 2048));
     }
   }
 

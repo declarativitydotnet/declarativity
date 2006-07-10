@@ -17,10 +17,11 @@
 #include "val_uint32.h"
 #include "val_opaque.h"
 #include "xdrbuf.h"
+#include "netglobals.h"
 
-Defrag::Defrag(string name, unsigned sf)
+Defrag::Defrag(string name)
   : Element(name, 1, 1),
-    _pull_cb(0), seq_field_(sf)
+    _pull_cb(0) 
 {
 }
 
@@ -71,13 +72,13 @@ TuplePtr Defrag::pull(int port, b_cbv cb)
 
 void Defrag::defragment(TuplePtr t)
 {
-  uint64_t seq_num = Val_UInt64::cast((*t)[seq_field_]);
-  unsigned offset  = Val_UInt32::cast((*t)[seq_field_+1]);
-  unsigned chunks  = Val_UInt32::cast((*t)[seq_field_+2]);
+  uint64_t seq_num = Val_UInt64::cast((*t)[SEQ]);
+  unsigned offset  = Val_UInt32::cast((*t)[SEQ+1]);
+  unsigned chunks  = Val_UInt32::cast((*t)[SEQ+2]);
 
   for (FragMap::iterator iter = fragments_.find(seq_num); 
        iter != fragments_.end(); iter++) {
-    if (Val_UInt32::cast((*iter->second)[seq_field_+1]) == offset) {
+    if (Val_UInt32::cast((*iter->second)[SEQ+1]) == offset) {
       ELEM_INFO( "defragment: duplicate offset");
       return;
     }
@@ -92,14 +93,14 @@ void Defrag::defragment(TuplePtr t)
       TuplePtr p;
       for (FragMap::iterator iter = fragments_.find(seq_num); 
            iter != fragments_.end(); iter++) {
-        if (Val_UInt32::cast((*iter->second)[seq_field_+1]) == i) {
+        if (Val_UInt32::cast((*iter->second)[SEQ+1]) == i) {
           p = iter->second;
           fragments_.erase(iter);
           break;
         }
       }
       assert(p);
-      FdbufPtr payload = Val_Opaque::cast((*p)[seq_field_+3]);
+      FdbufPtr payload = Val_Opaque::cast((*p)[SEQ+3]);
       fb->push_bytes(payload->cstr(), payload->length());
     }
 
@@ -111,7 +112,7 @@ void Defrag::defragment(TuplePtr t)
 
     TuplePtr defraged = Tuple::mk();
     for (unsigned i = 0 ; i < t->size(); ) {
-      if (i == seq_field_) {
+      if (i == SEQ) {
         defraged->append((*t)[i]);	// Add the sequence number
         for (unsigned j = 0; j < unmarshal->size(); j++) {
           defraged->append((*unmarshal)[j]);

@@ -9,8 +9,8 @@
  * 
  */
 
-#ifndef __ODELIVERY_H__
-#define __ODELIVERY_H__
+#ifndef __DUPREMOVE_H__
+#define __DUPREMOVE_H__
 
 #include <map>
 #include <vector>
@@ -21,10 +21,11 @@
 #include "loop.h"
 
 
-class ODelivery : public Element {
+class DupRemove : public Element {
 public:
-  ODelivery(string name); 
-  const char *class_name() const { return "ODelivery";};
+  DupRemove(string n) : Element(n, 1, 1) {}
+
+  const char *class_name() const { return "DupRemove";};
   const char *processing() const { return "h/h"; };
   const char *flow_code() const	 { return "-/-"; };
 
@@ -33,34 +34,26 @@ public:
 private:
   class Connection {
     public:
-      Connection(uint ns) 
-        : tcb_(NULL), next_seq_(ns) { touch(); }
+      Connection(uint cs) 
+        : _tcb(NULL), _cum_seq(cs) { touch(); }
 
-      void insert(TuplePtr);
+      bool received(TuplePtr);
       long touch_duration() const;
       void touch();
 
       boost::posix_time::ptime last_touched;
-      timeCBHandle*         tcb_;
-      SeqNum                next_seq_;
-      std::vector<TuplePtr> queue_; 
+      timeCBHandle*          _tcb;
+      SeqNum                 _cum_seq;
+      std::map<SeqNum, bool> _receiveMap; 
   };
   typedef boost::shared_ptr<Connection> ConnectionPtr;
-
-  REMOVABLE_INLINE void out_cb();
 
   REMOVABLE_INLINE void map(ValuePtr, ConnectionPtr);
   REMOVABLE_INLINE void unmap(ValuePtr);
   REMOVABLE_INLINE ConnectionPtr lookup(ValuePtr);
 
-  REMOVABLE_INLINE void flush(ConnectionPtr cp);
-  REMOVABLE_INLINE void flushConnectionQ(ValuePtr src);
-
-  b_cbv     _in_cb;
-  bool      out_on_;		//  Output port ready status
-
   typedef std::map<ValuePtr, ConnectionPtr, Value::Less> ConnectionIndex;
   ConnectionIndex cmap_;	// Map containing unacked in transit tuples
 };
   
-#endif /* __ODELIVERY_H_ */
+#endif /* __DUPREMOVE_H_ */

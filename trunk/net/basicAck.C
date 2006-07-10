@@ -17,6 +17,7 @@
 #include "val_uint32.h"
 #include "val_str.h"
 #include "val_tuple.h"
+#include "netglobals.h"
 
 
 /////////////////////////////////////////////////////////////////////
@@ -28,12 +29,8 @@
  * Constructor: 
  * name: The name given to this element.
  */
-BasicAck::BasicAck(string name, uint dest, uint src, uint seq) 
-  : Element(name, 1, 2),
-    _ack_cb(0),
-    dest_field_(dest),
-    src_field_(src),
-    seq_field_(seq)
+BasicAck::BasicAck(string name) 
+  : Element(name, 1, 2), _ack_cb(0)
 {
 }
 
@@ -43,18 +40,18 @@ BasicAck::BasicAck(string name, uint dest, uint src, uint seq)
  */
 TuplePtr BasicAck::simple_action(TuplePtr p) 
 {
-  ValuePtr src  = (*p)[src_field_]; 
-  ValuePtr dest = (*p)[dest_field_]; 
-  ValuePtr seq  = (*p)[seq_field_];
+  ValuePtr src  = (*p)[SRC]; 
 
+/*
   if ((rand() / (float)RAND_MAX) < 0.5)
     return p;
+*/
 
   TuplePtr ack  = Tuple::mk();
   ack->append(src);			// Source location
   ack->append(Val_Str::mk("ACK"));
-  ack->append(dest);			// Destination address
-  ack->append(seq);			// The sequence number
+  for(unsigned i = 0; i < STACK_SIZE; i++)
+    ack->append((*p)[i]);
   ack->freeze();
   ack_q_.push_back(ack);		// Append to ack queue
 

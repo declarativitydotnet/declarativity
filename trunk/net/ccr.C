@@ -20,6 +20,7 @@
 #include "val_str.h"
 #include "val_tuple.h"
 #include "val_null.h"
+#include "netglobals.h"
 
 
 /////////////////////////////////////////////////////////////////////
@@ -32,13 +33,10 @@
  * name: The name given to this element.
  * rwnd: Initial receiver window size (default given in ccrx.h).
  */
-CCR::CCR(string name, double rwnd, int dest, int src, int seq) 
+CCR::CCR(string name, double rwnd) 
   : Element(name, 1, 2),
     _ack_cb(0),
-    rwnd_(rwnd),
-    src_field_(src),
-    dest_field_(dest),
-    seq_field_(seq)
+    rwnd_(rwnd)
 {
 }
 
@@ -48,15 +46,15 @@ CCR::CCR(string name, double rwnd, int dest, int src, int seq)
  */
 TuplePtr CCR::simple_action(TuplePtr p) 
 {
-  ValuePtr src    = (*p)[src_field_]; 
-  ValuePtr dest   = (*p)[dest_field_]; 
-  ValuePtr seq    = (*p)[seq_field_];
+  ValuePtr src    = (*p)[SRC]; 
+  ValuePtr dest   = (*p)[DEST]; 
+  ValuePtr seq    = (*p)[SEQ];
 
   TuplePtr ack  = Tuple::mk();
   ack->append(src);			// Source location
   ack->append(Val_Str::mk("ACK"));
-  ack->append(dest);			// Destination address
-  ack->append(seq);			// The sequence number
+  for(unsigned i = 0; i < STACK_SIZE; i++)
+    ack->append((*p)[i]);
   ack->append(Val_Double::mk(rwnd_));	// Receiver window size
   ack->freeze();
   ack_q_.push_back(ack);		// Append to ack queue
@@ -91,7 +89,7 @@ TuplePtr CCR::pull(int port, b_cbv cb)
 /*
 int CCR::push(int port, TuplePtr p, b_cbv cb)
 {
-  if ((rand() / (float)RAND_MAX) < 0.5)
+  if ((rand() / (float)RAND_MAX) < 0.9)
     return this->Element::push(port, p, cb); 	
   return 1;
 }

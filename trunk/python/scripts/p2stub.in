@@ -29,12 +29,15 @@ def get_stub(name, address, port):
       let udp = Udp2("udp", %s);
       let wrapAroundDemux = Demux("wrapAroundSendDemux", {Val_Str("%s:%s")}, 0);
       let wrapAroundMux = Mux("wrapAroundSendMux", 2);
+      let header        = PelTransform("source", "$0 pop \\"%s:%s\\" pop \
+                                                  swallow unbox drop \
+                                                  0 pop 0 pop 0 pop 0 pop popall");
 
       udp-> UnmarshalField("unmarshal", 1)      -> 
       PelTransform("unRoute", "$1 unboxPop")    ->
-      Defrag("defragment", 1)                   -> 
+      Defrag("defragment")                      -> 
       TimedPullPush("demux_in_pullPush", 0)     -> 
-      PelTransform("unPackage", "$2 unboxPop")  ->
+      PelTransform("unPackage", "$6 unboxPop")  ->
       wrapAroundMux ->
       PrintWatch("printWatch", {str}) ->
       DDemux("dDemux", {value}, 0) -> 
@@ -45,17 +48,17 @@ def get_stub(name, address, port):
       UnboxField("unboxWrapAround", 1) -> 
       [1]wrapAroundMux;
 
-      wrapAroundDemux[1] -> 
-      Sequence("terminal_sequence", 1, 1)          ->
-      Frag("fragment", 1)                          ->
+      wrapAroundDemux[1] -> header                  ->
+      Sequence("terminal_sequence", 1)              ->
+      Frag("fragment")                              ->
       PelTransform("package", "$0 pop swallow pop") ->
-      MarshalField("marshalField", 1)              ->
-      StrToSockaddr("addr_conv", 0)                ->
+      MarshalField("marshalField", 1)               ->
+      StrToSockaddr("addr_conv", 0)                 ->
       udp; 
 
     }
     .	# END OF DATAFLOW DEFINITION
-  """ % (name, port, address, port)
+  """ % (name, port, address, port, address, port)
   return stub
 
 def gen_stub(plumber, name, address, port):

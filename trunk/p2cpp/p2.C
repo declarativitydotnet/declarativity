@@ -224,9 +224,10 @@ string P2::stub(string hostname, string port)
                                                                 << hostname << ":" << port
                                                                 << "\")}, 0); \
            let inputRR = RoundRobin(\"inputRR\", 3); \
-           let srcAddr = PelTransform(\"source\", \"$0 pop \\\""
+           let header  = PelTransform(\"source\", \"$0 pop \\\""
                                       << hostname <<":" << port 
-                                      << "\\\" pop swallow unbox drop popall\"); ";
+                                      << "\\\" pop swallow unbox drop "
+                                      << "0 pop 0 pop 0 pop 0 pop popall\"); ";
 
 
   if (_transport_conf & (RELIABLE | CC | ORDERED)) {
@@ -243,10 +244,7 @@ string P2::stub(string hostname, string port)
     }
 
     if (_transport_conf & RELIABLE)  {
-    stub << "let rdelv = RDelivery(\"reliable_delivery\"); ";
-    }
-    if (_transport_conf & ORDERED)  {
-      stub << "let odevl = ODelivery(\"order\"); ";
+      stub << "let rdelv = RDelivery(\"reliable_delivery\"); ";
     }
   }
 
@@ -262,19 +260,17 @@ string P2::stub(string hostname, string port)
       stub << "ack ->";
     }
   }
+  stub << "Defrag(\"defragment\") -> ";
 
-  if (_transport_conf & (RELIABLE | CC | ORDERED)) {
-    stub << "Defrag(\"defragment\", 3) -> ";
-    if (_transport_conf & ORDERED) {
-      stub << "TimedPullPush(\"pullDriver\", 0) -> \
-               odevl -> Queue ->";
-    }
-    stub << "PelTransform(\"unPackage\", \"$4 unboxPop\")->";
+  if (_transport_conf & ORDERED) {
+    stub << "TimedPullPush(\"pullDriver\", 0) -> \
+             ODelivery(\"order\") -> Queue ->";
   }
-  else {
-    stub << "Defrag(\"defragment\", 2) -> ";
-    stub << "PelTransform(\"unPackage\", \"$3 unboxPop\")->";
+  else if (_transport_conf & RELIABLE) {
+    stub << "TimedPullPush(\"pullDriver\", 0) -> \
+             DupRemove(\"dupremove\") -> Queue ->";
   }
+  stub << "PelTransform(\"unPackage\", \"$6 unboxPop\")->";
 
   stub << "inputRR -> \
            TimedPullPush(\"pullDriver\", 0)     -> \
@@ -288,9 +284,9 @@ string P2::stub(string hostname, string port)
            Queue(\"wrapAroundQueue\", 1000) -> \
            [1]inputRR; \
            wrapAroundDemux[1] -> \
-           srcAddr -> \
-           Sequence(\"terminal_sequence\", 1, 2) -> \
-           Frag(\"fragment\", 2) ->";
+           header -> \
+           Sequence(\"terminal_sequence\", 1) -> \
+           Frag(\"fragment\") ->";
 
 
   /** Send side reliable delivery and congestion control */
@@ -302,10 +298,10 @@ string P2::stub(string hostname, string port)
     if (_transport_conf & CC) {
       stub << "cct ->";
     }
+    stub << "netoutRR ->";
   }
 
-   stub << "netoutRR -> \
-            PelTransform(\"package\", \"$0 pop swallow pop\") -> \
+   stub << "PelTransform(\"package\", \"$0 pop swallow pop\") -> \
             MarshalField(\"marshalField\", 1)              -> \
             StrToSockaddr(\"addr_conv\", 0)                -> \
             udp;  \
@@ -319,6 +315,9 @@ string P2::stub(string hostname, string port)
     }
     else { 
       stub << "ack[1] ->";
+    }
+    if (_transport_conf & RELIABLE) {
+      stub << "CumulativeAck(\"cack\") ->";
     }
     stub << "[1]netoutRR; ";
   }

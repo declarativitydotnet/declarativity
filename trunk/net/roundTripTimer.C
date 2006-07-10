@@ -19,6 +19,7 @@
 #include "val_str.h"
 #include "val_tuple.h"
 #include "val_null.h"
+#include "netglobals.h"
 
 
 /////////////////////////////////////////////////////////////////////
@@ -63,11 +64,8 @@ RoundTripTimer::RTTRec::RTTRec() : sa_(-1), sv_(0), rto_(MAX_RTO) {}
 
 /**
  */
-RoundTripTimer::RoundTripTimer(string name, uint dest_field, uint seq_field, uint rto_field) 
-  : Element(name, 2, 1),
-    dest_field_(dest_field),
-    seq_field_(seq_field),
-    rto_field_(rto_field)
+RoundTripTimer::RoundTripTimer(string name) 
+  : Element(name, 2, 1)
 {
 }
 
@@ -76,8 +74,8 @@ RoundTripTimer::RoundTripTimer(string name, uint dest_field, uint seq_field, uin
 int RoundTripTimer::push(int port, TuplePtr tp, b_cbv cb)
 {
   if (port == 0) {
-    SeqNum   seq  = Val_UInt64::cast((*tp)[seq_field_]);
-    ValuePtr dest = (*tp)[dest_field_];
+    SeqNum   seq  = Val_UInt64::cast((*tp)[SEQ]);
+    ValuePtr dest = (*tp)[DEST];
     
     RTTIndex::iterator iter = rttmap_.find(dest);
     boost::shared_ptr<RTTRec> rttrec; 
@@ -93,32 +91,24 @@ int RoundTripTimer::push(int port, TuplePtr tp, b_cbv cb)
     map(tt);
 
     TuplePtr tpl = Tuple::mk();
-    for (unsigned i = 0; i < rto_field_; i++) {
-      tpl->append((*tp)[i]);
-    }
-    tpl->append(Val_Double::mk(rttrec->rto_));
-    for (unsigned i = rto_field_; i < tp->size(); i++) {
-      tpl->append((*tp)[i]);
+    for (unsigned i = 0; i < tp->size(); i++) {
+      if (i == RTT) 
+        tpl->append(Val_Double::mk(rttrec->rto_));
+      else
+        tpl->append((*tp)[i]);
     }
     tpl->freeze();
     return output(0)->push(tpl, cb);
   }
   else if (port == 1) {
-    try {
-      for (uint i = 0;
-           i < tp->size();
-           i++) {
-        if ((*tp)[i]->typeCode() == Value::STR && Val_Str::cast((*tp)[i]) == "ACK") {
-          // Acknowledge tuple and update measurements.
-          ValuePtr dest = (*tp)[i+1];			// Destination address
-          SeqNum   seq  = Val_UInt64::cast((*tp)[i+2]);	// Sequence number
-          int32_t delay = dealloc(dest, seq);
-          add_rtt_meas(dest, delay);
-          return 1;
-        }
-      }
+    if ((*tp)[1]->typeCode() == Value::STR && Val_Str::cast((*tp)[1]) == "ACK") {
+      // Acknowledge tuple and update measurements.
+      ValuePtr dest = (*tp)[DEST+2];			// Destination address
+      SeqNum   seq  = Val_UInt64::cast((*tp)[SEQ+2]);	// Sequence number
+      int32_t delay = dealloc(dest, seq);
+      add_rtt_meas(dest, delay);
+      return 1;
     }
-    catch (Value::TypeError e) { } 
   } else assert(0);
   return 1;
 }
@@ -132,8 +122,8 @@ TuplePtr RoundTripTimer::pull(int port, b_cbv cb)
   assert (port == 0);
 
   if ((p = input(0)->pull(cb)) != NULL) {
-    SeqNum   seq  = Val_UInt64::cast((*p)[seq_field_]);
-    ValuePtr dest = (dest_field_ < 0) ? Val_Null::mk() : (*p)[dest_field_];
+    SeqNum   seq  = Val_UInt64::cast((*p)[SEQ]);
+    ValuePtr dest = (*p)[DEST];
 
     RTTIndex::iterator iter = rttmap_.find(dest);
     boost::shared_ptr<RTTRec> rttrec; 
@@ -148,12 +138,11 @@ TuplePtr RoundTripTimer::pull(int port, b_cbv cb)
     TupleTimestamp *tt = new TupleTimestamp(dest, seq);
     map(tt);
     TuplePtr tp = Tuple::mk();
-    for (unsigned i = 0; i < rto_field_; i++) {
-      tp->append((*p)[i]);
-    }
-    tp->append(Val_Double::mk(rttrec->rto_));
-    for (unsigned i = rto_field_; i < p->size(); i++) {
-      tp->append((*p)[i]);
+    for (unsigned i = 0; i < p->size(); i++) {
+      if (i == RTT) 
+        tp->append(Val_Double::mk(rttrec->rto_));
+      else
+        tp->append((*p)[i]);
     }
     tp->freeze();
     return tp;

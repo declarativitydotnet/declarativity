@@ -18,12 +18,10 @@
 #include "val_uint64.h"
 
 typedef uint64_t SeqNum;
-#define SEQ_FIELD    1
-#define OFFSET_FIELD 2
 
 class Sequence : public Element {
 public:
-  Sequence(string name="sequence", SeqNum start=1, unsigned seq_field=0, int dest_field=-1);
+  Sequence(string name="sequence", SeqNum start=0);
   const char *class_name() const { return "Sequence";};
   const char *processing() const { return "a/a"; };
   const char *flow_code() const	 { return "-/-"; };
@@ -31,10 +29,10 @@ public:
   TuplePtr simple_action(TuplePtr p);
 
 private:
-  SeqNum seq_;
-  unsigned seq_field_;
-  int      dest_field_;
-  std::map<ValuePtr, SeqNum> seq_nums_;
+  SeqNum _start_seq;
+
+  typedef std::map<ValuePtr, SeqNum, Value::Less> ValueSeqMap;
+  ValueSeqMap _seq_map;
 };
 
 #endif /* __TupleSeq_H_ */

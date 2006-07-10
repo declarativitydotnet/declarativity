@@ -17,11 +17,12 @@
 #include "val_double.h"
 #include "val_str.h"
 #include "val_tuple.h"
+#include "netglobals.h"
 
-#define CONNECTION_TIMEOUT 10
+#define CONNECTION_TIMEOUT 240
 
 void ODelivery::Connection::insert(TuplePtr tp) {
-  SeqNum seq = Val_UInt64::cast((*tp)[seq_field_]);
+  SeqNum seq = Val_UInt64::cast((*tp)[SEQ]);
 
   if (queue_.size() == 0 && next_seq_ <= seq) {
     queue_.push_back(tp);
@@ -30,7 +31,7 @@ void ODelivery::Connection::insert(TuplePtr tp) {
     // Insert the tuple in sequence order
     std::vector<TuplePtr>::iterator iter; 
     for (iter = queue_.begin(); iter != queue_.end(); iter++) {
-      SeqNum seq2 = Val_UInt64::cast((**iter)[seq_field_]);
+      SeqNum seq2 = Val_UInt64::cast((**iter)[SEQ]);
       if (seq == seq2) {
         return;		// We already have it
       }
@@ -46,7 +47,7 @@ void ODelivery::Connection::insert(TuplePtr tp) {
   // Move the next sequence pointer if we've filled a hole
   for (std::vector<TuplePtr>::iterator iter = queue_.begin(); 
        iter != queue_.end(); iter++) {
-    SeqNum seq3 = Val_UInt64::cast((**iter)[seq_field_]);
+    SeqNum seq3 = Val_UInt64::cast((**iter)[SEQ]);
     if (seq3 == next_seq_) next_seq_++;
     else break;
   }
@@ -64,14 +65,8 @@ void ODelivery::Connection::touch() {
   getTime(last_touched);
 }
 
-ODelivery::ODelivery(string n, uint ins, uint src, uint rto, uint seq)
-  : Element(n, 1, 1),
-    _in_cb(0),
-    out_on_(1),
-    init_next_seq_(ins),
-    src_field_(src),
-    seq_field_(seq),
-    rto_field_(rto)
+ODelivery::ODelivery(string n)
+  : Element(n, 1, 1), _in_cb(0), out_on_(1)
 {
 }
 
@@ -79,8 +74,8 @@ int ODelivery::push(int port, TuplePtr tp, b_cbv cb)
 {
   assert(port == 0);
 
-  ValuePtr src = (*tp)[src_field_];
-  SeqNum   seq = Val_UInt64::cast((*tp)[seq_field_]);
+  ValuePtr src = (*tp)[SRC];
+  SeqNum   seq = Val_UInt64::cast((*tp)[SEQ]);
   ConnectionPtr cp = lookup(src);
 
   if (cp && seq < cp->next_seq_) {
@@ -92,7 +87,9 @@ int ODelivery::push(int port, TuplePtr tp, b_cbv cb)
     cp->insert(tp);
   }
   else {
-    cp.reset(new Connection(seq_field_, init_next_seq_));
+    SeqNum  cseq = (*tp)[CUMSEQ]->typeCode() == Value::NULLV 
+                   ?  seq : Val_UInt64::cast((*tp)[CUMSEQ]);
+    cp.reset(new Connection(cseq+1));
     map(src, cp);
     cp->insert(tp);
   }
@@ -106,9 +103,9 @@ int ODelivery::push(int port, TuplePtr tp, b_cbv cb)
 REMOVABLE_INLINE void ODelivery::flush(ConnectionPtr cp) {
   while ( out_on_ && cp->queue_.size() > 0 ) {
     TuplePtr tpl = cp->queue_.front();
-    ValuePtr src = (*tpl)[src_field_];
-    SeqNum   seq = Val_UInt64::cast((*tpl)[seq_field_]);
-    double   rto = Val_Double::cast((*tpl)[rto_field_]); 
+    ValuePtr src = (*tpl)[SRC];
+    SeqNum   seq = Val_UInt64::cast((*tpl)[SEQ]);
+    double   rto = Val_Double::cast((*tpl)[RTT]); 
     if (seq <= cp->next_seq_) {
       out_on_ = output(0)->push(tpl, boost::bind(&ODelivery::out_cb, this));
       cp->queue_.erase(cp->queue_.begin());
@@ -124,7 +121,7 @@ REMOVABLE_INLINE void ODelivery::flush(ConnectionPtr cp) {
     }
     else if (cp->queue_.size() > 0 && cp->tcb_ == NULL) {
       /** Set timeout for receiving the tuple with the next sequence number */
-      cp->tcb_ = delayCB((5.0 * rto) / 1000.0,
+      cp->tcb_ = delayCB(5.0 + ((10.0 * rto) / 1000.0),
                          boost::bind(&ODelivery::flushConnectionQ, this, src), this);
       break;
     }
@@ -151,12 +148,13 @@ REMOVABLE_INLINE void ODelivery::out_cb()
  */
 REMOVABLE_INLINE void ODelivery::flushConnectionQ(ValuePtr src)
 {
+  std::cerr << "FLUSH CONNECTION QUEUE CALLED" << std::endl;
   ConnectionPtr cp = lookup(src);
   cp->tcb_ = NULL;
 
   if (cp->queue_.size() > 0) {
     TuplePtr t = cp->queue_.back();
-    SeqNum   s = Val_UInt64::cast((*t)[seq_field_]);
+    SeqNum   s = Val_UInt64::cast((*t)[SEQ]);
     cp->next_seq_ = s + 1;
     flush(cp); 
   }
@@ -164,6 +162,7 @@ REMOVABLE_INLINE void ODelivery::flushConnectionQ(ValuePtr src)
   /** Check if the connection is dead */
   if (cp->queue_.size() == 0 && 
       cp->touch_duration() > CONNECTION_TIMEOUT) {
+    std::cerr << "REMOVING CONNECTION" << std::endl;
     unmap(src);
   }
 }

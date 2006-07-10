@@ -171,28 +171,31 @@ def parse_cmdline(argv):
             exit(3)
     return flags, args
 
-def get_stub(port):
-    stub = r"""dataflow %s {
+def get_stub(hostname, port):
+    stub = """dataflow %s {
       let udp = Udp2("udp", %s);
+      let header = PelTransform("output", "$0 pop \\"%s:%s\\" pop \
+                                           swallow unbox drop \
+                                           0 pop 0 pop 0 pop 0 pop popall");
 
       TimedPushSource("dummy_source", 0)            ->
-      Sequence("output", 1, 1)                      ->
-      Frag("fragment", 1)                           ->
+      header -> Sequence("sequence", 1)             ->
+      Frag("fragment")                              ->
       PelTransform("package", "$0 pop swallow pop") ->
       MarshalField("marshal", 1)                    ->
       StrToSockaddr("addr_conv", 0)                 -> 
       udp -> UnmarshalField("unmarshal", 1) ->
       PelTransform("unpackage", "$1 unboxPop") ->
-      Defrag("defragment", 1) ->
-      PelTransform("get_payload", "$2 unboxPop") ->
+      Defrag("defragment") ->
+      PelTransform("get_payload", "$6 unboxPop") ->
       TimedPullPush("input", 0) ->
       Discard("dummy_discard");
       }
-      .   # END OF DATAFLOW DEFINITION""" % (DATAFLOW_NAME, port)
+      .   # END OF DATAFLOW DEFINITION""" % (DATAFLOW_NAME, port, hostname, port)
     return stub
 
-def gen_stub(plumber, port):
-    stub = get_stub(port) 
+def gen_stub(plumber, hostname, port):
+    stub = get_stub(hostname, port) 
 
     dfparser.compile(plumber, stub)
 
@@ -220,7 +223,7 @@ if __name__ == "__main__":
     port     = int(args[1])
   
     plumber = Plumber()
-    stub    = gen_stub(plumber, port)
+    stub    = gen_stub(plumber, address, port)
 
     if plumber.install(stub) != 0:
         print "** Stub Failed to initialize correct spec\n"

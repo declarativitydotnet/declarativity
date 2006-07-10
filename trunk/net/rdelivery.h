@@ -23,7 +23,7 @@
 
 class RDelivery : public Element {
 public:
-  RDelivery(string name, uint max_retry=5, uint dest=0, uint rto=2, uint seq=3);
+  RDelivery(string name, uint max_retry=3);
   const char *class_name() const { return "RDelivery";};
   const char *processing() const { return "lh/lh"; };
   const char *flow_code() const	 { return "--/--"; };
@@ -32,44 +32,49 @@ public:
   int push(int port, TuplePtr tp, b_cbv cb);	// Incoming ack or timeout
 
 private:
-  struct RTuple
-  {
-    RTuple(ValuePtr dest, SeqNum seq, double rto, TuplePtr tp) 
-      : dest_(dest), seq_(seq), rto_(rto), tp_(tp), tcb_(NULL), retry_cnt_(0) { } 
+  typedef std::deque<TuplePtr> TupleQ;
+  TupleQ  _retry_q;	// Retransmit queue 
 
-    ValuePtr      dest_;
-    SeqNum        seq_;
-    double        rto_;		// Round trip time
-    TuplePtr      tp_;		// The tuple.
-    timeCBHandle* tcb_;       	// Used to cancel retransmit timer
-    uint          retry_cnt_;	// Transmit counter.
+  struct Connection {
+    struct Tuple {
+      Tuple(SeqNum seq, TuplePtr tp) 
+        : _seq(seq), _tp(tp), _retry_cnt(0) { } 
+
+      SeqNum   _seq;		// Sequence number
+      TuplePtr _tp;		// The tuple.
+      uint     _retry_cnt;	// Transmit counter.
+    };
+    typedef boost::shared_ptr<Tuple> TuplePtr;
+
+    Connection(double rtt, SeqNum cum_seq)
+      : _rtt(rtt), _cum_seq(cum_seq), _tcb(NULL) {} 
+
+    std::deque<TuplePtr> _outstanding; 	// All outstanding tuples
+    double               _rtt;		// The round trip time
+    SeqNum               _cum_seq;	// The cumulative sequence
+    timeCBHandle*        _tcb; 		// Used to cancel retransmit timer
   };
-  typedef boost::shared_ptr<RTuple> RTuplePtr;
+  typedef boost::shared_ptr<Connection> ConnectionPtr;
 
-  // Helper methods to manipulate memorized tuples
-  RTuplePtr lookup(ValuePtr dest, SeqNum seq);
-  void      map(ValuePtr, SeqNum, RTuplePtr rtp);
-  void      unmap(ValuePtr, SeqNum);
+  REMOVABLE_INLINE void handle_failure(ConnectionPtr); 
 
-  // Handles a failure to deliver a tuple
-  REMOVABLE_INLINE void handle_failure(ValuePtr, SeqNum);
+  // Helper methods to manipulate memorized connections
+  ConnectionPtr lookup(ValuePtr);
+  void map(ValuePtr, ConnectionPtr);
+  void unmap(ValuePtr);
+
+  TuplePtr tuple(TuplePtr tp);
+  void ack(TuplePtr tp);
+
 
   void input_cb();
   b_cbv _out_cb;
 
-  bool      in_on_;
-  uint      max_retry_;			// Max number of retries for a tuple
-  uint      dest_field_;
-  uint      seq_field_;
-  uint      rto_field_;
+  bool      _in_on;
+  uint      _max_retry;			// Max number of retries for a tuple
 
-  std::deque <RTuplePtr>  rtran_q_;	// Retransmit queue 
-
-  typedef std::map<SeqNum, RTuplePtr> SeqRTupleMap;
-  typedef std::map<ValuePtr, 
-                   boost::shared_ptr<SeqRTupleMap>, 
-                   Value::Less> ValueSeqRTupleMap;
-  ValueSeqRTupleMap index_;		// Map containing unacked in transit tuples
+  typedef std::map<ValuePtr, ConnectionPtr, Value::Less> ValueConnectionMap;
+  ValueConnectionMap _index;		// Map containing outstanding connections
 };
   
 #endif /* __RDELIVERY_H_ */

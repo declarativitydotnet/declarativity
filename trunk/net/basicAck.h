@@ -22,7 +22,7 @@
  */
 class BasicAck : public Element {
 public:
-  BasicAck(string name, uint dest=0, uint src=1, uint seq=3);
+  BasicAck(string name);
   const char *class_name() const { return "BasicAck";};
   const char *processing() const { return "a/al"; };
   const char *flow_code() const	 { return "x/x-"; };
@@ -33,10 +33,6 @@ public:
 
 private:
   b_cbv    _ack_cb; 			// Callback to send an ack 
-
-  uint      dest_field_;
-  uint      src_field_;
-  uint      seq_field_;
   std::deque <TuplePtr> ack_q_;		// Output ack queue
 };
   

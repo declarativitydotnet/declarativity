@@ -38,9 +38,8 @@ class CCTuple;
  */
 class CCT : public Element {
 public:
-  CCT(string name, double init_wnd=1., double max_wnd=2048., 
-      uint dest_field=0, uint rto_field=2, uint seq_field=3);
-  const char *class_name() const { return "CCT";};
+  CCT(string name, double init_wnd=1., double max_wnd=2048.);
+  const char *class_name() const { return "CCT";   };
   const char *processing() const { return "lh/lh"; };
   const char *flow_code() const	 { return "--/--"; };
 
@@ -64,11 +63,10 @@ private:
   double    rwnd_;				// Receiver window size
   double    cwnd_;				// Current congestion window size
   double    ssthresh_;				// Slow start threshold
-  uint      dest_field_;
-  uint      rto_field_;
-  uint      seq_field_;
 
-  typedef std::map<ValuePtr, boost::shared_ptr<std::map<SeqNum, CCTuple*> >, Value::Less> CCTupleIndex;
+  typedef std::map<ValuePtr, 
+                   boost::shared_ptr<std::map<SeqNum, CCTuple*> >, 
+                   Value::Less> CCTupleIndex;
   CCTupleIndex tmap_;			// Map containing unacked in transit tuples
 };
   

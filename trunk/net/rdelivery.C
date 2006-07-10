@@ -18,17 +18,14 @@
 #include "val_double.h"
 #include "val_str.h"
 #include "val_tuple.h"
+#include "netglobals.h"
 
 
-RDelivery::RDelivery(string n, unsigned m, 
-                     uint dest, uint rto, uint seq)
+RDelivery::RDelivery(string n, unsigned m) 
   : Element(n, 2, 2),
     _out_cb(0),
-    in_on_(true),
-    max_retry_(m),
-    dest_field_(dest),
-    seq_field_(seq),
-    rto_field_(rto)
+    _in_on(true),
+    _max_retry(m)
 {
 }
 
@@ -40,22 +37,15 @@ TuplePtr RDelivery::pull(int port, b_cbv cb)
   assert (port == 0);
 
   TuplePtr tp;
-  if (rtran_q_.empty() && in_on_ && 
-      (in_on_ = ((tp = input(0)->pull(boost::bind(&RDelivery::input_cb,this))) != NULL))) {
+  if (_retry_q.empty() && _in_on && 
+      (_in_on = ((tp = input(0)->pull(boost::bind(&RDelivery::input_cb,this))) != NULL))) {
     /* Store the tuple for retry, if failure */
-    ValuePtr dest = (*tp)[dest_field_];
-    SeqNum   seq  = Val_UInt64::cast((*tp)[seq_field_]);
-    double   rto  = Val_Double::cast((*tp)[rto_field_]);
-
-    RTuplePtr rtp(new RTuple(dest, seq, rto, tp));
-    map(dest, seq, rtp);
-    return tp;			// forward tuple along
+    return tuple(tp);
   }
-  else if (!rtran_q_.empty()) {
-    RTuplePtr rtp = rtran_q_.front();
-    rtran_q_.pop_front();
-    map(rtp->dest_, rtp->seq_, rtp);
-    return rtp->tp_;	// Already memoized, so just return it.
+  else if (!_retry_q.empty()) {
+    tp = _retry_q.front();
+    _retry_q.pop_front();
+    return tp;
   }
 
   _out_cb = cb;
@@ -74,15 +64,10 @@ int RDelivery::push(int port, TuplePtr tp, b_cbv cb)
     for (uint i = 0;
          i < tp->size();
          i++) {
-      if ((*tp)[i]->typeCode() == Value::STR && Val_Str::cast((*tp)[i]) == "ACK") {
+      if ((*tp)[i]->typeCode() == Value::STR && 
+          Val_Str::cast((*tp)[i]) == "ACK") {
         // Acknowledge tuple and update measurements.
-        ValuePtr dest = (*tp)[i+1];                     // Destination address
-        SeqNum   seq  = Val_UInt64::cast((*tp)[i+2]);   // Sequence number
-        //TODO: Use timestamps to track the latest rwnd value.
-        RTuplePtr rtp = lookup(dest, seq);
-        if (rtp != NULL) {
-          unmap(dest, seq);
-        }
+        ack(tp);
       }
     }
   }
@@ -90,73 +75,120 @@ int RDelivery::push(int port, TuplePtr tp, b_cbv cb)
   return output(1)->push(tp, cb);
 }
 
-REMOVABLE_INLINE void RDelivery::handle_failure(ValuePtr dest, SeqNum seq) 
+REMOVABLE_INLINE void RDelivery::handle_failure(ConnectionPtr cp) 
 {
-  RTuplePtr rtp = lookup(dest, seq);
-  unmap(dest, seq);
-  
-  if (rtp->retry_cnt_ < max_retry_) {
-    rtran_q_.push_back(rtp);
-    if (_out_cb) {
-      _out_cb();
-      _out_cb = 0;
-    }
-  }
-  else {
-    std::cerr << "TUPLE SEQ: " << rtp->seq_ << " RETRIES " << rtp->retry_cnt_ << std::endl;
-  }
-}
+  cp->_tcb = NULL;
 
-RDelivery::RTuplePtr RDelivery::lookup(ValuePtr dest, SeqNum seq)
-{
-  ValueSeqRTupleMap::iterator iter_map = index_.find(dest);
-  if (iter_map != index_.end()) {
-    SeqRTupleMap::iterator iter_rtuple = iter_map->second->find(seq);
-    if (iter_rtuple != iter_map->second->end()) {
-      return iter_rtuple->second;	// Found it.
-    }
-  }
-  return RTuplePtr();			// Didn't find it. 
-}
-
-void RDelivery::map(ValuePtr dest, SeqNum seq, RTuplePtr rtp) 
-{
-  ValueSeqRTupleMap::iterator iter_map = index_.find(dest);
-  if (iter_map != index_.end()) {
-    iter_map->second->insert(std::make_pair(seq, rtp));
-  }
-  else {
-    boost::shared_ptr<SeqRTupleMap> tuple_map(new SeqRTupleMap);
-    tuple_map->insert(std::make_pair(seq, rtp));
-    index_.insert(std::make_pair(dest,tuple_map)); 
-  }
-  rtp->tcb_ =
-    delayCB((0.0 + rtp->rto_) / 1000.0,
-            boost::bind(&RDelivery::handle_failure, this, dest, seq), this);
-  rtp->retry_cnt_++;
-}
-
-void RDelivery::unmap(ValuePtr dest, SeqNum seq)
-{
-  ValueSeqRTupleMap::iterator iter_map = index_.find(dest);
-  if (iter_map != index_.end()) {
-    SeqRTupleMap::iterator iter_rtuple = iter_map->second->find(seq);
-    if (iter_rtuple != iter_map->second->end()) {
-      if (iter_rtuple->second->tcb_ != NULL) {
-        timeCBRemove(iter_rtuple->second->tcb_);
-        iter_rtuple->second->tcb_ = NULL;
+  for (std::deque<RDelivery::Connection::TuplePtr>::iterator iter = 
+       cp->_outstanding.begin(); iter != cp->_outstanding.end(); ) {
+    RDelivery::Connection::TuplePtr ctp = *iter;
+    if (ctp->_retry_cnt < _max_retry) {
+      ctp->_retry_cnt++;
+      _retry_q.push_back(ctp->_tp);
+      if (_out_cb) {
+        _out_cb();
+        _out_cb = 0;
       }
-      iter_map->second->erase(iter_rtuple);	// Remove outstanding tuple.
+      iter++;
     }
-    if (iter_map->second->size() == 0) {
-      index_.erase(iter_map);		// No more outstanding tuples
+    else {
+      std::cerr << "RETRY TOO MANY: SEQ = " << ctp->_seq << std::endl;
+      if (cp->_cum_seq < ctp->_seq)
+        cp->_cum_seq = ctp->_seq;
+      assert(iter == cp->_outstanding.begin());
+      iter = cp->_outstanding.erase(iter);
+    }
+  }
+
+  if (cp->_outstanding.size() > 0) {
+    cp->_tcb = delayCB((cp->_rtt) / 1000.0,
+                       boost::bind(&RDelivery::handle_failure, this, cp), this);
+  }
+}
+
+RDelivery::ConnectionPtr RDelivery::lookup(ValuePtr dest)
+{
+  ValueConnectionMap::iterator iter = _index.find(dest);
+  if (iter != _index.end()) {
+    return iter->second;		// Found it.
+  }
+  return RDelivery::ConnectionPtr();	// Didn't find it. 
+}
+
+void RDelivery::map(ValuePtr dest, ConnectionPtr cp) 
+{
+  ValueConnectionMap::iterator iter = _index.find(dest);
+  if (iter == _index.end()) {
+    _index.insert(std::make_pair(dest,cp)); 
+  }
+}
+
+void RDelivery::unmap(ValuePtr dest)
+{
+  ValueConnectionMap::iterator iter = _index.find(dest);
+  if (iter != _index.end()) {
+      _index.erase(iter);
+  }
+}
+
+TuplePtr RDelivery::tuple(TuplePtr tp)
+{
+  ValuePtr dest = (*tp)[DEST];
+  SeqNum   seq  = Val_UInt64::cast((*tp)[SEQ]);
+  double   rtt  = Val_Double::cast((*tp)[RTT]);
+
+  RDelivery::ConnectionPtr cp = lookup(dest);  
+  if (!cp) {
+    cp.reset(new Connection(rtt, seq-1));
+    map(dest, cp);
+  }
+
+  TuplePtr rtp = Tuple::mk();
+  for (unsigned i = 0; i < tp->size(); i++) {
+    if (i == CUMSEQ) {
+      rtp->append(Val_UInt64::mk(cp->_cum_seq));
+    }
+    else {
+      rtp->append((*tp)[i]);
+    }
+  }
+  rtp->freeze();
+
+  RDelivery::Connection::TuplePtr ctp(new RDelivery::Connection::Tuple(seq, rtp));
+  cp->_outstanding.push_back(ctp);
+  if (cp->_tcb == NULL) {
+    cp->_tcb = delayCB((2 * cp->_rtt) / 1000.0,
+                       boost::bind(&RDelivery::handle_failure, this, cp), this);
+  }
+  return rtp;
+}
+
+void RDelivery::ack(TuplePtr tp)
+{
+  ValuePtr      dest = (*tp)[DEST + 2];
+  ConnectionPtr cp   = lookup(dest);
+  SeqNum        cseq = Val_UInt64::cast((*tp)[CUMSEQ + 2]); 
+
+  if (cp && cp->_cum_seq < cseq) {
+    if (cp->_tcb != NULL) {
+      timeCBRemove(cp->_tcb);
+      cp->_tcb = NULL;
+    }
+    cp->_cum_seq = cseq;
+    while (cp->_outstanding.size() > 0 && 
+           cp->_outstanding.front()->_seq <= cp->_cum_seq) {
+      cp->_outstanding.pop_front();
+    }
+    if (cp->_outstanding.size() > 0) {
+      cp->_tcb = delayCB((2 * cp->_rtt) / 1000.0,
+                         boost::bind(&RDelivery::handle_failure, this, cp), this);
     }
   }
 }
 
 void RDelivery::input_cb()
 {
-  in_on_ = true;
+  _in_on = true;
   if (_out_cb) {
     _out_cb();
     _out_cb = 0;

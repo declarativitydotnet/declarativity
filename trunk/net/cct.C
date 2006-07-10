@@ -19,6 +19,7 @@
 #include "val_str.h"
 #include "val_tuple.h"
 #include "val_null.h"
+#include "netglobals.h"
 
 
 /////////////////////////////////////////////////////////////////////
@@ -57,14 +58,10 @@ void CCTuple::operator()(std::pair<const SeqNum, CCTuple*>& entry)
  * Output 0 (pull): Tuple to send with cc info wrapper.
  * Output 1 (push): Acknowledgement of some outstanding tuple.
  */
-CCT::CCT(string name, double init_wnd, double max_wnd, 
-         uint dest_field, uint rto_field, uint seq_field) 
+CCT::CCT(string name, double init_wnd, double max_wnd) 
   : Element(name, 2, 2),
     _data_cb(0),
-    data_on_(true),
-    dest_field_(dest_field),
-    rto_field_(seq_field),
-    seq_field_(seq_field)
+    data_on_(true)
 {
   max_wnd_        = max_wnd;
   cwnd_           = init_wnd;
@@ -111,18 +108,18 @@ TuplePtr CCT::pull(int port, b_cbv cb)
 
   if (current_window() < max_window() && 
       (data_on_ = (tp = input(0)->pull(boost::bind(&CCT::data_ready, this))) != NULL)) {
-    SeqNum   seq  = Val_UInt64::cast((*tp)[seq_field_]);
-    ValuePtr dest = (*tp)[dest_field_];
-    double   rto  = Val_Double::cast((*tp)[rto_field_]);
+    SeqNum   seq  = Val_UInt64::cast((*tp)[SEQ]);
+    ValuePtr dest = (*tp)[DEST];
+    double   rtt  = Val_Double::cast((*tp)[RTT]);
 
     CCTuple  *otp = new CCTuple(dest, seq);
-    map(otp, rto);
+    map(otp, rtt);
   } else _data_cb = cb;
 
   return tp;
 }
 
-void CCT::map(CCTuple *otp, double rto) 
+void CCT::map(CCTuple *otp, double rtt) 
 {
   boost::shared_ptr<std::map<SeqNum, CCTuple*> > m;
   CCTupleIndex::iterator i = tmap_.find(otp->dest_);
@@ -135,7 +132,7 @@ void CCT::map(CCTuple *otp, double rto)
   m->insert(std::make_pair(otp->seq_, otp));
 
   otp->tcb_ =
-    delayCB((0.0 + rto) / 1000.0,
+    delayCB((0.0 + rtt) / 1000.0,
             boost::bind(&CCT::timeout_cb, this, otp), this); 
 }
 
