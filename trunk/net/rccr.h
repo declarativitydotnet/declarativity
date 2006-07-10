@@ -25,7 +25,7 @@ class LossRec;
 
 class RateCCR : public Element {
 public:
-  RateCCR(string name, int dest=0, int src=1, int seq=2, int rtt=3, int ts=4);
+  RateCCR(string name);
   const char *class_name() const { return "RateCCR";};
   const char *processing() const { return "a/al"; };
   const char *flow_code()  const { return "-/--"; };
@@ -40,15 +40,12 @@ private:
   class Connection;
   REMOVABLE_INLINE TuplePtr strip(TuplePtr p);
 
-  b_cbv  _ack_cb;	// Indicates when it is once again acceptable to send acks
-  int    dest_field_;	// Tuple location of the destination address
-  int    src_field_;	// Tuple location of the source address
-  int    seq_field_;	// Tuple location of the sequence number
-  int    rtt_field_;	// Tuple location of the round trip time
-  int    ts_field_;	// Tuple location of the timestamp
+  // Indicates when it is once again acceptable to send acks
+  b_cbv  _ack_cb;	
+  std::deque <TuplePtr> ack_q_;	// Output ack queue
 
-  std::deque <TuplePtr>           ack_q_;	// Output ack queue
-  std::map <string, Connection*>  cmap_;	// Interval weights
+  typedef std::map <ValuePtr, Connection*, Value::Less>  ValueConnectionMap;
+  ValueConnectionMap  cmap_;
 };
   
 #endif /* __RCCR_H_ */

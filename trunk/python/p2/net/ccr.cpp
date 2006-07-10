@@ -6,7 +6,7 @@ using namespace boost::python;
 void export_ccr()
 {
   class_<CCR, bases<Element>, boost::shared_ptr<CCR>, boost::noncopyable>
-      ("CCR", init<std::string, optional<double> >())
+      ("CCR", init<std::string>())
 
     .def("class_name", &CCR::class_name)
     .def("processing", &CCR::processing)

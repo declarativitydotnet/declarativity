@@ -60,7 +60,6 @@ private:
   bool    data_on_;
 
   double    max_wnd_;				// Max window size
-  double    rwnd_;				// Receiver window size
   double    cwnd_;				// Current congestion window size
   double    ssthresh_;				// Slow start threshold
 

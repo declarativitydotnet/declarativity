@@ -6,7 +6,7 @@ using namespace boost::python;
 void export_rccr()
 {
   class_<RateCCR, bases<Element>, boost::shared_ptr<RateCCR>, boost::noncopyable>
-      ("RateCCR", init<std::string, optional<int, int, int, int, int> >())
+      ("RateCCR", init<std::string>())
 
     .def("class_name", &RateCCR::class_name)
     .def("processing", &RateCCR::processing)

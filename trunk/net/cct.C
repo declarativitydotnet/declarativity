@@ -66,7 +66,6 @@ CCT::CCT(string name, double init_wnd, double max_wnd)
   max_wnd_        = max_wnd;
   cwnd_           = init_wnd;
   ssthresh_       = max_wnd;
-  rwnd_           = max_wnd;
 }
 
 /**
@@ -78,22 +77,13 @@ int CCT::push(int port, TuplePtr tp, b_cbv cb)
 {
   assert(port == 1);
 
-  try {
-    for (uint i = 0;
-         i < tp->size();
-         i++) {
-      if ((*tp)[i]->typeCode() == Value::STR && Val_Str::cast((*tp)[i]) == "ACK") {
-        // Acknowledge tuple and update measurements.
-        ValuePtr dest = (*tp)[i+1];			// Destination address
-        SeqNum   seq  = Val_UInt64::cast((*tp)[i+2]);	// Sequence number
-        //TODO: Use timestamps to track the latest rwnd value.
-        rwnd_ = Val_Double::cast((*tp)[i+3]);		// Receiver window
-        dealloc(dest, seq);
-        successTransmit();
-      }
-    }
+  if ((*tp)[1]->typeCode() == Value::STR && Val_Str::cast((*tp)[1]) == "ACK") {
+    // Acknowledge tuple and update measurements.
+    ValuePtr dest = (*tp)[DEST+2];			// Destination address
+    SeqNum   seq  = Val_UInt64::cast((*tp)[SEQ+2]);	// Sequence number
+    dealloc(dest, seq);
+    successTransmit();
   }
-  catch (Value::TypeError e) { } 
   return output(1)->push(tp, cb);
 }
 
@@ -218,5 +208,5 @@ REMOVABLE_INLINE int CCT::current_window() {
 }
 
 REMOVABLE_INLINE int CCT::max_window() {
-  return (cwnd_ < rwnd_) ? int(cwnd_) : int(rwnd_);
+  return int(cwnd_);
 }

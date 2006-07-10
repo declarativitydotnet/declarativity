@@ -24,7 +24,7 @@ typedef uint64_t SeqNum;
 
 class RateCCT : public Element {
 public:
-  RateCCT(string name, int dest=0, int seq=2, int rtt=3, int ts=4);
+  RateCCT(string name);
   const char *class_name() const { return "RateCCT";};
   const char *processing() const { return "lh/lh"; };
   const char *flow_code() const	 { return "--/--"; };
@@ -55,10 +55,6 @@ private:
   uint32_t  rto_;			// The round-trip timeout
   timeCBHandle  *nofeedback_;		// No feedback timer
   boost::posix_time::ptime  tld_;	// Time last doubled (for slow start)
-  int       dest_field_;
-  int       seq_field_;
-  int       rtt_field_;
-  int       ts_field_;
 
   typedef std::map<SeqNum, timeCBHandle*> SeqTimeCBMap;
   typedef std::map<ValuePtr, boost::shared_ptr<SeqTimeCBMap>, Value::Less> ValueSeqTimeCBMap;

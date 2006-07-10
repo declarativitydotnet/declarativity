@@ -39,7 +39,7 @@ typedef uint64_t SeqNum;
  */
 class CCR : public Element {
 public:
-  CCR(string name, double rwnd=512.);
+  CCR(string name);
   const char *class_name() const { return "CCR";};
   const char *processing() const { return "a/al"; };
   const char *flow_code() const	 { return "-/--"; };
@@ -53,7 +53,6 @@ public:
 private:
   b_cbv _ack_cb; 				// Callback to send an ack 
 
-  double   rwnd_;				// Receiver window size
   std::deque <TuplePtr> ack_q_;			// Output ack queue
 };
   

@@ -20,6 +20,7 @@
 #include "val_str.h"
 #include "val_time.h"
 #include "val_tuple.h"
+#include "netglobals.h"
 
 
 /////////////////////////////////////////////////////////////////////
@@ -27,25 +28,7 @@
 // Globals and MACROS
 //
 
-#define MAX_MBI     (64000)
-#define ACK_SIG     1
-#define ACK_DEST    ACK_SIG + 1
-#define ACK_SEQ     ACK_SIG + 2
-#define ACK_RATE    ACK_SIG + 3
-#define ACK_LOSS    ACK_SIG + 4
-#define ACK_TIME    ACK_SIG + 5
-#define MAX_SURPLUS 10
 #define RTT_FILTER  0.9
-
-#define ACK(status, d, s) \
-do { \
-  TuplePtr tp = Tuple::mk(); \
-  tp->append(Val_Str::mk((status))); \
-  tp->append((d)); \
-  tp->append(Val_UInt64::mk(s)); \
-  tp->freeze(); \
-  assert(output(1)->push(tp, 0)); \
-} while (0)
 
 #undef MAX
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))
@@ -64,18 +47,14 @@ do { \
  * Output 0 (push): Tuple to send with cc info wrapper.
  * Output 1 (push): Status of a tuple that was recently sent.
  */
-RateCCT::RateCCT(string name, int dest, int seq, int rtt, int ts) 
+RateCCT::RateCCT(string name) 
   : Element(name, 2, 2),
     data_on_(true),
     data_cbv_(0), 
     trate_(1),
     rtt_(100),
     rto_(4000),
-    nofeedback_(NULL),
-    dest_field_(dest),
-    seq_field_(seq),
-    rtt_field_(rtt),
-    ts_field_(ts)
+    nofeedback_(NULL)
 {
   getTime(tld_);
 }
@@ -89,25 +68,18 @@ int RateCCT::push(int port, TuplePtr tp, b_cbv cb)
 {
   assert(port == 1);
 
-  try {
-    if (Val_Str::cast((*tp)[ACK_SIG]) == "ACK") {
-      // Acknowledge tuple with rate feedback.
-      ValuePtr dest = (*tp)[ACK_DEST];
-      SeqNum   seq  = Val_UInt64::cast((*tp)[ACK_SEQ]);
-      uint32_t rr   = Val_UInt32::cast((*tp)[ACK_RATE]);
-      double   p    = Val_Double::cast((*tp)[ACK_LOSS]);
-      boost::posix_time::ptime ts = Val_Time::cast(  (*tp)[ACK_TIME]);
+  if ((*tp)[1]->typeCode() == Value::STR && Val_Str::cast((*tp)[1]) == "ACK") {
+    // Acknowledge tuple with rate feedback.
+    ValuePtr               dest = (*tp)[DEST + 2];
+    SeqNum                  seq = Val_UInt64::cast((*tp)[SEQ + 2]);
+    boost::posix_time::ptime ts = Val_Time::cast(  (*tp)[TS + 2]);
+    uint32_t                 rr = Val_UInt32::cast((*tp)[STACK_SIZE]);
+    double                   p  = Val_Double::cast((*tp)[STACK_SIZE + 1]);
 
-      unmap(dest, seq);
-      ACK("SUCCESS", dest, seq);
-      feedback(delay(&ts), rr, p);
-      return 1;
-    }
+    unmap(dest, seq);
+    feedback(delay(&ts), rr, p);
   }
-  catch (Value::TypeError e) { } 
-
-  assert(output(1)->push(tp, 0)); // Pass data tuple through
-  return 1;
+  return output(1)->push(tp, cb); // Pass data tuple through
 }
 
 /**
@@ -186,7 +158,6 @@ RateCCT::data_ready()
 
 void RateCCT::tuple_timeout(ValuePtr d, SeqNum s) 
 {
-  ACK("FAIL", d, s);
   unmap(d, s);
 }
 
@@ -211,16 +182,27 @@ REMOVABLE_INLINE uint32_t RateCCT::delay(boost::posix_time::ptime *ts)
 
 REMOVABLE_INLINE TuplePtr RateCCT::package(TuplePtr tp)
 {
-  ValuePtr dest = (*tp)[dest_field_];
-  SeqNum   seq  = Val_UInt64::cast((*tp)[seq_field_]);
+  ValuePtr dest = (*tp)[DEST];
+  SeqNum   seq  = Val_UInt64::cast((*tp)[SEQ]);
   boost::posix_time::ptime now;
   getTime(now);
-   
   map(dest, seq);	// Set a timer for this tuple
 
-  (*tp)[rtt_field_] = Val_UInt32::mk(rtt_);
-  (*tp)[ts_field_]  = Val_Time::mk(now); 
-  return tp;
+  TuplePtr p = Tuple::mk();
+  for (unsigned i = 0; i < tp->size(); i++) {
+    if (i == RTT) {
+      p->append(Val_UInt32::mk(rtt_));
+    }
+    else if (i == TS) {
+      p->append(Val_Time::mk(now));
+    }
+    else {
+      p->append((*tp)[i]);
+    }
+  }
+  p->freeze();
+
+  return p;
 }
 
 /**

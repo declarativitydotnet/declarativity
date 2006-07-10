@@ -33,12 +33,8 @@
  * name: The name given to this element.
  * rwnd: Initial receiver window size (default given in ccrx.h).
  */
-CCR::CCR(string name, double rwnd) 
-  : Element(name, 1, 2),
-    _ack_cb(0),
-    rwnd_(rwnd)
-{
-}
+CCR::CCR(string name) 
+  : Element(name, 1, 2), _ack_cb(0) { }
 
 /**
  * Acknowledge tuple p if ack_q is empty and output1 is open.
@@ -55,7 +51,6 @@ TuplePtr CCR::simple_action(TuplePtr p)
   ack->append(Val_Str::mk("ACK"));
   for(unsigned i = 0; i < STACK_SIZE; i++)
     ack->append((*p)[i]);
-  ack->append(Val_Double::mk(rwnd_));	// Receiver window size
   ack->freeze();
   ack_q_.push_back(ack);		// Append to ack queue
 

@@ -23,6 +23,7 @@
 #include "val_time.h"
 #include "val_tuple.h"
 #include "tupleseq.h"
+#include "netglobals.h"
 
 #define RF        0.9
 #define HIST_SIZE 100000
@@ -243,14 +244,8 @@ REMOVABLE_INLINE void RateCCR::Connection::clearHistory() {
 // Receive element
 //
 
-RateCCR::RateCCR(string name, int dest, int src, int seq, int rtt, int ts) 
-  : Element(name, 1, 2),
-    _ack_cb(0),
-    dest_field_(dest),
-    src_field_(src),
-    seq_field_(seq),
-    rtt_field_(rtt),
-    ts_field_(ts)
+RateCCR::RateCCR(string name) 
+  : Element(name, 1, 2), _ack_cb(0)
 {
 }
 
@@ -261,29 +256,28 @@ RateCCR::RateCCR(string name, int dest, int src, int seq, int rtt, int ts)
 TuplePtr RateCCR::simple_action(TuplePtr tp) 
 {
   Connection *c  = NULL;
-  ValuePtr  src  = (*tp)[src_field_];
-  ValuePtr  dest = (*tp)[dest_field_];
-  SeqNum    seq  = Val_UInt64::cast((*tp)[seq_field_]);
-  int       rtt  = Val_UInt32::cast((*tp)[rtt_field_]);
-  boost::posix_time::ptime ts = Val_Time::cast((*tp)[ts_field_]);
+  ValuePtr  src  = (*tp)[SRC];
+  SeqNum    seq  = Val_UInt64::cast((*tp)[SEQ]);
+  int       rtt  = Val_UInt32::cast((*tp)[RTT]);
+  boost::posix_time::ptime ts = Val_Time::cast((*tp)[TS]);
 
   if (seq == 0 || rtt < 0) {
     log(LoggerI::INFO, 0, "NON-RateCC Tuple: " + tp->toString()); 
     return tp;
   }
 
-  if (cmap_.find(src->toString()) == cmap_.end()) {
+  if (cmap_.find(src) == cmap_.end()) {
     c = new Connection(); 
-    cmap_.insert(std::make_pair(src->toString(), c));
-  } else c = cmap_.find(src->toString())->second;
+    cmap_.insert(std::make_pair(src, c));
+  } else c = cmap_.find(src)->second;
   assert(c);
 
 /*
   if (!c->active()) { 
     log(LoggerI::WARN, 0, "REMOVING INACTIVE CONNECTION FROM SOURCE: " + src->toString()); 
-    cmap_.erase(cmap_.find(src->toString()));
+    cmap_.erase(cmap_.find(src));
     c = new Connection(); 
-    cmap_.insert(std::make_pair(src->toString(), c));
+    cmap_.insert(std::make_pair(src, c));
   }
 */
   c->handle_tuple(seq, rtt, ts);
@@ -291,11 +285,10 @@ TuplePtr RateCCR::simple_action(TuplePtr tp)
   TuplePtr ack = Tuple::mk();
   ack->append(src);				// Source location
   ack->append(Val_Str::mk("ACK"));		// Acknowledgement name
-  ack->append(dest);				// Destination location
-  ack->append(Val_UInt64::mk(seq));		// The sequence number
+  for(unsigned i = 0; i < STACK_SIZE; i++)
+    ack->append((*tp)[i]);
   ack->append(Val_UInt32::mk(c->receiveRate()));// Rate observed in past rtt
   ack->append(Val_Double::mk(c->lossRate()));	// Loss event rate
-  ack->append(Val_Time::mk(ts));		// Echo the timestamp
   ack->freeze();
   ack_q_.push_back(ack);			// Append to ack queue
 

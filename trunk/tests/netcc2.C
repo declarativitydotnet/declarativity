@@ -107,7 +107,7 @@ Plumber::DataflowPtr UdpCC_sink(PlumberPtr plumber, Udp *udp, double drop) {
   ElementSpecPtr unmarshal = conf->addElement(ElementPtr(new UnmarshalField("unmarshal", 1)));
   ElementSpecPtr unroute   = conf->addElement(ElementPtr(new PelTransform("unRoute", "$1 unboxPop")));
   ElementSpecPtr printS    = conf->addElement(ElementPtr(new Print("Print Sink")));
-  ElementSpecPtr ccr       = conf->addElement(ElementPtr(new CCR("CC Receive", 2048)));
+  ElementSpecPtr ccr       = conf->addElement(ElementPtr(new CCR("CC Receive")));
   ElementSpecPtr discard   = conf->addElement(ElementPtr(new Discard("DISCARD")));
 
   // The remote ack elements

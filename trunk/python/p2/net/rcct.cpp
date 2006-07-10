@@ -6,7 +6,7 @@ using namespace boost::python;
 void export_rcct()
 {
   class_<RateCCT, bases<Element>, boost::shared_ptr<RateCCT>, boost::noncopyable>
-      ("RateCCT", init<string, optional<int, int, int, int> >())
+      ("RateCCT", init<string>())
 
     .def("class_name", &RateCCT::class_name)
     .def("processing", &RateCCT::processing)
