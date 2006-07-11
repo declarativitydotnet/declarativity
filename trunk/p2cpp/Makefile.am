@@ -17,6 +17,8 @@ lib_LTLIBRARIES = libp2cpp.la
 libp2cpp_la_SOURCES = \
 	p2.C
 
+libp2cpp_la_LIBADD = -lboost_python
+
 
 INCLUDES = @BOOST_INC@ -I../p2core -I../elements \
            -I../eventLoop -I../overlog -I../net -I../debugger
