@@ -38,150 +38,149 @@ noinst_PROGRAMS 	=  	tuples \
 
 
 tuples_SOURCES	= tuples.C
-tuples_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
-		$(top_builddir)/eventLoop/.libs/libp2eventLoop.a
+tuples_LDADD = $(top_builddir)/p2core/libp2core.la \
+		$(top_builddir)/eventLoop/libp2eventLoop.la
 
 benchmark_SOURCES	= benchmark.C
-benchmark_LDADD = $(top_builddir)/p2core/.libs/libp2core.a \
-		  $(top_builddir)/eventLoop/.libs/libp2eventLoop.a
+benchmark_LDADD = $(top_builddir)/p2core/libp2core.la \
+		  $(top_builddir)/eventLoop/libp2eventLoop.la
 
 
 logger_SOURCES  = logger.C
-logger_LDADD = $(top_builddir)/elements/.libs/libp2elements.a \
-		$(top_builddir)/p2core/.libs/libp2core.a \
-		$(top_builddir)/eventLoop/.libs/libp2eventLoop.a
+logger_LDADD = -lboost_python \
+		$(top_builddir)/elements/libp2elements.la \
+		$(top_builddir)/p2core/libp2core.la \
+		$(top_builddir)/eventLoop/libp2eventLoop.la
 
 
 scheduling_SOURCES = scheduling.C
-scheduling_LDADD = \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a
+scheduling_LDADD = -lboost_python \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la
 
 demultiplex_SOURCES = demultiplex.C
-demultiplex_LDADD = \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a
+demultiplex_LDADD = -lboost_python \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la
 
 runOverLog_SOURCES = runOverLog.C
-runOverLog_LDADD = \
-	$(top_builddir)/overlog/.libs/libp2overlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a \
-	$(top_builddir)/debugger/.libs/libp2debugger.a
+runOverLog_LDADD = -lboost_python \
+	$(top_builddir)/overlog/libp2overlog.la \
+	$(top_builddir)/net/libp2net.la \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la \
+	$(top_builddir)/debugger/libp2debugger.la
 
 runChord_SOURCES = runChord.C
-runChord_LDADD = \
-	$(top_builddir)/overlog/.libs/libp2overlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a \
-	$(top_builddir)/debugger/.libs/libp2debugger.a
+runChord_LDADD = -lboost_python \
+	$(top_builddir)/debugger/libp2debugger.la \
+	$(top_builddir)/overlog/libp2overlog.la \
+	$(top_builddir)/net/libp2net.la \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la
 
 runOverLog2_SOURCES = runOverLog2.C
-runOverLog2_LDADD = \
-	-lboost_python -lp2core -lp2debugger -lp2elements \
-	-lp2eventLoop -lp2net -lp2overlog -lp2cpp \
-	$(top_builddir)/overlog/.libs/libp2overlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a \
-	$(top_builddir)/p2cpp/.libs/libp2cpp.a
+runOverLog2_LDADD = -lboost_python \
+	$(top_builddir)/debugger/libp2debugger.la \
+	$(top_builddir)/p2cpp/libp2cpp.la \
+	$(top_builddir)/overlog/libp2overlog.la \
+	$(top_builddir)/net/libp2net.la \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la
 
 
 runPingPong_SOURCES = runPingPong.C
-runPingPong_LDADD = \
-	-lboost_python -lp2core -lp2debugger -lp2elements \
-	-lp2eventLoop -lp2net -lp2overlog -lp2cpp \
-	$(top_builddir)/overlog/.libs/libp2overlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a \
-	$(top_builddir)/p2cpp/.libs/libp2cpp.a
+runPingPong_LDADD = -lboost_python \
+	$(top_builddir)/debugger/libp2debugger.la \
+	$(top_builddir)/p2cpp/libp2cpp.la \
+	$(top_builddir)/overlog/libp2overlog.la \
+	$(top_builddir)/net/libp2net.la \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la 
 
 
 overlog_SOURCES	= overlog.C
-overlog_LDADD = \
-	$(top_builddir)/overlog/.libs/libp2overlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a \
-	$(top_builddir)/debugger/.libs/libp2debugger.a
+overlog_LDADD = -lboost_python \
+	$(top_builddir)/overlog/libp2overlog.la \
+	$(top_builddir)/net/libp2net.la \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la \
+	$(top_builddir)/debugger/libp2debugger.la
 
 simple_lookup_SOURCES = simple_lookup.C
-simple_lookup_LDADD = \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a 
+simple_lookup_LDADD = -lboost_python \
+	$(top_builddir)/net/libp2net.la \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la 
 
 lookupGenerator_SOURCES = lookupGenerator.C
-lookupGenerator_LDADD = \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a 
+lookupGenerator_LDADD = -lboost_python \
+	$(top_builddir)/net/libp2net.la \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la 
 
 net_SOURCES = net.C
-net_LDADD = \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a
+net_LDADD = -lboost_python \
+	$(top_builddir)/net/libp2net.la \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la
 
 netrcc_SOURCES = netrcc.C
-netrcc_LDADD = \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a \
-	$(top_builddir)/p2core/.libs/libp2core.a
+netrcc_LDADD = -lboost_python \
+	$(top_builddir)/net/libp2net.la \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la \
+	$(top_builddir)/p2core/libp2core.la
 
 netcc2_SOURCES = netcc2.C
-netcc2_LDADD = \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a
+netcc2_LDADD = -lboost_python \
+	$(top_builddir)/net/libp2net.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la
 
 perfectChord_SOURCES = perfectChord.C
-perfectChord_LDADD = \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a
+perfectChord_LDADD = -lboost_python \
+	$(top_builddir)/net/libp2net.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la
 
 basicelements_SOURCES	= basicelements.C
-basicelements_LDADD = \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a
+basicelements_LDADD = -lboost_python \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la
 
 testQueue_SOURCES	= testQueue.C
-testQueue_LDADD = \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a
+testQueue_LDADD = -lboost_python \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la
 
 udpMessage_SOURCES	= udpMessage.C
-udpMessage_LDADD = \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a
+udpMessage_LDADD = -lboost_python \
+	$(top_builddir)/net/libp2net.la \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la
 
 udpListen_SOURCES	= udpListen.C
-udpListen_LDADD = \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a
+udpListen_LDADD = -lboost_python \
+	$(top_builddir)/net/libp2net.la \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la
 
 CLEANFILES = core *.core *~
 
