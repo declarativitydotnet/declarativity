@@ -168,7 +168,7 @@ WHITESPACE	[ \t\r\n]+
   lvalp->v = new Parse_Val(Val_Null::mk()); 
   return OL_NULL; }
 
-<INITIAL>f_[a-zA-Z]+ { 
+<INITIAL>f_[a-zA-Z0-9]+ { 
   lvalp->v = new Parse_Var(Val_Str::mk(yytext)); 
   return OL_FUNCTION; }
 

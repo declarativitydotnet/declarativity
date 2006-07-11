@@ -2004,6 +2004,10 @@ string Plmb_ConfGen::pelFunction(FieldNamesTracker* names, Parse_Function *expr,
   else if (expr->name() == "f_rand") {
     pel << "rand "; 
   } 
+  else if (expr->name() == "f_sha1") {
+    int pos = names->fieldPosition(expr->arg(0)->toString());
+    pel << "$" << (pos+1) << " sha1 "; 
+  } 
   else if (expr->name() == "f_now") {
     pel << "now "; 
   }
