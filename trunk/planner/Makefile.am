@@ -14,15 +14,16 @@
 
 
 lib_LTLIBRARIES = libp2planner.la
-libp2planner_la_SOURCES = catalog.C \
+libp2planner_la_SOURCES = tableStore.C \
+			planContext.C \
+			localize_context.C \
 			eca_context.C \
 			ruleStrand.C \
-			planContext.C \
 			netPlanner.C \
 			planner.C 
 
 
-INCLUDES = @BOOST_INC@ -I../p2core -I../elements -I../net -I../overlog -I../eventLoop
+INCLUDES = @BOOST_INC@ -I../p2core -I../elements -I../net -I../overlog -I../eventLoop -I../debugger
 
 CLEANFILES = core *.core *~
 EXTRA_DIST = .cvsignore

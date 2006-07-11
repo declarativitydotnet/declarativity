@@ -43,7 +43,6 @@ void NetPlanner::generateNetworkOutElements(boost::shared_ptr<Udp> udp)
     _networkOut.push_back(_outOptimize.at(k));
   }
   _networkOut.push_back(sendQueue);
-  //_networkOut.push_back(measureBW);
   _networkOut.push_back(marshalSend);
   _networkOut.push_back(routeSend);
     _networkOut.push_back(udpSend);
@@ -59,7 +58,6 @@ void NetPlanner::generateNetworkOutElements(boost::shared_ptr<Udp> udp)
 		  0, sendQueue, 0);
   }
   _conf->hookUp(sendQueue, 0, marshalSend, 0);
-  //_conf->hookUp(measureBW, 0, marshalSend, 0);
   _conf->hookUp(marshalSend, 0, routeSend, 0);
   _conf->hookUp(routeSend, 0, udpSend, 0);
 }
@@ -82,16 +80,11 @@ void NetPlanner::generateNetworkInElements(boost::shared_ptr<Udp> udp)
   _networkIn.push_back(udpReceive);
   _networkIn.push_back(unmarshalS);
   _networkIn.push_back(unBoxS);
-  /*_networkIn.push_back(pathsIn);
-    _networkIn.push_back(pathsInPullPush);*/
   _networkIn.push_back(receiveBufferQueue);
   _networkIn.push_back(receiveQueuePullPush);
   
   _conf->hookUp(udpReceive, 0, unmarshalS, 0);
   _conf->hookUp(unmarshalS, 0, unBoxS, 0);
-  //_conf->hookUp(unBoxS, 0, pathsIn, 0);
-  //_conf->hookUp(pathsIn, 0, pathsInPullPush, 0);
-  //_conf->hookUp(pathsInPullPush, 0, receiveBufferQueue, 0);
   _conf->hookUp(unBoxS, 0, receiveBufferQueue, 0);
   _conf->hookUp(receiveBufferQueue, 0, receiveQueuePullPush, 0);
 }
@@ -115,7 +108,7 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands)
   boost::shared_ptr< std::vector< ValuePtr > > demuxKeys(new std::vector< ValuePtr >);
   for (unsigned k = 0; k < ruleStrands.size(); k++) {
     RuleStrand* rs = ruleStrands.at(k);
-    if (rs->_eca_rule->_event != NULL && rs->eventType() == Parse_Event::RECV) {
+    if (rs->getRule()->_event != NULL && rs->eventType() == Parse_Event::RECV) {
       numReceivers++;
       ReceiverInfoMap::iterator iterator 
 	= _receiverInfo.find(ruleStrands.at(k)->eventFunctorName());

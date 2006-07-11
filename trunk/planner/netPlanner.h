@@ -9,7 +9,7 @@
  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
  * Berkeley, CA,  94707. Attention: P2 Group.
  * 
- * DESCRIPTION: Planner code
+ * DESCRIPTION: Network planner code
  *
  */
 
@@ -47,10 +47,7 @@
 #include "timedPullSink.h"
 #include "timestampSource.h"
 #include "hexdump.h"
-#include "table.h"
-#include "lookup.h"
 #include "insert.h"
-#include "scan.h"
 #include "queue.h"
 #include "printTime.h"
 #include "roundRobin.h"
@@ -63,9 +60,6 @@
 #include "duplicateConservative.h"
 #include "aggwrap.h"
 #include "tupleseq.h"
-#include "cc.h"
-//#include "pathsIn.h"
-//#include "agg.h"
 
 #include "ruleStrand.h"
 #define QUEUESIZE 1000
@@ -73,7 +67,7 @@
 class NetPlanner
 {
 public:
-  NetPlanner(Plumber::ConfigurationPtr conf, string nodeID, 
+  NetPlanner(Plumber::DataflowPtr conf, string nodeID, 
 	     FILE* outputDebugFile) :
     _conf(conf)
   { _nodeID = nodeID; _outputDebugFile = outputDebugFile; };
@@ -81,7 +75,6 @@ public:
   ~NetPlanner() { }; 
   void generateNetworkElements(boost::shared_ptr<Udp> udp);
   void registerAllRuleStrands(std::vector<RuleStrand*>);
-
   void registerOptimizeSend(std::vector<ElementSpecPtr> outOptimize) {
     _outOptimize = outOptimize; }
 
@@ -105,9 +98,9 @@ private:
 
   string _nodeID;
   FILE* _outputDebugFile;
-  Plumber::ConfigurationPtr _conf;
-  std::vector<ElementSpecPtr> _networkIn, _networkOut;
   std::vector<ElementSpecPtr> _outOptimize;
+  Plumber::DataflowPtr _conf;
+  std::vector<ElementSpecPtr> _networkIn, _networkOut;
   ReceiverInfoMap _receiverInfo;  
   std::vector<ElementSpecPtr> _senders;
   ElementSpecPtr _receiveMux, _sendRoundRobin;

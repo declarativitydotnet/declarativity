@@ -17,21 +17,22 @@
 
 #include "planContext.h"
 
-PlanContext::PlanContext(Plumber::ConfigurationPtr conf, Catalog* catalog, 
+PlanContext::PlanContext(Plumber::DataflowPtr conf, TableStore* tableStore, 
 			 RuleStrand* ruleStrand, string nodeID, FILE* outputDebugFile) :
   _outputDebugFile(outputDebugFile), _conf(conf)
 {
-  _catalog = catalog;
+  _tableStore = tableStore;
   _ruleStrand = ruleStrand;
   _nodeID = nodeID;
   _namesTracker = 
-    new FieldNamesTracker(ruleStrand->_eca_rule->_event->_pf);
+    new FieldNamesTracker(ruleStrand->getRule()->_event->_pf);
 }
 
 PlanContext::~PlanContext()
 {
   delete _namesTracker;
 }
+
 
 PlanContext::FieldNamesTracker::FieldNamesTracker() { }
 
@@ -52,31 +53,8 @@ PlanContext::FieldNamesTracker::initialize(Parse_Term* term)
       fieldNames.push_back(parse_var->toString());
     }  
   }
-
-  Parse_RangeFunction* pr = dynamic_cast<Parse_RangeFunction* > (term);    
-  if (pr != NULL) {
-    fieldNames.push_back(string("NI"));
-    fieldNames.push_back(string(pr->var->toString()));
-  }
 }
 
-
-std::vector<int> 
-PlanContext::FieldNamesTracker::matchingJoinKeys(std::vector<string> 
-						 otherArgNames)
-{
-  // figure out the matching on other side. Assuming that
-  // there is only one matching key for now
-  std::vector<int> toRet;
-  for (unsigned int k = 0; k < otherArgNames.size(); k++) {
-    string nextStr = otherArgNames.at(k);
-    if (fieldPosition(nextStr) != -1) {
-      // exists
-      toRet.push_back(k);
-    }
-  }  
-  return toRet;
-}
 
 int 
 PlanContext::FieldNamesTracker::fieldPosition(string var)
@@ -114,14 +92,43 @@ PlanContext::FieldNamesTracker::mergeWith(std::vector<string> names,
   }
 }
 
-string 
-PlanContext::FieldNamesTracker::toString()
+string PlanContext::FieldNamesTracker::toString()
 {
-  ostringstream toRet("FieldNamesTracker<");
+  ostringstream toRet;
+
+  toRet << "FieldNamesTracker<";
   
   for (uint k = 0; k < fieldNames.size(); k++) {
     toRet << fieldNames.at(k) << " ";
   }
-  return toRet.str() + ">";
+  toRet << ">";
+  return toRet.str();
 }
 
+void PlanContext::FieldNamesTracker::joinKeys(FieldNamesTracker* probeNames,
+					      Table2::Key& lookupKey,
+					      Table2::Key& indexKey,
+					      Table2::Key& remainingBaseKey)
+{
+  unsigned myFieldNo = 1;       // start at one to skip the table name
+  for (std::vector< string >::iterator i = fieldNames.begin();
+       i != fieldNames.end();
+       i++, myFieldNo++) {
+    string myNextArgument = *i;
+    int probePosition = 
+      probeNames->fieldPosition(myNextArgument);
+
+    // Does my argument match any probe arguments?
+    if (probePosition == -1) {
+      // My argument doesn't match. It's a "remaining" base key
+      remainingBaseKey.push_back(myFieldNo);
+    } else {
+      // My argument myNextArgument at field number myFieldNo matches
+      // the probe's argument at field number probePosition. The lookup
+      // key will project probePosition on the probe tuple onto
+      // myFieldNo.
+      lookupKey.push_back(probePosition + 1); // add 1 for the table name
+      indexKey.push_back(myFieldNo);
+    }
+  }  
+}

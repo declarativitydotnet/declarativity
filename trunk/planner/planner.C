@@ -22,11 +22,11 @@
 #include "planContext.h"
 #include "rulePlanner.C"
 
-Planner::Planner(Plumber::ConfigurationPtr conf, Catalog* catalog, 
+Planner::Planner(Plumber::DataflowPtr conf, TableStore* tableStore, 
 		 bool debug, string nodeID, string outputFile) 
   : _conf(conf)
 { 
-  _catalog = catalog; 
+  _tableStore = tableStore; 
   _debug = debug; 
   _nodeID = nodeID;
   _ruleCount = 0;
@@ -44,14 +44,14 @@ Planner::generateRuleStrands(ECA_ContextPtr ectxt)
 {
   std::vector<RuleStrand*> toRet;
   // go through each eca rule, form a rule strand
-  for (unsigned k = 0; k < ectxt->_ecaRules.size(); k++) {
-    ECA_Rule* nextRule = ectxt->_ecaRules.at(k);
+  for (unsigned k = 0; k < ectxt->getRules().size(); k++) {
+    ECA_Rule* nextRule = ectxt->getRules().at(k);
     ostringstream b; b << _ruleCount++ << "-" << _nodeID;
     RuleStrand *rs = new RuleStrand(nextRule, b.str());
     toRet.push_back(rs);
-    PlanContext* pc = new PlanContext(_conf, _catalog, rs, 
+    PlanContext* pc = new PlanContext(_conf, _tableStore, rs, 
 				      _nodeID, _outputDebugFile);
-    generateEcaElements(pc);    
+    compileECARule(pc);
     delete pc;
   }
   return toRet;

@@ -1,4 +1,3 @@
-
 // -*- c-basic-offset: 2; related-file-name: "ol_context.C" -*-
 /*
  * @(#)$Id$
@@ -18,14 +17,14 @@
 
 #include "eca_context.h"
 #include "planContext.h"
+#include "parser_util.h"
 
 string Parse_Event::toString()
 {
   ostringstream b;
   if (_event == RECV) { b << "EVENT_RECV<" << _pf->toString() << ">"; }
-  if (_event == PERIODIC) { b << "EVENT_PERIODIC<" << _pf->toString() << ">"; }
-  if (_event == UPDATE) { b << "EVENT_UPDATE<" << _pf->toString() << ">"; }
-  if (_event == AGGUPDATE) { b << "EVENT_AGGUPDATE<" << _pf->toString() << ">"; }
+  if (_event == INSERT) { b << "EVENT_INSERT<" << _pf->toString() << ">"; }
+  if (_event == DELETE) { b << "EVENT_DELETE<" << _pf->toString() << ">"; }
   return b.str();
 }
 
@@ -75,181 +74,117 @@ void ECA_Context::add_rule(ECA_Rule* eca_rule)
     }
   }
   
-  warn << eca_rule->toString() << "\n";
+  std::cout << "  Add rule: " << eca_rule->toString() << "\n";
   _ecaRules.push_back(eca_rule);  
 }
 
-void ECA_Context::activateLocalizedRule(OL_Context::Rule* rule, Catalog* catalog)
+void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore)
 {
-  // check if it is an aggTerm rule
-  Parse_AggTerm *aggTerm = dynamic_cast<Parse_AggTerm*>(rule->terms.at(0)); 
-  if (rule->terms.size() == 1 && aggTerm != NULL) {
-    ECA_Rule* eca_rule = new ECA_Rule(rule->ruleID);    
-    Parse_Functor *baseFunctor = dynamic_cast<Parse_Functor*>(aggTerm->_baseTerm); 
-    eca_rule->_event = new Parse_Event(baseFunctor, Parse_Event::AGGUPDATE);
-    eca_rule->_action = new Parse_Action(rule->head, Parse_Action::ADD);
-    eca_rule->_aggTerm = aggTerm; 
-    add_rule(eca_rule);
-    return;
-  }
-  
-  // activate each body functor.
-  // a. recv if not materialized
-  // b. update if materialized
-  for (unsigned k = 0; k < rule->terms.size(); k++) {
-    Parse_Term* nextTerm = rule->terms.at(k);
+  std::cout << "Perform ECA rewrite on " << rule->toString() << "\n";
+
+  std::list<Parse_Term*>::iterator t = rule->terms.begin();
+  int count = 0;
+  for(; t != rule->terms.end(); t++) {
+    Parse_Term* nextTerm = (*t);
     Parse_Functor *nextFunctor = dynamic_cast<Parse_Functor*>(nextTerm); 
     if (nextFunctor == NULL) { continue; }
 
     // create an event
     ostringstream oss;
-    oss << rule->ruleID << "-" << k;    
-    ECA_Rule* eca_rule = new ECA_Rule(oss.str());    
+    oss << rule->ruleID << "-eca" << count;    
+    ECA_Rule* eca_insert_rule = new ECA_Rule(oss.str() + "-ins");    
+    ECA_Rule* eca_delete_rule = new ECA_Rule(oss.str() + "-del");    
 
-    // if event is not materialized, do a recv, otherwise, update
-    string functorName = nextFunctor->fn->name;
-    Catalog::TableInfo* functorTableInfo = catalog->getTableInfo(functorName);
-    if (functorTableInfo == NULL ||
-	(functorTableInfo->_tableInfo->timeout == 0)) {
-      eca_rule->_event = new Parse_Event(nextFunctor, Parse_Event::RECV);
-    } else {
-      eca_rule->_event = new Parse_Event(nextFunctor, Parse_Event::UPDATE);
-    }
+    // delete functor generated from delete event
+    ValuePtr name = Val_Str::mk(rule->head->fn->name + "delete");
+    ValuePtr loc = Val_Str::mk(rule->head->fn->loc);
+    Parse_Functor *deleteFunctor = 
+      new Parse_Functor(new Parse_FunctorName(new Parse_Val(name), 
+					      new Parse_Val(loc)), 
+			rule->head->args_);
 
-    // if head is remote, do a send, and a recv 
+    eca_insert_rule->_event = new Parse_Event(nextFunctor, Parse_Event::INSERT);
+    eca_delete_rule->_event = new Parse_Event(nextFunctor, Parse_Event::DELETE);
+
     if (rule->head->fn->loc == nextFunctor->fn->loc) {
-      eca_rule->_action = new Parse_Action(rule->head, Parse_Action::ADD);
+      // if this is local, we can simply add local table
+      eca_insert_rule->_action = new Parse_Action(rule->head, Parse_Action::ADD);
+      eca_delete_rule->_action = new Parse_Action(rule->head, Parse_Action::DELETE);
     } else {
-      eca_rule->_action = new Parse_Action(rule->head, Parse_Action::SEND);
-      // check to see if materialize, if so, create one more rule
+      // if the head is remote, we have to do a send, 
+      // followed by another recv/add rule strand
+      eca_insert_rule->_action = new Parse_Action(rule->head, Parse_Action::SEND);
+      eca_delete_rule->_action = new Parse_Action(deleteFunctor, Parse_Action::SEND);
       string headName = rule->head->fn->name;
-      Catalog::TableInfo* headTableInfo = catalog->getTableInfo(headName);
-      if (headTableInfo != NULL &&
-	  (headTableInfo->_tableInfo->timeout != 0)) {
+      OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);
+      if (headTableInfo != NULL) {
         ostringstream oss;
-	oss << rule->ruleID << "-" << k << "-" << 1;    
-	ECA_Rule* eca_rule1 = new ECA_Rule(oss.str());    
-	eca_rule1->_event = new Parse_Event(rule->head, Parse_Event::RECV);
-	eca_rule1->_action = new Parse_Action(rule->head, Parse_Action::ADD);      
-	add_rule(eca_rule1);
+	oss << rule->ruleID << "-eca" << count << "-remote";    
+	ECA_Rule* eca_insert_rule1 = new ECA_Rule(oss.str() + "-ins");    
+	eca_insert_rule1->_event = new Parse_Event(rule->head, Parse_Event::RECV);
+	eca_insert_rule1->_action = new Parse_Action(rule->head, Parse_Action::ADD);      
+	add_rule(eca_insert_rule1);
+
+	ECA_Rule* eca_delete_rule1 = new ECA_Rule(oss.str() + "-del");    
+	eca_delete_rule1->_event = new Parse_Event(deleteFunctor, Parse_Event::RECV);
+	eca_delete_rule1->_action = new Parse_Action(rule->head, Parse_Action::DELETE);      
+	add_rule(eca_delete_rule1);
       }
     }
 
     // create the other terms
-    for (unsigned i = 0; i < rule->terms.size(); i++) {
-      if (i == k) { continue; }
-      Parse_Term* nextTerm = rule->terms.at(i);
+    int count1 = 0;
+    std::list<Parse_Term*>::iterator t = rule->terms.begin();
+    for(; t != rule->terms.end(); t++) {
+      if (count1 == count) { continue; }
+      Parse_Term* nextTerm = (*t);    
       Parse_Functor *nextFunctor = dynamic_cast<Parse_Functor*>(nextTerm); 
       Parse_Select *nextSelect = dynamic_cast<Parse_Select*>(nextTerm); 
       Parse_Assign *nextAssign = dynamic_cast<Parse_Assign*>(nextTerm); 
       
       if (nextFunctor != NULL) {
-	eca_rule->_probeTerms.push_back(nextFunctor);
+	eca_insert_rule->_probeTerms.push_back(nextFunctor);
+	eca_delete_rule->_probeTerms.push_back(nextFunctor);
       }
       if (nextSelect != NULL || nextAssign != NULL) {
-	eca_rule->_selectAssignTerms.push_back(nextTerm);
+	eca_insert_rule->_selectAssignTerms.push_back(nextTerm);
+	eca_delete_rule->_selectAssignTerms.push_back(nextTerm);
       }
-     }
-    add_rule(eca_rule);
+      count1++;
+    }
+    add_rule(eca_insert_rule);
+    add_rule(eca_delete_rule);
+    count++;
   }
 }
 
-OL_Context::Rule* generateSendRule(OL_Context::Rule* nextRule, 
-				   Parse_Functor *functor, string loc, 
-				   Catalog* catalog)
+void ECA_Context::rewriteEventRule(OL_Context::Rule* rule, 
+				   TableStore* tableStore)
 {
-  ostringstream oss;
-  std::vector<Parse_Term*> newTerms;
-  newTerms.push_back(functor);
-  Parse_Functor* newHead 
-    = new Parse_Functor(
-          new Parse_FunctorName(
-              new Parse_Var(Val_Str::mk(functor->fn->name + nextRule->ruleID + loc)), 
-      new Parse_Var(Val_Str::mk(loc))), functor->args_);
-  OL_Context::Rule* newRule = new OL_Context::Rule(nextRule->ruleID + "-1", newHead, false);
-  newRule->terms = newTerms;
-  warn << "Generate send rule " << newRule->toString() << "\n";
-
-  Catalog::TableInfo* ti = catalog->getTableInfo(functor->fn->name);  
-  OL_Context::TableInfo* cti = new OL_Context::TableInfo();
-  *cti = *(ti->_tableInfo);
-  oss << functor->fn->name << nextRule->ruleID << loc;
-  cti->tableName = oss.str();
-  if (ti != NULL) {
-    catalog->createTable(cti);
-  }
-  
-  return newRule;
 }
 
-std::vector<OL_Context::Rule*> 
-ECA_Context::localizeRule(OL_Context::Rule* nextRule, Catalog* catalog)
+void ECA_Context::rewrite(Localize_Context* lctxt, TableStore* tableStore)
 {
-  std::vector<OL_Context::Rule*> toRet;
-  Parse_AggTerm *aggTerm = dynamic_cast<Parse_AggTerm*>(nextRule->terms.at(0)); 
-  if (nextRule->terms.size() == 1 && aggTerm != NULL) {
-    // special aggregate view action rule
-    toRet.push_back(nextRule);
-    return toRet;
+  for (unsigned k = 0; k < lctxt->getRules().size(); k++) {
+    OL_Context::Rule* nextRule = lctxt->getRules().at(k);
+    rewriteViewRule(nextRule, tableStore);
   }
 
-  std::vector<Parse_Functor*> probeTerms;
-  std::vector<Parse_Term*> otherTerms;
-  // separate out the probeTerms and other terms
-  for (unsigned k = 0; k < nextRule->terms.size(); k++) {
-    Parse_Functor *functor = dynamic_cast<Parse_Functor*>(nextRule->terms.at(k));
-    if (functor != NULL) {
-      probeTerms.push_back(functor);
-    } else {
-      otherTerms.push_back(nextRule->terms.at(k));
-    }
-  }
+    // To check:
+    // 1) At most one event in rule
+    // 2) Rules have been localized
 
-  // go through all the probe terms,
-  // do a left to right join ordering transformation
-  PlanContext::FieldNamesTracker* namesTracker = new PlanContext::FieldNamesTracker();
-  if (probeTerms.size() == 2 && 
-      probeTerms.at(0)->fn->loc != probeTerms.at(1)->fn->loc) {
-    // form a rule sending first term to location of second
-    OL_Context::Rule* newRule = generateSendRule(nextRule, probeTerms.at(0), 
-						 probeTerms.at(1)->fn->loc, 
-						 catalog);
-    toRet.push_back(newRule);
-    
-    std::vector<Parse_Term*> newTerms;
-    newTerms.push_back(newRule->head);
-    newTerms.push_back(probeTerms.at(1));
-    for (unsigned k = 0; k < otherTerms.size(); k++) {
-      newTerms.push_back(otherTerms.at(k));
-    }
-    OL_Context::Rule* newRuleTwo = new OL_Context::Rule(nextRule->ruleID + "-2", 
-							nextRule->head, false);
-    newRuleTwo->terms = newTerms;
-    warn << "New rule " << newRuleTwo->toString() << "\n";
-    toRet.push_back(newRuleTwo);
+    // localize each overlog rule
+    /*(std::vector<OL_Context::Rule*> localRules 
+      = localizeRewrite(nextRule, tableStore);
+    */
 
-  } else {
-    toRet.push_back(nextRule);
-  }
-  
-  delete namesTracker;
-  return toRet;
-}
+    // 2. For each set of localized rules, translate into ECA
+    //for (unsigned i = 0; i < localRules.size(); i++) {
 
-void ECA_Context::eca_rewrite(OL_Context* ctxt, Catalog* catalog)
-{
-  for (unsigned k = 0; k < ctxt->getRules()->size(); k++) {
-    OL_Context::Rule* nextRule = ctxt->getRules()->at(k);
-    // 1. Localize each rule, may return multiple rules
-    
-    std::vector<OL_Context::Rule*> localRules 
-      = localizeRule(nextRule, catalog);
+    //}
 
-    // 2. For each localized rule, activate the rule
-    for (unsigned i = 0; i < localRules.size(); i++) {
-      activateLocalizedRule(localRules.at(i), catalog);
-    }
-  }
+    // 3. For all localized ECA rules, translate into ECA context trivally
 }
 
 string ECA_Context::toString()

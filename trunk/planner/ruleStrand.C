@@ -19,14 +19,14 @@
 string RuleStrand::toString()
 {
   ostringstream b;
-  b << "Rule Strand " << _ruleStrandID << ": " << _eca_rule->toString() << "\n";
+  b << "Rule Strand " << _strandID << ": " << _eca_rule->toString() << "\n";
   for (unsigned k = 0; k < _elementChain.size(); k++) {
     b << " -> Element " << k << " " << _elementChain.at(k)->toString() << "\n";
   }
   return b.str();
 }
 
-void RuleStrand::addElement(Plumber::ConfigurationPtr conf, ElementSpecPtr elementSpecPtr)
+void RuleStrand::addElement(Plumber::DataflowPtr conf, ElementSpecPtr elementSpecPtr)
 {
   if (_elementChain.size() > 0) {
     conf->hookUp(_elementChain.at(_elementChain.size()-1), 0, elementSpecPtr, 0);

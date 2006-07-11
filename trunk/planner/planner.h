@@ -9,7 +9,7 @@
  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
  * Berkeley, CA,  94707. Attention: P2 Group.
  * 
- * DESCRIPTION: Planner code
+ * DESCRIPTION: Planner program that compiles rules and connect to net planner
  *
  */
 
@@ -48,10 +48,9 @@
 #include "timedPullSink.h"
 #include "timestampSource.h"
 #include "hexdump.h"
-#include "table.h"
-#include "lookup.h"
+#include "table2.h"
+#include "lookup2.h"
 #include "insert.h"
-#include "scan.h"
 #include "queue.h"
 #include "printTime.h"
 #include "roundRobin.h"
@@ -64,9 +63,12 @@
 #include "duplicateConservative.h"
 #include "aggwrap.h"
 #include "tupleseq.h"
-#include "cc.h"
+#include "loop.h"
+#include "ruleTracer.h"
+#include "tap.h"
+#include "traceTuple.h"
 
-#include "catalog.h"
+#include "tableStore.h"
 #include "eca_context.h"
 #include "ruleStrand.h"
 #include "netPlanner.h"
@@ -74,7 +76,7 @@
 class Planner
 {
 public:
-  Planner(Plumber::ConfigurationPtr conf, Catalog* catalog, 
+  Planner(Plumber::DataflowPtr conf, TableStore* catalog, 
 	  bool debug, string nodeID, string outputFile); 
 
   ~Planner() { delete _netPlanner; 
@@ -83,7 +85,7 @@ public:
   std::vector<RuleStrand*> generateRuleStrands(ECA_ContextPtr ectxt);
   void registerRuleStrand(RuleStrand* rs);
   void registerAllRuleStrands(std::vector<RuleStrand*>);  
-  void generatePlumberConfig(Plumber::ConfigurationPtr conf);
+  void generatePlumberConfig(Plumber::DataflowPtr conf);
   void setupNetwork(boost::shared_ptr<Udp> udp);
   void registerOptimizeSend(std::vector<ElementSpecPtr> optimizeSend) {
     _netPlanner->registerOptimizeSend(optimizeSend); }
@@ -91,11 +93,11 @@ public:
 
 private:
   bool _debug;
-  Plumber::ConfigurationPtr _conf;
+  Plumber::DataflowPtr _conf;
   string _nodeID;
   int _ruleCount;
   NetPlanner* _netPlanner;
-  Catalog* _catalog;
+  TableStore* _tableStore;
   FILE* _outputDebugFile;
 };
 

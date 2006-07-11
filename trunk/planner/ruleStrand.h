@@ -26,14 +26,10 @@
 class RuleStrand
 {
 public:  
-  RuleStrand(ECA_Rule* rule, string ruleStrandID) :
+  RuleStrand(ECA_Rule* rule, string strandID) :
     _eca_rule(rule) 
-  { _ruleID = rule->_ruleID; _ruleStrandID = ruleStrandID; }; 
+  { _ruleID = rule->_ruleID; _strandID = strandID; }; 
 
-  string _ruleID; // original rule ID
-  string _ruleStrandID; // number, issued by planner
-  ECA_Rule* _eca_rule; 
- 
   string toString();
   
   Parse_Event::Event eventType() 
@@ -54,10 +50,18 @@ public:
   ElementSpecPtr getActionElement() 
   { return _elementChain.at(_elementChain.size() - 1); }
 
-  void addElement(Plumber::ConfigurationPtr conf, ElementSpecPtr elementSpecPtr);
+  void addElement(Plumber::DataflowPtr conf, ElementSpecPtr elementSpecPtr);
+
+  string getRuleID() { return _ruleID; }
+  string getStrandID() { return _strandID; }
+  ECA_Rule* getRule() { return _eca_rule; }
 
 private:
   std::vector<ElementSpecPtr> _elementChain;
+  string _ruleID; // original source rule ID
+  string _strandID; // unique ID given after rewrite
+  ECA_Rule* _eca_rule;  
+
 };
 
 #endif

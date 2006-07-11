@@ -9,31 +9,51 @@
  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
  * Berkeley, CA,  94707. Attention: P2 Group.
  * 
- * DESCRIPTION: Planner code
+ * DESCRIPTION: Planning environment for planner
  *
  */
 
 #ifndef __PL_PLANCONTEXT_H__
 #define __PL_PLANCONTEXT_H__
 
-#include "catalog.h"
+#include "tableStore.h"
 #include "ol_context.h"
 #include "ruleStrand.h"
 #include "plumber.h"
 
-class PlanContext {
+/* Stores all information on planning state */
 
+class PlanContext {
 public:
-  PlanContext(Plumber::ConfigurationPtr conf, Catalog* catalog, 
+  PlanContext(Plumber::DataflowPtr conf, TableStore* tableStore, 
 	      RuleStrand* ruleStrand, string nodeID, FILE* outputDebugFile);
   ~PlanContext();
-  Catalog* _catalog;
-  RuleStrand* _ruleStrand;
-  string _nodeID;
-  FILE* _outputDebugFile;
-  Plumber::ConfigurationPtr _conf;
 
-  // convince placeholder to figure out the cur fields in a tuple in flight
+  /** References to all tables */
+  TableStore* _tableStore;
+
+  /** Current strand being planned */
+  RuleStrand* _ruleStrand;
+
+  /** ID of node where planner is running */
+  string _nodeID;
+
+  /** File log output of planner */
+  FILE* _outputDebugFile;
+  
+  /** Dataflow configuration */
+  Plumber::DataflowPtr _conf;
+
+  ECA_Rule* getRule() { return _ruleStrand->getRule(); }
+
+  ElementSpecPtr createElementSpec(ElementPtr element) {
+    return _conf->addElement(element);
+  }
+  
+  void addElementSpec(ElementSpecPtr elementSpec) {
+    _ruleStrand->addElement(_conf, elementSpec);
+    }
+
   class FieldNamesTracker {
   public:
     std::vector<string> fieldNames;    
@@ -44,6 +64,11 @@ public:
     std::vector<int> matchingJoinKeys(std::vector<string> names);    
     void mergeWith(std::vector<string> names);
     void mergeWith(std::vector<string> names, int numJoinKeys);
+    void FieldNamesTracker::joinKeys(FieldNamesTracker* probeNames,
+				     Table2::Key& lookupKey,
+				     Table2::Key& indexKey,
+				     Table2::Key& remainingBaseKey);
+
     int fieldPosition(string var);
     string toString();
   };

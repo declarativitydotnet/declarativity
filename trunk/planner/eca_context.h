@@ -10,7 +10,7 @@
  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
  * Berkeley, CA,  94707. Attention: P2 Group.
  * 
- * DESCRIPTION: Rewrite environment for ECA rules
+ * DESCRIPTION: Rewritten context from Overlog to ECA
  *
  */
 
@@ -23,16 +23,16 @@
 #include "value.h"
 #include "tuple.h"
 #include "ol_context.h"
+#include "localize_context.h"
 #include "parser_util.h"
-#include "catalog.h"
+#include "tableStore.h"
 
-// struct for an event term
 class Parse_Event 
 {
 public:
   virtual ~Parse_Event() {};
 
-  enum Event {UPDATE, AGGUPDATE, RECV, PERIODIC};
+  enum Event {INSERT, DELETE, RECV};
   
   Parse_Event(Parse_Functor *pf, Event e)
     : _pf(pf), _event(e) {};
@@ -69,6 +69,7 @@ public:
   
   string toString();
   string toRuleString();
+  string getEventName() { return _event->_pf->fn->name; }
   
   string _ruleID; 
   Parse_Event* _event;
@@ -81,17 +82,17 @@ public:
 
 class ECA_Context
 {
-
 public:
-  void eca_rewrite(OL_Context* ctxt, Catalog* catalog);
+  void rewrite(Localize_Context* lctxt, TableStore* tableStore);
+  std::vector<ECA_Rule*> getRules() { return _ecaRules; }
   string toString();
-  void add_rule(ECA_Rule* eca_rule);
-
-  std::vector<ECA_Rule* > _ecaRules;
   
 private:
-  void activateLocalizedRule(OL_Context::Rule*, Catalog*);
-  std::vector<OL_Context::Rule*> localizeRule(OL_Context::Rule*, Catalog*);
+  std::vector<ECA_Rule* > _ecaRules;
+  void add_rule(ECA_Rule* eca_rule);
+  void rewriteViewRule(OL_Context::Rule*, TableStore*);
+  void rewriteEventRule(OL_Context::Rule*, TableStore*);
+  std::vector<OL_Context::Rule*> localizeRewrite(OL_Context::Rule*, TableStore*);
 };
 
 typedef boost::shared_ptr<ECA_Context> ECA_ContextPtr;
