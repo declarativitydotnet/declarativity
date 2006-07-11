@@ -39,6 +39,8 @@ for op, ar, va, desc in [
   ("ifpoptuple",1,"IFPOP_TUPLE","If first arg, then pop entire tuple, else nothing"),
   ("ifstop",1,   "IFSTOP",      "If first arg, then stop execution"),
   ("dumpStack",1,"DUMPSTACK",   "Dump the contents of the stack prefixed by the string arg"),
+
+  ("sha1",1,"H_SHA1","Replace the top of the stack with its SHA-1 value"),
  
   ("->t", 1,    "T_MKTUPLE",    "Create a tuple out of the argument"),
   ("append", 2, "T_APPEND",     "Append first argument to second tuple"),

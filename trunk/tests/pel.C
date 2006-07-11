@@ -416,6 +416,7 @@ static const ValTest vtests[] = {
   TST(STR, SUCCESS, "",	"\"abcdefg\" 4 0 substr" ),
   TST(STR, SUCCESS, "",	"\"abcdefg\" 10 0 substr" ),
   TST(STR, SUCCESS, "",	"\"abcdefg\" 10 3 substr" ),
+
   // match (Perl regular expression matching: not much testing here
   // yet :-( )
   TST(INT32, STACK_UNDERFLOW, "",	"match" ),

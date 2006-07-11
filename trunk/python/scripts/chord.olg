@@ -13,22 +13,6 @@
  */
 
 
-/*
-#define tSucc          5
-#define tFix           5
-#define tJoin          5
-#define tStabilizeWait 5
-#define tPingSoftState 5
-#define tStap          5
-#define succSize       5
-#define fNum           5
-#define fFixProb       0.5
-#define t_Fix          5
-#define tStab          5
-#define tPing          5
-#define local          "127.0.0.1:80"
-*/
-
 /* The base tuples */
 
 materialize(node, infinity, 1, keys(1)).

@@ -24,6 +24,8 @@
 #include <math.h>
 #include <boost/regex.hpp>
 
+#include <openssl/sha.h>
+
 
 #include "val_int32.h"
 #include "val_uint32.h"
@@ -496,6 +498,19 @@ DEF_OP(T_SWALLOW) {
   stackPush(swallowed);
 }
 
+/**
+ * HASH OPERATIONS
+ */
+DEF_OP(H_SHA1) { 
+  ValuePtr vp = stackTop(); stackPop();
+  std::string svalue = vp->toString();
+  unsigned char digest[SHA_DIGEST_LENGTH];	// 20 byte array
+  SHA1(reinterpret_cast<const unsigned char*>(svalue.c_str()), 
+       svalue.size(), &digest[0]);
+
+  IDPtr hashID = ID::mk(reinterpret_cast<uint32_t*>(digest));
+  stackPush(Val_ID::mk(hashID));
+}
 
 /**
  * List operations

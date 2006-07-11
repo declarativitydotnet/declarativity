@@ -1256,7 +1256,10 @@ testPel::vtests[] = {
   TST(LIST, SUCCESS, "()", "null null msintersect"), 
   TST(LIST, SUCCESS, "()", "null null 6 lappend msintersect"),
   TST(LIST, SUCCESS, "(1, 1, 1)", "null 1 lappend 1 lappend 1 lappend 1 lappend null 1 lappend 1 lappend 1 lappend msintersect"),
-  TST(LIST, SUCCESS, "(1, 1, 1)", "null 1 lappend 1 lappend 1 lappend null 1 lappend 1 lappend 1 lappend 1 lappend msintersect")
+  TST(LIST, SUCCESS, "(1, 1, 1)", "null 1 lappend 1 lappend 1 lappend null 1 lappend 1 lappend 1 lappend 1 lappend msintersect"),
+
+// Hash tests
+  TST(ID, SUCCESS, "", "1 sha1")
 };
 #undef TST
 
