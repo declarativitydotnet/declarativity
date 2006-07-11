@@ -18,6 +18,7 @@ lib_LTLIBRARIES = libp2python.la
 libp2python_la_SOURCES = p2python.cpp
 
 libp2python_la_LIBADD = \
+#    -lboost_python \
 	-lp2pythondebugger \
 	-lp2pythonelements \
 	-lp2pythoncore \
@@ -25,7 +26,7 @@ libp2python_la_LIBADD = \
 	-lp2pythoneventloop \
 	-lp2pythonoverlog \
 	-lp2pythoncpp \
-       -lboost_python -lp2core -lp2debugger -lp2elements -lp2eventLoop -lp2net -lp2overlog -lp2cpp
+       -lp2core -lp2debugger -lp2elements -lp2eventLoop -lp2net -lp2overlog -lp2cpp
 
 INCLUDES = $(PYTHON_CPPFLAGS) $(BOOST_INC)
 
