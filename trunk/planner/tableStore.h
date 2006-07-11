@@ -10,7 +10,7 @@
  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
  * Berkeley, CA,  94707. Attention: P2 Group.
  * 
- * DESCRIPTION: Planner Table References
+ * DESCRIPTION: References to all tables
  *
  */
 
@@ -25,7 +25,6 @@
 #include "ol_context.h"
 #include "table2.h"
 
-/* Store references to all tables */
 class TableStore
 {
 public:

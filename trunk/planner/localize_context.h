@@ -41,7 +41,7 @@ private:
 				Parse_Functor *functor, string loc, 
 				TableStore* tableStore);
   
-  void Localize_Context::add_rule(OL_Context::Rule* rule);
+  void add_rule(OL_Context::Rule* rule);
   std::vector<OL_Context::Rule* > _localizedRules;
 
 };

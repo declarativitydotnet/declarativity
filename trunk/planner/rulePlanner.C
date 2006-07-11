@@ -77,6 +77,10 @@
 #include "ruleStrand.h"
 #include "netPlanner.h"
 
+////////////////////////////////////////////////////////////
+// Function to output into a dataflow graph specification
+////////////////////////////////////////////////////////////
+
 void debugRule(PlanContext* pc, string msg)
 {
   warn << "DEBUG RULE: " << pc->_ruleStrand->getRuleID() << " " 
@@ -311,9 +315,9 @@ void generateActionElement(PlanContext* pc)
 }
 
 
-void secondaryIndex(PlanContext* pc, 
-		    Table2Ptr table,
-		    Table2::Key key)
+void createSecondaryIndex(PlanContext* pc, 
+			  Table2Ptr table,
+			  Table2::Key key)
 {
   ostringstream uniqStr;
   uniqStr << table->name() << ":";
@@ -391,7 +395,7 @@ void generateProbeElements(PlanContext* pc,
     // This is a primary key join so we don't need a secondary index
   } else {
     // Ensure there's a secondary index on the indexKey
-    secondaryIndex(pc, innerTable, innerIndexKey);
+    createSecondaryIndex(pc, innerTable, innerIndexKey);
   }
   
   int numFieldsProbe = outerNamesTracker->fieldNames.size();

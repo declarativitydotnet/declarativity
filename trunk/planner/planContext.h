@@ -64,10 +64,10 @@ public:
     std::vector<int> matchingJoinKeys(std::vector<string> names);    
     void mergeWith(std::vector<string> names);
     void mergeWith(std::vector<string> names, int numJoinKeys);
-    void FieldNamesTracker::joinKeys(FieldNamesTracker* probeNames,
-				     Table2::Key& lookupKey,
-				     Table2::Key& indexKey,
-				     Table2::Key& remainingBaseKey);
+    void joinKeys(FieldNamesTracker* probeNames,
+		  Table2::Key& lookupKey,
+		  Table2::Key& indexKey,
+		  Table2::Key& remainingBaseKey);
 
     int fieldPosition(string var);
     string toString();
