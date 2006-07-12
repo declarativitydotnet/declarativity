@@ -18,7 +18,7 @@ lib_LTLIBRARIES = libp2python.la
 libp2python_la_SOURCES = p2python.cpp
 
 libp2python_la_LIBADD = \
-	-lssl \
+	-lcrypto \
 	-lp2pythondebugger \
 	-lp2pythonelements \
 	-lp2pythoncore \

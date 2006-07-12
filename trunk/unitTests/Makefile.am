@@ -62,7 +62,7 @@ CXXFLAGS=-Wall -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG @CXXFLAGS@
 
 LDFLAGS=@BOOST_LIB@ @LDFLAGS@
 
-LIBS = @BOOST_LIB@ -lssl
+LIBS = @BOOST_LIB@ -lcrypto
 
 MAINTAINERCLEANFILES = aclocal.m4 install-sh mkinstalldirs \
 	missing configure config.guess config.sub config.h.in \

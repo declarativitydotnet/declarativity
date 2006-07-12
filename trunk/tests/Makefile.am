@@ -219,7 +219,7 @@ LIBS = @BOOST_LIB@ \
        -L$(top_builddir)/elements -L$(top_builddir)/p2core \
        -L$(top_builddir)/eventLoop -L$(top_builddir)/net \
        -L$(top_builddir)/overlog -L$(top_builddir)/debugger \
-       -L$(top_builddir)/p2cpp -lssl
+       -L$(top_builddir)/p2cpp -lcrypto
 
 MAINTAINERCLEANFILES = aclocal.m4 install-sh mkinstalldirs \
 	missing configure config.guess config.sub config.h.in \
