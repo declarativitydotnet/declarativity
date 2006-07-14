@@ -34,8 +34,7 @@ noinst_PROGRAMS 	=  	tuples \
 			logger \
 			testQueue \
 			udpMessage \
-			udpListen
-
+			udpListen 
 
 tuples_SOURCES	= tuples.C
 tuples_LDADD = $(top_builddir)/p2core/libp2core.la \
@@ -107,6 +106,7 @@ runPingPong_LDADD = -lboost_python \
 
 overlog_SOURCES	= overlog.C
 overlog_LDADD = -lboost_python \
+	$(top_builddir)/planner/libp2planner.la \
 	$(top_builddir)/overlog/libp2overlog.la \
 	$(top_builddir)/net/libp2net.la \
 	$(top_builddir)/elements/libp2elements.la \
@@ -181,6 +181,7 @@ udpListen_LDADD = -lboost_python \
 	$(top_builddir)/elements/libp2elements.la \
 	$(top_builddir)/p2core/libp2core.la \
 	$(top_builddir)/eventLoop/libp2eventLoop.la
+
 
 CLEANFILES = core *.core *~
 
