@@ -30,7 +30,7 @@ watch(bestPathCost).
 
 r1 path@X(X,Y,C,P) :- link@X(X,Y,C), P:=f_initList(X,Y).
 
-r3 path@X(X,Y,C,P) :- link@X(X,Z,C1), 
+r2 path@X(X,Y,C,P) :- link@X(X,Z,C1), 
 		     bestPath@Z(Z,Y,C2,P2), 
 		     C:=C1+C2, 
 		     f_inList(P2,X)==0,
