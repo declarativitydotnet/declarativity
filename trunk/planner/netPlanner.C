@@ -103,11 +103,11 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands)
       if (iterator == _receiverInfo.end()) {
 	ReceiverInfo* ri = new ReceiverInfo(rs->eventFunctorName());      
 	_receiverInfo.insert(std::make_pair(ri->_tableName, ri));	
-	ri->_receivers.push_back(rs->getEventElement());
+	ri->_receivers.push_back(rs->getFirstElement());
 	numReceivers++;
 	demuxKeys->push_back(Val_Str::mk(ri->_tableName));
       } else {
-	iterator->second->_receivers.push_back(rs->getEventElement());      
+	iterator->second->_receivers.push_back(rs->getFirstElement());      
       }
     }
   }

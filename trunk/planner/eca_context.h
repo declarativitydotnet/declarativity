@@ -65,7 +65,7 @@ class ECA_Rule {
 public:
   ECA_Rule(string r) 
     : _ruleID(r) 
-  { _event = NULL; _action = NULL; };
+  { _event = NULL; _action = NULL; _aggWrap = false;};
   
   string toString();
   string toRuleString();
@@ -76,6 +76,7 @@ public:
   Parse_Action* _action;   
   std::vector<Parse_Functor*> _probeTerms;
   std::vector<Parse_Term*> _selectAssignTerms;
+  bool _aggWrap;
 };
 
 

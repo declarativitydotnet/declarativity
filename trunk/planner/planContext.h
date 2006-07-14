@@ -20,6 +20,7 @@
 #include "ol_context.h"
 #include "ruleStrand.h"
 #include "plumber.h"
+#include "aggwrap.h"
 
 /* Stores all information on planning state */
 
@@ -44,7 +45,12 @@ public:
   /** Dataflow configuration */
   Plumber::DataflowPtr _conf;
 
+  /** Aggwrap spec */
+  Aggwrap* _agg_el;
+
   ECA_Rule* getRule() { return _ruleStrand->getRule(); }
+
+  
 
   ElementSpecPtr createElementSpec(ElementPtr element) {
     return _conf->addElement(element);

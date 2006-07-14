@@ -516,6 +516,7 @@ void generateProbeElements(PlanContext* pc,
   PlanContext::FieldNamesTracker* outerNamesTracker = pc->_namesTracker;
   PlanContext::FieldNamesTracker *innerNamesTracker
     = new PlanContext::FieldNamesTracker(innerFunctor);   
+  ECA_Rule* curRule = pc->_ruleStrand->getRule();
 
   Table2::Key innerIndexKey;         
   Table2::Key outerLookupKey;        
@@ -524,7 +525,6 @@ void generateProbeElements(PlanContext* pc,
 			      innerIndexKey, innerRemainingKey);
 
   addWatch(pc, "BeforeJoin");
- 
   
   string innerTableName = innerFunctor->fn->name;
   
@@ -557,11 +557,22 @@ void generateProbeElements(PlanContext* pc,
   ostringstream lookuposs;
   lookuposs << "Lookup2:" << pc->getRule()->_ruleID << "|" << pc->_nodeID;
 
-  last_el =
-    pc->createElementSpec(ElementPtr(new Lookup2(lookuposs.str(),
-						 innerTable,
-						 outerLookupKey,
-						 innerIndexKey)));
+  if (curRule->_aggWrap == false) {
+    debugRule(pc, "Lookup " + innerTableName + " no callbacks\n");
+    last_el =
+      pc->createElementSpec(ElementPtr(new Lookup2(lookuposs.str(),
+						   innerTable,
+						   outerLookupKey,
+						   innerIndexKey)));
+  } else {
+    debugRule(pc, "Lookup " + innerTableName + " callbacks\n");
+    last_el =
+      pc->createElementSpec(ElementPtr(new Lookup2(lookuposs.str(),
+						   innerTable,
+						   outerLookupKey,
+						   innerIndexKey,
+						   *comp_cb)));
+  }
 
   if (tableInfo->primaryKeys == innerIndexKey) {
     // This is a primary key join so we don't need a secondary index
@@ -625,9 +636,16 @@ void generateMultipleProbeElements(PlanContext* pc)
     debugRule(pc, "Probing " + curRule->getEventName()
 		      + " " + pf->toString() + "\n");
     
-    generateProbeElements(pc, pf);
+    if (curRule->_aggWrap == false) {
+      generateProbeElements(pc, pf);
+    } else {
+      b_cbv comp_cb = 0;
+      comp_cb = pc->_agg_el->get_comp_cb();
+      generateProbeElements(pc, pf, &comp_cb);
+			    
+    }
 
-    if (curRule->_probeTerms.size() - 1 != k) {
+     if (curRule->_probeTerms.size() - 1 != k) {
       ElementSpecPtr pullPush =
 	pc->createElementSpec(ElementPtr(new TimedPullPush("ProbePullPush|" 
 							   + curRule->_ruleID + "|" 
@@ -663,6 +681,8 @@ void generateProjectElements(PlanContext* pc)
   ECA_Rule* curRule = pc->getRule();
   Parse_Functor* pf = curRule->_action->_pf;
   PlanContext::FieldNamesTracker* curNamesTracker = pc->_namesTracker;
+  PlanContext::FieldNamesTracker* newNamesTracker = 
+    new PlanContext::FieldNamesTracker();
 
   // determine the projection fields, and the first address to return. 
    // Add 1 for table name     
@@ -674,11 +694,13 @@ void generateProjectElements(PlanContext* pc)
     if (parse_var != NULL) {
       // care only about vars    
       pos = curNamesTracker->fieldPosition(parse_var->toString());    
+      newNamesTracker->fieldNames.push_back(parse_var->toString());
     }
 
     Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(pf->arg(k));
     if (aggExpr != NULL) {
       pos = curNamesTracker->fieldPosition(aggExpr->v->toString());
+      newNamesTracker->fieldNames.push_back(aggExpr->v->toString());
     }
 
     if (pos == -1) { continue; }    
@@ -704,14 +726,72 @@ void generateProjectElements(PlanContext* pc)
 						      pelTransformStr)));
 
   pc->addElementSpec(projectHeadPelTransform);  
+  pc->_namesTracker = newNamesTracker;
 }
 
+void initializeAggWrap(PlanContext* pc)
+{
+  ECA_Rule* r = pc->getRule();
+  if (r->_aggWrap == false) {
+    return;
+  }
+  debugRule(pc, "Generate agg wrap " + r->toString() 
+	    + " " + pc->_namesTracker->toString() + "\n");
+
+  Parse_Functor* headFunctor = r->_action->_pf;
+
+  int aggField = headFunctor->aggregate();
+  // there is an aggregate and involves an event, we need an agg wrap      
+  Parse_Agg* aggExpr = dynamic_cast< Parse_Agg* >
+    (headFunctor->arg(aggField));
+
+  ostringstream oss;
+  if (aggExpr == NULL) {
+    oss << "Invalid aggregate field " << aggField
+	<< " for rule " << r->_ruleID;  
+    error(oss.str(), pc);
+  }
+      
+  oss << "Aggwrap:" << r->_ruleID << ":" << pc->_nodeID;
+  
+  pc->_agg_el = new Aggwrap(oss.str(), aggExpr->aggName(), 
+			    aggField + 1, headFunctor->fn->name);
+}
+
+void generateAggWrap(PlanContext* pc)
+{
+  ECA_Rule* r = pc->getRule();
+  if (r->_aggWrap == false) {
+    return;
+  }
+  Parse_Functor* headFunctor = r->_action->_pf;
+  int aggField = headFunctor->aggregate();
+
+  // check to see if need to generate
+  PlanContext::FieldNamesTracker* curNamesTracker = pc->_namesTracker;
+  ElementSpecPtr agg_elSpec 
+    = pc->createElementSpec(ElementPtr(pc->_agg_el));
+
+  pc->_ruleStrand->aggWrapperElement(pc->_conf, agg_elSpec);
+
+  for (int k = 0; k < headFunctor->args(); k++) {
+    if (k != aggField) {
+      // for each groupby value, figure out its location in the
+      // initial event tuple, if not present, throw an error
+      int pos 
+	= curNamesTracker->fieldPosition(headFunctor->arg(k)->toString());
+      pc->_agg_el->registerGroupbyField(pos+1);
+    }
+  }
+}
 
 void compileECARule(PlanContext* pc)
 {
   std::cout << "Process rule " << pc->getRule()->toString() << "\n";
-  // first generate the incoming event
-  
+
+  initializeAggWrap(pc);
+
+  // first generate the incoming event  
   generateEventElement(pc);        
 
   // do all the joins
@@ -723,8 +803,13 @@ void compileECARule(PlanContext* pc)
   // do projection based on head
   generateProjectElements(pc);
 
-  // do action. For send, later hook to round robin
+  // once strand is completed, generate a wrapper if necessary
+  generateAggWrap(pc);
+
+  // to complete the strand, generate the necessary action
   generateActionElement(pc);
+
+
 
   std::cout << "Finish processing rule " << pc->getRule()->toString() << "\n";
 }

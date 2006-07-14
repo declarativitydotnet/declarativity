@@ -27,10 +27,15 @@ class RuleStrand
 {
 public:  
   RuleStrand(ECA_Rule* rule, string strandID) :
-    _eca_rule(rule) 
-  { _ruleID = rule->_ruleID; _strandID = strandID; }; 
+    _eca_rule(rule)
+  { _ruleID = rule->_ruleID; _strandID = strandID; 
+  _aggWrapFlag = false; }; 
 
   string toString();
+
+  string eventFunctorName(); 
+
+  string actionFunctorName(); 
   
   Parse_Event::Event eventType() 
   { return _eca_rule->_event->_event; }
@@ -38,17 +43,21 @@ public:
   Parse_Action::Action actionType() 
   { return _eca_rule->_action->_action; }
 
-  string eventFunctorName() 
-  { return _eca_rule->_event->_pf->fn->name; }
-
-  string actionFunctorName() 
-  { return _eca_rule->_action->_pf->fn->name; }
-
   ElementSpecPtr getEventElement() 
   { return _elementChain.at(0); }
 
+  ElementSpecPtr getFirstElement()
+  { 
+    if (_aggWrapFlag == false) {
+      return getEventElement(); 
+    }
+    return _aggWrapperSpec;
+  }
+
   ElementSpecPtr getActionElement() 
   { return _elementChain.at(_elementChain.size() - 1); }
+
+  void aggWrapperElement(Plumber::DataflowPtr conf, ElementSpecPtr aggWrapperSpec);
 
   void addElement(Plumber::DataflowPtr conf, ElementSpecPtr elementSpecPtr);
 
@@ -58,6 +67,8 @@ public:
 
 private:
   std::vector<ElementSpecPtr> _elementChain;
+  bool _aggWrapFlag;
+  ElementSpecPtr _aggWrapperSpec; // special agg wrap
   string _ruleID; // original source rule ID
   string _strandID; // unique ID given after rewrite
   ECA_Rule* _eca_rule;  

@@ -242,6 +242,11 @@ void ECA_Context::rewriteEventRule(OL_Context::Rule* rule,
 
   // now generate the head action
   generateActionHead(rule, loc, tableStore, eca_rule);
+
+  int aggField = rule->head->aggregate();
+  if (aggField >= 0) { // there is an aggregate
+    eca_rule->_aggWrap = true;
+  }
   add_rule(eca_rule);
 }
 

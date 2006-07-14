@@ -26,6 +26,7 @@ PlanContext::PlanContext(Plumber::DataflowPtr conf, TableStore* tableStore,
   _nodeID = nodeID;
   _namesTracker = 
     new FieldNamesTracker(ruleStrand->getRule()->_event->_pf);
+  _agg_el = 0;
 }
 
 PlanContext::~PlanContext()
