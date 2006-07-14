@@ -2,6 +2,7 @@
 /*
  * @(#)$Id$
  *
+ *
  * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
@@ -10,35 +11,40 @@
  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
  * Berkeley, CA,  94707. Attention: P2 Group.
  * 
- * DESCRIPTION: Test harness for datalog....
+ * DESCRIPTION: Overlog based on new planner
  *
  */
 
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <time.h>
+#include <vector>
 
 #include "ol_lexer.h"
 #include "ol_context.h"
+#include "eca_context.h"
+#include "localize_context.h"
 #include "plmb_confgen.h"
+#include "tableStore.h"
 #include "udp.h"
+#include "planner.h"
+#include "ruleStrand.h"
+
 #include "dot.h"
 
 extern int ol_parser_debug;
 
-//class boost::c_regex_traits<char>;
-
 int main(int argc, char **argv)
 {
   LoggerI::Level level = LoggerI::NONE;
-  std::cout << "OVERLOG\n";
+  PlumberPtr plumber(new Plumber(level));
+  std::cout << "TestPlanner\n";
   boost::shared_ptr< OL_Context > ctxt(new OL_Context());
   bool route = false;
   bool builtin = false;
-  bool tracing = false;
   string filename("");
-  PlumberPtr plumber(new Plumber(level));
+
+  //PlumberPtr plumber(new Plumber());
 
   for( int i=1; i<argc; i++) { 
     std::string arg(argv[i]);
@@ -52,8 +58,6 @@ int main(int argc, char **argv)
 		<< "\t-r: try to instantiate a plumber config\n"
                 << "\t-g: produce a DOT graph spec\n"
 		<< "\t-h: print this help text\n"
-		<< "\t-l: Produce dataflow language spec\n"
-                << "\t-t: Enable tracing (default: off)\n"
 		<< "\t- : read from stdin\n";
       exit(0);
     } else if (arg == "-c") { 
@@ -63,48 +67,30 @@ int main(int argc, char **argv)
       builtin = false;
     } else if (arg == "-") {
       ctxt->parse_stream(&std::cin);
-    } else if (arg == "-t") {
-      tracing = true;
-    } else if (arg == "-l" || arg == "-e") {
-      Plumber::DataflowPtr conf(new Plumber::Dataflow("Overlog"));
-      filename = argv[i+1];
-      string specFileName = "./p2dl.df";
-      std::fstream istr(filename.c_str());
-      std::fstream fstr;
-      fstr.open(specFileName.c_str(), std::fstream::out);
-      ctxt->parse_stream(&istr);
-      Plmb_ConfGen *gen = (arg == "-l") ? 
-        new Plmb_ConfGen(ctxt.get(), conf, false, false, false,
-                         filename,
-                         tracing, // tracing
-                         fstr) :
-        new Plmb_ConfGen(ctxt.get(), conf, false, false, false,
-                         filename,
-                         tracing, // Tracing
-                         fstr,
-                         true); // Editing
-      gen->createTables("127.0.0.1:10000");
-      
-      boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));
-      gen->configurePlumber(udp, "127.0.0.1:10000");
-
-      fstr.close(); 
-      if (plumber->install(conf) == 0) {
-        std::cout << "Correctly initialized network of reachability flows.\n";
-      } else {
-        std::cout << "** Failed to initialize correct spec\n";
-      }
-      exit (0);
     } else if (arg == "-g") {
+
       Plumber::DataflowPtr conf(new Plumber::Dataflow("overlog"));
       filename = argv[i+1];
       std::ifstream istr(filename.c_str());
       ctxt->parse_stream(&istr);
-      Plmb_ConfGen gen(ctxt.get(), conf, false, false, false, filename);
-      gen.createTables("127.0.0.1:10000");
+
+      boost::shared_ptr< TableStore > tableStore(new TableStore(ctxt.get()));  
+      tableStore->initTables(); 
       
+      boost::shared_ptr< Localize_Context > lctxt(new Localize_Context()); 
+      lctxt->rewrite(ctxt.get(), tableStore.get());
+      
+      boost::shared_ptr< ECA_Context > ectxt(new ECA_Context()); 
+      ectxt->rewrite(lctxt.get(), tableStore.get());
+
+      boost::shared_ptr< Planner > planner(new Planner(conf, tableStore.get(), false, "127.0.0.1:10000", "0"));
       boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));
-      gen.configurePlumber(udp, "127.0.0.1:10000");
+
+      std::vector<RuleStrand*>
+      ruleStrands = planner->generateRuleStrands(ectxt);
+
+      planner->setupNetwork(udp);
+      planner->registerAllRuleStrands(ruleStrands);
 
       if (plumber->install(conf) == 0) {
         std::cout << "Correctly initialized network of reachability flows.\n";
@@ -117,7 +103,7 @@ int main(int argc, char **argv)
       filename = argv[i];
       std::ifstream istr(argv[i]);
       ctxt->parse_stream(&istr);
-    }
+      }
   }
 
   if (builtin) {
@@ -127,29 +113,43 @@ int main(int argc, char **argv)
     std::cout.flush();
   } 
 
-  std::cout << "Finish parsing (functors / tableInfos) " << ctxt->getRules()->size() 
+  std::cout << "Finish parsing (functors / tableInfos) " 
+	    << ctxt->getRules()->size() 
 	    << " " << ctxt->getTableInfos()->size() << "\n";
 
   std::cout << ctxt->toString() << "\n";
 
-
   if (route) {
-    // test a configuration of a plumber
     Plumber::DataflowPtr conf(new Plumber::Dataflow("overlog"));
-    Plmb_ConfGen gen(ctxt.get(), conf, false, false, true, filename);
-    gen.createTables("127.0.0.1:10000");
+    boost::shared_ptr< TableStore > tableStore(new TableStore(ctxt.get()));  
+    tableStore->initTables(); 
+
+    boost::shared_ptr< Localize_Context > lctxt(new Localize_Context()); 
+    lctxt->rewrite(ctxt.get(), tableStore.get());
+
+    boost::shared_ptr< ECA_Context > ectxt(new ECA_Context()); 
+    ectxt->rewrite(lctxt.get(), tableStore.get());
     
+    boost::shared_ptr< Planner > planner(new Planner(conf, tableStore.get(), false, "127.0.0.1:10000", "0"));
     boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));
-    gen.configurePlumber(udp, "127.0.0.1:10000");
+    std::vector<RuleStrand*> ruleStrands = planner->generateRuleStrands(ectxt);
     
+    for (unsigned k = 0; k < ruleStrands.size(); k++) {
+      std::cout << ruleStrands.at(k)->toString();
+    }
+    
+    planner->setupNetwork(udp);
+    planner->registerAllRuleStrands(ruleStrands);
+    std::cout << planner->getNetPlanner()->toString() << "\n";
+
     if (plumber->install(conf) == 0) {
       std::cout << "Correctly initialized network of reachability flows.\n";
     } else {
       std::cout << "** Failed to initialize correct spec\n";
-    }
-  } 
+    }    
+    std::cout << "Done.\n";
 
-  std::cout << "Done.\n";
+  }
 
   return 0;
 }
