@@ -12,12 +12,12 @@
  *
  */
 
-/** All-Pairs All Paths */
+/** All-Pairs Shortest Paths */
 
 /** Declare the base tables tables. 
     Derived tables will be generated from rules. */
 materialize(link,infinity,infinity,keys(1,2)).
-materialize(path,infinity,infinity,keys(5)).
+materialize(path,infinity,infinity,keys(4)).
 materialize(bestPath,infinity,infinity,keys(1,2)).
 materialize(bestPathCost,infinity,infinity,keys(1,2)).
 
@@ -28,16 +28,16 @@ watch(path).
 watch(bestPath).
 watch(bestPathCost).
 
-r1 path@X(X,Y,Z,C,P) :- link@X(X,Y,C), P:=f_initList(X,Y), Z:=Y.
+r1 path@X(X,Y,C,P) :- link@X(X,Y,C), P:=f_initList(X,Y).
 
-r3 path@X(X,Y,Z,C,P) :- link@X(X,Z,C1), 
+r3 path@X(X,Y,C,P) :- link@X(X,Z,C1), 
 		     bestPath@Z(Z,Y,C2,P2), 
 		     C:=C1+C2, 
 		     f_inList(P2,X)==0,
 		     P:=f_consList(X,P2).
 
-r3 bestPathCost@X(X,Y,min<C>) :- path@X(X,Y,Z,C,P).
+r3 bestPathCost@X(X,Y,min<C>) :- path@X(X,Y,C,P).
 
-r4 bestPath@X(X,Y,C,P) :- bestPathCost@X(X,Y,C), path@X(X,Y,Z,C,P).
+r4 bestPath@X(X,Y,C,P) :- bestPathCost@X(X,Y,C), path@X(X,Y,C,P).
 
 
