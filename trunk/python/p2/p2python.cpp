@@ -56,7 +56,6 @@ void export_unmarshal();
 void export_unmarshalField();
 void export_eventLoop();
 void export_bw();
-void export_ccr();
 void export_cct();
 void export_rccr();
 void export_rcct();
@@ -186,7 +185,6 @@ BOOST_PYTHON_MODULE(libp2python)
   export_unmarshalField();
   export_eventLoop();
   export_bw();
-  export_ccr();
   export_cct();
   export_defrag();
   export_frag();

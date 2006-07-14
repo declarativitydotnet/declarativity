@@ -17,10 +17,9 @@
 #include "tuple.h"
 #include "element.h"
 #include "inlines.h"
+#include "tupleseq.h"
 
 struct timeCBHandle;
-
-typedef uint64_t SeqNum;
 
 class RateCCT : public Element {
 public:

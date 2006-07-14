@@ -18,31 +18,17 @@
 #include "element.h"
 #include "inlines.h"
 
-typedef uint64_t SeqNum;
-
-class TupleInfo;
-class LossRec;
-
 class RateCCR : public Element {
 public:
   RateCCR(string name);
   const char *class_name() const { return "RateCCR";};
-  const char *processing() const { return "a/al"; };
-  const char *flow_code()  const { return "-/--"; };
+  const char *processing() const { return "a/a"; };
+  const char *flow_code()  const { return "-/-"; };
 
   TuplePtr simple_action(TuplePtr p);
 
-  TuplePtr pull(int port, b_cbv cb);
-
-  int push(int port, TuplePtr tp, b_cbv cb);	// Rate control input
-
 private:
   class Connection;
-  REMOVABLE_INLINE TuplePtr strip(TuplePtr p);
-
-  // Indicates when it is once again acceptable to send acks
-  b_cbv  _ack_cb;	
-  std::deque <TuplePtr> ack_q_;	// Output ack queue
 
   typedef std::map <ValuePtr, Connection*, Value::Less>  ValueConnectionMap;
   ValueConnectionMap  cmap_;

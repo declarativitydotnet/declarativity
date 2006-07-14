@@ -25,7 +25,15 @@
 
 class P2 { 
 public:
-  enum TransportConf {NONE=0, RELIABLE=1, ORDERED=2, CC=4};
+  /** Any combination of the following transport layer options
+   *  is supported by this interface. To turn on a transport layer
+   *  feature simply pass the desired TransportConf value to the
+   *  P2 class constructor. 
+   *  For example: P2("localhost", 10000, P2::RELIABLE | P2::RCC);
+   *  This enables reliable delivery and rate based congestion
+   *  control in the started P2 instance. 
+   */
+  enum TransportConf {NONE=0, RELIABLE=1, ORDERED=2, CC=4, RCC=5};
 
   /** A handle to return to a subscriber of an event */
   class CallbackHandle {

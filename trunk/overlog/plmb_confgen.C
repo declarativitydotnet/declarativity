@@ -15,7 +15,7 @@
 #include "plmb_confgen.h"
 #include "trace.h"
 #include "cct.h"
-#include "ccr.h"
+#include "basicAck.h"
 #include "aggFactory.h"
 #include "tableTracer.h"
 
@@ -311,9 +311,9 @@ Plmb_ConfGen::configurePlumber(boost::shared_ptr< Udp > udp, string nodeID)
       _p2dl << conf_assign(_ccTx.get(), 
                            conf_function("CCT", "transmitCC", 1, 2048));
       _ccRx 
-        = _conf->addElement(ElementPtr(new CCR("CC Receive" + nodeID)));
+        = _conf->addElement(ElementPtr(new BasicAck("CC Receive" + nodeID)));
       _p2dl << conf_assign(_ccRx.get(), 
-                           conf_function("CCR", "receiveCC"));
+                           conf_function("BasicAck", "receiveCC"));
     }
   }
 

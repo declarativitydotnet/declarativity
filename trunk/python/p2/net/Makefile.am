@@ -20,7 +20,6 @@ libp2pythonnet_la_SOURCES = \
 	bw.cpp \
 	basicAck.cpp \
 	cumulativeAck.cpp \
-	ccr.cpp \
 	cct.cpp \
 	rccr.cpp \
 	rcct.cpp \

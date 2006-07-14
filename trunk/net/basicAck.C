@@ -65,7 +65,7 @@ TuplePtr BasicAck::simple_action(TuplePtr p)
 /*
 int BasicAck::push(int port, TuplePtr p, b_cbv cb)
 {
-  if ((rand() / (float)RAND_MAX) < 0.5)
+  if ((rand() / (float)RAND_MAX) < 0.9)
     return this->Element::push(port, p, cb); 	
   return 1;
 }

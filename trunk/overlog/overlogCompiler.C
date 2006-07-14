@@ -28,8 +28,14 @@ int OverlogCompiler::push(int port, TuplePtr tp, b_cbv cb)
   std::ostringstream script;
   ValuePtr dest    = (*tp)[1];
   ValuePtr source  = (*tp)[2];
-  string   name    = Val_Str::cast((*tp)[3]);
-  string   overlog = Val_Str::cast((*tp)[4]);
+  string   overlog;
+ 
+  if (tp->size() > 4) {
+    overlog = Val_Str::cast((*tp)[4]);
+  }
+  else {
+    overlog = Val_Str::cast((*tp)[3]);
+  }
 
   compile(overlog, script);
 

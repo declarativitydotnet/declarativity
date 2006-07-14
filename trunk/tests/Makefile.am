@@ -27,10 +27,6 @@ noinst_PROGRAMS 	=  	tuples \
 			basicelements \
 			scheduling \
 			demultiplex \
-			net \
-			netrcc \
-			netcc2 \
-			perfectChord \
 			logger \
 			testQueue \
 			udpMessage \
@@ -127,34 +123,6 @@ lookupGenerator_LDADD = -lboost_python \
 	$(top_builddir)/elements/libp2elements.la \
 	$(top_builddir)/p2core/libp2core.la \
 	$(top_builddir)/eventLoop/libp2eventLoop.la 
-
-net_SOURCES = net.C
-net_LDADD = -lboost_python \
-	$(top_builddir)/net/libp2net.la \
-	$(top_builddir)/elements/libp2elements.la \
-	$(top_builddir)/p2core/libp2core.la \
-	$(top_builddir)/eventLoop/libp2eventLoop.la
-
-netrcc_SOURCES = netrcc.C
-netrcc_LDADD = -lboost_python \
-	$(top_builddir)/net/libp2net.la \
-	$(top_builddir)/elements/libp2elements.la \
-	$(top_builddir)/eventLoop/libp2eventLoop.la \
-	$(top_builddir)/p2core/libp2core.la
-
-netcc2_SOURCES = netcc2.C
-netcc2_LDADD = -lboost_python \
-	$(top_builddir)/net/libp2net.la \
-	$(top_builddir)/eventLoop/libp2eventLoop.la \
-	$(top_builddir)/elements/libp2elements.la \
-	$(top_builddir)/p2core/libp2core.la
-
-perfectChord_SOURCES = perfectChord.C
-perfectChord_LDADD = -lboost_python \
-	$(top_builddir)/net/libp2net.la \
-	$(top_builddir)/eventLoop/libp2eventLoop.la \
-	$(top_builddir)/elements/libp2elements.la \
-	$(top_builddir)/p2core/libp2core.la
 
 basicelements_SOURCES	= basicelements.C
 basicelements_LDADD = -lboost_python \

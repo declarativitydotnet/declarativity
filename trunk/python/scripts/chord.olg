@@ -29,6 +29,10 @@ materialize(nextFingerFix, infinity, 1, keys(1)).
 materialize(pingNode, 10, infinity, keys(2)).  
 materialize(pendingPing, 10, infinity, keys(2)).  
 
+materialize(references, 240, infinity, keys(2, 3)).  
+materialize(backReference, 240, infinity, keys(2)).  
+materialize(forwardReference, 240, infinity, keys(2)).  
+
 node(IPADDRESS, NODEID).
 pred(IPADDRESS, 0x0I, "--").
 nextFingerFix(IPADDRESS, 0).
@@ -62,6 +66,19 @@ l3 lookup@BI(min<BI>,K,R,E) :- node@NI(NI,N),
 			       B in (N,K).
 
 
+/* Back reference overlog */
+watch(references).
+watch(backReference).
+
+b0 forwardReference@LI(LI, K, SI) :- finger@LI(LI, P, S, SI), 
+                                     LI != SI, K := f_sha1(S).
+
+b1 lookup@LI(LI,K,LI,SI) :- forwardReference@LI(LI, K, SI).
+
+b2 references@DI(DI, LI, SI) :- lookupResults@LI(LI, K, D, DI, E), 
+                                forwardReference@LI(LI, K, SI).
+
+b3 backReference@SI(SI, LI) :- references@DI(DI, LI, SI).
 
 /** Neighbor Selection */
 
@@ -155,8 +172,6 @@ f9 nextFingerFix@NI(NI,I) :- node@NI(NI,N),
 
 /** Churn Handling */
 
-watch(join).
-
 c1 joinEvent@NI(NI,E) :- join@NI(NI,E).
 
 c2 joinReq@LI(LI,N,NI,E) :- joinEvent@NI(NI,E),
@@ -187,8 +202,6 @@ c8 join@NI(NI, E) :- periodic@NI(NI, E, 0, 1).
 
 /** Stabilization */
 
-watch(bestSucc).
-watch(succ).
 /*
 watch(stabilize).
 watch(succ).

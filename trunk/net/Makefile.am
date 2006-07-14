@@ -25,7 +25,6 @@ libp2net_la_SOURCES = \
 	basicAck.C \
 	cumulativeAck.C \
 	cct.C \
-	ccr.C \
 	rcct.C \
 	rccr.C \
 	rdelivery.C \

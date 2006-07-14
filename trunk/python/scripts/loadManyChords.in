@@ -97,23 +97,27 @@ def parse_cmdline(argv):
     return flags, args
 
 def get_stub():
-    stub = r"""dataflow %s {
+    stub = """dataflow %s {
       let udp = Udp2("udp", %s);
+      let header = PelTransform("output", "$0 pop \\"%s:%s\\" pop \
+                                           swallow unbox drop \
+                                           0 pop 0 pop 0 pop 0 pop popall");
 
       TimedPushSource("dummy_source", 0)            ->
-      Sequence("output", 1, 1)                      ->
-      Frag("fragment", 1)                           ->
+      header                                        -> 
+      Sequence("sequence", 1)                       ->
+      Frag("fragment")                              ->
       PelTransform("package", "$0 pop swallow pop") ->
       MarshalField("marshal", 1)                    ->
       StrToSockaddr("addr_conv", 0)                 -> 
-      udp -> UnmarshalField("unmarshal", 1) ->
-      PelTransform("unpackage", "$1 unboxPop") ->
-      Defrag("defragment", 1) ->
-      PelTransform("get_payload", "$2 unboxPop") ->
-      TimedPullPush("input", 0) ->
+      udp -> UnmarshalField("unmarshal", 1)         ->
+      PelTransform("unpackage", "$1 unboxPop")      ->
+      Defrag("defragment")                          ->
+      PelTransform("get_payload", "$6 unboxPop")    ->
+      TimedPullPush("input", 0)                     ->
       Discard("dummy_discard");
       }
-      .   # END OF DATAFLOW DEFINITION""" % (DATAFLOW_NAME, myport)
+      .   # END OF DATAFLOW DEFINITION""" % (DATAFLOW_NAME, myport, myaddress, myport)
     return stub
 
 def gen_stub(plumber):

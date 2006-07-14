@@ -227,20 +227,20 @@ string P2::stub(string hostname, string port)
            let header  = PelTransform(\"source\", \"$0 pop \\\""
                                       << hostname <<":" << port 
                                       << "\\\" pop swallow unbox drop "
-                                      << "0 pop 0 pop 0 pop 0 pop popall\"); ";
+                                      << "0 pop 0 pop 0 pop 0 pop 0 pop 0 pop popall\"); ";
 
 
-  if (_transport_conf & (RELIABLE | CC | ORDERED)) {
+  if (_transport_conf & (RELIABLE | RCC | CC | ORDERED)) {
     stub << "let rtt      = RoundTripTimer(\"rtt_timer\"); ";
     stub << "let ackDemux = Demux(\"ackDemux\", {Val_Str(\"ACK\")}, 1); ";
     stub << "let netoutRR = RoundRobin(\"netoutRR\", 2); ";
+    stub << "let ack = BasicAck(\"acknowledge\"); ";
 
     if (_transport_conf & CC) {
       stub << "let cct = CCT(\"cct\"); ";
-      stub << "let ccr = CCR(\"ccr\"); ";
     }
-    else {
-      stub << "let ack = BasicAck(\"acknowledge\"); ";
+    else if (_transport_conf & RCC) {
+      stub << "let rcct = RateCCT(\"rcct\"); ";
     }
 
     if (_transport_conf & RELIABLE)  {
@@ -251,14 +251,8 @@ string P2::stub(string hostname, string port)
   stub << "udp-> UnmarshalField(\"unmarshal\", 1) -> \
            PelTransform(\"unRoute\", \"$1 unboxPop\") ->";
 
-  if (_transport_conf & (CC | RELIABLE | ORDERED)) {
-    stub << "ackDemux[1] -> ";
-    if (_transport_conf & CC) {
-      stub << "ccr ->";
-    }
-    else { 
-      stub << "ack ->";
-    }
+  if (_transport_conf & (RCC | CC | RELIABLE | ORDERED)) {
+    stub << "ackDemux[1] -> ack ->";
   }
   stub << "Defrag(\"defragment\") -> ";
 
@@ -270,7 +264,7 @@ string P2::stub(string hostname, string port)
     stub << "TimedPullPush(\"pullDriver\", 0) -> \
              DupRemove(\"dupremove\") -> Queue ->";
   }
-  stub << "PelTransform(\"unPackage\", \"$6 unboxPop\")->";
+  stub << "PelTransform(\"unPackage\", \"$8 unboxPop\")->";
 
   stub << "inputRR -> \
            TimedPullPush(\"pullDriver\", 0)     -> \
@@ -290,13 +284,16 @@ string P2::stub(string hostname, string port)
 
 
   /** Send side reliable delivery and congestion control */
-  if (_transport_conf & (RELIABLE | CC | ORDERED)) {
+  if (_transport_conf & (RELIABLE | RCC | CC | ORDERED)) {
     stub << "rtt ->";
     if (_transport_conf & RELIABLE) {
       stub << "rdelv ->";
     }
     if (_transport_conf & CC) {
       stub << "cct ->";
+    }
+    else if (_transport_conf & RCC) {
+      stub << "rcct ->";
     }
     stub << "netoutRR ->";
   }
@@ -309,12 +306,11 @@ string P2::stub(string hostname, string port)
             Queue(\"injectQueue\",1000)-> [2]inputRR; ";
 
   /** Ack packet send dataflow */
-  if (_transport_conf & (CC | RELIABLE | ORDERED)) {
-    if (_transport_conf & CC) {
-      stub << "ccr[1] ->";
-    }
-    else { 
-      stub << "ack[1] ->";
+  if (_transport_conf & (RCC | CC | RELIABLE | ORDERED)) {
+    stub << "ack[1] ->";
+
+    if (_transport_conf & RCC) {
+      stub << "RateCCR(\"rccr\") ->";
     }
     if (_transport_conf & RELIABLE) {
       stub << "CumulativeAck(\"cack\") ->";
@@ -323,11 +319,15 @@ string P2::stub(string hostname, string port)
   }
 
   /** Ack packet receive dataflow */
-  if (_transport_conf & (RELIABLE | CC | ORDERED)) {
+  if (_transport_conf & (RELIABLE | RCC | CC | ORDERED)) {
     stub << "ackDemux ->";
     if (_transport_conf & CC) {
       stub << "[1]cct[1] ->";
     }
+    else if (_transport_conf & RCC) {
+      stub << "[1]rcct[1] ->";
+    }
+
     if (_transport_conf & RELIABLE) {
       stub << "[1]rdelv[1] ->";
     }

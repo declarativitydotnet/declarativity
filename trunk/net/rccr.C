@@ -245,7 +245,7 @@ REMOVABLE_INLINE void RateCCR::Connection::clearHistory() {
 //
 
 RateCCR::RateCCR(string name) 
-  : Element(name, 1, 2), _ack_cb(0)
+  : Element(name, 1, 1)
 {
 }
 
@@ -256,12 +256,12 @@ RateCCR::RateCCR(string name)
 TuplePtr RateCCR::simple_action(TuplePtr tp) 
 {
   Connection *c  = NULL;
-  ValuePtr  src  = (*tp)[SRC];
-  SeqNum    seq  = Val_UInt64::cast((*tp)[SEQ]);
-  int       rtt  = Val_UInt32::cast((*tp)[RTT]);
-  boost::posix_time::ptime ts = Val_Time::cast((*tp)[TS]);
+  ValuePtr  src  = (*tp)[SRC+2];
+  SeqNum    seq  = Val_UInt64::cast((*tp)[SEQ+2]);
+  int       rtt  = Val_UInt32::cast((*tp)[RTT+2]);
+  boost::posix_time::ptime ts = Val_Time::cast((*tp)[TS+2]);
 
-  if (seq == 0 || rtt < 0) {
+  if (!seq || !rtt) {
     log(LoggerI::INFO, 0, "NON-RateCC Tuple: " + tp->toString()); 
     return tp;
   }
@@ -272,84 +272,17 @@ TuplePtr RateCCR::simple_action(TuplePtr tp)
   } else c = cmap_.find(src)->second;
   assert(c);
 
-/*
-  if (!c->active()) { 
-    log(LoggerI::WARN, 0, "REMOVING INACTIVE CONNECTION FROM SOURCE: " + src->toString()); 
-    cmap_.erase(cmap_.find(src));
-    c = new Connection(); 
-    cmap_.insert(std::make_pair(src, c));
-  }
-*/
   c->handle_tuple(seq, rtt, ts);
 
-  TuplePtr ack = Tuple::mk();
-  ack->append(src);				// Source location
-  ack->append(Val_Str::mk("ACK"));		// Acknowledgement name
-  for(unsigned i = 0; i < STACK_SIZE; i++)
-    ack->append((*tp)[i]);
-  ack->append(Val_UInt32::mk(c->receiveRate()));// Rate observed in past rtt
-  ack->append(Val_Double::mk(c->lossRate()));	// Loss event rate
-  ack->freeze();
-  ack_q_.push_back(ack);			// Append to ack queue
-
-  if (_ack_cb) {
-    _ack_cb();				// Notify new ack
-    _ack_cb = 0;
-  } 
-  return strip(tp);				// Forward data tuple
-}
-
-/**
- * Pulls the next acknowledgement in ack_q_ to send to the
- * receiver.
- */
-TuplePtr RateCCR::pull(int port, b_cbv cb)
-{
-  if (port == 1) {
-    if (!ack_q_.empty()) {
-      TuplePtr ack = ack_q_.front();
-      ack_q_.pop_front();
-      return ack;
-    }
-    _ack_cb = cb;
-    return TuplePtr();
-  } 
-
-  // Need this to go through regular pull
-  return this->Element::pull(port, cb); 	
-}
-
-/**
- * Port 1 deals with Flow control
- */
-int RateCCR::push(int port, TuplePtr tp, b_cbv cb)
-{
-  if (port == 1) {
-  /*
-    try {
-      if (Val_Str::cast((*tp)[0]) == "RRATE")
-    }
-    catch (Value::TypeError e) {
-      log(LoggerI::WARN, 0, "CCR::push TypeError Thrown on port 1"); 
-    } 
-  */
-    return 1;
+  TuplePtr rack = Tuple::mk();
+  for(unsigned i = 0; i < tp->size(); i++) {
+    if (i == RRATE+2)
+      rack->append(Val_UInt32::mk(c->receiveRate()));	// Rate observed in past rtt
+    else if (i == LRATE+2)
+      rack->append(Val_Double::mk(c->lossRate()));	// Loss event rate
+    else 
+      rack->append((*tp)[i]);
   }
-
-  // Need this to go through regular push
-  return this->Element::push(port, tp, cb); 	
-}
-
-REMOVABLE_INLINE TuplePtr RateCCR::strip(TuplePtr p) {
-  TuplePtr tuple = Tuple::mk();
-  for (uint i = 0; i < p->size(); i++) {
-    try {
-      TuplePtr t = Val_Tuple::cast((*p)[i]); 
-      if (Val_Str::cast((*t)[0]) == "TINFO") continue;
-    }
-    catch (Value::TypeError e) { } 
-    tuple->append((*p)[i]);
-  }
-  tuple->freeze();
-  return tuple;
+  rack->freeze();
+  return rack;		// Forward ack with rate information included.
 }
