@@ -35,7 +35,7 @@ void Localize_Context::add_rule(OL_Context::Rule* rule)
     }
   }
 
-  std::cout << "  Add localized rule: " << rule->toString() << "\n";  
+  warn << "  Add localized rule: " << rule->toString() << "\n";  
   _localizedRules.push_back(rule);  
 }
 
@@ -54,10 +54,10 @@ OL_Context::Rule* Localize_Context::sendRewrite(OL_Context::Rule* nextRule,
 					+ loc)), 
       new Parse_Var(Val_Str::mk(loc))), functor->args_);
   OL_Context::Rule* newRule = new OL_Context::Rule(nextRule->ruleID 
-						   + "-local1", newHead, false);
+						   + "_local1", newHead, false);
 
   newRule->terms = newTerms;
-  std::cout << "  Localizated rule " << newRule->toString() << "\n";
+  warn << "  Localizated rule " << newRule->toString() << "\n";
 
   // Materialize what we send if the source has been materialized
   OL_Context::TableInfo* tableInfo 
@@ -87,7 +87,7 @@ void Localize_Context::rewrite(OL_Context* ctxt, TableStore* tableStore)
 void Localize_Context::rewriteRule(OL_Context::Rule* nextRule, 
 				   TableStore* tableStore)
 {
-  std::cout << "Perform localization rewrite on " << nextRule->toString() 
+  warn << "Perform localization rewrite on " << nextRule->toString() 
 	    << "\n";
 
   std::vector<OL_Context::Rule*> toRet;
@@ -125,7 +125,7 @@ void Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
       newTerms.push_back(otherTerms.at(k));
     }
     OL_Context::Rule* newRuleTwo 
-      = new OL_Context::Rule(nextRule->ruleID + "-local2", 
+      = new OL_Context::Rule(nextRule->ruleID + "_local2", 
 			     nextRule->head, false);
 
     std::list<Parse_Term*>::iterator t = nextRule->terms.begin();

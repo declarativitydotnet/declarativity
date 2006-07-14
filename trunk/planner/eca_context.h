@@ -65,7 +65,7 @@ class ECA_Rule {
 public:
   ECA_Rule(string r) 
     : _ruleID(r) 
-  { _event = NULL; _action = NULL; _aggTerm = NULL; };
+  { _event = NULL; _action = NULL; };
   
   string toString();
   string toRuleString();
@@ -76,7 +76,6 @@ public:
   Parse_Action* _action;   
   std::vector<Parse_Functor*> _probeTerms;
   std::vector<Parse_Term*> _selectAssignTerms;
-  Parse_AggTerm* _aggTerm;
 };
 
 
@@ -92,7 +91,10 @@ private:
   void add_rule(ECA_Rule* eca_rule);
   void rewriteViewRule(OL_Context::Rule*, TableStore*);
   void rewriteEventRule(OL_Context::Rule*, TableStore*);
-  std::vector<OL_Context::Rule*> localizeRewrite(OL_Context::Rule*, TableStore*);
+  void rewriteAggregateView(OL_Context::Rule* rule, 
+			    TableStore *tableStore);
+  void generateActionHead(OL_Context::Rule* rule, string bodyLoc,
+			  TableStore* tableStore, ECA_Rule* eca_rule);
 };
 
 typedef boost::shared_ptr<ECA_Context> ECA_ContextPtr;

@@ -52,7 +52,7 @@ public:
   
   void addElementSpec(ElementSpecPtr elementSpec) {
     _ruleStrand->addElement(_conf, elementSpec);
-    }
+  }
 
   class FieldNamesTracker {
   public:

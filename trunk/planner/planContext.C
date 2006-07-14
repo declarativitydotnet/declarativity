@@ -50,7 +50,9 @@ PlanContext::FieldNamesTracker::initialize(Parse_Term* term)
   if (pf != NULL) {
     for (int k = 0; k < pf->args(); k++) {
       Parse_Var* parse_var = dynamic_cast<Parse_Var*>(pf->arg(k));
-      fieldNames.push_back(parse_var->toString());
+      if (parse_var != NULL) {
+	fieldNames.push_back(parse_var->toString());
+      }
     }  
   }
 }

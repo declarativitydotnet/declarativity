@@ -39,24 +39,12 @@ void NetPlanner::generateNetworkOutElements(boost::shared_ptr<Udp> udp)
   ElementSpecPtr udpSend = _conf->addElement(udp->get_tx());  
   
   _networkOut.push_back(pullPush);
-  for (unsigned k = 0; k < _outOptimize.size(); k++) {
-    _networkOut.push_back(_outOptimize.at(k));
-  }
   _networkOut.push_back(sendQueue);
   _networkOut.push_back(marshalSend);
   _networkOut.push_back(routeSend);
-    _networkOut.push_back(udpSend);
-
-  if (_outOptimize.size() == 0) {
-    _conf->hookUp(pullPush, 0, sendQueue, 0);
-  } else {
-    _conf->hookUp(pullPush, 0, _outOptimize.at(0), 0);
-    for (unsigned k = 0; k < _outOptimize.size()-1; k++) {
-      _conf->hookUp(_outOptimize.at(k), 0, _outOptimize.at(k+1), 0);
-    }
-    _conf->hookUp(_outOptimize.at(_outOptimize.size()-1), 
-		  0, sendQueue, 0);
-  }
+  _networkOut.push_back(udpSend);
+  
+  _conf->hookUp(pullPush, 0, sendQueue, 0);
   _conf->hookUp(sendQueue, 0, marshalSend, 0);
   _conf->hookUp(marshalSend, 0, routeSend, 0);
   _conf->hookUp(routeSend, 0, udpSend, 0);

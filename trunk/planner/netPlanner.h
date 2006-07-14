@@ -75,9 +75,6 @@ public:
   ~NetPlanner() { }; 
   void generateNetworkElements(boost::shared_ptr<Udp> udp);
   void registerAllRuleStrands(std::vector<RuleStrand*>);
-  void registerOptimizeSend(std::vector<ElementSpecPtr> outOptimize) {
-    _outOptimize = outOptimize; }
-
   string toString();
 
   class ReceiverInfo {
@@ -98,7 +95,6 @@ private:
 
   string _nodeID;
   FILE* _outputDebugFile;
-  std::vector<ElementSpecPtr> _outOptimize;
   Plumber::DataflowPtr _conf;
   std::vector<ElementSpecPtr> _networkIn, _networkOut;
   ReceiverInfoMap _receiverInfo;  

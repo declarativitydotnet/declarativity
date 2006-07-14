@@ -52,7 +52,7 @@ Planner::generateRuleStrands(ECA_ContextPtr ectxt)
     PlanContext* pc = new PlanContext(_conf, _tableStore, rs, 
 				      _nodeID, _outputDebugFile);
     compileECARule(pc);
-    delete pc;
+    delete pc;    
   }
   return toRet;
 }
@@ -61,6 +61,7 @@ void Planner::setupNetwork(boost::shared_ptr<Udp> udp)
 {
   // call the netplanner to generate network in and out
   // mux and demux not generated
+  std::cout << "Planner: set up network elements\n";
   _netPlanner->generateNetworkElements(udp);
 }
 
@@ -72,6 +73,7 @@ void Planner::registerRuleStrand(RuleStrand* rs)
 
 void Planner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands)
 {
+  std::cout << "Planner: register " << ruleStrands.size() << " rule strands with network planner\n";
   // call netplanner to create the right mux/demuxes
   _netPlanner->registerAllRuleStrands(ruleStrands);
 }

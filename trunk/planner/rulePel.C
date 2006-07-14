@@ -32,7 +32,7 @@ void error(string msg, PlanContext* pc)
 {  
   ECA_Rule* curRule = pc->_ruleStrand->getRule();
   std::cerr << "PLANNER ERROR: " << msg << " for rule " 
-	    << curRule << ". Planner exits.\n";
+	    << curRule->toString() << ". Planner exits.\n";
   exit(-1);
 }
 

@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <fstream>
 
+#include "aggFactory.h"
 #include "ol_context.h"
 #include "value.h"
 #include "parser_util.h"
@@ -81,6 +82,10 @@
 // Function to output into a dataflow graph specification
 ////////////////////////////////////////////////////////////
 
+void createSecondaryIndex(PlanContext* pc, 
+			  Table2Ptr table,
+			  Table2::Key key);
+
 void debugRule(PlanContext* pc, string msg)
 {
   warn << "DEBUG RULE: " << pc->_ruleStrand->getRuleID() << " " 
@@ -91,14 +96,15 @@ void debugRule(PlanContext* pc, string msg)
 
 void addWatch(PlanContext* pc, string b)
 {
+  string output = b + "|" + pc->getRule()->_ruleID + "|" + pc->_nodeID;
   if (pc->_outputDebugFile == NULL) {
     ElementSpecPtr print = 
-      pc->createElementSpec(ElementPtr(new PrintWatch(b, 
-						   pc->_tableStore->getWatchTables())));
+      pc->createElementSpec(ElementPtr(new PrintWatch(output,
+						      pc->_tableStore->getWatchTables())));
     pc->addElementSpec(print);  
   } else {
     ElementSpecPtr print = 
-      pc->createElementSpec(ElementPtr(new PrintWatch(b, 
+      pc->createElementSpec(ElementPtr(new PrintWatch(output,
 						      pc->_tableStore->getWatchTables(), 
 						      pc->_outputDebugFile)));
     pc->addElementSpec(print);  
@@ -120,7 +126,7 @@ void generateInsertEvent(PlanContext* pc)
   pc->addElementSpec(updateTable);
   
   // add a debug element
-  addWatch(pc, "DebugInsertEvent|"+curRule->_ruleID+"|"+pc->_nodeID);
+  addWatch(pc, "InsertEvent");
   
   if (curRule->_probeTerms.size() > 0) {
     // if we are doing a join
@@ -151,7 +157,7 @@ void generateDeleteEvent(PlanContext* pc)
   pc->addElementSpec(removedTable);
   
   // add a debug element
-  addWatch(pc, "DebugInsertEvent|"+curRule->_ruleID+"|"+pc->_nodeID);
+  addWatch(pc, "DeleteEvent");
   
   if (curRule->_probeTerms.size() > 0) {
     // if we are doing a join
@@ -167,11 +173,11 @@ void generateDeleteEvent(PlanContext* pc)
 void generateReceiveEvent(PlanContext* pc)
 {
   ECA_Rule* curRule = pc->getRule();
-  pc->_namesTracker = new PlanContext::FieldNamesTracker(pc->getRule()->_event->_pf);
+  pc->_namesTracker = new PlanContext::FieldNamesTracker(curRule->_event->_pf);
 
   debugRule(pc, "Recv event NamesTracker " 
 	    + pc->_namesTracker->toString() + "\n");
-  addWatch(pc, "DebugRecvEvent|" + curRule->_ruleID + "|" + pc->_nodeID);
+  addWatch(pc, "RecvEvent");
   
   if (curRule->_probeTerms.size() == 0) {
     ElementSpecPtr slot = 
@@ -182,13 +188,177 @@ void generateReceiveEvent(PlanContext* pc)
   }
 }
 
+void generateAggEvent(PlanContext* pc)
+{
+  
+  ECA_Rule* curRule = pc->getRule();
+  pc->_namesTracker = new PlanContext::FieldNamesTracker(curRule->_event->_pf);
+
+  Table2::Key groupByFields;      
+  
+  PlanContext::FieldNamesTracker* aggregateNamesTracker 
+    = new PlanContext::FieldNamesTracker();
+  Parse_Functor* action_functor = curRule->_action->_pf;
+  Parse_Functor* event_functor = curRule->_event->_pf;
+
+  for (int k = 0; k < action_functor->args(); k++) {
+    // go through the functor head, but skip the aggField itself    
+    Parse_Var* pv = dynamic_cast< Parse_Var* > (action_functor->arg(k));
+    if (pv == NULL) {
+      continue;
+    }
+    int pos = pc->_namesTracker->fieldPosition(pv->toString());
+    if (k != -1 && k != action_functor->aggregate()) {
+      groupByFields.push_back((uint) pos + 1);
+      aggregateNamesTracker->fieldNames.push_back(pv->toString());
+      //  push_back(pc->_namesTracker->fieldNames.at(pos));
+    }
+  }
+
+  Parse_Agg* pa 
+    = dynamic_cast<Parse_Agg* > (action_functor->arg(action_functor->aggregate()));
+  string aggVarname = pa->v->toString();
+  aggregateNamesTracker->fieldNames.push_back(aggVarname);
+
+  int aggFieldBaseTable =
+    pc->_namesTracker->fieldPosition(aggVarname) + 1;
+
+  // get the table, create the index
+  Table2Ptr aggTable = pc->_tableStore->getTableByName(event_functor->fn->name);  
+  createSecondaryIndex(pc, aggTable, groupByFields);  
+
+  Table2::Aggregate tableAgg =
+    aggTable->aggregate(groupByFields,
+                        aggFieldBaseTable, // the agg field
+                        pa->oper);
+
+  if (tableAgg == NULL) {
+    // Ooops, I couldn't create an aggregate. Complain.
+    error("Could not create aggregate \"" + pa->oper
+          + "\". I only know aggregates " +
+          AggFactory::aggList(), pc);
+    return;
+  }
+
+  debugRule(pc, "Agg NamesTracker " + aggregateNamesTracker->toString()+ "\n");
+
+  ElementSpecPtr aggElement =
+    pc->createElementSpec(ElementPtr(new Aggregate("Agg|" + curRule->_ruleID +
+						   "|" + pc->_nodeID, tableAgg)));
+  
+  ostringstream pelTransformStr;
+  pelTransformStr << "\"" << "aggResult|" 
+		  << curRule->_ruleID << "\" pop";
+  for (uint k = 0;
+       k < aggregateNamesTracker->fieldNames.size();
+       k++) {
+    pelTransformStr << " $" << k << " pop";
+  }
+  debugRule(pc, "Agg Pel Expr " + pelTransformStr.str()+ "\n");
+
+  // apply PEL to add a table name
+  ElementSpecPtr addTableName =
+    pc->createElementSpec(ElementPtr(new PelTransform("Aggregation|"
+						      + curRule->_ruleID
+						      + "|" + pc->_nodeID,
+						      pelTransformStr.str())));
+
+  pc->addElementSpec(aggElement);
+  pc->addElementSpec(addTableName);
+
+  addWatch(pc, "Aggregate");
+  pc->_namesTracker = aggregateNamesTracker;  
+}
+
+void generatePeriodicEvent(PlanContext* pc)
+{
+  ECA_Rule* curRule = pc->getRule();
+    
+  TuplePtr functorTuple = Tuple::mk();
+  functorTuple->append(Val_Str::mk("periodic_" + curRule->_ruleID));
+  functorTuple->append(Val_Str::mk(pc->_nodeID)); 
+  functorTuple->freeze();
+
+  ElementSpecPtr source =
+    pc->createElementSpec(ElementPtr(new TupleSource("FunctorSource|" + curRule->_ruleID 
+						     + "|" + pc->_nodeID,
+						     functorTuple)));
+  pc->addElementSpec(source);
+
+  Parse_Functor* pf = dynamic_cast<Parse_Functor* > (curRule->_event->_pf);
+  if (pf == NULL) {
+    error(curRule->getEventName() + " must be a functor", pc);
+    return;
+  }
+
+  if (pf->args() < 3) {
+    error("Mal-form periodic predicate", pc);
+  }
+
+  pc->_namesTracker->fieldNames.push_back("T"); // time interval
+
+  string period = pf->arg(2)->toString();
+  int count = 0;
+  if (pf->args() > 3) {
+    count = atoi(pf->arg(3)->toString().c_str());
+    pc->_namesTracker->fieldNames.push_back("C"); // count
+  }
+
+   
+  // a pel transform that puts in the periodic stuff
+  ElementSpecPtr pelRand = 
+    pc->createElementSpec(ElementPtr(new PelTransform("FunctorSourcePel|" + curRule->_ruleID +
+                                                  "|" + pc->_nodeID, "$0 pop $1 pop rand pop")));
+  pc->addElementSpec(pelRand);
+
+  ostringstream oss;
+  oss << pc->_namesTracker->toString() << " " <<
+    atof(period.c_str()) << " " << count << "\n";
+  debugRule(pc, "Periodic Event " + oss.str());
+
+
+  // The timed pusher
+  ElementSpecPtr pushFunctor =
+    pc->createElementSpec(ElementPtr(new TimedPullPush("FunctorPush|" 
+						       + curRule->_ruleID+ "|"
+						       + pc->_nodeID,
+						      atof(period.c_str()), count)));
+
+  pc->addElementSpec(pushFunctor);
+  
+  if (curRule->_probeTerms.size() == 0) {
+    ElementSpecPtr functorSlot 
+      = pc->createElementSpec(ElementPtr(new Slot("functorSlot:" 
+						  + curRule->_ruleID + ":" 
+						  + pc->_nodeID)));      
+    pc->addElementSpec(functorSlot);
+  }
+  addWatch(pc, "PeriodicEvent");
+}
+
 void generateEventElement(PlanContext* pc)
 {
   RuleStrand* rs = pc->_ruleStrand;
+  int aggField = pc->getRule()->_action->_pf->aggregate();
+
 
   // update, create an updater
   if (rs->eventType() == Parse_Event::INSERT) {
+
+    // is this an agg table type?
+    if (aggField >= 0) {
+      generateAggEvent(pc);
+      return;
+    }
+
+    if (pc->getRule()->getEventName() == "periodic") {
+      generatePeriodicEvent(pc);
+      return;
+    }
+
     generateInsertEvent(pc);
+
+    // check for periodic as well
   }
   
   if (rs->eventType() == Parse_Event::DELETE) {
@@ -214,8 +384,7 @@ void generateAddAction(PlanContext* pc)
 						       + "|" + pc->_nodeID, 
 						       0)));
   
-  addWatch(pc, "DebugInsertAction|" + curRule->_ruleID + "|" + 
-	   rs->actionFunctorName() + "|" + pc->_nodeID);
+  addWatch(pc, "AddAction");
   
   Table2Ptr tablePtr 
     = pc->_tableStore->getTableByName(rs->actionFunctorName()); 
@@ -243,8 +412,7 @@ void generateDeleteAction(PlanContext* pc)
   debugRule(pc, "Generate Delete Action for " + rs->actionFunctorName() + "\n");
 
   // add a debug element
-  addWatch(pc, "DebugDeleteAction|" + curRule->_ruleID + "|" + 
-	   rs->actionFunctorName() + "|" + pc->_nodeID);
+  addWatch(pc, "DeleteAction");
   
   ElementSpecPtr deletePullPush = 
     pc->_conf->addElement(ElementPtr(new TimedPullPush("Delete|" 
@@ -270,8 +438,6 @@ void generateSendAction(PlanContext* pc)
   ECA_Rule* curRule = pc->getRule();
   RuleStrand* rs = pc->_ruleStrand;
 
-  debugRule(pc, "Generate Send Action for " + rs->actionFunctorName() + "\n");
-
   // compute the field for location specifier
   Parse_Functor* head = curRule->_action->_pf;
   string loc = head->fn->loc;
@@ -282,8 +448,6 @@ void generateSendAction(PlanContext* pc)
       locationIndex = k+1;
     }
   }
-  // copy that location specifier field first, encapsulate rest of tuple
-  addWatch(pc, "DebugSendAction|"+ curRule->_ruleID + "|" + pc->_nodeID);
   ostringstream oss;
   oss << "$" << locationIndex << " pop swallow pop";
   ElementSpecPtr sendPelTransform =
@@ -291,8 +455,13 @@ void generateSendAction(PlanContext* pc)
 						      + curRule->_ruleID 
 						      + "|" + pc->_nodeID,
 						      oss.str())));
-  
+
+  debugRule(pc, "Generate Send Action for " + rs->actionFunctorName() 
+	    + " " + oss.str() + "\n");
+
+  addWatch(pc, "SendAction");  
   pc->addElementSpec(sendPelTransform);   
+  // copy that location specifier field first, encapsulate rest of tuple
 }
 
 void generateActionElement(PlanContext* pc)
@@ -353,6 +522,9 @@ void generateProbeElements(PlanContext* pc,
   Table2::Key innerRemainingKey; 
   innerNamesTracker->joinKeys(outerNamesTracker, outerLookupKey, 
 			      innerIndexKey, innerRemainingKey);
+
+  addWatch(pc, "BeforeJoin");
+ 
   
   string innerTableName = innerFunctor->fn->name;
   
@@ -383,7 +555,7 @@ void generateProbeElements(PlanContext* pc,
 
   // The lookup
   ostringstream lookuposs;
-  lookuposs << "Lookup2:" << pc->getRule()->_ruleID;
+  lookuposs << "Lookup2:" << pc->getRule()->_ruleID << "|" << pc->_nodeID;
 
   last_el =
     pc->createElementSpec(ElementPtr(new Lookup2(lookuposs.str(),
@@ -410,10 +582,10 @@ void generateProbeElements(PlanContext* pc,
   // projection.  Keep all fields from the probe, and all fields from
   // the base table that were not join keys.
   ostringstream pelProject;
-  pelProject << "\"join:"
+  pelProject << "\"join|"
              << pc->getRule()->getEventName() 
-             << ":" << innerTableName
-             << ":" 
+             << "|" << innerTableName
+	     << "|" 
 	     << pc->getRule()->_ruleID
              << "\" pop "; // table name
   for (int k = 0; k < numFieldsProbe; k++) {
@@ -431,13 +603,13 @@ void generateProbeElements(PlanContext* pc,
   string pelProjectStr = pelProject.str();
   ostringstream oss1; 
   oss1 << "joinPel_" << pc->getRule()->_ruleID 
-       << " " << pelProjectStr << "\n";
+       << " " << pelProjectStr;
 
   ElementSpecPtr transS =
     pc->createElementSpec(ElementPtr(new PelTransform(oss1.str(),
 						      pelProjectStr)));
   debugRule(pc, "Join Pel Transform " + oss1.str());
-  
+  addWatch(pc, "AfterJoin");  
   pc->addElementSpec(transS);
 }		   
 
@@ -491,9 +663,9 @@ void generateProjectElements(PlanContext* pc)
   ECA_Rule* curRule = pc->getRule();
   Parse_Functor* pf = curRule->_action->_pf;
   PlanContext::FieldNamesTracker* curNamesTracker = pc->_namesTracker;
-  
+
   // determine the projection fields, and the first address to return. 
-  // Add 1 for table name     
+   // Add 1 for table name     
   std::vector<unsigned int> indices;  
   // iterate through all functor's output
   for (int k = 0; k < pf->args(); k++) {
@@ -503,6 +675,12 @@ void generateProjectElements(PlanContext* pc)
       // care only about vars    
       pos = curNamesTracker->fieldPosition(parse_var->toString());    
     }
+
+    Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(pf->arg(k));
+    if (aggExpr != NULL) {
+      pos = curNamesTracker->fieldPosition(aggExpr->v->toString());
+    }
+
     if (pos == -1) { continue; }    
     indices.push_back(pos + 1);
   }
@@ -531,10 +709,9 @@ void generateProjectElements(PlanContext* pc)
 
 void compileECARule(PlanContext* pc)
 {
-
   std::cout << "Process rule " << pc->getRule()->toString() << "\n";
-
   // first generate the incoming event
+  
   generateEventElement(pc);        
 
   // do all the joins
@@ -548,6 +725,8 @@ void compileECARule(PlanContext* pc)
 
   // do action. For send, later hook to round robin
   generateActionElement(pc);
+
+  std::cout << "Finish processing rule " << pc->getRule()->toString() << "\n";
 }
 
 #endif

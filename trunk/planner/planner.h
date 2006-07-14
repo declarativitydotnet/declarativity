@@ -87,8 +87,6 @@ public:
   void registerAllRuleStrands(std::vector<RuleStrand*>);  
   void generatePlumberConfig(Plumber::DataflowPtr conf);
   void setupNetwork(boost::shared_ptr<Udp> udp);
-  void registerOptimizeSend(std::vector<ElementSpecPtr> optimizeSend) {
-    _netPlanner->registerOptimizeSend(optimizeSend); }
   NetPlanner* getNetPlanner() { return _netPlanner; }
 
 private:
