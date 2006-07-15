@@ -199,7 +199,7 @@ void Aggwrap::agg_finalize() {
       for (uint k = 0; k < _groupByFields.size(); k++) {
 	/*warn << _incomingTuple->toString() << " " 
 	  << _groupByFields.at(k) + 1 << "\n";     */
-	aggResultToRet->append((*_incomingTuple)[_groupByFields.at(k)+1]);
+	aggResultToRet->append((*_incomingTuple)[_groupByFields.at(k)]);
       }
       aggResultToRet->append(Val_Int32::mk(count));
       aggResultToRet->freeze();
