@@ -29,8 +29,14 @@
 
 #include "ol_lexer.h"
 #include "ol_context.h"
-#include "plmb_confgen.h"
 #include "udp.h"
+#include "eca_context.h"
+#include "localize_context.h"
+#include "tableStore.h"
+#include "udp.h"
+#include "planner.h"
+#include "ruleStrand.h"
+
 
 
 
@@ -38,7 +44,7 @@ bool DEBUG = false;
 bool CC = false;
 bool TEST_SUCCESSOR = false;
 bool TEST_LOOKUP = false;
-int JOIN_ATTEMPTS = 4;
+int JOIN_ATTEMPTS = 1;
 
 void killJoin()
 {
@@ -73,12 +79,11 @@ struct SuccessorGenerator : public FunctorSource::Generator
 
 // this allows us to isolate and test just the finger lookup rules
 void fakeFingersSuccessors(boost::shared_ptr< OL_Context> ctxt,
-                           boost::shared_ptr<Plmb_ConfGen>
-                           plumberConfigGenerator,
+			   TableStore* tableStore,
                            string localAddress, IDPtr me)
 {
   Table2Ptr fingerTable =
-    plumberConfigGenerator->getTableByName(localAddress, "finger");
+    tableStore->getTableByName("finger");
   OL_Context::TableInfo* fingerTableInfo = ctxt->getTableInfos()->find("finger")->second;  
 
   // Fill up the table with fingers
@@ -97,7 +102,7 @@ void fakeFingersSuccessors(boost::shared_ptr< OL_Context> ctxt,
     tuple->append(Val_ID::mk(best));
   
     ostringstream address;
-    address << "Finger:" << (i / 2);
+    address << "Finger:" << i;
     tuple->append(Val_Str::mk(address.str()));
     tuple->freeze();
     fingerTable->insert(tuple);
@@ -107,7 +112,7 @@ void fakeFingersSuccessors(boost::shared_ptr< OL_Context> ctxt,
 
   // fake the best successor table. Only for testing purposes.  
   Table2Ptr bestSuccessorTable =
-    plumberConfigGenerator->getTableByName(localAddress, "bestSucc");
+    tableStore->getTableByName("bestSucc");
   TuplePtr tuple = Tuple::mk();
   tuple->append(Val_Str::mk("bestSucc"));
   
@@ -127,7 +132,7 @@ void fakeFingersSuccessors(boost::shared_ptr< OL_Context> ctxt,
 }
 
 
-void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr<Plmb_ConfGen> plumberConfigGenerator, 
+void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, TableStore* tableStore, 
 			  string localAddress, string landmarkAddress)
 {
 
@@ -142,11 +147,10 @@ void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr
 
   if (TEST_LOOKUP) {
     // fake fingers and best successors
-    fakeFingersSuccessors(ctxt, plumberConfigGenerator, localAddress, myKey);  
+    fakeFingersSuccessors(ctxt, tableStore, localAddress, myKey);  
   }
 
-  Table2Ptr nodeTable =
-    plumberConfigGenerator->getTableByName(localAddress, "node");
+  Table2Ptr nodeTable = tableStore->getTableByName("node");
   TuplePtr tuple = Tuple::mk();
   tuple->append(Val_Str::mk("node"));
     
@@ -157,8 +161,7 @@ void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr
   nodeTable->insert(tuple);
   warn << "Node: " << tuple->toString() << "\n";
 
-  Table2Ptr predecessorTable =
-    plumberConfigGenerator->getTableByName(localAddress, "pred");
+  Table2Ptr predecessorTable = tableStore->getTableByName("pred");
   TuplePtr predecessorTuple = Tuple::mk();
   predecessorTuple->append(Val_Str::mk("pred"));
   predecessorTuple->append(Val_Str::mk(localAddress));
@@ -169,7 +172,7 @@ void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr
   warn << "Initial predecessor " << predecessorTuple->toString() << "\n";
 
   Table2Ptr nextFingerFixTable =
-    plumberConfigGenerator->getTableByName(localAddress, "nextFingerFix");
+    tableStore->getTableByName("nextFingerFix");
   TuplePtr nextFingerFixTuple = Tuple::mk();
   nextFingerFixTuple->append(Val_Str::mk("nextFingerFix"));
   nextFingerFixTuple->append(Val_Str::mk(localAddress));
@@ -179,7 +182,7 @@ void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, boost::shared_ptr
   warn << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";
 
   Table2Ptr landmarkNodeTable =
-    plumberConfigGenerator->getTableByName(localAddress, "landmark");  
+    tableStore->getTableByName("landmark");  
   TuplePtr landmark = Tuple::mk();
   landmark->append(Val_Str::mk("landmark"));
   landmark->append(Val_Str::mk(localAddress));
@@ -227,18 +230,20 @@ void sendSuccessorStream(boost::shared_ptr< Udp> udp, boost::shared_ptr< Plumber
 }
 
 
-void initiateJoinRequest(boost::shared_ptr< Plmb_ConfGen > plumberConfigGenerator, 
+/*
+void initiateJoinRequest(boost::shared_ptr< Planner > planner, 
                          boost::shared_ptr< Plumber::Dataflow > conf, 
 			 string localAddress, double delay)
 {
 
  // My next finger fix tuple
   TuplePtr joinEventTuple = Tuple::mk();
-  joinEventTuple->append(Val_Str::mk("join"));
+  joinEventTuple->append(Val_Str::mk("joinEvent"));
   joinEventTuple->append(Val_Str::mk(localAddress));
   joinEventTuple->append(Val_Int32::mk(random()));
   joinEventTuple->freeze();
 
+  
   // create r rule here for tracing compatibility
   ostringstream t;
   t << "$";
@@ -262,9 +267,9 @@ void initiateJoinRequest(boost::shared_ptr< Plmb_ConfGen > plumberConfigGenerato
   // Link everything
   conf->hookUp(sourceS, 0, onceS, 0);
   conf->hookUp(onceS, 0, slotS, 0);
-
-  plumberConfigGenerator->registerUDPPushSenders(slotS, r, localAddress);
-}
+  
+  //plumberConfigGenerator->registerUDPPushSenders(slotS, r, localAddress);
+}*/
 
 
 /** Test lookups. */
@@ -276,21 +281,53 @@ void startChordInDatalog(LoggerI::Level level, boost::shared_ptr< OL_Context> ct
 
   // create dataflow for translated chord lookup rules
   PlumberPtr plumber(new Plumber(level));
-  Plumber::DataflowPtr conf(new Plumber::Dataflow("chord"));
-  boost::shared_ptr< Plmb_ConfGen > plumberConfigGenerator(new Plmb_ConfGen(ctxt.get(), conf, false, DEBUG, CC, datalogFile, ifTrace));
+  /*boost::shared_ptr< Plmb_ConfGen > plumberConfigGenerator(new Plmb_ConfGen(ctxt.get(), conf, false, DEBUG, CC, datalogFile, ifTrace));
 
   plumberConfigGenerator->createTables(localAddress);
-
   boost::shared_ptr< Udp > udp(new Udp(localAddress, port));
   plumberConfigGenerator->clear();
-  initiateJoinRequest(plumberConfigGenerator, conf, localAddress, delay);
+  //initiateJoinRequest(plumberConfigGenerator, conf, localAddress, delay);
   plumberConfigGenerator->configurePlumber(udp, localAddress);
+  */
 
-  initializeBaseTables(ctxt, plumberConfigGenerator, localAddress, landmarkAddress);
-   
+  Plumber::DataflowPtr conf(new Plumber::Dataflow("chord"));
+  FILE* strandOutput = fopen((datalogFile + ".strand").c_str(), "w");
+  FILE* ecaOutput = fopen((datalogFile + ".eca").c_str(), "w");
+  FILE* localOutput = fopen((datalogFile + ".local").c_str(), "w");
+
+  TableStore* tableStore = new TableStore(ctxt.get());  
+  tableStore->initTables(); 
+
+  boost::shared_ptr< Localize_Context > lctxt(new Localize_Context()); 
+  lctxt->rewrite(ctxt.get(), tableStore);
+  fprintf(localOutput, lctxt->toString().c_str());
+  fclose(localOutput);
+
+  boost::shared_ptr< ECA_Context > ectxt(new ECA_Context()); 
+  ectxt->rewrite(lctxt.get(), tableStore);
+  fprintf(ecaOutput, ectxt->toString().c_str());
+  fclose(ecaOutput);
+ 
+  boost::shared_ptr< Planner > planner(new Planner(conf, tableStore, false, localAddress, "0"));
+  initializeBaseTables(ctxt, tableStore, localAddress, landmarkAddress);
+  //initiateJoinRequest(planner, conf, localAddress, delay);
+  boost::shared_ptr< Udp > udp(new Udp(localAddress, port));
+  std::vector<RuleStrand*> ruleStrands = planner->generateRuleStrands(ectxt);
+    
+  for (unsigned k = 0; k < ruleStrands.size(); k++) {
+    //std::cout << ruleStrands.at(k)->toString();
+    fprintf(strandOutput, ruleStrands.at(k)->toString().c_str());
+  }
+  fclose(strandOutput);
+  
+  planner->setupNetwork(udp);
+  planner->registerAllRuleStrands(ruleStrands);
+  std::cout << planner->getNetPlanner()->toString() << "\n";
+     
   // synthetically generate stream of successors to test replacement policies
   // at one node
   boost::shared_ptr< Udp > bootstrapUdp(new Udp(localAddress, 20000 + port));
+
   if (TEST_SUCCESSOR) { 
     sendSuccessorStream(bootstrapUdp, conf, localAddress);
   }
