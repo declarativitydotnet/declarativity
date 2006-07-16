@@ -303,13 +303,13 @@ void generatePeriodicEvent(PlanContext* pc)
     error(pc, "Mal-form periodic predicate");
   }
 
-  pc->_namesTracker->fieldNames.push_back("T"); // time interval
+  //pc->_namesTracker->fieldNames.push_back("T"); // time interval
 
   string period = pf->arg(2)->toString();
   int count = 0;
   if (pf->args() > 3) {
     count = atoi(pf->arg(3)->toString().c_str());
-    pc->_namesTracker->fieldNames.push_back("C"); // count
+    //pc->_namesTracker->fieldNames.push_back("C"); // count
   }
 
    
