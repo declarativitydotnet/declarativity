@@ -28,14 +28,13 @@ void error(string msg)
 }
 
 
-void error(string msg, PlanContext* pc)
+void error(PlanContext* pc, string msg)
 {  
   ECA_Rule* curRule = pc->_ruleStrand->getRule();
   std::cerr << "PLANNER ERROR: " << msg << " for rule " 
 	    << curRule->toString() << ". Planner exits.\n";
   exit(-1);
 }
-
 
 string pelMath(PlanContext* pc, Parse_Math *expr) 
 {
@@ -56,7 +55,7 @@ string pelMath(PlanContext* pc, Parse_Math *expr)
   if ((var = dynamic_cast<Parse_Var*>(expr->lhs)) != NULL) {
     int pos = names->fieldPosition(var->toString());
     if (pos < 0) {
-      error("Pel math error " + expr->toString(), pc);
+      error(pc, "Pel math error " + expr->toString());
     }
     pel << "$" << (pos+1) << " ";
   }
@@ -76,13 +75,13 @@ string pelMath(PlanContext* pc, Parse_Math *expr)
   }
   else {    
     // TODO: throw/signal some kind of error
-    error("Pel Math error " + expr->toString(), pc);
+    error(pc, "Pel Math error " + expr->toString());
   }
 
   if ((var = dynamic_cast<Parse_Var*>(expr->rhs)) != NULL) {
     int pos = names->fieldPosition(var->toString());
     if (pos < 0) {
-      error("Pel Math error " + expr->toString(), pc);
+      error(pc, "Pel Math error " + expr->toString());
     }
     pel << "$" << (pos+1) << " ";
   }
@@ -99,7 +98,7 @@ string pelMath(PlanContext* pc, Parse_Math *expr)
   }
   else {
     // TODO: throw/signal some kind of error
-    error("Math error " + expr->toString(), pc);
+    error(pc, "Math error " + expr->toString());
   }
 
   switch (expr->oper) {
@@ -110,7 +109,7 @@ string pelMath(PlanContext* pc, Parse_Math *expr)
     case Parse_Math::TIMES:   pel << "* "; break;
     case Parse_Math::DIVIDE:  pel << "/ "; break;
     case Parse_Math::MODULUS: pel << "\% "; break;
-  default: error("Pel Math error" + expr->toString(), pc);
+  default: error(pc, "Pel Math error" + expr->toString());
   }
 
   return pel.str();
@@ -186,10 +185,10 @@ string pelRange(PlanContext* pc, Parse_Bool *expr)
   }
 
   switch (range->type) {
-    case Parse_Range::RANGEOO: pel << "() "; break;
-    case Parse_Range::RANGEOC: pel << "(] "; break;
-    case Parse_Range::RANGECO: pel << "[) "; break;
-    case Parse_Range::RANGECC: pel << "[] "; break;
+    case Parse_Range::RANGEOO: pel << "()id "; break;
+    case Parse_Range::RANGEOC: pel << "(]id "; break;
+    case Parse_Range::RANGECO: pel << "[)id "; break;
+    case Parse_Range::RANGECC: pel << "[]id "; break;
     }
 
   return pel.str();

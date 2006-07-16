@@ -199,7 +199,7 @@ string NetPlanner::ReceiverInfo::toString()
   if (_duplicator != NULL) {
     b << "   Duplicator: " << _duplicator->toString() << "\n";
   }
-  for (unsigned k = 0; k < _receivers.size(); k++) {
+   for (unsigned k = 0; k < _receivers.size(); k++) {
     b << "    " << _receivers.at(k)->toString() << "\n";
   }
   return b.str();

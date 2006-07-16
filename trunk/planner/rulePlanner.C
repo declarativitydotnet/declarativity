@@ -94,6 +94,14 @@ void debugRule(PlanContext* pc, string msg)
 
 #include "rulePel.C"
 
+void addPrint(PlanContext* pc, string b)
+{
+  string output = b + "|" + pc->getRule()->_ruleID + "|" + pc->_nodeID;
+  ElementSpecPtr print = 
+    pc->createElementSpec(ElementPtr(new Print(output)));
+  pc->addElementSpec(print);  
+}
+
 void addWatch(PlanContext* pc, string b)
 {
   string output = b + "|" + pc->getRule()->_ruleID + "|" + pc->_nodeID;
@@ -234,9 +242,9 @@ void generateAggEvent(PlanContext* pc)
 
   if (tableAgg == NULL) {
     // Ooops, I couldn't create an aggregate. Complain.
-    error("Could not create aggregate \"" + pa->oper
+    error(pc, "Could not create aggregate \"" + pa->oper
           + "\". I only know aggregates " +
-          AggFactory::aggList(), pc);
+          AggFactory::aggList());
     return;
   }
 
@@ -287,12 +295,12 @@ void generatePeriodicEvent(PlanContext* pc)
 
   Parse_Functor* pf = dynamic_cast<Parse_Functor* > (curRule->_event->_pf);
   if (pf == NULL) {
-    error(curRule->getEventName() + " must be a functor", pc);
+    error(pc, curRule->getEventName() + " must be a functor");
     return;
   }
 
   if (pf->args() < 3) {
-    error("Mal-form periodic predicate", pc);
+    error(pc, "Mal-form periodic predicate");
   }
 
   pc->_namesTracker->fieldNames.push_back("T"); // time interval
@@ -441,13 +449,23 @@ void generateSendAction(PlanContext* pc)
   // compute the field for location specifier
   Parse_Functor* head = curRule->_action->_pf;
   string loc = head->fn->loc;
-  int locationIndex = 0;
+  int locationIndex = -1;
   for (int k = 0; k < head->args(); k++) {
     Parse_Var* parse_var = dynamic_cast<Parse_Var*>(head->arg(k));
     if (parse_var != NULL && parse_var->toString() == loc) {
       locationIndex = k+1;
     }
+    Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(head->arg(k));
+    if (aggExpr != NULL && aggExpr->v->toString() == loc) {
+      locationIndex = k+1;
+    }    
   }
+
+  if (locationIndex == -1) {
+    error(pc, "Cannot find location specifier for " 
+	  + loc + " in rule " + curRule->toString() + "\n");
+  }
+
   ostringstream oss;
   oss << "$" << locationIndex << " pop swallow pop";
   ElementSpecPtr sendPelTransform =
@@ -461,6 +479,8 @@ void generateSendAction(PlanContext* pc)
 
   addWatch(pc, "SendAction");  
   pc->addElementSpec(sendPelTransform);   
+  addPrint(pc, "SendActionMsg");
+
   // copy that location specifier field first, encapsulate rest of tuple
 }
 
@@ -529,13 +549,23 @@ void generateProbeElements(PlanContext* pc,
   string innerTableName = innerFunctor->fn->name;
   
   if (outerLookupKey.size() == 0 || innerIndexKey.size() == 0) {
-    error("No join keys " + innerTableName + " ", pc);
+    error(pc, "No join keys " + innerTableName + " ");
   }
 
   ostringstream joinKeyStr;
-  joinKeyStr << "Size of join keys " << outerLookupKey.size() 
-	     << " " << innerIndexKey.size() 
-	     << " " << innerRemainingKey.size() << "\n";
+  joinKeyStr << "Size of join keys: ";
+  for (uint k = 0; k < innerIndexKey.size(); k++) {
+    joinKeyStr << innerIndexKey.at(k) << " ";
+  }
+  joinKeyStr << ", ";
+  for (uint k = 0; k < outerLookupKey.size(); k++) {
+    joinKeyStr << outerLookupKey.at(k) << " ";
+  }
+  joinKeyStr << ", ";
+  for (uint k = 0; k < innerRemainingKey.size(); k++) {
+    joinKeyStr << innerRemainingKey.at(k) << " ";
+  }
+  joinKeyStr << "\n";
   debugRule(pc, joinKeyStr.str());
   
   // feter the inner table
@@ -727,6 +757,7 @@ void generateProjectElements(PlanContext* pc)
 
   pc->addElementSpec(projectHeadPelTransform);  
   pc->_namesTracker = newNamesTracker;
+  debugRule(pc, "Project head names tracker " + pc->_namesTracker->toString() + "\n");
 }
 
 void initializeAggWrap(PlanContext* pc)
@@ -749,7 +780,7 @@ void initializeAggWrap(PlanContext* pc)
   if (aggExpr == NULL) {
     oss << "Invalid aggregate field " << aggField
 	<< " for rule " << r->_ruleID;  
-    error(oss.str(), pc);
+    error(pc, oss.str());
   }
       
   oss << "Aggwrap:" << r->_ruleID << ":" << pc->_nodeID;

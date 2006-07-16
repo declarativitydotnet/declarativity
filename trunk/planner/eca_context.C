@@ -69,9 +69,8 @@ void ECA_Context::add_rule(ECA_Rule* eca_rule)
     if (_ecaRules.at(k)->toRuleString() == eca_rule->toRuleString()) {
       return;
     }
-  }
-  
- warn << "  Add rule: " << eca_rule->toString() << "\n";
+  }  
+  warn << "  Add rule: " << eca_rule->toString() << "\n";
   _ecaRules.push_back(eca_rule);  
 }
 
@@ -91,7 +90,7 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
   for(; t != rule->terms.end(); t++) {
     Parse_Term* nextTerm = (*t);
     Parse_Functor *nextFunctor = dynamic_cast<Parse_Functor*>(nextTerm); 
-    if (nextFunctor == NULL) { continue; }
+    if (nextFunctor == NULL) { count++; continue; }
 
     // create an event
     ostringstream oss;
@@ -107,18 +106,24 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
 					      new Parse_Val(loc)), 
 			rule->head->args_);
 
-    eca_insert_rule->_event = new Parse_Event(nextFunctor, Parse_Event::INSERT);
-    eca_delete_rule->_event = new Parse_Event(nextFunctor, Parse_Event::DELETE);
+    eca_insert_rule->_event 
+      = new Parse_Event(nextFunctor, Parse_Event::INSERT);
+    eca_delete_rule->_event 
+      = new Parse_Event(nextFunctor, Parse_Event::DELETE);
 
     if (rule->head->fn->loc == nextFunctor->fn->loc) {
       // if this is local, we can simply add local table or send as an event
       if (headTableInfo != NULL) {
-	eca_insert_rule->_action = new Parse_Action(rule->head, Parse_Action::ADD);
-	eca_delete_rule->_action = new Parse_Action(rule->head, Parse_Action::DELETE);
+	eca_insert_rule->_action 
+	  = new Parse_Action(rule->head, Parse_Action::ADD);
+	eca_delete_rule->_action 
+	  = new Parse_Action(rule->head, Parse_Action::DELETE);
       } else {
-	// XXX: May not wish to support in future.
-	eca_insert_rule->_action = new Parse_Action(rule->head, Parse_Action::SEND);
-	eca_delete_rule->_action = new Parse_Action(deleteFunctor, Parse_Action::SEND);
+	// XXX: May not wish to support in future events in head
+	eca_insert_rule->_action 
+	  = new Parse_Action(rule->head, Parse_Action::SEND);
+	eca_delete_rule->_action 
+	  = new Parse_Action(deleteFunctor, Parse_Action::SEND);
       }
     } else {
       // if the head is remote, we have to do a send, 
@@ -130,14 +135,20 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
       if (headTableInfo != NULL) {
         ostringstream oss;
 	oss << rule->ruleID << "_eca" << count << "_remote";    
-	ECA_Rule* eca_insert_rule1 = new ECA_Rule(oss.str() + "_ins");    
-	eca_insert_rule1->_event = new Parse_Event(rule->head, Parse_Event::RECV);
-	eca_insert_rule1->_action = new Parse_Action(rule->head, Parse_Action::ADD);      
+	ECA_Rule* eca_insert_rule1 
+	  = new ECA_Rule(oss.str() + "_ins");    
+	eca_insert_rule1->_event 
+	  = new Parse_Event(rule->head, Parse_Event::RECV);
+	eca_insert_rule1->_action 
+	  = new Parse_Action(rule->head, Parse_Action::ADD);      
 	add_rule(eca_insert_rule1);
 
-	ECA_Rule* eca_delete_rule1 = new ECA_Rule(oss.str() + "_del");    
-	eca_delete_rule1->_event = new Parse_Event(deleteFunctor, Parse_Event::RECV);
-	eca_delete_rule1->_action = new Parse_Action(rule->head, Parse_Action::DELETE);      
+	ECA_Rule* eca_delete_rule1 
+	  = new ECA_Rule(oss.str() + "_del");    
+	eca_delete_rule1->_event 
+	  = new Parse_Event(deleteFunctor, Parse_Event::RECV);
+	eca_delete_rule1->_action 
+	  = new Parse_Action(rule->head, Parse_Action::DELETE);      
 	add_rule(eca_delete_rule1);
       }
     }
@@ -147,18 +158,18 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
     std::list<Parse_Term*>::iterator t = rule->terms.begin();
     for(; t != rule->terms.end(); t++) {
       if (count1 != count) { 
-	Parse_Term* nextTerm = (*t);    
-	Parse_Functor *nextFunctor = dynamic_cast<Parse_Functor*>(nextTerm); 
-	Parse_Select *nextSelect = dynamic_cast<Parse_Select*>(nextTerm); 
-	Parse_Assign *nextAssign = dynamic_cast<Parse_Assign*>(nextTerm); 
+	Parse_Term* nextTerm1 = (*t);    
+	Parse_Functor *nextFunctor1 = dynamic_cast<Parse_Functor*>(nextTerm1); 
+	Parse_Select *nextSelect = dynamic_cast<Parse_Select*>(nextTerm1); 
+	Parse_Assign *nextAssign = dynamic_cast<Parse_Assign*>(nextTerm1); 
 	
-	if (nextFunctor != NULL) {
-	  eca_insert_rule->_probeTerms.push_back(nextFunctor);
-	  eca_delete_rule->_probeTerms.push_back(nextFunctor);
+	if (nextFunctor1 != NULL) {
+	  eca_insert_rule->_probeTerms.push_back(nextFunctor1);
+	  eca_delete_rule->_probeTerms.push_back(nextFunctor1);
 	}
 	if (nextSelect != NULL || nextAssign != NULL) {
-	  eca_insert_rule->_selectAssignTerms.push_back(nextTerm);
-	  eca_delete_rule->_selectAssignTerms.push_back(nextTerm);
+	  eca_insert_rule->_selectAssignTerms.push_back(nextTerm1);
+	  eca_delete_rule->_selectAssignTerms.push_back(nextTerm1);
 	}
       }
       count1++;
@@ -181,7 +192,11 @@ void ECA_Context::generateActionHead(OL_Context::Rule* rule, string bodyLoc,
   } else {
     // if need to be materialized, 
     if (rule->head->fn->loc == bodyLoc) {
-      eca_rule->_action = new Parse_Action(rule->head, Parse_Action::ADD);
+      if (rule->deleteFlag) {
+	eca_rule->_action = new Parse_Action(rule->head, Parse_Action::DELETE);
+      } else {
+	eca_rule->_action = new Parse_Action(rule->head, Parse_Action::ADD);
+      }
     } else {
       // if the head is remote, we have to do a send, 
       // followed by another recv/add rule strand
@@ -193,7 +208,11 @@ void ECA_Context::generateActionHead(OL_Context::Rule* rule, string bodyLoc,
 	oss << rule->ruleID << "_eca" << "_remote";    
 	ECA_Rule* eca_rule1 = new ECA_Rule(oss.str());    
 	eca_rule1->_event = new Parse_Event(rule->head, Parse_Event::RECV);
-	eca_rule1->_action = new Parse_Action(rule->head, Parse_Action::ADD);      
+	if (rule->deleteFlag) {
+	  eca_rule1->_action = new Parse_Action(rule->head, Parse_Action::DELETE);
+	} else {
+	  eca_rule1->_action = new Parse_Action(rule->head, Parse_Action::ADD);      
+	}
 	add_rule(eca_rule1);
       }
     }

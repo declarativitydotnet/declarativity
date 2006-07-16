@@ -49,6 +49,7 @@ void RuleStrand::addElement(Plumber::DataflowPtr conf, ElementSpecPtr elementSpe
   _elementChain.push_back(elementSpecPtr);
 }
 
+
 void RuleStrand::aggWrapperElement(Plumber::DataflowPtr conf, ElementSpecPtr aggWrapperSpec)
 {
   _aggWrapperSpec = aggWrapperSpec;
@@ -63,14 +64,13 @@ void RuleStrand::aggWrapperElement(Plumber::DataflowPtr conf, ElementSpecPtr agg
     conf->addElement(ElementPtr(new TimedPullPush("AggWrapPullPush|" 
 						  + _eca_rule->_ruleID, 0)));
   addElement(conf, pullPush);
-
+  
   // push from aggwrap into start of strand
   conf->hookUp(aggWrapperSpec, 1, _elementChain.at(0), 0);
 
   // connect from last element of strand to aggwrap input
   conf->hookUp(_elementChain.at(_elementChain.size()-1), 0, aggWrapperSpec, 1);
 
-  
   // result from aggwrap goes to external output
   ElementSpecPtr aggWrapSlot 
     = conf->addElement(ElementPtr(new Slot("aggWrapSlot|" + _strandID )));

@@ -138,3 +138,4 @@ void Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
   
   delete namesTracker;
 }
+
