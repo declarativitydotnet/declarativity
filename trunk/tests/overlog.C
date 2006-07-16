@@ -124,11 +124,19 @@ int main(int argc, char **argv)
     boost::shared_ptr< TableStore > tableStore(new TableStore(ctxt.get()));  
     tableStore->initTables(); 
 
+    FILE* strandOutput = fopen((filename + ".strand").c_str(), "w");
+    FILE* ecaOutput = fopen((filename + ".eca").c_str(), "w");
+    FILE* localOutput = fopen((filename + ".local").c_str(), "w");
+
     boost::shared_ptr< Localize_Context > lctxt(new Localize_Context()); 
     lctxt->rewrite(ctxt.get(), tableStore.get());
-
+    fprintf(localOutput, lctxt->toString().c_str());
+    fclose(localOutput);
+    
     boost::shared_ptr< ECA_Context > ectxt(new ECA_Context()); 
     ectxt->rewrite(lctxt.get(), tableStore.get());
+    fprintf(ecaOutput, lctxt->toString().c_str());
+    fclose(ecaOutput);
     
     boost::shared_ptr< Planner > planner(new Planner(conf, tableStore.get(), false, "127.0.0.1:10000", "0"));
     boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));
@@ -136,7 +144,9 @@ int main(int argc, char **argv)
     
     for (unsigned k = 0; k < ruleStrands.size(); k++) {
       std::cout << ruleStrands.at(k)->toString();
+      fprintf(strandOutput, ruleStrands.at(k)->toString().c_str());
     }
+    fclose(strandOutput);
     
     planner->setupNetwork(udp);
     planner->registerAllRuleStrands(ruleStrands);
