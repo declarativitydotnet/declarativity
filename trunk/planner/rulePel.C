@@ -210,11 +210,16 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   else if (expr->name() == "f_now") {
     pel << "now "; 
   }
+  else if (expr->name() == "f_sha1") {
+    if (expr->args() != 1) {
+      error(pc, "Error in pel generation " + expr->toString());
+    }
+    int pos = names->fieldPosition(expr->arg(0)->toString());
+    pel << "$" << (pos+1) << " sha1 ";
+  }
   else if (expr->name() == "f_initList") {
     if (expr->args() != 2) {
-      std::cerr << "Error in pel generation " << expr->toString() << "\n";
-      exit(-1);
-      return "ERROR.";
+      error(pc, "Error in pel generation " + expr->toString());
     }
     pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString());
     pel << " $" << 1 + names->fieldPosition(expr->arg(1)->toString()) << " ";
@@ -222,9 +227,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   }
   else if (expr->name() == "f_consList") {
     if (expr->args() != 2) {
-      std::cerr << "Error in pel generation " << expr->toString() << "\n";
-      exit(-1);
-      return "ERROR.";
+      error(pc, "Error in pel generation " + expr->toString());
     }
     pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString());
     pel << " $" << 1 + names->fieldPosition(expr->arg(1)->toString()) << " ";
