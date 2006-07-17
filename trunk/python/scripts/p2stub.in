@@ -31,13 +31,13 @@ def get_stub(name, address, port):
       let wrapAroundMux = Mux("wrapAroundSendMux", 2);
       let header        = PelTransform("source", "$0 pop \\"%s:%s\\" pop \
                                                   swallow unbox drop \
-                                                  0 pop 0 pop 0 pop 0 pop popall");
+                                                  0 pop 0 pop 0 pop 0 pop 0 pop 0 pop popall");
 
       udp-> UnmarshalField("unmarshal", 1)      -> 
       PelTransform("unRoute", "$1 unboxPop")    ->
       Defrag("defragment")                      -> 
       TimedPullPush("demux_in_pullPush", 0)     -> 
-      PelTransform("unPackage", "$6 unboxPop")  ->
+      PelTransform("unPackage", "$8 unboxPop")  ->
       wrapAroundMux ->
       PrintWatch("printWatch", {str}) ->
       DDemux("dDemux", {value}, 0) -> 

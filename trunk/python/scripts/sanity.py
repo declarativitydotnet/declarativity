@@ -33,7 +33,7 @@ def ts2sec(hr, min, sec, fr):
     return (float(hr)*60.*60. + float(min)*60. + float(sec) + float(fr))
 
 def process_file(file, event, event_hash):
-    match_event = re.compile(r"""^.*Print\[PrintWatchInsert.*,\s*
+    match_event = re.compile(r"""^.*Print\[printWatch.*,\s*
                                  [0-9]+\-[A-Za-z]+\-[0-9]+\s                   # Day of year
                                  ([0-9]+):                                     # Hour 
                                  ([0-9]+):                                     # Minute 

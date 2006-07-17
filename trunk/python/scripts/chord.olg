@@ -67,7 +67,7 @@ l3 lookup@BI(min<BI>,K,R,E) :- node@NI(NI,N),
 
 
 /* Back reference overlog */
-watch(references).
+watch(bestSucc).
 watch(backReference).
 
 b0 forwardReference@LI(LI, K, SI) :- finger@LI(LI, P, S, SI), 
@@ -75,10 +75,10 @@ b0 forwardReference@LI(LI, K, SI) :- finger@LI(LI, P, S, SI),
 
 b1 lookup@LI(LI,K,LI,SI) :- forwardReference@LI(LI, K, SI).
 
-b2 references@DI(DI, LI, SI) :- lookupResults@LI(LI, K, D, DI, E), 
-                                forwardReference@LI(LI, K, SI).
+b2 references@DI(DI, LI, K, SI) :- lookupResults@LI(LI, K, D, DI, E), 
+                                   forwardReference@LI(LI, K, SI).
 
-b3 backReference@SI(SI, LI) :- references@DI(DI, LI, SI).
+b3 backReference@SI(SI, K, LI) :- references@DI(DI, LI, K, SI).
 
 /** Neighbor Selection */
 
@@ -144,7 +144,9 @@ f3 lookup@NI(NI,K,NI,E) :- fFixEvent@NI(NI,E,I),
 f4 eagerFinger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I), 
 				lookupResults@NI(NI,K,B,BI,E).
 
+/*
 f5 finger@NI(NI,I,B,BI) :- eagerFinger@NI(NI,I,B,BI).
+*/
 
 f6 eagerFinger@NI(NI,I,B,BI) :- node@NI(NI,N), 
 				eagerFinger@NI(NI,I1,B,BI), 
