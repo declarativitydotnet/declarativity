@@ -41,5 +41,5 @@ CLEANFILES = $(bin_SCRIPTS)
 
 EXTRA_DIST = README \
              p2stub.in p2terminal.in loadManyChords.in p2insert.in \
-             planetlab.in psetup.in dfrun.in sanity.py netcc.py \
+             planetlab.in psetup.in dfrun.in sanity.py \
              recv.df sender.df p2
