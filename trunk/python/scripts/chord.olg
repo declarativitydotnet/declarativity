@@ -33,10 +33,14 @@ materialize(references, 240, infinity, keys(2, 3)).
 materialize(backReference, 240, infinity, keys(2)).  
 materialize(forwardReference, 240, infinity, keys(2)).  
 
-node(IPADDRESS, NODEID).
-pred(IPADDRESS, 0x0I, "--").
-nextFingerFix(IPADDRESS, 0).
-landmark(IPADDRESS, LANDMARK).
+i0 node@NI(NI, N)            :- periodic@NI(NI, E, 0, 1), N := f_sha1(NI).
+i1 pred@NI(NI, P, PI)        :- periodic@NI(NI, E, 0, 1), P := 0x0I, PI:="-".
+i2 nextFingerFix@NI(NI, 0)   :- periodic@NI(NI, E, 0, 1). 
+i3 landmark@NI(NI, LANDMARK) :- periodic@NI(NI, E, 0, 1).
+
+watch(node).
+watch(pred).
+watch(landmark).
 
 /** Lookups */
 
@@ -179,12 +183,12 @@ c1 joinEvent@NI(NI,E) :- join@NI(NI,E).
 c2 joinReq@LI(LI,N,NI,E) :- joinEvent@NI(NI,E),
 			 node@NI(NI,N), 
 			 landmark@NI(NI,LI),
-			 LI != "--".
+			 LI != NI.
 
 c3 succ@NI(NI,N,NI) :- landmark@NI(NI,LI),
 		       joinEvent@NI(NI,E),
 		       node@NI(NI,N), 
-		       LI == "--".
+		       NI == LI.
 
 c4 lookup@LI(LI,N,NI,E) :- joinReq@LI(LI,N,NI,E).
 
@@ -222,7 +226,7 @@ sb2 stabilizeRequest@SI(SI,NI) :- stabilize@NI(NI,E),
 
 sb3 sendPredecessor@PI1(PI1,P,PI) :- stabilizeRequest@NI(NI,PI1),
 				pred@NI(NI,P,PI), 
-				PI != "--".
+				PI != "-".
 
 sb4 succ@NI(NI,P,PI) :- node@NI(NI,N),
 		     	sendPredecessor@NI(NI,P,PI),
@@ -245,7 +249,7 @@ sb7 notifyPredecessor@SI(SI,N,NI) :- stabilize@NI(NI,E),
 sb8 pred@NI(NI,P,PI) :- node@NI(NI,N),
 			notifyPredecessor@NI(NI,P,PI), 
 			pred@NI(NI,P1,PI1),
-			((PI1 == "--") || (P1 == N) || (P in (P1,N))).
+			((PI1 == "-") || (P1 == N) || (P in (P1,N))).
 
 
 /** Connectivity Monitoring */
@@ -274,7 +278,7 @@ cm5 pingNode@NI(NI,SI) :- succ@NI(NI,S,SI),
 
 cm6 pingNode@NI(NI,PI) :- pred@NI(NI,P,PI), 
 		       PI != NI, 
-		       PI != "--".
+		       PI != "-".
 
 cm7 succ@NI(NI,S,SI) :- succ@NI(NI,S,SI),
 		     pingResp@NI(NI,SI,E).
@@ -282,7 +286,7 @@ cm7 succ@NI(NI,S,SI) :- succ@NI(NI,S,SI),
 cm8 pred@NI(NI,P,PI) :- pred@NI(NI,P,PI),
 		     pingResp@NI(NI,PI,E).
 
-cm9 pred@NI(NI,"--","--") :- pingEvent@NI(NI,E), 
+cm9 pred@NI(NI,"-","-") :- pingEvent@NI(NI,E), 
 			pendingPing@NI(NI,PI,E), 
 			pred@NI(NI,P,PI).
 

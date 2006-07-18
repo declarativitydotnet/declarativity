@@ -251,10 +251,10 @@ string P2::stub(string hostname, string port)
   stub << "udp-> UnmarshalField(\"unmarshal\", 1) -> \
            PelTransform(\"unRoute\", \"$1 unboxPop\") ->";
 
+  stub << "Defrag(\"defragment\") -> ";
   if (_transport_conf & (RCC | CC | RELIABLE | ORDERED)) {
     stub << "ackDemux[1] -> ack ->";
   }
-  stub << "Defrag(\"defragment\") -> ";
 
   if (_transport_conf & ORDERED) {
     stub << "TimedPullPush(\"pullDriver\", 0) -> \
@@ -279,8 +279,7 @@ string P2::stub(string hostname, string port)
            [1]inputRR; \
            wrapAroundDemux[1] -> \
            header -> \
-           Sequence(\"terminal_sequence\", 1) -> \
-           Frag(\"fragment\") ->";
+           Sequence(\"terminal_sequence\", 1) ->";
 
 
   /** Send side reliable delivery and congestion control */
@@ -298,7 +297,8 @@ string P2::stub(string hostname, string port)
     stub << "netoutRR ->";
   }
 
-   stub << "PelTransform(\"package\", \"$0 pop swallow pop\") -> \
+   stub << "Frag(\"fragment\") -> \
+            PelTransform(\"package\", \"$0 pop swallow pop\") -> \
             MarshalField(\"marshalField\", 1)              -> \
             StrToSockaddr(\"addr_conv\", 0)                -> \
             udp;  \
