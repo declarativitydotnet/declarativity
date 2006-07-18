@@ -287,7 +287,7 @@ int Plumber::Dataflow::check_push_and_pull()
                   << "\n";
         errors++;
       }
-    }
+    }	// END FOR
     
     if (!progress) {
       break;

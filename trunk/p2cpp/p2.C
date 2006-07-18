@@ -252,21 +252,20 @@ string P2::stub(string hostname, string port)
            PelTransform(\"unRoute\", \"$1 unboxPop\") ->";
 
   stub << "Defrag(\"defragment\") -> ";
+  stub << "TimedPullPush(\"defrag_pull\", 0) ->";
   if (_transport_conf & (RCC | CC | RELIABLE | ORDERED)) {
     stub << "ackDemux[1] -> ack ->";
   }
 
   if (_transport_conf & ORDERED) {
-    stub << "TimedPullPush(\"pullDriver\", 0) -> \
-             ODelivery(\"order\") -> Queue ->";
+    stub << "ODelivery(\"order\") ->";
   }
   else if (_transport_conf & RELIABLE) {
-    stub << "TimedPullPush(\"pullDriver\", 0) -> \
-             DupRemove(\"dupremove\") -> Queue ->";
+    stub << "DupRemove(\"dupremove\") ->";
   }
   stub << "PelTransform(\"unPackage\", \"$8 unboxPop\")->";
 
-  stub << "inputRR -> \
+  stub << "Queue -> inputRR -> \
            TimedPullPush(\"pullDriver\", 0)     -> \
            PrintWatch(\"printWatch\", {str}) -> \
            DDemux(\"dDemux\", {value}, 0) ->  \
@@ -277,7 +276,7 @@ string P2::stub(string hostname, string port)
            UnboxField(\"unboxWrapAround\", 1) -> \
            Queue(\"wrapAroundQueue\", 1000) -> \
            [1]inputRR; \
-           wrapAroundDemux[1] -> \
+           wrapAroundDemux[1] -> Queue -> \
            header -> \
            Sequence(\"terminal_sequence\", 1) ->";
 
@@ -297,7 +296,7 @@ string P2::stub(string hostname, string port)
     stub << "netoutRR ->";
   }
 
-   stub << "Frag(\"fragment\") -> \
+   stub << "TimedPullPush(\"ppfrag\", 0) -> Frag(\"fragment\") -> \
             PelTransform(\"package\", \"$0 pop swallow pop\") -> \
             MarshalField(\"marshalField\", 1)              -> \
             StrToSockaddr(\"addr_conv\", 0)                -> \

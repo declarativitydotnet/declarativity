@@ -27,7 +27,7 @@ public:
 
   const char *class_name() const { return "RoundTripTimer";};
   const char *processing() const { return "ah/a"; };
-  const char *flow_code() const	 { return "--/-"; };
+  const char *flow_code() const	 { return "x-/x"; };
 
   int push(int port, TuplePtr tp, b_cbv cb);
   TuplePtr pull(int port, b_cbv cb);

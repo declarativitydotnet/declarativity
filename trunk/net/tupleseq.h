@@ -24,7 +24,7 @@ public:
   Sequence(string name="sequence", SeqNum start=0);
   const char *class_name() const { return "Sequence";};
   const char *processing() const { return "a/a"; };
-  const char *flow_code() const	 { return "-/-"; };
+  const char *flow_code() const	 { return "x/x"; };
 
   TuplePtr simple_action(TuplePtr p);
 

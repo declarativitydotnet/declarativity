@@ -133,10 +133,6 @@ class ElementSpec {
         than one. */
     ElementSpecPtr _counterpart;
 
-    /** The hookup that made this connection 
-    HookupPtr _hookup;
-    */
-
     /** Check this port for hookup? */ 
     bool _check;
   };
