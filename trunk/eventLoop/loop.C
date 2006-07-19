@@ -91,6 +91,10 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
     
     // And erase it
     delete theCallback;
+
+    // Update the time in case the previous callback took too long.
+    // Due to Eric Yu-En Lu
+    getTime(now);
   }
 
   /** Time to clean house: remove all inactive callbacks */
