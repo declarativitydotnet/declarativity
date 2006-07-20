@@ -1,0 +1,1512 @@
+/* 
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
+ */
+
+
+#include "boost/test/unit_test.hpp"
+#include "tuple.h"
+#include "refTable.h"
+
+#include "val_str.h"
+#include "val_tuple.h"
+#include "val_int32.h"
+#include "val_uint32.h"
+#include "val_id.h"
+#include "ID.h"
+
+#include "testRefTable.h"
+#include <boost/bind.hpp>
+#include "vector"
+
+#include "stdlib.h"
+
+class testRefTable
+{
+private:
+  static const uint SIZE = 100 / 4 * 4;
+
+  static const uint EXTRA_TUPLES = 1000;
+
+
+
+
+public:
+  testRefTable()
+  {
+  }
+
+
+  /** Create table, destroy table, with different primary keys. */
+  void
+  testCreateDestroy();
+
+
+  /** Test case demonstrating problems with delete in tables v1, when a
+      multi-field primary key is combined with a single-field secondary
+      key. */
+  void
+  testSuperimposedIndexRemoval();
+
+
+  /** Test insert/remove/lookup scripts */
+  void
+  testInsertRemoveLookupScripts();
+
+
+  /** A special-case insert, overwrite, lookup sequence. */
+  void
+  testPrimaryOverwrite();
+
+
+  /** Check that a secondary index search is equivalent to scanning and
+      selecting. */
+  void
+  testSecondaryEquivalence();
+
+
+  /** Test aggregate scripts */
+  void
+  testAggregates();
+
+
+  /** Old indexing test from v1 ported. */
+  void
+  testIndexing();
+
+  
+  /** Old batch removal test from v1 ported. */
+  void
+  testBatchRemovals();
+
+
+  /** Old batch removal from multi-field keys */
+  void
+  testBatchMultikeyRemovals();
+
+  
+  /** Old unique tuple removal test from v1 ported */
+  void
+  testUniqueTupleRemovals();
+
+
+  /** Projected lookups */
+  void
+  testProjectedLookups();
+
+  
+  /** Random inserts/deletes */
+  void
+  testPseudoRandomInsertDeleteSequences();
+
+
+  /** Superclass of script-based tests */
+  class refTableTest {
+  public:
+    refTableTest(std::string script,
+                 int line,
+                 RefTable::Key& key);
+    
+    
+    std::string _script;
+    
+    
+    int _line;
+    
+    
+    RefTable::Key& _key;
+  };
+  
+  
+  class intAggTest2 : public refTableTest {
+  public:
+    intAggTest2(std::string script,
+                RefTable::Key& key,
+                RefTable::Key& groupBy,
+                uint aggField,
+                std::string func,
+                int line);
+    
+    RefTable::Key& _groupBy;
+    
+    uint _aggFieldNo;
+    
+    std::string _function;
+  };
+
+
+  /**
+   * This object tracks a single interactive test for a single script. It
+   * creates an empty table, prepares it accordingly, parses the script,
+   * applies it to the table, and evaluates the result. If the script is
+   * executed without mismatch, the test is a success.  Otherwise, an
+   * error is generated and the rest of the test is aborted.
+   */
+  class RefTracker2 {
+  public:
+    /** Process an array of tests */
+    static void
+    process(std::vector< refTableTest >);
+
+
+
+
+  private:
+    /** The all-fields key vector */
+    std::vector< unsigned > _allFields;
+
+
+
+
+  protected:
+    /** Create the new tracker */
+    RefTracker2(refTableTest &);
+
+
+    /** My test */
+    refTableTest & _test;
+  
+
+    /** My table */
+    RefTable _table;
+
+
+    /** The remainder of my script */
+    std::string _remainder;
+
+
+    /** Advance the script by a command. Returns false if the tracking is
+        aborted, true otherwise. */
+    bool
+    fetchCommand();
+
+
+    /** The current command type */
+    char _command;
+
+
+    /** The current tuple */
+    TuplePtr _tuple;
+
+
+    /** Execute the tracked script */
+    void
+    test();
+  };
+
+
+  /**
+   * This object tracks a single integer aggregate test for a single
+   * script. It creates an empty table, parses the script, applies it to
+   * the table, and evaluates the result. If the script is executed
+   * without mismatch, the test is a success.  Otherwise, an error is
+   * generated and the rest of the test is aborted.
+   */
+  class AggRefTracker2 : public RefTracker2 {
+  public:
+    /** Process an array of tests */
+    static void
+    process(std::vector< intAggTest2 >);
+    
+    
+    /** Create the new tracker, parse the script */
+    AggRefTracker2(intAggTest2 & test);
+    
+    
+    /** Listener for aggregate updates */
+    void
+    listener(TuplePtr t);
+  };
+};
+
+
+
+void
+testRefTable::testCreateDestroy()
+{
+  RefTable table1("table1", RefTable::KEYID);
+  RefTable refTable("refTable", RefTable::KEY0);
+  RefTable table3("table3", RefTable::KEY01);
+  RefTable table4("table4", RefTable::KEY012);
+  RefTable table5("table5", RefTable::KEY13);
+}
+
+
+/**
+ * This test corresponds on a particular problem encountered with
+ * aggregate testing on Tables v1.  It creates a table whose tuples are
+ * <int, int>.  It creates a unique index on all fields, and a multiple
+ * index on the first field.  It inserts <0, 10>, <0, 15>, <0, 5>, and
+ * then removes <0, 5> from the table.  Then it looks up <0, 5> in the
+ * multiple index.  It should not find it.
+ */
+void
+testRefTable::testSuperimposedIndexRemoval()
+{
+  TuplePtr a = Tuple::mk();
+  a->append(Val_Int32::mk(0));
+  a->append(Val_Int32::mk(10));
+  a->freeze();
+  
+  TuplePtr b = Tuple::mk();
+  b->append(Val_Int32::mk(0));
+  b->append(Val_Int32::mk(15));
+  b->freeze();
+  
+  TuplePtr c = Tuple::mk();
+  c->append(Val_Int32::mk(0));
+  c->append(Val_Int32::mk(5));
+  c->freeze();
+  
+
+  // Create a table of unique tuples with a multiple key on its first
+  // field
+  RefTable table("test_table", RefTable::KEY01);
+  table.secondaryIndex(RefTable::KEY0);
+
+  // Insert the three tuples in that order
+  BOOST_CHECK_MESSAGE(table.insert(a),
+                      "Tuple a '"
+                      << a->toString()
+                      << "' should be newly inserted");
+  BOOST_CHECK_MESSAGE(table.insert(b),
+                      "Tuple b '"
+                      << b->toString()
+                      << "' should be newly inserted");
+  BOOST_CHECK_MESSAGE(table.insert(c),
+                      "Tuple c '"
+                      << c->toString()
+                      << "' should be newly inserted");
+
+  // Remove the last tuple
+  BOOST_CHECK_MESSAGE(table.remove(c),
+                      "Tuple c '"
+                      << c->toString()
+                      << "' should be fully deleted");
+
+  // Lookup the tuple itself in the unique index
+  BOOST_CHECK_MESSAGE(table.lookup(RefTable::KEY01, c)->done(),
+                      "Table test. Lookup of removed tuple "
+                      << c->toString()
+                      << " should return no results.");
+
+  // Count the elements matching a on the multiple index (i.e., all
+  // elements). It should contain two elements
+  RefTable::Iterator m = table.lookup(RefTable::KEY0, a);
+  int count = 0;
+  while (!m->done()) {
+    m->next();
+    count++;
+  }
+  BOOST_CHECK_MESSAGE(count == 2,
+                      "Table test. Lookup of removed tuple "
+                      << c->toString()
+                      << " in multiple index should return "
+                      << " 2 results exactly but returned "
+                      << count
+                      << " instead.");
+}
+
+
+/**
+ * This test tries a simple tuple overwrite using the primary index.  It
+ * inserts <0,10> and then overwrites it with i<0,15>, expecting to find
+ * f<0,15> when looking up by <0, 15>.  The table's primary key is 0.
+ */
+void
+testRefTable::testPrimaryOverwrite()
+{
+  TuplePtr a = Tuple::mk();
+  a->append(Val_Int32::mk(0));
+  a->append(Val_Int32::mk(10));
+  a->freeze();
+  
+  TuplePtr b = Tuple::mk();
+  b->append(Val_Int32::mk(0));
+  b->append(Val_Int32::mk(15));
+  b->freeze();
+  
+  // Create a table with unique first fields.
+  RefTable table("test_table", RefTable::KEY0);
+
+  // Insert the first tuples
+  BOOST_CHECK_MESSAGE(table.insert(a),
+                      "Tuple a '"
+                      << a->toString()
+                      << "' should be newly inserted");
+  BOOST_CHECK_MESSAGE(table.insert(b),
+                      "Tuple b '"
+                      << b->toString()
+                      << "' should be newly inserted (overwriting a).");
+
+  // Lookup b in the primary index
+  RefTable::Iterator i = table.lookup(RefTable::KEY0, b);
+  BOOST_CHECK_MESSAGE(!i->done(),
+                      "Lookup of tuple b '"
+                      << b->toString()
+                      << "' should return results.");
+
+  if (!i->done()) {
+    TuplePtr t = i->next();
+    BOOST_CHECK_MESSAGE(t->compareTo(b) == 0,
+                        "Lookup of tuple b '"
+                        << b->toString()
+                        << "' should return b.");
+
+    BOOST_CHECK_MESSAGE(i->done(),
+                        "Lookup of tuple b '"
+                        << b->toString()
+                        << "' should return exactly and only b.");
+  }
+}
+
+
+/**
+ * This test exercises projected lookups.  Especially of tuples with
+ * different sizes.
+ */
+void
+testRefTable::testProjectedLookups()
+{
+  TuplePtr a = Tuple::mk();
+  a->append(Val_Int32::mk(0));
+  a->append(Val_Int32::mk(10));
+  a->append(Val_Int32::mk(0));
+  a->freeze();
+  
+  TuplePtr b = Tuple::mk();
+  b->append(Val_Int32::mk(1));
+  b->append(Val_Int32::mk(0));
+  b->freeze();
+  
+  // Create a table with unique first fields.
+  RefTable table("table1", RefTable::KEY0);
+
+  // Insert the first tuple
+  BOOST_CHECK_MESSAGE(table.insert(a),
+                      "Tuple a '"
+                      << a->toString()
+                      << "' should be newly inserted");
+
+  // Lookup the second tuple with its first field on the primary index
+  RefTable::Iterator i = table.lookup(RefTable::KEY0, RefTable::KEY0, b);
+  BOOST_CHECK_MESSAGE(i->done(),
+                      "Lookup of tuple b '"
+                      << b->toString()
+                      << "' on field 0 should return no results.");
+
+
+  // Lookup the second tuple with its second field on the primary index
+  i = table.lookup(RefTable::KEY1, RefTable::KEY0, b);
+  BOOST_CHECK_MESSAGE(!i->done(),
+                      "Lookup of tuple b '"
+                      << b->toString()
+                      << "' on field 1 should return results.");
+  
+  if (!i->done()) {
+    TuplePtr t = i->next();
+    BOOST_CHECK_MESSAGE(t->compareTo(a) == 0,
+                        "Lookup of tuple b '"
+                        << b->toString()
+                        << "' on field 1 should return "
+                        << a->toString());
+
+    BOOST_CHECK_MESSAGE(i->done(),
+                        "Lookup of tuple b '"
+                        << b->toString()
+                        << "' on field 1 should return exactly "
+                        << "one result.");
+  }
+}
+
+
+
+////////////////////////////////////////////////////////////
+// Insert/Delete/Lookup scripts
+////////////////////////////////////////////////////////////
+
+testRefTable::refTableTest::refTableTest(std::string script,
+                                         int line,
+                                         RefTable::Key& key)
+  : _script(script),
+    _line(line),
+    _key(key)
+{
+}
+
+
+
+
+
+
+/**
+ * Execute the script.  First parse the script string.  Then execute it.
+ * Parse errors abort the current test.
+ */
+void
+testRefTable::RefTracker2::test()
+{
+  //   std::cout << "Testing script \""
+  //             << _test._script
+  //             << "\"\n";
+  _remainder = std::string(_test._script);
+  
+  while (!_remainder.empty()) {
+    bool result = fetchCommand();
+    
+    if (result) {
+      switch(_command) {
+      case 'i':
+        // Insert into table
+        //         std::cout << "Tracker:Inserting '"
+        //                   << _tuple->toString()
+        //                   << "'\n";
+        _table.insert(_tuple);
+        break;
+      case 'd':
+        // Delete from table
+        //         std::cout << "Tracker:Removing '"
+        //                   << _tuple->toString()
+        //                   << "'\n";
+        _table.remove(_tuple);
+        break;
+      case 'f':
+        // Find in table (lookup successfully)
+        {
+          // Lookup the tuple in the command and ensure it was found.
+          //           std::cout << "Tracker:Looking up '"
+          //                     << _tuple->toString()
+          //                     << "'\n";
+          RefTable::Iterator i = _table.lookup(_test._key, _tuple);
+          BOOST_CHECK_MESSAGE(!i->done(),
+                              "Did not find results for expected tuple '"
+                              << _tuple->toString()
+                              << "'.");
+          
+          if (i->done()) {
+            // OK, we had no results, so we might as well skip the next
+            //test 
+          } else {
+            // Ensure the results contain the expected tuple exactly
+            bool found = false;
+            while (!i->done()) {
+              TuplePtr t = i->next();
+              if (t->compareTo(_tuple) == 0) {
+                found = true;
+              }
+            }
+            // Ensure we did find it
+            BOOST_CHECK_MESSAGE(found,
+                                "Error in test line "
+                                << _test._line
+                                << " with suffix "
+                                << "\""
+                                << _remainder
+                                << "\". Results did not contain "
+                                << "expected tuple '"
+                                << _tuple->toString()
+                                << "'.");
+          }
+        }
+        break;
+      case 'm':
+        // Miss in table (lookup unsuccessfully)
+        {
+          // Lookup the tuple in the command and ensure it is not found
+          //           std::cout << "Tracker:Looking up '"
+          //                     << _tuple->toString()
+          //                     << "'\n";
+          RefTable::Iterator i = _table.lookup(_test._key, _tuple);
+          
+          // If there were any results
+          if (!i->done()) {
+            // Ensure none match the tuple
+            bool found = false;
+            while (!i->done()) {
+              TuplePtr t = i->next();
+              if (t->compareTo(_tuple) == 0) {
+                found = true;
+              }
+            }
+            // Ensure we did not find it
+            BOOST_CHECK_MESSAGE(!found,
+                                "Results contained expected tuple '"
+                                << _tuple->toString()
+                                << "'.");
+          } else {
+            // We're done. Nothing else to check.
+          }
+        }
+        break;
+      case 's':
+        // Create a secondary index
+        {
+          // Turn tuple into key vector
+          RefTable::Key k;
+          for (uint i = 0;
+               i < _tuple->size();
+               i++) {
+            k.push_back(Val_UInt32::cast((*_tuple)[i]));
+          }
+          _table.secondaryIndex(k);
+        }
+      default:
+        // I should not receive anything else
+        BOOST_ERROR("Error in test line "
+                    << _test._line
+                    << " with suffix "
+                    << "\""
+                    << _remainder
+                    << "\". Unexpected command '"
+                    << _command
+                    << "'.");
+        return;
+      }
+    } else {
+      //       std::cout << "Aborting script \""
+      //                 << _test._script
+      //                 << "\"\n";
+      return;
+    }
+  }
+}
+
+
+
+/**
+ * Fetch another command from the beginning of the _remainder script.
+ * The command is placed in the _command field.  The tuple argument of
+ * the command is placed in the _tuple field.  The _remainder string is
+ * shrunk by the removed command.
+ *
+ * This assumes that _remainder is not empty.
+ *
+ * If the fetch was successful, returns true. False if a syntax error in
+ * the test specification was identified.
+ */
+bool
+testRefTable::RefTracker2::fetchCommand()
+{
+  //   std::cout << "Fetching command from \""
+  //             << _remainder
+  //             << "\"\n";
+
+  // This will require a new tuple
+  _tuple = Tuple::mk();
+
+  // Fetch another token
+  std::string::size_type tokenEnd = _remainder.find(';');
+  if (tokenEnd == std::string::npos) {
+    // Syntax error. I should always end with a semicolon
+    BOOST_ERROR("Syntax error in test line "
+                << _test._line
+                << " with suffix "
+                << "\""
+                << _remainder
+                << "\". Missing a trailing semicolon.");
+    return false;
+  }
+  
+  // Take out token, leaving semicolon behind
+  std::string token = _remainder.substr(0, tokenEnd);
+  
+  // Check command
+  _command = token[0];
+  switch(_command) {
+  case 'i':
+  case 'd':
+  case 'u':
+  case 'f':
+  case 'm':
+  case 's':
+    break;
+  default:
+    BOOST_ERROR("Syntax error in test line "
+                << _test._line
+                << " with token "
+                << "\""
+                << token
+                << "\". Unknown command '"
+                << _command
+                << "'.");
+    return false;
+  }
+  
+  // Check tuple containers
+  if ((token[1] != '<') ||
+      (token[token.length() - 1] != '>')) {
+    BOOST_ERROR("Syntax error in test line "
+                << _test._line
+                << " with token "
+                << "\""
+                << token
+                << "\". Tuple must be enclosed in '<>'.");
+    return false;
+  }
+  
+  // Parse and construct tuple
+  std::string tuple = token.substr(2, token.length() - 3);
+  
+  //   std::cout << "Parsing tuple \""
+  //             << tuple
+  //             << "\"\n";
+  
+  while (!tuple.empty()) {
+    // Fetch another field delimiter
+    std::string::size_type fieldEnd = tuple.find(',');
+    
+    // Isolate the field
+    std::string field;
+    if (fieldEnd == std::string::npos) {
+      // The rest of the tuple makes up a field
+      field = tuple;
+      tuple = std::string();
+    } else {
+      // Take a field up to the delimiter
+      field = tuple.substr(0, fieldEnd);
+      tuple = tuple.substr(fieldEnd + 1);
+    }
+    
+    // Interpret the field as an int32
+    ValuePtr intField = Val_Int32::mk(Val_Int32::cast(Val_Str::mk(field)));
+    _tuple->append(intField);
+    
+    //     std::cout << "Found int32 field \""
+    //               << intField->toString()
+    //               << "\"\n";
+  }
+  
+  // Shrink remainder
+  _remainder = _remainder.substr(tokenEnd + 1);
+
+  // Freeze the tuple
+  _tuple->freeze();
+
+  return true;
+}
+
+
+testRefTable::RefTracker2::RefTracker2(refTableTest & test)
+  : _test(test),
+    // Create a very simple table with the following schema
+    // Schema is <A int, B int>
+    // No maximum lifetime or size
+    _table("trackerTest", _test._key)
+{
+}
+
+
+void
+testRefTable::RefTracker2::process(std::vector< refTableTest > tests)
+{
+  for (std::vector< refTableTest >::iterator i = tests.begin();
+       i != tests.end();
+       i++) {
+    // Create a script tracker
+    RefTracker2 tracker((*i));
+    // Run it
+    tracker.test();
+  }
+}
+
+
+
+
+////////////////////////////////////////////////////////////
+// Specific insert/lookup/delete scripts
+////////////////////////////////////////////////////////////
+
+/** 
+ * i<tuple> means insert into the primary key
+ *
+ * d<tuple> means delete from the primary key
+ *
+ * f<tuple> means find the identical tuple looking up into the primary
+ * key
+ *
+ * m<tuple> means do not find this identical tuple looking into the
+ * primary key
+ *
+ * s<key> means create the secondary index described by the key
+ */
+void
+testRefTable::testInsertRemoveLookupScripts()
+{
+  refTableTest t[] =
+    {
+      refTableTest("i<0,10>;i<0,15>;i<0,20>;i<0,25>;m<0,10>;" // first one flushed
+                   //      >----------------------->  
+                   "i<0,15>;"
+                   //      >20, 25, 15>
+                   "i<0,30>;f<0,15>;m<0,20>;" // 15 refreshed, 20 not
+                   //      >25, 15, 30>
+                   "i<0,15>;i<0,15>;i<0,35>;m<0,25>;",
+                   __LINE__,
+                   RefTable::KEY01),
+      
+      refTableTest("i<0,10>;i<0,15>;f<0,15>;m<0,10>;d<0,15>;m<0,15>;",
+                   __LINE__,
+                   RefTable::KEY0),
+      
+      refTableTest("i<0,10>;i<0,15>;f<0,15>;f<0,10>;d<0,15>;m<0,15>;"
+                   "f<0,10>;d<0,10>;m<0,15>;m<0,10>;",
+                   __LINE__,
+                   RefTable::KEY01),
+      
+      refTableTest("i<0,10>;i<0,15>;m<0,10>;m<0,15>;",
+                   __LINE__,
+                   RefTable::KEYID),
+      
+      refTableTest("i<0,10>;f<0,10>;d<0,10>;m<0,10>;d<0,10>;m<0,10>;"
+                   "i<0,15>;f<0,15>;",
+                   __LINE__,
+                   RefTable::KEY0),
+      
+      refTableTest("i<0,10>;i<0,15>;i<0,20>;i<0,25>;i<0,30>;"
+                   "i<0,15>;f<0,15>;",
+                   __LINE__,
+                   RefTable::KEY0),
+      
+      refTableTest("i<0,10>;i<0,15>;i<0,20>;i<0,25>;i<0,30>;"
+                   "d<0,15>;m<0,15>;",
+                   __LINE__,
+                   RefTable::KEY0),
+      
+      refTableTest("i<0,10>;i<0,15>;i<0,20>;i<0,25>;i<0,30>;"
+                   "i<0,15>;d<0,15>;m<0,15>;",
+                   __LINE__,
+                   RefTable::KEY0),
+      
+      refTableTest("i<0,10>;d<0,10>;i<0,10>;"
+                   "i<0,15>;i<0,20>;i<0,25>;i<0,30>;"
+                   "i<0,15>;d<0,15>;m<0,15>;",
+                   __LINE__,
+                   RefTable::KEY0),
+      
+    };
+  std::vector< refTableTest > vec(t,
+                                  t + sizeof(t)/sizeof(t[0]));
+  
+  RefTracker2::process(vec);
+}
+
+
+
+
+////////////////////////////////////////////////////////////
+// Secondary Index completeness
+////////////////////////////////////////////////////////////
+
+void
+testRefTable::testSecondaryEquivalence()
+{
+  // Make sure that an index lookup is the same as a full scan with the
+  // appropriate selection (predicate check.)
+
+  RefTable table("secondary equivalence", RefTable::KEY0);
+  table.secondaryIndex(RefTable::KEY1);
+
+  // Add a bunch of tuples with some replacements
+  uint TUPLES = 1000;
+  uint GROUPS = 5;
+  for (uint i = 0;
+       i < TUPLES;
+       i++) {
+    TuplePtr t = Tuple::mk();
+    t->append(Val_Str::mk(Val_Str::
+                          cast(Val_UInt32::mk((i + ((i + 1) %
+                                                    (GROUPS - 1)))/(GROUPS)))));
+    t->append(Val_UInt32::mk(i % GROUPS));
+    t->freeze();
+  }
+
+  // Now for every distinct second field (0, 1, 2, ..., GROUPS-1), get
+  // the secondary index lookup results and store them. Compute the same
+  // thing using a primary scan with selection. Are the two answer sets
+  // identical?
+  ValuePtr emptyString = Val_Str::mk("");
+  for (uint i = 0;
+       i < GROUPS;
+       i++) {
+    ValuePtr iVal = Val_UInt32::mk(i);
+    TuplePtr lookupT = Tuple::mk();
+    lookupT->append(emptyString);
+    lookupT->append(iVal);
+    RefTable::Iterator i = table.lookup(RefTable::KEY1, lookupT);
+
+    TupleSet sResults;
+    while (!i->done()) {
+      sResults.insert(i->next());
+    }
+
+    // Now scan the whole table and find all tuples whose second field
+    // equals i. Remove every found tuple from the results set, ensuring
+    // that every removal corresponds to a found element. If in the end
+    // the results set is not empty, then we have a problem.
+    RefTable::Iterator s = table.scan();
+
+    while (!s->done()) {
+      TuplePtr found = s->next();
+      if ((*found)[1] == iVal) {
+        // we found a result
+        BOOST_CHECK_MESSAGE(sResults.erase(found) == 1,
+                            "A scan result is missing from secondary result");
+      }
+    }
+    BOOST_CHECK_MESSAGE(sResults.size() == 0,
+                        "There are secondary results not found during scan.");
+  }
+}
+
+
+
+
+
+
+////////////////////////////////////////////////////////////
+// Aggregate Testing
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+
+testRefTable::intAggTest2::intAggTest2(std::string script,
+                                       RefTable::Key& key,
+                                       RefTable::Key& groupBy,
+                                       uint aggFieldNo,
+                                       std::string func,
+                                       int line)
+  : refTableTest(script, line, key),
+    _groupBy(groupBy),
+    _aggFieldNo(aggFieldNo),
+    _function(func)
+{
+}
+
+
+
+
+
+void
+testRefTable::AggRefTracker2::process(std::vector< intAggTest2 > tests)
+{
+  for (std::vector< intAggTest2 >::iterator i = tests.begin();
+       i != tests.end();
+       i++) {
+    // Create a script tracker
+    AggRefTracker2 tracker((*i));
+    // Run it
+    tracker.test();
+  }
+}
+
+
+testRefTable::AggRefTracker2::AggRefTracker2(intAggTest2 & test)
+  : RefTracker2(test)
+{
+  // Create a multiple index on the group by field
+  _table.secondaryIndex(test._groupBy);
+
+  // Create a multiple-value aggregate with the given function
+  RefTable::Aggregate u =
+    _table.aggregate(test._groupBy,
+                     test._aggFieldNo,
+                     test._function);
+  u->listener(boost::bind(&AggRefTracker2::listener, this, _1));
+}
+
+
+void
+testRefTable::AggRefTracker2::listener(TuplePtr t)
+{
+  //   std::cout << "Aggregate received \""
+  //             << t->toString()
+  //             << "\"\n";
+
+  // Fetch a command
+  if (!_remainder.empty()) {
+    bool result = fetchCommand();
+
+    if (result) {
+      // Is it an update?
+      if (_command != 'u') {
+        // I should have an update in there
+        BOOST_ERROR("Semantic error in test line "
+                    << _test._line
+                    << " with suffix "
+                    << "\""
+                    << _remainder
+                    << "\". Script should expect an update with '"
+                    << t->toString()
+                    << "' but contained the '"
+                    << _command
+                    << "' command instead.");
+        _remainder = std::string();
+        return;
+      }
+
+      // Compare the tuples
+      if (t->compareTo(_tuple) != 0) {
+        BOOST_ERROR("Error in test line "
+                    << _test._line
+                    << " with suffix "
+                    << "\""
+                    << _remainder
+                    << "\". Script expected tuple '"
+                    << _tuple->toString()
+                    << "' but received '"
+                    << t->toString()
+                    << "' instead.");
+        _remainder = std::string();
+      }
+    } else {
+      // Something went wrong. Just exist zeroing out the remainder
+      _remainder = std::string();
+    }
+  } else {
+    // I should have an update in there
+    BOOST_ERROR("Error in test line "
+                << _test._line
+                << " with suffix "
+                << "\""
+                << _remainder
+                << "\". Script should expect an update with '"
+                << t->toString()
+                << "' but didn't.");
+    _remainder = std::string();
+  }
+}
+
+
+
+
+
+
+
+
+/** 
+ * The purpose of this test is to check that table aggregates work
+ * correctly.  The way we implement the test is to submit to the table a
+ * particular sequence of insertions and deletions and the corresponding
+ * sequence of aggregates updates.  If the sequences match, then the
+ * test has succeeded.
+ *
+ * We define each test as an EXPECT-like script, made up of insertions,
+ * deletions, and updates.
+ */
+void
+testRefTable::testAggregates()
+{
+  intAggTest2 t[] = {
+    // Test reinsertion without update
+    intAggTest2("i<0,10>;u<0,10>;i<0,10>;"
+                // 10(x2)
+                "i<0,20>;",
+                // 10(x2), 20
+                RefTable::KEY01,
+                RefTable::KEY0, 1, "MIN",
+                __LINE__),
+
+    // Test reinsertion without update followed by multiple removals
+    intAggTest2("i<0,10>;u<0,10>;i<0,10>;"
+                // 10(x2)
+                "i<0,20>;"
+                // 10(x2), 20
+                "d<0,10>;"
+                // 10, 20
+                "d<0,10>;u<0,20>;",
+                // 20
+                RefTable::KEY01,
+                RefTable::KEY0, 1, "MIN",
+                __LINE__),
+
+
+    // Here there's an update for every insert that is not identical to
+    // its preceeding one since the primary key is the first field, so
+    // any new insertion removes the old tuple.  When the last entry is
+    // gone, no update is received.
+    intAggTest2("i<0,10>;u<0,10>;i<0,10>;i<0,15>;u<0,15>;i<0,5>;u<0,5>;d<0,5>;",
+                RefTable::KEY0, // first field is indexed
+                RefTable::KEY0, // first field is group-by
+                1, // second field is aggregated
+                "MIN", // aggregate function is MIN
+                __LINE__),
+
+    // The following tests script expects the sequence
+    // INSERT <0, 10>
+    // UPDATE <0, 10>
+    // INSERT <0, 15>
+    // INSERT <0, 5>
+    // UPDATE <0, 5>
+    // DELETE <0, 5>
+    // UPDATE <0, 10>
+    intAggTest2("i<0,10>;u<0,10>;i<0,15>;i<0,5>;u<0,5>;d<0,5>;u<0,10>;",
+                RefTable::KEY01, // first field is indexed
+                RefTable::KEY0, // first field is group-by
+                1, // second field is aggregated
+                "MIN", // aggregate function is MIN
+                __LINE__),
+
+    // The following tests script for MIN expects the sequence
+    // INSERT <0, 10>
+    // UPDATE <0, 10>
+    // INSERT <0, 5>
+    // UPDATE <0, 5>
+    intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;",
+                RefTable::KEY01,
+                RefTable::KEY0,
+                1, "MIN",
+                __LINE__),
+    
+    intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;i<0,20>;i<0,30>;",
+                RefTable::KEY01,
+                RefTable::KEY0, 1, "MIN",
+                __LINE__),
+    
+    intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;i<0,20>;i<0,3>;u<0,3>;i<0,4>;",
+                RefTable::KEY01,
+                RefTable::KEY0, 1, "MIN",
+                __LINE__),
+
+
+    ////////////////////////////////////////////////////////////
+    // MAX
+
+    intAggTest2("i<0,10>;u<0,10>;i<0,5>;",
+                RefTable::KEY01,
+                RefTable::KEY0, 1, "MAX",
+                __LINE__),
+    
+    intAggTest2("i<0,10>;u<0,10>;i<0,15>;u<0,15>;i<0,3>;",
+                RefTable::KEY01,
+                RefTable::KEY0, 1, "MAX",
+                __LINE__),
+    
+    intAggTest2("i<0,10>;u<0,10>;i<0,5>;i<0,15>;u<0,15>;",
+                RefTable::KEY01,
+                RefTable::KEY0, 1, "MAX",
+                __LINE__),
+    
+    intAggTest2("i<0,10>;u<0,10>;i<0,10>;",
+                RefTable::KEY01,
+                RefTable::KEY0, 1, "MAX",
+                __LINE__)
+  };
+
+  std::vector< intAggTest2 > vec(t,
+                                 t + sizeof(t)/sizeof(t[0]));
+  
+  AggRefTracker2::process(vec);
+}
+
+
+
+
+void
+testRefTable::testIndexing()
+{
+  TuplePtr tpls[SIZE];
+
+  // Create our test set of tuples
+  for(uint i = 0;
+      i < SIZE;
+      i++) {
+    TuplePtr t = Tuple::mk();
+    t->append(Val_UInt32::mk(i));
+    t->append(Val_UInt32::mk(i/2));
+    t->append(Val_UInt32::mk(i/4));
+    t->append(Val_UInt32::mk(i % (SIZE/2)));
+    t->append(Val_UInt32::mk(i % (SIZE/4)));
+    t->freeze();
+    tpls[i] = t;
+  }
+
+  {
+    //  First: tuples inserted can be looked up.  Tuples not inserted
+    // cannot be looked up.  Create a very simple table
+    RefTable tbl("test_table", RefTable::KEY0);
+    for(uint i=0;
+        i < SIZE/2;
+        i++) { 
+      tbl.insert(tpls[i]);
+    }
+    
+    
+    for(uint i = 0;
+        i< SIZE/2;
+        i++) { 
+      TuplePtr t = Tuple::mk();
+      t->append(Val_UInt32::mk(i));
+      t->append(Val_UInt32::mk(i/2));
+      t->append(Val_UInt32::mk(i/4));
+      t->append(Val_UInt32::mk(i % (SIZE/2)));
+      t->append(Val_UInt32::mk(i));
+      t->freeze();
+      BOOST_CHECK_MESSAGE(!tbl.lookup(RefTable::KEY0, t)->done(),
+                          "Table test. Lookup "
+                          << i
+                          << ".  Tuple is not in the table but should.");
+      
+      t = Tuple::mk();
+      t->append(Val_UInt32::mk(i + SIZE/2));
+      t->append(Val_UInt32::mk(i/2));
+      t->append(Val_UInt32::mk(i/4));
+      t->append(Val_UInt32::mk(i % (SIZE/2)));
+      t->append(Val_UInt32::mk(i));
+      t->freeze();
+      BOOST_CHECK_MESSAGE(tbl.lookup(RefTable::KEY0, t)->done(),
+                          "Table test. Lookup "
+                          << (i + SIZE/2)
+                          << ".  Tuple is in the table but shouldn't");
+    }
+  }
+  {
+    // Check secondary indices
+    RefTable tbl("test_table", RefTable::KEY0);
+    tbl.secondaryIndex(RefTable::KEY4);
+    for(uint i = 0;
+        i < SIZE;
+        i++) { 
+      tbl.insert(tpls[i]);
+    }
+    
+    // Now every tuple we find with the first quarter of counters in field
+    // 4 must have four exactly distinct instances in the index
+    for(uint i = 0;
+        i < SIZE / 4;
+        i++) { 
+      TuplePtr t = Tuple::mk();
+      t->append(Val_UInt32::mk(i));
+      t->append(Val_UInt32::mk(i));
+      t->append(Val_UInt32::mk(i));
+      t->append(Val_UInt32::mk(i));
+      t->append(Val_UInt32::mk(i));
+      t->freeze();
+      RefTable::Iterator iter = tbl.lookup(RefTable::KEY4, t);
+      for (uint counter = 0;
+           counter < 4;
+           counter++) {
+        TuplePtr result = iter->next();
+        BOOST_CHECK_MESSAGE(result != NULL,
+                            "Table test. Key "
+                            << i
+                            << " seems to have too few "
+                            << "tuples in the secondary index");
+      }
+      
+      BOOST_CHECK_MESSAGE(iter->done() == true,
+                          "Table test. Key "
+                          << i
+                          << " seems to have too many tuples "
+                          << "in the secondary index");
+    }
+  }
+}
+
+
+void
+testRefTable::testBatchRemovals()
+{
+  TuplePtr tpls[SIZE];
+  // Create our test set of tuples
+  for(uint i = 0;
+      i < SIZE;
+      i++) {
+    TuplePtr t = Tuple::mk();
+    t->append(Val_Int32::mk(i));
+    t->append(Val_Int32::mk(i/2));
+    t->append(Val_Int32::mk(i/4));
+    t->append(Val_Int32::mk(i % (SIZE/2)));
+    t->append(Val_Int32::mk(i % (SIZE/4)));
+    t->freeze();
+    tpls[i] = t;
+  }
+  
+  // Create a unique index on first field
+  RefTable tbl("test_table", RefTable::KEY0);
+  for(uint i = 0;
+      i < SIZE;
+      i++) { 
+    tbl.insert(tpls[i]);
+  }
+  
+  for(uint i = 0;
+      i < SIZE;
+      i++) { 
+    tbl.remove(tpls[i]);
+  }
+  
+  // I should be unable to look up any elements at all
+  for(uint i = 0;
+      i< SIZE;
+      i++) { 
+    BOOST_CHECK_MESSAGE(tbl.lookup(RefTable::KEY0, tpls[i])->done(),
+                        "Table test. Lookup of removed tuple "
+                        << tpls[i]->toString()
+                        << " should return no results.");
+  }
+}
+
+
+void
+testRefTable::testBatchMultikeyRemovals()
+{
+  TuplePtr tpls[SIZE];
+  // Create our test set of tuples
+  for(uint i = 0;
+      i < SIZE;
+      i++) {
+    TuplePtr t = Tuple::mk();
+    t->append(Val_Int32::mk(i));
+    t->append(Val_Int32::mk(i/2));
+    t->append(Val_Int32::mk(i/4));
+    t->append(Val_Int32::mk(i % (SIZE/2)));
+    t->append(Val_Int32::mk(i % (SIZE/4)));
+    t->freeze();
+    tpls[i] = t;
+  }
+  
+  // Create a unique index on first two fields
+  RefTable tbl("test_table", RefTable::KEY01);
+  for(uint i = 0;
+      i < SIZE;
+      i++) { 
+    tbl.insert(tpls[i]);
+  }
+  
+  for(uint i = 0;
+      i < SIZE;
+      i++) { 
+    tbl.remove(tpls[i]);
+  }
+
+  // I should be unable to look up any elements at all
+  for(uint i = 0;
+      i< SIZE;
+      i++) { 
+    BOOST_CHECK_MESSAGE(tbl.lookup(RefTable::KEY01, tpls[i])->done(),
+                        "Table test. Lookup of removed tuple "
+                        << tpls[i]->toString()
+                        << " should return no results.");
+  }
+}
+
+
+void
+testRefTable::testUniqueTupleRemovals()
+{
+  TuplePtr tpls[SIZE];
+
+  // Create our test set of tuples
+  for(uint i = 0;
+      i < SIZE;
+      i++) {
+    TuplePtr t = Tuple::mk();
+    t->append(Val_Int32::mk(i));
+    t->append(Val_Int32::mk(i/2));
+    t->append(Val_Int32::mk(i/4));
+    t->append(Val_Int32::mk(i % (SIZE/2)));
+    t->append(Val_Int32::mk(i % (SIZE/4)));
+    t->freeze();
+    tpls[i] = t;
+  }
+  
+  // Create a unique index on all five fields
+  RefTable tbl("test_table", RefTable::KEY01234);
+  tbl.secondaryIndex(RefTable::KEY1);
+  for(uint i = 0;
+      i < SIZE;
+      i++) { 
+    tbl.insert(tpls[i]);
+  }
+  
+  for(uint i = 0;
+      i < SIZE;
+      i++) { 
+    tbl.remove(tpls[i]);
+  }
+
+  // I should be unable to look up any elements at all
+  for(uint i = 0;
+      i< SIZE;
+      i++) { 
+    BOOST_CHECK_MESSAGE(tbl.lookup(RefTable::KEY01234, tpls[i])->done(),
+                        "Table test. Lookup of removed tuple "
+                        << tpls[i]->toString()
+                        << " should return no results.");
+  }
+}
+
+
+void
+testRefTable::testPseudoRandomInsertDeleteSequences()
+{
+  srand(0);
+
+  {
+    // Create a table with fixed lifetime but no size
+    RefTable t("succ", RefTable::KEY2);
+    for (uint i = 0;
+         i < SIZE + EXTRA_TUPLES;
+         i++) {
+      // Make a random tuple
+      TuplePtr tup = Tuple::mk();
+      
+      // My tuple name
+      tup->append(Val_Str::mk("succ"));
+      
+      // My node address
+      ostringstream nodeID;
+      nodeID << "127.0.0.1:";
+      int port = rand() % 5;
+      nodeID << port;
+      tup->append(Val_Str::mk(nodeID.str()));
+    
+      // My Node identifier
+      unsigned int nestedSeed = rand() % 5;
+      uint32_t words[ID::WORDS];
+      for (uint w = 0;
+           w < ID::WORDS;
+           w++) {
+        words[w] = rand_r(&nestedSeed);
+      }
+      tup->append(Val_ID::mk(ID::mk(words)));
+    
+      tup->freeze();
+    
+      // Choose between insert and delete
+      int r = rand();
+      //    std::cout << "Random number " << r << "\n";
+      if ((r & 1) == 0) {
+        //      std::cout << "Inserting " << tup->toString() << "\n";
+        t.insert(tup);
+      } else {
+        //      std::cout << "Deleting " << tup->toString() << "\n";
+        t.remove(tup);
+      }
+    }
+  }
+  {
+    // Create a table with fixed size but not lifetime
+    RefTable t("succ", RefTable::KEY2);
+    for (uint i = 0;
+         i < SIZE + EXTRA_TUPLES;
+         i++) {
+      // Make a random tuple
+      TuplePtr tup = Tuple::mk();
+      
+      // My tuple name
+      tup->append(Val_Str::mk("succ"));
+      
+      // My node address
+      ostringstream nodeID;
+      nodeID << "127.0.0.1:";
+      int port = rand() % 5;
+      nodeID << port;
+      tup->append(Val_Str::mk(nodeID.str()));
+    
+      // My Node identifier
+      unsigned int nestedSeed = rand() % 5;
+      uint32_t words[ID::WORDS];
+      for (uint w = 0;
+           w < ID::WORDS;
+           w++) {
+        words[w] = rand_r(&nestedSeed);
+      }
+      tup->append(Val_ID::mk(ID::mk(words)));
+    
+      tup->freeze();
+    
+      // Choose between insert and delete
+      int r = rand();
+      //    std::cout << "Random number " << r << "\n";
+      if ((r & 1) == 0) {
+        //      std::cout << "Inserting " << tup->toString() << "\n";
+        t.insert(tup);
+      } else {
+        //      std::cout << "Deleting " << tup->toString() << "\n";
+        t.remove(tup);
+      }
+    }
+  }
+  {
+    // Create a table with fixed lifetime and size
+    boost::posix_time::
+      time_duration expiration(boost::posix_time::milliseconds(200));
+    RefTable t("succ", RefTable::KEY2);
+    for (uint i = 0;
+         i < SIZE + EXTRA_TUPLES;
+         i++) {
+      // Make a random tuple
+      TuplePtr tup = Tuple::mk();
+      
+      // My tuple name
+      tup->append(Val_Str::mk("succ"));
+      
+      // My node address
+      ostringstream nodeID;
+      nodeID << "127.0.0.1:";
+      int port = rand() % 5;
+      nodeID << port;
+      tup->append(Val_Str::mk(nodeID.str()));
+    
+      // My Node identifier
+      unsigned int nestedSeed = rand() % 5;
+      uint32_t words[ID::WORDS];
+      for (uint w = 0;
+           w < ID::WORDS;
+           w++) {
+        words[w] = rand_r(&nestedSeed);
+      }
+      tup->append(Val_ID::mk(ID::mk(words)));
+    
+      tup->freeze();
+    
+      // Choose between insert and delete
+      int r = rand();
+      //    std::cout << "Random number " << r << "\n";
+      if ((r & 1) == 0) {
+        //      std::cout << "Inserting " << tup->toString() << "\n";
+        t.insert(tup);
+      } else {
+        //      std::cout << "Deleting " << tup->toString() << "\n";
+        t.remove(tup);
+      }
+    }
+  }
+}
+
+
+
+
+
+testRefTable_testSuite::testRefTable_testSuite()
+  : boost::unit_test_framework::test_suite("testRefTable: Marshaling/Unmarshaling")
+{
+  boost::shared_ptr<testRefTable> instance(new testRefTable());
+  
+  add(BOOST_CLASS_TEST_CASE(&testRefTable::testCreateDestroy, instance));
+  add(BOOST_CLASS_TEST_CASE(&testRefTable::testSuperimposedIndexRemoval, instance));
+  add(BOOST_CLASS_TEST_CASE(&testRefTable::testPrimaryOverwrite, instance));
+  add(BOOST_CLASS_TEST_CASE(&testRefTable::testSecondaryEquivalence, instance));
+  add(BOOST_CLASS_TEST_CASE(&testRefTable::testAggregates, instance));
+  /*
+  add(BOOST_CLASS_TEST_CASE(&testRefTable::testInsertRemoveLookupScripts, instance));
+  add(BOOST_CLASS_TEST_CASE(&testRefTable::testBatchMultikeyRemovals, instance));
+  add(BOOST_CLASS_TEST_CASE(&testRefTable::testPseudoRandomInsertDeleteSequences, instance));
+  add(BOOST_CLASS_TEST_CASE(&testRefTable::testProjectedLookups, instance));
+  add(BOOST_CLASS_TEST_CASE(&testRefTable::testIndexing, instance));
+  add(BOOST_CLASS_TEST_CASE(&testRefTable::testBatchRemovals, instance));
+  add(BOOST_CLASS_TEST_CASE(&testRefTable::testUniqueTupleRemovals,
+  instance)); */
+}
+

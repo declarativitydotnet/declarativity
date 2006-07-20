@@ -16,11 +16,11 @@
 #ifndef __AGGCOUNT_H__
 #define __AGGCOUNT_H__
 
-#include "table2.h"
+#include "commonTable.h"
 #include "value.h"
 
 class AggCount :
-  public Table2::AggFunc
+  public CommonTable::AggFunc
 {
 public:
   AggCount();

@@ -18,7 +18,7 @@
 #include "aggMax.h"
 #include "aggCount.h"
 
-Table2::AggFunc*
+CommonTable::AggFunc*
 AggFactory::mk(std::string aggName)
 {
   // Look up the constructor method

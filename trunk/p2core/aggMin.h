@@ -16,11 +16,11 @@
 #ifndef __AGGMIN_H__
 #define __AGGMIN_H__
 
-#include "table2.h"
+#include "commonTable.h"
 #include "value.h"
 
 class AggMin :
-  public Table2::AggFunc
+  public CommonTable::AggFunc
 {
 public:
   AggMin();

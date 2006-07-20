@@ -16,11 +16,11 @@
 #ifndef __AGGMAX_H__
 #define __AGGMAX_H__
 
-#include "table2.h"
+#include "commonTable.h"
 #include "value.h"
 
 class AggMax :
-  public Table2::AggFunc
+  public CommonTable::AggFunc
 {
 public:
   AggMax();

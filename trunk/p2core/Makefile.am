@@ -16,7 +16,9 @@
 lib_LTLIBRARIES = libp2core.la
 
 libp2core_la_SOURCES = \
+	commonTable.C \
 	table2.C \
+	refTable.C \
 	aggMin.C \
 	aggMax.C \
 	aggCount.C \
@@ -65,6 +67,8 @@ EXTRA_DIST = 	$(libp2core_la_SOURCES:.C=.h) \
 		pel_program.h
 
 MAINTAINERCLEANFILES = Makefile.in
+
+pel_vm.C : pel_opcode_decls.gen.h
 
 pel_opcode_decls.gen.h: pel_gen.py
 	@PYTHON@ pel_gen.py

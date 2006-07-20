@@ -12,6 +12,7 @@ noinst_LTLIBRARIES = libp2unitTests.la
 
 libp2unitTests_la_SOURCES = \
 	testTable2.C \
+	testRefTable.C \
 	testBasicElementPlumbing.C \
 	testValues.C \
 	testIDs.C \

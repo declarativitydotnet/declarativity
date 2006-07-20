@@ -18,19 +18,19 @@
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include "map"
-#include "table2.h"
+#include "commonTable.h"
 
 class AggFactory
 {
 public:
   /** A type for aggregate function factories.  Just a boost
       function. */
-  typedef boost::function< Table2::AggFunc* () > AggFuncFactory;
+  typedef boost::function< CommonTable::AggFunc* () > AggFuncFactory;
 
   
   /** Returns a new aggregate function object on the heap. Must be
       deleted in the end. */
-  static Table2::AggFunc*
+  static CommonTable::AggFunc*
   mk(std::string aggName);
 
 
