@@ -2204,7 +2204,8 @@ Plmb_ConfGen::pelAssign(OL_Context::Rule* rule,
   else if ((val=dynamic_cast<Parse_Val*>(expr->assign)) != NULL) {
     if (val->v->typeCode() == Value::STR) { 
       pelAssign << "\"" << val->toString() << "\" ";
-    } else {
+    }
+    else {
       pelAssign << val->toString() << " ";
     }
   } else {

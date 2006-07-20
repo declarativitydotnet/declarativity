@@ -124,7 +124,7 @@ ID::toString() const
     sprintf(buf, "%04x", words[i]);
     result += buf;
   }
-  return result;
+  return "0x" + result + "I";
 }
 
 
@@ -136,7 +136,7 @@ string ID::toConfString() const
     sprintf(buf, "%04x", words[i]);
     result << buf;
   }
-  return result.str();
+  return "0x" + result.str() + "I";
 }
 
 int

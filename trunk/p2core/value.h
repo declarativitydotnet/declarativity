@@ -64,6 +64,7 @@
 #include <sstream>
 
 #include <assert.h>
+#include <stdexcept>
 #include "inlines.h"
 #include "config.h"
 
@@ -171,7 +172,7 @@ public:
   virtual int compareTo(ValuePtr other) const = 0;
 
   // Thrown when an invalid type conversion is attempted. 
-  struct TypeError { 
+  struct TypeError : public std::exception { 
     TypeCode	realType;
     TypeCode	toType;
     TypeError(TypeCode t1, TypeCode t2) : realType(t1), toType(t2) {};

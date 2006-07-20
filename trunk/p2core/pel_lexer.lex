@@ -114,6 +114,11 @@ HEXDIGIT	[0-9a-fA-F]
   add_const_int(v);
 }
 
+0[xX]{HEXDIGIT}+I {
+  string id = string(yytext+2);
+  add_const(Val_ID::mk(id.substr(0, id.length()-1)));
+}
+
 -?{DIGIT}+(({DECIM}{EXP}?)|{EXP}) {
   // Double-precision literal
   double v = strtod(yytext,NULL);

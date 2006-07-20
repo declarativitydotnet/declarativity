@@ -11,6 +11,7 @@
  * Berkeley, CA,  94707. Attention: P2 Group.
  */
 
+#include <stdexcept>
 #include "loop.h"
 #include "math.h"
 #include "assert.h"
@@ -383,9 +384,14 @@ eventLoop()
   // selwait in libasync
   boost::posix_time::time_duration waitDuration;
 
-  while (1) {
-    timeCBCatchup(waitDuration);
-    fileDescriptorCatchup(waitDuration);
+  try {
+    while (1) {
+      timeCBCatchup(waitDuration);
+      fileDescriptorCatchup(waitDuration);
+    }
+  }
+  catch (std::exception e) {
+    std::cerr << "EXCEPTION: " << e.what() << std::endl;
   }
 }
 

@@ -251,8 +251,7 @@ string P2::stub(string hostname, string port)
   stub << "udp-> UnmarshalField(\"unmarshal\", 1) -> \
            PelTransform(\"unRoute\", \"$1 unboxPop\") ->";
 
-  stub << "Defrag(\"defragment\") -> ";
-  stub << "TimedPullPush(\"defrag_pull\", 0) ->";
+  stub << "Defrag(\"defrag\") -> TimedPullPush(\"defrag_pull\", 0) ->";
   if (_transport_conf & (RCC | CC | RELIABLE | ORDERED)) {
     stub << "ackDemux[1] -> ack ->";
   }
@@ -296,8 +295,8 @@ string P2::stub(string hostname, string port)
     stub << "netoutRR ->";
   }
 
-   stub << "TimedPullPush(\"ppfrag\", 0) -> Frag(\"fragment\") -> \
-            PelTransform(\"package\", \"$0 pop swallow pop\") -> \
+   stub << "TimedPullPush(\"ppfrag\", 0) -> Frag(\"fragment\") ->";
+   stub << "PelTransform(\"package\", \"$0 pop swallow pop\") -> \
             MarshalField(\"marshalField\", 1)              -> \
             StrToSockaddr(\"addr_conv\", 0)                -> \
             udp;  \

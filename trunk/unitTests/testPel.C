@@ -1259,7 +1259,14 @@ testPel::vtests[] = {
   TST(LIST, SUCCESS, "(1, 1, 1)", "null 1 lappend 1 lappend 1 lappend null 1 lappend 1 lappend 1 lappend 1 lappend msintersect"),
 
 // Hash tests
-  TST(ID, SUCCESS, "", "1 sha1")
+  TST(ID, SUCCESS, "", "1 sha1"),
+
+// Test ID
+  TST(INT32, SUCCESS, "1", "1 ->id 0x00000000000000000002I <" ),
+  TST(INT32, SUCCESS, "1", "0x00000000000000000001I 0x00000000000000000002I   <" ),
+  TST(INT32, SUCCESS, "0", "0x00000000000000000003I 0x00000000000000000002I   <" ),
+  TST(INT32, SUCCESS, "1", "0x00000000000000000001I 0x00000000000000000001I   <=" ),
+  TST(INT32, SUCCESS, "1", "0x00000000000000000001I 0x00000000000000000001I   ==" )
 };
 #undef TST
 

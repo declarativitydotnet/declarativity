@@ -28,6 +28,7 @@
 #include "val_double.h"
 #include "val_null.h"
 #include "val_list.h"
+#include "val_id.h"
 
 #ifndef yyFlexLexer
 #define yyFlexLexer PelBaseFlexLexer

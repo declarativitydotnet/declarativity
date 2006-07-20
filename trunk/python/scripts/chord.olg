@@ -30,13 +30,13 @@ materialize(pingNode, 10, infinity, keys(2)).
 materialize(pendingPing, 10, infinity, keys(2)).  
 
 materialize(references, 240, infinity, keys(2, 3)).  
-materialize(backReference, 240, infinity, keys(2)).  
+materialize(backReference, 240, infinity, keys(1)).  
 materialize(forwardReference, 240, infinity, keys(2)).  
 
 i0 node@NI(NI, N)            :- periodic@NI(NI, E, 0, 1), N := f_sha1(NI).
 i1 pred@NI(NI, P, PI)        :- periodic@NI(NI, E, 0, 1), P := 0x0I, PI:="-".
 i2 nextFingerFix@NI(NI, 0)   :- periodic@NI(NI, E, 0, 1). 
-i3 landmark@NI(NI, LANDMARK) :- periodic@NI(NI, E, 0, 1).
+i3 landmark@NI(NI, "localhost:10000") :- periodic@NI(NI, E, 0, 1).
 
 watch(node).
 watch(pred).
@@ -82,7 +82,7 @@ b1 lookup@LI(LI,K,LI,SI) :- forwardReference@LI(LI, K, SI).
 b2 references@DI(DI, LI, K, SI) :- lookupResults@LI(LI, K, D, DI, E), 
                                    forwardReference@LI(LI, K, SI).
 
-b3 backReference@SI(SI, K, LI) :- references@DI(DI, LI, K, SI).
+/* b3 backReference@SI(SI, K, LI) :- references@DI(DI, LI, K, SI). */
 
 /** Neighbor Selection */
 

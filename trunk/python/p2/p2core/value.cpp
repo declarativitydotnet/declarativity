@@ -45,6 +45,10 @@ scope outer =
     .def("compareTo", &Value::compareTo)
   ; 
 
+  class_<Value::TypeError, boost::shared_ptr<Value::TypeError>, boost::noncopyable>
+        ("TypeError", no_init)
+  ;
+
   enum_<Value::TypeCode>("TypeCode")
     .value("NULLV",         Value::NULLV)
     .value("STR",           Value::STR)
