@@ -15,7 +15,7 @@
 /*
 Try out with
 
-tests/runOverLog doc/narada.plg NONE 0 127.0.0.1:10000 0 "neighbor=127.0.0.1:10001;"
+tests/runOverLog doc/narada.olg NONE 0 127.0.0.1:10000 0 "neighbor=127.0.0.1:10001;"
 */
 
 
@@ -47,13 +47,11 @@ materialize(sequence, infinity, 1, keys(2)).
 materialize(env, infinity, infinity, keys(2,3)).
 materialize(neighbor, infinity, infinity, keys(2)).
 
-/*
 watch(member).
 watch(sequence).
 watch(refreshSequence).
 watch(refresh).
 watch(membersFound).
-*/
 
 watch(report).
 
