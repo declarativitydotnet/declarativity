@@ -62,6 +62,7 @@ demultiplex_LDADD = -lboost_python \
 
 runOverLog_SOURCES = runOverLog.C
 runOverLog_LDADD = -lboost_python \
+	$(top_builddir)/planner/libp2planner.la \
 	$(top_builddir)/overlog/libp2overlog.la \
 	$(top_builddir)/net/libp2net.la \
 	$(top_builddir)/elements/libp2elements.la \
@@ -103,13 +104,13 @@ runPingPong_LDADD = -lboost_python \
 
 overlog_SOURCES	= overlog.C
 overlog_LDADD = -lboost_python \
-	$(top_builddir)/planner/.libs/libp2planner.a \
-	$(top_builddir)/overlog/.libs/libp2overlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a \
-	$(top_builddir)/debugger/.libs/libp2debugger.a
+	$(top_builddir)/planner/libp2planner.la \
+	$(top_builddir)/overlog/libp2overlog.la \
+	$(top_builddir)/net/libp2net.la \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la \
+	$(top_builddir)/debugger/libp2debugger.la
 
 simple_lookup_SOURCES = simple_lookup.C
 simple_lookup_LDADD = -lboost_python \
