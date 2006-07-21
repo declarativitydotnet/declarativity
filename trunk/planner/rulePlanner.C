@@ -211,6 +211,7 @@ void generateAggEvent(PlanContext* pc)
   Parse_Functor* action_functor = curRule->_action->_pf;
   Parse_Functor* event_functor = curRule->_event->_pf;
 
+  ostringstream oss;
   for (int k = 0; k < action_functor->args(); k++) {
     // go through the functor head, but skip the aggField itself    
     Parse_Var* pv = dynamic_cast< Parse_Var* > (action_functor->arg(k));
@@ -220,6 +221,7 @@ void generateAggEvent(PlanContext* pc)
     int pos = pc->_namesTracker->fieldPosition(pv->toString());
     if (k != -1 && k != action_functor->aggregate()) {
       groupByFields.push_back((uint) pos + 1);
+      oss << (pos + 1) << " ";
       aggregateNamesTracker->fieldNames.push_back(pv->toString());
       //  push_back(pc->_namesTracker->fieldNames.at(pos));
     }
@@ -241,6 +243,8 @@ void generateAggEvent(PlanContext* pc)
     aggTable->aggregate(groupByFields,
                         aggFieldBaseTable, // the agg field
                         pa->oper);
+  oss << "," << aggFieldBaseTable;
+  debugRule(pc, "Group by " + oss.str() + "\n");
 
   if (tableAgg == NULL) {
     // Ooops, I couldn't create an aggregate. Complain.
@@ -254,7 +258,8 @@ void generateAggEvent(PlanContext* pc)
 
   ElementSpecPtr aggElement =
     pc->createElementSpec(ElementPtr(new Aggregate("Agg|" + curRule->_ruleID +
-						   "|" + pc->_nodeID, tableAgg)));
+						   "|" + pc->_nodeID + "|" 
+						   + pa->oper, tableAgg)));
   
   ostringstream pelTransformStr;
   pelTransformStr << "\"" << "aggResult|" 

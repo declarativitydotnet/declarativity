@@ -217,6 +217,60 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
     int pos = names->fieldPosition(expr->arg(0)->toString());
     pel << "$" << (pos+1) << " sha1 ";
   }
+  else if (expr->name() == "f_append") {
+    if (expr->args() == 2) {
+      pel << " $" << 1 + names->fieldPosition(expr->arg(1)->toString()) << " ";
+      pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString()) << " ";
+      pel << "lappend "; 
+    } 
+    else if (expr->args() == 1) { // append null
+      pel << " null ";
+      pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString()) << " ";
+      pel << "lappend ";
+    } else {
+      error(pc, "Error in pel generation " + expr->toString());
+    }
+  }
+  else if (expr->name() == "f_member") {
+      if (expr->args() != 2) {
+	std::cerr << "Error in pel generation " << expr->toString() << "\n";
+	exit(-1);
+	return "ERROR.";
+      }
+      pel << " $" << 1 + names->fieldPosition(expr->arg(0)->toString()) << " ";
+      pel << "$" << 1 + names->fieldPosition(expr->arg(1)->toString()) << " ";
+      pel << "member "; 
+  }
+  else if (expr->name() == "f_concat") {
+      if (expr->args() != 2) {
+	std::cerr << "Error in pel generation " << expr->toString() << "\n";
+	exit(-1);
+	return "ERROR.";
+      }
+      pel << " $" << 1 + names->fieldPosition(expr->arg(1)->toString()) << " ";
+      pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString()) << " ";
+      pel << "concat "; 
+  }
+  else if (expr->name() == "f_intersect") {
+      if (expr->args() != 2) {
+	std::cerr << "Error in pel generation " << expr->toString() << "\n";
+	exit(-1);
+	return "ERROR.";
+      }
+      pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString());
+      pel << " $" << 1 + names->fieldPosition(expr->arg(1)->toString()) << " ";
+      pel << "intersect "; 
+  }
+  else if (expr->name() == "f_msintersect") {
+      if (expr->args() != 2) {
+	std::cerr << "Error in pel generation " << expr->toString() << "\n";
+	exit(-1);
+	return "ERROR.";
+      }
+      pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString());
+      pel << " $" << 1 + names->fieldPosition(expr->arg(1)->toString()) << " ";
+      pel << "msintersect "; 
+  } 
   else if (expr->name() == "f_initList") {
     if (expr->args() != 2) {
       error(pc, "Error in pel generation " + expr->toString());
