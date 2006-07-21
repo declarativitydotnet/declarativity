@@ -84,7 +84,7 @@ int main(int argc, char **argv)
       ectxt->rewrite(lctxt.get(), tableStore.get());
 
       boost::shared_ptr< Planner > planner(new Planner(conf, tableStore.get(), false, "127.0.0.1:10000", "0"));
-      boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));
+      boost::shared_ptr< Udp > udp(new Udp("Udp", 12345));
 
       std::vector<RuleStrand*>
       ruleStrands = planner->generateRuleStrands(ectxt);
@@ -135,11 +135,11 @@ int main(int argc, char **argv)
     
     boost::shared_ptr< ECA_Context > ectxt(new ECA_Context()); 
     ectxt->rewrite(lctxt.get(), tableStore.get());
-    fprintf(ecaOutput, lctxt->toString().c_str());
+    fprintf(ecaOutput, ectxt->toString().c_str());
     fclose(ecaOutput);
     
     boost::shared_ptr< Planner > planner(new Planner(conf, tableStore.get(), false, "127.0.0.1:10000", "0"));
-    boost::shared_ptr< Udp > udp(new Udp("Udp", 10000));
+    boost::shared_ptr< Udp > udp(new Udp("Udp", 12345));
     std::vector<RuleStrand*> ruleStrands = planner->generateRuleStrands(ectxt);
     
     for (unsigned k = 0; k < ruleStrands.size(); k++) {
