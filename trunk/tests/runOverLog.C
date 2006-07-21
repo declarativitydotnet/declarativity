@@ -32,6 +32,13 @@
 #include "ol_lexer.h"
 #include "ol_context.h"
 #include "plmb_confgen.h"
+#include "eca_context.h"
+#include "localize_context.h"
+#include "plmb_confgen.h"
+#include "tableStore.h"
+#include "udp.h"
+#include "planner.h"
+#include "ruleStrand.h"
 
 
 #include "table2.h"
@@ -54,13 +61,12 @@ static char * USAGE = "Usage:\n\t runOverLog <overLogFile> <loggingLevel> "
  */
 void
 initializeBaseTables(boost::shared_ptr< OL_Context> ctxt,
-                     boost::shared_ptr<Plmb_ConfGen> plumberConfigGenerator, 
+                     boost::shared_ptr<TableStore> tableStore, 
                      string localAddress,
                      string environment)
 {
   // Put in my own address
-  Table2Ptr envTable =
-    plumberConfigGenerator->getTableByName(localAddress, "env");
+  Table2Ptr envTable = tableStore->getTableByName("env");
   TuplePtr tuple = Tuple::mk();
   ValuePtr envName = Val_Str::mk("env");
   tuple->append(envName);
@@ -129,21 +135,31 @@ startOverLogDataflow(LoggerI::Level level,
 {
   eventLoopInitialize();
   // create dataflow for translated OverLog
+
   PlumberPtr plumber(new Plumber(level));
   Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
+  boost::shared_ptr< TableStore > tableStore(new TableStore(ctxt.get()));  
+  tableStore->initTables(); 
+  
+  boost::shared_ptr< Localize_Context > lctxt(new Localize_Context()); 
+  lctxt->rewrite(ctxt.get(), tableStore.get());  
+  boost::shared_ptr< ECA_Context > ectxt(new ECA_Context()); 
+  ectxt->rewrite(lctxt.get(), tableStore.get());
+  
+  boost::shared_ptr< Planner > planner(new Planner(conf, tableStore.get(), false, 
+						   localAddress, "0"));
+  boost::shared_ptr< Udp > udp(new Udp("Udp", port));
+  std::vector<RuleStrand*> ruleStrands = planner->generateRuleStrands(ectxt);
+  
+  for (unsigned k = 0; k < ruleStrands.size(); k++) {
+    std::cout << ruleStrands.at(k)->toString();
+  }
+  planner->setupNetwork(udp);
+  planner->registerAllRuleStrands(ruleStrands);
+  std::cout << planner->getNetPlanner()->toString() << "\n";
 
-  boost::shared_ptr< Plmb_ConfGen > 
-    plumberConfigGenerator(new Plmb_ConfGen(ctxt.get(), conf,
-                                            false, DEBUG, CC, overLogFile));
-
-  plumberConfigGenerator->createTables(localAddress);
-
-  boost::shared_ptr< Udp > udp(new Udp(localAddress, port));
-  plumberConfigGenerator->clear();
-  plumberConfigGenerator->configurePlumber(udp, localAddress);
-
-  initializeBaseTables(ctxt, plumberConfigGenerator, localAddress, environment);
-   
+  initializeBaseTables(ctxt, tableStore, localAddress, environment);
+  
   if (plumber->install(conf) == 0) {
     warn << "Correctly initialized network of chord lookup flows.\n";
   } else {
@@ -238,11 +254,11 @@ main(int argc, char **argv)
   string thePort(theColon + 1);
   int port = atoi(thePort.c_str());
 
-  // How long should I wait before I begin?
+   // How long should I wait before I begin?
   double delay = atof(argv[5]);
 
   string environment(argv[6]);
-
+ 
   testOverLog(level,
               myAddress,
               port,
