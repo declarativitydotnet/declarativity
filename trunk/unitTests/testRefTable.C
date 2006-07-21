@@ -739,52 +739,37 @@ testRefTable::testInsertRemoveLookupScripts()
 {
   refTableTest t[] =
     {
-      refTableTest("i<0,10>;i<0,15>;i<0,20>;i<0,25>;m<0,10>;" // first one flushed
-                   //      >----------------------->  
-                   "i<0,15>;"
-                   //      >20, 25, 15>
-                   "i<0,30>;f<0,15>;m<0,20>;" // 15 refreshed, 20 not
-                   //      >25, 15, 30>
-                   "i<0,15>;i<0,15>;i<0,35>;m<0,25>;",
+      refTableTest("i<0,10>;i<0,15>;i<0,20>;i<0,25>;f<0,10>;" // first one flushed
+                   //      10, 15, 20, 25
+                   "i<0,15>;f<0,15>;"
+                   //      10, 15x2, 20, 25
+                   "d<0,10>;m<0,10>;"
+                   //      15x2, 20, 25
+                   "i<0,10>;f<0,10>;"
+                   //      10, 15x2, 20, 25
+                   "d<0,15>;f<0,15>;"
+                   //      10, 15, 20, 25
+                   "d<0,15>;m<0,15>;",
+                   //      10, 20, 25
                    __LINE__,
                    RefTable::KEY01),
       
-      refTableTest("i<0,10>;i<0,15>;f<0,15>;m<0,10>;d<0,15>;m<0,15>;",
+      refTableTest("i<0,10>;f<0,10>;i<0,10>;f<0,10>;i<0,15>;m<0,10>;f<0,15>;",
                    __LINE__,
                    RefTable::KEY0),
       
-      refTableTest("i<0,10>;i<0,15>;f<0,15>;f<0,10>;d<0,15>;m<0,15>;"
-                   "f<0,10>;d<0,10>;m<0,15>;m<0,10>;",
+      refTableTest("i<0,10>;i<0,15>;f<0,10>;i<0,10>;f<0,10>;d<0,10>;"
+                   "f<0,10>;i<0,10>;f<0,10>;d<0,10>;f<0,10>;"
+                   "d<0,10>;m<0,10>;",
                    __LINE__,
                    RefTable::KEY01),
       
-      refTableTest("i<0,10>;i<0,15>;m<0,10>;m<0,15>;",
+      refTableTest("i<0,10>;m<0,10>;i<0,10>;m<0,10>;",
                    __LINE__,
                    RefTable::KEYID),
       
       refTableTest("i<0,10>;f<0,10>;d<0,10>;m<0,10>;d<0,10>;m<0,10>;"
-                   "i<0,15>;f<0,15>;",
-                   __LINE__,
-                   RefTable::KEY0),
-      
-      refTableTest("i<0,10>;i<0,15>;i<0,20>;i<0,25>;i<0,30>;"
-                   "i<0,15>;f<0,15>;",
-                   __LINE__,
-                   RefTable::KEY0),
-      
-      refTableTest("i<0,10>;i<0,15>;i<0,20>;i<0,25>;i<0,30>;"
-                   "d<0,15>;m<0,15>;",
-                   __LINE__,
-                   RefTable::KEY0),
-      
-      refTableTest("i<0,10>;i<0,15>;i<0,20>;i<0,25>;i<0,30>;"
-                   "i<0,15>;d<0,15>;m<0,15>;",
-                   __LINE__,
-                   RefTable::KEY0),
-      
-      refTableTest("i<0,10>;d<0,10>;i<0,10>;"
-                   "i<0,15>;i<0,20>;i<0,25>;i<0,30>;"
-                   "i<0,15>;d<0,15>;m<0,15>;",
+                   "i<0,15>;f<0,15>;i<0,10>;f<0,10>;",
                    __LINE__,
                    RefTable::KEY0),
       
@@ -1353,95 +1338,7 @@ testRefTable::testPseudoRandomInsertDeleteSequences()
   srand(0);
 
   {
-    // Create a table with fixed lifetime but no size
-    RefTable t("succ", RefTable::KEY2);
-    for (uint i = 0;
-         i < SIZE + EXTRA_TUPLES;
-         i++) {
-      // Make a random tuple
-      TuplePtr tup = Tuple::mk();
-      
-      // My tuple name
-      tup->append(Val_Str::mk("succ"));
-      
-      // My node address
-      ostringstream nodeID;
-      nodeID << "127.0.0.1:";
-      int port = rand() % 5;
-      nodeID << port;
-      tup->append(Val_Str::mk(nodeID.str()));
-    
-      // My Node identifier
-      unsigned int nestedSeed = rand() % 5;
-      uint32_t words[ID::WORDS];
-      for (uint w = 0;
-           w < ID::WORDS;
-           w++) {
-        words[w] = rand_r(&nestedSeed);
-      }
-      tup->append(Val_ID::mk(ID::mk(words)));
-    
-      tup->freeze();
-    
-      // Choose between insert and delete
-      int r = rand();
-      //    std::cout << "Random number " << r << "\n";
-      if ((r & 1) == 0) {
-        //      std::cout << "Inserting " << tup->toString() << "\n";
-        t.insert(tup);
-      } else {
-        //      std::cout << "Deleting " << tup->toString() << "\n";
-        t.remove(tup);
-      }
-    }
-  }
-  {
-    // Create a table with fixed size but not lifetime
-    RefTable t("succ", RefTable::KEY2);
-    for (uint i = 0;
-         i < SIZE + EXTRA_TUPLES;
-         i++) {
-      // Make a random tuple
-      TuplePtr tup = Tuple::mk();
-      
-      // My tuple name
-      tup->append(Val_Str::mk("succ"));
-      
-      // My node address
-      ostringstream nodeID;
-      nodeID << "127.0.0.1:";
-      int port = rand() % 5;
-      nodeID << port;
-      tup->append(Val_Str::mk(nodeID.str()));
-    
-      // My Node identifier
-      unsigned int nestedSeed = rand() % 5;
-      uint32_t words[ID::WORDS];
-      for (uint w = 0;
-           w < ID::WORDS;
-           w++) {
-        words[w] = rand_r(&nestedSeed);
-      }
-      tup->append(Val_ID::mk(ID::mk(words)));
-    
-      tup->freeze();
-    
-      // Choose between insert and delete
-      int r = rand();
-      //    std::cout << "Random number " << r << "\n";
-      if ((r & 1) == 0) {
-        //      std::cout << "Inserting " << tup->toString() << "\n";
-        t.insert(tup);
-      } else {
-        //      std::cout << "Deleting " << tup->toString() << "\n";
-        t.remove(tup);
-      }
-    }
-  }
-  {
-    // Create a table with fixed lifetime and size
-    boost::posix_time::
-      time_duration expiration(boost::posix_time::milliseconds(200));
+    // Create a table
     RefTable t("succ", RefTable::KEY2);
     for (uint i = 0;
          i < SIZE + EXTRA_TUPLES;
@@ -1499,14 +1396,12 @@ testRefTable_testSuite::testRefTable_testSuite()
   add(BOOST_CLASS_TEST_CASE(&testRefTable::testPrimaryOverwrite, instance));
   add(BOOST_CLASS_TEST_CASE(&testRefTable::testSecondaryEquivalence, instance));
   add(BOOST_CLASS_TEST_CASE(&testRefTable::testAggregates, instance));
-  /*
-  add(BOOST_CLASS_TEST_CASE(&testRefTable::testInsertRemoveLookupScripts, instance));
-  add(BOOST_CLASS_TEST_CASE(&testRefTable::testBatchMultikeyRemovals, instance));
-  add(BOOST_CLASS_TEST_CASE(&testRefTable::testPseudoRandomInsertDeleteSequences, instance));
-  add(BOOST_CLASS_TEST_CASE(&testRefTable::testProjectedLookups, instance));
   add(BOOST_CLASS_TEST_CASE(&testRefTable::testIndexing, instance));
   add(BOOST_CLASS_TEST_CASE(&testRefTable::testBatchRemovals, instance));
-  add(BOOST_CLASS_TEST_CASE(&testRefTable::testUniqueTupleRemovals,
-  instance)); */
+  add(BOOST_CLASS_TEST_CASE(&testRefTable::testBatchMultikeyRemovals, instance));
+  add(BOOST_CLASS_TEST_CASE(&testRefTable::testUniqueTupleRemovals, instance));
+  add(BOOST_CLASS_TEST_CASE(&testRefTable::testProjectedLookups, instance));
+  add(BOOST_CLASS_TEST_CASE(&testRefTable::testPseudoRandomInsertDeleteSequences, instance));
+  add(BOOST_CLASS_TEST_CASE(&testRefTable::testInsertRemoveLookupScripts, instance));
 }
 
