@@ -119,13 +119,11 @@ RefTable::insert(TuplePtr t)
     }
     // Otherwise, tuple has same primary key but is different
     else {
-      // We will replace the existing tuple, so remove it first,
-      // regardless of counter
-      removeTuple(found);
-      // Must move the found iterator forward before reaching the
-      // insertTuple statement below, since after the removal this
-      // iterator position will be invalid
-      found++; 
+      PrimaryIndex::iterator toErase = found;
+      found++;
+      
+      // We will replace the existing tuple, so remove it first
+      removeTuple(toErase);
     }
   }
 
