@@ -115,17 +115,14 @@ s4 delete succ@NI(NI,S,SI) :- node@NI(NI,N),
 
 /** Finger fixing */
 
-/*watch(fFixEvent).
-watch(fFix).
+watch(fFixEvent).
+/*watch(fFix).
 watch(fFixPeriodic).
 watch(eagerFinger).
 watch(nextFingerFix).*/
 watch(finger).
-/*watch(periodicFix).*/
 
-f0 periodicFix@NI(NI,E) :- periodic@NI(NI,E,10).
-
-f1 fFixEvent@NI(NI,E,I) :- periodicFix@NI(NI,E), 
+f1 fFixEvent@NI(NI,E,I) :- periodic@NI(NI,E,10), 
 		   nextFingerFix@NI(NI,I).
 
 f2 fFix@NI(NI,E,I) :- fFixEvent@NI(NI,E,I).
@@ -169,23 +166,23 @@ watch(joinEvent).
 watch(join).
 watch(joinReq). 
 
-c0 joinEvent@NI(NI,E) :- periodic@NI(NI,E,1,2).
+c1 joinEvent@NI(NI,E) :- periodic@NI(NI,E,1,2).
 
-c1 join@NI(NI,E) :- joinEvent@NI(NI,E).
+c2 join@NI(NI,E) :- joinEvent@NI(NI,E).
 
-c2 joinReq@LI(LI,N,NI,E) :- joinEvent@NI(NI,E),
+c3 joinReq@LI(LI,N,NI,E) :- joinEvent@NI(NI,E),
 			 node@NI(NI,N), 
 			 landmark@NI(NI,LI),
 			 LI != "NIL".
 
-c3 succ@NI(NI,N,NI) :- landmark@NI(NI,LI),
+c4 succ@NI(NI,N,NI) :- landmark@NI(NI,LI),
 		       joinEvent@NI(NI,E),
 		       node@NI(NI,N), 
 		       LI == "NIL".
 
-c4 lookup@LI(LI,N,NI,E) :- joinReq@LI(LI,N,NI,E).
+c5 lookup@LI(LI,N,NI,E) :- joinReq@LI(LI,N,NI,E).
 
-c5 succ@NI(NI,S,SI) :- join@NI(NI,E),
+c6 succ@NI(NI,S,SI) :- join@NI(NI,E),
 		    lookupResults@NI(NI,K,S,SI,E).
 
 
@@ -232,11 +229,6 @@ sb8 pred@NI(NI,P,PI) :- node@NI(NI,N),
 			notifyPredecessor@NI(NI,P,PI), 
 			pred@NI(NI,P1,PI1),
 			((PI1 == "NIL") || (P in (P1,N))).
-
-sb8a predList@NI(NI,P,PI,P1,N) :- node@NI(NI,N),
-			notifyPredecessor@NI(NI,P,PI), 
-			pred@NI(NI,P1,PI1).
-
 
 
 /** Connectivity Monitoring */
