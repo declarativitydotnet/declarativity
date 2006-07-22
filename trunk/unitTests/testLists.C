@@ -169,6 +169,62 @@ void testListConcat(ListPtr list1, ListPtr list2)
            << " and " << list2->toString() 
            << " should have been " << test->toString() 
            << " but was " << result->toString();
+   
+      BOOST_CHECK_MESSAGE(result->compareTo(test) == 0, 
+                        message.str().c_str());
+}
+
+void testListCompare(ListPtr L1, ListPtr L2, int expected) {
+   std::string testID;
+   {
+      std::ostringstream ID;
+      ID << "List comparison test.";
+      testID = ID.str();
+   }
+   
+   string expectedString;
+   string resultString;
+      
+   string EQ = "equal";
+   string LT = "less than";
+   string GT = "greater than";
+   
+   int result = L1->compareTo(L2);
+   
+   if(result == 0) {
+      resultString = EQ;
+   } 
+   else if(result > 0) {
+      resultString = GT;
+      result = 1;
+   } 
+   else {
+      resultString = LT;
+      result = -1;
+   }
+   
+   if(expected == 0) {
+      expectedString = EQ; 
+   }
+   else if(expected > 0) {
+      expectedString = GT;
+      expected = 1;
+   } 
+   else {
+      expectedString = LT;
+      expected = -1;
+   }
+   
+   std::ostringstream message;
+   
+   message << testID
+           << "The comparison of lists " << L1->toString() 
+           << " and " << L1->toString() 
+           << " should have been " << expectedString
+           << " but was " << resultString;
+   
+      BOOST_CHECK_MESSAGE(result - expected == 0, 
+                        message.str().c_str());
 }
 
 // ==================
@@ -323,6 +379,42 @@ void testConcat()
    testListConcat(test1, test1);
 }
 
+void testCompare() {
+   // (1,2,3)
+   ListPtr test1 = List::mk();
+   test1->append(Val_Int32::mk(1));
+   test1->append(Val_Int32::mk(2));
+   test1->append(Val_Int32::mk(3));
+   // (2,3,4)
+   ListPtr test2 = List::mk();
+   test2->append(Val_Int32::mk(2));
+   test2->append(Val_Int32::mk(3));
+   test2->append(Val_Int32::mk(4));
+   // (5)
+   ListPtr test3 = List::mk();
+   test3->append(Val_Int32::mk(5));
+   // (1,2,3,4)
+   ListPtr test4 = List::mk();
+   test4->append(Val_Int32::mk(1));
+   test4->append(Val_Int32::mk(2));
+   test4->append(Val_Int32::mk(3));
+   test4->append(Val_Int32::mk(4));
+   
+   testListCompare(test1, test1, 0);
+   
+   testListCompare(test1, test2, -1);
+   testListCompare(test2, test1, 1);
+   
+   testListCompare(test1, test4, -1);
+   testListCompare(test4, test1, 1);
+   
+   testListCompare(test3, test2, 1);
+   testListCompare(test2, test3, -1);
+   
+   testListCompare(test4, test2, -1);
+   testListCompare(test2, test4, 1);
+}
+
 };
 
 #undef TEST_LISTMEMBER
@@ -334,4 +426,5 @@ testLists_testSuite::testLists_testSuite()
   add(BOOST_CLASS_TEST_CASE(&testLists::testIntersection, instance));
   add(BOOST_CLASS_TEST_CASE(&testLists::testMembership, instance));
   add(BOOST_CLASS_TEST_CASE(&testLists::testConcat, instance));
+  add(BOOST_CLASS_TEST_CASE(&testLists::testCompare, instance));
 }
