@@ -18,8 +18,8 @@
     Derived tables will be generated from rules. */
 materialize(link,infinity,infinity,keys(1,2)).
 materialize(path,infinity,infinity,keys(4)).
-materialize(bestPath,infinity,infinity,keys(1,2)).
-materialize(bestPathCost,infinity,infinity,keys(1,2)).
+materialize(bestPath,infinity,infinity,keys(2)).
+materialize(bestPathCost,infinity,infinity,keys(2)).
 
 /* Rules */
 
@@ -27,17 +27,23 @@ watch(link).
 watch(path).
 watch(bestPath).
 watch(bestPathCost).
+watch(pathMember).
 
-r1 path@X(X,Y,C,P) :- link@X(X,Y,C), P:=f_initList(X,Y).
+ro linkZ@Y(X,Y,C) :- link@X(X,Y,C).
+
+r1 path@X(X,Y,C,P) :- link@X(X,Y,C), 
+		      P1:=f_append(X), 
+		      P2:=f_append(Y),
+		      P:=f_concat(P1,P2). 
 
 r2 path@X(X,Y,C,P) :- link@X(X,Z,C1), 
 		     bestPath@Z(Z,Y,C2,P2), 
 		     C:=C1+C2, 
-		     f_inList(P2,X)==0,
-		     P:=f_consList(X,P2).
+		     f_member(P2,X)==0,	        
+		     P1:=f_append(X),
+		     P:=f_concat(P1,P2).
 
 r3 bestPathCost@X(X,Y,min<C>) :- path@X(X,Y,C,P).
 
 r4 bestPath@X(X,Y,C,P) :- bestPathCost@X(X,Y,C), path@X(X,Y,C,P).
-
 
