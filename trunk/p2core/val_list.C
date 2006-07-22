@@ -85,6 +85,6 @@ int Val_List::compareTo(ValuePtr other) const
    } else if(other->typeCode() > Value::LIST) {
       return 1;
    } else {
-      return 0;
+      return L->compareTo(cast(other));
    }
 }
