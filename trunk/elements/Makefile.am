@@ -63,7 +63,7 @@ libp2elements_la_SOURCES = \
 	removed.C \
 	dataflowInstaller.C
 
-# libp2elements_la_LIBADD = 
+libp2elements_la_LIBADD = -lboost_python
 
 INCLUDES = @BOOST_INC@ -I../p2core -I../eventLoop -I../overlog -I../net
 

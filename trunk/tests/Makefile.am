@@ -42,36 +42,36 @@ benchmark_LDADD = $(top_builddir)/p2core/libp2core.la \
 
 
 logger_SOURCES  = logger.C
-logger_LDADD = -lboost_python \
+logger_LDADD =  \
 		$(top_builddir)/elements/libp2elements.la \
 		$(top_builddir)/p2core/libp2core.la \
 		$(top_builddir)/eventLoop/libp2eventLoop.la
 
 
 scheduling_SOURCES = scheduling.C
-scheduling_LDADD = -lboost_python \
+scheduling_LDADD =  \
 	$(top_builddir)/elements/libp2elements.la \
 	$(top_builddir)/p2core/libp2core.la \
 	$(top_builddir)/eventLoop/libp2eventLoop.la
 
 demultiplex_SOURCES = demultiplex.C
-demultiplex_LDADD = -lboost_python \
+demultiplex_LDADD =  \
 	$(top_builddir)/elements/libp2elements.la \
 	$(top_builddir)/p2core/libp2core.la \
 	$(top_builddir)/eventLoop/libp2eventLoop.la
 
 runOverLog_SOURCES = runOverLog.C
-runOverLog_LDADD = -lboost_python \
+runOverLog_LDADD = \
 	$(top_builddir)/planner/libp2planner.la \
 	$(top_builddir)/overlog/libp2overlog.la \
 	$(top_builddir)/net/libp2net.la \
 	$(top_builddir)/elements/libp2elements.la \
 	$(top_builddir)/p2core/libp2core.la \
 	$(top_builddir)/eventLoop/libp2eventLoop.la \
-	$(top_builddir)/debugger/libp2debugger.la
+	$(top_builddir)/debugger/libp2debugger.la 
 
 runChord_SOURCES = runChord.C
-runChord_LDADD = -lboost_python \
+runChord_LDADD =  \
 	$(top_builddir)/planner/libp2planner.la \
 	$(top_builddir)/debugger/libp2debugger.la \
 	$(top_builddir)/overlog/libp2overlog.la \
@@ -81,7 +81,7 @@ runChord_LDADD = -lboost_python \
 	$(top_builddir)/eventLoop/libp2eventLoop.la
 
 runOverLog2_SOURCES = runOverLog2.C
-runOverLog2_LDADD = -lboost_python \
+runOverLog2_LDADD =  \
 	$(top_builddir)/debugger/libp2debugger.la \
 	$(top_builddir)/p2cpp/libp2cpp.la \
 	$(top_builddir)/overlog/libp2overlog.la \
@@ -92,7 +92,7 @@ runOverLog2_LDADD = -lboost_python \
 
 
 runPingPong_SOURCES = runPingPong.C
-runPingPong_LDADD = -lboost_python \
+runPingPong_LDADD =  \
 	$(top_builddir)/debugger/libp2debugger.la \
 	$(top_builddir)/p2cpp/libp2cpp.la \
 	$(top_builddir)/overlog/libp2overlog.la \
@@ -103,7 +103,7 @@ runPingPong_LDADD = -lboost_python \
 
 
 overlog_SOURCES	= overlog.C
-overlog_LDADD = -lboost_python \
+overlog_LDADD =  \
 	$(top_builddir)/planner/libp2planner.la \
 	$(top_builddir)/overlog/libp2overlog.la \
 	$(top_builddir)/net/libp2net.la \
@@ -113,40 +113,40 @@ overlog_LDADD = -lboost_python \
 	$(top_builddir)/debugger/libp2debugger.la
 
 simple_lookup_SOURCES = simple_lookup.C
-simple_lookup_LDADD = -lboost_python \
+simple_lookup_LDADD =  \
 	$(top_builddir)/net/libp2net.la \
 	$(top_builddir)/elements/libp2elements.la \
 	$(top_builddir)/p2core/libp2core.la \
 	$(top_builddir)/eventLoop/libp2eventLoop.la 
 
 lookupGenerator_SOURCES = lookupGenerator.C
-lookupGenerator_LDADD = -lboost_python \
+lookupGenerator_LDADD =  \
 	$(top_builddir)/net/libp2net.la \
 	$(top_builddir)/elements/libp2elements.la \
 	$(top_builddir)/p2core/libp2core.la \
 	$(top_builddir)/eventLoop/libp2eventLoop.la 
 
 basicelements_SOURCES	= basicelements.C
-basicelements_LDADD = -lboost_python \
+basicelements_LDADD =  \
 	$(top_builddir)/elements/libp2elements.la \
 	$(top_builddir)/p2core/libp2core.la \
 	$(top_builddir)/eventLoop/libp2eventLoop.la
 
 testQueue_SOURCES	= testQueue.C
-testQueue_LDADD = -lboost_python \
+testQueue_LDADD =  \
 	$(top_builddir)/elements/libp2elements.la \
 	$(top_builddir)/p2core/libp2core.la \
 	$(top_builddir)/eventLoop/libp2eventLoop.la
 
 udpMessage_SOURCES	= udpMessage.C
-udpMessage_LDADD = -lboost_python \
+udpMessage_LDADD =  \
 	$(top_builddir)/net/libp2net.la \
 	$(top_builddir)/elements/libp2elements.la \
 	$(top_builddir)/p2core/libp2core.la \
 	$(top_builddir)/eventLoop/libp2eventLoop.la
 
 udpListen_SOURCES	= udpListen.C
-udpListen_LDADD = -lboost_python \
+udpListen_LDADD =  \
 	$(top_builddir)/net/libp2net.la \
 	$(top_builddir)/elements/libp2elements.la \
 	$(top_builddir)/p2core/libp2core.la \
