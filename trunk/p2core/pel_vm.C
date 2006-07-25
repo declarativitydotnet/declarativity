@@ -680,6 +680,7 @@ DEF_OP(SIZE) {
 //
 // Integer-only arithmetic operations (mostly bitwise)
 //
+
 DEF_OP(ASR) {
   ValuePtr shiftCount = pop();
   ValuePtr numberToShift = pop();
@@ -691,13 +692,19 @@ DEF_OP(ASL) {
   stackPush((v2 << v1));
 }
 DEF_OP(BIT_AND) {
-  stackPush((pop() & pop()));
+  ValuePtr v1 = pop();
+  ValuePtr v2 = pop();
+  stackPush((v2 & v1));
 }
 DEF_OP(BIT_OR) {
-  stackPush((pop() | pop()));
+  ValuePtr v1 = pop();
+  ValuePtr v2 = pop();
+  stackPush((v2 | v1));
 }
 DEF_OP(BIT_XOR) {
-  stackPush((pop() ^ pop()));
+  ValuePtr v1 = pop();
+  ValuePtr v2 = pop();
+  stackPush((v2 ^ v1));
 }
 DEF_OP(BIT_NOT) {
   stackPush((~pop()));
@@ -795,19 +802,29 @@ DEF_OP(MOD) {
 // Comparison operators
 //
 DEF_OP(EQ) {
-  stackPush(Val_Int32::mk(pop() == pop()));
+  ValuePtr v1 = pop();
+  ValuePtr v2 = pop();
+  stackPush(Val_Int32::mk(v2 == v1));
 }
 DEF_OP(LT) { 
-  stackPush(Val_Int32::mk(pop() > pop())); 
+  ValuePtr v1 = pop();
+  ValuePtr v2 = pop();
+  stackPush(Val_Int32::mk(v2 > v1)); 
 }
 DEF_OP(LTE) { 
-  stackPush(Val_Int32::mk(pop() >= pop())); 
+  ValuePtr v1 = pop();
+  ValuePtr v2 = pop();
+  stackPush(Val_Int32::mk(v2 >= v1)); 
 }
 DEF_OP(GT) { 
-  stackPush(Val_Int32::mk(pop() < pop())); 
+  ValuePtr v1 = pop();
+  ValuePtr v2 = pop();
+  stackPush(Val_Int32::mk(v2 < v1)); 
 }
 DEF_OP(GTE) { 
-  stackPush(Val_Int32::mk(pop() <= pop())); 
+  ValuePtr v1 = pop();
+  ValuePtr v2 = pop();
+  stackPush(Val_Int32::mk(v2 <= v1)); 
 }
 
 //
