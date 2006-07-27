@@ -39,40 +39,51 @@ void Localize_Context::add_rule(OL_Context::Rule* rule)
   _localizedRules.push_back(rule);  
 }
 
-OL_Context::Rule* Localize_Context::sendRewrite(OL_Context::Rule* nextRule, 
-						Parse_Functor *functor, string loc, 
+
+OL_Context::Rule* Localize_Context::addSendRule(OL_Context::Rule* nextRule,
+						std::list<Parse_Term*> newTerms,
+						string newFunctorName,
+						Parse_Functor* functor,
+						string loc, 
+						boost::posix_time::time_duration minLifetime,
+						std::vector<string> fieldNames,
 						TableStore* tableStore)
 {
-
-  ostringstream oss;
-  std::list<Parse_Term*> newTerms;
-  newTerms.push_back(functor);
+  Parse_ExprList* pe = new Parse_ExprList();
+  for (uint k = 0; k < fieldNames.size(); k++) {
+    Parse_Var* pv = new Parse_Var(Val_Str::mk(fieldNames.at(k)));
+    pe->push_back(pv);
+  }
+  
   Parse_Functor* newHead 
-    = new Parse_Functor(
-          new Parse_FunctorName(
-              new Parse_Var(Val_Str::mk(functor->fn->name + nextRule->ruleID 
-					+ loc)), 
-      new Parse_Var(Val_Str::mk(loc))), functor->args_);
+    = new Parse_Functor(new 
+			Parse_FunctorName(new 
+					  Parse_Var(Val_Str::mk(newFunctorName)),
+					  new Parse_Var(Val_Str::mk(loc))), pe);
   OL_Context::Rule* newRule = new OL_Context::Rule(nextRule->ruleID 
-						   + "_local1", newHead, false);
+						   + "Local1", newHead, false);
 
   newRule->terms = newTerms;
-  warn << "  Localizated rule " << newRule->toString() << "\n";
+  warn << "  Localized send rule " << newRule->toString() << "\n";
 
   // Materialize what we send if the source has been materialized
   OL_Context::TableInfo* tableInfo 
     = tableStore->getTableInfo(functor->fn->name);  
-  oss << functor->fn->name << nextRule->ruleID << loc;
-  if (tableInfo != NULL) {
+
+  boost::posix_time::time_duration zeroLifetime =
+    boost::posix_time::seconds(0);
+
+  if (tableInfo != NULL && minLifetime != zeroLifetime) {
     OL_Context::TableInfo* newTableInfo = new OL_Context::TableInfo();
-    newTableInfo->tableName = oss.str();
-    newTableInfo->size = tableInfo->size;
-    newTableInfo->timeout = tableInfo->timeout;
-    newTableInfo->primaryKeys = tableInfo->primaryKeys;
+    newTableInfo->tableName = newFunctorName;
+    newTableInfo->size = tableInfo->size; // XXX arbitrarily set
+    newTableInfo->timeout = minLifetime;
+    newTableInfo->primaryKeys = tableInfo->primaryKeys; // XXX arbitrary primary key set
     tableStore->addTableInfo(newTableInfo);
+    warn << "Old table " << tableInfo->toString() << "\n";
+    warn << " Create table for " << newTableInfo->toString() << "\n";
     tableStore->createTable(newTableInfo);
   }  
-  add_rule(newRule);
   return newRule;
 }
 
@@ -108,34 +119,89 @@ void Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
 
   // go through all the probe terms,
   // do a left to right join ordering transformation
-  PlanContext::FieldNamesTracker* namesTracker 
-    = new PlanContext::FieldNamesTracker();
-  // XXX: Special case works for only 2 predicates. To fix and use recursive method
-  if (probeTerms.size() == 2 && 
+  bool local = true;
+  ostringstream headName;
+  
+  boost::posix_time::time_duration
+    minLifetime(boost::date_time::pos_infin);
+  boost::posix_time::time_duration zeroLifetime = 
+    boost::posix_time::seconds(0);
+
+  uint boundary = 0;
+
+  std::list<Parse_Term*> beforeBoundaryTerms;
+  PlanContext::FieldNamesTracker* namesTracker = NULL;
+  for (uint k = 0; k < probeTerms.size()-1; k++) {
+    if (k == 0) {
+      namesTracker = new PlanContext::FieldNamesTracker(probeTerms.at(k));
+    } else {
+      PlanContext::FieldNamesTracker* otherNamesTracker = 
+	new PlanContext::FieldNamesTracker(probeTerms.at(k));
+      namesTracker->mergeWith(otherNamesTracker->fieldNames);
+    }
+    headName << probeTerms.at(k)->fn->name;
+    OL_Context::TableInfo* tableInfo 
+      = tableStore->getTableInfo(probeTerms.at(k)->fn->name);  
+    if (tableInfo != NULL) {
+      if (minLifetime > tableInfo->timeout) {
+	minLifetime = tableInfo->timeout;
+      }
+    } else {
+      minLifetime = zeroLifetime;
+    }      
+    beforeBoundaryTerms.push_back(probeTerms.at(k));
+    if (probeTerms.at(k)->fn->loc != probeTerms.at(k+1)->fn->loc) {
+      headName << probeTerms.at(k+1)->fn->loc;
+      local = false;
+      boundary = k;      
+      break;
+    }
+  }
+
+  if (local == true) {
+    warn << nextRule->toString() << " is already localized\n";
+    add_rule(nextRule);
+    delete namesTracker;
+    return;
+  }
+
+  warn << headName.str() << " " 
+       << boost::posix_time::to_simple_string(minLifetime) << " " 
+       << boundary << " " << namesTracker->toString() << "\n";
+
+
+  // add a new rule that takes all terms up to boundary, and send them to dst
+  OL_Context::Rule* newRule = addSendRule(nextRule, beforeBoundaryTerms,
+					  headName.str(), probeTerms.at(0),
+					  probeTerms.at(boundary+1)->fn->loc, 
+					  minLifetime, namesTracker->fieldNames, tableStore);
+  add_rule(newRule);
+
+  // recursively call localization on new rule that has
+  std::list<Parse_Term*> newTerms; 
+  newTerms.push_back(newRule->head);
+  for (unsigned k = boundary+1; k < probeTerms.size(); k++) {
+    newTerms.push_back(probeTerms.at(k));
+  }
+  for (unsigned k = 0; k < otherTerms.size(); k++) {
+    newTerms.push_back(otherTerms.at(k));
+  }
+
+  OL_Context::Rule* newRuleTwo 
+    = new OL_Context::Rule(nextRule->ruleID + "Local2", 
+			   nextRule->head, false);
+  
+  newRuleTwo->terms = newTerms;
+  //warn << "Rewrite rule " << newRuleTwo->toString() << "\n";
+  rewriteRule(newRuleTwo, tableStore);
+  
+  
+  /*if g(probeTerms.size() == 2 && 
       probeTerms.at(0)->fn->loc != probeTerms.at(1)->fn->loc) {
     // form a rule sending first term to location of second
-    OL_Context::Rule* newRule = sendRewrite(nextRule, probeTerms.at(0), 
-					    probeTerms.at(1)->fn->loc, 
-					    tableStore);
-    
-    std::list<Parse_Term*> newTerms; 
-    newTerms.push_back(newRule->head);
-    newTerms.push_back(probeTerms.at(1));
-    for (unsigned k = 0; k < otherTerms.size(); k++) {
-      newTerms.push_back(otherTerms.at(k));
-    }
-    OL_Context::Rule* newRuleTwo 
-      = new OL_Context::Rule(nextRule->ruleID + "_local2", 
-			     nextRule->head, false);
 
-    std::list<Parse_Term*>::iterator t = nextRule->terms.begin();
-
-    newRuleTwo->terms = newTerms;
-    add_rule(newRuleTwo);
   } else {
     add_rule(nextRule);
-  }
-  
-  delete namesTracker;
+    }*/
 }
 

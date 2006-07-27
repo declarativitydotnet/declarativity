@@ -23,9 +23,9 @@
 #include "value.h"
 #include "tuple.h"
 #include "ol_context.h"
-#include "localize_context.h"
 #include "parser_util.h"
 #include "tableStore.h"
+#include "localize_context.h"
 
 class Parse_Event 
 {
@@ -78,7 +78,6 @@ public:
   std::vector<Parse_Term*> _selectAssignTerms;
   bool _aggWrap;
 };
-
 
 class ECA_Context
 {

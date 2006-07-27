@@ -26,6 +26,7 @@
 #include "parser_util.h"
 #include "tableStore.h"
 
+
 class Localize_Context
 {
 
@@ -37,13 +38,16 @@ public:
   
 private:
   void rewriteRule(OL_Context::Rule* rule, TableStore* tableStore);
-  OL_Context::Rule* sendRewrite(OL_Context::Rule* nextRule, 
-				Parse_Functor *functor, string loc, 
-				TableStore* tableStore);
-  
+  OL_Context::Rule* addSendRule(OL_Context::Rule* nextRule,
+				std::list<Parse_Term*> newTerms,
+				string newFunctorName,
+				Parse_Functor* functor,
+				string loc, 
+				boost::posix_time::time_duration minLifetime,
+				std::vector<string> fieldNames,
+				TableStore* tableStore);  
   void add_rule(OL_Context::Rule* rule);
   std::vector<OL_Context::Rule* > _localizedRules;
-
 };
 
 typedef boost::shared_ptr<Localize_Context> Local_ContextPtr;

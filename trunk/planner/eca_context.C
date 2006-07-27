@@ -94,9 +94,9 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
 
     // create an event
     ostringstream oss;
-    oss << rule->ruleID << "_eca" << count;    
-    ECA_Rule* eca_insert_rule = new ECA_Rule(oss.str() + "_ins");    
-    ECA_Rule* eca_delete_rule = new ECA_Rule(oss.str() + "_del");    
+    oss << rule->ruleID << "Eca" << count;    
+    ECA_Rule* eca_insert_rule = new ECA_Rule(oss.str() + "Ins");    
+    ECA_Rule* eca_delete_rule = new ECA_Rule(oss.str() + "Del");    
 
     // delete functor generated from delete event
     ValuePtr name = Val_Str::mk(rule->head->fn->name + "delete");
@@ -134,9 +134,9 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
       OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);
       if (headTableInfo != NULL) {
         ostringstream oss;
-	oss << rule->ruleID << "_eca" << count << "_remote";    
+	oss << rule->ruleID << "Eca" << count << "Remote";    
 	ECA_Rule* eca_insert_rule1 
-	  = new ECA_Rule(oss.str() + "_ins");    
+	  = new ECA_Rule(oss.str() + "Ins");    
 	eca_insert_rule1->_event 
 	  = new Parse_Event(rule->head, Parse_Event::RECV);
 	eca_insert_rule1->_action 
@@ -144,7 +144,7 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
 	add_rule(eca_insert_rule1);
 
 	ECA_Rule* eca_delete_rule1 
-	  = new ECA_Rule(oss.str() + "_del");    
+	  = new ECA_Rule(oss.str() + "Del");    
 	eca_delete_rule1->_event 
 	  = new Parse_Event(deleteFunctor, Parse_Event::RECV);
 	eca_delete_rule1->_action 
@@ -205,7 +205,7 @@ void ECA_Context::generateActionHead(OL_Context::Rule* rule, string bodyLoc,
       OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);
       if (headTableInfo != NULL) {
         ostringstream oss;
-	oss << rule->ruleID << "_eca" << "_remote";    
+	oss << rule->ruleID << "Eca" << "Remote";    
 	ECA_Rule* eca_rule1 = new ECA_Rule(oss.str());    
 	eca_rule1->_event = new Parse_Event(rule->head, Parse_Event::RECV);
 	if (rule->deleteFlag) {
