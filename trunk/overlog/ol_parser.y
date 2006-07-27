@@ -94,17 +94,19 @@
   Parse_ExprList	*u_exprlist;
   Parse_Expr		*v;
   Parse_AggTerm         *u_aggterm;
+  Parse_Vector      *u_vector;
 }
 
 %type<u_termlist>    termlist;
-%type<u_exprlist>    functorbody functorargs functionargs primarykeys keylist; 
+%type<u_exprlist>    functorbody functorargs functionargs vectorentries primarykeys keylist; 
 %type<u_functorname> functorname;
 %type<u_term>        term functor assign select;
 %type<u_aggterm>     aggview;
-%type<v>             functorarg functionarg tablearg atom rel_atom math_atom function math_expr bool_expr range_expr range_atom aggregate;
+%type<v>             functorarg functionarg tablearg atom rel_atom math_atom function math_expr bool_expr range_expr range_atom aggregate vectorentry vectoratom;
 %type<u_boper>       rel_oper;
 %type<u_moper>       math_oper;
 %type<u_aoper>       agg_oper;
+%type<u_vector>  vector_expr;
 %%
 
 program:	OL_EOF { YYACCEPT; }
@@ -297,6 +299,8 @@ math_expr:	math_expr math_oper math_atom
 			{ $$ = new Parse_Math($2, $1, $3 ); }
 		| math_atom math_oper OL_ID math_atom
 			{ $$ = new Parse_Math($2, $1, $4, true ); }
+        | vectoratom
+            { $$ = $1; }
 		;
 
 math_atom:	atom 
@@ -333,9 +337,27 @@ range_atom:	math_expr
 			{ $$ = $1; }
 		;
 
+vector_expr: OL_LSQUB vectorentries OL_RSQUB
+            { $$ = new Parse_Vector($2); }
+
+vectorentries: vectorentry {
+             $$ = new Parse_ExprList();
+             $$->push_front($1); } 
+       | vectorentry OL_COMMA vectorentries {
+       			$3->push_front($1); 
+			$$=$3; }
+		;
+
+vectorentry: atom { $$ = $1; };  
+
+vectoratom : OL_VAR OL_LSQUB vectorentry OL_RSQUB {
+            $$ = new Parse_VecAtom($1, $3);
+		};
 
 atom:		OL_VALUE | OL_VAR | OL_STRING | OL_NULL
 			{ $$ = $1; }
+        | vector_expr
+            { $$ = $1; }
 		| OL_NOW
 			{ $$ = Parse_Expr::Now; }
 		;

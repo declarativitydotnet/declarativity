@@ -260,6 +260,52 @@ string Parse_Function::toString() {
   return f.str();
 }
 
+string Parse_Vector::toString() {
+  ostringstream f;
+  f << "[";
+  for (int i = 0; i < offsets(); i++) {
+    f << offset(i)->toString();
+    if (i+1 < offsets()) f << ", ";
+  }
+  f << "]";
+  return f.str();
+}
+
+bool Parse_Vector::operator==(const Parse_Expr &e){
+  try {
+    const Parse_Vector& v = dynamic_cast<const Parse_Vector&>(e);
+	int o1 = offsets();
+	int o2 = v.offsets();
+	if (o1 == o2) {
+	  for (int i = 0; i < offsets(); i++) {
+		if (offset(i) != v.offset(i))
+		  return(false);
+	  }
+	  return(true);
+	}
+	else return(false);
+  } catch (std::bad_cast e) {
+    return false;
+  }
+}
+
+bool Parse_VecAtom::operator==(const Parse_Expr &e)
+{ 
+	const Parse_VecAtom& v2 = dynamic_cast<const Parse_VecAtom&>(e);
+	if (v == v2.v && offset_ == v2.offset())
+	  return (true);
+	else return(false);
+}
+
+string Parse_VecAtom::toString() {
+  ostringstream f;
+  f << v->toString() << "[";
+  offset_->toString();
+  f << "]";
+  return f.str();
+}
+
+
 string Parse_AggTerm::toString() {
 
   ostringstream aggFieldStr;
@@ -280,8 +326,8 @@ string Parse_AggTerm::toString() {
   for (unsigned k = 0; k < _aggFields->size(); k++) {
     aggFieldStr << _aggFields->at(k)->toString();
     if (k != _aggFields->size() - 1) {
-      aggFieldStr << ", ";
-    }
+      aggFieldStr << ", "; 
+   }
   }
   aggFieldStr << ")";
   

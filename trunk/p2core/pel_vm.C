@@ -37,6 +37,7 @@
 #include "val_tuple.h"
 #include "val_time.h"
 #include "val_id.h"
+#include "val_vector.h"
 #include "oper.h"
 #include "loop.h"
 
@@ -566,6 +567,29 @@ DEF_OP(L_MULTISET_INTERSECT) {
    stackPush(Val_List::mk(l1->multiset_intersect(l2)));
 }
 
+// Vector operations
+DEF_OP(V_INITVEC) {
+  uint64_t sz = pop_unsigned();
+  ValuePtr vector = Val_Vector::mk2(sz);
+  stackPush(vector);
+}
+
+DEF_OP(V_GETOFFSET) {
+   int64_t offset = pop_unsigned();
+   ValuePtr val1 = stackTop(); stackPop();
+   VectorPtr v1 = Val_Vector::cast(val1);
+   stackPush((*v1)[offset]);
+}
+
+
+DEF_OP(V_SETOFFSET) {
+   ValuePtr val1 = stackTop(); stackPop();
+   int64_t offset = pop_unsigned();
+   ValuePtr val2 = stackTop(); stackPop();
+   VectorPtr v2 = Val_Vector::cast(val2);
+   (*v2)[offset] = val1;
+   stackPush(Val_Vector::mk(v2));
+}
 
 //
 // Boolean operations

@@ -43,12 +43,12 @@ public:
 
   // Constructors
   Val_Matrix(MatrixPtr mp) : M(mp) {};
-  Val_Matrix(size_t size1, size_t size2) { MatrixPtr p(new ValPtrMatrix(size1,size2)); M = p;}
+  Val_Matrix(uint64_t &size1, uint64_t &size2) { MatrixPtr p(new ValPtrMatrix(size1,size2)); M = p;}
   virtual ~Val_Matrix() {};
 
   // Factory
   static ValuePtr mk(MatrixPtr mp) { ValuePtr p(new Val_Matrix(mp)); return p; };
-  static ValuePtr mk2(size_t size1, size_t size2) { ValuePtr p(new Val_Matrix(size1,size2)); return p; };
+  static ValuePtr mk2(uint64_t &size1, uint64_t &size2) { ValuePtr p(new Val_Matrix(size1,size2)); return p; };
   
   // strict comparison
   int compareTo(ValuePtr v) const;
@@ -63,8 +63,8 @@ public:
   const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
 
   // manipulate matrix entries
-  void insert(size_t i1, size_t i2, ValuePtr vp) { (*M)(i1,i2) = vp; };
-  void erase(size_t i1, size_t i2) { (*M)(i1,i2).reset(); };
+  void insert(uint64_t &i1, uint64_t &i2, ValuePtr &vp) { (*M)(i1,i2) = vp; };
+  void erase(uint64_t &i1, uint64_t &i2) { (*M)(i1,i2).reset(); };
 
       
   static const opr::Oper* oper_;

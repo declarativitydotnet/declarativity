@@ -43,12 +43,12 @@ public:
 
   // Constructors
   Val_Vector(VectorPtr vp) : V(vp) {};
-  Val_Vector(size_t size) { VectorPtr p(new ValPtrVector(size)); V = p;}
+  Val_Vector(uint64_t &size) { VectorPtr p(new ValPtrVector(size)); V = p;}
   virtual ~Val_Vector() {};
 
   // Factory
   static ValuePtr mk(VectorPtr vp) { ValuePtr p(new Val_Vector(vp)); return p; };
-  static ValuePtr mk2(size_t size) { ValuePtr p(new Val_Vector(size)); return p; };
+  static ValuePtr mk2(uint64_t &size) { ValuePtr p(new Val_Vector(size)); return p; };
   
   // strict comparison
   int compareTo(ValuePtr v) const;
@@ -61,9 +61,10 @@ public:
   const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
 
   // manipulate vector entries
-  void insert(size_t i, ValuePtr vp) { (*V)[i] = vp; };
-  void erase(size_t i) { (*V)[i].reset(); };
-      
+  void insert(uint64_t &i, ValuePtr vp) { (*V)[i] = vp; };
+  void erase(uint64_t &i) { (*V)[i].reset(); };
+  // ValuePtr operator[] (uint64_t &i) { return (*V)[i]; }
+
   static const opr::Oper* oper_;
    
 private:

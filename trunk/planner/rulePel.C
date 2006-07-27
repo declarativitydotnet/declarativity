@@ -19,7 +19,9 @@
 #ifndef __PL_RULEPEL_C__
 #define __PL_RULEPEL_C__
 
+string pelMath(PlanContext* pc, Parse_Math *expr);
 string pelFunction(PlanContext* pc, Parse_Function *expr);
+string pelBool(PlanContext* pc, Parse_Bool *expr);
 
 void error(string msg)
 {
@@ -36,70 +38,75 @@ void error(PlanContext* pc, string msg)
   exit(-1);
 }
 
-string pelMath(PlanContext* pc, Parse_Math *expr) 
+// convert expression to Pel
+void expr2Pel(PlanContext* pc, ostringstream &pel, Parse_Expr *e) 
 {
   PlanContext::FieldNamesTracker* names = pc->_namesTracker;
   Parse_Var*  var;
   Parse_Val*  val;
-  Parse_Math* math;
-  Parse_Function* fn  = NULL;
-  ostringstream  pel;  
+  Parse_Bool     *b   = NULL;
+  Parse_Math     *m   = NULL;
+  Parse_Function *f   = NULL; 
+  Parse_Vector   *v   = NULL;
+  Parse_VecAtom  *va  = NULL;
 
+  if ((var = dynamic_cast<Parse_Var*>(e)) != NULL) {
+	// expr is a variable
+	int pos = names->fieldPosition(e->toString());
+	if (pos < 0) {
+	  error(pc, "Error parsing Pel expression " + e->toString());
+	}
+	pel << "$" << (pos+1) << " ";
+  }
+  else if ((val = dynamic_cast<Parse_Val*>(e)) != NULL) {
+	// expr is a constant
+	if (val->v->typeCode() == Value::STR)
+	  pel << "\"" << val->toString() << "\"" << " "; 
+	else pel << val->toString() << " "; 
+	if (val->id()) pel << "->u32 ->id "; 
+  }
+  else if (e == Parse_Expr::Now)
+    pel << "now "; 
+  else if ((b = dynamic_cast<Parse_Bool*>(e)) != NULL)
+    pel << pelBool(pc, b);
+  else if ((m = dynamic_cast<Parse_Math*>(e)) != NULL) {
+    string pelMathStr = pelMath(pc, m);
+    pel << pelMathStr;
+  }
+  else if ((f = dynamic_cast<Parse_Function*>(e)) != NULL)
+    pel << pelFunction(pc, f);
+  else if ((v=dynamic_cast<Parse_Vector*>(e)) != NULL) {
+	pel << v->offsets() << " initvec ";
+	for (int i = 0; i < v->offsets(); i++) {
+	  pel << i << " " << v->offset(i)->toString() << " setvectoroffset ";
+	}
+  }
+  else if ((va=dynamic_cast<Parse_VecAtom*>(e)) != NULL) {
+	int pos2 = names->fieldPosition(va->v->toString());
+	if (pos2 < 0) {
+	  error(pc, "Error parsing Pel vector variable " + va->v->toString());
+	}
+	pel << " $" << (pos2+1) << " ";
+	expr2Pel(pc, pel, va->offset_);
+	pel << " getvectoroffset ";
+  }
+  else {    
+	// TODO: throw/signal some kind of error
+	error(pc, "Error parsing Pel expression " + e->toString());
+  }
+}
+
+string pelMath(PlanContext* pc, Parse_Math *expr) 
+{
+  ostringstream  pel;  
 
   if (expr->id && expr->oper == Parse_Math::MINUS) {
     Parse_Expr *tmp = expr->lhs;
     expr->lhs = expr->rhs;
     expr->rhs = tmp;
   }
-
-  if ((var = dynamic_cast<Parse_Var*>(expr->lhs)) != NULL) {
-    int pos = names->fieldPosition(var->toString());
-    if (pos < 0) {
-      error(pc, "Pel math error " + expr->toString());
-    }
-    pel << "$" << (pos+1) << " ";
-  }
-  else if ((val = dynamic_cast<Parse_Val*>(expr->lhs)) != NULL) {
-    if (val->v->typeCode() == Value::STR)
-      pel << "\"" << val->toString() << "\"" << " "; 
-    else pel << val->toString() << " "; 
-
-    if (val->id()) pel << "->u32 ->id "; 
-    else if (expr->id) pel << "->u32 ->id "; 
-  }
-  else if ((math = dynamic_cast<Parse_Math*>(expr->lhs)) != NULL) {
-    pel << pelMath(pc, math); 
-  }
-  else if ((fn = dynamic_cast<Parse_Function*>(expr->lhs)) != NULL) {
-    pel << pelFunction(pc, fn); 
-  }
-  else {    
-    // TODO: throw/signal some kind of error
-    error(pc, "Pel Math error " + expr->toString());
-  }
-
-  if ((var = dynamic_cast<Parse_Var*>(expr->rhs)) != NULL) {
-    int pos = names->fieldPosition(var->toString());
-    if (pos < 0) {
-      error(pc, "Pel Math error " + expr->toString());
-    }
-    pel << "$" << (pos+1) << " ";
-  }
-  else if ((val = dynamic_cast<Parse_Val*>(expr->rhs)) != NULL) {    
-    if (val->v->typeCode() == Value::STR)
-      pel << "\"" << val->toString() << "\"" << " "; 
-    else pel << val->toString() << " "; 
-
-    if (val->id()) pel << "->u32 ->id "; 
-    else if (expr->id) pel << "->u32 ->id "; 
-  }
-  else if ((math = dynamic_cast<Parse_Math*>(expr->rhs)) != NULL) {
-    pel << pelMath(pc, math); 
-  }
-  else {
-    // TODO: throw/signal some kind of error
-    error(pc, "Math error " + expr->toString());
-  }
+  expr2Pel(pc, pel, expr->lhs);
+  expr2Pel(pc, pel, expr->rhs);
 
   switch (expr->oper) {
     case Parse_Math::LSHIFT:  pel << (expr->id ? "<<id "      : "<< "); break;
@@ -119,9 +126,6 @@ string pelMath(PlanContext* pc, Parse_Math *expr)
 string pelRange(PlanContext* pc, Parse_Bool *expr) 
 {
   PlanContext::FieldNamesTracker* names = pc->_namesTracker;
-  Parse_Var*   var       = NULL;
-  Parse_Val*   val       = NULL;
-  Parse_Math*  math      = NULL;
   Parse_Var*   range_var = dynamic_cast<Parse_Var*>(expr->lhs);
   Parse_Range* range     = dynamic_cast<Parse_Range*>(expr->rhs);
   ostringstream pel;
@@ -141,49 +145,8 @@ string pelRange(PlanContext* pc, Parse_Bool *expr)
   }
   pel << "$" << (pos + 1) << " ";
 
-  if ((var = dynamic_cast<Parse_Var*>(range->lhs)) != NULL) {
-    pos = names->fieldPosition(var->toString());
-    if (pos < 0) {
-      std::cerr << "Error in pel generation " << expr->toString() << "\n";
-      exit(-1);
-      return "ERROR";
-    }
-    pel << "$" << (pos + 1) << " ";
-  }
-  else if ((val = dynamic_cast<Parse_Val*>(range->lhs)) != NULL) {
-    pel << val->toString() << " ";
-  }
-  else if ((math = dynamic_cast<Parse_Math*>(range->lhs)) != NULL) {
-   pel << pelMath(pc, math);
-  }
-  else {
-    std::cerr << "Error in pel generation " << expr->toString() << "\n";
-    exit(-1);
-    return "ERROR";
-  }
-
-  if ((var = dynamic_cast<Parse_Var*>(range->rhs)) != NULL) {
-    pos = names->fieldPosition(var->toString());
-    if (pos < 0) {
-      std::cerr << "Error in pel generation " << expr->toString() << "\n";
-      exit(-1);      
-      return "ERROR";
-    }
-    pel << "$" << (pos + 1) << " ";
-  }
-  else if ((val = dynamic_cast<Parse_Val*>(range->rhs)) != NULL) {
-    pel << val->toString() << " ";
-  }
-  else if ((math = dynamic_cast<Parse_Math*>(range->rhs)) != NULL) {
-   pel << pelMath(pc, math);
-  }
-  else {
-    std::cerr << "Error in pel generation " << expr->toString() << "\n";
-    exit(-1);
-
-    return "ERROR";
-  }
-
+  expr2Pel(pc, pel, range->lhs);
+  expr2Pel(pc, pel, range->rhs);
   switch (range->type) {
     case Parse_Range::RANGEOO: pel << "()id "; break;
     case Parse_Range::RANGEOC: pel << "(]id "; break;
@@ -198,7 +161,6 @@ string pelRange(PlanContext* pc, Parse_Bool *expr)
 string pelFunction(PlanContext* pc, Parse_Function *expr) 
 {
   ostringstream pel;
-  PlanContext::FieldNamesTracker* names = pc->_namesTracker;
 
   if (expr->name() == "f_coinFlip") {
     Val_Double &val = dynamic_cast<Val_Double&>(*expr->arg(0)->v);
@@ -214,18 +176,19 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
     if (expr->args() != 1) {
       error(pc, "Error in pel generation " + expr->toString());
     }
-    int pos = names->fieldPosition(expr->arg(0)->toString());
-    pel << "$" << (pos+1) << " sha1 ";
+	expr2Pel(pc, pel, expr->arg(0));
+	pel << "sha1 ";
   }
+  // functions on lists
   else if (expr->name() == "f_append") {
     if (expr->args() == 2) {
-      pel << " $" << 1 + names->fieldPosition(expr->arg(1)->toString()) << " ";
-      pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString()) << " ";
+	  expr2Pel(pc, pel, expr->arg(1));
+	  expr2Pel(pc, pel, expr->arg(0));
       pel << "lappend "; 
     } 
     else if (expr->args() == 1) { // append null
       pel << " null ";
-      pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString()) << " ";
+	  expr2Pel(pc, pel, expr->arg(0));
       pel << "lappend ";
     } else {
       error(pc, "Error in pel generation " + expr->toString());
@@ -237,8 +200,8 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
 	exit(-1);
 	return "ERROR.";
       }
-      pel << " $" << 1 + names->fieldPosition(expr->arg(0)->toString()) << " ";
-      pel << "$" << 1 + names->fieldPosition(expr->arg(1)->toString()) << " ";
+	  expr2Pel(pc, pel, expr->arg(0));
+	  expr2Pel(pc, pel, expr->arg(1));
       pel << "member "; 
   }
   else if (expr->name() == "f_concat") {
@@ -247,8 +210,8 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
 	exit(-1);
 	return "ERROR.";
       }
-      pel << " $" << 1 + names->fieldPosition(expr->arg(1)->toString()) << " ";
-      pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString()) << " ";
+	  expr2Pel(pc, pel, expr->arg(1));
+	  expr2Pel(pc, pel, expr->arg(0));
       pel << "concat "; 
   }
   else if (expr->name() == "f_intersect") {
@@ -257,8 +220,8 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
 	exit(-1);
 	return "ERROR.";
       }
-      pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString());
-      pel << " $" << 1 + names->fieldPosition(expr->arg(1)->toString()) << " ";
+	  expr2Pel(pc, pel, expr->arg(0));
+	  expr2Pel(pc, pel, expr->arg(1));
       pel << "intersect "; 
   }
   else if (expr->name() == "f_msintersect") {
@@ -267,24 +230,24 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
 	exit(-1);
 	return "ERROR.";
       }
-      pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString());
-      pel << " $" << 1 + names->fieldPosition(expr->arg(1)->toString()) << " ";
+	  expr2Pel(pc, pel, expr->arg(0));
+	  expr2Pel(pc, pel, expr->arg(1));
       pel << "msintersect "; 
   } 
   else if (expr->name() == "f_initList") {
     if (expr->args() != 2) {
       error(pc, "Error in pel generation " + expr->toString());
     }
-    pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString());
-    pel << " $" << 1 + names->fieldPosition(expr->arg(1)->toString()) << " ";
+	expr2Pel(pc, pel, expr->arg(0));
+	expr2Pel(pc, pel, expr->arg(1));
     pel << "initlist "; 
   }
   else if (expr->name() == "f_consList") {
     if (expr->args() != 2) {
       error(pc, "Error in pel generation " + expr->toString());
     }
-    pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString());
-    pel << " $" << 1 + names->fieldPosition(expr->arg(1)->toString()) << " ";
+	expr2Pel(pc, pel, expr->arg(0));
+	expr2Pel(pc, pel, expr->arg(1));
     pel << "conslist "; 
   } 
   else if (expr->name() == "f_inList") {
@@ -293,8 +256,8 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
       exit(-1);
       return "ERROR.";
     }
-    pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString());
-    pel << " $" << 1 + names->fieldPosition(expr->arg(1)->toString()) << " ";
+	expr2Pel(pc, pel, expr->arg(0));
+	expr2Pel(pc, pel, expr->arg(1));
     pel << "inlist "; 
   }
   else if (expr->name() == "f_removeLast") {
@@ -303,7 +266,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
       exit(-1);
       return "ERROR.";
     }
-    pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString()) << " ";
+	expr2Pel(pc, pel, expr->arg(0));
     pel << "removeLast "; 
   }
   
@@ -313,7 +276,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
       exit(-1);
       return "ERROR.";
     }
-    pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString()) << " ";
+	expr2Pel(pc, pel, expr->arg(0));
     pel << "last "; 
   }
 
@@ -323,10 +286,33 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
       exit(-1);
       return "ERROR.";
     }
-    pel << "$" << 1 + names->fieldPosition(expr->arg(0)->toString()) << " ";
+	expr2Pel(pc, pel, expr->arg(0));
     pel << "size "; 
   }
   
+  // functions on vectors
+  else if (expr->name() == "f_getVectorOffset") {
+    if (expr->args() != 2) {
+      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      exit(-1);
+      return "ERROR.";
+    }
+   	expr2Pel(pc, pel, expr->arg(0));
+	expr2Pel(pc, pel, expr->arg(1));
+	pel << " getvectoroffset "; 
+  }
+
+  else if (expr->name() == "f_setVectorOffset") {
+    if (expr->args() != 3) {
+      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      exit(-1);
+      return "ERROR.";
+    }
+   	expr2Pel(pc, pel, expr->arg(0));
+	expr2Pel(pc, pel, expr->arg(1));
+	expr2Pel(pc, pel, expr->arg(2));
+    pel << "setvectoroffset "; 
+  }
 
   else {
     std::cerr << "Error in pel generation " << expr->toString() << "\n";
@@ -340,77 +326,12 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
 
 string pelBool(PlanContext* pc, Parse_Bool *expr) 
 {
-  PlanContext::FieldNamesTracker* names = pc->_namesTracker;
-  Parse_Var*      var = NULL;
-  Parse_Val*      val = NULL;
-  Parse_Function* fn  = NULL;
-  Parse_Math*     m   = NULL;
-  Parse_Bool*     b   = NULL;
   ostringstream   pel;  
 
   if (expr->oper == Parse_Bool::RANGE) return pelRange(pc, expr);
 
-  bool strCompare = false;
-  if ((var = dynamic_cast<Parse_Var*>(expr->lhs)) != NULL) {
-    int pos = names->fieldPosition(var->toString());
-    pel << "$" << (pos+1) << " ";
-  }
-  else if ((val = dynamic_cast<Parse_Val*>(expr->lhs)) != NULL) {
-    if (val->v->typeCode() == Value::STR) { 
-      strCompare = true; 
-      pel << "\"" << val->toString() << "\" "; 
-    } else {
-      strCompare = false;
-      pel << val->toString() << " "; 
-    }
-  }
-  else if ((b = dynamic_cast<Parse_Bool*>(expr->lhs)) != NULL) {
-    pel << pelBool(pc, b); 
-  }
-  else if ((m = dynamic_cast<Parse_Math*>(expr->lhs)) != NULL) {
-    pel << pelMath(pc, m); 
-  }
-  else if ((fn = dynamic_cast<Parse_Function*>(expr->lhs)) != NULL) {
-      pel << pelFunction(pc, fn); 
-  }
-  else {
-    // TODO: throw/signal some kind of error
-    std::cerr << "Error in pel generation " << expr->toString() << "\n";
-    exit(-1);
-    return "UNKNOWN BOOL OPERAND ERROR";
-  }
-
-  if (expr->rhs != NULL) {
-    if ((var = dynamic_cast<Parse_Var*>(expr->rhs)) != NULL) {
-      int pos = names->fieldPosition(var->toString());
-      pel << "$" << (pos+1) << " ";
-    }
-    else if ((val = dynamic_cast<Parse_Val*>(expr->rhs)) != NULL) {      
-      if (val->v->typeCode() == Value::STR) { 
-	strCompare = true; 
-	pel << "\"" << val->toString() << "\" "; 
-      } else {
-	strCompare = false;
-	pel << val->toString() << " "; 
-      }
-    }
-    else if ((b = dynamic_cast<Parse_Bool*>(expr->rhs)) != NULL) {
-      pel << pelBool(pc, b); 
-    }
-    else if ((m = dynamic_cast<Parse_Math*>(expr->rhs)) != NULL) {
-      pel << pelMath(pc, m); 
-    }
-    else if ((fn = dynamic_cast<Parse_Function*>(expr->rhs)) != NULL) {
-      pel << pelFunction(pc, fn); 
-    }
-    else {
-      // TODO: throw/signal some kind of error
-      std::cerr << "Error in pel generation " << expr->toString() << "\n";
-      exit(-1);
-      return "UNKNOWN BOOL OPERAND ERROR";
-    }
-  }
-
+  expr2Pel(pc, pel, expr->lhs);
+  expr2Pel(pc, pel, expr->rhs);
   switch (expr->oper) {
     case Parse_Bool::NOT: pel << "not "; break;
     case Parse_Bool::AND: pel << "and "; break;
@@ -454,35 +375,8 @@ void pelAssign(PlanContext* pc, Parse_Assign* expr, int assignID)
   ostringstream pel;
   ostringstream pelAssign;
   Parse_Var      *a   = dynamic_cast<Parse_Var*>(expr->var);
-  Parse_Var      *var = NULL;
-  Parse_Val      *val = NULL;
-  Parse_Bool     *b   = NULL;
-  Parse_Math     *m   = NULL;
-  Parse_Function *f   = NULL; 
 
-  if (expr->assign == Parse_Expr::Now)
-    pelAssign << "now "; 
-  else if ((b = dynamic_cast<Parse_Bool*>(expr->assign)) != NULL)
-    pelAssign << pelBool(pc, b);
-  else if ((m = dynamic_cast<Parse_Math*>(expr->assign)) != NULL) {
-    string pelMathStr = pelMath(pc, m);
-    pelAssign << pelMathStr;
-  }
-  else if ((f = dynamic_cast<Parse_Function*>(expr->assign)) != NULL)
-    pelAssign << pelFunction(pc, f);
-  else if ((var=dynamic_cast<Parse_Var*>(expr->assign)) != NULL && 
-           pc->_namesTracker->fieldPosition(var->toString()) >= 0)                        
-    pelAssign << "$" << (pc->_namesTracker->fieldPosition(var->toString())+1) << " ";
-  else if ((val=dynamic_cast<Parse_Val*>(expr->assign)) != NULL) {
-    if (val->v->typeCode() == Value::STR) { 
-      pelAssign << "\"" << val->toString() << "\" ";
-    } else {
-      pelAssign << val->toString() << " ";
-    }
-  } else {
-    std::cerr << "ASSIGN ERROR!\n";
-    assert(0);
-  }
+  expr2Pel(pc, pelAssign, expr->assign);
    
   int pos = pc->_namesTracker->fieldPosition(a->toString());
   for (int k = 0; k < int(pc->_namesTracker->fieldNames.size()+1); k++) {

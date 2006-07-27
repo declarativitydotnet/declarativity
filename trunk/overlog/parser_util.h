@@ -170,6 +170,35 @@ public:
   Parse_ExprList *args_;
 };
 
+class Parse_Vector : public Parse_Expr {
+public:
+  Parse_Vector(Parse_ExprList *o) : offsets_(o) { };
+  ~Parse_Vector() { delete offsets_; };
+
+  virtual string toString();
+  virtual bool operator==(const Parse_Expr &e);
+
+  void offset(Parse_Expr *offset) { offsets_->push_back(offset); };
+  Parse_Expr* offset(int i) const { return offsets_->at(i); };
+  int offsets() const { return offsets_->size(); };
+
+  Parse_ExprList *offsets_;
+
+};
+
+class Parse_VecAtom : public Parse_Expr {
+public:
+  Parse_VecAtom(Parse_Expr *var, Parse_Expr *o) : Parse_Expr(var), offset_(o) { };
+  ~Parse_VecAtom() { };
+
+  virtual string toString();
+  virtual bool operator==(const Parse_Expr &e);
+
+  Parse_Expr *offset() const { return offset_; }
+
+  Parse_Expr *offset_;
+};
+
 class Parse_Term {
 public:
   virtual ~Parse_Term() {};
