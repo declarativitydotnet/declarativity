@@ -75,8 +75,8 @@ string Parse_Bool::toString() {
     b << lhs->toString();
     if (dynamic_cast<Parse_Bool*>(lhs) != NULL) b << " )";
     switch (oper) {
-      case AND: b << " AND "; break;
-      case OR:  b << " OR "; break;
+      case AND: b << " && "; break;
+      case OR:  b << " || "; break;
       case EQ:  b << " == "; break;
       case NEQ: b << " != "; break;
       case GT:  b << " > "; break;
