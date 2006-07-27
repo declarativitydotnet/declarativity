@@ -60,11 +60,6 @@ public:
   virtual bool id() { return id_; };
 
   virtual string toString() { 
-    if (v->typeCode() == Value::STR) {
-      ostringstream oss; 
-      oss << "\"" << v->toString() << "\"";
-      return oss.str();
-    }
     return v->toString(); 
   };
 
