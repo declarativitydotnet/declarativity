@@ -27,9 +27,6 @@ watch(link).
 watch(path).
 watch(bestPath).
 watch(bestPathCost).
-watch(pathMember).
-
-ro linkZ@Y(X,Y,C) :- link@X(X,Y,C).
 
 r1 path@X(X,Y,C,P) :- link@X(X,Y,C), 
 		      P1:=f_append(X), 
