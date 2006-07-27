@@ -1,0 +1,257 @@
+/*
+ * @(#)$Id$
+ *
+ * Copyright (c) 2005 Intel Corporation
+ *
+ * This file is distributed under the terms in the attached INTEL-LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * 
+ * DESCRIPTION: P2Chord in Overlog with automatic localization
+ *
+ */
+
+
+/*
+#define tSucc          5
+#define tFix           5
+#define tJoin          5
+#define tStabilizeWait 5
+#define tPingSoftState 5
+#define tStap          5
+#define succSize       5
+#define fNum           5
+#define fFixProb       0.5
+#define t_Fix          5
+#define tStab          5
+#define tPing          5
+#define local          "127.0.0.1:80"
+*/
+
+/* The base tuples */
+
+materialize(node, infinity, 1, keys(1)).
+materialize(finger, 180, 160, keys(2)).
+materialize(bestSucc, infinity, 1, keys(1)).
+materialize(bestSuccDist, infinity, 1, keys(1)).
+materialize(succDist, infinity, 100, keys(2)).
+materialize(succ, infinity, 100, keys(2)).
+materialize(pred, infinity, 100, keys(1)).
+materialize(succCount, infinity, 1, keys(1)).
+materialize(join, 10, 5, keys(1)).
+materialize(landmark, infinity, 1, keys(1)).
+materialize(fFix, infinity, 160, keys(2)).  
+materialize(nextFingerFix, infinity, 1, keys(1)).  
+materialize(pingNode, 10, infinity, keys(2)).  
+materialize(pendingPing, 10, infinity, keys(2)).  
+
+/** Lookups */
+
+watch(lookupResults).
+watch(lookup).
+watch(bestLookupDist).
+
+
+l1 lookupResults@R(R,K,S,SI,E) :- node@NI(NI,N),
+				  lookup@NI(NI,K,R,E), 
+				  bestSucc@NI(NI,S,SI),
+				  K in (N,S].
+
+
+l2 bestLookupDist@NI(NI,K,R,E,min<D>) :- node@NI(NI,N), 
+					 lookup@NI(NI,K,R,E), 
+					 finger@NI(NI,I,B,BI), 
+					 D:=K - B - 1, 
+					 B in (N,K).
+
+l3 lookup@BI(min<BI>,K,R,E) :- node@NI(NI,N),	    
+			       bestLookupDist@NI(NI,K,R,E,D), 
+			       finger@NI(NI,I,B,BI), 
+			       D == K - B - 1,
+			       B in (N,K).
+
+/** Neighbor Selection */
+
+watch(bestSucc).
+watch(bestSuccEvent).
+watch(succDist).
+watch(bestSuccDist).
+
+n1 succDist@NI(NI,S,SI,D) :- node@NI(NI,N),
+			  succ@NI(NI,S,SI), 
+			  D:=S - N - 1.
+
+n2 bestSuccDist@NI(NI,min<D>) :- succDist@NI(NI,S,SI,D).
+
+n3 bestSucc@NI(NI,S,SI) :- succDist@NI(NI,S,SI,D),
+			   bestSuccDist@NI(NI,D).
+
+n4 finger@NI(NI,0,S,SI) :- bestSucc@NI(NI,S,SI).
+
+
+
+/** Successor eviction */
+
+watch(succCount).
+watch(evictSucc).
+watch(maxSuccDist).
+
+s1 succCount@NI(NI,count<*>) :- succ@NI(NI,S,SI).
+
+s2 evictSucc@NI(NI) :- succCount@NI(NI,C), 
+		    C > 2.
+
+s3 maxSuccDist@NI(NI,max<D>) :- succ@NI(NI,S,SI),
+				node@NI(NI,N), 
+				evictSucc@NI(NI),
+				D:=S - N - 1.
+
+s4 delete succ@NI(NI,S,SI) :- node@NI(NI,N), 
+			      succ@NI(NI,S,SI),
+			      maxSuccDist@NI(NI,D), 
+			      D == S - N - 1.
+
+
+/** Finger fixing */
+
+watch(fFixEvent).
+/*watch(fFix).
+watch(fFixPeriodic).
+watch(eagerFinger).
+watch(nextFingerFix).*/
+watch(finger).
+
+f1 fFixEvent@NI(NI,E,I) :- periodic@NI(NI,E,10), 
+		   nextFingerFix@NI(NI,I).
+
+f2 fFix@NI(NI,E,I) :- fFixEvent@NI(NI,E,I).
+
+f3 lookup@NI(NI,K,NI,E) :- fFixEvent@NI(NI,E,I),
+			   node@NI(NI,N), 
+			   K:=0x1I << I + N.
+
+f4 eagerFinger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I), 
+				lookupResults@NI(NI,K,B,BI,E).
+
+f5 finger@NI(NI,I,B,BI) :- eagerFinger@NI(NI,I,B,BI).
+
+f6 eagerFinger@NI(NI,I,B,BI) :- node@NI(NI,N), 
+				eagerFinger@NI(NI,I1,B,BI), 
+				I:=I1 + 1, 
+				K:=0x1I << I + N, 
+				K in (N,B), 
+				BI != NI.
+ 
+f7 delete fFix@NI(NI,E,I1) :- eagerFinger@NI(NI,I,B,BI), 
+			   fFix@NI(NI,E,I1),
+			   I > 0,   
+			   I1 == I - 1.
+
+
+f8 nextFingerFix@NI(NI,0) :- eagerFinger@NI(NI,I,B,BI), 
+			   ((I == 159) || (BI == NI)).
+
+f9 nextFingerFix@NI(NI,I) :- node@NI(NI,N), 
+			   eagerFinger@NI(NI,I1,B,BI), 
+			   I:=I1 + 1, 
+			   K:=0x1I << I + N, 
+			   K in (B,N), 
+			   NI != BI.
+
+
+/** Churn Handling */
+
+watch(joinEvent).
+watch(join).
+watch(joinReq). 
+
+/* Insert in entries after a delay. Change join. */
+
+c1 joinEvent@NI(NI,E) :- periodic@NI(NI,E,1,2).
+
+c2 join@NI(NI,E) :- joinEvent@NI(NI,E).
+
+c3 joinReq@LI(LI,N,NI,E) :- joinEvent@NI(NI,E),
+			 node@NI(NI,N), 
+			 landmark@NI(NI,LI),
+			 LI != "NIL".
+
+c4 succ@NI(NI,N,NI) :- landmark@NI(NI,LI),
+		       joinEvent@NI(NI,E),
+		       node@NI(NI,N), 
+		       LI == "NIL".
+
+c5 lookup@LI(LI,N,NI,E) :- joinReq@LI(LI,N,NI,E).
+
+c6 succ@NI(NI,S,SI) :- join@NI(NI,E),
+		    lookupResults@NI(NI,K,S,SI,E).
+
+
+
+/** Stabilization */
+
+watch(stabilize).
+watch(succ).
+watch(pred).
+watch(periodicnodebestSuccSI).
+watch(periodicsuccSI).
+watch(periodicnodesuccSI).
+
+sb1 succ@NI(NI,P,PI) :- periodic@NI(NI,E,15),
+		        node@NI(NI,N),    
+			bestSucc@NI(NI,S,SI),
+			pred@SI(SI,P,PI), 
+			PI != "NIL", 
+			P in (N,S).
+
+sb2 succ@NI(NI,S1,SI1) :- periodic@NI(NI,E,15),
+			succ@NI(NI,S,SI),
+			succ@SI(SI,S1,SI1). 
+
+sb3 pred@SI(SI,N,NI) :- periodic@NI(NI,E,15),
+			node@NI(NI,N), 
+			succ@NI(NI,S,SI),
+			pred@SI(SI,P,PI),
+			node@SI(SI,N1),
+			((PI == "NIL") || (N in (P,N1))).   
+
+
+/** Connectivity Monitoring */
+/*watch(pingEvent).*/
+watch(pingReq).
+watch(pingResp).
+/*watch(pingNode).
+watch(pingNodeCount).*/
+/*watch(pingNode).
+
+watch(pendingPing).
+
+cm0 pingEvent@NI(NI,E) :- periodic@NI(NI,E,5).
+
+cm1 pendingPing@NI(NI,PI,E) :- pingEvent@NI(NI,E),
+			pingNode@NI(NI,PI).
+
+cm2 pingReq@PI(PI,NI,E) :- pendingPing@NI(NI,PI,E).
+
+cm3 delete pendingPing@NI(NI,PI,E) :- pingResp@NI(NI,PI,E).
+
+cm4 pingResp@RI(RI,NI,E) :- pingReq@NI(NI,RI,E).
+
+cm5 pingNode@NI(NI,SI) :- succ@NI(NI,S,SI), 
+		       SI != NI.
+
+cm6 pingNode@NI(NI,PI) :- pred@NI(NI,P,PI), 
+		       PI != NI, 
+		       PI != "NIL".
+
+cm7 succ@NI(NI,S,SI) :- succ@NI(NI,S,SI),
+		     pingResp@NI(NI,SI,E).
+
+cm8 pred@NI(NI,P,PI) :- pred@NI(NI,P,PI),
+		     pingResp@NI(NI,PI,E).
+
+cm9 pred@NI(NI,"NIL","NIL") :- pingEvent@NI(NI,E), 
+			pendingPing@NI(NI,PI,E), 
+			pred@NI(NI,P,PI).
+*/
