@@ -161,7 +161,7 @@ startOverLogDataflow(LoggerI::Level level,
   initializeBaseTables(ctxt, tableStore, localAddress, environment);
   
   if (plumber->install(conf) == 0) {
-    warn << "Correctly initialized network of chord lookup flows.\n";
+    warn << "Correctly initialized dataflow.\n";
   } else {
     warn << "** Failed to initialize correct spec\n";
     return;
