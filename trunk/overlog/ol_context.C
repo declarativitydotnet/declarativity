@@ -55,10 +55,10 @@ string OL_Context::TableInfo::toString() {
   ostringstream t;
   t << "MATERIALIZE( " << tableName << ", "
     << timeout << ", "
-    << size;
+    << size << " (";
 
-  if (primaryKeys.size() > 0) {
-    t << ", " << primaryKeys.at(0);
+  for (uint k = 0; k < primaryKeys.size(); k++) {
+    t << ", " << primaryKeys.at(k);
   }
   t << " )";
 

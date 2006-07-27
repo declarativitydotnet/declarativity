@@ -38,7 +38,7 @@ public:
     Error(int l, string m) : line_num(l), msg(m) {};
   };
   
-  struct Rule {
+   struct Rule {
     Rule(string r, Parse_Functor *h, bool d) 
       : ruleID(r), head(h), deleteFlag(d), 
 	ruleNum(OL_Context::ruleCount++) {};
