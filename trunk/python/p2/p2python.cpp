@@ -94,8 +94,8 @@ void export_val_uint32();
 void export_val_uint64();
 void export_val_vector();
 void export_val_matrix();
-//void export_val_list();
-//void export_list();
+void export_val_list();
+void export_list();
 void export_overlogCompiler();
 void export_tupleListener();
 void export_tupleSourceInterface();
@@ -143,8 +143,8 @@ BOOST_PYTHON_MODULE(libp2python)
   export_val_uint64();
   export_val_vector();
   export_val_matrix();
-  //export_val_list();
-  //export_list();
+  export_val_list();
+  export_list();
 
   export_aggregate();
   export_aggwrap();
