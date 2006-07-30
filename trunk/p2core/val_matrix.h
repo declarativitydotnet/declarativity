@@ -63,7 +63,7 @@ public:
   const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
 
   // manipulate matrix entries
-  void insert(uint64_t &i1, uint64_t &i2, ValuePtr &vp) { (*M)(i1,i2) = vp; };
+  void insert(uint64_t &i1, uint64_t &i2, ValuePtr vp) { (*M)(i1,i2) = vp; };
   void erase(uint64_t &i1, uint64_t &i2) { (*M)(i1,i2).reset(); };
 
       

@@ -289,6 +289,8 @@ bool Parse_Vector::operator==(const Parse_Expr &e){
   }
 }
 
+// XXX this currently compares the syntax of the atom, not the
+// expression's result!
 bool Parse_VecAtom::operator==(const Parse_Expr &e)
 { 
 	const Parse_VecAtom& v2 = dynamic_cast<const Parse_VecAtom&>(e);
@@ -300,8 +302,79 @@ bool Parse_VecAtom::operator==(const Parse_Expr &e)
 string Parse_VecAtom::toString() {
   ostringstream f;
   f << v->toString() << "[";
-  offset_->toString();
+  f << offset_->toString();
   f << "]";
+  return f.str();
+}
+
+Parse_Matrix::Parse_Matrix(Parse_ExprListList *o)
+{
+  Parse_ExprList *row;
+  uint64_t columns;
+
+  rows_ = o;
+  // count to check that all rows are the same length!
+  for (uint64_t i = 0; i < rows_->size(); i++) {
+	row = rows_->at(i);
+	if (i == 0) // initialize
+	  columns = row->size();
+	else if (columns != row->size())
+	  std::cerr << "PARSE ERROR: matrix " << toString() << " has rows of nonuniform length\n";
+  }
+}
+
+string Parse_Matrix::toString() {
+  ostringstream f;
+  uint64_t rows, columns;
+  bounds(rows, columns);
+  f << "{";
+  for (uint64_t i = 0; i < rows; i++) {
+	f << "[";
+	for (uint64_t j = 0; j < columns; j++) {
+	  f << offset(i,j)->toString();
+	  if (j+1 < columns) f << ", ";
+	}
+	f << "]";
+	if (i+1 < rows) f << ", ";
+  }
+  f << "}";
+  return f.str();
+}
+
+bool Parse_Matrix::operator==(const Parse_Expr &e){
+  try {
+    const Parse_Matrix& v = dynamic_cast<const Parse_Matrix&>(e);
+	uint64_t r1, c1, r2, c2;
+	bounds(r1, c1);
+	v.bounds(r2, c2);
+	if (r1 == r2 && c1 == c2) {
+	  for (uint64_t i = 0; i < r1; i++) 
+		for (uint64_t j = 0; j < c1; j++)
+		  if (offset(i,j) != v.offset(i,j))
+			return(false);
+	  return(true);
+	}
+	else return(false);
+  } catch (std::bad_cast e) {
+    return false;
+  }
+}
+
+// XXX this currently compares the syntax of the atom, not the
+// expression's result!
+bool Parse_MatAtom::operator==(const Parse_Expr &e)
+{ 
+	const Parse_MatAtom& v2 = dynamic_cast<const Parse_MatAtom&>(e);
+
+	if (v == v2.v && offset1_ == v2.offset1_ && offset2_ == v2.offset2_)
+	  return (true);
+	else return(false);
+}
+
+string Parse_MatAtom::toString() {
+  ostringstream f;
+  f << v->toString() << "[";
+  f << ", " << offset1_->toString() << "]";
   return f.str();
 }
 

@@ -38,6 +38,7 @@
 #include "val_time.h"
 #include "val_id.h"
 #include "val_vector.h"
+#include "val_matrix.h"
 #include "oper.h"
 #include "loop.h"
 
@@ -589,6 +590,49 @@ DEF_OP(V_SETOFFSET) {
    VectorPtr v2 = Val_Vector::cast(val2);
    (*v2)[offset] = val1;
    stackPush(Val_Vector::mk(v2));
+}
+
+DEF_OP(V_COMPAREVEC) {
+  ValuePtr val1 = stackTop(); stackPop();
+  ValuePtr val2 = stackTop(); stackPop();
+  VectorPtr v2 = Val_Vector::cast(val2);
+  Val_Vector vec2(v2);
+  stackPush(Val_Int32::mk(vec2.compareTo(val1)));
+}
+
+// Matrix operations
+DEF_OP(M_INITMAT) {
+  uint64_t sz2 = pop_unsigned();
+  uint64_t sz1 = pop_unsigned();
+  ValuePtr matrix = Val_Matrix::mk2(sz1,sz2);
+  stackPush(matrix);
+}
+
+DEF_OP(M_GETOFFSET) {
+   int64_t offset1 = pop_unsigned();
+   int64_t offset2 = pop_unsigned();
+   ValuePtr val1 = stackTop(); stackPop();
+   MatrixPtr m1 = Val_Matrix::cast(val1);
+   stackPush((*m1)(offset1,offset2));
+}
+
+
+DEF_OP(M_SETOFFSET) {
+   ValuePtr val1 = stackTop(); stackPop();
+   int64_t offset1 = pop_unsigned();
+   int64_t offset2 = pop_unsigned();
+   ValuePtr val2 = stackTop(); stackPop();
+   MatrixPtr mat = Val_Matrix::cast(val2);
+   (*mat)(offset1,offset2) = val1;
+   stackPush(Val_Matrix::mk(mat));
+}
+
+DEF_OP(M_COMPAREMAT) {
+  ValuePtr val1 = stackTop(); stackPop();
+  ValuePtr val2 = stackTop(); stackPop();
+  MatrixPtr m2 = Val_Matrix::cast(val2);
+  Val_Matrix mat2(m2);
+  stackPush(Val_Int32::mk(mat2.compareTo(val1)));
 }
 
 //

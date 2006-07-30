@@ -50,6 +50,7 @@ public:
   int      position_;
 };
 typedef std::deque<Parse_Expr *> Parse_ExprList;
+typedef std::deque<Parse_ExprList *> Parse_ExprListList;
 
 // Boxing up a ValuePtr see we can pass it through the Bison parser
 // union unscathed. 
@@ -178,7 +179,6 @@ public:
   virtual string toString();
   virtual bool operator==(const Parse_Expr &e);
 
-  void offset(Parse_Expr *offset) { offsets_->push_back(offset); };
   Parse_Expr* offset(int i) const { return offsets_->at(i); };
   int offsets() const { return offsets_->size(); };
 
@@ -197,6 +197,36 @@ public:
   Parse_Expr *offset() const { return offset_; }
 
   Parse_Expr *offset_;
+};
+
+
+class Parse_Matrix : public Parse_Expr {
+public:
+  Parse_Matrix(Parse_ExprListList *r);
+  ~Parse_Matrix() { delete rows_;};
+
+  virtual string toString();
+  virtual bool operator==(const Parse_Expr &e);
+
+  Parse_Expr* offset(int i, int j) const { return (rows_->at(i)->at(j)); };
+  void bounds(uint64_t &r, uint64_t &c) const {r = rows_->size(); c = rows_->at(0)->size();};
+
+  Parse_ExprListList *rows_;
+};
+
+class Parse_MatAtom : public Parse_Expr {
+public:
+  Parse_MatAtom(Parse_Expr *var, Parse_Expr *o1, Parse_Expr *o2) : Parse_Expr(var), offset1_(o1), offset2_(o2) { };
+  ~Parse_MatAtom() { };
+
+  virtual string toString();
+  virtual bool operator==(const Parse_Expr &e);
+
+  Parse_Expr *offset1() const { return offset1_; }
+  Parse_Expr *offset2() const { return offset2_; }
+
+  Parse_Expr *offset1_;
+  Parse_Expr *offset2_;
 };
 
 class Parse_Term {

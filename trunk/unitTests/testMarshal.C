@@ -19,6 +19,8 @@
 #include "val_str.h"
 #include "val_tuple.h"
 #include "val_uint64.h"
+#include "val_vector.h"
+#include "val_matrix.h"
 
 #include "testMarshal.h"
 
@@ -31,6 +33,7 @@ private:
   UnmarshalField uF;
   TuplePtr flat;
   TuplePtr nested;
+  TuplePtr vecmat;
   
 public:
   testMarshal()
@@ -51,6 +54,36 @@ public:
     nested->append(Val_Str::mk("Nested"));
     nested->append(Val_Tuple::mk(flat));
     nested->freeze();
+
+	// Create a tuple with vecmat fields
+	vecmat = Tuple::mk();
+	static uint64_t zero = 0;
+	static uint64_t one = 1;
+	static uint64_t two = 2;
+	static uint64_t three = 3;
+	static uint64_t four = 4;
+	static uint64_t five = 5;
+	static uint64_t six = 6;
+	Val_Vector *v = new Val_Vector(four);
+	Val_Matrix *m = new Val_Matrix(two, three);
+	
+	v->insert(zero, Val_UInt64::mk(one));
+	v->insert(one, Val_UInt64::mk(two));
+	v->insert(two, Val_UInt64::mk(three));
+	v->insert(three, Val_UInt64::mk(four));
+	m->insert(zero, zero, Val_UInt64::mk(one));
+	m->insert(zero, one, Val_UInt64::mk(two));
+	m->insert(zero, two, Val_UInt64::mk(three));
+	m->insert(one, zero, Val_UInt64::mk(four));
+	m->insert(one, one, Val_UInt64::mk(five));
+	m->insert(one, two, Val_UInt64::mk(six));
+
+    vecmat->append(Val_Str::mk("vecmat"));
+	ValuePtr vp(v);
+	ValuePtr vp2(m);
+    vecmat->append(vp);
+    vecmat->append(vp2);
+    vecmat->freeze();  
   }
 
   void
@@ -107,6 +140,33 @@ public:
                         "Field marshalled/unmarshalled tuple does not match original");
   }
 
+  //  XXXXX
+  void
+  testMVM()
+  {
+    // Marshal it
+    TuplePtr result = m.simple_action(vecmat);
+    
+    BOOST_REQUIRE_MESSAGE(result != NULL, "Didn't get a marshaling result for vecmat");
+    BOOST_CHECK_MESSAGE(result->size() == 1, "Outer tuple has wrong size\n");
+    BOOST_CHECK_MESSAGE((*result)[0]->typeCode() == Value::OPAQUE,
+                        "Marshalled field is not OPAQUE 1\n");
+  }
+
+
+  void
+  testUVM()
+  {
+    // Marshal it and unmarshal it
+    TuplePtr result = m.simple_action(vecmat);
+    TuplePtr reVecmat = u.simple_action(result);
+
+    BOOST_REQUIRE_MESSAGE(reVecmat != NULL, "Didn't get a field unmarshaling vecmat result");
+    BOOST_CHECK_MESSAGE(reVecmat->size() == vecmat->size(),
+                        "Field marshalled/unmarshalled vecmat tuple is different size");
+    BOOST_CHECK_MESSAGE(reVecmat->compareTo(vecmat) == 0,
+                        "Field marshalled/unmarshalled vecmat tuple does not match original");
+  }
 };
 
 testMarshal_testSuite::testMarshal_testSuite()
@@ -118,4 +178,6 @@ testMarshal_testSuite::testMarshal_testSuite()
   add(BOOST_CLASS_TEST_CASE(&testMarshal::testU, instance));
   add(BOOST_CLASS_TEST_CASE(&testMarshal::testMF, instance));
   add(BOOST_CLASS_TEST_CASE(&testMarshal::testUF, instance));
+  add(BOOST_CLASS_TEST_CASE(&testMarshal::testMVM, instance));
+  add(BOOST_CLASS_TEST_CASE(&testMarshal::testUVM, instance));
 }

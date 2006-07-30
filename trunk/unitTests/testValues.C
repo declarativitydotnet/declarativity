@@ -32,6 +32,7 @@
 #include "val_str.h"
 #include "val_list.h"
 #include "val_vector.h"
+#include "val_matrix.h"
 
 #include "testValues.h"
 
@@ -161,6 +162,19 @@ public:
     TEST_TIME(Time,  0, -1, TIME, "time");
     TEST_TIME(Time, -2, -2, TIME, "time");
 #undef TEST_TIMEVAL
+
+	// Vectors
+	uint64_t one = 1;
+	ValuePtr valp = Val_Vector::mk2(one);
+	VectorPtr vp = Val_Vector::cast(valp);
+	((*vp)[0]) = Val_UInt64::mk(1);
+	TEST_VAL(Vector, vp, VECTOR, "vector");
+
+	// Matrix
+	valp = Val_Matrix::mk2(one, one);
+	MatrixPtr mp = Val_Matrix::cast(valp);
+	((*mp)(0,0)) = Val_UInt64::mk(1);
+	TEST_VAL(Matrix, mp, MATRIX, "matrix");
   } 
 #undef TEST_VAL
 
@@ -330,6 +344,20 @@ public:
     // Strings
     std::string addr = "127.0.0.1:1000";
     TEST_CAST(IP_ADDR, addr, string, IP_ADDR, addr);
+
+	// Vectors
+	uint64_t one = 1;
+	ValuePtr valp = Val_Vector::mk2(one);
+	VectorPtr vp = Val_Vector::cast(valp);
+	((*vp)[0]) = Val_UInt64::mk(1);
+	TEST_CAST(Vector, vp, VectorPtr, Vector, vp);
+
+	// Matrices
+	valp = Val_Matrix::mk2(one,one);
+	MatrixPtr mp = Val_Matrix::cast(valp);
+	((*mp)(0,0)) = Val_UInt64::mk(1);
+	TEST_CAST(Matrix, mp, MatrixPtr, Matrix, mp);
+
   }
 
 
@@ -419,7 +447,7 @@ public:
 
   TEST_CAST_T(Double, 0, 0);
   TEST_CAST_T(Double, 1.0, 1);
-  TEST_CAST_T(Double, -1.0, UINT_MAX);
+  // TEST_CAST_T(Double, -1.0, UINT_MAX);   // not robust cross-platform
   // TEST_CAST_T(Double, -1.79769E+308, 0); // not robust cross-platform
   // TEST_CAST_T(Double, 1.79769E+308, 0); // not robust cross-platform
   TEST_CAST_T(Double, 2.225E-307, 0);
@@ -703,7 +731,7 @@ public:
 
   TEST_CAST_T(Double, 0, 0, 0);
   TEST_CAST_T(Double, 1.0, 1, 0);
-  TEST_CAST_T(Double, -1.0, -1, 0);
+  // TEST_CAST_T(Double, -1.0, -1, 0); // not robust cross-platform
   
   // These next casts assume nanosecond precision --ACR
   TEST_CAST_T(Double, (double) 1.000000002, 1, 2);
@@ -878,6 +906,12 @@ testBadCasts()
   TEST_BADCAST(Int32, 0, Vector);
   TEST_BADCAST(UInt64, 0, Vector);
   TEST_BADCAST(Double, 0, Vector);
+
+  TEST_BADCAST(Int32, 0, Matrix);
+  TEST_BADCAST(UInt64, 0, Matrix);
+  TEST_BADCAST(Int32, 0, Matrix);
+  TEST_BADCAST(UInt64, 0, Matrix);
+  TEST_BADCAST(Double, 0, Matrix);
 }
 #undef TEST_BADCAST
 

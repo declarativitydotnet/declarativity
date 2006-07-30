@@ -54,9 +54,16 @@ for op, ar, va, desc in [
   ("member", 2, "L_MEMBER", "Push 1 if first arg is in second list, 0 otherwise"),
   ("intersect", 2, "L_INTERSECT", "Intersects first list with second, using Lisp intersection rules"),
   ("msintersect", 2, "L_MULTISET_INTERSECT", "Intersects first list with second, using multiset intersection rules"),
+
   ("initvec", 1, "V_INITVEC", "Create a vector with size of the argument"),
-  ("getvectoroffset", 2, "V_GETOFFSET", "Extracts an value from an vector offset"),
+  ("getvectoroffset", 2, "V_GETOFFSET", "Extracts a value from an vector offset"),
   ("setvectoroffset", 3, "V_SETOFFSET", "Insert first item into the offset specified in second item of vector in 3rd item"),
+  ("vectorcompare", 2, "V_COMPAREVEC", "Compare 2 vectors"),
+
+  ("initmat", 2, "M_INITMAT", "Create a matrix of arg1 by arg2"),
+  ("getmatrixoffset", 3, "M_GETOFFSET", "Extracts a value from a matrix"),
+  ("setmatrixoffset", 4, "M_SETOFFSET", "Insert first item into the offsets specified in second and 3rd items of matrix in 4th item"),
+  ("matrixcompare", 3, "M_COMPAREMAT", "Compare 2 matrices"),
   
   ("not",1, 	"NOT",          "Boolean negation"),
   ("and",2,	"AND",          "Boolean AND"),

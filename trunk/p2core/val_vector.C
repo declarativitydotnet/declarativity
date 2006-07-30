@@ -51,10 +51,10 @@ ValuePtr Val_Vector::xdr_unmarshal( XDR *x )
 {
   u_int32_t ui;
   xdr_uint32_t(x, &ui);
-  // Unmarshal the entries
   uint32_t sz = ui;
 
   VectorPtr vp(new vector<ValuePtr>(sz));
+  // Unmarshal the entries
   for (uint32_t i = 0;
 	   i < sz;
 	   i++){

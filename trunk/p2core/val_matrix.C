@@ -56,13 +56,14 @@ void Val_Matrix::xdr_marshal_subtype( XDR *x )
 
 ValuePtr Val_Matrix::xdr_unmarshal( XDR *x )
 {
-  MatrixPtr mp(new matrix<ValuePtr>());
   u_int32_t ui1, ui2;
   xdr_uint32_t(x, &ui1);
   xdr_uint32_t(x, &ui2);
-  // Unmarshal the entries -- we use default (row-major) storage
   uint32_t sz1 = ui1;
   uint32_t sz2 = ui2;
+
+  MatrixPtr mp(new matrix<ValuePtr>(sz1, sz2));
+  // Unmarshal the entries -- we use default (row-major) storage
   for (uint32_t i1 = 0; i1 < sz1; i1++) {
 	for (uint32_t i2 = 0; i2 < sz2; i2++) {
 	  (*mp)(i1,i2) = Value::xdr_unmarshal(x);

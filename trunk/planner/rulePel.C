@@ -49,6 +49,8 @@ void expr2Pel(PlanContext* pc, ostringstream &pel, Parse_Expr *e)
   Parse_Function *f   = NULL; 
   Parse_Vector   *v   = NULL;
   Parse_VecAtom  *va  = NULL;
+  Parse_Matrix   *mat = NULL;
+  Parse_MatAtom  *mata= NULL;
 
   if ((var = dynamic_cast<Parse_Var*>(e)) != NULL) {
 	// expr is a variable
@@ -89,6 +91,24 @@ void expr2Pel(PlanContext* pc, ostringstream &pel, Parse_Expr *e)
 	pel << " $" << (pos2+1) << " ";
 	expr2Pel(pc, pel, va->offset_);
 	pel << " getvectoroffset ";
+  }
+  else if ((mat=dynamic_cast<Parse_Matrix*>(e)) != NULL) {
+	uint64_t rows, cols;
+	mat->bounds(rows, cols);
+	pel << rows << " " << cols << " initmat ";
+	for (uint64_t i = 0; i < rows; i++)
+	  for (uint64_t j = 0; j < cols; j++)
+		pel << j << " " << i << " " << mat->offset(i, j)->toString() << " setmatrixoffset ";
+  }
+  else if ((mata=dynamic_cast<Parse_MatAtom*>(e)) != NULL) {
+	int pos2 = names->fieldPosition(mata->v->toString());
+	if (pos2 < 0) {
+	  error(pc, "Error parsing Pel vector variable " + mata->v->toString());
+	}
+	pel << " $" << (pos2+1) << " ";
+	expr2Pel(pc, pel, mata->offset2_);
+	expr2Pel(pc, pel, mata->offset1_);
+	pel << " getmatrixoffset ";
   }
   else {    
 	// TODO: throw/signal some kind of error
@@ -312,6 +332,54 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
 	expr2Pel(pc, pel, expr->arg(1));
 	expr2Pel(pc, pel, expr->arg(2));
     pel << "setvectoroffset "; 
+  }
+
+  else if (expr->name() == "f_vectorCompare") {
+	if (expr->args() != 2) {
+      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      exit(-1);
+      return "ERROR.";
+    }
+	expr2Pel(pc, pel, expr->arg(0));
+	expr2Pel(pc, pel, expr->arg(1));
+	pel << "vectorcompare ";
+  }
+
+  // functions on matrices
+  else if (expr->name() == "f_getMatrixOffset") {
+    if (expr->args() != 3) {
+      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      exit(-1);
+      return "ERROR.";
+    }
+   	expr2Pel(pc, pel, expr->arg(0));
+	expr2Pel(pc, pel, expr->arg(1));
+	expr2Pel(pc, pel, expr->arg(21));
+	pel << " getmatrixoffset "; 
+  }
+
+  else if (expr->name() == "f_setMatrixOffset") {
+    if (expr->args() != 4) {
+      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      exit(-1);
+      return "ERROR.";
+    }
+   	expr2Pel(pc, pel, expr->arg(0));
+	expr2Pel(pc, pel, expr->arg(1));
+	expr2Pel(pc, pel, expr->arg(2));
+	expr2Pel(pc, pel, expr->arg(3));
+    pel << "setmatrixoffset "; 
+  }
+
+  else if (expr->name() == "f_matrixCompare") {
+	if (expr->args() != 2) {
+      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      exit(-1);
+      return "ERROR.";
+    }
+	expr2Pel(pc, pel, expr->arg(0));
+	expr2Pel(pc, pel, expr->arg(1));
+	pel << "matrixcompare ";
   }
 
   else {

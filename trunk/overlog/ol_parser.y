@@ -63,6 +63,8 @@
 %token OL_RPAR
 %token OL_LSQUB
 %token OL_RSQUB
+%token OL_LCURB
+%token OL_RCURB
 %token OL_PERIOD
 %token OL_DEL
 %token OL_QUERY
@@ -88,25 +90,29 @@
   Parse_Bool::Operator  u_boper;
   Parse_Math::Operator  u_moper;
   char*                 u_aoper;
-  Parse_TermList	*u_termlist;
-  Parse_Term		*u_term;
-  Parse_FunctorName	*u_functorname;
-  Parse_ExprList	*u_exprlist;
-  Parse_Expr		*v;
+  Parse_TermList	    *u_termlist;
+  Parse_Term		    *u_term;
+  Parse_FunctorName	    *u_functorname;
+  Parse_ExprList	    *u_exprlist;
+  Parse_ExprListList	*u_exprlistlist;
+  Parse_Expr		    *v;
   Parse_AggTerm         *u_aggterm;
-  Parse_Vector      *u_vector;
+  Parse_Vector          *u_vector;
+  Parse_Matrix          *u_matrix;
 }
 
 %type<u_termlist>    termlist;
-%type<u_exprlist>    functorbody functorargs functionargs vectorentries primarykeys keylist; 
+%type<u_exprlist>    functorbody functorargs functionargs vectorentries matrixentry primarykeys keylist; 
+%type<u_exprlistlist> matrixentries;
 %type<u_functorname> functorname;
 %type<u_term>        term functor assign select;
 %type<u_aggterm>     aggview;
-%type<v>             functorarg functionarg tablearg atom rel_atom math_atom function math_expr bool_expr range_expr range_atom aggregate vectorentry vectoratom;
+%type<v>             functorarg functionarg tablearg atom rel_atom math_atom function math_expr bool_expr range_expr range_atom aggregate vectorentry vectoratom matrixatom;
 %type<u_boper>       rel_oper;
 %type<u_moper>       math_oper;
 %type<u_aoper>       agg_oper;
 %type<u_vector>  vector_expr;
+%type<u_matrix>  matrix_expr;
 %%
 
 program:	OL_EOF { YYACCEPT; }
@@ -247,13 +253,9 @@ select:    	bool_expr
 			{ $$ = new Parse_Select($1); }
 		;
 
-assign:		OL_VAR OL_ASSIGN math_expr
+assign:		OL_VAR OL_ASSIGN rel_atom
 			{ $$ = new Parse_Assign($1, $3); }
 		| OL_VAR OL_ASSIGN bool_expr
-			{ $$ = new Parse_Assign($1, $3); }
-		| OL_VAR OL_ASSIGN atom
-			{ $$ = new Parse_Assign($1, $3); }
-		| OL_VAR OL_ASSIGN function
 			{ $$ = new Parse_Assign($1, $3); }
 		;
 
@@ -301,6 +303,8 @@ math_expr:	math_expr math_oper math_atom
 			{ $$ = new Parse_Math($2, $1, $4, true ); }
         | vectoratom
             { $$ = $1; }
+        | matrixatom
+            { $$ = $1; }
 		;
 
 math_atom:	atom 
@@ -340,6 +344,9 @@ range_atom:	math_expr
 vector_expr: OL_LSQUB vectorentries OL_RSQUB
             { $$ = new Parse_Vector($2); }
 
+matrix_expr: OL_LCURB matrixentries OL_RCURB
+            { $$ = new Parse_Matrix($2); }
+
 vectorentries: vectorentry {
              $$ = new Parse_ExprList();
              $$->push_front($1); } 
@@ -348,15 +355,31 @@ vectorentries: vectorentry {
 			$$=$3; }
 		;
 
-vectorentry: atom { $$ = $1; };  
+matrixentries: matrixentry {
+             $$ = new Parse_ExprListList();
+             $$->push_front($1); } 
+       | matrixentry OL_COMMA matrixentries {
+       			$3->push_front($1); 
+			$$=$3; }
+		;
+vectorentry: math_atom { $$ = $1; };  
+
+matrixentry: OL_LSQUB vectorentries OL_RSQUB
+         { $$ = $2; };
 
 vectoratom : OL_VAR OL_LSQUB vectorentry OL_RSQUB {
             $$ = new Parse_VecAtom($1, $3);
 		};
 
+matrixatom : OL_VAR OL_LCURB vectorentry OL_COMMA vectorentry OL_RCURB {
+            $$ = new Parse_MatAtom($1, $3, $5);
+		};
+
 atom:		OL_VALUE | OL_VAR | OL_STRING | OL_NULL
 			{ $$ = $1; }
         | vector_expr
+            { $$ = $1; }
+        | matrix_expr
             { $$ = $1; }
 		| OL_NOW
 			{ $$ = Parse_Expr::Now; }

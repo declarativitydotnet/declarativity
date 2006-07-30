@@ -117,6 +117,8 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>")" { return OL_RPAR; }
 <INITIAL>"[" { return OL_LSQUB; }
 <INITIAL>"]" { return OL_RSQUB; }
+<INITIAL>"{" { return OL_LCURB; }
+<INITIAL>"}" { return OL_RCURB; }
 
  /* Relational operators */
 <INITIAL>"<" { return OL_LT; }
