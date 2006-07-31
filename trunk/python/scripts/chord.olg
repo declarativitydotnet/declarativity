@@ -86,6 +86,8 @@ b2 references@DI(DI, LI, K, SI) :- lookupResults@LI(LI, K, D, DI, E),
 
 /** Neighbor Selection */
 
+l0 linkEvent@NI(NI, LI) :- finger@NI(NI,P,L,LI).
+
 /*
 watch(bestSucc).
 watch(bestSuccDist).

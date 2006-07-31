@@ -8,15 +8,17 @@ import socket
 
 def print_usage():
     print """Usage: planetlab.py [-s <seed>] [-o <overlog>] \\
-                    -n <slice_name> <port>"""
+                    -m master_addr -p master_port -n <slice_name> <port>"""
 
 def parse_cmdline(argv):
-    shortopts = "s:o:n:"
-    flags = {"overlog" : None, "slice" : None}
+    shortopts = "s:o:n:m:p:"
+    flags = {"overlog" : None, "slice" : None, "master_addr" : None, "master_port" : None}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
-        if   o == "-o": flags["overlog"]  = v
-        elif o == "-n": flags["slice"]    = v
+        if   o == "-o": flags["overlog"]     = v
+        elif o == "-n": flags["slice"]       = v
+        elif o == "-m": flags["master_addr"] = v
+        elif o == "-p": flags["master_port"] = v
         elif o == "-s": libp2python.srand(int(v))
         else:
             print_usage()
@@ -38,6 +40,30 @@ def sliceEventHandler(event):
     tp.append(libp2python.Val_Str.mk(n + ":" + port))	# PlanetLab node address
     tp.freeze()
     p2.tuple(tp) 
+
+def linkHandler(event):
+  tuple = "L,"
+  tuple += event.at(1).toString()	# Local IP address
+  tuple += event.at(2).toString()	# Neighbor
+  report(tuple)
+  
+def installHandler(event):
+  tuple = "I,"
+  tuple += event.at(1).toString()	# Local IP address
+  tuple += event.at(3).toString()	# Program name
+  report(tuple)
+
+def report(tuple):
+  pid = os.fork()
+  if pid == 0:
+    try:
+      s = socket(AF_INET, SOCK_STREAM)
+      s.connect((flags["master_addr"], flags["master_port"]))
+      s.send(tuple)
+      s.close()
+    except:
+      print "UNABLE TO SEND TUPLE TO: %s:%s" % (flags["master_addr"], flags["master_port"])
+    sys.exit(0)
 
 if __name__ == "__main__":
   global flags, p2, server, host, port
@@ -64,8 +90,10 @@ if __name__ == "__main__":
     # Install the bootstrap overlog
     p2.install("overlog", overlog)
 
-  # Install dissemination event trigger
+  # Install event triggers
   p2.subscribe("sliceEvent", sliceEventHandler)
+  p2.subscribe("overlogInstall", installHandler)
+  p2.subscribe("linkEvent", linkHandler)
 
   # Run the system
   p2.run()

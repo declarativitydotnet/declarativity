@@ -23,12 +23,14 @@ def print_usage():
     print """
 Usage: psetup.py [-j <parallel>] [-i] [-k] \\
                  [-Dvar=<value> [-Dvar=<value> [...]] -o <overlog>] \\
+                 -m master_addr -p master_port \\
                  -n <slice_name> [<planetLabNode>]"""
 
 def parse_cmdline(argv):
-    shortopts = "ikn:j:o:D:"
+    shortopts = "ikn:j:o:D:m:p:"
     flags = {"overlog" : "", "kill" : False, "slice" : None, "parallel" : 1, \
-             "env" : {}, "install" : False, "email" : None, "password" : None}
+             "env" : {}, "install" : False, "email" : None, "password" : None \
+             "master_addr" : "clash.berkeley.intel-research.net", master_port : "10000"}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if   o == "-n": flags["slice"]    = v
@@ -36,6 +38,8 @@ def parse_cmdline(argv):
         elif o == "-i": flags["install"]  = True
         elif o == "-k": flags["kill"]     = True
         elif o == "-o": flags["overlog"]  = v
+        elif o == "-m": flags["master_addr"] = v
+        elif o == "-p": flags["master_port"] = v
         elif o == "-D": 
             d = v.split("=", 1)
             flags["env"][d[0]] = d[1].replace("\"", "\\\"")
@@ -84,13 +88,15 @@ def startNode(node):
       for f in files:
         os.system("scp %s %s@%s: >& /dev/null" % (f, flags["slice"], node))  
       os.system("ssh -l %s %s \"%s\" >& /dev/null" % (flags["slice"], node, install))
+
+    start = startup + flags["master_addr"] + " " + flags["master_port"]
     if flags["overlog"]:
       os.system("scp %s %s@%s: >& /dev/null" % (flags["overlog"], flags["slice"], node))  
       os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % \
-                (flags["slice"], node, startup+" "+flags["overlog"].split("/")[-1]))
+                (flags["slice"], node, start+" "+flags["overlog"].split("/")[-1]))
     else:
       os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % \
-                (flags["slice"], node, startup))
+                (flags["slice"], node, start))
     sys.exit(0)
   return pid
 
