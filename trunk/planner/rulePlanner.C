@@ -85,8 +85,8 @@
 ////////////////////////////////////////////////////////////
 
 void createSecondaryIndex(PlanContext* pc, 
-			  Table2Ptr table,
-			  Table2::Key key);
+			  CommonTablePtr table,
+			  CommonTable::Key key);
 
 void debugRule(PlanContext* pc, string msg)
 {
@@ -128,7 +128,7 @@ void generateInsertEvent(PlanContext* pc)
   pc->_namesTracker = new PlanContext::FieldNamesTracker(pc->getRule()->_event->_pf);
 
   debugRule(pc, "Insert event NamesTracker " + pc->_namesTracker->toString() + "\n");
-  Table2Ptr tablePtr = pc->_tableStore->getTableByName(rs->eventFunctorName());
+  CommonTablePtr tablePtr = pc->_tableStore->getTableByName(rs->eventFunctorName());
   ElementSpecPtr updateTable =
     pc->createElementSpec(ElementPtr(new Update("Update|" + curRule->_ruleID 
 						+ "|" + rs->eventFunctorName()
@@ -156,7 +156,7 @@ void generateDeleteEvent(PlanContext* pc)
 
   debugRule(pc, "Delete event NamesTracker " 
 	    + pc->_namesTracker->toString() + "\n");
-  Table2Ptr tablePtr = pc->_tableStore->getTableByName(rs->eventFunctorName());
+  CommonTablePtr tablePtr = pc->_tableStore->getTableByName(rs->eventFunctorName());
   ElementSpecPtr removedTable =
     pc->createElementSpec(ElementPtr(new Removed("Removed|" 
 						 + curRule->_ruleID 
@@ -204,7 +204,7 @@ void generateAggEvent(PlanContext* pc)
   ECA_Rule* curRule = pc->getRule();
   pc->_namesTracker = new PlanContext::FieldNamesTracker(curRule->_event->_pf);
 
-  Table2::Key groupByFields;      
+  CommonTable::Key groupByFields;      
   
   PlanContext::FieldNamesTracker* aggregateNamesTracker 
     = new PlanContext::FieldNamesTracker();
@@ -236,10 +236,10 @@ void generateAggEvent(PlanContext* pc)
     pc->_namesTracker->fieldPosition(aggVarname) + 1;
 
   // get the table, create the index
-  Table2Ptr aggTable = pc->_tableStore->getTableByName(event_functor->fn->name);  
+  CommonTablePtr aggTable = pc->_tableStore->getTableByName(event_functor->fn->name);  
   createSecondaryIndex(pc, aggTable, groupByFields);  
 
-  Table2::Aggregate tableAgg =
+  CommonTable::Aggregate tableAgg =
     aggTable->aggregate(groupByFields,
                         aggFieldBaseTable, // the agg field
                         pa->oper);
@@ -401,7 +401,7 @@ void generateAddAction(PlanContext* pc)
   
   addWatch(pc, "AddAction");
   
-  Table2Ptr tablePtr 
+  CommonTablePtr tablePtr 
     = pc->_tableStore->getTableByName(rs->actionFunctorName()); 
   
   ElementSpecPtr insertElement
@@ -435,7 +435,7 @@ void generateDeleteAction(PlanContext* pc)
 						       + "|" + pc->_nodeID, 
 						       0)));
   
-  Table2Ptr tablePtr 
+  CommonTablePtr tablePtr 
     = pc->_tableStore->getTableByName(rs->actionFunctorName()); 
   
   ElementSpecPtr deleteElement
@@ -512,8 +512,8 @@ void generateActionElement(PlanContext* pc)
 
 
 void createSecondaryIndex(PlanContext* pc, 
-			  Table2Ptr table,
-			  Table2::Key key)
+			  CommonTablePtr table,
+			  CommonTable::Key key)
 {
   ostringstream uniqStr;
   uniqStr << table->name() << ":";
@@ -524,7 +524,7 @@ void createSecondaryIndex(PlanContext* pc,
   }
   if (pc->_tableStore->checkSecondaryIndex(uniqStr.str()) == false) {
     // not there yet
-    table->secondaryIndex(key);
+    table->createSecondaryIndex(key);
     debugRule(pc, "AddMultTableIndex: Mult index added " + uniqStr.str() 
 	      + "\n");
   } else {
@@ -545,9 +545,9 @@ void generateProbeElements(PlanContext* pc,
     = new PlanContext::FieldNamesTracker(innerFunctor);   
   ECA_Rule* curRule = pc->_ruleStrand->getRule();
 
-  Table2::Key innerIndexKey;         
-  Table2::Key outerLookupKey;        
-  Table2::Key innerRemainingKey; 
+  CommonTable::Key innerIndexKey;         
+  CommonTable::Key outerLookupKey;        
+  CommonTable::Key innerRemainingKey; 
   innerNamesTracker->joinKeys(outerNamesTracker, outerLookupKey, 
 			      innerIndexKey, innerRemainingKey);
 
@@ -576,7 +576,7 @@ void generateProbeElements(PlanContext* pc,
   debugRule(pc, joinKeyStr.str());
   
   // feter the inner table
-  Table2Ptr innerTable = pc->_tableStore->getTableByName(innerTableName);
+  CommonTablePtr innerTable = pc->_tableStore->getTableByName(innerTableName);
 
   // The NoNull filter for the join sequence
   OL_Context::TableInfo* tableInfo 
@@ -642,7 +642,7 @@ void generateProbeElements(PlanContext* pc,
 
   // And also pop all remaining base field numbers (those that did not
   // participate in the join.
-  for (Table2::Key::iterator i = innerRemainingKey.begin();
+  for (CommonTable::Key::iterator i = innerRemainingKey.begin();
        i != innerRemainingKey.end();
        i++) {
     pelProject << "$1 " << (*i) << " field pop ";

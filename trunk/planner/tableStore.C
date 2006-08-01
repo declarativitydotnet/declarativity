@@ -27,7 +27,7 @@ TableStore::TableStore(OL_Context* ctxt) {
 };
 
 
-Table2Ptr TableStore::getTableByName(string tableName)
+CommonTablePtr TableStore::getTableByName(string tableName)
 {
   TableMap::iterator _iterator = _tables->find(tableName);
   if (_iterator == _tables->end()) {
@@ -51,13 +51,20 @@ void TableStore::createTable(OL_Context::TableInfo* tableInfo)
   // What's the table name. This is unique across nodes
   string newTableName = tableInfo->tableName;
   
-  // Create the table. Should this table be traced?
-  Table2Ptr newTable;
-  newTable.reset(new Table2(tableInfo->tableName,
-			    key,
-			    tableSize,
-			    expiration));
-  
+  // Create the table. 
+  CommonTablePtr newTable;
+  if (expiration == Table2::NO_EXPIRATION) {
+    newTable.reset(new RefTable(tableInfo->tableName,
+				key));
+    std::cout << "Create ref counted table " << tableInfo->toString() << "\n";
+  } else {
+    newTable.reset(new Table2(tableInfo->tableName,
+			      key,
+			      tableSize,
+			      expiration));
+    std::cout << "Create table " << tableInfo->toString() << "\n";
+  }
+
   _tables->insert(std::make_pair(tableInfo->tableName, newTable));
   
   // Now handle facts
@@ -67,7 +74,7 @@ void TableStore::createTable(OL_Context::TableInfo* tableInfo)
     std::cout << "Insert tuple " << tr->toString()
               << " into table "  << vr->toString()
               << " " << tr->size() << "\n";
-    Table2Ptr tableToInsert = getTableByName(vr->toString());     
+    CommonTablePtr tableToInsert = getTableByName(vr->toString());     
     tableToInsert->insert(tr);
     std::cout << "Tuple inserted: " << tr->toString() 
 	      << " into table " << vr->toString() 

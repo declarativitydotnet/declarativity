@@ -106,6 +106,13 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
 					      new Parse_Val(loc)), 
 			rule->head->args_);
 
+    ValuePtr nameSend = Val_Str::mk(rule->ruleID + rule->head->fn->name + "send");
+    ValuePtr locSend = Val_Str::mk(rule->head->fn->loc);
+    Parse_Functor *sendFunctor = 
+      new Parse_Functor(new Parse_FunctorName(new Parse_Val(nameSend), 
+					      new Parse_Val(locSend)), 
+			rule->head->args_);
+
     eca_insert_rule->_event 
       = new Parse_Event(nextFunctor, Parse_Event::INSERT);
     eca_delete_rule->_event 
@@ -128,7 +135,7 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
     } else {
       // if the head is remote, we have to do a send, 
       // followed by another recv/add rule strand
-      eca_insert_rule->_action = new Parse_Action(rule->head, Parse_Action::SEND);
+      eca_insert_rule->_action = new Parse_Action(sendFunctor, Parse_Action::SEND);
       eca_delete_rule->_action = new Parse_Action(deleteFunctor, Parse_Action::SEND);
       string headName = rule->head->fn->name;
       OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);
@@ -138,7 +145,7 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
 	ECA_Rule* eca_insert_rule1 
 	  = new ECA_Rule(oss.str() + "Ins");    
 	eca_insert_rule1->_event 
-	  = new Parse_Event(rule->head, Parse_Event::RECV);
+	  = new Parse_Event(sendFunctor, Parse_Event::RECV);
 	eca_insert_rule1->_action 
 	  = new Parse_Action(rule->head, Parse_Action::ADD);      
 	add_rule(eca_insert_rule1);
@@ -186,28 +193,35 @@ void ECA_Context::generateActionHead(OL_Context::Rule* rule, string bodyLoc,
   // if event, just send
   string headName = rule->head->fn->name;
   OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);
-  // if this is local, we can simply add or send      
   if (headTableInfo == NULL) {
+    // event, just send
     eca_rule->_action = new Parse_Action(rule->head, Parse_Action::SEND);
   } else {
-    // if need to be materialized, 
+    // to be materialized
     if (rule->head->fn->loc == bodyLoc) {
+      // local materialization
       if (rule->deleteFlag) {
 	eca_rule->_action = new Parse_Action(rule->head, Parse_Action::DELETE);
       } else {
 	eca_rule->_action = new Parse_Action(rule->head, Parse_Action::ADD);
       }
     } else {
-      // if the head is remote, we have to do a send, 
-      // followed by another recv/add rule strand
-      eca_rule->_action = new Parse_Action(rule->head, Parse_Action::SEND);
+      // remote materializatin. Send, followed by store
+      ValuePtr name = Val_Str::mk(rule->ruleID + rule->head->fn->name + "send");
+      ValuePtr loc = Val_Str::mk(rule->head->fn->loc);
+      Parse_Functor *sendFunctor = 
+	new Parse_Functor(new Parse_FunctorName(new Parse_Val(name), 
+						new Parse_Val(loc)), 
+			  rule->head->args_);
+      
+      eca_rule->_action = new Parse_Action(sendFunctor, Parse_Action::SEND);
       string headName = rule->head->fn->name;
       OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);
       if (headTableInfo != NULL) {
         ostringstream oss;
-	oss << rule->ruleID << "Eca" << "Remote";    
+	oss << rule->ruleID << "Eca" << "Mat";    
 	ECA_Rule* eca_rule1 = new ECA_Rule(oss.str());    
-	eca_rule1->_event = new Parse_Event(rule->head, Parse_Event::RECV);
+	eca_rule1->_event = new Parse_Event(sendFunctor, Parse_Event::RECV);
 	if (rule->deleteFlag) {
 	  eca_rule1->_action = new Parse_Action(rule->head, Parse_Action::DELETE);
 	} else {
@@ -217,8 +231,8 @@ void ECA_Context::generateActionHead(OL_Context::Rule* rule, string bodyLoc,
       }
     }
   }
-
 }
+
 void ECA_Context::rewriteEventRule(OL_Context::Rule* rule, 
 				   TableStore* tableStore)
 {

@@ -49,6 +49,8 @@
 #include "timestampSource.h"
 #include "hexdump.h"
 #include "table2.h"
+#include "refTable.h"
+#include "commonTable.h"
 #include "lookup2.h"
 #include "insert.h"
 #include "queue.h"

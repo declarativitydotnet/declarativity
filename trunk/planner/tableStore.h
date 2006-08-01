@@ -23,13 +23,15 @@
 #include "value.h"
 #include "tuple.h"
 #include "ol_context.h"
+#include "commonTable.h"
 #include "table2.h"
+#include "refTable.h"
 
 class TableStore
 {
 public:
   /* Table information */
-  typedef std::map<string, Table2Ptr >  TableMap;
+  typedef std::map<string, CommonTablePtr >  TableMap;
  
   TableStore(OL_Context* ctxt);
   ~TableStore() { delete _tables; }
@@ -42,7 +44,7 @@ public:
   void addTableInfo(OL_Context::TableInfo* ti) {  
     _tableInfos->insert(std::make_pair(ti->tableName, ti));
   };
-  Table2Ptr getTableByName(string tableName);
+  CommonTablePtr getTableByName(string tableName);
   bool checkSecondaryIndex(string uniqueStr);
 
 private:

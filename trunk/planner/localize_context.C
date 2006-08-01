@@ -40,14 +40,15 @@ void Localize_Context::add_rule(OL_Context::Rule* rule)
 }
 
 
-OL_Context::Rule* Localize_Context::addSendRule(OL_Context::Rule* nextRule,
-						std::list<Parse_Term*> newTerms,
-						string newFunctorName,
-						Parse_Functor* functor,
-						string loc, 
-						boost::posix_time::time_duration minLifetime,
-						std::vector<string> fieldNames,
-						TableStore* tableStore)
+OL_Context::Rule* 
+Localize_Context::addSendRule(OL_Context::Rule* nextRule,
+			      std::list<Parse_Term*> newTerms,
+			      string newFunctorName,
+			      Parse_Functor* functor,
+			      string loc, 
+			      boost::posix_time::time_duration minLifetime,
+			      std::vector<string> fieldNames,
+			      TableStore* tableStore)
 {
   Parse_ExprList* pe = new Parse_ExprList();
   for (uint k = 0; k < fieldNames.size(); k++) {
@@ -76,9 +77,9 @@ OL_Context::Rule* Localize_Context::addSendRule(OL_Context::Rule* nextRule,
   if (tableInfo != NULL && minLifetime != zeroLifetime) {
     OL_Context::TableInfo* newTableInfo = new OL_Context::TableInfo();
     newTableInfo->tableName = newFunctorName;
-    newTableInfo->size = tableInfo->size; // XXX arbitrarily set
+    newTableInfo->size = tableInfo->size; // XXX depends on size of first table
     newTableInfo->timeout = minLifetime;
-    newTableInfo->primaryKeys = tableInfo->primaryKeys; // XXX arbitrary primary key set
+    newTableInfo->primaryKeys = tableInfo->primaryKeys; // XXX depends on first table
     tableStore->addTableInfo(newTableInfo);
     warn << "Old table " << tableInfo->toString() << "\n";
     warn << " Create table for " << newTableInfo->toString() << "\n";
@@ -111,7 +112,15 @@ void Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
     Parse_Term* nextTerm = (*t);    
     Parse_Functor *functor = dynamic_cast<Parse_Functor*>(nextTerm);
     if (functor != NULL) {
-      probeTerms.push_back(functor);
+      OL_Context::TableInfo* tableInfo 
+	= tableStore->getTableInfo(functor->fn->name);        
+      if (tableInfo != NULL) {
+	probeTerms.push_back(functor);
+      } else {
+	// put events first
+	warn << "Put to front " << functor->fn->name << "\n";
+	probeTerms.insert(probeTerms.begin(), functor);
+      }
     } else {
       otherTerms.push_back(nextTerm);
     }
@@ -121,6 +130,7 @@ void Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
   // do a left to right join ordering transformation
   bool local = true;
   ostringstream headName;
+  headName << nextRule->ruleID;
   
   boost::posix_time::time_duration
     minLifetime(boost::date_time::pos_infin);
@@ -142,6 +152,7 @@ void Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
     headName << probeTerms.at(k)->fn->name;
     OL_Context::TableInfo* tableInfo 
       = tableStore->getTableInfo(probeTerms.at(k)->fn->name);  
+    warn << "Get table " << probeTerms.at(k)->fn->name << "\n";
     if (tableInfo != NULL) {
       if (minLifetime > tableInfo->timeout) {
 	minLifetime = tableInfo->timeout;
@@ -192,16 +203,7 @@ void Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
 			   nextRule->head, false);
   
   newRuleTwo->terms = newTerms;
-  //warn << "Rewrite rule " << newRuleTwo->toString() << "\n";
   rewriteRule(newRuleTwo, tableStore);
-  
-  
-  /*if g(probeTerms.size() == 2 && 
-      probeTerms.at(0)->fn->loc != probeTerms.at(1)->fn->loc) {
-    // form a rule sending first term to location of second
 
-  } else {
-    add_rule(nextRule);
-    }*/
 }
 
