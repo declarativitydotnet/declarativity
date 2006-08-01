@@ -263,6 +263,14 @@ public:
       deletion or due to garbage collection.  */
   void
   removalListener(Listener);
+
+
+  /** Register refresh listeners. Every registered listener is called
+      whenever a tuple's lifetime (but not content) is updated in the
+      table, through a reinsertion.  Refresh listeners are never called
+      for tuples in tables with infinite size or lifetime */
+  void
+  refreshListener(Listener);
   
 
   /** Virtual methods inherited by table2 and refTable */
@@ -569,6 +577,10 @@ protected:
 
   /** My remove listeners */
   ListenerVector _removalListeners;
+
+
+  /** My refresh listeners */
+  ListenerVector _refreshListeners;
 
 
   /** My lookup search entry, used with projecting lookups. It must have

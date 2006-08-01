@@ -58,6 +58,7 @@ libp2elements_la_SOURCES = \
 	printWatch.C \
 	aggregate.C \
 	update.C \
+	refresh.C \
 	tupleListener.C \
 	tupleSourceInterface.C \
 	removed.C \

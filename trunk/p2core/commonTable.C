@@ -771,7 +771,7 @@ CommonTable::scanPrimary()
 
 
 ////////////////////////////////////////////////////////////
-// Update listeners
+// Listeners
 ////////////////////////////////////////////////////////////
 
 void
@@ -786,6 +786,15 @@ CommonTable::removalListener(Listener listener)
 {
   _removalListeners.push_back(listener);
 }
+
+
+void
+CommonTable::refreshListener(Listener listener)
+{
+  _refreshListeners.push_back(listener);
+}
+
+
 
 
 

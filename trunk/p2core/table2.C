@@ -130,6 +130,7 @@ Table2::~Table2()
   // And all listeners
   _updateListeners.clear();
   _removalListeners.clear();
+  _refreshListeners.clear();
   
 
   // Now empty out actual entries.  If flushing, flush the
@@ -357,6 +358,13 @@ Table2::updateTime(Entry* e)
   e->refCount++;
   getTime(e->time);
   _queue.push_front(e);
+
+  // Notify refresh listeners
+  for (ListenerVector::iterator i = _refreshListeners.begin();
+       i != _refreshListeners.end();
+       i++) {
+    (*i)(e->tuple);
+  }
 }
 
 

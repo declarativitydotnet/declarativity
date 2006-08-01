@@ -215,7 +215,7 @@ boost::shared_ptr< Pel_Program > Pel_Lexer::compile(const char *prog)
 // Constructor, including parsing the program.
 //
 Pel_Lexer::Pel_Lexer(const char *prog) 
-  : strb(prog) 
+    : strb(prog) 
 { 
   bufstate = yy_create_buffer( &strb, strlen(prog));
   yy_switch_to_buffer( bufstate );

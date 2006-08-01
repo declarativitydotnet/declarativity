@@ -154,7 +154,7 @@ private:
   vmTest(Pel_VM &vm, TuplePtr tpl, int i) {
     const ValTest *t = &vtests[i];
     
-    boost::shared_ptr<Pel_Program> prog = Pel_Lexer::compile( t->src);
+    boost::shared_ptr<Pel_Program> prog = Pel_Lexer::compile(t->src);
     vm.reset();
 
     Pel_VM::Error e = vm.execute(*prog, tpl);

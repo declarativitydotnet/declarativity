@@ -66,6 +66,7 @@ RefTable::~RefTable()
   // And all listeners
   _updateListeners.clear();
   _removalListeners.clear();
+  _refreshListeners.clear();
   
 
   // Now empty out actual entries.
