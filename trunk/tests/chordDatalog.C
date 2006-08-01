@@ -82,7 +82,7 @@ void fakeFingersSuccessors(boost::shared_ptr< OL_Context> ctxt,
 			   TableStore* tableStore,
                            string localAddress, IDPtr me)
 {
-  Table2Ptr fingerTable =
+  CommonTablePtr fingerTable =
     tableStore->getTableByName("finger");
   OL_Context::TableInfo* fingerTableInfo = ctxt->getTableInfos()->find("finger")->second;  
 
@@ -111,7 +111,7 @@ void fakeFingersSuccessors(boost::shared_ptr< OL_Context> ctxt,
 
 
   // fake the best successor table. Only for testing purposes.  
-  Table2Ptr bestSuccessorTable =
+  CommonTablePtr bestSuccessorTable =
     tableStore->getTableByName("bestSucc");
   TuplePtr tuple = Tuple::mk();
   tuple->append(Val_Str::mk("bestSucc"));
@@ -150,7 +150,7 @@ void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, TableStore* table
     fakeFingersSuccessors(ctxt, tableStore, localAddress, myKey);  
   }
 
-  Table2Ptr nodeTable = tableStore->getTableByName("node");
+  CommonTablePtr nodeTable = tableStore->getTableByName("node");
   TuplePtr tuple = Tuple::mk();
   tuple->append(Val_Str::mk("node"));
     
@@ -161,7 +161,7 @@ void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, TableStore* table
   nodeTable->insert(tuple);
   warn << "Node: " << tuple->toString() << "\n";
 
-  Table2Ptr predecessorTable = tableStore->getTableByName("pred");
+  CommonTablePtr predecessorTable = tableStore->getTableByName("pred");
   TuplePtr predecessorTuple = Tuple::mk();
   predecessorTuple->append(Val_Str::mk("pred"));
   predecessorTuple->append(Val_Str::mk(localAddress));
@@ -171,7 +171,7 @@ void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, TableStore* table
   predecessorTable->insert(predecessorTuple);
   warn << "Initial predecessor " << predecessorTuple->toString() << "\n";
 
-  Table2Ptr nextFingerFixTable =
+  CommonTablePtr nextFingerFixTable =
     tableStore->getTableByName("nextFingerFix");
   TuplePtr nextFingerFixTuple = Tuple::mk();
   nextFingerFixTuple->append(Val_Str::mk("nextFingerFix"));
@@ -181,7 +181,7 @@ void initializeBaseTables(boost::shared_ptr< OL_Context> ctxt, TableStore* table
   nextFingerFixTable->insert(nextFingerFixTuple);
   warn << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";
 
-  Table2Ptr landmarkNodeTable =
+  CommonTablePtr landmarkNodeTable =
     tableStore->getTableByName("landmark");  
   TuplePtr landmark = Tuple::mk();
   landmark->append(Val_Str::mk("landmark"));

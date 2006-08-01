@@ -42,6 +42,7 @@
 
 
 #include "table2.h"
+#include "commonTable.h"
 
 
 bool DEBUG = false;
@@ -66,7 +67,7 @@ initializeBaseTables(boost::shared_ptr< OL_Context> ctxt,
                      string environment)
 {
   // Put in my own address
-  Table2Ptr envTable = tableStore->getTableByName("env");
+  CommonTablePtr envTable = tableStore->getTableByName("env");
   TuplePtr tuple = Tuple::mk();
   ValuePtr envName = Val_Str::mk("env");
   tuple->append(envName);
