@@ -206,7 +206,7 @@ public:
   
   /** A destructor. Doesn't clean anything up. The subclass should deal
       with this. */
-  ~CommonTable();
+  virtual ~CommonTable();
 
 
 
@@ -265,7 +265,13 @@ public:
   removalListener(Listener);
   
 
+  /** Virtual methods inherited by table2 and refTable */
+  virtual bool
+  insert(TuplePtr t) = 0;
 
+  virtual bool
+  remove(TuplePtr t) = 0;
+  
 
 
   ////////////////////////////////////////////////////////////
@@ -524,9 +530,12 @@ public:
   Iterator
   scan();
   
+  /** Create a fresh secondary index. It assume the index does not
+      exist */
+  void
+  createSecondaryIndex(Key& key);
 
-
-
+  
 
 protected:
   /** My name (human readable). */
@@ -640,12 +649,6 @@ protected:
   findSecondaryIndex(Key& key);
 
 
-  /** Create a fresh secondary index. It assume the index does not
-      exist */
-  void
-  createSecondaryIndex(Key& key);
-
-  
   /** Project a (potentially frozen) source tuple to an unfrozen
       destination tuple, by placing all the fields of the source
       described by the source key into the corresponding fields of the
