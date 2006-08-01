@@ -16,7 +16,7 @@
 #include "aggregate.h"
 
 Aggregate::Aggregate(string name,
-                     Table2::Aggregate aggregate)
+                     CommonTable::Aggregate aggregate)
   : Element(name, 0, 1),
     _aggregate(aggregate),
     _pullCallback(0),

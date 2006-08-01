@@ -19,7 +19,7 @@
 #ifndef __REMOVED_H__
 #define __REMOVED_H__
 
-#include "table2.h"
+#include "commonTable.h"
 #include "element.h"
 #include "tuple.h"
 #include <list>
@@ -27,7 +27,7 @@
 class Removed : public Element {
 public:
   Removed(string name, 
-          Table2Ptr table);
+          CommonTablePtr table);
   
 
   const char*

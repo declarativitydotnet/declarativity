@@ -15,7 +15,7 @@
 #include "removed.h"
 
 Removed::Removed(string name,
-                 Table2Ptr table)
+                 CommonTablePtr table)
   : Element(name, 0, 1),
     _pullCB(0)
 {

@@ -30,16 +30,16 @@
 #define __LOOKUP2_H__
 
 #include "element.h"
-#include "table2.h"
+#include "commonTable.h"
 #include "val_tuple.h"
 #include "val_null.h"
 
 class Lookup2 : public Element {
 public:
   Lookup2(string name,
-          Table2Ptr table,
-          Table2::Key lookupKey,
-          Table2::Key indexKey,
+          CommonTablePtr table,
+          CommonTable::Key lookupKey,
+          CommonTable::Key indexKey,
           b_cbv completion_cb = 0);
   ~Lookup2();
   
@@ -67,7 +67,7 @@ public:
 
 private:
   /** My table */
-  Table2Ptr _table;
+  CommonTablePtr _table;
   
 
   /** My pusher's callback */
@@ -91,15 +91,15 @@ private:
 
   
   /** My current iterator */
-  Table2::Iterator _iterator;
+  CommonTable::Iterator _iterator;
 
 
   /** My lookup key */
-  Table2::Key _lookupKey;
+  CommonTable::Key _lookupKey;
   
   
   /** My index key */
-  Table2::Key _indexKey;
+  CommonTable::Key _indexKey;
 
 
   /** Are my lookup key and index key different?  If so, I need to

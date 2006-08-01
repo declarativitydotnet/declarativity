@@ -15,7 +15,7 @@
 #include "delete.h"
 
 Delete::Delete(string name,
-               Table2Ptr table)
+               CommonTablePtr table)
   : Element(name, 1, 0),
     _table(table)
 {

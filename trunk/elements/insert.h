@@ -22,13 +22,13 @@
 #define __INSERT_H__
 
 #include "element.h"
-#include "table2.h"
+#include "commonTable.h"
 
 class Insert
   : public Element {
 public:
   Insert(string name,
-         Table2Ptr table);
+         CommonTablePtr table);
   
   const char*
   class_name() const {return "Insert";}
@@ -52,7 +52,7 @@ public:
 
 private:
   /** My table */
-  Table2Ptr _table;
+  CommonTablePtr _table;
 };
 
 

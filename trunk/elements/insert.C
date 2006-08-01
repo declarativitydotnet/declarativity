@@ -13,10 +13,10 @@
  */
 
 #include "insert.h"
-#include "table2.h"
+#include "commonTable.h"
 
 Insert::Insert(string name,
-               Table2Ptr table)
+               CommonTablePtr table)
   : Element(name, 1, 1),
     _table(table)
 {

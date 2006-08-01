@@ -14,9 +14,9 @@
 #include "lookup2.h"
 
 Lookup2::Lookup2(string name,
-                 Table2Ptr table,
-                 Table2::Key lookupKey,
-                 Table2::Key indexKey,
+                 CommonTablePtr table,
+                 CommonTable::Key lookupKey,
+                 CommonTable::Key indexKey,
                  b_cbv completion_cb)
   : Element(name, 1, 1),
     _table(table),

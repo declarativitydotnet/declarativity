@@ -20,12 +20,12 @@
 #define __DELETE_H__
 
 #include "element.h"
-#include "table2.h"
+#include "commonTable.h"
 
 class Delete : public Element {
 public:
   Delete(string name,
-         Table2Ptr table);
+         CommonTablePtr table);
   
   const char*
   class_name() const {return "Delete";}
@@ -46,7 +46,7 @@ public:
   
 private:
   /** My table */
-  Table2Ptr _table;
+  CommonTablePtr _table;
 };
 
 

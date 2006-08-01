@@ -18,13 +18,13 @@
 #ifndef __AGGREGATEELEMENT_H__
 #define __AGGREGATEELEMENT_H__
 
-#include "table2.h"
+#include "commonTable.h"
 #include "element.h"
 
 class Aggregate : public Element {
  public:
   Aggregate(string name,
-            Table2::Aggregate aggregate);
+            CommonTable::Aggregate aggregate);
 
   
   const char*
@@ -48,7 +48,7 @@ class Aggregate : public Element {
   
  private:
   /** My aggregate */
-  Table2::Aggregate _aggregate;
+  CommonTable::Aggregate _aggregate;
 
 
   /** My latest aggregate */
