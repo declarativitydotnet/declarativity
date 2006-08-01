@@ -202,7 +202,6 @@ private:
               << "'";
       BOOST_CHECK_MESSAGE(top->typeCode() == t->t,
                           message.str().c_str());
-      //return;
     }
 
 
@@ -239,22 +238,25 @@ private:
         eq = (Val_Str::cast(top).compare(t->val) == 0) ? 1 : 0;
       default:
         // Ignore remaining values XXX
-        break;
-      }
-      {
-        std::ostringstream message;
-        message << testID
-                << ". Mismatching stack top for '"
-                << t->src
-                << "'; expected '"
-                << t->val
-                << "' but received '"
-                << top->toTypeString()
-                << "'";
-        BOOST_CHECK_MESSAGE(eq, 
-                            message.str().c_str());
+        BOOST_MESSAGE(testID
+                      << ". Don't know how to check result for '"
+                      << t->src
+                      << "'; expected '"
+                      << t->val
+                      << "' and received '"
+                      << top->toTypeString()
+                      << "'");
         return;
       }
+      BOOST_CHECK_MESSAGE(eq, 
+                          testID
+                          << ". Mismatching stack top for '"
+                          << t->src
+                          << "'; expected '"
+                          << t->val
+                          << "' but received '"
+                          << top->toTypeString()
+                          << "'");
     }
   }
   
