@@ -32,9 +32,8 @@
 /* The base tuples */
 
 materialize(node, infinity, 1, keys(1)).
-materialize(finger, 180, 160, keys(2)).
+materialize(finger, infinity, 160, keys(2)).
 materialize(bestSucc, infinity, 1, keys(1)).
-materialize(bestSuccDist, infinity, 1, keys(1)).
 materialize(succDist, infinity, 100, keys(2)).
 materialize(succ, infinity, 100, keys(2)).
 materialize(pred, infinity, 100, keys(1)).
@@ -43,8 +42,9 @@ materialize(join, 10, 5, keys(1)).
 materialize(landmark, infinity, 1, keys(1)).
 materialize(fFix, infinity, 160, keys(2)).  
 materialize(nextFingerFix, infinity, 1, keys(1)).  
-materialize(pingNode, 10, infinity, keys(2)).  
-materialize(pendingPing, 10, infinity, keys(2)).  
+materialize(pingNode, infinity, infinity, keys(2)).  
+materialize(pendingPing, infinity, infinity, keys(2)).  
+
 
 /** Lookups */
 
@@ -210,7 +210,7 @@ sb2 succ@NI(NI,S1,SI1) :- periodic@NI(NI,E,15),
 			succ@SI(SI,S1,SI1). 
 
 sb3 pred@SI(SI,N,NI) :- periodic@NI(NI,E,15),
-			node@NI(NI,N), 
+			node@NI(NI,N), 			
 			succ@NI(NI,S,SI),
 			pred@SI(SI,P,PI),
 			node@SI(SI,N1),
@@ -218,40 +218,60 @@ sb3 pred@SI(SI,N,NI) :- periodic@NI(NI,E,15),
 
 
 /** Connectivity Monitoring */
-/*watch(pingEvent).*/
+watch(pingEvent).
 watch(pingReq).
 watch(pingResp).
-/*watch(pingNode).
-watch(pingNodeCount).*/
-/*watch(pingNode).
-
+watch(pingNode).
 watch(pendingPing).
+watch(checkPendingEvent).
+watch(timeoutEvent).
 
+/* Periodically, go through all nodes in pingTable, and then generate
+ping requests every 10 seconds*/
 cm0 pingEvent@NI(NI,E) :- periodic@NI(NI,E,5).
 
-cm1 pendingPing@NI(NI,PI,E) :- pingEvent@NI(NI,E),
-			pingNode@NI(NI,PI).
+cm1 pingReq@PI(PI,NI,E) :- pingEvent@NI(NI,E),
+			pingNode@NI(NI,PI,T).
 
-cm2 pingReq@PI(PI,NI,E) :- pendingPing@NI(NI,PI,E).
+cm2 pendingPing@NI(NI,PI,T,E) :- pingEvent@NI(NI,E),
+			pingNode@NI(NI,PI), T:=f_now().
 
-cm3 delete pendingPing@NI(NI,PI,E) :- pingResp@NI(NI,PI,E).
+cm3 delete pendingPing@NI(NI,PI,T,E) :- pingResp@NI(NI,PI,E).
 
 cm4 pingResp@RI(RI,NI,E) :- pingReq@NI(NI,RI,E).
 
-cm5 pingNode@NI(NI,SI) :- succ@NI(NI,S,SI), 
-		       SI != NI.
 
-cm6 pingNode@NI(NI,PI) :- pred@NI(NI,P,PI), 
+/** Views of pingNode */
+cm5 pingNode@NI(NI,SI,T) :- succ@NI(NI,S,SI), 
+		       SI != NI,
+		       T:="S".
+
+cm6 pingNode@NI(NI,PI,T) :- pred@NI(NI,P,PI), 
 		       PI != NI, 
-		       PI != "NIL".
+		       PI != "NIL",
+		       T:="P".
 
-cm7 succ@NI(NI,S,SI) :- succ@NI(NI,S,SI),
-		     pingResp@NI(NI,SI,E).
 
-cm8 pred@NI(NI,P,PI) :- pred@NI(NI,P,PI),
-		     pingResp@NI(NI,PI,E).
+/* Periodically, check the pendingPing table to see if
+timeouts. Consider 5 seconds not hearing back as timeout. */
 
-cm9 pred@NI(NI,"NIL","NIL") :- pingEvent@NI(NI,E), 
-			pendingPing@NI(NI,PI,E), 
+cm9 checkPendingEvent@NI(NI,T,E) :- periodic@NI(NI,E,3),T:=f_now().
+
+cm10 timeoutEvent@NI(NI,PI) :- checkPendingEvent@NI(NI,T1,E1), 
+                               pendingPing@NI(NI,PI,T,E), T2:=T1-T, 
+			       T2>3.
+
+cm11 delete pendingPing@NI(NI,PI,T,E) :- timeoutEvent@NI(NI,PI), 
+                                         pendingPing@NI(NI,PI,T,E).
+
+
+/** Note, we can have multiple retries by keeping timeoutEvent increment
+up to 3 and keeping state */
+
+/* EVICT */
+cm7 pred@NI(NI,"NIL","NIL") :- timeoutEvent@NI(NI,PI), 
 			pred@NI(NI,P,PI).
-*/
+
+cm8 delete succ@NI(NI,S,SI) :- timeoutEvent@NI(NI,SI), 
+			succ@NI(NI,S,SI).
+
