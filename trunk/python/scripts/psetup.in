@@ -8,8 +8,7 @@ import socket
 import getpass
 
 files   = ["~/boost-1.32.0-6.i386.rpm", "~/libstdc++-4.0.0-8.i386.rpm",
-           "~/p2-0.7.2-0.i386.rpm", "~/python-2.3.4-11.i386.rpm", "./planetlab.py", 
-           "./p2"]
+           "~/p2-0.7.2-0.i386.rpm", "~/python-2.3.4-11.i386.rpm", "./p2"]
 install = """\
 sudo rpm -i --force libstdc++-4.0.0-8.i386.rpm; \
 sudo rpm -i --force boost-1.32.0-6.i386.rpm; \
@@ -29,8 +28,8 @@ Usage: psetup.py [-j <parallel>] [-i] [-k] \\
 def parse_cmdline(argv):
     shortopts = "ikn:j:o:D:m:p:"
     flags = {"overlog" : "", "kill" : False, "slice" : None, "parallel" : 1, \
-             "env" : {}, "install" : False, "email" : None, "password" : None \
-             "master_addr" : "clash.berkeley.intel-research.net", master_port : "10000"}
+             "env" : {}, "install" : False, "email" : None, "password" : None, \
+             "master_addr" : "clash.berkeley.intel-research.net", "master_port" : "10000"}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if   o == "-n": flags["slice"]    = v
@@ -88,8 +87,9 @@ def startNode(node):
       for f in files:
         os.system("scp %s %s@%s: >& /dev/null" % (f, flags["slice"], node))  
       os.system("ssh -l %s %s \"%s\" >& /dev/null" % (flags["slice"], node, install))
+    os.system("scp ./planetlab.py %s@%s: >& /dev/null" % (flags["slice"], node))  
 
-    start = startup + flags["master_addr"] + " " + flags["master_port"]
+    start = startup + " " + flags["master_addr"] + " " + flags["master_port"]
     if flags["overlog"]:
       os.system("scp %s %s@%s: >& /dev/null" % (flags["overlog"], flags["slice"], node))  
       os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % \

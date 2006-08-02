@@ -16,7 +16,7 @@
 /* The base tuples */
 
 materialize(node, infinity, 1, keys(1)).
-materialize(finger, 180, 160, keys(2)).
+materialize(finger, infinity, 160, keys(2)).
 materialize(bestSucc, infinity, 1, keys(1)).
 materialize(succ, 10, 100, keys(2)).
 materialize(pred, infinity, 100, keys(1)).
@@ -29,14 +29,16 @@ materialize(nextFingerFix, infinity, 1, keys(1)).
 materialize(pingNode, 10, infinity, keys(2)).  
 materialize(pendingPing, 10, infinity, keys(2)).  
 
+/*
 materialize(references, 240, infinity, keys(2, 3)).  
 materialize(backReference, 240, infinity, keys(1)).  
 materialize(forwardReference, 240, infinity, keys(2)).  
+*/
 
 i0 node@NI(NI, N)            :- periodic@NI(NI, E, 0, 1), N := f_sha1(NI).
 i1 pred@NI(NI, P, PI)        :- periodic@NI(NI, E, 0, 1), P := 0x0I, PI:="-".
 i2 nextFingerFix@NI(NI, 0)   :- periodic@NI(NI, E, 0, 1). 
-i3 landmark@NI(NI, "localhost:10000") :- periodic@NI(NI, E, 0, 1).
+i3 landmark@NI(NI, MASTER) :- periodic@NI(NI, E, 0, 1).
 
 watch(node).
 watch(pred).
@@ -50,43 +52,47 @@ watch(lookup).
 watch(bestLookupDist).
 */
 
-l1 lookupResults@R(R,K,S,SI,E) :- node@NI(NI,N),
-				  lookup@NI(NI,K,R,E), 
-				  bestSucc@NI(NI,S,SI),
-				  (K in (N,S] || (N == S)).
+l0 displayEvent@MI(MI,T,NI,P) :- lookupResults@NI(NI,K,S,SI,E,P), MI:=MASTER, T:="P".
+
+l1 lookupResults@R(R,K,S,SI,E,P) :- node@NI(NI,N),
+				    lookup@NI(NI,K,R,E,P), 
+				    bestSucc@NI(NI,S,SI),
+				    (K in (N,S] || (N == S)).
 
 
-l2 bestLookupDist@NI(NI,K,R,E,min<D>) :- node@NI(NI,N), 
-					 lookup@NI(NI,K,R,E), 
-					 finger@NI(NI,I,B,BI), 
-					 D:=K - B - 1, 
-					 B in (N,K).
+l2 bestLookupDist@NI(NI,K,R,E,min<D>,P) :- node@NI(NI,N), 
+				  	   lookup@NI(NI,K,R,E,P), 
+					   finger@NI(NI,I,B,BI), 
+					   D:=K - B - 1, 
+					   B in (N,K).
 
 
-l3 lookup@BI(min<BI>,K,R,E) :- node@NI(NI,N),	    
-			       bestLookupDist@NI(NI,K,R,E,D), 
-			       finger@NI(NI,I,B,BI), 
-			       D == K - B - 1,
-			       B in (N,K).
+l3 lookup@BI(min<BI>,K,R,E,P1) :- node@NI(NI,N),	    
+			          bestLookupDist@NI(NI,K,R,E,D,P), 
+			          finger@NI(NI,I,B,BI), 
+			          D == K - B - 1,
+			          B in (N,K), P1:=P+","+NI.
 
 
-/* Back reference overlog */
+/* Back reference overlog
+/*
 watch(bestSucc).
 watch(backReference).
 
 b0 forwardReference@LI(LI, K, SI) :- finger@LI(LI, P, S, SI), 
                                      LI != SI, K := f_sha1(S).
 
-b1 lookup@LI(LI,K,LI,SI) :- forwardReference@LI(LI, K, SI).
+b1 lookup@LI(LI,K,LI,SI,LI) :- forwardReference@LI(LI, K, SI).
 
-b2 references@DI(DI, LI, K, SI) :- lookupResults@LI(LI, K, D, DI, E), 
+b2 references@DI(DI, LI, K, SI) :- lookupResults@LI(LI, K, D, DI, E,P), 
                                    forwardReference@LI(LI, K, SI).
 
-/* b3 backReference@SI(SI, K, LI) :- references@DI(DI, LI, K, SI). */
+b3 backReference@SI(SI, K, LI) :- references@DI(DI, LI, K, SI).
+*/
 
 /** Neighbor Selection */
 
-l0 linkEvent@NI(NI, LI) :- finger@NI(NI,P,L,LI).
+l0 displayEvent@MI(MI, T, NI, LI) :- finger@NI(NI,P,L,LI), MI:=MASTER, T:="L".
 
 /*
 watch(bestSucc).
@@ -143,12 +149,12 @@ f1 fFix@NI(NI,E,I) :- periodic@NI(NI,E,10),
 
 f2 fFixEvent@NI(NI,E,I) :- fFix@NI(NI,E,I).
 
-f3 lookup@NI(NI,K,NI,E) :- fFixEvent@NI(NI,E,I),
-			   node@NI(NI,N), 
-			   K:=0x1I << I + N.
+f3 lookup@NI(NI,K,NI,E,NI) :- fFixEvent@NI(NI,E,I),
+			      node@NI(NI,N), 
+			      K:=0x1I << I + N.
 
 f4 eagerFinger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I), 
-				lookupResults@NI(NI,K,B,BI,E).
+				lookupResults@NI(NI,K,B,BI,E,P).
 
 /*
 f5 finger@NI(NI,I,B,BI) :- eagerFinger@NI(NI,I,B,BI).
@@ -192,10 +198,10 @@ c3 succ@NI(NI,N,NI) :- landmark@NI(NI,LI),
 		       node@NI(NI,N), 
 		       NI == LI.
 
-c4 lookup@LI(LI,N,NI,E) :- joinReq@LI(LI,N,NI,E).
+c4 lookup@LI(LI,N,NI,E,LI) :- joinReq@LI(LI,N,NI,E).
 
 c5 succ@NI(NI,S,SI) :- join@NI(NI,E),
-		    lookupResults@NI(NI,K,S,SI,E).
+		    lookupResults@NI(NI,K,S,SI,E,P).
 
 cb1 joinCheck@NI(NI,E) :- periodic@NI(NI,E,120).
 

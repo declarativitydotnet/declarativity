@@ -6,7 +6,7 @@ using namespace boost::python;
 void export_table2()
 {
   scope outer =
-    class_<Table2, Table2Ptr>
+    class_<Table2, bases<CommonTable>, Table2Ptr>
     ("Table2", init<string, Table2::Key&>())
     .def(init<string, Table2::Key&, uint32_t>())
     .def(init<string, Table2::Key&, uint32_t, string>())

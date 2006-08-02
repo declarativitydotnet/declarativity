@@ -18,7 +18,7 @@ def parse_cmdline(argv):
         if   o == "-o": flags["overlog"]     = v
         elif o == "-n": flags["slice"]       = v
         elif o == "-m": flags["master_addr"] = v
-        elif o == "-p": flags["master_port"] = v
+        elif o == "-p": flags["master_port"] = int(v)
         elif o == "-s": libp2python.srand(int(v))
         else:
             print_usage()
@@ -57,16 +57,18 @@ def report(tuple):
   pid = os.fork()
   if pid == 0:
     try:
-      s = socket(AF_INET, SOCK_STREAM)
-      s.connect((flags["master_addr"], flags["master_port"]))
-      s.send(tuple)
-      s.close()
+      print >> log, tuple
+      #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+      #s.connect((flags["master_addr"], flags["master_port"]))
+      #s.send(tuple)
+      #s.close()
     except:
+      print "EXCEPTION: %s\n" % str(sys.exc_info()[:2])
       print "UNABLE TO SEND TUPLE TO: %s:%s" % (flags["master_addr"], flags["master_port"])
     sys.exit(0)
 
 if __name__ == "__main__":
-  global flags, p2, server, host, port
+  global flags, p2, server, host, port, log
   libp2python.srand(libp2python.time())
   try:
     flags, args = parse_cmdline(sys.argv)
@@ -81,6 +83,7 @@ if __name__ == "__main__":
   port   = args[0]
   server = xmlrpclib.Server('https://www.planet-lab.org/PLCAPI/')
   p2     = libp2python.P2(host, port)
+  log    = open("home/irb_p2/planetlab.log", 'w')
 
   if flags["overlog"]:
     # Read in the optional overlog program 
@@ -94,6 +97,8 @@ if __name__ == "__main__":
   p2.subscribe("sliceEvent", sliceEventHandler)
   p2.subscribe("overlogInstall", installHandler)
   p2.subscribe("linkEvent", linkHandler)
+
+  report("R,"+host)
 
   # Run the system
   p2.run()

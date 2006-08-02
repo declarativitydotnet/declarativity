@@ -6,7 +6,7 @@
 
 materialize(overlog, infinity, infinity, keys(3)).
 materialize(sliceNodes, infinity, infinity, keys(2)).
-materialize(neighbors, 90, infinity, keys(2)).
+materialize(neighbors, infinity, infinity, keys(2)).
 materialize(neighborCount, infinity, 1, keys(2)).
 
 watch(overlogInstall).
@@ -22,13 +22,13 @@ r3 neighborRequest@N(N, J) :- periodic@J(J, E, 5),
                               neighborCount@J(J, C), 
                               sliceNodes@J(J, N),
                               f_coinFlip(0.1) == 1,
-                              C < 3.
+                              C < NUM_NEIGHBORS.
 
 r4 neighborResponse@N(N, J) :- neighborRequest@J(J, N).
 
 r5 neighbors@J(J, N) :- neighborResponse@J(J, N),
                         neighborCount@J(J, C),
-                        C < 3.
+                        C < NUM_NEIGHBORS.
 
 r6 neighborPing@N(N, J) :- periodic@J(J, E, 30),
                            neighbors@J(J, N).
@@ -38,11 +38,12 @@ r8 neighbors@J(J, N)    :- neighborPong@J(J, N).
 r9 delete neighbors@J(J,N) :- periodic@J(J,E,10),
                               neighbors@J(J,N),
                               neighborCount@J(J,C),
-                              C > 3. 
+                              C > NUM_NEIGHBORS. 
 
 /** Overlog installation rules */
 p0 overlog@J(J, T, P)           :- overlogEvent@J(J, S, T, P).
 p1 overlogInstall@J(J, J, T, P) :- overlog@J(J, T, P).
+p3 displayEvent@M(M, I, J, T)   :- overlogInstall@J(J, S, T, P), M:=MASTER, I:="I".
 
 /** Tell all my neighbors about the new install */
 p2 overlogEvent@N(N, J, T, P)   :- overlogInstall@J(J, S, T, P), neighbors@J(J, N).

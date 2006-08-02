@@ -33,11 +33,12 @@ g1 gossipEvent@J(J, I2, S, T, P, C2) :- gossipEvent@J(J, I, S, T, P, C),
                                         C2:=C+1, I2 := f_rand() % A.
 
 /** Overlog installation rules */
-p0 overlog@J(J, S, T, P)        :- overlogEvent@J(J, S, T, P).
+p0 overlog@J(J, S, T, P)      :- overlogEvent@J(J, S, T, P).
 p1 overlogInstall@J(J, S, T, P) :- overlog@J(J, S, T, P).
+p2 displayEvent@M(M, I, J, T) :- overlogInstall@J(J, S, T, P), M:=MASTER, I:="I".
 
 /** Tell some folks about the new install */
-p2 gossipEvent@J(J, I, S, T, P, C) :- overlogInstall@J(J, S, T, P),
+p3 gossipEvent@J(J, I, S, T, P, C) :- overlogInstall@J(J, S, T, P),
                                       nodeCount@J(J, A), 
                                       C:=0, I:=f_rand() % A.
 

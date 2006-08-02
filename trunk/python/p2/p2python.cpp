@@ -78,6 +78,7 @@ void export_elementSpec();
 void export_loggerI();
 void export_plumber();
 void export_tuple();
+void export_commonTable();
 void export_table2();
 void export_value();
 void export_val_double();
@@ -126,6 +127,7 @@ BOOST_PYTHON_MODULE(libp2python)
   export_elementSpec();
   export_loggerI();
   export_tuple();
+  export_commonTable();
   export_table2();
   export_plumber();
   export_value();

@@ -23,6 +23,7 @@ libp2pythoncore_la_SOURCES = \
 	plumber.cpp          \
 	tuple.cpp            \
 	table2.cpp           \
+	commonTable.cpp      \
 	value.cpp            \
 	val_double.cpp       \
 	val_id.cpp           \
