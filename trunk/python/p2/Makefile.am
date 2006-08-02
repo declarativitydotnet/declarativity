@@ -19,7 +19,9 @@ libp2python_la_SOURCES = p2python.cpp
 
 libp2python_la_LIBADD = \
 	-lcrypto \
-	-lboost_python \
+## Do not include -lboost_python, which is already linked into
+## -lp2elements.  Linking it in twice causes link errors on OS X. -- JMH
+#	-lboost_python \
 	-lp2pythondebugger \
 	-lp2pythonelements \
 	-lp2pythoncore \
