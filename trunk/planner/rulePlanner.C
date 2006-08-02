@@ -486,7 +486,7 @@ void generateSendAction(PlanContext* pc)
 
   addWatch(pc, "SendAction");  
   pc->addElementSpec(sendPelTransform);   
-  addPrint(pc, "SendActionMsg");
+  //addPrint(pc, "SendActionMsg");
 
   // copy that location specifier field first, encapsulate rest of tuple
 }

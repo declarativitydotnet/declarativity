@@ -71,14 +71,15 @@ void TableStore::createTable(OL_Context::TableInfo* tableInfo)
   for (unsigned int k = 0; k < _ctxt->getFacts().size(); k++) {
     TuplePtr tr = _ctxt->getFacts().at(k);
     ValuePtr vr = (*tr)[0];
+    if (tableInfo->tableName != vr->toString()) {
+      continue;
+    }
     std::cout << "Insert tuple " << tr->toString()
               << " into table "  << vr->toString()
               << " " << tr->size() << "\n";
-    CommonTablePtr tableToInsert = getTableByName(vr->toString());     
+
+    CommonTablePtr tableToInsert = getTableByName(vr->toString());         
     tableToInsert->insert(tr);
-    std::cout << "Tuple inserted: " << tr->toString() 
-	      << " into table " << vr->toString() 
-	      << " " << tr->size() << "\n";
   }
 }
 

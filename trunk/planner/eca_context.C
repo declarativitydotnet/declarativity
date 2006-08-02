@@ -245,14 +245,13 @@ void ECA_Context::rewriteEventRule(OL_Context::Rule* rule,
   ostringstream oss;
   oss << rule->ruleID << "_eca";    
   ECA_Rule* eca_rule = new ECA_Rule(oss.str());    
-    
   for(; t != rule->terms.end(); t++) {
     Parse_Term* nextTerm = (*t);    
     Parse_Functor *nextFunctor = dynamic_cast<Parse_Functor*>(nextTerm); 
     Parse_Select *nextSelect = dynamic_cast<Parse_Select*>(nextTerm); 
     Parse_Assign *nextAssign = dynamic_cast<Parse_Assign*>(nextTerm); 
 
-    if (nextFunctor != NULL) {
+    if (nextFunctor != NULL) {     
       loc = nextFunctor->fn->loc;
       string termName = nextFunctor->fn->name;
       OL_Context::TableInfo* termTableInfo = tableStore->getTableInfo(termName);	  
@@ -260,12 +259,33 @@ void ECA_Context::rewriteEventRule(OL_Context::Rule* rule,
 	// this is not an event
 	eca_rule->_probeTerms.push_back(nextFunctor);
       } else {
-	// an event
-	if (termName != "periodic") {
-	  eca_rule->_event = new Parse_Event(nextFunctor, Parse_Event::RECV);    
+	// an event. Generate an event functor
+	if (termName == "periodic") {
+	  ECA_Rule* eca_rule1 = new ECA_Rule(oss.str() + "periodic");    
+
+	  Parse_ExprList* periodicArgs = new Parse_ExprList();	  
+	  periodicArgs->push_back(nextFunctor->arg(0));
+	  periodicArgs->push_back(nextFunctor->arg(1));
+	  ValuePtr name = Val_Str::mk(rule->ruleID + "periodic");
+	  ValuePtr loc = Val_Str::mk(nextFunctor->fn->loc);
+	  Parse_Functor *sendFunctor = 
+	    new Parse_Functor(new Parse_FunctorName(new Parse_Val(name), 
+						    new Parse_Val(loc)), 
+			      periodicArgs);
+
+	  eca_rule1->_action = new Parse_Action(sendFunctor, Parse_Action::SEND);    	  
+	  eca_rule1->_event = new Parse_Event(nextFunctor, Parse_Event::INSERT);    	  
+	  add_rule(eca_rule1);
+
+	  Parse_Functor *recvFunctor = 
+	    new Parse_Functor(new Parse_FunctorName(new Parse_Val(name), 
+						    new Parse_Val(loc)), 
+			      periodicArgs);
+
+	  eca_rule->_event = new Parse_Event(recvFunctor, Parse_Event::RECV);    	  
 	} else {
-	  eca_rule->_event = new Parse_Event(nextFunctor, Parse_Event::INSERT);    
-	}
+	  eca_rule->_event = new Parse_Event(nextFunctor, Parse_Event::RECV);    
+	} 
       }
     }
     if (nextSelect != NULL || nextAssign != NULL) {
