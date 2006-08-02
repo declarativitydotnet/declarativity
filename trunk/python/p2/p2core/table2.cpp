@@ -19,7 +19,9 @@ void export_table2()
     .def("aggregate", &Table2::aggregate, return_value_policy<reference_existing_object>())
     ;
   
+/*
    class_<Table2::AggregateObj, Table2::Aggregate, boost::noncopyable>
      ("Aggregate", no_init)
    ;
+*/
 }
