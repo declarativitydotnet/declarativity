@@ -8,7 +8,7 @@
 # without these tools.
 #
 # You should generally only need to run this script if you just
-# checked sfs out of a CVS repository, or else somehow badly mangled
+# checked p2 out of a CVS repository, or else somehow badly mangled
 # the Makefile.
 
 if test ! -f configure.ac; then
@@ -46,10 +46,16 @@ for dir in *; do
     fi
 done
 
+if [ `uname` = "Darwin" ]; then
+        lt=glibtoolize
+else
+        lt=libtoolize
+fi
 set -x
 chmod +x setup
 aclocal
 autoheader
+$lt
 automake --add-missing --foreign --copy
 autoconf
 set +x
