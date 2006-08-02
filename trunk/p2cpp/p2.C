@@ -260,7 +260,7 @@ string P2::stub(string hostname, string port)
     stub << "ODelivery(\"order\") ->";
   }
   else if (_transport_conf & RELIABLE) {
-    stub << "DupRemove(\"dupremove\") ->";
+    // stub << "DupRemove(\"dupremove\") ->";
   }
   stub << "PelTransform(\"unPackage\", \"$8 unboxPop\")->";
 
