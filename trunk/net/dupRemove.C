@@ -65,7 +65,7 @@ int DupRemove::push(int port, TuplePtr tp, b_cbv cb)
   if (!cp) { 
     SeqNum  cseq = (*tp)[CUMSEQ]->typeCode() == Value::NULLV 
                    ?  seq : Val_UInt64::cast((*tp)[CUMSEQ]);
-    cp.reset(new Connection(cseq+1));
+    cp.reset(new Connection(cseq));
     map(src, cp);
   }
   cp->touch();
