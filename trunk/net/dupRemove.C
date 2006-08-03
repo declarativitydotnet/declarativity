@@ -59,12 +59,16 @@ int DupRemove::push(int port, TuplePtr tp, b_cbv cb)
   assert(port == 0);
 
   ValuePtr src = (*tp)[SRC];
-  SeqNum   seq = Val_UInt64::cast((*tp)[SEQ]);
+  SeqNum  cseq = Val_UInt64::cast((*tp)[CUMSEQ]);
   ConnectionPtr cp = lookup(src);
 
+  if (cseq == 0 && cp) {
+    if (cp->_tcb != NULL) timeCBRemove(cp->_tcb);
+    unmap(src);
+    cp.reset();
+  }
+
   if (!cp) { 
-    SeqNum  cseq = (*tp)[CUMSEQ]->typeCode() == Value::NULLV 
-                   ?  seq : Val_UInt64::cast((*tp)[CUMSEQ]);
     cp.reset(new Connection(cseq));
     map(src, cp);
   }

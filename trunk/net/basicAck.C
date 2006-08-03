@@ -42,11 +42,6 @@ TuplePtr BasicAck::simple_action(TuplePtr p)
 {
   ValuePtr src  = (*p)[SRC]; 
 
-/*
-  if ((rand() / (float)RAND_MAX) < 0.5)
-    return p;
-*/
-
   TuplePtr ack  = Tuple::mk();
   ack->append(src);			// Source location
   ack->append(Val_Str::mk("ACK"));

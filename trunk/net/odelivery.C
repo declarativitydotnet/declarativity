@@ -76,7 +76,13 @@ int ODelivery::push(int port, TuplePtr tp, b_cbv cb)
 
   ValuePtr src = (*tp)[SRC];
   SeqNum   seq = Val_UInt64::cast((*tp)[SEQ]);
+  SeqNum  cseq = Val_UInt64::cast((*tp)[CUMSEQ]);
   ConnectionPtr cp = lookup(src);
+
+  if (cseq == 0 && cp) {
+    unmap(src);
+    cp.reset();
+  }
 
   if (cp && seq < cp->next_seq_) {
     /** We've already received this tuple sequence, so ignore it */
@@ -87,9 +93,7 @@ int ODelivery::push(int port, TuplePtr tp, b_cbv cb)
     cp->insert(tp);
   }
   else {
-    SeqNum  cseq = (*tp)[CUMSEQ]->typeCode() == Value::NULLV 
-                   ?  seq : Val_UInt64::cast((*tp)[CUMSEQ]);
-    cp.reset(new Connection(cseq+1));
+    cp.reset(new Connection(cseq));
     map(src, cp);
     cp->insert(tp);
   }

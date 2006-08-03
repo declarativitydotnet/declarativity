@@ -92,7 +92,8 @@ REMOVABLE_INLINE void RDelivery::handle_failure(ConnectionPtr cp)
       iter++;
     }
     else {
-      std::cerr << "RETRY TOO MANY: SEQ = " << ctp->_seq << std::endl;
+      std::cerr << "RETRY TOO MANY: DEST = " << cp->_dest->toString()
+                << " SEQ = " << ctp->_seq << std::endl;
       if (cp->_cum_seq < ctp->_seq)
         cp->_cum_seq = ctp->_seq;
       assert(iter == cp->_outstanding.begin());
@@ -139,7 +140,7 @@ TuplePtr RDelivery::tuple(TuplePtr tp)
 
   RDelivery::ConnectionPtr cp = lookup(dest);  
   if (!cp) {
-    cp.reset(new Connection(rtt, seq-1));
+    cp.reset(new Connection(dest, rtt));
     map(dest, cp);
   }
 

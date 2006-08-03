@@ -28,9 +28,6 @@ void CumulativeAck::Connection::confirm(SeqNum seq) {
   else if (_cum_seq + 1 == seq) {
     _cum_seq++;			// Got what we expected
   }
-  else if (_queue.size() == 0 && _cum_seq < seq) {
-    _queue.push_back(seq);	// Queue and wait for missing sequence #s
-  }
   else {
     // Insert in sequence order
     std::vector<SeqNum>::iterator iter; 
@@ -51,8 +48,8 @@ void CumulativeAck::Connection::confirm(SeqNum seq) {
   // Move the next sequence pointer if we've filled a hole
   for (std::vector<SeqNum>::iterator iter = _queue.begin(); 
        iter != _queue.end(); iter++) {
-    if (*iter == _cum_seq) _cum_seq++;
-    else break;
+    if (_cum_seq+1 == *iter) _cum_seq++;
+    else if (_cum_seq < *iter) break;
   }
 
   for (std::vector<SeqNum>::iterator iter = _queue.begin(); 
@@ -73,12 +70,21 @@ TuplePtr CumulativeAck::simple_action(TuplePtr tp)
   SeqNum   srcCumulativeSeq = Val_UInt64::cast((*tp)[CUMSEQ+2]);
   ConnectionPtr cp = lookup(src);
 
+  if (srcCumulativeSeq == 0 && cp) {
+    if (cp->_tcb != NULL) timeCBRemove(cp->_tcb);
+    unmap(src);
+    cp.reset();
+  }
+
   if (!cp) {
     cp.reset(new Connection());
     map(src, cp);
   }
 
-  if (cp->_cum_seq < srcCumulativeSeq) {
+  if (srcCumulativeSeq == 0) {
+    cp->_cum_seq = seq;
+  }
+  else if (cp->_cum_seq < srcCumulativeSeq) {
     cp->_cum_seq = srcCumulativeSeq;
   }
   cp->confirm(seq);

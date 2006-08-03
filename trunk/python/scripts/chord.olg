@@ -42,6 +42,7 @@ i3 landmark@NI(NI, MASTER) :- periodic@NI(NI, E, 0, 1).
 
 watch(node).
 watch(pred).
+watch(bestSucc).
 watch(landmark).
 
 /** Lookups */
@@ -92,7 +93,7 @@ b3 backReference@SI(SI, K, LI) :- references@DI(DI, LI, K, SI).
 
 /** Neighbor Selection */
 
-l0 displayEvent@MI(MI, T, NI, LI) :- finger@NI(NI,P,L,LI), MI:=MASTER, T:="L".
+l0 displayEvent@MI(MI, T, P, NI, LI) :- finger@NI(NI,P,L,LI), MI:=MASTER, T:="L".
 
 /*
 watch(bestSucc).

@@ -46,9 +46,10 @@ private:
     };
     typedef boost::shared_ptr<Tuple> TuplePtr;
 
-    Connection(double rtt, SeqNum cum_seq)
-      : _rtt(rtt), _cum_seq(cum_seq), _tcb(NULL) {} 
+    Connection(ValuePtr dest, double rtt)
+      : _dest(dest), _rtt(rtt), _cum_seq(0), _tcb(NULL) {} 
 
+    ValuePtr             _dest;
     std::deque<TuplePtr> _outstanding; 	// All outstanding tuples
     double               _rtt;		// The round trip time
     SeqNum               _cum_seq;	// The cumulative sequence
