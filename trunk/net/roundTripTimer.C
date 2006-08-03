@@ -105,8 +105,14 @@ int RoundTripTimer::push(int port, TuplePtr tp, b_cbv cb)
       // Acknowledge tuple and update measurements.
       ValuePtr dest = (*tp)[DEST+2];			// Destination address
       SeqNum   seq  = Val_UInt64::cast((*tp)[SEQ+2]);	// Sequence number
-      int32_t delay = dealloc(dest, seq);
-      add_rtt_meas(dest, delay);
+      RTTIndex::iterator iter = rttmap_.find(dest);
+      if (iter == rttmap_.end()) {
+        std::cerr << "RTT TIMER UNKNOWN DESTINATION: " << dest->toString() << std::endl;
+      }
+      else {
+        int32_t delay = dealloc(dest, seq);
+        add_rtt_meas(dest, delay);
+      }
       return 1;
     }
   } else assert(0);

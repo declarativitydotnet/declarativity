@@ -12,6 +12,8 @@
  *
  */
 
+#define MASTER "planet1.berkeley.intel-research.net:10000"
+
 
 /* The base tuples */
 

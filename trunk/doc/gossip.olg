@@ -11,6 +11,9 @@
  * the P2 C++ stub interface.
  */
 
+#define MASTER "planet1.berkeley.intel-research.net:10000"
+#define NUM_GOSSIP 4
+
 materialize(overlog, infinity, infinity, keys(3)).
 materialize(sliceNodes, infinity, infinity, keys(2,3)).
 materialize(nodeCount, infinity, 1, keys(2)).
