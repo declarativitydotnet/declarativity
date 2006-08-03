@@ -73,34 +73,7 @@ RoundTripTimer::RoundTripTimer(string name)
  */
 int RoundTripTimer::push(int port, TuplePtr tp, b_cbv cb)
 {
-  if (port == 0) {
-    SeqNum   seq  = Val_UInt64::cast((*tp)[SEQ]);
-    ValuePtr dest = (*tp)[DEST];
-    
-    RTTIndex::iterator iter = rttmap_.find(dest);
-    boost::shared_ptr<RTTRec> rttrec; 
-    if (iter == rttmap_.end()) {
-      rttrec.reset(new RTTRec());
-      rttmap_.insert(std::make_pair(dest, rttrec));
-    }
-    else {
-      rttrec = iter->second; 
-    }
-
-    TupleTimestamp *tt = new TupleTimestamp(dest, seq);
-    map(tt);
-
-    TuplePtr tpl = Tuple::mk();
-    for (unsigned i = 0; i < tp->size(); i++) {
-      if (i == RTT) 
-        tpl->append(Val_Double::mk(rttrec->rto_));
-      else
-        tpl->append((*tp)[i]);
-    }
-    tpl->freeze();
-    return output(0)->push(tpl, cb);
-  }
-  else if (port == 1) {
+  if (port == 1) {
     if ((*tp)[1]->typeCode() == Value::STR && Val_Str::cast((*tp)[1]) == "ACK") {
       // Acknowledge tuple and update measurements.
       ValuePtr dest = (*tp)[DEST+2];			// Destination address
@@ -113,47 +86,39 @@ int RoundTripTimer::push(int port, TuplePtr tp, b_cbv cb)
         int32_t delay = dealloc(dest, seq);
         add_rtt_meas(dest, delay);
       }
-      return 1;
     }
-  } else assert(0);
+  } else return this->Element::push(port, tp, cb); 	
   return 1;
 }
 
 /**
  */
-TuplePtr RoundTripTimer::pull(int port, b_cbv cb)
+TuplePtr RoundTripTimer::simple_action(TuplePtr p)
 {
-  TuplePtr p;
+  SeqNum   seq  = Val_UInt64::cast((*p)[SEQ]);
+  ValuePtr dest = (*p)[DEST];
 
-  assert (port == 0);
-
-  if ((p = input(0)->pull(cb)) != NULL) {
-    SeqNum   seq  = Val_UInt64::cast((*p)[SEQ]);
-    ValuePtr dest = (*p)[DEST];
-
-    RTTIndex::iterator iter = rttmap_.find(dest);
-    boost::shared_ptr<RTTRec> rttrec; 
-    if (iter == rttmap_.end()) {
-      rttrec.reset(new RTTRec());
-      rttmap_.insert(std::make_pair(dest, rttrec));
-    }
-    else {
-      rttrec = iter->second; 
-    }
-
-    TupleTimestamp *tt = new TupleTimestamp(dest, seq);
-    map(tt);
-    TuplePtr tp = Tuple::mk();
-    for (unsigned i = 0; i < p->size(); i++) {
-      if (i == RTT) 
-        tp->append(Val_Double::mk(rttrec->rto_));
-      else
-        tp->append((*p)[i]);
-    }
-    tp->freeze();
-    return tp;
+  RTTIndex::iterator iter = rttmap_.find(dest);
+  boost::shared_ptr<RTTRec> rttrec; 
+  if (iter == rttmap_.end()) {
+    rttrec.reset(new RTTRec());
+    rttmap_.insert(std::make_pair(dest, rttrec));
   }
-  return p;
+  else {
+    rttrec = iter->second; 
+  }
+
+  TupleTimestamp *tt = new TupleTimestamp(dest, seq);
+  map(tt);
+  TuplePtr tp = Tuple::mk();
+  for (unsigned i = 0; i < p->size(); i++) {
+    if (i == RTT) 
+      tp->append(Val_Double::mk(rttrec->rto_));
+    else
+      tp->append((*p)[i]);
+  }
+  tp->freeze();
+  return tp;
 }
 
 void RoundTripTimer::map(TupleTimestamp *tt) 

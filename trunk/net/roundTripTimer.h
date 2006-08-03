@@ -29,8 +29,8 @@ public:
   const char *processing() const { return "ah/a"; };
   const char *flow_code() const	 { return "x-/x"; };
 
+  TuplePtr simple_action(TuplePtr p);
   int push(int port, TuplePtr tp, b_cbv cb);
-  TuplePtr pull(int port, b_cbv cb);
 
 private:
   void timeout_cb(TupleTimestamp*);
