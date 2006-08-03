@@ -49,6 +49,6 @@ p3 gossipEvent@J(J, I, S, T, P, C) :- overlogInstall@J(J, S, T, P),
 p3a gossipEvent@J(J, I, S, T, P, C) :- gossipOverlog@J(J, I), 
                                        overlog@J(J, S, T, P), C:=0.
 
-p3b gossipOverlog@J(J, I) :- periodic@J(J, E, 240),
+p3b gossipOverlog@J(J, I) :- periodic@J(J, E, 30),
                              nodeCount@J(J, A), 
                              I := f_rand() % A.

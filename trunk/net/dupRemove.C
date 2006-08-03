@@ -22,6 +22,7 @@
 #define CONNECTION_TIMEOUT 240
 
 bool DupRemove::Connection::received(TuplePtr tp) {
+  ValuePtr src = (*tp)[SRC]; 
   SeqNum seq  = Val_UInt64::cast((*tp)[SEQ]);
   SeqNum cseq = Val_UInt64::cast((*tp)[CUMSEQ]);
 
@@ -33,9 +34,11 @@ bool DupRemove::Connection::received(TuplePtr tp) {
   }
 
   if (seq < _cum_seq) {
+    std::cerr << "ALREADY RECEIVED TUPLE: " << seq << " FROM " << src->toString() << std::endl;
     return true;
   }
   else if (_receiveMap.find(seq) != _receiveMap.end()) {
+    std::cerr << "ALREADY RECEIVED TUPLE: " << seq << " FROM " << src->toString() << std::endl;
     return true;
   }
   _receiveMap.insert(std::make_pair(seq, true));

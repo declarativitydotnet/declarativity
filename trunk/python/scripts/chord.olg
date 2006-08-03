@@ -43,7 +43,9 @@ i2 nextFingerFix@NI(NI, 0)   :- periodic@NI(NI, E, 0, 1).
 i3 landmark@NI(NI, MASTER) :- periodic@NI(NI, E, 0, 1).
 
 watch(node).
+watch(joinReq).
 watch(pred).
+watch(succ).
 watch(bestSucc).
 watch(landmark).
 
