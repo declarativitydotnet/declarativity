@@ -27,18 +27,18 @@ bool DupRemove::Connection::received(TuplePtr tp) {
   SeqNum cseq = Val_UInt64::cast((*tp)[CUMSEQ]);
 
   if (_cum_seq < cseq) {
-    for (SeqNum s = _cum_seq; s <= cseq; s++) {
-      _receiveMap.erase(s);
+    if (_cum_seq && _receiveMap.size() > 0) {
+      for (SeqNum s = _cum_seq; s <= cseq; s++) {
+        _receiveMap.erase(s);
+      }
     }
     _cum_seq = cseq;
   }
 
   if (seq < _cum_seq) {
-    std::cerr << "ALREADY RECEIVED TUPLE: " << seq << " FROM " << src->toString() << std::endl;
     return true;
   }
   else if (_receiveMap.find(seq) != _receiveMap.end()) {
-    std::cerr << "ALREADY RECEIVED TUPLE: " << seq << " FROM " << src->toString() << std::endl;
     return true;
   }
   _receiveMap.insert(std::make_pair(seq, true));
@@ -72,7 +72,7 @@ int DupRemove::push(int port, TuplePtr tp, b_cbv cb)
   }
 
   if (!cp) { 
-    cp.reset(new Connection(cseq));
+    cp.reset(new Connection());
     map(src, cp);
   }
   cp->touch();

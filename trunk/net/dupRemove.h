@@ -34,8 +34,8 @@ public:
 private:
   class Connection {
     public:
-      Connection(uint cs) 
-        : _tcb(NULL), _cum_seq(cs) { touch(); }
+      Connection() 
+        : _tcb(NULL), _cum_seq(0) { touch(); }
 
       bool received(TuplePtr);
       long touch_duration() const;
