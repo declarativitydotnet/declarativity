@@ -275,7 +275,7 @@ string P2::stub(string hostname, string port)
            UnboxField(\"unboxWrapAround\", 1) -> \
            Queue(\"wrapAroundQueue\", 1000) -> \
            [1]inputRR; \
-           wrapAroundDemux[1] -> Queue -> \
+           wrapAroundDemux[1] -> Queue(\"netout_queue\", 1000) -> \
            header -> \
            Sequence(\"terminal_sequence\", 1) ->";
 
