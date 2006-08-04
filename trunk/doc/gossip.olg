@@ -12,7 +12,7 @@
  */
 
 #define MASTER "planet1.berkeley.intel-research.net:10000"
-#define NUM_GOSSIP 4
+#define NUM_GOSSIP 2
 
 materialize(overlog, infinity, infinity, keys(3)).
 materialize(sliceNodes, infinity, infinity, keys(2,3)).
@@ -49,6 +49,6 @@ p3 gossipEvent@J(J, I, S, T, P, C) :- overlogInstall@J(J, S, T, P),
 p3a gossipEvent@J(J, I, S, T, P, C) :- gossipOverlog@J(J, I), 
                                        overlog@J(J, S, T, P), C:=0.
 
-p3b gossipOverlog@J(J, I) :- periodic@J(J, E, 30),
+p3b gossipOverlog@J(J, I) :- periodic@J(J, E, 240),
                              nodeCount@J(J, A), 
                              I := f_rand() % A.

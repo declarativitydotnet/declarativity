@@ -38,14 +38,14 @@ TuplePtr RDelivery::pull(int port, b_cbv cb)
   double flip = rand() / (float)RAND_MAX;
 
   TuplePtr tp;
-  if (_in_on && 
-      (_retry_q.empty() ||
-       (flip < 0.5 &&
-        (_in_on = ((tp = input(0)->pull(boost::bind(&RDelivery::input_cb,this))) != NULL))))) {
-    /* Store the tuple for retry, if failure */
-    return tuple(tp);
+  if (_in_on && (_retry_q.empty() || flip < 0.5)) {
+    if (_in_on = ((tp = input(0)->pull(boost::bind(&RDelivery::input_cb,this))) != NULL)) {
+      /* Store the tuple for retry, if failure */
+      return tp;
+    }
   }
-  else if (!_retry_q.empty()) {
+
+  if (!_retry_q.empty()) {
     tp = _retry_q.front();
     _retry_q.pop_front();
     return tp;

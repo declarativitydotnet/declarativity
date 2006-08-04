@@ -42,14 +42,7 @@ i1 pred@NI(NI, P, PI)        :- periodic@NI(NI, E, 0, 1), P := 0x0I, PI:="-".
 i2 nextFingerFix@NI(NI, 0)   :- periodic@NI(NI, E, 0, 1). 
 i3 landmark@NI(NI, MASTER) :- periodic@NI(NI, E, 0, 1).
 
-watch(node).
-watch(joinReq).
-watch(lookup).
-watch(lookupResults).
-watch(pred).
-watch(succ).
 watch(bestSucc).
-watch(landmark).
 
 /** Lookups */
 
@@ -223,6 +216,7 @@ c8 join@NI(NI, E) :- periodic@NI(NI, E, 0, 1).
 
 /** Stabilization */
 
+/*
 watch(stabilize).
 watch(succ).
 watch(pred).
@@ -231,6 +225,7 @@ watch(sendPredecessor).
 watch(sendSuccessors).
 watch(notifyPredecessor).
 watch(returnSuccessor).
+*/
 
 sb1 stabilize@NI(NI,E) :- periodic@NI(NI,E,15).
 
