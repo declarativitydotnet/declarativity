@@ -20,11 +20,11 @@
 materialize(node, infinity, 1, keys(1)).
 materialize(finger, infinity, 160, keys(2)).
 materialize(bestSucc, infinity, 1, keys(1)).
-materialize(succ, 10, 100, keys(2)).
+materialize(succ, infinity, 100, keys(2)).
 materialize(pred, infinity, 100, keys(1)).
 materialize(succCount, infinity, 1, keys(1)).
 materialize(bestSuccCount, infinity, 1, keys(1)).
-materialize(join, 60, 10, keys(1)).
+materialize(join, infinity, 10, keys(1)).
 materialize(landmark, infinity, 1, keys(1)).
 materialize(fFix, infinity, 160, keys(2)).  
 materialize(nextFingerFix, infinity, 1, keys(1)).  
@@ -37,13 +37,15 @@ materialize(backReference, 240, infinity, keys(1)).
 materialize(forwardReference, 240, infinity, keys(2)).  
 */
 
-i0 node@NI(NI, N)            :- periodic@NI(NI, E, 0, 1), N := f_sha1(NI).
+i0 node@NI(NI, N)          :- periodic@NI(NI, E, 0, 1), N := f_sha1(NI).
 i1 pred@NI(NI, P, PI)        :- periodic@NI(NI, E, 0, 1), P := 0x0I, PI:="-".
 i2 nextFingerFix@NI(NI, 0)   :- periodic@NI(NI, E, 0, 1). 
 i3 landmark@NI(NI, MASTER) :- periodic@NI(NI, E, 0, 1).
 
 watch(node).
 watch(joinReq).
+watch(lookup).
+watch(lookupResults).
 watch(pred).
 watch(succ).
 watch(bestSucc).
@@ -127,7 +129,7 @@ watch(maxSuccDist).*/
 s1 succCount@NI(NI,count<*>) :- succ@NI(NI,S,SI).
 
 s2 evictSucc@NI(NI) :- succCount@NI(NI,C), 
-		    C > 2.
+		    C > 4.
 
 s3 maxSuccDist@NI(NI,max<D>) :- succ@NI(NI,S,SI),
 				node@NI(NI,N), 
@@ -221,7 +223,6 @@ c8 join@NI(NI, E) :- periodic@NI(NI, E, 0, 1).
 
 /** Stabilization */
 
-/*
 watch(stabilize).
 watch(succ).
 watch(pred).
@@ -230,7 +231,6 @@ watch(sendPredecessor).
 watch(sendSuccessors).
 watch(notifyPredecessor).
 watch(returnSuccessor).
-*/
 
 sb1 stabilize@NI(NI,E) :- periodic@NI(NI,E,15).
 
