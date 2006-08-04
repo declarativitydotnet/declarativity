@@ -35,10 +35,13 @@ RDelivery::RDelivery(string n, unsigned m)
 TuplePtr RDelivery::pull(int port, b_cbv cb)
 {
   assert (port == 0);
+  double flip = rand() / (float)RAND_MAX;
 
   TuplePtr tp;
-  if (_retry_q.empty() && _in_on && 
-      (_in_on = ((tp = input(0)->pull(boost::bind(&RDelivery::input_cb,this))) != NULL))) {
+  if (_in_on && 
+      (_retry_q.empty() ||
+       (flip < 0.5 &&
+        (_in_on = ((tp = input(0)->pull(boost::bind(&RDelivery::input_cb,this))) != NULL))))) {
     /* Store the tuple for retry, if failure */
     return tuple(tp);
   }
