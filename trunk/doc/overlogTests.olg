@@ -66,7 +66,8 @@ r11 h@A(A, B, min<C>) :- first@A(A, B, C, D).
 
 r12 i@A(A, F, min<L>) :- e@A(A, B, C), first@A(A, B, F, L).
 
-
+r13 i@A(A, F, L) :- e@A(A, B, C), first@B(A, B, F, L), second@F(A, B, F, L).
 
 r19 first@A(A, B, C, D) :- second@A(A, B, C, D), third@A(A, B, C, D). 
 
+r14 first@A(A,B) :- fourth@A(A,B), third@A(A,B).
