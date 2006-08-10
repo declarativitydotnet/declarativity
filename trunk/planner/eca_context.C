@@ -25,6 +25,7 @@ string Parse_Event::toString()
   if (_event == RECV) { b << "EVENT_RECV<" << _pf->toString() << ">"; }
   if (_event == INSERT) { b << "EVENT_INSERT<" << _pf->toString() << ">"; }
   if (_event == DELETE) { b << "EVENT_DELETE<" << _pf->toString() << ">"; }
+  if (_event == REFRESH) { b << "EVENT_REFRESH<" << _pf->toString() << ">"; }
   return b.str();
 }
 
@@ -75,18 +76,32 @@ void ECA_Context::add_rule(ECA_Rule* eca_rule)
 }
 
 void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore)
-{
+{ 
   warn << "Perform ECA view rewrite on " << rule->toString() << "\n";
 
   string headName = rule->head->fn->name;
   OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);	  
-  /*if (headTableInfo == NULL) {
-    warn << "Head of " << rule->toString() << " must be materialized for view rules\n";
-    exit(-1);
-    }*/
 
+  bool softStateRule = false;
   std::list<Parse_Term*>::iterator t = rule->terms.begin();
-  int count = 0;
+  for(; t != rule->terms.end(); t++) {
+    Parse_Term* nextTerm = (*t);
+    Parse_Functor *nextFunctor = dynamic_cast<Parse_Functor*>(nextTerm); 
+    if (nextFunctor == NULL) { continue; }
+    OL_Context::TableInfo* tableInfo = tableStore->getTableInfo(nextFunctor->fn->name);   
+    if (tableInfo == NULL || tableInfo->timeout != Table2::NO_EXPIRATION) {
+      softStateRule = true; // if any rule body is soft-state, rule is soft-state
+      break;
+    }
+  }
+  OL_Context::TableInfo* tableInfo = tableStore->getTableInfo(rule->head->fn->name);   
+  if (tableInfo == NULL || tableInfo->timeout != Table2::NO_EXPIRATION) {
+    softStateRule = true; // if rule head is soft-state, rule is soft-state
+  }
+  warn << "Processing soft state rule " << softStateRule << " " << rule->toString() << "\n";
+
+  t = rule->terms.begin();
+  int count = 0;  
   for(; t != rule->terms.end(); t++) {
     Parse_Term* nextTerm = (*t);
     Parse_Functor *nextFunctor = dynamic_cast<Parse_Functor*>(nextTerm); 
@@ -97,6 +112,7 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
     oss << rule->ruleID << "Eca" << count;    
     ECA_Rule* eca_insert_rule = new ECA_Rule(oss.str() + "Ins");    
     ECA_Rule* eca_delete_rule = new ECA_Rule(oss.str() + "Del");    
+    ECA_Rule* eca_refresh_rule = new ECA_Rule(oss.str() + "Ref");    
 
     // delete functor generated from delete event
     ValuePtr name = Val_Str::mk(rule->head->fn->name + "delete");
@@ -112,22 +128,35 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
       new Parse_Functor(new Parse_FunctorName(new Parse_Val(nameSend), 
 					      new Parse_Val(locSend)), 
 			rule->head->args_);
-
+    
+    // create the events
     eca_insert_rule->_event 
       = new Parse_Event(nextFunctor, Parse_Event::INSERT);
+    eca_refresh_rule->_event 
+      = new Parse_Event(nextFunctor, Parse_Event::REFRESH);
     eca_delete_rule->_event 
-      = new Parse_Event(nextFunctor, Parse_Event::DELETE);
+      = new Parse_Event(nextFunctor, Parse_Event::DELETE);    
+
+    bool softStatePredicate = false;
+    OL_Context::TableInfo* tableInfo = tableStore->getTableInfo(nextFunctor->fn->name);   
+    if (tableInfo == NULL || tableInfo->timeout != Table2::NO_EXPIRATION) {
+      softStatePredicate = true;
+    }
 
     if (rule->head->fn->loc == nextFunctor->fn->loc) {
       // if this is local, we can simply add local table or send as an event
       if (headTableInfo != NULL) {
 	eca_insert_rule->_action 
 	  = new Parse_Action(rule->head, Parse_Action::ADD);
+	eca_refresh_rule->_action 
+	  = new Parse_Action(rule->head, Parse_Action::ADD);
 	eca_delete_rule->_action 
 	  = new Parse_Action(rule->head, Parse_Action::DELETE);
       } else {
-	// XXX: May not wish to support in future events in head
+	// send head events
 	eca_insert_rule->_action 
+	  = new Parse_Action(rule->head, Parse_Action::SEND);
+	eca_refresh_rule->_action 
 	  = new Parse_Action(rule->head, Parse_Action::SEND);
 	eca_delete_rule->_action 
 	  = new Parse_Action(deleteFunctor, Parse_Action::SEND);
@@ -137,11 +166,14 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
       // followed by another recv/add rule strand
       eca_insert_rule->_action = new Parse_Action(sendFunctor, Parse_Action::SEND);
       eca_delete_rule->_action = new Parse_Action(deleteFunctor, Parse_Action::SEND);
+      eca_refresh_rule->_action = new Parse_Action(sendFunctor, Parse_Action::SEND);
       string headName = rule->head->fn->name;
       OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);
       if (headTableInfo != NULL) {
         ostringstream oss;
 	oss << rule->ruleID << "Eca" << count << "Remote";    
+
+	// insert
 	ECA_Rule* eca_insert_rule1 
 	  = new ECA_Rule(oss.str() + "Ins");    
 	eca_insert_rule1->_event 
@@ -150,13 +182,27 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
 	  = new Parse_Action(rule->head, Parse_Action::ADD);      
 	add_rule(eca_insert_rule1);
 
+	// refresh
+	ECA_Rule* eca_refresh_rule1 
+	  = new ECA_Rule(oss.str() + "Ref");    
+	eca_refresh_rule1->_event 
+	  = new Parse_Event(sendFunctor, Parse_Event::RECV);
+	eca_refresh_rule1->_action 
+	  = new Parse_Action(rule->head, Parse_Action::ADD);      
+	if (softStatePredicate == true) {
+	  add_rule(eca_refresh_rule1);
+	}
+
+	// delete
 	ECA_Rule* eca_delete_rule1 
 	  = new ECA_Rule(oss.str() + "Del");    
 	eca_delete_rule1->_event 
 	  = new Parse_Event(deleteFunctor, Parse_Event::RECV);
 	eca_delete_rule1->_action 
 	  = new Parse_Action(rule->head, Parse_Action::DELETE);      
-	add_rule(eca_delete_rule1);
+	if (softStateRule == false) {
+	  add_rule(eca_delete_rule1);
+	}
       }
     }
 
@@ -173,16 +219,24 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
 	if (nextFunctor1 != NULL) {
 	  eca_insert_rule->_probeTerms.push_back(nextFunctor1);
 	  eca_delete_rule->_probeTerms.push_back(nextFunctor1);
+	  eca_refresh_rule->_probeTerms.push_back(nextFunctor1);
 	}
 	if (nextSelect != NULL || nextAssign != NULL) {
 	  eca_insert_rule->_selectAssignTerms.push_back(nextTerm1);
+	  eca_refresh_rule->_selectAssignTerms.push_back(nextTerm1);
 	  eca_delete_rule->_selectAssignTerms.push_back(nextTerm1);
 	}
       }
       count1++;
     }
     add_rule(eca_insert_rule);
-    add_rule(eca_delete_rule);
+    if (softStatePredicate == true) {
+      add_rule(eca_refresh_rule);
+    }
+    if (softStateRule == false) {
+      // only cascade deletes for hard-state rules
+      add_rule(eca_delete_rule);
+    }
     count++;
   }
 }
@@ -190,6 +244,7 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
 void ECA_Context::generateActionHead(OL_Context::Rule* rule, string bodyLoc,
 				     TableStore* tableStore, ECA_Rule* eca_rule)
 {
+
   // if event, just send
   string headName = rule->head->fn->name;
   OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);
@@ -259,8 +314,8 @@ void ECA_Context::rewriteEventRule(OL_Context::Rule* rule,
 	// this is not an event
 	eca_rule->_probeTerms.push_back(nextFunctor);
       } else {
-	// an event. Generate an event functor
 	if (termName == "periodic") {
+	  // when there is a periodic, break this up into two rules
 	  ECA_Rule* eca_rule1 = new ECA_Rule(oss.str() + "periodic");    
 
 	  Parse_ExprList* periodicArgs = new Parse_ExprList();	  
@@ -322,7 +377,7 @@ void ECA_Context::rewriteAggregateView(OL_Context::Rule* rule,
   }
   
   ostringstream oss;
-  oss << rule->ruleID << "_eca";    
+  oss << rule->ruleID << "eca";    
   ECA_Rule* eca_rule = new ECA_Rule(oss.str());    
   eca_rule->_event = new Parse_Event(nextFunctor, Parse_Event::INSERT);
 

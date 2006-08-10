@@ -53,19 +53,29 @@ void expr2Pel(PlanContext* pc, ostringstream &pel, Parse_Expr *e)
   Parse_MatAtom  *mata= NULL;
 
   if ((var = dynamic_cast<Parse_Var*>(e)) != NULL) {
-	// expr is a variable
-	int pos = names->fieldPosition(e->toString());
-	if (pos < 0) {
-	  error(pc, "Error parsing Pel expression " + e->toString());
-	}
-	pel << "$" << (pos+1) << " ";
+    // expr is a variable
+    int pos = names->fieldPosition(e->toString());
+    if (pos < 0) {
+      error(pc, "Error parsing Pel expression " + e->toString());
+    }
+    pel << "$" << (pos+1) << " ";
   }
   else if ((val = dynamic_cast<Parse_Val*>(e)) != NULL) {
-	// expr is a constant
-	if (val->v->typeCode() == Value::STR)
-	  pel << "\"" << val->toString() << "\"" << " "; 
-	else pel << val->toString() << " "; 
-	if (val->id()) pel << "->u32 ->id "; 
+    // expr is a constant
+    if (val->v->typeCode() == Value::STR) {
+      pel << "\"" << val->toString() << "\"" << " "; 
+    }
+    else {
+      pel << val->toString() << " "; 
+    }
+    /*if (val->id()) {
+      pel << "->u32 ->id "; 
+    } else {
+      m = dynamic_cast<Parse_Math*>(e);
+      if (m != NULL && m->id) {
+	pel << "->u32 ->id ";
+      }
+      }*/
   }
   else if (e == Parse_Expr::Now)
     pel << "now "; 
@@ -78,48 +88,48 @@ void expr2Pel(PlanContext* pc, ostringstream &pel, Parse_Expr *e)
   else if ((f = dynamic_cast<Parse_Function*>(e)) != NULL)
     pel << pelFunction(pc, f);
   else if ((v=dynamic_cast<Parse_Vector*>(e)) != NULL) {
-	pel << v->offsets() << " initvec ";
-	for (int i = 0; i < v->offsets(); i++) {
-	  pel << i << " " << v->offset(i)->toString() << " setvectoroffset ";
-	}
+    pel << v->offsets() << " initvec ";
+    for (int i = 0; i < v->offsets(); i++) {
+      pel << i << " " << v->offset(i)->toString() << " setvectoroffset ";
+    }
   }
   else if ((va=dynamic_cast<Parse_VecAtom*>(e)) != NULL) {
-	int pos2 = names->fieldPosition(va->v->toString());
-	if (pos2 < 0) {
-	  error(pc, "Error parsing Pel vector variable " + va->v->toString());
-	}
-	pel << " $" << (pos2+1) << " ";
-	expr2Pel(pc, pel, va->offset_);
-	pel << " getvectoroffset ";
+    int pos2 = names->fieldPosition(va->v->toString());
+    if (pos2 < 0) {
+      error(pc, "Error parsing Pel vector variable " + va->v->toString());
+    }
+    pel << " $" << (pos2+1) << " ";
+    expr2Pel(pc, pel, va->offset_);
+    pel << " getvectoroffset ";
   }
   else if ((mat=dynamic_cast<Parse_Matrix*>(e)) != NULL) {
-	uint64_t rows, cols;
-	mat->bounds(rows, cols);
-	pel << rows << " " << cols << " initmat ";
-	for (uint64_t i = 0; i < rows; i++)
-	  for (uint64_t j = 0; j < cols; j++)
-		pel << j << " " << i << " " << mat->offset(i, j)->toString() << " setmatrixoffset ";
+    uint64_t rows, cols;
+    mat->bounds(rows, cols);
+    pel << rows << " " << cols << " initmat ";
+    for (uint64_t i = 0; i < rows; i++)
+      for (uint64_t j = 0; j < cols; j++)
+	pel << j << " " << i << " " << mat->offset(i, j)->toString() << " setmatrixoffset ";
   }
   else if ((mata=dynamic_cast<Parse_MatAtom*>(e)) != NULL) {
-	int pos2 = names->fieldPosition(mata->v->toString());
-	if (pos2 < 0) {
-	  error(pc, "Error parsing Pel vector variable " + mata->v->toString());
-	}
-	pel << " $" << (pos2+1) << " ";
-	expr2Pel(pc, pel, mata->offset2_);
-	expr2Pel(pc, pel, mata->offset1_);
-	pel << " getmatrixoffset ";
+    int pos2 = names->fieldPosition(mata->v->toString());
+    if (pos2 < 0) {
+      error(pc, "Error parsing Pel vector variable " + mata->v->toString());
+    }
+    pel << " $" << (pos2+1) << " ";
+    expr2Pel(pc, pel, mata->offset2_);
+    expr2Pel(pc, pel, mata->offset1_);
+    pel << " getmatrixoffset ";
   }
   else {    
-	// TODO: throw/signal some kind of error
-	error(pc, "Error parsing Pel expression " + e->toString());
+    // TODO: throw/signal some kind of error
+    error(pc, "Error parsing Pel expression " + e->toString());
   }
 }
 
 string pelMath(PlanContext* pc, Parse_Math *expr) 
 {
   ostringstream  pel;  
-
+  
   if (expr->id && expr->oper == Parse_Math::MINUS) {
     Parse_Expr *tmp = expr->lhs;
     expr->lhs = expr->rhs;

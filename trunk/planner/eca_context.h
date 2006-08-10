@@ -32,7 +32,7 @@ class Parse_Event
 public:
   virtual ~Parse_Event() {};
 
-  enum Event {INSERT, DELETE, RECV};
+  enum Event {INSERT, DELETE, RECV, REFRESH};
   
   Parse_Event(Parse_Functor *pf, Event e)
     : _pf(pf), _event(e) {};

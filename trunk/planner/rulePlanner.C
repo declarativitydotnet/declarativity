@@ -37,6 +37,7 @@
 #include "discard.h"
 #include "pelTransform.h"
 #include "duplicate.h"
+#include "refresh.h"
 #include "dupElim.h"
 #include "filter.h"
 #include "timedPullPush.h"
@@ -142,6 +143,33 @@ void generateInsertEvent(PlanContext* pc)
     // if we are doing a join
     ElementSpecPtr pullPush = 
       pc->createElementSpec(ElementPtr(new TimedPullPush("InsertEventTimedPullPush|"
+							 + curRule->_ruleID 
+							 + "|" + pc->_nodeID, 0)));
+    pc->addElementSpec(pullPush);
+  }
+}
+
+void generateRefreshEvent(PlanContext* pc)
+{
+  RuleStrand* rs = pc->_ruleStrand;
+  ECA_Rule* curRule = pc->getRule();
+  pc->_namesTracker = new PlanContext::FieldNamesTracker(pc->getRule()->_event->_pf);
+
+  debugRule(pc, "Refresh event NamesTracker " + pc->_namesTracker->toString() + "\n");
+  CommonTablePtr tablePtr = pc->_tableStore->getTableByName(rs->eventFunctorName());
+  ElementSpecPtr refreshTable =
+    pc->createElementSpec(ElementPtr(new Refresh("Refresh|" + curRule->_ruleID 
+						+ "|" + rs->eventFunctorName()
+						+ "|" + pc->_nodeID, tablePtr)));
+  pc->addElementSpec(refreshTable);
+  
+  // add a debug element
+  addWatch(pc, "RefreshEvent");
+  
+  if (curRule->_probeTerms.size() > 0) {
+    // if we are doing a join
+    ElementSpecPtr pullPush = 
+      pc->createElementSpec(ElementPtr(new TimedPullPush("RefreshEventTimedPullPush|"
 							 + curRule->_ruleID 
 							 + "|" + pc->_nodeID, 0)));
     pc->addElementSpec(pullPush);
@@ -356,6 +384,9 @@ void generateEventElement(PlanContext* pc)
   RuleStrand* rs = pc->_ruleStrand;
   int aggField = pc->getRule()->_action->_pf->aggregate();
 
+  if (rs->eventType() == Parse_Event::REFRESH) {
+    generateRefreshEvent(pc);
+  }
 
   // update, create an updater
   if (rs->eventType() == Parse_Event::INSERT) {
@@ -630,10 +661,9 @@ void generateProbeElements(PlanContext* pc,
   // projection.  Keep all fields from the probe, and all fields from
   // the base table that were not join keys.
   ostringstream pelProject;
-  pelProject << "\"join|"
+  pelProject << "\"join"
              << pc->getRule()->getEventName() 
-             << "|" << innerTableName
-	     << "|" 
+             << innerTableName	     
 	     << pc->getRule()->_ruleID
              << "\" pop "; // table name
   for (int k = 0; k < numFieldsProbe; k++) {
