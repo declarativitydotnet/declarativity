@@ -71,3 +71,5 @@ r13 i@A(A, F, L) :- e@A(A, B, C), first@B(A, B, F, L), second@F(A, B, F, L).
 r19 first@A(A, B, C, D) :- second@A(A, B, C, D), third@A(A, B, C, D). 
 
 r14 first@A(A,B) :- fourth@A(A,B), third@A(A,B).
+
+r14 first@A(A,B) :- fourth@A(A,B), third@B(A,B).
