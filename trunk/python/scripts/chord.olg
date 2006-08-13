@@ -12,7 +12,7 @@
  *
  */
 
-#define MASTER "planet1.berkeley.intel-research.net:10000"
+#define MASTER "planet2.berkeley.intel-research.net:10000"
 
 
 /* The base tuples */
@@ -20,39 +20,32 @@
 materialize(node, infinity, 1, keys(1)).
 materialize(finger, infinity, 160, keys(2)).
 materialize(bestSucc, infinity, 1, keys(1)).
-materialize(succ, infinity, 100, keys(2)).
-materialize(pred, infinity, 100, keys(1)).
+materialize(succ, infinity, infinity, keys(2)).
+materialize(pred, infinity, 1, keys(1)).
 materialize(succCount, infinity, 1, keys(1)).
-materialize(bestSuccCount, infinity, 1, keys(1)).
-materialize(join, infinity, 10, keys(1)).
+materialize(join, 120, 10, keys(1)).
 materialize(landmark, infinity, 1, keys(1)).
 materialize(fFix, infinity, 160, keys(2)).  
-materialize(nextFingerFix, infinity, 1, keys(1)).  
-materialize(pingNode, 10, infinity, keys(2)).  
-materialize(pendingPing, 10, infinity, keys(2)).  
+materialize(nextFingerFix, infinity, 1, keys(1)).
+materialize(pingNode, 20, infinity, keys(2)).  
+materialize(pendingPing, 20, infinity, keys(2)).  
 
-/*
-materialize(references, 240, infinity, keys(2, 3)).  
-materialize(backReference, 240, infinity, keys(1)).  
-materialize(forwardReference, 240, infinity, keys(2)).  
-*/
-
-i0 node@NI(NI, N)          :- periodic@NI(NI, E, 0, 1), N := f_sha1(NI).
-i1 pred@NI(NI, P, PI)        :- periodic@NI(NI, E, 0, 1), P := 0x0I, PI:="-".
-i2 nextFingerFix@NI(NI, 0)   :- periodic@NI(NI, E, 0, 1). 
-i3 landmark@NI(NI, MASTER) :- periodic@NI(NI, E, 0, 1).
+/* Inherit table from gossip.olg */
+materialize(parent, infinity, 1, keys(2)).
 
 watch(bestSucc).
+watch(pred).
+watch(sendPredecessor).
+watch(stabilizeRequest).
+
+i0 node@NI(NI, N)          :- periodic@NI(NI, E, 0, 1), N := f_sha1(NI).
+i1 pred@NI(NI, P, PI)      :- periodic@NI(NI, E, 0, 1), P := 0x0I, PI:="-".
+i2 nextFingerFix@NI(NI, 0) :- periodic@NI(NI, E, 0, 1). 
+i3 landmark@NI(NI, MASTER) :- periodic@NI(NI, E, 0, 1).
+i4 landmark@NI(NI, PI)     :- periodic@NI(NI, E, 1, 1), parent@NI(NI, PI), f_coinFlip(0.5) == 1.
 
 /** Lookups */
-
-/*
-watch(lookupResults).
-watch(lookup).
-watch(bestLookupDist).
-*/
-
-l0 displayEvent@MI(MI,T,NI,P) :- lookupResults@NI(NI,K,S,SI,E,P), MI:=MASTER, T:="P".
+l0 pathEvent@MI(MI,T,NI,P) :- lookupResults@NI(NI,K,S,SI,E,P), MI:=MASTER, T:="P".
 
 l1 lookupResults@R(R,K,S,SI,E,P) :- node@NI(NI,N),
 				    lookup@NI(NI,K,R,E,P), 
@@ -74,30 +67,14 @@ l3 lookup@BI(min<BI>,K,R,E,P1) :- node@NI(NI,N),
 			          B in (N,K), P1:=P+","+NI.
 
 
-/* Back reference overlog
-/*
-watch(bestSucc).
-watch(backReference).
-
-b0 forwardReference@LI(LI, K, SI) :- finger@LI(LI, P, S, SI), 
-                                     LI != SI, K := f_sha1(S).
-
-b1 lookup@LI(LI,K,LI,SI,LI) :- forwardReference@LI(LI, K, SI).
-
-b2 references@DI(DI, LI, K, SI) :- lookupResults@LI(LI, K, D, DI, E,P), 
-                                   forwardReference@LI(LI, K, SI).
-
-b3 backReference@SI(SI, K, LI) :- references@DI(DI, LI, K, SI).
-*/
-
 /** Neighbor Selection */
 
-l0 displayEvent@MI(MI, T, P, NI, LI) :- finger@NI(NI,P,L,LI), MI:=MASTER, T:="L".
+l0 bestSuccEvent@MI(MI, T, NI, SI) :- bestSucc@NI(NI,S,SI), 
+                                      MI:=MASTER, T:="S".
 
-/*
-watch(bestSucc).
-watch(bestSuccDist).
-*/
+l1 fingerEvent@MI(MI, T, P, NI, LI) :- finger@NI(NI,P,L,LI), 
+                                       MI:=MASTER, T:="F",
+                                       P > 0.
 
 n1 succEvent@NI(NI) :- periodic@NI(NI,E,5).
 
@@ -115,14 +92,9 @@ n4 finger@NI(NI,0,S,SI) :- bestSucc@NI(NI,S,SI).
 
 /** Successor eviction */
 
-/*watch(succCount).
-watch(evictSucc).
-watch(maxSuccDist).*/
+s1 succCount@NI(NI,count<*>) :- succ@NI(NI,S,SI), NI != SI.
 
-s1 succCount@NI(NI,count<*>) :- succ@NI(NI,S,SI).
-
-s2 evictSucc@NI(NI) :- succCount@NI(NI,C), 
-		    C > 4.
+s2 evictSucc@NI(NI) :- succCount@NI(NI,C), C > 8.
 
 s3 maxSuccDist@NI(NI,max<D>) :- succ@NI(NI,S,SI),
 				node@NI(NI,N), 
@@ -136,18 +108,9 @@ s4 delete succ@NI(NI,S,SI) :- node@NI(NI,N),
 
 /** Finger fixing */
 
-/*watch(fFixEvent).
-watch(fFix).
-watch(fFixPeriodic).
-watch(eagerFinger).
-watch(nextFingerFix).
-watch(finger).
-*/
+f1 fFixEvent@NI(NI,E,I) :- periodic@NI(NI,E,10), nextFingerFix@NI(NI,I).
 
-f1 fFix@NI(NI,E,I) :- periodic@NI(NI,E,10), 
-		   nextFingerFix@NI(NI,I).
-
-f2 fFixEvent@NI(NI,E,I) :- fFix@NI(NI,E,I).
+f2 fFix@NI(NI,E,I) :- fFixEvent@NI(NI,E,I).
 
 f3 lookup@NI(NI,K,NI,E,NI) :- fFixEvent@NI(NI,E,I),
 			      node@NI(NI,N), 
@@ -156,9 +119,7 @@ f3 lookup@NI(NI,K,NI,E,NI) :- fFixEvent@NI(NI,E,I),
 f4 eagerFinger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I), 
 				lookupResults@NI(NI,K,B,BI,E,P).
 
-/*
 f5 finger@NI(NI,I,B,BI) :- eagerFinger@NI(NI,I,B,BI).
-*/
 
 f6 eagerFinger@NI(NI,I,B,BI) :- node@NI(NI,N), 
 				eagerFinger@NI(NI,I1,B,BI), 
@@ -168,90 +129,69 @@ f6 eagerFinger@NI(NI,I,B,BI) :- node@NI(NI,N),
 				BI != NI.
 
 f7 delete fFix@NI(NI,E,I1) :- eagerFinger@NI(NI,I,B,BI), 
-			   fFix@NI(NI,E,I1),
-			   I > 0, 
-			   I1 == I - 1.
+  			      fFix@NI(NI,E,I1),
+			      I > 0, I1 == I - 1.
 
 
+/*
 f8 nextFingerFix@NI(NI,0) :- eagerFinger@NI(NI,I,B,BI), 
-			   ((I == 159) || (BI == NI)).
+			     ((I == 159) || (BI == NI)).
+*/
 
+watch(nextFingerFix).
 f9 nextFingerFix@NI(NI,I) :- node@NI(NI,N), 
-			   eagerFinger@NI(NI,I1,B,BI), 
-			   I:=I1 + 1, 
-			   K:=0x1I << I + N, 
-			   K in (B,N), 
-			   NI != BI.
+			     eagerFinger@NI(NI,I1,B,BI), 
+			     I:=(I1 + 1)%160, 
+			     K:=0x1I << I + N, 
+			     K in (B,N), 
+			     NI != BI.
 
 
-/** Churn Handling */
+/* Chord Join */
+j1 joinEvent@NI(NI,E) :- join@NI(NI,E).
 
-c1 joinEvent@NI(NI,E) :- join@NI(NI,E).
-
-c2 joinReq@LI(LI,N,NI,E) :- joinEvent@NI(NI,E),
+j2 joinReq@LI(LI,N,NI,E) :- joinEvent@NI(NI,E),
 			 node@NI(NI,N), 
 			 landmark@NI(NI,LI),
 			 LI != NI.
 
-c3 succ@NI(NI,N,NI) :- landmark@NI(NI,LI),
+j3 succ@NI(NI,N,NI) :- landmark@NI(NI,LI),
 		       joinEvent@NI(NI,E),
 		       node@NI(NI,N), 
 		       NI == LI.
 
-c4 lookup@LI(LI,N,NI,E,LI) :- joinReq@LI(LI,N,NI,E).
+j4 lookup@LI(LI,N,NI,E,LI) :- joinReq@LI(LI,N,NI,E).
 
-c5 succ@NI(NI,S,SI) :- join@NI(NI,E),
-		    lookupResults@NI(NI,K,S,SI,E,P).
+j5 succ@NI(NI,S,SI) :- join@NI(NI,E),
+		       lookupResults@NI(NI,K,S,SI,E,P).
 
-cb1 joinCheck@NI(NI,E) :- periodic@NI(NI,E,120).
-
-c6 bestSuccCount@NI(NI,E,count<*>) :- joinCheck@NI(NI,E),
-		                      node@NI(NI,N), 
-                                      succ@NI(NI,S,SI),
-                                      N != S.
-
-c7 join@NI(NI, E) :- bestSuccCount@NI(NI,E,C), C == 0.
-
-c8 join@NI(NI, E) :- periodic@NI(NI, E, 0, 1).
+j6 join@NI(NI, E) :- periodic@NI(NI, E, 30), succCount@NI(NI,C), C == 0.
+j7 join@NI(NI, E) :- periodic@NI(NI, E, 5, 1).
 
 /** Stabilization */
 
-/*
-watch(stabilize).
-watch(succ).
-watch(pred).
-watch(stabilizeRequest).
-watch(sendPredecessor).
-watch(sendSuccessors).
-watch(notifyPredecessor).
-watch(returnSuccessor).
-*/
+sb1 stabilize@NI(NI,E) :- periodic@NI(NI,E,5).
 
-sb1 stabilize@NI(NI,E) :- periodic@NI(NI,E,15).
-
-sb2 stabilizeRequest@SI(SI,NI) :- stabilize@NI(NI,E),
-				bestSucc@NI(NI,S,SI).
+sb2 stabilizeRequest@SI(SI,NI) :- stabilize@NI(NI,E), bestSucc@NI(NI,S,SI).
 
 sb3 sendPredecessor@PI1(PI1,P,PI) :- stabilizeRequest@NI(NI,PI1),
-				pred@NI(NI,P,PI), 
-				PI != "-".
+				     pred@NI(NI,P,PI), PI != "-".
 
 sb4 succ@NI(NI,P,PI) :- node@NI(NI,N),
 		     	sendPredecessor@NI(NI,P,PI),
 			bestSucc@NI(NI,S,SI), 
 			P in (N,S).
 
-sb5 sendSuccessors@SI(SI,NI) :- stabilize@NI(NI,E),
-			  succ@NI(NI,S,SI).
+sb5 sendSuccessors@SI(SI,NI) :- stabilize@NI(NI,E), succ@NI(NI,S,SI).
 
-sb6 returnSuccessor@PI(PI,S,SI) :- sendSuccessors@NI(NI,PI),
-				   succ@NI(NI,S,SI).
+sb6 returnSuccessor@PI(PI,S,SI) :- sendSuccessors@NI(NI,PI), 
+                                   succ@NI(NI,S,SI).
 
 sb7 succ@NI(NI,S,SI) :- returnSuccessor@NI(NI,S,SI).
 
 sb7 notifyPredecessor@SI(SI,N,NI) :- stabilize@NI(NI,E),
-			      node@NI(NI,N), 
-			      succ@NI(NI,S,SI).
+			             node@NI(NI,N), 
+			             succ@NI(NI,S,SI).
 
 
 sb8 pred@NI(NI,P,PI) :- node@NI(NI,N),
@@ -268,9 +208,7 @@ watch(pingResp).
 watch(pingNode).
 watch(pingNodeCount).
 watch(pendingPing).
-*/
-
-cm0 pingEvent@NI(NI,E) :- periodic@NI(NI,E,5).
+cm0 pingEvent@NI(NI,E) :- periodic@NI(NI,E,10).
 
 cm1 pendingPing@NI(NI,PI,E) :- pingEvent@NI(NI,E),
 			pingNode@NI(NI,PI).
@@ -298,3 +236,4 @@ cm9 pred@NI(NI,"-","-") :- pingEvent@NI(NI,E),
 			pendingPing@NI(NI,PI,E), 
 			pred@NI(NI,P,PI).
 
+*/

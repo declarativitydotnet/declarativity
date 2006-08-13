@@ -10,14 +10,15 @@
 
 MASTER=$2
 PORT=$3
-OVERLOG=$4
+TIMEPORT=$4
+OVERLOG=$5
 
 start() {
 	export PYTHONPATH=/usr/local/lib:/usr/local/bin
         if [ -f /home/irb_p2/${OVERLOG} ]; then
-		python /home/irb_p2/planetlab.py -m $MASTER -p $PORT -o /home/irb_p2/${OVERLOG} -n irb_p2 10000 >& /home/irb_p2/planetlab.out &
+		python /home/irb_p2/planetlab.py -t $TIMEPORT -m $MASTER -p $PORT -o /home/irb_p2/${OVERLOG} -n irb_p2 10000 >& /home/irb_p2/planetlab.out &
 	else
-		python /home/irb_p2/planetlab.py -m $MASTER -p $PORT -n irb_p2 10000 >& /home/irb_p2/planetlab.out &
+		python /home/irb_p2/planetlab.py -t $TIMEPORT -m $MASTER -p $PORT -n irb_p2 10000 >& /home/irb_p2/planetlab.out &
         fi
 }
 

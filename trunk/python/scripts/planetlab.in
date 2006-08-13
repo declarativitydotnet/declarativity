@@ -7,18 +7,19 @@ import getopt
 import socket
 
 def print_usage():
-    print """Usage: planetlab.py [-s <seed>] [-o <overlog>] \\
+    print """Usage: planetlab.py [-s <seed>] [-o <overlog>] [-t pingPort] \\
                     -m master_addr -p master_port -n <slice_name> <port>"""
 
 def parse_cmdline(argv):
-    shortopts = "s:o:n:m:p:"
-    flags = {"overlog" : None, "slice" : None, "master_addr" : None, "master_port" : None}
+    shortopts = "t:s:o:n:m:p:"
+    flags = {"pingPort" : 0, "overlog" : None, "slice" : None, "master_addr" : None, "master_port" : None}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if   o == "-o": flags["overlog"]     = v
         elif o == "-n": flags["slice"]       = v
         elif o == "-m": flags["master_addr"] = v
         elif o == "-p": flags["master_port"] = int(v)
+        elif o == "-t": flags["pingPort"]    = int(v)
         elif o == "-s": libp2python.srand(int(v))
         else:
             print_usage()
@@ -31,44 +32,49 @@ def sliceEventHandler(event):
   auth['AuthMethod'] = "anonymous"
   nodes = server.AnonSliceNodesList(auth, flags["slice"])
 
-  for n in nodes:
-    if n == host:
-      continue	# Ignore myself
+  for i in range(len(nodes)):
+    if nodes[i] == host:
+      del nodes[i]
+      break
+
+  for i in range(len(nodes)):
     tp = libp2python.Tuple.mk()
     tp.append(libp2python.Val_Str.mk("sliceNodeEvent"))	# Event name
     tp.append(event.at(1)) 			 	# Local IP address
-    tp.append(libp2python.Val_Str.mk(n + ":" + port))	# PlanetLab node address
+    tp.append(libp2python.Val_Str.mk(nodes[i] + ":" + port))	# PlanetLab node address
+    tp.append(libp2python.Val_UInt32.mk(i))
     tp.freeze()
     p2.tuple(tp) 
 
-def linkHandler(event):
-  tuple = "L,"
-  tuple += event.at(1).toString()	# Local IP address
-  tuple += event.at(2).toString()	# Neighbor
+def displayHandler(event):
+  tuple = event.at(2).toString() 	# display type 
+  for i in range(event.size()):
+    if i > 2:
+      tuple += "," + event.at(i).toString()
   report(tuple)
   
-def installHandler(event):
-  tuple = "I,"
-  tuple += event.at(1).toString()	# Local IP address
-  tuple += event.at(3).toString()	# Program name
-  report(tuple)
-
 def report(tuple):
-  pid = os.fork()
-  if pid == 0:
-    try:
-      print >> log, tuple
-      #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      #s.connect((flags["master_addr"], flags["master_port"]))
-      #s.send(tuple)
-      #s.close()
-    except:
-      print "EXCEPTION: %s\n" % str(sys.exc_info()[:2])
-      print "UNABLE TO SEND TUPLE TO: %s:%s" % (flags["master_addr"], flags["master_port"])
-    sys.exit(0)
+  try:
+    visSocket.send(tuple + "\n")
+    print >> log, tuple
+  except:
+    print "EXCEPTION: %s\n" % str(sys.exc_info()[:2])
+    print "UNABLE TO SEND TUPLE TO: %s:%s" % (flags["master_addr"], flags["master_port"])
+
+def pingCheck(port):
+  try:
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(('', port))
+    s.listen(10)
+    while True:
+      client, addr = s.accept()
+      client.send("PONG: " + host)
+      client.close()
+  except:
+    print "PINGCHECK EXCEPTION: %s\n" % str(sys.exc_info()[:2])
 
 if __name__ == "__main__":
-  global flags, p2, server, host, port, log
+  global flags, p2, server, host, port, log, visSocket
   libp2python.srand(libp2python.time())
   try:
     flags, args = parse_cmdline(sys.argv)
@@ -79,11 +85,13 @@ if __name__ == "__main__":
     print_usage()
     sys.exit(1)
 
+  visSocket = None
   host   = socket.gethostname()
   port   = args[0]
   server = xmlrpclib.Server('https://www.planet-lab.org/PLCAPI/')
-  p2     = libp2python.P2(host, port)
-  log    = open("home/irb_p2/planetlab.log", 'w')
+  p2     = libp2python.P2(host, port, libp2python.P2.TransportConf.RELIABLE)
+  # p2     = libp2python.P2(host, port)
+  log    = open("/home/irb_p2/planetlab.log", 'w')
 
   if flags["overlog"]:
     # Read in the optional overlog program 
@@ -95,10 +103,15 @@ if __name__ == "__main__":
 
   # Install event triggers
   p2.subscribe("sliceEvent", sliceEventHandler)
-  p2.subscribe("overlogInstall", installHandler)
-  p2.subscribe("linkEvent", linkHandler)
+  if flags["master_addr"] == host:
+    visSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    visSocket.connect(("localhost", flags["master_port"]))
+    p2.subscribe("installEvent", displayHandler)
+    p2.subscribe("fingerEvent", displayHandler)
+    p2.subscribe("bestSuccEvent", displayHandler)
+    p2.subscribe("pathEvent", displayHandler)
 
-  report("R,"+host)
+  if flags["pingPort"] > 0: pingCheck(flags["pingPort"])
 
   # Run the system
   p2.run()

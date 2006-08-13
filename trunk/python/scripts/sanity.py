@@ -41,7 +41,7 @@ def process_file(file, event, event_hash):
                                  (\.[0-9]+)\]\:\s*                             # fractional seconds
                                  \[[0-9]+,\s*\<%s,\s*                          # token
                                  ([A-Za-z]+:[0-9]+),\s*                        # Source address
-                                 ([a-f0-9]+),\s*                               # Identifier
+                                 (0x[a-f0-9]+I),\s*                               # Identifier
                                  ([A-Za-z]+:[0-9]+)\s*                        # Destination address
                                   \>\]$\n""" % event, re.VERBOSE)
                                  # ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\:[0-9]+),\s*  # Source IP address

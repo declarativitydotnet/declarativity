@@ -136,7 +136,7 @@ class Terminal(Element):
       tuple.append(Val_Str.mk(dest))
       payload.append(Val_Str.mk("overlogEvent"))
       payload.append(Val_Str.mk(dest))
-      payload.append(Val_Str.mk(src))
+      payload.append(Val_Str.mk(dest))
       payload.append(Val_Str.mk(name))
       payload.append(Val_Str.mk(program))
       payload.freeze()
