@@ -33,10 +33,7 @@ materialize(pendingPing, 20, infinity, keys(2)).
 /* Inherit table from gossip.olg */
 materialize(parent, infinity, 1, keys(2)).
 
-watch(bestSucc).
-watch(pred).
-watch(sendPredecessor).
-watch(stabilizeRequest).
+watch(landmark).
 
 i0 node@NI(NI, N)          :- periodic@NI(NI, E, 0, 1), N := f_sha1(NI).
 i1 pred@NI(NI, P, PI)      :- periodic@NI(NI, E, 0, 1), P := 0x0I, PI:="-".
@@ -138,7 +135,6 @@ f8 nextFingerFix@NI(NI,0) :- eagerFinger@NI(NI,I,B,BI),
 			     ((I == 159) || (BI == NI)).
 */
 
-watch(nextFingerFix).
 f9 nextFingerFix@NI(NI,I) :- node@NI(NI,N), 
 			     eagerFinger@NI(NI,I1,B,BI), 
 			     I:=(I1 + 1)%160, 

@@ -62,16 +62,18 @@ def report(tuple):
     print "UNABLE TO SEND TUPLE TO: %s:%s" % (flags["master_addr"], flags["master_port"])
 
 def pingCheck(port):
-  try:
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind(('', port))
-    s.listen(10)
-    while True:
-      client, addr = s.accept()
-      client.send("PONG: " + host)
-      client.close()
-  except:
-    print "PINGCHECK EXCEPTION: %s\n" % str(sys.exc_info()[:2])
+  pid = os.fork()
+  if pid == 0:
+    try:
+      s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+      s.bind(('', port))
+      s.listen(10)
+      while True:
+        client, addr = s.accept()
+        client.send("PONG: " + host)
+        client.close()
+    except:
+      print "PINGCHECK EXCEPTION: %s\n" % str(sys.exc_info()[:2])
 
 if __name__ == "__main__":
   global flags, p2, server, host, port, log, visSocket

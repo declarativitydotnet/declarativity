@@ -31,11 +31,11 @@ Usage: psetup.py [-d] [-a] [-t pingCheckPort] [-j <parallel>] [-(i|I)] [-k] \\
                  -n <slice_name> [<planetLabNode>]"""
 
 def parse_cmdline(argv):
-    shortopts = "daIikn:j:o:D:m:p:t:"
+    shortopts = "shdaIikn:j:o:D:m:p:t:"
     flags = {"dealloc" : False, "alloc" : False, "pingPort" : 0, "overlog" : "", \
              "kill" : False, "slice" : None, "parallel" : 1, \
              "env" : {}, "install" : False, "all_install" : False, "email" : None, \
-             "password" : None, \
+             "password" : None, "slice_start" : False, "slice_halt" : False,\
              "master_addr" : "clash.berkeley.intel-research.net", "master_port" : "10000"}
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
@@ -46,6 +46,8 @@ def parse_cmdline(argv):
         elif o == "-k": flags["kill"]        = True
         elif o == "-a": flags["alloc"]       = True
         elif o == "-d": flags["dealloc"]     = True
+        elif o == "-s": flags["slice_start"] = True
+        elif o == "-h": flags["slice_halt"]  = True
         elif o == "-o": flags["overlog"]     = v
         elif o == "-m": flags["master_addr"] = v
         elif o == "-p": flags["master_port"] = v
@@ -77,6 +79,12 @@ def getNodes():
             (node_record['hostname'], node_record['boot_state'], node_record['hostname'])
       server.SliceNodesDel(auth, flags["slice"], [node_record['hostname']])
   return nodes
+
+def stopSlice():
+  server.SliceStop(auth, flags["slice"])
+
+def startSlice():
+  server.SliceStart(auth, flags["slice"])
 
 def deallocNodes():
   nodes = server.SliceNodesList(auth, flags["slice"])
@@ -117,7 +125,7 @@ def allocNodes():
     print "Allocating %d nodes." % len(nodes)
     server.SliceNodesAdd(auth, flags["slice"], nodes)
 
-def startNode(node, nodeid):
+def startNode(node):
   pid = os.fork()
   if pid == 0:
     install_files = None
@@ -164,7 +172,7 @@ def startNode(node, nodeid):
 
     if flags["pingPort"] > 0 and not pong:
       print "UNABLE TO GET PING FROM NODE %s!" % node
-      server.SliceNodesDel(auth, flags["slice"], [node])
+      # server.SliceNodesDel(auth, flags["slice"], [node])
     sys.exit(0)
   return pid
 
@@ -174,7 +182,7 @@ def timeoutHandler(signum, frame):
     for k in pids.keys():
       print "\tTIMEOUT NODE: ", pids[k]
       os.kill(k, signal.SIGKILL)
-      server.SliceNodesDel(auth, flags["slice"], [pids[k]])
+      # server.SliceNodesDel(auth, flags["slice"], [pids[k]])
   else:
     print "UNKNOWN SIGNAL: ", signum
   return 0
@@ -182,7 +190,7 @@ def timeoutHandler(signum, frame):
 def stopNode(node):
   pid = os.fork()
   if pid == 0:
-    os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % (flags["slice"], node, stop))
+    os.system("ssh -l %s %s \"%s\" >& /dev/null" % (flags["slice"], node, stop))
     sys.exit(0)
   return pid
 
@@ -233,7 +241,11 @@ if __name__ == "__main__":
     except:
       print "ERROR: open file error on file", flags["overlog"]
 
-  if flags["alloc"]:
+  if flags["slice_start"]:
+    startSlice() 
+  elif flags["slice_halt"]:
+    stopSlice()
+  elif flags["alloc"]:
     allocNodes()
   elif flags["dealloc"]:
     deallocNodes()
@@ -253,7 +265,7 @@ if __name__ == "__main__":
         pids[stopNode(hostname)] = hostname
       else:
         # print "PlanetLab P2 install on node %s" % hostname
-        pids[startNode(hostname, nodeid)] = hostname
+        pids[startNode(hostname)] = hostname
       if len(pids) >= flags["parallel"]:
         p, s = os.wait()
         # print "\tJob finished on planetLab node %s!" % pids[p]
