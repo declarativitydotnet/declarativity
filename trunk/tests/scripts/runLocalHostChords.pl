@@ -87,7 +87,7 @@ if (defined $opt_R) {
 my $firstGateway = "$remoteHost:$firstPort";
 my $firstLog = "$firstGateway.log";
 my $nextSeed = $opt_s;
-my $firstLine = "tests/runChord $opt_F $opt_l $nextSeed $firstGateway $opt_D >& $firstLog &";
+my $firstLine = "tests/runChord $opt_F $opt_l $nextSeed $firstGateway $opt_D NO-TRACE >& $firstLog &";
 if (!defined $opt_g) {
     print "$firstLine\n";
     system($firstLine);
@@ -130,7 +130,7 @@ while($remainingNodes > 0) {
 	}
 	my $nextNodeAddress = "$localHost:$nextNode";
 	my $nextLog = "$nextNodeAddress.log";
-	my $nextLine = "tests/runChord $opt_F $opt_l $nextSeed $nextNodeAddress $opt_D $nextGatewayAddress >& $nextLog&";
+	my $nextLine = "tests/runChord $opt_F $opt_l $nextSeed $nextNodeAddress $opt_D NO-TRACE $nextGatewayAddress >& $nextLog&";
 	print "$nextLine\n";
 	system($nextLine);
 	$currentGateway++;
