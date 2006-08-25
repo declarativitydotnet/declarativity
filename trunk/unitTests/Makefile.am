@@ -30,12 +30,12 @@ noinst_PROGRAMS = p2Test p2TestTable2
 p2Test_SOURCES =	p2Test.C
 
 p2Test_LDADD = \
-	$(top_builddir)/unitTests/.libs/libp2unitTests.a \
-	$(top_builddir)/overlog/.libs/libp2overlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a \
+	$(top_builddir)/unitTests/libp2unitTests.la \
+	$(top_builddir)/overlog/libp2overlog.la \
+	$(top_builddir)/net/libp2net.la \
+	$(top_builddir)/elements/libp2elements.la \
+	$(top_builddir)/p2core/libp2core.la \
+	$(top_builddir)/eventLoop/libp2eventLoop.la \
 	-lboost_unit_test_framework
 
 p2TestTable2_SOURCES =	p2TestTable2.C
@@ -61,7 +61,7 @@ INCLUDES =	@BOOST_INC@ \
 CXXFLAGS=-Wall -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG @CXXFLAGS@
 
 
-LDFLAGS=@BOOST_LIB@ @LDFLAGS@
+LDFLAGS=@BOOST_LIB@ @LDFLAGS@ -static
 
 LIBS = @BOOST_LIB@ -lcrypto
 
