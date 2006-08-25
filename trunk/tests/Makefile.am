@@ -73,8 +73,8 @@ runOverLog_LDADD = \
 runChord_SOURCES = runChord.C
 runChord_LDADD =  \
 	$(top_builddir)/planner/libp2planner.la \
-	$(top_builddir)/debugger/libp2debugger.la \
 	$(top_builddir)/overlog/libp2overlog.la \
+	$(top_builddir)/debugger/libp2debugger.la \
 	$(top_builddir)/net/libp2net.la \
 	$(top_builddir)/elements/libp2elements.la \
 	$(top_builddir)/p2core/libp2core.la \
@@ -82,9 +82,9 @@ runChord_LDADD =  \
 
 runOverLog2_SOURCES = runOverLog2.C
 runOverLog2_LDADD =  \
-	$(top_builddir)/debugger/libp2debugger.la \
 	$(top_builddir)/p2cpp/libp2cpp.la \
 	$(top_builddir)/overlog/libp2overlog.la \
+	$(top_builddir)/debugger/libp2debugger.la \
 	$(top_builddir)/net/libp2net.la \
 	$(top_builddir)/elements/libp2elements.la \
 	$(top_builddir)/p2core/libp2core.la \
@@ -93,9 +93,9 @@ runOverLog2_LDADD =  \
 
 runPingPong_SOURCES = runPingPong.C
 runPingPong_LDADD =  \
-	$(top_builddir)/debugger/libp2debugger.la \
 	$(top_builddir)/p2cpp/libp2cpp.la \
 	$(top_builddir)/overlog/libp2overlog.la \
+	$(top_builddir)/debugger/libp2debugger.la \
 	$(top_builddir)/net/libp2net.la \
 	$(top_builddir)/elements/libp2elements.la \
 	$(top_builddir)/p2core/libp2core.la \
