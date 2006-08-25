@@ -1,3 +1,4 @@
+materialize(env, infinity, infinity, keys(2,3)).
 materialize(link, infinity, infinity, keys(1,2)).
 
 watch(link).
@@ -6,5 +7,5 @@ watch(pong).
 
 link("localhost:10000", "localhost:10001").
 
-r1 pong@J(J, I) :- ping@I(I, J).
-r2 ping@J(J, I) :- periodic@I(I,E,1,1000), link@I(I,J).
+r1 pong(@J, I) :- ping(@I, J).
+r2 ping(@J, I) :- periodic(@I,E,1,1000), link(@I,J).

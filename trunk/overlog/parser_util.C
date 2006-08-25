@@ -15,6 +15,7 @@
 #define __PARSER_UTIL_C__
 
 #include "parser_util.h"
+#include "ol_context.h"
 #include "val_int32.h"
 #include "oper.h"
 
@@ -192,21 +193,41 @@ string Parse_Math::toString() {
   return m.str();
 }
 
-Parse_FunctorName::Parse_FunctorName(Parse_Expr *n, Parse_Expr *l) {
+Parse_FunctorName::Parse_FunctorName(Parse_Expr *n) {
   name = n->v->toString(); delete n;
-  if (l) {
-    loc = l->v->toString();
-    delete l;
-  } else {
-    loc = "";
-  }
 }
 
 string Parse_FunctorName::toString() {
   ostringstream fn;
   fn <<  name;
-  if (loc != "") fn << "@" << loc;
   return fn.str();
+}
+
+string Parse_Functor::getlocspec() {
+  Parse_Var *p;
+  // if the loc_ field was filled in, trust it.  Sometimes this may be
+  // done externally to the parser (e.g. during rule localization.)
+  // Otherwise, find the locspec among the args.
+  if (loc_.empty())  {
+	bool found = false;
+	for (int k = 0; k < args(); k++) {
+	  if ((p = dynamic_cast<Parse_Var*>(arg(k)))
+		  && p->locspec)
+		if (!found) {
+		  loc_ = p->toString();
+		  found = true;
+		}
+		else {
+		  std::cout << "PARSER ERROR: More than one location specifier in predicate " << toString();
+		  loc_.clear();
+		  break;
+		}
+	}
+	if (!found)
+	  std::cout << "PARSER WARNING: No location specifier in predicate " << toString();
+	// drop through to return
+  }
+  return(loc_);
 }
 
 string Parse_Functor::toString() {
@@ -307,7 +328,7 @@ string Parse_VecAtom::toString() {
   return f.str();
 }
 
-Parse_Matrix::Parse_Matrix(Parse_ExprListList *o)
+Parse_Matrix::Parse_Matrix(Parse_ExprListList *o, OL_Context *ctxt)
 {
   Parse_ExprList *row;
   uint64_t columns;
@@ -318,8 +339,11 @@ Parse_Matrix::Parse_Matrix(Parse_ExprListList *o)
 	row = rows_->at(i);
 	if (i == 0) // initialize
 	  columns = row->size();
-	else if (columns != row->size())
-	  std::cerr << "PARSE ERROR: matrix " << toString() << " has rows of nonuniform length\n";
+	else if (columns != row->size()) {
+	  ostringstream oss;
+	  oss << "matrix " << toString() << " has rows of nonuniform length";
+	  ctxt->error(oss.str());
+	}
   }
 }
 

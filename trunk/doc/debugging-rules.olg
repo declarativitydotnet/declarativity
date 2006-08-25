@@ -18,8 +18,8 @@ watch(inTracelookupResults).
 
 trace(lookupResults).
 
-x1 interMed@RI(RI, TRemote, Tout, E, NI, D) :- inTracelookupResults@NI(NI, K, S, SI, E, Tout),
- 			      tupleTable@NI(NI, TLocal, RI, TRemote),
+x1 interMed(@RI, TRemote, Tout, E, NI, D) :- inTracelookupResults(@NI, K, S, SI, E, Tout),
+ 			      tupleTable(@NI, TLocal, RI, TRemote),
 			      Tout == TLocal, D := NI.
 
 
@@ -32,33 +32,33 @@ x1 interMed@RI(RI, TRemote, Tout, E, NI, D) :- inTracelookupResults@NI(NI, K, S,
 /*
 trace(lookup).
 
-x1 interMed@RI(RI, TRemote, E, NI, D) :- inTracelookup@NI(NI, K, R, E, Tout),
-				tupleTable@NI(NI, TLocal, RI, TRemote),
+x1 interMed(@RI, TRemote, E, NI, D) :- inTracelookup(@NI, K, R, E, Tout),
+				tupleTable(@NI, TLocal, RI, TRemote),
 				Tout == TLocal, D := NI.
 */
 
-x2 traceBack@RI(RI, Tin, R, Tout, E, NI, D1) :- interMed@RI(RI, TRemote, T, E, NI, D),
-			      ruleExecTable@RI(RI, R, Tin, Tout, Sout, LTIN, LTOUT, TYPE),
+x2 traceBack(@RI, Tin, R, Tout, E, NI, D1) :- interMed(@RI, TRemote, T, E, NI, D),
+			      ruleExecTable(@RI, R, Tin, Tout, Sout, LTIN, LTOUT, TYPE),
  			      TYPE == "EVENT",
 			      TRemote == Tout,
 			      D1 := RI + "::" + D.
 
-x3 traceBack@SI(SI, TRemote, R, Tout, E, NI, D1) :- 
-			      traceBack@RI(RI, Tin, R, Tout, E, NI, D),
-			      tupleTable@RI(RI, Tin, SI, TRemote),
+x3 traceBack(@SI, TRemote, R, Tout, E, NI, D1) :- 
+			      traceBack(@RI, Tin, R, Tout, E, NI, D),
+			      tupleTable(@RI, Tin, SI, TRemote),
 			      SI != RI,
 			      D1 := RI + "::" + D.
 
-x4 traceBack@SI(SI, T1, R2, Tout, E, NI, D1) :- 
-			      traceBack@SI(SI, Tin, R1, Tout, E, NI, D),
-			      ruleExecTable@SI(SI, R, T1, T2, Sout, LTIN, LTOUT, TYPE),
+x4 traceBack(@SI, T1, R2, Tout, E, NI, D1) :- 
+			      traceBack(@SI, Tin, R1, Tout, E, NI, D),
+			      ruleExecTable(@SI, R, T1, T2, Sout, LTIN, LTOUT, TYPE),
 			      TYPE == "EVENT",
 			      R2 := R + "::" + R1,
 			      T1 != 0, T2 == Tin, M := "::",
 			      D1 := SI + "::" + D, R2 != "c1".
 
-x5 report@NI(NI, T1, T, R, D1) :- traceBack@SI(SI, Tin, R1, T, E, NI, D),
-				 ruleExecTable@SI(SI, R2, T1, T2, Sout, LTIN, LTOUT, TYPE),
+x5 report(@NI, T1, T, R, D1) :- traceBack(@SI, Tin, R1, T, E, NI, D),
+				 ruleExecTable(@SI, R2, T1, T2, Sout, LTIN, LTOUT, TYPE),
 				 ((T1 == 0) || ( R2 == "c1")), 
 				 T2 == Tin, R := R2 + "::" + R1, TYPE == "EVENT",
 				 D1 := SI + "::" + D.

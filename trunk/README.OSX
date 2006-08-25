@@ -35,9 +35,9 @@ or Intel processor):
                    CXXFLAGS="-g -Wall -DTRACE_OFF"
        make
    This may take a while as well.  We've found you can
-   parallelize the make at a factor of about 4 per processor, so on a
-   uniprocessor machine saying "make -j4" is beneficial; on a
-   dual-core machine you might try "make -j8".
+   parallelize the make at a factor of about 2 per processor, so on a
+   uniprocessor machine saying "make -j2" is beneficial; on a
+   dual-core machine you might try "make -j4".
 9) Assuming everything built correctly you should be ready to install
    the libraries and scripts.  You will have to run this command as root:
        make install
@@ -47,7 +47,7 @@ or Intel processor):
 12) Due to libtool weirdness (if someone has a fix, let us know!) 
    "make install" may not create the file /usr/local/lib/libp2python.so which
    is needed to run the P2 Python scripts.  To fix this simply type
-       cd /usr/local/lib; ln -s libp2python.0 libp2python.so
+       cd /usr/local/lib; ln -s libp2python.0.dylib libp2python.so
 
 ---
 NOTE: There are prebuilt boost distributions in the fink (unstable)

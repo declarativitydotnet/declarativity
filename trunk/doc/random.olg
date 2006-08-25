@@ -11,42 +11,42 @@ materialize(neighborCount, infinity, 1, keys(2)).
 
 watch(overlogInstall).
 
-r0a sliceEvent@J(J, E) :- periodic@J(J, E, 0, 1).
-r0b sliceNodes@J(J, N) :- sliceNodeEvent@J(J, N).
+r0a sliceEvent(@J, E) :- periodic(@J, E, 0, 1).
+r0b sliceNodes(@J, N) :- sliceNodeEvent(@J, N).
 
-r1 neighborCount@J(J, C) :- periodic@J(J, E, 0, 1), C:=0.
+r1 neighborCount(@J, C) :- periodic(@J, E, 0, 1), C:=0.
 
-r2 neighborCount@J(J, count<N>) :- neighbors@J(J, N).
+r2 neighborCount(@J, count<N>) :- neighbors(@J, N).
 
-r3 neighborRequest@N(N, J) :- periodic@J(J, E, 5),
-                              neighborCount@J(J, C), 
-                              sliceNodes@J(J, N),
+r3 neighborRequest(@N, J) :- periodic(@J, E, 5),
+                              neighborCount(@J, C), 
+                              sliceNodes(@J, N),
                               f_coinFlip(0.1) == 1,
                               C < NUM_NEIGHBORS.
 
-r4 neighborResponse@N(N, J) :- neighborRequest@J(J, N).
+r4 neighborResponse(@N, J) :- neighborRequest(@J, N).
 
-r5 neighbors@J(J, N) :- neighborResponse@J(J, N),
-                        neighborCount@J(J, C),
+r5 neighbors(@J, N) :- neighborResponse(@J, N),
+                        neighborCount(@J, C),
                         C < NUM_NEIGHBORS.
 
-r6 neighborPing@N(N, J) :- periodic@J(J, E, 30),
-                           neighbors@J(J, N).
-r7 neighborPong@N(N, J) :- neighborPing@J(J, N).
-r8 neighbors@J(J, N)    :- neighborPong@J(J, N).
+r6 neighborPing(@N, J) :- periodic(@J, E, 30),
+                           neighbors(@J, N).
+r7 neighborPong(@N, J) :- neighborPing(@J, N).
+r8 neighbors(@J, N)    :- neighborPong(@J, N).
 
-r9 delete neighbors@J(J,N) :- periodic@J(J,E,10),
-                              neighbors@J(J,N),
-                              neighborCount@J(J,C),
+r9 delete neighbors(@J,N) :- periodic(@J,E,10),
+                              neighbors(@J,N),
+                              neighborCount(@J,C),
                               C > NUM_NEIGHBORS. 
 
 /** Overlog installation rules */
-p0 overlog@J(J, T, P)           :- overlogEvent@J(J, S, T, P).
-p1 overlogInstall@J(J, J, T, P) :- overlog@J(J, T, P).
-p3 displayEvent@M(M, I, J, T)   :- overlogInstall@J(J, S, T, P), M:=MASTER, I:="I".
+p0 overlog(@J, T, P)           :- overlogEvent(@J, S, T, P).
+p1 overlogInstall(@J, J, T, P) :- overlog(@J, T, P).
+p3 displayEvent(@M, I, J, T)   :- overlogInstall(@J, S, T, P), M:=MASTER, I:="I".
 
 /** Tell all my neighbors about the new install */
-p2 overlogEvent@N(N, J, T, P)   :- overlogInstall@J(J, S, T, P), neighbors@J(J, N).
+p2 overlogEvent(@N, J, T, P)   :- overlogInstall(@J, S, T, P), neighbors(@J, N).
 
 /** Tell the dude connecting about all the past overlog programs */
-p3 overlogEvent@N(N, J, T, P)   :- overlog@J(J, T, P), neighborRequest@J(J, N).
+p3 overlogEvent(@N, J, T, P)   :- overlog(@J, T, P), neighborRequest(@J, N).

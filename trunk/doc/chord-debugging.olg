@@ -86,31 +86,31 @@ watch(forward).
 /*watch(bestLookupDist).*/
 
 
-L1 lookupResults@R(R,K,S,SI,E,NI,E2) :- node@NI(NI,N),
-				  lookup@NI(NI,K,R,E), 
-				  bestSucc@NI(NI,S,SI),
+L1 lookupResults(@R,K,S,SI,E,NI,E2) :- node(@NI,N),
+				  lookup(@NI,K,R,E), 
+				  bestSucc(@NI,S,SI),
 				  K in (N,S],
-				  recentSnapId@NI(NI,E2).
+				  recentSnapId(@NI,E2).
 
 
-L2 bestLookupDist@NI(NI,K,R,E,min<D>) :- node@NI(NI,N), 
-					 lookup@NI(NI,K,R,E), 
-					 finger@NI(NI,I,B,BI), 
+L2 bestLookupDist(@NI,K,R,E,min<D>) :- node(@NI,N), 
+					 lookup(@NI,K,R,E), 
+					 finger(@NI,I,B,BI), 
 					 D:=K - B - 1, 
 					 B in (N,K).
 /*
-L3 forward@NI(NI, K, R, E, min<BI>) :- node@NI(NI, N),
-                                  bestLookupDist@NI(NI,K,R,E,D),
-	 			  finger@NI(NI,I,B,BI),
+L3 forward(@NI, K, R, E, min<BI>) :- node(@NI, N),
+                                  bestLookupDist(@NI,K,R,E,D),
+	 			  finger(@NI,I,B,BI),
                                   D == K - B - 1,
                                   B in (N, K).
 
-L4 lookup@BI(BI,K, R, E) :- forward@NI(NI, K, R, E, BI).
+L4 lookup(@BI,K, R, E) :- forward(@NI, K, R, E, BI).
 */
 
-L3 lookup@BI(min<BI>,K,R,E) :- node@NI(NI,N),	    
-			       bestLookupDist@NI(NI,K,R,E,D), 
-			       finger@NI(NI,I,B,BI), 
+L3 lookup(@min<BI>,K,R,E) :- node(@NI,N),	    
+			       bestLookupDist(@NI,K,R,E,D), 
+			       finger(@NI,I,B,BI), 
 			       D == K - B - 1,
 			       B in (N,K).
 
@@ -125,20 +125,20 @@ watch(succEvent).
 watch(succDist).
 watch(bestSuccDist).*/
 
-N1 succEvent@NI(NI,S,SI) :- succ@NI(NI,S,SI).
+N1 succEvent(@NI,S,SI) :- succ(@NI,S,SI).
 
-N2 succDist@NI(NI,S,D) :- node@NI(NI,N),
-			  succEvent@NI(NI,S,SI), 
+N2 succDist(@NI,S,D) :- node(@NI,N),
+			  succEvent(@NI,S,SI), 
 			  D:=S - N - 1.
 
-N3 bestSuccDist@NI(NI,min<D>) :- succDist@NI(NI,S,D).
+N3 bestSuccDist(@NI,min<D>) :- succDist(@NI,S,D).
 
-N4 bestSucc@NI(NI,S,SI) :- succ@NI(NI,S,SI),
-			   bestSuccDist@NI(NI,D), 
-			   node@NI(NI,N),
+N4 bestSucc(@NI,S,SI) :- succ(@NI,S,SI),
+			   bestSuccDist(@NI,D), 
+			   node(@NI,N),
 			   D == S - N - 1.
 
-N5 finger@NI(NI,0,S,SI) :- bestSucc@NI(NI,S,SI).
+N5 finger(@NI,0,S,SI) :- bestSucc(@NI,S,SI).
 
 
 /** Successor eviction */
@@ -148,19 +148,19 @@ watch(succCount).
 watch(evictSucc).
 watch(maxSuccDist).*/
 
-S1 succCount@NI(NI,count<*>) :- succ@NI(NI,S,SI).
+S1 succCount(@NI,count<*>) :- succ(@NI,S,SI).
 
-S2 evictSucc@NI(NI) :- succCount@NI(NI,C), 
+S2 evictSucc(@NI) :- succCount(@NI,C), 
 		    C > 2.
 
-S3 maxSuccDist@NI(NI,max<D>) :- succ@NI(NI,S,SI),
-				node@NI(NI,N), 
-				evictSucc@NI(NI),
+S3 maxSuccDist(@NI,max<D>) :- succ(@NI,S,SI),
+				node(@NI,N), 
+				evictSucc(@NI),
 				D:=S - N - 1.
 
-S4 delete succ@NI(NI,S,SI) :- node@NI(NI,N), 
-			      succ@NI(NI,S,SI),
-			      maxSuccDist@NI(NI,D), 
+S4 delete succ(@NI,S,SI) :- node(@NI,N), 
+			      succ(@NI,S,SI),
+			      maxSuccDist(@NI,D), 
 			      D == S - N - 1.
 
 /** Finger fixing */
@@ -172,49 +172,49 @@ watch(eagerFinger).
 watch(nextFingerFix).*/
 watch(finger).
 
-F1 fFix@NI(NI,E,I) :- periodic@NI(NI,E,10), 
-		   nextFingerFix@NI(NI,I).
+F1 fFix(@NI,E,I) :- periodic(@NI,E,10), 
+		   nextFingerFix(@NI,I).
 
-F2 fFixEvent@NI(NI,E,I) :- fFix@NI(NI,E,I).
+F2 fFixEvent(@NI,E,I) :- fFix(@NI,E,I).
 
-F3 lookup@NI(NI,K,NI,E) :- fFixEvent@NI(NI,E,I),
-			   node@NI(NI,N), 
+F3 lookup(@NI,K,NI,E) :- fFixEvent(@NI,E,I),
+			   node(@NI,N), 
 			   K:=1I << I + N.
 
-F4 eagerFinger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I), 
-				lookupResults@NI(NI,K,B,BI,E,LH,E2).
+F4 eagerFinger(@NI,I,B,BI) :- fFix(@NI,E,I), 
+				lookupResults(@NI,K,B,BI,E,LH,E2).
 
-F5 finger@NI(NI,I,B,BI) :- eagerFinger@NI(NI,I,B,BI).
+F5 finger(@NI,I,B,BI) :- eagerFinger(@NI,I,B,BI).
 
-F6 eagerFinger@NI(NI,I,B,BI) :- node@NI(NI,N), 
-				eagerFinger@NI(NI,I1,B,BI), 
+F6 eagerFinger(@NI,I,B,BI) :- node(@NI,N), 
+				eagerFinger(@NI,I1,B,BI), 
 				I:=I1 + 1, 
 				K:=1I << I + N, 
 				K in (N,B), 
 				BI != NI.
 
-F7 delete fFix@NI(NI,E,I1) :- eagerFinger@NI(NI,I,B,BI), 
-			   fFix@NI(NI,E,I1),
+F7 delete fFix(@NI,E,I1) :- eagerFinger(@NI,I,B,BI), 
+			   fFix(@NI,E,I1),
 			   I > 0, 
 			   I1 == I - 1.
 
 
-F8 nextFingerFix@NI(NI,0) :- eagerFinger@NI(NI,I,B,BI), 
+F8 nextFingerFix(@NI,0) :- eagerFinger(@NI,I,B,BI), 
 			   ((I == 159) || (BI == NI)).
 
-F9 nextFingerFix@NI(NI,I) :- node@NI(NI,N), 
-			   eagerFinger@NI(NI,I1,B,BI), 
+F9 nextFingerFix(@NI,I) :- node(@NI,N), 
+			   eagerFinger(@NI,I1,B,BI), 
 			   I:=I1 + 1, 
 			   K:=1I << I + N, 
 			   K in (B,N), 
 			   NI != BI.
 /*
-F10 uniqueFinger@NI(NI, BI, B) :- eagerFinger@NI(NI, I, B, BI).
+F10 uniqueFinger(@NI, BI, B) :- eagerFinger(@NI, I, B, BI).
 */
 
-F10 uniqueFinger@NI(NI, BI, B) :- finger@NI(NI, I, B, BI).
+F10 uniqueFinger(@NI, BI, B) :- finger(@NI, I, B, BI).
 
-F11 countUniqueFinger@NI(NI, count<*>) :- uniqueFinger@NI(NI, BI, B).
+F11 countUniqueFinger(@NI, count<*>) :- uniqueFinger(@NI, BI, B).
 
 /** Churn Handling */
 
@@ -224,22 +224,22 @@ watch(joinReq).
 watch(uniqueFinger).
 watch(countUniqueFinger).
 
-C1 joinEvent@NI(NI,E) :- join@NI(NI,E).
+C1 joinEvent(@NI,E) :- join(@NI,E).
 
-C2 joinReq@LI(LI,N,NI,E) :- joinEvent@NI(NI,E),
-			 node@NI(NI,N), 
-			 landmark@NI(NI,LI),
+C2 joinReq(@LI,N,NI,E) :- joinEvent(@NI,E),
+			 node(@NI,N), 
+			 landmark(@NI,LI),
 			 LI != "-".
 
-C3 succ@NI(NI,N,NI) :- landmark@NI(NI,LI),
-		       joinEvent@NI(NI,E),
-		       node@NI(NI,N), 
+C3 succ(@NI,N,NI) :- landmark(@NI,LI),
+		       joinEvent(@NI,E),
+		       node(@NI,N), 
 		       LI == "-".
 
-C4 lookup@LI(LI,N,NI,E) :- joinReq@LI(LI,N,NI,E).
+C4 lookup(@LI,N,NI,E) :- joinReq(@LI,N,NI,E).
 
-C5 succ@NI(NI,S,SI) :- join@NI(NI,E),
-		    lookupResults@NI(NI,K,S,SI,E, LH, E2).
+C5 succ(@NI,S,SI) :- join(@NI,E),
+		    lookupResults(@NI,K,S,SI,E, LH, E2).
 
 
 /** Stabilization */
@@ -273,13 +273,13 @@ watch(calculateRTAvg).
 
 /* N == Number of Rule execs , NL == Number of Local HOps, NR == Number of remote hops */
 
-SB1 stabilize@NI(NI,E) :- periodic@NI(NI,E,15).
+SB1 stabilize(@NI,E) :- periodic(@NI,E,15).
 
 /*
-X1 startDebug@NI(NI) :- periodic@NI(NI, E, 60).
+X1 startDebug(@NI) :- periodic(@NI, E, 60).
 
-X2 startTrace@NI(NI, max<Tout>, E1, 10) :- startDebug@NI(NI),
-				     traceTable@NI(NI, R, Tin, Tout, Sout),
+X2 startTrace(@NI, max<Tout>, E1, 10) :- startDebug(@NI),
+				     traceTable(@NI, R, Tin, Tout, Sout),
      				     Tin != "-",
 				     Tout != "-",
 				     E1 := f_rand().
@@ -287,8 +287,8 @@ X2 startTrace@NI(NI, max<Tout>, E1, 10) :- startDebug@NI(NI),
 
 
 
-X3 collect1@NI(NI, Tin, R, Tout, E, K, LT, RT, IR, X, Y, N, NL,NR) :- startTrace@NI(NI, Tout, E, K),
-				     ruleExecTable@NI(NI, R, Tin, Tout, Sout, LTIN, LTOUT, TYPE),
+X3 collect1(@NI, Tin, R, Tout, E, K, LT, RT, IR, X, Y, N, NL,NR) :- startTrace(@NI, Tout, E, K),
+				     ruleExecTable(@NI, R, Tin, Tout, Sout, LTIN, LTOUT, TYPE),
 				     TYPE == "EVENT", 
 				     IR := LTOUT - LTIN,
 				     RT := 0, LT := 0, X := LTIN, Y := "LOCAL",
@@ -296,17 +296,17 @@ X3 collect1@NI(NI, Tin, R, Tout, E, K, LT, RT, IR, X, Y, N, NL,NR) :- startTrace
 
 				
 
-X4 collect3@S(S, E, Tin, R, Tout, K, NI, LT, RT, IR, X, Y, N, NL1, NR) :- collect1@NI(NI, T, R, Tout, E, K, LT, RT, IR, X, Y, N, NL, NR),
-					  tupleTable@NI(NI, T, TupleTin, S, Tin),
+X4 collect3(@S, E, Tin, R, Tout, K, NI, LT, RT, IR, X, Y, N, NL1, NR) :- collect1(@NI, T, R, Tout, E, K, LT, RT, IR, X, Y, N, NL, NR),
+					  tupleTable(@NI, T, TupleTin, S, Tin),
 					  S == NI, NL1 := NL + 1.
 	      
-X14 collect3@S(S, E, Tin, R, Tout, K, NI, LT, RT, IR, X, Y1, N, NL, NR1) :-  collect1@NI(NI, T, R, Tout, E, K, LT, RT, IR, X, Y, N, NL, NR),
-					  tupleTable@NI(NI, T, TupleTin, S, Tin),
+X14 collect3(@S, E, Tin, R, Tout, K, NI, LT, RT, IR, X, Y1, N, NL, NR1) :-  collect1(@NI, T, R, Tout, E, K, LT, RT, IR, X, Y, N, NL, NR),
+					  tupleTable(@NI, T, TupleTin, S, Tin),
 					  S != NI, Y1 := "REMOTE", NR1 := NR + 1.
 
 
-X6 collect4@S(S, E, T1, T, R2, NI,K, LT2, RT, IR2, X1, Y, N1, NL, NR) :- collect3@S(S, E, Tin, R1, T, K, NI, LT, RT, IR, X, Y, N, NL, NR),
-				ruleExecTable@S(S, R, T1, T2, Sout, LTIN, LTOUT, TYPE),
+X6 collect4(@S, E, T1, T, R2, NI,K, LT2, RT, IR2, X1, Y, N1, NL, NR) :- collect3(@S, E, Tin, R1, T, K, NI, LT, RT, IR, X, Y, N, NL, NR),
+				ruleExecTable(@S, R, T1, T2, Sout, LTIN, LTOUT, TYPE),
 				TYPE == "EVENT",
 				R2 := R + R1,
 				R != "-",
@@ -321,8 +321,8 @@ X6 collect4@S(S, E, T1, T, R2, NI,K, LT2, RT, IR2, X1, Y, N1, NL, NR) :- collect
 				N1 := N + 1.
 
 
-X16 collect4@S(S, E, T1, T, R2, NI, K, LT, RT2, IR2, X1, Y, N1, NL, NR) :- collect3@S(S, E, Tin, R1, T, K, NI, LT, RT, IR, X, Y, N, NL, NR),
-				ruleExecTable@S(S, R, T1, T2, Sout, LTIN, LTOUT, TYPE),
+X16 collect4(@S, E, T1, T, R2, NI, K, LT, RT2, IR2, X1, Y, N1, NL, NR) :- collect3(@S, E, Tin, R1, T, K, NI, LT, RT, IR, X, Y, N, NL, NR),
+				ruleExecTable(@S, R, T1, T2, Sout, LTIN, LTOUT, TYPE),
 				TYPE == "EVENT",
 				R2 := R + R1,
 				R != "-",
@@ -336,17 +336,17 @@ X16 collect4@S(S, E, T1, T, R2, NI, K, LT, RT2, IR2, X1, Y, N1, NL, NR) :- colle
 				X1 := LTIN,
 				N1 := N + 1.
 
-X7 collect3@S(S, E, Tin, R1, T, K, NI, LT, RT, IR, X, Y1, N, NL, NR1) :- collect4@F(F, E, T1, T, R1, NI, K, LT, RT, IR, X, Y, N, NL, NR),
-					     tupleTable@F(F, T1, Tuple, S, Tin),
+X7 collect3(@S, E, Tin, R1, T, K, NI, LT, RT, IR, X, Y1, N, NL, NR1) :- collect4(@F, E, T1, T, R1, NI, K, LT, RT, IR, X, Y, N, NL, NR),
+					     tupleTable(@F, T1, Tuple, S, Tin),
 					     S != F, Y1 := "REMOTE", NR1 := NR + 1.
 
-X17 collect3@S(S, E, Tin, R1, T, K, NI, LT, RT, IR, X, Y1, N, NL1, NR) :- collect4@F(F, E, T1, T, R1, NI, K, LT, RT, IR, X, Y, N, NL, NR),
-					     tupleTable@F(F, T1, Tuple, S, Tin),
+X17 collect3(@S, E, Tin, R1, T, K, NI, LT, RT, IR, X, Y1, N, NL1, NR) :- collect4(@F, E, T1, T, R1, NI, K, LT, RT, IR, X, Y, N, NL, NR),
+					     tupleTable(@F, T1, Tuple, S, Tin),
 					     S == F, Y1 := "LOCAL", NL1 := NL + 1.
 
 
-X8 report@NI(NI, T, E, R, K, IR2, LT2, RT3, N1, NL, NR, IR, LT, RT2, TOT) :- collect3@S(S, E, Tin, R2, T, K, NI, LT, RT, IR, X, Y, N, NL, NR),
-				ruleExecTable@S(S, R1, T1, T2, Sout, LTIN,LTOUT, TYPE),
+X8 report(@NI, T, E, R, K, IR2, LT2, RT3, N1, NL, NR, IR, LT, RT2, TOT) :- collect3(@S, E, Tin, R2, T, K, NI, LT, RT, IR, X, Y, N, NL, NR),
+				ruleExecTable(@S, R1, T1, T2, Sout, LTIN,LTOUT, TYPE),
 				T2 == Tin,
 				((R1 == "-") || (T1 == "-")),
 				R := R1 + R2,
@@ -357,8 +357,8 @@ X8 report@NI(NI, T, E, R, K, IR2, LT2, RT3, N1, NL, NR, IR, LT, RT2, TOT) :- col
 				RT3 := RT2/NR, LT2 := LT / NL, IR2 := IR / N1,
 				TOT := RT2 + LT + IR.
 
-X18 report@NI(NI, T, E, R, K, IR2, LT3, RT2, N1, NL, NR, IR, LT2, RT, TOT) :- collect3@S(S, E, Tin, R2, T, K, NI, LT, RT, IR, X, Y, N, NL, NR),
-				ruleExecTable@S(S, R1, T1, T2, Sout, LTIN,LTOUT, TYPE),
+X18 report(@NI, T, E, R, K, IR2, LT3, RT2, N1, NL, NR, IR, LT2, RT, TOT) :- collect3(@S, E, Tin, R2, T, K, NI, LT, RT, IR, X, Y, N, NL, NR),
+				ruleExecTable(@S, R1, T1, T2, Sout, LTIN,LTOUT, TYPE),
 				T2 == Tin,
 				((R1 == "-") || (T1 == "-")),
 				R := R1 + R2,
@@ -369,76 +369,76 @@ X18 report@NI(NI, T, E, R, K, IR2, LT3, RT2, N1, NL, NR, IR, LT2, RT, TOT) :- co
 				RT2 := RT/NR, LT3 := LT2/NL, IR2 := IR/N1,
 				TOT := RT + LT2 + IR.
 
-X22 reportTable@NI(NI,T,LT,RT,IR) :- report@NI(NI,T,E,R,K,LT,RT,IR).
+X22 reportTable(@NI,T,LT,RT,IR) :- report(@NI,T,E,R,K,LT,RT,IR).
 
 
-X9 endInconsistency@NI(NI, PI, BI, T) :- stabilizeRequest@NI(NI, P, PI),
-					 pred@NI(NI, B, BI),
+X9 endInconsistency(@NI, PI, BI, T) :- stabilizeRequest(@NI, P, PI),
+					 pred(@NI, B, BI),
 					 BI != "-",
 					 BI != PI,
 					 B in (P, N),
-					 node@NI(NI, N),
+					 node(@NI, N),
 					 T := f_now().
 
-X10 beginInconsistency@NI(NI, PI1, PI, T) :- notifyPredecessor@NI(NI, P, PI),
-					    pred@NI(NI, P1, PI1),
+X10 beginInconsistency(@NI, PI1, PI, T) :- notifyPredecessor(@NI, P, PI),
+					    pred(@NI, P1, PI1),
 					    PI1 != "-",
 					    PI1 != PI,
 					    P in (P1, N),
-					    node@NI(NI, N),
+					    node(@NI, N),
 					    T := f_now().
 
 
-X11 inconsistency@NI(NI, PI, BI, T) :- beginInconsistency@NI(NI, PI, BI, T).
+X11 inconsistency(@NI, PI, BI, T) :- beginInconsistency(@NI, PI, BI, T).
 
-X12 inconsistencyDuration@NI(NI, P1, B1, B2, T) :- inconsistency@NI(NI, P1, B1, T1),
-					       endInconsistency@NI(NI, P2, B2, T2),
+X12 inconsistencyDuration(@NI, P1, B1, B2, T) :- inconsistency(@NI, P1, B1, T1),
+					       endInconsistency(@NI, P2, B2, T2),
 					       P1 == P2,
 					       T := T2 - T1.
 			
-X13 delete inconsistency@NI(NI, PI1, BI, T) :- inconsistencyDuration@NI(NI, PI1, B1, B2, T1),
-					      inconsistency@NI(NI, PI2, BI, T),
+X13 delete inconsistency(@NI, PI1, BI, T) :- inconsistencyDuration(@NI, PI1, B1, B2, T1),
+					      inconsistency(@NI, PI2, BI, T),
 					      PI1 == PI2.
 						
 */
 		      
-SB2 stabilizeRequest@SI(SI,N, NI) :- stabilize@NI(NI,E),
-				bestSucc@NI(NI,S,SI),
-				node@NI(NI, N).
+SB2 stabilizeRequest(@SI,N, NI) :- stabilize(@NI,E),
+				bestSucc(@NI,S,SI),
+				node(@NI, N).
 
-SB3 sendPredecessor@PI1(PI1,P,PI) :- stabilizeRequest@NI(NI, P1, PI1),
-				pred@NI(NI,P,PI), 
+SB3 sendPredecessor@PI1(PI1,P,PI) :- stabilizeRequest(@NI, P1, PI1),
+				pred(@NI,P,PI), 
 				PI != "-".
 
-SB4 succ@NI(NI,P,PI) :- node@NI(NI,N),
-		     	sendPredecessor@NI(NI,P,PI),
-			bestSucc@NI(NI,S,SI), 
+SB4 succ(@NI,P,PI) :- node(@NI,N),
+		     	sendPredecessor(@NI,P,PI),
+			bestSucc(@NI,S,SI), 
 			P in (N,S).
 
-SB5 sendSuccessors@SI(SI,NI) :- stabilize@NI(NI,E),
-			  succ@NI(NI,S,SI).
+SB5 sendSuccessors(@SI,NI) :- stabilize(@NI,E),
+			  succ(@NI,S,SI).
 
-SB6 returnSuccessor@PI(PI,S,SI, NI) :- sendSuccessors@NI(NI,PI),
-				   succ@NI(NI,S,SI).
+SB6 returnSuccessor(@PI,S,SI, NI) :- sendSuccessors(@NI,PI),
+				   succ(@NI,S,SI).
 
-SB7 succ@NI(NI,S,SI) :- returnSuccessor@NI(NI,S,SI, BI).
+SB7 succ(@NI,S,SI) :- returnSuccessor(@NI,S,SI, BI).
 
 
 
-SB8 notifyPredecessor@SI(SI,N,NI) :- stabilize@NI(NI,E),
-			      node@NI(NI,N), 
-			      succ@NI(NI,S,SI).
+SB8 notifyPredecessor(@SI,N,NI) :- stabilize(@NI,E),
+			      node(@NI,N), 
+			      succ(@NI,S,SI).
 
-SB9 pred@NI(NI,P,PI) :- node@NI(NI,N),
-			notifyPredecessor@NI(NI,P,PI), 
-			pred@NI(NI,P1,PI1),
+SB9 pred(@NI,P,PI) :- node(@NI,N),
+			notifyPredecessor(@NI,P,PI), 
+			pred(@NI,P1,PI1),
 			((PI1 == "-") || (P in (P1,N))).
 
 
-SB10 returnSuccRcvd@NI(NI, SI, T) :- returnSuccessor@NI(NI, S, SI, BI),
+SB10 returnSuccRcvd(@NI, SI, T) :- returnSuccessor(@NI, S, SI, BI),
 					T := f_now().
 
-SB11 sendPredRcvd@NI(NI, PI, T) :- sendPredecessor@NI(NI, P, PI),
+SB11 sendPredRcvd(@NI, PI, T) :- sendPredecessor(@NI, P, PI),
 					     T := f_now().
 
 
@@ -458,78 +458,78 @@ watch(backPointer).
 watch(numBackPointer).
 watch(faultyNode).
 
-CM0 pingEvent@NI(NI,E) :- periodic@NI(NI,E,5).
+CM0 pingEvent(@NI,E) :- periodic(@NI,E,5).
 
-CM1 pendingPing@NI(NI,PI,E) :- pingEvent@NI(NI,E),
-			pingNode@NI(NI,PI).
+CM1 pendingPing(@NI,PI,E) :- pingEvent(@NI,E),
+			pingNode(@NI,PI).
 
-CM2 pingReq@PI(PI,NI,E) :- pendingPing@NI(NI,PI,E).
+CM2 pingReq(@PI,NI,E) :- pendingPing(@NI,PI,E).
 
-CM3 delete pendingPing@NI(NI,PI,E) :- pingResp@NI(NI,PI,E).
+CM3 delete pendingPing(@NI,PI,E) :- pingResp(@NI,PI,E).
 
-CM4 pingResp@RI(RI,NI,E) :- pingReq@NI(NI,RI,E).
+CM4 pingResp(@RI,NI,E) :- pingReq(@NI,RI,E).
 
-CM5 pingNode@NI(NI,SI) :- succ@NI(NI,S,SI), 
+CM5 pingNode(@NI,SI) :- succ(@NI,S,SI), 
 		       SI != NI.
 
-CM6 pingNode@NI(NI,PI) :- pred@NI(NI,P,PI), 
+CM6 pingNode(@NI,PI) :- pred(@NI,P,PI), 
 		       PI != NI, 
 		       PI != "-".
 
-CM7 succ@NI(NI,S,SI) :- succ@NI(NI,S,SI),
-		     pingResp@NI(NI,SI,E).
+CM7 succ(@NI,S,SI) :- succ(@NI,S,SI),
+		     pingResp(@NI,SI,E).
 
-CM8 pred@NI(NI,P,PI) :- pred@NI(NI,P,PI),
-		     pingResp@NI(NI,PI,E).
-
-
-CM9 pred@NI(NI,"-", "-") :- pingEvent@NI(NI,E1), 
-			pendingPing@NI(NI,PI,E), 
-			pred@NI(NI,P,PI).
+CM8 pred(@NI,P,PI) :- pred(@NI,P,PI),
+		     pingResp(@NI,PI,E).
 
 
-CM10 faultyuniquefinger@NI(NI, PI) :- pingEvent@NI(NI, E1),
-				      pendingPing@NI(NI, PI, E).
+CM9 pred(@NI,"-", "-") :- pingEvent(@NI,E1), 
+			pendingPing(@NI,PI,E), 
+			pred(@NI,P,PI).
 
 
-CM11 delete bestSucc@NI(NI, P, PI) :- faultyuniquefinger@NI(NI, PI),
-				      bestSucc@NI(NI, P, PI).
+CM10 faultyuniquefinger(@NI, PI) :- pingEvent(@NI, E1),
+				      pendingPing(@NI, PI, E).
+
+
+CM11 delete bestSucc(@NI, P, PI) :- faultyuniquefinger(@NI, PI),
+				      bestSucc(@NI, P, PI).
 
 				      
-CM12 delete succ@NI(NI, P, PI) :- faultyuniquefinger@NI(NI, PI),
-				  succ@NI(NI, P, PI).
+CM12 delete succ(@NI, P, PI) :- faultyuniquefinger(@NI, PI),
+				  succ(@NI, P, PI).
 
 
 
-CM13 delete uniqueFinger@NI(NI, PI, P) :- faultyuniquefinger@NI(NI, PI),
-					  uniqueFinger@NI(NI, PI, P).
+CM13 delete uniqueFinger(@NI, PI, P) :- faultyuniquefinger(@NI, PI),
+					  uniqueFinger(@NI, PI, P).
 
 	
-CM14 delete finger@NI(NI, I, P, PI) :- faultyuniquefinger@NI(NI, PI),
-				       finger@NI(NI, I, P, PI).
+CM14 delete finger(@NI, I, P, PI) :- faultyuniquefinger(@NI, PI),
+				       finger(@NI, I, P, PI).
 
 
-CM16 faultyNode@NI(NI, PI, T) :- faultyuniquefinger@NI(NI, PI),
+CM16 faultyNode(@NI, PI, T) :- faultyuniquefinger(@NI, PI),
 				 T := f_now().
 
 
-CM17 pingFingerEvent@NI(NI) :- periodic@NI(NI, E, 30).
+CM17 pingFingerEvent(@NI) :- periodic(@NI, E, 30).
 
-CM18 pingFinger@SI(SI, NI) :- pingFingerEvent@NI(NI),
-			    uniqueFinger@NI(NI, SI, S),
+CM18 pingFinger(@SI, NI) :- pingFingerEvent(@NI),
+			    uniqueFinger(@NI, SI, S),
 			    SI != NI.
 
-CM19 backPointer@SI(SI, NI) :- pingFinger@SI(SI, NI),
+CM19 backPointer(@SI, NI) :- pingFinger(@SI, NI),
 			       NI != SI.
 				
-CM20 countBackPointer@NI(NI, count<*>) :- backPointer@NI(NI, SI).
+CM20 countBackPointer(@NI, count<*>) :- backPointer(@NI, SI).
 
 /*
-CM21 backPointer@NI(NI, SI) :- pred@NI(NI, S,SI),
+CM21 backPointer(@NI, SI) :- pred(@NI, S,SI),
 			       SI != NI,
 			       SI != "-".
 */
-CM22 numBackPointer@NI(NI, C) :- countBackPointer@NI(NI, C).
+CM22 numBackPointer(@NI, C) :- countBackPointer(@NI, C).
 
 /** Consistency monitoring */
 
@@ -559,76 +559,76 @@ watch(deleteEntry).
 watch(countMaximum).
 watch(findMax).
 
-CS1 periodicEvent@NI(NI) :- periodic@NI(NI, E, 40).
+CS1 periodicEvent(@NI) :- periodic(@NI, E, 40).
 
 
-CS2 consistencyEvent@NI(NI, K) :- periodicEvent@NI(NI),
+CS2 consistencyEvent(@NI, K) :- periodicEvent(@NI),
                                         K:=f_randID().
 
-CS3 consistencyLookup@NI(NI, K, BI, E, T) :- consistencyEvent@NI(NI, K),
-                                uniqueFinger@NI(NI, BI, B),
+CS3 consistencyLookup(@NI, K, BI, E, T) :- consistencyEvent(@NI, K),
+                                uniqueFinger(@NI, BI, B),
                                 E:=f_rand(),
 				T := f_now().
 
-CS4 consistencyLookupTable@NI(NI, E, K, BI, T) :- consistencyLookup@NI(NI, K, BI, E, T),
-                                           node@NI(NI, N).
+CS4 consistencyLookupTable(@NI, E, K, BI, T) :- consistencyLookup(@NI, K, BI, E, T),
+                                           node(@NI, N).
 
-CS5 lookup@BI(BI, K, NI, E) :- consistencyLookup@NI(NI, K, BI, E, T),
-                                node@NI(NI, N).
+CS5 lookup(@BI, K, NI, E) :- consistencyLookup(@NI, K, BI, E, T),
+                                node(@NI, N).
 
 
-CS6 consistencyLookupRespTable@NI(NI, E, K, SI, BI, T) :- lookupResults@NI(NI, K, S, SI, E1,LH, E2),
-                                            consistencyLookupTable@NI(NI, E, K, BI, T),
-                                            node@NI(NI, N),
+CS6 consistencyLookupRespTable(@NI, E, K, SI, BI, T) :- lookupResults(@NI, K, S, SI, E1,LH, E2),
+                                            consistencyLookupTable(@NI, E, K, BI, T),
+                                            node(@NI, N),
                                             E1==E.
 
-CS7 aggregateKSI@NI(NI, E, KSI, K, SI, T) :- consistencyLookupRespTable@NI(NI, E, K, SI, BI, T),
+CS7 aggregateKSI(@NI, E, KSI, K, SI, T) :- consistencyLookupRespTable(@NI, E, K, SI, BI, T),
                                    KSI:= K+SI.
 
-CS8 csResponseCount(KSI,count<*>) :- aggregateKSI@NI(NI, E, KSI, K, SI, T).
+CS8 csResponseCount(KSI,count<*>) :- aggregateKSI(@NI, E, KSI, K, SI, T).
 
 
-CS9 aggregateCountKSI@NI(NI, KSI, K, E, SI, C, T) :- csResponseCount@NI(NI, KSI, C),
-                                        aggregateKSI@NI(NI, E, KSI, K, SI, T),
-                                        node@NI(NI, N).
+CS9 aggregateCountKSI(@NI, KSI, K, E, SI, C, T) :- csResponseCount(@NI, KSI, C),
+                                        aggregateKSI(@NI, E, KSI, K, SI, T),
+                                        node(@NI, N).
 
-CS10 countMaximum@NI(NI, KSI, max<C>) :- aggregateCountKSI@NI(NI, KSI, K, E, SI, C, T).
-
-
-CS26 aggregateCountMaxKSI@NI(NI, KSI, K, E, SI, X) :- aggregateCountKSI@NI(NI, KSI, K, E, SI, C, T),
-							countMaximum@NI(NI, KSI, X).
-
-CS11 checkConsistencyEvent@NI(NI) :- periodic@NI(NI, E, 20).
+CS10 countMaximum(@NI, KSI, max<C>) :- aggregateCountKSI(@NI, KSI, K, E, SI, C, T).
 
 
-CS12 countLookupSend(K, count<*>) :- consistencyLookupTable@NI(NI, E, K, BI, T).
+CS26 aggregateCountMaxKSI(@NI, KSI, K, E, SI, X) :- aggregateCountKSI(@NI, KSI, K, E, SI, C, T),
+							countMaximum(@NI, KSI, X).
+
+CS11 checkConsistencyEvent(@NI) :- periodic(@NI, E, 20).
 
 
-CS13 lookupSendCountTable@NI(NI, K, C) :- countLookupSend@NI(NI, K, C).
+CS12 countLookupSend(K, count<*>) :- consistencyLookupTable(@NI, E, K, BI, T).
+
+
+CS13 lookupSendCountTable(@NI, K, C) :- countLookupSend(@NI, K, C).
 
                                      
-CS14 countLookupRcv(K, count<*>) :- consistencyLookupRespTable@NI(NI, E, K, SI, BI, T).
+CS14 countLookupRcv(K, count<*>) :- consistencyLookupRespTable(@NI, E, K, SI, BI, T).
 
 
-CS15 lookupRcvCountTable@NI(NI, K, C) :- countLookupRcv@NI(NI, K, C).
+CS15 lookupRcvCountTable(@NI, K, C) :- countLookupRcv(@NI, K, C).
 
 				
 
 
-CS16 alarmEvent@NI(NI, K, SI, C, E, TS, TR) :- lookupSendCountTable@NI(NI, K, TS),
-                                 lookupRcvCountTable@NI(NI, K, TR),
-				 findMax@NI(NI, KSI, C1),
-                                 aggregateCountKSI@NI(NI, KSI, K, E, SI, C, T),
+CS16 alarmEvent(@NI, K, SI, C, E, TS, TR) :- lookupSendCountTable(@NI, K, TS),
+                                 lookupRcvCountTable(@NI, K, TR),
+				 findMax(@NI, KSI, C1),
+                                 aggregateCountKSI(@NI, KSI, K, E, SI, C, T),
 				 C1 == C,
                                  C < TS/2,
 				 T1 := f_now(),
 				 T2 := T + 10,
 				 T1 > T2.
 
-CS30 alarm2@NI(NI, K, SI, C, E, TS) :- lookupSendCountTable@NI(NI, K, TS),
-                                 lookupRcvCountTable@NI(NI, K, TR),
-				 findMax@NI(NI, KSI, C1),
-                                 aggregateCountKSI@NI(NI, KSI, K, E, SI, C, T),
+CS30 alarm2(@NI, K, SI, C, E, TS) :- lookupSendCountTable(@NI, K, TS),
+                                 lookupRcvCountTable(@NI, K, TR),
+				 findMax(@NI, KSI, C1),
+                                 aggregateCountKSI(@NI, KSI, K, E, SI, C, T),
 				 C1 == C,
 				 TS == TR,
                                  C < TS/2,
@@ -636,36 +636,36 @@ CS30 alarm2@NI(NI, K, SI, C, E, TS) :- lookupSendCountTable@NI(NI, K, TS),
 				 T2 := T + 10,
 				 T1 > T2.
 
-CS17 culpritLookup@NI(NI,K,E,SI,BI,C,TS) :- alarmEvent@NI(NI, K, SI1, C, E1, TS, TR),
-                                       consistencyLookupRespTable@NI(NI, E, K1, SI, BI, T),
+CS17 culpritLookup(@NI,K,E,SI,BI,C,TS) :- alarmEvent(@NI, K, SI1, C, E1, TS, TR),
+                                       consistencyLookupRespTable(@NI, E, K1, SI, BI, T),
                                        SI1!=SI,
 				       K==K1.
 
-CS26 findMax@NI(NI, KSI, max<C>) :- aggregateCountKSI@NI(NI, KSI, K, E, SI, C, T),
-				    checkConsistencyEvent@NI(NI).
+CS26 findMax(@NI, KSI, max<C>) :- aggregateCountKSI(@NI, KSI, K, E, SI, C, T),
+				    checkConsistencyEvent(@NI).
 
 */
 
 /*
-CS18 deleteEntry@NI(NI, K, E, BI, T1, T) :- findMax@NI(NI, KSI, C),
-			      consistencyLookupTable@NI(NI, E, K, BI, T),
+CS18 deleteEntry(@NI, K, E, BI, T1, T) :- findMax(@NI, KSI, C),
+			      consistencyLookupTable(@NI, E, K, BI, T),
 			      T1 := f_now(),
 			      T2 := T + 30,
 			      T1 > T2. 
 
 
 
-CS19 delete lookupSendCountTable@NI(NI, K, TS) :- deleteEntry@NI(NI, K, E1, BI, T1, T).
+CS19 delete lookupSendCountTable(@NI, K, TS) :- deleteEntry(@NI, K, E1, BI, T1, T).
 
-CS20 delete lookupRcvCountTable@NI(NI, K, TR) :- deleteEntry@NI(NI, K, E1, BI, T1, T).
+CS20 delete lookupRcvCountTable(@NI, K, TR) :- deleteEntry(@NI, K, E1, BI, T1, T).
 
-CS22 delete consistencyLookupRespTable@NI(NI, E, K, SI, BI, T2) :- deleteEntry@NI(NI, K, E1, BI1, T1, T).
+CS22 delete consistencyLookupRespTable(@NI, E, K, SI, BI, T2) :- deleteEntry(@NI, K, E1, BI1, T1, T).
 
-CS23 delete consistencyLookupTable@NI(NI, E, K, BI, T) :- deleteEntry@NI(NI, K, E1, BI1, T1, T).
+CS23 delete consistencyLookupTable(@NI, E, K, BI, T) :- deleteEntry(@NI, K, E1, BI1, T1, T).
 						  
-CS24 delete aggregateCountKSI@NI(NI, KSI, K, E, SI, C) :- deleteEntry@NI(NI, K, E1, BI, T1, T).
+CS24 delete aggregateCountKSI(@NI, KSI, K, E, SI, C) :- deleteEntry(@NI, K, E1, BI, T1, T).
 
-CS25 delete aggregateCountMaxKSI@NI(NI, KSI, K, E, SI, C) :- deleteEntry@NI(NI, K, E1, BI, T1, T).
+CS25 delete aggregateCountMaxKSI(@NI, KSI, K, E, SI, C) :- deleteEntry(@NI, K, E1, BI, T1, T).
 */
 
 
@@ -676,38 +676,38 @@ trace(lookupResults).
 /*** tracking flip-flopping of dead entries ****/
 watch(flipFlop).
 
-FF1 flipFlop@NI(NI, PI) :- faultyNode@NI(NI, PI, T1),
-                             sendPredRcvd@NI(NI, PI, T2),
+FF1 flipFlop(@NI, PI) :- faultyNode(@NI, PI, T1),
+                             sendPredRcvd(@NI, PI, T2),
                              T2 > T1.
 
-FF2 flipFlop@NI(NI, PI) :- faultyNode@NI(NI, PI, T1),
-                             returnSuccRcvd@NI(NI, PI, T2),
+FF2 flipFlop(@NI, PI) :- faultyNode(@NI, PI, T1),
+                             returnSuccRcvd(@NI, PI, T2),
                              T2 > T1.
 /*
-P1 backTrace@SI(SI, Ts, NI) :- 
-            ruleExec@NI(NI, R, Tin, Tout, S, T),
+P1 backTrace(@SI, Ts, NI) :- 
+            ruleExec(@NI, R, Tin, Tout, S, T),
             (R == ``D1'' || R == ``D2''),
-            tuple@NI(NI, Tin, Tup, S, Ts).
+            tuple(@NI, Tin, Tup, S, Ts).
 
 
-P2 checkFaulty@NI(NI, Tup, S1, T) :- 
-            backTrace@NI(NI, T, S1),
-            ruleExec@NI(NI, R, Tin, Tout, S2, T),
+P2 checkFaulty(@NI, Tup, S1, T) :- 
+            backTrace(@NI, T, S1),
+            ruleExec(@NI, R, Tin, Tout, S2, T),
             S1 == S2, T == Tout,
             R == ``SB2'',
-            tuple@NI(NI, Tin, Tup, S, Ts),
+            tuple(@NI, Tin, Tup, S, Ts),
             Type := f_type(Tup),
             Type == ``pred''.
             
-P2 satisfiedPred1@S(S, P, NI, T) :- 
-            checkFaulty@NI(NI, Tup, S, T),
+P2 satisfiedPred1(@S, P, NI, T) :- 
+            checkFaulty(@NI, Tup, S, T),
             P := f_getField(Tup, 2),
-            not (faultyNode@NI(NI, P, T1) && T1 < T).
+            not (faultyNode(@NI, P, T1) && T1 < T).
 
-P3 satisfiedPred2@S(S, P, NI) :- 
-            checkFaulty@NI(NI, Tup, S, T),
+P3 satisfiedPred2(@S, P, NI) :- 
+            checkFaulty(@NI, Tup, S, T),
             P := f_getField(Tup, 2),
-            faultyNode@NI(NI, P, T1),
+            faultyNode(@NI, P, T1),
             T < T1.
 */
 
@@ -729,110 +729,110 @@ watch(countEntriesFinger).
 watch(countEntriesSucc).
 
 /*
-SR1 takeSnap@NI(NI, E) :- periodic@NI(NI, E, 30).
+SR1 takeSnap(@NI, E) :- periodic(@NI, E, 30).
 
 
-SR2 handleSnap@NI(NI, E1) :- takeSnap@NI(NI, E),
-			     snapShotStart@NI(NI, I),
+SR2 handleSnap(@NI, E1) :- takeSnap(@NI, E),
+			     snapShotStart(@NI, I),
 			     E1 := I.
 
-SR11 snapShotStart@NI(NI, I) :- takeSnap@NI(NI, E),
-				snapShotStart@NI(NI, I1),
+SR11 snapShotStart(@NI, I) :- takeSnap(@NI, E),
+				snapShotStart(@NI, I1),
 				I := I1 + 1.
 
-SR3 stateSnap@NI(NI, E, T) :- handleSnap@NI(NI, E),
+SR3 stateSnap(@NI, E, T) :- handleSnap(@NI, E),
 		       	      T := "Snapping".
 
-SR14 startTakingSnap@NI(NI, E, T) :- handleSnap@NI(NI, E),
+SR14 startTakingSnap(@NI, E, T) :- handleSnap(@NI, E),
 				     T := "Snapping".
 
-SR4 markerSend@SI(SI, NI, E) :- handleSnap@NI(NI, E),
-			     uniqueFinger@NI(NI, SI, S),
+SR4 markerSend(@SI, NI, E) :- handleSnap(@NI, E),
+			     uniqueFinger(@NI, SI, S),
 			     SI != NI.
 
-SR16 markerSend@SI(SI, NI, E) :- handleSnap@NI(NI, E),
-			      succ@NI(NI, S, SI),
+SR16 markerSend(@SI, NI, E) :- handleSnap(@NI, E),
+			      succ(@NI, S, SI),
 			      SI != NI.
 
-SR5 handleSnap@SI(SI, E1) :- countState@SI(SI, NI,E1, C),
+SR5 handleSnap(@SI, E1) :- countState(@SI, NI,E1, C),
 			     C == 0.
 
-SR7 channelStateDone@SI(SI, E1, X, E) :- markerSend@SI(SI, NI, E),
-					 stateSnap@SI(SI, E, T),
+SR7 channelStateDone(@SI, E1, X, E) :- markerSend(@SI, NI, E),
+					 stateSnap(@SI, E, T),
 					T == "Snapping",
-				 	backPointer@SI(SI, X),
+				 	backPointer(@SI, X),
 				 	X == NI,
 				 	E1 := X + E.
 
-SR18 channelStateStart@SI(SI, E1, X, E) :- countState@SI(SI,NI,E,C), C == 0,
-					   backPointer@SI(SI,X),
+SR18 channelStateStart(@SI, E1, X, E) :- countState(@SI,NI,E,C), C == 0,
+					   backPointer(@SI,X),
 					   X != NI,	
 					   E1 := X + E.
 
-SR30 channelStateDone@SI(SI,E1,X,E) :- countState@SI(SI,NI,E,C), C==0,
-					backPointer@SI(SI,X), X==NI, E1 := X+E.
+SR30 channelStateDone(@SI,E1,X,E) :- countState(@SI,NI,E,C), C==0,
+					backPointer(@SI,X), X==NI, E1 := X+E.
 
-SR31 recentSnapId@NI(NI,E) :- handleSnap@NI(NI,E).
+SR31 recentSnapId(@NI,E) :- handleSnap(@NI,E).
 
-SR8 channelStateDoneCount@NI(NI, E, count<*>) :- channelStateDone@NI(NI, E1, X, E).
+SR8 channelStateDoneCount(@NI, E, count<*>) :- channelStateDone(@NI, E1, X, E).
 
-SR9 stateSnap@NI(NI, E, T1) :- stateSnap@NI(NI, E, T), T == "Snapping",
-			    channelStateDoneCount@NI(NI, E, C1),
-			    numBackPointer@NI(NI, C2),
+SR9 stateSnap(@NI, E, T1) :- stateSnap(@NI, E, T), T == "Snapping",
+			    channelStateDoneCount(@NI, E, C1),
+			    numBackPointer(@NI, C2),
 			    C1 == C2,
 			    T1 := "Done".
 
-SR10 countState@SI(SI, NI,E2, count<*>) :- stateSnap@SI(SI, E1, T),
-				markerSend@SI(SI, NI, E2),
+SR10 countState(@SI, NI,E2, count<*>) :- stateSnap(@SI, E1, T),
+				markerSend(@SI, NI, E2),
 				E1 == E2.
 
 
-SR12 stateDumpFinger@NI(NI, E1, E, SI, S) :- startTakingSnap@NI(NI, E, T),
-					  uniqueFinger@NI(NI, SI, S),
+SR12 stateDumpFinger(@NI, E1, E, SI, S) :- startTakingSnap(@NI, E, T),
+					  uniqueFinger(@NI, SI, S),
 					  E1 := E + SI, 
 					  T == "Snapping".
 
 					  
-SR13 stateDumpSucc@NI(NI, E1, E, SI, S) :- startTakingSnap@NI(NI, E, T),
-				      succ@NI(NI, S, SI),
+SR13 stateDumpSucc(@NI, E1, E, SI, S) :- startTakingSnap(@NI, E, T),
+				      succ(@NI, S, SI),
 				      E1 := E + SI,
 				      T == "Snapping".
 
-SR15 countEntriesSucc@NI(NI, E1, count<*>) :- stateDumpSucc@NI(NI, E, E1, SI, S).
+SR15 countEntriesSucc(@NI, E1, count<*>) :- stateDumpSucc(@NI, E, E1, SI, S).
 
-SR16 countEntriesFinger@NI(NI, E1, count<*>) :- stateDumpFinger@NI(NI, E, E1, SI, S).
+SR16 countEntriesFinger(@NI, E1, count<*>) :- stateDumpFinger(@NI, E, E1, SI, S).
 
 
-SR17 channelSendSuccDump@NI(NI, E1, E, LI, S, SI, C) :- returnSuccessor@NI(NI,S,SI, BI),
-					channelStateStart@NI(NI, E2, LI, E),
-					countMsgSnap@NI(NI, C),
+SR17 channelSendSuccDump(@NI, E1, E, LI, S, SI, C) :- returnSuccessor(@NI,S,SI, BI),
+					channelStateStart(@NI, E2, LI, E),
+					countMsgSnap(@NI, C),
 					LI==BI,
 					E1 := E + SI.
 
-SR19 countMsgSnap@NI(NI,C) :- returnSuccessor@NI(NI,S,SI,BI),
-		  	      channelStateStart@NI(NI,E2,LI,E),
+SR19 countMsgSnap(@NI,C) :- returnSuccessor(@NI,S,SI,BI),
+		  	      channelStateStart(@NI,E2,LI,E),
 			      BI == LI,
-			      countMsgSnap@NI(NI,C1),
+			      countMsgSnap(@NI,C1),
 			      C := C1 + 1.
 
 				 
-SR22 delete channelStateStart@NI(NI, E1, LI, E) :- markerSend@NI(NI, LI, E),
-						   channelStateStart@NI(NI,E1,LI,E).
+SR22 delete channelStateStart(@NI, E1, LI, E) :- markerSend(@NI, LI, E),
+						   channelStateStart(@NI,E1,LI,E).
 
 						  
-SR20 channelLookupResDump@NI(NI,E1,E,LI,S,SI,C) :- lookupResults@NI(NI,K,S,SI,E2,LI,E3),
-						   recentSnapId@NI(NI,E4),
+SR20 channelLookupResDump(@NI,E1,E,LI,S,SI,C) :- lookupResults(@NI,K,S,SI,E2,LI,E3),
+						   recentSnapId(@NI,E4),
 						   E3 < E4,
 						   E1 := E3 + LI.
 
-SR21 countMsgSnap@NI(NI,E,C) :- countMsgSnap@NI(NI,C1),
+SR21 countMsgSnap(@NI,E,C) :- countMsgSnap(@NI,C1),
 				C := C1 + 1,
-				lookupResults@NI(NI,K,S,SI,E2,LI,E3),
-				recentSnapId@NI(NI,E4),
+				lookupResults(@NI,K,S,SI,E2,LI,E3),
+				recentSnapId(@NI,E4),
 				E3 < E4.
 
-SR22 handleSnap@NI(NI, E3) :- lookupResults@NI(NI,K,S,SI,E2,LI,E3),
-			    recentSnapId@NI(NI,E4),
+SR22 handleSnap(@NI, E3) :- lookupResults(@NI,K,S,SI,E2,LI,E3),
+			    recentSnapId(@NI,E4),
 			    E3>E4.
 
 
@@ -857,39 +857,39 @@ watch(gotResp).
 watch(calResp).
 watch(pendingDegCollect).
 
-DH0 periodicStart@NI(NI) :- periodic@NI(NI,E, 150).
+DH0 periodicStart(@NI) :- periodic(@NI,E, 150).
 
 
-DH2 collectDeg@SI(SI,C2,NI) :- periodicStart@NI(NI), snapShotStart@NI(NI,C), C > 3,
-				bestSucc@NI(NI,S,SI), NI != SI, C2 := C - 2.
+DH2 collectDeg(@SI,C2,NI) :- periodicStart(@NI), snapShotStart(@NI,C), C > 3,
+				bestSucc(@NI,S,SI), NI != SI, C2 := C - 2.
 
-DH18 countSelf@NI(NI,C2) :- periodicStart@NI(NI), snapShotStart@NI(NI,C), C > 3,
+DH18 countSelf(@NI,C2) :- periodicStart(@NI), snapShotStart(@NI,C), C > 3,
 				C2 := C - 2.
 
-DH19 countSelfObt@NI(NI,C, count<*>) :- countSelf@NI(NI,C),
-				 stateDumpFinger@NI(NI,E1,E,SI,S), C==E.
+DH19 countSelfObt(@NI,C, count<*>) :- countSelf(@NI,C),
+				 stateDumpFinger(@NI,E1,E,SI,S), C==E.
 
-DH20 gotResp@NI(NI,E,NI,C,R) :- countSelfObt@NI(NI,C,R),
+DH20 gotResp(@NI,E,NI,C,R) :- countSelfObt(@NI,C,R),
 				E := NI+C.
 
-DH3 pendingDegCollect@PI(PI,C,NI) :- collectDeg@PI(PI,C,NI).
+DH3 pendingDegCollect(@PI,C,NI) :- collectDeg(@PI,C,NI).
 
-DH4 calResp@PI(PI,C,count<*>) :- collectDeg@PI(PI,C,NI), toResp@PI(PI,C,NI).
-
-
-DH5 toResp@PI(PI,C,NI) :- calResp@PI(PI,C, X), X==0, pendingDegCollect@PI(PI,C,NI).
+DH4 calResp(@PI,C,count<*>) :- collectDeg(@PI,C,NI), toResp(@PI,C,NI).
 
 
-DH6 collectDeg@SI(SI,C,NI) :- calResp@PI(PI,C,X), 
-				pendingDegCollect@PI(PI,C,NI),
-				bestSucc@PI(PI,S,SI),X==0, PI != SI, SI != NI.
+DH5 toResp(@PI,C,NI) :- calResp(@PI,C, X), X==0, pendingDegCollect(@PI,C,NI).
+
+
+DH6 collectDeg(@SI,C,NI) :- calResp(@PI,C,X), 
+				pendingDegCollect(@PI,C,NI),
+				bestSucc(@PI,S,SI),X==0, PI != SI, SI != NI.
 
 
 
-DH8 calculateDeg@PI(PI,C, count<*>) :- calResp@PI(PI,C,X), X==0,
-				stateDumpFinger@PI(PI,E1,E,SI,S), C==E.
+DH8 calculateDeg(@PI,C, count<*>) :- calResp(@PI,C,X), X==0,
+				stateDumpFinger(@PI,E1,E,SI,S), C==E.
 
-DH9 gotResp@NI(NI,E,PI,C,R) :- calculateDeg@PI(PI,C,R), toResp@PI(PI,C,NI),
+DH9 gotResp(@NI,E,PI,C,R) :- calculateDeg(@PI,C,R), toResp(@PI,C,NI),
 				  E := PI+C.
 
 
@@ -902,29 +902,29 @@ watch(countHowMany).
 watch(countAvgStat).
 watch(countTotal).
 
-DH10 calculateMax@NI(NI,C, max<R>) :- gotResp@NI(NI,E,PI,C,R), periodicStart@NI(NI).
+DH10 calculateMax(@NI,C, max<R>) :- gotResp(@NI,E,PI,C,R), periodicStart(@NI).
 
-DH11 maxResp@NI(NI,C,R) :- calculateMax@NI(NI,C,R).
+DH11 maxResp(@NI,C,R) :- calculateMax(@NI,C,R).
 
-DH12 calculateAvg@NI(NI,C) :- periodicStart@NI(NI), gotResp@NI(NI,E,PI,C,R),
+DH12 calculateAvg(@NI,C) :- periodicStart(@NI), gotResp(@NI,E,PI,C,R),
 			      NI == PI.
 	
-DH17 checked@NI(NI,C) :- countAvgStat@NI(NI,C,X), X==0.
+DH17 checked(@NI,C) :- countAvgStat(@NI,C,X), X==0.
 
-DH38 countTotal@NI(NI,C, sum<R>) :- checked@NI(NI,C), gotResp@NI(NI,E,PI,C,R).
+DH38 countTotal(@NI,C, sum<R>) :- checked(@NI,C), gotResp(@NI,E,PI,C,R).
 
-DH36 countAvgStat@NI(NI,C,count<*>) :- calculateAvg@NI(NI,C), avgStat@NI(NI,C,R,K).
+DH36 countAvgStat(@NI,C,count<*>) :- calculateAvg(@NI,C), avgStat(@NI,C,R,K).
 
 */
 
 /*
-DH7 collectDeg@SI(SI,C,NI) :- calResp@PI(PI,C,X), 
-			pendingDegCollect@PI(PI,C,NI),
-			uniqueFinger@PI(PI,SI,S), X==0, PI != SI, SI != NI.
+DH7 collectDeg(@SI,C,NI) :- calResp(@PI,C,X), 
+			pendingDegCollect(@PI,C,NI),
+			uniqueFinger(@PI,SI,S), X==0, PI != SI, SI != NI.
 */
 /*
-DH1 collectDeg@PI(PI,C2,NI) :- periodicStart@NI(NI), snapShotStart@NI(NI,C), C > 3,
-			 	uniqueFinger@NI(NI, PI,P), NI != PI, C2 := C - 2.
+DH1 collectDeg(@PI,C2,NI) :- periodicStart(@NI), snapShotStart(@NI,C), C > 3,
+			 	uniqueFinger(@NI, PI,P), NI != PI, C2 := C - 2.
 */
 
 
@@ -935,33 +935,33 @@ watch(cmpDensities).
 watch(densityAlarm).
 watch(densityLog).
 /*
-D1 densityEvent@NAddr(NAddr) :- periodic@NAddr(NAddr,
+D1 densityEvent(@NAddr) :- periodic(@NAddr,
    E, 30).
  
   
-D2 densityExtent@NAddr(NAddr, max<D>) :-
-   densityEvent@NAddr(NAddr), node@NAddr(NAddr,NID), succ@NAddr(NAddr, SID, SAddr), 
-   pred@NAddr(NAddr, B, BI), BI != "-",
+D2 densityExtent(@NAddr, max<D>) :-
+   densityEvent(@NAddr), node(@NAddr,NID), succ(@NAddr, SID, SAddr), 
+   pred(@NAddr, B, BI), BI != "-",
    D := SID - B - 1.
 
 
-D3 density@NAddr(NAddr, T, Density) :-
-   densityExtent@NAddr(NAddr, D),
-   succCount@NAddr(NAddr, C), C > 0, Density := D/(C+2), T := f_now().
+D3 density(@NAddr, T, Density) :-
+   densityExtent(@NAddr, D),
+   succCount(@NAddr, C), C > 0, Density := D/(C+2), T := f_now().
 
    
-ND1 cmpDensities@NAddr(NAddr, NewTime, NewDensity,
-   Density) :- density@NAddr(NAddr, NewTime,
-   NewDensity), densityLog@NAddr(NAddr,Time,
+ND1 cmpDensities(@NAddr, NewTime, NewDensity,
+   Density) :- density(@NAddr, NewTime,
+   NewDensity), densityLog(@NAddr,Time,
    Density, C),  C > 0.
 
-ND2 densityAlarm@NAddr(NAddr, Time, Density,
-   OldDensity) :- cmpDensities@NAddr(NAddr, Time,
+ND2 densityAlarm(@NAddr, Time, Density,
+   OldDensity) :- cmpDensities(@NAddr, Time,
    Density, OldDensity), (Density < OldDensity / 2).
 
 
-ND3 densityLog@NAddr(NAddr, T, Density, C1) :-
-    density@NAddr(NAddr, T, Density), C1 := 1.
+ND3 densityLog(@NAddr, T, Density, C1) :-
+    density(@NAddr, T, Density), C1 := 1.
 
 */
 
@@ -973,37 +973,37 @@ watch(reintroCheck).
 watch(reintegrated).
 watch(partitioned).  
 /*
-PU2 probeEv@NAddr(NAddr) :- periodic@NAddr(NAddr, E, 30).
+PU2 probeEv(@NAddr) :- periodic(@NAddr, E, 30).
 
 
-PU3 identify@NbrAddr(NbrAddr, NAddr) :-
-   probeEv@NAddr(NAddr), faultyNode@NAddr(NAddr,
+PU3 identify(@NbrAddr, NAddr) :-
+   probeEv(@NAddr), faultyNode(@NAddr,
    NbrAddr, T).
 
-PU4 identified@NbrAddr(NbrAddr, NAddr, NID) :-
-   identify@NAddr(NAddr, NbrAddr), node@NAddr(NAddr,
+PU4 identified(@NbrAddr, NAddr, NID) :-
+   identify(@NAddr, NbrAddr), node(@NAddr,
    NID).
 
-PU5 reintroCheck@NAddr(NAddr, E, NbrAddr, NbrID)
-   :- identified@NAddr(NAddr, NbrAddr, NbrID),
-   faultyNode@NAddr(NAddr,NbrAddr, T2), E := f_rand().
+PU5 reintroCheck(@NAddr, E, NbrAddr, NbrID)
+   :- identified(@NAddr, NbrAddr, NbrID),
+   faultyNode(@NAddr,NbrAddr, T2), E := f_rand().
 
 
-PU6 lookup@NAddr(NAddr, NbrID, NAddr, E) :-
-   reintroCheck@NAddr(NAddr, E, NbrAddr, NbrID).
+PU6 lookup(@NAddr, NbrID, NAddr, E) :-
+   reintroCheck(@NAddr, E, NbrAddr, NbrID).
 
 
-PU7 reintegrated@NAddr(NAddr, E, NbrAddr, NbrID) :-
-    reintroCheck@NAddr(NAddr, E, NbrAddr, NbrID),
-    lookupResults@NAddr(NAddr, K, NbrID, NbrAddr, E, H, E2),
+PU7 reintegrated(@NAddr, E, NbrAddr, NbrID) :-
+    reintroCheck(@NAddr, E, NbrAddr, NbrID),
+    lookupResults(@NAddr, K, NbrID, NbrAddr, E, H, E2),
     K == NbrID.
 
 
 
 
-PU8 partitioned@NAddr(NAddr, NbrAddr, NbrID) :-
-   lookupResults@NAddr(NAddr, K, SuccID, SuccAddr, E, H, E2),
-   reintroCheck@NAddr(NAddr, E, NbrAddr, NbrID),
+PU8 partitioned(@NAddr, NbrAddr, NbrID) :-
+   lookupResults(@NAddr, K, SuccID, SuccAddr, E, H, E2),
+   reintroCheck(@NAddr, E, NbrAddr, NbrID),
    NbrAddr != SuccAddr.
 
 */
@@ -1016,35 +1016,35 @@ watch(countFF).
 watch(checkKFlipFlop).
 watch(kFlipFlop).
 
-R0 countFF@NI(NI,PI,count<*>) :- flipFlop@NI(NI,P,PI,T).
+R0 countFF(@NI,PI,count<*>) :- flipFlop(@NI,P,PI,T).
 
-R1 kFlipFlop@NI(NI,PI) :- countFF@NI(NI,PI,K), K >= 5.
+R1 kFlipFlop(@NI,PI) :- countFF(@NI,PI,K), K >= 5.
 */
 /** collaborative oscillation detection **/
 /*
-R4 checkStat@NI(NI) :- periodic@NI(NI,E, 30).
+R4 checkStat(@NI) :- periodic(@NI,E, 30).
 
-R5 obtainStat@NI(NI,PI) :- checkStat@NI(NI),
-   kFlipFlop@NI(NI,PI).
+R5 obtainStat(@NI,PI) :- checkStat(@NI),
+   kFlipFlop(@NI,PI).
 
-R6 checkKFF@BI(BI,PI,NI) :- obtainStat@NI(NI,PI),
-   succ@NI(NI,B,BI), BI != PI.
-
-
-R7 checkKFF@BI(BI,PI,NI) :- obtainStat@NI(NI,PI),
-   pred@NI(NI,BI,B), BI != PI.
+R6 checkKFF(@BI,PI,NI) :- obtainStat(@NI,PI),
+   succ(@NI,B,BI), BI != PI.
 
 
-R8 agree@SI(SI,PI,NI) :- checkKFF@NI(NI,PI,SI),
-   kFlipFlop@NI(NI,PI).
+R7 checkKFF(@BI,PI,NI) :- obtainStat(@NI,PI),
+   pred(@NI,BI,B), BI != PI.
 
 
-R9 agreeSet@NI(NI,PI,SI) :- agree@NI(NI,PI,SI).
+R8 agree(@SI,PI,NI) :- checkKFF(@NI,PI,SI),
+   kFlipFlop(@NI,PI).
 
-R10 countAgree@NI(NI, PI, count<*>) :- checkStat@NI(NI),
-   agreeSet@NI(NI,PI,SI).
 
-R11 chaoticNode@NI(NI,PI) :- countAgree@NI(NI,PI,C), C > 1.
+R9 agreeSet(@NI,PI,SI) :- agree(@NI,PI,SI).
+
+R10 countAgree(@NI, PI, count<*>) :- checkStat(@NI),
+   agreeSet(@NI,PI,SI).
+
+R11 chaoticNode(@NI,PI) :- countAgree(@NI,PI,C), C > 1.
 */
 
 /** Ring is totally ordered **/
@@ -1054,45 +1054,45 @@ watch(ordering).
 watch(finalOrdering).
 watch(badOrdering).
 /*
-O0 orderingEvent@NI(NI,E) :- periodic@NI(NI,E,30).
+O0 orderingEvent(@NI,E) :- periodic(@NI,E,30).
 
-O1 ordering@NI(NI, E, NI, N, W) :-
-   orderingEvent@NI(NI, E), node@NI(NI, N), W := 0.
+O1 ordering(@NI, E, NI, N, W) :-
+   orderingEvent(@NI, E), node(@NI, N), W := 0.
 
-O2 ordering@SuccAddr(SuccAddr, E, SrcAddr, SuccID,
-   Wraps) :- ordering@NI(NI, E, SrcAddr, MyID,
-   Wraps), bestSucc@NI(NI, SuccAddr, SuccID),
+O2 ordering(@SuccAddr, E, SrcAddr, SuccID,
+   Wraps) :- ordering(@NI, E, SrcAddr, MyID,
+   Wraps), bestSucc(@NI, SuccAddr, SuccID),
    MyID < SuccID, SrcAddr != SuccAddr.
 
-O3 ordering@SuccAddr(SuccAddr, E, SrcAddr, SuccID,
-   NewWraps) :- ordering@NI(NI, E, SrcAddr, MyID,
-   Wraps), bestSucc@NI(NI, SuccAddr, SuccID),
+O3 ordering(@SuccAddr, E, SrcAddr, SuccID,
+   NewWraps) :- ordering(@NI, E, SrcAddr, MyID,
+   Wraps), bestSucc(@NI, SuccAddr, SuccID),
    MyID >= SuccID, SrcAddr != SuccAddr, NewWraps :=
    Wraps + 1.
 
-O4 finalOrdering@SuccAddr(SuccAddr, E, Wraps) :-
-   ordering@NI(NI, E, SrcAddr, MyID, Wraps),
-   bestSucc@NI(NI, SuccAddr, SuccID), SrcAddr ==
+O4 finalOrdering(@SuccAddr, E, Wraps) :-
+   ordering(@NI, E, SrcAddr, MyID, Wraps),
+   bestSucc(@NI, SuccAddr, SuccID), SrcAddr ==
    SuccAddr, MyID == SuccID.
 
-O5 badOrdering@NI(NI, E) :- finalOrdering@NI(NI, E, W), W > 1.
+O5 badOrdering(@NI, E) :- finalOrdering(@NI, E, W), W > 1.
 */
 /*** Pickling ***/
 /*
-t1 trace@NI(NI, TOut, Depth, ID) :-
-   ruleExec@NI(NI,R,TIn,TOut,Dest,LTin,LTout, TYPE), Depth :=10, R == r1,
+t1 trace(@NI, TOut, Depth, ID) :-
+   ruleExec(@NI,R,TIn,TOut,Dest,LTin,LTout, TYPE), Depth :=10, R == r1,
    ID := f_random(), TYPE == "EVENT".
 
-t2 pickledExec@NI(ID, Depth, Rule, In, Tuple, Time)
-   :- trace@NI(Tuple,Depth, ID), Depth >= 0,
-   exec@NI(Rule, In, Tuple, Time).
+t2 pickledExec(@ID, Depth, Rule, In, Tuple, Time)
+   :- trace(@Tuple,Depth, ID), Depth >= 0,
+   exec(@Rule, In, Tuple, Time).
 
-t3 trace@SourceAddr(In, NewDepth, ID) :-
-   pickledExec@NI(ID, Depth, Rule,In, Out, Time),
+t3 trace(@In, NewDepth, ID) :-
+   pickledExec(@ID, Depth, Rule,In, Out, Time),
    SourceAddr := f_source(In), NewDepth := Depth - 1.
 
-t4 findOld@Designated(In) :- ID == idInQuestion,
-   pickledExec@NI(ID, Depth, Rule, In, Out,Time),
+t4 findOld(@In) :- ID == idInQuestion,
+   pickledExec(@ID, Depth, Rule, In, Out,Time),
    InAge := f_age(In), InAge > 10, Designated :=
    myNode.
 */

@@ -486,17 +486,19 @@ void generateSendAction(PlanContext* pc)
 
   // compute the field for location specifier
   Parse_Functor* head = curRule->_action->_pf;
-  string loc = head->fn->loc;
+  string loc = head->getlocspec();
   int locationIndex = -1;
   for (int k = 0; k < head->args(); k++) {
     Parse_Var* parse_var = dynamic_cast<Parse_Var*>(head->arg(k));
-    if (parse_var != NULL && parse_var->toString() == loc) {
+    if (parse_var != NULL && fieldNameEq(parse_var->toString(), loc)) {
       locationIndex = k+1;
     }
-    Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(head->arg(k));
-    if (aggExpr != NULL && aggExpr->v->toString() == loc) {
-      locationIndex = k+1;
-    }    
+	else {
+	  Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(head->arg(k));
+	  if (aggExpr != NULL && fieldNameEq(aggExpr->v->toString(), loc)) {
+		locationIndex = k+1;
+	  }    
+	}
   }
 
   if (locationIndex == -1) {

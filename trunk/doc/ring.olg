@@ -1,5 +1,5 @@
 /*
- * @(#)$Id$
+ * (@#)$Id$
  *
  * Copyright (c) 2005 Intel Corporation
  *
@@ -21,40 +21,40 @@ materialize(join, 10, 5, keys(1)).
 materialize(landmark, infinity, 1, keys(1)).
 
 /** Lookups */
-l1 lookupResults@R(R,K,S,SI,E) :- node@NI(NI,N),
-				  lookup@NI(NI,K,R,E), 
-				  succ@NI(NI,S,SI),
+l1 lookupResults(@R,K,S,SI,E) :- node(@NI,N),
+				  lookup(@NI,K,R,E), 
+				  succ(@NI,S,SI),
 				  ((K in (N,S]) || (N == S)).
 
 
-l2 lookup@SI(SI,K,R,E) :- node@NI(NI,N),	    
-   				   lookup@NI(NI,K,R,E),
-			       succ@NI(NI,S,SI), 
+l2 lookup(@SI,K,R,E) :- node(@NI,N),	    
+   				   lookup(@NI,K,R,E),
+			       succ(@NI,S,SI), 
 				   ((K <= N) || (K > S)).
 
 /** Joining the ring */
 
-c1 joinEvent@NI(NI,E) :- join@NI(NI,E).
+c1 joinEvent(@NI,E) :- join(@NI,E).
 
-c2 joinReq@LI(LI,N,NI,E) :- joinEvent@NI(NI,E),
-			 node@NI(NI,N), 
-			 landmark@NI(NI,LI),
+c2 joinReq(@LI,N,NI,E) :- joinEvent(@NI,E),
+			 node(@NI,N), 
+			 landmark(@NI,LI),
 			 LI != "127.0.0.1:10000".
 
-c3 succ@NI(NI,N,NI) :- joinEvent@NI(NI,E),
-		       node@NI(NI,N), 
-		       landmark@NI(NI,LI),
+c3 succ(@NI,N,NI) :- joinEvent(@NI,E),
+		       node(@NI,N), 
+		       landmark(@NI,LI),
 		       LI == "127.0.0.1:10000".
 
-c4 lookup@LI(LI,N,NI,E) :- joinReq@LI(LI,N,NI,E).
+c4 lookup(@LI,N,NI,E) :- joinReq(@LI,N,NI,E).
 
-c5 succ@NI(NI,S,SI) :- join@NI(NI,E),
-		    lookupResults@NI(NI,K,S,SI,E).
+c5 succ(@NI,S,SI) :- join(@NI,E),
+		    lookupResults(@NI,K,S,SI,E).
 
 /* start the process */
-g1 join@NI(NI, E) :- periodic@NI(NI,E,3,1), env@NI(NI, H, J), H == "join".
-g2 node@I(I, J) :- periodic@I(I,E,1,1), env@I(I, H, J), H == "node".
-g3 landmark@I(I, J) :- periodic@I(I,E,1,1), env@I(I, H, J), H == "landmark".
+g1 join(@NI, E) :- periodic(@NI,E,3,1), env(@NI, H, J), H == "join".
+g2 node(@I, J) :- periodic(@I,E,1,1), env(@I, H, J), H == "node".
+g3 landmark(@I, J) :- periodic(@I,E,1,1), env(@I, H, J), H == "landmark".
 watch(node).
 watch(landmark).
 watch(joinEvent).

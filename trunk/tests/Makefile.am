@@ -62,7 +62,7 @@ demultiplex_LDADD =  \
 
 runOverLog_SOURCES = runOverLog.C
 runOverLog_LDADD = \
-	$(top_builddir)/planner/libp2planner.la \
+	-lboost_python $(top_builddir)/planner/libp2planner.la \
 	$(top_builddir)/overlog/libp2overlog.la \
 	$(top_builddir)/net/libp2net.la \
 	$(top_builddir)/elements/libp2elements.la \
@@ -183,13 +183,14 @@ INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements \
 
 CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@ ${PYTHON_CPPFLAGS}
 
-LDFLAGS=@BOOST_LIB@ @LDFLAGS@ @PYTHON_LDFLAGS@
+# Static linking works around a bug in the OS X 10.4.7 Developer Tools
+LDFLAGS=@BOOST_LIB@ @LDFLAGS@ @PYTHON_LDFLAGS@ -static
 
 LIBS = @BOOST_LIB@ \
        -L$(top_builddir)/elements -L$(top_builddir)/p2core \
        -L$(top_builddir)/eventLoop -L$(top_builddir)/net \
        -L$(top_builddir)/overlog -L$(top_builddir)/debugger \
-       -L$(top_builddir)/p2cpp -lcrypto
+       -L$(top_builddir)/p2cpp -lcrypto -lboost_python
 
 MAINTAINERCLEANFILES = aclocal.m4 install-sh mkinstalldirs \
 	missing configure config.guess config.sub config.h.in \

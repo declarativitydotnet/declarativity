@@ -1,5 +1,5 @@
 /*
- * @(#)$Id$
+ * (@#)$Id$
  * 
  * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
@@ -27,49 +27,49 @@ trace(l).
 traceTable(fourth).
 
 
-r18 l@A(A, B) :- periodic@A(A, E, 5), B := "--" + E.
+r18 l(@A, B) :- periodic(@A, E, 5), B := "--" + E.
 
-r17 l@A(A, B) :- periodic@A(A, E, 5), B := "-" + E.
+r17 l(@A, B) :- periodic(@A, E, 5), B := "-" + E.
 
 first("blah", 0x123ABCI, "blah", "bloo").
 
 
-r16 l@A(A, B) :- third@A(A, B, E, D), periodic@A(A, E, 5).
+r16 l(@A, B) :- third(@A, B, E, D), periodic(@A, E, 5).
 
-r15 l@A(A, B) :- periodic@A(A, E, 5), third@A(A, B, E, D).
+r15 l(@A, B) :- periodic(@A, E, 5), third(@A, B, E, D).
 
-r14 k@A(A, B, A) :- periodic@A(A, E, 5), third@A(A, B, E, D).
+r14 k(@A, B, A) :- periodic(@A, E, 5), third(@A, B, E, D).
 
-r13 j@A(A, A) :- periodic@A(A, E, 5).
+r13 j(@A, A) :- periodic(@A, E, 5).
 
-r1 a@A(A, B) :- first@A(A, B, C, D).
+r1 a(@A, B) :- first(@A, B, C, D).
 
-r2 a@A(A, B) :- second@A(A, B, C, D).
+r2 a(@A, B) :- second(@A, B, C, D).
 
-r3 a@A(A, B) :- third@A(A, B, C, D).
+r3 a(@A, B) :- third(@A, B, C, D).
 
-r4 a@A(A, B) :- fourth@A(A, B, C, D).
+r4 a(@A, B) :- fourth(@A, B, C, D).
 
-r5 a@A(A, B) :- b@A(A), fourth@A(A, B, C, D).
+r5 a(@A, B) :- b(@A), fourth(@A, B, C, D).
 
-r6 c@A(A, B, E) :- d@A(A, B, C, D, E), first@A(L, B, A, Q).
+r6 c(@A, B, E) :- d(@A, B, C, D, E), first(L, B, @A, Q).
 
-r7 e@A(A, B, E) :- d@A(A, B, C, D, E), first@A(L, B, A, Q), second@A(A, Q, Q, D).
+r7 e(@A, B, E) :- d(@A, B, C, D, E), first(L, B, @A, Q), second(@A, Q, Q, D).
 
-r8 e@A(A, B, P) :- d@A(A, B, C, D, E), first@A(L, B, A, Q), second@A(A, Q, Q, P).
+r8 e(@A, B, P) :- d(@A, B, C, D, E), first(L, B, @A, Q), second(@A, Q, Q, P).
 
-r9 fifth@A(A, B, count<*>) :- first@A(A, B, C, D).
+r9 fifth(@A, B, count<*>) :- first(@A, B, C, D).
 
-r10 g@F(A, F, count<*>) :- e@A(A, B, C), first@A(A, B, F, L).
+r10 g(A, @F, count<*>) :- e(@A, B, C), first(@A, B, F, L).
 
-r11 h@A(A, B, min<C>) :- first@A(A, B, C, D).
+r11 h(@A, B, min<C>) :- first(@A, B, C, D).
 
-r12 i@A(A, F, min<L>) :- e@A(A, B, C), first@A(A, B, F, L).
+r12 i(@A, F, min<L>) :- e(@A, B, C), first(@A, B, F, L).
 
-r13 i@A(A, F, L) :- e@A(A, B, C), first@B(A, B, F, L), second@F(A, B, F, L).
+r13 i(@A, F, L) :- e(@A, B, C), first(A, @B, F, L), second(A, B, @F, L).
 
-r19 first@A(A, B, C, D) :- second@A(A, B, C, D), third@A(A, B, C, D). 
+r19 first(@A, B, C, D) :- second(@A, B, C, D), third(@A, B, C, D). 
 
-r14 first@A(A,B) :- fourth@A(A,B), third@A(A,B).
+r14 first(@A,B) :- fourth(@A,B), third(@A,B).
 
-r14 first@A(A,B) :- fourth@A(A,B), third@B(A,B).
+r14 first(@A,B) :- fourth(@A,B), third(A,@B).
