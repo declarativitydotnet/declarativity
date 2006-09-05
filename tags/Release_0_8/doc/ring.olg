@@ -1,0 +1,65 @@
+/*
+ * (@#)$Id$
+ *
+ * Copyright (c) 2005 Intel Corporation
+ *
+ * This file is distributed under the terms in the attached INTEL-LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * 
+ * DESCRIPTION: A very simplistic ring-based DHT in Overlog
+ *
+ */
+
+
+/* The base tuples */
+materialize(env, infinity, infinity, keys(2,3)).
+materialize(node, infinity, 1, keys(1)).
+materialize(succ, 10, 100, keys(2)).
+materialize(join, 10, 5, keys(1)).
+materialize(landmark, infinity, 1, keys(1)).
+
+/** Lookups */
+l1 lookupResults(@R,K,S,SI,E) :- node(@NI,N),
+				  lookup(@NI,K,R,E), 
+				  succ(@NI,S,SI),
+				  ((K in (N,S]) || (N == S)).
+
+
+l2 lookup(@SI,K,R,E) :- node(@NI,N),	    
+   				   lookup(@NI,K,R,E),
+			       succ(@NI,S,SI), 
+				   ((K <= N) || (K > S)).
+
+/** Joining the ring */
+
+c1 joinEvent(@NI,E) :- join(@NI,E).
+
+c2 joinReq(@LI,N,NI,E) :- joinEvent(@NI,E),
+			 node(@NI,N), 
+			 landmark(@NI,LI),
+			 LI != "127.0.0.1:10000".
+
+c3 succ(@NI,N,NI) :- joinEvent(@NI,E),
+		       node(@NI,N), 
+		       landmark(@NI,LI),
+		       LI == "127.0.0.1:10000".
+
+c4 lookup(@LI,N,NI,E) :- joinReq(@LI,N,NI,E).
+
+c5 succ(@NI,S,SI) :- join(@NI,E),
+		    lookupResults(@NI,K,S,SI,E).
+
+/* start the process */
+g1 join(@NI, E) :- periodic(@NI,E,3,1), env(@NI, H, J), H == "join".
+g2 node(@I, J) :- periodic(@I,E,1,1), env(@I, H, J), H == "node".
+g3 landmark(@I, J) :- periodic(@I,E,1,1), env(@I, H, J), H == "landmark".
+watch(node).
+watch(landmark).
+watch(joinEvent).
+watch(join).
+watch(joinReq).
+watch(lookup).
+watch(lookupResults).
+watch(succ).

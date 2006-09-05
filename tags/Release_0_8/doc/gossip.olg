@@ -1,0 +1,46 @@
+/**
+ * This program instructs nodes to gossip the overlog programs it
+ * knows about with other planetlab nodes. The program assumes 
+ * a sliceNodeEvent, triggered by a sliceEvent, that provides the set 
+ * of nodes in a planetlab slice. Such event support is provided by the
+ * planetlab.py scripts located in the 'python/scripts' directory.
+ * The p2terminal.py script will send an overlog program as an
+ * overlogEvent, which will tigger an insertion into the overlog
+ * table followed by an overlogInstall event. The overlogInstall event
+ * is picked up by the overlog compile and install strand created by
+ * the P2 C++ stub interface.
+ */
+
+#define MASTER "planet2.berkeley.intel-research.net:10000"
+
+materialize(overlog, infinity, infinity, keys(3)).
+materialize(sliceNodes, infinity, infinity, keys(2,3)).
+materialize(nodeCount, infinity, 1, keys(2)).
+materialize(parent, infinity, 1, keys(2)).
+
+watch(parent).
+
+i0  nodeCount(@J, C) :- periodic(@J, E, 0, 1), C:=0.
+
+r0a sliceEvent(@J, E)    :- periodic(@J, E, 1, 1).
+r0b sliceNodes(@J, N, C) :- sliceNodeEvent(@J, N, C).
+r0c nodeCount(@J, C2)    :- sliceNodeEvent(@J, N, C), C2:=C+1.
+
+g0 overlogEvent(@N, J, T, P) :- gossipEvent(@J, I, T, P, C), 
+                                 sliceNodes(@J, N, X), I==X.
+
+/** Overlog installation rules */
+p0 overlog(@J, T, P)             :- overlogEvent(@J, S, T, P).
+p1 parent(@J, S)                 :- overlogEvent(@J, S, T, P).
+p2 overlogInstall(@J, J, T, P)   :- overlog(@J, T, P).
+p3 installEvent(@M, I, J, ID, T) :- overlogInstall(@J, S, T, P), 
+                                     ID:=f_sha1(J), M:=MASTER, I:="I".
+
+/** Periodically tell folks what i have installed */
+p3a gossipEvent(@J, I, T, P, C) :- gossipOverlog(@J, I), 
+                                    overlog(@J, T, P), C:=0.
+
+p3b gossipOverlog(@J, I) :- periodic(@J, E, 5),
+                             nodeCount(@J, A), 
+                             I := f_rand() % A,
+                             ((f_coinFlip(0.1)==1) || (J==MASTER)).
