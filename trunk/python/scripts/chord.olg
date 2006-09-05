@@ -105,7 +105,7 @@ s4 delete succ@NI(NI,S,SI) :- node@NI(NI,N),
 
 /** Finger fixing */
 
-f1 fFixEvent@NI(NI,E,I) :- periodic@NI(NI,E,10), nextFingerFix@NI(NI,I).
+f1 fFixEvent@NI(NI,E,I) :- periodic@NI(NI,E,20), nextFingerFix@NI(NI,I).
 
 f2 fFix@NI(NI,E,I) :- fFixEvent@NI(NI,E,I).
 
@@ -166,7 +166,7 @@ j7 join@NI(NI, E) :- periodic@NI(NI, E, 5, 1).
 
 /** Stabilization */
 
-sb1 stabilize@NI(NI,E) :- periodic@NI(NI,E,5).
+sb1 stabilize@NI(NI,E) :- periodic@NI(NI,E,10).
 
 sb2 stabilizeRequest@SI(SI,NI) :- stabilize@NI(NI,E), bestSucc@NI(NI,S,SI).
 
