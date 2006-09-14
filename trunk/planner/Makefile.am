@@ -26,7 +26,10 @@ libp2planner_la_SOURCES = tableStore.C \
 INCLUDES = @BOOST_INC@ -I../p2core -I../elements -I../net -I../overlog -I../eventLoop -I../debugger
 
 CLEANFILES = core *.core *~
-EXTRA_DIST = .cvsignore
+
+EXTRA_DIST = $(libp2core_la_SOURCES:.C=.h) \
+		rulePlanner.C \
+		rulePel.C
 
 MAINTAINERCLEANFILES = Makefile.in
 
