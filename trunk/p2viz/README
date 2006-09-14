@@ -1,0 +1,38 @@
+This document outlines the steps to running P2 on planetlab, and visualizing
+events that occur on nodes. A planetlab installation requires the following
+4 rpms: boost-1.32.0-6.i386.rpm, libstdc++-4.0.0-8.i386.rpm, python-2.3.4-11.i386.rpm,
+and p2-*.rpm. The last rpm is the P2 rpm, which you will have to build under a FC2-3 
+environment (i.e., grouchy or grumpy).
+
+
+Steps to build P2 rpm:
+1. Log into a machine running RedHat version no later than FC3.
+2. Ensure you have the following directory structure under your 
+home directory:
+/homes/<login>/rpm
+	/BUILD  
+	/RPMS  
+		/i386
+	/SOURCES  
+	/SPECS  
+	/SRPMS
+
+3. Create a file named '.rpmmacros' in your home directory containing the
+text below:
+%_topdir /homes/<login>/rpm
+%__strip /bin/true
+%__os_install_post    \
+    /usr/lib/rpm/redhat/brp-compress \
+%{nil}
+
+4. If necessary, check out P2 from the cvs repository and do the 'setup' 
+and configure steps.
+5. Make a P2 distribution tarball: 'make dist'
+6. Take the distribution file (e.g., p2-0.7.2.tar.gz) and place it in
+the '/homes/<login>/rpm/SOURCES' directory created in step 2. 
+7. In the top level P2 directory ('./phi/phi/') make sure you see a file
+titled p2.spec. Edit this file and ensure the 'Version' line matches the
+version indicated on the distribution file (e.g., '0.7.2'). 
+8. Execute: 'rpmbuild -ba p2.spec'
+9. If step 8 was successfull you will find the P2 rpm in the 
+'/homes/<login>/rpm/RPMS/i386' directory.
