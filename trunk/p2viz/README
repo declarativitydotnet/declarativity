@@ -35,4 +35,10 @@ titled p2.spec. Edit this file and ensure the 'Version' line matches the
 version indicated on the distribution file (e.g., '0.7.2'). 
 8. Execute: 'rpmbuild -ba p2.spec'
 9. If step 8 was successfull you will find the P2 rpm in the 
-'/homes/<login>/rpm/RPMS/i386' directory.
+'/homes/<login>/rpm/RPMS/i386' directory. Place this rpm in the
+'phi/phi/rpms' directory. You should now be ready to run the planetlab
+setup script (psetup.py).
+
+
+
+
