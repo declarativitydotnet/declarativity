@@ -40,5 +40,41 @@ version indicated on the distribution file (e.g., '0.7.2').
 setup script (psetup.py).
 
 
+=============================================================
+This section describes the the PlanetLab setup script 'psetup.py'.
+The script assumes that the 4 aforementioned rpms are in the 
+'phi/phi/rpms' directory. In order to run this script you must have
+no less that 'user' priviledge on the slice in which you wish to 
+run P2. You should edit the psetup.py script and make sure the file
+names to the rpms match that which is indicated the arrays at the
+beginning of the script.  The usage statement to psetup.py is as 
+follows:
 
+Usage: psetup.py [-d] [-a] [-t pingCheckPort] [-j <parallel>] [-(i|I)] [-k] \
+                 [-Dvar=<value> [-Dvar=<value> [...]] -o <overlog>] \
+                 [-m master_addr -p master_port] \
+                 -n <slice_name> [<planetLabNode>]
+
+Description of arguments:
+-n	This argument must always be given. It indicates the planetlab slice
+	on which the command is to be executed.
+-d	This will deallocate all planetlab nodes from the indicated slice.
+-a 	This will add all available nodes to the slice.
+-t 	This is a port number (e.g., 10002) that will be used to ensure
+	an instance of P2 is running. That is, after P2 has been installed
+	and started, the script will ping, on the indcated port, the planetlab.py 
+	script to ensure that is has indeed successfully started. If it does
+	not receive a pong (after a few tries) the node is removed from the slice.
+-j	Indicates the number of nodes to install and start in parallel.
+-i|-I	These flags tell the script to install the rpms before starting P2. The
+	'-I' installs all rpms, while the '-i' only installs the P2 rpm. When
+	I say install, I also mean upload the rpm(s) from the 'phi/phi/rpms' 
+	directory.		
+-o	The indicated overlog script will be installed in the P2 instance after
+	startup.
+-D	For passing environment variables to the overlog script.
+-m	A node that is designated the master node will open a channel to the
+	visualizer.
+-p	The port number that the master node uses to open a tcp connection
+	to the visualizer.
 
