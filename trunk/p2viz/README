@@ -81,7 +81,17 @@ Description of arguments:
 ==================================================================
 Example demo session.
 
-0. Make sure you have you ssh-agent running.
+0. Make sure you have you ssh-agent running. If you're using a tunnel, via
+a master node, to receive visualizer update messages you'll need to setup
+a ssh tunnel to the master node.
+
+$> ssh -l irb_p2 -R 10001:localhost:10001 planet2.berkeley.intel-research.net
+
+This assumes that your master node is planet2.berkeley.intel-research.net 
+(specified using the -m argument to psetup.py) with a master port 10001
+(specified using the -p argument to psetup.py). Moreover, your visualizer should
+have a server socket listening to port 10001 on your local machine. Deviations
+from these settings should change the above command accordingly.
 
 1. Allocate as many nodes as possible to the irb_p2 slice.
 
