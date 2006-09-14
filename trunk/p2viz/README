@@ -78,3 +78,46 @@ Description of arguments:
 -p	The port number that the master node uses to open a tcp connection
 	to the visualizer.
 
+==================================================================
+Example demo session.
+
+0. Make sure you have you ssh-agent running.
+
+1. Allocate as many nodes as possible to the irb_p2 slice.
+
+[tcondie@clash scripts]$ python psetup.py -a -n irb_p2
+Allocating 580 nodes.
+
+2. Install P2 on all nodes assigned to irb_p2, starting up a P2 instance
+initialized with the gossip.olg
+[tcondie@clash scripts]$ python psetup.py -t 10002 -j 20 -I -o ../../doc/gossip.olg -m planet2.berkeley.intel-research.net -p 10001 -n irb_p2
+
+NOTE: You need not initialize a P2 instance with an overlog file. If you don't
+then a plan P2 stub is all that will be running on a given planetlab node. The
+gossip.olg file contains rules that gossips futher overlog installations with
+other nodes in the slice.
+
+NOTE 2: I have indicated a ping port in the previous command. This will result in
+the p2setup.py script contacting the planetlab.py script on port 10002 to make
+sure it is running. If for some reason this fails (the script tries 3 times in
+10 second intervals) then the node is removed from the slice. Here is an example
+message indicating that node planetlab-3... did not respond to the ping.
+UNABLE TO GET PING FROM NODE planetlab-3.sjce.nodes.planet-lab.org!
+
+3. Send the overlog contained in chord.olg to the master node, using p2terminal.py.
+[tcondie@clash scripts]$ python p2terminal.py -t chord.olg -f chord.olg -n 1 -a planet2.berkeley.intel-research.net -p 10000 localhost 9999
+
+NOTE: The master node is also the default landmark node in 'phi/phi/python/scripts/chord.olg'.
+The master node is the first node to be installed and started in step 2, so you
+may issue this command as soon as the master has been started up resulting in the
+installation/startup process being overlaped with the distribution of chord.olg via
+the gossip.olg algorithm. The last two arguments (localhost and 9999) are meaningless
+in this context. 
+
+NOTE 2: You should have started up the visualizer before executing the command in this
+step. The installation of chord.olg will be displayed to the visualizer, along with
+links and lookup responses.
+
+4. Issue the following command to kill all P2 instances in the slice.
+[tcondie@clash scripts]$ python psetup.py -j 20 -k -n irb_p2
+

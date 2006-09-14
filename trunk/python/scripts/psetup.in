@@ -211,8 +211,8 @@ if __name__ == "__main__":
   auth  = {}
   auth['AuthMethod'] = "anonymous"
   server = xmlrpclib.Server('https://www.planet-lab.org/PLCAPI/')
-  flags["email"]    = "tcondie@cs.berkeley.edu" # raw_input("PlanetLab Login: ") 
-  flags["password"] = "cyAU362J" #getpass.getpass() 
+  flags["email"]    = raw_input("PlanetLab Login: ") 
+  flags["password"] = getpass.getpass() 
 
   if flags["email"] and flags["password"]:
     auth['Username'] = flags["email"] 
