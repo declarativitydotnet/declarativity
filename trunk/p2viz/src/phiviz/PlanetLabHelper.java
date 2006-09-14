@@ -1,79 +1,81 @@
 package phiviz;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
 public class PlanetLabHelper {
-	
-	public static void main(String[] args) throws Exception {
-		PlanetLabHelper helper = new PlanetLabHelper();
-	}
-	
-	final public int NODE_ID    = 0;
-	final public int NODE_NAME  = 1;
-	final public int NODE_MODEL = 2;
-	final public int NODE_VER   = 3;
-	final public int NODE_STATE = 4;
-	final public int NODE_IP    = 5;
-	final public int NODE_MAC   = 6;
-	final public int SITE_ID    = 7;
-	final public int SITE_NAME  = 8;
-	final public int SITE_LONG  = 9;
-	final public int SITE_LAT   = 10;
-	final public int SITE_URL   = 11;
-	
-	/** Defines a list of SITE objects. */
-	protected static Hashtable _sites = new Hashtable();
+
+  public static void main(String[] args) throws Exception {
+    PlanetLabHelper helper = new PlanetLabHelper();
+  }
+
+  final public int NODE_ID    = 0;
+  final public int NODE_NAME  = 1;
+  final public int NODE_MODEL = 2;
+  final public int NODE_VER   = 3;
+  final public int NODE_STATE = 4;
+  final public int NODE_IP    = 5;
+  final public int NODE_MAC   = 6;
+  final public int SITE_ID    = 7;
+  final public int SITE_NAME  = 8;
+  final public int SITE_LONG  = 9;
+  final public int SITE_LAT   = 10;
+  final public int SITE_URL   = 11;
+
+  /** Defines a list of SITE objects. */
+  protected static Hashtable _sites = new Hashtable();
 
 
   /**
    * Create a planetlab helper given a sites XML file.
    *
    * @param sitesFile The filename of the XML sites file.
- * @throws IOException 
+   * @throws IOException
    */
   public PlanetLabHelper() throws IOException
   {
-	Runtime runtime = Runtime.getRuntime();
-	Process proc;
+    Runtime runtime = Runtime.getRuntime();
+    Process proc;
 
-	try {
-		proc = runtime.exec("C:\\Python24\\python sites.py irb_p2");
-		proc.waitFor();
-	} catch (IOException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	} catch (InterruptedException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
+    try {
+      proc = runtime.exec("python sites.py irb_p2");
+      proc.waitFor();
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (InterruptedException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
 
 
-	  
-	BufferedReader br = new BufferedReader(new FileReader("sites.out"));
-	for (String line = br.readLine(); line != null; line = br.readLine()) {
-		String[] node_info = line.split(",,");
-		SITE site = new SITE(node_info[SITE_ID], node_info[SITE_NAME], node_info[SITE_LONG], 
-				             node_info[SITE_LAT], node_info[SITE_URL]);
-		if (_sites.containsKey(node_info[SITE_ID])) {
-			site = (SITE) _sites.get(node_info[SITE_ID]);
-		}
-		else {
-			_sites.put(node_info[SITE_ID], site);
-		}
-		HOST host = new HOST(node_info[NODE_ID], node_info[NODE_NAME], node_info[NODE_MODEL], node_info[NODE_VER],
-				             node_info[NODE_STATE], node_info[NODE_IP], node_info[NODE_MAC]);
-		site.addHOST(host);
-	 }
-	this.buildHostKeyedIndices();
-	this.buildSiteByName();
+
+    BufferedReader br = new BufferedReader(new FileReader("sites.out"));
+    for (String line = br.readLine(); line != null; line = br.readLine()) {
+      String[] node_info = line.split(",,");
+      SITE site = new SITE(node_info[SITE_ID], node_info[SITE_NAME],
+                           node_info[SITE_LONG], node_info[SITE_LAT],
+                           node_info[SITE_URL]);
+      if (_sites.containsKey(node_info[SITE_ID])) {
+        site = (SITE) _sites.get(node_info[SITE_ID]);
+      }
+      else {
+        _sites.put(node_info[SITE_ID], site);
+      }
+      HOST host = new HOST(node_info[NODE_ID], node_info[NODE_NAME],
+                           node_info[NODE_MODEL], node_info[NODE_VER],
+                           node_info[NODE_STATE], node_info[NODE_IP],
+                           node_info[NODE_MAC]);
+      site.addHOST(host);
+    }
+    this.buildHostKeyedIndices();
+    this.buildSiteByName();
   }
-  
+
   public Collection sites() {
-	  return _sites.values();
+    return _sites.values();
   }
 
   /**
@@ -96,7 +98,7 @@ public class PlanetLabHelper {
    */
   private static TreeMap hostFromIP_;
 
- 
+
   /**
    * Build the indices keyed by host IP and host names.
    */
