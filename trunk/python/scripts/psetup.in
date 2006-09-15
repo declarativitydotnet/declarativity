@@ -9,17 +9,19 @@ import socket
 import getpass
 import time
 
-files   = ["../../rpms/p2-0.7.2-0.i386.rpm"]
-install = "sudo rpm -i --force p2-0.7.2-0.i386.rpm"
+p2rpmversion = "@VERSION@"
+p2rpm = "p2-" + p2rpmversion + "-0.i386.rpm"
+files   = ["../../rpms/" + p2rpm]
+install = "sudo rpm -i --force " + p2rpm
 
 all_files   = ["../../rpms/boost-1.32.0-6.i386.rpm", "../../rpms/libstdc++-4.0.0-8.i386.rpm",
-               "../../rpms/p2-0.7.2-0.i386.rpm", "../../rpms/python-2.3.4-11.i386.rpm", "./p2"]
+               "../../rpms/" + p2rpm, "../../rpms/python-2.3.4-11.i386.rpm", "./p2"]
 all_install = """\
 sudo rpm -i --force libstdc++-4.0.0-8.i386.rpm; \
 sudo rpm -i --force boost-1.32.0-6.i386.rpm; \
 sudo rpm -i --force python-2.3.4-11.i386.rpm; \
-sudo rpm -i --force p2-0.7.2-0.i386.rpm; \
-sudo mv ~/p2 /etc/rc.d/init.d/"""
+sudo rpm -i --force %s; \
+sudo mv ~/p2 /etc/rc.d/init.d/""" % p2rpm
 startup =  "sudo /sbin/service p2 restart"
 stop    =  "sudo /sbin/service p2 stop"
 
@@ -144,12 +146,13 @@ def startNode(node):
     # Push over the planetlab script no matter what
     os.system("scp ./planetlab.py %s@%s: >& /dev/null" % (flags["slice"], node))  
 
-    start = startup + " " + flags["master_addr"] + " " + flags["master_port"] + " " + str(flags["pingPort"])
+    start = startup + " " + flags["master_addr"] + " " + flags["master_port"] + " " + str(flags["pingPort"]) + " " + str(flags["slice"])
     if flags["overlog"]:
       os.system("scp %s %s@%s: >& /dev/null" % (flags["overlog"], flags["slice"], node))  
 
     pong = False
     for i in range(2):
+      print "Starting system with command: %s" % start
       if flags["overlog"]:
         os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % \
                   (flags["slice"], node, start+" "+flags["overlog"].split("/")[-1]))

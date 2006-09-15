@@ -2,7 +2,7 @@
 #
 # chkconfig: - 50 01
 #
-# p2 This shell script enables the automatic use of P2 on port 10000
+# p2 This shell script enables the automatic use of P2
 #
 
 # source function library
@@ -12,13 +12,14 @@ MASTER=$2
 PORT=$3
 TIMEPORT=$4
 OVERLOG=$5
+SLICE=$6
 
 start() {
 	export PYTHONPATH=/usr/local/lib:/usr/local/bin
-        if [ -f /home/irb_p2/${OVERLOG} ]; then
-		sudo python /home/irb_p2/planetlab.py -t $TIMEPORT -m $MASTER -p $PORT -o /home/irb_p2/${OVERLOG} -n irb_p2 10000 >& /home/irb_p2/planetlab.out &
+        if [ -f /home/${SLICE}/${OVERLOG} ]; then
+		sudo python /home/${SLICE}/planetlab.py -t $TIMEPORT -m $MASTER -p $PORT -o /home/${SLICE}/${OVERLOG} -n ${SLICE} 10000 >& /home/${SLICE}/planetlab.out &
 	else
-		sudo python /home/irb_p2/planetlab.py -t $TIMEPORT -m $MASTER -p $PORT -n irb_p2 10000 >& /home/irb_p2/planetlab.out &
+		sudo python /home/${SLICE}/planetlab.py -t $TIMEPORT -m $MASTER -p $PORT -n ${SLICE} 10000 >& /home/${SLICE}/planetlab.out &
         fi
 }
 

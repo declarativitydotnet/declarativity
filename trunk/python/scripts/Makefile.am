@@ -14,7 +14,7 @@
 bin_SCRIPTS = p2stub.py p2terminal.py p2insert.py \
               loadManyChords.py planetlab.py psetup.py dfrun.py
 
-do_subst = sed -e 's,[@]PYTHON[@],$(PYTHON),g'
+do_subst = sed -e 's,[@]PYTHON[@],$(PYTHON),g;s,[@]VERSION[@],$(VERSION),g'
 
 p2stub.py: p2stub.in Makefile
 		   $(do_subst) < $(srcdir)/p2stub.in > p2stub.py
