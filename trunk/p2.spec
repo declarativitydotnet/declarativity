@@ -1,6 +1,6 @@
 Summary: INTEL P2
 Name: p2
-Version: 0.7.2 
+Version: 0.7.2.1
 Release: 0
 Source0: %{name}-%{version}.tar.gz
 License: GPL
@@ -12,7 +12,7 @@ P2
 %setup -q
 ./setup
 %build
-./configure CXXFLAGS="-O3 -DTRACE_OFF"
+./configure CXXFLAGS="-g -DTRACE_OFF"
 make -j 16
 %install
 rm -rf $RPM_BUILD_ROOT
