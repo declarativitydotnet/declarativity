@@ -93,7 +93,7 @@ if __name__ == "__main__":
   server = xmlrpclib.Server('https://www.planet-lab.org/PLCAPI/')
   p2     = libp2python.P2(host, port, libp2python.P2.TransportConf.RELIABLE)
   # p2     = libp2python.P2(host, port)
-  log    = open("/home/irb_p2/planetlab.log", 'w')
+  log    = open("/home/" + flags["slice"] + "/planetlab.log", 'w')
 
   if flags["overlog"]:
     # Read in the optional overlog program 

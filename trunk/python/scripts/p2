@@ -11,8 +11,8 @@
 MASTER=$2
 PORT=$3
 TIMEPORT=$4
-OVERLOG=$5
-SLICE=$6
+SLICE=$5
+OVERLOG=$6
 
 start() {
 	export PYTHONPATH=/usr/local/lib:/usr/local/bin
@@ -24,7 +24,7 @@ start() {
 }
 
 stop() {
-	sudo kill -9 `ps -ef | grep planetlab.py | awk '{print $2}'`
+	sudo /bin/kill -9 `ps -ef | grep planetlab.py | grep -v grep | awk '{print $2}'`
 	echo `ps -ef | grep planetlab.py`
 }
 

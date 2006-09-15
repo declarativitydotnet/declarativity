@@ -8,7 +8,7 @@ import java.util.*;
 public class PlanetLabHelper {
 
   public static void main(String[] args) throws Exception {
-    PlanetLabHelper helper = new PlanetLabHelper();
+    PlanetLabHelper helper = new PlanetLabHelper("irb_phi");
   }
 
   final public int NODE_ID    = 0;
@@ -34,13 +34,13 @@ public class PlanetLabHelper {
    * @param sitesFile The filename of the XML sites file.
    * @throws IOException
    */
-  public PlanetLabHelper() throws IOException
+  public PlanetLabHelper(String sliceName) throws IOException
   {
     Runtime runtime = Runtime.getRuntime();
     Process proc;
 
     try {
-      proc = runtime.exec("python sites.py irb_p2");
+      proc = runtime.exec("python sites.py " + sliceName);
       proc.waitFor();
     } catch (IOException e) {
       // TODO Auto-generated catch block

@@ -35,108 +35,108 @@ materialize(parent, infinity, 1, keys(2)).
 
 watch(landmark).
 
-i0 node@NI(NI, N)          :- periodic@NI(NI, E, 0, 1), N := f_sha1(NI).
-i1 pred@NI(NI, P, PI)      :- periodic@NI(NI, E, 0, 1), P := 0x0I, PI:="-".
-i2 nextFingerFix@NI(NI, 0) :- periodic@NI(NI, E, 0, 1). 
-i3 landmark@NI(NI, MASTER) :- periodic@NI(NI, E, 0, 1).
-i4 landmark@NI(NI, PI)     :- periodic@NI(NI, E, 1, 1), parent@NI(NI, PI), f_coinFlip(0.5) == 1.
+i0 node(@NI, N)          :- periodic(@NI, E, 0, 1), N := f_sha1(NI).
+i1 pred(@NI, P, PI)      :- periodic(@NI, E, 0, 1), P := 0x0I, PI:="-".
+i2 nextFingerFix(@NI, 0) :- periodic(@NI, E, 0, 1). 
+i3 landmark(@NI, MASTER) :- periodic(@NI, E, 0, 1).
+i4 landmark(@NI, PI)     :- periodic(@NI, E, 1, 1), parent(@NI, PI), f_coinFlip(0.5) == 1.
 
 /** Lookups */
-l0 pathEvent@MI(MI,T,NI,P) :- lookupResults@NI(NI,K,S,SI,E,P), MI:=MASTER, T:="P".
+l0 pathEvent(@MI,T,NI,P) :- lookupResults(@NI,K,S,SI,E,P), MI:=MASTER, T:="P".
 
-l1 lookupResults@R(R,K,S,SI,E,P) :- node@NI(NI,N),
-				    lookup@NI(NI,K,R,E,P), 
-				    bestSucc@NI(NI,S,SI),
+l1 lookupResults(@R,K,S,SI,E,P) :- node(@NI,N),
+				    lookup(@NI,K,R,E,P), 
+				    bestSucc(@NI,S,SI),
 				    (K in (N,S] || (N == S)).
 
 
-l2 bestLookupDist@NI(NI,K,R,E,min<D>,P) :- node@NI(NI,N), 
-				  	   lookup@NI(NI,K,R,E,P), 
-					   finger@NI(NI,I,B,BI), 
+l2 bestLookupDist(@NI,K,R,E,min<D>,P) :- node(@NI,N), 
+				  	   lookup(@NI,K,R,E,P), 
+					   finger(@NI,I,B,BI), 
 					   D:=K - B - 1, 
 					   B in (N,K).
 
 
-l3 lookup@BI(min<BI>,K,R,E,P1) :- node@NI(NI,N),	    
-			          bestLookupDist@NI(NI,K,R,E,D,P), 
-			          finger@NI(NI,I,B,BI), 
+l3 lookup(min<BI>,K,R,E,P1) :- node(@NI,N),	    
+			          bestLookupDist(@NI,K,R,E,D,P), 
+			          finger(@NI,I,B,BI), 
 			          D == K - B - 1,
 			          B in (N,K), P1:=P+","+NI.
 
 
 /** Neighbor Selection */
 
-l0 bestSuccEvent@MI(MI, T, NI, SI) :- bestSucc@NI(NI,S,SI), 
+l0 bestSuccEvent(@MI, T, NI, SI) :- bestSucc(@NI,S,SI), 
                                       MI:=MASTER, T:="S".
 
-l1 fingerEvent@MI(MI, T, P, NI, LI) :- finger@NI(NI,P,L,LI), 
+l1 fingerEvent(@MI, T, P, NI, LI) :- finger(@NI,P,L,LI), 
                                        MI:=MASTER, T:="F",
                                        P > 0.
 
-n1 succEvent@NI(NI) :- periodic@NI(NI,E,5).
+n1 succEvent(@NI) :- periodic(@NI,E,5).
 
-n2 bestSuccDist@NI(NI,min<D>) :- succEvent@NI(NI),
-  			         node@NI(NI,N),
-			         succ@NI(NI,S,SI), 
+n2 bestSuccDist(@NI,min<D>) :- succEvent(@NI),
+  			         node(@NI,N),
+			         succ(@NI,S,SI), 
 			         D:=S - N - 1.
 
-n3 bestSucc@NI(NI,S,SI) :- succ@NI(NI,S,SI),
-			   bestSuccDist@NI(NI,D), 
-			   node@NI(NI,N),
+n3 bestSucc(@NI,S,SI) :- succ(@NI,S,SI),
+			   bestSuccDist(@NI,D), 
+			   node(@NI,N),
 			   D == S - N - 1.
 
-n4 finger@NI(NI,0,S,SI) :- bestSucc@NI(NI,S,SI).
+n4 finger(@NI,0,S,SI) :- bestSucc(@NI,S,SI).
 
 /** Successor eviction */
 
-s1 succCount@NI(NI,count<*>) :- succ@NI(NI,S,SI), NI != SI.
+s1 succCount(@NI,count<*>) :- succ(@NI,S,SI), NI != SI.
 
-s2 evictSucc@NI(NI) :- succCount@NI(NI,C), C > 8.
+s2 evictSucc(@NI) :- succCount(@NI,C), C > 8.
 
-s3 maxSuccDist@NI(NI,max<D>) :- succ@NI(NI,S,SI),
-				node@NI(NI,N), 
-				evictSucc@NI(NI),
+s3 maxSuccDist(@NI,max<D>) :- succ(@NI,S,SI),
+				node(@NI,N), 
+				evictSucc(@NI),
 				D:=S - N - 1.
 
-s4 delete succ@NI(NI,S,SI) :- node@NI(NI,N), 
-			      succ@NI(NI,S,SI),
-			      maxSuccDist@NI(NI,D), 
+s4 delete succ(@NI,S,SI) :- node(@NI,N), 
+			      succ(@NI,S,SI),
+			      maxSuccDist(@NI,D), 
 			      D == S - N - 1.
 
 /** Finger fixing */
 
-f1 fFixEvent@NI(NI,E,I) :- periodic@NI(NI,E,20), nextFingerFix@NI(NI,I).
+f1 fFixEvent(@NI,E,I) :- periodic(@NI,E,20), nextFingerFix(@NI,I).
 
-f2 fFix@NI(NI,E,I) :- fFixEvent@NI(NI,E,I).
+f2 fFix(@NI,E,I) :- fFixEvent(@NI,E,I).
 
-f3 lookup@NI(NI,K,NI,E,NI) :- fFixEvent@NI(NI,E,I),
-			      node@NI(NI,N), 
+f3 lookup(@NI,K,NI,E,NI) :- fFixEvent(@NI,E,I),
+			      node(@NI,N), 
 			      K:=0x1I << I + N.
 
-f4 eagerFinger@NI(NI,I,B,BI) :- fFix@NI(NI,E,I), 
-				lookupResults@NI(NI,K,B,BI,E,P).
+f4 eagerFinger(@NI,I,B,BI) :- fFix(@NI,E,I), 
+				lookupResults(@NI,K,B,BI,E,P).
 
-f5 finger@NI(NI,I,B,BI) :- eagerFinger@NI(NI,I,B,BI).
+f5 finger(@NI,I,B,BI) :- eagerFinger(@NI,I,B,BI).
 
-f6 eagerFinger@NI(NI,I,B,BI) :- node@NI(NI,N), 
-				eagerFinger@NI(NI,I1,B,BI), 
+f6 eagerFinger(@NI,I,B,BI) :- node(@NI,N), 
+				eagerFinger(@NI,I1,B,BI), 
 				I:=I1 + 1, 
 				K:=0x1I << I + N, 
 				K in (N,B), 
 				BI != NI.
 
-f7 delete fFix@NI(NI,E,I1) :- eagerFinger@NI(NI,I,B,BI), 
-  			      fFix@NI(NI,E,I1),
+f7 delete fFix(@NI,E,I1) :- eagerFinger(@NI,I,B,BI), 
+  			      fFix(@NI,E,I1),
 			      I > 0, I1 == I - 1.
 
 
 /*
-f8 nextFingerFix@NI(NI,0) :- eagerFinger@NI(NI,I,B,BI), 
+f8 nextFingerFix(@NI,0) :- eagerFinger(@NI,I,B,BI), 
 			     ((I == 159) || (BI == NI)).
 */
 
-f9 nextFingerFix@NI(NI,I) :- node@NI(NI,N), 
-			     eagerFinger@NI(NI,I1,B,BI), 
+f9 nextFingerFix(@NI,I) :- node(@NI,N), 
+			     eagerFinger(@NI,I1,B,BI), 
 			     I:=(I1 + 1)%160, 
 			     K:=0x1I << I + N, 
 			     K in (B,N), 
@@ -144,55 +144,55 @@ f9 nextFingerFix@NI(NI,I) :- node@NI(NI,N),
 
 
 /* Chord Join */
-j1 joinEvent@NI(NI,E) :- join@NI(NI,E).
+j1 joinEvent(@NI,E) :- join(@NI,E).
 
-j2 joinReq@LI(LI,N,NI,E) :- joinEvent@NI(NI,E),
-			 node@NI(NI,N), 
-			 landmark@NI(NI,LI),
+j2 joinReq(@LI,N,NI,E) :- joinEvent(@NI,E),
+			 node(@NI,N), 
+			 landmark(@NI,LI),
 			 LI != NI.
 
-j3 succ@NI(NI,N,NI) :- landmark@NI(NI,LI),
-		       joinEvent@NI(NI,E),
-		       node@NI(NI,N), 
+j3 succ(@NI,N,NI) :- landmark(@NI,LI),
+		       joinEvent(@NI,E),
+		       node(@NI,N), 
 		       NI == LI.
 
-j4 lookup@LI(LI,N,NI,E,LI) :- joinReq@LI(LI,N,NI,E).
+j4 lookup(@LI,N,NI,E,LI) :- joinReq(@LI,N,NI,E).
 
-j5 succ@NI(NI,S,SI) :- join@NI(NI,E),
-		       lookupResults@NI(NI,K,S,SI,E,P).
+j5 succ(@NI,S,SI) :- join(@NI,E),
+		       lookupResults(@NI,K,S,SI,E,P).
 
-j6 join@NI(NI, E) :- periodic@NI(NI, E, 30), succCount@NI(NI,C), C == 0.
-j7 join@NI(NI, E) :- periodic@NI(NI, E, 5, 1).
+j6 join(@NI, E) :- periodic(@NI, E, 30), succCount(@NI,C), C == 0.
+j7 join(@NI, E) :- periodic(@NI, E, 5, 1).
 
 /** Stabilization */
 
-sb1 stabilize@NI(NI,E) :- periodic@NI(NI,E,10).
+sb1 stabilize(@NI,E) :- periodic(@NI,E,10).
 
-sb2 stabilizeRequest@SI(SI,NI) :- stabilize@NI(NI,E), bestSucc@NI(NI,S,SI).
+sb2 stabilizeRequest(@SI,NI) :- stabilize(@NI,E), bestSucc(@NI,S,SI).
 
-sb3 sendPredecessor@PI1(PI1,P,PI) :- stabilizeRequest@NI(NI,PI1),
-				     pred@NI(NI,P,PI), PI != "-".
+sb3 sendPredecessor(@PI1,P,PI) :- stabilizeRequest(@NI,PI1),
+				     pred(@NI,P,PI), PI != "-".
 
-sb4 succ@NI(NI,P,PI) :- node@NI(NI,N),
-		     	sendPredecessor@NI(NI,P,PI),
-			bestSucc@NI(NI,S,SI), 
+sb4 succ(@NI,P,PI) :- node(@NI,N),
+		     	sendPredecessor(@NI,P,PI),
+			bestSucc(@NI,S,SI), 
 			P in (N,S).
 
-sb5 sendSuccessors@SI(SI,NI) :- stabilize@NI(NI,E), succ@NI(NI,S,SI).
+sb5 sendSuccessors(@SI,NI) :- stabilize(@NI,E), succ(@NI,S,SI).
 
-sb6 returnSuccessor@PI(PI,S,SI) :- sendSuccessors@NI(NI,PI), 
-                                   succ@NI(NI,S,SI).
+sb6 returnSuccessor(@PI,S,SI) :- sendSuccessors(@NI,PI), 
+                                   succ(@NI,S,SI).
 
-sb7 succ@NI(NI,S,SI) :- returnSuccessor@NI(NI,S,SI).
+sb7 succ(@NI,S,SI) :- returnSuccessor(@NI,S,SI).
 
-sb7 notifyPredecessor@SI(SI,N,NI) :- stabilize@NI(NI,E),
-			             node@NI(NI,N), 
-			             succ@NI(NI,S,SI).
+sb7 notifyPredecessor(@SI,N,NI) :- stabilize(@NI,E),
+			             node(@NI,N), 
+			             succ(@NI,S,SI).
 
 
-sb8 pred@NI(NI,P,PI) :- node@NI(NI,N),
-			notifyPredecessor@NI(NI,P,PI), 
-			pred@NI(NI,P1,PI1),
+sb8 pred(@NI,P,PI) :- node(@NI,N),
+			notifyPredecessor(@NI,P,PI), 
+			pred(@NI,P1,PI1),
 			((PI1 == "-") || (P1 == N) || (P in (P1,N))).
 
 
@@ -204,32 +204,32 @@ watch(pingResp).
 watch(pingNode).
 watch(pingNodeCount).
 watch(pendingPing).
-cm0 pingEvent@NI(NI,E) :- periodic@NI(NI,E,10).
+cm0 pingEvent(@NI,E) :- periodic(@NI,E,10).
 
-cm1 pendingPing@NI(NI,PI,E) :- pingEvent@NI(NI,E),
-			pingNode@NI(NI,PI).
+cm1 pendingPing(@NI,PI,E) :- pingEvent(@NI,E),
+			pingNode(@NI,PI).
 
-cm2 pingReq@PI(PI,NI,E) :- pendingPing@NI(NI,PI,E).
+cm2 pingReq(@PI,NI,E) :- pendingPing(@NI,PI,E).
 
-cm3 delete pendingPing@NI(NI,PI,E) :- pingResp@NI(NI,PI,E).
+cm3 delete pendingPing(@NI,PI,E) :- pingResp(@NI,PI,E).
 
-cm4 pingResp@RI(RI,NI,E) :- pingReq@NI(NI,RI,E).
+cm4 pingResp(@RI,NI,E) :- pingReq(@NI,RI,E).
 
-cm5 pingNode@NI(NI,SI) :- succ@NI(NI,S,SI), 
+cm5 pingNode(@NI,SI) :- succ(@NI,S,SI), 
 		       SI != NI.
 
-cm6 pingNode@NI(NI,PI) :- pred@NI(NI,P,PI), 
+cm6 pingNode(@NI,PI) :- pred(@NI,P,PI), 
 		       PI != NI, 
 		       PI != "-".
 
-cm7 succ@NI(NI,S,SI) :- succ@NI(NI,S,SI),
-		     pingResp@NI(NI,SI,E).
+cm7 succ(@NI,S,SI) :- succ(@NI,S,SI),
+		     pingResp(@NI,SI,E).
 
-cm8 pred@NI(NI,P,PI) :- pred@NI(NI,P,PI),
-		     pingResp@NI(NI,PI,E).
+cm8 pred(@NI,P,PI) :- pred(@NI,P,PI),
+		     pingResp(@NI,PI,E).
 
-cm9 pred@NI(NI,"-","-") :- pingEvent@NI(NI,E), 
-			pendingPing@NI(NI,PI,E), 
-			pred@NI(NI,P,PI).
+cm9 pred(@NI,"-","-") :- pingEvent(@NI,E), 
+			pendingPing(@NI,PI,E), 
+			pred(@NI,P,PI).
 
 */
