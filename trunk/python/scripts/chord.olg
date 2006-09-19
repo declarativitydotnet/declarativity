@@ -164,6 +164,8 @@ j5 succ(@NI,S,SI) :- join(@NI,E),
 j6 join(@NI, E) :- periodic(@NI, E, 30), succCount(@NI,C), C == 0.
 j7 join(@NI, E) :- periodic(@NI, E, 5, 1).
 
+
+
 /** Stabilization */
 
 sb1 stabilize(@NI,E) :- periodic(@NI,E,10).

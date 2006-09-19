@@ -96,7 +96,9 @@ int main(int argc, char **argv)
   string ping(readScript(argv[1]));
   string hostname(argv[2]);
   string port(argv[3]);
-  p2 = new P2(hostname, port, P2::ORDERED | P2::RCC | P2::RELIABLE);
+  p2 = new P2(hostname, port,
+              P2::ORDERED | P2::RCC | P2::RELIABLE,
+              LoggerI::NONE);
 
   p2->install("overlog", ping);
   std::cerr << "INSTALLED OVERLOG" << std::endl;
