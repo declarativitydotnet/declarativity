@@ -151,7 +151,7 @@ int main(int argc, char **argv)
   string hostname(argv[1]);
   string port(argv[2]);
   p2 = new P2(hostname, port,
-              P2::RELIABLE,
+              P2::NONE,
               LoggerI::NONE);
 
   std::cerr << "INSTALL PROGRAM" << std::endl;

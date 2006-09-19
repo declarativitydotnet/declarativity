@@ -39,7 +39,9 @@ P2::P2(string hostname,
     parser(boost::python::handle<> 
            (boost::python::borrowed(PyImport_ImportModule("dfparser"))));
   _parser = parser;
-  install("dataflow", stub(hostname, port));
+  std::string stubProgram = stub(hostname, port);
+  std::cout << "Created stub p2dl program: " << stubProgram << "\n";
+  install("dataflow", stubProgram);
   _tupleSourceInterface = dynamic_cast<TupleSourceInterface*>( 
     _plumber->dataflow("P2")->find("tupleSourceInterface")->element().get());
   _plumber->toDot("p2.dot");
@@ -224,16 +226,16 @@ void P2::compileOverlog(string overlog, std::ostringstream& script) {
 string P2::stub(string hostname, string port)
 {
   ostringstream stub;
-  stub << "dataflow P2 { \
-           let udp = Udp2(\"udp\"," << port << "); \
+  stub << "dataflow P2 { \n\
+           let udp = Udp2(\"udp\"," << port << "); \n\
            let wrapAroundDemux = Demux(\"wrapAroundSendDemux\", \{Val_Str(\""
                                                                 << hostname << ":" << port
-                                                                << "\")}, 0); \
-           let inputRR = RoundRobin(\"inputRR\", 3); \
+                                                                << "\")}, 0); \n\
+           let inputRR = RoundRobin(\"inputRR\", 3); \n\
            let header  = PelTransform(\"source\", \"$0 pop \\\""
                                       << hostname <<":" << port 
                                       << "\\\" pop swallow unbox drop "
-                                      << "0 pop 0 pop 0 pop 0 pop 0 pop 0 pop popall\"); ";
+                                      << "0 pop 0 pop 0 pop 0 pop 0 pop 0 pop popall\"); \n";
 
 
   if (_transport_conf & (RELIABLE | RCC | CC | ORDERED)) {
@@ -254,10 +256,10 @@ string P2::stub(string hostname, string port)
     }
   }
 
-  stub << "udp-> UnmarshalField(\"unmarshal\", 1) -> \
-           PelTransform(\"unRoute\", \"$1 unboxPop\") ->";
+  stub << "udp-> Print(\"Received\") -> UnmarshalField(\"unmarshal\", 1) -> \n\
+           PelTransform(\"unRoute\", \"$1 unboxPop\") ->\n";
 
-  stub << "Defrag(\"defrag\") -> TimedPullPush(\"defrag_pull\", 0) ->";
+  stub << "Defrag(\"defrag\") -> TimedPullPush(\"defrag_pull\", 0) ->\n";
   if (_transport_conf & (RCC | CC | RELIABLE | ORDERED)) {
     stub << "ackDemux[1] -> ack ->";
   }
@@ -268,22 +270,25 @@ string P2::stub(string hostname, string port)
   else if (_transport_conf & RELIABLE) {
     stub << "DupRemove(\"dupremove\") ->";
   }
-  stub << "PelTransform(\"unPackage\", \"$8 unboxPop\")->";
+  stub << "PelTransform(\"unPackage\", \"$8 unboxPop\")->\n";
 
-  stub << "Queue -> inputRR -> \
-           TimedPullPush(\"pullDriver\", 0)     -> \
-           PrintWatch(\"printWatch\", {str}) -> \
-           DDemux(\"dDemux\", {value}, 0) ->  \
-           Discard(\"discard\"); \
-           DRoundRobin(\"dRoundRobin\", 0) -> \
-           TimedPullPush(\"rrout_pullPush\", 0) -> \
-           wrapAroundDemux -> \
-           UnboxField(\"unboxWrapAround\", 1) -> \
-           Queue(\"wrapAroundQueue\", 1000) -> \
-           [1]inputRR; \
-           wrapAroundDemux[1] -> Queue(\"netout_queue\", 1000) -> \
-           header -> \
-           Sequence(\"terminal_sequence\", 1) ->";
+  stub << "Queue -> inputRR -> \n\
+           TimedPullPush(\"pullDriver\", 0)     -> \n\
+           PrintWatch(\"printWatch\", {str}) -> \n\
+           DDemux(\"dDemux\", {value}, 0) ->  \n\
+           Discard(\"discard\"); \n\
+           DRoundRobin(\"dRoundRobin\", 0) -> \n\
+           TimedPullPush(\"rrout_pullPush\", 0) -> \n\
+           wrapAroundDemux -> \n\
+           UnboxField(\"unboxWrapAround\", 1) -> \n\
+           Queue(\"wrapAroundQueue\", 1000) -> \n\
+           [1]inputRR; \n\
+           wrapAroundDemux[1] ->\n\
+           Queue(\"netout_queue\", 1000) -> \n\
+           Print(\"Sending\") -> \n\
+           header -> \n\
+           Sequence(\"terminal_sequence\", 1) ->\n\
+           ";
 
 
   /** Send side reliable delivery and congestion control */
@@ -301,13 +306,18 @@ string P2::stub(string hostname, string port)
     stub << "netoutRR ->";
   }
 
-   stub << "TimedPullPush(\"ppfrag\", 0) -> Frag(\"fragment\") ->";
-   stub << "PelTransform(\"package\", \"$0 pop swallow pop\") -> \
-            MarshalField(\"marshalField\", 1)              -> \
-            StrToSockaddr(\"addr_conv\", 0)                -> \
-            udp;  \
-            TupleSourceInterface(\"tupleSourceInterface\") -> \
-            Queue(\"injectQueue\",1000)-> [2]inputRR; ";
+   stub << "\
+            TimedPullPush(\"ppfrag\", 0) -> \n\
+            Print(\"Sending prefrag pushed\") -> \n\
+            Frag(\"fragment\") ->\n\
+            Print(\"Sending fragged\") -> \n\
+            PelTransform(\"package\", \"$0 pop swallow pop\") -> \n\
+            Print(\"Sending packaged\") -> \n\
+            MarshalField(\"marshalField\", 1)              -> \n\
+            StrToSockaddr(\"addr_conv\", 0)                -> \n\
+            udp;  \n \
+            TupleSourceInterface(\"tupleSourceInterface\") -> \n\
+            Queue(\"injectQueue\",1000)-> [2]inputRR; \n";
 
   /** Ack packet send dataflow */
   if (_transport_conf & (RCC | CC | RELIABLE | ORDERED)) {
@@ -338,6 +348,6 @@ string P2::stub(string hostname, string port)
     stub << "[1]rtt; ";
   }
 
-  stub << "}\n.	# END OF DATAFLOW DEFINITION"; 
+  stub << "}\n.	# END OF DATAFLOW DEFINITION\n"; 
   return stub.str();
 }

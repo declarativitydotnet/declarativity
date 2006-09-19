@@ -1,0 +1,27 @@
+/**
+This file is distributed under the terms in the attached LICENSE file.
+If you do not find this file, copies can be found by writing to:
+Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+Or
+UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+Berkeley, CA,  94707. Attention: P2 Group.
+
+DESCRIPTION: Connectivity test file
+
+$Id$
+
+Run me as follows:
+
+tests/runOverLog2 -DOTHER=\"<remoteHost:remotePort\" doc/testPing.olg <host> <port>
+*/
+
+watch(ping).
+watch(pong).
+watch(here).
+watch(pingE).
+
+r1 pingE(@NI, Other, E) :- periodic(@NI, E, 1), Other := OTHER.
+r3 ping(@Other, NI, E) :- pingE(@NI, Other, E).
+r2 here(@NI, Other, E) :- pong(@NI, Other, E).
+

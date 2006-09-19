@@ -35,7 +35,6 @@ MarshalField::~MarshalField()
 
 TuplePtr MarshalField::simple_action(TuplePtr p)
 {
-  std::cout << "Marshaling tuple " << p->toString() << "\n";
   TuplePtr newTuple = Tuple::mk();
   // Take out the appropriate field
   for (unsigned field = 0; field < p->size(); field++) {
