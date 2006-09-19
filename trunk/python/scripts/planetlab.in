@@ -91,7 +91,7 @@ if __name__ == "__main__":
   host   = socket.gethostname()
   port   = args[0]
   server = xmlrpclib.Server('https://www.planet-lab.org/PLCAPI/')
-  p2     = libp2python.P2(host, port, libp2python.P2.TransportConf.RELIABLE)
+  p2     = libp2python.P2(host, port, libp2python.P2.TransportConf.RELIABLE, libp2python.LoggerI.Level.ALL)
   # p2     = libp2python.P2(host, port)
   log    = open("/home/" + flags["slice"] + "/planetlab.log", 'w')
 
