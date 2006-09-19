@@ -660,7 +660,7 @@ Plmb_ConfGen::processRule(OL_Context::Rule *r,
                j < theEventTerm->args();
                j++) {
 	    if (fieldNameEq(r->head->arg(k)->toString(),
-						theEventTerm->arg(j)->toString())) {
+                            theEventTerm->arg(j)->toString())) {
 	      agg_el->registerGroupbyField(j);
               _p2dl << conf_call(agg_spec.get(),
                                  conf_function("registerGroupbyField", j))
@@ -785,8 +785,9 @@ Plmb_ConfGen::checkFunctor(Parse_Functor* functor,
     }
     return; 
   }
-  else (void) functor->getlocspec();
-
+  else {
+    functor->getlocspec();
+  }
 }
 
 
@@ -2301,7 +2302,7 @@ Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
   ostringstream pelTransformStrbuf;
   pelTransformStrbuf << "\"" << pf->fn->name << "\" pop";
 
-  if (pf->aggregate() != -1 && pf->getlocspec() != "") {
+  if (pf->aggregate() != -1 && pf->getlocspec() == "") {
     pelTransformStrbuf << " \"" << nodeID << "\" pop";
   }
 

@@ -83,6 +83,7 @@ int P2::install(string type, string program)
     ostringstream script;
     compileOverlog(program, script);
     program = script.str();
+    std::cout<< " Compiled P2DL program\n" << program << "\nDONE---\n";
     type = "dataflow";
   }
 
