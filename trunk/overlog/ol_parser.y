@@ -205,6 +205,8 @@ aggview:        agg_oper OL_LPAR functorbody OL_COMMA functorbody OL_COMMA funct
 
 functorname:	OL_NAME 
 			{ $$ = new Parse_FunctorName($1); }
+		| OL_NAME OL_AT OL_VAR 
+			{ $$ = new Parse_FunctorName($1,$3); }
 		;
 
 functorbody:	OL_LPAR OL_RPAR 
@@ -218,30 +220,6 @@ functorargs:	functorarg {
 		| functorarg OL_COMMA functorargs {
 			$3->push_front($1); 
 			$$=$3; }
-        | OL_AT atom {
-            $$ = new Parse_ExprList(); 
-			Parse_Var *pv = dynamic_cast<Parse_Var*>($2);
-			if (!pv) {
-			  ostringstream oss;
-			  oss << "location specifier is not a variable";
-			  ctxt->error(oss.str());
-			}
-			else {
-			  pv->locspec = true;
-			  $$->push_front($2); 
-			}}
-        | OL_AT atom OL_COMMA functorargs{
-			Parse_Var *pv = dynamic_cast<Parse_Var*>($2);
-			if (!pv) {
-			  ostringstream oss;
-			  oss << "location specifier is not a variable";
-			  ctxt->error(oss.str());
-			}
-			else {
-			  pv->locspec = true;
-			  $4->push_front($2); 
-			  $$=$4; 
-			}}
 		;
 
 functorarg:	atom
@@ -423,7 +401,7 @@ agg_oper:	  OL_MIN   { $$ = "MIN"; }
 
 // Epilog
 		
- #undef yylex
+#undef yylex
 #include "ol_lexer.h"
 
 static int ol_parser_lex (YYSTYPE *lvalp, OL_Context *ctxt)

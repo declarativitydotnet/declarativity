@@ -1,4 +1,3 @@
-
 /*
  * @(#)$Id$
  *
@@ -63,7 +62,7 @@ int
 PlanContext::FieldNamesTracker::fieldPosition(string var)
 {
   for (uint k = 0; k < fieldNames.size(); k++) {
-    if (fieldNameEq(fieldNames.at(k), var)) {
+    if (fieldNames.at(k) == var) {
       return k;
     }
   }

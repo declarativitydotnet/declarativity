@@ -26,17 +26,6 @@
 class OL_Lexer;
 class OL_Context;
 
-inline bool fieldNameEq(string n1, string n2) 
-{ 
-  if ((n1[0] == '@' &&  n2[0] == '@') 
-	  || (n1[0] != '@' && n2[0] != '@')) 
-	return(n1==n2); 
-  else if (n1[0] == '@' &&  n2[0] != '@') 
-	return((n1.substr(1)) == n2); 
-  else 
-	return((n2.substr(1)) == n1); 
-}
-
 /**
  * A Parse_Expr represents expressions in the Overlog language
  */
@@ -84,15 +73,10 @@ private:
 
 class Parse_Var : public Parse_Expr { 
 public:
-  Parse_Var(ValuePtr var) : Parse_Expr(var) {locspec = FALSE;};
+  Parse_Var(ValuePtr var) : Parse_Expr(var) {};
   Parse_Var(const string& var) : Parse_Expr(Val_Str::mk(var))  {};
 
-  virtual string toString() { 
-	if (!locspec) return v->toString(); 
-	else return ("@" + v->toString());
-  };
-
-  bool locspec;
+  virtual string toString() { return v->toString(); };
 };
 
 class Parse_Agg : public Parse_Expr {
@@ -260,22 +244,18 @@ typedef std::deque<Parse_Term *> Parse_TermList;
 
 class Parse_FunctorName {
 public:
-  Parse_FunctorName(Parse_Expr *n);
+  Parse_FunctorName(Parse_Expr *n, Parse_Expr *l=NULL);
 
   string toString();
 
   string name;
+  string loc;
 };
 
 class Parse_Functor : public Parse_Term {
 public:
-  Parse_Functor(Parse_FunctorName *f, Parse_ExprList *a, Parse_Expr *l=NULL) 
-    : fn(f), args_(a) { 
-	if (l) {
-	  loc_ = l->v->toString(); delete l;
-	}
-	else (void) getlocspec();
-  }
+  Parse_Functor(Parse_FunctorName *f, Parse_ExprList *a) 
+    : fn(f), args_(a) {}
   virtual ~Parse_Functor() {delete fn; delete args_; };
 
   virtual string toString();
@@ -288,13 +268,11 @@ public:
   void arg(Parse_Expr *arg) { args_->push_back(arg); };
   Parse_Expr* arg(int i) { return args_->at(i); };
   int args() { return args_->size(); };
-  string getlocspec();
 
   void replace(int p, Parse_Expr *e);
 
   Parse_FunctorName *fn;
   Parse_ExprList    *args_;
-  string loc_;
 };
 
 class Parse_Assign : public Parse_Term {

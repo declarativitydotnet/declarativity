@@ -659,8 +659,8 @@ Plmb_ConfGen::processRule(OL_Context::Rule *r,
 	  for (int j = 0;
                j < theEventTerm->args();
                j++) {
-	    if (fieldNameEq(r->head->arg(k)->toString(),
-                            theEventTerm->arg(j)->toString())) {
+	    if (r->head->arg(k)->toString() ==
+                theEventTerm->arg(j)->toString()) {
 	      agg_el->registerGroupbyField(j);
               _p2dl << conf_call(agg_spec.get(),
                                  conf_function("registerGroupbyField", j))
@@ -778,6 +778,10 @@ void
 Plmb_ConfGen::checkFunctor(Parse_Functor* functor,
                            OL_Context::Rule* rule)
 {
+  if (functor->fn->loc == "") {
+    error("\"" + functor->fn->name + "\" lacks a location specifier", rule);
+  }
+
   if (functor->fn->name == "periodic") { 
     if (functor->args() < 3) {
       error("Make sure periodic predicate has at least "
@@ -785,8 +789,16 @@ Plmb_ConfGen::checkFunctor(Parse_Functor* functor,
     }
     return; 
   }
-  else {
-    functor->getlocspec();
+
+  bool validLoc = false;
+  for (int k = 0; k < functor->args(); k++) {
+    if (functor->arg(k)->toString() == functor->fn->loc) {
+      validLoc = true;
+    }
+  }
+
+  if (validLoc == false) {
+    error("Invalid location specifier in predicate " + functor->toString(), rule);
   }
 }
 
@@ -796,7 +808,7 @@ Plmb_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
                                          string nodeID, 
                                          FieldNamesTracker* baseNamesTracker)
 {
-  Parse_Functor* baseFunctor;
+  Parse_Functor* baseFunctor = NULL;
   // figure first, which term is the base term. 
   // Assume there is only one for now. Support more in future.
   for (std::list< Parse_Term* >::iterator j = currentRule->terms.begin();
@@ -2259,8 +2271,8 @@ Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
     int pos = -1;
     if (parse_var != NULL) {
       //warn << "Check " << parse_var->toString() << " " << pf->fn->loc << "\n";
-      if (fieldNameEq(parse_var->toString(), pf->getlocspec())) {	
-		locationIndex = k;
+      if (parse_var->toString() == pf->fn->loc) {	
+	locationIndex = k;
       }
       // care only about vars    
       pos = curNamesTracker->fieldPosition(parse_var->toString());    
@@ -2272,9 +2284,9 @@ Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
     if (k == pf->aggregate()) {
       // as input into aggwrap
       Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(curRule->head->arg(k));
-      //warn << "Check " << aggExpr->v->toString() << " " << pf->getlocspec() << "\n";
-      if (fieldNameEq(aggExpr->v->toString(), pf->getlocspec())) {	
-		locationIndex = k;
+      //warn << "Check " << aggExpr->v->toString() << " " << pf->fn->loc << "\n";
+      if (aggExpr->v->toString() == pf->fn->loc) {	
+	locationIndex = k;
       }
       if (aggExpr->aggName() != "COUNT") {
 	pos = curNamesTracker->fieldPosition(aggExpr->v->toString());
@@ -2290,9 +2302,9 @@ Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
     indices.push_back(pos + 1);
   }
 
-  if (locationIndex == -1 && !pf->getlocspec().empty()) {
+  if (locationIndex == -1 && pf->fn->loc != "") {
     error("Head predicate \"" + pf->fn->name + "\" has invalid location specifier " 
-		  + pf->getlocspec());
+	  + pf->fn->loc, curRule);
   }
 						  
   if (locationIndex == -1) { 
@@ -2302,7 +2314,7 @@ Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
   ostringstream pelTransformStrbuf;
   pelTransformStrbuf << "\"" << pf->fn->name << "\" pop";
 
-  if (pf->aggregate() != -1 && pf->getlocspec() == "") {
+  if (pf->aggregate() != -1 && pf->fn->loc == "") {
     pelTransformStrbuf << " \"" << nodeID << "\" pop";
   }
 
@@ -2324,7 +2336,7 @@ Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
   ostringstream oss;
   oss << "Project head " << curNamesTracker->toString() 
       << " " << pelTransformStr + " " << locationIndex << " " <<
-    pf->getlocspec() << "\n";
+    pf->fn->loc << "\n";
   debugRule(curRule, oss.str());
  
   _currentPositionIndex = locationIndex + 1;
@@ -2370,7 +2382,7 @@ Plmb_ConfGen::genJoinElements(OL_Context::Rule* curRule,
                               boost::shared_ptr<Aggwrap> agg_el)
 {
   // identify the events, use that to probe the other matching tables
-  Parse_Functor* eventFunctor;
+  Parse_Functor* eventFunctor = NULL;
   std::vector<Parse_Term*> baseFunctors;
   bool eventFound = false;
 
@@ -2438,10 +2450,9 @@ Plmb_ConfGen::genJoinElements(OL_Context::Rule* curRule,
     FieldNamesTracker* baseProbeNames 
       = new FieldNamesTracker(baseFunctors.at(k));
     
-    if (!fieldNameEq(eventFunctor->getlocspec(), pf->getlocspec())) {
-      error("Event " + eventFunctor->fn->name + "@" 
-            + eventFunctor->getlocspec() + 
-            " and predicate " + pf->fn->name + "@" + pf->getlocspec()  
+    if (eventFunctor->fn->loc != pf->fn->loc) {
+      error("Event " + eventFunctor->fn->name + "@" + eventFunctor->fn->loc + 
+	    " and predicate " + pf->fn->name + "@" + pf->fn->loc  
 	    + " should have the same location specifier", curRule);
     }
 
@@ -2894,7 +2905,7 @@ int
 Plmb_ConfGen::FieldNamesTracker::fieldPosition(string var)
 {
   for (uint k = 0; k < fieldNames.size(); k++) {
-    if (fieldNameEq(fieldNames.at(k), var)) {
+    if (fieldNames.at(k) == var) {
       return k;
     }
   }

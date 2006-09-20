@@ -16,11 +16,13 @@ Run me as follows:
 tests/runOverLog2 -DOTHER=\"<remoteHost:remotePort\" doc/testPing.olg <host> <port>
 */
 
+materialize(env, infinity, infinity, keys(1)).
+
 watch(pingE).
 watch(ping).
 watch(heardPong).
 
-r1 pingE(@NI, Other, E) :- periodic(@NI, E, 1), Other := OTHER.
-r3 ping(@Other, NI, E) :- pingE(@NI, Other, E).
-r2 heardPong(@NI, Other, E) :- pong(@NI, Other, E).
+r1 pingE@NI(NI, Other, E) :- periodic@NI(NI, E, 1), Other := OTHER.
+r3 ping@Other(Other, NI, E) :- pingE@NI(NI, Other, E).
+r2 heardPong@NI(NI, Other, E) :- pong@NI(NI, Other, E).
 

@@ -116,16 +116,18 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
 
     // delete functor generated from delete event
     ValuePtr name = Val_Str::mk(rule->head->fn->name + "delete");
-    ValuePtr loc = Val_Str::mk(rule->head->getlocspec());
+    ValuePtr loc = Val_Str::mk(rule->head->fn->loc);
     Parse_Functor *deleteFunctor = 
-      new Parse_Functor(new Parse_FunctorName(new Parse_Val(name)), 
-						rule->head->args_, new Parse_Val(loc));
+      new Parse_Functor(new Parse_FunctorName(new Parse_Val(name), 
+					      new Parse_Val(loc)), 
+			rule->head->args_);
 
     ValuePtr nameSend = Val_Str::mk(rule->ruleID + rule->head->fn->name + "send");
-    ValuePtr locSend = Val_Str::mk(rule->head->getlocspec());
+    ValuePtr locSend = Val_Str::mk(rule->head->fn->loc);
     Parse_Functor *sendFunctor = 
-      new Parse_Functor(new Parse_FunctorName(new Parse_Val(nameSend)), 
-						rule->head->args_, new Parse_Val(locSend));
+      new Parse_Functor(new Parse_FunctorName(new Parse_Val(nameSend), 
+					      new Parse_Val(locSend)), 
+			rule->head->args_);
     
     // create the events
     eca_insert_rule->_event 
@@ -141,8 +143,7 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
       softStatePredicate = true;
     }
 
-    if (!rule->head->getlocspec().empty() 
-		&& fieldNameEq(rule->head->getlocspec(), nextFunctor->getlocspec())) {
+    if (rule->head->fn->loc == nextFunctor->fn->loc) {
       // if this is local, we can simply add local table or send as an event
       if (headTableInfo != NULL) {
 	eca_insert_rule->_action 
@@ -252,8 +253,7 @@ void ECA_Context::generateActionHead(OL_Context::Rule* rule, string bodyLoc,
     eca_rule->_action = new Parse_Action(rule->head, Parse_Action::SEND);
   } else {
     // to be materialized
-    if (!rule->head->getlocspec().empty()
-		&& fieldNameEq(rule->head->getlocspec(), bodyLoc)) {
+    if (rule->head->fn->loc == bodyLoc) {
       // local materialization
       if (rule->deleteFlag) {
 	eca_rule->_action = new Parse_Action(rule->head, Parse_Action::DELETE);
@@ -263,10 +263,11 @@ void ECA_Context::generateActionHead(OL_Context::Rule* rule, string bodyLoc,
     } else {
       // remote materializatin. Send, followed by store
       ValuePtr name = Val_Str::mk(rule->ruleID + rule->head->fn->name + "send");
-      ValuePtr loc = Val_Str::mk(rule->head->getlocspec());
+      ValuePtr loc = Val_Str::mk(rule->head->fn->loc);
       Parse_Functor *sendFunctor = 
-		new Parse_Functor(new Parse_FunctorName(new Parse_Val(name)), 
-						  rule->head->args_, new Parse_Val(loc));
+	new Parse_Functor(new Parse_FunctorName(new Parse_Val(name), 
+						new Parse_Val(loc)), 
+			  rule->head->args_);
       
       eca_rule->_action = new Parse_Action(sendFunctor, Parse_Action::SEND);
       string headName = rule->head->fn->name;
@@ -306,7 +307,7 @@ void ECA_Context::rewriteEventRule(OL_Context::Rule* rule,
     Parse_Assign *nextAssign = dynamic_cast<Parse_Assign*>(nextTerm); 
 
     if (nextFunctor != NULL) {     
-      loc = nextFunctor->getlocspec();
+      loc = nextFunctor->fn->loc;
       string termName = nextFunctor->fn->name;
       OL_Context::TableInfo* termTableInfo = tableStore->getTableInfo(termName);	  
       if (termTableInfo != NULL) {    
@@ -321,18 +322,20 @@ void ECA_Context::rewriteEventRule(OL_Context::Rule* rule,
 	  periodicArgs->push_back(nextFunctor->arg(0));
 	  periodicArgs->push_back(nextFunctor->arg(1));
 	  ValuePtr name = Val_Str::mk(rule->ruleID + "periodic");
-	  ValuePtr loc = Val_Str::mk(nextFunctor->getlocspec());
+	  ValuePtr loc = Val_Str::mk(nextFunctor->fn->loc);
 	  Parse_Functor *sendFunctor = 
-	    new Parse_Functor(new Parse_FunctorName(new Parse_Val(name)), 
-						  periodicArgs, new Parse_Val(loc));
+	    new Parse_Functor(new Parse_FunctorName(new Parse_Val(name), 
+						    new Parse_Val(loc)), 
+			      periodicArgs);
 
 	  eca_rule1->_action = new Parse_Action(sendFunctor, Parse_Action::SEND);    	  
 	  eca_rule1->_event = new Parse_Event(nextFunctor, Parse_Event::INSERT);    	  
 	  add_rule(eca_rule1);
 
 	  Parse_Functor *recvFunctor = 
-	    new Parse_Functor(new Parse_FunctorName(new Parse_Val(name)), 
-						  periodicArgs, new Parse_Val(loc));
+	    new Parse_Functor(new Parse_FunctorName(new Parse_Val(name), 
+						    new Parse_Val(loc)), 
+			      periodicArgs);
 
 	  eca_rule->_event = new Parse_Event(recvFunctor, Parse_Event::RECV);    	  
 	} else {
@@ -379,7 +382,7 @@ void ECA_Context::rewriteAggregateView(OL_Context::Rule* rule,
   eca_rule->_event = new Parse_Event(nextFunctor, Parse_Event::INSERT);
 
   // generate the head action
-  generateActionHead(rule, nextFunctor->getlocspec(), tableStore, eca_rule);
+  generateActionHead(rule, nextFunctor->fn->loc, tableStore, eca_rule);
   add_rule(eca_rule);
 }
 
