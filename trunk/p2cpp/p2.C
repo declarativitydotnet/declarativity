@@ -44,7 +44,7 @@ P2::P2(string hostname,
   install("dataflow", stubProgram);
   _tupleSourceInterface = dynamic_cast<TupleSourceInterface*>( 
     _plumber->dataflow("P2")->find("tupleSourceInterface")->element().get());
-  _plumber->toDot("p2.dot");
+  _plumber->toDot("p2.stub.initial.dot");
 
   Plumber::DataflowEditPtr edit = _plumber->new_dataflow_edit("P2");
   ElementSpecPtr dDemux      = edit->find("dDemux");
@@ -73,9 +73,7 @@ P2::P2(string hostname,
     std::cerr << "OVERLOG AND DATAFLOW INSTALLER FAILURE" << std::endl;
     exit(1);
   }
-#ifdef DEBUG
-  _plumber->toDot("p2.dot");
-#endif
+  _plumber->toDot("p2.stub.compiler.dot");
 }
 
 
@@ -121,9 +119,7 @@ int P2::install(string type, string program)
         return -1;
       }
     }
-#ifdef DEBUG
-    _plumber->toDot("p2.dot");
-#endif
+    _plumber->toDot("p2.installed.dot");
   }
   return 0;
 }
@@ -169,9 +165,7 @@ P2::CallbackHandlePtr P2::subscribe(string tupleName, cb_tp callback)
     std::cerr << "ERROR: Couldn't install listener" << std::endl;
     return P2::CallbackHandlePtr();
   }
-#ifdef DEBUG
-  _plumber->toDot("p2.dot");
-#endif
+  _plumber->toDot("p2.external.callbacks.dot");
   // Return a handle to the caller for unsubscribing to the listener.
   return P2::CallbackHandlePtr(new P2::CallbackHandle(tupleName, port));	
 }
