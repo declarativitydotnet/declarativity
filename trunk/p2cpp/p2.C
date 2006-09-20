@@ -273,7 +273,7 @@ string P2::stub(string hostname, string port)
   stub << "PelTransform(\"unPackage\", \"$8 unboxPop\")->\n";
 
   stub << "Queue -> inputRR -> \n\
-           TimedPullPush(\"pullDriver\", 0)     -> \n\
+           TimedPullPush(\"pullDriver\", 0) -> \n\
            PrintWatch(\"printWatch\", {str}) -> \n\
            DDemux(\"dDemux\", {value}, 0) ->  \n\
            Discard(\"discard\"); \n\

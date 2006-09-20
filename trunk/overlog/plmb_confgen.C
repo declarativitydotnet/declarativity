@@ -2440,8 +2440,8 @@ Plmb_ConfGen::genJoinElements(OL_Context::Rule* curRule,
     
     if (!fieldNameEq(eventFunctor->getlocspec(), pf->getlocspec())) {
       error("Event " + eventFunctor->fn->name + "@" 
-			+ eventFunctor->getlocspec() + 
-			" and predicate " + pf->fn->name + "@" + pf->getlocspec()  
+            + eventFunctor->getlocspec() + 
+            " and predicate " + pf->fn->name + "@" + pf->getlocspec()  
 	    + " should have the same location specifier", curRule);
     }
 
