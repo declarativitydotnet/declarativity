@@ -62,7 +62,7 @@ demultiplex_LDADD =  \
 
 runOverLog_SOURCES = runOverLog.C
 runOverLog_LDADD = \
-	-lboost_python $(top_builddir)/planner/libp2planner.la \
+	$(top_builddir)/planner/libp2planner.la \
 	$(top_builddir)/overlog/libp2overlog.la \
 	$(top_builddir)/net/libp2net.la \
 	$(top_builddir)/elements/libp2elements.la \
@@ -73,8 +73,8 @@ runOverLog_LDADD = \
 runChord_SOURCES = runChord.C
 runChord_LDADD =  \
 	$(top_builddir)/planner/libp2planner.la \
-	$(top_builddir)/overlog/libp2overlog.la \
 	$(top_builddir)/debugger/libp2debugger.la \
+	$(top_builddir)/overlog/libp2overlog.la \
 	$(top_builddir)/net/libp2net.la \
 	$(top_builddir)/elements/libp2elements.la \
 	$(top_builddir)/p2core/libp2core.la \
@@ -82,9 +82,9 @@ runChord_LDADD =  \
 
 runOverLog2_SOURCES = runOverLog2.C
 runOverLog2_LDADD =  \
+	$(top_builddir)/debugger/libp2debugger.la \
 	$(top_builddir)/p2cpp/libp2cpp.la \
 	$(top_builddir)/overlog/libp2overlog.la \
-	$(top_builddir)/debugger/libp2debugger.la \
 	$(top_builddir)/net/libp2net.la \
 	$(top_builddir)/elements/libp2elements.la \
 	$(top_builddir)/p2core/libp2core.la \
@@ -93,9 +93,9 @@ runOverLog2_LDADD =  \
 
 runPingPong_SOURCES = runPingPong.C
 runPingPong_LDADD =  \
+	$(top_builddir)/debugger/libp2debugger.la \
 	$(top_builddir)/p2cpp/libp2cpp.la \
 	$(top_builddir)/overlog/libp2overlog.la \
-	$(top_builddir)/debugger/libp2debugger.la \
 	$(top_builddir)/net/libp2net.la \
 	$(top_builddir)/elements/libp2elements.la \
 	$(top_builddir)/p2core/libp2core.la \
@@ -183,14 +183,13 @@ INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements \
 
 CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@ ${PYTHON_CPPFLAGS}
 
-# Static linking works around a bug in the OS X 10.4.7 Developer Tools
-LDFLAGS=@BOOST_LIB@ @LDFLAGS@ @PYTHON_LDFLAGS@ -static
+LDFLAGS=@BOOST_LIB@ @LDFLAGS@ @PYTHON_LDFLAGS@
 
 LIBS = @BOOST_LIB@ \
        -L$(top_builddir)/elements -L$(top_builddir)/p2core \
        -L$(top_builddir)/eventLoop -L$(top_builddir)/net \
        -L$(top_builddir)/overlog -L$(top_builddir)/debugger \
-       -L$(top_builddir)/p2cpp -lcrypto -lboost_python
+       -L$(top_builddir)/p2cpp -lcrypto
 
 MAINTAINERCLEANFILES = aclocal.m4 install-sh mkinstalldirs \
 	missing configure config.guess config.sub config.h.in \
