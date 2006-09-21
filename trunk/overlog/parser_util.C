@@ -193,21 +193,41 @@ string Parse_Math::toString() {
   return m.str();
 }
 
-Parse_FunctorName::Parse_FunctorName(Parse_Expr *n, Parse_Expr *l) {
+Parse_FunctorName::Parse_FunctorName(Parse_Expr *n) {
   name = n->v->toString(); delete n;
-  if (l) {
-    loc = l->v->toString();
-    delete l;
-  } else {
-    loc = "";
-  }
 }
 
 string Parse_FunctorName::toString() {
   ostringstream fn;
   fn <<  name;
-  if (loc != "") fn << "@" << loc;
   return fn.str();
+}
+
+string Parse_Functor::getlocspec() {
+  Parse_Var *p;
+  // if the loc_ field was filled in, trust it.  Sometimes this may be
+  // done externally to the parser (e.g. during rule localization.)
+  // Otherwise, find the locspec among the args.
+  if (loc_.empty())  {
+	bool found = false;
+	for (int k = 0; k < args(); k++) {
+	  if ((p = dynamic_cast<Parse_Var*>(arg(k)))
+		  && p->locspec)
+		if (!found) {
+		  loc_ = p->toString();
+		  found = true;
+		}
+		else {
+		  std::cout << "PARSER ERROR: More than one location specifier in predicate " << toString();
+		  loc_.clear();
+		  break;
+		}
+	}
+	if (!found)
+	  std::cout << "PARSER WARNING: No location specifier in predicate " << toString();
+	// drop through to return
+  }
+  return(loc_);
 }
 
 string Parse_Functor::toString() {
