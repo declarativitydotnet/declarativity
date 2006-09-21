@@ -22,8 +22,7 @@ watch(pong).
 watch(pongE).
 watch(heardPing).
 
-
-r1 pongE@NI(NI, Other, E) :- periodic@NI(NI, E, 1), Other := OTHER.
-r2 pong@Other(Other, NI, E) :- pongE@NI(NI, Other, E).
-r3 heardPing@NI(NI, Other, E) :- ping@NI(NI, Other, E).
+r1 pongE(@NI, Other, E) :- periodic(@NI, E, 1), Other := OTHER.
+r2 pong(@Other, NI, E) :- pongE(@NI, Other, E).
+r3 heardPing(@NI, Other, E) :- ping(@NI, Other, E).
 

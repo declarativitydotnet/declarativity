@@ -59,8 +59,9 @@ Localize_Context::addSendRule(OL_Context::Rule* nextRule,
   Parse_Functor* newHead 
     = new Parse_Functor(new 
 			Parse_FunctorName(new 
-					  Parse_Var(Val_Str::mk(newFunctorName)),
-					  new Parse_Var(Val_Str::mk(loc))), pe);
+                                          Parse_Var(Val_Str::
+                                                    mk(newFunctorName))), pe, 
+                        new Parse_Val(Val_Str::mk(loc)));
   OL_Context::Rule* newRule = new OL_Context::Rule(nextRule->ruleID 
 						   + "Local1", newHead, false);
 
@@ -161,8 +162,9 @@ void Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
       minLifetime = zeroLifetime;
     }      
     beforeBoundaryTerms.push_back(probeTerms.at(k));
-    if (probeTerms.at(k)->fn->loc != probeTerms.at(k+1)->fn->loc) {
-      headName << probeTerms.at(k+1)->fn->loc;
+    if (!fieldNameEq(probeTerms.at(k)->getlocspec(),
+					 probeTerms.at(k+1)->getlocspec())) {
+      headName << probeTerms.at(k+1)->getlocspec();
       local = false;
       boundary = k;      
       break;
@@ -184,7 +186,7 @@ void Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
   // add a new rule that takes all terms up to boundary, and send them to dst
   OL_Context::Rule* newRule = addSendRule(nextRule, beforeBoundaryTerms,
 					  headName.str(), probeTerms.at(0),
-					  probeTerms.at(boundary+1)->fn->loc, 
+					  probeTerms.at(boundary+1)->getlocspec(), 
 					  minLifetime, namesTracker->fieldNames, tableStore);
   add_rule(newRule);
 
