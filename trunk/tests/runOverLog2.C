@@ -150,9 +150,7 @@ int main(int argc, char **argv)
   string program(readScript(argv[0], &args[0]));
   string hostname(argv[1]);
   string port(argv[2]);
-  p2 = new P2(hostname, port,
-              P2::NONE,
-              LoggerI::NONE);
+  p2 = new P2(hostname, port, P2::RELIABLE);
 
   std::cerr << "INSTALL PROGRAM" << std::endl;
   p2->install("overlog", program);

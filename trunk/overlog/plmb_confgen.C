@@ -796,7 +796,7 @@ Plmb_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
                                          string nodeID, 
                                          FieldNamesTracker* baseNamesTracker)
 {
-  Parse_Functor* baseFunctor = NULL;
+  Parse_Functor* baseFunctor;
   // figure first, which term is the base term. 
   // Assume there is only one for now. Support more in future.
   for (std::list< Parse_Term* >::iterator j = currentRule->terms.begin();
@@ -2370,7 +2370,7 @@ Plmb_ConfGen::genJoinElements(OL_Context::Rule* curRule,
                               boost::shared_ptr<Aggwrap> agg_el)
 {
   // identify the events, use that to probe the other matching tables
-  Parse_Functor* eventFunctor = NULL;
+  Parse_Functor* eventFunctor;
   std::vector<Parse_Term*> baseFunctors;
   bool eventFound = false;
 

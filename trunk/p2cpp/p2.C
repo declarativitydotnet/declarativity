@@ -25,13 +25,8 @@
 #include "val_str.h"
 #include <iostream>
 
-P2::P2(string hostname,
-       string port,
-       uint tc,
-       LoggerI::Level level) 
-  : _plumber(new Plumber(level)),
-    _id(hostname+":"+port),
-    _transport_conf(tc)
+P2::P2(string hostname, string port, uint tc) 
+  : _plumber(new Plumber()), _id(hostname+":"+port), _transport_conf(tc)
 {
   eventLoopInitialize();
   Py_Initialize();

@@ -51,10 +51,7 @@ public:
   /**
    * Creates a stub P2 installation that receives and
    * sends tuple on hostname:port */
-  P2(string hostname,
-     string port,
-     uint transport_conf,
-     LoggerI::Level level);
+  P2(string hostname, string port, uint transport_conf=NONE);
 
   /**
    * Run the event loop. This call will block the main
