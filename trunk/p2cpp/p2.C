@@ -250,7 +250,9 @@ string P2::stub(string hostname, string port)
     }
   }
 
-  stub << "udp-> Print(\"Received\") -> UnmarshalField(\"unmarshal\", 1) -> \n\
+  stub << "udp-> \n";
+  //  stub << "Print(\"Received\") -> \n";
+  stub << "UnmarshalField(\"unmarshal\", 1) -> \n   \
            PelTransform(\"unRoute\", \"$1 unboxPop\") ->\n";
 
   stub << "Defrag(\"defrag\") -> TimedPullPush(\"defrag_pull\", 0) ->\n";
@@ -278,9 +280,9 @@ string P2::stub(string hostname, string port)
            Queue(\"wrapAroundQueue\", 1000) -> \n\
            [1]inputRR; \n\
            wrapAroundDemux[1] ->\n\
-           Queue(\"netout_queue\", 1000) -> \n\
-           Print(\"Sending\") -> \n\
-           header -> \n\
+           Queue(\"netout_queue\", 1000) -> \n";
+  //  stub << "Print(\"Sending\") -> \n";
+  stub << "header -> \n\
            Sequence(\"terminal_sequence\", 1) ->\n\
            ";
 
@@ -300,14 +302,13 @@ string P2::stub(string hostname, string port)
     stub << "netoutRR ->";
   }
 
-   stub << "\
-            TimedPullPush(\"ppfrag\", 0) -> \n\
-            Print(\"Sending prefrag pushed\") -> \n\
-            Frag(\"fragment\") ->\n\
-            Print(\"Sending fragged\") -> \n\
-            PelTransform(\"package\", \"$0 pop swallow pop\") -> \n\
-            Print(\"Sending packaged\") -> \n\
-            MarshalField(\"marshalField\", 1)              -> \n\
+  stub << "TimedPullPush(\"ppfrag\", 0) -> \n";
+  //  stub << "Print(\"Sending prefrag pushed\") -> \n";
+  stub << "Frag(\"fragment\") ->\n";
+  //  stub << "Print(\"Sending fragged\") -> \n";
+  stub << "PelTransform(\"package\", \"$0 pop swallow pop\") -> \n";
+  //  stub << "Print(\"Sending packaged\") -> \n";
+  stub << "MarshalField(\"marshalField\", 1)              -> \n\
             StrToSockaddr(\"addr_conv\", 0)                -> \n\
             udp;  \n \
             TupleSourceInterface(\"tupleSourceInterface\") -> \n\

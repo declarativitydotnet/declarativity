@@ -1,16 +1,20 @@
-/*
- * @(#)$Id$
- *
- * Copyright (c) 2005 Intel Corporation
- *
- * This file is distributed under the terms in the attached INTEL-LICENSE file.
- * If you do not find this file, copies can be found by writing to:
- * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
- * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
- * 
- * DESCRIPTION: P2Chord in Overlog
- *
- */
+/**
+  * This file is distributed under the terms in the attached LICENSE file.
+  * If you do not find this file, copies can be found by writing to:
+  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+  * Or
+  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+  * Berkeley, CA,  94707. Attention: P2 Group.
+  * 
+  * DESCRIPTION: P2Chord in OverLog
+  * 
+  * $Id$
+  * 
+  * Run me as follows:
+  * 
+  * tests/runOverLog2 -DMASTER=\"<masterHost:myPort\" chord.olg <myhost> <myport>
+  **/
 
 /* The base tuples */
 
@@ -35,9 +39,6 @@ watch(joinEvent).
 watch(lookup).
 watch(lookupResults).
 watch(joinReq).
-watch(joinEventJ).
-watch(joinEventJJ).
-watch(joinEventJJJ).
 watch(bestLookupDist).
 watch(finger).
 watch(succ).
@@ -46,7 +47,6 @@ watch(bestSuccJ).
 watch(bestSuccDist).
 watch(succEvent).
 
-i joinEventJJJ(@M, NI, I, K) :- periodic(@NI, E, 1), M := MASTER, I := 0, K := 2.
 i0 node(@NI, N)          :- periodic(@NI, E, 0, 1), N := f_sha1(NI).
 i1 pred(@NI, P, PI)      :- periodic(@NI, E, 0, 1), P := 0x0I, PI:="-".
 i2 nextFingerFix(@NI, 0) :- periodic(@NI, E, 0, 1). 
@@ -87,15 +87,15 @@ l1 fingerEvent(@MI, T, P, NI, LI) :- finger(@NI,P,L,LI),
 
 n1 succEvent(@NI) :- periodic(@NI,E,5).
 
-n2 bestSuccDist(@NI,min<D>) :- 	succEvent(@NI),
-  				node(@NI,N),
-			        succ(@NI,S,SI), 
-			        D := S - N - 1.
+n2 bestSuccDist(@NI,min<D>) :- succEvent(@NI),
+  			         node(@NI,N),
+			         succ(@NI,S,SI), 
+			         D:=S - N - 1.
 
-n3 bestSucc(@NI,S,SI) :-	succ(@NI,S,SI),
-			   	bestSuccDist(@NI,D), 
-			   	node(@NI,N),
-			   	S - N - 1 == D.
+n3 bestSucc(@NI,S,SI) :- succ(@NI,S,SI),
+			   bestSuccDist(@NI,D), 
+			   node(@NI,N),
+			   D == S - N - 1.
 
 n4 finger(@NI,0,S,SI) :- bestSucc(@NI,S,SI).
 
@@ -157,11 +157,6 @@ f9 nextFingerFix(@NI,I) :- node(@NI,N),
 
 /* Chord Join */
 j1 joinEvent(@NI,E) :- join(@NI,E).
-
-j2a joinEventJ(@NI, E, N, LI) :- joinEvent(@NI, E), node(@NI, N), landmark(@NI, LI).
-j2b joinEventJJ(@NI, E, N, LI) :- joinEventJ(@NI, E, N, LI), LI != NI.
-
-j2c joinEventJJJ(@LI, E, N, NI) :- joinEventJJ(@NI, E, N, LI).
 
 j2 joinReq(@LI,N,NI,E) :- joinEvent(@NI,E),
 			 node(@NI,N), 
