@@ -17,6 +17,7 @@ tests/runOverLog2 -DOTHER=\"<remoteHost:remotePort\" doc/testPong.olg <host> <po
 */
 
 materialize(env, infinity, infinity, keys(1)).
+materialize(eennvv, infinity, infinity, keys(2)).  
 
 watch(pong).
 watch(pongE).

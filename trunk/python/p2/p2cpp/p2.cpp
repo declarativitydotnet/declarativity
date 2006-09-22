@@ -9,8 +9,11 @@ using namespace boost::python::api;
 class P2Wrap : public P2, public wrapper<P2>
 {
 public:
-  P2Wrap(std::string hostname, std::string port, P2::TransportConf conf=P2::NONE)
-    : P2(hostname, port, conf) {};
+  P2Wrap(std::string hostname,
+         std::string port,
+         P2::TransportConf conf,
+         LoggerI::Level level)
+    : P2(hostname, port, conf, level) {};
 
   CallbackHandlePtr subscribe(string tableName, object callback) {
     return P2::subscribe(tableName, boost::function<void (TuplePtr)>(callback));
@@ -21,7 +24,7 @@ void export_p2()
 {
 scope outer =
   class_<P2Wrap, boost::shared_ptr<P2Wrap>, boost::noncopyable>
-        ("P2", init<string, string, optional<P2::TransportConf> >())
+  ("P2", init<string, string, P2::TransportConf, LoggerI::Level >())
     .def("run",         &P2::run)
     .def("install",     &P2::install)
     .def("subscribe",   &P2Wrap::subscribe)
