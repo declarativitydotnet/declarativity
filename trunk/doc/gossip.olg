@@ -9,7 +9,12 @@
  * table followed by an overlogInstall event. The overlogInstall event
  * is picked up by the overlog compile and install strand created by
  * the P2 C++ stub interface.
- */
+ *
+ *
+ * MASTER must be defined externally to the address of the visualization
+ * master, or its proxy address if the visualization master is behind a
+ * NAT. In that case, a tunnel should exist between the MASTER address
+ * and the visualization tool.  */
 
 materialize(overlog, infinity, infinity, keys(3)).
 materialize(sliceNodes, infinity, infinity, keys(2,3)).
@@ -40,8 +45,18 @@ p1 parent(@J, S) :-
 
 p2 overlogInstall(@J, S, T, P) :- overlog(@J, S, T, P).
 
-p3 installEvent(@M, I, J, ID, T) :- overlogInstall(@J, S, T, P), 
-	ID:=f_sha1(J), M:=MASTER, I:="I".
+
+
+/** The dataflow installer element, if there, will issue a
+    dataflowInstallationResult(@Local, Sender, Result, Message) tuple
+    when it's done.  If Result == 0, then installation succeeded. The
+    next rule builds a visualization tuple, which it sends to the
+    visualization master (or proxy thereof). */
+p3 installEvent(@M, I, J, ID, T) :-
+	dataflowInstallationResult(@NI, Sender, Result, Message), 
+	ID := f_sha1(Sender),
+	M := MASTER,
+	I := "I".
 
 /** Periodically tell folks what i have installed */
 p3a gossipEvent(@J, I, T, P, C) :- gossipOverlog(@J, I), 

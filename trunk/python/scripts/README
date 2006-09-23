@@ -27,7 +27,7 @@ in this directory make use of the edit interface, supported by
 the Python interface, which makes use of two new elements. The
 first is the OverlogCompiler (overlog/overlogCompiler.C) element,
 and the second is the DataflowInstaller (elements/dataflowInstaller.C).
-These element assume the existence of a skeleton dataflow graph upon
+These elements assume the existence of a skeleton dataflow graph upon
 which edits are made through the overlog submitted by the user. 
 
 It is recommended that any user of these features read the SOSP 2005

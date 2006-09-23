@@ -18,8 +18,8 @@ Demux::Demux(string name,
              std::vector< ValuePtr > demuxKeys,
              unsigned inputFieldNo)
   : Element(name, 1, demuxKeys.size() + 1),
-    _push_cb(0),
     _demuxKeys(demuxKeys),
+    _push_cb(0),
     _block_flags(),
     _block_flag_count(0),
     _inputFieldNo(inputFieldNo)

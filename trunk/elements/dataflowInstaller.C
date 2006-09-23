@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
@@ -7,7 +9,6 @@
  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
  * Berkeley, CA,  94707. Attention: P2 Group.
  * 
- * DESCRIPTION:
  */
 
 #include "dataflowInstaller.h"
@@ -42,17 +43,17 @@ int DataflowInstaller::push(int port, TuplePtr tp, b_cbv cb)
   if (tp->size() > 2 && (*tp)[1]->typeCode() == Value::STR &&
       Val_Str::cast((*tp)[0]) == "script") {
     ostringstream mesg;
-    ValuePtr my_addr    = (*tp)[1];
+    ValuePtr my_addr = (*tp)[1];
     ValuePtr other_addr = (*tp)[2];
-    string   script = Val_Str::cast((*tp)[3]);
-    int      result = install(script, mesg);
+    string script = Val_Str::cast((*tp)[3]);
+    int result = install(script, mesg);
 
     std::cerr << mesg.str() << std::endl;
 
     TuplePtr status = Tuple::mk();
-    status->append(Val_Str::mk("status"));
-    status->append(other_addr);
+    status->append(Val_Str::mk("dataflowInstallationResult"));
     status->append(my_addr);
+    status->append(other_addr);
     status->append(Val_Int32::mk(result));
     status->append(Val_Str::mk(mesg.str())); 
     status->freeze();
@@ -63,7 +64,10 @@ int DataflowInstaller::push(int port, TuplePtr tp, b_cbv cb)
   }
 }
 
-int DataflowInstaller::install(string script, ostringstream& status) {
+int
+DataflowInstaller::install(string script,
+                           ostringstream& status) {
+  plumber_->toDot("dataflowInstallerBefore.dot");
   parser_.attr("clear")();
   tuple result   = extract<tuple>(parser_.attr("compile")(plumber_, script));
   dict dataflows = extract<dict>(result[0]);
@@ -100,7 +104,7 @@ int DataflowInstaller::install(string script, ostringstream& status) {
       status << "SUCCESSFUL INSTALLATION FOR DATAFLOW EDIT: " << e->name() << std::endl;
     }
   }
-  plumber_->toDot("dataflowInstaller.dot");
+  plumber_->toDot("dataflowInstallerAfter.dot");
   return 0;
 }
 
