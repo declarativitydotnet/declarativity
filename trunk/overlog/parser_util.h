@@ -86,12 +86,15 @@ class Parse_Var : public Parse_Expr {
 public:
   Parse_Var(ValuePtr var) : Parse_Expr(var) {locspec = FALSE;};
   Parse_Var(const string& var) : Parse_Expr(Val_Str::mk(var))  {};
-
+  
   virtual string toString() { 
-	if (!locspec) return v->toString(); 
-	else return ("@" + v->toString());
+    if (!locspec) {
+      return v->toString(); 
+    } else {
+      return ("@" + v->toString());
+    }
   };
-
+  
   bool locspec;
 };
 
@@ -105,7 +108,14 @@ public:
             std::string o,
             ValuePtr p)
     : Parse_Expr(v), oper(o), parameter(p)
-  {};
+  {
+    Parse_Var *pv = dynamic_cast<Parse_Var*>(v);
+    if (pv != NULL) {
+      locspec = pv->locspec;
+    } else {
+      locspec = false;
+    }
+  };
 
   virtual bool operator==(const Parse_Expr &e);
 
@@ -114,6 +124,9 @@ public:
 
   // The parameter of the aggregate, if it's parametric
   ValuePtr parameter;
+
+  /** Am I the loc spec? */
+  bool locspec;
 };
 
 class Parse_Bool : public Parse_Expr {
