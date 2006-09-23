@@ -38,11 +38,11 @@ watch(landmark).
 watch(joinEvent).
 watch(lookup).
 watch(lookupResults).
-watch(joinReq).
 watch(bestLookupDist).
 watch(finger).
 watch(succ).
 watch(bestSucc).
+watch(joinReq).
 watch(bestSuccJ).
 watch(bestSuccDist).
 watch(succEvent).
@@ -54,26 +54,28 @@ i3 landmark(@NI, MASTER) :- periodic(@NI, E, 0, 1).
 i4 landmark(@NI, PI)     :- periodic(@NI, E, 1, 1), parent(@NI, PI), f_coinFlip(0.5) == 1.
 
 /** Lookups */
+
 l0 pathEvent(@MI,T,NI,P) :- lookupResults(@NI,K,S,SI,E,P), MI:=MASTER, T:="P".
+
+
+l2 bestLookupDist(@NI,K,R,E,min<D>,P) :- node(@NI,N), 
+				  	 lookup(@NI,K,R,E,P), 
+					 D := K - B - 1, 
+					 finger(@NI,I,B,BI), 
+					 B in (N,K).
+
+
+l3 lookup(min<@BI>, K, R, E, P1) :- node(@NI,N),	    
+			        bestLookupDist(@NI,K,R,E,D,P), 
+			        finger(@NI,I,B,BI), 
+			        D == K - B - 1,
+			        B in (N, K), P1 := P+ "," + NI.
 
 l1 lookupResults(@R,K,S,SI,E,P) :- node(@NI,N),
 				    lookup(@NI,K,R,E,P), 
 				    bestSucc(@NI,S,SI),
 				    (K in (N,S] || (N == S)).
 
-
-l2 bestLookupDist(@NI,K,R,E,min<D>,P) :- node(@NI,N), 
-				  	   lookup(@NI,K,R,E,P), 
-					   finger(@NI,I,B,BI), 
-					   D:=K - B - 1, 
-					   B in (N,K).
-
-
-l3 lookup(min<BI>,K,R,E,P1) :- node(@NI,N),	    
-			          bestLookupDist(@NI,K,R,E,D,P), 
-			          finger(@NI,I,B,BI), 
-			          D == K - B - 1,
-			          B in (N,K), P1:=P+","+NI.
 
 
 /** Neighbor Selection */
