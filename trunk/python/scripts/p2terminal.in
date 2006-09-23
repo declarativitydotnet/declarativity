@@ -52,9 +52,10 @@ class Terminal(Element):
       return 0
   def push_program(self, node):
       if node < self.nodes:
-          print "\tprogram push to node %s:%d" % (self.address, self.port+node)
+          print "Program push to node %s:%d\n" % (self.address, self.port+node)
           if self.send(self.myaddress, self.address+":"+str(self.port+node), 
                        self.program_name, self.program) == 0:
+              print "Program push successful\n"
               return
           if node+1 < self.nodes: 
               self.set_delay(flags["delay"], lambda: self.push_program(node+1)) 
@@ -120,6 +121,8 @@ class Terminal(Element):
           self.print_usage()
       self.set_delay(0.1, self.delay_callback) 
   def push(self, port, tp, cb):
+      print "===Terminal received tuple %s===" % tp.toString()
+
       # Received status of some sent tuple
       nodeID = Val_Str.cast(tp.at(1))
       status = Val_Int32.cast(tp.at(2))
@@ -142,6 +145,7 @@ class Terminal(Element):
       payload.freeze()
       tuple.append(Val_Tuple.mk(payload))
       tuple.freeze()
+      print "Sending tuple %s\n" % tuple.toString()
       return self.py_push(0, tuple, self.callback)
   
 
@@ -260,9 +264,9 @@ if __name__ == "__main__":
         term.element().program_name = flags["name"]
 
     if plumber.install(edit) == 0:
-        print "Edit Correctly initialized.\n"
+        print "Terminal Correctly Installed.\n"
 
-    # plumber.toDot("p2terminal.dot")
+    plumber.toDot("p2terminal.dot")
     # os.system("dot -Tps p2terminal.dot -o p2terminal.ps")
     # os.remove("p2terminal.dot")
     # Run the plumber

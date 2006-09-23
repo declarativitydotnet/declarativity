@@ -73,7 +73,7 @@ toDot(std::ostream * ostr,
         }
         *ostr << "<o0> default";
         *ostr << "}";
-      } if (string(element->class_name()).compare("Demux") == 0) {
+      } else if (string(element->class_name()).compare("Demux") == 0) {
         Demux* demuxPtr = (Demux*) element.get();
         
         *ostr << "|{";

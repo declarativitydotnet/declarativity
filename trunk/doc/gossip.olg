@@ -11,8 +11,6 @@
  * the P2 C++ stub interface.
  */
 
-#define MASTER "planet2.berkeley.intel-research.net:10000"
-
 materialize(overlog, infinity, infinity, keys(3)).
 materialize(sliceNodes, infinity, infinity, keys(2,3)).
 materialize(nodeCount, infinity, 1, keys(2)).
@@ -26,13 +24,16 @@ r0a sliceEvent(@J, E)    :- periodic(@J, E, 1, 1).
 r0b sliceNodes(@J, N, C) :- sliceNodeEvent(@J, N, C).
 r0c nodeCount(@J, C2)    :- sliceNodeEvent(@J, N, C), C2:=C+1.
 
-g0 overlogEvent(@N, J, T, P) :- gossipEvent(@J, I, T, P, C), 
+g0 overlogDisseminateEvent(@N, J, T, P) :- gossipEvent(@J, I, T, P, C), 
                                  sliceNodes(@J, N, X), I==X.
 
 /** Overlog installation rules */
-p0 overlog(@J, T, P)             :- overlogEvent(@J, S, T, P).
-p1 parent(@J, S)                 :- overlogEvent(@J, S, T, P).
-p2 overlogInstall(@J, J, T, P)   :- overlog(@J, T, P).
+p0 overlog(@J, S, T, P)             :- overlogEvent(@J, S, T, P).
+p0a overlog(@J, S, T, P)             :- overlogDisseminateEvent(@J, S, T, P).
+
+p1 parent(@J, S)                 :- overlogDisseminateEvent(@J, S, T, P).
+
+p2 overlogInstall(@J, S, T, P)   :- overlog(@J, S, T, P).
 p3 installEvent(@M, I, J, ID, T) :- overlogInstall(@J, S, T, P), 
                                      ID:=f_sha1(J), M:=MASTER, I:="I".
 
