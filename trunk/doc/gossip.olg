@@ -16,7 +16,7 @@ materialize(sliceNodes, infinity, infinity, keys(2,3)).
 materialize(nodeCount, infinity, 1, keys(2)).
 materialize(parent, infinity, 1, keys(2)).
 
-watch(parent).
+watch(installEvent).
 
 i0  nodeCount(@J, C) :- periodic(@J, E, 0, 1), C:=0.
 
@@ -24,24 +24,30 @@ r0a sliceEvent(@J, E)    :- periodic(@J, E, 1, 1).
 r0b sliceNodes(@J, N, C) :- sliceNodeEvent(@J, N, C).
 r0c nodeCount(@J, C2)    :- sliceNodeEvent(@J, N, C), C2:=C+1.
 
-g0 overlogDisseminateEvent(@N, J, T, P) :- gossipEvent(@J, I, T, P, C), 
-                                 sliceNodes(@J, N, X), I==X.
+g0 overlogDisseminateEvent(@N, J, T, P) :-
+	gossipEvent(@J, I, T, P, C), 
+	sliceNodes(@J, N, X), I==X.
 
 /** Overlog installation rules */
-p0 overlog(@J, S, T, P)             :- overlogEvent(@J, S, T, P).
-p0a overlog(@J, S, T, P)             :- overlogDisseminateEvent(@J, S, T, P).
+p0 overlog(@J, S, T, P) :-
+	overlogEvent(@J, S, T, P).
 
-p1 parent(@J, S)                 :- overlogDisseminateEvent(@J, S, T, P).
+p0a overlog(@J, S, T, P) :-
+	overlogDisseminateEvent(@J, S, T, P).
 
-p2 overlogInstall(@J, S, T, P)   :- overlog(@J, S, T, P).
+p1 parent(@J, S) :-
+	overlogDisseminateEvent(@J, S, T, P).
+
+p2 overlogInstall(@J, S, T, P) :- overlog(@J, S, T, P).
+
 p3 installEvent(@M, I, J, ID, T) :- overlogInstall(@J, S, T, P), 
-                                     ID:=f_sha1(J), M:=MASTER, I:="I".
+	ID:=f_sha1(J), M:=MASTER, I:="I".
 
 /** Periodically tell folks what i have installed */
 p3a gossipEvent(@J, I, T, P, C) :- gossipOverlog(@J, I), 
-                                    overlog(@J, T, P), C:=0.
+	overlog(@J, S, T, P), C:=0.
 
 p3b gossipOverlog(@J, I) :- periodic(@J, E, 5),
-                             nodeCount(@J, A), 
-                             I := f_rand() % A,
-                             ((f_coinFlip(0.1)==1) || (J==MASTER)).
+	nodeCount(@J, A), 
+	I := f_rand() % A,
+    ((f_coinFlip(0.1)==1) || (J==MASTER)).

@@ -11,11 +11,11 @@ import time
 
 p2rpmversion = "@VERSION@"
 p2rpm = "p2-" + p2rpmversion + "-0.i386.rpm"
-files   = ["../../rpms/" + p2rpm]
+files   = ["rpms/" + p2rpm]
 install = "sudo rpm -i --force " + p2rpm
 
-all_files   = ["../../rpms/boost-1.32.0-6.i386.rpm", "../../rpms/libstdc++-4.0.0-8.i386.rpm",
-               "../../rpms/" + p2rpm, "../../rpms/python-2.3.4-11.i386.rpm", "./p2"]
+all_files   = ["rpms/boost-1.32.0-6.i386.rpm", "rpms/libstdc++-4.0.0-8.i386.rpm",
+               "rpms/" + p2rpm, "rpms/python-2.3.4-11.i386.rpm", "python/scripts/p2"]
 all_install = """\
 sudo rpm -i --force libstdc++-4.0.0-8.i386.rpm; \
 sudo rpm -i --force boost-1.32.0-6.i386.rpm; \
@@ -154,10 +154,10 @@ def startNode(node):
     for i in range(2):
       print "Starting system with command: %s" % start
       if flags["overlog"]:
-        os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % \
+        os.system("ssh -f -l %s %s \"%s\" " % \
                   (flags["slice"], node, start+" "+flags["overlog"].split("/")[-1]))
       else:
-        os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % \
+        os.system("ssh -f -l %s %s \"%s\" " % \
                   (flags["slice"], node, start))
       if flags["pingPort"] > 0:
         pong = False

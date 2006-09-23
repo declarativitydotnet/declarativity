@@ -72,7 +72,7 @@ public class PhiVizFrame
   /**
    * The length of the square drawn around every site.
    */
-  public static final int SIDE = 4;
+  public static final int SIDE = 8;
 
   //Construct the frame
   public PhiVizFrame(BufferedImage mapImage, PlanetLabHelper sites) {
@@ -89,7 +89,7 @@ public class PhiVizFrame
       e.printStackTrace();
     }
   }
-  
+
   public PhiPanel panel() {
 	  return phiPanel;
   }
@@ -121,7 +121,7 @@ public class PhiVizFrame
 	JMenu menu = new JMenu("Display");
 	menuBar.add(menu);
 	this.setJMenuBar(menuBar);
-	
+
     contentPane = (JPanel) this.getContentPane();
     contentPaneBorder = BorderFactory.createEtchedBorder(Color.white,new Color(165, 163, 151));
     contentPane.setLayout(contentPaneGridBagLayout);

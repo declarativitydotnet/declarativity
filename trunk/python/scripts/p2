@@ -17,15 +17,15 @@ OVERLOG=$6
 start() {
 	export PYTHONPATH=/usr/local/lib:/usr/local/bin
         if [ -f /home/${SLICE}/${OVERLOG} ]; then
-		sudo python /home/${SLICE}/planetlab.py -t $TIMEPORT -m $MASTER -p $PORT -o /home/${SLICE}/${OVERLOG} -n ${SLICE} 10000 >& /home/${SLICE}/planetlab.out &
+		sudo python /home/${SLICE}/planetlab.py -t $TIMEPORT -m $MASTER -p $PORT -o /home/${SLICE}/${OVERLOG} -n ${SLICE} 10000 >  /home/${SLICE}/planetlab.out 2>&1 &
 	else
-		sudo python /home/${SLICE}/planetlab.py -t $TIMEPORT -m $MASTER -p $PORT -n ${SLICE} 10000 >& /home/${SLICE}/planetlab.out &
+		sudo python /home/${SLICE}/planetlab.py -t $TIMEPORT -m $MASTER -p $PORT -n ${SLICE} 10000 > /home/${SLICE}/planetlab.out 2>&1 &
         fi
 }
 
 stop() {
 	sudo /bin/kill -9 `ps -ef | grep planetlab.py | grep -v grep | awk '{print $2}'`
-	echo `ps -ef | grep planetlab.py`
+	echo `ps -ef | grep -v grep | grep planetlab.py`
 }
 
 restart() {
