@@ -1380,14 +1380,14 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
     _p2dl << conf_assign(wrapAroundMux.get(), 
                          conf_function("Mux", "wrapAroundSendMux", 3));
 
-    boost::shared_ptr< std::vector< ValuePtr > > demuxKeysCC(new std::vector< ValuePtr > );
-    demuxKeysCC->push_back(ValuePtr(new Val_Str ("ack")));
-    demuxKeysCC->push_back(ValuePtr(new Val_Str ("ccdata")));
+    std::vector< ValuePtr > demuxKeysCC;
+    demuxKeysCC.push_back(ValuePtr(new Val_Str ("ack")));
+    demuxKeysCC.push_back(ValuePtr(new Val_Str ("ccdata")));
 
     ElementSpecPtr demuxRxCC 
       = _conf->addElement(ElementPtr(new Demux ("receiveDemuxCC", demuxKeysCC)));
     _p2dl << conf_assign(demuxRxCC.get(), 
-                         conf_function("Demux", "receiveDemuxCC", conf_valueVec(*demuxKeysCC)));
+                         conf_function("Demux", "receiveDemuxCC", conf_valueVec(demuxKeysCC)));
 
     genPrintElement("PrintBeforeReceiveDemuxCC:" + nodeID);
     hookUp(demuxRxCC, 0);
@@ -1412,19 +1412,19 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
   }
 
   // demuxer
-  boost::shared_ptr< std::vector< ValuePtr > > demuxKeys(new std::vector< ValuePtr >);
+  std::vector< ValuePtr > demuxKeys;
   ReceiverInfoMap::iterator _iterator;
   for (_iterator = _udpReceivers.begin(); 
        _iterator != _udpReceivers.end(); 
        _iterator++) {
     string nextTableName = _iterator->second._name;
-    demuxKeys->push_back(ValuePtr(new Val_Str (nextTableName)));
+    demuxKeys.push_back(ValuePtr(new Val_Str (nextTableName)));
   }
 
   ElementSpecPtr demuxS 
     = _conf->addElement(ElementPtr(new Demux("receiveDemux", demuxKeys)));
   _p2dl << conf_assign(demuxS.get(), 
-                       conf_function("Demux", "receiveDemux", conf_valueVec(*demuxKeys)));
+                       conf_function("Demux", "receiveDemux", conf_valueVec(demuxKeys)));
  
   genPrintElement("PrintReceivedBeforeDemux:"+nodeID);
   genDupElimElement("ReceiveDupElimBeforeDemux:"+ nodeID); 
@@ -1623,13 +1623,13 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
   hookUp(roundRobin, 0, pullPush, 0);
 
   // check here for the wrap around
-  boost::shared_ptr< std::vector< ValuePtr > > wrapAroundDemuxKeys(new std::vector< ValuePtr >);  
-  wrapAroundDemuxKeys->push_back(ValuePtr(new Val_Str(nodeID)));
+  std::vector< ValuePtr > wrapAroundDemuxKeys;
+  wrapAroundDemuxKeys.push_back(ValuePtr(new Val_Str(nodeID)));
   ElementSpecPtr wrapAroundDemux 
     = _conf->addElement(ElementPtr(new Demux("wrapAroundSendDemux", wrapAroundDemuxKeys, 0)));  
   _p2dl << conf_assign(wrapAroundDemux.get(), 
                        conf_function("Demux", "wrapAroundSendDemux", 
-                                     conf_valueVec(*wrapAroundDemuxKeys), 0));
+                                     conf_valueVec(wrapAroundDemuxKeys), 0));
 
   hookUp(wrapAroundDemux, 0); // connect to the wrap around
 

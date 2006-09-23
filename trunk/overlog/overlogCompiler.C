@@ -37,13 +37,24 @@ int OverlogCompiler::push(int port, TuplePtr tp, b_cbv cb)
     overlog = Val_Str::cast((*tp)[3]);
   }
 
+  std::cerr << "Received overlog program:--------\n"
+            << overlog
+            << "\n---EndOfOverlogProgram---------\n";
+
   compile(overlog, script);
+
+  string scriptString =
+    script.str();
+
+  std::cerr << "Produced P2DL script:--------\n"
+            << scriptString
+            << "\n-----EndOfP2DLScript-------\n";
 
   TuplePtr script_tuple = Tuple::mk();
   script_tuple->append(Val_Str::mk("script"));
   script_tuple->append(dest);
   script_tuple->append(source);
-  script_tuple->append(Val_Str::mk(script.str())); 
+  script_tuple->append(Val_Str::mk(scriptString)); 
   script_tuple->freeze();
   return output(0)->push(script_tuple, cb);
 }

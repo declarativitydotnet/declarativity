@@ -101,6 +101,8 @@ n3 bestSucc(@NI,S,SI) :- succ(@NI,S,SI),
 
 n4 finger(@NI,0,S,SI) :- bestSucc(@NI,S,SI).
 
+
+
 /** Successor eviction */
 
 s1 succCount(@NI,count<*>) :- succ(@NI,S,SI), NI != SI.
@@ -158,25 +160,29 @@ f9 nextFingerFix(@NI,I) :- node(@NI,N),
 
 
 /* Chord Join */
-j1 joinEvent(@NI,E) :- join(@NI,E).
+j1 join(@NI, E) :- periodic(@NI, E, 5, 1).
 
-j2 joinReq(@LI,N,NI,E) :- joinEvent(@NI,E),
-			 node(@NI,N), 
-			 landmark(@NI,LI),
-			 LI != NI.
+j2 joinEvent(@NI,E) :- join(@NI,E).
 
-j3 succ(@NI,N,NI) :- landmark(@NI,LI),
-		       joinEvent(@NI,E),
-		       node(@NI,N), 
-		       NI == LI.
+j3 joinReq(@LI,N,NI,E) :- joinEvent(@NI,E),
+			  node(@NI,N), 
+			  landmark(@NI,LI),
+			  LI != NI.
 
-j4 lookup(@LI,N,NI,E,LI) :- joinReq(@LI,N,NI,E).
+j4 succ(@NI,N,NI) :- landmark(@NI,LI),
+		     joinEvent(@NI,E),
+		     node(@NI,N), 
+		     NI == LI.
 
-j5 succ(@NI,S,SI) :- join(@NI,E),
-		       lookupResults(@NI,K,S,SI,E,P).
+j5 lookup(@LI,N,NI,E,LI) :- joinReq(@LI,N,NI,E).
 
+j6 succ(@NI,S,SI) :- join(@NI,E),
+		     lookupResults(@NI,K,S,SI,E,P).
+
+
+/** Attempt to rejoin if I have no successors */
 j6 join(@NI, E) :- periodic(@NI, E, 30), succCount(@NI,C), C == 0.
-j7 join(@NI, E) :- periodic(@NI, E, 5, 1).
+
 
 
 
@@ -190,26 +196,26 @@ sb3 sendPredecessor(@PI1,P,PI) :- stabilizeRequest(@NI,PI1),
 				     pred(@NI,P,PI), PI != "-".
 
 sb4 succ(@NI,P,PI) :- node(@NI,N),
-		     	sendPredecessor(@NI,P,PI),
-			bestSucc(@NI,S,SI), 
-			P in (N,S).
+		      sendPredecessor(@NI,P,PI),
+		      bestSucc(@NI,S,SI), 
+		      P in (N,S).
 
 sb5 sendSuccessors(@SI,NI) :- stabilize(@NI,E), succ(@NI,S,SI).
 
 sb6 returnSuccessor(@PI,S,SI) :- sendSuccessors(@NI,PI), 
-                                   succ(@NI,S,SI).
+                                 succ(@NI,S,SI).
 
 sb7 succ(@NI,S,SI) :- returnSuccessor(@NI,S,SI).
 
 sb7 notifyPredecessor(@SI,N,NI) :- stabilize(@NI,E),
-			             node(@NI,N), 
-			             succ(@NI,S,SI).
+			           node(@NI,N), 
+			           succ(@NI,S,SI).
 
 
 sb8 pred(@NI,P,PI) :- node(@NI,N),
-			notifyPredecessor(@NI,P,PI), 
-			pred(@NI,P1,PI1),
-			((PI1 == "-") || (P1 == N) || (P in (P1,N))).
+                      notifyPredecessor(@NI,P,PI), 
+                      pred(@NI,P1,PI1),
+                      ((PI1 == "-") || (P1 == N) || (P in (P1,N))).
 
 
 /** Connectivity Monitoring */

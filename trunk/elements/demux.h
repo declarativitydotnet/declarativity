@@ -28,7 +28,7 @@
 class Demux : public Element { 
 public:
   
-  Demux(string, boost::shared_ptr< std::vector< ValuePtr > >, unsigned f = 0);
+  Demux(string, std::vector< ValuePtr >, unsigned f = 0);
 
   int push(int port, TuplePtr t, b_cbv cb);
 
@@ -41,12 +41,12 @@ public:
       pushed back. */
   int push(TuplePtr p, b_cbv cb) const;
 
+  /** My demux key vector */
+  std::vector< ValuePtr > _demuxKeys;
+
 private:
   /** The callback for my input */
   b_cbv	_push_cb;
-
-  /** My demux key vector */
-  boost::shared_ptr< std::vector< ValuePtr > > _demuxKeys;
 
   /** My block flags, one per output port */
   std::vector<int> _block_flags;

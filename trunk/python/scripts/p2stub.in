@@ -32,6 +32,8 @@ def get_stub(name, address, port):
       let header        = PelTransform("source", "$0 pop \\"%s:%s\\" pop \
                                                   swallow unbox drop \
                                                   0 pop 0 pop 0 pop 0 pop 0 pop 0 pop popall");
+      let ddemux = DDemux("dDemux", {Val_Str("overlogEvent"),Val_Str("overlogInstall")}, 0);
+      let droundrobin = DRoundRobin("dRoundRobin", 2);
 
       udp-> UnmarshalField("unmarshal", 1)      -> 
       PelTransform("unRoute", "$1 unboxPop")    ->
@@ -40,15 +42,29 @@ def get_stub(name, address, port):
       PelTransform("unPackage", "$8 unboxPop")  ->
       wrapAroundMux ->
       PrintWatch("printWatch", {str}) ->
-      DDemux("dDemux", {value}, 0) -> 
+      Print("BeforeDDemux") ->
+      ddemux[2] ->
+      Print("installPortInput") ->
       Queue("install_result_queue") ->
-      DRoundRobin("dRoundRobin", 1) ->  
+      PelTransform("installEncap", "$1 pop swallow pop") ->
+      [0]droundrobin ->  
+      Print("AfterDRoundRobin") ->
       TimedPullPush("rr_out_pullPush", 0) -> 
+      Print("BeforeWA") ->
       wrapAroundDemux -> 
+      Print("Local") ->
       UnboxField("unboxWrapAround", 1) -> 
       [1]wrapAroundMux;
 
-      wrapAroundDemux[1] -> header                  ->
+      ddemux[0] -> Print("UnknownEventType") -> Discard();
+      ddemux[1] -> Queue("overlogEventToOverlogInstall")
+		-> PelTransform("oE2oI", "\\"overlogInstall\\" pop $1 pop $2 pop $3 pop $4 pop")
+		-> PelTransform("oE2oIEncap", "$1 pop swallow pop")
+	        -> [1]droundrobin;
+
+      wrapAroundDemux[1] ->
+      Print("Remote") ->
+      header                  ->
       Sequence("terminal_sequence", 1)              ->
       Frag("fragment")                              ->
       PelTransform("package", "$0 pop swallow pop") ->
@@ -103,13 +119,13 @@ if __name__ == "__main__":
 
       edit   = plumber.new_dataflow_edit(name)
       ddemux = edit.find("dDemux")
+      installPrint = edit.find("installPortInput")
       rqueue = edit.find("install_result_queue")
 
       oc = edit.addElement(libp2python.OverlogCompiler("ocompiler", plumber, 
                                                        address+":"+str(port+i), name)) 
       di = edit.addElement(libp2python.DataflowInstaller("dinstaller", plumber, dfparser))
-      # printer = edit.addElement(libp2python.Print("dataflow_printer"));
-      edit.hookUp(ddemux, 0, oc, 0)
+      edit.hookUp(installPrint, 0, oc, 0)
       edit.hookUp(oc, 0, di, 0)
       edit.hookUp(di, 0, rqueue, 0)
 
@@ -120,8 +136,6 @@ if __name__ == "__main__":
           print "** Edit Failed to initialize correct spec\n"
 
       plumber.toDot("p2stub_%s.dot" % name)
-      os.system("dot -Tps p2stub_%s.dot -o p2stub_%s.ps" % (name, name))
-      os.remove("p2stub_%s.dot" % name)
 
   # Run the plumber
   libp2python.eventLoop()

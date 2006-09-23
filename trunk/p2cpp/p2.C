@@ -61,13 +61,17 @@ P2::P2(string hostname,
     ElementPtr(new OverlogCompiler("overlogCompiler", _plumber, _id, "P2")));
   ElementSpecPtr dataflowInstaller = edit->addElement(
     ElementPtr(new DataflowInstaller("dataflowInstaller", _plumber, _parser)));
+  ElementSpecPtr diEncap =
+    edit->addElement(ElementPtr(new PelTransform("diEncap",
+                                                 "$1 pop swallow pop")));
 
   edit->hookUp(dDemux, dDemux->add_output(Val_Str::mk("overlogInstall")), qinput, 0);
   edit->hookUp(qinput, 0, pullPush, 0);
   edit->hookUp(pullPush, 0, duplicator, 0);
   edit->hookUp(duplicator, 0, overlogCompiler, 0);
   edit->hookUp(overlogCompiler, 0, dataflowInstaller, 0);
-  edit->hookUp(dataflowInstaller, 0, qoutput, 0);
+  edit->hookUp(dataflowInstaller, 0, diEncap, 0);
+  edit->hookUp(diEncap, 0, qoutput, 0);
   edit->hookUp(qoutput, 0, dRoundRobin, dRoundRobin->add_input());
   if (_plumber->install(edit) < 0) {
     std::cerr << "OVERLOG AND DATAFLOW INSTALLER FAILURE" << std::endl;
@@ -272,10 +276,11 @@ string P2::stub(string hostname, string port)
            TimedPullPush(\"pullDriver\", 0) -> \n\
            PrintWatch(\"printWatch\", {str}) -> \n\
            DDemux(\"dDemux\", {value}, 0) ->  \n\
+           Print(\"Unrecognized Message\") -> \n\
            Discard(\"discard\"); \n\
            DRoundRobin(\"dRoundRobin\", 0) -> \n\
            TimedPullPush(\"rrout_pullPush\", 0) -> \n\
-           wrapAroundDemux -> \n\
+           wrapAroundDemux[0] -> \n\
            UnboxField(\"unboxWrapAround\", 1) -> \n\
            Queue(\"wrapAroundQueue\", 1000) -> \n\
            [1]inputRR; \n\

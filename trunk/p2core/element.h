@@ -223,6 +223,8 @@ public:
     
     Port();
 
+    ~Port() {};
+
     Port(Element * owner,
          Element * correspondent,
          int correspondentPortNumber);

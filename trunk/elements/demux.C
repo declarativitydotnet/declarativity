@@ -15,9 +15,9 @@
 #include "demux.h"
 
 Demux::Demux(string name,
-             boost::shared_ptr< std::vector< ValuePtr > > demuxKeys,
+             std::vector< ValuePtr > demuxKeys,
              unsigned inputFieldNo)
-  : Element(name, 1, demuxKeys->size() + 1),
+  : Element(name, 1, demuxKeys.size() + 1),
     _push_cb(0),
     _demuxKeys(demuxKeys),
     _block_flags(),
@@ -77,7 +77,7 @@ int Demux::push(int port, TuplePtr p, b_cbv cb)
   for (unsigned i = 0;
        i < noutputs() - 1;
        i++) {
-    ValuePtr key = (*_demuxKeys)[i];
+    ValuePtr key = _demuxKeys[i];
 
     // The match must be exact.  No type conversions allowed.
     if (key->equals(first)) {

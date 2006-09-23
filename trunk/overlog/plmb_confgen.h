@@ -289,7 +289,8 @@ private:
 
   void debugRule(OL_Context::Rule* curRule, 
 		 string debugMsg) { 
-    warn << "Planner debug rule (" << curRule->ruleID<< "): " << debugMsg; 
+    warn << "Planner debug rule (" << curRule->ruleID<< "): "
+         << debugMsg << "\n"; 
   }
 
   void error(string msg);

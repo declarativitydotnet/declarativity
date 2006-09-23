@@ -93,7 +93,7 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands)
   // for all rule strands with receive
   // form the receiver infos
   int numReceivers = 0;
-  boost::shared_ptr< std::vector< ValuePtr > > demuxKeys(new std::vector< ValuePtr >);
+  std::vector< ValuePtr > demuxKeys;
   for (unsigned k = 0; k < ruleStrands.size(); k++) {
     RuleStrand* rs = ruleStrands.at(k);
     if (rs->getRule()->_event != NULL && rs->eventType() == Parse_Event::RECV) {
@@ -105,7 +105,7 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands)
 	_receiverInfo.insert(std::make_pair(ri->_tableName, ri));	
 	ri->_receivers.push_back(rs->getFirstElement());
 	numReceivers++;
-	demuxKeys->push_back(Val_Str::mk(ri->_tableName));
+	demuxKeys.push_back(Val_Str::mk(ri->_tableName));
       } else {
 	iterator->second->_receivers.push_back(rs->getFirstElement());      
       }
@@ -138,8 +138,8 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands)
   _networkIn.push_back(demuxReceive);
    
   // hookup demux to duplicators or listeners
-  for (unsigned k = 0; k < demuxKeys->size(); k++) {
-    string key = Val_Str::cast((*demuxKeys)[k]);    
+  for (unsigned k = 0; k < demuxKeys.size(); k++) {
+    string key = Val_Str::cast((demuxKeys)[k]);    
     ReceiverInfoMap::iterator iterator = _receiverInfo.find(key);
     ReceiverInfo* ri = iterator->second;
     
@@ -161,7 +161,7 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands)
 
   ElementSpecPtr sinkS 
     = _conf->addElement(ElementPtr(new Discard("DemuxDiscard")));
-  _conf->hookUp(demuxReceive, demuxKeys->size(), sinkS, 0); 
+  _conf->hookUp(demuxReceive, demuxKeys.size(), sinkS, 0); 
   
 
   // for each rule strands with send

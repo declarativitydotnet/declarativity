@@ -49,19 +49,18 @@ int DataflowInstaller::push(int port, TuplePtr tp, b_cbv cb)
 
     std::cerr << mesg.str() << std::endl;
 
-    TuplePtr packaged = Tuple::mk();
-    TuplePtr status   = Tuple::mk();
-    packaged->append(other_addr);
+    TuplePtr status = Tuple::mk();
     status->append(Val_Str::mk("status"));
+    status->append(other_addr);
     status->append(my_addr);
     status->append(Val_Int32::mk(result));
     status->append(Val_Str::mk(mesg.str())); 
     status->freeze();
-    packaged->append(Val_Tuple::mk(status));
-    packaged->freeze();
-    return output(0)->push(packaged, cb);
+
+    return output(0)->push(status, cb);
+  } else {
+    return 1;                   // keep sending
   }
-  return output(0)->push(tp, cb);
 }
 
 int DataflowInstaller::install(string script, ostringstream& status) {

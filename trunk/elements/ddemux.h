@@ -48,14 +48,18 @@ public:
   int remove_output(unsigned);
   int remove_output(ValuePtr);
 
+
+  typedef std::map<ValuePtr, unsigned, Value::Less> PortMap;
+  PortMap _port_map;
+
+
+
+
 private:
   void remove_block_flag(unsigned port);
 
   /** The callback for my input */
   b_cbv	_push_cb;
-
-  typedef std::map<ValuePtr, unsigned, Value::Less> PortMap;
-  PortMap _port_map;
 
   /** My block flags, one per output port */
   std::vector<bool> _block_flags;

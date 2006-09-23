@@ -136,7 +136,7 @@ class Terminal(Element):
       tuple.append(Val_Str.mk(dest))
       payload.append(Val_Str.mk("overlogEvent"))
       payload.append(Val_Str.mk(dest))
-      payload.append(Val_Str.mk(dest))
+      payload.append(Val_Str.mk(src))
       payload.append(Val_Str.mk(name))
       payload.append(Val_Str.mk(program))
       payload.freeze()
@@ -250,7 +250,7 @@ if __name__ == "__main__":
             file = open(flags["input"]+".processed", 'r') 
             term.element().program = file.read()
             file.close()
-            os.remove("%s.processed" % flags["input"])
+            #os.remove("%s.processed" % flags["input"])
             print "File %s text added to overlog program." % flags["input"]
         except:
             print "ERROR: open file error on file", flags["input"]

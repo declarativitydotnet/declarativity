@@ -15,6 +15,10 @@
 #include <element.h>
 #include <elementSpec.h>
 #include <iostream>
+#include <ddemux.h>
+#include <demux.h>
+#include "val_int32.h"
+#include "val_uint32.h"
 
 void
 toDot(std::ostream * ostr,
@@ -48,15 +52,56 @@ toDot(std::ostream * ostr,
           << "\\n"
           << element->name();   // the official name
 
-    // And figure out the output ports
+    // And figure out the output ports.  For demux, put the names of the
+    // output in there as well
     if (element->noutputs() > 0) {
-      *ostr << "|{<o0> 0";
-      for (unsigned p = 1;
-           p < element->noutputs();
-           p++) {
-        *ostr << "| <o" << p << "> " << p << " ";
+      if (string(element->class_name()).compare("DDemux") == 0) {
+        DDemux* demuxPtr = (DDemux*) element.get();
+        
+        *ostr << "|{";
+
+        DDemux::PortMap::iterator miter =
+          demuxPtr->_port_map.begin();
+        while (miter != demuxPtr->_port_map.end()) {
+          *ostr << "<o"
+                << miter->second
+                << "> "
+                << miter->first->toString();
+
+          miter++;
+          *ostr << "|";
+        }
+        *ostr << "<o0> default";
+        *ostr << "}";
+      } if (string(element->class_name()).compare("Demux") == 0) {
+        Demux* demuxPtr = (Demux*) element.get();
+        
+        *ostr << "|{";
+
+        std::vector< ValuePtr >::iterator miter =
+          demuxPtr->_demuxKeys.begin();
+        uint counter = 0;
+        while (miter != demuxPtr->_demuxKeys.end()) {
+          *ostr << "<o"
+                << counter
+                << "> "
+                << (*miter)->toString();
+
+          miter++;
+          counter++;
+          *ostr << "|";
+        }
+        *ostr << "<o" << counter << "> default";
+        *ostr << "}";
+      } else {
+        *ostr << "|{<o0> 0";
+        for (unsigned p = 1;
+             p < element->noutputs();
+             p++) {
+          *ostr << "| <o" << p << "> " << p << " ";
+        }
+        *ostr << "}";
       }
-      *ostr << "}";
     }
 
     // Close the element label

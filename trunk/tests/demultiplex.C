@@ -68,9 +68,9 @@ void testStaticDemux()
   conf->hookUp(sinkPrintOtherS, 0, sinkOtherS, 0);
 
   // The demultiplexer
-  boost::shared_ptr< std::vector< ValuePtr > > demuxKeys(new std::vector< ValuePtr >);
-  demuxKeys->push_back(ValuePtr(new Val_Int32(0)));
-  demuxKeys->push_back(ValuePtr(new Val_Int32(1)));
+  std::vector< ValuePtr > demuxKeys;
+  demuxKeys.push_back(ValuePtr(new Val_Int32(0)));
+  demuxKeys.push_back(ValuePtr(new Val_Int32(1)));
   ElementSpecPtr demuxS = conf->addElement(ElementPtr(new Demux("demux", demuxKeys)));
   conf->hookUp(prefixedPrintS, 0, demuxS, 0);
   conf->hookUp(demuxS, 0, sinkPrintEvenS, 0);
