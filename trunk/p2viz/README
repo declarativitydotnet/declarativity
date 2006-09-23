@@ -131,3 +131,12 @@ links and lookup responses.
 4. Issue the following command to kill all P2 instances in the slice.
 [tcondie@clash scripts]$ python psetup.py -j 20 -k -n irb_p2
 
+
+============================================
+Demo session from phi/phi:
+
+   394  14:11   ssh -v -l irb_phi -R 10001:localhost:10001 planet2.berkeley.intel-research.net
+   313  6:14    python python/scripts/psetup.py -j 10 -k -n irb_phi
+   314  6:14    python python/scripts/psetup.py -DMASTER=\"planet2.berkeley.intel-research.net\" -t 10002 -j 20 -o doc/gossip.olg -m planet2.berkeley.intel-research.net -p 10001 -n irb_phi
+   315  6:15    python python/scripts/p2terminal.py -DMASTER=\"planet2.berkeley.intel-research.net:10000\" -t chord.olg -f python/scripts/chord.olg -n 1 -a planet2.berkeley.intel-research.net -p 10000 localhost 9999
+
