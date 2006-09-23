@@ -205,27 +205,47 @@ string Parse_FunctorName::toString() {
 
 string Parse_Functor::getlocspec() {
   Parse_Var *p;
+  Parse_Agg *a;
+  
   // if the loc_ field was filled in, trust it.  Sometimes this may be
   // done externally to the parser (e.g. during rule localization.)
   // Otherwise, find the locspec among the args.
   if (loc_.empty())  {
-	bool found = false;
-	for (int k = 0; k < args(); k++) {
-	  if ((p = dynamic_cast<Parse_Var*>(arg(k)))
-		  && p->locspec)
-		if (!found) {
-		  loc_ = p->toString();
-		  found = true;
-		}
-		else {
-		  std::cout << "PARSER ERROR: More than one location specifier in predicate " << toString();
-		  loc_.clear();
-		  break;
-		}
-	}
-	if (!found)
-	  std::cout << "PARSER WARNING: No location specifier in predicate " << toString();
-	// drop through to return
+    bool found = false;
+    for (int k = 0; k < args(); k++) {
+      if ((p = dynamic_cast<Parse_Var*>(arg(k)))
+          && p->locspec) {
+        if (!found) {
+          loc_ = p->toString();
+          found = true;
+        }
+        else {
+          std::cout << "PARSER ERROR: More than one location "
+                    << "specifier in predicate " << toString();
+          loc_.clear();
+          break;
+        }
+      } else if ((a = dynamic_cast<Parse_Agg*>(arg(k)))
+                 && a->locspec) {
+        // This argument is an aggregate and also the location
+        // specifier
+        if (!found) {
+          // The name of the locspec is the aggregation variable
+          loc_ = "@" + a->v->toString();
+          found = true;
+        }
+        else {
+          std::cout << "PARSER ERROR: More than one location "
+                    << "specifier in predicate " << toString();
+          loc_.clear();
+          break;
+        }
+      }
+    }
+    if (!found)
+      std::cout << "PARSER WARNING: No location specifier in predicate "
+                << toString();
+    // drop through to return
   }
   return(loc_);
 }
