@@ -408,7 +408,15 @@ atom:		OL_VALUE | OL_VAR | OL_STRING | OL_NULL
 		;
 
 aggregate:	agg_oper OL_LT OL_VAR OL_GT 
-			{ $$ = new Parse_Agg($3, $1, ValuePtr()); }
+                        { $$ = new Parse_Agg($3, $1, ValuePtr()); }
+		|
+		agg_oper OL_LT OL_AT OL_VAR OL_GT 
+                        {
+                          // Make the variable a location specifier
+                          Parse_Var *pv = dynamic_cast<Parse_Var*>($4);
+                          pv->locspec = true;
+                          $$ = new Parse_Agg($4, $1, ValuePtr());
+                        }
 		|
 		agg_oper OL_LT OL_TIMES OL_GT 
 			{ $$ = new Parse_Agg(Parse_Agg::DONT_CARE, $1, ValuePtr()); }
