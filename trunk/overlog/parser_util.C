@@ -244,7 +244,8 @@ string Parse_Functor::getlocspec() {
     }
     if (!found)
       std::cout << "PARSER WARNING: No location specifier in predicate "
-                << toString();
+                << toString()
+                << "\n";
     // drop through to return
   }
   return(loc_);
