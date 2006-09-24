@@ -441,8 +441,8 @@ void pelSelect(PlanContext* pc, Parse_Select *expr, int selectionID)
  
   ElementSpecPtr sPelTrans =
     pc->createElementSpec(ElementPtr(new PelTransform("Selection:" 
-							  + curRule->_ruleID + ":" + 
-							  pc->_nodeID, sPel.str())));
+                                                      + curRule->_ruleID + ":" + 
+                                                      pc->_nodeID, sPel.str())));
   pc->addElementSpec(sPelTrans);
 }
 
@@ -472,7 +472,7 @@ void pelAssign(PlanContext* pc, Parse_Assign* expr, int assignID)
   
   ElementSpecPtr assignPelTrans =
     pc->createElementSpec(ElementPtr(new PelTransform("Assignment:" + curRule->_ruleID + ":" 
-							  + pc->_nodeID, pel.str())));
+                                                      + pc->_nodeID, pel.str())));
   
   pc->addElementSpec(assignPelTrans);  
 }

@@ -350,8 +350,10 @@ void generatePeriodicEvent(PlanContext* pc)
    
   // a pel transform that puts in the periodic stuff
   ElementSpecPtr pelRand = 
-    pc->createElementSpec(ElementPtr(new PelTransform("FunctorSourcePel|" + curRule->_ruleID +
-                                                  "|" + pc->_nodeID, "$0 pop $1 pop rand pop")));
+    pc->createElementSpec(ElementPtr(new PelTransform("FunctorSourcePel|" +
+                                                      curRule->_ruleID +
+                                                      "|" + pc->_nodeID,
+                                                      "$0 pop $1 pop rand pop")));
   pc->addElementSpec(pelRand);
 
   ostringstream oss;
@@ -363,9 +365,10 @@ void generatePeriodicEvent(PlanContext* pc)
   // The timed pusher
   ElementSpecPtr pushFunctor =
     pc->createElementSpec(ElementPtr(new TimedPullPush("FunctorPush|" 
-						       + curRule->_ruleID+ "|"
-						       + pc->_nodeID,
-						      atof(period.c_str()), count)));
+						       + curRule->_ruleID +
+                                                       "|" + pc->_nodeID,
+                                                       atof(period.c_str()),
+                                                       count)));
 
   pc->addElementSpec(pushFunctor);
   
@@ -682,8 +685,7 @@ void generateProbeElements(PlanContext* pc,
 
   string pelProjectStr = pelProject.str();
   ostringstream oss1; 
-  oss1 << "joinPel_" << pc->getRule()->_ruleID 
-       << " " << pelProjectStr;
+  oss1 << "joinPel_" << pc->getRule()->_ruleID;
 
   ElementSpecPtr transS =
     pc->createElementSpec(ElementPtr(new PelTransform(oss1.str(),
