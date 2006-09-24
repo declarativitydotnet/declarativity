@@ -1,4 +1,16 @@
-/**
+/*
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
+ * 
+ * DESCRIPTION: Dissemination Gossip
+ *
+ * $Id$
+ *
  * This program instructs nodes to gossip the overlog programs it
  * knows about with other planetlab nodes. The program assumes 
  * a sliceNodeEvent, triggered by a sliceEvent, that provides the set 
@@ -14,55 +26,202 @@
  * MASTER must be defined externally to the address of the visualization
  * master, or its proxy address if the visualization master is behind a
  * NAT. In that case, a tunnel should exist between the MASTER address
- * and the visualization tool.  */
+ * and the visualization tool.
+ *
+ */
 
-materialize(overlog, infinity, infinity, keys(3)).
+
+/* Schema: overlog(LocalNode, OverLogProgramName, OverLogProgramText). */
+materialize(overlog, infinity, infinity, keys(2)).
+
+/* My installed programs. Contains the same info as localInstalledEvent.
+   */
+materialize(installed, infinity, infinity, keys(2)).
+
+/* Schema: sliceNodes(LocalNode, OtherSliceNode, NodeNumber). */
 materialize(sliceNodes, infinity, infinity, keys(2,3)).
+
+/* Schema: nodeCount(LocalNode, HighestNodeVersionNumber). */
 materialize(nodeCount, infinity, 1, keys(2)).
+
+/* Schema: parent(LocalNode, ParentNode).
 materialize(parent, infinity, 1, keys(2)).
 
-watch(installEvent).
-
-i0  nodeCount(@J, C) :- periodic(@J, E, 0, 1), C:=0.
-
-r0a sliceEvent(@J, E)    :- periodic(@J, E, 1, 1).
-r0b sliceNodes(@J, N, C) :- sliceNodeEvent(@J, N, C).
-r0c nodeCount(@J, C2)    :- sliceNodeEvent(@J, N, C), C2:=C+1.
-
-g0 overlogDisseminateEvent(@N, J, T, P) :-
-	gossipEvent(@J, I, T, P, C), 
-	sliceNodes(@J, N, X), I==X.
-
-/** Overlog installation rules */
-p0 overlog(@J, S, T, P) :-
-	overlogEvent(@J, S, T, P).
-
-p0a overlog(@J, S, T, P) :-
-	overlogDisseminateEvent(@J, S, T, P).
-
-p1 parent(@J, S) :-
-	overlogDisseminateEvent(@J, S, T, P).
-
-p2 overlogInstall(@J, S, T, P) :- overlog(@J, S, T, P).
 
 
+
+
+
+/**
+***
+*** Group membership management
+***
+***/
+
+g1 nodeCount(@J, 0) :- periodic(@J, E, 0, 1).
+
+g2 sliceEvent(@J, E) :- periodic(@J, E, 1, 1).
+
+g3 sliceNodes(@J, N, C) :- sliceNodeEvent(@J, N, C).
+
+g4 nodeCount(@J, C2) :- sliceNodeEvent(@J, N, C), C2 := C + 1.
+
+
+
+
+/**
+***
+*** Name Dissemination
+***
+***/
+
+d1 gossipEvent(@NI, NeighborID) :-
+	periodic(@NI, E, 2),
+	nodeCount(@NI, Counter), 
+	NeighborID := f_rand() % Counter.
+
+d2 programNamesDisseminateMessage(@Neighbor, NI, Name) :-
+	sending(@NI, Neighbor, Name).
+
+d2a sending(@NI, Neighbor, Name) :-
+	gossipEvent(@NI, NeighborID),
+	sliceNodes(@NI, Neighbor, SliceNeighborID),
+	SliceNeighborID == NeighborID, /* They don't match types so I
+                                          have to put them in an
+				          expression that autocasts. */
+	overlog(@NI, Name, Program).
+
+d3 parent(@NI, Sender) :-
+	programNamesDisseminateMessage(@NI, Sender, Name).
+
+
+
+/**
+***
+*** Program Pull
+***
+***/
+
+/* Do I have this name? */
+l1 nameCount(@NI, Sender, Name, count<*>) :-
+	programNamesDisseminateMessage(@NI, Sender, Name),
+	overlog(@NI, Name, _).
+
+/* Please give me programs I don't have. */
+l3 pullProgramMessage(@Sender, NI, Name) :-
+	nameCount(@NI, Sender, Name, Counter), Counter == 0.
+
+/* Here ya go. */
+l4 overlogMessage(@Requester, NI, Name, Program) :-
+	pullProgramMessage(@NI, Requester, Name),
+	overlog(@NI, Name, Program).
+
+
+
+
+/**
+***
+*** Overlog installation.
+***
+****/
+
+/* Through gossip */
+p1 overlog(@NI, Name, Program) :-
+	overlogMessage(@NI, Sender, Name, Program).
+
+/* Initial install via p2terminal. It sends overlogEvent messages. */
+p2 overlog(@NI, Name, Program) :-
+	overlogEvent(@NI, Sender, Name, Program).
+
+/* Pass new programs to native installer. Don't pass through a
+sender. */
+p3 overlogInstall(@NI, "none", Name, Program) :-
+	overlog(@NI, Name, Program).
 
 /** The dataflow installer element, if there, will issue a
     dataflowInstallationResult(@Local, Sender, Result, Message) tuple
     when it's done.  If Result == 0, then installation succeeded. The
     next rule builds a visualization tuple, which it sends to the
-    visualization master (or proxy thereof). */
-p3 installEvent(@M, I, J, ID, T) :-
-	dataflowInstallationResult(@NI, Sender, Result, Message), 
-	ID := f_sha1(Sender),
-	M := MASTER,
-	I := "I".
+    visualization master (or proxy thereof).  Since we don't pass a
+    sender in p3 above, ignore the sender value in the
+    dataflowInstallationResult tuple. */
+p4 localInstallEvent(@NI, "I", M, ID, Result) :-
+	dataflowInstallationResult(@NI, _, Result, Message), 
+	ID := f_sha1(NI),
+	M := MASTER.
 
-/** Periodically tell folks what i have installed */
-p3a gossipEvent(@J, I, T, P, C) :- gossipOverlog(@J, I), 
-	overlog(@J, S, T, P), C:=0.
+p5 installed(@NI, I, M, ID, Result) :-
+	localInstallEvent(@NI, I, M, ID, Result).
 
-p3b gossipOverlog(@J, I) :- periodic(@J, E, 5),
-	nodeCount(@J, A), 
-	I := f_rand() % A,
-    ((f_coinFlip(0.1)==1) || (J==MASTER)).
+p6 installEvent(@M, I, NI, ID, Result) :-
+	installed(@NI, I, M, ID, Result).
+
+/** Duplicate just in case */
+p7 installEvent(@M, I, NI, ID, Result) :-
+	visUpdate(@NI),
+	installed(@NI, I, M, ID, Result).
+
+/** visUpdate is common for all replay events */
+p8 visUpdate(@NI) :-
+	periodic(@NI, E, 5).
+
+
+
+/**
+***
+*** Watch statements
+***
+****/
+
+watch(installEvent).
+
+/*
+watch(dataflowInstallationResult).
+
+watch(reportNewOverlog).
+
+watch(overlogInstall).
+
+watch(localInstallEvent).
+
+watch(reportOverlog).
+
+watch(reportSlice).
+
+watch(programNamesDisseminateMessage).
+
+watch(reportSending).
+
+watch(gossipEvent).
+
+watch(pullProgramMessage).
+
+watch(nameCount).
+
+*/
+
+/**
+***
+*** Debugging statements
+***
+***/
+
+/*
+
+r2 reportNewOverlog(@NI, Name) :-
+	overlog(@NI, Name, Program).
+
+r3 reportSending(@NI, Neighbor, Name) :-
+	sending(@NI, Neighbor, Name).
+
+r1 reportOverlog(@NI, E, Name, Program) :-
+	periodic(@NI, E, 3),
+	overlog(@NI, Name, Program).
+
+r2 reportSlice(@NI, E, Neighbor, ID) :-
+	periodic(@NI, E, 3),
+	sliceNodes(@NI, Neighbor, ID).
+*/
+
+
+/** End of gossip.olg. */

@@ -197,9 +197,6 @@ void Aggwrap::agg_finalize() {
   TRC_FN; 
   if (_aggfn == "COUNT") {       
     if (_incomingTuple) {
-      std::cout << "AGGWRAP COUNT FINALIZATION GOT INCOMING "
-                << _incomingTuple->toString()
-                << "\n";
       aggResult = Tuple::mk();
       aggResult->append(Val_Str::mk(_outputTableName));
       for (uint k = 0; k < _groupByFields.size(); k++) {

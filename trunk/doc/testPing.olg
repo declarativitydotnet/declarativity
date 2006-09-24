@@ -16,13 +16,4 @@
   * tests/runOverLog2 -DOTHER=\"<remoteHost:remotePort\" doc/testPing.olg <host> <port>
   **/
 
-materialize(env, infinity, infinity, keys(1)).
-materialize(pingNode, infinity, infinity, keys(2)).  
-
-watch(pingE).
-watch(ping).
-watch(heardPong).
-
-r1 pingE(@NI, Other, E) :- periodic(@NI, E, 1), Other := OTHER.
-r3 ping(@Other, NI, E) :- pingE(@NI, Other, E).
-r2 heardPong(@NI, Other, E) :- pong(@NI, Other, E).
+r1 pingE(@NI, Other, E) :- pongE(@NI, Other, E).

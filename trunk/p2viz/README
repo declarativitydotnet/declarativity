@@ -136,7 +136,63 @@ links and lookup responses.
 Demo session from phi/phi:
 
    394  14:11   ssh -v -l irb_phi -R 10001:localhost:10001 planet2.berkeley.intel-research.net
+     3  16:32   setenv PYTHONPATH python/p2/.libs/:python/dfparser/:python/dfparser/yapps/
    313  6:14    python python/scripts/psetup.py -j 10 -k -n irb_phi
-   314  6:14    python python/scripts/psetup.py -DMASTER=\"planet2.berkeley.intel-research.net\" -t 10002 -j 20 -o doc/gossip.olg -m planet2.berkeley.intel-research.net -p 10001 -n irb_phi
+   314  6:14    python python/scripts/psetup.py -DMASTER=\"planet2.berkeley.intel-research.net\" -t 10002 -j 20 -o doc/gossip.olg -m planet2.berkeley.intel-research.net -p 12221 -n irb_phi
    315  6:15    python python/scripts/p2terminal.py -DMASTER=\"planet2.berkeley.intel-research.net:10000\" -t chord.olg -f python/scripts/chord.olg -n 1 -a planet2.berkeley.intel-research.net -p 10000 localhost 9999
+
+
+Set up a screen with 4 sites, tailing planetlab.out
+
+^A S to split the screen (again and again)
+^A ^I to switch among them
+^A A to name them
+
+
+
+France telecom scenario
+-----------------------
+
+
+As many nodes as possible
+
+Add them all
+python python/scripts/psetup.py -j 10 -a -n irb_francetelecom -u maniatis@intel-research.net -w pmPLpm ;
+
+Kill them all
+python python/scripts/psetup.py -j 10 -k -n irb_francetelecom -u maniatis@intel-research.net -w pmPLpm ;
+
+Install them all
+python python/scripts/psetup.py -I -DMASTER=\"planet1.berkeley.intel-research.net:10000\" -t 10002 -j 20 -o doc/gossip.olg -m planet1.berkeley.intel-research.net -p 12221 -n irb_francetelecom -u maniatis@intel-research.net -w pmPLpm ;
+
+Run them all
+python python/scripts/psetup.py -DMASTER=\"planet1.berkeley.intel-research.net:10000\" -t 10002 -j 20 -o doc/gossip.olg -m planet1.berkeley.intel-research.net -p 12221 -n irb_francetelecom -u maniatis@intel-research.net -w pmPLpm ;
+
+Install chord
+python python/scripts/p2terminal.py -DMASTER=\"planet1.berkeley.intel-research.net:10000\" -t chord.olg -f python/scripts/chord.olg -n 1 -a planet1.berkeley.intel-research.net -p 10000 localhost 9999
+
+
+
+irb_p2 scenario
+-----------------------
+
+Several reliable far apart nodes
+
+Kill them all
+python python/scripts/psetup.py -j 10 -k -n irb_p2 -u maniatis@intel-research.net -w pmPLpm ;
+
+Install them all
+python python/scripts/psetup.py -I -DMASTER=\"planet3.berkeley.intel-research.net:10000\" -t 10002 -j 20 -o doc/gossip.olg -m planet3.berkeley.intel-research.net -p 12221 -n irb_p2 -u maniatis@intel-research.net -w pmPLpm ;
+
+Run them all
+python python/scripts/psetup.py -DMASTER=\"planet3.berkeley.intel-research.net:10000\" -t 10002 -j 20 -o doc/gossip.olg -m planet3.berkeley.intel-research.net -p 12221 -n irb_p2 -u maniatis@intel-research.net -w pmPLpm ;
+
+Install chord
+python python/scripts/p2terminal.py -DMASTER=\"planet3.berkeley.intel-research.net:10000\" -t chord.olg -f python/scripts/chord.olg -n 1 -a planet3.berkeley.intel-research.net -p 10000 localhost 9999
+
+
+
+
+
+
 

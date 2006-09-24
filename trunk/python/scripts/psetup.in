@@ -8,37 +8,67 @@ import getopt
 import socket
 import getpass
 import time
+import traceback
 
 p2rpmversion = "@VERSION@"
 p2rpm = "p2-" + p2rpmversion + "-0.i386.rpm"
-files   = ["rpms/" + p2rpm]
-install = "sudo rpm -i --force " + p2rpm
 
-all_files   = ["rpms/boost-1.32.0-6.i386.rpm", "rpms/libstdc++-4.0.0-8.i386.rpm",
-               "rpms/" + p2rpm, "rpms/python-2.3.4-11.i386.rpm", "python/scripts/p2"]
-all_install = """\
-sudo rpm -i --force libstdc++-4.0.0-8.i386.rpm; \
-sudo rpm -i --force boost-1.32.0-6.i386.rpm; \
-sudo rpm -i --force python-2.3.4-11.i386.rpm; \
-sudo rpm -i --force %s; \
-sudo mv ~/p2 /etc/rc.d/init.d/""" % p2rpm
-startup =  "sudo /sbin/service p2 restart"
-stop    =  "sudo /sbin/service p2 stop"
+#File classes
+planetlabfile_root = ["python/scripts/planetlab.py",
+                  "python/scripts/p2"]
+planetlabfileinstall = "sudo mv ~/p2 /etc/rc.d/init.d/;"
+
+
+p2rpmfiles_root = ["rpms/" + p2rpm]
+p2rpminstall = "sudo rpm -i --force %s;" % p2rpm
+
+
+otherrpmfiles_root = ["rpms/boost-1.32.0-6.i386.rpm",
+                      "rpms/libstdc++-4.0.0-8.i386.rpm",
+                      "rpms/python-2.3.4-11.i386.rpm"]
+otherrpminstall = """\
+sudo rpm -i --force libstdc++-4.0.0-8.i386.rpm \
+                    boost-1.32.0-6.i386.rpm \
+                    python-2.3.4-11.i386.rpm;"""
+
+
+p2rpmfiles = []
+otherrpmfiles = []
+planetlabfile = []
+
+
+
+startup =  "echo \`hostname\` is restarting; sudo /sbin/service p2 restart"
+stop    =  "echo \`hostname\` is stopping; sudo /sbin/service p2 stop"
 
 def print_usage():
     print """
 Usage: psetup.py [-d] [-a] [-t pingCheckPort] [-j <parallel>] [-(i|I)] [-k] \\
                  [-Dvar=<value> [-Dvar=<value> [...]] -o <overlog>] \\
                  [-m master_addr -p master_port -u username -w password] \\
-                 -n <slice_name> [<planetLabNode>]"""
+                 -r rootDir(i.e., phi/phi/) -n <slice_name> [<planetLabNode>]"""
 
 def parse_cmdline(argv):
-    shortopts = "shdaIikn:j:o:D:m:p:t:u:w:"
-    flags = {"dealloc" : False, "alloc" : False, "pingPort" : 0, "overlog" : "", \
-             "kill" : False, "slice" : None, "parallel" : 1, \
-             "env" : {}, "install" : False, "all_install" : False, "email" : None, \
-             "password" : None, "slice_start" : False, "slice_halt" : False,\
-             "master_addr" : "clash.berkeley.intel-research.net", "master_port" : "10000"}
+    shortopts = "shdaIikn:j:o:D:m:p:t:u:w:r:"
+
+    flags = {"dealloc" : False,
+             "alloc" : False,
+             "pingPort" : 0,
+             "overlog" : "",
+             "kill" : False,
+             "slice" : None,
+             "parallel" : 1,
+             "env" : {},
+             "install" : False,
+             "all_install" : False,
+             "email" : None,
+             "password" : None,
+             "slice_start" : False,
+             "slice_halt" : False,
+             "master_addr" : "clash.berkeley.intel-research.net",
+             "master_port" : "10000",
+             "root" : "."}
+
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
         if   o == "-n": flags["slice"]       = v
@@ -56,12 +86,23 @@ def parse_cmdline(argv):
         elif o == "-t": flags["pingPort"] = int(v)
         elif o == "-u": flags["email"] = str(v)
         elif o == "-w": flags["password"] = str(v)
+        elif o == "-r": flags["root"] = str(v)
         elif o == "-D": 
             d = v.split("=", 1)
             flags["env"][d[0]] = d[1].replace("\"", "\\\"")
         else:
+            print "Unrecognized option %s\n" % o
             print_usage()
             exit(3)
+
+    # Initialize all paths with root directory
+    for file in otherrpmfiles_root:
+        otherrpmfiles.append("%s/%s" % (flags["root"], file))
+    for file in p2rpmfiles_root:
+        p2rpmfiles.append("%s/%s" % (flags["root"], file))
+    for file in planetlabfile_root:
+        planetlabfile.append("%s/%s" % (flags["root"], file))
+
     return flags, args
 
 def getNodes():
@@ -132,34 +173,40 @@ def allocNodes():
 def startNode(node):
   pid = os.fork()
   if pid == 0:
-    install_files = None
-    install_cmd   = None
+    install_files = planetlabfile
+    install_cmd   = planetlabfileinstall
     if flags["all_install"]:
-      install_files = all_files
-      install_cmd   = all_install
+        install_files.extend(otherrpmfiles)
+        install_cmd += otherrpminstall
+        install_files.extend(p2rpmfiles)
+        install_cmd += p2rpminstall
     if flags["install"]:
-      install_files = files
-      install_cmd   = install
-    if install_files and install_cmd:
-      for f in install_files:
-        os.system("scp %s %s@%s: >& /dev/null" % (f, flags["slice"], node))  
-      os.system("ssh -l %s %s \"%s\" >& /dev/null" % (flags["slice"], node, install_cmd))
+        install_files.extend(p2rpmfiles)
+        install_cmd += p2rpminstall
+    if flags["overlog"]:
+        install_files.append(flags["overlog"])
 
-    # Push over the planetlab script no matter what
-    os.system("scp ./planetlab.py %s@%s: >& /dev/null" % (flags["slice"], node))  
+    filelist = ""
+    for file in install_files:
+        filelist += file + " "
+#    print "Copying files '%s' to node %s'\n" % (filelist, node)
+    os.system("rsync %s %s@%s: >& /dev/null" % (filelist, flags["slice"], node))  
+
+#    print "Executing command(s) '%s' at node %s\n" % (install_cmd, node)
+    os.system("ssh -l %s %s \"%s\" >& /dev/null" % (flags["slice"], node, install_cmd))
+
+
 
     start = startup + " " + flags["master_addr"] + " " + flags["master_port"] + " " + str(flags["pingPort"]) + " " + str(flags["slice"])
-    if flags["overlog"]:
-      os.system("scp %s %s@%s: >& /dev/null" % (flags["overlog"], flags["slice"], node))  
 
     pong = False
     for i in range(2):
-      print "Starting node %s with command: %s" % (node, start)
+#      print "Starting node %s with command: %s" % (node, start)
       if flags["overlog"]:
-        os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % \
+        os.system("ssh -f -l %s %s \"%s\" ; true ; true ;" % \
                   (flags["slice"], node, start+" "+flags["overlog"].split("/")[-1]))
       else:
-        os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % \
+        os.system("ssh -f -l %s %s \"%s\" ; true ; true ;" % \
                   (flags["slice"], node, start))
       if flags["pingPort"] > 0:
         pong = False
@@ -203,11 +250,14 @@ if __name__ == "__main__":
   global flags, server, auth, pids
   libp2python.srand(libp2python.time())
   try:
-    flags, args = parse_cmdline(sys.argv)
+      flags, args = parse_cmdline(sys.argv)
   except:
-    print "EXCEPTION"
-    print_usage()
-    sys.exit(1)
+      print "Parse Command Line Exception in user code:"
+      print '-'*60
+      traceback.print_exc(file=sys.stdout)
+      print '-'*60
+      print_usage()
+      sys.exit(1)
   if not flags["slice"]:
     print_usage()
     sys.exit(1)

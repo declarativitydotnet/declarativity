@@ -24,7 +24,7 @@ materialize(bestSucc, infinity, 1, keys(1)).
 materialize(succ, infinity, infinity, keys(2)).
 materialize(pred, infinity, 1, keys(1)).
 materialize(succCount, infinity, 1, keys(1)).
-materialize(join, 120, 10, keys(1)).
+materialize(join, 20, 10, keys(1)).
 materialize(landmark, infinity, 1, keys(1)).
 materialize(fFix, infinity, 160, keys(2)).  
 materialize(nextFingerFix, infinity, 1, keys(1)).
@@ -34,18 +34,24 @@ materialize(pendingPing, 20, infinity, keys(2)).
 /* Inherit table from gossip.olg */
 materialize(parent, infinity, 1, keys(2)).
 
+/*
 watch(landmark).
+watch(bestSuccEvent).
+watch(fingerEvent).
+watch(bestLookupDist).
+*/
 watch(joinEvent).
 watch(lookup).
 watch(lookupResults).
-watch(bestLookupDist).
+
 watch(finger).
 watch(succ).
 watch(bestSucc).
 watch(joinReq).
-watch(bestSuccJ).
 watch(bestSuccDist).
 watch(succEvent).
+watch(currentSucc).
+
 
 i0 node(@NI, N)          :- periodic(@NI, E, 0, 1), N := f_sha1(NI).
 i1 pred(@NI, P, PI)      :- periodic(@NI, E, 0, 1), P := 0x0I, PI:="-".
@@ -55,44 +61,49 @@ i4 landmark(@NI, PI)     :- periodic(@NI, E, 1, 1), parent(@NI, PI), f_coinFlip(
 
 /** Lookups */
 
-l0 pathEvent(@MI,T,NI,P) :- lookupResults(@NI,K,S,SI,E,P), MI:=MASTER, T:="P".
-
-
-l2 bestLookupDist(@NI,K,R,E,min<D>,P) :- node(@NI,N), 
-				  	 lookup(@NI,K,R,E,P), 
+l2 bestLookupDist(@NI,K,R,E,min<D>) :- node(@NI,N), 
+				  	 lookup(@NI,K,R,E), 
 					 D := K - B - 1, 
 					 finger(@NI,I,B,BI), 
 					 B in (N,K).
 
-
-l3 lookup(min<@BI>, K, R, E, P1) :- node(@NI,N),	    
-			        bestLookupDist(@NI,K,R,E,D,P), 
+l3 lookup(min<@BI>, K, R, E) :- node(@NI,N),	    
+			        bestLookupDist(@NI,K,R,E,D), 
 			        finger(@NI,I,B,BI), 
 			        D == K - B - 1,
-			        B in (N, K), P1 := P+ "," + NI.
+			        B in (N, K).
 
-l1 lookupResults(@R,K,S,SI,E,P) :- node(@NI,N),
-				    lookup(@NI,K,R,E,P), 
-				    bestSucc(@NI,S,SI),
-				    (K in (N,S] || (N == S)).
+l1 lookupResults(@R,K,S,SI,E) :-
+	node(@NI,N),
+	lookup(@NI,K,R,E), 
+	bestSucc(@NI,S,SI),
+	(K in (N,S] || (N == S)).
 
 
 
 /** Neighbor Selection */
 
-l0 bestSuccEvent(@MI, T, NI, SI) :- bestSucc(@NI,S,SI), 
-                                      MI:=MASTER, T:="S".
+n0 bestSuccEvent(@MI, T, NI, SI) :-
+	bestSucc(@NI,S,SI), 
+	MI:=MASTER, T:="S".
 
-l1 fingerEvent(@MI, T, P, NI, LI) :- finger(@NI,P,L,LI), 
-                                       MI:=MASTER, T:="F",
-                                       P > 0.
+n0a bestSuccEvent(@MI, T, NI, SI) :-
+	bestSucc(@NI, S, SI), 
+	MI:=MASTER, T:="S",
+	visUpdate(@NI).
+
+n5 fingerEvent(@MI, T, I, NI, BI) :-
+	finger(@NI, I, B, BI), 
+	MI := MASTER,
+	T := "F",
+	I > 0.
 
 n1 succEvent(@NI) :- periodic(@NI,E,5).
 
 n2 bestSuccDist(@NI,min<D>) :- succEvent(@NI),
   			         node(@NI,N),
 			         succ(@NI,S,SI), 
-			         D:=S - N - 1.
+			         D := S - N - 1.
 
 n3 bestSucc(@NI,S,SI) :- succ(@NI,S,SI),
 			   bestSuccDist(@NI,D), 
@@ -107,12 +118,12 @@ n4 finger(@NI,0,S,SI) :- bestSucc(@NI,S,SI).
 
 s1 succCount(@NI,count<*>) :- succ(@NI,S,SI), NI != SI.
 
-s2 evictSucc(@NI) :- succCount(@NI,C), C > 8.
+s2 evictSucc(@NI) :- succCount(@NI,C), C > 3.
 
 s3 maxSuccDist(@NI,max<D>) :- succ(@NI,S,SI),
 				node(@NI,N), 
 				evictSucc(@NI),
-				D:=S - N - 1.
+				D := S - N - 1.
 
 s4 delete succ(@NI,S,SI) :- node(@NI,N), 
 			      succ(@NI,S,SI),
@@ -125,12 +136,12 @@ f1 fFixEvent(@NI,E,I) :- periodic(@NI,E,20), nextFingerFix(@NI,I).
 
 f2 fFix(@NI,E,I) :- fFixEvent(@NI,E,I).
 
-f3 lookup(@NI,K,NI,E,NI) :- fFixEvent(@NI,E,I),
+f3 lookup(@NI,K,NI,E) :- fFixEvent(@NI,E,I),
 			      node(@NI,N), 
 			      K:=0x1I << I + N.
 
 f4 eagerFinger(@NI,I,B,BI) :- fFix(@NI,E,I), 
-				lookupResults(@NI,K,B,BI,E,P).
+				lookupResults(@NI,K,B,BI,E).
 
 f5 finger(@NI,I,B,BI) :- eagerFinger(@NI,I,B,BI).
 
@@ -174,10 +185,10 @@ j4 succ(@NI,N,NI) :- landmark(@NI,LI),
 		     node(@NI,N), 
 		     NI == LI.
 
-j5 lookup(@LI,N,NI,E,LI) :- joinReq(@LI,N,NI,E).
+j5 lookup(@LI,N,NI,E) :- joinReq(@LI,N,NI,E).
 
 j6 succ(@NI,S,SI) :- join(@NI,E),
-		     lookupResults(@NI,K,S,SI,E,P).
+		     lookupResults(@NI,K,S,SI,E).
 
 
 /** Attempt to rejoin if I have no successors */
@@ -188,7 +199,7 @@ j6 join(@NI, E) :- periodic(@NI, E, 30), succCount(@NI,C), C == 0.
 
 /** Stabilization */
 
-sb1 stabilize(@NI,E) :- periodic(@NI,E,10).
+sb1 stabilize(@NI,E) :- periodic(@NI, E, 10).
 
 sb2 stabilizeRequest(@SI,NI) :- stabilize(@NI,E), bestSucc(@NI,S,SI).
 
@@ -216,6 +227,10 @@ sb8 pred(@NI,P,PI) :- node(@NI,N),
                       notifyPredecessor(@NI,P,PI), 
                       pred(@NI,P1,PI1),
                       ((PI1 == "-") || (P1 == N) || (P in (P1,N))).
+
+
+sb10 currentSucc(@NI, E, SI) :-
+	stabilize(@NI, E), succ(@NI, S, SI).
 
 
 /** Connectivity Monitoring */
