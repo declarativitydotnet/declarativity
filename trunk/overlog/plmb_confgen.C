@@ -614,6 +614,9 @@ Plmb_ConfGen::processRule(OL_Context::Rule *r,
   int aggField = r->head->aggregate(); 
   if (aggField >= 0) {
     // This contains an aggregate
+    ostringstream o;
+    o << "Aggregate found with field " << aggField << "\n";
+    debugRule(r, o.str());
 
     // get the event term if it exists (i.e., a predicate that is not
     // materialized).
@@ -656,17 +659,34 @@ Plmb_ConfGen::processRule(OL_Context::Rule *r,
 	if (k != aggField) {
 	  // for each groupby value, figure out its location in the
 	  // initial event tuple, if not present, throw an error
-	  for (int j = 0;
+          int j;
+	  for (j = 0;
                j < theEventTerm->args();
                j++) {
 	    if (fieldNameEq(r->head->arg(k)->toString(),
                             theEventTerm->arg(j)->toString())) {
-	      agg_el->registerGroupbyField(j);
+	      agg_el->registerGroupbyField(j + 1);
               _p2dl << conf_call(agg_spec.get(),
-                                 conf_function("registerGroupbyField", j))
+                                 conf_function("registerGroupbyField",
+                                               j + 1))
                     << ";" << std::endl;
+              break;
 	    }
 	  }
+          if (j == theEventTerm->args()) {
+            // Didn't locate the group by variable in the event. Not
+            // good! We can't have group by variables from 
+            // the join tables!
+            ostringstream oss;
+            oss << "Invalid group by variable "
+                << r->head->arg(k)->toString()
+                << " in rule '"
+                << r->toString()
+                << "'. Group by variables can only come "
+                << "from the event tuple in "
+                << "event aggregations."; 
+            error(oss.str());
+          }
 	}
       }
     } else {
@@ -2095,9 +2115,11 @@ string Plmb_ConfGen::pelBool(FieldNamesTracker* names, Parse_Bool *expr,
 }
 
 void 
-Plmb_ConfGen::pelSelect(OL_Context::Rule* rule, FieldNamesTracker* names, 
-		       Parse_Select *expr,
-		       string nodeID, int selectionID)
+Plmb_ConfGen::pelSelect(OL_Context::Rule* rule,
+                        FieldNamesTracker* names, 
+                        Parse_Select *expr,
+                        string nodeID,
+                        int selectionID)
 {
   ostringstream sPel;
   sPel << pelBool(names, expr->select, rule) << "not ifstop ";
@@ -2259,8 +2281,9 @@ Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
     int pos = -1;
     if (parse_var != NULL) {
       //warn << "Check " << parse_var->toString() << " " << pf->fn->loc << "\n";
-      if (fieldNameEq(parse_var->toString(), pf->getlocspec())) {	
-		locationIndex = k;
+      if (fieldNameEq(parse_var->toString(),
+                      pf->getlocspec())) {
+        locationIndex = k;
       }
       // care only about vars    
       pos = curNamesTracker->fieldPosition(parse_var->toString());    
@@ -2274,13 +2297,14 @@ Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
       Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(curRule->head->arg(k));
       //warn << "Check " << aggExpr->v->toString() << " " << pf->getlocspec() << "\n";
       if (fieldNameEq(aggExpr->v->toString(), pf->getlocspec())) {	
-		locationIndex = k;
+        locationIndex = k;
       }
       if (aggExpr->aggName() != "COUNT") {
 	pos = curNamesTracker->fieldPosition(aggExpr->v->toString());
 	if (pos == -1) {
 	  error("Head predicate \"" + pf->fn->name 
-		+ "\" has invalid variable " + aggExpr->v->toString(), curRule);
+		+ "\" has invalid variable " +
+                aggExpr->v->toString(), curRule);
 	} 
       }
     }
@@ -2291,8 +2315,9 @@ Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
   }
 
   if (locationIndex == -1 && !pf->getlocspec().empty()) {
-    error("Head predicate \"" + pf->fn->name + "\" has invalid location specifier " 
-		  + pf->getlocspec());
+    error("Head predicate \"" + pf->fn->name +
+          "\" has invalid location specifier "
+          + pf->getlocspec());
   }
 						  
   if (locationIndex == -1) { 
