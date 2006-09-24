@@ -29,11 +29,11 @@ def print_usage():
     print """
 Usage: psetup.py [-d] [-a] [-t pingCheckPort] [-j <parallel>] [-(i|I)] [-k] \\
                  [-Dvar=<value> [-Dvar=<value> [...]] -o <overlog>] \\
-                 [-m master_addr -p master_port] \\
+                 [-m master_addr -p master_port -u username -w password] \\
                  -n <slice_name> [<planetLabNode>]"""
 
 def parse_cmdline(argv):
-    shortopts = "shdaIikn:j:o:D:m:p:t:"
+    shortopts = "shdaIikn:j:o:D:m:p:t:u:w:"
     flags = {"dealloc" : False, "alloc" : False, "pingPort" : 0, "overlog" : "", \
              "kill" : False, "slice" : None, "parallel" : 1, \
              "env" : {}, "install" : False, "all_install" : False, "email" : None, \
@@ -54,6 +54,8 @@ def parse_cmdline(argv):
         elif o == "-m": flags["master_addr"] = v
         elif o == "-p": flags["master_port"] = v
         elif o == "-t": flags["pingPort"] = int(v)
+        elif o == "-u": flags["email"] = str(v)
+        elif o == "-w": flags["password"] = str(v)
         elif o == "-D": 
             d = v.split("=", 1)
             flags["env"][d[0]] = d[1].replace("\"", "\\\"")
@@ -152,12 +154,12 @@ def startNode(node):
 
     pong = False
     for i in range(2):
-      print "Starting system with command: %s" % start
+      print "Starting node %s with command: %s" % (node, start)
       if flags["overlog"]:
-        os.system("ssh -f -l %s %s \"%s\" " % \
+        os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % \
                   (flags["slice"], node, start+" "+flags["overlog"].split("/")[-1]))
       else:
-        os.system("ssh -f -l %s %s \"%s\" " % \
+        os.system("ssh -f -l %s %s \"%s\" >& /dev/null" % \
                   (flags["slice"], node, start))
       if flags["pingPort"] > 0:
         pong = False
@@ -214,8 +216,9 @@ if __name__ == "__main__":
   auth  = {}
   auth['AuthMethod'] = "anonymous"
   server = xmlrpclib.Server('https://www.planet-lab.org/PLCAPI/')
-  flags["email"]    = raw_input("PlanetLab Login: ") 
-  flags["password"] = getpass.getpass() 
+  if (not flags["email"]) or (not flags["password"]):
+    flags["email"]    = raw_input("PlanetLab Login: ") 
+    flags["password"] = getpass.getpass() 
 
   if flags["email"] and flags["password"]:
     auth['Username'] = flags["email"] 
