@@ -18,7 +18,10 @@
 #include "val_str.h"
 #include "loop.h"
 
-Aggwrap::Aggwrap(string name, string aggfn, int aggfield, string outputTableName)
+Aggwrap::Aggwrap(string name,
+                 string aggfn,
+                 int aggfield,
+                 string outputTableName)
   : Element(name, 2, 2),
     _aggfn(aggfn), 
     _aggfield(aggfield), 
@@ -194,19 +197,18 @@ void Aggwrap::agg_finalize() {
   TRC_FN; 
   if (_aggfn == "COUNT") {       
     if (_incomingTuple) {
-      TuplePtr aggResultToRet = Tuple::mk();
-      aggResultToRet->append(Val_Str::mk(_outputTableName));
+      std::cout << "AGGWRAP COUNT FINALIZATION GOT INCOMING "
+                << _incomingTuple->toString()
+                << "\n";
+      aggResult = Tuple::mk();
+      aggResult->append(Val_Str::mk(_outputTableName));
       for (uint k = 0; k < _groupByFields.size(); k++) {
 	/*warn << _incomingTuple->toString() << " " 
 	  << _groupByFields.at(k) + 1 << "\n";     */
-	aggResultToRet->append((*_incomingTuple)[_groupByFields.at(k)]);
+	aggResult->append((*_incomingTuple)[_groupByFields.at(k)]);
       }
-      aggResultToRet->append(Val_Int32::mk(count));
-      aggResultToRet->freeze();
-      
-      aggResult = Tuple::mk();
-      aggResult->concat(aggResultToRet);
-      aggResult->freeze();     
+      aggResult->append(Val_Int32::mk(count));
+      aggResult->freeze();
     }
   }
   if (aggResult) {
