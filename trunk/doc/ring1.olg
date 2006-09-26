@@ -1,0 +1,248 @@
+/**
+  * This file is distributed under the terms in the attached LICENSE file.
+  * If you do not find this file, copies can be found by writing to:
+  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+  * Or
+  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+  * Berkeley, CA,  94707. Attention: P2 Group.
+  * 
+  * DESCRIPTION: P2Chord in OverLog
+  * 
+  * $Id$
+  * 
+  * Run me as follows:
+  * 
+  * tests/runOverLog2 -DMASTER=\"<masterHost:myPort\" chord.olg <myhost> <myport>
+  **/
+
+#define MAX_SUCCESSORS 8
+#define REJOIN_INTERVAL 15
+#define SUCC_REFRESH_INTERVAL 5
+#define STABILIZE_INTERVAL 10
+#define CIRCUIT_INTERVAL 10
+
+/* The base tuples */
+
+materialize(node, infinity, 1, keys(1)).
+materialize(finger, infinity, 160, keys(2)).
+materialize(bestSucc, infinity, 1, keys(1)).
+materialize(succ, infinity, infinity, keys(2)).
+materialize(pred, infinity, 1, keys(1)).
+materialize(succCount, infinity, 1, keys(1)).
+materialize(join, 20, 10, keys(1)).
+materialize(landmark, infinity, 1, keys(1)).
+materialize(fFix, infinity, 160, keys(2)).  
+materialize(nextFingerFix, infinity, 1, keys(1)).
+materialize(pingNode, 20, infinity, keys(2)).  
+materialize(pendingPing, 20, infinity, keys(2)).  
+
+/* Inherit table from gossip.olg */
+materialize(parent, infinity, 1, keys(2)).
+
+/*
+watch(landmark).
+watch(bestSuccEvent).
+watch(fingerEvent).
+watch(bestLookupDist).
+*/
+watch(joinEvent).
+watch(lookup).
+watch(lookupResults).
+
+watch(finger).
+watch(succ).
+watch(pred).
+watch(bestSucc).
+watch(joinReq).
+watch(bestSuccDist).
+watch(succEvent).
+watch(currentSucc).
+watch(newSuccD).
+
+/** Shifting node id's to break up clusters */
+i0 node(@NI, N)          :- periodic(@NI, E, 0, 1), D := NI + "1", N := f_sha1(D).
+
+i1 pred(@NI, P, PI)      :- periodic(@NI, E, 0, 1), P := 0x0I, PI:="-".
+
+i3 landmark(@NI, MASTER) :- periodic(@NI, E, 0, 1).
+
+
+/** Lookups */
+
+l1 lookupResults(@R,K,S,SI,E) :- node(@NI,N), lookup(@NI,K,R,E),
+	bestSucc(@NI,S,SI), (K in (N,S] || (N == S)).
+
+l2 bestLookupDist(@NI,K,R,E,min<D>) :- node(@NI,N), lookup(@NI,K,R,E), D
+	:= K - S - 1, succ(@NI,S,SI), S in (N,K).
+
+l3 lookup(min<@SI>, K, R, E) :- node(@NI,N),
+	bestLookupDist(@NI,K,R,E,D), succ(@NI,S,SI), D == K - S - 1, S
+	in (N, K).
+
+
+
+
+/** Neighbor Selection */
+
+n0 bestSuccEvent(@MI, T, NI, SI) :- bestSucc(@NI,S,SI), MI:=MASTER,
+	T:="S".
+
+n0a bestSuccEvent(@MI, T, NI, SI) :- bestSucc(@NI, S, SI), MI:=MASTER,
+	T:="S", visUpdate(@NI).
+
+n1 succEvent(@NI) :- periodic(@NI, E, SUCC_REFRESH_INTERVAL).
+
+n2 bestSuccDist(@NI,min<D>) :- succEvent(@NI), node(@NI,N),
+	succ(@NI,S,SI), D := S - N - 1.
+
+n3 bestSucc(@NI,S,SI) :- succ(@NI,S,SI), bestSuccDist(@NI,D),
+	node(@NI,N), D == S - N - 1.
+
+newSucc(@NI, S, SI) :- succ(@NI, S, SI).
+
+newSuccD(@NI, S, SI, D) :- newSucc(@NI, S, SI), node(@NI, N), D := S - N
+- 1.
+
+
+
+/** Successor eviction */
+
+s1 succCount(@NI,count<*>) :- succ(@NI,S,SI), NI != SI.
+
+s2 evictSucc(@NI) :- succCount(@NI,C), C > MAX_SUCCESSORS.
+
+s3 maxSuccDist(@NI,max<D>) :- succ(@NI,S,SI), node(@NI,N),
+	evictSucc(@NI), D := S - N - 1.
+
+s4 delete succ(@NI,S,SI) :- node(@NI,N), succ(@NI,S,SI),
+	maxSuccDist(@NI,D), D == S - N - 1.
+
+
+
+
+/* Chord Join */
+
+j1 join(@NI, E) :- periodic(@NI, E, 5, 1).
+
+j2 joinEvent(@NI,E) :- join(@NI,E).
+
+j3 joinReq(@LI,N,NI,E) :- joinEvent(@NI,E), node(@NI,N),
+	landmark(@NI,LI), LI != NI.
+
+j4 succ(@NI,N,NI) :- landmark(@NI,LI), joinEvent(@NI,E), node(@NI,N), NI
+	== LI.
+
+j5 lookup(@LI,N,NI,E) :- joinReq(@LI,N,NI,E).
+
+j6 succ(@NI,S,SI) :- join(@NI,E), lookupResults(@NI,K,S,SI,E).
+
+
+
+/** Attempt to rejoin if I have no successors */
+j6 join(@NI, E) :- periodic(@NI, E, REJOIN_INTERVAL), succCount(@NI,C), C == 0.
+
+
+
+
+/** Stabilization */
+
+sb1 stabilize(@NI,E) :- periodic(@NI, E, STABILIZE_INTERVAL).
+
+sb2 stabilizeRequest(@SI,NI) :- stabilize(@NI,E), bestSucc(@NI,S,SI).
+
+sb3 sendPredecessor(@PI1,P,PI) :- stabilizeRequest(@NI,PI1),
+	pred(@NI,P,PI), PI != "-".
+
+sb4 succ(@NI,P,PI) :- node(@NI,N), sendPredecessor(@NI,P,PI),
+	bestSucc(@NI,S,SI), P in (N,S).
+
+sb5 sendSuccessors(@SI,NI) :- stabilize(@NI,E), succ(@NI,S,SI).
+
+sb6 returnSuccessor(@PI,S,SI) :- sendSuccessors(@NI,PI), succ(@NI,S,SI).
+
+sb7 succ(@NI,S,SI) :- returnSuccessor(@NI,S,SI).
+
+sb7 notifyPredecessor(@SI,N,NI) :- stabilize(@NI,E), node(@NI,N),
+	succ(@NI,S,SI).
+
+
+sb8 pred(@NI,P,PI) :- node(@NI,N), notifyPredecessor(@NI,P,PI),
+	pred(@NI,P1,PI1), ((PI1 == "-") || (P1 == N) || (P in (P1,N))).
+
+
+sb10 currentSucc(@NI, E, SI) :- stabilize(@NI, E), succ(@NI, S, SI).
+
+
+
+
+/** Traversal */
+
+/** tokenMessage(MyAddr, SourceID, SourceAddr, TokenID, Path, TTL).
+
+tokenForward(MyAddr, MyID, SuccID, SuccAddr, E, SourceID, SourceAddr, Path, TTL). */
+
+t0 tokenStart(@NI, N, NI, E, Path, TTL) :- periodic(@NI, E, CIRCUIT_INTERVAL),
+	node(@NI, N),
+	NI == MASTER, TTL := 30, Path := NI.
+
+t0 tokenStart(@NI, N, NI, E, Path, TTL) :- periodic(@NI, E, CIRCUIT_INTERVAL),
+	node(@NI, N),
+	NI == MASTER, TTL := 30, Path := NI.
+
+t1 tokenMessage(@NI, N, NI, E, Path, TTL) :- tokenStart(@NI, N, NI, E, Path, TTL).
+
+t2 sendCircleComplete(@NI, SI, Source, E, Path) :- tokenMessage(@NI,
+	SourceID, Source, E, Path, TTL),
+	bestSucc(@NI, S, SI), SI == Source.
+
+t2a circleComplete(@SI, Source, E, Path) :- sendCircleComplete(@NI, SI, Source, E, Path).
+
+t3 tokenMessage(@SI, SourceID, Source, E, Path, TTL) :-
+	tokenForward(@NI, N, S, SI, E, SourceID, Source, Path, TTL).
+
+/** If the source is between me and my successor, include it in my
+successors */
+t3b repairSucc(@NI, SourceID, Source) :-
+	tokenForward(@NI, N, S, SI, E, SourceID, Source, Path, TTL),
+	Source != NI,
+	SourceID in (N, S).
+
+t3c succ(@NI, S, SI) :- repairSucc(@NI, S, SI).
+
+t4d notifyRepair(@MI, NI, SI) :- repairSucc(@NI, S, SI), MI := MASTER.
+
+t3a tokenForward(@NI, N, S, SI, E, SourceID, Source, NewPath, NewTTL) :-
+	tokenMessage(@NI, SourceID, Source, E, Path, TTL),
+	bestSucc(@NI, S, SI), SI != Source,
+	node(@NI, N),
+	TTL > 0, NewTTL := TTL - 1,
+	NewPath := Path + "+" + SI.
+
+t4a sendCircleIncomplete(@NI, SI, Source, E, Path) :- tokenMessage(@NI,
+	SourceID, Source, E, Path, TTL),
+	bestSucc(@NI, S, SI), SI != Source,
+	TTL == 0.
+
+t4 circleIncomplete(@SI, Source, E, Path) :- sendCircleIncomplete(@NI,
+	SI, Source, E, Path).
+
+t5 tokenEvent(@MI, T, Completed, NI, Path, E) :-
+	circleComplete(@NI, Source, E, Path), T := "T",
+	MI := MASTER,
+	Completed := "Y".
+
+t6 tokenEvent(@MI, T, Completed, NI, Path, E) :-
+	circleIncomplete(@NI, Source, E, Path), T := "T",
+	MI := MASTER,
+	Completed := "N".
+
+watch(tokenEvent).
+watch(tokenStart).
+watch(tokenForward).
+watch(tokenMessage).
+watch(circleComplete).
+watch(circleIncomplete).
+watch(sendCircleComplete).
+watch(sendCircleIncomplete).
+watch(notifyRepair).
