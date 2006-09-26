@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!python.exe
 import xmlrpclib
 import sys
 import os
@@ -25,17 +25,17 @@ def getNodes(slice):
 
   # get the all the nodes, regardless of current boot state
   nodes = {}
-  node_fields = ['node_id', 'hostname', 'model', 'version', 'boot_state', 'ip', 'mac'] 
+  node_fields = ['node_id', 'hostname', 'model', 'version', 'boot_state', 'ip', 'mac']
   all_nodes = server.AnonAdmGetNodes(auth, [], node_fields)
   for n in all_nodes:
-    nodes[n['node_id']] = n 
+    nodes[n['node_id']] = n
 
   all_sites      = server.AnonAdmGetSites(auth)
   all_site_nodes = server.AnonAdmGetSiteNodes(auth)
   for s in all_sites:
     siteid = str(s['site_id'])
     if all_site_nodes.has_key(siteid):
-      site_nodes = all_site_nodes[siteid] 
+      site_nodes = all_site_nodes[siteid]
       for n in site_nodes:
         node = nodes[n]
         if sliceNodes and not sliceNodes.has_key(node['hostname']): continue
@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
   for node in node_info:
       line = ""
-      for i in node[:-1]: 
+      for i in node[:-1]:
         try:
           value = str(i).strip()
         except:
@@ -81,3 +81,4 @@ if __name__ == "__main__":
       if not value: value = "unknown"
       line += "%s" % value
       print >> result, line
+

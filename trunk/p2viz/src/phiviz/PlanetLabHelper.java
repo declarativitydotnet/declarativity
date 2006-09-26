@@ -39,8 +39,9 @@ public class PlanetLabHelper {
     Runtime runtime = Runtime.getRuntime();
     Process proc;
 
+/*
     try {
-      proc = runtime.exec("python sites.py " + sliceName);
+      proc = runtime.exec("C:/cygwin/bin/python.exe sites.py " + sliceName);
       proc.waitFor();
     } catch (IOException e) {
       // TODO Auto-generated catch block
@@ -49,7 +50,7 @@ public class PlanetLabHelper {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-
+*/
 
 
     BufferedReader br = new BufferedReader(new FileReader("sites.out"));

@@ -75,6 +75,7 @@ public class Vis {
         public String guid_str;
         public BigInteger guid;
         private BasicFigure dot;
+        private BasicFigure token = null;
         private LinkedList ls_connectors = new LinkedList ();
         private LinkedList rt_connectors = new LinkedList ();
         private LabelFigure hostname_label;
@@ -171,13 +172,26 @@ public class Vis {
           return conn;
         }
 
-        public void redraw () {
+        public void redraw() {
           FigureLayer layer = graphicsPane.getForegroundLayer();
-          if (layer.contains (dot))
-            layer.remove (dot);
-          dot = new BasicEllipse (x_pos (), y_pos (), diameter (),
-                                  diameter (),
-                                  (host==null) ? Color.black : Color.blue);
+          if (layer.contains (dot)) {
+            layer.remove(dot);
+          }
+          if (token != null) {
+            if (layer.contains(token)) {
+              layer.remove(token);
+            }
+          }
+          if (PhiVizApplication.TOKEN.contains(host)) {
+            token = new BasicEllipse(x_pos()-5, y_pos()-5,
+                diameter()+10, diameter()+10,
+                Color.red);
+            layer.add(token);
+          }
+          dot = new BasicEllipse(x_pos (), y_pos (),
+                                 diameter (),
+                                 diameter (),
+                                 (host == null) ? Color.black : Color.blue);
           dot.setUserObject (this);
           dot.setInteractor (p2_node_interactor);
           layer.add (dot);
@@ -186,8 +200,10 @@ public class Vis {
           redraw_hostname ();
         }
 
-        public P2Node (String g, HOST h) {
+        public P2Node(String g, HOST h) {
+          show_hostname = true;
           show_leaf_set = true;
+          show_rt = false;
           guid_str = g;
           if (g.substring(0,2).equalsIgnoreCase("0x"))
             g = g.substring(2, g.length()-1);
@@ -336,8 +352,7 @@ public class Vis {
             int pie = (int) ((decimal () + 1.0/16.0) * 8);
             if (pie >= hostname_anchors.length)
               pie = 0;
-            hostname_label = new LabelFigure (host.getNAME() +
-                                              " GUID(" + guid_str + ")");
+            hostname_label = new LabelFigure (host.getNAME());
             hostname_label.setAnchor (hostname_anchors [pie]);
             Point2D pt =
                 CanvasUtilities.
@@ -674,17 +689,18 @@ public class Vis {
     }
 
     protected void redraw_all () {
-        FigureLayer layer = graphicsPane.getForegroundLayer();
-        if (the_ring == null) {
-            the_ring = new BasicEllipse(
-                                        -1.0*ring_radius, -1.0*ring_radius,
-                                        2.0*ring_radius, 2.0*ring_radius);
-            the_ring.setLineWidth ((float) (dot_radius/3.0));
-            the_ring.repaint ();
-            layer.add (the_ring);
-        }
-        for (P2Node b : nodes.values ())
-	    b.redraw ();
+      FigureLayer layer = graphicsPane.getForegroundLayer();
+      if (the_ring == null) {
+        the_ring =
+            new BasicEllipse(-1.0*ring_radius, -1.0*ring_radius,
+                             2.0*ring_radius, 2.0*ring_radius);
+        the_ring.setLineWidth ((float) (dot_radius/3.0));
+        the_ring.repaint ();
+        layer.add (the_ring);
+      }
+      for (P2Node b : nodes.values ()) {
+        b.redraw();
+      }
     }
 
     protected static interface ForNodeFn {

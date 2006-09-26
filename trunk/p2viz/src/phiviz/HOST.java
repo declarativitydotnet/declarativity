@@ -13,21 +13,20 @@ import java.util.HashSet;
 public class HOST
 {
 	private SITE   _parent;
-	
+
 	private String  _guid = null;
 	private String  _node_id;
 	private String _hostname;
 	private String _version;
-	
+
 	private String _ip;
 	private String _model;
 	private String _mac;
 	private String _boot_state;
-	
+
 	public HashMap _fingers    = new HashMap();
 	public HashSet _successors = new HashSet();
 	public boolean _installed = false;
-	
 
 	/**
 	 * Creates an empty HOST object.
@@ -42,35 +41,35 @@ public class HOST
 		_boot_state = boot_state;
 		_ip         = ip;
 		_mac        = mac;
-		
+
 	}
-	
+
 	public void addFinger(String pos, HOST link) {
 		_fingers.put(pos, link);
 	}
-	
+
 	public void addSuccessor(HOST s) {
 		_successors.add(s);
 	}
-	
+
 	public void clearFingers() {
 		_fingers.clear();
 	}
-	
+
 	public Collection fingers() {
 		return _fingers.values();
 	}
-	
+
 	public void clearSuccessors() {
 		_successors.clear();
 	}
-	
+
 	public Collection successors() {
-		return _successors; 
+		return _successors;
 	}
 
 
-	public SITE getParent() 
+	public SITE getParent()
 	{
 		return _parent;
 	}
@@ -79,7 +78,7 @@ public class HOST
 	{
 		_parent = site;
 	}
-	
+
 	/**
 	 * Gets the value of "IP" attribute.
 	 */
@@ -122,11 +121,11 @@ public class HOST
 	{
 		return _node_id;
 	}
-	
+
 	public void setGUID(String guid) {
 		_guid = guid;
 	}
-	
+
 	public String getGUID() {
 		return _guid;
 	}

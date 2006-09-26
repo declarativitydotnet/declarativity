@@ -17,6 +17,8 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * <p>
@@ -43,6 +45,7 @@ public class PhiVizApplication {
   public static PhiVizFrame frame;
 
   public static PlanetLabHelper sites;
+  public static Set TOKEN = new HashSet();
 
   // Construct the application
   /**
@@ -195,9 +198,9 @@ public class PhiVizApplication {
             while (true) {
               try {
                 if (connection_.getInputStream().available() > 0) {
-                  System.err.println("RECEIVED MESSAGE");
                   String line;
                   while ((line = reader.readLine()) != null) {
+                    System.err.println("RECEIVED MESSAGE '" + line + "'");
                     if (line.length() > 0) {
                       String[] tuple = line.split(",");
                       switch (line.charAt(0)) {
@@ -205,6 +208,15 @@ public class PhiVizApplication {
                           synchronized (frame) {
                             synchronized (p2vis) {
                               handleSuccessor(tuple);
+                              frame.update();
+                              p2vis.redraw();
+                            }
+                          }
+                          break;
+                        case 'T':
+                          synchronized (frame) {
+                            synchronized (p2vis) {
+                              handleToken(tuple);
                               frame.update();
                               p2vis.redraw();
                             }
@@ -267,19 +279,19 @@ public class PhiVizApplication {
 		}
 
 		private void handleInstall(String[] tuple) {
-			String hostname = tuple[1].split(":")[0];
-			String guid = tuple[2];
-			HOST host = sites.hostFromName(hostname);
-			if (host != null) {
-				if (host._installed)
-					System.err.println("HOST ALREADY INSTALLED!! " + hostname);
-				host._installed = true;
-			} else {
-				System.err.println("HOST " + hostname
-						+ " DOES NOT EXIST IN VISUALIZER!");
-				return;
-			}
-			p2vis.new_node(guid, host);
+                  String hostname = tuple[1].split(":")[0];
+                  String guid = tuple[2];
+                  HOST host = sites.hostFromName(hostname);
+                  if (host != null) {
+                    if (host._installed)
+                      System.err.println("HOST ALREADY INSTALLED!! " + hostname);
+                    host._installed = true;
+                  } else {
+                    System.err.println("HOST " + hostname
+                                       + " DOES NOT EXIST IN VISUALIZER!");
+                    return;
+                  }
+                  p2vis.new_node(guid, host);
 		}
 
                 private void handleSuccessor(String[] tuple) {
@@ -297,6 +309,18 @@ public class PhiVizApplication {
                     src.addSuccessor(succ);
                   } else
                     System.err.println("HOST IS NULL");
+                }
+
+                private void handleToken(String[] tuple) {
+                  String pathNodes[] = tuple[2].split("\\+");
+                  TOKEN.clear();
+                  for (int i = 0; i < pathNodes.length; i++) {
+                    String thisNodeSpec = pathNodes[i];
+                    String thisNode = thisNodeSpec.split(":")[0];
+                    HOST tokenHost =
+                        sites.hostFromName(thisNode);
+                    TOKEN.add(tokenHost);
+                  }
                 }
 
 		private void handleFinger(String[] tuple) {

@@ -49,13 +49,13 @@ public class PhiPanel
    * The PlanetLab sites structure
    */
   private PlanetLabHelper sites_;
-  
+
   private ArrayList<SITE> lookupPath_ = null;
 
   /**
    * The current zoom factor
    */
-  private double zoomFactor_;
+  private double zoomFactor_ = 0.5;
 
   /**
    * The side of the square drawn around sites in pixels.
@@ -63,7 +63,7 @@ public class PhiPanel
   private static final int SIDE = PhiVizFrame.SIDE;
 
   /**
-   * Create the CanPanel
+   * Create the PhiPanel
    *
    * @param mapImage The background image (i.e., the map).
    * @param sites The sites structure for all of the planetlab nodes, as read
@@ -75,9 +75,8 @@ public class PhiPanel
     sites_ = sites;
     imageDimension_ = new Dimension(background_.getWidth(),
                                     background_.getHeight());
-    zoom(1.0);
   }
-  
+
   public void lookup(ArrayList<SITE> path) {
 	  lookupPath_ = path;
   }
@@ -113,7 +112,7 @@ public class PhiPanel
       graphics.fillRect((int) x - SIDE / 2, (int) y - SIDE / 2, SIDE, SIDE);
     }
   }
-  
+
   private void drawLinks() {
     Collection siteList = sites_.list();
     Iterator iterator = siteList.iterator();
@@ -139,17 +138,17 @@ public class PhiPanel
       }
     }
   }
-  
+
   private void drawPath() {
-	  if (lookupPath_ != null) { 
-		  for (int i = 0; i < lookupPath_.size()-1; i++) { 
+	  if (lookupPath_ != null) {
+		  for (int i = 0; i < lookupPath_.size()-1; i++) {
 			  SITE src = lookupPath_.get(i);
-			  SITE dest = lookupPath_.get(i+1); 
+			  SITE dest = lookupPath_.get(i+1);
     		drawLink(src, dest, PATH_COLOR);
 		  }
 	  }
   }
-  
+
 
   /**
    * Standard component painter.  It draws the foreground image onto the panel.
@@ -385,7 +384,7 @@ public class PhiPanel
     	}
     	double distance = Point2D.distance(sourceX, sourceY, destX, destY);
     	Point2D controlPoint = new Point2D.Double(-distance / 3.0, 0);
-    
+
     	AffineTransform transform = new AffineTransform();
     	transform.translate((sourceX + destX) / 2,
     	                    (sourceY + destY) / 2);

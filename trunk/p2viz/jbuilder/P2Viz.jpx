@@ -4,24 +4,37 @@
 <property category="generalFormatting2" name="overrideBasicFormatting" value="1"/>
 <property category="javaFormatting" name="packagePrefixGroups" value="java;javax;BLANK_LINE;java.awt;javax.swing;BLANK_LINE;org;(*)"/>
 <property category="javadoc" name="custom.tags.1" value="todo;a;To Do:"/>
+<property category="runtime" name="ConfigurationCount" value="2"/>
 <property category="runtime" name="DefaultConfiguration" value="-1"/>
 <property category="runtime.0" name="BuildTargetOnRun" value="com.borland.jbuilder.build.ProjectBuilder$ProjectBuildAction;make"/>
-<property category="runtime.0" name="ConfigurationName" value="Untitled Runtime Configuration"/>
+<property category="runtime.0" name="ConfigurationName" value="irb_phi"/>
 <property category="runtime.0" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
 <property category="runtime.0" name="application.class" value="phiviz.PhiVizApplication"/>
 <property category="runtime.0" name="application.parameters" value="world_NASA.jpg irb_phi"/>
 <property category="runtime.0" name="application.vmparameters" value="-Xmx1000m"/>
+<property category="runtime.1" name="BuildTargetOnRun" value="com.borland.jbuilder.build.ProjectBuilder$ProjectBuildAction;make"/>
+<property category="runtime.1" name="ConfigurationName" value="irb_francetelecom"/>
+<property category="runtime.1" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+<property category="runtime.1" name="application.class" value="phiviz.PhiVizApplication"/>
+<property category="runtime.1" name="application.parameters" value="world_NASA.jpg irb_francetelecom"/>
+<property category="runtime.1" name="application.vmparameters" value="-Xmx1000m"/>
+<property category="runtime.2" name="BuildTargetOnRun" value="com.borland.jbuilder.build.ProjectBuilder$ProjectBuildAction;make"/>
+<property category="runtime.2" name="ConfigurationName" value="irb_p2"/>
+<property category="runtime.2" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+<property category="runtime.2" name="application.class" value="phiviz.PhiVizApplication"/>
+<property category="runtime.2" name="application.parameters" value="world_NASA.jpg irb_p2"/>
+<property category="runtime.2" name="application.vmparameters" value="-Xmx1000m"/>
 <property category="serverservices" name="WarnedOfLegacyToCurrentServerChange" value="1"/>
 <property category="serverservices" name="disabled.services" value="jdatastore"/>
 <property category="serverservices" name="single.server.name" value="Tomcat 4.0"/>
 <property category="sys" name="AuthorLabel" value="@author"/>
-<property category="sys" name="BackupPath" value="../../project/phi/phi/p2viz/bak"/>
+<property category="sys" name="BackupPath" value="../bak"/>
 <property category="sys" name="CheckStable" value="1"/>
 <property category="sys" name="Company" value=""/>
 <property category="sys" name="CompanyLabel" value="Company:"/>
 <property category="sys" name="Copyright" value="Copyright (c) 2006"/>
 <property category="sys" name="CopyrightLabel" value="Copyright:"/>
-<property category="sys" name="DefaultPath" value="../../project/phi/phi/p2viz/src"/>
+<property category="sys" name="DefaultPath" value="../src"/>
 <property category="sys" name="Description" value=""/>
 <property category="sys" name="DescriptionLabel" value="Description:"/>
 <property category="sys" name="DocPath" value="doc"/>
@@ -33,14 +46,52 @@
 <property category="sys" name="LastTag" value="0"/>
 <property category="sys" name="Libraries" value="Diva"/>
 <property category="sys" name="MakeStable" value="0"/>
-<property category="sys" name="OutPath" value="../../project/phi/phi/p2viz/classes"/>
-<property category="sys" name="SourcePath" value="../../project/phi/phi/p2viz/src"/>
+<property category="sys" name="OutPath" value="../classes"/>
+<property category="sys" name="SourcePath" value="../src"/>
 <property category="sys" name="SourceVersion" value="1.5"/>
-<property category="sys" name="TestPath" value="../../project/phi/phi/p2viz/src"/>
+<property category="sys" name="TestPath" value="../src"/>
 <property category="sys" name="Title" value="P2 Visualizer"/>
 <property category="sys" name="TitleLabel" value="Title:"/>
 <property category="sys" name="Version" value="1.0"/>
 <property category="sys" name="VersionLabel" value="@version"/>
-<property category="sys" name="WorkingDirectory" value="../../project/phi/phi/p2viz"/>
+<property category="sys" name="WorkingDirectory" value="../"/>
 <property category="sys" name="max.package.levels" value="5"/>
+<node name="P2VizFrancetelecom" type="Archive">
+<property category="archiving" name="archiverClass" value="com.borland.jbuilder.wizard.archive.ExecutableArchiver"/>
+<property category="archiving" name="buildWithProject" value="0"/>
+<property category="archiving" name="contentRules.1" value="I:**/*.*"/>
+<property category="archiving" name="executableEnabled.1" value="1"/>
+<property category="archiving" name="executableEnabled.2" value="1"/>
+<property category="archiving" name="executableEnabled.3" value="0"/>
+<property category="archiving" name="executableEnabled.4" value="0"/>
+<property category="archiving" name="executableEnabled.5" value="0"/>
+<property category="archiving" name="executableFiles.1" value="C%|/Documents and Settings/pmaniati/My Documents/SharedDocuments/p2viz/P2VizWFrance.exe"/>
+<property category="archiving" name="executableFiles.2" value="C%|/Documents and Settings/pmaniati/My Documents/SharedDocuments/p2viz/P2VizFrance.exe"/>
+<property category="archiving" name="executableFiles.3" value="P2Viz-linux"/>
+<property category="archiving" name="executableFiles.4" value="P2Viz-solaris"/>
+<property category="archiving" name="executableFiles.5" value="P2Viz-mac"/>
+<property category="archiving" name="libraryStates.1" value="3:Diva"/>
+<property category="archiving" name="manifestConfigFile" value="1"/>
+<property category="archiving" name="targetPath" value="C%|/Documents and Settings/pmaniati/My Documents/SharedDocuments/p2viz/P2VizFrance.jar"/>
+<property category="archiving" name="usingRules" value="1"/>
+</node>
+<node name="P2VizP2" type="Archive">
+<property category="archiving" name="archiverClass" value="com.borland.jbuilder.wizard.archive.ExecutableArchiver"/>
+<property category="archiving" name="buildWithProject" value="0"/>
+<property category="archiving" name="contentRules.1" value="I:**/*.*"/>
+<property category="archiving" name="executableEnabled.1" value="1"/>
+<property category="archiving" name="executableEnabled.2" value="1"/>
+<property category="archiving" name="executableEnabled.3" value="0"/>
+<property category="archiving" name="executableEnabled.4" value="0"/>
+<property category="archiving" name="executableEnabled.5" value="0"/>
+<property category="archiving" name="executableFiles.1" value="C%|/Documents and Settings/pmaniati/My Documents/SharedDocuments/p2viz/P2VizW.exe"/>
+<property category="archiving" name="executableFiles.2" value="C%|/Documents and Settings/pmaniati/My Documents/SharedDocuments/p2viz/P2Viz.exe"/>
+<property category="archiving" name="executableFiles.3" value="C%|/P2Viz-linux"/>
+<property category="archiving" name="executableFiles.4" value="C%|/P2Viz-solaris"/>
+<property category="archiving" name="executableFiles.5" value="C%|/P2Viz-mac"/>
+<property category="archiving" name="libraryStates.1" value="3:Diva"/>
+<property category="archiving" name="manifestConfigFile" value="2"/>
+<property category="archiving" name="targetPath" value="C%|/Documents and Settings/pmaniati/My Documents/SharedDocuments/p2viz/P2Viz.jar"/>
+<property category="archiving" name="usingRules" value="1"/>
+</node>
 </project>

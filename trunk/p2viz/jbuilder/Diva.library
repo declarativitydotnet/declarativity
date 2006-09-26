@@ -3,7 +3,7 @@
 <!--JBuilder Library Definition File-->
 <fullname>Diva</fullname>
 <class>
-<path>[../../project/phi/phi/p2viz/lib/diva-26Sep02.jar]</path>
+<path>[../lib/diva-26Sep02.jar]</path>
 </class>
-<lastmodsaved>1158188637323</lastmodsaved>
+<lastmodsaved>1159077070625</lastmodsaved>
 </library>

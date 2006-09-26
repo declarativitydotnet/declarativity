@@ -153,11 +153,11 @@ public class PhiVizFrame
     zoomSlider.setMinimum(-10);
     zoomSlider.setToolTipText("Slide to zoom the map in or out");
     zoomSlider.addChangeListener(new PhiVizFrame_zoomSlider_changeAdapter(this));
-    zoomSlider.setValue(0);
+    zoomSlider.setValue(-5);
     mapPanel.setLayout(mapGridBagLayout1);
     mapPanel.setBorder(BorderFactory.createEtchedBorder());
     mapPanel.setDebugGraphicsOptions(0);
-    mapPanel.setMaximumSize(new Dimension(32767, 32767));
+    mapPanel.setMaximumSize(new Dimension(200, 200));
     zoomPanel.setLayout(gridBagLayout1);
     errorsLabel.setBackground(new Color(100, 255, 100));
     errorsLabel.setText("E:");
