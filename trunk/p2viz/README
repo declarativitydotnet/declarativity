@@ -154,6 +154,9 @@ France telecom scenario
 -----------------------
 
 
+
+
+
 As many nodes as possible
 
 Add them all
@@ -176,7 +179,20 @@ python python/scripts/p2terminal.py -DMASTER=\"planet1.berkeley.intel-research.n
 irb_p2 scenario
 -----------------------
 
+Start ssh agent and forwarder from cygwin:
+
+eval `ssh-agent`
+
+ssh -t -X -A maniatis@blsshsvr.berkeley.intel-research.net ssh -X -A tetryl ssh-add
+
+ssh -v -l irb_p2 -R 12221:localhost:10001 planet2.berkeley.intel-research.net
+
+Start the visualizer
+
+
+
 Several reliable far apart nodes
+setenv PYTHONPATH python/p2/.libs/:python/dfparser/:python/dfparser/yapps/
 
 Kill them all
 python python/scripts/psetup.py -j 10 -k -n irb_p2 -u maniatis@intel-research.net -w pmPLpm ;
@@ -189,10 +205,3 @@ python python/scripts/psetup.py -DMASTER=\"planet3.berkeley.intel-research.net:1
 
 Install chord
 python python/scripts/p2terminal.py -DMASTER=\"planet3.berkeley.intel-research.net:10000\" -t chord.olg -f python/scripts/chord.olg -n 1 -a planet3.berkeley.intel-research.net -p 10000 localhost 9999
-
-
-
-
-
-
-

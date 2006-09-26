@@ -76,8 +76,9 @@ g4 nodeCount(@J, C2) :- sliceNodeEvent(@J, N, C), C2 := C + 1.
 ***/
 
 d1 gossipEvent(@NI, NeighborID) :-
-	periodic(@NI, E, 2),
+	periodic(@NI, E, 1),
 	nodeCount(@NI, Counter), 
+	f_coinFlip(0.1) == 1,
 	NeighborID := f_rand() % Counter.
 
 d2 programNamesDisseminateMessage(@Neighbor, NI, Name) :-

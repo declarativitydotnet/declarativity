@@ -23,7 +23,7 @@ import javax.swing.event.*;
 
 /**
  */
-public class Vis {
+public class Vis implements Runnable {
 
     protected static Hashtable<String, P2Node> nodes =
         new Hashtable<String, P2Node>();
@@ -183,9 +183,11 @@ public class Vis {
             }
           }
           if (PhiVizApplication.TOKEN.contains(host)) {
+            Color ofTheRing = PhiVizApplication.TOKENROUND ?
+                Color.GREEN : Color.red;
             token = new BasicEllipse(x_pos()-5, y_pos()-5,
                 diameter()+10, diameter()+10,
-                Color.red);
+                ofTheRing);
             layer.add(token);
           }
           dot = new BasicEllipse(x_pos (), y_pos (),
@@ -235,17 +237,20 @@ public class Vis {
 
           if (! show_leaf_set || host == null)
             return;
-          for (Iterator iter = host.successors().iterator();
-               iter.hasNext();
-              ) {
-            HOST h = (HOST) iter.next();
-            String g = h.getGUID();
-            if (g == null || !nodes.containsKey(g)) continue;
-            FigureLayer layer = graphicsPane.getForegroundLayer();
-            ArcConnector conn = make_arc ((P2Node) nodes.get(g), true,
-                                          Color.green);
-            layer.add (conn);
-            ls_connectors.add (conn);
+          synchronized(nodes) {
+            for (Iterator iter = host.successors().iterator();
+                 iter.hasNext();
+                ) {
+              HOST h = (HOST) iter.next();
+              String g = h.getGUID();
+              if (g == null || !nodes.containsKey(g))
+                continue;
+              FigureLayer layer = graphicsPane.getForegroundLayer();
+              ArcConnector conn = make_arc( (P2Node) nodes.get(g), true,
+                                           Color.green);
+              layer.add(conn);
+              ls_connectors.add(conn);
+            }
           }
         }
 
@@ -275,25 +280,27 @@ public class Vis {
             ConnectorTarget target = new PerimeterTarget();
 
             Iterator j = host.fingers().iterator ();
-            for (int i = 0; j.hasNext (); i++) {
-              P2Node other = (P2Node) nodes.get(((HOST) j.next ()).getGUID());
-              if (other == null) continue;
-              Site a = target.getTailSite (dot, 0.0, 0.0);
-              Site b = target.getHeadSite (other.dot, 0.0, 0.0);
-              StraightConnector conn = new StraightConnector (a, b);
-              Rectangle2D.Double bounds =
-                  (Rectangle2D.Double) conn.getBounds ();
-              double len = Math.sqrt (bounds.height * bounds.height +
-                                      bounds.width * bounds.width) / 4.0;
-              Arrowhead arrow =
-                  new Arrowhead(b.getX(), b.getY(), b.getNormal());
-              arrow.setLength (Math.min (len, dot_radius * 3));
-              conn.setHeadEnd(arrow);
-              conn.setStrokePaint (Color.red);
-              layer.add (conn);
-              rt_connectors.add (conn);
+            synchronized(nodes) {
+              for (int i = 0; j.hasNext(); i++) {
+                P2Node other = (P2Node) nodes.get( ( (HOST) j.next()).getGUID());
+                if (other == null)
+                  continue;
+                Site a = target.getTailSite(dot, 0.0, 0.0);
+                Site b = target.getHeadSite(other.dot, 0.0, 0.0);
+                StraightConnector conn = new StraightConnector(a, b);
+                Rectangle2D.Double bounds =
+                    (Rectangle2D.Double) conn.getBounds();
+                double len = Math.sqrt(bounds.height * bounds.height +
+                                       bounds.width * bounds.width) / 4.0;
+                Arrowhead arrow =
+                    new Arrowhead(b.getX(), b.getY(), b.getNormal());
+                arrow.setLength(Math.min(len, dot_radius * 3));
+                conn.setHeadEnd(arrow);
+                conn.setStrokePaint(Color.red);
+                layer.add(conn);
+                rt_connectors.add(conn);
+              }
             }
-
             PathFigure pf =
                 new PathFigure(new Line2D.Double(0,
                                                  ring_radius,
@@ -384,10 +391,12 @@ public class Vis {
     }
 
     public void new_node (String g, HOST h) {
-    	if (!nodes.containsKey(g)) {
-    		P2Node new_node = new P2Node (g, h);
-    		nodes.put(g, new_node);
-    	}
+      synchronized(nodes) {
+        if (!nodes.containsKey(g)) {
+          P2Node new_node = new P2Node(g, h);
+          nodes.put(g, new_node);
+        }
+      }
     }
 
     protected void fit_in_window () {
@@ -668,19 +677,23 @@ public class Vis {
     }
 
     protected void reset_node_colors () {
+      synchronized(nodes) {
         P2Node current_node;
         Iterator IT = nodes.values().iterator();
 
-        while (IT.hasNext ()) {
-            current_node = (P2Node) IT.next ();
-            current_node.color_node_default ();
-            current_node.hide_hostname ();
+        while (IT.hasNext()) {
+          current_node = (P2Node) IT.next();
+          current_node.color_node_default();
+          current_node.hide_hostname();
         }
+      }
     }
 
     protected void update_node_count () {
-        node_count_label.setText ("nodes up: " + nodes.size ());
-        node_count_label.repaint ();
+      synchronized(nodes) {
+        node_count_label.setText("nodes up: " + nodes.size());
+        node_count_label.repaint();
+      }
     }
 
     protected void set_dot_radius (double value) {
@@ -698,8 +711,10 @@ public class Vis {
         the_ring.repaint ();
         layer.add (the_ring);
       }
-      for (P2Node b : nodes.values ()) {
-        b.redraw();
+      synchronized(nodes) {
+        for (P2Node b : nodes.values()) {
+          b.redraw();
+        }
       }
     }
 
@@ -773,12 +788,21 @@ public class Vis {
     }
 
     public void redraw () {
-    	redraw_all ();
-    	update_transform();
+      if (SwingUtilities.isEventDispatchThread()) {
+        run();
+      } else {
+        EventQueue.invokeLater(this);
+      }
     }
 
     public static void main (String [] args) throws IOException {
         Vis vis = new Vis (BigInteger.valueOf (2).pow (160));
         vis.redraw ();
     }
+
+  public void run() {
+    // Do my redrawing
+    redraw_all ();
+    update_transform();
+  }
 }

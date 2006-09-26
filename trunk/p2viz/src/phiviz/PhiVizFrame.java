@@ -95,7 +95,7 @@ public class PhiVizFrame
   }
 
   public void update() {
-	  phiPanel.update();
+    phiPanel.update();
   }
 
   //Component initialization

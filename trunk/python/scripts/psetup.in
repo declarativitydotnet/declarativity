@@ -45,11 +45,11 @@ def print_usage():
     print """
 Usage: psetup.py [-d] [-a] [-t pingCheckPort] [-j <parallel>] [-(i|I)] [-k] \\
                  [-Dvar=<value> [-Dvar=<value> [...]] -o <overlog>] \\
-                 [-m master_addr -p master_port -u username -w password] \\
+                 [-m master_addr -P node_port -p master_port -u username -w password] \\
                  -r rootDir(i.e., phi/phi/) -n <slice_name> [<planetLabNode>]"""
 
 def parse_cmdline(argv):
-    shortopts = "shdaIikn:j:o:D:m:p:t:u:w:r:"
+    shortopts = "shdaIikn:j:o:D:m:p:t:u:w:r:P:"
 
     flags = {"dealloc" : False,
              "alloc" : False,
@@ -65,8 +65,9 @@ def parse_cmdline(argv):
              "password" : None,
              "slice_start" : False,
              "slice_halt" : False,
-             "master_addr" : "clash.berkeley.intel-research.net",
-             "master_port" : "10000",
+             "master_addr" : None,
+             "master_port" : None,
+             "node_port" : None,
              "root" : "."}
 
     opts, args = getopt.getopt(argv[1:], shortopts)
@@ -83,6 +84,7 @@ def parse_cmdline(argv):
         elif o == "-o": flags["overlog"]     = v
         elif o == "-m": flags["master_addr"] = v
         elif o == "-p": flags["master_port"] = v
+        elif o == "-P": flags["node_port"] = v
         elif o == "-t": flags["pingPort"] = int(v)
         elif o == "-u": flags["email"] = str(v)
         elif o == "-w": flags["password"] = str(v)
@@ -197,7 +199,7 @@ def startNode(node):
 
 
 
-    start = startup + " " + flags["master_addr"] + " " + flags["master_port"] + " " + str(flags["pingPort"]) + " " + str(flags["slice"])
+    start = startup + " " + flags["master_addr"] + " " + flags["master_port"] + " " + str(flags["pingPort"]) + " " + str(flags["slice"]) + " " + str(flags["node_port"])
 
     pong = False
     for i in range(2):

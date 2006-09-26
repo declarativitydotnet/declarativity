@@ -45,6 +45,7 @@ public class PhiVizApplication {
   public static PhiVizFrame frame;
 
   public static PlanetLabHelper sites;
+  public static boolean TOKENROUND = false;
   public static Set TOKEN = new HashSet();
 
   // Construct the application
@@ -180,7 +181,7 @@ public class PhiVizApplication {
 	class ConnectionHandler implements Runnable {
           private Socket connection_;
 
-          public ConnectionHandler(Socket sock) {
+    public ConnectionHandler(Socket sock) {
             connection_ = sock;
           }
 
@@ -264,82 +265,81 @@ public class PhiVizApplication {
             }
           }
 
-		private void handlePath(String[] tuple) {
-			ArrayList<SITE> path = new ArrayList<SITE>();
-			for (int i = 1; i < tuple.length; i++) {
-				String hostname = tuple[i].split(":")[0];
-				HOST host = sites.hostFromName(hostname);
-				if (host == null) {
-					System.err.println("HANDLE PATH: Unknown hostname -> " + hostname);
-					return;
-				}
-				path.add(host.getParent());
-			}
-			frame.panel().lookup(path);
-		}
+          private void handlePath(String[] tuple) {
+            ArrayList<SITE> path = new ArrayList<SITE>();
+            for (int i = 1; i < tuple.length; i++) {
+              String hostname = tuple[i].split(":")[0];
+              HOST host = sites.hostFromName(hostname);
+              if (host == null) {
+                System.err.println("HANDLE PATH: Unknown hostname -> " + hostname);
+                return;
+              }
+              path.add(host.getParent());
+            }
+            frame.panel().lookup(path);
+          }
 
-		private void handleInstall(String[] tuple) {
-                  String hostname = tuple[1].split(":")[0];
-                  String guid = tuple[2];
-                  HOST host = sites.hostFromName(hostname);
-                  if (host != null) {
-                    if (host._installed)
-                      System.err.println("HOST ALREADY INSTALLED!! " + hostname);
-                    host._installed = true;
-                  } else {
-                    System.err.println("HOST " + hostname
-                                       + " DOES NOT EXIST IN VISUALIZER!");
-                    return;
-                  }
-                  p2vis.new_node(guid, host);
-		}
+          private void handleInstall(String[] tuple) {
+            String hostname = tuple[1].split(":")[0];
+            String guid = tuple[2];
+            HOST host = sites.hostFromName(hostname);
+            if (host != null) {
+              host._installed = true;
+            } else {
+              System.err.println("HOST " + hostname
+                                 + " DOES NOT EXIST IN VISUALIZER!");
+              return;
+            }
+            p2vis.new_node(guid, host);
+          }
 
-                private void handleSuccessor(String[] tuple) {
-                  String srcName = tuple[1].split(":")[0];
-                  String succName = tuple[2].split(":")[0];
+          private void handleSuccessor(String[] tuple) {
+            String srcName = tuple[1].split(":")[0];
+            String succName = tuple[2].split(":")[0];
 
-                  HOST src = sites.hostFromName(srcName);
-                  HOST succ = sites.hostFromName(succName);
-                  if (src != null && succ != null) {
-                    if (!src._installed)
-                      System.err.println("HOST NOT INSTALLED: " + srcName);
-                    if (!succ._installed)
-                      System.err.println("HOST NOT INSTALLED: " + succName);
-                    src.clearSuccessors();
-                    src.addSuccessor(succ);
-                  } else
-                    System.err.println("HOST IS NULL");
-                }
+            HOST src = sites.hostFromName(srcName);
+            HOST succ = sites.hostFromName(succName);
+            if (src != null && succ != null) {
+              if (!src._installed)
+                System.err.println("HOST NOT INSTALLED: " + srcName);
+              if (!succ._installed)
+                System.err.println("HOST NOT INSTALLED: " + succName);
+              src.clearSuccessors();
+              src.addSuccessor(succ);
+            } else
+              System.err.println("HOST IS NULL");
+          }
 
-                private void handleToken(String[] tuple) {
-                  String pathNodes[] = tuple[2].split("\\+");
-                  TOKEN.clear();
-                  for (int i = 0; i < pathNodes.length; i++) {
-                    String thisNodeSpec = pathNodes[i];
-                    String thisNode = thisNodeSpec.split(":")[0];
-                    HOST tokenHost =
-                        sites.hostFromName(thisNode);
-                    TOKEN.add(tokenHost);
-                  }
-                }
+          private void handleToken(String[] tuple) {
+            TOKENROUND = tuple[2].equals("Y");
+            String pathNodes[] = tuple[3].split("\\+");
+            TOKEN.clear();
+            for (int i = 0; i < pathNodes.length; i++) {
+              String thisNodeSpec = pathNodes[i];
+              String thisNode = thisNodeSpec.split(":")[0];
+              HOST tokenHost =
+                  sites.hostFromName(thisNode);
+              TOKEN.add(tokenHost);
+            }
+          }
 
-		private void handleFinger(String[] tuple) {
-			String pos = tuple[1];
-			String srcName = tuple[2].split(":")[0];
-			String destName = tuple[3].split(":")[0];
+          private void handleFinger(String[] tuple) {
+            String pos = tuple[1];
+            String srcName = tuple[2].split(":")[0];
+            String destName = tuple[3].split(":")[0];
 
-			HOST src = sites.hostFromName(srcName);
-			HOST dest = sites.hostFromName(destName);
-			if (src != null && dest != null) {
-				if (!src._installed)
-					System.err.println("HOST NOT INSTALLED: " + srcName);
-				if (!dest._installed)
-					System.err.println("HOST NOT INSTALLED: " + destName);
-				src.addFinger(pos, dest);
-			} else
-				System.err.println("HOST IS NULL");
-		}
-	}
+            HOST src = sites.hostFromName(srcName);
+            HOST dest = sites.hostFromName(destName);
+            if (src != null && dest != null) {
+              if (!src._installed)
+                System.err.println("HOST NOT INSTALLED: " + srcName);
+              if (!dest._installed)
+                System.err.println("HOST NOT INSTALLED: " + destName);
+              src.addFinger(pos, dest);
+            } else
+              System.err.println("HOST IS NULL");
+          }
+        }
 
         // Main method
         public static void main(String[] args) throws Exception {

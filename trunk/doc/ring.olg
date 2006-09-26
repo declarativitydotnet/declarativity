@@ -1,65 +1,193 @@
 /*
  * (@#)$Id$
  *
- * Copyright (c) 2005 Intel Corporation
- *
- * This file is distributed under the terms in the attached INTEL-LICENSE file.
+ * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
  * 
  * DESCRIPTION: A very simplistic ring-based DHT in Overlog
  *
  */
 
 
-/* The base tuples */
-materialize(env, infinity, infinity, keys(2,3)).
-materialize(node, infinity, 1, keys(1)).
-materialize(succ, 10, 100, keys(2)).
-materialize(join, 10, 5, keys(1)).
-materialize(landmark, infinity, 1, keys(1)).
-
-/** Lookups */
-l1 lookupResults(@R,K,S,SI,E) :- node(@NI,N),
-				  lookup(@NI,K,R,E), 
-				  succ(@NI,S,SI),
-				  ((K in (N,S]) || (N == S)).
+#define STABILIZATION_INTERVAL 10
+#define JOIN_INTERVAL 5
+#define JOIN_REQUEST_EXPIRATION 20
 
 
-l2 lookup(@SI,K,R,E) :- node(@NI,N),	    
-   				   lookup(@NI,K,R,E),
-			       succ(@NI,S,SI), 
-				   ((K <= N) || (K > S)).
+/* Who am I? node(Address, Identifier) */
+materialize(node, infinity, 1, keys(1, 2)).
 
-/** Joining the ring */
 
-c1 joinEvent(@NI,E) :- join(@NI,E).
+/* My successors. succ(MyAddress, SuccessorIdentifier, SuccessorAddress)
+*/
+materialize(succ, infinity, 1, keys(1, 2)).
 
-c2 joinReq(@LI,N,NI,E) :- joinEvent(@NI,E),
-			 node(@NI,N), 
-			 landmark(@NI,LI),
-			 LI != "127.0.0.1:10000".
 
-c3 succ(@NI,N,NI) :- joinEvent(@NI,E),
-		       node(@NI,N), 
-		       landmark(@NI,LI),
-		       LI == "127.0.0.1:10000".
+/** My pending join requests. joinRequest(MyAddress, JoinID). */
+materialize(joinRequest, JOIN_REQUEST_EXPIRATION, infinity, keys(1, 2)).
 
-c4 lookup(@LI,N,NI,E) :- joinReq(@LI,N,NI,E).
 
-c5 succ(@NI,S,SI) :- join(@NI,E),
-		    lookupResults(@NI,K,S,SI,E).
+/** My predecessor. pred(MyAddress, PredecessorID, PredecessorAddress)
+*/
+materialize(pred, infinity, 1, keys(1, 2)).
 
-/* start the process */
-g1 join(@NI, E) :- periodic(@NI,E,3,1), env(@NI, H, J), H == "join".
-g2 node(@I, J) :- periodic(@I,E,1,1), env(@I, H, J), H == "node".
-g3 landmark(@I, J) :- periodic(@I,E,1,1), env(@I, H, J), H == "landmark".
-watch(node).
-watch(landmark).
-watch(joinEvent).
-watch(join).
-watch(joinReq).
-watch(lookup).
-watch(lookupResults).
+
+
+/* Inherit table from gossip.olg */
+materialize(parent, infinity, 1, keys(2)).
+
+
+
+
+i0 node(@NI, N) :-
+	periodic(@NI, E, 0, 1), N := f_sha1(NI).
+
+
+
+/** Join the ring, if not there already. Upon reception of a join event
+    joinEvent(@MyAddress, JoinID), check if I have any successors. If
+    not, store the request locally, and then send a lookup request to
+    the landmark node. Otherwise do nothing.  When a response arrives,
+    install the successor. */
+
+j0 joinEvent(@MyAddress, JoinID) :-
+	periodic(@MyAddress, E, JOIN_INTERVAL), JoinID := E.
+
+j0a joinEvent(@MyAddress, JoinID) :-
+	periodic(@MyAddress, E, 0, 1), JoinID := E.
+
+j1 joinDecision(@MyAddress, JoinID, count<*>) :-
+	joinEvent(@MyAddress, JoinID),
+	succ(@MyAddress, SuccessorID, SuccessorAddr).
+
+j2 joinRequest(@MyAddress, JoinID) :-
+	joinDecision(@MyAddress, JoinID, SuccessorCount),
+	LANDMARK != MyAddress,
+	SuccessorCount == 0.
+
+j2a joined(@MyAddress, JoinID, MyID, MyAddress) :-
+	joinDecision(@MyAddress, JoinID, SuccessorCount),
+	LANDMARK == MyAddress,
+	node(@MyAddress, MyID),
+	SuccessorCount == 0.
+
+j2b joinRequestUpdated(@MyAddress, JoinID) :-
+	joinRequest(@MyAddress, JoinID).
+
+j3 lookup(@Landmark, Identifier, MyAddress, JoinID) :-
+	joinRequestUpdated(@MyAddress, JoinID),
+	node(@MyAddress, Identifier),
+	parent(@MyAddress, Parent),
+	Landmark := Parent.
+
+j4 joined(@MyAddress, RequestID, SuccessorID, SuccessorAddress) :-
+	lookupResponse(@MyAddress, Key, SuccessorID, SuccessorAddress,
+	RequestID), joinRequest(@MyAddress, RequestID).
+
+j5 succ(@MyAddress, SuccessorID, SuccessorAddress) :-
+	joined(@MyAddress, RequestID, SuccessorID, SuccessorAddress).
+
+j6 delete joinRequest(@MyAddress, RequestID) :-
+	joined(@MyAddress, RequestID, SuccessorID, SuccessorAddress).
+
+
+
+
+
+
+
+/** Lookups. */
+
+l1 lookupResponse(@RequesterAddress, Key, SuccessorID,
+	SuccessorAddress, RequestID) :-
+	lookup(@MyAddress, Key, RequesterAddress, RequestID), 
+	node(@MyAddress, MyID),
+	succ(@MyAddress, SuccessorID, SuccessorAddress),
+	((Key in (MyID, SuccessorID]) || (MyID == SuccessorID)).
+
+
+l2 lookup(@SuccessorAddress, Key, RequesterAddress, RequestID) :-
+	lookup(@MyAddress, Key, RequesterAddress, RequestID), 
+	node(@MyAddress, MyID),
+	succ(@MyAddress, SuccessorID, SuccessorAddress),
+	((Key in (SuccessorID, MyID)) && (SuccessorID != MyID)).
+
+
+
+/** Stabilization. Tell my successors I'm here. They adjust their
+predecessor accordingly. */
+
+sb1 stabilizeEvent(@NI, E) :-
+	periodic(@NI, E, STABILIZATION_INTERVAL).
+
+sb2 pushForwardMessage(@SuccessorAddress, MyID, MyAddress) :-
+	stabilizeEvent(@MyAddress, E),
+	succ(@MyAddress, SuccessorID, SuccessorAddress),
+	node(@MyAddress, MyID).
+
+sb3 pushForwardDecision(@MyAddress, PredecessorID, PredecessorAddress,
+	count<*>) :- pushForwardMessage(@MyAddress, PredecessorID,
+	PredecessorAddress), pred(@MyAddress, APredecessorID,
+	APredecessorAddress).
+
+
+/** If I have no predecessor, install the guy I heard from, if he's not
+me. */
+sb4 pred(@MyAddress, NewPredecessorID, NewPredecessorAddress) :-
+	pushForwardDecision(@MyAddress, NewPredecessorID,
+	NewPredecessorAddress, CurrentPredecessorCount),
+	CurrentPredecessorCount == 0, NewPredecessorAddress != MyAddress.
+
+/** If I have a predecessor, but the new guy I heard from is closer,
+	replace my predecessor */
+sb5 pred(@MyAddress, NewPredecessorID, NewPredecessorAddress) :-
+	pushForwardDecision(@MyAddress, NewPredecessorID,
+	NewPredecessorAddress, CurrentPredecessorCount),
+	CurrentPredecessorCount > 0, pred(@MyAddress, PredecessorID,
+	PredecessorAddress),  node(@MyAddress, MyID),  NewPredecessorID
+	in (PredecessorID, MyID).
+
+/** Tell the guy who contacted me of my current predecessor */
+sb6 pushBackMessage(@PotentialPredecessorAddress, CurrentPredecessorID,
+	CurrentPredecessorAddress) :- pushForwardMessage(@MyAddress,
+	PotentialPredecessorID, PotentialPredecessorAddress),
+	pred(@MyAddress, CurrentPredecessorID,
+	CurrentPredecessorAddress).
+
+
+sb7 succ(@MyAddr, PotentialSuccID, PotentialSuccAddr) :-
+	pushBackMessage(@MyAddr, PotentialSuccID, PotentialSuccAddr),
+	succ(@MyAddr, SuccID, SuccAddr), node(@MyAddr, MyID),
+	PotentialSuccID in (MyID, SuccID).
+
+
+
+
+
+
+/** Notify others of my successor information */
+
+n0 bestSuccEvent(@MasterAddress, Type, MyAddress, SuccessorAddress) :-
+	succ(@MyAddress, SuccessorID, SuccessorAddress), MasterAddress
+	:= MASTER, Type := "S", stabilizeEvent(@MyAddress, E).
+
+
+
 watch(succ).
+watch(pred).
+watch(bestSuccEvent).
+watch(pushForwardDecision).
+watch(pushForwardMessage).
+watch(lookup).
+watch(lookupResponse).
+watch(joinEvent).
+watch(joinDecision).
+watch(joinRequest).
+watch(joinEvent).
+watch(joinDecision).
+watch(joined).

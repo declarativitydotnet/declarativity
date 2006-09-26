@@ -12,14 +12,15 @@ MASTER=$2
 PORT=$3
 TIMEPORT=$4
 SLICE=$5
-OVERLOG=$6
+NODEPORT=$6
+OVERLOG=$7
 
 start() {
 	export PYTHONPATH=/usr/local/lib:/usr/local/bin
         if [ -f /home/${SLICE}/${OVERLOG} ]; then
-		sudo python /home/${SLICE}/planetlab.py -t $TIMEPORT -m $MASTER -p $PORT -o /home/${SLICE}/${OVERLOG} -n ${SLICE} 10000 >  /home/${SLICE}/planetlab.out 2>&1 &
+		sudo python /home/${SLICE}/planetlab.py -t $TIMEPORT -m $MASTER -p $PORT -o /home/${SLICE}/${OVERLOG} -n ${SLICE} ${NODEPORT} >  /home/${SLICE}/planetlab.out 2>&1 &
 	else
-		sudo python /home/${SLICE}/planetlab.py -t $TIMEPORT -m $MASTER -p $PORT -n ${SLICE} 10000 > /home/${SLICE}/planetlab.out 2>&1 &
+		sudo python /home/${SLICE}/planetlab.py -t $TIMEPORT -m $MASTER -p $PORT -n ${SLICE} ${NODEPORT} > /home/${SLICE}/planetlab.out 2>&1 &
         fi
 }
 
