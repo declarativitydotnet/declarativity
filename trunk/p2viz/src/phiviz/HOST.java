@@ -12,6 +12,8 @@ import java.util.HashSet;
  */
 public class HOST
 {
+  public static HOST NONE = new HOST("0x0", "none", "none", "none", "none", "none", "none");
+
 	private SITE   _parent;
 
 	private String  _guid = null;
@@ -41,6 +43,8 @@ public class HOST
 		_boot_state = boot_state;
 		_ip         = ip;
 		_mac        = mac;
+                System.out.println("New Host " +
+                                   hostname);
 
 	}
 

@@ -52,9 +52,11 @@ public class Vis implements Runnable {
     protected long check_period_ms = 5*60*1000;
 
     private final double decimal (BigInteger guid) {
-      return (new BigDecimal(guid).divide(new BigDecimal(MODULUS),
-                                          6 /* scale */,
-                                          BigDecimal.ROUND_UP)).doubleValue ();
+      double dec = (new BigDecimal(guid).
+                    divide(new BigDecimal(MODULUS),
+                           6 /* scale */,
+                           BigDecimal.ROUND_UP)).doubleValue ();
+      return dec;
     }
 
     private final double theta (BigInteger guid) {
@@ -83,9 +85,11 @@ public class Vis implements Runnable {
 
         private final double decimal () {
             assert guid != null;
-            return (new BigDecimal(guid).divide(new BigDecimal(MODULUS),
-                                                6, BigDecimal.ROUND_UP)).
+            double dec = (new BigDecimal(guid).
+                          divide(new BigDecimal(MODULUS),
+                                 6, BigDecimal.ROUND_UP)).
                 doubleValue ();
+            return dec;
         }
 
         private final double theta () {
@@ -213,6 +217,10 @@ public class Vis implements Runnable {
           host = h;
           if (host != null)
             host.setGUID(guid_str);
+          System.out.println("New node " +
+                             h.getNAME() +
+                             " with guid " +
+                             guid_str);
           //redraw (); Must use callbacks to do this
         }
 
@@ -544,7 +552,7 @@ public class Vis implements Runnable {
         the_ring = new BasicEllipse( -1.0*ring_radius, -1.0*ring_radius,
                                       2.0*ring_radius, 2.0*ring_radius);
         layer.add (the_ring);
-        new_node("0x0I", null);
+        new_node("0x0I", HOST.NONE);
 
         update_transform ();
 

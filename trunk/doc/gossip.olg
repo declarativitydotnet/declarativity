@@ -145,11 +145,12 @@ p3 overlogInstall(@NI, "none", Name, Program) :-
     next rule builds a visualization tuple, which it sends to the
     visualization master (or proxy thereof).  Since we don't pass a
     sender in p3 above, ignore the sender value in the
-    dataflowInstallationResult tuple. */
+    dataflowInstallationResult tuple.
 p4 localInstallEvent(@NI, "I", M, ID, Result) :-
 	dataflowInstallationResult(@NI, _, Result, Message), 
 	ID := f_sha1(NI),
 	M := MASTER.
+*/
 
 p5 installed(@NI, I, M, ID, Result) :-
 	localInstallEvent(@NI, I, M, ID, Result).

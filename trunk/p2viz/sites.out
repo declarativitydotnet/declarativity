@@ -1,12 +1,22 @@
-10098,,thu1.6planetlab.edu.cn,,Unknown,,PlanetLab BootCD v2.0,,boot,,219.243.200.17,,00:11:85:69:7B:FC,,10008,,CERNET - Tsinghua University,,116.28,,39.54,,http://www.tsinghua.edu.cn/eng/index.htm
-46,,planetlab1.cs.duke.edu,,Dell Poweredge 1650,,PlanetLab BootCD v2.0,,boot,,152.3.138.1,,00:06:5B:EC:C5:E0,,17,,Duke University,,-78.9427,,36.0088,,http://www.cs.duke.edu/
-8198,,planetlab02.ethz.ch,,Unknown,,PlanetLab BootCD v2.0,,boot,,192.33.90.196,,00:01:02:90:F1:72,,136,,ETH Zuerich,,8.53333,,47.3833,,http://www.planetlab.ethz.ch
-77,,lefthand.eecs.harvard.edu,,Dell Precision 340,,PlanetLab BootCD v2.0,,boot,,140.247.60.123,,00:08:74:40:3C:63,,2,,Harvard University,,-71.1164,,42.3788,,http://www.cs.harvard.edu/
-10511,,planetlab5.nbgisp.com,,Dell 1650/minhw,,PlanetLab BootCD v2.0,,boot,,63.64.153.86,,00:06:5B:8E:FD:C9,,27,,Intel Labs - Oregon,,-122.957,,45.5403,,http://www.intel.com/research/exploratory/planetlab.htm
-71,,planet2.seattle.intel-research.net,,Dell Poweredge 1650,,PlanetLab BootCD v2.0,,boot,,12.17.136.137,,00:06:5B:EC:F8:9A,,3,,Intel Research at Seattle,,-122.316,,47.6614,,http://www.intel-research.net/seattle/
-8188,,planet3.berkeley.intel-research.net,,Unknown,,PlanetLab BootCD v2.0,,boot,,12.46.129.23,,00:0F:1F:9D:27:9B,,11,,Intel Research Berkeley,,-122.268,,37.8702,,http://www.intel-research.net/berkeley/
-8155,,planetlab3.cambridge.intel-research.net,,Unknown,,PlanetLab BootCD v2.0,,boot,,195.212.206.162,,00:0D:56:FD:C1:B0,,104,,Intel Research Cambridge,,0.00133333,,52.0022,,http://www.intel-research.net/cambridge/
-30,,planet1.pittsburgh.intel-research.net,,Dell Poweredge 1650,,PlanetLab BootCD v2.0,,boot,,12.108.127.136,,00:06:5B:EC:F8:96,,10,,Intel Research Pittsburgh,,-79.9486,,40.4451,,http://www.intel-research.net/pittsburgh/
-331,,csplanetlab3.kaist.ac.kr,,Unknown,,PlanetLab BootCD v2.0,,boot,,143.248.139.170,,00:07:E9:19:0D:C0,,118,,KAIST,,127.5,,37.0,,http://cosmos.kaist.ac.kr/~sbmoon/cs540/term-project.htm
-10546,,planetlab3.ucsd.edu,,HP DL320,,PlanetLab BootCD 3.3,,boot,,132.239.17.226,,00:18:71:E8:3C:25,,6,,University of California at San Diego,,-117.237,,32.877,,http://www.cs.ucsd.edu/
-55,,planetlab2.csres.utexas.edu,,Dell Precision 340,,PlanetLab BootCD v2.0,,boot,,128.83.122.180,,00:06:5B:DD:6D:08,,29,,University of Texas, Austin,,-97.7373,,30.2836,,http://www.cs.utexas.edu/
+150,,planetlab1.iis.sinica.edu.tw,,Dell Poweredge 2650,,PlanetLab BootCD v2.0,,boot,,140.109.17.180,,00:06:5B:F3:0A:A8,,61,,Academia Sinica - Taiwan,,121.37,,25.02,,http://www.iis.sinica.edu.tw/
+8236,,planet1.att.nodes.planet-lab.org,,Unknown,,PlanetLab BootCD v2.0,,boot,,204.178.4.163,,00:30:48:51:B3:FB,,206,,AT&T Labs--Research,,-74.18,,40.73,,http://www.research.att.com
+8265,,venus.cs.brown.edu,,Unknown,,PlanetLab BootCD 3.1,,boot,,198.7.255.163,,00:C0:9F:40:36:D4,,217,,Brown University,,-71.42,,41.82,,http://cs.brown.edu/
+10099,,thu2.6planetlab.edu.cn,,Unknown,,PlanetLab BootCD 3.1,,boot,,219.243.201.17,,00:11:85:19:33:BE,,10008,,CERNET - Tsinghua University,,116.28,,39.54,,http://www.tsinghua.edu.cn/eng/index.htm
+10346,,planet2.colbud.hu,,Dell PowerEdge 650,,PlanetLab BootCD 3.1,,boot,,193.6.20.5,,00:04:23:89:99:C2,,10104,,Collegium Budapest,,19.25,,47.43,,http://www.colbud.hu
+10268,,planetlab-2.cs.colostate.edu,,HP PC,,PlanetLab BootCD 3.1,,boot,,129.82.12.188,,00:13:21:C6:F4:8C,,10085,,Colorado State University,,-105.05,,40.35,,http://netsec.cs.colostate.edu
+8218,,planetlab2.cslab.ece.ntua.gr,,Unknown,,PlanetLab BootCD 3.0-beta0.1,,boot,,147.102.3.102,,00:10:5A:2E:8C:A4,,180,,CSLab - Institute of Communication and Computer Systems of National Technical University of Athens,,23.73,,38.0,,http://www.cslab.ece.ntua.gr
+26,,planetlab2.diku.dk,,Dell Precision 340,,PlanetLab BootCD v2.0,,boot,,192.38.109.144,,00:08:74:40:4A:6F,,35,,Datalogisk Institut Copenhagen,,12.5622,,55.7024,,http://www.diku.dk/
+10474,,planet01.hhi.fraunhofer.de,,HP Proliant DL 320 G4 DC 3.0 4 GB,,PlanetLab BootCD 3.3,,boot,,193.174.67.186,,00:15:60:0F:F8:47,,10121,,Fraunhofer-Institute for Telecommunications - Heinrich-Hertz-Institut,,13.32,,52.52,,http://www.hhi.fraunhofer.de
+10106,,planetlab1.hiit.fi,,HP Prolian DL360 G4,,PlanetLab BootCD 3.0-beta0.1,,boot,,128.214.112.91,,00:11:85:6A:1B:86,,10039,,Helsinki Institute for Information Technology,,25.0,,60.1,,http://www.hiit.fi
+8186,,planetlab1.iiitb.ac.in,,Unknown,,PlanetLab BootCD v2.0,,boot,,164.164.104.162,,00:07:E9:2E:36:16,,183,,Indian Institute of Information Technology, Bangalore,,77.58,,12.97,,http://planetlab.iiitb.ac.in/
+8196,,planet1.berkeley.intel-research.net,,Unknown,,PlanetLab BootCD v2.0,,boot,,12.46.129.21,,00:06:5B:8F:8B:4C,,11,,Intel Research Berkeley,,-122.268,,37.8702,,http://www.intel-research.net/berkeley/
+10333,,planetlab03.mpi-sws.mpg.de,,Dell PowerEdge 1750,,PlanetLab BootCD 3.1,,boot,,139.19.142.3,,00:11:43:E6:E7:CB,,10098,,Max Planck Institute for Software Systems,,6.59,,49.14,,http://www.mpi-sws.mpg.de
+3,,planet2.scs.cs.nyu.edu,,Dell Precision 340,,PlanetLab BootCD v2.0,,boot,,216.165.109.82,,00:08:74:40:1A:0F,,5,,New York University,,-73.9934,,40.7292,,http://www.cs.nyu.edu/
+10396,,planetlab-2.cse.ohio-state.edu,,Dell PowerEdge 1850,,PlanetLab BootCD 3.1,,boot,,164.107.127.13,,00:14:22:17:CF:B9,,10110,,Ohio State University,,-83.03,,39.98,,http://www.cse.ohio-state.edu
+10208,,planetlab-1.ssvl.kth.se,,Unknown,,PlanetLab BootCD 3.0-beta0.5,,boot,,192.16.125.11,,00:11:43:25:9A:D2,,10074,,Royal Institute of Technology (KTH), Sweden,,17.38,,59.52,,http://www.imit.kth.se
+4,,planet1.scs.stanford.edu,,Dell Precision 340,,PlanetLab BootCD v2.0,,boot,,171.66.3.181,,00:08:74:40:1B:3C,,25,,Stanford University,,-122.172,,37.4294,,http://cs.stanford.edu/
+3240,,planetlab1.ls.fi.upm.es,,Unknown,,PlanetLab BootCD 3.1,,boot,,138.100.12.148,,00:13:20:63:A5:49,,129,,Technical University of Madrid,,-3.72,,40.42,,http://www.fi.upm.es
+10202,,planetlab2.warsaw.rd.tp.pl,,Custom,,PlanetLab BootCD 3.0-beta0.4,,boot,,195.116.60.2,,00:0C:76:7C:86:B5,,10069,,Telekomunikacja Polska R&D at Warsaw,,21.0017,,52.1763,,http://www.tp-ir.pl/index.php?page=index&lang=en
+3225,,planetlab8.millennium.berkeley.edu,,Dell 650,,PlanetLab BootCD v2.0,,boot,,169.229.50.10,,00:04:23:5F:1F:0E,,24,,University of California at Berkeley,,-122.259,,37.8757,,http://www.cs.berkeley.edu/
+8261,,plnode01.cs.mu.oz.au,,Dell PE850,,PlanetLab BootCD 3.3,,boot,,220.245.140.196,,00:13:72:FD:17:61,,220,,University of Melbourne - CSSE,,144.9,,-37.8,,http://www.csse.unimelb.edu.au/
+204,,planetlab2.cs.vu.nl,,Unknown,,PlanetLab BootCD 3.1,,boot,,130.37.198.244,,00:0C:6E:30:7E:DC,,94,,Vrije Universiteit,,4.9,,52.35,,http://www.cs.vu.nl/index-en.html

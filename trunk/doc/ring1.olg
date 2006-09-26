@@ -67,6 +67,11 @@ i1 pred(@NI, P, PI)      :- periodic(@NI, E, 0, 1), P := 0x0I, PI:="-".
 
 i3 landmark(@NI, MASTER) :- periodic(@NI, E, 0, 1).
 
+i4 nodeInstalled(@NI, N) :- node(@NI, N).
+
+i5 localInstallEvent(@NI, "I", M, N, 0) :-
+	nodeInstalled(@NI, N), M := MASTER.
+
 
 /** Lookups */
 
