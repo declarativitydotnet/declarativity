@@ -61,7 +61,7 @@ watch(currentSucc).
 watch(newSuccD).
 
 /** Shifting node id's to break up clusters */
-i0 node(@NI, N)          :- periodic(@NI, E, 0, 1), D := NI + "1", N := f_sha1(D).
+i0 node(@NI, N)          :- periodic(@NI, E, 0, 1), N := f_sha1(NI).
 
 i1 pred(@NI, P, PI)      :- periodic(@NI, E, 0, 1), P := 0x0I, PI:="-".
 
