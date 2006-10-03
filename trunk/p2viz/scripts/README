@@ -4,12 +4,14 @@ Process:
 Sets up local ssh agent on the Windows machine
 
 # ./init2
-Pulls an ssh certificate that gets the user into Planetlab
+Pulls an ssh certificate that gets the user into Planetlab. Customize with the current user's username and machine where the ssh certificate resides
 
 # ./startP2
-Creates a port forwarder from a PlanetLab machine and starts the visualization
+Creates a port forwarder from a PlanetLab machine and starts the visualization. The port numbers are as per the three IDF 2006 scenarios.
+
 
 At this point, p2setup can be called on the controlling machine to start dissemination and startup of P2
+
 
 # ./shutdown1
 Kills the local ssh-agent
