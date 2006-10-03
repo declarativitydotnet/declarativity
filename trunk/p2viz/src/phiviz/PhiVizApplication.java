@@ -56,11 +56,10 @@ public class PhiVizApplication {
    *            The image of the map forming the background.
    */
   public PhiVizApplication(BufferedImage mapImage,
-                           String sliceName,
                            Vis vis)
       throws IOException {
     p2vis = vis;
-    sites = new PlanetLabHelper(sliceName);
+    sites = new PlanetLabHelper();
     frame = new PhiVizFrame(mapImage, sites);
     create_menus(frame, sites);
 
@@ -343,11 +342,10 @@ public class PhiVizApplication {
 
         // Main method
         public static void main(String[] args) throws Exception {
-          if (args.length != 2) {
+          if (args.length != 1) {
             throw new RuntimeException("Expecting <mapFilename> <slicename>");
           }
           String mapFilename = args[0];
-          String sliceName = args[1];
 
           BufferedImage mapImage = ImageIO.read(new FileInputStream(mapFilename));
 
@@ -359,7 +357,6 @@ public class PhiVizApplication {
 
           Vis vis = new Vis(BigInteger.valueOf(2).pow(160));
           PhiVizApplication app = new PhiVizApplication(mapImage,
-                                                        sliceName,
                                                         vis);
           app.eventLoop(new ServerSocket(10001));
         }

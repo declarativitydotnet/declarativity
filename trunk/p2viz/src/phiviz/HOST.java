@@ -12,7 +12,7 @@ import java.util.HashSet;
  */
 public class HOST
 {
-  public static HOST NONE = new HOST("0x0", "none", "none", "none", "none", "none", "none");
+  public static HOST NONE = new HOST("0x0", "0", "0", "0", "0", "0", "0");
 
 	private SITE   _parent;
 

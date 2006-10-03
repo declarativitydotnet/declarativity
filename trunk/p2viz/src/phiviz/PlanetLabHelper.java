@@ -8,7 +8,7 @@ import java.util.*;
 public class PlanetLabHelper {
 
   public static void main(String[] args) throws Exception {
-    PlanetLabHelper helper = new PlanetLabHelper("irb_phi");
+    PlanetLabHelper helper = new PlanetLabHelper();
   }
 
   final public int NODE_ID    = 0;
@@ -34,7 +34,7 @@ public class PlanetLabHelper {
    * @param sitesFile The filename of the XML sites file.
    * @throws IOException
    */
-  public PlanetLabHelper(String sliceName) throws IOException
+  public PlanetLabHelper() throws IOException
   {
     Runtime runtime = Runtime.getRuntime();
     Process proc;
