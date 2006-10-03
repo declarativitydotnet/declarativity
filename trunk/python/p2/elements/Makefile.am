@@ -59,9 +59,10 @@ libp2pythonelements_la_SOURCES = \
 	unmarshalField.cpp \
 	tupleListener.cpp \
 	tupleSourceInterface.cpp \
-	update.cpp
+	update.cpp \
+	mergeSort.cpp
 
-INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements -I$(top_builddir)/eventLoop
+INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements -I$(top_builddir)/eventLoop -I$(top_builddir)/mapreduce
 
 CLEANFILES = core *.core *~
 
