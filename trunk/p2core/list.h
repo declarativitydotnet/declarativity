@@ -73,6 +73,8 @@ public:
    void xdr_marshal( XDR *xdrs );
    
    static ListPtr xdr_unmarshal( XDR *xdrs );
+
+   void sort();
       
 private:
    ValPtrList vpl;

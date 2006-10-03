@@ -298,3 +298,10 @@ ListPtr List::xdr_unmarshal(XDR *x)
    
   return lp;
 }
+
+
+//sort
+void List::sort()
+{
+	vpl.sort(Value::Less());
+}
