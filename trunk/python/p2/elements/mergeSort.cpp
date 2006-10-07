@@ -2,12 +2,12 @@
 #include <boost/python.hpp>
 using namespace boost::python;
 
-void export_unmarshal()
+void export_mergeSort()
 {
   class_<MergeSort, bases<MapBase>, boost::shared_ptr<MergeSort>, boost::noncopyable>
         ("MergeSort", init<std::string>())
-    .def("class_name", &Unmarshal::class_name)
-    .def("processing", &Unmarshal::processing)
-    .def("flow_code",  &Unmarshal::flow_code)
+    .def("class_name", &MergeSort::class_name)
+    .def("processing", &MergeSort::processing)
+    .def("flow_code",  &MergeSort::flow_code)
   ;
 }
