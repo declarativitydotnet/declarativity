@@ -67,7 +67,7 @@ P2::P2(string hostname,
 
   edit->hookUp(dDemux, dDemux->add_output(Val_Str::mk("overlogInstall")), qinput, 0);
   //eric: for direct dataflow installation...
-  edit->hookUp(dDemux, dDemux->add_output(Val_Str::mk("script")), dataflowInstaller,0);
+  //edit->hookUp(dDemux, dDemux->add_output(Val_Str::mk("script")), dataflowInstaller,0);
   edit->hookUp(qinput, 0, pullPush, 0);
   edit->hookUp(pullPush, 0, duplicator, 0);
   edit->hookUp(duplicator, 0, overlogCompiler, 0);
