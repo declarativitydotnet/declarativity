@@ -15,7 +15,7 @@
 #
 
 SUBDIRS=eventLoop p2core elements net overlog planner p2cpp debugger tests unitTests \
-	python mapreduce
+	python
 
 EXTRA_DIST = LICENSE setup \
 		doc/chord.olg doc/narada.olg doc/ping.olg \

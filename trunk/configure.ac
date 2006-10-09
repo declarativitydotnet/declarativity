@@ -108,7 +108,6 @@ AC_CONFIG_FILES([
 	unitTests/Makefile 
 	overlog/Makefile 
 	planner/Makefile
-	debugger/Makefile 
-	mapreduce/Makefile ])
+	debugger/Makefile ])
 
 AC_OUTPUT

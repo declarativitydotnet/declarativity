@@ -1,4 +1,0 @@
-materialize(env,infinity,infinity,keys(2)).
-
-watch(script).
-t0 a(@X, K) :- b(@X,C), K := 0.
