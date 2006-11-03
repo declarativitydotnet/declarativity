@@ -343,7 +343,7 @@ public class PhiVizApplication {
         // Main method
         public static void main(String[] args) throws Exception {
           if (args.length != 1) {
-            throw new RuntimeException("Expecting <mapFilename> <slicename>");
+            throw new RuntimeException("Expecting <mapFilename>");
           }
           String mapFilename = args[0];
 
