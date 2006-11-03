@@ -13,54 +13,52 @@
 # DESCRIPTION: Makefile for the P2 datalog parser
 #
 
-lib_LTLIBRARIES = libp2overlog.la
+lib_LTLIBRARIES =		libp2overlog.la
 
-GENERATED_SOURCES = \
-	ol_parser.H \
-	ol_lexer.C \
-	ol_parser.C
+SOURCE_FILE_ROOTS =		\
+				parser_util \
+				ol_context \
+				plmb_confgen \
+				overlogCompiler
 
-REAL_SOURCES = \
-	parser_util.C \
-	ol_context.C \
-	plmb_confgen.C \
-	overlogCompiler.C
+GENERATED_SOURCES =		\
+				ol_parser.H \
+				ol_lexer.C \
+				ol_parser.C
 
-libp2overlog_la_SOURCES = \
-	$(REAL_SOURCES) \
-	$(GENERATED_SOURCES)
+libp2overlog_la_SOURCES =	\
+				$(SOURCE_FILE_ROOTS:=.h) \
+				$(SOURCE_FILE_ROOTS:=.C) \
+				$(GENERATED_SOURCES)
 
-INCLUDES = @BOOST_INC@ -I../p2core -I../elements -I../net -I../eventLoop -I../debugger
+libp2overlog_la_CPPFLAGS =	@BOOST_INC@ \
+				-I../p2core \
+				-I../elements \
+				-I../net \
+				-I../eventLoop \
+				-I../debugger
 
-CLEANFILES = core *.core *~ *.gen.h *.gen.txt ol_lexer.C \
-	ol_parser.output ol_parser.H ol_parser.C \
-	*.works
+libp2overlog_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 
-EXTRA_DIST = .cvsignore \
-		$(REAL_SOURCES:.C=.h) \
-		ol_lexer.lex \
-		ol_parser.y \
-		ol_lexer.h
+CLEANFILES =			core *.core *~ *.gen.h *.gen.txt ol_lexer.C \
+				ol_parser.output ol_parser.H ol_parser.C
 
+EXTRA_DIST = 			\
+				ol_lexer.lex \
+				ol_parser.y \
+				ol_lexer.h
 
 MAINTAINERCLEANFILES = Makefile.in 
 
-ol_parser.C: ol_parser.y parser_util.C ol_lexer.C
+
+ol_parser.C:			ol_parser.y parser_util.C ol_lexer.C
 	$(YACC) -t -y ol_parser.y -o ol_parser.C
 
-#	$(top_builddir)/util/fixbison.sh ol_parser.y
-#	$(YACC) ol_parser.y
-#	cp ol_parser.tab.c ol_parser.C
+ol_parser.H:			ol_parser.C
 
-ol_parser.H: ol_parser.C
-
-ol_lexer.C: ol_lexer.lex
+ol_lexer.C:			ol_lexer.lex
 	$(LEX) $(AM_LFLAGS) $(LFLAGS) -ool_lexer.C -8 ol_lexer.lex
 
-ol_context.C: ol_parser.H
+ol_context.C:			ol_parser.H
 
-
-
-
-CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@
 

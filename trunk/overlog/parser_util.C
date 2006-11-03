@@ -220,8 +220,8 @@ string Parse_Functor::getlocspec() {
           found = true;
         }
         else {
-          std::cout << "PARSER ERROR: More than one location "
-                    << "specifier in predicate " << toString();
+          TELL_ERROR << "PARSER ERROR: More than one location "
+                     << "specifier in predicate " << toString();
           loc_.clear();
           break;
         }
@@ -235,15 +235,15 @@ string Parse_Functor::getlocspec() {
           found = true;
         }
         else {
-          std::cout << "PARSER ERROR: More than one location "
-                    << "specifier in predicate " << toString();
+          TELL_ERROR << "PARSER ERROR: More than one location "
+                     << "specifier in predicate " << toString();
           loc_.clear();
           break;
         }
       }
     }
     if (!found)
-      std::cout << "PARSER WARNING: No location specifier in predicate "
+      TELL_WARN << "PARSER WARNING: No location specifier in predicate "
                 << toString()
                 << "\n";
     // drop through to return

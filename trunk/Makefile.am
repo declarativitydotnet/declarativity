@@ -14,15 +14,22 @@
 # 
 #
 
-SUBDIRS=eventLoop p2core elements net overlog planner p2cpp debugger tests unitTests \
-	python
+SUBDIRS=	\
+		eventLoop \
+		p2core \
+		elements \
+		pythonElements \
+		net \
+		overlog \
+		planner \
+		p2cpp \
+		debugger \
+		unitTests \
+		python \
+		tests
 
-EXTRA_DIST = LICENSE setup \
+EXTRA_DIST =	LICENSE setup \
 		doc/chord.olg doc/narada.olg doc/ping.olg \
 		doc/reachable.olg doc/types.txt README README.OSX \
 		doc/dataflow.ps doc/dataflow.pdf
-
-CXXFLAGS=-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG -Wall @PYTHON_CSPEC@ @CXXFLAGS@
-
-LDFLAGS=@BOOST_LIB@ @PYTHON_LSPEC@ @LDFLAGS@ 
 

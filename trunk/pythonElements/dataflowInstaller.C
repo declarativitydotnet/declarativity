@@ -20,6 +20,7 @@
 #include "val_int32.h"
 #include "ID.h"
 #include "val_id.h"
+#include "reporting.h"
 
 using namespace boost::python;
 using namespace boost::python::api;
@@ -29,13 +30,13 @@ DataflowInstaller::DataflowInstaller(string n, PlumberPtr p, object o)
 {
   // Start python and instantiate dfparser object I'm not given one
   if (o.ptr() == object().ptr()) {
-    std::cerr << "NO PARSER PROVIDED: MAKE ONE" << std::endl;
+    TELL_INFO << "NO PARSER PROVIDED: MAKE ONE" << std::endl;
     Py_Initialize();
     object parser(handle<> (borrowed(PyImport_ImportModule("dfparser"))));
     parser_ = parser;
   }
   if (parser_.ptr() == object().ptr())
-    std::cerr << "UNABLE TO IMPORT DFPARSER" << std::endl;
+    TELL_ERROR << "UNABLE TO IMPORT DFPARSER" << std::endl;
 }
 
 int DataflowInstaller::push(int port, TuplePtr tp, b_cbv cb)
@@ -48,7 +49,7 @@ int DataflowInstaller::push(int port, TuplePtr tp, b_cbv cb)
     string script = Val_Str::cast((*tp)[3]);
     int result = install(script, mesg);
 
-    std::cerr << mesg.str() << std::endl;
+    TELL_INFO << mesg.str() << std::endl;
 
     TuplePtr status = Tuple::mk();
     status->append(Val_Str::mk("dataflowInstallationResult"));
@@ -108,33 +109,31 @@ DataflowInstaller::install(string script,
   return 0;
 }
 
-string DataflowInstaller::readScript( string fileName )
+string DataflowInstaller::readScript(string fileName)
 {
   string script = "";
   std::ifstream pythonFile;
 
-  pythonFile.open( fileName.c_str() );
+  pythonFile.open(fileName.c_str());
 
-  if ( !pythonFile.is_open() )
-  {
-    std::cout << "Cannot open Python script file, \"" << fileName << "\"!" << std::endl;
+  if (!pythonFile.is_open()) {
+    TELL_ERROR << "Cannot open Python script file, \""
+               << fileName << "\"!" << std::endl;
     return script;
-  }
-  else
-  {
+  } else {
     // Get the length of the file
-    pythonFile.seekg( 0, std::ios::end );
+    pythonFile.seekg(0, std::ios::end);
     int nLength = pythonFile.tellg();
-    pythonFile.seekg( 0, std::ios::beg );
+    pythonFile.seekg(0, std::ios::beg);
 
     // Allocate  a char buffer for the read.
     char *buffer = new char[nLength];
-    memset( buffer, 0, nLength );
+    memset(buffer, 0, nLength);
 
     // read data as a block:
-    pythonFile.read( buffer, nLength );
+    pythonFile.read(buffer, nLength);
 
-    script.assign( buffer );
+    script.assign(buffer);
 
     delete [] buffer;
     pythonFile.close();
@@ -161,7 +160,7 @@ DataflowInstaller::initializeChordBaseTables(Plumber::DataflowPtr d) {
     tuple->append(Val_ID::mk(myKey));
     tuple->freeze();
     nodeTable->insert(tuple);
-    warn << "Node: " << tuple->toString() << "\n";
+    TELL_WARN << "Node: " << tuple->toString() << "\n";
   }
 
   if (d->getTable("pred") != 0 && d->getTable("pred")->size() == 0) {
@@ -173,7 +172,7 @@ DataflowInstaller::initializeChordBaseTables(Plumber::DataflowPtr d) {
     predecessorTuple->append(Val_Str::mk(string("-"))); 
     predecessorTuple->freeze();
     predecessorTable->insert(predecessorTuple);
-    warn << "Initial predecessor " << predecessorTuple->toString() << "\n";
+    TELL_WARN << "Initial predecessor " << predecessorTuple->toString() << "\n";
   }
 
   if (d->getTable("nextFingerFix") != 0 && d->getTable("nextFingerFix")->size() == 0) {
@@ -184,7 +183,7 @@ DataflowInstaller::initializeChordBaseTables(Plumber::DataflowPtr d) {
     nextFingerFixTuple->append(Val_UInt32::mk(0));
     nextFingerFixTuple->freeze();
     nextFingerFixTable->insert(nextFingerFixTuple);
-    warn << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";
+    TELL_WARN << "Next finger fix: " << nextFingerFixTuple->toString() << "\n";
   }
 
   if (d->getTable("landmark") != 0 && d->getTable("landmark")->size() == 0) {
@@ -194,7 +193,7 @@ DataflowInstaller::initializeChordBaseTables(Plumber::DataflowPtr d) {
     landmark->append(Val_Str::mk(localAddress_));
     landmark->append(Val_Str::mk(landmarkAddress_));
     landmark->freeze();
-    warn << "Insert landmark node " << landmark->toString() << "\n";
+    TELL_WARN << "Insert landmark node " << landmark->toString() << "\n";
     landmarkNodeTable->insert(landmark);
   }
 }

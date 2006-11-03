@@ -27,9 +27,8 @@
 
 P2::P2(string hostname,
        string port,
-       uint tc,
-       LoggerI::Level level) 
-  : _plumber(new Plumber(level)),
+       uint tc) 
+  : _plumber(new Plumber()),
     _id(hostname+":"+port),
     _transport_conf(tc)
 {
@@ -76,7 +75,7 @@ P2::P2(string hostname,
   edit->hookUp(diEncap, 0, qoutput, 0);
   edit->hookUp(qoutput, 0, dRoundRobin, dRoundRobin->add_input());
   if (_plumber->install(edit) < 0) {
-    std::cerr << "OVERLOG AND DATAFLOW INSTALLER FAILURE" << std::endl;
+    TELL_ERROR << "OVERLOG AND DATAFLOW INSTALLER FAILURE" << std::endl;
     exit(1);
   }
   _plumber->toDot("p2.stub.compiler.dot");
@@ -112,7 +111,7 @@ int P2::install(string type, string program)
       Plumber::DataflowPtr d = 
         boost::python::extract<Plumber::DataflowPtr>(t[1].attr("conf"));
       if (_plumber->install(d) < 0) {
-        std::cerr << "DATAFLOW INSTALLATION FAILURE" << std::endl;
+        TELL_ERROR << "DATAFLOW INSTALLATION FAILURE" << std::endl;
         return -1;
       }
     }
@@ -121,7 +120,7 @@ int P2::install(string type, string program)
       Plumber::DataflowEditPtr e = 
         boost::python::extract<Plumber::DataflowEditPtr>(edits[0].attr("conf"));
       if (_plumber->install(e) < 0) {
-        std::cerr << "EDIT INSTALLATION FAILURE" << std::endl;
+        TELL_ERROR << "EDIT INSTALLATION FAILURE" << std::endl;
         return -1;
       }
     }
@@ -168,7 +167,7 @@ P2::CallbackHandlePtr P2::subscribe(string tupleName, cb_tp callback)
   port = duplicator->add_output();
   edit->hookUp(duplicator, port, listener, 0);
   if (_plumber->install(edit) < 0) {
-    std::cerr << "ERROR: Couldn't install listener" << std::endl;
+    TELL_ERROR << "ERROR: Couldn't install listener" << std::endl;
     return P2::CallbackHandlePtr();
   }
   _plumber->toDot("p2.external.callbacks.dot");
@@ -179,7 +178,7 @@ P2::CallbackHandlePtr P2::subscribe(string tupleName, cb_tp callback)
 void P2::unsubscribe(P2::CallbackHandlePtr handle)
 {
   if (!handle || handle->_valid == false) {
-    std::cerr << "ERROR: invalid callback handle." << std::endl;
+    TELL_ERROR << "ERROR: invalid callback handle." << std::endl;
   } 
   else {
     // Invalidate the handle
@@ -193,12 +192,12 @@ void P2::unsubscribe(P2::CallbackHandlePtr handle)
   Plumber::DataflowEditPtr edit = _plumber->new_dataflow_edit("P2");
   ElementSpecPtr     duplicator = edit->find("dc_"+tupleName);
   if (!duplicator) {
-    std::cerr << "ERROR: no listener registered for " << tupleName << std::endl;
+    TELL_ERROR << "ERROR: no listener registered for " << tupleName << std::endl;
     return;
   }
   edit->disconnect_output(duplicator, port);
   if (_plumber->install(edit) < 0) {
-    std::cerr << "ERROR: uninstall listener" << std::endl;
+    TELL_ERROR << "ERROR: uninstall listener" << std::endl;
     return;
   }
 

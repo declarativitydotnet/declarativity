@@ -20,7 +20,7 @@
 #ifndef __LOGGERI_H__
 #define __LOGGERI_H__
 
-#include <map>
+#include "reporting.h"
 #include <string>
 
 
@@ -28,42 +28,15 @@ class LoggerI {
 public:
   virtual ~LoggerI() {};
 
-  
-  enum Level { ALL = 0, WORDY, INFO, WARN, ERROR, NONE };
 
-  
   /** Create a log tuple. */
-  virtual void log( std::string classname,
-                    std::string instancename,
-                    Level severity,
-                    int errnum,
-                    std::string explanation ) = 0;
+  virtual void log(std::string classname,
+                   std::string instancename,
+                   Reporting::Level severity,
+                   int errnum,
+                   std::string explanation) = 0;
 
-  static std::map< std::string, LoggerI::Level > levelFromName;
-  static std::map< LoggerI::Level, std::string > levelToName;
-
-  class Initializer {
-  public:
-    Initializer() {
-      levelFromName["ALL"] = ALL;
-      levelFromName["WORDY"] = WORDY;
-      levelFromName["INFO"] = INFO;
-      levelFromName["WARN"] = WARN;
-      levelFromName["ERROR"] = ERROR;
-      levelFromName["NONE"] = NONE;
-
-      levelToName[ALL] = "ALL";
-      levelToName[INFO] = "INFO";
-      levelToName[WARN] = "WARN";
-      levelToName[ERROR] = "ERROR";
-      levelToName[WORDY] = "WORDY";
-      levelToName[NONE] = "NONE";
-    }
-  };
-  
  private:
-  static Initializer _initializer;
-
 };
 
 #endif /* __LOGGERI_H_ */

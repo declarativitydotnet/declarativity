@@ -17,7 +17,9 @@
 #include "val_tuple.h"
 #include "val_int32.h"
 #include "val_uint32.h"
+#include "val_uint64.h"
 #include "val_id.h"
+#include "val_null.h"
 #include "ID.h"
 
 #include "testTable2.h"
@@ -861,13 +863,28 @@ Tracker2::fetchCommand()
       tuple = tuple.substr(fieldEnd + 1);
     }
     
-    // Interpret the field as an int32
-    ValuePtr intField = Val_Int32::mk(Val_Int32::cast(Val_Str::mk(field)));
-    _tuple->append(intField);
-    
-//     std::cout << "Found int32 field \""
-//               << intField->toString()
-//               << "\"\n";
+    // is this the null tuple?
+    if (field == "null") {
+      _tuple->append(Val_Null::mk());
+    } else {
+      // Identify any type information.
+      ValuePtr intField;
+      switch (field[field.length() - 1]) {
+      case 'U':
+        // This should be unsigned 64bit
+        intField = Val_UInt64::mk(Val_UInt64::cast(Val_Str::mk(field)));
+        break;
+      case 'u':
+        // This should be unsigned 32bit
+        intField = Val_UInt32::mk(Val_UInt32::cast(Val_Str::mk(field)));
+        break;
+      default:
+        // Interpret as signed 32bit
+        intField = Val_Int32::mk(Val_Int32::cast(Val_Str::mk(field)));
+        break;
+      }
+      _tuple->append(intField);
+    }
   }
   
   // Shrink remainder
@@ -1189,9 +1206,9 @@ AggTracker2::listener(TuplePtr t)
                     << "\""
                     << _remainder
                     << "\". Script expected tuple '"
-                    << _tuple->toString()
+                    << _tuple->toConfString()
                     << "' but received '"
-                    << t->toString()
+                    << t->toConfString()
                     << "' instead.");
         _remainder = std::string();
       }
@@ -1234,6 +1251,19 @@ void
 testTable2::testAggregates()
 {
   intAggTest2 t[] = {
+    // Modifications cause two aggregate updates, one when the old value
+    // is removed and one when the new value is inserted.  here with a
+    // non-null backup
+    intAggTest2("i<0,2,5>;u<0,5>;"
+                "i<0,1,2>;u<0,2>;"
+                "i<0,1,3>;u<0,5>;u<0,3>;",
+                Table2::KEY01, // first three fields are indexed
+                Table2::DEFAULT_SIZE, // use default max size
+                Table2::KEY0, // first field is group-by
+                2, // third field is aggregated
+                "MIN", // aggregate function is MIN
+                __LINE__),
+
     // Test reinsertion without update but with time upate
     intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;i<0,20>;"
                 // <10, 5, 20<
@@ -1254,9 +1284,11 @@ testTable2::testAggregates()
 
     // Here there's an update for every insert that is not identical to
     // its preceeding one since the primary key is the first field, so
-    // any new insertion removes the old tuple.  When the last entry is
-    // gone, no update is received.
-    intAggTest2("i<0,10>;u<0,10>;i<0,10>;i<0,15>;u<0,15>;i<0,5>;u<0,5>;d<0,5>;",
+    // any new insertion removes the old tuple.
+    intAggTest2("i<0,10>;u<0,10>;i<0,10>;"
+                "i<0,15>;u<0,null>;u<0,15>;"
+                "i<0,5>;u<0,null>;u<0,5>;"
+                "d<0,5>;u<0,null>;",
                 Table2::KEY0, // first field is indexed
                 Table2::DEFAULT_SIZE, // use default max size
                 Table2::KEY0, // first field is group-by
@@ -1323,7 +1355,33 @@ testTable2::testAggregates()
     intAggTest2("i<0,10>;u<0,10>;i<0,10>;",
                 Table2::KEY01, Table2::DEFAULT_SIZE,
                 Table2::KEY0, 1, "MAX",
-                __LINE__)
+                __LINE__),
+
+    intAggTest2("i<0,10>;u<0,10>;d<0,10>;u<0,null>;",
+                Table2::KEY01, Table2::DEFAULT_SIZE,
+                Table2::KEY0, 1, "MAX",
+                __LINE__),
+
+
+    ////////////////////////////////////////////////////////////
+    // COUNT
+
+    intAggTest2(// Insertions of same group-by
+                "i<0,10>;u<0,1U>;i<0,5>;u<0,2U>;"
+                // Insertion of other group-by
+                "i<1,5>;u<1,1U>;"
+                // Interspersed group-bys
+                "i<0,12>;u<0,3U>;i<1,8>;u<1,2U>;"
+                // No-op insertions
+                "i<1,5>;i<0,12>;"
+                // Deletions
+                "d<0,5>;u<0,2U>;d<1,5>;u<1,1U>;d<0,10>;u<0,1U>;"
+                // Run down to 0
+                "d<0,12>;u<0,0U>;d<1,8>;u<1,0U>;",
+                Table2::KEY01, Table2::DEFAULT_SIZE,
+                Table2::KEY0, 1, "COUNT",
+                __LINE__),
+    
   };
 
   std::vector< intAggTest2 > vec(t,

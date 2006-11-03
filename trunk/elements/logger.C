@@ -25,6 +25,7 @@
 #include "val_str.h"
 #include "val_int32.h"
 #include "val_time.h"
+#include "reporting.h"
 
 //
 // One global sequence number
@@ -40,11 +41,11 @@ Logger::Logger(string name) : Element(name, 0, 1) { }
 void
 Logger::log(string classname, 
             string instancename,
-            Level severity,
+            Reporting::Level severity,
             int errnum,
             string explanation )
 {
-  if (severity >= _loggingLevel) {
+  if (severity >= Reporting::level()) {
     boost::posix_time::ptime now_ts;
     
     getTime(now_ts);
@@ -58,7 +59,7 @@ Logger::log(string classname,
     t->append(Val_Str::mk(explanation));
     t->freeze();
     if (push(1, t, 0) == 0) {
-      warn << "Logger: possible tuple overrun next time\n";
+      TELL_WARN << "Logger: possible tuple overrun next time\n";
     }
   }
 }

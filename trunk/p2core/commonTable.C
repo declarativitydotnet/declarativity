@@ -19,7 +19,7 @@
 #include "commonTable.h"
 #include "p2Time.h"
 #include "aggFactory.h"
-#include "iostream"
+#include "val_null.h"
 
 ////////////////////////////////////////////////////////////
 // Sorters
@@ -283,7 +283,7 @@ CommonTable::createSecondaryIndex(CommonTable::Key& key)
     i++;
   }
 
-  // And enlarget the lookup entry
+  // And enlarge the lookup entry
   lookupSearchEntry(key);
 }
 
@@ -334,7 +334,7 @@ CommonTable::toString()
 CommonTable::Entry::Entry(TuplePtr tp)
   : tuple(tp)
 {
-  //  std::cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@Creating entry at address " << this << "\n";
+  //  TELL_WORDY << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@Creating entry at address " << this << "\n";
   getTime(time);
   refCount = 0;
 }
@@ -342,7 +342,7 @@ CommonTable::Entry::Entry(TuplePtr tp)
 
 CommonTable::Entry::~Entry()
 {
-  //  std::cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@Destroying entry at address " << this << "\n";
+  //  TELL_WORDY << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@Destroying entry at address " << this << "\n";
 }
 
 
@@ -828,9 +828,9 @@ CommonTable::AggFunc::~AggFunc()
 
 
 CommonTable::AggregateObj::AggregateObj(CommonTable::Key& key,
-                                   CommonTable::SecondaryIndex* index,
-                                   unsigned aggField,
-                                   CommonTable::AggFunc* function)
+                                        CommonTable::SecondaryIndex* index,
+                                        unsigned aggField,
+                                        CommonTable::AggFunc* function)
   : _key(key),
     _index(index),
     _aggField(aggField),
@@ -864,8 +864,8 @@ CommonTable::AggregateObj::update(TuplePtr changedTuple)
   // Start a new computation of the aggregate function
   _aggregateFn->reset();
 
-  // An exemplar, if necessary
-  TuplePtr aMatchingTuple = TuplePtr();
+  // Have I seen tuples before?
+  bool seenTuples = false;
 
   // Scan the index on the group-by fields
   static Entry searchEntry(Tuple::EMPTY);
@@ -879,54 +879,64 @@ CommonTable::AggregateObj::update(TuplePtr changedTuple)
 
     // It is bound to match the group-by fields since we're still
     // between the lower bound and the upper bound
-    if (aMatchingTuple.get() == NULL) {
+    if (!seenTuples) {
       // This is the first matching tuple
       _aggregateFn->first((*tuple)[_aggField]);
-      aMatchingTuple = tuple;
+      seenTuples = true;
     } else {
       // This is not the first matching tuple
       _aggregateFn->process((*tuple)[_aggField]);
     }
   }
   
-  // Handle the newly computed aggregate, if any.  If I have none, then
-  // make sure I erase what I may remember. If I have some, if the new
-  // one is the same, update no one. If I have some, but the new one is
-  // different, update what I remember and send a notice to the listener.
+  // Fetch the result
+  ValuePtr result = _aggregateFn->result();
 
-  if (aMatchingTuple.get() == NULL) {
-    // I got no aggregate for this value. Presumably this update was a
-    // removal. Erase any remembered aggregate (for the group-by values
-    // of the changed tuple) and notify no one.
-    _currentAggregates.erase(changedTuple);
-  } else {
-    // We had at least one match so we must have some result.
-    ValuePtr result = _aggregateFn->result();
-    assert(result.get() != NULL);
+  // No aggregate function should return null pointers. If it needs to
+  // return null, it should return a Val_Null.
+  if (result.get() == NULL) {
+    result = Val_Null::mk();
+    TELL_ERROR << "Aggregate Function "
+               << _aggregateFn->name()
+               << " returned null result. FIX IT!!!";
+  }
+
+  // Do I remember a prior result for this group-by combination?
+  AggMap::iterator remembered = _currentAggregates.find(changedTuple);
+  if (remembered == _currentAggregates.end()) {
+    // I don't remember anything for this group-by value set
     
-    // Is this a new result?
-    AggMap::iterator remembered = _currentAggregates.find(changedTuple);
-    if (remembered == _currentAggregates.end()) {
-      // I didn't remember anything for this group-by value set
-      // No need to erase anything
-    } else {
-      // We have one. Is it the same?
-      if (remembered->second->compareTo(result) == 0) {
-        // Yup, no need to remember anything
-        goto doneRemembering;
-      } else {
-        // Different. we need to forget the old one and remember the new
-        // one
-        _currentAggregates.erase(changedTuple);
-      }
+    // Put together the result tuple
+    TuplePtr updateTuple = Tuple::mk();
+    for (Key::iterator k = _key.begin();
+         k != _key.end();
+         k++) {
+      unsigned fieldNo = *k;
+      updateTuple->append((*changedTuple)[fieldNo]);
     }
-    
-    {
-      // If we're here, we need to remember a result and, if necessary,
-      // we've forgotten the old result.
-      _currentAggregates.insert(std::make_pair(changedTuple, result));
-      
-      // Put together an update tuple for listeners
+    updateTuple->append(result);
+    updateTuple->freeze();
+
+    // Remember the tuple
+    _currentAggregates.insert(std::make_pair(changedTuple, result));
+
+    // Update listeners
+    for (ListenerVector::iterator i = _listeners.begin();
+         i != _listeners.end();
+         i++) {
+      Listener listener = *i;
+      listener(updateTuple);
+    }
+  } else {
+    // We have one. Is it the same?
+    if (remembered->second->compareTo(result) == 0) {
+      // No need to update anyone
+    } else {
+      // Different. we need to forget the old one and remember the new
+      // one
+      _currentAggregates.erase(changedTuple);
+
+      // Put together the new result tuple
       TuplePtr updateTuple = Tuple::mk();
       for (Key::iterator k = _key.begin();
            k != _key.end();
@@ -937,7 +947,10 @@ CommonTable::AggregateObj::update(TuplePtr changedTuple)
       updateTuple->append(result);
       updateTuple->freeze();
       
-      // We also need to notify listeners for the change
+      // Remember the tuple
+      _currentAggregates.insert(std::make_pair(changedTuple, result));
+
+      // Update listeners.
       for (ListenerVector::iterator i = _listeners.begin();
            i != _listeners.end();
            i++) {
@@ -945,39 +958,80 @@ CommonTable::AggregateObj::update(TuplePtr changedTuple)
         listener(updateTuple);
       }
     }
-  doneRemembering:
-    // Any closing remarks independent on whether I updated listeners
-    // with a new result or not?
-    ;
   }
-  return;
+}
+
+
+void
+CommonTable::AggregateObj::evaluateEmpties()
+{
+  // Only empty aggregate indices make sense for this and then only for
+  // the empty key (i.e., empty group-by).  Non-empty group-bys cannot
+  // be expecting a result without any elements in the table.
+
+  if (_index->empty() && _key.empty()) {
+    // Make the aggregate output a result tuple
+
+    // Start a new computation of the aggregate function
+    _aggregateFn->reset();
+
+    ValuePtr result = _aggregateFn->result();
+
+    // No aggregate function should return null pointers. If it needs to
+    // return null, it should return a Val_Null.
+    if (result.get() == NULL) {
+      result = Val_Null::mk();
+      TELL_ERROR << "Aggregate Function "
+                 << _aggregateFn->name()
+                 << " returned null result. FIX IT!!!";
+    }
+    
+    // Put together the result tuple
+    TuplePtr updateTuple = Tuple::mk();
+    updateTuple->append(result);
+    updateTuple->freeze();
+    
+    // Update listeners
+    for (ListenerVector::iterator i = _listeners.begin();
+         i != _listeners.end();
+         i++) {
+      Listener listener = *i;
+      listener(updateTuple);
+    }
+  }
 }
 
 
 CommonTable::Aggregate
 CommonTable::aggregate(CommonTable::Key& groupBy,
-                  unsigned aggFieldNo,
-                  std::string functionName)
+                       unsigned aggFieldNo,
+                       std::string functionName)
 {
   // Find the aggregate function
   AggFunc* function = AggFactory::mk(functionName);
-  if (function == NULL) {
-    // Couldn't create one. Return no aggregate
-    return NULL;
-  } else {
-    // Ensure we have a secondary index. If one already exists, this is
-    // a no-op.
-    secondaryIndex(groupBy);
-    SecondaryIndex* index = findSecondaryIndex(groupBy);
-    
-    // Create the aggregate object
-    Aggregate a = new AggregateObj(groupBy, index, aggFieldNo,
-                                   function);
-    
-    // Store the aggregate
-    _aggregates.push_back(a);
-    return a;
-  }
+
+  // Ensure we have a secondary index. If one already exists, this is
+  // a no-op.
+  secondaryIndex(groupBy);
+  SecondaryIndex* index = findSecondaryIndex(groupBy);
+  
+  // Create the aggregate object
+  Aggregate a = new AggregateObj(groupBy, index, aggFieldNo,
+                                 function);
+  
+  // Store the aggregate
+  _aggregates.push_back(a);
+  return a;
 }
 
 
+void
+CommonTable::evaluateEmptyAggregates()
+{
+  // Go through all the aggregates
+  for (AggregateVector::iterator i = _aggregates.begin();
+       i != _aggregates.end();
+       i++) {
+    (*i)->evaluateEmpties();
+  }
+}

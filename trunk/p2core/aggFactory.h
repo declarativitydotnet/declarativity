@@ -29,14 +29,32 @@ public:
 
   
   /** Returns a new aggregate function object on the heap. Must be
-      deleted in the end. */
+      deleted in the end.  It never returns a null. If the given name is
+      not found, an AggregateNotFound exception is raised. */
   static CommonTable::AggFunc*
   mk(std::string aggName);
+
+
+  /** Returns an aggregate function factory.  If the given name is not
+      found, an AggregateNotFound exception is raised. */
+  static AggFuncFactory
+  factory(std::string aggName);
 
 
   /** Returns a string containing all aggregates known to me */
   static std::string
   aggList();
+
+
+  /** An exception thrown when a factory fails to locate a named
+      aggregate function */
+  struct AggregateNotFound {
+  public:
+    AggregateNotFound(std::string name);
+    
+    
+    std::string aggName;
+  };
 
   
   

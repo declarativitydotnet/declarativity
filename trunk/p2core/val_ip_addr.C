@@ -12,13 +12,13 @@
 */
 
 #include "val_ip_addr.h"
-#include <iostream>
 #include "val_str.h"
 #include "math.h"
 #include <loggerI.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <reporting.h>
 
 const opr::Oper* Val_IP_ADDR::oper_ = new opr::OperCompare< Val_IP_ADDR> ();
 
@@ -73,7 +73,7 @@ FdbufPtr Val_IP_ADDR::getAddress()
   
   if (theAtSign == NULL) {
     // Couldn't find the correct format
-    std::cout << "The IP Address is not in correct format:" << toString() << "\n";
+    TELL_WARN << "The IP Address is not in correct format:" << toString() << "\n";
     exit(-1);
     //return 0;
   }

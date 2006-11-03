@@ -19,9 +19,6 @@
 
 #include "val_str.h"
 
-//#define TRACE_OFF
-#include "trace.h"
-
 //
 // This regexp matches an HTTP response.  Various groups are of
 // interest:
@@ -49,7 +46,7 @@ PlSensor::PlSensor(string name,
     // req_re(HTTP_RX), FIX ME
     delay(reconnect_delay)
 {
-  TRC_FN;
+  TRACE_FUNCTION;
   inet_aton("127.0.0.1", &localaddr);
   reqtmpl << "GET " << path << " HTTP/1.0\r\n" 
 	  << "Host: localhost:" << port << "\r\n"
@@ -66,8 +63,8 @@ PlSensor::PlSensor(string name,
 // 
 void PlSensor::error_cleanup(uint32_t errnum, string errmsg) 
 {
-  TRC_FN;
-  log(LoggerI::WARN, errnum, errmsg);
+  TRACE_FUNCTION;
+  log(Reporting::WARN, errnum, errmsg);
   enter_waiting();
 }
 
@@ -77,7 +74,7 @@ void PlSensor::error_cleanup(uint32_t errnum, string errmsg)
 //
 void PlSensor::enter_waiting()
 {
-  TRC_FN;
+  TRACE_FUNCTION;
   if (sd >= 0) { 
     removeFileDescriptorCB(sd, b_selread);
     removeFileDescriptorCB(sd, b_selwrite);
@@ -95,7 +92,7 @@ void PlSensor::enter_waiting()
 //
 void PlSensor::enter_connecting() 
 {
-  TRC_FN;
+  TRACE_FUNCTION;
   state = ST_CONNECTING;
   assert(sd < 0);
   hdrs.clear();
@@ -110,13 +107,13 @@ void PlSensor::enter_connecting()
 //
 void PlSensor::connect_cb(int fd) 
 {
-  TRC_FN;
+  TRACE_FUNCTION;
   sd = fd;
   if (sd < 0) {
     error_cleanup(errno, string() + "Connecting:" + strerror(errno));
   } else {
     // Enter SENDING
-    TRC( "socket descriptor is " << sd);
+    TRACE_WORDY << "socket descriptor is " << sd << "\n";
     state = ST_SENDING;
     fileDescriptorCB(sd, b_selwrite, boost::bind(&PlSensor::write_cb,this), this);
   }
@@ -128,12 +125,12 @@ void PlSensor::connect_cb(int fd)
 //
 void PlSensor::write_cb()
 {
-  TRC_FN;
+  TRACE_FUNCTION;
   assert(state == ST_SENDING);
   if (req_buf.length()) {
     // Still stuff to send
     uint32_t s = req_buf.write(sd);
-    TRC( "wrote " << s);
+    TRACE_WORDY << "wrote " << s << "\n";
     if ( s < 0 && errno != EAGAIN && errno !=0) {
       error_cleanup(errno, string("Writing request:") + strerror(errno));
       return;
@@ -154,12 +151,12 @@ void PlSensor::write_cb()
 //
 void PlSensor::rx_hdr_cb()
 {
-  TRC_FN;
+  TRACE_FUNCTION;
   Fdbuf rx;
   switch (rx.read(sd)) {
   case 0:
-    TRC("Got 0; Read: " << hdrs.str());
-    TRC("Errno: " << errno );
+    TRACE_WORDY << "Got 0; Read: " << hdrs.str() << "\n";
+    TRACE_WORDY << "Errno: " << errno << "\n";
     error_cleanup(errno, "Server closed connection reading headers");
     return;
   case -1:
@@ -187,7 +184,7 @@ void PlSensor::rx_hdr_cb()
 	state = ST_BLOCKED;
       }
     } else {
-      TRC("No match so far.");
+      TRACE_WORDY << "No match so far.\n";
     }
   }
 }
@@ -209,7 +206,7 @@ void PlSensor::rx_hdr_cb()
 //
 void PlSensor::rx_body_cb()
 {
-  TRC_FN;
+  TRACE_FUNCTION;
   // If push is not enabled, turn off the callback and return. 
   if ( state != ST_RX_BODY ) {
     socket_off();
@@ -219,7 +216,7 @@ void PlSensor::rx_body_cb()
   Fdbuf rx;
   switch (rx.read(sd)) {
   case 0:
-    TRC("Connection closed: enter waiting");
+    TRACE_WORDY << "Connection closed: enter waiting\n";
     // Not really an error - just retry.
     socket_off();
     enter_waiting();

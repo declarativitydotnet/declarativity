@@ -36,20 +36,20 @@ int Queue::push(int port, TuplePtr p, b_cbv cb)
   ostringstream oss;
 
   oss << "Push " << p->toString() << ", queuesize=" << _q.size();
-  log(LoggerI::INFO, 0,oss.str());
+  log(Reporting::INFO, 0,oss.str());
   if (_pullCB) {
     // is there a pending callback? If so, wake it up
     _pullCB();
     _pullCB = 0;
   } else {
-      log(LoggerI::INFO, 0, "No pending pull callbacks");
+      log(Reporting::INFO, 0, "No pending pull callbacks");
   }
 
   // have we reached the max size? If so, we have to wait
   if (_q.size() == _size) {
     oss.clear();
     oss << "Queue has reach max size, queuesize=" << _q.size();
-    log(LoggerI::INFO, 0, oss.str());
+    log(Reporting::INFO, 0, oss.str());
     _pushCB = cb;
     return 0;
   }
@@ -62,7 +62,7 @@ int Queue::push(int port, TuplePtr p, b_cbv cb)
 TuplePtr Queue::pull(int port, b_cbv cb)
 {
   if (_q.size() == 0) { 
-    log(LoggerI::INFO, 0, "Queue is empty during pull");
+    log(Reporting::INFO, 0, "Queue is empty during pull");
     _pullCB = cb;
     return TuplePtr(); 
   }
@@ -76,7 +76,7 @@ TuplePtr Queue::pull(int port, b_cbv cb)
 
   ostringstream oss;
   oss << "Pull succeed " << p->toString() << ", queuesize=" << _q.size();
-  log(LoggerI::INFO, 0, oss.str());
+  log(Reporting::INFO, 0, oss.str());
   return p;
 }
 

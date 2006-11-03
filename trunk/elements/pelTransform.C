@@ -22,7 +22,8 @@ PelTransform::PelTransform(string name, string pelCode)
   _program = Pel_Lexer::compile(pelCode.c_str());
 }
 
-TuplePtr PelTransform::simple_action(TuplePtr p)
+TuplePtr
+PelTransform::simple_action(TuplePtr p)
 {
   _vm.reset();
   Pel_VM::Error e = _vm.execute(*_program, p);
@@ -43,4 +44,11 @@ TuplePtr PelTransform::simple_action(TuplePtr p)
       return result;
     }
   }
+}
+
+
+string
+PelTransform::pelCode()
+{
+  return _pelCode;
 }

@@ -72,9 +72,9 @@ struct LookupGenerator : public FunctorSource::Generator
   mutable bool exit_;
 };
 
-void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> lookup)
+void issue_lookup(boost::shared_ptr<LookupGenerator> lookup)
 {
-  PlumberPtr plumber(new Plumber(level));
+  PlumberPtr plumber(new Plumber());
   Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
 
   // sending result
@@ -118,7 +118,7 @@ void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> looku
   conf->hookUp(slot, 0, sinkS, 0);
    
   if (plumber->install(conf) != 0) {
-    std::cout << "** Failed to initialize correct spec\n";
+    TELL_ERROR << "** Failed to initialize correct spec\n";
     return;
   }
 
@@ -131,19 +131,20 @@ void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> looku
 
 int main(int argc, char **argv)
 {
-  LoggerI::Level level = LoggerI::ALL;
+  Reporting::Level level;
   if (argc < 3) {
-    std::cout << "Usage: simple_lookup logLevel seed event source_ip dest_ip\n";
+    TELL_ERROR << "Usage: simple_lookup logLevel seed event source_ip dest_ip\n";
     exit(0);
   }
 
   eventLoopInitialize();
 
   int seed = 0;
-  level = LoggerI::levelFromName[string(argv[1])];
+  level = Reporting::levelFromName[string(argv[1])];
+  Reporting::setLevel(level);
   seed = atoi(argv[2]);
   srandom(seed);
-  issue_lookup(level, boost::shared_ptr<LookupGenerator>(new LookupGenerator(argv[4], argv[5], argv[3])));
+  issue_lookup(boost::shared_ptr<LookupGenerator>(new LookupGenerator(argv[4], argv[5], argv[3])));
 
   return 0;
 }

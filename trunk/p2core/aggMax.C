@@ -11,6 +11,7 @@
  */
 
 #include "aggMax.h"
+#include "val_null.h"
 
 AggMax::AggMax()
 {
@@ -49,7 +50,11 @@ AggMax::process(ValuePtr v)
 ValuePtr 
 AggMax::result()
 {
-  return _currentMax;
+  if (_currentMax != 0) {
+    return _currentMax;
+  } else {
+    return Val_Null::mk();
+  }
 }
 
 
@@ -57,4 +62,11 @@ AggMax*
 AggMax::mk()
 {
   return new AggMax();
+}
+
+
+std::string
+AggMax::name()
+{
+  return "MAX";
 }

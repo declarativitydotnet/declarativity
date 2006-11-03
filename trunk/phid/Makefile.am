@@ -14,8 +14,6 @@
 
 $(PROGRAMS): $(LDEPS)
 
-# CXXLD = $(CXX) -all-static
-
 bin_PROGRAMS 	= phid
 noinst_HEADERS	= phid.h
 phid_SOURCES	= phid.C

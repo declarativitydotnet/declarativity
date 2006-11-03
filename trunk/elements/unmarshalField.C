@@ -64,7 +64,7 @@ TuplePtr UnmarshalField::simple_action(TuplePtr p)
     } else {
       // Numbered field is un-unmarshallable.  Just return the same
       // tuple and log a warning
-      log(LoggerI::WARN, -1, "Cannot unmarshal a non-opaque field");
+      log(Reporting::WARN, -1, "Cannot unmarshal a non-opaque field");
       return p;
     }
   }

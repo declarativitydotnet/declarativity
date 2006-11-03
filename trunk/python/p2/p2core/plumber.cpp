@@ -9,7 +9,7 @@ void export_plumber()
 {
   scope outer = 
     class_<Plumber, PlumberPtr>
-          ("Plumber", init<optional<LoggerI::Level> >())
+          ("Plumber")
       /** Initialize the engine from the configuration */
       .def("new_dataflow_edit", &Plumber::new_dataflow_edit)
       .def("install", &Plumber::install)

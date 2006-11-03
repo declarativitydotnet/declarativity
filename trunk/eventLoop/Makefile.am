@@ -13,21 +13,22 @@
 # DESCRIPTION: Makefile for the P2 event loop library
 #
 
-lib_LTLIBRARIES = libp2eventLoop.la
-libp2eventLoop_la_SOURCES = \
-	loop.C \
-	p2Time.C
+lib_LTLIBRARIES =		libp2eventLoop.la
 
-INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core
+SOURCE_FILE_ROOTS =		\
+				loop \
+				p2Time
+
+libp2eventLoop_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C)
+
+libp2eventLoop_la_CPPFLAGS =	@BOOST_INC@ \
+				-I$(top_builddir)/p2core
+
+libp2eventLoop_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 
 CLEANFILES = core *.core *~ *.gen.h *.gen.txt pel_lexer.C
 
-EXTRA_DIST = .cvsignore \
-		$(libp2eventLoop_la_SOURCES:.C=.h)
-
 MAINTAINERCLEANFILES = Makefile.in
-
-CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG @CXXFLAGS@
 
 # End of File
 ############################################################

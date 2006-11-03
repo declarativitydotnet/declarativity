@@ -8,62 +8,77 @@
 #
 
 
-noinst_LTLIBRARIES = libp2unitTests.la
+# Libraries
 
-libp2unitTests_la_SOURCES = \
-	testTable2.C \
-	testRefTable.C \
-	testBasicElementPlumbing.C \
-	testValues.C \
-	testIDs.C \
-	testFdbufs.C \
-	testCsv.C \
-	testMarshal.C \
-	testPel.C \
-	testLists.C
+lib_LTLIBRARIES = libp2unitTests.la
+
+SOURCE_FILE_ROOTS =		\
+				testTable2 \
+				testRefTable \
+				testBasicElementPlumbing \
+				testValues \
+				testIDs \
+				testFdbufs \
+				testCsv \
+				testMarshal \
+				testPel \
+				testLists \
+				testAggwrap
+
+libp2unitTests_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C)
+
+libp2unitTests_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
+
+libp2unitTests_la_CPPFLAGS =	@BOOST_INC@ \
+				-I$(top_builddir)/p2core \
+				-I$(top_builddir)/elements \
+				-I$(top_builddir)/net \
+				-I$(top_builddir)/overlog \
+				-I$(top_builddir)/planner \
+				-I$(top_builddir)/eventLoop
 
 
-$(noinst_PROGRAMS): $(LDEPS) $(noinst_LTLIBRARIES)
 
-noinst_PROGRAMS = p2Test p2TestTable2
+# Programs
 
-p2Test_SOURCES =	p2Test.C
+bin_PROGRAMS =			p2TestTable2 \
+				p2Test \
+				p2TestAggwrap
 
-p2Test_LDADD = \
-	$(top_builddir)/unitTests/.libs/libp2unitTests.a \
-	$(top_builddir)/overlog/.libs/libp2overlog.a \
-	$(top_builddir)/net/.libs/libp2net.a \
-	$(top_builddir)/elements/.libs/libp2elements.a \
-	$(top_builddir)/p2core/.libs/libp2core.a \
-	$(top_builddir)/eventLoop/.libs/libp2eventLoop.a \
-	-lboost_unit_test_framework
+p2Test_SOURCES =		p2Test.C
 
-p2TestTable2_SOURCES =	p2TestTable2.C
+p2TestTable2_SOURCES =		p2TestTable2.C
 
-p2TestTable2_LDADD = $(p2Test_LDADD)
-
-$(p2Test_LDADD) : $(noinst_LTLIBRARIES)
+p2TestAggwrap_SOURCES =		p2TestAggwrap.C
 
 CLEANFILES = core *.core *~
 
-EXTRA_DIST = .cvsignore $(p2Test_SOURCES) \
-		$(libp2unitTests_la_SOURCES:.C=.h)
+AM_LDFLAGS =			 \
+				-lboost_unit_test_framework \
+				-lcrypto \
+				@BOOST_LIB@
 
+AM_CXXFLAGS =			-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 
-INCLUDES =	@BOOST_INC@ \
-		-I$(top_builddir)/p2core \
-		-I$(top_builddir)/elements \
-		-I$(top_builddir)/net \
-		-I$(top_builddir)/overlog \
-		-I$(top_builddir)/planner \
-		-I$(top_builddir)/eventLoop
+AM_CPPFLAGS =			-I$(top_builddir)/p2core
 
-CXXFLAGS=-Wall -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG @CXXFLAGS@
+p2Test_DEPENDENCIES =		$(lib_LTLIBRARIES)
 
+p2TestTable2_DEPENDENCIES =	$(lib_LTLIBRARIES)
 
-LDFLAGS=@BOOST_LIB@ @LDFLAGS@
+p2TestAggwrap_DEPENDENCIES =	$(lib_LTLIBRARIES)
 
-LIBS = @BOOST_LIB@ -lcrypto
+UNITLIBRARYDEPS =		\
+				$(top_builddir)/unitTests/libp2unitTests.la \
+				$(top_builddir)/overlog/libp2overlog.la \
+				$(top_builddir)/net/libp2net.la \
+				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/debugger/libp2debugger.la \
+				$(top_builddir)/p2core/libp2core.la \
+				$(top_builddir)/eventLoop/libp2eventLoop.la
+
+LDADD =				$(UNITLIBRARYDEPS) \
+				$(lib_LTLIBRARIES)
 
 MAINTAINERCLEANFILES = aclocal.m4 install-sh mkinstalldirs \
 	missing configure config.guess config.sub config.h.in \

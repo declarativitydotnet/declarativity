@@ -18,6 +18,7 @@ AC_INIT(p2,0.1)
 AC_CONFIG_SRCDIR(p2core/element.h)
 # AC_CONFIG_AUX_DIR(config)
 AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE(1.9.2)
 AM_INIT_AUTOMAKE(p2,0.7.2.1)
 
 
@@ -30,17 +31,14 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_LIBTOOL
 AM_PATH_PYTHON(2.3)
-## We have given up on SWIG! -- JMH 2/26/06
-#AC_PROG_SWIG(1.3.21)
-#SWIG_ENABLE_CXX
-#SWIG_PYTHON
 
 # Checks for libraries.
+P2_OPENSSLLIB
 P2_BOOSTLIB
-AC_PYTHON_DEVEL(2.3)
 
 # Checks for header files.
 AC_HEADER_STDC
+P2_OPENSSLINC
 P2_BOOSTINC
 
 AC_LANG_PUSH(C++)
@@ -73,6 +71,20 @@ AC_CHECK_FUNCS([exp10],[],[],[#include <math.h>])
 ## CPPFLAGS="$save_CPPFLAGS"
 AC_LANG_POP(C++)
 
+
+#Python setup
+AZ_PYTHON_DEFAULT( )
+AZ_PYTHON_ENABLE( )             # Optional
+AZ_PYTHON_WITH( )               # Optional
+AZ_PYTHON_PATH( )               # or AZ_PYTHON_INSIST( )
+# if $PYTHON is not defined, then the following do nothing.
+AZ_PYTHON_VERSION_ENSURE( [2.2] )
+AZ_PYTHON_CSPEC
+AZ_PYTHON_LSPEC
+
+
+
+
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_TYPE_OFF_T
@@ -94,6 +106,7 @@ AC_CONFIG_FILES([
 	python/p2/Makefile
 	python/p2/debugger/Makefile
 	python/p2/elements/Makefile
+	python/p2/pythonElements/Makefile
 	python/p2/eventLoop/Makefile
 	python/p2/p2core/Makefile
 	python/p2/net/Makefile
@@ -103,6 +116,7 @@ AC_CONFIG_FILES([
 	python/dfparser/yapps/Makefile
 	python/scripts/Makefile
 	elements/Makefile 
+	pythonElements/Makefile
 	net/Makefile 
 	tests/Makefile 
 	unitTests/Makefile 

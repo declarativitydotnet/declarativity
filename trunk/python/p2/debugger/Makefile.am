@@ -14,17 +14,23 @@
 # DESCRIPTION: Makefile for the P2 debugger python library
 #
 
-noinst_LTLIBRARIES = libp2pythondebugger.la
+lib_LTLIBRARIES =			libp2pythondebugger.la
 
-libp2pythondebugger_la_SOURCES = \
-	ruleTracer.cpp \
-	tap.cpp \
-	traceTuple.cpp
+libp2pythondebugger_la_SOURCES =	\
+					ruleTracer.cpp \
+					tap.cpp \
+					traceTuple.cpp
 
-INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/debugger -I$(top_builddir)/eventLoop
+libp2pythondebugger_la_CPPFLAGS =	@BOOST_INC@ \
+					-I$(top_builddir)/p2core \
+					-I$(top_builddir)/debugger \
+					-I$(top_builddir)/eventLoop
 
-CLEANFILES = core *.core *~
+CLEANFILES =				core *.core *~
 
-MAINTAINERCLEANFILES = Makefile.in
+MAINTAINERCLEANFILES =			Makefile.in
 
-CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@ ${PYTHON_CPPFLAGS}
+libp2pythondebugger_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG \
+					@PYTHON_CSPEC@
+
+

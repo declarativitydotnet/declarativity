@@ -21,9 +21,31 @@ using boost::unit_test_framework::test_suite;
 #include "testCsv.h"
 #include "testIDs.h"
 #include "testLists.h"
+#include "testAggwrap.h"
+#include "reporting.h"
+#include "iostream"
 
-test_suite* init_unit_test_suite(int, char**)
+test_suite* init_unit_test_suite(int argc, char** argv)
 {
+  // Set up reporting
+  int c;
+  while ((c = getopt(argc, argv, "r:")) != -1) {
+    switch (c) {
+    case 'r':
+      {
+        // My minimum reporting level is optarg
+        std::string levelName(optarg);
+        Reporting::Level level =
+          Reporting::levelFromName[levelName];
+        Reporting::setLevel(level);
+      }
+      break;
+    default:
+      std::cerr << "Unrecognized option.\n";
+      break;
+    }
+  }
+
   test_suite *top = BOOST_TEST_SUITE("P2 Unit Test Suite");
   
   top->add(new testPel_testSuite());
@@ -36,5 +58,7 @@ test_suite* init_unit_test_suite(int, char**)
   top->add(new testCsv_testSuite());
   top->add(new testIDs_testSuite());
   top->add(new testLists_testSuite());
+  top->add(new testAggwrap_testSuite());
+
   return top;
 }

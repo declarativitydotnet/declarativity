@@ -38,7 +38,7 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
   ValuePtr firstP = (*p)[_fieldNo];
   if (firstP == 0) {
     // No such field
-    log(LoggerI::WARN,
+    log(Reporting::WARN,
         -1,
         "Input tuple has no field to translate");
     return TuplePtr();
@@ -48,7 +48,7 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
   // Is it a string?
   if (first->typeCode() != Value::STR) {
     // Can't translate something that isn't a string
-    log(LoggerI::WARN, -1,
+    log(Reporting::WARN, -1,
         string("Field to translate[") + first->toString() + "] is not a string");
     return TuplePtr();
   }
@@ -58,7 +58,7 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
   char * theAtSign = strchr(theString, ':');
   if (theAtSign == NULL) {
     // Couldn't find the correct format
-    log(LoggerI::WARN, -1, string("Field to translate ")+first->toString()+" is malformed");
+    log(Reporting::WARN, -1, string("Field to translate ")+first->toString()+" is malformed");
     return TuplePtr();
   }
   string theAddress(theString, theAtSign - theString);

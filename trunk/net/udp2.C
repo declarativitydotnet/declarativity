@@ -52,7 +52,7 @@ void Udp2::Rx::socket_cb()
     // Error! 
     int error = errno;
     if (error != EAGAIN) {
-      u->log(LoggerI::ERROR, error, strerror(error));
+      u->log(Reporting::ERROR, error, strerror(error));
     }
   } else {
     // Success! We've got a packet.  Package it up...
@@ -129,7 +129,7 @@ void Udp2::Tx::socket_cb()
     //  segmentation and reassembly elements upstream to not make us
     //  send anything bigger than the MTU, which should fit into the
     //  socket buffers. 
-    u->log(LoggerI::ERROR, errno, "Payload larger than socket buffer");
+    u->log(Reporting::ERROR, errno, "Payload larger than socket buffer");
   }
   socket_on();
 }

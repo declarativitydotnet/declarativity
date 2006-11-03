@@ -13,24 +13,32 @@
 # DESCRIPTION: Makefile for the P2 event loop library
 #
 
-lib_LTLIBRARIES = libp2cpp.la
-libp2cpp_la_SOURCES = \
-	p2.C
+lib_LTLIBRARIES =	libp2cpp.la
 
-# libp2cpp_la_LIBADD =
+SOURCE_FILE_ROOTS =	p2
 
+libp2cpp_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C) 
 
-INCLUDES = @BOOST_INC@ -I../p2core -I../elements \
-           -I../eventLoop -I../overlog -I../net -I../debugger
+libp2cpp_la_LDFLAGS =	@PYTHON_LSPEC@
 
-CLEANFILES = core *.core *~
+libp2cpp_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 
-EXTRA_DIST = .cvsignore README \
-		$(libp2cpp_la_SOURCES:.C=.h)
+libp2cpp_la_CPPFLAGS =	@PYTHON_CSPEC@ \
+			@BOOST_INC@ \
+			-I../p2core \
+			-I../elements \
+			-I../pythonElements \
+			-I../eventLoop \
+			-I../overlog \
+			-I../net \
+			-I../debugger
 
-MAINTAINERCLEANFILES = Makefile.in
+CLEANFILES =		core *.core *~
 
-CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG @CXXFLAGS@ ${PYTHON_CPPFLAGS}
+EXTRA_DIST =		.cvsignore \
+			README
+
+MAINTAINERCLEANFILES =	Makefile.in
 
 # End of File
 ############################################################

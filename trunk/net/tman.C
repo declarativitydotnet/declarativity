@@ -51,7 +51,7 @@ int TrafficManager::push(int port, TuplePtr tp, b_cbv cb) {
     
 int TrafficManager::initialize()
 {
-  log(LoggerI::INFO, 0, "initialize");
+  log(Reporting::INFO, 0, "initialize");
   // Schedule my timer
   if (_seconds != 0.0)
     _timeCallback = delayCB(_seconds, _runTimerCB, this);
@@ -80,10 +80,10 @@ void TrafficManager::runTimer()
   // Attempt to push it
   if (!output(0)->push(tuple, _wakeupCB)) {
     // We have been pushed back.  Don't reschedule wakeup
-    log(LoggerI::INFO, 0, "runTimer: sleeping");
+    log(Reporting::INFO, 0, "runTimer: sleeping");
   } else {
     // Reschedule me into the future
-    log(LoggerI::INFO, 0, "runTimer: rescheduling");
+    log(Reporting::INFO, 0, "runTimer: rescheduling");
     _timeCallback = delayCB(_seconds, _runTimerCB, this);
   }
 }
@@ -93,7 +93,7 @@ void TrafficManager::wakeup()
   // I'd better not be already scheduled
   assert(_timeCallback == NULL);
 
-  log(LoggerI::INFO, 0, "wakeup");
+  log(Reporting::INFO, 0, "wakeup");
 
   // Okey dokey.  Reschedule me into the future
   _timeCallback = delayCB(_seconds, _runTimerCB, this);
@@ -124,7 +124,8 @@ REMOVABLE_INLINE bool TrafficManager::processResponse(TuplePtr tp) {
 		boost::posix_time::ptime t = Val_Time::cast((*tp)[i+2]); 
         uint    hc = Val_UInt32::cast((*tp)[i+3]);
         uint    rc = Val_UInt32::cast((*tp)[i+4]);
-        std::cerr << "RECEIVE RESPONSE: delay " << delay(&t) << ", hop count " << hc << ", retry count " << rc << std::endl;
+        TELL_INFO << "RECEIVE RESPONSE: delay " << delay(&t) << ", hop count "
+                  << hc << ", retry count " << rc << std::endl;
         return true;
       }
     }

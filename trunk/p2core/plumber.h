@@ -20,7 +20,6 @@
 #define __PLUMBER_H__
 
 #include <inlines.h>
-#include <iostream>
 #include <fstream>
 #include <element.h>
 #include <elementSpec.h>
@@ -194,7 +193,7 @@ public:
 
   /** Create a new plumber given a configuration of constructed but not
       necessarily configured elements. */
-  Plumber(LoggerI::Level loggingLevel = LoggerI::NONE);
+  Plumber();
 
   /** Return a reference to a new dataflow object */
   DataflowEditPtr new_dataflow_edit(string name) { 
@@ -230,9 +229,6 @@ public:
       responsibility to delete that logger if it's on the heap. */
   REMOVABLE_INLINE LoggerI * logger(LoggerI * newLogger);
   
-  /** My logging level */
-  LoggerI::Level loggingLevel;
-
 private:
   /** The list of installed dataflows */
   boost::shared_ptr<std::map< string, DataflowPtr > > _dataflows;

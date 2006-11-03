@@ -15,7 +15,4 @@
 
 #include <loggerI.h>
 
-std::map< std::string, LoggerI::Level > LoggerI::levelFromName;
-std::map< LoggerI::Level, std::string > LoggerI::levelToName;
-LoggerI::Initializer LoggerI::_initializer;
 

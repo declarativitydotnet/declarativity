@@ -14,66 +14,66 @@
 # DESCRIPTION: Makefile for the P2 core elements library
 #
 
-lib_LTLIBRARIES = libp2elements.la
+lib_LTLIBRARIES =		libp2elements.la
 
-libp2elements_la_SOURCES = \
-	aggwrap.C \
-	slot.C \
-	print.C \
-	printTime.C \
-	timedPushSource.C \
-	timestampSource.C \
-	timedPullSink.C \
-	discard.C \
-	logger.C \
-	pelTransform.C \
-	marshal.C \
-	marshalField.C \
-	hexdump.C \
-	csvparser.C \
-	unmarshal.C \
-	unmarshalField.C \
-	route.C \
-	demux.C \
-	ddemux.C \
-	mux.C \
-	roundRobin.C \
-	dRoundRobin.C \
-	duplicate.C \
-	duplicateConservative.C \
-	dDuplicateConservative.C \
-	dupElim.C \
-	filter.C \
-	insert.C \
-	lookup2.C \
-	delete.C \
-	timedPullPush.C \
-	strToSockaddr.C \
-	queue.C \
-	functorSource.C \
-	tupleSource.C \
-	noNull.C \
-	noNullField.C\
-	unboxField.C \
-	printWatch.C \
-	aggregate.C \
-	update.C \
-	refresh.C \
-	tupleListener.C \
-	tupleSourceInterface.C \
-	removed.C \
-	dataflowInstaller.C
+SOURCE_FILE_ROOTS =		\
+				aggwrap2 \
+				aggwrap \
+				slot \
+				print \
+				printTime \
+				timedPushSource \
+				timestampSource \
+				timedPullSink \
+				discard \
+				logger \
+				pelTransform \
+				marshal \
+				marshalField \
+				hexdump \
+				csvparser \
+				unmarshal \
+				unmarshalField \
+				route \
+				demux \
+				ddemux \
+				mux \
+				roundRobin \
+				dRoundRobin \
+				duplicate \
+				duplicateConservative \
+				dDuplicateConservative \
+				dupElim \
+				filter \
+				insert \
+				lookup2 \
+				delete \
+				timedPullPush \
+				strToSockaddr \
+				queue \
+				functorSource \
+				tupleSource \
+				noNull \
+				noNullField \
+				unboxField \
+				printWatch \
+				aggregate \
+				update \
+				refresh \
+				tupleListener \
+				tupleSourceInterface \
+				removed
 
-libp2elements_la_LIBADD = -lboost_python
+libp2elements_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C)
 
-INCLUDES = @BOOST_INC@ -I../p2core -I../eventLoop -I../overlog -I../net
+libp2elements_la_CPPFLAGS =	@BOOST_INC@ \
+				-I../p2core \
+				-I../eventLoop
+
+libp2elements_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 
 CLEANFILES = core *.core *~
 
-EXTRA_DIST = .cvsignore \
-		$(libp2elements_la_SOURCES:.C=.h)
-
 MAINTAINERCLEANFILES = Makefile.in
 
-CXXFLAGS=-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG @CXXFLAGS@ ${PYTHON_CPPFLAGS}
 

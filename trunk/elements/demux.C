@@ -35,7 +35,7 @@ void Demux::unblock(unsigned output)
   
   // Unset a blocked output
   if (_block_flags[output]) {
-    log(LoggerI::INFO, -1, "unblock");
+    log(Reporting::INFO, -1, "unblock");
 
     _block_flags[output] = false;
     _block_flag_count--;
@@ -44,7 +44,7 @@ void Demux::unblock(unsigned output)
 
   // If I have a push callback, call it and remove it
   if (_push_cb) {
-    log(LoggerI::INFO, -1, "unblock: propagating aggregate unblock");
+    log(Reporting::INFO, -1, "unblock: propagating aggregate unblock");
     _push_cb();
     _push_cb = 0;
   }
@@ -62,9 +62,9 @@ int Demux::push(int port, TuplePtr p, b_cbv cb)
     if (!_push_cb) {
       _push_cb = cb;
     } else {
-      log(LoggerI::WARN, -1, "push: Callback overrun");
+      log(Reporting::WARN, -1, "push: Callback overrun");
     }
-    log(LoggerI::WARN, -1, "push: Overrun");
+    log(Reporting::WARN, -1, "push: Overrun");
     return 0;
   }
 
@@ -85,7 +85,7 @@ int Demux::push(int port, TuplePtr p, b_cbv cb)
       if (_block_flags[i]) {
         // No can do. Drop the tuple and return 0 if all outputs are
         // blocked
-        log(LoggerI::WARN, -1, "push: Matched blocked output");
+        log(Reporting::WARN, -1, "push: Matched blocked output");
 
         // Of course, our input is not blocked, or we wouldn't be here,
         // yes?
@@ -105,7 +105,7 @@ int Demux::push(int port, TuplePtr p, b_cbv cb)
           if (_block_flag_count == noutputs()) {
             assert(!_push_cb);
             _push_cb = cb;
-            log(LoggerI::WARN, -1, "push: Blocking input");
+            log(Reporting::WARN, -1, "push: Blocking input");
             return 0;
           } else {
             // I can still take more
@@ -125,7 +125,7 @@ int Demux::push(int port, TuplePtr p, b_cbv cb)
   if (_block_flags[noutputs() - 1]) {
     // No can do. Drop the tuple and return 0 if all outputs are
     // blocked
-    log(LoggerI::WARN, -1, "push: Default output blocked");
+    log(Reporting::WARN, -1, "push: Default output blocked");
     
     // Of course, our input is not blocked, or we wouldn't be here,
     // yes?
@@ -145,7 +145,7 @@ int Demux::push(int port, TuplePtr p, b_cbv cb)
       if (_block_flag_count == noutputs()) {
         assert(!_push_cb);
         _push_cb = cb;
-        log(LoggerI::WARN, -1, "push: Blocking input");
+        log(Reporting::WARN, -1, "push: Blocking input");
         return 0;
       } else {
         // I can still take more
@@ -157,4 +157,53 @@ int Demux::push(int port, TuplePtr p, b_cbv cb)
     }
   }
 }
+
+
+void
+Demux::toDot(std::ostream* ostr)
+{
+  *ostr << ID()                 // unique element ID
+        << " [ label=\"{";
+  
+  // Now figure out how many input ports
+  if (ninputs() > 0) {
+    *ostr << "{<i0> 0";
+    for (unsigned p = 1;
+         p < ninputs();
+         p++) {
+      *ostr << "| <i" << p << "> " << p << " ";
+    }
+    *ostr << "}|";
+  }
+      
+  // Show the name
+  *ostr << class_name() // the official type
+        << "\\n"
+        << name();   // the official name
+  
+  // And figure out the output ports.
+  if (noutputs() > 0) {
+    *ostr << "|{";
+    
+    std::vector< ValuePtr >::iterator miter =
+      _demuxKeys.begin();
+    uint counter = 0;
+    while (miter != _demuxKeys.end()) {
+      *ostr << "<o"
+            << counter
+            << "> "
+            << (*miter)->toString();
+      
+      miter++;
+      counter++;
+      *ostr << "|";
+    }
+    *ostr << "<o" << counter << "> default";
+    *ostr << "}";
+  }
+  
+  // Close the element label
+  *ostr << "}\" ];\n";
+}
+
 

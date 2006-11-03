@@ -12,7 +12,6 @@
  * 
  */
 
-#include <iostream>
 #include <errno.h>
 #include "element.h"
 #include "plumber.h"
@@ -24,6 +23,7 @@
 #include "val_str.h"
 #include "val_int32.h"
 #include "val_time.h"
+#include "reporting.h"
 
 
 // Some basic element types
@@ -55,7 +55,6 @@ Element::Element(string instanceName) :
   _noutputs(1),
   _ID(elementCounter++),
   _name(instanceName),
-  _loggingLevel(LoggerI::NONE),
   _logger(NULL),
   _IDstr(mk_id_str(_ID)),
   _state(Element::INACTIVE)
@@ -68,7 +67,6 @@ Element::Element(string instanceName, unsigned ninputs, unsigned noutputs) :
   _noutputs(noutputs),
   _ID(elementCounter++),
   _name(instanceName),
-  _loggingLevel(LoggerI::NONE),
   _logger(NULL),
   _IDstr(mk_id_str(_ID)),
   _state(Element::INACTIVE)
@@ -219,7 +217,7 @@ int Element::push(int port, TuplePtr p, b_cbv cb)
   // Did we get a result?
   if (result == 0 || result->size() == 0) {
     // No result
-    log(LoggerI::WARN,
+    log(Reporting::WARN,
         -1,
         "push: Input tuple yielded no output tuple");
     return 1;
@@ -238,7 +236,7 @@ TuplePtr Element::pull(int port, b_cbv cb)
         return result;
       } else {
         // This input yielded no result. Try again.
-        log(LoggerI::WARN,
+        log(Reporting::WARN,
             -1,
             "pull: Input tuple yielded no output tuple");
       }
@@ -321,13 +319,13 @@ int Element::initialize()
   return 0;
 }
 
-REMOVABLE_INLINE void Element::log(LoggerI::Level severity,
+REMOVABLE_INLINE void Element::log(Reporting::Level severity,
                                    int errnum,
                                    string explanation)
 {
   // Even this is a shortcut, cut off the process here as well, since
   // creating the instance name is expensive
-  if (severity >= _loggingLevel) {
+  if (severity >= Reporting::level()) {
     ostringstream n;
     n << _name << ":" << _IDstr;
     log(n.str(), severity, errnum, explanation);
@@ -335,12 +333,12 @@ REMOVABLE_INLINE void Element::log(LoggerI::Level severity,
 }
 
 REMOVABLE_INLINE void Element::log(string instanceName,
-                                   LoggerI::Level severity,
+                                   Reporting::Level severity,
                                    int errnum,
                                    string explanation)
 {
   // Check logging level first
-  if (severity >= _loggingLevel) {
+  if (severity >= Reporting::level()) {
     if (_logger) {
       _logger->log(class_name(),
                    instanceName,
@@ -354,7 +352,7 @@ REMOVABLE_INLINE void Element::log(string instanceName,
 }
 
 REMOVABLE_INLINE void Element::logDefault(string instanceName,
-                                          LoggerI::Level severity,
+                                          Reporting::Level severity,
                                           int errnum,
                                           string explanation)
 {
@@ -370,6 +368,43 @@ REMOVABLE_INLINE void Element::logDefault(string instanceName,
   t->append(Val_Int32::mk(errnum));
   t->append(Val_Str::mk(explanation));
   t->freeze();
-  warn << "PRE-init LOGGER: " << t->toString() << "\n";
+  TELL_WARN << "PRE-init LOGGER: " << t->toString() << "\n";
 }
                             
+
+void
+Element::toDot(std::ostream* ostr)
+{
+  *ostr << ID()                 // unique element ID
+        << " [ label=\"{";
+  
+  // Now figure out how many input ports
+  if (ninputs() > 0) {
+    *ostr << "{<i0> 0";
+    for (unsigned p = 1;
+         p < ninputs();
+         p++) {
+      *ostr << "| <i" << p << "> " << p << " ";
+    }
+    *ostr << "}|";
+  }
+      
+  // Show the name
+  *ostr << class_name() // the official type
+        << "\\n"
+        << name();   // the official name
+  
+  // And figure out the output ports.
+  if (noutputs() > 0) {
+    *ostr << "|{<o0> 0";
+    for (unsigned p = 1;
+         p < noutputs();
+         p++) {
+      *ostr << "| <o" << p << "> " << p << " ";
+    }
+    *ostr << "}";
+  }
+  
+  // Close the element label
+  *ostr << "}\" ];\n";
+}

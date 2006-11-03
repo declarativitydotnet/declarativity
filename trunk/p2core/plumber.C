@@ -16,9 +16,9 @@
 
 
 #include <plumber.h>
-#include <iostream>
 #include <set>
 #include "table2.h"
+#include "reporting.h"
 
 /**************************************************************
  * Plumber::Dataflow is responsible for a dataflow that
@@ -106,17 +106,17 @@ int Plumber::Dataflow::check_hookup_elements()
   for (uint i = 0;
        i < hookups_.size();
        i++) {
-    // std::cerr << "CHECKING HOOKUP: " << i << std::endl;
+    // TELL_INFO << "CHECKING HOOKUP: " << i << std::endl;
     ElementSpec::HookupPtr hookup = (hookups_)[i];
-    // std::cerr << "FROM ELEMENT: " << hookup->fromElement->toString() << std::endl;
-    // std::cerr << "TO ELEMENT: " << hookup->toElement->toString() << std::endl;
+    // TELL_INFO << "FROM ELEMENT: " << hookup->fromElement->toString() << std::endl;
+    // TELL_INFO << "TO ELEMENT: " << hookup->toElement->toString() << std::endl;
 
     std::set< ElementPtr >::iterator found =
       elementSet.find(hookup->fromElement->element());
     if ((found == elementSet.end()) ||
         (*found != hookup->fromElement->element())) {
       // This hookup comes from a non-existing element 
-      std::cerr << "Non-existent from element " <<
+      TELL_ERROR << "Non-existent from element " <<
         hookup->fromElement->toString() << "\n";
       errors++;
     }
@@ -124,18 +124,18 @@ int Plumber::Dataflow::check_hookup_elements()
     if ((found == elementSet.end()) ||
         (*found != hookup->toElement->element())) {
       // This hookup goes to a non-existing element 
-      std::cerr << "Non-existent to element " <<
+      TELL_ERROR << "Non-existent to element " <<
         hookup->toElement->toString() << "\n";
       errors++;
     }
     if (hookup->fromPortNumber < 0) {
       // Negative port is bad
-      std::cerr << "Bad hookup from port " << hookup->fromPortNumber << "\n";
+      TELL_ERROR << "Bad hookup from port " << hookup->fromPortNumber << "\n";
       errors++;
     }
     if (hookup->toPortNumber < 0) {
       // Negative port is bad
-      std::cerr << "Bad hookup to port " << hookup->toPortNumber << "\n";
+      TELL_ERROR << "Bad hookup to port " << hookup->toPortNumber << "\n";
       errors++;
     }
   }
@@ -179,7 +179,7 @@ int Plumber::Dataflow::check_push_and_pull()
           
         case Element::PULL:
           // If to port is pull, we're not OK
-          std::cerr << "Hookup from PUSH["
+          TELL_ERROR << "Hookup from PUSH["
                     << fromElement->toString()
                     << "] port "
                     << fromPort
@@ -197,7 +197,7 @@ int Plumber::Dataflow::check_push_and_pull()
           ElementSpec::UnificationResult result =
             toElement->unifyInput(toPort);
           if (result == ElementSpec::CONFLICT) {
-            std::cerr << "PUSH unification failed for element "
+            TELL_ERROR << "PUSH unification failed for element "
                       << toElement->toString()
                       << "\n";
             errors++;
@@ -212,7 +212,7 @@ int Plumber::Dataflow::check_push_and_pull()
         switch (toElement->input(toPort)->personality()) {
         case Element::PUSH:
           // If to port is push, we're not Ok
-          std::cerr << "Hookup from PULL["
+          TELL_ERROR << "Hookup from PULL["
                     << fromElement->toString()
                     << "] port "
                     << fromPort
@@ -234,7 +234,7 @@ int Plumber::Dataflow::check_push_and_pull()
           ElementSpec::UnificationResult result =
             toElement->unifyInput(toPort);
           if (result == ElementSpec::CONFLICT) {
-            std::cerr << "PULL unification failed for element "
+            TELL_ERROR << "PULL unification failed for element "
                       << toElement->toString()
                       << "\n";
             errors++;
@@ -252,7 +252,7 @@ int Plumber::Dataflow::check_push_and_pull()
           fromElement->output(fromPort)->personality(Element::PUSH);
           result = fromElement->unifyOutput(fromPort);
           if (result == ElementSpec::CONFLICT) {
-            std::cerr << "PUSH unification failed for element "
+            TELL_ERROR << "PUSH unification failed for element "
                       << fromElement->toString()
                       << "\n";
             errors++;
@@ -265,7 +265,7 @@ int Plumber::Dataflow::check_push_and_pull()
           fromElement->output(fromPort)->personality(Element::PULL);
           result = fromElement->unifyOutput(fromPort);
           if (result == ElementSpec::CONFLICT) {
-            std::cerr << "PULL unification failed for element "
+            TELL_ERROR << "PULL unification failed for element "
                       << fromElement->toString()
                       << "\n";
             errors++;
@@ -280,7 +280,7 @@ int Plumber::Dataflow::check_push_and_pull()
         break;
 
       default:
-        std::cerr << "Invalid personality for from element "
+        TELL_ERROR << "Invalid personality for from element "
                   << fromElement->toString()
                   << " and port "
                   << fromPort
@@ -313,14 +313,14 @@ int Plumber::Dataflow::check_hookup_range()
     
     if (hookup->fromPortNumber >= hookup->fromElement->
         element()->noutputs()) {
-      std::cerr << "Cannot connect from port " <<
+      TELL_ERROR << "Cannot connect from port " <<
         hookup->fromPortNumber << " in element " <<
         hookup->fromElement->toString() << "\n";
       errors++;
     }
     if (hookup->toPortNumber >= hookup->toElement->
         element()->ninputs()) {
-      std::cerr << "Cannot connect to port " <<
+      TELL_ERROR << "Cannot connect to port " <<
         hookup->toPortNumber << " in element " <<
         hookup->toElement->toString() << "\n";
       errors++;
@@ -349,7 +349,7 @@ int Plumber::Dataflow::eval_hookups()
     int dup =
       fromElement->output(fromPort)->counterpart(toElement);
     if (dup > 0) {
-      std::cerr << "Output port " << fromPort << " of element "
+      TELL_ERROR << "Output port " << fromPort << " of element "
                 << fromElement->toString()
                 << " reused\n";
     }
@@ -357,7 +357,7 @@ int Plumber::Dataflow::eval_hookups()
     dup =
       toElement->input(toPort)->counterpart(fromElement);
     if (dup > 0) {
-      std::cerr << "Input port " << toPort << " of element "
+      TELL_ERROR << "Input port " << toPort << " of element "
                 << toElement->toString()
                 << " reused\n";
     }
@@ -400,7 +400,7 @@ int Plumber::Dataflow::check_hookup_completeness() {
     }
 
     if (unuseds) {
-      std::cerr << oss.str();
+      TELL_ERROR << oss.str();
       total += unuseds;
     }
   }
@@ -446,32 +446,32 @@ int Plumber::Dataflow::validate()
 {
   // Are the hookups pointing to existing elements and ports?
   if (check_hookup_elements() < 0) {
-    std::cerr << "** Check_Hookup_Elements failed";
+    TELL_ERROR << "** Check_Hookup_Elements failed\n";
     return -1;
   }
 
   // Are the port numbers plausible?
   if (check_hookup_range() < 0) {
-    std::cerr << "** Port numbers implausible";
+    TELL_ERROR << "** Port numbers implausible\n";
     return -1;
   }
 
   // Check push/pull semantics
   if (check_push_and_pull() < 0) {
-    std::cerr << "** Bad push/pull semantics";
+    TELL_ERROR << "** Bad push/pull semantics\n";
     return -1;
   }
 
   // Evaluate hookups indicated in my new dataflow
   if (eval_hookups() < 0) {
-    std::cerr << "** Hookup evaluation failure";
+    TELL_ERROR << "** Hookup evaluation failure\n";
     return -1;
   }
 
   // Check hookup completeness.  
   // All ports, in all dataflows, have something attached to them
   if (check_hookup_completeness() < 0) {
-    std::cerr << "** Hookup incompleteness";
+    TELL_ERROR << "** Hookup incompleteness\n";
     return -1;
   }
 
@@ -486,7 +486,7 @@ int Plumber::Dataflow::finalize() {
        iter != elements_.end(); iter++) {
     if ((*iter)->element()->state()  == Element::INACTIVE && 
         (*iter)->element()->initialize() < 0) {
-      std::cerr << "** Initialize element " 
+      TELL_ERROR << "** Initialize element " 
                 << (*iter)->element()->name() 
                 << " failure.\n";
       failures++;
@@ -729,9 +729,8 @@ ElementSpecPtr Plumber::DataflowEdit::find(string name)
  * each defined by their configuration. 
  */
 
-Plumber::Plumber(LoggerI::Level loggingLevel)
-  : loggingLevel(loggingLevel),
-    _dataflows(new std::map<string, DataflowPtr>()),
+Plumber::Plumber()
+  : _dataflows(new std::map<string, DataflowPtr>()),
     _logger(0)
 {
 }
@@ -742,7 +741,7 @@ Plumber::Plumber(LoggerI::Level loggingLevel)
 int Plumber::install(DataflowPtr d)
 {
   if (d->validate() < 0 || d->finalize() < 0) {
-    std::cerr << "** Dataflow installation failure\n";
+    TELL_ERROR << "** Dataflow installation failure\n";
     return -1;
   }
 

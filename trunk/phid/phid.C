@@ -36,7 +36,7 @@ const uint16_t port = 12337;
 /** Test the Rx part of the Udp element. */
 int main(int argc, char **argv)
 {
-  std::cout << "\nPhi daemon started\n";
+  TELL_INFO << "\nPhi daemon started\n";
   eventLoopInitialize();
 
   Plumber::ConfigurationPtr conf(new Plumber::Configuration());
@@ -51,9 +51,9 @@ int main(int argc, char **argv)
   // Create the plumber and check it statically
   PlumberPtr plumber(new Plumber(conf));
   if (plumber->initialize(plumber) == 0) {
-    std::cout << "Correctly initialized configuration.\n";
+    TELL_INFO << "Correctly initialized configuration.\n";
   } else {
-    std::cout << "** Failed to initialize correct spec\n";
+    TELL_INFO << "** Failed to initialize correct spec\n";
   }
 
   // Activate the plumber

@@ -30,7 +30,7 @@ void Duplicate::unblock(unsigned output)
   
   // Unset a blocked output
   if (_block_flags[output]) {
-    log(LoggerI::INFO, -1, "unblock");
+    log(Reporting::INFO, -1, "unblock");
 
     _block_flags[output] = false;
     _block_flag_count--;
@@ -39,7 +39,7 @@ void Duplicate::unblock(unsigned output)
 
   // If I have a push callback, call it and remove it
   if (_push_cb) {
-    log(LoggerI::INFO, -1, "unblock: propagating aggregate unblock");
+    log(Reporting::INFO, -1, "unblock: propagating aggregate unblock");
     _push_cb();
     _push_cb = 0;
   }
@@ -57,9 +57,9 @@ int Duplicate::push(int port, TuplePtr p, b_cbv cb)
     if (!_push_cb) {
       _push_cb = cb;
     } else {
-      log(LoggerI::WARN, -1, "push: Callback overrun");
+      log(Reporting::WARN, -1, "push: Callback overrun");
     }
-    log(LoggerI::WARN, -1, "push: Overrun");
+    log(Reporting::WARN, -1, "push: Overrun");
     return 0;
   }
 
@@ -70,7 +70,7 @@ int Duplicate::push(int port, TuplePtr p, b_cbv cb)
     // Is the output blocked?
     if (_block_flags[i]) {
       // No can do. Skip this output
-      log(LoggerI::INFO, -1, "push: Skipped duplication on blocked output ");
+      log(Reporting::INFO, -1, "push: Skipped duplication on blocked output ");
     } else {
       // Send it with the appropriate callback
       int result = output(i)->push(p, boost::bind(&Duplicate::unblock, this, i));
@@ -88,7 +88,7 @@ int Duplicate::push(int port, TuplePtr p, b_cbv cb)
   if (_block_flag_count == noutputs()) {
     assert(!_push_cb);
     _push_cb = cb;
-    log(LoggerI::WARN, -1, "push: Blocking input");
+    log(Reporting::WARN, -1, "push: Blocking input");
     return 0;
   } else {
     return 1;

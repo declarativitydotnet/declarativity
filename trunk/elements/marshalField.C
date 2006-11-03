@@ -67,7 +67,7 @@ TuplePtr MarshalField::simple_action(TuplePtr p)
     else {
       // Numbered field is unmarshallable.  Just return the same tuple
       // and log a warning
-      log(LoggerI::WARN, -1, "Cannot marshal a non-tuple field");
+      log(Reporting::WARN, -1, "Cannot marshal a non-tuple field");
       return p;
     }
   }

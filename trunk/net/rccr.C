@@ -262,7 +262,7 @@ TuplePtr RateCCR::simple_action(TuplePtr tp)
   boost::posix_time::ptime ts = Val_Time::cast((*tp)[TS+2]);
 
   if (!seq || !rtt) {
-    log(LoggerI::INFO, 0, "NON-RateCC Tuple: " + tp->toString()); 
+    log(Reporting::INFO, 0, "NON-RateCC Tuple: " + tp->toString()); 
     return tp;
   }
 

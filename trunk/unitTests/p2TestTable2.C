@@ -20,3 +20,4 @@ test_suite* init_unit_test_suite(int, char**)
   top->add(new testTable2_testSuite());
   return top;
 }
+

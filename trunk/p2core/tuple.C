@@ -20,6 +20,7 @@
 #include "val_str.h"
 #include "val_int32.h"
 #include "val_null.h"
+#include "reporting.h"
 
 void
 Tuple::xdr_marshal( XDR *x ) 
@@ -232,7 +233,7 @@ Tuple::concat(TuplePtr tf)
 
 Tuple::~Tuple()
 {
-//   std::cout << "Destroying tuple "
+//   TELL_WORDY << "Destroying tuple "
 //             << toString()
 //             << " with ID "
 //             << _ID
@@ -257,7 +258,7 @@ Tuple::Tuple()
     _tags(0),
     _ID(_tupleIDCounter++)
 {
-//   std::cout << "Creating tuple " << toString()
+//   TELL_WORDY << "Creating tuple " << toString()
 //             << "with ID " << _ID
 //             << "\n";
 }
@@ -283,7 +284,7 @@ void
 Tuple::freeze()
 {
   frozen = true;
-//   std::cout << "Freezing tuple " << toString()
+//   TELL_WORDY << "Freezing tuple " << toString()
 //             << "with ID " << _ID << "\n";
 }
 

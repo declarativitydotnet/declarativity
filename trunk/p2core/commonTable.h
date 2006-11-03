@@ -99,7 +99,7 @@ public:
 
 
 
-protected:
+public:
   ////////////////////////////////////////////////////////////
   // Comparators
   ////////////////////////////////////////////////////////////
@@ -150,6 +150,7 @@ protected:
 
 
 
+protected:
   ////////////////////////////////////////////////////////////
   // Indices
   ////////////////////////////////////////////////////////////
@@ -319,10 +320,17 @@ public:
     process(ValuePtr value) = 0;
 
     
-    /** Retrieve the result for this function. If no tuples have been
-        submitted, return NULL. */
+    /** Retrieve the result for this function. It should never return
+        the null pointer. If the result of the aggregate is undefined
+        (e.g., when running MIN over an empty set), this should return
+        the NULL value (i.e., Val_Null::mk()). */
     virtual ValuePtr
     result() = 0;
+
+
+    /** What's my name? */
+    virtual std::string
+    name() = 0;
   };
   
 
@@ -364,6 +372,11 @@ public:
         into the table. */
     void
     update(TuplePtr changedTuple);
+
+
+    /** Send out updates conveying my state if I'm all empty */
+    void
+    evaluateEmpties();
 
 
   protected:
@@ -411,7 +424,7 @@ public:
 
 
   /** Install a new aggregate returning a handle to it. If the aggregate
-      is unknown, return NULL. */
+      is unknown, throws AggFactory::AggregateNotFound. */
   Aggregate
   aggregate(Key& groupBy,
             uint aggregateFieldNo,
@@ -543,6 +556,12 @@ public:
   void
   createSecondaryIndex(Key& key);
 
+
+  /** Evaluates all zero-tuple-set aggregates before a table goes into
+      operation, since those do not get triggered unless a tuple
+      insertion/deletion occurs otherwise. */
+  void
+  evaluateEmptyAggregates();
   
 
 protected:

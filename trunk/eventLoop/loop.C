@@ -19,6 +19,7 @@
 #include <sys/socket.h>
 #include "fcntl.h"
 #include "val_time.h"
+#include "reporting.h"
 
 callbackQueueT callbacks;
 long callbackID = 0;
@@ -306,7 +307,7 @@ fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
                        NULL, &td_ts, NULL);
   if (result == -1) {
     // Ooops, error
-    fatal << "pselect failed";
+    TELL_ERROR << "pselect failed";
     exit(-1);
   } else if (result == 0) {
     // Nothing happened
@@ -330,9 +331,11 @@ fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
 
         // Call the callback
         if ((*iter)->owner == NULL || 
-            (*iter)->owner->state() == Element::ACTIVE)
+            (*iter)->owner->state() == Element::ACTIVE) {
           ((*iter)->callback)();
-        else std::cerr << "NOT RUNNING CALLBACK: element not active\n";
+        } else {
+          TELL_INFO << "NOT RUNNING CALLBACK: element not active\n";
+        }
       }
     }
     for (int i = 0;
@@ -351,9 +354,11 @@ fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
 
         // Call the callback
         if ((*iter)->owner == NULL || 
-            (*iter)->owner->state() == Element::ACTIVE)
+            (*iter)->owner->state() == Element::ACTIVE) {
           ((*iter)->callback)();
-        else std::cerr << "NOT RUNNING CALLBACK: element not active\n";
+        } else {
+          TELL_INFO << "NOT RUNNING CALLBACK: element not active\n";
+        }
       }
     }
   }
@@ -391,7 +396,7 @@ eventLoop()
     }
   }
   catch (std::exception e) {
-    std::cerr << "EXCEPTION: " << e.what() << std::endl;
+    TELL_WARN << "EXCEPTION: " << e.what() << std::endl;
   }
 }
 

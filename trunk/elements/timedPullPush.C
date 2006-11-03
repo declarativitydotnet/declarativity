@@ -37,7 +37,7 @@ TimedPullPush::TimedPullPush(string name,
 
 int TimedPullPush::initialize()
 {
-  log(LoggerI::INFO, 0, "initialize");
+  log(Reporting::INFO, 0, "initialize");
   // Schedule my timer
   reschedule();
   return 0;
@@ -49,7 +49,7 @@ void TimedPullPush::runTimer()
   // remove the timer id
   _timeCallback = 0;
 
-  log(LoggerI::INFO, 0, "runTimer: called back");
+  log(Reporting::INFO, 0, "runTimer: called back");
 
   // Attempt to fetch a tuple. If it's there, it will certainly be
   // delivered.
@@ -63,7 +63,7 @@ void TimedPullPush::runTimer()
     // Were we pushed back?
     if (result == 0) {
       // Yup.  Don't reschedule until my _unblockPush is invoked.
-      log(LoggerI::INFO, 0, "runTimer: push blocked");
+      log(Reporting::INFO, 0, "runTimer: push blocked");
     } else {
       // No.  Reschedule me
       reschedule();
@@ -71,13 +71,13 @@ void TimedPullPush::runTimer()
   } else {
     // Didn't get any tuples from my input. Don't reschedule me until my
     // _unblockPull is invoked
-    log(LoggerI::INFO, 0, "runTimer: pull blocked");
+    log(Reporting::INFO, 0, "runTimer: pull blocked");
   }
 }
 
 void TimedPullPush::pullWakeup()
 {
-  log(LoggerI::INFO, 0, "pullWakeup");
+  log(Reporting::INFO, 0, "pullWakeup");
 
   // Okey dokey.  Reschedule me into the future
   reschedule();
@@ -85,7 +85,7 @@ void TimedPullPush::pullWakeup()
 
 void TimedPullPush::pushWakeup()
 {
-  log(LoggerI::INFO, 0, "pushWakeup");
+  log(Reporting::INFO, 0, "pushWakeup");
 
   // Okey dokey.  Reschedule me into the future
   reschedule();
@@ -100,10 +100,10 @@ TimedPullPush::reschedule()
       ((_tuples > 0) && (_counter < _tuples))) {
     _counter++;
 
-    log(LoggerI::INFO, 0, "reschedule: rescheduling");
+    log(Reporting::INFO, 0, "reschedule: rescheduling");
     // Okey dokey.  Reschedule me into the future
     _timeCallback = delayCB(_seconds, _runTimerCB, this);
   } else {
-    log(LoggerI::INFO, 0, "reschedule: DONE!");
+    log(Reporting::INFO, 0, "reschedule: DONE!");
   }
 }

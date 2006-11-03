@@ -58,7 +58,7 @@ ValuePtr Val_Opaque::xdr_unmarshal( XDR *x )
 
 string Val_Opaque::toConfString() const
 {
-  warn << "Cannot get conf string for an OPAQUE value\n";
+  TELL_WARN << "Cannot get conf string for an OPAQUE value\n";
   return "";
 }
 
@@ -90,7 +90,7 @@ int Val_Opaque::compareTo(ValuePtr other) const
       return 1;
     }
   }
-  warn << "Comparing opaques. Not implemented yet!!!\n";
+  TELL_WARN << "Comparing opaques. Not implemented yet!!!\n";
   exit(-1);
   //  return cmp(b, cast(other));
   return -1;

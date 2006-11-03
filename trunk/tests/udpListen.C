@@ -84,9 +84,9 @@ listenForMessages(std::string ipAddress,
 
   // Put the plumber together
   if (plumber->install(conf) == 0) {
-    std::cout << "Correctly initialized.\n";
+    TELL_INFO << "Correctly initialized.\n";
   } else {
-    std::cout << "** Failed to initialize correct spec\n";
+    TELL_ERROR << "** Failed to initialize correct spec\n";
   }
 
   // Run the plumber
@@ -96,10 +96,10 @@ listenForMessages(std::string ipAddress,
 
 int main(int argc, char **argv)
 {
-  std::cout << "Simple message listener on UDP\n";
+  TELL_INFO << "Simple message listener on UDP\n";
   
   if (argc != 3) {
-    std::cerr << "Usage: udpListen <myIP> <myPort>\n";
+    TELL_ERROR << "Usage: udpListen <myIP> <myPort>\n";
     exit(0);
   }
 
@@ -107,7 +107,7 @@ int main(int argc, char **argv)
   std::string myAddress(argv[1]);
   int port = atoi(argv[2]);
 
-  std::cout << "Listening for messages to address "
+  TELL_INFO << "Listening for messages to address "
             << myAddress 
             << " and port "
             << port

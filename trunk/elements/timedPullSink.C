@@ -28,7 +28,7 @@ TimedPullSink::TimedPullSink(string name,
     
 int TimedPullSink::initialize()
 {
-  log(LoggerI::INFO, 0, "initialize: TIMEDPULLSINK/init");
+  log(Reporting::INFO, 0, "initialize: TIMEDPULLSINK/init");
   // Schedule my timer
   _timeCallback = delayCB(_seconds, _runTimerCB, this);
 
@@ -42,15 +42,15 @@ void TimedPullSink::runTimer()
   _timeCallback = 0;
 
   // Suck a tuple
-  log(LoggerI::INFO, 0, "runTimer: pulling");
+  log(Reporting::INFO, 0, "runTimer: pulling");
   TuplePtr result = input(0)->pull(_wakeupCB);
   if (result == 0) {
     // We have been pushed back.  Don't reschedule wakeup
-    log(LoggerI::INFO, 0, "runTimer: sleeping");
+    log(Reporting::INFO, 0, "runTimer: sleeping");
   } else {
     // Reschedule me into the future
     _timeCallback = delayCB(_seconds, _runTimerCB, this);
-    log(LoggerI::INFO, 0, "runTimer: rescheduling");
+    log(Reporting::INFO, 0, "runTimer: rescheduling");
   }
 }
 
@@ -59,7 +59,7 @@ void TimedPullSink::wakeup()
   // I'd better not be already scheduled
   assert(_timeCallback == 0);
 
-  log(LoggerI::INFO, 0, "wakeup");
+  log(Reporting::INFO, 0, "wakeup");
 
   // Okey dokey.  Reschedule me into the future
   _timeCallback = delayCB(_seconds, _runTimerCB, this);

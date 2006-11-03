@@ -7,8 +7,6 @@
 # Berkeley, CA,  94707. Attention: P2 Group.
 #
 
-EXTRA_DIST = README
+EXTRA_DIST =		README
 
-CXXFLAGS=${CXXFLAGS}  " -static"
-
-SUBDIRS=p2 dfparser scripts
+SUBDIRS =		p2 dfparser scripts

@@ -11,6 +11,7 @@
  */
 
 #include "aggMin.h"
+#include "val_null.h"
 
 AggMin::AggMin()
 {
@@ -49,7 +50,11 @@ AggMin::process(ValuePtr v)
 ValuePtr 
 AggMin::result()
 {
-  return _currentMin;
+  if (_currentMin != 0) {
+    return _currentMin;
+  } else {
+    return Val_Null::mk();
+  }
 }
 
 
@@ -57,4 +62,11 @@ AggMin*
 AggMin::mk()
 {
   return new AggMin();
+}
+
+
+std::string
+AggMin::name()
+{
+  return "MIN";
 }

@@ -18,6 +18,13 @@
 #include "aggMax.h"
 #include "aggCount.h"
 
+
+AggFactory::AggregateNotFound::AggregateNotFound(std::string name)
+  : aggName(name)
+{
+}
+
+
 CommonTable::AggFunc*
 AggFactory::mk(std::string aggName)
 {
@@ -26,11 +33,28 @@ AggFactory::mk(std::string aggName)
 
   // Do we have it?
   if (i == _factories.end()) {
-    // Nope. Return null
-    return NULL;
+    // Nope. Throw exception
+    throw AggregateNotFound(aggName);
   } else {
     // Execute it and return the function object
     return ((*i).second)();
+  }
+}
+
+
+AggFactory::AggFuncFactory
+AggFactory::factory(std::string aggName)
+{
+  // Look up the constructor method
+  FactorySet::iterator i = _factories.find(aggName);
+
+  // Do we have it?
+  if (i == _factories.end()) {
+    // Nope. Throw exception
+    throw AggregateNotFound(aggName);
+  } else {
+    // Return the factory
+    return ((*i).second);
   }
 }
 

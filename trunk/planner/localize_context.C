@@ -35,7 +35,7 @@ void Localize_Context::add_rule(OL_Context::Rule* rule)
     }
   }
 
-  warn << "  Add localized rule: " << rule->toString() << "\n";  
+  TELL_WARN << "  Add localized rule: " << rule->toString() << "\n";  
   _localizedRules.push_back(rule);  
 }
 
@@ -66,7 +66,7 @@ Localize_Context::addSendRule(OL_Context::Rule* nextRule,
 						   + "Local1", newHead, false);
 
   newRule->terms = newTerms;
-  warn << "  Localized send rule " << newRule->toString() << "\n";
+  TELL_WARN << "  Localized send rule " << newRule->toString() << "\n";
 
   // Materialize what we send if the source has been materialized
   OL_Context::TableInfo* tableInfo 
@@ -82,8 +82,8 @@ Localize_Context::addSendRule(OL_Context::Rule* nextRule,
     newTableInfo->timeout = minLifetime;
     newTableInfo->primaryKeys = tableInfo->primaryKeys; // XXX depends on first table
     tableStore->addTableInfo(newTableInfo);
-    warn << "Old table " << tableInfo->toString() << "\n";
-    warn << " Create table for " << newTableInfo->toString() << "\n";
+    TELL_WARN << "Old table " << tableInfo->toString() << "\n";
+    TELL_WARN << " Create table for " << newTableInfo->toString() << "\n";
     tableStore->createTable(newTableInfo);
   }  
   return newRule;
@@ -100,7 +100,7 @@ void Localize_Context::rewrite(OL_Context* ctxt, TableStore* tableStore)
 void Localize_Context::rewriteRule(OL_Context::Rule* nextRule, 
 				   TableStore* tableStore)
 {
-  warn << "Perform localization rewrite on " << nextRule->toString() 
+  TELL_WARN << "Perform localization rewrite on " << nextRule->toString() 
 	    << "\n";
 
   std::vector<OL_Context::Rule*> toRet;
@@ -119,7 +119,7 @@ void Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
 	probeTerms.push_back(functor);
       } else {
 	// put events first
-	warn << "Put to front " << functor->fn->name << "\n";
+	TELL_WARN << "Put to front " << functor->fn->name << "\n";
 	probeTerms.insert(probeTerms.begin(), functor);
       }
     } else {
@@ -153,7 +153,7 @@ void Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
     headName << probeTerms.at(k)->fn->name;
     OL_Context::TableInfo* tableInfo 
       = tableStore->getTableInfo(probeTerms.at(k)->fn->name);  
-    warn << "Get table " << probeTerms.at(k)->fn->name << "\n";
+    TELL_WARN << "Get table " << probeTerms.at(k)->fn->name << "\n";
     if (tableInfo != NULL) {
       if (minLifetime > tableInfo->timeout) {
 	minLifetime = tableInfo->timeout;
@@ -172,13 +172,13 @@ void Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
   }
 
   if (local == true) {
-    warn << nextRule->toString() << " is already localized\n";
+    TELL_WARN << nextRule->toString() << " is already localized\n";
     add_rule(nextRule);
     delete namesTracker;
     return;
   }
 
-  warn << headName.str() << " " 
+  TELL_WARN << headName.str() << " " 
        << boost::posix_time::to_simple_string(minLifetime) << " " 
        << boundary << " " << namesTracker->toString() << "\n";
 

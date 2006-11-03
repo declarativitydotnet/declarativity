@@ -39,7 +39,7 @@ Bandwidth::simple_action(TuplePtr p)
 
   std::ostringstream o;
   o << bw_;
-  log(mMarkup_, LoggerI::INFO, 0, o.str());
+  log(mMarkup_, Reporting::INFO, 0, o.str());
       
   return p;
 }

@@ -64,7 +64,7 @@ int RuleTracer::push(int port, TuplePtr p, b_cbv cb)
   if(t_tupleTable)
     insertInTupleTable(t_tupleTable);
 
-  //std::cout << " INSERTED " << t_tupleTable->toString() << "\n";
+  //TELL_INFO << " INSERTED " << t_tupleTable->toString() << "\n";
 #ifdef SKIP
   // undefine the SKIP at the beginning if you want
   // to trace the debugging rules too
@@ -73,10 +73,10 @@ int RuleTracer::push(int port, TuplePtr p, b_cbv cb)
 
 #endif
 
-  log(LoggerI::INFO, -1, name() + " Pushing tuple " + p->toString() + "\n");
+  log(Reporting::INFO, -1, name() + " Pushing tuple " + p->toString() + "\n");
 
   if(_startPort == _endPort){
-    log(LoggerI::INFO, -1, " For element " + name() + ", start and end ports are same\n");
+    log(Reporting::INFO, -1, " For element " + name() + ", start and end ports are same\n");
   }
 
   if(port == _startPort && _startPort < _endPort)
@@ -148,7 +148,7 @@ void RuleTracer::startRule(TuplePtr t, int port)
   e->tupleIn = t->ID();
   getTime(e->timeIn);
   e->finished = false;
-  //std::cout << e->toString();
+  //TELL_INFO << e->toString();
   
   return;
 }
@@ -188,7 +188,7 @@ void RuleTracer::appendRule(TuplePtr t, int port)
   int index = findRecordIndex(port);
   ExecRecord * e = _records[index];
   
-  log(LoggerI::INFO, -1, "AppendRule " + t->toString() + " Rule " + _ruleName + "\n");
+  log(Reporting::INFO, -1, "AppendRule " + t->toString() + " Rule " + _ruleName + "\n");
   TuplePtr t2 = Val_Tuple::cast((*t)[1]);
   setLocalNode(t2);
 
@@ -201,7 +201,7 @@ void RuleTracer::appendRule(TuplePtr t, int port)
 
   e->precond[port] = t2->ID();
   e->numEntries ++;
-  //std::cout << e->toString();
+  //TELL_INFO << e->toString();
   return;
 }
 
@@ -224,8 +224,8 @@ TuplePtr RuleTracer::createExecTuple(ExecRecord *e)
   t->append(Val_Time::mk(e->timeIn));
   t->append(Val_Time::mk(e->timeOut));
   t->append(Val_Str::mk("EVENT"));
-  log(LoggerI::INFO, -1,  t->toString() + "\n");
-  //std::cout << t->toString() << "\n";
+  log(Reporting::INFO, -1,  t->toString() + "\n");
+  //TELL_INFO << t->toString() << "\n";
   return t;
 
   // todo: insert tuples for each precondition also
@@ -246,7 +246,7 @@ int RuleTracer::createExecTupleUsingPrecond(ExecRecord *e,
     t->append(Val_Time::mk(e->timeIn));
     t->append(Val_Time::mk(e->timeOut));
     t->append(Val_Str::mk("PRECOND"));
-    log(LoggerI::INFO, -1, t->toString() + "\n");
+    log(Reporting::INFO, -1, t->toString() + "\n");
     execs->push_back(t);
   }
   return e->numEntries;
@@ -291,8 +291,8 @@ RuleTracer::createTupleTableTuple(TuplePtr t)
   //getTime(timedd);
   //t_new->append(Val_Time::mk(timedd));
 
-  log(LoggerI::INFO, -1, t_new->toString() + "\n");
-  //std::cout<< t_new->toString() << "\n";
+  log(Reporting::INFO, -1, t_new->toString() + "\n");
+  //TELL_INFO<< t_new->toString() << "\n";
 
   return t_new;
 }

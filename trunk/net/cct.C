@@ -151,7 +151,7 @@ void CCT::dealloc(ValuePtr dest, SeqNum seq)
   }
   else {
     // Log event: possibly due to duplicate ack.
-    log(LoggerI::INFO, 0, "CCT::push receive unknown ack, possible duplicate"); 
+    log(Reporting::INFO, 0, "CCT::push receive unknown ack, possible duplicate"); 
   }
 }
 

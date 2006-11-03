@@ -23,7 +23,7 @@
 #include "table2.h"
 #include "p2Time.h"
 #include "aggFactory.h"
-#include "iostream"
+#include "reporting.h"
 
 ////////////////////////////////////////////////////////////
 // Constructors
@@ -96,7 +96,7 @@ Table2::Table2(std::string tableName,
 /** Empty out all indices and kill their heap-allocated components */
 Table2::~Table2()
 {
-  //  std::cout << "Destroying table " << _name << "\n";
+  //  TELL_WORDY << "Destroying table " << _name << "\n";
 
   ////////////////////////////////////////////////////////////
   // Secondary indices
@@ -163,7 +163,7 @@ Table2::~Table2()
   _primaryIndex.clear();
   
 
-  //  std::cout << "Destroyed table " << _name << "\n";
+  //  TELL_WORDY << "Destroyed table " << _name << "\n";
 }
 
 
@@ -179,7 +179,7 @@ Table2::insert(TuplePtr t)
 /*
   boost::posix_time::ptime now_ts;
   getTime(now_ts);
-  std::cerr << "INSERT TUPLE current time = " << boost::posix_time::to_simple_string(now_ts)
+  TELL_WARN << "INSERT TUPLE current time = " << boost::posix_time::to_simple_string(now_ts)
             << ", TUPLE = " << t->toString() << std::endl;
 */
   // Ensure we're operating on the correct view of the table as of right
@@ -204,11 +204,11 @@ Table2::insert(TuplePtr t)
       // Update insertion time if we're flushing tuples
       if (_flushing) {
 /*
-        std::cerr << "UPDATING TUPLE TIME" << std::endl; 
-        std::cerr << "\tOLD: " << boost::posix_time::to_simple_string((*found)->time) << std::endl;
+        TELL_WARN << "UPDATING TUPLE TIME" << std::endl; 
+        TELL_WARN << "\tOLD: " << boost::posix_time::to_simple_string((*found)->time) << std::endl;
 */
         updateTime(*found);
-        // std::cerr << "\tNEW: " << boost::posix_time::to_simple_string((*found)->time) << std::endl;
+        // TELL_WARN << "\tNEW: " << boost::posix_time::to_simple_string((*found)->time) << std::endl;
       }
       return false;
     }
@@ -308,7 +308,7 @@ Table2::flushEntry(Entry* e)
 /*
     boost::posix_time::ptime now_ts;
     getTime(now_ts);
-    std::cerr << "FLUSHING TUPLE: current time = " 
+    TELL_WARN << "FLUSHING TUPLE: current time = " 
               << boost::posix_time::to_simple_string(now_ts)
               << ", tuple time = " << boost::posix_time::to_simple_string(e->time)
        << ", " << e->tuple->toString() << std::endl;

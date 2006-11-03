@@ -60,13 +60,14 @@
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <string>
-#include <iostream>
 #include <sstream>
 
 #include <assert.h>
 #include <stdexcept>
 #include "inlines.h"
 #include "config.h"
+
+#include "reporting.h"
 
 extern "C" {
 #include <rpc/rpc.h>

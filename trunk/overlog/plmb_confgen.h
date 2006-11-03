@@ -287,10 +287,11 @@ private:
 
   bool hasPeriodicTerm(OL_Context::Rule* curRule);
 
-  void debugRule(OL_Context::Rule* curRule, 
-		 string debugMsg) { 
-    warn << "Planner debug rule (" << curRule->ruleID<< "): "
-         << debugMsg << "\n"; 
+  void
+  debugRule(OL_Context::Rule* curRule, 
+            string debugMsg) { 
+    TELL_WARN << "Planner debug rule (" << curRule->ruleID<< "): "
+              << debugMsg; 
   }
 
   void error(string msg);
@@ -377,7 +378,7 @@ private:
     void addReceiver(ElementSpecPtr elementSpecPtr, int ruleNum) { 
       _receivers.push_back(elementSpecPtr);
       _ruleNums.push_back(ruleNum);
-      std::cout << "Pushing ruleNum " << ruleNum << " for element " << elementSpecPtr->element()->name() << "\n";
+      TELL_INFO << "Pushing ruleNum " << ruleNum << " for element " << elementSpecPtr->element()->name() << "\n";
     }
   };
 

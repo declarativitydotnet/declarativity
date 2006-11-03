@@ -53,8 +53,7 @@ public:
    * sends tuple on hostname:port */
   P2(string hostname,
      string port,
-     uint transport_conf,
-     LoggerI::Level level);
+     uint transport_conf);
 
   /**
    * Run the event loop. This call will block the main

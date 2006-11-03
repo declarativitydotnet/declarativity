@@ -14,57 +14,61 @@
 # DESCRIPTION: Makefile for the P2 core elements python library
 #
 
-noinst_LTLIBRARIES = libp2pythonelements.la
+lib_LTLIBRARIES =			libp2pythonelements.la
 
-libp2pythonelements_la_SOURCES = \
-	aggregate.cpp \
-	aggwrap.cpp \
-	csvparser.cpp \
-	dDuplicateConservative.cpp \
-	dRoundRobin.cpp \
-	dataflowInstaller.cpp \
-	ddemux.cpp \
-	delete.cpp \
-	demux.cpp \
-	discard.cpp \
-	dupElim.cpp \
-	duplicate.cpp \
-	duplicateConservative.cpp \
-	filter.cpp \
-	functorSource.cpp \
-	hexdump.cpp \
-	insert.cpp \
-	logger.cpp \
-	lookup2.cpp \
-	marshal.cpp \
-	marshalField.cpp \
-	mux.cpp \
-	noNull.cpp \
-	noNullField.cpp \
-	pelTransform.cpp \
-	print.cpp \
-	printTime.cpp \
-	printWatch.cpp \
-	queue.cpp \
-	roundRobin.cpp \
-	slot.cpp \
-	strToSockaddr.cpp \
-	timedPullPush.cpp \
-	timedPullSink.cpp \
-	timedPushSource.cpp \
-	timestampSource.cpp \
-	tupleSource.cpp \
-	unboxField.cpp \
-	unmarshal.cpp \
-	unmarshalField.cpp \
-	tupleListener.cpp \
-	tupleSourceInterface.cpp \
-	update.cpp
+libp2pythonelements_la_SOURCES =	\
+					aggregate.cpp \
+					aggwrap.cpp \
+					csvparser.cpp \
+					dDuplicateConservative.cpp \
+					dRoundRobin.cpp \
+					ddemux.cpp \
+					delete.cpp \
+					demux.cpp \
+					discard.cpp \
+					dupElim.cpp \
+					duplicate.cpp \
+					duplicateConservative.cpp \
+					filter.cpp \
+					functorSource.cpp \
+					hexdump.cpp \
+					insert.cpp \
+					logger.cpp \
+					lookup2.cpp \
+					marshal.cpp \
+					marshalField.cpp \
+					mux.cpp \
+					noNull.cpp \
+					noNullField.cpp \
+					pelTransform.cpp \
+					print.cpp \
+					printTime.cpp \
+					printWatch.cpp \
+					queue.cpp \
+					roundRobin.cpp \
+					slot.cpp \
+					strToSockaddr.cpp \
+					timedPullPush.cpp \
+					timedPullSink.cpp \
+					timedPushSource.cpp \
+					timestampSource.cpp \
+					tupleSource.cpp \
+					unboxField.cpp \
+					unmarshal.cpp \
+					unmarshalField.cpp \
+					tupleListener.cpp \
+					tupleSourceInterface.cpp \
+					update.cpp
 
-INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements -I$(top_builddir)/eventLoop -I$(top_builddir)/mapreduce
 
-CLEANFILES = core *.core *~
+libp2pythonelements_la_CPPFLAGS =	@BOOST_INC@ \
+					-I$(top_builddir)/p2core \
+					-I$(top_builddir)/elements \
+					-I$(top_builddir)/eventLoop
 
-MAINTAINERCLEANFILES = Makefile.in
+CLEANFILES =				core *.core *~
 
-CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@ ${PYTHON_CPPFLAGS}
+MAINTAINERCLEANFILES =			Makefile.in
+
+libp2pythonelements_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG \
+					@PYTHON_CSPEC@

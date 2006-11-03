@@ -32,7 +32,7 @@ TimedPushSource::TimedPushSource(string name,
     
 int TimedPushSource::initialize()
 {
-  log(LoggerI::INFO, 0, "initialize");
+  log(Reporting::INFO, 0, "initialize");
   // Schedule my timer
   _timeCallback = delayCB(_seconds, _runTimerCB, this);
   
@@ -49,11 +49,11 @@ void TimedPushSource::runTimer()
   TuplePtr tuple = Tuple::mk();
   if (tuple == 0) {
     // Couldn't create a new tuple.  Bzzzt
-    log(LoggerI::ERROR, 0, "runTimer: Failed to create new tuple");
+    log(Reporting::ERROR, 0, "runTimer: Failed to create new tuple");
     return;
   }
 
-  log(LoggerI::INFO, 0, "runTimer: Creating new tuple");
+  log(Reporting::INFO, 0, "runTimer: Creating new tuple");
   // Fill it up with the current timeval
   boost::posix_time::ptime t;
   getTime(t);
@@ -67,10 +67,10 @@ void TimedPushSource::runTimer()
   int result = output(0)->push(tuple, _wakeupCB);
   if (result == 0) {
     // We have been pushed back.  Don't reschedule wakeup
-    log(LoggerI::INFO, 0, "runTimer: sleeping");
+    log(Reporting::INFO, 0, "runTimer: sleeping");
   } else {
     // Reschedule me into the future
-    log(LoggerI::INFO, 0, "runTimer: rescheduling");
+    log(Reporting::INFO, 0, "runTimer: rescheduling");
     _timeCallback = delayCB(_seconds, _runTimerCB, this);
   }
 }
@@ -80,7 +80,7 @@ void TimedPushSource::wakeup()
   // I'd better not be already scheduled
   assert(_timeCallback == 0);
 
-  log(LoggerI::INFO, 0, "wakeup");
+  log(Reporting::INFO, 0, "wakeup");
 
   // Okey dokey.  Reschedule me into the future
   _timeCallback = delayCB(_seconds, _runTimerCB, this);

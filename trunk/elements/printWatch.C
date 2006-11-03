@@ -74,7 +74,7 @@ TuplePtr PrintWatch::simple_action(TuplePtr p)
   if (_output != NULL) {
     fprintf(_output, "%s", b.str().c_str()); 
   } else {
-    warn << b.str();
+    TELL_WARN << b.str();
   }
   fflush(_output);
   return p;

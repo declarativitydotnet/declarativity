@@ -79,13 +79,13 @@ initializeBaseTables(boost::shared_ptr< OL_Context> ctxt,
   envTable->insert(tuple);
 
   // Now rest of the environment
-  warn << "Environment is " << environment << "\n";
+  TELL_WARN << "Environment is " << environment << "\n";
   const char * current = environment.c_str();
   while (strlen(current) > 0) {
     // Find a semicolon
     char * theSemi = strchr(current, ';');
     if (theSemi == NULL) {
-      fatal << "Malformed environment string. No semicolon\n";
+      TELL_ERROR << "Malformed environment string. No semicolon\n";
       exit(-1);
     }
 
@@ -94,7 +94,7 @@ initializeBaseTables(boost::shared_ptr< OL_Context> ctxt,
     // Find an =
     char * theEqual = strchr(current, '=');
     if (theEqual == NULL) {
-      fatal << "Malformed environment entry [" << current << "]. No equals sign\n";
+      TELL_ERROR << "Malformed environment entry [" << current << "]. No equals sign\n";
       exit(-1);
     }
     
@@ -104,7 +104,7 @@ initializeBaseTables(boost::shared_ptr< OL_Context> ctxt,
     *theEqual = '=';
 
     string value(theEqual + 1);
-    warn << "[" << attribute << "=" << value << "]\n";
+    TELL_WARN << "[" << attribute << "=" << value << "]\n";
 
     TuplePtr tuple = Tuple::mk();
     tuple->append(envName);
@@ -126,8 +126,7 @@ initializeBaseTables(boost::shared_ptr< OL_Context> ctxt,
    Put together the dataflow.
 */
 void
-startOverLogDataflow(LoggerI::Level level,
-                     boost::shared_ptr< OL_Context> ctxt,
+startOverLogDataflow(boost::shared_ptr< OL_Context> ctxt,
                      string overLogFile, 
                      string localAddress,
                      int port,
@@ -137,7 +136,7 @@ startOverLogDataflow(LoggerI::Level level,
   eventLoopInitialize();
   // create dataflow for translated OverLog
 
-  PlumberPtr plumber(new Plumber(level));
+  PlumberPtr plumber(new Plumber());
   Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
   boost::shared_ptr< TableStore > tableStore(new TableStore(ctxt.get()));  
   tableStore->initTables(); 
@@ -162,9 +161,9 @@ startOverLogDataflow(LoggerI::Level level,
   initializeBaseTables(ctxt, tableStore, localAddress, environment);
   
   if (plumber->install(conf) == 0) {
-    warn << "Correctly initialized dataflow.\n";
+    TELL_WARN << "Correctly initialized dataflow.\n";
   } else {
-    warn << "** Failed to initialize correct spec\n";
+    TELL_WARN << "** Failed to initialize correct spec\n";
     return;
   }
 
@@ -176,8 +175,7 @@ startOverLogDataflow(LoggerI::Level level,
 /**
  * Builds a dataflow graph from an OverLog specification
  */
-void testOverLog(LoggerI::Level level,
-                 string myAddress,
+void testOverLog(string myAddress,
                  int port,    // extracted from myAddress for convenience
                  string filename,
                  double delay,
@@ -190,7 +188,7 @@ void testOverLog(LoggerI::Level level,
   // Run the OverLog through the preprocessor
   pid_t pid = fork();
   if (pid == -1) {
-    fatal << "Cannot fork a preprocessor\n";
+    TELL_ERROR << "Cannot fork a preprocessor\n";
     exit(-1);
   } else if (pid == 0) {
     // I am the preprocessor
@@ -198,7 +196,7 @@ void testOverLog(LoggerI::Level level,
            (char*) NULL);
 
     // If I'm here, I failed
-    fatal << "Preprocessor execution failed\n";
+    TELL_ERROR << "Preprocessor execution failed\n";
     exit(-1);
   } else {
     // I am the child
@@ -209,12 +207,12 @@ void testOverLog(LoggerI::Level level,
   std::ifstream istr(processed.c_str());
   if (!istr.is_open()) {
     // Failed to open the file
-    std::cerr << "Could not open file " << filename << "\n";
+    TELL_ERROR << "Could not open file " << filename << "\n";
     exit(-1);
   }
   ctxt->parse_stream(&istr);
   
-  startOverLogDataflow(level, ctxt, filename, myAddress,
+  startOverLogDataflow(ctxt, filename, myAddress,
                        port, delay, environment);
 }
 
@@ -229,15 +227,16 @@ int
 main(int argc, char **argv)
 {
   if (argc < 7) {
-    fatal << USAGE;
+    TELL_ERROR << USAGE;
     exit(-1);
   }
 
   string overLogFile(argv[1]);
-  std::cout << "Running from translated file \"" << overLogFile << "\"\n";
+  TELL_INFO << "Running from translated file \"" << overLogFile << "\"\n";
 
   string levelName(argv[2]);
-  LoggerI::Level level = LoggerI::levelFromName[levelName];
+  Reporting::Level level = Reporting::levelFromName[levelName];
+  Reporting::setLevel(level);
 
   int seed = atoi(argv[3]);
   srandom(seed);
@@ -248,8 +247,8 @@ main(int argc, char **argv)
   char * theColon = strchr(theString, ':');
   if (theColon == NULL) {
     // Couldn't find the correct format
-    std::cerr << "Incorrect own address format\n";
-    fatal << USAGE;
+    TELL_ERROR << "Incorrect own address format\n";
+    TELL_ERROR << USAGE;
     exit(-1);
   }
   string thePort(theColon + 1);
@@ -260,8 +259,7 @@ main(int argc, char **argv)
 
   string environment(argv[6]);
  
-  testOverLog(level,
-              myAddress,
+  testOverLog(myAddress,
               port,
               overLogFile, 
               delay,

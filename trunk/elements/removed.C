@@ -27,7 +27,7 @@ Removed::Removed(string name,
 void
 Removed::listener(TuplePtr t)
 {
-  log(LoggerI::WORDY, 0, "RemovalListener " + t->toString());
+  log(Reporting::WORDY, 0, "RemovalListener " + t->toString());
   _removedBuffer.push_back(t);
   if (_pullCB) {
     _pullCB();
@@ -49,7 +49,7 @@ Removed::pull(int port, b_cbv cb)
   } else {
     TuplePtr retTuple = _removedBuffer.front();
     _removedBuffer.pop_front();
-    log(LoggerI::WORDY, 0, "Pull returns " + retTuple->toString());
+    log(Reporting::WORDY, 0, "Pull returns " + retTuple->toString());
     return retTuple;
   }
 }

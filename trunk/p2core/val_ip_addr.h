@@ -48,11 +48,6 @@ class Val_IP_ADDR : public Value {
   
   static const opr::Oper* oper_;
   
-  /** My logging level */
-  LoggerI::Level loggingLevel;
-
-  /** My local logger */
-  LoggerI * _logger;
 
   // Casting
   static string cast(ValuePtr v);

@@ -34,7 +34,7 @@ struct Parse_Val {
 struct Parse_Expr {
   enum Type { DONTCARE=0, VAL, VAR, AGG, BINARY, UNARY };
   ~Parse_Expr() { 
-    std::cerr << "Deleting a Parse_Expr\n"; 
+    TELL_INFO << "Deleting a Parse_Expr\n"; 
     if (lhs) delete lhs;
     if (rhs) delete rhs;
   };

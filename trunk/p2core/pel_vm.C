@@ -277,7 +277,7 @@ void Pel_VM::dumpStack(string message)
   for (std::deque<ValuePtr>::reverse_iterator i = _st.rbegin();
        i != _st.rend();
        i++) {
-    warn << "Stack entry[" << message << "]: " << (*i)->toString() << "\n";
+    TELL_WARN << "Stack entry[" << message << "]: " << (*i)->toString() << "\n";
   }
 }
 
@@ -424,9 +424,9 @@ DEF_OP(IFSTOP) {
   int64_t ifVal = pop_unsigned();
   if (ifVal) {
     stop();
-    //    warn << "IF stop of " << ifVal << ".  Stopping!!!\n";
+    //    TELL_WARN << "IF stop of " << ifVal << ".  Stopping!!!\n";
   } else {
-    //    warn << "IF stop of " << ifVal << ".  Not stopping\n";
+    //    TELL_WARN << "IF stop of " << ifVal << ".  Not stopping\n";
   }
 }
 DEF_OP(DUMPSTACK) {
@@ -640,7 +640,7 @@ DEF_OP(M_COMPAREMAT) {
 //
 DEF_OP(NOT) {
   u_int64_t v = pop_unsigned();
-  //  warn << "NOT of " << v << " is " << !v << "\n";
+  //  TELL_WARN << "NOT of " << v << " is " << !v << "\n";
   stackPush(Val_Int32::mk(!v));
 }
 DEF_OP(AND) {
@@ -735,7 +735,7 @@ DEF_OP(REMOVELAST) {
 DEF_OP(LAST) {
   ValuePtr first = stackTop(); stackPop();
   TuplePtr curTuple= Val_Tuple::cast(first);
-  warn << "Get Last: " << curTuple->toString() << "\n";
+  TELL_WARN << "Get Last: " << curTuple->toString() << "\n";
   stackPush(Val_Str::mk((*curTuple)[curTuple->size()-1]->toString()));
 }
 
@@ -1035,28 +1035,28 @@ DEF_OP(ID_MINUSMINUS) {
 DEF_OP(ID_LSL) {
   uint32_t shift = pop_unsigned();
   IDPtr id = pop_ID();
-  //warn << "Left shift " << shift << " " << id->toString() << " " << id->shift(shift)->toString() << "\n";
+  //TELL_WARN << "Left shift " << shift << " " << id->toString() << " " << id->shift(shift)->toString() << "\n";
   stackPush(Val_ID::mk(id->shift(shift)));
 }
 DEF_OP(ID_DIST) {
   // Be careful of undefined evaluation order in C++!
   IDPtr v1 = pop_ID();
   IDPtr v2 = pop_ID();
-  //warn << "Distance(" << v2->toString() << " to " << v1->toString() << "=" << v2->distance(v1)->toString() << "\n";
+  //TELL_WARN << "Distance(" << v2->toString() << " to " << v1->toString() << "=" << v2->distance(v1)->toString() << "\n";
   stackPush(Val_ID::mk(v2->distance(v1)));
 }
 DEF_OP(ID_BTWOO) {
   IDPtr to = pop_ID();
   IDPtr from = pop_ID();
   IDPtr key = pop_ID();
-  //  warn << key->toString() << "(" << from->toString() << "," << to->toString() << ") :" << key->betweenOO(from, to) << "\n";
+  //  TELL_WARN << key->toString() << "(" << from->toString() << "," << to->toString() << ") :" << key->betweenOO(from, to) << "\n";
   stackPush(Val_Int32::mk(key->betweenOO(from, to)));
 }
 DEF_OP(ID_BTWOC) {
   IDPtr to = pop_ID();
   IDPtr from = pop_ID();
   IDPtr key = pop_ID();
-  //  warn << key->toString() << "(" << from->toString() << "," << to->toString() << "] :" << key->betweenOC(from, to) << "\n";
+  //  TELL_WARN << key->toString() << "(" << from->toString() << "," << to->toString() << "] :" << key->betweenOC(from, to) << "\n";
   stackPush(Val_Int32::mk(key->betweenOC(from, to)));
 }
 DEF_OP(ID_BTWCO) {
@@ -1099,7 +1099,7 @@ DEF_OP(STR_GTE) {
 DEF_OP(STR_EQ) { 
   string s1 = pop_string();
   string s2 = pop_string();
-  //  warn << s1 << "==?" << s2 << " is " << (s1==s2) << "\n";
+  //  TELL_WARN << s1 << "==?" << s2 << " is " << (s1==s2) << "\n";
   stackPush(Val_Int32::mk(s2 == s1));
 }
 DEF_OP(STR_CAT) { 

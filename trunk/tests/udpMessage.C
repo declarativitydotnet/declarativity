@@ -99,9 +99,9 @@ sendMessages(std::string udpAddress)
 
   // Put the plumber together
   if (plumber->install(conf) == 0) {
-    std::cout << "Correctly initialized.\n";
+    TELL_INFO << "Correctly initialized.\n";
   } else {
-    std::cout << "** Failed to initialize correct spec\n";
+    TELL_ERROR << "** Failed to initialize correct spec\n";
   }
 
   // Run the plumber
@@ -111,17 +111,17 @@ sendMessages(std::string udpAddress)
 
 int main(int argc, char **argv)
 {
-  std::cout << "Simple message via UDP\n";
+  TELL_INFO << "Simple message via UDP\n";
   
   if (argc != 2) {
-    std::cerr << "Usage: udpMessage <destIP:destPort>\n";
+    TELL_ERROR << "Usage: udpMessage <destIP:destPort>\n";
     exit(0);
   }
 
 
   std::string myAddress(argv[1]);
 
-  std::cout << "Sending messages to address "
+  TELL_INFO << "Sending messages to address "
             << myAddress 
             << "\n";
 

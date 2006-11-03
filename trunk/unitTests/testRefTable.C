@@ -17,7 +17,9 @@
 #include "val_tuple.h"
 #include "val_int32.h"
 #include "val_uint32.h"
+#include "val_uint64.h"
 #include "val_id.h"
+#include "val_null.h"
 #include "ID.h"
 
 #include "testRefTable.h"
@@ -672,13 +674,28 @@ testRefTable::RefTracker2::fetchCommand()
       tuple = tuple.substr(fieldEnd + 1);
     }
     
-    // Interpret the field as an int32
-    ValuePtr intField = Val_Int32::mk(Val_Int32::cast(Val_Str::mk(field)));
-    _tuple->append(intField);
-    
-    //     std::cout << "Found int32 field \""
-    //               << intField->toString()
-    //               << "\"\n";
+    // is this the null tuple?
+    if (field == "null") {
+      _tuple->append(Val_Null::mk());
+    } else {
+      // Identify any type information.
+      ValuePtr intField;
+      switch (field[field.length() - 1]) {
+      case 'U':
+        // This should be unsigned 64bit
+        intField = Val_UInt64::mk(Val_UInt64::cast(Val_Str::mk(field)));
+        break;
+      case 'u':
+        // This should be unsigned 32bit
+        intField = Val_UInt32::mk(Val_UInt32::cast(Val_Str::mk(field)));
+        break;
+      default:
+        // Interpret as signed 32bit
+        intField = Val_Int32::mk(Val_Int32::cast(Val_Str::mk(field)));
+        break;
+      }
+      _tuple->append(intField);
+    }
   }
   
   // Shrink remainder
@@ -1019,7 +1036,10 @@ testRefTable::testAggregates()
     // its preceeding one since the primary key is the first field, so
     // any new insertion removes the old tuple.  When the last entry is
     // gone, no update is received.
-    intAggTest2("i<0,10>;u<0,10>;i<0,10>;i<0,15>;u<0,15>;i<0,5>;u<0,5>;d<0,5>;",
+    intAggTest2("i<0,10>;u<0,10>;i<0,10>;"
+                "i<0,15>;u<0,null>;u<0,15>;"
+                "i<0,5>;u<0,null>;u<0,5>;"
+                "d<0,5>;u<0,null>;",
                 RefTable::KEY0, // first field is indexed
                 RefTable::KEY0, // first field is group-by
                 1, // second field is aggregated
@@ -1063,6 +1083,27 @@ testRefTable::testAggregates()
                 __LINE__),
 
 
+    ////////////////////////////////////////////////////////////
+    // COUNT
+
+    intAggTest2(// Insertions of same group-by
+                "i<0,10>;u<0,1U>;i<0,5>;u<0,2U>;"
+                // Insertion of other group-by
+                "i<1,5>;u<1,1U>;"
+                // Interspersed group-bys
+                "i<0,12>;u<0,3U>;i<1,8>;u<1,2U>;"
+                // No-op insertions
+                "i<1,5>;i<0,12>;"
+                // Deletions
+                "d<0,5>;u<0,2U>;d<1,5>;d<1,5>;u<1,1U>;"
+                "d<0,10>;u<0,1U>;"
+                // Run down to 0
+                "d<0,12>;d<0,12>;u<0,0U>;"
+                "d<1,8>;u<1,0U>;",
+                RefTable::KEY01,
+                RefTable::KEY0, 1, "COUNT",
+                __LINE__),
+    
     ////////////////////////////////////////////////////////////
     // MAX
 

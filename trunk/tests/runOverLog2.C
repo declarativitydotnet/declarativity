@@ -43,12 +43,12 @@ string readScript( string fileName, char* args[] )
 
   pid_t pid = fork();
   if (pid == -1) {
-    std::cerr << "Cannot fork a preprocessor\n";
+    TELL_ERROR << "Cannot fork a preprocessor\n";
     exit(1);
   } 
   else if (pid == 0) {
     if (execvp("cpp", args) < 0) {
-      std::cerr << "CPP ERROR" << std::endl;
+      TELL_ERROR << "CPP ERROR" << std::endl;
     }
     exit(1);
   }
@@ -59,7 +59,7 @@ string readScript( string fileName, char* args[] )
 
   if ( !file.is_open() )
   {
-    std::cerr << "Cannot open Overlog file, \"" << processed << "\"!" << std::endl;
+    TELL_ERROR << "Cannot open Overlog file, \"" << processed << "\"!" << std::endl;
     return script;
   }
   else
@@ -85,12 +85,12 @@ string readScript( string fileName, char* args[] )
 
   pid = fork();
   if (pid == -1) {
-    std::cerr << "Cannot fork a preprocessor\n";
+    TELL_ERROR << "Cannot fork a preprocessor\n";
     exit(1);
   } 
   else if (pid == 0) {
     if (execlp("rm", "rm", "-f", processed.c_str(), (char*) NULL) < 0)
-      std::cerr << "CPP ERROR" << std::endl;
+      TELL_ERROR << "CPP ERROR" << std::endl;
     exit(1);
   }
   else {
@@ -101,13 +101,14 @@ string readScript( string fileName, char* args[] )
 
 void watch(TuplePtr tp)
 {
-  std::cerr << tp->toString() << std::endl;
+  TELL_INFO << tp->toString() << std::endl;
 }
 
 void print_usage()
 {
-  std::cerr << "Usage: runOverlog [-Dvariable=value [-Dvariable=value [...]]]\n " 
+  TELL_ERROR << "Usage: runOverlog [-Dvariable=value [-Dvariable=value [...]]]\n " 
             << "                 [-w tupleName [-w tupleName [...]]]\n "
+            << "                 -r <reporting level>\n"
             << "                 <overlogFile> <hostname> <port>" << std::endl;
 }
 
@@ -131,8 +132,7 @@ int main(int argc, char **argv)
   for (int a = 2; argc > 0 && argv[0][0] == '-'; argc--, argv++) {
     if (argv[0][1] == 'D') {
       args[a++] = argv[0];  
-    }
-    else if (argv[0][1] == 'w') {
+    } else if (argv[0][1] == 'w') {
       if (argv[0][2] == '\0') {
         argc--; argv++;
         watchTuples.push_back(string(&argv[0][0]));      
@@ -140,8 +140,14 @@ int main(int argc, char **argv)
       else {
         watchTuples.push_back(string(&argv[0][2]));      
       }
-    }
-    else {
+    } else if (argv[0][1] == 'r') {
+      string levelName(argv[1]);
+      Reporting::Level level =
+        Reporting::levelFromName[levelName];
+      Reporting::setLevel(level);
+      argc--;
+      argv++;
+    } else {
       print_usage();
       exit(-1);
     }
@@ -151,15 +157,15 @@ int main(int argc, char **argv)
   string hostname(argv[1]);
   string port(argv[2]);
   p2 = new P2(hostname, port,
-              P2::NONE,
-              LoggerI::NONE);
+              P2::NONE);
 
-  std::cerr << "INSTALL PROGRAM" << std::endl;
+  TELL_INFO << "INSTALL PROGRAM" << std::endl;
   p2->install("overlog", program);
   
   for (std::vector<string>::iterator iter = watchTuples.begin(); 
-       iter != watchTuples.end(); iter++)
+       iter != watchTuples.end(); iter++) {
     p2->subscribe(*iter, boost::bind(&watch, _1));
+  }
   p2->run();
 
   return 0;

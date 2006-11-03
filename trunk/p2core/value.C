@@ -15,8 +15,6 @@
 
 #include "loop.h"
 #include "value.h"
-#define DEBUG_OFF
-#include "trace.h"
 
 #include "val_null.h"
 #include "val_str.h"
@@ -62,9 +60,9 @@ static _unmarshal_fn jump_tab[] = {
 
 void Value::xdr_marshal( XDR *x ) 
 {
-  TRC_FN;
+  TRACE_FUNCTION;
   uint32_t tc = typeCode();
-  TRC("TypeCode is " << tc);
+  TRACE_WORDY << "TypeCode is " << tc << "\n";
   xdr_uint32_t(x, &tc);
   xdr_marshal_subtype(x);
 }
@@ -74,12 +72,12 @@ void Value::xdr_marshal( XDR *x )
 //
 ValuePtr Value::xdr_unmarshal(XDR *x)
 {
-  TRC_FN;
+  TRACE_FUNCTION;
   uint32_t tc;
   xdr_uint32_t(x, &tc);
-  TRC("TypeCode is " << tc);
+  TRACE_WORDY << "TypeCode is " << tc << "\n";
   if ((unsigned) tc >= (sizeof(jump_tab)/sizeof(_unmarshal_fn))) {
-    warn << "Unmarshalling: Bad typecode " << tc << "\n";
+    TELL_WARN << "Unmarshalling: Bad typecode " << tc << "\n";
     return Val_Null::mk();
   } else {
     return jump_tab[tc](x);

@@ -26,7 +26,7 @@ Tap::~Tap()
 TuplePtr Tap::simple_action(TuplePtr p)
 {
   if(output(1)->push(p, NULL) == 0){
-    std::cout << name() << " Blocking on port 1, should never "
+    TELL_ERROR << name() << " Blocking on port 1, should never "
 	      << "happen since ruleTracer always accepts\n";
     std::exit(-1);
   }

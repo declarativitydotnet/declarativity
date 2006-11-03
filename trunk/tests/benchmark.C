@@ -82,11 +82,11 @@ static double time_fn(b_cbv cb)
   } 
 
   iter /= 2;
-  std::cout << " Total numbers of values: " << iter << " * " << FIELD_TST_SZ << " = " << FIELD_TST_SZ * iter;
-  std::cout << "\n";
-  std::cout << "average: " << average * 1000 << " msecs, ";
-  std::cout << "elapsed: " << elapsed * 1000 << " msecs (";
-  std::cout << tdiff.seconds() << " secs " << elapsed - (tdiff.seconds()/1000) << " usecs)\n";
+  TELL_INFO << " Total numbers of values: " << iter << " * " << FIELD_TST_SZ << " = " << FIELD_TST_SZ * iter;
+  TELL_INFO << "\n";
+  TELL_INFO << "average: " << average * 1000 << " msecs, ";
+  TELL_INFO << "elapsed: " << elapsed * 1000 << " msecs (";
+  TELL_INFO << tdiff.seconds() << " secs " << elapsed - (tdiff.seconds()/1000) << " usecs)\n";
   return elapsed;
 }
 
@@ -262,56 +262,56 @@ static void unmarshal_lots_of_tuples()
 static void unit_test_for(Value::TypeCode t ) {
   switch (t) {
     case Value::NULLV:
-      std::cout << "NULLV:\ncreating:";
+      TELL_INFO << "NULLV:\ncreating:";
       time_fn(boost::bind(create_lots_val_null));
-      std::cout << "marshalling:";
+      TELL_INFO << "marshalling:";
       time_fn(boost::bind(marshal_lots_of_values));
-      std::cout << "unmarshalling:";
+      TELL_INFO << "unmarshalling:";
       time_fn(boost::bind(unmarshal_lots_of_null));  
-      std::cout << "\n";
+      TELL_INFO << "\n";
       break;
     case Value::INT32: 
-      std::cout << "INT32: creating:"; 
+      TELL_INFO << "INT32: creating:"; 
       time_fn(boost::bind(create_lots_val_int32));
-      std::cout << "marshalling:";
+      TELL_INFO << "marshalling:";
       time_fn(boost::bind(marshal_lots_of_values));
-      std::cout << "unmarshalling:";
+      TELL_INFO << "unmarshalling:";
       time_fn(boost::bind(unmarshal_lots_of_int32));  
-      std::cout << "\n";
+      TELL_INFO << "\n";
       break;
     case Value::UINT64:
-      std::cout << "UINT64:\ncreating:";
+      TELL_INFO << "UINT64:\ncreating:";
       time_fn(boost::bind(create_lots_val_uint64));
-      std::cout << "marshalling:";
+      TELL_INFO << "marshalling:";
       time_fn(boost::bind(marshal_lots_of_values));
-      std::cout << "unmarshalling:";
+      TELL_INFO << "unmarshalling:";
       time_fn(boost::bind(unmarshal_lots_of_uint64));  
-      std::cout << "\n";
+      TELL_INFO << "\n";
       break;
     case Value::DOUBLE:
-      std::cout << "DOUBLE:\ncreating:";
+      TELL_INFO << "DOUBLE:\ncreating:";
       time_fn(boost::bind(create_lots_val_double));
-      std::cout << "marshalling:";
+      TELL_INFO << "marshalling:";
       time_fn(boost::bind(marshal_lots_of_values));
-      std::cout << "unmarshalling:";
+      TELL_INFO << "unmarshalling:";
       time_fn(boost::bind(unmarshal_lots_of_double));  
-      std::cout << "\n";
+      TELL_INFO << "\n";
       break;
     case Value::STR:
-      std::cout << "STR:\ncreating:";
+      TELL_INFO << "STR:\ncreating:";
       time_fn(boost::bind(create_lots_val_str));
-      std::cout << "marshalling:";
+      TELL_INFO << "marshalling:";
       time_fn(boost::bind(marshal_lots_of_values));
-      std::cout << "unmarshalling:";
+      TELL_INFO << "unmarshalling:";
       time_fn(boost::bind(unmarshal_lots_of_str));  
-      std::cout << "\n";
+      TELL_INFO << "\n";
       break;
     case Value::TUPLE:
-      std::cout << "TUPLE:\ncreating:";
+      TELL_INFO << "TUPLE:\ncreating:";
       time_fn(boost::bind(create_lots_of_tuples));
-      std::cout << "marshalling:";
+      TELL_INFO << "marshalling:";
       time_fn(boost::bind(marshal_lots_of_tuples));
-      std::cout << "unmarshalling:";
+      TELL_INFO << "unmarshalling:";
       time_fn(boost::bind(unmarshal_lots_of_tuples));
       break;
     default:
@@ -328,12 +328,12 @@ int main(int argc, char **argv)
   xdrfdbuf_create(&xdrs, &singlet, false, XDR_ENCODE);
   t->xdr_marshal(&xdrs);
 
-  std::cout << " length=" << singlet.length();
-  std::cout << " removed=" << singlet.removed();
+  TELL_INFO << " length=" << singlet.length();
+  TELL_INFO << " removed=" << singlet.removed();
   // const char *buf = singlet.cstr();
   // uint32_t sz = singlet.length();
   // string s = hexdump(buf,sz);
-  // std::cout << " Hexdump: " << s << "\n";
+  // TELL_INFO << " Hexdump: " << s << "\n";
 
   unit_test_for(Value::NULLV);
 /*

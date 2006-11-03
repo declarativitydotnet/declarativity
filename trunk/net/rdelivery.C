@@ -95,7 +95,7 @@ REMOVABLE_INLINE void RDelivery::handle_failure(ConnectionPtr cp)
       iter++;
     }
     else {
-      std::cerr << "RETRY TOO MANY: DEST = " << cp->_dest->toString()
+      TELL_INFO << "RETRY TOO MANY: DEST = " << cp->_dest->toString()
                 << " SEQ = " << ctp->_seq << std::endl;
       if (cp->_cum_seq < ctp->_seq)
         cp->_cum_seq = ctp->_seq;

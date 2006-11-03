@@ -1,4 +1,4 @@
-// -*- c-basic-offset: 2; related-file-name: "ol_context.h" -*-
+// -*- c-basic-offset: 2; related-file-name: "tableStore.h" -*-
 /*
  * @(#)$Id$
  *
@@ -31,13 +31,15 @@ CommonTablePtr TableStore::getTableByName(string tableName)
 {
   TableMap::iterator _iterator = _tables->find(tableName);
   if (_iterator == _tables->end()) {
-    std::cerr << "ERROR: table " << tableName << " not found.\n";
+    TELL_ERROR << "ERROR: table " << tableName << " not found.\n";
     exit(-1) ;
   }
   return _iterator->second;
 }
 
-void TableStore::createTable(OL_Context::TableInfo* tableInfo)
+
+void
+TableStore::createTable(OL_Context::TableInfo* tableInfo)
 {
   // What's my expiration? -1 in the inputs means no expiration.
   boost::posix_time::time_duration expiration = tableInfo->timeout;
@@ -56,7 +58,8 @@ void TableStore::createTable(OL_Context::TableInfo* tableInfo)
   if (expiration == Table2::NO_EXPIRATION) {
     newTable.reset(new RefTable(tableInfo->tableName,
 				key));
-    std::cout << "Create ref counted table " << tableInfo->toString() << "\n";
+    TELL_INFO << "Create ref counted table "
+              << tableInfo->toString() << "\n";
   } else {
     newTable.reset(new Table2(tableInfo->tableName,
 			      key,
@@ -74,24 +77,33 @@ void TableStore::createTable(OL_Context::TableInfo* tableInfo)
     if (tableInfo->tableName != vr->toString()) {
       continue;
     }
-    std::cout << "Insert tuple " << tr->toString()
+    TELL_INFO << "Insert tuple " << tr->toString()
               << " into table "  << vr->toString()
               << " " << tr->size() << "\n";
 
     CommonTablePtr tableToInsert = getTableByName(vr->toString());         
     tableToInsert->insert(tr);
   }
+
+  // And deal with empty aggregates, forcing them to output an update if
+  // they have 1) no tuples and 2) no group-by fields. This way, for
+  // instance, table counters will be updated in the beginning of time.
+  newTable->evaluateEmptyAggregates();
 }
 
-void TableStore::initTables()
+
+void
+TableStore::initTables()
 {
   OL_Context::TableInfoMap::iterator theIterator;
   for (theIterator = _ctxt->getTableInfos()->begin(); 
-       theIterator != _ctxt->getTableInfos()->end(); theIterator++) {
+       theIterator != _ctxt->getTableInfos()->end();
+       theIterator++) {
     OL_Context::TableInfo* tableInfo = theIterator->second;
     createTable(tableInfo);  
   }
 }
+
 
 bool TableStore::checkSecondaryIndex(string uniqStr) {
   if (_secondaryIndices.find(uniqStr) == _secondaryIndices.end()) {

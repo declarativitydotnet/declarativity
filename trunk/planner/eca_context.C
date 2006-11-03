@@ -71,13 +71,13 @@ void ECA_Context::add_rule(ECA_Rule* eca_rule)
       return;
     }
   }  
-  warn << "  Add rule: " << eca_rule->toString() << "\n";
+  TELL_WARN << "  Add rule: " << eca_rule->toString() << "\n";
   _ecaRules.push_back(eca_rule);  
 }
 
 void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore)
 { 
-  warn << "Perform ECA view rewrite on " << rule->toString() << "\n";
+  TELL_WARN << "Perform ECA view rewrite on " << rule->toString() << "\n";
 
   string headName = rule->head->fn->name;
   OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);	  
@@ -98,7 +98,7 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
   if (tableInfo == NULL || tableInfo->timeout != Table2::NO_EXPIRATION) {
     softStateRule = true; // if rule head is soft-state, rule is soft-state
   }
-  warn << "Processing soft state rule " << softStateRule << " " << rule->toString() << "\n";
+  TELL_WARN << "Processing soft state rule " << softStateRule << " " << rule->toString() << "\n";
 
   t = rule->terms.begin();
   int count = 0;  
@@ -291,7 +291,7 @@ void ECA_Context::rewriteEventRule(OL_Context::Rule* rule,
 				   TableStore* tableStore)
 {
   // figure out which is the event. 
-  warn << "Perform ECA rewrite on " << rule->toString() << "\n";
+  TELL_WARN << "Perform ECA rewrite on " << rule->toString() << "\n";
 
   // event-condition-action
   string loc("");
@@ -358,9 +358,9 @@ void ECA_Context::rewriteEventRule(OL_Context::Rule* rule,
 void ECA_Context::rewriteAggregateView(OL_Context::Rule* rule, 
 				       TableStore *tableStore)
 {
-  warn << "Perform ECA aggregate view rewrite on " << rule->toString() << "\n";
+  TELL_WARN << "Perform ECA aggregate view rewrite on " << rule->toString() << "\n";
   if (rule->terms.size() != 1) {
-    warn << "Currently only support simple table view aggregates\n";
+    TELL_WARN << "Currently only support simple table view aggregates\n";
     exit(-1);
   }
 
@@ -369,7 +369,7 @@ void ECA_Context::rewriteAggregateView(OL_Context::Rule* rule,
 
   Parse_Functor *nextFunctor = dynamic_cast<Parse_Functor*>(nextTerm); 
   if (nextFunctor == NULL) { 
-    warn << "Currently only support simple table view aggregates\n";
+    TELL_WARN << "Currently only support simple table view aggregates\n";
     exit(-1);
   }
   
@@ -404,7 +404,7 @@ void ECA_Context::rewrite(Localize_Context* lctxt, TableStore* tableStore)
     }
 
     if (countEvents > 1) {
-      warn << nextRule->toString() << " should have at most one event\n";
+      TELL_WARN << nextRule->toString() << " should have at most one event\n";
       exit(-1);
     }
 

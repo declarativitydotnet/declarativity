@@ -25,7 +25,7 @@ string pelBool(PlanContext* pc, Parse_Bool *expr);
 
 void error(string msg)
 {
-  std::cerr << "PLANNER ERROR: " << msg << "\n";
+  TELL_ERROR << "PLANNER ERROR: " << msg << "\n";
   exit(-1);
 }
 
@@ -33,8 +33,8 @@ void error(string msg)
 void error(PlanContext* pc, string msg)
 {  
   ECA_Rule* curRule = pc->_ruleStrand->getRule();
-  std::cerr << "PLANNER ERROR: " << msg << " for rule " 
-	    << curRule->toString() << ". Planner exits.\n";
+  TELL_ERROR << "PLANNER ERROR: " << msg << " for rule " 
+             << curRule->toString() << ". Planner exits.\n";
   exit(-1);
 }
 
@@ -162,14 +162,14 @@ string pelRange(PlanContext* pc, Parse_Bool *expr)
   int          pos;
 
   if (!range || !range_var) {
-    std::cerr << "Error in pel generation " << expr->toString() << "\n";
+    TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
     exit(-1);
     return "ERROR";
   }
 
   pos = names->fieldPosition(range_var->toString());
   if (pos < 0) {
-    std::cerr << "Error in pel generation " << expr->toString() << "\n";
+    TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
     exit(-1);
     return "ERROR";
   }
@@ -209,6 +209,17 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
 	expr2Pel(pc, pel, expr->arg(0));
 	pel << "sha1 ";
   }
+  // Strings
+  else if (expr->name() == "f_match") {
+    if (expr->args() != 2) {
+      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+      exit(-1);
+      return "ERROR.";
+    }	
+    expr2Pel(pc, pel, expr->arg(1));
+    expr2Pel(pc, pel, expr->arg(0));
+    pel << "match "; 
+  }
   // functions on lists
   else if (expr->name() == "f_append") {
     if (expr->args() == 2) {
@@ -226,7 +237,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   }
   else if (expr->name() == "f_member") {
       if (expr->args() != 2) {
-	std::cerr << "Error in pel generation " << expr->toString() << "\n";
+	TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
 	exit(-1);
 	return "ERROR.";
       }
@@ -236,7 +247,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   }
   else if (expr->name() == "f_concat") {
       if (expr->args() != 2) {
-	std::cerr << "Error in pel generation " << expr->toString() << "\n";
+	TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
 	exit(-1);
 	return "ERROR.";
       }
@@ -246,7 +257,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   }
   else if (expr->name() == "f_intersect") {
       if (expr->args() != 2) {
-	std::cerr << "Error in pel generation " << expr->toString() << "\n";
+	TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
 	exit(-1);
 	return "ERROR.";
       }
@@ -256,7 +267,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   }
   else if (expr->name() == "f_msintersect") {
       if (expr->args() != 2) {
-	std::cerr << "Error in pel generation " << expr->toString() << "\n";
+	TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
 	exit(-1);
 	return "ERROR.";
       }
@@ -282,7 +293,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   } 
   else if (expr->name() == "f_inList") {
     if (expr->args() != 2) {
-      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
       exit(-1);
       return "ERROR.";
     }
@@ -292,7 +303,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   }
   else if (expr->name() == "f_removeLast") {
     if (expr->args() != 1) {
-      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
       exit(-1);
       return "ERROR.";
     }
@@ -302,7 +313,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   
   else if (expr->name() == "f_last") {
     if (expr->args() != 1) {
-      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
       exit(-1);
       return "ERROR.";
     }
@@ -312,7 +323,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
 
   else if (expr->name() == "f_size") {
     if (expr->args() != 1) {
-      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
       exit(-1);
       return "ERROR.";
     }
@@ -323,7 +334,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   // functions on vectors
   else if (expr->name() == "f_getVectorOffset") {
     if (expr->args() != 2) {
-      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
       exit(-1);
       return "ERROR.";
     }
@@ -334,7 +345,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
 
   else if (expr->name() == "f_setVectorOffset") {
     if (expr->args() != 3) {
-      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
       exit(-1);
       return "ERROR.";
     }
@@ -346,7 +357,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
 
   else if (expr->name() == "f_vectorCompare") {
 	if (expr->args() != 2) {
-      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
       exit(-1);
       return "ERROR.";
     }
@@ -358,7 +369,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   // functions on matrices
   else if (expr->name() == "f_getMatrixOffset") {
     if (expr->args() != 3) {
-      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
       exit(-1);
       return "ERROR.";
     }
@@ -370,7 +381,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
 
   else if (expr->name() == "f_setMatrixOffset") {
     if (expr->args() != 4) {
-      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
       exit(-1);
       return "ERROR.";
     }
@@ -383,7 +394,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
 
   else if (expr->name() == "f_matrixCompare") {
 	if (expr->args() != 2) {
-      std::cerr << "Error in pel generation " << expr->toString() << "\n";
+      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
       exit(-1);
       return "ERROR.";
     }
@@ -393,7 +404,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   }
 
   else {
-    std::cerr << "Error in pel generation " << expr->toString() << "\n";
+    TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
     exit(-1);
     return "ERROR: unknown function name.";
   }

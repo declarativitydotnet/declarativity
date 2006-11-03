@@ -13,7 +13,6 @@
  */
 
 #include "plmb_confgen.h"
-#include "trace.h"
 #include "cct.h"
 #include "basicAck.h"
 #include "aggFactory.h"
@@ -94,7 +93,6 @@ static string conf_assign(T *e, string obj)
   string v;
   var << "variable_" << variables.size();
 
-  // std::cout << "CONF ASSIGN: " << var.str() << " = " << obj << std::endl;
   std::map<void*, string>::iterator iter = variables.find((void*)e);
   if (iter == variables.end()) {
     variables.insert(std::make_pair((void*)e, var.str()));  
@@ -131,7 +129,7 @@ static string conf_hookup(string toVar, P1 toPort, string fromVar, P2 fromPort)
 static string conf_function(string fn)
 {
   ostringstream oss;
-  // std::cerr << "CONF FUNCTION CREATE: " << fn << std::endl;
+  // TELL_INFO << "CONF FUNCTION CREATE: " << fn << std::endl;
   oss << fn << "()";
   return oss.str(); 
 }
@@ -197,7 +195,7 @@ static string conf_function(string fn, A arg0, B arg1, C arg2)
   ostringstream arg_ss;
   arg_ss << arg2;
 
-  std::cerr << "CONF FUNCTION ARG2: " << arg2 << std::endl;
+  TELL_INFO << "CONF FUNCTION ARG2: " << arg2 << std::endl;
   string s = conf_function(fn, arg0, arg1);
   s.erase(s.end()-1);
   if ((typeid(arg2) == typeid(string) || 
@@ -382,8 +380,9 @@ Plmb_ConfGen::genTappedDataFlow(string nodeID)
 
   for (unsigned int k = 0; k < _ctxt->getRules()->size(); k++) {
     OL_Context::Rule *_cr = _ctxt->getRules()->at(k);
-    std::cout << "Handling rule name " << _cr->ruleID << " ruleNum " << 
-      _cr->ruleNum << "\n";
+    TELL_INFO << "Handling rule name " << _cr->ruleID
+                    << " ruleNum "
+                    << _cr->ruleNum << "\n";
     
     ElementSpecPtr tap_beg = find_tap(_cr->ruleNum, 0);
     ElementSpecPtr tap_end = find_tap(_cr->ruleNum, 1);
@@ -391,8 +390,9 @@ Plmb_ConfGen::genTappedDataFlow(string nodeID)
     PrecondInfoMap::iterator _iterator = _taps_for_precond.find(_cr->ruleNum);
     PreconditionInfo p = _iterator->second;
     if(_iterator == _taps_for_precond.end()){
-      std::cout << "There does not exist any precondition for rule " << 
-	_cr->ruleID << ", beg " << tap_beg << " end " << tap_end << "\n";
+      TELL_WARN << "There does not exist any precondition for rule "
+                      << _cr->ruleID << ", beg " << tap_beg
+                      << " end " << tap_end << "\n";
       numPrecond = 0;
     }
     else{
@@ -446,10 +446,10 @@ Plmb_ConfGen::genTappedDataFlow(string nodeID)
     else
       continue;
     
-    std::cout << "Rule Tracer " << rt->element()->name() 
-	      << ", tap_beg " << tap_beg << ", tap_end " 
-	      << tap_end << " preconditions " << numPrecond 
-	      << " numPorts " << numPorts << "\n";
+    TELL_INFO << "Rule Tracer " << rt->element()->name() 
+                    << ", tap_beg " << tap_beg << ", tap_end " 
+                    << tap_end << " preconditions " << numPrecond 
+                    << " numPorts " << numPorts << "\n";
     
     for(int i = 0; i < numPrecond && numPrecond > 0; i++){
       ElementSpecPtr t1 = p._preconds.at(i);
@@ -524,7 +524,8 @@ Plmb_ConfGen::genTappedDataFlow(string nodeID)
     // obtain a pointer to the roundrobin
     ElementSpecPtr rr = _conf->find("roundRobinSender:" + nodeID);
     if(rr == NULL){
-      std::cout << "There does not exist a roundRobin, not possible. Exiting..\n";
+      TELL_ERROR << "There does not exist a roundRobin."
+                       << " Not possible. Exiting..\n";
       std::exit(-1);
     }
     // hookup output of the queue to the roundrobin's last input port
@@ -550,8 +551,9 @@ Plmb_ConfGen::find_tap(int ruleNum, int beg_or_end)
       }
     }
     else{
-      std::cout << "RuleNum " << ruleNum << " taps " 
-		<< _taps_end << " beg " << beg_or_end <<"\n";
+      TELL_INFO << "RuleNum " << ruleNum << " taps " 
+                      << _taps_end
+                      << " beg " << beg_or_end <<"\n";
       result = _taps_end->find(ruleNum);
       if(result == _taps_end->end()){
 	return xx;
@@ -724,8 +726,6 @@ Plmb_ConfGen::processRule(OL_Context::Rule *r,
     // do the selections and assignment, followed by projection
     genAllSelectionAssignmentElements(r, nodeID, &curNamesTracker);    
 
-    //std::cout << "NetPlanner: Register receiver at demux " 
-    //	      << _pendingRegisterReceiver << "\n";
     genProjectHeadElements(r, nodeID, &curNamesTracker);
   }
     
@@ -873,17 +873,22 @@ Plmb_ConfGen::genSingleAggregateElements(OL_Context::Rule* currentRule,
   Table2Ptr aggTable = getTableByName(nodeID, baseFunctor->fn->name);  
   secondaryIndex(aggTable, groupByFields, nodeID);  
 
-  Table2::Aggregate tableAgg =
-    aggTable->aggregate(groupByFields,
-                        aggFieldBaseTable, // the agg field
-                        pa->oper);
-  if (tableAgg == NULL) {
+  Table2::Aggregate tableAgg;
+
+  try {
+    tableAgg =
+      aggTable->aggregate(groupByFields,
+                          aggFieldBaseTable,
+                          pa->oper);
+  } catch (AggFactory::AggregateNotFound a) {
     // Ooops, I couldn't create an aggregate. Complain.
     error("Could not create aggregate \"" + pa->oper
           + "\". I only know aggregates " +
           AggFactory::aggList());
     return;
   }
+
+  assert(tableAgg != NULL);
 
   _p2dl << conf_assign(tableAgg, 
                        conf_call(aggTable.get(), 
@@ -1044,7 +1049,8 @@ Plmb_ConfGen::genProbeElements(OL_Context::Rule* curRule,
                                        conf_UIntVec(indexKey),
                                        conf_var(comp_cb)));
   }
-  std::cout << "CALLBACK VARIABLE LOOKUP: " << *comp_cb << std::endl;
+  TELL_INFO << "CALLBACK VARIABLE LOOKUP: "
+                  << *comp_cb << std::endl;
   
   
   if (tableInfo->primaryKeys == indexKey) {
@@ -1308,7 +1314,8 @@ Plmb_ConfGen::genEditFinalize(string nodeID)
     // connect the duplicator to elements for this name
     for (uint k = 0; k < ri._receivers.size(); k++) {
       int ruleNum = ri._ruleNums.at(k);
-      std::cout << "Rule num " << ruleNum << ", ruleTracing " << _ruleTracing << "\n";
+      TELL_INFO << "Rule num " << ruleNum << ", ruleTracing "
+                      << _ruleTracing << "\n";
       if(!_ruleTracing){
 	ElementSpecPtr nextElementSpec = ri._receivers.at(k);
 	
@@ -1338,7 +1345,10 @@ Plmb_ConfGen::genEditFinalize(string nodeID)
 	ElementSpecPtr nextElementSpec = ri._receivers.at(k);
 	ElementSpecPtr tap_beg = find_tap(ruleNum, 0);
 
-	std::cout << "Receivers " << nextElementSpec->element()->name() << ", taps is " << tap_beg->element()->name() << "\n";
+        TELL_INFO << "Receivers "
+                        << nextElementSpec->element()->name()
+                        << ", taps is "
+                        << tap_beg->element()->name() << "\n";
 	std::exit(-1);
 	if (_debug) {
 	  ElementSpecPtr printDuplicator = 
@@ -1474,8 +1484,9 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
     int numElementsToReceive = ri._receivers.size(); 
     string tableName = ri._name;
 
-    std::cout << "NetPlanner Receive: add demux port for " << tableName << " for " 
-	      << numElementsToReceive << " elements\n";
+    TELL_INFO << "NetPlanner Receive: add demux port for "
+                    << tableName << " for " 
+                    << numElementsToReceive << " elements\n";
 
     // DupElim -> DemuxS -> Insert -> Duplicator -> Fork
     ElementSpecPtr bufferQueue = 
@@ -1524,7 +1535,9 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
       //hookUp(pullPush, 0, duplicator, 0);
       hookUp(duplicator, 0);
     }
-    std::cout << " Number of duplications needed " << ri._receivers.size() << " for table " << tableName << ", ruleTracing " << _ruleTracing << "\n";
+    TELL_INFO << " Number of duplications needed " << ri._receivers.size()
+                    << " for table " << tableName
+                    << ", ruleTracing " << _ruleTracing << "\n";
     // connect the duplicator to elements for this name
     for (uint k = 0; k < ri._receivers.size(); k++) {
       int ruleNum = ri._ruleNums.at(k);
@@ -1547,7 +1560,9 @@ Plmb_ConfGen::genReceiveElements(boost::shared_ptr< Udp> udp,
       else {
 	ElementSpecPtr nextElementSpec = ri._receivers.at(k);
 	ElementSpecPtr tap_beg = find_tap(ruleNum, 0);
-	std::cout << "RuleNum " << ruleNum << " tap is " << tap_beg->element()->name() << "\n";
+        TELL_INFO << "RuleNum "
+                        << ruleNum << " tap is "
+                        << tap_beg->element()->name() << "\n";
 	if (_debug) {
 	  ElementSpecPtr printDuplicator = 
 	    _conf->addElement(ElementPtr(new PrintTime("PrintAfterDuplicator:"
@@ -1594,11 +1609,13 @@ Plmb_ConfGen::registerUDPPushSenders(ElementSpecPtr elementSpecPtr,
   _udpSenders.push_back(elementSpecPtr);
   _udpSendersPos.push_back(1);
   if(curRule->ruleID != "$")
-    std::cout << "Registering sender for " << curRule->head->fn->name << "\n";
+    TELL_INFO << "Registering sender for "
+                    << curRule->head->fn->name << "\n";
 
   // if ruleTracing, create a tap element here for a given rule
   if(_ruleTracing){
-    std::cout << "Creating tap_end for rule " << curRule->ruleID << "\n";
+    TELL_INFO << "Creating tap_end for rule "
+                    << curRule->ruleID << "\n";
     if(curRule->ruleID == "$")
       return;
     ElementSpecPtr tap_end = _conf->addElement(ElementPtr(new Tap("Tap_End:"+curRule->ruleID, curRule->ruleNum)));
@@ -1606,7 +1623,10 @@ Plmb_ConfGen::registerUDPPushSenders(ElementSpecPtr elementSpecPtr,
     if(_taps_end == 0)
       _taps_end = new std::map<int, ElementSpecPtr>();
     
-    std::cout << "Rule Number " << curRule->ruleNum << ", Rule Name " << curRule->ruleID << "_taps_end " << _taps_end << ", tap " << tap_end << "\n";
+    TELL_INFO << "Rule Number " << curRule->ruleNum
+                    << ", Rule Name " << curRule->ruleID
+                    << "_taps_end " << _taps_end
+                    << ", tap " << tap_end << "\n";
     _taps_end->insert(std::make_pair(curRule->ruleNum, tap_end));
     
     _taps_end_vector.push_back(tap_end);
@@ -1768,8 +1788,6 @@ Plmb_ConfGen::genSendElements(boost::shared_ptr< Udp> udp, string nodeID)
   for (unsigned int k = 0; k < _udpSenders.size(); k++) {
     ElementSpecPtr nextElementSpec = _udpSenders.at(k);
 
-    //std::cout << "Encapsulation " << k << " pop " << _udpSendersPos.at(k) << "\n";
-
     ostringstream oss;
     oss << "$"<< _udpSendersPos.at(k) << " pop swallow pop";
     ElementSpecPtr encapSend =
@@ -1815,12 +1833,12 @@ Plmb_ConfGen::registerReceiver(string tableName,
   if (_iterator != _udpReceivers.end()) {
     _iterator->second.addReceiver(elementSpecPtr, _curRule->ruleNum);
   }
-  std::cout << "RegisterReceiver " << tableName  << "\n";
+  TELL_INFO << "RegisterReceiver " << tableName  << "\n";
   // if rule tracing, add a tap at the end of a rule here
   if(_ruleTracing){
     std::set<string> tt = _ctxt->getTuplesToTrace();
     if(tt.find(tableName) != tt.end()){
-      std::cout << "Enabling needTracing for tuple " << tableName << "\n";
+      TELL_INFO << "Enabling needTracing for tuple " << tableName << "\n";
       _needTracingPortAtRR = true;
     }
     
@@ -1828,7 +1846,11 @@ Plmb_ConfGen::registerReceiver(string tableName,
       _taps_beg = new std::map<int, ElementSpecPtr>();
     
     ElementSpecPtr tap_beg = _conf->addElement(ElementPtr(new Tap("Tap_Beg:"+_curRule->ruleID, _curRule->ruleNum)));
-    std::cout << "Reciever is " << elementSpecPtr->element()->name() << ", tap is " << tap_beg->element()->name() << "\n";
+    TELL_INFO << "Reciever is "
+                    << elementSpecPtr->element()->name()
+                    << ", tap is "
+                    << tap_beg->element()->name()
+                    << "\n";
     _taps_beg->insert(std::make_pair(_curRule->ruleNum, tap_beg));
     _taps_beg_vector.push_back(tap_beg);
   }
@@ -1859,14 +1881,14 @@ void Plmb_ConfGen::registerReceiverTable(OL_Context::Rule* rule,
 ///////////////// Relational Operators -> P2 Elements
 //////////////////////////////////////////////////////////////////
 
-string Plmb_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr, 
-			    OL_Context::Rule* rule) {
+string
+Plmb_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr, 
+                      OL_Context::Rule* rule) {
   Parse_Var*  var;
   Parse_Val*  val;
   Parse_Math* math;
   Parse_Function* fn  = NULL;
   ostringstream  pel;  
-
 
   if (expr->id && expr->oper == Parse_Math::MINUS) {
     Parse_Expr *tmp = expr->lhs;
@@ -1882,12 +1904,11 @@ string Plmb_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr,
     pel << "$" << (pos+1) << " ";
   }
   else if ((val = dynamic_cast<Parse_Val*>(expr->lhs)) != NULL) {
-    if (val->v->typeCode() == Value::STR)
+    if (val->v->typeCode() == Value::STR) {
       pel << "\"" << val->toString() << "\"" << " "; 
-    else pel << val->toString() << " "; 
-
-    if (val->id()) pel << "->u32 ->id "; 
-    else if (expr->id) pel << "->u32 ->id "; 
+    } else {
+      pel << val->toString() << " ";
+    }
   }
   else if ((math = dynamic_cast<Parse_Math*>(expr->lhs)) != NULL) {
     pel << pelMath(names, math, rule); 
@@ -1912,8 +1933,8 @@ string Plmb_ConfGen::pelMath(FieldNamesTracker* names, Parse_Math *expr,
       pel << "\"" << val->toString() << "\"" << " "; 
     else pel << val->toString() << " "; 
 
-    if (val->id()) pel << "->u32 ->id "; 
-    else if (expr->id) pel << "->u32 ->id "; 
+    // if (val->id()) pel << "->u32 ->id "; 
+    // else if (expr->id) pel << "->u32 ->id "; 
   }
   else if ((math = dynamic_cast<Parse_Math*>(expr->rhs)) != NULL) {
     pel << pelMath(names, math, rule); 
@@ -2280,7 +2301,7 @@ Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
     Parse_Var* parse_var = dynamic_cast<Parse_Var*>(pf->arg(k));
     int pos = -1;
     if (parse_var != NULL) {
-      //warn << "Check " << parse_var->toString() << " " << pf->fn->loc << "\n";
+      //TELL_WARN << "Check " << parse_var->toString() << " " << pf->fn->loc << "\n";
       if (fieldNameEq(parse_var->toString(),
                       pf->getlocspec())) {
         locationIndex = k;
@@ -2295,7 +2316,7 @@ Plmb_ConfGen::genProjectHeadElements(OL_Context::Rule* curRule,
     if (k == pf->aggregate()) {
       // as input into aggwrap
       Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(curRule->head->arg(k));
-      //warn << "Check " << aggExpr->v->toString() << " " << pf->getlocspec() << "\n";
+      //TELL_WARN << "Check " << aggExpr->v->toString() << " " << pf->getlocspec() << "\n";
       if (fieldNameEq(aggExpr->v->toString(), pf->getlocspec())) {	
         locationIndex = k;
       }
@@ -2512,10 +2533,10 @@ Plmb_ConfGen::secondaryIndex(Table2Ptr table,
           << ";"
           << std::endl;
     _multTableIndices.insert(std::make_pair(uniqStr.str(), uniqStr.str()));
-    std::cout << "AddMultTableIndex: Mult index added " << uniqStr.str() 
+    TELL_INFO << "AddMultTableIndex: Mult index added " << uniqStr.str() 
 	      << "\n";
   } else {
-    std::cout << "AddMultTableIndex: Mult index already exists " 
+    TELL_INFO << "AddMultTableIndex: Mult index already exists " 
 	      << uniqStr.str() << "\n";
   }
 }
@@ -2534,7 +2555,7 @@ Plmb_ConfGen::genSingleTermElement(OL_Context::Rule* curRule,
   _p2dl << conf_assign(slotElement.get(), 
                        conf_function("Slot", "singleTermSlot"));
 
-  //std::cout << "Number of terms " << curRule->terms.size() << "\n";
+  //TELL_INFO << "Number of terms " << curRule->terms.size() << "\n";
   for (std::list< Parse_Term* >::iterator j = curRule->terms.begin();
        j != curRule->terms.end();
        j++) {    
@@ -2657,7 +2678,7 @@ Plmb_ConfGen::genTraceElement(string header)
     std::set<string> tt = _ctxt->getTuplesToTrace();
     if(tt.find(header) != tt.end()){
       //if(header == "lookup"){
-      std::cout << "Adding a traceTuple element for tuple "
+      TELL_INFO << "Adding a traceTuple element for tuple "
                 << header
                 << ", size "
                 << tt.size()
@@ -2685,7 +2706,7 @@ Table2Ptr
 Plmb_ConfGen::getTableByName(string nodeID,
                              string tableName)
 {
-  //std::cout << "Get table " << nodeID << ":" << tableName << "\n";
+  //TELL_INFO << "Get table " << nodeID << ":" << tableName << "\n";
   TableMap::iterator _iterator = _tables.find(nodeID + ":" + tableName);
   if (_iterator == _tables.end()) { 
     error("Table " + nodeID + ":" + tableName + " not found\n");
@@ -2767,6 +2788,9 @@ Plmb_ConfGen::createTables(string nodeID)
     
     // And store it in the table index
     _tables.insert(std::make_pair(newTableName, newTable));      
+
+    // And evaluate all empty aggregates
+    newTable->evaluateEmptyAggregates();
   }
 
 
@@ -2777,7 +2801,7 @@ Plmb_ConfGen::createTables(string nodeID)
        k++) {
     TuplePtr tr = _ctxt->getFacts().at(k);
     ValuePtr vr = (*tr)[0];
-    std::cout << "Insert tuple "
+    TELL_INFO << "Insert tuple "
               << tr->toString()
               << " into table " 
 	      << vr->toString()
@@ -2786,7 +2810,7 @@ Plmb_ConfGen::createTables(string nodeID)
               << "\n";
     Table2Ptr tableToInsert = getTableByName(nodeID, vr->toString());     
     tableToInsert->insert(tr);
-    std::cout << "Tuple inserted: "
+    TELL_INFO << "Tuple inserted: "
               << tr->toString() 
 	      << " into table "
               << vr->toString() 
@@ -2966,7 +2990,7 @@ string Plmb_ConfGen::FieldNamesTracker::toString()
 
 void Plmb_ConfGen::error(string msg)
 {
-  std::cerr << "PLANNER ERROR: " << msg << "\n";
+  TELL_ERROR << "PLANNER ERROR: " << msg << "\n";
   exit(-1);
 }
 
@@ -2975,7 +2999,7 @@ void
 Plmb_ConfGen::error(string msg, 
                     OL_Context::Rule* rule)
 {
-  std::cerr << "PLANNER ERROR: " << msg 
+  TELL_ERROR << "PLANNER ERROR: " << msg 
 	    << " for rule " << rule->ruleID << ". Planner exits.\n";
   exit(-1);
 }

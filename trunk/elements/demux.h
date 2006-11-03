@@ -36,6 +36,10 @@ public:
   const char *processing() const		{ return "h/h"; }
   const char *flow_code() const			{ return "-/-"; }
 
+  /** Override Element::toDot to show names of outputs */
+  void
+  toDot(std::ostream*);
+
   /** A tuple may be dropped without notification if it resolves to an
       output that's held back.  Push back only if all outputs have
       pushed back. */

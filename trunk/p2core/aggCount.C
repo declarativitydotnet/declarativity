@@ -33,7 +33,7 @@ AggCount::reset()
 void
 AggCount::first(ValuePtr v)
 {
-  _current++;
+  _current = 1;
 }
   
 
@@ -55,4 +55,12 @@ AggCount*
 AggCount::mk()
 {
   return new AggCount();
+}
+
+
+
+std::string
+AggCount::name()
+{
+  return "COUNT";
 }

@@ -91,8 +91,8 @@ void createSecondaryIndex(PlanContext* pc,
 
 void debugRule(PlanContext* pc, string msg)
 {
-  warn << "DEBUG RULE: " << pc->_ruleStrand->getRuleID() << " " 
-       << pc->_ruleStrand->getStrandID() << " " << msg; 
+  TELL_WARN << "DEBUG RULE: " << pc->_ruleStrand->getRuleID() << " " 
+            << pc->_ruleStrand->getStrandID() << " " << msg; 
 }
 
 #include "rulePel.C"
@@ -267,14 +267,15 @@ void generateAggEvent(PlanContext* pc)
   CommonTablePtr aggTable = pc->_tableStore->getTableByName(event_functor->fn->name);  
   createSecondaryIndex(pc, aggTable, groupByFields);  
 
-  CommonTable::Aggregate tableAgg =
-    aggTable->aggregate(groupByFields,
-                        aggFieldBaseTable, // the agg field
-                        pa->oper);
-  oss << "," << aggFieldBaseTable;
-  debugRule(pc, "Group by " + oss.str() + "\n");
-
-  if (tableAgg == NULL) {
+  CommonTable::Aggregate tableAgg;
+  try {
+    tableAgg =
+      aggTable->aggregate(groupByFields,
+                          aggFieldBaseTable, // the agg field
+                          pa->oper);
+    oss << "," << aggFieldBaseTable;
+    debugRule(pc, "Group by " + oss.str() + "\n");
+  } catch (AggFactory::AggregateNotFound a) {
     // Ooops, I couldn't create an aggregate. Complain.
     error(pc, "Could not create aggregate \"" + pa->oper
           + "\". I only know aggregates " +

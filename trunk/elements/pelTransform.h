@@ -34,6 +34,10 @@ public:
   const char *flow_code() const			{ return "x/x"; }
 
 
+  /** What's my program code? */
+  string
+  pelCode();
+
 private:
   /** My program.  */
   boost::shared_ptr< Pel_Program > _program;

@@ -30,13 +30,13 @@ TuplePtr Filter::simple_action(TuplePtr p)
   // Does the field exist?
   if (field == NULL) {
     // Nope, no such field. Log a warning and return nothing.
-    log(LoggerI::WARN, -1, "Filtered field unavailable");
+    log(Reporting::WARN, -1, "Filtered field unavailable");
     return TuplePtr();
   } else {
     // Make sure it is an INT32
     if (field->typeCode() != Value::INT32) {
       // Drop this and issue a warning
-      log(LoggerI::WARN, -1, "Filtered field not an INT32. Dropping");
+      log(Reporting::WARN, -1, "Filtered field not an INT32. Dropping");
       return TuplePtr();
     } else {
       // OK, this is the right type.  Now do the filtering

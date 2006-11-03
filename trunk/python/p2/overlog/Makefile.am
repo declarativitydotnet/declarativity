@@ -14,18 +14,22 @@
 # DESCRIPTION: Makefile for the P2 core elements python library
 #
 
-noinst_LTLIBRARIES = libp2pythonoverlog.la
+lib_LTLIBRARIES =			libp2pythonoverlog.la
 
-libp2pythonoverlog_la_SOURCES = \
-	overlogCompiler.cpp
+libp2pythonoverlog_la_SOURCES =		\
+					overlogCompiler.cpp
 
-INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core \
-                       -I$(top_builddir)/elements \
-                       -I$(top_builddir)/eventLoop \
-                       -I$(top_builddir)/overlog 
 
-CLEANFILES = core *.core *~
+libp2pythonoverlog_la_CPPFLAGS =	@BOOST_INC@ \
+					-I$(top_builddir)/p2core \
+					-I$(top_builddir)/elements \
+					-I$(top_builddir)/overlog \
+					-I$(top_builddir)/eventLoop
 
-MAINTAINERCLEANFILES = Makefile.in
+CLEANFILES =				core *.core *~
 
-CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@ ${PYTHON_CPPFLAGS}
+MAINTAINERCLEANFILES =			Makefile.in
+
+libp2pythonoverlog_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG \
+					@PYTHON_CSPEC@
+

@@ -32,21 +32,22 @@
 
 #include <string>
 #include <sstream>
-#include <iostream>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "inlines.h"
 #include "tuple.h"
+#include "reporting.h"
 #include "loggerI.h"
   
 #define ELEM_LOG(_sev,_errnum,_rest) do { ostringstream _sb; _sb << _rest; log(_sev,_errnum,_sb.str()); } while (false)
-#define ELEM_INFO(_rest) ELEM_LOG(LoggerI::INFO, 0, _rest)
 
-#undef warn
-#define warn std::cerr
-#undef fatal
-#define fatal std::cerr
+
+#define ELEM_INFO(_rest) ELEM_LOG(Reporting::INFO, 0, _rest)
+#define ELEM_WORDY(_rest) ELEM_LOG(Reporting::WORDY, 0, _rest)
+#define ELEM_WARN(_rest) ELEM_LOG(Reporting::WARN, 0, _rest)
+#define ELEM_ERROR(_rest) ELEM_LOG(Reporting::ERROR, 0, _rest)
+#define ELEM_OUTPUT(_rest) ELEM_LOG(Reporting::OUTPUT, 0, _rest)
 
 using std::string;
 using std::ostringstream;
@@ -166,6 +167,11 @@ public:
 
   /** A descriptive name for the element */
   string name() const				{ return _name; }
+
+
+  /** Output my Dot description. */
+  virtual void
+  toDot(std::ostream*);
   
   // INPUTS AND OUTPUTS
   
@@ -197,23 +203,22 @@ public:
 
   /** Log something to the default element logger */
   REMOVABLE_INLINE void log(string instanceName,
-                            LoggerI::Level severity,
+                            Reporting::Level severity,
                             int errnum,
                             string explanation);
 
   /** Call the log method without an instance name.  Use the element ID
       instead. */
-  REMOVABLE_INLINE void log(LoggerI::Level severity,
+  REMOVABLE_INLINE void log(Reporting::Level severity,
                             int errnum,
                             string explanation);
   
   /** Call the default logger, if the plumber's logger is unavailable */
   REMOVABLE_INLINE void logDefault(string instanceName,
-                                   LoggerI::Level severity,
+                                   Reporting::Level severity,
                                    int errnum,
                                    string explanation);
 
-  void loggingLevel(LoggerI::Level l) { _loggingLevel = l; }
   void logger(LoggerI* l)             { _logger = l; }
 
   /** A nested class encapsulating connection stubs into and out of an
@@ -346,7 +351,6 @@ public:
   /** My instance name */
   string _name;
 
-  LoggerI::Level _loggingLevel;
   LoggerI*       _logger;
 
 protected:

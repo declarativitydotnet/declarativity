@@ -11,35 +11,53 @@
 #
 #
 
-SUBDIRS=debugger eventLoop p2core elements net overlog p2cpp
+SUBDIRS =			debugger \
+				eventLoop \
+				p2core \
+				elements \
+				pythonElements \
+				net \
+				overlog \
+				p2cpp
 
-lib_LTLIBRARIES = libp2python.la
 
-libp2python_la_SOURCES = p2python.cpp
 
-libp2python_la_LIBADD = \
-	-lcrypto \
-	-lboost_python \
-	-lp2pythondebugger \
-	-lp2pythonelements \
-	-lp2pythoncore \
-	-lp2pythonnet \
-	-lp2pythoneventloop \
-	-lp2pythonoverlog \
-	-lp2pythoncpp \
-        -lp2core -lp2debugger -lp2elements -lp2eventLoop -lp2net -lp2overlog -lp2cpp
 
-INCLUDES = $(PYTHON_CPPFLAGS) $(BOOST_INC)
 
-LIBS = $(BOOST_LIB) $(PYTHON_LDFLAGS) \
-       -L$(top_builddir)/elements -L$(top_builddir)/p2core \
-       -L$(top_builddir)/eventLoop -L$(top_builddir)/net \
-       -L$(top_builddir)/overlog -L$(top_builddir)/debugger -L$(top_builddir)/p2cpp \
-       -L./elements -L./p2core -L./eventLoop -L./net -L./overlog -L./debugger -L./p2cpp
 
-CLEANFILES = core *.core *~
 
-EXTRA_DIST = .cvsignore README \
-		$(libp2python_la_SOURCES)
+lib_LTLIBRARIES =		libp2python.la
 
-MAINTAINERCLEANFILES = Makefile.in
+libp2python_la_SOURCES =	p2python.cpp
+
+libp2python_la_LIBADD =		\
+				-lcrypto \
+				-lboost_python \
+				@PYTHON_LSPEC@ \
+				$(top_builddir)/python/p2/debugger/libp2pythondebugger.la \
+				$(top_builddir)/python/p2/elements/libp2pythonelements.la \
+				$(top_builddir)/python/p2/pythonElements/libp2pythonPythonelements.la \
+				$(top_builddir)/python/p2/p2core/libp2pythoncore.la \
+				$(top_builddir)/python/p2/net/libp2pythonnet.la \
+				$(top_builddir)/python/p2/eventLoop/libp2pythoneventloop.la \
+				$(top_builddir)/python/p2/overlog/libp2pythonoverlog.la \
+				$(top_builddir)/python/p2/p2cpp/libp2pythoncpp.la \
+				$(top_builddir)/p2core/libp2core.la \
+				$(top_builddir)/debugger/libp2debugger.la \
+				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/pythonElements/libp2PythonElements.la \
+				$(top_builddir)/eventLoop/libp2eventLoop.la \
+				$(top_builddir)/net/libp2net.la \
+				$(top_builddir)/overlog/libp2overlog.la \
+				$(top_builddir)/p2cpp/libp2cpp.la
+
+libp2python_la_CPPFLAGS =	@BOOST_INC@ \
+				@PYTHON_CSPEC@
+
+CLEANFILES =			core *.core *~
+
+EXTRA_DIST =			README
+
+MAINTAINERCLEANFILES =		Makefile.in
+
+

@@ -14,15 +14,20 @@
 # DESCRIPTION: Makefile for the P2 core elements python library
 #
 
-noinst_LTLIBRARIES = libp2pythoneventloop.la
+lib_LTLIBRARIES =			libp2pythoneventloop.la
 
-libp2pythoneventloop_la_SOURCES = \
-	eventLoop.cpp
+libp2pythoneventloop_la_SOURCES =	\
+					eventLoop.cpp
 
-INCLUDES = @BOOST_INC@ -I$(top_builddir)/eventLoop -I$(top_builddir)/p2core
+libp2pythoneventloop_la_CPPFLAGS =	@BOOST_INC@ \
+					-I$(top_builddir)/p2core \
+					-I$(top_builddir)/eventLoop
 
-CLEANFILES = core *.core *~
+CLEANFILES =				core *.core *~
 
-MAINTAINERCLEANFILES = Makefile.in
+MAINTAINERCLEANFILES =			Makefile.in
 
-CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@ ${PYTHON_CPPFLAGS}
+libp2pythoneventloop_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG \
+					@PYTHON_CSPEC@
+
+

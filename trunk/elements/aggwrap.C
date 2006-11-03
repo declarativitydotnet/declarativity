@@ -13,7 +13,6 @@
  */
 
 #include "aggwrap.h"
-#include "trace.h"
 #include "val_int32.h"
 #include "val_str.h"
 #include "loop.h"
@@ -26,22 +25,20 @@ Aggwrap::Aggwrap(string name,
     _aggfn(aggfn), 
     _aggfield(aggfield), 
     inner_accepting(true),
-    ext_in_cb(0), 
-    ext_out_cb(0)
+    ext_in_cb(0),
+    aggState(0)
 {
   numJoins = 0;
   _outputTableName = outputTableName;
-  ostringstream os;
   if (aggfn == "MIN") {
-    os << "min aggregation " << _aggfield;
+    ELEM_INFO("min aggregation " << _aggfield);
   } else if (aggfn == "MAX") {
-    os << "max aggregation " << _aggfield;
+    ELEM_INFO("max aggregation " << _aggfield);
   } else if (aggfn == "COUNT") { 
-    os << "count aggregation " << _aggfield;
+    ELEM_INFO("count aggregation " << _aggfield);
   } else {
-    os << "HELP: Don't understand agg function '" << aggfn << "'";
+    ELEM_INFO("HELP: Don't understand agg function '" << aggfn << "'");
   }
-  ELEM_INFO( os.str() );
 }
 
 //
@@ -49,9 +46,7 @@ Aggwrap::Aggwrap(string name,
 //
 int Aggwrap::push(int port, TuplePtr t, b_cbv cb)
 {
-  ostringstream os;
-  os << " Push: " << port << "," << t->toString();
-  ELEM_INFO( os.str() );
+  ELEM_INFO(" Push: " << port << "," << t->toString());
 
   // if receive the next one when previous has not finished, then keep in queue?
 
@@ -61,42 +56,38 @@ int Aggwrap::push(int port, TuplePtr t, b_cbv cb)
     ext_in_cb = cb;
     switch(aggState) {
     case 0:  // Waiting
-      ELEM_INFO( " received a tuple from outside!" + t->toString());
+      ELEM_INFO(" received a tuple from outside! " << t->toString());
       assert(inner_accepting);
       agg_init();
       _incomingTuple = t;
-      inner_accepting = output(1)->push(t, boost::bind( &Aggwrap::int_push_cb, this ));
+      inner_accepting =
+        output(1)->push(t, boost::bind(&Aggwrap::int_push_cb, this));
       break;
     case 1:
-      ELEM_INFO( "FAIL: pushed when processing!");
+      ELEM_INFO("FAIL: pushed when processing!");
       // Discard tuple
       break;
     case 2:
-      ELEM_INFO( "FAIL: pushed when done pending");
+      ELEM_INFO("FAIL: pushed when done pending");
       break;
     default:
-      ostringstream os;
-      os << "FAIL: weird state " << aggState;
-      ELEM_INFO( os.str() );
+      ELEM_INFO("FAIL: weird state " << aggState);
     }     
-    ELEM_INFO( " Block downstream");
+    ELEM_INFO(" Block downstream");
     return 0;
   case 1:
     switch(aggState) {
     case 0:  // Waiting
-      ELEM_INFO( 
-	  "OOPS: unexpected result tuple when in state waiting");
+      ELEM_INFO("OOPS: unexpected result tuple when in state waiting");
       break;
     case 1:
       agg_accum(t);
       break;
     case 2:
-      ELEM_INFO( "FAIL: pushed when done pending");
+      ELEM_INFO("FAIL: pushed when done pending");
       break;
     default:
-      ostringstream os; 
-      os << "FAIL: weird state " << aggState;
-      ELEM_INFO( os.str());
+      ELEM_INFO("FAIL: weird state " << aggState);
     } 
     return 1;
   default:
@@ -111,13 +102,11 @@ int Aggwrap::push(int port, TuplePtr t, b_cbv cb)
 // 
 void Aggwrap::int_push_cb()
 {
-  TRC_FN;
+  TRACE_FUNCTION;
   inner_accepting = true;
-  ostringstream os;
-  os << "Callback from inner graph on successful push" << aggState;
-  ELEM_INFO( os.str());
+  ELEM_INFO("Callback from inner graph on successful push" << aggState);
   if (aggState == 0 && ext_in_cb) {
-    ELEM_INFO( "Invoke ext_in_cb");
+    ELEM_INFO("Invoke ext_in_cb");
     ext_in_cb();
     ext_in_cb = 0;
   }
@@ -127,12 +116,11 @@ void Aggwrap::int_push_cb()
 //
 // Completion callback
 //
-void Aggwrap::comp_cb(int jnum)
+void
+Aggwrap::comp_cb(int jnum)
 {
-  TRC_FN;
-  ostringstream os;
-  os << "Join " << jnum << " completed.";
-  ELEM_INFO( os.str());
+  TRACE_FUNCTION;
+  ELEM_INFO("Join " << jnum << " completed.");
   if (curJoin < jnum) { 
     curJoin = jnum;
   }
@@ -146,19 +134,19 @@ void Aggwrap::comp_cb(int jnum)
 //
 // Getting hold of a closure for the above
 //
-b_cbv Aggwrap::get_comp_cb()
+b_cbv
+Aggwrap::get_comp_cb()
 {
-  ostringstream os;
-  os << "Joins so far: " << numJoins + 1;
-  ELEM_INFO( os.str());
-  return boost::bind(&Aggwrap::comp_cb,this,numJoins++);
+  ELEM_INFO("Joins so far: " << numJoins + 1);
+  return boost::bind(&Aggwrap::comp_cb, this, numJoins++);
 }
 
 //
 // Finally, the aggregation functions
 //
-void Aggwrap::agg_init() {
-  TRC_FN;
+void
+Aggwrap::agg_init() {
+  TRACE_FUNCTION;
   curJoin = -1;
   aggState = 1;
   if ( _aggfn == "COUNT") {
@@ -169,8 +157,8 @@ void Aggwrap::agg_init() {
 }
 
 void Aggwrap::agg_accum(TuplePtr t) {
-  TRC_FN;
-  if ( _aggfn == "COUNT") {
+  TRACE_FUNCTION;
+  if (_aggfn == "COUNT") {
     count++;
     aggResult = t;
     ELEM_INFO( "After Agg accumulation: " + aggResult->toString());
@@ -188,19 +176,22 @@ void Aggwrap::agg_accum(TuplePtr t) {
   if ((cr == -1 && _aggfn == "MIN") || (cr == 1 && _aggfn == "MAX")) {
     aggResult = t;
   }
-  ELEM_INFO( "After Agg accumulation: " + aggResult->toString()
-      + "\n " + (*t)[_aggfield]->toString() + " " 
-      + (*aggResult)[_aggfield]->toString());
+  ELEM_INFO("After Agg accumulation: "
+            << aggResult->toString()
+            << "\n "
+            << (*t)[_aggfield]->toString()
+            << " " 
+            << (*aggResult)[_aggfield]->toString());
 }
 
 void Aggwrap::agg_finalize() {
-  TRC_FN; 
+  TRACE_FUNCTION; 
   if (_aggfn == "COUNT") {       
     if (_incomingTuple) {
       aggResult = Tuple::mk();
       aggResult->append(Val_Str::mk(_outputTableName));
       for (uint k = 0; k < _groupByFields.size(); k++) {
-	/*warn << _incomingTuple->toString() << " " 
+	/*TELL_WARN << _incomingTuple->toString() << " " 
 	  << _groupByFields.at(k) + 1 << "\n";     */
 	aggResult->append((*_incomingTuple)[_groupByFields.at(k)]);
       }
@@ -209,10 +200,10 @@ void Aggwrap::agg_finalize() {
     }
   }
   if (aggResult) {
-    ELEM_INFO( " finalize: Pushing tuple" + aggResult->toString());
+    ELEM_INFO(" finalize: Pushing tuple" << aggResult->toString());
     output(0)->push(aggResult, 0);
   } else {
-    ELEM_INFO( "Finalize: Alas, nothing to push");
+    ELEM_INFO(" Finalize: Alas, nothing to push");
   }
   if (ext_in_cb) {
     ELEM_INFO( "Invoke push callback for more tuples");
@@ -226,5 +217,5 @@ void Aggwrap::agg_finalize() {
 void Aggwrap::registerGroupbyField(int field)
 { 
   _groupByFields.push_back(field); 
-  warn << "Register group by " << field << "\n";
+  TELL_WORDY << "Register group by " << field << "\n";
 }

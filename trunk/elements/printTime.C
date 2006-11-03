@@ -31,9 +31,9 @@ TuplePtr PrintTime::simple_action(TuplePtr p)
   boost::posix_time::ptime now_ts;
   
   getTime(now_ts);
-  warn << "Print[" << _prefix
-       << ", "
-       << boost::posix_time::to_simple_string(now_ts)
-       << "]:  [" << p->toString() << "]\n";
+  TELL_WARN << "Print[" << _prefix
+            << ", "
+            << boost::posix_time::to_simple_string(now_ts)
+            << "]:  [" << p->toString() << "]\n";
   return p;
 }

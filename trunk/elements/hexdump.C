@@ -34,7 +34,7 @@ TuplePtr Hexdump::simple_action(TuplePtr p)
   ValuePtr first = (*p)[_fieldNo];
   if (first == NULL) {
     // No such field
-    log(LoggerI::WARN,
+    log(Reporting::WARN,
         -1,
         "Input tuple has no requested field");
     return TuplePtr();
@@ -43,7 +43,7 @@ TuplePtr Hexdump::simple_action(TuplePtr p)
   // Is it an opaque?
   if (first->typeCode() != Value::OPAQUE) {
     // Can't hexdump anything but opaques
-    log(LoggerI::WARN,
+    log(Reporting::WARN,
         -1,
         "Input tuple's field to hexdump is not an opaque");
     return TuplePtr();

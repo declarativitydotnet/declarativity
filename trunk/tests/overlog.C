@@ -36,9 +36,8 @@ extern int ol_parser_debug;
 
 int main(int argc, char **argv)
 {
-  LoggerI::Level level = LoggerI::NONE;
-  PlumberPtr plumber(new Plumber(level));
-  std::cout << "TestPlanner\n";
+  PlumberPtr plumber(new Plumber());
+  TELL_INFO << "TestPlanner\n";
   boost::shared_ptr< OL_Context > ctxt(new OL_Context());
   bool route = false;
   bool builtin = false;
@@ -52,7 +51,7 @@ int main(int argc, char **argv)
     if (arg == "-d") { 
       ol_parser_debug = 1;
     } else if (arg == "-h") { 
-      std::cerr << "Usage: " << argv[0] << "{option|filename}+\n"
+      TELL_ERROR << "Usage: " << argv[0] << "{option|filename}+\n"
 		<< "\t-c: canonical form (used for builtin tests)\n"
 		<< "\t-d: turn on parser debugging\n"
 		<< "\t-r: try to instantiate a plumber config\n"
@@ -93,9 +92,9 @@ int main(int argc, char **argv)
       planner->registerAllRuleStrands(ruleStrands);
 
       if (plumber->install(conf) == 0) {
-        std::cout << "Correctly initialized network of reachability flows.\n";
+        TELL_INFO << "Correctly initialized network of reachability flows.\n";
       } else {
-        std::cout << "** Failed to initialize correct spec\n";
+        TELL_ERROR << "** Failed to initialize correct spec\n";
       }
       plumber->toDot("overlog.dot");
       exit (0);
@@ -107,17 +106,15 @@ int main(int argc, char **argv)
   }
 
   if (builtin) {
-    std::cerr << ctxt->toString();
-    std::cerr.flush();
-    std::cout << "OK\n";
-    std::cout.flush();
+    TELL_INFO << ctxt->toString();
+    TELL_INFO << "OK\n";
   } 
 
-  std::cout << "Finish parsing (functors / tableInfos) " 
+  TELL_INFO << "Finish parsing (functors / tableInfos) " 
 	    << ctxt->getRules()->size() 
 	    << " " << ctxt->getTableInfos()->size() << "\n";
 
-  std::cout << ctxt->toString() << "\n";
+  TELL_INFO << ctxt->toString() << "\n";
 
   if (route) {
     Plumber::DataflowPtr conf(new Plumber::Dataflow("overlog"));
@@ -143,21 +140,21 @@ int main(int argc, char **argv)
     std::vector<RuleStrand*> ruleStrands = planner->generateRuleStrands(ectxt);
     
     for (unsigned k = 0; k < ruleStrands.size(); k++) {
-      std::cout << ruleStrands.at(k)->toString();
+      TELL_INFO << ruleStrands.at(k)->toString();
       fprintf(strandOutput, ruleStrands.at(k)->toString().c_str());
     }
     fclose(strandOutput);
     
     planner->setupNetwork(udp);
     planner->registerAllRuleStrands(ruleStrands);
-    std::cout << planner->getNetPlanner()->toString() << "\n";
+    TELL_INFO << planner->getNetPlanner()->toString() << "\n";
 
     if (plumber->install(conf) == 0) {
-      std::cout << "Correctly initialized network of reachability flows.\n";
+      TELL_INFO << "Correctly initialized network of reachability flows.\n";
     } else {
-      std::cout << "** Failed to initialize correct spec\n";
+      TELL_ERROR << "** Failed to initialize correct spec\n";
     }    
-    std::cout << "Done.\n";
+    TELL_INFO << "Done.\n";
 
   }
 

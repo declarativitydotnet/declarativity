@@ -54,7 +54,7 @@ TuplePtr DRoundRobin::pull(int port, b_cbv cb)
     if (!_pull_cb) {
       _pull_cb = cb;
     }
-    log(LoggerI::WARN, -1, "pull: Underrun");
+    log(Reporting::WARN, -1, "pull: Underrun");
     return TuplePtr();
   }
 

@@ -45,7 +45,7 @@ string ExecRecord::toString()
   os << "Tin " << tupleIn << "\n";
   os << "Tout " << tupleOut << "\n";
   if(numEntries > MAX_STAGES){
-    std::cout << "NUmber of preconditions is " << numEntries << ", " << os.str() << "\n";
+    TELL_ERROR << "NUmber of preconditions is " << numEntries << ", " << os.str() << "\n";
     std::exit(-1);
   }
   for(int i = 0; i < numEntries; i++){

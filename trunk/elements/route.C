@@ -21,7 +21,7 @@ Route::Route(string name, FdbufPtr destinationUio)
 {
   if (destinationUio->length() == 0) {
     // Got no destination. Bummer
-    log(LoggerI::ERROR,
+    log(Reporting::ERROR,
         -1,
         "Cannot create a route element without a destination address");
     exit(-1);
@@ -38,7 +38,7 @@ TuplePtr Route::simple_action(TuplePtr p)
   ValuePtr firstP = (*p)[0];
   if (firstP == 0) {
     // No such field
-    log(LoggerI::WARN,
+    log(Reporting::WARN,
         -1,
         "Input tuple has no first field");
     return TuplePtr();
@@ -48,7 +48,7 @@ TuplePtr Route::simple_action(TuplePtr p)
   // Is it a string?
   if (first->typeCode() != Value::OPAQUE) {
     // Can't route to something that isn't a marshalled opaque
-    log(LoggerI::WARN,
+    log(Reporting::WARN,
         -1,
         "Input tuple's first field is not an opaque");
     return TuplePtr();
@@ -58,7 +58,7 @@ TuplePtr Route::simple_action(TuplePtr p)
   TuplePtr routed = Tuple::mk();
   if (routed == 0) {
     // Couldn't create one. Memory problems?
-    log(LoggerI::WARN,
+    log(Reporting::WARN,
         -1,
         "Couldn't allocate new tuple");
 

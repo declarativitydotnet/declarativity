@@ -35,7 +35,7 @@ void TraceTuple::unblock(unsigned output)
   assert(output <= noutputs());
 
   if(_block_flags[output]){
-    log(LoggerI::INFO, -1, "unblock");
+    log(Reporting::INFO, -1, "unblock");
     _block_flags[output] = false;
     _block_flag_count --;
     assert(_block_flag_count >= 0);
@@ -43,7 +43,7 @@ void TraceTuple::unblock(unsigned output)
 
   // call a pushback if we have it
   if(_push_cb){
-    log(LoggerI::INFO, -1, "unblock: propagating aggregate unblock");
+    log(Reporting::INFO, -1, "unblock: propagating aggregate unblock");
     _push_cb();
     _push_cb = 0;
   }
@@ -52,11 +52,11 @@ void TraceTuple::unblock(unsigned output)
 
 int TraceTuple::push(int port, TuplePtr p, b_cbv cb)
 {
-  log(LoggerI::INFO, -1, "Tracing element " + name() + " handling tuple " 
+  log(Reporting::INFO, -1, "Tracing element " + name() + " handling tuple " 
       + p->toString() + "\n");
 
   if(output(0)->push(p, boost::bind(&TraceTuple::unblock, this, 0)) == 0){
-    log(LoggerI::WARN, -1, " Problem in pushing the original tuple " 
+    log(Reporting::WARN, -1, " Problem in pushing the original tuple " 
 	+ p->toString() + "\n");
     _block_flags[0] = true;
     _block_flag_count ++;
@@ -73,12 +73,12 @@ int TraceTuple::push(int port, TuplePtr p, b_cbv cb)
     t->append((*p)[i]);
   t->append(Val_UInt32::mk(p->ID()));
   t->freeze();
-  log(LoggerI::INFO, -1, "Produced tuple " + t->toString() + "\n");
+  log(Reporting::INFO, -1, "Produced tuple " + t->toString() + "\n");
 
-  //std::cout << "Produced tuple " << t->toString() << "\n";
+  //TELL_INFO << "Produced tuple " << t->toString() << "\n";
 
   if(output(1)->push(t, boost::bind(&TraceTuple::unblock, this, 1)) == 0){
-    log(LoggerI::WARN, -1, " Problem in pushing the trace tuple " 
+    log(Reporting::WARN, -1, " Problem in pushing the trace tuple " 
 	+ t->toString() + "\n");
     _block_flags[1] = true;
     _block_flag_count ++;
@@ -86,7 +86,7 @@ int TraceTuple::push(int port, TuplePtr p, b_cbv cb)
 
   if(_block_flag_count > 0){
     _push_cb = cb;
-    log(LoggerI::WARN, -1, "push: Blocking input");
+    log(Reporting::WARN, -1, "push: Blocking input");
     return 0;
   }
   else

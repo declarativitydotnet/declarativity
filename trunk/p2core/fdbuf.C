@@ -17,7 +17,6 @@
 #include "fdbuf.h"
 
 #include <cerrno>
-#include <iostream>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>

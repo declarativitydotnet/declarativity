@@ -21,6 +21,7 @@
 
 #include <element.h>
 #include <loggerI.h>
+#include "reporting.h"
 
 class Logger : public Element,
                public LoggerI { 
@@ -34,7 +35,7 @@ public:
   /** Override this since it's pure virtual in the interface */
   void log( string classname,
 	    string instancename,
-	    Level severity,
+	    Reporting::Level severity,
 	    int errnum,
 	    string explanation );
 

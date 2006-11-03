@@ -13,184 +13,172 @@
 # DESCRIPTION: Makefile for the P2 tests
 #
 
-$(PROGRAMS): $(LDEPS)
-
-noinst_PROGRAMS 	=  	tuples \
-			benchmark \
-			overlog \
-			runChord \
-			runOverLog \
-			runOverLog2 \
-			runPingPong \
-			simple_lookup \
-			lookupGenerator \
-			basicelements \
-			scheduling \
-			demultiplex \
-			logger \
-			testQueue \
-			udpMessage \
-			udpListen
-
-tuples_SOURCES	= tuples.C
-tuples_LDADD = $(top_builddir)/p2core/libp2core.la \
-		$(top_builddir)/eventLoop/libp2eventLoop.la
-
-benchmark_SOURCES	= benchmark.C
-benchmark_LDADD = $(top_builddir)/p2core/libp2core.la \
-		  $(top_builddir)/eventLoop/libp2eventLoop.la
+bin_PROGRAMS =			benchmark \
+				overlog \
+				runOverLog \
+				runOverLog2 \
+				runPingPong \
+				simple_lookup \
+				lookupGenerator \
+				udpMessage \
+				udpListen
 
 
-logger_SOURCES  = logger.C
-logger_LDADD =  \
-		$(top_builddir)/elements/libp2elements.la \
-		$(top_builddir)/p2core/libp2core.la \
-		$(top_builddir)/eventLoop/libp2eventLoop.la
+benchmark_SOURCES =		benchmark.C
+
+benchmark_LDADD =		$(top_builddir)/p2core/libp2core.la \
+				$(top_builddir)/eventLoop/libp2eventLoop.la
 
 
-scheduling_SOURCES = scheduling.C
-scheduling_LDADD =  \
-	$(top_builddir)/elements/libp2elements.la \
-	$(top_builddir)/p2core/libp2core.la \
-	$(top_builddir)/eventLoop/libp2eventLoop.la
+runOverLog_SOURCES =		runOverLog.C
 
-demultiplex_SOURCES = demultiplex.C
-demultiplex_LDADD =  \
-	$(top_builddir)/elements/libp2elements.la \
-	$(top_builddir)/p2core/libp2core.la \
-	$(top_builddir)/eventLoop/libp2eventLoop.la
-
-runOverLog_SOURCES = runOverLog.C
-runOverLog_LDADD = \
-	$(top_builddir)/planner/libp2planner.la \
-	$(top_builddir)/overlog/libp2overlog.la \
-	$(top_builddir)/net/libp2net.la \
-	$(top_builddir)/elements/libp2elements.la \
-	$(top_builddir)/p2core/libp2core.la \
-	$(top_builddir)/eventLoop/libp2eventLoop.la \
-	$(top_builddir)/debugger/libp2debugger.la 
-
-runChord_SOURCES = runChord.C
-runChord_LDADD =  \
-	$(top_builddir)/planner/libp2planner.la \
-	$(top_builddir)/debugger/libp2debugger.la \
-	$(top_builddir)/overlog/libp2overlog.la \
-	$(top_builddir)/net/libp2net.la \
-	$(top_builddir)/elements/libp2elements.la \
-	$(top_builddir)/p2core/libp2core.la \
-	$(top_builddir)/eventLoop/libp2eventLoop.la
-
-runOverLog2_SOURCES = runOverLog2.C
-runOverLog2_LDADD =  \
-	$(top_builddir)/debugger/libp2debugger.la \
-	$(top_builddir)/p2cpp/libp2cpp.la \
-	$(top_builddir)/overlog/libp2overlog.la \
-	$(top_builddir)/net/libp2net.la \
-	$(top_builddir)/elements/libp2elements.la \
-	$(top_builddir)/p2core/libp2core.la \
-	$(top_builddir)/eventLoop/libp2eventLoop.la
+runOverLog_LDADD = 		\
+				$(top_builddir)/planner/libp2planner.la \
+				$(top_builddir)/overlog/libp2overlog.la \
+				$(top_builddir)/net/libp2net.la \
+				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/p2core/libp2core.la \
+				$(top_builddir)/eventLoop/libp2eventLoop.la \
+				$(top_builddir)/debugger/libp2debugger.la 
 
 
-runPingPong_SOURCES = runPingPong.C
-runPingPong_LDADD =  \
-	$(top_builddir)/debugger/libp2debugger.la \
-	$(top_builddir)/p2cpp/libp2cpp.la \
-	$(top_builddir)/overlog/libp2overlog.la \
-	$(top_builddir)/net/libp2net.la \
-	$(top_builddir)/elements/libp2elements.la \
-	$(top_builddir)/p2core/libp2core.la \
-	$(top_builddir)/eventLoop/libp2eventLoop.la 
+runOverLog2_SOURCES =		runOverLog2.C
+
+runOverLog2_LDADD =		\
+				@PYTHON_LSPEC@ \
+				-lboost_python \
+				$(top_builddir)/p2cpp/libp2cpp.la \
+				$(top_builddir)/overlog/libp2overlog.la \
+				$(top_builddir)/debugger/libp2debugger.la \
+				$(top_builddir)/net/libp2net.la \
+				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/pythonElements/libp2PythonElements.la \
+				$(top_builddir)/p2core/libp2core.la \
+				$(top_builddir)/eventLoop/libp2eventLoop.la
+
+runOverLog2_CPPFLAGS =		@PYTHON_CSPEC@ \
+				@BOOST_INC@ \
+				-I$(top_builddir)/p2core \
+				-I$(top_builddir)/elements \
+				-I$(top_builddir)/pythonElements \
+				-I$(top_builddir)/net \
+				-I$(top_builddir)/overlog \
+				-I$(top_builddir)/planner \
+				-I$(top_builddir)/eventLoop \
+				-I$(top_builddir)/debugger \
+				-I$(top_builddir)/p2cpp
 
 
-overlog_SOURCES	= overlog.C
-overlog_LDADD =  \
-	$(top_builddir)/planner/libp2planner.la \
-	$(top_builddir)/overlog/libp2overlog.la \
-	$(top_builddir)/net/libp2net.la \
-	$(top_builddir)/elements/libp2elements.la \
-	$(top_builddir)/p2core/libp2core.la \
-	$(top_builddir)/eventLoop/libp2eventLoop.la \
-	$(top_builddir)/debugger/libp2debugger.la
+runPingPong_SOURCES =		runPingPong.C
 
-simple_lookup_SOURCES = simple_lookup.C
-simple_lookup_LDADD =  \
-	$(top_builddir)/net/libp2net.la \
-	$(top_builddir)/elements/libp2elements.la \
-	$(top_builddir)/p2core/libp2core.la \
-	$(top_builddir)/eventLoop/libp2eventLoop.la 
+runPingPong_LDADD =		\
+				@PYTHON_LSPEC@ \
+				-lboost_python \
+				$(top_builddir)/p2cpp/libp2cpp.la \
+				$(top_builddir)/overlog/libp2overlog.la \
+				$(top_builddir)/debugger/libp2debugger.la \
+				$(top_builddir)/net/libp2net.la \
+				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/pythonElements/libp2PythonElements.la \
+				$(top_builddir)/p2core/libp2core.la \
+				$(top_builddir)/eventLoop/libp2eventLoop.la
 
-lookupGenerator_SOURCES = lookupGenerator.C
-lookupGenerator_LDADD =  \
-	$(top_builddir)/net/libp2net.la \
-	$(top_builddir)/elements/libp2elements.la \
-	$(top_builddir)/p2core/libp2core.la \
-	$(top_builddir)/eventLoop/libp2eventLoop.la 
+runPingPong_CPPFLAGS =		@PYTHON_CSPEC@ \
+				@BOOST_INC@ \
+				-I$(top_builddir)/p2core \
+				-I$(top_builddir)/elements \
+				-I$(top_builddir)/pythonElements \
+				-I$(top_builddir)/net \
+				-I$(top_builddir)/overlog \
+				-I$(top_builddir)/planner \
+				-I$(top_builddir)/eventLoop \
+				-I$(top_builddir)/debugger \
+				-I$(top_builddir)/p2cpp
 
-basicelements_SOURCES	= basicelements.C
-basicelements_LDADD =  \
-	$(top_builddir)/elements/libp2elements.la \
-	$(top_builddir)/p2core/libp2core.la \
-	$(top_builddir)/eventLoop/libp2eventLoop.la
 
-testQueue_SOURCES	= testQueue.C
-testQueue_LDADD =  \
-	$(top_builddir)/elements/libp2elements.la \
-	$(top_builddir)/p2core/libp2core.la \
-	$(top_builddir)/eventLoop/libp2eventLoop.la
+overlog_SOURCES	=		overlog.C
 
-udpMessage_SOURCES	= udpMessage.C
-udpMessage_LDADD =  \
-	$(top_builddir)/net/libp2net.la \
-	$(top_builddir)/elements/libp2elements.la \
-	$(top_builddir)/p2core/libp2core.la \
-	$(top_builddir)/eventLoop/libp2eventLoop.la
+overlog_LDADD =			\
+				$(top_builddir)/planner/libp2planner.la \
+				$(top_builddir)/overlog/libp2overlog.la \
+				$(top_builddir)/net/libp2net.la \
+				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/p2core/libp2core.la \
+				$(top_builddir)/eventLoop/libp2eventLoop.la \
+				$(top_builddir)/debugger/libp2debugger.la
 
-udpListen_SOURCES	= udpListen.C
-udpListen_LDADD =  \
-	$(top_builddir)/net/libp2net.la \
-	$(top_builddir)/elements/libp2elements.la \
-	$(top_builddir)/p2core/libp2core.la \
-	$(top_builddir)/eventLoop/libp2eventLoop.la
+simple_lookup_SOURCES =		simple_lookup.C
+
+simple_lookup_LDADD =		\
+				$(top_builddir)/net/libp2net.la \
+				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/p2core/libp2core.la \
+				$(top_builddir)/eventLoop/libp2eventLoop.la 
+
+
+lookupGenerator_SOURCES =	lookupGenerator.C
+
+lookupGenerator_LDADD =		\
+				$(top_builddir)/net/libp2net.la \
+				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/p2core/libp2core.la \
+				$(top_builddir)/eventLoop/libp2eventLoop.la 
+
+
+udpMessage_SOURCES =		udpMessage.C
+
+udpMessage_LDADD =		\
+				$(top_builddir)/net/libp2net.la \
+				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/p2core/libp2core.la \
+				$(top_builddir)/eventLoop/libp2eventLoop.la
+
+
+udpListen_SOURCES =		udpListen.C
+
+udpListen_LDADD =		\
+				$(top_builddir)/net/libp2net.la \
+				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/p2core/libp2core.la \
+				$(top_builddir)/eventLoop/libp2eventLoop.la
+
 
 CLEANFILES = core *.core *~
 
-EXTRA_DIST = .cvsignore \
-		testerr.h \
-		chordDatalog.C \
-		scripts/buildCDF.pl \
-		scripts/plookups.py \
-		scripts/pout.py \
-		scripts/process_output.py \
-		scripts/reset.sh \
-		scripts/rnode.py \
-		scripts/runLocalHostChords.pl \
-		scripts/run_lookups.py \
-		scripts/run_node.py \
-		scripts/crunch/buildCDF.pl \
-		scripts/crunch/consistency.pl \
-		scripts/crunch/crunch.sh \
-		scripts/crunch/hopDist.pl \
-		scripts/crunch/messages.pl \
-		scripts/crunch/stripResults.sh
+
+EXTRA_DIST = 			testerr.h \
+				scripts/buildCDF.pl \
+				scripts/plookups.py \
+				scripts/pout.py \
+				scripts/process_output.py \
+				scripts/reset.sh \
+				scripts/rnode.py \
+				scripts/runLocalHostChords.pl \
+				scripts/run_lookups.py \
+				scripts/run_node.py \
+				scripts/crunch/buildCDF.pl \
+				scripts/crunch/consistency.pl \
+				scripts/crunch/crunch.sh \
+				scripts/crunch/hopDist.pl \
+				scripts/crunch/messages.pl \
+				scripts/crunch/stripResults.sh
+
+AM_CPPFLAGS =			@BOOST_INC@ \
+				-I$(top_builddir)/p2core \
+				-I$(top_builddir)/elements \
+				-I$(top_builddir)/pythonElements \
+				-I$(top_builddir)/net \
+				-I$(top_builddir)/overlog \
+				-I$(top_builddir)/planner \
+				-I$(top_builddir)/eventLoop \
+				-I$(top_builddir)/debugger \
+				-I$(top_builddir)/p2cpp
+
+AM_CXXFLAGS =			-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 
 
+MAINTAINERCLEANFILES =		aclocal.m4 install-sh mkinstalldirs \
+				missing configure config.guess config.sub config.h.in \
+				ltconfig ltmain.sh INSTALL COPYING Makefile.in stamp-h.in
 
 
-INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/elements \
-		-I$(top_builddir)/net -I$(top_builddir)/overlog \
-		-I$(top_builddir)/planner -I$(top_builddir)/eventLoop \
-		-I$(top_builddir)/debugger -I$(top_builddir)/p2cpp
-
-CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@ ${PYTHON_CPPFLAGS}
-
-LDFLAGS=@BOOST_LIB@ @LDFLAGS@ @PYTHON_LDFLAGS@
-
-LIBS = @BOOST_LIB@ \
-       -L$(top_builddir)/elements -L$(top_builddir)/p2core \
-       -L$(top_builddir)/eventLoop -L$(top_builddir)/net \
-       -L$(top_builddir)/overlog -L$(top_builddir)/debugger \
-       -L$(top_builddir)/p2cpp -lcrypto
-
-MAINTAINERCLEANFILES = aclocal.m4 install-sh mkinstalldirs \
-	missing configure config.guess config.sub config.h.in \
-	ltconfig ltmain.sh INSTALL COPYING Makefile.in stamp-h.in

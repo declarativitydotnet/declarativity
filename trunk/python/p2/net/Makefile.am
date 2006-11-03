@@ -14,33 +14,38 @@
 # DESCRIPTION: Makefile for the P2 core elements python library
 #
 
-noinst_LTLIBRARIES = libp2pythonnet.la
+lib_LTLIBRARIES =			libp2pythonnet.la
 
-libp2pythonnet_la_SOURCES = \
-	bw.cpp \
-	basicAck.cpp \
-	cumulativeAck.cpp \
-	cct.cpp \
-	rccr.cpp \
-	rcct.cpp \
-	defrag.cpp \
-	frag.cpp \
-	plsensor.cpp \
-	rdelivery.cpp \
-	odelivery.cpp \
-	dupRemove.cpp \
-	skr.cpp \
-	snetsim.cpp \
-	tman.cpp \
-	tupleseq.cpp \
-	roundTripTimer.cpp \
-	udp.cpp \
-	udp2.cpp
+libp2pythonnet_la_SOURCES =		\
+					bw.cpp \
+					basicAck.cpp \
+					cumulativeAck.cpp \
+					cct.cpp \
+					rccr.cpp \
+					rcct.cpp \
+					defrag.cpp \
+					frag.cpp \
+					plsensor.cpp \
+					rdelivery.cpp \
+					odelivery.cpp \
+					dupRemove.cpp \
+					skr.cpp \
+					snetsim.cpp \
+					tman.cpp \
+					tupleseq.cpp \
+					roundTripTimer.cpp \
+					udp.cpp \
+					udp2.cpp
 
-INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core -I$(top_builddir)/net -I$(top_builddir)/eventLoop
 
-CLEANFILES = core *.core *~
+libp2pythonnet_la_CPPFLAGS =		@BOOST_INC@ \
+					-I$(top_builddir)/p2core \
+					-I$(top_builddir)/net \
+					-I$(top_builddir)/eventLoop
 
-MAINTAINERCLEANFILES = Makefile.in
+CLEANFILES =				core *.core *~
 
-CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@ ${PYTHON_CPPFLAGS}
+MAINTAINERCLEANFILES =			Makefile.in
+
+libp2pythonnet_la_CXXFLAGS =		-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG \
+					@PYTHON_CSPEC@

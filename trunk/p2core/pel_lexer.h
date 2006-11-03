@@ -61,7 +61,6 @@ private:
   void add_const(ValuePtr f);
   void add_tuple_load(int f);
   void add_opcode(u_int32_t op);
-  void log_error(string errstr);
 
   Pel_Lexer(const char *prog);
   virtual ~Pel_Lexer() { yy_delete_buffer(bufstate); };

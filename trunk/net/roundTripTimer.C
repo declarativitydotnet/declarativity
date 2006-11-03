@@ -80,7 +80,7 @@ int RoundTripTimer::push(int port, TuplePtr tp, b_cbv cb)
       SeqNum   seq  = Val_UInt64::cast((*tp)[SEQ+2]);	// Sequence number
       RTTIndex::iterator iter = rttmap_.find(dest);
       if (iter == rttmap_.end()) {
-        std::cerr << "RTT TIMER UNKNOWN DESTINATION: " << dest->toString() << std::endl;
+        TELL_INFO << "RTT TIMER UNKNOWN DESTINATION: " << dest->toString() << std::endl;
       }
       else {
         int32_t delay = dealloc(dest, seq);
@@ -163,7 +163,7 @@ int32_t RoundTripTimer::dealloc(ValuePtr dest, SeqNum seq)
   }
   else {
     // Log event: possibly due to duplicate ack.
-    log(LoggerI::INFO, 0, "RoundTripTimer::push receive unknown ack, possible duplicate"); 
+    log(Reporting::INFO, 0, "RoundTripTimer::push receive unknown ack, possible duplicate"); 
   }
   return delay;
 }

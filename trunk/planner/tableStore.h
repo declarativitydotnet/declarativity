@@ -1,4 +1,4 @@
-// -*- c-basic-offset: 2; related-file-name: "ol_context.C" -*-
+// -*- c-basic-offset: 2; related-file-name: "tableStore.C" -*-
 /*
  * @(#)$Id$
  *
@@ -38,8 +38,18 @@ public:
 
   std::set<string> getWatchTables() { return _ctxt->getWatchTables(); };
   OL_Context::TableInfoMap* getTableInfos()  { return _tableInfos;   };
-  void initTables();
-  void createTable(OL_Context::TableInfo* ti);
+
+
+  /** Creates an empty table for a given table definition */
+  void
+  createTable(OL_Context::TableInfo* ti);
+
+
+  /** Creates empty tables for all tables definitions recorded so far */
+  void
+  initTables();
+
+
   OL_Context::TableInfo* getTableInfo(string tableName);
   void addTableInfo(OL_Context::TableInfo* ti) {  
     _tableInfos->insert(std::make_pair(ti->tableName, ti));

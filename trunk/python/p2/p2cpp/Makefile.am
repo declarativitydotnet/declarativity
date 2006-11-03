@@ -10,19 +10,25 @@
 #  
 #
 
-noinst_LTLIBRARIES = libp2pythoncpp.la
+lib_LTLIBRARIES =			libp2pythoncpp.la
 
-libp2pythoncpp_la_SOURCES = \
-	p2.cpp
+libp2pythoncpp_la_SOURCES =		\
+					p2.cpp
 
-INCLUDES = @BOOST_INC@ -I$(top_builddir)/p2core \
-                       -I$(top_builddir)/elements \
-                       -I$(top_builddir)/p2cpp \
-                       -I$(top_builddir)/eventLoop \
-                       -I$(top_builddir)/overlog 
 
-CLEANFILES = core *.core *~
+libp2pythoncpp_la_CPPFLAGS =		@BOOST_INC@ \
+					-I$(top_builddir)/p2core \
+					-I$(top_builddir)/elements \
+					-I$(top_builddir)/overlog \
+					-I$(top_builddir)/p2cpp \
+					-I$(top_builddir)/eventLoop
 
-MAINTAINERCLEANFILES = Makefile.in
+CLEANFILES =				core *.core *~
 
-CXXFLAGS= -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG  @CXXFLAGS@ ${PYTHON_CPPFLAGS}
+MAINTAINERCLEANFILES =			Makefile.in
+
+libp2pythoncpp_la_CXXFLAGS =		-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG \
+					@PYTHON_CSPEC@
+
+
+

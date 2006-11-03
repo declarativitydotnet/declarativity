@@ -47,7 +47,7 @@ Aggregate::listener(TuplePtr t)
 
   // If there's a pull callback, call it
   if (_pullCallback) {
-    log(LoggerI::INFO, 0, "listener: wakeup puller");
+    log(Reporting::INFO, 0, "listener: wakeup puller");
     _pullCallback();
     _pullCallback = 0;
   }
@@ -64,11 +64,11 @@ Aggregate::pull(int port, b_cbv cb)
     // Nope, no pending update.  Deal with underruns.
     if (!_pullCallback) {
       // Accept the callback
-      log(LoggerI::INFO, 0, "pull: raincheck");
+      log(Reporting::INFO, 0, "pull: raincheck");
       _pullCallback = cb;
     } else {
       // I already have a pull callback
-      log(LoggerI::INFO, 0, "pull: callback underrun");
+      log(Reporting::INFO, 0, "pull: callback underrun");
     }
     return TuplePtr();
   } else {

@@ -30,7 +30,7 @@ TuplePtr Unmarshal::simple_action(TuplePtr p)
 {
   // Get first tuple field
   if (p->size() == 0) {
-    log(LoggerI::WARN, -1, "Input tuple has no first field");
+    log(Reporting::WARN, -1, "Input tuple has no first field");
     return TuplePtr();
   }
 

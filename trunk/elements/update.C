@@ -27,7 +27,7 @@ Update::Update(string name,
 void
 Update::listener(TuplePtr t)
 {
-  log(LoggerI::WORDY, 0, "Listener " + t->toString());
+  log(Reporting::WORDY, 0, "Listener " + t->toString());
   _updateBuffer.push_back(t);
   if (_pullCB) {
     _pullCB();
@@ -49,7 +49,7 @@ Update::pull(int port, b_cbv cb)
   } else {
     TuplePtr retTuple = _updateBuffer.front();
     _updateBuffer.pop_front();
-    log(LoggerI::WORDY, 0, "Pull returns " + retTuple->toString());
+    log(Reporting::WORDY, 0, "Pull returns " + retTuple->toString());
     return retTuple;
   }
 }

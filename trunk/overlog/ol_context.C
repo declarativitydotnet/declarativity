@@ -18,8 +18,7 @@
 #include "ol_lexer.h"
 #include "val_uint32.h"
 #include "tuple.h"
-#define DEBUG_OFF
-#include "trace.h"
+#include "reporting.h"
 
 int OL_Context::ruleCount = 0;
 
@@ -82,7 +81,7 @@ OL_Context::rule(Parse_Term *lhs,
                  bool deleteFlag,
                  Parse_Expr *n) 
 {
-  TRC_FN;
+  TRACE_FUNCTION;
   Parse_Functor *h    = dynamic_cast<Parse_Functor*>(lhs);
   string     ruleName    = (n) ? n->v->toString() : "";
   int     fict_varnum = 1;		// Counter for inventing anonymous variables. 
@@ -242,20 +241,20 @@ void OL_Context::parse_stream(std::istream *str)
 
 void OL_Context::error(string msg)
 {
-  std::cerr << "PARSER ERROR (line " << lexer->line_num() << "): " << msg << "\n";
+  TELL_ERROR << "PARSER ERROR (line " << lexer->line_num() << "): " << msg << "\n";
   errors.push_back(new OL_Context::Error(lexer->line_num(), msg));
 }
 
 void OL_Context::watch(Parse_Expr *w)
 {
-  std::cout << "Add watch variable " << w->toString() << "\n";
+  TELL_INFO << "Add watch variable " << w->toString() << "\n";
   watchTables.insert(w->v->toString());
 }
 
 void
 OL_Context::traceTuple(Parse_Expr *w)
 {
-  std::cout << "Add trace variable " << w->toString() << "\n";
+  TELL_INFO << "Add trace variable " << w->toString() << "\n";
   tuplesToTrace.insert(w->v->toString());
 }
 
@@ -263,7 +262,7 @@ OL_Context::traceTuple(Parse_Expr *w)
 void
 OL_Context::traceTable(Parse_Expr *w)
 {
-  std::cout << "Add traced table " << w->toString() << "\n";
+  TELL_INFO << "Add traced table " << w->toString() << "\n";
   tablesToTrace.insert(w->v->toString());
 }
 
@@ -305,9 +304,9 @@ OL_Context::table(Parse_Expr *name,
   
   tables->insert(std::make_pair(tableInfo->tableName, tableInfo));
   
-  DBG("Materialize " << tableInfo->tableName << "/"
-      << ", timeout " << tableInfo->timeout
-      << ", size " << tableInfo->size); 
+  TELL_WORDY << "Materialize " << tableInfo->tableName << "/"
+             << ", timeout " << tableInfo->timeout
+             << ", size " << tableInfo->size << "\n"; 
 }
 
 //
@@ -339,8 +338,6 @@ void OL_Context::fact(Parse_Term *term)
   tpl->freeze();
   facts.push_back(tpl);
 
-  DBG("Fact: " << name->v->toString() << " <- " << tpl->toString());
-    
   fact_error:
     delete name;
     delete args;
@@ -350,6 +347,6 @@ void OL_Context::fact(Parse_Term *term)
 void OL_Context::query( Parse_Term *term) 
 {
   singleQuery = dynamic_cast<Parse_Functor*>(term);
-  std::cout << "Add query " << singleQuery->toString() << "\n";  
+  TELL_INFO << "Add query " << singleQuery->toString() << "\n";  
 }
 

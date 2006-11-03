@@ -152,7 +152,7 @@ REMOVABLE_INLINE void ODelivery::out_cb()
  */
 REMOVABLE_INLINE void ODelivery::flushConnectionQ(ValuePtr src)
 {
-  std::cerr << "FLUSH CONNECTION QUEUE CALLED" << std::endl;
+  TELL_INFO << "FLUSH CONNECTION QUEUE CALLED" << std::endl;
   ConnectionPtr cp = lookup(src);
   cp->tcb_ = NULL;
 
@@ -166,7 +166,7 @@ REMOVABLE_INLINE void ODelivery::flushConnectionQ(ValuePtr src)
   /** Check if the connection is dead */
   if (cp->queue_.size() == 0 && 
       cp->touch_duration() > CONNECTION_TIMEOUT) {
-    std::cerr << "REMOVING CONNECTION" << std::endl;
+    TELL_INFO << "REMOVING CONNECTION" << std::endl;
     unmap(src);
   }
 }

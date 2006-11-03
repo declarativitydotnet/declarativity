@@ -21,8 +21,8 @@
 #include "csvparser.h"
 
 #include "val_str.h"
-#include "trace.h"
 #include <boost/regex.hpp>
+#include "reporting.h"
 
 //
 // What are these queue parameters then?  Well...
@@ -89,13 +89,13 @@ int CSVParser::push(int port, TuplePtr t, b_cbv cb)
   _push_cb = cb;
   
   if (t->size() != 1) {
-    DBG("Error: tuple is not of size 1");
+    TELL_WORDY << "Error: tuple is not of size 1\n";
   } else {
     _acc += Val_Str::cast((*t)[0]);
     while(try_to_parse_line());
   }
   if (_push_blocked) {
-    DBG("Error: push after push has been blocked.");
+    TELL_WORDY << "Error: push after push has been blocked.\n";
     return 0;
   } else if ( _q.size() > MAX_Q_SIZE ) {
     _push_blocked = true;
@@ -110,23 +110,23 @@ int CSVParser::push(int port, TuplePtr t, b_cbv cb)
 //
 int CSVParser::try_to_parse_line()
 {
-  TRC_FN;
+  TRACE_FUNCTION;
   // Do we have a complete line in the buffer?
   boost::smatch m;
   if (regex_search(_acc,m,_re_line)) {
-    TRC("Got a line <" << m[1] << ">");
+    TRACE_WORDY << "Got a line <" << m[1] << ">\n";
     TuplePtr t = Tuple::mk();
     string line = m[1];
     _acc = _acc.substr(m[0].length());
     if (regex_match(line, m, _re_comm)) {
-      TRC("Comment: discarding.");
+      TRACE_WORDY << "Comment: discarding.\n";
       return 1;
     }
     while( line.length() > 0) {
-      TRC("Remaining line is <" << line << ">");
+      TRACE_WORDY << "Remaining line is <" << line << ">\n";
       { 
 	if (regex_search(line,m,_re_qstr)) {
-	  TRC("Got a quoted string <" << m[1] << ">");
+	  TRACE_WORDY << "Got a quoted string <" << m[1] << ">\n";
 	  t->append(Val_Str::mk(m[1]));
 	  line = line.substr(m[0].length());
 	  continue;
@@ -134,13 +134,13 @@ int CSVParser::try_to_parse_line()
       }
       {
 	if (regex_search(line,m,_re_tokn)) {
-	  TRC("Got a token <" << m[1] << ">");
+	  TRACE_WORDY << "Got a token <" << m[1] << ">\n";
 	  t->append(Val_Str::mk(m[1]));
 	  line = line.substr(m[0].length());
 	  continue;
 	}
       }
-      TRC("Don't understand string <" << line << ">");
+      TRACE_WORDY << "Don't understand string <" << line << ">\n";
       line = "";
     }
     // Push the tuple we have
@@ -152,7 +152,7 @@ int CSVParser::try_to_parse_line()
     }
     return 1;
   } else {
-    TRC("Don't yet have a whole line <" << _acc << ">");
+    TRACE_WORDY << "Don't yet have a whole line <" << _acc << ">\n";
     return 0;
   }
   return 0;

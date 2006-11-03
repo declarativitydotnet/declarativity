@@ -55,8 +55,8 @@ void RuleStrand::aggWrapperElement(Plumber::DataflowPtr conf, ElementSpecPtr agg
   _aggWrapperSpec = aggWrapperSpec;
 
   if (_elementChain.size() == 0) {
-    warn << "Rule strand " << _strandID 
-	 << " cannot have an agg wrap over an empty strand\n";
+    TELL_WARN << "Rule strand " << _strandID 
+              << " cannot have an agg wrap over an empty strand\n";
     exit(-1);
   }
 

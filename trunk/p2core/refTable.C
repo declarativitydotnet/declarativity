@@ -16,6 +16,7 @@
  */
 
 #include "refTable.h"
+#include "reporting.h"
 
 ////////////////////////////////////////////////////////////
 // Constructors
@@ -32,7 +33,7 @@ RefTable::RefTable(std::string tableName,
 /** Empty out all indices and kill their heap-allocated components */
 RefTable::~RefTable()
 {
-  //  std::cout << "Destroying table " << _name << "\n";
+  //  TELL_WORDY << "Destroying table " << _name << "\n";
 
   ////////////////////////////////////////////////////////////
   // Secondary indices
@@ -86,7 +87,7 @@ RefTable::~RefTable()
   _primaryIndex.clear();
   
 
-  //  std::cout << "Destroyed table " << _name << "\n";
+  //  TELL_WORDY << "Destroyed table " << _name << "\n";
 }
 
 

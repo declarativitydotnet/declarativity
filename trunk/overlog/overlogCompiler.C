@@ -80,7 +80,7 @@ string OverlogCompiler::readScript( string fileName )
 
   if ( !file.is_open() )
   {
-    std::cout << "Cannot open script file, \"" << fileName << "\"!" << std::endl;
+    TELL_ERROR << "Cannot open script file, \"" << fileName << "\"!" << std::endl;
     return script;
   }
   else

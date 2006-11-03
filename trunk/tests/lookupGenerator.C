@@ -83,11 +83,11 @@ struct LookupGenerator : public FunctorSource::Generator
   string _prefix;
 };
 
-void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> lookup,
+void issue_lookup(boost::shared_ptr<LookupGenerator> lookup,
                   double delay, int times)
 {
   eventLoopInitialize();
-  PlumberPtr plumber(new Plumber(level));
+  PlumberPtr plumber(new Plumber());
   Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
 
   ElementSpecPtr func    = conf->addElement(ElementPtr(new FunctorSource(string("Source"), lookup.get())));
@@ -120,7 +120,7 @@ void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> looku
   conf->hookUp(route, 0, udpTx, 0);
    
   if (plumber->install(conf) != 0) {
-    std::cout << "** Failed to initialize correct spec\n";
+    TELL_ERROR << "** Failed to initialize correct spec\n";
     return;
   }
 
@@ -130,22 +130,23 @@ void issue_lookup(LoggerI::Level level, boost::shared_ptr<LookupGenerator> looku
 
 int main(int argc, char **argv)
 {
-  LoggerI::Level level = LoggerI::ALL;
+  Reporting::Level level;
   if (argc < 9) {
-    std::cout << "Usage: lookupGenerator logLevel seed host firstPort ports delay times eventPrefix \n";
+    TELL_ERROR << "Usage: lookupGenerator logLevel seed host firstPort ports delay times eventPrefix \n";
     exit(0);
   }
 
   int seed = 0;
-  level = LoggerI::levelFromName[string(argv[1])];
+  level = Reporting::levelFromName[string(argv[1])];
+  Reporting::setLevel(level);
   seed = atoi(argv[2]);
   srandom(seed);
-  issue_lookup(level, boost::shared_ptr<LookupGenerator>(new LookupGenerator(argv[3],
-                                                                             atoi(argv[4]),
-                                                                             atoi(argv[5]),
-                                                                             argv[8])),
-                                                                             atof(argv[6]),
-                                                                             atoi(argv[7]));
+  issue_lookup(boost::shared_ptr<LookupGenerator>(new LookupGenerator(argv[3],
+                                                                      atoi(argv[4]),
+                                                                      atoi(argv[5]),
+                                                                      argv[8])),
+               atof(argv[6]),
+               atoi(argv[7]));
 
   return 0;
 }

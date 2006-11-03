@@ -103,7 +103,7 @@ int Mux::push(int port, TuplePtr p, b_cbv cb)
 
       // We have already received a buffered tuple from that input.  Bad
       // input!
-      log(LoggerI::WARN, -1, "pull: Overrun on port");
+      log(Reporting::WARN, -1, "pull: Overrun on port");
       return 0;
     }
   } else {

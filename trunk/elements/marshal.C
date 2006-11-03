@@ -39,7 +39,7 @@ TuplePtr Marshal::simple_action(TuplePtr p)
   TuplePtr t = Tuple::mk();
   if (t == 0) {
     // Couldn't create one. Memory problems?
-    log(LoggerI::ERROR, -1, "Couldn't allocate new tuple");
+    log(Reporting::ERROR, -1, "Couldn't allocate new tuple");
     return TuplePtr();
   } else {
     // Stick the string into a tuple field and into the tuple

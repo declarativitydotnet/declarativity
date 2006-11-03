@@ -38,7 +38,7 @@ string readScript( string fileName )
 
   if ( !file.is_open() )
   {
-    std::cout << "Cannot open Ping Overlog file, \"" << fileName << "\"!" << std::endl;
+    TELL_ERROR << "Cannot open Ping Overlog file, \"" << fileName << "\"!" << std::endl;
     return script;
   }
   else
@@ -74,22 +74,22 @@ TuplePtr tup()
 
 void ping_cb(TuplePtr tp)
 {
-  std::cerr << "RECEIVED PING TUPLE: " << tp->toString() << std::endl;
-  // std::cerr << "CANCELING CALLBACK: " << std::endl;
+  TELL_INFO << "RECEIVED PING TUPLE: " << tp->toString() << std::endl;
+  // TELL_INFO << "CANCELING CALLBACK: " << std::endl;
   // p2->unsubscribe(ping_handle); 
   // p2->tuple(tup());
 }
 
 void test_cb(TuplePtr tp)
 {
-  std::cerr << "RECEIVED TEST TUPLE: " << tp->toString() << std::endl;
+  TELL_INFO << "RECEIVED TEST TUPLE: " << tp->toString() << std::endl;
   ping_handle = p2->subscribe("ping", boost::bind(&ping_cb, _1));
 }
 
 int main(int argc, char **argv)
 {
   if (argc < 4) {
-    std::cerr << "Usage:\n\t runPingPong <pingPongDatalogFile> <hostname> <port>" << std::endl;
+    TELL_ERROR << "Usage:\n\t runPingPong <pingPongDatalogFile> <hostname> <port>" << std::endl;
     exit(-1);
   }
   
@@ -97,11 +97,10 @@ int main(int argc, char **argv)
   string hostname(argv[2]);
   string port(argv[3]);
   p2 = new P2(hostname, port,
-              P2::ORDERED | P2::RCC | P2::RELIABLE,
-              LoggerI::NONE);
+              P2::ORDERED | P2::RCC | P2::RELIABLE);
 
   p2->install("overlog", ping);
-  std::cerr << "INSTALLED OVERLOG" << std::endl;
+  TELL_INFO << "INSTALLED OVERLOG" << std::endl;
   ping_handle = p2->subscribe("ping", boost::bind(&ping_cb, _1));
   p2->subscribe("test", boost::bind(&test_cb, _1));
   p2->run();

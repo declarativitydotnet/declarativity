@@ -27,7 +27,7 @@ Refresh::Refresh(string name,
 void
 Refresh::listener(TuplePtr t)
 {
-  log(LoggerI::WORDY, 0, "Listener " + t->toString());
+  log(Reporting::WORDY, 0, "Listener " + t->toString());
   _refreshBuffer.push_back(t);
   if (_pullCB) {
     _pullCB();
@@ -49,7 +49,7 @@ Refresh::pull(int port, b_cbv cb)
   } else {
     TuplePtr retTuple = _refreshBuffer.front();
     _refreshBuffer.pop_front();
-    log(LoggerI::WORDY, 0, "Pull returns " + retTuple->toString());
+    log(Reporting::WORDY, 0, "Pull returns " + retTuple->toString());
     return retTuple;
   }
 }

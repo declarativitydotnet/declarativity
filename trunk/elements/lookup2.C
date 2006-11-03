@@ -51,18 +51,18 @@ Lookup2::push(int port,
     assert((_lookupTupleValue == NULL) &&
            (_iterator == NULL));
     
-    log(LoggerI::WORDY, 0, "push: lookup tuple is no longer null");
+    log(Reporting::WORDY, 0, "push: lookup tuple is no longer null");
     
     // Establish the lookup
     _lookupTuple = t;
     _lookupTupleValue = Val_Tuple::mk(t);
     
     // Groovy.  Signal puller that we're ready to give results
-    log(LoggerI::INFO, 0, "push: accepted lookup for tuple "+ _lookupTuple->toString());
+    log(Reporting::INFO, 0, "push: accepted lookup for tuple "+ _lookupTuple->toString());
     
     // Unblock the puller if one is waiting
     if (_pullCallback) {
-      log(LoggerI::INFO, 0, "push: wakeup puller");
+      log(Reporting::INFO, 0, "push: wakeup puller");
       _pullCallback();
       _pullCallback = 0;
     }
@@ -84,7 +84,7 @@ Lookup2::push(int port,
     assert(_iterator != NULL);
     assert(_lookupTuple.get() != NULL);
     assert(_lookupTupleValue.get() != NULL);
-    log(LoggerI::WARN, 0, "push: lookup overrun");
+    log(Reporting::WARN, 0, "push: lookup overrun");
     return 0;
   }
 }
@@ -105,11 +105,11 @@ Lookup2::pull(int port,
     
     if (!_pullCallback) {
       // Accept the callback
-      log(LoggerI::INFO, 0, "pull: raincheck");
+      log(Reporting::INFO, 0, "pull: raincheck");
       _pullCallback = cb;
     } else {
       // I already have a pull callback
-      log(LoggerI::INFO, 0, "pull: callback underrun");
+      log(Reporting::INFO, 0, "pull: callback underrun");
     }
     if (_compCallback) {
       _compCallback();
@@ -123,7 +123,7 @@ Lookup2::pull(int port,
     //        it != _table->end();
     //        ++it)
     //     dump << "  [" << ((*it).first)->toString() << ", " << ((*it).second)->toString() << "]\n";
-    //   log(LoggerI::INFO, 0, dump);
+    //   log(Reporting::INFO, 0, dump);
     // }
     assert(_iterator);
 
@@ -134,7 +134,7 @@ Lookup2::pull(int port,
       // Empty search. Don't try to dereference the iterator.  Just
       // set the result to the empty tuple, to be tagged later
       /*
-        std::cerr << "\tNO MORE TUPLES IN ITERATOR" << " IN TABLE " << _table->name << " iterator " << _iterator 
+        TELL_INFO << "\tNO MORE TUPLES IN ITERATOR" << " IN TABLE " << _table->name << " iterator " << _iterator 
         << " TABLE SIZE = " << _table->size() 
         << " TABLE ADDRESS " << _table << std::endl;
       */
@@ -143,7 +143,7 @@ Lookup2::pull(int port,
       // This lookup has at least one result.
       t = _iterator->next();
       /*
-        std::cerr << "\tLOOKUP KEY " << _key->toString() << " IN TABLE " << _table->name << " iterator " << _iterator
+        TELL_INFO << "\tLOOKUP KEY " << _key->toString() << " IN TABLE " << _table->name << " iterator " << _iterator
         << " RETURN TUPLE " << t->toString() << " TABLE SIZE = " << _table->size() 
         << " TABLE ADDRESS " << _table << std::endl;
       */
@@ -158,7 +158,7 @@ Lookup2::pull(int port,
 
     // Now, are we done with this search?
     if (_iterator->done()) {
-      log(LoggerI::INFO, 0, "pull: Finished search on tuple "
+      log(Reporting::INFO, 0, "pull: Finished search on tuple "
           + _lookupTuple->toString());
       
       // Tag the result tuple
@@ -168,11 +168,11 @@ Lookup2::pull(int port,
       _lookupTuple.reset();
       _lookupTupleValue.reset();
       _iterator.reset();
-      log(LoggerI::WORDY, 0, "push: iterator now is null");
+      log(Reporting::WORDY, 0, "push: iterator now is null");
       
       // Wake up any pusher
       if (_pushCallback) {
-        log(LoggerI::INFO, 0, "pull: wakeup pusher");
+        log(Reporting::INFO, 0, "pull: wakeup pusher");
         _pushCallback();
         _pushCallback = 0;
       }
