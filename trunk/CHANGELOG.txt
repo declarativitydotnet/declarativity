@@ -1,0 +1,53 @@
+
+Release 0.7.4
+
+- Broke out elements dependent on Python into pythonElements
+
+- Reorganized automake files to remove deprecated variables such as
+INCLUDES, to remove duplicate PYTHON macros, to remove any variable
+definitions for user-specified variables (e.g., CXXFLAGS and LDFLAGS),
+to remove user-specifiable parameters (e.g., -Wall)
+
+- Added support for .dylib libraries in acinclude.m4
+
+- Added support for alternate OpenSSL locations in automake/autoconf
+
+- Added an automake dependency on Automake version 1.9.2 and above.
+
+- Replaced most direct uses of std::cout/cerr etc. for the TELL_*
+macros, which allow overriding via the new Reporting static class.
+Removed most functionality from LoggerI.  Reporting state is now set
+directly via Reporting, not through the plumber, elements, etc.
+
+- Reimplemented aggwrap (called Aggwrap2) to use modular aggregate
+functions, to implement correctly empty-set aggregates, and to handle
+group-by values and interspersed aggregate fields correctly. This will
+soon replace the old Aggwrap in planner-generated dataflow graphs.
+
+- Removed toDot specialization into the elements themselves to remove
+cyclical dependence.
+
+- Fixed bug in aggCount whereby _current was used uninitialized.
+
+- Added AggFactory exception for not-found aggregates. Now the AggWrap
+constructor and the aggregate function throw that exception, which is
+properly caught.
+
+- Now min/max aggregates return Val_Null on empty sets.
+
+- Fixed table aggregates to deal correctly with empty-set groups.
+
+- Added machinery into tables that flushes any empty-set aggregate
+updates at the beginning of time (e.g., for any aggregate COUNT views
+that should contain a correct tuple at the beginning).
+
+- Added f_match in OverLog (from JMH).
+
+- Removed many legacy tests/ programs.
+
+- Added machinery for casting values in test scripts for tables and
+aggregates (in unitTests)
+
+- Added a tester for AggWrap2 in unitTests.
+
+
