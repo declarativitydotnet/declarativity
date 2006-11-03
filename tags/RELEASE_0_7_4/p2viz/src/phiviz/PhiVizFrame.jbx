@@ -1,0 +1,36 @@
+[PropertyInfo]
+attackerButton,JRadioButton,false,false, , ,false,<default>
+boxDrawnX_,int,false,false, , ,false,<default>
+boxDrawnY_,int,false,false, , ,false,<default>
+contentPaneBorder,Border,false,false, , ,false,<default>
+contentPaneGridBagLayout,GridBagLayout,false,false, , ,false,<default>
+controlGridBagLayout,GridBagLayout,false,false, , ,false,<default>
+controlPanel,JPanel,false,false, , ,false,<default>
+gridBagLayout1,GridBagLayout,false,false, , ,false,<default>
+gridBagLayout2,GridBagLayout,false,false, , ,false,<default>
+HEIGHT,int,false,false, , ,false,<default>
+mapGridBagLayout1,GridBagLayout,false,false, , ,false,<default>
+mapPanel,JPanel,false,false, , ,false,<default>
+mousePressedX_,int,false,false, , ,false,<default>
+mousePressedY_,int,false,false, , ,false,<default>
+phiPanel,PhiPanel,false,false, , ,false,<default>
+phiScroller,JScrollPane,false,false, , ,false,<default>
+siteList,JList,false,false, , ,false,<default>
+siteListScroller,JScrollPane,false,false, , ,false,<default>
+siteNameArray_,String[],false,false, , ,false,<default>
+siteNames_,TreeMap,false,false, , ,false,<default>
+statusField,JTextField,false,false, , ,false,<default>
+statusLabel,JLabel,false,false, , ,false,<default>
+statusScrollPane,JScrollPane,false,false, , ,false,<default>
+victimAttackerGroup,ButtonGroup,false,false, , ,false,<default>
+victimAttackerPanel,JPanel,false,false, , ,false,<default>
+victimButton,JRadioButton,false,false, , ,false,<default>
+WIDTH,int,false,false, , ,false,<default>
+zoomLabel,JLabel,false,false, , ,false,<default>
+zoomPanel,JPanel,false,false, , ,false,<default>
+zoomSlider,JSlider,false,false, , ,false,<default>
+[IconNames]
+
+
+
+
