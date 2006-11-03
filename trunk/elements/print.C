@@ -26,6 +26,6 @@ Print::~Print()
 
 TuplePtr Print::simple_action(TuplePtr p)
 {
-  TELL_WARN << "Print[" << _prefix << "]:  [" << p->toString() << "]\n";
+  TELL_OUTPUT << "Print[" << _prefix << "]:  [" << p->toString() << "]\n";
   return p;
 }

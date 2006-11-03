@@ -152,11 +152,11 @@ startOverLogDataflow(boost::shared_ptr< OL_Context> ctxt,
   std::vector<RuleStrand*> ruleStrands = planner->generateRuleStrands(ectxt);
   
   for (unsigned k = 0; k < ruleStrands.size(); k++) {
-    std::cout << ruleStrands.at(k)->toString();
+    TELL_INFO << ruleStrands.at(k)->toString();
   }
   planner->setupNetwork(udp);
   planner->registerAllRuleStrands(ruleStrands);
-  std::cout << planner->getNetPlanner()->toString() << "\n";
+  TELL_INFO << planner->getNetPlanner()->toString() << "\n";
 
   initializeBaseTables(ctxt, tableStore, localAddress, environment);
   
@@ -243,7 +243,7 @@ main(int argc, char **argv)
   string myAddress(argv[4]);
   
   const char * theString = argv[4];
-  std::cout << theString << "\n";
+  TELL_INFO << theString << "\n";
   char * theColon = strchr(theString, ':');
   if (theColon == NULL) {
     // Couldn't find the correct format

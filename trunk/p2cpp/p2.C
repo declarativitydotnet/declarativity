@@ -24,6 +24,7 @@
 #include "plmb_confgen.h"
 #include "val_str.h"
 #include <iostream>
+#include "reporting.h"
 
 P2::P2(string hostname,
        string port,
@@ -39,7 +40,7 @@ P2::P2(string hostname,
            (boost::python::borrowed(PyImport_ImportModule("dfparser"))));
   _parser = parser;
   std::string stubProgram = stub(hostname, port);
-  std::cout << "Created stub p2dl program: " << stubProgram << "\n";
+  TELL_INFO << "Created stub p2dl program: " << stubProgram << "\n";
   install("dataflow", stubProgram);
   _tupleSourceInterface = dynamic_cast<TupleSourceInterface*>( 
     _plumber->dataflow("P2")->find("tupleSourceInterface")->element().get());
@@ -88,7 +89,7 @@ int P2::install(string type, string program)
     ostringstream script;
     compileOverlog(program, script);
     program = script.str();
-    std::cout<< " Compiled P2DL program\n" << program << "\nDONE---\n";
+    TELL_INFO << " Compiled P2DL program\n" << program << "\nDONE---\n";
     type = "dataflow";
   }
 

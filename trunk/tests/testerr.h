@@ -16,7 +16,9 @@
 #ifndef __TESTERR_H__
 #define __TESTERR_H__
 
-#define FAIL std::cerr << __FILE__ << ":" << __LINE__ << ": **"
-#define TIMING std::cout << "Time: "
+#include "reporting.h"
+
+#define FAIL TELL_ERROR << __FILE__ << ":" << __LINE__ << ": **"
+#define TIMING TELL_INFO << "Time: "
 
 #endif

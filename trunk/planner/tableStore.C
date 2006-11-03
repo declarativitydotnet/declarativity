@@ -65,7 +65,7 @@ TableStore::createTable(OL_Context::TableInfo* tableInfo)
 			      key,
 			      tableSize,
 			      expiration));
-    std::cout << "Create table " << tableInfo->toString() << "\n";
+    TELL_INFO << "Create table " << tableInfo->toString() << "\n";
   }
 
   _tables->insert(std::make_pair(tableInfo->tableName, newTable));

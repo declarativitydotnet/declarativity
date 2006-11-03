@@ -860,7 +860,7 @@ void generateAggWrap(PlanContext* pc)
 
 void compileECARule(PlanContext* pc)
 {
-  std::cout << "Process rule " << pc->getRule()->toString() << "\n";
+  TELL_INFO << "Process rule " << pc->getRule()->toString() << "\n";
 
   initializeAggWrap(pc);
 
@@ -884,7 +884,7 @@ void compileECARule(PlanContext* pc)
 
 
 
-  std::cout << "Finish processing rule " << pc->getRule()->toString() << "\n";
+  TELL_INFO << "Finish processing rule " << pc->getRule()->toString() << "\n";
 }
 
 #endif
