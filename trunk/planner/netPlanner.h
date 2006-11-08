@@ -67,10 +67,9 @@
 class NetPlanner
 {
 public:
-  NetPlanner(Plumber::DataflowPtr conf, string nodeID, 
-	     FILE* outputDebugFile) :
-    _conf(conf)
-  { _nodeID = nodeID; _outputDebugFile = outputDebugFile; };
+  NetPlanner(Plumber::DataflowPtr conf, string nodeID)
+    : _conf(conf)
+  { _nodeID = nodeID; };
 
   ~NetPlanner() { }; 
   void generateNetworkElements(boost::shared_ptr<Udp> udp);
@@ -94,7 +93,6 @@ private:
   void generateNetworkInElements(boost::shared_ptr<Udp> udp);
 
   string _nodeID;
-  FILE* _outputDebugFile;
   Plumber::DataflowPtr _conf;
   std::vector<ElementSpecPtr> _networkIn, _networkOut;
   ReceiverInfoMap _receiverInfo;  

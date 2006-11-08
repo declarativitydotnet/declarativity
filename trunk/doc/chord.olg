@@ -1,15 +1,22 @@
 /*
- * (@#)$Id$
- *
- * Copyright (c) 2005 Intel Corporation
- *
- * This file is distributed under the terms in the attached INTEL-LICENSE file.
+ * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
  * 
- * DESCRIPTION: P2Chord in Overlog
+ * DESCRIPTION: P2Chord in OverLog
  *
+ * Execute first node with
+ * tests/runOverLog -o doc/chord.olg -D LANDMARK=\"NIL\" -D LOCALADDRESS=\"<myhost>:<myport>\" -n <myhost> -p <myport> -D NODEID=<mynodeid>
+ *
+ * Execute joining nodes with
+ * tests/runOverLog -o doc/chord.olg -D LANDMARK=\"<landmarkhost>:<landmarkport>\" -D LOCALADDRESS=\"<myhost>:<myport>\" -n <myhost> -p <myport> -D NODEID=<mynodeid>
+ *
+ * For example, the following starts node localhost:10000 with node ID 0 to join via landmark localhost:10101
+ * tests/runOverLog -o doc/chord.olg -D LANDMARK=\"localhost:10101\" -D LOCALADDRESS=\"localhost:10000\" -n localhost -p 10000 -DNODEID=0x0I
  */
 
 /* The base tuples */
@@ -27,12 +34,17 @@ materialize(nextFingerFix, 180, 1, keys(1)).
 
 
 
+/** Preexisting state. My landmark and myself. */
+landmark(LOCALADDRESS, LANDMARK).
+node(LOCALADDRESS, NODEID).
+
+
 /** Lookups */
 
 watch(lookupResults).
 watch(lookup).
 watch(bestLookupDist).
-
+watch(landmark).
 
 l1 lookupResults(@R,K,S,SI,E) :- node(@NI,N),
 				  lookup(@NI,K,R,E), 
@@ -46,7 +58,7 @@ l2 bestLookupDist(@NI,K,R,E,min<D>) :- node(@NI,N),
 					 D:=K - B - 1, 
 					 B in (N,K).
 
-l3 lookup(@min<BI>,K,R,E) :- node(@NI,N),	    
+l3 lookup(min<@BI>,K,R,E) :- node(@NI,N),	    
 			       bestLookupDist(@NI,K,R,E,D), 
 			       finger(@NI,I,B,BI), 
 			       D == K - B - 1,
@@ -154,20 +166,20 @@ c1 joinEvent(@NI,E) :- periodic(@NI,E,1,2).
 
 c2 join(@NI,E) :- joinEvent(@NI,E).
 
-c3 joinReq(@LI,N,NI,E) :- joinEvent(@NI,E),
-			 node(@NI,N), 
-			 landmark(@NI,LI),
-			 LI != "NIL".
+c3 joinReq(@LI,N,NI,E) :- joinEvent(@NI, E),
+	node(@NI, N), 
+	landmark(@NI, LI),
+	LI != "NIL".
 
-c4 succ(@NI,N,NI) :- landmark(@NI,LI),
-		       joinEvent(@NI,E),
-		       node(@NI,N), 
-		       LI == "NIL".
+c4 succ(@NI,N,NI) :- landmark(@NI, LI),
+	joinEvent(@NI, E),
+	node(@NI, N), 
+	LI == "NIL".
 
 c5 lookup(@LI,N,NI,E) :- joinReq(@LI,N,NI,E).
 
 c6 succ(@NI,S,SI) :- join(@NI,E),
-		    lookupResults(@NI,K,S,SI,E).
+	lookupResults(@NI,K,S,SI,E).
 
 
 

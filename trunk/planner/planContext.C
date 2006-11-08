@@ -17,8 +17,8 @@
 #include "planContext.h"
 
 PlanContext::PlanContext(Plumber::DataflowPtr conf, TableStore* tableStore, 
-			 RuleStrand* ruleStrand, string nodeID, FILE* outputDebugFile) :
-  _outputDebugFile(outputDebugFile), _conf(conf)
+			 RuleStrand* ruleStrand, string nodeID) :
+  _conf(conf)
 {
   _tableStore = tableStore;
   _ruleStrand = ruleStrand;

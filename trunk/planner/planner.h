@@ -79,10 +79,9 @@ class Planner
 {
 public:
   Planner(Plumber::DataflowPtr conf, TableStore* catalog, 
-	  bool debug, string nodeID, string outputFile); 
+	  bool debug, string nodeID); 
 
-  ~Planner() { delete _netPlanner; 
-  if (_outputDebugFile != NULL) {fclose(_outputDebugFile); }}
+  ~Planner() { delete _netPlanner; }
 
   std::vector<RuleStrand*> generateRuleStrands(ECA_ContextPtr ectxt);
   void registerRuleStrand(RuleStrand* rs);
@@ -98,7 +97,6 @@ private:
   int _ruleCount;
   NetPlanner* _netPlanner;
   TableStore* _tableStore;
-  FILE* _outputDebugFile;
 };
 
 #endif

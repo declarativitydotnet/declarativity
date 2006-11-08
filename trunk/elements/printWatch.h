@@ -24,8 +24,8 @@
 class PrintWatch : public Element { 
 public:
 
-  PrintWatch(string prefix, std::set<string> tableNames,  FILE*output=NULL);
-  PrintWatch(string prefix, std::vector<string> tableNames,  FILE*output=NULL);
+  PrintWatch(string prefix, std::set<string> tableNames);
+  PrintWatch(string prefix, std::vector<string> tableNames);
 
   ~PrintWatch();
   
@@ -37,11 +37,16 @@ public:
   const char *flow_code() const		{ return "x/x"; }
 
   void watch(string name) 	{ _tableNames.insert(name); }
+
+
+
+
 private:
   /** The prefix to be placed on every printout by this element */
   string _prefix;
+
+
   std::set<string> _tableNames;
-  FILE *_output;
 };
 
 

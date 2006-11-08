@@ -29,74 +29,83 @@
 P2::CallbackHandlePtr ping_handle;
 P2 *p2;
 
-string readScript( string fileName, char* args[] )
+string
+readScript(string fileName,
+           std::vector< std::string > definitions)
 {
-  string script = "";
-  std::ifstream file;
+  string processed;
+  if (fileName == "-") {
+    processed = "stdout.processed";
+  } else {
+    processed = fileName + ".processed";
+  }
+  
 
-  string processed(fileName+".processed");
-  int i = 0;
-  for (i = 0; args[i] != (char*)NULL; i++)
-    ;
-  args[i++] = (char*) fileName.c_str();
-  args[i]   = (char*) processed.c_str();
+  // Turn definitions vector into a cpp argument array.
+  int defSize = definitions.size();
+  char* args[defSize
+             + 1                // for cpp
+             + 2                // for flags -C and -P
+             + 2                // for filenames
+             + 1];              // for the null pointer at the end
 
+  int count = 0;
+
+  args[count++] = "cpp";
+  args[count++] = "-P";
+  args[count++] = "-C";
+
+  for (std::vector< std::string>::iterator i =
+         definitions.begin();
+       i != definitions.end();
+       i++) {
+    args[count] = (char*) (*i).c_str();
+    count++;
+  }
+
+  args[count++] = (char*) fileName.c_str();
+  args[count++] = (char*) processed.c_str();
+  args[count++] = NULL;
+
+
+  // Invoke the preprocessor
   pid_t pid = fork();
   if (pid == -1) {
     TELL_ERROR << "Cannot fork a preprocessor\n";
     exit(1);
-  } 
-  else if (pid == 0) {
+  } else if (pid == 0) {
     if (execvp("cpp", args) < 0) {
       TELL_ERROR << "CPP ERROR" << std::endl;
     }
     exit(1);
-  }
-  else {
+  } else {
     wait(NULL);
   }
-  file.open( processed.c_str() );
 
-  if ( !file.is_open() )
-  {
-    TELL_ERROR << "Cannot open Overlog file, \"" << processed << "\"!" << std::endl;
-    return script;
-  }
-  else
-  {
-    // Get the length of the file
-    file.seekg( 0, std::ios::end );
-    int nLength = file.tellg();
-    file.seekg( 0, std::ios::beg );
 
-    // Allocate  a char buffer for the read.
-    char *buffer = new char[nLength];
-    memset( buffer, 0, nLength );
+  // Read processed script.
+  std::ifstream file;
+  file.open(processed.c_str());
 
-    // read data as a block:
-    file.read( buffer, nLength );
+  if (!file.is_open()) {
+    TELL_ERROR << "Cannot open processed Overlog file \""
+               << processed << "\"!\n";
+    return std::string();
+  } else {
 
-    script.assign( buffer );
+    std::ostringstream scriptStream;
+    std::string line;
+    
+    while(std::getline(file, line)) {
+      scriptStream << line << "\n";
+    }
 
-    delete [] buffer;
     file.close();
+    std::string script = scriptStream.str();
+
+
     return script;
   }
-
-  pid = fork();
-  if (pid == -1) {
-    TELL_ERROR << "Cannot fork a preprocessor\n";
-    exit(1);
-  } 
-  else if (pid == 0) {
-    if (execlp("rm", "rm", "-f", processed.c_str(), (char*) NULL) < 0)
-      TELL_ERROR << "CPP ERROR" << std::endl;
-    exit(1);
-  }
-  else {
-    wait(NULL);
-  }
-  return script;
 }
 
 void watch(TuplePtr tp)
@@ -104,68 +113,85 @@ void watch(TuplePtr tp)
   TELL_INFO << tp->toString() << std::endl;
 }
 
-void print_usage()
-{
-  TELL_ERROR << "Usage: runOverlog [-Dvariable=value [-Dvariable=value [...]]]\n " 
-            << "                 [-w tupleName [-w tupleName [...]]]\n "
-            << "                 -r <reporting level>\n"
-            << "                 <overlogFile> <hostname> <port>" << std::endl;
-}
+static char* USAGE = "Usage:\n\t runOverLog2\n"
+                     "\t\t[-o <overLogFile> (default: standard input)]\n"
+                     "\t\t[-r <loggingLevel> (default: ERROR)]\n"
+                     "\t\t[-n <myipaddr> (default: localhost)]\n"
+                     "\t\t[-p <port> (default: 10000)]\n"
+                     "\t\t[-D<key>=<value>]*\n"
+                     "\t\t[-h (gets usage help)]\n";
 
 int main(int argc, char **argv)
 {
-  if (argc < 4) {
-    print_usage();
-    exit(-1);
-  }
-  // Skip the program name
-  argc--;
-  argv++;
+  string overLogFile("-");
+  string myHostname = "localhost";
+  int port = 10000;
+  std::string portString("10000");
+  std::vector< std::string > definitions;
 
-  char* args[argc+4];
-  for (int i = 0; i < argc+4; i++)
-    args[i] = (char*)NULL;
-  args[0] = "cpp";
-  args[1] = "-P";
+  // Parse command line options
+  int c;
+  while ((c = getopt(argc, argv, "o:r:n:p:D:h")) != -1) {
+    switch (c) {
+    case 'o':
+      overLogFile = optarg;
+      break;
 
-  std::vector<string> watchTuples;
-  for (int a = 2; argc > 0 && argv[0][0] == '-'; argc--, argv++) {
-    if (argv[0][1] == 'D') {
-      args[a++] = argv[0];  
-    } else if (argv[0][1] == 'w') {
-      if (argv[0][2] == '\0') {
-        argc--; argv++;
-        watchTuples.push_back(string(&argv[0][0]));      
+    case 'r':
+      {
+        // My minimum reporting level is optarg
+        std::string levelName(optarg);
+        Reporting::Level level =
+          Reporting::levelFromName[levelName];
+        Reporting::setLevel(level);
       }
-      else {
-        watchTuples.push_back(string(&argv[0][2]));      
-      }
-    } else if (argv[0][1] == 'r') {
-      string levelName(argv[1]);
-      Reporting::Level level =
-        Reporting::levelFromName[levelName];
-      Reporting::setLevel(level);
-      argc--;
-      argv++;
-    } else {
-      print_usage();
+      break;
+
+    case 'n':
+      myHostname = optarg;
+      break;
+
+    case 'p':
+      port = atoi(optarg);
+      portString = string(optarg);
+      break;
+
+    case 'D':
+      definitions.push_back(std::string("-D") + optarg);
+      break;
+
+    case 'h':
+    default:
+      TELL_ERROR << USAGE;
       exit(-1);
     }
   }
+  
+  TELL_INFO << "Running from translated file \"" << overLogFile << "\"\n";
 
-  string program(readScript(argv[0], &args[0]));
-  string hostname(argv[1]);
-  string port(argv[2]);
-  p2 = new P2(hostname, port,
+  std::ostringstream myAddressBuf;
+  myAddressBuf <<  myHostname << ":" << port;
+  std::string myAddress = myAddressBuf.str();
+  TELL_INFO << "My address is \"" << myAddress << "\"\n";
+  
+  TELL_INFO << "My environment is ";
+  for (std::vector< std::string>::iterator i =
+         definitions.begin();
+       i != definitions.end();
+       i++) {
+    TELL_INFO << (*i) << " ";
+  }
+  TELL_INFO << "\n";
+
+  string program(readScript(overLogFile,
+                            definitions));
+
+  p2 = new P2(myHostname, portString,
               P2::NONE);
 
-  TELL_INFO << "INSTALL PROGRAM" << std::endl;
+  TELL_INFO << "INSTALLING PROGRAM" << std::endl;
   p2->install("overlog", program);
   
-  for (std::vector<string>::iterator iter = watchTuples.begin(); 
-       iter != watchTuples.end(); iter++) {
-    p2->subscribe(*iter, boost::bind(&watch, _1));
-  }
   p2->run();
 
   return 0;

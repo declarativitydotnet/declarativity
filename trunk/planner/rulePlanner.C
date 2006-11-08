@@ -105,21 +105,15 @@ void addPrint(PlanContext* pc, string b)
   pc->addElementSpec(print);  
 }
 
-void addWatch(PlanContext* pc, string b)
+void
+addWatch(PlanContext* pc, string b)
 {
   string output = b + "|" + pc->getRule()->_ruleID + "|" + pc->_nodeID;
-  if (pc->_outputDebugFile == NULL) {
-    ElementSpecPtr print = 
-      pc->createElementSpec(ElementPtr(new PrintWatch(output,
-						      pc->_tableStore->getWatchTables())));
-    pc->addElementSpec(print);  
-  } else {
-    ElementSpecPtr print = 
-      pc->createElementSpec(ElementPtr(new PrintWatch(output,
-						      pc->_tableStore->getWatchTables(), 
-						      pc->_outputDebugFile)));
-    pc->addElementSpec(print);  
-  }
+  ElementSpecPtr print = 
+    pc->createElementSpec(ElementPtr(new PrintWatch(output,
+                                                    pc->_tableStore->
+                                                    getWatchTables())));
+  pc->addElementSpec(print);  
 }
 
 void generateInsertEvent(PlanContext* pc)

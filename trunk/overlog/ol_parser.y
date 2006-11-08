@@ -144,6 +144,9 @@ tablearg:	OL_VALUE
 primarykeys:	OL_KEYS OL_LPAR keylist OL_RPAR {
 			$$ = $3;
 		}
+		| OL_KEYS OL_LPAR OL_RPAR {
+			$$ = NULL; // This is going to be KeyID
+		}
 		;
 
 keylist:	OL_VALUE { $$ = new Parse_ExprList(); $$->push_front($1); }
@@ -227,7 +230,7 @@ functorargs:	functorarg {
 			  ctxt->error(oss.str());
 			}
 			else {
-			  pv->locspec = true;
+			  pv->setLocspec();
 			  $$->push_front($2); 
 			}}
         | OL_AT atom OL_COMMA functorargs{
@@ -238,7 +241,7 @@ functorargs:	functorarg {
 			  ctxt->error(oss.str());
 			}
 			else {
-			  pv->locspec = true;
+			  pv->setLocspec();
 			  $4->push_front($2); 
 			  $$=$4; 
 			}}
@@ -414,7 +417,7 @@ aggregate:	agg_oper OL_LT OL_VAR OL_GT
                         {
                           // Make the variable a location specifier
                           Parse_Var *pv = dynamic_cast<Parse_Var*>($4);
-                          pv->locspec = true;
+                          pv->setLocspec();
                           $$ = new Parse_Agg($4, $1, ValuePtr());
                         }
 		|

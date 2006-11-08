@@ -18,18 +18,16 @@
 #include <iostream>
 #include <errno.h>
 
-PrintWatch::PrintWatch(string prefix, std::set<string> tableNames, 
-		       FILE* output)
+PrintWatch::PrintWatch(string prefix, std::set<string> tableNames)
   : Element(prefix, 1, 1),
-    _prefix(prefix), _output(output)
+    _prefix(prefix)
 {
   _tableNames = tableNames;  
 }
 
-PrintWatch::PrintWatch(string prefix, std::vector<string> tableNames, 
-		       FILE* output)
+PrintWatch::PrintWatch(string prefix, std::vector<string> tableNames)
   : Element(prefix, 1, 1),
-    _prefix(prefix), _output(output)
+    _prefix(prefix)
 {
   for (std::vector<string>::iterator iter = tableNames.begin();
        iter != tableNames.end(); iter++) {
@@ -65,17 +63,14 @@ TuplePtr PrintWatch::simple_action(TuplePtr p)
   boost::posix_time::ptime now_ts;
   
   getTime(now_ts);
-  ostringstream b;
-  b << "Print[" << _prefix
-    << ", "
-    << boost::posix_time::to_simple_string(now_ts)
-    << "]:  [" << (int) bytes << ", " << p->toString() << "]\n";
-  
-  if (_output != NULL) {
-    fprintf(_output, "%s", b.str().c_str()); 
-  } else {
-    TELL_WARN << b.str();
-  }
-  fflush(_output);
+  TELL_OUTPUT << "Print["
+              << _prefix
+              << ", "
+              << boost::posix_time::to_simple_string(now_ts)
+              << "]:  ["
+              << (int) bytes
+              << ", "
+              << p->toString()
+              << "]\n";
   return p;
 }

@@ -29,6 +29,7 @@
 #include "udp.h"
 #include "planner.h"
 #include "ruleStrand.h"
+#include "reporting.h"
 
 #include "dot.h"
 
@@ -45,44 +46,76 @@ int main(int argc, char **argv)
 
   //PlumberPtr plumber(new Plumber());
 
-  for( int i=1; i<argc; i++) { 
-    std::string arg(argv[i]);
-    
-    if (arg == "-d") { 
-      ol_parser_debug = 1;
-    } else if (arg == "-h") { 
-      TELL_ERROR << "Usage: " << argv[0] << "{option|filename}+\n"
-		<< "\t-c: canonical form (used for builtin tests)\n"
-		<< "\t-d: turn on parser debugging\n"
-		<< "\t-r: try to instantiate a plumber config\n"
+
+
+
+  // Parse command line options
+  int c;
+  while ((c = getopt(argc, argv, "r:dhcpf:g")) != -1) {
+    switch (c) {
+    case 'f':
+      {
+        if (optarg == "-") {
+          ctxt->parse_stream(&std::cin);
+        } else {
+          filename = optarg;
+          std::ifstream istr(filename.c_str());
+          ctxt->parse_stream(&istr);
+        }
+      }
+      break;
+    case 'r':
+      {
+        // My minimum reporting level is optarg
+        std::string levelName(optarg);
+        Reporting::Level level =
+          Reporting::levelFromName[levelName];
+        Reporting::setLevel(level);
+      }
+      break;
+    case 'd':
+      {
+        ol_parser_debug = 1;
+      }
+      break;
+    case 'h':
+      TELL_ERROR << "Usage: " << argv[0] << "{option}*\n"
+                << "\t-c: canonical form (used for builtin tests)\n"
+                << "\t-d: turn on parser debugging\n"
+                << "\t-p: try to instantiate a plumber config\n"
                 << "\t-g: produce a DOT graph spec\n"
-		<< "\t-h: print this help text\n"
-		<< "\t- : read from stdin\n";
+                << "\t-h: print this help text\n"
+                << "\t-r <reporting level> : Set reporting level\n"
+                << "\t-f <filename> : "-" means read from stdin\n";
       exit(0);
-    } else if (arg == "-c") { 
+      break;
+    case 'c':
       builtin = true;
-    } else if (arg == "-r") {
+      break;
+    case 'p':
       route = true;
       builtin = false;
-    } else if (arg == "-") {
-      ctxt->parse_stream(&std::cin);
-    } else if (arg == "-g") {
-
+      break;
+    case 'g':
+      {
       Plumber::DataflowPtr conf(new Plumber::Dataflow("overlog"));
-      filename = argv[i+1];
+      filename = optarg;
       std::ifstream istr(filename.c_str());
       ctxt->parse_stream(&istr);
 
-      boost::shared_ptr< TableStore > tableStore(new TableStore(ctxt.get()));  
-      tableStore->initTables(); 
-      
-      boost::shared_ptr< Localize_Context > lctxt(new Localize_Context()); 
+      boost::shared_ptr< TableStore > tableStore(new TableStore(ctxt.get()));
+      tableStore->initTables();
+
+      boost::shared_ptr< Localize_Context > lctxt(new Localize_Context());
       lctxt->rewrite(ctxt.get(), tableStore.get());
-      
-      boost::shared_ptr< ECA_Context > ectxt(new ECA_Context()); 
+
+      boost::shared_ptr< ECA_Context > ectxt(new ECA_Context());
       ectxt->rewrite(lctxt.get(), tableStore.get());
 
-      boost::shared_ptr< Planner > planner(new Planner(conf, tableStore.get(), false, "127.0.0.1:10000", "0"));
+      boost::shared_ptr< Planner > planner(new Planner(conf,
+                                                       tableStore.get(),
+                                                       false,
+                                                       "127.0.0.1:10000"));
       boost::shared_ptr< Udp > udp(new Udp("Udp", 12345));
 
       std::vector<RuleStrand*>
@@ -98,12 +131,15 @@ int main(int argc, char **argv)
       }
       plumber->toDot("overlog.dot");
       exit (0);
-    } else { 
-      filename = argv[i];
-      std::ifstream istr(argv[i]);
-      ctxt->parse_stream(&istr);
       }
+      break;
+    default:
+      std::cerr << "Unrecognized option.\n";
+      break;
+    }
   }
+
+
 
   if (builtin) {
     TELL_INFO << ctxt->toString();
@@ -135,7 +171,10 @@ int main(int argc, char **argv)
     fprintf(ecaOutput, ectxt->toString().c_str());
     fclose(ecaOutput);
     
-    boost::shared_ptr< Planner > planner(new Planner(conf, tableStore.get(), false, "127.0.0.1:10000", "0"));
+    boost::shared_ptr< Planner > planner(new Planner(conf,
+                                                     tableStore.get(),
+                                                     false,
+                                                     "127.0.0.1:10000"));
     boost::shared_ptr< Udp > udp(new Udp("Udp", 12345));
     std::vector<RuleStrand*> ruleStrands = planner->generateRuleStrands(ectxt);
     

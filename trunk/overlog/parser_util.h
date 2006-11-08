@@ -45,22 +45,27 @@ public:
   static Parse_Expr* Now;
 
   Parse_Expr() : position_(-1) {};
+
   Parse_Expr(ValuePtr val) : v(val), position_(-1) {};
+
   Parse_Expr(Parse_Expr *val) : v(val->v), position_(-1) {};
 
   virtual ~Parse_Expr() {};
 
   virtual bool operator==(const Parse_Expr &e) 
-    { return v == e.v; };
+  { return v == e.v; };
 
   virtual string toString() = 0;
 
   virtual void position(int p) { position_ = p; };
+
   virtual int position() { return position_; }
 
   ValuePtr v;
+
   int      position_;
 };
+
 typedef std::deque<Parse_Expr *> Parse_ExprList;
 typedef std::deque<Parse_ExprList *> Parse_ExprListList;
 
@@ -84,18 +89,21 @@ private:
 
 class Parse_Var : public Parse_Expr { 
 public:
-  Parse_Var(ValuePtr var) : Parse_Expr(var) {locspec = FALSE;};
-  Parse_Var(const string& var) : Parse_Expr(Val_Str::mk(var))  {};
+  Parse_Var(ValuePtr var);
+
+  Parse_Var(const string& var);
   
-  virtual string toString() { 
-    if (!locspec) {
-      return v->toString(); 
-    } else {
-      return ("@" + v->toString());
-    }
-  };
-  
-  bool locspec;
+  virtual string
+  toString();
+
+  bool
+  locspec();
+
+  void
+  setLocspec();
+
+private:
+  bool _locspec;
 };
 
 class Parse_Agg : public Parse_Expr {
@@ -111,7 +119,7 @@ public:
   {
     Parse_Var *pv = dynamic_cast<Parse_Var*>(v);
     if (pv != NULL) {
-      locspec = pv->locspec;
+      locspec = pv->locspec();
     } else {
       locspec = false;
     }

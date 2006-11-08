@@ -30,69 +30,37 @@ and the second is the DataflowInstaller (elements/dataflowInstaller.C).
 These elements assume the existence of a skeleton dataflow graph upon
 which edits are made through the overlog submitted by the user. 
 
-It is recommended that any user of these features read the SOSP 2005
-P2 paper. In it we describe the general layout of a P2 dataflow. 
-The P2 dataflow architecture paper (located in ???)
-provides a graphical representation, and description, of the initial 
-dataflow assumed by the scripts in this directory. The "p2stub"
-script is in fact the script that sets up the initial dataflow that 
-receives overlog programs and dynamically installs them. But before
-we get into such details we provide a little background on overlog
-program compilation/installation.  
+It is recommended that any user of these features read the SOSP 2005 P2
+paper. In it we describe the general layout of a P2 dataflow.  The P2
+dataflow architecture paper (located in ???)  provides a graphical
+representation, and description, of the initial dataflow assumed by the
+scripts in this directory. The "tests/runOverLog2" program sets up the
+initial dataflow that receives overlog programs and dynamically installs
+them. But before we get into such details we provide a little background
+on overlog program compilation/installation.
 
 Any overlog program compiled and installed through the C++ interface
-(i.e. runOverlog.C) will result in a network in and out being generated.
-The network in is connected to a Demux element that is been given 
-the names of all events anticipated by the overlog rules. The end of
-each rule strand is connected to a RoundRobin element, which in turn
+(i.e. tests/runOverLog) will result in a network in and out being
+generated.  The network in is connected to a Demux element that is been
+given the names of all events anticipated by the overlog rules. The end
+of each rule strand is connected to a RoundRobin element, which in turn
 is connected to a dataflow representing the out bound (egress) network.
 Only the rule strands themselves differ along various overlog programs.
-Therefore, we have created a generic script (entitled "p2stub.py") that
-creates a network in and out, and connects the ingress to a Dynamic
-Demux element and the egress to a Dynamic Round Robin element. The 
-"Dynamic" term of the Demux and Round Robin means that we can perform
-additions to the ports of these elements. These additions will be the
-rule strands that are compiled by the OverlogCompiler and DataflowInstaller 
-elements upon receipt of some overlog program. Further details 
-on this topic are given in the P2 dataflow architecture paper. We
-now describe our first Python script, which sets up the aforementioned
-initial dataflow.
-
-===== P2STUB =====
-
-The p2stub.py script establishes an initial dataflow that supports the compilation
-and installation of *any* overlog program sent to it. The arguments to
-the p2stub.py script are accurately described by a usage statement printed
-when the script is executed without any arguments. The usage statement reads
-as such:
-Usage: p2stub.py [-s <seed>] [-n <nodes>=1]  <address> <port>
-
-The optional arguments are given in square brackets '[]' and the required 
-arguments in '<>'. This is the convention followed by all scripts. 
-The optional 'seed' argument initializes the random number generated with
-the provided seed (i.e., srand(seed)). If this argument is not provided
-then the random number generated is seeded with the current system time.
-The number of stubs to be installed is indicated by the 'nodes' argument.
-The script will install the desired number of initial *dataflow* instances
-into a single plumber. For example, if you desire the installation of
-5 stubs you would indicated this by '-n 5', and 5 separate dataflows would
-be created each containing a network in and out, Dynamic Demux, and Dynamic
-Round Robin. The only required arguments are the address of the node (in
-either IP or hostname format) and the port on which to send/receive packets.
-Support for more than 1 node is given by incrementing the port number by one
-for each additional node dataflow. Here are a couple of example executions:
-
-1. Run a single stub node that sends and receives its data on port 10000.
-	python p2stub.py gumpy.intel-research.berkeley.net 10000
-
-2. Run 5 stub nodes that send and receive data on port 10001, 10002, ..., 
-   10004.
-	python p2stub.py -n 5 grumpy.intel-research.berkeley.net 10000
+Therefore, we have created an alternate program loader (entitled
+"tests/runOverLog2") that creates a network in and out, and connects the
+ingress to a Dynamic Demux element and the egress to a Dynamic Round
+Robin element. The "Dynamic" term of the Demux and Round Robin means
+that we can perform additions to the ports of these elements. These
+additions will be the rule strands that are compiled by the
+OverlogCompiler and DataflowInstaller elements upon receipt of some
+overlog program. Further details on this topic are given in the P2
+dataflow architecture paper. We now describe our first Python script,
+which sets up the aforementioned initial dataflow.
 
 ==== P2TERMINAL ====
 
 The purpose of the p2terminal.py script is to accumulate an arbitrary overlog
-program and send it to the address of some running p2stub node instance.
+program and send it to the address of some running p2 stub node instance.
 There are a couple ways in which the terminal obtains the input overlog program.
 The first is through an interactive interface, wherein the user is presented
 with a terminal like interface takes input in the form of commands or
@@ -169,11 +137,11 @@ program.
 ==== LOADMANYCHORDS ====
 
 The script loadManyChords.py was written to easily distribute the Chord overlog 
-program (with proper environment variables) to a set of p2stub nodes running
+program (with proper environment variables) to a set of p2 stub nodes running
 on a single machine, listening on successive ports. The 'python/scripts/chord.olg'
 version of Chord defines the environment variables that this script assumes. They
 are IPADDRESS, NODEID, and LANDMARK. The script will pass the proper values
-to the C pre-processor for each target p2stub node. The usage statement for this
+to the C pre-processor for each target p2 stub node. The usage statement for this
 script is as follows:
 Usage: loadManyChords.py [-d <sec_delay>=20] 
                          -f <input_file> -n <nodes> 

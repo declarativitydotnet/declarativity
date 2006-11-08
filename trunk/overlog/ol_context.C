@@ -300,6 +300,10 @@ OL_Context::table(Parse_Expr *name,
          i != keys->end();
          i++)
       tableInfo->primaryKeys.push_back(Val_UInt32::cast((*i)->v));
+  } else {
+      // If keys was NULL, then I'm going to leave primaryKeys
+      // alone, which means it is going to be empty
+      // which means it's going to be KEYID
   }
   
   tables->insert(std::make_pair(tableInfo->tableName, tableInfo));

@@ -21,6 +21,50 @@
 
 using namespace opr;
 
+
+Parse_Var::Parse_Var(ValuePtr var)
+  : Parse_Expr(var),
+    _locspec(false)
+{
+}
+
+Parse_Var::Parse_Var(const string& var)
+  : Parse_Expr(Val_Str::mk(var)),
+    _locspec(false)
+{
+}
+  
+
+string
+Parse_Var::toString()
+{ 
+  if (!locspec()) {
+    return v->toString(); 
+  } else {
+    return ("@" + v->toString());
+  }
+}
+  
+
+bool
+Parse_Var::locspec()
+{ 
+  return _locspec;
+}
+  
+
+
+void
+Parse_Var::setLocspec()
+{ 
+  _locspec = true;
+}
+  
+
+
+
+
+
 //=====================================
 
 Parse_Expr* Parse_Agg::DONT_CARE = new Parse_Var(Val_Str::mk("*"));
@@ -214,7 +258,7 @@ string Parse_Functor::getlocspec() {
     bool found = false;
     for (int k = 0; k < args(); k++) {
       if ((p = dynamic_cast<Parse_Var*>(arg(k)))
-          && p->locspec) {
+          && p->locspec()) {
         if (!found) {
           loc_ = p->toString();
           found = true;
@@ -283,7 +327,9 @@ void Parse_Functor::replace(int p, Parse_Expr *e) {
   args_->insert(next, e);
 }
 
-string Parse_Assign::toString() {
+string
+Parse_Assign::toString()
+{
   return var->toString() + " = " + assign->toString();
 }
 

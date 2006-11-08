@@ -11,13 +11,10 @@
 # Berkeley, CA,  94707. Attention: P2 Group.
 #
 
-bin_SCRIPTS = p2stub.py p2terminal.py p2insert.py \
+bin_SCRIPTS = p2terminal.py p2insert.py \
               loadManyChords.py planetlab.py psetup.py dfrun.py
 
 do_subst = sed -e 's,[@]PYTHON[@],$(PYTHON),g;s,[@]VERSION[@],$(VERSION),g'
-
-p2stub.py: p2stub.in Makefile
-		   $(do_subst) < $(srcdir)/p2stub.in > p2stub.py
 
 p2terminal.py: p2terminal.in Makefile
 		   $(do_subst) < $(srcdir)/p2terminal.in > p2terminal.py
@@ -40,6 +37,6 @@ dfrun.py: dfrun.in Makefile
 CLEANFILES = $(bin_SCRIPTS)
 
 EXTRA_DIST = README \
-             p2stub.in p2terminal.in loadManyChords.in p2insert.in \
+             p2terminal.in loadManyChords.in p2insert.in \
              planetlab.in psetup.in dfrun.in sanity.py \
              recv.df sender.df p2

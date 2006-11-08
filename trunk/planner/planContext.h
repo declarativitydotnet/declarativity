@@ -26,8 +26,10 @@
 
 class PlanContext {
 public:
-  PlanContext(Plumber::DataflowPtr conf, TableStore* tableStore, 
-	      RuleStrand* ruleStrand, string nodeID, FILE* outputDebugFile);
+  PlanContext(Plumber::DataflowPtr conf,
+              TableStore* tableStore, 
+	      RuleStrand* ruleStrand,
+              string nodeID);
   ~PlanContext();
 
   /** References to all tables */
@@ -39,9 +41,6 @@ public:
   /** ID of node where planner is running */
   string _nodeID;
 
-  /** File log output of planner */
-  FILE* _outputDebugFile;
-  
   /** Dataflow configuration */
   Plumber::DataflowPtr _conf;
 

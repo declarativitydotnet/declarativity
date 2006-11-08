@@ -23,7 +23,7 @@
 #include "rulePlanner.C"
 
 Planner::Planner(Plumber::DataflowPtr conf, TableStore* tableStore, 
-		 bool debug, string nodeID, string outputFile) 
+		 bool debug, string nodeID) 
   : _conf(conf)
 { 
   _tableStore = tableStore; 
@@ -31,12 +31,7 @@ Planner::Planner(Plumber::DataflowPtr conf, TableStore* tableStore,
   _nodeID = nodeID;
   _ruleCount = 0;
 
-  if (outputFile[0] != '0') {
-    _outputDebugFile = fopen(outputFile.c_str(), "w");
-  } else {
-    _outputDebugFile = NULL;
-  }
-  _netPlanner = new NetPlanner(conf, nodeID, _outputDebugFile); 
+  _netPlanner = new NetPlanner(conf, nodeID); 
 }
 
 std::vector<RuleStrand*> 
@@ -50,7 +45,7 @@ Planner::generateRuleStrands(ECA_ContextPtr ectxt)
     RuleStrand *rs = new RuleStrand(nextRule, b.str());
     toRet.push_back(rs);
     PlanContext* pc = new PlanContext(_conf, _tableStore, rs, 
-				      _nodeID, _outputDebugFile);
+				      _nodeID);
     compileECARule(pc);
     delete pc;    
   }
