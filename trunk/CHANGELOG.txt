@@ -1,4 +1,30 @@
 
+Release 0.7.5
+
+- changed tests/runOverLog2, tests/overlog, and tests/runOverLog to use getopt
+command line options (run them with -h to see the command line option
+descriptions).
+
+- removed p2stub.py, which has been obsolete for a few months now and has been
+subsumed by runOverLog2.
+
+- removed explicit use of c-style file descriptors from PrintWatch. Watches
+can be taken from the standard output.
+
+- Fixed some leaks with old buffer manipulation in runOverLog2
+
+- fixed the chord.olg files to contain node and landmark facts (which used to
+be set up by special programs before). Added running instructions in the
+comments. Tested for correctness.
+
+- Fixed the materialize keyword to allow multisets (i.e., to take empty keys()
+clauses).
+
+- Fixed an uninitialized locspec wreaking havoc in parse_util
+
+
+
+
 Release 0.7.4
 
 - Broke out elements dependent on Python into pythonElements
