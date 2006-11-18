@@ -216,7 +216,7 @@ ID::distance(IDPtr to) const
 }
 
 IDPtr
-ID::shift(uint32_t shift) const
+ID::lshift(uint32_t shift) const
 {
   if (shift == 0) {
     return ID::mk((uint32_t*) words);
@@ -255,6 +255,60 @@ ID::shift(uint32_t shift) const
     temp = temp | carry;
     carry = temp >> 32;
     newID->words[i] = (temp & 0xFFFFFFFF);
+  }
+
+  return newID;
+}
+
+IDPtr
+ID::rshift(uint32_t shift) const
+{
+  if (shift == 0) {
+    return ID::mk((uint32_t*) words);
+  }
+  if (shift >= WORDS * 32) {
+    return ID::ZERO;
+  }
+
+  IDPtr newID = ID::mk();
+
+  // Perform long shifts (i.e., by bytes, not by bits)
+  if (shift > 32) {
+    // By how many entire bytes (at most)?
+    uint32_t longShift = shift >> 5;
+    for (uint i = longShift;
+         i < WORDS;
+         i++) {
+      newID->words[i] = words[i - longShift];
+    }
+    shift = shift & 0x1f;
+  } else {
+    for (uint i = 0;
+         i < WORDS;
+         i++) {
+      newID->words[i] = words[i];
+    }
+  }
+  
+  // Now we only have short shifts
+  uint32_t carry = 0;
+  for (int i = 0;
+       i < WORDS;
+       i++) {
+    uint64_t temp = newID->words[i];
+    uint32_t newWord;
+    temp = temp << 32;          // Make some room in the lower-order
+                                // word
+    temp = temp >> shift;       // Now do the actual shift, keeping any
+                                // left over bits in the lower-order
+                                // word, while the higher-order word
+                                // keeps the actual new bits of this
+                                // position. 
+    newWord = ((temp >> 32) & 0xFFFFFFFF); // store the high-order bits
+                                           // in the actual word
+    newID->words[i] = newWord | carry; // and put in the carry also
+    cary = temp & 0xFFFFFFFF    // The carry is what's left in the
+                                // lower-order bits of the temp
   }
 
   return newID;

@@ -94,8 +94,11 @@ public:
   /** Add two IDs together arithmetically */
   IDPtr add(IDPtr) const;
 
-  /** Shift an ID by a number of bit positions */
-  IDPtr shift(uint32_t) const;
+  /** Left shift an ID by a number of bit positions */
+  IDPtr lshift(uint32_t) const;
+
+  /** Right shift an ID by a number of bit positions */
+  IDPtr rshift(uint32_t) const;
 
   /** Marshal into an XDR, one word at a time */
   void xdr_marshal(XDR *x);
