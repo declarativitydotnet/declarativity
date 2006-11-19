@@ -16,7 +16,7 @@ p2_openssllib=`echo $p2_openssllib | sed -e 's!/$!!'`
 
 if test -d "$p2_openssllib"; then
     if /bin/ls $p2_openssllib | egrep '^libssl.*\.(la|so|a|dylib)$' >/dev/null 2>&1; then
-	OPENSSL_LIB="-L${p2_openssllib} -lssl"
+	OPENSSL_LIB="-L${p2_openssllib} -lssl -lcrypto"
 	AC_MSG_RESULT([using OpenSSL library from $p2_openssllib])
     else
 	AC_MSG_ERROR([Could not find OpenSSL library in $p2_openssllib])

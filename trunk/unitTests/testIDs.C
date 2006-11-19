@@ -157,9 +157,13 @@ private:
 
 
 
-  static const ShiftTest idShiftTests[];
+  static const ShiftTest idLShiftTests[];
   
-  static const uint32_t num_shiftTests;
+  static const uint32_t num_LshiftTests;
+
+  static const ShiftTest idRShiftTests[];
+  
+  static const uint32_t num_RshiftTests;
 
 public:
 
@@ -631,13 +635,13 @@ testIDs::num_disttests =
 void
 testIDs::testShifts()
 {
-
+  // Left
   for (uint32_t i = 0;
-       i < num_shiftTests;
+       i < num_LshiftTests;
        i++) {
     uint32_t left[5];
     uint32_t right[5];
-    const ShiftTest * idTest = &idShiftTests[i];
+    const ShiftTest * idTest = &idLShiftTests[i];
 
     left[0] = idTest->lw0;
     left[1] = idTest->lw1;
@@ -653,12 +657,52 @@ testIDs::testShifts()
 
     IDPtr leftID = ID::mk(left);
     IDPtr rightID = ID::mk(right);
-    IDPtr resultID = leftID->shift(idTest->shift);
+    IDPtr resultID = leftID->lshift(idTest->shift);
 
     std::ostringstream message;
     message << "ID test at line "
             << idTest->line
-            << ". Shift of '"
+            << ". Left shift of '"
+            << leftID->toString()
+            << "' by "
+            << idTest->shift
+            << " should be '"
+            << rightID->toString()
+            << "' but I got '"
+            << resultID->toString()
+            << "'.";
+    BOOST_CHECK_MESSAGE(resultID->compareTo(rightID) == 0,
+                        message.str().c_str());
+  }
+
+  // Right
+  for (uint32_t i = 0;
+       i < num_RshiftTests;
+       i++) {
+    uint32_t left[5];
+    uint32_t right[5];
+    const ShiftTest * idTest = &idRShiftTests[i];
+
+    left[0] = idTest->lw0;
+    left[1] = idTest->lw1;
+    left[2] = idTest->lw2;
+    left[3] = idTest->lw3;
+    left[4] = idTest->lw4;
+
+    right[0] = idTest->rw0;
+    right[1] = idTest->rw1;
+    right[2] = idTest->rw2;
+    right[3] = idTest->rw3;
+    right[4] = idTest->rw4;
+
+    IDPtr leftID = ID::mk(left);
+    IDPtr rightID = ID::mk(right);
+    IDPtr resultID = leftID->rshift(idTest->shift);
+
+    std::ostringstream message;
+    message << "ID test at line "
+            << idTest->line
+            << ". Right shift of '"
             << leftID->toString()
             << "' by "
             << idTest->shift
@@ -676,17 +720,21 @@ testIDs::testShifts()
 #define SHIFTTST(_lword0, _lword1, _lword2, _lword3, _lword4, _rword0, _rword1, _rword2, _rword3, _rword4, _shift) {__LINE__, _lword0, _lword1, _lword2, _lword3, _lword4, _rword0, _rword1, _rword2, _rword3, _rword4, _shift}
 
 const testIDs::ShiftTest
-testIDs::idShiftTests[] = {
+testIDs::idLShiftTests[] = {
   // Least significant comparisons
   SHIFTTST(0, 0, 0, 0, 0,            0, 0, 0, 0, 0,          0),
 
   SHIFTTST(0, 0, 0, 0, 0,            0, 0, 0, 0, 0,          1),
-  SHIFTTST(0, 0, 0, 0, 0,            0, 0, 0, 0, 0,        100),
   SHIFTTST(0, 0, 0, 0, 1,            0, 0, 0, 0, 1,          0),
+  SHIFTTST(0, 0, 0, 0, 1,            0, 0, 0, 0, 0x10000,   16),
   SHIFTTST(0, 0, 0, 0, 1,            0, 0, 0, 1, 0,         32),
+  SHIFTTST(0, 0, 0, 0, 1,            0, 0, 0, 0x10000, 0,   48),
   SHIFTTST(0, 0, 0, 0, 1,            0, 0, 1, 0, 0,         64),
+  SHIFTTST(0, 0, 0, 0, 1,            0, 0, 0x10000, 0, 0,   80),
   SHIFTTST(0, 0, 0, 0, 1,            0, 1, 0, 0, 0,         96),
+  SHIFTTST(0, 0, 0, 0, 1,            0, 0x10000, 0, 0, 0,  112),
   SHIFTTST(0, 0, 0, 0, 1,            1, 0, 0, 0, 0,        128),
+  SHIFTTST(0, 0, 0, 0, 1,            0x10000, 0, 0, 0, 0,  144),
   SHIFTTST(0, 0, 0, 0, 1,            0, 0, 0, 0, 0,        160),
   SHIFTTST(0, 0, 0, 0, 1,            0, 0, 0, 0, 0,        161),
 
@@ -700,9 +748,45 @@ testIDs::idShiftTests[] = {
 };
 
 const uint32_t
-testIDs::num_shiftTests =
-                 sizeof(testIDs::idShiftTests) /
-                 sizeof(testIDs::ShiftTest);
+testIDs::num_LshiftTests =
+               sizeof(testIDs::idLShiftTests) /
+               sizeof(testIDs::ShiftTest);
+
+
+const testIDs::ShiftTest
+testIDs::idRShiftTests[] = {
+  // Least significant comparisons
+  SHIFTTST(0, 0, 0, 0, 0,            0, 0, 0, 0, 0,               0),
+
+  SHIFTTST(0, 0, 0, 0, 0,            0, 0, 0, 0, 0,               1),
+  SHIFTTST(0x80000000, 0, 0, 0, 0,       0x80000000, 0, 0, 0, 0,          0),
+  SHIFTTST(0x80000000, 0, 0, 0, 0,       0, 0x80000000, 0, 0, 0,         32),
+  SHIFTTST(0x80000000, 0, 0, 0, 0,       0, 0, 0x80000000, 0, 0,         64),
+  SHIFTTST(0x80000000, 0, 0, 0, 0,       0, 0, 0, 0x80000000, 0,         96),
+  SHIFTTST(0x80000000, 0, 0, 0, 0,       0, 0, 0, 0, 0x80000000,        128),
+  SHIFTTST(0x80000000, 0, 0, 0, 0,       0, 0, 0, 0, 0,             160),
+  SHIFTTST(0x80000000, 0, 0, 0, 0,       0, 0, 0, 0, 0,             161),
+
+  SHIFTTST(0x80000000, 0, 0, 0, 0,       0x40000000, 0, 0, 0, 0,      1),
+  SHIFTTST(0x80000000, 0, 0, 0, 0,       0x20000000, 0, 0, 0, 0,      2),
+  SHIFTTST(0x80000000, 0, 0, 0, 0,       0x10000000, 0, 0, 0, 0,      3),
+  SHIFTTST(0x80000000, 0, 0, 0, 0,       0x10000, 0, 0, 0, 0,        15),
+  SHIFTTST(0x80000000, 0, 0, 0, 0,       1, 0, 0, 0, 0,              31),
+  SHIFTTST(0x80000000, 0, 0, 0, 0,       0, 0x10000, 0, 0, 0,        47),
+  SHIFTTST(0x80000000, 0, 0, 0, 0,       0, 1, 0, 0, 0,              63),
+  SHIFTTST(0, 0x80000000, 0, 0, 0,       0, 0x10000, 0, 0, 0,        15),
+  SHIFTTST(0, 0x80000000, 0, 0, 0,       0, 1, 0, 0, 0,              31),
+  SHIFTTST(0, 0x80000000, 0, 0, 0,       0, 0, 0x10000, 0, 0,        47),
+  SHIFTTST(0, 0x80000000, 0, 0, 0,       0, 0, 1, 0, 0,              63),
+  SHIFTTST(0,      0, 0, 0, 2,       0, 0, 0, 0, 1,               1),
+
+  SHIFTTST(0, 0, 0, 0, 0,            0, 0, 0, 0, 0,             100)
+};
+
+const uint32_t
+testIDs::num_RshiftTests =
+               sizeof(testIDs::idRShiftTests) /
+               sizeof(testIDs::ShiftTest);
 
 
 #undef SHIFTTST
@@ -860,29 +944,8 @@ testIDs::testConstructFromString()
 
 const testIDs::StringTest
 testIDs::idStringTests[] = {
-  STRTST("0lE400D300C200B100A5",   0xE4,   0xD3,   0xC2,   0xB1,   0xA5, 0),
-  STRTST( "l1200D300C200B100A5",   0x12,   0xD3,   0xC2,   0xB1,   0xA5, 0),
-  STRTST(   "l10D300C200B100A5",   0x00, 0x10D3,   0xC2,   0xB1,   0xA5, 0),
-  STRTST(     "lD300C200B100A5",   0x00,   0xD3,   0xC2,   0xB1,   0xA5, 0),
-  STRTST(       "l11C200B100A5",   0x00,   0x00, 0x11C2,   0xB1,   0xA5, 0),
-  STRTST(         "lC200B100A5",   0x00,   0x00,   0xC2,   0xB1,   0xA5, 0),
-  STRTST(           "l12B100A5",   0x00,   0x00,   0x00, 0x12B1,   0xA5, 0),
-  STRTST(             "lB100A5",   0x00,   0x00,   0x00,   0xB1,   0xA5, 0),
-  STRTST(               "l13A5",   0x00,   0x00,   0x00,   0x00, 0x13A5, 0),
-  STRTST(                 "lA5",   0x00,   0x00,   0x00,   0x00,   0xA5, 0),
-  STRTST(                   "l",   0x00,   0x00,   0x00,   0x00,   0x00, 0),
-  STRTST("00040003000200010005",      4,      3,      2,      1,      5, 0),
-  STRTST("00E400D300C200B100A5",   0xE4,   0xD3,   0xC2,   0xB1,   0xA5, 0),
-  STRTST(  "1200D300C200B100A5",   0x12,   0xD3,   0xC2,   0xB1,   0xA5, 0),
-  STRTST(    "10D300C200B100A5",   0x00, 0x10D3,   0xC2,   0xB1,   0xA5, 0),
-  STRTST(      "D300C200B100A5",   0x00,   0xD3,   0xC2,   0xB1,   0xA5, 0),
-  STRTST(        "11C200B100A5",   0x00,   0x00, 0x11C2,   0xB1,   0xA5, 0),
-  STRTST(          "C200B100A5",   0x00,   0x00,   0xC2,   0xB1,   0xA5, 0),
-  STRTST(            "12B100A5",   0x00,   0x00,   0x00, 0x12B1,   0xA5, 0),
-  STRTST(              "B100A5",   0x00,   0x00,   0x00,   0xB1,   0xA5, 0),
-  STRTST(                "13A5",   0x00,   0x00,   0x00,   0x00, 0x13A5, 0),
-  STRTST(                  "A5",   0x00,   0x00,   0x00,   0x00,   0xA5, 0),
-  STRTST(                    "",   0x00,   0x00,   0x00,   0x00,   0x00, 0),
+  STRTST("123456789ABCDEF0123456789ABCDEF012345678",
+         0x12345678, 0x9abcdef0, 0x12345678, 0x9abcdef0, 0x12345678, 0),
 
 };
 

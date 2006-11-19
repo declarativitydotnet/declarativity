@@ -44,6 +44,14 @@ or Intel processor):
 10) Ensure that the "/usr/local/bin" directory is in your path.
 11) Add the "/usr/local/bin" and "/usr/local/lib" directories to
    the PYTHONPATH environment variable (via "export" in bash, or "setenv" in tcsh)
+12) Ensure you have the latest GNU autotools installed.  The current distribution
+   requires automake 1.9.2, which is not included in Xcode. Download automake, autoconf,
+   and libtool from GNU. Make sure you configure them with --prefix=/usr/local/. Also
+   make sure that in libtool's configuration you set --program-prefix=g. OSX has
+   a /usr/bin/libtool program that is completely different from GNU libtool, so
+   typical GNU libtool installations rename libtool and libtoolize to glibtool and
+   glibtoolize, which is what --program-prefix=g does.  The distribution is known
+   to work on OSX with automake 1.10, autoconf 2.60, and libtool 1.5.22.
 12) Due to libtool weirdness (if someone has a fix, let us know!) 
    "make install" may not create the file /usr/local/lib/libp2python.so which
    is needed to run the P2 Python scripts.  To fix this simply type

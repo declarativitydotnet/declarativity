@@ -27,6 +27,8 @@ using boost::unit_test_framework::test_suite;
 
 test_suite* init_unit_test_suite(int argc, char** argv)
 {
+  Reporting::setLevel(Reporting::OUTPUT);
+
   // Set up reporting
   int c;
   while ((c = getopt(argc, argv, "r:")) != -1) {
@@ -48,6 +50,7 @@ test_suite* init_unit_test_suite(int argc, char** argv)
 
   test_suite *top = BOOST_TEST_SUITE("P2 Unit Test Suite");
   
+  top->add(new testIDs_testSuite());
   top->add(new testPel_testSuite());
   top->add(new testTable2_testSuite());
   top->add(new testRefTable_testSuite());
@@ -56,7 +59,6 @@ test_suite* init_unit_test_suite(int argc, char** argv)
   top->add(new testFdbufs_testSuite());
   top->add(new testValues_testSuite());
   top->add(new testCsv_testSuite());
-  top->add(new testIDs_testSuite());
   top->add(new testLists_testSuite());
   top->add(new testAggwrap_testSuite());
 

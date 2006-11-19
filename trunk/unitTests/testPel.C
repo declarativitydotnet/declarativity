@@ -234,6 +234,9 @@ private:
       case Value::STR:
         eq = (Val_Str::cast(top) == t->val);
         break;
+      case Value::ID:
+        eq = (Val_ID::cast(top)->equals(ID::mk(t->val))) ? 1 : 0;
+        break;
       case Value::LIST:
         eq = (Val_Str::cast(top).compare(t->val) == 0) ? 1 : 0;
       default:
@@ -375,24 +378,23 @@ testPel::vtests[] = {
   TST(INT32, SUCCESS, "1",     "1 \"Hello\" or"),
   TST(INT32, SUCCESS, "1",     "1 null or"),
   // >> (logical shift right)
+  TST(ID, SUCCESS,    "0",  "0x0I 160 >>id"),
+  TST(ID, SUCCESS,    "1",  "0x2I 1 >>id"),
+  TST(ID, SUCCESS,    "0",  "0x8000I 31 >>id"),
+  TST(ID, SUCCESS,    "1",  "0x80000000I 31 >>id"),
+  TST(ID, SUCCESS,    "8000","0x20000I 2 >>id"),
   TST(INT32, STACK_UNDERFLOW, "",	">>" ),
   TST(INT32, STACK_UNDERFLOW, "",	"1 >>" ),
   TST(INT64, SUCCESS, "0",	"1 1 >>" ),
   TST(INT64, SUCCESS, "1",	"2 1 >>" ),
   TST(INT64, SUCCESS, "4",	"16 2 >>" ),
   TST(UINT64, SUCCESS, "0x7fffffffffffffff","0xffffffffffffffffU 1 >>" ),
-  TST(INT64, SUCCESS, "-1","-1 2 >>" ), // Recall this
-                                                         // is with sign
-                                                         // extension,
-                                                         // so empty
-                                                         // bits extend
-                                                         // the last bit
+  TST(INT64, SUCCESS, "-1","-1 2 >>" ), // Recall this is with sign
+                                // extension, so empty bits extend the
+                                // last bit
   TST(UINT64, SUCCESS, "0x3fffffffffffffffU","-1 ->u64 2 >>" ), // Recall this
-                                                         // is with sign
-                                                         // extension,
-                                                         // so empty
-                                                         // bits extend
-                                                         // the last bit
+                                // is with sign extension, so empty bits
+                                // extend the last bit
 
   // >> (arithmetic shift right)
   TST(INT64, STACK_UNDERFLOW, "",	">>" ),
@@ -408,7 +410,11 @@ testPel::vtests[] = {
   TST(INT64, SUCCESS, "2",	"1 1 <<" ),
   TST(INT64, SUCCESS, "4",	"2 1 <<" ),
   TST(INT64, SUCCESS, "64",	"16 2 <<" ),
-  TST(ID,    SUCCESS, "4",	"1 ->id 2 <<" ),
+  TST(ID, SUCCESS,    "0", "0x1I 160 <<id"),
+  TST(ID, SUCCESS,    "2", "0x1I 1 <<id"),
+  TST(ID, SUCCESS,    "80000000", "0x1I 31 <<id"),
+  TST(ID, SUCCESS,    "8000", "0x1I 15 <<id"),
+  TST(ID, SUCCESS,    "20000", "0x8000I 2 <<id"),
   TST(UINT64, SUCCESS, "0xfffffffffffffffeU",	"0xffffffffffffffffU 1 <<" ),
   TST(UINT64, SUCCESS, "0xfffffffffffffffcU",	"-1 ->u64 2 <<" ),
   // & (bitwise AND)
@@ -1261,7 +1267,7 @@ testPel::vtests[] = {
   TST(LIST, SUCCESS, "(1, 1, 1)", "null 1 lappend 1 lappend 1 lappend null 1 lappend 1 lappend 1 lappend 1 lappend msintersect"),
 
 // Hash tests
-  TST(ID, SUCCESS, "", "1 sha1"),
+  TST(ID, SUCCESS, "2B196A354CB01379184D5754E6468DC2AB285439", "1 sha1"),
 
 // Test ID
   TST(INT32, SUCCESS, "1", "1 ->id 0x00000000000000000002I <" ),

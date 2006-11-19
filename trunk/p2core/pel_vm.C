@@ -957,6 +957,13 @@ DEF_OP(TIME_NOW) {
   getTime(t);
   stackPush(Val_Time::mk(t));
 }
+DEF_OP(TIME_MINUS) {
+   // Be careful of undefined evaluation order in C++!
+   // Note that this returns a Time_Duration!
+   boost::posix_time::ptime v1 = pop_time();
+   boost::posix_time::ptime v2 = pop_time();
+   stackPush(Val_Time_Duration::mk(v2 - v1));
+ }
 
 //
 // Time_Duration operations.  Note that the '>' and '<' are reversed: think
@@ -1036,7 +1043,12 @@ DEF_OP(ID_LSL) {
   uint32_t shift = pop_unsigned();
   IDPtr id = pop_ID();
   //TELL_WARN << "Left shift " << shift << " " << id->toString() << " " << id->shift(shift)->toString() << "\n";
-  stackPush(Val_ID::mk(id->shift(shift)));
+  stackPush(Val_ID::mk(id->lshift(shift)));
+}
+DEF_OP(ID_LSR) {
+  uint32_t shift = pop_unsigned();
+  IDPtr id = pop_ID();
+  stackPush(Val_ID::mk(id->rshift(shift)));
 }
 DEF_OP(ID_DIST) {
   // Be careful of undefined evaluation order in C++!

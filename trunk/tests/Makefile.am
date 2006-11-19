@@ -33,6 +33,7 @@ benchmark_LDADD =		$(top_builddir)/p2core/libp2core.la \
 runOverLog_SOURCES =		runOverLog.C
 
 runOverLog_LDADD = 		\
+				@OPENSSL_LIB@ \
 				$(top_builddir)/planner/libp2planner.la \
 				$(top_builddir)/overlog/libp2overlog.la \
 				$(top_builddir)/net/libp2net.la \
@@ -47,6 +48,7 @@ runOverLog2_SOURCES =		runOverLog2.C
 runOverLog2_LDADD =		\
 				@PYTHON_LSPEC@ \
 				-lboost_python \
+				@OPENSSL_LIB@ \
 				$(top_builddir)/p2cpp/libp2cpp.la \
 				$(top_builddir)/overlog/libp2overlog.la \
 				$(top_builddir)/debugger/libp2debugger.la \
@@ -73,6 +75,7 @@ runPingPong_SOURCES =		runPingPong.C
 
 runPingPong_LDADD =		\
 				@PYTHON_LSPEC@ \
+				@OPENSSL_LIB@ \
 				-lboost_python \
 				$(top_builddir)/p2cpp/libp2cpp.la \
 				$(top_builddir)/overlog/libp2overlog.la \
@@ -99,6 +102,7 @@ runPingPong_CPPFLAGS =		@PYTHON_CSPEC@ \
 overlog_SOURCES	=		overlog.C
 
 overlog_LDADD =			\
+				@OPENSSL_LIB@ \
 				$(top_builddir)/planner/libp2planner.la \
 				$(top_builddir)/overlog/libp2overlog.la \
 				$(top_builddir)/net/libp2net.la \
@@ -110,6 +114,7 @@ overlog_LDADD =			\
 simple_lookup_SOURCES =		simple_lookup.C
 
 simple_lookup_LDADD =		\
+				@OPENSSL_LIB@ \
 				$(top_builddir)/net/libp2net.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/p2core/libp2core.la \
@@ -119,6 +124,7 @@ simple_lookup_LDADD =		\
 lookupGenerator_SOURCES =	lookupGenerator.C
 
 lookupGenerator_LDADD =		\
+				@OPENSSL_LIB@ \
 				$(top_builddir)/net/libp2net.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/p2core/libp2core.la \
@@ -128,6 +134,7 @@ lookupGenerator_LDADD =		\
 udpMessage_SOURCES =		udpMessage.C
 
 udpMessage_LDADD =		\
+				@OPENSSL_LIB@ \
 				$(top_builddir)/net/libp2net.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/p2core/libp2core.la \
@@ -137,6 +144,7 @@ udpMessage_LDADD =		\
 udpListen_SOURCES =		udpListen.C
 
 udpListen_LDADD =		\
+				@OPENSSL_LIB@ \
 				$(top_builddir)/net/libp2net.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/p2core/libp2core.la \

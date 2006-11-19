@@ -90,6 +90,7 @@ for op, ar, va, desc in [
   (">time",2,      "TIME_GT",       "Time greater-than comparison"),
   (">=time",2,     "TIME_GTE",      "Time greater-than-or-eq comparison"),
   ("==time",2,     "TIME_EQ",       "Time compare equality"),
+  ("-time",2,      "TIME_MINUS",    "Time subtraction"),
   ("now",0,        "TIME_NOW",      "The current time token"),
 
   ("<time_duration",2,      "TIME_DURATION_LT",       "Time_Duration less-than comparison"),
@@ -111,6 +112,7 @@ for op, ar, va, desc in [
   ("++",1,      "PLUSPLUS",     "increment by one"),
   ("distance",2, "ID_DIST",     "ID subtraction"),
   ("<<id",2,	 "ID_LSL",      "ID arithmetic shift left"),
+  (">>id",2,	 "ID_LSR",      "ID arithmetic shift left"),
   ("()id",3,	 "ID_BTWOO",    "ID interval open-open containment"),
   ("(]id",2,	 "ID_BTWOC",    "ID interval open-closed containment"),
   ("[)id",3,	 "ID_BTWCO",    "ID interval closed-open containment"),

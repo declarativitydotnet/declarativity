@@ -139,13 +139,13 @@ string pelMath(PlanContext* pc, Parse_Math *expr)
   expr2Pel(pc, pel, expr->rhs);
 
   switch (expr->oper) {
-    case Parse_Math::LSHIFT:  pel << (expr->id ? "<<id "      : "<< "); break;
-    case Parse_Math::RSHIFT:  pel << ">> "; break;
-    case Parse_Math::PLUS:    pel << "+ "; break;
-    case Parse_Math::MINUS:   pel << "- "; break;
-    case Parse_Math::TIMES:   pel << "* "; break;
-    case Parse_Math::DIVIDE:  pel << "/ "; break;
-    case Parse_Math::MODULUS: pel << "\% "; break;
+  case Parse_Math::LSHIFT:  pel << (expr->id ? "<<id "      : "<< "); break;
+  case Parse_Math::RSHIFT:  pel << (expr->id ? ">>id " : ">> "); break;
+  case Parse_Math::PLUS:    pel << "+ "; break;
+  case Parse_Math::MINUS:   pel << "- "; break;
+  case Parse_Math::TIMES:   pel << "* "; break;
+  case Parse_Math::DIVIDE:  pel << "/ "; break;
+  case Parse_Math::MODULUS: pel << "\% "; break;
   default: error(pc, "Pel Math error" + expr->toString());
   }
 
@@ -436,7 +436,8 @@ string pelBool(PlanContext* pc, Parse_Bool *expr)
   return pel.str();
 }
 
-void pelSelect(PlanContext* pc, Parse_Select *expr, int selectionID)
+void 
+pelSelect(PlanContext* pc, Parse_Select *expr, int selectionID)
 {
   ECA_Rule* curRule = pc->_ruleStrand->getRule();
   ostringstream sPel;
@@ -458,7 +459,8 @@ void pelSelect(PlanContext* pc, Parse_Select *expr, int selectionID)
 }
 
 
-void pelAssign(PlanContext* pc, Parse_Assign* expr, int assignID) 
+void
+pelAssign(PlanContext* pc, Parse_Assign* expr, int assignID) 
 {
   ECA_Rule* curRule = pc->_ruleStrand->getRule();
   ostringstream pel;
@@ -482,8 +484,10 @@ void pelAssign(PlanContext* pc, Parse_Assign* expr, int assignID)
 	    + pc->_namesTracker->toString() + "\n");
   
   ElementSpecPtr assignPelTrans =
-    pc->createElementSpec(ElementPtr(new PelTransform("Assignment:" + curRule->_ruleID + ":" 
-                                                      + pc->_nodeID, pel.str())));
+    pc->createElementSpec(ElementPtr(new PelTransform("Assignment:" +
+                                                      curRule->_ruleID + ":" +
+                                                      pc->_nodeID,
+                                                      pel.str())));
   
   pc->addElementSpec(assignPelTrans);  
 }

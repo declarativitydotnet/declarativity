@@ -55,7 +55,7 @@ set -x
 chmod +x setup
 aclocal
 autoheader
-$lt
+$lt --force
 automake --add-missing --foreign --copy
 autoconf
 set +x

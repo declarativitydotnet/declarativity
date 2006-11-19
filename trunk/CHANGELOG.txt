@@ -1,3 +1,23 @@
+Release 0.7.6
+
+- Fixed bug in initialization of IDs via strings (4 bytes per word as
+  opposed to 2 bytes).
+
+- Added ID right-shift operation.
+
+- Migrated tests/overlog to use getopt
+
+- Added -lcrypto in compilation machinery for OPENSSL (required on OSX)
+
+- Added -force in libtoolize to deal with cross-platform setups
+
+- Added time subtraction in pel and OverLog
+
+- Added OPENSSL_LIB in all tests programs
+
+- Fixed unit test library dependencies
+
+
 
 Release 0.7.5
 

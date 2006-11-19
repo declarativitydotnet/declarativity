@@ -20,13 +20,13 @@ class OperID : public opr::OperCompare<Val_ID> {
   virtual ValuePtr _lshift (const ValuePtr& v1, const ValuePtr& v2) const {
     IDPtr   id = Val_ID::cast(v1);
     uint32_t s = Val_UInt32::cast(v2);
-    return Val_ID::mk(id->shift(s));
+    return Val_ID::mk(id->lshift(s));
   };
 
   virtual ValuePtr _rshift (const ValuePtr& v1, const ValuePtr& v2) const {
     IDPtr id = Val_ID::cast(v1);
-    int32_t s = Val_UInt32::cast(v2);
-    return Val_ID::mk(id->shift(-s));
+    uint32_t s = Val_UInt32::cast(v2);
+    return Val_ID::mk(id->rshift(s));
   };
 
   virtual ValuePtr _plus (const ValuePtr& v1, const ValuePtr& v2) const {

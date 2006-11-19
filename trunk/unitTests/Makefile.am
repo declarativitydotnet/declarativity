@@ -39,6 +39,7 @@ libp2unitTests_la_CPPFLAGS =	@BOOST_INC@ \
 
 
 
+
 # Programs
 
 bin_PROGRAMS =			p2TestTable2 \
@@ -60,13 +61,14 @@ AM_LDFLAGS =			 \
 
 AM_CXXFLAGS =			-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 
-AM_CPPFLAGS =			-I$(top_builddir)/p2core
+AM_CPPFLAGS =			-I$(top_builddir)/p2core \
+				@BOOST_INC@
 
-p2Test_DEPENDENCIES =		$(lib_LTLIBRARIES)
+p2Test_DEPENDENCIES =		$(lib_LTLIBRARIES) $(UNITLIBRARYDEPS)
 
-p2TestTable2_DEPENDENCIES =	$(lib_LTLIBRARIES)
+p2TestTable2_DEPENDENCIES =	$(lib_LTLIBRARIES) $(UNITLIBRARYDEPS)
 
-p2TestAggwrap_DEPENDENCIES =	$(lib_LTLIBRARIES)
+p2TestAggwrap_DEPENDENCIES =	$(lib_LTLIBRARIES) $(UNITLIBRARYDEPS)
 
 UNITLIBRARYDEPS =		\
 				$(top_builddir)/unitTests/libp2unitTests.la \

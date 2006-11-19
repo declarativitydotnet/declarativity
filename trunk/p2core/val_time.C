@@ -29,8 +29,24 @@ using namespace boost::gregorian;
 using namespace boost::posix_time;
 
 class OperTime : public opr::OperCompare<Val_Time> {
-  // removed _plus and _minus from here since it doesn't make sense to 
+  // removed _plus from here since it doesn't make sense to 
   // add two absolute calendar times (i.e. boost::ptime's) -- JMH 
+  
+  virtual ValuePtr _minus (const ValuePtr& v1, const ValuePtr& v2) const {
+    // This is slightly confusing, but based on Boost's time
+    // semantics.
+    // Given two Val_Time values, their difference is a
+    // Val_Time_Duration.
+    // But the difference between a Val_Time and another numeric type
+    // is of type Val_Time.
+    if (v2->typeCode() == Value::TIME) {
+      return Val_Time_Duration::mk(Val_Time::cast(v1) -
+                                   Val_Time::cast(v2));
+    } else {
+      return Val_Time::mk(Val_Time::cast(v1) -
+                          Val_Time_Duration::cast(v2));
+    }
+  };
 };
 const opr::Oper* Val_Time::oper_ = new OperTime();
 
@@ -374,7 +390,7 @@ boost::posix_time::time_duration Val_Time_Duration::cast(ValuePtr v) {
 
 int Val_Time_Duration::compareTo(ValuePtr other) const
 {  
-  if (other->typeCode() != Value::TIME) {
+  if (other->typeCode() != Value::TIME_DURATION) {
     if (Value::TIME_DURATION < other->typeCode()) {
       return -1;
     } else if (Value::TIME_DURATION > other->typeCode()) {

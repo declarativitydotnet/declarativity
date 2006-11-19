@@ -58,35 +58,36 @@ ID::ID(uint64_t doubleword)
 
 ID::ID(std::string hexString)
 {
-  static const std::string zeros(WORDS * 4, '0');
+  static const std::string zeros(WORDS * 8, '0');
   
-  // Read it in in chunks of 4-byte words from right to left. If it's
-  // two long, discard any extraneous prefix to leave WORDS-worth of
-  // suffix characters
+  // Read it in in chunks of 4-byte words (8 hexadecimal digits) from
+  // right to left. If it's too long, discard any extraneous prefix to
+  // leave WORDS-worth of suffix characters
   unsigned position = hexString.length();
-  if (position > (WORDS * 4)) {
+  if (position > (WORDS * 8)) {
     // This string is too long. Chop it down
-    hexString = hexString.substr(position - (WORDS * 4), WORDS * 4);
-    position = WORDS * 4;
+    hexString = hexString.substr(position - (WORDS * 8), WORDS * 8);
+    position = WORDS * 8;
   }
 
-  // Now we have at most WORDS*4 characters but perhaps fewer.
-  if (position < WORDS * 4) {
+  // Now we have at most WORDS*8 characters but perhaps fewer.
+  if (position < WORDS * 8) {
     // I don't have enough characters. Prepend 0's
-    hexString = zeros.substr(0, WORDS * 4 - position) + hexString;
-    position = WORDS * 4;
+    hexString = zeros.substr(0, WORDS * 8 - position) + hexString;
+    position = WORDS * 8;
   }
 
-  // Now we have exactly WORDS*4 characters.
+  // Now we have exactly WORDS*8 characters.
   int wordIndex = WORDS - 1;
   for (;
        wordIndex >= 0;
-       position -= 4,
+       position -= 8,
          wordIndex--) {
-    // Pick the last 4-char suffix
-    std::string suffix = hexString.substr(position - 4, 4);
+    // Pick the last 8-char suffix
+    std::string suffix = hexString.substr(position - 8, 8);
+    const char* startPointer = suffix.c_str();
     char* endPointer;
-    words[wordIndex] = (uint32_t) strtoull(suffix.c_str(),
+    words[wordIndex] = (uint32_t) strtoull(startPointer,
                                            &endPointer,
                                            16);
     if (*endPointer != '\0') {
@@ -116,12 +117,12 @@ ID::ID(std::string hexString)
 string
 ID::toString() const
 { 
-  char buf[30];
+  char buf[41];
   string result;
   for (unsigned i = 0;
        i < WORDS;
        i++) {
-    sprintf(buf, "%04x", words[i]);
+    sprintf(buf, "%08x", words[i]);
     result += buf;
   }
   return "0x" + result + "I";
@@ -131,9 +132,9 @@ ID::toString() const
 string ID::toConfString() const
 { 
   ostringstream result;
-  char buf[30];
+  char buf[41];
   for (unsigned i = 0; i < WORDS; i++) {
-    sprintf(buf, "%04x", words[i]);
+    sprintf(buf, "%08x", words[i]);
     result << buf;
   }
   return "0x" + result.str() + "I";
@@ -292,7 +293,7 @@ ID::rshift(uint32_t shift) const
   
   // Now we only have short shifts
   uint32_t carry = 0;
-  for (int i = 0;
+  for (uint32_t i = 0;
        i < WORDS;
        i++) {
     uint64_t temp = newID->words[i];
@@ -307,7 +308,7 @@ ID::rshift(uint32_t shift) const
     newWord = ((temp >> 32) & 0xFFFFFFFF); // store the high-order bits
                                            // in the actual word
     newID->words[i] = newWord | carry; // and put in the carry also
-    cary = temp & 0xFFFFFFFF    // The carry is what's left in the
+    carry = temp & 0xFFFFFFFF;  // The carry is what's left in the
                                 // lower-order bits of the temp
   }
 

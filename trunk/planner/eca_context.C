@@ -404,7 +404,7 @@ void ECA_Context::rewrite(Localize_Context* lctxt, TableStore* tableStore)
     }
 
     if (countEvents > 1) {
-      TELL_WARN << nextRule->toString() << " should have at most one event\n";
+      TELL_ERROR << nextRule->toString() << " should have at most one event\n";
       exit(-1);
     }
 
