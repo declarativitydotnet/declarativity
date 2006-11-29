@@ -92,6 +92,7 @@ private:
   void generateNetworkOutElements(boost::shared_ptr<Udp> udp);
   void generateNetworkInElements(boost::shared_ptr<Udp> udp);
 
+  ElementSpecPtr _unBoxWrapAround;
   string _nodeID;
   Plumber::DataflowPtr _conf;
   std::vector<ElementSpecPtr> _networkIn, _networkOut;

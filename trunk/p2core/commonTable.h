@@ -35,6 +35,7 @@
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <deque>
+#include "errno.h"
 
 
 class CommonTable {
@@ -696,5 +697,18 @@ protected:
 
 /** A pointer to tables */
 typedef boost::shared_ptr< CommonTable > CommonTablePtr;
+
+#define TABLE_LOG(_table,_reportingLevel,_rest) "CommonTable, " \
+  << _table->_name                                              \
+  << ", "                                                       \
+  << _reportingLevel                                            \
+  << ", "                                                       \
+  << errno                                                      \
+  << ", "                                                       \
+  << _rest
+
+#define TABLE_WORDY(_rest) TELL_WORDY           \
+  << TABLE_LOG(this, Reporting::WORDY, _rest)   \
+    << "\n"
 
 #endif

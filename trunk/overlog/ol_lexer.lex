@@ -139,6 +139,7 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>"^" { return OL_BITXOR; }
 <INITIAL>"&" { return OL_BITAND; }
 <INITIAL>"|" { return OL_BITOR; }
+<INITIAL>"~" { return OL_BITNOT; }
 <INITIAL>">>" { return OL_RSHIFT; }
 <INITIAL>"<<" { return OL_LSHIFT; }
 
@@ -146,12 +147,6 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>"!" { return OL_NOT; }
 <INITIAL>"&&" { return OL_AND; }
 <INITIAL>"||" { return OL_OR; } 
-
- /* Regular expressions */
-<INITIAL>"~" { return OL_REGEXP; }
-<INITIAL>"~*" { return OL_REGIEXP; }
-<INITIAL>"!~" { return OL_NOTREGEXP; }
-<INITIAL>"!~*" { return OL_NOTREGIEXP; }
 
 <INITIAL>":=" { return OL_ASSIGN; }
 <INITIAL>"." { return OL_DOT; }

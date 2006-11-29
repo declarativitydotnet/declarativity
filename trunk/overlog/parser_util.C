@@ -36,13 +36,20 @@ Parse_Var::Parse_Var(const string& var)
   
 
 string
-Parse_Var::toString()
+Parse_Var::toLocString()
 { 
   if (!locspec()) {
     return v->toString(); 
   } else {
     return ("@" + v->toString());
   }
+}
+  
+
+string
+Parse_Var::toString()
+{ 
+  return v->toString();
 }
   
 
@@ -225,6 +232,10 @@ string Parse_Math::toString() {
     case TIMES:   m << " *"; break;
     case DIVIDE:  m << " /"; break;
     case MODULUS: m << " %"; break;
+    case BIT_AND: m << "& "; break;
+    case BIT_OR:  m << "| "; break;
+    case BIT_XOR: m << "^ "; break;
+    case BIT_NOT: m << "~ "; break;
     default: assert(0);
   }
   if (id) m << "id ";
@@ -247,7 +258,8 @@ string Parse_FunctorName::toString() {
   return fn.str();
 }
 
-string Parse_Functor::getlocspec() {
+string
+Parse_Functor::getlocspec() {
   Parse_Var *p;
   Parse_Agg *a;
   
@@ -260,10 +272,9 @@ string Parse_Functor::getlocspec() {
       if ((p = dynamic_cast<Parse_Var*>(arg(k)))
           && p->locspec()) {
         if (!found) {
-          loc_ = p->toString();
+          loc_ = p->toLocString();
           found = true;
-        }
-        else {
+        } else {
           TELL_ERROR << "PARSER ERROR: More than one location "
                      << "specifier in predicate " << toString();
           loc_.clear();
@@ -295,13 +306,26 @@ string Parse_Functor::getlocspec() {
   return(loc_);
 }
 
-string Parse_Functor::toString() {
+string
+Parse_Functor::toString() {
   ostringstream f;
-  f << fn->toString() << "( ";
+  f << fn->toString()
+    << "( ";
   for (int i = 0; i < args(); i++) {
-    f << arg(i)->toString();
-    if (i+1 < args()) f << ", ";
-    else f << " )";
+    Parse_Expr* nextArg = arg(i);
+    Parse_Var* var = dynamic_cast<Parse_Var*>(nextArg);
+    if (var == NULL) {
+      // Wasn't a variable, so just call normal toString
+      f << nextArg->toString();
+    } else {
+      // It's a variable, so call toString with locspecs
+      f << var->toLocString();
+    }
+    if (i + 1 < args()) {
+      f << ", ";
+    } else {
+      f << " )";
+    }
   }
   return f.str();
 }

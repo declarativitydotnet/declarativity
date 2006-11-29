@@ -68,14 +68,6 @@ void expr2Pel(PlanContext* pc, ostringstream &pel, Parse_Expr *e)
     else {
       pel << val->toString() << " "; 
     }
-    /*if (val->id()) {
-      pel << "->u32 ->id "; 
-    } else {
-      m = dynamic_cast<Parse_Math*>(e);
-      if (m != NULL && m->id) {
-	pel << "->u32 ->id ";
-      }
-      }*/
   }
   else if (e == Parse_Expr::Now)
     pel << "now "; 
@@ -139,13 +131,17 @@ string pelMath(PlanContext* pc, Parse_Math *expr)
   expr2Pel(pc, pel, expr->rhs);
 
   switch (expr->oper) {
-  case Parse_Math::LSHIFT:  pel << (expr->id ? "<<id "      : "<< "); break;
-  case Parse_Math::RSHIFT:  pel << (expr->id ? ">>id " : ">> "); break;
+  case Parse_Math::LSHIFT:  pel << "<< "; break;
+  case Parse_Math::RSHIFT:  pel << ">> "; break;
   case Parse_Math::PLUS:    pel << "+ "; break;
   case Parse_Math::MINUS:   pel << "- "; break;
   case Parse_Math::TIMES:   pel << "* "; break;
   case Parse_Math::DIVIDE:  pel << "/ "; break;
   case Parse_Math::MODULUS: pel << "\% "; break;
+  case Parse_Math::BIT_AND: pel << "& "; break;
+  case Parse_Math::BIT_OR:  pel << "| "; break;
+  case Parse_Math::BIT_XOR: pel << "^ "; break;
+  case Parse_Math::BIT_NOT: pel << "~ "; break;
   default: error(pc, "Pel Math error" + expr->toString());
   }
 
@@ -448,8 +444,11 @@ pelSelect(PlanContext* pc, Parse_Select *expr, int selectionID)
     sPel << "$" << k << " pop ";
   }
 
-  debugRule(pc, "Generate selection functions for " + sPel.str() 
-		    + " " + pc->_namesTracker->toString() + "\n");
+  PLANNER_WORDY(pc,
+                "Generate selection functions for "
+                << sPel.str()
+                << " "
+                << pc->_namesTracker->toString());
  
   ElementSpecPtr sPelTrans =
     pc->createElementSpec(ElementPtr(new PelTransform("Selection:" 
@@ -479,9 +478,15 @@ pelAssign(PlanContext* pc, Parse_Assign* expr, int assignID)
     pc->_namesTracker->fieldNames.push_back(a->toString()); // the variable name
   } 
 
-  debugRule(pc, "Generate assignments for " + a->toString() + " " 
-	    + curRule->_ruleID + " " + pel.str() + " " 
-	    + pc->_namesTracker->toString() + "\n");
+  PLANNER_WORDY(pc,
+                "Generate assignments for "
+                << a->toString()
+                << " " 
+                << curRule->_ruleID
+                << " "
+                << pel.str()
+                << " " 
+                << pc->_namesTracker->toString());
   
   ElementSpecPtr assignPelTrans =
     pc->createElementSpec(ElementPtr(new PelTransform("Assignment:" +

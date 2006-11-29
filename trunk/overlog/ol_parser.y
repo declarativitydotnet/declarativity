@@ -32,9 +32,9 @@
 %left OL_BITOR
 %left OL_BITXOR
 %left OL_BITAND
+%left OL_BITNOT
 %left OL_EQ OL_NEQ
 %nonassoc OL_GT OL_GTE OL_LT OL_LTE
-%nonassoc OL_REGEXP OL_REGIEXP OL_NOTREGEXP OL_NOTREGIEXP
 %left OL_LSHIFT OL_RSHIFT
 %left OL_PLUS OL_MINUS 
 %left OL_TIMES OL_DIVIDE OL_MODULUS
@@ -347,6 +347,10 @@ math_oper:	  OL_LSHIFT  { $$ = Parse_Math::LSHIFT; }
 		| OL_TIMES   { $$ = Parse_Math::TIMES; }
 		| OL_DIVIDE  { $$ = Parse_Math::DIVIDE; }
 		| OL_MODULUS { $$ = Parse_Math::MODULUS; }
+		| OL_BITXOR  { $$ = Parse_Math::BIT_XOR; }
+		| OL_BITAND  { $$ = Parse_Math::BIT_AND; }
+		| OL_BITOR   { $$ = Parse_Math::BIT_OR; }
+		| OL_BITNOT  { $$ = Parse_Math::BIT_NOT; }
 		;
 
 

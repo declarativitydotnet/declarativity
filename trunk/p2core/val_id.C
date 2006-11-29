@@ -51,6 +51,28 @@ class OperID : public opr::OperCompare<Val_ID> {
     return Val_ID::mk(id1->add(ID::ONE));
   };
 
+  virtual ValuePtr _band(const ValuePtr& v1, const ValuePtr& v2) const {
+    IDPtr id1 = Val_ID::cast(v1);
+    IDPtr id2 = Val_ID::cast(v2);
+    return Val_ID::mk(id1->bitwiseAND(id2));
+  };
+
+  virtual ValuePtr _bor(const ValuePtr& v1, const ValuePtr& v2) const {
+    IDPtr id1 = Val_ID::cast(v1);
+    IDPtr id2 = Val_ID::cast(v2);
+    return Val_ID::mk(id1->bitwiseOR(id2));
+  };
+
+  virtual ValuePtr _bxor(const ValuePtr& v1, const ValuePtr& v2) const {
+    IDPtr id1 = Val_ID::cast(v1);
+    IDPtr id2 = Val_ID::cast(v2);
+    return Val_ID::mk(id1->bitwiseXOR(id2));
+  };
+
+  virtual ValuePtr _bnot(const ValuePtr& v1) const {
+    IDPtr id1 = Val_ID::cast(v1);
+    return Val_ID::mk(id1->bitwiseNOT());
+  };
 };
 const opr::Oper* Val_ID::oper_ = new OperID();
 

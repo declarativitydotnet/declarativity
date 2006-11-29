@@ -129,7 +129,8 @@ ID::toString() const
 }
 
 
-string ID::toConfString() const
+string
+ID::toConfString() const
 { 
   ostringstream result;
   char buf[41];
@@ -139,6 +140,7 @@ string ID::toConfString() const
   }
   return "0x" + result.str() + "I";
 }
+
 
 int
 ID::compareTo(IDPtr other) const
@@ -156,6 +158,7 @@ ID::compareTo(IDPtr other) const
   return 0;
 }
 
+
 bool
 ID::betweenOO(IDPtr from, IDPtr to) const
 {
@@ -163,6 +166,7 @@ ID::betweenOO(IDPtr from, IDPtr to) const
           ((to->compareTo(from) <= 0) && (compareTo(from) > 0)) ||
           ((compareTo(to) < 0) && (to->compareTo(from) <= 0)));
 }
+
 
 bool
 ID::betweenOC(IDPtr from, IDPtr to) const
@@ -172,6 +176,7 @@ ID::betweenOC(IDPtr from, IDPtr to) const
           ((compareTo(to) <= 0) && (to->compareTo(from) <= 0)));
 }
 
+
 bool
 ID::betweenCO(IDPtr from, IDPtr to) const
 {
@@ -180,6 +185,7 @@ ID::betweenCO(IDPtr from, IDPtr to) const
           ((compareTo(to) < 0) && (to->compareTo(from) <= 0)));
 }
 
+
 bool
 ID::betweenCC(IDPtr from, IDPtr to) const
 {
@@ -187,6 +193,7 @@ ID::betweenCC(IDPtr from, IDPtr to) const
           ((to->compareTo(from) <= 0) && (compareTo(from) >= 0)) ||
           ((compareTo(to) <= 0) && (to->compareTo(from) <= 0)));
 }
+
 
 IDPtr
 ID::distance(IDPtr to) const
@@ -215,6 +222,7 @@ ID::distance(IDPtr to) const
   }
   return newID;
 }
+
 
 IDPtr
 ID::lshift(uint32_t shift) const
@@ -260,6 +268,7 @@ ID::lshift(uint32_t shift) const
 
   return newID;
 }
+
 
 IDPtr
 ID::rshift(uint32_t shift) const
@@ -315,6 +324,63 @@ ID::rshift(uint32_t shift) const
   return newID;
 }
 
+
+IDPtr
+ID::bitwiseAND(IDPtr other) const
+{
+  IDPtr newID = ID::mk();
+  for(int i = (int) WORDS - 1;
+      i >= 0;
+      i--) {
+    newID->words[i] = words[i] & other->words[i];
+  }
+  
+  return newID;
+}
+
+
+IDPtr
+ID::bitwiseOR(IDPtr other) const
+{
+  IDPtr newID = ID::mk();
+  for(int i = (int) WORDS - 1;
+      i >= 0;
+      i--) {
+    newID->words[i] = words[i] | other->words[i];
+  }
+  
+  return newID;
+}
+
+
+IDPtr
+ID::bitwiseXOR(IDPtr other) const
+{
+  IDPtr newID = ID::mk();
+  for(int i = (int) WORDS - 1;
+      i >= 0;
+      i--) {
+    newID->words[i] = words[i] ^ other->words[i];
+  }
+  
+  return newID;
+}
+
+
+IDPtr
+ID::bitwiseNOT() const
+{
+  IDPtr newID = ID::mk();
+  for(int i = (int) WORDS - 1;
+      i >= 0;
+      i--) {
+    newID->words[i] = ~words[i];
+  }
+  
+  return newID;
+}
+
+
 IDPtr
 ID::add(IDPtr other) const
 {
@@ -337,6 +403,7 @@ ID::add(IDPtr other) const
   return newID;
 }
 
+
 void
 ID::xdr_marshal(XDR *x)
 {
@@ -346,6 +413,7 @@ ID::xdr_marshal(XDR *x)
     xdr_uint32_t(x, &(words[i]));
   }
 }
+
 
 IDPtr
 ID::xdr_unmarshal(XDR *x)
@@ -359,11 +427,14 @@ ID::xdr_unmarshal(XDR *x)
   return newID;
 }
 
+
 IDPtr
 ID::ZERO(ID::mk((uint32_t) 0));
 
+
 IDPtr
 ID::ONE(ID::mk((uint32_t) 1));
+
 
 std::ostream&
 operator <<(std::ostream& os, const ID& object)

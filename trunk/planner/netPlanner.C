@@ -1,4 +1,3 @@
-
 /*
  * @(#)$Id$
  *
@@ -27,6 +26,12 @@ void NetPlanner::generateNetworkOutElements(boost::shared_ptr<Udp> udp)
   ElementSpecPtr sendQueue = 
     _conf->addElement(ElementPtr(new Queue("SendQueue|", QUEUESIZE)));
 
+  // If wrap around, we unbox
+  std::vector< ValuePtr > wrapAroundDemuxKeys;
+  wrapAroundDemuxKeys.push_back(ValuePtr(new Val_Str(_nodeID)));
+  ElementSpecPtr wrapAroundDemux 
+    = _conf->addElement(ElementPtr(new Demux("wrapAroundSendDemux",
+                                             wrapAroundDemuxKeys, 0)));  
 
   // <dst, <opaque>>
   ElementSpecPtr marshalSend = 
@@ -44,7 +49,9 @@ void NetPlanner::generateNetworkOutElements(boost::shared_ptr<Udp> udp)
   _networkOut.push_back(routeSend);
   _networkOut.push_back(udpSend);
   
-  _conf->hookUp(pullPush, 0, sendQueue, 0);
+  _conf->hookUp(pullPush, 0, wrapAroundDemux, 0);
+  _conf->hookUp(wrapAroundDemux, 0, _unBoxWrapAround, 0);
+  _conf->hookUp(wrapAroundDemux, 1, sendQueue, 0);
   _conf->hookUp(sendQueue, 0, marshalSend, 0);
   _conf->hookUp(marshalSend, 0, routeSend, 0);
   _conf->hookUp(routeSend, 0, udpSend, 0);
@@ -65,16 +72,24 @@ void NetPlanner::generateNetworkInElements(boost::shared_ptr<Udp> udp)
   ElementSpecPtr receiveQueuePullPush = 
     _conf->addElement(ElementPtr(new TimedPullPush("ReceiveQueuePullPush", 0)));
 
+  ElementSpecPtr receiveMux = _conf->addElement(ElementPtr(new Mux("wrapAroundSendMux:", 2)));
+  _unBoxWrapAround =
+    _conf->addElement(ElementPtr(new UnboxField("UnBoxWrapAround:", 1)));
+  
+  _conf->hookUp(_unBoxWrapAround, 0, receiveMux, 0);
+
   _networkIn.push_back(udpReceive);
   _networkIn.push_back(unmarshalS);
   _networkIn.push_back(unBoxS);
   _networkIn.push_back(receiveBufferQueue);
   _networkIn.push_back(receiveQueuePullPush);
-  
+  _networkIn.push_back(receiveMux);
+
   _conf->hookUp(udpReceive, 0, unmarshalS, 0);
   _conf->hookUp(unmarshalS, 0, unBoxS, 0);
   _conf->hookUp(unBoxS, 0, receiveBufferQueue, 0);
   _conf->hookUp(receiveBufferQueue, 0, receiveQueuePullPush, 0);
+  _conf->hookUp(receiveQueuePullPush, 0, receiveMux, 1);  
 }
 
 void NetPlanner::generateNetworkElements(boost::shared_ptr<Udp> udp)

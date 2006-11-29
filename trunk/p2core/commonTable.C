@@ -255,6 +255,7 @@ CommonTable::~CommonTable()
 bool
 CommonTable::secondaryIndex(CommonTable::Key& key)
 {
+  TABLE_WORDY("Creating new secondary index.");
   if (findSecondaryIndex(key) == NULL) {
     createSecondaryIndex(key);
     return true;
@@ -575,6 +576,9 @@ CommonTable::lookup(CommonTable::Key& lookupKey,
                     CommonTable::Key& indexKey,
                     TuplePtr t)  
 {
+  TABLE_WORDY("Lookup with projection of tuple "
+              << t->toString());
+
   // It is essential that the two keys have the exact number of field
   // numbers
   assert(lookupKey.size() == indexKey.size());
@@ -615,6 +619,9 @@ CommonTable::Iterator
 CommonTable::lookup(CommonTable::Key& indexKey,
                     TuplePtr t)  
 {
+  TABLE_WORDY("Lookup without projection of tuple "
+              << t->toString());
+
   // The search entry.  We don't need to project for this one so the
   // search entry can be initialized with a known tuple.
   static Entry searchEntry(Tuple::EMPTY);
@@ -658,7 +665,7 @@ CommonTable::lookupSecondary(CommonTable::Entry* searchEntry,
   // queue and passing them into the iterator.
   std::deque< TuplePtr >* spool = new std::deque< TuplePtr >();
   for (;
-       tupleIter != tupleIterEnd;
+       (tupleIter != tupleIterEnd) && (tupleIter != index.end());
        tupleIter++) {
     TuplePtr result = (*tupleIter)->tuple;
     spool->push_front(result);
@@ -672,11 +679,13 @@ CommonTable::Iterator
 CommonTable::lookupPrimary(CommonTable::Entry* searchEntry)  
 {
   PrimaryIndex::iterator tupleIter = _primaryIndex.find(searchEntry);
-  
+  PrimaryIndex::iterator endIter = _primaryIndex.upper_bound(searchEntry);
+
   // Create the lookup iterator by spooling all results found into a
   // queue and passing them into the iterator.
   std::deque< TuplePtr >* spool = new std::deque< TuplePtr >();
-  while (tupleIter != _primaryIndex.end()) {
+  while ((tupleIter != endIter) &&
+         (tupleIter != _primaryIndex.end())) {
     spool->push_front((*(tupleIter++))->tuple);
   }
   Iterator iterPtr = Iterator(new IteratorObj(spool));

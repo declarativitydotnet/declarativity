@@ -122,11 +122,11 @@ private:
 // MACROS
 ////////////////////////////////////////////////////////////
 
-#define TELL_WORDY (*Reporting::wordy)
-#define TELL_INFO (*Reporting::info)
-#define TELL_WARN (*Reporting::warn)
-#define TELL_ERROR (*Reporting::error)
-#define TELL_OUTPUT (*Reporting::output)
+#define TELL_WORDY (*Reporting::wordy) << "REPORTING: "
+#define TELL_INFO (*Reporting::info) << "REPORTING: "
+#define TELL_WARN (*Reporting::warn) << "REPORTING: "
+#define TELL_ERROR (*Reporting::error) << "REPORTING: "
+#define TELL_OUTPUT (*Reporting::output) << "REPORTING: "
 
 #define TRACE_WORDY ((*Reporting::wordy) <<  __PRETTY_FUNCTION__)
 #define TRACE_INFO (*Reporting::info <<  __PRETTY_FUNCTION__)

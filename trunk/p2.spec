@@ -1,6 +1,6 @@
 Summary: INTEL P2
 Name: p2
-Version: 0.7.6
+Version: 0.7.7
 Release: 0
 Source0: %{name}-%{version}.tar.gz
 License: GPL

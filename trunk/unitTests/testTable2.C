@@ -85,6 +85,14 @@ public:
   testPrimaryOverwrite();
 
 
+  /** Ensure that when a look something up, I get only it and not its
+      successor, non-matching elements. This was a bug in which when
+      using index.find() in common table, we'd end the iterator with
+      index.end() as opposed to with index.upper_bound(). */
+  void
+  testAvoidIndexTail();
+
+
   /** Check that a secondary index search is equivalent to scanning and
       selecting. */
   void
@@ -1504,6 +1512,61 @@ testTable2::testIndexing()
 
 
 void
+testTable2::testAvoidIndexTail()
+{
+  // We are using the pattern from the bug that triggered this test
+  Table2 table("coordinator", Table2::KEY1,
+               Table2::DEFAULT_SIZE, Table2::DEFAULT_EXPIRATION);
+
+  TuplePtr c10000 = Tuple::mk();
+  c10000->append(Val_Str::mk("coordinator"));
+  c10000->append(Val_Str::mk("localhost:10000"));
+  c10000->append(Val_Str::mk("localhost:10000"));
+  c10000->freeze();
+  table.insert(c10000);
+  
+  TuplePtr c10001 = Tuple::mk();
+  c10001->append(Val_Str::mk("coordinator"));
+  c10001->append(Val_Str::mk("localhost:10001"));
+  c10001->append(Val_Str::mk("localhost:10000"));
+  c10001->freeze();
+  table.insert(c10001);
+  
+  TuplePtr c10002 = Tuple::mk();
+  c10002->append(Val_Str::mk("coordinator"));
+  c10002->append(Val_Str::mk("localhost:10002"));
+  c10002->append(Val_Str::mk("localhost:10000"));
+  c10002->freeze();
+  table.insert(c10002);
+  
+
+  // Now lookup without projection the per tuple:
+  TuplePtr per = Tuple::mk();
+  per->append(Val_Str::mk("per"));
+  per->append(Val_Str::mk("localhost:10001"));
+  per->append(Val_Int32::mk(0));
+  per->freeze();
+
+  Table2::Iterator i = table.lookup(Table2::KEY1, per);
+  BOOST_CHECK_MESSAGE(!i->done(),
+                      "Lookup of per tuple should return at least "
+                      << "one single result");
+
+  // Count the elements returned. There should be exactly one
+  int count = 0;
+  while (!i->done()) {
+    i->next();
+    count++;
+  }
+  BOOST_CHECK_MESSAGE(count == 1,
+                      "Lookup of per tuple should return exactly "
+                      << "one result. It returned "
+                      << count
+                      << " instead.");  
+}
+
+
+void
 testTable2::testBatchRemovals()
 {
   TuplePtr tpls[SIZE];
@@ -1792,6 +1855,7 @@ testTable2_testSuite::testTable2_testSuite()
   add(BOOST_CLASS_TEST_CASE(&testTable2::testPseudoRandomInsertDeleteSequences, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testProjectedLookups, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSecondaryEquivalence, instance));
+  add(BOOST_CLASS_TEST_CASE(&testTable2::testAvoidIndexTail, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testPrimaryOverwrite, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testCreateDestroy, instance));
   add(BOOST_CLASS_TEST_CASE(&testTable2::testSizeLimitID, instance));

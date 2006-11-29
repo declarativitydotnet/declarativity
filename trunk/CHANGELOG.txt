@@ -1,3 +1,47 @@
+Release 0.7.7
+
+Modification of chord.olg to deal with connectivity management better
+(from Boon Loo).
+
+Added wrap-around in the net planner of the new planner (from Boon Loo).
+
+Removed naming component from localization rewrite to avoid @ signs in functor names.
+
+Now moving locspec during localization rewrites.
+
+Changed toString in Parse_Functor to show locspec.
+
+Added pred(.., NIL, NIL) as a fact into Chord.olg
+
+Fixed rule head name setting in localization rewrites that now allow
+inclusion of locspec (without the @ character).
+
+Replaced debugRule with PLANNER_WORDY macros in Planner files.
+
+Replaced all PrintWatch elements with Print elements that are placed
+conditionally when the tuple flow they see is a watched tuple name.
+
+Replaced string delimiter in element names from | to ! to avoid conflict
+with graphviz language.
+
+Started migration in some elements from log(...) to ELEM_*
+
+Added TABLE_* logging macros for table functionalities
+
+Fixed BIG BUG in commonTable in which lookup would not only return
+matching elements but all elements past the match to the end of the
+index (bug found by Igor Ganichev).
+
+Added unit test to catch such iterator tail bugs.
+
+Added bit-wise operators into OverLog
+
+Removed runOverLog2 from executables to discourage its use.
+
+Added bitwise operators for IDs (originally due to Ashima Atul).
+
+
+
 Release 0.7.6
 
 - Fixed bug in initialization of IDs via strings (4 bytes per word as

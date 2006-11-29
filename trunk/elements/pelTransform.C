@@ -30,6 +30,9 @@ PelTransform::simple_action(TuplePtr p)
 
   if (e != Pel_VM::PE_SUCCESS) {
     // The transform failed.  Return nothing
+    ELEM_WORDY("Pel VM execution on "
+               << p->toString()
+               << " failed.");
     return TuplePtr();
   } else {
     // The transform succeeded.
@@ -38,9 +41,16 @@ PelTransform::simple_action(TuplePtr p)
     TuplePtr result = _vm.result_tuple();
     if (result == 0) {
       // No result tuple or empty result tuple.  Return nothing
+      ELEM_WORDY("Pel VM execution on "
+                 << p->toString()
+                 << " succeeded but yielded nothing");
       return TuplePtr();
     } else {
       // This tuple better have at least a single field
+      ELEM_WORDY("Pel VM execution on "
+                 << p->toString()
+                 << " succeeded and yielded "
+                 << result->toString());
       return result;
     }
   }

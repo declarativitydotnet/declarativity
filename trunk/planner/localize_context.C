@@ -1,4 +1,3 @@
-// -*- c-basic-offset: 2; related-file-name: "ol_context.C" -*-
 /*
  * @(#)$Id$
  *
@@ -52,21 +51,25 @@ Localize_Context::addSendRule(OL_Context::Rule* nextRule,
 {
   Parse_ExprList* pe = new Parse_ExprList();
   for (uint k = 0; k < fieldNames.size(); k++) {
-    Parse_Var* pv = new Parse_Var(Val_Str::mk(fieldNames.at(k)));
+
+    std::string varName = fieldNames.at(k);
+    Parse_Var* pv = new Parse_Var(Val_Str::mk(varName));
+    if (fieldNameEq(loc, varName)) {
+      // The new variable should be a locspec
+      pv->setLocspec();
+    }
     pe->push_back(pv);
   }
   
   Parse_Functor* newHead 
-    = new Parse_Functor(new 
-			Parse_FunctorName(new 
-                                          Parse_Var(Val_Str::
-                                                    mk(newFunctorName))), pe, 
-                        new Parse_Val(Val_Str::mk(loc)));
+    = new Parse_Functor(new Parse_FunctorName
+                        (new Parse_Var(Val_Str::
+                                       mk(newFunctorName))), pe);
   OL_Context::Rule* newRule = new OL_Context::Rule(nextRule->ruleID 
 						   + "Local1", newHead, false);
 
   newRule->terms = newTerms;
-  TELL_WARN << "  Localized send rule " << newRule->toString() << "\n";
+  TELL_INFO << "  Localized send rule " << newRule->toString() << "\n";
 
   // Materialize what we send if the source has been materialized
   OL_Context::TableInfo* tableInfo 
@@ -97,10 +100,12 @@ void Localize_Context::rewrite(OL_Context* ctxt, TableStore* tableStore)
   }
 }
 
-void Localize_Context::rewriteRule(OL_Context::Rule* nextRule, 
-				   TableStore* tableStore)
+
+void
+Localize_Context::rewriteRule(OL_Context::Rule* nextRule, 
+                              TableStore* tableStore)
 {
-  TELL_WARN << "Perform localization rewrite on " << nextRule->toString() 
+  TELL_WORDY << "Perform localization rewrite on " << nextRule->toString() 
 	    << "\n";
 
   std::vector<OL_Context::Rule*> toRet;
@@ -119,7 +124,7 @@ void Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
 	probeTerms.push_back(functor);
       } else {
 	// put events first
-	TELL_WARN << "Put to front " << functor->fn->name << "\n";
+	TELL_WORDY << "Put to front " << functor->fn->name << "\n";
 	probeTerms.insert(probeTerms.begin(), functor);
       }
     } else {
@@ -153,7 +158,7 @@ void Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
     headName << probeTerms.at(k)->fn->name;
     OL_Context::TableInfo* tableInfo 
       = tableStore->getTableInfo(probeTerms.at(k)->fn->name);  
-    TELL_WARN << "Get table " << probeTerms.at(k)->fn->name << "\n";
+    TELL_WORDY << "Get table " << probeTerms.at(k)->fn->name << "\n";
     if (tableInfo != NULL) {
       if (minLifetime > tableInfo->timeout) {
 	minLifetime = tableInfo->timeout;
@@ -163,8 +168,9 @@ void Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
     }      
     beforeBoundaryTerms.push_back(probeTerms.at(k));
     if (!fieldNameEq(probeTerms.at(k)->getlocspec(),
-					 probeTerms.at(k+1)->getlocspec())) {
-      headName << probeTerms.at(k+1)->getlocspec();
+                     probeTerms.at(k+1)->getlocspec())) {
+      // getlocspec is guaranteed to start with @ sign
+      headName << probeTerms.at(k+1)->getlocspec().substr(1);
       local = false;
       boundary = k;      
       break;
@@ -172,22 +178,24 @@ void Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
   }
 
   if (local == true) {
-    TELL_WARN << nextRule->toString() << " is already localized\n";
+    TELL_INFO << nextRule->toString() << " is already localized\n";
     add_rule(nextRule);
     delete namesTracker;
     return;
   }
 
-  TELL_WARN << headName.str() << " " 
-       << boost::posix_time::to_simple_string(minLifetime) << " " 
-       << boundary << " " << namesTracker->toString() << "\n";
+  TELL_WORDY << headName.str() << " minimumLifetime " 
+            << boost::posix_time::to_simple_string(minLifetime)
+             << " boundaryIndex " 
+            << boundary << " " << namesTracker->toString() << "\n";
 
 
   // add a new rule that takes all terms up to boundary, and send them to dst
-  OL_Context::Rule* newRule = addSendRule(nextRule, beforeBoundaryTerms,
-					  headName.str(), probeTerms.at(0),
-					  probeTerms.at(boundary+1)->getlocspec(), 
-					  minLifetime, namesTracker->fieldNames, tableStore);
+  OL_Context::Rule* newRule =
+    addSendRule(nextRule, beforeBoundaryTerms,
+                headName.str(), probeTerms.at(0),
+                probeTerms.at(boundary + 1)->getlocspec(), 
+                minLifetime, namesTracker->fieldNames, tableStore);
   add_rule(newRule);
 
   // recursively call localization on new rule that has
@@ -206,6 +214,5 @@ void Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
   
   newRuleTwo->terms = newTerms;
   rewriteRule(newRuleTwo, tableStore);
-
 }
 

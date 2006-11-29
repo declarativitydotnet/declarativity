@@ -51,18 +51,19 @@ Lookup2::push(int port,
     assert((_lookupTupleValue == NULL) &&
            (_iterator == NULL));
     
-    log(Reporting::WORDY, 0, "push: lookup tuple is no longer null");
+    ELEM_WORDY("push: lookup tuple is no longer null");
     
     // Establish the lookup
     _lookupTuple = t;
     _lookupTupleValue = Val_Tuple::mk(t);
     
     // Groovy.  Signal puller that we're ready to give results
-    log(Reporting::INFO, 0, "push: accepted lookup for tuple "+ _lookupTuple->toString());
+    ELEM_INFO("push: accepted lookup for tuple "
+              << _lookupTuple->toString());
     
     // Unblock the puller if one is waiting
     if (_pullCallback) {
-      log(Reporting::INFO, 0, "push: wakeup puller");
+      ELEM_INFO("push: wakeup puller");
       _pullCallback();
       _pullCallback = 0;
     }
@@ -84,7 +85,7 @@ Lookup2::push(int port,
     assert(_iterator != NULL);
     assert(_lookupTuple.get() != NULL);
     assert(_lookupTupleValue.get() != NULL);
-    log(Reporting::WARN, 0, "push: lookup overrun");
+    ELEM_WARN("push: lookup overrun");
     return 0;
   }
 }
@@ -105,26 +106,17 @@ Lookup2::pull(int port,
     
     if (!_pullCallback) {
       // Accept the callback
-      log(Reporting::INFO, 0, "pull: raincheck");
+      ELEM_INFO("pull: registered callback");
       _pullCallback = cb;
     } else {
       // I already have a pull callback
-      log(Reporting::INFO, 0, "pull: callback underrun");
+      ELEM_INFO("pull: callback underrun");
     }
     if (_compCallback) {
       _compCallback();
     }
     return TuplePtr();
   } else {
-    // {
-    //   // Dump the contents
-    //   strbuf dump;
-    //   for (std::multimap< ValuePtr, TuplePtr >::iterator it = _table->begin();
-    //        it != _table->end();
-    //        ++it)
-    //     dump << "  [" << ((*it).first)->toString() << ", " << ((*it).second)->toString() << "]\n";
-    //   log(Reporting::INFO, 0, dump);
-    // }
     assert(_iterator);
 
     // Is the iterator at its end?  This should only happen if a lookup
@@ -158,8 +150,8 @@ Lookup2::pull(int port,
 
     // Now, are we done with this search?
     if (_iterator->done()) {
-      log(Reporting::INFO, 0, "pull: Finished search on tuple "
-          + _lookupTuple->toString());
+      ELEM_INFO("pull: Finished search on tuple "
+                << _lookupTuple->toString());
       
       // Tag the result tuple
       newTuple->tag(Lookup2::END_OF_SEARCH, Val_Null::mk());
@@ -168,11 +160,11 @@ Lookup2::pull(int port,
       _lookupTuple.reset();
       _lookupTupleValue.reset();
       _iterator.reset();
-      log(Reporting::WORDY, 0, "push: iterator now is null");
+      ELEM_WORDY("push: iterator now is null");
       
       // Wake up any pusher
       if (_pushCallback) {
-        log(Reporting::INFO, 0, "pull: wakeup pusher");
+        ELEM_INFO("pull: wakeup pusher");
         _pushCallback();
         _pushCallback = 0;
       }
@@ -180,6 +172,8 @@ Lookup2::pull(int port,
       // More results to be had.  Don't tag
     }
     newTuple->freeze();
+    ELEM_WORDY("pull: Lookup returned tuple "
+               << newTuple->toString());
     return newTuple;
   }
 }

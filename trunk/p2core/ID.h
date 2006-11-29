@@ -68,43 +68,87 @@ public:
   toConfString() const;
 
   /** Strict equality */
-  REMOVABLE_INLINE bool equals(IDPtr other) const { return compareTo(other) == 0; }
+  REMOVABLE_INLINE bool
+  equals(IDPtr other) const { return compareTo(other) == 0; }
+
 
   /** Am I less than, equal or greater than the other value?  -1 means
       less, 0 means equal, +1 means greater.  This is done strictly on
       the numerical space, i.e., not on the ring. */
-  int compareTo(IDPtr) const;
+  int
+  compareTo(IDPtr) const;
+
 
   /** Am I in (from, to)? */
-  bool betweenOO(IDPtr, IDPtr) const;
+  bool
+  betweenOO(IDPtr, IDPtr) const;
+
 
   /** Am I in (from, to]? */
-  bool betweenOC(IDPtr, IDPtr) const;
+  bool
+  betweenOC(IDPtr, IDPtr) const;
+
 
   /** Am I in [from, to)? */
-  bool betweenCO(IDPtr, IDPtr) const;
+  bool
+  betweenCO(IDPtr, IDPtr) const;
+
 
   /** Am I in [from, to]? */
-  bool betweenCC(IDPtr, IDPtr) const;
+  bool
+  betweenCC(IDPtr, IDPtr) const;
+
 
   /** The minimum directional distance from me to the given ID on the
       ring. */
-  IDPtr distance(IDPtr) const;
+  IDPtr
+  distance(IDPtr) const;
+
 
   /** Add two IDs together arithmetically */
-  IDPtr add(IDPtr) const;
+  IDPtr
+  add(IDPtr) const;
+
+
+  /** Bitwise AND two IDs together */
+  IDPtr
+  bitwiseAND(IDPtr) const;
+
+
+  /** Bitwise OR two IDs together */
+  IDPtr
+  bitwiseOR(IDPtr) const;
+
+
+  /** Bitwise XOR two IDs together */
+  IDPtr
+  bitwiseXOR(IDPtr) const;
+
+
+  /** Bitwise NOT of an ID */
+  IDPtr
+  bitwiseNOT() const;
+
 
   /** Left shift an ID by a number of bit positions */
-  IDPtr lshift(uint32_t) const;
+  IDPtr
+  lshift(uint32_t) const;
+
 
   /** Right shift an ID by a number of bit positions */
-  IDPtr rshift(uint32_t) const;
+  IDPtr
+  rshift(uint32_t) const;
+
 
   /** Marshal into an XDR, one word at a time */
-  void xdr_marshal(XDR *x);
+  void
+  xdr_marshal(XDR *x);
+
 
   /** Create an ID from an XDR buffer, one word at a time */
-  static IDPtr xdr_unmarshal(XDR *x);
+  static IDPtr
+  xdr_unmarshal(XDR *x);
+
 
   /** Create an ID */
   static IDPtr mk()                  { IDPtr p(new ID());  return p; }

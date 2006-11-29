@@ -40,6 +40,7 @@ Table2::Table2(std::string tableName,
     _flushing(((_maxSize > 0) ||
                (!_maxLifetime.is_pos_infinity())))
 {
+  TABLE_WORDY("Creating table with constructor 1.");
 }
 
 
@@ -51,6 +52,7 @@ Table2::Table2(std::string tableName,
     _flushing(((_maxSize > 0) ||
                (!_maxLifetime.is_pos_infinity())))
 {
+  TABLE_WORDY("Creating table with constructor 2");
 }
 
 
@@ -63,7 +65,9 @@ Table2::Table2(std::string tableName,
     _flushing(((_maxSize > 0) ||
                (!_maxLifetime.is_pos_infinity())))
 {
+  TABLE_WORDY("Creating table with constructor 3");
 }
+
 
 Table2::Table2(std::string tableName,
                Key& key,
@@ -75,6 +79,7 @@ Table2::Table2(std::string tableName,
     _flushing(((_maxSize > 0) ||
                (!_maxLifetime.is_pos_infinity())))
 {
+  TABLE_WORDY("Creating table with constructor 4");
   if (lifetime == std::string("+infinity")) {
     _maxLifetime = boost::posix_time::time_duration(boost::date_time::pos_infin);
   }
@@ -96,7 +101,7 @@ Table2::Table2(std::string tableName,
 /** Empty out all indices and kill their heap-allocated components */
 Table2::~Table2()
 {
-  //  TELL_WORDY << "Destroying table " << _name << "\n";
+  TABLE_WORDY("Destroying table.");
 
   ////////////////////////////////////////////////////////////
   // Secondary indices
@@ -163,7 +168,7 @@ Table2::~Table2()
   _primaryIndex.clear();
   
 
-  //  TELL_WORDY << "Destroyed table " << _name << "\n";
+  TABLE_WORDY("Destroyed table.");
 }
 
 
@@ -176,12 +181,11 @@ Table2::~Table2()
 bool
 Table2::insert(TuplePtr t)
 {
-/*
-  boost::posix_time::ptime now_ts;
-  getTime(now_ts);
-  TELL_WARN << "INSERT TUPLE current time = " << boost::posix_time::to_simple_string(now_ts)
-            << ", TUPLE = " << t->toString() << std::endl;
-*/
+  TABLE_WORDY("Attempting to insert tuple "
+              << t->toString()
+              << ". Current size "
+              << size());
+
   // Ensure we're operating on the correct view of the table as of right
   // now.
   flush();
@@ -203,13 +207,19 @@ Table2::insert(TuplePtr t)
 
       // Update insertion time if we're flushing tuples
       if (_flushing) {
-/*
-        TELL_WARN << "UPDATING TUPLE TIME" << std::endl; 
-        TELL_WARN << "\tOLD: " << boost::posix_time::to_simple_string((*found)->time) << std::endl;
-*/
+        TABLE_WORDY("Refreshing tuple time for tuple "
+                    << t->toString()
+                    << " from "
+                    << boost::posix_time::to_simple_string((*found)->time));
         updateTime(*found);
-        // TELL_WARN << "\tNEW: " << boost::posix_time::to_simple_string((*found)->time) << std::endl;
+        TABLE_WORDY("New tuple time for tuple "
+                    << t->toString()
+                    << " is "
+                    << boost::posix_time::to_simple_string((*found)->time));
       }
+      TABLE_WORDY("Inserted tuple "
+                  << t->toString()
+                  << " is a duplicate.");
       return false;
     }
     // Otherwise, tuple has same primary key but is different
@@ -218,6 +228,9 @@ Table2::insert(TuplePtr t)
       found++;
       
       // We will replace the existing tuple, so remove it first
+      TABLE_WORDY("Replacing tuple "
+                  << " with "
+                  << (*toErase)->tuple->toString());
       removeTuple(toErase);
     }
   }
@@ -226,6 +239,11 @@ Table2::insert(TuplePtr t)
   // exists in the table. Insert the new one and return true.
   insertTuple(t, found);
   
+  TABLE_WORDY("Inserted tuple "
+              << t->toString()
+              << ". New size "
+              << size());
+
   // Ensure we're still compliant
   flush();
 
@@ -305,14 +323,6 @@ Table2::flushEntry(Entry* e)
   } else {
     // Ah! This is the last instance of this entry in the queue, so
     // we're doing a real removal from the table.
-/*
-    boost::posix_time::ptime now_ts;
-    getTime(now_ts);
-    TELL_WARN << "FLUSHING TUPLE: current time = " 
-              << boost::posix_time::to_simple_string(now_ts)
-              << ", tuple time = " << boost::posix_time::to_simple_string(e->time)
-       << ", " << e->tuple->toString() << std::endl;
-*/
 
     // Remove it from all derivatives (secondaries, aggs)
     removeDerivatives(e->tuple);

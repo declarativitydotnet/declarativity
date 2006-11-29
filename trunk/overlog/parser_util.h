@@ -69,7 +69,7 @@ public:
 typedef std::deque<Parse_Expr *> Parse_ExprList;
 typedef std::deque<Parse_ExprList *> Parse_ExprListList;
 
-// Boxing up a ValuePtr see we can pass it through the Bison parser
+// Boxing up a ValuePtr so we can pass it through the Bison parser
 // union unscathed. 
 class Parse_Val : public Parse_Expr { 
 public:
@@ -93,7 +93,13 @@ public:
 
   Parse_Var(const string& var);
   
-  virtual string
+  /** Returns the location specifier marker along with the name of the
+      variable */
+  string
+  toLocString();
+
+  /** Returns the name of the variable */
+  string
   toString();
 
   bool
@@ -171,7 +177,18 @@ public:
 
 class Parse_Math : public Parse_Expr {
 public:
-  enum Operator {LSHIFT, RSHIFT, PLUS, MINUS, TIMES, DIVIDE, MODULUS, NOP};
+  enum Operator {LSHIFT,
+                 RSHIFT,
+                 PLUS,
+                 MINUS,
+                 TIMES,
+                 DIVIDE,
+                 MODULUS,
+                 BIT_XOR,
+                 BIT_AND,
+                 BIT_OR,
+                 BIT_NOT,
+                 NOP};
   Parse_Math(Operator o, Parse_Expr *l, Parse_Expr *r=NULL, bool i = false) 
     : oper(o), id(i), lhs(l), rhs(r) {
       // TODO: if (oper != NOP && rhs == NULL) ERROR!
@@ -292,10 +309,11 @@ class Parse_Functor : public Parse_Term {
 public:
   Parse_Functor(Parse_FunctorName *f, Parse_ExprList *a, Parse_Expr *l=NULL) 
     : fn(f), args_(a) { 
-	if (l) {
-	  loc_ = l->v->toString(); delete l;
-	}
-	else (void) getlocspec();
+    if (l) {
+      loc_ = l->v->toString(); delete l;
+    } else {
+      (void) getlocspec();
+    }
   }
   virtual ~Parse_Functor() {delete fn; delete args_; };
 
