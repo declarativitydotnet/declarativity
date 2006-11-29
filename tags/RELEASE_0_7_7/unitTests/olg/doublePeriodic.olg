@@ -1,0 +1,14 @@
+materialize(coordinator, infinity, infinity, keys(1)).
+
+watch(generateUpdateEvent).
+watch(per).
+
+coordinator("localhost:10000", "localhost:10000").
+coordinator("localhost:10001", "localhost:10000").
+coordinator("localhost:10002", "localhost:10000").
+
+
+g2 per(@I, E) :- periodic(@I, E, 1).
+
+g1 generateUpdateEvent(@I, J) :-  per(@I,E), coordinator(@I,
+J), I != J. 

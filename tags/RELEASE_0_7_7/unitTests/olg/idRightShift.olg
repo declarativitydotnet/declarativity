@@ -1,0 +1,16 @@
+materialize(node,infinity,1,keys(1)).
+materialize(nodeid,infinity,1,keys(1)).
+node("localhost:10000").
+
+/* Getting Node Id*/
+in0 nodeid(@X, Ident) :- periodic(@X, E, 0, 1),
+node(@X), Ident := f_sha1(X).
+
+/*preparing the routing table */
+rt0 tableInitialization(@X, Counter) :-
+periodic(@X,E,1,1), nodeid(@X,I), Counter := I>>4.
+
+watch(node).
+watch(nodeid).
+watch(tableInitialization).
+

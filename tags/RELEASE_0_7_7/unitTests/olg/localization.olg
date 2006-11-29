@@ -1,0 +1,6 @@
+materialize(localPred, infinity, infinity, keys(1)).
+materialize(remotePred, infinity, infinity, keys(1)).
+materialize(furtherRemotePred, infinity, infinity, keys(1)).
+
+r1 result(@NI, T) :- event(@NI, X), localPred(@NI, Y),
+	 remotePred(@Y, G, F), furtherRemotePred(@G, T).
