@@ -1,0 +1,44 @@
+#!/bin/bash
+#
+# chkconfig: - 50 01
+#
+# p2monolithic This shell script enables the automatic use of P2 (using
+# the SIGMOD planner without Python loadables).
+#
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+OVERLOG=$2
+SLICE=$3
+PORT=$4
+PINGPORT=$5
+SEED=$6
+
+start() {
+	sudo python /home/${SLICE}/monolithic.py -o /home/${SLICE}/${OVERLOG} -n ${SLICE} -p $PORT -t $PINGPORT -s ${SEED}> /home/${SLICE}/start.log 2>&1 &
+}
+
+stop() {
+	sudo /usr/bin/killall -9 python runOverLog > /dev/null 2>&1
+}
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop) 
+	stop
+	;;
+  restart)
+	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac

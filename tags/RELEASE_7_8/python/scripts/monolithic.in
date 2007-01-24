@@ -1,0 +1,71 @@
+#!@PYTHON@
+import xmlrpclib
+import sys
+import os
+import getopt
+import socket
+
+def pingCheck(port):
+    pid = os.fork()
+    if pid == 0:
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.bind(('', port))
+            s.listen(10)
+            while True:
+                client, addr = s.accept()
+                client.send("PONG: " + host)
+                client.close()
+        except:
+            print "PINGCHECK EXCEPTION: %s\n" % str(sys.exc_info()[:2])
+            
+def print_usage():
+    print """
+    Usage: monolithic.py -o <overlog> -n <slice_name> [-p myPort]
+                         [-t pingPort] [-s <seed>] [-l logfile]"""
+
+    
+def parse_cmdline(argv):
+    shortopts = "o:n:p:t:s:l:"
+    flags = {"overlog" : None, "slice" : None,
+             "myPort" : 11331, "pingPort" : 11332,
+             "seed" : 0, "logFile" : "planetlab.log"}
+    opts, args = getopt.getopt(argv[1:], shortopts)
+    for o, v in opts:
+        if   o == "-o": flags["overlog"] = v
+        elif o == "-n": flags["slice"] = v
+        elif o == "-p": flags["myPort"] = int(v)
+        elif o == "-t": flags["pingPort"] = int(v)
+        elif o == "-s": flags["seed"] = int(v)
+	elif o == "-l": flags["logFile"] = str(v)
+        else:
+            print_usage()
+            exit(3)
+    return flags, args
+
+if __name__ == "__main__":
+    global flags, server, host, port, log
+    try:
+        flags, args = parse_cmdline(sys.argv)
+    except:
+        print_usage()
+        sys.exit(1)
+
+    if not flags["slice"] or not flags["overlog"] :
+        print_usage()
+        sys.exit(1)
+        
+        
+    host = socket.gethostname()
+    server = xmlrpclib.Server('https://www.planet-lab.org/PLCAPI/')
+    logFile = "/home/%s/%s" % (flags["slice"], flags["logFile"])
+    
+    # Set up liveness check
+    if flags["pingPort"] > 0: pingCheck(flags["pingPort"])
+    
+    commandLine = "tests/runOverLog -o %s -s %s -n %s -p %s >& %s" % (flags["overlog"],
+                                                                flags["seed"],
+                                                                host,
+                                                                flags["myPort"],
+                                                                flags["logFile"])
+    os.system(commandLine)
