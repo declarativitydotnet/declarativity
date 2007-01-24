@@ -56,7 +56,7 @@ void Planner::setupNetwork(boost::shared_ptr<Udp> udp)
 {
   // call the netplanner to generate network in and out
   // mux and demux not generated
-  TELL_INFO << "Planner: set up network elements\n";
+  PLANNER_INFO_NOPC("Planner: set up network elements");
   _netPlanner->generateNetworkElements(udp);
 }
 
@@ -68,8 +68,8 @@ void Planner::registerRuleStrand(RuleStrand* rs)
 
 void Planner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands)
 {
-  TELL_INFO << "Planner: register " << ruleStrands.size()
-            << " rule strands with network planner\n";
+  PLANNER_INFO_NOPC("Planner: register " << ruleStrands.size()
+                    << " rule strands with network planner");
   // call netplanner to create the right mux/demuxes
   _netPlanner->registerAllRuleStrands(ruleStrands);
 }

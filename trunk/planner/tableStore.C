@@ -19,6 +19,7 @@
 #include "val_uint32.h"
 #include "tuple.h"
 #include "loop.h"
+#include "planner.h"
 
 TableStore::TableStore(OL_Context* ctxt) { 
   _ctxt = ctxt;
@@ -31,8 +32,8 @@ CommonTablePtr TableStore::getTableByName(string tableName)
 {
   TableMap::iterator _iterator = _tables->find(tableName);
   if (_iterator == _tables->end()) {
-    TELL_ERROR << "ERROR: table " << tableName << " not found.\n";
-    exit(-1) ;
+    PLANNER_ERROR_NOPC("ERROR: table " << tableName << " not found.");
+    exit(-1);
   }
   return _iterator->second;
 }
@@ -58,14 +59,14 @@ TableStore::createTable(OL_Context::TableInfo* tableInfo)
   if (expiration == Table2::NO_EXPIRATION) {
     newTable.reset(new RefTable(tableInfo->tableName,
 				key));
-    TELL_INFO << "Create ref counted table "
-              << tableInfo->toString() << "\n";
+    PLANNER_INFO_NOPC("Create ref counted table "
+                      << tableInfo->toString());
   } else {
     newTable.reset(new Table2(tableInfo->tableName,
 			      key,
 			      tableSize,
 			      expiration));
-    TELL_INFO << "Create table " << tableInfo->toString() << "\n";
+    PLANNER_INFO_NOPC("Create table " << tableInfo->toString());
   }
 
   _tables->insert(std::make_pair(tableInfo->tableName, newTable));
@@ -77,9 +78,9 @@ TableStore::createTable(OL_Context::TableInfo* tableInfo)
     if (tableInfo->tableName != vr->toString()) {
       continue;
     }
-    TELL_INFO << "Insert tuple " << tr->toString()
-              << " into table "  << vr->toString()
-              << " " << tr->size() << "\n";
+    PLANNER_INFO_NOPC("Insert tuple " << tr->toString()
+                      << " into table "  << vr->toString()
+                      << " " << tr->size());
 
     CommonTablePtr tableToInsert = getTableByName(vr->toString());         
     tableToInsert->insert(tr);

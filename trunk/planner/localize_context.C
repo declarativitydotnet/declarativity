@@ -14,6 +14,7 @@
  *
  */
 
+#include "planner.h"
 #include "localize_context.h"
 #include "planContext.h"
 
@@ -34,7 +35,7 @@ void Localize_Context::add_rule(OL_Context::Rule* rule)
     }
   }
 
-  TELL_WARN << "  Add localized rule: " << rule->toString() << "\n";  
+  PLANNER_INFO_NOPC("Add localized rule: " << rule->toString());
   _localizedRules.push_back(rule);  
 }
 
@@ -66,10 +67,11 @@ Localize_Context::addSendRule(OL_Context::Rule* nextRule,
                         (new Parse_Var(Val_Str::
                                        mk(newFunctorName))), pe);
   OL_Context::Rule* newRule = new OL_Context::Rule(nextRule->ruleID 
-						   + "Local1", newHead, false);
+						   + "Local1",
+                                                   newHead, false);
 
   newRule->terms = newTerms;
-  TELL_INFO << "  Localized send rule " << newRule->toString() << "\n";
+  PLANNER_INFO_NOPC("Localized send rule " << newRule->toString());
 
   // Materialize what we send if the source has been materialized
   OL_Context::TableInfo* tableInfo 
@@ -85,8 +87,8 @@ Localize_Context::addSendRule(OL_Context::Rule* nextRule,
     newTableInfo->timeout = minLifetime;
     newTableInfo->primaryKeys = tableInfo->primaryKeys; // XXX depends on first table
     tableStore->addTableInfo(newTableInfo);
-    TELL_WARN << "Old table " << tableInfo->toString() << "\n";
-    TELL_WARN << " Create table for " << newTableInfo->toString() << "\n";
+    PLANNER_INFO_NOPC("Old table " << tableInfo->toString());
+    PLANNER_INFO_NOPC(" Create table for " << newTableInfo->toString());
     tableStore->createTable(newTableInfo);
   }  
   return newRule;
@@ -105,8 +107,8 @@ void
 Localize_Context::rewriteRule(OL_Context::Rule* nextRule, 
                               TableStore* tableStore)
 {
-  TELL_WORDY << "Perform localization rewrite on " << nextRule->toString() 
-	    << "\n";
+  PLANNER_WORDY_NOPC("Perform localization rewrite on "
+                     << nextRule->toString());
 
   std::vector<OL_Context::Rule*> toRet;
   std::vector<Parse_Functor*> probeTerms;
@@ -124,7 +126,7 @@ Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
 	probeTerms.push_back(functor);
       } else {
 	// put events first
-	TELL_WORDY << "Put to front " << functor->fn->name << "\n";
+	PLANNER_WORDY_NOPC("Put to front " << functor->fn->name);
 	probeTerms.insert(probeTerms.begin(), functor);
       }
     } else {
@@ -158,7 +160,7 @@ Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
     headName << probeTerms.at(k)->fn->name;
     OL_Context::TableInfo* tableInfo 
       = tableStore->getTableInfo(probeTerms.at(k)->fn->name);  
-    TELL_WORDY << "Get table " << probeTerms.at(k)->fn->name << "\n";
+    PLANNER_WORDY_NOPC("Get table " << probeTerms.at(k)->fn->name);
     if (tableInfo != NULL) {
       if (minLifetime > tableInfo->timeout) {
 	minLifetime = tableInfo->timeout;
@@ -178,16 +180,16 @@ Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
   }
 
   if (local == true) {
-    TELL_INFO << nextRule->toString() << " is already localized\n";
+    PLANNER_INFO_NOPC(nextRule->toString() << " is already localized");
     add_rule(nextRule);
     delete namesTracker;
     return;
   }
 
-  TELL_WORDY << headName.str() << " minimumLifetime " 
-            << boost::posix_time::to_simple_string(minLifetime)
-             << " boundaryIndex " 
-            << boundary << " " << namesTracker->toString() << "\n";
+  PLANNER_WORDY_NOPC(headName.str() << " minimumLifetime " 
+                     << boost::posix_time::to_simple_string(minLifetime)
+                     << " boundaryIndex " 
+                     << boundary << " " << namesTracker->toString());
 
 
   // add a new rule that takes all terms up to boundary, and send them to dst

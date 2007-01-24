@@ -16,56 +16,60 @@
 #include <reporting.h>
 #include <iostream>
 
-std::map< std::string, Reporting::Level > Reporting::levelFromName;
-std::map< Reporting::Level, std::string > Reporting::levelToName;
-Reporting::Initializer Reporting::_initializer;
+std::ostream* Reporting::_wordy;
 
 
-std::ostream* Reporting::wordy;
+std::ostream* Reporting::_info;
 
 
-std::ostream* Reporting::info;
+std::ostream* Reporting::_warn;
 
 
-std::ostream* Reporting::warn;
+std::ostream* Reporting::_error;
 
 
-std::ostream* Reporting::error;
+std::ostream* Reporting::_output;
 
 
-std::ostream* Reporting::output;
+Reporting::LeakyStreambuf Reporting::_leakyStreambuf;
 
 
-Reporting::LeakyStreambuf Reporting::leakyStreambuf;
-
-
-std::ostream Reporting::nullOStream(&Reporting::leakyStreambuf);
+std::ostream* Reporting::_nullOStream;
 
 
 Reporting::Level Reporting::_level;
 
 
+std::map< std::string, Reporting::Level > Reporting::_levelFromName;
+
+
+std::map< Reporting::Level, std::string > Reporting::_levelToName;
+
+
+/** This method assumes the initializations have happened. It is only
+    called internally.  External clients should use setLevel()
+    instead. */
 void
-Reporting::setLevel(Level l)
+Reporting::innerSetLevel(Level l)
 {
-  wordy = &nullOStream;
-  info = &nullOStream;
-  warn = &nullOStream;
-  error = &nullOStream;
-  output = &nullOStream;
+  _wordy = _nullOStream;
+  _info = _nullOStream;
+  _warn = _nullOStream;
+  _error = _nullOStream;
+  _output = _nullOStream;
 
   switch(l) {
   case ALL:
   case WORDY:
-    wordy = &std::cerr;
+    _wordy = &std::cerr;
   case INFO:
-    info = &std::cerr;
+    _info = &std::cerr;
   case WARN:
-    warn = &std::cerr;
+    _warn = &std::cerr;
   case ERROR:
-    error = &std::cerr;
+    _error = &std::cerr;
   case OUTPUT:
-    output = &std::cerr;
+    _output = &std::cerr;
   case NONE:
   default:
     ;
@@ -75,10 +79,85 @@ Reporting::setLevel(Level l)
 }
 
 
+void
+Reporting::setLevel(Level l)
+{
+  Initializer* initializer = theInitializer(); // ensure the initializer
+                                               // has run
+  initializer = initializer;    // avoid "unused" warnings
+
+  innerSetLevel(l);
+}
+
+
 Reporting::Level
 Reporting::level()
 {
+  Initializer* initializer = theInitializer(); // ensure the initializer
+                                               // has run
+  initializer = initializer;    // avoid "unused" warnings
+
   return _level;
+}
+
+
+std::map< std::string, Reporting::Level >&
+Reporting::levelFromName()
+{
+  Initializer* initializer = theInitializer(); // ensure the initializer
+                                               // has run
+  initializer = initializer;    // avoid "unused" warnings
+
+  return _levelFromName;
+}
+ 
+
+std::map< Reporting::Level, std::string >&
+Reporting::levelToName()
+{
+  Initializer* initializer = theInitializer(); // ensure the initializer
+                                               // has run
+  initializer = initializer;    // avoid "unused" warnings
+
+  return _levelToName;
+}
+
+
+
+std::ostream*
+Reporting::wordy()
+{
+  Initializer* initializer = theInitializer();
+  initializer = initializer;
+  return _wordy;
+}
+std::ostream*
+Reporting::info()
+{
+  Initializer* initializer = theInitializer();
+  initializer = initializer;
+  return _info;
+}
+std::ostream*
+Reporting::warn()
+{
+  Initializer* initializer = theInitializer();
+  initializer = initializer;
+  return _warn;
+}
+std::ostream*
+Reporting::error()
+{
+  Initializer* initializer = theInitializer();
+  initializer = initializer;
+  return _error;
+}
+std::ostream*
+Reporting::output()
+{
+  Initializer* initializer = theInitializer();
+  initializer = initializer;
+  return _output;
 }
 
 
@@ -86,27 +165,39 @@ Reporting::level()
 
 Reporting::Initializer::Initializer()
 {
+  _nullOStream = new std::ostream(&Reporting::_leakyStreambuf);
+
   // Prepare maps
-  levelFromName["ALL"] = ALL;
-  levelFromName["WORDY"] = WORDY;
-  levelFromName["INFO"] = INFO;
-  levelFromName["WARN"] = WARN;
-  levelFromName["ERROR"] = ERROR;
-  levelFromName["OUTPUT"] = OUTPUT;
-  levelFromName["NONE"] = NONE;
+  _levelFromName["ALL"] = ALL;
+  _levelFromName["WORDY"] = WORDY;
+  _levelFromName["INFO"] = INFO;
+  _levelFromName["WARN"] = WARN;
+  _levelFromName["ERROR"] = ERROR;
+  _levelFromName["OUTPUT"] = OUTPUT;
+  _levelFromName["NONE"] = NONE;
   
-  levelToName[ALL] = "ALL";
-  levelToName[INFO] = "INFO";
-  levelToName[WARN] = "WARN";
-  levelToName[ERROR] = "ERROR";
-  levelToName[WORDY] = "WORDY";
-  levelToName[OUTPUT] = "OUTPUT";
-  levelToName[NONE] = "NONE";
+  _levelToName[ALL] = "ALL";
+  _levelToName[INFO] = "INFO";
+  _levelToName[WARN] = "WARN";
+  _levelToName[ERROR] = "ERROR";
+  _levelToName[WORDY] = "WORDY";
+  _levelToName[OUTPUT] = "OUTPUT";
+  _levelToName[NONE] = "NONE";
 
 
   // Point streams. By default all are null
-  wordy = info = warn = error = output = &nullOStream;
-  setLevel(ERROR);
+  _wordy = _info = _warn = _error = _output = _nullOStream;
+  innerSetLevel(ERROR);
+}
+
+
+/** Implements the construct before use pattern */
+Reporting::Initializer*
+Reporting::theInitializer()
+{
+  static Initializer* _initializer =
+    new Initializer();
+  return _initializer;
 }
 
 

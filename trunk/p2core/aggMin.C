@@ -12,6 +12,7 @@
 
 #include "aggMin.h"
 #include "val_null.h"
+#include "aggFactory.h"
 
 AggMin::AggMin()
 {
@@ -58,15 +59,8 @@ AggMin::result()
 }
 
 
-AggMin*
-AggMin::mk()
-{
-  return new AggMin();
-}
+// This is necessary for the class to register itself with the
+// factory.
+DEFINE_INITS(AggMin,"MIN")
 
 
-std::string
-AggMin::name()
-{
-  return "MIN";
-}

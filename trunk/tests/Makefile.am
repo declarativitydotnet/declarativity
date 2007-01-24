@@ -16,6 +16,7 @@
 bin_PROGRAMS =			benchmark \
 				overlog \
 				runOverLog \
+				runOverLogNoCPP \
 				simple_lookup \
 				lookupGenerator \
 				udpMessage \
@@ -34,6 +35,19 @@ benchmark_LDADD =		$(top_builddir)/p2core/libp2core.la \
 runOverLog_SOURCES =		runOverLog.C
 
 runOverLog_LDADD = 		\
+				@OPENSSL_LIB@ \
+				$(top_builddir)/planner/libp2planner.la \
+				$(top_builddir)/overlog/libp2overlog.la \
+				$(top_builddir)/net/libp2net.la \
+				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/p2core/libp2core.la \
+				$(top_builddir)/eventLoop/libp2eventLoop.la \
+				$(top_builddir)/debugger/libp2debugger.la 
+
+
+runOverLogNoCPP_SOURCES =	runOverLogNoCPP.C
+
+runOverLogNoCPP_LDADD =		\
 				@OPENSSL_LIB@ \
 				$(top_builddir)/planner/libp2planner.la \
 				$(top_builddir)/overlog/libp2overlog.la \
@@ -152,7 +166,7 @@ udpListen_LDADD =		\
 				$(top_builddir)/eventLoop/libp2eventLoop.la
 
 
-CLEANFILES = core *.core *~
+CLEANFILES = core *.core *~ .\#*
 
 
 EXTRA_DIST = 			testerr.h \

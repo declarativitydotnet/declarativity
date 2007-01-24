@@ -11,8 +11,9 @@
 # Berkeley, CA,  94707. Attention: P2 Group.
 #
 
-bin_SCRIPTS = p2terminal.py p2insert.py \
-              loadManyChords.py planetlab.py psetup.py dfrun.py
+bin_SCRIPTS = 	p2terminal.py p2insert.py \
+		loadManyChords.py planetlab.py psetup.py dfrun.py \
+		setupMonolithic.py monolithic.py
 
 do_subst = sed -e 's,[@]PYTHON[@],$(PYTHON),g;s,[@]VERSION[@],$(VERSION),g'
 
@@ -28,8 +29,14 @@ loadManyChords.py: loadManyChords.in Makefile
 planetlab.py: planetlab.in Makefile
 		   $(do_subst) < $(srcdir)/planetlab.in > planetlab.py
 
+monolithic.py: monolithic.in Makefile
+		   $(do_subst) < $(srcdir)/monolithic.in > monolithic.py
+
 psetup.py: psetup.in Makefile
 		   $(do_subst) < $(srcdir)/psetup.in > psetup.py
+
+setupMonolithic.py: setupMonolithic.in Makefile
+		   $(do_subst) < $(srcdir)/setupMonolithic.in > setupMonolithic.py
 
 dfrun.py: dfrun.in Makefile
 		   $(do_subst) < $(srcdir)/dfrun.in > dfrun.py
@@ -38,5 +45,5 @@ CLEANFILES = $(bin_SCRIPTS)
 
 EXTRA_DIST = README \
              p2terminal.in loadManyChords.in p2insert.in \
-             planetlab.in psetup.in dfrun.in sanity.py \
-             recv.df sender.df p2
+             planetlab.in psetup.in setupMonolithic.in dfrun.in sanity.py \
+             recv.df sender.df p2 p2monolithic monolithic.in

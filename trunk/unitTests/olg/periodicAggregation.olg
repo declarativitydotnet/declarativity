@@ -11,12 +11,17 @@
   * 
   * DESCRIPTION: OverLog regression test for localization reordering.
   * 
+  * Run me as follows:
+  *
 ***/
 
-materialize(localPred, infinity, infinity, keys(1)).
-materialize(remotePred, infinity, infinity, keys(1)).
-materialize(furtherRemotePred, infinity, infinity, keys(1)).
 
-r1 result(@NI, T) :- event(@NI, X), localPred(@NI, Y),
-	 remotePred(@Y, G, F), furtherRemotePred(@G, T).
+materialize(someTable, infinity, infinity, keys(1,2)).
 
+someTable(LOCALADDR, 1, 2).
+someTable(LOCALADDR, 2, 4).
+someTable(LOCALADDR, 3, 1).
+
+watch(someEvent).
+
+r2 someEvent(@J, max<V>) :- periodic(@J, E, 1), someTable(@J, N, V).

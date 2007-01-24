@@ -19,7 +19,7 @@ AC_CONFIG_SRCDIR(p2core/element.h)
 # AC_CONFIG_AUX_DIR(config)
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE(1.9.2)
-AM_INIT_AUTOMAKE(p2,0.7.7)
+AM_INIT_AUTOMAKE(p2,0.7.8)
 
 
 # Checks for programs.
@@ -101,27 +101,30 @@ AC_CONFIG_FILES([
 	Makefile 
 	eventLoop/Makefile
 	p2core/Makefile 
-	p2cpp/Makefile 
-	python/Makefile
-	python/p2/Makefile
-	python/p2/debugger/Makefile
-	python/p2/elements/Makefile
-	python/p2/pythonElements/Makefile
-	python/p2/eventLoop/Makefile
-	python/p2/p2core/Makefile
-	python/p2/net/Makefile
-	python/p2/overlog/Makefile
-	python/p2/p2cpp/Makefile
-	python/dfparser/Makefile
-	python/dfparser/yapps/Makefile
-	python/scripts/Makefile
 	elements/Makefile 
-	pythonElements/Makefile
 	net/Makefile 
 	tests/Makefile 
 	unitTests/Makefile 
+	unitTests/olg/Makefile 
+	python/Makefile
+	python/scripts/Makefile
 	overlog/Makefile 
 	planner/Makefile
 	debugger/Makefile ])
+
+#	python/Makefile
+#	python/p2/Makefile
+#	python/p2/debugger/Makefile
+#	python/p2/elements/Makefile
+#	python/p2/pythonElements/Makefile
+#	python/p2/eventLoop/Makefile
+#	python/p2/p2core/Makefile
+#	python/p2/net/Makefile
+#	python/p2/overlog/Makefile
+#	python/p2/p2cpp/Makefile
+#	python/dfparser/Makefile
+#	python/dfparser/yapps/Makefile
+#	python/scripts/Makefile
+#	pythonElements/Makefile
 
 AC_OUTPUT

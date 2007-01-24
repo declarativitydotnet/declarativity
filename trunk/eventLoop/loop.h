@@ -36,6 +36,37 @@ extern long callbackID;
 
 
 
+/** Reporting support */
+
+#include <errno.h>
+#define LOOP_LOG(_reportingLevel,_rest) "Event Loop, "           \
+  << "_, "                                                      \
+  << _reportingLevel                                             \
+  << ", "                                                        \
+  << errno                                                       \
+  << ", "                                                        \
+  << _rest
+
+
+#define LOOP_ERROR(_rest) TELL_ERROR   \
+  << LOOP_LOG(Reporting::ERROR,_rest)  \
+    << "\n"
+
+#define LOOP_WORDY(_rest) TELL_WORDY   \
+  << LOOP_LOG(Reporting::WORDY,_rest)  \
+    << "\n"
+
+#define LOOP_INFO(_rest) TELL_INFO   \
+  << LOOP_LOG(Reporting::INFO,_rest) \
+    << "\n"
+
+#define LOOP_WARN(_rest) TELL_WARN   \
+  << LOOP_LOG(Reporting::WARN,_rest) \
+    << "\n"
+
+
+
+
 ////////////////////////////////////////////////////////////
 // Timed callbacks 
 ////////////////////////////////////////////////////////////
@@ -63,6 +94,10 @@ public:
   timeCBHandle(boost::posix_time::ptime& t, const b_cbv& cb, Element* e)
     : owner(e), active(true), time(t), callback(cb), ID(callbackID++)
   {}
+
+  
+  /** Print me */
+  std::string toString();
 };
 
 

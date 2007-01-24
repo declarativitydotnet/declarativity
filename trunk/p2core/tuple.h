@@ -96,7 +96,7 @@ public:
 
 
   /** The tuple becomes immutable. It will not allow further appends or
-      concats to itself */
+      concats to itself. */
   void
   freeze();
 

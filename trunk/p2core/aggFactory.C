@@ -28,11 +28,13 @@ AggFactory::AggregateNotFound::AggregateNotFound(std::string name)
 CommonTable::AggFunc*
 AggFactory::mk(std::string aggName)
 {
+  ensureInit();
+
   // Look up the constructor method
-  FactorySet::iterator i = _factories.find(aggName);
+  FactorySet::iterator i = _factories->find(aggName);
 
   // Do we have it?
-  if (i == _factories.end()) {
+  if (i == _factories->end()) {
     // Nope. Throw exception
     throw AggregateNotFound(aggName);
   } else {
@@ -46,10 +48,10 @@ AggFactory::AggFuncFactory
 AggFactory::factory(std::string aggName)
 {
   // Look up the constructor method
-  FactorySet::iterator i = _factories.find(aggName);
+  FactorySet::iterator i = _factories->find(aggName);
 
   // Do we have it?
-  if (i == _factories.end()) {
+  if (i == _factories->end()) {
     // Nope. Throw exception
     throw AggregateNotFound(aggName);
   } else {
@@ -63,8 +65,10 @@ bool
 AggFactory::add(std::string aggName,
                 AggFuncFactory factory)
 {
+  ensureInit();
+
   // Just insert it and return true if it is new
-  bool succeeded = _factories.insert(std::make_pair(aggName, factory)).second;
+  bool succeeded = _factories->insert(std::make_pair(aggName, factory)).second;
 
   return succeeded;
 }
@@ -73,9 +77,11 @@ AggFactory::add(std::string aggName,
 std::string
 AggFactory::aggList()
 {
+  ensureInit();
+
   std::string aggList;
-  for (FactorySet::iterator i = _factories.begin();
-       i != _factories.end();
+  for (FactorySet::iterator i = _factories->begin();
+       i != _factories->end();
        i++) {
     std::string currentName = (*i).first;
     aggList += currentName + ";";
@@ -85,18 +91,32 @@ AggFactory::aggList()
 }
 
 
-AggFactory::FactorySet
+AggFactory::FactorySet*
 AggFactory::_factories;
 
 
-AggFactory::Initializer
-AggFactory::_INITIALIZER;
+/** Return the initializer ensuring it runs first */
+AggFactory::Initializer*
+AggFactory::theInitializer()
+{
+  static Initializer* _initializer =
+    new Initializer();
+  return _initializer;
+}
 
 
 AggFactory::Initializer::Initializer()
 {
-  // Register all known factories
-  add("MIN", &AggMin::mk);
-  add("MAX", &AggMax::mk);
-  add("COUNT", &AggCount::mk);
+  _factories = new FactorySet();
 }
+
+
+/** Implements the construct at first use pattern */
+void
+AggFactory::ensureInit()
+{
+  Initializer* init;
+  init = theInitializer();
+}
+
+

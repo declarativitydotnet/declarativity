@@ -43,7 +43,8 @@ Element::elementsLive = 0;
 int
 Element::elementCounter = 0;
 
-static inline string mk_id_str(long id)
+static inline
+string mk_id_str(long id)
 {
   ostringstream s; 
   s << id;
@@ -217,9 +218,7 @@ int Element::push(int port, TuplePtr p, b_cbv cb)
   // Did we get a result?
   if (result == 0 || result->size() == 0) {
     // No result
-    log(Reporting::WARN,
-        -1,
-        "push: Input tuple yielded no output tuple");
+    ELEM_INFO("push: Input tuple yielded no output tuple");
     return 1;
   } else {
     return output(0)->push(result, cb);
@@ -236,9 +235,7 @@ TuplePtr Element::pull(int port, b_cbv cb)
         return result;
       } else {
         // This input yielded no result. Try again.
-        log(Reporting::WARN,
-            -1,
-            "pull: Input tuple yielded no output tuple");
+        ELEM_INFO("pull: Input tuple yielded no output tuple");
       }
     } else {
       // Didn't get any tuples from my input. Fail.

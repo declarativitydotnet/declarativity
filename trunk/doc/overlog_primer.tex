@@ -280,16 +280,69 @@ into a hashtable via a key value.  Each node in our overlay will have
 form a ring.  Such rings are commonly used in more serious DHT
 implementations.
 
+\section{Watches}
 
+The \lstinline$watch$ and \lstinline$watchmod$ facts (of arity 1 and 2,
+respectively) allow a programmer to place taps in
+particular flows in the resulting dataflow graph.  For example 
+\begin{lstlisting}
+watch(eventName).
+\end{lstlisting}
+specifies that whenever eventName is produced, a line is appended to the
+reporting stream of the runtime (e.g., on the standard output).  Watches
+can have a modifier string, in which case the \lstinline$watchmod$ fact
+is used.  For instance,
+\begin{lstlisting}
+watchmod(eventName, "id").
+\end{lstlisting}
+sets a watch on the \lstinline$eventName$ tuple type with modifiers
+``i'' and ``d.''  An empty modifier string is equivalent to all
+modifiers, so 
+\begin{lstlisting}
+watchmod(eventName, "").
+\end{lstlisting}
+is equivalent to the \lstinline$watch$ fact above.
+
+Here are the different possible modifiers:
+\begin{itemize}
+\item InsertEvent, i, is issued right after a tuple is inserted into
+  a table by the same name.
+\item RefreshEvent, r, is issued right after a tuple has been refreshed
+  in a table by the same name.
+\item DeleteEvent, d, is issued right after a tuple is deleted from a
+  table by the same name.
+\item RecvEvent, c, is issued right after a tuple has been received from
+  the network.
+\item PeriodicEvent, p, is issued right after a periodic event has been issued.
+\item AddAction, a, is issued right before a tuple is inserted into the
+  table by the same name.
+\item DeleteAction, z, is issued right before a tuple is removed from
+  the table by the same name.
+\item SendAction, s, is issued right before a tuple is transmitted.
+\item BeforeJoin, b, is issued right before a tuple by that name is used
+  to join with a table.
+\item AfterJoin, j, is issued right after a join that created the tuple
+  by that name.
+\item HeadProjection, h, is issued right after a tuple by that name is
+  produced as the head of a rule (within or without an aggregation rule).
+\end{itemize}
+
+An important note is that, though a tuple type may be received at a P2
+node over the network, it may not be necessarily reported via
+watches. This is the case when a tuple type is not \emph{expected} by
+the node; that is, there is no rule taking that tuple type as its
+input.  In that case, though the tuple may be received, it is
+discarded.  To watch for such tuples, a workaround is to create a
+reception rule that accepts the received tuple \lstinline$msg$ and produces a local
+one \lsginline$gotMsg$.  Now watching for the sent tuple or the local
+tuple will produce printouts.
 
 
 \section{Language and System Limitations}
 \begin{itemize}
-\item replication of location specifier as 1st attribute
 \item exactly one event per rule (not 0, not 2).  workaround for 0 is
       a periodic rule
 \item data import
-\item periodic should be the first term
 \end{itemize}
 \section{Further Reading}
 \end{document}

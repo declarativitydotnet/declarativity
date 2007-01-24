@@ -14,33 +14,20 @@
   * 
   * Run me as follows:
   *
-  * Have three nodes with ports 20202, 20203, 20204. Execute the following:
-  * 
-  * At 20202:
-  * tests/runOverLog2 -DNEIGHBOR1=\"localhost:20203\" -DNEIGHBOR2=\"localhost:20204\" unitTests/olg/aggregates.olg localhost 20202
-  * At 20203:
-  * tests/runOverLog2 -DNEIGHBOR1=\"localhost:20202\" -DNEIGHBOR2=\"localhost:20204\" unitTests/olg/aggregates.olg localhost 20203
-  * At 20204:
-  * tests/runOverLog2 -DNEIGHBOR1=\"localhost:20203\" -DNEIGHBOR2=\"localhost:20204\" unitTests/olg/aggregates.olg localhost 20204
+  * tests/runOverLog -o unitTests/olg/keyLessTable.olg
   *
-  * 20202 should be receiving bigee events from both 20203 and 20204.
-  * 20203 should be receiving bigee events from 20204 and smallee events
-  *   from 20202
-  * 20204 should be receiving smallee events from both 20202 and 20203.
-  *
-  * NEIGHBOR1 is a neighbor host:port
-  * NEIGHBOR2 is another neighbor host:port
+  * Every second, a new keyLess tuple should be produced with an
+  * increasing count.
 ***/
 
 materialize(keyLess, infinity, infinity, keys()).
 
-watch(event).
-watch(keyLessCount).
+watchmod(keyLessCount, "s").
 
 r1 event(@NI) :- periodic(@NI, E, 1).
 
 r2 keyLess(@NI) :- event(@NI).
 
-r3 keyLessCount(@NI, count<*>) :- keyLes(@NI).
+r3 keyLessCount(@NI, count<*>) :- keyLess(@NI).
 
 

@@ -17,9 +17,7 @@ lib_LTLIBRARIES =		libp2overlog.la
 
 SOURCE_FILE_ROOTS =		\
 				parser_util \
-				ol_context \
-				plmb_confgen \
-				overlogCompiler
+				ol_context
 
 GENERATED_SOURCES =		\
 				ol_parser.H \

@@ -24,7 +24,6 @@
 #include "ol_context.h"
 #include "eca_context.h"
 #include "localize_context.h"
-#include "plmb_confgen.h"
 #include "tableStore.h"
 #include "udp.h"
 #include "planner.h"
@@ -153,7 +152,7 @@ main(int argc, char** argv)
         // My minimum reporting level is optarg
         std::string levelName(optarg);
         Reporting::Level level =
-          Reporting::levelFromName[levelName];
+          Reporting::levelFromName()[levelName];
         Reporting::setLevel(level);
       }
       break;
@@ -208,6 +207,12 @@ main(int argc, char** argv)
   boost::shared_ptr< OL_Context > ctxt(new OL_Context());
   std::istringstream istr(program);
   ctxt->parse_stream(&istr);
+  if (ctxt->gotErrors()) {
+    TELL_ERROR << "Parse Errors Found\n";
+    ctxt->dumpErrors();
+    TELL_ERROR << "Compilation aborted\n";
+    exit (-1);
+  }
   
 
   TELL_INFO << "Finished parsing. Functors: "

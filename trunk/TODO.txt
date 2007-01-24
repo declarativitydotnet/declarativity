@@ -92,9 +92,6 @@
 
  - Go through and fix all n^2 traversals of vectors!!!!!
 
- - Replace custom aggregate functions within AggWrap with generic
-   functions from factory
-
  - Split planning of periodics from arbitrary rule bodies. 
 
  - Implement views correctly, linking them to both update and remove

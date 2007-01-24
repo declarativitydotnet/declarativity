@@ -18,15 +18,17 @@ SUBDIRS=	\
 		eventLoop \
 		p2core \
 		elements \
-		pythonElements \
 		net \
 		overlog \
 		planner \
-		p2cpp \
 		debugger \
 		unitTests \
-		python \
-		tests
+		tests \
+		python
+
+PYTHONSTUFF=	pythonElements \
+		python
+
 
 EXTRA_DIST =	LICENSE setup \
 		doc/chord.olg doc/narada.olg doc/ping.olg \

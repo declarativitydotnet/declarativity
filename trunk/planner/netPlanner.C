@@ -21,10 +21,10 @@ void NetPlanner::generateNetworkOutElements(boost::shared_ptr<Udp> udp)
   // <dst, <t>>
   
   ElementSpecPtr pullPush =
-    _conf->addElement(ElementPtr(new TimedPullPush("SendPullPush|", 0)));
+    _conf->addElement(ElementPtr(new TimedPullPush("SendPullPush!", 0)));
   
   ElementSpecPtr sendQueue = 
-    _conf->addElement(ElementPtr(new Queue("SendQueue|", QUEUESIZE)));
+    _conf->addElement(ElementPtr(new Queue("SendQueue!", QUEUESIZE)));
 
   // If wrap around, we unbox
   std::vector< ValuePtr > wrapAroundDemuxKeys;
@@ -35,11 +35,11 @@ void NetPlanner::generateNetworkOutElements(boost::shared_ptr<Udp> udp)
 
   // <dst, <opaque>>
   ElementSpecPtr marshalSend = 
-    _conf->addElement(ElementPtr(new MarshalField("marshal|" + _nodeID, 1)));  
+    _conf->addElement(ElementPtr(new MarshalField("marshal!" + _nodeID, 1)));  
 
   // <dstAddr, <opaque>>
   ElementSpecPtr routeSend =
-    _conf->addElement(ElementPtr(new StrToSockaddr("plumber|" + _nodeID, 0)));
+    _conf->addElement(ElementPtr(new StrToSockaddr("plumber!" + _nodeID, 0)));
 
   ElementSpecPtr udpSend = _conf->addElement(udp->get_tx());  
   
@@ -62,12 +62,12 @@ void NetPlanner::generateNetworkInElements(boost::shared_ptr<Udp> udp)
    // network in
   ElementSpecPtr udpReceive = _conf->addElement(udp->get_rx());  
   ElementSpecPtr unmarshalS =
-    _conf->addElement(ElementPtr(new UnmarshalField("ReceiveUnmarshal|", 1)));
+    _conf->addElement(ElementPtr(new UnmarshalField("ReceiveUnmarshal!", 1)));
   ElementSpecPtr unBoxS =
-    _conf->addElement(ElementPtr(new UnboxField("ReceiveUnBox|", 1)));
+    _conf->addElement(ElementPtr(new UnboxField("ReceiveUnBox!", 1)));
 
   ElementSpecPtr receiveBufferQueue = 
-    _conf->addElement(ElementPtr(new Queue("ReceiveQueue|", QUEUESIZE)));
+    _conf->addElement(ElementPtr(new Queue("ReceiveQueue!", QUEUESIZE)));
 
   ElementSpecPtr receiveQueuePullPush = 
     _conf->addElement(ElementPtr(new TimedPullPush("ReceiveQueuePullPush", 0)));
@@ -138,7 +138,7 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands)
     if (ri->_receivers.size() > 1) {
       // require a duplicator
       ElementSpecPtr duplicator = 
-	_conf->addElement(ElementPtr(new DuplicateConservative("DuplicateConservative|" 
+	_conf->addElement(ElementPtr(new DuplicateConservative("DuplicateConservative!" 
 			    + ri->_tableName, ri->_receivers.size())));
       
       for (unsigned k = 0; k < ri->_receivers.size(); k++) {
@@ -163,10 +163,10 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands)
       continue; 
     }
     ElementSpecPtr bufferQueue = 
-      _conf->addElement(ElementPtr(new Queue("DemuxDuplicatorQueue|" +  
+      _conf->addElement(ElementPtr(new Queue("DemuxDuplicatorQueue!" +  
                                              ri->_tableName, QUEUESIZE)));   
     ElementSpecPtr pullPush = 
-      _conf->addElement(ElementPtr(new TimedPullPush("DemuxDuplicatorQueuePullPush|" + 
+      _conf->addElement(ElementPtr(new TimedPullPush("DemuxDuplicatorQueuePullPush!" + 
 				                     ri->_tableName, 0)));
     
     _conf->hookUp(demuxReceive, k, bufferQueue, 0);
@@ -190,7 +190,7 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands)
 
   // create round robin
   ElementSpecPtr roundRobin =
-    _conf->addElement(ElementPtr(new RoundRobin("roundRobinSender|" + _nodeID, 
+    _conf->addElement(ElementPtr(new RoundRobin("roundRobinSender!" + _nodeID, 
 						   numSenders))); 
   
   _conf->hookUp(roundRobin, 0, _networkOut.at(0), 0);

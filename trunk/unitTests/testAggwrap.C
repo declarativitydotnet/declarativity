@@ -22,6 +22,11 @@
 #include "val_null.h"
 #include "ID.h"
 
+#include "aggMin.h"
+#include "aggMax.h"
+#include "aggCount.h"
+
+
 #include "testAggwrap.h"
 #include <boost/bind.hpp>
 #include "vector"
@@ -215,6 +220,7 @@ testAggwrap::simpleTest()
   Aggwrap2 aggwrap("TestedAggwrap",
                   "MAX",
                    3,           // C from joined(@, B, C)
+                   false,
                    "joined");   
   testAggwrap::InnerElement inner("Inner",
                                   boost::bind(&testAggwrap::simpleTestFeeder,
@@ -567,6 +573,7 @@ AggwrapTracker::test()
           _aggwrap = new Aggwrap2("TestedAggwrap",
                                   Val_Str::cast((*_tuple)[0]),
                                   Val_UInt32::cast((*_tuple)[1]),
+                                  false, // not a * aggregate
                                   Val_Str::cast((*_tuple)[3]));
           
           _inner = new InnerElement("Inner");
@@ -1074,25 +1081,25 @@ testAggwrap::testScripts()
       AggwrapTest("a<\"MIN\",3,3,\"inner\",2,1>;"
                   "e<\"input\",6,1>;"
                   "j<0>;"
+                  "o<\"inner\",1,6,null>;"
                   "j<1>;"
-                  "j<2>;"
-                  "o<\"inner\",1,6,null>;",
+                  "j<2>;",
                   __LINE__),
       
       AggwrapTest("a<\"MAX\",3,3,\"inner\",2,1>;"
                   "e<\"input\",6,1>;"
                   "j<0>;"
+                  "o<\"inner\",1,6,null>;"
                   "j<1>;"
-                  "j<2>;"
-                  "o<\"inner\",1,6,null>;",
+                  "j<2>;",
                   __LINE__),
       
       AggwrapTest("a<\"COUNT\",3,3,\"inner\",2,1>;"
                   "e<\"input\",6,1>;"
                   "j<0>;"
+                  "o<\"inner\",1,6,0U>;"
                   "j<1>;"
-                  "j<2>;"
-                  "o<\"inner\",1,6,0U>;",
+                  "j<2>;",
                   __LINE__),
       
       // Group-by aggregations with non-empty result sets and
@@ -1103,31 +1110,18 @@ testAggwrap::testScripts()
                   "i<\"inner\",1,6,7>;"
                   "i<\"inner\",1,6,1>;"
                   "j<0>;"
+                  "o<\"inner\",1,6,1>;"
                   "j<1>;"
-                  "j<2>;"
-                  "o<\"inner\",1,6,1>;",
+                  "j<2>;",
                   __LINE__),
       
-      AggwrapTest("a<\"MAX\",3,3,\"inner\",2,1>;"
-                  "e<\"input\",6,1>;"
-                  "i<\"inner\",1,6,5>;"
+      // Multi-result first join with single-result second join.
+      AggwrapTest("a<\"COUNT\",1,2,\"inner\">;"
+                  "e<\"input\",8>;"
+                  "i<\"inner\",5>;"
                   "j<0>;"
-                  "i<\"inner\",1,6,7>;"
-                  "i<\"inner\",1,6,1>;"
-                  "j<1>;"
-                  "j<2>;"
-                  "o<\"inner\",1,6,7>;",
-                  __LINE__),
-      
-      AggwrapTest("a<\"COUNT\",3,3,\"inner\",2,1>;"
-                  "e<\"input\",6,1>;"
-                  "i<\"inner\",1,6,5>;"
-                  "j<0>;"
-                  "i<\"inner\",1,6,7>;"
-                  "j<1>;"
-                  "i<\"inner\",1,6,1>;"
-                  "j<2>;"
-                  "o<\"inner\",1,6,3U>;",
+                  "o<\"inner\",1U>;"
+                  "j<1>;",
                   __LINE__),
       
     };
@@ -1169,8 +1163,13 @@ testAggwrap::testScripts()
 testAggwrap_testSuite::testAggwrap_testSuite()
   : boost::unit_test_framework::test_suite("testAggwrap: Marshaling/Unmarshaling")
 {
-  boost::shared_ptr<testAggwrap> instance(new testAggwrap());
+  // Ensure the aggregate functions are initialized
+  AggMin::ensureInit();
+  AggMax::ensureInit();
+  AggCount::ensureInit();
 
+
+  boost::shared_ptr<testAggwrap> instance(new testAggwrap());
 
   add(BOOST_CLASS_TEST_CASE(&testAggwrap::testScripts, instance));
   add(BOOST_CLASS_TEST_CASE(&testAggwrap::simpleTest, instance));

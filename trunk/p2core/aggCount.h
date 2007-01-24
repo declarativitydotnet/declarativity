@@ -18,6 +18,7 @@
 
 #include "commonTable.h"
 #include "value.h"
+#include "aggFactory.h"
 
 class AggCount :
   public CommonTable::AggFunc
@@ -45,19 +46,21 @@ public:
   result();
 
 
-  static AggCount*
-  mk();
-
-
-  std::string
-  name();
-
-
+  // This is necessary for the class to register itself with the
+  // factory.
+  DECLARE_PUBLIC_INITS(AggCount)
 
 
 private:
   /** The current count value for this aggregate */
   uint64_t _current;
+
+
+  // This is necessary for the class to register itself with the
+  // factory.
+  DECLARE_PRIVATE_INITS
+
+
 };
 
 

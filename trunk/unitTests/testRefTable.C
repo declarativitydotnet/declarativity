@@ -13,6 +13,11 @@
 #include "tuple.h"
 #include "refTable.h"
 
+#include "aggMin.h"
+#include "aggMax.h"
+#include "aggCount.h"
+
+
 #include "val_str.h"
 #include "val_tuple.h"
 #include "val_int32.h"
@@ -231,11 +236,11 @@ public:
 void
 testRefTable::testCreateDestroy()
 {
-  RefTable table1("table1", RefTable::KEYID);
-  RefTable refTable("refTable", RefTable::KEY0);
-  RefTable table3("table3", RefTable::KEY01);
-  RefTable table4("table4", RefTable::KEY012);
-  RefTable table5("table5", RefTable::KEY13);
+  RefTable table1("table1", RefTable::theKey(CommonTable::KEYID));
+  RefTable refTable("refTable", RefTable::theKey(CommonTable::KEY0));
+  RefTable table3("table3", RefTable::theKey(CommonTable::KEY01));
+  RefTable table4("table4", RefTable::theKey(CommonTable::KEY012));
+  RefTable table5("table5", RefTable::theKey(CommonTable::KEY13));
 }
 
 
@@ -268,8 +273,8 @@ testRefTable::testSuperimposedIndexRemoval()
 
   // Create a table of unique tuples with a multiple key on its first
   // field
-  RefTable table("test_table", RefTable::KEY01);
-  table.secondaryIndex(RefTable::KEY0);
+  RefTable table("test_table", RefTable::theKey(CommonTable::KEY01));
+  table.secondaryIndex(RefTable::theKey(CommonTable::KEY0));
 
   // Insert the three tuples in that order
   BOOST_CHECK_MESSAGE(table.insert(a),
@@ -292,14 +297,14 @@ testRefTable::testSuperimposedIndexRemoval()
                       << "' should be fully deleted");
 
   // Lookup the tuple itself in the unique index
-  BOOST_CHECK_MESSAGE(table.lookup(RefTable::KEY01, c)->done(),
+  BOOST_CHECK_MESSAGE(table.lookup(RefTable::theKey(CommonTable::KEY01), c)->done(),
                       "Table test. Lookup of removed tuple "
                       << c->toString()
                       << " should return no results.");
 
   // Count the elements matching a on the multiple index (i.e., all
   // elements). It should contain two elements
-  RefTable::Iterator m = table.lookup(RefTable::KEY0, a);
+  RefTable::Iterator m = table.lookup(RefTable::theKey(CommonTable::KEY0), a);
   int count = 0;
   while (!m->done()) {
     m->next();
@@ -334,7 +339,7 @@ testRefTable::testPrimaryOverwrite()
   b->freeze();
   
   // Create a table with unique first fields.
-  RefTable table("test_table", RefTable::KEY0);
+  RefTable table("test_table", RefTable::theKey(CommonTable::KEY0));
 
   // Insert the first tuples
   BOOST_CHECK_MESSAGE(table.insert(a),
@@ -347,7 +352,7 @@ testRefTable::testPrimaryOverwrite()
                       << "' should be newly inserted (overwriting a).");
 
   // Lookup b in the primary index
-  RefTable::Iterator i = table.lookup(RefTable::KEY0, b);
+  RefTable::Iterator i = table.lookup(RefTable::theKey(CommonTable::KEY0), b);
   BOOST_CHECK_MESSAGE(!i->done(),
                       "Lookup of tuple b '"
                       << b->toString()
@@ -387,7 +392,7 @@ testRefTable::testProjectedLookups()
   b->freeze();
   
   // Create a table with unique first fields.
-  RefTable table("table1", RefTable::KEY0);
+  RefTable table("table1", RefTable::theKey(CommonTable::KEY0));
 
   // Insert the first tuple
   BOOST_CHECK_MESSAGE(table.insert(a),
@@ -396,7 +401,7 @@ testRefTable::testProjectedLookups()
                       << "' should be newly inserted");
 
   // Lookup the second tuple with its first field on the primary index
-  RefTable::Iterator i = table.lookup(RefTable::KEY0, RefTable::KEY0, b);
+  RefTable::Iterator i = table.lookup(RefTable::theKey(CommonTable::KEY0), RefTable::theKey(CommonTable::KEY0), b);
   BOOST_CHECK_MESSAGE(i->done(),
                       "Lookup of tuple b '"
                       << b->toString()
@@ -404,7 +409,7 @@ testRefTable::testProjectedLookups()
 
 
   // Lookup the second tuple with its second field on the primary index
-  i = table.lookup(RefTable::KEY1, RefTable::KEY0, b);
+  i = table.lookup(RefTable::theKey(CommonTable::KEY1), RefTable::theKey(CommonTable::KEY0), b);
   BOOST_CHECK_MESSAGE(!i->done(),
                       "Lookup of tuple b '"
                       << b->toString()
@@ -769,26 +774,26 @@ testRefTable::testInsertRemoveLookupScripts()
                    "d<0,15>;m<0,15>;",
                    //      10, 20, 25
                    __LINE__,
-                   RefTable::KEY01),
+                   RefTable::theKey(CommonTable::KEY01)),
       
       refTableTest("i<0,10>;f<0,10>;i<0,10>;f<0,10>;i<0,15>;m<0,10>;f<0,15>;",
                    __LINE__,
-                   RefTable::KEY0),
+                   RefTable::theKey(CommonTable::KEY0)),
       
       refTableTest("i<0,10>;i<0,15>;f<0,10>;i<0,10>;f<0,10>;d<0,10>;"
                    "f<0,10>;i<0,10>;f<0,10>;d<0,10>;f<0,10>;"
                    "d<0,10>;m<0,10>;",
                    __LINE__,
-                   RefTable::KEY01),
+                   RefTable::theKey(CommonTable::KEY01)),
       
       refTableTest("i<0,10>;m<0,10>;i<0,10>;m<0,10>;",
                    __LINE__,
-                   RefTable::KEYID),
+                   RefTable::theKey(CommonTable::KEYID)),
       
       refTableTest("i<0,10>;f<0,10>;d<0,10>;m<0,10>;d<0,10>;m<0,10>;"
                    "i<0,15>;f<0,15>;i<0,10>;f<0,10>;",
                    __LINE__,
-                   RefTable::KEY0),
+                   RefTable::theKey(CommonTable::KEY0)),
       
     };
   std::vector< refTableTest > vec(t,
@@ -810,8 +815,8 @@ testRefTable::testSecondaryEquivalence()
   // Make sure that an index lookup is the same as a full scan with the
   // appropriate selection (predicate check.)
 
-  RefTable table("secondary equivalence", RefTable::KEY0);
-  table.secondaryIndex(RefTable::KEY1);
+  RefTable table("secondary equivalence", RefTable::theKey(CommonTable::KEY0));
+  table.secondaryIndex(RefTable::theKey(CommonTable::KEY1));
 
   // Add a bunch of tuples with some replacements
   uint TUPLES = 1000;
@@ -839,7 +844,7 @@ testRefTable::testSecondaryEquivalence()
     TuplePtr lookupT = Tuple::mk();
     lookupT->append(emptyString);
     lookupT->append(iVal);
-    RefTable::Iterator i = table.lookup(RefTable::KEY1, lookupT);
+    RefTable::Iterator i = table.lookup(RefTable::theKey(CommonTable::KEY1), lookupT);
 
     TupleSet sResults;
     while (!i->done()) {
@@ -1014,8 +1019,8 @@ testRefTable::testAggregates()
                 // 10(x2)
                 "i<0,20>;",
                 // 10(x2), 20
-                RefTable::KEY01,
-                RefTable::KEY0, 1, "MIN",
+                RefTable::theKey(CommonTable::KEY01),
+                RefTable::theKey(CommonTable::KEY0), 1, "MIN",
                 __LINE__),
 
     // Test reinsertion without update followed by multiple removals
@@ -1027,8 +1032,8 @@ testRefTable::testAggregates()
                 // 10, 20
                 "d<0,10>;u<0,20>;",
                 // 20
-                RefTable::KEY01,
-                RefTable::KEY0, 1, "MIN",
+                RefTable::theKey(CommonTable::KEY01),
+                RefTable::theKey(CommonTable::KEY0), 1, "MIN",
                 __LINE__),
 
 
@@ -1040,8 +1045,8 @@ testRefTable::testAggregates()
                 "i<0,15>;u<0,null>;u<0,15>;"
                 "i<0,5>;u<0,null>;u<0,5>;"
                 "d<0,5>;u<0,null>;",
-                RefTable::KEY0, // first field is indexed
-                RefTable::KEY0, // first field is group-by
+                RefTable::theKey(CommonTable::KEY0), // first field is indexed
+                RefTable::theKey(CommonTable::KEY0), // first field is group-by
                 1, // second field is aggregated
                 "MIN", // aggregate function is MIN
                 __LINE__),
@@ -1055,8 +1060,8 @@ testRefTable::testAggregates()
     // DELETE <0, 5>
     // UPDATE <0, 10>
     intAggTest2("i<0,10>;u<0,10>;i<0,15>;i<0,5>;u<0,5>;d<0,5>;u<0,10>;",
-                RefTable::KEY01, // first field is indexed
-                RefTable::KEY0, // first field is group-by
+                RefTable::theKey(CommonTable::KEY01), // first field is indexed
+                RefTable::theKey(CommonTable::KEY0), // first field is group-by
                 1, // second field is aggregated
                 "MIN", // aggregate function is MIN
                 __LINE__),
@@ -1067,19 +1072,19 @@ testRefTable::testAggregates()
     // INSERT <0, 5>
     // UPDATE <0, 5>
     intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;",
-                RefTable::KEY01,
-                RefTable::KEY0,
+                RefTable::theKey(CommonTable::KEY01),
+                RefTable::theKey(CommonTable::KEY0),
                 1, "MIN",
                 __LINE__),
     
     intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;i<0,20>;i<0,30>;",
-                RefTable::KEY01,
-                RefTable::KEY0, 1, "MIN",
+                RefTable::theKey(CommonTable::KEY01),
+                RefTable::theKey(CommonTable::KEY0), 1, "MIN",
                 __LINE__),
     
     intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;i<0,20>;i<0,3>;u<0,3>;i<0,4>;",
-                RefTable::KEY01,
-                RefTable::KEY0, 1, "MIN",
+                RefTable::theKey(CommonTable::KEY01),
+                RefTable::theKey(CommonTable::KEY0), 1, "MIN",
                 __LINE__),
 
 
@@ -1100,31 +1105,31 @@ testRefTable::testAggregates()
                 // Run down to 0
                 "d<0,12>;d<0,12>;u<0,0U>;"
                 "d<1,8>;u<1,0U>;",
-                RefTable::KEY01,
-                RefTable::KEY0, 1, "COUNT",
+                RefTable::theKey(CommonTable::KEY01),
+                RefTable::theKey(CommonTable::KEY0), 1, "COUNT",
                 __LINE__),
     
     ////////////////////////////////////////////////////////////
     // MAX
 
     intAggTest2("i<0,10>;u<0,10>;i<0,5>;",
-                RefTable::KEY01,
-                RefTable::KEY0, 1, "MAX",
+                RefTable::theKey(CommonTable::KEY01),
+                RefTable::theKey(CommonTable::KEY0), 1, "MAX",
                 __LINE__),
     
     intAggTest2("i<0,10>;u<0,10>;i<0,15>;u<0,15>;i<0,3>;",
-                RefTable::KEY01,
-                RefTable::KEY0, 1, "MAX",
+                RefTable::theKey(CommonTable::KEY01),
+                RefTable::theKey(CommonTable::KEY0), 1, "MAX",
                 __LINE__),
     
     intAggTest2("i<0,10>;u<0,10>;i<0,5>;i<0,15>;u<0,15>;",
-                RefTable::KEY01,
-                RefTable::KEY0, 1, "MAX",
+                RefTable::theKey(CommonTable::KEY01),
+                RefTable::theKey(CommonTable::KEY0), 1, "MAX",
                 __LINE__),
     
     intAggTest2("i<0,10>;u<0,10>;i<0,10>;",
-                RefTable::KEY01,
-                RefTable::KEY0, 1, "MAX",
+                RefTable::theKey(CommonTable::KEY01),
+                RefTable::theKey(CommonTable::KEY0), 1, "MAX",
                 __LINE__)
   };
 
@@ -1159,7 +1164,7 @@ testRefTable::testIndexing()
   {
     //  First: tuples inserted can be looked up.  Tuples not inserted
     // cannot be looked up.  Create a very simple table
-    RefTable tbl("test_table", RefTable::KEY0);
+    RefTable tbl("test_table", RefTable::theKey(CommonTable::KEY0));
     for(uint i=0;
         i < SIZE/2;
         i++) { 
@@ -1177,7 +1182,7 @@ testRefTable::testIndexing()
       t->append(Val_UInt32::mk(i % (SIZE/2)));
       t->append(Val_UInt32::mk(i));
       t->freeze();
-      BOOST_CHECK_MESSAGE(!tbl.lookup(RefTable::KEY0, t)->done(),
+      BOOST_CHECK_MESSAGE(!tbl.lookup(RefTable::theKey(CommonTable::KEY0), t)->done(),
                           "Table test. Lookup "
                           << i
                           << ".  Tuple is not in the table but should.");
@@ -1189,7 +1194,7 @@ testRefTable::testIndexing()
       t->append(Val_UInt32::mk(i % (SIZE/2)));
       t->append(Val_UInt32::mk(i));
       t->freeze();
-      BOOST_CHECK_MESSAGE(tbl.lookup(RefTable::KEY0, t)->done(),
+      BOOST_CHECK_MESSAGE(tbl.lookup(RefTable::theKey(CommonTable::KEY0), t)->done(),
                           "Table test. Lookup "
                           << (i + SIZE/2)
                           << ".  Tuple is in the table but shouldn't");
@@ -1197,8 +1202,8 @@ testRefTable::testIndexing()
   }
   {
     // Check secondary indices
-    RefTable tbl("test_table", RefTable::KEY0);
-    tbl.secondaryIndex(RefTable::KEY4);
+    RefTable tbl("test_table", RefTable::theKey(CommonTable::KEY0));
+    tbl.secondaryIndex(RefTable::theKey(CommonTable::KEY4));
     for(uint i = 0;
         i < SIZE;
         i++) { 
@@ -1217,7 +1222,7 @@ testRefTable::testIndexing()
       t->append(Val_UInt32::mk(i));
       t->append(Val_UInt32::mk(i));
       t->freeze();
-      RefTable::Iterator iter = tbl.lookup(RefTable::KEY4, t);
+      RefTable::Iterator iter = tbl.lookup(RefTable::theKey(CommonTable::KEY4), t);
       for (uint counter = 0;
            counter < 4;
            counter++) {
@@ -1258,7 +1263,7 @@ testRefTable::testBatchRemovals()
   }
   
   // Create a unique index on first field
-  RefTable tbl("test_table", RefTable::KEY0);
+  RefTable tbl("test_table", RefTable::theKey(CommonTable::KEY0));
   for(uint i = 0;
       i < SIZE;
       i++) { 
@@ -1275,7 +1280,7 @@ testRefTable::testBatchRemovals()
   for(uint i = 0;
       i< SIZE;
       i++) { 
-    BOOST_CHECK_MESSAGE(tbl.lookup(RefTable::KEY0, tpls[i])->done(),
+    BOOST_CHECK_MESSAGE(tbl.lookup(RefTable::theKey(CommonTable::KEY0), tpls[i])->done(),
                         "Table test. Lookup of removed tuple "
                         << tpls[i]->toString()
                         << " should return no results.");
@@ -1302,7 +1307,7 @@ testRefTable::testBatchMultikeyRemovals()
   }
   
   // Create a unique index on first two fields
-  RefTable tbl("test_table", RefTable::KEY01);
+  RefTable tbl("test_table", RefTable::theKey(CommonTable::KEY01));
   for(uint i = 0;
       i < SIZE;
       i++) { 
@@ -1319,7 +1324,7 @@ testRefTable::testBatchMultikeyRemovals()
   for(uint i = 0;
       i< SIZE;
       i++) { 
-    BOOST_CHECK_MESSAGE(tbl.lookup(RefTable::KEY01, tpls[i])->done(),
+    BOOST_CHECK_MESSAGE(tbl.lookup(RefTable::theKey(CommonTable::KEY01), tpls[i])->done(),
                         "Table test. Lookup of removed tuple "
                         << tpls[i]->toString()
                         << " should return no results.");
@@ -1347,8 +1352,8 @@ testRefTable::testUniqueTupleRemovals()
   }
   
   // Create a unique index on all five fields
-  RefTable tbl("test_table", RefTable::KEY01234);
-  tbl.secondaryIndex(RefTable::KEY1);
+  RefTable tbl("test_table", RefTable::theKey(CommonTable::KEY01234));
+  tbl.secondaryIndex(RefTable::theKey(CommonTable::KEY1));
   for(uint i = 0;
       i < SIZE;
       i++) { 
@@ -1365,7 +1370,7 @@ testRefTable::testUniqueTupleRemovals()
   for(uint i = 0;
       i< SIZE;
       i++) { 
-    BOOST_CHECK_MESSAGE(tbl.lookup(RefTable::KEY01234, tpls[i])->done(),
+    BOOST_CHECK_MESSAGE(tbl.lookup(RefTable::theKey(CommonTable::KEY01234), tpls[i])->done(),
                         "Table test. Lookup of removed tuple "
                         << tpls[i]->toString()
                         << " should return no results.");
@@ -1380,7 +1385,7 @@ testRefTable::testPseudoRandomInsertDeleteSequences()
 
   {
     // Create a table
-    RefTable t("succ", RefTable::KEY2);
+    RefTable t("succ", RefTable::theKey(CommonTable::KEY2));
     for (uint i = 0;
          i < SIZE + EXTRA_TUPLES;
          i++) {
@@ -1430,6 +1435,12 @@ testRefTable::testPseudoRandomInsertDeleteSequences()
 testRefTable_testSuite::testRefTable_testSuite()
   : boost::unit_test_framework::test_suite("testRefTable: Marshaling/Unmarshaling")
 {
+  // Ensure the aggregate functions are initialized
+  AggMin::ensureInit();
+  AggMax::ensureInit();
+  AggCount::ensureInit();
+
+
   boost::shared_ptr<testRefTable> instance(new testRefTable());
   
   add(BOOST_CLASS_TEST_CASE(&testRefTable::testCreateDestroy, instance));

@@ -35,7 +35,7 @@ void Demux::unblock(unsigned output)
   
   // Unset a blocked output
   if (_block_flags[output]) {
-    log(Reporting::INFO, -1, "unblock");
+    ELEM_INFO("unblock");
 
     _block_flags[output] = false;
     _block_flag_count--;
@@ -44,7 +44,7 @@ void Demux::unblock(unsigned output)
 
   // If I have a push callback, call it and remove it
   if (_push_cb) {
-    log(Reporting::INFO, -1, "unblock: propagating aggregate unblock");
+    ELEM_INFO("unblock: propagating aggregate unblock");
     _push_cb();
     _push_cb = 0;
   }
@@ -62,9 +62,9 @@ int Demux::push(int port, TuplePtr p, b_cbv cb)
     if (!_push_cb) {
       _push_cb = cb;
     } else {
-      log(Reporting::WARN, -1, "push: Callback overrun");
+      ELEM_WARN("push: Callback overrun");
     }
-    log(Reporting::WARN, -1, "push: Overrun");
+    ELEM_WARN("push: Overrun");
     return 0;
   }
 
@@ -85,7 +85,7 @@ int Demux::push(int port, TuplePtr p, b_cbv cb)
       if (_block_flags[i]) {
         // No can do. Drop the tuple and return 0 if all outputs are
         // blocked
-        log(Reporting::WARN, -1, "push: Matched blocked output");
+        ELEM_INFO("push: Matched blocked output");
 
         // Of course, our input is not blocked, or we wouldn't be here,
         // yes?
@@ -105,7 +105,7 @@ int Demux::push(int port, TuplePtr p, b_cbv cb)
           if (_block_flag_count == noutputs()) {
             assert(!_push_cb);
             _push_cb = cb;
-            log(Reporting::WARN, -1, "push: Blocking input");
+            ELEM_INFO("push: Blocking input");
             return 0;
           } else {
             // I can still take more
@@ -125,7 +125,7 @@ int Demux::push(int port, TuplePtr p, b_cbv cb)
   if (_block_flags[noutputs() - 1]) {
     // No can do. Drop the tuple and return 0 if all outputs are
     // blocked
-    log(Reporting::WARN, -1, "push: Default output blocked");
+    ELEM_INFO("push: Default output blocked");
     
     // Of course, our input is not blocked, or we wouldn't be here,
     // yes?
@@ -145,7 +145,7 @@ int Demux::push(int port, TuplePtr p, b_cbv cb)
       if (_block_flag_count == noutputs()) {
         assert(!_push_cb);
         _push_cb = cb;
-        log(Reporting::WARN, -1, "push: Blocking input");
+        ELEM_INFO("push: Blocking input");
         return 0;
       } else {
         // I can still take more

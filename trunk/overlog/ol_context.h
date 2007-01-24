@@ -38,7 +38,7 @@ public:
     Error(int l, string m) : line_num(l), msg(m) {};
   };
   
-   struct Rule {
+  struct Rule {
     Rule(string r, Parse_Functor *h, bool d) 
       : ruleID(r), head(h), deleteFlag(d), 
 	ruleNum(OL_Context::ruleCount++) {};
@@ -71,13 +71,6 @@ public:
     Table2::Key primaryKeys;
   };
   
-  struct WatchDef {
-    WatchDef(Parse_Expr *e) : watch(e->v) {};
-    string toString() { return "watch( " + watch->toString() + " )"; };
-
-    ValuePtr watch;
-  };
-
   /*******************************************************************/
   OL_Context();
   ~OL_Context();
@@ -85,8 +78,8 @@ public:
   //
   // Parsing programs
   //
-  void parse_string( const char *prog );
-  void parse_stream( std::istream *str );
+  void parse_string(const char *prog);
+  void parse_stream(std::istream *str);
 
   /////
   // 
@@ -97,26 +90,46 @@ public:
 
   //
   // Add a new rule to the system
-  void rule( Parse_Term *lhs, Parse_TermList *rhs, bool deleteFlag, Parse_Expr *n=NULL );
-  void aggRule( Parse_Term *lhs, Parse_AggTerm *rhs, bool deleteFlag, Parse_Expr *n=NULL );
+  void rule(Parse_Term *lhs, Parse_TermList *rhs, bool deleteFlag, Parse_Expr *n=NULL);
+  void aggRule(Parse_Term *lhs, Parse_AggTerm *rhs, bool deleteFlag, Parse_Expr *n=NULL);
 
   // Materialize a table
-  void table( Parse_Expr *n, Parse_Expr *t, Parse_Expr *s, Parse_ExprList *k=NULL );
+  void table(Parse_Expr *n, Parse_Expr *t, Parse_Expr *s, Parse_ExprList *k=NULL);
 
-  void query( Parse_Term *term);
+  void query(Parse_Term *term);
 
-  void fact( Parse_Term *term);
+  void fact(Parse_Term *term);
 
-  void watch( Parse_Expr *t );
 
-  void traceTuple( Parse_Expr *t );
+  /** Register a watch fact */
+  void
+  watch(Parse_Expr *t,
+        std::string modifiers);
+
+
+  void traceTuple(Parse_Expr *t);
 
 
   /** Keep track of tables to be traced */
   void
   traceTable(Parse_Expr *t);
 
-  void error(string msg);
+
+
+  /** Error management */
+  void
+  error(string msg);
+
+
+  /** Return true if I encountered errors during parsing */
+  bool
+  gotErrors();
+
+  
+  /** Dump any errors into the ERROR stream */
+  void
+  dumpErrors();
+
 
   OL_Lexer *lexer;
 
@@ -129,10 +142,17 @@ public:
   typedef std::vector<OL_Context::Error *> ErrorList;
 
 
+  /** The type of watched table mappings */
+  typedef std::map<string, string> WatchTableType;
+
 private:
   TableInfoMap*      tables;
   RuleList*          rules;
-  std::set<string>      watchTables;
+
+
+  /** The watched table map */
+  WatchTableType watchTables;
+
   std::vector<TuplePtr> facts;
   Parse_Functor* singleQuery;
   std::set< string, std::less< string > > tuplesToTrace;
@@ -146,13 +166,18 @@ public:
   ErrorList          errors;
   RuleList*          getRules()       { return rules; };
   TableInfoMap*      getTableInfos()  { return tables;   };
-  std::set<string>      getWatchTables() { return watchTables; };
+
+
+  WatchTableType
+  getWatchTables() { return watchTables; };
+
+
   std::vector<TuplePtr> getFacts()       { return facts; };
   std::set< string > getTuplesToTrace() { return tuplesToTrace;};  
   std::set< string > getTablesToTrace() { return tablesToTrace;};  
   
 };
 
-extern int ol_parser_parse( OL_Context *env );
+extern int ol_parser_parse(OL_Context *env);
 
 #endif /* __OL_PARSEENV_H_ */

@@ -28,6 +28,12 @@ public:
   typedef boost::function< CommonTable::AggFunc* () > AggFuncFactory;
 
   
+  /** Ensure we're initialized.  All exterior-facing functions dealing
+      with statics must invoke this first */
+  static void
+  ensureInit();
+
+
   /** Returns a new aggregate function object on the heap. Must be
       deleted in the end.  It never returns a null. If the given name is
       not found, an AggregateNotFound exception is raised. */
@@ -56,30 +62,6 @@ public:
     std::string aggName;
   };
 
-  
-  
-private:
-  /** A type for a directory of aggregate function factories. */
-  typedef std::map< std::string, // name
-                    AggFuncFactory, // factory
-                    std::less< std::string > > FactorySet;
-  
-
-  /** The actual directory */
-  static FactorySet _factories;
-
-
-  /** A static initializer object to initialize static class objects */
-  class Initializer {
-  public:
-    Initializer();
-  };
-
-  
-  /** And the actual dummy initializer object.  Its constructor is the
-      static initializer. */
-  static Initializer _INITIALIZER;
-
 
   /** Registers an aggregate function factory given its name (e.g., MIN,
       MAX, etc.) */
@@ -90,7 +72,90 @@ private:
 
 
 
+  
+  
+private:
+  /** A type for a directory of aggregate function factories. */
+  typedef std::map< std::string, // name
+                    AggFuncFactory, // factory
+                    std::less< std::string > > FactorySet;
+  
+
+  /** The actual directory */
+  static FactorySet* _factories;
+
+
+  /** A static initializer object to initialize static class objects */
+  class Initializer {
+  public:
+    Initializer();
+  };
+
+  
+  /** Return the initializer ensuring it runs first */
+  static Initializer*
+  theInitializer();
 };
+
+
+
+#define DECLARE_PRIVATE_INITS                   \
+  class Initializer {                           \
+  public:                                       \
+    Initializer();                              \
+  };                                            \
+                                                \
+  static Initializer*                           \
+  theInitializer();                             \
+                                                \
+
+
+#define DECLARE_PUBLIC_INITS(_classname) \
+  static _classname*                     \
+  mk();                                  \
+                                         \
+  std::string                            \
+  name();                                \
+                                         \
+  static void                            \
+  ensureInit();                          \
+                                         \
+  
+
+#define DEFINE_INITS(_classname,_name)         \
+  _classname::Initializer::Initializer()       \
+  {                                            \
+    AggFactory::add(_name, &_classname::mk);   \
+  }                                            \
+                                               \
+  _classname::Initializer*                     \
+  _classname::theInitializer()                 \
+  {                                            \
+    static Initializer* _initializer =         \
+      new Initializer();                       \
+    return _initializer;                       \
+  }                                            \
+                                               \
+  void                                         \
+  _classname::ensureInit()                     \
+  {                                            \
+    Initializer* init;                         \
+    init = theInitializer();                   \
+  }                                            \
+                                               \
+  _classname*                                  \
+  _classname::mk()                             \
+  {                                            \
+    return new _classname();                   \
+  }                                            \
+                                               \
+  std::string                                  \
+  _classname::name()                           \
+  {                                            \
+    return _name;                              \
+  }                                            \
+                                               \
+  
 
 
 #endif // AGGMIN_H

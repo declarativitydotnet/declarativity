@@ -12,6 +12,7 @@
 
 #include "aggCount.h"
 #include "val_uint64.h"
+#include "aggFactory.h"
 
 AggCount::AggCount()
 {
@@ -51,16 +52,8 @@ AggCount::result()
 }
 
 
-AggCount*
-AggCount::mk()
-{
-  return new AggCount();
-}
+// This is necessary for the class to register itself with the
+// factory.
+DEFINE_INITS(AggCount,"COUNT")
 
 
-
-std::string
-AggCount::name()
-{
-  return "COUNT";
-}

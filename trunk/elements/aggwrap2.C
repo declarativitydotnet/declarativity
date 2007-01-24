@@ -44,10 +44,12 @@
 Aggwrap2::Aggwrap2(std::string name,
                    std::string aggregateFunctionName,
                    uint32_t aggfield,
+                   bool starAgg,
                    std::string resultTupleName)
   : Element(name, 2, 2),
     // Config
-    _aggField(aggfield), 
+    _aggField(aggfield),
+    _starAgg(starAgg),
     _numJoins(0),
     _comparator(NULL),
     _outerGroupBy(),
@@ -59,6 +61,11 @@ Aggwrap2::Aggwrap2(std::string name,
     ext_in_cb(0),
     _eventTuple()
 {
+  ELEM_WORDY("Creating aggwrap "
+             << name
+             << " with aggregate field number "
+             << aggfield);
+
   try {
     _aggregateFn = AggFactory::mk(aggregateFunctionName);
   } catch (AggFactory::AggregateNotFound a) {
@@ -110,6 +117,10 @@ Aggwrap2::push(int port, TuplePtr t, b_cbv cb)
       agg_init();
       inner_accepting =
         output(1)->push(t, boost::bind(&Aggwrap2::int_push_cb, this));
+      ELEM_WORDY("My inner_accepting at line "
+                 << __LINE__
+                 << " became "
+                 << inner_accepting);
       break;
     case BUSY:
       ELEM_WARN("Received an overrun outer tuple "
@@ -156,12 +167,16 @@ Aggwrap2::int_push_cb()
 {
   TRACE_FUNCTION;
 
-  if (_aggState != IDLE) {
-    // Can't receive callbacks while not idle!
+  if (_aggState != BUSY) {
+    // Can only receive callbacks while BUSY
     ELEM_ERROR("Received an inner callback while in state "
                << _aggState);
   } else {
     inner_accepting = true;
+      ELEM_WORDY("My inner_accepting at line "
+                 << __LINE__
+                 << " became "
+                 << inner_accepting);
     ELEM_WORDY("Callback from inner graph on successful push"
                << _aggState);
     if (ext_in_cb) {
@@ -185,12 +200,9 @@ Aggwrap2::comp_cb(int jnum)
                << _aggState);
   } else {
     ELEM_WORDY("Join " << jnum << " completed.");
-    if (_curJoin < jnum) { 
-      _curJoin = jnum;
-    }
-    
-    if (_curJoin >= _numJoins - 1) {
-      // Presumably, we're now done.
+    if (jnum == 0) {
+      // The first join is done, which means the whole aggregation is
+      // done.
       agg_finalize();
     }
   }
@@ -218,7 +230,6 @@ Aggwrap2::agg_init() {
   TRACE_FUNCTION;
   _aggState = BUSY;
 
-  _curJoin = -1;
   _seenTuples = false;
   _aggregateFn->reset();
 }
@@ -229,11 +240,19 @@ Aggwrap2::agg_accum(TuplePtr t) {
   // Have I seen other tuples yet?
   if (!_seenTuples) {
     // This is the first tuple I am aggregating
-    _aggregateFn->first((*t)[_aggField]);
+    if (_starAgg) {
+      _aggregateFn->first(Val_Null::mk());
+    } else {
+      _aggregateFn->first((*t)[_aggField]);
+    }
     _seenTuples = true;
   } else {
     // This is not the first tuple I am aggregating
-    _aggregateFn->process((*t)[_aggField]);
+    if (_starAgg) {
+      _aggregateFn->process(Val_Null::mk());
+    } else {
+      _aggregateFn->process((*t)[_aggField]);
+    }
   }
 }
 

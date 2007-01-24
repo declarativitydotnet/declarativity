@@ -40,43 +40,69 @@ class ExecRecord{
 
   /** ID of input tuple */
   uint32_t tupleIn;
+
+
   /** ID of output tuple */
   uint32_t tupleOut;
+
+
   /** preconditin for this record */
   uint32_t precond[MAX_STAGES];
+
+
   /** destination for the output tuple */
   string remoteNode;
+
+
   /** time at which input was recieved */
   boost::posix_time::ptime timeIn;
+
+
   /** time at which output was recieved */
   boost::posix_time::ptime timeOut;
+
+
   /** is this execution finished */
   bool finished;
+
+
   /** how many preconditions */
   int numEntries;
+
 
   /** range of elements in the rule strand that can 
       input to this record. */
   int range_start;
   int range_end;
 
+
   ExecRecord(string rule);
+
+
   ~ExecRecord();
 
+
   /** initializes the preconditions */
-  void initializePreds();
+  void
+  initializePreds();
 
-  string toString();
   
-  /** 0's the preconditions starting from 
-      index till the end port */
-  void flushTillIndex(int index);
+  string
+  toString();
+  
+  
+  /** 0's the preconditions starting from index till the end port */
+  void
+  flushTillIndex(int index);
 
+  
   /** re-initializes everything */
-  void flush();
+  void
+  flush();
 
-  void resetTimer(boost::posix_time::ptime *t){};
-  
+
+  void
+  resetTimer(boost::posix_time::ptime *t){};
 };
 
 #endif /** __EXECRECORD_H__ **/

@@ -1,3 +1,79 @@
+Release 0.7.8
+=============
+
+- Removed python from the default build process.
+
+- Removed unit test convenience library to simplify dependencies.
+
+
+- Fixed Lookup2 to always return an empty tuple upon completion of a
+  lookup. Abolished END_OF_STREAM tags. Fixed Aggwrap to use the simpler
+  lookup result discipline. (Thanks to Igor Ganichev for finding the
+  bug).
+
+- Migrated to new Aggwrap (aggwrap2.C) and removed old version of the
+  element. 
+
+- Fixed aggwrap join completion order bug and adapted to the new Lookup
+  completion logic to match new stream punctuation in Lookup2.
+
+- Fixed AggWrap's handling of completion callback state logic (must be
+  BUSY when receiving a completion callback).
+
+- Fixed planning for aggwraps to avoid including "*" as one of the
+  tracked names.  Also fixed the choice of group-by fields to be
+  determined from the incoming event, as opposed to from the outgoing
+  tuple, which was the previous buggy version.
+
+- Now Aggwrap is explicitly handling aggregates that have a don't care
+  aggregate expression.
+
+
+- In Chord, now preventing predecessor stabilization from installing a
+  self-referential predecessor.
+
+- In Chord, now initializing the PINGPERIOD.
+
+
+- More logging migration in elements, planner, and event loop.
+
+
+- Added modifiers for watch facts.  Now there exists the old watch fact,
+  for backward compatibility, and the new watchmod fact with
+  modifiers. Explanations for the modifiers can be found in the
+  "Watches" section of the overlog_primer.
+
+- Added more (optional) print elements right after the final projection
+  for a rule head. Those are controlled by the 'h' watch modifier.
+
+
+- Fixed bug with OperNull class inheritance, via which equality was
+  thought unsupported.
+
+
+- Moved unsupported operator exception handling in the Pel VM's
+  execution method, as opposed to individual Pel operators.
+
+
+- overlog and runOverLog now exit when a parse error is found.
+
+
+- Fixed tuple field access methods to check bounds (by using .at() as
+  opposed to []).
+
+
+- Removed v1 planner from the repository.
+
+
+- Fixed static initializers for CommonTable, Reporting, and aggregates
+  to use the construct at first use pattern, and also to allow
+  dynamically loaded aggregate objects.
+
+
+
+
+
+
 Release 0.7.7
 
 Modification of chord.olg to deal with connectivity management better

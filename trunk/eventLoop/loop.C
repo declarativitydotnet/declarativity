@@ -24,6 +24,22 @@
 callbackQueueT callbacks;
 long callbackID = 0;
 
+
+std::string
+timeCBHandle::toString()
+{
+  ostringstream o;
+  o << "<timeCB ["
+    << ID
+    << "]"
+    << owner->name()
+    << "@"
+    << time
+    << ">";
+  return o.str();
+}
+
+
 timeCBHandle*
 delayCB(double secondDelay, b_cbv cb, Element* owner)
 {
@@ -69,7 +85,13 @@ void
 timeCBCatchup(boost::posix_time::time_duration& waitDuration)
 {
   boost::posix_time::ptime now;
-  getTime(now);
+  try {
+    getTime(now);
+  } catch (std::exception e) {
+    LOOP_ERROR("timeCBCatchup exception getting current time A: '"
+               << e.what()
+               << "'");
+  }
 
 
   ////////////////////////////////////////////////////////////
@@ -88,7 +110,14 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
     if (theCallback->active &&
         (theCallback->owner == NULL || 
          theCallback->owner->state() == Element::ACTIVE)) {
-      (theCallback->callback)();
+      try {
+        LOOP_WORDY("Invoking timeCBCatchup callback on "
+                   << theCallback->toString());
+        (theCallback->callback)();
+      } catch (std::exception e) {
+        LOOP_ERROR("timeCBCatchup callback invocation exception on "
+                   << theCallback->toString());
+      }
     }
     
     // And erase it
@@ -96,7 +125,13 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
 
     // Update the time in case the previous callback took too long.
     // Due to Eric Yu-En Lu
-    getTime(now);
+    try {
+      getTime(now);
+    } catch (std::exception e) {
+      LOOP_ERROR("timeCBCatchup exception getting current time B: '"
+                 << e.what()
+                 << "'");
+    }
   }
 
   /** Time to clean house: remove all inactive callbacks */
@@ -113,7 +148,13 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
   // scheduled event
   
   // Update current time
-  getTime(now);
+  try {
+    getTime(now);
+  } catch (std::exception e) {
+    LOOP_ERROR("timeCBCatchup exception getting current time C: '"
+               << e.what()
+               << "'");
+  }
 
   // Get first waiting time
   if (callbacks.empty()) {
@@ -300,14 +341,14 @@ fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
   td_ts.tv_sec = waitDuration.total_seconds();
   // ensure we compute nanosecs (1/(10^9) sec) even if boost is compiled to lower 
   // precision 
-  td_ts.tv_nsec= waitDuration.fractional_seconds() * PTIME_SECS_FACTOR;
+  td_ts.tv_nsec = waitDuration.fractional_seconds() * PTIME_SECS_FACTOR;
   assert(td_ts.tv_nsec >= 0);
 
   int result = pselect(nextFD, &readResultBits, &writeResultBits,
                        NULL, &td_ts, NULL);
   if (result == -1) {
     // Ooops, error
-    TELL_ERROR << "pselect failed";
+    LOOP_ERROR("pselect failed");
     exit(-1);
   } else if (result == 0) {
     // Nothing happened
@@ -334,7 +375,7 @@ fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
             (*iter)->owner->state() == Element::ACTIVE) {
           ((*iter)->callback)();
         } else {
-          TELL_INFO << "NOT RUNNING CALLBACK: element not active\n";
+          LOOP_INFO("NOT RUNNING CALLBACK: element not active");
         }
       }
     }
@@ -357,7 +398,7 @@ fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
             (*iter)->owner->state() == Element::ACTIVE) {
           ((*iter)->callback)();
         } else {
-          TELL_INFO << "NOT RUNNING CALLBACK: element not active\n";
+          LOOP_INFO("NOT RUNNING CALLBACK: element not active");
         }
       }
     }
@@ -389,14 +430,22 @@ eventLoop()
   // selwait in libasync
   boost::posix_time::time_duration waitDuration;
 
-  try {
-    while (1) {
+  while (1) {
+    try {
       timeCBCatchup(waitDuration);
-      fileDescriptorCatchup(waitDuration);
+    } catch (std::exception e) {
+      LOOP_ERROR("timeCBCatchup exception in loop: '"
+                 << e.what()
+                 << "'");
     }
-  }
-  catch (std::exception e) {
-    TELL_WARN << "EXCEPTION: " << e.what() << std::endl;
+    
+    try {
+      fileDescriptorCatchup(waitDuration);
+    } catch (std::exception e) {
+      LOOP_ERROR("fileDescriptorCatchup exception in loop: '"
+                 << e.what()
+                 << "'");
+    }
   }
 }
 

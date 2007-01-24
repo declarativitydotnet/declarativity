@@ -30,7 +30,7 @@ void DuplicateConservative::unblock(unsigned output)
   
   // Unset a blocked output
   if (_block_flags[output]) {
-    log(Reporting::INFO, -1, "unblock output");
+    ELEM_INFO("unblock output");
 
     _block_flags[output] = false;
     _block_flag_count--;
@@ -39,7 +39,7 @@ void DuplicateConservative::unblock(unsigned output)
 
   // If I have no more blocked outputs, unblock my pusher
   if (_block_flag_count == 0) {
-   log(Reporting::INFO, -1, "unblock: propagating aggregate unblock output");
+   ELEM_INFO("unblock: propagating aggregate unblock output");
      _push_cb();
     _push_cb = 0;
   }
@@ -54,7 +54,7 @@ int DuplicateConservative::push(int port, TuplePtr p, b_cbv cb)
   if (_block_flag_count > 0) {
     // I'm still blocked
     assert(_push_cb);
-    log(Reporting::WARN, -1, "push: Overrun");
+    ELEM_WARN("push: Overrun");
     return 0;
   }
 
@@ -82,7 +82,7 @@ int DuplicateConservative::push(int port, TuplePtr p, b_cbv cb)
   // If I just blocked any of my outputs, push back my input
   if (_block_flag_count > 0) {
     _push_cb = cb;
-    log(Reporting::WARN, -1, "push: Blocking input");
+    ELEM_INFO("push: Blocking input");
     return 0;
   } else {
     return 1;

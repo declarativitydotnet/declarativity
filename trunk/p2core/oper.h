@@ -75,7 +75,6 @@ namespace opr {
   public:
     virtual ~Oper() {};
 
-
     /**
      * Operator Type Table
      * This is an NxN matrix of operator functions. Most operators
@@ -96,6 +95,8 @@ namespace opr {
     public:
       OperException(string d) : desc_(d) {};
   
+      string description() {return desc_;};
+
       operator string() { return desc_; };
   
       private:
@@ -227,13 +228,13 @@ namespace opr {
   
   /**
    * Basic Operator Function Template for comparison based operators.
-   * Most of the concrete P2 types define a compareTo method. The
+   * All concrete P2 types define a compareTo method. The
    * OperCompare template will override the comparison operators (==, !=, etc.)
    * of Oper by implementing the respective operator using the compareTo logic.
    */
   template <class T> class OperCompare : public Oper { 
   public: 
-    virtual bool _eq (const ValuePtr& v1, const ValuePtr& v2) const {
+    virtual bool _eq(const ValuePtr& v1, const ValuePtr& v2) const {
       ValuePtr c1 = T::mk(T::cast(v1));
       ValuePtr c2 = T::mk(T::cast(v2));
       return c2->compareTo(c1) == 0;

@@ -33,25 +33,38 @@ class Val_IP_ADDR : public Value {
   
   // Marshalling and unmarshallng
   void xdr_marshal_subtype( XDR *x );
-  static ValuePtr xdr_unmarshal( XDR *x );
+
+
+  static ValuePtr
+  xdr_unmarshal( XDR *x );
   
   // Constructor
   // takes in a string of format "xx.xx.xx.xx:port"
   Val_IP_ADDR(string s) : _s(s){};
   virtual ~Val_IP_ADDR(){};
   
+
+
   // Factory
-  static ValuePtr mk(string s){ ValuePtr p(new Val_IP_ADDR(s)); return p;};
+  static ValuePtr
+  mk(string s){ ValuePtr p(new Val_IP_ADDR(s)); return p;};
   
   // Strict comparison
   int compareTo(ValuePtr) const;
   
-  static const opr::Oper* oper_;
+
+
+  static const opr::Oper*
+  oper_;
   
 
   // Casting
-  static string cast(ValuePtr v);
-  const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
+  static string
+  cast(ValuePtr v);
+
+
+  const ValuePtr
+  toMe(ValuePtr other) const { return mk(cast(other)); }
 
 #ifndef SWIG
   FdbufPtr getAddress();

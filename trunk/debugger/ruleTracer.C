@@ -61,8 +61,9 @@ int RuleTracer::push(int port, TuplePtr p, b_cbv cb)
 
   TuplePtr t_tupleTable = createTupleTableTuple(p);
   
-  if(t_tupleTable)
+  if (t_tupleTable) {
     insertInTupleTable(t_tupleTable);
+  }
 
   //TELL_INFO << " INSERTED " << t_tupleTable->toString() << "\n";
 #ifdef SKIP
@@ -73,18 +74,22 @@ int RuleTracer::push(int port, TuplePtr p, b_cbv cb)
 
 #endif
 
-  log(Reporting::INFO, -1, name() + " Pushing tuple " + p->toString() + "\n");
+  ELEM_INFO("Pushing tuple " << p->toString());
 
   if(_startPort == _endPort){
-    log(Reporting::INFO, -1, " For element " + name() + ", start and end ports are same\n");
+    ELEM_INFO("For element " 
+              << name()
+              << ", start and end ports are same");
   }
 
-  if(port == _startPort && _startPort < _endPort)
+  if (port == _startPort &&
+      _startPort < _endPort) {
     startRule(p, port);
-  else if(port == _endPort)
+  } else if(port == _endPort) {
     endRule(p, port);
-  else
+  } else {
     appendRule(p, port);
+  }
   
   return 1;
 }
@@ -148,12 +153,12 @@ void RuleTracer::startRule(TuplePtr t, int port)
   e->tupleIn = t->ID();
   getTime(e->timeIn);
   e->finished = false;
-  //TELL_INFO << e->toString();
   
   return;
 }
 
-void RuleTracer::endRule(TuplePtr t, int port)
+void
+RuleTracer::endRule(TuplePtr t, int port)
 {
   int index = findRecordIndex(port);
   ExecRecord * e = _records[index];
@@ -161,6 +166,7 @@ void RuleTracer::endRule(TuplePtr t, int port)
   e->tupleOut = t->ID();
   getTime(e->timeOut);
   e->finished = true;
+
   // destination node for this tuple is the 2nd field
   e->remoteNode = ((*t)[1])->toString();
 
@@ -176,26 +182,29 @@ void RuleTracer::endRule(TuplePtr t, int port)
     insertInRuleTable(vv->at(i));
   }
 
-  
- 
-
   // create the exec tuple and send it to the insert element
   return;
 }
 
-void RuleTracer::appendRule(TuplePtr t, int port)
+
+void
+RuleTracer::appendRule(TuplePtr t, int port)
 {
   int index = findRecordIndex(port);
   ExecRecord * e = _records[index];
   
-  log(Reporting::INFO, -1, "AppendRule " + t->toString() + " Rule " + _ruleName + "\n");
+  ELEM_INFO("AppendRule "
+            <<  t->toString()
+            << " Rule "
+            << _ruleName);
   TuplePtr t2 = Val_Tuple::cast((*t)[1]);
   setLocalNode(t2);
 
   TuplePtr t_tupleTable = createTupleTableTuple(t2);
 
-  if(t_tupleTable)
+  if(t_tupleTable) {
     insertInTupleTable(t_tupleTable);
+  }
 
   e->flushTillIndex(port);
 
@@ -264,7 +273,7 @@ RuleTracer::createTupleTableTuple(TuplePtr t)
 
   // This assumes that the tuple table has a primary key on field 2.
   (*TUPLETABLETUPLE)[2] = Val_UInt32::mk(t->ID());
-  Table2::Iterator it = _tupleTable->lookup(Table2::KEY2, TUPLETABLETUPLE);
+  Table2::Iterator it = _tupleTable->lookup(Table2::theKey(CommonTable::KEY2), TUPLETABLETUPLE);
   int count = 0;
   while(!it->done()){
     it->next();

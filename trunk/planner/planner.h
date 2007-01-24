@@ -63,7 +63,7 @@
 #include "printWatch.h"
 #include "aggregate.h"
 #include "duplicateConservative.h"
-#include "aggwrap.h"
+#include "aggwrap2.h"
 #include "tupleseq.h"
 #include "loop.h"
 #include "ruleTracer.h"
@@ -98,5 +98,59 @@ private:
   NetPlanner* _netPlanner;
   TableStore* _tableStore;
 };
+
+
+#define PLANNER_LOG(_reportingLevel,_pc,_rest) "Planner, "       \
+  << (_pc->_ruleStrand->getRuleID())                             \
+    << ":"                                                       \
+       << (_pc->_ruleStrand->getStrandID())                      \
+    << ", "                                                      \
+       << _reportingLevel                                        \
+          << ", "                                                \
+             << errno                                            \
+                << ", "                                          \
+                   << _rest
+
+#define PLANNER_LOG_NOPC(_reportingLevel,_pc,_rest) "Planner, "  \
+  << "-:-, "                                                        \
+     << _reportingLevel                                          \
+        << ", "                                                  \
+           << errno                                              \
+              << ", "                                            \
+                 << _rest
+
+#define PLANNER_ERROR(_pc,_rest) TELL_ERROR       \
+  << PLANNER_LOG(Reporting::ERROR,_pc,_rest)      \
+    << "\n"
+
+#define PLANNER_WORDY(_pc,_rest) TELL_WORDY       \
+  << PLANNER_LOG(Reporting::WORDY,_pc,_rest)      \
+    << "\n"
+
+#define PLANNER_INFO(_pc,_rest) TELL_INFO       \
+  << PLANNER_LOG(Reporting::INFO,_pc,_rest)      \
+    << "\n"
+
+#define PLANNER_WARN(_pc,_rest) TELL_WARN       \
+  << PLANNER_LOG(Reporting::WARN,_pc,_rest)      \
+    << "\n"
+
+
+#define PLANNER_ERROR_NOPC(_rest) TELL_ERROR       \
+  << PLANNER_LOG_NOPC(Reporting::ERROR,_pc,_rest)  \
+    << "\n"
+
+#define PLANNER_WORDY_NOPC(_rest) TELL_WORDY       \
+  << PLANNER_LOG_NOPC(Reporting::WORDY,_pc,_rest)  \
+    << "\n"
+
+#define PLANNER_INFO_NOPC(_rest) TELL_INFO       \
+  << PLANNER_LOG_NOPC(Reporting::INFO,_pc,_rest) \
+    << "\n"
+
+#define PLANNER_WARN_NOPC(_rest) TELL_WARN       \
+  << PLANNER_LOG_NOPC(Reporting::WARN,_pc,_rest) \
+    << "\n"
+
 
 #endif

@@ -292,12 +292,20 @@ Pel_VM::Error Pel_VM::execute_instruction( u_int32_t inst, TuplePtr data)
   } else if (_st.size() < (uint) jump_table[op].arity) {
     error = PE_STACK_UNDERFLOW;
   } else {
-    // This is a somewhat esoteric bit of C++.  Believe it or not,
-    // jump_table[op].fn is a pointer to a member function.
-    // Consequently, "this->*" dereferences it with respect to the
-    // "this" (i.e., the VM we're in), meaning that we can invoke it
-    // as a member. 
-    (this->*(jump_table[op].fn))(inst);
+    try {
+      // This is a somewhat esoteric bit of C++.  Believe it or not,
+      // jump_table[op].fn is a pointer to a member function.
+      // Consequently, "this->*" dereferences it with respect to the
+      // "this" (i.e., the VM we're in), meaning that we can invoke it
+      // as a member. 
+      (this->*(jump_table[op].fn))(inst);
+    } catch (opr::Oper::OperException oe) {
+      TELL_ERROR << "Pel_VM caught an operator exception: '"
+                 << oe.description()
+                 << "\n";
+      error = PE_OPER_UNSUP;
+      return error;
+    }
   }
   return error;
 }
@@ -782,57 +790,33 @@ DEF_OP(BIT_NOT) {
 // arithmetic operations
 //
 DEF_OP(NEG) {
-  try {
-    ValuePtr neg = Val_Int64::mk(-1);
-    stackPush(pop() * neg);
-  } catch (opr::Oper::OperException e) {
-    error = PE_OPER_UNSUP;
-  }
+  ValuePtr neg = Val_Int64::mk(-1);
+  stackPush(pop() * neg);
 }
 DEF_OP(PLUS) {
   ValuePtr v2 = pop();
   ValuePtr v1 = pop();
-  try {
-    ValuePtr r = v1 + v2;
-    stackPush(r);
-  } catch (opr::Oper::OperException e) {
-    error = PE_OPER_UNSUP;
-  }
+  ValuePtr r = v1 + v2;
+  stackPush(r);
 }
 DEF_OP(MINUS) {
   // Be careful of undefined evaluation order in C++!
   ValuePtr v1 = pop();
   ValuePtr v2 = pop();
-  try {
-    stackPush(v2 - v1);
-  } catch (opr::Oper::OperException e) {
-    error = PE_OPER_UNSUP;
-  }
+  stackPush(v2 - v1);
 }
 DEF_OP(MINUSMINUS) {
   ValuePtr v1 = pop();
-  try {
-    stackPush(--v1);
-  } catch (opr::Oper::OperException e) {
-    error = PE_OPER_UNSUP;
-  }
+  stackPush(--v1);
 }
 DEF_OP(PLUSPLUS) {
   ValuePtr v1 = pop();
-  try {
-    stackPush(++v1);
-  } catch (opr::Oper::OperException e) {
-    error = PE_OPER_UNSUP;
-  }
+  stackPush(++v1);
 }
 DEF_OP(MUL) {
   ValuePtr v2 = pop();
   ValuePtr v1 = pop();
-  try {
-    stackPush(v1 * v2);
-  } catch (opr::Oper::OperException e) {
-    error = PE_OPER_UNSUP;
-  }
+  stackPush(v1 * v2);
 }
 DEF_OP(DIV) {
   // Be careful of undefined evaluation order in C++!
@@ -841,8 +825,6 @@ DEF_OP(DIV) {
   if (v1 != Val_UInt64::mk(0)) { 
     try {
       stackPush((v2 / v1));
-    } catch (opr::Oper::OperException e) {
-      error = PE_OPER_UNSUP;
     } catch (opr::Oper::DivisionByZeroException e) {
       error = PE_DIVIDE_BY_ZERO;
     }
@@ -855,11 +837,7 @@ DEF_OP(MOD) {
   ValuePtr v1 = pop();
   ValuePtr v2 = pop();
   if (v1 != Val_UInt64::mk(0)) { 
-    try {
-      stackPush((v2 % v1));
-    } catch (opr::Oper::OperException e) {
-      error = PE_OPER_UNSUP;
-    }
+    stackPush((v2 % v1));
   } else if (error == PE_SUCCESS) {
     error = PE_DIVIDE_BY_ZERO;
   }

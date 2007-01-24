@@ -154,10 +154,15 @@ int Udp2::Tx::initialize()
 // The main object itself
 //
 Udp2::Udp2(string name,
-         u_int16_t port, u_int32_t addr) 
+           u_int16_t port,
+           u_int32_t addr) 
   : Element(name, 1, 1),
     rx(new Udp2::Rx(name, *this)),
     tx(new Udp2::Tx(name, *this))
 {
   sd = networkSocket(SOCK_DGRAM, port, addr);
+  if (sd < 0) {
+    // Couldn't allocate network socket
+    throw NetworkException();
+  }
 }

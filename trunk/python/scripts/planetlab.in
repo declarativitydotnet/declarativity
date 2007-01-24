@@ -11,21 +11,21 @@ def print_usage():
                     -m master_addr -l logfile -p master_port -n <slice_name> <port>"""
 
 def parse_cmdline(argv):
-    shortopts = "t:s:o:n:m:p:l:"
-    flags = {"pingPort" : 0, "overlog" : None, "slice" : None, "master_addr" : None, "master_port" : None, "logFile" : "planetlab.log"}
-    opts, args = getopt.getopt(argv[1:], shortopts)
-    for o, v in opts:
-        if   o == "-o": flags["overlog"]     = v
-        elif o == "-n": flags["slice"]       = v
-        elif o == "-m": flags["master_addr"] = v
-        elif o == "-p": flags["master_port"] = int(v)
-        elif o == "-t": flags["pingPort"]    = int(v)
-	elif o == "-l": flags["logFile"] = str(v)
-        elif o == "-s": libp2python.srand(int(v))
-        else:
-            print_usage()
-            exit(3)
-    return flags, args
+  shortopts = "t:s:o:n:m:p:l:"
+  flags = {"pingPort" : 0, "overlog" : None, "slice" : None, "master_addr" : None, "master_port" : None, "logFile" : "planetlab.log"}
+  opts, args = getopt.getopt(argv[1:], shortopts)
+  for o, v in opts:
+    if   o == "-o": flags["overlog"]     = v
+    elif o == "-n": flags["slice"]       = v
+    elif o == "-m": flags["master_addr"] = v
+    elif o == "-p": flags["master_port"] = int(v)
+    elif o == "-t": flags["pingPort"]    = int(v)
+    elif o == "-l": flags["logFile"] = str(v)
+    elif o == "-s": libp2python.srand(int(v))
+    else:
+      print_usage()
+      exit(3)
+  return flags, args
 
 def sliceEventHandler(event):
   # Get the list of nodes in the slice

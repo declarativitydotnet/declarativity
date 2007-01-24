@@ -139,19 +139,24 @@ readScript(string fileName,
   args[count++] = NULL;
 
 
-  // Invoke the preprocessor
-  pid_t pid = fork();
-  if (pid == -1) {
-    TELL_ERROR << "Cannot fork a preprocessor\n";
-    exit(1);
-  } else if (pid == 0) {
-    if (execvp("cpp", args) < 0) {
+
+  /** Ignore CPP. This version of the program is only to be run with
+      pre-processed files 
+      
+      // Invoke the preprocessor
+      pid_t pid = fork();
+      if (pid == -1) {
+      TELL_ERROR << "Cannot fork a preprocessor\n";
+      exit(1);
+      } else if (pid == 0) {
+      if (execvp("cpp", args) < 0) {
       TELL_ERROR << "CPP ERROR" << std::endl;
-    }
-    exit(1);
-  } else {
-    wait(NULL);
-  }
+      }
+      exit(1);
+      } else {
+      wait(NULL);
+      }
+  */
 
 
   // Read processed script.

@@ -37,6 +37,11 @@
 class Udp2 : public Element { 
 public:
 
+  /** A network exception for the UDP element */
+  class NetworkException {
+  };
+
+
   // 
   // First, the Rx element: pushes tuples when packets arrive
   //

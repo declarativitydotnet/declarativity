@@ -100,7 +100,8 @@ Parse_Agg::aggName() {
 }
 
 
-Parse_Bool::Parse_Bool(Parse_Bool::Operator o, Parse_Expr *l, Parse_Expr *r, bool id) 
+Parse_Bool::Parse_Bool(Parse_Bool::Operator o, Parse_Expr *l,
+                       Parse_Expr *r, bool id) 
   : oper(o), lhs(l), rhs(r), id_(id) {
   // TODO: if (oper != NOT && rhs == NULL) ERROR!
 }
@@ -340,7 +341,8 @@ int Parse_Functor::find(string argname) {
   return (p < args()) ? p : -1;
 }
 
-int Parse_Functor::aggregate() {
+int
+Parse_Functor::aggregate() {
   for (int i = 0; i < args(); i++)
     if (dynamic_cast<Parse_Agg*>(arg(i)) != NULL) return i;
   return -1;

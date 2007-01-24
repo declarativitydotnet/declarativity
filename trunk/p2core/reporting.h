@@ -43,44 +43,45 @@ public:
 
 
   
-  static std::map< std::string, Reporting::Level > levelFromName;
-  static std::map< Reporting::Level, std::string > levelToName;
+private:
+  static std::map< std::string, Reporting::Level > _levelFromName;
 
+  static std::map< Reporting::Level, std::string > _levelToName;
 
-
-  /** The leaky stream buffer. */
-  class LeakyStreambuf : public std::streambuf {
-    /** Override the overflow method to do nothing */
-    int
-    overflow(int c = EOF);
-  };
-
-  
   /** The wordy stream */
-  static std::ostream* wordy;
+  static std::ostream* _wordy;
 
 
   /** The info stream */
-  static std::ostream* info;
+  static std::ostream* _info;
 
 
   /** The warn stream */
-  static std::ostream* warn;
+  static std::ostream* _warn;
 
 
   /** The error stream */
-  static std::ostream* error;
+  static std::ostream* _error;
 
 
   /** The error stream */
-  static std::ostream* output;
+  static std::ostream* _output;
 
 
-  class Initializer {
-  public:
-    Initializer();
-  };
+  /** Convenience function to share level setting functionality with
+      initializers and external clients. Only to be used internally.  */
+  static void
+  innerSetLevel(Level l);
 
+
+public:
+  static std::map< std::string, Reporting::Level >&
+  levelFromName();
+ 
+
+  static std::map< Reporting::Level, std::string >&
+  levelToName();
+  
 
   /** Set the logging level. Everything at and above it is
       enabled. Everything below it is disabled. */
@@ -93,6 +94,48 @@ public:
   level();
 
 
+  /** The wordy stream */
+  static std::ostream* wordy();
+
+
+  /** The info stream */
+  static std::ostream* info();
+
+
+  /** The warn stream */
+  static std::ostream* warn();
+
+
+  /** The error stream */
+  static std::ostream* error();
+
+
+  /** The error stream */
+  static std::ostream* output();
+
+
+
+
+
+  /** The leaky stream buffer. */
+  class LeakyStreambuf : public std::streambuf {
+    /** Override the overflow method to do nothing */
+    int
+    overflow(int c = EOF);
+  };
+
+  
+  class Initializer {
+  public:
+    Initializer();
+  };
+
+
+  /** Fetch the initializer to construct it */
+  static Initializer*
+  theInitializer();
+
+
   
 private:
   /** Can't create objects */
@@ -100,15 +143,11 @@ private:
 
 
   /** The leaky stream buffer */
-  static LeakyStreambuf leakyStreambuf;
+  static LeakyStreambuf _leakyStreambuf;
 
 
   /** The null stream */
-  static std::ostream nullOStream;
-
-
-  /** The class initializer */
-  static Initializer _initializer;
+  static std::ostream* _nullOStream;
 
 
   /** The Logging Level */
@@ -122,17 +161,17 @@ private:
 // MACROS
 ////////////////////////////////////////////////////////////
 
-#define TELL_WORDY (*Reporting::wordy) << "REPORTING: "
-#define TELL_INFO (*Reporting::info) << "REPORTING: "
-#define TELL_WARN (*Reporting::warn) << "REPORTING: "
-#define TELL_ERROR (*Reporting::error) << "REPORTING: "
-#define TELL_OUTPUT (*Reporting::output) << "REPORTING: "
+#define TELL_WORDY (*Reporting::wordy()) << "REPORTING: "
+#define TELL_INFO (*Reporting::info()) << "REPORTING: "
+#define TELL_WARN (*Reporting::warn()) << "REPORTING: "
+#define TELL_ERROR (*Reporting::error()) << "REPORTING: "
+#define TELL_OUTPUT (*Reporting::output()) << "REPORTING: "
 
-#define TRACE_WORDY ((*Reporting::wordy) <<  __PRETTY_FUNCTION__)
-#define TRACE_INFO (*Reporting::info <<  __PRETTY_FUNCTION__)
-#define TRACE_WARN (*Reporting::warn <<  __PRETTY_FUNCTION__)
-#define TRACE_ERROR (*Reporting::error <<  __PRETTY_FUNCTION__)
-#define TRACE_OUTPUT (*Reporting::output <<  __PRETTY_FUNCTION__)
+#define TRACE_WORDY ((*Reporting::wordy()) <<  __PRETTY_FUNCTION__)
+#define TRACE_INFO (*Reporting::info() <<  __PRETTY_FUNCTION__)
+#define TRACE_WARN (*Reporting::warn() <<  __PRETTY_FUNCTION__)
+#define TRACE_ERROR (*Reporting::error() <<  __PRETTY_FUNCTION__)
+#define TRACE_OUTPUT (*Reporting::output() <<  __PRETTY_FUNCTION__)
 
 
 

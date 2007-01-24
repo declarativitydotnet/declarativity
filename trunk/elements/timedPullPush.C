@@ -35,7 +35,8 @@ TimedPullPush::TimedPullPush(string name,
   assert(_tuples >= 0);
 }
 
-int TimedPullPush::initialize()
+int
+TimedPullPush::initialize()
 {
   log(Reporting::INFO, 0, "initialize");
   // Schedule my timer
@@ -44,7 +45,8 @@ int TimedPullPush::initialize()
 }
 
 
-void TimedPullPush::runTimer()
+void
+TimedPullPush::runTimer()
 {
   // remove the timer id
   _timeCallback = 0;
@@ -75,7 +77,9 @@ void TimedPullPush::runTimer()
   }
 }
 
-void TimedPullPush::pullWakeup()
+
+void
+TimedPullPush::pullWakeup()
 {
   log(Reporting::INFO, 0, "pullWakeup");
 
@@ -83,13 +87,16 @@ void TimedPullPush::pullWakeup()
   reschedule();
 }
 
-void TimedPullPush::pushWakeup()
+
+void
+TimedPullPush::pushWakeup()
 {
   log(Reporting::INFO, 0, "pushWakeup");
 
   // Okey dokey.  Reschedule me into the future
   reschedule();
 }
+
 
 void
 TimedPullPush::reschedule()

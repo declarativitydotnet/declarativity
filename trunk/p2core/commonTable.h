@@ -82,20 +82,48 @@ public:
   typedef std::vector< unsigned > Key;
 
 
+  /** A key name is an identifier for system-provided key objects */
+  typedef enum {
+    KEYID,
+    KEY0,
+    KEY1,
+    KEY2,
+    KEY3,
+    KEY4,
+    KEY01,
+    KEY12,
+    KEY23,
+    KEY13,
+    KEY012,
+    KEY123,
+    KEY01234
+  } KeyName;
+
+
   /** Some default keys */
-  static Key KEYID;
-  static Key KEY0;
-  static Key KEY1;
-  static Key KEY2;
-  static Key KEY3;
-  static Key KEY4;
-  static Key KEY01;
-  static Key KEY12;
-  static Key KEY23;
-  static Key KEY13;
-  static Key KEY012;
-  static Key KEY123;
-  static Key KEY01234;
+  static Key theKEYID;
+  static Key theKEY0;
+  static Key theKEY1;
+  static Key theKEY2;
+  static Key theKEY3;
+  static Key theKEY4;
+  static Key theKEY01;
+  static Key theKEY12;
+  static Key theKEY23;
+  static Key theKEY13;
+  static Key theKEY012;
+  static Key theKEY123;
+  static Key theKEY01234;
+
+
+  /** Return one of the pre-initialized Keys, given its key name */
+  static Key&
+  theKey(KeyName keyID);
+
+
+  /** An exception thrown when an unknown key is requested */
+  class UnknownKeyNameException {
+  };
 
 
 
@@ -173,7 +201,7 @@ protected:
   /** An index of indices secondary indices is a map from key
       designations to secondary indices. */
   typedef std::map< Key, SecondaryIndex*, KeyComparator >
-  SecondaryIndexIndex;
+    SecondaryIndexIndex;
   
 
 
@@ -619,10 +647,34 @@ protected:
   public:
     Initializer();
   };
-  static Initializer
-  _INITIALIZER;
 
   
+  /** Fetch the static initializer to ensure the class initializer has
+      run */
+  static Initializer*
+  theInitializer();
+
+
+  /** The table registry type */
+  typedef std::map< string, CommonTable*, std::less< string > > TableRegistry;
+
+  
+  /** Fetch the table registry */
+  static TableRegistry*
+  theRegistry();
+  
+
+
+
+public:
+
+  /** Fetch a table pointer from the registry */
+  static CommonTable*
+  lookupTable(string tableName);
+
+
+
+protected:  
 
 
   ////////////////////////////////////////////////////////////

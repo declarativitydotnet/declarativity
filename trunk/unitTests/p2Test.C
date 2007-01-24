@@ -38,7 +38,7 @@ test_suite* init_unit_test_suite(int argc, char** argv)
         // My minimum reporting level is optarg
         std::string levelName(optarg);
         Reporting::Level level =
-          Reporting::levelFromName[levelName];
+          Reporting::levelFromName()[levelName];
         Reporting::setLevel(level);
       }
       break;

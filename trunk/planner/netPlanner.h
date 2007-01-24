@@ -58,7 +58,7 @@
 #include "printWatch.h"
 #include "aggregate.h"
 #include "duplicateConservative.h"
-#include "aggwrap.h"
+#include "aggwrap2.h"
 #include "tupleseq.h"
 
 #include "ruleStrand.h"

@@ -25,7 +25,7 @@ string pelBool(PlanContext* pc, Parse_Bool *expr);
 
 void error(string msg)
 {
-  TELL_ERROR << "PLANNER ERROR: " << msg << "\n";
+  PLANNER_ERROR_NOPC("PLANNER ERROR: " << msg);
   exit(-1);
 }
 
@@ -33,13 +33,14 @@ void error(string msg)
 void error(PlanContext* pc, string msg)
 {  
   ECA_Rule* curRule = pc->_ruleStrand->getRule();
-  TELL_ERROR << "PLANNER ERROR: " << msg << " for rule " 
-             << curRule->toString() << ". Planner exits.\n";
+  PLANNER_ERROR_NOPC("PLANNER ERROR: " << msg << " for rule " 
+                     << curRule->toString() << ". Planner exits.");
   exit(-1);
 }
 
 // convert expression to Pel
-void expr2Pel(PlanContext* pc, ostringstream &pel, Parse_Expr *e) 
+void
+expr2Pel(PlanContext* pc, ostringstream &pel, Parse_Expr *e) 
 {
   PlanContext::FieldNamesTracker* names = pc->_namesTracker;
   Parse_Var*  var;
@@ -158,14 +159,14 @@ string pelRange(PlanContext* pc, Parse_Bool *expr)
   int          pos;
 
   if (!range || !range_var) {
-    TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+    PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
     exit(-1);
     return "ERROR";
   }
 
   pos = names->fieldPosition(range_var->toString());
   if (pos < 0) {
-    TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+    PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
     exit(-1);
     return "ERROR";
   }
@@ -208,7 +209,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   // Strings
   else if (expr->name() == "f_match") {
     if (expr->args() != 2) {
-      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
       exit(-1);
       return "ERROR.";
     }	
@@ -233,27 +234,30 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   }
   else if (expr->name() == "f_member") {
       if (expr->args() != 2) {
-	TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+	PLANNER_ERROR_NOPC("Error in pel generation " <<
+                           expr->toString());
 	exit(-1);
 	return "ERROR.";
       }
-	  expr2Pel(pc, pel, expr->arg(0));
-	  expr2Pel(pc, pel, expr->arg(1));
+      expr2Pel(pc, pel, expr->arg(0));
+      expr2Pel(pc, pel, expr->arg(1));
       pel << "member "; 
   }
   else if (expr->name() == "f_concat") {
       if (expr->args() != 2) {
-	TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+	PLANNER_ERROR_NOPC("Error in pel generation " <<
+                           expr->toString());
 	exit(-1);
 	return "ERROR.";
       }
-	  expr2Pel(pc, pel, expr->arg(1));
-	  expr2Pel(pc, pel, expr->arg(0));
+      expr2Pel(pc, pel, expr->arg(1));
+      expr2Pel(pc, pel, expr->arg(0));
       pel << "concat "; 
   }
   else if (expr->name() == "f_intersect") {
       if (expr->args() != 2) {
-	TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+	PLANNER_ERROR_NOPC("Error in pel generation " <<
+                           expr->toString());
 	exit(-1);
 	return "ERROR.";
       }
@@ -263,7 +267,8 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   }
   else if (expr->name() == "f_msintersect") {
       if (expr->args() != 2) {
-	TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+	PLANNER_ERROR_NOPC("Error in pel generation " <<
+                           expr->toString());
 	exit(-1);
 	return "ERROR.";
       }
@@ -289,7 +294,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   } 
   else if (expr->name() == "f_inList") {
     if (expr->args() != 2) {
-      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
       exit(-1);
       return "ERROR.";
     }
@@ -299,7 +304,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   }
   else if (expr->name() == "f_removeLast") {
     if (expr->args() != 1) {
-      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
       exit(-1);
       return "ERROR.";
     }
@@ -309,7 +314,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   
   else if (expr->name() == "f_last") {
     if (expr->args() != 1) {
-      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
       exit(-1);
       return "ERROR.";
     }
@@ -319,7 +324,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
 
   else if (expr->name() == "f_size") {
     if (expr->args() != 1) {
-      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
       exit(-1);
       return "ERROR.";
     }
@@ -329,8 +334,8 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   
   // functions on vectors
   else if (expr->name() == "f_getVectorOffset") {
-    if (expr->args() != 2) {
-      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+    if (expr->args() != 2) { 
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
       exit(-1);
       return "ERROR.";
     }
@@ -341,7 +346,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
 
   else if (expr->name() == "f_setVectorOffset") {
     if (expr->args() != 3) {
-      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
       exit(-1);
       return "ERROR.";
     }
@@ -352,20 +357,20 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   }
 
   else if (expr->name() == "f_vectorCompare") {
-	if (expr->args() != 2) {
-      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+    if (expr->args() != 2) {
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
       exit(-1);
       return "ERROR.";
     }
-	expr2Pel(pc, pel, expr->arg(0));
-	expr2Pel(pc, pel, expr->arg(1));
-	pel << "vectorcompare ";
+    expr2Pel(pc, pel, expr->arg(0));
+    expr2Pel(pc, pel, expr->arg(1));
+    pel << "vectorcompare ";
   }
 
   // functions on matrices
   else if (expr->name() == "f_getMatrixOffset") {
     if (expr->args() != 3) {
-      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
       exit(-1);
       return "ERROR.";
     }
@@ -377,7 +382,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
 
   else if (expr->name() == "f_setMatrixOffset") {
     if (expr->args() != 4) {
-      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
       exit(-1);
       return "ERROR.";
     }
@@ -389,18 +394,18 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   }
 
   else if (expr->name() == "f_matrixCompare") {
-	if (expr->args() != 2) {
-      TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+    if (expr->args() != 2) {
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
       exit(-1);
       return "ERROR.";
     }
-	expr2Pel(pc, pel, expr->arg(0));
-	expr2Pel(pc, pel, expr->arg(1));
-	pel << "matrixcompare ";
+    expr2Pel(pc, pel, expr->arg(0));
+    expr2Pel(pc, pel, expr->arg(1));
+    pel << "matrixcompare ";
   }
 
   else {
-    TELL_ERROR << "Error in pel generation " << expr->toString() << "\n";
+    PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
     exit(-1);
     return "ERROR: unknown function name.";
   }

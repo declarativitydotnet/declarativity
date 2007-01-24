@@ -48,7 +48,7 @@ public:
 
   Parse_Expr(ValuePtr val) : v(val), position_(-1) {};
 
-  Parse_Expr(Parse_Expr *val) : v(val->v), position_(-1) {};
+  Parse_Expr(Parse_Expr* val) : v(val->v), position_(-1) {};
 
   virtual ~Parse_Expr() {};
 
@@ -118,7 +118,7 @@ public:
 
   static Parse_Expr* DONT_CARE;
 
-  Parse_Agg(Parse_Expr *v,
+  Parse_Agg(Parse_Expr* v,
             std::string o,
             ValuePtr p)
     : Parse_Expr(v), oper(o), parameter(p)

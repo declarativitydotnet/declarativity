@@ -58,14 +58,14 @@
 #include "queue.h"
 #include "printTime.h"
 #include "roundRobin.h"
-#include "noNullField.h"
+#include "noNull.h"
 #include "functorSource.h"
 #include "delete.h"
 #include "tupleSource.h"
 #include "printWatch.h"
 #include "aggregate.h"
 #include "duplicateConservative.h"
-#include "aggwrap.h"
+#include "aggwrap2.h"
 #include "tupleseq.h"
 #include "loop.h"
 #include "ruleTracer.h"
@@ -90,50 +90,34 @@ void createSecondaryIndex(PlanContext* pc,
 			  CommonTable::Key key);
 
 
-#define PLANNER_LOG(_reportingLevel,_pc,_rest) "Planner, "       \
-  << _pc->_ruleStrand->getRuleID()                               \
-    << ":"                                                       \
-       << _pc->_ruleStrand->getStrandID()                        \
-    << ", "                                                      \
-       << _reportingLevel                                        \
-          << ", "                                                \
-             << errno                                            \
-                << ", "                                          \
-                   << _rest
-
-#define PLANNER_WORDY(_pc,_rest) TELL_WORDY       \
-  << PLANNER_LOG(Reporting::WORDY,_pc,_rest)      \
-    << "\n"
-
-
 #include "rulePel.C"
 
-
-/** Add a print watch that looks up the functor name before printing its
-    contents */
-void
-addWatch(PlanContext* pc, string b)
-{
-  string output = b + "!" + pc->getRule()->_ruleID + "!" + pc->_nodeID;
-  ElementSpecPtr print = 
-    pc->createElementSpec(ElementPtr(new PrintWatch(output,
-                                                    pc->_tableStore->
-                                                    getWatchTables())));
-  pc->addElementSpec(print);  
-}
 
 /** Add a print element if the functor name is watched.*/
 void
 addPrint(PlanContext* pc,
          string b,
-         string functorName)
+         string functorName,
+         string modifier)
 {
-  std::set< std::string > watchedNames =
-    pc->_tableStore->
-    getWatchTables();
-  if (watchedNames.find(functorName) == watchedNames.end()) {
+  OL_Context::WatchTableType  watchedNames =
+    pc->_tableStore->getWatchTables();
+  OL_Context::WatchTableType::iterator i =
+    watchedNames.find(functorName);
+  if (i == watchedNames.end()) {
     // Didn't find that name. Do nothing
   } else {
+    std::string modifiers = i->second;
+
+    if (modifiers.size() == 0) {
+      // All modifiers are allowed
+    } else if (modifiers.find(modifier, 0) != std::string::npos) {
+      // Found this modifier
+    } else {
+      // Didn't find this modifier
+      return;
+    }
+
     string output = b + "!" + functorName +
       "!" + pc->getRule()->_ruleID + "!" + pc->_nodeID;
     ElementSpecPtr print = 
@@ -142,7 +126,9 @@ addPrint(PlanContext* pc,
   }
 }
 
-void generateInsertEvent(PlanContext* pc)
+
+void
+generateInsertEvent(PlanContext* pc)
 {
   RuleStrand* rs = pc->_ruleStrand;
   ECA_Rule* curRule = pc->getRule();
@@ -152,25 +138,27 @@ void generateInsertEvent(PlanContext* pc)
   string tableName = rs->eventFunctorName();
   CommonTablePtr tablePtr = pc->_tableStore->getTableByName(tableName);
   ElementSpecPtr updateTable =
-    pc->createElementSpec(ElementPtr(new Update("Update|" + curRule->_ruleID 
+    pc->createElementSpec(ElementPtr(new Update("Update!" + curRule->_ruleID 
 						+ "!" + rs->eventFunctorName()
 						+ "!" + pc->_nodeID, tablePtr)));
   pc->addElementSpec(updateTable);
   
   // add a print element
-  addPrint(pc, "InsertEvent", tableName);
+  addPrint(pc, "InsertEvent", tableName, "i");
   
   if (curRule->_probeTerms.size() > 0) {
     // if we are doing a join
     ElementSpecPtr pullPush = 
-      pc->createElementSpec(ElementPtr(new TimedPullPush("InsertEventTimedPullPush|"
+      pc->createElementSpec(ElementPtr(new TimedPullPush("InsertEventTimedPullPush!"
 							 + curRule->_ruleID 
 							 + "!" + pc->_nodeID, 0)));
     pc->addElementSpec(pullPush);
   }
 }
 
-void generateRefreshEvent(PlanContext* pc)
+
+void
+generateRefreshEvent(PlanContext* pc)
 {
   RuleStrand* rs = pc->_ruleStrand;
   ECA_Rule* curRule = pc->getRule();
@@ -180,25 +168,27 @@ void generateRefreshEvent(PlanContext* pc)
   string tableName = rs->eventFunctorName();
   CommonTablePtr tablePtr = pc->_tableStore->getTableByName(tableName);
   ElementSpecPtr refreshTable =
-    pc->createElementSpec(ElementPtr(new Refresh("Refresh|" + curRule->_ruleID 
+    pc->createElementSpec(ElementPtr(new Refresh("Refresh!" + curRule->_ruleID 
 						+ "!" + rs->eventFunctorName()
 						+ "!" + pc->_nodeID, tablePtr)));
   pc->addElementSpec(refreshTable);
   
   // add a debug element
-  addPrint(pc, "RefreshEvent", tableName);
+  addPrint(pc, "RefreshEvent", tableName, "r");
   
   if (curRule->_probeTerms.size() > 0) {
     // if we are doing a join
     ElementSpecPtr pullPush = 
-      pc->createElementSpec(ElementPtr(new TimedPullPush("RefreshEventTimedPullPush|"
+      pc->createElementSpec(ElementPtr(new TimedPullPush("RefreshEventTimedPullPush!"
 							 + curRule->_ruleID 
 							 + "!" + pc->_nodeID, 0)));
     pc->addElementSpec(pullPush);
   }
 }
 
-void generateDeleteEvent(PlanContext* pc)
+
+void
+generateDeleteEvent(PlanContext* pc)
 {
   RuleStrand* rs = pc->_ruleStrand;
   ECA_Rule* curRule = pc->getRule();
@@ -209,7 +199,7 @@ void generateDeleteEvent(PlanContext* pc)
   string tableName = rs->eventFunctorName();
   CommonTablePtr tablePtr = pc->_tableStore->getTableByName(tableName);
   ElementSpecPtr removedTable =
-    pc->createElementSpec(ElementPtr(new Removed("Removed|" 
+    pc->createElementSpec(ElementPtr(new Removed("Removed!" 
 						 + curRule->_ruleID 
 						 + "!" 
 						 + rs->eventFunctorName()
@@ -218,12 +208,12 @@ void generateDeleteEvent(PlanContext* pc)
   pc->addElementSpec(removedTable);
   
   // add a debug element
-  addPrint(pc, "DeleteEvent", tableName);
+  addPrint(pc, "DeleteEvent", tableName, "d");
   
   if (curRule->_probeTerms.size() > 0) {
     // if we are doing a join
     ElementSpecPtr pullPush = 
-      pc->createElementSpec(ElementPtr(new TimedPullPush("RemovedEventTimedPullPush|"
+      pc->createElementSpec(ElementPtr(new TimedPullPush("RemovedEventTimedPullPush!"
 							 + curRule->_ruleID 
 							 + "!" + pc->_nodeID, 
 							 0)));
@@ -231,25 +221,29 @@ void generateDeleteEvent(PlanContext* pc)
   }
 }
 
-void generateReceiveEvent(PlanContext* pc)
+
+void
+generateReceiveEvent(PlanContext* pc)
 {
   ECA_Rule* curRule = pc->getRule();
   pc->_namesTracker = new PlanContext::FieldNamesTracker(curRule->_event->_pf);
 
   PLANNER_WORDY(pc, "Recv event NamesTracker " 
                 << pc->_namesTracker->toString());
-  addPrint(pc, "RecvEvent", curRule->getEventName());
+  addPrint(pc, "RecvEvent", curRule->getEventName(), "c");
   
   if (curRule->_probeTerms.size() == 0) {
     ElementSpecPtr slot = 
-      pc->createElementSpec(ElementPtr(new Slot("RecvEventSlot|" 
+      pc->createElementSpec(ElementPtr(new Slot("RecvEventSlot!" 
                                                 + curRule->_ruleID 
                                                 + "!" + pc->_nodeID)));
     pc->addElementSpec(slot);
   }
 }
 
-void generateAggEvent(PlanContext* pc)
+
+void
+generateAggEvent(PlanContext* pc)
 {
   
   ECA_Rule* curRule = pc->getRule();
@@ -309,12 +303,12 @@ void generateAggEvent(PlanContext* pc)
   PLANNER_WORDY(pc, "Agg NamesTracker " << aggregateNamesTracker->toString());
 
   ElementSpecPtr aggElement =
-    pc->createElementSpec(ElementPtr(new Aggregate("Agg|" + curRule->_ruleID +
+    pc->createElementSpec(ElementPtr(new Aggregate("Agg!" + curRule->_ruleID +
 						   "!" + pc->_nodeID + "!" 
 						   + pa->oper, tableAgg)));
   
   ostringstream pelTransformStr;
-  pelTransformStr << "\"" << "aggResult|" 
+  pelTransformStr << "\"" << "aggResult!" 
 		  << curRule->_ruleID << "\" pop";
   for (uint k = 0;
        k < aggregateNamesTracker->fieldNames.size();
@@ -325,7 +319,7 @@ void generateAggEvent(PlanContext* pc)
 
   // apply PEL to add a table name
   ElementSpecPtr addTableName =
-    pc->createElementSpec(ElementPtr(new PelTransform("Aggregation|"
+    pc->createElementSpec(ElementPtr(new PelTransform("Aggregation!"
 						      + curRule->_ruleID
 						      + "!" + pc->_nodeID,
 						      pelTransformStr.str())));
@@ -336,7 +330,9 @@ void generateAggEvent(PlanContext* pc)
   pc->_namesTracker = aggregateNamesTracker;  
 }
 
-void generatePeriodicEvent(PlanContext* pc)
+
+void
+generatePeriodicEvent(PlanContext* pc)
 {
   ECA_Rule* curRule = pc->getRule();
     
@@ -346,7 +342,7 @@ void generatePeriodicEvent(PlanContext* pc)
   functorTuple->freeze();
 
   ElementSpecPtr source =
-    pc->createElementSpec(ElementPtr(new TupleSource("FunctorSource|" + curRule->_ruleID 
+    pc->createElementSpec(ElementPtr(new TupleSource("FunctorSource!" + curRule->_ruleID 
 						     + "!" + pc->_nodeID,
 						     functorTuple)));
   pc->addElementSpec(source);
@@ -358,7 +354,7 @@ void generatePeriodicEvent(PlanContext* pc)
   }
 
   if (pf->args() < 3) {
-    error(pc, "Mal-form periodic predicate");
+    error(pc, "Malformed periodic predicate");
   }
 
   //pc->_namesTracker->fieldNames.push_back("T"); // time interval
@@ -373,7 +369,7 @@ void generatePeriodicEvent(PlanContext* pc)
    
   // a pel transform that puts in the periodic stuff
   ElementSpecPtr pelRand = 
-    pc->createElementSpec(ElementPtr(new PelTransform("FunctorSourcePel|" +
+    pc->createElementSpec(ElementPtr(new PelTransform("FunctorSourcePel!" +
                                                       curRule->_ruleID +
                                                       "!" + pc->_nodeID,
                                                       "$0 pop $1 pop rand pop")));
@@ -386,7 +382,7 @@ void generatePeriodicEvent(PlanContext* pc)
 
   // The timed pusher
   ElementSpecPtr pushFunctor =
-    pc->createElementSpec(ElementPtr(new TimedPullPush("FunctorPush|" 
+    pc->createElementSpec(ElementPtr(new TimedPullPush("FunctorPush!" 
 						       + curRule->_ruleID +
                                                        "!" + pc->_nodeID,
                                                        atof(period.c_str()),
@@ -401,10 +397,12 @@ void generatePeriodicEvent(PlanContext* pc)
 						  + pc->_nodeID)));      
     pc->addElementSpec(functorSlot);
   }
-  addPrint(pc, "PeriodicEvent", "periodic");
+  addPrint(pc, "PeriodicEvent", "periodic", "p");
 }
 
-void generateEventElement(PlanContext* pc)
+
+void
+generateEventElement(PlanContext* pc)
 {
   RuleStrand* rs = pc->_ruleStrand;
   int aggField = pc->getRule()->_action->_pf->aggregate();
@@ -441,7 +439,9 @@ void generateEventElement(PlanContext* pc)
   }
 }
 
-void generateAddAction(PlanContext* pc)
+
+void
+generateAddAction(PlanContext* pc)
 {
   ECA_Rule* curRule = pc->getRule();
   RuleStrand* rs = pc->_ruleStrand;
@@ -450,19 +450,18 @@ void generateAddAction(PlanContext* pc)
 
   // add a debug element
   ElementSpecPtr insertPullPush = 
-    pc->createElementSpec(ElementPtr(new TimedPullPush("Insert|" 
+    pc->createElementSpec(ElementPtr(new TimedPullPush("Insert!" 
 						       + curRule->_ruleID 
 						       + "!" + pc->_nodeID, 
 						       0)));
   
-  addPrint(pc, "AddAction",
-           rs->actionFunctorName());
+  addPrint(pc, "AddAction", rs->actionFunctorName(), "a");
   
   CommonTablePtr tablePtr 
     = pc->_tableStore->getTableByName(rs->actionFunctorName()); 
   
   ElementSpecPtr insertElement
-    = pc->createElementSpec(ElementPtr(new Insert("Insert|" 
+    = pc->createElementSpec(ElementPtr(new Insert("Insert!" 
 					       + curRule->_ruleID + "!" 
 					       + rs->actionFunctorName() 
 					       + "!" + pc->_nodeID, 
@@ -476,7 +475,9 @@ void generateAddAction(PlanContext* pc)
   pc->addElementSpec(sinkS);
 }
 
-void generateDeleteAction(PlanContext* pc)
+
+void
+generateDeleteAction(PlanContext* pc)
 {
   ECA_Rule* curRule = pc->getRule();
   RuleStrand* rs = pc->_ruleStrand;
@@ -484,11 +485,10 @@ void generateDeleteAction(PlanContext* pc)
   PLANNER_WORDY(pc, "Generate Delete Action for " << rs->actionFunctorName());
 
   // add a debug element
-  addPrint(pc, "DeleteAction",
-           rs->actionFunctorName());
+  addPrint(pc, "DeleteAction", rs->actionFunctorName(), "z");
   
   ElementSpecPtr deletePullPush = 
-    pc->_conf->addElement(ElementPtr(new TimedPullPush("Delete|" 
+    pc->_conf->addElement(ElementPtr(new TimedPullPush("Delete!" 
 						       + curRule->_ruleID 
 						       + "!" + pc->_nodeID, 
 						       0)));
@@ -497,7 +497,7 @@ void generateDeleteAction(PlanContext* pc)
     = pc->_tableStore->getTableByName(rs->actionFunctorName()); 
   
   ElementSpecPtr deleteElement
-    = pc->_conf->addElement(ElementPtr(new Delete("Delete|" 
+    = pc->_conf->addElement(ElementPtr(new Delete("Delete!" 
 						  + curRule->_ruleID + "!" 
 						  + rs->actionFunctorName() 
 						  + "!" + pc->_nodeID, 
@@ -536,7 +536,7 @@ void generateSendAction(PlanContext* pc)
   ostringstream oss;
   oss << "$" << locationIndex << " pop swallow pop";
   ElementSpecPtr sendPelTransform =
-    pc->createElementSpec(ElementPtr(new PelTransform("SendActionAddress|" 
+    pc->createElementSpec(ElementPtr(new PelTransform("SendActionAddress!" 
 						      + curRule->_ruleID 
 						      + "!" + pc->_nodeID,
 						      oss.str())));
@@ -544,7 +544,7 @@ void generateSendAction(PlanContext* pc)
   PLANNER_WORDY(pc, "Generate Send Action for " << rs->actionFunctorName() 
                 << " " + oss.str());
 
-  addPrint(pc, "SendAction", rs->actionFunctorName());  
+  addPrint(pc, "SendAction", rs->actionFunctorName(), "s");  
   pc->addElementSpec(sendPelTransform);   
   //addPrint(pc, "SendActionMsg");
 
@@ -614,7 +614,7 @@ generateProbeElements(PlanContext* pc,
   innerNamesTracker->joinKeys(outerNamesTracker, outerLookupKey, 
 			      innerIndexKey, innerRemainingKey);
 
-  addPrint(pc, "BeforeJoin", probeName);
+  addPrint(pc, "BeforeJoin", probeName, "b");
   
   string innerTableName = innerFunctor->fn->name;
   PLANNER_WORDY(pc, "InnerFunctorName " << innerTableName);
@@ -648,7 +648,7 @@ generateProbeElements(PlanContext* pc,
   ostringstream nonulloss;
   nonulloss << "NoNull:" << pc->getRule()->_ruleID;
   ElementSpecPtr noNull =
-    pc->createElementSpec(ElementPtr(new NoNullField(nonulloss.str(), 1)));
+    pc->createElementSpec(ElementPtr(new NoNull(nonulloss.str())));
   
   // The connector slot for the output of my join
   ElementSpecPtr last_el(new ElementSpec
@@ -656,7 +656,9 @@ generateProbeElements(PlanContext* pc,
 
   // The lookup
   ostringstream lookuposs;
-  lookuposs << "Lookup2:" << pc->getRule()->_ruleID << "!" << pc->_nodeID;
+  lookuposs << "Lookup2:" << pc->getRule()->_ruleID
+            << "!" << innerTableName
+            << "!" << pc->_nodeID;
 
   if (curRule->_aggWrap == false) {
     PLANNER_WORDY(pc, "Lookup " << innerTableName << " no callbacks");
@@ -715,13 +717,16 @@ generateProbeElements(PlanContext* pc,
 
   string pelProjectStr = pelProject.str();
   ostringstream oss1; 
-  oss1 << "joinPel_" << pc->getRule()->_ruleID;
+  oss1 << "joinPel_" << pc->getRule()->_ruleID
+       << "!"
+       << temporaryResultName
+       << "!";
 
   ElementSpecPtr transS =
     pc->createElementSpec(ElementPtr(new PelTransform(oss1.str(),
 						      pelProjectStr)));
   PLANNER_WORDY(pc, "Join Pel Transform " << oss1.str());
-  addPrint(pc, "AfterJoin", temporaryResultName);  
+  addPrint(pc, "AfterJoin", temporaryResultName, "j");  
   pc->addElementSpec(transS);
 
   return temporaryResultName;
@@ -753,7 +758,7 @@ void generateMultipleProbeElements(PlanContext* pc)
 
      if (curRule->_probeTerms.size() - 1 != k) {
       ElementSpecPtr pullPush =
-	pc->createElementSpec(ElementPtr(new TimedPullPush("ProbePullPush|" 
+	pc->createElementSpec(ElementPtr(new TimedPullPush("ProbePullPush!" 
 							   + curRule->_ruleID + "!" 
 							   + pc->_nodeID, 0)));
       pc->addElementSpec(pullPush);
@@ -782,7 +787,9 @@ void generateSelectionAssignmentElements(PlanContext* pc)
   }
 }
 
-void generateProjectElements(PlanContext* pc)
+
+void
+generateProjectElements(PlanContext* pc)
 {
   ECA_Rule* curRule = pc->getRule();
   Parse_Functor* pf = curRule->_action->_pf;
@@ -803,13 +810,21 @@ void generateProjectElements(PlanContext* pc)
       newNamesTracker->fieldNames.push_back(parse_var->toString());
     }
 
+    // Is this term in the functor an aggregate?
     Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(pf->arg(k));
     if (aggExpr != NULL) {
+      // It seems to be an aggregate
       pos = curNamesTracker->fieldPosition(aggExpr->v->toString());
-      newNamesTracker->fieldNames.push_back(aggExpr->v->toString());
+
+      // Only add it if it's not a don't care
+      if (pos != -1) {
+        newNamesTracker->fieldNames.push_back(aggExpr->v->toString());
+      }
     }
 
-    if (pos == -1) { continue; }    
+    if (pos == -1) {
+      continue;
+    }
     indices.push_back(pos + 1);
   }
  
@@ -822,34 +837,41 @@ void generateProjectElements(PlanContext* pc)
 
 
   string pelTransformStr = pel.str();
-  PLANNER_WORDY(pc, "Project head " << curNamesTracker->toString() << " " + pelTransformStr);
+  PLANNER_WORDY(pc, "Project head " << curNamesTracker->toString()
+                << " " + pelTransformStr);
  
   ElementSpecPtr projectHeadPelTransform =
-    pc->createElementSpec(ElementPtr(new PelTransform("ProjectHead|" 
+    pc->createElementSpec(ElementPtr(new PelTransform("ProjectHead!" 
 						      + curRule->_ruleID 
 						      + "!" + pc->_nodeID,
 						      pelTransformStr)));
 
   pc->addElementSpec(projectHeadPelTransform);  
+  addPrint(pc, "HeadProjection", pf->fn->name, "h");
+
+
   pc->_namesTracker = newNamesTracker;
   PLANNER_WORDY(pc, "Project head names tracker " << pc->_namesTracker->toString());
 }
 
-void initializeAggWrap(PlanContext* pc)
+
+void
+initializeAggWrap(PlanContext* pc)
 {
   ECA_Rule* r = pc->getRule();
   if (r->_aggWrap == false) {
     return;
   }
-  PLANNER_WORDY(pc, "Generate agg wrap " << r->toString() << " "
+  PLANNER_WORDY(pc, "Generate agg wrap "
+                << r->toString() << " "
                 << pc->_namesTracker->toString());
 
   Parse_Functor* headFunctor = r->_action->_pf;
 
   int aggField = headFunctor->aggregate();
   // there is an aggregate and involves an event, we need an agg wrap      
-  Parse_Agg* aggExpr = dynamic_cast< Parse_Agg* >
-    (headFunctor->arg(aggField));
+  Parse_Agg* aggExpr =
+    dynamic_cast< Parse_Agg* > (headFunctor->arg(aggField));
 
   ostringstream oss;
   if (aggExpr == NULL) {
@@ -857,14 +879,22 @@ void initializeAggWrap(PlanContext* pc)
 	<< " for rule " << r->_ruleID;  
     error(pc, oss.str());
   }
+
+  // Is this a DONT_CARE aggregate?
+  bool dontCare = (aggExpr->v == Parse_Agg::DONT_CARE->v);
       
   oss << "Aggwrap:" << r->_ruleID << ":" << pc->_nodeID;
   
-  pc->_agg_el = new Aggwrap(oss.str(), aggExpr->aggName(), 
-			    aggField + 1, headFunctor->fn->name);
+  pc->_agg_el = new Aggwrap2(oss.str(),
+                             aggExpr->aggName(), 
+                             aggField + 1,
+                             dontCare,
+                             headFunctor->fn->name);
 }
 
-void generateAggWrap(PlanContext* pc)
+
+void
+generateAggWrap(PlanContext* pc)
 {
   ECA_Rule* r = pc->getRule();
   if (r->_aggWrap == false) {
@@ -873,27 +903,33 @@ void generateAggWrap(PlanContext* pc)
   Parse_Functor* headFunctor = r->_action->_pf;
   int aggField = headFunctor->aggregate();
 
-  // check to see if need to generate
-  PlanContext::FieldNamesTracker* curNamesTracker = pc->_namesTracker;
+  // We need a name tracker for the event functor of the Aggwrap.  We
+  // could probably save this one from earlier but it isn't that big a
+  // cost anyway...
+  PlanContext::FieldNamesTracker eventNamesTracker(pc->getRule()
+                                                   ->_event->_pf);
   ElementSpecPtr agg_elSpec 
     = pc->createElementSpec(ElementPtr(pc->_agg_el));
 
   pc->_ruleStrand->aggWrapperElement(pc->_conf, agg_elSpec);
 
-  for (int k = 0; k < headFunctor->args(); k++) {
+  for (int k = 0;
+       k < headFunctor->args();
+       k++) {
     if (k != aggField) {
       // for each groupby value, figure out its location in the
       // initial event tuple, if not present, throw an error
-      int pos 
-	= curNamesTracker->fieldPosition(headFunctor->arg(k)->toString());
-      pc->_agg_el->registerGroupbyField(pos+1);
+      int pos =
+	eventNamesTracker.fieldPosition(headFunctor->arg(k)->toString());
+      pc->_agg_el->registerGroupbyField(pos + 1);
     }
   }
 }
 
+
 void compileECARule(PlanContext* pc)
 {
-  TELL_INFO << "Process rule " << pc->getRule()->toString() << "\n";
+  PLANNER_INFO(pc, "Process rule " << pc->getRule()->toString());
 
   initializeAggWrap(pc);
 
@@ -917,7 +953,8 @@ void compileECARule(PlanContext* pc)
 
 
 
-  TELL_INFO << "Finish processing rule " << pc->getRule()->toString() << "\n";
+  PLANNER_INFO(pc, "Finish processing rule "
+               << pc->getRule()->toString());
 }
 
 #endif

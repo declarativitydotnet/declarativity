@@ -780,6 +780,8 @@ testIDs::idRShiftTests[] = {
   SHIFTTST(0, 0x80000000, 0, 0, 0,       0, 0, 1, 0, 0,              63),
   SHIFTTST(0,      0, 0, 0, 2,       0, 0, 0, 0, 1,               1),
 
+  SHIFTTST(0, 0, 0, 0x12345678, 0x90abcdef, 0, 0, 0, 0x246, 0x8acf1215, 0x13),
+
   SHIFTTST(0, 0, 0, 0, 0,            0, 0, 0, 0, 0,             100)
 };
 

@@ -140,7 +140,7 @@ int main(int argc, char **argv)
   eventLoopInitialize();
 
   int seed = 0;
-  level = Reporting::levelFromName[string(argv[1])];
+  level = Reporting::levelFromName()[string(argv[1])];
   Reporting::setLevel(level);
   seed = atoi(argv[2]);
   srandom(seed);

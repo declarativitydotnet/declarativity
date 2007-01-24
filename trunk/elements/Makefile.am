@@ -18,7 +18,6 @@ lib_LTLIBRARIES =		libp2elements.la
 
 SOURCE_FILE_ROOTS =		\
 				aggwrap2 \
-				aggwrap \
 				slot \
 				print \
 				printTime \

@@ -18,6 +18,7 @@
 
 #include "commonTable.h"
 #include "value.h"
+#include "aggFactory.h"
 
 class AggMin :
   public CommonTable::AggFunc
@@ -45,18 +46,21 @@ public:
   result();
 
 
-  static AggMin*
-  mk();
-
-
-  std::string
-  name();
+  // This is necessary for the class to register itself with the
+  // factory.
+  DECLARE_PUBLIC_INITS(AggMin)
 
 
 
 private:
   /** The current min value for this aggregate */
   ValuePtr _currentMin;
+
+
+  // This is necessary for the class to register itself with the
+  // factory.
+  DECLARE_PRIVATE_INITS
+
 };
 
 

@@ -17,12 +17,12 @@ Lookup2::Lookup2(string name,
                  CommonTablePtr table,
                  CommonTable::Key lookupKey,
                  CommonTable::Key indexKey,
-                 b_cbv completion_cb)
+                 b_cbv state_cb)
   : Element(name, 1, 1),
     _table(table),
     _pushCallback(0),
     _pullCallback(0),
-    _compCallback(completion_cb),
+    _stateCallback(state_cb),
     _lookupKey(lookupKey),
     _indexKey(indexKey)
 {
@@ -78,6 +78,8 @@ Lookup2::push(int port,
     // And stop the pusher since we have to wait until the iterator is
     // flushed one way or another
     _pushCallback = cb;
+
+
     return 0;
   } else {
     // We already have a lookup pending
@@ -110,51 +112,20 @@ Lookup2::pull(int port,
       _pullCallback = cb;
     } else {
       // I already have a pull callback
-      ELEM_INFO("pull: callback underrun");
-    }
-    if (_compCallback) {
-      _compCallback();
+      ELEM_WARN("pull: callback underrun");
     }
     return TuplePtr();
   } else {
     assert(_iterator);
 
-    // Is the iterator at its end?  This should only happen if a lookup
-    // returned no results at all.
-    TuplePtr t;
+    // Is the iterator at its end?
+    TuplePtr returnTuple;
     if (_iterator->done()) {
-      // Empty search. Don't try to dereference the iterator.  Just
-      // set the result to the empty tuple, to be tagged later
-      /*
-        TELL_INFO << "\tNO MORE TUPLES IN ITERATOR" << " IN TABLE " << _table->name << " iterator " << _iterator 
-        << " TABLE SIZE = " << _table->size() 
-        << " TABLE ADDRESS " << _table << std::endl;
-      */
-      t = Tuple::EMPTY;
-    } else {
-      // This lookup has at least one result.
-      t = _iterator->next();
-      /*
-        TELL_INFO << "\tLOOKUP KEY " << _key->toString() << " IN TABLE " << _table->name << " iterator " << _iterator
-        << " RETURN TUPLE " << t->toString() << " TABLE SIZE = " << _table->size() 
-        << " TABLE ADDRESS " << _table << std::endl;
-      */
-    }
-    TuplePtr theT = t;
-    
-    // Make an unfrozen result tuple containing first the lookup tuple
-    // and then the lookup result
-    TuplePtr newTuple = Tuple::mk();
-    newTuple->append(_lookupTupleValue);
-    newTuple->append(Val_Tuple::mk(theT));
+      // Return the empty tuple and complete this lookup.
+      returnTuple = Tuple::EMPTY;
 
-    // Now, are we done with this search?
-    if (_iterator->done()) {
       ELEM_INFO("pull: Finished search on tuple "
                 << _lookupTuple->toString());
-      
-      // Tag the result tuple
-      newTuple->tag(Lookup2::END_OF_SEARCH, Val_Null::mk());
       
       // Clean the lookup state
       _lookupTuple.reset();
@@ -168,16 +139,27 @@ Lookup2::pull(int port,
         _pushCallback();
         _pushCallback = 0;
       }
+      // Notify any state listeners
+      if (_stateCallback) {
+        ELEM_INFO("My state callback was invoked with false.");
+        _stateCallback();
+      }
     } else {
-      // More results to be had.  Don't tag
+      // This lookup has at least one result.
+      TuplePtr t = _iterator->next();
+
+      // Make a result tuple containing first the lookup tuple and then
+      // the lookup result
+      returnTuple = Tuple::mk();
+      returnTuple->append(_lookupTupleValue);
+      returnTuple->append(Val_Tuple::mk(t));
+
+      returnTuple->freeze();
     }
-    newTuple->freeze();
+    
     ELEM_WORDY("pull: Lookup returned tuple "
-               << newTuple->toString());
-    return newTuple;
+               << returnTuple->toString());
+    return returnTuple;
   }
 }
-
-/** The END_OF_SEARCH tag */
-string Lookup2::END_OF_SEARCH = "Lookup2:END_OF_SEARCH";
 

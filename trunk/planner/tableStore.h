@@ -36,7 +36,7 @@ public:
   TableStore(OL_Context* ctxt);
   ~TableStore() { delete _tables; }
 
-  std::set<string> getWatchTables() { return _ctxt->getWatchTables(); };
+  OL_Context::WatchTableType getWatchTables() { return _ctxt->getWatchTables(); };
   OL_Context::TableInfoMap* getTableInfos()  { return _tableInfos;   };
 
 

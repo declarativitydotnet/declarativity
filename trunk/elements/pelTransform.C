@@ -30,7 +30,7 @@ PelTransform::simple_action(TuplePtr p)
 
   if (e != Pel_VM::PE_SUCCESS) {
     // The transform failed.  Return nothing
-    ELEM_WORDY("Pel VM execution on "
+    ELEM_ERROR("Pel VM execution on "
                << p->toString()
                << " failed.");
     return TuplePtr();

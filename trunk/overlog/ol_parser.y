@@ -16,6 +16,9 @@
   #include <iostream>
   #include "val_str.h"
   #include "ol_context.h"
+  #include "aggMin.h"
+  #include "aggMax.h"
+  #include "aggCount.h"
 
   union YYSTYPE;
   static int ol_parser_lex (YYSTYPE *lvalp, OL_Context *ctxt);
@@ -73,6 +76,7 @@
 %token OL_MATERIALIZE
 %token OL_KEYS
 %token OL_WATCH
+%token OL_WATCHFINE
 %token OL_TRACE
 %token OL_TRACETABLE
 
@@ -127,6 +131,7 @@ clause:		  rule
 		| fact
                 | materialize
                 | watch
+                | watchfine
 		| trace
                 | traceTable
                 | query               
@@ -155,7 +160,12 @@ keylist:	OL_VALUE { $$ = new Parse_ExprList(); $$->push_front($1); }
 		; 
 
 watch:		OL_WATCH OL_LPAR OL_NAME OL_RPAR OL_DOT {
-			ctxt->watch($3);
+                ctxt->watch($3, ""); /* no modifiers */
+		}
+		;
+
+watchfine:	OL_WATCHFINE OL_LPAR OL_NAME OL_COMMA OL_STRING OL_RPAR OL_DOT {
+                ctxt->watch($3, $5->toString()); /* With modifiers */
 		}
 		;
 
@@ -429,9 +439,15 @@ aggregate:	agg_oper OL_LT OL_VAR OL_GT
 			{ $$ = new Parse_Agg(Parse_Agg::DONT_CARE, $1, ValuePtr()); }
 		;
 
-agg_oper:	  OL_MIN   { $$ = "MIN"; }
-		| OL_MAX   { $$ = "MAX"; }
-		| OL_COUNT { $$ = "COUNT"; }
+agg_oper:	  OL_MIN   { AggMin::ensureInit();
+                    // Ensure AggMin is loaded and registered
+                             $$ = "MIN"; }
+                | OL_MAX   { AggMax::ensureInit();
+                    // Ensure AggMax is loaded and registered
+                             $$ = "MAX"; }
+                | OL_COUNT { AggCount::ensureInit();
+                    // Ensure AggCount is loaded and registered
+                             $$ = "COUNT"; }
 		;
 
 %%

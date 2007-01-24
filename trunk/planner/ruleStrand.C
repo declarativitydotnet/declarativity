@@ -17,18 +17,24 @@
 #include "ruleStrand.h"
 #include "slot.h"
 #include "timedPullPush.h"
+#include "planner.h"
 
-string RuleStrand::eventFunctorName() 
+string
+RuleStrand::eventFunctorName() 
 { 
   return _eca_rule->_event->_pf->fn->name;  
 }
 
-string RuleStrand::actionFunctorName() 
+
+string
+RuleStrand::actionFunctorName() 
 { 
   return _eca_rule->_action->_pf->fn->name; 
 }
 
-string RuleStrand::toString()
+
+string
+RuleStrand::toString()
 {
   ostringstream b;
   b << "Rule Strand " << _strandID << ": " << _eca_rule->toString() << "\n";
@@ -41,7 +47,9 @@ string RuleStrand::toString()
   return b.str();
 }
 
-void RuleStrand::addElement(Plumber::DataflowPtr conf, ElementSpecPtr elementSpecPtr)
+
+void
+RuleStrand::addElement(Plumber::DataflowPtr conf, ElementSpecPtr elementSpecPtr)
 {
   if (_elementChain.size() > 0) {
     conf->hookUp(_elementChain.at(_elementChain.size()-1), 0, elementSpecPtr, 0);
@@ -50,18 +58,21 @@ void RuleStrand::addElement(Plumber::DataflowPtr conf, ElementSpecPtr elementSpe
 }
 
 
-void RuleStrand::aggWrapperElement(Plumber::DataflowPtr conf, ElementSpecPtr aggWrapperSpec)
+void
+RuleStrand::aggWrapperElement(Plumber::DataflowPtr conf,
+                              ElementSpecPtr aggWrapperSpec)
 {
   _aggWrapperSpec = aggWrapperSpec;
 
   if (_elementChain.size() == 0) {
-    TELL_WARN << "Rule strand " << _strandID 
-              << " cannot have an agg wrap over an empty strand\n";
+    PLANNER_WARN_NOPC("Rule strand "
+                      << _strandID 
+                      << " cannot have an agg wrap over an empty strand");
     exit(-1);
   }
 
   ElementSpecPtr pullPush =
-    conf->addElement(ElementPtr(new TimedPullPush("AggWrapPullPush|" 
+    conf->addElement(ElementPtr(new TimedPullPush("AggWrapPullPush!" 
 						  + _eca_rule->_ruleID, 0)));
   addElement(conf, pullPush);
   
@@ -73,7 +84,7 @@ void RuleStrand::aggWrapperElement(Plumber::DataflowPtr conf, ElementSpecPtr agg
 
   // result from aggwrap goes to external output
   ElementSpecPtr aggWrapSlot 
-    = conf->addElement(ElementPtr(new Slot("aggWrapSlot|" + _strandID )));
+    = conf->addElement(ElementPtr(new Slot("aggWrapSlot!" + _strandID )));
   conf->hookUp(aggWrapperSpec, 0, aggWrapSlot, 0);
 
   _elementChain.push_back(aggWrapSlot); // connect this to end of strand

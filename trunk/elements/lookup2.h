@@ -20,10 +20,13 @@
  * returned with successive pulls.  Outputs consist of tuples that
  * contain two embedded tuples, the first holding the lookup tuple and
  * the second holding the result if any.  The last output tuple to be
- * returned for a given search is tagged with END_OF_SEARCH.  If a
- * lookup yields no results, an output tuple with the lookup tuple as
- * the first value and an empty tuple as the second value is returned
- * (also tagged with END_OF_SEARCH).
+ * returned for a given search is empty (i.e., contains no fields).  If
+ * a lookup yields no results, its only output tuple is the empty tuple.
+ *
+ * A lookup constructor may optionally take a state change callback,
+ * which is called with true every time a lookup becomes busy (i.e.,
+ * acquires a new probe tuple) and with false every time it becomes free
+ * (i.e., it gives out its last result).
  */
 
 #ifndef __LOOKUP2_H__
@@ -40,7 +43,7 @@ public:
           CommonTablePtr table,
           CommonTable::Key lookupKey,
           CommonTable::Key indexKey,
-          b_cbv completion_cb = 0);
+          b_cbv state_cb = 0);
   ~Lookup2();
   
   
@@ -58,10 +61,6 @@ public:
   TuplePtr
   pull(int port, b_cbv cb);
 
-  
-  /** The END_OF_SEARCH tuple tag. */
-  static string END_OF_SEARCH;
-  
 
 
 
@@ -78,10 +77,10 @@ private:
   b_cbv _pullCallback;
 
   
-  /** My completion callback */
-  b_cbv _compCallback;
+  /** My state callback */
+  b_cbv _stateCallback;
 
-  
+
   /** My current lookup tuple */
   TuplePtr _lookupTuple;
 

@@ -7,6 +7,7 @@
 # Berkeley, CA,  94707. Attention: P2 Group.
 #
 
-EXTRA_DIST =		README
+CLEANFILES =			*.processed *~
 
-SUBDIRS =		scripts
+EXTRA_DIST =			*.olg
+

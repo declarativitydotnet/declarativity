@@ -1,14 +1,34 @@
-materialize(coordinator, infinity, infinity, keys(1)).
+/**
+  * This file is distributed under the terms in the attached LICENSE file.
+  * If you do not find this file, copies can be found by writing to:
+  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+  * Or
+  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+  * Berkeley, CA,  94707. Attention: P2 Group.
+  * 
+  * $Id$
+  * 
+  * This regression test is meant to test aggwrap's ability to deal with
+  * selections in its inner graph.  When run with
+  * 
+  * tests/runOverLog -o unitTests/olg/doublePeriodic.olg
+  *
+  * this program should generate exactly one send action to each
+  * non-local host.
+***/
 
-watch(generateUpdateEvent).
-watch(per).
+
+materialize(coordinator, infinity, infinity, keys(1, 2)).
+
+watchmod(generateUpdateEvent, "s").
 
 coordinator("localhost:10000", "localhost:10000").
-coordinator("localhost:10001", "localhost:10000").
-coordinator("localhost:10002", "localhost:10000").
+coordinator("localhost:10000", "localhost:10002").
+coordinator("localhost:10000", "localhost:10001").
 
 
-g2 per(@I, E) :- periodic(@I, E, 1).
+g2 per(@I, E) :- periodic(@I, E, 1, 1).
 
-g1 generateUpdateEvent(@I, J) :-  per(@I,E), coordinator(@I,
-J), I != J. 
+g1 generateUpdateEvent(@I, J) :-  per(@I, E),
+	 coordinator(@I, J), I != J. 

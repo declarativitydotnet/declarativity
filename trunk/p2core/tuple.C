@@ -299,14 +299,32 @@ Tuple::size() const
 ValuePtr
 Tuple::operator[] (ptrdiff_t i)
 {
-  return fields[i];
+  try {
+    return fields.at(i);
+  } catch (std::exception e) {
+    TELL_ERROR << "Tuple::[] Attempted to fetch non existent field "
+               << i
+               << " from tuple "
+               << toString()
+               << ". Returning null\n";
+    return Val_Null::mk();
+  }
 }
 
 
 const ValuePtr
 Tuple::operator[] (ptrdiff_t i) const
 {
-  return fields[i];
+  try {
+    return fields.at(i);
+  } catch (std::exception e) {
+    TELL_ERROR << "Tuple::[] Attempted to fetch non existent field "
+               << i
+               << " from tuple "
+               << toString()
+               << ". Returning null\n";
+    return Val_Null::mk();
+  }
 }
 
 

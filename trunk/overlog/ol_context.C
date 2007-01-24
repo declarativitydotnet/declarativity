@@ -31,7 +31,8 @@ int OL_Context::ruleCount = 0;
 //
 // Print out the rule for debugging purposes
 //
-string OL_Context::Rule::toString() {
+string
+OL_Context::Rule::toString() {
   ostringstream r;
   r << ruleID << " ";
   r << head->toString() << " :- ";
@@ -50,7 +51,9 @@ string OL_Context::Rule::toString() {
   return r.str();
 }
 
-string OL_Context::TableInfo::toString() {
+
+string
+OL_Context::TableInfo::toString() {
   ostringstream t;
   t << "MATERIALIZE( " << tableName << ", "
     << timeout << ", "
@@ -178,8 +181,10 @@ OL_Context::rule(Parse_Term *lhs,
   rules->push_back(r);
 }
 
-void OL_Context::aggRule( Parse_Term *lhs, Parse_AggTerm *rhs, 
-			  bool deleteFlag, Parse_Expr *n ) 
+
+void
+OL_Context::aggRule(Parse_Term *lhs, Parse_AggTerm *rhs, 
+                    bool deleteFlag, Parse_Expr *n) 
 {
   Parse_Functor *h    = dynamic_cast<Parse_Functor*>(lhs);
   string     ruleName    = (n) ? n->v->toString() : "";
@@ -230,7 +235,10 @@ void OL_Context::parse_string(const char *prog)
   delete lexer;
   lexer = NULL;
 }
-void OL_Context::parse_stream(std::istream *str)
+
+
+void
+OL_Context::parse_stream(std::istream *str)
 {
   assert(lexer==NULL);
   lexer = new OL_Lexer(str);
@@ -239,17 +247,29 @@ void OL_Context::parse_stream(std::istream *str)
   lexer = NULL;
 }
 
-void OL_Context::error(string msg)
+
+void
+OL_Context::error(string msg)
 {
-  TELL_ERROR << "PARSER ERROR (line " << lexer->line_num() << "): " << msg << "\n";
+  TELL_ERROR << "PARSER ERROR (line "
+             << lexer->line_num()
+             << "): " << msg << "\n";
   errors.push_back(new OL_Context::Error(lexer->line_num(), msg));
 }
 
-void OL_Context::watch(Parse_Expr *w)
+
+void
+OL_Context::watch(Parse_Expr *w,
+                  std::string modifiers)
 {
-  TELL_INFO << "Add watch variable " << w->toString() << "\n";
-  watchTables.insert(w->v->toString());
+  TELL_INFO << "Added watched functor "
+            << w->toString()
+            << " with modifiers ["
+            << modifiers
+            << "]\n";
+  watchTables.insert(std::make_pair(w->v->toString(), modifiers));
 }
+
 
 void
 OL_Context::traceTuple(Parse_Expr *w)
@@ -352,5 +372,24 @@ void OL_Context::query( Parse_Term *term)
 {
   singleQuery = dynamic_cast<Parse_Functor*>(term);
   TELL_INFO << "Add query " << singleQuery->toString() << "\n";  
+}
+
+
+bool
+OL_Context::gotErrors()
+{
+  return !errors.empty();
+}
+
+
+void
+OL_Context::dumpErrors()
+{
+  for(ErrorList::iterator e = errors.begin();
+      e!=errors.end();
+      e++) {
+    TELL_ERROR << "error at line " << (*e)->line_num
+               << ": '" << (*e)->msg << "'.\n";
+  }
 }
 

@@ -19,10 +19,16 @@
 
 
 class OperNull : public opr::Oper {
-  bool _eq(ValuePtr v1, ValuePtr v2) {
-    return v1->typeCode() == Value::NULLV && v2->typeCode() == Value::NULLV;
+public:
+  bool
+  _eq(const ValuePtr& v1, const ValuePtr& v2) const {
+    return (v1->typeCode() == Value::NULLV) &&
+      (v2->typeCode() == Value::NULLV);
   }; 
-  bool _neq(ValuePtr v1, ValuePtr v2) {
+
+
+  bool
+  _neq(const ValuePtr& v1, const ValuePtr& v2) const {
     return !OperNull::_eq(v1, v2);
   };
 };
@@ -36,9 +42,7 @@ ValuePtr Val_Null::singleton = ValuePtr(new Val_Null());
 
 string Val_Null::toConfString() const
 {
-  ostringstream conf;
-  conf << "Val_Null()";
-  return conf.str();
+  return "Val_Null()";
 }
 
 //

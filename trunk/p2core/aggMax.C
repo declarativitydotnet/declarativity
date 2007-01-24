@@ -12,6 +12,7 @@
 
 #include "aggMax.h"
 #include "val_null.h"
+#include "aggFactory.h"
 
 AggMax::AggMax()
 {
@@ -58,15 +59,6 @@ AggMax::result()
 }
 
 
-AggMax*
-AggMax::mk()
-{
-  return new AggMax();
-}
-
-
-std::string
-AggMax::name()
-{
-  return "MAX";
-}
+// This is necessary for the class to register itself with the
+// factory.
+DEFINE_INITS(AggMax,"MAX")

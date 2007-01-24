@@ -125,7 +125,6 @@ static string conf_hookup(string toVar, P1 toPort, string fromVar, P2 fromPort)
 static string conf_function(string fn)
 {
   ostringstream oss;
-  // TELL_INFO << "CONF FUNCTION CREATE: " << fn << std::endl;
   oss << fn << "()";
   return oss.str(); 
 }

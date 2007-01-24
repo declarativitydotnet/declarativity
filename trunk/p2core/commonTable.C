@@ -218,6 +218,9 @@ CommonTable::CommonTable(std::string tableName,
     _lookupSearchEntry(Tuple::mk())
 {
   lookupSearchEntry(key);
+
+  // Register table
+  theRegistry()->insert(std::make_pair(tableName, this));
 }
 
 
@@ -446,64 +449,162 @@ CommonTable::removeTuple(PrimaryIndex::iterator position)
 
 
 
-CommonTable::Key CommonTable::KEYID = CommonTable::Key();
-CommonTable::Key CommonTable::KEY0 = CommonTable::Key();
-CommonTable::Key CommonTable::KEY1 = CommonTable::Key();
-CommonTable::Key CommonTable::KEY2 = CommonTable::Key();
-CommonTable::Key CommonTable::KEY3 = CommonTable::Key();
-CommonTable::Key CommonTable::KEY4 = CommonTable::Key();
-CommonTable::Key CommonTable::KEY01 = CommonTable::Key();
-CommonTable::Key CommonTable::KEY12 = CommonTable::Key();
-CommonTable::Key CommonTable::KEY23 = CommonTable::Key();
-CommonTable::Key CommonTable::KEY13 = CommonTable::Key();
-CommonTable::Key CommonTable::KEY012 = CommonTable::Key();
-CommonTable::Key CommonTable::KEY123 = CommonTable::Key();
-CommonTable::Key CommonTable::KEY01234 = CommonTable::Key();
+CommonTable::Key CommonTable::theKEYID = CommonTable::Key();
+CommonTable::Key CommonTable::theKEY0 = CommonTable::Key();
+CommonTable::Key CommonTable::theKEY1 = CommonTable::Key();
+CommonTable::Key CommonTable::theKEY2 = CommonTable::Key();
+CommonTable::Key CommonTable::theKEY3 = CommonTable::Key();
+CommonTable::Key CommonTable::theKEY4 = CommonTable::Key();
+CommonTable::Key CommonTable::theKEY01 = CommonTable::Key();
+CommonTable::Key CommonTable::theKEY12 = CommonTable::Key();
+CommonTable::Key CommonTable::theKEY23 = CommonTable::Key();
+CommonTable::Key CommonTable::theKEY13 = CommonTable::Key();
+CommonTable::Key CommonTable::theKEY012 = CommonTable::Key();
+CommonTable::Key CommonTable::theKEY123 = CommonTable::Key();
+CommonTable::Key CommonTable::theKEY01234 = CommonTable::Key();
 
 
 CommonTable::Initializer::Initializer()
 {
   // No need to initialize KEYID. It's already empty.
-  CommonTable::KEY0.push_back(0);
+  CommonTable::theKEY0.push_back(0);
 
-  CommonTable::KEY1.push_back(1);
+  CommonTable::theKEY1.push_back(1);
 
-  CommonTable::KEY2.push_back(2);
+  CommonTable::theKEY2.push_back(2);
 
-  CommonTable::KEY3.push_back(3);
+  CommonTable::theKEY3.push_back(3);
 
-  CommonTable::KEY4.push_back(4);
+  CommonTable::theKEY4.push_back(4);
 
-  CommonTable::KEY01.push_back(0);
-  CommonTable::KEY01.push_back(1);
+  CommonTable::theKEY01.push_back(0);
+  CommonTable::theKEY01.push_back(1);
 
-  CommonTable::KEY12.push_back(1);
-  CommonTable::KEY12.push_back(2);
+  CommonTable::theKEY12.push_back(1);
+  CommonTable::theKEY12.push_back(2);
 
-  CommonTable::KEY23.push_back(2);
-  CommonTable::KEY23.push_back(3);
+  CommonTable::theKEY23.push_back(2);
+  CommonTable::theKEY23.push_back(3);
 
-  CommonTable::KEY13.push_back(1);
-  CommonTable::KEY13.push_back(3);
+  CommonTable::theKEY13.push_back(1);
+  CommonTable::theKEY13.push_back(3);
 
-  CommonTable::KEY012.push_back(0);
-  CommonTable::KEY012.push_back(1);
-  CommonTable::KEY012.push_back(2);
+  CommonTable::theKEY012.push_back(0);
+  CommonTable::theKEY012.push_back(1);
+  CommonTable::theKEY012.push_back(2);
 
-  CommonTable::KEY123.push_back(1);
-  CommonTable::KEY123.push_back(2);
-  CommonTable::KEY123.push_back(3);
+  CommonTable::theKEY123.push_back(1);
+  CommonTable::theKEY123.push_back(2);
+  CommonTable::theKEY123.push_back(3);
 
-  CommonTable::KEY01234.push_back(0);
-  CommonTable::KEY01234.push_back(1);
-  CommonTable::KEY01234.push_back(2);
-  CommonTable::KEY01234.push_back(3);
-  CommonTable::KEY01234.push_back(4);
+  CommonTable::theKEY01234.push_back(0);
+  CommonTable::theKEY01234.push_back(1);
+  CommonTable::theKEY01234.push_back(2);
+  CommonTable::theKEY01234.push_back(3);
+  CommonTable::theKEY01234.push_back(4);
 }
 
-/** Run the static initialization */
-CommonTable::Initializer
-CommonTable::_INITIALIZER;
+
+CommonTable::Initializer*
+CommonTable::theInitializer()
+{
+  static Initializer* _initializer =
+    new CommonTable::Initializer();
+  return _initializer;
+}
+  
+
+
+
+/** Fetch an existing key object.  This method uses the "construct at
+    first use" pattern. See below at theRegistry for details. */
+CommonTable::Key&
+CommonTable::theKey(CommonTable::KeyName keyID)
+{
+  Initializer* initializer;
+  initializer = theInitializer(); // To ensure keys have been initialized
+
+
+  switch (keyID) {
+  case KEYID:
+    return theKEYID;
+    break;
+  case KEY0:
+    return theKEY0;
+    break;
+  case KEY1:
+    return theKEY1;
+    break;
+  case KEY2:
+    return theKEY2;
+    break;
+  case KEY3:
+    return theKEY3;
+    break;
+  case KEY4:
+    return theKEY4;
+    break;
+  case KEY01:
+    return theKEY01;
+    break;
+  case KEY12:
+    return theKEY12;
+    break;
+  case KEY23:
+    return theKEY23;
+    break;
+  case KEY13:
+    return theKEY13;
+    break;
+  case KEY012:
+    return theKEY012;
+    break;
+  case KEY123:
+    return theKEY123;
+    break;
+  case KEY01234:
+    return theKEY01234;
+    break;
+  default:
+    throw UnknownKeyNameException();
+    break;
+  };
+}
+
+
+
+/** Find a table in the registry */
+CommonTable*
+CommonTable::lookupTable(string tableName)
+{
+  TableRegistry::iterator t = theRegistry()->find(tableName);
+  if (t == theRegistry()->end()) {
+    // Didn't find anything
+    return NULL;
+  } else {
+    return t->second;
+  }
+}
+
+
+/** This implements the "construct at first use" pattern, which is the
+    best known method for dealing with static initializer ordering in
+    C++. This way of initializing the registry "leaks" the registry at
+    exit time, since the object is never freed from the queue. However,
+    this is an acceptable shortcoming (and recommended by most FAQs such
+    as the C++ FAQ Lite). Using the alternative, a stack-allocated
+    registry object, still fixes the initialization ordering problem but
+    does not fix the deinitialization ordering problem which is just as
+    annoying... */
+CommonTable::TableRegistry*
+CommonTable::theRegistry()
+{
+  static TableRegistry* _registry =
+    new TableRegistry();
+
+  return _registry;
+}
+
 
 
 

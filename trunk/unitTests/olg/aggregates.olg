@@ -1,4 +1,3 @@
-
 /**
   * This file is distributed under the terms in the attached LICENSE file.
   * If you do not find this file, copies can be found by writing to:
@@ -17,11 +16,11 @@
   * Have three nodes with ports 20202, 20203, 20204. Execute the following:
   * 
   * At 20202:
-  * tests/runOverLog2 -DNEIGHBOR1=\"localhost:20203\" -DNEIGHBOR2=\"localhost:20204\" unitTests/olg/aggregates.olg localhost 20202
+  * tests/runOverLog -DNEIGHBOR1=\"localhost:20203\" -DNEIGHBOR2=\"localhost:20204\" -o unitTests/olg/aggregates.olg -n localhost -p 20202 
   * At 20203:
-  * tests/runOverLog2 -DNEIGHBOR1=\"localhost:20202\" -DNEIGHBOR2=\"localhost:20204\" unitTests/olg/aggregates.olg localhost 20203
+  * tests/runOverLog -DNEIGHBOR1=\"localhost:20202\" -DNEIGHBOR2=\"localhost:20204\" -o unitTests/olg/aggregates.olg -n localhost -p 20203
   * At 20204:
-  * tests/runOverLog2 -DNEIGHBOR1=\"localhost:20203\" -DNEIGHBOR2=\"localhost:20204\" unitTests/olg/aggregates.olg localhost 20204
+  * tests/runOverLog -DNEIGHBOR1=\"localhost:20202\" -DNEIGHBOR2=\"localhost:20203\" -o unitTests/olg/aggregates.olg -n localhost -p 20204
   *
   * 20202 should be receiving bigee events from both 20203 and 20204.
   * 20203 should be receiving bigee events from 20204 and smallee events
@@ -33,9 +32,6 @@
 ***/
 
 materialize(neighbor, infinity, infinity, keys(1,2)).
-
-watch(bigee).
-watch(smallee).
 
 i0 neighbor(@NI, NEIGHBOR1) :- periodic(@NI, E, 0, 1).
 i1 neighbor(@NI, NEIGHBOR2) :- periodic(@NI, E, 0, 1).
@@ -49,8 +45,19 @@ r2 bigee(max<@Neighbor>, NI) :-
 
 
 /** The following should ping the smallest-name neighbor */
-r2 smallee(min<@Neighbor>, NI) :-
+r3 smallee(min<@Neighbor>, NI) :-
 	pingE(@NI),
 	neighbor(@NI, Neighbor).
+
+
+/* Reporting. Rules d1 and d2 are there to enable watching for the
+arrival of bigee and smallee */
+watchmod(bigee, "c").
+watchmod(smallee, "c").
+
+d1 gotBigee(@NI, Source) :- bigee(@NI, Source).
+
+d2 gotSmalee(@NI, Source) :- smallee(@NI, Source).
+
 
 

@@ -22,6 +22,10 @@
 #include "val_null.h"
 #include "ID.h"
 
+#include "aggMin.h"
+#include "aggMax.h"
+#include "aggCount.h"
+
 #include "testTable2.h"
 #include <boost/bind.hpp>
 #include "vector"
@@ -141,29 +145,29 @@ testTable2::testCreateDestroy()
 {
   // Shortest constructor
   {
-    Table2 table1("table1", Table2::KEYID);
-    Table2 table2("table2", Table2::KEY0);
-    Table2 table3("table3", Table2::KEY01);
-    Table2 table4("table4", Table2::KEY012);
-    Table2 table5("table5", Table2::KEY13);
+    Table2 table1("table1", Table2::theKey(CommonTable::KEYID));
+    Table2 table2("table2", Table2::theKey(CommonTable::KEY0));
+    Table2 table3("table3", Table2::theKey(CommonTable::KEY01));
+    Table2 table4("table4", Table2::theKey(CommonTable::KEY012));
+    Table2 table5("table5", Table2::theKey(CommonTable::KEY13));
   }
 
   // Lifetime-less constructor with 0 size limit
   {
-    Table2 table1("table1", Table2::KEYID, 0);
-    Table2 table2("table2", Table2::KEY0, 0);
-    Table2 table3("table3", Table2::KEY01, 0);
-    Table2 table4("table4", Table2::KEY012, 0);
-    Table2 table5("table5", Table2::KEY13, 0);
+    Table2 table1("table1", Table2::theKey(CommonTable::KEYID), 0);
+    Table2 table2("table2", Table2::theKey(CommonTable::KEY0), 0);
+    Table2 table3("table3", Table2::theKey(CommonTable::KEY01), 0);
+    Table2 table4("table4", Table2::theKey(CommonTable::KEY012), 0);
+    Table2 table5("table5", Table2::theKey(CommonTable::KEY13), 0);
   }
 
   // Lifetime-less constructor with non-zero size limit
   {
-    Table2 table1("table1", Table2::KEYID, 100);
-    Table2 table2("table2", Table2::KEY0, 100);
-    Table2 table3("table3", Table2::KEY01, 100);
-    Table2 table4("table4", Table2::KEY012, 100);
-    Table2 table5("table5", Table2::KEY13, 100);
+    Table2 table1("table1", Table2::theKey(CommonTable::KEYID), 100);
+    Table2 table2("table2", Table2::theKey(CommonTable::KEY0), 100);
+    Table2 table3("table3", Table2::theKey(CommonTable::KEY01), 100);
+    Table2 table4("table4", Table2::theKey(CommonTable::KEY012), 100);
+    Table2 table5("table5", Table2::theKey(CommonTable::KEY13), 100);
   }
 }
 
@@ -172,7 +176,7 @@ void
 testTable2::testSizeLimitID()
 {
   // A table with a size limit indexed by ID
-  Table2 table("LimitedSize", Table2::KEYID, SIZE);
+  Table2 table("LimitedSize", Table2::theKey(CommonTable::KEYID), SIZE);
 
   // Until I reach the maximum size, the table size should keep
   // increasing with every insertion
@@ -215,7 +219,7 @@ void
 testTable2::testSizeLimitSingle()
 {
   // A table with a size limit indexed by ID
-  Table2 table("LimitedSize", Table2::KEY1, SIZE);
+  Table2 table("LimitedSize", Table2::theKey(CommonTable::KEY1), SIZE);
 
   // Until I reach the maximum size, the table size should keep
   // increasing with every insertion
@@ -283,7 +287,7 @@ void
 testTable2::testSizeLimitMulti()
 {
   // A table with a size limit indexed by ID
-  Table2 table("LimitedSize", Table2::KEY13, SIZE);
+  Table2 table("LimitedSize", Table2::theKey(CommonTable::KEY13), SIZE);
 
   // Until I reach the maximum size, the table size should keep
   // increasing with every insertion
@@ -383,8 +387,8 @@ testTable2::testSuperimposedIndexRemoval()
 
   // Create a table of unique tuples with a multiple key on its first
   // field
-  Table2 table("test_table", Table2::KEY01, 200);
-  table.secondaryIndex(Table2::KEY0);
+  Table2 table("test_table", Table2::theKey(CommonTable::KEY01), 200);
+  table.secondaryIndex(Table2::theKey(CommonTable::KEY0));
 
   // Insert the three tuples in that order
   BOOST_CHECK_MESSAGE(table.insert(a),
@@ -407,14 +411,14 @@ testTable2::testSuperimposedIndexRemoval()
                       << "' should be fully deleted");
 
   // Lookup the tuple itself in the unique index
-  BOOST_CHECK_MESSAGE(table.lookup(Table2::KEY01, c)->done(),
+  BOOST_CHECK_MESSAGE(table.lookup(Table2::theKey(CommonTable::KEY01), c)->done(),
                       "Table test. Lookup of removed tuple "
                       << c->toString()
                       << " should return no results.");
 
   // Count the elements matching a on the multiple index (i.e., all
   // elements). It should contain two elements
-  Table2::Iterator m = table.lookup(Table2::KEY0, a);
+  Table2::Iterator m = table.lookup(Table2::theKey(CommonTable::KEY0), a);
   int count = 0;
   while (!m->done()) {
     m->next();
@@ -449,7 +453,7 @@ testTable2::testPrimaryOverwrite()
   b->freeze();
   
   // Create a table with unique first fields.
-  Table2 table("test_table", Table2::KEY0);
+  Table2 table("test_table", Table2::theKey(CommonTable::KEY0));
 
   // Insert the first tuples
   BOOST_CHECK_MESSAGE(table.insert(a),
@@ -462,7 +466,7 @@ testTable2::testPrimaryOverwrite()
                       << "' should be newly inserted (overwriting a).");
 
   // Lookup b in the primary index
-  Table2::Iterator i = table.lookup(Table2::KEY0, b);
+  Table2::Iterator i = table.lookup(Table2::theKey(CommonTable::KEY0), b);
   BOOST_CHECK_MESSAGE(!i->done(),
                       "Lookup of tuple b '"
                       << b->toString()
@@ -502,7 +506,7 @@ testTable2::testProjectedLookups()
   b->freeze();
   
   // Create a table with unique first fields.
-  Table2 table("table1", Table2::KEY0);
+  Table2 table("table1", Table2::theKey(CommonTable::KEY0));
 
   // Insert the first tuple
   BOOST_CHECK_MESSAGE(table.insert(a),
@@ -511,7 +515,7 @@ testTable2::testProjectedLookups()
                       << "' should be newly inserted");
 
   // Lookup the second tuple with its first field on the primary index
-  Table2::Iterator i = table.lookup(Table2::KEY0, Table2::KEY0, b);
+  Table2::Iterator i = table.lookup(Table2::theKey(CommonTable::KEY0), Table2::theKey(CommonTable::KEY0), b);
   BOOST_CHECK_MESSAGE(i->done(),
                       "Lookup of tuple b '"
                       << b->toString()
@@ -519,7 +523,7 @@ testTable2::testProjectedLookups()
 
 
   // Lookup the second tuple with its second field on the primary index
-  i = table.lookup(Table2::KEY1, Table2::KEY0, b);
+  i = table.lookup(Table2::theKey(CommonTable::KEY1), Table2::theKey(CommonTable::KEY0), b);
   BOOST_CHECK_MESSAGE(!i->done(),
                       "Lookup of tuple b '"
                       << b->toString()
@@ -961,46 +965,46 @@ testTable2::testInsertRemoveLookupScripts()
                  //      >25, 15, 30>
                  "i<0,15>;i<0,15>;i<0,35>;m<0,25>;",
                  __LINE__,
-                 Table2::KEY01, 3),
+                 Table2::theKey(CommonTable::KEY01), 3),
       
       table2Test("i<0,10>;i<0,15>;f<0,15>;m<0,10>;d<0,15>;m<0,15>;",
                  __LINE__,
-                 Table2::KEY0),
+                 Table2::theKey(CommonTable::KEY0)),
       
       table2Test("i<0,10>;i<0,15>;f<0,15>;f<0,10>;d<0,15>;m<0,15>;"
                  "f<0,10>;d<0,10>;m<0,15>;m<0,10>;",
                  __LINE__,
-                 Table2::KEY01),
+                 Table2::theKey(CommonTable::KEY01)),
       
       table2Test("i<0,10>;i<0,15>;m<0,10>;m<0,15>;",
                  __LINE__,
-                 Table2::KEYID),
+                 Table2::theKey(CommonTable::KEYID)),
       
       table2Test("i<0,10>;f<0,10>;d<0,10>;m<0,10>;d<0,10>;m<0,10>;"
                  "i<0,15>;f<0,15>;",
                  __LINE__,
-                 Table2::KEY0),
+                 Table2::theKey(CommonTable::KEY0)),
       
       table2Test("i<0,10>;i<0,15>;i<0,20>;i<0,25>;i<0,30>;"
                  "i<0,15>;f<0,15>;",
                  __LINE__,
-                 Table2::KEY0, 3),
+                 Table2::theKey(CommonTable::KEY0), 3),
       
       table2Test("i<0,10>;i<0,15>;i<0,20>;i<0,25>;i<0,30>;"
                  "d<0,15>;m<0,15>;",
                  __LINE__,
-                 Table2::KEY0, 3),
+                 Table2::theKey(CommonTable::KEY0), 3),
       
       table2Test("i<0,10>;i<0,15>;i<0,20>;i<0,25>;i<0,30>;"
                  "i<0,15>;d<0,15>;m<0,15>;",
                  __LINE__,
-                 Table2::KEY0, 3),
+                 Table2::theKey(CommonTable::KEY0), 3),
       
       table2Test("i<0,10>;d<0,10>;i<0,10>;"
                  "i<0,15>;i<0,20>;i<0,25>;i<0,30>;"
                  "i<0,15>;d<0,15>;m<0,15>;",
                  __LINE__,
-                 Table2::KEY0, 3),
+                 Table2::theKey(CommonTable::KEY0), 3),
       
     };
   std::vector< table2Test > vec(t,
@@ -1022,8 +1026,8 @@ testTable2::testSecondaryEquivalence()
   // Make sure that an index lookup is the same as a full scan with the
   // appropriate selection (predicate check.)
 
-  Table2 table("secondary equivalence", Table2::KEY0);
-  table.secondaryIndex(Table2::KEY1);
+  Table2 table("secondary equivalence", Table2::theKey(CommonTable::KEY0));
+  table.secondaryIndex(Table2::theKey(CommonTable::KEY1));
 
   // Add a bunch of tuples with some replacements
   uint TUPLES = 1000;
@@ -1049,7 +1053,7 @@ testTable2::testSecondaryEquivalence()
     TuplePtr lookupT = Tuple::mk();
     lookupT->append(emptyString);
     lookupT->append(iVal);
-    Table2::Iterator i = table.lookup(Table2::KEY1, lookupT);
+    Table2::Iterator i = table.lookup(Table2::theKey(CommonTable::KEY1), lookupT);
 
     TupleSet sResults;
     while (!i->done()) {
@@ -1265,9 +1269,9 @@ testTable2::testAggregates()
     intAggTest2("i<0,2,5>;u<0,5>;"
                 "i<0,1,2>;u<0,2>;"
                 "i<0,1,3>;u<0,5>;u<0,3>;",
-                Table2::KEY01, // first three fields are indexed
+                Table2::theKey(CommonTable::KEY01), // first three fields are indexed
                 Table2::DEFAULT_SIZE, // use default max size
-                Table2::KEY0, // first field is group-by
+                Table2::theKey(CommonTable::KEY0), // first field is group-by
                 2, // third field is aggregated
                 "MIN", // aggregate function is MIN
                 __LINE__),
@@ -1285,8 +1289,8 @@ testTable2::testAggregates()
                 // <4, 8, 20<
                 "i<0,30>;u<0,8>;",
                 // <8, 20, 30<
-                Table2::KEY01, 3,
-                Table2::KEY0, 1, "MIN",
+                Table2::theKey(CommonTable::KEY01), 3,
+                Table2::theKey(CommonTable::KEY0), 1, "MIN",
                 __LINE__),
 
 
@@ -1297,9 +1301,9 @@ testTable2::testAggregates()
                 "i<0,15>;u<0,null>;u<0,15>;"
                 "i<0,5>;u<0,null>;u<0,5>;"
                 "d<0,5>;u<0,null>;",
-                Table2::KEY0, // first field is indexed
+                Table2::theKey(CommonTable::KEY0), // first field is indexed
                 Table2::DEFAULT_SIZE, // use default max size
-                Table2::KEY0, // first field is group-by
+                Table2::theKey(CommonTable::KEY0), // first field is group-by
                 1, // second field is aggregated
                 "MIN", // aggregate function is MIN
                 __LINE__),
@@ -1313,9 +1317,9 @@ testTable2::testAggregates()
     // DELETE <0, 5>
     // UPDATE <0, 10>
     intAggTest2("i<0,10>;u<0,10>;i<0,15>;i<0,5>;u<0,5>;d<0,5>;u<0,10>;",
-                Table2::KEY01, // first field is indexed
+                Table2::theKey(CommonTable::KEY01), // first field is indexed
                 Table2::DEFAULT_SIZE, // use default max size
-                Table2::KEY0, // first field is group-by
+                Table2::theKey(CommonTable::KEY0), // first field is group-by
                 1, // second field is aggregated
                 "MIN", // aggregate function is MIN
                 __LINE__),
@@ -1326,19 +1330,19 @@ testTable2::testAggregates()
     // INSERT <0, 5>
     // UPDATE <0, 5>
     intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;",
-                Table2::KEY01, Table2::DEFAULT_SIZE,
-                Table2::KEY0,
+                Table2::theKey(CommonTable::KEY01), Table2::DEFAULT_SIZE,
+                Table2::theKey(CommonTable::KEY0),
                 1, "MIN",
                 __LINE__),
     
     intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;i<0,20>;i<0,30>;",
-                Table2::KEY01, Table2::DEFAULT_SIZE,
-                Table2::KEY0, 1, "MIN",
+                Table2::theKey(CommonTable::KEY01), Table2::DEFAULT_SIZE,
+                Table2::theKey(CommonTable::KEY0), 1, "MIN",
                 __LINE__),
     
     intAggTest2("i<0,10>;u<0,10>;i<0,5>;u<0,5>;i<0,20>;i<0,3>;u<0,3>;i<0,4>;",
-                Table2::KEY01, Table2::DEFAULT_SIZE,
-                Table2::KEY0, 1, "MIN",
+                Table2::theKey(CommonTable::KEY01), Table2::DEFAULT_SIZE,
+                Table2::theKey(CommonTable::KEY0), 1, "MIN",
                 __LINE__),
 
 
@@ -1346,28 +1350,28 @@ testTable2::testAggregates()
     // MAX
 
     intAggTest2("i<0,10>;u<0,10>;i<0,5>;",
-                Table2::KEY01, Table2::DEFAULT_SIZE,
-                Table2::KEY0, 1, "MAX",
+                Table2::theKey(CommonTable::KEY01), Table2::DEFAULT_SIZE,
+                Table2::theKey(CommonTable::KEY0), 1, "MAX",
                 __LINE__),
     
     intAggTest2("i<0,10>;u<0,10>;i<0,15>;u<0,15>;i<0,3>;",
-                Table2::KEY01, Table2::DEFAULT_SIZE,
-                Table2::KEY0, 1, "MAX",
+                Table2::theKey(CommonTable::KEY01), Table2::DEFAULT_SIZE,
+                Table2::theKey(CommonTable::KEY0), 1, "MAX",
                 __LINE__),
     
     intAggTest2("i<0,10>;u<0,10>;i<0,5>;i<0,15>;u<0,15>;",
-                Table2::KEY01, Table2::DEFAULT_SIZE,
-                Table2::KEY0, 1, "MAX",
+                Table2::theKey(CommonTable::KEY01), Table2::DEFAULT_SIZE,
+                Table2::theKey(CommonTable::KEY0), 1, "MAX",
                 __LINE__),
     
     intAggTest2("i<0,10>;u<0,10>;i<0,10>;",
-                Table2::KEY01, Table2::DEFAULT_SIZE,
-                Table2::KEY0, 1, "MAX",
+                Table2::theKey(CommonTable::KEY01), Table2::DEFAULT_SIZE,
+                Table2::theKey(CommonTable::KEY0), 1, "MAX",
                 __LINE__),
 
     intAggTest2("i<0,10>;u<0,10>;d<0,10>;u<0,null>;",
-                Table2::KEY01, Table2::DEFAULT_SIZE,
-                Table2::KEY0, 1, "MAX",
+                Table2::theKey(CommonTable::KEY01), Table2::DEFAULT_SIZE,
+                Table2::theKey(CommonTable::KEY0), 1, "MAX",
                 __LINE__),
 
 
@@ -1386,8 +1390,8 @@ testTable2::testAggregates()
                 "d<0,5>;u<0,2U>;d<1,5>;u<1,1U>;d<0,10>;u<0,1U>;"
                 // Run down to 0
                 "d<0,12>;u<0,0U>;d<1,8>;u<1,0U>;",
-                Table2::KEY01, Table2::DEFAULT_SIZE,
-                Table2::KEY0, 1, "COUNT",
+                Table2::theKey(CommonTable::KEY01), Table2::DEFAULT_SIZE,
+                Table2::theKey(CommonTable::KEY0), 1, "COUNT",
                 __LINE__),
     
   };
@@ -1431,7 +1435,7 @@ testTable2::testIndexing()
   {
     //  First: tuples inserted can be looked up.  Tuples not inserted
     // cannot be looked up.  Create a very simple table
-    Table2 tbl("test_table", Table2::KEY0);
+    Table2 tbl("test_table", Table2::theKey(CommonTable::KEY0));
     for(uint i=0;
         i < SIZE/2;
         i++) { 
@@ -1449,7 +1453,7 @@ testTable2::testIndexing()
       t->append(Val_UInt32::mk(i % (SIZE/2)));
       t->append(Val_UInt32::mk(i));
       t->freeze();
-      BOOST_CHECK_MESSAGE(!tbl.lookup(Table2::KEY0, t)->done(),
+      BOOST_CHECK_MESSAGE(!tbl.lookup(Table2::theKey(CommonTable::KEY0), t)->done(),
                           "Table test. Lookup "
                           << i
                           << ".  Tuple is not in the table but should.");
@@ -1461,7 +1465,7 @@ testTable2::testIndexing()
       t->append(Val_UInt32::mk(i % (SIZE/2)));
       t->append(Val_UInt32::mk(i));
       t->freeze();
-      BOOST_CHECK_MESSAGE(tbl.lookup(Table2::KEY0, t)->done(),
+      BOOST_CHECK_MESSAGE(tbl.lookup(Table2::theKey(CommonTable::KEY0), t)->done(),
                           "Table test. Lookup "
                           << (i + SIZE/2)
                           << ".  Tuple is in the table but shouldn't");
@@ -1469,8 +1473,8 @@ testTable2::testIndexing()
   }
   {
     // Check secondary indices
-    Table2 tbl("test_table", Table2::KEY0, SIZE);
-    tbl.secondaryIndex(Table2::KEY4);
+    Table2 tbl("test_table", Table2::theKey(CommonTable::KEY0), SIZE);
+    tbl.secondaryIndex(Table2::theKey(CommonTable::KEY4));
     for(uint i = 0;
         i < SIZE;
         i++) { 
@@ -1489,7 +1493,7 @@ testTable2::testIndexing()
       t->append(Val_UInt32::mk(i));
       t->append(Val_UInt32::mk(i));
       t->freeze();
-      Table2::Iterator iter = tbl.lookup(Table2::KEY4, t);
+      Table2::Iterator iter = tbl.lookup(Table2::theKey(CommonTable::KEY4), t);
       for (uint counter = 0;
            counter < 4;
            counter++) {
@@ -1515,7 +1519,7 @@ void
 testTable2::testAvoidIndexTail()
 {
   // We are using the pattern from the bug that triggered this test
-  Table2 table("coordinator", Table2::KEY1,
+  Table2 table("coordinator", Table2::theKey(CommonTable::KEY1),
                Table2::DEFAULT_SIZE, Table2::DEFAULT_EXPIRATION);
 
   TuplePtr c10000 = Tuple::mk();
@@ -1547,7 +1551,7 @@ testTable2::testAvoidIndexTail()
   per->append(Val_Int32::mk(0));
   per->freeze();
 
-  Table2::Iterator i = table.lookup(Table2::KEY1, per);
+  Table2::Iterator i = table.lookup(Table2::theKey(CommonTable::KEY1), per);
   BOOST_CHECK_MESSAGE(!i->done(),
                       "Lookup of per tuple should return at least "
                       << "one single result");
@@ -1585,7 +1589,7 @@ testTable2::testBatchRemovals()
   }
   
   // Create a unique index on first field
-  Table2 tbl("test_table", Table2::KEY0, SIZE);
+  Table2 tbl("test_table", Table2::theKey(CommonTable::KEY0), SIZE);
   for(uint i = 0;
       i < SIZE;
       i++) { 
@@ -1602,7 +1606,7 @@ testTable2::testBatchRemovals()
   for(uint i = 0;
       i< SIZE;
       i++) { 
-    BOOST_CHECK_MESSAGE(tbl.lookup(Table2::KEY0, tpls[i])->done(),
+    BOOST_CHECK_MESSAGE(tbl.lookup(Table2::theKey(CommonTable::KEY0), tpls[i])->done(),
                         "Table test. Lookup of removed tuple "
                         << tpls[i]->toString()
                         << " should return no results.");
@@ -1629,7 +1633,7 @@ testTable2::testBatchMultikeyRemovals()
   }
   
   // Create a unique index on first two fields
-  Table2 tbl("test_table", Table2::KEY01, 200);
+  Table2 tbl("test_table", Table2::theKey(CommonTable::KEY01), 200);
   for(uint i = 0;
       i < SIZE;
       i++) { 
@@ -1646,7 +1650,7 @@ testTable2::testBatchMultikeyRemovals()
   for(uint i = 0;
       i< SIZE;
       i++) { 
-    BOOST_CHECK_MESSAGE(tbl.lookup(Table2::KEY01, tpls[i])->done(),
+    BOOST_CHECK_MESSAGE(tbl.lookup(Table2::theKey(CommonTable::KEY01), tpls[i])->done(),
                         "Table test. Lookup of removed tuple "
                         << tpls[i]->toString()
                         << " should return no results.");
@@ -1674,8 +1678,8 @@ testTable2::testUniqueTupleRemovals()
   }
   
   // Create a unique index on all five fields
-  Table2 tbl("test_table", Table2::KEY01234, SIZE);
-  tbl.secondaryIndex(Table2::KEY1);
+  Table2 tbl("test_table", Table2::theKey(CommonTable::KEY01234), SIZE);
+  tbl.secondaryIndex(Table2::theKey(CommonTable::KEY1));
   for(uint i = 0;
       i < SIZE;
       i++) { 
@@ -1692,7 +1696,7 @@ testTable2::testUniqueTupleRemovals()
   for(uint i = 0;
       i< SIZE;
       i++) { 
-    BOOST_CHECK_MESSAGE(tbl.lookup(Table2::KEY01234, tpls[i])->done(),
+    BOOST_CHECK_MESSAGE(tbl.lookup(Table2::theKey(CommonTable::KEY01234), tpls[i])->done(),
                         "Table test. Lookup of removed tuple "
                         << tpls[i]->toString()
                         << " should return no results.");
@@ -1709,7 +1713,7 @@ testTable2::testPseudoRandomInsertDeleteSequences()
     // Create a table with fixed lifetime but no size
     boost::posix_time::
       time_duration expiration(boost::posix_time::milliseconds(200));
-    Table2 t("succ", Table2::KEY2, Table2::NO_SIZE, expiration);
+    Table2 t("succ", Table2::theKey(CommonTable::KEY2), Table2::NO_SIZE, expiration);
     for (uint i = 0;
          i < SIZE + EXTRA_TUPLES;
          i++) {
@@ -1752,7 +1756,7 @@ testTable2::testPseudoRandomInsertDeleteSequences()
   }
   {
     // Create a table with fixed size but not lifetime
-    Table2 t("succ", Table2::KEY2, 100, Table2::NO_EXPIRATION);
+    Table2 t("succ", Table2::theKey(CommonTable::KEY2), 100, Table2::NO_EXPIRATION);
     for (uint i = 0;
          i < SIZE + EXTRA_TUPLES;
          i++) {
@@ -1797,7 +1801,7 @@ testTable2::testPseudoRandomInsertDeleteSequences()
     // Create a table with fixed lifetime and size
     boost::posix_time::
       time_duration expiration(boost::posix_time::milliseconds(200));
-    Table2 t("succ", Table2::KEY2, 100, expiration);
+    Table2 t("succ", Table2::theKey(CommonTable::KEY2), 100, expiration);
     for (uint i = 0;
          i < SIZE + EXTRA_TUPLES;
          i++) {
@@ -1847,6 +1851,12 @@ testTable2::testPseudoRandomInsertDeleteSequences()
 testTable2_testSuite::testTable2_testSuite()
   : boost::unit_test_framework::test_suite("testTable2: Marshaling/Unmarshaling")
 {
+  // Ensure the aggregate functions are initialized
+  AggMin::ensureInit();
+  AggMax::ensureInit();
+  AggCount::ensureInit();
+
+
   boost::shared_ptr<testTable2> instance(new testTable2());
   
   add(BOOST_CLASS_TEST_CASE(&testTable2::testAggregates, instance));

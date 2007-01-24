@@ -34,10 +34,13 @@ public:
   /** The constructor takes the name of the element instance, the name
       of the aggregation function applied, the field number on which to
       apply the aggregation function with regards to the expected input
-      schema received from the inner graph on input 1. */
+      schema received from the inner graph on input 1.  When starAgg is
+      true, then the aggregation is not done on a field but on the whole
+      tuple coming in from the input. */
   Aggwrap2(std::string name,
            std::string aggregateFunctionName,
            uint32_t aggfield,
+           bool starAgg,
            std::string resultTupleName);
 
 
@@ -100,6 +103,10 @@ private:
 
   /** The aggregated field number of my internal inputs */
   uint32_t _aggField;
+
+
+  /** Is my aggregate expression a DONT_CARE? */
+  bool _starAgg;
 
 
   /** My number of joins registered so far */
@@ -172,10 +179,6 @@ private:
   ////////////////////////////////////////////////////////////
   // Subordinate state, reset by state transitions
   ////////////////////////////////////////////////////////////
-
-  /** The next join I'm expecting a conclusion from */
-  int _curJoin;
-
 
   /** Have I seen any matching tuples for the current aggregate? */
   bool _seenTuples;

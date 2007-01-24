@@ -108,11 +108,6 @@ readScript(string fileName,
   }
 }
 
-void watch(TuplePtr tp)
-{
-  TELL_INFO << tp->toString() << std::endl;
-}
-
 static char* USAGE = "Usage:\n\t runOverLog2\n"
                      "\t\t[-o <overLogFile> (default: standard input)]\n"
                      "\t\t[-r <loggingLevel> (default: ERROR)]\n"
