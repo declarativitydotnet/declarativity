@@ -40,6 +40,7 @@
 #include "val_str.h"
 #include "val_null.h"
 #include "loop.h"
+#include <boost/bind.hpp>
 
 Aggwrap2::Aggwrap2(std::string name,
                    std::string aggregateFunctionName,
@@ -63,8 +64,13 @@ Aggwrap2::Aggwrap2(std::string name,
 {
   ELEM_WORDY("Creating aggwrap "
              << name
+             << " on agg function "
+             << aggregateFunctionName
              << " with aggregate field number "
-             << aggfield);
+             << aggfield
+             << (starAgg ? "starred " : "not starred ")
+             << "resulting in tuples of name "
+             << resultTupleName);
 
   try {
     _aggregateFn = AggFactory::mk(aggregateFunctionName);

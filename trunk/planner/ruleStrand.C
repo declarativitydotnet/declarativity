@@ -19,6 +19,74 @@
 #include "timedPullPush.h"
 #include "planner.h"
 
+RuleStrand::RuleStrand(ECA_Rule* rule, string strandID)
+  : _eca_rule(rule)
+{
+  _ruleID = rule->_ruleID;
+  _strandID = strandID; 
+  _aggWrapFlag = false;
+}
+
+
+Parse_Event::Event
+RuleStrand::eventType() 
+{
+  return _eca_rule->_event->_event;
+}
+
+
+Parse_Action::Action
+RuleStrand::actionType() 
+{
+  return _eca_rule->_action->_action;
+}
+
+
+ElementSpecPtr
+RuleStrand::getEventElement() 
+{
+  return _elementChain.at(0);
+}
+
+
+ElementSpecPtr
+RuleStrand::getFirstElement()
+{ 
+  if (!_aggWrapFlag) {
+    return getEventElement(); 
+  } else {
+    return _aggWrapperSpec;
+  }
+}
+
+
+ElementSpecPtr
+RuleStrand::getActionElement() 
+{
+  return _elementChain.at(_elementChain.size() - 1);
+}
+
+
+string
+RuleStrand::getRuleID()
+{
+  return _ruleID;
+}
+
+string
+RuleStrand::getStrandID()
+{
+  return _strandID;
+}
+
+
+ECA_Rule*
+RuleStrand::getRule()
+{
+  return _eca_rule;
+}
+
+
 string
 RuleStrand::eventFunctorName() 
 { 

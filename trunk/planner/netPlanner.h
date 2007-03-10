@@ -62,6 +62,8 @@
 #include "tupleseq.h"
 
 #include "ruleStrand.h"
+#include "stageStrand.h"
+
 #define QUEUESIZE 1000
 
 class NetPlanner
@@ -73,7 +75,14 @@ public:
 
   ~NetPlanner() { }; 
   void generateNetworkElements(boost::shared_ptr<Udp> udp);
-  void registerAllRuleStrands(std::vector<RuleStrand*>);
+
+
+  /** Push all strands between a demux and a round robin. */
+  void
+  registerAllRuleStrands(std::vector< RuleStrand* >,
+                         std::vector< StageStrand* >);
+
+
   string toString();
 
   class ReceiverInfo {
@@ -92,7 +101,7 @@ private:
   void generateNetworkOutElements(boost::shared_ptr<Udp> udp);
   void generateNetworkInElements(boost::shared_ptr<Udp> udp);
 
-  ElementSpecPtr _unBoxWrapAround;
+  ElementSpecPtr _wrapAroundSendDemux;
   string _nodeID;
   Plumber::DataflowPtr _conf;
   std::vector<ElementSpecPtr> _networkIn, _networkOut;

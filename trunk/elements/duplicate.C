@@ -13,6 +13,7 @@
  */
 
 #include "duplicate.h"
+#include <boost/bind.hpp>
 
 Duplicate::Duplicate(string name, int outputs)
   : Element(name, 1, outputs),

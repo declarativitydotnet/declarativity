@@ -1,4 +1,3 @@
-
 /*
  * @(#)$Id$
  *
@@ -26,44 +25,47 @@
 class RuleStrand
 {
 public:  
-  RuleStrand(ECA_Rule* rule, string strandID) :
-    _eca_rule(rule)
-  { _ruleID = rule->_ruleID; _strandID = strandID; 
-  _aggWrapFlag = false; }; 
+  RuleStrand(ECA_Rule* rule, string strandID);
 
-  string toString();
+  string
+  toString();
 
-  string eventFunctorName(); 
+  string
+  eventFunctorName(); 
 
-  string actionFunctorName(); 
+  string
+  actionFunctorName(); 
   
-  Parse_Event::Event eventType() 
-  { return _eca_rule->_event->_event; }
+  Parse_Event::Event
+  eventType();
 
-  Parse_Action::Action actionType() 
-  { return _eca_rule->_action->_action; }
+  Parse_Action::Action
+  actionType();
 
-  ElementSpecPtr getEventElement() 
-  { return _elementChain.at(0); }
+  ElementSpecPtr
+  getEventElement();
 
-  ElementSpecPtr getFirstElement()
-  { 
-    if (_aggWrapFlag == false) {
-      return getEventElement(); 
-    }
-    return _aggWrapperSpec;
-  }
+  ElementSpecPtr
+  getFirstElement();
 
-  ElementSpecPtr getActionElement() 
-  { return _elementChain.at(_elementChain.size() - 1); }
+  ElementSpecPtr
+  getActionElement();
 
-  void aggWrapperElement(Plumber::DataflowPtr conf, ElementSpecPtr aggWrapperSpec);
+  void
+  aggWrapperElement(Plumber::DataflowPtr conf, ElementSpecPtr aggWrapperSpec);
 
-  void addElement(Plumber::DataflowPtr conf, ElementSpecPtr elementSpecPtr);
+  void
+  addElement(Plumber::DataflowPtr conf, ElementSpecPtr elementSpecPtr);
 
-  string getRuleID() { return _ruleID; }
-  string getStrandID() { return _strandID; }
-  ECA_Rule* getRule() { return _eca_rule; }
+  string
+  getRuleID();
+
+  string
+  getStrandID();
+
+  ECA_Rule*
+  getRule();
+
 
 private:
   std::vector<ElementSpecPtr> _elementChain;

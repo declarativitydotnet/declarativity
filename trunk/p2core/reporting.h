@@ -44,9 +44,9 @@ public:
 
   
 private:
-  static std::map< std::string, Reporting::Level > _levelFromName;
+  static std::map< std::string, Reporting::Level >* _levelFromName;
 
-  static std::map< Reporting::Level, std::string > _levelToName;
+  static std::map< Reporting::Level, std::string >* _levelToName;
 
   /** The wordy stream */
   static std::ostream* _wordy;
@@ -143,7 +143,7 @@ private:
 
 
   /** The leaky stream buffer */
-  static LeakyStreambuf _leakyStreambuf;
+  static LeakyStreambuf* _leakyStreambuf;
 
 
   /** The null stream */

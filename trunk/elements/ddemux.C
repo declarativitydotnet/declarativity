@@ -11,6 +11,7 @@
  */
 
 #include "ddemux.h"
+#include <boost/bind.hpp>
 
 DDemux::DDemux(string name, std::vector<ValuePtr> keys,
                unsigned inputFieldNo)

@@ -1,4 +1,15 @@
 #!@PYTHON@
+##
+## This file is distributed under the terms in the attached LICENSE file.
+## If you do not find this file, copies can be found by writing to:
+## Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+## Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+## Or
+## UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+## Berkeley, CA,  94707. Attention: P2 Group.
+## 
+## DESCRIPTION: Non-incremental dissemination agent for Planetlab
+##
 import xmlrpclib
 import sys
 import os
@@ -8,14 +19,15 @@ import socket
 import getpass
 import time
 import traceback
+import random
 
 p2rpmversion = "@VERSION@"
 p2rpm = "p2-" + p2rpmversion + "-0.i386.rpm"
 
 #File classes
 planetlabfile_root = ["python/scripts/monolithic.py",
-                  	"python/scripts/p2monolithic"]
-planetlabfileinstall = "sudo mv ~/p2monolithic /etc/rc.d/init.d/;"
+                      "python/scripts/p2monolithic"]
+planetlabfileinstall = "chmod 755 p2monolithic"
 
 
 #p2rpmfiles_root = ["rpms/" + p2rpm]
@@ -41,62 +53,98 @@ planetlabfile = []
 
 
 
-startup =  "echo \`hostname\` is restarting; sudo /sbin/service p2monolithic restart"
-stop    =  "echo \`hostname\` is stopping; sudo /sbin/service p2monolithic stop"
+startup =  "echo \`hostname\` is restarting; ./p2monolithic restart"
+stop    =  "echo \`hostname\` is stopping; ./p2monolithic stop"
 
 def print_usage():
     print """
-Usage: setupMonolithic.py [-d] [-a] [-t pingCheckPort] [-j <parallel>] [-(i|I)] [-k] \\
-                 -s seed -g generatorScript -o <overlog>] \\
-                 [-m master_addr -P node_port -p master_port -u username -w password] \\
-                 -r rootDir(i.e., phi/phi/) -n <slice_name> [<planetLabNode>]"""
+Usage: setupMonolithic.py -d  //deallocate all slide nodes
+                 [-u username (ask user)]
+                 [-w password (ask user)]
+                 -n <slice_name>
+or:    setupMonolithic.py -a  //allocate all nodes to slice
+                 [-u username (ask user)]
+                 [-w password (ask user)]
+                 -n <slice_name>
+or:    setupMonolithic.py -k  //kill all nodes in slice
+                 [-u username (ask user)]
+                 [-w password (ask user)]
+                 -n <slice_name>
+                 [-z <planetLabNode>] // exclude from action
+                 [-l <planetLabNode>] // include in action
+or:    setupMonolithic.py -c  //setup all nodes in slice
+                 [-i]         //install new executables
+                 [-I]         //install everything
+                 [-t pingCheckPort (10001)]
+                 [-j <parallel>] //how many nodes at a time?
+                 [-s seed (0)]
+                 [-g generatorScript (cpp)]
+                 -o <overlog>
+                 -x <runOverLog file>
+                 [-p <port> (10000)]
+                 [-u username (ask user)]
+                 [-w password (ask user)]
+                 [-r rootDir(i.e., phi/phi/) (.)]
+                 [-D<key>=<value>]
+                 -n <slice_name>
+                 [-z <planetLabNode>] // exclude from action
+                 [-l <planetLabNode>] // include in action
+or:    setupMonolithic.py -h  //Usage hints (this page)
+"""
 
 def parse_cmdline(argv):
-    shortopts = "s:daIikn:j:o:D:m:p:t:u:w:r:P:"
+    shortopts = "dakchs:Iij:o:D:n:p:t:u:w:r:g:x:z:l:"
 
     flags = {"dealloc" : False,
              "alloc" : False,
-             "pingPort" : 0,
-             "overlog" : "",
              "kill" : False,
-             "slice" : None,
-             "seed" : 0,
-             "parallel" : 1,
-             "env" : {},
-             "install" : False,
-             "all_install" : False,
+             "create" : False,
              "email" : None,
              "password" : None,
-             "master_addr" : None,
-             "master_port" : None,
-             "node_port" : None,
-             "root" : "."}
+             "install" : False,
+             "all_install" : False,
+             "slice" : None,
+             "pingPort" : 10001,
+             "parallel" : 1,
+             "seed" : 0,
+             "generator" : None,
+             "overlog" : None,
+             "port" : 10000,
+             "root" : ".",
+             "env" : {},
+             "help" : False,
+             "exclude" : [],
+             "include" : [],
+             "executable" : None}
 
     opts, args = getopt.getopt(argv[1:], shortopts)
     for o, v in opts:
-        if   o == "-n": flags["slice"]       = v
-        elif o == "-j": flags["parallel"]    = int(v)
-        elif o == "-i": flags["install"]     = True
-        elif o == "-I": flags["all_install"] = True
-        elif o == "-k": flags["kill"]        = True
-        elif o == "-a": flags["alloc"]       = True
-        elif o == "-d": flags["dealloc"]     = True
-        elif o == "-o": flags["overlog"]     = v
-        elif o == "-m": flags["master_addr"] = v
-        elif o == "-p": flags["master_port"] = v
-        elif o == "-P": flags["node_port"] = v
-        elif o == "-t": flags["pingPort"] = int(v)
+        if   o == "-a": flags["alloc"] = True
+        elif o == "-d": flags["dealloc"] = True
+        elif o == "-k": flags["kill"] = True
+        elif o == "-c": flags["create"] = True
+        elif o == "-n": flags["slice"] = v
         elif o == "-u": flags["email"] = str(v)
-        elif o == "-s": flags["seed"] = int(v)
         elif o == "-w": flags["password"] = str(v)
+        elif o == "-i": flags["install"] = True
+        elif o == "-I": flags["all_install"] = True
+        elif o == "-t": flags["pingPort"] = int(v)
+        elif o == "-j": flags["parallel"] = int(v)
+        elif o == "-s": flags["seed"] = int(v)
+        elif o == "-g": flags["generator"] = str(v)
+        elif o == "-o": flags["overlog"] = v
+        elif o == "-p": flags["port"] = v
         elif o == "-r": flags["root"] = str(v)
+        elif o == "-x": flags["executable"] = str(v)
+        elif o == "-z": flags["exclude"].append(str(v))
+        elif o == "-l": flags["include"].append(str(v))
         elif o == "-D": 
-            d = v.split("=", 1)
-            flags["env"][d[0]] = d[1].replace("\"", "\\\"")
+          d = v.split("=", 1)
+          flags["env"][d[0]] = d[1].replace("\"", "\\\"")
+        elif o == "-h": flags["help"] = True
         else:
-            print "Unrecognized option %s\n" % o
-            print_usage()
-            exit(3)
+          print "Unhandled option %s\n" % o
+          sys.exit(3)
 
     # Initialize all paths with root directory
     for file in otherrpmfiles_root:
@@ -105,8 +153,12 @@ def parse_cmdline(argv):
         p2rpmfiles.append("%s/%s" % (flags["root"], file))
     for file in planetlabfile_root:
         planetlabfile.append("%s/%s" % (flags["root"], file))
+    planetlabfile.append(flags["executable"])
 
     return flags, args
+
+
+
 
 def getNodes():
   nodes = server.SliceNodesList(auth, flags["slice"])
@@ -167,42 +219,61 @@ def allocNodes():
     print "Allocating %d nodes." % len(nodes)
     server.SliceNodesAdd(auth, flags["slice"], nodes)
 
-def startNode(node):
+
+
+
+def startNode(node, envs):
+  print "Starting node %s with environment %s" % (node, str(envs))
+  mySeed = random.randint(0, sys.maxint)
   pid = os.fork()
   if pid == 0:
     # What's the seed of this node?
-    mySeed = randint(0, sys.maxint)
 
     # Generate overlog file for this node
-    nodeOverlog = "%s.%s" % (node, flags["overlog"])
-    command = "%s %s %s > %s" % (flags["generator"], flags["overlog"],
-                                 mySeed, nodeOverlog)
-    os.system(command)
-
-    
+    nodeOverlog = "%s.%s" % (node, flags["overlog"].split("/")[-1])
+    if flags["generator"]:
+      command = "%s %s %s %s %s %s %s" % (flags["generator"],
+                                          flags["overlog"],
+                                          mySeed,
+                                          node,
+                                          flags["port"],
+                                          nodeOverlog,
+                                          envs)
+      os.system(command)
+    else:
+      # Just run CPP
+      command = "cpp -P -C %s %s %s" % (envs, \
+                                        flags["overlog"], \
+                                        nodeOverlog)
+      os.system(command)
+      
     # Setup the node
+    planetlabfile.append(nodeOverlog)
+
     install_files = planetlabfile
     install_cmd   = planetlabfileinstall
+    install_files.extend(otherrpmfiles)
+    install_files.extend(p2rpmfiles)
     if flags["all_install"]:
-        install_files.extend(otherrpmfiles)
         install_cmd += otherrpminstall
-        install_files.extend(p2rpmfiles)
         install_cmd += p2rpminstall
     if flags["install"]:
-        install_files.extend(p2rpmfiles)
         install_cmd += p2rpminstall
 
-    install_files.append(nodeOverlog)
 
 
     filelist = ""
     for file in install_files:
         filelist += file + " "
-#    print "Copying files '%s' to node %s'\n" % (filelist, node)
-    os.system("rsync %s %s@%s: >& /dev/null" % (filelist, flags["slice"], node))  
+    command = "rsync %s %s@%s: >& /dev/null" % (filelist, flags["slice"], node)
+    print "Resyncing with %s" % command
+    os.system(command)
+    
+    #    print "Executing command(s) '%s' at node %s\n" % (install_cmd, node)
 
-#    print "Executing command(s) '%s' at node %s\n" % (install_cmd, node)
-    os.system("ssh -l %s %s \"%s\" >& /dev/null" % (flags["slice"], node, install_cmd))
+    command = "ssh -l %s %s \"%s\" >& /dev/null" % (flags["slice"], node, install_cmd)
+    print "Executing with %s\n" % command
+    os.system(command)
 
 
     start = startup + " " + \
@@ -210,13 +281,15 @@ def startNode(node):
             str(flags["slice"]) + " " + \
             flags["port"] + " " + \
             str(flags["pingPort"]) + " " + \
-            mySeed
+            str(mySeed) + " "
 
     pong = False
     for i in range(2):
       #      print "Starting node %s with command: %s" % (node, start)
-      os.system("ssh -f -l %s %s \"%s\" ; true ; true ;" % \
-                (flags["slice"], node, start+" "+flags["overlog"].split("/")[-1]))
+      command = "ssh -f -l %s %s \"%s\" ; true ; true ;" % \
+                (flags["slice"], node, start)
+      print "Starting with %s\n" % command
+      os.system(command)
       if flags["pingPort"] > 0:
         pong = False
         for i in range(5):
@@ -251,7 +324,7 @@ def timeoutHandler(signum, frame):
 def stopNode(node):
   pid = os.fork()
   if pid == 0:
-    os.system("ssh -l %s %s \"%s\" >& /dev/null" % (flags["slice"], node, stop))
+    os.system("ssh -l %s %s \"%s\"" % (flags["slice"], node, stop))
     sys.exit(0)
   return pid
 
@@ -266,19 +339,43 @@ if __name__ == "__main__":
       print '-'*60
       print_usage()
       sys.exit(1)
-  if not flags["slice"]:
+  if flags["help"]:
+    print_usage()
+    sys.exit(0)
+  if len(args) > 0:
+    print "No loose arguments are expected (%s). Everything should be an \
+    option.\n" % str(args)
     print_usage()
     sys.exit(1)
 
-  seed(flags["seed"])
-  pids  = {}
+
+  # Sanity checks
+  choices = (flags["dealloc"]) \
+            + (flags["alloc"]) \
+            + (flags["kill"]) \
+            + (flags["create"])
+  if choices != 1:
+    print "Must have exactly one of -d, -a, -k, -c, or -h"
+    print_usage()
+    sys.exit(1)
+  if not flags["slice"]:
+    print "Must have a slice name (with -n)"
+    print_usage()
+    sys.exit(1)
+  if flags["create"] and (not flags["overlog"] or not flags["executable"]):
+    print "Must have an overlog and an executable file name to start an experiment"
+    print_usage()
+    sys.exit(1)
+    
+
+  #Fetch username and password (for all instances of the command)
   auth  = {}
   auth['AuthMethod'] = "anonymous"
   server = xmlrpclib.Server('https://www.planet-lab.org/PLCAPI/')
-  if (not flags["email"]) or (not flags["password"]):
+  if (not flags["email"]):
     flags["email"]    = raw_input("PlanetLab Login: ") 
+  if (not flags["password"]):
     flags["password"] = getpass.getpass() 
-
   if flags["email"] and flags["password"]:
     auth['Username'] = flags["email"] 
     # always 'password', for password based authentication
@@ -291,48 +388,59 @@ if __name__ == "__main__":
       print "You are not authorized to access planetlab's slice management interface!"
       sys.exit(1)
 
-  if flags["overlog"]:
-    try:
+
+  #Now figure which command we're running
+  if flags["dealloc"]:
+    deallocNodes()
+    sys.exit(0)
+  elif flags["alloc"]:
+    allocNodes()
+    sys.exit(0)
+  elif flags["kill"] or flags["create"]:
+    allNodes = []
+    excluded = set(flags["exclude"])
+    if len(flags["include"]) > 0:
+      # We have explicit nodes we're talking to
+      for node in flags["include"]:
+        if (node not in excluded):
+          allNodes.append(node)
+    else:
+      siteNodes = getNodes()
+      for n in siteNodes:
+        nodeid   = n[0]
+        hostname = n[1]
+        if (hostname not in excluded):
+          allNodes.append(hostname)
+
+    #Now allNodes contains all the nodes we want to talk to
+    print "Will address nodes %s\n" % (str(allNodes))
+    pids  = {}
+    if flags["kill"]:
+      for node in allNodes:
+        pids[stopNode(node)] = node
+        if len(pids) >= flags["parallel"]:
+          p, s = os.wait()
+          # print "\tJob finished on planetLab node %s!" % pids[p]
+          del pids[p]
+    else:
+      random.seed(flags["seed"])
+      
+      envs = ""
+      # Set up the definitions string
       if flags["env"]:
         envs = ""
         env = flags["env"]
         for var in env:
-            envs += "-D" + var + "=" + env[var] + " "
-        os.system("cpp -P %s %s %s.processed" % \
-                  (envs, flags["overlog"], flags["overlog"]))
-      else:
-        os.system("cpp -P %s %s.processed" % (flags["overlog"], flags["overlog"]))
-      flags["overlog"] = "%s.processed" % flags["overlog"]
-    except:
-      print "ERROR: open file error on file", flags["overlog"]
-
-  if flags["alloc"]:
-    allocNodes()
-  elif flags["dealloc"]:
-    deallocNodes()
-  elif len(args) > 0:
-    if flags["kill"]:
-      pid = stopNode(args[0])
-    else:
-      pid = startNode(args[0])
-    p, s = os.wait()
-  else:
-    nodes = getNodes()
-    for n in nodes:
-      nodeid   = n[0]
-      hostname = n[1]
-      if flags["kill"]:
-        # print "PlanetLab P2 kill on node %s" % hostname
-        pids[stopNode(hostname)] = hostname
-      else:
-        # print "PlanetLab P2 install on node %s" % hostname
-        pids[startNode(hostname)] = hostname
-      if len(pids) >= flags["parallel"]:
-        p, s = os.wait()
-        # print "\tJob finished on planetLab node %s!" % pids[p]
-        del pids[p]
-
-    # Wait until everyone is done
+          envs += "-D" + var + "=" + env[var] + " "
+          
+      for node in allNodes:
+        pids[startNode(node, envs)] = node
+        if len(pids) >= flags["parallel"]:
+          p, s = os.wait()
+          # print "\tJob finished on planetLab node %s!" % pids[p]
+          del pids[p]
+      
+    #Now wait until they're done
     signal.signal(signal.SIGALRM, timeoutHandler)
     while pids:
       try:

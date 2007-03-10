@@ -149,12 +149,7 @@ ValuePtr Pel_VM::pop()
 uint64_t Pel_VM::pop_unsigned() 
 {
   ValuePtr t = stackTop(); stackPop();
-  try {
-    return Val_UInt64::cast(t);
-  } catch (Value::TypeError) {
-    error = PE_TYPE_CONVERSION;
-    return 0;
-  }
+  return Val_UInt64::cast(t);
 }
 
 //
@@ -163,12 +158,7 @@ uint64_t Pel_VM::pop_unsigned()
 int64_t Pel_VM::pop_signed() 
 {
   ValuePtr t = stackTop(); stackPop();
-  try {
-    return Val_Int64::cast(t);
-  } catch (Value::TypeError) {
-    error = PE_TYPE_CONVERSION;
-    return 0;
-  }
+  return Val_Int64::cast(t);
 }
 
 //
@@ -178,12 +168,7 @@ string Pel_VM::pop_string()
 {
   ValuePtr t = stackTop();
   stackPop();
-  try {
-    return Val_Str::cast(t);
-  } catch (Value::TypeError) {
-    error = PE_TYPE_CONVERSION;
-    return "";
-  }
+  return Val_Str::cast(t);
 }
 
 //
@@ -192,13 +177,7 @@ string Pel_VM::pop_string()
 boost::posix_time::ptime Pel_VM::pop_time() 
 {
   ValuePtr t = stackTop(); stackPop();
-  try {
-    return Val_Time::cast(t);
-  } catch (Value::TypeError) {
-    error = PE_TYPE_CONVERSION;
-    boost::posix_time::ptime t;
-    return t;
-  }
+  return Val_Time::cast(t);
 }
 
 //
@@ -207,13 +186,7 @@ boost::posix_time::ptime Pel_VM::pop_time()
 boost::posix_time::time_duration Pel_VM::pop_time_duration() 
 {
   ValuePtr t = stackTop(); stackPop();
-  try {
-    return Val_Time_Duration::cast(t);
-  } catch (Value::TypeError) {
-    error = PE_TYPE_CONVERSION;
-    boost::posix_time::time_duration t;
-    return t;
-  }
+  return Val_Time_Duration::cast(t);
 }
 
 //
@@ -222,12 +195,7 @@ boost::posix_time::time_duration Pel_VM::pop_time_duration()
 IDPtr Pel_VM::pop_ID() 
 {
   ValuePtr t = stackTop(); stackPop();
-  try {
-    return Val_ID::cast(t);
-  } catch (Value::TypeError) {
-    error = PE_TYPE_CONVERSION;
-    return ID::mk();
-  }
+  return Val_ID::cast(t);
 }
 
 //
@@ -236,12 +204,7 @@ IDPtr Pel_VM::pop_ID()
 double Pel_VM::pop_double() 
 {
   ValuePtr t = stackTop(); stackPop();
-  try { 
-    return Val_Double::cast(t);
-  } catch (Value::TypeError) {
-    error = PE_TYPE_CONVERSION;
-    return 0.0;
-  }
+  return Val_Double::cast(t);
 }
 
 //
@@ -304,6 +267,12 @@ Pel_VM::Error Pel_VM::execute_instruction( u_int32_t inst, TuplePtr data)
                  << oe.description()
                  << "\n";
       error = PE_OPER_UNSUP;
+      return error;
+    } catch (Value::TypeError te) {
+      TELL_ERROR << "Pel_VM casting failed: '"
+                 << te.what()
+                 << "\n";
+      error = PE_TYPE_CONVERSION;
       return error;
     }
   }
@@ -507,6 +476,14 @@ DEF_OP(T_SWALLOW) {
   ValuePtr swallowed = Val_Tuple::mk(operand);
   stackPush(swallowed);
 }
+
+DEF_OP(TYPEOF) { 
+  ValuePtr value = stackTop(); stackPop();
+  ValuePtr typeName = Val_Str::mk(string(value->typeName()));
+
+  stackPush(typeName);
+}
+
 
 /**
  * HASH OPERATIONS
@@ -847,6 +824,11 @@ DEF_OP(MOD) {
 //
 // Comparison operators
 //
+DEF_OP(TOTALCOMP) { 
+  ValuePtr v1 = pop();
+  ValuePtr v2 = pop();
+  stackPush(Val_Int32::mk(v1->compareTo(v2)));
+}
 DEF_OP(EQ) {
   ValuePtr v1 = pop();
   ValuePtr v2 = pop();
@@ -983,115 +965,9 @@ DEF_OP(TIME_DURATION_MINUS) {
  }
 
 //
-// ID operations.  Note that the '>' and '<' are reversed: think
-// about operand order on the stack!
-//
-DEF_OP(ID_LT) { 
-  IDPtr s1 = pop_ID();
-  IDPtr s2 = pop_ID();
-  stackPush(Val_Int32::mk(s2->compareTo(s1) < 0));
-}
-DEF_OP(ID_LTE) { 
-  IDPtr s1 = pop_ID();
-  IDPtr s2 = pop_ID();
-  stackPush(Val_Int32::mk(s2->compareTo(s1) <= 0));
-}
-DEF_OP(ID_GT) { 
-  IDPtr s1 = pop_ID();
-  IDPtr s2 = pop_ID();
-  stackPush(Val_Int32::mk(s2->compareTo(s1) > 0));
-}
-DEF_OP(ID_GTE) { 
-  IDPtr s1 = pop_ID();
-  IDPtr s2 = pop_ID();
-  stackPush(Val_Int32::mk(s2->compareTo(s1) >= 0));
-}
-DEF_OP(ID_EQ) { 
-  IDPtr s1 = pop_ID();
-  IDPtr s2 = pop_ID();
-  stackPush(Val_Int32::mk(s1->equals(s2)));
-}
-DEF_OP(ID_PLUS) {
-  stackPush(Val_ID::mk(pop_ID()->add(pop_ID())));
-}
-DEF_OP(ID_MINUSMINUS) {
-  stackPush(Val_ID::mk(ID::ONE->distance(pop_ID())));
-}
-DEF_OP(ID_LSL) {
-  uint32_t shift = pop_unsigned();
-  IDPtr id = pop_ID();
-  //TELL_WARN << "Left shift " << shift << " " << id->toString() << " " << id->shift(shift)->toString() << "\n";
-  stackPush(Val_ID::mk(id->lshift(shift)));
-}
-DEF_OP(ID_LSR) {
-  uint32_t shift = pop_unsigned();
-  IDPtr id = pop_ID();
-  stackPush(Val_ID::mk(id->rshift(shift)));
-}
-DEF_OP(ID_DIST) {
-  // Be careful of undefined evaluation order in C++!
-  IDPtr v1 = pop_ID();
-  IDPtr v2 = pop_ID();
-  //TELL_WARN << "Distance(" << v2->toString() << " to " << v1->toString() << "=" << v2->distance(v1)->toString() << "\n";
-  stackPush(Val_ID::mk(v2->distance(v1)));
-}
-DEF_OP(ID_BTWOO) {
-  IDPtr to = pop_ID();
-  IDPtr from = pop_ID();
-  IDPtr key = pop_ID();
-  //  TELL_WARN << key->toString() << "(" << from->toString() << "," << to->toString() << ") :" << key->betweenOO(from, to) << "\n";
-  stackPush(Val_Int32::mk(key->betweenOO(from, to)));
-}
-DEF_OP(ID_BTWOC) {
-  IDPtr to = pop_ID();
-  IDPtr from = pop_ID();
-  IDPtr key = pop_ID();
-  //  TELL_WARN << key->toString() << "(" << from->toString() << "," << to->toString() << "] :" << key->betweenOC(from, to) << "\n";
-  stackPush(Val_Int32::mk(key->betweenOC(from, to)));
-}
-DEF_OP(ID_BTWCO) {
-  IDPtr to = pop_ID();
-  IDPtr from = pop_ID();
-  IDPtr key = pop_ID();
-  stackPush(Val_Int32::mk(key->betweenCO(from, to)));
-}
-DEF_OP(ID_BTWCC) {
-  IDPtr to = pop_ID();
-  IDPtr from = pop_ID();
-  IDPtr key = pop_ID();
-  stackPush(Val_Int32::mk(key->betweenCC(from, to)));
-}
-
-//
 // String operations.  Note that the '>' and '<' are reversed: think
 // about operand order on the stack!
 //
-DEF_OP(STR_LT) { 
-  string s1 = pop_string();
-  string s2 = pop_string();
-  stackPush(Val_Int32::mk(s2 < s1));
-}
-DEF_OP(STR_LTE) { 
-  string s1 = pop_string();
-  string s2 = pop_string();
-  stackPush(Val_Int32::mk(s2 <= s1));
-}
-DEF_OP(STR_GT) { 
-  string s1 = pop_string();
-  string s2 = pop_string();
-  stackPush(Val_Int32::mk(s2 > s1));
-}
-DEF_OP(STR_GTE) { 
-  string s1 = pop_string();
-  string s2 = pop_string();
-  stackPush(Val_Int32::mk(s2 >= s1));
-}
-DEF_OP(STR_EQ) { 
-  string s1 = pop_string();
-  string s2 = pop_string();
-  //  TELL_WARN << s1 << "==?" << s2 << " is " << (s1==s2) << "\n";
-  stackPush(Val_Int32::mk(s2 == s1));
-}
 DEF_OP(STR_CAT) { 
   string s1 = pop_string();
   string s2 = pop_string();
@@ -1156,96 +1032,21 @@ DEF_OP(STR_CONV) {
 //
 // Integer arithmetic operations
 //
-DEF_OP(INT_NEG) {
-  stackPush(Val_Int64::mk(-pop_signed()));
-}
-DEF_OP(INT_PLUS) {
-  stackPush(Val_Int64::mk(pop_signed()+pop_signed()));
-}
-DEF_OP(INT_MINUS) {
-  // Be careful of undefined evaluation order in C++!
-  int64_t v1 = pop_signed();
-  int64_t v2 = pop_signed();
-  stackPush(Val_Int64::mk(v2 - v1));
-}
-DEF_OP(INT_MUL) {
-  stackPush(Val_Int64::mk(pop_signed()*pop_signed()));
-}
-DEF_OP(INT_DIV) {
-  // Be careful of undefined evaluation order in C++!
-  int64_t v1 = pop_signed();
-  int64_t v2 = pop_signed();
-  if (v1) { 
-    stackPush(Val_Int64::mk(v2 / v1));
-  } else if (error == PE_SUCCESS) {
-    error = PE_DIVIDE_BY_ZERO;
-  }
-}
 DEF_OP(INT_ABS) {
   stackPush(Val_Int64::mk(llabs(pop_signed())));
-}
-DEF_OP(INT_EQ) {
-  stackPush(Val_Int32::mk(pop_signed() == pop_signed()));
-}
-DEF_OP(INT_LT) { 
-  stackPush(Val_Int32::mk(pop_signed() > pop_signed())); 
-}
-DEF_OP(INT_LTE) { 
-  stackPush(Val_Int32::mk(pop_signed() >= pop_signed())); 
-}
-DEF_OP(INT_GT) { 
-  stackPush(Val_Int32::mk(pop_signed() < pop_signed())); 
-}
-DEF_OP(INT_GTE) { 
-  stackPush(Val_Int32::mk(pop_signed() <= pop_signed())); 
 }
 
 
 //
 // Floating-point arithmetic operations
 //
-DEF_OP(DBL_NEG) {
-  stackPush(Val_Double::mk(-pop_double()));
-}
-DEF_OP(DBL_PLUS) {
-  stackPush(Val_Double::mk(pop_double()+pop_double()));
-}
-DEF_OP(DBL_MINUS) {
-  // Be careful of undefined evaluation order in C++!
-  double v1 = pop_double();
-  double v2 = pop_double();
-  stackPush(Val_Double::mk(v2 - v1));
-}
-DEF_OP(DBL_MUL) {
-  stackPush(Val_Double::mk(pop_double()*pop_double()));
-}
-DEF_OP(DBL_DIV) {
-  // Be careful of undefined evaluation order in C++!
-  double v1 = pop_double();
-  double v2 = pop_double();
-  stackPush(Val_Double::mk(v2 / v1));
-}
-DEF_OP(DBL_EQ) {
-  stackPush(Val_Int32::mk(pop_double() == pop_double()));
-}
-DEF_OP(DBL_LT) { 
-  stackPush(Val_Int32::mk(pop_double() > pop_double())); 
-}
-DEF_OP(DBL_LTE) { 
-  stackPush(Val_Int32::mk(pop_double() >= pop_double())); 
-}
-DEF_OP(DBL_GT) { 
-  stackPush(Val_Int32::mk(pop_double() < pop_double())); 
-}
-DEF_OP(DBL_GTE) { 
-  stackPush(Val_Int32::mk(pop_double() <= pop_double())); 
-}
 DEF_OP(DBL_FLOOR) {
   stackPush(Val_Double::mk(floor(pop_double())));
 }
 DEF_OP(DBL_CEIL) {
   stackPush(Val_Double::mk(ceil(pop_double())));
 }
+
 
 //
 // Explicit Type conversions

@@ -19,6 +19,7 @@
 #include "loop.h"
 #include "val_str.h"
 #include "val_uint64.h"
+#include <boost/bind.hpp>
 
 TimedPullPush::TimedPullPush(string name,
                              double seconds,

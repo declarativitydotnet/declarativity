@@ -67,7 +67,10 @@ int Val_Null::compareTo(ValuePtr other) const
 // 
 void Val_Null::cast(ValuePtr v) { 
   if (v->typeCode() != Value::NULLV) {
-    throw Value::TypeError(v->typeCode(), Value::NULLV);
+    throw Value::TypeError(v->typeCode(),
+                           v->typeName(),
+                           Value::NULLV,
+                           "null");
   };
 }
 

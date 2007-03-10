@@ -77,7 +77,8 @@ FdbufPtr Val_Opaque::cast(ValuePtr v)
       return fb;
     }
   default:
-    throw Value::TypeError(v->typeCode(), Value::OPAQUE );
+    throw Value::TypeError(v->typeCode(), v->typeName(),
+                           Value::OPAQUE, "opaque");
   }
 }
   

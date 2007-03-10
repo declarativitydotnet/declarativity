@@ -205,7 +205,10 @@ boost::posix_time::ptime Val_Time::cast(ValuePtr v) {
       return pt;
     }
   default:
-    throw Value::TypeError(v->typeCode(), Value::TIME );
+    throw Value::TypeError(v->typeCode(),
+                           v->typeName(),
+                           Value::TIME,
+                           "time");
   }
 	
 }
@@ -384,7 +387,10 @@ boost::posix_time::time_duration Val_Time_Duration::cast(ValuePtr v) {
       return td;
     }
   default:
-    throw Value::TypeError(v->typeCode(), Value::TIME );
+    throw Value::TypeError(v->typeCode(),
+                           v->typeName(),
+                           Value::TIME,
+                           "time");
   }
 }
 

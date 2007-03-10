@@ -16,11 +16,13 @@ PINGPORT=$5
 SEED=$6
 
 start() {
-	sudo python /home/${SLICE}/monolithic.py -o /home/${SLICE}/${OVERLOG} -n ${SLICE} -p $PORT -t $PINGPORT -s ${SEED}> /home/${SLICE}/start.log 2>&1 &
+    rm -f /home/${SLICE}/start.log /home/${SLICE}/planetlab.log 
+    echo "python /home/${SLICE}/monolithic.py -o /home/${SLICE}/${OVERLOG} -n ${SLICE} -p $PORT -t $PINGPORT -s ${SEED}> /home/${SLICE}/start.log 2>&1 &"
+    python /home/${SLICE}/monolithic.py -o /home/${SLICE}/${OVERLOG} -n ${SLICE} -p $PORT -t $PINGPORT -s ${SEED}> /home/${SLICE}/start.log 2>&1 &
 }
 
 stop() {
-	sudo /usr/bin/killall -9 python runOverLog > /dev/null 2>&1
+    /usr/bin/killall -9 python runOverLog > /dev/null 2>&1
 }
 
 restart() {

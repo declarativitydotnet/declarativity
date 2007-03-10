@@ -1,3 +1,170 @@
+Monolithic Planner Machinery
+============================
+
+To use PlanetLab with a P2 application and the static planner (as
+executed by tests/runOverLog), please follow the following steps:
+
+- Get a PlanetLab slice <slice>, findd out your PlanetLab account
+username <username>, and password <password>.
+
+- Compile P2 with the same libc setup as PlanetLab runs.  Fedora Core 2
+is such a setup, but later distributions run a later version of libc and
+their executables will not run on PlanetLab.  Let <runOverLog> be that
+executable. 
+
+- Figure out what OverLog program you'd like to run, and what
+parametrizations you require (e.g., for landmark nodes and for other
+nodes).  The example we will use is doc/chord.olg.
+
+- Figure out what parametrizations need to happen on each node.  To
+automate this, produce a script <generator> in any language (we have
+used python in this example) to figure out how to parametrize the
+OverLog program. If you have no parametrizations, then just create an
+empty script.  The command line interface to the script should be:
+
+<generator> <sourceOverLogFilename> <random seed> <target hostname>
+            <target port> <parametrizedOverLogFilename>
+            [-Dkey=value]*
+
+In our example, doc/chord.generator.py is such a generator, whose task
+is to take the input doc/chord.olg and set it to use a single node as
+the landmark node, and set the node identifiers.
+
+- Use the python/scripts/setupMonolithic.py script to disseminate,
+start, and stop your experiments on PlanetLab.  The script offers a
+parallelism option (-j) whose argument determines how many nodes are
+processed by the script at the same time. Leaving the option absent is
+equivalent to "-j 1".  The script must have exactly one of 5 "actions":
+-h gives the command line options. -a tells the script to pull in as
+many nodes as it can to the slice given. -d removes all nodes from the
+slice. -k kills the P2 process on all nodes given in the script.  -c
+starts the P2 software on all nodes given in the script.
+
+   - Along with -c, the -i/-I option installs the necessary rpms on the
+     given nodes (in the rpms/ directory)
+
+   - If none of -z/-l options are given, all nodes in a slice will be
+     included in an action.  -z excludes nodes.  -l only includes nodes
+     explicitly.  Without -l, all nodes in the slice are included and
+     then any mention in -z are excluded.
+
+   - The script installs a short-term "ping port" to ensure all nodes
+     have been installed appropriately.  By default, this is port 10001,
+     but it can also set with the -t option.
+
+   - Run the script as follows:
+
+python python/scripts/setupMonolithic.py -n <slice> -o
+<SourceOverlogFilename> -u <username> -w <password> -j <parallelism> -g
+<generator script> [-Dkey=value]* -p portNumber -x <runOverLog>
+[-z <excluded node>]* [-l <included node>]*  {-a|-d|-c|-k}  [-i] [-I]
+
+For example, to install and start P2-chord on all nodes in a slice do:
+
+python python/scripts/setupMonolithic.py -n <slice> -o
+doc/chord.olg -u <username> -w <password> -j 4 -g
+doc/chord.python.py -DLANDMARK=\"<landmarkNode>:10000\" -p 10000
+-x <runOverLog> -c -I
+
+To run an updated version of chord.olg subsequently (without installing
+new RPMs) do
+
+python python/scripts/setupMonolithic.py -n <slice> -o
+doc/chord.olg -u <username> -w <password> -j 4 -g
+doc/chord.python.py -DLANDMARK=\"<landmarkNode>:10000\" -p 10000
+-x <runOverLog> -c
+
+To only start the landmark node do:
+
+python python/scripts/setupMonolithic.py -n <slice> -o
+doc/chord.olg -u <username> -w <password> -j 4 -g
+doc/chord.python.py -DLANDMARK=\"<landmarkNode>:10000\" -p 10000
+-x <runOverLog> -c -l <landmarkNode>
+
+To only start everyone in the slice but the landmark node do:
+
+python python/scripts/setupMonolithic.py -n <slice> -o
+doc/chord.olg -u <username> -w <password> -j 4 -g
+doc/chord.python.py -DLANDMARK=\"<landmarkNode>:10000\" -p 10000
+-x <runOverLog> -c -z <landmarkNode>
+
+To only start nodes n1, n2, and n3 do
+
+python python/scripts/setupMonolithic.py -n <slice> -o
+doc/chord.olg -u <username> -w <password> -j 4 -g
+doc/chord.python.py -DLANDMARK=\"<landmarkNode>:10000\" -p 10000
+-x <runOverLog> -c -l n1 -l n2 -l n3
+
+To kill all P2 instances in the slice do
+
+python python/scripts/setupMonolithic.py -n <slice> -o
+doc/chord.olg -u <username> -w <password> -j 4 -g
+doc/chord.python.py -DLANDMARK=\"<landmarkNode>:10000\" -p 10000
+-x <runOverLog> -k
+
+
+
+- Output for the installation/shutdown of a P2 instance appears in the
+start.log file on the target node.  Output of the P2 instance itself
+(e.g., printouts, diagnostics, etc.) appear in the planetlab.log file on
+the target node.
+
+
+
+
+
+
+
+
+
+ 
+
+>-----Original Message-----
+>From: Gautam Altekar [mailto:galtekar@cs.berkeley.edu]
+>Sent: Wednesday, January 24, 2007 2:27 PM
+>To: Maniatis, Petros
+>Subject: Re: Update
+>
+>Maniatis, Petros wrote:
+>> Hi Gautam,
+>>
+>> That's what I'm doing right now.  Typically, I compile the package on
+>an
+>> FC2 machine, and then just copy over the single executable.  The way
+>to
+>> avoid the whole libtool fiasco is to compile everything with the -
+>static
+>> flag. So do
+>>
+>> ./configure CXXFLAGS="-gdwarf-2 -DTRACE_OFF" LDFLAGS="-static"
+>>
+>> on an FC2 machine.  Then you can just copy over the tests/runOverLog
+>> file and you don't need anything else (other than the chord.olg or
+>> whatever of course).
+>>
+>> Alternatively, you can take my scripts and modify them to run
+>runOverLog
+>> within liblog.
+>>
+>> Would you like to take a look at them?
+>>
+>>
+>That would be great, Petros.
+>
+>Gautam
+>
+>
+>> Petros
+>>
+>>
+
+
+
+
+
+Incremental Planner Machinery
+=============================
+
 This directory contains a number of python scripts that setup and run 
 various P2 configurations. In this README file we describe these
 these scripts. All scripts rely on the P2 Python library. You must

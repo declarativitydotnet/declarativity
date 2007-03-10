@@ -13,6 +13,7 @@
  */
 
 #include "duplicateConservative.h"
+#include <boost/bind.hpp>
 
 DuplicateConservative::DuplicateConservative(string name, int outputs)
   : Element(name, 1, outputs),

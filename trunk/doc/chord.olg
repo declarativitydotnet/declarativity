@@ -10,7 +10,7 @@
  * DESCRIPTION: P2Chord in OverLog
  *
  * Execute first node with
- * tests/runOverLog -o doc/chord.olg -D LANDMARK=\"NIL\" -D LOCALADDRESS=\"<myhost>:<myport>\" -n <myhost> -p <myport> -D NODEID=<mynodeid>
+ * tests/runOverLog -o doc/chord.olg -D LANDMARK=\"<myhost>:<myport>\" -D LOCALADDRESS=\"<myhost>:<myport>\" -n <myhost> -p <myport> -D NODEID=<mynodeid>
  *
  * Execute joining nodes with
  * tests/runOverLog -o doc/chord.olg -D LANDMARK=\"<landmarkhost>:<landmarkport>\" -D LOCALADDRESS=\"<myhost>:<myport>\" -n <myhost> -p <myport> -D NODEID=<mynodeid>
@@ -22,7 +22,7 @@
  * watchmod(bestSucc, "id").
  * and run three nodes as follows:
  *
- * tests/runOverLog -o doc/chord.olg -D LANDMARK=\"NIL\" -D LOCALADDRESS=\"localhost:11111\" -n localhost -p 11111 -D NODEID=0x0I
+ * tests/runOverLog -o doc/chord.olg -D LANDMARK=\"localhost:11111\" -D LOCALADDRESS=\"localhost:11111\" -n localhost -p 11111 -D NODEID=0x0I
  * and then
  * 
  * tests/runOverLog -o doc/chord.olg -D LANDMARK=\"localhost:11111\" -D LOCALADDRESS=\"localhost:22222\" -n localhost -p 22222 -D NODEID=0x222222222222222I
@@ -81,11 +81,20 @@ l2 bestLookupDist(@NI,K,R,E,min<D>) :- node(@NI,N),
 					 D := K - B - 1, 
 					 B in (N,K).
 
-l3 lookup(min<@BI>,K,R,E) :- node(@NI,N),	    
+l3 forwardLookup(@NI, min<BI>,K,R,E) :- node(@NI,N),	    
 			       bestLookupDist(@NI,K,R,E,D),
 			       finger(@NI,I,B,BI), 
 			       D == K - B - 1,
 			       B in (N,K).
+
+/** This extra rule is required since l3 will produce an output even if
+there are no fingers available with a null min node. Rule l4 ensures
+that only non-trivial destinations receive a lookup message */
+
+l4 lookup(@BI, K, R, E) :- forwardLookup(@NI, BI, K, R, E),
+			f_typeOf(BI) != "null".
+
+
 
 /** Neighbor Selection */
 
@@ -166,12 +175,12 @@ c2 join(@NI,E) :- joinEvent(@NI,E).
 c3 joinReq(@LI,N,NI,E) :- joinEvent(@NI, E),
 	node(@NI, N), 
 	landmark(@NI, LI),
-	LI != "NIL".
+	LI != NI.
 
 c4 succ(@NI, N, NI) :- landmark(@NI, LI),
 	joinEvent(@NI, E),
 	node(@NI, N), 
-	LI == "NIL".
+	LI == NI.
 
 c5 lookup(@LI,N,NI,E) :- joinReq(@LI,N,NI,E).
 

@@ -34,6 +34,7 @@
 #include "val_double.h"
 #include "val_time.h"
 #include "testerr.h"
+#include <boost/bind.hpp>
 
 using namespace opr;
 

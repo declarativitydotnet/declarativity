@@ -14,6 +14,7 @@
 
 #include "mux.h"
 #include "loop.h"
+#include <boost/bind.hpp>
 
 Mux::Mux(string name,
          int noInputs)

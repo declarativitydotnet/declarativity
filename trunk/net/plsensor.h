@@ -22,6 +22,7 @@
 #include "loop.h"
 
 #include <boost/regex.hpp>
+#include <boost/bind.hpp>
 
 class PlSensor : public Element { 
   

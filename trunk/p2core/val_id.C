@@ -136,18 +136,25 @@ Val_ID::toConfString() const
 // Casting
 //  no negative values allowed
 //
-IDPtr Val_ID::cast(ValuePtr v) {
+IDPtr
+Val_ID::cast(ValuePtr v) {
   switch (v->typeCode()) {
   case Value::ID:
     return (static_cast<Val_ID *>(v.get()))->i;
   case Value::INT32: {
     if (Val_UInt32::cast(v) < 0)
-      throw Value::TypeError(v->typeCode(), Value::ID );
+      throw Value::TypeError(v->typeCode(),
+                             v->typeName(),
+                             Value::ID,
+                             "ID");
     return ID::mk(Val_UInt32::cast(v));
   }
   case Value::INT64: {
     if (Val_UInt64::cast(v) < 0)
-      throw Value::TypeError(v->typeCode(), Value::ID );
+      throw Value::TypeError(v->typeCode(),
+                             v->typeName(),
+                             Value::ID,
+                             "ID");
     return ID::mk(Val_UInt64::cast(v));
   }
   case Value::UINT32:
@@ -159,7 +166,10 @@ IDPtr Val_ID::cast(ValuePtr v) {
   case Value::STR:
     return ID::mk(Val_Str::cast(v));
   default:
-    throw Value::TypeError(v->typeCode(), Value::ID );
+    throw Value::TypeError(v->typeCode(),
+                           v->typeName(),
+                           Value::ID,
+                           "ID");
   }
 }
 

@@ -51,7 +51,10 @@ SOURCE_FILE_ROOTS =	reporting \
 			list \
 			val_list \
 			val_vector \
-			val_matrix
+			val_matrix \
+			stage \
+			stageRegistry 
+
 
 libp2core_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C) \
 			inlines.h \

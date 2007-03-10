@@ -11,6 +11,7 @@
  */
 
 #include "dDuplicateConservative.h"
+#include <boost/bind.hpp>
 
 DDuplicateConservative::DDuplicateConservative(string name, int outputs)
   : Element(name, 1, outputs),

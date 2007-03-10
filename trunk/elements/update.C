@@ -13,6 +13,7 @@
  */
 
 #include "update.h"
+#include <boost/bind.hpp>
 
 Update::Update(string name,
                CommonTablePtr table)

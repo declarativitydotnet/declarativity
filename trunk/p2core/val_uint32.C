@@ -65,7 +65,9 @@ uint32_t Val_UInt32::cast(ValuePtr v) {
   case Value::STR:
     return strtoul(Val_Str::cast(v).c_str(), (char **)NULL, 0);
   default:
-    throw Value::TypeError(v->typeCode(), Value::UINT32 );
+    throw Value::TypeError(v->typeCode(), v->typeName(),
+                           Value::UINT32,
+                           "uint32");
   }
 }
 

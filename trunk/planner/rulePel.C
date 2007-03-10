@@ -404,6 +404,27 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
     pel << "matrixcompare ";
   }
 
+  else if (expr->name() == "f_typeOf") {
+    if (expr->args() != 1) {
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
+      exit(-1);
+      return "ERROR.";
+    }
+    expr2Pel(pc, pel, expr->arg(0));
+    pel << "typeOf ";
+  }
+
+  else if (expr->name() == "f_totalComp") {
+    if (expr->args() != 2) {
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
+      exit(-1);
+      return "ERROR.";
+    }
+    expr2Pel(pc, pel, expr->arg(0));
+    expr2Pel(pc, pel, expr->arg(1));
+    pel << "totalComp ";
+  }
+
   else {
     PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
     exit(-1);

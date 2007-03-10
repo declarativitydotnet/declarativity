@@ -18,6 +18,7 @@
 #include "val_str.h"
 #include "val_tuple.h"
 #include "netglobals.h"
+#include <boost/bind.hpp>
 
 #define CONNECTION_TIMEOUT 240
 

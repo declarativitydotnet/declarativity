@@ -19,7 +19,7 @@ AC_CONFIG_SRCDIR(p2core/element.h)
 # AC_CONFIG_AUX_DIR(config)
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE(1.9.2)
-AM_INIT_AUTOMAKE(p2,0.7.8)
+AM_INIT_AUTOMAKE(p2,0.8)
 
 
 # Checks for programs.
@@ -102,6 +102,7 @@ AC_CONFIG_FILES([
 	eventLoop/Makefile
 	p2core/Makefile 
 	elements/Makefile 
+	stages/Makefile 
 	net/Makefile 
 	tests/Makefile 
 	unitTests/Makefile 

@@ -34,7 +34,7 @@ SOURCE_FILE_ROOTS =		\
 				unmarshal \
 				unmarshalField \
 				route \
-				demux \
+				demuxConservative \
 				ddemux \
 				mux \
 				roundRobin \

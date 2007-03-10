@@ -22,7 +22,9 @@ SOURCE_FILE_ROOTS =		tableStore \
 				eca_context \
 				ruleStrand \
 				netPlanner \
-				planner
+				planner \
+				stageStrand 
+
 
 libp2planner_la_SOURCES =	\
 				$(SOURCE_FILE_ROOTS:=.h) \

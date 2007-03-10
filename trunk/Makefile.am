@@ -18,6 +18,7 @@ SUBDIRS=	\
 		eventLoop \
 		p2core \
 		elements \
+		stages \
 		net \
 		overlog \
 		planner \

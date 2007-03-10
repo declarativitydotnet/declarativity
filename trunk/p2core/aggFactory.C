@@ -13,11 +13,6 @@
 #include "aggFactory.h"
 #include <boost/function.hpp>
 
-// Agg functions
-#include "aggMin.h"
-#include "aggMax.h"
-#include "aggCount.h"
-
 
 AggFactory::AggregateNotFound::AggregateNotFound(std::string name)
   : aggName(name)
@@ -47,6 +42,8 @@ AggFactory::mk(std::string aggName)
 AggFactory::AggFuncFactory
 AggFactory::factory(std::string aggName)
 {
+  ensureInit();
+
   // Look up the constructor method
   FactorySet::iterator i = _factories->find(aggName);
 

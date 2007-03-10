@@ -31,7 +31,7 @@ for op, ar, va, desc in [
   ("dup",   1, "DUP",   "Duplicate the top stack value"),
   (""      ,0, "PUSH_CONST",  "Push a constant"),
   ("" , 0,        "PUSH_FIELD",   "Push a field of the tuple"),
-  ("pop",1,     "POP",          "Pop result tuple field"),
+  ("pop",1,     "POP",          "Pop a value into the result tuple"),
   ("popall",1,  "POP_ALL",      "Pop remaining stack to result tuple"),
   ("peek", 1,   "PEEK",         "Push a duplicate of a stack element"),
   ("ifelse",3,  "IFELSE",       "If first arg, then return second, else third"),
@@ -47,8 +47,11 @@ for op, ar, va, desc in [
   ("unbox", 1,  "T_UNBOX",      "Replaces a tuple value with its fields top to bottom"),
   ("unboxPop",1,"T_UNBOXPOP",   "Pops the fields of the argument tuple value in order"),
   ("field", 2,  "T_FIELD",      "Extracts a field of a tuple value"),
-  ("swallow", 0,"T_SWALLOW",    "Swallows the entire input tuple into a single tuple value in the stack"),
+  ("swallow", 0, "T_SWALLOW",    "Swallows the entire input tuple into a single tuple value in the stack"),
   
+  ("typeOf", 1, "TYPEOF", "Get the type name of a value"),
+  ("totalComp", 2, "TOTALCOMP", "Compare two value in the total order of the type system"),
+
   ("lappend", 2, "L_APPEND", "Insert first element into second list, or create liust if second list is null"),
   ("concat", 2, "L_CONCAT", "Insert all elements of first list into second list"),
   ("member", 2, "L_MEMBER", "Push 1 if first arg is in second list, 0 otherwise"),
@@ -101,32 +104,13 @@ for op, ar, va, desc in [
   ("+time_duration",2,      "TIME_DURATION_PLUS",     "Time_Duration addition"),
   ("-time_duration",2,      "TIME_DURATION_MINUS",    "Time_Duration subtraction"),
 
-  ("<id",2,      "ID_LT",       "ID less-than comparison"),
-  ("<=id",2,     "ID_LTE",      "ID less-than-or-eq comparison"),
-  (">id",2,      "ID_GT",       "ID greater-than comparison"),
-  (">=id",2,     "ID_GTE",      "ID greater-than-or-eq comparison"),
-  ("==id",2,     "ID_EQ",       "ID compare equality"),
-  ("+id",2,      "ID_PLUS",     "ID addition"),
-  ("--id",1,      "ID_MINUSMINUS","ID decrementation by 1"),
   ("--",1,      "MINUSMINUS",   "decrement by one"),
   ("++",1,      "PLUSPLUS",     "increment by one"),
-  ("distance",2, "ID_DIST",     "ID subtraction"),
-  ("<<id",2,	 "ID_LSL",      "ID arithmetic shift left"),
-  (">>id",2,	 "ID_LSR",      "ID arithmetic shift left"),
-  ("()id",3,	 "ID_BTWOO",    "ID interval open-open containment"),
-  ("(]id",2,	 "ID_BTWOC",    "ID interval open-closed containment"),
-  ("[)id",3,	 "ID_BTWCO",    "ID interval closed-open containment"),
-  ("[]id",2,	 "ID_BTWCC",    "ID interval closed-closed containment"),
   ("()",3,	 "INOO",       "Interval open-open containment"),
   ("(]",3,	 "INOC",       "Interval open-closed containment"),
   ("[)",3,	 "INCO",       "Interval closed-open containment"),
   ("[]",3,	 "INCC",       "Interval closed-closed containment"),
 
-  ("<s",2,      "STR_LT",       "String less-than comparison"),
-  ("<=s",2,     "STR_LTE",      "String less-than-or-eq comparison"),
-  (">s",2,      "STR_GT",       "String greater-than comparison"),
-  (">=s",2,     "STR_GTE",      "String greater-than-or-eq comparison"),
-  ("==s",2,     "STR_EQ",       "Compare equality"),
   ("strcat",2,	"STR_CAT",      "String concatenation"),
   ("strlen",1,	"STR_LEN",      "String length"),
   ("upper",1,	"STR_UPPER",    "Convert string to upper case"),
@@ -149,8 +133,6 @@ for op, ar, va, desc in [
   (">=",2,      "GTE",          "greater-than-or-eq comparison")
   ]: 
   emit_opcode(op, ar, va, desc + " for polymorphic types.")
-  emit_opcode(op+"i", ar, "INT_" + va, "Integer " + desc)
-  emit_opcode(op+"f", ar, "DBL_" + va, "Float " + desc)
 
 for op, ar, va, desc in [
   ("abs",1,     "INT_ABS",      "Absolute value"),

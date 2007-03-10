@@ -16,6 +16,7 @@
 #include <element.h>
 #include <math.h>
 #include "loop.h"
+#include <boost/bind.hpp>
 
 TimedPullSink::TimedPullSink(string name,
                              double seconds)

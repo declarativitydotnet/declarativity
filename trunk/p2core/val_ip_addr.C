@@ -56,7 +56,10 @@ string Val_IP_ADDR::cast(ValuePtr v) {
     return Val_Str::cast(v);
   }
   else{
-    throw Value::TypeError(v->typeCode(), Value::IP_ADDR );
+    throw Value::TypeError(v->typeCode(),
+                           v->typeName(),
+                           Value::IP_ADDR,
+                           "ip_addr");
   }
 }
 

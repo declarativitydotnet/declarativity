@@ -73,6 +73,7 @@
 #include "tableStore.h"
 #include "eca_context.h"
 #include "ruleStrand.h"
+#include "stageStrand.h"
 #include "netPlanner.h"
 
 class Planner
@@ -83,12 +84,39 @@ public:
 
   ~Planner() { delete _netPlanner; }
 
-  std::vector<RuleStrand*> generateRuleStrands(ECA_ContextPtr ectxt);
-  void registerRuleStrand(RuleStrand* rs);
-  void registerAllRuleStrands(std::vector<RuleStrand*>);  
-  void generatePlumberConfig(Plumber::DataflowPtr conf);
-  void setupNetwork(boost::shared_ptr<Udp> udp);
-  NetPlanner* getNetPlanner() { return _netPlanner; }
+
+  /** Generate a vector of all rule strands drawn from ECA rules */
+  std::vector< RuleStrand* >
+  generateRuleStrands(ECA_ContextPtr ectxt);
+
+
+  /** Generate a vector of all external stage strands. */
+  std::vector< StageStrand* >
+  generateStageStrands(OL_Context* ctxt);
+
+  /** Generate a single stage strand from a stage specification */
+  StageStrand*
+  generateStageStrand(const OL_Context::ExtStageSpec* spec,
+                      std::string strandID);
+
+
+  void
+  registerRuleStrand(RuleStrand* rs);
+
+  void
+  registerAllRuleStrands(std::vector<RuleStrand*>,
+                         std::vector<StageStrand*>);  
+
+  void
+  generatePlumberConfig(Plumber::DataflowPtr conf);
+  
+  void
+  setupNetwork(boost::shared_ptr<Udp> udp);
+  
+  NetPlanner*
+  getNetPlanner() { return _netPlanner; }
+
+  
 
 private:
   bool _debug;

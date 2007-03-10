@@ -66,7 +66,10 @@ int32_t Val_Int32::cast(ValuePtr v) {
   case Value::STR:
     return strtol(Val_Str::cast(v).c_str(), NULL, 0);
   default:
-    throw Value::TypeError(v->typeCode(), Value::INT32 );
+    throw Value::TypeError(v->typeCode(),
+                           v->typeName(),
+                           Value::INT32,
+                           "int32");
   }
 }
 

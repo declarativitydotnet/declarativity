@@ -62,7 +62,8 @@ TuplePtr Val_Tuple::cast(ValuePtr v) {
   if (v->typeCode() == Value::TUPLE) {
     return (static_cast< Val_Tuple * >(v.get()))->t;
   } else {
-    throw Value::TypeError(v->typeCode(), Value::TUPLE);
+    throw Value::TypeError(v->typeCode(), v->typeName(),
+                           Value::TUPLE, "tuple");
   }
 }
 

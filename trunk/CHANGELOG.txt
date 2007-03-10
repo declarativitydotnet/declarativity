@@ -1,3 +1,46 @@
+Release 0.8
+===========
+
+- Thanks to a bug found by Ashima Atul. Added demux conservative. Now a
+  demux blocks until all its outputs are unblocked so that it cannot
+  drop tuples. Fixed netplanner to place wraparound tuples into the
+  receive queue. Added regression test showing that locally recursive
+  rules don't block.
+
+- Full use example for chord on PlanetLab.
+
+- Removed pong and ping elements
+
+- Modified chord.olg to account for empty-set aggregates in lookup
+  rules.
+
+- Adding support for user-defined external stages (elements)
+
+- Removed Pel redundant type-specific operations with polymorphic
+  counterparts.
+
+- Moved all checks for TypeError exceptions in one place within pel_vm.
+
+- Added f_typeOf function to obtain the name of the type of a value.
+
+- Added f_totalComp function to compare two values according to the
+  total order of the type system. No implicit casts are done for this
+  comparison. 
+
+- Fixed non-pointer static initializers in reporting.[hC] (from Tyson
+  Condie).
+
+- Added support for external stages.
+
+- Re-added catching of group-by fields from non-event functors in
+  event-table aggregates.
+
+- Added more reporting for lexer errors.
+
+
+
+
+
 Release 0.7.8
 =============
 

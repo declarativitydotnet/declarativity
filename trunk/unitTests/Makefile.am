@@ -30,6 +30,7 @@ p2Test_SOURCES =		p2Test.C \
 AM_CPPFLAGS =			@BOOST_INC@ \
 				-I$(top_builddir)/p2core \
 				-I$(top_builddir)/elements \
+				-I$(top_builddir)/stages \
 				-I$(top_builddir)/net \
 				-I$(top_builddir)/overlog \
 				-I$(top_builddir)/planner \
@@ -47,6 +48,7 @@ AM_CXXFLAGS =			-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 LDADD =		\
 				$(top_builddir)/overlog/libp2overlog.la \
 				$(top_builddir)/net/libp2net.la \
+				$(top_builddir)/stages/libp2stages.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/debugger/libp2debugger.la \
 				$(top_builddir)/p2core/libp2core.la \

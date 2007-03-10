@@ -23,8 +23,6 @@
  - Element to demultiplex packets based on peer IP address.  push-in,
    push-out. 
 
- - Text extensively aggregates, adding to the unit test.
-
  - Add a persistent table object, using BerkeleyDB or Rusty's
    transactional store.
 
@@ -36,8 +34,6 @@
 
  - Message-level simulation
 
- - Autoconf should check for correct version of automake (1.9)
-
  - Autoconf should check for correct version of flex 
 
  - Autoconf should check for correct version of bison
@@ -45,40 +41,18 @@
  - Dynamic or static schema checker. Do all instances of foo(X, Y, Z) in
    your OverLog use the same arity, types?
 
- - Fix OverLog parser and planner so that location specifier need not be
-   mentioned explicitly in the tuple fields.  Every tuple should have
-   (internally) a location specifier.  The location specifier, if at
-   all, appears in OverLog using the @ notation.  No field within the
-   tuple (in OverLog notation) need match the location specifier.
-
  - Create an AND barrier.  It has a variable number of push inputs and a
    push output.  It remembers inputs it receives until it is
    reset. Waits until all received inputs have received a tuple with
    "true".  When all have received true inputs, it pushes out a signal
    tuple on its output port and resets all input ports to false.
 
- - Add aggregation to SIGMOD planner (Boon)
-
- - Add periodics to SIGMOD planner (Boon)
-
  - Add a "getting started with P2" document (Joe)
-
- - Install bugzilla (Alex)
-
- - Install wiki (Alex)
 
  - Rewrite OverLog parser, fix off-by-one errors in error reporting,
    engineer a consistent error handling policy.
 
- - Write a dataflow manual for the new Python interface. (Tyson)
-
  - Write an OverLog manual. (Joe)
-
- - Collect a list of known bugs, e.g., for the parser. Subsumed by
-   bugzilla.
-
- - Use causality information, if present, to derive tuples that must be
-   eliminated when a base tuple is deleted.
 
  - Use shared pointers (or a materialized version thereof) to implement
    the count algorithm for multiply-derived tuples.
@@ -89,12 +63,5 @@
 
  - Create a replay facility for element, rule strand, and dataflow
    traces. Great for replay debugging.
-
- - Go through and fix all n^2 traversals of vectors!!!!!
-
- - Split planning of periodics from arbitrary rule bodies. 
-
- - Implement views correctly, linking them to both update and remove
-   events on the underlying tables.
 
  - Fix docs/ping.olg

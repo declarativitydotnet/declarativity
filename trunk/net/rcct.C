@@ -21,6 +21,7 @@
 #include "val_time.h"
 #include "val_tuple.h"
 #include "netglobals.h"
+#include <boost/bind.hpp>
 
 
 /////////////////////////////////////////////////////////////////////

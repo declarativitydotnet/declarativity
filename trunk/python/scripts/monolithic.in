@@ -1,4 +1,15 @@
 #!@PYTHON@
+##
+## This file is distributed under the terms in the attached LICENSE file.
+## If you do not find this file, copies can be found by writing to:
+## Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+## Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+## Or
+## UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+## Berkeley, CA,  94707. Attention: P2 Group.
+## 
+## DESCRIPTION: Non-incremental runOverLog runner for Planetlab
+##
 import xmlrpclib
 import sys
 import os
@@ -63,9 +74,11 @@ if __name__ == "__main__":
     # Set up liveness check
     if flags["pingPort"] > 0: pingCheck(flags["pingPort"])
     
-    commandLine = "tests/runOverLog -o %s -s %s -n %s -p %s >& %s" % (flags["overlog"],
-                                                                flags["seed"],
-                                                                host,
-                                                                flags["myPort"],
-                                                                flags["logFile"])
+    commandLine = "/home/%s/runOverLog -o %s -s %s -n %s -p %s >& %s" % (flags["slice"],
+                                                                         flags["overlog"],
+                                                                         flags["seed"],
+                                                                         host,
+                                                                         flags["myPort"],
+                                                                         flags["logFile"])
+    print "Starting monolithic with command line %s\n" % commandLine
     os.system(commandLine)

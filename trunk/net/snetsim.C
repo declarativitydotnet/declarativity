@@ -13,6 +13,7 @@
 #include <iostream>
 #include "snetsim.h"
 #include "loop.h"
+#include <boost/bind.hpp>
 
 SimpleNetSim::SimpleNetSim(string name, uint32_t min, uint32_t max, double p)
   : Element(name,1, 1),

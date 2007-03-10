@@ -84,6 +84,33 @@ ValuePtr Value::xdr_unmarshal(XDR *x)
   }
 }
 
+
+Value::TypeError::TypeError(TypeCode t1, const char* t1Name,
+                            TypeCode t2, const char* t2Name)
+  : realType(t1),
+    realTypeName(t2Name),
+    toType(t2),
+    toTypeName(t2Name)
+{
+  std::ostringstream oss;
+  oss << "Failed to cast type "
+      << t1
+      << ":"
+      << t1Name 
+      << " to type "
+      << t2
+      << ":"
+      << t2Name;
+  _message = oss.str().c_str();
+}
+
+
+const char*
+Value::TypeError::what() const throw()
+{
+  return _message;
+}
+
 /*
  * Value.C
  */

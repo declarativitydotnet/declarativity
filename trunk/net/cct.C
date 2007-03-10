@@ -20,6 +20,7 @@
 #include "val_tuple.h"
 #include "val_null.h"
 #include "netglobals.h"
+#include <boost/bind.hpp>
 
 
 /////////////////////////////////////////////////////////////////////

@@ -21,16 +21,19 @@ const opr::Oper* Val_Matrix::oper_ = new OperMatrix();
 MatrixPtr Val_Matrix::cast(ValuePtr v)
 {
    
-   switch(v->typeCode()) {
-      case Value::MATRIX:
-		{
-		  return (static_cast<Val_Matrix *>(v.get()))->M;         
-		default:
-		  {
-			throw Value::TypeError(v->typeCode(), Value::MATRIX);      
-		  }
-		}
-   }
+  switch(v->typeCode()) {
+  case Value::MATRIX:
+    {
+      return (static_cast<Val_Matrix *>(v.get()))->M;         
+    default:
+      {
+        throw Value::TypeError(v->typeCode(),
+                               v->typeName(),
+                               Value::MATRIX,
+                               "matrix");      
+      }
+    }
+  }
 }
 
 
@@ -49,9 +52,9 @@ void Val_Matrix::xdr_marshal_subtype( XDR *x )
   // Marshal the entries -- we will use default storage (row-major)
   for (it1 = M->begin1();  it1 != M->end1(); ++it1)
     { 
-	  for (it2 = it1.begin(); it2 != it1.end(); ++it2)
-		(*it2)->xdr_marshal(x); 
-	}
+      for (it2 = it1.begin(); it2 != it1.end(); ++it2)
+        (*it2)->xdr_marshal(x); 
+    }
 }
 
 ValuePtr Val_Matrix::xdr_unmarshal( XDR *x )
@@ -65,134 +68,134 @@ ValuePtr Val_Matrix::xdr_unmarshal( XDR *x )
   MatrixPtr mp(new matrix<ValuePtr>(sz1, sz2));
   // Unmarshal the entries -- we use default (row-major) storage
   for (uint32_t i1 = 0; i1 < sz1; i1++) {
-	for (uint32_t i2 = 0; i2 < sz2; i2++) {
-	  (*mp)(i1,i2) = Value::xdr_unmarshal(x);
-	}
+    for (uint32_t i2 = 0; i2 < sz2; i2++) {
+      (*mp)(i1,i2) = Value::xdr_unmarshal(x);
+    }
   }
   return mk(mp);
 }
 
 string Val_Matrix::toString() const
 {
-   ostringstream sb;
+  ostringstream sb;
    
-   sb << "[";
+  sb << "[";
    
-   ValPtrMatrix::const_iterator1 iter1 = M->begin1();
-   ValPtrMatrix::const_iterator1 end1 = M->end1();
-   ValPtrMatrix::const_iterator1 almost_end1 = M->end1();
-   almost_end1--;
+  ValPtrMatrix::const_iterator1 iter1 = M->begin1();
+  ValPtrMatrix::const_iterator1 end1 = M->end1();
+  ValPtrMatrix::const_iterator1 almost_end1 = M->end1();
+  almost_end1--;
    
-   while(iter1 != end1) {
-	 sb << "[";
-	 ValPtrMatrix::const_iterator2 iter2 = iter1.begin();
-	 ValPtrMatrix::const_iterator2 end2 = iter1.end();
-	 ValPtrMatrix::const_iterator2 almost_end2 = iter1.end();
-	 almost_end2--;
+  while(iter1 != end1) {
+    sb << "[";
+    ValPtrMatrix::const_iterator2 iter2 = iter1.begin();
+    ValPtrMatrix::const_iterator2 end2 = iter1.end();
+    ValPtrMatrix::const_iterator2 almost_end2 = iter1.end();
+    almost_end2--;
 
-	 while (iter2 != end2) {
-	   sb << (*iter2)->toString();
+    while (iter2 != end2) {
+      sb << (*iter2)->toString();
       
-	   if(iter2 != almost_end2) {
-         sb << ", ";
-	   }
-	   iter2++;
-	 }
+      if(iter2 != almost_end2) {
+        sb << ", ";
+      }
+      iter2++;
+    }
    
-	 sb << "]";
+    sb << "]";
 
-	 if (iter1 != almost_end1) {
-	   sb << ", ";
-	 }
-	 iter1++;
-   }
+    if (iter1 != almost_end1) {
+      sb << ", ";
+    }
+    iter1++;
+  }
 	
-   sb << "]";
-   return sb.str();
+  sb << "]";
+  return sb.str();
 }
 
 string Val_Matrix::toConfString() const
 {
-   ostringstream sb;
+  ostringstream sb;
    
-   sb << "[";
+  sb << "[";
    
-   ValPtrMatrix::const_iterator1 iter1 = M->begin1();
-   ValPtrMatrix::const_iterator1 end1 = M->end1();
-   ValPtrMatrix::const_iterator1 almost_end1 = M->end1();
-   almost_end1--;
+  ValPtrMatrix::const_iterator1 iter1 = M->begin1();
+  ValPtrMatrix::const_iterator1 end1 = M->end1();
+  ValPtrMatrix::const_iterator1 almost_end1 = M->end1();
+  almost_end1--;
    
-   while(iter1 != end1) {
-	 sb << "[";
-	 ValPtrMatrix::const_iterator2 iter2 = iter1.begin();
-	 ValPtrMatrix::const_iterator2 end2 = iter1.end();
-	 ValPtrMatrix::const_iterator2 almost_end2 = iter1.end();
-	 almost_end2--;
+  while(iter1 != end1) {
+    sb << "[";
+    ValPtrMatrix::const_iterator2 iter2 = iter1.begin();
+    ValPtrMatrix::const_iterator2 end2 = iter1.end();
+    ValPtrMatrix::const_iterator2 almost_end2 = iter1.end();
+    almost_end2--;
 
-	 while (iter2 != end2) {
-	   sb << (*iter2)->toConfString();
+    while (iter2 != end2) {
+      sb << (*iter2)->toConfString();
       
-	   if(iter2 != almost_end2) {
-         sb << ", ";
-	   }
-	   iter2++;
-	 }
+      if(iter2 != almost_end2) {
+        sb << ", ";
+      }
+      iter2++;
+    }
    
-	 sb << "]";
+    sb << "]";
 
-	 if (iter1 != almost_end1) {
-	   sb << ", ";
-	 }
-	 iter1++;
-   }
+    if (iter1 != almost_end1) {
+      sb << ", ";
+    }
+    iter1++;
+  }
 	
-   sb << "]";
-   return sb.str();
+  sb << "]";
+  return sb.str();
 }
 
 // Matrix comparison. Follow rules from Tuple
 int Val_Matrix::compareTo(ValuePtr other) const
 {
-   if(other->typeCode() < Value::MATRIX) {
+  if(other->typeCode() < Value::MATRIX) {
+    return -1;
+  } 
+  else if(other->typeCode() > Value::MATRIX) {
+    return 1;
+  } 
+  else {
+    Val_Matrix om = cast(other);
+    if (size1() == om.M->size1() && size2() == om.M->size2()) {
+      // same size
+      ValPtrMatrix::const_iterator1 myiter1, oiter1;
+      ValPtrMatrix::const_iterator2 myiter2, oiter2;
+      for (myiter1 = M->begin1(), oiter1 = om.M->begin1();
+           myiter1 != M->end1(); myiter1++, oiter1++) {
+        for (myiter2 = myiter1.begin(), oiter2 = oiter1.begin();
+             myiter2 != myiter1.end(); myiter2++, oiter2++) {
+          int result = (*myiter2)->compareTo(*oiter2);
+          if (result != 0) {
+            // Found a field position for which we are different.  Return
+            // the difference.
+            return result;
+          }
+        }
+      }
+      // All fields are equal
+      return(0);
+    }
+    else if (size1() == om.M->size1()) { // tie on size1
+      if (size2() < om.M->size2()) {
+        return -1;
+      } 
+      else { // size2() > om.M->size2()
+        return 1;
+      }
+    }
+    else if (size1() < om.M->size1()) {
       return -1;
-   } 
-   else if(other->typeCode() > Value::MATRIX) {
+    }
+    else { // size1() > om.M->size1()
       return 1;
-   } 
-   else {
-	 Val_Matrix om = cast(other);
-	 if (size1() == om.M->size1() && size2() == om.M->size2()) {
-	   // same size
-	   ValPtrMatrix::const_iterator1 myiter1, oiter1;
-	   ValPtrMatrix::const_iterator2 myiter2, oiter2;
-	   for (myiter1 = M->begin1(), oiter1 = om.M->begin1();
-			myiter1 != M->end1(); myiter1++, oiter1++) {
-		 for (myiter2 = myiter1.begin(), oiter2 = oiter1.begin();
-			  myiter2 != myiter1.end(); myiter2++, oiter2++) {
-		   int result = (*myiter2)->compareTo(*oiter2);
-		   if (result != 0) {
-		   // Found a field position for which we are different.  Return
-		   // the difference.
-		   return result;
-		   }
-		 }
-	   }
-	   // All fields are equal
-	   return(0);
-	 }
-	 else if (size1() == om.M->size1()) { // tie on size1
-	   if (size2() < om.M->size2()) {
-	     return -1;
-	   } 
-	   else { // size2() > om.M->size2()
-		 return 1;
-	   }
-	 }
-	 else if (size1() < om.M->size1()) {
-	   return -1;
-	 }
-	 else { // size1() > om.M->size1()
-	   return 1;
-	 }
-   }
+    }
+  }
 }

@@ -14,6 +14,7 @@
 #include "val_str.h"
 #include "val_uint32.h"
 #include "loggerI.h"
+#include <boost/bind.hpp>
 
 TraceTuple::TraceTuple(string id, string tupleName)
   : Element(id, 1, 2),

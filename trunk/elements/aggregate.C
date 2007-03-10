@@ -14,6 +14,7 @@
  */
 
 #include "aggregate.h"
+#include <boost/bind.hpp>
 
 Aggregate::Aggregate(string name,
                      CommonTable::Aggregate aggregate)

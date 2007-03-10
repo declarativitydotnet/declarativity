@@ -28,7 +28,9 @@ Demux::Demux(string name,
   _block_flags.resize(noutputs());
 }
 
-void Demux::unblock(unsigned output)
+
+void
+Demux::unblock(unsigned output)
 {
   assert((output >= 0) &&
          (output <= noutputs()));

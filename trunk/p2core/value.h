@@ -125,7 +125,7 @@ public:
     TIME_DURATION,
     LIST,
     VECTOR,
-	MATRIX,
+    MATRIX,
     /* NEW TYPE DEFINITIONS GO ABOVE HERE */    
     TYPES
   };
@@ -174,9 +174,20 @@ public:
 
   // Thrown when an invalid type conversion is attempted. 
   struct TypeError : public std::exception { 
-    TypeCode	realType;
-    TypeCode	toType;
-    TypeError(TypeCode t1, TypeCode t2) : realType(t1), toType(t2) {};
+    TypeCode realType;
+
+    const char* realTypeName;
+
+    TypeCode toType;
+
+    const char* toTypeName;
+
+    const char* _message;
+
+    TypeError(TypeCode t1, const char* t1Name,
+              TypeCode t2, const char* t2Name);
+
+    const char* what() const throw();
   };
 
   // Marshalling

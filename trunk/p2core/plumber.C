@@ -755,6 +755,9 @@ int Plumber::install(DataflowPtr d)
 
 
 void Plumber::toDot(string f) { 
+  TELL_INFO << "Outputting DOT for dataflow into file "
+            << f
+            << "\n";
   std::set<ElementSpec::HookupPtr> hookups;
   std::set<ElementSpecPtr> elements;
 

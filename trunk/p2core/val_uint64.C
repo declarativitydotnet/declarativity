@@ -74,7 +74,10 @@ Val_UInt64::cast(ValuePtr v) {
     returnValue = strtoull(Val_Str::cast(v).c_str(),(char **)NULL, 0);
     break;
   default:
-    throw Value::TypeError(v->typeCode(), Value::UINT64 );
+    throw Value::TypeError(v->typeCode(),
+                           v->typeName(),
+                           Value::UINT64,
+                           "uint64");
   }
   return returnValue;
 }

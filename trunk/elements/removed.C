@@ -13,6 +13,7 @@
  */
 
 #include "removed.h"
+#include <boost/bind.hpp>
 
 Removed::Removed(string name,
                  CommonTablePtr table)

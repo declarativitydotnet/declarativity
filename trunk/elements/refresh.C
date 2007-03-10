@@ -13,6 +13,7 @@
  */
 
 #include "refresh.h"
+#include <boost/bind.hpp>
 
 Refresh::Refresh(string name,
                  CommonTablePtr table)

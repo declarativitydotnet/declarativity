@@ -116,7 +116,9 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
         (theCallback->callback)();
       } catch (std::exception e) {
         LOOP_ERROR("timeCBCatchup callback invocation exception on "
-                   << theCallback->toString());
+                   << theCallback->toString()
+                   << " with message "
+                   << e.what());
       }
     }
     

@@ -107,6 +107,14 @@ public:
         std::string modifiers);
 
 
+  /** Register a stage fact, made of the stage name, the input tuple
+      name and the output tuple name */
+  void
+  stage(Parse_Expr* stageName,
+        Parse_Expr* inputTuple,
+        Parse_Expr* outputTuple);
+
+
   void traceTuple(Parse_Expr *t);
 
 
@@ -145,6 +153,33 @@ public:
   /** The type of watched table mappings */
   typedef std::map<string, string> WatchTableType;
 
+
+  /** The external stage structure */
+  struct ExtStageSpec{
+    string stageName;
+    
+
+    string inputTupleName;
+    
+
+    string outputTupleName;
+    
+
+    ExtStageSpec(string name, string input, string output);
+
+
+    ExtStageSpec(){};
+
+
+    ExtStageSpec(const ExtStageSpec& s);
+  };
+
+  
+  /** The type of stage catalogs */
+  typedef std::map< string, ExtStageSpec* > ExternalStageSpecMap;
+
+
+
 private:
   TableInfoMap*      tables;
   RuleList*          rules;
@@ -162,6 +197,12 @@ private:
       execution */
   std::set< string > tablesToTrace;
 
+  /** Declared external stages */
+  ExternalStageSpecMap mStages;
+
+
+
+
 public: 
   ErrorList          errors;
   RuleList*          getRules()       { return rules; };
@@ -175,7 +216,10 @@ public:
   std::vector<TuplePtr> getFacts()       { return facts; };
   std::set< string > getTuplesToTrace() { return tuplesToTrace;};  
   std::set< string > getTablesToTrace() { return tablesToTrace;};  
-  
+
+
+  const ExternalStageSpecMap&
+  getExtStagesInfo();
 };
 
 extern int ol_parser_parse(OL_Context *env);

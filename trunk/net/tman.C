@@ -21,6 +21,7 @@
 #include "val_uint32.h"
 #include "val_tuple.h"
 #include "val_time.h"
+#include <boost/bind.hpp>
 
 TrafficManager::TrafficManager(string n, string a, uint k, uint r, double s)
   : Element(n, 1, 2),

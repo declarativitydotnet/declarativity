@@ -53,7 +53,6 @@
 %token OL_MIN
 %token OL_COUNT
 %token OL_COMMA
-%token OL_DONTCARE
 %token OL_DOT
 %token OL_EOF 
 %token OL_IF 
@@ -77,6 +76,7 @@
 %token OL_KEYS
 %token OL_WATCH
 %token OL_WATCHFINE
+%token OL_STAGE
 %token OL_TRACE
 %token OL_TRACETABLE
 
@@ -134,7 +134,8 @@ clause:		  rule
                 | watchfine
 		| trace
                 | traceTable
-                | query               
+                | query
+                | stage
 		;
 
 materialize:	OL_MATERIALIZE OL_LPAR OL_NAME OL_COMMA
@@ -166,6 +167,11 @@ watch:		OL_WATCH OL_LPAR OL_NAME OL_RPAR OL_DOT {
 
 watchfine:	OL_WATCHFINE OL_LPAR OL_NAME OL_COMMA OL_STRING OL_RPAR OL_DOT {
                 ctxt->watch($3, $5->toString()); /* With modifiers */
+		}
+		;
+
+stage:		OL_STAGE OL_LPAR OL_STRING OL_COMMA OL_NAME OL_COMMA OL_NAME OL_RPAR OL_DOT {
+			ctxt->stage($3,$5,$7);
 		}
 		;
 

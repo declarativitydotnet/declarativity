@@ -13,6 +13,7 @@
  */
 
 #include "roundRobin.h"
+#include <boost/bind.hpp>
 
 RoundRobin::RoundRobin(string name,
                        int noInputs)

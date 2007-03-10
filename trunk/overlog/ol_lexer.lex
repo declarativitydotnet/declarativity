@@ -154,6 +154,7 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>"period=" { return OL_PERIOD; }
 <INITIAL>"watch" { return OL_WATCH; }
 <INITIAL>"watchmod" { return OL_WATCHFINE; }
+<INITIAL>"stage" { return OL_STAGE; }
 <INITIAL>"traceTable" {return OL_TRACETABLE;}
 <INITIAL>"trace" {return OL_TRACE;}
 <INITIAL>"delete" { return OL_DEL; }

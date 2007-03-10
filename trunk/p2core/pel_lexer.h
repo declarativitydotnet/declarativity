@@ -51,6 +51,8 @@ private:
 
   boost::shared_ptr< Pel_Program > result;
 
+  const char* _programText;
+
   virtual int yylex();
 
   void add_const_int(int v) { add_const(Val_Int32::mk(v));};

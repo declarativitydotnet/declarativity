@@ -31,7 +31,7 @@ std::ostream* Reporting::_error;
 std::ostream* Reporting::_output;
 
 
-Reporting::LeakyStreambuf Reporting::_leakyStreambuf;
+Reporting::LeakyStreambuf* Reporting::_leakyStreambuf;
 
 
 std::ostream* Reporting::_nullOStream;
@@ -40,10 +40,10 @@ std::ostream* Reporting::_nullOStream;
 Reporting::Level Reporting::_level;
 
 
-std::map< std::string, Reporting::Level > Reporting::_levelFromName;
+std::map< std::string, Reporting::Level >* Reporting::_levelFromName;
 
 
-std::map< Reporting::Level, std::string > Reporting::_levelToName;
+std::map< Reporting::Level, std::string >* Reporting::_levelToName;
 
 
 /** This method assumes the initializations have happened. It is only
@@ -108,7 +108,7 @@ Reporting::levelFromName()
                                                // has run
   initializer = initializer;    // avoid "unused" warnings
 
-  return _levelFromName;
+  return (*_levelFromName);
 }
  
 
@@ -119,7 +119,7 @@ Reporting::levelToName()
                                                // has run
   initializer = initializer;    // avoid "unused" warnings
 
-  return _levelToName;
+  return (*_levelToName);
 }
 
 
@@ -165,24 +165,27 @@ Reporting::output()
 
 Reporting::Initializer::Initializer()
 {
-  _nullOStream = new std::ostream(&Reporting::_leakyStreambuf);
+  _leakyStreambuf = new Reporting::LeakyStreambuf();
+  _nullOStream = new std::ostream(Reporting::_leakyStreambuf);
+  _levelFromName = new std::map< std::string, Reporting::Level >();
+  _levelToName = new std::map< Reporting::Level, std::string >();
 
   // Prepare maps
-  _levelFromName["ALL"] = ALL;
-  _levelFromName["WORDY"] = WORDY;
-  _levelFromName["INFO"] = INFO;
-  _levelFromName["WARN"] = WARN;
-  _levelFromName["ERROR"] = ERROR;
-  _levelFromName["OUTPUT"] = OUTPUT;
-  _levelFromName["NONE"] = NONE;
+  (*_levelFromName)["ALL"] = ALL;
+  (*_levelFromName)["WORDY"] = WORDY;
+  (*_levelFromName)["INFO"] = INFO;
+  (*_levelFromName)["WARN"] = WARN;
+  (*_levelFromName)["ERROR"] = ERROR;
+  (*_levelFromName)["OUTPUT"] = OUTPUT;
+  (*_levelFromName)["NONE"] = NONE;
   
-  _levelToName[ALL] = "ALL";
-  _levelToName[INFO] = "INFO";
-  _levelToName[WARN] = "WARN";
-  _levelToName[ERROR] = "ERROR";
-  _levelToName[WORDY] = "WORDY";
-  _levelToName[OUTPUT] = "OUTPUT";
-  _levelToName[NONE] = "NONE";
+  (*_levelToName)[ALL] = "ALL";
+  (*_levelToName)[INFO] = "INFO";
+  (*_levelToName)[WARN] = "WARN";
+  (*_levelToName)[ERROR] = "ERROR";
+  (*_levelToName)[WORDY] = "WORDY";
+  (*_levelToName)[OUTPUT] = "OUTPUT";
+  (*_levelToName)[NONE] = "NONE";
 
 
   // Point streams. By default all are null

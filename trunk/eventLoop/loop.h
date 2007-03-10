@@ -40,7 +40,10 @@ extern long callbackID;
 
 #include <errno.h>
 #define LOOP_LOG(_reportingLevel,_rest) "Event Loop, "           \
-  << "_, "                                                      \
+  << __FILE__                                                    \
+  << ":"                                                         \
+  << __LINE__                                                    \
+  << ", "                                                        \
   << _reportingLevel                                             \
   << ", "                                                        \
   << errno                                                       \

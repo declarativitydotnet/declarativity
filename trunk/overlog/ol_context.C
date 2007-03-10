@@ -270,6 +270,24 @@ OL_Context::watch(Parse_Expr *w,
   watchTables.insert(std::make_pair(w->v->toString(), modifiers));
 }
 
+void
+OL_Context::stage(Parse_Expr *stageName,
+                  Parse_Expr *inTupleName,
+                  Parse_Expr *outTupleName)
+{
+  TELL_INFO << "Add Stage Info "
+            << stageName->toString()
+            << " taking inTupleName= " 
+            << inTupleName->v->toString()
+            << " outTupleName= "
+            << outTupleName->v->toString()
+            << "\n";
+  mStages[inTupleName->toString()] =
+    new ExtStageSpec(stageName->toString(),
+                     inTupleName->v->toString(),
+                     outTupleName->v->toString());
+}
+
 
 void
 OL_Context::traceTuple(Parse_Expr *w)
@@ -392,4 +410,29 @@ OL_Context::dumpErrors()
                << ": '" << (*e)->msg << "'.\n";
   }
 }
+
+
+OL_Context::ExtStageSpec::ExtStageSpec(string name,
+                                       string input,
+                                       string output)
+  : stageName(name),
+    inputTupleName(input),
+    outputTupleName(output)
+{
+}
+
+
+OL_Context::ExtStageSpec::ExtStageSpec(const ExtStageSpec& s)
+{
+  stageName = s.stageName;
+  inputTupleName = s.inputTupleName;
+  outputTupleName = s.outputTupleName;
+}
+
+const OL_Context::ExternalStageSpecMap&
+OL_Context::getExtStagesInfo()
+{
+  return mStages;
+}
+
 

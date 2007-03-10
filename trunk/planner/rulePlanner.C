@@ -127,6 +127,42 @@ addPrint(PlanContext* pc,
 }
 
 
+/** Add a print element if the functor name is watched.*/
+void
+addPrint(TableStore* tableStore,
+         Plumber::DataflowPtr _conf,
+         string nodeID,
+         StageStrand* strand,
+         string b,
+         string functorName,
+         string modifier)
+{
+  OL_Context::WatchTableType watchedNames =
+    tableStore->getWatchTables();
+  OL_Context::WatchTableType::iterator i =
+    watchedNames.find(functorName);
+  if (i == watchedNames.end()) {
+    // Didn't find that name. Do nothing
+  } else {
+    std::string modifiers = i->second;
+
+    if (modifiers.size() == 0) {
+      // All modifiers are allowed
+    } else if (modifiers.find(modifier, 0) != std::string::npos) {
+      // Found this modifier
+    } else {
+      // Didn't find this modifier
+      return;
+    }
+
+    string output = b + "!" + functorName +
+      "!" + strand->getStrandID() + "!" + nodeID;
+    strand->addElement(_conf,
+                       ElementPtr(new Print(output)));
+  }
+}
+
+
 void
 generateInsertEvent(PlanContext* pc)
 {
@@ -268,7 +304,6 @@ generateAggEvent(PlanContext* pc)
       groupByFields.push_back((uint) pos + 1);
       oss << (pos + 1) << " ";
       aggregateNamesTracker->fieldNames.push_back(pv->toString());
-      //  push_back(pc->_namesTracker->fieldNames.at(pos));
     }
   }
 
@@ -551,6 +586,33 @@ void generateSendAction(PlanContext* pc)
   // copy that location specifier field first, encapsulate rest of tuple
 }
 
+void generateSendAction(TableStore* tableStore,
+                        string nodeID,
+                        StageStrand* strand,
+                        const OL_Context::ExtStageSpec* aSpec,
+                        Plumber::DataflowPtr _conf)
+{
+  // The first field after the tuple name is always the location
+  // specifier
+  PLANNER_WORDY_NOPC("Generate Send Action for "
+                     << aSpec->outputTupleName
+                     << " $1 pop swallow pop");
+
+  addPrint(tableStore,
+           _conf,
+           nodeID,
+           strand,
+           "SendAction",
+           aSpec->outputTupleName,
+           "s");  
+  strand->addElement(_conf,
+                     ElementPtr(new PelTransform("SendActionAddress!" 
+                                                 + strand->getStrandID()
+                                                 + "!" + nodeID,
+                                                 "$1 pop swallow pop")));
+}
+
+
 void generateActionElement(PlanContext* pc)
 {
   RuleStrand* rs = pc->_ruleStrand;
@@ -624,15 +686,17 @@ generateProbeElements(PlanContext* pc,
   }
 
   ostringstream joinKeyStr;
-  joinKeyStr << "Size of join keys: ";
+  joinKeyStr << "Size of join keys: "
+             << innerIndexKey.size()
+             << ". InnerIndex: ";
   for (uint k = 0; k < innerIndexKey.size(); k++) {
     joinKeyStr << innerIndexKey.at(k) << " ";
   }
-  joinKeyStr << ", ";
+  joinKeyStr << ", OuterLookup: ";
   for (uint k = 0; k < outerLookupKey.size(); k++) {
     joinKeyStr << outerLookupKey.at(k) << " ";
   }
-  joinKeyStr << ", ";
+  joinKeyStr << ", Remaining: ";
   for (uint k = 0; k < innerRemainingKey.size(); k++) {
     joinKeyStr << innerRemainingKey.at(k) << " ";
   }
@@ -921,7 +985,17 @@ generateAggWrap(PlanContext* pc)
       // initial event tuple, if not present, throw an error
       int pos =
 	eventNamesTracker.fieldPosition(headFunctor->arg(k)->toString());
-      pc->_agg_el->registerGroupbyField(pos + 1);
+      if (pos == -1) {
+        // This field was not found in the event. Throw an error
+        error(pc, "Group-by field " 
+              + headFunctor->arg(k)->toString()
+              + " does not come from the event in the aggregation rule. "
+              + " Currently, only group-by fields from the event "
+              + "are supported for event-table aggregates, ");
+        return;
+      } else {
+        pc->_agg_el->registerGroupbyField(pos + 1);
+      }
     }
   }
 }

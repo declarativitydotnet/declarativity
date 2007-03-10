@@ -11,6 +11,7 @@
 
 #include "tupleSourceInterface.h"
 #include "loop.h"
+#include <boost/bind.hpp>
 
 TupleSourceInterface::TupleSourceInterface(string name)
   : Element(name, 0, 1), _notBlocked(1)

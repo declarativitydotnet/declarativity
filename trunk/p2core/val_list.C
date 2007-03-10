@@ -20,26 +20,29 @@ const opr::Oper* Val_List::oper_ = new OperList();
 ListPtr Val_List::cast(ValuePtr v)
 {
    
-   switch(v->typeCode()) {
-      case Value::LIST:
-      {
-         return (static_cast<Val_List *>(v.get()))->L;         
-      }
-      case Value::NULLV:
-      {
-         return List::mk();
-      }
-      default:
-      {
-         throw Value::TypeError(v->typeCode(), Value::LIST);      
-      }
-   }
+  switch(v->typeCode()) {
+  case Value::LIST:
+    {
+      return (static_cast<Val_List *>(v.get()))->L;         
+    }
+  case Value::NULLV:
+    {
+      return List::mk();
+    }
+  default:
+    {
+      throw Value::TypeError(v->typeCode(),
+                             v->typeName(),
+                             Value::LIST,
+                             "list");      
+    }
+  }
 }
 
 
 void Val_List::xdr_marshal_subtype( XDR *x )
 {
-   L->xdr_marshal(x);
+  L->xdr_marshal(x);
 }
 
 ValuePtr Val_List::xdr_unmarshal( XDR *x )
@@ -50,27 +53,27 @@ ValuePtr Val_List::xdr_unmarshal( XDR *x )
 
 string Val_List::toConfString() const
 {
-   ostringstream sb;
+  ostringstream sb;
    
-   sb << "(";
+  sb << "(";
    
-   ValPtrList::const_iterator iter = L->begin();
-   ValPtrList::const_iterator end = L->end();
-   ValPtrList::const_iterator almost_end = L->end();
-   almost_end--;
+  ValPtrList::const_iterator iter = L->begin();
+  ValPtrList::const_iterator end = L->end();
+  ValPtrList::const_iterator almost_end = L->end();
+  almost_end--;
    
-   while(iter != end) {
-      sb << (*iter)->toConfString();
+  while(iter != end) {
+    sb << (*iter)->toConfString();
       
-      if(iter != almost_end) {
-         sb << ", ";
-      }
-      iter++;
-   }
+    if(iter != almost_end) {
+      sb << ", ";
+    }
+    iter++;
+  }
    
-   sb << ")";
+  sb << ")";
    
-   return sb.str();
+  return sb.str();
 
 }
 
@@ -80,11 +83,11 @@ string Val_List::toConfString() const
 // this particular type --ACR
 int Val_List::compareTo(ValuePtr other) const
 {
-   if(other->typeCode() < Value::LIST) {
-      return -1;
-   } else if(other->typeCode() > Value::LIST) {
-      return 1;
-   } else {
-      return L->compareTo(cast(other));
-   }
+  if(other->typeCode() < Value::LIST) {
+    return -1;
+  } else if(other->typeCode() > Value::LIST) {
+    return 1;
+  } else {
+    return L->compareTo(cast(other));
+  }
 }

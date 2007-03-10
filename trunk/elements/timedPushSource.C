@@ -20,6 +20,7 @@
 #include "val_str.h"
 #include "val_uint64.h"
 #include "val_time.h"
+#include <boost/bind.hpp>
 
 TimedPushSource::TimedPushSource(string name,
                                  double seconds)

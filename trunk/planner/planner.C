@@ -21,6 +21,7 @@
 #include "planner.h"
 #include "planContext.h"
 #include "rulePlanner.C"
+#include "stageRegistry.h"
 
 Planner::Planner(Plumber::DataflowPtr conf, TableStore* tableStore, 
 		 bool debug, string nodeID) 
@@ -34,7 +35,7 @@ Planner::Planner(Plumber::DataflowPtr conf, TableStore* tableStore,
   _netPlanner = new NetPlanner(conf, nodeID); 
 }
 
-std::vector<RuleStrand*> 
+std::vector< RuleStrand* > 
 Planner::generateRuleStrands(ECA_ContextPtr ectxt)
 {
   std::vector<RuleStrand*> toRet;
@@ -52,7 +53,89 @@ Planner::generateRuleStrands(ECA_ContextPtr ectxt)
   return toRet;
 }
 
-void Planner::setupNetwork(boost::shared_ptr<Udp> udp)
+
+std::vector< StageStrand* >
+Planner::generateStageStrands(OL_Context* ctxt)
+{
+  std::vector< StageStrand* > toRet;
+
+  OL_Context::ExternalStageSpecMap aStageSpecMap =
+    ctxt->getExtStagesInfo();
+
+  for (OL_Context::ExternalStageSpecMap::const_iterator it =
+         aStageSpecMap.begin();
+       it != aStageSpecMap.end();
+       it++) {
+    std::ostringstream strandIDoss;
+    strandIDoss << _ruleCount++
+                << "-"
+                << _nodeID;
+    std::string strandID = strandIDoss.str();
+
+    try {
+      StageStrand* ss = generateStageStrand(it->second,
+                                            strandID);
+      toRet.push_back(ss);
+    } catch (StageRegistry::StageNotFound snf) {
+      // Couldn't create this stage. Skip it and report failure.
+      PLANNER_INFO_NOPC("Planner: could not find external stage "
+                        << "named "
+                        << snf.stageName
+                        << ". Skipping.");
+    }
+  }
+
+  return toRet;
+}
+
+
+StageStrand*
+Planner::generateStageStrand(const OL_Context::ExtStageSpec* aSpec,
+                             string strandID)
+{
+  // Stages are always pull in pull out. But rule strands start out push
+  // (right after the duplicator), so we need a slot, then the stage,
+  // then the name changer (PelTransform), and we're done.
+  StageStrand* strand = new StageStrand(aSpec,
+                                        strandID);
+  strand->addElement(_conf,
+                     ElementPtr(new Slot(aSpec->stageName + "!Slot")));
+  strand->addElement(_conf,
+                     ElementPtr(new Stage(aSpec->stageName + "!Stage",
+                                          aSpec->stageName)));
+  strand->addElement(_conf,
+                     ElementPtr(new PelTransform(aSpec->stageName + "!Stage",
+                                                 "swallow " // push
+                                                            // entire
+                                                            // input
+                                                            // into the
+                                                            // stack
+                                                 "unbox "   // turn
+                                                            // swallowed
+                                                            // tuple
+                                                            // into indiv
+                                                            // fields
+                                                 "drop "    // drop
+                                                            // old
+                                                            // name
+                                                 "\""
+                                                 + aSpec->outputTupleName
+                                                 + "\" pop " // new name
+                                                 + " popall" // rest
+                                                 )));
+
+  generateSendAction(_tableStore,
+                     _nodeID,
+                     strand,
+                     aSpec,
+                     _conf);
+  
+  return strand;
+}
+
+
+void
+Planner::setupNetwork(boost::shared_ptr<Udp> udp)
 {
   // call the netplanner to generate network in and out
   // mux and demux not generated
@@ -61,17 +144,15 @@ void Planner::setupNetwork(boost::shared_ptr<Udp> udp)
 }
 
 
-void Planner::registerRuleStrand(RuleStrand* rs)
-{
-  // register a single rule strand 
-}
-
-void Planner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands)
+void
+Planner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands,
+                                std::vector<StageStrand*> stageStrands)
 {
   PLANNER_INFO_NOPC("Planner: register " << ruleStrands.size()
                     << " rule strands with network planner");
+
   // call netplanner to create the right mux/demuxes
-  _netPlanner->registerAllRuleStrands(ruleStrands);
+  _netPlanner->registerAllRuleStrands(ruleStrands, stageStrands);
 }
 
 

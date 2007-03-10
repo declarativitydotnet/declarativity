@@ -33,7 +33,6 @@
 #include <string>
 #include <sstream>
 #include <boost/function.hpp>
-#include <boost/bind.hpp>
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "inlines.h"
 #include "tuple.h"

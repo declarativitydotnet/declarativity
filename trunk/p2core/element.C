@@ -121,7 +121,8 @@ Element::ports_frozen() const
   return false;
 }
 
-unsigned Element::addInputPort() 
+unsigned
+Element::addInputPort() 
 {
   for (unsigned port=0; port < _inputs.size(); port++) {
     if (_inputs[port] == 0) {
@@ -136,7 +137,8 @@ unsigned Element::addInputPort()
   return _ninputs - 1;	// Return the last port number
 }
 
-unsigned Element::addOutputPort()
+unsigned
+Element::addOutputPort()
 {
   for (unsigned port=0; port < _outputs.size(); port++) {
     if (_outputs[port] == 0) {
@@ -151,7 +153,8 @@ unsigned Element::addOutputPort()
   return _noutputs - 1;	// Return the last port number
 }
 
-int Element::deleteInputPort(unsigned port)
+int
+Element::deleteInputPort(unsigned port)
 {
   if (port < _inputs.size()) {
     _inputs[port].reset();
@@ -161,7 +164,8 @@ int Element::deleteInputPort(unsigned port)
   return -1;
 }
 
-int Element::deleteOutputPort(unsigned port)
+int
+Element::deleteOutputPort(unsigned port)
 {
   if (port < _outputs.size()) {
     _outputs[port].reset();
@@ -171,7 +175,8 @@ int Element::deleteOutputPort(unsigned port)
   return -1;
 }
 
-int Element::connect_input(unsigned i, Element *f, unsigned port)
+int
+Element::connect_input(unsigned i, Element *f, unsigned port)
 {
   if (i >= 0 && i < _inputs.size()) {
     _inputs[i].reset(new Port(this, f, port));
@@ -180,7 +185,8 @@ int Element::connect_input(unsigned i, Element *f, unsigned port)
     return -1;
 }
 
-int Element::connect_output(unsigned o, Element *f, unsigned port)
+int
+Element::connect_output(unsigned o, Element *f, unsigned port)
 {
   if (o >= 0 && o < _outputs.size()) {
     _outputs[o].reset(new Port(this, f, port));
@@ -191,24 +197,28 @@ int Element::connect_output(unsigned o, Element *f, unsigned port)
 
 // PUSH OR PULL PROCESSING
 
-const char * Element::processing() const
+const char*
+Element::processing() const
 {
   return "a/a";
 }
 
-const char *Element::flow_code() const
+const char*
+Element::flow_code() const
 {
   return COMPLETE_FLOW;
 }
 
-const char *Element::flags() const
+const char*
+Element::flags() const
 {
   return "";
 }
 
 // RUNNING
 
-int Element::push(int port, TuplePtr p, b_cbv cb)
+int
+Element::push(int port, TuplePtr p, b_cbv cb)
 {
   assert(p != 0);
 
@@ -225,7 +235,8 @@ int Element::push(int port, TuplePtr p, b_cbv cb)
   }
 }
 
-TuplePtr Element::pull(int port, b_cbv cb)
+TuplePtr
+Element::pull(int port, b_cbv cb)
 {
   while (1) {
     TuplePtr p = input(0)->pull(cb);
@@ -244,18 +255,21 @@ TuplePtr Element::pull(int port, b_cbv cb)
   }
 }
 
-TuplePtr Element::simple_action(TuplePtr p)
+TuplePtr
+Element::simple_action(TuplePtr p)
 {
   return p;
 }
 
-REMOVABLE_INLINE const Element::PortPtr Element::input(unsigned i) const
+REMOVABLE_INLINE const Element::PortPtr
+Element::input(unsigned i) const
 {
   assert(i < _inputs.size());
   return _inputs[i];
 }
 
-REMOVABLE_INLINE const Element::PortPtr Element::output(unsigned o) const
+REMOVABLE_INLINE const Element::PortPtr
+Element::output(unsigned o) const
 {
   assert(o < _outputs.size());
   return _outputs[o];
@@ -265,14 +279,16 @@ REMOVABLE_INLINE const Element::PortPtr Element::output(unsigned o) const
 // Element::Port
 
 
-REMOVABLE_INLINE int Element::Port::push(TuplePtr p, b_cbv cb) const
+REMOVABLE_INLINE int
+Element::Port::push(TuplePtr p, b_cbv cb) const
 {
   // If I am not connected, I shouldn't be pushed.
   assert(_e);
   return _e->input(_port)->push_incoming(_port, p, cb);
 }
 
-REMOVABLE_INLINE TuplePtr Element::Port::pull(b_cbv cb) const
+REMOVABLE_INLINE TuplePtr
+Element::Port::pull(b_cbv cb) const
 {
   // If I am not connected, I shouldn't be pulled.
   assert(_e);
@@ -280,12 +296,14 @@ REMOVABLE_INLINE TuplePtr Element::Port::pull(b_cbv cb) const
   return p;
 }
 
-REMOVABLE_INLINE int Element::Port::push_incoming(int port, TuplePtr p, b_cbv cb) const
+REMOVABLE_INLINE int
+Element::Port::push_incoming(int port, TuplePtr p, b_cbv cb) const
 {
   return _owner->push(port, p, cb);
 }
 
-REMOVABLE_INLINE TuplePtr Element::Port::pull_outgoing(int port, b_cbv cb ) const
+REMOVABLE_INLINE TuplePtr
+Element::Port::pull_outgoing(int port, b_cbv cb ) const
 {
   TuplePtr t = _owner->pull(port, cb);
   return t;
@@ -293,10 +311,10 @@ REMOVABLE_INLINE TuplePtr Element::Port::pull_outgoing(int port, b_cbv cb ) cons
 
 
 /** Construct a detached free port */
-REMOVABLE_INLINE Element::Port::Port() :
-  _e(0),
-  _port(NOT_INITIALIZED),
-  _cb(0)
+REMOVABLE_INLINE Element::Port::Port()
+  : _e(0),
+    _port(NOT_INITIALIZED),
+    _cb(0)
 {
 }
 
@@ -311,14 +329,16 @@ REMOVABLE_INLINE Element::Port::Port(Element *owner,
 {
 }
 
-int Element::initialize()
+int
+Element::initialize()
 {
   return 0;
 }
 
-REMOVABLE_INLINE void Element::log(Reporting::Level severity,
-                                   int errnum,
-                                   string explanation)
+REMOVABLE_INLINE void
+Element::log(Reporting::Level severity,
+             int errnum,
+             string explanation)
 {
   // Even this is a shortcut, cut off the process here as well, since
   // creating the instance name is expensive
@@ -329,10 +349,11 @@ REMOVABLE_INLINE void Element::log(Reporting::Level severity,
   }
 }
 
-REMOVABLE_INLINE void Element::log(string instanceName,
-                                   Reporting::Level severity,
-                                   int errnum,
-                                   string explanation)
+REMOVABLE_INLINE void
+Element::log(string instanceName,
+             Reporting::Level severity,
+             int errnum,
+             string explanation)
 {
   // Check logging level first
   if (severity >= Reporting::level()) {
@@ -348,10 +369,11 @@ REMOVABLE_INLINE void Element::log(string instanceName,
   }
 }
 
-REMOVABLE_INLINE void Element::logDefault(string instanceName,
-                                          Reporting::Level severity,
-                                          int errnum,
-                                          string explanation)
+REMOVABLE_INLINE void
+Element::logDefault(string instanceName,
+                    Reporting::Level severity,
+                    int errnum,
+                    string explanation)
 {
   boost::posix_time::ptime now;
   getTime(now);

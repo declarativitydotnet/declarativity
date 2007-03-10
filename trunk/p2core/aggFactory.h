@@ -28,12 +28,6 @@ public:
   typedef boost::function< CommonTable::AggFunc* () > AggFuncFactory;
 
   
-  /** Ensure we're initialized.  All exterior-facing functions dealing
-      with statics must invoke this first */
-  static void
-  ensureInit();
-
-
   /** Returns a new aggregate function object on the heap. Must be
       deleted in the end.  It never returns a null. If the given name is
       not found, an AggregateNotFound exception is raised. */
@@ -58,7 +52,6 @@ public:
   public:
     AggregateNotFound(std::string name);
     
-    
     std::string aggName;
   };
 
@@ -75,6 +68,12 @@ public:
   
   
 private:
+  /** Ensure we're initialized.  All exterior-facing functions dealing
+      with statics must invoke this first */
+  static void
+  ensureInit();
+
+
   /** A type for a directory of aggregate function factories. */
   typedef std::map< std::string, // name
                     AggFuncFactory, // factory
@@ -158,4 +157,4 @@ private:
   
 
 
-#endif // AGGMIN_H
+#endif // AGGFACTORY_H

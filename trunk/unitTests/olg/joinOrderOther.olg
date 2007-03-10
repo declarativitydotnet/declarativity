@@ -10,7 +10,7 @@
  * DESCRIPTION: Regression test for join ordering in aggwrap
  *
  * Execute with
- * tests/runOverLog -o unitTests/olg/joinOrder.olg
+ * tests/runOverLog -o unitTests/olg/joinOrderOther.olg
  *
  * A single tuple should be produced with count 2.
 */

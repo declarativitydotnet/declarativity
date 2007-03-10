@@ -109,7 +109,10 @@ Val_Double::cast(ValuePtr v)
     returnValue = strtod(Val_Str::cast(v).c_str(),NULL);
     break;
   default:
-    throw Value::TypeError(v->typeCode(), Value::DOUBLE );
+    throw Value::TypeError(v->typeCode(),
+                           v->typeName(),
+                           Value::DOUBLE,
+                           "double");
   }
   return returnValue;
 }

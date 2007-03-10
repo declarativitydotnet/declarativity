@@ -19,6 +19,7 @@
 #include "val_str.h"
 #include "val_tuple.h"
 #include "netglobals.h"
+#include <boost/bind.hpp>
 
 
 RDelivery::RDelivery(string n, unsigned m) 

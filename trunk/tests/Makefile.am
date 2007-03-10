@@ -14,7 +14,6 @@
 #
 
 bin_PROGRAMS =			benchmark \
-				overlog \
 				runOverLog \
 				runOverLogNoCPP \
 				simple_lookup \
@@ -39,6 +38,7 @@ runOverLog_LDADD = 		\
 				$(top_builddir)/planner/libp2planner.la \
 				$(top_builddir)/overlog/libp2overlog.la \
 				$(top_builddir)/net/libp2net.la \
+				$(top_builddir)/stages/libp2stages.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/eventLoop/libp2eventLoop.la \
@@ -52,79 +52,12 @@ runOverLogNoCPP_LDADD =		\
 				$(top_builddir)/planner/libp2planner.la \
 				$(top_builddir)/overlog/libp2overlog.la \
 				$(top_builddir)/net/libp2net.la \
+				$(top_builddir)/stages/libp2stages.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/eventLoop/libp2eventLoop.la \
 				$(top_builddir)/debugger/libp2debugger.la 
 
-
-# runOverLog2_SOURCES =		runOverLog2.C
-
-# runOverLog2_LDADD =		\
-# 				@PYTHON_LSPEC@ \
-# 				-lboost_python \
-# 				@OPENSSL_LIB@ \
-# 				$(top_builddir)/p2cpp/libp2cpp.la \
-# 				$(top_builddir)/overlog/libp2overlog.la \
-# 				$(top_builddir)/debugger/libp2debugger.la \
-# 				$(top_builddir)/net/libp2net.la \
-# 				$(top_builddir)/elements/libp2elements.la \
-# 				$(top_builddir)/pythonElements/libp2PythonElements.la \
-# 				$(top_builddir)/p2core/libp2core.la \
-# 				$(top_builddir)/eventLoop/libp2eventLoop.la
-
-# runOverLog2_CPPFLAGS =		@PYTHON_CSPEC@ \
-# 				@BOOST_INC@ \
-# 				-I$(top_builddir)/p2core \
-# 				-I$(top_builddir)/elements \
-# 				-I$(top_builddir)/pythonElements \
-# 				-I$(top_builddir)/net \
-# 				-I$(top_builddir)/overlog \
-# 				-I$(top_builddir)/planner \
-# 				-I$(top_builddir)/eventLoop \
-# 				-I$(top_builddir)/debugger \
-# 				-I$(top_builddir)/p2cpp
-
-
-# runPingPong_SOURCES =		runPingPong.C
-
-# runPingPong_LDADD =		\
-# 				@PYTHON_LSPEC@ \
-# 				@OPENSSL_LIB@ \
-# 				-lboost_python \
-# 				$(top_builddir)/p2cpp/libp2cpp.la \
-# 				$(top_builddir)/overlog/libp2overlog.la \
-# 				$(top_builddir)/debugger/libp2debugger.la \
-# 				$(top_builddir)/net/libp2net.la \
-# 				$(top_builddir)/elements/libp2elements.la \
-# 				$(top_builddir)/pythonElements/libp2PythonElements.la \
-# 				$(top_builddir)/p2core/libp2core.la \
-# 				$(top_builddir)/eventLoop/libp2eventLoop.la
-
-# runPingPong_CPPFLAGS =		@PYTHON_CSPEC@ \
-# 				@BOOST_INC@ \
-# 				-I$(top_builddir)/p2core \
-# 				-I$(top_builddir)/elements \
-# 				-I$(top_builddir)/pythonElements \
-# 				-I$(top_builddir)/net \
-# 				-I$(top_builddir)/overlog \
-# 				-I$(top_builddir)/planner \
-# 				-I$(top_builddir)/eventLoop \
-# 				-I$(top_builddir)/debugger \
-# 				-I$(top_builddir)/p2cpp
-
-
-overlog_SOURCES	=		overlog.C
-
-overlog_LDADD =			\
-				@OPENSSL_LIB@ \
-				$(top_builddir)/planner/libp2planner.la \
-				$(top_builddir)/overlog/libp2overlog.la \
-				$(top_builddir)/net/libp2net.la \
-				$(top_builddir)/elements/libp2elements.la \
-				$(top_builddir)/p2core/libp2core.la \
-				$(top_builddir)/eventLoop/libp2eventLoop.la \
-				$(top_builddir)/debugger/libp2debugger.la
 
 simple_lookup_SOURCES =		simple_lookup.C
 
@@ -188,6 +121,7 @@ EXTRA_DIST = 			testerr.h \
 
 AM_CPPFLAGS =			@BOOST_INC@ \
 				-I$(top_builddir)/p2core \
+				-I$(top_builddir)/stages \
 				-I$(top_builddir)/elements \
 				-I$(top_builddir)/pythonElements \
 				-I$(top_builddir)/net \
