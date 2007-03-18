@@ -1,0 +1,31 @@
+/*
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
+ * 
+ * DESCRIPTION: Regression test for external stages.
+ *
+ * Execute with
+ * tests/runOverLog -o unitTests/olg/stage.olg
+ *
+ * outToken tuples should be generated, one for each of a, b, c, d, e,
+ * f, g, 1, 2, 3, 4, 5, 6, 7.  Each should be generated in order twice.
+*/
+
+stage("TOKENIZER", inputString, outToken).
+
+materialize(inputs, infinity, infinity, keys(1,2)).
+
+inputs("localhost:10000", "a b c d e f g").
+inputs("localhost:10000", "1 2 3 4 5 6 7").
+
+r1 inputString(@NI, Delimiters, String) :-
+	periodic(@NI, E, 2, 2),
+ 	inputs(@NI, String),
+	Delimiters := " ".
+
+watch(outToken).
