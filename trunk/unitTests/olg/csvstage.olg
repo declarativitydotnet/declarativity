@@ -22,9 +22,8 @@ materialize(files, infinity, infinity, keys(1,2)).
 
 files("localhost:10000", "unitTests/olg/test.csv").
 
-r1 filerule(@NI, Delimiters, Filename) :- 
+r1 filerule(@NI, Filename) :- 
 	periodic(@NI, E, 1, 1), 
-	files(@NI, Filename), 
-	Delimiters := ",".
+	files(@NI, Filename).
 
 watch(out).

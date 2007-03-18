@@ -61,10 +61,6 @@ private:
   // The current string accumulator
   string	_acc;
 
-  /** Delimiter string */
-  std::string _delimiter;
-
-
   /** file name string */
   std::ifstream _fileStream;
 

@@ -1,3 +1,10 @@
+
+- Added a stage called "CSVtuple" that reads comma-separated-value
+  files from the filesystem, and produces corresponding tuples.  See
+  unitTests/olg/csvstage.olg for a usage example.  Also, factored CSV
+  parsing code out of the csvparser element into p2core/CSVlex.[Ch],
+  so it could be reused by the new stage. 
+
 Release 0.8
 ===========
 

@@ -84,16 +84,16 @@ CSVstage::newOutput()
   return std::make_pair(resultTuple, Stage::MORE);
 }
 
-  /** The input schema for CSVstage is <tupleName, location specifier,
-      delimiterString, filename>. The output is <tupleName,
-      location specifier, fields...>.  Note that there's no schema check here ...if the CSV is
-  		irregular, we simply produce an irregular stream of tuples
-		*/
+  /** The input schema for CSVstage is <tupleName, location specifier, filename>. 
+      The output is <tupleName, location specifier, fields...>.  Note
+      that there's no schema check here ...if the CSV is irregular, we
+      simply produce an irregular stream of tuples 
+  */
 void
 CSVstage::newInput(TuplePtr inputTuple)
 {
 	// Fetch the input tuple
-  if (inputTuple->size() < 4) {
+  if (inputTuple->size() < 3) {
     // Insufficient number of fields
     STAGE_WARN("newInput: tuple "
               << inputTuple
@@ -103,21 +103,17 @@ CSVstage::newInput(TuplePtr inputTuple)
     // Remember the location specifier
     _locationSpecifier = (*inputTuple)[1];
 
-    // Fetch the 3rd and 4th values
-    ValuePtr delimiterVal = (*inputTuple)[2];
-    ValuePtr fileName = (*inputTuple)[3];
+    // Fetch the 3rd value
+    ValuePtr fileName = (*inputTuple)[2];
 
-    // Are they both strings?
-    if ((delimiterVal->typeCode() != Value::STR) ||
-        (fileName->typeCode() != Value::STR)) {
+    // Is the filename a string?
+    if ((fileName->typeCode() != Value::STR)) {
       // Inappropriate input values
       STAGE_WARN("newInput: tuple "
                 << inputTuple
-                << " doesn't appear to have strings "
-                << "as its values in positions 2 and 3.");
+                << " doesn't appear to have a string "
+                << "for a filename in position 2.");
     } else {
-      // Turn the delimiter into a string
-      _delimiter = Val_Str::cast(delimiterVal);
 			string fileNameStr = Val_Str::cast(fileName);
 
 			// attempt to open file
@@ -138,7 +134,6 @@ CSVstage::newInput(TuplePtr inputTuple)
 
   // We're here because the CSV stage cannot produce anything. The next
   // newOutput will just conclude.
-  _delimiter = "";
   _fileStream.close();
 }
 
