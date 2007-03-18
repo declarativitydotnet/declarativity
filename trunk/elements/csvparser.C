@@ -23,6 +23,7 @@
 #include "val_str.h"
 #include <boost/regex.hpp>
 #include "reporting.h"
+#include "CSVlex.h"
 
 //
 // What are these queue parameters then?  Well...
@@ -43,10 +44,6 @@ CSVParser::CSVParser(string name)
     _push_cb(0), 
     _push_blocked(false), 
     _pull_cb(0),
-    _re_line("^([^\\r\\n]*)\\r?\\n"),
-    _re_comm("(^$|#.*)"),
-    _re_qstr("^\\s*\\\"(([^\\n\\\"]*(\\\\(.|\\n))?)+)\\\"\\s*(,|$)"),
-    _re_tokn("^\\s*([^,\\s\"\']+)\\s*(,|$)"),
     _acc("")
 {
 }  
@@ -110,50 +107,26 @@ int CSVParser::push(int port, TuplePtr t, b_cbv cb)
 //
 int CSVParser::try_to_parse_line()
 {
-  TRACE_FUNCTION;
-  // Do we have a complete line in the buffer?
-  boost::smatch m;
-  if (regex_search(_acc,m,_re_line)) {
-    TRACE_WORDY << "Got a line <" << m[1] << ">\n";
-    TuplePtr t = Tuple::mk();
-    string line = m[1];
-    _acc = _acc.substr(m[0].length());
-    if (regex_match(line, m, _re_comm)) {
-      TRACE_WORDY << "Comment: discarding.\n";
-      return 1;
-    }
-    while( line.length() > 0) {
-      TRACE_WORDY << "Remaining line is <" << line << ">\n";
-      { 
-	if (regex_search(line,m,_re_qstr)) {
-	  TRACE_WORDY << "Got a quoted string <" << m[1] << ">\n";
-	  t->append(Val_Str::mk(m[1]));
-	  line = line.substr(m[0].length());
-	  continue;
+	TRACE_FUNCTION;
+	CSVlex lexer;
+	TuplePtr t = Tuple::mk();
+    int returnval = lexer.try_to_parse_line(_acc, t);
+	
+    if (returnval == CSVlex::CSVGotComment)
+	  return(1);
+	else if (returnval == CSVlex::CSVGotLine) {
+	  // Push the tuple we have
+	  _q.push(t);
+	  // Restart pulls if we need to
+	  if (_pull_cb) {
+		_pull_cb();
+		_pull_cb = 0;
+	  }
+	  return 1;
+	} 
+	else {
+		TRACE_WORDY << "Don't yet have a whole line <" << _acc << ">\n";
+		return 0;
 	}
-      }
-      {
-	if (regex_search(line,m,_re_tokn)) {
-	  TRACE_WORDY << "Got a token <" << m[1] << ">\n";
-	  t->append(Val_Str::mk(m[1]));
-	  line = line.substr(m[0].length());
-	  continue;
-	}
-      }
-      TRACE_WORDY << "Don't understand string <" << line << ">\n";
-      line = "";
-    }
-    // Push the tuple we have
-    _q.push(t);
-    // Restart pulls if we need to
-    if (_pull_cb) {
-      _pull_cb();
-      _pull_cb = 0;
-    }
-    return 1;
-  } else {
-    TRACE_WORDY << "Don't yet have a whole line <" << _acc << ">\n";
-    return 0;
-  }
-  return 0;
+	return 0;
 }

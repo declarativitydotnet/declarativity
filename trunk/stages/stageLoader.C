@@ -14,10 +14,12 @@
 
 #include "stageLoader.h"
 #include "tokenizer.h"
+#include "CSVstage.h"
 
 void
 StageLoader::loadStages()
 {
   Tokenizer::ensureInit();
+  CSVstage::ensureInit();
 }
 

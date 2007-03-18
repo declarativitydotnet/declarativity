@@ -16,7 +16,7 @@
   *
   * tests/runOverLog -o unitTests/olg/keyLessTable.olg
   *
-  * Every second, a new keyLess tuple should be produced with an
+  * Every second for five iterations, a new keyLess tuple should be produced with an
   * increasing count.
 ***/
 
@@ -24,7 +24,7 @@ materialize(keyLess, infinity, infinity, keys()).
 
 watchmod(keyLessCount, "s").
 
-r1 event(@NI) :- periodic(@NI, E, 1).
+r1 event(@NI) :- periodic(@NI, E, 1, 5).
 
 r2 keyLess(@NI) :- event(@NI).
 

@@ -18,7 +18,8 @@ lib_LTLIBRARIES =		libp2stages.la
 
 SOURCE_FILE_ROOTS =		\
 				stageLoader \
-				tokenizer
+				tokenizer \
+				CSVstage
 
 libp2stages_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C)
 

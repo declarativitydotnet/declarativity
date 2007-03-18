@@ -53,7 +53,8 @@ SOURCE_FILE_ROOTS =	reporting \
 			val_vector \
 			val_matrix \
 			stage \
-			stageRegistry 
+			stageRegistry \
+			CSVlex
 
 
 libp2core_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C) \
