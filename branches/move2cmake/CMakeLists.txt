@@ -12,6 +12,20 @@ INCLUDE(FindPythonLibs)
 FIND_PACKAGE(FLEX)
 FIND_PACKAGE(BISON)
 
+INCLUDE (CheckIncludeFiles)
+# usage: CHECK_INCLUDE_FILES (<header> <RESULT_VARIABLE> )
+
+CHECK_INCLUDE_FILES( rpc/rpc.h HAVE_RPC_RPC_H)
+CHECK_INCLUDE_FILES( "rpc/types.h;rpc/xdr.h" HAVE_RPC_XDR_H)
+
+INCLUDE(CheckSymbolExists)
+CHECK_SYMBOL_EXISTS(xdr_uint32_t "rpc/types.h;rpc/xdr.h" HAVE_XDR_UINT32_T)
+CHECK_SYMBOL_EXISTS(xdr_u_int32_t "rpc/types.h;rpc/xdr.h" HAVE_XDR_U_INT32_T)
+CHECK_SYMBOL_EXISTS("exp10" "math.h" HAVE_EXP10)
+
+
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+
 # tell gcc to treat all .c and .C files as C++
 #IF(CMAKE_COMPILER_IS_GNUCC)
 	#SET (CMAKE_COMPILER_IS_GNUCXX 1)
