@@ -8,6 +8,11 @@ ADD_LIBRARY(p2planner
 			planner.C 
 			stageStrand.C
 			)
+			
+# need to explicitly mention dependencies on ol_lexer.h since CMake can't 
+# figure it out.
+ADD_DEPENDENCIES(p2planner overlog)			
+
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} ${P2_BINARY_DIR}/overlog 			
 					../elements 
 					../net 

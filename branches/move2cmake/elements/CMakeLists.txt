@@ -1,4 +1,4 @@
-ADD_LIBRARY(p2elements
+ ADD_LIBRARY(p2elements
 			aggwrap2.C 
 			slot.C 
 			print.C 

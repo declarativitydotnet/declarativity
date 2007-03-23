@@ -1,5 +1,5 @@
 ADD_LIBRARY(p2core 
-                        pel_opcode_decls.gen.h  
+            pel_opcode_decls.gen.h  
 			reporting.C 
 			commonTable.C 
 			table2.C 
@@ -44,9 +44,13 @@ INCLUDE(FindPythonInterp)
 
 
 # Create custom command for running python
-ADD_CUSTOM_COMMAND(OUTPUT ${P2_SOURCE_DIR}/p2core/pel_opcode_decls.gen.h ${P2_SOURCE_DIR}/p2core/pel_opcode_defns.gen.h ${P2_SOURCE_DIR}/p2core/pel_opcode_tokens.gen.h
-	           COMMAND ${PYTHON_EXECUTABLE}  ARGS ${P2_SOURCE_DIR}/p2core/pel_gen.py
-                   SOURCE ${P2_SOURCE_DIR}/p2core/pel_gen.py)
+ADD_CUSTOM_COMMAND(OUTPUT ${P2_SOURCE_DIR}/p2core/pel_opcode_decls.gen.h 	
+						  ${P2_SOURCE_DIR}/p2core/pel_opcode_defns.gen.h 
+						  ${P2_SOURCE_DIR}/p2core/pel_opcode_tokens.gen.h
+	               COMMAND ${PYTHON_EXECUTABLE} 
+				   ARGS ${P2_SOURCE_DIR}/p2core/pel_gen.py
+                   SOURCE ${P2_SOURCE_DIR}/p2core/pel_gen.py
+				   COMMENT "Generating PEL lexer")
 
 
 # Add pel_gen.py outputs to the list of sources
