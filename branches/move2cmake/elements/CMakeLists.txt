@@ -44,4 +44,6 @@
 			tupleListener.C 
 			tupleSourceInterface.C 
 			removed.C)
+
+ADD_DEPENDENCIES(p2elements p2core)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
