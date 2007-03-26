@@ -10,7 +10,7 @@ ADD_LIBRARY(p2core
 			aggFactory.C 
 			val_str.C 
 			value.C 
-			fdbuf.C 
+			fdbuf.C
 			xdrbuf.C 
 			ID.C 
 			element.C 
@@ -47,6 +47,7 @@ INCLUDE(FindPythonInterp)
 ADD_CUSTOM_COMMAND(OUTPUT ${P2_SOURCE_DIR}/p2core/pel_opcode_decls.gen.h 	
 						  ${P2_SOURCE_DIR}/p2core/pel_opcode_defns.gen.h 
 						  ${P2_SOURCE_DIR}/p2core/pel_opcode_tokens.gen.h
+						  ${P2_SOURCE_DIR}/p2core/pel_opcode_descriptions.gen.txt
 	               COMMAND ${PYTHON_EXECUTABLE} 
 				   ARGS ${P2_SOURCE_DIR}/p2core/pel_gen.py
                    SOURCE ${P2_SOURCE_DIR}/p2core/pel_gen.py
@@ -63,6 +64,6 @@ SET_SOURCE_FILES_PROPERTIES(${P2_BINARY_DIR}/p2core/pel_opcode_decls.gen.h ${P2_
 FIND_PACKAGE(FLEX)
 FLEX_TARGET(PelLexer ${P2_SOURCE_DIR}/p2core/pel_lexer.lex ${P2_BINARY_DIR}/p2core/pel_lexer.C)
 
-TARGET_LINK_LIBRARIES(p2core boost_regex boost_date_time) 
+TARGET_LINK_LIBRARIES(p2core p2eventLoop boost_regex boost_date_time crypto ssl) 
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})

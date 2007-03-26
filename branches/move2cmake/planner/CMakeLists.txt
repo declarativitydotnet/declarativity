@@ -11,7 +11,9 @@ ADD_LIBRARY(p2planner
 			
 # need to explicitly mention dependencies on ol_lexer.h since CMake can't 
 # figure it out.
-ADD_DEPENDENCIES(p2planner overlog)			
+ADD_DEPENDENCIES(p2planner overlog)		
+
+TARGET_LINK_LIBRARIES(p2planner p2core)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} ${P2_BINARY_DIR}/overlog 			
 					../elements 

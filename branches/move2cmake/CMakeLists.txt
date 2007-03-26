@@ -39,6 +39,11 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY
 
 # SET(CMAKE_CXX_SOURCE_FILE_EXTENSIONS C;M;c++;cc;cpp;cxx;m;mm;c)
 
+IF(${CMAKE_SYSTEM} MATCHES Darwin)
+	SET(CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS "${CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS}  -flat_namespace -undefined suppress")
+	SET(CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS}  -flat_namespace -undefined suppress")
+ENDIF(${CMAKE_SYSTEM} MATCHES Darwin)
+
 # deal with Boost time shtuff: we want nanoseconds!
 ADD_DEFINITIONS(-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG)
 
@@ -55,3 +60,6 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/over
                     ${CMAKE_CURRENT_SOURCE_DIR}/debugger
 	                ${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_PATH} /usr/include)
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS} ${P2_BINARY_DIR}/overlog ${P2_BINARY_DIR}/net ${P2_BINARY_DIR}/stages ${P2_BINARY_DIR}/elements ${P2_BINARY_DIR}/debugger ${P2_BINARY_DIR}/p2core  ${P2_BINARY_DIR}/eventLoop ${P2_BINARY_DIR}/planner)
+
+# uncomment the following line to get CMake variables to print to screen
+INCLUDE(CMakePrintSystemInformation)
