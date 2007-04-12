@@ -1,0 +1,5 @@
+python sites.py irb_francetelecom
+./P2Viz.exe&
+ssh -v -l irb_francetelecom -R 23331:localhost:10001 planet1.berkeley.intel-research.net
+
+
