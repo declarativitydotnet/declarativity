@@ -18,7 +18,8 @@
 
 #include "value.h"
 #include "oper.h"
-
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 class Val_UInt32 : public Value {
 
 public:  
@@ -32,8 +33,8 @@ public:
   virtual unsigned int size() const { return sizeof(uint32_t); }
 
   // Marshalling and unmarshallng
-  void xdr_marshal_subtype( XDR *x );
-  static ValuePtr xdr_unmarshal( XDR *x );
+  void marshal_subtype( boost::archive::text_oarchive *x );
+  static ValuePtr unmarshal( boost::archive::text_iarchive *x );
 
   // Constructor
   Val_UInt32(uint32_t theInt) : i(theInt) {};

@@ -50,7 +50,7 @@ void TimedPushSource::runTimer()
   TuplePtr tuple = Tuple::mk();
   if (tuple == 0) {
     // Couldn't create a new tuple.  Bzzzt
-    log(Reporting::ERROR, 0, "runTimer: Failed to create new tuple");
+    log(Reporting::P2_ERROR, 0, "runTimer: Failed to create new tuple");
     return;
   }
 

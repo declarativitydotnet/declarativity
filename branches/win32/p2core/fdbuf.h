@@ -19,11 +19,13 @@
 
 #include <boost/shared_ptr.hpp>
 #include <cstdlib>
-#include <stdint.h>
+//#include <stdint.h>
+#include "value.h"
 #include <string>
 #include <sstream>
 #include <errno.h>
-#include <sys/socket.h>
+// #include <sys/socket.h>
+#include <winsock2.h>
 
 /*
   A brief implementation discussion is in order.  Unlike (say) DM's
@@ -78,7 +80,7 @@ public:
     BUF_DFLT_READ = 1500,	// Default quantity to read.
     BUF_UNLIMITED = -1,		// Unlimited capacity.
     BUF_INCREMENT = 0x80,	// Granularity of buffer growing.
-    BUF_SIZE_MAX = (2 << (sizeof(uint32_t) - 1) - 1)
+    BUF_SIZE_MAX = ((2 << (sizeof(uint32_t) - 1)) - 1)
   };
 
   Fdbuf( int init_capacity = BUF_DFLT_CAP, bool is_safe = false);
@@ -145,8 +147,8 @@ public:
          socklen_t tolen = 0);
   
   // Member functions: stuff removing data from the head of the buffer
-  u_int32_t pop_uint32();
-  Fdbuf& push_uint32(const u_int32_t);
+  uint32_t pop_uint32();
+  Fdbuf& push_uint32(const uint32_t);
   bool pop_bytes(char *buf, uint32_t len);
   Fdbuf& push_bytes(const char *buf, uint32_t len);
   uint32_t pop_to_fdbuf(Fdbuf &fb, uint32_t len);

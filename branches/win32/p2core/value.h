@@ -64,27 +64,75 @@
 
 #include <assert.h>
 #include <stdexcept>
+
 #include "inlines.h"
 #include "config.h"
 
 #include "reporting.h"
 
-extern "C" {
-#include <rpc/rpc.h>
-#include <rpc/xdr.h>
-}
+//extern "C" {
+//#include <rpc/rpc.h>
+//#include <rpc/xdr.h>
+//}
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 
-// deal with xdr portability issues (originally found on OS X 10.4)
+// deal with P2_XDR portability issues (originally found on OS X 10.4)
 #ifdef HAVE_XDR_U_INT32_T
 #define xdr_uint32_t xdr_u_int32_t
 #define xdr_uint64_t xdr_u_int64_t
 #endif
 
+#ifndef HAVE_TRUNC
+inline double trunc(double f) { if (f > 0) return floor(f); else return ceil(f); }
+#endif
+
+#ifndef HAVE_ROUND
+inline double round(double f) { return floor(f + 0.5); }
+#endif
+
+typedef __int64 int64_t;
+typedef __int32 int32_t;
+typedef __int16 int16_t;
+typedef unsigned __int64 uint64_t;
+typedef unsigned __int32 uint32_t;
+typedef unsigned __int16 uint16_t;
+typedef unsigned int uint;
+typedef unsigned __int64 u_int64_t;
+typedef unsigned __int32 u_int32_t;
+typedef unsigned __int16 u_int16_t;
+typedef unsigned int u_int;
+typedef long ssize_t;
+typedef int bool_t;
+typedef int socklen_t;
+#ifndef caddr_t
+typedef char* caddr_t;
+#endif /* caddr_t */
+
+#ifndef strtoull
+#define strtoull _strtoui64
+#endif
+
+#ifndef strtoll
+#define strtoll _strtoi64
+#endif
+
+
+#ifndef llabs
+#define llabs _abs64
+#endif
+
+#ifndef drand48
+inline int32_t drand48() { unsigned int retval; (void) rand_s(&retval); return (int32_t) retval; }
+#endif
+
+#ifndef HAVE_RANDOM
+inline int32_t random() { return (int32_t) rand(); }
+#endif
 // deal with exp10 portability issues (missing from gcc4 on OS X 10.4)
 #ifndef HAVE_EXP10
 #define exp10(n) 	pow(10.0,(n))
 #endif /* NO_EXP10 */
-
 
 using std::string;
 using std::ostringstream;
@@ -116,7 +164,7 @@ public:
     INT64,
     UINT64,
     DOUBLE,
-    OPAQUE,
+    P2_OPAQUE,
     TUPLE,
     TIME,
     ID,
@@ -191,11 +239,11 @@ public:
   };
 
   // Marshalling
-  void xdr_marshal( XDR *x );
-  static ValuePtr xdr_unmarshal( XDR *x );
+  void marshal( boost::archive::text_oarchive *x );
+  static ValuePtr unmarshal( boost::archive::text_iarchive *x );
 
 protected:
-  virtual void xdr_marshal_subtype( XDR *x ) = 0;
+  virtual void marshal_subtype( boost::archive::text_oarchive *x ) = 0;
 };
 
  

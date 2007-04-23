@@ -34,7 +34,7 @@ TuplePtr Unmarshal::simple_action(TuplePtr p)
     return TuplePtr();
   }
 
-  XDR xd;
+  P2_XDR xd;
   FdbufPtr fb = Val_Opaque::cast((*p)[0]);
   xdrfdbuf_create(&xd, fb.get(), false, XDR_DECODE);
   TuplePtr t = Tuple::xdr_unmarshal(&xd);

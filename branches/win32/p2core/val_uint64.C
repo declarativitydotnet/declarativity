@@ -34,14 +34,14 @@ string Val_UInt64::toConfString() const
 //
 // Marshalling and unmarshallng
 //
-void Val_UInt64::xdr_marshal_subtype( XDR *x )
+void Val_UInt64::marshal_subtype( boost::archive::text_oarchive *x )
 {
-  xdr_uint64_t(x, &i);
+  *x & i;
 }
-ValuePtr Val_UInt64::xdr_unmarshal( XDR *x )
+ValuePtr Val_UInt64::unmarshal( boost::archive::text_iarchive *x)
 {
   uint64_t i;
-  xdr_uint64_t(x, &i);
+  *x & i;
   return mk(i);
 }
 
@@ -71,7 +71,7 @@ Val_UInt64::cast(ValuePtr v) {
     returnValue = 0;
     break;
   case Value::STR:
-    returnValue = strtoull(Val_Str::cast(v).c_str(),(char **)NULL, 0);
+    returnValue = /* strtoull */ _strtoui64(Val_Str::cast(v).c_str(),(char **)NULL, 0);
     break;
   default:
     throw Value::TypeError(v->typeCode(),

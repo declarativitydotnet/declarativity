@@ -105,7 +105,7 @@ void Defrag::defragment(TuplePtr t)
     }
 
     // Unmarhsal and expand the packaged tuple
-    XDR xd;
+    P2_XDR xd;
     xdrfdbuf_create(&xd, fb.get(), false, XDR_DECODE);
     TuplePtr unmarshal = Tuple::xdr_unmarshal(&xd);
     xdr_destroy(&xd);

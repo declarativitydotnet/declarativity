@@ -456,7 +456,7 @@ public:
       is unknown, throws AggFactory::AggregateNotFound. */
   Aggregate
   aggregate(Key& groupBy,
-            uint aggregateFieldNo,
+            u_int aggregateFieldNo,
             std::string functionName);
 
 

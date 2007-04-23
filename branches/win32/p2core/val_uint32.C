@@ -21,6 +21,10 @@
 #include "val_double.h"
 #include "val_str.h"
 #include "val_null.h"
+// the boost serialization implementer claims text is not much more expensive than portable binary
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
 
 const opr::Oper* Val_UInt32::oper_ = new opr::OperImpl<Val_UInt32>();
 
@@ -34,14 +38,14 @@ string Val_UInt32::toConfString() const
 //
 // Marshalling and unmarshallng
 //
-void Val_UInt32::xdr_marshal_subtype( XDR *x )
+void Val_UInt32::marshal_subtype( boost::archive::text_oarchive *x )
 {
-  xdr_uint32_t(x, &i);
+  *x & i;
 }
-ValuePtr Val_UInt32::xdr_unmarshal( XDR *x )
+ValuePtr Val_UInt32::unmarshal( boost::archive::text_iarchive *x )
 {
   uint32_t i;
-  xdr_uint32_t(x, &i);
+  *x & i;
   return mk(i);
 }
 

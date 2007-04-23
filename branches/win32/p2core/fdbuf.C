@@ -13,14 +13,21 @@
  * DESCRIPTION: Receive buffer for file descriptors
  *
  */
-
+#define NOMINMAX // don't let windef.h put in macros for min and max, screwing up std::min
 #include "fdbuf.h"
 
 #include <cerrno>
-#include <unistd.h>
+// #include <unistd.h>
 #include <sys/types.h>
-#include <sys/socket.h>
+// #include <sys/socket.h>
 #include <assert.h>
+#include <winsock2.h>
+// for Win32 _read
+#include <io.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <share.h>
+
 
 //
 // Constructor
@@ -58,7 +65,7 @@ Fdbuf::~Fdbuf()
 ssize_t Fdbuf::read(int fd, uint32_t max_read)
 {
   ensure_additional(max_read);
-  return post_read(::read(fd, data + start + len, max_read));
+  return post_read(::_read(fd, data + start + len, max_read));
 }
 ssize_t Fdbuf::recv(int fd, uint32_t max_read, int flags)
 {
@@ -78,7 +85,7 @@ ssize_t Fdbuf::recvfrom(int sd, uint32_t max_read, int flags,
 Fdbuf &Fdbuf::pushString(const std::string &s)
 {
   ensure_additional(s.length());
-  s.copy(data + start + len, s.length(), 0);
+  s._Copy_s(data + start + len, s.length(), 0);
   len += s.length();
   return *this;
 }
@@ -103,7 +110,7 @@ Fdbuf &Fdbuf::pushFdbuf(const Fdbuf &fb, uint32_t max_size)
 ssize_t
 Fdbuf::write(int fd, ssize_t max_write)
 {
-  return post_write(::write(fd,
+  return post_write(::_write(fd,
                             data + start, 
 			    (max_write < 0) ? len
                             : std::min(len, (uint32_t) max_write)));

@@ -23,19 +23,19 @@
 #include "reporting.h"
 
 void
-Tuple::xdr_marshal( XDR *x ) 
+Tuple::marshal( boost::archive::text_oarchive *x ) 
 {
   assert(frozen);
 
   // Tuple size overall
   uint32_t sz = fields.size();
   u_int32_t i = (u_int32_t)sz;
-  xdr_uint32_t(x, &i);
+  *x & i;
   // Marshal the fields
   for(uint32_t i = 0;
       i < fields.size();
       i++) {
-    fields[i]->xdr_marshal(x);
+    fields[i]->marshal(x);
   };
 
   // Metadata to handle tuple tracing across wire
@@ -47,42 +47,42 @@ Tuple::xdr_marshal( XDR *x )
   int count = 0;
   if(_tags){
     count = _tags->size();
-    (Val_Int32::mk(count))->xdr_marshal(x);
-    (Val_Str::mk("sourceNode"))->xdr_marshal(x);
-    tag("localNode")->xdr_marshal(x);
-    (Val_Str::mk("ID"))->xdr_marshal(x);
-    (Val_UInt32::mk(ID()))->xdr_marshal(x);
+    (Val_Int32::mk(count))->marshal(x);
+    (Val_Str::mk("sourceNode"))->marshal(x);
+    tag("localNode")->marshal(x);
+    (Val_Str::mk("ID"))->marshal(x);
+    (Val_UInt32::mk(ID()))->marshal(x);
   }
   else {
-    (Val_Int32::mk(count))->xdr_marshal(x);
+    (Val_Int32::mk(count))->marshal(x);
   }
 
 }
 
 
 TuplePtr
-Tuple::xdr_unmarshal(XDR* x) 
+Tuple::unmarshal(boost::archive::text_iarchive *x) 
 {
   TuplePtr t = Tuple::mk();
   // Tuple size overall
   u_int32_t ui;
-  xdr_uint32_t(x, &ui);
+  *x & ui;
   // Marshal the fields
   uint32_t sz = ui;
   for(uint32_t i = 0;
       i < sz;
       i++) {
-    t->append(Value::xdr_unmarshal(x));
+    t->append(Value::unmarshal(x));
   }
 
   // retrieve debugging metadata in the tags
-  int numTags = Val_Int32::cast(Value::xdr_unmarshal(x));
+  int numTags = Val_Int32::cast(Value::unmarshal(x));
   if(numTags > 0){
     // create a tag depending on the tags coming from wire
-    ValuePtr sourceNodeTag = Value::xdr_unmarshal(x);
-    ValuePtr sn = Value::xdr_unmarshal(x);
-    ValuePtr idTag = Value::xdr_unmarshal(x);
-    ValuePtr idt = Value::xdr_unmarshal(x);
+    ValuePtr sourceNodeTag = Value::unmarshal(x);
+    ValuePtr sn = Value::unmarshal(x);
+    ValuePtr idTag = Value::unmarshal(x);
+    ValuePtr idt = Value::unmarshal(x);
 
     t->tag(sourceNodeTag->toString(), sn);
     t->tag(idTag->toString(), idt);
@@ -208,7 +208,7 @@ TuplePtr
 Tuple::EMPTY = Tuple::mk();
 
 
-uint
+u_int
 Tuple::_tupleIDCounter = 0;
 
 // Create an empty initializer object so that the EMPTY tuple is fully
@@ -333,7 +333,8 @@ bool
 Tuple::Comparator::operator()(const TuplePtr first,
                               const TuplePtr second) const
 {
-  return first->compareTo(second);
+	// this construct makes Viz C++ warnings happier than casting to bool
+  return ((first->compareTo(second) != 0));
 }
 
 

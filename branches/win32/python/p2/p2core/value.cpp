@@ -23,7 +23,7 @@ public:
     return this->get_override("compareTo")();
   };
 protected:
-  virtual void xdr_marshal_subtype(XDR*) const {
+  virtual void xdr_marshal_subtype(P2_XDR*) const {
     this->get_override("xdr_marshal_subtype")();
   };
 };

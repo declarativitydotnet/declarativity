@@ -9,7 +9,7 @@
  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
  * Berkeley, CA,  94707. Attention: P2 Group.
  * 
- * DESCRIPTION: An XDR stream implementation for P2 fdbufs
+ * DESCRIPTION: An P2_XDR stream implementation for P2 fdbufs
  *
  */
 
@@ -17,13 +17,13 @@
 #define __XDRBUF_H__
 
 #include "fdbuf.h"
-#include <rpc/rpc.h>
-#include <rpc/xdr.h>
+//#include <rpc/rpc.h>
+//#include <rpc/xdr.h>
 
 //
-// Initialize an XDR to use an Fdbuf.  If 'take' is true, the fdbuf
-// will be destroyed when the XDR is destroyed. 
+// Initialize an P2_XDR to use an Fdbuf.  If 'take' is true, the fdbuf
+// will be destroyed when the P2_XDR is destroyed. 
 //
-extern void xdrfdbuf_create(XDR *xdrs, Fdbuf *fdb, bool take, enum xdr_op op);
+extern void xdrfdbuf_create(P2_XDR *xdrs, Fdbuf *fdb, bool take, enum xdr_op op);
 
 #endif // __XDRBUF_H__

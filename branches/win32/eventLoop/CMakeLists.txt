@@ -1,3 +1,3 @@
-ADD_LIBRARY(p2eventLoop loop.C p2Time.C)
+ADD_LIBRARY(p2eventLoop loop.cpp p2Time.cpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})

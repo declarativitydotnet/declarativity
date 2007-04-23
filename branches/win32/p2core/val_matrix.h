@@ -28,7 +28,6 @@ typedef matrix< ValuePtr > ValPtrMatrix;
 class Val_Matrix : public Value {    
 
 public:
-
   // Required fields for all concrete types.
   // The type name
   const Value::TypeCode typeCode() const { return Value::MATRIX; };
@@ -38,17 +37,17 @@ public:
   virtual string toConfString() const;
 
   // Marshal/unmarshal a matrix.
-  void xdr_marshal_subtype( XDR *x );
-  static ValuePtr xdr_unmarshal( XDR *x );
+  void marshal_subtype( boost::archive::text_oarchive *x );
+  static ValuePtr unmarshal( boost::archive::text_iarchive *x );
 
   // Constructors
   Val_Matrix(MatrixPtr mp) : M(mp) {};
-  Val_Matrix(uint64_t &size1, uint64_t &size2) { MatrixPtr p(new ValPtrMatrix(size1,size2)); M = p;}
+  Val_Matrix(unsigned int &size1, unsigned int &size2) { MatrixPtr p(new ValPtrMatrix(size1, size2)); M = p;}
   virtual ~Val_Matrix() {};
 
   // Factory
   static ValuePtr mk(MatrixPtr mp) { ValuePtr p(new Val_Matrix(mp)); return p; };
-  static ValuePtr mk2(uint64_t &size1, uint64_t &size2) { ValuePtr p(new Val_Matrix(size1,size2)); return p; };
+  static ValuePtr mk2(unsigned int &size1, unsigned int &size2) { ValuePtr p(new Val_Matrix(size1,size2)); return p; };
   
   // strict comparison
   int compareTo(ValuePtr v) const;
@@ -63,8 +62,8 @@ public:
   const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
 
   // manipulate matrix entries
-  void insert(uint64_t &i1, uint64_t &i2, ValuePtr vp) { (*M)(i1,i2) = vp; };
-  void erase(uint64_t &i1, uint64_t &i2) { (*M)(i1,i2).reset(); };
+  void insert(unsigned int &i1, unsigned int &i2, ValuePtr vp) { (*M)(i1,i2) = vp; };
+  void erase(unsigned int &i1, unsigned int &i2) { (*M)(i1,i2).reset(); };
 
       
   static const opr::Oper* oper_;

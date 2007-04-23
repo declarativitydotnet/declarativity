@@ -97,7 +97,7 @@ void Frag::fragment(TuplePtr t)
   payload->freeze();
 
   FdbufPtr payload_fb(new Fdbuf());
-  XDR xe;
+  P2_XDR xe;
   xdrfdbuf_create(&xe, payload_fb.get(), false, XDR_ENCODE);
   payload->xdr_marshal(&xe);
   xdr_destroy(&xe);

@@ -68,14 +68,14 @@ string Val_Double::toConfString() const
 //
 // Marshalling and unmarshallng
 //
-void Val_Double::xdr_marshal_subtype( XDR *x )
+void Val_Double::marshal_subtype( boost::archive::text_oarchive *x )
 {
-  xdr_double(x, &d);
+  *x & d;
 }
-ValuePtr Val_Double::xdr_unmarshal( XDR *x )
+ValuePtr Val_Double::unmarshal( boost::archive::text_iarchive *x )
 {
   double d;
-  xdr_double(x, &d);
+  *x & d;
   return mk(d);
 }
 

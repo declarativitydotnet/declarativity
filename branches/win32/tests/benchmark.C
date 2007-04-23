@@ -92,7 +92,7 @@ static double time_fn(b_cbv cb)
 }
 
 
-/* What hex dump of the next tuple in XDR should look like... 
+/* What hex dump of the next tuple in P2_XDR should look like... 
    00000004 // Tuple has 5 fields
    00000000 // Null (type code = 0)
    00000001 // Type code = 1 (int32)
@@ -163,7 +163,7 @@ static void create_lots_val_str() {
 
 static void marshal_lots_of_values() {
   for (int c = 0; c < MARSHAL_NUM_UIOS; c++) { 
-    XDR xdrs;
+    P2_XDR xdrs;
     // clear uio first, then write.
     // this prevent memory from growing indefinitely
     xe[c].clear();
@@ -176,7 +176,7 @@ static void marshal_lots_of_values() {
 
 static void unmarshal_lots_of(Value::TypeCode t) {
   for (int c = 0; c < MARSHAL_NUM_UIOS; c++) {
-    XDR xdrs;
+    P2_XDR xdrs;
     xdrfdbuf_create(&xdrs, &xe[c], false, XDR_DECODE);
     for (int i = 0; i < MARSHAL_CHUNK_SZ; i++) {
       switch (t) {
@@ -238,7 +238,7 @@ static void marshal_lots_of_tuples()
 {
   assert( MARSHAL_CHUNK_SZ < TUPLE_TST_SZ);
   for( int c=0; c< MARSHAL_NUM_UIOS; c++) {
-    XDR xdrs;
+    P2_XDR xdrs;
     encode_uios[c].clear();
     xdrfdbuf_create(&xdrs, &encode_uios[c], false, XDR_ENCODE);
     for( int i=0; i< MARSHAL_CHUNK_SZ; i++) {
@@ -251,7 +251,7 @@ static void unmarshal_lots_of_tuples()
 {
   assert( MARSHAL_CHUNK_SZ < TUPLE_TST_SZ);
   for( int c=0; c< MARSHAL_NUM_UIOS; c++) {
-    XDR xdrs;
+    P2_XDR xdrs;
     xdrfdbuf_create(&xdrs, &encode_uios[c], false, XDR_DECODE);
     for( int i=0; i< MARSHAL_CHUNK_SZ; i++) {
       ta[i]=Tuple::xdr_unmarshal(&xdrs);
@@ -324,7 +324,7 @@ static void unit_test_for(Value::TypeCode t ) {
 int main(int argc, char **argv)
 {
   TuplePtr t = create_tuple_1();
-  XDR xdrs;
+  P2_XDR xdrs;
   Fdbuf singlet;
   xdrfdbuf_create(&xdrs, &singlet, false, XDR_ENCODE);
   t->xdr_marshal(&xdrs);

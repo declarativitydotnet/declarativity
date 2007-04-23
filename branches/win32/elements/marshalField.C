@@ -48,13 +48,13 @@ TuplePtr MarshalField::simple_action(TuplePtr p)
       // Nope.  Return nothing
       return TuplePtr();
     } 
-    else if (value->typeCode() == Value::OPAQUE) {
+    else if (value->typeCode() == Value::P2_OPAQUE) {
       newTuple->append((*p)[field]);	// Just add it
     }
     else if (value->typeCode() == Value::TUPLE) {
       // Goodie. Marshal the field
       FdbufPtr fb(new Fdbuf());
-      XDR xe;
+      P2_XDR xe;
       xdrfdbuf_create(&xe, fb.get(), false, XDR_ENCODE);
       value->xdr_marshal(&xe);
       xdr_destroy(&xe);

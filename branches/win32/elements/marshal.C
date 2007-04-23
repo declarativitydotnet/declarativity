@@ -30,7 +30,7 @@ TuplePtr Marshal::simple_action(TuplePtr p)
 {
   // Taken straight from the tuples test.
   FdbufPtr fb(new Fdbuf());
-  XDR xe;
+  P2_XDR xe;
   xdrfdbuf_create(&xe, fb.get(), false, XDR_ENCODE);
   p->xdr_marshal(&xe);
   xdr_destroy(&xe);
@@ -39,7 +39,7 @@ TuplePtr Marshal::simple_action(TuplePtr p)
   TuplePtr t = Tuple::mk();
   if (t == 0) {
     // Couldn't create one. Memory problems?
-    log(Reporting::ERROR, -1, "Couldn't allocate new tuple");
+    log(Reporting::P2_ERROR, -1, "Couldn't allocate new tuple");
     return TuplePtr();
   } else {
     // Stick the string into a tuple field and into the tuple

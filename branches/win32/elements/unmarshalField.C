@@ -52,10 +52,10 @@ TuplePtr UnmarshalField::simple_action(TuplePtr p)
       return TuplePtr();
     } 
     // Is this a field of type OPAQUE?
-    else if (value->typeCode() == Value::OPAQUE) {
+    else if (value->typeCode() == Value::P2_OPAQUE) {
       // Goodie. Unmarshal the field
       FdbufPtr fb = Val_Opaque::cast(value);
-      XDR xd;
+      P2_XDR xd;
       xdrfdbuf_create(&xd, fb.get(), false, XDR_DECODE);
       ValuePtr unmarshalled = Value::xdr_unmarshal(&xd);
       xdr_destroy(&xd);

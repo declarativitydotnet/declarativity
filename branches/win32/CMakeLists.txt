@@ -5,6 +5,8 @@ SUBDIRS(eventLoop p2core elements stages net overlog planner debugger unitTests 
 # Main decisions
 SET(BUILD_SHARED_LIBS ON)
 
+# uncomment the following line to get CMake variables to print to screen
+#INCLUDE(CMakePrintSystemInformation)
 
 
 # find our custom CMake modules
@@ -46,6 +48,15 @@ ENDIF(${CMAKE_SYSTEM} MATCHES Darwin)
 # add random environment variable definitions
 # deal with Boost time shtuff: we want nanoseconds!
 ADD_DEFINITIONS(-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG)
+# This makes visual studio happy with Boost (see
+# http://opensource.adobe.com/asl_readme.html#Issues_Surrounding_MSVC_8.0.27s_.22Safe.22_Libraries)
+ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE)
+
+# This includes rand_s under windows
+ADD_DEFINITIONS(-D_CRT_RAND_S)
+
+# This ensures that windows.h doesn't include winsock.h (we're using winsock2.h)
+ADD_DEFINITIONS(-DWIN32_LEAN_AND_MEAN)
 
 # set include path for this and all subdirs
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/overlog	
@@ -57,7 +68,8 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/over
                     ${CMAKE_CURRENT_SOURCE_DIR}/overlog
                     ${CMAKE_CURRENT_SOURCE_DIR}/planner
                     ${CMAKE_CURRENT_SOURCE_DIR}/debugger
-		    ${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_PATH} /usr/include)
+		    ${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_PATH} /usr/include
+		    )
 
 # set linker path for this and all subdirs
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS} 
@@ -70,5 +82,3 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS}
 		${P2_BINARY_DIR}/eventLoop 
 		${P2_BINARY_DIR}/planner)
 
-# uncomment the following line to get CMake variables to print to screen
-#INCLUDE(CMakePrintSystemInformation)

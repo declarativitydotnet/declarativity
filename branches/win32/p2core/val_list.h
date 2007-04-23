@@ -50,9 +50,9 @@ public:
    
    
    // Marshal/unmarshal a list.
-   void xdr_marshal_subtype( XDR *x );
+   void marshal_subtype( boost::archive::text_oarchive *x );
    
-   static ValuePtr xdr_unmarshal( XDR *x );
+   static ValuePtr unmarshal( boost::archive::text_iarchive *x );
    
    static const opr::Oper* oper_;
    

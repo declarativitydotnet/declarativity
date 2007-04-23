@@ -21,7 +21,7 @@
 #include "val_str.h"
 #include "val_null.h"
 #include "val_tuple.h"
-#include "math.h"
+#include <math.h>
 #include "tuple.h"
 
 using namespace opr;
@@ -61,7 +61,7 @@ string Val_Time::toConfString() const
 // Marshalling and unmarshallng
 //
 
-void Val_Time::xdr_marshal_subtype( XDR *x )
+void Val_Time::marshal_subtype( boost::archive::text_oarchive *x )
 {
   
   ptime epoch(date(1970,Jan,1));
@@ -73,24 +73,24 @@ void Val_Time::xdr_marshal_subtype( XDR *x )
   uint32_t hours = d.hours();
   uint32_t mins = d.minutes();
   uint32_t secs = d.seconds();
-  uint32_t frac_secs = d.fractional_seconds() * PTIME_SECS_FACTOR;
+  uint64_t frac_secs = d.fractional_seconds() * PTIME_SECS_FACTOR;
   
-  xdr_uint32_t(x, &hours);
-  xdr_uint32_t(x, &mins);
-  xdr_uint32_t(x, &secs);
-  xdr_uint32_t(x, &frac_secs);
+  *x & hours;
+  *x & mins;
+  *x & secs;
+  *x & frac_secs;
 }
 
-ValuePtr Val_Time::xdr_unmarshal( XDR *x )
+ValuePtr Val_Time::unmarshal( boost::archive::text_iarchive *x )
 {
   uint32_t hours;
   uint32_t mins;
   uint32_t secs;
   uint32_t frac_secs;
-  xdr_uint32_t(x, &hours);
-  xdr_uint32_t(x, &mins);
-  xdr_uint32_t(x, &secs);
-  xdr_uint32_t(x, &frac_secs);
+  *x & hours;
+  *x & mins;
+  *x & secs;
+  *x & frac_secs;
   
   ptime epoch(date(1970,Jan,1));
   time_duration td(hours, mins, secs, frac_secs);
@@ -106,12 +106,12 @@ double Val_Time::_theDouble = 0;
 // Construction from a timespec object
 //
 
-Val_Time::Val_Time(struct timespec theTime) {
-  ptime epoch(date(1970,Jan,1));
-  time_duration td(0,0,theTime.tv_sec, 
-                   (uint32_t) round(theTime.tv_nsec / PTIME_SECS_FACTOR));
-  t = epoch + td;
-}
+// Val_Time::Val_Time(struct timespec theTime) {
+//  ptime epoch(date(1970,Jan,1));
+//  time_duration td(0,0,theTime.tv_sec, 
+//                   (uint32_t) round(theTime.tv_nsec / PTIME_SECS_FACTOR));
+//  t = epoch + td;
+// }
 
 /*
  * Casting
@@ -155,13 +155,13 @@ boost::posix_time::ptime Val_Time::cast(ValuePtr v) {
     }
   case Value::INT64:
     {
-      time_duration elapsed(0,0,Val_Int64::cast(v), 0);
+      time_duration elapsed(0,0,(boost::posix_time::time_duration::sec_type)Val_Int64::cast(v), 0);
       ptime pt = epoch + elapsed;
       return pt;
     }
   case Value::UINT64:
     {
-      time_duration elapsed(0,0,Val_UInt64::cast(v), 0);
+      time_duration elapsed(0,0,(boost::posix_time::time_duration::sec_type)Val_UInt64::cast(v), 0);
       ptime pt = epoch + elapsed;
       return pt;
     }
@@ -284,7 +284,7 @@ string Val_Time_Duration::toConfString() const
 //
 // Marshalling and unmarshallng
 //
-void Val_Time_Duration::xdr_marshal_subtype( XDR *x )
+void Val_Time_Duration::marshal_subtype( boost::archive::text_oarchive *x )
 {
   // ensure we send nanosecs (1/(10^9) sec) 
   // even if boost is compiled to lower precision 
@@ -292,24 +292,25 @@ void Val_Time_Duration::xdr_marshal_subtype( XDR *x )
   uint32_t hours = td.hours();
   uint32_t mins = td.minutes();
   uint32_t secs = td.seconds();
-  uint32_t frac_secs = td.fractional_seconds() * PTIME_SECS_FACTOR;
-  xdr_uint32_t(x, &hours);
-  xdr_uint32_t(x, &mins);
-  xdr_uint32_t(x, &secs);
-  xdr_uint32_t(x, &frac_secs);
+  uint64_t frac_secs = td.fractional_seconds() * PTIME_SECS_FACTOR;
+  *x & hours;
+  *x & mins;
+  *x & secs;
+  *x & frac_secs;
 }
 
-ValuePtr Val_Time_Duration::xdr_unmarshal( XDR *x )
+ValuePtr Val_Time_Duration::unmarshal( boost::archive::text_iarchive *x )
 {
   uint32_t hours;
   uint32_t mins;
   uint32_t secs;
   uint32_t frac_secs;
   
-  xdr_uint32_t(x, &hours);
-  xdr_uint32_t(x, &mins);
-  xdr_uint32_t(x, &secs);
-  xdr_uint32_t(x, &frac_secs);
+  *x & hours;
+  *x & mins;
+  *x & secs;
+  *x & frac_secs;
+
 
   // ensure we interpret this as nanosecs (1/(10^9) sec) 
   // even if boost is compiled to lower precision 
@@ -318,7 +319,7 @@ ValuePtr Val_Time_Duration::xdr_unmarshal( XDR *x )
   
   
   
-  return mk(td1);
+  return Val_Time_Duration::mk(td1);
 }
 
 double Val_Time_Duration::_theDouble = 0;
@@ -345,20 +346,20 @@ boost::posix_time::time_duration Val_Time_Duration::cast(ValuePtr v) {
   case Value::INT64:
     {
       // treat the input as seconds
-      boost::posix_time::time_duration td(0,0,Val_Int64::cast(v), 0);       
+      boost::posix_time::time_duration td(0,0,(boost::posix_time::time_duration::sec_type)Val_Int64::cast(v), 0);       
       return td;
     }
   case Value::UINT64:
     {
       // treat the input as seconds
-      boost::posix_time::time_duration td(0,0,Val_UInt64::cast(v), 0);       
+      boost::posix_time::time_duration td(0,0,(boost::posix_time::time_duration::sec_type)Val_UInt64::cast(v), 0);       
       return td;
     }
   case Value::DOUBLE:
     {
       // treat the input as seconds and nanoseconds
       double d = Val_Double::cast(v);
-      uint32_t secs = (uint32_t)trunc(d);
+	  uint32_t secs = (uint32_t) trunc(d);
       // ensure we interpret this fractional part appropriately
       // regardless of how much precision boost is compiled for
       uint32_t frac_secs = (uint32_t) round(modf(d, &Val_Time_Duration::_theDouble) 

@@ -80,11 +80,11 @@ public:
   xdrTest(ValuePtr in)
   {
     Fdbuf fin(0);
-    XDR xe;
+    P2_XDR xe;
     xdrfdbuf_create(&xe, &fin, false, XDR_ENCODE);
     in->xdr_marshal(&xe);
     
-    XDR xd;
+    P2_XDR xd;
     Fdbuf fout(0);
     fout.pushFdbuf(fin, fin.length());
     xdrfdbuf_create(&xd, &fout, false, XDR_DECODE);
