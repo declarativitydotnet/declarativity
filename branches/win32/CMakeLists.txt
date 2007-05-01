@@ -1,9 +1,9 @@
 Project(P2)
 
-SUBDIRS(eventLoop p2core elements stages net overlog planner debugger unitTests tests python)
+SUBDIRS(getopt p2core elements stages net overlog planner debugger unitTests tests python)
 
 # Main decisions
-SET(BUILD_SHARED_LIBS ON)
+# SET(BUILD_SHARED_LIBS ON)
 
 # uncomment the following line to get CMake variables to print to screen
 #INCLUDE(CMakePrintSystemInformation)
@@ -58,10 +58,13 @@ ADD_DEFINITIONS(-D_CRT_RAND_S)
 # This ensures that windows.h doesn't include winsock.h (we're using winsock2.h)
 ADD_DEFINITIONS(-DWIN32_LEAN_AND_MEAN)
 
+
 # set include path for this and all subdirs
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/overlog	
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}
+					${CMAKE_CURRENT_BINARY_DIR}/getopt 
+                    ${CMAKE_CURRENT_BINARY_DIR}/overlog	
                     ${CMAKE_CURRENT_BINARY_DIR}/p2core 
-		    ${CMAKE_CURRENT_SOURCE_DIR}/eventLoop 
+#		            ${CMAKE_CURRENT_SOURCE_DIR}/eventLoop 
                     ${CMAKE_CURRENT_SOURCE_DIR}/elements
                     ${CMAKE_CURRENT_SOURCE_DIR}/stages
                     ${CMAKE_CURRENT_SOURCE_DIR}/net
@@ -73,12 +76,13 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/over
 
 # set linker path for this and all subdirs
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS} 
+		${P2_BINARY_DIR}/getopt
 		${P2_BINARY_DIR}/overlog 
 		${P2_BINARY_DIR}/net 
 		${P2_BINARY_DIR}/stages 
 		${P2_BINARY_DIR}/elements 
 		${P2_BINARY_DIR}/debugger 
 		${P2_BINARY_DIR}/p2core  
-		${P2_BINARY_DIR}/eventLoop 
+#		${P2_BINARY_DIR}/eventLoop 
 		${P2_BINARY_DIR}/planner)
 

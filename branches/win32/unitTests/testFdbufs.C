@@ -12,8 +12,11 @@
 
 #include "fdbuf.h"
 #include "value.h"
-#include <rpc/xdr.h>
-#include "xdrbuf.h"
+//#include <rpc/xdr.h>
+//#include "xdrbuf.h"
+// the boost serialization implementer claims text is not much more expensive than portable binary
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
 
 
 #include "val_null.h"
@@ -77,18 +80,21 @@ public:
 
 
   void
-  xdrTest(ValuePtr in)
+  marshalTest(ValuePtr in)
   {
     Fdbuf fin(0);
-    P2_XDR xe;
-    xdrfdbuf_create(&xe, &fin, false, XDR_ENCODE);
-    in->xdr_marshal(&xe);
+    std::stringstream outstr;
+    boost::archive::text_oarchive xe(outstr);
+  
+	// xdrfdbuf_create(&xe, &fin, false, XDR_ENCODE);
+    in->marshal(&xe);
     
-    P2_XDR xd;
+    //P2_XDR xd;
+	boost::archive::text_iarchive *xd;
     Fdbuf fout(0);
     fout.pushFdbuf(fin, fin.length());
-    xdrfdbuf_create(&xd, &fout, false, XDR_DECODE);
-    ValuePtr out = Value::xdr_unmarshal(&xd);
+    // xdrfdbuf_create(&xd, &fout, false, XDR_DECODE);
+    ValuePtr out = Value::unmarshal(xd);
     
     BOOST_CHECK_MESSAGE(out->compareTo(in) == 0,
                         "Marshalled/unmarshalled mismatch!\n");
@@ -100,30 +106,30 @@ public:
   }
   
   void
-  xdrTests()
+  marshalTests()
   {
-    xdrTest(Val_Null::mk());
-    xdrTest(Val_Str::mk("Test String"));
-    xdrTest(Val_Int32::mk(-12));
-    xdrTest(Val_UInt32::mk(12));
-    xdrTest(Val_Int64::mk(-24));
-    xdrTest(Val_UInt64::mk(24));
-    xdrTest(Val_Double::mk(0.1856));
+    marshalTest(Val_Null::mk());
+    marshalTest(Val_Str::mk("Test String"));
+    marshalTest(Val_Int32::mk(-12));
+    marshalTest(Val_UInt32::mk(12));
+    marshalTest(Val_Int64::mk(-24));
+    marshalTest(Val_UInt64::mk(24));
+    marshalTest(Val_Double::mk(0.1856));
 
     TuplePtr t = Tuple::mk();
     t->append(Val_Str::mk("Flat"));
     t->append(Val_UInt64::mk(13500975));
     t->freeze();  
-    xdrTest(Val_Tuple::mk(t));
+    marshalTest(Val_Tuple::mk(t));
     
-    xdrTest(Val_List::mk(List::mk()));
+    marshalTest(Val_List::mk(List::mk()));
     
     ListPtr l = List::mk();
     l->append(Val_Str::mk("Foo"));
     l->append(Val_UInt64::mk(13117));
     l->append(Val_Int32::mk(42));
     
-    xdrTest(Val_List::mk(l));
+    marshalTest(Val_List::mk(l));
     
     //	boost::posix_time::ptime time = boost::posix_time::second_clock::universal_time();
     //getTime(time);
@@ -131,14 +137,14 @@ public:
     boost::posix_time::ptime time(date(1970, Jan, 1));
     time += hours(2) + seconds(25) + nanoseconds(50203);
 	
-    xdrTest(Val_Time::mk(time));
+    marshalTest(Val_Time::mk(time));
     
     boost::posix_time::time_duration td(0,0,5,0);
     td += boost::posix_time::nanoseconds(1020430);
-    xdrTest(Val_Time_Duration::mk(td));
+    marshalTest(Val_Time_Duration::mk(td));
     
     IDPtr id(new ID((uint32_t) 102040));
-    xdrTest(Val_ID::mk(id));
+    marshalTest(Val_ID::mk(id));
   }
 };
 
@@ -156,6 +162,6 @@ testFdbufs_testSuite::testFdbufs_testSuite()
   
   add(BOOST_CLASS_TEST_CASE(&testFdbufs::originalTests,
                             instance));
-  add(BOOST_CLASS_TEST_CASE(&testFdbufs::xdrTests,
+  add(BOOST_CLASS_TEST_CASE(&testFdbufs::marshalTests,
                             instance));
 }

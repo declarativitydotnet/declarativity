@@ -12,10 +12,11 @@
  * 
  */
 
-#include <netdb.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+//#include <netdb.h>
+//#include <sys/socket.h>
+//#include <netinet/in.h>
+//#include <arpa/inet.h>
+#include <winsock2.h>
 
 #include "strToSockaddr.h"
 #include "val_opaque.h"
@@ -55,7 +56,7 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
 
   // Split into address and port
   const char * theString = Val_Str::cast(first).c_str();
-  char * theAtSign = strchr(theString, ':');
+  const char * theAtSign = strchr(theString, ':');
   if (theAtSign == NULL) {
     // Couldn't find the correct format
     log(Reporting::WARN, -1, string("Field to translate ")+first->toString()+" is malformed");
@@ -71,13 +72,16 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
 
   // Now construct the sockaddr
   struct sockaddr_in addr;
-  bzero(&addr, sizeof(addr));
+  memset(&addr, 0, sizeof(addr));
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
   addr.sin_len = sizeof(sockaddr_in);
 #endif // HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
-  inet_pton(AF_INET, theAddress.c_str(), &addr.sin_addr);
+  //inet_pton(AF_INET, theAddress.c_str(), &addr.sin_addr);
+  int saddr_len;
+  WSAStringToAddress((LPSTR) theAddress.c_str(), AF_INET, NULL, (LPSOCKADDR) &addr.sin_addr, &saddr_len);
+
   FdbufPtr addressUio(new Fdbuf());
   addressUio->push_bytes((char*)&addr, sizeof(addr));
   ValuePtr sockaddr = Val_Opaque::mk(addressUio);

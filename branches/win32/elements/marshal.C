@@ -15,7 +15,10 @@
 
 #include "val_opaque.h"
 #include "fdbuf.h"
-#include "xdrbuf.h"
+#include <sstream>
+// #include "xdrbuf.h"
+// the boost serialization implementer claims text is not much more expensive than portable binary
+#include <boost/archive/text_oarchive.hpp>
 
 Marshal::Marshal(string name)
   : Element(name, 1, 1)
@@ -29,11 +32,13 @@ Marshal::~Marshal()
 TuplePtr Marshal::simple_action(TuplePtr p)
 {
   // Taken straight from the tuples test.
-  FdbufPtr fb(new Fdbuf());
-  P2_XDR xe;
-  xdrfdbuf_create(&xe, fb.get(), false, XDR_ENCODE);
-  p->xdr_marshal(&xe);
-  xdr_destroy(&xe);
+  // FdbufPtr fb(new Fdbuf());
+	std::stringstream outstr;
+  boost::archive::text_oarchive xe(outstr);
+  // xdrfdbuf_create(&xe, fb.get(), false, XDR_ENCODE);
+  p->marshal(&xe);
+  // xdr_destroy(&xe);
+
 
   // Now create a new tuple to host the opaque
   TuplePtr t = Tuple::mk();
@@ -43,6 +48,8 @@ TuplePtr Marshal::simple_action(TuplePtr p)
     return TuplePtr();
   } else {
     // Stick the string into a tuple field and into the tuple
+	  FdbufPtr fb(new Fdbuf());
+	  fb->pushString(outstr.rdbuf()->str());
     t->append(Val_Opaque::mk(fb));
     t->freeze();
     return t;

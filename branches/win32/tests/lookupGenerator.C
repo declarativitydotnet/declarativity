@@ -140,7 +140,7 @@ int main(int argc, char **argv)
   level = Reporting::levelFromName()[string(argv[1])];
   Reporting::setLevel(level);
   seed = atoi(argv[2]);
-  srandom(seed);
+  srand(seed);
   issue_lookup(boost::shared_ptr<LookupGenerator>(new LookupGenerator(argv[3],
                                                                       atoi(argv[4]),
                                                                       atoi(argv[5]),

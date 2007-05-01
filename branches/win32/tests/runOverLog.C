@@ -20,7 +20,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/wait.h>
+//#include <sys/wait.h>
 
 #include "tuple.h"
 #include "plumber.h"
@@ -154,11 +154,11 @@ readScript(string overlog,
 
   // Turn definitions vector into a cpp argument array.
   int defSize = definitions.size();
-  char* args[defSize
+  char ** args = new (char * [defSize
              + 1                // for cpp
              + 2                // for flags -C and -P
              + 2                // for filenames
-             + 1];              // for the null pointer at the end
+             + 1]);              // for the null pointer at the end
 
   int count = 0;
 
@@ -180,23 +180,24 @@ readScript(string overlog,
 
 
   // Invoke the preprocessor
-  pid_t pid = fork();
-  if (pid == -1) {
-    TELL_ERROR << "Cannot fork a preprocessor\n";
-    exit(1);
-  } else if (pid == 0) {
-    if (execvp("cpp", args) < 0) {
-      TELL_ERROR << "CPP ERROR" << std::endl;
-    }
-    exit(1);
-  } else {
-    wait(NULL);
-  }
+ // pid_t pid = fork();
+ // if (pid == -1) {
+ //   TELL_ERROR << "Cannot fork a preprocessor\n";
+ //   exit(1);
+ // } else if (pid == 0) {
+ //   if (execvp("cpp", args) < 0) {
+ //     TELL_ERROR << "CPP ERROR" << std::endl;
+ //   }
+ //   exit(1);
+ // } else {
+ //   wait(NULL);
+ // }
 
 
   // Read processed script.
   std::ifstream file;
-  file.open(processed.c_str());
+//  file.open(processed.c_str());
+  file.open(overlog.c_str());
 
   if (!file.is_open()) {
     TELL_ERROR << "Cannot open processed Overlog file \""
@@ -213,7 +214,7 @@ readScript(string overlog,
 
     file.close();
     std::string script = scriptStream.str();
-
+	delete args;
 
     return script;
   }

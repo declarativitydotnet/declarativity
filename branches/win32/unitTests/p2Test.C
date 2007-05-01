@@ -24,6 +24,7 @@ using boost::unit_test_framework::test_suite;
 #include "testAggwrap.h"
 #include "reporting.h"
 #include "iostream"
+#include "getopt.h"
 
 test_suite* init_unit_test_suite(int argc, char** argv)
 {

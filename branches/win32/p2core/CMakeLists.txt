@@ -1,4 +1,6 @@
 ADD_LIBRARY(p2core 
+            loop.C
+            p2Time.C
             pel_opcode_decls.gen.h  
 			reporting.C 
 			commonTable.C 
@@ -11,7 +13,7 @@ ADD_LIBRARY(p2core
 			val_str.C 
 			value.C 
 			fdbuf.C
-						ID.C 
+			ID.C 
 			element.C 
 			tuple.C 
 			plumber.C 
@@ -63,6 +65,7 @@ SET_SOURCE_FILES_PROPERTIES(${P2_BINARY_DIR}/p2core/pel_opcode_decls.gen.h ${P2_
 FIND_PACKAGE(FLEX)
 FLEX_TARGET(PelLexer ${P2_SOURCE_DIR}/p2core/pel_lexer.lex ${P2_BINARY_DIR}/p2core/pel_lexer.C)
 
-TARGET_LINK_LIBRARIES(p2core boost_regex boost_date_time crypto ssl) 
+#TARGET_LINK_LIBRARIES(p2core boost_regex boost_date_time crypto ssl) 
+TARGET_LINK_LIBRARIES(p2core libeay32MDd ws2_32) 
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})

@@ -15,7 +15,10 @@
 #include "marshalField.h"
 
 #include "val_opaque.h"
-#include "xdrbuf.h"
+//#include "xdrbuf.h"
+// the boost serialization implementer claims text is not much more expensive than portable binary
+#include <boost/archive/text_oarchive.hpp>
+#include <sstream>
 
 MarshalField::MarshalField(string name,
                            unsigned fieldNo)
@@ -52,14 +55,16 @@ TuplePtr MarshalField::simple_action(TuplePtr p)
       newTuple->append((*p)[field]);	// Just add it
     }
     else if (value->typeCode() == Value::TUPLE) {
-      // Goodie. Marshal the field
+	  // Goodie. Marshal the field
+		std::stringstream outstr;
+		boost::archive::text_oarchive xe(outstr);
       FdbufPtr fb(new Fdbuf());
-      P2_XDR xe;
-      xdrfdbuf_create(&xe, fb.get(), false, XDR_ENCODE);
-      value->xdr_marshal(&xe);
-      xdr_destroy(&xe);
+      // xdrfdbuf_create(&xe, fb.get(), false, XDR_ENCODE);
+      value->marshal(&xe);
+     // xdr_destroy(&xe);
       
       // Now create the opaque
+	  fb->pushString(outstr.rdbuf()->str());
       ValuePtr marshalled = Val_Opaque::mk(fb);
 
       newTuple->append(marshalled);

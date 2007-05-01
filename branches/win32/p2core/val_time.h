@@ -55,12 +55,12 @@ public:
   Val_Time(string theTime) : 
     t(boost::posix_time::time_from_string(theTime)) {};
   Val_Time(boost::posix_time::ptime theTime) : t(theTime) {};
-  Val_Time(struct timeval theTime);
+  Val_Time(struct timespec theTime);
 
   // Factory
   static ValuePtr mk(boost::posix_time::ptime theTime) 
     { return ValuePtr(new Val_Time(theTime)); };
-  static ValuePtr mk(struct timeval ts) 
+  static ValuePtr mk(struct timespec ts) 
     { return ValuePtr(new Val_Time(ts)); };
   static ValuePtr mk(string tss) 
     { return ValuePtr(new Val_Time(tss)); };

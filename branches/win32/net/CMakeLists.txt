@@ -2,7 +2,7 @@ ADD_LIBRARY(p2net
 			snetsim.C 
 			skr.C 
 			tman.C 
-			plsensor.C 
+#			plsensor.C 
 			udp.C 
 			udp2.C 
 			tupleseq.C 

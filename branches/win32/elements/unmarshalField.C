@@ -16,7 +16,9 @@
 
 #include "val_opaque.h"
 #include "val_tuple.h"
-#include "xdrbuf.h"
+//#include "xdrbuf.h"
+// the boost serialization implementer claims text is not much more expensive than portable binary
+#include <boost/archive/text_iarchive.hpp>
 
 UnmarshalField::UnmarshalField(string name,
                                unsigned fieldNo)
@@ -55,10 +57,10 @@ TuplePtr UnmarshalField::simple_action(TuplePtr p)
     else if (value->typeCode() == Value::P2_OPAQUE) {
       // Goodie. Unmarshal the field
       FdbufPtr fb = Val_Opaque::cast(value);
-      P2_XDR xd;
-      xdrfdbuf_create(&xd, fb.get(), false, XDR_DECODE);
-      ValuePtr unmarshalled = Value::xdr_unmarshal(&xd);
-      xdr_destroy(&xd);
+	  boost::archive::text_iarchive *xd = (boost::archive::text_iarchive *)fb->raw_inline(fb->length());;
+		  //      xdrfdbuf_create(&xd, fb.get(), false, XDR_DECODE);
+      ValuePtr unmarshalled = Value::unmarshal(xd);
+//      xdr_destroy(&xd);
 
       newTuple->append(unmarshalled);
     } else {

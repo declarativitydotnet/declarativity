@@ -106,12 +106,12 @@ double Val_Time::_theDouble = 0;
 // Construction from a timespec object
 //
 
-// Val_Time::Val_Time(struct timespec theTime) {
-//  ptime epoch(date(1970,Jan,1));
-//  time_duration td(0,0,theTime.tv_sec, 
-//                   (uint32_t) round(theTime.tv_nsec / PTIME_SECS_FACTOR));
-//  t = epoch + td;
-// }
+Val_Time::Val_Time(struct timespec theTime) {
+  ptime epoch(date(1970,Jan,1));
+  time_duration td(0,0,theTime.tv_sec, 
+                   (uint32_t) round(theTime.tv_nsec / PTIME_SECS_FACTOR));
+  t = epoch + td;
+}
 
 /*
  * Casting

@@ -119,7 +119,13 @@ public:
                  int line,
                  RefTable::Key& key);
     
-    
+    	  // this is needed for VC++
+	refTableTest& operator=(const refTableTest& t) {
+	  _script = t._script;
+	  _line = t._line;
+	  _key = t._key;
+	  return *this;
+    }
     std::string _script;
     
     
@@ -138,7 +144,13 @@ public:
                 uint aggField,
                 std::string func,
                 int line);
-    
+   	intAggTest2& operator=(const intAggTest2& t) {
+	  _groupBy = t._groupBy;
+	  _aggFieldNo = t._aggFieldNo;
+	  _function = t._function;
+	  return *this;
+    }
+
     RefTable::Key& _groupBy;
     
     uint _aggFieldNo;
@@ -844,11 +856,11 @@ testRefTable::testSecondaryEquivalence()
     TuplePtr lookupT = Tuple::mk();
     lookupT->append(emptyString);
     lookupT->append(iVal);
-    RefTable::Iterator i = table.lookup(RefTable::theKey(CommonTable::KEY1), lookupT);
+    RefTable::Iterator it = table.lookup(RefTable::theKey(CommonTable::KEY1), lookupT);
 
     TupleSet sResults;
-    while (!i->done()) {
-      sResults.insert(i->next());
+    while (!it->done()) {
+      sResults.insert(it->next());
     }
 
     // Now scan the whole table and find all tuples whose second field
@@ -1408,7 +1420,7 @@ testRefTable::testPseudoRandomInsertDeleteSequences()
       for (uint w = 0;
            w < ID::WORDS;
            w++) {
-        words[w] = rand_r(&nestedSeed);
+        words[w] = rand_s(&nestedSeed);
       }
       tup->append(Val_ID::mk(ID::mk(words)));
     

@@ -31,8 +31,6 @@
 %{
 #include "ol_lexer.h"
 
-using namespace std;
-
 #include <limits.h>
 #include <stdlib.h>
 

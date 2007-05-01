@@ -15,7 +15,9 @@
 #include "unmarshal.h"
 
 #include "val_opaque.h"
-#include "xdrbuf.h"
+// #include "xdrbuf.h"
+// the boost serialization implementer claims text is not much more expensive than portable binary
+#include <boost/archive/text_iarchive.hpp>
 
 Unmarshal::Unmarshal(string name)
   : Element(name, 1, 1)
@@ -34,10 +36,11 @@ TuplePtr Unmarshal::simple_action(TuplePtr p)
     return TuplePtr();
   }
 
-  P2_XDR xd;
+  boost::archive::text_iarchive *xd;
   FdbufPtr fb = Val_Opaque::cast((*p)[0]);
-  xdrfdbuf_create(&xd, fb.get(), false, XDR_DECODE);
-  TuplePtr t = Tuple::xdr_unmarshal(&xd);
-  xdr_destroy(&xd);
+  xd = (boost::archive::text_iarchive *) fb->raw_inline(fb->length());
+  // xdrfdbuf_create(&xd, fb.get(), false, XDR_DECODE);
+  TuplePtr t = Tuple::unmarshal(xd);
+  // xdr_destroy(&xd);
   return t;
 }

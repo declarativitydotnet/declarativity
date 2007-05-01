@@ -13,7 +13,7 @@
 #ifndef __SimpleNetSim_H__
 #define __SimpleNetSim_H__
 
-#include <sys/time.h>
+//#include <sys/time.h>
 #include <deque>
 #include "element.h"
 

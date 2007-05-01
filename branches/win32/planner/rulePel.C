@@ -138,7 +138,8 @@ string pelMath(PlanContext* pc, Parse_Math *expr)
   case Parse_Math::MINUS:   pel << "- "; break;
   case Parse_Math::TIMES:   pel << "* "; break;
   case Parse_Math::DIVIDE:  pel << "/ "; break;
-  case Parse_Math::MODULUS: pel << "\% "; break;
+//  case Parse_Math::MODULUS: pel << "\% "; break;
+  case Parse_Math::MODULUS: pel << "% "; break;
   case Parse_Math::BIT_AND: pel << "& "; break;
   case Parse_Math::BIT_OR:  pel << "| "; break;
   case Parse_Math::BIT_XOR: pel << "^ "; break;

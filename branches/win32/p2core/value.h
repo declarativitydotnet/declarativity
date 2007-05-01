@@ -122,12 +122,18 @@ typedef char* caddr_t;
 #define llabs _abs64
 #endif
 
+struct timespec {
+	long tv_sec;
+    long tv_nsec;
+};
+
 #ifndef drand48
 inline int32_t drand48() { unsigned int retval; (void) rand_s(&retval); return (int32_t) retval; }
 #endif
 
 #ifndef HAVE_RANDOM
 inline int32_t random() { return (int32_t) rand(); }
+inline void srandom(unsigned int seed) { srand(seed); }
 #endif
 // deal with exp10 portability issues (missing from gcc4 on OS X 10.4)
 #ifndef HAVE_EXP10

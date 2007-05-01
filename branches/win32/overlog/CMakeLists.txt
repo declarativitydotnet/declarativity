@@ -6,6 +6,7 @@ FLEX_TARGET(P2Lexer ${P2_SOURCE_DIR}/overlog/ol_lexer.lex ${P2_BINARY_DIR}/overl
 
 # Include binary directory to include lexer.c in parser.c
 INCLUDE_DIRECTORIES(${P2_BINARY_DIR}/overlog)
+ADD_DEPENDENCIES(p2overlog p2core)
 
 ##
 ## COULD ALSO TRY http://public.kitware.com/pipermail/cmake/2002-September/003028.html
