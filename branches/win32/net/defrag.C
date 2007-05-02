@@ -107,10 +107,10 @@ void Defrag::defragment(TuplePtr t)
     }
 
     // Unmarhsal and expand the packaged tuple
-    boost::archive::text_iarchive *xd;
-	xd = (boost::archive::text_iarchive *) fb.get();
+	std::stringstream ss(fb->str());
+	boost::archive::text_iarchive xd(ss);
     // xdrfdbuf_create(&xd, fb.get(), false, XDR_DECODE);
-    TuplePtr unmarshal = Tuple::unmarshal(xd);
+    TuplePtr unmarshal = Tuple::unmarshal(&xd);
     // xdr_destroy(&xd);
 
     TuplePtr defraged = Tuple::mk();

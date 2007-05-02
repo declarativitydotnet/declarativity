@@ -85,7 +85,7 @@ ssize_t Fdbuf::recvfrom(int sd, uint32_t max_read, int flags,
 Fdbuf &Fdbuf::pushString(const std::string &s)
 {
   ensure_additional(s.length());
-  s._Copy_s(data + start + len, s.length(), 0);
+  s._Copy_s(data + start + len, s.length(), s.length());
   len += s.length();
   return *this;
 }

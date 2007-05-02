@@ -246,17 +246,19 @@ string List::toString() const
   ValPtrList::const_iterator iter = vpl.begin();
   ValPtrList::const_iterator end = vpl.end();
   ValPtrList::const_iterator almost_end = vpl.end();
-  almost_end--;
+  if (!vpl.empty()) {
+	  almost_end--;
    
-  while(iter != end) {
-    sb << (*iter)->toString();
-      
-    if(iter != almost_end) {
-      sb << ", ";
-    }
-    iter++;
+	  while(iter != end) {
+	    sb << (*iter)->toString();
+	      
+	    if(iter != almost_end) {
+	      sb << ", ";
+	    }
+	    iter++;
+	  }
+   
   }
-   
   sb << ")";
    
   return sb.str();

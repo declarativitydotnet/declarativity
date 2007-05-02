@@ -144,7 +144,7 @@ public:
     // Opaques
     FdbufPtr u1(new Fdbuf());
     u1->pushBack("This is UIO 1");
-    TEST_VAL(Opaque, u1, P2_OPAQUE, "opaque");
+    TEST_VAL(Opaque, u1, P2_OPAQUE, "P2_opaque");
     
 
     // Strings

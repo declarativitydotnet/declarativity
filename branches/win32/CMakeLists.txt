@@ -58,6 +58,8 @@ ADD_DEFINITIONS(-D_CRT_RAND_S)
 # This ensures that windows.h doesn't include winsock.h (we're using winsock2.h)
 ADD_DEFINITIONS(-DWIN32_LEAN_AND_MEAN)
 
+ADD_DEFINITIONS(-DBOOST_LIB_DIAGNOSTIC)
+ADD_DEFINITIONS(-DBOOST_ALL_DYN_LINK)
 
 # set include path for this and all subdirs
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}

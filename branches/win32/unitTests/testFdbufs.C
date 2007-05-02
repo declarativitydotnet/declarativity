@@ -82,7 +82,7 @@ public:
   void
   marshalTest(ValuePtr in)
   {
-    Fdbuf fin(0);
+    // Fdbuf fin(0);
     std::stringstream outstr;
     boost::archive::text_oarchive xe(outstr);
   
@@ -90,11 +90,12 @@ public:
     in->marshal(&xe);
     
     //P2_XDR xd;
-	boost::archive::text_iarchive *xd;
     Fdbuf fout(0);
-    fout.pushFdbuf(fin, fin.length());
+    fout.pushString(outstr.str());
     // xdrfdbuf_create(&xd, &fout, false, XDR_DECODE);
-    ValuePtr out = Value::unmarshal(xd);
+	std::stringstream ss(fout.str());
+	boost::archive::text_iarchive xd(ss);
+    ValuePtr out = Value::unmarshal(&xd);
     
     BOOST_CHECK_MESSAGE(out->compareTo(in) == 0,
                         "Marshalled/unmarshalled mismatch!\n");

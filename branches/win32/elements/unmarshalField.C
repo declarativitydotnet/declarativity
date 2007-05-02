@@ -57,9 +57,10 @@ TuplePtr UnmarshalField::simple_action(TuplePtr p)
     else if (value->typeCode() == Value::P2_OPAQUE) {
       // Goodie. Unmarshal the field
       FdbufPtr fb = Val_Opaque::cast(value);
-	  boost::archive::text_iarchive *xd = (boost::archive::text_iarchive *)fb->raw_inline(fb->length());;
+	  std::stringstream ss(fb->str());
+	  boost::archive::text_iarchive xd(ss);
 		  //      xdrfdbuf_create(&xd, fb.get(), false, XDR_DECODE);
-      ValuePtr unmarshalled = Value::unmarshal(xd);
+      ValuePtr unmarshalled = Value::unmarshal(&xd);
 //      xdr_destroy(&xd);
 
       newTuple->append(unmarshalled);

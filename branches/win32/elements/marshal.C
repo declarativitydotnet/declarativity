@@ -49,7 +49,7 @@ TuplePtr Marshal::simple_action(TuplePtr p)
   } else {
     // Stick the string into a tuple field and into the tuple
 	  FdbufPtr fb(new Fdbuf());
-	  fb->pushString(outstr.rdbuf()->str());
+	  fb->pushString(outstr.str());
     t->append(Val_Opaque::mk(fb));
     t->freeze();
     return t;

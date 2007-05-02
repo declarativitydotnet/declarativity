@@ -26,7 +26,7 @@ using boost::unit_test_framework::test_suite;
 #include "iostream"
 #include "getopt.h"
 
-test_suite* init_unit_test_suite(int argc, char** argv)
+test_suite* init_unit_test_suite(int argc, char* argv[])
 {
   Reporting::setLevel(Reporting::OUTPUT);
 
