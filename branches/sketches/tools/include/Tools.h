@@ -40,6 +40,18 @@
 #include <cmath>
 #include <climits>
 
+extern "C" {
+#include <rpc/rpc.h>
+#include <rpc/xdr.h>
+}
+
+// deal with xdr portability issues (originally found on OS X 10.4)
+#ifdef HAVE_XDR_U_INT32_T
+#define xdr_uint16_t xdr_u_int16_t
+#define xdr_uint32_t xdr_u_int32_t
+#define xdr_uint64_t xdr_u_int64_t
+#endif
+
 #if TIME_WITH_SYS_TIME
 	#include <sys/time.h>
 	#include <time.h>
@@ -587,6 +599,9 @@ namespace Tools
 		virtual size_t getSize() const;
 		virtual void getData(byte** buffer, size_t& length) const;
 
+		virtual void marshal(XDR *x) const;
+		static Tools::UniversalHash unmarshal(XDR *x);
+
 		virtual void hash(
 			const std::string& s,
 			byte** out, size_t& lout
@@ -598,10 +613,11 @@ namespace Tools
 
 		static const uint64_t m_P = 0x1FFFFFFFFFFFFFFFull; // 2^61 - 1
 
-	private:
+	protected:
 		uint64_t* m_a;
 		uint16_t m_k;
 
+	private:
 		friend std::ostream& Tools::operator<<(
 			std::ostream& os,
 			const Tools::UniversalHash& h

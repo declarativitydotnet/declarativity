@@ -426,24 +426,14 @@ void Sketches::FM::marshal(XDR *x) const
   xdr_u_int(x, &myBits);
   xdr_u_int(x, &myBitmaps);
   xdr_int(x, &type);
-  
-  for( size_t i = 0; i < m_bitmap.size(); i ++ )
+
+  for ( size_t i = 0; i < m_bitmap.size(); i ++ )
   {
-    for( size_t j = 0; j < (m_bitmap.begin())->size(); j++ )
+    for ( size_t j = 0; j < (m_bitmap.begin())->size(); j++ )
     {
       xdr_bool(x, (bool_t *) m_bitmap[i][j]);
     }
   }
-
-  // 
-  // for
-  // {
-  //   for ( std::vector<bool>::iterator j = i->begin(); j != i->end(); j++ )
-  //   {
-  //     bool tempJ = *j;
-  //     xdr_bool(x, (bool_t *) &tempJ);
-  //   }
-  // }
 }
 
 Sketches::FM *Sketches::FM::unmarshal(XDR *x)
@@ -456,15 +446,16 @@ Sketches::FM *Sketches::FM::unmarshal(XDR *x)
   xdr_u_int(x, &bitmaps);
   xdr_int(x, &type);
 
-  Sketches::FM *sketch = new Sketches::FM((u_int) bits, (u_int) bitmaps, (HashType) type);
-  
-  for(u_int i = 0; i < bitmaps; i++)
+  Sketches::FM *sketch = new Sketches::FM((u_int) bits, (u_int) bitmaps,
+                                          (HashType) type);
+
+  for (u_int i = 0; i < bitmaps; i++)
   {
-    for(u_int j = 0; j < bits; j++)
+    for (u_int j = 0; j < bits; j++)
     {
       int tmpJ;
       xdr_bool(x, &tmpJ);
-      
+
       sketch->m_bitmap[i][j] = tmpJ;
     }
   }

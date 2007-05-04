@@ -24,18 +24,6 @@
 
 #include <tools/Tools.h>
 
-extern "C" {
-#include <rpc/rpc.h>
-#include <rpc/xdr.h>
-}
-
-// deal with xdr portability issues (originally found on OS X 10.4)
-#ifdef HAVE_XDR_U_INT32_T
-#define xdr_uint32_t xdr_u_int32_t
-#define xdr_uint64_t xdr_u_int64_t
-#endif
-
-
 namespace Sketches
 {
 	enum HashType
@@ -190,8 +178,8 @@ namespace Sketches
 		);
 		virtual ~CountMinFM();
 
-    virtual void marshal(XDR *x) const;
-    static Sketches::CountMinFM *unmarshal(XDR *x);
+    	virtual void marshal(XDR *x) const;
+    	static Sketches::CountMinFM *unmarshal(XDR *x);
 
 		virtual uint64_t getFrequency(const std::string& id) const;
 
@@ -202,6 +190,9 @@ namespace Sketches
 
 		virtual size_t getSize() const;
 
+	protected:
+		std::vector<FM> m_filter;
+		std::vector<Tools::UniversalHash> m_hash;
 	private:
 		void initialize(
 			const std::string& id,
@@ -220,8 +211,6 @@ namespace Sketches
 			// for proper merging.
 		size_t m_counters;
 		size_t m_hashes;
-		std::vector<FM> m_filter;
-		std::vector<Tools::UniversalHash> m_hash;
 	};
 
 	/**************************************************/

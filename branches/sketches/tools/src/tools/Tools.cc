@@ -1073,6 +1073,31 @@ bool Tools::UniversalHash::operator==(const UniversalHash& in) const
 	return true;
 }
 
+void Tools::UniversalHash::marshal(XDR *x) const
+{
+	xdr_u_int16_t(x, (u_int16_t *)(&m_k));
+
+	for( uint16_t i = 0; i < m_k; i++ )
+	{
+		xdr_u_int64_t(x, &(m_a[i]));
+	}
+}
+
+Tools::UniversalHash Tools::UniversalHash::unmarshal(XDR *x)
+{	
+	u_int16_t k;
+	xdr_u_int16_t(x, &k);
+	
+	Tools::UniversalHash *hash = new Tools::UniversalHash(k);
+	
+	hash->m_a = new uint64_t[k];
+	
+	for( uint16_t i = 0; i < hash->m_k; i++ )
+	{
+		xdr_u_int64_t(x, &(hash->m_a[i]));
+	}
+}
+
 Tools::UniversalHash::value_type Tools::UniversalHash::hash(
 	UniversalHash::value_type x
 ) const
