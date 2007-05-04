@@ -1,0 +1,21 @@
+## Makefile.am -- Process this file with automake to produce Makefile.in
+noinst_PROGRAMS = Generator ExternalSort ResourceUsage PropertySet UniversalHash SHA1Hash Random PRGZipf RLECompress
+INCLUDES = -I../include 
+Generator_SOURCES = Generator.cc 
+Generator_LDADD = ../libtools.la
+ExternalSort_SOURCES = ExternalSort.cc 
+ExternalSort_LDADD = ../libtools.la
+Random_SOURCES = Random.cc 
+Random_LDADD = ../libtools.la
+ResourceUsage_SOURCES = ResourceUsage.cc 
+ResourceUsage_LDADD = ../libtools.la
+PropertySet_SOURCES = PropertySet.cc 
+PropertySet_LDADD = ../libtools.la
+UniversalHash_SOURCES = UniversalHash.cc 
+UniversalHash_LDADD = ../libtools.la
+SHA1Hash_SOURCES = SHA1Hash.cc 
+SHA1Hash_LDADD = ../libtools.la
+PRGZipf_SOURCES = PRGZipf.cc 
+PRGZipf_LDADD = ../libtools.la
+RLECompress_SOURCES = RLECompress.cc 
+RLECompress_LDADD = ../libtools.la
