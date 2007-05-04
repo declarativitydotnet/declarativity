@@ -7,7 +7,6 @@
  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
  * Berkeley, CA,  94707. Attention: P2 Group.
  */
-
 #include "boost/test/unit_test.hpp"
 using boost::unit_test_framework::test_suite; 
 

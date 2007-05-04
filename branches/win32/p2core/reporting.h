@@ -20,6 +20,12 @@
 #ifndef __REPORTING_H__
 #define __REPORTING_H__
 
+#ifdef VISUAL_LEAK_DETECTOR
+// SINCE THIS FILE GETS INCLUDED EVERYWHERE, ADD
+// THE VISUAL LEAK DETECTOR INCLUDE HERE
+#include "vld.h"
+#endif // VISUAL_LEAK_DETECTOR
+
 #include <map>
 #include <string>
 #include <ostream>

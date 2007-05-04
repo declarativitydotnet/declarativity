@@ -46,6 +46,8 @@
 
 #include "stageLoader.h"
 
+#include "getopt.h"
+
 bool DEBUG = false;
 bool CC = false;
 
