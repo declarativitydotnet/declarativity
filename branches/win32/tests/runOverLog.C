@@ -203,7 +203,8 @@ readScript(string overlog,
 
   if (!file.is_open()) {
     TELL_ERROR << "Cannot open processed Overlog file \""
-               << processed << "\"!\n";
+//               << processed << "\"!\n";
+               << overlog << "\"!\n";
     return std::string();
   } else {
 

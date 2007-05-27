@@ -173,5 +173,6 @@ Udp::Udp(string name,
     rx(new Udp::Rx(_name, *this)),
     tx(new Udp::Tx(_name, *this))
 {
-  sd = networkSocket(SOCK_DGRAM, port, addr);
+  sd = networkSocket(SOCK_DGRAM, port, addr, IPPROTO_UDP);
+  if (sd < 0) TELL_ERROR << "Udp element unable to initialize socket\n";
 }
