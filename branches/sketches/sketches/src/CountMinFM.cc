@@ -167,9 +167,11 @@ size_t Sketches::CountMinFM::getSize() const
 
 void Sketches::CountMinFM::marshal(XDR *x) const
 {
-  xdr_string(x, &m_id);
-  xdr_u_int32_t(x, &m_counters);
-  xdr_u_int32_t(x, &m_hashes);
+  const char *st = m_id.c_str();
+  int32_t sl = m_id.length();
+  xdr_string(x, const_cast<char **>(&st), sl + 1);
+  xdr_u_long(x, (unsigned long *)&m_counters);
+  xdr_u_long(x, (unsigned long *)&m_hashes);
   xdr_int(x, (int *)&m_type);
 
   for ( std::vector<FM>::iterator vectIter = m_filter.begin();
@@ -188,20 +190,24 @@ void Sketches::CountMinFM::marshal(XDR *x) const
 
 Sketches::CountMinFM *Sketches::CountMinFM::unmarshal(XDR *x)
 {
-	std::string m_id;
+
+  int32_t strlength;
 	u_int32_t m_counters;
 	u_int32_t m_hashes;
 	HashType m_type;
-	
-  std::map<std::string, uint64_t> emptyMap;
 
-  xdr_string(x, &m_id);
+  std::map<std::string, uint64_t> emptyMap;
+  xdr_int32_t(x, &strlength);
+  
+  char *buffer = new char[strlength + 1];
+  xdr_string(x, &buffer, strlength + 1);
+  buffer[strlength] = 0;
+	std::string m_id(buffer, strlength);
   xdr_u_int32_t(x, &m_counters);
-  xdr_u_int32_t(x, &m_hashes);
+  xdr_u_int32_t(x, &m_hashes);  
   
   
-  
-  return new Sketches::CountMinFM(0, emptyMap, 2, 4, 6, 8, HT_SHA1);
+  return new Sketches::CountMinFM(&m_id, emptyMap, 2, 4, 6, 8, HT_SHA1);
 
   // THIS IS A STUB! IMPLEMENT ME!!!
 }
