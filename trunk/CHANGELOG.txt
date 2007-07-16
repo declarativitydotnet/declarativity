@@ -103,6 +103,8 @@ Release 0.8.1
   parsing code out of the csvparser element into p2core/CSVlex.[Ch],
   so it could be reused by the new stage. 
 
+- Added a simple tutorial/user guide.
+
 
 
 
