@@ -20,6 +20,7 @@
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include "loop.h"
+#include "elementRegistry.h"
 
 //
 // The Udp::Rx element emits 2-tuples:
@@ -34,8 +35,15 @@
 // also have a single push-output for errors as above. 
 //
 
-class Udp { 
+class Udp : public Element { 
 public:
+
+  /** A network exception for the UDP element */
+  class NetworkException : public Element::Exception {
+  public:
+    NetworkException(string msg);
+  };
+
 
   // 
   // First, the Rx element: pushes tuples when packets arrive
@@ -47,15 +55,11 @@ public:
     const char *processing() const		{ return "/h"; };
     const char *flow_code() const		{ return "/-"; };
 
-    void socket_on()
-    {
-      fileDescriptorCB(u->sd, b_selread,
-                       boost::bind(&Udp::Rx::socket_cb, this), this);
-    };
-    void socket_off()
-    {
-      removeFileDescriptorCB(u->sd, b_selread);
-    };
+    void
+    socket_on();
+
+    void
+    socket_off();
 
     /** Turn on the socket and start listening. */
     virtual int initialize();
@@ -97,6 +101,17 @@ public:
   // Now the Udp object itself.
   //
   Udp(string, u_int16_t port=0, u_int32_t addr = INADDR_ANY);
+  Udp(TuplePtr args);
+
+  const char *class_name() const	{ return "Udp";};
+  const char *processing() const	{ return "l/h"; };
+  const char *flow_code() const		{ return "-/-"; };
+
+  virtual int initialize() {
+     tx->initialize();
+     rx->initialize();
+     return 0;
+  };
 
   string toConfString() const { 
     ostringstream oss;
@@ -107,6 +122,8 @@ public:
   // Accessing the individual elements
   boost::shared_ptr< Udp::Rx > get_rx() { return rx; };
   boost::shared_ptr< Udp::Tx > get_tx() { return tx; };
+
+  DECLARE_PUBLIC_ELEMENT_INITS
 
 private:
   // Socket
@@ -121,6 +138,10 @@ private:
   // Elements 
   boost::shared_ptr< Rx > rx;
   boost::shared_ptr< Tx > tx;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
+
+typedef boost::shared_ptr< Udp > UdpPtr;
 
 #endif /* __UDP_H_ */

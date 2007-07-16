@@ -33,9 +33,10 @@ libp2net_la_SOURCES = \
 	bw.C \
 	frag.C \
 	defrag.C \
-	roundTripTimer.C
+	roundTripTimer.C \
+	netLoader.C
 
-INCLUDES = @BOOST_INC@ -I../p2core -I../eventLoop
+INCLUDES = @BOOST_INC@ -I../p2core -I../elements
 
 CLEANFILES = core *.core *~
 

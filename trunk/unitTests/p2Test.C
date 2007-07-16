@@ -15,10 +15,8 @@ using boost::unit_test_framework::test_suite;
 #include "testTable2.h"
 #include "testRefTable.h"
 #include "testMarshal.h"
-#include "testBasicElementPlumbing.h"
 #include "testFdbufs.h"
 #include "testValues.h"
-#include "testCsv.h"
 #include "testIDs.h"
 #include "testLists.h"
 #include "testAggwrap.h"
@@ -55,10 +53,8 @@ test_suite* init_unit_test_suite(int argc, char** argv)
   top->add(new testTable2_testSuite());
   top->add(new testRefTable_testSuite());
   top->add(new testMarshal_testSuite());
-  top->add(new testBasicElementPlumbing_testSuite());
   top->add(new testFdbufs_testSuite());
   top->add(new testValues_testSuite());
-  top->add(new testCsv_testSuite());
   top->add(new testLists_testSuite());
   top->add(new testAggwrap_testSuite());
 

@@ -13,70 +13,104 @@
 # DESCRIPTION: Makefile for the P2 tests
 #
 
-bin_PROGRAMS =			benchmark \
+bin_PROGRAMS =			runOverLog2 \
 				runOverLog \
-				runOverLogNoCPP \
-				simple_lookup \
-				lookupGenerator \
+				benchmark \
 				udpMessage \
-				udpListen
-
-#				runOverLog2 
-#				runPingPong
+				udpListen \
+				runStagedOverlog \
+				p2nc
 
 
 benchmark_SOURCES =		benchmark.C
 
 benchmark_LDADD =		$(top_builddir)/p2core/libp2core.la \
-				$(top_builddir)/eventLoop/libp2eventLoop.la
+				$(top_builddir)/lang/libp2lang.la \
+				$(top_builddir)/lang/parse/libp2parse.la \
+				$(top_builddir)/lang/eca/libp2eca.la \
+				$(top_builddir)/lang/local/libp2local.la \
+				$(top_builddir)/lang/rewrite/libp2rewrite.la \
+				$(top_builddir)/lang/debug/libp2debug.la \
+				$(top_builddir)/lang/planner/libp2planner.la \
+				$(top_builddir)/lang/p2dl/libp2dl.la \
+				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/net/libp2net.la
+
+runOverLog2_SOURCES =		runOverLog2.C
+
+runOverLog2_LDADD = 		\
+				@OPENSSL_LIB@ \
+				$(top_builddir)/stages/libp2stages.la \
+				$(top_builddir)/lang/p2dl/libp2dl.la \
+				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/p2core/libp2core.la \
+				$(top_builddir)/lang/libp2lang.la \
+				$(top_builddir)/lang/parse/libp2parse.la \
+				$(top_builddir)/lang/eca/libp2eca.la \
+				$(top_builddir)/lang/local/libp2local.la \
+				$(top_builddir)/lang/rewrite/libp2rewrite.la \
+				$(top_builddir)/lang/debug/libp2debug.la \
+				$(top_builddir)/lang/planner/libp2planner.la \
+				$(top_builddir)/net/libp2net.la \
+				$(top_builddir)/functions/libp2functions.la \
+				$(top_builddir)/aggregates/libp2aggregates.la \
+				$(top_builddir)/debugger/libp2debugger.la 
+
+
+runStagedOverlog_SOURCES  =	runStagedOverlog.C
+
+runStagedOverlog_LDADD =	\
+				@OPENSSL_LIB@ \
+				$(top_builddir)/stages/libp2stages.la \
+				$(top_builddir)/lang/p2dl/libp2dl.la \
+				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/p2core/libp2core.la \
+				$(top_builddir)/lang/libp2lang.la \
+				$(top_builddir)/lang/parse/libp2parse.la \
+				$(top_builddir)/lang/eca/libp2eca.la \
+				$(top_builddir)/lang/local/libp2local.la \
+				$(top_builddir)/lang/rewrite/libp2rewrite.la \
+				$(top_builddir)/lang/debug/libp2debug.la \
+				$(top_builddir)/lang/planner/libp2planner.la \
+				$(top_builddir)/net/libp2net.la \
+				$(top_builddir)/functions/libp2functions.la \
+				$(top_builddir)/aggregates/libp2aggregates.la \
+				$(top_builddir)/debugger/libp2debugger.la 
+
 
 
 runOverLog_SOURCES =		runOverLog.C
 
 runOverLog_LDADD = 		\
 				@OPENSSL_LIB@ \
+				$(top_builddir)/p2cpp/libp2cpp.la \
 				$(top_builddir)/planner/libp2planner.la \
 				$(top_builddir)/overlog/libp2overlog.la \
 				$(top_builddir)/net/libp2net.la \
 				$(top_builddir)/stages/libp2stages.la \
+				$(top_builddir)/functions/libp2functions.la \
+				$(top_builddir)/aggregates/libp2aggregates.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/p2core/libp2core.la \
-				$(top_builddir)/eventLoop/libp2eventLoop.la \
-				$(top_builddir)/debugger/libp2debugger.la 
+				$(top_builddir)/debugger/libp2debugger.la
 
 
-runOverLogNoCPP_SOURCES =	runOverLogNoCPP.C
+p2nc_SOURCES =			p2nc.C
 
-runOverLogNoCPP_LDADD =		\
+p2nc_LDADD =	 		\
 				@OPENSSL_LIB@ \
+				$(top_builddir)/p2cpp/libp2cpp.la \
 				$(top_builddir)/planner/libp2planner.la \
 				$(top_builddir)/overlog/libp2overlog.la \
 				$(top_builddir)/net/libp2net.la \
 				$(top_builddir)/stages/libp2stages.la \
+				$(top_builddir)/functions/libp2functions.la \
+				$(top_builddir)/aggregates/libp2aggregates.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/p2core/libp2core.la \
-				$(top_builddir)/eventLoop/libp2eventLoop.la \
-				$(top_builddir)/debugger/libp2debugger.la 
+				$(top_builddir)/debugger/libp2debugger.la
 
 
-simple_lookup_SOURCES =		simple_lookup.C
-
-simple_lookup_LDADD =		\
-				@OPENSSL_LIB@ \
-				$(top_builddir)/net/libp2net.la \
-				$(top_builddir)/elements/libp2elements.la \
-				$(top_builddir)/p2core/libp2core.la \
-				$(top_builddir)/eventLoop/libp2eventLoop.la 
-
-
-lookupGenerator_SOURCES =	lookupGenerator.C
-
-lookupGenerator_LDADD =		\
-				@OPENSSL_LIB@ \
-				$(top_builddir)/net/libp2net.la \
-				$(top_builddir)/elements/libp2elements.la \
-				$(top_builddir)/p2core/libp2core.la \
-				$(top_builddir)/eventLoop/libp2eventLoop.la 
 
 
 udpMessage_SOURCES =		udpMessage.C
@@ -86,7 +120,14 @@ udpMessage_LDADD =		\
 				$(top_builddir)/net/libp2net.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/p2core/libp2core.la \
-				$(top_builddir)/eventLoop/libp2eventLoop.la
+				$(top_builddir)/lang/libp2lang.la \
+				$(top_builddir)/lang/parse/libp2parse.la \
+				$(top_builddir)/lang/eca/libp2eca.la \
+				$(top_builddir)/lang/local/libp2local.la \
+				$(top_builddir)/lang/rewrite/libp2rewrite.la \
+				$(top_builddir)/lang/debug/libp2debug.la \
+				$(top_builddir)/lang/planner/libp2planner.la \
+				$(top_builddir)/lang/p2dl/libp2dl.la
 
 
 udpListen_SOURCES =		udpListen.C
@@ -96,7 +137,14 @@ udpListen_LDADD =		\
 				$(top_builddir)/net/libp2net.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/p2core/libp2core.la \
-				$(top_builddir)/eventLoop/libp2eventLoop.la
+				$(top_builddir)/lang/libp2lang.la \
+				$(top_builddir)/lang/parse/libp2parse.la \
+				$(top_builddir)/lang/eca/libp2eca.la \
+				$(top_builddir)/lang/local/libp2local.la \
+				$(top_builddir)/lang/rewrite/libp2rewrite.la \
+				$(top_builddir)/lang/debug/libp2debug.la \
+				$(top_builddir)/lang/planner/libp2planner.la \
+				$(top_builddir)/lang/p2dl/libp2dl.la
 
 
 CLEANFILES = core *.core *~ .\#*
@@ -121,15 +169,25 @@ EXTRA_DIST = 			testerr.h \
 
 AM_CPPFLAGS =			@BOOST_INC@ \
 				-I$(top_builddir)/p2core \
+				-I$(top_builddir)/aggregates \
 				-I$(top_builddir)/stages \
+				-I$(top_builddir)/functions \
 				-I$(top_builddir)/elements \
 				-I$(top_builddir)/pythonElements \
 				-I$(top_builddir)/net \
 				-I$(top_builddir)/overlog \
 				-I$(top_builddir)/planner \
-				-I$(top_builddir)/eventLoop \
+				-I$(top_builddir)/lang \
+				-I$(top_builddir)/lang/parse \
+				-I$(top_builddir)/lang/eca \
+				-I$(top_builddir)/lang/local \
+				-I$(top_builddir)/lang/rewrite \
+				-I$(top_builddir)/lang/debug \
+				-I$(top_builddir)/lang/planner \
+				-I$(top_builddir)/lang/p2dl \
 				-I$(top_builddir)/debugger \
-				-I$(top_builddir)/p2cpp
+				-I$(top_builddir)/p2cpp \
+				-I$(top_builddir)/lang 
 
 AM_CXXFLAGS =			-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 

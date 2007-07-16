@@ -18,10 +18,12 @@
 #define __MARSHAL_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 
 class Marshal : public Element { 
 public:
   Marshal(string);
+  Marshal(TuplePtr args);
 
   ~Marshal();
   
@@ -33,7 +35,11 @@ public:
   const char *flow_code() const			{ return "x/x"; }
 
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

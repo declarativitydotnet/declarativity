@@ -1,4 +1,3 @@
-// -*- c-basic-offset: 2; related-file-name: "tupleSource.C" -*-
 /*
  * @(#)$Id$
  * 
@@ -10,44 +9,54 @@
  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
  * Berkeley, CA,  94707. Attention: P2 Group.
  * 
- * DESCRIPTION: Element that produces the same tuple whenever pulled.
- * It never blocks.  A specialization of FunctorSource.
+ * DESCRIPTION: Abstract class for all 0-in-1-out elements that return
+ * tuples when pulled.
  */
 
 
 #ifndef __TUPLE_SOURCE_H__
 #define __TUPLE_SOURCE_H__
 
-#include <element.h>
-#include <boost/shared_ptr.hpp>
-#include "functorSource.h"
+#include "element.h"
 
-class TupleSource : public FunctorSource { 
+class TupleSource : public Element { 
 public:
   
-  struct TupleGenerator : public FunctorSource::Generator
-  {
-  private:
-    /** My tuple */
-    TuplePtr _tuple;
-    
-  public:
-    TupleGenerator(TuplePtr tuple) : _tuple(tuple) { }
+  /** To construct, just give the name of the element object and a
+      generator object, whose ownership passes over to the element (so
+      the pointer should no longer be used after the constructor has
+      been invoked). */
+  TupleSource(string);
 
-    TuplePtr operator()() {
-      return _tuple;
-    }
-  };
 
-  TupleSource(string, TuplePtr);
+  TupleSource(TuplePtr args);
 
-  const char *class_name() const		{ return "TupleSource"; }
-  const char *flow_code() const			{ return "/-"; }
-  const char *processing() const		{ return "/l"; }
 
-private:
-  /** My generator */
-  boost::shared_ptr<TupleGenerator> _tupleGenerator;
+  const char*
+  class_name() const { return "TupleSource"; }
+
+
+  const char*
+  flow_code() const { return "/-"; }
+
+
+  const char*
+  processing() const { return "/l"; }
+
+
+  virtual TuplePtr
+  pull(int port, b_cbv cb);
+
+
+
+
+protected:
+  /** The generator function for this tuple source. Always returns a
+      tuple (cannot refuse). */
+  virtual TuplePtr
+  generate() = 0;
+
+
 };
 
 #endif /* __TUPLE_SOURCE_H_ */

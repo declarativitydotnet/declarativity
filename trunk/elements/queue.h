@@ -16,13 +16,19 @@
 #define __QUEUE_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 #include <queue>
+#include "iStateful.h"
 
 /** Simple queue that buffers up elements pushed in as input, and pulled from the other end. */
 class Queue : public Element { 
 public:
 
-  Queue(string name="queue", unsigned int queueSize=0);
+
+  /** Queue size of 0 is meaningless! */
+  Queue(string name, unsigned int queueSize, string type="basic");
+
+  Queue(TuplePtr args);
 
   ~Queue();
   
@@ -31,15 +37,30 @@ public:
   TuplePtr pull(int port, b_cbv cb);  
 
 
-  const char *class_name() const		{ return "Queue";}
-  const char *processing() const		{ return "h/l"; }
-  const char *flow_code() const			{ return "x/x"; }
+  const char *class_name() const { return "Queue";}
+  const char *processing() const { return "h/l"; }
+  const char *flow_code() const	 { return "x/x"; }
+
+  bool isEmpty(){return _q.empty();};
+  int size(){return _q.size();};
+
+  DECLARE_PUBLIC_ELEMENT_INITS
 
 private:
+  int initialize();
+
+  /** My state proxy */
+  IStatefulPtr _stateProxy;
+
   b_cbv _pullCB, _pushCB;
   unsigned int _size;
+
+  /* Queue type */
+  string _type;
   /** The tuple ref array from which I pull */
   std::queue<TuplePtr> _q;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

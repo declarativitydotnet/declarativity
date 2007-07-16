@@ -21,12 +21,15 @@
 
 #include "element.h"
 #include "commonTable.h"
+#include "elementRegistry.h"
 
 class Delete : public Element {
 public:
   Delete(string name,
          CommonTablePtr table);
   
+  Delete(TuplePtr args);
+
   const char*
   class_name() const {return "Delete";}
 
@@ -44,9 +47,13 @@ public:
   push(int port, TuplePtr, b_cbv cb);
 
   
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   /** My table */
   CommonTablePtr _table;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

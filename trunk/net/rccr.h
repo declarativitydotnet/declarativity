@@ -16,22 +16,28 @@
 #include <vector>
 #include "tuple.h"
 #include "element.h"
+#include "elementRegistry.h"
 #include "inlines.h"
 
 class RateCCR : public Element {
 public:
   RateCCR(string name);
+  RateCCR(TuplePtr args);
   const char *class_name() const { return "RateCCR";};
   const char *processing() const { return "a/a"; };
   const char *flow_code()  const { return "-/-"; };
 
   TuplePtr simple_action(TuplePtr p);
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   class Connection;
 
-  typedef std::map <ValuePtr, Connection*, Value::Less>  ValueConnectionMap;
+  typedef std::map <ValuePtr, Connection*, Value::Comparator>  ValueConnectionMap;
   ValueConnectionMap  cmap_;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
   
 #endif /* __RCCR_H_ */

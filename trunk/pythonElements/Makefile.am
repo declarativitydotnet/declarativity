@@ -21,7 +21,6 @@ libp2PythonElements_la_SOURCES =	dataflowInstaller.C \
 
 libp2PythonElements_la_CPPFLAGS =	@BOOST_INC@ \
 					-I../p2core \
-					-I../eventLoop \
 					-I../overlog \
 					-I../net
 

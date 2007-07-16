@@ -22,6 +22,7 @@
 #include "netglobals.h"
 #include <boost/bind.hpp>
 
+DEFINE_ELEMENT_INITS(CCT, "CCT")
 
 /////////////////////////////////////////////////////////////////////
 //
@@ -69,6 +70,15 @@ CCT::CCT(string name, double init_wnd, double max_wnd)
   ssthresh_       = max_wnd;
 }
 
+CCT::CCT(TuplePtr args) 
+  : Element((*args)[2]->toString(), 2, 2),
+    _data_cb(0),
+    data_on_(true)
+{
+  cwnd_           = Val_Double::cast((*args)[3]);
+  max_wnd_        = Val_Double::cast((*args)[4]);
+  ssthresh_       = max_wnd_;
+}
 /**
  * The push method handles input on 2 ports.
  * port 0: Indicates a tuple to send.
@@ -152,7 +162,7 @@ void CCT::dealloc(ValuePtr dest, SeqNum seq)
   }
   else {
     // Log event: possibly due to duplicate ack.
-    log(Reporting::INFO, 0, "CCT::push receive unknown ack, possible duplicate"); 
+    ELEM_INFO("CCT::push receive unknown ack, possible duplicate"); 
   }
 }
 

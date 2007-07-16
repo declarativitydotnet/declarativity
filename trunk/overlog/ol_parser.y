@@ -16,13 +16,10 @@
   #include <iostream>
   #include "val_str.h"
   #include "ol_context.h"
-  #include "aggMin.h"
-  #include "aggMax.h"
-  #include "aggCount.h"
 
   union YYSTYPE;
-  static int ol_parser_lex (YYSTYPE *lvalp, OL_Context *ctxt);
-  static void ol_parser_error (OL_Context *ctxt, string msg);
+  static int ol_parser_lex(YYSTYPE *lvalp, OL_Context *ctxt);
+  static void ol_parser_error(OL_Context *ctxt, string msg);
 
 %}
 %debug
@@ -41,17 +38,15 @@
 %left OL_LSHIFT OL_RSHIFT
 %left OL_PLUS OL_MINUS 
 %left OL_TIMES OL_DIVIDE OL_MODULUS
-%left OL_EXP
 %right OL_NOT
 %left OL_IN
 %left OL_ID
 %nonassoc OL_ASSIGN
 
+
+// used to disambiguate aggregates from relative expressions
 %token OL_AT 
 %token<v> OL_NAME 
-%token OL_MAX
-%token OL_MIN
-%token OL_COUNT
 %token OL_COMMA
 %token OL_DOT
 %token OL_EOF 
@@ -59,19 +54,17 @@
 %token<v> OL_STRING
 %token<v> OL_VALUE
 %token<v> OL_VAR
+%token<v> OL_AGGFUNCNAME
 %token<v> OL_FUNCTION
 %token<v> OL_NULL
-%token OL_LPAR
 %token OL_RPAR
+%token OL_LPAR
 %token OL_LSQUB
 %token OL_RSQUB
 %token OL_LCURB
 %token OL_RCURB
-%token OL_PERIOD
 %token OL_DEL
 %token OL_QUERY
-%token OL_NOW
-%token OL_LOCAL
 %token OL_MATERIALIZE
 %token OL_KEYS
 %token OL_WATCH
@@ -79,11 +72,6 @@
 %token OL_STAGE
 %token OL_TRACE
 %token OL_TRACETABLE
-
-%token OL_RANGEOO
-%token OL_RANGEOC
-%token OL_RANGECO
-%token OL_RANGECC
 
 %start program
 %file-prefix="ol_parser"
@@ -93,7 +81,7 @@
 %union {
   Parse_Bool::Operator  u_boper;
   Parse_Math::Operator  u_moper;
-  char*                 u_aoper;
+  const char*                 u_aoper;
   Parse_TermList	    *u_termlist;
   Parse_Term		    *u_term;
   Parse_FunctorName	    *u_functorname;
@@ -231,42 +219,50 @@ functorbody:	OL_LPAR OL_RPAR
 		| OL_LPAR functorargs OL_RPAR 
 			{ $$=$2; };
 
-functorargs:	functorarg { 
-			$$ = new Parse_ExprList(); 
-			$$->push_front($1); }
+functorargs:	functorarg
+                        { 
+                          $$ = new Parse_ExprList(); 
+                          $$->push_front($1);
+                        }
 		| functorarg OL_COMMA functorargs {
 			$3->push_front($1); 
 			$$=$3; }
-        | OL_AT atom {
-            $$ = new Parse_ExprList(); 
-			Parse_Var *pv = dynamic_cast<Parse_Var*>($2);
-			if (!pv) {
-			  ostringstream oss;
-			  oss << "location specifier is not a variable";
-			  ctxt->error(oss.str());
-			}
-			else {
-			  pv->setLocspec();
-			  $$->push_front($2); 
-			}}
-        | OL_AT atom OL_COMMA functorargs{
-			Parse_Var *pv = dynamic_cast<Parse_Var*>($2);
-			if (!pv) {
-			  ostringstream oss;
-			  oss << "location specifier is not a variable";
-			  ctxt->error(oss.str());
-			}
-			else {
-			  pv->setLocspec();
-			  $4->push_front($2); 
-			  $$=$4; 
-			}}
-		;
+                | OL_AT atom
+                        {
+                          $$ = new Parse_ExprList(); 
+                          Parse_Var *pv = dynamic_cast<Parse_Var*>($2);
+                          if (!pv) {
+                            ostringstream oss;
+                            oss << "location specifier is not a variable";
+                            ctxt->error(oss.str());
+                          }
+                          else {
+                            pv->setLocspec();
+                            $$->push_front($2); 
+                          }
+                        }
+                | OL_AT atom OL_COMMA functorargs
+                        {
+                          Parse_Var *pv = dynamic_cast<Parse_Var*>($2);
+                          if (!pv) {
+                            ostringstream oss;
+                            oss << "location specifier is not a variable";
+                            ctxt->error(oss.str());
+                          }
+                          else {
+                            pv->setLocspec();
+                            $4->push_front($2); 
+                            $$=$4; 
+                          }
+                        }
+;
 
 functorarg:	atom
 			{ $$ = $1; }
 		| aggregate
-			{ $$ = $1; }
+			{
+                          $$ = $1;
+                        }
 		;
 
 
@@ -304,8 +300,6 @@ bool_expr:	OL_LPAR bool_expr OL_RPAR
 			{ $$ = $2; }
 		| OL_VAR OL_IN range_expr 
 			{ $$ = new Parse_Bool(Parse_Bool::RANGE, $1, $3); } 
-		| OL_VAR OL_IN OL_ID range_expr 
-			{ $$ = new Parse_Bool(Parse_Bool::RANGE, $1, $4, true); } 
 		| OL_NOT bool_expr 
 			{ $$ = new Parse_Bool(Parse_Bool::NOT, $2 ); } 
 		| bool_expr OL_OR bool_expr
@@ -314,8 +308,6 @@ bool_expr:	OL_LPAR bool_expr OL_RPAR
 			{ $$ = new Parse_Bool(Parse_Bool::AND, $1, $3 ); }
 		| rel_atom rel_oper rel_atom
 			{ $$ = new Parse_Bool($2, $1, $3 ); }
-		| rel_atom rel_oper OL_ID rel_atom
-			{ $$ = new Parse_Bool($2, $1, $4, true); }
 		;
 
 rel_atom:	math_expr 
@@ -336,16 +328,12 @@ rel_oper:	  OL_EQ  { $$ = Parse_Bool::EQ; }
 
 math_expr:	math_expr math_oper math_atom
 			{ $$ = new Parse_Math($2, $1, $3 ); }
-		| math_expr math_oper OL_ID math_atom
-			{ $$ = new Parse_Math($2, $1, $4, true ); }
 		| math_atom math_oper math_atom
 			{ $$ = new Parse_Math($2, $1, $3 ); }
-		| math_atom math_oper OL_ID math_atom
-			{ $$ = new Parse_Math($2, $1, $4, true ); }
-        | vectoratom
-            { $$ = $1; }
-        | matrixatom
-            { $$ = $1; }
+                | vectoratom
+                        { $$ = $1; }
+                | matrixatom
+                        { $$ = $1; }
 		;
 
 math_atom:	atom 
@@ -422,12 +410,14 @@ matrixatom : OL_VAR OL_LCURB vectorentry OL_COMMA vectorentry OL_RCURB {
 
 atom:		OL_VALUE | OL_VAR | OL_STRING | OL_NULL
 			{ $$ = $1; }
-        | vector_expr
-            { $$ = $1; }
-        | matrix_expr
-            { $$ = $1; }
-		| OL_NOW
-			{ $$ = Parse_Expr::Now; }
+                | vector_expr
+                {
+                  $$ = $1;
+                }
+                | matrix_expr
+                {
+                  $$ = $1;
+                }
 		;
 
 aggregate:	agg_oper OL_LT OL_VAR OL_GT 
@@ -445,16 +435,11 @@ aggregate:	agg_oper OL_LT OL_VAR OL_GT
 			{ $$ = new Parse_Agg(Parse_Agg::DONT_CARE, $1, ValuePtr()); }
 		;
 
-agg_oper:	  OL_MIN   { AggMin::ensureInit();
-                    // Ensure AggMin is loaded and registered
-                             $$ = "MIN"; }
-                | OL_MAX   { AggMax::ensureInit();
-                    // Ensure AggMax is loaded and registered
-                             $$ = "MAX"; }
-                | OL_COUNT { AggCount::ensureInit();
-                    // Ensure AggCount is loaded and registered
-                             $$ = "COUNT"; }
-		;
+agg_oper:	OL_AGGFUNCNAME
+                {
+                  $$ = Val_Str::cast($1->v).c_str();
+                }
+;
 
 %%
 
@@ -463,11 +448,14 @@ agg_oper:	  OL_MIN   { AggMin::ensureInit();
 #undef yylex
 #include "ol_lexer.h"
 
-static int ol_parser_lex (YYSTYPE *lvalp, OL_Context *ctxt)
+int
+ol_parser_lex(YYSTYPE *lvalp, OL_Context *ctxt)
 {
   return ctxt->lexer->yylex(lvalp, ctxt);
 }
-static void ol_parser_error(OL_Context *ctxt, string msg)
+
+void
+ol_parser_error(OL_Context *ctxt, string msg)
 {
   ctxt->error(msg);
 }

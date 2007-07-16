@@ -94,12 +94,12 @@ WHITESPACE	[ \t\r\n]+
 <CSTRING>\\.	{
   assert(cstring != NULL);
   // An escaped character literal
-  switch (yytext[2]) {
+  switch (yytext[1]) {
   case 'n': (*cstring) << "\n"; break;
   case 'r': (*cstring) << "\r"; break;
   case 't': (*cstring) << "\t"; break;
   case 'f': (*cstring) << "\f"; break;
-  default: (*cstring) << yytext[2]; break;
+  default: (*cstring) << yytext[1]; break;
   }
 }
 <CSTRING>[^\\\"]+ { 
@@ -135,7 +135,6 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>"*" { return OL_TIMES; }
 <INITIAL>"/" { return OL_DIVIDE; }
 <INITIAL>"%" { return OL_MODULUS; }
-<INITIAL>"**" { return OL_EXP; }
 <INITIAL>"^" { return OL_BITXOR; }
 <INITIAL>"&" { return OL_BITAND; }
 <INITIAL>"|" { return OL_BITOR; }
@@ -151,21 +150,22 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>":=" { return OL_ASSIGN; }
 <INITIAL>"." { return OL_DOT; }
 <INITIAL>":-" { return OL_IF; }
-<INITIAL>"period=" { return OL_PERIOD; }
 <INITIAL>"watch" { return OL_WATCH; }
 <INITIAL>"watchmod" { return OL_WATCHFINE; }
 <INITIAL>"stage" { return OL_STAGE; }
 <INITIAL>"traceTable" {return OL_TRACETABLE;}
 <INITIAL>"trace" {return OL_TRACE;}
 <INITIAL>"delete" { return OL_DEL; }
-<INITIAL>"now" { return OL_NOW; }
 <INITIAL>"Query" { return OL_QUERY; }
-<INITIAL>[Mm][Aa][Xx] { return OL_MAX; }
-<INITIAL>[Mm][Ii][Nn] { return OL_MIN; }
-<INITIAL>[Cc][Oo][Uu][Nn][Tt] { return OL_COUNT; }
 <INITIAL>"null" { 
   lvalp->v = new Parse_Val(Val_Null::mk()); 
   return OL_NULL; }
+
+<INITIAL>a_[a-zA-Z0-9]+ { 
+  string aggName(yytext);
+  lvalp->v = new Parse_Var(Val_Str::mk(aggName.substr(2))); 
+  return OL_AGGFUNCNAME;
+ }
 
 <INITIAL>f_[a-zA-Z0-9]+ { 
   lvalp->v = new Parse_Var(Val_Str::mk(yytext)); 

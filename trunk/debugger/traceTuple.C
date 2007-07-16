@@ -36,7 +36,7 @@ void TraceTuple::unblock(unsigned output)
   assert(output <= noutputs());
 
   if(_block_flags[output]){
-    log(Reporting::INFO, -1, "unblock");
+    ELEM_INFO("unblock");
     _block_flags[output] = false;
     _block_flag_count --;
     assert(_block_flag_count >= 0);
@@ -44,7 +44,7 @@ void TraceTuple::unblock(unsigned output)
 
   // call a pushback if we have it
   if(_push_cb){
-    log(Reporting::INFO, -1, "unblock: propagating aggregate unblock");
+    ELEM_INFO("unblock: propagating aggregate unblock");
     _push_cb();
     _push_cb = 0;
   }
@@ -53,12 +53,14 @@ void TraceTuple::unblock(unsigned output)
 
 int TraceTuple::push(int port, TuplePtr p, b_cbv cb)
 {
-  log(Reporting::INFO, -1, "Tracing element " + name() + " handling tuple " 
-      + p->toString() + "\n");
+  ELEM_INFO("Tracing element "
+            << name()
+            << " handling tuple " 
+            << p->toString());
 
   if(output(0)->push(p, boost::bind(&TraceTuple::unblock, this, 0)) == 0){
-    log(Reporting::WARN, -1, " Problem in pushing the original tuple " 
-	+ p->toString() + "\n");
+    ELEM_WARN("Problem in pushing the original tuple " 
+              << p->toString());
     _block_flags[0] = true;
     _block_flag_count ++;
   }
@@ -74,20 +76,21 @@ int TraceTuple::push(int port, TuplePtr p, b_cbv cb)
     t->append((*p)[i]);
   t->append(Val_UInt32::mk(p->ID()));
   t->freeze();
-  log(Reporting::INFO, -1, "Produced tuple " + t->toString() + "\n");
+  ELEM_INFO("Produced tuple "
+            << t->toString());
 
   //TELL_INFO << "Produced tuple " << t->toString() << "\n";
-
+  
   if(output(1)->push(t, boost::bind(&TraceTuple::unblock, this, 1)) == 0){
-    log(Reporting::WARN, -1, " Problem in pushing the trace tuple " 
-	+ t->toString() + "\n");
+    ELEM_WARN("Problem in pushing the trace tuple " 
+              << t->toString());
     _block_flags[1] = true;
     _block_flag_count ++;
   }
 
   if(_block_flag_count > 0){
     _push_cb = cb;
-    log(Reporting::WARN, -1, "push: Blocking input");
+    ELEM_WARN("push: Blocking input");
     return 0;
   }
   else

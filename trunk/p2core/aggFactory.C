@@ -13,11 +13,24 @@
 #include "aggFactory.h"
 #include <boost/function.hpp>
 
-
 AggFactory::AggregateNotFound::AggregateNotFound(std::string name)
   : aggName(name)
 {
 }
+
+
+AggFactory::AggregateNotFound::~AggregateNotFound()
+  throw()
+{
+}
+
+
+const char*
+AggFactory::AggregateNotFound::what()
+{
+  return aggName.c_str();
+}
+
 
 
 CommonTable::AggFunc*
@@ -31,6 +44,9 @@ AggFactory::mk(std::string aggName)
   // Do we have it?
   if (i == _factories->end()) {
     // Nope. Throw exception
+    TELL_ERROR << "Aggregate factory known functions: " << std::endl;
+    for (i = _factories->begin(); i != _factories->end(); i++)
+      TELL_ERROR << "\t" << i->first << std::endl;
     throw AggregateNotFound(aggName);
   } else {
     // Execute it and return the function object
@@ -50,6 +66,10 @@ AggFactory::factory(std::string aggName)
   // Do we have it?
   if (i == _factories->end()) {
     // Nope. Throw exception
+    TELL_ERROR << "Aggregate factory known functions: " << std::endl;
+    for (i = _factories->begin(); i != _factories->end(); i++)
+      TELL_ERROR << "\t" << i->first << std::endl;
+    exit(0);
     throw AggregateNotFound(aggName);
   } else {
     // Return the factory

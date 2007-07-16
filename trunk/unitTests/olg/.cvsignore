@@ -1,1 +1,6 @@
 Makefile Makefile.in 
+*.cpp
+*.dot
+*.eca
+*.localized
+*.ruleStrand

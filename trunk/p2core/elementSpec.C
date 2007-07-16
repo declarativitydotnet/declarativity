@@ -13,6 +13,7 @@
 
 #include "elementSpec.h"
 #include "plumber.h"
+#include "element.h"
 
 ElementSpec::ElementSpec(ElementPtr e)
   : _element(e),
@@ -169,17 +170,40 @@ const ElementPtr ElementSpec::element()
 
 ElementSpec::PortPtr ElementSpec::input(int pno)
 {
+  Plumber::Dataflow *d = NULL;
+  if ((d = dynamic_cast<Plumber::Dataflow*>(_element.get())) != NULL) {
+    /* Resolve to actual input element. Not Dataflow::input will modify
+     * pno to correct input port number, which may be different that 
+     * what was passed in. */
+    return d->input((unsigned*)&pno)->input(pno); 
+  }
   return (*_inputs)[pno];
 }
 
 ElementSpec::PortPtr ElementSpec::output(int pno)
 {
+  Plumber::Dataflow *d = NULL;
+  if ((d = dynamic_cast<Plumber::Dataflow*>(_element.get())) != NULL) {
+    /* Resolve to actual input element. Not Dataflow::input will modify
+     * pno to correct input port number, which may be different that 
+     * what was passed in. */
+    return d->output((unsigned*)&pno)->output(pno); 
+  }
   return (*_outputs)[pno];
 }
 
 int ElementSpec::add_input(ValuePtr portKey)
 {
-  unsigned port = (portKey == 0) ? element()->add_input() : element()->add_input(portKey);
+  unsigned port=0;
+  if (portKey) {
+    if (element()->input(portKey) >= 0)
+      throw Element::Exception("Input port key already assigned! " + portKey->toString());
+    port = element()->add_input(portKey);
+  }
+  else {
+    port = element()->add_input();
+  }
+
   Element::Processing proc = (Element::Processing) *_element->processing();
   if (port < _inputs->size()) {
     (*_inputs)[port] = PortPtr(new Port(proc));
@@ -193,7 +217,15 @@ int ElementSpec::add_input(ValuePtr portKey)
 
 int ElementSpec::add_output(ValuePtr portKey)
 {
-  unsigned port = (portKey == 0) ? element()->add_output() : element()->add_output(portKey);
+  unsigned port=0;
+  if (portKey) {
+    if (element()->output(portKey) >= 0)
+      throw Element::Exception("Output port key already assigned! " + portKey->toString());
+    port = element()->add_output(portKey);
+  }
+  else {
+    port = element()->add_output();
+  }
   const char* proc = _element->processing();
   for ( ; *proc != '/'; proc++) 
     ;

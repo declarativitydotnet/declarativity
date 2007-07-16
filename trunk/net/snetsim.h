@@ -22,6 +22,7 @@ public:
 
   SimpleNetSim(string name="SimpleNetSim", uint32_t min_delay=0, uint32_t max_delay=0, 
                double drop_prob=0.);
+
   const char *class_name() const	{ return "SimpleNetSim";};
   const char *processing() const	{ return "l/l"; };
   const char *flow_code() const		{ return "x/x"; };

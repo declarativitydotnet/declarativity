@@ -13,9 +13,22 @@
  */
 
 #include "noNull.h"
+#include "val_str.h"
+
+DEFINE_ELEMENT_INITS(NoNull, "NoNull");
 
 NoNull::NoNull(string name)
   : Element(name, 1, 1)
+{
+}
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ */
+NoNull::NoNull(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1)
 {
 }
 

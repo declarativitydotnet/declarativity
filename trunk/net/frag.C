@@ -20,6 +20,8 @@
 #include "xdrbuf.h"
 #include "netglobals.h"
 
+DEFINE_ELEMENT_INITS(Frag, "Frag")
+
 Frag::Frag(string name, unsigned bs, unsigned mqs)
   : Element(name, 1, 1),
     _push_cb(0), _pull_cb(0),
@@ -28,6 +30,14 @@ Frag::Frag(string name, unsigned bs, unsigned mqs)
   assert (bs % 4 == 0);
 }
 
+Frag::Frag(TuplePtr args)
+  : Element(args->size() > 2 ? (*args)[2]->toString() : "frag", 1, 1),
+    _push_cb(0), _pull_cb(0),
+    block_size_(args->size() > 3 ? Val_UInt32::cast((*args)[3]) : 1024),
+    max_queue_size_(args->size() > 4 ? Val_UInt32::cast((*args)[4]) : 1000)
+{
+  assert (block_size_ % 4 == 0);
+}
 
 int Frag::push(int port, TuplePtr t, b_cbv cb)
 {

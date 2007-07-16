@@ -13,10 +13,25 @@
  */
 
 #include "print.h"
+#include "val_str.h"
+#include "reporting.h"
+
+DEFINE_ELEMENT_INITS(Print, "Print");
 
 Print::Print(string prefix)
   : Element(prefix, 1, 1),
     _prefix(prefix)
+{
+}
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str: Prefix / Name.
+ */
+Print::Print(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1),
+    _prefix(Val_Str::cast((*args)[2])) 
 {
 }
 
@@ -26,6 +41,10 @@ Print::~Print()
 
 TuplePtr Print::simple_action(TuplePtr p)
 {
-  TELL_OUTPUT << "Print[" << _prefix << "]:  [" << p->toString() << "]\n";
+  TELL_OUTPUT << "Print["
+              << _prefix
+              << "]:  ["
+              << p->toString()
+              << "]" << std::endl;
   return p;
 }

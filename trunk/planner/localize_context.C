@@ -17,6 +17,7 @@
 #include "planner.h"
 #include "localize_context.h"
 #include "planContext.h"
+#include <set>
 
 string Localize_Context::toString()
 {
@@ -94,9 +95,14 @@ Localize_Context::addSendRule(OL_Context::Rule* nextRule,
   return newRule;
 }
 
-void Localize_Context::rewrite(OL_Context* ctxt, TableStore* tableStore)
+
+void
+Localize_Context::rewrite(OL_Context* ctxt,
+                          TableStore* tableStore)
 {
-  for (unsigned k = 0; k < ctxt->getRules()->size(); k++) {
+  for (unsigned k = 0;
+       k < ctxt->getRules()->size();
+       k++) {
     OL_Context::Rule* nextRule = ctxt->getRules()->at(k);
     rewriteRule(nextRule, tableStore);
   }
@@ -113,21 +119,34 @@ Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
   std::vector<OL_Context::Rule*> toRet;
   std::vector<Parse_Functor*> probeTerms;
   std::vector<Parse_Term*> otherTerms;
+  bool hasEvent = false;        // Does this rule have an event?
+  std::set< string, std::less<string> > probeLocales; // The locspecs of
+                                                      // materialized
+                                                      // tables in the
+                                                      // rule body?
 
   // separate out the probeTerms and other terms
-  std::list<Parse_Term*>::iterator t = nextRule->terms.begin();
-  for(; t != nextRule->terms.end(); t++) {
+  for(std::list<Parse_Term*>::iterator t = nextRule->terms.begin();
+      t != nextRule->terms.end();
+      t++) {
     Parse_Term* nextTerm = (*t);    
     Parse_Functor *functor = dynamic_cast<Parse_Functor*>(nextTerm);
     if (functor != NULL) {
+      // Is this materialized?
       OL_Context::TableInfo* tableInfo 
 	= tableStore->getTableInfo(functor->fn->name);        
       if (tableInfo != NULL) {
+        // This is materialized
 	probeTerms.push_back(functor);
+
+        // It's locspec is
+        string locspec = functor->getlocspec();
+        probeLocales.insert(locspec);
       } else {
 	// put events first
 	PLANNER_WORDY_NOPC("Put to front " << functor->fn->name);
 	probeTerms.insert(probeTerms.begin(), functor);
+        hasEvent = true;
       }
     } else {
       otherTerms.push_back(nextTerm);
@@ -184,6 +203,16 @@ Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
     add_rule(nextRule);
     delete namesTracker;
     return;
+  } else if (hasEvent &&        // it's not a view
+             probeLocales.size() > 1 && // the materialized tables are
+                                        // on multiple locations
+             nextRule->head->aggregate() != -1) { // and it's an aggregate
+    // This rule is an non-local event aggregate. We don't handle these currently
+    PLANNER_ERROR_NOPC("Rule '"
+                       << nextRule->toString()
+                       << "' is a non-local streaming aggregate, which "
+                       << "is not currently supported.");
+    exit(-1);
   }
 
   PLANNER_WORDY_NOPC(headName.str() << " minimumLifetime " 

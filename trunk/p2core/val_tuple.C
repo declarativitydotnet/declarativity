@@ -35,6 +35,8 @@ int Val_Tuple::compareTo(ValuePtr other) const
       return -1;
    } else if(Value::TUPLE > other->typeCode()) {
       return 1;
+   } else if (!t) {
+      return other->typeCode() == Value::NULLV ? 0 : 1;
    } else {
       return t->compareTo(cast(other));
    }
@@ -61,6 +63,8 @@ string Val_Tuple::toConfString() const
 TuplePtr Val_Tuple::cast(ValuePtr v) {
   if (v->typeCode() == Value::TUPLE) {
     return (static_cast< Val_Tuple * >(v.get()))->t;
+  } else if (v->typeCode() == Value::NULLV) {
+    return TuplePtr();
   } else {
     throw Value::TypeError(v->typeCode(), v->typeName(),
                            Value::TUPLE, "tuple");

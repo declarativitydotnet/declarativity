@@ -27,7 +27,6 @@ libp2debugger_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C)
 
 libp2debugger_la_CPPFLAGS =	@BOOST_INC@ \
 				-I../p2core \
-				-I../eventLoop \
 				-I../elements
 
 libp2debugger_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG

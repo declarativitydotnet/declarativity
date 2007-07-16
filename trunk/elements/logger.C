@@ -27,6 +27,8 @@
 #include "val_time.h"
 #include "reporting.h"
 
+DEFINE_ELEMENT_INITS(Logger, "Logger");
+
 //
 // One global sequence number
 //
@@ -37,6 +39,16 @@ uint64_t Logger::seq=0;
 // Not much of a constructor
 //
 Logger::Logger(string name) : Element(name, 0, 1) { }
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ */
+Logger::Logger(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 0, 1)
+{
+}
 
 void
 Logger::log(string classname, 

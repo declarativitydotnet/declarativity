@@ -38,10 +38,10 @@ TuplePtr SimpleNetSim::pull(int port, b_cbv cb)
 }
 
 void SimpleNetSim::grab() {
-  log(Reporting::INFO, 0, "SimpleNetSim::grab"); 
+  ELEM_INFO("SimpleNetSim::grab"); 
   if (!pull_pending) {
-     log(Reporting::INFO, 0, "SimpleNetSim::grab !pull_pending FINISHED"); 
-     return;
+    ELEM_INFO("SimpleNetSim::grab !pull_pending FINISHED"); 
+    return;
   }
 
   TuplePtr t = TuplePtr(); 
@@ -52,7 +52,6 @@ void SimpleNetSim::grab() {
 
   if (t) {
     uint32_t d = min_delay_ + uint32_t((max_delay_ - min_delay_)*(rand()/double(RAND_MAX)));
-    // log(Reporting::INFO, 0, strbuf() << "SimpleNetSim: Delaying for " << d << "(ms)"); 
 
     delayCB((0.0 + d) / 1000.0, boost::bind(&SimpleNetSim::tuple_ready, this, t), this);
   } else {

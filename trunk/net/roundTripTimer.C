@@ -22,6 +22,7 @@
 #include "netglobals.h"
 #include <boost/bind.hpp>
 
+DEFINE_ELEMENT_INITS(RoundTripTimer, "RoundTripTimer")
 
 /////////////////////////////////////////////////////////////////////
 //
@@ -67,6 +68,11 @@ RoundTripTimer::RTTRec::RTTRec() : sa_(-1), sv_(0), rto_(MAX_RTO) {}
  */
 RoundTripTimer::RoundTripTimer(string name) 
   : Element(name, 2, 1)
+{
+}
+
+RoundTripTimer::RoundTripTimer(TuplePtr args) 
+  : Element((*args)[2]->toString(), 2, 1)
 {
 }
 
@@ -164,7 +170,7 @@ int32_t RoundTripTimer::dealloc(ValuePtr dest, SeqNum seq)
   }
   else {
     // Log event: possibly due to duplicate ack.
-    log(Reporting::INFO, 0, "RoundTripTimer::push receive unknown ack, possible duplicate"); 
+    ELEM_INFO("RoundTripTimer::push receive unknown ack, possible duplicate"); 
   }
   return delay;
 }

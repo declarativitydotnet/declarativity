@@ -18,11 +18,13 @@
 #define __SLOT_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 
 class Slot : public Element { 
 public:
   
   Slot(string name);
+  Slot(TuplePtr args);
 
   int push(int port, TuplePtr t, b_cbv cb);
   TuplePtr pull(int port, b_cbv);
@@ -30,10 +32,14 @@ public:
   const char *processing() const		{ return PUSH_TO_PULL; }
   const char *flow_code() const			{ return "-/-"; }
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   TuplePtr _t;
   b_cbv	_push_cb;
   b_cbv	_pull_cb;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

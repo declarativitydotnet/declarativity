@@ -15,6 +15,7 @@
  *
  * Inputs:  0, push: incoming event tuples
  *          1, push: output from the inner graph
+ *          2, push: signal for the end
  * Outputs: 0, push: aggregates (external output)
  *          1, push: push events to the inner graph
  *
@@ -26,6 +27,7 @@
 #define __AGGWRAP2_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 #include "aggFactory.h"
 
 class Aggwrap2 : public Element { 
@@ -43,6 +45,7 @@ public:
            bool starAgg,
            std::string resultTupleName);
 
+  Aggwrap2(TuplePtr args);
 
   /** The destructor, deallocating internal heap state */
   ~Aggwrap2();
@@ -55,12 +58,12 @@ public:
 
   /** What's my processing personality? Push all around. */
   const char*
-  processing() const {return "hh/hh";};
+  processing() const {return "hhh/hh";};
 
 
   /** Any flow recommendations? None since no ports are agnostic. */
   const char*
-  flow_code() const {return "--/--";}
+  flow_code() const {return "---/--";}
 
 
   /** Register the next event tuple group-by field. The order of
@@ -94,6 +97,7 @@ public:
   };
 
 
+  DECLARE_PUBLIC_ELEMENT_INITS
 
 
 private:
@@ -216,6 +220,9 @@ private:
   /** My internal push callback */
   void
   int_push_cb();
+
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 #endif /* __AGGWRAP2_H_ */

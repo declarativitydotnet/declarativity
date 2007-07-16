@@ -16,11 +16,26 @@
 
 #include "val_str.h"
 #include "val_opaque.h"
+#include "val_uint32.h"
+
+DEFINE_ELEMENT_INITS(Hexdump, "Hexdump");
 
 Hexdump::Hexdump(string name,
                  unsigned fieldNo)
   : Element(name, 1, 1),
     _fieldNo(fieldNo)
+{
+}
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_UInt32: Field number to convert to hex.
+ */
+Hexdump::Hexdump(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1),
+    _fieldNo(Val_UInt32::cast((*args)[3]))
 {
 }
 
@@ -34,18 +49,14 @@ TuplePtr Hexdump::simple_action(TuplePtr p)
   ValuePtr first = (*p)[_fieldNo];
   if (first == NULL) {
     // No such field
-    log(Reporting::WARN,
-        -1,
-        "Input tuple has no requested field");
+    ELEM_WARN("Input tuple has no requested field");
     return TuplePtr();
   }
 
   // Is it an opaque?
   if (first->typeCode() != Value::OPAQUE) {
     // Can't hexdump anything but opaques
-    log(Reporting::WARN,
-        -1,
-        "Input tuple's field to hexdump is not an opaque");
+    ELEM_WARN("Input tuple's field to hexdump is not an opaque");
     return TuplePtr();
   }
   

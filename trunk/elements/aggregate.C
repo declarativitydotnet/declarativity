@@ -14,6 +14,10 @@
  */
 
 #include "aggregate.h"
+#include "val_str.h"
+#include "val_uint32.h"
+#include "val_list.h"
+#include "plumber.h"
 #include <boost/bind.hpp>
 
 Aggregate::Aggregate(string name,
@@ -27,6 +31,33 @@ Aggregate::Aggregate(string name,
   _aggregate->listener(boost::bind(&Aggregate::listener, this, _1));
 }
 
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_Str:    Table Name.
+ * 4. Val_List:   Group by attributes.
+ * 5. Val_UInt32: Aggregation field postion.
+ * 6. Val_Str:    Aggregation function name.
+ */
+Aggregate::Aggregate(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 0, 1),
+    _pullCallback(0),
+    _pending(false)
+{
+  string  tableName = Val_Str::cast((*args)[3]);
+  ListPtr groupBy   = Val_List::cast((*args)[4]);
+  uint    fieldNo   = Val_UInt32::cast((*args)[5]);
+  string  function  = Val_Str::cast((*args)[6]);
+    
+  CommonTablePtr table = Plumber::catalog()->table(tableName); 
+  CommonTable::Key groupByKey;
+  for (ValPtrList::const_iterator iter = groupBy->begin();
+       iter != groupBy->end(); iter++)
+   groupByKey.push_back(Val_UInt32::cast(*iter));
+  _aggregate = table->aggregate(groupByKey, fieldNo, function);
+  _aggregate->listener(boost::bind(&Aggregate::listener, this, _1));
+}
 
 void
 Aggregate::listener(TuplePtr t)
@@ -48,7 +79,7 @@ Aggregate::listener(TuplePtr t)
 
   // If there's a pull callback, call it
   if (_pullCallback) {
-    log(Reporting::INFO, 0, "listener: wakeup puller");
+    ELEM_INFO("listener: wakeup puller");
     _pullCallback();
     _pullCallback = 0;
   }
@@ -65,11 +96,11 @@ Aggregate::pull(int port, b_cbv cb)
     // Nope, no pending update.  Deal with underruns.
     if (!_pullCallback) {
       // Accept the callback
-      log(Reporting::INFO, 0, "pull: raincheck");
+      ELEM_INFO("pull: raincheck");
       _pullCallback = cb;
     } else {
       // I already have a pull callback
-      log(Reporting::INFO, 0, "pull: callback underrun");
+      ELEM_INFO("pull: callback underrun");
     }
     return TuplePtr();
   } else {
@@ -84,3 +115,8 @@ Aggregate::pull(int port, b_cbv cb)
     return _latest;
   }
 }
+
+
+// This is necessary for the class to register itself with the
+// stage registry.
+DEFINE_ELEMENT_INITS(Aggregate,"Aggregate")

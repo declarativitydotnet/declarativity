@@ -36,8 +36,20 @@ public:
   TableStore(OL_Context* ctxt);
   ~TableStore() { delete _tables; }
 
-  OL_Context::WatchTableType getWatchTables() { return _ctxt->getWatchTables(); };
-  OL_Context::TableInfoMap* getTableInfos()  { return _tableInfos;   };
+
+  /** Get watch tables */
+  OL_Context::WatchTableType
+  getWatchTables();
+
+
+  /** Get table specifications */
+  OL_Context::TableInfoMap*
+  getTableInfos();
+
+
+  /** Get actual tables */
+  TableMap*
+  getTables();
 
 
   /** Creates an empty table for a given table definition */

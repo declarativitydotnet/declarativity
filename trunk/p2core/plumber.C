@@ -19,11 +19,57 @@
 #include <set>
 #include "table2.h"
 #include "reporting.h"
+#include "tableManager.h"
+#include "commitManager.h"
+#include "scheduler.h"
+#include "loop.h"
+#include "dot.h"
+
+
+CommonTable::ManagerPtr Plumber::_catalog(new TableManager());
+std::map<string, Plumber::DataflowPtr > Plumber::_dataflows;
+Scheduler Plumber::_scheduler(new CommitManager());
+
+
 
 /**************************************************************
  * Plumber::Dataflow is responsible for a dataflow that
  * is to be installed into the plumber. 
  */
+Plumber::Dataflow::Dataflow(string name, 
+                            unsigned ninputs,
+                            unsigned noutputs, 
+                            string p,
+                            string fc) 
+  : Element(name, ninputs, noutputs), 
+    _processing(p.c_str()),
+    _flow_code(fc.c_str()),
+    _validated(false),
+    _initialized(false) 
+{
+}
+
+Plumber::Dataflow::~Dataflow() { }
+
+void
+Plumber::Dataflow::toDot(std::ostream* dotstr)
+{
+  Element::toDot(dotstr);
+  return;
+  /*std::set<ElementSpec::HookupPtr> hookups;
+  std::set<ElementSpecPtr> elements;
+
+  for(int i=0;i<elements_.size();i++)
+	  elements.insert(elements_[i]);
+  for(int i=0;i<hookups_.size();i++)
+	  hookups.insert(hookups_[i]);
+  std::ostringstream subg;
+  subg<<"subgraph "<<ID()<<"{\n";
+  ::toDot(&subg, elements,hookups,false);
+  subg<<"\n};";
+  *dotstr<<subg.str();*/
+}
+
 
 std::string Plumber::Dataflow::toString() const {
     ostringstream oss;
@@ -34,7 +80,88 @@ std::string Plumber::Dataflow::toString() const {
     return oss.str();
 }
 
-ElementSpecPtr Plumber::Dataflow::find(string name)
+ElementSpecPtr
+Plumber::Dataflow::input(unsigned* port)
+{
+  assert (*port < inputs_.size());
+  for (std::vector<ElementSpec::HookupPtr>::iterator i = inputs_.begin();
+       i != inputs_.end(); i++)
+    if ((*i)->fromPortNumber == *port) {
+      Plumber::Dataflow *d = NULL;
+      /* Modify port mapping to refer to element's input port number. */
+      *port = (*i)->toPortNumber; 
+      if ((d = dynamic_cast<Plumber::Dataflow*>((*i)->toElement->element().get())) != NULL) {
+        return d->input(port);
+      }
+      return (*i)->toElement;
+    }
+  return ElementSpecPtr();
+}
+
+bool
+Plumber::Dataflow::checkInput(ElementSpecPtr element, unsigned port)
+{
+  for (std::vector<ElementSpec::HookupPtr>::iterator i = inputs_.begin();
+       i != inputs_.end(); i++) {
+    if ((*i)->toPortNumber == port && (*i)->toElement == element) {
+      return true;
+    }
+  }
+  return false;
+}
+
+ElementSpecPtr
+Plumber::Dataflow::output(unsigned* port)
+{
+  assert (*port < outputs_.size());
+  for (std::vector<ElementSpec::HookupPtr>::iterator i = outputs_.begin();
+       i != outputs_.end(); i++)
+    if ((*i)->toPortNumber == *port) {
+      Plumber::Dataflow *d = NULL;
+      /* Modify port mapping to refer to element's output port number. */
+      *port = (*i)->fromPortNumber; 
+      if ((d = dynamic_cast<Plumber::Dataflow*>((*i)->fromElement->element().get())) != NULL) {
+        return d->output(port);
+      }
+      return (*i)->fromElement;
+    }
+  return ElementSpecPtr();
+}
+
+bool
+Plumber::Dataflow::checkOutput(ElementSpecPtr element, unsigned port)
+{
+  for (std::vector<ElementSpec::HookupPtr>::iterator i = outputs_.begin();
+       i != outputs_.end(); i++) {
+    if ((*i)->fromPortNumber == port && (*i)->fromElement == element) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/*
+int Plumber::Dataflow::connect_input(unsigned i, Element *f, unsigned port)
+{
+  if (i >= 0 && i < _inputs.size()) {
+    return input(&i)->element()->connect_input(i, f, port);
+    // _inputs[i].reset(new Port(this, f, port));
+  } else
+    return -1;
+}
+
+int Plumber::Dataflow::connect_output(unsigned o, Element *f, unsigned port)
+{
+  if (o >= 0 && o < _outputs.size()) {
+    return output(&o)->element()->connect_output(o, f, port);
+    // _outputs[o].reset(new Port(this, f, port));
+  } else
+    return -1;
+}
+*/
+
+ElementSpecPtr 
+Plumber::Dataflow::find(string name)
 {
   for (std::vector<ElementSpecPtr>::iterator i = elements_.begin();
        i != elements_.end(); i++) {
@@ -42,51 +169,37 @@ ElementSpecPtr Plumber::Dataflow::find(string name)
       return *i;
     }
   }
+
   return ElementSpecPtr();
 }
 
 
 ElementSpecPtr Plumber::Dataflow::addElement(ElementPtr e) {
+  for (std::vector<ElementSpecPtr>::iterator i = elements_.begin();
+       i != elements_.end(); i++) {
+    if ((*i)->element().get() == e.get()) return *i;
+  }
+
   ElementSpecPtr s(new ElementSpec(e));
   elements_.push_back(s);	// Add element to my dataflow
+
   return s;
 }
 
-void Plumber::Dataflow::hookUp(ElementSpecPtr src, int src_port,
-                               ElementSpecPtr dst, int dst_port ) {
-  assert(src != 0 && dst != 0);
+void Plumber::Dataflow::hookUp(ElementSpecPtr src, unsigned src_port,
+                               ElementSpecPtr dst, unsigned dst_port ) {
   ElementSpec::HookupPtr p(new ElementSpec::Hookup(src, src_port, dst, dst_port));
-  hookups_.push_back(p);
-}
-
-
-Table2Ptr
-Plumber::Dataflow::table(string name,
-                         Table2::Key& key,
-                         uint32_t max_size,
-                         string lifetime)
-{
-  std::map<string, Table2Ptr>::iterator iter = tables_.find(name);
-  if (iter != tables_.end()) {
-    // Already there. Just return it
-    return iter->second;
-  } else {
-    Table2Ptr tp(new Table2(name, key, max_size, lifetime));
-    tables_[name] = tp;
-    return tp;
+  if (src && dst) {
+    hookups_.push_back(p); // Internal hookup
   }
-}
-
-
-Table2Ptr
-Plumber::Dataflow::getTable(string name)
-{
-  std::map<string, Table2Ptr>::iterator iter = tables_.find(name);
-  if (iter != tables_.end()) {
-    return iter->second;
+  else if (dst) {
+    inputs_.push_back(p);  // Input hookup (only destination specified).
+  }
+  else if (src) {
+    outputs_.push_back(p); // Output hookup (only src specified).
   }
   else {
-    return Table2Ptr();
+    assert(0);
   }
 }
 
@@ -117,7 +230,7 @@ int Plumber::Dataflow::check_hookup_elements()
         (*found != hookup->fromElement->element())) {
       // This hookup comes from a non-existing element 
       TELL_ERROR << "Non-existent from element " <<
-        hookup->fromElement->toString() << "\n";
+        hookup->fromElement->toString() << " in dataflow " << name() << "\n";
       errors++;
     }
     found = elementSet.find(hookup->toElement->element());
@@ -125,7 +238,7 @@ int Plumber::Dataflow::check_hookup_elements()
         (*found != hookup->toElement->element())) {
       // This hookup goes to a non-existing element 
       TELL_ERROR << "Non-existent to element " <<
-        hookup->toElement->toString() << "\n";
+        hookup->toElement->toString() << " in dataflow " << name() << "\n";
       errors++;
     }
     if (hookup->fromPortNumber < 0) {
@@ -166,6 +279,7 @@ int Plumber::Dataflow::check_push_and_pull()
       unsigned fromPort = hookup->fromPortNumber;
       unsigned toPort = hookup->toPortNumber;
       // By now, the ports should be acceptable
+
       assert((fromPort < fromElement->element()->noutputs()) &&
              (toPort < toElement->element()->ninputs()));
       
@@ -343,8 +457,8 @@ int Plumber::Dataflow::eval_hookups()
     ElementSpec::HookupPtr hookup = *iter;
     ElementSpecPtr fromElement = hookup->fromElement;
     ElementSpecPtr toElement = hookup->toElement;
-    int fromPort = hookup->fromPortNumber;
-    int toPort = hookup->toPortNumber;
+    unsigned fromPort = hookup->fromPortNumber;
+    unsigned toPort = hookup->toPortNumber;
 
     int dup =
       fromElement->output(fromPort)->counterpart(toElement);
@@ -381,7 +495,10 @@ int Plumber::Dataflow::check_hookup_completeness() {
     for (unsigned in = 0;
          in < element->element()->ninputs();
          in++) {
-      if (element->input(in)->check() && 
+      if (checkInput(element, in)) {
+        continue;
+      }
+      else if (element->input(in)->check() && 
           element->input(in)->counterpart() == 0) {
         unuseds++;
         oss << "Input port " << in << " of element "
@@ -390,7 +507,10 @@ int Plumber::Dataflow::check_hookup_completeness() {
       }
     }
     for (unsigned out = 0; out < element->element()->noutputs(); out++) {
-      if (element->output(out)->check() && 
+      if (checkOutput(element, out)) {
+        continue;
+      }
+      else if (element->output(out)->check() && 
           element->output(out)->counterpart() == 0) {
         unuseds++;
         oss << "Output port " << out << " of element "
@@ -418,9 +538,16 @@ void Plumber::Dataflow::set_connections()
     ElementSpec::HookupPtr hookup = hookups_[i];
     ElementSpecPtr fromElement = hookup->fromElement;
     ElementSpecPtr toElement = hookup->toElement;
-    int fromPort = hookup->fromPortNumber;
-    int toPort = hookup->toPortNumber;
+    unsigned fromPort = hookup->fromPortNumber;
+    unsigned toPort = hookup->toPortNumber;
 
+    Plumber::Dataflow *d = NULL;
+    if ((d = dynamic_cast<Plumber::Dataflow*>(fromElement->element().get())) != NULL) {
+      fromElement = d->output(&fromPort);
+    }
+    if ((d = dynamic_cast<Plumber::Dataflow*>(toElement->element().get())) != NULL) {
+      toElement = d->input(&toPort);
+    }
     fromElement->element()->connect_output(fromPort,
                                            toElement->element().get(),
                                            toPort);
@@ -444,74 +571,108 @@ void Plumber::Dataflow::set_connections()
  */
 int Plumber::Dataflow::validate()
 {
-  // Are the hookups pointing to existing elements and ports?
-  if (check_hookup_elements() < 0) {
-    TELL_ERROR << "** Check_Hookup_Elements failed\n";
-    return -1;
+  if (!_validated) {
+    /** Validate any sub-dataflow elements first */
+    for (std::vector<ElementSpecPtr>::iterator iter = elements_.begin();
+         iter != elements_.end(); iter++) {
+      Dataflow* d = NULL;
+      if ((d = dynamic_cast<Dataflow*>((*iter)->element().get())) != NULL &&
+          d->validate() < 0)
+        return -1;
+    }
+  
+    // Are the hookups pointing to existing elements and ports?
+    if (check_hookup_elements() < 0) {
+      TELL_ERROR << "** Check_Hookup_Elements failed\n";
+      return -1;
+    }
+  
+    // Are the port numbers plausible?
+    if (check_hookup_range() < 0) {
+      TELL_ERROR << "** Port numbers implausible\n";
+      return -1;
+    }
+  
+    // Check push/pull semantics
+    if (check_push_and_pull() < 0) {
+      TELL_ERROR << "** Bad push/pull semantics\n";
+      return -1;
+    }
+  
+    // Evaluate hookups indicated in my new dataflow
+    if (eval_hookups() < 0) {
+      TELL_ERROR << "** Hookup evaluation failure\n";
+      return -1;
+    }
+  
+    // Check hookup completeness.  
+    // All ports, in all dataflows, have something attached to them
+    if (check_hookup_completeness() < 0) {
+      TELL_ERROR << "** Hookup incompleteness\n";
+      return -1;
+    }
   }
-
-  // Are the port numbers plausible?
-  if (check_hookup_range() < 0) {
-    TELL_ERROR << "** Port numbers implausible\n";
-    return -1;
-  }
-
-  // Check push/pull semantics
-  if (check_push_and_pull() < 0) {
-    TELL_ERROR << "** Bad push/pull semantics\n";
-    return -1;
-  }
-
-  // Evaluate hookups indicated in my new dataflow
-  if (eval_hookups() < 0) {
-    TELL_ERROR << "** Hookup evaluation failure\n";
-    return -1;
-  }
-
-  // Check hookup completeness.  
-  // All ports, in all dataflows, have something attached to them
-  if (check_hookup_completeness() < 0) {
-    TELL_ERROR << "** Hookup incompleteness\n";
-    return -1;
-  }
+  _validated = true;
 
   return 0;
 }
 
-int Plumber::Dataflow::finalize() {
-  set_connections();
-
+int Plumber::Dataflow::initialize() {
   int failures = 0;
-  for (std::vector<ElementSpecPtr>::iterator iter = elements_.begin();
-       iter != elements_.end(); iter++) {
-    if ((*iter)->element()->state()  == Element::INACTIVE && 
-        (*iter)->element()->initialize() < 0) {
-      TELL_ERROR << "** Initialize element " 
-                << (*iter)->element()->name() 
-                << " failure.\n";
-      failures++;
-    }
-    else {
-      (*iter)->element()->state(Element::ACTIVE);
+  if (!_initialized) {
+    set_connections();
+
+    for (std::vector<ElementSpecPtr>::iterator iter = elements_.begin();
+         iter != elements_.end(); iter++) {
+      if ((*iter)->element()->state()  == Element::INACTIVE && 
+          (*iter)->element()->initialize() < 0) {
+        TELL_ERROR << "** Initialize element " 
+                  << (*iter)->element()->name() 
+                  << " failure.\n";
+        failures++;
+      }
+      else {
+	//ensure all elements are ACTIVE
+        (*iter)->element()->state(Element::ACTIVE);
+      }
     }
   }
-  return (failures == 0) ? 0 : -1;
+
+  if (failures == 0) {
+    _initialized = true;
+    return 0;
+  }
+  return -1;
 }
 
 /****************************************************
  * Plumber::DataflowEdit methods
  */
 
-Plumber::DataflowEdit::DataflowEdit(DataflowPtr d) : Dataflow(d->name()) 
+Plumber::DataflowEdit::DataflowEdit(DataflowPtr d)
+  : Dataflow(d->name()) 
 {
-  tables_           = d->tables_;		// Copy over the tables
-  garbage_elements_ = d->garbage_elements_;	// Copy over the garbage elements
+  garbage_elements_ = d->garbage_elements_;	// Copy over the garbage
+  // elements
 
   /** I really need to call the 'addElement' method here so that a new
     * ElementSpectPtr is created around the old Element structure */
   for (std::vector<ElementSpecPtr>::iterator iter = d->elements_.begin();
        iter != d->elements_.end(); iter++) {
-    this->Dataflow::addElement((*iter)->element());
+    ElementPtr e = (*iter)->element();
+    Plumber::Dataflow* d = NULL;
+    if ((d = dynamic_cast<Plumber::Dataflow*>(e.get())) != NULL) {
+      /* We must clear the inputs and outputs to internal dataflow element */
+      for (unsigned i = 0; i < d->ninputs(); i++) {
+        unsigned port = i;
+        d->input(&port)->input(port)->reset();
+      }
+      for (unsigned o = 0; o < d->noutputs(); o++) {
+        unsigned port = o;
+        d->output(&port)->output(port)->reset();
+      }
+    }
+    this->Dataflow::addElement(e);
   }
 
   /** I also want new Hookups (without the old counterparts) so that the
@@ -542,14 +703,23 @@ Plumber::DataflowEdit::DataflowEdit(DataflowPtr d) : Dataflow(d->name())
   }
 }
 
-ElementSpecPtr Plumber::DataflowEdit::addElement(ElementPtr e) {
+
+ElementSpecPtr
+Plumber::DataflowEdit::addElement(ElementPtr e) {
+  for (std::vector<ElementSpecPtr>::iterator i = new_elements_.begin();
+       i != new_elements_.end(); i++) {
+    if ((*i)->element().get() == e.get()) return *i;
+  }
+
   ElementSpecPtr s(new ElementSpec(e));
   new_elements_.push_back(s);	// Add element to my dataflow
   return s;
 }
 
-void Plumber::DataflowEdit::hookUp(ElementSpecPtr src, int src_port,
-                                   ElementSpecPtr dst, int dst_port ) {
+
+void
+Plumber::DataflowEdit::hookUp(ElementSpecPtr src, unsigned src_port,
+                                   ElementSpecPtr dst, unsigned dst_port ) {
   assert(src != 0 && dst != 0);
   ElementSpec::HookupPtr p(new ElementSpec::Hookup(src, src_port, dst, dst_port));
   new_hookups_.push_back(p);
@@ -610,8 +780,16 @@ void Plumber::DataflowEdit::set_connections()
     ElementSpec::HookupPtr hookup = *iter;
     ElementSpecPtr fromElement = hookup->fromElement;
     ElementSpecPtr toElement = hookup->toElement;
-    int fromPort = hookup->fromPortNumber;
-    int toPort = hookup->toPortNumber;
+    unsigned fromPort = hookup->fromPortNumber;
+    unsigned toPort = hookup->toPortNumber;
+
+    Plumber::Dataflow *d = NULL;
+    if ((d = dynamic_cast<Plumber::Dataflow*>(fromElement->element().get())) != NULL) {
+      fromElement = d->output(&fromPort);
+    }
+    if ((d = dynamic_cast<Plumber::Dataflow*>(toElement->element().get())) != NULL) {
+      toElement = d->input(&toPort);
+    }
 
     fromElement->element()->connect_output(fromPort,
                                            toElement->element().get(),
@@ -713,26 +891,18 @@ void Plumber::DataflowEdit::remove_old_hookups(ElementSpec::HookupPtr hookup)
 }
 
 
-ElementSpecPtr Plumber::DataflowEdit::find(string name)
-{
-  for (std::vector<ElementSpecPtr>::iterator i = elements_.begin();
-       i != elements_.end(); i++) {
-    if ((*i)->element()->name() == name) {
-      return *i;
-    }
-  }
-  return ElementSpecPtr();
-}
-
 /********************************************************
  * Plumber is responsible for maintaining a set of dataflows
  * each defined by their configuration. 
  */
 
 Plumber::Plumber()
-  : _dataflows(new std::map<string, DataflowPtr>()),
-    _logger(0)
+  : _logger(0)
 {
+}
+
+Scheduler* Plumber::scheduler() {
+  return &_scheduler;
 }
 
 /**
@@ -740,19 +910,21 @@ Plumber::Plumber()
  */
 int Plumber::install(DataflowPtr d)
 {
-  if (d->validate() < 0 || d->finalize() < 0) {
+  if (d->validate() < 0 || d->initialize() < 0) {
     TELL_ERROR << "** Dataflow installation failure\n";
     return -1;
   }
 
-  std::map<string, DataflowPtr>::iterator iter = _dataflows->find(d->name());
-  if (iter != _dataflows->end()) {
-    _dataflows->erase(iter);
+  std::map<string, DataflowPtr>::iterator iter = _dataflows.find(d->name());
+  if (iter != _dataflows.end()) {
+    _dataflows.erase(iter);
   }
-  _dataflows->insert(std::make_pair(d->name(), d));
+  _dataflows.insert(std::make_pair(d->name(), d));
+
   return 0;
 }
 
+#include <sstream>
 
 void Plumber::toDot(string f) { 
   TELL_INFO << "Outputting DOT for dataflow into file "
@@ -761,10 +933,10 @@ void Plumber::toDot(string f) {
   std::set<ElementSpec::HookupPtr> hookups;
   std::set<ElementSpecPtr> elements;
 
-  for (std::map<string, DataflowPtr>::iterator iter = _dataflows->begin();
-       iter != _dataflows->end(); iter++) {
-    std::vector<ElementSpec::HookupPtr>& h = iter->second->hookups_;
-    std::vector<ElementSpecPtr>&         e = iter->second->elements_;
+  for (std::map<string, DataflowPtr>::iterator iter = _dataflows.begin();
+       iter != _dataflows.end(); iter++) {
+    std::vector<ElementSpec::HookupPtr> h = iter->second->hookups_;
+    std::vector<ElementSpecPtr>         e = iter->second->elements_;
     for (unsigned i = 0; i < e.size(); i++) {
       elements.insert(e[i]);
     }
@@ -772,8 +944,12 @@ void Plumber::toDot(string f) {
       hookups.insert(h[i]);
     }
   }
+
   std::ofstream ostr(f.c_str());
-  ::toDot(&ostr, elements, hookups);
+  std::ostringstream buf;
+
+  ::toDot(&buf, elements, hookups);
+  ostr<<buf.str();
 }
 
 REMOVABLE_INLINE LoggerI * Plumber::logger(LoggerI * newLogger)
@@ -782,3 +958,41 @@ REMOVABLE_INLINE LoggerI * Plumber::logger(LoggerI * newLogger)
   _logger = newLogger;
   return l;
 }
+
+
+
+Plumber::DataflowEditPtr
+Plumber::edit(string name)
+{ 
+  DataflowPtr dpt = dataflow(name);
+  if (dpt == 0) {
+    // Doesn't already exist. Create a new one.
+    return DataflowEditPtr();
+  }
+  return DataflowEditPtr(new DataflowEdit(dpt)); 
+}
+
+
+Plumber::DataflowPtr
+Plumber::dataflow(string n)
+{
+  std::map<string, Plumber::DataflowPtr>::const_iterator i =
+    _dataflows.find(n); 
+  return (i == _dataflows.end()) ? DataflowPtr() : i->second; 
+}
+
+
+ElementPtr
+Plumber::Dataflow::injector()
+{
+  return _injector;
+}
+
+
+void
+Plumber::Dataflow::injector(ElementPtr injector)
+{
+  _injector = injector;
+}
+
+

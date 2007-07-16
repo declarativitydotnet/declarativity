@@ -21,7 +21,9 @@
 #ifndef __TIMED_PULL_PUSH_H__
 #define __TIMED_PULL_PUSH_H__
 
-#include <element.h>
+#include "element.h"
+#include "elementRegistry.h"
+
 struct timeCBHandle;
 
 class TimedPullPush : public Element { 
@@ -29,6 +31,7 @@ class TimedPullPush : public Element {
   
   /** Initialized with the interval between forwards. */
   TimedPullPush(string name, double seconds, int tuples = 0);
+  TimedPullPush(TuplePtr args);
 
   const char *class_name() const		{ return "TimedPullPush"; }
   const char *flow_code() const			{ return "-/-"; }
@@ -37,7 +40,11 @@ class TimedPullPush : public Element {
   virtual int initialize();
 
   void runTimer();
+
+  TuplePtr pull(int port, b_cbv cb);
   
+  DECLARE_PUBLIC_ELEMENT_INITS
+
  private:
   /** The interval in seconds */
   double _seconds;
@@ -50,9 +57,11 @@ class TimedPullPush : public Element {
 
   /** My pull wakeup callback */
   b_cbv _unblockPull;
+  bool _pendingPull;
 
   /** My push wakeup callback */
   b_cbv _unblockPush;
+  bool _pendingPush;
 
   /** Callback to my runTimer() */
   b_cbv _runTimerCB;
@@ -68,6 +77,8 @@ class TimedPullPush : public Element {
 
   /** Reschedule me to run in the future. */
   void reschedule();
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 #endif /* __TIMED_PULL_PUSH_H_ */

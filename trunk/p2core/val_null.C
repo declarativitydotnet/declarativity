@@ -59,7 +59,9 @@ ValuePtr Val_Null::xdr_unmarshal( XDR *x )
 
 int Val_Null::compareTo(ValuePtr other) const
 {
-  return (other->typeCode() != Value::NULLV);
+  if (other->typeCode() == Value::NULLV)
+    return 0;
+  return -1; // NULL IS LESS THAN ANYTHING ELSE
 }
 
 //

@@ -37,7 +37,6 @@
 #include <deque>
 #include "errno.h"
 
-
 class CommonTable {
 protected:
   ////////////////////////////////////////////////////////////
@@ -74,6 +73,17 @@ protected:
 
 
 public:
+  /**
+    * The manager class object creates and maintains
+    * all tables defined in a running P2 instance. Tables
+    * create outside the scope of the system Manager will
+    * not be accessible to the system.
+    * Primarily used by the compile for table resolution and
+    * creation.
+    */
+  class Manager;
+  typedef boost::shared_ptr<Manager> ManagerPtr;
+
   ////////////////////////////////////////////////////////////
   // special vectors
   ////////////////////////////////////////////////////////////
@@ -90,30 +100,20 @@ public:
     KEY2,
     KEY3,
     KEY4,
+    KEY5,
     KEY01,
     KEY12,
     KEY23,
     KEY13,
+    KEY34,
+    KEY35,
+    KEY36,
+    KEY38,
+    KEY45,
     KEY012,
     KEY123,
     KEY01234
   } KeyName;
-
-
-  /** Some default keys */
-  static Key theKEYID;
-  static Key theKEY0;
-  static Key theKEY1;
-  static Key theKEY2;
-  static Key theKEY3;
-  static Key theKEY4;
-  static Key theKEY01;
-  static Key theKEY12;
-  static Key theKEY23;
-  static Key theKEY13;
-  static Key theKEY012;
-  static Key theKEY123;
-  static Key theKEY01234;
 
 
   /** Return one of the pre-initialized Keys, given its key name */
@@ -266,6 +266,8 @@ public:
   std::string
   name() const;
   
+  const Key&
+  primaryKey() const;
   
   
   ////////////////////////////////////////////////////////////
@@ -502,7 +504,10 @@ public:
 
     /** The destructor kills the spool queue */
     ~IteratorObj();
-    
+   
+
+    /** Rewind the iterator to begining**/ 
+    void rewind();
     
     
     
@@ -515,6 +520,8 @@ public:
         viewing an inconsistent view of the container (e.g., pointing at
         a removed element) but instead segfaults. */
     std::deque< TuplePtr >* _spool;
+
+    std::deque< TuplePtr >::reverse_iterator _it;
   };
 
 
@@ -529,8 +536,8 @@ public:
   ////////////////////////////////////////////////////////////
 
   /** Turn the table into a string of tuples along the primary key */
-  std::string
-  toString();
+  virtual std::string
+  toString() = 0;
 
 
 
@@ -550,7 +557,7 @@ public:
       size.  If the lookup and index keys are known to be identical,
       lookup(Key, TuplePtr) should be used instead for peformance
       reasons.  */
-  Iterator
+  virtual Iterator
   lookup(Key& lookupKey, Key& indexKey, TuplePtr t);
 
 
@@ -564,23 +571,42 @@ public:
       projection implied in the more complex method, however it is
       slightly faster than that method since it does not perform the
       projection. */
-  Iterator
+  virtual Iterator
   lookup(Key& indexKey, TuplePtr t);
+
+
+
+  /**
+     Range lookup access method:
+     Take the incoming tuple attributes indexed by lKey and rKey, 
+     which corresponds to attrs indexed by indexKey in table.
+     Returns iterator to a set of tuples within (tLower,tUpper) 
+     
+     Empty lKey,rKey will be treated as Infinity
+  */
+  virtual Iterator
+  range1DLookup(Key& lKey, Key& rKey, Key& indexKey,
+                bool openL, bool openR, 
+		TuplePtr t);
+
+  virtual Iterator
+  range1DLookupSecondary(bool openL, Entry* lb, bool openR, Entry* rb,
+                         SecondaryIndex& index);
 
 
   /** Returns a pointer to a lookup iterator on all elements ordered by
       the given index.  If no such index exists, a null pointer is
       returned.  */
-  Iterator
+  virtual Iterator
   scan(Key& key);
 
 
   /** Returns a pointer to a lookup iterator on all elements ordered by
       the primary index.*/
-  Iterator
+  virtual Iterator
   scan();
   
-  /** Create a fresh secondary index. It assume the index does not
+  /** Create a fresh secondary index. It assumes the index does not
       exist */
   void
   createSecondaryIndex(Key& key);
@@ -646,6 +672,27 @@ protected:
   class Initializer {
   public:
     Initializer();
+
+    /** Some default keys */
+    Key theKEYID;
+    Key theKEY0;
+    Key theKEY1;
+    Key theKEY2;
+    Key theKEY3;
+    Key theKEY4;
+    Key theKEY5;
+    Key theKEY01;
+    Key theKEY12;
+    Key theKEY23;
+    Key theKEY13;
+    Key theKEY34;
+    Key theKEY35;
+    Key theKEY36;
+    Key theKEY38;
+    Key theKEY45;
+    Key theKEY012;
+    Key theKEY123;
+    Key theKEY01234;
   };
 
   
@@ -746,7 +793,6 @@ protected:
           Key& destinationKey);
 };
 
-
 /** A pointer to tables */
 typedef boost::shared_ptr< CommonTable > CommonTablePtr;
 
@@ -762,5 +808,107 @@ typedef boost::shared_ptr< CommonTable > CommonTablePtr;
 #define TABLE_WORDY(_rest) TELL_WORDY           \
   << TABLE_LOG(this, Reporting::WORDY, _rest)   \
     << "\n"
+
+
+/*****************************************************
+ * Primary interface class to the table manager.
+ * See TableManager class for implementation of this
+ * interface.
+ */
+class CommonTable::Manager {
+public:
+  virtual ~Manager() {};
+
+  virtual string toString() const = 0;
+
+  virtual ValuePtr nodeid() = 0;
+
+  /** Generates a unique identifier */
+  virtual unsigned uniqueIdentifier() = 0;
+
+  /**
+   * Creates and registers a new Table with the system.
+   * Return: Creates a RefTable instance if table does not exist
+   *         0 if table already exists
+   */
+  virtual TuplePtr 
+  createTable(string name, CommonTable::Key& key) = 0;
+
+  /**
+   * Creates and registers a new Table with the system.
+   * Return: Table2 instance with specified maxSize and lifetime
+   *         0 if table already exists
+   */
+  virtual TuplePtr 
+  createTable(string name, CommonTable::Key& key, uint32_t maxSize,
+              boost::posix_time::time_duration& lifetime) = 0;
+
+  /**
+   * Creates and registers a new Table with the system.
+   * Return: Table2 instance with specified maxSize and lifetime
+   *         0 if table already exists
+   */
+  virtual TuplePtr 
+  createTable(string name, CommonTable::Key& key, uint32_t maxSize, 
+              string lifetime) = 0;
+  
+  /**
+   * Creates and registers a new Table with the system.
+   * Return: Table2 instance with specified maxSize and infinite lifetime
+   *         0 if table already exists
+   */
+  virtual TuplePtr 
+  createTable(string name, CommonTable::Key& key, uint32_t maxSize) = 0;
+
+  /**
+   * Create and registers a secondary index on specified table name
+   * Return: true  -- if new secondary index is created.
+   *         false -- if index already exists.
+   */
+  virtual void
+  createIndex(string tableName, CommonTable::Key& key) = 0;
+
+  /**
+   * Create foreign key relationship from table 'src' on 
+   * key attributes 'fk', to the primaryKey of table 'dest'.
+   * Throws: TableManager::Exception upon error
+   */
+  virtual void
+  createForeignKey(string src, CommonTable::Key& fk, string dest) = 0;
+
+  /**
+   * Drops the secondary index on specified table name
+   * Return: true  -- if new secondary index is dropped.
+   *         false -- if index does not exists.
+   */
+  virtual bool
+  dropIndex(string tableName, CommonTable::Key& key) = 0;
+
+  /**
+   * Drop the table from the system.
+   * Return: true  -- if table was dropped.
+   *         false -- if table was not dropped. 
+   *                  i.e., can't drop non-existent table or system table.
+   */
+  virtual bool
+  dropTable(string tableName) = 0;
+
+  /**
+   * Return reference to table if it exists, otherwise
+   * returns an empty pointer object. 
+   */
+  virtual CommonTablePtr 
+  table(string name) const = 0;
+
+  /**
+   * Return the position of the named attribute within
+   * the given tablename
+   */
+  virtual int
+  attribute(string tablename, string attrname) const = 0;
+
+  virtual int
+  attributes(string tablename) const = 0;
+};
 
 #endif

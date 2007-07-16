@@ -18,10 +18,12 @@
 #define __NONULLFIELD_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 
 class NoNullField : public Element { 
 public:
   NoNullField(string, unsigned);
+  NoNullField(TuplePtr args);
   ~NoNullField();
   
   /** Overridden to perform the projecting. */
@@ -31,9 +33,13 @@ public:
   const char *processing() const		{ return "a/a"; }
   const char *flow_code() const			{ return "x/x"; }
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   /** The field number to check */
   unsigned _fieldNo;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

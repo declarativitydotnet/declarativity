@@ -22,6 +22,10 @@
 #include "val_str.h"
 #include "val_opaque.h"
 #include "val_int32.h"
+#include "val_uint32.h"
+
+
+DEFINE_ELEMENT_INITS(Udp, "Udp")
 
 /////////////////////////////////////////////////////////////////////
 //
@@ -55,7 +59,7 @@ void Udp::Rx::socket_cb()
     // Error! 
     int error = errno;
     if (error != EAGAIN) {
-      log(Reporting::ERROR, error, strerror(error));
+      ELEM_ERROR(strerror(error));
     }
   } else {
     // Success! We've got a packet.  Package it up...
@@ -134,7 +138,7 @@ void Udp::Tx::socket_cb()
     //  segmentation and reassembly elements upstream to not make us
     //  send anything bigger than the MTU, which should fit into the
     //  socket buffers. 
-    log(Reporting::ERROR, errno, "Payload larger than socket buffer");
+    ELEM_ERROR("Payload larger than socket buffer");
   }
   socket_on();
 }
@@ -159,12 +163,59 @@ int Udp::Tx::initialize()
 // The main object itself
 //
 Udp::Udp(string name,
-         u_int16_t port, u_int32_t addr) 
-  : _name(name),
+         u_int16_t port,
+         u_int32_t addr) 
+  : Element(name, 0, 0),
+    _name(name),
     _port(port),
     _addr(addr),
-    rx(new Udp::Rx(_name, *this)),
-    tx(new Udp::Tx(_name, *this))
+    rx(new Udp::Rx(_name + "Rx", *this)),
+    tx(new Udp::Tx(_name + "Tx", *this))
 {
   sd = networkSocket(SOCK_DGRAM, port, addr);
+  if (sd < 0) {
+    // Couldn't allocate network socket
+    throw NetworkException("Couldn't allocate network socket");
+  }
+}
+
+
+Udp::Udp(TuplePtr args) 
+  : Element(Val_Str::cast((*args)[2]), 0, 0),
+    rx(new Udp::Rx(name(), *this)),
+    tx(new Udp::Tx(name(), *this))
+{
+  if (args->size() > 4) {
+    sd = networkSocket(SOCK_DGRAM, 
+                       Val_UInt32::cast((*args)[3]), 
+                       Val_UInt32::cast((*args)[4]));
+  }
+  else {
+    sd = networkSocket(SOCK_DGRAM, 
+                       Val_UInt32::cast((*args)[3]), INADDR_ANY); 
+  }
+
+  if (sd < 0) {
+    // Couldn't allocate network socket
+    throw NetworkException("Couldn't allocate network socket.");
+  }
+}
+
+
+void
+Udp::Rx::socket_on()
+{
+  fileDescriptorCB(u->sd, b_selread,
+                   boost::bind(&Udp::Rx::socket_cb, this), this);
+}
+
+void
+Udp::Rx::socket_off()
+{
+  removeFileDescriptorCB(u->sd, b_selread);
+}
+
+Udp::NetworkException::NetworkException(string msg)
+  : Element::Exception(msg)
+{
 }

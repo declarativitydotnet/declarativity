@@ -24,11 +24,14 @@
 #define __DEMUX_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 
 class Demux : public Element { 
 public:
   
   Demux(string, std::vector< ValuePtr >, unsigned f = 0);
+
+  Demux(TuplePtr args);
 
   int push(int port, TuplePtr t, b_cbv cb);
 
@@ -48,7 +51,12 @@ public:
   /** My demux key vector */
   std::vector< ValuePtr > _demuxKeys;
 
+
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
+  int output(ValuePtr key); 
+
   /** The callback for my input */
   b_cbv	_push_cb;
 
@@ -63,6 +71,8 @@ private:
 
   /** The input field on which I perform the demultiplexing */
   unsigned _inputFieldNo;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

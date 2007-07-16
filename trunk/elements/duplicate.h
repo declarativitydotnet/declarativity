@@ -20,11 +20,14 @@
 #define __DUPLICATE_H__
 
 #include "element.h"
+#include "elementRegistry.h"
+
 
 class Duplicate : public Element { 
 public:
   
   Duplicate(string, int);
+  Duplicate(TuplePtr args);
 
   int push(int port, TuplePtr t, b_cbv cb);
 
@@ -35,6 +38,8 @@ public:
   /** Push back only if all outputs have pushed back. */
   int push(TuplePtr p, b_cbv cb) const;
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+  
 private:
   /** The callback for my input */
   b_cbv	_push_cb;
@@ -47,6 +52,8 @@ private:
 
   /** My block callback function for a given output */
   void unblock(unsigned output);
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

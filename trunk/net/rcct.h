@@ -16,6 +16,7 @@
 #include <deque>
 #include "tuple.h"
 #include "element.h"
+#include "elementRegistry.h"
 #include "inlines.h"
 #include "tupleseq.h"
 
@@ -24,6 +25,7 @@ struct timeCBHandle;
 class RateCCT : public Element {
 public:
   RateCCT(string name);
+  RateCCT(TuplePtr args);
   const char *class_name() const { return "RateCCT";};
   const char *processing() const { return "lh/lh"; };
   const char *flow_code() const	 { return "--/--"; };
@@ -33,6 +35,8 @@ public:
 
   // Difference between current time and that given in timespec
   static REMOVABLE_INLINE uint32_t delay(boost::posix_time::ptime*);	
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   unsigned tuplesInFlight() const;
   void map(ValuePtr dest, SeqNum seq);
@@ -56,8 +60,11 @@ private:
   boost::posix_time::ptime  tld_;	// Time last doubled (for slow start)
 
   typedef std::map<SeqNum, timeCBHandle*> SeqTimeCBMap;
-  typedef std::map<ValuePtr, boost::shared_ptr<SeqTimeCBMap>, Value::Less> ValueSeqTimeCBMap;
+  typedef std::map<ValuePtr, boost::shared_ptr<SeqTimeCBMap>,
+                   Value::Comparator> ValueSeqTimeCBMap;
   ValueSeqTimeCBMap index_;		// Map containing unacked in transit tuples
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
   
 #endif /* __RCCT_H_ */

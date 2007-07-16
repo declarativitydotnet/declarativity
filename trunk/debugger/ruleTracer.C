@@ -233,8 +233,7 @@ TuplePtr RuleTracer::createExecTuple(ExecRecord *e)
   t->append(Val_Time::mk(e->timeIn));
   t->append(Val_Time::mk(e->timeOut));
   t->append(Val_Str::mk("EVENT"));
-  log(Reporting::INFO, -1,  t->toString() + "\n");
-  //TELL_INFO << t->toString() << "\n";
+  ELEM_INFO(t->toString());
   return t;
 
   // todo: insert tuples for each precondition also
@@ -255,7 +254,7 @@ int RuleTracer::createExecTupleUsingPrecond(ExecRecord *e,
     t->append(Val_Time::mk(e->timeIn));
     t->append(Val_Time::mk(e->timeOut));
     t->append(Val_Str::mk("PRECOND"));
-    log(Reporting::INFO, -1, t->toString() + "\n");
+    ELEM_INFO(t->toString());
     execs->push_back(t);
   }
   return e->numEntries;
@@ -300,8 +299,7 @@ RuleTracer::createTupleTableTuple(TuplePtr t)
   //getTime(timedd);
   //t_new->append(Val_Time::mk(timedd));
 
-  log(Reporting::INFO, -1, t_new->toString() + "\n");
-  //TELL_INFO<< t_new->toString() << "\n";
+  ELEM_INFO(t_new->toString());
 
   return t_new;
 }

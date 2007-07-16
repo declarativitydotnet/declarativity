@@ -84,7 +84,6 @@ ValuePtr Value::xdr_unmarshal(XDR *x)
   }
 }
 
-
 Value::TypeError::TypeError(TypeCode t1, const char* t1Name,
                             TypeCode t2, const char* t2Name)
   : realType(t1),
@@ -110,6 +109,14 @@ Value::TypeError::what() const throw()
 {
   return _message;
 }
+
+bool
+Value::Comparator::operator()(const ValuePtr first,
+                              const ValuePtr second) const
+{
+  return first->compareTo(second) < 0;
+}
+
 
 /*
  * Value.C

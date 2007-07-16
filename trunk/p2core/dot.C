@@ -17,21 +17,24 @@
 #include <iostream>
 #include "val_int32.h"
 #include "val_uint32.h"
+#include "reporting.h"
 
 void
 toDot(std::ostream * ostr,
       const std::set<ElementSpecPtr>& elements, 
-      const std::set<ElementSpec::HookupPtr>& hookups)
+      const std::set<ElementSpec::HookupPtr>& hookups, bool header = true)
 {
-  *ostr << "digraph G {\n"
-        << "rankdir=LR;\n"
-        << "node [shape=record];\n";
+  if(header){
+    *ostr << "digraph G {\n"
+          << "rankdir=LR;\n"
+          << "node [shape=record];\n";
+  }
 
   // Delcare all elements.
   for (std::set<ElementSpecPtr>::const_iterator i = elements.begin();
        i != elements.end(); i++) {
-    const ElementPtr element = (*i)->element();
-    element->toDot(ostr);
+    //TELL_INFO<<"toDotting "<<(*i)->element()->name() <<" \n";
+    (*i)->element()->toDot(ostr);
   }
 
   for (std::set<ElementSpec::HookupPtr>::const_iterator i = hookups.begin();
@@ -46,6 +49,9 @@ toDot(std::ostream * ostr,
           << toElement->element()->ID() << ":" << "i" << toPort
           << ";\n";
   }
-  *ostr << "}\n";
+
+  if(header){
+    *ostr << "}\n";
+  }
   ostr->flush();
 }

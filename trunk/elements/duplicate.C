@@ -13,7 +13,11 @@
  */
 
 #include "duplicate.h"
+#include "val_str.h"
+#include "val_uint32.h"
 #include <boost/bind.hpp>
+
+DEFINE_ELEMENT_INITS(Duplicate, "Duplicate")
 
 Duplicate::Duplicate(string name, int outputs)
   : Element(name, 1, outputs),
@@ -25,13 +29,26 @@ Duplicate::Duplicate(string name, int outputs)
   _block_flags.resize(noutputs());
 }
 
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_UInt32: Number of outputs.
+ */
+Duplicate::Duplicate(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, Val_UInt32::cast((*args)[3]))
+{
+  // Clean out the block flags
+  _block_flags.resize(noutputs());
+}
+
 void Duplicate::unblock(unsigned output)
 {
   assert(output <= noutputs());
   
   // Unset a blocked output
   if (_block_flags[output]) {
-    log(Reporting::INFO, -1, "unblock");
+    ELEM_INFO("unblock");
 
     _block_flags[output] = false;
     _block_flag_count--;
@@ -40,7 +57,7 @@ void Duplicate::unblock(unsigned output)
 
   // If I have a push callback, call it and remove it
   if (_push_cb) {
-    log(Reporting::INFO, -1, "unblock: propagating aggregate unblock");
+    ELEM_INFO("unblock: propagating aggregate unblock");
     _push_cb();
     _push_cb = 0;
   }
@@ -58,9 +75,9 @@ int Duplicate::push(int port, TuplePtr p, b_cbv cb)
     if (!_push_cb) {
       _push_cb = cb;
     } else {
-      log(Reporting::WARN, -1, "push: Callback overrun");
+      ELEM_WARN("push: Callback overrun");
     }
-    log(Reporting::WARN, -1, "push: Overrun");
+    ELEM_WARN("push: Overrun");
     return 0;
   }
 
@@ -71,7 +88,7 @@ int Duplicate::push(int port, TuplePtr p, b_cbv cb)
     // Is the output blocked?
     if (_block_flags[i]) {
       // No can do. Skip this output
-      log(Reporting::INFO, -1, "push: Skipped duplication on blocked output ");
+      ELEM_INFO("push: Skipped duplication on blocked output ");
     } else {
       // Send it with the appropriate callback
       int result = output(i)->push(p, boost::bind(&Duplicate::unblock, this, i));
@@ -89,7 +106,7 @@ int Duplicate::push(int port, TuplePtr p, b_cbv cb)
   if (_block_flag_count == noutputs()) {
     assert(!_push_cb);
     _push_cb = cb;
-    log(Reporting::WARN, -1, "push: Blocking input");
+    ELEM_WARN("push: Blocking input");
     return 0;
   } else {
     return 1;

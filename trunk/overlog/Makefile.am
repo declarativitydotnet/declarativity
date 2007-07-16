@@ -33,7 +33,6 @@ libp2overlog_la_CPPFLAGS =	@BOOST_INC@ \
 				-I../p2core \
 				-I../elements \
 				-I../net \
-				-I../eventLoop \
 				-I../debugger
 
 libp2overlog_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG

@@ -40,14 +40,19 @@
 #include "val_str.h"
 #include "val_null.h"
 #include "loop.h"
+#include "val_uint32.h"
+#include "list.h"
+#include "val_list.h"
 #include <boost/bind.hpp>
 
-Aggwrap2::Aggwrap2(std::string name,
+DEFINE_ELEMENT_INITS(Aggwrap2, "Aggwrap2");
+
+Aggwrap2::Aggwrap2(std::string n,
                    std::string aggregateFunctionName,
                    uint32_t aggfield,
                    bool starAgg,
                    std::string resultTupleName)
-  : Element(name, 2, 2),
+  : Element(n, 2, 2),
     // Config
     _aggField(aggfield),
     _starAgg(starAgg),
@@ -63,7 +68,7 @@ Aggwrap2::Aggwrap2(std::string name,
     _eventTuple()
 {
   ELEM_WORDY("Creating aggwrap "
-             << name
+             << n
              << " on agg function "
              << aggregateFunctionName
              << " with aggregate field number "
@@ -79,7 +84,55 @@ Aggwrap2::Aggwrap2(std::string name,
     ELEM_ERROR("Could not find an aggregate with name '"
                << a.aggName
                << "'");
+    throw std::runtime_error("Cannot find loadable module " + a.aggName);
   }
+}
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_Str:    Function Name.
+ * 4. Val_Int32:  Aggregation field number. (Value < 0) => (_starAgg == true)
+ * 5. Val_UInt32: Star agg indicator.
+ * 6. Val_List:   Group by fields. 
+ * 7. Val_Str:    Result tuple name.
+ */
+Aggwrap2::Aggwrap2(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 3, 2),
+    // Config
+    _aggField(0), 
+    _numJoins(0),
+    _comparator(NULL),
+    _outerGroupBy(),
+    _innerGroupBy(),
+    _resultTupleName(""),
+    // State
+    _aggState(CONFIG),
+    inner_accepting(true),
+    ext_in_cb(0),
+    _eventTuple()
+{
+  string functionName = Val_Str::cast((*args)[3]);
+
+  _aggField = Val_Int32::cast((*args)[4]);
+  _starAgg = Val_UInt32::cast((*args)[5]);
+
+  try {
+    _aggregateFn = AggFactory::mk(functionName);
+  } catch (AggFactory::AggregateNotFound a) {
+    // Couldn't create one. Return no aggregate
+    ELEM_ERROR("Could not find an aggregate with name '"
+               << a.aggName
+               << "'");
+  }
+
+  ListPtr groupByFields = Val_List::cast((*args)[6]);
+  for (ValPtrList::const_iterator i = groupByFields->begin();
+       i != groupByFields->end(); i++)
+    registerGroupbyField(Val_UInt32::cast(*i));
+
+  _resultTupleName = Val_Str::cast((*args)[7]);
 }
 
 
@@ -157,12 +210,24 @@ Aggwrap2::push(int port, TuplePtr t, b_cbv cb)
       break;
     } 
     return 1;
+  case 2:
+    {TRACE_FUNCTION;
+  
+    if (_aggState != BUSY) {
+      // Can't receive join completions while not busy!
+      ELEM_ERROR("Received a join completion callback while in state "
+                 << _aggState);
+    } else {
+      ELEM_WORDY("Join completed.");
+      agg_finalize();
+    }
+    return 1;}
   default:
-    ELEM_ERROR("Received push of tuple "
+    {ELEM_ERROR("Received push of tuple "
                << t->toString()
                << " on unexpected port "
                << port);
-    return  0;
+    return  0;}
   }
 }
 

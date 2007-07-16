@@ -21,10 +21,25 @@
 #include "val_opaque.h"
 #include "string.h"
 #include "val_str.h"
+#include "val_uint32.h"
+
+DEFINE_ELEMENT_INITS(StrToSockaddr, "StrToSockaddr")
 
 StrToSockaddr::StrToSockaddr(string name, unsigned fieldNo)
   : Element(name, 1, 1),
     _fieldNo(fieldNo)
+{
+}
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_UInt32: Field number to convert.
+ */
+StrToSockaddr::StrToSockaddr(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1),
+    _fieldNo(Val_UInt32::cast((*args)[3]))
 {
 }
 
@@ -38,9 +53,7 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
   ValuePtr firstP = (*p)[_fieldNo];
   if (firstP == 0) {
     // No such field
-    log(Reporting::WARN,
-        -1,
-        "Input tuple has no field to translate");
+    ELEM_WARN("Input tuple has no field to translate");
     return TuplePtr();
   }
   ValuePtr first = firstP;
@@ -48,8 +61,9 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
   // Is it a string?
   if (first->typeCode() != Value::STR) {
     // Can't translate something that isn't a string
-    log(Reporting::WARN, -1,
-        string("Field to translate[") + first->toString() + "] is not a string");
+    ELEM_WARN("Field to translate["
+              << first->toString()
+              << "] is not a string");
     return TuplePtr();
   }
 
@@ -58,7 +72,9 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
   char * theAtSign = strchr(theString, ':');
   if (theAtSign == NULL) {
     // Couldn't find the correct format
-    log(Reporting::WARN, -1, string("Field to translate ")+first->toString()+" is malformed");
+    ELEM_WARN("Field to translate "
+              << first->toString()
+              << " is malformed");
     return TuplePtr();
   }
   string theAddress(theString, theAtSign - theString);

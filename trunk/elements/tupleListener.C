@@ -11,12 +11,16 @@
 
 #include "tupleListener.h"
 
-TupleListener::TupleListener(string name, cb_tp callback)
-  : Element(name, 1, 0), _callback(callback)
+TupleListener::TupleListener(string name,
+                             TupleCallback callback)
+  : Element(name, 1, 0),
+    _callback(callback)
 {
 }
 
-int TupleListener::push(int port, TuplePtr tp, b_cbv cb)
+
+int
+TupleListener::push(int port, TuplePtr tp, b_cbv cb)
 {
   _callback(tp);
   return 1;

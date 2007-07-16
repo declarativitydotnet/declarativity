@@ -18,11 +18,13 @@
 #define __UNMARSHAL_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 #include <bitset>
 
 class Unmarshal : public Element { 
 public:
   Unmarshal(string);
+  Unmarshal(TuplePtr args);
 
   ~Unmarshal();
   
@@ -34,7 +36,11 @@ public:
   const char *flow_code() const			{ return "x/x"; }
 
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

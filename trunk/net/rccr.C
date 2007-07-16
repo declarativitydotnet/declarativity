@@ -25,6 +25,8 @@
 #include "tupleseq.h"
 #include "netglobals.h"
 
+DEFINE_ELEMENT_INITS(RateCCR, "RateCCR")
+
 #define RF        0.9
 #define HIST_SIZE 100000
 #define LOSS_SIZE 8
@@ -249,6 +251,11 @@ RateCCR::RateCCR(string name)
 {
 }
 
+RateCCR::RateCCR(TuplePtr args) 
+  : Element((*args)[2]->toString(), 1, 1)
+{
+}
+
 /**
  * Acknowledge tuple p if ack_q is empty and output1 is open.
  * Otherwise, add to ack_q and enable callback.
@@ -262,7 +269,7 @@ TuplePtr RateCCR::simple_action(TuplePtr tp)
   boost::posix_time::ptime ts = Val_Time::cast((*tp)[TS+2]);
 
   if (!seq || !rtt) {
-    log(Reporting::INFO, 0, "NON-RateCC Tuple: " + tp->toString()); 
+    ELEM_INFO("NON-RateCC Tuple: " << tp->toString()); 
     return tp;
   }
 

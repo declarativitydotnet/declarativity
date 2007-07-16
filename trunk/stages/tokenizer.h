@@ -39,14 +39,14 @@ public:
   std::pair< TuplePtr, Stage::Status >
   newOutput();
 
-
+  
   // This is necessary for the class to register itself with the
-  // factory.
+  // stage registry.
   DECLARE_PUBLIC_STAGE_INITS(Tokenizer)
-
-
-
-
+    
+    
+    
+    
 private:
 
   /** Delimiter string */
@@ -70,7 +70,7 @@ private:
 
 
   // This is necessary for the class to register itself with the
-  // factory.
+  // stage registry.
   DECLARE_PRIVATE_STAGE_INITS
 };
 

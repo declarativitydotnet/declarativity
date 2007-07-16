@@ -59,6 +59,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <vector>
+#include <deque>
 #include <string>
 #include <sstream>
 
@@ -68,6 +69,8 @@
 #include "config.h"
 
 #include "reporting.h"
+
+#include <set>
 
 extern "C" {
 #include <rpc/rpc.h>
@@ -91,21 +94,15 @@ using std::ostringstream;
 
 class Value;
 typedef boost::shared_ptr<Value> ValuePtr;
+typedef std::deque<ValuePtr> ValueList;
 
 class Value {
-
 protected: 
 
   Value() {};
   virtual ~Value() {};
 
 public:  
-
-  struct Less
-  {
-    bool operator()(const ValuePtr first, const ValuePtr second) const
-    { return first->compareTo(second) < 0; }
-  };
 
   // Type codes
   enum TypeCode { 
@@ -194,9 +191,25 @@ public:
   void xdr_marshal( XDR *x );
   static ValuePtr xdr_unmarshal( XDR *x );
 
+
+  /** A comparator object for values */
+  struct Comparator
+  {
+    bool
+    operator()(const ValuePtr first,
+               const ValuePtr second) const;
+  };
+  
+  
+
 protected:
   virtual void xdr_marshal_subtype( XDR *x ) = 0;
+
 };
 
  
+/** A set of values */
+typedef std::set< ValuePtr, Value::Comparator > ValueSet;
+
+
 #endif /* __VALUE_H_ */

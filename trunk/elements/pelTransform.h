@@ -17,12 +17,14 @@
 #define __PELTRANSFORM_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 #include "pel_program.h"
 #include "pel_vm.h"
 
 class PelTransform : public Element { 
 public:
   PelTransform(string, string);
+  PelTransform(TuplePtr args);
 
   ~PelTransform() {};
   
@@ -38,6 +40,8 @@ public:
   string
   pelCode();
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   /** My program.  */
   boost::shared_ptr< Pel_Program > _program;
@@ -48,6 +52,8 @@ private:
   /** The virtual machine within which to execute the transform.  Any
       need to share this? */
   Pel_VM _vm;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

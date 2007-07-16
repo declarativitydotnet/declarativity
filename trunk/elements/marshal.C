@@ -16,9 +16,22 @@
 #include "val_opaque.h"
 #include "fdbuf.h"
 #include "xdrbuf.h"
+#include "val_str.h"
+
+DEFINE_ELEMENT_INITS(Marshal, "Marshal");
 
 Marshal::Marshal(string name)
   : Element(name, 1, 1)
+{
+}
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ */
+Marshal::Marshal(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1)
 {
 }
 
@@ -39,7 +52,7 @@ TuplePtr Marshal::simple_action(TuplePtr p)
   TuplePtr t = Tuple::mk();
   if (t == 0) {
     // Couldn't create one. Memory problems?
-    log(Reporting::ERROR, -1, "Couldn't allocate new tuple");
+    ELEM_ERROR("Couldn't allocate new tuple");
     return TuplePtr();
   } else {
     // Stick the string into a tuple field and into the tuple

@@ -456,6 +456,28 @@ Table2::lookup(Table2::Key& indexKey,
 } 
 
 
+CommonTable::Iterator
+Table2::range1DLookup(CommonTable::Key& lKey,
+                      CommonTable::Key& rKey,
+                      CommonTable::Key& indexKey,
+                      bool openL, bool openR, TuplePtr t)
+{
+  flush();
+  return CommonTable::range1DLookup(lKey, rKey, indexKey,
+                                    openL, openR, t);
+}
+
+
+CommonTable::Iterator
+Table2::range1DLookupSecondary(bool openL, CommonTable::Entry* lb, 
+                               bool openR, CommonTable::Entry* rb, 
+                               SecondaryIndex& index)
+{
+  flush();
+  return CommonTable::range1DLookupSecondary(openL, lb,
+                                             openR, rb,
+                                             index);
+}
 
 
 ////////////////////////////////////////////////////////////
@@ -484,6 +506,28 @@ Table2::scan()
 } 
 
 
+
+
+std::string
+Table2::toString()
+{
+  ostringstream oss;
+  oss << "Table2 '" << _name << "'"
+      << " maxSize(" << _maxSize << ")"
+      << " ttl(" << _maxLifetime << ")"
+      << ":";
+  if (_primaryIndex.size() > 0) {
+    for (PrimaryIndex::iterator i = _primaryIndex.begin();
+         i != _primaryIndex.end();
+         i++) {
+      oss << "\t" << (*i)->tuple->toString() << std::endl;
+    }
+    oss << ".";
+  } else {
+    oss << "Empty.";
+  }
+  return oss.str();
+}
 
 
 ////////////////////////////////////////////////////////////

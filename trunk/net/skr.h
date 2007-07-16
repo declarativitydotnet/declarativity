@@ -22,6 +22,8 @@ class SimpleKeyRouter : public Element {
 public:
 
   SimpleKeyRouter(string name, ValuePtr id, bool retry=false);
+  SimpleKeyRouter(TuplePtr args);
+
   const char *class_name() const	{ return "SimpleKeyRouter";};
   const char *processing() const	{ return "hh/hh"; };
   const char *flow_code() const		{ return "-/-"; };

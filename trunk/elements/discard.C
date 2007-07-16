@@ -15,8 +15,15 @@
 
 #include "discard.h"
 
+DEFINE_ELEMENT_INITS(Discard, "Discard");
+
 Discard::Discard(string name) :
   Element(name, 1,0)
+{
+}
+
+Discard::Discard(TuplePtr args) :
+  Element((*args)[2]->toString(), 1,0)
 {
 }
 

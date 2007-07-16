@@ -13,10 +13,11 @@
  * DESCRIPTION: Element-pair for a UDP socket
  */
 
-#ifndef __UDP_H__
-#define __UDP_H__
+#ifndef __UDP2_H__
+#define __UDP2_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include "loop.h"
@@ -45,11 +46,15 @@ public:
   // 
   // First, the Rx element: pushes tuples when packets arrive
   //
-  class Rx {
+  class Rx : public Element{
   public:
     Rx(string, Udp2 &udp);
 
     virtual ~Rx() {};
+
+    
+    const char*
+    class_name() const;
 
     void socket_on()
     {
@@ -76,9 +81,12 @@ public:
   // 
   // Second, the Tx element: pulls tuples when the socket can send
   //
-  class Tx {
+  class Tx : public Element {
   public:
     Tx(string, Udp2 &udp);
+
+    const char*
+    class_name() const;
 
     virtual ~Tx() {};
 
@@ -100,6 +108,7 @@ public:
   // Now the Udp2 object itself.
   //
   Udp2(string, u_int16_t port=0, u_int32_t addr = INADDR_ANY);
+  Udp2(TuplePtr args);
 
   const char *class_name() const	{ return "Udp2";};
   const char *processing() const	{ return "l/h"; };
@@ -115,6 +124,8 @@ public:
   boost::shared_ptr< Udp2::Rx > get_rx() { return rx; };
   boost::shared_ptr< Udp2::Tx > get_tx() { return tx; };
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   // Socket
   int sd; 
@@ -125,6 +136,8 @@ private:
   // Elements 
   boost::shared_ptr< Rx > rx;
   boost::shared_ptr< Tx > tx;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
-#endif /* __UDP_H_ */
+#endif /* __UDP2_H_ */

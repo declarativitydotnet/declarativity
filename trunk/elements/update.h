@@ -21,6 +21,7 @@
 
 #include "commonTable.h"
 #include "element.h"
+#include "elementRegistry.h"
 #include "tuple.h"
 #include <list>
 
@@ -28,6 +29,7 @@ class Update : public Element {
 public:
   Update(string name, 
          CommonTablePtr table);
+  Update(TuplePtr args);
   
 
   const char*
@@ -55,6 +57,8 @@ public:
 
 
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
  private:
 
   /** My queue of table updates */
@@ -63,6 +67,8 @@ public:
 
   /** Call back for downstream elements */
   b_cbv _pullCB;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 #endif /* __UPDATE_H_ */

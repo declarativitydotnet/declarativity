@@ -22,6 +22,7 @@
 #define __MUX_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 #include <vector>
 
 struct timeCBHandle;
@@ -30,6 +31,7 @@ class Mux : public Element {
 public:
   
   Mux(string, int);
+  Mux(TuplePtr args);
   ~Mux() {}
 
   const char *class_name() const		{ return "Mux";}
@@ -43,6 +45,8 @@ public:
 
   /** My catch up method, to handle callbacks off the callback thread */
   void catchUp();
+
+  DECLARE_PUBLIC_ELEMENT_INITS
 
 private:
   /** Is my output blocked? */
@@ -65,6 +69,8 @@ private:
 
   /** My own output callback */
   b_cbv _callback;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

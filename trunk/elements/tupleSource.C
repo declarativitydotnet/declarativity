@@ -1,4 +1,3 @@
-// -*- c-basic-offset: 2; related-file-name: "tupleSource.h" -*-
 /*
  * @(#)$Id$
  * 
@@ -13,10 +12,29 @@
  */
 
 #include <tupleSource.h>
+#include "val_str.h"
 
-TupleSource::TupleSource(string name,
-                         TuplePtr tuple)
-  : FunctorSource(name, NULL), _tupleGenerator(new TupleGenerator(tuple))
+TupleSource::TupleSource(string name)
+  : Element(name, 0, 1)
 {
-  _generator = _tupleGenerator.get();
+}
+
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ */
+TupleSource::TupleSource(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 0, 1)
+{
+}
+
+
+TuplePtr
+TupleSource::pull(int port, b_cbv cb)
+{
+  // Always produce a result, never block
+  TuplePtr generated = generate();
+  return generated;
 }

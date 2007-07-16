@@ -15,24 +15,26 @@
 #
 
 SUBDIRS=	\
-		eventLoop \
 		p2core \
 		elements \
 		stages \
+		functions \
+		aggregates \
 		net \
 		overlog \
-		planner \
+		p2cpp \
+		lang \
 		debugger \
 		unitTests \
+		planner \
 		tests \
-		python
+		python \
+		doc
 
 PYTHONSTUFF=	pythonElements \
 		python
 
 
 EXTRA_DIST =	LICENSE setup \
-		doc/chord.olg doc/narada.olg doc/ping.olg \
-		doc/reachable.olg doc/types.txt README README.OSX \
-		doc/dataflow.ps doc/dataflow.pdf
+		README README.OSX
 

@@ -18,11 +18,13 @@
 #define __UNMARSHALFIELD_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 
 class UnmarshalField : public Element { 
 public:
   UnmarshalField(string, unsigned);
   UnmarshalField(string, std::vector<unsigned>);
+  UnmarshalField(TuplePtr args);
 
   ~UnmarshalField();
   
@@ -33,9 +35,13 @@ public:
   const char *flow_code() const			{ return "x/x"; }
 
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   /** The field number I'm unmarshalling */
   std::vector<unsigned> _fieldNos;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

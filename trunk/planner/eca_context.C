@@ -20,7 +20,8 @@
 #include "parser_util.h"
 #include "planner.h"
 
-string Parse_Event::toString()
+string
+Parse_Event::toString()
 {
   ostringstream b;
   if (_event == RECV) { b << "EVENT_RECV<" << _pf->toString() << ">"; }
@@ -30,42 +31,415 @@ string Parse_Event::toString()
   return b.str();
 }
 
+Parse_Event::Parse_Event(Parse_Functor *pf,
+                         Event e)
+  : _pf(pf),
+    _event(e)
+{
+}
+  
+
 string Parse_Action::toString()
 {
   ostringstream b;
   if (_action == SEND) { b << "ACTION_SEND<" << _pf->toString() << ">"; }
   if (_action == ADD) { b << "ACTION_ADD<" << _pf->toString() << ">"; }
   if (_action == DELETE) { b << "ACTION_DELETE<" << _pf->toString() << ">"; }
+  if (_action == DROP) { b << "ACTION_DROP<" << _pf->toString() << ">"; }
   return b.str();
 }
 
 
-string ECA_Rule::toString()
+string
+ECA_Rule::toString()
 {
   ostringstream b;
-  b << "ECA Rule " << _ruleID << " " << toRuleString();
+  b << "ECA Rule "
+    << _ruleID
+    << " "
+    << toRuleString();
   return b.str();  
 }
 
-string ECA_Rule::toRuleString()
+
+string
+ECA_Rule::toRuleString()
 {
   ostringstream b;
   if (_event != NULL) {
-    b << _action->toString() << ":-" << _event->toString() << ",";
+    b << _action->toString() << " :- " << _event->toString();
+
+    if (_probeTerms.size() + _selectAssignTerms.size() == 0) {
+      b << ".";
+    } else {
+      b << ", ";
+    }
   } else {
-    b << _action->toString() << ":-";
+    b << _action->toString() << " :- ";
   }
-  for (unsigned k = 0; k < _probeTerms.size(); k++) {
-    b << _probeTerms.at(k)->toString() << ",";
+
+  unsigned k = 0;
+  for (k = 0;
+       k + 1 < _probeTerms.size();
+       k++) {
+    b << _probeTerms.at(k)->toString()
+      << ", ";
   }
-  for (unsigned k = 0; k < _selectAssignTerms.size(); k++) {
-    b << _selectAssignTerms.at(k)->toString() << ",";
+  if (_probeTerms.size() > 0) {
+    b << _probeTerms.at(k)->toString();
+    if (_selectAssignTerms.size() > 0) {
+      b << ", ";
+    } else {
+      b << ".";
+    }
+  }
+  for (k = 0;
+       k + 1 < _selectAssignTerms.size();
+       k++) {
+    b << _selectAssignTerms.at(k)->toString()
+      << ", ";
+  }
+  if (_selectAssignTerms.size() > 0) {
+    b << _selectAssignTerms.at(k)->toString()
+      << ".";
   }
   return b.str();  
 }
 
 
-void ECA_Context::add_rule(ECA_Rule* eca_rule)
+ECA_Rule::ECA_Rule(string r) 
+  : _ruleID(r) 
+{
+  _event = NULL;
+  _action = NULL;
+  _aggWrap = false;
+}
+
+
+string
+ECA_Rule::getEventName()
+{
+  return _event->_pf->fn->name;
+}
+
+
+void
+ECA_Context::rewrite(Localize_Context* lctxt,
+                     TableStore* tableStore)
+{
+  for (unsigned k = 0;
+       k < lctxt->getRules().size();
+       k++) {
+    OL_Context::Rule* nextRule = lctxt->getRules().at(k);
+    int countEvents = 0;
+
+    // First count the events in the next rule
+    std::list< Parse_Term* >::iterator t =
+      nextRule->terms.begin();
+    for(;
+        t != nextRule->terms.end();
+        t++) {
+      Parse_Term* nextTerm = (*t);    
+      // Is the next rule term a tuple?
+      Parse_Functor* nextFunctor = dynamic_cast< Parse_Functor* >(nextTerm); 
+      if (nextFunctor != NULL) {
+        // Next term is a tuple
+        string termName = nextFunctor->fn->name;
+        // Is it materialized?
+        OL_Context::TableInfo* termTableInfo =
+          tableStore->getTableInfo(termName);	  
+        if (termTableInfo == NULL) {
+          // Not materialized, so this is an event
+          countEvents ++;
+        }
+      }
+    }
+
+    // Do I have more than 1 events in the rule?
+    if (countEvents > 1) {
+      PLANNER_ERROR_NOPC(nextRule->toString()
+                         << " should have at most one event");
+      exit(-1);
+    }
+
+    // Does this rule have 0 events?
+    if (countEvents == 0) {
+      // view rules with no events
+      int aggField = nextRule->head->aggregate();
+      if (aggField >= 0) { // there is an aggregate
+        // This is an aggregate view rule. Handle it
+	rewriteAggregateView(nextRule, tableStore);
+      } else {
+        // No aggregate. This is a normal view rule
+        rewriteViewRule(nextRule, tableStore);
+      }
+    } else {
+      // This rule has exactly 1 event. Handle like a traditional ECA
+      // rules
+      rewriteEventRule(nextRule, tableStore);
+    }
+  }
+
+  // We're done dealing with localized rules and they have all turned
+  // into ECA rules.
+
+  // Finally, create dummy rules for all watched receive events
+  OL_Context::WatchTableType watches =
+    tableStore->getWatchTables();
+  for (OL_Context::WatchTableType::iterator i =
+         watches.begin();
+       i != watches.end();
+       i++) {
+    string watchedName = i->first;
+    string watchedNameModifiers = i->second;
+    PLANNER_INFO_NOPC("Watching '"
+                      << watchedName
+                      << "' with mods '"
+                      << watchedNameModifiers
+                      << "'");
+    if ((watchedNameModifiers == "") ||
+        (watchedNameModifiers.find("c") != string::npos)) {
+      PLANNER_INFO_NOPC("The reception of tuple '"
+                        << watchedName
+                        << "' should be watched.");
+
+      // Now, do I already have a rule with a RECV_EVENT<watchedName>?
+      bool found = false;
+      std::vector< ECA_Rule* > rules = getRules();
+      for (std::vector< ECA_Rule* >::iterator i = rules.begin();
+           i != rules.end();
+           i++) {
+        ECA_Rule* thisRule = (*i);
+        
+        // What's the event?
+        Parse_Event* theEvent = thisRule->_event;
+
+        // Is the event a receive?
+        if (theEvent->_event == Parse_Event::RECV) {
+          // And is it a receive of the watched name?
+          if (theEvent->_pf->fn->name == watchedName) {
+            PLANNER_INFO_NOPC("The reception of tuple '"
+                              << watchedName
+                              << "' is already watched, no stub needed.");
+            found = true;
+            break;
+          }
+        }
+      }
+
+      // Is my tuple watched?
+      if (found) {
+        // No need for extra stub rule
+      } else {
+        watchStubRule(watchedName);
+      }
+    }
+  }
+}
+
+
+void
+ECA_Context::watchStubRule(string watchedName)
+{
+  PLANNER_INFO_NOPC("Creating watch-stub rule for tuple '"
+                    << watchedName
+                    << "'");
+
+  ECA_Rule* watchStubRule = new ECA_Rule(watchedName +
+                                         "_watchStub");
+
+  Parse_ExprList* periodicArgs = new Parse_ExprList(); 
+  Parse_Var* dummyLocspec = new Parse_Var(Val_Str::mk("A"));
+  dummyLocspec->setLocspec();
+
+  periodicArgs->push_back(dummyLocspec); // the dummy locspec
+
+  Parse_Functor* recvFunctor = 
+    new Parse_Functor(new Parse_FunctorName
+                      (new Parse_Val(Val_Str::mk(watchedName))), 
+                      periodicArgs);
+  watchStubRule->_event = new Parse_Event(recvFunctor,
+                                          Parse_Event::RECV);
+
+
+  watchStubRule->_action = new Parse_Action(recvFunctor,
+                                            Parse_Action::DROP);
+
+  add_rule(watchStubRule);
+}
+
+
+
+void
+ECA_Context::rewriteEventRule(OL_Context::Rule* rule, 
+                              TableStore* tableStore)
+{
+  // figure out which is the event. 
+  PLANNER_INFO_NOPC("Perform ECA rewrite on "
+                    << rule->toString());
+
+  // The location specifier of the rule body. Since this is a localized
+  // rule, this is also the location specifier of the event tuple
+  string bodyloc("");
+  string ruleIDPrefix = rule->ruleID + "_eca";
+
+  /** The new (currently empty) ECA rule */
+  ECA_Rule* eca_rule = new ECA_Rule(ruleIDPrefix);    
+
+  /** For all old-rule terms */
+  int counter = 1;
+  for(std::list< Parse_Term* >::iterator t =
+        rule->terms.begin();
+      t != rule->terms.end();
+      t++, counter++) {
+    // The actual term
+    Parse_Term* nextTerm = (*t);    
+
+    // Attempt to cast it as a tuple, selection, or assignment
+    Parse_Functor *nextFunctor = dynamic_cast<Parse_Functor*>(nextTerm); 
+    Parse_Select *nextSelect = dynamic_cast<Parse_Select*>(nextTerm); 
+    Parse_Assign *nextAssign = dynamic_cast<Parse_Assign*>(nextTerm); 
+
+    // Is it a tuple?
+    if (nextFunctor != NULL) {     
+      // This is a tuple term
+      bodyloc = nextFunctor->getlocspec();
+      string termName = nextFunctor->fn->name;
+      OL_Context::TableInfo* termTableInfo =
+        tableStore->getTableInfo(termName);	  
+      if (termTableInfo != NULL) {    
+	// this is not the event, append it to the conditions of the ECA
+	// rule
+	eca_rule->_probeTerms.push_back(nextFunctor);
+      } else {
+        // This is indeed an event. Handle the "periodic" event in a
+        // separate way.
+	if (termName == "periodic") {
+	  // Break this up into two rules. eca_rule1 will be
+          // SEND_ACTION<ruleID+periodic(@NodeID, EventID)> :-
+          // EVENT_RECV<periodic(NodeID, EventID, Period, Repeats)>.
+          string periodicRuleID = ruleIDPrefix + "periodic";
+          ECA_Rule* eca_rule1 = new ECA_Rule(periodicRuleID);
+
+          // The event generated by the periodic
+	  Parse_ExprList* periodicArgs = new Parse_ExprList(); 
+	  periodicArgs->push_back(nextFunctor->arg(0)); // the locspec
+	  periodicArgs->push_back(nextFunctor->arg(1)); // the event ID
+	  ValuePtr name = Val_Str::mk(periodicRuleID);
+	  ValuePtr loc = Val_Str::mk(nextFunctor->getlocspec());
+	  Parse_Functor* sendFunctor = 
+	    new Parse_Functor(new Parse_FunctorName(new Parse_Val(name)), 
+                              periodicArgs, new Parse_Val(loc));
+
+          // The actual rule has the sendFunctor as the action and the
+	  // periodic tuple as the event
+	  eca_rule1->_action = new Parse_Action(sendFunctor, Parse_Action::SEND);    	  
+	  eca_rule1->_event = new Parse_Event(nextFunctor, Parse_Event::INSERT);    	  
+	  add_rule(eca_rule1);
+
+
+          // The rest of the original periodic rule, to be stored in
+	  // eca_rule. Listening for the tuples generated by eca_rule1
+	  Parse_Functor* recvFunctor = 
+	    new Parse_Functor(new Parse_FunctorName(new Parse_Val(name)), 
+                              periodicArgs, new Parse_Val(loc));
+	  eca_rule->_event = new Parse_Event(recvFunctor,
+                                             Parse_Event::RECV);
+          // The rest of the processing of further original terms will
+          // be appended to eca_rule
+	} else {
+          // Just plonk down the event to the eca rule
+	  eca_rule->_event = new Parse_Event(nextFunctor, Parse_Event::RECV);    
+	}
+      }
+    } else {
+      // OK this is not a tuple. It might be a selection or an
+      // assignment. Regardless of what it is, plonk it into the "other
+      // terms" of the ECA rule.
+      if (nextSelect != NULL || nextAssign != NULL) {
+        eca_rule->_selectAssignTerms.push_back(nextTerm);
+      } else {
+        // This is a term type that we didn't think of. Complain but
+        // move on
+        PLANNER_WARN_NOPC("The "
+                          << counter
+                          << "-th term of rule '"
+                          << rule->toString()
+                          << "' has an unknown type. Ignoring.");
+      }
+    }
+  }
+
+  // now generate the head action
+  generateActionHead(rule, bodyloc, tableStore, eca_rule);
+
+  // And carry over the aggregate-ness of this rule into the newly
+  // minted ECA rule
+  int aggField = rule->head->aggregate();
+  if (aggField >= 0) { // there is an aggregate
+    eca_rule->_aggWrap = true;
+  }
+
+  add_rule(eca_rule);
+}
+
+
+void
+ECA_Context::generateActionHead(OL_Context::Rule* rule,
+                                string bodyLoc,
+                                TableStore* tableStore,
+                                ECA_Rule* eca_rule)
+{
+
+  // Is the rule head an unmaterialized tuple name?
+  string headName = rule->head->fn->name;
+  OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);
+  if (headTableInfo == NULL) {
+    // It's unmaterialized, i.e., an event. Just ACTION_SEND it
+    eca_rule->_action = new Parse_Action(rule->head, Parse_Action::SEND);
+  } else {
+    // to be materialized
+    if (!rule->head->getlocspec().empty()
+        && fieldNameEq(rule->head->getlocspec(), bodyLoc)) {
+      // local materialization
+      if (rule->deleteFlag) {
+	eca_rule->_action = new Parse_Action(rule->head, Parse_Action::DELETE);
+      } else {
+	eca_rule->_action = new Parse_Action(rule->head, Parse_Action::ADD);
+      }
+    } else {
+      // remote materialization. Generate a separate send rule and a
+      // separate local materialization rule. The current rule eca_rule
+      // does the sending. The new rule eca_rule1 will do the storing.
+      ValuePtr name = Val_Str::mk(rule->ruleID + rule->head->fn->name + "send");
+      ValuePtr loc = Val_Str::mk(rule->head->getlocspec());
+      Parse_Functor* sendFunctor = 
+        new Parse_Functor(new Parse_FunctorName(new Parse_Val(name)), 
+                          rule->head->args_, new Parse_Val(loc));
+      eca_rule->_action = new Parse_Action(sendFunctor, Parse_Action::SEND);
+
+
+      string headName = rule->head->fn->name;
+      OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);
+      if (headTableInfo != NULL) {
+        string materializationRuleName = rule->ruleID + "ECAMat";
+	ECA_Rule* eca_rule1 = new ECA_Rule(materializationRuleName);    
+        // The event is the reception of the head of the rule above
+	eca_rule1->_event = new Parse_Event(sendFunctor, Parse_Event::RECV);
+	if (rule->deleteFlag) {
+	  eca_rule1->_action = new Parse_Action(rule->head, Parse_Action::DELETE);
+	} else {
+	  eca_rule1->_action = new Parse_Action(rule->head, Parse_Action::ADD);      
+	}
+	add_rule(eca_rule1);
+      }
+    }
+  }
+}
+
+
+void
+ECA_Context::add_rule(ECA_Rule* eca_rule)
 {
   for (unsigned k = 0; k < _ecaRules.size(); k++) {
     if (_ecaRules.at(k)->toRuleString() == eca_rule->toRuleString()) {
@@ -76,7 +450,10 @@ void ECA_Context::add_rule(ECA_Rule* eca_rule)
   _ecaRules.push_back(eca_rule);  
 }
 
-void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore)
+
+void
+ECA_Context::rewriteViewRule(OL_Context::Rule* rule,
+                             TableStore* tableStore)
 { 
   PLANNER_INFO_NOPC("Perform ECA view rewrite on " << rule->toString());
 
@@ -85,29 +462,53 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
 
   bool softStateRule = false;
   std::list<Parse_Term*>::iterator t = rule->terms.begin();
-  for(; t != rule->terms.end(); t++) {
+  for(;
+      t != rule->terms.end();
+      t++) {
     Parse_Term* nextTerm = (*t);
     Parse_Functor *nextFunctor = dynamic_cast<Parse_Functor*>(nextTerm); 
-    if (nextFunctor == NULL) { continue; }
+    if (nextFunctor == NULL) {
+      continue;
+    }
     OL_Context::TableInfo* tableInfo = tableStore->getTableInfo(nextFunctor->fn->name);   
     if (tableInfo == NULL || tableInfo->timeout != Table2::NO_EXPIRATION) {
       softStateRule = true; // if any rule body is soft-state, rule is soft-state
       break;
     }
   }
-  OL_Context::TableInfo* tableInfo = tableStore->getTableInfo(rule->head->fn->name);   
-  if (tableInfo == NULL || tableInfo->timeout != Table2::NO_EXPIRATION) {
-    softStateRule = true; // if rule head is soft-state, rule is soft-state
+  if (headTableInfo == NULL ||
+      headTableInfo->timeout != Table2::NO_EXPIRATION) {
+    softStateRule = true;     // if head is unmaterialized or softstate,
+                              // then the rule is soft-state
   }
   PLANNER_INFO_NOPC("Processing soft state rule " << softStateRule
                     << " " << rule->toString());
 
   t = rule->terms.begin();
   int count = 0;  
-  for(; t != rule->terms.end(); t++) {
+
+  // For every materialized rule-body term, create a set of delta rules
+  // (one for insertions, one for refreshes, and one for deletes)
+  // containing all other terms. Softstate rules only get the insert
+  // rule per materialized term, whereas hardstate rules get all three
+  // rules per term. If the action is a local materialized table, the
+  // actions are performed directly (insert for insertions and
+  // refreshes, delete for deletes).  If the action is a remote
+  // materialized table, then a proxy rule is generated that sends the
+  // appropriate message across, which causes the remote materialized
+  // table to be affected as would have been the case for a locally
+  // materialized table. If the action is a non-materialized table
+  // (local or remote), then only a send action is created (local or
+  // remote as the case may be).
+  for(;
+      t != rule->terms.end();
+      t++) {
     Parse_Term* nextTerm = (*t);
-    Parse_Functor *nextFunctor = dynamic_cast<Parse_Functor*>(nextTerm); 
-    if (nextFunctor == NULL) { count++; continue; }
+    Parse_Functor* nextFunctor = dynamic_cast<Parse_Functor*>(nextTerm); 
+    if (nextFunctor == NULL) {
+      count++;
+      continue;
+    }
 
     // create an event
     ostringstream oss;
@@ -125,7 +526,7 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
 
     ValuePtr nameSend = Val_Str::mk(rule->ruleID + rule->head->fn->name + "send");
     ValuePtr locSend = Val_Str::mk(rule->head->getlocspec());
-    Parse_Functor *sendFunctor = 
+    Parse_Functor* sendFunctor = 
       new Parse_Functor(new Parse_FunctorName(new Parse_Val(nameSend)), 
 						rule->head->args_, new Parse_Val(locSend));
     
@@ -144,7 +545,7 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
     }
 
     if (!rule->head->getlocspec().empty() 
-		&& fieldNameEq(rule->head->getlocspec(), nextFunctor->getlocspec())) {
+        && fieldNameEq(rule->head->getlocspec(), nextFunctor->getlocspec())) {
       // if this is local, we can simply add local table or send as an event
       if (headTableInfo != NULL) {
 	eca_insert_rule->_action 
@@ -168,9 +569,15 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
       eca_insert_rule->_action = new Parse_Action(sendFunctor, Parse_Action::SEND);
       eca_delete_rule->_action = new Parse_Action(deleteFunctor, Parse_Action::SEND);
       eca_refresh_rule->_action = new Parse_Action(sendFunctor, Parse_Action::SEND);
-      string headName = rule->head->fn->name;
-      OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);
-      if (headTableInfo != NULL) {
+      if (headTableInfo == NULL) {
+        // The rule head is a remote event. Just send the appropriate info
+	eca_insert_rule->_action 
+	  = new Parse_Action(rule->head, Parse_Action::SEND);
+	eca_refresh_rule->_action 
+	  = new Parse_Action(rule->head, Parse_Action::SEND);
+	eca_delete_rule->_action 
+	  = new Parse_Action(deleteFunctor, Parse_Action::SEND);
+      } else {
         ostringstream oss;
 	oss << rule->ruleID << "Eca" << count << "Remote";    
 
@@ -201,7 +608,7 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
 	  = new Parse_Event(deleteFunctor, Parse_Event::RECV);
 	eca_delete_rule1->_action 
 	  = new Parse_Action(rule->head, Parse_Action::DELETE);      
-	if (softStateRule == false) {
+	if (!softStateRule) {
 	  add_rule(eca_delete_rule1);
 	}
       }
@@ -231,10 +638,10 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
       count1++;
     }
     add_rule(eca_insert_rule);
-    if (softStatePredicate == true) {
+    if (softStatePredicate) {
       add_rule(eca_refresh_rule);
     }
-    if (softStateRule == false) {
+    if (!softStateRule) {
       // only cascade deletes for hard-state rules
       add_rule(eca_delete_rule);
     }
@@ -242,123 +649,10 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
   }
 }
 
-void ECA_Context::generateActionHead(OL_Context::Rule* rule, string bodyLoc,
-				     TableStore* tableStore, ECA_Rule* eca_rule)
-{
 
-  // if event, just send
-  string headName = rule->head->fn->name;
-  OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);
-  if (headTableInfo == NULL) {
-    // event, just send
-    eca_rule->_action = new Parse_Action(rule->head, Parse_Action::SEND);
-  } else {
-    // to be materialized
-    if (!rule->head->getlocspec().empty()
-		&& fieldNameEq(rule->head->getlocspec(), bodyLoc)) {
-      // local materialization
-      if (rule->deleteFlag) {
-	eca_rule->_action = new Parse_Action(rule->head, Parse_Action::DELETE);
-      } else {
-	eca_rule->_action = new Parse_Action(rule->head, Parse_Action::ADD);
-      }
-    } else {
-      // remote materializatin. Send, followed by store
-      ValuePtr name = Val_Str::mk(rule->ruleID + rule->head->fn->name + "send");
-      ValuePtr loc = Val_Str::mk(rule->head->getlocspec());
-      Parse_Functor *sendFunctor = 
-		new Parse_Functor(new Parse_FunctorName(new Parse_Val(name)), 
-						  rule->head->args_, new Parse_Val(loc));
-      
-      eca_rule->_action = new Parse_Action(sendFunctor, Parse_Action::SEND);
-      string headName = rule->head->fn->name;
-      OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);
-      if (headTableInfo != NULL) {
-        ostringstream oss;
-	oss << rule->ruleID << "Eca" << "Mat";    
-	ECA_Rule* eca_rule1 = new ECA_Rule(oss.str());    
-	eca_rule1->_event = new Parse_Event(sendFunctor, Parse_Event::RECV);
-	if (rule->deleteFlag) {
-	  eca_rule1->_action = new Parse_Action(rule->head, Parse_Action::DELETE);
-	} else {
-	  eca_rule1->_action = new Parse_Action(rule->head, Parse_Action::ADD);      
-	}
-	add_rule(eca_rule1);
-      }
-    }
-  }
-}
-
-void ECA_Context::rewriteEventRule(OL_Context::Rule* rule, 
-				   TableStore* tableStore)
-{
-  // figure out which is the event. 
-  PLANNER_INFO_NOPC("Perform ECA rewrite on " << rule->toString());
-
-  // event-condition-action
-  string loc("");
-  std::list<Parse_Term*>::iterator t = rule->terms.begin();
-  ostringstream oss;
-  oss << rule->ruleID << "_eca";    
-  ECA_Rule* eca_rule = new ECA_Rule(oss.str());    
-  for(; t != rule->terms.end(); t++) {
-    Parse_Term* nextTerm = (*t);    
-    Parse_Functor *nextFunctor = dynamic_cast<Parse_Functor*>(nextTerm); 
-    Parse_Select *nextSelect = dynamic_cast<Parse_Select*>(nextTerm); 
-    Parse_Assign *nextAssign = dynamic_cast<Parse_Assign*>(nextTerm); 
-
-    if (nextFunctor != NULL) {     
-      loc = nextFunctor->getlocspec();
-      string termName = nextFunctor->fn->name;
-      OL_Context::TableInfo* termTableInfo = tableStore->getTableInfo(termName);	  
-      if (termTableInfo != NULL) {    
-	// this is not an event
-	eca_rule->_probeTerms.push_back(nextFunctor);
-      } else {
-	if (termName == "periodic") {
-	  // when there is a periodic, break this up into two rules
-	  ECA_Rule* eca_rule1 = new ECA_Rule(oss.str() + "periodic");    
-
-	  Parse_ExprList* periodicArgs = new Parse_ExprList();	  
-	  periodicArgs->push_back(nextFunctor->arg(0));
-	  periodicArgs->push_back(nextFunctor->arg(1));
-	  ValuePtr name = Val_Str::mk(rule->ruleID + "periodic");
-	  ValuePtr loc = Val_Str::mk(nextFunctor->getlocspec());
-	  Parse_Functor *sendFunctor = 
-	    new Parse_Functor(new Parse_FunctorName(new Parse_Val(name)), 
-						  periodicArgs, new Parse_Val(loc));
-
-	  eca_rule1->_action = new Parse_Action(sendFunctor, Parse_Action::SEND);    	  
-	  eca_rule1->_event = new Parse_Event(nextFunctor, Parse_Event::INSERT);    	  
-	  add_rule(eca_rule1);
-
-	  Parse_Functor *recvFunctor = 
-	    new Parse_Functor(new Parse_FunctorName(new Parse_Val(name)), 
-						  periodicArgs, new Parse_Val(loc));
-
-	  eca_rule->_event = new Parse_Event(recvFunctor, Parse_Event::RECV);    	  
-	} else {
-	  eca_rule->_event = new Parse_Event(nextFunctor, Parse_Event::RECV);    
-	} 
-      }
-    }
-    if (nextSelect != NULL || nextAssign != NULL) {
-      eca_rule->_selectAssignTerms.push_back(nextTerm);
-    }
-  }
-
-  // now generate the head action
-  generateActionHead(rule, loc, tableStore, eca_rule);
-
-  int aggField = rule->head->aggregate();
-  if (aggField >= 0) { // there is an aggregate
-    eca_rule->_aggWrap = true;
-  }
-  add_rule(eca_rule);
-}
-
-void ECA_Context::rewriteAggregateView(OL_Context::Rule* rule, 
-				       TableStore *tableStore)
+void
+ECA_Context::rewriteAggregateView(OL_Context::Rule* rule, 
+                                  TableStore *tableStore)
 {
   PLANNER_INFO_NOPC("Perform ECA aggregate view rewrite on "
                << rule->toString());
@@ -386,51 +680,10 @@ void ECA_Context::rewriteAggregateView(OL_Context::Rule* rule,
   add_rule(eca_rule);
 }
 
-void ECA_Context::rewrite(Localize_Context* lctxt, TableStore* tableStore)
-{
-   
-  for (unsigned k = 0; k < lctxt->getRules().size(); k++) {
-    OL_Context::Rule* nextRule = lctxt->getRules().at(k);
-    int countEvents = 0;
 
-    std::list<Parse_Term*>::iterator t = nextRule->terms.begin();
-    for(; t != nextRule->terms.end(); t++) {
-	Parse_Term* nextTerm = (*t);    
-	Parse_Functor *nextFunctor = dynamic_cast<Parse_Functor*>(nextTerm); 
-	if (nextFunctor != NULL) {
-	  string termName = nextFunctor->fn->name;
-	  OL_Context::TableInfo* termTableInfo = tableStore->getTableInfo(termName);	  
-	  if (termTableInfo == NULL) {
-	    countEvents ++;
-	  }
-	}
-    }
 
-    if (countEvents > 1) {
-      PLANNER_ERROR_NOPC(nextRule->toString()
-                         << " should have at most one event");
-      exit(-1);
-    }
-
-    if (countEvents == 0) {
-      // view rules with no events
-      int aggField = nextRule->head->aggregate();
-      if (aggField >= 0) { // there is an aggregate
-	rewriteAggregateView(nextRule, tableStore);
-	continue;
-      }
-
-      // otherwise, it is a normal view rule
-      rewriteViewRule(nextRule, tableStore);
-      continue;
-    }
-
-    // handle traditional ECA rules
-    rewriteEventRule(nextRule, tableStore);    
-  }
-}
-
-string ECA_Context::toString()
+string
+ECA_Context::toString()
 {
   ostringstream b;
   for (unsigned k = 0; k < _ecaRules.size(); k++) {

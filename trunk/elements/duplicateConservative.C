@@ -1,4 +1,3 @@
-// -*- c-basic-offset: 2; related-file-name: "duplicateConservative.h" -*-
 /*
  * @(#)$Id$
  * 
@@ -13,7 +12,11 @@
  */
 
 #include "duplicateConservative.h"
+#include "val_str.h"
+#include "val_uint32.h"
 #include <boost/bind.hpp>
+
+DEFINE_ELEMENT_INITS(DuplicateConservative, "DuplicateConservative");
 
 DuplicateConservative::DuplicateConservative(string name, int outputs)
   : Element(name, 1, outputs),
@@ -25,9 +28,26 @@ DuplicateConservative::DuplicateConservative(string name, int outputs)
   _block_flags.resize(noutputs());
 }
 
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_UInt32: Number of outputs.
+ */
+DuplicateConservative::DuplicateConservative(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, Val_UInt32::cast((*args)[3])),
+    _push_cb(0),
+    _block_flags(),
+    _block_flag_count(0)
+{
+  // Clean out the block flags
+  _block_flags.resize(noutputs());
+}
+
 void DuplicateConservative::unblock(unsigned output)
 {
-  assert(output <= noutputs());
+  assert((output >= 0) &&
+         (output <= noutputs()));
   
   // Unset a blocked output
   if (_block_flags[output]) {

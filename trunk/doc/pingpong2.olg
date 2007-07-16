@@ -1,6 +1,0 @@
-materialize(link, infinity, infinity, keys(1,2)).
-
-link(MYADDRESS, NEIGHBOR).
-
-r1 pong(@J, I) :- ping(@I, J).
-r2 ping(@J, I) :- periodic(@I,E,1,1000), link(@I,J).

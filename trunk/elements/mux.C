@@ -14,11 +14,38 @@
 
 #include "mux.h"
 #include "loop.h"
+#include "val_str.h"
+#include "val_uint32.h"
 #include <boost/bind.hpp>
+
+DEFINE_ELEMENT_INITS(Mux, "Mux");
 
 Mux::Mux(string name,
          int noInputs)
   : Element(name, noInputs, 1),
+    _blocked(false),
+    _pushCallbacks(),
+    _inputTuples(),
+    _catchUp(boost::bind(&Mux::catchUp, this)),
+    _timeCallback(NULL),
+    _callback(boost::bind(&Mux::callback, this))
+{
+  for (unsigned i = 0;
+       i < ninputs();
+       i++) {
+    _pushCallbacks.push_back(0);
+    _inputTuples.push_back(TuplePtr());
+  }
+}
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_UInt32: The number of inputs.
+ */
+Mux::Mux(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), Val_UInt32::cast((*args)[3]), 1),
     _blocked(false),
     _pushCallbacks(),
     _inputTuples(),
@@ -104,7 +131,7 @@ int Mux::push(int port, TuplePtr p, b_cbv cb)
 
       // We have already received a buffered tuple from that input.  Bad
       // input!
-      log(Reporting::WARN, -1, "pull: Overrun on port");
+      ELEM_WARN("pull: Overrun on port");
       return 0;
     }
   } else {

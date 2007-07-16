@@ -38,20 +38,25 @@ public:
     Error(int l, string m) : line_num(l), msg(m) {};
   };
   
+  /** An OverLog rule structure */
   struct Rule {
     Rule(string r, Parse_Functor *h, bool d) 
       : ruleID(r), head(h), deleteFlag(d), 
 	ruleNum(OL_Context::ruleCount++) {};
     
-    string toString();
+    string
+    toString();
     
     string ruleID;
 
-    Parse_Functor *head;
+    /** The functor at the rule head */
+    Parse_Functor* head;
     
+    /** Is this rule a delete rule? */
     bool deleteFlag;
 
-    std::list<Parse_Term*> terms; 	// List of terms in the left hand side.
+    /** The list of terms in the rule body */
+    std::list<Parse_Term*> terms;
 
     int ruleNum;
   };

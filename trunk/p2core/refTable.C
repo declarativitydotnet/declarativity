@@ -208,5 +208,25 @@ RefTable::removeTuple(PrimaryIndex::iterator position)
 
 
 
+std::string
+RefTable::toString()
+{
+  ostringstream oss;
+  oss << "RefTable '" << _name << "'"
+      << " maxSize(infinity)"
+      << " ttl(infinity)"
+      << ":";
+  if (_primaryIndex.size() > 0) {
+    for (PrimaryIndex::iterator i = _primaryIndex.begin();
+         i != _primaryIndex.end();
+         i++) {
+      oss << "\t" << (*i)->tuple->toString() << std::endl;
+    }
+    oss << ".";
+  } else {
+    oss << "Empty.";
+  }
+  return oss.str();
+}
 
 

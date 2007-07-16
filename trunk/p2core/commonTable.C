@@ -20,6 +20,11 @@
 #include "p2Time.h"
 #include "aggFactory.h"
 #include "val_null.h"
+#include "val_str.h"
+#include "val_uint32.h"
+#include "plumber.h"
+#include "systemTable.h"
+#include "tuple.h"
 
 ////////////////////////////////////////////////////////////
 // Sorters
@@ -232,7 +237,7 @@ CommonTable::lookupSearchEntry(CommonTable::Key& key)
        i++) {
     unsigned fieldNo = *i;
     while (fieldNo + 1 > _lookupSearchEntry.tuple->size()) {
-      _lookupSearchEntry.tuple->append(ValuePtr());
+      _lookupSearchEntry.tuple->append(Val_Null::mk());
     }
   }
 }
@@ -308,27 +313,6 @@ CommonTable::findSecondaryIndex(CommonTable::Key& key)
 
 
 
-std::string
-CommonTable::toString()
-{
-  ostringstream oss;
-  oss << "Table '" << _name << "':";
-  if (_primaryIndex.size() > 0) {
-    PrimaryIndex::iterator i = _primaryIndex.begin();
-    oss << (*i)->tuple->toString();
-    for (i++;
-         i != _primaryIndex.end();
-         i++) {
-      oss << ", " << (*i)->tuple->toString();
-    }
-    oss << ".";
-  } else {
-    oss << "Empty.";
-  }
-  return oss.str();
-}
-
-
 
 
 ////////////////////////////////////////////////////////////
@@ -388,6 +372,25 @@ CommonTable::commonInsertTuple(Entry* newEntry,
        i++) {
     (*i)(t);
   }
+
+  // Update table information
+  CommonTable::ManagerPtr catalog = Plumber::catalog();
+  if (catalog) {
+    CommonTablePtr table = catalog->table(TABLE);
+    if (table) {
+      static unsigned cardPos = catalog->attribute(TABLE, "CARD");
+      TuplePtr tableNameTp = Tuple::mk();
+      tableNameTp->append(Val_Str::mk(name()));
+      tableNameTp->freeze();
+      CommonTable::Iterator iter = table->lookup(CommonTable::theKey(CommonTable::KEY0),
+                                                 CommonTable::theKey(CommonTable::KEY3),
+                                                 tableNameTp); 
+      if (!iter->done()) {
+        TuplePtr tp = iter->next()->clone();
+        tp->set(cardPos, Val_UInt32::mk(size()));
+      }
+    }
+  }
 }
 
 
@@ -444,64 +447,84 @@ CommonTable::removeTuple(PrimaryIndex::iterator position)
   removeDerivatives(toRemove);
 
   // The subclass finishes it off from the primary index
+
+  // Update table information
+  CommonTable::ManagerPtr catalog = Plumber::catalog();
+  if (catalog) {
+    CommonTablePtr table = catalog->table(TABLE);
+    if (table) {
+      static unsigned cardPos = catalog->attribute(TABLE, "CARD");
+      TuplePtr tableNameTp = Tuple::mk();
+      tableNameTp->append(Val_Str::mk(name()));
+      tableNameTp->freeze();
+      CommonTable::Iterator iter = table->lookup(CommonTable::theKey(CommonTable::KEY0),
+                                                 CommonTable::theKey(CommonTable::KEY3),
+                                                 tableNameTp); 
+      if (!iter->done()) {
+        TuplePtr tp = iter->next()->clone();
+        tp->set(cardPos, Val_UInt32::mk(size()));
+      }
+    }
+  }
 }
 
-
-
-
-CommonTable::Key CommonTable::theKEYID = CommonTable::Key();
-CommonTable::Key CommonTable::theKEY0 = CommonTable::Key();
-CommonTable::Key CommonTable::theKEY1 = CommonTable::Key();
-CommonTable::Key CommonTable::theKEY2 = CommonTable::Key();
-CommonTable::Key CommonTable::theKEY3 = CommonTable::Key();
-CommonTable::Key CommonTable::theKEY4 = CommonTable::Key();
-CommonTable::Key CommonTable::theKEY01 = CommonTable::Key();
-CommonTable::Key CommonTable::theKEY12 = CommonTable::Key();
-CommonTable::Key CommonTable::theKEY23 = CommonTable::Key();
-CommonTable::Key CommonTable::theKEY13 = CommonTable::Key();
-CommonTable::Key CommonTable::theKEY012 = CommonTable::Key();
-CommonTable::Key CommonTable::theKEY123 = CommonTable::Key();
-CommonTable::Key CommonTable::theKEY01234 = CommonTable::Key();
 
 
 CommonTable::Initializer::Initializer()
 {
   // No need to initialize KEYID. It's already empty.
-  CommonTable::theKEY0.push_back(0);
+  theKEY0.push_back(0);
 
-  CommonTable::theKEY1.push_back(1);
+  theKEY1.push_back(1);
 
-  CommonTable::theKEY2.push_back(2);
+  theKEY2.push_back(2);
 
-  CommonTable::theKEY3.push_back(3);
+  theKEY3.push_back(3);
 
-  CommonTable::theKEY4.push_back(4);
+  theKEY4.push_back(4);
 
-  CommonTable::theKEY01.push_back(0);
-  CommonTable::theKEY01.push_back(1);
+  theKEY5.push_back(5);
 
-  CommonTable::theKEY12.push_back(1);
-  CommonTable::theKEY12.push_back(2);
+  theKEY01.push_back(0);
+  theKEY01.push_back(1);
 
-  CommonTable::theKEY23.push_back(2);
-  CommonTable::theKEY23.push_back(3);
+  theKEY12.push_back(1);
+  theKEY12.push_back(2);
 
-  CommonTable::theKEY13.push_back(1);
-  CommonTable::theKEY13.push_back(3);
+  theKEY23.push_back(2);
+  theKEY23.push_back(3);
 
-  CommonTable::theKEY012.push_back(0);
-  CommonTable::theKEY012.push_back(1);
-  CommonTable::theKEY012.push_back(2);
+  theKEY13.push_back(1);
+  theKEY13.push_back(3);
 
-  CommonTable::theKEY123.push_back(1);
-  CommonTable::theKEY123.push_back(2);
-  CommonTable::theKEY123.push_back(3);
+  theKEY34.push_back(3);
+  theKEY34.push_back(4);
 
-  CommonTable::theKEY01234.push_back(0);
-  CommonTable::theKEY01234.push_back(1);
-  CommonTable::theKEY01234.push_back(2);
-  CommonTable::theKEY01234.push_back(3);
-  CommonTable::theKEY01234.push_back(4);
+  theKEY35.push_back(3);
+  theKEY35.push_back(5);
+
+  theKEY36.push_back(3);
+  theKEY36.push_back(6);
+
+  theKEY38.push_back(3);
+  theKEY38.push_back(8);
+
+  theKEY45.push_back(4);
+  theKEY45.push_back(5);
+
+  theKEY012.push_back(0);
+  theKEY012.push_back(1);
+  theKEY012.push_back(2);
+
+  theKEY123.push_back(1);
+  theKEY123.push_back(2);
+  theKEY123.push_back(3);
+
+  theKEY01234.push_back(0);
+  theKEY01234.push_back(1);
+  theKEY01234.push_back(2);
+  theKEY01234.push_back(3);
+  theKEY01234.push_back(4);
 }
 
 
@@ -513,9 +536,6 @@ CommonTable::theInitializer()
   return _initializer;
 }
   
-
-
-
 /** Fetch an existing key object.  This method uses the "construct at
     first use" pattern. See below at theRegistry for details. */
 CommonTable::Key&
@@ -527,43 +547,61 @@ CommonTable::theKey(CommonTable::KeyName keyID)
 
   switch (keyID) {
   case KEYID:
-    return theKEYID;
+    return initializer->theKEYID;
     break;
   case KEY0:
-    return theKEY0;
+    return initializer->theKEY0;
     break;
   case KEY1:
-    return theKEY1;
+    return initializer->theKEY1;
     break;
   case KEY2:
-    return theKEY2;
+    return initializer->theKEY2;
     break;
   case KEY3:
-    return theKEY3;
+    return initializer->theKEY3;
     break;
   case KEY4:
-    return theKEY4;
+    return initializer->theKEY4;
+    break;
+  case KEY5:
+    return initializer->theKEY5;
     break;
   case KEY01:
-    return theKEY01;
+    return initializer->theKEY01;
     break;
   case KEY12:
-    return theKEY12;
+    return initializer->theKEY12;
     break;
   case KEY23:
-    return theKEY23;
+    return initializer->theKEY23;
     break;
   case KEY13:
-    return theKEY13;
+    return initializer->theKEY13;
+    break;
+  case KEY34:
+    return initializer->theKEY34;
+    break;
+  case KEY35:
+    return initializer->theKEY35;
+    break;
+  case KEY36:
+    return initializer->theKEY36;
+    break;
+  case KEY38:
+    return initializer->theKEY38;
+    break;
+  case KEY45:
+    return initializer->theKEY45;
     break;
   case KEY012:
-    return theKEY012;
+    return initializer->theKEY012;
     break;
   case KEY123:
-    return theKEY123;
+    return initializer->theKEY123;
     break;
   case KEY01234:
-    return theKEY01234;
+    return initializer->theKEY01234;
     break;
   default:
     throw UnknownKeyNameException();
@@ -585,7 +623,6 @@ CommonTable::lookupTable(string tableName)
     return t->second;
   }
 }
-
 
 /** This implements the "construct at first use" pattern, which is the
     best known method for dealing with static initializer ordering in
@@ -615,18 +652,25 @@ CommonTable::theRegistry()
 /** An iterator contains only a queue of tuple pointers, which it
     dispenses when asked. XXX Replace by just returning the queue to the
     caller. */
+/*
+	Eric: modified to have this iterator rewindable 
+	Modified to have the spool resuable without exposing
+	STL API
+*/
+	
 CommonTable::IteratorObj::IteratorObj(std::deque< TuplePtr >* spool)
   : _spool(spool)
 {
+  _it = _spool->rbegin();
 }
 
 
 TuplePtr
 CommonTable::IteratorObj::next()
 {
-  if (_spool->size() > 0) {
-    TuplePtr back = _spool->back();
-    _spool->pop_back();
+  if (!done()) {
+    TuplePtr back = *_it;
+    _it++;
     return back;
   } else {
     // We've run out of elements, period.
@@ -638,9 +682,21 @@ CommonTable::IteratorObj::next()
 bool
 CommonTable::IteratorObj::done()
 {
-  return (_spool->size() == 0);
+  if(_spool == NULL || _spool->empty())
+    return true;
+  return (_it == _spool->rend());
 }
 
+void
+CommonTable::IteratorObj::rewind()
+{
+  _it = _spool->rbegin();
+  /**XXX: somehow using temp obj causes seg fault...
+	  DO NOT USE return Iterator(this); !!!!
+  */
+  /*Iterator itObj(this);
+  return itObj;*/
+}
 
 CommonTable::IteratorObj::~IteratorObj()
 {
@@ -665,6 +721,11 @@ CommonTable::name() const
   return _name;
 }
 
+const CommonTable::Key&
+CommonTable::primaryKey() const
+{
+  return _key;
+}
 
 
 
@@ -700,6 +761,8 @@ CommonTable::lookup(CommonTable::Key& lookupKey,
     
     // If not, return null
     if (indexIter == _indices.end()) {
+      /**How could this be possible? no secondary Index?!*/
+      TELL_ERROR<<"Table "<<_name<<" does not have a secondary index for "<<t->toString()<<"!!!??\n";
       return Iterator();
     }
     // Otherwise, create the iterator from all the matches and return it
@@ -743,6 +806,7 @@ CommonTable::lookup(CommonTable::Key& indexKey,
     
     // If not, return null
     if (indexIter == _indices.end()) {
+      assert(0);
       return Iterator();
     }
     // Otherwise, create the iterator from all the matches and return it
@@ -794,11 +858,100 @@ CommonTable::lookupPrimary(CommonTable::Entry* searchEntry)
 } 
 
 
+void initTupleEntry(TuplePtr tuple, CommonTable::Key& key)
+{
+  for (CommonTable::Key::iterator i = key.begin();
+       i != key.end();
+       i++) {
+    unsigned fieldNo = *i;
+    while (fieldNo + 1 > tuple->size()) {
+      tuple->append(ValuePtr());
+    }
+  }
+}
+
+
+CommonTable::Iterator
+CommonTable::range1DLookup(CommonTable::Key& lKey,
+                           CommonTable::Key& rKey,
+                           CommonTable::Key& indexKey,
+                           bool openL, bool openR, TuplePtr t)
+{
+  assert(indexKey.size() == rKey.size() || indexKey.size() == lKey.size());
+  
+  Entry eU(Tuple::mk());
+  Entry eL(Tuple::mk());
+  
+  if (!lKey.empty()) {
+    initTupleEntry(eL.tuple,indexKey);
+    project(t,lKey,eL.tuple,indexKey);
+    ///if(eL.tuple->size()!=0) TELL_INFO<<"\nCommonTable::RangeLookup: eL= "<<eL.tuple->toString()<<"\n";
+  }
+  if (!rKey.empty()) {
+    initTupleEntry(eU.tuple,indexKey);
+    project(t,rKey,eU.tuple,indexKey);
+    //if(eU.tuple->size() != 0) TELL_INFO<<"\nCommonTable::RangeLookup: eU= "<<eU.tuple->toString()<<"\n";
+  }
+  
+  //is it a secondary index?
+  CommonTable::SecondaryIndexIndex::iterator it = _indices.find(indexKey);
+  if (it == _indices.end()) {
+    TELL_ERROR<<"XXX Range query without secondary index?!\n";
+    assert(0);	
+    return Iterator();
+  } else { 
+    SecondaryIndex& index = *(*it).second;
+    return range1DLookupSecondary(openL, &eL, openR, &eU, index);
+  }
+}
+
+CommonTable::Iterator
+CommonTable::range1DLookupSecondary(bool openL, CommonTable::Entry* lb, 
+                                    bool openR, CommonTable::Entry* rb, 
+                                    SecondaryIndex& index)
+{
+  SecondaryIndex::iterator itL, itR;
+
+  //if(index.size() !=0)
+  //  TELL_INFO<< "\nSAMPLE: "<<(*index.begin())->tuple->toString()<<"\n";
+
+  //no equal for the left boudary?
+  if(lb->tuple->size() !=0 && openL == false) //close
+	itL = index.lower_bound(lb); // things >=lb
+  else if(lb->tuple->size() != 0) //open
+	itL = index.upper_bound(lb); //things > lb
+  else
+	itL = index.begin();//infty
+
+  //contains equal for right boundary?
+  if(rb->tuple->size() != 0 && openR == false) //close RHS
+	itR = index.upper_bound(rb); // stop at things > rb
+  else if(rb->tuple->size() != 0) //open 	
+	itR = index.lower_bound(rb); // stop at things >= rb
+  else
+	itR = index.end();
+
+  int count =0;
+
+  std::deque< TuplePtr >* spool = new std::deque< TuplePtr >();
+  for(;itL != itR;itL++){
+	//std::cout<<"\nRange Lookup: result added: "<<(*itL)->tuple->toString();
+	//std::cout.flush();
+	spool->push_front( (*itL)->tuple );
+	count++;
+  }
+  //TELL_INFO<<"\nRangeLookup Results found: "<<count<<"\n";
+
+  return Iterator(new IteratorObj(spool));
+}
+
+
+
 void
 CommonTable::project(TuplePtr source,
-                Key& sourceKey,
-                TuplePtr destination,
-                Key& destinationKey)
+                     Key& sourceKey,
+                     TuplePtr destination,
+                     Key& destinationKey)
 {
   Key::iterator s;
   Key::iterator d;

@@ -20,13 +20,16 @@
 
 #include "commonTable.h"
 #include "element.h"
+#include "elementRegistry.h"
 
 class Aggregate : public Element {
  public:
   Aggregate(string name,
             CommonTable::Aggregate aggregate);
 
+  Aggregate(TuplePtr args);
   
+
   const char*
   class_name() const {return "Aggregate";}
 
@@ -44,9 +47,15 @@ class Aggregate : public Element {
   pull(int port, b_cbv cb);
 
 
+  // This is necessary for the class to register itself with the
+  // element registry.
+  DECLARE_PUBLIC_ELEMENT_INITS
 
-  
- private:
+
+
+
+private:
+
   /** My aggregate */
   CommonTable::Aggregate _aggregate;
 
@@ -65,6 +74,11 @@ class Aggregate : public Element {
 
   /** Is the latest pending transmission? */
   bool _pending;
+
+
+  // This is necessary for the class to register itself with the
+  // element registry.
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

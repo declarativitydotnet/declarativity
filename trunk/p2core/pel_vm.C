@@ -26,7 +26,8 @@
 
 #include <openssl/sha.h>
 
-
+#include "plumber.h"
+#include "compileUtil.h"
 #include "val_int32.h"
 #include "val_uint32.h"
 #include "val_int64.h"
@@ -63,6 +64,8 @@ const char *Pel_VM::err_msgs[] = {
   "ER:Divide by zero",
   "ER:Bad string operation",
   "ER:Invalid Errno",
+  "ER:Bad list field",
+  "ER:List underflow",
   "ER:Unknown Error"
 };
 
@@ -84,14 +87,17 @@ Pel_VM::Pel_VM(std::deque< ValuePtr > staque) : _st(staque) {
 //
 // Reset the VM
 //
-void Pel_VM::reset() 
+void
+Pel_VM::reset() 
 {
   while (!_st.empty()) {
     stackPop();
   }
 }
 
-void Pel_VM::stop()
+
+void
+Pel_VM::stop()
 {
   error = Pel_VM::PE_STOP;
 }
@@ -499,10 +505,98 @@ DEF_OP(H_SHA1) {
   stackPush(Val_ID::mk(hashID));
 }
 
+DEF_OP(T_IDGEN) { 
+  stackPush(Val_UInt32::mk(Plumber::catalog()->uniqueIdentifier()));
+}
+
+/* MAX and MIN of two value types. */
+DEF_OP(MAX) { 
+  ValuePtr v1 = stackTop(); stackPop();
+  ValuePtr v2 = stackTop(); stackPop();
+  stackPush((v1 <= v2 ? v2 : v1));
+}
+
+DEF_OP(MIN) { 
+  ValuePtr v1 = stackTop(); stackPop();
+  ValuePtr v2 = stackTop(); stackPop();
+  stackPush((v1 <= v2 ? v1 : v2));
+}
+
+
+/**
+ * Named Functions
+ */
+DEF_OP(FUNC0) { 
+  ValuePtr vp = stackTop(); stackPop();
+
+  // Find the function
+
+  // Run the function
+}
+
+
+
+DEF_OP(A_TO_VAR) { 
+   ValuePtr attr = stackTop(); stackPop();
+   stackPush(compile::namestracker::toVar(attr));
+}
+
 /**
  * List operations
  *
  */
+
+DEF_OP(L_MERGE) { 
+   ValuePtr val1 = stackTop(); stackPop();
+   ValuePtr val2 = stackTop(); stackPop();
+   ListPtr list1 = Val_List::cast(val1);
+   ListPtr list2 = Val_List::cast(val2);
+   
+   stackPush(Val_List::mk(compile::namestracker::merge(list1, list2)));
+}
+
+DEF_OP(L_POS_ATTR) { 
+   ValuePtr var     = stackTop(); stackPop();
+   ValuePtr listVal = stackTop(); stackPop();
+   ListPtr  list    = Val_List::cast(listVal);
+   
+   stackPush(Val_Int32::mk(compile::namestracker::position(list, var)));
+}
+
+DEF_OP(L_GET_ATTR) { 
+   ValuePtr attr    = stackTop(); stackPop();
+   ValuePtr listVal = stackTop(); stackPop();
+   ListPtr  list    = Val_List::cast(listVal);
+   
+   if (attr->typeCode() == Value::INT32) {
+     int position = Val_Int32::cast(attr);
+     for (ValPtrList::const_iterator iter = list->begin();
+          iter != list->end(); iter++) {
+       if (!position--) {
+         stackPush(*iter);
+         return;
+       } 
+     }
+   }
+   else if (attr->typeCode() == Value::STR) {
+     string type = Val_Str::cast(attr);
+     for (ValPtrList::const_iterator iter = list->begin();
+          iter != list->end(); iter++) {
+       if ((*Val_Tuple::cast(*iter))[0]->toString() == type) {
+         stackPush(*iter);
+         return;
+       } 
+     } 
+   }
+   stackPush(Val_Null::mk());
+}
+
+DEF_OP(L_AGG_ATTR) { 
+   ValuePtr listVal = stackTop(); stackPop();
+   ListPtr  list    = Val_List::cast(listVal);
+   
+   stackPush(Val_Int32::mk(compile::namestracker::aggregation(list)));
+}
 
 DEF_OP(L_CONCAT) {
    ValuePtr val1 = stackTop(); stackPop();
@@ -648,86 +742,126 @@ DEF_OP(COIN) {
   stackPush(Val_Int32::mk(r <= p));
 }
 
-DEF_OP(INITLIST) {
-  ValuePtr second = stackTop(); stackPop();
-  ValuePtr first = stackTop(); stackPop();
-  TuplePtr newTuple = Tuple::mk();
-  newTuple->append(first);
-  newTuple->append(second);
-  newTuple->freeze();
-  stackPush(Val_Tuple::mk(newTuple));
+DEF_OP(L_INIT) {
+  stackPush(Val_List::mk(List::mk()));
 }
 
-DEF_OP(CONSLIST) {
-  ValuePtr second = stackTop(); stackPop();
+DEF_OP(L_CONS) {
   ValuePtr first = stackTop(); stackPop();
+  ValuePtr second = stackTop(); stackPop();
   
-  TuplePtr firstTuple, secondTuple;
-  // make each argument a tuple
-  if (string(first->typeName()) == "tuple") {
-    firstTuple = Val_Tuple::cast(first);
-  } else {
-    firstTuple = Tuple::mk();
-    firstTuple->append(first);
-  }
-  if (string(second->typeName()) == "tuple") {
-    secondTuple = Val_Tuple::cast(second);
-  } else {
-    secondTuple = Tuple::mk();
-    secondTuple->append(second);
-  }
+  ListPtr list = List::mk();
 
-  // combine the two
-  TuplePtr combinedTuple = Tuple::mk();
-  combinedTuple->concat(firstTuple);
-  combinedTuple->concat(secondTuple);
-  combinedTuple->freeze();
-  stackPush(Val_Tuple::mk(combinedTuple));
-}
-
-DEF_OP(INLIST) {
-  ValuePtr second = stackTop(); stackPop();
-  ValuePtr first = stackTop(); stackPop();
-
-  TuplePtr curTuple= Val_Tuple::cast(first);
-
-  bool flag = false;
-  for (unsigned k = 0; k < curTuple->size(); k++) {
-    if ((*curTuple)[k]->compareTo(second) == 0) {
-      flag = true;
+  if (first->typeCode() != Value::NULLV) {
+    if (first->typeCode() == Value::LIST) {
+      list = list->concat(Val_List::cast(first));
+    }
+    else {
+      list->append(first);
     }
   }
-  if (flag == true) {
-    stackPush(Val_Int32::mk(1));
-  } else {
-    stackPush(Val_Int32::mk(0));
-  } 
-}
 
-DEF_OP(REMOVELAST) {
-  ValuePtr first = stackTop(); stackPop();
-
-  TuplePtr curTuple= Val_Tuple::cast(first);
-
-  TuplePtr newTuple = Tuple::mk();
-  for (unsigned k = 0; k < curTuple->size()-1; k++) {
-    newTuple->append(Val_Str::mk((*curTuple)[k]->toString()));
+  if (second->typeCode() != Value::NULLV) {
+    if (second->typeCode() == Value::LIST) {
+      list = list->concat(Val_List::cast(second));
+    }
+    else {
+      list->append(second);
+    }
   }
-  newTuple->freeze();
-  stackPush(Val_Tuple::mk(newTuple));
+  
+  stackPush(Val_List::mk(list));
 }
 
-DEF_OP(LAST) {
+DEF_OP(L_CDR) {
   ValuePtr first = stackTop(); stackPop();
-  TuplePtr curTuple= Val_Tuple::cast(first);
-  TELL_WARN << "Get Last: " << curTuple->toString() << "\n";
-  stackPush(Val_Str::mk((*curTuple)[curTuple->size()-1]->toString()));
+  ListPtr list = Val_List::cast(first);
+
+  if (!list) {
+    error = PE_BAD_LIST_FIELD;
+    return;
+  }
+  else if (list->size() == 0) {
+    error = PE_LIST_UNDERFLOW;
+    return;
+  }
+
+  list = list->clone();
+  list->pop_front();
+  stackPush(Val_List::mk(list));
 }
 
-DEF_OP(SIZE) {
+DEF_OP(L_CAR) {
   ValuePtr first = stackTop(); stackPop();
-  TuplePtr curTuple= Val_Tuple::cast(first);
-  stackPush(Val_Int32::mk(curTuple->size()));
+  ListPtr list = Val_List::cast(first);
+
+  if (!list) {
+    error = PE_BAD_LIST_FIELD;
+    return;
+  }
+  else if (list->size() == 0) {
+    error = PE_LIST_UNDERFLOW;
+    return;
+  }
+
+  stackPush(list->front());
+}
+
+DEF_OP(L_CONTAINS) {
+  ValuePtr second = stackTop(); stackPop();
+  ValuePtr first = stackTop(); stackPop();
+
+  ListPtr list = Val_List::cast(first);
+  if (!list) {
+    error = PE_BAD_LIST_FIELD;
+    return;
+  }
+  stackPush(Val_Int32::mk(list->member(second)));
+}
+
+DEF_OP(L_REMOVELAST) {
+  ValuePtr first = stackTop(); stackPop();
+  ListPtr list = Val_List::cast(first);
+
+  if (!list) {
+    error = PE_BAD_LIST_FIELD;
+    return;
+  }
+  else if (list->size() == 0) {
+    error = PE_LIST_UNDERFLOW;
+    return;
+  }
+
+  list->pop_back();
+  stackPush(Val_List::mk(list));
+}
+
+DEF_OP(L_LAST) {
+  ValuePtr first = stackTop(); stackPop();
+  ListPtr list = Val_List::cast(first);
+
+  if (!list) {
+    error = PE_BAD_LIST_FIELD;
+    return;
+  }
+  else if (list->size() == 0) {
+    error = PE_LIST_UNDERFLOW;
+    return;
+  }
+
+  stackPush(list->back());
+}
+
+DEF_OP(L_SIZE) {
+  ValuePtr first = stackTop(); stackPop();
+  ListPtr list = Val_List::cast(first);
+
+  if (!list) {
+    error = PE_BAD_LIST_FIELD;
+    return;
+  }
+
+  stackPush(Val_Int32::mk(list->size()));
 }
 
 //
@@ -1026,7 +1160,13 @@ DEF_OP(STR_MATCH) {
 }
 DEF_OP(STR_CONV) {
   ValuePtr t = stackTop(); stackPop();
-  stackPush(Val_Str::mk(t->toString()));
+
+  if (t->typeCode() == Value::TUPLE) {
+    ostringstream oss;
+    compile::namestracker::exprString(&oss, Val_Tuple::cast(t));
+    stackPush(Val_Str::mk(oss.str()));
+  }
+  else stackPush(Val_Str::mk(t->toString()));
 }
 
 //
@@ -1098,6 +1238,59 @@ DEF_OP(DRAND48) {
   stackPush(Val_Double::mk(drand48()));
 }
 
+// Extra hacks for System R
+DEF_OP(O_STATUS) {
+  ValuePtr second = stackTop(); stackPop();
+  ValuePtr first  = stackTop(); stackPop();
+}
+
+DEF_OP(O_SELECT) {
+  ValuePtr third  = stackTop(); stackPop();
+  ValuePtr second = stackTop(); stackPop();
+  ValuePtr first  = stackTop(); stackPop();
+}
+
+DEF_OP(O_RANGEAM) {
+  ValuePtr second = stackTop(); stackPop();
+  ValuePtr first = stackTop(); stackPop();
+}
+
+DEF_OP(O_FILTER) {
+  ValuePtr second = stackTop(); stackPop();
+  ValuePtr first = stackTop(); stackPop();
+}
+
+
+
+
+
+
+REMOVABLE_INLINE ValuePtr
+Pel_VM::stackTop()
+{
+  return _st.back();
+}
+
+
+REMOVABLE_INLINE ValuePtr
+Pel_VM::stackPeek(unsigned p)
+{
+  return _st[_st.size() - 1 - p];
+}
+
+
+REMOVABLE_INLINE void
+Pel_VM::stackPop()
+{
+  _st.pop_back();
+}
+
+
+REMOVABLE_INLINE void
+Pel_VM::stackPush(ValuePtr v)
+{
+  _st.push_back(v);
+}
 
 /*
  * End of file 

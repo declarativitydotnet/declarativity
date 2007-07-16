@@ -15,6 +15,7 @@
 #include <deque>
 #include "tuple.h"
 #include "element.h"
+#include "elementRegistry.h"
 #include "inlines.h"
 
 
@@ -23,6 +24,9 @@
 class BasicAck : public Element {
 public:
   BasicAck(string name);
+
+  BasicAck(TuplePtr args);
+
   const char *class_name() const { return "BasicAck";};
   const char *processing() const { return "a/al"; };
   const char *flow_code() const	 { return "x/x-"; };
@@ -31,9 +35,13 @@ public:
   TuplePtr pull(int port, b_cbv cb);	// Pull next acknowledgement from ack_q
   // int push(int port, TuplePtr p, b_cbv cb);
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   b_cbv    _ack_cb; 			// Callback to send an ack 
   std::deque <TuplePtr> ack_q_;		// Output ack queue
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
   
 #endif /* __BASICACK_H_ */

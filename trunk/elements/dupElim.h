@@ -18,11 +18,14 @@
 #define __DUPELIM_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 #include "set"
 
 class DupElim : public Element { 
 public:
   DupElim(string);
+
+  DupElim(TuplePtr args);
 
   /** Overridden to perform the tranformation. */
   TuplePtr simple_action(TuplePtr p);
@@ -31,6 +34,8 @@ public:
   const char *processing() const		{ return "a/a"; }
   const char *flow_code() const			{ return "x/x"; }
 
+
+  DECLARE_PUBLIC_ELEMENT_INITS
 
 private:
   /** My tupleref comparison function for the set */
@@ -44,6 +49,8 @@ private:
   
   /** My hash table. */
   std::set< TuplePtr, tuplePtrCompare > _table;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

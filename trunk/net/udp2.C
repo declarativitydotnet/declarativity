@@ -21,20 +21,26 @@
 #include "val_str.h"
 #include "val_opaque.h"
 #include "val_int32.h"
+#include "val_uint32.h"
+
+DEFINE_ELEMENT_INITS(Udp2, "Udp2")
 
 /////////////////////////////////////////////////////////////////////
 //
 // Receive element
 //
 Udp2::Rx::Rx(string name, Udp2 &udp) 
-    : u(&udp), push_pending(true) 
+  : Element(name, 0, 1),
+    u(&udp),
+    push_pending(true) 
 {
 }
 
 //
 // Socket callback for receive element
 //
-void Udp2::Rx::socket_cb()
+void
+Udp2::Rx::socket_cb()
 {
   // If push is not enabled, turn off the callback and return. 
   if (!push_pending) {
@@ -52,7 +58,7 @@ void Udp2::Rx::socket_cb()
     // Error! 
     int error = errno;
     if (error != EAGAIN) {
-      u->log(Reporting::ERROR, error, strerror(error));
+      ELEM_ERROR(strerror(error));
     }
   } else {
     // Success! We've got a packet.  Package it up...
@@ -89,8 +95,10 @@ int Udp2::Rx::initialize()
 //
 // Transmit element
 //
-Udp2::Tx::Tx(string name, Udp2 &udp) 
-    : u(&udp), pull_pending(true)
+Udp2::Tx::Tx(string name, Udp2 &udp)
+  : Element(name, 1, 0),
+    u(&udp),
+    pull_pending(true)
 {
 }
 
@@ -129,7 +137,7 @@ void Udp2::Tx::socket_cb()
     //  segmentation and reassembly elements upstream to not make us
     //  send anything bigger than the MTU, which should fit into the
     //  socket buffers. 
-    u->log(Reporting::ERROR, errno, "Payload larger than socket buffer");
+    ELEM_ERROR("Payload larger than socket buffer");
   }
   socket_on();
 }
@@ -166,3 +174,39 @@ Udp2::Udp2(string name,
     throw NetworkException();
   }
 }
+
+Udp2::Udp2(TuplePtr args) 
+  : Element(Val_Str::cast((*args)[2]), 1, 1),
+    rx(new Udp2::Rx(name(), *this)),
+    tx(new Udp2::Tx(name(), *this))
+{
+  if (args->size() > 4) {
+    sd = networkSocket(SOCK_DGRAM, 
+                       Val_UInt32::cast((*args)[3]), 
+                       Val_UInt32::cast((*args)[4]));
+  }
+  else {
+    sd = networkSocket(SOCK_DGRAM, 
+                       Val_UInt32::cast((*args)[3]), INADDR_ANY); 
+  }
+
+  if (sd < 0) {
+    // Couldn't allocate network socket
+    throw NetworkException();
+  }
+}
+
+
+const char*
+Udp2::Rx::class_name() const
+{
+  return "Udp2::Rx";
+}
+
+
+const char*
+Udp2::Tx::class_name() const
+{
+  return "Udp2::Tx";
+}
+

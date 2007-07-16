@@ -64,7 +64,7 @@ PlSensor::PlSensor(string name,
 void PlSensor::error_cleanup(uint32_t errnum, string errmsg) 
 {
   TRACE_FUNCTION;
-  log(Reporting::WARN, errnum, errmsg);
+  ELEM_WARN(errmsg);
   enter_waiting();
 }
 
