@@ -62,7 +62,10 @@ libp2core_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C) \
 			inlines.h \
 			pel_lexer.lex \
 			pel_gen.py \
-			pel_program.h
+			pel_program.h \
+			systemTable.h \
+			iStateful.h \
+			iRunnable.h			
 
 
 libp2core_la_LDFLAGS =	@BOOST_LIB@ \

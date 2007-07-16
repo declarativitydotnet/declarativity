@@ -43,7 +43,7 @@ dfrun.py: dfrun.in Makefile
 
 CLEANFILES = $(bin_SCRIPTS)
 
-EXTRA_DIST = README \
+EXTRA_DIST = \
              p2terminal.in loadManyChords.in p2insert.in \
              planetlab.in psetup.in setupMonolithic.in dfrun.in sanity.py \
              recv.df sender.df p2 p2monolithic monolithic.in

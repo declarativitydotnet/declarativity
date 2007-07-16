@@ -25,8 +25,6 @@ CLEANFILES =			*.cpp \
 				*.pdf \
 				*.dvi
 
-EXTRA_DIST =			*.olg
-
 all : UserGuide.pdf
 
 UserGuide.pdf :	UserGuide.tex UserGuide.bib

@@ -18,10 +18,10 @@ SUBDIRS=	\
 		tutorial
 
 EXTRA_DIST =	chord.olg \
+		chord.generator.py \
 		narada.olg \
 		reachable.olg \
-		types.txt \
-		dataflow.pdf
+		types.txt
 
 CLEANFILES =	*.cpp *.eca *.ruleStrand *.dot *~ .\#* *.localized
 
