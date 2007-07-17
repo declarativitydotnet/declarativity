@@ -1,0 +1,324 @@
+<HTML
+><HEAD
+><TITLE
+>Example: Query Correctness Test on PIER</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="DART HOWTO"
+HREF="index.html"><LINK
+REL="PREVIOUS"
+TITLE="Writing a Distributed Test"
+HREF="x23.html"><LINK
+REL="NEXT"
+TITLE="Running a Distributed Test"
+HREF="x36.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>DART HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x23.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x36.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN26">4. Example: Query Correctness Test on PIER</H1
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><FONT
+COLOR="#000000"
+><PRE
+CLASS="SCREEN"
+>&#60;?xml version="1.0" ?&#62;
+&#60;dart&#62;
+
+  &#60;test&#62;
+    &#60;name&#62;sq.pier0032&#60;/name&#62;
+    &#60;outdir&#62;/tmp/sq.pier0032&#60;/outdir&#62;
+  &#60;/test&#62;
+
+  &#60;topology&#62;
+
+    &#60;project&#62;planetlab&#60;/project&#62;
+    &#60;experiment&#62;pier0032&#60;/experiment&#62;
+    &#60;nsfile&#62;pier0032.ns&#60;/nsfile&#62;
+    &#60;eipsfile&#62;pier0032.eips&#60;/eipsfile&#62;
+    &#60;iipsfile&#62;pier0032.iips&#60;/iipsfile&#62;
+
+  &#60;/topology&#62;
+
+  &#60;commonfiles&#62;
+    &#60;dir&#62;
+      &#60;src&#62;/homes/bnc/pier/server&#60;/src&#62;
+      &#60;dst&#62;$DART_COMMON_DIR/server&#60;/dst&#62;
+    &#60;/dir&#62;
+    &#60;dir&#62;
+      &#60;src&#62;/homes/bnc/pier/client&#60;/src&#62;
+      &#60;dst&#62;$DART_COMMON_DIR/client&#60;/dst&#62;
+    &#60;/dir&#62;
+    &#60;dir&#62;
+      &#60;src&#62;/homes/bnc/pier/sensors&#60;/src&#62;
+      &#60;dst&#62;$DART_COMMON_DIR/sensors&#60;/dst&#62;
+    &#60;/dir&#62;
+    &#60;dir&#62;
+      &#60;src&#62;/homes/bnc/pier/scripts&#60;/src&#62;
+      &#60;dst&#62;$DART_COMMON_DIR/scripts&#60;/dst&#62;
+    &#60;/dir&#62;
+    &#60;file&#62;
+      &#60;src type="remote"&#62;/proj/planetlab/tarfiles/edata.tar.gz&#60;/src&#62;
+      &#60;dst&#62;$DART_COMMON_DIR/edata.tar.gz&#60;/dst&#62;
+    &#60;/file&#62;
+    &#60;file&#62; 
+      &#60;src type="remote"&#62;/proj/planetlab/rpms/j2sdk-1_4_2_03-linux-i586.rpm&#60;/src&#62;
+      &#60;dst&#62;$DART_COMMON_DIR/j2sdk-1_4_2_03-linux-i586.rpm&#60;/dst&#62;
+    &#60;/file&#62;
+  &#60;/commonfiles&#62;
+
+  &#60;preexecution&#62;
+    &#60;script&#62;$DART_COMMON_DIR/scripts/preexecution&#60;/script&#62;
+  &#60;/preexecution&#62;
+
+  &#60;execution duration="700"&#62;
+    &#60;nodegroup&#62;
+      &#60;nodes&#62;*&#60;/nodes&#62;
+      &#60;cmd&#62;$DART_COMMON_DIR/scripts/startPier&#60;/cmd&#62;
+    &#60;/nodegroup&#62;
+    &#60;nodegroup&#62;
+      &#60;nodes&#62;*&#60;/nodes&#62;
+      &#60;cmd&#62;$DART_COMMON_DIR/scripts/startsensors&#60;/cmd&#62;
+    &#60;/nodegroup&#62;
+
+    &#60;!-- Wait 120 seconds for PIER, 10 seconds between each test --&#62;
+    &#60;nodegroup&#62;
+      &#60;nodes&#62;0&#60;/nodes&#62;
+      &#60;cmd time="120"&#62;$DART_COMMON_DIR/scripts/sq.selectall/runclient -b 1 1&#60;/cmd&#62;
+    &#60;/nodegroup&#62;
+    &#60;nodegroup&#62;
+      &#60;nodes&#62;0&#60;/nodes&#62;
+      &#60;cmd time="250"&#62;$DART_COMMON_DIR/scripts/sq.selectall/runclient -b 4 1&#60;/cmd&#62;
+    &#60;/nodegroup&#62;
+    &#60;nodegroup&#62;
+      &#60;nodes&#62;0&#60;/nodes&#62;
+      &#60;cmd time="380"&#62;$DART_COMMON_DIR/scripts/sq.selectall/runclient -b 16 1&#60;/cmd&#62;
+    &#60;/nodegroup&#62;
+    &#60;nodegroup&#62;
+      &#60;nodes&#62;0&#60;/nodes&#62;
+      &#60;cmd time="510"&#62;$DART_COMMON_DIR/scripts/sq.selectall/runclient -b 64 1&#60;/cmd&#62;
+    &#60;/nodegroup&#62;
+
+  &#60;/execution&#62;
+
+  &#60;postexecution&#62;
+    &#60;script&#62;$DART_COMMON_DIR/scripts/sq.selectall/postexecution&#60;/script&#62;
+  &#60;/postexecution&#62;
+
+  &#60;reset&#62;
+    &#60;script&#62;$DART_COMMON_DIR/scripts/reset&#60;/script&#62;
+  &#60;/reset&#62;
+
+&#60;/dart&#62;</PRE
+></FONT
+></TD
+></TR
+></TABLE
+><P
+>    The test section includes two things.  First, a unique test name and
+    second, a local directory to store test output from all nodes in the
+    test.  Under the output directory, node output will be stored under
+    subdirectories named by virtual nodes numbers ranging from 0 to n - 1. 
+    Usually I just store all output in /tmp under /tmp/testname as
+    in the example.
+  </P
+><P
+>    The topology section includes Emulab information and names of
+    useful related files.  The project is the name of the Emulab
+    project you are part of (recall the Preliminaries section). 
+    The experiment and nsfile correspond to the specific Emulab
+    topology the distributed test is to be run on.  nsfile is
+    an Emulab topology file generated by dart using the mktopologies
+    command. (NOTE: add more on this) while experiment is the
+    name of the experiment corresponding to that file.  When
+    running multiple tests that use the same topology, it's
+    convenenient to use the same experiment and nsfile names.
+    This will ensure that the topology gets cached rather than
+    reinstantiated each time.  Lastly, the eipsfile and iipsfile
+    are local files (that DART creates) that store the list of
+    external IP addresses and internal IP addresses for the
+    nodes in your  Emulab experiment. These can be useful
+    if you need/want to ssh into specific nodes to examine what
+    is going on (e.g., when debugging a distributed test for
+    the first time).
+  </P
+><P
+>    The commonfiles section specifies a set of local files/directories (dir
+    for directories, file for files) to be transfered to each node.   
+    For each file/directory, src specifies a local path of the
+    relevant data and dst specifes a remote path on Emulab nodes. 
+    Specifying type="remote" specifies that src should be taken relative
+    to the destination node.  This is useful if you are repeatedly 
+    transferring common files over the wide-area that are large and
+    are better served off of Emulab's local NFS (which all nodes
+    mount).  For example, in the above, the JDK's src is a path to
+    an NFS mounted directory on an Emulab node and dst is a local
+    path on that Emulab node.
+  </P
+><P
+>    The preexecution section specifies a script to run on all nodes
+    after all files/directories in commonfiles have been transferred
+    over.  In the preexecution script above, we install the JDK RPM
+    and copy static data (to be queried) off of Emulab's NFS server.
+    This is entirely application-specific and is optional (omit this
+    section if you don't want it).
+  </P
+><P
+>    The execution section is where the main action takes place. It
+    takes a required attribute called duration which specifies how
+    long the test should run.  Within the execution section, one
+    or more nodegroup sections can be specified. Each nodegroup
+    section specifies a commond to run at a specified time on a 
+    a specific subset of nodes. The time is specified in seconds
+    since the test start.  The nodes are specified by a comma
+    separated node numbers (0 to n-1).  Two conveniences are provided:
+    a wildcard * which means all nodes and ranges of nodes (e.g., 0-3).
+    In the PIER example, there are three things going on. First,
+    we start the servers up by calling startPier.  This starts up
+    PIER.  Second, we start the sensors that have data to be queried.
+    Third, we issue a sequence of queries by a single client in
+    succession.  Note that after starting PIER, we wait 120 seconds before 
+    issuing the first such query.  This is to give the DHT time 
+    to stabilize and to allow the multicast tree for query dissemination
+    to form. In the test code itself (i.e., the client code), output
+    is written to a well-known directory (/tmp/out).  This output
+    will then be collected by the master node (node 0) which 
+    we can then run a postexecution script against to check the results.
+  </P
+><P
+>     The postexecution section specifies a script to run on the master
+     node (node 0) after everything in the execution section has
+     completed.  Note that, in contrast to the preexecution section,
+     this runs only on the master.  The idea here is that after the
+     test completes, all the output data (from /tmp/out on each node)
+     from each node will be collected on the master in a well-known
+     directory (/tmp/allout on the master).  We then run a
+     postexecution script to compute the results of the test. 
+  </P
+><P
+>      Finally, the reset script specifies how to reset a node so
+      that an Emulab experiment can be reused across tests that
+      use the same topology.  This might kill all application processes
+      and remove all application files for example.
+   </P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x23.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x36.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Writing a Distributed Test</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Running a Distributed Test</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>
