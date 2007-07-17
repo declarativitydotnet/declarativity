@@ -25,6 +25,8 @@ CLEANFILES =			*.cpp \
 				*.pdf \
 				*.dvi
 
+EXTRA_DIST =	UserGuide.tex UserGuide.bib
+
 all : UserGuide.pdf
 
 UserGuide.pdf :	UserGuide.tex UserGuide.bib
