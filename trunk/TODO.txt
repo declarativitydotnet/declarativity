@@ -47,12 +47,8 @@
    "true".  When all have received true inputs, it pushes out a signal
    tuple on its output port and resets all input ports to false.
 
- - Add a "getting started with P2" document (Joe)
-
  - Rewrite OverLog parser, fix off-by-one errors in error reporting,
    engineer a consistent error handling policy.
-
- - Write an OverLog manual. (Joe)
 
  - Use shared pointers (or a materialized version thereof) to implement
    the count algorithm for multiply-derived tuples.
@@ -64,4 +60,3 @@
  - Create a replay facility for element, rule strand, and dataflow
    traces. Great for replay debugging.
 
- - Fix docs/ping.olg
