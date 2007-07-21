@@ -16,7 +16,6 @@
 
 
 
-
  - A TCP connect element pair: analogous to UDP element.  Some kind of
    reconnection policy.   Rx is push output, Tx is pull input. 
 
