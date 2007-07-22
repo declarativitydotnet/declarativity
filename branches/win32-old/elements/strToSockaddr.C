@@ -55,7 +55,9 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
   }
 
   // Split into address and port
-  const char * theString = Val_Str::cast(first).c_str();
+  // const char * theString = Val_Str::cast(first).c_str();
+  string str = Val_Str::cast(first);
+  const char * theString = str.c_str();
   const char * theAtSign = strchr(theString, ':');
   if (theAtSign == NULL) {
     // Couldn't find the correct format
@@ -63,7 +65,7 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
     return TuplePtr();
   }
   string theAddress(theString, theAtSign - theString);
-  struct hostent *host = gethostbyname(theAddress.c_str());
+  LPHOSTENT host = gethostbyname(theAddress.c_str());
   if (host != NULL) {
     theAddress = inet_ntoa(*((struct in_addr*)host->h_addr));
   }
@@ -80,7 +82,9 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
   addr.sin_port = htons(port);
   //inet_pton(AF_INET, theAddress.c_str(), &addr.sin_addr);
   int saddr_len;
-  WSAStringToAddress((LPSTR) theAddress.c_str(), AF_INET, NULL, (LPSOCKADDR) &addr.sin_addr, &saddr_len);
+  // WSAStringToAddress((LPSTR) theAddress.c_str(), AF_INET, NULL, (LPSOCKADDR) &addr.sin_addr, &saddr_len);
+  addr.sin_addr = *((LPIN_ADDR)*host->h_addr_list);
+//  addr.sin_addr.s_addr = inet_addr(theAddress.c_str());
 
   FdbufPtr addressUio(new Fdbuf());
   addressUio->push_bytes((char*)&addr, sizeof(addr));

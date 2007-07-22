@@ -51,6 +51,7 @@ const int MARSHAL_NUM_UIOS=5000;
 static ValuePtr va[FIELD_TST_SZ];
 
 static Fdbuf xe[MARSHAL_NUM_UIOS];
+
 static ValuePtr vf;
 
 static double time_fn(b_cbv cb) 
@@ -77,7 +78,7 @@ static double time_fn(b_cbv cb)
     tdiff = after_ts - before_ts; 
     // ensure we compute nanosecs (1/(10^9) sec) 
     // even if boost is compiled to lower precision 
-    elapsed = tdiff.fractional_seconds() * PTIME_SECS_FACTOR;
+    elapsed = (double)(tdiff.fractional_seconds() * PTIME_SECS_FACTOR);
     average = elapsed / iter;
     sum = (average - past_average);
     if (sum > 0) 
@@ -168,13 +169,14 @@ static void create_lots_val_str() {
 
 static void marshal_lots_of_values() {
   for (int c = 0; c < MARSHAL_NUM_UIOS; c++) { 
-    boost::archive::text_oarchive xdrs(&xe[c]);
-    // clear uio first, then write.
+    boost::archive::text_oarchive *ostr = (boost::archive::text_oarchive *)(&(xe[c]));
+
+	// clear uio first, then write.
     // this prevent memory from growing indefinitely
-    xe[c].clear();
+    // xe[c].clear();
 //    xdrfdbuf_create(&xdrs, &xe[c], false, XDR_ENCODE);
     for (int i = 0; i < MARSHAL_CHUNK_SZ; i++) {
-      va[i]->marshal(&xdrs); 
+      va[i]->marshal(ostr); 
     }
   }
 }
@@ -182,7 +184,8 @@ static void marshal_lots_of_values() {
 static void unmarshal_lots_of(Value::TypeCode t) {
   for (int c = 0; c < MARSHAL_NUM_UIOS; c++) {
 //    P2_XDR xdrs;
-	  boost::archive::text_iarchive xdrs(&xe[c]);
+	  std::stringstream ss(xe[c].str());
+	  boost::archive::text_iarchive xdrs(ss);
 //    xdrfdbuf_create(&xdrs, &xe[c], false, XDR_DECODE);
     for (int i = 0; i < MARSHAL_CHUNK_SZ; i++) {
       switch (t) {
@@ -336,13 +339,14 @@ int main(int argc, char **argv)
   TuplePtr t = create_tuple_1();
   // P2_XDR xdrs;
   Fdbuf singlet;
-  std::stringstream outstr;
-  boost::archive::text_oarchive xdrs(&outstr);
+
+  FdbufPtr fb(new Fdbuf());
+  boost::archive::text_oarchive *xdrs = (boost::archive::text_oarchive *)fb.get();
 //  xdrfdbuf_create(&xdrs, &singlet, false, XDR_ENCODE);
-  t->marshal(&xdrs);
+  t->marshal(xdrs);
 
 //  TELL_INFO << " length=" << singlet.length();
-    TELL_INFO << " length=" << outstr.rdbuf().str().length();
+    TELL_INFO << " length=" << fb->str().length();
 //  TELL_INFO << " removed=" << singlet.removed();
   // const char *buf = singlet.cstr();
   // uint32_t sz = singlet.length();

@@ -50,7 +50,7 @@ void Udp::Rx::socket_cb()
   FdbufPtr fb(new Fdbuf());
   struct sockaddr sa;
   memset(&sa, 0, sizeof(sa));
-  socklen_t sa_len = 0;
+  socklen_t sa_len = sizeof(sa);
   int result = fb->recvfrom(u->sd, Fdbuf::BUF_DFLT_READ, 0, &sa, &sa_len);
   if (result <= 0) {
     // Error! 
@@ -81,6 +81,7 @@ void Udp::Rx::element_cb()
 {
   push_pending = true;
   socket_on();
+  return;
 }
 
 int Udp::Rx::initialize()
@@ -139,6 +140,7 @@ void Udp::Tx::socket_cb()
     log(Reporting::P2_ERROR, errno, "Payload larger than socket buffer");
   }
   socket_on();
+  return;
 }
 
 //
@@ -148,6 +150,7 @@ void Udp::Tx::element_cb()
 {
   pull_pending = true;
   socket_on();
+  return;
 }
 
 int Udp::Tx::initialize()

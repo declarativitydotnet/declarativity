@@ -59,6 +59,7 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL><<EOF>> { return OL_EOF; }
 <INITIAL>{WHITESPACE}		;
 <INITIAL>%%.*			; // Ignore %% comments
+<INITIAL>\/\/.*           ; // Ignore // comments
 <INITIAL>^#!.*			; // Ignore '#' directives
 
 <INITIAL>\/\* { 

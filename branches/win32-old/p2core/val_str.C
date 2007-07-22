@@ -38,7 +38,7 @@ void Val_Str::marshal_subtype( boost::archive::text_oarchive *x )
   const char *st = s.c_str();
   int32_t sl = s.length();
   *x & sl;
-  x->save_binary(const_cast<char **>(&st), sl + 1);
+  x->save_binary(const_cast<char *>(st), sl + 1);
 }
 
 
@@ -53,7 +53,7 @@ ValuePtr Val_Str::unmarshal( boost::archive::text_iarchive *x )
     // We can use the static buffer
     static char stringBuffer[STATIC_STRING_BUFFER];
     static char* sb = &(stringBuffer[0]);
-    x->load_binary(&sb, sl + 1);
+    x->load_binary(sb, sl + 1);
     sb[sl] = 0;       // make sure it's null terminated
     string st(sb, sl);
     return mk(st);

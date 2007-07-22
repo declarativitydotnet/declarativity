@@ -23,7 +23,7 @@
 #include "value.h"
 #include <string>
 #include <sstream>
-#include <errno.h>
+// #include <error.h>
 // #include <sys/socket.h>
 #include <winsock2.h>
 
@@ -46,13 +46,13 @@ private:
   uint32_t capacity;	// Capacity of the buffer so far.
   uint32_t len;		// Number of bytes actually held.
   uint32_t start;		// Offset of first valid byte
-  int	 err;		// Last value of errno. 
+  int	 err;		// Last value of WSAGetLastError(). 
   char	 *data;		// Data itself
   bool	 safe;		// Zero any data before deleting
 
   // Used by write, send, sendto...
   inline ssize_t post_write(uint32_t w) {
-    err = errno;
+    err = WSAGetLastError();
     if (w > 0) {
       start += w;
       len -= w;
@@ -62,7 +62,7 @@ private:
   
   // Used by read, recv, recvfrom...
   inline ssize_t post_read(uint32_t r) {
-    err = errno;
+    err = WSAGetLastError();
     if (r > 0) {
       len += r;
     }
@@ -157,7 +157,7 @@ public:
   // ACCESS FUNCTIONS: those that aren't quite INPUT or OUTPUT. 
   //
   
-  // Return the last value of errno. 
+  // Return the last value of WSAGetLastError(). 
   int last_errno() { return err; };
   
   // Remove all data in the buffer.

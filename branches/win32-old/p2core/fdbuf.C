@@ -126,10 +126,12 @@ ssize_t Fdbuf::send(int sd, ssize_t max_write, int flags)
 ssize_t Fdbuf::sendto(int sd, ssize_t max_write, int flags,
 		      const struct sockaddr *to, socklen_t tolen)
 {
-  return post_write(::sendto(sd, data + start, 
-			     ((max_write < 0) ? len
-                              : std::min(len, (uint32_t) max_write)),
-			     flags, to, tolen));
+	ssize_t s = ::sendto(sd, data + start, 
+						 ((max_write < 0) ? len
+						  : std::min(len, (uint32_t) max_write)),
+						 flags, (LPSOCKADDR) to, tolen);
+	unsigned int i = post_write(s);
+	return (ssize_t) i;
 }
 
 //
