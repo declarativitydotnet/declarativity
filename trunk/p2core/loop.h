@@ -276,7 +276,8 @@ public:
 };
 typedef std::list<IProcess*> TProcesses;
 
-extern TProcesses procs;
+TProcesses
+procs();
 
 void registerProcess(IProcess*);
 void removeProcess(IProcess*);
