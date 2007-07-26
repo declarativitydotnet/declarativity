@@ -23,13 +23,10 @@ FIND_PACKAGE(BISON)
 # Look for include files
 INCLUDE (CheckIncludeFiles)
 # usage: CHECK_INCLUDE_FILES (<header> <RESULT_VARIABLE> )
-CHECK_INCLUDE_FILES( rpc/rpc.h HAVE_RPC_RPC_H)
-CHECK_INCLUDE_FILES( "rpc/types.h;rpc/xdr.h" HAVE_RPC_XDR_H)
 
 # Check for unusual functions
 INCLUDE(CheckSymbolExists)
-CHECK_SYMBOL_EXISTS(xdr_uint32_t "rpc/types.h;rpc/xdr.h" HAVE_XDR_UINT32_T)
-CHECK_SYMBOL_EXISTS(xdr_u_int32_t "rpc/types.h;rpc/xdr.h" HAVE_XDR_U_INT32_T)
+
 # Check for exp10, which is a g++ special.  CHECK_SYMBOL_EXISTS fires off gcc, not g++, so we
 # write a custom check.
 INCLUDE(CheckCXXSourceCompiles)
