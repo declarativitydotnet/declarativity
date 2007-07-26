@@ -35,11 +35,6 @@ public:
 
 const opr::Oper* Val_Null::oper_ = new OperNull();
 
-//
-// Singleton null value.
-//
-ValuePtr Val_Null::singleton = ValuePtr(new Val_Null());
-
 string Val_Null::toConfString() const
 {
   return "Val_Null()";
@@ -54,7 +49,7 @@ void Val_Null::xdr_marshal_subtype( XDR *x )
 }
 ValuePtr Val_Null::xdr_unmarshal( XDR *x )
 {
-  return singleton;
+  return Val_Null::mk();
 }
 
 int Val_Null::compareTo(ValuePtr other) const
@@ -77,3 +72,16 @@ void Val_Null::cast(ValuePtr v) {
 }
 
 
+ValuePtr
+Val_Null::mk()
+{
+  static ValuePtr _theSingleton = ValuePtr(new Val_Null());
+  return _theSingleton;
+}
+
+
+unsigned int
+Val_Null::size() const
+{
+  return sizeof(Val_Null::mk());
+}
