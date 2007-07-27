@@ -171,17 +171,18 @@ loadAllModules()
    My usage string
 */
 static char* USAGE = "Usage:\n\t runStagedOverLog\n"
-                     "\t\t[-o <overLogFile> (default: standard input)]\n"
                      "\t\t[-r <loggingLevel> (default: ERROR)]\n"
-                     "\t\t[-s <seed> (default: 0)]\n"
                      "\t\t[-n <myipaddr> (default: localhost)]\n"
                      "\t\t[-p <port> (default: 10000)]\n"
+                     "\t\t[-D<key>=<value>]*\n"
+                     "\t\t[-s <seed> (default: 0)]\n"
+
+                     "\t\t[-o <overLogFile> (default: standard input)]\n"
                      "\t\t[-d <startDelay> (default: 0)]\n"
                      "\t\t[-g (produce a DOT graph)]\n"
                      "\t\t[-c (output canonical form)]\n"
                      "\t\t[-v (show stages of planning)]\n"
                      "\t\t[-x (dry run, don't start dataflow)]\n"
-                     "\t\t[-D<key>=<value>]*\n"
                      "\t\t[-h (gets usage help)]\n";
 
 
@@ -189,31 +190,25 @@ static char* USAGE = "Usage:\n\t runStagedOverLog\n"
 int
 main(int argc, char **argv)
 {
-  string overLogFile("-");
-  string derivativeFile("stdin");
-  int seed = 0;
   string myHostname = "localhost";
   int port = 10000;
-  double delay = 0.0;
   std::vector< std::string > definitions;
+  int seed = 0;
+
+
+  string overLogFile("-");
+  string derivativeFile("stdin");
+  double delay = 0.0;
   bool outputDot = false;
   bool run = true;
   bool outputCanonicalForm = false;
   bool outputStages = false;
 
+  Reporting::setLevel(Reporting::ERROR);
   // Parse command line options
   int c;
-  while ((c = getopt(argc, argv, "o:r:s:n:p:d:D:hgcvx")) != -1) {
+  while ((c = getopt(argc, argv, "r:n:p:D:ho:s:d:gcvx")) != -1) {
     switch (c) {
-    case 'o':
-      overLogFile = optarg;
-      if (overLogFile == "-") {
-        derivativeFile = "stdin";
-      } else {
-        derivativeFile = overLogFile;
-      }
-      break;
-
     case 'r':
       {
         // My minimum reporting level is optarg
@@ -221,6 +216,35 @@ main(int argc, char **argv)
         Reporting::Level level =
         Reporting::levelFromName()[levelName];
         Reporting::setLevel(level);
+      }
+      break;
+
+    case 'n':
+      myHostname = optarg;
+      break;
+
+    case 'p':
+      port = atoi(optarg);
+      break;
+
+    case 'D':
+      definitions.push_back(optarg);
+      break;
+
+    case 's':
+      seed = atoi(optarg);
+      break;
+
+
+
+
+
+    case 'o':
+      overLogFile = optarg;
+      if (overLogFile == "-") {
+        derivativeFile = "stdin";
+      } else {
+        derivativeFile = overLogFile;
       }
       break;
 
@@ -240,24 +264,8 @@ main(int argc, char **argv)
       outputStages = true;
       break;
 
-    case 's':
-      seed = atoi(optarg);
-      break;
-
-    case 'n':
-      myHostname = optarg;
-      break;
-
-    case 'p':
-      port = atoi(optarg);
-      break;
-
     case 'd':
       delay = atof(optarg);
-      break;
-
-    case 'D':
-      definitions.push_back(std::string("-D") + optarg);
       break;
 
     case 'h':
@@ -267,25 +275,8 @@ main(int argc, char **argv)
     }
   }      
 
-  if (overLogFile == "-") {
-    derivativeFile = "stdin";
-  } else {
-    derivativeFile = overLogFile;
-  }
-  
-  TELL_INFO << "Running from translated file \"" << overLogFile << "\"\n";
-
   srandom(seed);
   TELL_INFO << "Seed is \"" << seed << "\"\n";
-
-  std::ostringstream myAddressBuf, myPortBuf;
-  myAddressBuf <<  myHostname << ":" << port;
-  myPortBuf <<port;
-  std::string myAddress = myAddressBuf.str();
-  std::string myPort = myPortBuf.str();
-  TELL_INFO << "My address is \"" << myAddress << "\"\n";
-  
-  TELL_INFO << "My start delay is " << delay << "\n";
 
   TELL_INFO << "My environment is ";
   for (std::vector< std::string>::iterator i =
@@ -300,11 +291,33 @@ main(int argc, char **argv)
 
 
 
+  if (overLogFile == "-") {
+    derivativeFile = "stdin";
+  } else {
+    derivativeFile = overLogFile;
+  }
+  
+  TELL_INFO << "Running from translated file \"" << overLogFile << "\"\n";
+
+  std::ostringstream myAddressBuf, myPortBuf;
+  myAddressBuf <<  myHostname << ":" << port;
+  myPortBuf <<port;
+  std::string myAddress = myAddressBuf.str();
+  std::string myPort = myPortBuf.str();
+  TELL_INFO << "My address is \"" << myAddress << "\"\n";
+  
+  TELL_INFO << "My start delay is " << delay << "\n";
+
+
+
+
+
+
 
   try {
     loadAllModules();
 
-    Reporting::setLevel(Reporting::ERROR);
+    // Set up my NodeID table
     CommonTablePtr nodeIDTbl = Plumber::catalog()->table(NODEID);
     TuplePtr nodeIDTp = Tuple::mk(NODEID);
     nodeIDTp->append(Val_Str::mk(myAddress));
@@ -313,7 +326,45 @@ main(int argc, char **argv)
     assert(nodeIDTbl->insert(nodeIDTp));
     assert(Plumber::catalog()->nodeid());
 
-    string dfdesc = stub(myHostname,myPort,TERMINAL);
+    // Set up my arguments table
+    CommonTablePtr argumentsTbl = Plumber::catalog()->table(ARGUMENT);
+    for (std::vector< std::string>::iterator i =
+           definitions.begin();
+         i != definitions.end();
+         i++) {
+      std::string definition = (*i);
+      std::string::size_type eqPosition = definition.find('=');
+      if (eqPosition == std::string::npos) {
+        // Doesn't have an equals. Throw warning and skip
+        TELL_WARN << "Argument \"" 
+                  << definition
+                  << "\" is missing a '='. Skipped."
+                  << "\n";
+      } else if (eqPosition == 0) {
+        // Doesn't have a key. Throw warning and skip
+        TELL_WARN << "Argument \"" 
+                  << definition
+                  << "\" has no key, only value (after the '='). Skipped."
+                  << "\n";
+      } else if (eqPosition == definition.size() - 1) {
+        // Doesn't have a value. Throw warning and skip
+        TELL_WARN << "Argument \"" 
+                  << definition
+                  << "\" has no value, only key (before the '='). Skipped."
+                  << "\n";
+      } else {
+        std::string key = definition.substr(0, eqPosition - 1);
+        std::string value = definition.substr(eqPosition + 1);
+
+        TuplePtr argumentsTp = Tuple::mk(ARGUMENT);
+        argumentsTp->append(Val_Str::mk(key));
+        argumentsTp->append(Val_Str::mk(value));
+        argumentsTp->freeze();
+        assert(argumentsTbl->insert(argumentsTp));
+      }
+    }
+
+    string dfdesc = stub(myHostname, myPort, TERMINAL);
 
     eventLoopInitialize();
     compile::Context *context = new compile::p2dl::Context("p2dl", dfdesc);

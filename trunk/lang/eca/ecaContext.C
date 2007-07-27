@@ -278,8 +278,9 @@ namespace compile {
       for (ValPtrList::const_iterator iter = periodicSchema->begin();
            iter != periodicSchema->end(); iter++) {
         if ((*Val_Tuple::cast(*iter))[TNAME]->toString() == VAR ||
-            (*Val_Tuple::cast(*iter))[TNAME]->toString() == LOC)
+            (*Val_Tuple::cast(*iter))[TNAME]->toString() == LOC) {
           schema->append(*iter);
+        }
       }
   
       /** Setup the trigger rule tuple */

@@ -576,7 +576,14 @@ namespace compile {
                                  )
     {
       static int fict_varnum = 1; // Counter for inventing anonymous variables. 
-      // Next, we canonicalize all the args in the rule head.  We build up
+
+      // We should not be canonicalize periodics
+      if (pred->name() == "periodic") {
+        // Skip this one
+        return;
+      }
+
+      // Next, we canonicalize all the args in the functor.  We build up
       // a list of argument names - the first 'arity' of these will be the
       // free variables in the rule head.  Literals and duplicate free
       // variables here are eliminated, by a process of appending extra

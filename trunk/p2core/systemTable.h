@@ -18,6 +18,7 @@
 #define SYS_TABLE_GLOBALS
   /** Entity table names */
   #define NODEID            "nodeId"
+  #define ARGUMENT          "argument"
   #define PROGRAM           "program"
   #define GLOBAL_EVENT      "globalEvent"
   #define REWRITE           "rewrite"
@@ -86,6 +87,10 @@ TABLEDEF(ACCESS_METHOD, CommonTable::theKey(CommonTable::KEY3), \
 TABLEDEF(NODEID, CommonTable::theKey(CommonTable::KEY3), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("NID", 2) \
          SCHEMA("ADDRESS", 3))
+
+TABLEDEF(ARGUMENT, CommonTable::theKey(CommonTable::KEY2), \
+         SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("KEY", 2) \
+         SCHEMA("VALUE", 3))
 
 TABLEDEF(GLOBAL_EVENT, CommonTable::theKey(CommonTable::KEY34), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("EID", 2) \
