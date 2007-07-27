@@ -13,8 +13,7 @@
 # DESCRIPTION: Makefile for the P2 tests
 #
 
-bin_PROGRAMS =			runOverLog2 \
-				runOverLog \
+bin_PROGRAMS =			runOverLog \
 				benchmark \
 				udpMessage \
 				udpListen \
@@ -35,27 +34,6 @@ benchmark_LDADD =		$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/lang/p2dl/libp2dl.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/net/libp2net.la
-
-runOverLog2_SOURCES =		runOverLog2.C
-
-runOverLog2_LDADD = 		\
-				@OPENSSL_LIB@ \
-				$(top_builddir)/stages/libp2stages.la \
-				$(top_builddir)/lang/p2dl/libp2dl.la \
-				$(top_builddir)/elements/libp2elements.la \
-				$(top_builddir)/p2core/libp2core.la \
-				$(top_builddir)/lang/libp2lang.la \
-				$(top_builddir)/lang/parse/libp2parse.la \
-				$(top_builddir)/lang/eca/libp2eca.la \
-				$(top_builddir)/lang/local/libp2local.la \
-				$(top_builddir)/lang/rewrite/libp2rewrite.la \
-				$(top_builddir)/lang/debug/libp2debug.la \
-				$(top_builddir)/lang/planner/libp2planner.la \
-				$(top_builddir)/net/libp2net.la \
-				$(top_builddir)/functions/libp2functions.la \
-				$(top_builddir)/aggregates/libp2aggregates.la \
-				$(top_builddir)/debugger/libp2debugger.la 
-
 
 runStagedOverlog_SOURCES  =	runStagedOverlog.C
 

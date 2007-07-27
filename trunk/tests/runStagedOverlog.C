@@ -170,7 +170,7 @@ loadAllModules()
 /**
    My usage string
 */
-static char* USAGE = "Usage:\n\t runOverLog\n"
+static char* USAGE = "Usage:\n\t runStagedOverLog\n"
                      "\t\t[-o <overLogFile> (default: standard input)]\n"
                      "\t\t[-r <loggingLevel> (default: ERROR)]\n"
                      "\t\t[-s <seed> (default: 0)]\n"
