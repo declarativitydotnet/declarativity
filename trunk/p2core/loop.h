@@ -276,7 +276,7 @@ public:
 };
 typedef std::list<IProcess*> TProcesses;
 
-TProcesses
+TProcesses*
 procs();
 
 void registerProcess(IProcess*);

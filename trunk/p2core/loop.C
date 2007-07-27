@@ -424,32 +424,32 @@ fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
 ////////////////////////////////////////
 //Process callbacks...
 ///////////////////////////////////////
-TProcesses
+TProcesses*
 procs()
 {
   static TProcesses* theProcs = new TProcesses();
-  return *theProcs;
+  return theProcs;
 }
 
 void
 registerProcess(IProcess* aProc)
 {
-  procs().push_back(aProc);
+  procs()->push_back(aProc);
 }
 
 void
 removeProcess(IProcess* aProc)
 {
-  procs().remove(aProc);
+  procs()->remove(aProc);
 }
 
 void
 processCatchup(boost::posix_time::time_duration& waitDuration)
 {
   boost::posix_time::time_duration w2 = waitDuration;
-  TProcesses::iterator it = procs().begin();
+  TProcesses::iterator it = procs()->begin();
   for(;
-      it != procs().end();
+      it != procs()->end();
       it++) {
     (*it)->proc(&w2);
     if(w2 < waitDuration) {
