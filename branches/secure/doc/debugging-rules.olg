@@ -1,0 +1,65 @@
+materialize(ruleExecTable, 100, 500, keys(1,2,3,4,5,6,7)).
+materialize(tupleTable, 100, 1000, keys(2)).
+
+/** if you give trace(X), then our framework will
+ ** produce inTraceX() type tuples, where the fields
+ ** of inTrace tuple contain all fields of X and the
+ ** tupleId of X 
+ */
+
+
+watch(report).
+
+/*
+watch(interMed).
+watch(traceBack).
+watch(inTracelookupResults).
+*/
+
+trace(lookupResults).
+
+x1 interMed(@RI, TRemote, Tout, E, NI, D) :- inTracelookupResults(@NI, K, S, SI, E, Tout),
+ 			      tupleTable(@NI, TLocal, RI, TRemote),
+			      Tout == TLocal, D := NI.
+
+
+/*
+ Below rule handles traceback of lookup tupes, you may need to 
+ write your own version of the rule for the type of tuple you
+ want to trace. 
+*/
+
+/*
+trace(lookup).
+
+x1 interMed(@RI, TRemote, E, NI, D) :- inTracelookup(@NI, K, R, E, Tout),
+				tupleTable(@NI, TLocal, RI, TRemote),
+				Tout == TLocal, D := NI.
+*/
+
+x2 traceBack(@RI, Tin, R, Tout, E, NI, D1) :- interMed(@RI, TRemote, T, E, NI, D),
+			      ruleExecTable(@RI, R, Tin, Tout, Sout, LTIN, LTOUT, TYPE),
+ 			      TYPE == "EVENT",
+			      TRemote == Tout,
+			      D1 := RI + "::" + D.
+
+x3 traceBack(@SI, TRemote, R, Tout, E, NI, D1) :- 
+			      traceBack(@RI, Tin, R, Tout, E, NI, D),
+			      tupleTable(@RI, Tin, SI, TRemote),
+			      SI != RI,
+			      D1 := RI + "::" + D.
+
+x4 traceBack(@SI, T1, R2, Tout, E, NI, D1) :- 
+			      traceBack(@SI, Tin, R1, Tout, E, NI, D),
+			      ruleExecTable(@SI, R, T1, T2, Sout, LTIN, LTOUT, TYPE),
+			      TYPE == "EVENT",
+			      R2 := R + "::" + R1,
+			      T1 != 0, T2 == Tin, M := "::",
+			      D1 := SI + "::" + D, R2 != "c1".
+
+x5 report(@NI, T1, T, R, D1) :- traceBack(@SI, Tin, R1, T, E, NI, D),
+				 ruleExecTable(@SI, R2, T1, T2, Sout, LTIN, LTOUT, TYPE),
+				 ((T1 == 0) || ( R2 == "c1")), 
+				 T2 == Tin, R := R2 + "::" + R1, TYPE == "EVENT",
+				 D1 := SI + "::" + D.
+	
