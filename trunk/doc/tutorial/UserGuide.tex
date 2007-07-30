@@ -1526,6 +1526,7 @@ This bug does not apply to rule head predicates, so
 r1 action(@Me, 5) :- predicate(@Me).
 \end{lstlisting}
 is handled correctly and the workaround is not required.
+\end{itemize}
 
 
 
@@ -1534,7 +1535,225 @@ is handled correctly and the workaround is not required.
 
 \emph{Placeholder}
 
-\end{itemize}
+In this section, we describe the new P2 Dataflow Language (P2DL). The purpose
+of this language is to serve as an intermediate compilation language for the
+new P2 Overlog Compiler. In prior versions of the Overlog compiler, the dataflow
+graph was created directly in the Planner. The result was complex code that only
+few knew how to navigate. The complexity came from the need to directly create
+and configure the C++ objects that make up the dataflow graph. The dataflow
+language makes this a much more intuitive process by allowing for a syntactical 
+representation of the dataflow graph.
+
+
+\subsection{The Graph Description}
+
+The {\bf graph} statement is how one creates an arbitrary graph out of
+Elements. The statement has the following syntactical form.
+
+\begin{verbatim}
+graph <NAME> (<INPUTS>, <OUTPUTS>, <PROCESSING>, <FLOW_CODE>) {
+     <GRAPH DESCRIPTION>
+}
+\end{verbatim}
+
+A graph is declared using the {\bf graph} keyword followed by the {\em name}
+of the graph. The graph name can be used to reference the graph in further
+statements (more on this later). A graph statement requires four arguments.
+\begin{enumerate}
+\item INPUTS: The number of inputs to the graph.
+\item OUTPUTS: The number of outputs to the graph.
+\item PROCESSING: A string that defines the push/pull semantics of each input and output port.
+\item FLOW\_CODE: A string defining the flow code semantics of each input and output port.
+\end{enumerate}
+The arguments to a graph are the same as those given to a basic P2 
+Element~\footnote{In fact, in the new framework a dataflow object inherits 
+from the Element class}. The graph statement corresponds to a dataflow 
+object in the system, initialized according to the aforementioned arguments.
+
+\subsubsection{Internal graph structure}
+
+In this section we describe how to define the internal graph structure.
+A graph specification describes a dataflow graph object that can be installed 
+into the Plumber or used in another graph specification. The following is a 
+simplified grammar of a graph specification.
+
+\begin{verbatim}
+graph <NAME> (<INPUTS>, <OUTPUTS>, <PROCESSING>, <FLOW_CODE>) {
+     ( assignment; )*
+     ( graph;}+
+     ( strand; )+
+}
+.	# END OF PROGRAM
+\end{verbatim}
+
+The dataflow graph description is enclosed within brackets, and consists of a zero or more assignments, zero or more graph statements, and one or more dataflow strands.
+
+\subsubsection{Assignments}
+An assignment binds a variable to a P2 Element declaration and has the following 
+syntax.
+
+\begin{verbatim}
+<variable> = <ELEMENT>( <arguments> );
+\end{verbatim}
+
+The variable can be any alpha or number character combination, and has a scope
+within the graph statement. The above grammar binds the variable
+to an Element object. The variable name can be used in strand statements to
+specify the hookups that should be made to the binding Element object.
+
+\subsubsection{Strand}
+A strand defines how a set of elements and graphs are to be connected in the 
+dataflow. A strand has the following simplified grammar. 
+
+\begin{verbatim}
+<element_expression> ( '->' <element_expression>)+;
+\end{verbatim}
+
+An element\_expression can be either the declaration of a new P2 Element, a 
+variable, or the name of some previously defined graph.
+The element\_expression can indicated the input/output ports that
+are to be hooked up by the strand statement. If a port is not given then the hookup defaults to port zero. Ports a defined by enclosing the port identifier in square
+brackets (e.g., [0] port zero, ["foo"] port "foo"). The position of the port identifier
+indicates an input or an output. If the port identifier proceeds the element\_expression
+then it is an input port. If it follows it is an output port identifier. The port identifier can
+also indicate the addition of a new port~\footnote{Only to be used with Elements that
+support dynamic port allocation.}. The [+] port identifier indicates the addition of a 
+new port. If the port takes a string (e.g., the dynamic demux element) then 
+the ["foo" +] port identifier would add the port string "foo" to the Element.
+
+
+\subsubsection{Defining and Linking P2 Elements}
+An element is defined by specifying the element type and any arguments required 
+by the element constructor. Connecting two elements together is indicated by a link. 
+The following sections define this process in more detail.
+
+\subsubsection{Declaring P2 Elements}
+
+An element is declared by specifying the Element type and any constructor arguments
+defined by the actual P2 Element class. The argument types of a P2 element include
+numeric (int or double), string, identifiers, and a C++ vector of P2 values. 
+All of these types are supported in the P2DL. The support for P2 values and vector 
+of P2 values will be described in Section~\ref{sec:p2values}. 
+
+The first argument of a P2 element constructor is always the name the element. 
+Under the general P2 architecture the element name can be
+an arbitrary string. However, when using P2DL, in order to reference the element in an
+edit the name of an element must follow the variable syntax by beginning with a lower
+case alpha character.
+
+\subsubsection{Hooking up P2 Elements using dataflow strands}
+
+In the P2 architecture, elements are connected by linking together an output port
+of one element to an input port of another element. The P2DL uses the array syntax
+for specifying the port of an element. The following 'foobar'
+graph description creates two Elements, TimedPushSource and Discard, and connects
+the former output port 0 to the latter input port 0.
+
+\begin{verbatim}
+graph foobar (0, 0, "", "") {
+         # No port specified defaults to port 0
+         TimedPushSource("source", 1) -> Discard("discard");
+}
+.
+\end{verbatim}
+
+A dataflow strand is a series of P2 elements and links specifying how the element
+ports should be connect. Each strand begins and ends with a single element\_expression
+and is terminated with a semicolon. The input of the first element\_expression
+and the output of the last element\_expression are not specified. Some elements 
+require the configuration of multiple input/output ports, which can be supported by
+declaring an element variable in the dataflow block and using that variable to reference
+the Element object in multiple positions. 
+
+\subsubsection{Declaring local variables using assignments}
+
+Local variables provide a way
+to reference an element\_expression in multiple positions, thereby permitting the 
+configuration of any number of input/ouput ports. A local variable is defined
+by assigning the Element declaration to a variable, as shown below.
+
+\begin{verbatim}
+graph bar(0, 0, "", "") {
+         # Define local variable mux
+         mux = Mux("mymux", 2);
+         
+         TimedPushSource("source1", 1) -> [0] mux[0] -> Discard("discard");
+         TimedPushSource("source2", 1) -> [1] mux;
+}
+.
+\end{verbatim}
+
+\subsubsection{P2 values and vectors of P2 values}
+\label{sec:p2values}
+
+The values supported by P2DL include numeric (int, unsigned, and double), string,
+identifier, and a vector of values. A numeric value in P2DL will create the appropriate
+P2 value. An integer value is assumed to be an 'int' type unless a 'U' character is
+appended to the value. An identifier is specified by appending a 'I' character to the
+hexadecimal character string representing the identifier. A string value is indicated by enclosing
+the string character with double quotes. A vector of values is indicated by enclosing
+a list of values in brackets. The list of values is delimited with a comma. The following
+provides some example vectors.
+\begin{verbatim}
+a = {0, 1, 2, 3};  # A list of integers
+b = {0U, 1U, 2U, 3U}; # A list of unsigned integers
+c = {1.0, 3.0}; # A list of double values
+d = {"foo", "bar"}; # A list of string values
+e = {2343254ef5e98I, 3e43545435454I}; # A list of identifers
+f = Demux("mydemux", {"foo", "bar"});
+g = Demux{"mysamedemux", d);
+\end{verbatim} 
+
+All examples above are expressed in assignment statements. The vector values
+can be referenced by the binding variable in further statements. The assignment
+to the variable 'f' binds that variable to a Demux object that is initialized with a vector of 
+string values indicating the demux ports. The variable 'g' is also bound to a Demux
+with the same configuration, but its vector values is provided by the variable 'd'.
+
+\subsection{Edit Specification}
+\label{sec:edits}
+
+The edit construct is used for rewiring the elements of an installed dataflow graph. 
+Permitting the ability to rewire a dataflow allows one to remove old elements 
+and/or incorporate new elements into the dataflow graph. The following is a 
+informal grammar to the edit specification.
+
+\begin{verbatim}
+edit <NAME> {
+   (assignment;)*
+   (graph;)*
+   (strand;)+
+}
+\end{verbatim}
+
+Every edit begins with the keyword {\bf edit}, followed by a DataflowName, which
+must be the name of some dataflow that has already been installed in the 
+Plumber~\footnote{Otherwise the Plumber will ignore the edit.}. The edit
+block is enclosed in brackets and contains zero or more assignments and one or
+more strands. The syntax for assignments remain the same but a dataflow strand
+is now able to references elements of the dataflow being edited. A reference
+to an existing element must be preceded by a single '.' in order to differentiate 
+it from a local variable. The following example illustrates an edit on a dataflow
+titled 'Main'.
+
+\begin{verbatim}
+edit main {
+  main.marshal -> Bandwidth("bw") -> main.udp;
+  main.cct -> main.unmarshal;  
+}
+.
+\end{verbatim}
+
+The first strand in the 'Main' edit rewires the output port $0$ of the existing element
+named 'marshal' to the input port $0$ of a new 'Bandwidth' element. 
+The output port $0$ of the new 'Bandwidth' element is connected to the existing element
+named 'udp', which will result in a rewiring of the 'udp' element's input port $0$. The
+second strand in the 'Main' edit rewires the output port $0$ of the existing 'cct' element
+to the input port $0$ of the existing 'unmarshal' element.
+
+
+
+ 
 
 
 \bibliographystyle{abbrv}
