@@ -59,6 +59,8 @@ namespace compile {
       virtual ~Expression() {};
   
       virtual string toString() const = 0;
+
+      virtual Expression* copy() const = 0;
   
       virtual const ValuePtr value() const
       { throw Exception(0, "Expression does not have a value."); }
@@ -74,10 +76,13 @@ namespace compile {
     
     class Term {
     public:
+
+      virtual Term* copy() const = 0;
+
       virtual ~Term() {};
   
       virtual string toString() const = 0;
-  
+
       virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string) = 0;
     };
     typedef std::deque<Term *> TermList;
@@ -85,6 +90,9 @@ namespace compile {
     
     class Statement {
     public:
+
+      virtual Statement* copy() const = 0;
+
       virtual ~Statement() {};
   
       virtual string toString() const = 0;
@@ -97,6 +105,13 @@ namespace compile {
     public:
       Value(ValuePtr val) : _value(val) {};
     
+      virtual Expression* copy() const{
+	Value *v = new Value(*this);
+	return v;
+      }
+
+      Value(const Value &v) : _value(v._value) {};
+
       virtual string toString() const 
       { return _value->toString(); };
   
@@ -113,8 +128,16 @@ namespace compile {
       : _value(var), _location(l) {};
     
       Variable(const string& var, bool l=false) 
-      : _value(Val_Str::mk(var)), _location(l)  {};
+      : _location(l),_value(Val_Str::mk(var))  {};
   
+      Variable(const Variable& var) 
+      : _location(var._location), _value(var._value)  {};
+
+      virtual Expression* copy() const{
+	Variable *v = new Variable(*this);
+	return v;
+      }
+
       virtual string toString() const 
       { return (_location ? "@" : "") + _value->toString(); };
     
@@ -131,6 +154,15 @@ namespace compile {
     public:
       Aggregation(string o, Expression *v);
     
+      Aggregation(const Aggregation &o):_operName(o._operName){
+	_variable = new Variable(*o._variable);
+      };
+
+      virtual Expression* copy() const{
+	Aggregation *v = new Aggregation(*this);
+	return v;
+      }
+
       virtual string toString() const;
     
       virtual string operName() const
@@ -166,6 +198,17 @@ namespace compile {
         }
       } 
     
+      Bool(const Bool &b)
+	: _operName(b._operName){
+	_lhs = b._lhs->copy();
+	_rhs = b._rhs->copy();
+      };
+
+      virtual Expression* copy() const{
+	Bool *v = new Bool(*this);
+	return v;
+      }
+
       virtual ~Bool() 
       { delete _lhs; if (_rhs) delete _rhs; }
     
@@ -202,6 +245,17 @@ namespace compile {
           case RANGECC: _operName = "[]"; break; 
         }
       };
+
+      Range(const Range &b)
+	: _operName(b._operName){
+	_lhs = b._lhs->copy();
+	_rhs = b._rhs->copy();
+      };
+
+      virtual Expression* copy() const{
+	Range *v = new Range(*this);
+	return v;
+      }
     
       virtual string toString() const;
     
@@ -242,6 +296,18 @@ namespace compile {
         }
       }
     
+      Math(const Math &b)
+      : _operName(b._operName){
+	_lhs = b._lhs->copy(); 
+	_rhs = b._rhs->copy();
+      };
+
+
+      virtual Expression* copy() const{
+	Math *v = new Math(*this);
+	return v;
+      }
+
       virtual ~Math() { delete _lhs; if (_rhs) delete _rhs; }
     
       virtual string toString() const;
@@ -267,7 +333,16 @@ namespace compile {
     class Vector : public Expression {
     public:
       Vector(ExpressionList *o);
+
+      Vector(const Vector &b)
+	: _vector(b._vector){
+      };
     
+      virtual Expression* copy() const{
+	Vector *v = new Vector(*this);
+	return v;
+      }
+
       virtual string toString() const 
       { return _vector->toString(); };
     
@@ -279,7 +354,16 @@ namespace compile {
     class Matrix : public Expression {
     public:
       Matrix(ExpressionListList *r);
+
+      Matrix(const Matrix &b)
+	: _matrix(b._matrix){
+      };
     
+      virtual Expression* copy() const{
+	Matrix *v = new Matrix(*this);
+	return v;
+      }
+
       virtual string toString() const
       { return _matrix->toString(); };
     
@@ -292,6 +376,24 @@ namespace compile {
     public:
       Function(Expression *n, ExpressionList *a) 
         : _name(n->toString()), _args(a) { };
+
+      Function(const Function &f) 
+        : _name(f._name){
+
+	ExpressionList *a = new ExpressionList();
+	ExpressionList::size_type sz = f._args->size();
+
+	for (unsigned i=0; i<sz; i++){
+	  Expression *e = f._args->at(i);
+	  a->push_back(e->copy());
+	}
+	_args = a;
+      };
+
+      virtual Expression* copy() const{
+	Function *v = new Function(*this);
+	return v;
+      }
     
       virtual ~Function() { delete _args; };
     
@@ -314,6 +416,22 @@ namespace compile {
     public:
       Functor(Expression *n, ExpressionList *a); 
      
+      Functor(const Functor &f) 
+        : _name(f._name){ 
+	ExpressionList *a = new ExpressionList();
+	ExpressionList::iterator it = f._args->begin();
+	while (it != f._args->end()){
+	  Expression *expr = *it;
+	  a->push_back(expr->copy());
+	}
+	_args = a;
+      };
+
+      virtual Term* copy() const{
+	Functor *v = new Functor(*this);
+	return v;
+      }
+
       virtual ~Functor() { delete _args; }
     
       virtual string toString() const;
@@ -337,6 +455,31 @@ namespace compile {
       string          _name;
       ExpressionList* _args;
     };
+
+    class Says : public Functor {
+    public:
+      Says(Functor* f, ExpressionList* s):Functor(*f), _says(s){};
+
+      Says(const Says &s):Functor(s){
+	ExpressionList *a = new ExpressionList();
+	ExpressionList::iterator it = s._says->begin();
+	while (it != s._says->end()){
+	  a->push_back((*it)->copy());
+	}
+	_says = a;
+      };
+
+      virtual Term* copy() const{
+	Says *v = new Says(*this);
+	return v;
+      }
+
+    private:
+      ExpressionList* _says;
+  
+    };
+
+
     
     class Assign : public Term {
     public:
@@ -344,6 +487,17 @@ namespace compile {
              Expression *a) 
         : _variable(dynamic_cast<Variable*>(v)), _assign(a) { }
     
+      Assign(const Assign &a) {
+	_assign = a._assign->copy();
+	_variable = new Variable(*a._variable);
+     };
+
+
+      virtual Term* copy() const{
+	Assign *v = new Assign(*this);
+	return v;
+      }
+	
       virtual ~Assign() { delete _variable; delete _assign; }
     
       virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string);
@@ -365,6 +519,16 @@ namespace compile {
     public:
       Select(Expression *s) 
       : _select(dynamic_cast<Bool*>(s)) { };
+
+      Select(const Select &s){
+	_select = new Bool(*s._select);
+      };
+
+      virtual Term* copy() const{
+	Select *v = new Select(*this);
+	return v;
+      }
+
       virtual ~Select() { delete _select; }
     
       virtual string toString() const;
@@ -390,6 +554,32 @@ namespace compile {
       {
         _baseTable = dynamic_cast<Functor*>(bt);
       }
+
+      virtual Term* copy() const{
+	AggregationView *v = new AggregationView(*this);
+	return v;
+      }
+ 
+      AggregationView(const AggregationView &a) 
+        : _operName(a._operName) {
+
+	ExpressionList *agg = new ExpressionList();
+	ExpressionList::iterator it = a._agg->begin();
+	while (it != a._agg->end()){
+	  agg->push_back((*it)->copy());
+	}
+	_agg = agg;
+
+	ExpressionList *groupBy = new ExpressionList();
+	ExpressionList::iterator itg = a._groupBy->begin();
+	while (itg != a._groupBy->end()){
+	  groupBy->push_back((*itg)->copy());
+	}
+	_groupBy = groupBy;
+
+	_baseTable = new Functor(*a._baseTable);
+
+      };
     
       virtual string toString() const;
     
@@ -422,6 +612,11 @@ namespace compile {
     public:
       Namespace(string, StatementList*);
 
+      virtual Statement* copy() const{
+	Namespace *v = new Namespace(*this);
+	return v;
+      }
+ 
       virtual string toString() const;
     
       virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string);
@@ -435,7 +630,12 @@ namespace compile {
     class Rule : public Statement {
     public:
       Rule(Term *t, TermList *rhs, bool deleteFlag, Expression *n=NULL); 
-    
+      
+      virtual Statement* copy() const{
+	Rule *v = new Rule(*this);
+	return v;
+      }
+     
       virtual ~Rule() { delete _head; delete _body; };
     
       virtual string toString() const;
@@ -474,6 +674,11 @@ namespace compile {
     
       virtual ~Table() {};
     
+      virtual Statement* copy() const{
+	Table *v = new Table(*this);
+	return v;
+      }
+     
       virtual string toString() const;
     
       virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string);
@@ -503,6 +708,11 @@ namespace compile {
       Watch(string w,
             string modifiers);
     
+      virtual Statement* copy() const{
+	Watch *v = new Watch(*this);
+	return v;
+      }
+     
       virtual ~Watch() {}
     
       virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string);
@@ -527,6 +737,11 @@ namespace compile {
       Stage(string processorName,
             string inputName,
             string outputName);
+
+      virtual Statement* copy() const{
+	Stage *v = new Stage(*this);
+	return v;
+      }
     
       virtual ~Stage() {}
     
@@ -548,6 +763,11 @@ namespace compile {
       Fact(Expression *n, 
            ExpressionList *a); 
     
+      virtual Statement* copy() const{
+	Fact *v = new Fact(*this);
+	return v;
+      }
+
       virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string);
     
       virtual string toString() const;

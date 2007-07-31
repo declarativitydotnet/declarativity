@@ -111,6 +111,7 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>namespace { return OL_NAMESPACE; }
 <INITIAL>keys { return OL_KEYS; }
 <INITIAL>in { return OL_IN; }
+<INITIAL>says { return OL_SAYS;}
 <INITIAL>"," { return OL_COMMA; }
 <INITIAL>"(" { return OL_LPAR; }
 <INITIAL>")" { return OL_RPAR; }

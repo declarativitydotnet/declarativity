@@ -65,6 +65,7 @@
 %token OL_DEL
 %token OL_QUERY
 %token OL_MATERIALIZE
+%token OL_SAYS
 %token OL_KEYS
 %token OL_WATCH
 %token OL_WATCHFINE
@@ -95,7 +96,7 @@
 %type<u_exprlist>      factbody functorbody functorargs functionargs vectorentries
 %type<u_exprlist>      matrixentry primarykeys keylist; 
 %type<u_exprlistlist>  matrixentries;
-%type<u_term>          term functor assign select;
+%type<u_term>          term functor assign select says;
 %type<v>               functorarg locationarg functionarg tablearg atom rel_atom math_atom;
 %type<v>               function math_expr bool_expr range_expr range_atom aggregate;
 %type<v>               vectorentry vector_expr matrix_expr;
@@ -180,7 +181,12 @@ rule: OL_NAME functor OL_IF termlist OL_DOT
         { $$ = new compile::parse::Rule($2, $4, false, $1); }
       | functor OL_IF aggview OL_DOT 
         { $$ = new compile::parse::Rule($1, $3, false); }
+      | OL_NAME says OL_IF termlist OL_DOT 
+        { $$ = new compile::parse::Rule($2, $4, false, $1); }
+      | says OL_IF termlist OL_DOT 
+        { $$ = new compile::parse::Rule($1, $3, false); }
     ;
+
 
 term: functor | assign | select 
         { $$=$1; }
@@ -375,7 +381,20 @@ agg_oper:	OL_AGGFUNCNAME
                                 anf.what());
                   }
                 }
+;
 
+says:           OL_SAYS OL_LPAR functorargs OL_RPAR OL_LT functor OL_GT{
+
+                compile::parse::Functor *pf = dynamic_cast<compile::parse::Functor*>($6);
+                if (!pf || $3->size() != 4) {
+		  ctxt->error(string("functor is not of type Functor or says parameters incorrect"));
+                }
+                else{
+		    // check for the types of the says parameters
+		    $$ = new compile::parse::Says(pf, $3);
+                }
+
+                }
 %%
 
 // Epilog
