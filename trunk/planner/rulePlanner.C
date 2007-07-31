@@ -186,9 +186,11 @@ generateInsertEvent(PlanContext* pc)
   if (curRule->_probeTerms.size() > 0) {
     // if we are doing a join
     ElementSpecPtr pullPush = 
-      pc->createElementSpec(ElementPtr(new TimedPullPush("InsertEventTimedPullPush!"
-							 + curRule->_ruleID 
-							 + "!" + pc->_nodeID, 0)));
+      pc->createElementSpec(ElementPtr(new
+                                       TimedPullPush("InsertEventTimedPullPush!"
+                                                     + curRule->_ruleID 
+                                                     + "!" +
+                                                     pc->_nodeID, 0, 0)));
     pc->addElementSpec(pullPush);
   }
 }
@@ -216,9 +218,11 @@ generateRefreshEvent(PlanContext* pc)
   if (curRule->_probeTerms.size() > 0) {
     // if we are doing a join
     ElementSpecPtr pullPush = 
-      pc->createElementSpec(ElementPtr(new TimedPullPush("RefreshEventTimedPullPush!"
-							 + curRule->_ruleID 
-							 + "!" + pc->_nodeID, 0)));
+      pc->createElementSpec(ElementPtr(new
+                                       TimedPullPush("RefreshEventTimedPullPush!"
+                                                     + curRule->_ruleID 
+                                                     + "!" +
+                                                     pc->_nodeID, 0, 0)));
     pc->addElementSpec(pullPush);
   }
 }
@@ -250,10 +254,11 @@ generateDeleteEvent(PlanContext* pc)
   if (curRule->_probeTerms.size() > 0) {
     // if we are doing a join
     ElementSpecPtr pullPush = 
-      pc->createElementSpec(ElementPtr(new TimedPullPush("RemovedEventTimedPullPush!"
-							 + curRule->_ruleID 
-							 + "!" + pc->_nodeID, 
-							 0)));
+      pc->createElementSpec(ElementPtr(new
+                                       TimedPullPush("RemovedEventTimedPullPush!"
+                                                     + curRule->_ruleID 
+                                                     + "!" + pc->_nodeID, 
+                                                     0, 0)));
     pc->addElementSpec(pullPush);
   }
 }
@@ -493,7 +498,7 @@ generateAddAction(PlanContext* pc)
     pc->createElementSpec(ElementPtr(new TimedPullPush("Insert!" 
 						       + curRule->_ruleID 
 						       + "!" + pc->_nodeID, 
-						       0)));
+						       0, 0)));
   
   addPrint(pc, "AddAction", rs->actionFunctorName(), "a");
   
@@ -531,7 +536,7 @@ generateDeleteAction(PlanContext* pc)
     pc->_conf->addElement(ElementPtr(new TimedPullPush("Delete!" 
 						       + curRule->_ruleID 
 						       + "!" + pc->_nodeID, 
-						       0)));
+						       0, 0)));
   
   CommonTablePtr tablePtr 
     = pc->_tableStore->getTableByName(rs->actionFunctorName()); 
@@ -600,13 +605,12 @@ generateDropAction(PlanContext* pc)
   //Connect an active discard sink in
   ECA_Rule* curRule = pc->getRule();
 
-
-
   ElementSpecPtr pullPush = 
     pc->createElementSpec(ElementPtr
                           (new TimedPullPush("DiscardPullPush!"
                                              + curRule->_ruleID 
-                                             + "!" + pc->_nodeID, 0)));
+                                             + "!" + pc->_nodeID,
+                                             0, 0)));
   pc->addElementSpec(pullPush);
 
   string elementName = "Discard!"
@@ -863,11 +867,13 @@ void generateMultipleProbeElements(PlanContext* pc)
       joinProbeName = generateProbeElements(pc, pf, joinProbeName, &comp_cb);
     }
 
-     if (curRule->_probeTerms.size() - 1 != k) {
+    if (curRule->_probeTerms.size() - 1 != k) {
       ElementSpecPtr pullPush =
-	pc->createElementSpec(ElementPtr(new TimedPullPush("ProbePullPush!" 
-							   + curRule->_ruleID + "!" 
-							   + pc->_nodeID, 0)));
+	pc->createElementSpec(ElementPtr(new
+                                         TimedPullPush("ProbePullPush!" 
+                                                       + curRule->_ruleID + "!" 
+                                                       + pc->_nodeID, 0,
+                                                       0)));
       pc->addElementSpec(pullPush);
     }
   }

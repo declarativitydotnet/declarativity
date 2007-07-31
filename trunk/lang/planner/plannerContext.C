@@ -152,7 +152,8 @@ namespace compile {
       indexKey.clear();
       indexKey.push_back(catalog->attribute(FACT, "PID"));
       iter =
-        catalog->table(FACT)->lookup(CommonTable::theKey(CommonTable::KEY2), indexKey, program); 
+        catalog->table(FACT)->
+        lookup(CommonTable::theKey(CommonTable::KEY2), indexKey, program); 
       while (!iter->done()) {
         TuplePtr fact = iter->next();                                        // The row in the fact table
         fact = Val_Tuple::cast((*fact)[catalog->attribute(FACT, "TUPLE")]);  // The actual fact to assert
@@ -742,7 +743,7 @@ namespace compile {
         oss << indent << "\tsource = StaticTupleSource(\"periodicSource\", periodic<\""
                       << Plumber::catalog()->nodeid()->toString() << "\">);\n";
         oss << indent << "\tpel = PelTransform(\"periodicPel\", \"$0 pop $1 pop rand pop\");\n";
-        oss << indent << "\ttimer = TimedPullPush(\"periodicTimer\", "<<period;
+        oss << indent << "\ttimer = TimedPullPush(\"periodicTimer\", ";
         oss << period << ", " << count << ");\n";
         oss << indent << "\tsource -> pel -> timer -> Slot(\"periodicSlot\") -> output;\n";
         oss << indent << "};\n";
