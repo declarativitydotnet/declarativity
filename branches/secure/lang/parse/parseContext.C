@@ -548,7 +548,17 @@ namespace compile {
     }
 
 
-    Rule::Rule(Term *lhs, TermList *rhs, bool deleteFlag, Expression *n) 
+    Rule::Rule(Term *lhs, TermList *rhs, bool deleteFlag,  bool says, Expression *n)
+    {
+      // check if lhs is a says term
+      if(says)
+      {
+	
+      }
+
+    }
+
+    Rule::canonicalizeRule(Term *lhs, TermList *rhs, bool deleteFlag, Expression *n) 
     {
       _name = (n) ? n->toString() : "";
       _delete = deleteFlag;

@@ -423,6 +423,7 @@ namespace compile {
 	while (it != f._args->end()){
 	  Expression *expr = *it;
 	  a->push_back(expr->copy());
+	  it++;
 	}
 	_args = a;
       };
@@ -465,6 +466,7 @@ namespace compile {
 	ExpressionList::iterator it = s._says->begin();
 	while (it != s._says->end()){
 	  a->push_back((*it)->copy());
+	  it++;
 	}
 	_says = a;
       };
@@ -567,6 +569,7 @@ namespace compile {
 	ExpressionList::iterator it = a._agg->begin();
 	while (it != a._agg->end()){
 	  agg->push_back((*it)->copy());
+	  it++;
 	}
 	_agg = agg;
 
@@ -574,6 +577,7 @@ namespace compile {
 	ExpressionList::iterator itg = a._groupBy->begin();
 	while (itg != a._groupBy->end()){
 	  groupBy->push_back((*itg)->copy());
+	  itg++;
 	}
 	_groupBy = groupBy;
 
@@ -629,7 +633,7 @@ namespace compile {
 
     class Rule : public Statement {
     public:
-      Rule(Term *t, TermList *rhs, bool deleteFlag, Expression *n=NULL); 
+      Rule(Term *t, TermList *rhs, bool deleteFlag, bool says = false, Expression *n=NULL); 
       
       virtual Statement* copy() const{
 	Rule *v = new Rule(*this);
@@ -656,6 +660,8 @@ namespace compile {
     
     private:
       void canonicalizeAttributes(Functor*, TermList*, bool);
+
+      void canonicalizeRule(Term *lhs, TermList *rhs, bool deleteFlag, Expression *n);
 
       string                    _name;
       bool                      _delete;
