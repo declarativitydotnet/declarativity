@@ -133,6 +133,12 @@ namespace compile {
       Variable(const Variable& var) 
       : _location(var._location), _value(var._value)  {};
 
+      static Variable* getLocalLocationSpecifier()
+      {
+	static ValuePtr val = Val_Str::mk("me");
+	return new compile::parse::Variable(val, true); 
+      }
+
       virtual Expression* copy() const{
 	Variable *v = new Variable(*this);
 	return v;
@@ -277,7 +283,7 @@ namespace compile {
     
     class Math : public Expression {
     public:
-      enum Operator {LSHIFT, RSHIFT, PLUS, MINUS, TIMES, DIVIDE, MODULUS, NOP};
+      enum Operator {LSHIFT, RSHIFT, PLUS, MINUS, TIMES, DIVIDE, MODULUS, BITOR, NOP};
     
       Math(Operator o, 
            Expression *l, 
@@ -292,6 +298,7 @@ namespace compile {
           case TIMES:   _operName = "*";  break;
           case DIVIDE:  _operName = "/";  break;
           case MODULUS: _operName = "%";  break;
+          case BITOR: _operName = "|";  break;
           default: assert(0);
         }
       }
@@ -436,6 +443,10 @@ namespace compile {
       virtual ~Functor() { delete _args; }
     
       virtual string toString() const;
+
+      virtual void changeLocSpec(Variable *l);
+
+      virtual Variable* getLocSpec();
     
       virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string);
     
@@ -459,6 +470,13 @@ namespace compile {
 
     class Says : public Functor {
     public:
+      const static string verTable;
+      const static string encHint;
+      const static string varPrefix;
+      const string Says::hashFunc; 
+      const string Says::verFunc;
+      const string Says::bufFunc;
+
       Says(Functor* f, ExpressionList* s):Functor(*f), _says(s){};
 
       Says(const Says &s):Functor(s){
@@ -476,11 +494,23 @@ namespace compile {
 	return v;
       }
 
+      // return a list of terms that needs to be added to the rule on converting the 
+      // securelog term f into overlog.
+      // Also converts f into the appropriate overlog form
+      static TermList* normalize(Functor* f, int& newVariable);
+
     private:
       ExpressionList* _says;
   
     };
 
+
+     const string Says::verTable = "verKey"; 
+     const string Says::hashFunc = "f_sha1"; 
+     const string Says::verFunc = "f_verify"; 
+     const string Says::bufFunc = "f_buf"; 
+     const string Says::encHint = "encHint"; 
+     const string Says::varPrefix = "_"; 
 
     
     class Assign : public Term {
@@ -633,12 +663,25 @@ namespace compile {
 
     class Rule : public Statement {
     public:
-      Rule(Term *t, TermList *rhs, bool deleteFlag, bool says = false, Expression *n=NULL); 
+      Rule(Term *t, TermList *rhs, bool deleteFlag, Expression *n=NULL); 
+      
+      Rule(const Rule &r):_name(r._name), _delete(r._delete){
+	_head = new Functor(*r._head);
+	TermList *tl = new TermList();
+	TermList::iterator it = r._body->begin();
+	while (it != r._body->end()){
+	  tl->push_back((*it)->copy());
+	  it++;
+	}
+	_body = tl;
+      };
       
       virtual Statement* copy() const{
 	Rule *v = new Rule(*this);
 	return v;
       }
+
+      
      
       virtual ~Rule() { delete _head; delete _body; };
     
@@ -658,10 +701,12 @@ namespace compile {
       virtual const TermList* body() const
       { return _body; }
     
+      virtual void initializeRule(StatementList *s);
+
     private:
       void canonicalizeAttributes(Functor*, TermList*, bool);
 
-      void canonicalizeRule(Term *lhs, TermList *rhs, bool deleteFlag, Expression *n);
+      void canonicalizeRule();
 
       string                    _name;
       bool                      _delete;

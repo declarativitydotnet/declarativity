@@ -392,7 +392,98 @@ namespace compile {
       ExpressionList::iterator next = _args->erase(i);
       _args->insert(next, e);
     }
-  
+
+    void Functor::changeLocSpec(Variable *l) {
+      Variable    *var;
+      
+      if(l->location() && (var = dynamic_cast<Variable*>(_args->at(0))) != NULL && var->location()) {
+	replace(_args->begin(), l);
+      }
+      else{
+	throw compile::Exception("Location specifier is not the first field in functor" + toString() + 
+				 "incorrect new location specifier " + l->toString());
+      }
+    }  
+
+    Variable* Functor::getLocSpec() {
+      Variable    *var;
+      
+      if((var = dynamic_cast<Variable*>(_args->at(0))) != NULL && var->location()) {
+	return var;
+      }
+      else{
+	throw compile::Exception("Location specifier is not the first field in functor" + toString() + 
+				 "incorrect new location specifier " + l->toString());
+	return NULL;
+      }
+    }  
+    // return a list of terms that needs to be added to the rule on converting the 
+    // securelog term f into overlog.
+    // Also converts f into the appropriate overlog form
+    static TermList* Says::normalize(Functor* f, int& newVariable)
+    {
+      Says *s;
+      if ((s = dynamic_cast<Says*>(f)) != NULL)
+      {
+	
+	TermList *newTerms = new TermList();
+
+	// create encryption hint
+	ExpressionList *t = new ExpressionList();
+	t->push_back(s->getLocSpec());
+	ExpressionList::iterator iter; 
+	for (iter = s->_says->begin(); 
+           iter != s->_says->end(); iter++)
+	  t->push_back(*iter);
+	string var1 = Says::varPrefix + newVariable++;
+	Variable *encId = new Variable(Val_Str::mk(var1));
+	t->push_back(encId);
+	Functor *encHint = new Functor(new Value(Val_Str::mk(Says::encHint)), t);
+
+	//create verification table
+	ExpressionList *verT = new ExpressionList();
+	verT->push_back(s->getLocSpec());
+	verT->push_back(encId);
+	string var2 = Says::varPrefix + newVariable++;
+	Variable *verKey = new Variable(Val_Str::mk(var2));
+	verT->push_back(verKey);
+	Functor *verTable = new Functor(new Value(Val_Str::mk(Says::verTable)), verT);
+
+	//create buffer creation logic
+	string var3 = Says::varPrefix + newVariable++;
+	Variable *buf = new Variable(Val_Str::mk(var3));
+
+	for (iter = s->_->begin(); 
+           iter != s->_says->end(); iter++)
+	  t->push_back(*iter);
+
+
+	//create verification logic
+	string var4 = Says::varPrefix + newVariable++;
+	Variable *hash = new Variable(Val_Str::mk(var4));
+	string var5 = Says::varPrefix + newVariable++;
+	Variable *proof = new Variable(Val_Str::mk(var5));
+
+	ExpressionList hashArg = new ExpressionList();
+	hashArg->push_back(buf);
+	Function *f_hash = new Function(new Value(Val_Str::mk(Says::hashFunc)), hashArg);
+	Assign *ass = new Assign(hash, f_hash);
+
+
+	ExpressionList verArg = new ExpressionList();
+	verArg->push_back(hash);
+	Function *f_verify = new Function(new Value(Val_Str::mk(Says::verFunc)), verArg);
+	Assign *ass = new Assign(proof, f_verify);
+
+
+	newTerms->push_back(encHint);
+	newTerms->push_back(verTable);
+	
+	  
+      }
+      return NULL;
+    }
+
     string Assign::toString() const {
       return _variable->toString() + " = " + _assign->toString();
     }
@@ -548,34 +639,70 @@ namespace compile {
     }
 
 
-    Rule::Rule(Term *lhs, TermList *rhs, bool deleteFlag,  bool says, Expression *n)
-    {
-      // check if lhs is a says term
-      if(says)
-      {
-	
-      }
-
-    }
-
-    Rule::canonicalizeRule(Term *lhs, TermList *rhs, bool deleteFlag, Expression *n) 
+    Rule::Rule(Term *lhs, TermList *rhs, bool deleteFlag, Expression *n)
     {
       _name = (n) ? n->toString() : "";
       _delete = deleteFlag;
 
-      canonicalizeAttributes(dynamic_cast<Functor*>(lhs), rhs, true);
-      for (TermList::iterator iter = rhs->begin(); 
-           iter != rhs->end(); iter++)
+      _head = dynamic_cast<Functor*>(lhs);
+      _body = rhs;
+
+    }
+
+    void Rule::initializeRule(StatementList *s)
+    {
+      int newVariable = 1;
+      for (TermList::iterator iter = _body->begin(); 
+           iter != _body->end(); iter++) {
+	if ((dynamic_cast<Says*>(*iter)) != NULL)
+	{
+	  TermList *newTerms = Says::normalize(*iter, newVariable);
+       if(newTerms != NULL){
+	  for (TermList::iterator it = _newTerms->begin(); 
+           it != _newTerms->end(); it++) {
+	    _body->push_back(*it);
+	  }
+       }
+	}
+      }
+
+      if(dynamic_cast<Says*>(_head) != NULL)
+      {
+	// copy this rule into a new rule and insert the new rule into the list as well 
+	// as modify the existing rule
+	Rule* r = this->copy();
+
+	// do stuff for current rule first
+	// first rule assumes that we have a proof for the says
+	TermList *newTerms = Says::normalize(_head);
+	for (TermList::iterator it = _newTerms->begin(); 
+	     it != _newTerms->end(); it++) {
+	  _body->push_back(*it);
+	}
+
+	Functor* headCopy =  dynamic_cast<Functor*>(_head->copy());
+	headCopy->replaceLocSpec(Variable::getLocalLocationSpecifier());
+	_body->push_back(headCopy);
+
+	// now do stuff that constructs a new proof assuming that we are the speaking principal
+
+      }
+      canonicalizeRule();
+    }
+
+    void Rule::canonicalizeRule() 
+    {
+      canonicalizeAttributes(_head, _body, true);
+      for (TermList::iterator iter = _body->begin(); 
+           iter != _body->end(); iter++)
       {
         Functor *pred;
         if ((pred = dynamic_cast<Functor*>(*iter)) != NULL)
         {
-          canonicalizeAttributes(pred, rhs, false);
+          canonicalizeAttributes(pred, _body, false);
         }
       }
 
-      _head = dynamic_cast<Functor*>(lhs);
-      _body = rhs;
     }
 
     void 
@@ -972,7 +1099,19 @@ namespace compile {
     Context::program(StatementList *s) 
     {
       assert(_statements == NULL);
+
       _statements = s;
+      Rule* r;
+
+      for (StatementList::iterator iter = _statements->begin();
+             iter != _statements->end(); iter++) { 
+
+	if ((r = dynamic_cast<Rule*>(*iter)) != NULL) 
+	{
+	  r->initializeRule(s);
+	}
+      }
+      
     }
 
     TuplePtr 

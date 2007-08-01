@@ -170,21 +170,21 @@ stage: OL_STAGE OL_LPAR OL_STRING OL_COMMA OL_NAME OL_COMMA OL_NAME OL_RPAR OL_D
      ;
 
 rule: OL_NAME functor OL_IF termlist OL_DOT 
-        { $$ = new compile::parse::Rule($2, $4, false, false, $1); } 
+        { $$ = new compile::parse::Rule($2, $4, false, $1); } 
       | OL_NAME OL_DEL functor OL_IF termlist OL_DOT 
-        { $$ = new compile::parse::Rule($3, $5, true, false, $1); } 
+        { $$ = new compile::parse::Rule($3, $5, true, $1); } 
       | functor OL_IF termlist OL_DOT 
         { $$ = new compile::parse::Rule($1, $3, false); } 
       | OL_DEL functor OL_IF termlist OL_DOT 
         { $$ = new compile::parse::Rule($2, $4, true); } 
       | OL_NAME functor OL_IF aggview OL_DOT 
-        { $$ = new compile::parse::Rule($2, $4, false, false, $1); }
+        { $$ = new compile::parse::Rule($2, $4, false, $1); }
       | functor OL_IF aggview OL_DOT 
         { $$ = new compile::parse::Rule($1, $3, false); }
       | OL_NAME says OL_IF termlist OL_DOT 
-        { $$ = new compile::parse::Rule($2, $4, false, true, $1); }
+        { $$ = new compile::parse::Rule($2, $4, false, $1); }
       | says OL_IF termlist OL_DOT 
-        { $$ = new compile::parse::Rule($1, $3, false, true); }
+        { $$ = new compile::parse::Rule($1, $3, false); }
     ;
 
 
@@ -310,6 +310,7 @@ math_oper: OL_LSHIFT  { $$ = compile::parse::Math::LSHIFT; }
          | OL_TIMES   { $$ = compile::parse::Math::TIMES; }
          | OL_DIVIDE  { $$ = compile::parse::Math::DIVIDE; }
          | OL_MODULUS { $$ = compile::parse::Math::MODULUS; }
+         | OL_BITOR { $$ = compile::parse::Math::BITOR; }
          ;
 
 
