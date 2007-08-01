@@ -208,8 +208,11 @@ factbody: OL_LPAR atom OL_RPAR
           { $4->push_front($2); $$=$4; }
         ;
 
-functor: OL_NAME functorbody 
-         { $$=new compile::parse::Functor($1, $2); } 
+functor: OL_NAME functorbody          
+         { $$=new compile::parse::Functor($1, $2); }  
+       | OL_NOT OL_NAME functorbody
+         { $$=new compile::parse::Functor($2, $3, true); }           
+
        ;
 
 functorbody: OL_LPAR locationarg OL_RPAR 
@@ -387,8 +390,9 @@ agg_oper:	OL_AGGFUNCNAME
 says:           OL_SAYS OL_LPAR functorargs OL_RPAR OL_LT functor OL_GT{
 
                 compile::parse::Functor *pf = dynamic_cast<compile::parse::Functor*>($6);
-                if (!pf || $3->size() != 4) {
-		  ctxt->error(string("functor is not of type Functor or says parameters incorrect"));
+                if (!pf || $3->size() != 4 || pf->isComplement()) {
+		  ctxt->error(string("functor is not of type Functor or says \
+                          parameters incorrect or functor is of complement type"));
                 }
                 else{
 		    // check for the types of the says parameters

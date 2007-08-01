@@ -30,6 +30,7 @@ class OL_Lexer;
 namespace compile {
   namespace parse {
 
+
     class Exception : public compile::Exception {
     public:
       Exception(uint line, string msg) 
@@ -421,10 +422,10 @@ namespace compile {
     
     class Functor : public Term {
     public:
-      Functor(Expression *n, ExpressionList *a); 
+      Functor(Expression *n, ExpressionList *a, bool complement = false); 
      
       Functor(const Functor &f) 
-        : _name(f._name){ 
+        : _name(f._name), _complement(f._complement){ 
 	ExpressionList *a = new ExpressionList();
 	ExpressionList::iterator it = f._args->begin();
 	while (it != f._args->end()){
@@ -451,6 +452,8 @@ namespace compile {
       virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string);
     
       virtual string name() const { return _name; }
+
+      virtual bool isComplement() const { return _complement; }
     
       virtual const ExpressionList* arguments() const 
       { return _args; }
@@ -466,20 +469,27 @@ namespace compile {
     protected:
       string          _name;
       ExpressionList* _args;
-
+      bool _complement;
     };
 
     class Says : public Functor {
     public:
       const static string verTable;
+      const static string genTable;
       const static string encHint;
       const static string varPrefix;
       const static string hashFunc; 
       const static string verFunc;
-      const static string bufFunc;
+      const static string genFunc;
       const static string saysPrefix;
 
-      Says(Functor* f, ExpressionList* s):Functor(*f), _says(s){};
+      Says(Functor* f, ExpressionList* s):Functor(*f), _says(s){
+	if(f->isComplement())
+	{
+	  throw compile::Exception("Functor with ! can't be said");
+	}
+
+      };
 
       Says(const Says &s):Functor(s){
 	ExpressionList *a = new ExpressionList();
@@ -501,6 +511,8 @@ namespace compile {
 	_name = newName;
       }
 
+      virtual string toString() const;
+
       virtual ~Says() { delete _says; }
 
       virtual const ExpressionList* saysParams() const 
@@ -512,7 +524,9 @@ namespace compile {
       // return a list of terms that needs to be added to the rule on converting the 
       // securelog term f into overlog.
       // Also converts f into the appropriate overlog form
-      static TermList* normalize(Functor* f, int& newVariable);
+      static TermList* normalizeVerify(Functor* f, int& newVariable, bool addKeyConstraint = false);
+
+      static TermList* normalizeGenerate(Functor* f, int& newVariable);
 
     private:
       ExpressionList* _says;
@@ -706,13 +720,17 @@ namespace compile {
     
       virtual const TermList* body() const
       { return _body; }
-    
+
       virtual void initializeRule(StatementList *s);
+
+      virtual void canonicalizeRule();
 
     private:
       void canonicalizeAttributes(Functor*, TermList*, bool);
 
-      void canonicalizeRule();
+      void resetName(){
+	_name = "";
+      }
 
       string                    _name;
       bool                      _delete;
@@ -744,7 +762,7 @@ namespace compile {
       { return _name; }
     
       virtual boost::posix_time::time_duration lifetime() const
-      { return _lifetime; }
+	{ return _lifetime; }
     
       virtual uint32_t size() const
       { return _size; }
@@ -836,13 +854,12 @@ namespace compile {
     };
     typedef std::deque<Fact*> FactList;
   
-    
     class Context : public compile::Context {
     
     public:
       /*******************************************************************/
-      Context(string name) 
-      : compile::Context(name), lexer(NULL), _statements(NULL) {};
+      Context(string name, bool print = false) 
+      : compile::Context(name), lexer(NULL), _statements(NULL) {printOverLog = print;};
   
       Context(TuplePtr args); 
 
@@ -863,6 +880,8 @@ namespace compile {
       void error(string msg);
     
       OL_Lexer *lexer;
+      
+      void testParse(std::istream *str){parse_stream(str);}
     
       DECLARE_PUBLIC_ELEMENT_INITS
 
@@ -880,6 +899,7 @@ namespace compile {
       /** Call bison to parse the given program contained in the istream argument. */
       void parse_stream(std::istream *str);
   
+      bool printOverLog;
 
       DECLARE_PRIVATE_ELEMENT_INITS
     };

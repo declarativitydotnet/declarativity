@@ -80,12 +80,14 @@ namespace compile {
     
 
      const string Says::verTable = "verKey"; 
+     const string Says::genTable = "genKey"; 
      const string Says::hashFunc = "f_sha1"; 
      const string Says::verFunc = "f_verify"; 
-     const string Says::bufFunc = "f_buf"; 
+     const string Says::genFunc = "f_gen"; 
      const string Says::encHint = "encHint"; 
      const string Says::varPrefix = "_"; 
      const string Says::saysPrefix = "says"; 
+
     
     string 
     Bool::toString() const {
@@ -274,7 +276,7 @@ namespace compile {
     string 
     Functor::toString() const {
       ostringstream f;
-      f << name() << "( ";
+      f << (_complement?"!":"") <<name() << "( ";
       for (ExpressionList::const_iterator iter = _args->begin(); 
            iter != _args->end(); iter++) {
         f << (*iter)->toString();
@@ -284,6 +286,19 @@ namespace compile {
       return f.str();
     }
     
+    string 
+    Says::toString() const {
+      ostringstream f;
+      f <<  "says( ";
+      for (ExpressionList::const_iterator iter = _says->begin(); 
+           iter != _says->end(); iter++) {
+        f << (*iter)->toString();
+        if (iter+1 != _says->end()) f << ", ";
+      }
+      f << " ) <" << Functor::toString() << "> ";
+      return f.str();
+    }
+
     TuplePtr 
     Functor::materialize(CommonTable::ManagerPtr catalog, ValuePtr ruleId, string ns)
     {
@@ -348,8 +363,8 @@ namespace compile {
       return NULL;
     }
     
-    Functor::Functor(Expression *n, ExpressionList *a)
-      : _name(n->toString()), _args(a)
+    Functor::Functor(Expression *n, ExpressionList *a, bool complement)
+      : _name(n->toString()), _args(a), _complement(complement)
     {
       Variable    *var;
       Aggregation *agg;
@@ -424,10 +439,118 @@ namespace compile {
 	return NULL;
       }
     }  
+
     // return a list of terms that needs to be added to the rule on converting the 
     // securelog term f into overlog.
     // Also converts f into the appropriate overlog form
-    TermList* Says::normalize(Functor* f, int& newVariable)
+    TermList* Says::normalizeGenerate(Functor* f, int& newVariable)
+    {
+      Says *s;
+      if ((s = dynamic_cast<Says*>(f)) != NULL)
+      {
+	
+	TermList *newTerms = new TermList();
+
+	// create encryption hint
+	ExpressionList *t = new ExpressionList();
+	t->push_back(Variable::getLocalLocationSpecifier());
+	ExpressionList::iterator iter; 
+	ExpressionList *saysList =  const_cast<ExpressionList*>(s->saysParams());
+	for (iter = saysList->begin(); 
+	     iter != saysList->end(); iter++){
+	  t->push_back(*iter);
+	}
+	ostringstream var1;
+	var1 << Says::varPrefix << newVariable++;
+	Variable *encId = new Variable(Val_Str::mk(var1.str()));
+	t->push_back(encId);
+	Functor *genHint = new Functor(new Value(Val_Str::mk(Says::encHint)), t);
+
+	//create key generation table
+	ExpressionList *genT = new ExpressionList();
+	genT->push_back(Variable::getLocalLocationSpecifier());
+	genT->push_back(encId);
+
+	ostringstream var2;
+	var2 << Says::varPrefix << newVariable++;
+	Variable *genKey = new Variable(Val_Str::mk(var2.str()));
+	genT->push_back(genKey);
+	Functor *genTable = new Functor(new Value(Val_Str::mk(Says::genTable)), genT);
+
+	//create buffer creation logic
+	ostringstream var3;
+	var3 << Says::varPrefix << newVariable++;
+	Variable *buf = new Variable(Val_Str::mk(var3.str()));
+
+	// check if the concatenate operation is needed or not
+	// remember that the loc specifier is excluded but the table name must be included
+	Value *table = new Value(Val_Str::mk(s->_name));
+	Expression *cur = table;
+
+	if(s->_args->size() > 1)
+	{
+	  ExpressionList *list = s->saysArgs();
+	  iter = list->begin();
+	  //exclude location specifier
+	  iter++; 
+	  for (; iter != list->end(); iter++){
+	    cur = new Math(Math::BITOR, cur, *iter);
+	  }
+	}
+
+	Assign *assBuf = new Assign(buf, cur);
+
+	//create generation logic
+	ostringstream var4;
+	var4 << Says::varPrefix << newVariable++;
+	Variable *hash = new Variable(Val_Str::mk(var4.str()));
+	ostringstream var5;
+	var5 << Says::varPrefix << newVariable++;
+	Variable *proof = new Variable(Val_Str::mk(var5.str()));
+
+	ExpressionList *hashArg = new ExpressionList();
+	hashArg->push_back(buf);
+	Function *f_hash = new Function(new Value(Val_Str::mk(Says::hashFunc)), hashArg);
+	Assign *assHash = new Assign(hash, f_hash);
+
+
+	ExpressionList *genArg = new ExpressionList();
+	genArg->push_back(hash);
+	Function *f_gen = new Function(new Value(Val_Str::mk(Says::genFunc)), genArg);
+	Assign *assGen = new Assign(proof, f_gen);
+
+
+	newTerms->push_back(genHint);
+	newTerms->push_back(genTable);
+	newTerms->push_back(assBuf);
+	newTerms->push_back(assHash);
+	newTerms->push_back(assGen);
+	
+	// now modify the says tuple
+
+	ExpressionList *arg = s->saysArgs();
+	for (iter = saysList->begin(); 
+	     iter != saysList->end(); iter++){
+	  arg->push_back(*iter);
+	}
+	arg->push_back(proof);
+	
+	s->changeName(Says::saysPrefix + s->name());
+
+	// finally return the new terms
+	return newTerms;
+      }
+      return NULL;
+    }
+
+
+    // return a list of terms that needs to be added to the rule on converting the 
+    // securelog term f into overlog.
+    // Also converts f into the appropriate overlog form
+    // the last boolean indicates if the list of terms should also include the 
+    // constraint that "the verifying principal doesn't have the authority to 
+    // generate the proof"
+    TermList* Says::normalizeVerify(Functor* f, int& newVariable, bool addNoKeyConstraint)
     {
       Says *s;
       if ((s = dynamic_cast<Says*>(f)) != NULL)
@@ -510,6 +633,19 @@ namespace compile {
 	newTerms->push_back(assHash);
 	newTerms->push_back(assVer);
 	
+	if(addNoKeyConstraint)
+	{
+	  ExpressionList *genT = new ExpressionList();
+	  genT->push_back(Variable::getLocalLocationSpecifier());
+	  genT->push_back(encId);
+	  ostringstream var6;
+	  var6 << Says::varPrefix << newVariable++;
+	  Variable *genKey = new Variable(Val_Str::mk(var6.str()));
+	  genT->push_back(genKey);
+	  Functor *genTable = new Functor(new Value(Val_Str::mk(Says::genTable)), genT, true);
+	  
+	  newTerms->push_back(genTable);
+	}
 	// now modify the says tuple
 
 	ExpressionList *arg = s->saysArgs();
@@ -526,6 +662,8 @@ namespace compile {
       }
       return NULL;
     }
+
+
 
     string Assign::toString() const {
       return _variable->toString() + " = " + _assign->toString();
@@ -700,7 +838,7 @@ namespace compile {
 	Says *s;
 	if ((s = dynamic_cast<Says*>(*iter)) != NULL)
 	{
-	  TermList *newTerms = Says::normalize(s, newVariable);
+	  TermList *newTerms = Says::normalizeVerify(s, newVariable);
 	  if(newTerms != NULL){
 	  for (TermList::iterator it = newTerms->begin(); 
            it != newTerms->end(); it++) {
@@ -716,12 +854,23 @@ namespace compile {
 	// copy this rule into a new rule and insert the new rule into the list as well 
 	// as modify the existing rule
 	Rule* r = new Rule(*this);
+	
+	Says *head = dynamic_cast<Says*>(r->_head);
+	// first rule generates the proof assuming that the node 
+	// executing the rule has the key
+	TermList *newTermsGen = Says::normalizeGenerate(head, newVariable);
+	for (TermList::iterator it1 = newTermsGen->begin(); 
+	     it1 != newTermsGen->end(); it1++) {
+	  r->_body->push_back(*it1);
+	}
+	r->resetName();
+	s->push_back(r);
 
-	// do stuff for current rule first
-	// first rule assumes that we have a proof for the says
-	TermList *newTerms = Says::normalize(sh, newVariable);
-	for (TermList::iterator it = newTerms->begin(); 
-	     it != newTerms->end(); it++) {
+	// now write rule that assumes that the node executing
+	// has a proof for the says on lhs
+	TermList *newTermsUse = Says::normalizeVerify(sh, newVariable, true);
+	for (TermList::iterator it = newTermsUse->begin(); 
+	     it != newTermsUse->end(); it++) {
 	  _body->push_back(*it);
 	}
 
@@ -729,10 +878,9 @@ namespace compile {
 	headCopy->changeLocSpec(Variable::getLocalLocationSpecifier());
 	_body->push_back(headCopy);
 
-	// now do stuff that constructs a new proof assuming that we are the speaking principal
-
       }
-      canonicalizeRule();
+
+      //      canonicalizeRule();
     }
 
     void Rule::canonicalizeRule() 
@@ -1154,6 +1302,14 @@ namespace compile {
 	if ((r = dynamic_cast<Rule*>(*iter)) != NULL) 
 	{
 	  r->initializeRule(s);
+	  if(!printOverLog)
+	  {
+	    r->canonicalizeRule();
+	  }
+	  else
+	  {
+	    std::cout<<r;
+	  }
 	}
       }
       
@@ -1222,3 +1378,5 @@ namespace compile {
     }
   }
 }
+
+
