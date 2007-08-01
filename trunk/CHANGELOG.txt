@@ -12,6 +12,35 @@
  */
 
 
+Release 0.8.2
+=============
+
+A bug-fix release
+
+- Eliminated static initialization problems with the Val_Null singleton
+  object, and with the scheduler's procs list.
+
+- Added the CSV parser stage processor into the make sequence.
+
+- Added first-pass description of P2DL into the user guide.
+
+- TimedPullPush elements no longer have a default constructor parameter
+  for number of tuples.
+
+- Fixed variable canonicalization for periodic tuples; no selections are
+  necessary there.
+
+- Fixed P2DL emitted code for periodics (two periods were appended to
+  the P2DL program).
+
+- Fixed Fact emission to remove tuple identifier from explicit naming.
+
+- Added support for command-line arguments into the language, to phase
+  out macro preprocessing (eventually).
+
+
+
+
 Release 0.8.1
 =============
 
