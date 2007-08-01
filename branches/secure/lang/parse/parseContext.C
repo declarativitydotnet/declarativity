@@ -412,15 +412,14 @@ namespace compile {
 	return var;
       }
       else{
-	throw compile::Exception("Location specifier is not the first field in functor" + toString() + 
-				 "incorrect new location specifier " + l->toString());
+	throw compile::Exception("Location specifier is not the first field in functor" + toString());
 	return NULL;
       }
     }  
     // return a list of terms that needs to be added to the rule on converting the 
     // securelog term f into overlog.
     // Also converts f into the appropriate overlog form
-    static TermList* Says::normalize(Functor* f, int& newVariable)
+    TermList* Says::normalize(Functor* f, int& newVariable)
     {
       Says *s;
       if ((s = dynamic_cast<Says*>(f)) != NULL)
@@ -432,11 +431,14 @@ namespace compile {
 	ExpressionList *t = new ExpressionList();
 	t->push_back(s->getLocSpec());
 	ExpressionList::iterator iter; 
-	for (iter = s->_says->begin(); 
-           iter != s->_says->end(); iter++)
+	ExpressionList *saysList =  const_cast<ExpressionList*>(s->saysParams());
+	for (iter = saysList->begin(); 
+	     iter != saysList->end(); iter++){
 	  t->push_back(*iter);
-	string var1 = Says::varPrefix + newVariable++;
-	Variable *encId = new Variable(Val_Str::mk(var1));
+	}
+	ostringstream var1;
+	var1 << Says::varPrefix << newVariable++;
+	Variable *encId = new Variable(Val_Str::mk(var1.str()));
 	t->push_back(encId);
 	Functor *encHint = new Functor(new Value(Val_Str::mk(Says::encHint)), t);
 
@@ -444,42 +446,75 @@ namespace compile {
 	ExpressionList *verT = new ExpressionList();
 	verT->push_back(s->getLocSpec());
 	verT->push_back(encId);
-	string var2 = Says::varPrefix + newVariable++;
-	Variable *verKey = new Variable(Val_Str::mk(var2));
+
+	ostringstream var2;
+	var2 << Says::varPrefix << newVariable++;
+	Variable *verKey = new Variable(Val_Str::mk(var2.str()));
 	verT->push_back(verKey);
 	Functor *verTable = new Functor(new Value(Val_Str::mk(Says::verTable)), verT);
 
 	//create buffer creation logic
-	string var3 = Says::varPrefix + newVariable++;
-	Variable *buf = new Variable(Val_Str::mk(var3));
+	ostringstream var3;
+	var3 << Says::varPrefix << newVariable++;
+	Variable *buf = new Variable(Val_Str::mk(var3.str()));
 
-	for (iter = s->_->begin(); 
-           iter != s->_says->end(); iter++)
-	  t->push_back(*iter);
+	// check if the concatenate operation is needed or not
+	// remember that the loc specifier is excluded but the table name must be included
+	Value *table = new Value(Val_Str::mk(s->_name));
+	Expression *cur = table;
 
+	if(s->_args->size() > 1)
+	{
+	  ExpressionList *list = s->saysArgs();
+	  iter = list->begin();
+	  //exclude location specifier
+	  iter++; 
+	  for (; iter != list->end(); iter++){
+	    cur = new Math(Math::BITOR, cur, *iter);
+	  }
+	}
+
+	Assign *assBuf = new Assign(buf, cur);
 
 	//create verification logic
-	string var4 = Says::varPrefix + newVariable++;
-	Variable *hash = new Variable(Val_Str::mk(var4));
-	string var5 = Says::varPrefix + newVariable++;
-	Variable *proof = new Variable(Val_Str::mk(var5));
+	ostringstream var4;
+	var4 << Says::varPrefix << newVariable++;
+	Variable *hash = new Variable(Val_Str::mk(var4.str()));
+	ostringstream var5;
+	var5 << Says::varPrefix << newVariable++;
+	Variable *proof = new Variable(Val_Str::mk(var5.str()));
 
-	ExpressionList hashArg = new ExpressionList();
+	ExpressionList *hashArg = new ExpressionList();
 	hashArg->push_back(buf);
 	Function *f_hash = new Function(new Value(Val_Str::mk(Says::hashFunc)), hashArg);
-	Assign *ass = new Assign(hash, f_hash);
+	Assign *assHash = new Assign(hash, f_hash);
 
 
-	ExpressionList verArg = new ExpressionList();
-	verArg->push_back(hash);
+	ExpressionList *verArg = new ExpressionList();
+	verArg->push_back(proof);
 	Function *f_verify = new Function(new Value(Val_Str::mk(Says::verFunc)), verArg);
-	Assign *ass = new Assign(proof, f_verify);
+	Assign *assVer = new Assign(hash, f_verify);
 
 
 	newTerms->push_back(encHint);
 	newTerms->push_back(verTable);
+	newTerms->push_back(assBuf);
+	newTerms->push_back(assHash);
+	newTerms->push_back(assVer);
 	
-	  
+	// now modify the says tuple
+
+	ExpressionList *arg = s->saysArgs();
+	for (iter = saysList->begin(); 
+	     iter != saysList->end(); iter++){
+	  arg->push_back(*iter);
+	}
+	arg->push_back(proof);
+	
+	s->changeName(Says::saysPrefix + s->name());
+
+	// finally return the new terms
+	return newTerms;
       }
       return NULL;
     }
@@ -654,34 +689,36 @@ namespace compile {
       int newVariable = 1;
       for (TermList::iterator iter = _body->begin(); 
            iter != _body->end(); iter++) {
-	if ((dynamic_cast<Says*>(*iter)) != NULL)
+	Says *s;
+	if ((s = dynamic_cast<Says*>(*iter)) != NULL)
 	{
-	  TermList *newTerms = Says::normalize(*iter, newVariable);
-       if(newTerms != NULL){
-	  for (TermList::iterator it = _newTerms->begin(); 
-           it != _newTerms->end(); it++) {
+	  TermList *newTerms = Says::normalize(s, newVariable);
+	  if(newTerms != NULL){
+	  for (TermList::iterator it = newTerms->begin(); 
+           it != newTerms->end(); it++) {
 	    _body->push_back(*it);
 	  }
        }
 	}
       }
 
-      if(dynamic_cast<Says*>(_head) != NULL)
+      Says *sh;
+      if((sh = dynamic_cast<Says*>(_head)) != NULL)
       {
 	// copy this rule into a new rule and insert the new rule into the list as well 
 	// as modify the existing rule
-	Rule* r = this->copy();
+	Rule* r = new Rule(*this);
 
 	// do stuff for current rule first
 	// first rule assumes that we have a proof for the says
-	TermList *newTerms = Says::normalize(_head);
-	for (TermList::iterator it = _newTerms->begin(); 
-	     it != _newTerms->end(); it++) {
+	TermList *newTerms = Says::normalize(sh, newVariable);
+	for (TermList::iterator it = newTerms->begin(); 
+	     it != newTerms->end(); it++) {
 	  _body->push_back(*it);
 	}
 
-	Functor* headCopy =  dynamic_cast<Functor*>(_head->copy());
-	headCopy->replaceLocSpec(Variable::getLocalLocationSpecifier());
+	Says* headCopy =  new Says(*sh);
+	headCopy->changeLocSpec(Variable::getLocalLocationSpecifier());
 	_body->push_back(headCopy);
 
 	// now do stuff that constructs a new proof assuming that we are the speaking principal

@@ -463,9 +463,10 @@ namespace compile {
       virtual void replace(ExpressionList::iterator i, 
                            Expression *e);
     
-    private:
+    protected:
       string          _name;
       ExpressionList* _args;
+
     };
 
     class Says : public Functor {
@@ -473,9 +474,10 @@ namespace compile {
       const static string verTable;
       const static string encHint;
       const static string varPrefix;
-      const string Says::hashFunc; 
-      const string Says::verFunc;
-      const string Says::bufFunc;
+      const static string hashFunc; 
+      const static string verFunc;
+      const static string bufFunc;
+      const static string saysPrefix;
 
       Says(Functor* f, ExpressionList* s):Functor(*f), _says(s){};
 
@@ -494,6 +496,19 @@ namespace compile {
 	return v;
       }
 
+      virtual void changeName(string newName)
+      {
+	_name = newName;
+      }
+
+      virtual ~Says() { delete _says; }
+
+      virtual const ExpressionList* saysParams() const 
+      { return _says; }
+
+      virtual ExpressionList* saysArgs() const 
+      { return _args; }
+
       // return a list of terms that needs to be added to the rule on converting the 
       // securelog term f into overlog.
       // Also converts f into the appropriate overlog form
@@ -511,6 +526,7 @@ namespace compile {
      const string Says::bufFunc = "f_buf"; 
      const string Says::encHint = "encHint"; 
      const string Says::varPrefix = "_"; 
+     const string Says::saysPrefix = "says"; 
 
     
     class Assign : public Term {
