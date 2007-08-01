@@ -78,6 +78,14 @@ namespace compile {
       return Val_Tuple::mk(tp);
     }
     
+
+     const string Says::verTable = "verKey"; 
+     const string Says::hashFunc = "f_sha1"; 
+     const string Says::verFunc = "f_verify"; 
+     const string Says::bufFunc = "f_buf"; 
+     const string Says::encHint = "encHint"; 
+     const string Says::varPrefix = "_"; 
+     const string Says::saysPrefix = "says"; 
     
     string 
     Bool::toString() const {

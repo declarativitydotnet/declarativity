@@ -518,16 +518,6 @@ namespace compile {
       ExpressionList* _says;
   
     };
-
-
-     const string Says::verTable = "verKey"; 
-     const string Says::hashFunc = "f_sha1"; 
-     const string Says::verFunc = "f_verify"; 
-     const string Says::bufFunc = "f_buf"; 
-     const string Says::encHint = "encHint"; 
-     const string Says::varPrefix = "_"; 
-     const string Says::saysPrefix = "says"; 
-
     
     class Assign : public Term {
     public:
