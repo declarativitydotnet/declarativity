@@ -18,8 +18,7 @@ bin_PROGRAMS =			runOverLog \
 				udpMessage \
 				udpListen \
 				runStagedOverlog \
-				p2nc \
-				secureLog 
+				p2nc 
 
 
 benchmark_SOURCES =		benchmark.C
@@ -73,21 +72,6 @@ runOverLog_LDADD = 		\
 				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/debugger/libp2debugger.la
 
-
-secureLog_SOURCES  =		secureLog.C
-
-secureLog_LDADD = 		\
-				@OPENSSL_LIB@ \
-				$(top_builddir)/p2cpp/libp2cpp.la \
-				$(top_builddir)/planner/libp2planner.la \
-				$(top_builddir)/overlog/libp2overlog.la \
-				$(top_builddir)/net/libp2net.la \
-				$(top_builddir)/stages/libp2stages.la \
-				$(top_builddir)/functions/libp2functions.la \
-				$(top_builddir)/aggregates/libp2aggregates.la \
-				$(top_builddir)/elements/libp2elements.la \
-				$(top_builddir)/p2core/libp2core.la \
-				$(top_builddir)/debugger/libp2debugger.la
 
 p2nc_SOURCES =			p2nc.C
 

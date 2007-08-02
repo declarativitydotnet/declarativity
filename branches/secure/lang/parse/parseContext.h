@@ -423,6 +423,12 @@ namespace compile {
     class Functor : public Term {
     public:
       Functor(Expression *n, ExpressionList *a, bool complement = false); 
+
+      Functor(Functor *f){
+	_name = f->_name;
+	_args = f->_args;
+	_complement = f->_complement;
+      }; 
      
       Functor(const Functor &f) 
         : _name(f._name), _complement(f._complement){ 
@@ -483,7 +489,7 @@ namespace compile {
       const static string genFunc;
       const static string saysPrefix;
 
-      Says(Functor* f, ExpressionList* s):Functor(*f), _says(s){
+      Says(Functor* f, ExpressionList* s):Functor(f), _says(s){
 	if(f->isComplement())
 	{
 	  throw compile::Exception("Functor with ! can't be said");
