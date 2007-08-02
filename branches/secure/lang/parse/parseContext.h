@@ -692,7 +692,7 @@ namespace compile {
       Rule(Term *t, TermList *rhs, bool deleteFlag, Expression *n=NULL); 
       
       Rule(const Rule &r):_name(r._name), _delete(r._delete){
-	_head = new Functor(*r._head);
+	_head = dynamic_cast<Functor*>(r._head->copy());
 	TermList *tl = new TermList();
 	TermList::iterator it = r._body->begin();
 	while (it != r._body->end()){
@@ -707,8 +707,6 @@ namespace compile {
 	return v;
       }
 
-      
-     
       virtual ~Rule() { delete _head; delete _body; };
     
       virtual string toString() const;

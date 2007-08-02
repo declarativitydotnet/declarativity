@@ -516,6 +516,7 @@ namespace compile {
 
 	ExpressionList *genArg = new ExpressionList();
 	genArg->push_back(hash);
+	genArg->push_back(genKey);
 	Function *f_gen = new Function(new Value(Val_Str::mk(Says::genFunc)), genArg);
 	Assign *assGen = new Assign(proof, f_gen);
 
@@ -623,6 +624,7 @@ namespace compile {
 
 	ExpressionList *verArg = new ExpressionList();
 	verArg->push_back(proof);
+	verArg->push_back(verKey);
 	Function *f_verify = new Function(new Value(Val_Str::mk(Says::verFunc)), verArg);
 	Assign *assVer = new Assign(hash, f_verify);
 
@@ -840,11 +842,15 @@ namespace compile {
 	{
 	  TermList *newTerms = Says::normalizeVerify(s, newVariable);
 	  if(newTerms != NULL){
-	  for (TermList::iterator it = newTerms->begin(); 
-           it != newTerms->end(); it++) {
-	    _body->push_back(*it);
+
+	    _body->erase(iter);
+	    _body->push_back(new Functor(s));
+
+	    for (TermList::iterator it = newTerms->begin(); 
+		 it != newTerms->end(); it++) {
+	      _body->push_back(*it);
+	    }
 	  }
-       }
 	}
       }
 
@@ -860,6 +866,9 @@ namespace compile {
 	// executing the rule has the key
 	TermList *newTermsGen = Says::normalizeGenerate(head, newVariable);
 	if(newTermsGen != NULL){
+	  
+	  r->_head = new Functor(head);
+	  
 	  for (TermList::iterator it1 = newTermsGen->begin(); 
 	       it1 != newTermsGen->end(); it1++) {
 	    r->_body->push_back(*it1);
@@ -872,13 +881,16 @@ namespace compile {
 	// has a proof for the says on lhs
 	TermList *newTermsUse = Says::normalizeVerify(sh, newVariable, true);
 	if(newTermsUse != NULL){
+
+	  _head = new Functor(sh);
+
 	  for (TermList::iterator it = newTermsUse->begin(); 
 	       it != newTermsUse->end(); it++) {
 	    _body->push_back(*it);
 	  }
 	}
 
-	Says* headCopy =  new Says(*sh);
+	Functor* headCopy =  new Functor(*sh);
 	headCopy->changeLocSpec(Variable::getLocalLocationSpecifier());
 	_body->push_back(headCopy);
 
@@ -1310,7 +1322,7 @@ namespace compile {
 	  r->initializeRule(s);
 	  if(printOverLog)
 	  {
-	    std::cout<<r->toString();
+	    std::cout<<std::endl<<r->toString();
 	  }
 	  r->canonicalizeRule();
 	}
