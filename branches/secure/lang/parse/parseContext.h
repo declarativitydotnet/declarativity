@@ -864,8 +864,8 @@ namespace compile {
     
     public:
       /*******************************************************************/
-      Context(string name, bool print = false) 
-      : compile::Context(name), lexer(NULL), _statements(NULL) {printOverLog = print;};
+      Context(string name) 
+      : compile::Context(name), lexer(NULL), _statements(NULL) {printOverLog = true;};
   
       Context(TuplePtr args); 
 

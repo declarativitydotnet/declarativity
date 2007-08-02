@@ -859,9 +859,11 @@ namespace compile {
 	// first rule generates the proof assuming that the node 
 	// executing the rule has the key
 	TermList *newTermsGen = Says::normalizeGenerate(head, newVariable);
-	for (TermList::iterator it1 = newTermsGen->begin(); 
-	     it1 != newTermsGen->end(); it1++) {
-	  r->_body->push_back(*it1);
+	if(newTermsGen != NULL){
+	  for (TermList::iterator it1 = newTermsGen->begin(); 
+	       it1 != newTermsGen->end(); it1++) {
+	    r->_body->push_back(*it1);
+	  }
 	}
 	r->resetName();
 	s->push_back(r);
@@ -869,9 +871,11 @@ namespace compile {
 	// now write rule that assumes that the node executing
 	// has a proof for the says on lhs
 	TermList *newTermsUse = Says::normalizeVerify(sh, newVariable, true);
-	for (TermList::iterator it = newTermsUse->begin(); 
-	     it != newTermsUse->end(); it++) {
-	  _body->push_back(*it);
+	if(newTermsUse != NULL){
+	  for (TermList::iterator it = newTermsUse->begin(); 
+	       it != newTermsUse->end(); it++) {
+	    _body->push_back(*it);
+	  }
 	}
 
 	Says* headCopy =  new Says(*sh);
@@ -1223,6 +1227,7 @@ namespace compile {
     Context::Context(string name, string prog, bool file)
       : compile::Context(name), lexer(NULL), _statements(NULL)
     {
+      printOverLog = true;
       std::istream* pstream;
 
       if (file) {
@@ -1271,6 +1276,7 @@ namespace compile {
       : compile::Context((*args)[2]->toString()), 
         lexer(NULL), _statements(NULL)
     {
+      printOverLog = true;
       if (args->size() > 3) {
         CommonTablePtr programTbl = Plumber::catalog()->table(PROGRAM);
         TuplePtr       programTp  = Tuple::mk(PROGRAM, true);
@@ -1302,14 +1308,11 @@ namespace compile {
 	if ((r = dynamic_cast<Rule*>(*iter)) != NULL) 
 	{
 	  r->initializeRule(s);
-	  if(!printOverLog)
+	  if(printOverLog)
 	  {
-	    r->canonicalizeRule();
+	    std::cout<<r->toString();
 	  }
-	  else
-	  {
-	    std::cout<<r;
-	  }
+	  r->canonicalizeRule();
 	}
       }
       
