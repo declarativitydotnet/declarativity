@@ -99,6 +99,7 @@ for op, ar, va, desc in [
   ("^",2,       "BIT_XOR",      "Bitwise exclusive-OR"),
   ("~",1,       "BIT_NOT",      "1's complement"),
   ("%",2,       "MOD",          "Integer modulus"),
+  ("append",2,       "APPEND",      "Append operation"),
 
   ("<time",2,      "TIME_LT",       "Time less-than comparison"),
   ("<=time",2,     "TIME_LTE",      "Time less-than-or-eq comparison"),

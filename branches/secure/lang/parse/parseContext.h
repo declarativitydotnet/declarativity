@@ -284,7 +284,7 @@ namespace compile {
     
     class Math : public Expression {
     public:
-      enum Operator {LSHIFT, RSHIFT, PLUS, MINUS, TIMES, DIVIDE, MODULUS, BITOR, NOP};
+      enum Operator {LSHIFT, RSHIFT, PLUS, MINUS, TIMES, DIVIDE, MODULUS, BITOR, APPEND, NOP};
     
       Math(Operator o, 
            Expression *l, 
@@ -300,6 +300,7 @@ namespace compile {
           case DIVIDE:  _operName = "/";  break;
           case MODULUS: _operName = "%";  break;
           case BITOR: _operName = "|";  break;
+          case APPEND: _operName = "|||";  break;
           default: assert(0);
         }
       }
