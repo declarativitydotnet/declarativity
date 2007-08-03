@@ -170,30 +170,50 @@ stage: OL_STAGE OL_LPAR OL_STRING OL_COMMA OL_NAME OL_COMMA OL_NAME OL_RPAR OL_D
      ;
 
 rule: OL_NAME functor OL_IF termlist OL_DOT 
-        { $$ = new compile::parse::Rule($2, $4, false, $1);std::cout<<std::endl<<"Found Rule: "<<$$->toString(); } 
+        { $$ = new compile::parse::Rule($2, $4, false, $1);
+	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
+	} 
       | OL_NAME OL_DEL functor OL_IF termlist OL_DOT 
-        { $$ = new compile::parse::Rule($3, $5, true, $1); std::cout<<std::endl<<"Found Rule: "<<$$->toString(); } 
+        { $$ = new compile::parse::Rule($3, $5, true, $1); 
+	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
+	} 
       | functor OL_IF termlist OL_DOT 
-        { $$ = new compile::parse::Rule($1, $3, false); std::cout<<std::endl<<"Found Rule: "<<$$->toString(); }  
+        { $$ = new compile::parse::Rule($1, $3, false); 
+	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
+	}
       | OL_DEL functor OL_IF termlist OL_DOT 
-        { $$ = new compile::parse::Rule($2, $4, true); std::cout<<std::endl<<"Found Rule: "<<$$->toString(); } 
+        { $$ = new compile::parse::Rule($2, $4, true); 
+	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
+	} 
       | OL_NAME functor OL_IF aggview OL_DOT 
-        { $$ = new compile::parse::Rule($2, $4, false, $1); std::cout<<std::endl<<"Found Rule: "<<$$->toString(); } 
+        { $$ = new compile::parse::Rule($2, $4, false, $1); 
+	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
+	} 
       | functor OL_IF aggview OL_DOT 
-        { $$ = new compile::parse::Rule($1, $3, false); std::cout<<std::endl<<"Found Rule: "<<$$->toString(); } 
+        { $$ = new compile::parse::Rule($1, $3, false); 
+	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
+	} 
       | OL_NAME says OL_IF termlist OL_DOT 
-        { $$ = new compile::parse::Rule($2, $4, false, $1); std::cout<<std::endl<<"Found Rule: "<<$$->toString(); } 
+        { $$ = new compile::parse::Rule($2, $4, false, $1); 
+	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
+	} 
       | says OL_IF termlist OL_DOT 
-        { $$ = new compile::parse::Rule($1, $3, false); std::cout<<std::endl<<"Found Rule: "<<$$->toString(); } 
+        { $$ = new compile::parse::Rule($1, $3, false); 
+	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
+	} 
     ;
 
 
 term: functor | assign | select | says
-        { $$=$1;std::cout<<std::endl<<"Executing term"; }
+        { $$=$1;
+	//std::cout<<std::endl<<"Executing term";
+	}
       ;
 
 termlist:  term 
-           { $$ = new compile::parse::TermList(); $$->push_front($1);std::cout<<std::endl<<"Executing termlist";  }
+           { $$ = new compile::parse::TermList(); $$->push_front($1);
+	   //std::cout<<std::endl<<"Executing termlist";  
+	   }
          | term OL_COMMA termlist 
            { $3->push_front($1); $$=$3; } 
          ;
@@ -209,30 +229,46 @@ factbody: OL_LPAR atom OL_RPAR
         ;
 
 functor: OL_NAME functorbody          
-         { std::cout<<std::endl<<"starting functor" ; $$=new compile::parse::Functor($1, $2); std::cout<<std::endl<<"Executing functor: found"<<$$->toString();  }  
+         { 
+	   //std::cout<<std::endl<<"starting functor" ; 
+	   $$=new compile::parse::Functor($1, $2); 
+	   //std::cout<<std::endl<<"Executing functor: found"<<$$->toString();  
+	 }  
        | OL_NOT OL_NAME functorbody
          { $$=new compile::parse::Functor($2, $3, true); }           
 
        ;
 
 functorbody: OL_LPAR locationarg OL_RPAR 
-               { $$ = new compile::parse::ExpressionList; $$->push_front($2); std::cout<<std::endl<<"Executing functorbody";  }
+               { $$ = new compile::parse::ExpressionList; $$->push_front($2); 
+	       //std::cout<<std::endl<<"Executing functorbody";  
+	       }
              | OL_LPAR locationarg OL_COMMA functorargs OL_RPAR
-               { $4->push_front($2); $$=$4; std::cout<<std::endl<<"Executing functorbody";  }
+               { $4->push_front($2); $$=$4; 
+	       //std::cout<<std::endl<<"Executing functorbody";  
+	       }
              ;
 
 locationarg: OL_VAR | aggregate
-             { $$ = $1; std::cout<<std::endl<<"Executing locationarg: found"<<$$->toString();  }
+             { $$ = $1; 
+	     //std::cout<<std::endl<<"Executing locationarg: found"<<$$->toString();  
+	     }
            ;
 
 functorargs: functorarg 
-             { $$ = new compile::parse::ExpressionList(); $$->push_front($1); std::cout<<std::endl<<"Executing functorargs";  }
+             { $$ = new compile::parse::ExpressionList(); $$->push_front($1); 
+	     //std::cout<<std::endl<<"Executing functorargs";  
+	     }
            | functorarg OL_COMMA functorargs 
-             { $3->push_front($1); $$=$3; std::cout<<std::endl<<"Executing functorargs";  }
+             { $3->push_front($1); $$=$3; 
+	     //std::cout<<std::endl<<"Executing functorargs";  
+	     }
            ;
 
 functorarg: atom | OL_VAR | aggregate | math_expr | function
-            { $$ = $1; std::cout<<std::endl<<"Executing functorarg: found"<<$$->toString();  }
+            { $$ = $1; 
+	    //std::cout<<std::endl<<"Executing functorarg: found"<<$$->toString();  
+	    }
           ;
 
 aggview: agg_oper OL_LPAR functorbody OL_COMMA functorbody OL_COMMA functor OL_RPAR 
@@ -360,7 +396,9 @@ matrixentry: OL_LSQUB vectorentries OL_RSQUB
            ;
 
 atom: OL_VALUE | OL_STRING | OL_NULL | vector_expr | matrix_expr
-      { $$ = $1; std::cout<<std::endl<<"Executing atom";  }
+      { $$ = $1; 
+      //std::cout<<std::endl<<"Executing atom";  
+      }
     ;
 
 aggregate: agg_oper OL_LT OL_VAR OL_GT 
@@ -388,7 +426,7 @@ agg_oper:	OL_AGGFUNCNAME
 ;
 
 says:           OL_SAYS OL_LPAR functorargs OL_RPAR OL_LT functor OL_GT{
-                std::cout<<std::endl<<"starting says: "<<" "<<$6->toString();
+                //std::cout<<std::endl<<"starting says: "<<" "<<$6->toString();
                 compile::parse::Functor *pf = dynamic_cast<compile::parse::Functor*>($6);
                 if (!pf || $3->size() != 4 || pf->isComplement()) {
 		  ctxt->error(string("functor is not of type Functor or says \
@@ -397,7 +435,7 @@ says:           OL_SAYS OL_LPAR functorargs OL_RPAR OL_LT functor OL_GT{
                 else{
 		    // check for the types of the says parameters
 		    $$ = new compile::parse::Says(pf, $3);
-		    std::cout<<std::endl<<"Executing says: found"<<$$->toString();  
+		    //std::cout<<std::endl<<"Executing says: found"<<$$->toString();  
                 }
 
                 }
