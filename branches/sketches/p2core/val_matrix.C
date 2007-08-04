@@ -38,30 +38,30 @@ MatrixPtr Val_Matrix::cast(ValuePtr v)
 
 
 // Marshal/Unmarshal essentially copied from Val_Tuple
-void Val_Matrix::marshal_subtype( boost::archive::text_oarchive *x )
+void Val_Matrix::xdr_marshal_subtype( XDR *x )
 {
   ValPtrMatrix::const_iterator1 it1;
   ValPtrMatrix::const_iterator2 it2;
   
   uint32_t sz1 = M->size1();
-  uint32_t i1 = (uint32_t)sz1;
+  u_int32_t i1 = (u_int32_t)sz1;
   uint32_t sz2 = M->size2();
-  uint32_t i2 = (uint32_t)sz2;
-  *x & i1;
-  *x & i2;
+  u_int32_t i2 = (u_int32_t)sz2;
+  xdr_uint32_t(x, &i1);
+  xdr_uint32_t(x, &i2);
   // Marshal the entries -- we will use default storage (row-major)
   for (it1 = M->begin1();  it1 != M->end1(); ++it1)
     { 
       for (it2 = it1.begin(); it2 != it1.end(); ++it2)
-        (*it2)->marshal(x); 
+        (*it2)->xdr_marshal(x); 
     }
 }
 
-ValuePtr Val_Matrix::unmarshal( boost::archive::text_iarchive *x )
+ValuePtr Val_Matrix::xdr_unmarshal( XDR *x )
 {
-  uint32_t ui1, ui2;
-  *x & ui1;
-  *x & ui2;
+  u_int32_t ui1, ui2;
+  xdr_uint32_t(x, &ui1);
+  xdr_uint32_t(x, &ui2);
   uint32_t sz1 = ui1;
   uint32_t sz2 = ui2;
 
@@ -69,7 +69,7 @@ ValuePtr Val_Matrix::unmarshal( boost::archive::text_iarchive *x )
   // Unmarshal the entries -- we use default (row-major) storage
   for (uint32_t i1 = 0; i1 < sz1; i1++) {
     for (uint32_t i2 = 0; i2 < sz2; i2++) {
-      (*mp)(i1,i2) = Value::unmarshal(x);
+      (*mp)(i1,i2) = Value::xdr_unmarshal(x);
     }
   }
   return mk(mp);

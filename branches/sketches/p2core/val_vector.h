@@ -38,17 +38,17 @@ public:
   virtual string toConfString() const;
 
   // Marshal/unmarshal a vector.
-  void marshal_subtype( boost::archive::text_oarchive *x );
-  static ValuePtr unmarshal( boost::archive::text_iarchive *x );
+  void xdr_marshal_subtype( XDR *x );
+  static ValuePtr xdr_unmarshal( XDR *x );
 
   // Constructors
   Val_Vector(VectorPtr vp) : V(vp) {};
-  Val_Vector(unsigned int &size) { VectorPtr p(new ValPtrVector(size)); V = p;}
+  Val_Vector(uint64_t &size) { VectorPtr p(new ValPtrVector(size)); V = p;}
   virtual ~Val_Vector() {};
 
   // Factory
   static ValuePtr mk(VectorPtr vp) { ValuePtr p(new Val_Vector(vp)); return p; };
-  static ValuePtr mk2(unsigned int &size) { ValuePtr p(new Val_Vector(size)); return p; };
+  static ValuePtr mk2(uint64_t &size) { ValuePtr p(new Val_Vector(size)); return p; };
   
   // strict comparison
   int compareTo(ValuePtr v) const;
@@ -61,8 +61,8 @@ public:
   const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
 
   // manipulate vector entries
-  void insert(unsigned int &i, ValuePtr vp) { (*V)[i] = vp; };
-  void erase(unsigned int &i) { (*V)[i].reset(); };
+  void insert(uint64_t &i, ValuePtr vp) { (*V)[i] = vp; };
+  void erase(uint64_t &i) { (*V)[i].reset(); };
   // ValuePtr operator[] (uint64_t &i) { return (*V)[i]; }
 
   static const opr::Oper* oper_;

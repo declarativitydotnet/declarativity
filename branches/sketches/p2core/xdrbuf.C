@@ -18,7 +18,6 @@
 
 #include "fdbuf.h"
 #include <assert.h>
-#include <winsock2.h>
 
 //
 // Forward XDR method declarations
@@ -200,7 +199,7 @@ fd_control(XDR *xdrs, int c, void *ch)
 // Initialize an XDR to use an Fdbuf.  If 'take' is true, the fdbuf
 // will be destroyed when the XDR is destroyed. 
 //
-void XDRfdbuf_create(XDR *xdrs, Fdbuf *fdb, bool take, enum xdr_op op)
+void xdrfdbuf_create(XDR *xdrs, Fdbuf *fdb, bool take, enum xdr_op op)
 {
   xdrs->x_op = op;
   xdrs->x_ops = &ops;

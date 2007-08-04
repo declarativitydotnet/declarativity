@@ -13,8 +13,7 @@
 #ifndef __Bandwidth_H__
 #define __Bandwidth_H__
 
-// #include <sys/time.h>
-#include <winsock2.h> // for time stuff
+#include <sys/time.h>
 #include "element.h"
 
 class Bandwidth : public Element {

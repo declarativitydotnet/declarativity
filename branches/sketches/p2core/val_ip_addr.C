@@ -16,26 +16,22 @@
 #include "math.h"
 #include <loggerI.h>
 #include <sys/types.h>
-// #include <sys/socket.h>
-// #include <arpa/inet.h>
-#include <winsock2.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include <reporting.h>
-
-// see http://lists.helixcommunity.org/pipermail/helix-client-dev/2004-May/001812.html
-
 
 const opr::Oper* Val_IP_ADDR::oper_ = new opr::OperCompare< Val_IP_ADDR> ();
 
 //
 // Marshalling and unmarshallng
 //
-void Val_IP_ADDR::marshal_subtype( boost::archive::text_oarchive *x )
+void Val_IP_ADDR::xdr_marshal_subtype( XDR *x )
 {
   exit(-1);
   return;
 }
 
-ValuePtr Val_IP_ADDR::unmarshal( boost::archive::text_iarchive *x )
+ValuePtr Val_IP_ADDR::xdr_unmarshal( XDR *x )
 {
   exit(-1);
   ValuePtr v;
@@ -76,7 +72,7 @@ FdbufPtr Val_IP_ADDR::getAddress()
   FdbufPtr x(new Fdbuf());
   struct sockaddr_in saddr;
 
-  const char * theAtSign = strchr(_s.c_str(), ':');
+  char * theAtSign = strchr(_s.c_str(), ':');
   
   if (theAtSign == NULL) {
     // Couldn't find the correct format
@@ -88,11 +84,10 @@ FdbufPtr Val_IP_ADDR::getAddress()
   string theAddress(_s.c_str(), theAtSign - _s.c_str());
   string thePort(theAtSign + 1);
   int port = atoi(thePort.c_str());
-  memset(&saddr, 0, sizeof(saddr));
+  bzero(&saddr, sizeof(saddr));
   saddr.sin_port = htons(port);
-  int saddr_len;
-  WSAStringToAddress((LPSTR) _s.c_str(), AF_INET, NULL, (LPSOCKADDR) &saddr.sin_addr, &saddr_len);
-  x->push_bytes((char*) &saddr, saddr_len);
+  inet_pton(AF_INET, _s.c_str(), &saddr.sin_addr);
+  x->push_bytes((char*) &saddr, sizeof(saddr));
   return x;
   
 }

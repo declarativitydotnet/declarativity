@@ -38,21 +38,22 @@ VectorPtr Val_Vector::cast(ValuePtr v)
 
 
 // Marshal/Unmarshal essentially copied from Val_Tuple
-void Val_Vector::marshal_subtype( boost::archive::text_oarchive *x )
+void Val_Vector::xdr_marshal_subtype( XDR *x )
 {
   ValPtrVector::const_iterator it;
+  
   uint32_t sz = V->size();
-  uint32_t i = (uint32_t)sz;
-  *x & i;
+  u_int32_t i = (u_int32_t)sz;
+  xdr_uint32_t(x, &i);
   // Marshal the entries
   for (it = V->begin();  it != V->end(); ++it)
-    { (*it)->marshal(x); }
+    { (*it)->xdr_marshal(x); }
 }
 
-ValuePtr Val_Vector::unmarshal( boost::archive::text_iarchive *x )
+ValuePtr Val_Vector::xdr_unmarshal( XDR *x )
 {
-  uint32_t ui;
-  *x &ui ;
+  u_int32_t ui;
+  xdr_uint32_t(x, &ui);
   uint32_t sz = ui;
 
   VectorPtr vp(new vector<ValuePtr>(sz));
@@ -60,7 +61,7 @@ ValuePtr Val_Vector::unmarshal( boost::archive::text_iarchive *x )
   for (uint32_t i = 0;
        i < sz;
        i++){
-    (*vp)(i) = Value::unmarshal(x);
+    (*vp)(i) = Value::xdr_unmarshal(x);
   }
   return mk(vp);
 }

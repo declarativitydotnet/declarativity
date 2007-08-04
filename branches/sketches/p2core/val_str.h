@@ -32,8 +32,8 @@ public:
   virtual unsigned int size() const { return s.size(); }
 
   // Marshalling and unmarshallng
-  void marshal_subtype( boost::archive::text_oarchive *x );
-  static ValuePtr unmarshal( boost::archive::text_iarchive *x );
+  void xdr_marshal_subtype( XDR *x );
+  static ValuePtr xdr_unmarshal( XDR *x );
 
   // Constructor
   Val_Str(string theString) : s(theString) {};

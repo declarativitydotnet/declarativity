@@ -43,10 +43,10 @@ public:
 
 
   // Marshalling and unmarshallng
-  void marshal_subtype( boost::archive::text_oarchive *x );
+  void xdr_marshal_subtype( XDR *x );
 
 
-  static ValuePtr unmarshal( boost::archive::text_iarchive *x );
+  static ValuePtr xdr_unmarshal( XDR *x );
 
 
   // Constructors

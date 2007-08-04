@@ -38,7 +38,6 @@ void ElementSpec::initializePorts()
 
   // Empty out the set of unification structures
   _scratchUniGroups.clear();
-  _scratchUniGroups = std::vector< ElementSpec::UniGroupPtr >(256);
 
   // Start an iterator through the personality and flow specs
   const char * personalityPointer = _element->processing();

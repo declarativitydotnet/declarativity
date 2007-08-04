@@ -17,8 +17,8 @@
 #define __XDRBUF_H__
 
 #include "fdbuf.h"
-//#include <rpc/rpc.h>
-//#include <rpc/xdr.h>
+#include <rpc/rpc.h>
+#include <rpc/xdr.h>
 
 //
 // Initialize an XDR to use an Fdbuf.  If 'take' is true, the fdbuf

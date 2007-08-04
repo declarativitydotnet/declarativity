@@ -27,14 +27,14 @@ const opr::Oper* Val_Int64::oper_ = new opr::OperImpl<Val_Int64>();
 //
 // Marshalling and unmarshallng
 //
-void Val_Int64::marshal_subtype( boost::archive::text_oarchive *x )
+void Val_Int64::xdr_marshal_subtype( XDR *x )
 {
-  *x & i;
+  xdr_int64_t(x, &i);
 }
-ValuePtr Val_Int64::unmarshal( boost::archive::text_iarchive *x )
+ValuePtr Val_Int64::xdr_unmarshal( XDR *x )
 {
   int64_t i;
-  *x & i;
+  xdr_int64_t(x, &i);
   return mk(i);
 }
 
@@ -63,7 +63,7 @@ int64_t Val_Int64::cast(ValuePtr v) {
   case Value::NULLV:
     return 0;
   case Value::STR:
-    return /* strtoll */_strtoi64(Val_Str::cast(v).c_str(),NULL,0);
+    return strtoll(Val_Str::cast(v).c_str(),NULL,0);
   default:
     throw Value::TypeError(v->typeCode(), v->typeName(),
                            Value::INT64, "int64");

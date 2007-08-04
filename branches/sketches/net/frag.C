@@ -17,9 +17,7 @@
 #include "val_uint32.h"
 #include "val_opaque.h"
 #include "math.h"
-//#include "xdrbuf.h"
-// the boost serialization implementer claims text is not much more expensive than portable binary
-#include <boost/archive/text_oarchive.hpp>
+#include "xdrbuf.h"
 #include "netglobals.h"
 
 Frag::Frag(string name, unsigned bs, unsigned mqs)
@@ -99,10 +97,10 @@ void Frag::fragment(TuplePtr t)
   payload->freeze();
 
   FdbufPtr payload_fb(new Fdbuf());
-  boost::archive::text_oarchive *xe = (boost::archive::text_oarchive *)payload_fb.get();
-  //xdrfdbuf_create(&xe, payload_fb.get(), false, XDR_ENCODE);
-  payload->marshal(xe);
-  // xdr_destroy(&xe);
+  XDR xe;
+  xdrfdbuf_create(&xe, payload_fb.get(), false, XDR_ENCODE);
+  payload->xdr_marshal(&xe);
+  xdr_destroy(&xe);
 
   unsigned num_chunks = 
     static_cast<unsigned>(ceil((double)payload_fb->length() / block_size_)); 

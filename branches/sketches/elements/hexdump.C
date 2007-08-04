@@ -41,7 +41,7 @@ TuplePtr Hexdump::simple_action(TuplePtr p)
   }
 
   // Is it an opaque?
-  if (first->typeCode() != Value::P2_OPAQUE) {
+  if (first->typeCode() != Value::OPAQUE) {
     // Can't hexdump anything but opaques
     log(Reporting::WARN,
         -1,

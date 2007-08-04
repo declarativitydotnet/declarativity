@@ -66,7 +66,7 @@ Reporting::innerSetLevel(Level l)
     _info = &std::cerr;
   case WARN:
     _warn = &std::cerr;
-  case P2_ERROR:
+  case ERROR:
     _error = &std::cerr;
   case OUTPUT:
     _output = &std::cerr;
@@ -175,14 +175,14 @@ Reporting::Initializer::Initializer()
   (*_levelFromName)["WORDY"] = WORDY;
   (*_levelFromName)["INFO"] = INFO;
   (*_levelFromName)["WARN"] = WARN;
-  (*_levelFromName)["P2_ERROR"] = P2_ERROR;
+  (*_levelFromName)["ERROR"] = ERROR;
   (*_levelFromName)["OUTPUT"] = OUTPUT;
   (*_levelFromName)["NONE"] = NONE;
   
   (*_levelToName)[ALL] = "ALL";
   (*_levelToName)[INFO] = "INFO";
   (*_levelToName)[WARN] = "WARN";
-  (*_levelToName)[P2_ERROR] = "P2_ERROR";
+  (*_levelToName)[ERROR] = "ERROR";
   (*_levelToName)[WORDY] = "WORDY";
   (*_levelToName)[OUTPUT] = "OUTPUT";
   (*_levelToName)[NONE] = "NONE";
@@ -190,7 +190,7 @@ Reporting::Initializer::Initializer()
 
   // Point streams. By default all are null
   _wordy = _info = _warn = _error = _output = _nullOStream;
-  innerSetLevel(P2_ERROR);
+  innerSetLevel(ERROR);
 }
 
 

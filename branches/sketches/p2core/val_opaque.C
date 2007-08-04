@@ -22,18 +22,18 @@ const opr::Oper* Val_Opaque::oper_ = new opr::OperCompare<Val_Opaque>();
 //
 // Marshal an opaque
 // 
-void Val_Opaque::marshal_subtype( boost::archive::text_oarchive *x ) 
+void Val_Opaque::xdr_marshal_subtype( XDR *x ) 
 {
   uint32_t l = b->length();
-  *x & l;
-  x->save_binary(b->raw_inline(l), l);
+  xdr_uint32_t(x, &l);
+  xdr_opaque(x, b->raw_inline(l), l);
 }
 
-ValuePtr Val_Opaque::unmarshal( boost::archive::text_iarchive *x )
+ValuePtr Val_Opaque::xdr_unmarshal( XDR *x )
 {
   FdbufPtr fb(new Fdbuf());
   uint32_t l;
-  *x & l;
+  xdr_uint32_t(x, &l);
   static const unsigned STATIC_BYTE_BUFFER = 10000;
 
   if (l < STATIC_BYTE_BUFFER) {
@@ -41,14 +41,14 @@ ValuePtr Val_Opaque::unmarshal( boost::archive::text_iarchive *x )
     static char byteBuffer[STATIC_BYTE_BUFFER];
     static char* bb = &(byteBuffer[0]);
     memset(bb, 0, STATIC_BYTE_BUFFER);
-    x->load_binary(bb, l);
+    xdr_opaque(x, bb, l);
     fb->push_bytes(bb, l);
   }  else {
     // We can't use the static buffer. We must allocate a one-shot
     // buffer
     char * localBuffer = new char[l+1];
     memset(localBuffer, 0, STATIC_BYTE_BUFFER);
-    x->load_binary(localBuffer, l);
+    xdr_opaque(x, localBuffer, l);
     fb->push_bytes(localBuffer, l);
     delete localBuffer;
   }
@@ -68,7 +68,7 @@ string Val_Opaque::toConfString() const
 FdbufPtr Val_Opaque::cast(ValuePtr v)
 {
   switch (v->typeCode()) {
-  case Value::P2_OPAQUE:
+  case Value::OPAQUE:
     return (static_cast<Val_Opaque *>(v.get()))->b;
   case Value::STR:
     {
@@ -78,16 +78,16 @@ FdbufPtr Val_Opaque::cast(ValuePtr v)
     }
   default:
     throw Value::TypeError(v->typeCode(), v->typeName(),
-                           Value::P2_OPAQUE, "P2_opaque");
+                           Value::OPAQUE, "opaque");
   }
 }
   
 int Val_Opaque::compareTo(ValuePtr other) const
 {
-  if (other->typeCode() != Value::P2_OPAQUE) {
-    if (Value::P2_OPAQUE < other->typeCode()) {
+  if (other->typeCode() != Value::OPAQUE) {
+    if (Value::OPAQUE < other->typeCode()) {
       return -1;
-    } else if (Value::P2_OPAQUE > other->typeCode()) {
+    } else if (Value::OPAQUE > other->typeCode()) {
       return 1;
     }
   }

@@ -122,7 +122,7 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands,
   for (unsigned k = 0; k < ruleStrands.size(); k++) {
     RuleStrand* rs = ruleStrands.at(k);
     if (rs->getRule()->_event != NULL
-        && rs->eventType() == Parse_Event::P2_RECV) {
+        && rs->eventType() == Parse_Event::RECV) {
       numReceivers++;
       ReceiverInfoMap::iterator iterator =
         _receiverInfo.find(ruleStrands.at(k)->eventFunctorName());
@@ -216,7 +216,7 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands,
   // hookup with round robin
   int numSenders = 0;
   for (unsigned k = 0; k < ruleStrands.size(); k++) {
-    if (ruleStrands.at(k)->actionType() == Parse_Action::P2_SEND) {
+    if (ruleStrands.at(k)->actionType() == Parse_Action::SEND) {
       numSenders++;
     }
   }
@@ -233,7 +233,7 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands,
   // hookup rule strands
   int counter = 0;
   for (unsigned k = 0; k < ruleStrands.size(); k++) {
-    if (ruleStrands.at(k)->actionType() == Parse_Action::P2_SEND) {
+    if (ruleStrands.at(k)->actionType() == Parse_Action::SEND) {
       _senders.push_back(ruleStrands.at(k)->getActionElement());
       _conf->hookUp(ruleStrands.at(k)->getActionElement(), 
 		    0, roundRobin, counter++);

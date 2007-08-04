@@ -19,13 +19,11 @@
 
 #include <boost/shared_ptr.hpp>
 #include <cstdlib>
-//#include <stdint.h>
-#include "value.h"
+#include <stdint.h>
 #include <string>
 #include <sstream>
-// #include <error.h>
-// #include <sys/socket.h>
-#include <winsock2.h>
+#include <errno.h>
+#include <sys/socket.h>
 
 /*
   A brief implementation discussion is in order.  Unlike (say) DM's
@@ -46,13 +44,13 @@ private:
   uint32_t capacity;	// Capacity of the buffer so far.
   uint32_t len;		// Number of bytes actually held.
   uint32_t start;		// Offset of first valid byte
-  int	 err;		// Last value of WSAGetLastError(). 
+  int	 err;		// Last value of errno. 
   char	 *data;		// Data itself
   bool	 safe;		// Zero any data before deleting
 
   // Used by write, send, sendto...
   inline ssize_t post_write(uint32_t w) {
-    err = WSAGetLastError();
+    err = errno;
     if (w > 0) {
       start += w;
       len -= w;
@@ -62,7 +60,7 @@ private:
   
   // Used by read, recv, recvfrom...
   inline ssize_t post_read(uint32_t r) {
-    err = WSAGetLastError();
+    err = errno;
     if (r > 0) {
       len += r;
     }
@@ -80,7 +78,7 @@ public:
     BUF_DFLT_READ = 1500,	// Default quantity to read.
     BUF_UNLIMITED = -1,		// Unlimited capacity.
     BUF_INCREMENT = 0x80,	// Granularity of buffer growing.
-    BUF_SIZE_MAX = ((2 << (sizeof(uint32_t) - 1)) - 1)
+    BUF_SIZE_MAX = (2 << (sizeof(uint32_t) - 1) - 1)
   };
 
   Fdbuf( int init_capacity = BUF_DFLT_CAP, bool is_safe = false);
@@ -147,8 +145,8 @@ public:
          socklen_t tolen = 0);
   
   // Member functions: stuff removing data from the head of the buffer
-  uint32_t pop_uint32();
-  Fdbuf& push_uint32(const uint32_t);
+  u_int32_t pop_uint32();
+  Fdbuf& push_uint32(const u_int32_t);
   bool pop_bytes(char *buf, uint32_t len);
   Fdbuf& push_bytes(const char *buf, uint32_t len);
   uint32_t pop_to_fdbuf(Fdbuf &fb, uint32_t len);
@@ -157,7 +155,7 @@ public:
   // ACCESS FUNCTIONS: those that aren't quite INPUT or OUTPUT. 
   //
   
-  // Return the last value of WSAGetLastError(). 
+  // Return the last value of errno. 
   int last_errno() { return err; };
   
   // Remove all data in the buffer.

@@ -39,7 +39,7 @@ private:
     bool operator()(const TuplePtr first, const TuplePtr second) const
     {
       return first->compareTo(second) < 0;
-    } 
+    }
   };
   
   /** My hash table. */

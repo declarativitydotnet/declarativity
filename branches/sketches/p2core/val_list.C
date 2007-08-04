@@ -40,14 +40,14 @@ ListPtr Val_List::cast(ValuePtr v)
 }
 
 
-void Val_List::marshal_subtype( boost::archive::text_oarchive *x )
+void Val_List::xdr_marshal_subtype( XDR *x )
 {
-  L->marshal(x);
+  L->xdr_marshal(x);
 }
 
-ValuePtr Val_List::unmarshal( boost::archive::text_iarchive *x )
+ValuePtr Val_List::xdr_unmarshal( XDR *x )
 {
-  ListPtr lp = List::unmarshal(x);
+  ListPtr lp = List::xdr_unmarshal(x);
   return mk(lp);
 }
 

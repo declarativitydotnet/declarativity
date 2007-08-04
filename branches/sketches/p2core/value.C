@@ -33,48 +33,48 @@
 #include "val_matrix.h"
 
 
-typedef ValuePtr (*_unmarshal_fn)( boost::archive::text_iarchive *);
+typedef ValuePtr (*_unmarshal_fn)( XDR *);
 
 static _unmarshal_fn jump_tab[] = {
-  Val_Null::unmarshal,
-  Val_Str::unmarshal,
-  Val_Int32::unmarshal,
-  Val_UInt32::unmarshal,
-  Val_Int64::unmarshal,
-  Val_UInt64::unmarshal,
-  Val_Double::unmarshal,
-  Val_Opaque::unmarshal,
-  Val_Tuple::unmarshal,
-  Val_Time::unmarshal,
-  Val_ID::unmarshal,
-  Val_IP_ADDR::unmarshal,
-  Val_Time_Duration::unmarshal,
-  Val_List::unmarshal,
-  Val_Vector::unmarshal,
-  Val_Matrix::unmarshal
+  Val_Null::xdr_unmarshal,
+  Val_Str::xdr_unmarshal,
+  Val_Int32::xdr_unmarshal,
+  Val_UInt32::xdr_unmarshal,
+  Val_Int64::xdr_unmarshal,
+  Val_UInt64::xdr_unmarshal,
+  Val_Double::xdr_unmarshal,
+  Val_Opaque::xdr_unmarshal,
+  Val_Tuple::xdr_unmarshal,
+  Val_Time::xdr_unmarshal,
+  Val_ID::xdr_unmarshal,
+  Val_IP_ADDR::xdr_unmarshal,
+  Val_Time_Duration::xdr_unmarshal,
+  Val_List::xdr_unmarshal,
+  Val_Vector::xdr_unmarshal,
+  Val_Matrix::xdr_unmarshal
 };
 
 //
 // Marshalling
 //
 
-void Value::marshal( boost::archive::text_oarchive *x ) 
+void Value::xdr_marshal( XDR *x ) 
 {
   TRACE_FUNCTION;
   uint32_t tc = typeCode();
   TRACE_WORDY << "TypeCode is " << tc << "\n";
-  *x & tc;
-  marshal_subtype(x);
+  xdr_uint32_t(x, &tc);
+  xdr_marshal_subtype(x);
 }
 
 //
 // Unmarshalling
 //
-ValuePtr Value::unmarshal(boost::archive::text_iarchive *x)
+ValuePtr Value::xdr_unmarshal(XDR *x)
 {
   TRACE_FUNCTION;
   uint32_t tc;
-  *x & tc;
+  xdr_uint32_t(x, &tc);
   TRACE_WORDY << "TypeCode is " << tc << "\n";
   if ((unsigned) tc >= (sizeof(jump_tab)/sizeof(_unmarshal_fn))) {
     TELL_WARN << "Unmarshalling: Bad typecode " << tc << "\n";

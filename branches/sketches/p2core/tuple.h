@@ -126,9 +126,9 @@ public:
   void
   set(uint32_t, ValuePtr);
 
-  void marshal(boost::archive::text_oarchive *xdrs);
+  void xdr_marshal(XDR *xdrs);
 
-  static TuplePtr unmarshal(boost::archive::text_iarchive *xdrs);
+  static TuplePtr xdr_unmarshal(XDR *xdrs);
 
   string toString() const;
 

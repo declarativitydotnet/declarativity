@@ -13,10 +13,9 @@
 
 #include "plsensor.h"
 #include <sys/types.h>
-// #include <sys/socket.h>
-//#include <netinet/in.h>
-//#include <arpa/inet.h>
-#include <winsock2.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "val_str.h"
 
@@ -48,9 +47,7 @@ PlSensor::PlSensor(string name,
     delay(reconnect_delay)
 {
   TRACE_FUNCTION;
-  int slen = sizeof(localaddr);
-  WSAStringToAddress((LPSTR)&"127.0.0.1", AF_INET,NULL,(LPSOCKADDR)&localaddr, &slen);
-  // inet_aton("127.0.0.1", &localaddr);
+  inet_aton("127.0.0.1", &localaddr);
   reqtmpl << "GET " << path << " HTTP/1.0\r\n" 
 	  << "Host: localhost:" << port << "\r\n"
 	  << "Connection: close\r\n"

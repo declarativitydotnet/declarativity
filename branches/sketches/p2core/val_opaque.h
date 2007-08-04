@@ -28,15 +28,15 @@ public:
   
   // Required fields for all concrete types.
   // The type name
-  const Value::TypeCode typeCode() const { return Value::P2_OPAQUE; };
-  const char *typeName() const { return "P2_opaque"; };
+  const Value::TypeCode typeCode() const { return Value::OPAQUE; };
+  const char *typeName() const { return "opaque"; };
   string toString() const { return b->str(); };
   virtual string toConfString() const;
   virtual unsigned int size() const { return (b ? b->length() : 0); }
 
   // Marshalling and unmarshallng
-  void marshal_subtype( boost::archive::text_oarchive *x );
-  static ValuePtr unmarshal( boost::archive::text_iarchive *x );
+  void xdr_marshal_subtype( XDR *x );
+  static ValuePtr xdr_unmarshal( XDR *x );
 
   // Constructor
   Val_Opaque(FdbufPtr fb) : b(fb) {};

@@ -16,7 +16,6 @@
 #ifndef __VAL_TIME_H__
 #define __VAL_TIME_H__
 
-#include <winsock2.h> // for struct timeval
 #include "math.h"
 #include "value.h"
 #include "oper.h"
@@ -47,9 +46,9 @@ public:
   virtual unsigned int size() const { return sizeof(boost::posix_time::ptime); }
 
   // Marshalling and unmarshallng
-  void marshal_subtype( boost::archive::text_oarchive *x );
+  void xdr_marshal_subtype( XDR *x );
 
-  static ValuePtr unmarshal( boost::archive::text_iarchive *x );
+  static ValuePtr xdr_unmarshal( XDR *x );
 
   // Constructors
   Val_Time(string theTime) : 
@@ -62,8 +61,8 @@ public:
     { return ValuePtr(new Val_Time(theTime)); };
   static ValuePtr mk(struct timespec ts) 
     { return ValuePtr(new Val_Time(ts)); };
-  static ValuePtr mk(string tss) 
-    { return ValuePtr(new Val_Time(tss)); };
+  static ValuePtr mk(string ts) 
+    { return ValuePtr(new Val_Time(ts)); };
 
   // Strict comparison
   int compareTo(ValuePtr) const;
@@ -102,9 +101,9 @@ public:
   virtual unsigned int size() const { return sizeof(boost::posix_time::time_duration);};
 
   // Marshalling and unmarshallng
-  void marshal_subtype( boost::archive::text_oarchive *x );
+  void xdr_marshal_subtype( XDR *x );
 
-  static ValuePtr unmarshal( boost::archive::text_iarchive *x );
+  static ValuePtr xdr_unmarshal( XDR *x );
 
   // Constructors
   Val_Time_Duration(boost::posix_time::time_duration theDuration) : td(theDuration) {};

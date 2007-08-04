@@ -14,11 +14,10 @@
  *
  */
 
-//#include <sys/socket.h>
-//#include <netinet/in.h>
-//#include <arpa/inet.h>
-//#include <netdb.h>
-#include <winsock2.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 
 #if HAVE_CONFIG_H
 #include <config.h>
@@ -26,7 +25,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <vector>
-// #include <sys/socket.h>
+#include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include "strToSockaddr.h"

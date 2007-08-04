@@ -57,13 +57,13 @@ public:
 
 	// Create a tuple with vecmat fields
 	vecmat = Tuple::mk();
-	static unsigned int zero = 0;
-	static unsigned int one = 1;
-	static unsigned int two = 2;
-	static unsigned int three = 3;
-	static unsigned int four = 4;
-	static unsigned int five = 5;
-	static unsigned int six = 6;
+	static uint64_t zero = 0;
+	static uint64_t one = 1;
+	static uint64_t two = 2;
+	static uint64_t three = 3;
+	static uint64_t four = 4;
+	static uint64_t five = 5;
+	static uint64_t six = 6;
 	Val_Vector *v = new Val_Vector(four);
 	Val_Matrix *m = new Val_Matrix(two, three);
 	
@@ -94,7 +94,7 @@ public:
     
     BOOST_REQUIRE_MESSAGE(result != NULL, "Didn't get a marshaling result");
     BOOST_CHECK_MESSAGE(result->size() == 1, "Marshalled tuple has size != 1\n");
-    BOOST_CHECK_MESSAGE((*result)[0]->typeCode() == Value::P2_OPAQUE,
+    BOOST_CHECK_MESSAGE((*result)[0]->typeCode() == Value::OPAQUE,
                         "Marshalled field is not OPAQUE 1\n");
   }
 
@@ -121,7 +121,7 @@ public:
     
     BOOST_REQUIRE_MESSAGE(result != NULL, "Didn't get a field marshaling result");
     BOOST_CHECK_MESSAGE(result->size() == 2, "Outer tuple has wrong size\n");
-    BOOST_CHECK_MESSAGE((*result)[1]->typeCode() == Value::P2_OPAQUE,
+    BOOST_CHECK_MESSAGE((*result)[1]->typeCode() == Value::OPAQUE,
                         "Marshalled field is not OPAQUE 1\n");
   }
 
@@ -149,7 +149,7 @@ public:
     
     BOOST_REQUIRE_MESSAGE(result != NULL, "Didn't get a marshaling result for vecmat");
     BOOST_CHECK_MESSAGE(result->size() == 1, "Outer tuple has wrong size\n");
-    BOOST_CHECK_MESSAGE((*result)[0]->typeCode() == Value::P2_OPAQUE,
+    BOOST_CHECK_MESSAGE((*result)[0]->typeCode() == Value::OPAQUE,
                         "Marshalled field is not OPAQUE 1\n");
   }
 

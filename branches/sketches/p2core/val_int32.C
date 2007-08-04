@@ -27,14 +27,14 @@ const opr::Oper* Val_Int32::oper_ = new opr::OperImpl<Val_Int32>();
 //
 // Marshalling and unmarshallng
 //
-void Val_Int32::marshal_subtype( boost::archive::text_oarchive *x )
+void Val_Int32::xdr_marshal_subtype( XDR *x )
 {
-  *x & i;
+  xdr_int32_t(x, &i);
 }
-ValuePtr Val_Int32::unmarshal( boost::archive::text_iarchive *x )
+ValuePtr Val_Int32::xdr_unmarshal( XDR *x )
 {
   int32_t i;
-  *x & i;
+  xdr_int32_t(x, &i);
   return mk(i);
 }
 

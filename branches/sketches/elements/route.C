@@ -21,7 +21,7 @@ Route::Route(string name, FdbufPtr destinationUio)
 {
   if (destinationUio->length() == 0) {
     // Got no destination. Bummer
-    log(Reporting::P2_ERROR,
+    log(Reporting::ERROR,
         -1,
         "Cannot create a route element without a destination address");
     exit(-1);
@@ -46,7 +46,7 @@ TuplePtr Route::simple_action(TuplePtr p)
   ValuePtr first = firstP;
 
   // Is it a string?
-  if (first->typeCode() != Value::P2_OPAQUE) {
+  if (first->typeCode() != Value::OPAQUE) {
     // Can't route to something that isn't a marshalled opaque
     log(Reporting::WARN,
         -1,

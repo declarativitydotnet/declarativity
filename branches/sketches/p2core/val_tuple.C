@@ -18,14 +18,14 @@ const opr::Oper* Val_Tuple::oper_ = new opr::OperCompare<Val_Tuple>();
 //
 // Marshal a tuple
 // 
-void Val_Tuple::marshal_subtype( boost::archive::text_oarchive *x ) 
+void Val_Tuple::xdr_marshal_subtype( XDR *x ) 
 {
-  t->marshal(x);
+  t->xdr_marshal(x);
 }
 
-ValuePtr Val_Tuple::unmarshal( boost::archive::text_iarchive *x )
+ValuePtr Val_Tuple::xdr_unmarshal( XDR *x )
 {
-  TuplePtr t = Tuple::unmarshal(x);
+  TuplePtr t = Tuple::xdr_unmarshal(x);
   return mk(t);
 }
   

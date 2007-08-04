@@ -70,9 +70,9 @@ public:
    
    int compareTo(ListPtr) const;
    
-   void marshal( boost::archive::text_oarchive *xdrs );
+   void xdr_marshal( XDR *xdrs );
    
-   static ListPtr unmarshal( boost::archive::text_iarchive *xdrs );
+   static ListPtr xdr_unmarshal( XDR *xdrs );
 
    void sort();
       

@@ -63,7 +63,7 @@ void Plumber::Dataflow::hookUp(ElementSpecPtr src, int src_port,
 Table2Ptr
 Plumber::Dataflow::table(string name,
                          Table2::Key& key,
-                         u_int32_t max_size,
+                         uint32_t max_size,
                          string lifetime)
 {
   std::map<string, Table2Ptr>::iterator iter = tables_.find(name);
@@ -95,7 +95,7 @@ int Plumber::Dataflow::check_hookup_elements()
 {
   // Put all (real not spec) elements in a set to be searchable
   std::set< ElementPtr > elementSet;
-  for (u_int i = 0;
+  for (uint i = 0;
        i < elements_.size();
        i++) {
     elementSet.insert((elements_)[i]->element());
@@ -103,7 +103,7 @@ int Plumber::Dataflow::check_hookup_elements()
   
   // Check each hookup to ensure it connects valid element references
   int errors = 0;
-  for (u_int i = 0;
+  for (uint i = 0;
        i < hookups_.size();
        i++) {
     // TELL_INFO << "CHECKING HOOKUP: " << i << std::endl;
@@ -156,7 +156,7 @@ int Plumber::Dataflow::check_push_and_pull()
   while (1) {
     bool progress = false;
 
-    for (u_int i = 0;
+    for (uint i = 0;
          i < hookups_.size();
          i++) {
       ElementSpec::HookupPtr hookup = (hookups_)[i];
@@ -306,7 +306,7 @@ int Plumber::Dataflow::check_hookup_range()
 {
   // Check each hookup to ensure its port numbers are within range
   int errors = 0;
-  for (u_int i = 0;
+  for (uint i = 0;
        i < hookups_.size();
        i++) {
     ElementSpec::HookupPtr hookup = (hookups_)[i];
@@ -414,7 +414,7 @@ int Plumber::Dataflow::check_hookup_completeness() {
 void Plumber::Dataflow::set_connections()
 {
   // actually assign ports
-  for (u_int i = 0; i < hookups_.size(); i++) {
+  for (uint i = 0; i < hookups_.size(); i++) {
     ElementSpec::HookupPtr hookup = hookups_[i];
     ElementSpecPtr fromElement = hookup->fromElement;
     ElementSpecPtr toElement = hookup->toElement;

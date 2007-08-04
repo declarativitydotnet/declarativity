@@ -22,9 +22,7 @@ DupElim::DupElim(string name)
 TuplePtr DupElim::simple_action(TuplePtr p)
 {
   // Attempt to insert tuple
-  //std::pair< std::set< TuplePtr >::iterator, bool > result = _table.insert(p);
-	// VC++ is being VERRRRRY PICKY!
-  std::_Tree<std::_Tset_traits<TuplePtr, DupElim::tuplePtrCompare, std::allocator<TuplePtr>, false> >::_Pairib result = _table.insert(p);
+  std::pair< std::set< TuplePtr >::iterator, bool > result = _table.insert(p);
 
   // Did we succeed?
   if (result.second) {

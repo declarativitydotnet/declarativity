@@ -35,8 +35,8 @@ public:
   virtual unsigned int size() const { return (t ? t->size() : 0); }
 
   // Marshalling and unmarshallng
-  void marshal_subtype( boost::archive::text_oarchive *x );
-  static ValuePtr unmarshal( boost::archive::text_iarchive *x );
+  void xdr_marshal_subtype( XDR *x );
+  static ValuePtr xdr_unmarshal( XDR *x );
 
   // Constructor
   Val_Tuple(TuplePtr tuple) : t(tuple) {};

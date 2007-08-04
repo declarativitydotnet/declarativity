@@ -48,12 +48,9 @@ Bandwidth::simple_action(TuplePtr p)
 REMOVABLE_INLINE time_t
 Bandwidth::now_s() const
 {
-  // struct timeval tv;
-  // gettimeofday(&tv, NULL);
-  SYSTEMTIME st;
-  GetSystemTime(&st);
-  return(st.wSecond);
-//	return tv.tv_sec;		// Time in seconds
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return tv.tv_sec;		// Time in seconds
 }
 
 

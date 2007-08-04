@@ -20,12 +20,6 @@
 #ifndef __REPORTING_H__
 #define __REPORTING_H__
 
-#ifdef VISUAL_LEAK_DETECTOR
-// SINCE THIS FILE GETS INCLUDED EVERYWHERE, ADD
-// THE VISUAL LEAK DETECTOR INCLUDE HERE
-#include "vld.h"
-#endif // VISUAL_LEAK_DETECTOR
-
 #include <map>
 #include <string>
 #include <ostream>
@@ -42,7 +36,7 @@ public:
           WORDY,                // Print excruciatingly detailed info
           INFO,                 // Print informational messages
           WARN,                 // Print warnings
-          P2_ERROR,                // Print outright errors
+          ERROR,                // Print outright errors
           OUTPUT,               // Print application output
           NONE                  // Print nothing
   };
@@ -173,11 +167,11 @@ private:
 #define TELL_ERROR (*Reporting::error()) << "REPORTING: "
 #define TELL_OUTPUT (*Reporting::output()) << "REPORTING: "
 
-#define TRACE_WORDY ((*Reporting::wordy()) <<  __FUNCSIG__)
-#define TRACE_INFO (*Reporting::info() <<  __FUNCSIG__)
-#define TRACE_WARN (*Reporting::warn() <<  __FUNCSIG__)
-#define TRACE_ERROR (*Reporting::error() <<  __FUNCSIG__)
-#define TRACE_OUTPUT (*Reporting::output() <<  __FUNCSIG__)
+#define TRACE_WORDY ((*Reporting::wordy()) <<  __PRETTY_FUNCTION__)
+#define TRACE_INFO (*Reporting::info() <<  __PRETTY_FUNCTION__)
+#define TRACE_WARN (*Reporting::warn() <<  __PRETTY_FUNCTION__)
+#define TRACE_ERROR (*Reporting::error() <<  __PRETTY_FUNCTION__)
+#define TRACE_OUTPUT (*Reporting::output() <<  __PRETTY_FUNCTION__)
 
 
 
@@ -213,7 +207,7 @@ public:
 
 #ifndef TRACE_OFF
 // Place this in a function that must be traced
-#define TRACE_FUNCTION TraceObj _t(__FUNCSIG__)
+#define TRACE_FUNCTION TraceObj _t(__PRETTY_FUNCTION__)
 
 #else
 

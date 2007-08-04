@@ -48,11 +48,11 @@ string Val_Null::toConfString() const
 //
 // Marshalling and unmarshallng
 //
-void Val_Null::marshal_subtype( boost::archive::text_oarchive *x ) 
+void Val_Null::xdr_marshal_subtype( XDR *x ) 
 {
   return;
 }
-ValuePtr Val_Null::unmarshal( boost::archive::text_iarchive *x )
+ValuePtr Val_Null::xdr_unmarshal( XDR *x )
 {
   return singleton;
 }

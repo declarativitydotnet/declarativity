@@ -170,7 +170,7 @@ private:
     }
 
     // Check matching return conditions
-    BOOST_CHECK_MESSAGE((e == t->err),
+    BOOST_CHECK_MESSAGE(e == t->err,
                         testID
                         << ". Return condition mismatch on '"
                         << t->src
@@ -229,9 +229,7 @@ private:
         eq = (strtoull(t->val,NULL,0)==Val_UInt64::cast(top));
         break;
       case Value::DOUBLE:
-		if (!strcmp(t->val,"1.#INF"))
-			eq = (Val_Double::cast(top) == HUGE_VAL);
-        else eq = (strtod(t->val,NULL)==Val_Double::cast(top));
+        eq = (strtod(t->val,NULL)==Val_Double::cast(top));
         break;
       case Value::STR:
         eq = (Val_Str::cast(top) == t->val);
@@ -971,8 +969,7 @@ testPel::vtests[] = {
   // / (floating-point division)
   TST(DOUBLE, STACK_UNDERFLOW, "",	"/"),
   TST(DOUBLE, STACK_UNDERFLOW, "",	"1 /"),
-  // TST(DOUBLE, SUCCESS, "inf",	"1.0 \"Hello\" /"),
-  TST(DOUBLE, SUCCESS, "1.#INF",	"1.0 \"Hello\" /"),
+  TST(DOUBLE, SUCCESS, "inf",	"1.0 \"Hello\" /"),
   TST(DOUBLE, SUCCESS, "1",	"1.0 1 /"),
   TST(DOUBLE, DIVIDE_BY_ZERO, "inf",	"2.0 0.0 /"),
   TST(DOUBLE, SUCCESS, "4",	"8.0 2.0 /"),

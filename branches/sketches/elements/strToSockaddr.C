@@ -12,11 +12,10 @@
  * 
  */
 
-//#include <netdb.h>
-//#include <sys/socket.h>
-//#include <netinet/in.h>
-//#include <arpa/inet.h>
-#include <winsock2.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "strToSockaddr.h"
 #include "val_opaque.h"
@@ -55,17 +54,15 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
   }
 
   // Split into address and port
-  // const char * theString = Val_Str::cast(first).c_str();
-  string str = Val_Str::cast(first);
-  const char * theString = str.c_str();
-  const char * theAtSign = strchr(theString, ':');
+  const char * theString = Val_Str::cast(first).c_str();
+  char * theAtSign = strchr(theString, ':');
   if (theAtSign == NULL) {
     // Couldn't find the correct format
     log(Reporting::WARN, -1, string("Field to translate ")+first->toString()+" is malformed");
     return TuplePtr();
   }
   string theAddress(theString, theAtSign - theString);
-  LPHOSTENT host = gethostbyname(theAddress.c_str());
+  struct hostent *host = gethostbyname(theAddress.c_str());
   if (host != NULL) {
     theAddress = inet_ntoa(*((struct in_addr*)host->h_addr));
   }
@@ -74,18 +71,13 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
 
   // Now construct the sockaddr
   struct sockaddr_in addr;
-  memset(&addr, 0, sizeof(addr));
+  bzero(&addr, sizeof(addr));
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
   addr.sin_len = sizeof(sockaddr_in);
 #endif // HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
-  //inet_pton(AF_INET, theAddress.c_str(), &addr.sin_addr);
-  int saddr_len;
-  // WSAStringToAddress((LPSTR) theAddress.c_str(), AF_INET, NULL, (LPSOCKADDR) &addr.sin_addr, &saddr_len);
-  addr.sin_addr = *((LPIN_ADDR)*host->h_addr_list);
-//  addr.sin_addr.s_addr = inet_addr(theAddress.c_str());
-
+  inet_pton(AF_INET, theAddress.c_str(), &addr.sin_addr);
   FdbufPtr addressUio(new Fdbuf());
   addressUio->push_bytes((char*)&addr, sizeof(addr));
   ValuePtr sockaddr = Val_Opaque::mk(addressUio);

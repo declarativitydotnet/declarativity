@@ -148,7 +148,7 @@ private:
                  << _rest
 
 #define PLANNER_ERROR(_pc,_rest) TELL_ERROR       \
-  << PLANNER_LOG(Reporting::P2_ERROR,_pc,_rest)      \
+  << PLANNER_LOG(Reporting::ERROR,_pc,_rest)      \
     << "\n"
 
 #define PLANNER_WORDY(_pc,_rest) TELL_WORDY       \
@@ -165,7 +165,7 @@ private:
 
 
 #define PLANNER_ERROR_NOPC(_rest) TELL_ERROR       \
-  << PLANNER_LOG_NOPC(Reporting::P2_ERROR,_pc,_rest)  \
+  << PLANNER_LOG_NOPC(Reporting::ERROR,_pc,_rest)  \
     << "\n"
 
 #define PLANNER_WORDY_NOPC(_rest) TELL_WORDY       \

@@ -23,19 +23,19 @@
 string Parse_Event::toString()
 {
   ostringstream b;
-  if (_event == P2_RECV) { b << "EVENT_RECV<" << _pf->toString() << ">"; }
-  if (_event == P2_INSERT) { b << "EVENT_INSERT<" << _pf->toString() << ">"; }
-  if (_event == P2_DELETE) { b << "EVENT_DELETE<" << _pf->toString() << ">"; }
-  if (_event == P2_REFRESH) { b << "EVENT_REFRESH<" << _pf->toString() << ">"; }
+  if (_event == RECV) { b << "EVENT_RECV<" << _pf->toString() << ">"; }
+  if (_event == INSERT) { b << "EVENT_INSERT<" << _pf->toString() << ">"; }
+  if (_event == DELETE) { b << "EVENT_DELETE<" << _pf->toString() << ">"; }
+  if (_event == REFRESH) { b << "EVENT_REFRESH<" << _pf->toString() << ">"; }
   return b.str();
 }
 
 string Parse_Action::toString()
 {
   ostringstream b;
-  if (_action == P2_SEND) { b << "ACTION_SEND<" << _pf->toString() << ">"; }
-  if (_action == P2_ADD) { b << "ACTION_ADD<" << _pf->toString() << ">"; }
-  if (_action == P2_DELETE) { b << "ACTION_DELETE<" << _pf->toString() << ">"; }
+  if (_action == SEND) { b << "ACTION_SEND<" << _pf->toString() << ">"; }
+  if (_action == ADD) { b << "ACTION_ADD<" << _pf->toString() << ">"; }
+  if (_action == DELETE) { b << "ACTION_DELETE<" << _pf->toString() << ">"; }
   return b.str();
 }
 
@@ -131,11 +131,11 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
     
     // create the events
     eca_insert_rule->_event 
-      = new Parse_Event(nextFunctor, Parse_Event::P2_INSERT);
+      = new Parse_Event(nextFunctor, Parse_Event::INSERT);
     eca_refresh_rule->_event 
-      = new Parse_Event(nextFunctor, Parse_Event::P2_REFRESH);
+      = new Parse_Event(nextFunctor, Parse_Event::REFRESH);
     eca_delete_rule->_event 
-      = new Parse_Event(nextFunctor, Parse_Event::P2_DELETE);    
+      = new Parse_Event(nextFunctor, Parse_Event::DELETE);    
 
     bool softStatePredicate = false;
     OL_Context::TableInfo* tableInfo = tableStore->getTableInfo(nextFunctor->fn->name);   
@@ -148,26 +148,26 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
       // if this is local, we can simply add local table or send as an event
       if (headTableInfo != NULL) {
 	eca_insert_rule->_action 
-	  = new Parse_Action(rule->head, Parse_Action::P2_ADD);
+	  = new Parse_Action(rule->head, Parse_Action::ADD);
 	eca_refresh_rule->_action 
-	  = new Parse_Action(rule->head, Parse_Action::P2_ADD);
+	  = new Parse_Action(rule->head, Parse_Action::ADD);
 	eca_delete_rule->_action 
-	  = new Parse_Action(rule->head, Parse_Action::P2_DELETE);
+	  = new Parse_Action(rule->head, Parse_Action::DELETE);
       } else {
 	// send head events
 	eca_insert_rule->_action 
-	  = new Parse_Action(rule->head, Parse_Action::P2_SEND);
+	  = new Parse_Action(rule->head, Parse_Action::SEND);
 	eca_refresh_rule->_action 
-	  = new Parse_Action(rule->head, Parse_Action::P2_SEND);
+	  = new Parse_Action(rule->head, Parse_Action::SEND);
 	eca_delete_rule->_action 
-	  = new Parse_Action(deleteFunctor, Parse_Action::P2_SEND);
+	  = new Parse_Action(deleteFunctor, Parse_Action::SEND);
       }
     } else {
       // if the head is remote, we have to do a send, 
       // followed by another recv/add rule strand
-      eca_insert_rule->_action = new Parse_Action(sendFunctor, Parse_Action::P2_SEND);
-      eca_delete_rule->_action = new Parse_Action(deleteFunctor, Parse_Action::P2_SEND);
-      eca_refresh_rule->_action = new Parse_Action(sendFunctor, Parse_Action::P2_SEND);
+      eca_insert_rule->_action = new Parse_Action(sendFunctor, Parse_Action::SEND);
+      eca_delete_rule->_action = new Parse_Action(deleteFunctor, Parse_Action::SEND);
+      eca_refresh_rule->_action = new Parse_Action(sendFunctor, Parse_Action::SEND);
       string headName = rule->head->fn->name;
       OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);
       if (headTableInfo != NULL) {
@@ -178,18 +178,18 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
 	ECA_Rule* eca_insert_rule1 
 	  = new ECA_Rule(oss.str() + "Ins");    
 	eca_insert_rule1->_event 
-	  = new Parse_Event(sendFunctor, Parse_Event::P2_RECV);
+	  = new Parse_Event(sendFunctor, Parse_Event::RECV);
 	eca_insert_rule1->_action 
-	  = new Parse_Action(rule->head, Parse_Action::P2_ADD);      
+	  = new Parse_Action(rule->head, Parse_Action::ADD);      
 	add_rule(eca_insert_rule1);
 
 	// refresh
 	ECA_Rule* eca_refresh_rule1 
 	  = new ECA_Rule(oss.str() + "Ref");    
 	eca_refresh_rule1->_event 
-	  = new Parse_Event(sendFunctor, Parse_Event::P2_RECV);
+	  = new Parse_Event(sendFunctor, Parse_Event::RECV);
 	eca_refresh_rule1->_action 
-	  = new Parse_Action(rule->head, Parse_Action::P2_ADD);      
+	  = new Parse_Action(rule->head, Parse_Action::ADD);      
 	if (softStatePredicate == true) {
 	  add_rule(eca_refresh_rule1);
 	}
@@ -198,9 +198,9 @@ void ECA_Context::rewriteViewRule(OL_Context::Rule* rule, TableStore* tableStore
 	ECA_Rule* eca_delete_rule1 
 	  = new ECA_Rule(oss.str() + "Del");    
 	eca_delete_rule1->_event 
-	  = new Parse_Event(deleteFunctor, Parse_Event::P2_RECV);
+	  = new Parse_Event(deleteFunctor, Parse_Event::RECV);
 	eca_delete_rule1->_action 
-	  = new Parse_Action(rule->head, Parse_Action::P2_DELETE);      
+	  = new Parse_Action(rule->head, Parse_Action::DELETE);      
 	if (softStateRule == false) {
 	  add_rule(eca_delete_rule1);
 	}
@@ -251,16 +251,16 @@ void ECA_Context::generateActionHead(OL_Context::Rule* rule, string bodyLoc,
   OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);
   if (headTableInfo == NULL) {
     // event, just send
-    eca_rule->_action = new Parse_Action(rule->head, Parse_Action::P2_SEND);
+    eca_rule->_action = new Parse_Action(rule->head, Parse_Action::SEND);
   } else {
     // to be materialized
     if (!rule->head->getlocspec().empty()
 		&& fieldNameEq(rule->head->getlocspec(), bodyLoc)) {
       // local materialization
       if (rule->deleteFlag) {
-	eca_rule->_action = new Parse_Action(rule->head, Parse_Action::P2_DELETE);
+	eca_rule->_action = new Parse_Action(rule->head, Parse_Action::DELETE);
       } else {
-	eca_rule->_action = new Parse_Action(rule->head, Parse_Action::P2_ADD);
+	eca_rule->_action = new Parse_Action(rule->head, Parse_Action::ADD);
       }
     } else {
       // remote materializatin. Send, followed by store
@@ -270,18 +270,18 @@ void ECA_Context::generateActionHead(OL_Context::Rule* rule, string bodyLoc,
 		new Parse_Functor(new Parse_FunctorName(new Parse_Val(name)), 
 						  rule->head->args_, new Parse_Val(loc));
       
-      eca_rule->_action = new Parse_Action(sendFunctor, Parse_Action::P2_SEND);
+      eca_rule->_action = new Parse_Action(sendFunctor, Parse_Action::SEND);
       string headName = rule->head->fn->name;
       OL_Context::TableInfo* headTableInfo = tableStore->getTableInfo(headName);
       if (headTableInfo != NULL) {
         ostringstream oss;
 	oss << rule->ruleID << "Eca" << "Mat";    
 	ECA_Rule* eca_rule1 = new ECA_Rule(oss.str());    
-	eca_rule1->_event = new Parse_Event(sendFunctor, Parse_Event::P2_RECV);
+	eca_rule1->_event = new Parse_Event(sendFunctor, Parse_Event::RECV);
 	if (rule->deleteFlag) {
-	  eca_rule1->_action = new Parse_Action(rule->head, Parse_Action::P2_DELETE);
+	  eca_rule1->_action = new Parse_Action(rule->head, Parse_Action::DELETE);
 	} else {
-	  eca_rule1->_action = new Parse_Action(rule->head, Parse_Action::P2_ADD);      
+	  eca_rule1->_action = new Parse_Action(rule->head, Parse_Action::ADD);      
 	}
 	add_rule(eca_rule1);
       }
@@ -328,17 +328,17 @@ void ECA_Context::rewriteEventRule(OL_Context::Rule* rule,
 	    new Parse_Functor(new Parse_FunctorName(new Parse_Val(name)), 
 						  periodicArgs, new Parse_Val(loc));
 
-	  eca_rule1->_action = new Parse_Action(sendFunctor, Parse_Action::P2_SEND);    	  
-	  eca_rule1->_event = new Parse_Event(nextFunctor, Parse_Event::P2_INSERT);    	  
+	  eca_rule1->_action = new Parse_Action(sendFunctor, Parse_Action::SEND);    	  
+	  eca_rule1->_event = new Parse_Event(nextFunctor, Parse_Event::INSERT);    	  
 	  add_rule(eca_rule1);
 
 	  Parse_Functor *recvFunctor = 
 	    new Parse_Functor(new Parse_FunctorName(new Parse_Val(name)), 
 						  periodicArgs, new Parse_Val(loc));
 
-	  eca_rule->_event = new Parse_Event(recvFunctor, Parse_Event::P2_RECV);    	  
+	  eca_rule->_event = new Parse_Event(recvFunctor, Parse_Event::RECV);    	  
 	} else {
-	  eca_rule->_event = new Parse_Event(nextFunctor, Parse_Event::P2_RECV);    
+	  eca_rule->_event = new Parse_Event(nextFunctor, Parse_Event::RECV);    
 	} 
       }
     }
@@ -379,7 +379,7 @@ void ECA_Context::rewriteAggregateView(OL_Context::Rule* rule,
   ostringstream oss;
   oss << rule->ruleID << "eca";    
   ECA_Rule* eca_rule = new ECA_Rule(oss.str());    
-  eca_rule->_event = new Parse_Event(nextFunctor, Parse_Event::P2_INSERT);
+  eca_rule->_event = new Parse_Event(nextFunctor, Parse_Event::INSERT);
 
   // generate the head action
   generateActionHead(rule, nextFunctor->getlocspec(), tableStore, eca_rule);

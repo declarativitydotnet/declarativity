@@ -32,7 +32,7 @@ class Parse_Event
 public:
   virtual ~Parse_Event() {};
 
-  enum Event {P2_INSERT, P2_DELETE, P2_RECV, P2_REFRESH};
+  enum Event {INSERT, DELETE, RECV, REFRESH};
   
   Parse_Event(Parse_Functor *pf, Event e)
     : _pf(pf), _event(e) {};
@@ -50,7 +50,7 @@ class Parse_Action
 public:
   virtual ~Parse_Action() {};
 
-  enum Action {P2_SEND, P2_ADD, P2_DELETE};
+  enum Action {SEND, ADD, DELETE};
 
   Parse_Action(Parse_Functor *pf, Action a)
     : _pf(pf), _action(a) {};
