@@ -414,51 +414,90 @@ bool Sketches::FM::isSubsumedBy(const Sketches::FM& in) const
 
 size_t Sketches::FM::getUncompressedSize() const
 {
-  return static_cast<size_t>(std::ceil(static_cast<double>(m_bitmap.size() * m_bitmap[0].size()) / CHAR_BIT));
+  return static_cast<size_t>(std::ceil(static_cast<double>(m_bitmap.size() * 
+      m_bitmap[0].size()) / CHAR_BIT));
 }
 
-void Sketches::FM::marshal(XDR *x) const
+void Sketches::FM::marshal(boost::archive::text_oarchive *x) const
 {
-  u_int myBits = (u_int) m_bitmap.size();
-  u_int myBitmaps = (u_int) (m_bitmap.begin())->size();
+  size_t numBits = m_bitmap.size();
+  size_t numBitmaps = (m_bitmap.begin())->size();
   int type = (int) m_type;
 
-  xdr_u_int(x, &myBits);
-  xdr_u_int(x, &myBitmaps);
-  xdr_int(x, &type);
+  *x & numBits;
+  *x & numBitmaps;
+  *x & type;
 
-  for ( size_t i = 0; i < m_bitmap.size(); i ++ )
+  for ( size_t i = 0; i < numBits; i ++ )
   {
-    for ( size_t j = 0; j < (m_bitmap.begin())->size(); j++ )
+    for ( size_t j = 0; j < numBitmaps; j++)
     {
-      xdr_bool(x, (bool_t *) m_bitmap[i][j]);
+      *x & m_bitmap[i][j];
     }
   }
 }
 
-Sketches::FM *Sketches::FM::unmarshal(XDR *x)
+Sketches::FM *Sketches::FM::unmarshal(boost::archive::text_iarchive *x)
 {
-  u_int bits;
-  u_int bitmaps;
+  size_t bits;
+  size_t bitmaps;
   int type;
 
-  xdr_u_int(x, &bits);
-  xdr_u_int(x, &bitmaps);
-  xdr_int(x, &type);
+  *x & bits;
+  *x & bitmaps;
+  *x & type;
 
-  Sketches::FM *sketch = new Sketches::FM((u_int) bits, (u_int) bitmaps,
-                                          (HashType) type);
+  Sketches::FM *sketch = new Sketches::FM(bits, bitmaps,(HashType) type);
 
-  for (u_int i = 0; i < bitmaps; i++)
+  for (int i = 0; i < bitmaps; i++)
   {
-    for (u_int j = 0; j < bits; j++)
+    for (int j = 0; j < bits; j++)
     {
-      int tmpJ;
-      xdr_bool(x, &tmpJ);
-
-      sketch->m_bitmap[i][j] = tmpJ;
+      bool b;
+      
+      *x & b;
+      
+      sketch->m_bitmap[i][j] = b;
     }
   }
+
+  return sketch;
+}
+
+int Sketches::FM::compareTo(Sketches::FM *f)
+{
+  if(m_type != f->m_type)
+    {
+      return (int) (m_type - f->m_type);
+    }
+
+  int my_rows = (int) m_bitmap.size();
+  int my_cols = (int) (m_bitmap.begin())->size();
+
+  int f_rows = (int) f->m_bitmap.size();
+  int f_cols = (int) ((f->m_bitmap).begin())->size();
+  
+  if(my_rows != f_rows)
+    {
+      return (int) (my_rows - f_rows);
+    }
+
+  if(my_cols != f_cols)
+    {
+      return (int) (my_cols - f_cols);
+    }
+
+  for(int i = 0; i < my_rows; i++)
+    {
+      for(int j = 0; j < my_cols; j++)
+	{
+	  if(m_bitmap[i][j] != f->m_bitmap[i][j])
+	    {
+	      return -1;
+	    }
+	}
+    }
+  return 0;
 }
 
 size_t Sketches::FM::getSize() const

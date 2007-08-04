@@ -1073,29 +1073,55 @@ bool Tools::UniversalHash::operator==(const UniversalHash& in) const
 	return true;
 }
 
-void Tools::UniversalHash::marshal(XDR *x) const
+void Tools::UniversalHash::marshal(boost::archive::text_oarchive *x) const
 {
-	xdr_u_int16_t(x, (u_int16_t *)(&m_k));
+  *x & m_k;
 
-	for( uint16_t i = 0; i < m_k; i++ )
-	{
-		xdr_u_int64_t(x, &(m_a[i]));
-	}
+
+  for(int i = 0; i < m_k; i++ )
+  {
+    *x & m_a[i];
+  }
 }
 
-Tools::UniversalHash Tools::UniversalHash::unmarshal(XDR *x)
+Tools::UniversalHash *Tools::UniversalHash::unmarshal(boost::archive::text_iarchive *x)
 {	
-	u_int16_t k;
-	xdr_u_int16_t(x, &k);
+	uint16_t k;
 	
-	Tools::UniversalHash *hash = new Tools::UniversalHash(k);
+	*x & k;
 	
-	hash->m_a = new uint64_t[k];
+	Tools::UniversalHash *newHash = new Tools::UniversalHash(k);
+       
 	
-	for( uint16_t i = 0; i < hash->m_k; i++ )
+	for( uint16_t i = 0; i < newHash->m_k; i++ )
 	{
-		xdr_u_int64_t(x, &(hash->m_a[i]));
+	  int64_t placeholder;
+
+	  *x & placeholder;
+
+	  newHash->m_a[i] = placeholder;
 	}
+
+	return newHash;
+}
+
+
+int Tools::UniversalHash::compareTo(Tools::UniversalHash *h) const
+{
+  if(m_k != h->m_k)
+    {
+      return (int) (m_k - h->m_k);
+    }
+
+  for(int i = 0; i < m_k; i++)
+    {
+      if(h->m_a[i] != m_a[i])
+	{
+	  return -1;
+	}
+    }
+
+  return 0;
 }
 
 Tools::UniversalHash::value_type Tools::UniversalHash::hash(

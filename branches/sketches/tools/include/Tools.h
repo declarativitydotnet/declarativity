@@ -40,17 +40,8 @@
 #include <cmath>
 #include <climits>
 
-extern "C" {
-#include <rpc/rpc.h>
-#include <rpc/xdr.h>
-}
-
-// deal with xdr portability issues (originally found on OS X 10.4)
-#ifdef HAVE_XDR_U_INT32_T
-#define xdr_uint16_t xdr_u_int16_t
-#define xdr_uint32_t xdr_u_int32_t
-#define xdr_uint64_t xdr_u_int64_t
-#endif
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 
 #if TIME_WITH_SYS_TIME
 	#include <sys/time.h>
@@ -599,8 +590,10 @@ namespace Tools
 		virtual size_t getSize() const;
 		virtual void getData(byte** buffer, size_t& length) const;
 
-		virtual void marshal(XDR *x) const;
-		static Tools::UniversalHash unmarshal(XDR *x);
+		virtual void marshal(boost::archive::text_oarchive *x) const;
+		static Tools::UniversalHash *unmarshal(boost::archive::text_iarchive *x);
+
+		virtual int compareTo(UniversalHash *h) const;
 
 		virtual void hash(
 			const std::string& s,
@@ -611,6 +604,7 @@ namespace Tools
 			byte** out, size_t& lout
 		);
 
+		// Oh that's cute *eyeroll*
 		static const uint64_t m_P = 0x1FFFFFFFFFFFFFFFull; // 2^61 - 1
 
 	protected:
