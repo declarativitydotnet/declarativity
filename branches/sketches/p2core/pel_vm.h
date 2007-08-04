@@ -51,7 +51,7 @@ private:
   std::deque<ValuePtr> _st;
   const Pel_Program	*prg;
   Error		 error;
-  uint		 pc;
+  u_int		 pc;
   TuplePtr	 result;
   TuplePtr	 operand;
 

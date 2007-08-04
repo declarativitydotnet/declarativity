@@ -16,7 +16,8 @@
 #include "udp.h"
 #include "tuple.h"
 #include <sys/types.h>
-#include <sys/socket.h>
+//#include <sys/socket.h>
+#include <winsock2.h>
 #include <iostream>
 
 #include "val_str.h"
@@ -48,14 +49,14 @@ void Udp::Rx::socket_cb()
   // Read packet. 
   FdbufPtr fb(new Fdbuf());
   struct sockaddr sa;
-  bzero(&sa, sizeof(sa));
-  socklen_t sa_len = 0;
+  memset(&sa, 0, sizeof(sa));
+  socklen_t sa_len = sizeof(sa);
   int result = fb->recvfrom(u->sd, Fdbuf::BUF_DFLT_READ, 0, &sa, &sa_len);
   if (result <= 0) {
     // Error! 
     int error = errno;
     if (error != EAGAIN) {
-      log(Reporting::ERROR, error, strerror(error));
+      log(Reporting::P2_ERROR, error, strerror(error));
     }
   } else {
     // Success! We've got a packet.  Package it up...
@@ -67,7 +68,8 @@ void Udp::Rx::socket_cb()
     t->append(Val_Opaque::mk(fb));
     t->freeze();
     // Push it. 
-    push_pending = push(0, t, boost::bind(&Udp::Rx::element_cb,this));
+	// visual c++ complains casting integers to bools
+	push_pending = (push(0, t, boost::bind(&Udp::Rx::element_cb,this)) != 0);
   }
   socket_on();
 }
@@ -79,6 +81,7 @@ void Udp::Rx::element_cb()
 {
   push_pending = true;
   socket_on();
+  return;
 }
 
 int Udp::Rx::initialize()
@@ -134,9 +137,10 @@ void Udp::Tx::socket_cb()
     //  segmentation and reassembly elements upstream to not make us
     //  send anything bigger than the MTU, which should fit into the
     //  socket buffers. 
-    log(Reporting::ERROR, errno, "Payload larger than socket buffer");
+    log(Reporting::P2_ERROR, errno, "Payload larger than socket buffer");
   }
   socket_on();
+  return;
 }
 
 //
@@ -146,6 +150,7 @@ void Udp::Tx::element_cb()
 {
   pull_pending = true;
   socket_on();
+  return;
 }
 
 int Udp::Tx::initialize()
@@ -153,6 +158,11 @@ int Udp::Tx::initialize()
   socket_on();
   return 0;
 }
+
+
+// turn off visual c++ 'warning C4355: 'this' : used in base member initializer list'
+// some discussion at http://www.pcreview.co.uk/forums/thread-1428909.php
+#pragma warning ( disable:4355 )
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -166,5 +176,6 @@ Udp::Udp(string name,
     rx(new Udp::Rx(_name, *this)),
     tx(new Udp::Tx(_name, *this))
 {
-  sd = networkSocket(SOCK_DGRAM, port, addr);
+  sd = networkSocket(SOCK_DGRAM, port, addr, IPPROTO_UDP);
+  if (sd < 0) TELL_ERROR << "Udp element unable to initialize socket\n";
 }

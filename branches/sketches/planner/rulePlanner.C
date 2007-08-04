@@ -442,12 +442,12 @@ generateEventElement(PlanContext* pc)
   RuleStrand* rs = pc->_ruleStrand;
   int aggField = pc->getRule()->_action->_pf->aggregate();
 
-  if (rs->eventType() == Parse_Event::REFRESH) {
+  if (rs->eventType() == Parse_Event::P2_REFRESH) {
     generateRefreshEvent(pc);
   }
 
   // update, create an updater
-  if (rs->eventType() == Parse_Event::INSERT) {
+  if (rs->eventType() == Parse_Event::P2_INSERT) {
 
     // is this an agg table type?
     if (aggField >= 0) {
@@ -465,11 +465,11 @@ generateEventElement(PlanContext* pc)
     // check for periodic as well
   }
   
-  if (rs->eventType() == Parse_Event::DELETE) {
+  if (rs->eventType() == Parse_Event::P2_DELETE) {
     generateDeleteEvent(pc);
   }
   
-  if (rs->eventType() == Parse_Event::RECV) {
+  if (rs->eventType() == Parse_Event::P2_RECV) {
     generateReceiveEvent(pc);
   }
 }
@@ -618,16 +618,16 @@ void generateActionElement(PlanContext* pc)
   RuleStrand* rs = pc->_ruleStrand;
 
   // add, insert
-  if (rs->actionType() == Parse_Action::ADD) {    
+  if (rs->actionType() == Parse_Action::P2_ADD) {    
     generateAddAction(pc);
   }
 
-  if (rs->actionType() == Parse_Action::DELETE) {    
+  if (rs->actionType() == Parse_Action::P2_DELETE) {    
     generateDeleteAction(pc);
   }
 
 
-  if (rs->actionType() == Parse_Action::SEND) {    
+  if (rs->actionType() == Parse_Action::P2_SEND) {    
     generateSendAction(pc);
   }   
 }

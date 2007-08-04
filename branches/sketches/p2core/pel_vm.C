@@ -128,7 +128,7 @@ void Pel_VM::reset_result_tuple()
 // Convert an error message into a string
 //
 const char *Pel_VM::strerror(Pel_VM::Error e) {
-  if (e < 0 | e > PE_UNKNOWN ) {
+  if (e < 0 || e > PE_UNKNOWN ) {
     e = PE_INVALID_ERRNO;
   }
   return err_msgs[e];
@@ -368,7 +368,7 @@ DEF_OP(POP_ALL) {
   }
 }
 DEF_OP(PEEK) {
-  uint stackPosition = pop_unsigned();
+  uint stackPosition = (uint)pop_unsigned();
   if (stackPosition >= _st.size()) {
     error = PE_STACK_UNDERFLOW;
     return;
@@ -462,7 +462,7 @@ DEF_OP(T_UNBOXPOP) {
   }
 }
 DEF_OP(T_FIELD) {
-  unsigned field = pop_unsigned();
+  unsigned int field = (unsigned int)pop_unsigned();
   ValuePtr tuple = stackTop(); stackPop();
   TuplePtr theTuple = Val_Tuple::cast(tuple);
   ValuePtr value = (*theTuple)[field];
@@ -555,13 +555,13 @@ DEF_OP(L_MULTISET_INTERSECT) {
 
 // Vector operations
 DEF_OP(V_INITVEC) {
-  uint64_t sz = pop_unsigned();
+  unsigned int sz = (unsigned int)pop_unsigned();
   ValuePtr vector = Val_Vector::mk2(sz);
   stackPush(vector);
 }
 
 DEF_OP(V_GETOFFSET) {
-   int64_t offset = pop_unsigned();
+   unsigned int offset = (unsigned int)pop_unsigned();
    ValuePtr val1 = stackTop(); stackPop();
    VectorPtr v1 = Val_Vector::cast(val1);
    stackPush((*v1)[offset]);
@@ -570,7 +570,7 @@ DEF_OP(V_GETOFFSET) {
 
 DEF_OP(V_SETOFFSET) {
    ValuePtr val1 = stackTop(); stackPop();
-   int64_t offset = pop_unsigned();
+   unsigned int offset = (unsigned int)pop_unsigned();
    ValuePtr val2 = stackTop(); stackPop();
    VectorPtr v2 = Val_Vector::cast(val2);
    (*v2)[offset] = val1;
@@ -587,15 +587,15 @@ DEF_OP(V_COMPAREVEC) {
 
 // Matrix operations
 DEF_OP(M_INITMAT) {
-  uint64_t sz2 = pop_unsigned();
-  uint64_t sz1 = pop_unsigned();
+  unsigned int sz2 = (unsigned int)pop_unsigned();
+  unsigned int sz1 = (unsigned int)pop_unsigned();
   ValuePtr matrix = Val_Matrix::mk2(sz1,sz2);
   stackPush(matrix);
 }
 
 DEF_OP(M_GETOFFSET) {
-   int64_t offset1 = pop_unsigned();
-   int64_t offset2 = pop_unsigned();
+   unsigned int offset1 = (unsigned int)pop_unsigned();
+   unsigned int offset2 = (unsigned int)pop_unsigned();
    ValuePtr val1 = stackTop(); stackPop();
    MatrixPtr m1 = Val_Matrix::cast(val1);
    stackPush((*m1)(offset1,offset2));
@@ -604,8 +604,8 @@ DEF_OP(M_GETOFFSET) {
 
 DEF_OP(M_SETOFFSET) {
    ValuePtr val1 = stackTop(); stackPop();
-   int64_t offset1 = pop_unsigned();
-   int64_t offset2 = pop_unsigned();
+   unsigned int offset1 = (unsigned int)pop_unsigned();
+   unsigned int offset2 = (unsigned int)pop_unsigned();
    ValuePtr val2 = stackTop(); stackPop();
    MatrixPtr mat = Val_Matrix::cast(val2);
    (*mat)(offset1,offset2) = val1;
@@ -996,8 +996,8 @@ DEF_OP(STR_LOWER) {
   stackPush(Val_Str::mk(result));
 }
 DEF_OP(STR_SUBSTR) {
-  uint len = pop_unsigned();
-  uint pos = pop_unsigned();
+  uint len = (uint)pop_unsigned();
+  uint pos = (uint)pop_unsigned();
   string s = pop_string();
 
   // Sanity check parameters
@@ -1052,10 +1052,10 @@ DEF_OP(DBL_CEIL) {
 // Explicit Type conversions
 //
 DEF_OP(CONV_I32) {
-  stackPush(Val_Int32::mk(pop_signed()));
+  stackPush(Val_Int32::mk((int)pop_signed()));
 }
 DEF_OP(CONV_U32) {
-  stackPush(Val_UInt32::mk(pop_unsigned()));
+  stackPush(Val_UInt32::mk((unsigned int)pop_unsigned()));
 }  
 DEF_OP(CONV_I64) {
   stackPush(Val_Int64::mk(pop_signed()));

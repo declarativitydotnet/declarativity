@@ -33,19 +33,19 @@ string Val_Str::toConfString() const
 //
 // Marshal a string
 // 
-void Val_Str::xdr_marshal_subtype( XDR *x )
+void Val_Str::marshal_subtype( boost::archive::text_oarchive *x )
 {
   const char *st = s.c_str();
   int32_t sl = s.length();
-  xdr_int32_t(x, &sl);
-  xdr_string(x, const_cast<char **>(&st), sl + 1);
+  *x & sl;
+  x->save_binary(const_cast<char *>(st), sl + 1);
 }
 
 
-ValuePtr Val_Str::xdr_unmarshal( XDR *x )
+ValuePtr Val_Str::unmarshal( boost::archive::text_iarchive *x )
 {
   int32_t sl;
-  xdr_int32_t(x, &sl);
+  *x & sl;
   // Now fetch the string itself
   static const int STATIC_STRING_BUFFER = 10000;
 
@@ -53,7 +53,7 @@ ValuePtr Val_Str::xdr_unmarshal( XDR *x )
     // We can use the static buffer
     static char stringBuffer[STATIC_STRING_BUFFER];
     static char* sb = &(stringBuffer[0]);
-    xdr_string(x, &sb, sl + 1);
+    x->load_binary(sb, sl + 1);
     sb[sl] = 0;       // make sure it's null terminated
     string st(sb, sl);
     return mk(st);
@@ -61,7 +61,7 @@ ValuePtr Val_Str::xdr_unmarshal( XDR *x )
     // We can't use the static buffer. We must allocate a one-shot
     // buffer
     char * localBuffer = new char[sl + 1];
-    xdr_string(x, &localBuffer, sl);
+    x->load_binary(localBuffer, sl);
     localBuffer[sl] = 0;
     string st(localBuffer, sl);
     delete localBuffer;

@@ -246,54 +246,56 @@ string List::toString() const
   ValPtrList::const_iterator iter = vpl.begin();
   ValPtrList::const_iterator end = vpl.end();
   ValPtrList::const_iterator almost_end = vpl.end();
-  almost_end--;
+  if (!vpl.empty()) {
+	  almost_end--;
    
-  while(iter != end) {
-    sb << (*iter)->toString();
-      
-    if(iter != almost_end) {
-      sb << ", ";
-    }
-    iter++;
+	  while(iter != end) {
+	    sb << (*iter)->toString();
+	      
+	    if(iter != almost_end) {
+	      sb << ", ";
+	    }
+	    iter++;
+	  }
+   
   }
-   
   sb << ")";
    
   return sb.str();
 }
 
-// Marshal a List into an XDR
-void List::xdr_marshal(XDR *x) 
+// Marshal a List into an P2_XDR
+void List::marshal(boost::archive::text_oarchive *x) 
 {
   uint32_t size = vpl.size();
-  u_int32_t uintsize = (u_int32_t) size;
+  uint32_t uintsize = (uint32_t) size;
    
-  xdr_uint32_t(x, &uintsize);
+  *x & uintsize;
    
   ValPtrList::const_iterator iter = vpl.begin();
   ValPtrList::const_iterator end = vpl.end();
 
   while(iter != end) {
-    (*iter)->xdr_marshal(x);
+    (*iter)->marshal(x);
     iter++;
   }
 }
 
-// Unmarshal an XDR into a List
-ListPtr List::xdr_unmarshal(XDR *x)
+// Unmarshal an P2_XDR into a List
+ListPtr List::unmarshal(boost::archive::text_iarchive *x)
 {
   ListPtr lp = List::mk();
    
-  u_int32_t uintsize;
+  uint32_t uintsize;
    
-  xdr_uint32_t(x, &uintsize);
+  *x & uintsize;
    
   uint32_t size = uintsize;
    
   for(uint32_t i = 0;
       i < size;
       i++) {
-    lp->append(Value::xdr_unmarshal(x));
+    lp->append(Value::unmarshal(x));
   }
    
   return lp;

@@ -45,7 +45,7 @@
 #define ELEM_INFO(_rest) ELEM_LOG(Reporting::INFO, 0, _rest)
 #define ELEM_WORDY(_rest) ELEM_LOG(Reporting::WORDY, 0, _rest)
 #define ELEM_WARN(_rest) ELEM_LOG(Reporting::WARN, 0, _rest)
-#define ELEM_ERROR(_rest) ELEM_LOG(Reporting::ERROR, 0, _rest)
+#define ELEM_ERROR(_rest) ELEM_LOG(Reporting::P2_ERROR, 0, _rest)
 #define ELEM_OUTPUT(_rest) ELEM_LOG(Reporting::OUTPUT, 0, _rest)
 
 using std::string;

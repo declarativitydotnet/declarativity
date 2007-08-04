@@ -32,8 +32,8 @@ public:
   virtual unsigned int size() const { return sizeof(int32_t); }
 
   // Marshalling and unmarshallng
-  void xdr_marshal_subtype( XDR *x );
-  static ValuePtr xdr_unmarshal( XDR *x );
+  void marshal_subtype( boost::archive::text_oarchive *x );
+  static ValuePtr unmarshal( boost::archive::text_iarchive *x );
 
   // Constructor
   Val_Int32(int32_t theInt) : i(theInt) {};

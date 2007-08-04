@@ -8,11 +8,15 @@
  * Berkeley, CA,  94707. Attention: P2 Group.
  */
 
+#define NOMINMAX // avoid windows defining the min and max macros
+
 #include "boost/test/unit_test.hpp"
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "boost/date_time/gregorian/gregorian.hpp"
 
 #include <sstream>
+#include <math.h>
+#include <limits>
 
 #include "value.h"
 #include "val_null.h"
@@ -37,6 +41,7 @@
 #include "testValues.h"
 
 using namespace opr;
+using namespace std;
 
 
 class testValues
@@ -110,11 +115,11 @@ public:
     TEST_VAL(Int64, 0, INT64, "int64");
     TEST_VAL(Int64, 1, INT64, "int64");
     TEST_VAL(Int64, 2000, INT64, "int64");
-    TEST_VAL(Int64, LONG_LONG_MAX, INT64, "int64");
+	TEST_VAL(Int64, _I64_MAX, INT64, "int64");
     TEST_VAL(Int64, -1, INT64, "int64");
-    TEST_VAL(Int64, -2000, INT64, "int64");
-    TEST_VAL(Int64, LONG_LONG_MIN, INT64, "int64");
-  
+    TEST_VAL(Int64, -2000, INT64, "int64"); 
+	TEST_VAL(Int64, _I64_MIN, INT64, "int64");
+
     TEST_VAL(UInt32, 0, UINT32, "uint32");
     TEST_VAL(UInt32, 1, UINT32, "uint32");
     TEST_VAL(UInt32, 1000, UINT32, "uint32");
@@ -139,7 +144,7 @@ public:
     // Opaques
     FdbufPtr u1(new Fdbuf());
     u1->pushBack("This is UIO 1");
-    TEST_VAL(Opaque, u1, OPAQUE, "opaque");
+    TEST_VAL(Opaque, u1, P2_OPAQUE, "P2_opaque");
     
 
     // Strings
@@ -153,7 +158,7 @@ public:
       struct timespec ts; \
       ts.tv_sec = secs; \
       ts.tv_nsec = nsecs; \
-      TEST_VAL(valTypeExt, ts, typecode, typestr); \
+	TEST_VAL(valTypeExt, ts, typecode, typestr); \
     }
 
     TEST_TIME(Time,  0,  0, TIME, "time");
@@ -164,7 +169,7 @@ public:
 #undef TEST_TIMEVAL
 
 	// Vectors
-	uint64_t one = 1;
+	unsigned int one = 1;
 	ValuePtr valp = Val_Vector::mk2(one);
 	VectorPtr vp = Val_Vector::cast(valp);
 	((*vp)[0]) = Val_UInt64::mk(1);
@@ -346,7 +351,7 @@ public:
     TEST_CAST(IP_ADDR, addr, string, IP_ADDR, addr);
 
 	// Vectors
-	uint64_t one = 1;
+	unsigned int one = 1;
 	ValuePtr valp = Val_Vector::mk2(one);
 	VectorPtr vp = Val_Vector::cast(valp);
 	((*vp)[0]) = Val_UInt64::mk(1);
@@ -379,11 +384,12 @@ public:
     TEST_CAST_T(Int64, 0, 0);
     TEST_CAST_T(Int64, 1, 1);
     TEST_CAST_T(Int64, 2000, 2000);
-    TEST_CAST_T(Int64, LONG_LONG_MAX, -1);
+    TEST_CAST_T(Int64, _I64_MAX, -1);
+  
     TEST_CAST_T(Int64, -1, -1);
     TEST_CAST_T(Int64, -2000, -2000);
-    TEST_CAST_T(Int64, LONG_LONG_MIN, 0);
-  
+    TEST_CAST_T(Int64, _I64_MIN, 0);
+
     TEST_CAST_T(UInt32, 0, 0);
     TEST_CAST_T(UInt32, 1, 1);
     TEST_CAST_T(UInt32, 1000, 1000);
@@ -392,8 +398,8 @@ public:
     TEST_CAST_T(UInt64, 0, 0);
     TEST_CAST_T(UInt64, 1, 1);
     TEST_CAST_T(UInt64, 1000, 1000);
-    TEST_CAST_T(UInt64, ULONG_LONG_MAX, -1);
-
+    TEST_CAST_T(UInt64, _UI64_MAX, -1);
+ 
     TEST_CAST_T(Double, 0, 0);
     TEST_CAST_T(Double, 1.0, 1);
     TEST_CAST_T(Double, -1.0, -1);
@@ -430,11 +436,11 @@ public:
   TEST_CAST_T(Int64, 0, 0);
   TEST_CAST_T(Int64, 1, 1);
   TEST_CAST_T(Int64, 2000, 2000);
-  TEST_CAST_T(Int64, LONG_LONG_MAX, UINT_MAX);
+  TEST_CAST_T(Int64, _I64_MAX, UINT_MAX);
   TEST_CAST_T(Int64, -1, UINT_MAX);
   TEST_CAST_T(Int64, -2000, UINT_MAX-2000 +1);
-  TEST_CAST_T(Int64, LONG_LONG_MIN, 0);
-  
+  TEST_CAST_T(Int64, _I64_MIN, 0);
+
   TEST_CAST_T(UInt32, 0, 0);
   TEST_CAST_T(UInt32, 1, 1);
   TEST_CAST_T(UInt32, 1000, 1000);
@@ -443,7 +449,7 @@ public:
   TEST_CAST_T(UInt64, 0, 0);
   TEST_CAST_T(UInt64, 1, 1);
   TEST_CAST_T(UInt64, 1000, 1000);
-  TEST_CAST_T(UInt64, ULONG_LONG_MAX, UINT_MAX);
+  TEST_CAST_T(UInt64, _I64_MAX, UINT_MAX);
 
   TEST_CAST_T(Double, 0, 0);
   TEST_CAST_T(Double, 1.0, 1);
@@ -481,10 +487,10 @@ public:
   TEST_CAST_T(Int64, 0, 0);
   TEST_CAST_T(Int64, 1, 1);
   TEST_CAST_T(Int64, 2000, 2000);
-  TEST_CAST_T(Int64, LONG_LONG_MAX, LONG_LONG_MAX);
+  TEST_CAST_T(Int64, _I64_MAX, _I64_MAX);
   TEST_CAST_T(Int64, -1, -1);
   TEST_CAST_T(Int64, -2000, -2000);
-  TEST_CAST_T(Int64, LONG_LONG_MIN, LONG_LONG_MIN);
+  TEST_CAST_T(Int64, _I64_MIN, _I64_MIN);
   
   TEST_CAST_T(UInt32, 0, 0);
   TEST_CAST_T(UInt32, 1, 1);
@@ -494,13 +500,13 @@ public:
   TEST_CAST_T(UInt64, 0, 0);
   TEST_CAST_T(UInt64, 1, 1);
   TEST_CAST_T(UInt64, 1000, 1000);
-  TEST_CAST_T(UInt64, ULONG_LONG_MAX, -1);
+  TEST_CAST_T(UInt64, _UI64_MAX, -1);
 
   TEST_CAST_T(Double, 0, 0);
   TEST_CAST_T(Double, 1.0, 1);
   TEST_CAST_T(Double, -1.0, -1);
-  // TEST_CAST_T(Double, -1.79769E+308, LONG_LONG_MIN); // not robust cross-platform
-  // TEST_CAST_T(Double, 1.79769E+308, LONG_LONG_MIN); // not robust cross-platform
+  // TEST_CAST_T(Double, -1.79769E+308, _I64_MIN); // not robust cross-platform
+  // TEST_CAST_T(Double, 1.79769E+308, _I64_MIN); // not robust cross-platform
   TEST_CAST_T(Double, 2.225E-307, 0);
   TEST_CAST_T(Double, -2.225E-307, 0);
   
@@ -524,17 +530,17 @@ public:
   TEST_CAST_T(Int32, 1, 1);
   TEST_CAST_T(Int32, 2000, 2000);
   TEST_CAST_T(Int32, INT_MAX, INT_MAX);
-  TEST_CAST_T(Int32, -1, ULONG_LONG_MAX);
-  TEST_CAST_T(Int32, -2000, ULONG_LONG_MAX -2000 + 1);
-  TEST_CAST_T(Int32, INT_MIN, ULONG_LONG_MAX - INT_MAX);
+  TEST_CAST_T(Int32, -1, _UI64_MAX);
+  TEST_CAST_T(Int32, -2000, _UI64_MAX -2000 + 1);
+  TEST_CAST_T(Int32, INT_MIN, _UI64_MAX - INT_MAX);
 
   TEST_CAST_T(Int64, 0, 0);
   TEST_CAST_T(Int64, 1, 1);
   TEST_CAST_T(Int64, 2000, 2000);
-  TEST_CAST_T(Int64, LONG_LONG_MAX, LONG_LONG_MAX);
-  TEST_CAST_T(Int64, -1, ULONG_LONG_MAX);
-  TEST_CAST_T(Int64, -2000, ULONG_LONG_MAX-2000 +1);
-  TEST_CAST_T(Int64, LONG_LONG_MIN, 1UL + (uint64_t)(LONG_LONG_MAX));
+  TEST_CAST_T(Int64, _I64_MAX, _I64_MAX);
+  TEST_CAST_T(Int64, -1, _UI64_MAX);
+  TEST_CAST_T(Int64, -2000, _UI64_MAX-2000 +1);
+  TEST_CAST_T(Int64, _I64_MIN, 1UL + (uint64_t)(_I64_MAX));
   
   TEST_CAST_T(UInt32, 0, 0);
   TEST_CAST_T(UInt32, 1, 1);
@@ -544,13 +550,13 @@ public:
   TEST_CAST_T(UInt64, 0, 0);
   TEST_CAST_T(UInt64, 1, 1);
   TEST_CAST_T(UInt64, 1000, 1000);
-  TEST_CAST_T(UInt64, ULONG_LONG_MAX, ULONG_LONG_MAX);
+  TEST_CAST_T(UInt64, _UI64_MAX, _UI64_MAX);
 
   TEST_CAST_T(Double, 0, 0);
   TEST_CAST_T(Double, 1.0, 1);
   /**
      Removed due to GCC casting bug
-     TEST_CAST_T(Double, -1.0, ULONG_LONG_MAX);
+     TEST_CAST_T(Double, -1.0, _UI64_MAX);
   */
   // TEST_CAST_T(Double, -1.79769E+308, 0); // not robust cross-platform
   // TEST_CAST_T(Double, 1.79769E+308, 0); // not robust cross-platform
@@ -562,9 +568,9 @@ public:
   TEST_CAST_T(Str, "1", 1);
   TEST_CAST_T(Str, "0x1a", 26);
   TEST_CAST_T(Str, "011", 9);
-  TEST_CAST_T(Str, "-200", ULONG_LONG_MAX-200 +1);
+  TEST_CAST_T(Str, "-200", _UI64_MAX-200 +1);
   TEST_CAST_T(Str, "1.5", 1);
-  TEST_CAST_T(Str, "-1.5", ULONG_LONG_MAX);
+  TEST_CAST_T(Str, "-1.5", _UI64_MAX);
   TEST_CAST_T(Str, "Rubbish", 0);
 #undef TEST_CAST_T
   
@@ -586,10 +592,10 @@ public:
   TEST_CAST_T(Int64, 0, 0);
   TEST_CAST_T(Int64, 1, 1);
   TEST_CAST_T(Int64, 2000, 2000);
-  TEST_CAST_T(Int64, LONG_LONG_MAX, LONG_LONG_MAX);
+  TEST_CAST_T(Int64, _I64_MAX, _I64_MAX);
   TEST_CAST_T(Int64, -1, -1);
   TEST_CAST_T(Int64, -2000, -2000);
-  TEST_CAST_T(Int64, LONG_LONG_MIN, LONG_LONG_MIN);
+  TEST_CAST_T(Int64, _I64_MIN, _I64_MIN);
   
   TEST_CAST_T(UInt32, 0, 0);
   TEST_CAST_T(UInt32, 1, 1);
@@ -599,7 +605,7 @@ public:
   TEST_CAST_T(UInt64, 0, 0);
   TEST_CAST_T(UInt64, 1, 1);
   TEST_CAST_T(UInt64, 1000, 1000);
-  TEST_CAST_T(UInt64, ULONG_LONG_MAX, ULONG_LONG_MAX);
+  TEST_CAST_T(UInt64, _UI64_MAX, _UI64_MAX);
 
   TEST_CAST_T(Double, 0, 0);
   TEST_CAST_T(Double, 1.0, 1);
@@ -612,7 +618,8 @@ public:
   TEST_CAST_T(Str, "", 0);
   TEST_CAST_T(Str, "0", 0);
   TEST_CAST_T(Str, "1", 1);
-  TEST_CAST_T(Str, "0x1a", 26);
+// In VC++, strtod doesn't parse hex (though strtol does!)
+//  TEST_CAST_T(Str, "0x1a", 26);
   TEST_CAST_T(Str, "011", 11);
   TEST_CAST_T(Str, "-200", -200);
   TEST_CAST_T(Str, "1.5", 1.5);
@@ -637,10 +644,10 @@ public:
   TEST_CAST_T(Int64, 0, "0");
   TEST_CAST_T(Int64, 1, "1");
   TEST_CAST_T(Int64, 2000, "2000");
-  TEST_CAST_T(Int64, LONG_LONG_MAX, "9223372036854775807");
+  TEST_CAST_T(Int64, _I64_MAX, "9223372036854775807");
   TEST_CAST_T(Int64, -1, "-1");
   TEST_CAST_T(Int64, -2000, "-2000");
-  TEST_CAST_T(Int64, LONG_LONG_MIN, "-9223372036854775808");
+  TEST_CAST_T(Int64, _I64_MIN, "-9223372036854775808");
   
   TEST_CAST_T(UInt32, 0, "0");
   TEST_CAST_T(UInt32, 1, "1");
@@ -650,7 +657,7 @@ public:
   TEST_CAST_T(UInt64, 0, "0");
   TEST_CAST_T(UInt64, 1, "1");
   TEST_CAST_T(UInt64, 1000, "1000");
-  TEST_CAST_T(UInt64, ULONG_LONG_MAX, "18446744073709551615");
+  TEST_CAST_T(UInt64, _UI64_MAX, "18446744073709551615");
 
   TEST_CAST_T(Double, 0, "0");
   TEST_CAST_T(Double, 1.0, "1");
@@ -714,10 +721,10 @@ public:
   TEST_CAST_T(Int64, 0, 0, 0);
   TEST_CAST_T(Int64, 1, 1, 0);
   TEST_CAST_T(Int64, 2000, 2000, 0);
-  TEST_CAST_T(Int64, LONG_LONG_MAX, -1, 0);
+  TEST_CAST_T(Int64, _I64_MAX, -1, 0);
   TEST_CAST_T(Int64, -1, -1, 0);
   TEST_CAST_T(Int64, -2000, -2000, 0);
-  TEST_CAST_T(Int64, LONG_LONG_MIN, 0, 0);
+  TEST_CAST_T(Int64, _I64_MIN, 0, 0);
   
   TEST_CAST_T(UInt32, 0, 0, 0);
   TEST_CAST_T(UInt32, 1, 1, 0);
@@ -727,7 +734,7 @@ public:
   TEST_CAST_T(UInt64, 0, 0, 0);
   TEST_CAST_T(UInt64, 1, 1, 0);
   TEST_CAST_T(UInt64, 1000, 1000, 0);
-  TEST_CAST_T(UInt64, ULONG_LONG_MAX, -1, 0);
+  TEST_CAST_T(UInt64, _UI64_MAX, -1, 0);
 
   TEST_CAST_T(Double, 0, 0, 0);
   TEST_CAST_T(Double, 1.0, 1, 0);
@@ -799,10 +806,10 @@ testIDCasts()
   TEST_ID_CAST(Int64, 0, 0, 0, 0, 0, 0);
   TEST_ID_CAST(Int64, 1, 0, 0, 0, 0, 1);
   TEST_ID_CAST(Int64, 2000, 0, 0, 0, 0, 2000);
-  TEST_ID_CAST(Int64, LONG_LONG_MAX, 0, 0, 0, ((uint32_t) (LONG_LONG_MAX >> 32)), ((uint32_t) LONG_LONG_MAX));
+  TEST_ID_CAST(Int64, _I64_MAX, 0, 0, 0, ((uint32_t) (_I64_MAX >> 32)), ((uint32_t) _I64_MAX));
   TEST_ID_CAST(Int64, -1, 0, 0, 0, 0xffffffff, (uint32_t) -1);
   TEST_ID_CAST(Int64, -2000, 0, 0, 0, 0xffffffff, (uint32_t) -2000);
-  TEST_ID_CAST(Int64, LONG_LONG_MIN, 0, 0, 0, ((uint32_t) (LONG_LONG_MIN >> 32)), ((uint32_t) LONG_LONG_MIN));
+  TEST_ID_CAST(Int64, _I64_MIN, 0, 0, 0, ((uint32_t) (_I64_MIN >> 32)), ((uint32_t) _I64_MIN));
 
   TEST_ID_CAST(UInt32, 0, 0, 0, 0, 0, 0);
   TEST_ID_CAST(UInt32, 1, 0, 0, 0, 0, 1);
@@ -812,7 +819,7 @@ testIDCasts()
   TEST_ID_CAST(UInt64, 0, 0, 0, 0, 0, 0);
   TEST_ID_CAST(UInt64, 1, 0, 0, 0, 0, 1);
   TEST_ID_CAST(UInt64, 1000, 0, 0, 0, 0, 1000);
-  TEST_ID_CAST(UInt64, ULONG_LONG_MAX, 0, 0, 0, 0xffffffff, 0xffffffff);
+  TEST_ID_CAST(UInt64, _UI64_MAX, 0, 0, 0, 0xffffffff, 0xffffffff);
 }
 #undef TEST_ID_CAST
 

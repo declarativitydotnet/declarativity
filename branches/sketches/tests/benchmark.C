@@ -20,7 +20,12 @@
 #include <cmath>
 
 #include "fdbuf.h"
-#include "xdrbuf.h"
+// #include "xdrbuf.h"
+// #include "xdrbuf.h"
+// the boost serialization implementer claims text is not much more expensive than portable binary
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
 #include "tuple.h"
 #include "loop.h"
 #include "oper.h"
@@ -46,6 +51,7 @@ const int MARSHAL_NUM_UIOS=5000;
 static ValuePtr va[FIELD_TST_SZ];
 
 static Fdbuf xe[MARSHAL_NUM_UIOS];
+
 static ValuePtr vf;
 
 static double time_fn(b_cbv cb) 
@@ -72,7 +78,7 @@ static double time_fn(b_cbv cb)
     tdiff = after_ts - before_ts; 
     // ensure we compute nanosecs (1/(10^9) sec) 
     // even if boost is compiled to lower precision 
-    elapsed = tdiff.fractional_seconds() * PTIME_SECS_FACTOR;
+    elapsed = (double)(tdiff.fractional_seconds() * PTIME_SECS_FACTOR);
     average = elapsed / iter;
     sum = (average - past_average);
     if (sum > 0) 
@@ -92,7 +98,7 @@ static double time_fn(b_cbv cb)
 }
 
 
-/* What hex dump of the next tuple in XDR should look like... 
+/* What hex dump of the next tuple in P2_XDR should look like... 
    00000004 // Tuple has 5 fields
    00000000 // Null (type code = 0)
    00000001 // Type code = 1 (int32)
@@ -163,28 +169,31 @@ static void create_lots_val_str() {
 
 static void marshal_lots_of_values() {
   for (int c = 0; c < MARSHAL_NUM_UIOS; c++) { 
-    XDR xdrs;
-    // clear uio first, then write.
+    boost::archive::text_oarchive *ostr = (boost::archive::text_oarchive *)(&(xe[c]));
+
+	// clear uio first, then write.
     // this prevent memory from growing indefinitely
-    xe[c].clear();
-    xdrfdbuf_create(&xdrs, &xe[c], false, XDR_ENCODE);
+    // xe[c].clear();
+//    xdrfdbuf_create(&xdrs, &xe[c], false, XDR_ENCODE);
     for (int i = 0; i < MARSHAL_CHUNK_SZ; i++) {
-      va[i]->xdr_marshal(&xdrs); 
+      va[i]->marshal(ostr); 
     }
   }
 }
 
 static void unmarshal_lots_of(Value::TypeCode t) {
   for (int c = 0; c < MARSHAL_NUM_UIOS; c++) {
-    XDR xdrs;
-    xdrfdbuf_create(&xdrs, &xe[c], false, XDR_DECODE);
+//    P2_XDR xdrs;
+	  std::stringstream ss(xe[c].str());
+	  boost::archive::text_iarchive xdrs(ss);
+//    xdrfdbuf_create(&xdrs, &xe[c], false, XDR_DECODE);
     for (int i = 0; i < MARSHAL_CHUNK_SZ; i++) {
       switch (t) {
-        case Value::NULLV:   va[i] = Val_Null::xdr_unmarshal(&xdrs);   break;
-        case Value::UINT64:  va[i] = Val_UInt64::xdr_unmarshal(&xdrs); break;
-        case Value::INT32:   va[i] = Val_Int32::xdr_unmarshal(&xdrs);  break;
-        case Value::DOUBLE:  va[i] = Val_Double::xdr_unmarshal(&xdrs); break;
-        case Value::STR:     va[i] = Val_Str::xdr_unmarshal(&xdrs);    break;
+        case Value::NULLV:   va[i] = Val_Null::unmarshal(&xdrs);   break;
+        case Value::UINT64:  va[i] = Val_UInt64::unmarshal(&xdrs); break;
+        case Value::INT32:   va[i] = Val_Int32::unmarshal(&xdrs);  break;
+        case Value::DOUBLE:  va[i] = Val_Double::unmarshal(&xdrs); break;
+        case Value::STR:     va[i] = Val_Str::unmarshal(&xdrs);    break;
         default: FAIL << "TypeCode: " << t << " not handle\n";       break;
       }
     }   
@@ -238,11 +247,13 @@ static void marshal_lots_of_tuples()
 {
   assert( MARSHAL_CHUNK_SZ < TUPLE_TST_SZ);
   for( int c=0; c< MARSHAL_NUM_UIOS; c++) {
-    XDR xdrs;
-    encode_uios[c].clear();
-    xdrfdbuf_create(&xdrs, &encode_uios[c], false, XDR_ENCODE);
+    // P2_XDR xdrs;
+  	std::stringstream outstr;
+	encode_uios[c].clear();
+	boost::archive::text_oarchive xdrs(outstr);
+//    xdrfdbuf_create(&xdrs, &encode_uios[c], false, XDR_ENCODE);
     for( int i=0; i< MARSHAL_CHUNK_SZ; i++) {
-      ta[i]->xdr_marshal(&xdrs);
+      ta[i]->marshal(&xdrs);
     }
   }
 }
@@ -251,10 +262,12 @@ static void unmarshal_lots_of_tuples()
 {
   assert( MARSHAL_CHUNK_SZ < TUPLE_TST_SZ);
   for( int c=0; c< MARSHAL_NUM_UIOS; c++) {
-    XDR xdrs;
-    xdrfdbuf_create(&xdrs, &encode_uios[c], false, XDR_DECODE);
+//    P2_XDR xdrs;
+	std::stringstream outstr;
+   	boost::archive::text_iarchive xdrs(outstr);
+//    xdrfdbuf_create(&xdrs, &encode_uios[c], false, XDR_DECODE);
     for( int i=0; i< MARSHAL_CHUNK_SZ; i++) {
-      ta[i]=Tuple::xdr_unmarshal(&xdrs);
+      ta[i]=Tuple::unmarshal(&xdrs);
     }
   }
 }
@@ -324,13 +337,17 @@ static void unit_test_for(Value::TypeCode t ) {
 int main(int argc, char **argv)
 {
   TuplePtr t = create_tuple_1();
-  XDR xdrs;
+  // P2_XDR xdrs;
   Fdbuf singlet;
-  xdrfdbuf_create(&xdrs, &singlet, false, XDR_ENCODE);
-  t->xdr_marshal(&xdrs);
 
-  TELL_INFO << " length=" << singlet.length();
-  TELL_INFO << " removed=" << singlet.removed();
+  FdbufPtr fb(new Fdbuf());
+  boost::archive::text_oarchive *xdrs = (boost::archive::text_oarchive *)fb.get();
+//  xdrfdbuf_create(&xdrs, &singlet, false, XDR_ENCODE);
+  t->marshal(xdrs);
+
+//  TELL_INFO << " length=" << singlet.length();
+    TELL_INFO << " length=" << fb->str().length();
+//  TELL_INFO << " removed=" << singlet.removed();
   // const char *buf = singlet.cstr();
   // uint32_t sz = singlet.length();
   // string s = hexdump(buf,sz);

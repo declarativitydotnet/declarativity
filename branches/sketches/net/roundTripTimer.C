@@ -47,7 +47,7 @@ int32_t TupleTimestamp::delay()
   boost::posix_time::ptime  now;
   getTime(now);
 
-  return((now - tt_).total_milliseconds());
+  return((int32_t)(now - tt_).total_milliseconds());
 }
 
 /////////////////////////////////////////////////////////////////////

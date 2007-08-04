@@ -145,7 +145,7 @@ namespace opr {
     virtual ValuePtr _divide (const ValuePtr& v1, const ValuePtr& v2) const
       { NOSUP2("/", v1->typeName(), v2->typeName()); return ValuePtr(); };
     virtual ValuePtr _mod (const ValuePtr& v1, const ValuePtr& v2) const
-      { NOSUP2("\%", v1->typeName(), v2->typeName()); return ValuePtr(); };
+      { NOSUP2("%", v1->typeName(), v2->typeName()); return ValuePtr(); };
     virtual ValuePtr _dec (const ValuePtr& v1) const
       { NOSUP1("--", v1->typeName()); return ValuePtr(); };
     virtual ValuePtr _inc (const ValuePtr& v1) const

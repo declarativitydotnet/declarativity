@@ -51,8 +51,8 @@ ID::ID(uint64_t doubleword)
        i++) {
     words[i] = 0;
   }
-  words[WORDS - 1] = doubleword & 0xFFFFFFFF;
-  words[WORDS - 2] = (doubleword >> 32) & 0xFFFFFFFF;
+  words[WORDS - 1] = (uint32_t)(doubleword & 0xFFFFFFFF);
+  words[WORDS - 2] = (uint32_t)((doubleword >> 32) & 0xFFFFFFFF);
 }
 
 
@@ -262,8 +262,8 @@ ID::lshift(uint32_t shift) const
     uint64_t temp = newID->words[i];
     temp = temp << shift;
     temp = temp | carry;
-    carry = temp >> 32;
-    newID->words[i] = (temp & 0xFFFFFFFF);
+    carry = (uint32_t)(temp >> 32);
+    newID->words[i] = (uint32_t)(temp & 0xFFFFFFFF);
   }
 
   return newID;
@@ -314,10 +314,10 @@ ID::rshift(uint32_t shift) const
                                 // word, while the higher-order word
                                 // keeps the actual new bits of this
                                 // position. 
-    newWord = ((temp >> 32) & 0xFFFFFFFF); // store the high-order bits
+    newWord = (uint32_t)((temp >> 32) & 0xFFFFFFFF); // store the high-order bits
                                            // in the actual word
     newID->words[i] = newWord | carry; // and put in the carry also
-    carry = temp & 0xFFFFFFFF;  // The carry is what's left in the
+    carry = (uint32_t)(temp & 0xFFFFFFFF);  // The carry is what's left in the
                                 // lower-order bits of the temp
   }
 
@@ -393,10 +393,10 @@ ID::add(IDPtr other) const
     temp += other->words[i];
     temp += carry;
     if (temp > UINT_MAX) {
-      newID->words[i] = temp & 0xffffffff;
+      newID->words[i] = (uint32_t)(temp & 0xffffffff);
       carry = 1;
     } else {
-      newID->words[i] = temp;
+      newID->words[i] = (uint32_t)temp;
       carry = 0;
     }
   }
@@ -405,24 +405,24 @@ ID::add(IDPtr other) const
 
 
 void
-ID::xdr_marshal(XDR *x)
+ID::marshal(boost::archive::text_oarchive *x)
 {
   for (uint i = 0;
        i < WORDS;
        i++) {
-    xdr_uint32_t(x, &(words[i]));
+    *x & words[i];
   }
 }
 
 
 IDPtr
-ID::xdr_unmarshal(XDR *x)
+ID::unmarshal(boost::archive::text_iarchive *x)
 {
   IDPtr newID(new ID());
   for (uint i = 0;
        i < WORDS;
        i++) {
-    xdr_uint32_t(x, &(newID->words[i]));
+    *x & newID->words[i];
   }
   return newID;
 }

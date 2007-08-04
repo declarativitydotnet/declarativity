@@ -32,11 +32,11 @@ class Val_IP_ADDR : public Value {
   virtual unsigned int size() const { return _s.length(); }
   
   // Marshalling and unmarshallng
-  void xdr_marshal_subtype( XDR *x );
+  void marshal_subtype( boost::archive::text_oarchive *x );
 
 
   static ValuePtr
-  xdr_unmarshal( XDR *x );
+  unmarshal( boost::archive::text_iarchive *x );
   
   // Constructor
   // takes in a string of format "xx.xx.xx.xx:port"

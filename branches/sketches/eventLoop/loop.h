@@ -20,16 +20,17 @@
 #include <set>
 
 // For in_addr
-#include <netinet/in.h>
+//#include <netinet/in.h>
+#include <winsock2.h>
 
 #include <p2Time.h>
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "element.h"
 
-extern "C" {
-#include <rpc/rpc.h>
-#include <rpc/xdr.h>
-}
+//extern "C" {
+//#include <rpc/rpc.h>
+//#include <rpc/xdr.h>
+//}
 
 /** The global counter of callbacks */
 extern long callbackID;
@@ -52,7 +53,7 @@ extern long callbackID;
 
 
 #define LOOP_ERROR(_rest) TELL_ERROR   \
-  << LOOP_LOG(Reporting::ERROR,_rest)  \
+  << LOOP_LOG(Reporting::P2_ERROR,_rest)  \
     << "\n"
 
 #define LOOP_WORDY(_rest) TELL_WORDY   \
@@ -227,7 +228,7 @@ extern fileDescriptorCallbackDirectoryT fileDescriptorCallbacks;
 
 /** Create a non-blocking network socket, given its type */
 int
-networkSocket(int type, u_int16_t port, u_int32_t addr);
+networkSocket(int type, uint16_t port, uint32_t addr);
 
 
 /** Set a callback for asynchronous operations of a given type
@@ -271,7 +272,7 @@ struct tcpHandle {
 
 
 tcpHandle*
-tcpConnect(in_addr addr, u_int16_t port, b_cbi cb);
+tcpConnect(in_addr addr, uint16_t port, b_cbi cb);
 
 
 

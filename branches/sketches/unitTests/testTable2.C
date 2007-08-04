@@ -40,8 +40,6 @@ private:
   static const uint EXTRA_TUPLES = 1000;
 
 
-
-
 public:
   testTable2()
   {
@@ -559,6 +557,14 @@ public:
              Table2::Key& key,
              uint32_t size);
 
+  // this is needed for VC++
+  table2Test& operator=(const table2Test& t) {
+	  _script = t._script;
+	  _line = t._line;
+	  _key = t._key;
+	  _size = t._size;
+	  return *this;
+  }
 
   std::string _script;
 
@@ -1053,11 +1059,11 @@ testTable2::testSecondaryEquivalence()
     TuplePtr lookupT = Tuple::mk();
     lookupT->append(emptyString);
     lookupT->append(iVal);
-    Table2::Iterator i = table.lookup(Table2::theKey(CommonTable::KEY1), lookupT);
+    Table2::Iterator it = table.lookup(Table2::theKey(CommonTable::KEY1), lookupT);
 
     TupleSet sResults;
-    while (!i->done()) {
-      sResults.insert(i->next());
+    while (!it->done()) {
+      sResults.insert(it->next());
     }
 
     // Now scan the whole table and find all tuples whose second field
@@ -1104,6 +1110,13 @@ public:
               uint aggField,
               std::string func,
               int line);
+  // this is needed for VC++
+  intAggTest2& operator=(const intAggTest2& t) {
+	  _groupBy = t._groupBy;
+	  _aggFieldNo = t._aggFieldNo;
+	  _function = t._function;
+	  return *this;
+  }
 
   Table2::Key& _groupBy;
 
@@ -1736,7 +1749,7 @@ testTable2::testPseudoRandomInsertDeleteSequences()
       for (uint w = 0;
            w < ID::WORDS;
            w++) {
-        words[w] = rand_r(&nestedSeed);
+        words[w] = rand_s(&nestedSeed);
       }
       tup->append(Val_ID::mk(ID::mk(words)));
     
@@ -1779,7 +1792,7 @@ testTable2::testPseudoRandomInsertDeleteSequences()
       for (uint w = 0;
            w < ID::WORDS;
            w++) {
-        words[w] = rand_r(&nestedSeed);
+        words[w] = rand_s(&nestedSeed);
       }
       tup->append(Val_ID::mk(ID::mk(words)));
     
@@ -1824,7 +1837,7 @@ testTable2::testPseudoRandomInsertDeleteSequences()
       for (uint w = 0;
            w < ID::WORDS;
            w++) {
-        words[w] = rand_r(&nestedSeed);
+        words[w] = rand_s(&nestedSeed);
       }
       tup->append(Val_ID::mk(ID::mk(words)));
     

@@ -20,7 +20,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/wait.h>
+// #include <sys/wait.h>
 
 #include "tuple.h"
 #include "plumber.h"
@@ -45,6 +45,8 @@
 #include "dot.h"
 
 #include "stageLoader.h"
+
+#include "getopt.h"
 
 bool DEBUG = false;
 bool CC = false;
@@ -154,11 +156,11 @@ readScript(string overlog,
 
   // Turn definitions vector into a cpp argument array.
   int defSize = definitions.size();
-  char* args[defSize
+  char ** args = new (char * [defSize
              + 1                // for cpp
              + 2                // for flags -C and -P
              + 2                // for filenames
-             + 1];              // for the null pointer at the end
+             + 1]);              // for the null pointer at the end
 
   int count = 0;
 
@@ -218,7 +220,7 @@ readScript(string overlog,
 
     file.close();
     std::string script = scriptStream.str();
-
+	delete args;
 
     return script;
   }

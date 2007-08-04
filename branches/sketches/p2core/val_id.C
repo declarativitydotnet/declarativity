@@ -110,16 +110,16 @@ Val_ID::Val_ID(std::string theID)
 // Marshalling and unmarshallng
 //
 void
-Val_ID::xdr_marshal_subtype(XDR *x)
+Val_ID::marshal_subtype(boost::archive::text_oarchive *x)
 {
-  i->xdr_marshal(x);
+  i->marshal(x);
 }
 
 
 ValuePtr
-Val_ID::xdr_unmarshal(XDR *x)
+Val_ID::unmarshal(boost::archive::text_iarchive *x)
 {
-  return Val_ID::mk(ID::xdr_unmarshal(x));
+  return Val_ID::mk(ID::unmarshal(x));
 }
 
 

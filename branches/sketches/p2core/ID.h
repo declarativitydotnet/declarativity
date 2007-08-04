@@ -17,7 +17,7 @@
 #ifndef __ID_H__
 #define __ID_H__
 
-#include <rpc/xdr.h>
+// #include <rpc/xdr.h>
 #include <string>
 #include <sstream>
 #include <boost/shared_ptr.hpp>
@@ -140,14 +140,14 @@ public:
   rshift(uint32_t) const;
 
 
-  /** Marshal into an XDR, one word at a time */
+  /** Marshal into a boost::archive */
   void
-  xdr_marshal(XDR *x);
+  marshal(boost::archive::text_oarchive *x);
 
 
-  /** Create an ID from an XDR buffer, one word at a time */
+  /** Create an ID from a boost::archive buffer */
   static IDPtr
-  xdr_unmarshal(XDR *x);
+  unmarshal(boost::archive::text_iarchive *x);
 
 
   /** Create an ID */

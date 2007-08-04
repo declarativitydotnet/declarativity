@@ -20,7 +20,8 @@
 #include <iostream>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/wait.h>
+//#include <sys/wait.h>
+#include <boost/algorithm/string.hpp>
 
 #include "tuple.h"
 #include "plumber.h"
@@ -46,12 +47,14 @@
 
 #include "stageLoader.h"
 
+#include "getopt.h"
+
 bool DEBUG = false;
 bool CC = false;
 
 
-
-
+using namespace std;
+using namespace boost;
 
 /** Load any loadable modules */
 void
@@ -149,74 +152,46 @@ readScript(string overlog,
            string derivative,
            std::vector< std::string > definitions)
 {
-  string processed = derivative + ".cpp";
-  
+	// Read  script.
+	std::ifstream file;
+	file.open(overlog.c_str());
 
-  // Turn definitions vector into a cpp argument array.
-  int defSize = definitions.size();
-  char* args[defSize
-             + 1                // for cpp
-             + 2                // for flags -C and -P
-             + 2                // for filenames
-             + 1];              // for the null pointer at the end
+	if (!file.is_open()) {
+		TELL_ERROR << "Cannot open processed Overlog file \""
+			<< overlog << "\"!\n";
+		return std::string();
+	} else {
 
-  int count = 0;
+		std::ostringstream scriptStream;
+		std::string line;
 
-  args[count++] = "cpp";
-  args[count++] = "-P";
-  args[count++] = "-C";
+		while(std::getline(file, line)) {
+			scriptStream << line << "\n";
+		}
 
-  for (std::vector< std::string>::iterator i =
-         definitions.begin();
-       i != definitions.end();
-       i++) {
-    args[count] = (char*) (*i).c_str();
-    count++;
-  }
+		file.close();
+		std::string script = scriptStream.str();
 
-  args[count++] = (char*) overlog.c_str();
-  args[count++] = (char*) processed.c_str();
-  args[count++] = NULL;
+		for (std::vector< std::string>::iterator i =
+			definitions.begin();
+			i != definitions.end();
+		i++) {
+			vector<std::string> tokens;
+			split(tokens, i[0], is_any_of("="), token_compress_on);
+			// assert exactly 2 tokens, first begins with "-D"
+			if (tokens.size() != 2
+				|| tokens[0].c_str()[0] != '-'
+				|| tokens[1].c_str()[1] != 'D') {
+					TELL_ERROR << "-D flag " << i[0] << " incorrectly formatted\n";
+					TELL_ERROR << "tokens[0][0]=" << tokens[0][0] << "\n";
+					TELL_ERROR << "tokens[0][1]=" << tokens[0][1] << "\n";
+			}
+			string symbol = replace_all_copy(tokens[0],"-D", "");
 
-
-  // Invoke the preprocessor
-  pid_t pid = fork();
-  if (pid == -1) {
-    TELL_ERROR << "Cannot fork a preprocessor\n";
-    exit(1);
-  } else if (pid == 0) {
-    if (execvp("cpp", args) < 0) {
-      TELL_ERROR << "CPP ERROR" << std::endl;
-    }
-    exit(1);
-  } else {
-    wait(NULL);
-  }
-
-
-  // Read processed script.
-  std::ifstream file;
-  file.open(processed.c_str());
-
-  if (!file.is_open()) {
-    TELL_ERROR << "Cannot open processed Overlog file \""
-               << processed << "\"!\n";
-    return std::string();
-  } else {
-
-    std::ostringstream scriptStream;
-    std::string line;
-    
-    while(std::getline(file, line)) {
-      scriptStream << line << "\n";
-    }
-
-    file.close();
-    std::string script = scriptStream.str();
-
-
-    return script;
-  }
+			script = replace_all_copy(script,symbol,tokens[1]);
+		}
+		return script;
+	}
 }
 
 /**

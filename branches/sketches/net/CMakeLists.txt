@@ -1,0 +1,22 @@
+ADD_LIBRARY(p2net
+			snetsim.C 
+			skr.C 
+			tman.C 
+#			plsensor.C 
+			udp.C 
+			udp2.C 
+			tupleseq.C 
+			basicAck.C 
+			cumulativeAck.C 
+			cct.C 
+			rcct.C 
+			rccr.C 
+			rdelivery.C 
+			odelivery.C 
+			dupRemove.C 
+			bw.C 
+			frag.C 
+			defrag.C 
+			roundTripTimer.C
+)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
