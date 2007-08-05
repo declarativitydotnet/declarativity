@@ -1,0 +1,102 @@
+/*
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
+ * 
+ * DESCRIPTION: Test for aggwraps
+ *
+ * $Id$
+ *
+ */
+
+
+/* Schema: table(LocalNode, Number, Junk). */
+materialize(table, infinity, infinity, keys(2,3)).
+
+
+
+
+table(LOCAL, 1, 100).
+table(LOCAL, 1, 200).
+table(LOCAL, 2, 300).
+table(LOCAL, 2, 200).
+table(LOCAL, 2, 500).
+
+/* Notice the missing table(LOCAL, 0, _). */
+
+
+
+minAggwrap(@NI, First, min<Fourth>) :-
+	probe(@NI, First, Second, Third),
+	table(@NI, First1, Fourth),
+	First == First1.
+
+/**
+*** The following should not work, because First1 is not a probe field
+
+minAggwrap1(@NI, First1, min<Fourth>) :-
+	probe(@NI, First, Second, Third),
+	table(@NI, First1, Fourth),
+	First == First1.
+***/
+
+
+found(@NI, Number, count<*>) :-
+	probe(@NI, Number, Second, _),
+	table(@NI, Number1, Junk),
+	Number == Number1.
+
+/**
+*** This should not work! Only probe fields are allowed in the group-by
+
+found1(@NI, Number1, count<*>) :-
+	probe(@NI, Number, Second, _),
+	table(@NI, Number1, Junk),
+	Number == Number1.
+*/
+
+
+computedMin(@NI, min<Computed>) :-
+	probe(@NI, First, Second, Third),
+	table(@NI, Number, Junk),
+	First == Number,
+	Computed := First + Junk.
+
+computedMin(@NI, min<Computed>) :-
+	probe(@NI, First, Second, Third),
+	table(@NI, Number, Junk),
+	First == Number,
+	Computed := First + Junk.
+
+probe(@NI, First, Second, Third) :-
+	periodic(@NI, E, 3), First := E % 3,
+        Second := E % 99,
+        Third := E % 999.
+
+existing(@NI, Number, Junk) :-
+	probe(@NI, _, _, _),
+	table(@NI, Number, Junk).
+
+matches(@NI, Number) :-
+	probe(@NI, Number, _, _),
+	table(@NI, Number, Junk).
+
+expressionMatches(@NI, Number, Junk) :-
+	probe(@NI, Number, _, _),
+	table(@NI, TableNumber, Junk),
+	Number == TableNumber.
+
+watch(matches).
+watch(probe).
+watch(table).
+watch(existing).
+watch(expressionMatches).
+watch(found).
+watch(minAggwrap).
+watch(found1).
+watch(minAggwrap1).
+

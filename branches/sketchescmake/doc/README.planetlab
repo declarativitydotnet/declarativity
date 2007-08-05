@@ -1,0 +1,145 @@
+The purpose of this README file is to outline the steps for setting up and running the
+P2 system on a set of PlanetLab nodes assigned to your slice. This document does
+not provide any instructions on setting up a PlanetLab account or slice. Once you 
+have your account and slice you may assigned nodes to it through the PlanetLab
+website or through the xmlrpc interface. The nodes assigned to your slice will have
+a bare minimum installation, which will require you to install some supporting software
+before installing P2. The rpms required by a P2 installation can be found at 
+http://rpmfind.net/.  The following list of rpms should be downloaded and placed 
+in your home directory.
+- boost-1.32.0-6.i386.rpm
+- libstdc++-4.0.0-8.i386.rpm
+- python-2.3.4-11.i386.rpm
+
+The next step is to create a rpm for your P2 installation. You must create the P2 rpm on
+a FC2 or FC3 installation that runs Python 2.3 in order for it to be compatible with the
+PlanetLab nodes. The following steps outline how to create the P2 rpm.
+
+1. create a .rpmmacros file in your home directory that contains the following text:
+%_topdir /homes/tcondie/rpm
+%__strip /bin/true
+%__os_install_post    
+    /usr/lib/rpm/redhat/brp-compress 
+%{nil}
+
+2. Create the following directories:
+~/rpm
+~/rpm/BUILD
+~/rpm/RPMS
+~/rpm/RPMS/i386
+~/rpm/SOURCES
+~/rpm/SPECS
+~/rpm/SRPMS
+
+3. Make a P2 distribution file by doing a 'make dist' in the top level P2 directory.
+This will create a tarball file containing a distribution of P2. 
+
+4. Place the P2 tarball distribution in the ~/rpm/SOURCES directory.
+
+5. Ensure the 'Version' in the p2.spec file (located in the top level P2 directory) 
+matches the version of the P2 tarball. 
+
+6. Execute 'rpmbuild -ba p2.spec' in the top level P2 directory. 
+When this command finishes you can find the P2 binary rpm in the ~/rpm/RPMS/i386
+directory.
+
+7. Copy the P2 binary rpm to your home directory (along with the other supporting rpms).
+
+At this point you should be ready to install P2 on a set of PlanetLab nodes. 
+We have provided a couple of scripts to assist you in this regard. The scripts 
+are located in the 'python/scripts' directory. The following describes the usage 
+of these scripts. Note that executing these scripts without any arguments prints 
+a valid usage statement.
+
+==== psetup.py: Install and start P2 on one or all planetlab nodes assigned to a given slice.
+Usage: psetup.py [-j <parallel>] [-i] [-k] 
+                 [-Dvar=<value> [-Dvar=<value> [...]] -o <overlog>] 
+                 -n <slice_name> [<planetLabNode>]
+
+This script will install all the required rpms (indicated above, and located in your 
+home directory) on all planetlab nodes assigned to your slice. You can optionally 
+install P2 on a single node by giving the node in the final argument. The '-j' 
+argument indicates how may nodes you'd like to install at the same time (speeds 
+things up). The '-i' flag tells the script that you need the rpms uploaded and 
+installed. Once your rpms are installed you needn't provide this argument. That is, 
+this script will only start P2 if executed without the '-i' flag. The '-k' flag 
+will terminate all P2 processes on the nodes (or node if the last argument is given) 
+of your slice. You can indicate that P2 should be started with some overlog program 
+using the '-o' argument. If you don't provide an overlog program, then a stub 
+installation of P2 will be started. The script will run 'cpp' on the any provided 
+overlog program, passing any environment variables indicated by the '-D' argument. 
+
+When executed, the script will prompt you for your planetlab login and password. 
+This password is handled with care (communicated via https) using the planetlab 
+xmlrpm API. The script then begins installing and starting P2 on each node.
+
+=== planetlab.py: Starts a P2 instance on a planetlab node.
+
+The stub P2 instance supports the transfer of arbitrary sized tuples over the 
+network. You will not need to deal with this script since it will be started 
+by the psetup.py script. All planetlab nodes will use port 10000 for network
+communication. 
+
+
+=== Example session
+Usage: psetup.py [-j <parallel>] [-i] [-k] \
+                 [-Dvar=<value> [-Dvar=<value> [...]] -o <overlog>] \
+                 -n <slice_name> [<planetLabNode>]
+[tcondie@clash scripts]$ python psetup.py -j 10 -i -DNUM_GOSSIP=3 -o ../../doc/gossip.olg -n irb_p2
+PlanetLab Login: tcondie@cs.berkeley.edu
+Password:
+ERROR: planetlab node planetlab4.millennium.berkeley.edu is in state dbg.
+Removing planetlab4.millennium.berkeley.edu from installation!
+
+PlanetLab P2 install on node planet2.pittsburgh.intel-research.net
+PlanetLab P2 install on node planetlab6.millennium.berkeley.edu
+PlanetLab P2 install on node planet1.berkeley.intel-research.net
+PlanetLab P2 install on node planetlab2.cs.ucla.edu
+PlanetLab P2 install on node planetlab9.millennium.berkeley.edu
+PlanetLab P2 install on node planet1.seattle.intel-research.net
+PlanetLab P2 install on node planetlab7.millennium.berkeley.edu
+        Job finished on planetLab node planetlab7.millennium.berkeley.edu!
+PlanetLab P2 install on node planetlab10.millennium.berkeley.edu
+        Job finished on planetLab node planetlab12.millennium.berkeley.edu!
+PlanetLab P2 install on node planetlab2.millennium.berkeley.edu
+......
+
+
+=== Now lets push an overlog program to planet1.berkeley.intel-research.net
+
+tcondie@clash scripts]$ python p2terminal.py
+
+Usage: p2terminal.py [-Dvar=<value> [-Dvar=<value> [...]]] [-d <sec_delay>] \
+           [-t <program_name> -f <input_file> -n <nodes> -a <ip_address> -p <start_port>] \
+           <terminal_ip_address> <terminal_port>
+[tcondie@clash scripts]$ python p2terminal.py -t myPing -f myPing.olg -n 1 -a planet1.berkeley.intel-research.net -p 10000 planet1.berkeley.intel-research.net 10000
+File myPing.olg text added to overlog program.
+Edit Correctly initialized.
+
+        program push to node planet1.berkeley.intel-research.net:10000
+
+[tcondie@clash scripts]$
+
+=== Now lets stop all P2 processes on all PlanetLab nodes in slice irb_p2
+[tcondie@clash scripts]$ python psetup.py -j 10 -k -n irb_p2
+PlanetLab Login: tcondie@cs.berkeley.edu
+Password:
+ERROR: planetlab node planetlab4.millennium.berkeley.edu is in state dbg.
+Removing planetlab4.millennium.berkeley.edu from installation!
+
+PlanetLab P2 kill on node planet2.pittsburgh.intel-research.net
+PlanetLab P2 kill on node planetlab6.millennium.berkeley.edu
+PlanetLab P2 kill on node planet1.berkeley.intel-research.net
+PlanetLab P2 kill on node planetlab2.cs.ucla.edu
+PlanetLab P2 kill on node planetlab9.millennium.berkeley.edu
+PlanetLab P2 kill on node planet1.seattle.intel-research.net
+PlanetLab P2 kill on node planetlab7.millennium.berkeley.edu
+PlanetLab P2 kill on node planetlab12.millennium.berkeley.edu
+PlanetLab P2 kill on node planetlab15.millennium.berkeley.edu
+PlanetLab P2 kill on node planetlab14.millennium.berkeley.edu
+        Job finished on planetLab node planetlab12.millennium.berkeley.edu!
+PlanetLab P2 kill on node planetlab10.millennium.berkeley.edu
+        Job finished on planetLab node planetlab9.millennium.berkeley.edu!
+PlanetLab P2 kill on node planetlab2.millennium.berkeley.edu
+.......
+
