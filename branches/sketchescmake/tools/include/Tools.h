@@ -71,6 +71,9 @@ typedef uint8_t byte;
 
 #define interface class
 
+// I've got tools! Yay!
+#define IVEGOTTOOLS yay!
+
 namespace Tools
 {
 	enum IntervalType
@@ -531,11 +534,10 @@ namespace Tools
 		virtual bool operator==(const UniversalHash& in) const;
 
 		virtual value_type hash(value_type x) const;
-		virtual size_t getSize() const;
-		virtual void getData(byte** buffer, size_t& length) const;
-
 		virtual void marshal(boost::archive::text_oarchive *x) const;
 		static Tools::UniversalHash *unmarshal(boost::archive::text_iarchive *x);
+		virtual size_t getSize() const;
+		virtual void getData(byte** buffer, size_t& length) const;
 
 		virtual int compareTo(UniversalHash *h) const;
 

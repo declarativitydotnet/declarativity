@@ -432,7 +432,8 @@ void Sketches::FM::marshal(boost::archive::text_oarchive *x) const
   {
     for ( size_t j = 0; j < numBitmaps; j++)
     {
-      *x & m_bitmap[i][j];
+      bool bit = m_bitmap[i][j];
+      *x & bit;
     }
   }
 }

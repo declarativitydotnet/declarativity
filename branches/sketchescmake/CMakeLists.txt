@@ -4,6 +4,7 @@ SUBDIRS(eventLoop p2core elements stages net overlog planner debugger unitTests 
 
 # Main decisions
 SET(BUILD_SHARED_LIBS ON)
+#SET(CMAKE_CXX_FLAGS "-dD -E")
 
 # find our custom CMake modules
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${P2_SOURCE_DIR}/cmake)
@@ -57,6 +58,8 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/over
                     ${CMAKE_CURRENT_SOURCE_DIR}/debugger
                     ${Boost_INCLUDE_DIRS} 
                     ${PYTHON_INCLUDE_PATH} 
+                    ${CMAKE_CURRENT_SOURCE_DIR}/sketches/include
+                    ${CMAKE_CURRENT_SOURCE_DIR}/tools/include
                     /usr/include)
 
 # set linker path for this and all subdirs

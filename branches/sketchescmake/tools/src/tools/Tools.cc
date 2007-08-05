@@ -1073,39 +1073,6 @@ bool Tools::UniversalHash::operator==(const UniversalHash& in) const
 	return true;
 }
 
-void Tools::UniversalHash::marshal(boost::archive::text_oarchive *x) const
-{
-  *x & m_k;
-
-
-  for(int i = 0; i < m_k; i++ )
-  {
-    *x & m_a[i];
-  }
-}
-
-Tools::UniversalHash *Tools::UniversalHash::unmarshal(boost::archive::text_iarchive *x)
-{	
-	uint16_t k;
-	
-	*x & k;
-	
-	Tools::UniversalHash *newHash = new Tools::UniversalHash(k);
-       
-	
-	for( uint16_t i = 0; i < newHash->m_k; i++ )
-	{
-	  int64_t placeholder;
-
-	  *x & placeholder;
-
-	  newHash->m_a[i] = placeholder;
-	}
-
-	return newHash;
-}
-
-
 int Tools::UniversalHash::compareTo(Tools::UniversalHash *h) const
 {
   if(m_k != h->m_k)
@@ -1188,6 +1155,39 @@ void Tools::UniversalHash::getData(byte** buffer, size_t& length) const
 	p += m_k * sizeof(uint64_t);
 
 	assert(p == (*buffer) + length);
+}
+
+
+void Tools::UniversalHash::marshal(boost::archive::text_oarchive *x) const
+{
+  *x & m_k;
+
+
+  for(int i = 0; i < m_k; i++ )
+  {
+    *x & m_a[i];
+  }
+}
+
+Tools::UniversalHash *Tools::UniversalHash::unmarshal(boost::archive::text_iarchive *x)
+{	
+	uint16_t k;
+	
+	*x & k;
+	
+	Tools::UniversalHash *newHash = new Tools::UniversalHash(k);
+       
+	
+	for( uint16_t i = 0; i < newHash->m_k; i++ )
+	{
+	  int64_t placeholder;
+
+	  *x & placeholder;
+
+	  newHash->m_a[i] = placeholder;
+	}
+
+	return newHash;
 }
 
 Tools::SHA1Hash::~SHA1Hash()

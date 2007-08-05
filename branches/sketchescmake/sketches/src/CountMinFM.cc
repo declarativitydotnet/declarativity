@@ -191,10 +191,16 @@ void Sketches::CountMinFM::marshal(boost::archive::text_oarchive *x) const
 
   *x & numHashes;
 
-  for (std::vector<Tools::UniversalHash>::const_iterator vectIter = m_hash.begin();
-       vectIter != m_hash.end(); vectIter++)
-  {
-      vectIter->marshal(x);
+  // for (std::vector<Tools::UniversalHash>::const_iterator hashIter = m_hash.begin();
+  //      hashIter != m_hash.end(); hashIter++)
+  // {
+  //     Tools::UniversalHash *hash = const_cast<Tools::UniversalHash *>
+  //     hashIter->smoo();
+  //     
+  // }
+
+  for (int i = 0; i < m_hash.size(); i++) {
+    const_cast<Tools::UniversalHash *>(&m_hash[i])->getSize();
   }
 }
 

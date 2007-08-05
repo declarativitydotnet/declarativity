@@ -22,7 +22,7 @@
 #ifndef __sketches_h
 #define __sketches_h
 
-#include <tools/Tools.h>
+#include <Tools.h>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
