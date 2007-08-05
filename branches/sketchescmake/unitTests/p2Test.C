@@ -22,6 +22,7 @@ using boost::unit_test_framework::test_suite;
 #include "testIDs.h"
 #include "testLists.h"
 #include "testAggwrap.h"
+#include "testSketches.h"
 #include "reporting.h"
 #include "iostream"
 
@@ -61,6 +62,7 @@ test_suite* init_unit_test_suite(int argc, char** argv)
   top->add(new testCsv_testSuite());
   top->add(new testLists_testSuite());
   top->add(new testAggwrap_testSuite());
+  top->add(new testSketches_testSuite());
 
   return top;
 }

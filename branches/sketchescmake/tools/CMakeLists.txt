@@ -6,5 +6,7 @@ ADD_LIBRARY(tools
   src/tools/TemporaryFile.cc
   src/tools/Tools.cc
   include/Tools.h)
-  
+
+TARGET_LINK_LIBRARIES(tools boost_regex boost_date_time crypto ssl)
+
 INCLUDE_DIRECTORIES(src include)
