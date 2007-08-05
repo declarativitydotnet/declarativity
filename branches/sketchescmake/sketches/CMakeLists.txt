@@ -3,5 +3,5 @@ ADD_LIBRARY(sketches
             src/FM.cc
             include/Sketches.h)
             
-ADD_DEPENDENCIES(libsketches libtools)
+ADD_DEPENDENCIES(sketches tools)
 INCLUDE_DIRECTORIES(src include)

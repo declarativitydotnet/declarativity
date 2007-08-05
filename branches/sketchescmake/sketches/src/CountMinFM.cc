@@ -194,7 +194,7 @@ void Sketches::CountMinFM::marshal(boost::archive::text_oarchive *x) const
   for (std::vector<Tools::UniversalHash>::const_iterator vectIter = m_hash.begin();
        vectIter != m_hash.end(); vectIter++)
   {
-    vectIter->marshal((boost::archive::text_oarchive *) x);
+      vectIter->marshal(x);
   }
 }
 
