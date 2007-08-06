@@ -32,6 +32,7 @@
 %left OL_OR
 %left OL_AND
 %left OL_BITOR
+%left OL_APPEND
 %left OL_BITXOR
 %left OL_BITAND
 %left OL_BITNOT

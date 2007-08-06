@@ -888,17 +888,12 @@ DEF_OP(BIT_OR) {
   ValuePtr v2 = pop();
   stackPush((v2 | v1));
 }
-DEF_OP(BIT_OR) {
+DEF_OP(APPEND) {
   ValuePtr v1 = pop();
   ValuePtr v2 = pop();
   stackPush((v2 | v1));
 }
 DEF_OP(BIT_XOR) {
-  ValuePtr v1 = pop();
-  ValuePtr v2 = pop();
-  stackPush((v2 ^ v1));
-}
-DEF_OP(BIT_APPEND) {
   ValuePtr v1 = pop();
   ValuePtr v2 = pop();
   stackPush((v2 ^ v1));
