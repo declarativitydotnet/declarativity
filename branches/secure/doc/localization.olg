@@ -67,26 +67,6 @@ watchmod(programEventInitialized, "RECV_EVENT").
           OldPos := 2U, NewPos := 1U.
 
 
-  
-  /** The following rules deal with termination checks */
-  completion1 rulesComplete(@A, Pid, C) :-
-                terminate(@A, Pid, OldRid, NewRid, HeadFid, Terms),
-                rulesComplete(@A, Pid, C2),
-                C := C2 + 1.
-
-  /* Signal the completion of a rule */
-  completion2 ruleCompletion(@A, Pid, C) :- rulesComplete(@A, Pid, C).
-
-  /* Check that we are done with the rewrite by testing the count of
-     completed rules with the total number of rules in the program.
-     When done, generate a global programEvent tuple. */
-  end ::program(@A, Pid, Name, Rewrite, "localization", Text, Msg, P2DL) :-
-        ruleCompletion(@A, Pid, C),
-        totalRules(@A, Pid, T),
-        ::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
-        T == C.
-
-  
   /* Case: Next functor's location attribute matches previous functor's location attribute. 
      Maintain the same location attribute, rule group and position therein. */
   functor iterator(@A, Pid, OldRid, OldPos+1U, NewRid, NewPos+1U, PrevHeadFid, HeadFid, LocAttr, Schema, "Functor", FID) :-
@@ -109,6 +89,27 @@ watchmod(programEventInitialized, "RECV_EVENT").
 
   break break(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, NewLocAttr, NewSchema, TableName, ID) :-
           prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, NewLocAttr, NewSchema, TableName, ID).
+
+  
+  /** The following rules deal with termination checks */
+  completion1 rulesComplete(@A, Pid, C) :-
+                terminate(@A, Pid, OldRid, NewRid, HeadFid, Terms),
+                rulesComplete(@A, Pid, C2),
+                C := C2 + 1.
+
+  /* Signal the completion of a rule */
+  completion2 ruleCompletion(@A, Pid, C) :- rulesComplete(@A, Pid, C).
+
+  /* Check that we are done with the rewrite by testing the count of
+     completed rules with the total number of rules in the program.
+     When done, generate a global programEvent tuple. */
+  end ::program(@A, Pid, Name, Rewrite, "localization", Text, Msg, P2DL) :-
+        ruleCompletion(@A, Pid, C),
+        totalRules(@A, Pid, T),
+        ::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
+        T == C.
+
+  
   
   /* Have we reached the end? If so trigger one last break so that we update the logical plan state
      for the last rule group. */
