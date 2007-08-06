@@ -23,17 +23,50 @@ watchmod(programEventInitialized, "RECV_EVENT").
                    programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
                    ::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count).
 
-  /* Begin the localization rewrite by triggering a count of
-     distinct location attributes for each rule in the program. */
-  begin1 startRuleCounter(@A, Pid, Rid, HeadFid) :-
-           programEventInitialized(@A, Pid, Rid, HeadFid).
-
   begin2 rulesComplete(@A, Pid, 0) :-
           programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL).
 
   totalRules totalRules(@A, Pid, a_count<*>) :-
                programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
                ::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count).
+
+/* first fix point over*/
+
+  /* Begin the localization rewrite by triggering a count of
+     distinct location attributes for each rule in the program. */
+  begin1 startRuleCounter(@A, Pid, Rid, HeadFid) :-
+           programEventInitialized(@A, Pid, Rid, HeadFid).
+
+
+
+  /* Given a new program, go through the rules contained within and
+     count the number of distinct location attributes apprearing in
+     each rule. */
+  detect countLocalVar(@A, Pid, Rid, a_countdistinct<Attr>) :-
+            startRuleCounter(@A, Pid, Rid, HeadFid),
+            ::functor(@A, FID, Rid, Name, TID, ECA, Attributes, FPos, AM),
+            Attr := f_getattr("Location", Attributes), 
+            FID != HeadFid.
+
+  notrigger rulesComplete(@A, Pid, C) :-
+              countLocalVar(@A, Pid, Rid, C1),
+              rulesComplete(@A, Pid, C2),
+              C1 <= 1,
+              C := C2 + 1.
+  
+
+  /* If we have more than 1 location variable within a rule trigger the rewrite. */
+  /* Start the iteration process: We iterate over each term in the body, starting with the event,
+     of the orginal rule. */
+  init iterator(@A, Pid, Rid, OldPos, NewRid, NewPos, PrevHeadFid, NewHeadFid, LocAttr, F_Schema, "Functor", F_ID) :-
+          countLocalVar(@A, Pid, Rid, C), C > 1,
+          ::functor(@A, F_ID, Rid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM),
+          LocAttr := f_getattr("Location", F_Schema),
+          F_Pos == 1,
+          NewRid := f_idgen(), PrevHeadFid := null, NewHeadFid := f_idgen(), 
+          OldPos := 2U, NewPos := 1U.
+
+
   
   /** The following rules deal with termination checks */
   completion1 rulesComplete(@A, Pid, C) :-
@@ -53,34 +86,6 @@ watchmod(programEventInitialized, "RECV_EVENT").
         ::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
         T == C.
 
-
-  /* Given a new program, go through the rules contained within and
-     count the number of distinct location attributes apprearing in
-     each rule. */
-  detect countLocalVar(@A, Pid, Rid, a_countdistinct<Attr>) :-
-            startRuleCounter(@A, Pid, Rid, HeadFid),
-            ::functor(@A, FID, Rid, Name, TID, ECA, Attributes, FPos, AM),
-            Attr := f_getattr("Location", Attributes), 
-            FID != HeadFid.
-  
-  notrigger rulesComplete(@A, Pid, C) :-
-              countLocalVar(@A, Pid, Rid, C1),
-              rulesComplete(@A, Pid, C2),
-              C1 <= 1,
-              C := C2 + 1.
-  
-  
-
-  /* If we have more than 1 location variable within a rule trigger the rewrite. */
-  /* Start the iteration process: We iterate over each term in the body, starting with the event,
-     of the orginal rule. */
-  init iterator(@A, Pid, Rid, OldPos, NewRid, NewPos, PrevHeadFid, NewHeadFid, LocAttr, F_Schema, "Functor", F_ID) :-
-          countLocalVar(@A, Pid, Rid, C), C > 1,
-          ::functor(@A, F_ID, Rid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM),
-          LocAttr := f_getattr("Location", F_Schema),
-          F_Pos == 1,
-          NewRid := f_idgen(), PrevHeadFid := null, NewHeadFid := f_idgen(), 
-          OldPos := 2U, NewPos := 1U.
   
   /* Case: Next functor's location attribute matches previous functor's location attribute. 
      Maintain the same location attribute, rule group and position therein. */
