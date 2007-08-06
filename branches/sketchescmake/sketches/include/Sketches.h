@@ -123,7 +123,7 @@ namespace Sketches
       uint32_t fillLength(uint32_t val) const;
       int32_t pickBinomial(int32_t nIn, double pIn, Tools::Random& rand) const;
 
-      static const double PHI = 0.77351;
+      static const double PHI;
 
       uint16_t m_seed;
 
@@ -241,7 +241,7 @@ namespace Sketches
 	  T b = *it;
 	  return static_cast<T>((a + b) / 2.0);
 	}
-    }
+    };
 
   bool isPrime(uint64_t P);
   uint64_t getPrime(uint64_t low, uint64_t high, Tools::Random& r);

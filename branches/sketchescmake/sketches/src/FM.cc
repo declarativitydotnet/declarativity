@@ -20,6 +20,7 @@
 //    mhadji@gmail.com
 
 #include <Sketches.h>
+const double Sketches::FM::PHI = 0.77351;
 
 Sketches::FM::FM(
   size_t bits,
