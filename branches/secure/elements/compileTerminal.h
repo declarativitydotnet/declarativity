@@ -16,6 +16,14 @@
 #include "element.h"
 #include "elementRegistry.h"
 
+
+struct StageInformation{
+  string name;
+  string file;
+  string prevStageName;
+};
+
+
 class CompileTerminal : public Element { 
 public:
   
@@ -35,6 +43,20 @@ private:
   int initialize();
   void terminal();
   void programUpdate(TuplePtr program);
+  
+  StageInformation *defaultStages;
+  int numDefaultStages;
+  string more;
+
+  void initDefaultStages()
+  {
+    more = "y";
+    numDefaultStages = 1;
+    defaultStages = new StageInformation[numDefaultStages];
+    defaultStages[0].name = "localization";
+    defaultStages[0].file = "../doc/localization.olg";
+    defaultStages[0].prevStageName = "parse";
+  }
 
   DECLARE_PRIVATE_ELEMENT_INITS
 };
