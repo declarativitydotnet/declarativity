@@ -62,6 +62,8 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/over
                     ${CMAKE_CURRENT_SOURCE_DIR}/tools/include
                     /usr/include)
 
+ADD_DEFINITIONS(-DBOOST_ALL_DYN_LINK)
+
 # set linker path for this and all subdirs
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS} 
                  ${P2_BINARY_DIR}/overlog 
@@ -71,7 +73,10 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS}
                  ${P2_BINARY_DIR}/debugger 
                  ${P2_BINARY_DIR}/p2core  
                  ${P2_BINARY_DIR}/eventLoop 
-                 ${P2_BINARY_DIR}/planner)
+                 ${P2_BINARY_DIR}/planner
+		 ${P2_BINARY_DIR}/sketches
+		 ${P2_BINARY_DIR}/tools
+)
 
 # uncomment the following line to get CMake variables to print to screen
 #INCLUDE(CMakePrintSystemInformation)

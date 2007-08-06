@@ -167,11 +167,11 @@ size_t Sketches::CountMinFM::getSize() const
 
 void Sketches::CountMinFM::marshal(boost::archive::text_oarchive *x) const
 {
-  int32_t sl = m_id.length();
+  uint32_t sl = m_id.length() + 1;
   const char *st = m_id.c_str(); 
   
   *x & sl;
-  x->save_binary(const_cast<char *>(st), sl + 1);
+  x->save_binary(const_cast<char *>(st), sl);
 
   *x & m_counters;
   *x & m_hashes;
