@@ -55,7 +55,7 @@ private:
     defaultStages = new StageInformation[numDefaultStages];
     defaultStages[0].name = "localization";
     defaultStages[0].file = "../doc/localization.olg";
-    defaultStages[0].prevStageName = "parse";
+    defaultStages[0].prevStageName = "eca";
   }
 
   DECLARE_PRIVATE_ELEMENT_INITS

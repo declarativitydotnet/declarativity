@@ -59,7 +59,8 @@ CompileTerminal::programUpdate(TuplePtr program)
                 << "See compileTerminal.dot for dataflow description.");
 
   if (more.size() > 0 && (more[0] == 'y' || more[0] == 'Y')) {
-    delayCB(1, boost::bind(&CompileTerminal::terminal, this), this);
+    terminal();
+    //    delayCB(1, boost::bind(&CompileTerminal::terminal, this), this);
   }
   else {
     // do nothing: no more call backs needed 
