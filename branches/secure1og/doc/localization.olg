@@ -78,13 +78,14 @@ watchmod(programEventInitialized, "RECV_EVENT").
   iterateAssign iterator1(@A, Pid, Rid, OldPos-1U, NewSchema) :-
 	  iterator1(@A, Pid, Rid, OldPos, Cur_Schema),
           ::assign(@A, Aid, OldRid, A_Var, A_Value, A_Pos),
-          OldPos == A_Pos, NewSchema := f_combineMask(F_Schema, Cur_Schema).
+          OldPos == A_Pos, F_Schema = f_getSchema(
+	  NewSchema := f_combineMask(F_Schema, Cur_Schema).
 
 /* Iterate over the select*/
-  iterateSelect iterator1(@A, Pid, Rid, OldPos-1U, NewSchema) :-
+/*  iterateSelect iterator1(@A, Pid, Rid, OldPos-1U, NewSchema) :-
 	  iterator1(@A, Pid, Rid, OldPos, Cur_Schema),
 	  ::select(@A, Sid, OldRid, Bool, SelectPos, AM), SelectPos == OldPos, 
-          NewSchema := f_combineMask(F_Schema, Cur_Schema).
+          NewSchema := f_combineMask(F_Schema, Cur_Schema).*/
 
   
   /* Have we reached the end? If so trigger one last break so that we update the logical plan state
