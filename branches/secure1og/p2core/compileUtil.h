@@ -59,6 +59,13 @@ namespace compile {
                   CommonTable::Key& joinKey, 
                   CommonTable::Key& indexKey, 
                   CommonTable::Key& baseKey); 
+
+    ListPtr getMask(const ValuePtr v);
+ 
+    void calculateMaskRecur(ListPtr &mask, const ValuePtr v);
+
+    ListPtr applyMask(ListPtr original, ListPtr mask, unsigned oldPos);
+ 
   };
 
   namespace pel {

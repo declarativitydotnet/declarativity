@@ -159,6 +159,86 @@ namespace compile {
       return join;
     }
 
+    ListPtr 
+    getMask(const ValuePtr v)
+    {
+      ListPtr mask = List::mk();
+      calculateMaskRecur(mask, v);
+      return mask;
+    }
+
+    void calculateMaskRecur(ListPtr &mask, const ValuePtr v)
+    {
+      TuplePtr t = Val_Tuple::cast(v);
+      string type = (*t)[0]->toString();
+      if(type == LOC || type == VAR)
+      {
+	mask->append((*t)[2]);
+      }
+      else if(type == AGG)
+      {
+	calculateMaskRecur(mask, (*t)[2]);
+      }
+      else if(type == BOOL)
+      {
+	calculateMaskRecur(mask, (*t)[3]);
+	calculateMaskRecur(mask, (*t)[4]);
+      }
+      else if(type == RANGE)
+      {
+	calculateMaskRecur(mask, (*t)[3]);
+	calculateMaskRecur(mask, (*t)[4]);
+      }
+      else if(type == MATH)
+      {
+	calculateMaskRecur(mask, (*t)[3]);
+	calculateMaskRecur(mask, (*t)[4]);
+      }
+      else if(type == FUNCTION)
+      {
+	unsigned numArgs = Val_UInt32::cast((*t)[3]);
+	for(unsigned i = 0; i < numArgs; i++)
+	{
+	  calculateMaskRecur(mask, (*t)[4 + i]);
+	}
+      }
+      else if(type == VEC || type == MAT)
+      {
+	assert(0);
+      }
+
+    }
+
+    ListPtr applyMask(ListPtr original, ListPtr mask, unsigned oldPos){
+      ListPtr maskedList = List::mk();
+
+      bool found = false;
+      unsigned count = 0, countEnd = 0;
+      for(ValPtrList::const_iterator outer = original->begin();
+           outer != original->end(); outer++) {
+
+	found = false;
+	ValPtrList::const_iterator end = mask->end();
+	count = 0;
+	countEnd = (mask->size() - oldPos + 1u);
+	for(ValPtrList::const_iterator iter = mask->begin();
+	    iter != end, !found, count < countEnd ; iter++) {
+	  ListPtr maskPart = Val_List::cast(*iter);
+	  for (ValPtrList::const_iterator inner = maskPart->begin();
+	       inner != maskPart->end(), !found; inner++) {
+	    found |= (position(maskPart, *outer) >= 0);
+	  }
+	  
+	}
+	if (found)
+	{
+	  maskedList->append(*outer);
+	}
+      }
+      
+      return maskedList;
+    }
+
     void
     joinKeys(const ListPtr outer, const ListPtr inner,
           CommonTable::Key& joinKey, CommonTable::Key& indexKey, CommonTable::Key& baseKey) 

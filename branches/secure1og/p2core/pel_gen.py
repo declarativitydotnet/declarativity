@@ -141,7 +141,11 @@ for op, ar, va, desc in [
   ("getattr",2, "L_GET_ATTR",   "Extract attribute from list."),
   ("posattr",2, "L_POS_ATTR",   "Get the attribute position from list."),
   ("aggattr",1, "L_AGG_ATTR",   "Get the aggregation position from list."),
-  ("merge",2,   "L_MERGE",      "Merge two argument lists according join operation.")
+  ("merge",2,   "L_MERGE",      "Merge two argument lists according join operation."),
+  ("initMask",1,   "INITMASK",      "Initialize the mask using a list of fields from the head functor"),
+  ("combineMask",2,   "COMBINEMASK",      "Combine a mask (list) with another mask"),
+  ("getMask",1,   "GETMASK",      "Calculate the mask from an expression"),
+  ("mask",2,   "MASK",      "Apply the mask onto the scheme to get the masked scheme")
   ]:  emit_opcode(op, ar, va, desc)
 
 for op, ar, va, desc in [

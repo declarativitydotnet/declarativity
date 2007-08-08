@@ -230,4 +230,8 @@ FUNCTIONDEF("f_status",       2, "status")
 FUNCTIONDEF("f_selectivity",  3, "selectivity")
 FUNCTIONDEF("f_rangeAM",      2, "rangeAM")
 FUNCTIONDEF("f_filter",       2, "filter")
+FUNCTIONDEF("f_initMask",     1, "initMask")
+FUNCTIONDEF("f_combineMask",  2, "combineMask")
+FUNCTIONDEF("f_getMask",    1, "getMask")
+FUNCTIONDEF("f_mask",         2, "mask")
 #undef FUNCTIONDEF

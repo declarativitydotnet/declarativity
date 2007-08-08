@@ -597,6 +597,49 @@ DEF_OP(L_GET_ATTR) {
    stackPush(Val_Null::mk());
 }
 
+DEF_OP(INITMASK) { 
+   ValuePtr listVal = stackTop(); stackPop();
+   ListPtr list = List::mk();
+   list->append(listVal);
+   ValuePtr mask = Val_List::mk(list);
+   stackPush(mask);
+}
+
+DEF_OP(GETMASK) { 
+  ValuePtr v = stackTop(); stackPop();
+  ValuePtr mask = Val_List::mk(compile::namestracker::getMask(v));
+  stackPush(mask);
+}
+
+DEF_OP(COMBINEMASK) { 
+  ValuePtr second = stackTop(); stackPop();
+  ValuePtr first = stackTop(); stackPop();
+  ListPtr list = Val_List::cast(first);
+  if (!list) {
+    error = PE_BAD_LIST_FIELD;
+    return;
+  }
+
+  list->append(second);
+  stackPush(first);
+}
+
+DEF_OP(MASK) { 
+  ValuePtr oldPos = stackTop(); stackPop();
+  ValuePtr maskSchema = stackTop(); stackPop();
+  ValuePtr tempSchema = stackTop(); stackPop();
+  ListPtr maskList = Val_List::cast(maskSchema);
+  ListPtr tempList = Val_List::cast(tempSchema);
+  if (!maskList || !tempList) {
+    error = PE_BAD_LIST_FIELD;
+    return;
+  }
+
+  ListPtr maskedSchema = 
+    compile::namestracker::applyMask(tempList, maskList, Val_UInt32::cast(oldPos));
+  stackPush(Val_List::mk(maskedSchema));
+}
+
 DEF_OP(L_AGG_ATTR) { 
    ValuePtr listVal = stackTop(); stackPop();
    ListPtr  list    = Val_List::cast(listVal);

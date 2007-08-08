@@ -63,8 +63,8 @@ watchmod(programEventInitialized, "RECV_EVENT").
   init iterator1(@A, Pid, Rid, OldPos, F_Schema) :-
           countLocalVar(@A, Pid, Rid, C), C > 1,
           ::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count),
-	  ::functor(@A, HeadFid, Rid, Name, TID, ECA, Attributes, Pos, AM).  /* The orginal head functor. */	
-	  F_Schema = f_initSchemaMask(Attributes),
+	  ::functor(@A, HeadFid, Rid, Name, TID, ECA, Attributes, Pos, AM),  /* The orginal head functor. */	
+	  F_Schema = f_initMask(Attributes),
           OldPos := Term_Count.
 
 
@@ -72,20 +72,24 @@ watchmod(programEventInitialized, "RECV_EVENT").
   iterateFunctor iterator1(@A, Pid, Rid, OldPos-1U, NewSchema) :-
 	  iterator1(@A, Pid, Rid, OldPos, Cur_Schema),
           ::functor(@A, F_ID, Rid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM),
-          OldPos == F_Pos, NewSchema := f_combineMask(F_Schema, Cur_Schema).
+          OldPos == F_Pos, 
+	  NewSchema := f_combineMask(Cur_Schema, F_Schema).
 
 /* Iterate over the assign*/
   iterateAssign iterator1(@A, Pid, Rid, OldPos-1U, NewSchema) :-
 	  iterator1(@A, Pid, Rid, OldPos, Cur_Schema),
           ::assign(@A, Aid, OldRid, A_Var, A_Value, A_Pos),
-          OldPos == A_Pos, F_Schema = f_getSchema(
-	  NewSchema := f_combineMask(F_Schema, Cur_Schema).
+          OldPos == A_Pos, 
+	  F_Schema = f_merge(f_getMask(A_Var), f_getMask(A_Value)),
+	  NewSchema := f_combineMask(Cur_Schema, F_Schema).
 
 /* Iterate over the select*/
-/*  iterateSelect iterator1(@A, Pid, Rid, OldPos-1U, NewSchema) :-
+  iterateSelect iterator1(@A, Pid, Rid, OldPos-1U, NewSchema) :-
 	  iterator1(@A, Pid, Rid, OldPos, Cur_Schema),
-	  ::select(@A, Sid, OldRid, Bool, SelectPos, AM), SelectPos == OldPos, 
-          NewSchema := f_combineMask(F_Schema, Cur_Schema).*/
+	  ::select(@A, Sid, OldRid, Bool, SelectPos, AM), 
+	  SelectPos == OldPos, 
+	  F_Schema = f_getMask(Bool),
+          NewSchema := f_combineMask(Cur_Schema, F_Schema).
 
   
   /* Have we reached the end? If so trigger one last break so that we update the logical plan state
@@ -117,8 +121,8 @@ watchmod(programEventInitialized, "RECV_EVENT").
               ::functor(@A, FID, OldRid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM), /* Functor from old rule */
               F_Pos == OldPos,                            /* Make sure we are considering this functor's position. */
               LocAttr == f_getattr("Location", F_Schema), /* The location attribute matches that of the prior iteration. */
-	      TempSchema := f_merge(F_Schema, PrevSchema),
-	      Schema := f_mask(TempSchema, MaskScheme, F_Pos).
+	      Schema := f_merge(F_Schema, PrevSchema).
+
 
 /**For each iteration step do the following: assign, select, g7, g8, g9 and g10**/    
   
@@ -173,8 +177,7 @@ watchmod(programEventInitialized, "RECV_EVENT").
             F_Pos == OldPos,                               /* Considering this functor's position now. */
             LocAttr != f_getattr("Location", F_Schema),    /* Location variable mismatch. */
             NewLocAttr := f_getattr("Location", F_Schema), /* Switch to the new location variable. */
-            TempSchema := f_cons(f_tovar(f_car(Schema)), f_cdr(Schema)),
-	    NewSchema := f_mask(TempSchema, MaskScheme, OldPos).
+            NewSchema := f_cons(f_tovar(f_car(Schema)), f_cdr(Schema)).
 
   
   /***********************************************/
@@ -189,7 +192,8 @@ watchmod(programEventInitialized, "RECV_EVENT").
   g2 ::functor(@A, HeadFid, NewRid, F_Name, null, "SEND", F_Schema, 0U, null) :-
         prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID, MaskScheme),
         F_Name := "intermediateResult_" + f_tostr(NewRid),
-        F_Schema := f_cons(LocAttr, f_cons(f_tovar(f_car(Schema)), f_cdr(Schema))).
+        TempSchema := f_cons(LocAttr, f_cons(f_tovar(f_car(Schema)), f_cdr(Schema))),
+	F_Schema := f_mask(TempSchema, MaskScheme, OldPos).
 
 
   /* Have we reached the end? If so trigger one last break so that we update the logical plan state

@@ -30,6 +30,7 @@ class OL_Lexer;
 namespace compile {
   namespace parse {
 
+
     class Exception : public compile::Exception {
     public:
       Exception(uint line, string msg) 
@@ -52,6 +53,7 @@ namespace compile {
       uint   lineNumber_;
       string message_;
     };
+
   
     /* Top level compile structures */
     class Expression {
@@ -140,6 +142,7 @@ namespace compile {
       { return _variable; }
     
       virtual ValuePtr tuple() const;
+      
     private:
       string    _operName;
       Variable* _variable;
@@ -606,6 +609,8 @@ namespace compile {
 
       DECLARE_PRIVATE_ELEMENT_INITS
     };
+
+
   }
 }
   
