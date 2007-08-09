@@ -163,7 +163,9 @@ namespace compile {
     getMask(const ValuePtr v)
     {
       ListPtr mask = List::mk();
+      //      std::cout<<"Mask for " << v->toString()<<std::endl;
       calculateMaskRecur(mask, v);
+      //      std::cout<<" is " << mask->toString()<<std::endl;
       return mask;
     }
 

@@ -1,15 +1,16 @@
 namespace localization {
   materialize(programEventInitialized, 1, infinity, keys(2,3)).
- /* materialize(joinMaskCalculated, infinity, infinity, keys(2,3)).*/
   materialize(break, infinity, infinity, keys(2,3,5)).
   materialize(rulesComplete, 1, infinity, keys(2)).
   materialize(totalRules, 1, infinity, keys(2)).
 
 
 
-watch(joinMaskCalculated).
-watch(terminate).
+
 /*
+watch(::select).
+
+watch(joinMaskCalculated).
 watchmod(iterator, "RECV_ACTION").
 watchmod(iterator, "SEND_ACTION").
 watch(rulesCompletion).
@@ -100,18 +101,18 @@ watchmod(programEventInitialized, "RECV_EVENT").
 /* Iterate over the assign*/
   iterateAssign iterator1(@A, Pid, Rid, NewOldPos, NewSchema) :-
 	  iterator1(@A, Pid, Rid, OldPos, Cur_Schema),
-          ::assign(@A, Aid, OldRid, A_Var, A_Value, A_Pos),
+          ::assign(@A, Aid, Rid, A_Var, A_Value, A_Pos),
           OldPos == A_Pos, NewOldPos := OldPos - 1, OldPos > 0,
 	  F_Schema := f_merge(f_getMask(A_Var), f_getMask(A_Value)),
-/*	  NewSchema := Cur_Schema.*/
+/*	  NewSchema := Cur_Schema.*/ 
 	  NewSchema := f_combineMask(Cur_Schema, F_Schema).
 
 /* Iterate over the select*/
   iterateSelect iterator1(@A, Pid, Rid, NewOldPos, NewSchema) :-
 	  iterator1(@A, Pid, Rid, OldPos, Cur_Schema),
-	  ::select(@A, Sid, OldRid, Bool, SelectPos, AM), 
+	  ::select(@A, Sid, Rid, Bool, SelectPos, AM), 
 	  SelectPos == OldPos, NewOldPos := OldPos - 1, OldPos > 0,
-	  F_Schema := f_getMask(Bool),
+	  F_Schema := f_getMask(Bool), 
 /*	  NewSchema := Cur_Schema.*/
           NewSchema := f_combineMask(Cur_Schema, F_Schema).
 
