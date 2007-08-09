@@ -1,0 +1,32 @@
+/**
+  * This file is distributed under the terms in the attached LICENSE file.
+  * If you do not find this file, copies can be found by writing to:
+  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+  * Or
+  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+  * Berkeley, CA,  94707. Attention: P2 Group.
+  * 
+  * $Id: pinger.olg 1243 2007-07-16 19:05:00Z maniatis $
+  * 
+  * DESCRIPTION: The pinger, as per the UserGuide.
+  * 
+  * Execute as follows:
+  *
+  * tests/runOverLog -o doc/tutorial/pinger.olg -p 11111 -n 127.0.0.1 
+***/
+materialize(link, infinity, infinity, keys(1,2)).
+
+/*
+r1 ping(@I, I) :- test(@I, J, A), link(@J, I).
+
+r1 ping(@I, I) :- link(@I, J), link(@J, I).
+*/
+
+r1 ping(@I) :- test(@I, J, A), link(@J), A == 4.
+
+/*
+r1 ping(@I, I) :- test(@I, J, A, B), link(@J, X), X := A.
+
+r1 ping(@I, I, B) :- test(@I, J, A, B), link(@J, I).
+*/

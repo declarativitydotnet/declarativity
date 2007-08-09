@@ -1,0 +1,9 @@
+
+r1 says(P, R, 1, U) <table(@Me, A, B, C)> :- test(@Me, A).
+
+r2 says(P, R, 1, U) <table(@Me, A, B, C)> :- says(P, R, 1, U) <table(@Me, A, B, C)>, test(@Me, A).
+
+r3 test(@Me, A) :- says(P, R, 1, U) <table(@Me, A, B, C)>.
+
+
+

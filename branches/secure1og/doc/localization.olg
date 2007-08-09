@@ -5,17 +5,18 @@ namespace localization {
   materialize(rulesComplete, 1, infinity, keys(2)).
   materialize(totalRules, 1, infinity, keys(2)).
 
+
+
+watch(joinMaskCalculated).
+watch(terminate).
 /*
 watchmod(iterator, "RECV_ACTION").
-watch(joinMaskCalculated).
 watchmod(iterator, "SEND_ACTION").
-watch(terminate).
 watch(rulesCompletion).
 watch(rulesComplete).
 watch(totalRules).
 watch(prebreak).
 watchmod(totalRules, "ADD_ACTION").
-
 watchmod(prebreak, "SEND_ACTION").
 watchmod(prebreak, "RECV_ACTION").
 watchmod(iterator1, "SEND_ACTION").
