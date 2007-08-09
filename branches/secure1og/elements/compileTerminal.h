@@ -52,7 +52,7 @@ private:
   void initDefaultStages()
   {
     more = "y";
-    numDefaultStages = 2;
+    numDefaultStages = 1;
     int count = 0;
 
     defaultStages = new StageInformation[numDefaultStages];
@@ -60,11 +60,11 @@ private:
     defaultStages[count].file = "../doc/localization.olg";
     defaultStages[count].prevStageName = "eca";
     defaultStages[count].more = "y";
-    count++;
+    /*    count++;
     defaultStages[count].name = "pinger";
     defaultStages[count].file = "/home/pmahajan/tests/pinger.olg";
     defaultStages[count].prevStageName = "";
-    defaultStages[count].more = "n";
+    defaultStages[count].more = "n";*/
 
   }
 
