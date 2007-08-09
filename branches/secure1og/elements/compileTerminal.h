@@ -21,6 +21,7 @@ struct StageInformation{
   string name;
   string file;
   string prevStageName;
+  string more;
 };
 
 
@@ -51,11 +52,20 @@ private:
   void initDefaultStages()
   {
     more = "y";
-    numDefaultStages = 1;
+    numDefaultStages = 2;
+    int count = 0;
+
     defaultStages = new StageInformation[numDefaultStages];
-    defaultStages[0].name = "localization";
-    defaultStages[0].file = "../doc/localization.olg";
-    defaultStages[0].prevStageName = "eca";
+    defaultStages[count].name = "localization";
+    defaultStages[count].file = "../doc/localization.olg";
+    defaultStages[count].prevStageName = "eca";
+    defaultStages[count].more = "y";
+    count++;
+    defaultStages[count].name = "pinger";
+    defaultStages[count].file = "/home/pmahajan/tests/pinger.olg";
+    defaultStages[count].prevStageName = "";
+    defaultStages[count].more = "n";
+
   }
 
   DECLARE_PRIVATE_ELEMENT_INITS

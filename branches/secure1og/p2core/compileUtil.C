@@ -173,7 +173,7 @@ namespace compile {
       string type = (*t)[0]->toString();
       if(type == LOC || type == VAR)
       {
-	mask->append((*t)[2]);
+	mask->append(Val_Tuple::mk(t));
       }
       else if(type == AGG)
       {
@@ -218,17 +218,12 @@ namespace compile {
            outer != original->end(); outer++) {
 
 	found = false;
-	ValPtrList::const_iterator end = mask->end();
 	count = 0;
 	countEnd = (mask->size() - oldPos + 1u);
 	for(ValPtrList::const_iterator iter = mask->begin();
-	    iter != end, !found, count < countEnd ; iter++) {
+	    iter != mask->end() && !found && count < countEnd ; iter++, count++) {
 	  ListPtr maskPart = Val_List::cast(*iter);
-	  for (ValPtrList::const_iterator inner = maskPart->begin();
-	       inner != maskPart->end(), !found; inner++) {
-	    found |= (position(maskPart, *outer) >= 0);
-	  }
-	  
+	  found |= (position(maskPart, *outer) >= 0);
 	}
 	if (found)
 	{

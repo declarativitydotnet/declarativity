@@ -12,6 +12,7 @@
  */
  
 #include "value.h"
+#include "val_list.h"
 #include "list.h"
 #include <assert.h>
 
@@ -160,11 +161,21 @@ ListPtr List::multiset_intersect(ListPtr l) const
 
 void List::append(ValuePtr val)
 {
+  ListPtr p;
+  if(val->typeCode() == Value::LIST) {
+    p = Val_List::cast(val);
+    assert(p.get() != this);
+  }
   vpl.push_back(val);
 }
 
 void List::prepend(ValuePtr val)
 {
+  ListPtr p;
+  if(val->typeCode() == Value::LIST) {
+    p = Val_List::cast(val);
+    assert(p.get() != this);
+  }
   vpl.push_front(val);
 }
 

@@ -72,7 +72,11 @@ namespace compile {
           head = functor;
         }
       }
-
+      
+      if(!event)
+      {
+	std::cout<<rule->toString();
+      }
       TuplePtr triggerEvent = event->clone();
       ListPtr  headSchema   = Val_List::cast((*head)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
       ListPtr  eventSchema  = Val_List::cast((*event)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);

@@ -281,7 +281,7 @@ Pel_VM::Error Pel_VM::execute_instruction( u_int32_t inst, TuplePtr data)
       error = PE_OPER_UNSUP;
       return error;
     } catch (Value::TypeError te) {
-      TELL_ERROR << "Pel_VM casting failed: '"
+      TELL_ERROR << "Pel_VM casting failed while executing "<< inst<< jump_table[op].opcode <<"'"
                  << te.what()
                  << "\n";
       error = PE_TYPE_CONVERSION;
@@ -612,8 +612,8 @@ DEF_OP(GETMASK) {
 }
 
 DEF_OP(COMBINEMASK) { 
-  ValuePtr second = stackTop(); stackPop();
   ValuePtr first = stackTop(); stackPop();
+  ValuePtr second = stackTop(); stackPop();
   ListPtr list = Val_List::cast(first);
   if (!list) {
     error = PE_BAD_LIST_FIELD;
@@ -625,18 +625,21 @@ DEF_OP(COMBINEMASK) {
 }
 
 DEF_OP(MASK) { 
-  ValuePtr oldPos = stackTop(); stackPop();
-  ValuePtr maskSchema = stackTop(); stackPop();
   ValuePtr tempSchema = stackTop(); stackPop();
+  ValuePtr maskSchema = stackTop(); stackPop();
+  ValuePtr oldPos = stackTop(); stackPop();
   ListPtr maskList = Val_List::cast(maskSchema);
   ListPtr tempList = Val_List::cast(tempSchema);
   if (!maskList || !tempList) {
     error = PE_BAD_LIST_FIELD;
     return;
   }
-
+  //  std::cout<<"original schema: "<<tempList->toString()<<std::endl;
+  //std::cout<<"mask schema: "<<maskList->toString()<<std::endl;
+  //std::cout<<"pos: "<<Val_UInt32::cast(oldPos)<<std::endl;
   ListPtr maskedSchema = 
     compile::namestracker::applyMask(tempList, maskList, Val_UInt32::cast(oldPos));
+  //std::cout<<"masked schema: "<<maskedSchema->toString()<<std::endl;
   stackPush(Val_List::mk(maskedSchema));
 }
 

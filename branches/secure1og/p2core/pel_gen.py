@@ -145,7 +145,7 @@ for op, ar, va, desc in [
   ("initMask",1,   "INITMASK",      "Initialize the mask using a list of fields from the head functor"),
   ("combineMask",2,   "COMBINEMASK",      "Combine a mask (list) with another mask"),
   ("getMask",1,   "GETMASK",      "Calculate the mask from an expression"),
-  ("mask",2,   "MASK",      "Apply the mask onto the scheme to get the masked scheme")
+  ("mask",3,   "MASK",      "Apply the mask onto the scheme to get the masked scheme")
   ]:  emit_opcode(op, ar, va, desc)
 
 for op, ar, va, desc in [

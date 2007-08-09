@@ -142,10 +142,10 @@ CompileStage::initialize()
 
   STAGE_INIT("compile", "parse")
   STAGE_INIT("parse",   "eca")
-  STAGE_INIT("eca",     "rewrite")
+  STAGE_INIT("eca",     "debug")
+  STAGE_INIT("debug",   "rewrite")
   STAGE_INIT("rewrite", "local")
-  STAGE_INIT("local",   "debug")
-  STAGE_INIT("debug",   "planner")
+  STAGE_INIT("local",   "planner")
   STAGE_INIT("planner", "p2dl")
   STAGE_INIT("p2dl",    "installed")
 

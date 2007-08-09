@@ -1,15 +1,34 @@
 namespace localization {
   materialize(programEventInitialized, 1, infinity, keys(2,3)).
-/*  materialize(joinMaskCalculated, 1, infinity, keys(2,3)).*/
+ /* materialize(joinMaskCalculated, infinity, infinity, keys(2,3)).*/
   materialize(break, infinity, infinity, keys(2,3,5)).
   materialize(rulesComplete, 1, infinity, keys(2)).
   materialize(totalRules, 1, infinity, keys(2)).
 
-
-watchmod(programEvent, "RECV_EVENT").
+/*
+watchmod(iterator, "RECV_ACTION").
+watch(joinMaskCalculated).
+watchmod(iterator, "SEND_ACTION").
 watch(terminate).
-watchmod(terminate, "SEND_ACTION").
+watch(rulesCompletion).
+watch(rulesComplete).
+watch(totalRules).
+watch(prebreak).
+watchmod(totalRules, "ADD_ACTION").
+
+watchmod(prebreak, "SEND_ACTION").
+watchmod(prebreak, "RECV_ACTION").
+watchmod(iterator1, "SEND_ACTION").
+watch(break).
+watchmod(break, "ADD_ACTION").
+
 watchmod(countLocalVar, "SEND_ACTION").
+watchmod(iterator1, "RECV_ACTION").
+watchmod(::rule, "ADD_ACTION").
+watch(::rule).
+watchmod(programEvent, "RECV_EVENT").
+
+watchmod(terminate, "SEND_ACTION").
 watchmod(break, "c").
 watchmod(totalRules, "ADD_ACTION").
 watchmod(iterator, "SEND_ACTION").
@@ -19,7 +38,7 @@ watchmod(::rule, "c").
 watchmod(::functor, "c").
 watchmod(programEventInitialized, "SEND_ACTION").
 watchmod(programEventInitialized, "RECV_EVENT").
-
+*/
   
   initialization programEventInitialized(@A, Pid, Rid, HeadFid) :- 
                    programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
@@ -60,35 +79,39 @@ watchmod(programEventInitialized, "RECV_EVENT").
   /* If we have more than 1 location variable within a rule trigger the rewrite. */
   /* Start the iteration process: We iterate over each term in the body, starting with the event,
      of the orginal rule. */
-  init iterator1(@A, Pid, Rid, OldPos, F_Schema) :-
+  init1 iterator1(@A, Pid, Rid, OldPos, F_Schema) :-
           countLocalVar(@A, Pid, Rid, C), C > 1,
           ::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count),
 	  ::functor(@A, HeadFid, Rid, Name, TID, ECA, Attributes, Pos, AM),  /* The orginal head functor. */	
-	  F_Schema = f_initMask(Attributes),
-          OldPos := Term_Count.
+	  F_Schema := f_initMask(Attributes),
+/*	  F_Schema := 1,*/
+          OldPos := Term_Count - 1.
 
 
 /* Iterate over the functor*/
-  iterateFunctor iterator1(@A, Pid, Rid, OldPos-1U, NewSchema) :-
+  iterateFunctor iterator1(@A, Pid, Rid, NewOldPos, NewSchema) :-
 	  iterator1(@A, Pid, Rid, OldPos, Cur_Schema),
           ::functor(@A, F_ID, Rid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM),
-          OldPos == F_Pos, 
+          OldPos == F_Pos, NewOldPos := OldPos - 1, OldPos > 0,
+/*	  NewSchema := Cur_Schema.*/
 	  NewSchema := f_combineMask(Cur_Schema, F_Schema).
 
 /* Iterate over the assign*/
-  iterateAssign iterator1(@A, Pid, Rid, OldPos-1U, NewSchema) :-
+  iterateAssign iterator1(@A, Pid, Rid, NewOldPos, NewSchema) :-
 	  iterator1(@A, Pid, Rid, OldPos, Cur_Schema),
           ::assign(@A, Aid, OldRid, A_Var, A_Value, A_Pos),
-          OldPos == A_Pos, 
-	  F_Schema = f_merge(f_getMask(A_Var), f_getMask(A_Value)),
+          OldPos == A_Pos, NewOldPos := OldPos - 1, OldPos > 0,
+	  F_Schema := f_merge(f_getMask(A_Var), f_getMask(A_Value)),
+/*	  NewSchema := Cur_Schema.*/
 	  NewSchema := f_combineMask(Cur_Schema, F_Schema).
 
 /* Iterate over the select*/
-  iterateSelect iterator1(@A, Pid, Rid, OldPos-1U, NewSchema) :-
+  iterateSelect iterator1(@A, Pid, Rid, NewOldPos, NewSchema) :-
 	  iterator1(@A, Pid, Rid, OldPos, Cur_Schema),
 	  ::select(@A, Sid, OldRid, Bool, SelectPos, AM), 
-	  SelectPos == OldPos, 
-	  F_Schema = f_getMask(Bool),
+	  SelectPos == OldPos, NewOldPos := OldPos - 1, OldPos > 0,
+	  F_Schema := f_getMask(Bool),
+/*	  NewSchema := Cur_Schema.*/
           NewSchema := f_combineMask(Cur_Schema, F_Schema).
 
   
@@ -171,7 +194,7 @@ watchmod(programEventInitialized, "RECV_EVENT").
   /* Next functor's location attribute does not match previous functor's location attribute. 
      Must switch to a new rule id group with a new location attribute and a new position 
      within the new rule group. The break event will signal such an occurance. */
-  triggerBreak prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, NewLocAttr, NewSchema, TableName, ID) :-
+  triggerBreak prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, NewLocAttr, NewSchema, TableName, ID, MaskScheme) :-
             iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID, MaskScheme),
             ::functor(@A, FID, OldRid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM),
             F_Pos == OldPos,                               /* Considering this functor's position now. */

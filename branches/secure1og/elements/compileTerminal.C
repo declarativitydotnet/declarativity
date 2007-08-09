@@ -110,7 +110,7 @@ CompileTerminal::terminal()
     filename = defaultStages[counter].file;
     name = defaultStages[counter].name;
     rewrite = defaultStages[counter].prevStageName;
-    more = "y";
+    more = defaultStages[counter].more;
   }
   counter++;
 

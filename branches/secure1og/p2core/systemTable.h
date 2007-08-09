@@ -233,5 +233,5 @@ FUNCTIONDEF("f_filter",       2, "filter")
 FUNCTIONDEF("f_initMask",     1, "initMask")
 FUNCTIONDEF("f_combineMask",  2, "combineMask")
 FUNCTIONDEF("f_getMask",    1, "getMask")
-FUNCTIONDEF("f_mask",         2, "mask")
+FUNCTIONDEF("f_mask",         3, "mask")
 #undef FUNCTIONDEF
