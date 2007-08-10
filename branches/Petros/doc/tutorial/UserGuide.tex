@@ -1214,6 +1214,15 @@ offers a bit more functionality that the C++ standard.  The
 our \texttt{pingHandler}, however always setting its first parameter to
 the dataflow, and leaving its next parameter unbound.
 
+\begin{itemize}
+\item[$\Longrightarrow$] It is important to point out that the current
+  system only supports subscriptions to non-materialized tuples. You
+  cannot subscribe to a materialized table tuple or to table updates,
+  for example.  This is in feature wish list and will be coming in a
+  release soon.
+\end{itemize}
+
+
 That's it. The full program can be found in
 \url{tutorial/c++/ponger.C}. When executed on the same hostname and port
 number as \url{tutorial/olg/ponger.olg} had been in
