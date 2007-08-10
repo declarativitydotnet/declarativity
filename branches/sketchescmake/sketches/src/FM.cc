@@ -469,9 +469,9 @@ Sketches::FM *Sketches::FM::unmarshal(boost::archive::text_iarchive *x)
 int Sketches::FM::compareTo(Sketches::FM *f)
 {
   if(m_type != f->m_type)
-    {
-      return (int) (m_type - f->m_type);
-    }
+  {
+    return (int) (m_type - f->m_type);
+  }
 
   int my_rows = (int) m_bitmap.size();
   int my_cols = (int) (m_bitmap.begin())->size();
@@ -480,25 +480,25 @@ int Sketches::FM::compareTo(Sketches::FM *f)
   int f_cols = (int) ((f->m_bitmap).begin())->size();
   
   if(my_rows != f_rows)
-    {
-      return (int) (my_rows - f_rows);
-    }
+  {
+    return (int) (my_rows - f_rows);
+  }
 
   if(my_cols != f_cols)
-    {
-      return (int) (my_cols - f_cols);
-    }
+  {
+    return (int) (my_cols - f_cols);
+  }
 
   for(int i = 0; i < my_rows; i++)
-    {
-      for(int j = 0; j < my_cols; j++)
-	{
-	  if(m_bitmap[i][j] != f->m_bitmap[i][j])
+  {
+    for(int j = 0; j < my_cols; j++)
+	  {
+	    if(m_bitmap[i][j] != f->m_bitmap[i][j])
 	    {
 	      return -1;
 	    }
-	}
-    }
+	  }
+  }
   return 0;
 }
 

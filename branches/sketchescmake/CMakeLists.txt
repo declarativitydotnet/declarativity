@@ -4,7 +4,7 @@ SUBDIRS(eventLoop p2core elements stages net overlog planner debugger unitTests 
 
 # Main decisions
 SET(BUILD_SHARED_LIBS ON)
-#SET(CMAKE_CXX_FLAGS "-dD -E")
+SET(CMAKE_CXX_FLAGS "-g -O0")
 
 # find our custom CMake modules
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${P2_SOURCE_DIR}/cmake)
