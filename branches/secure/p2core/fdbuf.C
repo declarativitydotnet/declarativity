@@ -15,7 +15,6 @@
  */
 
 #include "fdbuf.h"
-
 #include <cerrno>
 #include <unistd.h>
 #include <sys/types.h>
@@ -34,6 +33,7 @@ Fdbuf::Fdbuf(int init_capacity, bool is_safe)
     safe(is_safe)
 {
 }
+
 
 // 
 // Destructor
@@ -125,6 +125,35 @@ ssize_t Fdbuf::sendto(int sd, ssize_t max_write, int flags,
 			     flags, to, tolen));
 }
 
+/**
+ larger buffer is bigger
+ **/
+int Fdbuf::compareTo(FdbufPtr f) const{
+  if(f == NULL)
+  {
+    if(len == 0){
+      return 0;
+    }
+    else{
+      return 1;
+    }
+  }
+  else{
+    if(len < f->length()){
+      return -1;
+    }
+    else if(len > f->length()){
+      return 1;
+    }
+    else{
+      //compare buffers:
+      char *me = raw_inline();
+      char *other = f->raw_inline();
+      return memcmp( me, other, len );
+    }
+  }
+  
+}
 //
 // Extracting values
 //
@@ -136,6 +165,7 @@ Fdbuf::pop_uint32()
     v = *((u_int32_t *)(data + start));
     len -= sizeof(u_int32_t);
     start += sizeof(u_int32_t);
+
   }
   return v;
 }
@@ -208,6 +238,7 @@ void Fdbuf::ensure(uint32_t new_capacity)
   if (capacity - start < new_capacity) {
     memcpy(data, data + start, len);
   }
+
   assert(capacity >= start + len);
 }
 

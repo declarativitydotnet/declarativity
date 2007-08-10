@@ -185,6 +185,7 @@ public:
                  MODULUS,
                  BIT_XOR,
                  BIT_AND,
+		 APPEND,
                  BIT_OR,
                  BIT_NOT,
                  NOP};

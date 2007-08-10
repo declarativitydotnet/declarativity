@@ -24,6 +24,8 @@
 #include <sstream>
 #include <errno.h>
 #include <sys/socket.h>
+#include <rpc/rpc.h>
+#include <rpc/xdr.h>
 
 /*
   A brief implementation discussion is in order.  Unlike (say) DM's
@@ -37,6 +39,10 @@
   std::basic_string, and rely on the latter's implementation.  With a
   good string implementation, we should minimise copy in and out. 
 */
+
+class Fdbuf;
+
+typedef boost::shared_ptr< Fdbuf > FdbufPtr;
 
 class Fdbuf {
 
@@ -82,6 +88,7 @@ public:
   };
 
   Fdbuf( int init_capacity = BUF_DFLT_CAP, bool is_safe = false);
+
   ~Fdbuf();
   
   //
@@ -151,6 +158,7 @@ public:
   Fdbuf& push_bytes(const char *buf, uint32_t len);
   uint32_t pop_to_fdbuf(Fdbuf &fb, uint32_t len);
 
+  int compareTo(FdbufPtr f) const;
   //
   // ACCESS FUNCTIONS: those that aren't quite INPUT or OUTPUT. 
   //
@@ -180,6 +188,8 @@ public:
   // by xdr_inline, among other things. 
   char *raw_inline(uint32_t sz) { ensure(sz); return data+start; };
 
+  char *raw_inline() const{ return data+start; };
+
   // Make sure the buffer has sufficient capacity
   void ensure(uint32_t new_capacity);
   void ensure_additional(uint32_t extra) { ensure(extra + len + start); };
@@ -192,6 +202,5 @@ public:
   void align_write() { len = align(len); };
 };
 
-typedef boost::shared_ptr< Fdbuf > FdbufPtr;
 
 #endif /* __FDBUF_H_ */

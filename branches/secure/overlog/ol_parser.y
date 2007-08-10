@@ -33,6 +33,7 @@
 %left OL_BITXOR
 %left OL_BITAND
 %left OL_BITNOT
+%left OL_APPEND
 %left OL_EQ OL_NEQ
 %nonassoc OL_GT OL_GTE OL_LT OL_LTE
 %left OL_LSHIFT OL_RSHIFT
@@ -354,6 +355,7 @@ math_oper:	  OL_LSHIFT  { $$ = Parse_Math::LSHIFT; }
 		| OL_BITXOR  { $$ = Parse_Math::BIT_XOR; }
 		| OL_BITAND  { $$ = Parse_Math::BIT_AND; }
 		| OL_BITOR   { $$ = Parse_Math::BIT_OR; }
+		| OL_APPEND   { $$ = Parse_Math::APPEND; }
 		| OL_BITNOT  { $$ = Parse_Math::BIT_NOT; }
 		;
 

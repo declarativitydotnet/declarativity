@@ -143,6 +143,7 @@ string pelMath(PlanContext* pc, Parse_Math *expr)
   case Parse_Math::BIT_OR:  pel << "| "; break;
   case Parse_Math::BIT_XOR: pel << "^ "; break;
   case Parse_Math::BIT_NOT: pel << "~ "; break;
+  case Parse_Math::APPEND: pel << "||| "; break;
   default: error(pc, "Pel Math error" + expr->toString());
   }
 

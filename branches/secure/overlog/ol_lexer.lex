@@ -147,6 +147,8 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>"&&" { return OL_AND; }
 <INITIAL>"||" { return OL_OR; } 
 
+<INITIAL>"|||" { return OL_APPEND; } 
+
 <INITIAL>":=" { return OL_ASSIGN; }
 <INITIAL>"." { return OL_DOT; }
 <INITIAL>":-" { return OL_IF; }

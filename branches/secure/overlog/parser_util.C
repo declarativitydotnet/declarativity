@@ -236,6 +236,7 @@ string Parse_Math::toString() {
     case BIT_OR:  m << "|"; break;
     case BIT_XOR: m << "^"; break;
     case BIT_NOT: m << "~"; break;
+    case APPEND: m << "|||"; break;
     default: assert(0);
   }
   if (id) m << "id ";

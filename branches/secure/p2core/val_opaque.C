@@ -56,6 +56,7 @@ ValuePtr Val_Opaque::xdr_unmarshal( XDR *x )
   return mk(fb);
 }
 
+
 string Val_Opaque::toConfString() const
 {
   TELL_WARN << "Cannot get conf string for an OPAQUE value\n";
@@ -91,10 +92,12 @@ int Val_Opaque::compareTo(ValuePtr other) const
       return 1;
     }
   }
-  TELL_WARN << "Comparing opaques. Not implemented yet!!!\n";
-  exit(-1);
+  //  TELL_WARN << "Comparing opaques. Not implemented yet!!!\n";
+  FdbufPtr f = static_cast<Val_Opaque *>(other.get())->b;
+  return b->compareTo(f);
+  //  exit(-1);
   //  return cmp(b, cast(other));
-  return -1;
+  //  return -1;
 }
 
 /* 
