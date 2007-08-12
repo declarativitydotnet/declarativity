@@ -1,6 +1,6 @@
 Project(P2)
 
-SUBDIRS(eventLoop p2core elements stages net overlog planner debugger unitTests tests python sketches tools)
+SUBDIRS(eventLoop p2core elements stages net overlog planner debugger unitTests tests python sketches)
 
 # Main decisions
 SET(BUILD_SHARED_LIBS ON)
