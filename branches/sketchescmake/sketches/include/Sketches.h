@@ -118,6 +118,8 @@ namespace Sketches
       virtual size_t getSize() const;
       virtual void getData(byte** data, size_t& length) const;
 
+      virtual void copy(Sketches::FM *fm);
+
     private:
       uint32_t pickOffset(Tools::Random& r) const;
       uint32_t fillLength(uint32_t val) const;
@@ -196,6 +198,11 @@ namespace Sketches
       virtual size_t getNumberOfHashes() const;
 
       virtual size_t getSize() const;
+
+      // compareTo for comparison at PEL level.
+      virtual int compareTo(CountMinFM *c);
+
+      virtual std::string toString() const;
 
     protected:
       std::vector<FM> m_filter;

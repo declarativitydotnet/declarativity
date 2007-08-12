@@ -126,6 +126,7 @@ public:
     LIST,
     VECTOR,
     MATRIX,
+    SKETCH,
     /* NEW TYPE DEFINITIONS GO ABOVE HERE */    
     TYPES
   };

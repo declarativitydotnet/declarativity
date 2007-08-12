@@ -167,12 +167,7 @@ size_t Sketches::CountMinFM::getSize() const
 
 void Sketches::CountMinFM::marshal(boost::archive::text_oarchive *x) const
 {
-  uint32_t sl = m_id.length() + 1;
-  const char *st = m_id.c_str(); 
-  
-  *x & sl;
-  x->save_binary(const_cast<char *>(st), sl);
-
+  *x & m_id;
   *x & m_counters;
   *x & m_hashes;
 
@@ -180,56 +175,26 @@ void Sketches::CountMinFM::marshal(boost::archive::text_oarchive *x) const
   
   *x & numFilters;
 
-  for ( std::vector<FM>::const_iterator vectIter = m_filter.begin(); 
-	vectIter != m_filter.end();
-	vectIter++)
+  for (int i = 0; i < m_filter.size(); i++)
   {
-    vectIter->marshal(x);
+    m_filter[i].marshal(x);
   }
 
-  int32_t numHashes;
+  int32_t numHashes = m_hash.size();
 
   *x & numHashes;
 
-  // for (std::vector<Tools::UniversalHash>::const_iterator hashIter = m_hash.begin();
-  //      hashIter != m_hash.end(); hashIter++)
-  // {
-  //     Tools::UniversalHash *hash = const_cast<Tools::UniversalHash *>
-  //     hashIter->smoo();
-  //     
-  // }
-
   for (int i = 0; i < m_hash.size(); i++) {
-    const_cast<Tools::UniversalHash *>(&m_hash[i])->getSize();
+    m_hash[i].marshal(x);
   }
 }
 
 Sketches::CountMinFM *Sketches::CountMinFM::unmarshal(
     boost::archive::text_iarchive *x)
 {
-  int32_t sl;
-  *x & sl;
-  // Now fetch the string itself
-  static const int STATIC_STRING_BUFFER = 10000;
+  std::string sketchId;
 
-  std::string *sketchId;
-
-  if (sl + 1 <= STATIC_STRING_BUFFER) {
-    // We can use the static buffer
-    static char stringBuffer[STATIC_STRING_BUFFER];
-    static char* sb = &(stringBuffer[0]);
-    x->load_binary(sb, sl + 1);
-    sb[sl] = 0;       // make sure it's null terminated
-    sketchId = new std::string(sb, sl);
-  }  else {
-    // We can't use the static buffer. We must allocate a one-shot
-    // buffer
-    char * localBuffer = new char[sl + 1];
-    x->load_binary(localBuffer, sl);
-    localBuffer[sl] = 0;
-    sketchId = new std::string(localBuffer, sl);
-    delete localBuffer;
-  }
+  *x & sketchId;
 
   size_t counters;
   size_t hashes;
@@ -240,7 +205,7 @@ Sketches::CountMinFM *Sketches::CountMinFM::unmarshal(
   std::map<std::string, uint64_t> emptyMap;
 
   Sketches::CountMinFM *sketch = new Sketches::CountMinFM(
-      *sketchId, emptyMap, counters, hashes, 32, 64, HT_SHA1);
+      sketchId, emptyMap, counters, hashes, 32, 64, HT_UNIVERSAL);
   
   int32_t numFilters;
   
@@ -249,7 +214,9 @@ Sketches::CountMinFM *Sketches::CountMinFM::unmarshal(
   for(int i = 0; i < numFilters; i++) {
     Sketches::FM *fmPointer = Sketches::FM::unmarshal(x);
 
-    sketch->m_filter[i] = *fmPointer;
+    sketch->m_filter[i].copy(fmPointer);
+    
+    delete fmPointer;
   }
 
   int32_t numHashes;
@@ -263,6 +230,11 @@ Sketches::CountMinFM *Sketches::CountMinFM::unmarshal(
   }
   
   return sketch;
+}
+
+std::string Sketches::CountMinFM::toString() const
+{
+  return m_id;
 }
 
 void Sketches::CountMinFM::initialize(
@@ -342,6 +314,36 @@ void Sketches::CountMinFM::initialize(
         m_filter[i * m_counters + h].insert(m_id, (*it).second);
       }
       delete[] data;
+    }
+  }
+}
+
+int Sketches::CountMinFM::compareTo(Sketches::CountMinFM *c)
+{
+  if(m_filter.size() != c->m_filter.size())
+  {
+    return m_filter.size() - c->m_filter.size();
+  }
+  
+  for(int i = 0; i < m_filter.size(); i++)
+  {
+    int filterCompare = (m_filter[i]).compareTo(&c->m_filter[i]);
+    if(filterCompare != 0)
+    {
+      return filterCompare;
+    }
+  }
+  
+  if(m_hash.size() != c->m_hash.size())
+  {
+    return m_hash.size() - c->m_hash.size();
+  }
+  
+  for(int i = 0; i < m_hash.size(); i++)
+  {
+    if(!(m_hash[i] == c->m_hash[i]))
+    {
+      return -1;
     }
   }
 }

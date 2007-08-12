@@ -36,7 +36,8 @@ ADD_LIBRARY(p2core
 			list.C 
 			val_list.C 
 			val_vector.C 
-			val_matrix.C 
+			val_matrix.C
+			val_sketch.C
 			stage.C 
 			stageRegistry.C 
 			CSVlex.C)
@@ -64,6 +65,6 @@ SET_SOURCE_FILES_PROPERTIES(${P2_BINARY_DIR}/p2core/pel_opcode_decls.gen.h ${P2_
 FIND_PACKAGE(FLEX)
 FLEX_TARGET(PelLexer ${P2_SOURCE_DIR}/p2core/pel_lexer.lex ${P2_BINARY_DIR}/p2core/pel_lexer.C)
 
-TARGET_LINK_LIBRARIES(p2core p2eventLoop boost_regex boost_date_time crypto ssl) 
+TARGET_LINK_LIBRARIES(p2core p2eventLoop p2sketches boost_regex boost_date_time crypto ssl) 
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})

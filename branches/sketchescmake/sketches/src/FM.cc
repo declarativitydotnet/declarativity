@@ -421,17 +421,17 @@ size_t Sketches::FM::getUncompressedSize() const
 
 void Sketches::FM::marshal(boost::archive::text_oarchive *x) const
 {
-  size_t numBits = m_bitmap.size();
-  size_t numBitmaps = (m_bitmap.begin())->size();
+  size_t numBitmaps = m_bitmap.size();
+  size_t numBits = (m_bitmap.begin())->size();
   int type = (int) m_type;
 
   *x & numBits;
   *x & numBitmaps;
   *x & type;
 
-  for ( size_t i = 0; i < numBits; i ++ )
+  for ( size_t i = 0; i < numBitmaps; i ++ )
   {
-    for ( size_t j = 0; j < numBitmaps; j++)
+    for ( size_t j = 0; j < numBits; j++)
     {
       bool bit = m_bitmap[i][j];
       *x & bit;
@@ -742,3 +742,13 @@ std::ostream& Sketches::operator<<(std::ostream& os, const Sketches::FM& s)
   return os;
 }
 
+void Sketches::FM::copy(Sketches::FM *fm)
+{
+  for(int i = 0; i < fm->m_bitmap.size(); i++)
+  {
+    for(int j = 0; j < fm->m_bitmap[0].size(); j++)
+    {
+      m_bitmap[i][j] = fm->m_bitmap[i][j];
+    }
+  }
+}
