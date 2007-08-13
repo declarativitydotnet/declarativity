@@ -47,7 +47,8 @@ protected:
       reference counter (each of which is interpreted by the sublass of
       CommonTable).  It is used to place tuples in all indices. */
   struct Entry {
-    /** Which tuple am I wrapping? */
+    /** Which tuple am I wrapping? If the tuple pointer is 0, then the
+        enclosed tuple has been already removed before. */
     TuplePtr tuple;
     
     
@@ -749,7 +750,7 @@ protected:
       a tuple to be removed from the table and therefore always calls
       any deletion listeners. */
   void
-  removeTuple(PrimaryIndex::iterator primaryPosition);
+  removeTupleOfEntry(Entry* theEntry);
 
 
   /** Flush an entry with an existing tuple from the table and all

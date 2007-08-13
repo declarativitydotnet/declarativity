@@ -157,14 +157,17 @@ public:
       different field counts, compare their field counts instead.  */
   int compareTo(TuplePtr) const;
 
+
   /** The empty untagged tuple. */
-  static TuplePtr EMPTY;
+  static TuplePtr
+  EMPTY();
+  
 
   /** The empty static initializer class */
   class EmptyInitializer {
   public:
     EmptyInitializer() {
-      EMPTY->freeze();
+      EMPTY()->freeze();
     }
   };
 
