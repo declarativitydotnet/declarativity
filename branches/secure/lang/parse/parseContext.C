@@ -64,7 +64,7 @@ namespace compile {
     Aggregation::toString() const {
       ostringstream a;
       a << _operName << "< ";
-      a << _variable->toString() << " >";
+      a << (_variable != NULL?_variable->toString():"*") << " >";
       return a.str();
     }
     
@@ -829,13 +829,14 @@ namespace compile {
 
       _head = dynamic_cast<Functor*>(lhs);
       _body = rhs;
+      //      canonicalizeRule();
 
     }
 
     void Rule::initializeRule(StatementList *s)
     {
       int newVariable = 1;
-      for (TermList::iterator iter = _body->begin(); 
+       for (TermList::iterator iter = _body->begin(); 
            iter != _body->end(); iter++) {
 	Says *s;
 	if ((s = dynamic_cast<Says*>(*iter)) != NULL)
@@ -896,7 +897,7 @@ namespace compile {
 
       }
 
-      //      canonicalizeRule();
+//      canonicalizeRule();
     }
 
     void Rule::canonicalizeRule() 
@@ -1307,15 +1308,19 @@ namespace compile {
     }
     
     void 
-    Context::program(StatementList *s) 
+    Context::program(StatementList *s, bool parserCall) 
     {
-      assert(_statements == NULL);
+      assert(_statements == NULL || !parserCall);
 
-      _statements = s;
+      if(parserCall)
+      {
+	_statements = s;
+      }
+
       Rule* r;
-
-      for (StatementList::iterator iter = _statements->begin();
-             iter != _statements->end(); iter++) { 
+      Namespace *nmSpc;
+      for (StatementList::iterator iter = s->begin();
+             iter != s->end(); iter++) { 
 
 	if ((r = dynamic_cast<Rule*>(*iter)) != NULL) 
 	{
@@ -1325,9 +1330,18 @@ namespace compile {
 	    std::cout<<std::endl<<r->toString();
 	  }
 	  r->canonicalizeRule();
+	  
+	}
+	else if((nmSpc = dynamic_cast<Namespace*>(*iter)) != NULL) 
+	{
+	  if(nmSpc->statements() != NULL)
+	    program(nmSpc->statements(), false);
+	}
+	else
+	{
+	  // do nothing
 	}
       }
-      
     }
 
     TuplePtr 

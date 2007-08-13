@@ -677,6 +677,10 @@ namespace compile {
 	Namespace *v = new Namespace(*this);
 	return v;
       }
+
+      virtual StatementList* statements(){
+	return _statements;
+      }
  
       virtual string toString() const;
     
@@ -880,7 +884,7 @@ namespace compile {
       /******************************************************************
        * Interface exported to bison */
   
-      void program(StatementList *statements);
+      void program(StatementList *statements, bool parserCall = true);
 
       void error(string msg);
     
