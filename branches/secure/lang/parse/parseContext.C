@@ -16,6 +16,7 @@
 #include <fstream>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <list>
 #include "parseContext.h"
 #include "plumber.h"
 #include "ol_lexer.h"
@@ -410,6 +411,8 @@ namespace compile {
       return iter;
     }
     
+    // careful with its use as it doesn't free the memory of the replaced variable. 
+    // caller should take care of it
     void Functor::replace(ExpressionList::iterator i, 
                           Expression *e) {
       ExpressionList::iterator next = _args->erase(i);
@@ -421,6 +424,7 @@ namespace compile {
       
       if(l->location() && (var = dynamic_cast<Variable*>(_args->at(0))) != NULL && var->location()) {
 	replace(_args->begin(), l);
+	delete var;
       }
       else{
 	throw compile::Exception("Location specifier is not the first field in functor" + toString() + 
@@ -829,34 +833,58 @@ namespace compile {
 
       _head = dynamic_cast<Functor*>(lhs);
       _body = rhs;
-      //      canonicalizeRule();
 
     }
 
     void Rule::initializeRule(StatementList *s)
     {
       int newVariable = 1;
-       for (TermList::iterator iter = _body->begin(); 
+      Says *sh;
+      std::list<TermList> newRuleComparators;
+      sh = dynamic_cast<Says*>(_head);
+
+      //      TermList *_bodyClone = NULL;
+
+      for (TermList::iterator iter = _body->begin(); 
            iter != _body->end(); iter++) {
 	Says *s;
 	if ((s = dynamic_cast<Says*>(*iter)) != NULL)
 	{
+	  //  if(_bodyClone == NULL){
+	  //	  _bodyClone = new TermList(_body->begin, iter);
+	  //}
+
+	  if(sh != NULL && (s->name().compare(sh->name())==0))
+	  {
+	    //	    TermList *comparisonTerms = 
+	  }
 	  TermList *newTerms = Says::normalizeVerify(s, newVariable);
 	  if(newTerms != NULL){
 
 	    _body->erase(iter);
-	    _body->push_back(new Functor(s));
+	    // make a deep copy even though we can live with shallow one 
+	    // to ensure that the following delete can be executed safely
+	    _body->push_back(new Functor(*s));
+	    delete s;
 
 	    for (TermList::iterator it = newTerms->begin(); 
 		 it != newTerms->end(); it++) {
+	      //      _bodyClone->push_back(*it);
 	      _body->push_back(*it);
 	    }
+	    delete newTerms;
 	  }
+	  
+	  
 	}
       }
 
-      Says *sh;
-      if((sh = dynamic_cast<Says*>(_head)) != NULL)
+      //      if(_bodyClone != NULL){
+      //delete _body;
+      //_body = _bodyClone;
+      //}
+      
+      if(sh != NULL)
       {
 	// copy this rule into a new rule and insert the new rule into the list as well 
 	// as modify the existing rule
@@ -874,6 +902,7 @@ namespace compile {
 	       it1 != newTermsGen->end(); it1++) {
 	    r->_body->push_back(*it1);
 	  }
+	  delete newTermsGen;
 	}
 	r->resetName();
 	s->push_back(r);
@@ -889,6 +918,7 @@ namespace compile {
 	       it != newTermsUse->end(); it++) {
 	    _body->push_back(*it);
 	  }
+	  delete newTermsUse;
 	}
 
 	Functor* headCopy =  new Functor(*sh);

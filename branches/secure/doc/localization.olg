@@ -8,10 +8,10 @@ namespace localization {
 watchmod(programEvent, "RECV_EVENT").
 watch(terminate).
 watchmod(terminate, "SEND_ACTION").
-watchmod(countLocalVar, "SEND_ACTION").*/
-watchmod(break, "c").
+watchmod(countLocalVar, "SEND_ACTION").
 watchmod(break, "ADD_ACTION").
-
+watchmod(iterator, "RECV_EVENT").
+*/
 /*
 watchmod(iterator, "RECV_EVENT").
 watchmod(iterator, "SEND_ACTION").
