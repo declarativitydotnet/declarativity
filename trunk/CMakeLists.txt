@@ -60,10 +60,11 @@ SET(CRYPTOLIBS ${OPENSSL_LIBRARIES})
 
 # set include path for this and all subdirs
 INCLUDE_DIRECTORIES(
-				    ${CMAKE_CURRENT_SOURCE_DIR} 
-					${CMAKE_CURRENT_SOURCE_DIR}/overlog	
+		    ${CMAKE_CURRENT_SOURCE_DIR} 
+		    ${CMAKE_CURRENT_BINARY_DIR} 
+		    ${CMAKE_CURRENT_SOURCE_DIR}/overlog	
                     ${CMAKE_CURRENT_SOURCE_DIR}/p2core 
-		    		${CMAKE_CURRENT_SOURCE_DIR}/aggregates
+		    ${CMAKE_CURRENT_SOURCE_DIR}/aggregates
                     ${CMAKE_CURRENT_SOURCE_DIR}/elements
                     ${CMAKE_CURRENT_SOURCE_DIR}/stages
                     ${CMAKE_CURRENT_SOURCE_DIR}/net
@@ -81,9 +82,9 @@ INCLUDE_DIRECTORIES(
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/rewrite
                     ${CMAKE_CURRENT_SOURCE_DIR}/functions
                     ${CMAKE_CURRENT_SOURCE_DIR}/debugger
-		    		${Boost_INCLUDE_DIRS} 
-					${PYTHON_INCLUDE_PATH} 
-					/usr/include)
+		    ${Boost_INCLUDE_DIRS} 
+		    ${PYTHON_INCLUDE_PATH} 
+		    /usr/include)
 
 # set linker path for this and all subdirs
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS} 
@@ -124,6 +125,8 @@ SET(COMMON_LIBRARIES p2core
 					 p2rewrite
 					 p2debug
 					 p2planner 
+					 p2planner2 
+					 p2dl
 	   				 )
 
 # uncomment the following line to get CMake variables to print to screen

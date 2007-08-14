@@ -32,6 +32,7 @@ ADD_LIBRARY(p2elements
             duplicate.C 
             duplicateConservative.C 
             elementLoader.C
+	    elementRegistry.C
             hexdump.C 
             identity.C
             insert.C 

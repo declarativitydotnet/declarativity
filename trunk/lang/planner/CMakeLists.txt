@@ -10,7 +10,7 @@
 #
 #
 
-ADD_LIBRARY(p2planner
+ADD_LIBRARY(p2planner2
              plannerContext.C
 )
 
