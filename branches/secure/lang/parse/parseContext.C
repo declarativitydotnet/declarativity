@@ -836,6 +836,52 @@ namespace compile {
 
     }
 
+    StatementList* Table::generateMaterialize()
+    {
+      StatementList *mat = new StatementList();
+      ValuePtr minusOne = Val_Int32::mk(-1);
+      ValuePtr one = Val_Int32::mk(1);
+      ValuePtr two = Val_Int32::mk(2);
+      ValuePtr three = Val_Int32::mk(3);
+      ValuePtr four = Val_Int32::mk(4);
+      ValuePtr five = Val_Int32::mk(5);
+      
+      //generate materialize for encHint
+      Value *encHintName = new Value(Val_Str::mk(Says::encHint));
+      ExpressionList *t = new ExpressionList();
+      t->push_back(new compile::parse::Value(one)); 
+      t->push_back(new compile::parse::Value(two)); 
+      t->push_back(new compile::parse::Value(three)); 
+      t->push_back(new compile::parse::Value(four)); 
+      t->push_back(new compile::parse::Value(five));
+      
+      Table *encHint = new Table(encHintName, new compile::parse::Value(minusOne), new compile::parse::Value(minusOne), t);
+      
+      mat->push_back(encHint);
+
+      //generate materialize for verTable
+      Value *verTableName = new Value(Val_Str::mk(Says::verTable));
+      t = new ExpressionList();
+      t->push_back(new compile::parse::Value(one)); 
+      t->push_back(new compile::parse::Value(two)); 
+      
+      Table *verTable = new Table(verTableName, new compile::parse::Value(minusOne), new compile::parse::Value(minusOne), t);
+      
+      mat->push_back(verTable);
+
+      //generate materialize for genTable
+      Value *genTableName = new Value(Val_Str::mk(Says::genTable));
+      t = new ExpressionList();
+      t->push_back(new compile::parse::Value(one)); 
+      t->push_back(new compile::parse::Value(two)); 
+      
+      Table *genTable = new Table(genTableName, new compile::parse::Value(minusOne), new compile::parse::Value(minusOne), t);
+      
+      mat->push_back(genTable);
+
+      return mat;
+    }
+
     TermList* Functor::generateEqTerms(Functor* s){
       assert(name().compare(s->name()) == 0);
       TermList *newTerms = new TermList();
@@ -1363,15 +1409,23 @@ namespace compile {
     Context::program(StatementList *s, bool parserCall) 
     {
       assert(_statements == NULL || !parserCall);
-
+      static bool materialized = false;
       if(parserCall)
       {
 	_statements = s;
+	if(!materialized){
+	  StatementList *mat = Table::generateMaterialize();
+	  for (StatementList::iterator iter = mat->begin();
+	       iter != mat->end(); iter++) { 
+	    s->push_back(*iter);
+	  }
+	  delete mat;
+	  materialized = true;
+	}
       }
 
       Rule* r;
       Namespace *nmSpc;
-      //      std::cout<<"old size"<<s->size()<<std::endl;
       for (StatementList::iterator iter = s->begin();
              iter != s->end(); iter++) { 
 
@@ -1380,7 +1434,7 @@ namespace compile {
 	  r->initializeRule(s);
 	  if(printOverLog)
 	  {
-	    std::cout<<std::endl<<r->toString();
+	    std::cout<<r->toString()<<std::endl;
 	  }
 	  r->canonicalizeRule();
 	  
@@ -1396,7 +1450,6 @@ namespace compile {
 	}
 
       }
-      //      std::cout<<"old size"<<s->size()<<std::endl;
     }
 
     TuplePtr 

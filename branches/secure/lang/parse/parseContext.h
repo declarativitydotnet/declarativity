@@ -805,6 +805,7 @@ namespace compile {
       virtual Table2::Key primaryKeys() const
       { return _keys; }
     
+      static StatementList* generateMaterialize();
     private:
       string                           _name;
       boost::posix_time::time_duration _lifetime;
