@@ -65,6 +65,10 @@ namespace compile {
   
       virtual const ValuePtr value() const
       { throw Exception(0, "Expression does not have a value."); }
+
+      virtual bool isEqual(Expression *e) const {
+	return false;
+      }
   
       /** Creates, but does not materialize, a tuple representing the expression.
        *  The identifier of any variables that the expression depends on will 
@@ -117,6 +121,16 @@ namespace compile {
       { return _value->toString(); };
   
       virtual ValuePtr tuple() const;
+
+      virtual bool isEqual(Expression *e) const {
+	Value* v = dynamic_cast<Value*>(e);
+	if(v == NULL){
+	  return false;
+	}
+	else{
+	  return _value->compareTo(v->_value) == 0;
+	}
+      }
   
       virtual const ValuePtr value() const { return _value; }
     private:
@@ -149,7 +163,17 @@ namespace compile {
       { return (_location ? "@" : "") + _value->toString(); };
     
       virtual bool location() const { return _location; }
-    
+
+      virtual bool isEqual(Expression *e) const {
+	Variable* v = dynamic_cast<Variable*>(e);
+	if(v == NULL){
+	  return false;
+	}
+	else{
+	  return _value->compareTo(v->_value) == 0;
+	}
+      }
+
       virtual ValuePtr tuple() const;
     private:
       ValuePtr _value;
@@ -469,6 +493,8 @@ namespace compile {
     
       virtual ExpressionList::iterator
       find(const Expression *e) const;
+
+      TermList* generateEqTerms(Functor* s);
     
       virtual void replace(ExpressionList::iterator i, 
                            Expression *e);
@@ -544,7 +570,7 @@ namespace compile {
     public:
       Assign(Expression *v, 
              Expression *a) 
-        : _variable(dynamic_cast<Variable*>(v)), _assign(a) { }
+        : _variable(dynamic_cast<Variable*>(v)), _assign(a) {assert(v); assert(a); }
     
       Assign(const Assign &a) {
 	_assign = a._assign->copy();

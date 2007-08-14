@@ -672,7 +672,7 @@ namespace compile {
 
 
     string Assign::toString() const {
-      return _variable->toString() + " = " + _assign->toString();
+      return _variable->toString() + " := " + _assign->toString();
     }
     
     TuplePtr 
@@ -836,13 +836,43 @@ namespace compile {
 
     }
 
+    TermList* Functor::generateEqTerms(Functor* s){
+      assert(name().compare(s->name()) == 0);
+      TermList *newTerms = new TermList();
+      ExpressionList::iterator iter1; 
+      ExpressionList::iterator iter2; 
+      ExpressionList *saysList1 =  const_cast<ExpressionList*>(arguments());
+      ExpressionList *saysList2 =  const_cast<ExpressionList*>(s->arguments());
+      
+      //skip location specifier terms
+      for (iter1 = saysList1->begin() + 1, iter2 = saysList2->begin() + 1 ; 
+	     iter1 < saysList1->end() && iter2 < saysList2->end(); iter1++, iter2++){
+	if(!(*iter1)->isEqual(*iter2))
+	{
+	  newTerms->push_back(new Assign((*iter1)->copy(), (*iter2)->copy()));
+	}
+      }
+
+      return newTerms;
+    }
+
     void Rule::initializeRule(StatementList *s)
     {
       int newVariable = 1;
       Says *sh;
-      std::list<TermList> newRuleComparators;
+      std::list<TermList*> newRuleComparators;
       sh = dynamic_cast<Says*>(_head);
+      if(sh != NULL)
+      {
+	// first rule generates the proof assuming that the node 
+	// executing the rule has the key
+	TermList *newTermsGen = Says::normalizeGenerate(sh, newVariable);
+	if(newTermsGen != NULL){
+	  newRuleComparators.push_back(newTermsGen);
+	  _head = new Functor(sh);
 
+	}
+      }
       //      TermList *_bodyClone = NULL;
 
       for (TermList::iterator iter = _body->begin(); 
@@ -854,11 +884,13 @@ namespace compile {
 	  //	  _bodyClone = new TermList(_body->begin, iter);
 	  //}
 
-	  if(sh != NULL && (s->name().compare(sh->name())==0))
-	  {
-	    //	    TermList *comparisonTerms = 
-	  }
 	  TermList *newTerms = Says::normalizeVerify(s, newVariable);
+	  if(sh != NULL && (s->name().compare(_head->name())==0))
+	  {
+	    TermList *comparisonTerms = _head->generateEqTerms(s);
+	    newRuleComparators.push_back(comparisonTerms);
+	  }
+	 
 	  if(newTerms != NULL){
 
 	    _body->erase(iter);
@@ -888,44 +920,34 @@ namespace compile {
       {
 	// copy this rule into a new rule and insert the new rule into the list as well 
 	// as modify the existing rule
-	Rule* r = new Rule(*this);
-	
-	Says *head = dynamic_cast<Says*>(r->_head);
-	// first rule generates the proof assuming that the node 
-	// executing the rule has the key
-	TermList *newTermsGen = Says::normalizeGenerate(head, newVariable);
-	if(newTermsGen != NULL){
-	  
-	  r->_head = new Functor(head);
-	  
-	  for (TermList::iterator it1 = newTermsGen->begin(); 
-	       it1 != newTermsGen->end(); it1++) {
-	    r->_body->push_back(*it1);
+	int size = newRuleComparators.size();
+	Rule *r;
+	for(int i = 0; i < size; i++){
+	// if i < size - 1, then create a copy for next stage
+	// else use the current copy
+	  if(i < size - 1){
+	    r = new Rule(*this);
+	    r->resetName();
+	    s->push_back(r);
 	  }
-	  delete newTermsGen;
-	}
-	r->resetName();
-	s->push_back(r);
-
-	// now write rule that assumes that the node executing
-	// has a proof for the says on lhs
-	TermList *newTermsUse = Says::normalizeVerify(sh, newVariable, true);
-	if(newTermsUse != NULL){
-
-	  _head = new Functor(sh);
-
-	  for (TermList::iterator it = newTermsUse->begin(); 
-	       it != newTermsUse->end(); it++) {
-	    _body->push_back(*it);
+	  else{
+	    r = this;
 	  }
-	  delete newTermsUse;
+
+	  TermList *newTermsUse = newRuleComparators.front();
+	  newRuleComparators.pop_front();
+	  if(newTermsUse != NULL){
+	    
+	    for (TermList::iterator it = newTermsUse->begin(); 
+		 it != newTermsUse->end(); it++) {
+	      r->_body->push_back(*it);
+	    }
+	    delete newTermsUse;
+	  }
+
 	}
-
-	Functor* headCopy =  new Functor(*sh);
-	headCopy->changeLocSpec(Variable::getLocalLocationSpecifier());
-	_body->push_back(headCopy);
-
       }
+
 
 //      canonicalizeRule();
     }
@@ -1349,6 +1371,7 @@ namespace compile {
 
       Rule* r;
       Namespace *nmSpc;
+      //      std::cout<<"old size"<<s->size()<<std::endl;
       for (StatementList::iterator iter = s->begin();
              iter != s->end(); iter++) { 
 
@@ -1371,7 +1394,9 @@ namespace compile {
 	{
 	  // do nothing
 	}
+
       }
+      //      std::cout<<"old size"<<s->size()<<std::endl;
     }
 
     TuplePtr 
