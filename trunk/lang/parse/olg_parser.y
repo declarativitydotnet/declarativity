@@ -20,8 +20,8 @@
   #include "aggFactory.h"
 
   union YYSTYPE;
-  static int ol_parser_lex (YYSTYPE *lvalp, compile::parse::Context *ctxt);
-  static void ol_parser_error (compile::parse::Context *ctxt, string msg);
+  static int olg_parser_lex (YYSTYPE *lvalp, compile::parse::Context *ctxt);
+  static void olg_parser_error (compile::parse::Context *ctxt, string msg);
 
 %}
 %debug
@@ -29,52 +29,52 @@
 %verbose
 %pure_parser
 
-%left OL_OR
-%left OL_AND
-%left OL_BITOR
-%left OL_BITXOR
-%left OL_BITAND
-%left OL_BITNOT
-%left OL_EQ OL_NEQ
-%nonassoc OL_GT OL_GTE OL_LT OL_LTE
-%left OL_LSHIFT OL_RSHIFT
-%left OL_PLUS OL_MINUS 
-%left OL_EXP OL_TIMES OL_DIVIDE OL_MODULUS
-%right OL_NOT
-%left OL_IN
-%nonassoc OL_ASSIGN
+%left OLG_OR
+%left OLG_AND
+%left OLG_BITOR
+%left OLG_BITXOR
+%left OLG_BITAND
+%left OLG_BITNOT
+%left OLG_EQ OLG_NEQ
+%nonassoc OLG_GT OLG_GTE OLG_LT OLG_LTE
+%left OLG_LSHIFT OLG_RSHIFT
+%left OLG_PLUS OLG_MINUS 
+%left OLG_EXP OLG_TIMES OLG_DIVIDE OLG_MODULUS
+%right OLG_NOT
+%left OLG_IN
+%nonassoc OLG_ASSIGN
 
-%token<v> OL_NAME 
-%token OL_NAMESPACE
-%token OL_COMMA
-%token OL_DOT
-%token OL_EOF 
-%token OL_IF 
-%token<v> OL_STRING
-%token<v> OL_VALUE
-%token<v> OL_VAR
-%token<v> OL_AGGFUNCNAME
-%token<v> OL_FUNCTION
-%token<v> OL_NULL
-%token OL_LPAR
-%token OL_RPAR
-%token OL_LSQUB
-%token OL_RSQUB
-%token OL_LCURB
-%token OL_RCURB
-%token OL_DEL
-%token OL_QUERY
-%token OL_MATERIALIZE
-%token OL_KEYS
-%token OL_WATCH
-%token OL_WATCHFINE
-%token OL_STAGE
-%token OL_TRACE
-%token OL_TRACETABLE
+%token<v> OLG_NAME 
+%token OLG_NAMESPACE
+%token OLG_COMMA
+%token OLG_DOT
+%token OLG_EOF 
+%token OLG_IF 
+%token<v> OLG_STRING
+%token<v> OLG_VALUE
+%token<v> OLG_VAR
+%token<v> OLG_AGGFUNCNAME
+%token<v> OLG_FUNCTION
+%token<v> OLG_NULL
+%token OLG_LPAR
+%token OLG_RPAR
+%token OLG_LSQUB
+%token OLG_RSQUB
+%token OLG_LCURB
+%token OLG_RCURB
+%token OLG_DEL
+%token OLG_QUERY
+%token OLG_MATERIALIZE
+%token OLG_KEYS
+%token OLG_WATCH
+%token OLG_WATCHFINE
+%token OLG_STAGE
+%token OLG_TRACE
+%token OLG_TRACETABLE
 
 %start program
-%file-prefix="ol_parser"
-%name-prefix="ol_parser_"
+%file-prefix="olg_parser"
+%name-prefix="olg_parser_"
 %parse-param { compile::parse::Context *ctxt }
 %lex-param { compile::parse::Context *ctxt }
 %union {
@@ -97,16 +97,16 @@
 %type<u_exprlistlist>  matrixentries;
 %type<u_term>          term functor assign select;
 %type<v>               functorarg locationarg functionarg tablearg atom rel_atom math_atom;
-%type<v>               function math_expr bool_expr range_expr range_atom aggregate;
+%type<v>               function math_expr boolg_expr range_expr range_atom aggregate;
 %type<v>               vectorentry vector_expr matrix_expr;
 %type<u_boper>         rel_oper;
 %type<u_moper>         math_oper;
 %type<v>               agg_oper;
 %%
 
-program: OL_EOF { YYACCEPT; }
+program: OLG_EOF { YYACCEPT; }
          | 
-         statements OL_EOF { ctxt->program($1); YYACCEPT; }
+         statements OLG_EOF { ctxt->program($1); YYACCEPT; }
          ;
 
 statements: statement
@@ -125,60 +125,60 @@ statement:   nameSpace   { $$ = $1; }
            | fact        { $$ = $1; }
          ;
 
-nameSpace: OL_NAMESPACE OL_NAME OL_LCURB statements OL_RCURB
+nameSpace: OLG_NAMESPACE OLG_NAME OLG_LCURB statements OLG_RCURB
              { $$ = new compile::parse::Namespace($2->toString(), $4); }
          ;
 
-materialize: OL_MATERIALIZE OL_LPAR OL_NAME OL_COMMA
-             tablearg OL_COMMA tablearg OL_COMMA primarykeys OL_RPAR OL_DOT 
+materialize: OLG_MATERIALIZE OLG_LPAR OLG_NAME OLG_COMMA
+             tablearg OLG_COMMA tablearg OLG_COMMA primarykeys OLG_RPAR OLG_DOT 
              { $$ = new compile::parse::Table($3, $5, $7, $9); } 
     ;
 
-tablearg: OL_VALUE
+tablearg: OLG_VALUE
           { $$ = $1; }
           ;
 
-primarykeys: OL_KEYS OL_LPAR keylist OL_RPAR 
+primarykeys: OLG_KEYS OLG_LPAR keylist OLG_RPAR 
              { $$ = $3; }
              ;
 
-keylist: OL_VALUE { $$ = new compile::parse::ExpressionList(); 
+keylist: OLG_VALUE { $$ = new compile::parse::ExpressionList(); 
                     $$->push_front($1); }
          | 
-         OL_VALUE OL_COMMA keylist 
+         OLG_VALUE OLG_COMMA keylist 
          { $3->push_front($1); $$=$3; }
          ; 
 
-watch: OL_WATCH OL_LPAR OL_NAME OL_RPAR OL_DOT 
+watch: OLG_WATCH OLG_LPAR OLG_NAME OLG_RPAR OLG_DOT 
        {
 	 $$ = new compile::parse::Watch($3->toString(), "");
        }
        ;
 
-watchfine: OL_WATCHFINE OL_LPAR OL_NAME OL_COMMA OL_STRING OL_RPAR OL_DOT
+watchfine: OLG_WATCHFINE OLG_LPAR OLG_NAME OLG_COMMA OLG_STRING OLG_RPAR OLG_DOT
            {
              $$ = new compile::parse::Watch($3->toString(), $5->toString());
            }
          ;
 
 
-stage: OL_STAGE OL_LPAR OL_STRING OL_COMMA OL_NAME OL_COMMA OL_NAME OL_RPAR OL_DOT
+stage: OLG_STAGE OLG_LPAR OLG_STRING OLG_COMMA OLG_NAME OLG_COMMA OLG_NAME OLG_RPAR OLG_DOT
        {
          $$ = new compile::parse::Stage($3->toString(), $5->toString(), $7->toString());
        }
      ;
 
-rule: OL_NAME functor OL_IF termlist OL_DOT 
+rule: OLG_NAME functor OLG_IF termlist OLG_DOT 
         { $$ = new compile::parse::Rule($2, $4, false, $1); } 
-      | OL_NAME OL_DEL functor OL_IF termlist OL_DOT 
+      | OLG_NAME OLG_DEL functor OLG_IF termlist OLG_DOT 
         { $$ = new compile::parse::Rule($3, $5, true, $1); } 
-      | functor OL_IF termlist OL_DOT 
+      | functor OLG_IF termlist OLG_DOT 
         { $$ = new compile::parse::Rule($1, $3, false); } 
-      | OL_DEL functor OL_IF termlist OL_DOT 
+      | OLG_DEL functor OLG_IF termlist OLG_DOT 
         { $$ = new compile::parse::Rule($2, $4, true); } 
-      | OL_NAME functor OL_IF aggview OL_DOT 
+      | OLG_NAME functor OLG_IF aggview OLG_DOT 
         { $$ = new compile::parse::Rule($2, $4, false, $1); }
-      | functor OL_IF aggview OL_DOT 
+      | functor OLG_IF aggview OLG_DOT 
         { $$ = new compile::parse::Rule($1, $3, false); }
     ;
 
@@ -188,101 +188,101 @@ term: functor | assign | select
 
 termlist:  term 
            { $$ = new compile::parse::TermList(); $$->push_front($1); }
-         | term OL_COMMA termlist 
+         | term OLG_COMMA termlist 
            { $3->push_front($1); $$=$3; } 
          ;
 
-fact: OL_NAME factbody OL_DOT
+fact: OLG_NAME factbody OLG_DOT
         { $$ = new compile::parse::Fact($1, $2); }
     ;
 
-factbody: OL_LPAR atom OL_RPAR
+factbody: OLG_LPAR atom OLG_RPAR
           { $$ = new compile::parse::ExpressionList(); $$->push_front($2); }
-        | OL_LPAR atom OL_COMMA functorargs OL_RPAR
+        | OLG_LPAR atom OLG_COMMA functorargs OLG_RPAR
           { $4->push_front($2); $$=$4; }
         ;
 
-functor: OL_NAME functorbody 
+functor: OLG_NAME functorbody 
          { $$=new compile::parse::Functor($1, $2); } 
        ;
 
-functorbody: OL_LPAR locationarg OL_RPAR 
+functorbody: OLG_LPAR locationarg OLG_RPAR 
                { $$ = new compile::parse::ExpressionList; $$->push_front($2); }
-             | OL_LPAR locationarg OL_COMMA functorargs OL_RPAR
+             | OLG_LPAR locationarg OLG_COMMA functorargs OLG_RPAR
                { $4->push_front($2); $$=$4; }
              ;
 
-locationarg: OL_VAR | aggregate
+locationarg: OLG_VAR | aggregate
              { $$ = $1; }
            ;
 
 functorargs: functorarg 
              { $$ = new compile::parse::ExpressionList(); $$->push_front($1); }
-           | functorarg OL_COMMA functorargs 
+           | functorarg OLG_COMMA functorargs 
              { $3->push_front($1); $$=$3; }
            ;
 
-functorarg: atom | OL_VAR | aggregate | math_expr | function
+functorarg: atom | OLG_VAR | aggregate | math_expr | function
             { $$ = $1; }
           ;
 
-aggview: agg_oper OL_LPAR functorbody OL_COMMA functorbody OL_COMMA functor OL_RPAR 
+aggview: agg_oper OLG_LPAR functorbody OLG_COMMA functorbody OLG_COMMA functor OLG_RPAR 
            { $$ = new compile::parse::TermList(); 
              $$->push_back(new compile::parse::AggregationView($1->toString(),
                                                                $3, $5, $7)); }
          ;
 
-function:  OL_FUNCTION OL_LPAR functionargs OL_RPAR
+function:  OLG_FUNCTION OLG_LPAR functionargs OLG_RPAR
            { $$ = new compile::parse::Function($1, $3); }
-         | OL_FUNCTION OL_LPAR OL_RPAR 
+         | OLG_FUNCTION OLG_LPAR OLG_RPAR 
            { $$ = new compile::parse::Function($1, new compile::parse::ExpressionList()); }
          ;
 
 functionargs: functionarg 
               { $$ = new compile::parse::ExpressionList(); 
                 $$->push_front($1); }
-            | functionarg OL_COMMA functionargs 
+            | functionarg OLG_COMMA functionargs 
               { $3->push_front($1); $$=$3; }
             ;
 
-functionarg: math_expr | atom | OL_VAR | function
+functionarg: math_expr | atom | OLG_VAR | function
              { $$ = $1; }
            ;
 
-select: bool_expr 
+select: boolg_expr 
         { $$ = new compile::parse::Select($1); }
       ;
 
-assign: OL_VAR OL_ASSIGN rel_atom
+assign: OLG_VAR OLG_ASSIGN rel_atom
         { $$ = new compile::parse::Assign($1, $3); }
-      | OL_VAR OL_ASSIGN bool_expr
+      | OLG_VAR OLG_ASSIGN boolg_expr
         { $$ = new compile::parse::Assign($1, $3); }
       ;
 
-bool_expr: OL_LPAR bool_expr OL_RPAR 
+boolg_expr: OLG_LPAR boolg_expr OLG_RPAR 
            { $$ = $2; }
-         | OL_VAR OL_IN range_expr 
+         | OLG_VAR OLG_IN range_expr 
            { $$ = new compile::parse::Bool(compile::parse::Bool::RANGEI, $1, $3); } 
-         | OL_NOT bool_expr 
+         | OLG_NOT boolg_expr 
            { $$ = new compile::parse::Bool(compile::parse::Bool::NOT, $2); } 
-         | bool_expr OL_OR bool_expr
+         | boolg_expr OLG_OR boolg_expr
            { $$ = new compile::parse::Bool(compile::parse::Bool::OR, $1, $3 ); }
-         | bool_expr OL_AND bool_expr
+         | boolg_expr OLG_AND boolg_expr
            { $$ = new compile::parse::Bool(compile::parse::Bool::AND, $1, $3 ); }
          | rel_atom rel_oper rel_atom
            { $$ = new compile::parse::Bool($2, $1, $3 ); }
          ;
 
-rel_atom: math_expr | function | atom | OL_VAR
+rel_atom: math_expr | function | atom | OLG_VAR
           { $$ = $1; }
         ;
 
-rel_oper: OL_EQ  { $$ = compile::parse::Bool::EQ; } 
-        | OL_NEQ { $$ = compile::parse::Bool::NEQ; }
-        | OL_GT  { $$ = compile::parse::Bool::GT; }
-        | OL_LT  { $$ = compile::parse::Bool::LT; }
-        | OL_GTE { $$ = compile::parse::Bool::GTE; }
-        | OL_LTE { $$ = compile::parse::Bool::LTE; }
+rel_oper: OLG_EQ  { $$ = compile::parse::Bool::EQ; } 
+        | OLG_NEQ { $$ = compile::parse::Bool::NEQ; }
+        | OLG_GT  { $$ = compile::parse::Bool::GT; }
+        | OLG_LT  { $$ = compile::parse::Bool::LT; }
+        | OLG_GTE { $$ = compile::parse::Bool::GTE; }
+        | OLG_LTE { $$ = compile::parse::Bool::LTE; }
         ;
 
 math_expr: math_expr math_oper math_atom
@@ -291,81 +291,81 @@ math_expr: math_expr math_oper math_atom
            { $$ = new compile::parse::Math($2, $1, $3 ); }
          ;
 
-math_atom: atom | OL_VAR | function
+math_atom: atom | OLG_VAR | function
            { $$ = $1; }
-         | OL_LPAR math_expr OL_RPAR 
+         | OLG_LPAR math_expr OLG_RPAR 
            { $$ = $2; }
          ;
 
-math_oper: OL_LSHIFT  { $$ = compile::parse::Math::LSHIFT; } 
-         | OL_RSHIFT  { $$ = compile::parse::Math::RSHIFT; }
-         | OL_PLUS    { $$ = compile::parse::Math::PLUS; }
-         | OL_MINUS   { $$ = compile::parse::Math::MINUS; }
-         | OL_TIMES   { $$ = compile::parse::Math::TIMES; }
-         | OL_DIVIDE  { $$ = compile::parse::Math::DIVIDE; }
-         | OL_MODULUS { $$ = compile::parse::Math::MODULUS; }
+math_oper: OLG_LSHIFT  { $$ = compile::parse::Math::LSHIFT; } 
+         | OLG_RSHIFT  { $$ = compile::parse::Math::RSHIFT; }
+         | OLG_PLUS    { $$ = compile::parse::Math::PLUS; }
+         | OLG_MINUS   { $$ = compile::parse::Math::MINUS; }
+         | OLG_TIMES   { $$ = compile::parse::Math::TIMES; }
+         | OLG_DIVIDE  { $$ = compile::parse::Math::DIVIDE; }
+         | OLG_MODULUS { $$ = compile::parse::Math::MODULUS; }
          ;
 
 
-range_expr: OL_LPAR range_atom OL_COMMA range_atom OL_RPAR 
+range_expr: OLG_LPAR range_atom OLG_COMMA range_atom OLG_RPAR 
             { $$ = new compile::parse::Range(compile::parse::Range::RANGEOO, $2, $4); } 
-          | OL_LPAR range_atom OL_COMMA range_atom OL_RSQUB
+          | OLG_LPAR range_atom OLG_COMMA range_atom OLG_RSQUB
             { $$ = new compile::parse::Range(compile::parse::Range::RANGEOC, $2, $4); } 
-          | OL_LSQUB range_atom OL_COMMA range_atom OL_RPAR
+          | OLG_LSQUB range_atom OLG_COMMA range_atom OLG_RPAR
             { $$ = new compile::parse::Range(compile::parse::Range::RANGECO, $2, $4); } 
-          | OL_LSQUB range_atom OL_COMMA range_atom OL_RSQUB
+          | OLG_LSQUB range_atom OLG_COMMA range_atom OLG_RSQUB
             { $$ = new compile::parse::Range(compile::parse::Range::RANGECC, $2, $4); } 
           ;
 
-range_atom: math_expr | atom | OL_VAR
+range_atom: math_expr | atom | OLG_VAR
             { $$ = $1; }
           ;
 
-vector_expr: OL_LSQUB vectorentries OL_RSQUB
+vector_expr: OLG_LSQUB vectorentries OLG_RSQUB
              { $$ = new compile::parse::Vector($2); }
 
-matrix_expr: OL_LCURB matrixentries OL_RCURB
+matrix_expr: OLG_LCURB matrixentries OLG_RCURB
              { $$ = new compile::parse::Matrix($2); }
 
 vectorentries: vectorentry 
                { $$ = new compile::parse::ExpressionList();
                  $$->push_front($1); } 
-             | vectorentry OL_COMMA vectorentries 
+             | vectorentry OLG_COMMA vectorentries 
                { $3->push_front($1); $$=$3; }
              ;
 
 matrixentries: matrixentry 
                { $$ = new compile::parse::ExpressionListList(); 
                  $$->push_front($1); } 
-             | matrixentry OL_COMMA matrixentries 
+             | matrixentry OLG_COMMA matrixentries 
                { $3->push_front($1); $$=$3; }
              ;
 
-vectorentry: OL_VALUE | OL_STRING | OL_NULL 
+vectorentry: OLG_VALUE | OLG_STRING | OLG_NULL 
              { $$ = $1; }
            ;  
 
-matrixentry: OL_LSQUB vectorentries OL_RSQUB 
+matrixentry: OLG_LSQUB vectorentries OLG_RSQUB 
              { $$ = $2; }
            ;
 
-atom: OL_VALUE | OL_STRING | OL_NULL | vector_expr | matrix_expr
+atom: OLG_VALUE | OLG_STRING | OLG_NULL | vector_expr | matrix_expr
       { $$ = $1; }
     ;
 
-aggregate: agg_oper OL_LT OL_VAR OL_GT 
+aggregate: agg_oper OLG_LT OLG_VAR OLG_GT 
              {
                $$ = new compile::parse::Aggregation($1->toString(),
                                                     $3);
              }
-             | agg_oper OL_LT OL_TIMES OL_GT 
+             | agg_oper OLG_LT OLG_TIMES OLG_GT 
              {
               $$ = new compile::parse::Aggregation($1->toString(),
                                                    NULL);
              }
 ;
 
-agg_oper:	OL_AGGFUNCNAME
+agg_oper:	OLG_AGGFUNCNAME
                 {
                   $$ = $1;
                   try {
@@ -381,13 +381,13 @@ agg_oper:	OL_AGGFUNCNAME
 // Epilog
     
 #undef yylex
-#include "ol_lexer.h"
+#include "olg_lexer.h"
 
-static int ol_parser_lex (YYSTYPE *lvalp, compile::parse::Context *ctxt)
+static int olg_parser_lex (YYSTYPE *lvalp, compile::parse::Context *ctxt)
 {
   return ctxt->lexer->yylex(lvalp, ctxt);
 }
-static void ol_parser_error(compile::parse::Context *ctxt, string msg)
+static void olg_parser_error(compile::parse::Context *ctxt, string msg)
 {
   TELL_ERROR << "PARSE ERROR " << msg << ": line " << (ctxt->lexer->line_num() - 2) 
              << ", token '" << ctxt->lexer->text() << "'" << std::endl;

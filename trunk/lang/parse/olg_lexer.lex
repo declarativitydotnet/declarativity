@@ -25,11 +25,11 @@
 %option c++
 %option yylineno
 %option noyywrap
-%option yyclass="OL_Lexer"
+%option yyclass="OLG_Lexer"
 %option prefix="OLBase"
 %start CCOMMENT CSTRING
 %{
-#include "ol_lexer.h"
+#include "olg_lexer.h"
 
 #include <limits.h>
 #include <stdlib.h>
@@ -37,7 +37,7 @@
 #ifdef YY_DECL
 #undef YY_DECL
 #endif
-#define YY_DECL int OL_Lexer::yylex (YYSTYPE *lvalp, compile::parse::Context *ctxt)
+#define YY_DECL int OLG_Lexer::yylex (YYSTYPE *lvalp, compile::parse::Context *ctxt)
 
 int unNamedVariableCounter = 0;
 
@@ -56,7 +56,7 @@ WHITESPACE	[ \t\r\n]+
 
 %%
 
-<INITIAL><<EOF>> { return OL_EOF; }
+<INITIAL><<EOF>> { return OLG_EOF; }
 <INITIAL>{WHITESPACE}		;
 <INITIAL>%%.*			; // Ignore %% comments
 <INITIAL>^#!.*			; // Ignore '#' directives
@@ -89,7 +89,7 @@ WHITESPACE	[ \t\r\n]+
   delete cstring;
   cstring = NULL;
   BEGIN(INITIAL); 
-  return OL_STRING; 
+  return OLG_STRING; 
 }
 <CSTRING>\\.	{
   assert(cstring != NULL);
@@ -107,70 +107,70 @@ WHITESPACE	[ \t\r\n]+
     (*cstring) << yytext; 
 }
 
-<INITIAL>materialize { return OL_MATERIALIZE; }
-<INITIAL>namespace { return OL_NAMESPACE; }
-<INITIAL>keys { return OL_KEYS; }
-<INITIAL>in { return OL_IN; }
-<INITIAL>"," { return OL_COMMA; }
-<INITIAL>"(" { return OL_LPAR; }
-<INITIAL>")" { return OL_RPAR; }
-<INITIAL>"[" { return OL_LSQUB; }
-<INITIAL>"]" { return OL_RSQUB; }
-<INITIAL>"{" { return OL_LCURB; }
-<INITIAL>"}" { return OL_RCURB; }
+<INITIAL>materialize { return OLG_MATERIALIZE; }
+<INITIAL>namespace { return OLG_NAMESPACE; }
+<INITIAL>keys { return OLG_KEYS; }
+<INITIAL>in { return OLG_IN; }
+<INITIAL>"," { return OLG_COMMA; }
+<INITIAL>"(" { return OLG_LPAR; }
+<INITIAL>")" { return OLG_RPAR; }
+<INITIAL>"[" { return OLG_LSQUB; }
+<INITIAL>"]" { return OLG_RSQUB; }
+<INITIAL>"{" { return OLG_LCURB; }
+<INITIAL>"}" { return OLG_RCURB; }
 
  /* Relational operators */
-<INITIAL>"<" { return OL_LT; }
-<INITIAL>">" { return OL_GT; }
-<INITIAL>"<=" { return OL_LTE; }
-<INITIAL>">=" { return OL_GTE; }
-<INITIAL>"!=" { return OL_NEQ; }
-<INITIAL>"<>" { return OL_NEQ; }
-<INITIAL>"==" { return OL_EQ; }
+<INITIAL>"<" { return OLG_LT; }
+<INITIAL>">" { return OLG_GT; }
+<INITIAL>"<=" { return OLG_LTE; }
+<INITIAL>">=" { return OLG_GTE; }
+<INITIAL>"!=" { return OLG_NEQ; }
+<INITIAL>"<>" { return OLG_NEQ; }
+<INITIAL>"==" { return OLG_EQ; }
 
  /* Arithmetic operations */
-<INITIAL>"+" { return OL_PLUS; }
-<INITIAL>"-" { return OL_MINUS; }
-<INITIAL>"*" { return OL_TIMES; }
-<INITIAL>"/" { return OL_DIVIDE; }
-<INITIAL>"%" { return OL_MODULUS; }
-<INITIAL>"**" { return OL_EXP; }
-<INITIAL>"^" { return OL_BITXOR; }
-<INITIAL>"&" { return OL_BITAND; }
-<INITIAL>"|" { return OL_BITOR; }
-<INITIAL>"~" { return OL_BITNOT; }
-<INITIAL>">>" { return OL_RSHIFT; }
-<INITIAL>"<<" { return OL_LSHIFT; }
+<INITIAL>"+" { return OLG_PLUS; }
+<INITIAL>"-" { return OLG_MINUS; }
+<INITIAL>"*" { return OLG_TIMES; }
+<INITIAL>"/" { return OLG_DIVIDE; }
+<INITIAL>"%" { return OLG_MODULUS; }
+<INITIAL>"**" { return OLG_EXP; }
+<INITIAL>"^" { return OLG_BITXOR; }
+<INITIAL>"&" { return OLG_BITAND; }
+<INITIAL>"|" { return OLG_BITOR; }
+<INITIAL>"~" { return OLG_BITNOT; }
+<INITIAL>">>" { return OLG_RSHIFT; }
+<INITIAL>"<<" { return OLG_LSHIFT; }
 
  /* Boolean operations */
-<INITIAL>"!" { return OL_NOT; }
-<INITIAL>"&&" { return OL_AND; }
-<INITIAL>"||" { return OL_OR; } 
+<INITIAL>"!" { return OLG_NOT; }
+<INITIAL>"&&" { return OLG_AND; }
+<INITIAL>"||" { return OLG_OR; } 
 
-<INITIAL>":=" { return OL_ASSIGN; }
-<INITIAL>"." { return OL_DOT; }
-<INITIAL>":-" { return OL_IF; }
-<INITIAL>"watch" { return OL_WATCH; }
-<INITIAL>"watchmod" { return OL_WATCHFINE; }
-<INITIAL>"stage" { return OL_STAGE; }
-<INITIAL>"traceTable" {return OL_TRACETABLE;}
-<INITIAL>"trace" {return OL_TRACE;}
-<INITIAL>"delete" { return OL_DEL; }
-<INITIAL>"Query" { return OL_QUERY; }
+<INITIAL>":=" { return OLG_ASSIGN; }
+<INITIAL>"." { return OLG_DOT; }
+<INITIAL>":-" { return OLG_IF; }
+<INITIAL>"watch" { return OLG_WATCH; }
+<INITIAL>"watchmod" { return OLG_WATCHFINE; }
+<INITIAL>"stage" { return OLG_STAGE; }
+<INITIAL>"traceTable" {return OLG_TRACETABLE;}
+<INITIAL>"trace" {return OLG_TRACE;}
+<INITIAL>"delete" { return OLG_DEL; }
+<INITIAL>"Query" { return OLG_QUERY; }
 <INITIAL>"null" { 
   lvalp->v = new compile::parse::Value(Val_Null::mk()); 
-  return OL_NULL; }
+  return OLG_NULL; }
 
 <INITIAL>"true" {
   // Unsigned integer literal (including octal and/or hex)
   lvalp->v = new compile::parse::Value(Val_Int32::mk(1));
-  return OL_VALUE;
+  return OLG_VALUE;
 }
 
 <INITIAL>"false" {
   // Unsigned integer literal (including octal and/or hex)
   lvalp->v = new compile::parse::Value(Val_Int32::mk(0));
-  return OL_VALUE;
+  return OLG_VALUE;
 }
 
 <INITIAL>a_[_a-zA-Z0-9]+ { 
@@ -178,54 +178,54 @@ WHITESPACE	[ \t\r\n]+
   yytext += 2;
   while (*yytext) aggName += char(toupper(*yytext++));
   lvalp->v = new compile::parse::Variable(Val_Str::mk(aggName)); 
-  return OL_AGGFUNCNAME;
+  return OLG_AGGFUNCNAME;
  }
 
 <INITIAL>f_[a-zA-Z0-9]+ { 
   lvalp->v = new compile::parse::Variable(Val_Str::mk(yytext)); 
-  return OL_FUNCTION; }
+  return OLG_FUNCTION; }
 
 <INITIAL>[A-Z]{ALNUM}* { 
   lvalp->v = new compile::parse::Variable(Val_Str::mk(yytext)); 
-  return OL_VAR; }
+  return OLG_VAR; }
 
 <INITIAL>\@[A-Z]{ALNUM}* { 
   lvalp->v = new compile::parse::Variable(Val_Str::mk(yytext+1), true); 
-  return OL_VAR; }
+  return OLG_VAR; }
 
 <INITIAL>_ { 
   ostringstream oss;
   oss << "$_" << unNamedVariableCounter++; 
   lvalp->v = new compile::parse::Variable(Val_Str::mk(oss.str())); 
-  return OL_VAR; }
+  return OLG_VAR; }
 
 <INITIAL>infinity {
   // Unsigned integer literal (including octal and/or hex)
   lvalp->v = new compile::parse::Value(Val_Int32::mk(-1));
-  return OL_VALUE;
+  return OLG_VALUE;
 }
 
 <INITIAL>("::"|[a-z]){ALNUM}* { 
   lvalp->v = new compile::parse::Value(Val_Str::mk(yytext)); 
-  return OL_NAME; 
+  return OLG_NAME; 
 }
 
 <INITIAL>({DIGIT}+|0[xX]{HEXDIGIT}+)U {
   // Unsigned integer literal (including octal and/or hex)
   lvalp->v = new compile::parse::Value(Val_UInt32::mk(strtoull(yytext,NULL,0)));
-  return OL_VALUE;
+  return OLG_VALUE;
 }
 
 <INITIAL>(-?{DIGIT}+|0[xX]{HEXDIGIT}+) {
   // Some integer literal (including octal and/or hex)
   lvalp->v = new compile::parse::Value(Val_Int32::mk(strtoll(yytext,NULL,0)));
-  return OL_VALUE;
+  return OLG_VALUE;
 }
 
 <INITIAL>-?{DIGIT}+(({DECIM}{EXP}?)|{EXP}) {
   // Double-precision literal
   lvalp->v = new compile::parse::Value(Val_Double::mk(strtod(yytext,NULL)));
-  return OL_VALUE;
+  return OLG_VALUE;
 }
 
 <INITIAL>0[xX]{HEXDIGIT}+I {
@@ -234,13 +234,13 @@ WHITESPACE	[ \t\r\n]+
   std::string choppedString = hex.substr(2, hex.size() - 3);
   compile::parse::Value *val = new compile::parse::Value(Val_ID::mk(choppedString));
   lvalp->v = val;
-  return OL_VALUE;
+  return OLG_VALUE;
 }
 
 %%
 
 // Default: yyin == std::cin.
-OL_Lexer::OL_Lexer(std::istream *str) 
+OLG_Lexer::OLG_Lexer(std::istream *str) 
   : comment_depth(0), cstring(NULL) 
 {
   bufstate = yy_create_buffer( str , YY_BUF_SIZE);
@@ -249,13 +249,13 @@ OL_Lexer::OL_Lexer(std::istream *str)
 };
 
 // Give it a string...
-OL_Lexer::OL_Lexer(const char *prog) 
+OLG_Lexer::OLG_Lexer(const char *prog) 
   : comment_depth(0), cstring(NULL), strb(prog)
 {
   bufstate = yy_create_buffer( &strb, strlen(prog));
   yy_switch_to_buffer( bufstate );
 };
 
-OL_Lexer::~OL_Lexer() { 
+OLG_Lexer::~OLG_Lexer() { 
   // if (bufstate) yy_delete_buffer(bufstate); 
 };
