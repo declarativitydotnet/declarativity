@@ -780,7 +780,8 @@ namespace compile {
       Table(Expression *name, 
             Expression *ttl, 
             Expression *size, 
-            ExpressionList *keys);
+            ExpressionList *keys, 
+	    bool says = false);
     
       virtual ~Table() {};
     

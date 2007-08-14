@@ -66,6 +66,7 @@
 %token OL_DEL
 %token OL_QUERY
 %token OL_MATERIALIZE
+%token OL_SAYSMATERIALIZE
 %token OL_SAYS
 %token OL_KEYS
 %token OL_WATCH
@@ -133,7 +134,10 @@ nameSpace: OL_NAMESPACE OL_NAME OL_LCURB statements OL_RCURB
 
 materialize: OL_MATERIALIZE OL_LPAR OL_NAME OL_COMMA
              tablearg OL_COMMA tablearg OL_COMMA primarykeys OL_RPAR OL_DOT 
-             { $$ = new compile::parse::Table($3, $5, $7, $9); } 
+             { $$ = new compile::parse::Table($3, $5, $7, $9); } |
+             OL_SAYSMATERIALIZE OL_LPAR OL_NAME OL_COMMA
+             tablearg OL_COMMA tablearg OL_COMMA primarykeys OL_RPAR OL_DOT 
+             { $$ = new compile::parse::Table($3, $5, $7, $9, true); } 
     ;
 
 tablearg: OL_VALUE

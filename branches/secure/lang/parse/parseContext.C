@@ -498,7 +498,7 @@ namespace compile {
 	  //exclude location specifier
 	  iter++; 
 	  for (; iter != list->end(); iter++){
-	    cur = new Math(Math::BITOR, cur, *iter);
+	    cur = new Math(Math::APPEND, cur, *iter);
 	  }
 	}
 
@@ -1268,10 +1268,11 @@ namespace compile {
     Table::Table(Expression *name, 
                  Expression *ttl, 
                  Expression *size, 
-                 ExpressionList *keys)
+                 ExpressionList *keys,
+		 bool says)
     {
-      _name = name->toString();
-    
+      _name = (says?Says::saysPrefix:"") + name->toString() ;
+
       int myTtl = Val_Int64::cast(ttl->value());
       if (myTtl == -1) {
         _lifetime = Table2::NO_EXPIRATION;
@@ -1426,6 +1427,8 @@ namespace compile {
 
       Rule* r;
       Namespace *nmSpc;
+      Table* tab;
+
       for (StatementList::iterator iter = s->begin();
              iter != s->end(); iter++) { 
 

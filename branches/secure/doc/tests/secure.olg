@@ -1,4 +1,5 @@
 materialize(test, infinity, infinity, keys(1,2)).
+materializeSays(table, infinity, infinity, keys(1,2,3)).
 
 r1 says(P, R, 1, U) <table(@Me, A, B, C)> :- test(@Me, A).
 
