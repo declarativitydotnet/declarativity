@@ -3,3 +3,7 @@
 #cmakedefine HAVE_XDR_UINT32_T
 #cmakedefine HAVE_XDR_U_INT32_T
 #cmakedefine HAVE_EXP10
+#cmakedefine HAVE_TRUNC
+#cmakedefine HAVE_ROUND
+#cmakedefine HAVE_RAND48
+#cmakedefine HAVE_RANDOM

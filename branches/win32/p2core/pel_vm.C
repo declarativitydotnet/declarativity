@@ -12,7 +12,6 @@
  * DESCRIPTION: PEL (P2 Expression Language) virtual machine
  *
  */
-
 #include "pel_vm.h"
 #include <iterator>    // for back_inserter
 #include <locale>

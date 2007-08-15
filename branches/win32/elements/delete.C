@@ -12,6 +12,9 @@
  * 
  */
 
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
 #include "delete.h"
 
 Delete::Delete(string name,

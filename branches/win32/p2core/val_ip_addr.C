@@ -16,9 +16,14 @@
 #include "math.h"
 #include <loggerI.h>
 #include <sys/types.h>
-// #include <sys/socket.h>
-// #include <arpa/inet.h>
+
+#ifdef WIN32
 #include <winsock2.h>
+#else
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#endif // WIN32
+
 #include <reporting.h>
 
 // see http://lists.helixcommunity.org/pipermail/helix-client-dev/2004-May/001812.html
@@ -90,8 +95,13 @@ FdbufPtr Val_IP_ADDR::getAddress()
   int port = atoi(thePort.c_str());
   memset(&saddr, 0, sizeof(saddr));
   saddr.sin_port = htons(port);
+#ifdef WIN32
   int saddr_len;
   WSAStringToAddress((LPSTR) _s.c_str(), AF_INET, NULL, (LPSOCKADDR) &saddr.sin_addr, &saddr_len);
+#else
+  int saddr_len = sizeof(saddr);
+  inet_pton(AF_INET, _s.c_str(), &saddr.sin_addr);
+#endif
   x->push_bytes((char*) &saddr, saddr_len);
   return x;
   

@@ -14,7 +14,9 @@
  * 
  */
 
-
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
 #include <plumber.h>
 #include <set>
 #include "table2.h"

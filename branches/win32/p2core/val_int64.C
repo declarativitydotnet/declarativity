@@ -63,7 +63,13 @@ int64_t Val_Int64::cast(ValuePtr v) {
   case Value::NULLV:
     return 0;
   case Value::STR:
-    return /* strtoll */_strtoi64(Val_Str::cast(v).c_str(),NULL,0);
+    return
+#ifdef WIN32
+           _strtoi64
+#else
+           strtoll
+#endif // WIN32
+                     (Val_Str::cast(v).c_str(),NULL,0);
   default:
     throw Value::TypeError(v->typeCode(), v->typeName(),
                            Value::INT64, "int64");

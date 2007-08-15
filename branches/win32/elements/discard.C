@@ -13,6 +13,10 @@
  * DESCRIPTION: Element discarding all tuples pushed into it
  */
 
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
+
 #include "discard.h"
 
 Discard::Discard(string name) :

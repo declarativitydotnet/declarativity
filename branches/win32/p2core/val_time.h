@@ -16,7 +16,10 @@
 #ifndef __VAL_TIME_H__
 #define __VAL_TIME_H__
 
+#ifdef WIN32
 #include <winsock2.h> // for struct timeval
+#endif // WIN32
+
 #include "math.h"
 #include "value.h"
 #include "oper.h"

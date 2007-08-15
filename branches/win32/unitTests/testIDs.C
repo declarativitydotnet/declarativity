@@ -8,6 +8,10 @@
  * Berkeley, CA,  94707. Attention: P2 Group.
  */
 
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
+
 #include "boost/test/unit_test.hpp"
 
 #include <sstream>

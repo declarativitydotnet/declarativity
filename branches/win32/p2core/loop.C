@@ -10,15 +10,20 @@
  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
  * Berkeley, CA,  94707. Attention: P2 Group.
  */
-
-#include <winsock2.h>
+#include <value.h>
 #include <wchar.h>
 #include <stdexcept>
 #include "loop.h"
 #include "math.h"
 #include "assert.h"
 #include <sys/types.h>
-//#include <sys/socket.h>
+
+#ifdef WIN32
+#include <winsock2.h>
+#else
+#include <sys/socket.h>
+#endif // WIN32
+
 #include "fcntl.h"
 #include "val_time.h"
 #include "reporting.h"
@@ -102,10 +107,13 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
   callbackQueueT::iterator iter = callbacks.begin();
   while ((iter != callbacks.end()) &&
          ((*iter)->time <= now)) {
-    // Remove this callback from the queue
+    // Remove this callback from the queue.  The iterator must be
+    // incremented before its previous position is erased!
     timeCBHandle* theCallback = *iter;
-	iter = callbacks.erase(iter);
-    
+    callbackQueueT::iterator toErase = iter;
+	iter++;
+	callbacks.erase(toErase);
+	
     // Run it
     if (theCallback->active &&
         (theCallback->owner == NULL || 
@@ -137,11 +145,17 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
   }
 
   /** Time to clean house: remove all inactive callbacks */
-  for (iter = callbacks.begin(); iter != callbacks.end(); iter++) {
+  for (iter = callbacks.begin(); 
+       iter != callbacks.end(); 
+       ) {
     if ((*iter)->active == false) {
       timeCBHandle* theCallback = *iter;
-      callbacks.erase(iter);
-      delete theCallback;
+	  callbackQueueT::iterator toKill = iter;
+	  iter++;
+	  callbacks.erase(toKill);      
+	  delete theCallback;
+    } else {
+      iter++;
     }
   }
 
@@ -160,9 +174,10 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
 
   // Get first waiting time
   if (callbacks.empty()) {
-    // Nothing to worry about. Set it to a minute
-    waitDuration = boost::posix_time::minutes(1);
+    // Nothing to worry about. Leave the wait duration alone.
   } else {
+	// Update the wait duration to be what's left until the next
+	// deadline.
     iter = callbacks.begin();
     assert(iter != callbacks.end()); // since it's not empty
 
@@ -187,18 +202,18 @@ networkSocket(int type, uint16_t port, uint32_t addr, int proto)
 {
   int s;
   // Create it
+#ifdef WIN32
   s = WSASocket(AF_INET, type, proto, NULL, 0, WSA_FLAG_OVERLAPPED);
-  if (s == INVALID_SOCKET) {
+#else
+  s = socket(AF_INET, type, 0);
+#endif // WIN32
+  if (s < 0) {
     // Ooops, couldn't allocate it. No can do.
-    int errcode = WSAGetLastError();
-    TELL_ERROR << "Socket creation failure, error code " << errcode << "\n";
     return -1;
   }
-  TELL_INFO "Created socket " << s << "(" << type << "," << proto << ",NULL,0,WSA_FLAG_OVERLAPPED\n";
-
   
   // Now bind the socket to the given address
-  SOCKADDR_IN  sin;
+  struct sockaddr_in sin;
 
   // Setup the address sturctures
   memset(&sin, 0, sizeof(sin));
@@ -207,25 +222,20 @@ networkSocket(int type, uint16_t port, uint32_t addr, int proto)
   sin.sin_addr.s_addr = htonl(addr);
 
   // And bind
-  if (bind(s, (LPSOCKADDR) &sin, sizeof(struct sockaddr)) < 0) {
+  if (bind(s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
     // Hmm, couldn't bind this socket. Close it and return failure.
     goto errorAfterOpen;
   } else {
-	TELL_INFO "Bound socket " << s << "to port " << port << ", addr " << addr << "\n";
-
-	  // Now enable keep alives
-    BOOL value = true;
-	int errcode = WSAGetLastError();
-	if (type != SOCK_DGRAM)
-	    if (setsockopt(s, SOL_SOCKET, SO_KEEPALIVE,
-            (const char *)&value, sizeof(value)) == -1) {
-          // Hmm, couldn't set the socket option
-          TELL_ERROR << "Failed setsockopt\n";
-          goto errorAfterOpen;
-        }
-    
     // And make the file descriptor non-blocking
-#ifdef JOE_NOTWINDOWS
+	int value;
+#ifdef WIN32
+	unsigned long tmpval = 1;
+	value = ioctlsocket(s,FIONBIO, &tmpval);
+
+	if (value < 0)
+			// problem with socket
+			goto errorAfterOpen;
+#else
 	value = fcntl(s, F_GETFL, 0);
     if (value < 0) {
       // Couldn't read the file descriptor flags
@@ -236,22 +246,16 @@ networkSocket(int type, uint16_t port, uint32_t addr, int proto)
       // Couldn't set the file descriptor flags
       goto errorAfterOpen;
     }
-#else
-	unsigned long tmpval = 1;
-	value = ioctlsocket(s,FIONBIO, &tmpval);
-    TELL_INFO "ioctlsocket(" << s << ",FIONBIO, &1)\n";
-
-	if (value < 0)
-			// problem with socket
-			goto errorAfterOpen;
-#endif
+#endif // WIN32
 	return s;
   }
 
  errorAfterOpen:
-  int errcode = WSAGetLastError();
+#ifdef WIN32
   closesocket(s);
-  TELL_ERROR << "error in setting up open socket.  error code " << errcode << "\n"; 
+#else
+  close(s);
+#endif // WIN32
   return -1;
 }
 
@@ -281,7 +285,6 @@ fileDescriptorCB(int fileDescriptor,
     fileDescriptorCallbacks.find(&handle);
   if (iter == fileDescriptorCallbacks.end()) {
     // Nope, none exists. Just create and insert it
-    TELL_INFO << "creating filedesc " << fileDescriptor << "\n";
     fileDescriptorCBHandle* newHandle =
       new fileDescriptorCBHandle(fileDescriptor, op, callback, owner);
     fileDescriptorCallbacks.insert(newHandle);
@@ -289,11 +292,9 @@ fileDescriptorCB(int fileDescriptor,
     // And turn on the appropriate bit
     switch(op) {
     case b_selread:
-      TELL_INFO "Setting read bit " << fileDescriptor << "\n";
       FD_SET(fileDescriptor, &readBits);
       break;
     case b_selwrite:
-      TELL_INFO "Setting write bit " << fileDescriptor << "\n";
       FD_SET(fileDescriptor, &writeBits);
       break;
     default:
@@ -303,7 +304,7 @@ fileDescriptorCB(int fileDescriptor,
 
     // Finally, check if the next untouched file descriptor must be
     // updated
-    nextFD = max(fileDescriptor + 1, nextFD);
+    nextFD = std::max(fileDescriptor + 1, nextFD);
 
     return true;
   } else {
@@ -318,8 +319,7 @@ removeFileDescriptorCB(int fileDescriptor,
                        b_selop operation)
 {
   assert(fileDescriptor >= 0);
-  TELL_INFO << "removing filedesc " << fileDescriptor << "\n";
-
+  
   fileDescriptorCBHandle handle(fileDescriptor, operation);
   // Must find it so that we can delete the element
 
@@ -339,11 +339,9 @@ removeFileDescriptorCB(int fileDescriptor,
   // And turn off the appropriate bit
   switch(operation) {
   case b_selread:
-    TELL_INFO "Clearing read bit " << fileDescriptor << "\n";
     FD_CLR(fileDescriptor, &readBits);
     break;
   case b_selwrite:
-    TELL_INFO "Clearing write bit " << fileDescriptor << "\n";
 	FD_CLR(fileDescriptor, &writeBits);
     break;
   default:
@@ -365,30 +363,44 @@ fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
   static fd_set writeResultBits;
   memcpy(&readResultBits, &readBits, sizeof(fd_set));
   memcpy(&writeResultBits, &writeBits, sizeof(fd_set));
-//  timespec td_ts;
+#ifdef WIN32
   timeval td_ts;
-
-  TELL_INFO << "entering fileDescriptorCatchup\n";
+#else
+  timespec td_ts;
+#endif // WIN32
 
   td_ts.tv_sec = waitDuration.total_seconds();
   // ensure we compute nanosecs (1/(10^9) sec) even if boost is compiled to lower 
   // precision 
-//  td_ts.tv_nsec = waitDuration.fractional_seconds() * PTIME_SECS_FACTOR;
-//  assert(td_ts.tv_nsec >= 0);
+#ifdef WIN32
+   td_ts.tv_sec = waitDuration.total_seconds();
+
   // Microseconds are nanoseconds / 1000
   td_ts.tv_usec = (long)(waitDuration.fractional_seconds() * PTIME_SECS_FACTOR) / 1000;
+#else
+  // ensure we compute nanosecs (1/(10^9) sec) even if boost is compiled to lower 
+  // precision 
+  td_ts.tv_nsec = waitDuration.fractional_seconds() * PTIME_SECS_FACTOR;
+  assert(td_ts.tv_nsec >= 0);
+  td_ts.tv_nsec = (long)(waitDuration.fractional_seconds() * PTIME_SECS_FACTOR);
+#endif // WIN32
 
+
+
+#ifdef WIN32
   timeval tmptv = td_ts;
-  int errcode_pre = WSAGetLastError();
   int result = SOCKET_ERROR;
-
   result = select(nextFD, &readResultBits, &writeResultBits,
                        NULL, (const timeval *)&tmptv);
-
-//  int result = pselect(nextFD, &readResultBits, &writeResultBits,
-//                       NULL, &td_ts, NULL);
   if (result == SOCKET_ERROR) {
+#else 
+  int result = pselect(nextFD, &readResultBits, &writeResultBits,
+                       NULL, &td_ts, NULL);
+  if (result == -1) {
+#endif // WIN32
     // Ooops, error
+#ifdef WIN32
+	// ignore the case of WSAEINVAL errors that arise when no bits are set
 	int errcode = WSAGetLastError();
 	if (errcode == WSAEINVAL) {
 		// very likely no bits are set, let's check.
@@ -396,24 +408,24 @@ fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
 	    int foundr=0;
 		for (int i = 0; i < nextFD; i++) {
 			if (FD_ISSET(i,&writeResultBits)) {
-				TELL_ERROR << "writeResultBit "<<i<<" was set.\n";
 				foundw = 1;
 			}
 			if (FD_ISSET(i,&readResultBits)) {
-				TELL_ERROR << "readResultBit "<<i<<" was set.\n";
 				foundr = 1;
 			}
 		}
 		if (!foundw && !foundr) {
-			TELL_INFO << "no read or write resultBits set\n";
+			LOOP_ERROR("select failed with errcode " << errcode);
 			return;
 		}
 		// else drop through
 	}
-    LOOP_ERROR("select failed with errcode " << errcode);
+#else
+		// On non-Windows this is a BAD error.  Just return
+	return;
+#endif // WIN32
   } else if (result == 0) {
     // Nothing happened
-	  TELL_INFO << "select successful with 0 result\n"; 
 	  return;
   } else {
     // Go through and call all requisite callbacks, first all writes,
@@ -423,7 +435,6 @@ fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
          i++) {
       if (FD_ISSET(i, &writeResultBits)) {
         // Fetch the callback
-		  TELL_INFO << "select succeeded with write on bit " << i << "\n";
         fileDescriptorCBHandle handle(i, b_selwrite);
         static fileDescriptorCallbackDirectoryT::iterator iter;
         iter = fileDescriptorCallbacks.find(&handle);
@@ -447,7 +458,6 @@ fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
          i++) {
       if (FD_ISSET(i, &readResultBits)) {
         // Fetch the callback
-		TELL_INFO << "select succeeded with read on bit " << i << "\n";
         fileDescriptorCBHandle handle(i, b_selread);
         static fileDescriptorCallbackDirectoryT::iterator iter;
         iter = fileDescriptorCallbacks.find(&handle);
@@ -484,6 +494,7 @@ eventLoopInitialize()
   FD_ZERO(&readBits);
   FD_ZERO(&writeBits);
 
+#ifdef WIN32
   // BEGIN WINSOCK INITIALIZATION
   // Winsock initialization taken from http://msdn2.microsoft.com/en-us/library/ms742213.aspx
   WORD wVersionRequested;
@@ -513,9 +524,8 @@ eventLoopInitialize()
   }
  
   /* The WinSock DLL is acceptable. Proceed. */
-  TELL_INFO << "Initialized Winsock 2.0\n";
   // END WINSOCK INITIALIZATION
-
+#endif
 }
 
 

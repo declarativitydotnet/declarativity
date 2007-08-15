@@ -13,11 +13,18 @@
  * DESCRIPTION: Element-pair for a UDP socket
  */
 
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
 #include "udp2.h"
 #include "tuple.h"
 #include <sys/types.h>
-//#include <sys/socket.h>
+
+#ifdef WIN32
 #include <winsock2.h>
+#else
+#include <sys/socket.h>
+#endif
 
 #include "val_str.h"
 #include "val_opaque.h"

@@ -13,10 +13,13 @@
 
 #include "plsensor.h"
 #include <sys/types.h>
-// #include <sys/socket.h>
-//#include <netinet/in.h>
-//#include <arpa/inet.h>
+#ifdef WIN32
 #include <winsock2.h>
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#endif // WIN32
 
 #include "val_str.h"
 

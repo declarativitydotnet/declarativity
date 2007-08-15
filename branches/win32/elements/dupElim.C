@@ -12,6 +12,10 @@
  * 
  */
 
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
+
 #include "dupElim.h"
 
 DupElim::DupElim(string name)
@@ -22,9 +26,12 @@ DupElim::DupElim(string name)
 TuplePtr DupElim::simple_action(TuplePtr p)
 {
   // Attempt to insert tuple
-  //std::pair< std::set< TuplePtr >::iterator, bool > result = _table.insert(p);
-	// VC++ is being VERRRRRY PICKY!
+#ifdef WIN32
+  // VC++ is being VERRRRRY PICKY!
   std::_Tree<std::_Tset_traits<TuplePtr, DupElim::tuplePtrCompare, std::allocator<TuplePtr>, false> >::_Pairib result = _table.insert(p);
+#else
+  std::pair< std::set< TuplePtr >::iterator, bool > result = _table.insert(p);
+#endif // WIN32 
 
   // Did we succeed?
   if (result.second) {

@@ -17,15 +17,22 @@
 #ifndef __FDBUF_H__
 #define __FDBUF_H__
 
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
 #include <boost/shared_ptr.hpp>
 #include <cstdlib>
-//#include <stdint.h>
-#include "value.h"
+
+#ifdef WIN32
+#include <winsock2.h>
+#else
+#include <stdint.h>
+#include <sys/socket.h>
+#include <errno.h>
+#endif
+
 #include <string>
 #include <sstream>
-// #include <error.h>
-// #include <sys/socket.h>
-#include <winsock2.h>
 
 /*
   A brief implementation discussion is in order.  Unlike (say) DM's
@@ -52,7 +59,11 @@ private:
 
   // Used by write, send, sendto...
   inline ssize_t post_write(uint32_t w) {
+#ifdef WIN32
     err = WSAGetLastError();
+#else
+	err = errno;
+#endif
     if (w > 0) {
       start += w;
       len -= w;
@@ -62,7 +73,11 @@ private:
   
   // Used by read, recv, recvfrom...
   inline ssize_t post_read(uint32_t r) {
+#ifdef WIN32
     err = WSAGetLastError();
+#else
+	err = errno;
+#endif
     if (r > 0) {
       len += r;
     }

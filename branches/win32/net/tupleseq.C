@@ -11,6 +11,9 @@
  */
 
 #include <iostream>
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
 #include "tupleseq.h"
 #include "val_uint64.h"
 #include "val_uint32.h"

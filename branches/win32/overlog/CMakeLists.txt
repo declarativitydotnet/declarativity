@@ -5,7 +5,7 @@ FLEX_TARGET(P2Lexer ${P2_SOURCE_DIR}/overlog/ol_lexer.lex ${P2_BINARY_DIR}/overl
 #ADD_FLEX_BISON_DEPENDENCY(P2Lexer P2Parser)
 
 # Include binary directory to include lexer.c in parser.c
-INCLUDE_DIRECTORIES(${P2_BINARY_DIR}/overlog)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} ${P2_BINARY_DIR}/overlog)
 ADD_DEPENDENCIES(p2overlog p2core)
 
 ##

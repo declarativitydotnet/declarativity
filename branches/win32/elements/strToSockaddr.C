@@ -12,11 +12,15 @@
  * 
  */
 
-//#include <netdb.h>
-//#include <sys/socket.h>
-//#include <netinet/in.h>
-//#include <arpa/inet.h>
+#ifdef WIN32
+#include "p2_win32.h"
 #include <winsock2.h>
+#else
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#endif // WIN32
 
 #include "strToSockaddr.h"
 #include "val_opaque.h"
@@ -55,17 +59,27 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
   }
 
   // Split into address and port
-  // const char * theString = Val_Str::cast(first).c_str();
+#ifdef WIN32
   string str = Val_Str::cast(first);
   const char * theString = str.c_str();
+#else
+  const char * theString = Val_Str::cast(first).c_str();
+#endif
   const char * theAtSign = strchr(theString, ':');
   if (theAtSign == NULL) {
     // Couldn't find the correct format
-    log(Reporting::WARN, -1, string("Field to translate ")+first->toString()+" is malformed");
+    ELEM_WARN("Field to translate "
+              << first->toString()
+              << " is malformed");
     return TuplePtr();
   }
   string theAddress(theString, theAtSign - theString);
-  LPHOSTENT host = gethostbyname(theAddress.c_str());
+#ifdef WIN32
+  LPHOSTENT 
+#else
+  struct hostent *
+#endif // WIN32
+	         host = gethostbyname(theAddress.c_str());
   if (host != NULL) {
     theAddress = inet_ntoa(*((struct in_addr*)host->h_addr));
   }
@@ -81,10 +95,11 @@ TuplePtr StrToSockaddr::simple_action(TuplePtr p)
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
   //inet_pton(AF_INET, theAddress.c_str(), &addr.sin_addr);
-  int saddr_len;
-  // WSAStringToAddress((LPSTR) theAddress.c_str(), AF_INET, NULL, (LPSOCKADDR) &addr.sin_addr, &saddr_len);
+#ifdef WIN32
   addr.sin_addr = *((LPIN_ADDR)*host->h_addr_list);
-//  addr.sin_addr.s_addr = inet_addr(theAddress.c_str());
+#else
+  addr.sin_addr.s_addr = inet_addr(theAddress.c_str());
+#endif // WIN32
 
   FdbufPtr addressUio(new Fdbuf());
   addressUio->push_bytes((char*)&addr, sizeof(addr));

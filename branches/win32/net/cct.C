@@ -11,6 +11,9 @@
 
 #include <algorithm>
 #include <iostream>
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
 #include "loop.h"
 #include "cct.h"
 #include "val_uint64.h"

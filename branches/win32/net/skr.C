@@ -10,6 +10,9 @@
  * 
  */
 
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
 #include <iostream>
 #include "skr.h"
 #include "val_tuple.h"

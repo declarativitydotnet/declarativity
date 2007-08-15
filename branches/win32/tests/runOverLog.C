@@ -14,6 +14,10 @@
  * fills in the env table with the local host.
  */
 
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
+
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */

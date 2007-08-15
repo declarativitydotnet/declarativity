@@ -18,6 +18,10 @@
  *   to the string boundaries. 
  */
 
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
+
 #include "csvparser.h"
 
 #include "val_str.h"

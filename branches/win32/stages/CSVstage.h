@@ -17,6 +17,9 @@
 #ifndef _CSVSTAGE_H_
 #define _CSVSTAGE_H_
 
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
 #include <string>
 #include <queue>
 #include <iostream>

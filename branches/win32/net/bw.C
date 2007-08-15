@@ -9,7 +9,9 @@
  * Berkeley, CA,  94707. Attention: P2 Group.
  * 
  */
-
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
 #include <iostream>
 #include "bw.h"
 
@@ -48,12 +50,15 @@ Bandwidth::simple_action(TuplePtr p)
 REMOVABLE_INLINE time_t
 Bandwidth::now_s() const
 {
-  // struct timeval tv;
-  // gettimeofday(&tv, NULL);
+#ifdef WIN32
   SYSTEMTIME st;
   GetSystemTime(&st);
   return(st.wSecond);
-//	return tv.tv_sec;		// Time in seconds
+#else
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return tv.tv_sec;		// Time in seconds
+#endif
 }
 
 

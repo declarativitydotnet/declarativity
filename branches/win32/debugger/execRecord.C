@@ -9,7 +9,9 @@
  *
 */
 
-
+#ifdef WIN32
+#include "p2_win32.h"
+#endif
 #include "execRecord.h"
 #include "val_time.h"
 

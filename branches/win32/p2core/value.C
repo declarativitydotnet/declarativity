@@ -13,8 +13,8 @@
  *
  */
 
-#include "loop.h"
 #include "value.h"
+#include "loop.h"
 
 #include "val_null.h"
 #include "val_str.h"

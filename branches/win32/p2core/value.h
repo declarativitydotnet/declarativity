@@ -57,7 +57,6 @@
 #ifndef __VALUE_H__
 #define __VALUE_H__
 
-#include <boost/shared_ptr.hpp>
 #include <vector>
 #include <string>
 #include <sstream>
@@ -69,6 +68,7 @@
 #include "config.h"
 
 #include "reporting.h"
+#include "math.h"
 
 //extern "C" {
 //#include <rpc/rpc.h>
@@ -76,6 +76,11 @@
 //}
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+
+#ifdef WIN32
+#include "p2_win32.h"
+#endif
+
 
 // deal with P2_XDR portability issues (originally found on OS X 10.4)
 #ifdef HAVE_XDR_U_INT32_T
@@ -91,54 +96,12 @@ inline double trunc(double f) { if (f > 0) return floor(f); else return ceil(f);
 inline double round(double f) { return floor(f + 0.5); }
 #endif
 
-typedef __int64 int64_t;
-typedef __int32 int32_t;
-typedef __int16 int16_t;
-typedef unsigned __int64 uint64_t;
-typedef unsigned __int32 uint32_t;
-typedef unsigned __int16 uint16_t;
-typedef unsigned int uint;
-typedef unsigned __int64 u_int64_t;
-typedef unsigned __int32 u_int32_t;
-typedef unsigned __int16 u_int16_t;
-typedef unsigned int u_int;
-typedef long ssize_t;
-typedef int bool_t;
-typedef int socklen_t;
-#ifndef caddr_t
-typedef char* caddr_t;
-#endif /* caddr_t */
-
-#ifndef strtoull
-#define strtoull _strtoui64
-#endif
-
-#ifndef strtoll
-#define strtoll _strtoi64
-#endif
-
-
-#ifndef llabs
-#define llabs _abs64
-#endif
-
-struct timespec {
-	long tv_sec;
-    long tv_nsec;
-};
-
-#ifndef drand48
-inline int32_t drand48() { unsigned int retval; (void) rand_s(&retval); return (int32_t) retval; }
-#endif
-
-#ifndef HAVE_RANDOM
-inline int32_t random() { return (int32_t) rand(); }
-inline void srandom(unsigned int seed) { srand(seed); }
-#endif
 // deal with exp10 portability issues (missing from gcc4 on OS X 10.4)
 #ifndef HAVE_EXP10
 #define exp10(n) 	pow(10.0,(n))
 #endif /* NO_EXP10 */
+
+#include <boost/shared_ptr.hpp>
 
 using std::string;
 using std::ostringstream;

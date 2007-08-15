@@ -71,7 +71,13 @@ Val_UInt64::cast(ValuePtr v) {
     returnValue = 0;
     break;
   case Value::STR:
-    returnValue = /* strtoull */ _strtoui64(Val_Str::cast(v).c_str(),(char **)NULL, 0);
+    returnValue = 
+#ifdef WIN32
+      _strtoui64
+#else
+      strtoull
+#endif // WIN32
+                (Val_Str::cast(v).c_str(),(char **)NULL, 0);
     break;
   default:
     throw Value::TypeError(v->typeCode(),

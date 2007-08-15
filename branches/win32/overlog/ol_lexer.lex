@@ -39,6 +39,10 @@
 #endif
 #define YY_DECL int OL_Lexer::yylex (YYSTYPE *lvalp, OL_Context *ctxt)
 
+#ifdef WIN32
+using namespace std;
+#endif
+
 int dcvar = 0;
 
 %}

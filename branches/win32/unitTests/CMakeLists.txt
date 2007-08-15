@@ -12,6 +12,6 @@ ADD_EXECUTABLE(p2Test
 				testLists.C 
 				testAggwrap.C)
 #SET_TARGET_PROPERTIES(p2Test PROPERTIES HAS_CXX TRUE)
-TARGET_LINK_LIBRARIES(p2Test libboost_unit_test_framework-vc80-mt-gd-1_33_1 libeay32MDd p2overlog p2net p2stages p2elements p2debugger p2core getopt)
+TARGET_LINK_LIBRARIES(p2Test ${COMMON_LIBRARIES})
 
-INCLUDE_DIRECTORIES(${P2_SOURCE_DIR}/elements ${P2_SOURCE_DIR}/stages ${P2_SOURCE_DIR}/getopt)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} ${P2_SOURCE_DIR}/elements ${P2_SOURCE_DIR}/stages ${P2_SOURCE_DIR}/getopt)

@@ -9,6 +9,9 @@
  *
  */
 
+#ifdef WIN32
+#include "p2_win32.h"
+#endif
 #include "traceTuple.h"
 #include "val_tuple.h"
 #include "val_str.h"

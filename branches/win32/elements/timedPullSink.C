@@ -12,6 +12,10 @@
  * 
  */
 
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
+
 #include <timedPullSink.h>
 #include <element.h>
 #include <math.h>

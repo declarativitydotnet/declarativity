@@ -20,8 +20,11 @@
 #include <set>
 
 // For in_addr
-//#include <netinet/in.h>
+#ifdef WIN32
 #include <winsock2.h>
+#else
+#include <netinet/in.h>
+#endif // WIN32
 
 #include <p2Time.h>
 #include "boost/date_time/posix_time/posix_time.hpp"

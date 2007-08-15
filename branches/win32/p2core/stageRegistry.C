@@ -10,6 +10,9 @@
  * 
  */
 
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
 #include "stageRegistry.h"
 #include <boost/function.hpp>
 #include "stage.h"

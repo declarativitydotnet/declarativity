@@ -11,6 +11,11 @@
  * Berkeley, CA,  94707. Attention: P2 Group.
  * 
  */
+
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
+
 #include "marshal.h"
 
 #include "val_opaque.h"

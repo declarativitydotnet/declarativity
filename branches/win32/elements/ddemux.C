@@ -10,6 +10,10 @@
  * 
  */
 
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
+
 #include "ddemux.h"
 #include <boost/bind.hpp>
 

@@ -12,6 +12,9 @@
  * 
  */
 
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
 #include "printWatch.h"
 #include "p2Time.h"
 #include "val_tuple.h"

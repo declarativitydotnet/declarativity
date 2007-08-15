@@ -1420,7 +1420,11 @@ testRefTable::testPseudoRandomInsertDeleteSequences()
       for (uint w = 0;
            w < ID::WORDS;
            w++) {
+#ifdef WIN32
         words[w] = rand_s(&nestedSeed);
+#else
+        words[w] = rand_r(&nestedSeed);
+#endif // WIN32
       }
       tup->append(Val_ID::mk(ID::mk(words)));
     

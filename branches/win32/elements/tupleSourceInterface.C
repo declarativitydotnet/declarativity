@@ -9,6 +9,9 @@
  * 
  */
 
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
 #include "tupleSourceInterface.h"
 #include "loop.h"
 #include <boost/bind.hpp>

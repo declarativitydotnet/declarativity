@@ -35,6 +35,10 @@
  * method's return value.
  */
 
+#ifdef WIN32
+#include "p2_win32.h"
+#endif // WIN32
+
 #include "aggwrap2.h"
 #include "val_int32.h"
 #include "val_str.h"

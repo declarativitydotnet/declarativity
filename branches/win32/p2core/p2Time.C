@@ -11,6 +11,7 @@
  * Berkeley, CA,  94707. Attention: P2 Group.
  */
 
+#include "value.h"
 #include "p2Time.h"
 #include "math.h"
 

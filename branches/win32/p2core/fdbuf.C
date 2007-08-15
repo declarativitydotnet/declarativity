@@ -13,20 +13,24 @@
  * DESCRIPTION: Receive buffer for file descriptors
  *
  */
-#define NOMINMAX // don't let windef.h put in macros for min and max, screwing up std::min
 #include "fdbuf.h"
 
 #include <cerrno>
-// #include <unistd.h>
-#include <sys/types.h>
-// #include <sys/socket.h>
-#include <assert.h>
+
+#ifdef WIN32
 #include <winsock2.h>
 // for Win32 _read
 #include <io.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <share.h>
+#else
+#include <unistd.h>
+#include <sys/socket.h>
+#endif
+
+#include <sys/types.h>
+#include <assert.h>
 
 
 //
@@ -65,7 +69,13 @@ Fdbuf::~Fdbuf()
 ssize_t Fdbuf::read(int fd, uint32_t max_read)
 {
   ensure_additional(max_read);
-  return post_read(::_read(fd, data + start + len, max_read));
+  return post_read(
+#ifdef WIN32
+                   ::_read
+#else
+                   ::read
+#endif
+                          (fd, data + start + len, max_read));
 }
 ssize_t Fdbuf::recv(int fd, uint32_t max_read, int flags)
 {
@@ -85,7 +95,11 @@ ssize_t Fdbuf::recvfrom(int sd, uint32_t max_read, int flags,
 Fdbuf &Fdbuf::pushString(const std::string &s)
 {
   ensure_additional(s.length());
+#ifdef WIN32
   s._Copy_s(data + start + len, s.length(), s.length());
+#else
+  s.copy(data + start + len, s.length(), 0);
+#endif
   len += s.length();
   return *this;
 }
@@ -110,7 +124,13 @@ Fdbuf &Fdbuf::pushFdbuf(const Fdbuf &fb, uint32_t max_size)
 ssize_t
 Fdbuf::write(int fd, ssize_t max_write)
 {
-  return post_write(::_write(fd,
+  return post_write(
+#ifdef WIN32
+                    ::_write(
+#else
+					::write(
+#endif // WIN32
+                             fd,
                             data + start, 
 			    (max_write < 0) ? len
                             : std::min(len, (uint32_t) max_write)));
@@ -129,7 +149,7 @@ ssize_t Fdbuf::sendto(int sd, ssize_t max_write, int flags,
 	ssize_t s = ::sendto(sd, data + start, 
 						 ((max_write < 0) ? len
 						  : std::min(len, (uint32_t) max_write)),
-						 flags, (LPSOCKADDR) to, tolen);
+						 flags, to, tolen);
 	unsigned int i = post_write(s);
 	return (ssize_t) i;
 }
