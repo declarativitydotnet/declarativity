@@ -1427,7 +1427,6 @@ namespace compile {
 
       Rule* r;
       Namespace *nmSpc;
-      Table* tab;
 
       for (StatementList::iterator iter = s->begin();
              iter != s->end(); iter++) { 
