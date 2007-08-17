@@ -233,7 +233,9 @@ namespace compile {
     {
       TuplePtr tp = Tuple::mk(SET);
   
+      tp->append(Val_Str::mk(SET));
       tp->append(Val_UInt32::mk(_args->size()));
+
       for (ExpressionList::iterator iter = _args->begin(); 
            iter != _args->end(); iter++) {
         tp->append((*iter)->tuple());
@@ -1084,6 +1086,15 @@ namespace compile {
 				      TermList *t){
       //      is 1 < 2
       // assert that there are only four terms in each of the iterator
+      // first generate the lte terms
+      Functor::generateSelectTerms(start1, end1, start2, end2, Bool::LTE, t);
+      Expression *modP = new Bool(Bool::NOT, (*start1)->copy());
+      Expression *modPPrime = new Bool(Bool::NOT, (*start2)->copy());
+      Math *lhs = new Math(Math::MINUS, modP, modPPrime);
+      Math *rhs = new Math(Math::MINUS, (*(start1+2))->copy(), (*(start1+2))->copy());
+      Math *term = new Math(Bool::EQ, lhs, rhs);
+      
+      t->push_back(term);
       return t;
     }
 

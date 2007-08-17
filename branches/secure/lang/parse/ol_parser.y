@@ -412,7 +412,7 @@ matrixentry: OL_LSQUB vectorentries OL_RSQUB
              { $$ = $2; }
            ;
 
-atom: OL_VALUE | OL_STRING | OL_NULL | vector_expr | matrix_expr
+atom: OL_VALUE | OL_STRING | OL_NULL | vector_expr | matrix_expr | set
       { $$ = $1; 
       //std::cout<<std::endl<<"Executing atom";  
       }
