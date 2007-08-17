@@ -49,6 +49,8 @@ SOURCE_FILE_ROOTS =	reporting \
 			dot \
 			list \
 			val_list \
+			set \
+			val_set \
 			val_vector \
 			CSVlex \
 			val_matrix \

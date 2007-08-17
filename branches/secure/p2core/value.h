@@ -120,6 +120,7 @@ public:
     IP_ADDR,
     /* NEW TYPE DEFINITIONS GO UNDER HERE */
     TIME_DURATION,
+    SET,
     LIST,
     VECTOR,
     MATRIX,

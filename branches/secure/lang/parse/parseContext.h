@@ -16,6 +16,7 @@
 
 #include <string>
 #include <deque>
+#include <set>
 #include <iostream>
 #include <map>
 #include "compileContext.h"
@@ -440,6 +441,17 @@ namespace compile {
       string          _name;
       ExpressionList* _args;
     };
+
+    struct TableEntry{
+      string name;
+      int fields;
+      static const int numSecureFields;
+      TableEntry(string _name, int _fields){
+	name = _name;
+	fields = _fields;
+      }
+    };
+
     
     /***************************************************
      * TERMS
@@ -455,6 +467,8 @@ namespace compile {
 	_complement = f->_complement;
       }; 
      
+      Functor(TableEntry* t, int &fictVar);
+
       Functor(const Functor &f) 
         : _name(f._name), _complement(f._complement){ 
 	ExpressionList *a = new ExpressionList();
@@ -496,6 +510,24 @@ namespace compile {
 
       TermList* generateEqTerms(Functor* s);
     
+      virtual void changeName(string newName)
+      {
+	_name = newName;
+      }
+
+      static TermList* generateEqTerms(ExpressionList::iterator start1, 
+				       ExpressionList::iterator end1, 
+				       ExpressionList::iterator start2, 
+				       ExpressionList::iterator end2,
+				       TermList *t = NULL);
+
+      static TermList* generateSelectTerms(ExpressionList::iterator start1, 
+					   ExpressionList::iterator end1, 
+					   ExpressionList::iterator start2, 
+					   ExpressionList::iterator end2,
+					   int o,
+					   TermList *t = NULL);
+
       virtual void replace(ExpressionList::iterator i, 
                            Expression *e);
     
@@ -515,13 +547,15 @@ namespace compile {
       const static string verFunc;
       const static string genFunc;
       const static string saysPrefix;
+      const static string makeSays;
+      const static string globalScope;
+      enum additionAxis{SPEAKER=0, RECEIVER, VERIFIER};
 
       Says(Functor* f, ExpressionList* s):Functor(f), _says(s){
 	if(f->isComplement())
 	{
 	  throw compile::Exception("Functor with ! can't be said");
 	}
-
       };
 
       Says(const Says &s):Functor(s){
@@ -539,10 +573,6 @@ namespace compile {
 	return v;
       }
 
-      virtual void changeName(string newName)
-      {
-	_name = newName;
-      }
 
       virtual string toString() const;
 
@@ -557,9 +587,27 @@ namespace compile {
       // return a list of terms that needs to be added to the rule on converting the 
       // securelog term f into overlog.
       // Also converts f into the appropriate overlog form
-      static TermList* normalizeVerify(Functor* f, int& newVariable, bool addKeyConstraint = false);
+      //      static TermList* normalizeVerify(Functor* f, int& newVariable, bool addKeyConstraint = false);
+
+      static void normalizeVerify(Functor* f, int& newVariable);
 
       static TermList* normalizeGenerate(Functor* f, int& newVariable);
+
+
+      static TermList* generateAlgebraLT(ExpressionList::iterator start1, 
+					 ExpressionList::iterator end1, 
+					 ExpressionList::iterator start2, 
+					 ExpressionList::iterator end2, 
+					 TermList *t = NULL);
+
+      static TermList* generateAlgebraCombine(int o, 
+					      ExpressionList::iterator start1, 
+					      ExpressionList::iterator end1, 
+					      ExpressionList::iterator start2, 
+					      ExpressionList::iterator end2,
+					      ExpressionList::iterator headStart, 
+					      ExpressionList::iterator headEnd,
+					      TermList *t = NULL);
 
     private:
       ExpressionList* _says;
@@ -718,6 +766,8 @@ namespace compile {
     }; 
     typedef std::deque<Namespace*> NamespaceList;
 
+    typedef std::set<TableEntry*> TableSet;
+
     class Rule : public Statement {
     public:
       Rule(Term *t, TermList *rhs, bool deleteFlag, Expression *n=NULL); 
@@ -756,11 +806,17 @@ namespace compile {
       virtual const TermList* body() const
       { return _body; }
 
-      virtual void initializeRule(StatementList *s);
+      virtual TableSet* initializeRule(StatementList *s);
 
       virtual void canonicalizeRule();
 
+      static void getAlgebra(TableEntry *t, StatementList *s);
+      
+      static void getVerifier(TableEntry *t, StatementList *S);
+
     private:
+
+
       void canonicalizeAttributes(Functor*, TermList*, bool);
 
       void resetName(){
@@ -805,13 +861,16 @@ namespace compile {
     
       virtual Table2::Key primaryKeys() const
       { return _keys; }
-    
+
+      virtual void initialize();
+
       static StatementList* generateMaterialize();
     private:
       string                           _name;
       boost::posix_time::time_duration _lifetime;
       int64_t                          _size;
       Table2::Key                      _keys;
+      bool                             _says;
     };
     typedef std::deque<Table*> TableList;
     

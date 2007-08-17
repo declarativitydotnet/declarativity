@@ -42,7 +42,7 @@ namespace opr {
    * UINT32, INT64,  UINT64, 
    * DOUBLE, OPAQUE, TUPLE,  
    * TIME,   ID,     IP_ADDR,
-   * TIME_DURATION, LIST, VECTOR,
+   * TIME_DURATION, SET, LIST, VECTOR,
    * MATRIX
    */
   const Oper** Oper::oper_table_[Value::TYPES][Value::TYPES] = {
@@ -141,7 +141,15 @@ namespace opr {
               &Val_Time_Duration::oper_,
      &Val_Time_Duration::oper_, &Val_Time_Duration::oper_,
               &Val_Time_Duration::oper_,
-	 &Val_Time_Duration::oper_}
+     &Val_Time_Duration::oper_},
+    /* SET */
+    {&Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_, 
+     &Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_, 
+     &Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_, 
+     &Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_,
+     &Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_,
+	 &Val_Set::oper_}
+
   };
   // const Oper** Oper::oper_table_[Value::TYPES][Value::TYPES] = {
   //   /* NULLV */

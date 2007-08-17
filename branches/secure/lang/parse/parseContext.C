@@ -38,7 +38,7 @@
 namespace compile {
   namespace parse {
     using namespace opr;
-
+    
     ValuePtr 
     Value::tuple() const
     {
@@ -80,15 +80,17 @@ namespace compile {
     }
     
 
-     const string Says::verTable = "verKey"; 
-     const string Says::genTable = "genKey"; 
-     const string Says::hashFunc = "f_sha1"; 
-     const string Says::verFunc = "f_verify"; 
-     const string Says::genFunc = "f_gen"; 
-     const string Says::encHint = "encHint"; 
-     const string Says::varPrefix = "_"; 
-     const string Says::saysPrefix = "says"; 
-
+    const string Says::verTable = "verKey"; 
+    const string Says::genTable = "genKey"; 
+    const string Says::hashFunc = "f_sha1"; 
+    const string Says::verFunc = "f_verify"; 
+    const string Says::genFunc = "f_gen"; 
+    const string Says::encHint = "encHint"; 
+    const string Says::varPrefix = "_"; 
+    const string Says::saysPrefix = "says"; 
+    const string Says::makeSays = "makeSays"; 
+    const string Says::globalScope = "::"; 
+    const int TableEntry::numSecureFields = 5;
     
     string 
     Bool::toString() const {
@@ -460,15 +462,29 @@ namespace compile {
 	t->push_back(Variable::getLocalLocationSpecifier());
 	ExpressionList::iterator iter; 
 	ExpressionList *saysList =  const_cast<ExpressionList*>(s->saysParams());
-	for (iter = saysList->begin(); 
-	     iter != saysList->end(); iter++){
+	//generate TabelEntry::numSecureFields -1 new terms for P, R, k, V on rhs
+	ExpressionList *rhsSaysParams = new ExpressionList();
+	for(int i = 0; i< TableEntry::numSecureFields -1; i++)
+	{
+	  ostringstream v;
+	  v << Says::varPrefix << newVariable++;
+	  rhsSaysParams->push_back(new Variable(Val_Str::mk(v.str())));
+	}
+
+	// add constraints between saysParams and rhsSaysParams
+	Says::generateAlgebraLT(saysList->begin(), saysList->end(), 
+				rhsSaysParams->begin(), rhsSaysParams->end(), newTerms);
+
+	// finally extract the appropriate proof using the rhsSaysParams
+	for (iter = rhsSaysParams->begin(); 
+	     iter != rhsSaysParams->end(); iter++){
 	  t->push_back(*iter);
 	}
 	ostringstream var1;
 	var1 << Says::varPrefix << newVariable++;
 	Variable *encId = new Variable(Val_Str::mk(var1.str()));
 	t->push_back(encId);
-	Functor *genHint = new Functor(new Value(Val_Str::mk(Says::encHint)), t);
+	Functor *genHint = new Functor(new Value(Val_Str::mk(Says::globalScope + Says::encHint)), t);
 
 	//create key generation table
 	ExpressionList *genT = new ExpressionList();
@@ -479,7 +495,7 @@ namespace compile {
 	var2 << Says::varPrefix << newVariable++;
 	Variable *genKey = new Variable(Val_Str::mk(var2.str()));
 	genT->push_back(genKey);
-	Functor *genTable = new Functor(new Value(Val_Str::mk(Says::genTable)), genT);
+	Functor *genTable = new Functor(new Value(Val_Str::mk(Says::globalScope + Says::genTable)), genT);
 
 	//create buffer creation logic
 	ostringstream var3;
@@ -491,6 +507,7 @@ namespace compile {
 	Value *table = new Value(Val_Str::mk(s->_name));
 	Expression *cur = table;
 
+	// since loc spec is not included
 	if(s->_args->size() > 1)
 	{
 	  ExpressionList *list = s->saysArgs();
@@ -540,7 +557,7 @@ namespace compile {
 	}
 	arg->push_back(proof);
 	
-	s->changeName(Says::saysPrefix + s->name());
+	s->changeName(Says::makeSays + s->name());
 
 	// finally return the new terms
 	return newTerms;
@@ -555,119 +572,143 @@ namespace compile {
     // the last boolean indicates if the list of terms should also include the 
     // constraint that "the verifying principal doesn't have the authority to 
     // generate the proof"
-    TermList* Says::normalizeVerify(Functor* f, int& newVariable, bool addNoKeyConstraint)
+    void Says::normalizeVerify(Functor* f, int& newVariable)
     {
       Says *s;
       if ((s = dynamic_cast<Says*>(f)) != NULL)
       {
-	
-	TermList *newTerms = new TermList();
-
-	// create encryption hint
-	ExpressionList *t = new ExpressionList();
-	t->push_back(s->getLocSpec());
-	ExpressionList::iterator iter; 
-	ExpressionList *saysList =  const_cast<ExpressionList*>(s->saysParams());
-	for (iter = saysList->begin(); 
-	     iter != saysList->end(); iter++){
-	  t->push_back(*iter);
-	}
-	ostringstream var1;
-	var1 << Says::varPrefix << newVariable++;
-	Variable *encId = new Variable(Val_Str::mk(var1.str()));
-	t->push_back(encId);
-	Functor *encHint = new Functor(new Value(Val_Str::mk(Says::encHint)), t);
-
-	//create verification table
-	ExpressionList *verT = new ExpressionList();
-	verT->push_back(s->getLocSpec());
-	verT->push_back(encId);
-
-	ostringstream var2;
-	var2 << Says::varPrefix << newVariable++;
-	Variable *verKey = new Variable(Val_Str::mk(var2.str()));
-	verT->push_back(verKey);
-	Functor *verTable = new Functor(new Value(Val_Str::mk(Says::verTable)), verT);
-
-	//create buffer creation logic
-	ostringstream var3;
-	var3 << Says::varPrefix << newVariable++;
-	Variable *buf = new Variable(Val_Str::mk(var3.str()));
-
-	// check if the concatenate operation is needed or not
-	// remember that the loc specifier is excluded but the table name must be included
-	Value *table = new Value(Val_Str::mk(s->_name));
-	Expression *cur = table;
-
-	if(s->_args->size() > 1)
-	{
-	  ExpressionList *list = s->saysArgs();
-	  iter = list->begin();
-	  //exclude location specifier
-	  iter++; 
-	  for (; iter != list->end(); iter++){
-	    cur = new Math(Math::BITOR, cur, *iter);
-	  }
-	}
-
-	Assign *assBuf = new Assign(buf, cur);
-
-	//create verification logic
-	ostringstream var4;
-	var4 << Says::varPrefix << newVariable++;
-	Variable *hash = new Variable(Val_Str::mk(var4.str()));
-	ostringstream var5;
-	var5 << Says::varPrefix << newVariable++;
-	Variable *proof = new Variable(Val_Str::mk(var5.str()));
-
-	ExpressionList *hashArg = new ExpressionList();
-	hashArg->push_back(buf);
-	Function *f_hash = new Function(new Value(Val_Str::mk(Says::hashFunc)), hashArg);
-	Assign *assHash = new Assign(hash, f_hash);
-
-
-	ExpressionList *verArg = new ExpressionList();
-	verArg->push_back(proof);
-	verArg->push_back(verKey);
-	Function *f_verify = new Function(new Value(Val_Str::mk(Says::verFunc)), verArg);
-	Assign *assVer = new Assign(hash, f_verify);
-
-
-	newTerms->push_back(encHint);
-	newTerms->push_back(verTable);
-	newTerms->push_back(assBuf);
-	newTerms->push_back(assHash);
-	newTerms->push_back(assVer);
-	
-	if(addNoKeyConstraint)
-	{
-	  ExpressionList *genT = new ExpressionList();
-	  genT->push_back(Variable::getLocalLocationSpecifier());
-	  genT->push_back(encId);
-	  ostringstream var6;
-	  var6 << Says::varPrefix << newVariable++;
-	  Variable *genKey = new Variable(Val_Str::mk(var6.str()));
-	  genT->push_back(genKey);
-	  Functor *genTable = new Functor(new Value(Val_Str::mk(Says::genTable)), genT, true);
-	  
-	  newTerms->push_back(genTable);
-	}
 	// now modify the says tuple
-
+	ExpressionList::iterator iter;
 	ExpressionList *arg = s->saysArgs();
+	ExpressionList *saysList =  const_cast<ExpressionList*>(s->saysParams());
 	for (iter = saysList->begin(); 
 	     iter != saysList->end(); iter++){
 	  arg->push_back(*iter);
 	}
+
+ 	ostringstream var5;
+ 	var5 << Says::varPrefix << newVariable++;
+ 	Variable *proof = new Variable(Val_Str::mk(var5.str()));
 	arg->push_back(proof);
 	
 	s->changeName(Says::saysPrefix + s->name());
 
-	// finally return the new terms
-	return newTerms;
       }
-      return NULL;
     }
+
+//     TermList* Says::normalizeVerify(Functor* f, int& newVariable, bool addNoKeyConstraint)
+//     {
+//       Says *s;
+//       if ((s = dynamic_cast<Says*>(f)) != NULL)
+//       {
+	
+// 	TermList *newTerms = new TermList();
+
+// 	// create encryption hint
+// 	ExpressionList *t = new ExpressionList();
+// 	t->push_back(s->getLocSpec());
+// 	ExpressionList::iterator iter; 
+// 	ExpressionList *saysList =  const_cast<ExpressionList*>(s->saysParams());
+// 	for (iter = saysList->begin(); 
+// 	     iter != saysList->end(); iter++){
+// 	  t->push_back(*iter);
+// 	}
+// 	ostringstream var1;
+// 	var1 << Says::varPrefix << newVariable++;
+// 	Variable *encId = new Variable(Val_Str::mk(var1.str()));
+// 	t->push_back(encId);
+// 	Functor *encHint = new Functor(new Value(Val_Str::mk(Says::globalScope + Says::encHint)), t);
+
+// 	//create verification table
+// 	ExpressionList *verT = new ExpressionList();
+// 	verT->push_back(s->getLocSpec());
+// 	verT->push_back(encId);
+
+// 	ostringstream var2;
+// 	var2 << Says::varPrefix << newVariable++;
+// 	Variable *verKey = new Variable(Val_Str::mk(var2.str()));
+// 	verT->push_back(verKey);
+// 	Functor *verTable = new Functor(new Value(Val_Str::mk(Says::globalScope + Says::verTable)), verT);
+
+// 	//create buffer creation logic
+// 	ostringstream var3;
+// 	var3 << Says::varPrefix << newVariable++;
+// 	Variable *buf = new Variable(Val_Str::mk(var3.str()));
+
+// 	// check if the concatenate operation is needed or not
+// 	// remember that the loc specifier is excluded but the table name must be included
+// 	Value *table = new Value(Val_Str::mk(s->_name));
+// 	Expression *cur = table;
+
+// 	if(s->_args->size() > 1)
+// 	{
+// 	  ExpressionList *list = s->saysArgs();
+// 	  iter = list->begin();
+// 	  //exclude location specifier
+// 	  iter++; 
+// 	  for (; iter != list->end(); iter++){
+// 	    cur = new Math(Math::BITOR, cur, *iter);
+// 	  }
+// 	}
+
+// 	Assign *assBuf = new Assign(buf, cur);
+
+// 	//create verification logic
+// 	ostringstream var4;
+// 	var4 << Says::varPrefix << newVariable++;
+// 	Variable *hash = new Variable(Val_Str::mk(var4.str()));
+// 	ostringstream var5;
+// 	var5 << Says::varPrefix << newVariable++;
+// 	Variable *proof = new Variable(Val_Str::mk(var5.str()));
+
+// 	ExpressionList *hashArg = new ExpressionList();
+// 	hashArg->push_back(buf);
+// 	Function *f_hash = new Function(new Value(Val_Str::mk(Says::hashFunc)), hashArg);
+// 	Assign *assHash = new Assign(hash, f_hash);
+
+
+// 	ExpressionList *verArg = new ExpressionList();
+// 	verArg->push_back(proof);
+// 	verArg->push_back(verKey);
+// 	Function *f_verify = new Function(new Value(Val_Str::mk(Says::verFunc)), verArg);
+// 	Assign *assVer = new Assign(hash, f_verify);
+
+
+// 	newTerms->push_back(encHint);
+// 	newTerms->push_back(verTable);
+// 	newTerms->push_back(assBuf);
+// 	newTerms->push_back(assHash);
+// 	newTerms->push_back(assVer);
+	
+// 	if(addNoKeyConstraint)
+// 	{
+// 	  ExpressionList *genT = new ExpressionList();
+// 	  genT->push_back(Variable::getLocalLocationSpecifier());
+// 	  genT->push_back(encId);
+// 	  ostringstream var6;
+// 	  var6 << Says::varPrefix << newVariable++;
+// 	  Variable *genKey = new Variable(Val_Str::mk(var6.str()));
+// 	  genT->push_back(genKey);
+// 	  Functor *genTable = new Functor(new Value(Val_Str::mk(Says::globalScope + Says::genTable)), genT, true);
+	  
+// 	  newTerms->push_back(genTable);
+// 	}
+// 	// now modify the says tuple
+
+// 	ExpressionList *arg = s->saysArgs();
+// 	for (iter = saysList->begin(); 
+// 	     iter != saysList->end(); iter++){
+// 	  arg->push_back(*iter);
+// 	}
+// 	arg->push_back(proof);
+	
+// 	s->changeName(Says::saysPrefix + s->name());
+
+// 	// finally return the new terms
+// 	return newTerms;
+//       }
+//       return NULL;
+//     }
 
 
 
@@ -884,29 +925,235 @@ namespace compile {
 
     TermList* Functor::generateEqTerms(Functor* s){
       assert(name().compare(s->name()) == 0);
-      TermList *newTerms = new TermList();
+      
       ExpressionList::iterator iter1; 
       ExpressionList::iterator iter2; 
       ExpressionList *saysList1 =  const_cast<ExpressionList*>(arguments());
       ExpressionList *saysList2 =  const_cast<ExpressionList*>(s->arguments());
       
       //skip location specifier terms
-      for (iter1 = saysList1->begin() + 1, iter2 = saysList2->begin() + 1 ; 
-	     iter1 < saysList1->end() && iter2 < saysList2->end(); iter1++, iter2++){
-	if(!(*iter1)->isEqual(*iter2))
+      return generateEqTerms(saysList1->begin() + 1, saysList1->end(), saysList2->begin() + 1, saysList2->end());
+      
+    }
+
+    TermList* Functor::generateEqTerms(ExpressionList::iterator start1, ExpressionList::iterator end1, 
+				       ExpressionList::iterator start2, ExpressionList::iterator end2,
+				       TermList *t){
+      TermList *newTerms;
+      if(t == NULL){
+      newTerms = new TermList();
+      }
+      else{
+	newTerms = t;
+      }
+      //skip location specifier terms
+      for (;start1 < end1 && start2 < end2; start1++, start2++){
+	if(!(*start1)->isEqual(*start2))
 	{
-	  newTerms->push_back(new Assign((*iter1)->copy(), (*iter2)->copy()));
+	  newTerms->push_back(new Assign((*start1)->copy(), (*start2)->copy()));
 	}
       }
 
       return newTerms;
     }
 
-    void Rule::initializeRule(StatementList *s)
+    TermList* Functor::generateSelectTerms(ExpressionList::iterator start1, ExpressionList::iterator end1, 
+					   ExpressionList::iterator start2, ExpressionList::iterator end2, int o,
+					   TermList *t){
+      TermList *newTerms;
+      if(t == NULL){
+      newTerms = new TermList();
+      }
+      else{
+	newTerms = t;
+      }
+      //skip location specifier terms
+      for (;start1 < end1 && start2 < end2; start1++, start2++){
+	if(!(*start1)->isEqual(*start2))
+	{
+	  newTerms->push_back(new Select(new Bool(o, (*start1)->copy(), (*start2)->copy())));
+	}
+      }
+
+      return newTerms;
+    }
+
+    void Rule::getAlgebra(TableEntry *tableEntry, StatementList *s){
+      int fictVar = 1;
+      TableEntry localTableEntry(Says::saysPrefix + tableEntry->name, tableEntry->numSecureFields);
+      TableEntry *te = &localTableEntry;
+
+      for(int i = 0; i < 3; i++){
+	Functor *f1 = new Functor(te, fictVar);
+	Functor *f2 = new Functor(te, fictVar);
+	Functor *f3 = new Functor(te, fictVar);
+	Functor *head = new Functor(te, fictVar);
+	// make all of them local
+	f2->changeLocSpec(new Variable(*f1->getLocSpec()));
+	f3->changeLocSpec(new Variable(*f1->getLocSpec()));
+	head->changeLocSpec(new Variable(*f1->getLocSpec()));
+	ExpressionList* f1Args = const_cast<ExpressionList*>(f1->arguments());
+	ExpressionList* f2Args = const_cast<ExpressionList*>(f2->arguments());
+	ExpressionList* f3Args = const_cast<ExpressionList*>(f3->arguments());
+	ExpressionList* headArgs = const_cast<ExpressionList*>(head->arguments());
+	
+	TermList *t = new TermList();
+	t->push_back(f1);
+	t->push_back(f2);
+	t->push_back(f3);
+	
+	// generate equality constraints for data parts of f1, f2 and f3
+	Functor::generateSelectTerms(f1Args->begin()+1, 
+				     f1Args->begin()+(te->fields - TableEntry::numSecureFields),
+				     f2Args->begin()+1, 
+				     f2Args->begin()+(te->fields - TableEntry::numSecureFields),
+				     Bool::EQ, 
+				     t);
+	
+	Functor::generateSelectTerms(f1Args->begin()+1, 
+				     f1Args->begin()+(te->fields - TableEntry::numSecureFields),
+				     f3Args->begin()+1, 
+				     f3Args->begin()+(te->fields - TableEntry::numSecureFields),
+				     Bool::EQ, 
+				     t);
+	
+	
+	// generate assign constraints for all fields of head
+	Says::generateAlgebraCombine(i,
+				     f1Args->begin()+(te->fields - TableEntry::numSecureFields), 
+				     f1Args->begin()+te->fields,
+				     f2Args->begin()+(te->fields - TableEntry::numSecureFields), 
+				     f2Args->begin()+te->fields,
+				     headArgs->begin()+(te->fields - TableEntry::numSecureFields), 
+				     headArgs->begin()+te->fields, 
+				     t);
+	
+	// finally check they are NOT weaker* than any other known says primitive
+	// by copying data parts and using algebra to generate the (P, R, k, V) parts
+	Says::generateAlgebraLT(
+				f3Args->begin()+(te->fields - TableEntry::numSecureFields), 
+				f3Args->begin()+te->fields,
+				headArgs->begin()+(te->fields - TableEntry::numSecureFields), 
+				headArgs->begin()+te->fields,
+				t);
+	
+	Functor::generateEqTerms(headArgs->begin()+1, 
+				 headArgs->begin()+(te->fields - TableEntry::numSecureFields),
+				 f1Args->begin()+1, 
+				 f1Args->begin()+(te->fields - TableEntry::numSecureFields),
+				 t);
+
+	Rule *r = new Rule(head, t, false);
+	s->push_back(r);
+      }
+      //issues: what if the tableEntry is not materialized?
+      // check before calling this func
+    }
+
+    TermList* Says::generateAlgebraLT(ExpressionList::iterator start1, 
+				      ExpressionList::iterator end1, 
+				      ExpressionList::iterator start2, 
+				      ExpressionList::iterator end2, 
+				      TermList *t){
+      //      is 1 < 2
+      // assert that there are only four terms in each of the iterator
+      return t;
+    }
+
+    TermList* Says::generateAlgebraCombine(int o, 
+					   ExpressionList::iterator start1, 
+					   ExpressionList::iterator end1, 
+					   ExpressionList::iterator start2, 
+					   ExpressionList::iterator end2,
+ 					   ExpressionList::iterator headStart, 
+					   ExpressionList::iterator headEnd,
+					   TermList *t){
+      return t;
+    }
+
+    // add rule to verify the correctness of proof for tables of type TableEntry t
+    void Rule::getVerifier(TableEntry *t, StatementList *s){
+      int newVariable = 1;
+      TableEntry localTableEntry(t->name, t->numSecureFields);
+      TableEntry *te = &localTableEntry;
+      te->name = Says::makeSays + t->name;
+      Functor *rhs = new Functor(te, newVariable);
+      
+      Functor *head = new Functor(*rhs);      
+      head->changeName(Says::saysPrefix + t->name);
+
+      TermList *newTerms = new TermList();
+
+      ExpressionList::iterator iter; 
+
+      //create buffer creation logic
+      ostringstream var3;
+      var3 << Says::varPrefix << newVariable++;
+      Variable *buf = new Variable(Val_Str::mk(var3.str()));
+      
+      // check if the concatenate operation is needed or not
+      // remember that the loc specifier is excluded but the table name must be included
+      Value *table = new Value(Val_Str::mk(t->name));
+      Expression *cur = table;
+      
+      ExpressionList *list = const_cast<ExpressionList*>(rhs->arguments());
+      if(rhs->arguments()->size() > TableEntry::numSecureFields + 1)
+      {
+	iter = list->begin();
+	//exclude location specifier and all secure fields
+	iter++; 
+	for (; iter < list->end() - TableEntry::numSecureFields; iter++){
+	  cur = new Math(Math::APPEND, cur, *iter);
+	}
+      }
+      
+      Assign *assBuf = new Assign(buf, cur);
+      
+      //create verification logic
+      ostringstream var4;
+      var4 << Says::varPrefix << newVariable++;
+      Variable *hash = new Variable(Val_Str::mk(var4.str()));
+      
+      ExpressionList *hashArg = new ExpressionList();
+      hashArg->push_back(buf);
+      Function *f_hash = new Function(new Value(Val_Str::mk(Says::hashFunc)), hashArg);
+      Assign *assHash = new Assign(hash, f_hash);
+      
+      
+      ExpressionList *verArg = new ExpressionList();
+      for (; iter < list->end(); iter++){
+	verArg->push_back((*iter)->copy());
+      }
+      
+      Function *f_verify = new Function(new Value(Val_Str::mk(Says::verFunc)), verArg);
+      Assign *assVer = new Assign(hash, f_verify);
+      
+      newTerms->push_back(assBuf);
+      newTerms->push_back(assHash);
+      newTerms->push_back(assVer);
+
+      Rule *r = new Rule(head, newTerms, false);
+      s->push_back(r);
+    }
+    
+    Functor::Functor(TableEntry *t, int &fictVar){
+      _complement = false;
+      _name = t->name;
+      _args = new ExpressionList();
+      for(int i = 0; i < t->fields; i++){
+	ostringstream oss;
+	oss << Says::varPrefix << fictVar++;
+	Variable *tmp = new Variable(Val_Str::mk(oss.str()), i == 0);	
+	_args->push_back(tmp);
+      }
+    }
+
+    TableSet* Rule::initializeRule(StatementList *s)
     {
       int newVariable = 1;
       Says *sh;
       std::list<TermList*> newRuleComparators;
+      TableSet *tables = new TableSet();
       sh = dynamic_cast<Says*>(_head);
       if(sh != NULL)
       {
@@ -929,11 +1176,21 @@ namespace compile {
 	  //  if(_bodyClone == NULL){
 	  //	  _bodyClone = new TermList(_body->begin, iter);
 	  //}
-
-	  TermList *newTerms = Says::normalizeVerify(s, newVariable);
+	  //	  TermList *newTerms = Says::normalizeVerify(s, newVariable);
+	  TermList *newTerms = NULL;
+	  tables->insert(new TableEntry(s->name(), s->saysArgs()->size()) + TableEntry::numSecureFields);
+	  Says::normalizeVerify(s, newVariable);
 	  if(sh != NULL && (s->name().compare(_head->name())==0))
 	  {
-	    TermList *comparisonTerms = _head->generateEqTerms(s);
+	    ExpressionList *head =  const_cast<ExpressionList*>(_head->arguments());
+
+	    TermList *comparisonTerms = Says::generateEqTerms(head->begin(),
+							      head->end()-TableEntry::numSecureFields,
+							      s->saysArgs()->begin(), 
+							      s->saysArgs()->end()-TableEntry::numSecureFields);
+	    Says::generateAlgebraLT(head->end()-TableEntry::numSecureFields, head->end()-1, 
+				    s->saysArgs()->end()-TableEntry::numSecureFields, s->saysArgs()->end()-1, 
+				    comparisonTerms);
 	    newRuleComparators.push_back(comparisonTerms);
 	  }
 	 
@@ -994,7 +1251,7 @@ namespace compile {
 	}
       }
 
-
+      return tables;
 //      canonicalizeRule();
     }
 
@@ -1271,7 +1528,8 @@ namespace compile {
                  ExpressionList *keys,
 		 bool says)
     {
-      _name = (says?Says::saysPrefix:"") + name->toString() ;
+      _name = name->toString() ;
+      _says = says;
 
       int myTtl = Val_Int64::cast(ttl->value());
       if (myTtl == -1) {
@@ -1312,6 +1570,14 @@ namespace compile {
       return b.str();
     }
     
+    void 
+    Table::initialize(){
+      if(_says)
+      {
+	_name = Says::saysPrefix + _name;
+      }
+    }
+
     TuplePtr 
     Table::materialize(CommonTable::ManagerPtr catalog, ValuePtr parentKey, string ns)
     {
@@ -1427,13 +1693,17 @@ namespace compile {
 
       Rule* r;
       Namespace *nmSpc;
-
+      TableSet secureTable;
+      Table *tab;
+      std::set<string> materializedTables;
       for (StatementList::iterator iter = s->begin();
              iter != s->end(); iter++) { 
 
 	if ((r = dynamic_cast<Rule*>(*iter)) != NULL) 
 	{
-	  r->initializeRule(s);
+	  TableSet *table = r->initializeRule(s);
+	  secureTable.insert(table->begin(), table->end());
+	  delete table;
 	  if(printOverLog)
 	  {
 	    std::cout<<r->toString()<<std::endl;
@@ -1446,12 +1716,29 @@ namespace compile {
 	  if(nmSpc->statements() != NULL)
 	    program(nmSpc->statements(), false);
 	}
+	else if((tab = dynamic_cast<Table*>(*iter)) != NULL)
+	{
+	  materializedTables.insert(tab->name());
+	  tab->initialize();
+	}
 	else
 	{
 	  // do nothing
 	}
 
       }
+
+      //insert rules for authentication algebra and validation
+      for(TableSet::iterator iter = secureTable.begin(); 
+	  iter != secureTable.end(); iter++){
+	Rule::getVerifier(*iter, s);
+	if(materializedTables.find((*iter)->name) != materializedTables.end())
+	{
+	  Rule::getAlgebra(*iter, s);
+	}
+	delete *iter;
+      }
+      
     }
 
     TuplePtr 
