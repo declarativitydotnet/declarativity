@@ -23,6 +23,7 @@
 #include "val_opaque.h"
 #include "val_tuple.h"
 #include "val_time.h"
+#include "val_set.h"
 #include "val_id.h"
 #include "val_ip_addr.h"
 
@@ -52,84 +53,84 @@ namespace opr {
      &Val_Null::oper_, &Val_Null::oper_, &Val_Null::oper_, 
      &Val_Null::oper_, &Val_Null::oper_, &Val_Null::oper_,
      &Val_Null::oper_, &Val_Null::oper_, &Val_Null::oper_,
-     &Val_Null::oper_},
+     &Val_Null::oper_, &Val_Null::oper_},
     /* STR */
     {&Val_Str::oper_, &Val_Str::oper_, &Val_Str::oper_, 
      &Val_Str::oper_, &Val_Str::oper_, &Val_Str::oper_, 
      &Val_Str::oper_, &Val_Str::oper_, &Val_Str::oper_, 
      &Val_Str::oper_, &Val_Str::oper_, &Val_Str::oper_,
      &Val_Str::oper_, &Val_Str::oper_, &Val_Str::oper_,
-	 &Val_Str::oper_},
+	 &Val_Str::oper_, &Val_Str::oper_},
     /* INT32 */
     {&Val_Int32::oper_, &Val_Int32::oper_, &Val_Int32::oper_, 
      &Val_Int32::oper_, &Val_Int32::oper_, &Val_Int32::oper_, 
      &Val_Int32::oper_, &Val_Int32::oper_, &Val_Int32::oper_, 
      &Val_Int32::oper_, &Val_Int32::oper_, &Val_Int32::oper_,
      &Val_Int32::oper_, &Val_Int32::oper_, &Val_Int32::oper_,
-	 &Val_Int32::oper_},
+	 &Val_Int32::oper_, &Val_Int32::oper_},
     /* UINT32 */
     {&Val_UInt32::oper_, &Val_UInt32::oper_, &Val_UInt32::oper_, 
      &Val_UInt32::oper_, &Val_UInt32::oper_, &Val_UInt32::oper_, 
      &Val_UInt32::oper_, &Val_UInt32::oper_, &Val_UInt32::oper_, 
      &Val_UInt32::oper_, &Val_UInt32::oper_, &Val_UInt32::oper_,
      &Val_UInt32::oper_, &Val_UInt32::oper_, &Val_UInt32::oper_,
-	 &Val_UInt32::oper_},
+	 &Val_UInt32::oper_, &Val_UInt32::oper_},
     /* INT64 */
     {&Val_Int64::oper_, &Val_Int64::oper_, &Val_Int64::oper_, 
      &Val_Int64::oper_, &Val_Int64::oper_, &Val_Int64::oper_, 
      &Val_Int64::oper_, &Val_Int64::oper_, &Val_Int64::oper_, 
      &Val_Int64::oper_, &Val_Int64::oper_, &Val_Int64::oper_,
      &Val_Int64::oper_, &Val_Int64::oper_, &Val_Int64::oper_,
-	 &Val_Int64::oper_},
+	 &Val_Int64::oper_, &Val_Int64::oper_},
     /* INT64 */
     {&Val_UInt64::oper_, &Val_UInt64::oper_, &Val_UInt64::oper_, 
      &Val_UInt64::oper_, &Val_UInt64::oper_, &Val_UInt64::oper_, 
      &Val_UInt64::oper_, &Val_UInt64::oper_, &Val_UInt64::oper_, 
      &Val_UInt64::oper_, &Val_UInt64::oper_, &Val_UInt64::oper_,
      &Val_UInt64::oper_, &Val_UInt64::oper_, &Val_UInt64::oper_,
-	 &Val_UInt64::oper_},
+	 &Val_UInt64::oper_, &Val_UInt64::oper_},
     /* Double */
     {&Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_, 
      &Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_, 
      &Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_, 
      &Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_,
      &Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_,
-	 &Val_Double::oper_},
+	 &Val_Double::oper_, &Val_Double::oper_},
     /* Opaque */
     {&Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_, 
      &Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_, 
      &Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_, 
      &Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_,
      &Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_,
-	 &Val_Opaque::oper_},
+	 &Val_Opaque::oper_, &Val_Opaque::oper_},
     /* Tuple */
     {&Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_, 
      &Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_, 
      &Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_, 
      &Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_,
      &Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_,
-	 &Val_Tuple::oper_},
+	 &Val_Tuple::oper_, &Val_Tuple::oper_},
     /* Time */
     {&Val_Time::oper_, &Val_Time::oper_, &Val_Time::oper_, 
      &Val_Time::oper_, &Val_Time::oper_, &Val_Time::oper_, 
      &Val_Time::oper_, &Val_Time::oper_, &Val_Time::oper_, 
      &Val_Time::oper_, &Val_Time::oper_, &Val_Time::oper_,
      &Val_Time::oper_, &Val_Time::oper_, &Val_Time::oper_,
-	 &Val_Time::oper_},
+	 &Val_Time::oper_, &Val_Time::oper_},
     /* ID */
     {&Val_ID::oper_, &Val_ID::oper_, &Val_ID::oper_, 
      &Val_ID::oper_, &Val_ID::oper_, &Val_ID::oper_, 
      &Val_ID::oper_, &Val_ID::oper_, &Val_ID::oper_, 
      &Val_ID::oper_, &Val_ID::oper_, &Val_ID::oper_,
      &Val_ID::oper_, &Val_ID::oper_, &Val_ID::oper_,
-	 &Val_ID::oper_},
+	 &Val_ID::oper_, &Val_ID::oper_},
     /* IP_ADDR */
     {&Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, 
      &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, 
      &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, 
      &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_,
      &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_,
-	 &Val_IP_ADDR::oper_},
+	 &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_},
     /* TIME_DURATION */
     {&Val_Time_Duration::oper_, &Val_Time_Duration::oper_,
               &Val_Time_Duration::oper_, 
@@ -141,14 +142,14 @@ namespace opr {
               &Val_Time_Duration::oper_,
      &Val_Time_Duration::oper_, &Val_Time_Duration::oper_,
               &Val_Time_Duration::oper_,
-     &Val_Time_Duration::oper_},
+     &Val_Time_Duration::oper_, &Val_Time_Duration::oper_},
     /* SET */
     {&Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_, 
      &Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_, 
      &Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_, 
      &Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_,
      &Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_,
-	 &Val_Set::oper_}
+	 &Val_Set::oper_, &Val_Set::oper_}
 
   };
   // const Oper** Oper::oper_table_[Value::TYPES][Value::TYPES] = {

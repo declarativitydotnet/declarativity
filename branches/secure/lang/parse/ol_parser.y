@@ -95,12 +95,12 @@
 %type<u_statement>     statement nameSpace rule materialize watch watchfine stage fact;
 %type<u_statementlist> statements;
 %type<u_termlist>      termlist aggview;
-%type<u_exprlist>      factbody functorbody functorargs functionargs vectorentries
+%type<u_exprlist>      factbody functorbody functorargs functionargs vectorentries setargs
 %type<u_exprlist>      matrixentry primarykeys keylist; 
 %type<u_exprlistlist>  matrixentries;
 %type<u_term>          term functor assign select says;
 %type<v>               functorarg locationarg functionarg tablearg atom rel_atom math_atom;
-%type<v>               function math_expr bool_expr range_expr range_atom aggregate;
+%type<v>               function math_expr bool_expr range_expr range_atom aggregate set;
 %type<v>               vectorentry vector_expr matrix_expr;
 %type<u_boper>         rel_oper;
 %type<u_moper>         math_oper;
@@ -372,6 +372,17 @@ range_expr: OL_LPAR range_atom OL_COMMA range_atom OL_RPAR
 range_atom: math_expr | atom | OL_VAR
             { $$ = $1; }
           ;
+
+setargs:  range_atom 
+              { $$ = new compile::parse::ExpressionList(); 
+                $$->push_front($1); }
+            | range_atom OL_COMMA setargs 
+              { $3->push_front($1); $$=$3; }
+            ;
+
+set: OL_LCURB setargs OL_RCURB
+     { $$ = new compile::parse::Sets($2);}
+     ;
 
 vector_expr: OL_LSQUB vectorentries OL_RSQUB
              { $$ = new compile::parse::Vector($2); }

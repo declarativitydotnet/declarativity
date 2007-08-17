@@ -122,7 +122,7 @@ void Set::insert(ValuePtr val)
   vpl.insert(val);
 }
 
-bool Set::inc(SetPtr l) const 
+bool Set::subset(SetPtr l) const 
 {
   ValPtrSet::const_iterator iter1 = vpl.begin();
   ValPtrSet::const_iterator iter2 = l->vpl.begin();   
@@ -130,6 +130,11 @@ bool Set::inc(SetPtr l) const
   ValPtrSet::const_iterator end1 = vpl.end();
   ValPtrSet::const_iterator end2 = l->vpl.end();   
   return includes(iter1, end1, iter2, end2, ltSet()) ;
+}
+
+bool Set::propersubset(SetPtr l) const 
+{
+  return (propersubset(l) && (vpl.size() > l->vpl.size()));
 }
 
 SetPtr Set::setunion(SetPtr l) const

@@ -442,6 +442,41 @@ namespace compile {
       ExpressionList* _args;
     };
 
+    class Sets : public Expression {
+    public:
+      Sets(ExpressionList *a) 
+        : _args(a) { };
+
+      Sets(const Sets &s) 
+      {
+
+	ExpressionList *a = new ExpressionList();
+	ExpressionList::size_type sz = s._args->size();
+
+	for (unsigned i=0; i<sz; i++){
+	  Expression *e = s._args->at(i);
+	  a->push_back(e->copy());
+	}
+	_args = a;
+      };
+
+      virtual Expression* copy() const{
+	Sets *v = new Sets(*this);
+	return v;
+      }
+    
+      virtual ~Sets() { delete _args; };
+    
+      virtual string toString() const;
+    
+      virtual const ExpressionList* arguments() const
+      { return _args; };
+    
+      virtual ValuePtr tuple() const;
+    private:
+      ExpressionList* _args;
+    };
+
     struct TableEntry{
       string name;
       int fields;

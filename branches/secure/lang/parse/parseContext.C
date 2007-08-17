@@ -214,6 +214,33 @@ namespace compile {
   
       return Val_Tuple::mk(tp);
     }
+
+    string 
+    Sets::toString() const {
+      ostringstream f;
+      f  << "{ ";
+      for (ExpressionList::iterator iter = _args->begin(); 
+           iter != _args->end(); iter++) {
+        f << (*iter)->toString();
+        if (iter+1 != _args->end()) f << ", ";
+      }
+      f << "}";
+      return f.str();
+    }
+    
+    ValuePtr
+    Sets::tuple() const 
+    {
+      TuplePtr tp = Tuple::mk(SET);
+  
+      tp->append(Val_UInt32::mk(_args->size()));
+      for (ExpressionList::iterator iter = _args->begin(); 
+           iter != _args->end(); iter++) {
+        tp->append((*iter)->tuple());
+      }
+  
+      return Val_Tuple::mk(tp);
+    }
     
     Vector::Vector(ExpressionList *v) {
       VectorPtr vp(new vector<ValuePtr>(v->size()));

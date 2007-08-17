@@ -85,7 +85,9 @@ public:
    
    int compareTo(SetPtr) const;
    
-   bool inc(SetPtr l) const ;
+   bool subset(SetPtr l) const ;
+
+   bool propersubset(SetPtr l) const ;
 
    void xdr_marshal( XDR *xdrs );
    
