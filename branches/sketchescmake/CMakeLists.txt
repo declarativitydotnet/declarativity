@@ -59,7 +59,6 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/over
                     ${Boost_INCLUDE_DIRS} 
                     ${PYTHON_INCLUDE_PATH} 
                     ${CMAKE_CURRENT_SOURCE_DIR}/sketches/include
-                    ${CMAKE_CURRENT_SOURCE_DIR}/tools/include
                     /usr/include)
 
 ADD_DEFINITIONS(-DBOOST_ALL_DYN_LINK)
@@ -75,7 +74,6 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS}
                  ${P2_BINARY_DIR}/eventLoop 
                  ${P2_BINARY_DIR}/planner
 		 ${P2_BINARY_DIR}/sketches
-		 ${P2_BINARY_DIR}/tools
 )
 
 # uncomment the following line to get CMake variables to print to screen

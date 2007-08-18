@@ -2,8 +2,10 @@
 
 Val_Sketch::Val_Sketch(int id, double errorBound, double errorProbability)
 {
+  this->id = id;
   width = ceil(M_E / errorBound);
   depth = ceil(log(1.0 / errorProbability));
+  frozen = false;
 }
 
 string Val_Sketch::toConfString() const
@@ -25,12 +27,12 @@ unsigned int Val_Sketch::size() const
 
 void Val_Sketch::xdr_marshal_subtype(XDR *x)
 {
-  // TODO: IMPLEMENT ME!
+  // TODO: Once boost marshalling is merged, fill me in.
 }
 
 ValuePtr Val_Sketch::xdr_unmarshal(XDR *x)
 {
-  // TODO: IMPLEMENT ME!
+  // TODO: Once boost marshalling is merged, fill me in.
 }
 
 
@@ -57,9 +59,31 @@ Val_Int64 Val_Sketch::getFrequency(const std::string &objectName)
   return sketchPtr.get()->getFrequency(objectName);
 }
 
+void Val_Sketch::insert(std::string key, uint64_t value)
+{
+  assert(!frozen);
+  
+  map[key] += value;
+}
+
 void Val_Sketch::merge(ValuePtr other)
 {
-  // TODO: IMPLEMENT ME!
+  assert(frozen);
+  
+  if(other->typeCode() == Value::SKETCH)
+  {
+    sketchPtr->merge(*(cast(other).get()));
+  }
+}
+
+void Val_Sketch::freeze()
+{
+  frozen = true;
+  
+  Sketches::CountMinFM *sketch = new Sketches::CountMinFM(id, map, width, 
+      depth, 32, 64, Sketches::HT_UNIVERSAL);
+  
+  sketchPtr.reset(sketch);
 }
 
 // Currently, all sketches are equal. This is mainly because comparing two

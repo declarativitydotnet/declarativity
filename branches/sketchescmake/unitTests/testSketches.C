@@ -100,6 +100,35 @@ public:
     
     BOOST_REQUIRE(sketch.compareTo(newSketch) == 0);
   }
+  
+  void testRuntime()
+  {
+    // This test serves primarily as an example of some typical usage.
+    
+    size_t domainSize = 100000;
+    double skew = -1;
+    
+    Tools::Random r;
+  	Tools::PRGZipf zipf(0L, domainSize, skew, &r);
+  	
+    std::map<std::string, uint64_t> exact;
+
+    // TODO: Finish after sleep.
+
+		for (size_t i = 1; i <= N; i++)
+		{
+			uint32_t l = zipf.nextLong();
+			std::ostringstream ss;
+			ss << l << std::flush;
+
+			itEx = exact.find(ss.str());
+			if (itEx != exact.end())
+				(*itEx).second++;
+			else
+				exact[ss.str()] = 1;
+		}
+		
+  }
 };
 
 testSketches_testSuite::testSketches_testSuite()
