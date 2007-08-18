@@ -141,7 +141,8 @@ for op, ar, va, desc in [
   ("getattr",2, "L_GET_ATTR",   "Extract attribute from list."),
   ("posattr",2, "L_POS_ATTR",   "Get the attribute position from list."),
   ("aggattr",1, "L_AGG_ATTR",   "Get the aggregation position from list."),
-  ("merge",2,   "L_MERGE",      "Merge two argument lists according join operation.")
+  ("merge",2,   "L_MERGE",      "Merge two argument lists according join operation."),
+  ("verify",5,   "VERIFY",      "Decrypt the first argument decrypted using the second key.")
   ]:  emit_opcode(op, ar, va, desc)
 
 for op, ar, va, desc in [

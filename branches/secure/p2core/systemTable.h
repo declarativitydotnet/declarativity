@@ -230,4 +230,5 @@ FUNCTIONDEF("f_status",       2, "status")
 FUNCTIONDEF("f_selectivity",  3, "selectivity")
 FUNCTIONDEF("f_rangeAM",      2, "rangeAM")
 FUNCTIONDEF("f_filter",       2, "filter")
+FUNCTIONDEF("f_verify",       5, "verify")
 #undef FUNCTIONDEF

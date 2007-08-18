@@ -826,6 +826,14 @@ DEF_OP(L_CONTAINS) {
   stackPush(Val_Int32::mk(list->member(second)));
 }
 
+DEF_OP(VERIFY) {
+  ValuePtr second = stackTop(); stackPop();
+  ValuePtr first = stackTop(); stackPop();
+
+  assert(0);
+  stackPush(first);
+}
+
 DEF_OP(L_REMOVELAST) {
   ValuePtr first = stackTop(); stackPop();
   ListPtr list = Val_List::cast(first);
