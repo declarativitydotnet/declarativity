@@ -79,7 +79,7 @@ namespace compile {
       return Val_Tuple::mk(tp);
     }
     
-
+    const string Function::max = "f_max";
     const string Says::verTable = "verKey"; 
     const string Says::genTable = "genKey"; 
     const string Says::hashFunc = "f_sha1"; 
@@ -501,8 +501,8 @@ namespace compile {
 	}
 
 	// add constraints between saysParams and rhsSaysParams
-	Says::generateAlgebraLT(saysList->begin(), saysList->end(), 
-				rhsSaysParams->begin(), rhsSaysParams->end(), newTerms);
+	Says::generateAlgebraLT(saysList->begin(), 
+				rhsSaysParams->begin(), newTerms);
 
 	// finally extract the appropriate proof using the rhsSaysParams
 	for (iter = rhsSaysParams->begin(); 
@@ -604,12 +604,19 @@ namespace compile {
     void Says::normalizeVerify(Functor* f, int& newVariable)
     {
       Says *s;
+      //      TermList *newTerms = NULL;
       if ((s = dynamic_cast<Says*>(f)) != NULL)
       {
 	// now modify the says tuple
 	ExpressionList::iterator iter;
 	ExpressionList *arg = s->saysArgs();
 	ExpressionList *saysList =  const_cast<ExpressionList*>(s->saysParams());
+	
+	// if(head != NULL){
+// 	  ExpressionList *headList =  const_cast<ExpressionList*>(head->saysParams());
+// 	  newTerms = Says::generateAlgebraLT(headList->begin(), saysList->begin());
+// 	}
+
 	for (iter = saysList->begin(); 
 	     iter != saysList->end(); iter++){
 	  arg->push_back(*iter);
@@ -623,6 +630,7 @@ namespace compile {
 	s->changeName(Says::saysPrefix + s->name());
 
       }
+      //      return newTerms;
     }
 
 //     TermList* Says::normalizeVerify(Functor* f, int& newVariable, bool addNoKeyConstraint)
@@ -970,7 +978,7 @@ namespace compile {
 				       TermList *t){
       TermList *newTerms;
       if(t == NULL){
-      newTerms = new TermList();
+	newTerms = new TermList();
       }
       else{
 	newTerms = t;
@@ -1007,12 +1015,15 @@ namespace compile {
       return newTerms;
     }
 
+    /**
+       generate rules for creating authentication algebra for functors with the given table entry
+     */
     void Rule::getAlgebra(TableEntry *tableEntry, StatementList *s){
-      int fictVar = 1;
-      TableEntry localTableEntry(Says::saysPrefix + tableEntry->name, tableEntry->numSecureFields);
+      TableEntry localTableEntry(Says::saysPrefix + tableEntry->name, tableEntry->fields);
       TableEntry *te = &localTableEntry;
-
+      static int index[]={0, 1, 3};
       for(int i = 0; i < 3; i++){
+	int fictVar = 1;
 	Functor *f1 = new Functor(te, fictVar);
 	Functor *f2 = new Functor(te, fictVar);
 	Functor *f3 = new Functor(te, fictVar);
@@ -1048,22 +1059,17 @@ namespace compile {
 	
 	
 	// generate assign constraints for all fields of head
-	Says::generateAlgebraCombine(i,
+	Says::generateAlgebraCombine(index[i],
 				     f1Args->begin()+(te->fields - TableEntry::numSecureFields), 
-				     f1Args->begin()+te->fields,
 				     f2Args->begin()+(te->fields - TableEntry::numSecureFields), 
-				     f2Args->begin()+te->fields,
 				     headArgs->begin()+(te->fields - TableEntry::numSecureFields), 
-				     headArgs->begin()+te->fields, 
 				     t);
 	
 	// finally check they are NOT weaker* than any other known says primitive
 	// by copying data parts and using algebra to generate the (P, R, k, V) parts
 	Says::generateAlgebraLT(
 				f3Args->begin()+(te->fields - TableEntry::numSecureFields), 
-				f3Args->begin()+te->fields,
 				headArgs->begin()+(te->fields - TableEntry::numSecureFields), 
-				headArgs->begin()+te->fields,
 				t);
 	
 	Functor::generateEqTerms(headArgs->begin()+1, 
@@ -1080,39 +1086,99 @@ namespace compile {
     }
 
     TermList* Says::generateAlgebraLT(ExpressionList::iterator start1, 
-				      ExpressionList::iterator end1, 
 				      ExpressionList::iterator start2, 
-				      ExpressionList::iterator end2, 
-				      TermList *t){
+				      TermList *newTerms){
+      TermList *t;
+      if(newTerms == NULL){
+      t = new TermList();
+      }
+      else{
+	t = newTerms;
+      }
+
+
       //      is 1 < 2
       // assert that there are only four terms in each of the iterator
       // first generate the lte terms
-      Functor::generateSelectTerms(start1, end1, start2, end2, Bool::LTE, t);
+      Functor::generateSelectTerms(start1, start1 + (TableEntry::numSecureFields - 1), 
+				   start2, start2 + (TableEntry::numSecureFields - 1), Bool::LTE, t);
       Expression *modP = new Bool(Bool::NOT, (*start1)->copy());
       Expression *modPPrime = new Bool(Bool::NOT, (*start2)->copy());
       Math *lhs = new Math(Math::MINUS, modP, modPPrime);
-      Math *rhs = new Math(Math::MINUS, (*(start1+2))->copy(), (*(start1+2))->copy());
-      Math *term = new Math(Bool::EQ, lhs, rhs);
-      
+      Math *rhs = new Math(Math::MINUS, (*(start1+Says::K))->copy(), (*(start2+Says::K))->copy());
+      Bool *eq = new Bool(Bool::LTE, lhs, rhs);
+      Select *term = new Select(eq);
       t->push_back(term);
+
       return t;
     }
 
     TermList* Says::generateAlgebraCombine(int o, 
 					   ExpressionList::iterator start1, 
-					   ExpressionList::iterator end1, 
 					   ExpressionList::iterator start2, 
-					   ExpressionList::iterator end2,
  					   ExpressionList::iterator headStart, 
-					   ExpressionList::iterator headEnd,
-					   TermList *t){
+					   TermList *newTerms){
+      TermList *t;
+      if(newTerms == NULL){
+	t = new TermList();
+      }
+      else{
+	t = newTerms;
+      }
+
+      // using || at the index[o] location and & at other locations
+      // k combination is decided later
+      int count = 0;
+      for(; count < 4; count++){
+	if(count != Says::K){
+	  int op = ((count == o)?Bool::OR:Bool::AND);
+	  Expression *p = new Bool(op, (*(start1+count))->copy(), (*(start2+count))->copy());
+	  Term *assign = new Assign((*(headStart+count))->copy(), p);
+	  t->push_back(assign);
+	}
+      }
+      
+      // now generate the appropriate k value
+      //first generate k1+k2
+      Expression *plus = new Math(Math::PLUS, (*(start1+Says::K))->copy(), (*(start2+Says::K))->copy());
+      // now the union/intersection set
+      int op = ((Says::SPEAKER == o)?Bool::AND:Bool::OR);
+      Expression *combinedSet = new Bool(op, (*(start1+Says::K))->copy(), (*(start2+Says::K))->copy());
+      //mod
+      Bool *mod = new Bool(Bool::NOT, combinedSet);
+      Expression *rhsMax;
+      if(o == Says::SPEAKER){
+	ExpressionList *maxT = new ExpressionList();
+	maxT->push_back( (*(start1+Says::K))->copy());
+	maxT->push_back( (*(start2+Says::K))->copy());
+
+	Expression *firstMax = new Function(new Value(Val_Str::mk(Function::max)), maxT);
+
+	maxT = new ExpressionList();
+	maxT->push_back(firstMax);
+	maxT->push_back(mod);
+
+	rhsMax = new Function(new Value(Val_Str::mk(Function::max)), maxT);
+      }
+      else{
+	ExpressionList *maxT = new ExpressionList();
+	maxT->push_back(new Value(Val_UInt32::mk(0)));
+	maxT->push_back(mod);
+
+	rhsMax = new Function(new Value(Val_Str::mk(Function::max)), maxT);
+
+      }
+      // final rhs
+      Math *rhs = new Math(Math::MINUS, plus, mod);
+      Term *assign = new Assign((*(headStart+Says::K))->copy(), rhs);
+      t->push_back(assign);
       return t;
     }
 
     // add rule to verify the correctness of proof for tables of type TableEntry t
     void Rule::getVerifier(TableEntry *t, StatementList *s){
       int newVariable = 1;
-      TableEntry localTableEntry(t->name, t->numSecureFields);
+      TableEntry localTableEntry(t->name, t->fields);
       TableEntry *te = &localTableEntry;
       te->name = Says::makeSays + t->name;
       Functor *rhs = new Functor(te, newVariable);
@@ -1121,6 +1187,7 @@ namespace compile {
       head->changeName(Says::saysPrefix + t->name);
 
       TermList *newTerms = new TermList();
+      newTerms->push_back(rhs);
 
       ExpressionList::iterator iter; 
 
@@ -1171,6 +1238,7 @@ namespace compile {
       newTerms->push_back(assVer);
 
       Rule *r = new Rule(head, newTerms, false);
+      r->canonicalizeRule();
       s->push_back(r);
     }
     
@@ -1193,6 +1261,7 @@ namespace compile {
       std::list<TermList*> newRuleComparators;
       TableSet *tables = new TableSet();
       sh = dynamic_cast<Says*>(_head);
+      string headTableName = ((sh!=NULL)?sh->name():"");
       if(sh != NULL)
       {
 	// first rule generates the proof assuming that the node 
@@ -1214,11 +1283,12 @@ namespace compile {
 	  //  if(_bodyClone == NULL){
 	  //	  _bodyClone = new TermList(_body->begin, iter);
 	  //}
-	  //	  TermList *newTerms = Says::normalizeVerify(s, newVariable);
-	  TermList *newTerms = NULL;
-	  tables->insert(new TableEntry(s->name(), s->saysArgs()->size()) + TableEntry::numSecureFields);
+	  tables->insert(new TableEntry(s->name(), s->saysArgs()->size() + TableEntry::numSecureFields));
+	  string saysTableName = s->name();
 	  Says::normalizeVerify(s, newVariable);
-	  if(sh != NULL && (s->name().compare(_head->name())==0))
+
+	  //	  Says::normalizeVerify(s, newVariable);
+	  if(sh != NULL && (saysTableName.compare(headTableName)==0))
 	  {
 	    ExpressionList *head =  const_cast<ExpressionList*>(_head->arguments());
 
@@ -1226,27 +1296,31 @@ namespace compile {
 							      head->end()-TableEntry::numSecureFields,
 							      s->saysArgs()->begin(), 
 							      s->saysArgs()->end()-TableEntry::numSecureFields);
-	    Says::generateAlgebraLT(head->end()-TableEntry::numSecureFields, head->end()-1, 
-				    s->saysArgs()->end()-TableEntry::numSecureFields, s->saysArgs()->end()-1, 
+	    Says::generateAlgebraLT(head->end()-TableEntry::numSecureFields, 
+				    s->saysArgs()->end()-TableEntry::numSecureFields, 
 				    comparisonTerms);
+	    Says::generateEqTerms(head->end()-1, head->end(), 
+				  s->saysArgs()->end()-1, s->saysArgs()->end(), 
+				  comparisonTerms);
 	    newRuleComparators.push_back(comparisonTerms);
 	  }
 	 
-	  if(newTerms != NULL){
+	  
+	  _body->erase(iter);
+	  // make a deep copy even though we can live with shallow one 
+	  // to ensure that the following delete can be executed safely
+	  _body->push_back(new Functor(*s));
+	  delete s;
+	  
+// 	  if(newTerms != NULL){
 
-	    _body->erase(iter);
-	    // make a deep copy even though we can live with shallow one 
-	    // to ensure that the following delete can be executed safely
-	    _body->push_back(new Functor(*s));
-	    delete s;
-
-	    for (TermList::iterator it = newTerms->begin(); 
-		 it != newTerms->end(); it++) {
-	      //      _bodyClone->push_back(*it);
-	      _body->push_back(*it);
-	    }
-	    delete newTerms;
-	  }
+// 	    for (TermList::iterator it = newTerms->begin(); 
+// 		 it != newTerms->end(); it++) {
+// 	      //      _bodyClone->push_back(*it);
+// 	      _body->push_back(*it);
+// 	    }
+// 	    delete newTerms;
+// 	  }
 	  
 	  
 	}
@@ -1259,6 +1333,7 @@ namespace compile {
       
       if(sh != NULL)
       {
+	//	delete sh;
 	// copy this rule into a new rule and insert the new rule into the list as well 
 	// as modify the existing rule
 	int size = newRuleComparators.size();
@@ -1288,6 +1363,7 @@ namespace compile {
 
 	}
       }
+
 
       return tables;
 //      canonicalizeRule();
@@ -1643,7 +1719,7 @@ namespace compile {
     Context::Context(string name, string prog, bool file)
       : compile::Context(name), lexer(NULL), _statements(NULL)
     {
-      printOverLog = true;
+      printOverLog = false;
       std::istream* pstream;
 
       if (file) {
@@ -1692,7 +1768,7 @@ namespace compile {
       : compile::Context((*args)[2]->toString()), 
         lexer(NULL), _statements(NULL)
     {
-      printOverLog = true;
+      printOverLog = false;
       if (args->size() > 3) {
         CommonTablePtr programTbl = Plumber::catalog()->table(PROGRAM);
         TuplePtr       programTp  = Tuple::mk(PROGRAM, true);
@@ -1740,7 +1816,13 @@ namespace compile {
 	if ((r = dynamic_cast<Rule*>(*iter)) != NULL) 
 	{
 	  TableSet *table = r->initializeRule(s);
-	  secureTable.insert(table->begin(), table->end());
+	  if(table->size() > 0)
+	  {
+	    for(TableSet::iterator iter = table->begin(); 
+		iter != table->end(); iter++){
+	      secureTable.insert(*iter);
+	    }
+	  }
 	  delete table;
 	  if(printOverLog)
 	  {
@@ -1756,7 +1838,9 @@ namespace compile {
 	}
 	else if((tab = dynamic_cast<Table*>(*iter)) != NULL)
 	{
-	  materializedTables.insert(tab->name());
+	  if(tab->says()){
+	    materializedTables.insert(tab->name());
+	  }
 	  tab->initialize();
 	}
 	else
@@ -1769,13 +1853,25 @@ namespace compile {
       //insert rules for authentication algebra and validation
       for(TableSet::iterator iter = secureTable.begin(); 
 	  iter != secureTable.end(); iter++){
+	//	std::cout<<"statement list size before getVerifier"<<s->size()<<std::endl;
+	//	std::cout<<"statement list size before getVerifier"<<_statements->size()<<std::endl;
 	Rule::getVerifier(*iter, s);
+	//	std::cout<<"statement list size after getVerifier"<<_statements->size()<<std::endl;
+	//	std::cout<<"statement list size after getVerifier"<<s->size()<<std::endl;
 	if(materializedTables.find((*iter)->name) != materializedTables.end())
 	{
 	  Rule::getAlgebra(*iter, s);
 	}
 	delete *iter;
       }
+      
+       if(parserCall){
+	for (StatementList::iterator iter = s->begin();
+             iter != s->end(); iter++) { 
+	  std::cout<<(*iter)->toString()<<std::endl;
+	}
+      }
+
       
     }
 

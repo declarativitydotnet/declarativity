@@ -151,7 +151,7 @@ namespace compile {
 
       static Variable* getLocalLocationSpecifier()
       {
-	static ValuePtr val = Val_Str::mk("me");
+	static ValuePtr val = Val_Str::mk("Me");
 	return new compile::parse::Variable(val, true); 
       }
 
@@ -408,6 +408,7 @@ namespace compile {
     
     class Function : public Expression {
     public:
+      const static string max;
       Function(Expression *n, ExpressionList *a) 
         : _name(n->toString()), _args(a) { };
 
@@ -473,6 +474,7 @@ namespace compile {
       { return _args; };
     
       virtual ValuePtr tuple() const;
+      
     private:
       ExpressionList* _args;
     };
@@ -584,7 +586,7 @@ namespace compile {
       const static string saysPrefix;
       const static string makeSays;
       const static string globalScope;
-      enum additionAxis{SPEAKER=0, RECEIVER, VERIFIER};
+      enum additionAxis{SPEAKER=0, RECEIVER, K, VERIFIER};
 
       Says(Functor* f, ExpressionList* s):Functor(f), _says(s){
 	if(f->isComplement())
@@ -630,18 +632,13 @@ namespace compile {
 
 
       static TermList* generateAlgebraLT(ExpressionList::iterator start1, 
-					 ExpressionList::iterator end1, 
 					 ExpressionList::iterator start2, 
-					 ExpressionList::iterator end2, 
 					 TermList *t = NULL);
 
       static TermList* generateAlgebraCombine(int o, 
 					      ExpressionList::iterator start1, 
-					      ExpressionList::iterator end1, 
 					      ExpressionList::iterator start2, 
-					      ExpressionList::iterator end2,
 					      ExpressionList::iterator headStart, 
-					      ExpressionList::iterator headEnd,
 					      TermList *t = NULL);
 
     private:
@@ -893,6 +890,10 @@ namespace compile {
     
       virtual uint32_t size() const
       { return _size; }
+
+      virtual bool says() const{
+	return _says;
+      }
     
       virtual Table2::Key primaryKeys() const
       { return _keys; }
