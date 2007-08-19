@@ -241,7 +241,12 @@ functor: OL_NAME functorbody
 	 }  
        | OL_NOT OL_NAME functorbody
          { $$=new compile::parse::Functor($2, $3, true); }           
-
+       | OL_NAME OL_BITXOR functorbody          
+         { 
+	   //std::cout<<std::endl<<"starting functor" ; 
+	   $$=new compile::parse::Functor($1, $3, false, true); 
+	   //std::cout<<std::endl<<"Executing functor: found"<<$$->toString();  
+	 }
        ;
 
 functorbody: OL_LPAR locationarg OL_RPAR 

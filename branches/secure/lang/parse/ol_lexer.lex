@@ -196,6 +196,10 @@ WHITESPACE	[ \t\r\n]+
   lvalp->v = new compile::parse::Variable(Val_Str::mk(yytext+1), true); 
   return OL_VAR; }
 
+<INITIAL>\@[A-Z]{ALNUM}* { 
+  lvalp->v = new compile::parse::Variable(Val_Str::mk(yytext+1), false, true); 
+  return OL_VAR; }
+
 <INITIAL>_ { 
   ostringstream oss;
   oss << "$_" << unNamedVariableCounter++; 

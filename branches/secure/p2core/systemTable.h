@@ -234,5 +234,5 @@ FUNCTIONDEF("f_verify",       6, "verify")
 FUNCTIONDEF("f_gen",       2, "gen")
 FUNCTIONDEF("f_mod",       1, "mod")
 FUNCTIONDEF("f_empty",       0, "empty")
-FUNCTIONDEF("f_initSet",       0, "initSet")
+FUNCTIONDEF("f_initSet",       1, "initSet")
 #undef FUNCTIONDEF

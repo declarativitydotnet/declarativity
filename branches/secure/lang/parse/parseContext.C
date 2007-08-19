@@ -308,7 +308,7 @@ namespace compile {
     string 
     Functor::toString() const {
       ostringstream f;
-      f << (_complement?"!":"") <<name() << "( ";
+      f << (_complement?"!":"") <<name()<<  (_complement?"^":"") << "( ";
       for (ExpressionList::const_iterator iter = _args->begin(); 
            iter != _args->end(); iter++) {
         f << (*iter)->toString();
@@ -395,8 +395,8 @@ namespace compile {
       return NULL;
     }
     
-    Functor::Functor(Expression *n, ExpressionList *a, bool complement)
-      : _name(n->toString()), _args(a), _complement(complement)
+    Functor::Functor(Expression *n, ExpressionList *a, bool complement, bool event)
+      : _name(n->toString()), _args(a), _complement(complement), _event(event)
     {
       Variable    *var;
       Aggregation *agg;

@@ -140,14 +140,16 @@ namespace compile {
     
     class Variable : public Expression { 
     public:
-      Variable(ValuePtr var, bool l=false) 
-      : _value(var), _location(l) {};
+      Variable(ValuePtr var, bool l=false, bool newLocSpec = false) 
+      : _value(var), _location(l), _newLocSpec(newLocSpec) {};
     
-      Variable(const string& var, bool l=false) 
-      : _location(l),_value(Val_Str::mk(var))  {};
+      Variable(const string& var, bool l=false, bool newLocSpec = false) 
+      : _location(l),_newLocSpec(newLocSpec), 
+	_value(Val_Str::mk(var))  {};
   
       Variable(const Variable& var) 
-      : _location(var._location), _value(var._value)  {};
+      : _location(var._location), _value(var._value), 
+	_newLocSpec(var._newLocSpec)  {};
 
       static Variable* getLocalLocationSpecifier()
       {
@@ -161,7 +163,11 @@ namespace compile {
       }
 
       virtual string toString() const 
-      { return (_location ? "@" : "") + _value->toString(); };
+      { 
+	return string(_location ? "@" :"") +  
+	  string(_newLocSpec ? "&" : "") + 
+	  _value->toString(); 
+      };
     
       virtual bool location() const { return _location; }
 
@@ -179,6 +185,7 @@ namespace compile {
     private:
       ValuePtr _value;
       bool     _location;
+      bool     _newLocSpec;
     
     };
     
@@ -505,12 +512,13 @@ namespace compile {
     
     class Functor : public Term {
     public:
-      Functor(Expression *n, ExpressionList *a, bool complement = false); 
+      Functor(Expression *n, ExpressionList *a, bool complement = false, bool event = false); 
 
       Functor(Functor *f){
 	_name = f->_name;
 	_args = f->_args;
 	_complement = f->_complement;
+	_event = f->_event;
       }; 
      
       Functor(TableEntry* t, int &fictVar);
@@ -581,6 +589,7 @@ namespace compile {
       string          _name;
       ExpressionList* _args;
       bool _complement;
+      bool _event;
     };
 
     class Says : public Functor {
