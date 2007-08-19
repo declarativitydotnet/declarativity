@@ -500,10 +500,6 @@ namespace compile {
 	  rhsSaysParams->push_back(new Variable(Val_Str::mk(v.str())));
 	}
 
-	// add constraints between saysParams and rhsSaysParams
-	Says::generateAlgebraLT(saysList->begin(), 
-				rhsSaysParams->begin(), newTerms);
-
 	// finally extract the appropriate proof using the rhsSaysParams
 	for (iter = rhsSaysParams->begin(); 
 	     iter != rhsSaysParams->end(); iter++){
@@ -576,6 +572,11 @@ namespace compile {
 	newTerms->push_back(assBuf);
 	newTerms->push_back(assHash);
 	newTerms->push_back(assGen);
+
+	// add constraints between saysParams and rhsSaysParams
+	Says::generateAlgebraLT(saysList->begin(), 
+				rhsSaysParams->begin(), newTerms);
+
 	
 	// now modify the says tuple
 
@@ -1131,7 +1132,7 @@ namespace compile {
       int count = 0;
       for(; count < 4; count++){
 	if(count != Says::K){
-	  int op = ((count == o)?Bool::OR:Bool::AND);
+	  int op = ((count == o)?Math::BITOR:Math::BITAND);
 	  Expression *p = new Bool(op, (*(start1+count))->copy(), (*(start2+count))->copy());
 	  Term *assign = new Assign((*(headStart+count))->copy(), p);
 	  t->push_back(assign);
@@ -1142,7 +1143,7 @@ namespace compile {
       //first generate k1+k2
       Expression *plus = new Math(Math::PLUS, (*(start1+Says::K))->copy(), (*(start2+Says::K))->copy());
       // now the union/intersection set
-      int op = ((Says::SPEAKER == o)?Bool::AND:Bool::OR);
+      int op = ((Says::SPEAKER == o)?Math::BITAND:Math::BITOR);
       Expression *combinedSet = new Bool(op, (*(start1+Says::K))->copy(), (*(start2+Says::K))->copy());
       //mod
       Bool *mod = new Bool(Bool::NOT, combinedSet);
@@ -1229,9 +1230,10 @@ namespace compile {
       for (; iter < list->end(); iter++){
 	verArg->push_back((*iter)->copy());
       }
-      
+      verArg->push_back(hash);
+
       Function *f_verify = new Function(new Value(Val_Str::mk(Says::verFunc)), verArg);
-      Assign *assVer = new Assign(hash, f_verify);
+      Select *assVer = new Select(new Bool(Bool::EQ, new Value(Val_UInt32::mk(1)), f_verify));
       
       newTerms->push_back(assBuf);
       newTerms->push_back(assHash);

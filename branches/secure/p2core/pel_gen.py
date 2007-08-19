@@ -142,7 +142,11 @@ for op, ar, va, desc in [
   ("posattr",2, "L_POS_ATTR",   "Get the attribute position from list."),
   ("aggattr",1, "L_AGG_ATTR",   "Get the aggregation position from list."),
   ("merge",2,   "L_MERGE",      "Merge two argument lists according join operation."),
-  ("verify",5,   "VERIFY",      "Decrypt the first argument decrypted using the second key.")
+  ("verify",6,   "VERIFY",      "Decrypt the first argument decrypted using the second key."),
+  ("gen",2,   "GEN",      "Decrypt the first argument decrypted using the second key."),
+  ("mod",1,   "SETMOD",      "Return the size of the passed set or list."),
+  ("empty",0,   "EMPTY",      "Return a new empty set."),
+  ("initSet",1,   "INITSET",      "Return a new set with the element passed.")
   ]:  emit_opcode(op, ar, va, desc)
 
 for op, ar, va, desc in [

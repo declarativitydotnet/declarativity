@@ -229,7 +229,10 @@ namespace compile {
       string oper = (*boolTp)[2]->toString();
 
       pel << gen(schema, Val_Tuple::cast((*boolTp)[3]));
-      pel << gen(schema, Val_Tuple::cast((*boolTp)[4]));
+      if ((*boolTp)[4] != Val_Null::mk()) {
+	// Binary boolean expression
+	pel << gen(schema, Val_Tuple::cast((*boolTp)[4]));
+      }
       if (oper != "in") {
         pel << oper << " "; 
       }

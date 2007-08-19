@@ -425,6 +425,27 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
     expr2Pel(pc, pel, expr->arg(1));
     pel << "totalComp ";
   }
+  else if (expr->name() == "f_empty") {
+    pel << "empty ";
+  }
+  else if (expr->name() == "f_initSet") {
+    if (expr->args() != 1) {
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
+      exit(-1);
+      return "ERROR.";
+    }
+    expr2Pel(pc, pel, expr->arg(0));
+    pel << "initSet ";
+  }
+  else if (expr->name() == "f_mod") {
+    if (expr->args() != 1) {
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
+      exit(-1);
+      return "ERROR.";
+    }
+    expr2Pel(pc, pel, expr->arg(0));
+    pel << "mod ";
+  }
 
   else {
 

@@ -20,7 +20,6 @@
 #include <utility>
 
 class Set;
-typedef boost::shared_ptr<Set> SetPtr;
 
 struct ltSet
 {
@@ -30,6 +29,7 @@ struct ltSet
   }
 };
 
+typedef boost::shared_ptr<Set> SetPtr;
 typedef std::set< ValuePtr, ltSet > ValPtrSet;
 
 class Set {

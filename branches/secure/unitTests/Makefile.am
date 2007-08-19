@@ -18,6 +18,7 @@ SOURCE_FILE_ROOTS =		\
 				testMarshal \
 				testPel \
 				testLists \
+				testSets \
 				testAggwrap
 
 bin_PROGRAMS =			p2Test

@@ -147,7 +147,7 @@ SetPtr Set::setunion(SetPtr l) const
   ValPtrSet::const_iterator end1 = vpl.end();
   ValPtrSet::const_iterator end2 = l->vpl.end();   
 
-  set_intersection(iter1, end1, iter2, end2, inserter(output->vpl, output->vpl.begin()), ltSet());
+  set_union(iter1, end1, iter2, end2, inserter(output->vpl, output->vpl.begin()), ltSet());
    
   return output;
 }
@@ -189,23 +189,23 @@ string Set::toString() const
 {
   ostringstream sb;
    
-  sb << "(";
+  sb << "{";
    
   ValPtrSet::const_iterator iter = vpl.begin();
   ValPtrSet::const_iterator end = vpl.end();
-  ValPtrSet::const_iterator almost_end = vpl.end();
-  almost_end--;
-   
-  while(iter != end) {
+  if(iter != end)
+  {
     sb << (*iter)->toString();
-      
-    if(iter != almost_end) {
-      sb << ", ";
-    }
+    iter++;
+  }
+
+  while(iter != end) {
+    sb << ", ";
+    sb << (*iter)->toString();
     iter++;
   }
    
-  sb << ")";
+  sb << "}";
    
   return sb.str();
 }

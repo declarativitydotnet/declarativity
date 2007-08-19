@@ -309,7 +309,7 @@ namespace compile {
     
     class Math : public Expression {
     public:
-      enum Operator {LSHIFT, RSHIFT, PLUS, MINUS, TIMES, DIVIDE, MODULUS, BITOR, APPEND, NOP};
+      enum Operator {LSHIFT, RSHIFT, PLUS, MINUS, TIMES, DIVIDE, MODULUS, BITOR, BITAND, APPEND, NOP};
     
       Math(Operator o, 
            Expression *l, 
@@ -325,6 +325,7 @@ namespace compile {
           case DIVIDE:  _operName = "/";  break;
           case MODULUS: _operName = "%";  break;
           case BITOR: _operName = "|";  break;
+          case BITAND: _operName = "&";  break;
           case APPEND: _operName = "|||";  break;
           default: assert(0);
         }
@@ -479,6 +480,7 @@ namespace compile {
       ExpressionList* _args;
     };
 
+    
     struct TableEntry{
       string name;
       int fields;
@@ -489,6 +491,13 @@ namespace compile {
       }
     };
 
+    struct lttbl
+    {
+      bool operator()(const TableEntry *s1, const TableEntry *s2) const
+      {
+	return s1->name.compare(s2->name) < 0;
+      }
+    };
     
     /***************************************************
      * TERMS
@@ -798,7 +807,7 @@ namespace compile {
     }; 
     typedef std::deque<Namespace*> NamespaceList;
 
-    typedef std::set<TableEntry*> TableSet;
+    typedef std::set<TableEntry*, lttbl> TableSet;
 
     class Rule : public Statement {
     public:

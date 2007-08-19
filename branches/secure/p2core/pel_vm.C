@@ -40,10 +40,12 @@
 #include "val_opaque.h"
 #include "val_time.h"
 #include "val_id.h"
+#include "val_set.h"
 #include "val_vector.h"
 #include "val_matrix.h"
 #include "oper.h"
 #include "loop.h"
+#include "set.h"
 #include "fdbuf.h"
 #include "xdrbuf.h"
 
@@ -630,9 +632,13 @@ DEF_OP(L_APPEND) {
 DEF_OP(L_MEMBER) {
    ValuePtr value = stackTop(); stackPop();
    ValuePtr listVal = stackTop();
-   ListPtr list = Val_List::cast(listVal);
-   
-   int isMember = list->member(value);
+   int isMember = 0;
+   if(listVal->typeCode() == Value::LIST){
+    isMember = (Val_List::cast(listVal))->member(value);
+   }
+   else{
+     isMember = (Val_Set::cast(listVal))->member(value);
+   }
    stackPush(Val_Int32::mk(isMember));
 }
 
@@ -753,6 +759,11 @@ DEF_OP(L_INIT) {
   stackPush(Val_List::mk(List::mk()));
 }
 
+DEF_OP(EMPTY) {
+  stackPush(Val_Set::mk(Set::mk()));
+}
+
+
 DEF_OP(L_CONS) {
   ValuePtr first = stackTop(); stackPop();
   ValuePtr second = stackTop(); stackPop();
@@ -825,6 +836,29 @@ DEF_OP(L_CONTAINS) {
   }
   stackPush(Val_Int32::mk(list->member(second)));
 }
+
+DEF_OP(GEN) {
+  ValuePtr second = stackTop(); stackPop();
+  ValuePtr first = stackTop(); stackPop();
+
+  assert(0);
+  stackPush(first);
+}
+
+
+DEF_OP(INITSET) {
+  ValuePtr v = stackTop(); stackPop();
+  SetPtr setPtr = Set::mk();
+  setPtr->insert(v);
+  stackPush(Val_Set::mk(setPtr));
+}
+
+DEF_OP(SETMOD) {
+  ValuePtr setVPtr = stackTop(); stackPop();
+  SetPtr setPtr = Val_Set::cast(setVPtr);
+  stackPush(Val_UInt32::mk(setPtr->size()));
+}
+
 
 DEF_OP(VERIFY) {
   ValuePtr second = stackTop(); stackPop();

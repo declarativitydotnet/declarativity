@@ -355,6 +355,7 @@ math_oper: OL_LSHIFT  { $$ = compile::parse::Math::LSHIFT; }
          | OL_DIVIDE  { $$ = compile::parse::Math::DIVIDE; }
          | OL_MODULUS { $$ = compile::parse::Math::MODULUS; }
          | OL_BITOR { $$ = compile::parse::Math::BITOR; }
+         | OL_BITAND { $$ = compile::parse::Math::BITAND; }
          | OL_APPEND { $$ = compile::parse::Math::APPEND; }
          ;
 

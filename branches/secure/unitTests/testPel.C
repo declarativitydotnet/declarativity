@@ -239,6 +239,8 @@ private:
         break;
       case Value::LIST:
         eq = (Val_Str::cast(top).compare(t->val) == 0) ? 1 : 0;
+      case Value::SET:
+        eq = (Val_Str::cast(top).compare(t->val) == 0) ? 1 : 0;
       default:
         // Ignore remaining values XXX
         BOOST_MESSAGE(testID
@@ -1249,6 +1251,35 @@ testPel::vtests[] = {
   TST(LIST, SUCCESS, "()", "null null 6 lappend msintersect"),
   TST(LIST, SUCCESS, "(1, 1, 1)", "null 1 lappend 1 lappend 1 lappend 1 lappend null 1 lappend 1 lappend 1 lappend msintersect"),
   TST(LIST, SUCCESS, "(1, 1, 1)", "null 1 lappend 1 lappend 1 lappend null 1 lappend 1 lappend 1 lappend 1 lappend msintersect"),
+
+// Insert set tests here.
+
+  TST(SET, STACK_UNDERFLOW, "", "|"),
+  TST(SET, STACK_UNDERFLOW, "", "7 initSet |"),
+  TST(SET, SUCCESS, "{}", "empty"),
+  TST(SET, SUCCESS, "{}", "empty empty |"),
+  TST(SET, SUCCESS, "{6, 7}", "7 initSet 6 initSet |"),
+  TST(SET, SUCCESS, "{6}", "6 initSet empty |"),
+  TST(SET, SUCCESS, "{6}", "empty empty | 6 initSet |"),
+  TST(SET, STACK_UNDERFLOW, "", "initSet"),
+  TST(UINT32, SUCCESS, "0", "empty mod"),
+  TST(UINT32, SUCCESS, "1", "6 initSet mod"),
+  TST(SET, SUCCESS, "{6}", "empty 6 initSet |"),
+  TST(SET, SUCCESS, "{}", "empty 6 initSet &"),
+  TST(SET, SUCCESS, "{6, 5}", "6 initSet 5 initSet empty | |"),
+  TST(SET, SUCCESS, "{6, 5, 4}", "6 initSet 5 initSet 4 initSet | |"),
+  TST(SET, STACK_UNDERFLOW, "", "member"),
+  TST(SET, STACK_UNDERFLOW, "", "6 member"),
+  TST(SET, STACK_UNDERFLOW, "", "6 initSet member"),
+  TST(INT32, SUCCESS, "1", "empty 6 initSet 6 member"),
+  TST(INT32, SUCCESS, "0", "6 initSet 4 member"),
+  TST(SET, STACK_UNDERFLOW, "", "&"), 
+  TST(SET, STACK_UNDERFLOW, "", "6 initSet &"),
+  TST(SET, SUCCESS, "{6}", "6 initSet 6 initSet &"),
+  TST(SET, SUCCESS, "{6}", "6 initSet 4 initSet 3 initSet | | 5 initSet 6 initSet 7 initSet &"),
+  TST(SET, SUCCESS, "{}", "8 initSet 7 initSet 6 initSet | | empty &"),
+  TST(SET, SUCCESS, "{}", "empty 8 initSet | 7 initSet 6 initSet | &"),
+
 
 // Hash tests
   TST(ID, SUCCESS, "2B196A354CB01379184D5754E6468DC2AB285439", "1 sha1"),

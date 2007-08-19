@@ -31,6 +31,7 @@
 #include "val_int32.h"
 #include "val_str.h"
 #include "val_list.h"
+#include "val_set.h"
 #include "val_vector.h"
 #include "val_matrix.h"
 
@@ -899,6 +900,12 @@ testBadCasts()
   TEST_BADCAST(Int32, 0, List);
   TEST_BADCAST(UInt64, 0, List);
   TEST_BADCAST(Double, 0, List);
+
+  TEST_BADCAST(Int32, 0, Set);
+  TEST_BADCAST(UInt64, 0, Set);
+  TEST_BADCAST(Int32, 0, Set);
+  TEST_BADCAST(UInt64, 0, Set);
+  TEST_BADCAST(Double, 0, Set);
 
   TEST_BADCAST(Int32, 0, Vector);
   TEST_BADCAST(UInt64, 0, Vector);
