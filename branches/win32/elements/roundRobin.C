@@ -17,11 +17,32 @@
 #endif // WIN32
 
 #include "roundRobin.h"
+#include "val_str.h"
+#include "val_uint32.h"
 #include <boost/bind.hpp>
+
+DEFINE_ELEMENT_INITS(RoundRobin, "RoundRobin")
 
 RoundRobin::RoundRobin(string name,
                        int noInputs)
   : Element(name, noInputs, 1),
+    _pull_cb(0),
+    _block_flags(),
+    _block_flag_count(0),
+    _nextInput(0)               // start with input 0
+{
+  // Clean out the block flags
+  _block_flags.resize(ninputs());
+}
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_UInt32: Number of inputs.
+ */
+RoundRobin::RoundRobin(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), Val_UInt32::cast((*args)[3]), 1),
     _pull_cb(0),
     _block_flags(),
     _block_flag_count(0),
@@ -59,7 +80,7 @@ TuplePtr RoundRobin::pull(int port, b_cbv cb)
     if (!_pull_cb) {
       _pull_cb = cb;
     }
-    log(Reporting::WARN, -1, "pull: Underrun");
+    ELEM_WARN("pull: Underrun");
     return TuplePtr();
   }
 

@@ -19,11 +19,13 @@
 
 #include <vector>
 #include "element.h"
+#include "elementRegistry.h"
 
 class MarshalField : public Element { 
 public:
   MarshalField(string, unsigned);
   MarshalField(string, std::vector<unsigned>);
+  MarshalField(TuplePtr args);
 
   ~MarshalField();
   
@@ -35,9 +37,13 @@ public:
   const char *flow_code() const			{ return "x/x"; }
 
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   /** The field(s) number I'm marshalling */
   std::vector<unsigned> _fieldNos;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

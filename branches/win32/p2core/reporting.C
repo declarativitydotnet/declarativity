@@ -210,5 +210,3 @@ Reporting::LeakyStreambuf::overflow(int c)
   // Always succeed
   return 0;
 }
-
-

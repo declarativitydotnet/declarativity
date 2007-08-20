@@ -48,10 +48,14 @@ public:
 
   /** An exception thrown when a factory fails to locate a named
       aggregate function */
-  struct AggregateNotFound {
+  class AggregateNotFound : public std::exception {
   public:
     AggregateNotFound(std::string name);
     
+    ~AggregateNotFound() throw();
+
+    const char* what();
+
     std::string aggName;
   };
 
@@ -153,7 +157,6 @@ private:
   {                                            \
     return _name;                              \
   }                                            \
-                                               \
   
 
 

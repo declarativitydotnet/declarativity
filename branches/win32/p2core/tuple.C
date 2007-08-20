@@ -13,6 +13,7 @@
  * DESCRIPTION: Tuple fields and Tuple implementations
  *
  */
+#include "plumber.h"
 #include "value.h"
 #include "tuple.h"
 #include <assert.h>
@@ -93,41 +94,61 @@ Tuple::unmarshal(boost::archive::text_iarchive *x)
 }
 
 
+/** Generate a printout of the form firstField(otherField, otherField,
+    ...). An empty tuple is EMPTY_TUPLE. */
 string
 Tuple::toString() const
 { 
-  ostringstream sb;
-  
-  sb << "<"; 
-  for(uint32_t i = 0;
-      i < fields.size();
-      i++) {
-    sb << fields[i]->toString();
-    if (i != fields.size() - 1) {
-      sb << ", ";
+  if (size() == 0) {
+    return "EMPTY_TUPLE";
+  } else {
+    ostringstream sb;
+
+    sb << fields[0]->toString()
+       << "(";
+
+    for (uint32_t i = 1;
+         i < fields.size() - 1;
+         i++) {
+      sb << fields[i]->toString()
+         << ", ";
     }
+    
+    if (fields.size() > 1) {
+      sb << fields[fields.size() - 1]->toString();
+    }
+    
+    sb << ")";
+    return sb.str();
   }
-  sb << ">";
-  return sb.str();
 }
 
 
 string
 Tuple::toConfString() const
 { 
-  ostringstream sb;
-  
-  sb << "<"; 
-  for(uint32_t i = 0;
-      i < fields.size();
-      i++) {
-    sb << fields[i]->toConfString();
-    if (i != fields.size() - 1) {
-      sb << ", ";
+  if (size() == 0) {
+    return "EMPTY_TUPLE";
+  } else {
+    ostringstream sb;
+
+    sb << fields[0]->toConfString()
+       << "(";
+
+    for (uint32_t i = 1;
+         i < fields.size() - 1;
+         i++) {
+      sb << fields[i]->toConfString()
+         << ", ";
     }
+    
+    if (fields.size() > 1) {
+      sb << fields[fields.size() - 1]->toConfString();
+    }
+    
+    sb << ")";
+    return sb.str();
   }
-  sb << ">";
-  return sb.str();
 }
 
 
@@ -271,12 +292,55 @@ Tuple::mk()
   return p;
 };
 
+TuplePtr
+Tuple::mk(string name, bool id)
+{
+  TuplePtr p(new Tuple());
+  p->append(Val_Str::mk(name));
+
+  if (Plumber::catalog() && Plumber::catalog()->nodeid())
+    p->append(Plumber::catalog()->nodeid());
+  else
+    p->append(Val_Null::mk());
+
+  if (id)
+    p->append(Val_UInt32::mk(Plumber::catalog()->uniqueIdentifier()));
+  return p;
+};
+
+TuplePtr
+Tuple::clone(string name, bool newid) const
+{
+  TuplePtr tp;
+  if (name != "") {
+    tp = mk(name, newid);
+
+    if (newid)
+      for (uint i = 3; i < size(); tp->append(fields[i++]));
+    else
+      for (uint i = 2; i < size(); tp->append(fields[i++]));
+  }
+  else {
+    tp = mk();
+    for (uint i = 0; i < size(); tp->append(fields[i++]));
+  }
+  return tp;
+}
 
 void
 Tuple::append(ValuePtr tf)
 {
+  assert(tf);
   assert(!frozen);
   fields.push_back(tf);
+}
+
+void
+Tuple::prepend(ValuePtr tf)
+{
+  assert(tf);
+  assert(!frozen);
+  fields.insert(fields.begin(), tf);
 }
 
 
@@ -333,8 +397,7 @@ bool
 Tuple::Comparator::operator()(const TuplePtr first,
                               const TuplePtr second) const
 {
-	// this construct makes Viz C++ warnings happier than casting to bool
-  return ((first->compareTo(second) != 0));
+  return first->compareTo(second) < 0;
 }
 
 

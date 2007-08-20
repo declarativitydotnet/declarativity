@@ -1,1 +1,0 @@
-ADD_LIBRARY(p2eventLoop loop.cpp p2Time.cpp)

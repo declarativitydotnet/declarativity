@@ -51,9 +51,12 @@ PlSensor::PlSensor(string name,
     delay(reconnect_delay)
 {
   TRACE_FUNCTION;
+#ifdef WIN32
   int slen = sizeof(localaddr);
   WSAStringToAddress((LPSTR)&"127.0.0.1", AF_INET,NULL,(LPSOCKADDR)&localaddr, &slen);
-  // inet_aton("127.0.0.1", &localaddr);
+#else
+  inet_aton("127.0.0.1", &localaddr);
+#endif
   reqtmpl << "GET " << path << " HTTP/1.0\r\n" 
 	  << "Host: localhost:" << port << "\r\n"
 	  << "Connection: close\r\n"
@@ -70,7 +73,7 @@ PlSensor::PlSensor(string name,
 void PlSensor::error_cleanup(uint32_t errnum, string errmsg) 
 {
   TRACE_FUNCTION;
-  log(Reporting::WARN, errnum, errmsg);
+  ELEM_WARN(errmsg);
   enter_waiting();
 }
 

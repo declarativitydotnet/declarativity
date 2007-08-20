@@ -16,6 +16,7 @@
 #include <vector>
 #include "tuple.h"
 #include "element.h"
+#include "elementRegistry.h"
 #include "inlines.h"
 #include "tupleseq.h"
 #include "loop.h"
@@ -24,11 +25,14 @@
 class ODelivery : public Element {
 public:
   ODelivery(string name); 
+  ODelivery(TuplePtr args);
   const char *class_name() const { return "ODelivery";};
   const char *processing() const { return "h/h"; };
   const char *flow_code() const	 { return "-/-"; };
 
   int push(int port, TuplePtr tp, b_cbv cb);	// Incoming ack or timeout
+
+  DECLARE_PUBLIC_ELEMENT_INITS
 
 private:
   class Connection {
@@ -59,8 +63,10 @@ private:
   b_cbv     _in_cb;
   bool      out_on_;		//  Output port ready status
 
-  typedef std::map<ValuePtr, ConnectionPtr, Value::Less> ConnectionIndex;
+  typedef std::map<ValuePtr, ConnectionPtr, Value::Comparator> ConnectionIndex;
   ConnectionIndex cmap_;	// Map containing unacked in transit tuples
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
   
 #endif /* __ODELIVERY_H_ */

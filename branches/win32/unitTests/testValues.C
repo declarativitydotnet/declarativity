@@ -898,7 +898,6 @@ testBadCasts()
   TEST_BADCAST(Double, 0, IP_ADDR);
   TEST_BADCAST(Opaque, u2, IP_ADDR);
 
-  TEST_BADCAST(Null,, Tuple);
   TEST_BADCAST(Int32, 0, Tuple);
   TEST_BADCAST(UInt64, 0, Tuple);
   TEST_BADCAST(Int32, 0, Tuple);

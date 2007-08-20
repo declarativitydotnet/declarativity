@@ -16,6 +16,7 @@
 #include <deque>
 #include "tuple.h"
 #include "element.h"
+#include "elementRegistry.h"
 #include "inlines.h"
 #include "tupleseq.h"
 
@@ -39,12 +40,15 @@ class CCTuple;
 class CCT : public Element {
 public:
   CCT(string name, double init_wnd=1., double max_wnd=2048.);
+  CCT(TuplePtr args);
   const char *class_name() const { return "CCT";   };
   const char *processing() const { return "lh/lh"; };
   const char *flow_code() const	 { return "--/--"; };
 
   int push(int port, TuplePtr tp, b_cbv cb);	// Incoming, either add to send_q or ack
   TuplePtr pull(int port, b_cbv cb);		// Rate limited output tuple stream
+
+  DECLARE_PUBLIC_ELEMENT_INITS
 
 private:
   void timeout_cb(CCTuple*);			// Callback for to retry sending a tuple
@@ -65,8 +69,10 @@ private:
 
   typedef std::map<ValuePtr, 
                    boost::shared_ptr<std::map<SeqNum, CCTuple*> >, 
-                   Value::Less> CCTupleIndex;
+                   Value::Comparator> CCTupleIndex;
   CCTupleIndex tmap_;			// Map containing unacked in transit tuples
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
   
 #endif /* __CCTX_H_ */

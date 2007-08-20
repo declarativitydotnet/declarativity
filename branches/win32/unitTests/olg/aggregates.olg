@@ -16,16 +16,20 @@
   * Have three nodes with ports 20202, 20203, 20204. Execute the following:
   * 
   * At 20202:
-  * tests/runOverLog -DNEIGHBOR1=\"localhost:20203\" -DNEIGHBOR2=\"localhost:20204\" -o unitTests/olg/aggregates.olg -n localhost -p 20202 
+  * tests/runOverLog -DME=\"localhost:20202\" -DNEIGHBOR1=\"localhost:20203\" -DNEIGHBOR2=\"localhost:20204\" -o unitTests/olg/aggregates.olg -n localhost -p 20202 
   * At 20203:
-  * tests/runOverLog -DNEIGHBOR1=\"localhost:20202\" -DNEIGHBOR2=\"localhost:20204\" -o unitTests/olg/aggregates.olg -n localhost -p 20203
+  * tests/runOverLog -DME=\"localhost:20203\" -DNEIGHBOR1=\"localhost:20202\" -DNEIGHBOR2=\"localhost:20204\" -o unitTests/olg/aggregates.olg -n localhost -p 20203
   * At 20204:
-  * tests/runOverLog -DNEIGHBOR1=\"localhost:20202\" -DNEIGHBOR2=\"localhost:20203\" -o unitTests/olg/aggregates.olg -n localhost -p 20204
+  * tests/runOverLog -DME=\"localhost:20204\" -DNEIGHBOR1=\"localhost:20202\" -DNEIGHBOR2=\"localhost:20203\" -o unitTests/olg/aggregates.olg -n localhost -p 20204
   *
-  * 20202 should be receiving bigee events from both 20203 and 20204.
-  * 20203 should be receiving bigee events from 20204 and smallee events
-  *   from 20202
-  * 20204 should be receiving smallee events from both 20202 and 20203.
+  * 20202 should be receiving smallestNeighborOf events from both 20203
+  * and 20204 (i.e., <smallestNeighborOf, localhost:20202, localhost:20203>
+  * and <smallestNeighborOf, localhost:20202, localhost:20204>).
+  * 
+  * 20203 should be receiving largestNeighborOf events from 20202 and smallestNeighborOf events
+  *   from 20204
+  * 
+  * 20204 should be receiving largestNeighborOf events from both 20202 and 20203.
   *
   * NEIGHBOR1 is a neighbor host:port
   * NEIGHBOR2 is another neighbor host:port
@@ -33,31 +37,31 @@
 
 materialize(neighbor, infinity, infinity, keys(1,2)).
 
-i0 neighbor(@NI, NEIGHBOR1) :- periodic(@NI, E, 0, 1).
-i1 neighbor(@NI, NEIGHBOR2) :- periodic(@NI, E, 0, 1).
+neighbor(ME, NEIGHBOR1).
+neighbor(ME, NEIGHBOR2).
 
-r1 pingE(@NI) :- periodic(@NI, E, 1).
+r1 pingee(@NI) :- periodic(@NI, E, 1).
 
 /** The following should ping the largest-name neighbor */
-r2 bigee(max<@Neighbor>, NI) :-
-	pingE(@NI),
+r2 largestNeighborOf(a_MAX<@Neighbor>, NI) :-
+	pingee(@NI),
 	neighbor(@NI, Neighbor).
 
 
 /** The following should ping the smallest-name neighbor */
-r3 smallee(min<@Neighbor>, NI) :-
-	pingE(@NI),
+r3 smallestNeighborOf(a_MIN<@Neighbor>, NI) :-
+	pingee(@NI),
 	neighbor(@NI, Neighbor).
 
 
 /* Reporting. Rules d1 and d2 are there to enable watching for the
-arrival of bigee and smallee */
-watchmod(bigee, "c").
-watchmod(smallee, "c").
+arrival of largestNeighborOf and smallestNeighborOf */
+watchmod(largestNeighborOf, "c").
+watchmod(smallestNeighborOf, "c").
 
-d1 gotBigee(@NI, Source) :- bigee(@NI, Source).
+d1 gotLargestNeighborOf(@NI, Source) :- largestNeighborOf(@NI, Source).
 
-d2 gotSmalee(@NI, Source) :- smallee(@NI, Source).
+d2 gotSmalee(@NI, Source) :- smallestNeighborOf(@NI, Source).
 
 
 

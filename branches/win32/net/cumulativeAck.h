@@ -16,6 +16,7 @@
 #include <vector>
 #include "tuple.h"
 #include "element.h"
+#include "elementRegistry.h"
 #include "inlines.h"
 #include "tupleseq.h"
 #include "loop.h"
@@ -24,11 +25,14 @@
 class CumulativeAck : public Element {
 public:
   CumulativeAck(string name);
+  CumulativeAck(TuplePtr args);
   const char *class_name() const { return "CumulativeAck";};
   const char *processing() const { return "a/a"; };
   const char *flow_code() const	 { return "-/-"; };
 
   TuplePtr simple_action(TuplePtr p);
+
+  DECLARE_PUBLIC_ELEMENT_INITS
 
 private:
   class Connection {
@@ -48,8 +52,10 @@ private:
   REMOVABLE_INLINE void unmap(ValuePtr);
   REMOVABLE_INLINE ConnectionPtr lookup(ValuePtr);
 
-  typedef std::map<ValuePtr, ConnectionPtr, Value::Less> ConnectionMap;
+  typedef std::map<ValuePtr, ConnectionPtr, Value::Comparator> ConnectionMap;
   ConnectionMap _cmap;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
   
 #endif /* __CUMULATIVEACK_H_ */

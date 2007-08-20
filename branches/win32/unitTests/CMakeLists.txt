@@ -2,11 +2,11 @@ ADD_EXECUTABLE(p2Test
 				p2Test.C
 				testTable2.C 
 				testRefTable.C 
-				testBasicElementPlumbing.C 
+#				testBasicElementPlumbing.C 
 				testValues.C 
 				testIDs.C 
 				testFdbufs.C 
-				testCsv.C 
+#				testCsv.C 
 				testMarshal.C 
 				testPel.C 
 				testLists.C 

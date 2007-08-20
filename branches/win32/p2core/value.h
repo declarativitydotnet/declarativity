@@ -58,6 +58,7 @@
 #define __VALUE_H__
 
 #include <vector>
+#include <deque>
 #include <string>
 #include <sstream>
 
@@ -70,6 +71,7 @@
 #include "reporting.h"
 #include "math.h"
 
+#include <set>
 //extern "C" {
 //#include <rpc/rpc.h>
 //#include <rpc/xdr.h>
@@ -108,21 +110,15 @@ using std::ostringstream;
 
 class Value;
 typedef boost::shared_ptr<Value> ValuePtr;
+typedef std::deque<ValuePtr> ValueList;
 
 class Value {
-
 protected: 
 
   Value() {};
   virtual ~Value() {};
 
 public:  
-
-  struct Less
-  {
-    bool operator()(const ValuePtr first, const ValuePtr second) const
-    { return first->compareTo(second) < 0; }
-  };
 
   // Type codes
   enum TypeCode { 
@@ -211,9 +207,25 @@ public:
   void marshal( boost::archive::text_oarchive *x );
   static ValuePtr unmarshal( boost::archive::text_iarchive *x );
 
+
+  /** A comparator object for values */
+  struct Comparator
+  {
+    bool
+    operator()(const ValuePtr first,
+               const ValuePtr second) const;
+  };
+  
+  
+
 protected:
   virtual void marshal_subtype( boost::archive::text_oarchive *x ) = 0;
+
 };
 
  
+/** A set of values */
+typedef std::set< ValuePtr, Value::Comparator > ValueSet;
+
+
 #endif /* __VALUE_H_ */

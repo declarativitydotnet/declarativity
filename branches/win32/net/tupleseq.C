@@ -21,10 +21,16 @@
 #include "val_tuple.h"
 #include "netglobals.h"
 
+DEFINE_ELEMENT_INITS(Sequence, "Sequence")
+
 #define MAX_INIT_SEQ 2048
 
 Sequence::Sequence(string name, SeqNum start)
   : Element(name,1,1), _start_seq(start) { }
+
+Sequence::Sequence(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]),1,1), 
+    _start_seq(Val_UInt64::cast((*args)[3])) { }
 
 
 TuplePtr Sequence::simple_action(TuplePtr p)

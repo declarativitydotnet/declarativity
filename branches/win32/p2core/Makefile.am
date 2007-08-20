@@ -16,12 +16,11 @@
 lib_LTLIBRARIES =	libp2core.la
 
 SOURCE_FILE_ROOTS =	reporting \
+			tableManager \
 			commonTable \
+			compileUtil \
 			table2 \
 			refTable \
-			aggMin \
-			aggMax \
-			aggCount \
 			aggFactory \
 			val_str \
 			value \
@@ -51,17 +50,22 @@ SOURCE_FILE_ROOTS =	reporting \
 			list \
 			val_list \
 			val_vector \
+			CSVlex \
 			val_matrix \
-			stage \
-			stageRegistry \
-			CSVlex
+			loop \
+			scheduler \
+			p2Time \
+			commitManager
 
 
 libp2core_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C) \
 			inlines.h \
 			pel_lexer.lex \
 			pel_gen.py \
-			pel_program.h
+			pel_program.h \
+			systemTable.h \
+			iStateful.h \
+			iRunnable.h			
 
 
 libp2core_la_LDFLAGS =	@BOOST_LIB@ \
@@ -73,7 +77,6 @@ libp2core_la_LDFLAGS =	@BOOST_LIB@ \
 libp2core_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 
 libp2core_la_CPPFLAGS = @BOOST_INC@ \
-			-I../eventLoop \
 			@OPENSSL_INC@
 
 CLEANFILES = core *.core *~ *.gen.h *.gen.txt pel_lexer.C

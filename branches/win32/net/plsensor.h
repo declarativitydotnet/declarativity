@@ -67,8 +67,11 @@ private:
   tcpHandle*    tc;
   boost::regex	req_re;
   Fdbuf		hdrs;
-  //in_addr	localaddr;
+#ifdef WIN32
   sockaddr_in localaddr;
+#else
+  in_addr	localaddr;
+#endif
   timeCBHandle  *wait_delaycb;
 
 

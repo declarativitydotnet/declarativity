@@ -13,7 +13,11 @@
  */
 
 #include "update.h"
+#include "val_str.h"
+#include "plumber.h"
 #include <boost/bind.hpp>
+
+DEFINE_ELEMENT_INITS(Update, "Update")
 
 Update::Update(string name,
                CommonTablePtr table)
@@ -24,11 +28,27 @@ Update::Update(string name,
   table->updateListener(boost::bind(&Update::listener, this, _1));
 }
 
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_Str:    Table Name.
+ */
+Update::Update(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 0, 1),
+    _pullCB(0)
+{
+  CommonTablePtr table = Plumber::catalog()->table(Val_Str::cast((*args)[3]));
+
+  // Connect this element's listener to the table for updates
+  table->updateListener(boost::bind(&Update::listener, this, _1));
+}
+
 
 void
 Update::listener(TuplePtr t)
 {
-  log(Reporting::WORDY, 0, "Listener " + t->toString());
+  ELEM_WORDY("Listener " << t->toString());
   _updateBuffer.push_back(t);
   if (_pullCB) {
     _pullCB();
@@ -50,7 +70,7 @@ Update::pull(int port, b_cbv cb)
   } else {
     TuplePtr retTuple = _updateBuffer.front();
     _updateBuffer.pop_front();
-    log(Reporting::WORDY, 0, "Pull returns " + retTuple->toString());
+    ELEM_WORDY("Pull returns " << retTuple->toString());
     return retTuple;
   }
 }

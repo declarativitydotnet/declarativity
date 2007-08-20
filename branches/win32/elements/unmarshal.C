@@ -23,9 +23,22 @@
 // the boost serialization implementer claims text is not much more expensive than portable binary
 #include <boost/archive/text_iarchive.hpp>
 #include <sstream>
+#include "val_str.h"
+
+DEFINE_ELEMENT_INITS(Unmarshal, "Unmarshal")
 
 Unmarshal::Unmarshal(string name)
   : Element(name, 1, 1)
+{
+}
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ */
+Unmarshal::Unmarshal(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1)
 {
 }
 
@@ -37,7 +50,7 @@ TuplePtr Unmarshal::simple_action(TuplePtr p)
 {
   // Get first tuple field
   if (p->size() == 0) {
-    log(Reporting::WARN, -1, "Input tuple has no first field");
+    ELEM_WARN("Input tuple has no first field");
     return TuplePtr();
   }
 

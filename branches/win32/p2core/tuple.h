@@ -22,6 +22,7 @@
 #include <map>
 #include <set>
 #include <utility>
+#include <deque>
 
 #include <assert.h>
 #include "inlines.h"
@@ -29,6 +30,7 @@
 
 class Tuple;
 typedef boost::shared_ptr<Tuple> TuplePtr;
+typedef std::deque< TuplePtr > TuplePtrList;
 
 class Tuple
 {
@@ -68,6 +70,21 @@ public:
   static TuplePtr
   mk();
 
+  /** Create a pointer to a new unfrozen tuple, initialized with identifer in
+      position 0 and the tuple name in position 1. This is the
+      preferred way to create new tuples, as opposed to using the
+      constructor.  */
+  static TuplePtr
+  mk(string name, bool id=false);
+
+  /** Makes an unfrozen copy of the tuple */
+  TuplePtr 
+  clone(string name="", bool id=false) const;
+
+  /** Prepend a value pointer to the end of an unfrozen tuple, keeping
+      the tuple unfrozen. */
+  void
+  prepend(ValuePtr tf);
   
   /** Append a value pointer to the end of an unfrozen tuple, keeping
       the tuple unfrozen. */
@@ -172,6 +189,9 @@ private:
   static EmptyInitializer _theEmptyInitializer;
 };
 
+
+
+/** A set of tuples */
 typedef std::set< TuplePtr, Tuple::Comparator > TupleSet;
 
 #endif /* __TUPLE_H_ */

@@ -18,10 +18,12 @@
 #define __UNBOXFIELD_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 
 class UnboxField : public Element { 
 public:
   UnboxField(string, unsigned);
+  UnboxField(TuplePtr args);
 
   ~UnboxField();
   
@@ -32,9 +34,13 @@ public:
   const char *flow_code() const			{ return "x/x"; }
 
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   /** The field number I'm unmarshalling */
   unsigned _fieldNo;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

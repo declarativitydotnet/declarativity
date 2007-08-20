@@ -25,7 +25,7 @@ table("localhost:10000", 3, 0, 1).
 table("localhost:10000", 3, 1, 2).
 table("localhost:10000", 3, 5, 2).
 
-r1 matches(@A, E, count<*>) :- event(@A, B, C), table(@A, C, D, E).
+r1 matches(@A, E, a_COUNT<*>) :- event(@A, B, C), table(@A, C, D, E).
 
 r2 event(@A, B, C) :- periodic(@A, E, 1, 1), B := 2, C := 3.
 

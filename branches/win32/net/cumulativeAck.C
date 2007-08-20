@@ -20,6 +20,8 @@
 #include "netglobals.h"
 #include <boost/bind.hpp>
 
+DEFINE_ELEMENT_INITS(CumulativeAck, "CumulativeAck")
+
 #define CONNECTION_TIMEOUT 240
 
 void CumulativeAck::Connection::confirm(SeqNum seq) {
@@ -63,6 +65,9 @@ void CumulativeAck::Connection::confirm(SeqNum seq) {
 
 CumulativeAck::CumulativeAck(string n)
   : Element(n, 1, 1) { }
+
+CumulativeAck::CumulativeAck(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1) { }
 
 TuplePtr CumulativeAck::simple_action(TuplePtr tp)
 {

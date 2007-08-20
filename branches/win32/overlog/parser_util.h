@@ -42,8 +42,6 @@ inline bool fieldNameEq(string n1, string n2)
  */
 class Parse_Expr {
 public:
-  static Parse_Expr* Now;
-
   Parse_Expr() : position_(-1) {};
 
   Parse_Expr(ValuePtr val) : v(val), position_(-1) {};
@@ -66,8 +64,9 @@ public:
   int      position_;
 };
 
-typedef std::deque<Parse_Expr *> Parse_ExprList;
-typedef std::deque<Parse_ExprList *> Parse_ExprListList;
+typedef std::deque< Parse_Expr* > Parse_ExprList;
+
+typedef std::deque< Parse_ExprList* > Parse_ExprListList;
 
 // Boxing up a ValuePtr so we can pass it through the Bison parser
 // union unscathed. 
@@ -223,7 +222,7 @@ public:
   int args() { return args_->size(); };
 
 
-  Parse_ExprList *args_;
+  Parse_ExprList* args_;
 };
 
 class Parse_Vector : public Parse_Expr {
@@ -296,6 +295,7 @@ public:
 };
 typedef std::deque<Parse_Term *> Parse_TermList;
 
+
 class Parse_FunctorName {
 public:
   Parse_FunctorName(Parse_Expr *n);
@@ -305,21 +305,21 @@ public:
   string name;
 };
 
+
 class Parse_Functor : public Parse_Term {
 public:
-  Parse_Functor(Parse_FunctorName *f, Parse_ExprList *a, Parse_Expr *l=NULL) 
-    : fn(f), args_(a) { 
-    if (l) {
-      loc_ = l->v->toString(); delete l;
-    } else {
-      (void) getlocspec();
-    }
-  }
+  Parse_Functor(Parse_FunctorName* f,
+                Parse_ExprList* a,
+                Parse_Expr* l = NULL);
+
   virtual ~Parse_Functor() {delete fn; delete args_; };
 
   virtual string toString();
 
-  int aggregate();
+  /** If this functor contains an aggregate, return its field position,
+      otherwise -1 */
+  int
+  aggregate();
 
   int find(Parse_Expr *arg);
   int find(string argname);
@@ -331,7 +331,11 @@ public:
 
   void replace(int p, Parse_Expr *e);
 
-  Parse_FunctorName *fn;
+  
+  /** The name of this tuple */
+  Parse_FunctorName* fn;
+
+
   Parse_ExprList    *args_;
   string loc_;
 };

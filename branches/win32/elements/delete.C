@@ -16,12 +16,30 @@
 #include "p2_win32.h"
 #endif // WIN32
 #include "delete.h"
+#include "val_str.h"
+#include "val_uint32.h"
+#include "plumber.h"
+
+DEFINE_ELEMENT_INITS(Delete, "Delete")
 
 Delete::Delete(string name,
                CommonTablePtr table)
   : Element(name, 1, 0),
     _table(table)
 {
+}
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_Str:    Table Name.
+ */
+Delete::Delete(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 0)
+{
+  string tableName = Val_Str::cast((*args)[3]);
+  _table = Plumber::catalog()->table(tableName);
 }
 
 

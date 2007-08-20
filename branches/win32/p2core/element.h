@@ -33,24 +33,55 @@
 #include <string>
 #include <sstream>
 #include <boost/function.hpp>
+#include <boost/any.hpp>
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "inlines.h"
 #include "tuple.h"
 #include "reporting.h"
 #include "loggerI.h"
-  
-#define ELEM_LOG(_sev,_errnum,_rest) do { ostringstream _sb; _sb << _rest; log(_sev,_errnum,_sb.str()); } while (false)
+#include "val_time.h"
 
+#define ELEM_LOG(_sev,_rest)                                     \
+  "Element, "                                                    \
+  << Val_Time::mk(boost::posix_time::second_clock::local_time())->toString() \
+    << ", "                                                      \
+       << class_name()                                           \
+    << ", "                                                      \
+       << name()                                                 \
+    << ", "                                                      \
+       << _sev                                                   \
+          << ", "                                                \
+             << _rest
 
-#define ELEM_INFO(_rest) ELEM_LOG(Reporting::INFO, 0, _rest)
-#define ELEM_WORDY(_rest) ELEM_LOG(Reporting::WORDY, 0, _rest)
-#define ELEM_WARN(_rest) ELEM_LOG(Reporting::WARN, 0, _rest)
-#define ELEM_ERROR(_rest) ELEM_LOG(Reporting::P2_ERROR, 0, _rest)
-#define ELEM_OUTPUT(_rest) ELEM_LOG(Reporting::OUTPUT, 0, _rest)
+#define ELEM_INFO(_rest) TELL_INFO    \
+  << ELEM_LOG(Reporting::INFO, _rest) \
+    << "\n"
+
+#define ELEM_WORDY(_rest) TELL_WORDY   \
+  << ELEM_LOG(Reporting::WORDY, _rest) \
+    << "\n"
+
+#define ELEM_WARN(_rest) TELL_WARN    \
+  << ELEM_LOG(Reporting::WARN, _rest) \
+    << "\n"
+
+#define ELEM_ERROR(_rest) TELL_ERROR   \
+  << ELEM_LOG(Reporting::P2_ERROR, _rest) \
+    << "\n"
+
+#define ELEM_OUTPUT(_rest) TELL_OUTPUT  \
+  << ELEM_LOG(Reporting::OUTPUT, _rest) \
+    << "\n"
 
 using std::string;
 using std::ostringstream;
 
+class Element;
+/** A handy dandy pointer to elements */
+typedef boost::shared_ptr< Element > ElementPtr;
+
+class Plumber;
+typedef boost::shared_ptr< Plumber > PlumberPtr;
 ////////////////////////////////////////////////////////////
 // Callbacks
 ////////////////////////////////////////////////////////////
@@ -59,10 +90,6 @@ typedef boost::function<void (void)>        b_cbv;
 typedef boost::function<void (int)>         b_cbi;
 typedef boost::function<void (std::string)> b_cbs;
 typedef boost::function<void (bool)>        b_cbb;
-
-class Plumber;
-typedef boost::shared_ptr< Plumber > PlumberPtr;
-
 
 class Element { 
 private:
@@ -83,13 +110,13 @@ public:
    * Thrown when an element operation is not supported
    */ 
   class Exception {
-    public:
-      Exception(string d) : desc_(d) {};
-      operator string() { return desc_; };
-    private:
-      string desc_;
+  public:
+    Exception(string d) : desc_(d) {};
+    string toString() { return desc_; };
+  private:
+    string desc_;
   };
-  
+
   // Two shorthand processing signatures.  
   static const char * const PUSH_TO_PULL;
   static const char * const PULL_TO_PUSH;
@@ -165,8 +192,10 @@ public:
   int ID() const				{ return _ID; }
 
   /** A descriptive name for the element */
-  string name() const				{ return _name; }
+  REMOVABLE_INLINE string
+  name() const;
 
+  virtual boost::any getProxy(){ return boost::any();};
 
   /** Output my Dot description. */
   virtual void
@@ -182,8 +211,8 @@ public:
 
   // CONFIGURATION
   /** Static port connection */
-  int connect_input(unsigned i, Element *f, unsigned port);
-  int connect_output(unsigned o, Element *f, unsigned port);
+  virtual int connect_input(unsigned i, Element *f, unsigned port);
+  virtual int connect_output(unsigned o, Element *f, unsigned port);
 
   // Called by the plumber before running 
   virtual int initialize();
@@ -198,27 +227,7 @@ public:
   virtual const char *flow_code() const;
   virtual const char *flags() const;
 
-  // LOGGING facilities
 
-  /** Log something to the default element logger */
-  REMOVABLE_INLINE void log(string instanceName,
-                            Reporting::Level severity,
-                            int errnum,
-                            string explanation);
-
-  /** Call the log method without an instance name.  Use the element ID
-      instead. */
-  REMOVABLE_INLINE void log(Reporting::Level severity,
-                            int errnum,
-                            string explanation);
-  
-  /** Call the default logger, if the plumber's logger is unavailable */
-  REMOVABLE_INLINE void logDefault(string instanceName,
-                                   Reporting::Level severity,
-                                   int errnum,
-                                   string explanation);
-
-  void logger(LoggerI* l)             { _logger = l; }
 
   /** A nested class encapsulating connection stubs into and out of an
       element. */
@@ -295,36 +304,27 @@ public:
   const PortPtr output(unsigned) const;
 
   /** Get the port number based on the port key */
-  virtual int input(ValuePtr key) 
-    { throw Exception("Port keys not supported on input."); return -1; }
-  virtual int output(ValuePtr key) 
-    { throw Exception("Port keys not supported on output."); return -1; }
+  virtual int input(ValuePtr key);
+  virtual int output(ValuePtr key); 
 
   /** Dynamic allocation of ports */
-  virtual unsigned add_input()
-    { throw Exception("Dynamic input ports not supported."); return 0; }
-  virtual unsigned add_output()
-    { throw Exception("Dynamic output ports not supported."); return 0; }
+  virtual unsigned add_input();
+  virtual unsigned add_output();
 
   /** Dynamic allocation of ports based on port keys */
-  virtual unsigned add_input(ValuePtr key)
-    { throw Exception("Port keys not supported on input."); return 0; }
-  virtual unsigned add_output(ValuePtr key)
-    { throw Exception("Port keys not supported on input."); return 0; }
+  virtual unsigned add_input(ValuePtr key);
+  virtual unsigned
+  add_output(ValuePtr key);
 
   /** Remove the port indicated by port number */
-  virtual int remove_input(unsigned p)
-    { throw Exception("Dynamic input ports not supported."); return -1; }
-  virtual int remove_output(unsigned p)
-    { throw Exception("Dynamic output ports not supported."); return -1; }
+  virtual int remove_input(unsigned p);
+  virtual int remove_output(unsigned p);
 
   /** Remove the port indicated by port keys 
    *  Return: The port number that was removed
    */
-  virtual int remove_input(ValuePtr key)
-    { throw Exception("Port keys not supported on input."); return -1; }
-  virtual int remove_output(ValuePtr key)
-    { throw Exception("Port keys not supported on input."); return -1; }
+  virtual int remove_input(ValuePtr key);
+  virtual int remove_output(ValuePtr key);
 
   /** My input ports */
   PortVec _inputs;
@@ -366,8 +366,5 @@ private:
   State _state; 
   
 };
-
-/** A handy dandy pointer to elements */
-typedef boost::shared_ptr< Element > ElementPtr;
 
 #endif /* __ELEMENT_H_ */

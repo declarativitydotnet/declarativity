@@ -27,8 +27,11 @@ libp2cpp_la_CPPFLAGS =	@PYTHON_CSPEC@ \
 			@BOOST_INC@ \
 			-I../p2core \
 			-I../elements \
-			-I../pythonElements \
-			-I../eventLoop \
+			-I../stages \
+			-I../functions \
+			-I../aggregates \
+			-I../planner \
+			-I../lang \
 			-I../overlog \
 			-I../net \
 			-I../debugger

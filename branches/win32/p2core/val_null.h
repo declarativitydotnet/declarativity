@@ -29,14 +29,16 @@ public:
   const char *typeName() const { return "null"; };
   string toString() const { return "NULL"; };
   virtual string toConfString() const;
-  virtual unsigned int size() const { return sizeof(singleton); }
+  virtual unsigned int
+  size() const;
 
   // Marshalling and unmarshallng
   void marshal_subtype( boost::archive::text_oarchive *x );
   static ValuePtr unmarshal( boost::archive::text_iarchive *x );
 
   // Factory
-  static ValuePtr mk() { return singleton; };
+  static ValuePtr
+  mk();
 
   // Strict comparison
   int compareTo(ValuePtr) const;
@@ -46,8 +48,6 @@ public:
   const ValuePtr toMe(ValuePtr other) const { cast(other); return mk(); }
   
   static const opr::Oper* oper_;
-private:
-  static ValuePtr singleton;
 };
 
 #endif /* __VAL_NULL_H_ */

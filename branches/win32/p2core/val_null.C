@@ -35,11 +35,6 @@ public:
 
 const opr::Oper* Val_Null::oper_ = new OperNull();
 
-//
-// Singleton null value.
-//
-ValuePtr Val_Null::singleton = ValuePtr(new Val_Null());
-
 string Val_Null::toConfString() const
 {
   return "Val_Null()";
@@ -54,12 +49,14 @@ void Val_Null::marshal_subtype( boost::archive::text_oarchive *x )
 }
 ValuePtr Val_Null::unmarshal( boost::archive::text_iarchive *x )
 {
-  return singleton;
+  return Val_Null::mk();
 }
 
 int Val_Null::compareTo(ValuePtr other) const
 {
-  return (other->typeCode() != Value::NULLV);
+  if (other->typeCode() == Value::NULLV)
+    return 0;
+  return -1; // NULL IS LESS THAN ANYTHING ELSE
 }
 
 //
@@ -75,3 +72,16 @@ void Val_Null::cast(ValuePtr v) {
 }
 
 
+ValuePtr
+Val_Null::mk()
+{
+  static ValuePtr _theSingleton = ValuePtr(new Val_Null());
+  return _theSingleton;
+}
+
+
+unsigned int
+Val_Null::size() const
+{
+  return sizeof(Val_Null::mk());
+}

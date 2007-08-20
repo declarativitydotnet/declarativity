@@ -16,6 +16,13 @@
 #endif // WIN32
 
 #include "lookup2.h"
+#include "val_str.h"
+#include "val_list.h"
+#include "val_uint32.h"
+#include "plumber.h"
+#include "scheduler.h"
+
+DEFINE_ELEMENT_INITS(Lookup2, "Lookup2");
 
 Lookup2::Lookup2(string name,
                  CommonTablePtr table,
@@ -23,6 +30,7 @@ Lookup2::Lookup2(string name,
                  CommonTable::Key indexKey,
                  b_cbv state_cb)
   : Element(name, 1, 1),
+    _stateProxy(new IStateful()),
     _table(table),
     _pushCallback(0),
     _pullCallback(0),
@@ -34,11 +42,47 @@ Lookup2::Lookup2(string name,
   _project = (_lookupKey != _indexKey);
 }
 
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_Str:    Table Name.
+ * 4. Val_List:   The lookup key.
+ * 5. Val_List:   The index key.
+ */
+Lookup2::Lookup2(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1),
+    _stateProxy(new IStateful()),
+    _table(Plumber::catalog()->table(Val_Str::cast((*args)[3]))),
+    _pushCallback(0),
+    _pullCallback(0),
+    _stateCallback(0)
+{
+  ListPtr lookupKey = Val_List::cast((*args)[4]);
+  for (ValPtrList::const_iterator i = lookupKey->begin();
+       i != lookupKey->end(); i++)
+    _lookupKey.push_back(Val_UInt32::cast(*i));
+
+  ListPtr indexKey = Val_List::cast((*args)[5]);
+  for (ValPtrList::const_iterator i = indexKey->begin();
+       i != indexKey->end(); i++)
+    _indexKey.push_back(Val_UInt32::cast(*i));
+
+  // If the two keys are identical, then we need not use projections.
+  _project = (_lookupKey != _indexKey);
+}
+
 
 Lookup2::~Lookup2()
 {
 }
 
+int
+Lookup2::initialize()
+{
+  Plumber::scheduler()->stateful(_stateProxy);
+  return 0;
+}
 
 int
 Lookup2::push(int port,
@@ -47,6 +91,7 @@ Lookup2::push(int port,
 {
   // Is this the right port?
   assert(port == 0);
+  assert(t != NULL);
   
   // Do I have a lookup pending?
   if (_lookupTuple == NULL) {
@@ -65,6 +110,7 @@ Lookup2::push(int port,
     ELEM_INFO("push: accepted lookup for tuple "
               << _lookupTuple->toString());
     
+    _stateProxy->state(IStateful::STATEFUL);
     // Unblock the puller if one is waiting
     if (_pullCallback) {
       ELEM_INFO("push: wakeup puller");
@@ -78,7 +124,8 @@ Lookup2::push(int port,
     } else {
       _iterator = _table->lookup(_indexKey, _lookupTuple);
     }
-    
+    assert(_iterator);
+
     // And stop the pusher since we have to wait until the iterator is
     // flushed one way or another
     _pushCallback = cb;
@@ -137,6 +184,8 @@ Lookup2::pull(int port,
       _iterator.reset();
       ELEM_WORDY("push: iterator now is null");
       
+      _stateProxy->state(IStateful::STATELESS);
+
       // Wake up any pusher
       if (_pushCallback) {
         ELEM_INFO("pull: wakeup pusher");

@@ -19,10 +19,12 @@
 #define __HEXDUMP_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 
 class Hexdump : public Element { 
 public:
   Hexdump(string, unsigned);
+  Hexdump(TuplePtr args);
 
   ~Hexdump();
   
@@ -34,9 +36,13 @@ public:
   const char *flow_code() const			{ return "x/x"; }
 
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   /** My field number to hexdump */
   unsigned _fieldNo;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

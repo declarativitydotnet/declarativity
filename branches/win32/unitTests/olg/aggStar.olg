@@ -12,7 +12,7 @@
  * Execute with
  * tests/runOverLog -o unitTests/olg/aggStar.olg
  *
- * A single result (i.e., SendAction line) should come from both each of
+ * A single result (i.e., SendAction line) should come from each of
  * the 6 rules. Rules q1, q2, and q3 should contain a count of 4 each,
  * along with the localhost:10000 address for the first two (in
  * different orders) and the random number in the third.
@@ -27,24 +27,24 @@ table("localhost:10000", 4, "localhost:10002", 5.0).
 table("localhost:10000", 2, "localhost:10006", 6.0).
 table("localhost:10000", 3, "localhost:10007", 7.0).
 
-q1 prodEvent1(@NI, count<*>) :- periodic(@NI, E, 1, 1),
+q1 prodEvent1(@NI, a_COUNT<*>) :- periodic(@NI, E, 1, 1),
                               table(@NI, Num, Addr, Double).
 
-q2 prodEvent2(count<*>, @NI) :- periodic(@NI, E, 1, 1),
+q2 prodEvent2(a_COUNT<*>, @NI) :- periodic(@NI, E, 1, 1),
                               table(@NI, Num, Addr, Double).
 
-q3 prodEvent3(count<*>, E, @NI) :- periodic(@NI, E, 1, 1),
+q3 prodEvent3(a_COUNT<*>, E, @NI) :- periodic(@NI, E, 1, 1),
                               table(@NI, Num, Addr, Double).
 
-q1empty prodEvent1Empty(@NI, count<*>) :- periodic(@NI, E, 1, 1),
+q1empty prodEvent1Empty(@NI, a_COUNT<*>) :- periodic(@NI, E, 1, 1),
                               table(@NI, Num, Addr, Double),
 			      NI == Addr.
 
-q2empty prodEvent2Empty(count<*>, @NI) :- periodic(@NI, E, 1, 1),
+q2empty prodEvent2Empty(a_COUNT<*>, @NI) :- periodic(@NI, E, 1, 1),
                               table(@NI, Num, Addr, Double),
 			      NI == Addr.
 
-q3empty prodEvent3Empty(count<*>, E, @NI) :- periodic(@NI, E, 1, 1),
+q3empty prodEvent3Empty(a_COUNT<*>, E, @NI) :- periodic(@NI, E, 1, 1),
                               table(@NI, Num, Addr, Double),
 			      NI == Addr.
 

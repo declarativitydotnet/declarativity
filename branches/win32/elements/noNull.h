@@ -17,10 +17,12 @@
 #define __NONULL_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 
 class NoNull : public Element { 
 public:
   NoNull(string);
+  NoNull(TuplePtr args);
   ~NoNull();
   
   /** Overridden to perform the projecting. */
@@ -29,6 +31,13 @@ public:
   const char *class_name() const		{ return "NoNull";}
   const char *processing() const		{ return "a/a"; }
   const char *flow_code() const			{ return "x/x"; }
+
+
+  DECLARE_PUBLIC_ELEMENT_INITS
+
+private:
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

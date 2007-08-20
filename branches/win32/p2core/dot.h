@@ -22,7 +22,7 @@
 #include <iostream>
 
 void
-toDot(std::ostream*, const std::set<ElementSpecPtr>&, const std::set<ElementSpec::HookupPtr>&);
+toDot(std::ostream*, const std::set<ElementSpecPtr>&, const std::set<ElementSpec::HookupPtr>&, bool header=true);
 
 #endif /* __DOT_H__ */
 

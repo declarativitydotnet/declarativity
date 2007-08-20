@@ -17,9 +17,24 @@
 #endif // WIN32
 
 #include "slot.h"
+#include "val_str.h"
+
+DEFINE_ELEMENT_INITS(Slot, "Slot")
 
 Slot::Slot(string name)
   : Element(name, 1, 1),
+    _push_cb(0),
+    _pull_cb(0)
+{
+}
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ */
+Slot::Slot(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1),
     _push_cb(0),
     _pull_cb(0)
 {
@@ -43,28 +58,28 @@ int Slot::push(int port, TuplePtr t, b_cbv cb)
   // have one, since either way I'll block my pushes.
   if (_push_cb) {
     // Complain and do nothing
-    log(Reporting::INFO, 0, "push: callback overrun");
+    ELEM_INFO("push: callback overrun");
   } else {
     // Accept the callback
     _push_cb = cb;
-    log(Reporting::INFO, 0, "push: raincheck");
+    ELEM_INFO("push: raincheck");
   }
 
   // Do I have a tuple?
   if (_t == NULL) {
     // Nope, accept the tuple
     _t = t;
-    log(Reporting::INFO, 0, "push: put accepted");
+    ELEM_INFO("push: put accepted");
 
     // Unblock the puller if one is waiting
     if (_pull_cb) {
-      log(Reporting::INFO, 0, "push: wakeup puller");
+      ELEM_INFO("push: wakeup puller");
       _pull_cb();
       _pull_cb = 0;
     }
   } else {
     // I already have a tuple so the one I just accepted is dropped
-    log(Reporting::INFO, 0, "push: tuple overrun");
+    ELEM_INFO("push: tuple overrun");
   }
   return 0;
 }
@@ -76,11 +91,11 @@ TuplePtr Slot::pull(int port, b_cbv cb)
 
   // Do I have a tuple?
   if (_t != NULL) {
-    log(Reporting::INFO, 0, "pull: will succeed");
+    ELEM_INFO("pull: will succeed");
     // I do so I will return it.  First, unblock my pusher if one is
     // waiting
     if (_push_cb) {
-      log(Reporting::INFO, 0, "pull: wakeup pusher");
+      ELEM_INFO("pull: wakeup pusher");
       _push_cb();
       _push_cb = 0;
     }
@@ -92,11 +107,16 @@ TuplePtr Slot::pull(int port, b_cbv cb)
     // I don't have a tuple.  Do I have a pull callback already?
     if (!_pull_cb) {
       // Accept the callback
-      log(Reporting::INFO, 0, "pull: raincheck");
+      ELEM_INFO("pull: raincheck");
       _pull_cb = cb;
     } else {
       // I already have a pull callback
-      log(Reporting::INFO, 0, "pull: underrun");
+      ELEM_INFO("pull: underrun");
+    }
+
+    if(_push_cb) {
+      _push_cb();
+      _push_cb = 0;
     }
     return TuplePtr();
   }

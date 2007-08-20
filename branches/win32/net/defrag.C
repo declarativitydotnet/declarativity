@@ -11,6 +11,7 @@
  */
 
 #include "defrag.h"
+#include "val_str.h"
 #include "val_tuple.h"
 #include "val_null.h"
 #include "val_uint64.h"
@@ -21,11 +22,16 @@
 #include <boost/archive/text_iarchive.hpp>
 #include "netglobals.h"
 
+DEFINE_ELEMENT_INITS(Defrag, "Defrag")
+
 Defrag::Defrag(string name)
   : Element(name, 1, 1),
     _pull_cb(0) 
 {
 }
+
+Defrag::Defrag(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1), _pull_cb(0) { }
 
 
 int Defrag::push(int port, TuplePtr t, b_cbv cb)

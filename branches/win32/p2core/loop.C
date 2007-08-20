@@ -1,6 +1,6 @@
 // -*- c-basic-offset: 2; related-file-name: "loop.h" -*-
 /*
- * @(#)$Id: loop.C,v 1.29 2007/03/10 05:38:09 maniatis Exp $
+ * @(#)$Id$
  *
  * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
@@ -72,12 +72,14 @@ delayCB(double secondDelay, b_cbv cb, Element* owner)
   return handle;
 }
 
+
 void
 timeCBRemove(timeCBHandle* handle)
 {
   // Do not remove this callback outside of the main loop.
   handle->active = false;
 }
+
 
 tcpHandle*
 tcpConnect(in_addr addr, uint16_t port, b_cbi cb)
@@ -105,15 +107,16 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
   // Empty the queue prefix that has already expired
 
   callbackQueueT::iterator iter = callbacks.begin();
+ 
   while ((iter != callbacks.end()) &&
          ((*iter)->time <= now)) {
-    // Remove this callback from the queue.  The iterator must be
+    // Remove this callback from the queue. The iterator must be
     // incremented before its previous position is erased!
     timeCBHandle* theCallback = *iter;
     callbackQueueT::iterator toErase = iter;
-	iter++;
-	callbacks.erase(toErase);
-	
+    iter++;
+    callbacks.erase(toErase);
+    
     // Run it
     if (theCallback->active &&
         (theCallback->owner == NULL || 
@@ -145,15 +148,15 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
   }
 
   /** Time to clean house: remove all inactive callbacks */
-  for (iter = callbacks.begin(); 
-       iter != callbacks.end(); 
+  for (iter = callbacks.begin();
+       iter != callbacks.end();
        ) {
     if ((*iter)->active == false) {
       timeCBHandle* theCallback = *iter;
-	  callbackQueueT::iterator toKill = iter;
-	  iter++;
-	  callbacks.erase(toKill);      
-	  delete theCallback;
+      callbackQueueT::iterator toKill = iter;
+      iter++;
+      callbacks.erase(toKill);
+      delete theCallback;
     } else {
       iter++;
     }
@@ -174,10 +177,8 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
 
   // Get first waiting time
   if (callbacks.empty()) {
-    // Nothing to worry about. Leave the wait duration alone.
+    // Nothing to worry about. Leave the wait duration alone
   } else {
-	// Update the wait duration to be what's left until the next
-	// deadline.
     iter = callbacks.begin();
     assert(iter != callbacks.end()); // since it's not empty
 
@@ -186,6 +187,8 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
       // poll
       waitDuration = boost::posix_time::minutes(0);
     } else {
+      // Update the wait duration to be what's left until the next
+      // deadline.
       waitDuration = (*iter)->time - now;
     }
   }
@@ -211,6 +214,7 @@ networkSocket(int type, uint16_t port, uint32_t addr, int proto)
     // Ooops, couldn't allocate it. No can do.
     return -1;
   }
+
   
   // Now bind the socket to the given address
   struct sockaddr_in sin;
@@ -319,7 +323,7 @@ removeFileDescriptorCB(int fileDescriptor,
                        b_selop operation)
 {
   assert(fileDescriptor >= 0);
-  
+
   fileDescriptorCBHandle handle(fileDescriptor, operation);
   // Must find it so that we can delete the element
 
@@ -334,6 +338,7 @@ removeFileDescriptorCB(int fileDescriptor,
     found = true;
     fileDescriptorCallbacks.erase(iter);
     delete (delme);
+    // delete(iter);
   }
 
   // And turn off the appropriate bit
@@ -421,15 +426,18 @@ fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
 		// else drop through
 	}
 #else
-		// On non-Windows this is a BAD error.  Just return
-	return;
+	// This is a BAD error.
+	LOOP_ERROR("select failed");
+    exit(-1);
 #endif // WIN32
   } else if (result == 0) {
     // Nothing happened
+      LOOP_WORDY("select says nothing happened");
 	  return;
   } else {
     // Go through and call all requisite callbacks, first all writes,
     // then all reads
+    LOOP_WORDY("pselect says something happened");
     for (int i = 0;
          i < nextFD;
          i++) {
@@ -480,7 +488,47 @@ fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
 }
 
 
+////////////////////////////////////////
+//Process callbacks...
+///////////////////////////////////////
+TProcesses*
+procs()
+{
+  static TProcesses* theProcs = new TProcesses();
+  return theProcs;
+}
 
+void
+registerProcess(IProcess* aProc)
+{
+  procs()->push_back(aProc);
+}
+
+void
+removeProcess(IProcess* aProc)
+{
+  procs()->remove(aProc);
+}
+
+void
+processCatchup(boost::posix_time::time_duration& waitDuration)
+{
+  boost::posix_time::time_duration w2 = waitDuration;
+  TProcesses::iterator it = procs()->begin();
+  for(;
+      it != procs()->end();
+      it++) {
+    (*it)->proc(&w2);
+    if(w2 < waitDuration) {
+      waitDuration = w2;
+    }
+  }
+}
+
+
+IProcess::~IProcess()
+{
+}
 
 
 
@@ -535,7 +583,8 @@ eventLoop()
   // The wait duration for file descriptor waits. It is set by
   // timeCBCatchup and used by fileDescriptorCatchup.  Equivalent to
   // selwait in libasync
-  boost::posix_time::time_duration waitDuration;
+  boost::posix_time::time_duration waitDuration =
+    boost::posix_time::seconds(1);
 
   while (1) {
     try {
@@ -545,6 +594,8 @@ eventLoop()
                  << e.what()
                  << "'");
     }
+
+    processCatchup(waitDuration);
     
     try {
       fileDescriptorCatchup(waitDuration);
@@ -553,8 +604,25 @@ eventLoop()
                  << e.what()
                  << "'");
     }
+    
   }
 }
 
 
+fileDescriptorCBHandle::fileDescriptorCBHandle(int fd,
+                                               b_selop op,
+                                               b_cbv& cb,
+                                               Element* o)
+  : fileDescriptor(fd), operation(op), callback(cb), owner(o)
+{ 
+  assert(fd > 0);
+}
+
+
+fileDescriptorCBHandle::fileDescriptorCBHandle(int fd,
+                                               b_selop op)
+  : fileDescriptor(fd), operation(op), callback(0)
+{
+  assert(fd > 0);
+}
 

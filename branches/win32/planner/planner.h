@@ -35,7 +35,6 @@
 #include "pelTransform.h"
 #include "duplicate.h"
 #include "dupElim.h"
-#include "filter.h"
 #include "timedPullPush.h"
 #include "udp.h"
 #include "marshalField.h"
@@ -45,8 +44,6 @@
 #include "demux.h"
 #include "strToSockaddr.h"
 #include "slot.h"
-#include "timedPullSink.h"
-#include "timestampSource.h"
 #include "hexdump.h"
 #include "table2.h"
 #include "refTable.h"
@@ -57,7 +54,6 @@
 #include "printTime.h"
 #include "roundRobin.h"
 #include "noNullField.h"
-#include "functorSource.h"
 #include "delete.h"
 #include "tupleSource.h"
 #include "printWatch.h"
@@ -163,6 +159,10 @@ private:
   << PLANNER_LOG(Reporting::WARN,_pc,_rest)      \
     << "\n"
 
+#define PLANNER_OUTPUT(_pc,_rest) TELL_OUTPUT    \
+  << PLANNER_LOG(Reporting::OUTPUT,_pc,_rest)      \
+    << "\n"
+
 
 #define PLANNER_ERROR_NOPC(_rest) TELL_ERROR       \
   << PLANNER_LOG_NOPC(Reporting::P2_ERROR,_pc,_rest)  \
@@ -178,6 +178,10 @@ private:
 
 #define PLANNER_WARN_NOPC(_rest) TELL_WARN       \
   << PLANNER_LOG_NOPC(Reporting::WARN,_pc,_rest) \
+    << "\n"
+
+#define PLANNER_OUTPUT_NOPC(_rest) TELL_OUTPUT       \
+  << PLANNER_LOG_NOPC(Reporting::OUTPUT,_pc,_rest)   \
     << "\n"
 
 

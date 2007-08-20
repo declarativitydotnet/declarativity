@@ -21,6 +21,8 @@
 #include "netglobals.h"
 #include <boost/bind.hpp>
 
+DEFINE_ELEMENT_INITS(RDelivery, "RDelivery")
+
 
 RDelivery::RDelivery(string n, unsigned m) 
   : Element(n, 2, 2),
@@ -29,6 +31,13 @@ RDelivery::RDelivery(string n, unsigned m)
     _max_retry(m)
 {
 }
+
+RDelivery::RDelivery(TuplePtr args) 
+  : Element((*args)[2]->toString(), 2, 2),
+    _out_cb(0),
+    _in_on(true),
+    _max_retry(args->size() > 3 ? Val_UInt32::cast((*args)[3]) : 3) { }
+
 
 /**
  * New tuple to send

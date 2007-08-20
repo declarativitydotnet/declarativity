@@ -20,11 +20,14 @@
 #define __ROUNDROBIN_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 
 class RoundRobin : public Element { 
 public:
   
   RoundRobin(string, int);
+
+  RoundRobin(TuplePtr args);
 
   TuplePtr pull(int port, b_cbv cb);
 
@@ -35,6 +38,8 @@ public:
   /** A tuple may be dropped without notification if it resolves to an
       output that's held back. */
   int push(TuplePtr p, b_cbv cb) const;
+
+  DECLARE_PUBLIC_ELEMENT_INITS
 
 private:
   /** The callback for my outputs */
@@ -51,6 +56,8 @@ private:
 
   /** My block callback function for a given input */
   void unblock(unsigned input);
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

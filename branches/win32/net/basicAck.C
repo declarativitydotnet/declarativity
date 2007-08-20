@@ -19,6 +19,7 @@
 #include "val_tuple.h"
 #include "netglobals.h"
 
+DEFINE_ELEMENT_INITS(BasicAck, "BasicAck")
 
 /////////////////////////////////////////////////////////////////////
 //
@@ -33,6 +34,9 @@ BasicAck::BasicAck(string name)
   : Element(name, 1, 2), _ack_cb(0)
 {
 }
+
+BasicAck::BasicAck(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 2), _ack_cb(0) { }
 
 /**
  * Acknowledge tuple p if ack_q is empty and output1 is open.

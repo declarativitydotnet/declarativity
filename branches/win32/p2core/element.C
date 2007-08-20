@@ -28,6 +28,7 @@
 #include "val_time.h"
 #include "reporting.h"
 
+#include "boost/bind.hpp"
 
 // Some basic element types
 const char * const Element::PUSH_TO_PULL = "h/l";
@@ -278,6 +279,66 @@ Element::output(unsigned o) const
   return _outputs[o];
 }
 
+REMOVABLE_INLINE int 
+Element::input(ValuePtr key) { 
+  throw Exception(string("Port keys not supported on input. Element class ") + class_name()); 
+  return -1; 
+}
+
+REMOVABLE_INLINE int 
+Element::output(ValuePtr key) { 
+  throw Exception(string("Port keys not supported on output. Element class ") + class_name()); 
+  return -1; 
+}
+
+REMOVABLE_INLINE unsigned 
+Element::add_input() { 
+  throw Exception(string("Dynamic input ports not supported. Element class ") + class_name()); 
+  return 0; 
+}
+
+REMOVABLE_INLINE unsigned 
+Element::add_output() { 
+  throw Exception(string("Dynamic output ports not supported. Element class ") + class_name()); 
+  return 0; 
+}
+
+REMOVABLE_INLINE unsigned 
+Element::add_input(ValuePtr key) { 
+  throw Exception(string("Port keys not supported on input. Element class ") + class_name()); 
+  return 0; 
+}
+
+REMOVABLE_INLINE unsigned 
+Element::add_output(ValuePtr key) { 
+  throw Exception(string("Port keys not supported on input. Element class ") + class_name()); 
+  return 0; 
+}
+
+REMOVABLE_INLINE int 
+Element::remove_input(unsigned p) { 
+  throw Exception(string("Dynamic input ports not supported. Element class ") + class_name()); 
+  return -1; 
+}
+
+REMOVABLE_INLINE int 
+Element::remove_output(unsigned p) { 
+  throw Exception(string("Dynamic output ports not supported. Element class ") + class_name()); 
+  return -1; 
+}
+
+REMOVABLE_INLINE int 
+Element::remove_input(ValuePtr key) { 
+  throw Exception(string("Port keys not supported on input. Element class ") + class_name()); 
+  return -1; 
+}
+
+REMOVABLE_INLINE int 
+Element::remove_output(ValuePtr key) { 
+  throw Exception(string("Port keys not supported on input. Element class ") + class_name()); 
+  return -1; 
+}
+
 ////////////////////////////////////////////////////////////
 // Element::Port
 
@@ -338,61 +399,6 @@ Element::initialize()
   return 0;
 }
 
-REMOVABLE_INLINE void
-Element::log(Reporting::Level severity,
-             int errnum,
-             string explanation)
-{
-  // Even this is a shortcut, cut off the process here as well, since
-  // creating the instance name is expensive
-  if (severity >= Reporting::level()) {
-    ostringstream n;
-    n << _name << ":" << _IDstr;
-    log(n.str(), severity, errnum, explanation);
-  }
-}
-
-REMOVABLE_INLINE void
-Element::log(string instanceName,
-             Reporting::Level severity,
-             int errnum,
-             string explanation)
-{
-  // Check logging level first
-  if (severity >= Reporting::level()) {
-    if (_logger) {
-      _logger->log(class_name(),
-                   instanceName,
-                   severity,
-                   errnum,
-                   explanation); 
-    } else {
-      logDefault(instanceName, severity, errnum, explanation);
-    }
-  }
-}
-
-REMOVABLE_INLINE void
-Element::logDefault(string instanceName,
-                    Reporting::Level severity,
-                    int errnum,
-                    string explanation)
-{
-  boost::posix_time::ptime now;
-  getTime(now);
-  
-  TuplePtr t = Tuple::mk();
-  t->append(Val_Time::mk(now));
-  t->append(Val_UInt64::mk(seq++));
-  t->append(Val_Str::mk(class_name()));
-  t->append(Val_Str::mk(instanceName));
-  t->append(Val_Int32::mk(severity));
-  t->append(Val_Int32::mk(errnum));
-  t->append(Val_Str::mk(explanation));
-  t->freeze();
-  TELL_WARN << "PRE-init LOGGER: " << t->toString() << "\n";
-}
-                            
 
 void
 Element::toDot(std::ostream* ostr)
@@ -429,4 +435,11 @@ Element::toDot(std::ostream* ostr)
   
   // Close the element label
   *ostr << "}\" ];\n";
+}
+
+
+string
+Element::name() const
+{
+  return _name;
 }

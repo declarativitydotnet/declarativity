@@ -43,7 +43,7 @@ OL_Context::Rule::toString() {
   for(;
       t != terms.end();
       t++) {
-    r << "," 
+    r << ", " 
       << (*t)->toString();
   }
   r << ".";
@@ -55,14 +55,24 @@ OL_Context::Rule::toString() {
 string
 OL_Context::TableInfo::toString() {
   ostringstream t;
-  t << "MATERIALIZE( " << tableName << ", "
-    << timeout << ", "
-    << size << " (";
-
-  for (uint k = 0; k < primaryKeys.size(); k++) {
-    t << ", " << primaryKeys.at(k);
+  t << "materialize("
+    << tableName
+    << ", "
+    << timeout
+    << ", "
+    << size
+    << ", keys(";
+  
+  for (uint k = 0;
+       k + 1 < primaryKeys.size();
+       k++) {
+    t << primaryKeys.at(k)
+      << ", ";
   }
-  t << " )";
+  if (primaryKeys.size() > 0) {
+    t << primaryKeys.at(primaryKeys.size() - 1);
+  }
+  t << ")";
 
   return t.str();
 }

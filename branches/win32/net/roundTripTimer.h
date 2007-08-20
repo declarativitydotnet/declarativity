@@ -15,6 +15,7 @@
 #include <map>
 #include "tuple.h"
 #include "element.h"
+#include "elementRegistry.h"
 #include "inlines.h"
 #include "tupleseq.h"
 
@@ -24,6 +25,7 @@ class TupleTimestamp;
 class RoundTripTimer : public Element {
 public:
   RoundTripTimer(string name); 
+  RoundTripTimer(TuplePtr args);
 
   const char *class_name() const { return "RoundTripTimer";};
   const char *processing() const { return "ah/a"; };
@@ -31,6 +33,8 @@ public:
 
   TuplePtr simple_action(TuplePtr p);
   int push(int port, TuplePtr tp, b_cbv cb);
+
+  DECLARE_PUBLIC_ELEMENT_INITS
 
 private:
   void timeout_cb(TupleTimestamp*);
@@ -51,13 +55,15 @@ private:
   };
 
   typedef std::map<ValuePtr, boost::shared_ptr<RTTRec>, 
-                   Value::Less> RTTIndex;
+                   Value::Comparator> RTTIndex;
   RTTIndex rttmap_;
 
   typedef std::map<ValuePtr, 
                    boost::shared_ptr<std::map<SeqNum, TupleTimestamp*> >,
-                   Value::Less> TupleTimestampIndex;
+                   Value::Comparator> TupleTimestampIndex;
   TupleTimestampIndex tmap_;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
   
 #endif /* __ROUNDTRIPTIMER_H_ */

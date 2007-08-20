@@ -24,11 +24,14 @@
 #include <map>
 #include <vector>
 #include "element.h"
+#include "elementRegistry.h"
 
 class DDemux : public Element { 
 public:
   
   DDemux(string, std::vector< ValuePtr >, unsigned f = 0);
+
+  DDemux(TuplePtr args);
 
   int push(int port, TuplePtr t, b_cbv cb);
 
@@ -41,10 +44,27 @@ public:
   void
   toDot(std::ostream*);
 
+
   /** A tuple may be dropped without notification if it resolves to an
       output that's held back.  Push back only if all outputs have
       pushed back. */
-  int push(TuplePtr p, b_cbv cb) const;
+  int
+  push(TuplePtr p, b_cbv cb) const;
+
+
+  /** Use the port map to find an output by name */
+  int
+  output(ValuePtr key); 
+
+
+  DECLARE_PUBLIC_ELEMENT_INITS
+
+private:
+  /** The type of port name to port number map */
+  typedef std::map<ValuePtr, unsigned, Value::Comparator> PortMap;
+
+  /** My port map */
+  PortMap _port_map;
 
   /** Add output port keyed off ValuePtr argument, returns allocated port # */
   unsigned add_output(ValuePtr);
@@ -54,13 +74,6 @@ public:
   int remove_output(ValuePtr);
 
 
-  typedef std::map<ValuePtr, unsigned, Value::Less> PortMap;
-  PortMap _port_map;
-
-
-
-
-private:
   void remove_block_flag(unsigned port);
 
   /** The callback for my input */
@@ -77,6 +90,8 @@ private:
 
   /** The input field on which I perform the demultiplexing */
   unsigned _inputFieldNo;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

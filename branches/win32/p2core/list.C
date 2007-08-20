@@ -25,6 +25,15 @@ List::List(ValuePtr v)
   vpl.push_back(v);
 }
 
+ListPtr List::clone() const
+{
+  ListPtr l = List::mk();
+  ValPtrList::const_iterator listp = vpl.begin();
+  while(listp != vpl.end())
+    l->append(*listp++);
+  return l; 
+}
+
 int List::member(ValuePtr val) const
 {
   ValPtrList::const_iterator listp = vpl.begin();
@@ -152,6 +161,11 @@ ListPtr List::multiset_intersect(ListPtr l) const
 void List::append(ValuePtr val)
 {
   vpl.push_back(val);
+}
+
+void List::prepend(ValuePtr val)
+{
+  vpl.push_front(val);
 }
 
 ListPtr List::concat(ListPtr L) const
@@ -305,5 +319,5 @@ ListPtr List::unmarshal(boost::archive::text_iarchive *x)
 //sort
 void List::sort()
 {
-	vpl.sort(Value::Less());
+  vpl.sort(Value::Comparator());
 }

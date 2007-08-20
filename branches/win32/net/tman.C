@@ -55,7 +55,7 @@ int TrafficManager::push(int port, TuplePtr tp, b_cbv cb) {
     
 int TrafficManager::initialize()
 {
-  log(Reporting::INFO, 0, "initialize");
+  ELEM_INFO("initialize");
   // Schedule my timer
   if (_seconds != 0.0)
     _timeCallback = delayCB(_seconds, _runTimerCB, this);
@@ -84,10 +84,10 @@ void TrafficManager::runTimer()
   // Attempt to push it
   if (!output(0)->push(tuple, _wakeupCB)) {
     // We have been pushed back.  Don't reschedule wakeup
-    log(Reporting::INFO, 0, "runTimer: sleeping");
+    ELEM_INFO("runTimer: sleeping");
   } else {
     // Reschedule me into the future
-    log(Reporting::INFO, 0, "runTimer: rescheduling");
+    ELEM_INFO("runTimer: rescheduling");
     _timeCallback = delayCB(_seconds, _runTimerCB, this);
   }
 }
@@ -97,7 +97,7 @@ void TrafficManager::wakeup()
   // I'd better not be already scheduled
   assert(_timeCallback == NULL);
 
-  log(Reporting::INFO, 0, "wakeup");
+  ELEM_INFO("wakeup");
 
   // Okey dokey.  Reschedule me into the future
   _timeCallback = delayCB(_seconds, _runTimerCB, this);

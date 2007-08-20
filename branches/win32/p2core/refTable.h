@@ -121,6 +121,17 @@ public:
       any deletion listeners. */
   void
   removeTuple(PrimaryIndex::iterator primaryPosition);
+
+
+
+
+  ////////////////////////////////////////////////////////////
+  // Misc
+  ////////////////////////////////////////////////////////////
+
+  /** Turn the table into a string of tuples along the primary key */
+  std::string
+  toString();
 };
 
 

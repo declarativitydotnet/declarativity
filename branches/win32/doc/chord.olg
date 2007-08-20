@@ -58,6 +58,13 @@ materialize(nextFingerFix, 180, 1, keys(1)).
 #define PINGPERIOD 2
 
 
+watchmod(bestSucc, "id").
+watchmod(succ, "id").
+watchmod(pred, "id").
+watchmod(node, "id").
+
+
+
 /** Preexisting state. My landmark and myself. */
 landmark(LOCALADDRESS, LANDMARK).
 node(LOCALADDRESS, NODEID).
@@ -75,13 +82,13 @@ l1 lookupResults(@R,K,S,SI,E) :- node(@NI,N), lookup(@NI,K,R,E),
 	bestSucc(@NI,S,SI), K in (N,S].
 
 
-l2 bestLookupDist(@NI,K,R,E,min<D>) :- node(@NI,N), 
+l2 bestLookupDist(@NI,K,R,E,a_MIN<D>) :- node(@NI,N), 
 					 lookup(@NI,K,R,E), 
 					 finger(@NI,I,B,BI), 
 					 D := K - B - 1, 
 					 B in (N,K).
 
-l3 forwardLookup(@NI, min<BI>,K,R,E) :- node(@NI,N),	    
+l3 forwardLookup(@NI,a_MIN<BI>,K,R,E) :- node(@NI,N),	    
 			       bestLookupDist(@NI,K,R,E,D),
 			       finger(@NI,I,B,BI), 
 			       D == K - B - 1,
@@ -102,7 +109,7 @@ n0 newSuccEvent(@NI) :- succ(@NI,S,SI).
 
 n2 newSuccEvent(@NI) :- deleteSucc(@NI,S,SI).
 
-n1 bestSuccDist(@NI, min<D>) :- newSuccEvent(@NI), node(@NI, N),
+n1 bestSuccDist(@NI, a_MIN<D>) :- newSuccEvent(@NI), node(@NI, N),
 	succ(@NI, S, SI), D := S - N - 1.
 
 n3 bestSucc(@NI, S, SI) :- succ(@NI, S, SI),
@@ -114,13 +121,13 @@ n4 finger(@NI,0,S,SI) :- bestSucc(@NI,S,SI).
 
 /** Successor eviction */
 
-s1 succCount(@NI,count<*>) :- newSuccEvent(@NI),
+s1 succCount(@NI,a_COUNT<*>) :- newSuccEvent(@NI),
 				succ(@NI,S,SI).
 
 s2 evictSucc(@NI) :- succCount(@NI,C), 
 		    C > SUCCESSORS.
 
-s3 maxSuccDist(@NI,max<D>) :- succ(@NI,S,SI),
+s3 maxSuccDist(@NI,a_MAX<D>) :- succ(@NI,S,SI),
 				node(@NI,N), 
 				evictSucc(@NI),
 				D:=S - N - 1.

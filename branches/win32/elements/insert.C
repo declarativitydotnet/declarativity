@@ -18,6 +18,10 @@
 
 #include "insert.h"
 #include "commonTable.h"
+#include "val_str.h"
+#include "plumber.h"
+
+DEFINE_ELEMENT_INITS(Insert, "Insert");
 
 Insert::Insert(string name,
                CommonTablePtr table)
@@ -26,6 +30,17 @@ Insert::Insert(string name,
 {
 }
 
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_Str:    Table Name.
+ */
+Insert::Insert(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1),
+    _table(Plumber::catalog()->table(Val_Str::cast((*args)[3])))
+{
+}
 
 int
 Insert::push(int port, TuplePtr p, b_cbv cb)

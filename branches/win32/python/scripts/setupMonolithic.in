@@ -1,4 +1,4 @@
-#!@PYTHON@
+#!@PYTHON_EXECUTABLE@
 ##
 ## This file is distributed under the terms in the attached LICENSE file.
 ## If you do not find this file, copies can be found by writing to:
@@ -27,7 +27,7 @@ p2rpm = "p2-" + p2rpmversion + "-0.i386.rpm"
 #File classes
 planetlabfile_root = ["python/scripts/monolithic.py",
                       "python/scripts/p2monolithic"]
-planetlabfileinstall = "chmod 755 p2monolithic"
+planetlabfileinstall = "chmod 755 p2monolithic;"
 
 
 #p2rpmfiles_root = ["rpms/" + p2rpm]
@@ -36,15 +36,20 @@ p2rpmfiles_root = []
 p2rpminstall = ""
 
 
-otherrpmfiles_root = ["rpms/boost-1.32.0-6.i386.rpm",
-                      "rpms/libstdc++-4.0.0-8.i386.rpm",
-                      "rpms/python-2.3.4-11.i386.rpm",
-		      "rpms/cpp-3.3.3-7.i386.rpm"]
-otherrpminstall = """\
-sudo rpm -i --force libstdc++-4.0.0-8.i386.rpm \
-                    boost-1.32.0-6.i386.rpm \
-                    python-2.3.4-11.i386.rpm \
-		    cpp-3.3.3-7.i386.rpm;"""
+#otherrpmfiles_root = ["rpms/boost-1.32.0-6.i386.rpm",
+#                      "rpms/libstdc++-4.0.0-8.i386.rpm",
+#                      "rpms/python-2.3.4-11.i386.rpm",
+#		      "rpms/cpp-3.3.3-7.i386.rpm"]
+#otherrpminstall = """\
+#sudo rpm -i --force libstdc++-4.0.0-8.i386.rpm \
+#                    boost-1.32.0-6.i386.rpm \
+#                    python-2.3.4-11.i386.rpm \
+#		    cpp-3.3.3-7.i386.rpm;"""
+#
+otherrpmfiles_root = []
+otherrpminstall = "sudo yum -y install boost cpp;"
+
+
 
 
 p2rpmfiles = []
@@ -53,8 +58,8 @@ planetlabfile = []
 
 
 
-startup =  "echo \`hostname\` is restarting; ./p2monolithic restart"
-stop    =  "echo \`hostname\` is stopping; ./p2monolithic stop"
+startup =  "echo \`hostname\` is restarting; bash p2monolithic restart"
+stop    =  "echo \`hostname\` is stopping; bash p2monolithic stop"
 
 def print_usage():
     print """
@@ -169,7 +174,7 @@ def getNodes():
   # an array of which fields to return from the node records.
   return_fields= ['node_id', 'hostname','boot_state']
   # get the all the nodes, regardless of current boot state
-  all_nodes = server.AdmGetNodes(auth, [], return_fields)
+  all_nodes = server.GetNodes(auth, {}, return_fields)
   nodes = []
   for node_record in all_nodes:
     if node_record['boot_state'] == 'boot' and sliceNodes.has_key(node_record['hostname']):
@@ -191,10 +196,10 @@ def allocNodes():
     sliceNodes[n] = True
 
   sites  = {}
-  for s in server.AdmGetSites(auth):
+  for s in server.GetSites(auth):
     sites[s['site_id']] = s
 
-  siteNodes = server.AdmGetSiteNodes(auth)
+  siteNodes = server.GetSiteNodes(auth)
   nodeSites = {}
   for s in siteNodes.keys():
     for n in siteNodes[s]:
@@ -203,7 +208,7 @@ def allocNodes():
   # an array of which fields to return from the node records.
   return_fields= ['node_id', 'hostname','boot_state']
   # get all the nodes, regardless of current boot state
-  all_nodes = server.AdmGetNodes(auth, [], return_fields)
+  all_nodes = server.GetNodes(auth, {}, return_fields)
   nodes = []
   for node in all_nodes:
     if sliceNodes.has_key(node['hostname']):
@@ -383,7 +388,7 @@ if __name__ == "__main__":
     auth['AuthString'] = flags["password"]
     # valid roles include, 'user', 'tech', 'pi', 'admin'
     auth['Role'] = "user"
-    authorized = server.AdmAuthCheck( auth )
+    authorized = server.AuthCheck( auth )
     if not authorized:
       print "You are not authorized to access planetlab's slice management interface!"
       sys.exit(1)
@@ -398,7 +403,7 @@ if __name__ == "__main__":
     sys.exit(0)
   elif flags["kill"] or flags["create"]:
     allNodes = []
-    excluded = set(flags["exclude"])
+    excluded = flags["exclude"]
     if len(flags["include"]) > 0:
       # We have explicit nodes we're talking to
       for node in flags["include"]:

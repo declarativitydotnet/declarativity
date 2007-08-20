@@ -18,11 +18,13 @@
 #define __STRTOSOCKADDR_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 #include "value.h"
 
 class StrToSockaddr : public Element { 
 public:
   StrToSockaddr(string, unsigned);
+  StrToSockaddr(TuplePtr args);
 
   ~StrToSockaddr();
   
@@ -34,9 +36,13 @@ public:
   const char *flow_code() const			{ return "x/x"; }
 
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   /** The field number to translate */
   unsigned _fieldNo;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

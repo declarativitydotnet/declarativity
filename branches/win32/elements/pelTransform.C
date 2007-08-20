@@ -14,12 +14,28 @@
 
 #include "pelTransform.h"
 #include "pel_lexer.h"
+#include "val_str.h"
+
+DEFINE_ELEMENT_INITS(PelTransform, "PelTransform");
 
 PelTransform::PelTransform(string name, string pelCode)
   : Element(name, 1, 1)
 {
   _pelCode = pelCode;
   _program = Pel_Lexer::compile(pelCode.c_str());
+}
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_Str:    The pel code.
+ */
+PelTransform::PelTransform(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1)
+{
+  _pelCode = Val_Str::cast((*args)[3]);
+  _program = Pel_Lexer::compile(_pelCode.c_str());
 }
 
 TuplePtr

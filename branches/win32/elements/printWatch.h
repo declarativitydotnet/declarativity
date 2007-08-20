@@ -18,6 +18,7 @@
 #define __PRINTWATCH_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 #include <set>
 #include <vector>
 
@@ -26,6 +27,7 @@ public:
 
   PrintWatch(string prefix, std::set<string> tableNames);
   PrintWatch(string prefix, std::vector<string> tableNames);
+  PrintWatch(TuplePtr args);
 
   ~PrintWatch();
   
@@ -41,12 +43,16 @@ public:
 
 
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   /** The prefix to be placed on every printout by this element */
   string _prefix;
 
 
   std::set<string> _tableNames;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

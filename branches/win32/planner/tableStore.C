@@ -28,11 +28,12 @@ TableStore::TableStore(OL_Context* ctxt) {
 };
 
 
-CommonTablePtr TableStore::getTableByName(string tableName)
+CommonTablePtr
+TableStore::getTableByName(string tableName)
 {
   TableMap::iterator _iterator = _tables->find(tableName);
   if (_iterator == _tables->end()) {
-    PLANNER_ERROR_NOPC("ERROR: table " << tableName << " not found.");
+    PLANNER_ERROR_NOPC("ERROR: table '" << tableName << "' not found.");
     exit(-1);
   }
   return _iterator->second;
@@ -42,10 +43,10 @@ CommonTablePtr TableStore::getTableByName(string tableName)
 void
 TableStore::createTable(OL_Context::TableInfo* tableInfo)
 {
-  // What's my expiration? -1 in the inputs means no expiration.
+  // What's my expiration? 0 in the inputs means no expiration.
   boost::posix_time::time_duration expiration = tableInfo->timeout;
   
-  // What's my size? -1 in the inputs means no size
+  // What's my size? 0 in the inputs means no size
   uint32_t tableSize = tableInfo->size;
   
   // What's my primary key?
@@ -56,7 +57,8 @@ TableStore::createTable(OL_Context::TableInfo* tableInfo)
   
   // Create the table. 
   CommonTablePtr newTable;
-  if (expiration == Table2::NO_EXPIRATION) {
+  if ((expiration == Table2::NO_EXPIRATION) &&
+      (tableSize == 0)) {
     newTable.reset(new RefTable(tableInfo->tableName,
 				key));
     PLANNER_INFO_NOPC("Create ref counted table "
@@ -124,3 +126,24 @@ OL_Context::TableInfo* TableStore::getTableInfo(string tableName)
   return theIterator->second;
 }
 
+
+OL_Context::WatchTableType
+TableStore::getWatchTables()
+{
+  return _ctxt->getWatchTables();
+}
+
+
+
+OL_Context::TableInfoMap*
+TableStore::getTableInfos()
+{
+  return _tableInfos;
+}
+
+
+TableStore::TableMap*
+TableStore::getTables()
+{
+  return _tables;
+}

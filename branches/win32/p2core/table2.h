@@ -133,6 +133,25 @@ public:
   lookup(Key& indexKey, TuplePtr t);
 
 
+  /**
+     Range lookup access method. Same as parent's, but with explicit
+     flush
+  */
+  virtual Iterator
+  range1DLookup(Key& lKey, Key& rKey, Key& indexKey,
+                bool openL, bool openR, 
+		TuplePtr t);
+
+
+  /**
+     Range lookup access method. Same as parent's, but with explicit
+     flush
+  */
+  virtual Iterator
+  range1DLookupSecondary(bool openL, Entry* lb, bool openR, Entry* rb,
+                         SecondaryIndex& index);
+
+
   /** Returns a pointer to a lookup iterator on all elements ordered by
       the given index.  If no such index exists, a null pointer is
       returned.  */
@@ -180,6 +199,15 @@ public:
       the same or equal in terms of Tuple::compareTo. */
   bool
   remove(TuplePtr t);
+
+
+  ////////////////////////////////////////////////////////////
+  // Misc
+  ////////////////////////////////////////////////////////////
+
+  /** Turn the table into a string of tuples along the primary key */
+  std::string
+  toString();
 
 
 

@@ -12,6 +12,11 @@
  * 
  * DESCRIPTION: Overlog planner
  *
+ * NOTE: Aggwrap2Callback is used instead of Aggwrap2. The former uses
+ * lookup callbacks whereas the latter has been transitioned to have a
+ * callback port (input port 2). Aggwrap2Callback is a compatibility
+ * element to be removed when the SIGMOD 2006 planner is obsolete.
+ *
  */
 
 #ifndef __PL_RULEPLANNER_C__
@@ -39,7 +44,6 @@
 #include "duplicate.h"
 #include "refresh.h"
 #include "dupElim.h"
-#include "filter.h"
 #include "timedPullPush.h"
 #include "udp.h"
 #include "marshalField.h"
@@ -49,8 +53,6 @@
 #include "demux.h"
 #include "strToSockaddr.h"
 #include "slot.h"
-#include "timedPullSink.h"
-#include "timestampSource.h"
 #include "hexdump.h"
 #include "table2.h"
 #include "lookup2.h"
@@ -59,9 +61,8 @@
 #include "printTime.h"
 #include "roundRobin.h"
 #include "noNull.h"
-#include "functorSource.h"
+#include "staticTupleSource.h"
 #include "delete.h"
-#include "tupleSource.h"
 #include "printWatch.h"
 #include "aggregate.h"
 #include "duplicateConservative.h"
@@ -185,9 +186,11 @@ generateInsertEvent(PlanContext* pc)
   if (curRule->_probeTerms.size() > 0) {
     // if we are doing a join
     ElementSpecPtr pullPush = 
-      pc->createElementSpec(ElementPtr(new TimedPullPush("InsertEventTimedPullPush!"
-							 + curRule->_ruleID 
-							 + "!" + pc->_nodeID, 0)));
+      pc->createElementSpec(ElementPtr(new
+                                       TimedPullPush("InsertEventTimedPullPush!"
+                                                     + curRule->_ruleID 
+                                                     + "!" +
+                                                     pc->_nodeID, 0, 0)));
     pc->addElementSpec(pullPush);
   }
 }
@@ -215,9 +218,11 @@ generateRefreshEvent(PlanContext* pc)
   if (curRule->_probeTerms.size() > 0) {
     // if we are doing a join
     ElementSpecPtr pullPush = 
-      pc->createElementSpec(ElementPtr(new TimedPullPush("RefreshEventTimedPullPush!"
-							 + curRule->_ruleID 
-							 + "!" + pc->_nodeID, 0)));
+      pc->createElementSpec(ElementPtr(new
+                                       TimedPullPush("RefreshEventTimedPullPush!"
+                                                     + curRule->_ruleID 
+                                                     + "!" +
+                                                     pc->_nodeID, 0, 0)));
     pc->addElementSpec(pullPush);
   }
 }
@@ -249,10 +254,11 @@ generateDeleteEvent(PlanContext* pc)
   if (curRule->_probeTerms.size() > 0) {
     // if we are doing a join
     ElementSpecPtr pullPush = 
-      pc->createElementSpec(ElementPtr(new TimedPullPush("RemovedEventTimedPullPush!"
-							 + curRule->_ruleID 
-							 + "!" + pc->_nodeID, 
-							 0)));
+      pc->createElementSpec(ElementPtr(new
+                                       TimedPullPush("RemovedEventTimedPullPush!"
+                                                     + curRule->_ruleID 
+                                                     + "!" + pc->_nodeID, 
+                                                     0, 0)));
     pc->addElementSpec(pullPush);
   }
 }
@@ -269,11 +275,12 @@ generateReceiveEvent(PlanContext* pc)
   addPrint(pc, "RecvEvent", curRule->getEventName(), "c");
   
   if (curRule->_probeTerms.size() == 0) {
-    ElementSpecPtr slot = 
-      pc->createElementSpec(ElementPtr(new Slot("RecvEventSlot!" 
-                                                + curRule->_ruleID 
-                                                + "!" + pc->_nodeID)));
-    pc->addElementSpec(slot);
+    ElementSpecPtr queue = 
+      pc->createElementSpec(ElementPtr(new Queue("RecvEventQueue!" 
+                                                 + curRule->_ruleID 
+                                                 + "!" + pc->_nodeID,
+                                                 QUEUESIZE)));
+    pc->addElementSpec(queue);
   }
 }
 
@@ -377,9 +384,12 @@ generatePeriodicEvent(PlanContext* pc)
   functorTuple->freeze();
 
   ElementSpecPtr source =
-    pc->createElementSpec(ElementPtr(new TupleSource("FunctorSource!" + curRule->_ruleID 
-						     + "!" + pc->_nodeID,
-						     functorTuple)));
+    pc->createElementSpec(ElementPtr
+                          (new StaticTupleSource("PeriodicSource!"
+                                                 + curRule->_ruleID 
+                                                 + "!"
+                                                 + pc->_nodeID,
+                                                 functorTuple)));
   pc->addElementSpec(source);
 
   Parse_Functor* pf = dynamic_cast<Parse_Functor* > (curRule->_event->_pf);
@@ -488,7 +498,7 @@ generateAddAction(PlanContext* pc)
     pc->createElementSpec(ElementPtr(new TimedPullPush("Insert!" 
 						       + curRule->_ruleID 
 						       + "!" + pc->_nodeID, 
-						       0)));
+						       0, 0)));
   
   addPrint(pc, "AddAction", rs->actionFunctorName(), "a");
   
@@ -526,7 +536,7 @@ generateDeleteAction(PlanContext* pc)
     pc->_conf->addElement(ElementPtr(new TimedPullPush("Delete!" 
 						       + curRule->_ruleID 
 						       + "!" + pc->_nodeID, 
-						       0)));
+						       0, 0)));
   
   CommonTablePtr tablePtr 
     = pc->_tableStore->getTableByName(rs->actionFunctorName()); 
@@ -541,7 +551,9 @@ generateDeleteAction(PlanContext* pc)
   pc->addElementSpec(deleteElement);
 }
 
-void generateSendAction(PlanContext* pc)
+
+void
+generateSendAction(PlanContext* pc)
 {
   ECA_Rule* curRule = pc->getRule();
   RuleStrand* rs = pc->_ruleStrand;
@@ -558,7 +570,7 @@ void generateSendAction(PlanContext* pc)
 	else {
 	  Parse_Agg* aggExpr = dynamic_cast<Parse_Agg*>(head->arg(k));
 	  if (aggExpr != NULL && fieldNameEq(aggExpr->v->toString(), loc)) {
-		locationIndex = k+1;
+            locationIndex = k+1;
 	  }    
 	}
   }
@@ -586,11 +598,36 @@ void generateSendAction(PlanContext* pc)
   // copy that location specifier field first, encapsulate rest of tuple
 }
 
-void generateSendAction(TableStore* tableStore,
-                        string nodeID,
-                        StageStrand* strand,
-                        const OL_Context::ExtStageSpec* aSpec,
-                        Plumber::DataflowPtr _conf)
+
+void
+generateDropAction(PlanContext* pc)
+{
+  //Connect an active discard sink in
+  ECA_Rule* curRule = pc->getRule();
+
+  ElementSpecPtr pullPush = 
+    pc->createElementSpec(ElementPtr
+                          (new TimedPullPush("DiscardPullPush!"
+                                             + curRule->_ruleID 
+                                             + "!" + pc->_nodeID,
+                                             0, 0)));
+  pc->addElementSpec(pullPush);
+
+  string elementName = "Discard!"
+    + curRule->_ruleID
+    + "!" + pc->_nodeID;
+  ElementSpecPtr discard =
+    pc->createElementSpec(ElementPtr(new Discard(elementName)));
+  pc->addElementSpec(discard);
+}
+
+
+void
+generateSendAction(TableStore* tableStore,
+                   string nodeID,
+                   StageStrand* strand,
+                   const OL_Context::ExtStageSpec* aSpec,
+                   Plumber::DataflowPtr _conf)
 {
   // The first field after the tuple name is always the location
   // specifier
@@ -613,23 +650,33 @@ void generateSendAction(TableStore* tableStore,
 }
 
 
-void generateActionElement(PlanContext* pc)
+void
+generateActionElement(PlanContext* pc)
 {
   RuleStrand* rs = pc->_ruleStrand;
 
-  // add, insert
-  if (rs->actionType() == Parse_Action::P2_ADD) {    
+  switch(rs->actionType()) {
+  case Parse_Action::P2_ADD:
     generateAddAction(pc);
-  }
+    break;
 
-  if (rs->actionType() == Parse_Action::P2_DELETE) {    
+  case Parse_Action::P2_DELETE:
     generateDeleteAction(pc);
-  }
+    break;
 
-
-  if (rs->actionType() == Parse_Action::P2_SEND) {    
+  case Parse_Action::P2_SEND:
     generateSendAction(pc);
-  }   
+    break;
+
+  case Parse_Action::P2_DROP:
+    generateDropAction(pc);
+    break;
+
+  default:
+    // What kind of action is this?
+    PLANNER_ERROR(pc, "Found action of unknown type");
+    break;
+  }
 }
 
 
@@ -820,11 +867,13 @@ void generateMultipleProbeElements(PlanContext* pc)
       joinProbeName = generateProbeElements(pc, pf, joinProbeName, &comp_cb);
     }
 
-     if (curRule->_probeTerms.size() - 1 != k) {
+    if (curRule->_probeTerms.size() - 1 != k) {
       ElementSpecPtr pullPush =
-	pc->createElementSpec(ElementPtr(new TimedPullPush("ProbePullPush!" 
-							   + curRule->_ruleID + "!" 
-							   + pc->_nodeID, 0)));
+	pc->createElementSpec(ElementPtr(new
+                                         TimedPullPush("ProbePullPush!" 
+                                                       + curRule->_ruleID + "!" 
+                                                       + pc->_nodeID, 0,
+                                                       0)));
       pc->addElementSpec(pullPush);
     }
   }
@@ -833,19 +882,25 @@ void generateMultipleProbeElements(PlanContext* pc)
 void generateSelectionAssignmentElements(PlanContext* pc)
 {
   ECA_Rule* curRule = pc->getRule();
-  for (unsigned int j = 0; j < curRule->_selectAssignTerms.size(); j++) {
+  for (unsigned int j = 0;
+       j < curRule->_selectAssignTerms.size();
+       j++) {
     Parse_Select* parse_select 
       = dynamic_cast<Parse_Select *>(curRule->_selectAssignTerms.at(j));
     if (parse_select != NULL) {
-      PLANNER_WORDY(pc, "Selection term " << parse_select->toString() << " " 
+      PLANNER_WORDY(pc, "Selection term "
+                    << parse_select->toString()
+                    << " " 
                     << curRule->_ruleID);
       pelSelect(pc, parse_select, j); 
     }
     Parse_Assign* parse_assign 
       = dynamic_cast<Parse_Assign *>(curRule->_selectAssignTerms.at(j));
     if (parse_assign != NULL) {
-      PLANNER_WORDY(pc, "Assignment term " << parse_assign->toString() << " " 
-			+ curRule->_ruleID);
+      PLANNER_WORDY(pc, "Assignment term "
+                    << parse_assign->toString()
+                    << " " 
+                    << curRule->_ruleID);
       pelAssign(pc, parse_assign, j);
     }
   }
@@ -871,6 +926,19 @@ generateProjectElements(PlanContext* pc)
     if (parse_var != NULL) {
       // care only about vars    
       pos = curNamesTracker->fieldPosition(parse_var->toString());    
+      if (pos == -1) {
+        // Found a variable in the rule head that is unbound (i.e., it
+        // is not unified with a variable in the rule body). This can't
+        // happen.
+        PLANNER_ERROR(pc,
+                      "Rule head for rule '"
+                      << curRule->toString()
+                      << "' contains unbound variable '"
+                      << parse_var->toString()
+                      << "'. All rule head variables must "
+                      << "be bound to variables in the rule body.");
+        exit(-1);
+      }
       newNamesTracker->fieldNames.push_back(parse_var->toString());
     }
 
@@ -949,11 +1017,11 @@ initializeAggWrap(PlanContext* pc)
       
   oss << "Aggwrap:" << r->_ruleID << ":" << pc->_nodeID;
   
-  pc->_agg_el = new Aggwrap2(oss.str(),
-                             aggExpr->aggName(), 
-                             aggField + 1,
-                             dontCare,
-                             headFunctor->fn->name);
+  pc->_agg_el = new Aggwrap2Callback(oss.str(),
+                                     aggExpr->aggName(), 
+                                     aggField + 1,
+                                     dontCare,
+                                     headFunctor->fn->name);
 }
 
 

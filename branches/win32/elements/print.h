@@ -18,11 +18,13 @@
 #define __PRINT_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 
 class Print : public Element { 
 public:
 
   Print(string prefix);
+  Print(TuplePtr args);
 
   ~Print();
   
@@ -33,9 +35,13 @@ public:
   const char *processing() const		{ return "a/a"; }
   const char *flow_code() const			{ return "x/x"; }
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   /** The prefix to be placed on every printout by this element */
   string _prefix;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

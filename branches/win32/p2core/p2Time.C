@@ -1,6 +1,6 @@
 // -*- c-basic-offset: 2; related-file-name: "p2Time.h" -*-
 /*
- * @(#)$Id: p2Time.C,v 1.6 2006/05/19 03:52:55 maniatis Exp $
+ * @(#)$Id$
  *
  * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:

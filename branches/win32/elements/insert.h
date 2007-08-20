@@ -22,6 +22,7 @@
 #define __INSERT_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 #include "commonTable.h"
 
 class Insert
@@ -29,6 +30,7 @@ class Insert
 public:
   Insert(string name,
          CommonTablePtr table);
+  Insert(TuplePtr args);
   
   const char*
   class_name() const {return "Insert";}
@@ -50,9 +52,13 @@ public:
 
 
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   /** My table */
   CommonTablePtr _table;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

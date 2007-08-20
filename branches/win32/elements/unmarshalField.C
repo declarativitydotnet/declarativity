@@ -23,6 +23,11 @@
 //#include "xdrbuf.h"
 // the boost serialization implementer claims text is not much more expensive than portable binary
 #include <boost/archive/text_iarchive.hpp>
+#include "val_str.h"
+#include "val_uint32.h"
+#include "val_list.h"
+
+DEFINE_ELEMENT_INITS(UnmarshalField, "UnmarshalField")
 
 UnmarshalField::UnmarshalField(string name,
                                unsigned fieldNo)
@@ -35,6 +40,28 @@ UnmarshalField::UnmarshalField(string name,
                                std::vector<unsigned> fieldNos)
   : Element(name, 1, 1), _fieldNos(fieldNos)
 {
+}
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_UInt32: Field number.
+ * OR
+ * 3. Val_List:   Field numbers.
+ */
+UnmarshalField::UnmarshalField(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1)
+{
+  if ((*args)[3]->typeCode() == Value::LIST) {
+    ListPtr fieldNos = Val_List::cast((*args)[3]);
+    for (ValPtrList::const_iterator i = fieldNos->begin();
+         i != fieldNos->end(); i++)
+      _fieldNos.push_back(Val_UInt32::cast(*i));
+  }
+  else {
+    _fieldNos.push_back(Val_UInt32::cast((*args)[3]));
+  }
 }
 
 
@@ -71,7 +98,7 @@ TuplePtr UnmarshalField::simple_action(TuplePtr p)
     } else {
       // Numbered field is un-unmarshallable.  Just return the same
       // tuple and log a warning
-      log(Reporting::WARN, -1, "Cannot unmarshal a non-opaque field");
+      ELEM_WARN("Cannot unmarshal a non-opaque field");
       return p;
     }
   }

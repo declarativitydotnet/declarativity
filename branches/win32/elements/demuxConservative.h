@@ -25,6 +25,7 @@
 #define __DEMUXCONSERVATIVE_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 
 class DemuxConservative : public Element { 
 public:
@@ -33,6 +34,10 @@ public:
   DemuxConservative(string,
                     std::vector< ValuePtr >,
                     unsigned f = 0);
+
+
+  DemuxConservative(TuplePtr args);
+
 
   int
   push(int port, TuplePtr t, b_cbv cb);
@@ -48,13 +53,23 @@ public:
   toDot(std::ostream*);
 
 
-  /** My demux key vector */
-  std::vector< ValuePtr > _demuxKeys;
+  /** Find an output port given its name */
+  int
+  output(ValuePtr);
 
 
 
+  DECLARE_PUBLIC_ELEMENT_INITS
 
 private:
+  /** The type of port name to port number map */
+  typedef std::map<ValuePtr, unsigned, Value::Comparator> PortMap;
+
+  
+  /** My port map */
+  PortMap _portMap;
+
+
   /** The callback for my input */
   b_cbv	_push_cb;
 
@@ -70,6 +85,8 @@ private:
 
   /** The input field on which I perform the demultiplexing */
   unsigned _inputFieldNo;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

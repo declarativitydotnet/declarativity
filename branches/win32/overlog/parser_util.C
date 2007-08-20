@@ -75,7 +75,6 @@ Parse_Var::setLocspec()
 //=====================================
 
 Parse_Expr* Parse_Agg::DONT_CARE = new Parse_Var(Val_Str::mk("*"));
-Parse_Expr* Parse_Expr::Now = new Parse_Var(Val_Str::mk("now"));
 
 bool Parse_Agg::operator==(const Parse_Expr &e){
   try {
@@ -118,15 +117,15 @@ bool Parse_Bool::operator==(const Parse_Expr &e) {
 string Parse_Bool::toString() {
   ostringstream b;
   if (oper == NOT) {
-    b << "NOT( " << lhs->toString() << " )";
+    b << "!(" << lhs->toString() << ")";
   }
   else if (oper == RANGE) {
-    b << lhs->toString() << " IN " << rhs->toString();
+    b << lhs->toString() << " in " << rhs->toString();
   }
   else {
-    if (dynamic_cast<Parse_Bool*>(lhs) != NULL) b << "( ";
+    if (dynamic_cast<Parse_Bool*>(lhs) != NULL) b << "(";
     b << lhs->toString();
-    if (dynamic_cast<Parse_Bool*>(lhs) != NULL) b << " )";
+    if (dynamic_cast<Parse_Bool*>(lhs) != NULL) b << ")";
     switch (oper) {
       case AND: b << " && "; break;
       case OR:  b << " || "; break;
@@ -138,9 +137,9 @@ string Parse_Bool::toString() {
       case GTE: b << " >= "; break;
       default: assert(0);
     }
-    if (dynamic_cast<Parse_Bool*>(rhs) != NULL) b << "( ";
+    if (dynamic_cast<Parse_Bool*>(rhs) != NULL) b << "(";
     b << rhs->toString();
-    if (dynamic_cast<Parse_Bool*>(rhs) != NULL) b << " )";
+    if (dynamic_cast<Parse_Bool*>(rhs) != NULL) b << ")";
   }
 
   return b.str();
@@ -221,36 +220,38 @@ string Parse_Math::toString() {
   bool lpar = (dynamic_cast<Parse_Math*>(lhs) != NULL);
   bool rpar = (dynamic_cast<Parse_Math*>(rhs) != NULL);
 
-  if (lpar) m << "( ";
+  if (lpar) m << "(";
   m << lhs->toString(); 
-  if (lpar) m << " )";
+  if (lpar) m << ")";
 
   switch (oper) {
-    case LSHIFT:  m << " <<"; break;
-    case RSHIFT:  m << " >>"; break;
-    case PLUS:    m << " +"; break;
-    case MINUS:   m << " -"; break;
-    case TIMES:   m << " *"; break;
-    case DIVIDE:  m << " /"; break;
-    case MODULUS: m << " %"; break;
-    case BIT_AND: m << "& "; break;
-    case BIT_OR:  m << "| "; break;
-    case BIT_XOR: m << "^ "; break;
-    case BIT_NOT: m << "~ "; break;
+    case LSHIFT:  m << "<<"; break;
+    case RSHIFT:  m << ">>"; break;
+    case PLUS:    m << "+"; break;
+    case MINUS:   m << "-"; break;
+    case TIMES:   m << "*"; break;
+    case DIVIDE:  m << "/"; break;
+    case MODULUS: m << "%"; break;
+    case BIT_AND: m << "&"; break;
+    case BIT_OR:  m << "|"; break;
+    case BIT_XOR: m << "^"; break;
+    case BIT_NOT: m << "~"; break;
     default: assert(0);
   }
   if (id) m << "id ";
   else m << " ";
 
-  if (rpar) m << "( ";
+  if (rpar) m << "(";
   m << rhs->toString();
-  if (rpar) m << " )";
+  if (rpar) m << ")";
 
   return m.str();
 }
 
-Parse_FunctorName::Parse_FunctorName(Parse_Expr *n) {
-  name = n->v->toString(); delete n;
+Parse_FunctorName::Parse_FunctorName(Parse_Expr *n)
+{
+  name = n->v->toString();
+  delete n;
 }
 
 string Parse_FunctorName::toString() {
@@ -258,6 +259,21 @@ string Parse_FunctorName::toString() {
   fn <<  name;
   return fn.str();
 }
+
+
+Parse_Functor::Parse_Functor(Parse_FunctorName* f,
+                             Parse_ExprList* a,
+                             Parse_Expr* l) 
+  : fn(f),
+    args_(a)
+{ 
+  if (l) {
+    loc_ = l->v->toString(); delete l;
+  } else {
+    (void) getlocspec();
+  }
+}
+
 
 string
 Parse_Functor::getlocspec() {
@@ -311,7 +327,7 @@ string
 Parse_Functor::toString() {
   ostringstream f;
   f << fn->toString()
-    << "( ";
+    << "(";
   for (int i = 0; i < args(); i++) {
     Parse_Expr* nextArg = arg(i);
     Parse_Var* var = dynamic_cast<Parse_Var*>(nextArg);
@@ -325,7 +341,7 @@ Parse_Functor::toString() {
     if (i + 1 < args()) {
       f << ", ";
     } else {
-      f << " )";
+      f << ")";
     }
   }
   return f.str();
@@ -343,8 +359,13 @@ int Parse_Functor::find(string argname) {
 
 int
 Parse_Functor::aggregate() {
-  for (int i = 0; i < args(); i++)
-    if (dynamic_cast<Parse_Agg*>(arg(i)) != NULL) return i;
+  for (int i = 0;
+       i < args();
+       i++) {
+    if (dynamic_cast<Parse_Agg*>(arg(i)) != NULL) {
+      return i;
+    }
+  }
   return -1;
 }
 
@@ -356,16 +377,18 @@ void Parse_Functor::replace(int p, Parse_Expr *e) {
 string
 Parse_Assign::toString()
 {
-  return var->toString() + " = " + assign->toString();
+  return var->toString() + " := " + assign->toString();
 }
 
 string Parse_Select::toString() {
   return select->toString();
 }
 
-string Parse_Function::toString() {
+
+string
+Parse_Function::toString() {
   ostringstream f;
-  f << v->toString() << "( ";
+  f << v->toString() << "(";
   for (int i = 0; i < args(); i++) {
     f << arg(i)->toString();
     if (i+1 < args()) f << ", ";

@@ -20,6 +20,10 @@
 #include "val_tuple.h"
 #include <iostream>
 #include <errno.h>
+#include "val_str.h"
+#include "val_list.h"
+
+DEFINE_ELEMENT_INITS(PrintWatch, "PrintWatch")
 
 PrintWatch::PrintWatch(string prefix, std::set<string> tableNames)
   : Element(prefix, 1, 1),
@@ -38,6 +42,20 @@ PrintWatch::PrintWatch(string prefix, std::vector<string> tableNames)
   }
 }
 
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:  Prefix / Name.
+ * 2. Val_List: Table names.
+ */
+PrintWatch::PrintWatch(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1)
+{
+  ListPtr tableNames = Val_List::cast((*args)[3]);
+  for (ValPtrList::const_iterator i = tableNames->begin();
+       i != tableNames->end(); i++)
+    _tableNames.insert(Val_Str::cast(*i));
+}
 
 PrintWatch::~PrintWatch()
 {
@@ -66,7 +84,7 @@ TuplePtr PrintWatch::simple_action(TuplePtr p)
   boost::posix_time::ptime now_ts;
   
   getTime(now_ts);
-  TELL_OUTPUT << "Print["
+  ELEM_OUTPUT("Print["
               << _prefix
               << ", "
               << boost::posix_time::to_simple_string(now_ts)
@@ -74,6 +92,6 @@ TuplePtr PrintWatch::simple_action(TuplePtr p)
               << (int) bytes
               << ", "
               << p->toString()
-              << "]\n";
+              << "]");
   return p;
 }

@@ -29,6 +29,14 @@ class List {
 public:
    // Factory
    static ListPtr mk() { ListPtr l(new List()); return l; };
+   static ListPtr mk(ValueList *vl) { 
+     ListPtr l(new List()); 
+     for (ValueList::iterator i = vl->begin(); i != vl->end(); i++)
+       l->append(*i);
+     return l; 
+   };
+
+   ListPtr clone() const;
 
    List() : vpl() {};
    
@@ -55,6 +63,9 @@ public:
    
    // Appends a value to a list.
    void append(ValuePtr val);
+
+   // Prepends a value to a list.
+   void prepend(ValuePtr val);
    
    // Concatenates two lists together. This is the functional 
    // equivalent of Lisp-style cons. Ordering in the new list is 
@@ -75,6 +86,12 @@ public:
    static ListPtr unmarshal( boost::archive::text_iarchive *xdrs );
 
    void sort();
+
+   ValuePtr front() { return vpl.front(); }
+   ValuePtr back() { return vpl.back(); }
+
+   void pop_front() { vpl.pop_front(); }
+   void pop_back() { vpl.pop_back(); }
       
 private:
    ValPtrList vpl;

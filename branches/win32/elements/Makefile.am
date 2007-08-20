@@ -16,26 +16,24 @@
 
 lib_LTLIBRARIES =		libp2elements.la
 
-SOURCE_FILE_ROOTS =		\
+SOURCE_FILE_ROOTS = 		elementRegistry \
+				elementLoader \
 				aggwrap2 \
+				aggwrap2Callback \
 				slot \
 				print \
 				printTime \
-				timedPushSource \
-				timestampSource \
-				timedPullSink \
 				discard \
 				logger \
 				pelTransform \
 				marshal \
 				marshalField \
 				hexdump \
-				csvparser \
 				unmarshal \
 				unmarshalField \
-				route \
 				demuxConservative \
 				ddemux \
+				demux \
 				mux \
 				roundRobin \
 				dRoundRobin \
@@ -43,16 +41,17 @@ SOURCE_FILE_ROOTS =		\
 				duplicateConservative \
 				dDuplicateConservative \
 				dupElim \
-				filter \
 				insert \
 				lookup2 \
 				delete \
 				timedPullPush \
 				strToSockaddr \
 				queue \
-				functorSource \
 				tupleSource \
+				staticTupleSource \
+				tupleInjector \
 				noNull \
+				noNullSignal \
 				noNullField \
 				unboxField \
 				printWatch \
@@ -60,14 +59,23 @@ SOURCE_FILE_ROOTS =		\
 				update \
 				refresh \
 				tupleListener \
-				tupleSourceInterface \
-				removed
+				compileStage \
+				stage \
+				stageRegistry \
+				compileTerminal \
+				identity \
+				removed \
+				pullPush \
+				switch \
+				rangeLookup \
+				commitBuf \
+				insert2 \
+				delete2
 
 libp2elements_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C)
 
 libp2elements_la_CPPFLAGS =	@BOOST_INC@ \
-				-I../p2core \
-				-I../eventLoop
+				-I../p2core
 
 libp2elements_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 

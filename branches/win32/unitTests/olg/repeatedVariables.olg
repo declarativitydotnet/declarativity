@@ -19,4 +19,5 @@ materialize(try, infinity, infinity, keys(1,2)).
 watch(out).
 
 r1 try(@I, M) :- periodic(@I,E,0,1), M := 1.
+
 r2 out(@I, M, Z, Z) :- periodic(@I,E,2,3), try(@I, M), Z := 1.

@@ -19,10 +19,24 @@
 #include <errno.h>
 #include "printTime.h"
 #include "loop.h"
+#include "val_str.h"
+
+DEFINE_ELEMENT_INITS(PrintTime, "PrintTime");
 
 PrintTime::PrintTime(string prefix)
   : Element(prefix, 1, 1),
     _prefix(prefix)
+{
+}
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str: Prefix / Name.
+ */
+PrintTime::PrintTime(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1),
+    _prefix(Val_Str::cast((*args)[2]))
 {
 }
 
@@ -35,9 +49,11 @@ TuplePtr PrintTime::simple_action(TuplePtr p)
   boost::posix_time::ptime now_ts;
   
   getTime(now_ts);
-  TELL_WARN << "Print[" << _prefix
-            << ", "
-            << boost::posix_time::to_simple_string(now_ts)
-            << "]:  [" << p->toString() << "]\n";
+  ELEM_OUTPUT("Print[" << _prefix
+              << ", "
+              << boost::posix_time::to_simple_string(now_ts)
+              << "]:  ["
+              << p->toString()
+              << "]");
   return p;
 }

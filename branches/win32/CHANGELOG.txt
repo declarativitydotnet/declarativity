@@ -1,9 +1,142 @@
+/*
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
+ * 
+ * DESCRIPTION: Element which simply prints any tuple that passes
+ * through it.
+ */
+
+
+Release 0.8.2
+=============
+
+A bug-fix release
+
+- Eliminated static initialization problems with the Val_Null singleton
+  object, and with the scheduler's procs list.
+
+- Added the CSV parser stage processor into the make sequence.
+
+- Added first-pass description of P2DL into the user guide.
+
+- TimedPullPush elements no longer have a default constructor parameter
+  for number of tuples.
+
+- Fixed variable canonicalization for periodic tuples; no selections are
+  necessary there.
+
+- Fixed P2DL emitted code for periodics (two periods were appended to
+  the P2DL program).
+
+- Fixed Fact emission to remove tuple identifier from explicit naming.
+
+- Added support for command-line arguments into the language, to phase
+  out macro preprocessing (eventually).
+
+
+
+
+Release 0.8.1
+=============
+
+- Made comparator functions for Tuples and Values consistent.
+
+- Added a count-distinct aggregation operator.
+
+- Changed parser to take arbitrary aggregate names.
+
+- Moved aggregates to separate directory.
+
+- Now catching missing aggregate names in the planner.
+
+- Fixed lexer problem with escaped characters
+
+- Fixed link order for static linking.
+
+- Changed the element registry mechanism to match those of functions,
+  stages, and aggregates.
+
+- Added a skeleton P2 interface back in.
+
+- Migrated runOverLog and runOverLogNoCPP to use the P2 interface.
+
+- Recreated old version of aggwrap that uses callbacks for legacy
+  planners.
+
+- Brought Udp up to speed as compared to Udp2, pending obsolescence.
+
+- Fixed iterator erasures in loop.C
+
+- Now scheduler will not be invoked in loop.C if there's no external
+  queue. 
+
+- Fixed toDot for DemuxConservative to use stored output numbers
+
+- Added string msg into NetworkExceptions
+
+- Fixed manipulation of waitDuration in loop.C to use initialization
+  from main loop function.
+
+- Subscriptions added via p2cpp
+
+- Cleaned up the interface to what used to be FunctorSource to remove
+  the need for a generator, since P2DL doesn't handle those very well.
+
+- Added an explicit tuple injector element that is not a subclass of
+  tupleSource, to avoid semantics issues.
+
+- Added an explicit place in a dataflow to hold a tupleInjector that can
+  be used for external app connections (via the P2 interface).
+
+- Added an injector element in the normal netout graph produced by the
+  planner.
+
+- Got rid of legacy app lookupGenerator.
+
+- Got rid of logging methods in elements.
+
+- Now Udp2 subcomponents are also elements.
+
+- Move stage and stageRegistry under elements.
+
+- Changed tuple printout to look more like tuples in OverLog (i.e.,
+  predicateName(field, field, field)).
+
+- Added support for watched tuples that are not listened-to by the
+  OverLog program.
+
+- Added an explicit DROP action in ECA.
+
+- Fixed inheritance of virtual lookup() methods in CommonTable
+  subclasses (identified by Ashima Atul).
+
+- Fixed decision on reference-counted vs. explicitly allocated tables.
+
+- Fixed view rewrite that caused dangling rules when action was
+  unmaterialized.
+
+- Now event aggregates with materialized tables that are distributed are
+  disallowed, since the implementation does not follow the semantics.
+
+- Fixed tokenizer packet processor to handle non-delimiter content
+  endings correctly.
 
 - Added a stage called "CSVtuple" that reads comma-separated-value
   files from the filesystem, and produces corresponding tuples.  See
   unitTests/olg/csvstage.olg for a usage example.  Also, factored CSV
   parsing code out of the csvparser element into p2core/CSVlex.[Ch],
   so it could be reused by the new stage. 
+
+- Added a simple tutorial/user guide.
+
+
+
+
 
 Release 0.8
 ===========

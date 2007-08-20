@@ -21,6 +21,7 @@
 
 #include "commonTable.h"
 #include "element.h"
+#include "elementRegistry.h"
 #include "tuple.h"
 #include <list>
 
@@ -28,6 +29,7 @@ class Refresh : public Element {
 public:
   Refresh(string name, 
           CommonTablePtr table);
+  Refresh(TuplePtr args);
   
   
   const char*
@@ -55,6 +57,8 @@ public:
   
 
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
  private:
 
   /** My queue of table refreshs */
@@ -63,6 +67,8 @@ public:
 
   /** Call back for downstream elements */
   b_cbv _pullCB;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 #endif /* __REFRESH_H_ */

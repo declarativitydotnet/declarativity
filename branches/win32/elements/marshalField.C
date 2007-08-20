@@ -23,6 +23,11 @@
 // the boost serialization implementer claims text is not much more expensive than portable binary
 #include <boost/archive/text_oarchive.hpp>
 #include <sstream>
+#include "val_str.h"
+#include "val_uint32.h"
+#include "val_list.h"
+
+DEFINE_ELEMENT_INITS(MarshalField, "MarshalField");
 
 MarshalField::MarshalField(string name,
                            unsigned fieldNo)
@@ -34,6 +39,28 @@ MarshalField::MarshalField(string name,
 MarshalField::MarshalField(string name, std::vector<unsigned> fieldNos)
   : Element(name, 1, 1), _fieldNos(fieldNos)
 {
+}
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_UInt32: The field number to be marshalled.
+ * OR
+ * 3. Val_List:   The field numbers to be marshalled.
+ */
+MarshalField::MarshalField(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1)
+{
+  if ((*args)[3]->typeCode() == Value::LIST) {
+    ListPtr fields = Val_List::cast((*args)[3]);
+    for (ValPtrList::const_iterator i = fields->begin();
+         i != fields->end(); i++)
+      _fieldNos.push_back(Val_UInt32::cast(*i));
+  }
+  else {
+    _fieldNos.push_back(Val_UInt32::cast((*args)[3]));
+  }
 }
 
 MarshalField::~MarshalField()
@@ -76,7 +103,7 @@ TuplePtr MarshalField::simple_action(TuplePtr p)
     else {
       // Numbered field is unmarshallable.  Just return the same tuple
       // and log a warning
-      log(Reporting::WARN, -1, "Cannot marshal a non-tuple field");
+      ELEM_WARN("Cannot marshal a non-tuple field");
       return p;
     }
   }

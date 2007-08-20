@@ -23,14 +23,16 @@ string pelMath(PlanContext* pc, Parse_Math *expr);
 string pelFunction(PlanContext* pc, Parse_Function *expr);
 string pelBool(PlanContext* pc, Parse_Bool *expr);
 
-void error(string msg)
+void
+error(string msg)
 {
   PLANNER_ERROR_NOPC("PLANNER ERROR: " << msg);
   exit(-1);
 }
 
 
-void error(PlanContext* pc, string msg)
+void
+error(PlanContext* pc, string msg)
 {  
   ECA_Rule* curRule = pc->_ruleStrand->getRule();
   PLANNER_ERROR_NOPC("PLANNER ERROR: " << msg << " for rule " 
@@ -43,15 +45,15 @@ void
 expr2Pel(PlanContext* pc, ostringstream &pel, Parse_Expr *e) 
 {
   PlanContext::FieldNamesTracker* names = pc->_namesTracker;
-  Parse_Var*  var;
-  Parse_Val*  val;
-  Parse_Bool     *b   = NULL;
-  Parse_Math     *m   = NULL;
-  Parse_Function *f   = NULL; 
-  Parse_Vector   *v   = NULL;
-  Parse_VecAtom  *va  = NULL;
-  Parse_Matrix   *mat = NULL;
-  Parse_MatAtom  *mata= NULL;
+  Parse_Var* var;
+  Parse_Val* val;
+  Parse_Bool *b = NULL;
+  Parse_Math *m = NULL;
+  Parse_Function *f = NULL; 
+  Parse_Vector *v = NULL;
+  Parse_VecAtom *va = NULL;
+  Parse_Matrix *mat = NULL;
+  Parse_MatAtom *mata = NULL;
 
   if ((var = dynamic_cast<Parse_Var*>(e)) != NULL) {
     // expr is a variable
@@ -70,8 +72,6 @@ expr2Pel(PlanContext* pc, ostringstream &pel, Parse_Expr *e)
       pel << val->toString() << " "; 
     }
   }
-  else if (e == Parse_Expr::Now)
-    pel << "now "; 
   else if ((b = dynamic_cast<Parse_Bool*>(e)) != NULL)
     pel << pelBool(pc, b);
   else if ((m = dynamic_cast<Parse_Math*>(e)) != NULL) {
@@ -176,10 +176,10 @@ string pelRange(PlanContext* pc, Parse_Bool *expr)
   expr2Pel(pc, pel, range->lhs);
   expr2Pel(pc, pel, range->rhs);
   switch (range->type) {
-    case Parse_Range::RANGEOO: pel << "()id "; break;
-    case Parse_Range::RANGEOC: pel << "(]id "; break;
-    case Parse_Range::RANGECO: pel << "[)id "; break;
-    case Parse_Range::RANGECC: pel << "[]id "; break;
+    case Parse_Range::RANGEOO: pel << "() "; break;
+    case Parse_Range::RANGEOC: pel << "(] "; break;
+    case Parse_Range::RANGECO: pel << "[) "; break;
+    case Parse_Range::RANGECC: pel << "[] "; break;
     }
 
   return pel.str();
@@ -427,6 +427,25 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
   }
 
   else {
+
+    // Here we handle non-builtin functions. We
+    // ask the function factory to check whether it knows how to handle
+    // a function with this particular name and arguments. If the check
+    // fails, we raise a planning error. Otherwise, we plonk the
+    // appropriate pel invocation into the string.
+
+    /**
+    if (FunctionRegistry::check(expr->name(),
+                                expr->args_)) {
+      // It checked out. Put it into the pel expression
+      Parse_ExprList::iterator arg = expr->args_->begin();
+      while (arg != expr->args_->end()) {
+        expr2Pel(pc, pel, *arg);
+      }
+      pel << "func" << expr->args_->size();
+    }
+    */
+
     PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
     exit(-1);
     return "ERROR: unknown function name.";
@@ -440,12 +459,18 @@ string pelBool(PlanContext* pc, Parse_Bool *expr)
 {
   ostringstream   pel;  
 
-  if (expr->oper == Parse_Bool::RANGE) return pelRange(pc, expr);
-
-  expr2Pel(pc, pel, expr->lhs);
-  expr2Pel(pc, pel, expr->rhs);
-  switch (expr->oper) {
-    case Parse_Bool::NOT: pel << "not "; break;
+  // RANGE is special so we handle it elsewhere
+  if (expr->oper == Parse_Bool::RANGE) {
+    return pelRange(pc, expr);
+  } else if (expr->oper == Parse_Bool::NOT) {
+    // Unary operators only have a single operand.
+    expr2Pel(pc, pel, expr->lhs);
+    pel << "not ";
+  } else {
+    // Binary operators have two operands.
+    expr2Pel(pc, pel, expr->lhs);
+    expr2Pel(pc, pel, expr->rhs);
+    switch (expr->oper) {
     case Parse_Bool::AND: pel << "and "; break;
     case Parse_Bool::OR:  pel << "or "; break;
     case Parse_Bool::EQ:  pel << "== "; break;
@@ -456,6 +481,7 @@ string pelBool(PlanContext* pc, Parse_Bool *expr)
     case Parse_Bool::GTE: pel << ">= "; break;
     default: return "ERROR";
     }
+  }
   return pel.str();
 }
 
@@ -479,8 +505,10 @@ pelSelect(PlanContext* pc, Parse_Select *expr, int selectionID)
  
   ElementSpecPtr sPelTrans =
     pc->createElementSpec(ElementPtr(new PelTransform("Selection:" 
-                                                      + curRule->_ruleID + ":" + 
-                                                      pc->_nodeID, sPel.str())));
+                                                      + curRule->_ruleID +
+                                                      ":" + 
+                                                      pc->_nodeID,
+                                                      sPel.str())));
   pc->addElementSpec(sPelTrans);
 }
 

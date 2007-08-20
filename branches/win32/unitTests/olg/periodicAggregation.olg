@@ -9,12 +9,13 @@
   * 
   * $Id$
   * 
-  * DESCRIPTION: OverLog regression test for localization reordering.
+  * DESCRIPTION: Periodic events triggering aggregation.
   * 
   * Run me as follows:
-  * tests/runOverLog -DLOCALADDR=\"localhost:10000\" -o unitTests/olg/periodicAggregation.olg
   * 
-  * Should produce two rounds of 3 tuples each.
+  * tests/runOverLog -o unitTests/olg/periodicAggregation.olg -DLOCALADDR=\"localhost:10000\"
+  *
+  * Exactly one tuple should be produced with value 4.
   *
 ***/
 
@@ -25,6 +26,7 @@ someTable(LOCALADDR, 1, 2).
 someTable(LOCALADDR, 2, 4).
 someTable(LOCALADDR, 3, 1).
 
-watch(someEvent).
+watchmod(someEvent, "s").
 
-r2 someEvent(@J, max<V>) :- periodic(@J, E, 1, 2), someTable(@J, N, V).
+r2 someEvent(@J, a_MAX<V>) :- periodic(@J, E, 1,1), someTable(@J, N, V).
+

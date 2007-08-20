@@ -19,7 +19,8 @@
 #ifndef __LOGGER_H__
 #define __LOGGER_H__
 
-#include <element.h>
+#include "element.h"
+#include "elementRegistry.h"
 #include <loggerI.h>
 #include "reporting.h"
 
@@ -27,6 +28,7 @@ class Logger : public Element,
                public LoggerI { 
 public:
   Logger(string);
+  Logger(TuplePtr args);
   
   const char *class_name() const		{ return "Logger"; }
   const char *flow_code() const			{ return "/-"; }
@@ -39,9 +41,13 @@ public:
 	    int errnum,
 	    string explanation );
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   static uint64_t seq;
   
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 #endif /* __LOGGER_H_ */

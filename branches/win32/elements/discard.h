@@ -17,11 +17,14 @@
 #define __DISCARD_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 
 class Discard : public Element { 
 public:
   
   Discard(string name="discard");
+
+  Discard(TuplePtr args);
 
   const char *class_name() const		{ return "Discard";}
   const char *processing() const		{ return "h/"; }
@@ -29,6 +32,11 @@ public:
 
   /** Overridden since I have no outputs */
   int push(int port, TuplePtr, b_cbv cb);
+
+  DECLARE_PUBLIC_ELEMENT_INITS
+
+private:
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 

@@ -12,20 +12,22 @@
  * Execute with
  * tests/runOverLog -o unitTests/olg/stage.olg
  *
- * outToken tuples should be generated, one for each of a, b, c, d, e,
- * f, g, 1, 2, 3, 4, 5, 6, 7.  Each should be generated in order twice.
+ * outToken tuples should be generated, one for each of a, b, c, 1, 2,
+ * 3.  Each should be generated in order twice.
 */
 
 stage("TOKENIZER", inputString, outToken).
 
 materialize(inputs, infinity, infinity, keys(1,2)).
 
-inputs("localhost:10000", "a b c d e f g").
-inputs("localhost:10000", "1 2 3 4 5 6 7").
+inputs("localhost:10000", " a b c d").
+inputs("localhost:10000", " 1 2 3 4").
+inputs("localhost:10000", "a b c d ").
+inputs("localhost:10000", "1 2 3 4 ").
 
 r1 inputString(@NI, Delimiters, String) :-
-	periodic(@NI, E, 2, 2),
+	periodic(@NI, E, 0, 1),
  	inputs(@NI, String),
 	Delimiters := " ".
 
-watch(outToken).
+watchmod(outToken, "c").

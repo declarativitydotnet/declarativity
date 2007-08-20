@@ -41,6 +41,8 @@ public:
     PE_BAD_STRING_OP,
     PE_INVALID_ERRNO,
     PE_STOP,
+    PE_BAD_LIST_FIELD,
+    PE_LIST_UNDERFLOW,
     PE_UNKNOWN // Must be the last error
   };
 
@@ -68,10 +70,20 @@ private:
 
 
   // Deque to stack conversion facilities
-  inline void stackPop() {  _st.pop_back(); }
-  inline void stackPush(ValuePtr v) { _st.push_back(v); }
-  inline ValuePtr stackTop() { return _st.back(); }
-  inline ValuePtr stackPeek(unsigned p) { return _st[_st.size() - 1 - p]; }
+  REMOVABLE_INLINE void
+  stackPop();
+
+
+  REMOVABLE_INLINE void
+  stackPush(ValuePtr v);
+
+
+  REMOVABLE_INLINE ValuePtr
+  stackTop();
+
+
+  REMOVABLE_INLINE ValuePtr
+  stackPeek(unsigned p);
 
 
 public:

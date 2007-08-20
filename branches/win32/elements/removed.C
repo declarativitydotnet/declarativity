@@ -13,7 +13,11 @@
  */
 
 #include "removed.h"
+#include "val_str.h"
+#include "plumber.h"
 #include <boost/bind.hpp>
+
+DEFINE_ELEMENT_INITS(Removed, "Removed")
 
 Removed::Removed(string name,
                  CommonTablePtr table)
@@ -24,11 +28,26 @@ Removed::Removed(string name,
   table->removalListener(boost::bind(&Removed::listener, this, _1));
 }
 
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_Str:    Table Name.
+ */
+Removed::Removed(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 0, 1),
+    _pullCB(0)
+{
+  CommonTablePtr table = Plumber::catalog()->table(Val_Str::cast((*args)[3]));
+
+  // Connect this element's listener to the table for refreshes
+  table->removalListener(boost::bind(&Removed::listener, this, _1));
+}
 
 void
 Removed::listener(TuplePtr t)
 {
-  log(Reporting::WORDY, 0, "RemovalListener " + t->toString());
+  ELEM_WORDY("RemovalListener " << t->toString());
   _removedBuffer.push_back(t);
   if (_pullCB) {
     _pullCB();
@@ -50,7 +69,7 @@ Removed::pull(int port, b_cbv cb)
   } else {
     TuplePtr retTuple = _removedBuffer.front();
     _removedBuffer.pop_front();
-    log(Reporting::WORDY, 0, "Pull returns " + retTuple->toString());
+    ELEM_WORDY("Pull returns " << retTuple->toString());
     return retTuple;
   }
 }

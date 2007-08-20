@@ -16,6 +16,7 @@
 #include <deque>
 #include "tuple.h"
 #include "element.h"
+#include "elementRegistry.h"
 #include "loop.h"
 #include "inlines.h"
 #include "tupleseq.h"
@@ -24,12 +25,15 @@
 class RDelivery : public Element {
 public:
   RDelivery(string name, uint max_retry=3);
+  RDelivery(TuplePtr args);
   const char *class_name() const { return "RDelivery";};
   const char *processing() const { return "lh/lh"; };
   const char *flow_code() const	 { return "--/--"; };
 
   TuplePtr pull(int port, b_cbv cb);
   int push(int port, TuplePtr tp, b_cbv cb);	// Incoming ack or timeout
+
+  DECLARE_PUBLIC_ELEMENT_INITS
 
 private:
   typedef std::deque<TuplePtr> TupleQ;
@@ -74,8 +78,10 @@ private:
   bool      _in_on;
   uint      _max_retry;			// Max number of retries for a tuple
 
-  typedef std::map<ValuePtr, ConnectionPtr, Value::Less> ValueConnectionMap;
+  typedef std::map<ValuePtr, ConnectionPtr, Value::Comparator> ValueConnectionMap;
   ValueConnectionMap _index;		// Map containing outstanding connections
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
   
 #endif /* __RDELIVERY_H_ */

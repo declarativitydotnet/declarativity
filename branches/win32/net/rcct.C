@@ -23,6 +23,8 @@
 #include "netglobals.h"
 #include <boost/bind.hpp>
 
+DEFINE_ELEMENT_INITS(RateCCT, "RateCCT")
+
 
 /////////////////////////////////////////////////////////////////////
 //
@@ -50,6 +52,18 @@
  */
 RateCCT::RateCCT(string name) 
   : Element(name, 2, 2),
+    data_on_(true),
+    data_cbv_(0), 
+    trate_(1),
+    rtt_(100),
+    rto_(4000),
+    nofeedback_(NULL)
+{
+  getTime(tld_);
+}
+
+RateCCT::RateCCT(TuplePtr args) 
+  : Element((*args)[2]->toString(), 2, 2),
     data_on_(true),
     data_cbv_(0), 
     trate_(1),

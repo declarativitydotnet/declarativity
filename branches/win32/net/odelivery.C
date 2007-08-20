@@ -20,6 +20,8 @@
 #include "netglobals.h"
 #include <boost/bind.hpp>
 
+DEFINE_ELEMENT_INITS(ODelivery, "ODelivery")
+
 #define CONNECTION_TIMEOUT 240
 
 void ODelivery::Connection::insert(TuplePtr tp) {
@@ -70,6 +72,9 @@ ODelivery::ODelivery(string n)
   : Element(n, 1, 1), _in_cb(0), out_on_(1)
 {
 }
+
+ODelivery::ODelivery(TuplePtr args)
+  : Element((*args)[2]->toString(), 1, 1), _in_cb(0), out_on_(1) { }
 
 int ODelivery::push(int port, TuplePtr tp, b_cbv cb)
 {

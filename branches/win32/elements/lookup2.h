@@ -33,9 +33,11 @@
 #define __LOOKUP2_H__
 
 #include "element.h"
+#include "elementRegistry.h"
 #include "commonTable.h"
 #include "val_tuple.h"
 #include "val_null.h"
+#include "iStateful.h"
 
 class Lookup2 : public Element {
 public:
@@ -44,6 +46,9 @@ public:
           CommonTable::Key lookupKey,
           CommonTable::Key indexKey,
           b_cbv state_cb = 0);
+
+  Lookup2(TuplePtr args);
+
   ~Lookup2();
   
   
@@ -62,9 +67,14 @@ public:
   pull(int port, b_cbv cb);
 
 
-
+  DECLARE_PUBLIC_ELEMENT_INITS
 
 private:
+  int initialize();
+
+  /** My stateful proxy */
+  IStatefulPtr _stateProxy;
+
   /** My table */
   CommonTablePtr _table;
   
@@ -105,6 +115,8 @@ private:
       project before matching (from the lookup tuple to the schema of
       the looked-up table). Otherwise I don't need to project. */
   bool _project;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 #endif /* __LOOKUP2_H_ */

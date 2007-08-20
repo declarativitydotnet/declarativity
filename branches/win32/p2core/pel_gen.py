@@ -40,8 +40,18 @@ for op, ar, va, desc in [
   ("ifstop",1,   "IFSTOP",      "If first arg, then stop execution"),
   ("dumpStack",1,"DUMPSTACK",   "Dump the contents of the stack prefixed by the string arg"),
 
+
+
+  ("func0", 1,   "FUNC0",       "Perform the named function given in the arg without parameters"),
+  
+
+
   ("sha1",1,"H_SHA1","Replace the top of the stack with its SHA-1 value"),
+
+  ("max",2,"MAX","Return the max of 2 values."),
+  ("min",2,"MIN","Return the min of 2 values."),
  
+  ("idgen",0,"T_IDGEN","Generate a unique tuple identifier."),
   ("->t", 1,    "T_MKTUPLE",    "Create a tuple out of the argument"),
   ("append", 2, "T_APPEND",     "Append first argument to second tuple"),
   ("unbox", 1,  "T_UNBOX",      "Replaces a tuple value with its fields top to bottom"),
@@ -73,12 +83,14 @@ for op, ar, va, desc in [
   ("or",2,	"OR",           "Boolean inclusive-OR"),
   ("rand",0,	"RAND",         "A random Int32"),
   ("coin",1,	"COIN",         "A coin flip biased to 1 with probability given as the argument"),
-  ("initlist",2,"INITLIST",         "Initialize a list with 2 arguments"),
-  ("conslist",2,"CONSLIST",         "Add two lists together. If one argument is not a list, convert to list"),
-  ("inlist",2,"INLIST",         "Check if second argument contained in first"),
-  ("removeLast",1,"REMOVELAST",         "Remove last item in list"),
-  ("last",1,"LAST",         "Get last item in list"),
-  ("size",1,"SIZE",         "numbers of items in list"),
+  ("initlist",  0,"L_INIT",       "Initialize a list."),
+  ("cons",      2,"L_CONS",       "Take first aregument and prepend it to the second list argument."),
+  ("car",       1,"L_CAR",        "Return the first element of the passed in list."),
+  ("cdr",       1,"L_CDR",        "Return a list with all but the first element of the passed in list."),
+  ("contains",  2,"L_CONTAINS",   "Check if the second arguement is contained in the first list argument."),
+  ("removeLast",1,"L_REMOVELAST", "Remove last item in list"),
+  ("last",      1,"L_LAST",       "Get last item in list"),
+  ("size",      1,"L_SIZE",       "Numbers of items in list"),
 
   (">>",2,	"ASR",          "Arithmetic shift right"),
   ("<<",2,	"ASL",          "Arithmetic shift left"),
@@ -117,7 +129,18 @@ for op, ar, va, desc in [
   ("lower",1,	"STR_LOWER",    "Convert string to lower case"),
   ("substr",3,	"STR_SUBSTR",   "Extract substring"),
   ("match",2,	"STR_MATCH",    "Perl regular expression matching"),
-  ("tostr",1,   "STR_CONV",     "Convert to a string (not ->s)")
+  ("tostr",1,   "STR_CONV",     "Convert to a string (not ->s)"),
+
+  ("status",     2, "O_STATUS", "Extract the overlog program status of a program attribute."),
+  ("selectivity",3, "O_SELECT", "Compute the selectivity of a join."),
+  ("rangeAM",    2, "O_RANGEAM","Determine if a range access method can be used."),
+  ("filter",     2, "O_FILTER", "Determine if a filter can be applied to the schema."),
+
+  ("tovar",1,   "A_TO_VAR",   "Convert attribute to a variable."),
+  ("getattr",2, "L_GET_ATTR",   "Extract attribute from list."),
+  ("posattr",2, "L_POS_ATTR",   "Get the attribute position from list."),
+  ("aggattr",1, "L_AGG_ATTR",   "Get the aggregation position from list."),
+  ("merge",2,   "L_MERGE",      "Merge two argument lists according join operation.")
   ]:  emit_opcode(op, ar, va, desc)
 
 for op, ar, va, desc in [

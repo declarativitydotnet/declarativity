@@ -20,7 +20,12 @@
 #include "netglobals.h"
 #include <boost/bind.hpp>
 
+DEFINE_ELEMENT_INITS(DupRemove, "DupRemove")
+
 #define CONNECTION_TIMEOUT 240
+
+DupRemove::DupRemove(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1) { }
 
 bool DupRemove::Connection::received(TuplePtr tp) {
   ValuePtr src = (*tp)[SRC]; 

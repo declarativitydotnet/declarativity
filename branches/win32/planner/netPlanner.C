@@ -16,6 +16,7 @@
 
 #include "netPlanner.h"
 #include "demuxConservative.h"
+#include "tupleInjector.h"
 
 void
 NetPlanner::generateNetworkOutElements(boost::shared_ptr<Udp> udp)
@@ -23,7 +24,8 @@ NetPlanner::generateNetworkOutElements(boost::shared_ptr<Udp> udp)
   // <dst, <t>>
   
   ElementSpecPtr pullPush =
-    _conf->addElement(ElementPtr(new TimedPullPush("SendPullPush", 0)));
+    _conf->addElement(ElementPtr(new TimedPullPush("SendPullPush",
+                                                   0, 0)));
   
   ElementSpecPtr sendQueue = 
     _conf->addElement(ElementPtr(new Queue("SendQueue", QUEUESIZE)));
@@ -42,7 +44,7 @@ NetPlanner::generateNetworkOutElements(boost::shared_ptr<Udp> udp)
 
   // <dstAddr, <opaque>>
   ElementSpecPtr routeSend =
-    _conf->addElement(ElementPtr(new StrToSockaddr("plumber!" + _nodeID, 0)));
+    _conf->addElement(ElementPtr(new StrToSockaddr("Router!" + _nodeID, 0)));
 
   ElementSpecPtr udpSend = _conf->addElement(udp->get_tx());  
   
@@ -53,7 +55,7 @@ NetPlanner::generateNetworkOutElements(boost::shared_ptr<Udp> udp)
   _networkOut.push_back(udpSend);
   
   _conf->hookUp(pullPush, 0, _wrapAroundSendDemux, 0);
-  _conf->hookUp(_wrapAroundSendDemux, 1, sendQueue, 0);
+  _conf->hookUp(_wrapAroundSendDemux, 0, sendQueue, 0); // outgoing traffic
   _conf->hookUp(sendQueue, 0, marshalSend, 0);
   _conf->hookUp(marshalSend, 0, routeSend, 0);
   _conf->hookUp(routeSend, 0, udpSend, 0);
@@ -71,7 +73,8 @@ NetPlanner::generateNetworkInElements(boost::shared_ptr<Udp> udp)
     _conf->addElement(ElementPtr(new Queue("ReceiveQueue", QUEUESIZE)));
 
   ElementSpecPtr bufferQueuePullPush = 
-    _conf->addElement(ElementPtr(new TimedPullPush("ReceiveQueuePullPush", 0)));
+    _conf->addElement(ElementPtr(new TimedPullPush("ReceiveQueuePullPush",
+                                                   0, 0)));
 
   ElementSpecPtr receiveMux = _conf->addElement(ElementPtr(new Mux("wrapAroundSendMux:", 2)));
 
@@ -93,7 +96,8 @@ NetPlanner::generateNetworkInElements(boost::shared_ptr<Udp> udp)
   _conf->hookUp(unmarshalS, 0, receiveMux, 1);  
 
   // From wraparound
-  _conf->hookUp(_wrapAroundSendDemux, 0, receiveMux, 0);
+  _conf->hookUp(_wrapAroundSendDemux, 1,
+                receiveMux, 0); // my local traffic
 
 
   // Link mux to receive demux
@@ -125,7 +129,7 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands,
         && rs->eventType() == Parse_Event::P2_RECV) {
       numReceivers++;
       ReceiverInfoMap::iterator iterator =
-        _receiverInfo.find(ruleStrands.at(k)->eventFunctorName());
+        _receiverInfo.find(rs->eventFunctorName());
       if (iterator == _receiverInfo.end()) {
 	ReceiverInfo* ri = new ReceiverInfo(rs->eventFunctorName());      
 	_receiverInfo.insert(std::make_pair(ri->_tableName, ri));	
@@ -163,16 +167,24 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands,
     _conf->addElement(ElementPtr(new DemuxConservative("receiveDemux",
                                                        demuxKeys)));
 
+  /*
+    ElementSpecPtr demuxPrint =
+    _conf->addElement(ElementPtr(new Print("DemuxReceive")));
+  */
+
   // create duplicators, hookup to rules
   ReceiverInfoMap::iterator iterator;
-  for (iterator = _receiverInfo.begin(); iterator != _receiverInfo.end(); 
+  for (iterator = _receiverInfo.begin();
+       iterator != _receiverInfo.end(); 
        iterator++) {  
     ReceiverInfo* ri = iterator->second;
     if (ri->_receivers.size() > 1) {
       // require a duplicator
       ElementSpecPtr duplicator = 
-	_conf->addElement(ElementPtr(new DuplicateConservative("DuplicateConservative!" 
-			    + ri->_tableName, ri->_receivers.size())));
+	_conf->addElement(ElementPtr
+                          (new DDuplicateConservative("DDuplicateConservative!"
+                                                      + ri->_tableName,
+                                                      ri->_receivers.size())));
       
       for (unsigned k = 0; k < ri->_receivers.size(); k++) {
 	_conf->hookUp(duplicator, k, ri->_receivers.at(k), 0);
@@ -182,7 +194,8 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands,
   }
 
   // create demux  
-  _conf->hookUp(_networkIn.at(_networkIn.size()-1), 0, demuxReceive, 0);
+  _conf->hookUp(_networkIn.at(_networkIn.size()-1), 0, /* demuxPrint, 0);
+  _conf->hookUp(demuxPrint, 0, */ demuxReceive, 0);
   _networkIn.push_back(demuxReceive);
    
   // hookup demux to duplicators or listeners
@@ -192,24 +205,15 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands,
     ReceiverInfo* ri = iterator->second;
     
     if (ri->_duplicator == NULL) { 
-      _conf->hookUp(demuxReceive, k, ri->_receivers.at(0), 0);      
-      continue; 
+      _conf->hookUp(demuxReceive, k + 1, ri->_receivers.at(0), 0); 
+    } else {
+      _conf->hookUp(demuxReceive, k + 1, ri->_duplicator, 0);
     }
-    ElementSpecPtr bufferQueue = 
-      _conf->addElement(ElementPtr(new Queue("DemuxDuplicatorQueue!" +  
-                                             ri->_tableName, QUEUESIZE)));   
-    ElementSpecPtr pullPush = 
-      _conf->addElement(ElementPtr(new TimedPullPush("DemuxDuplicatorQueuePullPush!" + 
-				                     ri->_tableName, 0)));
-    
-    _conf->hookUp(demuxReceive, k, bufferQueue, 0);
-    _conf->hookUp(bufferQueue, 0, pullPush, 0);
-    _conf->hookUp(pullPush, 0, ri->_duplicator, 0);
   }   
 
   ElementSpecPtr sinkS 
     = _conf->addElement(ElementPtr(new Discard("DemuxDiscard")));
-  _conf->hookUp(demuxReceive, demuxKeys.size(), sinkS, 0); 
+  _conf->hookUp(demuxReceive, 0, sinkS, 0); // 0th is default
   
 
   // for each rule strands with send
@@ -222,10 +226,29 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands,
   }
   numSenders += stageStrands.size();
 
+
+  // Create injector strand
+  ElementPtr inj = ElementPtr(new TupleInjector("TupleInjector"));
+  ElementSpecPtr injector =
+    _conf->addElement(inj);
+  ElementSpecPtr injectorQueue =
+    _conf->addElement(ElementPtr(new Queue("TupleInjectorQueue",
+                                           QUEUESIZE)));
+  ElementSpecPtr injectorSend =
+    _conf->addElement(ElementPtr(new PelTransform("InjectorSendAction",
+                                                  "$1 pop swallow pop")));
+  _conf->hookUp(injector, 0, injectorQueue, 0);
+  _conf->hookUp(injectorQueue, 0, injectorSend, 0);
+  _conf->injector(inj);
+
   // create round robin
   ElementSpecPtr roundRobin =
-    _conf->addElement(ElementPtr(new RoundRobin("roundRobinSender!" + _nodeID, 
-						   numSenders))); 
+    _conf->addElement(ElementPtr(new RoundRobin("roundRobinSender!"
+                                                + _nodeID, 
+                                                numSenders
+                                                // Plus 1 for the
+                                                // injector strand
+                                                + 1))); 
   
   _conf->hookUp(roundRobin, 0, _networkOut.at(0), 0);
   _networkOut.insert(_networkOut.begin(), roundRobin);
@@ -245,9 +268,13 @@ NetPlanner::registerAllRuleStrands(std::vector<RuleStrand*> ruleStrands,
     _conf->hookUp(stageStrands.at(k)->getLastElement(), 
                   0, roundRobin, counter++);
   }
+
+  // Hookup the injector
+  _conf->hookUp(injectorSend, 0, roundRobin, counter);
 }
 
-string NetPlanner::ReceiverInfo::toString()
+string
+NetPlanner::ReceiverInfo::toString()
 {
   ostringstream b;
   b << " Receiver Info: " << _tableName << " duplicate " << _receivers.size() << "\n";
@@ -260,7 +287,9 @@ string NetPlanner::ReceiverInfo::toString()
   return b.str();
 }
 
-string NetPlanner::toString()
+
+string
+NetPlanner::toString()
 {
   ostringstream b;
   b << "Network In:\n";

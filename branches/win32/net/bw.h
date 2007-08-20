@@ -20,11 +20,13 @@
 #endif // WIN32
 
 #include "element.h"
+#include "elementRegistry.h"
 
 class Bandwidth : public Element {
 public:
   Bandwidth(string name = "Bandwidth");
 
+  Bandwidth(TuplePtr args);
 
   const char*
   class_name() const {return "Bandwidth";};
@@ -48,6 +50,8 @@ public:
   void
   setMarkup(std::string m = "unspecified");
 
+  DECLARE_PUBLIC_ELEMENT_INITS
+
 private:
   REMOVABLE_INLINE time_t
   now_s() const;
@@ -63,6 +67,8 @@ private:
 
   
   std::string mMarkup_;
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 #endif /* __Bandwidth_H_ */

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.3
+#!/usr/bin python2.4
 # -*- Mode: python -*-
 #
 # Usage: mktopologies [-o outdir] topologies.xml

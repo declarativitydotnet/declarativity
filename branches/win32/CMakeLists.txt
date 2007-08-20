@@ -1,10 +1,9 @@
 Project(P2)
 
 IF(WIN32)
-SUBDIRS(getopt p2core elements stages net overlog planner debugger unitTests tests python)
-ELSE(WIN32)
-SUBDIRS(p2core elements stages net overlog planner debugger unitTests tests python)
+SUBDIRS(getopt)
 ENDIF(WIN32)
+SUBDIRS(p2core aggregates functions p2cpp lang elements stages net overlog planner debugger unitTests tests python)
 
 # Main decisions
 # SET(BUILD_SHARED_LIBS ON)
@@ -109,6 +108,17 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/overlog
                     ${CMAKE_CURRENT_SOURCE_DIR}/planner
                     ${CMAKE_CURRENT_SOURCE_DIR}/debugger
+                    ${CMAKE_CURRENT_SOURCE_DIR}/p2cpp
+                    ${CMAKE_CURRENT_SOURCE_DIR}/lang
+                    ${CMAKE_CURRENT_SOURCE_DIR}/lang/debug
+                    ${CMAKE_CURRENT_SOURCE_DIR}/lang/eca
+                    ${CMAKE_CURRENT_SOURCE_DIR}/lang/local
+                    ${CMAKE_CURRENT_SOURCE_DIR}/lang/p2dl
+                    ${CMAKE_CURRENT_SOURCE_DIR}/lang/parse
+                    ${CMAKE_CURRENT_SOURCE_DIR}/lang/planner
+                    ${CMAKE_CURRENT_SOURCE_DIR}/lang/rewrite
+                    ${CMAKE_CURRENT_SOURCE_DIR}/functions                                                                                                                                                                
+                    ${CMAKE_CURRENT_SOURCE_DIR}/aggregates                                                                                                                                                                
 		            ${Boost_INCLUDE_DIRS} 
 		            ${PYTHON_INCLUDE_PATH}
 		            ${FLEX_LEXER_H_PATH} 
@@ -127,6 +137,16 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS}
 		${P2_BINARY_DIR}/p2core  
 #		${P2_BINARY_DIR}/eventLoop 
 		${P2_BINARY_DIR}/planner
+        ${P2_BINARY_DIR}/lang
+        ${P2_BINARY_DIR}/lang/debug
+        ${P2_BINARY_DIR}/lang/eca
+        ${P2_BINARY_DIR}/lang/local
+        ${P2_BINARY_DIR}/lang/p2dl
+        ${P2_BINARY_DIR}/lang/parse
+        ${P2_BINARY_DIR}/lang/planner
+        ${P2_BINARY_DIR}/lang/rewrite
+        ${P2_BINARY_DIR}/functions                                                                                                                                                                
+        ${P2_BINARY_DIR}/aggregates                                                                                                                                                                
 		${P2_BINARY_DIR})
 
 SET(COMMON_LIBRARIES ${CRYPTO_LIBRARIES}
@@ -140,4 +160,15 @@ SET(COMMON_LIBRARIES ${CRYPTO_LIBRARIES}
 					 p2debugger
 					 p2overlog
 					 p2planner 
+					 p2aggregates
+					 p2functions
+					 p2lang
+					 p2parse
+					 p2eca
+					 p2local
+					 p2rewrite
+					 p2debug
+					 p2planner2
+					 p2dl
+					 p2cpp
 	   				 )

@@ -13,6 +13,12 @@
  */
 
 #include "demux.h"
+#include "val_str.h"
+#include "val_uint32.h"
+#include "val_list.h"
+#include <boost/bind.hpp>
+
+DEFINE_ELEMENT_INITS(Demux, "Demux");
 
 Demux::Demux(string name,
              std::vector< ValuePtr > demuxKeys,
@@ -26,6 +32,31 @@ Demux::Demux(string name,
 {
   // Clean out the block flags
   _block_flags.resize(noutputs());
+}
+
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_List:   Key values. 
+ * 4. Val_UInt32: Input field number.
+ */
+Demux::Demux(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, Val_List::cast((*args)[3])->size()+1),
+    _push_cb(0),
+    _block_flags(),
+    _block_flag_count(0),
+    _inputFieldNo(0)
+{
+  // Clean out the block flags
+  _block_flags.resize(noutputs());
+
+  ListPtr keys = Val_List::cast((*args)[3]);
+  for (ValPtrList::const_iterator i = keys->begin();
+       i != keys->end(); i++)
+    _demuxKeys.push_back(*i);
+  _inputFieldNo = args->size() > 4 ? Val_UInt32::cast((*args)[4]) : 0;
 }
 
 
@@ -51,6 +82,22 @@ Demux::unblock(unsigned output)
     _push_cb = 0;
   }
 }
+
+int 
+Demux::output(ValuePtr key)
+{
+  // Which of the demux keys does it match?
+  for (unsigned i = 0; i < noutputs() - 1; i++) {
+    ValuePtr dkey = _demuxKeys[i];
+
+    // The match must be exact.  No type conversions allowed.
+    if (dkey->equals(key)) {
+      // We found our output
+      return i;
+    }
+  }
+  return -1;
+} 
 
 int Demux::push(int port, TuplePtr p, b_cbv cb)
 {
@@ -95,7 +142,7 @@ int Demux::push(int port, TuplePtr p, b_cbv cb)
         return 1;
       } else {
         // Send it with the appropriate callback
-        int result = output(i)->push(p, boost::bind(&Demux::unblock, this, i));
+        int result = Element::output(i)->push(p, boost::bind(&Demux::unblock, this, i));
 
         // If it can take no more
         if (result == 0) {
@@ -135,7 +182,7 @@ int Demux::push(int port, TuplePtr p, b_cbv cb)
     return 1;
   } else {
     // Send it with the appropriate callback
-    int result = output(noutputs() - 1)->push(p, boost::bind(&Demux::unblock, this, noutputs() - 1));
+    int result = Element::output(noutputs() - 1)->push(p, boost::bind(&Demux::unblock, this, noutputs() - 1));
     
     // If it can take no more
     if (result == 0) {

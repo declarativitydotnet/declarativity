@@ -1,6 +1,6 @@
 // -*- c-basic-offset: 2; related-file-name: "loop.C" -*-
 /*
- * @(#)$Id: loop.h,v 1.22.10.1 2007/04/23 00:38:43 jmh Exp $
+ * @(#)$Id$
  *
  * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
@@ -18,6 +18,7 @@
 #define __LOOP_H__
 
 #include <set>
+#include <list>
 
 // For in_addr
 #ifdef WIN32
@@ -181,20 +182,12 @@ public:
   fileDescriptorCBHandle(int fd,
                          b_selop op,
                          b_cbv& cb,
-                         Element* o)
-    : fileDescriptor(fd), operation(op), callback(cb), owner(o)
-  { 
-    assert(fd > 0);
-  }
+                         Element* o);
 
   
   /** Construct me without a callback */
   fileDescriptorCBHandle(int fd,
-                         b_selop op)
-    : fileDescriptor(fd), operation(op), callback(0)
-  {
-    assert(fd > 0);
-  }
+                         b_selop op);
                          
 
   /** Change my callback and owner. It's OK to mutate me because the 
@@ -278,12 +271,24 @@ tcpHandle*
 tcpConnect(in_addr addr, uint16_t port, b_cbi cb);
 
 
+/**A Process callback used by scheduler***/
+class IProcess{
+public:
+  virtual void proc(boost::posix_time::time_duration*)=0;
 
+  virtual ~IProcess();
+};
+typedef std::list<IProcess*> TProcesses;
 
+TProcesses*
+procs();
+
+void registerProcess(IProcess*);
+void removeProcess(IProcess*);
 
 
 /** The initialization function for the event loop. Must be called
-    before any code that affect the event loop (e.g., before any
+    before any code that affects the event loop (e.g., before any
     callbacks are registered, non-blocking sockets have opened, etc.) */
 void
 eventLoopInitialize();

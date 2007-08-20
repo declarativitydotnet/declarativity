@@ -17,10 +17,26 @@
 #endif // WIN32
 #include "noNullField.h"
 #include "val_tuple.h"
+#include "val_str.h"
+#include "val_uint32.h"
+
+DEFINE_ELEMENT_INITS(NoNullField, "NoNullField");
 
 NoNullField::NoNullField(string name, unsigned fieldNo)
   : Element(name, 1, 1),
     _fieldNo(fieldNo)
+{
+}
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str:    Element Name.
+ * 3. Val_UInt32: The field number that should not be null.
+ */
+NoNullField::NoNullField(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1),
+    _fieldNo(Val_UInt32::cast((*args)[3]))
 {
 }
 

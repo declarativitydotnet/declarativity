@@ -39,28 +39,36 @@ Tokenizer::newOutput()
   std::string::size_type endOfToken =
     _content.find_first_of(_delimiter, _iterator);
 
+  ValuePtr token;
   if (endOfToken == _content.npos) {
-    // We didn't find anything. This is the end of the tokens in this
-    // content string.
-    return std::make_pair(TuplePtr(), Stage::DONE);
+    // We reached the end of the string. Do we have a non-empty content?
+    if (_iterator != endOfToken) {
+      // We have content. From here to the end
+      token = Val_Str::mk(_content.substr(_iterator));
+      _iterator = _content.npos;
+    } else {
+      // We have no content, zilch.  This is the end of the tokens in
+      // this content string.
+      return std::make_pair(TuplePtr(), Stage::DONE);
+    }
   } else {
-    // We did find something.
-    ValuePtr token =
+    // We did find something and haven't reached the end yet
+    token =
       Val_Str::mk(_content.substr(_iterator, endOfToken - _iterator));
 
     // Skip any delimiters
     _iterator = _content.find_first_not_of(_delimiter, endOfToken);
-
-    // And prepare result
-    TuplePtr resultTuple =
-      Tuple::mk();
-    resultTuple->append(TOKEN);
-    resultTuple->append(_locationSpecifier);
-    resultTuple->append(token);
-    resultTuple->freeze();
-
-    return std::make_pair(resultTuple, Stage::MORE);
   }
+
+  // We're here because we have a result to give
+  TuplePtr resultTuple =
+    Tuple::mk();
+  resultTuple->append(TOKEN);
+  resultTuple->append(_locationSpecifier);
+  resultTuple->append(token);
+  resultTuple->freeze();
+  
+  return std::make_pair(resultTuple, Stage::MORE);
 }
 
 
@@ -115,7 +123,7 @@ ValuePtr Tokenizer::TOKEN = Val_Str::mk(std::string("token"));
 
 
 // This is necessary for the class to register itself with the
-// factory.
+// stage registry.
 DEFINE_STAGE_INITS(Tokenizer,"TOKENIZER")
 
 

@@ -19,7 +19,7 @@ AC_CONFIG_SRCDIR(p2core/element.h)
 # AC_CONFIG_AUX_DIR(config)
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE(1.9.2)
-AM_INIT_AUTOMAKE(p2,0.8)
+AM_INIT_AUTOMAKE(p2,0.8.2)
 
 
 # Checks for programs.
@@ -99,10 +99,16 @@ AC_CHECK_FUNCS([dup2 strchr strerror strstr])
 
 AC_CONFIG_FILES([
 	Makefile 
-	eventLoop/Makefile
+	doc/Makefile
+	doc/tutorial/Makefile
+	doc/tutorial/olg/Makefile
+	doc/tutorial/c++/Makefile
 	p2core/Makefile 
 	elements/Makefile 
+	p2cpp/Makefile
 	stages/Makefile 
+	functions/Makefile 
+	aggregates/Makefile 
 	net/Makefile 
 	tests/Makefile 
 	unitTests/Makefile 
@@ -110,6 +116,14 @@ AC_CONFIG_FILES([
 	python/Makefile
 	python/scripts/Makefile
 	overlog/Makefile 
+	lang/Makefile
+	lang/parse/Makefile
+	lang/eca/Makefile
+	lang/local/Makefile
+	lang/rewrite/Makefile
+	lang/debug/Makefile
+	lang/planner/Makefile
+	lang/p2dl/Makefile
 	planner/Makefile
 	debugger/Makefile ])
 
@@ -118,7 +132,6 @@ AC_CONFIG_FILES([
 #	python/p2/debugger/Makefile
 #	python/p2/elements/Makefile
 #	python/p2/pythonElements/Makefile
-#	python/p2/eventLoop/Makefile
 #	python/p2/p2core/Makefile
 #	python/p2/net/Makefile
 #	python/p2/overlog/Makefile

@@ -121,7 +121,6 @@ class ElementSpec {
         changing the counterpart), 0 otherwise. */ 
     int counterpart(ElementSpecPtr);
 
-
   private:
     /** What's my personality? */
     Element::Processing _processing;

@@ -14,11 +14,18 @@
 #endif // WIN32
 #include <iostream>
 #include "bw.h"
+#include "val_str.h"
+
+DEFINE_ELEMENT_INITS(Bandwidth, "Bandwidth")
 
 Bandwidth::Bandwidth(string name)
   : Element(name,1, 1), prev_t_(now_s()), bytes_(0), bw_(0.)
 {
 }
+
+Bandwidth::Bandwidth(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1), 
+    prev_t_(now_s()), bytes_(0), bw_(0.) { }
 
 
 TuplePtr
@@ -39,9 +46,7 @@ Bandwidth::simple_action(TuplePtr p)
 
   prev_t_ = cur_t;
 
-  std::ostringstream o;
-  o << bw_;
-  log(mMarkup_, Reporting::INFO, 0, o.str());
+  ELEM_INFO(bw_);
       
   return p;
 }

@@ -17,12 +17,14 @@
 #include <deque>
 #include "tuple.h"
 #include "element.h"
+#include "elementRegistry.h"
 
 
 class Defrag : public Element { 
 public:
 
   Defrag(string name="defragment");
+  Defrag(TuplePtr args);
   const char *class_name() const	{ return "Defrag";};
   const char *processing() const	{ return PUSH_TO_PULL; };
   const char *flow_code()  const	{ return "-/-"; };
@@ -30,6 +32,8 @@ public:
   int push(int port, TuplePtr t, b_cbv cb);
 
   TuplePtr pull(int port, b_cbv cb);
+
+  DECLARE_PUBLIC_ELEMENT_INITS
 
  private:
   b_cbv _pull_cb;
@@ -41,6 +45,8 @@ public:
 
   FragMap fragments_;		// Holds fragments waiting to be merged
   DefragQ tuples_;		// Defragmented tuple queue
+
+  DECLARE_PRIVATE_ELEMENT_INITS
 };
 
 #endif /* __Defrag_H_ */

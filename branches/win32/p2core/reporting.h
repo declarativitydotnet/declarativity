@@ -27,7 +27,7 @@
 
 class Reporting { 
 public:
-  virtual ~Reporting() {};
+  virtual ~Reporting() {}; 
 
 
   /** What are the different reporting levels? */

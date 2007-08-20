@@ -39,11 +39,9 @@
 
 #include "print.h"
 #include "marshal.h"
-#include "route.h"
 #include "pelTransform.h"
 #include "unmarshal.h"
-#include "tupleSource.h"
-#include "timedPullSink.h"
+#include "staticTupleSource.h"
 #include "slot.h"
 #include "val_str.h"
 #include "val_tuple.h"
@@ -79,9 +77,10 @@ sendMessages(std::string udpAddress)
   tuple->freeze();  
 
   ElementSpecPtr sourceS =
-    conf->addElement(ElementPtr(new TupleSource("Source", tuple)));
+    conf->addElement(ElementPtr(new StaticTupleSource("Source",
+                                                      tuple)));
   ElementSpecPtr pusherS =
-    conf->addElement(ElementPtr(new TimedPullPush("Push", 0.5)));
+    conf->addElement(ElementPtr(new TimedPullPush("Push", 0.5, 0)));
   ElementSpecPtr slotS =
     conf->addElement(ElementPtr(new Slot("Slot")));
   ElementSpecPtr marshalS =

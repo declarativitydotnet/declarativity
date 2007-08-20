@@ -19,15 +19,32 @@
 #include "demuxConservative.h"
 #include <boost/bind.hpp>
 
+DEFINE_ELEMENT_INITS(DemuxConservative, "DemuxConservative");
+
 DemuxConservative::DemuxConservative(string name,
                                      std::vector< ValuePtr > demuxKeys,
                                      unsigned inputFieldNo)
   : Element(name, 1, demuxKeys.size() + 1),
-    _demuxKeys(demuxKeys),
     _push_cb(0),
     _blockedOutput(-1),
     _inputFieldNo(inputFieldNo)
 {
+  int port = 1;                 // Skip the first one, which is the
+                                // default
+  for (std::vector<ValuePtr>::iterator i = demuxKeys.begin(); 
+       i != demuxKeys.end();
+       i++) {
+    _portMap.insert(std::make_pair(*i, port++));
+  }
+}
+
+
+DemuxConservative::DemuxConservative(TuplePtr tp)
+  : Element("", 1, 1)
+{
+  assert(false);
+  /** TODO ADD GENERIC CONSTRUCTOR
+  */
 }
 
 
@@ -62,7 +79,8 @@ DemuxConservative::push(int port, TuplePtr p, b_cbv cb)
 {
   assert(p != 0);
   assert(port == 0);
-  assert(p->size() > 0);
+  assert(p->size() >= _inputFieldNo); // Must at least contain the input
+                                      // field number
 
   // Can I take more?
   if (_blockedOutput != -1) {
@@ -78,58 +96,39 @@ DemuxConservative::push(int port, TuplePtr p, b_cbv cb)
   }
 
   // Extract the demux field of the tuple
-  ValuePtr first = (*p)[_inputFieldNo];
-
-  // Which of the demux keys does it match?
-  for (unsigned i = 0;
-       i < noutputs() - 1;
-       i++) {
-    ValuePtr key = _demuxKeys[i];
-
-    // The match must be exact.  No type conversions allowed.
-    if (key->equals(first)) {
-      // We found our output. It can't be blocked if we're here
-      // Send it with the appropriate callback
-      int result =
-        output(i)->push(p, boost::bind(&DemuxConservative::unblock, this, i));
-
-      // If it can take no more
-      if (result == 0) {
-        // Block
-        _blockedOutput = i;
-
-        // And push back my input as well
-        assert(!_push_cb);
-        _push_cb = cb;
-        ELEM_INFO("push: Blocking input");
-        return 0;
-      } else {
-        // I can still take more
-        return 1;
-      }
-    }
+  PortMap::iterator i = _portMap.find((*p)[_inputFieldNo]);
+  unsigned o;
+  if (i == _portMap.end()) {
+    // Ain't got any. use the default
+    o = 0;
+  } else {
+    o = (*i).second;
   }
 
-  // The input matched none of the keys.  Send it to the default output
-  // (the last) with the appropriate callback
+  // We found our output. It can't be blocked if we're here. Send it
+  // with the appropriate callback
   int result =
-    output(noutputs() - 1)->
-    push(p, boost::bind(&DemuxConservative::unblock, this, noutputs() - 1));
-    
+    Element::output(o)->push(p, boost::bind(&DemuxConservative::unblock,
+                                            this, o));
+
   // If it can take no more
   if (result == 0) {
-    // update the flags
-    _blockedOutput = noutputs() - 1;
-      
+    // Block
+    _blockedOutput = o;
+    
+    // And push back my input as well
     assert(!_push_cb);
     _push_cb = cb;
-    ELEM_INFO("push: Blocking input");
+    ELEM_INFO("push: Blocking input due to blocked output '"
+              << _blockedOutput
+              << "'.");
     return 0;
   } else {
     // I can still take more
     return 1;
   }
 }
+
 
 
 void
@@ -157,21 +156,17 @@ DemuxConservative::toDot(std::ostream* ostr)
   // And figure out the output ports.
   if (noutputs() > 0) {
     *ostr << "|{";
+    *ostr << "<o" << 0 << "> default";
     
-    std::vector< ValuePtr >::iterator miter =
-      _demuxKeys.begin();
-    uint counter = 0;
-    while (miter != _demuxKeys.end()) {
-      *ostr << "<o"
-            << counter
+    PortMap::iterator miter = _portMap.begin();
+    while (miter != _portMap.end()) {
+      *ostr << "|<o"
+            << (*miter).second
             << "> "
-            << (*miter)->toString();
+            << (*miter).first->toString();
       
       miter++;
-      counter++;
-      *ostr << "|";
     }
-    *ostr << "<o" << counter << "> default";
     *ostr << "}";
   }
   
@@ -179,4 +174,15 @@ DemuxConservative::toDot(std::ostream* ostr)
   *ostr << "}\" ];\n";
 }
 
+
+int 
+DemuxConservative::output(ValuePtr key)
+{
+  // Which of the demux keys does it match?
+  PortMap::iterator piter = _portMap.find(key);
+  if (piter != _portMap.end()) {
+    return piter->second;
+  }
+  return 0;
+} 
 

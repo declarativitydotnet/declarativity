@@ -17,9 +17,23 @@
 #endif // WIN32
 
 #include "dupElim.h"
+#include "val_str.h"
+#include "val_uint32.h"
+
+DEFINE_ELEMENT_INITS(DupElim, "DupElim");
 
 DupElim::DupElim(string name)
   : Element(name, 1, 1)
+{
+}
+
+/**
+ * Generic constructor.
+ * Arguments:
+ * 2. Val_Str: Element Name.
+ */
+DupElim::DupElim(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 1, 1)
 {
 }
 

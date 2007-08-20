@@ -38,7 +38,6 @@ libp2planner_la_CPPFLAGS =	\
 				-I../elements \
 				-I../net \
 				-I../overlog \
-				-I../eventLoop \
 				-I../debugger
 
 CLEANFILES =			core *.core *~
