@@ -27,12 +27,22 @@ unsigned int Val_Sketch::size() const
 
 void Val_Sketch::xdr_marshal_subtype(XDR *x)
 {
-  // TODO: Once boost marshalling is merged, fill me in.
+  // TODO: Once boost marshalling is merged, uncomment me.
+  /*
+  assert(frozen);
+  
+  sketchPtr->marshal(x);
+  */
 }
 
 ValuePtr Val_Sketch::xdr_unmarshal(XDR *x)
 {
   // TODO: Once boost marshalling is merged, fill me in.
+  /*
+  assert(frozen);
+  
+  return new ValuePtr(new Val_Sketch(sketchPtr->unmarshal(x)));
+  */
 }
 
 
