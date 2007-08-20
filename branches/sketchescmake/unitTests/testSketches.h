@@ -12,6 +12,7 @@
 #define __TESTSKETCHES_H__
 
 #include "boost/test/unit_test.hpp"
+#include "p2core/val_sketch.h"
 
 class testSketches_testSuite
   : public boost::unit_test_framework::test_suite

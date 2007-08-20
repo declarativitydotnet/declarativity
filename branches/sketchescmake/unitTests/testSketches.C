@@ -10,15 +10,17 @@
 
 #include "testSketches.h"
 #include <Tools.h>
+#include "p2core/val_int64.h"
 #include <Sketches.h>
 #include <sstream>
+#include <cmath>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 
 class testSketches 
 {
 private:
-  
+
 public:
   void testUniversalHashMarshal() 
   {
@@ -63,12 +65,12 @@ public:
     double epsilon = 0.05;
     double delta = 0.01;
     
-    size_t width = ceil(M_E / epsilon);
-    size_t depth = ceil(log(1.0 / delta));
+    size_t width = (size_t) ceil(M_E / epsilon);
+    size_t depth = (size_t) ceil(log(1.0 / delta));
     
-    Tools::Random r;
-
     std::map<std::string, uint64_t> map;
+
+    Tools::Random r;
     std::map<std::string, uint64_t>::iterator itEx;
 
     for (size_t i = 1; i <= 1000; i++)
@@ -101,33 +103,40 @@ public:
     BOOST_REQUIRE(sketch.compareTo(newSketch) == 0);
   }
   
-  void testRuntime()
+  void testSampleRuntime()
   {
-    // This test serves primarily as an example of some typical usage.
-    
-    size_t domainSize = 100000;
-    double skew = -1;
-    
     Tools::Random r;
-  	Tools::PRGZipf zipf(0L, domainSize, skew, &r);
-  	
-    std::map<std::string, uint64_t> exact;
+    
+    Val_Sketch *sketch = new Val_Sketch(42, 0.01, 0.01);
 
-    // TODO: Finish after sleep.
+    std::map<std::string, uint64_t> testMap;
 
-		for (size_t i = 1; i <= N; i++)
-		{
-			uint32_t l = zipf.nextLong();
-			std::ostringstream ss;
-			ss << l << std::flush;
-
-			itEx = exact.find(ss.str());
-			if (itEx != exact.end())
-				(*itEx).second++;
-			else
-				exact[ss.str()] = 1;
-		}
-		
+    // Insert values from a highly skewed Zipfian distribution.
+    Tools::PRGZipf zipfianDistribution(0, 1000, 0.9, &r);
+    
+    for (size_t i = 1; i <= 100000; i++)
+    {
+      uint32_t l = zipfianDistribution.nextLong();
+      std::ostringstream ss;
+      ss << l << std::flush;
+      
+      sketch->insert(ss.str(), 100);
+      
+      testMap[ss.str()] += 100;
+    }
+    
+    // Done inserting values, now we freeze the sketch. Freezing the sketch 
+    // actually instantiates the Count-Min FM sketch object sitting underneath; 
+    // this is mainly due to the fact that all values are inserted into the 
+    // sketch at construction time.
+    sketch->freeze();
+    
+    // At this point we can query the sketch for frequencies of values.
+    std::map<std::string, uint64_t>::iterator iter;
+    for (iter = testMap.begin(); iter != testMap.end(); iter++)
+    {
+      Val_Int64 frequency = sketch->getFrequency(iter->first);
+    }
   }
 };
 
@@ -141,4 +150,5 @@ testSketches_testSuite::testSketches_testSuite()
        instance));
    add(BOOST_CLASS_TEST_CASE(&testSketches::testFMSketch, instance));
    add(BOOST_CLASS_TEST_CASE(&testSketches::testCountMinFMSketch, instance));
+   add(BOOST_CLASS_TEST_CASE(&testSketches::testSampleRuntime, instance));
 }

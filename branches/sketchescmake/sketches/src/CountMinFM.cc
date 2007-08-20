@@ -346,4 +346,6 @@ int Sketches::CountMinFM::compareTo(Sketches::CountMinFM *c)
       return -1;
     }
   }
+  
+  return 0;
 }
