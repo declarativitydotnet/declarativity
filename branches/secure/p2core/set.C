@@ -134,7 +134,7 @@ bool Set::subset(SetPtr l) const
 
 bool Set::propersubset(SetPtr l) const 
 {
-  return (propersubset(l) && (vpl.size() > l->vpl.size()));
+  return (subset(l) && (vpl.size() > l->vpl.size()));
 }
 
 SetPtr Set::setunion(SetPtr l) const

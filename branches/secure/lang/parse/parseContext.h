@@ -417,6 +417,7 @@ namespace compile {
     class Function : public Expression {
     public:
       const static string max;
+      const static string mod;
       Function(Expression *n, ExpressionList *a) 
         : _name(n->toString()), _args(a) { };
 

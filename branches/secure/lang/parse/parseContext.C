@@ -80,6 +80,7 @@ namespace compile {
     }
     
     const string Function::max = "f_max";
+    const string Function::mod = "f_mod";
     const string Says::verTable = "verKey"; 
     const string Says::genTable = "genKey"; 
     const string Says::hashFunc = "f_sha1"; 
@@ -1103,8 +1104,12 @@ namespace compile {
       // first generate the lte terms
       Functor::generateSelectTerms(start1, start1 + (TableEntry::numSecureFields - 1), 
 				   start2, start2 + (TableEntry::numSecureFields - 1), Bool::LTE, t);
-      Expression *modP = new Bool(Bool::NOT, (*start1)->copy());
-      Expression *modPPrime = new Bool(Bool::NOT, (*start2)->copy());
+      ExpressionList *expT = new ExpressionList();
+      expT->push_back((*start1)->copy());
+      Expression *modP = new Function(new Value(Val_Str::mk(Function::mod)), expT);
+      expT = new ExpressionList();
+      expT->push_back((*start2)->copy());
+      Expression *modPPrime = new Function(new Value(Val_Str::mk(Function::mod)), expT);
       Math *lhs = new Math(Math::MINUS, modP, modPPrime);
       Math *rhs = new Math(Math::MINUS, (*(start1+Says::K))->copy(), (*(start2+Says::K))->copy());
       Bool *eq = new Bool(Bool::LTE, lhs, rhs);
@@ -1146,7 +1151,10 @@ namespace compile {
       int op = ((Says::SPEAKER == o)?Math::BITAND:Math::BITOR);
       Expression *combinedSet = new Bool(op, (*(start1+Says::K))->copy(), (*(start2+Says::K))->copy());
       //mod
-      Bool *mod = new Bool(Bool::NOT, combinedSet);
+      ExpressionList *expT = new ExpressionList();
+      expT->push_back(combinedSet);
+      Expression *mod = new Function(new Value(Val_Str::mk(Function::mod)), expT);
+
       Expression *rhsMax;
       if(o == Says::SPEAKER){
 	ExpressionList *maxT = new ExpressionList();

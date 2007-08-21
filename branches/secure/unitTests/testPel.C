@@ -210,7 +210,7 @@ private:
     {
       // Turn the expected return value from string form to whatever
       // type I'm expecting and compare
-      // XXX This is really ugly. Replace with ValuePtr.
+
       int eq;
       switch (t->t) {
       case Value::NULLV:
@@ -1278,7 +1278,14 @@ testPel::vtests[] = {
   TST(SET, SUCCESS, "{6}", "6 initSet 6 initSet &"),
   TST(SET, SUCCESS, "{6}", "6 initSet 4 initSet 3 initSet | | 5 initSet 6 initSet 7 initSet &"),
   TST(SET, SUCCESS, "{}", "8 initSet 7 initSet 6 initSet | | empty &"),
-  TST(SET, SUCCESS, "{}", "empty 8 initSet | 7 initSet 6 initSet | &"),
+  //subset tests
+  TST(INT32, SUCCESS, "1", "empty 8 initSet >"),
+  TST(INT32, SUCCESS, "0", "empty 8 initSet <"),
+  TST(INT32, SUCCESS, "0", "8 initSet 8 initSet <"),
+  TST(INT32, SUCCESS, "1", "8 initSet 8 initSet <="),
+  TST(INT32, SUCCESS, "1", "8 initSet 8 initSet >="),
+  TST(INT32, SUCCESS, "0", "7 initSet 8 initSet <"),
+  TST(INT32, SUCCESS, "1", "7 initSet 8 initSet | 8 initSet <"),
 
 
 // Hash tests

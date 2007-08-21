@@ -133,8 +133,21 @@ namespace compile {
 
         // Copy over all assignments and selection predicates from old rule.
         CommonTable::Key key;
-        key.push_back(catalog->attribute(SELECT, "RID"));
         CommonTable::Iterator Iter;
+	key.push_back(catalog->attribute(ASSIGN, "RID"));
+
+	Iter = catalog->table(ASSIGN)->lookup(CommonTable::theKey(CommonTable::KEY2), key, rule); 
+        while (!Iter->done()) {
+          TuplePtr assign = Iter->next()->clone();
+          assign->set(catalog->attribute(ASSIGN, "POSITION"), Val_UInt32::mk(position++));
+          assign->freeze();
+          if (!catalog->table(ASSIGN)->insert(assign))
+            throw Exception("Rewrite View: Can't insert assignment. " + rule->toString());
+        }
+
+        key.clear();
+
+        key.push_back(catalog->attribute(SELECT, "RID"));
         Iter = catalog->table(SELECT)->lookup(CommonTable::theKey(CommonTable::KEY2), key, rule); 
         while (!Iter->done()) {
           TuplePtr select = Iter->next()->clone();
@@ -144,16 +157,6 @@ namespace compile {
             throw Exception("Rewrite View: Can't insert selection. " + rule->toString());
         }
 
-        key.clear();
-	key.push_back(catalog->attribute(ASSIGN, "RID"));
-	Iter = catalog->table(ASSIGN)->lookup(CommonTable::theKey(CommonTable::KEY2), key, rule); 
-        while (!Iter->done()) {
-          TuplePtr assign = Iter->next()->clone();
-          assign->set(catalog->attribute(ASSIGN, "POSITION"), Val_UInt32::mk(position++));
-          assign->freeze();
-          if (!catalog->table(ASSIGN)->insert(assign))
-            throw Exception("Rewrite View: Can't insert assignment. " + rule->toString());
-        }
       }
     } 
   
