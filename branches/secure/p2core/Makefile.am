@@ -13,12 +13,15 @@
 # DESCRIPTION: Makefile for the P2 core library
 #
 
+SUBDIRS=secure
+
 lib_LTLIBRARIES =	libp2core.la
 
 SOURCE_FILE_ROOTS =	reporting \
 			tableManager \
 			commonTable \
 			compileUtil \
+			secureUtil \
 			table2 \
 			refTable \
 			aggFactory \
@@ -67,19 +70,20 @@ libp2core_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C) \
 			pel_program.h \
 			systemTable.h \
 			iStateful.h \
-			iRunnable.h			
+			iRunnable.h 
+
 
 
 libp2core_la_LDFLAGS =	@BOOST_LIB@ \
 			@LDFLAGS@ \
 			@OPENSSL_LIB@
-			-lboost_regex \
-			-lssl
+			-lboost_regex 
 
 libp2core_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 
 libp2core_la_CPPFLAGS = @BOOST_INC@ \
-			@OPENSSL_INC@
+			@OPENSSL_INC@ \
+			-Isecure/ 
 
 CLEANFILES = core *.core *~ *.gen.h *.gen.txt pel_lexer.C
 

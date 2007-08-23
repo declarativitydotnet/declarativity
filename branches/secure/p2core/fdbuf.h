@@ -24,8 +24,6 @@
 #include <sstream>
 #include <errno.h>
 #include <sys/socket.h>
-#include <rpc/rpc.h>
-#include <rpc/xdr.h>
 
 /*
   A brief implementation discussion is in order.  Unlike (say) DM's
@@ -53,6 +51,7 @@ private:
   int	 err;		// Last value of errno. 
   char	 *data;		// Data itself
   bool	 safe;		// Zero any data before deleting
+  bool   reader; // whether this object is just a reader or a reader and writer both
 
   // Used by write, send, sendto...
   inline ssize_t post_write(uint32_t w) {
@@ -87,7 +86,17 @@ public:
     BUF_SIZE_MAX = (2 << (sizeof(uint32_t) - 1) - 1)
   };
 
-  Fdbuf( int init_capacity = BUF_DFLT_CAP, bool is_safe = false);
+  Fdbuf( int init_capacity = BUF_DFLT_CAP, bool is_safe = false, bool _reader = false);
+
+  Fdbuf(FdbufPtr f){
+    capacity = f->capacity;
+    len = f->len;
+    start = f->start;
+    err = f->err;
+    data = f->data;
+    safe = f->data;		// Zero any data before deleting
+    reader = true;
+  }
 
   ~Fdbuf();
   
@@ -154,6 +163,10 @@ public:
   // Member functions: stuff removing data from the head of the buffer
   u_int32_t pop_uint32();
   Fdbuf& push_uint32(const u_int32_t);
+
+  u_int64_t pop_uint64();
+  Fdbuf& push_uint64(const u_int64_t);
+
   bool pop_bytes(char *buf, uint32_t len);
   Fdbuf& push_bytes(const char *buf, uint32_t len);
   uint32_t pop_to_fdbuf(Fdbuf &fb, uint32_t len);
