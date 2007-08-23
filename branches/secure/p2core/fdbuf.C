@@ -255,7 +255,7 @@ Fdbuf::pop_to_fdbuf(Fdbuf &fb, uint32_t to_write)
 void Fdbuf::ensure(uint32_t new_capacity)
 {
   // Always give us aligned headroom.
-  assert(!reader);
+  //  assert(!reader);
   new_capacity = align(new_capacity);
   if (capacity < new_capacity) {
     uint32_t new_size = (new_capacity + BUF_INCREMENT - 1) / BUF_INCREMENT * BUF_INCREMENT;

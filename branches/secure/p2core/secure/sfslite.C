@@ -1,3 +1,4 @@
+#include<iostream>
 #include "sfslite.h"
 #include "crypt.h"
 #include "aes.h"
@@ -92,11 +93,10 @@ namespace compile {
       assert(serializedPriv->pop_uint32()==Sfslite::RSAPriv);
       uint32_t sizeP = serializedPriv->pop_uint32();
       uint32_t sizeQ = serializedPriv->pop_uint32();
+      uint64_t k = serializedPriv->pop_uint64();
       bigint p, q;
       mpz_set_raw (&p, serializedPriv->raw_inline(), sizeP);
       mpz_set_raw (&q, serializedPriv->raw_inline() + sizeP, sizeQ);
-      uint64_t k = serializedPriv->pop_uint64();
-      
       return new esign_priv(p, q, k);
     }
 
@@ -104,7 +104,6 @@ namespace compile {
     {
       FdbufPtr serializedPub(new Fdbuf(258));
       uint32_t sizeN = mpz_rawsize(&pub->n);
-      
       char *nbuf = new char[sizeN];
       mpz_get_raw (nbuf, sizeN, &pub->n);
       serializedPub->push_uint32(Sfslite::RSAPub);
@@ -142,6 +141,7 @@ namespace compile {
     
     FdbufPtr Sfslite::generateAESKey(int len){
       assert(!(len & 15));
+      assert((len & (len-1)) == 0);
       wmstr wmsg (len);
       rnd.getbytes (wmsg, len);
       FdbufPtr key(new Fdbuf(len));
@@ -165,24 +165,39 @@ namespace compile {
     FdbufPtr Sfslite::secureSignAES(FdbufPtr msg, FdbufPtr key){
       aes ctx;
       
+        //assert that key length is a multiple of 16 bytes
+      int length = key->length();
+      assert(!(length & 15));
+      assert((length & (length-1)) == 0);
+      // keylength must be a power of 2
+      //find the place of first 1 bit in binary of length
+      int pos = 0;
+      int mask = 0;
+      length = length>>1;
+      while(length){
+	mask = mask<<1 | 1;
+	pos++;
+	length = length>>1;
+      }
       ctx.setkey (key->raw_inline(), key->length());
-      
       bigint z;
       str msgStr(msg->cstr(), msg->length());
       msg2bigint(&z, msgStr, hashSize*8);
       
       uint32_t size = mpz_rawsize(&z);
-      //size rounded to 16 bytes
-      uint32_t size16 = (size+6>>4)<<4;
-      char* pbuf = new char[size16];
-      char* cbuf = new char[size16];
+      //size rounded to length bytes
+      
+      uint32_t sizeRounded = (size+mask>>pos)<<pos;
+      char* pbuf = new char[sizeRounded];
+      char* cbuf = new char[sizeRounded];
       mpz_get_raw (pbuf, size, &z);
       // fill the remaining bytes with 0s
-      memset(pbuf+size, 0, size16-size);
+      if(sizeRounded > size)
+	memset(pbuf+size, 0, sizeRounded-size);
       
-      cbcencrypt(&ctx, cbuf, pbuf, size16);
-      FdbufPtr cipher(new Fdbuf(size16));
-      cipher->push_bytes(cbuf, size16);
+      cbcencrypt(&ctx, cbuf, pbuf, sizeRounded);
+      FdbufPtr cipher(new Fdbuf(sizeRounded));
+      cipher->push_bytes(cbuf, sizeRounded);
       
       delete []cbuf;
       delete []pbuf;
@@ -209,6 +224,20 @@ namespace compile {
     
     bool Sfslite::secureVerifyAES(FdbufPtr msg, FdbufPtr key, FdbufPtr proof){	
       aes ctx;
+        //assert that key length is a multiple of 16 bytes
+      int length = key->length();
+      assert(!(length & 15));
+      assert((length & (length-1)) == 0);
+      // keylength must be a power of 2
+      //find the place of first 1 bit in binary of length
+      int pos = 0;
+      int mask = 0;
+      length = length>>1;
+      while(length){
+	mask = mask<<1 | 1;
+	pos++;
+	length = length>>1;
+      }
       
       ctx.setkey (key->raw_inline(), key->length());
       
@@ -217,22 +246,24 @@ namespace compile {
       msg2bigint(&msgHash, msgStr, hashSize*8);
       
       uint32_t size = mpz_rawsize(&msgHash);
-      //size rounded to 16 bytes
-      uint32_t size16 = (size+6>>4)<<4;
-      if(proof->length() != size16){
+      //size rounded to length bytes
+      
+      uint32_t sizeRounded = (size+mask>>pos)<<pos;
+      if(proof->length() != sizeRounded){
 	return false;
       }
-      char* pbuf = new char[size16];
-      char* decbuf = new char[size16];
+      char* pbuf = new char[sizeRounded + 1];
+      char* decbuf = new char[sizeRounded + 1];
       mpz_get_raw (pbuf, size, &msgHash);
-      memset(pbuf+size, 0, size16-size);
+      if(sizeRounded > size)
+	memset(pbuf+size, 0, sizeRounded-size);
       
-      cbcdecrypt(&ctx, decbuf, proof->raw_inline(), size16);
-      bool res = memcmp(decbuf, pbuf, size16);
+      cbcdecrypt(&ctx, decbuf, proof->raw_inline(), sizeRounded);
+      int res = memcmp(decbuf, pbuf, sizeRounded);
       delete []decbuf;
       delete []pbuf;
       
-      return res;
+      return res == 0;
     }
     
     bool Sfslite::secureVerifyRSA(FdbufPtr msg, FdbufPtr key, FdbufPtr proofbuf){
