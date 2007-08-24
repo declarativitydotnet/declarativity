@@ -87,12 +87,14 @@ namespace compile {
     const string Says::verFunc = "f_verify"; 
     const string Says::genFunc = "f_gen"; 
     const string Says::encHint = "encHint"; 
-    const string Says::varPrefix = "_"; 
+    const string Says::varPrefix = "SPL"; 
+    const string Says::rulePrefix = "rule"; 
     const string Says::saysPrefix = "says"; 
     const string Says::makeSays = "makeSays"; 
     const string Says::globalScope = "::"; 
     const int TableEntry::numSecureFields = 5;
-    
+    int Rule::ruleId = 0; 
+
     string 
     Bool::toString() const {
       ostringstream b;
@@ -1079,8 +1081,11 @@ namespace compile {
 				 f1Args->begin()+1, 
 				 f1Args->begin()+(te->fields - TableEntry::numSecureFields),
 				 t);
+	ostringstream ruleName;
+	ruleName << Says::rulePrefix << Rule::ruleId++;
+	Value *rN = new Value(Val_Str::mk(ruleName.str()));
 
-	Rule *r = new Rule(head, t, false);
+	Rule *r = new Rule(head, t, false, rN);
 	s->push_back(r);
       }
       //issues: what if the tableEntry is not materialized?
@@ -1247,7 +1252,11 @@ namespace compile {
       newTerms->push_back(assHash);
       newTerms->push_back(assVer);
 
-      Rule *r = new Rule(head, newTerms, false);
+      ostringstream ruleName;
+      ruleName << Says::rulePrefix<< Rule::ruleId++;
+      Value *rName = new Value(Val_Str::mk(ruleName.str()));
+      
+      Rule *r = new Rule(head, newTerms, false, rName);
       r->canonicalizeRule();
       s->push_back(r);
     }

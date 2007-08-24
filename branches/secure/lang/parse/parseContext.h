@@ -599,6 +599,7 @@ namespace compile {
       const static string genTable;
       const static string encHint;
       const static string varPrefix;
+      const static string rulePrefix;
       const static string hashFunc; 
       const static string verFunc;
       const static string genFunc;
@@ -821,6 +822,9 @@ namespace compile {
 
     class Rule : public Statement {
     public:
+      
+      static int ruleId;
+
       Rule(Term *t, TermList *rhs, bool deleteFlag, Expression *n=NULL); 
       
       Rule(const Rule &r):_name(r._name), _delete(r._delete){
@@ -871,7 +875,9 @@ namespace compile {
       void canonicalizeAttributes(Functor*, TermList*, bool);
 
       void resetName(){
-	_name = "";
+	ostringstream ruleName;
+	ruleName << Says::rulePrefix << Rule::ruleId++;
+	_name =  ruleName.str();
       }
 
       string                    _name;
