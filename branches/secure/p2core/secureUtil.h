@@ -57,6 +57,7 @@ namespace compile {
     public:
       const static int hashSize;
       const static int keyPos;
+      const static int primitivePos;
 
       enum encryptionType{RSA=0, AES};
       enum keyType{RSAPriv=0, RSAPub, AESSecret};

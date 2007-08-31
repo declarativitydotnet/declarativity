@@ -8,7 +8,9 @@ namespace compile {
 
   namespace secure {
     const int hashSize = 20;
+    //modify these to account for actual tuple
     const int keyPos = 3;
+    const int primitivePos = 1;
 
     Primitive* Primitive::combine(const Primitive* p2, int axis) const{
       SetPtr _p, _r, _v;
@@ -112,7 +114,10 @@ namespace compile {
 		break;
 	      }
 	      if(res){
-		pSet.insert(new Primitive(encType));
+		pSet.insert(new Primitive(Val_Set::cast((*encHint)[SecurityAlgorithms::primitivePos]), 
+					  Val_Set::cast((*encHint)[SecurityAlgorithms::primitivePos+1]), 
+					  Val_Int32::cast((*encHint)[SecurityAlgorithms::primitivePos+2]), 
+					  Val_Set::cast((*encHint)[SecurityAlgorithms::primitivePos+3])));
 	      }
 	    }
 
