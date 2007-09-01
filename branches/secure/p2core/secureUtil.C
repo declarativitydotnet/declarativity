@@ -1,5 +1,7 @@
 #include "secureUtil.h"
 #include "val_opaque.h"
+#include "val_set.h"
+#include "val_int32.h"
 #include "sfslite.h"
 #include "plumber.h"
 #include "systemTable.h"
@@ -87,10 +89,24 @@ namespace compile {
 	};
       }
 
-      bool SecurityAlgorithms::verify(ValuePtr msg, int encType, ValPtrList proof, Primitive *p){
+      bool SecurityAlgorithms::verify(ValuePtr msg, ValPtrList proof, Primitive *p){
 	PrimitiveSet pSet;
 	CommonTable::ManagerPtr catalog = Plumber::catalog();
+	//	CommonTablePtr functorTbl = catalog->table(FUNCTOR);
+
 	CommonTablePtr encHintTbl = catalog->table("::encHint");
+//       CommonTable::Key nameKey;
+//       nameKey.push_back(catalog->attribute(FUNCTOR, "NAME"));
+//       CommonTablePtr tableTbl = catalog->table(TABLE);
+//       CommonTable::Iterator tIter = 
+//         tableTbl->lookup(nameKey, CommonTable::theKey(CommonTable::KEY3), functorTp);
+//       if (!tIter->done()) 
+//         functorTp->append((*tIter->next())[TUPLE_ID]);
+//       else {
+//         functorTp->append(Val_Null::mk());
+//       }
+  
+
 	CommonTablePtr verKeyTbl = catalog->table("::verKey");
 	CommonTable::Iterator encHintIter;
 
@@ -98,19 +114,20 @@ namespace compile {
 	  TuplePtr encHint = encHintIter->next();
 	  CommonTable::Iterator verKeyIter;
 	  verKeyIter = verKeyTbl->lookup(CommonTable::theKey(CommonTable::KEY2), 
-                                      CommonTable::theKey(CommonTable::KEY6), encHint);
-	  for (; !verKeyIterIter->done(); ) {
+                                      CommonTable::theKey(CommonTable::KEY5), encHint);
+	  for (; !verKeyIter->done(); ) {
 	    ValPtrList::iterator iter = proof.begin();
 	    for(; iter != proof.end(); iter++){
 	      bool res = false;
 	      TuplePtr keyTuple = verKeyIter->next();
-	      ValuePtr key = (*keyTuple)[SecurityAlgorithms::keyPos];
+	      int encType = Val_Int32::cast((*keyTuple)[SecurityAlgorithms::keyPos]);
+	      ValuePtr key = (*keyTuple)[SecurityAlgorithms::keyPos+1];
 	      switch(encType){
 	      case SecurityAlgorithms::RSA:
-		res = verifyRSA(msg, key, proof);
+		res = verifyRSA(msg, key, (*iter));
 		break;
 	      case SecurityAlgorithms::AES:
-		res = verifyRSA(msg, key, proof);
+		res = verifyRSA(msg, key, (*iter));
 		break;
 	      }
 	      if(res){

@@ -63,7 +63,7 @@ namespace compile {
       enum keyType{RSAPriv=0, RSAPub, AESSecret};
        
       static ValuePtr generate(ValuePtr msg, int encType, ValuePtr key);
-      static bool verify(ValuePtr msg, int encType, ValPtrList proof, Primitive *p);
+      static bool verify(ValuePtr msg, ValPtrList proof, Primitive *p);
     private:
       //helper function
       

@@ -112,6 +112,7 @@ public:
     KEY45,
     KEY012,
     KEY123,
+    KEY345,
     KEY01234
   } KeyName;
 
@@ -692,6 +693,7 @@ protected:
     Key theKEY45;
     Key theKEY012;
     Key theKEY123;
+    Key theKEY345;
     Key theKEY01234;
   };
 

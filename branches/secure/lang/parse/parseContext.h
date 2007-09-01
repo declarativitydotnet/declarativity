@@ -25,6 +25,7 @@
 #include "tuple.h"
 #include "value.h"
 #include "val_str.h"
+#include "val_int32.h"
 
 class OL_Lexer;
 
@@ -934,6 +935,36 @@ namespace compile {
       bool                             _says;
     };
     typedef std::deque<Table*> TableList;
+
+
+    /* The meta-data of the table */
+    class Ref : public Statement {
+    public:
+
+      enum RefType{WEAK, STRONG};
+
+      Ref(int refType, 
+	  Expression *from, 
+	  Expression *to, 
+	  Expression *locSpecField);
+    
+      virtual ~Ref() {};
+    
+      virtual Statement* copy() const{
+	Ref *v = new Ref(*this);
+	return v;
+      }
+     
+      virtual string toString() const;
+    
+      virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string);
+    
+    private:
+      string                           _from;
+      string                           _to;
+      int32_t                          _locSpecField;
+      int32_t                          _refType;
+    };
     
     class Watch : public Statement {
     public:

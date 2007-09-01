@@ -1724,6 +1724,61 @@ namespace compile {
 
       return catalog->createTable(scopedName, _keys, _size, _lifetime);
     }
+
+    Ref::Ref(int refType, 
+	     Expression *from, 
+	     Expression *to, 
+	     Expression *locSpecField){
+      _from = from->toString() ;
+      _to = to->toString() ;
+      _locSpecField = Val_Int32::cast(locSpecField->value());
+      _refType = refType;
+
+    }
+
+    string 
+    Ref::toString() const 
+    {
+      ostringstream b;
+      b << ((_refType == Ref::STRONG)?"Strong ":"Weak ") << "Ref( " << _locSpecField << ", " << _from
+        << ", " << _to << ").";
+      return b.str();
+    }
+
+    TuplePtr 
+    Ref::materialize(CommonTable::ManagerPtr catalog, ValuePtr parentKey, string ns)
+    {
+      string scopedFrom;
+      string scopedTo;
+      if (_from.size() >= 2 && _from.substr(0,2) == "::") {
+        scopedFrom = _from.substr(2, _from.length()-2);
+      }
+      else {
+        scopedFrom = ns + _from; 
+      }
+
+      if (_to.size() >= 2 && _to.substr(0,2) == "::") {
+        scopedTo = _to.substr(2, _to.length()-2);
+      }
+      else {
+        scopedTo = ns + _to; 
+      }
+
+      TuplePtr tpl = Tuple::mk(REF, true);
+      
+      tpl->append(Val_Str::mk(scopedFrom));
+      tpl->append(Val_Str::mk(scopedTo));
+      tpl->append(Val_Int32::mk(_locSpecField));
+      tpl->append(Val_Int32::mk(_refType));
+      tpl->freeze();
+
+      // Update the the ref table to contain this fact as being installed
+      CommonTablePtr refTbl = catalog->table(REF);
+
+      refTbl->insert(tpl); 
+      return tpl;
+    }
+
     /**********************************************************************
      *
      * parse::Context methods

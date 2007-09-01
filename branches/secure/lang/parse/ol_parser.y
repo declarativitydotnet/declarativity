@@ -74,6 +74,9 @@
 %token OL_STAGE
 %token OL_TRACE
 %token OL_TRACETABLE
+%token OL_REF
+%token OL_WEAK
+%token OL_STRONG
 
 %start program
 %file-prefix="ol_parser"
@@ -83,6 +86,7 @@
 %union {
   compile::parse::Bool::Operator             u_boper;
   compile::parse::Math::Operator             u_moper;
+  compile::parse::Ref::RefType               u_refType;
   compile::parse::TermList                  *u_termlist;
   compile::parse::Term                      *u_term;
   compile::parse::ExpressionList            *u_exprlist;
@@ -92,7 +96,7 @@
   compile::parse::StatementList             *u_statementlist;
 }
 
-%type<u_statement>     statement nameSpace rule materialize watch watchfine stage fact;
+%type<u_statement>     statement nameSpace rule materialize watch watchfine stage fact ref;
 %type<u_statementlist> statements;
 %type<u_termlist>      termlist aggview;
 %type<u_exprlist>      factbody functorbody functorargs functionargs vectorentries;
@@ -104,6 +108,7 @@
 %type<v>               vectorentry vector_expr matrix_expr;
 %type<u_boper>         rel_oper;
 %type<u_moper>         math_oper;
+%type<u_refType>       refType;
 %type<v>               agg_oper;
 %%
 
@@ -126,6 +131,7 @@ statement:   nameSpace   { $$ = $1; }
            | watchfine   { $$ = $1; }
            | stage       { $$ = $1; }
            | fact        { $$ = $1; }
+           | ref         { $$ = $1; }
          ;
 
 nameSpace: OL_NAMESPACE OL_NAME OL_LCURB statements OL_RCURB
@@ -139,6 +145,15 @@ materialize: OL_MATERIALIZE OL_LPAR OL_NAME OL_COMMA
              tablearg OL_COMMA tablearg OL_COMMA primarykeys OL_RPAR OL_DOT 
              { $$ = new compile::parse::Table($3, $5, $7, $9, true); } 
     ;
+
+ref: refType OL_REF OL_LPAR OL_NAME OL_COMMA
+             OL_NAME OL_COMMA tablearg OL_RPAR OL_DOT 
+             { $$ = new compile::parse::Ref($1, $4, $6, $8); } 
+    ;
+
+refType: OL_WEAK { $$ = compile::parse::Ref::WEAK; } |
+         OL_STRONG { $$ = compile::parse::Ref::STRONG; }
+       ;
 
 tablearg: OL_VALUE
           { $$ = $1; }

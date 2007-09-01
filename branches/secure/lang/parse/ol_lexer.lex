@@ -108,6 +108,9 @@ WHITESPACE	[ \t\r\n]+
 }
 
 <INITIAL>materialize { return OL_MATERIALIZE; }
+<INITIAL>strong { return OL_STRONG; }
+<INITIAL>weak { return OL_WEAK; }
+<INITIAL>ref { return OL_REF; }
 <INITIAL>materializeSays { return OL_SAYSMATERIALIZE; }
 <INITIAL>namespace { return OL_NAMESPACE; }
 <INITIAL>keys { return OL_KEYS; }
