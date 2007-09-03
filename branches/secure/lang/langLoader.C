@@ -16,6 +16,7 @@
 
 
 #include "ecaContext.h"
+#include "compoundContext.h"
 #include "p2dlContext.h"
 #include "debugContext.h"
 #include "localContext.h"
@@ -33,6 +34,7 @@ LangLoader::loadElements()
   compile::local::Context::ensureInit();
   compile::parse::Context::ensureInit();
   compile::planner::Context::ensureInit();
+  compile::compound::Context::ensureInit();
   compile::rewrite::Context::ensureInit();
 }
 

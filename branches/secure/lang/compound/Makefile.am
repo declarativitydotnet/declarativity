@@ -10,15 +10,15 @@
 #
 #
 
-lib_LTLIBRARIES = libp2comp.la
+lib_LTLIBRARIES = libp2compound.la
 
-libp2eca_la_SOURCES = compContext.C
+libp2compound_la_SOURCES = compoundContext.C
 
 INCLUDES = @BOOST_INC@ \
            -I.. -I../../p2core -I../../elements -I../../p2cpp
 
 CLEANFILES = core *.core *~
 
-EXTRA_DIST = $(libp2comp_la_SOURCES:.C=.h)
+EXTRA_DIST = $(libp2compound_la_SOURCES:.C=.h)
 
 MAINTAINERCLEANFILES = Makefile.in

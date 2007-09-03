@@ -141,13 +141,13 @@ CompileStage::initialize()
   } while (0);
 
   STAGE_INIT("compile", "parse")
-  STAGE_INIT("parse",   "comp")
-  STAGE_INIT("comp",    "eca")
-  STAGE_INIT("eca",     "rewrite")
+  STAGE_INIT("parse",   "eca")
+  STAGE_INIT("eca",    "debug")
+  STAGE_INIT("debug",     "rewrite")
   STAGE_INIT("rewrite", "local")
   STAGE_INIT("local",   "planner")
-  STAGE_INIT("planner", "debug")
-  STAGE_INIT("debug",    "p2dl")
+  STAGE_INIT("planner", "compound")
+  STAGE_INIT("compound",    "p2dl")
   STAGE_INIT("p2dl",    "installed")
 
   return 0;

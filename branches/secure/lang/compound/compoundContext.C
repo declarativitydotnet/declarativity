@@ -12,7 +12,7 @@
  */
 
 #include<iostream>
-#include "compContext.h"
+#include "compoundContext.h"
 #include "plumber.h"
 #include "systemTable.h"
 #include "value.h"
@@ -23,10 +23,10 @@
 #include "val_list.h"
 #include "val_tuple.h"
 namespace compile {
-  namespace comp {
+  namespace compound{
     using namespace opr;
 
-    DEFINE_ELEMENT_INITS_NS(Context, "CompContext", compile::comp)
+    DEFINE_ELEMENT_INITS_NS(Context, "CompoundContext", compile::compound)
 
     Context::Context(string name)
     : compile::Context(name) { }
@@ -37,12 +37,15 @@ namespace compile {
     void
     Context::rule(CommonTable::ManagerPtr catalog, TuplePtr rule)
     {
+      static int counter = 0;
+      std::cout<<"compound stage rule counter"<<counter++<<std::endl;
       //do nothing
     } 
   
     TuplePtr 
     Context::program(CommonTable::ManagerPtr catalog, TuplePtr program) 
     {
+      std::cout<<"Reached compound stage"<<std::endl;
       CommonTable::Key indexKey;
       CommonTable::Iterator iter;
 
@@ -54,7 +57,7 @@ namespace compile {
 	std::cout<<"Ref:"<<ref->toString()<<std::endl;
       }
 
-
+      std::cout<<"exitting compound stage"<<std::endl;
       return this->compile::Context::program(catalog, program);
     }
  

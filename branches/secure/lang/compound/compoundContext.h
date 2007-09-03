@@ -11,8 +11,8 @@
  *
  */
 
-#ifndef __COMP_CONTEXT_H__
-#define __COMP_CONTEXT_H__
+#ifndef __COMPOUND_CONTEXT_H__
+#define __COMPOUND_CONTEXT_H__
 
 #include <iostream>
 #include "element.h"
@@ -21,7 +21,7 @@
 #include "val_str.h"
 
 namespace compile {
-  namespace comp {
+  namespace compound {
     class Exception : public compile::Exception {
     public:
       Exception(string msg) : compile::Exception(msg) {};
@@ -34,7 +34,7 @@ namespace compile {
   
       virtual ~Context() {}; 
   
-      const char *class_name() const { return "comp::Context";}
+      const char *class_name() const { return "compound::Context";}
   
       DECLARE_PUBLIC_ELEMENT_INITS
 
@@ -42,24 +42,11 @@ namespace compile {
       /* Process the current rule in the program */
       void rule(CommonTable::ManagerPtr catalog, TuplePtr rule);
 
-      /**
-       * A rule containing a periodic will be rewritten to by creating
-       * a new rule that contains only the periodic in the body and
-       * a periodicTrigger in the head. This periodicTrigger event will
-       * replace the periodic event in the original rule. */
-      void rewritePeriodic(CommonTable::ManagerPtr catalog, 
-                           TuplePtr rule, TuplePtr periodic, string name_space);
-
-      /** 
-       * If the view is a materialized view then rewrite it into a set
-       * of rules triggered by the DELTA of each base table. The old
-       * rule will be replaced by the generated new rules. */
-      void rewriteView(CommonTable::ManagerPtr catalog, TuplePtr rule, 
-                       std::deque<TuplePtr>& baseTables);
+      TuplePtr program(CommonTable::ManagerPtr catalog, TuplePtr rule);
 
       DECLARE_PRIVATE_ELEMENT_INITS
     };
   }
 }
 
-#endif /* __COMP_CONTEXT_H__ */
+#endif /* __COMPOUND_CONTEXT_H__ */

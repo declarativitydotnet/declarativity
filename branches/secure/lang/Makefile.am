@@ -12,7 +12,7 @@
 # DESCRIPTION: Makefile for the P2 planner
 #
 
-SUBDIRS=parse eca local rewrite debug planner p2dl
+SUBDIRS=parse compound eca local rewrite debug planner p2dl
 
 lib_LTLIBRARIES = libp2lang.la
 libp2lang_la_SOURCES = \
@@ -25,6 +25,7 @@ INCLUDES = @BOOST_INC@ \
 		-I../p2cpp \
 		-I./parse \
 		-I./eca \
+		-I./compound \
 		-I./planner \
 		-I./p2dl \
 		-I./debug \

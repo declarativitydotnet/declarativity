@@ -119,6 +119,7 @@ AC_CONFIG_FILES([
 	overlog/Makefile 
 	lang/Makefile
 	lang/parse/Makefile
+	lang/compound/Makefile
 	lang/eca/Makefile
 	lang/local/Makefile
 	lang/rewrite/Makefile
