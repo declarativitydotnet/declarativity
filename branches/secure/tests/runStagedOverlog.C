@@ -123,6 +123,9 @@ string stub(string hostname, string port, TransportConf conf)
   stub << "\tintDemux[+ \"parse::programEvent\"] -> ParseContext(\"parse\") -> "
        << "\tInsert2(\"parseInsert\", \"" << PROGRAM << "\");\n";
 
+  stub << "\tintDemux[+ \"compound::programEvent\"]   -> CompoundContext(\"compound\") -> "
+       << "\tInsert2(\"compoundInsert\", \"" << PROGRAM << "\");\n";
+
   stub << "\tintDemux[+ \"eca::programEvent\"]   -> EcaContext(\"eca\") -> "
        << "\tInsert2(\"ecaInsert\", \"" << PROGRAM << "\");\n";
 
