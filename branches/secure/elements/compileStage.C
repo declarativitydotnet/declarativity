@@ -141,7 +141,8 @@ CompileStage::initialize()
   } while (0);
 
   STAGE_INIT("compile", "parse")
-  STAGE_INIT("parse",   "eca")
+  STAGE_INIT("parse",   "comp")
+  STAGE_INIT("comp",    "eca")
   STAGE_INIT("eca",     "rewrite")
   STAGE_INIT("rewrite", "local")
   STAGE_INIT("local",   "planner")

@@ -11,6 +11,7 @@
  *
  */
 
+#include<iostream>
 #include "compContext.h"
 #include "plumber.h"
 #include "systemTable.h"
@@ -36,12 +37,24 @@ namespace compile {
     void
     Context::rule(CommonTable::ManagerPtr catalog, TuplePtr rule)
     {
-
+      //do nothing
     } 
   
     TuplePtr 
     Context::program(CommonTable::ManagerPtr catalog, TuplePtr program) 
     {
+      CommonTable::Key indexKey;
+      CommonTable::Iterator iter;
+
+      indexKey.push_back(catalog->attribute(REF, "PID"));
+      iter =
+        catalog->table(REF)->lookup(CommonTable::theKey(CommonTable::KEY2), indexKey, program); 
+      while (!iter->done()) {
+        TuplePtr ref = iter->next();                                        // The row in the fact table
+	std::cout<<"Ref:"<<ref->toString()<<std::endl;
+      }
+
+
       return this->compile::Context::program(catalog, program);
     }
  

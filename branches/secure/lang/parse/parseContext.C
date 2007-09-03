@@ -1766,6 +1766,7 @@ namespace compile {
 
       TuplePtr tpl = Tuple::mk(REF, true);
       
+      tpl->append(parentKey);      
       tpl->append(Val_Str::mk(scopedFrom));
       tpl->append(Val_Str::mk(scopedTo));
       tpl->append(Val_Int32::mk(_locSpecField));

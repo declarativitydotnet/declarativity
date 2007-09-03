@@ -79,9 +79,9 @@ TABLEDEF(TABLE, CommonTable::theKey(CommonTable::KEY3), \
          SCHEMA("KEY", 6) SCHEMA("CARD", 7))
 
 TABLEDEF(REF, CommonTable::theKey(CommonTable::KEY345), \
-         SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("TID", 2) \
-         SCHEMA("FROM", 3) SCHEMA("TO", 4) SCHEMA("LOCSPECFIELD", 5) \
-         SCHEMA("REFTYPE", 6))
+         SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("REFID", 2) \
+	 SCHEMA("PID", 3) SCHEMA("FROM", 4) SCHEMA("TO", 5) \
+	 SCHEMA("LOCSPECFIELD", 6) SCHEMA("REFTYPE", 7))
 
 TABLEDEF(INDEX, CommonTable::theKey(CommonTable::KEY34), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("IID", 2) \
@@ -167,9 +167,9 @@ TABLEDEF(COMPILE_STATUS, CommonTable::theKey(CommonTable::KEY1), \
 #define FOREIGN_KEY(table1, foreignKey, table2)
 #endif
 FOREIGN_KEY(FACT,              CommonTable::theKey(CommonTable::KEY3), PROGRAM)
-FOREIGN_KEY(FACT,              CommonTable::theKey(CommonTable::KEY3), PROGRAM)
+FOREIGN_KEY(REF,               CommonTable::theKey(CommonTable::KEY3), PROGRAM)
 FOREIGN_KEY(FACT,              CommonTable::theKey(CommonTable::KEY4), TABLE)
-FOREIGN_KEY(REF,               CommonTable::theKey(CommonTable::KEY3), TABLE)
+FOREIGN_KEY(REF,               CommonTable::theKey(CommonTable::KEY5), TABLE)
 FOREIGN_KEY(REF,               CommonTable::theKey(CommonTable::KEY4), TABLE)
 FOREIGN_KEY(RULE,              CommonTable::theKey(CommonTable::KEY3), PROGRAM)
 FOREIGN_KEY(INDEX,             CommonTable::theKey(CommonTable::KEY3), TABLE)
