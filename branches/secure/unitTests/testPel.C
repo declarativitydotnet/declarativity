@@ -829,6 +829,7 @@ testPel::vtests[] = {
   TST(INT32, SUCCESS, "0",	"1 2 =="),
   TST(INT32, SUCCESS, "1",	"1 1 =="),
   TST(INT32, SUCCESS, "1",	"0xffffffffffffffffU -1 =="),
+
   // == (integer equal)
   TST(INT32, STACK_UNDERFLOW, "",	"=="),
   TST(INT32, STACK_UNDERFLOW, "",	"1 =="),
@@ -1278,6 +1279,10 @@ testPel::vtests[] = {
   TST(SET, SUCCESS, "{6}", "6 initSet 6 initSet &"),
   TST(SET, SUCCESS, "{6}", "6 initSet 4 initSet 3 initSet | | 5 initSet 6 initSet 7 initSet &"),
   TST(SET, SUCCESS, "{}", "8 initSet 7 initSet 6 initSet | | empty &"),
+  TST(INT32, SUCCESS, "1", "empty empty =="),
+  TST(INT32, SUCCESS, "0", "empty 7 initSet =="),
+  TST(INT32, SUCCESS, "0", "empty empty == not"),
+  TST(INT32, SUCCESS, "1", "empty 7 initSet == not"),
   //subset tests
   TST(INT32, SUCCESS, "1", "empty 8 initSet >"),
   TST(INT32, SUCCESS, "0", "empty 8 initSet <"),
