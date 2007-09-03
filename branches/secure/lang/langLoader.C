@@ -28,13 +28,13 @@
 void
 LangLoader::loadElements()
 {
+  compile::compound::Context::ensureInit();
   compile::eca::Context::ensureInit();
   compile::p2dl::Context::ensureInit();
   compile::debug::Context::ensureInit();
   compile::local::Context::ensureInit();
   compile::parse::Context::ensureInit();
   compile::planner::Context::ensureInit();
-  compile::compound::Context::ensureInit();
   compile::rewrite::Context::ensureInit();
 }
 
