@@ -77,6 +77,7 @@
 %token OL_REF
 %token OL_WEAK
 %token OL_STRONG
+%token OL_NEW
 
 %start program
 %file-prefix="ol_parser"
@@ -98,11 +99,11 @@
 
 %type<u_statement>     statement nameSpace rule materialize watch watchfine stage fact ref;
 %type<u_statementlist> statements;
-%type<u_termlist>      termlist aggview;
+%type<u_termlist>      termlist aggview newtermlist;
 %type<u_exprlist>      factbody functorbody functorargs functionargs vectorentries;
 %type<u_exprlist>      matrixentry primarykeys keylist; 
 %type<u_exprlistlist>  matrixentries;
-%type<u_term>          term functor assign select says;
+%type<u_term>          term functor assign select says newFunctor headTerms;
 %type<v>               functorarg locationarg functionarg tablearg atom rel_atom math_atom;
 %type<v>               function math_expr bool_expr range_expr range_atom aggregate;
 %type<v>               vectorentry vector_expr matrix_expr;
@@ -189,7 +190,7 @@ stage: OL_STAGE OL_LPAR OL_STRING OL_COMMA OL_NAME OL_COMMA OL_NAME OL_RPAR OL_D
        }
      ;
 
-rule: OL_NAME functor OL_IF termlist OL_DOT 
+rule: OL_NAME headTerms OL_IF termlist OL_DOT 
         { $$ = new compile::parse::Rule($2, $4, false, $1);
 	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
 	} 
@@ -197,7 +198,7 @@ rule: OL_NAME functor OL_IF termlist OL_DOT
         { $$ = new compile::parse::Rule($3, $5, true, $1); 
 	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
 	} 
-      | functor OL_IF termlist OL_DOT 
+      | headTerms OL_IF termlist OL_DOT 
         { $$ = new compile::parse::Rule($1, $3, false); 
 	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
 	}
@@ -205,22 +206,25 @@ rule: OL_NAME functor OL_IF termlist OL_DOT
         { $$ = new compile::parse::Rule($2, $4, true); 
 	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
 	} 
-      | OL_NAME functor OL_IF aggview OL_DOT 
+      | OL_NAME headTerms OL_IF aggview OL_DOT 
         { $$ = new compile::parse::Rule($2, $4, false, $1); 
 	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
 	} 
-      | functor OL_IF aggview OL_DOT 
+      | headTerms OL_IF aggview OL_DOT 
         { $$ = new compile::parse::Rule($1, $3, false); 
 	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
+	}
+      | OL_NAME headTerms OL_IF newtermlist OL_DOT 
+        { $$ = new compile::parse::Rule($2, $4, false, $1);
+          $$->makeNew();
+	  //std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
 	} 
-      | OL_NAME says OL_IF termlist OL_DOT 
-        { $$ = new compile::parse::Rule($2, $4, false, $1); 
-	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
-	} 
-      | says OL_IF termlist OL_DOT 
+      | headTerms OL_IF newtermlist OL_DOT 
         { $$ = new compile::parse::Rule($1, $3, false); 
+          $$->makeNew();
 	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
-	} 
+	}
+      // pmahajan: currently we don't handle delete in constructor rules
     ;
 
 
@@ -230,11 +234,33 @@ term: functor | assign | select | says
 	}
       ;
 
+newFunctor: OL_NEW OL_LT OL_VAR OL_COMMA functorarg OL_COMMA functor OL_GT
+        { 
+	  $$ = new compile::parse::NewFunctor($3, $5, $7);
+	  //std::cout<<std::endl<<"Executing term";
+	}
+      ;
+
+headTerms: says { $$ = $1;} | 
+           newFunctor { $$ = $1;} | 
+           functor { $$ = $1;} 
+      ;
+
 termlist:  term 
            { $$ = new compile::parse::TermList(); $$->push_front($1);
 	   //std::cout<<std::endl<<"Executing termlist";  
 	   }
          | term OL_COMMA termlist 
+           { $3->push_front($1); $$=$3; } 
+         ;
+
+newtermlist:  newFunctor
+           { $$ = new compile::parse::TermList(); $$->push_front($1);
+	   //std::cout<<std::endl<<"Executing termlist";  
+	   }
+         | newFunctor OL_COMMA termlist 
+           { $3->push_front($1); $$=$3; } 
+         | term OL_COMMA newtermlist 
            { $3->push_front($1); $$=$3; } 
          ;
 
@@ -256,12 +282,6 @@ functor: OL_NAME functorbody
 	 }  
        | OL_NOT OL_NAME functorbody
          { $$=new compile::parse::Functor($2, $3, true); }           
-       | OL_NAME OL_BITXOR functorbody          
-         { 
-	   //std::cout<<std::endl<<"starting functor" ; 
-	   $$=new compile::parse::Functor($1, $3, false, true); 
-	   //std::cout<<std::endl<<"Executing functor: found"<<$$->toString();  
-	 }
        ;
 
 functorbody: OL_LPAR locationarg OL_RPAR 

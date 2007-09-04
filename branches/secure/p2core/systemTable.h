@@ -132,12 +132,14 @@ TABLEDEF(FACT, CommonTable::theKey(CommonTable::KEY2), \
 TABLEDEF(RULE, CommonTable::theKey(CommonTable::KEY2), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("RID", 2) \
          SCHEMA("PID", 3) SCHEMA("NAME", 4) SCHEMA("HEAD_FID", 5) \
-         SCHEMA("P2DL", 6) SCHEMA("DELETE", 7) SCHEMA("TERM_COUNT", 8))
+         SCHEMA("P2DL", 6) SCHEMA("DELETE", 7) SCHEMA("TERM_COUNT", 8) \
+	 SCHEMA("NEW", 9))
 
 TABLEDEF(FUNCTOR, CommonTable::theKey(CommonTable::KEY2), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("FID", 2) \
          SCHEMA("RID", 3) SCHEMA("NAME", 4) SCHEMA("TID", 5) \
-         SCHEMA("ECA", 6) SCHEMA("ATTRIBUTES", 7) SCHEMA("POSITION", 8) SCHEMA("AM", 9))
+         SCHEMA("ECA", 6) SCHEMA("ATTRIBUTES", 7) SCHEMA("POSITION", 8) \
+	 SCHEMA("AM", 9) ) 
 
 TABLEDEF(ASSIGN, CommonTable::theKey(CommonTable::KEY2), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("AID", 2) \

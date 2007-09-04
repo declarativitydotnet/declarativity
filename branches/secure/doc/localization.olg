@@ -25,14 +25,14 @@ watchmod(programEventInitialized, "RECV_EVENT").
   
   initialization programEventInitialized(@A, Pid, Rid, HeadFid) :- 
                    programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
-                   ::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count).
+                   ::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, New).
 
   begin2 rulesComplete(@A, Pid, 0) :-
           programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL).
 
   totalRules totalRules(@A, Pid, a_count<*>) :-
                programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
-               ::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count).
+               ::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, New).
 /* first fix point over*/
 
   /* Begin the localization rewrite by triggering a count of
@@ -45,7 +45,7 @@ watchmod(programEventInitialized, "RECV_EVENT").
      each rule. */
   detect countLocalVar(@A, Pid, Rid, a_countdistinct<Attr>) :-
             startRuleCounter(@A, Pid, Rid, HeadFid),
-            ::functor(@A, FID, Rid, Name, TID, ECA, Attributes, FPos, AM),
+            ::functor(@A, FID, Rid, Name, TID, ECA, Attributes, FPos, AM, New),
             Attr := f_getattr("Location", Attributes), 
             FID != HeadFid.
 
@@ -61,7 +61,7 @@ watchmod(programEventInitialized, "RECV_EVENT").
      of the orginal rule. */
   init iterator(@A, Pid, Rid, OldPos, NewRid, NewPos, PrevHeadFid, NewHeadFid, LocAttr, F_Schema, "Functor", F_ID) :-
 	countLocalVar(@A, Pid, Rid, C), C > 1,
-          ::functor(@A, F_ID, Rid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM),
+          ::functor(@A, F_ID, Rid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM, New),
           LocAttr := f_getattr("Location", F_Schema),
           F_Pos == 1,
           NewRid := f_idgen(), PrevHeadFid := null, NewHeadFid := f_idgen(), 
@@ -72,7 +72,7 @@ watchmod(programEventInitialized, "RECV_EVENT").
      Maintain the same location attribute, rule group and position therein. */
   functor iterator(@A, Pid, OldRid, OldPos+1U, NewRid, NewPos+1U, PrevHeadFid, HeadFid, LocAttr, Schema, "Functor", FID) :-
               iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, PrevSchema, TableName, ID),
-              ::functor(@A, FID, OldRid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM), /* Functor from old rule */
+              ::functor(@A, FID, OldRid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM, New), /* Functor from old rule */
               F_Pos == OldPos,                            /* Make sure we are considering this functor's position. */
               LocAttr == f_getattr("Location", F_Schema), /* The location attribute matches that of the prior iteration. */
 	      Schema := f_merge(F_Schema, PrevSchema).
@@ -95,9 +95,9 @@ watchmod(programEventInitialized, "RECV_EVENT").
   
   /* Point functors to their new rule. I add 1 to the NewPos since we'll move the previous
      rule's head into the event position. */
-  g7 ::functor(@A, Fid, NewRid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM) :-
+  g7 ::functor(@A, Fid, NewRid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM, New) :-
         iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, Fid),
-        ::functor(@A, Fid, OldRid, F_Name, F_TID, F_ECA, F_Schema, F_OldPos, F_AM),
+        ::functor(@A, Fid, OldRid, F_Name, F_TID, F_ECA, F_Schema, F_OldPos, F_AM, New),
         TableName == "Functor", 
         F_Pos := NewPos.
   
@@ -114,9 +114,9 @@ watchmod(programEventInitialized, "RECV_EVENT").
         TableName == "Select".
   
   /* Place result event from previous location group into next location group. */
-  g10 ::functor(@A, f_idgen(), NewRid, F_Name, F_TID, "RECV", F_Schema, 1U, "EVENT") :-
+  g10 ::functor(@A, f_idgen(), NewRid, F_Name, F_TID, "RECV", F_Schema, 1U, "EVENT", New) :-
         iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, Sid),
-        ::functor(@A, PrevHeadFid, F_NewRid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM),
+        ::functor(@A, PrevHeadFid, F_NewRid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM, New),
 	break(@A, Pid, OldRid, OldPos, _, _, _, _, _, _, _, _).
 /*princem: added last predicate*/
 
@@ -127,7 +127,7 @@ watchmod(programEventInitialized, "RECV_EVENT").
      within the new rule group. The break event will signal such an occurance. */
   triggerBreak prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, NewLocAttr, NewSchema, TableName, ID) :-
             iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
-            ::functor(@A, FID, OldRid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM),
+            ::functor(@A, FID, OldRid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM, New),
             F_Pos == OldPos,                               /* Considering this functor's position now. */
             LocAttr != f_getattr("Location", F_Schema),    /* Location variable mismatch. */
             NewLocAttr := f_getattr("Location", F_Schema), /* Switch to the new location variable. */
@@ -138,12 +138,14 @@ watchmod(programEventInitialized, "RECV_EVENT").
   /* Generate the new local join rules. */
  
   /* Create the new rule. Could be done multiple times but always the same tuple. */
-  g1 ::rule(@A, NewRid, Pid, NewName, HeadFid, null, false, NewPos) :-
+  /* pmahajan: create a non-new rule even if the original rule was a new one as localization and subsequent stages don't care 
+	about the newness. Thus to simplify the implementation*/
+  g1 ::rule(@A, NewRid, Pid, NewName, HeadFid, null, false, NewPos, 0U) :-
         prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
         NewName := "intermediateRule_" + f_tostr(NewRid).
 
   /* Create the head functor for each new rule */
-  g2 ::functor(@A, HeadFid, NewRid, F_Name, null, "SEND", F_Schema, 0U, null) :-
+  g2 ::functor(@A, HeadFid, NewRid, F_Name, null, "SEND", F_Schema, 0U, null, 0U) :-
         prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
         F_Name := "intermediateResult_" + f_tostr(NewRid),
         F_Schema := f_cons(LocAttr, f_cons(f_tovar(f_car(Schema)), f_cdr(Schema))).
@@ -153,25 +155,25 @@ watchmod(programEventInitialized, "RECV_EVENT").
      for the last rule group. */
   terminate terminate(@A, Pid, OldRid, NewRid, R_HeadFid, NewPos) :-
                iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
-               ::rule(@A, OldRid, Pid, R_Name, R_HeadFid, R_P2DL, R_Delete, R_Term_Count),
+               ::rule(@A, OldRid, Pid, R_Name, R_HeadFid, R_P2DL, R_Delete, R_Term_Count, New),
                OldPos == R_Term_Count.  /* If true, we've reached the end. */
 
   
   /* Point the original head functor to its new rule identifier. */
-  g4 ::functor(@A, HeadFid, NewRid, Name, TID, ECA, Attributes, 0U, AM) :-
+  g4 ::functor(@A, HeadFid, NewRid, Name, TID, ECA, Attributes, 0U, AM, New) :-
         terminate(@A, Pid, OldRid, NewRid, HeadFid, Terms),  /* We're done, redirect orginal head functor. */
-        ::functor(@A, HeadFid, OldRid, Name, TID, ECA, Attributes, Pos, AM).  /* The orginal head functor. */
+        ::functor(@A, HeadFid, OldRid, Name, TID, ECA, Attributes, Pos, AM, New).  /* The orginal head functor. */
   
   /* Create the final rule group. Carry forward attributes from orginal rule. */
-  g5 ::rule(@A, NewRid, PID, RName, HeadFid, P2DL, Delete, RTerms) :-
+  g5 ::rule(@A, NewRid, PID, RName, HeadFid, P2DL, Delete, RTerms, New) :-
         terminate(@A, Pid, OldRid, NewRid, HeadFid, Terms),  /* We're done, redirect orginal head functor. */
-        ::rule(@A, OldRid, PID, RName, HeadFid, P2DL, Delete, Term_Count),
+        ::rule(@A, OldRid, PID, RName, HeadFid, P2DL, Delete, Term_Count, New),
         RTerms := Terms.
   
   /* Delete the original rule. */
-  g6 delete ::rule(@A, OldRid, Pid, R_Name, R_HeadFid, R_P2DL, R_Delete, R_Term_Count) :-
+  g6 delete ::rule(@A, OldRid, Pid, R_Name, R_HeadFid, R_P2DL, R_Delete, R_Term_Count, New) :-
         terminate(@A, Pid, OldRid, NewRid, HeadFid, Terms),
-        ::rule(@A, OldRid, Pid, R_Name, R_HeadFid, R_P2DL, R_Delete, R_Term_Count).
+        ::rule(@A, OldRid, Pid, R_Name, R_HeadFid, R_P2DL, R_Delete, R_Term_Count, New).
 
 /** breaks split different terms groups into different fix-points**/
   break break(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, NewLocAttr, NewSchema, TableName, ID) :-

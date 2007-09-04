@@ -116,6 +116,7 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>keys { return OL_KEYS; }
 <INITIAL>in { return OL_IN; }
 <INITIAL>says { return OL_SAYS;}
+<INITIAL>new { return OL_NEW;}
 <INITIAL>"," { return OL_COMMA; }
 <INITIAL>"(" { return OL_LPAR; }
 <INITIAL>")" { return OL_RPAR; }
@@ -199,7 +200,7 @@ WHITESPACE	[ \t\r\n]+
   lvalp->v = new compile::parse::Variable(Val_Str::mk(yytext+1), true); 
   return OL_VAR; }
 
-<INITIAL>\@[A-Z]{ALNUM}* { 
+<INITIAL>\&[A-Z]{ALNUM}* { 
   lvalp->v = new compile::parse::Variable(Val_Str::mk(yytext+1), false, true); 
   return OL_VAR; }
 

@@ -37,15 +37,15 @@ namespace compile {
     void
     Context::rule(CommonTable::ManagerPtr catalog, TuplePtr rule)
     {
-      static int counter = 0;
-      std::cout<<"compound stage rule counter"<<counter++<<std::endl;
+      //      static int counter = 0;
+      //std::cout<<"compound stage rule counter"<<counter++<<std::endl;
       //do nothing
     } 
   
     TuplePtr 
     Context::program(CommonTable::ManagerPtr catalog, TuplePtr program) 
     {
-      std::cout<<"Reached compound stage"<<std::endl;
+      //      std::cout<<"Reached compound stage"<<std::endl;
       CommonTable::Key indexKey;
       CommonTable::Iterator iter;
 
@@ -57,7 +57,7 @@ namespace compile {
 	std::cout<<"Ref:"<<ref->toString()<<std::endl;
       }
 
-      std::cout<<"exitting compound stage"<<std::endl;
+      //      std::cout<<"exitting compound stage"<<std::endl;
       return this->compile::Context::program(catalog, program);
     }
  

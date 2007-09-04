@@ -334,6 +334,15 @@ namespace compile {
       return f.str();
     }
 
+
+    string 
+    NewFunctor::toString() const {
+      ostringstream f;
+      f << name()<< "( " << _locSpec->toString() <<", " << ((_opaque !=NULL)?_opaque->toString():NULL);
+      f << ", "<<_f->toString()<<" )";
+      return f.str();
+    }
+
     TuplePtr 
     Functor::materialize(CommonTable::ManagerPtr catalog, ValuePtr ruleId, string ns)
     {
@@ -373,6 +382,7 @@ namespace compile {
       functorTp->append(Val_Null::mk());          // The attributes field
       functorTp->append(Val_Null::mk());          // The position field
       functorTp->append(Val_Null::mk());          // The access method
+      functorTp->append(Val_Int32::mk(_new?1:0)); // The access method
       funcTbl->insert(functorTp);                 // Add new functor to functor table
 
       // Now take care of the functor arguments and variable dependencies
@@ -388,6 +398,85 @@ namespace compile {
       return functorTp;
     }
     
+    TuplePtr 
+    NewFunctor::materialize(CommonTable::ManagerPtr catalog, ValuePtr ruleId, string ns)
+    {
+      CommonTablePtr funcTbl = catalog->table(FUNCTOR);
+      TuplePtr     functorTp = Tuple::mk(FUNCTOR, true);
+      if (ruleId) {
+        functorTp->append(ruleId);
+      }
+      else {
+        functorTp->append(Val_Null::mk());
+      }
+  
+      string name;
+      if (_name.size() >= 2 && _name.substr(0,2) == "::") {
+        /* Referencing functor from some other namespace, 
+           relative to the global namespace */
+        name = _name.substr(2, _name.length()-2);
+      }
+      else {
+        name = ns + _name;
+      }
+      functorTp->append(Val_Str::mk(name));   // Functor name
+  
+      // Fill in table reference if functor is materialized
+      CommonTable::Key nameKey;
+      nameKey.push_back(catalog->attribute(FUNCTOR, "NAME"));
+      CommonTablePtr tableTbl = catalog->table(TABLE);
+      CommonTable::Iterator tIter = 
+        tableTbl->lookup(nameKey, CommonTable::theKey(CommonTable::KEY3), functorTp);
+      if (!tIter->done()) 
+        functorTp->append((*tIter->next())[TUPLE_ID]);
+      else {
+        functorTp->append(Val_Null::mk());
+      }
+  
+      functorTp->append(Val_Null::mk());          // The ECA flag
+      functorTp->append(Val_Null::mk());          // The attributes field
+      functorTp->append(Val_Null::mk());          // The position field
+      functorTp->append(Val_Null::mk());          // The access method
+      functorTp->append(Val_Int32::mk(1));        // The new
+      funcTbl->insert(functorTp);                 // Add new functor to functor table
+
+      // Now take care of the functor arguments and variable dependencies
+      ListPtr attributes = List::mk();
+      attributes->append(_locSpec->tuple());
+      if(_opaque){
+	attributes->append(_opaque->tuple());
+      }
+      else{
+	functorTp->append(Val_Null::mk());
+      }
+
+      // now fill in stuff from original functor
+      string functorname;
+      if (_f->name().size() >= 2 && _f->name().substr(0,2) == "::") {
+        /* Referencing functor from some other namespace, 
+           relative to the global namespace */
+        functorname = _f->name().substr(2, _f->name().length()-2);
+      }
+      else {
+        functorname = ns + _f->name();
+      }
+
+      attributes->append(Val_Str::mk(functorname));   // Functor name
+      
+      ExpressionList *args = const_cast<ExpressionList*>(_f->arguments());
+      for (ExpressionList::iterator iter = args->begin();
+           iter != args->end(); iter++) {
+        attributes->append((*iter)->tuple());
+      }
+
+      functorTp->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(attributes));
+      functorTp->freeze();
+      funcTbl->insert(functorTp); // Update functor with dependency list
+
+      return functorTp;
+    }
+    
+
     const Aggregation* 
     Functor::aggregate() const {
       for (ExpressionList::iterator iter = _args->begin(); 
@@ -398,12 +487,13 @@ namespace compile {
       return NULL;
     }
     
-    Functor::Functor(Expression *n, ExpressionList *a, bool complement, bool event)
-      : _name(n->toString()), _args(a), _complement(complement), _event(event)
+    Functor::Functor(Expression *n, ExpressionList *a, bool complement, bool newF)
+      : _name(n->toString()), _args(a), _complement(complement)
     {
       Variable    *var;
       Aggregation *agg;
-  
+      _new = newF;
+
       /** Ensure location sepecifier is first */
       for (ExpressionList::iterator iter = a->begin(); iter != a->end(); iter++) {
         if ((var = dynamic_cast<Variable*>(a->at(0))) != NULL && var->location()) {
@@ -476,6 +566,24 @@ namespace compile {
 	throw compile::Exception("Location specifier is not the first field in functor" + toString());
 	return NULL;
       }
+    }  
+
+    NewFunctor::NewFunctor(Expression *locSpec, Expression *opaque, Term *f)
+    {
+      _name = "new";
+      if ((_locSpec = dynamic_cast<Variable*>(locSpec)) != NULL &&
+          !_locSpec->location()) {
+        throw compile::Exception("Invalid location specifier. Variable: " 
+                                        + locSpec->toString());
+      }
+      if ((_f = dynamic_cast<Functor*>(f)) != NULL) {
+        throw compile::Exception("Invalid functor. " + f->toString());
+      }
+      _opaque = opaque;
+    }
+
+    Variable* NewFunctor::getLocSpec() {
+      return _locSpec;
     }  
 
     // return a list of terms that needs to be added to the rule on converting the 
@@ -912,7 +1020,7 @@ namespace compile {
     {
       _name = (n) ? n->toString() : "";
       _delete = deleteFlag;
-
+      _new = false;
       _head = dynamic_cast<Functor*>(lhs);
       _body = rhs;
 
@@ -1264,6 +1372,7 @@ namespace compile {
     Functor::Functor(TableEntry *t, int &fictVar){
       _complement = false;
       _name = t->name;
+      _new = false;
       _args = new ExpressionList();
       for(int i = 0; i < t->fields; i++){
 	ostringstream oss;
@@ -1512,6 +1621,7 @@ namespace compile {
       ruleTp->append(Val_Null::mk());                  // The P2DL desc. of this rule
       ruleTp->append(Val_UInt32::mk(_delete));         // Delete rule?
       ruleTp->append(Val_UInt32::mk(_body->size()+1)); // Term count?
+      ruleTp->append(Val_Int32::mk(_new?1:0)); // The access method
       ruleTp->freeze();
       ruleTbl->insert(ruleTp);	               // Add rule to rule table.
     

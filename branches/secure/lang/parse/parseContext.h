@@ -66,7 +66,7 @@ namespace compile {
       virtual Expression* copy() const = 0;
   
       virtual const ValuePtr value() const
-      { throw Exception(0, "Expression does not have a value."); }
+      { throw compile::Exception("Expression does not have a value."); }
 
       virtual bool isEqual(Expression *e) const {
 	return false;
@@ -87,7 +87,7 @@ namespace compile {
       virtual Term* copy() const = 0;
 
       virtual ~Term() {};
-  
+      
       virtual string toString() const = 0;
 
       virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string) = 0;
@@ -102,6 +102,8 @@ namespace compile {
 
       virtual ~Statement() {};
   
+      virtual void makeNew() { throw compile::Exception("makeNew not defined for this class"); }
+
       virtual string toString() const = 0;
   
       virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string) = 0;
@@ -514,17 +516,19 @@ namespace compile {
     
     class Functor : public Term {
     public:
-      Functor(Expression *n, ExpressionList *a, bool complement = false, bool event = false); 
+      Functor(Expression *n, ExpressionList *a, bool complement = false, bool newF = false); 
 
+      // shallow copy
       Functor(Functor *f){
 	_name = f->_name;
 	_args = f->_args;
 	_complement = f->_complement;
-	_event = f->_event;
+	_new = f->_new;
       }; 
      
       Functor(TableEntry* t, int &fictVar);
 
+      // deep copy
       Functor(const Functor &f) 
         : _name(f._name), _complement(f._complement){ 
 	ExpressionList *a = new ExpressionList();
@@ -535,6 +539,7 @@ namespace compile {
 	  it++;
 	}
 	_args = a;
+	_new = f._new;
       };
 
       virtual Term* copy() const{
@@ -591,7 +596,63 @@ namespace compile {
       string          _name;
       ExpressionList* _args;
       bool _complement;
-      bool _event;
+      bool _new;
+    };
+
+    class NewFunctor : public Term {
+    public:
+      NewFunctor(Expression *locSpec, Expression *opaque, Term *f); 
+
+      // shallow copy
+      NewFunctor(NewFunctor *f){
+	_name = f->_name;
+	_locSpec = dynamic_cast<Variable*>(f->_locSpec);
+	_opaque = f->_opaque;
+	if(!f){
+	  throw compile::Exception("Invalid functor arg to NewFunctor");
+	}
+	_f = f->_f;
+      }; 
+     
+      // deep copy
+      NewFunctor(const NewFunctor &f) 
+        : _name(f._name){ 
+	_locSpec = dynamic_cast<Variable*>(f._locSpec->copy());
+	if(f._opaque != NULL){
+	  _opaque = f._opaque->copy();
+	}
+	else{
+	  _opaque = NULL;
+	}
+	_f = new Functor(*f._f);
+      };
+
+      virtual Term* copy() const{
+	NewFunctor *v = new NewFunctor(*this);
+	return v;
+      }
+
+      virtual ~NewFunctor() { 
+	delete _locSpec; 
+	delete _f;
+	if(_opaque){
+	  delete _opaque;
+	}
+      }
+    
+      virtual string toString() const;
+
+      virtual Variable* getLocSpec();
+    
+      virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string);
+    
+      virtual string name() const { return _name; }
+
+    protected:
+      string          _name;
+      Variable*       _locSpec;
+      Expression*     _opaque;
+      Functor*        _f;
     };
 
     class Says : public Functor {
@@ -837,6 +898,7 @@ namespace compile {
 	  it++;
 	}
 	_body = tl;
+	_new = r._new;
       };
       
       virtual Statement* copy() const{
@@ -846,6 +908,8 @@ namespace compile {
 
       virtual ~Rule() { delete _head; delete _body; };
     
+      void makeNew() { _new = true; }
+
       virtual string toString() const;
     
       virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string);
@@ -885,6 +949,7 @@ namespace compile {
       bool                      _delete;
       Functor*                  _head;
       TermList* _body; 
+      bool _new;
     };
     typedef std::deque<Rule*> RuleList;
     
