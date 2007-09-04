@@ -600,7 +600,7 @@ namespace compile {
 	  throw compile::Exception("Invalid location specifier. Variable: " 
                                         + var->toString());
 	}
-	_name = "new" + _name;
+	_name =  _name + "new";
 	_new = true;
       }
 

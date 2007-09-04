@@ -1,3 +1,6 @@
+/*
+	this stage must be inserted before the eca stage as it modifies the head functors
+*/
 namespace rewrite0 {
   /* Given a new program, go through the rules contained within and
      count the number of distinct location attributes apprearing in
@@ -15,21 +18,22 @@ namespace rewrite0 {
 		::functor(@A, Fid, Rid, Name, TID, ECA, Attributes, FPos, AM, New),
 		New == 1, NewName := Name + f_tostr(f_posattr(HeadLocAttr, Attributes)).
 
-  makeheadnew ::functor(@A, HeadFid, Rid, NewName, null, HeadECA, HeadAttributes, HeadFPos, HeadAM, 1U) :-
+  makeheadnew ::functor(@A, HeadFid, Rid, NewName, null, HeadECA, NewHeadAttributes, HeadFPos, HeadAM, 1U) :-
 		newname(@A, Pid, Rid, HeadLocAttr), 
 		::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, New), 
 		::functor(@A, Fid, Rid, Name, TID, ECA, Attributes, FPos, AM, New),
 		::functor(@A, HeadFid, Rid, HeadName, HeadTID, HeadECA, HeadAttributes, HeadFPos, HeadAM, HeadNew),
 		New == 1, HeadNew == 0, LocAttr := f_getattr("Location", Attributes), 
-		
+		NewName := HeadName + "new", 
+		NewHeadAttributes := f_cons(LocAttr, f_cons(null, HeadAttributes)).
+
   /* Check that we are done with the rewrite by testing the count of
      completed rules with the total number of rules in the program.
      When done, generate a global programEvent tuple. */
   end ::program(@A, Pid, Name, Rewrite, "rewrite0", Text, Msg, P2DL) :-
-        ruleCompletion(@A, Pid, C),
-        totalRules(@A, Pid, T),
-        ::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
-        T == C.
+          programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL).
+
+  
 
 
 } /* END: namespace rewrite0 */
