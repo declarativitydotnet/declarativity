@@ -90,6 +90,10 @@ namespace compile {
       
       virtual string toString() const = 0;
 
+      virtual void makeNew(Expression* locSpec, Expression* opaque) { 
+	throw compile::Exception("makeNew not defined for this class"); 
+      };
+
       virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string) = 0;
     };
     typedef std::deque<Term *> TermList;
@@ -126,6 +130,9 @@ namespace compile {
   
       virtual ValuePtr tuple() const;
 
+      virtual void replace(ValuePtr newVal){
+	_value = newVal;
+      }
       virtual bool isEqual(Expression *e) const {
 	Value* v = dynamic_cast<Value*>(e);
 	if(v == NULL){
@@ -171,7 +178,11 @@ namespace compile {
 	  string(_newLocSpec ? "&" : "") + 
 	  _value->toString(); 
       };
-    
+
+      virtual void resetLocSpec(){
+	_location = false;
+      }
+
       virtual bool location() const { return _location; }
 
       virtual bool isEqual(Expression *e) const {
@@ -516,6 +527,8 @@ namespace compile {
     
     class Functor : public Term {
     public:
+      const static int32_t namePos;
+
       Functor(Expression *n, ExpressionList *a, bool complement = false, bool newF = false); 
 
       // shallow copy
@@ -576,6 +589,21 @@ namespace compile {
 	_name = newName;
       }
 
+      void makeNew(Expression* locSpec, Expression* opaque){
+	getLocSpec()->resetLocSpec();
+	//_args->push_front(new Value(Val_Str::mk(_name)));
+	_args->push_front(opaque);
+	_args->push_front(locSpec);
+	Variable *var;
+	if ((var = dynamic_cast<Variable*>(_args->at(0))) != NULL &&
+          !var->location()) {
+	  throw compile::Exception("Invalid location specifier. Variable: " 
+                                        + var->toString());
+	}
+	_name = "new" + _name;
+	_new = true;
+      }
+
       static TermList* generateEqTerms(ExpressionList::iterator start1, 
 				       ExpressionList::iterator end1, 
 				       ExpressionList::iterator start2, 
@@ -599,61 +627,61 @@ namespace compile {
       bool _new;
     };
 
-    class NewFunctor : public Term {
-    public:
-      NewFunctor(Expression *locSpec, Expression *opaque, Term *f); 
+/*     class NewFunctor : public Term { */
+/*     public: */
+/*       NewFunctor(Expression *locSpec, Expression *opaque, Term *f);  */
 
-      // shallow copy
-      NewFunctor(NewFunctor *f){
-	_name = f->_name;
-	_locSpec = dynamic_cast<Variable*>(f->_locSpec);
-	_opaque = f->_opaque;
-	if(!f){
-	  throw compile::Exception("Invalid functor arg to NewFunctor");
-	}
-	_f = f->_f;
-      }; 
+/*       // shallow copy */
+/*       NewFunctor(NewFunctor *f){ */
+/* 	_name = f->_name; */
+/* 	_locSpec = dynamic_cast<Variable*>(f->_locSpec); */
+/* 	_opaque = f->_opaque; */
+/* 	if(!f){ */
+/* 	  throw compile::Exception("Invalid functor arg to NewFunctor"); */
+/* 	} */
+/* 	_f = f->_f; */
+/*       };  */
      
-      // deep copy
-      NewFunctor(const NewFunctor &f) 
-        : _name(f._name){ 
-	_locSpec = dynamic_cast<Variable*>(f._locSpec->copy());
-	if(f._opaque != NULL){
-	  _opaque = f._opaque->copy();
-	}
-	else{
-	  _opaque = NULL;
-	}
-	_f = new Functor(*f._f);
-      };
+/*       // deep copy */
+/*       NewFunctor(const NewFunctor &f)  */
+/*         : _name(f._name){  */
+/* 	_locSpec = dynamic_cast<Variable*>(f._locSpec->copy()); */
+/* 	if(f._opaque != NULL){ */
+/* 	  _opaque = f._opaque->copy(); */
+/* 	} */
+/* 	else{ */
+/* 	  _opaque = NULL; */
+/* 	} */
+/* 	_f = new Functor(*f._f); */
+/*       }; */
 
-      virtual Term* copy() const{
-	NewFunctor *v = new NewFunctor(*this);
-	return v;
-      }
+/*       virtual Term* copy() const{ */
+/* 	NewFunctor *v = new NewFunctor(*this); */
+/* 	return v; */
+/*       } */
 
-      virtual ~NewFunctor() { 
-	delete _locSpec; 
-	delete _f;
-	if(_opaque){
-	  delete _opaque;
-	}
-      }
+/*       virtual ~NewFunctor() {  */
+/* 	delete _locSpec;  */
+/* 	delete _f; */
+/* 	if(_opaque){ */
+/* 	  delete _opaque; */
+/* 	} */
+/*       } */
     
-      virtual string toString() const;
+/*       virtual string toString() const; */
 
-      virtual Variable* getLocSpec();
+/*       virtual Variable* getLocSpec(); */
     
-      virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string);
+/*       virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string); */
     
-      virtual string name() const { return _name; }
+/*       virtual string name() const { return _name; } */
 
-    protected:
-      string          _name;
-      Variable*       _locSpec;
-      Expression*     _opaque;
-      Functor*        _f;
-    };
+/*     protected: */
+/*       string          _name; */
+/*       Variable*       _locSpec; */
+/*       Expression*     _opaque; */
+/*       Functor*        _f; */
+/*     }; */
 
     class Says : public Functor {
     public:

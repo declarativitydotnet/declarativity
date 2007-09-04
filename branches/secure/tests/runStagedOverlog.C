@@ -129,14 +129,14 @@ string stub(string hostname, string port, TransportConf conf)
   stub << "\tintDemux[+ \"eca::programEvent\"]   -> EcaContext(\"eca\") -> "
        << "\tInsert2(\"ecaInsert\", \"" << PROGRAM << "\");\n";
 
+  stub << "\tintDemux[+ \"debug::programEvent\"] -> DebugContext(\"debug\") -> "
+       << "\tInsert2(\"debugInsert\", \"" << PROGRAM << "\");\n";
+
   stub << "\tintDemux[+ \"local::programEvent\"] -> LocalContext(\"local\") -> "
        << "\tInsert2(\"localInsert\", \"" << PROGRAM << "\");\n";
 
   stub << "\tintDemux[+ \"rewrite::programEvent\"] -> RewriteContext(\"rewrite\") -> "
        << "\tInsert2(\"rewriteInsert\", \"" << PROGRAM << "\");\n";
-
-  stub << "\tintDemux[+ \"debug::programEvent\"] -> DebugContext(\"debug\") -> "
-       << "\tInsert2(\"debugInsert\", \"" << PROGRAM << "\");\n";
 
   stub << "\tintDemux[+ \"planner::programEvent\"] -> "
        << "PlannerContext(\"planner\", \"main\", \"intDemux\", \"intDRR\", \"extDRR\") -> "

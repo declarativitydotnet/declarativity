@@ -93,6 +93,7 @@ namespace compile {
     const string Says::makeSays = "makeSays"; 
     const string Says::globalScope = "::"; 
     const int TableEntry::numSecureFields = 5;
+    const int Functor::namePos = 2;
     int Rule::ruleId = 0; 
 
     string 
@@ -335,13 +336,13 @@ namespace compile {
     }
 
 
-    string 
-    NewFunctor::toString() const {
-      ostringstream f;
-      f << name()<< "( " << _locSpec->toString() <<", " << ((_opaque !=NULL)?_opaque->toString():NULL);
-      f << ", "<<_f->toString()<<" )";
-      return f.str();
-    }
+//     string 
+//     NewFunctor::toString() const {
+//       ostringstream f;
+//       f << name()<< "( " << _locSpec->toString() <<", " << ((_opaque !=NULL)?_opaque->toString():NULL);
+//       f << ", "<<_f->toString()<<" )";
+//       return f.str();
+//     }
 
     TuplePtr 
     Functor::materialize(CommonTable::ManagerPtr catalog, ValuePtr ruleId, string ns)
@@ -387,6 +388,24 @@ namespace compile {
 
       // Now take care of the functor arguments and variable dependencies
       ListPtr attributes = List::mk();
+//       if(_new){
+// 		Value* v = dynamic_cast<Value*>(_args->at(Functor::namePos));
+// 	if(!v){
+// 	  throw compile::Exception("Invalid new functor" + _args->at(Functor::namePos)->toString());
+// 	}
+// 	string newName;
+// 	string originalName = Val_Str::cast(v->value());
+// 	if (originalName.size() >= 2 && originalName.substr(0,2) == "::") {
+// 	  /* Referencing functor from some other namespace, 
+// 	     relative to the global namespace */
+// 	  newName = originalName.substr(2, originalName.length()-2);
+// 	}
+// 	else {
+// 	  newName = ns + originalName;
+// 	}
+	
+// 	v->replace(Val_Str::mk(newName));
+//       }
       for (ExpressionList::iterator iter = _args->begin();
            iter != _args->end(); iter++) {
         attributes->append((*iter)->tuple());
@@ -398,83 +417,83 @@ namespace compile {
       return functorTp;
     }
     
-    TuplePtr 
-    NewFunctor::materialize(CommonTable::ManagerPtr catalog, ValuePtr ruleId, string ns)
-    {
-      CommonTablePtr funcTbl = catalog->table(FUNCTOR);
-      TuplePtr     functorTp = Tuple::mk(FUNCTOR, true);
-      if (ruleId) {
-        functorTp->append(ruleId);
-      }
-      else {
-        functorTp->append(Val_Null::mk());
-      }
+//     TuplePtr 
+//     NewFunctor::materialize(CommonTable::ManagerPtr catalog, ValuePtr ruleId, string ns)
+//     {
+//       CommonTablePtr funcTbl = catalog->table(FUNCTOR);
+//       TuplePtr     functorTp = Tuple::mk(FUNCTOR, true);
+//       if (ruleId) {
+//         functorTp->append(ruleId);
+//       }
+//       else {
+//         functorTp->append(Val_Null::mk());
+//       }
   
-      string name;
-      if (_name.size() >= 2 && _name.substr(0,2) == "::") {
-        /* Referencing functor from some other namespace, 
-           relative to the global namespace */
-        name = _name.substr(2, _name.length()-2);
-      }
-      else {
-        name = ns + _name;
-      }
-      functorTp->append(Val_Str::mk(name));   // Functor name
+//       string name;
+//       if (_name.size() >= 2 && _name.substr(0,2) == "::") {
+//         /* Referencing functor from some other namespace, 
+//            relative to the global namespace */
+//         name = _name.substr(2, _name.length()-2);
+//       }
+//       else {
+//         name = ns + _name;
+//       }
+//       functorTp->append(Val_Str::mk(name));   // Functor name
   
-      // Fill in table reference if functor is materialized
-      CommonTable::Key nameKey;
-      nameKey.push_back(catalog->attribute(FUNCTOR, "NAME"));
-      CommonTablePtr tableTbl = catalog->table(TABLE);
-      CommonTable::Iterator tIter = 
-        tableTbl->lookup(nameKey, CommonTable::theKey(CommonTable::KEY3), functorTp);
-      if (!tIter->done()) 
-        functorTp->append((*tIter->next())[TUPLE_ID]);
-      else {
-        functorTp->append(Val_Null::mk());
-      }
+//       // Fill in table reference if functor is materialized
+//       CommonTable::Key nameKey;
+//       nameKey.push_back(catalog->attribute(FUNCTOR, "NAME"));
+//       CommonTablePtr tableTbl = catalog->table(TABLE);
+//       CommonTable::Iterator tIter = 
+//         tableTbl->lookup(nameKey, CommonTable::theKey(CommonTable::KEY3), functorTp);
+//       if (!tIter->done()) 
+//         functorTp->append((*tIter->next())[TUPLE_ID]);
+//       else {
+//         functorTp->append(Val_Null::mk());
+//       }
   
-      functorTp->append(Val_Null::mk());          // The ECA flag
-      functorTp->append(Val_Null::mk());          // The attributes field
-      functorTp->append(Val_Null::mk());          // The position field
-      functorTp->append(Val_Null::mk());          // The access method
-      functorTp->append(Val_Int32::mk(1));        // The new
-      funcTbl->insert(functorTp);                 // Add new functor to functor table
+//       functorTp->append(Val_Null::mk());          // The ECA flag
+//       functorTp->append(Val_Null::mk());          // The attributes field
+//       functorTp->append(Val_Null::mk());          // The position field
+//       functorTp->append(Val_Null::mk());          // The access method
+//       functorTp->append(Val_Int32::mk(1));        // The new
+//       funcTbl->insert(functorTp);                 // Add new functor to functor table
 
-      // Now take care of the functor arguments and variable dependencies
-      ListPtr attributes = List::mk();
-      attributes->append(_locSpec->tuple());
-      if(_opaque){
-	attributes->append(_opaque->tuple());
-      }
-      else{
-	functorTp->append(Val_Null::mk());
-      }
+//       // Now take care of the functor arguments and variable dependencies
+//       ListPtr attributes = List::mk();
+//       attributes->append(_locSpec->tuple());
+//       if(_opaque){
+// 	attributes->append(_opaque->tuple());
+//       }
+//       else{
+// 	functorTp->append(Val_Null::mk());
+//       }
 
-      // now fill in stuff from original functor
-      string functorname;
-      if (_f->name().size() >= 2 && _f->name().substr(0,2) == "::") {
-        /* Referencing functor from some other namespace, 
-           relative to the global namespace */
-        functorname = _f->name().substr(2, _f->name().length()-2);
-      }
-      else {
-        functorname = ns + _f->name();
-      }
+//       // now fill in stuff from original functor
+//       string functorname;
+//       if (_f->name().size() >= 2 && _f->name().substr(0,2) == "::") {
+//         /* Referencing functor from some other namespace, 
+//            relative to the global namespace */
+//         functorname = _f->name().substr(2, _f->name().length()-2);
+//       }
+//       else {
+//         functorname = ns + _f->name();
+//       }
 
-      attributes->append(Val_Str::mk(functorname));   // Functor name
+//       attributes->append(Val_Str::mk(functorname));   // Functor name
       
-      ExpressionList *args = const_cast<ExpressionList*>(_f->arguments());
-      for (ExpressionList::iterator iter = args->begin();
-           iter != args->end(); iter++) {
-        attributes->append((*iter)->tuple());
-      }
+//       ExpressionList *args = const_cast<ExpressionList*>(_f->arguments());
+//       for (ExpressionList::iterator iter = args->begin();
+//            iter != args->end(); iter++) {
+//         attributes->append((*iter)->tuple());
+//       }
 
-      functorTp->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(attributes));
-      functorTp->freeze();
-      funcTbl->insert(functorTp); // Update functor with dependency list
+//       functorTp->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(attributes));
+//       functorTp->freeze();
+//       funcTbl->insert(functorTp); // Update functor with dependency list
 
-      return functorTp;
-    }
+//       return functorTp;
+//     }
     
 
     const Aggregation* 
@@ -568,23 +587,23 @@ namespace compile {
       }
     }  
 
-    NewFunctor::NewFunctor(Expression *locSpec, Expression *opaque, Term *f)
-    {
-      _name = "new";
-      if ((_locSpec = dynamic_cast<Variable*>(locSpec)) != NULL &&
-          !_locSpec->location()) {
-        throw compile::Exception("Invalid location specifier. Variable: " 
-                                        + locSpec->toString());
-      }
-      if ((_f = dynamic_cast<Functor*>(f)) != NULL) {
-        throw compile::Exception("Invalid functor. " + f->toString());
-      }
-      _opaque = opaque;
-    }
+//     NewFunctor::NewFunctor(Expression *locSpec, Expression *opaque, Term *f)
+//     {
+//       _name = "new";
+//       if ((_locSpec = dynamic_cast<Variable*>(locSpec)) == NULL ||
+//           !_locSpec->location()) {
+//         throw compile::Exception("Invalid location specifier. Variable: " 
+//                                         + locSpec->toString());
+//       }
+//       if ((_f = dynamic_cast<Functor*>(f)) == NULL) {
+//         throw compile::Exception("Invalid functor. " + f->toString());
+//       }
+//       _opaque = opaque;
+//     }
 
-    Variable* NewFunctor::getLocSpec() {
-      return _locSpec;
-    }  
+//     Variable* NewFunctor::getLocSpec() {
+//       return _locSpec;
+//     }  
 
     // return a list of terms that needs to be added to the rule on converting the 
     // securelog term f into overlog.
