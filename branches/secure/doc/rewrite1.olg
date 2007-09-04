@@ -4,24 +4,6 @@ namespace rewrite0 {
   materialize(rulesComplete, 1, infinity, keys(2)).
   materialize(totalRules, 1, infinity, keys(2)).
 
-/*
-watchmod(programEvent, "RECV_EVENT").
-watch(terminate).
-watchmod(terminate, "SEND_ACTION").
-watchmod(countLocalVar, "SEND_ACTION").
-watchmod(break, "ADD_ACTION").
-watchmod(iterator, "RECV_EVENT").
-*/
-/*
-watchmod(iterator, "RECV_EVENT").
-watchmod(iterator, "SEND_ACTION").
-watchmod(totalRules, "ADD_ACTION").
-watchmod(::select, "ADD_ACTION").
-watchmod(::rule, "c").
-watchmod(::functor, "c").
-watchmod(programEventInitialized, "SEND_ACTION").
-watchmod(programEventInitialized, "RECV_EVENT").
-*/
   
   initialization programEventInitialized(@A, Pid, Rid, HeadFid) :- 
                    programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
@@ -34,8 +16,6 @@ watchmod(programEventInitialized, "RECV_EVENT").
                programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
                ::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count).
   
-  /* first fix point over*/
-
   /* Begin the rewrite0 rewrite by triggering a count of
      distinct location attributes for each rule in the program. */
   begin1 startRuleCounter(@A, Pid, Rid, HeadFid) :-

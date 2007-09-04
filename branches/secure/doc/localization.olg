@@ -3,9 +3,9 @@ namespace localization {
   materialize(break, infinity, infinity, keys(2,3,5)).
   materialize(rulesComplete, 1, infinity, keys(2)).
   materialize(totalRules, 1, infinity, keys(2)).
-
 /*
 watchmod(programEvent, "RECV_EVENT").
+
 watch(terminate).
 watchmod(terminate, "SEND_ACTION").
 watchmod(countLocalVar, "SEND_ACTION").
