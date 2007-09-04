@@ -383,7 +383,7 @@ namespace compile {
       functorTp->append(Val_Null::mk());          // The attributes field
       functorTp->append(Val_Null::mk());          // The position field
       functorTp->append(Val_Null::mk());          // The access method
-      functorTp->append(Val_Int32::mk(_new?1:0)); // The access method
+      functorTp->append(Val_Int32::mk(_new?1:0)); // The new field
       funcTbl->insert(functorTp);                 // Add new functor to functor table
 
       // Now take care of the functor arguments and variable dependencies
