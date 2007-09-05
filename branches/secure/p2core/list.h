@@ -90,6 +90,8 @@ public:
    ValuePtr front() { return vpl.front(); }
    ValuePtr back() { return vpl.back(); }
 
+   ValuePtr at(uint32_t pos) const;
+
    void pop_front() { vpl.pop_front(); }
    void pop_back() { vpl.pop_back(); }
       

@@ -1,5 +1,13 @@
 /*
 	this stage must be inserted before the eca stage as it modifies the head functors
+1> changes the name of new functors in constructor rules to include the pos of the newly constructed 
+	parent tuples. i.e. changes the "tuplenew" to "tuplenew4" if the new loc spec appears in 4th field
+2> Also, changes the head functors to new functors in "new" rules if they are not tagged new already
+3> localizes the new rules' rhs
+Assumption: constructor rules are purely local
+So, the only interesting scenarios in this case are rules that create container tuples 
+(i.e. parent tuples) but are not constructor
+PS: it seems that in presence of new tuples, this localization is not really needed
 */
 namespace rewrite0 {
   /* Given a new program, go through the rules contained within and

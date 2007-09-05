@@ -34,6 +34,17 @@ ListPtr List::clone() const
   return l; 
 }
 
+ValuePtr List::at(uint32_t pos) const
+{ 
+  assert(pos < vpl.size());
+  ValPtrList::const_iterator iter = vpl.begin();
+  uint32_t cnt = 0;
+  while(cnt < pos){
+    iter++;
+  }
+  return (*iter);
+}
+
 int List::member(ValuePtr val) const
 {
   ValPtrList::const_iterator listp = vpl.begin();

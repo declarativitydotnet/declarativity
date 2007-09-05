@@ -1,4 +1,9 @@
-namespace rewrite0 {
+/*
+Input: code with constructor and container creation rules. 
+Assumption: constructors have local rhs
+Placement: After eca stage
+*/
+namespace rewrite1 {
   materialize(programEventInitialized, 1, infinity, keys(2,3)).
   materialize(break, infinity, infinity, keys(2,3,5)).
   materialize(rulesComplete, 1, infinity, keys(2)).
@@ -31,42 +36,16 @@ namespace rewrite0 {
             Attr := f_getattrAt(Attributes, LocSpecPos), 
             FID != HeadFid.
 
-  notrigger rulesComplete(@A, Pid, C) :-
-              countLocalVar(@A, Pid, Rid, C1),
-              rulesComplete(@A, Pid, C2),
-              C1 == f_empty(),
-              C := C2 + 1.
-
-
   /* If we have more than 1 location variable within a rule trigger the rewrite. */
   /* Start the iteration process: We iterate over each term in the body, starting with the event,
      of the orginal rule. */
   initFunctor iterator(@A, Pid, Rid, OldPos, NewRid, NewPos, "Functor", F_ID, LocSpecVars) :-
-	  countLocalVar(@A, Pid, Rid, C), C != f_empty(),
+	  directLocSpec(@A, Pid, Rid, LocSpecVars), 
           ::functor(@A, F_ID, Rid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM),
           F_Pos == 1,
           NewRid := f_idgen(), 
           OldPos := 1U, NewPos := 1U.
 
-  /* If we have more than 1 location variable within a rule trigger the rewrite. */
-  /* Start the iteration process: We iterate over each term in the body, starting with the event,
-     of the orginal rule. */
-  initAssign iterator(@A, Pid, Rid, OldPos, NewRid, NewPos, "Assign", Aid, LocSpecVars) :-
-	  countLocalVar(@A, Pid, Rid, C), C != f_empty(),
-          ::assign(@A, Aid, OldRid, A_Var, A_Value, A_Pos),
-          A_Pos == 1,
-          NewRid := f_idgen(), 
-          OldPos := 1U, NewPos := 1U.
-
-  /* If we have more than 1 location variable within a rule trigger the rewrite. */
-  /* Start the iteration process: We iterate over each term in the body, starting with the event,
-     of the orginal rule. */
-  initSelect iterator(@A, Pid, Rid, OldPos, NewRid, NewPos, "Select", Sid, LocSpecVars) :-
-	  countLocalVar(@A, Pid, Rid, C), C != f_empty(),
-          ::select(@A, Sid, OldRid, S_Bool, S_Pos, S_AM),
-          S_Pos == 1,
-          NewRid := f_idgen(), 
-          OldPos := 1U, NewPos := 1U.
 
   /* Case: Next functor's location attribute matches previous functor's location attribute. 
      Maintain the same location attribute, rule group and position therein. */
