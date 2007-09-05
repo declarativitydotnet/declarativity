@@ -66,6 +66,7 @@ namespace compile {
 	  }
         }
       }
+
       if(!eventLocSpec){
 	throw compile::rewrite1::Exception("No event in eca processed rule" + rule->toString());
       }
