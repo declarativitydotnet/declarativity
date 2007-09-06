@@ -139,7 +139,7 @@ TABLEDEF(FUNCTOR, CommonTable::theKey(CommonTable::KEY2), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("FID", 2) \
          SCHEMA("RID", 3) SCHEMA("NAME", 4) SCHEMA("TID", 5) \
          SCHEMA("ECA", 6) SCHEMA("ATTRIBUTES", 7) SCHEMA("POSITION", 8) \
-	 SCHEMA("AM", 9) ) 
+	 SCHEMA("AM", 9) SCHEMA("NEW", 10)) 
 
 TABLEDEF(ASSIGN, CommonTable::theKey(CommonTable::KEY2), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("AID", 2) \

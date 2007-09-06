@@ -7,11 +7,17 @@
  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
  * Berkeley, CA,  94707. Attention: P2 Group.
  * 
- * DESCRIPTION: 
+ * DESCRIPTION: Post-eca rewrite stage that does the following tasks:
+ * 1> converts locSpec based accesses to transformed location based accesses in form of locSpecTable and versionTable
+ * 2> changes the materialized "table" into materialized "tableversion" with corresponding modifications in the keys
+ * Input: code with constructor and container creation rules. 
+ * Assumption: constructors have local rhs
+ * Placement: before eca stage
  *
  */
 
 #include<iostream>
+#include<vector>
 #include "rewrite1Context.h"
 #include "plumber.h"
 #include "systemTable.h"
@@ -23,6 +29,7 @@
 #include "val_list.h"
 #include "set.h"
 #include "val_tuple.h"
+
 namespace compile {
   namespace rewrite1{
     using namespace opr;
@@ -39,19 +46,27 @@ namespace compile {
     Context::rule(CommonTable::ManagerPtr catalog, TuplePtr rule)
     {
       SetPtr locSpecSet(new Set());
+      SetPtr locationSet(new Set());
       CommonTablePtr functorTbl = catalog->table(FUNCTOR);
       CommonTable::Iterator funcIter;
       ValuePtr eventLocSpec;
       uint32_t termCount = Val_UInt32::cast((*rule)[catalog->attribute(RULE, "TERM_COUNT")]);
+      TuplePtr *termList = new TuplePtr[termCount];
+      Vector<TuplePtr> newTermList;
+      int varSuffix = 0;
+
       int refPosPos = catalog->attribute(REF, "LOCSPECFIELD");
       
       for (funcIter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY2), 
                                          CommonTable::theKey(CommonTable::KEY3), rule);
            !funcIter->done(); ) {
         TuplePtr functor = funcIter->next();
+	int functorPos = (*functor)[catalog->attribute(FUNCTOR, "POSITION")];
+	termList[functorPos] = functor;
         if ((*functor)[TUPLE_ID] != (*rule)[catalog->attribute(RULE, "HEAD_FID")]) {
 	  ListPtr attributes = Val_List::cast((*functor)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
           if ((*functor)[catalog->attribute(FUNCTOR, "TID")] != Val_Null::mk()) {
+	    locationSet->insert(attributes->front());
 	    CommonTablePtr refTbl = catalog->table(REF);
 	    CommonTable::Iterator refIter;
 	      
@@ -67,14 +82,89 @@ namespace compile {
         }
       }
 
+      // copy assign terms
+      CommonTablePtr assignTbl = catalog->table(ASSIGN);
+      CommonTable::Iterator assignIter;
+
+      for (assignIter = assignTbl->lookup(CommonTable::theKey(CommonTable::KEY2), 
+                                         CommonTable::theKey(CommonTable::KEY3), rule);
+           !assignIter->done(); ) {
+        TuplePtr assign = assignIter->next();
+	int assignPos = (*assign)[catalog->attribute(ASSIGN, "POSITION")];
+	termList[assignPos] = assign;
+      }
+
+      // copy select terms
+      CommonTablePtr selectTbl = catalog->table(SELECT);
+      CommonTable::Iterator selectIter;
+
+      for (selectIter = selectTbl->lookup(CommonTable::theKey(CommonTable::KEY2), 
+                                         CommonTable::theKey(CommonTable::KEY3), rule);
+           !selectIter->done(); ) {
+        TuplePtr select = selectIter->next();
+	int selectPos = (*select)[catalog->attribute(SELECT, "POSITION")];
+	termList[selectPos] = select;
+      }
+
       if(!eventLocSpec){
-	throw compile::rewrite1::Exception("No event in eca processed rule" + rule->toString());
+	SetPtr possibleViewLocation = locationSet->difference(locSpecSet);
+	if(possibleViewLocation->size() == 0){
+	  throw compile::rewrite1::Exception("No event in eca processed rule" + rule->toString());
+	}
+	else{
+	  // pick up the first non locSpec member as the eventLocSpec
+	  eventLocSpec = (*possibleViewLocation->begin());
+	}
       }
 
+      CommonTablePtr tableTbl = catalog->table(TABLE);
+      CommonTable::Iterator tIter;
+
+      // now start sequential processing
       for(uint32_t i = 0; i < termCount; i++){
-	
-
+	// if non-functor then simply push it in the new term list
+	// note that "new" functors are automatically local due to the extended new tuple
+	if((*termList[i])[0] != FUNCTOR){
+	  newTermList.push_back(termList[i]);
+	  termList[i] = NULL;
+	}
+	else{
+	  // handle functors
+	  // check if materialized or not?
+	  CommonTable::Key nameKey;
+	  nameKey.push_back(catalog->attribute(FUNCTOR, "NAME"));
+	  tIter = tableTbl->lookup(nameKey, CommonTable::theKey(CommonTable::KEY3), termList[i]);
+	  if (!tIter->done()) {
+	    // materialized
+	    ListPtr attributes = Val_List::cast((*termList[i])[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
+	    ValuePtr tupleLoc = attributes->front();
+	    //if locSpec in locSpecSet, then add locSpec(@eventLocSpec, S, N, V), tableVersion(@N, V,...)
+	    // otherwise: simply change the name to add version, and add the 0 version
+	    if(locSpecSet->member(tupleLoc) == 1){
+	      TuplePtr version = makeVersionedTuple(&varSuffix, termList[i]);
+	      ListPtr verAttr = Val_List::cast((*version)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
+	      TuplePtr locSpecTuple = createLocSpecTuple(eventLocSpec, tupleLoc, verAttr->front(), verAttr->at(1));
+	      newTermList.push_back(locSpecTuple);
+	      newTermList.push_back(version);
+	    }
+	    else{
+	      TuplePtr version = makeVersionedTuple(&varSuffix, termList[i], tupleLoc);
+	      ListPtr verAttr = Val_List::cast((*version)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
+	      TuplePtr assign = createCurVerAssign(verAttr->at(1));
+	      newTermList.push_back(assign);
+	      newTermList.push_back(locSpecTuple);
+	    }
+	    functorTbl->remove(termList[i]);
+	  }
+	  else {
+	    //event: simply copy
+	    newTermList.push_back(termList[i]);
+	    termList[i] = NULL;
+	  }
+	}
       }
+
+      delete []termList;
 #ifdef BLAH
       /** Separate the event and probe functor terms */
       
@@ -198,11 +288,53 @@ namespace compile {
 #endif
     } 
 
+    TuplePtr makeVersionedTuple(int &varSuffix, TuplePtr functor, ValuePtr location){
+      TuplePtr     functorTp = Tuple::mk(FUNCTOR, true);
+      ValuePtr ruleId = (*functor)[catalog->attribute(FUNCTOR, "RID")];
+      functorTp->append(ruleId);
+      string name  = Val_String::cast((*functor)[catalog->attribute(FUNCTOR, "NAME")]);
+
+      functorTp->append(Val_Str::mk(name + compile::versionSuffix));   // Functor name
   
+      // Fill in table reference if functor is materialized
+      CommonTable::Key nameKey;
+      nameKey.push_back(catalog->attribute(FUNCTOR, "NAME"));
+      CommonTablePtr tableTbl = catalog->table(TABLE);
+      CommonTable::Iterator tIter = 
+        tableTbl->lookup(nameKey, CommonTable::theKey(CommonTable::KEY3), functorTp);
+      if (!tIter->done()) 
+        functorTp->append((*tIter->next())[TUPLE_ID]);
+      else {
+        functorTp->append(Val_Null::mk());
+      }
+  
+      functorTp->append((*functor)[catalog->attribute(FUNCTOR, "ECA")]);          // The ECA flag
+      functorTp->append(Val_Null::mk());          // The attributes field
+      functorTp->append(Val_Null::mk());          // The position field
+      functorTp->append((*functor)[catalog->attribute(FUNCTOR, "AM")]);          // The access method
+      functorTp->append((*functor)[catalog->attribute(FUNCTOR, "NEW")]);        // The new field
+
+      // Now take care of the functor arguments and variable dependencies
+      ListPtr attributes = Val_List::cast((*functor)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
+      attributes->pop_front();
+      //make version variable and push it
+      attributes->
+	// if location == NULL, create locationVariable and push it else push location variable
+      functorTp->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(attributes));
+
+      return functorTp;
+
+    }
+
+    TuplePtr createLocSpecTuple(ValuePtr location, ValuePtr locSpec, ValuePtr refLocation, ValuePtr ver){
+    }
+    
+    TuplePtr createCurVerAssign(ValuePtr ver){
+    }
+ 
     TuplePtr 
     Context::program(CommonTable::ManagerPtr catalog, TuplePtr program) 
     {
-      //      std::cout<<"Reached rewrite1 stage"<<std::endl;
       CommonTable::Key indexKey;
       CommonTable::Iterator iter;
 
@@ -211,12 +343,27 @@ namespace compile {
         catalog->table(REF)->lookup(CommonTable::theKey(CommonTable::KEY2), indexKey, program); 
       while (!iter->done()) {
         TuplePtr ref = iter->next();                                        // The row in the fact table
-	std::cout<<"Ref:"<<ref->toString()<<std::endl;
+
       }
 
-      //      std::cout<<"exitting rewrite1 stage"<<std::endl;
-      return this->compile::Context::program(catalog, program);
+      //add materialization for locSpecTable
+      string scopedName = "::" + compile::locSpecTable;
+      Table2::Key _keys;
+      _keys.push_back(Val_UInt32::mk(0));
+      _keys.push_back(Val_UInt32::mk(1));
+      _keys.push_back(Val_UInt32::mk(2));
+      _keys.push_back(Val_UInt32::mk(3));
+
+      catalog->createTable(scopedName, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
+
+      TuplePtr newProgram = this->compile::Context::program(catalog, program);
+
+      //change the materialization statements for other tables to include the extended name: 
+      //version suffix and corresponding changes in the key
+
+      return newProgram;
+
     }
- 
+
   }
 }

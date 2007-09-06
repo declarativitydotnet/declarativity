@@ -42,6 +42,13 @@ namespace compile {
       /* Process the current rule in the program */
       void rule(CommonTable::ManagerPtr catalog, TuplePtr rule);
 
+      /* If location is NULL, then create a new location variable else use the passed location variable*/
+      TuplePtr makeVersionedTuple(int &varSuffix, TuplePtr functor, ValuePtr location = NULL);
+
+      TuplePtr createLocSpecTuple(ValuePtr location, ValuePtr locSpec, ValuePtr refLocation, ValuePtr ver);
+
+      TuplePtr createCurVerAssign(ValuePtr ver);
+
       TuplePtr program(CommonTable::ManagerPtr catalog, TuplePtr rule);
 
       DECLARE_PRIVATE_ELEMENT_INITS

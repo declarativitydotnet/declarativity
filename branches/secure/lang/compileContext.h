@@ -34,6 +34,8 @@
 #include "list.h"
 
 namespace compile {
+  const string versionSuffix = "version";
+  const string locSpecTable = "locSpecTable";
 
   class Context : public Element {
   public:
