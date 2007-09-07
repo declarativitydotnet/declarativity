@@ -179,6 +179,7 @@ DemuxConservative::output(ValuePtr key)
   if (piter != _portMap.end()) {
     return piter->second;
   }
-  return 0;
+  //  return 0;
+  return -1; // if we don't find anything, return an invalid port!
 } 
 
