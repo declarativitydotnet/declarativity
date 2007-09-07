@@ -10,7 +10,7 @@ of compilers. It can generate:
 
 and so on.
 
-Eventually, we will replace the Gnu autoconf/automake/libtool toolset for P2
+Very soon, we will replace the Gnu autoconf/automake/libtool toolset for P2
 with cmake, to allow us better cross-platform compatibility (especially for
 the upcoming Windows port).
 
