@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Main-Class: phiviz.PhiVizApplication
+Class-Path: lib/diva-26Sep02.jar
+
