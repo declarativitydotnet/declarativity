@@ -19,16 +19,24 @@
 #include "compoundContext.h"
 #include "p2dlContext.h"
 #include "debugContext.h"
+#include "secureContext.h"
 #include "localContext.h"
 #include "parseContext.h"
 #include "plannerContext.h"
 #include "rewriteContext.h"
+#include "rewrite0Context.h"
+#include "rewrite1Context.h"
+#include "rewrite2Context.h"
 
 
 void
 LangLoader::loadElements()
 {
+  compile::secure::Context::ensureInit();
+  compile::rewrite0::Context::ensureInit();
   compile::compound::Context::ensureInit();
+  compile::rewrite1::Context::ensureInit();
+  compile::rewrite2::Context::ensureInit();
   compile::eca::Context::ensureInit();
   compile::p2dl::Context::ensureInit();
   compile::debug::Context::ensureInit();

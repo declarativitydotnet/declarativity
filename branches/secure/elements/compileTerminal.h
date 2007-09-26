@@ -48,15 +48,7 @@ private:
   int numDefaultStages;
   string more;
 
-  void initDefaultStages()
-  {
-    more = "y";
-    numDefaultStages = 1;
-    defaultStages = new StageInformation[numDefaultStages];
-    defaultStages[0].name = "localization";
-    defaultStages[0].file = "../doc/localization.olg";
-    defaultStages[0].prevStageName = "eca";
-  }
+  void initDefaultStages();
 
   DECLARE_PRIVATE_ELEMENT_INITS
 };

@@ -40,6 +40,9 @@ namespace compile {
       else if (type == LOC) {
         *oss << "@" << (*expr)[2]->toString(); 
       }
+      else if (type == NEWLOCSPEC) {
+        *oss << "&" << (*expr)[2]->toString(); 
+      }
       else if (type == AGG) {
         *oss << (*expr)[3]->toString() << "< "  << (*expr)[2]->toString() << " >"; 
       }

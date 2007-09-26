@@ -59,6 +59,28 @@ void testListSize(List theList, uint32_t expected)
                         message.str().c_str());
 }
 
+#define TEST_LISTAT(list, valTypeExt, value, pos) \
+  { \
+    std::string testID; \
+    { \
+      std::ostringstream ID; \
+      ID << "Value casting test. "; \
+      testID = ID.str(); \
+    } \
+ \
+    ValuePtr v = Val_##valTypeExt::mk(value); \
+    ValuePtr  memberAtPos = (list).at(pos); \
+    std::ostringstream message;                 \
+    message << testID                                          \
+            << "Checking whether " #value   \
+            << " is a present at " << pos << " position of " << (list).toString() \
+            << " returned an unexpected result (" \
+            << v->toString() \
+            << ")."; \
+    BOOST_CHECK_MESSAGE(memberAtPos->compareTo(v) == 0,                            \
+                        message.str().c_str());                       \
+  }
+
 #define TEST_LISTMEMBER(list, valTypeExt, value, result) \
   { \
     std::string testID; \
@@ -335,6 +357,11 @@ void testMembership()
    TEST_LISTMEMBER(*test2, Int32, 75, false);
    TEST_LISTMEMBER(*test1, Int32, -12, true);
    TEST_LISTMEMBER(*test1, Str, "NotANumber", false);
+
+   TEST_LISTAT(*test3, Str, "garply", 1);
+   TEST_LISTAT(*test1, Int32, -12, 4);
+
+
 }
 
 // =============

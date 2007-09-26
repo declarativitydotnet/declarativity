@@ -52,6 +52,7 @@ TableManager::TableManager()
   } catch (TableManager::Exception& e) {
     TELL_ERROR << "TableManager::TableManager exception: " 
               << e.toString() << std::endl;
+    throw e;
   }
 }
 
@@ -305,6 +306,9 @@ TableManager::attribute(string tablename, string attrname) const
   CommonTable::Iterator iter = 
     attrTbl->lookup(CommonTable::theKey(CommonTable::KEY01),
                     CommonTable::theKey(CommonTable::KEY34), tp);
+  if(iter->done()){
+    throw TableManager::Exception("Non-existing field " + attrname + " searched in table " + tablename );
+  }
   return iter->done() ? -1 : Val_UInt32::cast((*iter->next())[5]); 
 }
 

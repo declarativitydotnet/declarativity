@@ -817,10 +817,15 @@ namespace compile {
     string
     Context::assign(ostringstream& oss, string indent,
                     CommonTable::ManagerPtr catalog, 
-                    TuplePtr asmt, ListPtr tupleSchema)
+                    TuplePtr asmt, ListPtr &tupleSchema)
     {
       // Create a unique graph name for this assignment
       ostringstream graphName;
+      //      ListPtr schema = List::mk();
+      //      TuplePtr assignedVar = (Val_Tuple::cast((*asmt)[catalog->attribute(ASSIGN, "VAR")]))->clone();
+      //      assignedVar->freeze();
+      //      schema->append(Val_Tuple::mk(assignedVar));
+      //      tupleSchema = namestracker::merge(tupleSchema, schema);
       graphName << "assign_" << _nameCounter++;
 
       oss << std::endl;

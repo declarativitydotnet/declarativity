@@ -165,3 +165,20 @@ CompileTerminal::initialize()
 
   return 0;
 }
+
+void 
+CompileTerminal::initDefaultStages()
+{
+  more = "y";
+  numDefaultStages = 0;
+  int count = 0;
+  defaultStages = new StageInformation[numDefaultStages];
+  /*  defaultStages[count].name = "localization";
+  defaultStages[count].file = "../doc/localization.olg";
+  defaultStages[count++].prevStageName = "eca";
+  defaultStages[count].name = "rewrite0";
+  defaultStages[count].file = "../doc/rewrite0.olg";
+  defaultStages[count++].prevStageName = "compile";*/
+
+}
+

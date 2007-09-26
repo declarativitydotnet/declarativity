@@ -14,7 +14,7 @@
 #include "elementRegistry.h"
 #include <boost/function.hpp>
 #include "element.h"
-
+#include<iostream>
 
 ElementRegistry::ElementNotFound::ElementNotFound(std::string name)
   : elementName(name)
@@ -34,6 +34,7 @@ ElementRegistry::mk(std::string elementName,
   // Do we have it?
   if (i == _factories->end()) {
     // Nope. Throw exception
+    std::cout<<"ELEMENT NOT FOUND"<<elementName;
     throw ElementNotFound(elementName);
   } else {
     // Execute it to create the element

@@ -28,6 +28,8 @@
   #define TABLESTATS        "tableStats"
   #define INDEX             "index"
   #define FACT              "fact"
+  #define SAYS              "says"
+  #define NEW               "new"
   #define STAGE             "stage"
   #define RULE              "rule"
   #define FUNCTOR           "functor"
@@ -47,10 +49,13 @@
   #define SET          "Set"
   #define MATH         "Math"
   #define VAL          "AtomicValue"
-  #define VAR          "Variable"
+  #define VAR          "Variable"  
+  #define NEWLOCSPEC   "NewLocSpec"
   #define LOC          "Location"
   #define VEC          "Vector"
   #define MAT          "Matrix"
+  #define LOCSPECTUPLE "LocSpec"
+  #define VERSIONTUPLE "Version"
 
 /**
  * Every schema has a table name and tuple identifier.
@@ -58,7 +63,7 @@
  * these values. The CommonTable::Manager class provides
  * a more general way of extract attribute field positions. */
 enum SchemaGlobal{TNAME=0, NODE_ID, TUPLE_ID};
-
+enum VariableTuple{CONTENTPOS=2}; //pos of content in variable tuple
 #endif
 
 #ifndef SCHEMA
@@ -78,14 +83,23 @@ TABLEDEF(TABLE, CommonTable::theKey(CommonTable::KEY3), \
          SCHEMA("TABLENAME", 3) SCHEMA("LIFETIME", 4) SCHEMA("SIZE", 5) \
          SCHEMA("KEY", 6) SCHEMA("CARD", 7))
 
-TABLEDEF(REF, CommonTable::theKey(CommonTable::KEY345), \
+TABLEDEF(INDEX, CommonTable::theKey(CommonTable::KEY34), \
+         SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("IID", 2) \
+         SCHEMA("TABLENAME", 3) SCHEMA("KEY", 4) SCHEMA("TYPE", 5))
+
+TABLEDEF(REF, CommonTable::theKey(CommonTable::KEY2), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("REFID", 2) \
 	 SCHEMA("PID", 3) SCHEMA("FROM", 4) SCHEMA("TO", 5) \
 	 SCHEMA("LOCSPECFIELD", 6) SCHEMA("REFTYPE", 7))
 
-TABLEDEF(INDEX, CommonTable::theKey(CommonTable::KEY34), \
-         SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("IID", 2) \
-         SCHEMA("TABLENAME", 3) SCHEMA("KEY", 4) SCHEMA("TYPE", 5))
+TABLEDEF(SAYS, CommonTable::theKey(CommonTable::KEY2), \
+         SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("SAYSID", 2) \
+	 SCHEMA("FID", 3) SCHEMA("ATTRIBUTES", 4))
+
+TABLEDEF(NEW, CommonTable::theKey(CommonTable::KEY2), \
+         SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("NEWID", 2) \
+	 SCHEMA("FID", 3) SCHEMA("EVENTLOC", 4) SCHEMA("OPAQUE", 5) \
+	 SCHEMA("SYSTEMINFO", 6))
 
 TABLEDEF(ACCESS_METHOD, CommonTable::theKey(CommonTable::KEY3), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("AMID", 2) \
@@ -171,10 +185,10 @@ TABLEDEF(COMPILE_STATUS, CommonTable::theKey(CommonTable::KEY1), \
 FOREIGN_KEY(FACT,              CommonTable::theKey(CommonTable::KEY3), PROGRAM)
 FOREIGN_KEY(REF,               CommonTable::theKey(CommonTable::KEY3), PROGRAM)
 FOREIGN_KEY(FACT,              CommonTable::theKey(CommonTable::KEY4), TABLE)
-FOREIGN_KEY(REF,               CommonTable::theKey(CommonTable::KEY5), TABLE)
-FOREIGN_KEY(REF,               CommonTable::theKey(CommonTable::KEY4), TABLE)
 FOREIGN_KEY(RULE,              CommonTable::theKey(CommonTable::KEY3), PROGRAM)
 FOREIGN_KEY(INDEX,             CommonTable::theKey(CommonTable::KEY3), TABLE)
+FOREIGN_KEY(SAYS,              CommonTable::theKey(CommonTable::KEY3), FUNCTOR)
+FOREIGN_KEY(NEW,               CommonTable::theKey(CommonTable::KEY3), FUNCTOR)
 FOREIGN_KEY(FUNCTOR,           CommonTable::theKey(CommonTable::KEY3), RULE)
 FOREIGN_KEY(ASSIGN,            CommonTable::theKey(CommonTable::KEY3), RULE)
 FOREIGN_KEY(SELECT,            CommonTable::theKey(CommonTable::KEY3), RULE)
@@ -185,10 +199,14 @@ FOREIGN_KEY(SELECT,            CommonTable::theKey(CommonTable::KEY3), RULE)
 #endif
 SECONDARY_INDEX(ATTRIBUTE,         CommonTable::theKey(CommonTable::KEY3))
 SECONDARY_INDEX(REF,               CommonTable::theKey(CommonTable::KEY3))
+SECONDARY_INDEX(REF,               CommonTable::theKey(CommonTable::KEY4))
+SECONDARY_INDEX(SAYS,              CommonTable::theKey(CommonTable::KEY3))
+SECONDARY_INDEX(NEW,               CommonTable::theKey(CommonTable::KEY3))
 SECONDARY_INDEX(FUNCTION,          CommonTable::theKey(CommonTable::KEY3))
 SECONDARY_INDEX(FUNCTION,          CommonTable::theKey(CommonTable::KEY34))
 SECONDARY_INDEX(RULE,              CommonTable::theKey(CommonTable::KEY3))
 SECONDARY_INDEX(FUNCTOR,           CommonTable::theKey(CommonTable::KEY3))
+SECONDARY_INDEX(FUNCTOR,           CommonTable::theKey(CommonTable::KEY4))
 SECONDARY_INDEX(FUNCTOR,           CommonTable::theKey(CommonTable::KEY38))
 SECONDARY_INDEX(ASSIGN,            CommonTable::theKey(CommonTable::KEY3))
 SECONDARY_INDEX(ASSIGN,            CommonTable::theKey(CommonTable::KEY36))
@@ -215,7 +233,7 @@ FUNCTIONDEF("f_member",      2, "member")
 FUNCTIONDEF("f_concat",      2, "concat")
 FUNCTIONDEF("f_intersect",   2, "intersect")
 FUNCTIONDEF("f_msintersect", 2, "msintersect")
-FUNCTIONDEF("f_initlist",    2, "initlist")
+FUNCTIONDEF("f_initlist",    0, "initlist")
 FUNCTIONDEF("f_cons",        2, "cons")
 FUNCTIONDEF("f_car",         1, "car")
 FUNCTIONDEF("f_cdr",         1, "cdr")
@@ -243,8 +261,13 @@ FUNCTIONDEF("f_selectivity",  3, "selectivity")
 FUNCTIONDEF("f_rangeAM",      2, "rangeAM")
 FUNCTIONDEF("f_filter",       2, "filter")
 FUNCTIONDEF("f_verify",       6, "verify")
-FUNCTIONDEF("f_gen",       2, "gen")
-FUNCTIONDEF("f_mod",       1, "mod")
-FUNCTIONDEF("f_empty",       0, "empty")
-FUNCTIONDEF("f_initSet",       1, "initSet")
+FUNCTIONDEF("f_gen",          2, "gen")
+FUNCTIONDEF("f_mod",          1, "mod")
+FUNCTIONDEF("f_empty",        0, "empty")
+FUNCTIONDEF("f_initSet",      1, "initSet")
+FUNCTIONDEF("f_serialize",    2, "serialize")
+FUNCTIONDEF("f_deserialize",  2, "deserialize")
+FUNCTIONDEF("f_createVersion",0, "createVersion")
+FUNCTIONDEF("f_createLocSpec",0, "createLocSpec")
+FUNCTIONDEF("f_isLocSpec",    1, "isLocSpec")
 #undef FUNCTIONDEF

@@ -371,6 +371,7 @@ Tuple::operator[] (ptrdiff_t i)
                << " from tuple "
                << toString()
                << ". Returning null\n";
+    throw e;
     return Val_Null::mk();
   }
 }
@@ -387,6 +388,7 @@ Tuple::operator[] (ptrdiff_t i) const
                << " from tuple "
                << toString()
                << ". Returning null\n";
+    throw e;
     return Val_Null::mk();
   }
 }

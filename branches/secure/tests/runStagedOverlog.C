@@ -123,11 +123,23 @@ string stub(string hostname, string port, TransportConf conf)
   stub << "\tintDemux[+ \"parse::programEvent\"] -> ParseContext(\"parse\") -> "
        << "\tInsert2(\"parseInsert\", \"" << PROGRAM << "\");\n";
 
-  stub << "\tintDemux[+ \"compound::programEvent\"]   -> CompoundContext(\"compound\") -> "
-       << "\tInsert2(\"compoundInsert\", \"" << PROGRAM << "\");\n";
+  stub << "\tintDemux[+ \"rewrite0::programEvent\"]   -> Rewrite0Context(\"rewrite0\") -> "
+       << "\tInsert2(\"rewrite0Insert\", \"" << PROGRAM << "\");\n";
+
+  stub << "\tintDemux[+ \"secure::programEvent\"]   -> SecureContext(\"secure\") -> "
+       << "\tInsert2(\"secureInsert\", \"" << PROGRAM << "\");\n";
+
+  stub << "\tintDemux[+ \"rewrite1::programEvent\"]   -> Rewrite1Context(\"rewrite1\") -> "
+       << "\tInsert2(\"rewrite1Insert\", \"" << PROGRAM << "\");\n";
+
+  stub << "\tintDemux[+ \"rewrite2::programEvent\"]   -> Rewrite2Context(\"rewrite2\") -> "
+       << "\tInsert2(\"rewrite2Insert\", \"" << PROGRAM << "\");\n";
 
   stub << "\tintDemux[+ \"eca::programEvent\"]   -> EcaContext(\"eca\") -> "
        << "\tInsert2(\"ecaInsert\", \"" << PROGRAM << "\");\n";
+
+  stub << "\tintDemux[+ \"compound::programEvent\"]   -> CompoundContext(\"compound\") -> "
+       << "\tInsert2(\"compoundInsert\", \"" << PROGRAM << "\");\n";
 
   stub << "\tintDemux[+ \"debug::programEvent\"] -> DebugContext(\"debug\") -> "
        << "\tInsert2(\"debugInsert\", \"" << PROGRAM << "\");\n";

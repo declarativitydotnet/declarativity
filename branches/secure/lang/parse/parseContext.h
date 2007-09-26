@@ -19,19 +19,23 @@
 #include <set>
 #include <iostream>
 #include <map>
+#include <utility>
 #include "compileContext.h"
 #include "element.h"
 #include "elementRegistry.h"
 #include "tuple.h"
 #include "value.h"
 #include "val_str.h"
+#include "val_null.h"
 #include "val_int32.h"
+#include "set.h"
 
 class OL_Lexer;
 
 namespace compile {
   namespace parse {
 
+    //    class Secure;
 
     class Exception : public compile::Exception {
     public:
@@ -94,7 +98,7 @@ namespace compile {
 	throw compile::Exception("makeNew not defined for this class"); 
       };
 
-      virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string) = 0;
+      virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string, uint32_t pos) = 0;
     };
     typedef std::deque<Term *> TermList;
     typedef std::deque<TermList *> TermListList;
@@ -160,12 +164,6 @@ namespace compile {
       Variable(const Variable& var) 
       : _location(var._location), _value(var._value), 
 	_newLocSpec(var._newLocSpec)  {};
-
-      static Variable* getLocalLocationSpecifier()
-      {
-	static ValuePtr val = Val_Str::mk("Me");
-	return new compile::parse::Variable(val, true); 
-      }
 
       virtual Expression* copy() const{
 	Variable *v = new Variable(*this);
@@ -431,6 +429,7 @@ namespace compile {
     class Function : public Expression {
     public:
       const static string max;
+      const static string concat;
       const static string mod;
       Function(Expression *n, ExpressionList *a) 
         : _name(n->toString()), _args(a) { };
@@ -506,7 +505,7 @@ namespace compile {
     struct TableEntry{
       string name;
       int fields;
-      static const int numSecureFields;
+      static const uint32_t numSecureFields;
       TableEntry(string _name, int _fields){
 	name = _name;
 	fields = _fields;
@@ -524,10 +523,14 @@ namespace compile {
     /***************************************************
      * TERMS
      ***************************************************/
-    
+
+    typedef std::pair<int, ExpressionList::iterator> TotalIterator;
+
     class Functor : public Term {
     public:
-      const static int32_t namePos;
+      static uint32_t fictVarCounter;
+      const static string FICTPREFIX;
+      enum SubTerms{T_FUNCTOR = 0, T_LOCSPEC, T_OPAQUE, T_HINT, T_SAYS, NOT_FOUND};
 
       Functor(Expression *n, ExpressionList *a, bool complement = false, bool newF = false); 
 
@@ -537,13 +540,18 @@ namespace compile {
 	_args = f->_args;
 	_complement = f->_complement;
 	_new = f->_new;
+	_opaque = f->_opaque;
+	_locSpec = f->_locSpec;
+	_hint = f->_hint;
+
       }; 
      
       Functor(TableEntry* t, int &fictVar);
 
       // deep copy
       Functor(const Functor &f) 
-        : _name(f._name), _complement(f._complement){ 
+        : _name(f._name), _complement(f._complement),
+	_opaque(f._opaque), _locSpec(f._locSpec), _hint(f._hint){ 
 	ExpressionList *a = new ExpressionList();
 	ExpressionList::iterator it = f._args->begin();
 	while (it != f._args->end()){
@@ -560,19 +568,40 @@ namespace compile {
 	return v;
       }
 
-      virtual ~Functor() { delete _args; }
+      virtual ~Functor() { 
+	delete _args; 
+	if(_new){
+	  delete _locSpec;
+	  delete _opaque;
+	  delete _hint;
+	}
+      }
     
       virtual string toString() const;
 
       virtual void changeLocSpec(Variable *l);
 
       virtual Variable* getLocSpec();
+
+      virtual Expression* getOpaque(){
+	return _opaque;
+      }
+
+      virtual Expression* getNewLocSpec(){
+	return _locSpec;
+      }
     
-      virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string);
+      virtual Expression* getHint(){
+	return _hint;
+      }
+
+      virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string, uint32_t);
     
       virtual string name() const { return _name; }
 
       virtual bool isComplement() const { return _complement; }
+
+      virtual bool isNew() const { return _new; }
     
       virtual const ExpressionList* arguments() const 
       { return _args; }
@@ -582,7 +611,10 @@ namespace compile {
       virtual ExpressionList::iterator
       find(const Expression *e) const;
 
-      TermList* generateEqTerms(Functor* s);
+      virtual TotalIterator
+      totalFind(const Expression *e) const;
+
+      //      TermList* generateEqTerms(Functor* s);
     
       virtual void changeName(string newName)
       {
@@ -590,99 +622,29 @@ namespace compile {
       }
 
       void makeNew(Expression* locSpec, Expression* opaque){
-	getLocSpec()->resetLocSpec();
-	//_args->push_front(new Value(Val_Str::mk(_name)));
-	_args->push_front(opaque);
-	_args->push_front(locSpec);
-	Variable *var;
-	if ((var = dynamic_cast<Variable*>(_args->at(0))) != NULL &&
-          !var->location()) {
-	  throw compile::Exception("Invalid location specifier. Variable: " 
-                                        + var->toString());
-	}
-	_name =  _name + "new";
 	_new = true;
+	_locSpec = locSpec;
+	_opaque = opaque;
+	_hint = new Value(Val_Null::mk());
       }
 
-      static TermList* generateEqTerms(ExpressionList::iterator start1, 
-				       ExpressionList::iterator end1, 
-				       ExpressionList::iterator start2, 
-				       ExpressionList::iterator end2,
-				       TermList *t = NULL);
-
-      static TermList* generateSelectTerms(ExpressionList::iterator start1, 
-					   ExpressionList::iterator end1, 
-					   ExpressionList::iterator start2, 
-					   ExpressionList::iterator end2,
-					   int o,
-					   TermList *t = NULL);
+      void processNew(TermList *t = NULL, Expression *val = NULL);
 
       virtual void replace(ExpressionList::iterator i, 
                            Expression *e);
-    
+
+      virtual void replace(TotalIterator i, 
+                           Expression *e);
+     
     protected:
       string          _name;
       ExpressionList* _args;
       bool _complement;
       bool _new;
+      Expression *_locSpec;
+      Expression* _opaque;
+      Expression* _hint;
     };
-
-/*     class NewFunctor : public Term { */
-/*     public: */
-/*       NewFunctor(Expression *locSpec, Expression *opaque, Term *f);  */
-
-/*       // shallow copy */
-/*       NewFunctor(NewFunctor *f){ */
-/* 	_name = f->_name; */
-/* 	_locSpec = dynamic_cast<Variable*>(f->_locSpec); */
-/* 	_opaque = f->_opaque; */
-/* 	if(!f){ */
-/* 	  throw compile::Exception("Invalid functor arg to NewFunctor"); */
-/* 	} */
-/* 	_f = f->_f; */
-/*       };  */
-     
-/*       // deep copy */
-/*       NewFunctor(const NewFunctor &f)  */
-/*         : _name(f._name){  */
-/* 	_locSpec = dynamic_cast<Variable*>(f._locSpec->copy()); */
-/* 	if(f._opaque != NULL){ */
-/* 	  _opaque = f._opaque->copy(); */
-/* 	} */
-/* 	else{ */
-/* 	  _opaque = NULL; */
-/* 	} */
-/* 	_f = new Functor(*f._f); */
-/*       }; */
-
-/*       virtual Term* copy() const{ */
-/* 	NewFunctor *v = new NewFunctor(*this); */
-/* 	return v; */
-/*       } */
-
-/*       virtual ~NewFunctor() {  */
-/* 	delete _locSpec;  */
-/* 	delete _f; */
-/* 	if(_opaque){ */
-/* 	  delete _opaque; */
-/* 	} */
-/*       } */
-    
-/*       virtual string toString() const; */
-
-/*       virtual Variable* getLocSpec(); */
-    
-/*       virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string); */
-    
-/*       virtual string name() const { return _name; } */
-
-/*     protected: */
-/*       string          _name; */
-/*       Variable*       _locSpec; */
-/*       Expression*     _opaque; */
-/*       Functor*        _f; */
-/*     }; */
-
     class Says : public Functor {
     public:
       const static string verTable;
@@ -720,6 +682,7 @@ namespace compile {
 	return v;
       }
 
+      TuplePtr materialize(CommonTable::ManagerPtr catalog, ValuePtr ruleId, string ns, uint32_t pos);
 
       virtual string toString() const;
 
@@ -731,25 +694,12 @@ namespace compile {
       virtual ExpressionList* saysArgs() const 
       { return _args; }
 
-      // return a list of terms that needs to be added to the rule on converting the 
-      // securelog term f into overlog.
-      // Also converts f into the appropriate overlog form
-      //      static TermList* normalizeVerify(Functor* f, int& newVariable, bool addKeyConstraint = false);
 
-      static void normalizeVerify(Functor* f, int& newVariable);
+      virtual TotalIterator
+      totalFind(const Expression *e) const;
 
-      static TermList* normalizeGenerate(Functor* f, int& newVariable);
-
-
-      static TermList* generateAlgebraLT(ExpressionList::iterator start1, 
-					 ExpressionList::iterator start2, 
-					 TermList *t = NULL);
-
-      static TermList* generateAlgebraCombine(int o, 
-					      ExpressionList::iterator start1, 
-					      ExpressionList::iterator start2, 
-					      ExpressionList::iterator headStart, 
-					      TermList *t = NULL);
+      virtual void replace(TotalIterator i, 
+                           Expression *e);
 
     private:
       ExpressionList* _says;
@@ -775,7 +725,7 @@ namespace compile {
 	
       virtual ~Assign() { delete _variable; delete _assign; }
     
-      virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string);
+      virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string, uint32_t);
     
       virtual string toString() const;
     
@@ -808,7 +758,7 @@ namespace compile {
     
       virtual string toString() const;
     
-      virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string);
+      virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string, uint32_t);
     
       virtual const Bool* select() const
       { return _select; }
@@ -860,7 +810,7 @@ namespace compile {
     
       virtual string toString() const;
     
-      virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string);
+      virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string, uint32_t);
     
       virtual string operName() const 
       { return _operName; }
@@ -913,7 +863,7 @@ namespace compile {
     class Rule : public Statement {
     public:
       
-      static int ruleId;
+      static uint32_t ruleId;
 
       Rule(Term *t, TermList *rhs, bool deleteFlag, Expression *n=NULL); 
       
@@ -936,7 +886,9 @@ namespace compile {
 
       virtual ~Rule() { delete _head; delete _body; };
     
-      void makeNew() { _new = true; }
+      void makeNew() { 
+	_new = true; 
+      }
 
       virtual string toString() const;
     
@@ -954,13 +906,7 @@ namespace compile {
       virtual const TermList* body() const
       { return _body; }
 
-      virtual TableSet* initializeRule(StatementList *s);
-
       virtual void canonicalizeRule();
-
-      static void getAlgebra(TableEntry *t, StatementList *s);
-      
-      static void getVerifier(TableEntry *t, StatementList *S);
 
     private:
 
@@ -984,11 +930,15 @@ namespace compile {
     /* The meta-data of the table */
     class Table : public Statement {
     public:
+      const static bool compoundRewrite;
+      static SetPtr materializedSaysTables;
+
       Table(Expression *name, 
             Expression *ttl, 
             Expression *size, 
             ExpressionList *keys, 
-	    bool says = false);
+	    bool says = false,
+	    bool versioned = true);
     
       virtual ~Table() {};
     
@@ -1019,13 +969,13 @@ namespace compile {
 
       virtual void initialize();
 
-      static StatementList* generateMaterialize();
     private:
       string                           _name;
       boost::posix_time::time_duration _lifetime;
       int64_t                          _size;
       Table2::Key                      _keys;
       bool                             _says;
+      bool                             _versioned;
     };
     typedef std::deque<Table*> TableList;
 
@@ -1055,8 +1005,8 @@ namespace compile {
     private:
       string                           _from;
       string                           _to;
-      int32_t                          _locSpecField;
-      int32_t                          _refType;
+      uint32_t                         _locSpecField;
+      uint32_t                         _refType;
     };
     
     class Watch : public Statement {
@@ -1183,7 +1133,49 @@ namespace compile {
       bool printOverLog;
 
       DECLARE_PRIVATE_ELEMENT_INITS
-    };
+	};
+
+/*     class Secure{ */
+/*     public: */
+/*       /\** */
+/*        * Returns a list of tables used in says: for authentication algebra generation */
+/*        *\/ */
+/*       static void initializeRule(Rule *r, StatementList *s); */
+      
+/*       static void program(StatementList *s, bool parserCall); */
+
+/*       static TermList* generateAlgebraLT(ExpressionList::iterator start1,  */
+/* 					ExpressionList::iterator start2,  */
+/* 					TermList *newTerms = NULL); */
+
+
+/*       static TermList* generateSelectTerms(ExpressionList::iterator start1, ExpressionList::iterator end1,  */
+/* 					     ExpressionList::iterator start2, ExpressionList::iterator end2, int o, */
+/* 					     TermList *t = NULL); */
+     
+
+/*       static TermList* generateEqTerms(ExpressionList::iterator start1, ExpressionList::iterator end1,  */
+/* 					 ExpressionList::iterator start2, ExpressionList::iterator end2, */
+/* 					 TermList *t = NULL); */
+
+/*       static StatementList* generateMaterialize(); */
+
+/*       // return a list of terms that needs to be added to the rule on converting the  */
+/*       // securelog term f into overlog. */
+/*       // Also converts f into the appropriate overlog form */
+/*       // the last boolean indicates if the list of terms should also include the  */
+/*       // constraint that "the verifying principal doesn't have the authority to  */
+/*       // generate the proof" */
+/*       static void normalizeVerify(Functor* f, int& newVariable); */
+
+/*       // return a list of terms that needs to be added to the rule on converting the  */
+/*       // securelog term f into overlog. */
+/*       // Also converts f into the appropriate overlog form */
+/*       static TermList* normalizeGenerate(Functor* f, int& newVariable); */
+            
+/*     }; */
+
+
   }
 }
   

@@ -20,6 +20,8 @@
 #include "val_tuple.h"
 
 namespace compile {
+  SetPtr Context::materializedTables(new Set());
+  LocSpecMap* Context::ruleLocSpecMap = new LocSpecMap();
 
   TuplePtr 
   Context::simple_action(TuplePtr p)

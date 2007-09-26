@@ -1,0 +1,4 @@
+r2 new<@X, Y, parent(@A)>:- parent(@X), link(@Y, A).
+
+
+

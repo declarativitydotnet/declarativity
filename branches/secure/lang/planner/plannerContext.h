@@ -104,7 +104,7 @@ namespace compile {
   
       string assign(ostringstream& oss, string indent,
                     CommonTable::ManagerPtr catalog, 
-                    TuplePtr assign, ListPtr tupleSchema);
+                    TuplePtr assign, ListPtr &tupleSchema);
   
       string select(ostringstream& oss, string indent,
                     CommonTable::ManagerPtr catalog, 

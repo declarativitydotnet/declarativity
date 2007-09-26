@@ -241,6 +241,13 @@ newFunctor: OL_NEW OL_LT OL_VAR OL_COMMA functorarg OL_COMMA functor OL_GT
 	  $$->makeNew($3, $5);
 	  //std::cout<<std::endl<<"Executing term";
 	}
+        | OL_NEW OL_LT OL_VAR OL_COMMA functorarg OL_COMMA says OL_GT
+        { 
+	  //	  $$ = new compile::parse::NewFunctor($3, $5, $7);
+	  $$ = $7;
+	  $$->makeNew($3, $5);
+	  //std::cout<<std::endl<<"Executing term";
+	}
       ;
 
 headTerms: says { $$ = $1;} | 

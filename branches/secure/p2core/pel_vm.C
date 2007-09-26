@@ -29,6 +29,8 @@
 
 #include "plumber.h"
 #include "compileUtil.h"
+#include "secureUtil.h"
+#include "secureUtil1.h"
 #include "val_int32.h"
 #include "val_uint32.h"
 #include "val_int64.h"
@@ -761,6 +763,28 @@ DEF_OP(L_INIT) {
 
 DEF_OP(EMPTY) {
   stackPush(Val_Set::mk(Set::mk()));
+}
+
+
+DEF_OP(SERIALIZE) {
+  ValuePtr first = stackTop(); stackPop();
+  ValuePtr second = stackTop(); stackPop();
+  stackPush(compile::secure::processGen(first, second));
+}
+DEF_OP(DESERIALIZE) {
+  ValuePtr first = stackTop(); stackPop();
+  ValuePtr second = stackTop(); stackPop();
+  stackPush(compile::secure::processExtract(first, second));
+}
+DEF_OP(CREATEVER) {
+  stackPush(compile::secure::generateVersion());
+}
+DEF_OP(CREATELOCSPEC) {
+  stackPush(compile::secure::generateLocSpec());
+}
+DEF_OP(IS_LOCSPEC) {
+  ValuePtr first = stackTop(); stackPop();
+  stackPush(Val_UInt32::mk(compile::secure::isLocSpec(first)?1:0));
 }
 
 

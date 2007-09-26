@@ -10,6 +10,8 @@
  * DESCRIPTION: Utility classes for compile process
  *
  */
+#ifndef __COMPILEUTIL_H__
+#define __COMPILEUTIL_H__
 
 #include <ostream>
 #include "list.h"
@@ -68,3 +70,5 @@ namespace compile {
 
   };
 };
+
+#endif

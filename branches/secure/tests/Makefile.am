@@ -27,6 +27,10 @@ benchmark_LDADD =		$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/lang/libp2lang.la \
 				$(top_builddir)/lang/parse/libp2parse.la \
 				$(top_builddir)/lang/compound/libp2compound.la \
+				$(top_builddir)/lang/secure/libp2secure.la \
+				$(top_builddir)/lang/rewrite0/libp2rewrite0.la \
+				$(top_builddir)/lang/rewrite1/libp2rewrite1.la \
+				$(top_builddir)/lang/rewrite2/libp2rewrite2.la \
 				$(top_builddir)/lang/eca/libp2eca.la \
 				$(top_builddir)/lang/local/libp2local.la \
 				$(top_builddir)/lang/rewrite/libp2rewrite.la \
@@ -47,6 +51,10 @@ runStagedOverlog_LDADD =	\
 				$(top_builddir)/lang/libp2lang.la \
 				$(top_builddir)/lang/parse/libp2parse.la \
 				$(top_builddir)/lang/compound/libp2compound.la \
+				$(top_builddir)/lang/secure/libp2secure.la \
+				$(top_builddir)/lang/rewrite0/libp2rewrite0.la \
+				$(top_builddir)/lang/rewrite1/libp2rewrite1.la \
+				$(top_builddir)/lang/rewrite2/libp2rewrite2.la \
 				$(top_builddir)/lang/eca/libp2eca.la \
 				$(top_builddir)/lang/local/libp2local.la \
 				$(top_builddir)/lang/rewrite/libp2rewrite.la \
@@ -103,6 +111,10 @@ udpMessage_LDADD =		\
 				$(top_builddir)/lang/libp2lang.la \
 				$(top_builddir)/lang/parse/libp2parse.la \
 				$(top_builddir)/lang/compound/libp2compound.la \
+				$(top_builddir)/lang/secure/libp2secure.la \
+				$(top_builddir)/lang/rewrite0/libp2rewrite0.la \
+				$(top_builddir)/lang/rewrite1/libp2rewrite1.la \
+				$(top_builddir)/lang/rewrite2/libp2rewrite2.la \
 				$(top_builddir)/lang/eca/libp2eca.la \
 				$(top_builddir)/lang/local/libp2local.la \
 				$(top_builddir)/lang/rewrite/libp2rewrite.la \
@@ -121,6 +133,10 @@ udpListen_LDADD =		\
 				$(top_builddir)/lang/libp2lang.la \
 				$(top_builddir)/lang/parse/libp2parse.la \
 				$(top_builddir)/lang/compound/libp2compound.la \
+				$(top_builddir)/lang/secure/libp2secure.la \
+				$(top_builddir)/lang/rewrite0/libp2rewrite0.la \
+				$(top_builddir)/lang/rewrite1/libp2rewrite1.la \
+				$(top_builddir)/lang/rewrite2/libp2rewrite2.la \
 				$(top_builddir)/lang/eca/libp2eca.la \
 				$(top_builddir)/lang/local/libp2local.la \
 				$(top_builddir)/lang/rewrite/libp2rewrite.la \
@@ -162,6 +178,10 @@ AM_CPPFLAGS =			@BOOST_INC@ \
 				-I$(top_builddir)/lang \
 				-I$(top_builddir)/lang/parse \
 				-I$(top_builddir)/lang/compound \
+				-I$(top_builddir)/lang/secure \
+				-I$(top_builddir)/lang/rewrite0 \
+				-I$(top_builddir)/lang/rewrite1 \
+				-I$(top_builddir)/lang/rewrite2 \
 				-I$(top_builddir)/lang/eca \
 				-I$(top_builddir)/lang/local \
 				-I$(top_builddir)/lang/rewrite \

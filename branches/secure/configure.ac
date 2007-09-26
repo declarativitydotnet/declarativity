@@ -123,7 +123,10 @@ AC_CONFIG_FILES([
 	lang/eca/Makefile
 	lang/local/Makefile
 	lang/rewrite/Makefile
+	lang/secure/Makefile
+	lang/rewrite0/Makefile
 	lang/rewrite1/Makefile
+	lang/rewrite2/Makefile
 	lang/debug/Makefile
 	lang/planner/Makefile
 	lang/p2dl/Makefile

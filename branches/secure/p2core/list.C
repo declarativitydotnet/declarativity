@@ -36,11 +36,13 @@ ListPtr List::clone() const
 
 ValuePtr List::at(uint32_t pos) const
 { 
-  assert(pos < vpl.size());
+  pos--;
+  assert(pos >= 0 && pos < vpl.size());
   ValPtrList::const_iterator iter = vpl.begin();
   uint32_t cnt = 0;
   while(cnt < pos){
     iter++;
+    cnt++;
   }
   return (*iter);
 }

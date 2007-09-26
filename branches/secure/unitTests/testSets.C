@@ -387,6 +387,7 @@ void testDifference()
    SetPtr test1 = Set::mk();
    SetPtr test2 = Set::mk();
    SetPtr test3 = Set::mk();
+   SetPtr test4 = Set::mk();
    SetPtr empty = Set::mk();
    
    // Populate the sets with values (which should henceforth retain 
@@ -410,6 +411,12 @@ void testDifference()
    test3->insert(Val_Str::mk("quux"));
    test3->insert(Val_Str::mk("quuuux"));
 
+   test4->insert(Val_Str::mk("garpllksdgly"));
+   test4->insert(Val_Str::mk("barslkgdj"));
+   test4->insert(Val_Str::mk("baz"));
+   test4->insert(Val_Str::mk("quux"));
+   test4->insert(Val_Str::mk("quuuux"));
+
    // Test set sizes
    testSetsSize(*test1, 6);
    testSetsSize(*test2, 5);
@@ -421,7 +428,10 @@ void testDifference()
    differenceSets->insert(Val_Int32::mk(0));
    differenceSets->insert(Val_Int32::mk(-450));
 
-   testSetsDifference(test1, test2, differenceSets);
+   SetPtr differenceSetsStr = Set::mk();
+   differenceSetsStr->insert(Val_Str::mk("garply"));
+   differenceSetsStr->insert(Val_Str::mk("bar"));
+   testSetsDifference(test3, test4, differenceSetsStr);
    
    SetPtr test1sorted = Set::mk();
    

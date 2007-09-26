@@ -65,6 +65,7 @@ namespace compile {
         TuplePtr functor = funcIter->next();
         if ((*functor)[catalog->attribute(FUNCTOR, "POSITION")] == Val_UInt32::mk(1)) {
           if (event) throw compile::local::Exception("LOCAL CONTEXT: More than one event in rule");
+	  // assumption: event occurs at pos 1
           event = functor;
         } 
         else if ((*functor)[catalog->attribute(FUNCTOR, "POSITION")] == Val_UInt32::mk(0)) {
@@ -143,6 +144,7 @@ namespace compile {
           triggerHead->append(Val_List::mk(eventSchema)); // Attributes
           triggerHead->append(Val_UInt32::mk(0));         // Position
           triggerHead->append(Val_Null::mk());            // Acess method
+	  triggerHead->append(Val_UInt32::mk(0));           // Access method
           triggerHead->freeze();
           functorTbl->insert(triggerHead);
       
@@ -155,7 +157,8 @@ namespace compile {
           event->append(Val_List::mk(eventSchema));  // Attributes
           event->append(Val_UInt32::mk(1));          // Position
           event->append(Val_Null::mk());             // Acess method
-          event->freeze();
+	  event->append(Val_UInt32::mk(0));           // Access method
+	  event->freeze();
           functorTbl->insert(event);
 
           /** Add the new global event trigger to the table for future registrations */

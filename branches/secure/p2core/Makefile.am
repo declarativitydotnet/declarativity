@@ -22,6 +22,7 @@ SOURCE_FILE_ROOTS =	reporting \
 			commonTable \
 			compileUtil \
 			secureUtil \
+			secureUtil1 \
 			table2 \
 			refTable \
 			aggFactory \

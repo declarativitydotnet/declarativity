@@ -1,31 +1,53 @@
 /*
 	this stage must be inserted before the eca stage as it modifies the head functors
-1> changes the name of new functors in constructor rules to include the pos of the newly constructed 
+1> changes the name of new functors on rhs of constructor rules to include the pos of the newly constructed 
 	parent tuples. i.e. changes the "tuplenew" to "tuplenew4" if the new loc spec appears in 4th field
-2> Also, changes the head functors to new functors in "new" rules if they are not tagged new already
+2> Also, changes the head functors to new functors in "new" rules if they are not tagged new already: All
+   new rules must have new lhs because version need to be created for the lhs terms
 3> localizes the new rules' rhs
 Assumption: constructor rules are purely local
 So, the only interesting scenarios in this case are rules that create container tuples 
 (i.e. parent tuples) but are not constructor
-PS: it seems that in presence of new tuples, this localization is not really needed
+PS: it seems that in presence of new tuples, this localization is not really needed, so we are skipping this for the moment
 */
 namespace rewrite0 {
-  /* Given a new program, go through the rules contained within and
-     count the number of distinct location attributes apprearing in
-     each rule. */
+materialize(programEventInitialized, infinity, infinity, keys(2,3)).
+watch(newname).
+watch(programEventInitialized).
+watch(start).
+watch(doneEvent).
+watch(::rule).
+watch(programEvent).
+
+  initialization programEventInitialized(@A, Pid, Rid, HeadFid, New) :- 
+                   programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
+                   ::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, New).
+
+
+  start start(@A, Pid, Rid, HeadFid) :- 
+                   programEventInitialized(@A, Pid, Rid, HeadFid, New),
+		   New == 1.
+
+
+done      doneEvent(@A):-
+	          programEventInitialized(@A, Pid, Rid, HeadFid, New).
+
+
+/* starts processing of rules with new functor on rhs*/
   newname newname(@A, Pid, Rid, HeadLocAttr) :-
-          programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
-          ::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, New)
-	  New == 1, 
-          ::functor(@A, HeadFid, Rid, Name, TID, ECA, Attributes, FPos, AM, New),
+          start(@A, Pid, Rid, HeadFid),
+          ::functor(@A, HeadFid, Rid, Name, TID, ECA, Attributes, FPos, AM, HeadNew),
           HeadLocAttr := f_getattr("Location", Attributes).
 
+/* deals with the new tuples on the rhs: changes their name */
   changename ::functor(@A, Fid, Rid, NewName, TID, ECA, Attributes, FPos, AM, New) :-
 		newname(@A, Pid, Rid, HeadLocAttr), 
 		::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, New), 
 		::functor(@A, Fid, Rid, Name, TID, ECA, Attributes, FPos, AM, New),
-		New == 1, NewName := Name + f_tostr(f_posattr(HeadLocAttr, Attributes)).
+		New == 1, Fid != HeadFid, 
+	      	NewName := Name + f_tostr(f_posattr(HeadLocAttr, Attributes)).
 
+	/*deals with rules which have non-new heads: makes them new, changes their name and augments attribute list*/
   makeheadnew ::functor(@A, HeadFid, Rid, NewName, null, HeadECA, NewHeadAttributes, HeadFPos, HeadAM, 1U) :-
 		newname(@A, Pid, Rid, HeadLocAttr), 
 		::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, New), 
@@ -35,11 +57,17 @@ namespace rewrite0 {
 		NewName := HeadName + "new", 
 		NewHeadAttributes := f_cons(LocAttr, f_cons(null, HeadAttributes)).
 
-  /* Check that we are done with the rewrite by testing the count of
-     completed rules with the total number of rules in the program.
-     When done, generate a global programEvent tuple. */
+	/*deals with rules which have new heads: changes their name*/
+/*  makeheadnamenew ::functor(@A, HeadFid, Rid, NewName, null, HeadECA, HeadAttributes, HeadFPos, HeadAM, HeadNew) :-
+	          programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
+        	  ::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, New),
+                  ::functor(@A, HeadFid, Rid, HeadName, HeadTID, HeadECA, HeadAttributes, HeadFPos, HeadAM, HeadNew),
+		  HeadNew == 1, NewName := HeadName + "new".
+*/
+
   end ::program(@A, Pid, Name, Rewrite, "rewrite0", Text, Msg, P2DL) :-
-          programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL).
+	doneEvent(@A),
+	::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL).
 
   
 

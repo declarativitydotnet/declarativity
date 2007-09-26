@@ -21,7 +21,6 @@
 #include "plumber.h"
 #include "ol_lexer.h"
 #include "tuple.h"
-
 #include "systemTable.h"
 #include "val_tuple.h"
 #include "val_vector.h"
@@ -44,14 +43,16 @@ namespace compile {
     {
       TuplePtr tp = Tuple::mk(VAL);
       tp->append(_value);
+      tp->freeze();
       return Val_Tuple::mk(tp);
     }
   
     ValuePtr 
     Variable::tuple() const
     {
-      TuplePtr tp = Tuple::mk((_location ? LOC : VAR));
+      TuplePtr tp = Tuple::mk((_location ? LOC : (_newLocSpec ? NEWLOCSPEC: VAR)));
       tp->append(_value);
+      tp->freeze();
       return Val_Tuple::mk(tp);
     }
     
@@ -76,26 +77,31 @@ namespace compile {
       TuplePtr tp = Tuple::mk(AGG);
       tp->append(_variable ? _variable->tuple() : Val_Null::mk());
       tp->append(Val_Str::mk(_operName));
+      tp->freeze();
       return Val_Tuple::mk(tp);
     }
     
     const string Function::max = "f_max";
+    const string Function::concat = "f_concat";
     const string Function::mod = "f_mod";
-    const string Says::verTable = "verKey"; 
-    const string Says::genTable = "genKey"; 
+    const string Says::verTable = "::verKey"; 
+    const string Says::genTable = "::genKey"; 
     const string Says::hashFunc = "f_sha1"; 
     const string Says::verFunc = "f_verify"; 
     const string Says::genFunc = "f_gen"; 
-    const string Says::encHint = "encHint"; 
-    const string Says::varPrefix = "SPL"; 
-    const string Says::rulePrefix = "rule"; 
+    const string Says::encHint = "::encHint"; 
+    const string Says::varPrefix = "PRW_"; 
+    const string Says::rulePrefix = "prw_"; 
     const string Says::saysPrefix = "says"; 
     const string Says::makeSays = "makeSays"; 
     const string Says::globalScope = "::"; 
-    const int TableEntry::numSecureFields = 5;
-    const int Functor::namePos = 2;
-    int Rule::ruleId = 0; 
-
+    const uint32_t TableEntry::numSecureFields = 5;
+    uint32_t Functor::fictVarCounter = 0;
+    const string Functor::FICTPREFIX = "NH";
+    uint32_t Rule::ruleId = 0; 
+    const bool Table::compoundRewrite = true;
+    SetPtr Table::materializedSaysTables(new Set());
+    
     string 
     Bool::toString() const {
       ostringstream b;
@@ -121,7 +127,7 @@ namespace compile {
       tp->append(_lhs->tuple());
       if (_rhs) tp->append(_rhs->tuple());
       else tp->append(Val_Null::mk());
-    
+      tp->freeze();
       return Val_Tuple::mk(tp);
     }
     
@@ -138,6 +144,7 @@ namespace compile {
       tp->append(Val_Str::mk(_operName));
       tp->append(_lhs->tuple());
       tp->append(_rhs->tuple());
+      tp->freeze();
       return Val_Tuple::mk(tp);
     }
     
@@ -188,6 +195,7 @@ namespace compile {
       tp->append(Val_Str::mk(_operName));
       tp->append(_lhs->tuple());
       tp->append(_rhs->tuple());
+      tp->freeze();
       return Val_Tuple::mk(tp);
     }
     
@@ -216,6 +224,7 @@ namespace compile {
         tp->append((*iter)->tuple());
       }
   
+      tp->freeze();
       return Val_Tuple::mk(tp);
     }
 
@@ -245,6 +254,7 @@ namespace compile {
         tp->append((*iter)->tuple());
       }
   
+      tp->freeze();
       return Val_Tuple::mk(tp);
     }
     
@@ -264,6 +274,7 @@ namespace compile {
     {
       TuplePtr tp = Tuple::mk(VEC);
       tp->append(_vector);
+      tp->freeze();
       return Val_Tuple::mk(tp);
     }
     
@@ -301,6 +312,7 @@ namespace compile {
     {
       TuplePtr tp = Tuple::mk(MAT);
       tp->append(_matrix);
+      tp->freeze();
       return Val_Tuple::mk(tp);
     }
     
@@ -312,16 +324,57 @@ namespace compile {
     string 
     Functor::toString() const {
       ostringstream f;
+      if(_new){
+	f<<"new< " << _locSpec->toString()<<", "<<_opaque->toString()<<", "<<_hint->toString()<<", ";;
+      }
+
       f << (_complement?"!":"") <<name()<<  (_complement?"^":"") << "( ";
       for (ExpressionList::const_iterator iter = _args->begin(); 
            iter != _args->end(); iter++) {
         f << (*iter)->toString();
         if (iter+1 != _args->end()) f << ", ";
       }
-      f << " )";
+      f << " )" << (_new?">":"");
       return f.str();
     }
     
+    void Functor::processNew(TermList* termList, Expression *assignedVal){
+      assert(_new);
+      getLocSpec()->resetLocSpec();
+      
+      ostringstream oss;
+      oss << FICTPREFIX << fictVarCounter++; 
+      Variable *hintVar = new compile::parse::Variable(Val_Str::mk(oss.str())); 
+      _args->push_front(hintVar->copy()); 
+      
+      _args->push_front(_opaque);
+      _args->push_front(_locSpec);
+      Variable *var;
+      if ((var = dynamic_cast<Variable*>(_args->at(0))) != NULL &&
+          !var->location()) {
+	throw compile::Exception("Invalid location specifier. Variable: " 
+				 + var->toString());
+      }
+      if(assignedVal != NULL){
+	Term *assignTerm = new Assign(hintVar, assignedVal);
+	//NULL if head is new: if yes, then put null in the hintFieldPos
+	
+	//	Value* null = new Value(Val_Null::mk());
+	//	ExpressionList *argsList =  const_cast<ExpressionList*>(_head->arguments());
+	//	ExpressionList::iterator iter = argsList->begin();
+	//	iter++; // for location
+	//	iter++; // for opaque
+	//	Variable *var = dynamic_cast<Variable*>(*iter);
+	//	_head->replace(iter, null);
+	//	delete var;
+	termList->push_back(assignTerm);
+	
+      }
+      
+      _name =  _name + compile::NEWSUFFIX;
+    }
+  
+
     string 
     Says::toString() const {
       ostringstream f;
@@ -336,16 +389,22 @@ namespace compile {
     }
 
 
-//     string 
-//     NewFunctor::toString() const {
-//       ostringstream f;
-//       f << name()<< "( " << _locSpec->toString() <<", " << ((_opaque !=NULL)?_opaque->toString():NULL);
-//       f << ", "<<_f->toString()<<" )";
-//       return f.str();
+//     TermList* Functor::generateEqTerms(Functor* s){
+//       assert(name().compare(s->name()) == 0);
+      
+//       ExpressionList::iterator iter1; 
+//       ExpressionList::iterator iter2; 
+//       ExpressionList *saysList1 =  const_cast<ExpressionList*>(arguments());
+//       ExpressionList *saysList2 =  const_cast<ExpressionList*>(s->arguments());
+      
+//       //skip location specifier terms
+//       return Secure::generateEqTerms(saysList1->begin() + 1, saysList1->end(), saysList2->begin() + 1, saysList2->end());
+      
 //     }
 
+
     TuplePtr 
-    Functor::materialize(CommonTable::ManagerPtr catalog, ValuePtr ruleId, string ns)
+    Functor::materialize(CommonTable::ManagerPtr catalog, ValuePtr ruleId, string ns, uint32_t pos)
     {
       CommonTablePtr funcTbl = catalog->table(FUNCTOR);
       TuplePtr     functorTp = Tuple::mk(FUNCTOR, true);
@@ -381,31 +440,13 @@ namespace compile {
   
       functorTp->append(Val_Null::mk());          // The ECA flag
       functorTp->append(Val_Null::mk());          // The attributes field
-      functorTp->append(Val_Null::mk());          // The position field
+      functorTp->append(Val_UInt32::mk(pos));          // The position field
       functorTp->append(Val_Null::mk());          // The access method
-      functorTp->append(Val_Int32::mk(_new?1:0)); // The new field
+      functorTp->append(Val_UInt32::mk(_new?1:0)); // The new field
       funcTbl->insert(functorTp);                 // Add new functor to functor table
 
       // Now take care of the functor arguments and variable dependencies
       ListPtr attributes = List::mk();
-//       if(_new){
-// 		Value* v = dynamic_cast<Value*>(_args->at(Functor::namePos));
-// 	if(!v){
-// 	  throw compile::Exception("Invalid new functor" + _args->at(Functor::namePos)->toString());
-// 	}
-// 	string newName;
-// 	string originalName = Val_Str::cast(v->value());
-// 	if (originalName.size() >= 2 && originalName.substr(0,2) == "::") {
-// 	  /* Referencing functor from some other namespace, 
-// 	     relative to the global namespace */
-// 	  newName = originalName.substr(2, originalName.length()-2);
-// 	}
-// 	else {
-// 	  newName = ns + originalName;
-// 	}
-	
-// 	v->replace(Val_Str::mk(newName));
-//       }
       for (ExpressionList::iterator iter = _args->begin();
            iter != _args->end(); iter++) {
         attributes->append((*iter)->tuple());
@@ -414,87 +455,40 @@ namespace compile {
       functorTp->freeze();
       funcTbl->insert(functorTp); // Update functor with dependency list
 
+      // if new then also materialize new tuple
+      if(_new){
+	CommonTablePtr newTbl = catalog->table(NEW);
+	TuplePtr newTp = Tuple::mk(NEW, true);
+	newTp->append((*functorTp)[TUPLE_ID]); // add FID
+	newTp->append(_locSpec->tuple());
+	newTp->append(_opaque->tuple());
+	newTp->append(_hint->tuple());
+	newTp->freeze();
+	newTbl->insert(newTp);
+      }
       return functorTp;
     }
     
-//     TuplePtr 
-//     NewFunctor::materialize(CommonTable::ManagerPtr catalog, ValuePtr ruleId, string ns)
-//     {
-//       CommonTablePtr funcTbl = catalog->table(FUNCTOR);
-//       TuplePtr     functorTp = Tuple::mk(FUNCTOR, true);
-//       if (ruleId) {
-//         functorTp->append(ruleId);
-//       }
-//       else {
-//         functorTp->append(Val_Null::mk());
-//       }
-  
-//       string name;
-//       if (_name.size() >= 2 && _name.substr(0,2) == "::") {
-//         /* Referencing functor from some other namespace, 
-//            relative to the global namespace */
-//         name = _name.substr(2, _name.length()-2);
-//       }
-//       else {
-//         name = ns + _name;
-//       }
-//       functorTp->append(Val_Str::mk(name));   // Functor name
-  
-//       // Fill in table reference if functor is materialized
-//       CommonTable::Key nameKey;
-//       nameKey.push_back(catalog->attribute(FUNCTOR, "NAME"));
-//       CommonTablePtr tableTbl = catalog->table(TABLE);
-//       CommonTable::Iterator tIter = 
-//         tableTbl->lookup(nameKey, CommonTable::theKey(CommonTable::KEY3), functorTp);
-//       if (!tIter->done()) 
-//         functorTp->append((*tIter->next())[TUPLE_ID]);
-//       else {
-//         functorTp->append(Val_Null::mk());
-//       }
-  
-//       functorTp->append(Val_Null::mk());          // The ECA flag
-//       functorTp->append(Val_Null::mk());          // The attributes field
-//       functorTp->append(Val_Null::mk());          // The position field
-//       functorTp->append(Val_Null::mk());          // The access method
-//       functorTp->append(Val_Int32::mk(1));        // The new
-//       funcTbl->insert(functorTp);                 // Add new functor to functor table
+    TuplePtr 
+    Says::materialize(CommonTable::ManagerPtr catalog, ValuePtr ruleId, string ns, uint32_t pos)
+    {
+      TuplePtr functorTp = Functor::materialize(catalog, ruleId, ns, pos);
+      CommonTablePtr saysTbl = catalog->table(SAYS);
+      TuplePtr saysTp = Tuple::mk(SAYS, true);
+      saysTp->append((*functorTp)[TUPLE_ID]); // add FID
 
-//       // Now take care of the functor arguments and variable dependencies
-//       ListPtr attributes = List::mk();
-//       attributes->append(_locSpec->tuple());
-//       if(_opaque){
-// 	attributes->append(_opaque->tuple());
-//       }
-//       else{
-// 	functorTp->append(Val_Null::mk());
-//       }
-
-//       // now fill in stuff from original functor
-//       string functorname;
-//       if (_f->name().size() >= 2 && _f->name().substr(0,2) == "::") {
-//         /* Referencing functor from some other namespace, 
-//            relative to the global namespace */
-//         functorname = _f->name().substr(2, _f->name().length()-2);
-//       }
-//       else {
-//         functorname = ns + _f->name();
-//       }
-
-//       attributes->append(Val_Str::mk(functorname));   // Functor name
-      
-//       ExpressionList *args = const_cast<ExpressionList*>(_f->arguments());
-//       for (ExpressionList::iterator iter = args->begin();
-//            iter != args->end(); iter++) {
-//         attributes->append((*iter)->tuple());
-//       }
-
-//       functorTp->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(attributes));
-//       functorTp->freeze();
-//       funcTbl->insert(functorTp); // Update functor with dependency list
-
-//       return functorTp;
-//     }
-    
+      // Now take care of the functor arguments and variable dependencies
+      ListPtr attributes = List::mk();
+      for (ExpressionList::iterator iter = _says->begin();
+           iter != _says->end(); iter++) {
+        attributes->append((*iter)->tuple());
+      }
+      saysTp->append(Val_List::mk(attributes));
+      saysTp->freeze();
+      saysTbl->insert(saysTp); // Update functor with dependency list
+      return functorTp;
+    }
+        
 
     const Aggregation* 
     Functor::aggregate() const {
@@ -553,6 +547,44 @@ namespace compile {
         if (e->toString() == (*iter)->toString()) return iter;
       return iter;
     }
+
+    TotalIterator
+    Functor::totalFind(const Expression *e) const
+    {
+      ExpressionList::iterator iter; 
+      iter = find(e);
+      if(iter != _args->end()){
+	return TotalIterator(Functor::T_FUNCTOR, iter);
+      }
+      else{
+	// check if new
+	if(_new){
+	  if (e->toString() == _locSpec->toString()) return TotalIterator(Functor::T_LOCSPEC, iter);
+	  else if (e->toString() == _opaque->toString()) return TotalIterator(Functor::T_OPAQUE, iter);
+	  else if (e->toString() == _hint->toString()) return TotalIterator(Functor::T_HINT, iter);
+	}
+	return TotalIterator(Functor::NOT_FOUND, iter);
+      }
+      
+    }
+
+    TotalIterator
+    Says::totalFind(const Expression *e) const
+    {
+      TotalIterator iter; 
+      iter = Functor::totalFind(e);
+      if(iter.first != Functor::NOT_FOUND){
+	return iter;
+      }
+      else{
+	ExpressionList::iterator eiter; 
+	for (eiter = _says->begin(); 
+	     eiter != _says->end(); eiter++)
+	  if (e->toString() == (*eiter)->toString()) return TotalIterator(Functor::T_SAYS, eiter);
+
+	return TotalIterator(Functor::NOT_FOUND, eiter);
+      }
+    }
     
     // careful with its use as it doesn't free the memory of the replaced variable. 
     // caller should take care of it
@@ -560,6 +592,38 @@ namespace compile {
                           Expression *e) {
       ExpressionList::iterator next = _args->erase(i);
       _args->insert(next, e);
+    }
+
+
+    void Functor::replace(TotalIterator i, 
+                          Expression *e) {
+      if(i.first == Functor::T_FUNCTOR){
+	ExpressionList::iterator next = _args->erase(i.second);
+	_args->insert(next, e);
+      }
+      else if(i.first == Functor::T_LOCSPEC){
+	_locSpec = e;
+      }
+      else if(i.first == Functor::T_OPAQUE){
+	_opaque = e;
+      }
+      else if(i.first == Functor::T_HINT){
+	_hint = e;
+      }
+      else{
+	assert(0);
+      }
+    }
+
+    void Says::replace(TotalIterator i, 
+		       Expression *e) {
+      if(i.first == Functor::T_SAYS){
+	ExpressionList::iterator next = _says->erase(i.second);
+	_says->insert(next, e);
+      }
+      else{
+	Functor::replace(i, e);
+      }
     }
 
     void Functor::changeLocSpec(Variable *l) {
@@ -587,297 +651,6 @@ namespace compile {
       }
     }  
 
-//     NewFunctor::NewFunctor(Expression *locSpec, Expression *opaque, Term *f)
-//     {
-//       _name = "new";
-//       if ((_locSpec = dynamic_cast<Variable*>(locSpec)) == NULL ||
-//           !_locSpec->location()) {
-//         throw compile::Exception("Invalid location specifier. Variable: " 
-//                                         + locSpec->toString());
-//       }
-//       if ((_f = dynamic_cast<Functor*>(f)) == NULL) {
-//         throw compile::Exception("Invalid functor. " + f->toString());
-//       }
-//       _opaque = opaque;
-//     }
-
-//     Variable* NewFunctor::getLocSpec() {
-//       return _locSpec;
-//     }  
-
-    // return a list of terms that needs to be added to the rule on converting the 
-    // securelog term f into overlog.
-    // Also converts f into the appropriate overlog form
-    TermList* Says::normalizeGenerate(Functor* f, int& newVariable)
-    {
-      Says *s;
-      if ((s = dynamic_cast<Says*>(f)) != NULL)
-      {
-	
-	TermList *newTerms = new TermList();
-
-	// create encryption hint
-	ExpressionList *t = new ExpressionList();
-	t->push_back(Variable::getLocalLocationSpecifier());
-	ExpressionList::iterator iter; 
-	ExpressionList *saysList =  const_cast<ExpressionList*>(s->saysParams());
-	//generate TabelEntry::numSecureFields -1 new terms for P, R, k, V on rhs
-	ExpressionList *rhsSaysParams = new ExpressionList();
-	for(int i = 0; i< TableEntry::numSecureFields -1; i++)
-	{
-	  ostringstream v;
-	  v << Says::varPrefix << newVariable++;
-	  rhsSaysParams->push_back(new Variable(Val_Str::mk(v.str())));
-	}
-
-	// finally extract the appropriate proof using the rhsSaysParams
-	for (iter = rhsSaysParams->begin(); 
-	     iter != rhsSaysParams->end(); iter++){
-	  t->push_back(*iter);
-	}
-	ostringstream var1;
-	var1 << Says::varPrefix << newVariable++;
-	Variable *encId = new Variable(Val_Str::mk(var1.str()));
-	t->push_back(encId);
-	Functor *genHint = new Functor(new Value(Val_Str::mk(Says::globalScope + Says::encHint)), t);
-
-	//create key generation table
-	ExpressionList *genT = new ExpressionList();
-	genT->push_back(Variable::getLocalLocationSpecifier());
-	genT->push_back(encId);
-
-	ostringstream var2;
-	var2 << Says::varPrefix << newVariable++;
-	Variable *genKey = new Variable(Val_Str::mk(var2.str()));
-	genT->push_back(genKey);
-	Functor *genTable = new Functor(new Value(Val_Str::mk(Says::globalScope + Says::genTable)), genT);
-
-	//create buffer creation logic
-	ostringstream var3;
-	var3 << Says::varPrefix << newVariable++;
-	Variable *buf = new Variable(Val_Str::mk(var3.str()));
-
-	// check if the concatenate operation is needed or not
-	// remember that the loc specifier is excluded but the table name must be included
-	Value *table = new Value(Val_Str::mk(s->_name));
-	Expression *cur = table;
-
-	// since loc spec is not included
-	if(s->_args->size() > 1)
-	{
-	  ExpressionList *list = s->saysArgs();
-	  iter = list->begin();
-	  //exclude location specifier
-	  iter++; 
-	  for (; iter != list->end(); iter++){
-	    cur = new Math(Math::APPEND, cur, *iter);
-	  }
-	}
-
-	Assign *assBuf = new Assign(buf, cur);
-
-	//create generation logic
-	ostringstream var4;
-	var4 << Says::varPrefix << newVariable++;
-	Variable *hash = new Variable(Val_Str::mk(var4.str()));
-	ostringstream var5;
-	var5 << Says::varPrefix << newVariable++;
-	Variable *proof = new Variable(Val_Str::mk(var5.str()));
-
-	ExpressionList *hashArg = new ExpressionList();
-	hashArg->push_back(buf);
-	Function *f_hash = new Function(new Value(Val_Str::mk(Says::hashFunc)), hashArg);
-	Assign *assHash = new Assign(hash, f_hash);
-
-
-	ExpressionList *genArg = new ExpressionList();
-	genArg->push_back(hash);
-	genArg->push_back(genKey);
-	Function *f_gen = new Function(new Value(Val_Str::mk(Says::genFunc)), genArg);
-	Assign *assGen = new Assign(proof, f_gen);
-
-
-	newTerms->push_back(genHint);
-	newTerms->push_back(genTable);
-	newTerms->push_back(assBuf);
-	newTerms->push_back(assHash);
-	newTerms->push_back(assGen);
-
-	// add constraints between saysParams and rhsSaysParams
-	Says::generateAlgebraLT(saysList->begin(), 
-				rhsSaysParams->begin(), newTerms);
-
-	
-	// now modify the says tuple
-
-	ExpressionList *arg = s->saysArgs();
-	for (iter = saysList->begin(); 
-	     iter != saysList->end(); iter++){
-	  arg->push_back(*iter);
-	}
-	arg->push_back(proof);
-	
-	s->changeName(Says::makeSays + s->name());
-
-	// finally return the new terms
-	return newTerms;
-      }
-      return NULL;
-    }
-
-
-    // return a list of terms that needs to be added to the rule on converting the 
-    // securelog term f into overlog.
-    // Also converts f into the appropriate overlog form
-    // the last boolean indicates if the list of terms should also include the 
-    // constraint that "the verifying principal doesn't have the authority to 
-    // generate the proof"
-    void Says::normalizeVerify(Functor* f, int& newVariable)
-    {
-      Says *s;
-      //      TermList *newTerms = NULL;
-      if ((s = dynamic_cast<Says*>(f)) != NULL)
-      {
-	// now modify the says tuple
-	ExpressionList::iterator iter;
-	ExpressionList *arg = s->saysArgs();
-	ExpressionList *saysList =  const_cast<ExpressionList*>(s->saysParams());
-	
-	// if(head != NULL){
-// 	  ExpressionList *headList =  const_cast<ExpressionList*>(head->saysParams());
-// 	  newTerms = Says::generateAlgebraLT(headList->begin(), saysList->begin());
-// 	}
-
-	for (iter = saysList->begin(); 
-	     iter != saysList->end(); iter++){
-	  arg->push_back(*iter);
-	}
-
- 	ostringstream var5;
- 	var5 << Says::varPrefix << newVariable++;
- 	Variable *proof = new Variable(Val_Str::mk(var5.str()));
-	arg->push_back(proof);
-	
-	s->changeName(Says::saysPrefix + s->name());
-
-      }
-      //      return newTerms;
-    }
-
-//     TermList* Says::normalizeVerify(Functor* f, int& newVariable, bool addNoKeyConstraint)
-//     {
-//       Says *s;
-//       if ((s = dynamic_cast<Says*>(f)) != NULL)
-//       {
-	
-// 	TermList *newTerms = new TermList();
-
-// 	// create encryption hint
-// 	ExpressionList *t = new ExpressionList();
-// 	t->push_back(s->getLocSpec());
-// 	ExpressionList::iterator iter; 
-// 	ExpressionList *saysList =  const_cast<ExpressionList*>(s->saysParams());
-// 	for (iter = saysList->begin(); 
-// 	     iter != saysList->end(); iter++){
-// 	  t->push_back(*iter);
-// 	}
-// 	ostringstream var1;
-// 	var1 << Says::varPrefix << newVariable++;
-// 	Variable *encId = new Variable(Val_Str::mk(var1.str()));
-// 	t->push_back(encId);
-// 	Functor *encHint = new Functor(new Value(Val_Str::mk(Says::globalScope + Says::encHint)), t);
-
-// 	//create verification table
-// 	ExpressionList *verT = new ExpressionList();
-// 	verT->push_back(s->getLocSpec());
-// 	verT->push_back(encId);
-
-// 	ostringstream var2;
-// 	var2 << Says::varPrefix << newVariable++;
-// 	Variable *verKey = new Variable(Val_Str::mk(var2.str()));
-// 	verT->push_back(verKey);
-// 	Functor *verTable = new Functor(new Value(Val_Str::mk(Says::globalScope + Says::verTable)), verT);
-
-// 	//create buffer creation logic
-// 	ostringstream var3;
-// 	var3 << Says::varPrefix << newVariable++;
-// 	Variable *buf = new Variable(Val_Str::mk(var3.str()));
-
-// 	// check if the concatenate operation is needed or not
-// 	// remember that the loc specifier is excluded but the table name must be included
-// 	Value *table = new Value(Val_Str::mk(s->_name));
-// 	Expression *cur = table;
-
-// 	if(s->_args->size() > 1)
-// 	{
-// 	  ExpressionList *list = s->saysArgs();
-// 	  iter = list->begin();
-// 	  //exclude location specifier
-// 	  iter++; 
-// 	  for (; iter != list->end(); iter++){
-// 	    cur = new Math(Math::BITOR, cur, *iter);
-// 	  }
-// 	}
-
-// 	Assign *assBuf = new Assign(buf, cur);
-
-// 	//create verification logic
-// 	ostringstream var4;
-// 	var4 << Says::varPrefix << newVariable++;
-// 	Variable *hash = new Variable(Val_Str::mk(var4.str()));
-// 	ostringstream var5;
-// 	var5 << Says::varPrefix << newVariable++;
-// 	Variable *proof = new Variable(Val_Str::mk(var5.str()));
-
-// 	ExpressionList *hashArg = new ExpressionList();
-// 	hashArg->push_back(buf);
-// 	Function *f_hash = new Function(new Value(Val_Str::mk(Says::hashFunc)), hashArg);
-// 	Assign *assHash = new Assign(hash, f_hash);
-
-
-// 	ExpressionList *verArg = new ExpressionList();
-// 	verArg->push_back(proof);
-// 	verArg->push_back(verKey);
-// 	Function *f_verify = new Function(new Value(Val_Str::mk(Says::verFunc)), verArg);
-// 	Assign *assVer = new Assign(hash, f_verify);
-
-
-// 	newTerms->push_back(encHint);
-// 	newTerms->push_back(verTable);
-// 	newTerms->push_back(assBuf);
-// 	newTerms->push_back(assHash);
-// 	newTerms->push_back(assVer);
-	
-// 	if(addNoKeyConstraint)
-// 	{
-// 	  ExpressionList *genT = new ExpressionList();
-// 	  genT->push_back(Variable::getLocalLocationSpecifier());
-// 	  genT->push_back(encId);
-// 	  ostringstream var6;
-// 	  var6 << Says::varPrefix << newVariable++;
-// 	  Variable *genKey = new Variable(Val_Str::mk(var6.str()));
-// 	  genT->push_back(genKey);
-// 	  Functor *genTable = new Functor(new Value(Val_Str::mk(Says::globalScope + Says::genTable)), genT, true);
-	  
-// 	  newTerms->push_back(genTable);
-// 	}
-// 	// now modify the says tuple
-
-// 	ExpressionList *arg = s->saysArgs();
-// 	for (iter = saysList->begin(); 
-// 	     iter != saysList->end(); iter++){
-// 	  arg->push_back(*iter);
-// 	}
-// 	arg->push_back(proof);
-	
-// 	s->changeName(Says::saysPrefix + s->name());
-
-// 	// finally return the new terms
-// 	return newTerms;
-//       }
-//       return NULL;
-//     }
-
 
 
     string Assign::toString() const {
@@ -885,7 +658,7 @@ namespace compile {
     }
     
     TuplePtr 
-    Assign::materialize(CommonTable::ManagerPtr catalog, ValuePtr ruleId, string ns)
+    Assign::materialize(CommonTable::ManagerPtr catalog, ValuePtr ruleId, string ns, uint32_t pos)
     {
       CommonTablePtr assignTbl = catalog->table(ASSIGN);
       TuplePtr       assignTp  = Tuple::mk(ASSIGN, true);
@@ -900,7 +673,7 @@ namespace compile {
   
       assignTp->append(variable);               // Assignment variable
       assignTp->append(value);                  // Assignemnt value
-      assignTp->append(Val_Null::mk());         // Position
+      assignTp->append(Val_UInt32::mk(pos));         // Position
       assignTp->freeze();
       assignTbl->insert(assignTp); 
       return assignTp;
@@ -911,7 +684,7 @@ namespace compile {
     }
     
     TuplePtr 
-    Select::materialize(CommonTable::ManagerPtr catalog, ValuePtr parentKey, string ns)
+    Select::materialize(CommonTable::ManagerPtr catalog, ValuePtr parentKey, string ns, uint32_t pos)
     {
       CommonTablePtr selectTbl = catalog->table(SELECT);
       TuplePtr       selectTp  = Tuple::mk(SELECT, true);
@@ -924,7 +697,7 @@ namespace compile {
       ValuePtr boolExpr = _select->tuple();
      
       selectTp->append(boolExpr);              // Boolean expression
-      selectTp->append(Val_Null::mk());        // Position
+      selectTp->append(Val_UInt32::mk(pos));        // Position
       selectTp->append(Val_Null::mk());        // Access method
       selectTp->freeze();
       selectTbl->insert(selectTp); 
@@ -967,7 +740,7 @@ namespace compile {
     }
     
     TuplePtr 
-    AggregationView::materialize(CommonTable::ManagerPtr catalog, ValuePtr ruleId, string ns)
+    AggregationView::materialize(CommonTable::ManagerPtr catalog, ValuePtr ruleId, string ns, uint32_t pos)
     {
       CommonTablePtr aggViewTbl = catalog->table(AGG_VIEW);
       TuplePtr       aggViewTp  = Tuple::mk(AGG_VIEW, true);
@@ -994,7 +767,7 @@ namespace compile {
   
       /* Pass the baseTable functor the ruleId 
          (which is the rule defining this aggView). */
-      TuplePtr baseTableTp = _baseTable->materialize(catalog, ruleId, ns);
+      TuplePtr baseTableTp = _baseTable->materialize(catalog, ruleId, ns, pos);
       aggViewTp->append((*baseTableTp)[TUPLE_ID]); // Primary key of functor
       
       aggViewTp->append(Val_Str::mk(_operName));   // Aggregation operator
@@ -1042,350 +815,6 @@ namespace compile {
       _new = false;
       _head = dynamic_cast<Functor*>(lhs);
       _body = rhs;
-
-    }
-
-    StatementList* Table::generateMaterialize()
-    {
-      StatementList *mat = new StatementList();
-      ValuePtr minusOne = Val_Int32::mk(-1);
-      ValuePtr one = Val_Int32::mk(1);
-      ValuePtr two = Val_Int32::mk(2);
-      ValuePtr three = Val_Int32::mk(3);
-      ValuePtr four = Val_Int32::mk(4);
-      ValuePtr five = Val_Int32::mk(5);
-      
-      //generate materialize for encHint
-      Value *encHintName = new Value(Val_Str::mk(Says::encHint));
-      ExpressionList *t = new ExpressionList();
-      t->push_back(new compile::parse::Value(one)); 
-      t->push_back(new compile::parse::Value(two)); 
-      t->push_back(new compile::parse::Value(three)); 
-      t->push_back(new compile::parse::Value(four)); 
-      t->push_back(new compile::parse::Value(five));
-      
-      Table *encHint = new Table(encHintName, new compile::parse::Value(minusOne), new compile::parse::Value(minusOne), t);
-      
-      mat->push_back(encHint);
-
-      //generate materialize for verTable
-      Value *verTableName = new Value(Val_Str::mk(Says::verTable));
-      t = new ExpressionList();
-      t->push_back(new compile::parse::Value(one)); 
-      t->push_back(new compile::parse::Value(two)); 
-      
-      Table *verTable = new Table(verTableName, new compile::parse::Value(minusOne), new compile::parse::Value(minusOne), t);
-      
-      mat->push_back(verTable);
-
-      //generate materialize for genTable
-      Value *genTableName = new Value(Val_Str::mk(Says::genTable));
-      t = new ExpressionList();
-      t->push_back(new compile::parse::Value(one)); 
-      t->push_back(new compile::parse::Value(two)); 
-      
-      Table *genTable = new Table(genTableName, new compile::parse::Value(minusOne), new compile::parse::Value(minusOne), t);
-      
-      mat->push_back(genTable);
-
-      return mat;
-    }
-
-    TermList* Functor::generateEqTerms(Functor* s){
-      assert(name().compare(s->name()) == 0);
-      
-      ExpressionList::iterator iter1; 
-      ExpressionList::iterator iter2; 
-      ExpressionList *saysList1 =  const_cast<ExpressionList*>(arguments());
-      ExpressionList *saysList2 =  const_cast<ExpressionList*>(s->arguments());
-      
-      //skip location specifier terms
-      return generateEqTerms(saysList1->begin() + 1, saysList1->end(), saysList2->begin() + 1, saysList2->end());
-      
-    }
-
-    TermList* Functor::generateEqTerms(ExpressionList::iterator start1, ExpressionList::iterator end1, 
-				       ExpressionList::iterator start2, ExpressionList::iterator end2,
-				       TermList *t){
-      TermList *newTerms;
-      if(t == NULL){
-	newTerms = new TermList();
-      }
-      else{
-	newTerms = t;
-      }
-      //skip location specifier terms
-      for (;start1 < end1 && start2 < end2; start1++, start2++){
-	if(!(*start1)->isEqual(*start2))
-	{
-	  newTerms->push_back(new Assign((*start1)->copy(), (*start2)->copy()));
-	}
-      }
-
-      return newTerms;
-    }
-
-    TermList* Functor::generateSelectTerms(ExpressionList::iterator start1, ExpressionList::iterator end1, 
-					   ExpressionList::iterator start2, ExpressionList::iterator end2, int o,
-					   TermList *t){
-      TermList *newTerms;
-      if(t == NULL){
-      newTerms = new TermList();
-      }
-      else{
-	newTerms = t;
-      }
-      //skip location specifier terms
-      for (;start1 < end1 && start2 < end2; start1++, start2++){
-	if(!(*start1)->isEqual(*start2))
-	{
-	  newTerms->push_back(new Select(new Bool(o, (*start1)->copy(), (*start2)->copy())));
-	}
-      }
-
-      return newTerms;
-    }
-
-    /**
-       generate rules for creating authentication algebra for functors with the given table entry
-     */
-    void Rule::getAlgebra(TableEntry *tableEntry, StatementList *s){
-      TableEntry localTableEntry(Says::saysPrefix + tableEntry->name, tableEntry->fields);
-      TableEntry *te = &localTableEntry;
-      static int index[]={0, 1, 3};
-      for(int i = 0; i < 3; i++){
-	int fictVar = 1;
-	Functor *f1 = new Functor(te, fictVar);
-	Functor *f2 = new Functor(te, fictVar);
-	Functor *f3 = new Functor(te, fictVar);
-	Functor *head = new Functor(te, fictVar);
-	// make all of them local
-	f2->changeLocSpec(new Variable(*f1->getLocSpec()));
-	f3->changeLocSpec(new Variable(*f1->getLocSpec()));
-	head->changeLocSpec(new Variable(*f1->getLocSpec()));
-	ExpressionList* f1Args = const_cast<ExpressionList*>(f1->arguments());
-	ExpressionList* f2Args = const_cast<ExpressionList*>(f2->arguments());
-	ExpressionList* f3Args = const_cast<ExpressionList*>(f3->arguments());
-	ExpressionList* headArgs = const_cast<ExpressionList*>(head->arguments());
-	
-	TermList *t = new TermList();
-	t->push_back(f1);
-	t->push_back(f2);
-	t->push_back(f3);
-	
-	// generate equality constraints for data parts of f1, f2 and f3
-	Functor::generateSelectTerms(f1Args->begin()+1, 
-				     f1Args->begin()+(te->fields - TableEntry::numSecureFields),
-				     f2Args->begin()+1, 
-				     f2Args->begin()+(te->fields - TableEntry::numSecureFields),
-				     Bool::EQ, 
-				     t);
-	
-	Functor::generateSelectTerms(f1Args->begin()+1, 
-				     f1Args->begin()+(te->fields - TableEntry::numSecureFields),
-				     f3Args->begin()+1, 
-				     f3Args->begin()+(te->fields - TableEntry::numSecureFields),
-				     Bool::EQ, 
-				     t);
-	
-	
-	// generate assign constraints for all fields of head
-	Says::generateAlgebraCombine(index[i],
-				     f1Args->begin()+(te->fields - TableEntry::numSecureFields), 
-				     f2Args->begin()+(te->fields - TableEntry::numSecureFields), 
-				     headArgs->begin()+(te->fields - TableEntry::numSecureFields), 
-				     t);
-	
-	// finally check they are NOT weaker* than any other known says primitive
-	// by copying data parts and using algebra to generate the (P, R, k, V) parts
-	Says::generateAlgebraLT(
-				f3Args->begin()+(te->fields - TableEntry::numSecureFields), 
-				headArgs->begin()+(te->fields - TableEntry::numSecureFields), 
-				t);
-	
-	Functor::generateEqTerms(headArgs->begin()+1, 
-				 headArgs->begin()+(te->fields - TableEntry::numSecureFields),
-				 f1Args->begin()+1, 
-				 f1Args->begin()+(te->fields - TableEntry::numSecureFields),
-				 t);
-	ostringstream ruleName;
-	ruleName << Says::rulePrefix << Rule::ruleId++;
-	Value *rN = new Value(Val_Str::mk(ruleName.str()));
-
-	Rule *r = new Rule(head, t, false, rN);
-	s->push_back(r);
-      }
-      //issues: what if the tableEntry is not materialized?
-      // check before calling this func
-    }
-
-    TermList* Says::generateAlgebraLT(ExpressionList::iterator start1, 
-				      ExpressionList::iterator start2, 
-				      TermList *newTerms){
-      TermList *t;
-      if(newTerms == NULL){
-      t = new TermList();
-      }
-      else{
-	t = newTerms;
-      }
-
-
-      //      is 1 < 2
-      // assert that there are only four terms in each of the iterator
-      // first generate the lte terms
-      Functor::generateSelectTerms(start1, start1 + (TableEntry::numSecureFields - 1), 
-				   start2, start2 + (TableEntry::numSecureFields - 1), Bool::LTE, t);
-      ExpressionList *expT = new ExpressionList();
-      expT->push_back((*start1)->copy());
-      Expression *modP = new Function(new Value(Val_Str::mk(Function::mod)), expT);
-      expT = new ExpressionList();
-      expT->push_back((*start2)->copy());
-      Expression *modPPrime = new Function(new Value(Val_Str::mk(Function::mod)), expT);
-      Math *lhs = new Math(Math::MINUS, modP, modPPrime);
-      Math *rhs = new Math(Math::MINUS, (*(start1+Says::K))->copy(), (*(start2+Says::K))->copy());
-      Bool *eq = new Bool(Bool::LTE, lhs, rhs);
-      Select *term = new Select(eq);
-      t->push_back(term);
-
-      return t;
-    }
-
-    TermList* Says::generateAlgebraCombine(int o, 
-					   ExpressionList::iterator start1, 
-					   ExpressionList::iterator start2, 
- 					   ExpressionList::iterator headStart, 
-					   TermList *newTerms){
-      TermList *t;
-      if(newTerms == NULL){
-	t = new TermList();
-      }
-      else{
-	t = newTerms;
-      }
-
-      // using || at the index[o] location and & at other locations
-      // k combination is decided later
-      int count = 0;
-      for(; count < 4; count++){
-	if(count != Says::K){
-	  int op = ((count == o)?Math::BITOR:Math::BITAND);
-	  Expression *p = new Bool(op, (*(start1+count))->copy(), (*(start2+count))->copy());
-	  Term *assign = new Assign((*(headStart+count))->copy(), p);
-	  t->push_back(assign);
-	}
-      }
-      
-      // now generate the appropriate k value
-      //first generate k1+k2
-      Expression *plus = new Math(Math::PLUS, (*(start1+Says::K))->copy(), (*(start2+Says::K))->copy());
-      // now the union/intersection set
-      int op = ((Says::SPEAKER == o)?Math::BITAND:Math::BITOR);
-      Expression *combinedSet = new Bool(op, (*(start1+Says::K))->copy(), (*(start2+Says::K))->copy());
-      //mod
-      ExpressionList *expT = new ExpressionList();
-      expT->push_back(combinedSet);
-      Expression *mod = new Function(new Value(Val_Str::mk(Function::mod)), expT);
-
-      Expression *rhsMax;
-      if(o == Says::SPEAKER){
-	ExpressionList *maxT = new ExpressionList();
-	maxT->push_back( (*(start1+Says::K))->copy());
-	maxT->push_back( (*(start2+Says::K))->copy());
-
-	Expression *firstMax = new Function(new Value(Val_Str::mk(Function::max)), maxT);
-
-	maxT = new ExpressionList();
-	maxT->push_back(firstMax);
-	maxT->push_back(mod);
-
-	rhsMax = new Function(new Value(Val_Str::mk(Function::max)), maxT);
-      }
-      else{
-	ExpressionList *maxT = new ExpressionList();
-	maxT->push_back(new Value(Val_UInt32::mk(0)));
-	maxT->push_back(mod);
-
-	rhsMax = new Function(new Value(Val_Str::mk(Function::max)), maxT);
-
-      }
-      // final rhs
-      Math *rhs = new Math(Math::MINUS, plus, mod);
-      Term *assign = new Assign((*(headStart+Says::K))->copy(), rhs);
-      t->push_back(assign);
-      return t;
-    }
-
-    // add rule to verify the correctness of proof for tables of type TableEntry t
-    void Rule::getVerifier(TableEntry *t, StatementList *s){
-      int newVariable = 1;
-      TableEntry localTableEntry(t->name, t->fields);
-      TableEntry *te = &localTableEntry;
-      te->name = Says::makeSays + t->name;
-      Functor *rhs = new Functor(te, newVariable);
-      
-      Functor *head = new Functor(*rhs);      
-      head->changeName(Says::saysPrefix + t->name);
-
-      TermList *newTerms = new TermList();
-      newTerms->push_back(rhs);
-
-      ExpressionList::iterator iter; 
-
-      //create buffer creation logic
-      ostringstream var3;
-      var3 << Says::varPrefix << newVariable++;
-      Variable *buf = new Variable(Val_Str::mk(var3.str()));
-      
-      // check if the concatenate operation is needed or not
-      // remember that the loc specifier is excluded but the table name must be included
-      Value *table = new Value(Val_Str::mk(t->name));
-      Expression *cur = table;
-      
-      ExpressionList *list = const_cast<ExpressionList*>(rhs->arguments());
-      if(rhs->arguments()->size() > TableEntry::numSecureFields + 1)
-      {
-	iter = list->begin();
-	//exclude location specifier and all secure fields
-	iter++; 
-	for (; iter < list->end() - TableEntry::numSecureFields; iter++){
-	  cur = new Math(Math::APPEND, cur, *iter);
-	}
-      }
-      
-      Assign *assBuf = new Assign(buf, cur);
-      
-      //create verification logic
-      ostringstream var4;
-      var4 << Says::varPrefix << newVariable++;
-      Variable *hash = new Variable(Val_Str::mk(var4.str()));
-      
-      ExpressionList *hashArg = new ExpressionList();
-      hashArg->push_back(buf);
-      Function *f_hash = new Function(new Value(Val_Str::mk(Says::hashFunc)), hashArg);
-      Assign *assHash = new Assign(hash, f_hash);
-      
-      
-      ExpressionList *verArg = new ExpressionList();
-      for (; iter < list->end(); iter++){
-	verArg->push_back((*iter)->copy());
-      }
-      verArg->push_back(hash);
-
-      Function *f_verify = new Function(new Value(Val_Str::mk(Says::verFunc)), verArg);
-      Select *assVer = new Select(new Bool(Bool::EQ, new Value(Val_UInt32::mk(1)), f_verify));
-      
-      newTerms->push_back(assBuf);
-      newTerms->push_back(assHash);
-      newTerms->push_back(assVer);
-
-      ostringstream ruleName;
-      ruleName << Says::rulePrefix<< Rule::ruleId++;
-      Value *rName = new Value(Val_Str::mk(ruleName.str()));
-      
-      Rule *r = new Rule(head, newTerms, false, rName);
-      r->canonicalizeRule();
-      s->push_back(r);
     }
     
     Functor::Functor(TableEntry *t, int &fictVar){
@@ -1399,121 +828,6 @@ namespace compile {
 	Variable *tmp = new Variable(Val_Str::mk(oss.str()), i == 0);	
 	_args->push_back(tmp);
       }
-    }
-
-    TableSet* Rule::initializeRule(StatementList *s)
-    {
-      int newVariable = 1;
-      Says *sh;
-      std::list<TermList*> newRuleComparators;
-      TableSet *tables = new TableSet();
-      sh = dynamic_cast<Says*>(_head);
-      string headTableName = ((sh!=NULL)?sh->name():"");
-      if(sh != NULL)
-      {
-	// first rule generates the proof assuming that the node 
-	// executing the rule has the key
-	TermList *newTermsGen = Says::normalizeGenerate(sh, newVariable);
-	if(newTermsGen != NULL){
-	  newRuleComparators.push_back(newTermsGen);
-	  _head = new Functor(sh);
-
-	}
-      }
-      //      TermList *_bodyClone = NULL;
-
-      for (TermList::iterator iter = _body->begin(); 
-           iter != _body->end(); iter++) {
-	Says *s;
-	if ((s = dynamic_cast<Says*>(*iter)) != NULL)
-	{
-	  //  if(_bodyClone == NULL){
-	  //	  _bodyClone = new TermList(_body->begin, iter);
-	  //}
-	  tables->insert(new TableEntry(s->name(), s->saysArgs()->size() + TableEntry::numSecureFields));
-	  string saysTableName = s->name();
-	  Says::normalizeVerify(s, newVariable);
-
-	  //	  Says::normalizeVerify(s, newVariable);
-	  if(sh != NULL && (saysTableName.compare(headTableName)==0))
-	  {
-	    ExpressionList *head =  const_cast<ExpressionList*>(_head->arguments());
-
-	    TermList *comparisonTerms = Says::generateEqTerms(head->begin(),
-							      head->end()-TableEntry::numSecureFields,
-							      s->saysArgs()->begin(), 
-							      s->saysArgs()->end()-TableEntry::numSecureFields);
-	    Says::generateAlgebraLT(head->end()-TableEntry::numSecureFields, 
-				    s->saysArgs()->end()-TableEntry::numSecureFields, 
-				    comparisonTerms);
-	    Says::generateEqTerms(head->end()-1, head->end(), 
-				  s->saysArgs()->end()-1, s->saysArgs()->end(), 
-				  comparisonTerms);
-	    newRuleComparators.push_back(comparisonTerms);
-	  }
-	 
-	  
-	  _body->erase(iter);
-	  // make a deep copy even though we can live with shallow one 
-	  // to ensure that the following delete can be executed safely
-	  _body->push_back(new Functor(*s));
-	  delete s;
-	  
-// 	  if(newTerms != NULL){
-
-// 	    for (TermList::iterator it = newTerms->begin(); 
-// 		 it != newTerms->end(); it++) {
-// 	      //      _bodyClone->push_back(*it);
-// 	      _body->push_back(*it);
-// 	    }
-// 	    delete newTerms;
-// 	  }
-	  
-	  
-	}
-      }
-
-      //      if(_bodyClone != NULL){
-      //delete _body;
-      //_body = _bodyClone;
-      //}
-      
-      if(sh != NULL)
-      {
-	//	delete sh;
-	// copy this rule into a new rule and insert the new rule into the list as well 
-	// as modify the existing rule
-	int size = newRuleComparators.size();
-	Rule *r;
-	for(int i = 0; i < size; i++){
-	// if i < size - 1, then create a copy for next stage
-	// else use the current copy
-	  if(i < size - 1){
-	    r = new Rule(*this);
-	    r->resetName();
-	    s->push_back(r);
-	  }
-	  else{
-	    r = this;
-	  }
-
-	  TermList *newTermsUse = newRuleComparators.front();
-	  newRuleComparators.pop_front();
-	  if(newTermsUse != NULL){
-	    
-	    for (TermList::iterator it = newTermsUse->begin(); 
-		 it != newTermsUse->end(); it++) {
-	      r->_body->push_back(*it);
-	    }
-	    delete newTermsUse;
-	  }
-
-	}
-      }
-
-
-      return tables;
-//      canonicalizeRule();
     }
 
     void Rule::canonicalizeRule() 
@@ -1546,60 +860,89 @@ namespace compile {
         return;
       }
 
+      ExpressionList *argsList[Functor::NOT_FOUND];
+      ExpressionList locationList;
+      ExpressionList opaqueList;
+      ExpressionList hintList;
+      ExpressionList saysList;
+
+      if(pred->isNew()){
+	locationList.push_back(pred->getNewLocSpec());
+	opaqueList.push_back(pred->getOpaque());
+	hintList.push_back(pred->getHint());
+      }
+      argsList[Functor::T_FUNCTOR] = const_cast<ExpressionList*>(pred->arguments());
+      Says *s;
+      if((s = dynamic_cast<Says*>(pred)) != NULL){
+	argsList[Functor::T_SAYS] = const_cast<ExpressionList*>(s->saysParams());
+      }
+      else{
+	argsList[Functor::T_SAYS] = &saysList;
+      }
+
+      argsList[Functor::T_LOCSPEC] = &locationList;
+      argsList[Functor::T_OPAQUE] = &opaqueList;      
+      argsList[Functor::T_HINT] = &hintList;      
+
+      ExpressionList *args;
       // Next, we canonicalize all the args in the functor.  We build up
       // a list of argument names - the first 'arity' of these will be the
       // free variables in the rule head.  Literals and duplicate free
       // variables here are eliminated, by a process of appending extra
       // "eq" terms to the body, and inventing new free variables.
-      ExpressionList *args = const_cast<ExpressionList*>(pred->arguments());
-      for (ExpressionList::iterator i = args->begin();
-           i != pred->arguments()->end(); i++) {
-        Variable *var = NULL;
-        Value    *val = NULL;
-        Math     *math = NULL;
-        Function *func = NULL;
+      for(int count = 0; count < Functor::NOT_FOUND; count++){
+	args = argsList[count];
+	for (ExpressionList::iterator i = args->begin();
+	     i != args->end(); i++) {
+	  Variable *var = NULL;
+	  Value    *val = NULL;
+	  Math     *math = NULL;
+	  Function *func = NULL;
     
-        if ((var = dynamic_cast<Variable*>(*i)) != NULL) {
-          // The argument is a free variable - the usual case. 
-          ExpressionList::iterator prev = pred->find(var);
-          if (prev < i) {
-            ostringstream oss;
-            oss << "$" << fict_varnum++;
-    	    // We've found a duplicate variable in the head. Add a new
-    	    // "eq" term to the front of the term list. 
-            Variable *tmp = new Variable(Val_Str::mk(oss.str()));
-            (headPred) ? ruleBody->push_back(new Assign(tmp, *i))
-                       : ruleBody->push_back(new Select(new Bool(Bool::EQ, tmp, *i)));
-            pred->replace(i, tmp);
-          }
-        }
-        else if ((val = dynamic_cast<Value*>(*i)) != NULL) {
-          ostringstream oss;
-          oss << "$" << fict_varnum++;
-          Variable *tmp = new Variable(Val_Str::mk(oss.str()));
-          pred->replace(i, tmp);
-          (headPred) ? ruleBody->push_back(new Assign(tmp, val))
-                     : ruleBody->push_back(new Select(new Bool(Bool::EQ, tmp, val)));
-        }
-        else if ((math = dynamic_cast<Math*>(*i)) != NULL) {
-          ostringstream oss;
-          oss << "$" << fict_varnum++;
-          Variable *tmp = new Variable(Val_Str::mk(oss.str()));
-          pred->replace(i, tmp);
-          (headPred) ? ruleBody->push_back(new Assign(tmp, math))
-                     : ruleBody->push_back(new Select(new Bool(Bool::EQ, tmp, math)));
-        }
-        else if ((func = dynamic_cast<Function*>(*i)) != NULL) {
-          ostringstream oss;
-          oss << "$" << fict_varnum++;
-          Variable *tmp = new Variable(Val_Str::mk(oss.str()));
-          pred->replace(i, tmp);
-          (headPred) ? ruleBody->push_back(new Assign(tmp, func))
-                     : ruleBody->push_back(new Select(new Bool(Bool::EQ, tmp, func)));
-        }
-        else if (dynamic_cast<Aggregation*>(*i) == NULL) {
-          throw Exception(0, "Parse rule unknown functor body type.");
-        }
+	  if ((var = dynamic_cast<Variable*>(*i)) != NULL) {
+	    // The argument is a free variable - the usual case. 
+	    TotalIterator prev = pred->totalFind(var);
+	    if (prev.first < count || ((prev.first == count) && (prev.second < i))) {
+	      if((prev.first != count) || ((count != Functor::T_LOCSPEC) && (count != Functor::T_OPAQUE) && (count != Functor::T_HINT))){
+		ostringstream oss;
+		oss << "$" << fict_varnum++;
+		// We've found a duplicate variable in the head. Add a new
+		// "eq" term to the front of the term list. 
+		Variable *tmp = new Variable(Val_Str::mk(oss.str()));
+		(headPred) ? ruleBody->push_back(new Assign(tmp, *i))
+		  : ruleBody->push_back(new Select(new Bool(Bool::EQ, tmp, *i)));
+		pred->replace(TotalIterator(count, i), tmp);
+	      }
+	    }
+	  }
+	  else if ((val = dynamic_cast<Value*>(*i)) != NULL) {
+	    ostringstream oss;
+	    oss << "$" << fict_varnum++;
+	    Variable *tmp = new Variable(Val_Str::mk(oss.str()));
+	    pred->replace(TotalIterator(count, i), tmp);
+	    (headPred) ? ruleBody->push_back(new Assign(tmp, val))
+	      : ruleBody->push_back(new Select(new Bool(Bool::EQ, tmp, val)));
+	  }
+	  else if ((math = dynamic_cast<Math*>(*i)) != NULL) {
+	    ostringstream oss;
+	    oss << "$" << fict_varnum++;
+	    Variable *tmp = new Variable(Val_Str::mk(oss.str()));
+	    pred->replace(TotalIterator(count, i), tmp);
+	    (headPred) ? ruleBody->push_back(new Assign(tmp, math))
+	      : ruleBody->push_back(new Select(new Bool(Bool::EQ, tmp, math)));
+	  }
+	  else if ((func = dynamic_cast<Function*>(*i)) != NULL) {
+	    ostringstream oss;
+	    oss << "$" << fict_varnum++;
+	    Variable *tmp = new Variable(Val_Str::mk(oss.str()));
+	    pred->replace(TotalIterator(count, i), tmp);
+	    (headPred) ? ruleBody->push_back(new Assign(tmp, func))
+	      : ruleBody->push_back(new Select(new Bool(Bool::EQ, tmp, func)));
+	  }
+	  else if (dynamic_cast<Aggregation*>(*i) == NULL) {
+	    throw Exception(0, "Parse rule unknown functor body type.");
+	  }
+	}
       }
 
     } 
@@ -1624,7 +967,7 @@ namespace compile {
     Rule::materialize(CommonTable::ManagerPtr catalog, ValuePtr programID, string ns)
     {
       CommonTablePtr ruleTbl = catalog->table(RULE);
-    
+      uint32_t pos = 0;    
       /* First create a tuple represening the rule and add it to the rule
        * table. */
       TuplePtr ruleTp = Tuple::mk(RULE, true);
@@ -1635,21 +978,22 @@ namespace compile {
         ruleTp->append(Val_Null::mk());
       }
       ruleTp->append(Val_Str::mk(_name));
-      TuplePtr headTp = _head->materialize(catalog, (*ruleTp)[TUPLE_ID], ns);
+      TuplePtr headTp = _head->materialize(catalog, (*ruleTp)[TUPLE_ID], ns, pos++);
       ruleTp->append((*headTp)[TUPLE_ID]);             // Add the "head" functor identifer.
       ruleTp->append(Val_Null::mk());                  // The P2DL desc. of this rule
       ruleTp->append(Val_UInt32::mk(_delete));         // Delete rule?
       ruleTp->append(Val_UInt32::mk(_body->size()+1)); // Term count?
-      ruleTp->append(Val_Int32::mk(_new?1:0)); // The access method
+      ruleTp->append(Val_UInt32::mk(_new?1:0)); // The access method
       ruleTp->freeze();
       ruleTbl->insert(ruleTp);	               // Add rule to rule table.
     
       /* Create the functors associated with the rule body. Each functor row
        * will reference (foreign key) the rule identifier of the rule 
        * created above. */
+
       for (TermList::const_iterator iter = _body->begin();
-           iter != _body->end(); iter++) {
-        (*iter)->materialize(catalog, (*ruleTp)[TUPLE_ID], ns);
+           iter != _body->end(); iter++, pos++) {
+        (*iter)->materialize(catalog, (*ruleTp)[TUPLE_ID], ns, pos);
       }
       return ruleTp;
     }
@@ -1727,8 +1071,12 @@ namespace compile {
     {
       TuplePtr tpl = Tuple::mk(n->toString());
     
+      uint32_t pos = 1;
       ExpressionList::const_iterator iter;
-      for (iter = a->begin(); iter != a->end(); iter++) {
+      for (iter = a->begin(); iter != a->end(); iter++, pos++) {
+	if(pos == compile::VERPOS && Table::compoundRewrite){
+	  tpl->append(Val_UInt32::mk(0));
+	}
         Value *v = dynamic_cast<Value*>(*iter);
         Math  *m = dynamic_cast<Math*>(*iter);
         if (v != NULL) {
@@ -1788,10 +1136,17 @@ namespace compile {
                  Expression *ttl, 
                  Expression *size, 
                  ExpressionList *keys,
-		 bool says)
+		 bool says,
+		 bool versioned)
     {
       _name = name->toString() ;
       _says = says;
+      _versioned = versioned;
+
+      if(_says){
+	materializedSaysTables->insert(Val_Str::mk(_name));
+	initialize();
+      }
 
       int myTtl = Val_Int64::cast(ttl->value());
       if (myTtl == -1) {
@@ -1850,6 +1205,23 @@ namespace compile {
       else {
         scopedName = ns + _name; 
       }
+      if(compoundRewrite && _versioned){
+	Table2::Key newKey;
+	newKey.push_back(compile::VERPOS - 1); 
+	for (CommonTable::Key::iterator i = _keys.begin();
+	     i != _keys.end(); i++) {
+	  unsigned fieldNo = *i;
+	  if (fieldNo >= (compile::VERPOS - 1)) {
+	    newKey.push_back(fieldNo + 1);
+	  }
+	  else{
+	    newKey.push_back(fieldNo);
+	  }
+	}
+	compile::Context::materializedTables->insert(Val_Str::mk(scopedName));
+	return catalog->createTable(scopedName, newKey, _size, _lifetime);
+      }
+      
 
       return catalog->createTable(scopedName, _keys, _size, _lifetime);
     }
@@ -1898,8 +1270,8 @@ namespace compile {
       tpl->append(parentKey);      
       tpl->append(Val_Str::mk(scopedFrom));
       tpl->append(Val_Str::mk(scopedTo));
-      tpl->append(Val_Int32::mk(_locSpecField));
-      tpl->append(Val_Int32::mk(_refType));
+      tpl->append(Val_UInt32::mk(_locSpecField));
+      tpl->append(Val_UInt32::mk(_refType));
       tpl->freeze();
 
       // Update the the ref table to contain this fact as being installed
@@ -1994,46 +1366,22 @@ namespace compile {
     Context::program(StatementList *s, bool parserCall) 
     {
       assert(_statements == NULL || !parserCall);
-      static bool materialized = false;
       if(parserCall)
       {
 	_statements = s;
-	if(!materialized){
-	  StatementList *mat = Table::generateMaterialize();
-	  for (StatementList::iterator iter = mat->begin();
-	       iter != mat->end(); iter++) { 
-	    s->push_back(*iter);
-	  }
-	  delete mat;
-	  materialized = true;
-	}
+	//	compile::parse::Secure::program(_statements, true);
       }
 
       Rule* r;
       Namespace *nmSpc;
-      TableSet secureTable;
       Table *tab;
-      std::set<string> materializedTables;
+      SetPtr materializedSaysTables(new Set());
       for (StatementList::iterator iter = s->begin();
              iter != s->end(); iter++) { 
 
 	if ((r = dynamic_cast<Rule*>(*iter)) != NULL) 
 	{
-	  TableSet *table = r->initializeRule(s);
-	  if(table->size() > 0)
-	  {
-	    for(TableSet::iterator iter = table->begin(); 
-		iter != table->end(); iter++){
-	      secureTable.insert(*iter);
-	    }
-	  }
-	  delete table;
-	  if(printOverLog)
-	  {
-	    std::cout<<r->toString()<<std::endl;
-	  }
 	  r->canonicalizeRule();
-	  
 	}
 	else if((nmSpc = dynamic_cast<Namespace*>(*iter)) != NULL) 
 	{
@@ -2042,10 +1390,7 @@ namespace compile {
 	}
 	else if((tab = dynamic_cast<Table*>(*iter)) != NULL)
 	{
-	  if(tab->says()){
-	    materializedTables.insert(tab->name());
-	  }
-	  tab->initialize();
+	  //	  tab->initialize();
 	}
 	else
 	{
@@ -2054,28 +1399,13 @@ namespace compile {
 
       }
 
-      //insert rules for authentication algebra and validation
-      for(TableSet::iterator iter = secureTable.begin(); 
-	  iter != secureTable.end(); iter++){
-	//	std::cout<<"statement list size before getVerifier"<<s->size()<<std::endl;
-	//	std::cout<<"statement list size before getVerifier"<<_statements->size()<<std::endl;
-	Rule::getVerifier(*iter, s);
-	//	std::cout<<"statement list size after getVerifier"<<_statements->size()<<std::endl;
-	//	std::cout<<"statement list size after getVerifier"<<s->size()<<std::endl;
-	if(materializedTables.find((*iter)->name) != materializedTables.end())
-	{
-	  Rule::getAlgebra(*iter, s);
-	}
-	delete *iter;
-      }
-      
-       if(parserCall){
+      if(parserCall){
 	for (StatementList::iterator iter = s->begin();
-             iter != s->end(); iter++) { 
+	     iter != s->end(); iter++) { 
 	  std::cout<<(*iter)->toString()<<std::endl;
 	}
       }
-
+      
       
     }
 

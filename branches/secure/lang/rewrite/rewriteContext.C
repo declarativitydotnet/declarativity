@@ -139,6 +139,7 @@ namespace compile {
       status->append(Val_List::mk(schema));          // Schema
       status->append(Val_UInt32::mk(2));             // Position right after event
       status->append(Val_Null::mk());                // Acess method
+      status->append(Val_UInt32::mk(0));           // Access method
 
       /* Locate the table id associated with the name COMPILE_STATUS.
          Use the table id to set the TID field of the status table predicate */

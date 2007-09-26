@@ -10,6 +10,8 @@
  * DESCRIPTION: Utility classes for compile process
  *
  */
+#ifndef __SECUREUTIL_H__
+#define __SECUREUTIL_H__
 
 #include <ostream>
 #include <set>
@@ -78,3 +80,5 @@ namespace compile {
   };
   
 };
+
+#endif

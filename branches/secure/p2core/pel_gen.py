@@ -146,7 +146,13 @@ for op, ar, va, desc in [
   ("gen",2,   "GEN",      "Decrypt the first argument decrypted using the second key."),
   ("mod",1,   "SETMOD",      "Return the size of the passed set or list."),
   ("empty",0,   "EMPTY",      "Return a new empty set."),
-  ("initSet",1,   "INITSET",      "Return a new set with the element passed.")
+  ("initSet",1,   "INITSET",      "Return a new set with the element passed."),
+
+  ("serialize",2,   "SERIALIZE",   "serialize the graph rooted at the given tuple"),
+  ("deserialize",2,   "DESERIALIZE",   "deserialize the graph using the given buffer and root tuple name"),
+  ("createVersion",0,   "CREATEVER",   "create a new version"),
+  ("createLocSpec",0,   "CREATELOCSPEC",   "create a new locspec"),
+  ("isLocSpec",1,   "IS_LOCSPEC",   "returns 1 if the passed arg is a loc spec, 0 otherwise")
   ]:  emit_opcode(op, ar, va, desc)
 
 for op, ar, va, desc in [

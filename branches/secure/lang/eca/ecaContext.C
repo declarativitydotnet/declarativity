@@ -141,8 +141,9 @@ namespace compile {
           TuplePtr assign = Iter->next()->clone();
           assign->set(catalog->attribute(ASSIGN, "POSITION"), Val_UInt32::mk(position++));
           assign->freeze();
-          if (!catalog->table(ASSIGN)->insert(assign))
-            throw Exception("Rewrite View: Can't insert assignment. " + rule->toString());
+          if (!catalog->table(ASSIGN)->insert(assign)){
+	    //            throw Exception("Rewrite View: Can't insert assignment. " + rule->toString());
+	  }
         }
 
         key.clear();
@@ -153,8 +154,9 @@ namespace compile {
           TuplePtr select = Iter->next()->clone();
           select->set(catalog->attribute(SELECT, "POSITION"), Val_UInt32::mk(position++));
           select->freeze();
-          if (!catalog->table(SELECT)->insert(select))
-            throw Exception("Rewrite View: Can't insert selection. " + rule->toString());
+          if (!catalog->table(SELECT)->insert(select)){
+	    //            throw Exception("Rewrite View: Can't insert selection. " + rule->toString());
+	  }
         }
 
       }
@@ -181,6 +183,9 @@ namespace compile {
         TuplePtr deltaRule = rule->clone(RULE, true);
         TuplePtr deltaHead = head->clone(FUNCTOR, true);
         deltaRule->set(catalog->attribute(RULE, "HEAD_FID"), (*deltaHead)[TUPLE_ID]);
+	ostringstream oss;
+	oss<<RULENAMEPREFIX<<ruleCounter++;
+	deltaRule->set(catalog->attribute(RULE, "NAME"), Val_Str::mk(oss.str()));
         deltaHead->set(catalog->attribute(FUNCTOR, "RID"), (*deltaRule)[TUPLE_ID]);
 
         if ((*deltaHead)[catalog->attribute(FUNCTOR, "TID")] == Val_Null::mk())
@@ -224,20 +229,6 @@ namespace compile {
         
         // Copy over all assignments and selection predicates from old rule.
         key.clear();
-        key.push_back(catalog->attribute(SELECT, "RID"));
-        CommonTable::Iterator Iter;
-        Iter = catalog->table(SELECT)->lookup(CommonTable::theKey(CommonTable::KEY2),
-                                              key, rule); 
-        while (!Iter->done()) {
-          TuplePtr select = Iter->next()->clone(SELECT, true);
-          select->set(catalog->attribute(SELECT, "RID"), (*deltaRule)[TUPLE_ID]);
-          select->set(catalog->attribute(SELECT, "POSITION"), Val_UInt32::mk(position++));
-          select->freeze();
-          if (!catalog->table(SELECT)->insert(select))
-            throw Exception("Rewrite View: Can't insert selection. " + rule->toString());
-        }
-
-        key.clear();
 	key.push_back(catalog->attribute(ASSIGN, "RID"));
 	Iter = catalog->table(ASSIGN)->lookup(CommonTable::theKey(CommonTable::KEY2),
                                               key, rule); 
@@ -247,9 +238,26 @@ namespace compile {
           assign->set(catalog->attribute(ASSIGN, "RID"), (*deltaRule)[TUPLE_ID]);
           assign->set(catalog->attribute(ASSIGN, "POSITION"), Val_UInt32::mk(position++));
           assign->freeze();
-          if (!catalog->table(ASSIGN)->insert(assign))
-            throw Exception("Rewrite View: Can't insert assignment. " + rule->toString());
+          if (!catalog->table(ASSIGN)->insert(assign)){
+	    //            throw Exception("Rewrite View: Can't insert assignment. " + rule->toString());
+	  }
         }
+
+        key.clear();
+        key.push_back(catalog->attribute(SELECT, "RID"));
+        CommonTable::Iterator Iter;
+        Iter = catalog->table(SELECT)->lookup(CommonTable::theKey(CommonTable::KEY2),
+                                              key, rule); 
+        while (!Iter->done()) {
+          TuplePtr select = Iter->next()->clone(SELECT, true);
+          select->set(catalog->attribute(SELECT, "RID"), (*deltaRule)[TUPLE_ID]);
+          select->set(catalog->attribute(SELECT, "POSITION"), Val_UInt32::mk(position++));
+          select->freeze();
+          if (!catalog->table(SELECT)->insert(select)){
+	    //            throw Exception("Rewrite View: Can't insert selection. " + rule->toString());
+	  }
+        }
+
         
       }
 
@@ -322,6 +330,7 @@ namespace compile {
       event->append(Val_List::mk(schema));     // Attributes
       event->append(Val_UInt32::mk(1));        // Position
       event->append(Val_Null::mk());           // Access method
+      event->append(Val_UInt32::mk(0));           // Access method
       event->freeze();
       functorTbl->insert(event);
 
