@@ -1,1 +1,0 @@
-java -jar p2viz.jar map.jpg

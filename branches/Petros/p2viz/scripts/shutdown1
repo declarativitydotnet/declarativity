@@ -1,2 +1,0 @@
-eval `ssh-agent -k`
-
