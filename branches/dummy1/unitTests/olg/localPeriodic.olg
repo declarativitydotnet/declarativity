@@ -1,0 +1,24 @@
+/**
+  * This file is distributed under the terms in the attached LICENSE file.
+  * If you do not find this file, copies can be found by writing to:
+  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+  * Or
+  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+  * Berkeley, CA,  94707. Attention: P2 Group.
+  * 
+  * $Id: doublePeriodic.olg 1211 2007-01-24 00:57:03Z maniatis $
+  * 
+  * DESCRIPTION: This regression test is meant to ensure that local
+  * periodic events do happen in their entirety.
+  * 
+  * tests/runOverLog -o unitTests/olg/localPeriodic.olg
+  *
+  * this program should generate exactly 20 per tuples.
+***/
+
+
+watchmod(per, "s").
+
+g2 per(@I, E) :- periodic(@I, E, 0, 20).
+

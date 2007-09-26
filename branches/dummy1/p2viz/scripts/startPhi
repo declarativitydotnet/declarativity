@@ -1,0 +1,5 @@
+python sites.py irb_phi
+./P2Viz.exe&
+ssh -v -l irb_phi -R 12221:localhost:10001 planet2.berkeley.intel-research.net
+
+
