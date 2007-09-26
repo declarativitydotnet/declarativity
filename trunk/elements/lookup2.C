@@ -169,7 +169,7 @@ Lookup2::pull(int port,
     TuplePtr returnTuple;
     if (_iterator->done()) {
       // Return the empty tuple and complete this lookup.
-      returnTuple = Tuple::EMPTY;
+      returnTuple = Tuple::EMPTY();
 
       ELEM_INFO("pull: Finished search on tuple "
                 << _lookupTuple->toString());

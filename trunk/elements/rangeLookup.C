@@ -179,7 +179,7 @@ RangeLookup::pull(int port,
     if (_iterator->done()) {
       // Empty search. Don't try to dereference the iterator.  Just
       // set the result to the empty tuple, to be tagged later
-      t = Tuple::EMPTY;
+      t = Tuple::EMPTY();
     } else {
       // This lookup has at least one result.
       t = _iterator->next();

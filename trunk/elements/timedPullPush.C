@@ -104,6 +104,7 @@ TimedPullPush::runTimer()
   // Was it there?
   if (p) {
     // Goody, just push it out
+    _counter++;
     int result = output(0)->push(p, _unblockPush);
 
     // Were we pushed back?
@@ -160,8 +161,6 @@ TimedPullPush::reschedule()
 
   if ((_tuples == 0) ||
       ((_tuples > 0) && (_counter < _tuples))) {
-    _counter++;
-
     ELEM_INFO("reschedule: rescheduling ("
               << _counter
               << "/"
