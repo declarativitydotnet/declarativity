@@ -452,35 +452,40 @@ generateEventElement(PlanContext* pc)
   RuleStrand* rs = pc->_ruleStrand;
   int aggField = pc->getRule()->_action->_pf->aggregate();
 
-  if (rs->eventType() == Parse_Event::REFRESH) {
+  switch (rs->eventType()) {
+  case Parse_Event::REFRESH:
     generateRefreshEvent(pc);
-  }
+    break;
 
-  // update, create an updater
-  if (rs->eventType() == Parse_Event::INSERT) {
-
+  case Parse_Event::INSERT:
     // is this an agg table type?
     if (aggField >= 0) {
       generateAggEvent(pc);
       return;
     }
-
+    
     if (pc->getRule()->getEventName() == "periodic") {
       generatePeriodicEvent(pc);
       return;
     }
-
+    
     generateInsertEvent(pc);
+    break;
 
-    // check for periodic as well
-  }
-  
-  if (rs->eventType() == Parse_Event::DELETE) {
+  case Parse_Event::DELETE:
     generateDeleteEvent(pc);
-  }
-  
-  if (rs->eventType() == Parse_Event::RECV) {
+    break;
+
+  case Parse_Event::RECV:
     generateReceiveEvent(pc);
+    break;
+
+  default:
+    PLANNER_WARN(pc, "Rule strand '"
+                 << rs->toString()
+                 << "' has unknown event type '"
+                 << rs->eventType()
+                 << "'. Skipping.");
   }
 }
 

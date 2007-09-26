@@ -231,15 +231,69 @@ ECA_Context::rewrite(Localize_Context* lctxt,
       if (found) {
         // No need for extra stub rule
       } else {
-        watchStubRule(watchedName);
+        receiveWatchStubRule(watchedName);
       }
+    }
+  }
+
+
+  // And create dummy rules for all watched insert/delete/refresh events
+  for (OL_Context::WatchTableType::iterator i =
+         watches.begin();
+       i != watches.end();
+       i++) {
+    string watchedName = i->first;
+    string watchedNameModifiers = i->second;
+
+
+    // Is the watched name really a table?
+    OL_Context::TableInfo* tableInfo =
+      tableStore->getTableInfo(watchedName);
+    if (tableInfo == NULL) {
+      // This isn't really a table. Oops
+      PLANNER_WARN_NOPC("Watched tuple '"
+                        << watchedName
+                        << "' with a table modifier "
+                        << "(irdaz) is not really "
+                        << "a table. Ignoring.");
+      continue;
+    }
+
+    PLANNER_INFO_NOPC("Watching '"
+                      << watchedName
+                      << "' with mods '"
+                      << watchedNameModifiers
+                      << "'");
+    if ((watchedNameModifiers == "") ||
+        (watchedNameModifiers.find("i") != string::npos)) {
+      PLANNER_INFO_NOPC("Insertion into table '"
+                        << watchedName
+                        << "' should be watched.");
+
+      insertWatchStubRule(watchedName);
+    }
+    if ((watchedNameModifiers == "") ||
+        (watchedNameModifiers.find("d") != string::npos)) {
+      PLANNER_INFO_NOPC("Deletion from table '"
+                        << watchedName
+                        << "' should be watched.");
+
+      deleteWatchStubRule(watchedName);
+    }
+    if ((watchedNameModifiers == "") ||
+        (watchedNameModifiers.find("r") != string::npos)) {
+      PLANNER_INFO_NOPC("Refresh in table '"
+                        << watchedName
+                        << "' should be watched.");
+
+      refreshWatchStubRule(watchedName);
     }
   }
 }
 
 
 void
-ECA_Context::watchStubRule(string watchedName)
+ECA_Context::receiveWatchStubRule(string watchedName)
 {
   PLANNER_INFO_NOPC("Creating watch-stub rule for tuple '"
                     << watchedName
@@ -260,6 +314,102 @@ ECA_Context::watchStubRule(string watchedName)
                       periodicArgs);
   watchStubRule->_event = new Parse_Event(recvFunctor,
                                           Parse_Event::RECV);
+
+
+  watchStubRule->_action = new Parse_Action(recvFunctor,
+                                            Parse_Action::DROP);
+
+  add_rule(watchStubRule);
+}
+
+
+
+void
+ECA_Context::insertWatchStubRule(string watchedName)
+{
+  PLANNER_INFO_NOPC("Creating insert watch-stub rule for tuple '"
+                    << watchedName
+                    << "'");
+
+  ECA_Rule* watchStubRule = new ECA_Rule(watchedName +
+                                         "_insertWatchStub");
+
+  Parse_ExprList* args = new Parse_ExprList(); 
+  Parse_Var* dummyLocspec = new Parse_Var(Val_Str::mk("A"));
+  dummyLocspec->setLocspec();
+
+  args->push_back(dummyLocspec); // the dummy locspec
+
+  Parse_Functor* recvFunctor = 
+    new Parse_Functor(new Parse_FunctorName
+                      (new Parse_Val(Val_Str::mk(watchedName))), 
+                      args);
+  watchStubRule->_event = new Parse_Event(recvFunctor,
+                                          Parse_Event::INSERT);
+
+
+  watchStubRule->_action = new Parse_Action(recvFunctor,
+                                            Parse_Action::DROP);
+
+  add_rule(watchStubRule);
+}
+
+
+
+void
+ECA_Context::deleteWatchStubRule(string watchedName)
+{
+  PLANNER_INFO_NOPC("Creating delete watch-stub rule for tuple '"
+                    << watchedName
+                    << "'");
+
+  ECA_Rule* watchStubRule = new ECA_Rule(watchedName +
+                                         "_deleteWatchStub");
+
+  Parse_ExprList* args = new Parse_ExprList(); 
+  Parse_Var* dummyLocspec = new Parse_Var(Val_Str::mk("A"));
+  dummyLocspec->setLocspec();
+
+  args->push_back(dummyLocspec); // the dummy locspec
+
+  Parse_Functor* recvFunctor = 
+    new Parse_Functor(new Parse_FunctorName
+                      (new Parse_Val(Val_Str::mk(watchedName))), 
+                      args);
+  watchStubRule->_event = new Parse_Event(recvFunctor,
+                                          Parse_Event::DELETE);
+
+
+  watchStubRule->_action = new Parse_Action(recvFunctor,
+                                            Parse_Action::DROP);
+
+  add_rule(watchStubRule);
+}
+
+
+
+void
+ECA_Context::refreshWatchStubRule(string watchedName)
+{
+  PLANNER_INFO_NOPC("Creating refresh watch-stub rule for tuple '"
+                    << watchedName
+                    << "'");
+
+  ECA_Rule* watchStubRule = new ECA_Rule(watchedName +
+                                         "_refreshWatchStub");
+
+  Parse_ExprList* args = new Parse_ExprList(); 
+  Parse_Var* dummyLocspec = new Parse_Var(Val_Str::mk("A"));
+  dummyLocspec->setLocspec();
+
+  args->push_back(dummyLocspec); // the dummy locspec
+
+  Parse_Functor* recvFunctor = 
+    new Parse_Functor(new Parse_FunctorName
+                      (new Parse_Val(Val_Str::mk(watchedName))), 
+                      args);
+  watchStubRule->_event = new Parse_Event(recvFunctor,
+                                          Parse_Event::REFRESH);
 
 
   watchStubRule->_action = new Parse_Action(recvFunctor,

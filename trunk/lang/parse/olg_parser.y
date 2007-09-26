@@ -97,7 +97,7 @@
 %type<u_exprlistlist>  matrixentries;
 %type<u_term>          term functor assign select;
 %type<v>               functorarg locationarg functionarg tablearg atom rel_atom math_atom;
-%type<v>               function math_expr boolg_expr range_expr range_atom aggregate;
+%type<v>               function math_expr bool_expr range_expr range_atom aggregate;
 %type<v>               vectorentry vector_expr matrix_expr;
 %type<u_boper>         rel_oper;
 %type<u_moper>         math_oper;
@@ -249,25 +249,25 @@ functionarg: math_expr | atom | OLG_VAR | function
              { $$ = $1; }
            ;
 
-select: boolg_expr 
+select: bool_expr 
         { $$ = new compile::parse::Select($1); }
       ;
 
 assign: OLG_VAR OLG_ASSIGN rel_atom
         { $$ = new compile::parse::Assign($1, $3); }
-      | OLG_VAR OLG_ASSIGN boolg_expr
+      | OLG_VAR OLG_ASSIGN bool_expr
         { $$ = new compile::parse::Assign($1, $3); }
       ;
 
-boolg_expr: OLG_LPAR boolg_expr OLG_RPAR 
+bool_expr: OLG_LPAR bool_expr OLG_RPAR 
            { $$ = $2; }
          | OLG_VAR OLG_IN range_expr 
            { $$ = new compile::parse::Bool(compile::parse::Bool::RANGEI, $1, $3); } 
-         | OLG_NOT boolg_expr 
+         | OLG_NOT bool_expr 
            { $$ = new compile::parse::Bool(compile::parse::Bool::NOT, $2); } 
-         | boolg_expr OLG_OR boolg_expr
+         | bool_expr OLG_OR bool_expr
            { $$ = new compile::parse::Bool(compile::parse::Bool::OR, $1, $3 ); }
-         | boolg_expr OLG_AND boolg_expr
+         | bool_expr OLG_AND bool_expr
            { $$ = new compile::parse::Bool(compile::parse::Bool::AND, $1, $3 ); }
          | rel_atom rel_oper rel_atom
            { $$ = new compile::parse::Bool($2, $1, $3 ); }

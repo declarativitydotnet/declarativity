@@ -1214,6 +1214,15 @@ offers a bit more functionality that the C++ standard.  The
 our \texttt{pingHandler}, however always setting its first parameter to
 the dataflow, and leaving its next parameter unbound.
 
+\begin{itemize}
+\item[$\Longrightarrow$] It is important to point out that the current
+  system only supports subscriptions to non-materialized tuples. You
+  cannot subscribe to a materialized table tuple or to table updates,
+  for example.  This is in feature wish list and will be coming in a
+  release soon.
+\end{itemize}
+
+
 That's it. The full program can be found in
 \url{tutorial/c++/ponger.C}. When executed on the same hostname and port
 number as \url{tutorial/olg/ponger.olg} had been in
@@ -1462,20 +1471,20 @@ is equivalent to the \lstinline$watch$ fact above.
 
 Here are the different possible modifiers:
 \begin{itemize}
-\item InsertEvent, i, is issued right after a tuple is inserted into
+\item InsertEvent, (i or INSERT\_EVENT), is issued right after a tuple is inserted into
   a table by the same name.
-\item RefreshEvent, r, is issued right after a tuple has been refreshed
+\item RefreshEvent, (r or REFRESH\_EVENT), is issued right after a tuple has been refreshed
   in a table by the same name.
-\item DeleteEvent, d, is issued right after a tuple is deleted from a
+\item DeleteEvent, (d or DELETE\_EVENT), is issued right after a tuple is deleted from a
   table by the same name.
-\item RecvEvent, c, is issued right after a tuple has been received from
+\item RecvEvent, (c or RECV\_EVENT), is issued right after a tuple has been received from
   the network.
 \item PeriodicEvent, p, is issued right after a periodic event has been issued.
-\item AddAction, a, is issued right before a tuple is inserted into the
+\item AddAction, (a or ADD\_ACTION), is issued right before a tuple is inserted into the
   table by the same name.
-\item DeleteAction, z, is issued right before a tuple is removed from
+\item DeleteAction, (z or DELETE\_ACTION), is issued right before a tuple is removed from
   the table by the same name.
-\item SendAction, s, is issued right before a tuple is transmitted.
+\item SendAction, (s or SEND\_ACTION), is issued right before a tuple is transmitted.
 \item BeforeJoin, b, is issued right before a tuple by that name is used
   to join with a table.
 \item AfterJoin, j, is issued right after a join that created the tuple
@@ -1483,6 +1492,8 @@ Here are the different possible modifiers:
 \item HeadProjection, h, is issued right after a tuple by that name is
   produced as the head of a rule (within or without an aggregation rule).
 \end{itemize}
+Note that for the moment, the incremental planner only supports
+modifiers that also have a long name.
 
 An important note is that, though a tuple type may be received at a P2
 node over the network, it may not be necessarily reported via

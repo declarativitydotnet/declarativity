@@ -322,6 +322,7 @@ CommonTable::findSecondaryIndex(CommonTable::Key& key)
 CommonTable::Entry::Entry(TuplePtr tp)
   : tuple(tp)
 {
+  assert(tp.get() != NULL);
   //  TELL_WORDY << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@Creating entry at address " << this << "\n";
   getTime(time);
   refCount = 0;
@@ -404,7 +405,7 @@ CommonTable::removeDerivatives(TuplePtr t)
     
     // Now find the tuple removed from the primary index in this
     // secondary index and erase it
-    static Entry searchEntry(Tuple::EMPTY);
+    static Entry searchEntry(Tuple::EMPTY());
     searchEntry.tuple = t;
     SecondaryIndex::iterator secIter = index.lower_bound(&searchEntry);
     SecondaryIndex::iterator secIterEnd = index.upper_bound(&searchEntry);
@@ -437,18 +438,18 @@ CommonTable::removeDerivatives(TuplePtr t)
 
 
 void
-CommonTable::removeTuple(PrimaryIndex::iterator position)
+CommonTable::removeTupleOfEntry(Entry* theEntry)
 {
   // Set the search entry to the tuple from the primary index. This is
   // the tuple we want to remove from all secondary indices below.
-  TuplePtr toRemove = (*position)->tuple;
+  TuplePtr toRemove = theEntry->tuple;
 
   // Remove from derivatives
   removeDerivatives(toRemove);
 
   // The subclass finishes it off from the primary index
 
-  // Update table information
+  // Update table statistics
   CommonTable::ManagerPtr catalog = Plumber::catalog();
   if (catalog) {
     CommonTablePtr table = catalog->table(TABLE);
@@ -788,7 +789,7 @@ CommonTable::lookup(CommonTable::Key& indexKey,
 
   // The search entry.  We don't need to project for this one so the
   // search entry can be initialized with a known tuple.
-  static Entry searchEntry(Tuple::EMPTY);
+  static Entry searchEntry(Tuple::EMPTY());
 
   // Prepare the search entry by copying the tuple into it (no
   // projection needed).
@@ -858,7 +859,8 @@ CommonTable::lookupPrimary(CommonTable::Entry* searchEntry)
 } 
 
 
-void initTupleEntry(TuplePtr tuple, CommonTable::Key& key)
+void
+initTupleEntry(TuplePtr tuple, CommonTable::Key& key)
 {
   for (CommonTable::Key::iterator i = key.begin();
        i != key.end();
@@ -1131,7 +1133,7 @@ CommonTable::AggregateObj::update(TuplePtr changedTuple)
   bool seenTuples = false;
 
   // Scan the index on the group-by fields
-  static Entry searchEntry(Tuple::EMPTY);
+  static Entry searchEntry(Tuple::EMPTY());
   searchEntry.tuple = changedTuple;
   for (SecondaryIndex::iterator i = _index->lower_bound(&searchEntry);
        i != _index->upper_bound(&searchEntry);
