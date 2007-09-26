@@ -1,0 +1,26 @@
+materialize(tCounter,infinity,infinity,keys(2)).
+materialize(tSoftCounter,5,infinity,keys(2)).
+
+watch(tCounter).
+watch(tSoftCounter).
+
+watch(a).
+t1 a(@X, I) :- periodic(@X,E,1,1), I := 0.
+
+t2 tCounter(@X,I) :- a(@X,I), I < 11.
+
+watch(b).
+t21 b(@X,I) :- a(@X,I), I < 11.
+
+watch(c).
+t22 c(@X,I,a_count<*>) :- b(@X,I), tCounter(@X,I).
+watch(cerr).
+t22a cerr(@X,I,C,M) :- c(@X,I,C), C != 0, M := "If you see this msg, there is a bbbuuguguguguggg!!".
+
+watch(d).
+t23 tSoftCounter(@X,I,a_count<*>) :- c(@X,I,C), tCounter(@X,I).
+
+watch(serr).
+t23a serr(@X,I,C,M ) :- tSoftCounter(@X,I,C), C != 0, M := "If you see this message, there issssss a buggg 2!!!".
+
+t3 a(@X,J) :- tCounter(@X,I), J := I + 1.

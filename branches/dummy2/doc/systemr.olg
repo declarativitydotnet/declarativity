@@ -1,0 +1,169 @@
+namespace systemr {
+
+  materialize(plan, infinity, infinity, keys(2)).
+  materialize(bestPlan, infinity, infinity, keys(2)).
+  materialize(totalRules, 10, infinity, keys(2)).
+  
+
+  ruleCount totalRules(@A, Pid, a_count<Rid>) :-
+              programEvent(@A, Pid, P_Name, P_Status, P_Text, P_Msg, P_P2DL),
+              ::rule(@A, Rid, Pid, R_Name, R_HeadFid, R_P2DL, R_Delete, R_Terms).
+
+
+  completion ::programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL) :-
+               programComplete(@A, Pid),
+               ::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL).
+  
+  programCompletion programComplete(@A, Pid) :-
+                      totalRules(@A, Pid, Count), Count == 0.
+    
+  /* Start the optimization process */
+  
+  /* Get the program event and seed the optimization with the event functor. */
+  begin plan(@A, PlanID, SubPlanID, Rid, Type, ID, Plan, Schema, Card, Pos, AM, Cost) :-
+            programEvent(@A, Pid, P_Name, P_Rewrite, P_Status, P_Text, P_Msg, P_P2DL),
+            ::rule(@A, Rid, Pid, R_Name, R_HeadFid, R_P2DL, R_Delete, R_Terms),
+            ::functor(@A, Fid, Rid, F_Name, F_Tid, F_ECA, F_Schema, F_Pos, F_AM),
+            F_Pos == 1,
+            PlanID    := f_idgen(),
+            SubPlanID := null,
+            Type      :=  "Functor",
+            ID        := Fid,
+            Plan      := f_cons(Fid, null),
+            Schema    := F_Schema,
+            Card      := 1,
+            Pos       := 1,
+            AM        := "EVENT",
+            Cost      := 0.
+
+  /* Detect the completion of a rule optimization */
+  ruleComplete terminate(@A, Pid, Rid, BestPlanID) :-
+                 newBestPlan(@A, BestPlanID, BestPlan, BestCost),
+                 plan(@A, BestPlanID, SubPlanID, Rid, Type, ID, Plan, Schema, Card, Pos, AM, Cost),
+                 ::rule(@A, Rid, Pid, R_Name, R_HeadFid, R_P2DL, R_Delete, R_Terms),
+                 f_size(BestPlan) == R_Terms.
+
+  updateRuleCount totalRules(@A, Pid, Count) :-
+                    terminate(@A, Pid, Rid, BestPlanID),
+                    totalRules(@A, Pid, OldCount),
+                    Count := OldCount - 1.
+  
+  updateTermPositions updateTerm(@A, Rid, BestPlanID) :-
+                        terminate(@A, Pid, Rid, BestPlanID).
+
+
+  /* Detect an update to the local plan table */
+  o1 planUpdate(@A, PlanID, Rid, Plan, Cost) :- 
+        plan(@A, PlanID, SubPlanID, Rid, Type, ID, Plan, Schema, Card, Pos, AM, Cost).
+  
+  /* Pick the minimum cost over the plans with the max size. */
+  o2 bestPlan(@A, PlanID, BestPlan, Cost) :-
+        planUpdate(@A, PlanID, Rid, Plan, Cost),
+        bestPlan(@A, BestPlanID, BestPlan, BestCost),
+        f_size(BestPlan) == f_size(Plan),
+        Cost < BestCost. 
+
+  o3 bestPlan(@A, PlanID, BestPlan, Cost) :-
+        planUpdate(@A, PlanID, Rid, Plan, Cost),
+        bestPlan(@A, BestPlanID, BestPlan, BestCost),
+        f_size(BestPlan) < f_size(Plan). 
+  
+  /* Initialize best plan */
+  o4 bestPlan(@A, PlanID, Plan, Cost) :-
+       plan(@A, PlanID, SubPlanID, Rid, Type, ID, Plan, Schema, Card, Pos, AM, Cost),
+       Cost == 0.
+  
+  o5 newBestPlan(@A, PlanID, BestPlan, Cost) :- bestPlan(@A, PlanID, BestPlan, Cost).
+  
+  o6 plan(@A, PlanID, SubPlanID, Rid, Type, ID, Plan, Schema, Card, Pos, AM, Cost) :-
+        newBestPlan(@A, BestPlanID, BestPlan, BestCost),
+        plan(@A, BestPlanID, OuterSubPlanID, Rid, OuterType, OuterID, OuterPlan, OuterSchema, OuterCard, OuterPos, OuterAM, OuterCost),
+        ::functor(@A, Fid, Rid, F_Name, F_Tid, F_ECA, F_Schema, F_Pos, F_AM),
+        ::table(@A, T_Tid, T_Name, T_TTL, T_Size, T_Key, T_Card),
+        f_contains(Fid, OuterPlan) == false,
+        PlanID    := f_idgen(), 
+        SubPlanID := BestPlanID,
+        Plan      := f_cons(Fid, OuterPlan), 
+        Schema    := f_merge(OuterSchema, F_Schema),
+        Card      := (1.0/10.0) * OuterCard * T_Card,
+        Type      := "Functor", 
+        ID        := Fid,
+        Pos       := OuterPos + 1, 
+        AM        := "INDEX_JOIN", 
+        Cost      := (1.0/10.0) * OuterCard * T_Card.
+  
+  /* Check for range access method. */
+  o7 plan(@A, PlanID, SubPlanID, Rid, Type, ID, Plan, Schema, Card, Pos, AM, Cost) :-
+        newBestPlan(@A, BestPlanID, BestPlan, BestCost),
+        plan(@A, BestPlanID, OuterSubPlanID, Rid, OuterType, OuterID, OuterPlan, OuterSchema, OuterCard, OuterPos, OuterAM, OuterCost),
+        ::select(@A, Sid, Rid, S_Bool, S_Pos),
+        f_contains(Sid, OuterPlan) == false,
+        f_rangeAM(OuterSchema, S_Bool) == true,
+        PlanID     := f_idgen(),
+        SubPlanID  := BestPlanID,
+        Plan       := f_cons(Sid, OuterPlan), 
+        Schema     := OuterSchema,
+        Card       := OuterCard / 3,
+        Type       := "Select", 
+        ID         := Sid,
+        Pos        := OuterPos + 1, 
+        AM         := "RANGE_LOOKUP", 
+        Cost       := OuterCost / 3.
+  
+  /* Perform next selection? */
+  o8 plan(@A, PlanID, SubPlanID, Rid, Type, ID, Plan, Schema, Card, Pos, AM, Cost) :-
+        newBestPlan(@A, BestPlanID, BestPlan, BestCost),
+        plan(@A, BestPlanID, OuterSubPlanID, Rid, OuterType, OuterID, OuterPlan, OuterSchema, OuterCard, OuterPos, OuterAM, OuterCost),
+        ::select(@A, Sid, Rid, S_Bool, S_Pos),
+        f_contains(Sid, OuterPlan) == false,
+        f_filter(OuterSchema, S_Bool) == true,
+        PlanID    := f_idgen(),
+        SubPlanID := BestPlanID,
+        Plan      := f_cons(Sid, OuterPlan), 
+        Schema    := OuterSchema,
+        Card      := OuterCard / 3,
+        Type      := "Select", 
+        ID        := Sid, 
+        Pos       := OuterPos + 1, 
+        AM        := "FILTER", 
+        Cost      := OuterCost / 3.
+  
+  /* Perform next assignment? */
+  o9 plan(@A, PlanID, SubPlanID, Rid, Type, ID, Plan, Schema, Card, Pos, AM, Cost) :-
+        newBestPlan(@A, BestPlanID, BestPlan, BestCost),
+        plan(@A, BestPlanID, OuterSubPlanID, Rid, OuterType, OuterID, OuterPlan, OuterSchema, OuterCard, OuterPos, OuterAM, OuterCost),
+        ::assign(@A, Aid, Rid, A_Var, A_Value, A_Pos),
+        A_Pos == OuterPos,
+        PlanID    := f_idgen(),
+        SubPlanID := BestPlanID,
+        Plan      := f_cons(Aid, OuterPlan), 
+        Schema    := OuterSchema,
+        Card      := OuterCard,
+        Type      := "Assign", 
+        ID        := Aid, 
+        Pos       := OuterPos + 1, 
+        AM        := "ASSIGN", 
+        Cost      := OuterCost.
+  
+  
+  /* Update the functor and selection tables with the new position and access method. */
+  u0 updateTerm(@A, Rid, SubPlanID) :-
+       updateTerm(@A, Rid, BestPlanID),
+       plan(@A, BestPlanID, SubPlanID, Rid, P_Type, P_ID, P_Plan, P_Schema, P_Card, P_Pos, P_AM, P_Cost).
+  
+  /* Update the functor and selection tables with the new position and access method. */
+  u1 ::functor(@A, Fid, Rid, Name, TID, ECA, Schema, Pos, AM) :-
+        updateTerm(@A, Rid, BestPlanID),
+        plan(@A, BestPlanID, SubPlanID, Rid, P_Type, P_ID, P_Plan, P_Schema, P_Card, P_Pos, P_AM, P_Cost),
+        ::functor(@A, Fid, Rid, Name, TID, ECA, Schema, OldPos, AM),
+        P_Type == "Functor" && P_ID == Fid,
+        Pos := P_Pos.
+  
+  u2 ::select(@A, Sid, Rid, Bool, Pos, AM) :-
+        updateTerm(@A, Rid, BestPlanID),
+        plan(@A, BestPlanID, SubPlanID, Rid, P_Type, P_ID, P_Plan, P_Schema, P_Card, P_Pos, P_AM, P_Cost),
+        ::select(@A, Sid, Rid, Bool, OldPos, AM),
+        P_Type == "Select" && P_ID == Sid,
+        Pos := P_Pos.
+  
+}

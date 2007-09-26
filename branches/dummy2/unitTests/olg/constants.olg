@@ -1,0 +1,58 @@
+/**
+  * This file is distributed under the terms in the attached LICENSE file.
+  * If you do not find this file, copies can be found by writing to:
+  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+  * Or
+  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+  * Berkeley, CA,  94707. Attention: P2 Group.
+  * 
+  * $Id$
+  * 
+  * DESCRIPTION: The purpose of this program is to test whether
+  * constants within predicates are handled correctly.
+  *
+  * Execute as follows:
+  *
+  * tests/runOverLog -o unitTests/olg/constants.olg -DLOCALID=\"localhost:11111\" -p 11111
+  *
+  * There should be exactly one "HeadProjection" printout line for each
+  * of the events eventJoinConstant, eventJoin, tableTableJoin,
+  * newTableOldTableConstantJoin, bothTablesConstantJoin,
+  * newTableConstantOldTableJoin.
+  * 
+***/
+
+materialize(first, infinity, infinity, keys(1,2)).
+
+first(LOCALID, 1).
+first(LOCALID, 2).
+first(LOCALID, 5).
+
+
+
+
+r1 event(@Me, E) :-
+   periodic(@Me, E, 1, 1).
+
+r2 eventJoinConstant(@Me) :- event(@Me, E), first(@Me, 2).
+
+r2a eventJoin(@Me) :- event(@Me, E), first(@Me, C), C == 2.
+
+r3 second(@Me, 5) :- event(@Me, E).
+
+r4 tableTableJoin(@Me) :- second(@Me, Count), first(@Me, Count).
+
+r5 newTableOldTableConstantJoin(@Me) :- second(@Me, Count), first(@Me, 2).
+
+r5 bothTablesConstantJoin(@Me) :- second(@Me, 5), first(@Me, 2).
+
+r6 newTableConstantOldTableJoin(@Me) :- second(@Me, 5), first(@Me, Count),
+Count == 5.
+
+watchmod(eventJoinConstant, "h").
+watchmod(eventJoin, "h").
+watchmod(tableTableJoin, "h").
+watchmod(newTableOldTableConstantJoin, "h").
+watchmod(newTableConstantOldTableJoin, "h").
+watchmod(bothtablesConstantJoin, "h").

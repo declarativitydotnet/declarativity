@@ -1,0 +1,5 @@
+dataflow Foobar {
+  TimedPushSource("test", 1) -> Print("before hash") -> PelTransform("hash", "$1 sha1 pop") -> 
+  Print("hash_print") ->Discard;
+}
+.

@@ -1,0 +1,23 @@
+/**
+  * This file is distributed under the terms in the attached LICENSE file.
+  * If you do not find this file, copies can be found by writing to:
+  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+  * Or
+  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+  * Berkeley, CA,  94707. Attention: P2 Group.
+  * 
+  * $Id: namelessPeriodics.olg,v 1.1 2007/08/03 22:24:34 maniatis Exp maniatis $
+  * 
+  * This regression test is meant to test our ability to have nameless
+  * rules with periodic events. once() should be issued once, twice
+  * should be issued twice.
+***/
+
+
+once(@X) :- periodic(@X, E, 1, 1).
+
+twice(@X) :- periodic(@X, E, 1, 2).
+
+watchmod(once, "s").
+watchmod(twice, "s").
