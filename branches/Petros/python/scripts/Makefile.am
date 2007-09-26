@@ -15,7 +15,7 @@ bin_SCRIPTS = 	p2terminal.py p2insert.py \
 		loadManyChords.py planetlab.py psetup.py dfrun.py \
 		setupMonolithic.py monolithic.py
 
-do_subst = sed -e 's,[@]PYTHON[@],$(PYTHON),g;s,[@]VERSION[@],$(VERSION),g'
+do_subst = sed -e 's,[@]PYTHON_EXECUTABLE[@],$(PYTHON),g;s,[@]VERSION[@],$(VERSION),g'
 
 p2terminal.py: p2terminal.in Makefile
 		   $(do_subst) < $(srcdir)/p2terminal.in > p2terminal.py

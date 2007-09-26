@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include "parseContext.h"
 #include "plumber.h"
-#include "ol_lexer.h"
+#include "olg_lexer.h"
 #include "tuple.h"
 
 #include "systemTable.h"
@@ -1011,8 +1011,8 @@ namespace compile {
     {
       try {
         assert(lexer==NULL);
-        lexer = new OL_Lexer(str);
-        ol_parser_parse(this);
+        lexer = new OLG_Lexer(str);
+        olg_parser_parse(this);
         delete lexer; 
         lexer = NULL;
       } 
