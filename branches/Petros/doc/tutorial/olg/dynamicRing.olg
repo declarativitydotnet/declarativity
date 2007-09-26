@@ -1,0 +1,120 @@
+/*
+ * (@#)$Id$
+ *
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
+ * 
+ * DESCRIPTION: A very simplistic ring-based DHT in Overlog, derived
+ * from the simple stabilization rules in the Chord ToN paper.
+ *
+ */
+
+#define STABILIZATIONPERIOD 5
+
+materialize(identifier, infinity, 1, keys(1)).
+
+materialize(predecessor, infinity, 1, keys(1)).
+
+materialize(successor, infinity, 1, keys(1)).
+
+materialize(pendingJoin, infinity, infinity, keys(1)).
+
+
+
+identifier(ME, MYID).
+
+
+
+/** Create a new ring */
+
+create1 predecessor(@Me, "NIL") :-
+	create(@Me).
+
+create2 successor(@Me, Me) :-
+	create(@Me).
+
+
+/** Join an existing ring */
+
+join1 pendingJoin(@Me) :-
+	join(@Me, CurrentNode).
+
+join2 predecessor(@Me, "NIL") :-
+	join(@Me, CurrentNode).
+
+join3 lookup(@CurrentNode, MyID, Me) :-
+	join(@Me, CurrentNode),
+	identifier(@Me, MyID).
+
+join4 successor(@Me, Successor) :-
+	found(@Me, MyID, Successor),
+	pendingJoin(@Me).
+
+join5 delete pendingJoin(@Me) :-
+	found(@Me, MyID, Successor),
+	pendingJoin(@Me).
+
+
+/** Stabilize the ring */
+
+stabilize1 stabilize(@Me) :-
+	periodic(@Me, EventID, STABILIZATIONPERIOD).
+
+stabilize2 successor(@Me, Predecessor) :-
+	stabilize(@Me),
+	successor(@Me, Successor),
+	identifier(@Successor, SuccessorID),
+	predecessor(@Successor, Predecessor),
+	identifier(@Predecessor, PredecessorID),
+	identifier(@Me, MyID),
+	PredecessorID in (MyID, SuccessorID).
+
+stabilize3 notify(@Successor, Me) :-
+	stabilize(@Me),
+	successor(@Me, Successor).
+
+stabilize4 predecessor(@Me, SomeGuy) :-
+	notify(@Me, SomeGuy),
+	predecessor(@Me, Predecessor),
+	Predecessor == "NIL".
+
+stabilize5 predecessor(@Me, SomeGuy) :-
+	notify(@Me, SomeGuy),
+	identifier(@Me, MyID),
+	identifier(@SomeGuy, SomeGuyID),
+	predecessor(@Me, Predecessor),
+	identifier(@Predecessor, PredecessorID),
+	Predecessor != "NIL",
+	SomeGuyID in (PredecessorID, MyID).
+
+
+/** Lookup a key on the ring */
+
+lookup1 found(@Requester, Key, Successor) :-
+	lookup(@Node, Key, Requester),
+	successor(@Node, Successor),
+	identifier(@Successor, SuccessorID),
+	identifier(@Node, NodeID),
+	Key in (NodeID, SuccessorID].
+
+lookup2 lookup(@Successor, Key, Requester) :-
+	lookup(@Node, Key, Requester),
+	successor(@Node, Successor),
+	identifier(@Successor, SuccessorID),
+	identifier(@Node, NodeID),
+	!(Key in (NodeID, SuccessorID]).
+	
+
+
+
+watchmod(successor, "a").
+watchmod(predecessor, "a").
+watchmod(create, "c").
+watchmod(join, "c").
+
+/** End of program */
