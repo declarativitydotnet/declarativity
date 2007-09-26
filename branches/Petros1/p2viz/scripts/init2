@@ -1,3 +1,0 @@
-ssh -t -X -A maniatis@blsshsvr.berkeley.intel-research.net ssh -X -A -t tetryl ssh-add
-
-

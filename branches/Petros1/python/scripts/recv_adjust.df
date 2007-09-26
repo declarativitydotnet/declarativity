@@ -1,8 +1,0 @@
-edit Main {
-  let print = Print("print_sink");
-
-  .receive.udp -> Bandwidth -> .receive.unmarshal;
-  .receive.unRoute -> print -> .receive.rccr;
-  .receive.rccr[1] -> .receive.response_address;
-}
-.
