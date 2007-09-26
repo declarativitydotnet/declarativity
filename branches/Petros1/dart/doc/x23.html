@@ -1,0 +1,149 @@
+<HTML
+><HEAD
+><TITLE
+>Writing a Distributed Test</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
+"><LINK
+REL="HOME"
+TITLE="DART HOWTO"
+HREF="index.html"><LINK
+REL="PREVIOUS"
+TITLE="Installing the Software"
+HREF="x20.html"><LINK
+REL="NEXT"
+TITLE="Example: Query Correctness Test on PIER"
+HREF="x26.html"></HEAD
+><BODY
+CLASS="SECT1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>DART HOWTO</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x20.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x26.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN23">3. Writing a Distributed Test</H1
+><P
+>       A DART test consists of several key pieces: (1) a set of files to
+       install on each node, (2) an optional preeecution script,
+       (3) scripts that run at specific times on subsets of nodes (e.g.,
+       a big "run" script that runs on all nodes), (4) a postexecution
+       script and (5) a reset script (which cleans out a node and
+       allows Emulab experiments to be reused).  In addition, each
+       test allow requires a unique name, the name of your Emulab
+       project, a unique Emulab experiment name, and several other details.
+       We'll work through an example below to make this clearer. Also,
+       while this may sound like a lot of work, a significant fraction
+       of the above is usually common to multiple tests.   Thus,
+       writing a new test often requires just writing the "diff".
+    </P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x20.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x26.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Installing the Software</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Example: Query Correctness Test on PIER</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

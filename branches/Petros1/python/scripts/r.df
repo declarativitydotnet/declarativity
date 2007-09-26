@@ -1,0 +1,40 @@
+macro UdpRecv(name, port) {
+  let udp = Udp2("udp", port);
+  let ack = BasicAck("acknowledge");
+  let dremove = DupRemove("duplicateRemove");
+
+  output dremove;
+
+  udp -> UnmarshalField("unmarshal", 1)  ->
+  PelTransform("unRoute", "$1 unboxPop") ->
+  Defrag("defragment")                   ->
+  TimedPullPush("ttp", 0) ->
+  ack -> dremove;
+  
+  ack[1] -> CumulativeAck("cack") ->
+  PelTransform("response", "$0 pop swallow pop") ->
+  MarshalField("marshal", 1) -> StrToSockaddr("addr_convert", 0) -> udp;
+}
+
+macro UdpRecvCC(name, port) {
+  let udp = Udp2("udp", port);
+  let odelv = ODelivery("order");
+  let ack = BasicAck("acknowledge");
+
+  output odelv;
+
+  udp -> UnmarshalField("unmarshal", 1)  ->
+  PelTransform("unRoute", "$1 unboxPop") ->
+  Defrag("defragment")                   ->
+  TimedPullPush("ttp", 0) ->
+  ack -> DupRemove("removedup") -> odelv;
+  
+  ack[1] -> RateCCR("receiver") -> CumulativeAck("cack") -> Print("ack") ->
+  PelTransform("response", "$0 pop swallow pop") ->
+  MarshalField("marshal", 1) -> StrToSockaddr("addr_convert", 0) -> udp;
+}
+
+dataflow Main {
+  UdpRecv("receive", 10000)[0] -> Print("receiver") -> Discard;
+}
+.
