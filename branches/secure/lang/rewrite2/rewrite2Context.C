@@ -212,56 +212,9 @@ namespace compile {
 
 
     void
-    dump(CommonTable::ManagerPtr catalog)
-    {
-      CommonTablePtr functorTbl = catalog->table(FUNCTOR);
-      CommonTablePtr assignTbl  = catalog->table(ASSIGN);
-      CommonTablePtr selectTbl  = catalog->table(SELECT);
-      CommonTablePtr ruleTbl  = catalog->table(RULE);
-      CommonTablePtr tableTbl  = catalog->table(TABLE);
-
-      CommonTable::Iterator iter;
-      // first display all functors
-      TELL_OUTPUT << "\n FUNCTORS \n";
-      for (iter = functorTbl->scan();!iter->done(); ) {
-	TuplePtr functor = iter->next();
-	TELL_OUTPUT << functor->toString()<<"\n";
-      }
-
-      TELL_OUTPUT << "\n ASSIGNS \n";
-      for (iter = assignTbl->scan();!iter->done(); ) {
-	TuplePtr term = iter->next();
-	TELL_OUTPUT << term->toString()<<"\n";
-      }
-
-
-      TELL_OUTPUT << "\n SELECT \n";
-      for (iter = selectTbl->scan();!iter->done(); ) {
-	TuplePtr term = iter->next();
-	TELL_OUTPUT << term->toString()<<"\n";
-      }
-
-
-      TELL_OUTPUT << "\n RULE \n";
-      for (iter = ruleTbl->scan();!iter->done(); ) {
-	TuplePtr term = iter->next();
-	TELL_OUTPUT << term->toString()<<"\n";
-      }
-
-      TELL_OUTPUT << "\n TABLE \n";
-      for (iter = tableTbl->scan();!iter->done(); ) {
-	TuplePtr term = iter->next();
-	TELL_OUTPUT << term->toString()<<"\n";
-      }
-  
-    }   
-
-
-    void
     Context::rule(CommonTable::ManagerPtr catalog, TuplePtr rule)
     {
-      //rule2(catalog, rule);
-      //            dump(catalog);
+      //      rule2(catalog, rule);
       SetPtr locSpecSet;
       bool newRule = ((Val_UInt32::cast((*rule)[catalog->attribute(RULE, "NEW")]) == 1)?true:false);
       CommonTablePtr functorTbl = catalog->table(FUNCTOR);
@@ -273,12 +226,9 @@ namespace compile {
       std::vector<TuplePtr> newTermList;
       uint32_t varSuffix = 0;
       LocSpecMap::iterator ruleLocSpecInfo = compile::Context::ruleLocSpecMap->find(ruleId);
-      if(ruleLocSpecInfo == compile::Context::ruleLocSpecMap->end() || (ruleLocSpecInfo->second->locSpecSet->size() == 0)){
-	if(ruleLocSpecInfo != compile::Context::ruleLocSpecMap->end()){
-	  delete ruleLocSpecInfo->second;
-	  compile::Context::ruleLocSpecMap->erase(ruleLocSpecInfo);
-	}
-	return; // this rule has no locspec
+      if(ruleLocSpecInfo == compile::Context::ruleLocSpecMap->end()){
+	std::cout<<"WARNING: not locspec-izing rule " + rule->toString();
+	return;
       }
       LocSpecInfo *locSpecInfo = ruleLocSpecInfo->second;
       eventLocSpec = locSpecInfo->location;
@@ -473,7 +423,6 @@ namespace compile {
       }
 
       //      rule2(catalog, rule);
-      // dump(catalog);
     }
 
     TuplePtr Context::makeVersionedTuple(uint32_t &varSuffix, TuplePtr functor, TuplePtr location, CommonTable::ManagerPtr catalog){

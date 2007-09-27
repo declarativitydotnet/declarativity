@@ -152,7 +152,7 @@ namespace compile {
 
 	   TupleList* newTermsGen = normalizeGenerate(catalog, head, rule, eventLocSpec, newVariable, headpos, compoundHead, headProof); // create a new field if its not already present
 	   // also if compoundHead is false, remove the new field
-	   newRuleComparators.push_back(newTermsGen);
+   	   newRuleComparators.push_back(newTermsGen);
 	   
 	   if(!compoundHead){
 	     headProof = Val_Tuple::cast(headAttr->back());
@@ -275,7 +275,15 @@ namespace compile {
 		  TuplePtr functor = funcIter->next();
 		  if ((*functor)[TUPLE_ID] != (*rule)[catalog->attribute(RULE, "HEAD_FID")]) {
 		    Iter = newTbl->lookup(CommonTable::theKey(CommonTable::KEY2), CommonTable::theKey(CommonTable::KEY3), functor);
+		    ListPtr funcAttr = Val_List::cast((*functor)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
 		    functor = functor->clone(FUNCTOR, true);
+		    ListPtr attr = List::mk();
+		    for (ValPtrList::const_iterator iter = funcAttr->begin();
+			 iter!= funcAttr->end(); iter++) {
+		      attr->append(*iter);
+		    }
+		    functor->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(attr));
+
 		    functor->set(catalog->attribute(FUNCTOR, "RID"), newRuleId);
 		    functor->freeze();
 		    functorTbl->insert(functor);
@@ -306,7 +314,7 @@ namespace compile {
 		key.push_back(catalog->attribute(SELECT, "RID"));
 		Iter = catalog->table(SELECT)->lookup(CommonTable::theKey(CommonTable::KEY2), key, rule); 
 		while (!Iter->done()) {
-		  TuplePtr select = Iter->next()->clone();
+		  TuplePtr select = Iter->next()->clone(SELECT, true);
 		  select->set(catalog->attribute(SELECT, "RID"), newRuleId);
 		  select->freeze();
 		  if (!catalog->table(SELECT)->insert(select)){
@@ -964,7 +972,7 @@ namespace compile {
 	uint32_t pos = 0;
 	uint32_t fictVar = 0;
 	VerificationTuple *vt = (*iter);
-
+    
 	ostringstream oss;
 	oss << STAGERULEPREFIX <<ruleCounter++;
 	string rulename = oss.str();

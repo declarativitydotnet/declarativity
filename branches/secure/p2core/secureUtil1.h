@@ -23,7 +23,9 @@ namespace compile {
 
   
   namespace secure {
-    
+
+    const uint32_t STRONG = 1;
+
     ValuePtr generateLocSpec(bool strong = false);
 
     ValuePtr generateVersion(bool strong = false);
@@ -33,6 +35,8 @@ namespace compile {
     ValuePtr processGen(ValuePtr, ValuePtr);
 
     ValuePtr processExtract(ValuePtr, ValuePtr);
+
+    void serialize(CommonTable::ManagerPtr catalog, string tablename, TuplePtr parent, CommonTable::Key nameKey, ListPtr buf, bool createSecureVersion = false);
 
   };
   

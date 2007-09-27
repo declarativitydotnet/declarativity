@@ -37,7 +37,8 @@
 namespace compile {
   namespace parse {
     using namespace opr;
-    
+
+    const string Context::STAGEVARPREFIX = "PS_";
     ValuePtr 
     Value::tuple() const
     {
@@ -92,6 +93,7 @@ namespace compile {
     const string Says::encHint = "::encHint"; 
     const string Says::varPrefix = "PRW_"; 
     const string Says::rulePrefix = "prw_"; 
+    const string Says::saysSuffix = "Says"; 
     const string Says::saysPrefix = "says"; 
     const string Says::makeSays = "makeSays"; 
     const string Says::globalScope = "::"; 
@@ -905,7 +907,7 @@ namespace compile {
 	    if (prev.first < count || ((prev.first == count) && (prev.second < i))) {
 	      if((prev.first != count) || ((count != Functor::T_LOCSPEC) && (count != Functor::T_OPAQUE) && (count != Functor::T_HINT))){
 		ostringstream oss;
-		oss << "$" << fict_varnum++;
+		oss << Context::STAGEVARPREFIX << fict_varnum++;
 		// We've found a duplicate variable in the head. Add a new
 		// "eq" term to the front of the term list. 
 		Variable *tmp = new Variable(Val_Str::mk(oss.str()));
@@ -917,7 +919,7 @@ namespace compile {
 	  }
 	  else if ((val = dynamic_cast<Value*>(*i)) != NULL) {
 	    ostringstream oss;
-	    oss << "$" << fict_varnum++;
+	    oss << Context::STAGEVARPREFIX << fict_varnum++;
 	    Variable *tmp = new Variable(Val_Str::mk(oss.str()));
 	    pred->replace(TotalIterator(count, i), tmp);
 	    (headPred) ? ruleBody->push_back(new Assign(tmp, val))
@@ -925,7 +927,7 @@ namespace compile {
 	  }
 	  else if ((math = dynamic_cast<Math*>(*i)) != NULL) {
 	    ostringstream oss;
-	    oss << "$" << fict_varnum++;
+	    oss << Context::STAGEVARPREFIX << fict_varnum++;
 	    Variable *tmp = new Variable(Val_Str::mk(oss.str()));
 	    pred->replace(TotalIterator(count, i), tmp);
 	    (headPred) ? ruleBody->push_back(new Assign(tmp, math))
@@ -933,7 +935,7 @@ namespace compile {
 	  }
 	  else if ((func = dynamic_cast<Function*>(*i)) != NULL) {
 	    ostringstream oss;
-	    oss << "$" << fict_varnum++;
+	    oss << Context::STAGEVARPREFIX << fict_varnum++;
 	    Variable *tmp = new Variable(Val_Str::mk(oss.str()));
 	    pred->replace(TotalIterator(count, i), tmp);
 	    (headPred) ? ruleBody->push_back(new Assign(tmp, func))
@@ -1195,7 +1197,7 @@ namespace compile {
     Table::initialize(){
       if(_says)
       {
-	_name = Says::saysPrefix + _name;
+	_name =  _name + Says::saysSuffix;
       }
     }
 

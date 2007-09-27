@@ -1,0 +1,22 @@
+materialize(parent, infinity, infinity, keys(2)).
+materialize(child, infinity, infinity, keys(2)).
+weak ref(parent, child, 2).
+
+child("localhost:10000", 0).
+
+r1 test(@I, I) :- periodic(@I, E, 1, 1).
+
+r2 child(@I, NewC):- child(@I, Count), test(@I, I), NewC := Count + 1.
+
+r3 new<@I, null, parent(@A, C, &B)>:- child(@I, C).
+
+r4 event(@I, C):- child(@I, C).
+
+r1 child(@L1, B):- new<@Me, null, parent(@X, C, L1)>, child(@Me, B), X == Me.
+
+watch(child).
+watch(parent).
+watch(parentNew).
+watch(childNew).
+watch(event).
+watch(test).

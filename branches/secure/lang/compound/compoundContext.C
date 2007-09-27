@@ -163,6 +163,52 @@ namespace compile {
     }
 
     void
+    dump(CommonTable::ManagerPtr catalog)
+    {
+      CommonTablePtr functorTbl = catalog->table(FUNCTOR);
+      CommonTablePtr assignTbl  = catalog->table(ASSIGN);
+      CommonTablePtr selectTbl  = catalog->table(SELECT);
+      CommonTablePtr ruleTbl  = catalog->table(RULE);
+      CommonTablePtr tableTbl  = catalog->table(TABLE);
+
+      CommonTable::Iterator iter;
+      // first display all functors
+      TELL_OUTPUT << "\n FUNCTORS \n";
+      for (iter = functorTbl->scan();!iter->done(); ) {
+	TuplePtr functor = iter->next();
+	TELL_OUTPUT << functor->toString()<<"\n";
+      }
+
+      TELL_OUTPUT << "\n ASSIGNS \n";
+      for (iter = assignTbl->scan();!iter->done(); ) {
+	TuplePtr term = iter->next();
+	TELL_OUTPUT << term->toString()<<"\n";
+      }
+
+
+      TELL_OUTPUT << "\n SELECT \n";
+      for (iter = selectTbl->scan();!iter->done(); ) {
+	TuplePtr term = iter->next();
+	TELL_OUTPUT << term->toString()<<"\n";
+      }
+
+
+      TELL_OUTPUT << "\n RULE \n";
+      for (iter = ruleTbl->scan();!iter->done(); ) {
+	TuplePtr term = iter->next();
+	TELL_OUTPUT << term->toString()<<"\n";
+      }
+
+      TELL_OUTPUT << "\n TABLE \n";
+      for (iter = tableTbl->scan();!iter->done(); ) {
+	TuplePtr term = iter->next();
+	TELL_OUTPUT << term->toString()<<"\n";
+      }
+  
+    }   
+
+
+    void
     Context::rule(CommonTable::ManagerPtr catalog, TuplePtr rule)
     {
       if(!debug){
@@ -258,27 +304,10 @@ namespace compile {
     TuplePtr 
     Context::program(CommonTable::ManagerPtr catalog, TuplePtr program) 
     {
-      //      std::cout<<"Reached compound stage"<<std::endl;
-      CommonTable::Key indexKey;
-      CommonTable::Iterator iter;
-
-      indexKey.push_back(catalog->attribute(REF, "PID"));
-      iter =
-        catalog->table(REF)->lookup(CommonTable::theKey(CommonTable::KEY2), indexKey, program); 
-      while (!iter->done()) {
-        TuplePtr ref = iter->next();                                        // The row in the fact table
-	//	std::cout<<"Ref:"<<ref->toString()<<std::endl;
-      }
-      
       if(debug){
-	iter = catalog->table(TABLE)->scan();
-	while (!iter->done()) {
-	  TuplePtr table = iter->next();                                        // The row in the fact table
-	  TELL_OUTPUT<<"Table:"<<table->toString()<<std::endl;
-	}
+	dump(catalog);
       }
 
-      //      std::cout<<"exitting compound stage"<<std::endl;
       return this->compile::Context::program(catalog, program);
     }
  

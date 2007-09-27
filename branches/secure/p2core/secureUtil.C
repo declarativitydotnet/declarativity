@@ -94,7 +94,7 @@ namespace compile {
 	CommonTable::ManagerPtr catalog = Plumber::catalog();
 	//	CommonTablePtr functorTbl = catalog->table(FUNCTOR);
 
-	CommonTablePtr encHintTbl = catalog->table("::encHint");
+	CommonTablePtr encHintTbl = catalog->table("encHint");
 //       CommonTable::Key nameKey;
 //       nameKey.push_back(catalog->attribute(FUNCTOR, "NAME"));
 //       CommonTablePtr tableTbl = catalog->table(TABLE);
@@ -107,7 +107,7 @@ namespace compile {
 //       }
   
 
-	CommonTablePtr verKeyTbl = catalog->table("::verKey");
+	CommonTablePtr verKeyTbl = catalog->table("verKey");
 	CommonTable::Iterator encHintIter;
 
 	for (encHintIter = encHintTbl->scan(); !encHintIter->done(); ) {

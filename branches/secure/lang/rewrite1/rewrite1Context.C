@@ -82,6 +82,8 @@ namespace compile {
 	  iter++; // for location
 	  copyAttributes->append(*iter);
 	  iter++; // for opaque
+	  copyAttributes->append(*iter);
+	  iter++; // for hint
 	  for (; iter != attributes->end(); iter++, count++) {
 	    TuplePtr exprTuple = Val_Tuple::cast(*iter);
 	    if(Val_Str::cast((*exprTuple)[TNAME]) == NEWLOCSPEC){
@@ -253,6 +255,7 @@ namespace compile {
 
       TuplePtr assignTp  = Tuple::mk(ASSIGN, true);
       assignTp->append(ruleId);
+      assert(Val_Str::cast((*locSpec)[TNAME]) == VAR);
       assignTp->append(Val_Tuple::mk(locSpec));               // Assignment variable
       assignTp->append(Val_Tuple::mk(fntp));                  // Assignemnt value
       assignTp->append(Val_UInt32::mk(pos));         // Position
@@ -937,7 +940,7 @@ namespace compile {
       // make a dummy variable
       ostringstream oss;
       oss << STAGEVARPREFIX << fictVar++;
-      TuplePtr var = Tuple::mk(LOC);
+      TuplePtr var = Tuple::mk(VAR);
       var->append(Val_Str::mk(oss.str()));
 
       assignDeserialized->append(Val_Tuple::mk(var));

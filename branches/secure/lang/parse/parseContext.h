@@ -656,6 +656,7 @@ namespace compile {
       const static string verFunc;
       const static string genFunc;
       const static string saysPrefix;
+      const static string saysSuffix;
       const static string makeSays;
       const static string globalScope;
       enum additionAxis{SPEAKER=0, RECEIVER, K, VERIFIER};
@@ -1088,6 +1089,7 @@ namespace compile {
     class Context : public compile::Context {
     
     public:
+      static const string STAGEVARPREFIX;
       /*******************************************************************/
       Context(string name) 
       : compile::Context(name), lexer(NULL), _statements(NULL) {printOverLog = true;};
