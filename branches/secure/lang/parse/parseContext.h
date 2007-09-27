@@ -30,7 +30,7 @@
 #include "val_int32.h"
 #include "set.h"
 
-class OL_Lexer;
+class OLG_Lexer;
 
 namespace compile {
   namespace parse {
@@ -1110,7 +1110,7 @@ namespace compile {
 
       void error(string msg);
     
-      OL_Lexer *lexer;
+      OLG_Lexer *lexer;
       
       void testParse(std::istream *str){parse_stream(str);}
     
@@ -1179,6 +1179,6 @@ namespace compile {
   }
 }
   
-extern int ol_parser_parse(compile::parse::Context *env );
+extern int olg_parser_parse(compile::parse::Context *env );
   
 #endif /* __PARSE_CONTEXT_H__ */

@@ -53,7 +53,8 @@ CompileTerminal::~CompileTerminal()
 void 
 CompileTerminal::programUpdate(TuplePtr program)
 {
-  if ((*program)[Plumber::catalog()->attribute(PROGRAM, "STATUS")]->toString() == "installed") {
+  if ((*program)[Plumber::catalog()->
+                 attribute(PROGRAM, "STATUS")]->toString() == "installed") {
     Plumber::toDot("compileTerminal.dot");
     ELEM_OUTPUT("Program successfully installed. "
                 << "See compileTerminal.dot for dataflow description.");

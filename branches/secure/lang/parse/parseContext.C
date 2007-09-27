@@ -19,7 +19,7 @@
 #include <list>
 #include "parseContext.h"
 #include "plumber.h"
-#include "ol_lexer.h"
+#include "olg_lexer.h"
 #include "tuple.h"
 #include "systemTable.h"
 #include "val_tuple.h"
@@ -1069,10 +1069,14 @@ namespace compile {
 
     Fact::Fact(Expression *n, ExpressionList *a)
     {
-      TuplePtr tpl = Tuple::mk(n->toString());
-    
+      TuplePtr tpl = Tuple::mk();
+
+      tpl->append(Val_Str::mk(n->toString())); // my tuple name
+
+      // The fields
       uint32_t pos = 1;
       ExpressionList::const_iterator iter;
+
       for (iter = a->begin(); iter != a->end(); iter++, pos++) {
 	if(pos == compile::VERPOS && Table::compoundRewrite){
 	  tpl->append(Val_UInt32::mk(0));
@@ -1450,8 +1454,8 @@ namespace compile {
     {
       try {
         assert(lexer==NULL);
-        lexer = new OL_Lexer(str);
-        ol_parser_parse(this);
+        lexer = new OLG_Lexer(str);
+        olg_parser_parse(this);
         delete lexer; 
         lexer = NULL;
       } 

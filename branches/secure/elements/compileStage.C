@@ -144,7 +144,7 @@ CompileStage::initialize()
   string stages[] = {"compile", 
 		     "parse", 
 		     "secure", 
-      		     "rewrite0", 
+		     "rewrite0", 
 		     "rewrite1", 
 		     "rewrite2", 
 		     "compound", 

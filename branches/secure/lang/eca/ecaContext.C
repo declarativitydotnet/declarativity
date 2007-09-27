@@ -319,6 +319,7 @@ namespace compile {
       head->append(Val_List::mk(schema));     // Attributes
       head->append(Val_UInt32::mk(0));        // Position
       head->append(Val_Null::mk());           // Access method
+      head->append(Val_UInt32::mk(0));        // NEW?
       head->freeze();
       functorTbl->insert(head);
   
@@ -330,7 +331,7 @@ namespace compile {
       event->append(Val_List::mk(schema));     // Attributes
       event->append(Val_UInt32::mk(1));        // Position
       event->append(Val_Null::mk());           // Access method
-      event->append(Val_UInt32::mk(0));           // Access method
+      event->append(Val_UInt32::mk(0));           // NEW?
       event->freeze();
       functorTbl->insert(event);
 

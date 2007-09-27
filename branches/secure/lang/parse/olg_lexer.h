@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef __OL_LEXER_H__
-#define __OL_LEXER_H__
+#ifndef __OLG_LEXER_H__
+#define __OLG_LEXER_H__
 
 #include <sstream>
 #include <iostream>
@@ -33,9 +33,9 @@
 #endif
 
 #include "parseContext.h"
-#include "ol_parser.H"
+#include "olg_parser.H"
 
-class OL_Lexer : public OLBaseFlexLexer {
+class OLG_Lexer : public OLBaseFlexLexer {
 
 private:
   int comment_depth;
@@ -47,10 +47,10 @@ private:
 public:
 
   // Default: yyin == std::cin.
-  OL_Lexer(std::istream *str);
+  OLG_Lexer(std::istream *str);
   // Give it a string...
-  OL_Lexer(const char *prog);
-  virtual ~OL_Lexer();
+  OLG_Lexer(const char *prog);
+  virtual ~OLG_Lexer();
   
   int yylex (YYSTYPE *lvalp, compile::parse::Context *env);
 
@@ -60,4 +60,4 @@ public:
 
 };
 
-#endif /* __OL_LEXER_H_ */
+#endif /* __OLG_LEXER_H_ */

@@ -76,7 +76,7 @@ sendMessages(std::string udpAddress)
     conf->addElement(ElementPtr(new StaticTupleSource("Source",
                                                       tuple)));
   ElementSpecPtr pusherS =
-    conf->addElement(ElementPtr(new TimedPullPush("Push", 0.5)));
+    conf->addElement(ElementPtr(new TimedPullPush("Push", 0.5, 0)));
   ElementSpecPtr slotS =
     conf->addElement(ElementPtr(new Slot("Slot")));
   ElementSpecPtr marshalS =

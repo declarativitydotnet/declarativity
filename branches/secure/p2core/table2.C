@@ -191,7 +191,7 @@ Table2::insert(TuplePtr t)
   flush();
 
   // Find tuple with same primary key
-  static Entry searchEntry(Tuple::EMPTY);
+  static Entry searchEntry(Tuple::EMPTY());
   searchEntry.tuple = t;
   PrimaryIndex::iterator found = _primaryIndex.find(&searchEntry);
 
@@ -266,7 +266,7 @@ Table2::remove(TuplePtr t)
   flush();
 
   // Find tuple with same primary key
-  static Entry searchEntry(Tuple::EMPTY);
+  static Entry searchEntry(Tuple::EMPTY());
   searchEntry.tuple = t;
   PrimaryIndex::iterator found = _primaryIndex.find(&searchEntry);
 
@@ -321,18 +321,26 @@ Table2::flushEntry(Entry* e)
     e->refCount--;
     _queue.pop_back();
   } else {
-    // Ah! This is the last instance of this entry in the queue, so
-    // we're doing a real removal from the table.
+    // Ah! This is the last instance of this entry in the queue.
 
-    // Remove it from all derivatives (secondaries, aggs)
-    removeDerivatives(e->tuple);
+    // Is it still in the indexes?
+    if (e->tuple.get() == NULL) {
+      // Nope, it's been removed. No need to do no further maintenance
+      // on the indexes
+    } else {
+      // It's still in my indexes. Do a real removal from the indexes,
+      // derivatives, etc.
+      static Entry searchEntry(Tuple::EMPTY());
+      searchEntry.tuple = e->tuple;
 
-    // Primary index
-    static Entry searchEntry(Tuple::EMPTY);
-    searchEntry.tuple = e->tuple;
-    _primaryIndex.erase(&searchEntry);
- 
-    // Pop the tuple from the queue
+      // Derivatives first
+      CommonTable::removeTupleOfEntry(e);
+
+      // Primary index
+      _primaryIndex.erase(&searchEntry);
+    }
+      
+    // Now clean up the queue. Pop the tuple from the queue
     _queue.pop_back();
     
     // And delete the entry from the heap
@@ -344,15 +352,19 @@ Table2::flushEntry(Entry* e)
 void
 Table2::removeTuple(PrimaryIndex::iterator position)
 {
-  CommonTable::removeTuple(position);
+  Entry* toKill = *position;
+  CommonTable::removeTupleOfEntry(toKill);
 
   // If I have a queue, then I don't need to delete the entry since it
   // will be flushed sooner or later. Otherwise, I have to delete the
   // entry now.
   if (_flushing) {
     _primaryIndex.erase(position);
+
+    // Empty out the pointer of the associated entry, so that later
+    // CommonTable::removeTuple will not be rerun on it
+    toKill->tuple.reset();
   } else {
-    Entry* toKill = *position;
     _primaryIndex.erase(position);
     delete toKill;
   }

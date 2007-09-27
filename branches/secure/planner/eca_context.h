@@ -175,11 +175,32 @@ private:
 
 
   /** Create a new ECA rule that does nothing. This is used for watched
-      events that have no actual ECA rules listening for them.  Without
-      an event listener, no watches can be implemented further down in
-      the planner */
+      receive events that have no actual ECA rules listening for them.
+      Without an event listener, no watches can be implemented further
+      down in the planner */
   void
-  watchStubRule(string watchedTupleName);
+  receiveWatchStubRule(string watchedTupleName);
+
+  /** Create a new ECA rule that does nothing. This is used for watched
+      insert events that have no actual ECA rules listening for them.
+      Without an event listener, no watches can be implemented further
+      down in the planner */
+  void
+  insertWatchStubRule(string watchedTupleName);
+
+  /** Create a new ECA rule that does nothing. This is used for watched
+      removed events that have no actual ECA rules listening for them.
+      Without an event listener, no watches can be implemented further
+      down in the planner */
+  void
+  deleteWatchStubRule(string watchedTupleName);
+
+  /** Create a new ECA rule that does nothing. This is used for watched
+      refreshed events that have no actual ECA rules listening for them.
+      Without an event listener, no watches can be implemented further
+      down in the planner */
+  void
+  refreshWatchStubRule(string watchedTupleName);
 };
 
 typedef boost::shared_ptr<ECA_Context> ECA_ContextPtr;

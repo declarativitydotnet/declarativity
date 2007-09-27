@@ -69,9 +69,9 @@ int Queue::push(int port, TuplePtr p, b_cbv cb)
   _stateProxy->size(_q.size());
 
 
-  ELEM_INFO("Push "
+  ELEM_INFO("Just received Push of '"
             << p->toString()
-            << ", queuesize="
+            << "', current queuesize="
             << _q.size());
   if (_pullCB) {
     // is there a pending callback? If so, wake it up
