@@ -447,11 +447,18 @@ namespace compile {
       // Now take care of the functor arguments and variable dependencies
       ListPtr attributes = List::mk();
       ListPtr verAttr = Val_List::cast((*newTuple)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
-      TuplePtr loc = Val_Tuple::cast(verAttr->front());
-      attributes->append(Val_Tuple::mk(loc->clone()));
-      TuplePtr locSpec = Val_Tuple::cast(verAttr->at(compile::LOCSPECPOS));
-      attributes->append(Val_Tuple::mk(locSpec->clone()));
-      attributes->append(Val_Tuple::mk(loc->clone()));
+      TuplePtr loc = (Val_Tuple::cast(verAttr->front()))->clone();
+      loc->freeze();
+      attributes->append(Val_Tuple::mk(loc));
+
+      TuplePtr locSpec = (Val_Tuple::cast(verAttr->at(compile::LOCSPECPOS)))->clone();
+      locSpec->freeze();
+      attributes->append(Val_Tuple::mk(locSpec));
+
+      TuplePtr newloc = (Val_Tuple::cast(verAttr->front()))->clone(VAR);
+      newloc->freeze();
+      attributes->append(Val_Tuple::mk(newloc));
+
       TuplePtr ver = Val_Tuple::cast(verAttr->back());
       attributes->append(Val_Tuple::mk(ver->clone()));
 

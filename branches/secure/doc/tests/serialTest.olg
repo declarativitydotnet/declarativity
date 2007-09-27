@@ -6,13 +6,13 @@ child("localhost:10000", 0).
 
 r1 test(@I, I) :- periodic(@I, E, 1, 1).
 
-r2 child(@I, NewC):- child(@I, Count), test(@I, I), NewC := Count + 1.
+r2 child(@I, NewC):- test(@I, I), NewC := 1.
 
-r3 new<@I, null, parent(@A, C, &B)>:- child(@I, C).
+r3 new<@I, null, parent(@I, C, &B)>:- child(@I, C).
 
 r4 event(@I, C):- child(@I, C).
 
-r1 child(@L1, B):- new<@Me, null, parent(@X, C, L1)>, child(@Me, B), X == Me.
+r5 child(@L1, B):- new<@Me, null, parent(@Me, C, L1)>, child(@Me, B).
 
 watch(child).
 watch(parent).

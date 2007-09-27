@@ -318,7 +318,7 @@ namespace compile {
         return assign(schema, exprTp); 
       }
       else {
-        throw compile::Exception("pel::gen: Unknown expresion type! " + type);
+        throw compile::Exception("pel::gen: Unknown expresion type! " + type + " expr = " + ((*exprTp)[2])->toString() );
       }
     }
   } // END PEL
