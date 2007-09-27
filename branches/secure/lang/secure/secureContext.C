@@ -364,6 +364,7 @@ namespace compile {
       void Context::normalizeVerify(CommonTable::ManagerPtr catalog, TuplePtr functor, TuplePtr says, uint32_t &newVariable){
 	functor = functor->clone();
 	string name = Val_Str::cast((*functor)[catalog->attribute(FUNCTOR, "NAME")]);
+
 	functor->set(catalog->attribute(FUNCTOR, "NAME"), Val_Str::mk(name + SAYSSUFFIX));
 
 	CommonTable::Key nameKey;
@@ -393,6 +394,9 @@ namespace compile {
 	functor->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(attr));
 	functor->freeze();
 	catalog->table(FUNCTOR)->insert(functor);
+
+	verificationTables.insert(new VerificationTuple(name, attr->size()));
+
       }
 
       // return a list of terms that needs to be added to the rule on converting the 
@@ -654,6 +658,7 @@ namespace compile {
 	if(!_compound){
 	  // use good old scheme
 	  // also delete any new tuples and remove that NEW tag from head if present
+	  
 	  CommonTable::Iterator iter = newTbl->lookup(CommonTable::theKey(CommonTable::KEY2), CommonTable::theKey(CommonTable::KEY3), head);
 	  if(!iter->done()){
 	    TuplePtr newPtr = iter->next();
@@ -941,7 +946,213 @@ namespace compile {
       // generate materialize for genKey and encHint and decKey
       //      std::cout<<"exitting secure stage"<<std::endl;
       generateMaterialize(catalog);
-      return this->compile::Context::program(catalog, program);
+      TuplePtr programRes = this->compile::Context::program(catalog, program);
+      generateVerificationRules(catalog, programRes);
+      return programRes;
+    }
+
+    void Context::generateVerificationRules(CommonTable::ManagerPtr catalog, TuplePtr program){
+      CommonTablePtr ruleTbl = catalog->table(RULE);
+      CommonTablePtr assignTbl = catalog->table(ASSIGN);
+      CommonTablePtr functorTbl = catalog->table(FUNCTOR);
+      CommonTablePtr selectTbl = catalog->table(SELECT);
+
+      ValuePtr programID = (*program)[TUPLE_ID];
+      VerificationTupleSet::iterator iter = verificationTables.begin();
+
+      for(; iter != verificationTables.end(); iter++){
+	uint32_t pos = 0;
+	uint32_t fictVar = 0;
+	VerificationTuple *vt = (*iter);
+
+	ostringstream oss;
+	oss << STAGERULEPREFIX <<ruleCounter++;
+	string rulename = oss.str();
+
+	TuplePtr ruleTp = Tuple::mk(RULE, true);
+	ruleTp->append(programID);
+	ruleTp->append(Val_Str::mk(rulename));
+	
+	ruleTp->append(Val_Null::mk());             // Add the "head" functor identifer.
+	ruleTp->append(Val_Null::mk());                  // The P2DL desc. of this rule
+	ruleTp->append(Val_UInt32::mk(false));         // Delete rule?
+	ruleTp->append(Val_UInt32::mk(2)); // Term count?
+	ruleTp->append(Val_Int32::mk(0)); // NEW
+
+	ValuePtr ruleId = (*ruleTp)[TUPLE_ID];
+	TuplePtr head = generateFunctor(catalog, fictVar, vt->name + SAYSSUFFIX, ruleId, vt->numVars);
+	head->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(pos++));
+	head->freeze();
+	functorTbl->insert(head);
+
+	TuplePtr rhs = head->clone(FUNCTOR, true);
+	rhs->set(catalog->attribute(FUNCTOR, "NAME"), Val_Str::mk(vt->name+MAKESAYS));
+	rhs->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(pos++));
+	rhs->set(catalog->attribute(FUNCTOR, "TID"), Val_Null::mk());
+	rhs->freeze();
+	functorTbl->insert(rhs);
+	ruleTp->set(catalog->attribute(RULE, "HEAD_FID"), (*head)[TUPLE_ID]);
+	//create buffer creation logic
+	
+	ostringstream var3;
+	var3 << STAGEVARPREFIX << fictVar++;
+	TuplePtr buf = Tuple::mk(VAR);
+	buf->append(Val_Str::mk(var3.str()));
+	buf->freeze();
+	
+	// check if the concatenate operation is needed or not
+	// remember that the loc specifier is excluded but the table name must be included
+	TuplePtr table = Tuple::mk(VAL);
+	table->append(Val_Str::mk(vt->name));
+	table->freeze();
+
+	ValuePtr cur = Val_Tuple::mk(table);
+	  
+	ValuePtr append = Val_Str::mk("|||");
+	// since loc spec is not included
+	ListPtr headAttr = Val_List::cast((*head)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
+	ValPtrList::const_iterator iter = headAttr->begin();
+	//exclude location specifier
+	iter++; 
+	  
+	// since loc spec is not included
+	if(headAttr->size() > 6) // for locspec, P, R, k, V and proof
+	{
+	  uint32_t maxCount = headAttr->size() - 6;
+	  uint32_t count = 0;
+	  for (; count < maxCount; iter++, count++){
+	    TuplePtr newcur = Tuple::mk(MATH);
+	    newcur->append(append);
+	    newcur->append(cur);
+	    TuplePtr iterTuple = (Val_Tuple::cast(*iter))->clone();
+	    iterTuple->freeze();
+	    newcur->append(Val_Tuple::mk(iterTuple));
+	    newcur->freeze();
+	    
+	    cur = Val_Tuple::mk(newcur);
+	  }
+	}
+
+	assert(headAttr->size() >= 6);
+	
+	TuplePtr P = (Val_Tuple::cast(*iter))->clone();
+	P->freeze();
+	iter++;
+
+	TuplePtr R = (Val_Tuple::cast(*iter))->clone();
+	R->freeze();
+	iter++;
+
+	TuplePtr k = (Val_Tuple::cast(*iter))->clone();
+	k->freeze();
+	iter++;
+
+	TuplePtr V = (Val_Tuple::cast(*iter))->clone();
+	V->freeze();
+	iter++;
+
+	TuplePtr proof = (Val_Tuple::cast(*iter))->clone();
+	proof->freeze();
+	iter++;
+
+	TuplePtr assignTp  = Tuple::mk(ASSIGN, true);
+	assignTp->append(ruleId);   // Should be rule identifier
+	assignTp->append(Val_Tuple::mk(buf));
+	assignTp->append(cur);
+	assignTp->append(Val_UInt32::mk(pos++));        // Position
+	assignTp->freeze();
+	assignTbl->insert(assignTp);
+
+	TuplePtr f_ver = Tuple::mk(FUNCTION);
+	f_ver->append(Val_Str::mk(VERFUNC));
+	f_ver->append(Val_UInt32::mk(VERFUNCARGS));
+	f_ver->append(Val_Tuple::mk(buf));
+	f_ver->append(Val_Tuple::mk(proof));
+	f_ver->append(Val_Tuple::mk(P));
+	f_ver->append(Val_Tuple::mk(R));
+	f_ver->append(Val_Tuple::mk(k));
+	f_ver->append(Val_Tuple::mk(V));
+	f_ver->freeze();
+	
+	TuplePtr one = Tuple::mk(VAL);
+	one->append(Val_UInt32::mk(1));
+	one->freeze();
+
+	TuplePtr _boolExpr = Tuple::mk(BOOL);
+	_boolExpr->append(Val_Str::mk("=="));
+	_boolExpr->append(Val_Tuple::mk(one));
+	_boolExpr->append(Val_Tuple::mk(f_ver));
+	_boolExpr->freeze();
+
+	TuplePtr selVer  = Tuple::mk(SELECT, true);
+	selVer->append(ruleId);   // Should be rule identifier	
+	selVer->append(Val_Tuple::mk(_boolExpr));        // Position
+	selVer->append(Val_UInt32::mk(pos++));        // Position
+	selVer->append(Val_Null::mk());        // AM
+	selVer->freeze();
+	selectTbl->insert(selVer);
+
+	ruleTp->set(catalog->attribute(RULE, "TERM_COUNT"), Val_UInt32::mk(pos));
+	ruleTp->freeze();
+	ruleTbl->insert(ruleTp);
+
+	delete vt;
+      }
+      
+    }
+    TuplePtr
+    Context::generateFunctor(CommonTable::ManagerPtr catalog, uint32_t &fictVar, string name, ValuePtr ruleId, uint32_t numVars){
+    
+      TuplePtr     functorTp = Tuple::mk(FUNCTOR, true);
+      if (ruleId) {
+	functorTp->append(ruleId);
+      }
+      else {
+	functorTp->append(Val_Null::mk());
+      }
+    
+      functorTp->append(Val_Str::mk(name));   // Functor name
+    
+      CommonTable::Key nameKey;
+      nameKey.push_back(catalog->attribute(FUNCTOR, "NAME"));
+      CommonTablePtr tableTbl = catalog->table(TABLE);
+      CommonTable::Iterator tIter = 
+	tableTbl->lookup(nameKey, CommonTable::theKey(CommonTable::KEY3), functorTp);
+      if (!tIter->done()) 
+	functorTp->append((*tIter->next())[TUPLE_ID]);
+      else {
+	functorTp->append(Val_Null::mk());
+      }  
+      //      functorTp->append(Val_Null::mk());
+    
+    
+      functorTp->append(Val_Null::mk());          // The ECA flag
+    
+      // Now take care of the functor arguments and variable dependencies
+      ListPtr attributes = List::mk();
+      if(numVars > 0){
+	ostringstream oss;
+	oss << STAGEVARPREFIX << fictVar++;
+	TuplePtr var = Tuple::mk(LOC);
+	var->append(Val_Str::mk(oss.str()));
+	attributes->append(Val_Tuple::mk(var));
+      }
+    
+      for (uint32_t i = 1; i < numVars; i++){
+	TuplePtr var = Tuple::mk(VAR);
+	ostringstream oss;
+	oss << STAGEVARPREFIX << fictVar++;
+	var->append(Val_Str::mk(oss.str()));
+	var->freeze();
+	attributes->append(Val_Tuple::mk(var));
+      }
+    
+      functorTp->append(Val_List::mk(attributes));// the attribute field
+      functorTp->append(Val_Null::mk());          // The position field
+      functorTp->append(Val_Null::mk());          // The access method
+      functorTp->append(Val_Int32::mk(0));        // The new field
+      return functorTp;
+    
     }
 
     void Context::generateMaterialize(CommonTable::ManagerPtr catalog)

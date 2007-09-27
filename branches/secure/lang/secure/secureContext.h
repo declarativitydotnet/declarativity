@@ -31,6 +31,7 @@ namespace compile {
     const string HASHFUNC = "f_sha1"; 
     const uint32_t HASHFUNCARGS = 1; 
     const string VERFUNC = "f_verify"; 
+    const uint32_t VERFUNCARGS = 6; 
     const string GENFUNC = "f_gen"; 
     const uint32_t GENFUNCARGS = 2; 
     const string ENCHINT = "encHint"; 
@@ -50,16 +51,38 @@ namespace compile {
 
     typedef std::deque<TuplePtr> TupleList;
 
+    class VerificationTuple{
+    public:
+      string name;
+      uint32_t numVars;
+      VerificationTuple(string _name, uint32_t  _numVars){
+	numVars = _numVars;
+	name = _name;
+      }
+    };
+
+    struct ltVerificationTuple
+    {
+      bool operator()(const VerificationTuple *s1, const VerificationTuple *s2) const
+      {
+	return s1->name < s2->name;
+      }
+    };
+
+    typedef std::set<VerificationTuple*, ltVerificationTuple> VerificationTupleSet;
+
+
     class Context : public compile::Context {
     public:
       static uint32_t ruleCounter;
-
+      VerificationTupleSet verificationTables;
       Context(string name); 
       Context(TuplePtr args); 
   
-      virtual ~Context() {}; 
+      virtual ~Context() { }; 
   
       const char *class_name() const { return "secure::Context";}
+
   
       DECLARE_PUBLIC_ELEMENT_INITS
 
@@ -102,8 +125,11 @@ namespace compile {
 				     ValuePtr ruleId, 
 				     TupleList *t = NULL);
       
+      TuplePtr generateFunctor(CommonTable::ManagerPtr catalog, uint32_t &, string , ValuePtr , uint32_t);
 
-			   
+
+      void generateVerificationRules(CommonTable::ManagerPtr catalog, TuplePtr program);			   
+
       void generateMaterialize(CommonTable::ManagerPtr catalog);
 
       void initLocSpecMap(CommonTable::ManagerPtr catalog, TuplePtr rule);
