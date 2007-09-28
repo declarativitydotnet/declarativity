@@ -148,7 +148,7 @@ namespace compile {
 	    string lhsname;
 	    if(count < maxCount - 1){
 	      ostringstream oss1;
-	      oss1 << state->newRuleBase <<(*posIter);
+	      oss1 << state->newRuleBase <<"_"<<(*posIter);
 	      lhsname = oss1.str();
 	    }
 	    else{

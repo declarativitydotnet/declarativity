@@ -12,8 +12,23 @@
  */
 
 #include "val_tuple.h"
+#include<iostream>
+class OperTuple : public opr::OperCompare<Val_Tuple> {
+  virtual bool _eq(const ValuePtr& v1, const ValuePtr& v2) const {
+    ValuePtr c1 = Val_Tuple::mk(Val_Tuple::cast(v1));
+    std::cout<<"comparing == " << v1->toString() << " and " << v2->toString();
+    return c1->compareTo(v2) == 0;
+  };
+  virtual bool _neq (const ValuePtr& v1, const ValuePtr& v2) const {
+    ValuePtr c1 = Val_Tuple::mk(Val_Tuple::cast(v1));
+    std::cout<<"!comparing == " << v1->toString() << " and " << v2->toString();
+    return c1->compareTo(v2) != 0;
+  };
 
-const opr::Oper* Val_Tuple::oper_ = new opr::OperCompare<Val_Tuple>();
+};
+
+
+const opr::Oper* Val_Tuple::oper_ = new OperTuple();
 
 //
 // Marshal a tuple
@@ -66,6 +81,7 @@ TuplePtr Val_Tuple::cast(ValuePtr v) {
   } else if (v->typeCode() == Value::NULLV) {
     return TuplePtr();
   } else {
+    uint32_t x = 1/0;
     throw Value::TypeError(v->typeCode(), v->typeName(),
                            Value::TUPLE, "tuple");
   }

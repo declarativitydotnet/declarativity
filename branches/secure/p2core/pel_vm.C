@@ -289,6 +289,7 @@ Pel_VM::Error Pel_VM::execute_instruction( u_int32_t inst, TuplePtr data)
 	         << "on operation " << jump_table[op].opcode << ":"
                  << te.what()
                  << "\n";
+      TELL_ERROR<<data->toString()<<"\n";
       error = PE_TYPE_CONVERSION;
       return error;
     }

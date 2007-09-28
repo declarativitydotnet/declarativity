@@ -194,7 +194,7 @@ namespace compile {
 	      }
 	      assert(pos <= attributes->size());
 	      ostringstream oss1;
-	      oss1 << Val_Str::cast((*functor)[catalog->attribute(FUNCTOR, "NAME")]) << (pos - NEWFIELDS);
+	      oss1 << Val_Str::cast((*functor)[catalog->attribute(FUNCTOR, "NAME")]) << "_"<<(pos - NEWFIELDS);
 	      string newname = oss1.str();
 	      
 	      functor->set(catalog->attribute(FUNCTOR, "TID"), Val_Null::mk());

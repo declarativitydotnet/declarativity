@@ -169,9 +169,9 @@ namespace compile {
       CommonTable::Key key;
 
       TuplePtr head;
-      key.push_back(catalog->attribute(FUNCTOR, "RID"));
+      key.push_back(catalog->attribute(FUNCTOR, "FID"));
       CommonTable::Iterator Iter;
-      Iter = catalog->table(FUNCTOR)->lookup(CommonTable::theKey(CommonTable::KEY2),
+      Iter = catalog->table(FUNCTOR)->lookup(CommonTable::theKey(CommonTable::KEY5),
                                              key, rule);
       if (Iter->done()) 
         throw Exception("No head table predicate in rule: " + rule->toString());
