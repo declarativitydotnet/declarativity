@@ -73,7 +73,8 @@ namespace compile {
         int      functorEcaPos   = catalog->attribute(FUNCTOR, "ECA");
         int      functorPosPos   = catalog->attribute(FUNCTOR, "POSITION");
         string   eventName       = (*event)[functorNamePos]->toString();
-      
+	uint32_t eventPos = -1;
+
         if (eventName.size() >= 8 && 
             eventName.substr(eventName.size()-8, eventName.size()) == "periodic") {
           if (probes.size() > 0) {
@@ -95,6 +96,7 @@ namespace compile {
           ecaEvent->set(functorEcaPos, Val_Str::mk("RECV"));
         }
         /* Make sure the event appears in position 1 of the rule. */
+	eventPos = Val_UInt32::cast((*ecaEvent)[functorPosPos]);
         ecaEvent->set(functorPosPos, Val_UInt32::mk(1));
         ecaEvent->freeze();
         functorTbl->insert(ecaEvent); // Commit the updated event functor
@@ -127,7 +129,11 @@ namespace compile {
              iter != probes.end(); iter++) {
           TuplePtr tp = (*iter)->clone();
           tp->set(functorEcaPos, Val_Str::mk("PROBE"));
-          tp->set(functorPosPos, Val_UInt32::mk(position++));
+	  uint32_t oldPos = Val_UInt32::cast((*tp)[catalog->attribute(FUNCTOR, "POSITION")]);
+	  if(oldPos <= eventPos){
+	      tp->set(functorPosPos, Val_UInt32::mk(oldPos+1));
+	  }
+	  position++;
           functorTbl->insert(tp);
         }
 
@@ -139,7 +145,11 @@ namespace compile {
 	Iter = catalog->table(ASSIGN)->lookup(CommonTable::theKey(CommonTable::KEY2), key, rule); 
         while (!Iter->done()) {
           TuplePtr assign = Iter->next()->clone();
-          assign->set(catalog->attribute(ASSIGN, "POSITION"), Val_UInt32::mk(position++));
+	  uint32_t oldPos = Val_UInt32::cast((*assign)[catalog->attribute(ASSIGN, "POSITION")]);
+	  if(oldPos <= eventPos){
+	    assign->set(catalog->attribute(ASSIGN, "POSITION"), Val_UInt32::mk(oldPos+1));
+	  }
+	  position++;
           assign->freeze();
           if (!catalog->table(ASSIGN)->insert(assign)){
 	    //            throw Exception("Rewrite View: Can't insert assignment. " + rule->toString());
@@ -152,7 +162,11 @@ namespace compile {
         Iter = catalog->table(SELECT)->lookup(CommonTable::theKey(CommonTable::KEY2), key, rule); 
         while (!Iter->done()) {
           TuplePtr select = Iter->next()->clone();
-          select->set(catalog->attribute(SELECT, "POSITION"), Val_UInt32::mk(position++));
+	  uint32_t oldPos = Val_UInt32::cast((*select)[catalog->attribute(SELECT, "POSITION")]);
+	  if(oldPos <= eventPos){
+	    select->set(catalog->attribute(SELECT, "POSITION"), Val_UInt32::mk(oldPos + 1));
+	  }
+	  position++;
           select->freeze();
           if (!catalog->table(SELECT)->insert(select)){
 	    //            throw Exception("Rewrite View: Can't insert selection. " + rule->toString());
@@ -180,6 +194,7 @@ namespace compile {
       for (std::deque<TuplePtr>::iterator iter1 = baseTables.begin();
            iter1 != baseTables.end(); iter1++) {
         // Make the new delta rule and predicate head.
+	uint32_t eventPos = -1;
         TuplePtr deltaRule = rule->clone(RULE, true);
         TuplePtr deltaHead = head->clone(FUNCTOR, true);
         deltaRule->set(catalog->attribute(RULE, "HEAD_FID"), (*deltaHead)[TUPLE_ID]);
@@ -205,6 +220,7 @@ namespace compile {
 
         // Create delta rule event 
         TuplePtr deltaEvent = (*iter1)->clone(FUNCTOR, true);
+	eventPos = Val_UInt32::cast((*deltaEvent)[catalog->attribute(FUNCTOR, "POSITION")]);
         deltaEvent->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("DELTA"));
         deltaEvent->set(catalog->attribute(FUNCTOR, "RID"), (*deltaRule)[TUPLE_ID]);
         deltaEvent->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(1));
@@ -220,7 +236,11 @@ namespace compile {
             TuplePtr deltaProbe = (*iter2)->clone(FUNCTOR, true);
             deltaProbe->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("PROBE"));
             deltaProbe->set(catalog->attribute(FUNCTOR, "RID"), (*deltaRule)[TUPLE_ID]);
-            deltaProbe->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(position++));
+	    uint32_t oldPos = Val_UInt32::cast((*deltaProbe)[catalog->attribute(FUNCTOR, "POSITION")]);
+	    if(oldPos <= eventPos){
+	      deltaProbe->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(oldPos + 1));
+	    }
+	    position++;
             deltaProbe->freeze();
             if (!catalog->table(FUNCTOR)->insert(deltaProbe))
               throw Exception("Rewrite View: Can't insert probe. " + rule->toString());
@@ -236,7 +256,11 @@ namespace compile {
         while (!Iter->done()) {
           TuplePtr assign = Iter->next()->clone(ASSIGN, true);
           assign->set(catalog->attribute(ASSIGN, "RID"), (*deltaRule)[TUPLE_ID]);
-          assign->set(catalog->attribute(ASSIGN, "POSITION"), Val_UInt32::mk(position++));
+	  uint32_t oldPos = Val_UInt32::cast((*assign)[catalog->attribute(ASSIGN, "POSITION")]);
+	  if(oldPos <= eventPos){
+	    assign->set(catalog->attribute(ASSIGN, "POSITION"), Val_UInt32::mk(oldPos + 1));
+	  }
+	  position++;
           assign->freeze();
           if (!catalog->table(ASSIGN)->insert(assign)){
 	    //            throw Exception("Rewrite View: Can't insert assignment. " + rule->toString());
@@ -251,7 +275,11 @@ namespace compile {
         while (!Iter->done()) {
           TuplePtr select = Iter->next()->clone(SELECT, true);
           select->set(catalog->attribute(SELECT, "RID"), (*deltaRule)[TUPLE_ID]);
-          select->set(catalog->attribute(SELECT, "POSITION"), Val_UInt32::mk(position++));
+	  uint32_t oldPos = Val_UInt32::cast((*select)[catalog->attribute(SELECT, "POSITION")]);
+	  if(oldPos <= eventPos){
+	    select->set(catalog->attribute(SELECT, "POSITION"), Val_UInt32::mk(oldPos+1));
+	  }
+	  position++;
           select->freeze();
           if (!catalog->table(SELECT)->insert(select)){
 	    //            throw Exception("Rewrite View: Can't insert selection. " + rule->toString());
