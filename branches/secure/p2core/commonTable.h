@@ -560,7 +560,7 @@ public:
       lookup(Key, TuplePtr) should be used instead for peformance
       reasons.  */
   virtual Iterator
-  lookup(Key& lookupKey, Key& indexKey, TuplePtr t);
+  lookup(const Key& lookupKey, const Key& indexKey, TuplePtr t);
 
 
   /** Looks up tuple t in the index defined by indexKey.  If no such
@@ -574,7 +574,7 @@ public:
       slightly faster than that method since it does not perform the
       projection. */
   virtual Iterator
-  lookup(Key& indexKey, TuplePtr t);
+  lookup(const Key& indexKey, TuplePtr t);
 
 
 
@@ -791,9 +791,9 @@ protected:
       the destination tuple is not frozen. */
   void
   project(TuplePtr source,
-          Key& sourceKey,
+          const Key& sourceKey,
           TuplePtr destination,
-          Key& destinationKey);
+          const Key& destinationKey);
 };
 
 /** A pointer to tables */

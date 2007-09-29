@@ -742,8 +742,8 @@ CommonTable::primaryKey() const
 ////////////////////////////////////////////////////////////
 
 CommonTable::Iterator
-CommonTable::lookup(CommonTable::Key& lookupKey,
-                    CommonTable::Key& indexKey,
+CommonTable::lookup(const CommonTable::Key& lookupKey,
+                    const CommonTable::Key& indexKey,
                     TuplePtr t)  
 {
   TABLE_WORDY("Lookup with projection of tuple "
@@ -788,7 +788,7 @@ CommonTable::lookup(CommonTable::Key& lookupKey,
 
 
 CommonTable::Iterator
-CommonTable::lookup(CommonTable::Key& indexKey,
+CommonTable::lookup(const CommonTable::Key& indexKey,
                     TuplePtr t)  
 {
   TABLE_WORDY("Lookup without projection of tuple "
@@ -958,12 +958,12 @@ CommonTable::range1DLookupSecondary(bool openL, CommonTable::Entry* lb,
 
 void
 CommonTable::project(TuplePtr source,
-                     Key& sourceKey,
+                     const Key& sourceKey,
                      TuplePtr destination,
-                     Key& destinationKey)
+                     const Key& destinationKey)
 {
-  Key::iterator s;
-  Key::iterator d;
+  Key::const_iterator s;
+  Key::const_iterator d;
   for (s = sourceKey.begin(),
          d = destinationKey.begin();
        s != sourceKey.end();
