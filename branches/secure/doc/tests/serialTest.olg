@@ -1,6 +1,6 @@
 materialize(parent, infinity, infinity, keys(2)).
 materialize(child, infinity, infinity, keys(2)).
-weak ref(parent, child, 2).
+weak ref(parent, child, 3).
 
 /*child("localhost:10000", 0).*/
 
@@ -18,6 +18,9 @@ watch(child).
 watch(parent).
 watch(parentNew).
 watch(childNew).
+watch(childNew).
+watch(childNewVer).
+watch(locSpecTable).
 watch(event).
 watch(test).
 

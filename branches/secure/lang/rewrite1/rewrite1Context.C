@@ -236,12 +236,20 @@ namespace compile {
 	  materializeLocSpecTuple(fictVar, catalog, programID, newTupleVersion->clone(FUNCTOR, true), state);
 	  // and create the TVersion tuple using the newTVersion
 	  materializeNewTupleVersion(fictVar, catalog, programID, newTupleVersion->clone(FUNCTOR, true), state);
+	  size_t lastnewpos = state->newRuleBase.rfind(compile::NEWSUFFIX, state->newRuleBase.size());
+	  if(lastnewpos == string::npos){
+	    throw compile::rewrite1::Exception("Invalid new tuple:" + state->newRuleBase);
+	  }
+	  string scopedName = state->newRuleBase.substr(0, lastnewpos);
+	  assert(scopedName + compile::NEWSUFFIX == state->newRuleBase);
+	  catalog->createIndex(scopedName, CommonTable::theKey(CommonTable::KEY2));
+
 	}
 	else{
 	  TuplePtr processTuple = materializeProcessTuple(fictVar, catalog, programID, state);
 	  //	  materializeDeleteProcessTuple(fictVar, catalog, programID, processTuple->clone(FUNCTOR, true), state);
 	  materializeSendTuple(fictVar, catalog, programID, processTuple->clone(FUNCTOR, true), state);
-	  needRecvTuple = true;
+      	  needRecvTuple = true;
 	}
       }
     }
@@ -439,6 +447,7 @@ namespace compile {
       if (!tIter->done()) 
         head->append((*tIter->next())[TUPLE_ID]);
       else {
+	assert(0);
         head->append(Val_Null::mk());
       }
   
@@ -964,6 +973,17 @@ namespace compile {
     {
       SetPtr tmp(new Set());
       materializedTable = tmp;
+      //add materialization for LOCSPECTABLE
+      string scopedName = compile::LOCSPECTABLE;
+      Table2::Key _keys;
+      _keys.push_back(1); // location
+      _keys.push_back(2); // loc spec
+      _keys.push_back(3); // ver location
+      _keys.push_back(4); // ver
+
+      catalog->createTable(scopedName, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
+      catalog->createIndex(scopedName, CommonTable::theKey(CommonTable::KEY2));
+
       TuplePtr newProgram = this->compile::Context::program(catalog, program);
 
       pass2(catalog, program);

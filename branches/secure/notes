@@ -24,7 +24,7 @@ what happens to the rewritten form of this rule:
 20> need to add dest to genfunc to ensure that the serialization doesn't take place if the dest is same as the source
 List of functions to be added:
 21> Why does reordering in oper.h leads to different behavior in both runStagedOverlog and runOverLog? 1399 and 1401
-22> delete semantics
+22> delete semantics: deleting before the end of fix-point
 Minor error's log:
 
 

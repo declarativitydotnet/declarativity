@@ -11,28 +11,45 @@
 namespace compile {
 
   namespace secure {
-
+    const string ROOTSUFFIX = "NewProcess";
+    const string NEWSAYSSUFFIX = "NewSays";
+    const string SAYSSUFFIX = "Says";
+    const string LOCSPECTABLE = "locSpecTable";
+    const uint32_t WEAK = 0;
+    const uint32_t STRONG = 1;
+    const uint32_t WEAKSAYS = 2;
+    const uint32_t STRONGSAYS = 3;
+    const uint32_t ROOT = 4;
+    static string refSuffix[] = {"", "", NEWSAYSSUFFIX, NEWSAYSSUFFIX, ""};
     static uint32_t idCounter = 0;
     void
     dump(CommonTable::ManagerPtr catalog)
     {
       CommonTablePtr functorTbl = catalog->table("parentNewProcess");
       CommonTablePtr assignTbl  = catalog->table("child");
+      CommonTablePtr locSpecTbl  = catalog->table(LOCSPECTABLE);
       CommonTablePtr tableTbl  = catalog->table(TABLE);
 
       CommonTable::Iterator iter;
       // first display all functors
-      TELL_OUTPUT << "\n FUNCTORS \n";
+      TELL_OUTPUT << "\n PARENTS \n";
       for (iter = functorTbl->scan();!iter->done(); ) {
 	TuplePtr functor = iter->next();
 	TELL_OUTPUT << functor->toString()<<"\n";
       }
 
-      TELL_OUTPUT << "\n ASSIGNS \n";
+      TELL_OUTPUT << "\n CHILD \n";
       for (iter = assignTbl->scan();!iter->done(); ) {
 	TuplePtr term = iter->next();
 	TELL_OUTPUT << term->toString()<<"\n";
       }
+
+      TELL_OUTPUT << "\n LOCSPEC \n";
+      for (iter = locSpecTbl->scan();!iter->done(); ) {
+	TuplePtr term = iter->next();
+	TELL_OUTPUT << term->toString()<<"\n";
+      }
+
       TELL_OUTPUT << "\n TABLE \n";
       for (iter = tableTbl->scan();!iter->done(); ) {
 	TuplePtr term = iter->next();
@@ -44,24 +61,24 @@ namespace compile {
     ValuePtr generateLocSpec(bool strong){
       std::cout<<"generate loc spec called \n";
       CommonTable::ManagerPtr catalog = Plumber::catalog();
-      TuplePtr locSpec = Tuple::mk(LOCSPECTUPLE);
+      TuplePtr locSpec = Tuple::mk();
+      locSpec->append(Val_Str::mk(LOCSPECTUPLE));
       locSpec->append(catalog->nodeid());
-      //      locSpec->append(Val_Str::mk("Hi there!"));
+      //locSpec->append(Val_Str::mk("Hi there!"));
       locSpec->append(Val_UInt32::mk(idCounter++));
       locSpec->append(Val_UInt32::mk(strong?1:0)); // strong or weak
       locSpec->append(Val_Null::mk()); //for the self-certifying hash
       locSpec->freeze();
-      dump(catalog);
       return Val_Tuple::mk(locSpec);
     }
 
     ValuePtr generateVersion(bool strong){
       std::cout<<"generate version called \n";
       CommonTable::ManagerPtr catalog = Plumber::catalog();
-      dump(catalog);
-      TuplePtr version = Tuple::mk(VERSIONTUPLE);
+      TuplePtr version = Tuple::mk();
+      version->append(Val_Str::mk(VERSIONTUPLE));
       version->append(catalog->nodeid());
-      //      version->append(Val_Str::mk("Hi there!"));
+      //version->append(Val_Str::mk("Hi there!"));
       version->append(Val_UInt32::mk(idCounter++));
       version->append(Val_UInt32::mk(strong?1:0)); // strong or weak
       version->append(Val_Null::mk()); //for the self-certifying hash
@@ -85,9 +102,23 @@ namespace compile {
       // traverse the graph and return the serialized graph
       // find out all the linked tuples and recursively find their linked tuples and add it to the list
 
-      // assert that the table name is materialized and has key 1
+      // assert that the table name is materialized and has key 2
       std::cout<<"processGen called with arg" << tableName->toString() << " and time stamp " << key->toString()<< " \n";
-      dump(Plumber::catalog());
+      CommonTable::ManagerPtr catalog = Plumber::catalog();
+      dump(catalog);
+       CommonTablePtr parentTbl = catalog->table(Val_Str::cast(tableName) + ROOTSUFFIX);      
+      TuplePtr dummyTpl = Tuple::mk(Val_Str::cast(tableName) + ROOTSUFFIX);
+      dummyTpl->append(key);
+      // get reference to the tuple being talked about
+      CommonTable::Iterator parentProcessIter = parentTbl->lookup(parentTbl->primaryKey(), dummyTpl);
+      assert(!parentProcessIter->done());
+      TuplePtr parentProcessTuple = parentProcessIter->next();
+      // process root tuple here and call the serialize method for each linked tuple
+      // root needs spl processing i.e. dependent on the other parameters of processNewTuple
+      // first field
+      ListPtr buf = List::mk();
+      serialize(catalog, parentProcessTuple, Val_Str::cast(tableName), buf, ROOT);
+      std::cout<<"serialized buffer"<<buf->toString();
       return tableName;
       
     }
@@ -103,12 +134,14 @@ namespace compile {
     ///
     //
     //
-
+    
     // serialize the graph rooted at parent tuple with table name = tablename
     // store the result in buf
     // also create a secure version of this parent tuple if the createSecureVersion flag is set
     // princem: currently the old tuple can be safely deleted
-    void serialize(CommonTable::ManagerPtr catalog, TuplePtr parent, ListPtr buf, bool createSecureVersion){
+    // handle parentNewProcess tuple, parent tuple, and parentNewSays tuple
+    // decision based on the parent tuple: parentname tuple for ref calculations
+    void serialize(CommonTable::ManagerPtr catalog, TuplePtr parent, string parentname, ListPtr buf, uint32_t myRefType){
 	// do a lookup on the ref table to find out all the referenced tables
 	//     -> for all such tables childTable, iterate over all the joinable tuples (through locSpec table)
 	//           -> for all such tuples child, call serialize(catalog, childTableName, child, buf, link.type)
@@ -119,61 +152,101 @@ namespace compile {
 	// finally, calculate the the local hash that includes strong link.hash and all non-loc spec fields
 	// return local hash
 
-//       uint32_t refPosPos = catalog->attribute(REF, "LOCSPECFIELD");
-//       uint32_t refTypePos = catalog->attribute(REF, "REFTYPE");
-//       uint32_t refToPos = catalog->attribute(REF, "TO");
-     
-//       assert((*parent)[catalog->attribute(FUNCTOR, "TID")] != Val_Null::mk());
-//       CommonTablePtr refTbl = catalog->table(REF);
-//       CommonTable::Iterator refIter;
-//       CommonTable::Key key;
-//       key->push_back(refPosVal);
-//       CommonTablePtr childTbl = catalog->table(childTableName);
-//       CommonTablePtr locSpecTbl = catalog->table(LOCSPECTABLE);
-//       CommonTable::Iterator childIter;
-//       CommonTable::Iterator locSpecIter;
+      string tuplename = Val_Str::cast((*parent)[0]);
+      std::cout<<"serializing " << tuplename <<" tuple \n";
+      uint32_t refPosPos = catalog->attribute(REF, "LOCSPECFIELD");
+      uint32_t refTypePos = catalog->attribute(REF, "REFTYPE");
+      uint32_t refToPos = catalog->attribute(REF, "TO");
       
-//       for (locSpecIter = locSpecTbl->lookup(CommonTable::theKey(CommonTable::KEY0), CommonTable::theKey(CommonTable::KEY4), parent);
-// 	   !refIter->done(); ) {
-// 	TuplePtr ref = refIter->next();
-// 	uint32_t refPosVal = Val_UInt32::cast((*ref)[refPosPos]);
-// 	TuplePtr refLocSpecTuple = Val_Tuple::cast((*parent)[refPosVal]);
-// 	uint32_t refType = Val_UInt32::cast((*ref)[refTypePos]);
-// 	string childTableName = Val_Str::cast((*ref)[refToPos]);
-
-// 	Fdbuf totalBuf;
-// 	childIter = childTbl->lookup(key, CommonTable::theKey(CommonTable::KEY2), parent);
-// 	  for (; !childIter->done(); ) {
-// 	    TuplePtr child = child->next();
-// 	childIter = childTbl->lookup(key, CommonTable::theKey(CommonTable::KEY2), parent);
-// 	  for (; !childIter->done(); ) {
-// 	    TuplePtr child = child->next();
-// 	    if(refType == STRONG){
-// 	      ValuePtr proof = serialize(catalog, child, buf, (refType == STRONG));
-// 	      fdbuf->append(proof);
-// 	      createStrongLocSpec
-// 	    }
-// 	  }
-// 	  if(refType == STRONG){
+      uint32_t offset = 0;
+      switch(myRefType){
+      case WEAK: 
+      case STRONG: offset = 1; // because of version
+	assert(parentname == tuplename);
+	break;
+      case WEAKSAYS:
+      case STRONGSAYS: offset = 3; // because of new fields
+	assert(tuplename == (parentname + NEWSAYSSUFFIX));
+	break;
+      case ROOT: offset = 4; // because of new fields + time stamp fields
+	assert(tuplename == (parentname + ROOTSUFFIX));
+	break;
+      default: assert(0);
+      }
+      
+      CommonTablePtr refTbl = catalog->table(REF);
+      CommonTable::Iterator refIter;
+      TuplePtr dummyTpl = Tuple::mk(parentname);
+      for(refIter = refTbl->lookup(CommonTable::theKey(CommonTable::KEY0), CommonTable::theKey(CommonTable::KEY4), dummyTpl); !refIter->done();){
+      
+	TuplePtr refTpl = refIter->next();
+	
+	uint32_t refType = Val_UInt32::cast((*refTpl)[refTypePos]);
+	string childTableName = Val_Str::cast((*refTpl)[refToPos]);
+	uint32_t refPosVal = Val_UInt32::cast((*refTpl)[refPosPos]);
+	CommonTable::Key key;
+	key.push_back(refPosVal + offset);
+	string materializedChild = childTableName + refSuffix[refType];
+	CommonTablePtr childTbl = catalog->table(materializedChild);
+	CommonTablePtr locSpecTbl = catalog->table(LOCSPECTABLE);
+	CommonTable::Iterator childIter;
+	CommonTable::Iterator locSpecIter;
+	
+	for (locSpecIter = locSpecTbl->lookup(key, CommonTable::theKey(CommonTable::KEY2), parent);
+	     !locSpecIter->done(); ) {
+	  TuplePtr locSpec = locSpecIter->next()->clone();
+	  locSpec->freeze();
+	  TuplePtr refLocSpecTuple = Val_Tuple::cast((*parent)[refPosVal]);
+	  
+	  SetPtr hashSet = Set::mk();
+	  childIter = childTbl->lookup(CommonTable::theKey(CommonTable::KEY4), CommonTable::theKey(CommonTable::KEY2), locSpec);
+	  if(!childIter->done()) {
+	    TuplePtr child = childIter->next();
+	    if(refType == STRONG || refType == STRONGSAYS){
+	      assert(0);
+	      //	      ValuePtr proof = serialize(catalog, child, childTableName, buf, refType);
+	      //	      hashSet->insert(proof);
+	      // createStrongLocSpec
+	    }
+	    else{
+	      serialize(catalog, child, childTableName, buf, refType);
+	    }
+	  }
+	  if(refType == STRONG || refType == STRONGSAYS){
+	    // do more work
+	  }
+	  buf->append(Val_Tuple::mk(locSpec));
 	    
-// 	  }
+	}
+      }
 
-// 	}
-// 	    if(refType == STRONG){
-// 	      ValuePtr proof = serialize(catalog, child, buf, (refType == STRONG));
-// 	      fdbuf->append(proof);
-// 	      createStrongLocSpec
-// 	    }
-// 	  }
-// 	  if(refType == STRONG){
-	    
-// 	  }
-
-// 	}
-//       }
+      if(myRefType == STRONGSAYS || myRefType == WEAKSAYS || myRefType == ROOT){
+	uint32_t tupleSize = parent->size();
+	string parentNewName;
+	if(myRefType == STRONGSAYS || myRefType == WEAKSAYS){
+	  parentNewName = parentname + SAYSSUFFIX;
+	}
+	else if(myRefType == ROOT){
+	  parentNewName = parentname;
+	}
+	TuplePtr parentCopy = Tuple::mk(parentNewName);
+	for(uint32_t i = offset + 1 + 1; i < tupleSize; i++) // for location as it is also automatically created, also note that relevant fields start from 1
+	  {
+	    parentCopy->append((*parent)[i]);
+	  }
+	parentCopy->freeze();
+	std::cout<<"created a tuple "<< parentCopy->toString() << "to replace tuple"<< parent->toString()<<"\n";
+	buf->append(Val_Tuple::mk(parentCopy));
+      }
+      else{
+	TuplePtr parentCopy = parent->clone();
+	parentCopy->freeze();
+	buf->append(Val_Tuple::mk(parentCopy));
+      }
+	
     }
+    
 
-
-  } // END SECURE
+} // END SECURE
 
 } // END COMPILE

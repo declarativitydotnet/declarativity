@@ -456,7 +456,7 @@ namespace compile {
       TuplePtr     functorTp = Tuple::mk(FUNCTOR, true);
       functorTp->append(ruleId);
 
-      functorTp->append(Val_Str::mk("::" + compile::LOCSPECTABLE));   // Functor name
+      functorTp->append(Val_Str::mk(compile::LOCSPECTABLE));   // Functor name
   
       // Fill in table reference if functor is materialized
       CommonTable::Key nameKey;
@@ -467,7 +467,7 @@ namespace compile {
       if (!tIter->done()) 
         functorTp->append((*tIter->next())[TUPLE_ID]);
       else {
-        functorTp->append(Val_Null::mk());
+	assert(0);
       }
   
       functorTp->append(Val_Null::mk());          // The ECA flag
@@ -528,16 +528,6 @@ namespace compile {
     Context::program(CommonTable::ManagerPtr catalog, TuplePtr program) 
     {
 
-      //add materialization for LOCSPECTABLE
-      string scopedName = compile::LOCSPECTABLE;
-      Table2::Key _keys;
-      _keys.push_back(1); // location
-      _keys.push_back(2); // loc spec
-      _keys.push_back(3); // ver location
-      _keys.push_back(4); // ver
-
-      catalog->createTable(scopedName, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
-      catalog->createIndex(scopedName, CommonTable::theKey(CommonTable::KEY2));
       TuplePtr newProgram = this->compile::Context::program(catalog, program);
 
       delete compile::Context::ruleLocSpecMap;
