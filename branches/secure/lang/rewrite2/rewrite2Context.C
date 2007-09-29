@@ -537,7 +537,7 @@ namespace compile {
       _keys.push_back(4); // ver
 
       catalog->createTable(scopedName, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
-
+      catalog->createIndex(scopedName, CommonTable::theKey(CommonTable::KEY2));
       TuplePtr newProgram = this->compile::Context::program(catalog, program);
 
       delete compile::Context::ruleLocSpecMap;
