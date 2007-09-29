@@ -2,7 +2,7 @@ materialize(parent, infinity, infinity, keys(2)).
 materialize(child, infinity, infinity, keys(2)).
 weak ref(parent, child, 2).
 
-child("localhost:10000", 0).
+/*child("localhost:10000", 0).*/
 
 r1 test(@I, I) :- periodic(@I, E, 1, 1).
 

@@ -1168,26 +1168,26 @@ namespace compile {
 
 	//generate materialize for encHint
 	Table2::Key encHintKey;
-	encHintKey.push_back(1); 
 	encHintKey.push_back(2); 
 	encHintKey.push_back(3); 
 	encHintKey.push_back(4); 
 	encHintKey.push_back(5); 
+	encHintKey.push_back(6); 
 
 	catalog->createTable(ENCHINT, encHintKey, Table2::NO_SIZE, Table2::NO_EXPIRATION);
       
 	//generate materialize for verTable
 
 	Table2::Key vertableKey;
-	vertableKey.push_back(1); 
 	vertableKey.push_back(2); 
+	vertableKey.push_back(3); 
 
 	catalog->createTable(VERTABLE, vertableKey, Table2::NO_SIZE, Table2::NO_EXPIRATION);
 
 	//generate materialize for genTable
 	Table2::Key gentableKey;
-	gentableKey.push_back(1); 
 	gentableKey.push_back(2); 
+	gentableKey.push_back(3); 
 
 	catalog->createTable(GENTABLE, gentableKey, Table2::NO_SIZE, Table2::NO_EXPIRATION);
       }

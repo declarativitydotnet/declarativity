@@ -1213,11 +1213,11 @@ namespace compile {
       }
       if(compoundRewrite && _versioned){
 	Table2::Key newKey;
-	newKey.push_back(compile::VERPOS - 1); 
+	newKey.push_back(compile::VERPOS); 
 	for (CommonTable::Key::iterator i = _keys.begin();
 	     i != _keys.end(); i++) {
 	  unsigned fieldNo = *i;
-	  if (fieldNo >= (compile::VERPOS - 1)) {
+	  if (fieldNo >= (compile::VERPOS)) {
 	    newKey.push_back(fieldNo + 1);
 	  }
 	  else{

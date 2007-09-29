@@ -13,26 +13,55 @@ namespace compile {
   namespace secure {
 
     static uint32_t idCounter = 0;
+    void
+    dump(CommonTable::ManagerPtr catalog)
+    {
+      CommonTablePtr functorTbl = catalog->table("parentNewProcess");
+      CommonTablePtr assignTbl  = catalog->table("child");
+      CommonTablePtr tableTbl  = catalog->table(TABLE);
+
+      CommonTable::Iterator iter;
+      // first display all functors
+      TELL_OUTPUT << "\n FUNCTORS \n";
+      for (iter = functorTbl->scan();!iter->done(); ) {
+	TuplePtr functor = iter->next();
+	TELL_OUTPUT << functor->toString()<<"\n";
+      }
+
+      TELL_OUTPUT << "\n ASSIGNS \n";
+      for (iter = assignTbl->scan();!iter->done(); ) {
+	TuplePtr term = iter->next();
+	TELL_OUTPUT << term->toString()<<"\n";
+      }
+      TELL_OUTPUT << "\n TABLE \n";
+      for (iter = tableTbl->scan();!iter->done(); ) {
+	TuplePtr term = iter->next();
+	TELL_OUTPUT << term->toString()<<"\n";
+      }
+  
+    }   
 
     ValuePtr generateLocSpec(bool strong){
       std::cout<<"generate loc spec called \n";
       CommonTable::ManagerPtr catalog = Plumber::catalog();
       TuplePtr locSpec = Tuple::mk(LOCSPECTUPLE);
-      //      locSpec->append(catalog->nodeid());
-      locSpec->append(Val_Str::mk("Hi there!"));
+      locSpec->append(catalog->nodeid());
+      //      locSpec->append(Val_Str::mk("Hi there!"));
       locSpec->append(Val_UInt32::mk(idCounter++));
       locSpec->append(Val_UInt32::mk(strong?1:0)); // strong or weak
       locSpec->append(Val_Null::mk()); //for the self-certifying hash
       locSpec->freeze();
+      dump(catalog);
       return Val_Tuple::mk(locSpec);
     }
 
     ValuePtr generateVersion(bool strong){
       std::cout<<"generate version called \n";
       CommonTable::ManagerPtr catalog = Plumber::catalog();
+      dump(catalog);
       TuplePtr version = Tuple::mk(VERSIONTUPLE);
-      //      version->append(catalog->nodeid());
-      version->append(Val_Str::mk("Hi there!"));
+      version->append(catalog->nodeid());
+      //      version->append(Val_Str::mk("Hi there!"));
       version->append(Val_UInt32::mk(idCounter++));
       version->append(Val_UInt32::mk(strong?1:0)); // strong or weak
       version->append(Val_Null::mk()); //for the self-certifying hash
@@ -41,14 +70,14 @@ namespace compile {
     }
 
     bool isLocSpec(ValuePtr v){
-      std::cout<<"is locspec called with arg " + v->toString() + "\n";
-      if(v->typeCode() != Value::TUPLE){
-	return false;
-      }
-      else{
+      bool rVal = false;
+      if(v->typeCode() == Value::TUPLE){
 	TuplePtr tuple = Val_Tuple::cast(v);
-	return(Val_Str::cast((*tuple)[TNAME]) == LOCSPECTUPLE);
+	rVal = (Val_Str::cast((*tuple)[TNAME]) == LOCSPECTUPLE);
       }
+      std::cout<<"is locspec called with arg " << v->toString() << ": returned " << rVal << "\n";
+      return rVal;
+
     }
 
     // lets implement the insecure version first
@@ -58,6 +87,7 @@ namespace compile {
 
       // assert that the table name is materialized and has key 1
       std::cout<<"processGen called with arg" << tableName->toString() << " and time stamp " << key->toString()<< " \n";
+      dump(Plumber::catalog());
       return tableName;
       
     }

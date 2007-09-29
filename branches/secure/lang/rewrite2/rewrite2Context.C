@@ -529,27 +529,17 @@ namespace compile {
     {
 
       //add materialization for LOCSPECTABLE
-      string scopedName = "::" + compile::LOCSPECTABLE;
+      string scopedName = compile::LOCSPECTABLE;
       Table2::Key _keys;
-      _keys.push_back(0);
-      _keys.push_back(1);
-      _keys.push_back(2);
-      _keys.push_back(3);
+      _keys.push_back(1); // location
+      _keys.push_back(2); // loc spec
+      _keys.push_back(3); // ver location
+      _keys.push_back(4); // ver
 
       catalog->createTable(scopedName, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
 
       TuplePtr newProgram = this->compile::Context::program(catalog, program);
 
-      CommonTablePtr tableTbl = catalog->table(TABLE);
-      CommonTable::Iterator tableIter;
-
-      //change the materialization statements for other tables to include the extended name: 
-      //version suffix and corresponding changes in the key
-      for (tableIter = tableTbl->scan();
-           !tableIter->done(); ) {
-	TuplePtr table = tableIter->next();
-	// exclude locSpecTable, says tables, genKey, encHint, encKey, ref and other system tables
-      }
       delete compile::Context::ruleLocSpecMap;
       return newProgram;
 

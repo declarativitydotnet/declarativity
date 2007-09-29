@@ -239,7 +239,7 @@ namespace compile {
 	}
 	else{
 	  TuplePtr processTuple = materializeProcessTuple(fictVar, catalog, programID, state);
-	  materializeDeleteProcessTuple(fictVar, catalog, programID, processTuple->clone(FUNCTOR, true), state);
+	  //	  materializeDeleteProcessTuple(fictVar, catalog, programID, processTuple->clone(FUNCTOR, true), state);
 	  materializeSendTuple(fictVar, catalog, programID, processTuple->clone(FUNCTOR, true), state);
 	  needRecvTuple = true;
 	}
@@ -608,7 +608,7 @@ namespace compile {
       if(materializedTable->member(Val_Str::mk(lhsname)) == 0){
 	// need to materialize the lhs
 	Table2::Key _keys;
-	_keys.push_back(UNIQUEIDPOS - 1); // since the count for keys start from 0
+	_keys.push_back(UNIQUEIDPOS); // since the count for keys start from 0
 	catalog->createTable(lhsname, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
 	materializedTable->insert(Val_Str::mk(lhsname));
       }
