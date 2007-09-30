@@ -81,7 +81,6 @@ TuplePtr Val_Tuple::cast(ValuePtr v) {
   } else if (v->typeCode() == Value::NULLV) {
     return TuplePtr();
   } else {
-    uint32_t x = 1/0;
     throw Value::TypeError(v->typeCode(), v->typeName(),
                            Value::TUPLE, "tuple");
   }
