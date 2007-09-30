@@ -5,6 +5,7 @@
 #include "val_tuple.h"
 #include "val_null.h"
 #include "val_str.h"
+#include "val_list.h"
 #include "tuple.h"
 #include "plumber.h"
 
@@ -19,21 +20,30 @@ namespace compile {
     const uint32_t STRONG = 1;
     const uint32_t WEAKSAYS = 2;
     const uint32_t STRONGSAYS = 3;
-    const uint32_t ROOT = 4;
+    const uint32_t ROOT = 4;    
+    const uint32_t LOCSPECLOCATIONFIELD = 3;
+    const uint32_t CURVERSION = 0;
     static string refSuffix[] = {"", "", NEWSAYSSUFFIX, NEWSAYSSUFFIX, ""};
     static uint32_t idCounter = 0;
     void
     dump(CommonTable::ManagerPtr catalog)
     {
       CommonTablePtr functorTbl = catalog->table("parentNewProcess");
+      CommonTablePtr parentTbl = catalog->table("parent");
       CommonTablePtr assignTbl  = catalog->table("child");
       CommonTablePtr locSpecTbl  = catalog->table(LOCSPECTABLE);
       CommonTablePtr tableTbl  = catalog->table(TABLE);
 
       CommonTable::Iterator iter;
       // first display all functors
-      TELL_OUTPUT << "\n PARENTS \n";
+      TELL_OUTPUT << "\n PARENTSNewProcess \n";
       for (iter = functorTbl->scan();!iter->done(); ) {
+	TuplePtr functor = iter->next();
+	TELL_OUTPUT << functor->toString()<<"\n";
+      }
+
+      TELL_OUTPUT << "\n PARENTS \n";
+      for (iter = parentTbl->scan();!iter->done(); ) {
 	TuplePtr functor = iter->next();
 	TELL_OUTPUT << functor->toString()<<"\n";
       }
@@ -118,13 +128,30 @@ namespace compile {
       // first field
       ListPtr buf = List::mk();
       serialize(catalog, parentProcessTuple, Val_Str::cast(tableName), buf, ROOT);
-      std::cout<<"serialized buffer"<<buf->toString();
-      return tableName;
+      std::cout<<"serialized buffer"<<"\n"<<buf->toString()<<"\n";
+      return Val_List::mk(buf);
       
     }
 
     ValuePtr processExtract(ValuePtr tableName, ValuePtr buf){
-      std::cout<<"processGen called with arg" << tableName->toString() << " and buffer " << buf->toString()<< " \n";
+      std::cout<<"processExtract called with arg" << tableName->toString() << " and buffer " << buf->toString()<< " \n";
+      CommonTable::ManagerPtr catalog = Plumber::catalog();
+      ValuePtr nodeId = catalog->nodeid();
+      ListPtr serialBuf = Val_List::cast(buf);
+      for(ValPtrList::const_iterator iter= serialBuf->begin(); iter != serialBuf->end(); iter++){
+	TuplePtr tuple = (Val_Tuple::cast(*iter))->clone();
+	tuple->set(NODE_ID, nodeId);
+	string tablename = Val_Str::cast((*tuple)[TNAME]);
+	if(tablename == LOCSPECTABLE){
+	  tuple->set(LOCSPECLOCATIONFIELD, nodeId);
+	}
+	tuple->freeze();
+	CommonTablePtr table = catalog->table(tablename);
+	if(!table->insert(tuple)){
+	  std::cout<<"Failed to insert "<< tuple->toString();
+	}
+      }
+      dump(catalog);
       return tableName;
       // traverse the graph and return the serialized graph
     }
@@ -230,6 +257,9 @@ namespace compile {
 	  parentNewName = parentname;
 	}
 	TuplePtr parentCopy = Tuple::mk(parentNewName);
+	if(myRefType == ROOT){
+	  parentCopy->append(Val_UInt32::mk(CURVERSION));
+	}
 	for(uint32_t i = offset + 1 + 1; i < tupleSize; i++) // for location as it is also automatically created, also note that relevant fields start from 1
 	  {
 	    parentCopy->append((*parent)[i]);
