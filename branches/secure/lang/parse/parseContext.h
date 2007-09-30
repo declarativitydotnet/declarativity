@@ -985,7 +985,7 @@ namespace compile {
     class Ref : public Statement {
     public:
 
-      enum RefType{WEAK = 0, STRONG};
+      enum RefType{WEAK = 0, STRONG, WEAKSAYS, STRONGSAYS};
 
       Ref(int refType, 
 	  Expression *from, 

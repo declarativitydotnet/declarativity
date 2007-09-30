@@ -110,6 +110,8 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>materialize { return OLG_MATERIALIZE; }
 <INITIAL>strong { return OLG_STRONG; }
 <INITIAL>weak { return OLG_WEAK; }
+<INITIAL>strongSays { return OLG_STRONGSAYS; }
+<INITIAL>weakSays { return OLG_WEAKSAYS; }
 <INITIAL>ref { return OLG_REF; }
 <INITIAL>materializeSays { return OLG_SAYSMATERIALIZE; }
 <INITIAL>namespace { return OLG_NAMESPACE; }

@@ -77,6 +77,8 @@
 %token OLG_REF
 %token OLG_WEAK
 %token OLG_STRONG
+%token OLG_WEAKSAYS
+%token OLG_STRONGSAYS
 %token OLG_NEW
 
 %start program
@@ -153,7 +155,9 @@ ref: refType OLG_REF OLG_LPAR OLG_NAME OLG_COMMA
     ;
 
 refType: OLG_WEAK { $$ = compile::parse::Ref::WEAK; } |
-         OLG_STRONG { $$ = compile::parse::Ref::STRONG; }
+         OLG_STRONG { $$ = compile::parse::Ref::STRONG; } |
+         OLG_WEAKSAYS { $$ = compile::parse::Ref::WEAKSAYS; } |
+         OLG_STRONGSAYS { $$ = compile::parse::Ref::STRONGSAYS; }
        ;
 
 tablearg: OLG_VALUE
