@@ -31,17 +31,9 @@ SetPtr Set::clone() const
 
 int Set::member(ValuePtr val) const
 {
-  ValPtrSet::const_iterator setp = vpl.begin();
-   
-  while(setp != vpl.end()) {
-    if((*setp)->compareTo(val) == 0) {
-      return 1;
-    }
-      
-    setp++;
-  }
-   
-  return 0;
+  ValPtrSet::const_iterator setp = vpl.find(val);
+  //vpl.begin();
+  return(setp != vpl.end());
 }
 
 
