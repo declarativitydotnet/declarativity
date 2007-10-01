@@ -325,6 +325,7 @@ namespace compile {
 	    if(!newFunctor){
 	      if(locSpecSet->member(tupleLoc) == 1){
 		if(!newRule || (i != 0)){
+		  assert(i != 0);
 		  ostringstream oss1;
 		  oss1 << STAGEVARPREFIX << varSuffix++;
 		  TuplePtr verLocTuple = Tuple::mk(LOC); // location of the version tuple
@@ -351,6 +352,8 @@ namespace compile {
 
 		  version->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(newpos++));
 		  version->freeze();
+		  functorTbl->insert(version);
+
 		}
 		else{
 		  newpos++;// skip head with locSpec at location field in new Rules
