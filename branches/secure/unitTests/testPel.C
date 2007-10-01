@@ -502,6 +502,12 @@ testPel::vtests[] = {
   TST(INT64, SUCCESS, "499",	"499 500 %"),
   TST(INT64, SUCCESS, "1",	"13 2 %"),
   TST(INT64, SUCCESS, "2",	"602 5 %"),
+  // ||| APPEND
+  TST(INT32, STACK_UNDERFLOW, "",	"|||"),
+  TST(INT32, STACK_UNDERFLOW, "",	"1 |||"),
+  TST(INT32, SUCCESS, "1",     "1 0 ||| 1 0 ||| =="),
+  TST(INT32, SUCCESS, "0",     "1 0 ||| 0 1 ||| =="),
+  TST(INT32, SUCCESS, "0",     "0 1 ||| 0 \"Hi\" ||| =="),
   // < (string less-than)
   TST(INT32, STACK_UNDERFLOW, "",	"<"),
   TST(INT32, STACK_UNDERFLOW, "",	"1 <"),

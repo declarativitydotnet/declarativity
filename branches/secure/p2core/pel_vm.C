@@ -787,6 +787,10 @@ DEF_OP(IS_LOCSPEC) {
   ValuePtr first = stackTop(); stackPop();
   stackPush(Val_UInt32::mk(compile::secure::isLocSpec(first)?1:0));
 }
+DEF_OP(GET_CERT) {
+  ValuePtr first = stackTop(); stackPop();
+  stackPush(compile::secure::getCert(first));
+}
 
 
 DEF_OP(L_CONS) {

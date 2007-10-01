@@ -29,12 +29,16 @@ namespace compile {
     ValuePtr generateVersion(bool strong = false);
 
     bool isLocSpec(ValuePtr v);
+    
+    ValuePtr sha1(ValuePtr);
+
+    ValuePtr getCert(ValuePtr);
 
     ValuePtr processGen(ValuePtr, ValuePtr);
 
     ValuePtr processExtract(ValuePtr, ValuePtr);
 
-    void serialize(CommonTable::ManagerPtr catalog, TuplePtr parent, string parentRootName, ListPtr buf, uint32_t myRefType);
+    ValuePtr serialize(CommonTable::ManagerPtr catalog, TuplePtr parent, string parentRootName, ListPtr buf, uint32_t myRefType, bool certify);
 
   };
   

@@ -25,6 +25,9 @@ what happens to the rewritten form of this rule:
 List of functions to be added:
 21> Why does reordering in oper.h leads to different behavior in both runStagedOverlog and runOverLog? 1399 and 1401
 22> delete semantics: deleting before the end of fix-point
+23> the materialization for says statement is still weird as its not clear what should the keys be? because we don't process the key set for those.
+24> false views?
+
 Minor error's log:
 
 

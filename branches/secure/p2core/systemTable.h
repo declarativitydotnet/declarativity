@@ -64,6 +64,9 @@
  * a more general way of extract attribute field positions. */
 enum SchemaGlobal{TNAME=0, NODE_ID, TUPLE_ID};
 enum VariableTuple{CONTENTPOS=2}; //pos of content in variable tuple
+enum GLOBALUNIQUE{NAME = 0, NODE, ID, STRONGPOS, HASHPOS};
+enum RefType{WEAKLINK = 0, STRONGLINK, WEAKSAYS, STRONGSAYS, ROOT};
+
 #endif
 
 #ifndef SCHEMA
@@ -270,4 +273,5 @@ FUNCTIONDEF("f_deserialize",  2, "deserialize")
 FUNCTIONDEF("f_createVersion",0, "createVersion")
 FUNCTIONDEF("f_createLocSpec",0, "createLocSpec")
 FUNCTIONDEF("f_isLocSpec",    1, "isLocSpec")
+FUNCTIONDEF("f_getCert",    1, "getCert")
 #undef FUNCTIONDEF

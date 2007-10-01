@@ -37,6 +37,7 @@
 namespace compile {
   const string VERSIONSUFFIX = "";
   const string LOCSPECTABLE = "locSpecTable";
+  const string LINKEXPANDERTABLE = "linkExpanderTable";
   const string NEWSUFFIX = "New";
   const string STRONGSUFFIX = "Strong";
   const uint32_t NEWFIELDS = 3; //location and opaque and hint: number of fields from new before anything from original tuple (such as its name starts)
@@ -71,14 +72,17 @@ namespace compile {
   public:
     ValuePtr location;
     SetPtr locSpecSet;
-    LocSpecInfo(ValuePtr l, SetPtr s){
+    SetPtr strongLocSpecSet;
+    LocSpecInfo(ValuePtr l, SetPtr s, SetPtr strongSet){
       location = l;
       locSpecSet = s;
+      strongLocSpecSet = strongSet;
     }
 
     LocSpecInfo(const LocSpecInfo& l ){
       location = l.location;
       locSpecSet = l.locSpecSet;
+      strongLocSpecSet = l.strongLocSpecSet;
     }
     
     ~LocSpecInfo(){}

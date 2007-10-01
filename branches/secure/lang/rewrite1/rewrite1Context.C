@@ -984,6 +984,13 @@ namespace compile {
       catalog->createTable(scopedName, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
       catalog->createIndex(scopedName, CommonTable::theKey(CommonTable::KEY2));
 
+      scopedName = compile::LINKEXPANDERTABLE;
+
+      _keys.clear();
+      _keys.push_back(2); // loc spec
+
+      catalog->createTable(scopedName, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
+
       TuplePtr newProgram = this->compile::Context::program(catalog, program);
 
       pass2(catalog, program);

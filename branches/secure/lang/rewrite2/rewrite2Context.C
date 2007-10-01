@@ -215,7 +215,8 @@ namespace compile {
     Context::rule(CommonTable::ManagerPtr catalog, TuplePtr rule)
     {
       //      rule2(catalog, rule);
-      SetPtr locSpecSet;
+      SetPtr locSpecSet;      
+      SetPtr strongLocSpecSet;
       bool newRule = ((Val_UInt32::cast((*rule)[catalog->attribute(RULE, "NEW")]) == 1)?true:false);
       CommonTablePtr functorTbl = catalog->table(FUNCTOR);
       CommonTable::Iterator funcIter;
@@ -233,6 +234,7 @@ namespace compile {
       LocSpecInfo *locSpecInfo = ruleLocSpecInfo->second;
       eventLocSpec = locSpecInfo->location;
       locSpecSet = locSpecInfo->locSpecSet;
+      strongLocSpecSet = locSpecInfo->strongLocSpecSet;
       compile::Context::ruleLocSpecMap->erase(ruleLocSpecInfo);
       delete locSpecInfo;
 
@@ -314,7 +316,7 @@ namespace compile {
 	  tIter = tableTbl->lookup(nameKey, CommonTable::theKey(CommonTable::KEY3), termList[i]);
 	  ValuePtr name = (*(termList[i]))[catalog->attribute(FUNCTOR, "NAME")];
 	  if (!tIter->done() && (compile::Context::materializedTables->member(name) == 1)) {
-	    // materialized
+	    // materialized and user created
 	    ListPtr attributes = Val_List::cast((*termList[i])[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
 	    TuplePtr tupleLocTuple = Val_Tuple::cast(attributes->front()); // tuple for the location var of the functor
 	    TuplePtr tupleLocTupleClone = tupleLocTuple->clone(); 
@@ -350,6 +352,51 @@ namespace compile {
 		    throw compile::rewrite2::Exception("Failed to insert functor" + locSpecTuple->toString());
 		  }
 
+		  if(strongLocSpecSet->member(tupleLoc) == 1){
+		    // add the link expander tuple
+		    ostringstream oss2;
+		    oss2 << STAGEVARPREFIX << varSuffix++;
+		    TuplePtr linkExpanderSetTuple = Tuple::mk(VAR); // location of the version tuple
+		    linkExpanderSetTuple->append(Val_Str::mk(oss2.str()));
+		    linkExpanderSetTuple->freeze();
+
+		    TuplePtr tupleLocTupleClone = tupleLocTuple->clone(VAR);
+		    tupleLocTupleClone->freeze();
+
+		    TuplePtr eventLocClone = (Val_Tuple::cast(eventLocSpec))->clone();
+		    eventLocClone->freeze();
+
+		    TuplePtr linkExpanderTuple = createLinkExpanderTuple(ruleId,
+									 eventLocClone,
+									 tupleLocTupleClone,  // location specifier
+									 linkExpanderSetTuple,
+									 catalog);
+		    
+		    linkExpanderTuple->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(newpos++));
+		    linkExpanderTuple->freeze();
+
+		    if(!functorTbl->insert(linkExpanderTuple)){
+		      throw compile::rewrite2::Exception("Failed to insert functor" + linkExpanderTuple->toString());
+		    }
+		    
+		    TuplePtr linkExpanderSetTupleCopy = linkExpanderSetTuple->clone();
+		    linkExpanderSetTupleCopy->freeze();
+
+		    TuplePtr verTupleClone = verTuple->clone();
+		    verTupleClone->freeze();
+
+		    TuplePtr linkExpanderCheck = createLinkExpanderCheck(ruleId, 
+									 linkExpanderSetTupleCopy,
+									 verTupleClone);
+
+		    linkExpanderCheck->set(catalog->attribute(SELECT, "POSITION"), Val_UInt32::mk(newpos++));
+		    linkExpanderCheck->freeze();
+
+		    if(!selectTbl->insert(linkExpanderCheck)){
+		      throw compile::rewrite2::Exception("Failed to insert select" + linkExpanderCheck->toString());
+		    }
+		    
+		  }
 		  version->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(newpos++));
 		  version->freeze();
 		  functorTbl->insert(version);
@@ -490,6 +537,68 @@ namespace compile {
       return functorTp;
 
     }
+
+
+    TuplePtr Context::createLinkExpanderTuple(ValuePtr ruleId, TuplePtr location, TuplePtr locSpec, TuplePtr linkExpanderSet, CommonTable::ManagerPtr catalog){
+      TuplePtr     functorTp = Tuple::mk(FUNCTOR, true);
+      functorTp->append(ruleId);
+
+      functorTp->append(Val_Str::mk(compile::LINKEXPANDERTABLE));   // Functor name
+  
+      // Fill in table reference if functor is materialized
+      CommonTable::Key nameKey;
+      nameKey.push_back(catalog->attribute(FUNCTOR, "NAME"));
+      CommonTablePtr tableTbl = catalog->table(TABLE);
+      CommonTable::Iterator tIter = 
+        tableTbl->lookup(nameKey, CommonTable::theKey(CommonTable::KEY3), functorTp);
+      if (!tIter->done()) 
+        functorTp->append((*tIter->next())[TUPLE_ID]);
+      else {
+	assert(0);
+      }
+  
+      functorTp->append(Val_Null::mk());          // The ECA flag
+      functorTp->append(Val_Null::mk());          // The attributes field
+      functorTp->append(Val_Null::mk());          // The position field
+      functorTp->append(Val_Null::mk());          // The access method
+      functorTp->append(Val_Int32::mk(0)); // The new field
+
+      // Now take care of the functor arguments and variable dependencies
+      ListPtr attributes = List::mk();
+      attributes->append(Val_Tuple::mk(location));
+      attributes->append(Val_Tuple::mk(locSpec));
+      attributes->append(Val_Tuple::mk(linkExpanderSet));
+      functorTp->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(attributes));
+
+      return functorTp;
+
+    }
+
+    TuplePtr Context::createLinkExpanderCheck(ValuePtr ruleId, TuplePtr linkExpanderSet, TuplePtr ver){
+      ValuePtr gte = Val_Str::mk(">=");
+
+      TuplePtr selectTp  = Tuple::mk(SELECT, true);
+      selectTp->append(ruleId);   // Should be rule identifier
+      
+      TuplePtr boolExpr = Tuple::mk(BOOL);
+      boolExpr->append(gte);
+      boolExpr->append(Val_Tuple::mk(linkExpanderSet));
+
+      TuplePtr certFn = Tuple::mk(FUNCTION);
+      certFn->append(Val_Str::mk(CERTFN));
+      certFn->append(Val_UInt32::mk(1));
+      certFn->append(Val_Tuple::mk(ver));
+      certFn->freeze();
+
+      boolExpr->append(Val_Tuple::mk(certFn));
+      boolExpr->freeze();
+
+      selectTp->append(Val_Tuple::mk(boolExpr));              // Boolean expression
+      selectTp->append(Val_Null::mk());        // Pos
+      selectTp->append(Val_Null::mk());        // Access method
+      return selectTp;
+    }
+
     
     TuplePtr Context::createCurVerAssign(ValuePtr ruleId, TuplePtr ver){
       TuplePtr val = Tuple::mk(VAL);
@@ -526,6 +635,7 @@ namespace compile {
       selectTp->append(Val_Null::mk());        // Access method
       return selectTp;
     }
+
  
     TuplePtr 
     Context::program(CommonTable::ManagerPtr catalog, TuplePtr program) 

@@ -23,6 +23,7 @@
 namespace compile {
   namespace rewrite2 {
     const string STAGEVARPREFIX = "RW2_";
+    const string CERTFN = "f_getCert";
     const uint32_t CURVERSION = 0;
     class Exception : public compile::Exception {
     public:
@@ -53,6 +54,10 @@ namespace compile {
       TuplePtr createCurVerAssign(ValuePtr ruleId, TuplePtr ver);
 
       TuplePtr createCurVerSelect(ValuePtr ruleId, TuplePtr ver);
+
+      TuplePtr createLinkExpanderTuple(ValuePtr ruleId, TuplePtr location, TuplePtr locSpec, TuplePtr linkExpanderSet, CommonTable::ManagerPtr catalog);
+
+      TuplePtr createLinkExpanderCheck(ValuePtr ruleId, TuplePtr linkExpanderSet, TuplePtr ver);
 
       TuplePtr program(CommonTable::ManagerPtr catalog, TuplePtr rule);
 

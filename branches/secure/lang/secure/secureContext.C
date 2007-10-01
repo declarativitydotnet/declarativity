@@ -40,6 +40,7 @@ namespace compile {
     Context::initLocSpecMap(CommonTable::ManagerPtr catalog, TuplePtr rule){
       ValuePtr ruleId = (*rule)[TUPLE_ID];
       SetPtr locSpecSet(new Set());
+      SetPtr strongLocSpecSet(new Set());
       SetPtr locationSet(new Set());
       CommonTablePtr functorTbl = catalog->table(FUNCTOR);
       CommonTablePtr newTbl = catalog->table(NEW);
@@ -47,6 +48,7 @@ namespace compile {
       ValuePtr eventLocSpec;
 
       uint32_t refPosPos = catalog->attribute(REF, "LOCSPECFIELD");
+      uint32_t refTypePos = catalog->attribute(REF, "REFTYPE");
       
       for (funcIter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY2), 
                                          CommonTable::theKey(CommonTable::KEY3), rule);
@@ -63,7 +65,12 @@ namespace compile {
 	      TuplePtr ref = refIter->next();
 	      uint32_t refPosVal = Val_UInt32::cast((*ref)[refPosPos]);
 	      TuplePtr refLocSpecTuple = Val_Tuple::cast(attributes->at(refPosVal));
-	      locSpecSet->insert((*refLocSpecTuple)[CONTENTPOS]);
+	      ValuePtr locSpecVarName = (*refLocSpecTuple)[CONTENTPOS];
+	      locSpecSet->insert(locSpecVarName);
+	      uint32_t refType = Val_UInt32::cast((*ref)[refTypePos]);
+	      if(refType == STRONGLINK || refType == STRONGSAYS){
+		strongLocSpecSet->insert(locSpecVarName);
+	      }
 	    }
           } else{
 	    eventLocSpec = attributes->front();
@@ -96,7 +103,7 @@ namespace compile {
 	}
       }
 
-      compile::Context::ruleLocSpecMap->insert(std::pair<ValuePtr, LocSpecInfo*>(ruleId, new LocSpecInfo(eventLocSpec, locSpecSet))); // insert values into the event loc spec
+      compile::Context::ruleLocSpecMap->insert(std::pair<ValuePtr, LocSpecInfo*>(ruleId, new LocSpecInfo(eventLocSpec, locSpecSet, strongLocSpecSet))); // insert values into the event loc spec
     }
 
     void

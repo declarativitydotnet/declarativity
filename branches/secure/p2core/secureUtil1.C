@@ -1,13 +1,20 @@
+#include<set>
+#include <openssl/sha.h>
 #include "secureUtil1.h"
 #include "secureUtil.h"
-#include "systemTable.h"
 #include "val_uint32.h"
 #include "val_tuple.h"
 #include "val_null.h"
+#include "val_opaque.h"
 #include "val_str.h"
 #include "val_list.h"
+#include "val_set.h"
+#include "val_id.h"
 #include "tuple.h"
 #include "plumber.h"
+#include "fdbuf.h"
+#include "xdrbuf.h"
+#include "systemTable.h"
 
 namespace compile {
 
@@ -16,14 +23,14 @@ namespace compile {
     const string NEWSAYSSUFFIX = "NewSays";
     const string SAYSSUFFIX = "Says";
     const string LOCSPECTABLE = "locSpecTable";
-    const uint32_t WEAK = 0;
-    const uint32_t STRONG = 1;
-    const uint32_t WEAKSAYS = 2;
-    const uint32_t STRONGSAYS = 3;
-    const uint32_t ROOT = 4;    
-    const uint32_t LOCSPECLOCATIONFIELD = 3;
+    const string LINKEXPANDERTABLE = "linkExpanderTable";
+    const uint32_t TUPLEVERPOS = 2;
+    const uint32_t LOCSPECLOCATIONPOS = 3; // pos of location field in loc spec tuple
+    const uint32_t LOCSPECVERPOS = 4; // pos of version field in loc spec tuple
+    const uint32_t LOCSPECLOCSPECPOS = 2; // pos of loc spec field in loc spec tuple
+    const uint32_t LINKEXPANDERLOCSPECPOS = 2; // pos of loc spec field in loc spec tuple
     const uint32_t CURVERSION = 0;
-    static string refSuffix[] = {"", "", NEWSAYSSUFFIX, NEWSAYSSUFFIX, ""};
+    static string refSuffix[] = {"", "", NEWSAYSSUFFIX, NEWSAYSSUFFIX, ""}; // suffix for the tuple name based on the ref type
     static uint32_t idCounter = 0;
     void
     dump(CommonTable::ManagerPtr catalog)
@@ -32,6 +39,7 @@ namespace compile {
       CommonTablePtr parentTbl = catalog->table("parent");
       CommonTablePtr assignTbl  = catalog->table("child");
       CommonTablePtr locSpecTbl  = catalog->table(LOCSPECTABLE);
+      CommonTablePtr linkExpanderTbl  = catalog->table(LINKEXPANDERTABLE);
       CommonTablePtr tableTbl  = catalog->table(TABLE);
 
       CommonTable::Iterator iter;
@@ -56,6 +64,12 @@ namespace compile {
 
       TELL_OUTPUT << "\n LOCSPEC \n";
       for (iter = locSpecTbl->scan();!iter->done(); ) {
+	TuplePtr term = iter->next();
+	TELL_OUTPUT << term->toString()<<"\n";
+      }
+
+      TELL_OUTPUT << "\n LINKEXPANDER \n";
+      for (iter = linkExpanderTbl->scan();!iter->done(); ) {
 	TuplePtr term = iter->next();
 	TELL_OUTPUT << term->toString()<<"\n";
       }
@@ -107,6 +121,15 @@ namespace compile {
 
     }
 
+    bool isVersion(ValuePtr v){
+      bool rVal = false;
+      if(v->typeCode() == Value::TUPLE){
+	TuplePtr tuple = Val_Tuple::cast(v);
+	rVal = (Val_Str::cast((*tuple)[TNAME]) == VERSIONTUPLE);
+      }
+      return rVal;
+    }
+
     // lets implement the insecure version first
     ValuePtr processGen(ValuePtr tableName, ValuePtr key){
       // traverse the graph and return the serialized graph
@@ -127,7 +150,7 @@ namespace compile {
       // root needs spl processing i.e. dependent on the other parameters of processNewTuple
       // first field
       ListPtr buf = List::mk();
-      serialize(catalog, parentProcessTuple, Val_Str::cast(tableName), buf, ROOT);
+      serialize(catalog, parentProcessTuple, Val_Str::cast(tableName), buf, ROOT, true);
       std::cout<<"serialized buffer"<<"\n"<<buf->toString()<<"\n";
       return Val_List::mk(buf);
       
@@ -138,12 +161,66 @@ namespace compile {
       CommonTable::ManagerPtr catalog = Plumber::catalog();
       ValuePtr nodeId = catalog->nodeid();
       ListPtr serialBuf = Val_List::cast(buf);
+      ValuePtr null = Val_Null::mk();
+
+      CommonTablePtr refTbl = catalog->table(REF);
+      CommonTable::Iterator refIter;
+      uint32_t refPosPos = catalog->attribute(REF, "LOCSPECFIELD");
+      uint32_t refTypePos = catalog->attribute(REF, "REFTYPE");
+      
       for(ValPtrList::const_iterator iter= serialBuf->begin(); iter != serialBuf->end(); iter++){
 	TuplePtr tuple = (Val_Tuple::cast(*iter))->clone();
+	bool install = true;
 	tuple->set(NODE_ID, nodeId);
 	string tablename = Val_Str::cast((*tuple)[TNAME]);
 	if(tablename == LOCSPECTABLE){
-	  tuple->set(LOCSPECLOCATIONFIELD, nodeId);
+	  tuple->set(LOCSPECLOCATIONPOS, nodeId);
+	}
+	else if (tablename == LINKEXPANDERTABLE){
+	  TuplePtr locSpec = Val_Tuple::cast((*tuple)[LINKEXPANDERLOCSPECPOS]);
+	  if((*locSpec)[HASHPOS] != sha1((*tuple)[LINKEXPANDERLOCSPECPOS + 1])){
+	    install = false;
+	  }
+	}
+	else {
+	  // check the hash of the normal table if the version is strong
+	  uint32_t offset = 1; // for version field
+	  //	      create a set and also assert that all the strong fields have non-null hash
+	  ValuePtr version = (*tuple)[TUPLEVERPOS];
+	  TuplePtr verTp;
+	  bool strong = false;
+	  std::set<uint32_t> linkSet;
+	  if(isVersion(version)){
+	    verTp = Val_Tuple::cast(version);
+	    strong = (Val_UInt32::cast((*verTp)[STRONGLINK]) == 1);
+	  }
+	  for(refIter = refTbl->lookup(CommonTable::theKey(CommonTable::KEY0), 
+				       CommonTable::theKey(CommonTable::KEY4), 
+				       tuple); 
+	      !refIter->done();){
+	    
+	    TuplePtr refTpl = refIter->next();		
+	    uint32_t refType = Val_UInt32::cast((*refTpl)[refTypePos]);
+	    uint32_t refPos = Val_UInt32::cast((*refTpl)[refPosPos]) + offset;
+	    
+	    if(!isLocSpec((*tuple)[refPos])){
+	      std::cout<<"Invalid tuple received: location specifier field "<<refPos<<" corrupted "<<(*tuple)[refPos]->toString();
+	      install = false; 
+	    }
+	    else if(strong){
+	      // check if the hash of this tuple matches its version[has]
+	      // find out the list of strong and weak references for this tuple
+	      linkSet.insert(refPos);
+	      if(refType == STRONGLINK || refType == STRONGSAYS){
+		TuplePtr locSpecTuple = Val_Tuple::cast((*tuple)[refPos]);
+		if((*locSpecTuple)[HASHPOS] == null){
+		  std::cout<<"Invalid tuple received: strong location specifier field "<<refPos<<" is missing hash "<<(*tuple)[refPos]->toString();
+		  install = false;
+		}
+	      }
+	    }
+	  }
+
 	}
 	tuple->freeze();
 	CommonTablePtr table = catalog->table(tablename);
@@ -155,12 +232,89 @@ namespace compile {
       return tableName;
       // traverse the graph and return the serialized graph
     }
-    //
-    //
-    // CHECK IF THE ALL THE POS ARE CORRECTLY ASSIGNED
-    ///
-    //
-    //
+
+    // serializes a tuple excluding the loc spec field
+    ValuePtr serializeTuple(TuplePtr tuple, std::set<uint32_t> linkSet){
+      Fdbuf* fin = new Fdbuf(0);
+      XDR xdr;
+      xdrfdbuf_create(&xdr, fin, false, XDR_ENCODE);
+      ValuePtr va;
+      uint32_t size = tuple->size();
+      for(uint32_t count = 0; count  < size; count++){
+	if(linkSet.find(count) == linkSet.end()){ // process link fields differently
+	  ValuePtr field = (*tuple)[count];
+	  if(field->typeCode() == Value::TUPLE){
+	    TuplePtr fieldTuple  = Val_Tuple::cast(field);
+	    string tablename = Val_Str::cast((*fieldTuple)[TNAME]);
+	    assert(tablename == LOCSPECTUPLE);
+	    (*fieldTuple)[HASHPOS]->xdr_marshal(&xdr);
+	  }
+	}
+	else if(count != 1 && count != 2){ // skip location field and the version field
+	  (*tuple)[count]->xdr_marshal(&xdr);
+	}
+      }
+      return Val_Opaque::mk(FdbufPtr(fin));
+    }
+
+    // serializes a tuple excluding the loc spec field
+    ValuePtr serializeTuple1(TuplePtr tuple, std::set<uint32_t> linkSet){
+      ostringstream o;
+      uint32_t size = tuple->size();
+      for(uint32_t count = 0; count  < size; count++){
+	if(linkSet.find(count) != linkSet.end()){ // process link fields differently
+	  ValuePtr field = (*tuple)[count];
+	  if(field->typeCode() == Value::TUPLE){
+	    TuplePtr fieldTuple  = Val_Tuple::cast(field);
+	    string tablename = Val_Str::cast((*fieldTuple)[TNAME]);
+	    assert(tablename == LOCSPECTUPLE);
+	    o<<(*fieldTuple)[HASHPOS]->toString();
+	  }
+	}
+	else if(count != 1 && count != 2){ // skip location field and the version field
+	  o<<(*tuple)[count]->toString();
+	}
+      }
+      return Val_Str::mk(o.str());
+    }
+
+    ValuePtr sha1(ValuePtr vp){
+      // create hash of the serialized hashSet and insert it into the cert part of the locspec
+      // assert that the cert part of locspec is null prior to this
+      std::string svalue = vp->toString();
+      unsigned char digest[SHA_DIGEST_LENGTH];	// 20 byte array
+      SHA1(reinterpret_cast<const unsigned char*>(svalue.c_str()), 
+	   svalue.size(), &digest[0]);
+	
+      IDPtr hashID = ID::mk(reinterpret_cast<uint32_t*>(digest));
+      return Val_ID::mk(hashID);
+    }
+
+    ValuePtr getCert(ValuePtr v){
+      if(v->typeCode() == Value::TUPLE){
+	TuplePtr tuple = Val_Tuple::cast(v);
+	string tname = Val_Str::cast((*tuple)[TNAME]);
+	if(tname == LOCSPECTUPLE || tname == VERSIONTUPLE){
+	  return (*tuple)[HASHPOS];
+	}
+      }
+      return Val_Null::mk();
+    }
+
+    ValuePtr makeLocSpecStrong(SetPtr locSpecSet, SetPtr hashSet){
+      ValuePtr merkleHash = sha1(Val_Set::mk(hashSet));
+      
+      for(ValPtrSet::const_iterator iter = locSpecSet->begin(); iter != locSpecSet->end(); iter++){
+	TuplePtr locSpecTuple = Val_Tuple::cast(*iter);
+	TuplePtr locSpecField = (Val_Tuple::cast((*locSpecTuple)[2]))->clone();
+	locSpecField->set(HASHPOS, merkleHash);
+	locSpecField->set(STRONGPOS, Val_UInt32::mk(1));
+	locSpecField->freeze();
+	locSpecTuple->set(LOCSPECLOCSPECPOS, Val_Tuple::mk(locSpecField));
+	locSpecTuple->freeze();
+      }
+      return merkleHash;
+    }
     
     // serialize the graph rooted at parent tuple with table name = tablename
     // store the result in buf
@@ -168,7 +322,9 @@ namespace compile {
     // princem: currently the old tuple can be safely deleted
     // handle parentNewProcess tuple, parent tuple, and parentNewSays tuple
     // decision based on the parent tuple: parentname tuple for ref calculations
-    void serialize(CommonTable::ManagerPtr catalog, TuplePtr parent, string parentname, ListPtr buf, uint32_t myRefType){
+    // myRefType: type of link connecting this tuple to the main root
+    // certify: is the link already certified: this will happen for example when a strong link is copied
+    ValuePtr serialize(CommonTable::ManagerPtr catalog, TuplePtr parent, string parentname, ListPtr buf, uint32_t myRefType, bool certify){
 	// do a lookup on the ref table to find out all the referenced tables
 	//     -> for all such tables childTable, iterate over all the joinable tuples (through locSpec table)
 	//           -> for all such tuples child, call serialize(catalog, childTableName, child, buf, link.type)
@@ -184,11 +340,12 @@ namespace compile {
       uint32_t refPosPos = catalog->attribute(REF, "LOCSPECFIELD");
       uint32_t refTypePos = catalog->attribute(REF, "REFTYPE");
       uint32_t refToPos = catalog->attribute(REF, "TO");
-      
+      std::set<uint32_t> linkSet;
+      //set offset based on my ref type: this will help in extracting fields fro parent tuple      
       uint32_t offset = 0;
       switch(myRefType){
-      case WEAK: 
-      case STRONG: offset = 1; // because of version
+      case WEAKLINK: 
+      case STRONGLINK: offset = 1; // because of version
 	assert(parentname == tuplename);
 	break;
       case WEAKSAYS:
@@ -204,6 +361,7 @@ namespace compile {
       CommonTablePtr refTbl = catalog->table(REF);
       CommonTable::Iterator refIter;
       TuplePtr dummyTpl = Tuple::mk(parentname);
+      // now iterate over all links
       for(refIter = refTbl->lookup(CommonTable::theKey(CommonTable::KEY0), CommonTable::theKey(CommonTable::KEY4), dummyTpl); !refIter->done();){
       
 	TuplePtr refTpl = refIter->next();
@@ -213,40 +371,75 @@ namespace compile {
 	uint32_t refPosVal = Val_UInt32::cast((*refTpl)[refPosPos]);
 	CommonTable::Key key;
 	key.push_back(refPosVal + offset);
-	string materializedChild = childTableName + refSuffix[refType];
+	linkSet.insert(refPosVal + 1); // +1 because when link set will be used, we will only be left with the version field
+	string materializedChild = childTableName + refSuffix[refType]; // the name of the tuple materilized corresponding to the childTableName
 	CommonTablePtr childTbl = catalog->table(materializedChild);
 	CommonTablePtr locSpecTbl = catalog->table(LOCSPECTABLE);
 	CommonTable::Iterator childIter;
 	CommonTable::Iterator locSpecIter;
 	
+	SetPtr locSpecSet(new Set());
+	SetPtr hashSet(new Set());
+
+	// for each link, find all locSpecs
 	for (locSpecIter = locSpecTbl->lookup(key, CommonTable::theKey(CommonTable::KEY2), parent);
 	     !locSpecIter->done(); ) {
 	  TuplePtr locSpec = locSpecIter->next()->clone();
-	  locSpec->freeze();
-	  TuplePtr refLocSpecTuple = Val_Tuple::cast((*parent)[refPosVal]);
-	  
-	  SetPtr hashSet = Set::mk();
+	  //	  locSpecTbl->remove(locSpec);
+	  //find out the child corresponding to each locspec
 	  childIter = childTbl->lookup(CommonTable::theKey(CommonTable::KEY4), CommonTable::theKey(CommonTable::KEY2), locSpec);
 	  if(!childIter->done()) {
 	    TuplePtr child = childIter->next();
-	    if(refType == STRONG || refType == STRONGSAYS){
-	      assert(0);
-	      //	      ValuePtr proof = serialize(catalog, child, childTableName, buf, refType);
-	      //	      hashSet->insert(proof);
-	      // createStrongLocSpec
+	    //    childTbl->remove(child);
+	    if((refType == STRONGLINK || refType == STRONGSAYS) && certify){
+	      ValuePtr proof = serialize(catalog, child, childTableName, buf, refType, true);
+	      hashSet->insert(proof); // the version tuple is already having this proof: 
+	                              // However, we need to include this proof in the version field in the locSpec tuple
+	      TuplePtr version = (Val_Tuple::cast((*locSpec)[4]))->clone();
+	      version->set(HASHPOS, proof);
+	      version->set(STRONGPOS, Val_UInt32::mk(1));
+	      version->freeze();
+	      locSpec->set(4, Val_Tuple::mk(version));
+	      locSpecSet->insert(Val_Tuple::mk(locSpec));
+	      // create a link expander and export it 
+
 	    }
 	    else{
-	      serialize(catalog, child, childTableName, buf, refType);
+	      serialize(catalog, child, childTableName, buf, refType, certify);
+	      locSpec->freeze();
+	      buf->append(Val_Tuple::mk(locSpec));
 	    }
 	  }
-	  if(refType == STRONG || refType == STRONGSAYS){
-	    // do more work
-	  }
-	  buf->append(Val_Tuple::mk(locSpec));
 	    
 	}
+	if((refType == STRONGLINK || refType == STRONGSAYS) && certify){
+	  ValuePtr merkleHash = makeLocSpecStrong(locSpecSet, hashSet);
+	  
+	  TuplePtr parentLocSpecTuple = (Val_Tuple::cast((*parent)[refPosVal + offset]))->clone();
+	  parentLocSpecTuple->set(HASHPOS, merkleHash);
+	  parentLocSpecTuple->set(STRONGPOS, Val_UInt32::mk(1));
+	  parentLocSpecTuple->freeze();
+	  
+	  TuplePtr parentLocSpecTupleClone = parentLocSpecTuple->clone();
+	  parentLocSpecTupleClone->freeze();
+	  TuplePtr linkExpander = Tuple::mk(LINKEXPANDERTABLE);
+	  linkExpander->append(Val_Tuple::mk(parentLocSpecTupleClone));
+	  linkExpander->append(Val_Set::mk(hashSet));
+	  linkExpander->freeze();
+	  buf->append(Val_Tuple::mk(linkExpander));
+
+	  parent->set(refPosVal + offset, Val_Tuple::mk(parentLocSpecTuple));
+	  for(ValPtrSet::const_iterator iter = locSpecSet->begin(); iter != locSpecSet->end(); iter++){
+	    buf->append(*iter);
+	  }
+	  
+	  //	    buf->append(Val_Tuple::mk(linkExpander));
+	  // do more work
+	}
+	
       }
 
+      TuplePtr parentCopy;
       if(myRefType == STRONGSAYS || myRefType == WEAKSAYS || myRefType == ROOT){
 	uint32_t tupleSize = parent->size();
 	string parentNewName;
@@ -256,24 +449,38 @@ namespace compile {
 	else if(myRefType == ROOT){
 	  parentNewName = parentname;
 	}
-	TuplePtr parentCopy = Tuple::mk(parentNewName);
+	parentCopy = Tuple::mk(parentNewName);
 	if(myRefType == ROOT){
 	  parentCopy->append(Val_UInt32::mk(CURVERSION));
 	}
-	for(uint32_t i = offset + 1 + 1; i < tupleSize; i++) // for location as it is also automatically created, also note that relevant fields start from 1
+	// +2: +1 for location as it is also automatically created, and +1 because the relevant fields start from 1 not 0
+	for(uint32_t i = offset + 2; i < tupleSize; i++) 
 	  {
 	    parentCopy->append((*parent)[i]);
 	  }
-	parentCopy->freeze();
-	std::cout<<"created a tuple "<< parentCopy->toString() << "to replace tuple"<< parent->toString()<<"\n";
-	buf->append(Val_Tuple::mk(parentCopy));
       }
       else{
-	TuplePtr parentCopy = parent->clone();
-	parentCopy->freeze();
-	buf->append(Val_Tuple::mk(parentCopy));
+	parentCopy = parent->clone();
       }
-	
+      
+      ValuePtr retVal;
+      if(certify && (myRefType == STRONGSAYS || myRefType == STRONGLINK)){
+	// add the hash the cert
+	// set the retVal
+	ValuePtr serializedTuple = serializeTuple1(parentCopy, linkSet);
+	retVal = sha1(serializedTuple);
+	TuplePtr version = (Val_Tuple::cast((*parentCopy)[2]))->clone();
+	version->set(HASHPOS, retVal);
+	version->set(STRONGPOS, Val_UInt32::mk(1));
+	version->freeze();
+	parentCopy->set(TUPLEVERPOS, Val_Tuple::mk(version));
+      }
+      else{
+	retVal = Val_Null::mk();
+      }
+      parentCopy->freeze();
+      buf->append(Val_Tuple::mk(parentCopy));
+      return retVal;
     }
     
 

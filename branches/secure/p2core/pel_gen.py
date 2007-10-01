@@ -152,7 +152,8 @@ for op, ar, va, desc in [
   ("deserialize",2,   "DESERIALIZE",   "deserialize the graph using the given buffer and root tuple name"),
   ("createVersion",0,   "CREATEVER",   "create a new version"),
   ("createLocSpec",0,   "CREATELOCSPEC",   "create a new locspec"),
-  ("isLocSpec",1,   "IS_LOCSPEC",   "returns 1 if the passed arg is a loc spec, 0 otherwise")
+  ("isLocSpec",1,   "IS_LOCSPEC",   "returns 1 if the passed arg is a loc spec, 0 otherwise"),
+  ("getCert",1,   "GET_CERT",   "returns the cert from a strong locspec or version")
   ]:  emit_opcode(op, ar, va, desc)
 
 for op, ar, va, desc in [
