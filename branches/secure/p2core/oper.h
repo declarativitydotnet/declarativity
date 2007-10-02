@@ -236,11 +236,13 @@ namespace opr {
   public: 
     virtual bool _eq(const ValuePtr& v1, const ValuePtr& v2) const {
       ValuePtr c1 = T::mk(T::cast(v1));
-      return c1->compareTo(v2) == 0;
+      ValuePtr c2 = T::mk(T::cast(v2));
+      return c2->compareTo(c1) == 0;
     };
     virtual bool _neq (const ValuePtr& v1, const ValuePtr& v2) const {
       ValuePtr c1 = T::mk(T::cast(v1));
-      return c1->compareTo(v2) != 0;
+      ValuePtr c2 = T::mk(T::cast(v2));
+      return c2->compareTo(c1) != 0;
     };
     virtual bool _gt (const ValuePtr& v1, const ValuePtr& v2) const {
       ValuePtr c1 = T::mk(T::cast(v1));
