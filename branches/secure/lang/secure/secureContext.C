@@ -139,6 +139,7 @@ namespace compile {
 	  CommonTable::Iterator rIter = refTbl->lookup(CommonTable::theKey(CommonTable::KEY4), CommonTable::theKey(CommonTable::KEY4), head);
 	  TuplePtr headSays;
 	  TuplePtr headSaysType;
+	  TuplePtr keyTypeVar;
 
 	  ListPtr headSaysAttr;
 	  ListPtr headAttr;
@@ -160,17 +161,26 @@ namespace compile {
 	   var6 << STAGEVARPREFIX << newVariable++;
 	   headProof = Tuple::mk(VAR);
 	   headProof->append(Val_Str::mk(var6.str()));
-	   headProof->freeze();
+	   headProof->freeze(); // this is the variable in which the proof/key of the head says is inserted. This is passed to the normalizeGenerate so that we know 
+	   // which variable should contain the proof, should there be a functor on rhs that matches the head
 
 	   ostringstream var7;
 	   var7 << STAGEVARPREFIX << newVariable++;
 	   headSaysType = Tuple::mk(VAR);
 	   headSaysType->append(Val_Str::mk(var7.str()));
-	   headSaysType->freeze();
+	   headSaysType->freeze(); // this is the variable which is set to the appropriate operation type (CREATESAYS/COPYSAYS). Passed to the normalizeGenerate so that 
+	   // we know for compound tuples, which variable should be set to the CREATESAYS/COPYSAYS
+
+	   ostringstream v1;
+	   v1 << STAGEVARPREFIX << newVariable++;
+	   keyTypeVar = Tuple::mk(VAR);
+	   keyTypeVar->append(Val_Str::mk(v1.str()));
+	   keyTypeVar->freeze();
 
 	   listAssign = new TupleList();
 	   // create a new field if its not already present
-	   TupleList* newTermsGen = normalizeGenerate(catalog, head, rule, eventLocSpec, newVariable, headpos, compoundHead, headProof, headSaysType, listAssign); 
+	   TupleList* newTermsGen = normalizeGenerate(catalog, head, rule, eventLocSpec, newVariable, headpos, 
+						      compoundHead, headProof, headSaysType, keyTypeVar, listAssign); 
 	   // also if compoundHead is false, remove the new field
 
 	   if(!compoundHead){
@@ -252,6 +262,19 @@ namespace compile {
 		    assignTp->append(Val_Tuple::mk(val));
 		    assignTp->append(Val_UInt32::mk(funcpos++));         // Position
 		    comparisonTerms->push_back(assignTp);
+
+		    TuplePtr assignTp1  = Tuple::mk(ASSIGN, true);
+		    assignTp1->append((*rule)[TUPLE_ID]);
+		    TuplePtr varCopy1 = keyTypeVar->clone();
+		    varCopy1->freeze();
+		    assignTp1->append(Val_Tuple::mk(varCopy1));               // Assignment variable
+		    TuplePtr null = Tuple::mk(VAL);
+		    null->append(Val_Null::mk());                  // copy
+		    null->freeze();
+		    assignTp1->append(Val_Tuple::mk(null));
+		    assignTp1->append(Val_UInt32::mk(funcpos++));         // Position
+		    comparisonTerms->push_back(assignTp1);
+
 		  }
 		  newRuleComparators.push_back(comparisonTerms);
 
@@ -498,7 +521,7 @@ namespace compile {
       TupleList* Context::normalizeGenerate(CommonTable::ManagerPtr catalog, TuplePtr& head, TuplePtr& rule, 
 					    TuplePtr loc, uint32_t& newVariable, uint32_t& pos, 
 					    bool _compound, TuplePtr keyProofVar, TuplePtr headSaysType, 
-					    TupleList* listAssign)
+					    TuplePtr keyTypeVar, TupleList* listAssign)
       {
 	TupleList *newTerms = new TupleList();
 	
@@ -518,11 +541,18 @@ namespace compile {
 	ValuePtr ruleId = (*rule)[TUPLE_ID];
 
 	// generate variables for key
-	ostringstream v;
-	v << STAGEVARPREFIX << newVariable++;
-	TuplePtr keyVar = Tuple::mk(VAR);
-	keyVar->append(Val_Str::mk(v.str()));
-	keyVar->freeze();
+// 	ostringstream v;
+// 	v << STAGEVARPREFIX << newVariable++;
+// 	TuplePtr keyVar = Tuple::mk(VAR);
+// 	keyVar->append(Val_Str::mk(v.str()));
+// 	keyVar->freeze();
+
+	// generate variable for key type
+// 	ostringstream v1;
+// 	v1 << STAGEVARPREFIX << newVariable++;
+// 	TuplePtr keyTypeVar = Tuple::mk(VAR);
+// 	keyTypeVar->append(Val_Str::mk(v1.str()));
+// 	keyTypeVar->freeze();
 
 	// if new, then add the says params and encryption key to the hint field
 	// else generate terms for creating the buffer and encrypting the buffer using the key
@@ -604,11 +634,18 @@ namespace compile {
 	  f_init1->append(Val_Tuple::mk(null));
 	  f_init1->freeze();
 
+	  TuplePtr f_init2 = Tuple::mk(FUNCTION);
+	  f_init2->append(Val_Str::mk(APPENDFUNC));
+	  f_init2->append(Val_UInt32::mk(APPENDFUNCARGS));
+	  f_init2->append(Val_Tuple::mk(keyTypeVar));
+	  f_init2->append(Val_Tuple::mk(f_init1));
+	  f_init2->freeze();
+
 	  TuplePtr f_init = Tuple::mk(FUNCTION);
 	  f_init->append(Val_Str::mk(APPENDFUNC));
 	  f_init->append(Val_UInt32::mk(APPENDFUNCARGS));
 	  f_init->append(Val_Tuple::mk(keyProofVar));
-	  f_init->append(Val_Tuple::mk(f_init1));
+	  f_init->append(Val_Tuple::mk(f_init2));
 	  f_init->freeze();
 
 	  ostringstream var4;
@@ -745,6 +782,9 @@ namespace compile {
 	TuplePtr hintId = (Val_Tuple::cast(hintattributes->back()))->clone();
 	hintId->freeze();
 	genKeyAttributes->append(Val_Tuple::mk(hintId));
+	TuplePtr keyTypeVarClone = keyTypeVar->clone();
+	keyTypeVarClone->freeze();
+	genKeyAttributes->append(Val_Tuple::mk(keyTypeVarClone));
 	TuplePtr keyVarClone = keyProofVar->clone();
 	keyVarClone->freeze();
 	genKeyAttributes->append(Val_Tuple::mk(keyVarClone));
@@ -819,11 +859,11 @@ namespace compile {
 	  newTerms->push_back(assignTp);  
 	  
 	  //create generation logic
-	  ostringstream var4;
-	  var4 << STAGEVARPREFIX << newVariable++;
-	  TuplePtr hashVar = Tuple::mk(VAR);
-	  hashVar->append(Val_Str::mk(var4.str()));
-	  hashVar->freeze();
+// 	  ostringstream var4;
+// 	  var4 << STAGEVARPREFIX << newVariable++;
+// 	  TuplePtr hashVar = Tuple::mk(VAR);
+// 	  hashVar->append(Val_Str::mk(var4.str()));
+// 	  hashVar->freeze();
 	  
 	  ostringstream var5;
 	  var5 << STAGEVARPREFIX << newVariable++;
@@ -831,23 +871,24 @@ namespace compile {
 	  proof->append(Val_Str::mk(var5.str()));
 	  proof->freeze();
 
-	  TuplePtr f_hash = Tuple::mk(FUNCTION);
-	  f_hash->append(Val_Str::mk(HASHFUNC));
-	  f_hash->append(Val_UInt32::mk(HASHFUNCARGS));
-	  f_hash->append(Val_Tuple::mk(buf));
-	  f_hash->freeze();
+// 	  TuplePtr f_hash = Tuple::mk(FUNCTION);
+// 	  f_hash->append(Val_Str::mk(HASHFUNC));
+// 	  f_hash->append(Val_UInt32::mk(HASHFUNCARGS));
+// 	  f_hash->append(Val_Tuple::mk(buf));
+// 	  f_hash->freeze();
 	  
-	  TuplePtr assHash  = Tuple::mk(ASSIGN, true);
-	  assHash->append(ruleId);   // Should be rule identifier
-	  assHash->append(Val_Tuple::mk(hashVar));
-	  assHash->append(Val_Tuple::mk(f_hash));
-	  assHash->append(Val_UInt32::mk(pos++));        // Position
-	  newTerms->push_back(assHash);  
+// 	  TuplePtr assHash  = Tuple::mk(ASSIGN, true);
+// 	  assHash->append(ruleId);   // Should be rule identifier
+// 	  assHash->append(Val_Tuple::mk(hashVar));
+// 	  assHash->append(Val_Tuple::mk(f_hash));
+// 	  assHash->append(Val_UInt32::mk(pos++));        // Position
+// 	  newTerms->push_back(assHash);  
 
 	  TuplePtr f_gen = Tuple::mk(FUNCTION);
 	  f_gen->append(Val_Str::mk(GENFUNC));
 	  f_gen->append(Val_UInt32::mk(GENFUNCARGS));
-	  f_gen->append(Val_Tuple::mk(hashVar));
+	  f_gen->append(Val_Tuple::mk(buf)); // hashVar
+	  f_gen->append(Val_Tuple::mk(keyTypeVar));
 	  f_gen->append(Val_Tuple::mk(keyProofVar));
 	  f_gen->freeze();
 	  

@@ -13,8 +13,6 @@
 # DESCRIPTION: Makefile for the P2 core library
 #
 
-SUBDIRS=secure
-
 lib_LTLIBRARIES =	libp2core.la
 
 SOURCE_FILE_ROOTS =	reporting \
@@ -28,7 +26,6 @@ SOURCE_FILE_ROOTS =	reporting \
 			aggFactory \
 			val_str \
 			value \
-			fdbuf \
 			xdrbuf \
 			ID \
 			element \
@@ -77,14 +74,15 @@ libp2core_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C) \
 
 libp2core_la_LDFLAGS =	@BOOST_LIB@ \
 			@LDFLAGS@ \
-			@OPENSSL_LIB@
-			-lboost_regex 
+			@OPENSSL_LIB@ \
+			-lboost_regex \
+			$(top_builddir)/secure/libp2secure.la 
 
 libp2core_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 
 libp2core_la_CPPFLAGS = @BOOST_INC@ \
 			@OPENSSL_INC@ \
-			-Isecure/ 
+			-I../secure/ 
 
 CLEANFILES = core *.core *~ *.gen.h *.gen.txt pel_lexer.C
 

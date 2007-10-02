@@ -30,6 +30,13 @@ namespace compile {
 
     bool isLocSpec(ValuePtr v);
     
+    bool isVersion(ValuePtr v);
+
+    /**
+     * given an opaque, return whether the opaque is says opaque or not?
+     */
+    bool isSaysHint(ValuePtr v);
+
     ValuePtr sha1(ValuePtr);
 
     ValuePtr getCert(ValuePtr);

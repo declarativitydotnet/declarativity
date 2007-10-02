@@ -33,7 +33,7 @@ namespace compile {
     const string VERFUNC = "f_verify"; 
     const uint32_t VERFUNCARGS = 6; 
     const string GENFUNC = "f_gen"; 
-    const uint32_t GENFUNCARGS = 2; 
+    const uint32_t GENFUNCARGS = 3; 
     const string ENCHINT = "encHint"; 
     const string CONSLIST = "f_cons"; 
     const uint32_t CONSLISTARGS = 2; 
@@ -102,7 +102,8 @@ namespace compile {
       // Also converts f into the appropriate overlog form
       TupleList* normalizeGenerate(CommonTable::ManagerPtr catalog, TuplePtr &head, TuplePtr &rule, 
 				   TuplePtr loc, uint32_t& newVariable, uint32_t& pos, bool _new, 
-				   TuplePtr keyProofVar, TuplePtr headSaysType, TupleList* listAssign = NULL);
+				   TuplePtr keyProofVar, TuplePtr headSaysType, TuplePtr keyTypeVar,
+				   TupleList* listAssign = NULL);
 
       TupleList* generateAlgebraLT(ValPtrList::const_iterator start1, 
 					   ValPtrList::const_iterator start2, 

@@ -23,7 +23,8 @@ bin_PROGRAMS =			runOverLog \
 
 benchmark_SOURCES =		benchmark.C
 
-benchmark_LDADD =		$(top_builddir)/p2core/libp2core.la \
+benchmark_LDADD =		$(top_builddir)/secure/libp2secure.la \
+				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/lang/libp2lang.la \
 				$(top_builddir)/lang/parse/libp2parse.la \
 				$(top_builddir)/lang/compound/libp2compound.la \
@@ -47,6 +48,7 @@ runStagedOverlog_LDADD =	\
 				$(top_builddir)/stages/libp2stages.la \
 				$(top_builddir)/lang/p2dl/libp2dl.la \
 				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/secure/libp2secure.la \
 				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/lang/libp2lang.la \
 				$(top_builddir)/lang/parse/libp2parse.la \
@@ -79,6 +81,7 @@ runOverLog_LDADD = 		\
 				$(top_builddir)/functions/libp2functions.la \
 				$(top_builddir)/aggregates/libp2aggregates.la \
 				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/secure/libp2secure.la \
 				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/debugger/libp2debugger.la
 
@@ -95,6 +98,7 @@ p2nc_LDADD =	 		\
 				$(top_builddir)/functions/libp2functions.la \
 				$(top_builddir)/aggregates/libp2aggregates.la \
 				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/secure/libp2secure.la \
 				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/debugger/libp2debugger.la
 
@@ -107,6 +111,7 @@ udpMessage_LDADD =		\
 				@OPENSSL_LIB@ \
 				$(top_builddir)/net/libp2net.la \
 				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/secure/libp2secure.la \
 				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/lang/libp2lang.la \
 				$(top_builddir)/lang/parse/libp2parse.la \
@@ -129,6 +134,7 @@ udpListen_LDADD =		\
 				@OPENSSL_LIB@ \
 				$(top_builddir)/net/libp2net.la \
 				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/secure/libp2secure.la \
 				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/lang/libp2lang.la \
 				$(top_builddir)/lang/parse/libp2parse.la \
@@ -166,6 +172,7 @@ EXTRA_DIST = 			testerr.h \
 				scripts/crunch/stripResults.sh
 
 AM_CPPFLAGS =			@BOOST_INC@ \
+				-I$(top_builddir)/secure \
 				-I$(top_builddir)/p2core \
 				-I$(top_builddir)/aggregates \
 				-I$(top_builddir)/stages \

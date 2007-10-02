@@ -103,8 +103,8 @@ AC_CONFIG_FILES([
 	doc/tutorial/Makefile
 	doc/tutorial/olg/Makefile
 	doc/tutorial/c++/Makefile
+	secure/Makefile 
 	p2core/Makefile 
-	p2core/secure/Makefile 
 	elements/Makefile 
 	p2cpp/Makefile
 	stages/Makefile 

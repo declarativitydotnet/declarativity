@@ -28,8 +28,8 @@ p2Test_SOURCES =		p2Test.C \
 				$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C)
 
 AM_CPPFLAGS =			@BOOST_INC@ \
+				-I$(top_builddir)/secure \
 				-I$(top_builddir)/p2core \
-				-I$(top_builddir)/p2core/secure \
 				-I$(top_builddir)/elements \
 				-I$(top_builddir)/stages \
 				-I$(top_builddir)/aggregates \
@@ -53,8 +53,8 @@ LDADD =		\
 				$(top_builddir)/aggregates/libp2aggregates.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/debugger/libp2debugger.la \
+				$(top_builddir)/secure/libp2secure.la \
 				$(top_builddir)/p2core/libp2core.la \
-				$(top_builddir)/p2core/secure/libp2secure.la \
 				$(top_builddir)/lang/libp2lang.la \
 				$(top_builddir)/lang/parse/libp2parse.la \
 				$(top_builddir)/lang/rewrite/libp2rewrite.la \

@@ -75,6 +75,7 @@ SOURCE_FILE_ROOTS = 		elementRegistry \
 libp2elements_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C)
 
 libp2elements_la_CPPFLAGS =	@BOOST_INC@ \
+				-I../secure \
 				-I../p2core
 
 libp2elements_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG

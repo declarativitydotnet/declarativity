@@ -16,12 +16,12 @@
 class OperTuple : public opr::OperCompare<Val_Tuple> {
   virtual bool _eq(const ValuePtr& v1, const ValuePtr& v2) const {
     ValuePtr c1 = Val_Tuple::mk(Val_Tuple::cast(v1));
-    std::cout<<"comparing == " << v1->toString() << " and " << v2->toString();
+    //    std::cout<<"comparing == " << v1->toString() << " and " << v2->toString();
     return c1->compareTo(v2) == 0;
   };
   virtual bool _neq (const ValuePtr& v1, const ValuePtr& v2) const {
     ValuePtr c1 = Val_Tuple::mk(Val_Tuple::cast(v1));
-    std::cout<<"!comparing == " << v1->toString() << " and " << v2->toString();
+    //    std::cout<<"!comparing == " << v1->toString() << " and " << v2->toString();
     return c1->compareTo(v2) != 0;
   };
 

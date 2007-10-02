@@ -143,7 +143,7 @@ for op, ar, va, desc in [
   ("aggattr",1, "L_AGG_ATTR",   "Get the aggregation position from list."),
   ("merge",2,   "L_MERGE",      "Merge two argument lists according join operation."),
   ("verify",6,   "VERIFY",      "Decrypt the first argument decrypted using the second key."),
-  ("gen",2,   "GEN",      "Decrypt the first argument decrypted using the second key."),
+  ("gen",3,   "GEN",      "encrypt the first argument using the second encryption algorithm and the third key."),
   ("mod",1,   "SETMOD",      "Return the size of the passed set or list."),
   ("empty",0,   "EMPTY",      "Return a new empty set."),
   ("initSet",1,   "INITSET",      "Return a new set with the element passed."),

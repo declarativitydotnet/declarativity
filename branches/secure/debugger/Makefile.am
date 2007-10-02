@@ -26,6 +26,7 @@ SOURCE_FILE_ROOTS =		\
 libp2debugger_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C)
 
 libp2debugger_la_CPPFLAGS =	@BOOST_INC@ \
+				-I../secure \
 				-I../p2core \
 				-I../elements
 
