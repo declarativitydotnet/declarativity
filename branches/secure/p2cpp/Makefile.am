@@ -26,6 +26,7 @@ libp2cpp_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 libp2cpp_la_CPPFLAGS =	@PYTHON_CSPEC@ \
 			@BOOST_INC@ \
 			-I../p2core \
+			-I../p2core/pel \
 			-I../elements \
 			-I../stages \
 			-I../functions \
