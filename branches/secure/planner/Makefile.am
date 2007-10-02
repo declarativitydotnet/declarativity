@@ -35,6 +35,7 @@ libp2planner_la_CXXFLAGS =	-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 libp2planner_la_CPPFLAGS =	\
 				@BOOST_INC@ \
 				-I../p2core \
+				-I../p2core/pel \
 				-I../elements \
 				-I../net \
 				-I../overlog \
