@@ -9,14 +9,14 @@
 namespace compile {
 
   namespace secure {
-    const int hashSize = 20;
+    const int SecurityAlgorithms::hashSize = 20;
     //modify these to account for actual tuple
-    const int keyPos = 3;
-    const int primitivePos = 1;
+    const int SecurityAlgorithms::keyPos = 3;
+    const int SecurityAlgorithms::primitivePos = 1;
 
     Primitive* Primitive::combine(const Primitive* p2, int axis) const{
       SetPtr _p, _r, _v;
-      int _k;
+      uint32_t _k;
       
       SetPtr spkrUnion = p->setunion(p2->p);
       SetPtr spkrIntersection = p->intersect(p2->p);
@@ -39,7 +39,7 @@ namespace compile {
 	_p = spkrIntersection;
 	_r = r->intersect(p2->r);
 	_v = v->setunion(p2->v);
-	_k = std::max((unsigned)0, k + p2->k - spkrUnion->size());
+	_k = std::max((unsigned)0, (signed)k + (signed)p2->k - spkrUnion->size());
 	break;
       default:           
 	throw compile::Exception("Invalid combination axis in Primitive::combine!");
@@ -51,7 +51,7 @@ namespace compile {
     bool Primitive::smaller(const Primitive *p2) const{
       return (p->subset(p2->p) && r->subset(p2->r) && 
 	      v->subset(p2->v) && (p2->k <= k) && p->subset(p2->p) && 
-	      (((signed)p->size()-(signed)p2->p->size()) <= (k - p2->k)));
+	      (((signed)p->size()-(signed)p2->p->size()) <= ((signed)k - (signed)(p2->k))));
     }
 
     int Primitive::compareTo(const Primitive *p2) const{
@@ -62,7 +62,7 @@ namespace compile {
 	else if((comparison = r->compareTo(p2->r)) != 0){
 	  return comparison;
 	}
-	else if((comparison = (k - p2->k)) != 0){
+	else if((comparison = ((signed)k - (signed)(p2->k))) != 0){
 	  return comparison;
 	}
 	else if((comparison = v->compareTo(p2->v)) != 0){
@@ -74,7 +74,7 @@ namespace compile {
 	  
     }
     
-      ValuePtr SecurityAlgorithms::generate(ValuePtr msg, int encType, ValuePtr key){
+      ValuePtr SecurityAlgorithms::generate(ValuePtr msg, uint32_t encType, ValuePtr key){
 	switch(encType){
 	case SecurityAlgorithms::RSA:
 	  return signRSA(msg, key);
@@ -89,7 +89,7 @@ namespace compile {
 	};
       }
 
-      bool SecurityAlgorithms::verify(ValuePtr msg, ValPtrList proof, Primitive *p){
+      bool SecurityAlgorithms::verify(ValuePtr msg, ListPtr proof, Primitive *p){
 	PrimitiveSet pSet;
 	CommonTable::ManagerPtr catalog = Plumber::catalog();
 	//	CommonTablePtr functorTbl = catalog->table(FUNCTOR);
@@ -116,8 +116,8 @@ namespace compile {
 	  verKeyIter = verKeyTbl->lookup(CommonTable::theKey(CommonTable::KEY2), 
                                       CommonTable::theKey(CommonTable::KEY5), encHint);
 	  for (; !verKeyIter->done(); ) {
-	    ValPtrList::iterator iter = proof.begin();
-	    for(; iter != proof.end(); iter++){
+	    ValPtrList::const_iterator iter = proof->begin();
+	    for(; iter != proof->end(); iter++){
 	      bool res = false;
 	      TuplePtr keyTuple = verKeyIter->next();
 	      int encType = Val_Int32::cast((*keyTuple)[SecurityAlgorithms::keyPos]);

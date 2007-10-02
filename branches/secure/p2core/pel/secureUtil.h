@@ -28,7 +28,7 @@ namespace compile {
     public:
       enum combinationAxis{SPKR=0, RCVR, VERIFIER};
       
-      Primitive(SetPtr _p, SetPtr _r, int _k, SetPtr _v):p(_p), r(_r), v(_v){
+      Primitive(SetPtr _p, SetPtr _r, uint32_t _k, SetPtr _v):p(_p), r(_r), v(_v){
 	k = _k;
       }
 
@@ -42,7 +42,7 @@ namespace compile {
       SetPtr p;
       SetPtr r;
       SetPtr v;
-      int k;
+      uint32_t k;
     };
     
     struct ltPrimitive
@@ -64,8 +64,8 @@ namespace compile {
       enum encryptionType{RSA=0, AES};
       enum keyType{RSAPriv=0, RSAPub, AESSecret};
        
-      static ValuePtr generate(ValuePtr msg, int encType, ValuePtr key);
-      static bool verify(ValuePtr msg, ValPtrList proof, Primitive *p);
+      static ValuePtr generate(ValuePtr msg, uint32_t encType, ValuePtr key);
+      static bool verify(ValuePtr msg, ListPtr proof, Primitive *p);
     private:
       //helper function
       

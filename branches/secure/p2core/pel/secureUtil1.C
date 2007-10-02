@@ -150,7 +150,9 @@ namespace compile {
       // root needs spl processing i.e. dependent on the other parameters of processNewTuple
       // first field
       ListPtr buf = List::mk();
-      serialize(catalog, parentProcessTuple, Val_Str::cast(tableName), buf, ROOT, true);
+      ValuePtr hint = (*parentProcessTuple)[HINTPOS + 1]; // +1 because of version
+      uint32_t myRefType = (isSaysHint(hint)?ROOTSAYS:ROOT);
+      serialize(catalog, parentProcessTuple, Val_Str::cast(tableName), buf, myRefType, true);
       std::cout<<"serialized buffer"<<"\n"<<buf->toString()<<"\n";
       return Val_List::mk(buf);
       
@@ -315,6 +317,23 @@ namespace compile {
       }
       return merkleHash;
     }
+
+    bool isSaysHint(ValuePtr v){
+      if(v->typeCode() != Value::LIST){
+	return false;
+      }
+      else {
+	ListPtr l = Val_List::cast(v);
+	ValuePtr front = l->front();
+	if(front->typeCode() != Value::UINT32){
+	  return false;
+	}
+	else{
+	  uint32_t typeCode = Val_UInt32::cast(front);
+	  return (typeCode == CREATESAYS || typeCode == COPYSAYS);
+	}
+      }
+    }
     
     // serialize the graph rooted at parent tuple with table name = tablename
     // store the result in buf
@@ -341,7 +360,7 @@ namespace compile {
       uint32_t refTypePos = catalog->attribute(REF, "REFTYPE");
       uint32_t refToPos = catalog->attribute(REF, "TO");
       std::set<uint32_t> linkSet;
-      //set offset based on my ref type: this will help in extracting fields fro parent tuple      
+      //set offset based on my ref type: this will help in extracting fields from parent tuple      
       uint32_t offset = 0;
       switch(myRefType){
       case WEAKLINK: 
@@ -352,7 +371,9 @@ namespace compile {
       case STRONGSAYS: offset = 3; // because of new fields
 	assert(tuplename == (parentname + NEWSAYSSUFFIX));
 	break;
-      case ROOT: offset = 4; // because of new fields + time stamp fields
+      case ROOT: 
+	break;
+      case ROOTSAYS: offset = 4; // because of new fields + time stamp fields
 	assert(tuplename == (parentname + ROOTSUFFIX));
 	break;
       default: assert(0);
@@ -380,7 +401,8 @@ namespace compile {
 	
 	SetPtr locSpecSet(new Set());
 	SetPtr hashSet(new Set());
-
+	TuplePtr parentLocSpec = Val_Tuple::cast((*parent)[refPosVal + offset]);
+	bool needCertification = ((*parentLocSpec)[HASHPOS] != Val_Null::mk()) && certify;
 	// for each link, find all locSpecs
 	for (locSpecIter = locSpecTbl->lookup(key, CommonTable::theKey(CommonTable::KEY2), parent);
 	     !locSpecIter->done(); ) {
@@ -391,18 +413,19 @@ namespace compile {
 	  if(!childIter->done()) {
 	    TuplePtr child = childIter->next();
 	    //    childTbl->remove(child);
-	    if((refType == STRONGLINK || refType == STRONGSAYS) && certify){
-	      ValuePtr proof = serialize(catalog, child, childTableName, buf, refType, true);
-	      hashSet->insert(proof); // the version tuple is already having this proof: 
-	                              // However, we need to include this proof in the version field in the locSpec tuple
-	      TuplePtr version = (Val_Tuple::cast((*locSpec)[4]))->clone();
-	      version->set(HASHPOS, proof);
-	      version->set(STRONGPOS, Val_UInt32::mk(1));
-	      version->freeze();
-	      locSpec->set(4, Val_Tuple::mk(version));
+	    if(refType == STRONGLINK || refType == STRONGSAYS){
+	      if(certify){
+		ValuePtr proof = serialize(catalog, child, childTableName, buf, refType, needCertification);
+		hashSet->insert(proof); // the version tuple is already having this proof: 
+		// However, we need to include this proof in the version field in the locSpec tuple
+		TuplePtr version = (Val_Tuple::cast((*locSpec)[4]))->clone();
+		version->set(HASHPOS, proof);
+		version->set(STRONGPOS, Val_UInt32::mk(1));
+		version->freeze();
+		locSpec->set(4, Val_Tuple::mk(version));
+	      }
 	      locSpecSet->insert(Val_Tuple::mk(locSpec));
 	      // create a link expander and export it 
-
 	    }
 	    else{
 	      serialize(catalog, child, childTableName, buf, refType, certify);
@@ -412,38 +435,50 @@ namespace compile {
 	  }
 	    
 	}
-	if((refType == STRONGLINK || refType == STRONGSAYS) && certify){
-	  ValuePtr merkleHash = makeLocSpecStrong(locSpecSet, hashSet);
-	  
-	  TuplePtr parentLocSpecTuple = (Val_Tuple::cast((*parent)[refPosVal + offset]))->clone();
-	  parentLocSpecTuple->set(HASHPOS, merkleHash);
-	  parentLocSpecTuple->set(STRONGPOS, Val_UInt32::mk(1));
-	  parentLocSpecTuple->freeze();
-	  
-	  TuplePtr parentLocSpecTupleClone = parentLocSpecTuple->clone();
-	  parentLocSpecTupleClone->freeze();
-	  TuplePtr linkExpander = Tuple::mk(LINKEXPANDERTABLE);
-	  linkExpander->append(Val_Tuple::mk(parentLocSpecTupleClone));
-	  linkExpander->append(Val_Set::mk(hashSet));
-	  linkExpander->freeze();
+	if((refType == STRONGLINK || refType == STRONGSAYS)){
+	    TuplePtr linkExpander;
+	  if(certify){
+	    TuplePtr parentLocSpecTuple = parentLocSpec->clone();
+	    
+	    ValuePtr merkleHash = makeLocSpecStrong(locSpecSet, hashSet);
+	    parentLocSpecTuple->set(HASHPOS, merkleHash);
+	    parentLocSpecTuple->set(STRONGPOS, Val_UInt32::mk(1));
+	    parentLocSpecTuple->freeze();
+	    parent->set(refPosVal + offset, Val_Tuple::mk(parentLocSpecTuple));
+	   
+	    TuplePtr parentLocSpecTupleClone = parentLocSpecTuple->clone();
+	    parentLocSpecTupleClone->freeze();
+	    linkExpander = Tuple::mk(LINKEXPANDERTABLE);
+	    linkExpander->append(Val_Tuple::mk(parentLocSpecTupleClone));
+	    linkExpander->append(Val_Set::mk(hashSet));
+	    linkExpander->freeze();
+	  }
+	  else{
+	    CommonTablePtr linkExpanderTbl = catalog->table(LINKEXPANDERTABLE);
+	    CommonTable::Iterator iter = linkExpanderTbl->lookup(key, CommonTable::theKey(CommonTable::KEY2), parent);
+	    assert(!iter->done());
+	    linkExpander = iter->next()->clone();
+	    assert(iter->done());
+	  }
+
 	  buf->append(Val_Tuple::mk(linkExpander));
 
-	  parent->set(refPosVal + offset, Val_Tuple::mk(parentLocSpecTuple));
 	  for(ValPtrSet::const_iterator iter = locSpecSet->begin(); iter != locSpecSet->end(); iter++){
 	    buf->append(*iter);
 	  }
-	  
+  	  
 	  //	    buf->append(Val_Tuple::mk(linkExpander));
 	  // do more work
 	}
 	
+	
       }
 
       TuplePtr parentCopy;
-      if(myRefType == STRONGSAYS || myRefType == WEAKSAYS || myRefType == ROOT){
+      if(myRefType == STRONGSAYS || myRefType == WEAKSAYS || myRefType == ROOT || myRefType == ROOTSAYS){
 	uint32_t tupleSize = parent->size();
 	string parentNewName;
-	if(myRefType == STRONGSAYS || myRefType == WEAKSAYS){
+	if(myRefType == STRONGSAYS || myRefType == WEAKSAYS || myRefType == ROOTSAYS){
 	  parentNewName = parentname + SAYSSUFFIX;
 	}
 	else if(myRefType == ROOT){

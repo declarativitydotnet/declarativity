@@ -1,5 +1,5 @@
 /*
- * @(#)$Id: pel_vm.C 1411 2007-10-01 07:16:42Z prince $
+ * @(#)$Id: pel_vm.C 1416 2007-10-02 06:35:28Z prince $
  *
  * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
@@ -867,11 +867,12 @@ DEF_OP(L_CONTAINS) {
 }
 
 DEF_OP(GEN) {
-  ValuePtr second = stackTop(); stackPop();
-  ValuePtr first = stackTop(); stackPop();
-
-  assert(0);
-  stackPush(first);
+  ValuePtr key = stackTop(); stackPop();
+  uint32_t type = Val_UInt32::cast(stackTop()); stackPop();
+  ValuePtr serializedMsg = stackTop(); stackPop();
+  ValuePtr res = compile::secure::SecurityAlgorithms::generate(serializedMsg, type, key);
+  
+  stackPush(res);
 }
 
 
@@ -890,11 +891,24 @@ DEF_OP(SETMOD) {
 
 
 DEF_OP(VERIFY) {
-  ValuePtr second = stackTop(); stackPop();
-  ValuePtr first = stackTop(); stackPop();
+  SetPtr V = Val_Set::cast(stackTop()); stackPop();
+  uint32_t K = Val_UInt32::cast(stackTop()); stackPop();
+  SetPtr R = Val_Set::cast(stackTop()); stackPop();
+  SetPtr P = Val_Set::cast(stackTop()); stackPop();
+  ValuePtr proof = stackTop(); stackPop();
+  ValuePtr msg = stackTop(); stackPop();
+  ListPtr proofList;
+  
+  if(proof->typeCode() != Value::LIST){
+    proofList = List::mk();
+    proofList->append(proof);
+  }
+  else{
+    proofList = Val_List::cast(proof);
+  }
 
-  assert(0);
-  stackPush(first);
+  compile::secure::Primitive primitive(P, R, K, V);
+  stackPush(Val_UInt32::mk(compile::secure::SecurityAlgorithms::verify(msg, proofList, &primitive)));
 }
 
 DEF_OP(L_REMOVELAST) {
