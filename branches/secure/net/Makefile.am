@@ -36,7 +36,7 @@ libp2net_la_SOURCES = \
 	roundTripTimer.C \
 	netLoader.C
 
-INCLUDES = @BOOST_INC@ -I../secure -I../p2core -I../elements
+INCLUDES = @BOOST_INC@ -I../p2core -I../p2core/pel -I../elements
 
 CLEANFILES = core *.core *~
 
