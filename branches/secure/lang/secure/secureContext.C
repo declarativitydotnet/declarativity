@@ -138,6 +138,8 @@ namespace compile {
 	  CommonTable::Iterator tIter = tableTbl->lookup(nameKey, CommonTable::theKey(CommonTable::KEY3), head);
 	  CommonTable::Iterator rIter = refTbl->lookup(CommonTable::theKey(CommonTable::KEY4), CommonTable::theKey(CommonTable::KEY4), head);
 	  TuplePtr headSays;
+	  TuplePtr headSaysType;
+
 	  ListPtr headSaysAttr;
 	  ListPtr headAttr;
 	  TuplePtr headProof;
@@ -160,15 +162,35 @@ namespace compile {
 	   headProof->append(Val_Str::mk(var6.str()));
 	   headProof->freeze();
 
+	   ostringstream var7;
+	   var7 << STAGEVARPREFIX << newVariable++;
+	   headSaysType = Tuple::mk(VAR);
+	   headSaysType->append(Val_Str::mk(var7.str()));
+	   headSaysType->freeze();
+
 	   listAssign = new TupleList();
 	   // create a new field if its not already present
-	   TupleList* newTermsGen = normalizeGenerate(catalog, head, rule, eventLocSpec, newVariable, headpos, compoundHead, headProof, listAssign); 
+	   TupleList* newTermsGen = normalizeGenerate(catalog, head, rule, eventLocSpec, newVariable, headpos, compoundHead, headProof, headSaysType, listAssign); 
 	   // also if compoundHead is false, remove the new field
-   	   newRuleComparators.push_back(newTermsGen);
-	   
+
 	   if(!compoundHead){
 	     headProof = Val_Tuple::cast(headAttr->back());
 	   }
+	   else{
+	    TuplePtr assignTp  = Tuple::mk(ASSIGN, true);
+	    assignTp->append((*rule)[TUPLE_ID]);
+	    TuplePtr varCopy = headSaysType->clone();
+	    varCopy->freeze();
+	    assignTp->append(Val_Tuple::mk(varCopy));               // Assignment variable
+	    TuplePtr val = Tuple::mk(VAL);
+	    val->append(Val_UInt32::mk(CREATESAYS));                  // copy
+	    val->freeze();
+	    assignTp->append(Val_Tuple::mk(val));                  // create
+	    assignTp->append(Val_UInt32::mk(headpos++));         // Position
+	    newTermsGen->push_back(assignTp);
+	   }
+
+   	   newRuleComparators.push_back(newTermsGen);
 	  }
 
 	  CommonTable::Iterator funcIter;
@@ -218,7 +240,19 @@ namespace compile {
 		  assign->append(Val_Tuple::mk(rhs));
 		  assign->append(Val_UInt32::mk(funcpos++));        // Position
 		  comparisonTerms->push_back(assign); 
-
+		  if(compoundHead){
+		    TuplePtr assignTp  = Tuple::mk(ASSIGN, true);
+		    assignTp->append((*rule)[TUPLE_ID]);
+		    TuplePtr varCopy = headSaysType->clone();
+		    varCopy->freeze();
+		    assignTp->append(Val_Tuple::mk(varCopy));               // Assignment variable
+		    TuplePtr val = Tuple::mk(VAL);
+		    val->append(Val_UInt32::mk(COPYSAYS));                  // copy
+		    val->freeze();
+		    assignTp->append(Val_Tuple::mk(val));
+		    assignTp->append(Val_UInt32::mk(funcpos++));         // Position
+		    comparisonTerms->push_back(assignTp);
+		  }
 		  newRuleComparators.push_back(comparisonTerms);
 
 		}
@@ -463,7 +497,8 @@ namespace compile {
       // Also converts f into the appropriate overlog form
       TupleList* Context::normalizeGenerate(CommonTable::ManagerPtr catalog, TuplePtr& head, TuplePtr& rule, 
 					    TuplePtr loc, uint32_t& newVariable, uint32_t& pos, 
-					    bool _compound, TuplePtr keyProofVar, TupleList* listAssign)
+					    bool _compound, TuplePtr keyProofVar, TuplePtr headSaysType, 
+					    TupleList* listAssign)
       {
 	TupleList *newTerms = new TupleList();
 	
@@ -559,14 +594,21 @@ namespace compile {
 
 	  // now add terms that assign to this list
 	  
-	  TuplePtr f_init = Tuple::mk(FUNCTION);
-	  f_init->append(Val_Str::mk(CONSLIST));
-	  f_init->append(Val_UInt32::mk(CONSLISTARGS));
-	  f_init->append(Val_Tuple::mk(keyProofVar));
+	  TuplePtr f_init1 = Tuple::mk(FUNCTION);
+	  f_init1->append(Val_Str::mk(CONSLIST));
+	  f_init1->append(Val_UInt32::mk(CONSLISTARGS));
+	  f_init1->append(Val_Tuple::mk(headSaysType));
 	  TuplePtr null = Tuple::mk(VAL);
 	  null->append(Val_Null::mk());
 	  null->freeze();
-	  f_init->append(Val_Tuple::mk(null));
+	  f_init1->append(Val_Tuple::mk(null));
+	  f_init1->freeze();
+
+	  TuplePtr f_init = Tuple::mk(FUNCTION);
+	  f_init->append(Val_Str::mk(APPENDFUNC));
+	  f_init->append(Val_UInt32::mk(APPENDFUNCARGS));
+	  f_init->append(Val_Tuple::mk(keyProofVar));
+	  f_init->append(Val_Tuple::mk(f_init1));
 	  f_init->freeze();
 
 	  ostringstream var4;
