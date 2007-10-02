@@ -102,7 +102,7 @@ namespace compile {
       // Also converts f into the appropriate overlog form
       TupleList* normalizeGenerate(CommonTable::ManagerPtr catalog, TuplePtr &head, TuplePtr &rule, 
 				   TuplePtr loc, uint32_t& newVariable, uint32_t& pos, bool _new, 
-				   TuplePtr keyProofVar);
+				   TuplePtr keyProofVar, TupleList* listAssign = NULL);
 
       TupleList* generateAlgebraLT(ValPtrList::const_iterator start1, 
 					   ValPtrList::const_iterator start2, 

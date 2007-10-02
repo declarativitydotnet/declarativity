@@ -142,10 +142,13 @@ namespace compile {
 	  ListPtr headAttr;
 	  TuplePtr headProof;
 	  string headName = "";
-	  bool compoundHead = (!tIter->done() && !rIter->done());
+	  bool compoundHead = !rIter->done();
+	  assert(!compoundHead || !tIter->done());
 	  std::list<TupleList*> newRuleComparators;
 	  headAttr = Val_List::cast((*head)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
 	  headName = Val_Str::cast((*head)[catalog->attribute(FUNCTOR, "NAME")]);
+
+	  TupleList *listAssign = NULL;
 
 	  if(!saysIter->done()){
 	   headSays = saysIter->next();
@@ -157,7 +160,9 @@ namespace compile {
 	   headProof->append(Val_Str::mk(var6.str()));
 	   headProof->freeze();
 
-	   TupleList* newTermsGen = normalizeGenerate(catalog, head, rule, eventLocSpec, newVariable, headpos, compoundHead, headProof); // create a new field if its not already present
+	   listAssign = new TupleList();
+	   // create a new field if its not already present
+	   TupleList* newTermsGen = normalizeGenerate(catalog, head, rule, eventLocSpec, newVariable, headpos, compoundHead, headProof, listAssign); 
 	   // also if compoundHead is false, remove the new field
    	   newRuleComparators.push_back(newTermsGen);
 	   
@@ -229,13 +234,18 @@ namespace compile {
 	    // copy this rule into a new rule and insert the new rule into the list as well 
 	    // as modify the existing rule
 	    int size = newRuleComparators.size();
-	      
+	    uint32_t originalTermCount = Val_UInt32::cast((*rule)[catalog->attribute(RULE, "TERM_COUNT")]);
+
 	    for(int i = 0; i < size; i++){
 	      // if i < size - 1, then create a copy for next stage
 	      // else use the current copy
+
 	      TupleList *newTermsUse = newRuleComparators.front();
-	      uint32_t newTermsCount = newTermsUse->size();
+	      uint32_t assignTermPos = originalTermCount + newTermsUse->size();
+	      uint32_t newTermsCount = originalTermCount + newTermsUse->size() + (listAssign!= NULL?listAssign->size():0);
 	      newRuleComparators.pop_front();
+	      
+	      
 	      ValuePtr newRuleId;
 	      if(i < size - 1){
 		ostringstream n;
@@ -257,8 +267,7 @@ namespace compile {
 		newHead->freeze();
 		functorTbl->insert(newHead);
 		saysRule->set(catalog->attribute(RULE, "HEAD_FID"), (*newHead)[TUPLE_ID]);
-		uint32_t newCount = newTermsCount + Val_UInt32::cast((*saysRule)[catalog->attribute(RULE, "TERM_COUNT")]);
-		saysRule->set(catalog->attribute(RULE, "TERM_COUNT"), Val_UInt32::mk(newCount));
+		saysRule->set(catalog->attribute(RULE, "TERM_COUNT"), Val_UInt32::mk(newTermsCount));
 		saysRule->freeze();
 		ruleTbl->insert(saysRule);
 
@@ -334,12 +343,43 @@ namespace compile {
 	      else{
 		newRuleId = (*rule)[TUPLE_ID];
 		TuplePtr saysRule = rule->clone();
-		uint32_t newCount = newTermsCount + Val_UInt32::cast((*saysRule)[catalog->attribute(RULE, "TERM_COUNT")]);
-		saysRule->set(catalog->attribute(RULE, "TERM_COUNT"), Val_UInt32::mk(newCount));
+		saysRule->set(catalog->attribute(RULE, "TERM_COUNT"), Val_UInt32::mk(newTermsCount));
 		saysRule->freeze();
 		ruleTbl->insert(saysRule);
 	      }
-	      
+
+	      if(listAssign != NULL){
+		for (TupleList::iterator it = listAssign->begin(); 
+		     it != listAssign->end(); it++) {
+		  TuplePtr term = *it;
+		  string tname = Val_Str::cast((*term)[TNAME]);
+		  if(tname == FUNCTOR){
+		    TuplePtr functor = term->clone(FUNCTOR, true);
+		    functor->set(catalog->attribute(FUNCTOR, "RID"), newRuleId);
+		    functor->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(assignTermPos++));
+		    functor->freeze();
+		    functorTbl->insert(functor);
+		  }
+		  else if(tname == ASSIGN){
+		    TuplePtr assign = term->clone(ASSIGN, true);
+		    assign->set(catalog->attribute(ASSIGN, "RID"),  newRuleId);
+		    assign->set(catalog->attribute(ASSIGN, "POSITION"), Val_UInt32::mk(assignTermPos++));
+		    assign->freeze();
+		    assignTbl->insert(assign);
+		  }
+		  else if(tname == SELECT){
+		    TuplePtr select = term->clone(SELECT, true);
+		    select->set(catalog->attribute(SELECT, "RID"), newRuleId);
+		    select->set(catalog->attribute(SELECT, "POSITION"), Val_UInt32::mk(assignTermPos++));
+		    select->freeze();
+		    selectTbl->insert(select);
+		  }
+		  else{
+		    throw Exception("Secure rewrite: Invalid term type" + tname);
+		  }
+		}
+	      }
+
 	      if(newTermsUse != NULL){
 		for (TupleList::iterator it = newTermsUse->begin(); 
 		     it != newTermsUse->end(); it++) {
@@ -368,6 +408,10 @@ namespace compile {
 	      }
 
 	    }
+	    if(listAssign != NULL){
+	      delete listAssign;
+	    }
+
 	  }
       }
 
@@ -419,7 +463,7 @@ namespace compile {
       // Also converts f into the appropriate overlog form
       TupleList* Context::normalizeGenerate(CommonTable::ManagerPtr catalog, TuplePtr& head, TuplePtr& rule, 
 					    TuplePtr loc, uint32_t& newVariable, uint32_t& pos, 
-					    bool _compound, TuplePtr keyProofVar)
+					    bool _compound, TuplePtr keyProofVar, TupleList* listAssign)
       {
 	TupleList *newTerms = new TupleList();
 	
@@ -511,6 +555,7 @@ namespace compile {
 	    
 	  }
 
+	  uint32_t offsetPos = 0;
 
 	  // now add terms that assign to this list
 	  
@@ -535,11 +580,12 @@ namespace compile {
 	  assignTp1->append(ruleId);   // Should be rule identifier
 	  assignTp1->append(Val_Tuple::mk(l1));
 	  assignTp1->append(Val_Tuple::mk(f_init));
-	  assignTp1->append(Val_UInt32::mk(pos++));        // Position
+	  assignTp1->append(Val_UInt32::mk(offsetPos++));        // Position
 
-	  assignTp1->freeze();
-	  assignTbl->insert(assignTp1);
+	  //	  assignTp1->freeze();
+	  //	  assignTbl->insert(assignTp1);
 	  //	  newTerms->push_back(assignTp1);  
+	  listAssign->push_back(assignTp1);
 	  
 	  // now generate l2 = f_append(l1, P)
 	  TuplePtr prevList = l1;
@@ -570,12 +616,12 @@ namespace compile {
 	    assignTp2->append(ruleId);   // Should be rule identifier
 	    assignTp2->append(Val_Tuple::mk(l2));
 	    assignTp2->append(Val_Tuple::mk(f_append));
-	    assignTp2->append(Val_UInt32::mk(pos++));        // Position
+	    assignTp2->append(Val_UInt32::mk(offsetPos++));        // Position
 
-	    assignTp2->freeze();
-	    assignTbl->insert(assignTp2);
-
+	    //	    assignTp2->freeze();
+	    //	    assignTbl->insert(assignTp2);
 	    //	    newTerms->push_back(assignTp2);  
+	    listAssign->push_back(assignTp2);
 
 	    prevList = l2; // update prevList
 
