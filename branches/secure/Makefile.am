@@ -15,7 +15,6 @@
 #
 
 SUBDIRS=	\
-		secure \
 		p2core \
 		elements \
 		stages \
