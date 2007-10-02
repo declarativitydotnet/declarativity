@@ -288,8 +288,8 @@ namespace compile {
      FdbufPtr msg(new Fdbuf(len));
      msg->push_bytes(wmsg.cstr(), len);
      
-     FdbufPtr encrypted = secureSignAES(msg, key);
-     bool correct = secureVerifyAES(msg, key, encrypted);
+     FdbufPtr encrypted = Sfslite::secureSignAES(msg, key);
+     bool correct = Sfslite::secureVerifyAES(msg, key, encrypted);
      return correct;
     }
 
@@ -301,9 +301,9 @@ namespace compile {
      FdbufPtr msg(new Fdbuf(len));
      msg->push_bytes(wmsg.cstr(), len);
      
-     FdbufPtr encrypted = secureSignRSA(msg, privBuf);
+     FdbufPtr encrypted = Sfslite::secureSignRSA(msg, privBuf);
      FdbufPtr pubBuf = getPubKey(privBuf);
-     bool correct = secureVerifyRSA(msg, pubBuf, encrypted);
+     bool correct = Sfslite::secureVerifyRSA(msg, pubBuf, encrypted);
      return correct;
     }
 
