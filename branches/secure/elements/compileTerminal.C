@@ -81,7 +81,7 @@ void
 CompileTerminal::terminal()
 {
   static int counter = 0;
-  string filename;
+  string filename = "";
   ostringstream text;
   string name;
   string rewrite = "n";
@@ -90,6 +90,7 @@ CompileTerminal::terminal()
   {
     std::cout << "filename? > ";
     std::cin >> filename;
+    uint32_t dummyStatement = 0;
     if (filename == "") return;
     std::cout << "Program name? > ";
     std::cin >> name;
@@ -111,7 +112,8 @@ CompileTerminal::terminal()
     filename = defaultStages[counter].file;
     name = defaultStages[counter].name;
     rewrite = defaultStages[counter].prevStageName;
-    more = "y";
+    if(numDefaultStages >= (counter -1) )
+      more = "y";
   }
   counter++;
 
@@ -170,11 +172,15 @@ CompileTerminal::initialize()
 void 
 CompileTerminal::initDefaultStages()
 {
-  more = "y";
-  numDefaultStages = 0;
+  more = "n";
+  numDefaultStages = 1;
   int count = 0;
   defaultStages = new StageInformation[numDefaultStages];
-  /*  defaultStages[count].name = "localization";
+  defaultStages[count].name = "compound1";
+  defaultStages[count].file = "../doc/tests/compound1.olg";
+  defaultStages[count++].prevStageName = "";
+
+  /*defaultStages[count].name = "localization";
   defaultStages[count].file = "../doc/localization.olg";
   defaultStages[count++].prevStageName = "eca";
   defaultStages[count].name = "rewrite0";

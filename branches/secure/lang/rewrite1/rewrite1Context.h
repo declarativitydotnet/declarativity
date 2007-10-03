@@ -29,6 +29,8 @@ namespace compile {
     const string STAGERULEPREFIX = "rw1_";
     const string CREATELOCSPECFN = "f_createLocSpec";
     const string CREATEVERFN = "f_createVersion";
+    const string ISSAYSFN = "f_isSays";
+    const uint32_t ISSAYSFNARGS = 1; // tuple name and uniqueId, return serialized buffer
     const string SERIALIZEFN = "f_serialize";
     const uint32_t SERIALIZEFNARGS = 2; // tuple name and uniqueId, return serialized buffer
     const string DESERIALIZEFN = "f_deserialize";
@@ -38,6 +40,7 @@ namespace compile {
     const string SENDTUPLE = "sendtuple";
     const string ROOTVERSUFFIX = "Ver";
     const string ROOTPROCESSSUFFIX = "Process";
+    const string HEADSAYSSUFFIX = "NewSays";
     const string DUMMY = "dummy";
     const uint32_t DUMMYARGS = 1;
     const uint32_t LOCSPECFNARGS = 0;
@@ -118,6 +121,7 @@ namespace compile {
     private:
       HeadStateSet headState;
       SetPtr materializedTable;
+      SetPtr materializedSaysTable;
       /* Process the current rule in the program */
       void rule(CommonTable::ManagerPtr catalog, TuplePtr rule);
 
@@ -131,7 +135,7 @@ namespace compile {
 
       TuplePtr materializeNewTupleVersionEvent(uint32_t &fictVar, CommonTable::ManagerPtr, ValuePtr programID, NewHeadState *state);
       TuplePtr materializeLocSpecTuple(uint32_t &fictVar, CommonTable::ManagerPtr, ValuePtr programID, TuplePtr newTuple, NewHeadState *state);
-      TuplePtr materializeNewTupleVersion(uint32_t &fictVar, CommonTable::ManagerPtr, ValuePtr programID, TuplePtr newTuple, NewHeadState *state);
+      TuplePtr materializeNewTupleVersion(uint32_t &fictVar, CommonTable::ManagerPtr, ValuePtr programID, TuplePtr newTuple, NewHeadState *state, bool says);
       TuplePtr materializeProcessTuple(uint32_t &fictVar, CommonTable::ManagerPtr, ValuePtr programID, NewHeadState *state);
       TuplePtr materializeDeleteProcessTuple(uint32_t &fictVar, CommonTable::ManagerPtr, ValuePtr programID, TuplePtr newTuple, NewHeadState *state);
       TuplePtr materializeSendTuple(uint32_t &fictVar, CommonTable::ManagerPtr, ValuePtr programID, TuplePtr newTuple, NewHeadState *state);

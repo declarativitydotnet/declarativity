@@ -791,6 +791,10 @@ DEF_OP(GET_CERT) {
   ValuePtr first = stackTop(); stackPop();
   stackPush(compile::secure::getCert(first));
 }
+DEF_OP(IS_SAYS) {
+  ValuePtr first = stackTop(); stackPop();
+  stackPush(Val_UInt32::mk(compile::secure::isSaysHint(first)));
+}
 
 
 DEF_OP(L_CONS) {

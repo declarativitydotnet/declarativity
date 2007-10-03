@@ -221,6 +221,7 @@ namespace compile {
     void
     Context::pass3(CommonTable::ManagerPtr catalog, TuplePtr program)
     {
+      SetPtr done(new Set());
       CommonTablePtr ruleTbl = catalog->table(RULE);
       CommonTablePtr functorTbl = catalog->table(FUNCTOR);
       ValuePtr programID = (*program)[catalog->attribute(PROGRAM, "PID")];
@@ -228,28 +229,37 @@ namespace compile {
       for(; iter != headState.end(); iter++){
 	NewHeadState* state = *iter;
 	uint32_t fictVar = 0;
-	
-	if(state->newRule){
-	  // first create the newTVersion :- newT RULE
-	  TuplePtr newTupleVersion = materializeNewTupleVersionEvent(fictVar, catalog, programID, state);
-	  // next create the locSpec tuple using the newTVersion
-	  materializeLocSpecTuple(fictVar, catalog, programID, newTupleVersion->clone(FUNCTOR, true), state);
-	  // and create the TVersion tuple using the newTVersion
-	  materializeNewTupleVersion(fictVar, catalog, programID, newTupleVersion->clone(FUNCTOR, true), state);
-	  size_t lastnewpos = state->newRuleBase.rfind(compile::NEWSUFFIX, state->newRuleBase.size());
-	  if(lastnewpos == string::npos){
-	    throw compile::rewrite1::Exception("Invalid new tuple:" + state->newRuleBase);
-	  }
-	  string scopedName = state->newRuleBase.substr(0, lastnewpos);
-	  assert(scopedName + compile::NEWSUFFIX == state->newRuleBase);
-	  catalog->createIndex(scopedName, CommonTable::theKey(CommonTable::KEY2));
+	if(done->member(Val_Str::mk(state->newRuleBase)) == 0){
+	  done->insert(Val_Str::mk(state->newRuleBase));
+	  if(state->newRule){
+	    // first do everything assuming that its a non-says link
+	    //do it the hacky way
+	    bool says = true;
+	    // first create the newTVersion :- newT RULE
+	    TuplePtr newTupleVersion = materializeNewTupleVersionEvent(fictVar, catalog, programID, state);
+	    // next create the locSpec tuple using the newTVersion
+	    materializeLocSpecTuple(fictVar, catalog, programID, newTupleVersion->clone(FUNCTOR, true), state);
+	    // and create the TVersion tuple using the newTVersion
+	    materializeNewTupleVersion(fictVar, catalog, programID, newTupleVersion->clone(FUNCTOR, true), state, says);
+	    size_t lastnewpos = state->newRuleBase.rfind(compile::NEWSUFFIX, state->newRuleBase.size());
+	    if(lastnewpos == string::npos){
+	      throw compile::rewrite1::Exception("Invalid new tuple:" + state->newRuleBase);
+	    }
+	    string scopedName = state->newRuleBase.substr(0, lastnewpos);
+	    assert(scopedName + compile::NEWSUFFIX == state->newRuleBase);
+	    catalog->createIndex(scopedName, CommonTable::theKey(CommonTable::KEY2));
 
-	}
-	else{
-	  TuplePtr processTuple = materializeProcessTuple(fictVar, catalog, programID, state);
-	  //	  materializeDeleteProcessTuple(fictVar, catalog, programID, processTuple->clone(FUNCTOR, true), state);
-	  materializeSendTuple(fictVar, catalog, programID, processTuple->clone(FUNCTOR, true), state);
-      	  needRecvTuple = true;
+	    // now do assuming that its a says link
+	    says = false;
+	    materializeNewTupleVersion(fictVar, catalog, programID, newTupleVersion->clone(FUNCTOR, true), state, says);
+
+	  }
+	  else{
+	    TuplePtr processTuple = materializeProcessTuple(fictVar, catalog, programID, state);
+	    //	  materializeDeleteProcessTuple(fictVar, catalog, programID, processTuple->clone(FUNCTOR, true), state);
+	    materializeSendTuple(fictVar, catalog, programID, processTuple->clone(FUNCTOR, true), state);
+	    needRecvTuple = true;
+	  }
 	}
       }
     }
@@ -502,12 +512,15 @@ namespace compile {
 						 CommonTable::ManagerPtr catalog, 
 						 ValuePtr programID, 
 						 TuplePtr newTuple, 
-						 NewHeadState *state){
+						 NewHeadState *state, 
+						 bool says){
       CommonTablePtr ruleTbl = catalog->table(RULE);
       CommonTablePtr functorTbl = catalog->table(FUNCTOR);
+      CommonTablePtr selectTbl = catalog->table(SELECT);
       uint32_t pos = 0;
-      const uint32_t termCount = 2;
-
+      const uint32_t termCount = 3; // 1 head, 1 ver-event and 1 for check
+      string headSuffix = (says?compile::rewrite1::HEADSAYSSUFFIX:compile::VERSIONSUFFIX);
+      
       // find out the name of the version tuple using the new tuple name: replace new by version
       string originalRuleBase = state->newRuleBase;
       size_t lastnewpos = originalRuleBase.rfind(compile::NEWSUFFIX, originalRuleBase.size());
@@ -515,7 +528,17 @@ namespace compile {
 	throw compile::rewrite1::Exception("Invalid new tuple:" + state->newRuleBase);
       }
       
-      string headname = originalRuleBase.replace(lastnewpos, compile::NEWSUFFIX.length(), compile::VERSIONSUFFIX, 0, compile::VERSIONSUFFIX.length());
+      string headname = originalRuleBase.replace(lastnewpos, compile::NEWSUFFIX.length(), headSuffix, 0, headSuffix.length());
+      if(says){
+
+	if(materializedSaysTable->member(Val_Str::mk(headname)) == 0){
+	  // need to materialize the lhs
+	  Table2::Key _keys;
+	  _keys.push_back(UNIQUEIDPOS); // since the count for keys start from 0
+	  catalog->createTable(headname, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
+	  materializedSaysTable->insert(Val_Str::mk(headname));
+	}
+      }
 
       ostringstream oss2;
       oss2 << STAGERULEPREFIX <<ruleCounter++;
@@ -546,7 +569,7 @@ namespace compile {
       if (!tIter->done()) 
         head->append((*tIter->next())[TUPLE_ID]);
       else {
-        head->append(Val_Null::mk());
+	assert(0);
       }
   
       head->append(Val_Null::mk());          // The ECA flag
@@ -562,10 +585,16 @@ namespace compile {
       attributes->append(Val_Tuple::mk(ver));
       ValPtrList::const_iterator iter = verAttr->begin();
       int count = 0;
-      iter++; count++;// for loc
-      iter++; count++;// for opaque
-      iter++; count++;// for hint
-      iter++; count++;// for destLocSpec
+      iter++; iter++; 
+      TuplePtr hintVar = (Val_Tuple::cast(*iter))->clone();
+      hintVar->freeze();
+      iter = verAttr->begin();
+      if(!says){
+	iter++; count++;// for loc
+	iter++; count++;// for opaque
+	iter++; count++;// for hint
+	iter++; count++;// for destLocSpec
+      }
       // exclude the last field as it has already been included
       int size = verAttr->size();
       for (;count < (size - 1); iter++, count++) {
@@ -597,6 +626,30 @@ namespace compile {
 
       newTuple->freeze();
       functorTbl->insert(newTuple);
+
+      TuplePtr expr3 = Tuple::mk(BOOL);
+      expr3->append(Val_Str::mk("=="));
+      TuplePtr val = Tuple::mk(VAL);
+      val->append(Val_UInt32::mk(says?1:0));
+      val->freeze();
+
+      TuplePtr f_isSays = Tuple::mk(FUNCTION);
+      f_isSays->append(Val_Str::mk(ISSAYSFN));
+      f_isSays->append(Val_UInt32::mk(ISSAYSFNARGS));
+      f_isSays->append(Val_Tuple::mk(hintVar));
+      f_isSays->freeze();
+      expr3->append(Val_Tuple::mk(val));
+      expr3->append(Val_Tuple::mk(f_isSays));
+      expr3->freeze();
+
+      TuplePtr       selectTp  = Tuple::mk(SELECT, true);
+      selectTp->append(ruleId);   // Should be rule identifier
+      selectTp->append(Val_Tuple::mk(expr3));              // Boolean expression
+      selectTp->append(Val_UInt32::mk(pos++));        // Position
+      selectTp->append(Val_Null::mk());        // Access method
+      selectTp->freeze();
+      selectTbl->insert(selectTp); 
+
       return head;
     }
 
@@ -973,6 +1026,10 @@ namespace compile {
     {
       SetPtr tmp(new Set());
       materializedTable = tmp;
+
+      SetPtr tmp1(new Set());
+      materializedSaysTable = tmp1;
+
       //add materialization for LOCSPECTABLE
       string scopedName = compile::LOCSPECTABLE;
       Table2::Key _keys;
