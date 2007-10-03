@@ -29,6 +29,8 @@ ringControl_LDADD = 		\
 				$(top_builddir)/functions/libp2functions.la \
 				$(top_builddir)/aggregates/libp2aggregates.la \
 				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/p2core/pel/libp2pel.la \
+				$(top_builddir)/p2core/secureUtil/libp2secureUtil.la \
 				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/debugger/libp2debugger.la
 
@@ -46,6 +48,8 @@ ponger_LDADD =	 		\
 				$(top_builddir)/functions/libp2functions.la \
 				$(top_builddir)/aggregates/libp2aggregates.la \
 				$(top_builddir)/elements/libp2elements.la \
+				$(top_builddir)/p2core/pel/libp2pel.la \
+				$(top_builddir)/p2core/secureUtil/libp2secureUtil.la \
 				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/debugger/libp2debugger.la
 
@@ -56,6 +60,7 @@ CLEANFILES = core *.core *~ .\#*
 
 AM_CPPFLAGS =			@BOOST_INC@ \
 				-I$(top_builddir)/p2core \
+				-I$(top_builddir)/p2core/pel \
 				-I$(top_builddir)/aggregates \
 				-I$(top_builddir)/stages \
 				-I$(top_builddir)/functions \

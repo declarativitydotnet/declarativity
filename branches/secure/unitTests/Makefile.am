@@ -54,9 +54,9 @@ LDADD =		\
 				$(top_builddir)/aggregates/libp2aggregates.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/debugger/libp2debugger.la \
-				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/p2core/pel/libp2pel.la \
 				$(top_builddir)/p2core/secureUtil/libp2secureUtil.la \
+				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/lang/libp2lang.la \
 				$(top_builddir)/lang/parse/libp2parse.la \
 				$(top_builddir)/lang/rewrite/libp2rewrite.la \

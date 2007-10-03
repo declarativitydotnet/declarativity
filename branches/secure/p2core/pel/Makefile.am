@@ -16,14 +16,15 @@
 lib_LTLIBRARIES =	libp2pel.la
 
 SOURCE_FILE_ROOTS =	pel_lexer \
-			pel_vm 
+			pel_vm \
+			secureUtil \
+			secureUtil1 
+
 
 libp2pel_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C) \
 			pel_lexer.lex \
 			pel_gen.py \
-			pel_program.h \
-			secureUtil \
-			secureUtil1 
+			pel_program.h 
 
 
 
