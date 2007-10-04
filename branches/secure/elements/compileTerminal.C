@@ -170,6 +170,13 @@ CompileTerminal::initialize()
   return 0;
 }
 
+/**
+ *localization code: change the numDefaultStages value to reflect the number of default stages you want to be inserted
+ * Also comment out the defaultStages creation code if numDefaultStages = 0
+ * more should be set to "y" by default if there's at least 1 default or user entered olg program, "n" otherwise
+ * originalMore should be set to "y" if there's at least 1 user entered program, "n" otherwise
+ */
+
 void 
 CompileTerminal::initDefaultStages()
 {
@@ -177,18 +184,17 @@ CompileTerminal::initDefaultStages()
   more="y";
   numDefaultStages = 0;
   int count = 0;
-  /*   defaultStages = new StageInformation[numDefaultStages];
-  defaultStages[count].name = "secureTest";
+  defaultStages = new StageInformation[numDefaultStages];
+  /*defaultStages[count].name = "secureTest";
   //  defaultStages[count].file = "../unitTests/olg/localCounter.olg";
   defaultStages[count].file = "../doc/tests/secureTest.olg";
   defaultStages[count++].prevStageName = "";
+  */
   /*
   defaultStages[count].name = "localization";
   defaultStages[count].file = "../doc/localization.olg";
   defaultStages[count++].prevStageName = "eca";
-  defaultStages[count].name = "rewrite0";
-  defaultStages[count].file = "../doc/rewrite0.olg";
-  defaultStages[count++].prevStageName = "compile";*/
-
+  */
+  
 }
 
