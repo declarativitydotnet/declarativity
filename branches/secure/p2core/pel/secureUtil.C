@@ -215,7 +215,6 @@ namespace compile {
 	return Sfslite::secureVerifyRSA(msg, key, proof);
       }
 
-
   } // END NAMESTRACKER
 
 } // END COMPILE

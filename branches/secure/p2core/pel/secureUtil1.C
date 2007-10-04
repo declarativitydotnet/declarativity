@@ -130,6 +130,10 @@ namespace compile {
       return rVal;
     }
 
+    ValuePtr loadFile(ValuePtr fileName){
+      return fileName;
+    }
+
     // lets implement the insecure version first
     ValuePtr processGen(ValuePtr tableName, ValuePtr key){
       // traverse the graph and return the serialized graph

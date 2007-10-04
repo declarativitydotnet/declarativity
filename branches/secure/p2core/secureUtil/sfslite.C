@@ -1,3 +1,4 @@
+#include<cstdlib>
 #include<iostream>
 #include "sfslite.h"
 #include "crypt.h"
@@ -63,7 +64,7 @@ namespace compile {
 	cp->decipher_bytes ((--d)->c, s->c);
       }
     }
-    
+
     FdbufPtr serializePriv(esign_priv *priv)
     {
       FdbufPtr serializedPriv(new Fdbuf(512));
@@ -326,8 +327,58 @@ namespace compile {
 	     << " was reported incorrectly as " << dpub->n.cstr() 
 	     << "k: "<< dpub->k;
      
-     res2 = (dpub->n == priv.n) && (dpub->k == priv.k);
+     res2 = (dpub->n == priv.n) && (dpub->k == priv.k);     
+    }
 
+    void Sfslite::testFileSerialization(bool &res1, std::ostringstream &message1, bool &res2, std::ostringstream &message2, std::string privFile, std::string pubFile){
+     esign_priv priv = esign_keygen (424 + rnd.getword () % 256);
+     FdbufPtr serializedPriv = serializePriv(&priv);
+     FdbufPtr serializedPub = serializePub(&priv);
+     FdbufPtr serializedPrivCopy(new Fdbuf(serializedPriv));
+     FdbufPtr serializedPubCopy(new Fdbuf(serializedPub));
+
+     writeToFile(privFile, serializedPrivCopy);
+     FdbufPtr serializedPrivRead = readFromFile(privFile);
+     
+     res1 = (serializedPrivRead->str() == serializedPriv->str());
+
+     writeToFile(pubFile, serializedPubCopy);
+     FdbufPtr serializedPubRead = readFromFile(pubFile);
+     
+     res2 = (serializedPubRead->str() == serializedPub->str());
+
+     message1<< "The original priv fdbuf was: " <<  serializedPriv->cstr() 
+	     << " was read incorrectly as " << serializedPrivRead->cstr() ;
+
+     message2<< "The original pub fdbuf was: " <<  serializedPub->cstr() 
+	     << " was read incorrectly as " << serializedPubRead->cstr() ;
+     
+    }
+
+
+    FdbufPtr Sfslite::readFromFile(std::string filename){
+      int file = open(filename.c_str(), O_RDONLY, 0);
+	//      std::ifstream file(filename.c_str(), std::ios::in|std::ios::binary);
+      Fdbuf *f = new Fdbuf();
+      FdbufPtr fdbufPtr(f);
+      if (file != -1)
+	{
+	  while(f->read(file) > 0);
+	  close(file);
+	}
+      else std::cout << "Unable to open file";
+      return fdbufPtr;
+    }
+    
+    void Sfslite::writeToFile(std::string filename, FdbufPtr f){
+      int file = open(filename.c_str(), O_WRONLY|O_TRUNC|O_CREAT, 0);
+      //      std::ofstream file(filename.c_str(), std::ios::out|std::ios::binary);
+      if (file != -1)
+	{
+	  while(f->write(file) > 0);
+	  close(file);
+	}
+      else std::cout << "Unable to open file";
     }
     
   }

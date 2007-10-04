@@ -791,6 +791,10 @@ DEF_OP(GET_CERT) {
   ValuePtr first = stackTop(); stackPop();
   stackPush(compile::secure::getCert(first));
 }
+DEF_OP(LOADKEYFILE) {
+  ValuePtr first = stackTop(); stackPop();
+  stackPush(compile::secure::loadFile(first));
+}
 DEF_OP(IS_SAYS) {
   ValuePtr first = stackTop(); stackPop();
   stackPush(Val_UInt32::mk(compile::secure::isSaysHint(first)));

@@ -47,6 +47,7 @@ private:
   StageInformation *defaultStages;
   int numDefaultStages;
   string more;
+  string originalmore;
 
   void initDefaultStages();
 

@@ -38,6 +38,13 @@ namespace compile {
     static bool testRSA();
 
     static void testSerialization(bool &res1, std::ostringstream &message1, bool &res2, std::ostringstream &message2);
+
+    static void testFileSerialization(bool &res1, std::ostringstream &message1, bool &res2, std::ostringstream &message2, std::string privFile, std::string pubFile);
+
+    static FdbufPtr readFromFile(std::string filename);
+    
+    static void writeToFile(std::string filename, FdbufPtr f);
+
     };
   };
 };

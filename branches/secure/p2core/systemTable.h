@@ -277,4 +277,5 @@ FUNCTIONDEF("f_createLocSpec",0, "createLocSpec")
 FUNCTIONDEF("f_isLocSpec",    1, "isLocSpec")
 FUNCTIONDEF("f_getCert",    1, "getCert")
 FUNCTIONDEF("f_isSays",    1, "isSays")
+FUNCTIONDEF("f_loadKeyFile",    1, "loadKeyFile")
 #undef FUNCTIONDEF

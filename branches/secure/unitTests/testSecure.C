@@ -60,6 +60,33 @@ void testRSAKeySerialize()
    }
 }
 
+void testRSAKeyFileSerialize() 
+{
+  std::string privFile = "key.priv";
+  std::string pubFile = "key.pub";
+
+   std::string testID;
+   {
+      std::ostringstream ID;
+      ID << "RSA Key serialization test.";
+      testID = ID.str();
+   }
+   //test private serialization and deserialization
+   for(int i = 0; i < 10; i++){
+     std::ostringstream message1;
+     message1<<testID;
+     std::ostringstream message2;
+     message2<<testID;
+
+     bool res1, res2;
+     Sfslite::testFileSerialization(res1, message1, res2, message2, privFile, pubFile);
+     BOOST_CHECK_MESSAGE(res1, message1.str().c_str());
+
+     BOOST_CHECK_MESSAGE(res2, message2.str().c_str());
+
+   }
+}
+
 
 // ==================
 // RSA encryption tests
@@ -118,6 +145,7 @@ testSecure_testSuite::testSecure_testSuite()
 {
   boost::shared_ptr<testSecure> instance(new testSecure());
   add(BOOST_CLASS_TEST_CASE(&testSecure::testRSAKeySerialize, instance));
+  add(BOOST_CLASS_TEST_CASE(&testSecure::testRSAKeyFileSerialize, instance));
   add(BOOST_CLASS_TEST_CASE(&testSecure::testRSAEncryptionDecryption, instance));
   add(BOOST_CLASS_TEST_CASE(&testSecure::testAESEncryptionDecryption, instance));
 }

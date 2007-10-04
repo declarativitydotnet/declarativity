@@ -90,7 +90,6 @@ CompileTerminal::terminal()
   {
     std::cout << "filename? > ";
     std::cin >> filename;
-    uint32_t dummyStatement = 0;
     if (filename == "") return;
     std::cout << "Program name? > ";
     std::cin >> name;
@@ -114,6 +113,8 @@ CompileTerminal::terminal()
     rewrite = defaultStages[counter].prevStageName;
     if(numDefaultStages >= (counter -1) )
       more = "y";
+    else
+      more = originalmore;
   }
   counter++;
 
@@ -172,15 +173,17 @@ CompileTerminal::initialize()
 void 
 CompileTerminal::initDefaultStages()
 {
-  more = "n";
+  originalmore = "n";
+  more="y";
   numDefaultStages = 1;
   int count = 0;
+  
   defaultStages = new StageInformation[numDefaultStages];
   defaultStages[count].name = "compound1";
   defaultStages[count].file = "../doc/tests/compound1.olg";
   defaultStages[count++].prevStageName = "";
-
-  /*defaultStages[count].name = "localization";
+  /*
+  defaultStages[count].name = "localization";
   defaultStages[count].file = "../doc/localization.olg";
   defaultStages[count++].prevStageName = "eca";
   defaultStages[count].name = "rewrite0";

@@ -39,6 +39,8 @@ namespace compile {
 
     ValuePtr sha1(ValuePtr);
 
+    ValuePtr loadFile(ValuePtr);
+
     ValuePtr getCert(ValuePtr);
 
     ValuePtr processGen(ValuePtr, ValuePtr);

@@ -60,6 +60,10 @@ LDADD =		\
 				$(top_builddir)/lang/libp2lang.la \
 				$(top_builddir)/lang/parse/libp2parse.la \
 				$(top_builddir)/lang/rewrite/libp2rewrite.la \
+				$(top_builddir)/lang/rewrite0/libp2rewrite0.la \
+				$(top_builddir)/lang/rewrite1/libp2rewrite1.la \
+				$(top_builddir)/lang/rewrite2/libp2rewrite2.la \
+				$(top_builddir)/lang/secure/libp2secure.la \
 				$(top_builddir)/lang/debug/libp2debug.la \
 				$(top_builddir)/lang/local/libp2local.la \
 				$(top_builddir)/lang/compound/libp2compound.la \
