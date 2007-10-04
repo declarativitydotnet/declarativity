@@ -8,6 +8,7 @@ ADD_EXECUTABLE(p2Test
 				testMarshal.C 
 				testPel.C 
 				testLists.C 
+				testSets.C 
 				testAggwrap.C)
 #SET_TARGET_PROPERTIES(p2Test PROPERTIES HAS_CXX TRUE)
 TARGET_LINK_LIBRARIES(p2Test ${COMMON_LIBRARIES} boost_unit_test_framework)

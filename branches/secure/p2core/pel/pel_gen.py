@@ -200,7 +200,6 @@ warning="""
 
 f = open("pel_opcode_decls.gen.h","w+")
 f.write(warning)
-f.write('public:\n')
 map(lambda (n,o,a,v,d): f.write("  static const u_int32_t OP_%s = %d;\n" % (v, n)),
     decls)
 f.write('  static const uint32_t NUM_OPCODES= %d;\n' % curop)

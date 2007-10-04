@@ -20,7 +20,7 @@ using boost::unit_test_framework::test_suite;
 #include "testIDs.h"
 #include "testLists.h"
 #include "testSets.h"
-#include "testSecure.h"
+// #include "testSecure.h"
 #include "testAggwrap.h"
 #include "reporting.h"
 #include "iostream"
@@ -59,7 +59,7 @@ test_suite* init_unit_test_suite(int argc, char** argv)
   top->add(new testValues_testSuite());
   top->add(new testLists_testSuite());
   top->add(new testSets_testSuite());
-  top->add(new testSecure_testSuite());
+  // top->add(new testSecure_testSuite());
   top->add(new testAggwrap_testSuite());
 
   return top;

@@ -12,9 +12,9 @@
 #
 # DESCRIPTION: Makefile for the P2 core library
 #
+SUBDIRS(pel)
 
 ADD_LIBRARY(p2core 
-            pel_opcode_decls.gen.h  
             CSVlex.C
             ID.C 
             aggFactory.C 
@@ -30,8 +30,6 @@ ADD_LIBRARY(p2core
             loop.C
             oper.C
             p2Time.C 
-            pel_lexer.C
-            pel_vm.C 
             plumber.C 
             refTable.C 
             reporting.C
@@ -39,6 +37,8 @@ ADD_LIBRARY(p2core
             table2.C 
             tableManager.C
             tuple.C 
+            set.C 
+            val_set.C 
             val_double.C 
             val_id.C 
             val_int32.C 
@@ -57,31 +57,7 @@ ADD_LIBRARY(p2core
             value.C 
             xdrbuf.C 
 )
-INCLUDE(FindPythonInterp)
-
-
-# Create custom command for running python
-ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/pel_opcode_decls.gen.h    
-                          ${CMAKE_CURRENT_BINARY_DIR}/pel_opcode_defns.gen.h 
-                          ${CMAKE_CURRENT_BINARY_DIR}/pel_opcode_tokens.gen.h
-                          ${CMAKE_CURRENT_BINARY_DIR}/pel_opcode_descriptions.gen.txt
-                   COMMAND ${PYTHON_EXECUTABLE} 
-                   ARGS ${CMAKE_CURRENT_SOURCE_DIR}/pel_gen.py
-                   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/pel_gen.py
-                   COMMENT "Generating PEL lexer")
-
-
-# Add pel_gen.py outputs to the list of sources
-SET(P2_SRCS ${P2_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/pel_opcode_decls.gen.h ${CMAKE_CURRENT_BINARY_DIR}/pel_opcode_defns.gen.h ${CMAKE_CURRENT_BINARY_DIR}/pel_opcode_tokens.gen.h)
-# Since these files do not exist yet when cmake is run, mark
-# them as generated
-SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/pel_opcode_decls.gen.h ${CMAKE_CURRENT_BINARY_DIR}/pel_opcode_defns.gen.h ${CMAKE_CURRENT_BINARY_DIR}/pel_opcode_tokens.gen.h GENERATED)
-
-## FindFLEX from http://www.cmake.org/Bug/bug.php?op=show&bugid=4018&pos=4
-FIND_PACKAGE(FLEX)
-FLEX_TARGET(PelLexer ${P2_SOURCE_DIR}/p2core/pel_lexer.lex ${CMAKE_CURRENT_BINARY_DIR}/pel_lexer.C)
 
 TARGET_LINK_LIBRARIES(p2core boost_regex boost_date_time crypto ssl) 
-#TARGET_LINK_LIBRARIES(p2core libeay32MDd ws2_32) 
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})

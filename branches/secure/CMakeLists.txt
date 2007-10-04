@@ -64,6 +64,9 @@ INCLUDE_DIRECTORIES(
 		    ${CMAKE_CURRENT_BINARY_DIR} 
 		    ${CMAKE_CURRENT_SOURCE_DIR}/overlog	
                     ${CMAKE_CURRENT_SOURCE_DIR}/p2core 
+		    ${CMAKE_CURRENT_BINARY_DIR}/p2core/pel 
+                    ${CMAKE_CURRENT_SOURCE_DIR}/p2core/pel
+                    ${CMAKE_CURRENT_SOURCE_DIR}/p2core/secureUtil 
 		    ${CMAKE_CURRENT_SOURCE_DIR}/aggregates
                     ${CMAKE_CURRENT_SOURCE_DIR}/elements
                     ${CMAKE_CURRENT_SOURCE_DIR}/stages
@@ -80,6 +83,11 @@ INCLUDE_DIRECTORIES(
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/parse
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/planner
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/rewrite
+                    ${CMAKE_CURRENT_SOURCE_DIR}/lang/rewrite0
+                    ${CMAKE_CURRENT_SOURCE_DIR}/lang/rewrite1
+                    ${CMAKE_CURRENT_SOURCE_DIR}/lang/rewrite2
+                    ${CMAKE_CURRENT_SOURCE_DIR}/lang/compound
+                    ${CMAKE_CURRENT_SOURCE_DIR}/lang/secure
                     ${CMAKE_CURRENT_SOURCE_DIR}/functions
                     ${CMAKE_CURRENT_SOURCE_DIR}/debugger
 		    ${Boost_INCLUDE_DIRS} 
@@ -94,6 +102,8 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS}
 		${P2_BINARY_DIR}/elements 
 		${P2_BINARY_DIR}/debugger 
 		${P2_BINARY_DIR}/p2core  
+		${P2_BINARY_DIR}/p2core/pel
+		${P2_BINARY_DIR}/p2core/secureUtil
 		${P2_BINARY_DIR}/aggregates
 		${P2_BINARY_DIR}/planner
 		${P2_BINARY_DIR}/p2cpp
@@ -105,6 +115,11 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS}
 		${P2_BINARY_DIR}/lang/parse
 		${P2_BINARY_DIR}/lang/planner
 		${P2_BINARY_DIR}/lang/rewrite
+		${P2_BINARY_DIR}/lang/rewrite0
+		${P2_BINARY_DIR}/lang/rewrite1
+		${P2_BINARY_DIR}/lang/rewrite2
+		${P2_BINARY_DIR}/lang/compound
+		${P2_BINARY_DIR}/lang/secure
 		${P2_BINARY_DIR}/functions
 				)
 		
@@ -123,10 +138,16 @@ SET(COMMON_LIBRARIES p2core
 					 p2eca
 					 p2local
 					 p2rewrite
+					 p2rewrite0
+					 p2rewrite1
+					 p2rewrite2
+					 p2compound
+					 p2secure
 					 p2debug
 					 p2planner 
 					 p2planner2 
 					 p2dl
+					 p2pel
 	   				 )
 
 # uncomment the following line to get CMake variables to print to screen

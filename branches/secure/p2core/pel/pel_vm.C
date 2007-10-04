@@ -14,6 +14,7 @@
  */
 
 #include "pel_vm.h"
+#include "pel_opcode_decls.gen.h"
 #include <iterator>    // for back_inserter
 #include <locale>
 #include <string>
