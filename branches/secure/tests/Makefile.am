@@ -50,7 +50,6 @@ runStagedOverlog_LDADD =	\
 				$(top_builddir)/lang/p2dl/libp2dl.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/p2core/pel/libp2pel.la \
-				$(top_builddir)/p2core/secureUtil/libp2secureUtil.la \
 				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/lang/libp2lang.la \
 				$(top_builddir)/lang/parse/libp2parse.la \

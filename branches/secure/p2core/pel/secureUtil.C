@@ -1,8 +1,10 @@
+#include<iostream>
 #include "secureUtil.h"
 #include "val_opaque.h"
 #include "val_set.h"
+#include "val_str.h"
 #include "val_int32.h"
-#include "sfslite.h"
+//#include "sfslite.h"
 #include "plumber.h"
 #include "systemTable.h"
 
@@ -13,6 +15,19 @@ namespace compile {
     //modify these to account for actual tuple
     const int SecurityAlgorithms::keyPos = 3;
     const int SecurityAlgorithms::primitivePos = 1;
+
+    FdbufPtr readFromFile(std::string filename){
+
+      Fdbuf *f = new Fdbuf();
+      FdbufPtr fdbufPtr(f);
+      fdbufPtr->pushString("This is supposed to be an RSA Key");
+      return fdbufPtr;
+    }
+    
+    void writeToFile(std::string filename, FdbufPtr f){
+      assert(0);
+    }
+
 
     Primitive* Primitive::combine(const Primitive* p2, int axis) const{
       SetPtr _p, _r, _v;
@@ -187,41 +202,50 @@ namespace compile {
     
     ValuePtr SecurityAlgorithms::signAES(ValuePtr msgPtr, ValuePtr keyPtr){
 
+      return signRSA(msgPtr, keyPtr);
       //check if the msg and key are of Val_Opaque type
-      FdbufPtr msg = Val_Opaque::cast(msgPtr);
-      FdbufPtr key = Val_Opaque::cast(keyPtr);
-      return Val_Opaque::mk(Sfslite::secureSignAES(msg, key));
+      //      FdbufPtr msg = Val_Opaque::cast(msgPtr);
+      //      FdbufPtr key = Val_Opaque::cast(keyPtr);
+      //      return Val_Opaque::mk(Sfslite::secureSignAES(msg, key));
     }
       
     ValuePtr SecurityAlgorithms::signRSA(ValuePtr msgPtr, ValuePtr keyPtr){
       FdbufPtr msg = Val_Opaque::cast(msgPtr);
       FdbufPtr key = Val_Opaque::cast(keyPtr);
-
-      return Val_Opaque::mk(Sfslite::secureSignRSA(msg, key));
+      std::string signedMsg = msg->str() + key->str();
+      return Val_Str::mk(signedMsg);
+      //      return Val_Opaque::mk(Sfslite::secureSignRSA(msg, key));
     }
     
     bool SecurityAlgorithms::verifyAES(ValuePtr msgPtr, ValuePtr keyPtr, ValuePtr proofPtr){	
-      FdbufPtr msg = Val_Opaque::cast(msgPtr);
-      FdbufPtr key = Val_Opaque::cast(keyPtr);
-      FdbufPtr proof = Val_Opaque::cast(proofPtr);
-      return Sfslite::secureVerifyAES(msg, key, proof);
+      //      FdbufPtr msg = Val_Opaque::cast(msgPtr);
+      //      FdbufPtr key = Val_Opaque::cast(keyPtr);
+      //      FdbufPtr proof = Val_Opaque::cast(proofPtr);
+      //      return Sfslite::secureVerifyAES(msg, key, proof);
+      return verifyRSA(msgPtr, keyPtr, proofPtr);
     }
       
     bool SecurityAlgorithms::verifyRSA(ValuePtr msgPtr, ValuePtr keyPtr, ValuePtr proofPtr){
       FdbufPtr msg = Val_Opaque::cast(msgPtr);
-      FdbufPtr proof(new Fdbuf(Val_Opaque::cast(proofPtr)));
+      //      FdbufPtr proof(new Fdbuf(Val_Opaque::cast(proofPtr)));
       FdbufPtr key = Val_Opaque::cast(keyPtr);
 
-      return Sfslite::secureVerifyRSA(msg, key, proof);
+      std::string signedMsg = msg->str() + key->str();
+    
+      return Val_Str::mk(signedMsg)->compareTo(proofPtr);
+      //      return Sfslite::secureVerifyRSA(msg, key, proof);
     }
 
     ValuePtr SecurityAlgorithms::readFromFile(std::string filename){
-      return Val_Opaque::mk(Sfslite::readFromFile(filename));
+      //    return Val_Opaque::mk(Sfslite::readFromFile(filename));
+      return Val_Opaque::mk(compile::secure::readFromFile(filename));
     }
     
     void SecurityAlgorithms::writeToFile(std::string filename, ValuePtr f){
-      Sfslite::writeToFile(filename, Val_Opaque::cast(f));
+      //      Sfslite::writeToFile(filename, Val_Opaque::cast(f));
+      compile::secure::writeToFile(filename, Val_Opaque::cast(f));
     }
+
 
 
   } // END NAMESTRACKER

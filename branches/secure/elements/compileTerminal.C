@@ -175,9 +175,9 @@ CompileTerminal::initDefaultStages()
 {
   originalmore = "y";
   more="y";
-  numDefaultStages = 1;
+  numDefaultStages = 0;
   int count = 0;
-   defaultStages = new StageInformation[numDefaultStages];
+  /*   defaultStages = new StageInformation[numDefaultStages];
   defaultStages[count].name = "secureTest";
   //  defaultStages[count].file = "../unitTests/olg/localCounter.olg";
   defaultStages[count].file = "../doc/tests/secureTest.olg";
