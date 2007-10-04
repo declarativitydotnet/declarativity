@@ -15,6 +15,7 @@
 #include "aggFuncLoader.h"
 
 #include "aggMin.h"
+#include "aggMkSet.h"
 #include "aggMax.h"
 #include "aggCount.h"
 #include "aggCountDistinct.h"
@@ -25,6 +26,7 @@ AggFuncLoader::loadAggFunctions()
 {
   AggCount::ensureInit();
   AggMin::ensureInit();
+  AggMkSet::ensureInit();
   AggMax::ensureInit();
   AggCountDistinct::ensureInit();
 }

@@ -173,14 +173,14 @@ CompileTerminal::initialize()
 void 
 CompileTerminal::initDefaultStages()
 {
-  originalmore = "n";
+  originalmore = "y";
   more="y";
   numDefaultStages = 1;
   int count = 0;
-  
-  defaultStages = new StageInformation[numDefaultStages];
-  defaultStages[count].name = "compound1";
-  defaultStages[count].file = "../doc/tests/compound1.olg";
+   defaultStages = new StageInformation[numDefaultStages];
+  defaultStages[count].name = "secureTest";
+  //  defaultStages[count].file = "../unitTests/olg/localCounter.olg";
+  defaultStages[count].file = "../doc/tests/secureTest.olg";
   defaultStages[count++].prevStageName = "";
   /*
   defaultStages[count].name = "localization";

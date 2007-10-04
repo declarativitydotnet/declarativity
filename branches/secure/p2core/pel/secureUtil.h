@@ -67,6 +67,11 @@ namespace compile {
        
       static ValuePtr generate(ValuePtr msg, uint32_t encType, ValuePtr key);
       static bool verify(ValuePtr msg, ListPtr proof, Primitive *p);
+
+      static ValuePtr readFromFile(std::string filename);
+    
+      static void writeToFile(std::string filename, ValuePtr f);
+
     private:
       //helper function
       
@@ -75,13 +80,6 @@ namespace compile {
       static ValuePtr signRSA(ValuePtr msg, ValuePtr key);
       static bool verifyAES(ValuePtr msg, ValuePtr key, ValuePtr proof);
       static bool verifyRSA(ValuePtr msg, ValuePtr key, ValuePtr proof);
-
-      static void testFileSerialization(bool &res1, std::ostringstream &message1, bool &res2, std::ostringstream &message2, std::string privFile, std::string pubFile);
-
-
-      static FdbufPtr readFromFile(std::string filename);
-    
-      static void writeToFile(std::string filename, FdbufPtr f);
       
     };
     

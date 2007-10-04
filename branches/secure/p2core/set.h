@@ -63,6 +63,8 @@ public:
    SetPtr intersect(SetPtr l) const;
 
    uint32_t size() const { return vpl.size(); };
+
+   void clear() { vpl.clear(); };
    
    // Appends a value to a set.
    void insert(ValuePtr val);

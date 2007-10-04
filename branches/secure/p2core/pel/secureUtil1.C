@@ -131,7 +131,7 @@ namespace compile {
     }
 
     ValuePtr loadFile(ValuePtr fileName){
-      return fileName;
+      return SecurityAlgorithms::readFromFile(Val_Str::cast(fileName));
     }
 
     // lets implement the insecure version first
