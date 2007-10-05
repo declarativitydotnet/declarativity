@@ -426,6 +426,7 @@ namespace compile {
       else {
         name = ns + _name;
       }
+      functorTp->append(Val_UInt32::mk(_complement)); // NOTIN?
       functorTp->append(Val_Str::mk(name));   // Functor name
   
       // Fill in table reference if functor is materialized
@@ -434,15 +435,23 @@ namespace compile {
       CommonTablePtr tableTbl = catalog->table(TABLE);
       CommonTable::Iterator tIter = 
         tableTbl->lookup(nameKey, CommonTable::theKey(CommonTable::KEY3), functorTp);
-      if (!tIter->done()) 
+
+      if (!tIter->done()) { 
+        if (_complement && pos == 0) {
+          throw compile::Exception("NOTIN does not apply to the head predicate."); 
+        }
         functorTp->append((*tIter->next())[TUPLE_ID]);
+      }
       else {
+        if (_complement) {
+          throw compile::Exception("NOTIN only applies to table predicates."); 
+        }
         functorTp->append(Val_Null::mk());
       }
   
       functorTp->append(Val_Null::mk());          // The ECA flag
       functorTp->append(Val_Null::mk());          // The attributes field
-      functorTp->append(Val_UInt32::mk(pos));          // The position field
+      functorTp->append(Val_UInt32::mk(pos));     // The position field
       functorTp->append(Val_Null::mk());          // The access method
       functorTp->append(Val_UInt32::mk(_new?1:0)); // The new field
       funcTbl->insert(functorTp);                 // Add new functor to functor table

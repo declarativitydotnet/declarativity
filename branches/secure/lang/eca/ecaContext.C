@@ -191,6 +191,13 @@ namespace compile {
         throw Exception("No head table predicate in rule: " + rule->toString());
       head = Iter->next();
 
+      for (std::deque<TuplePtr>::iterator iter = baseTables.begin();
+           iter != baseTables.end(); iter++) {
+        if ((**iter)[catalog->attribute(FUNCTOR, "NOTIN")] == Val_UInt32::mk(true)) {
+          throw Exception("Materialized view can't contain a NOTIN predicate. " + rule->toString());
+        }
+      }
+
       for (std::deque<TuplePtr>::iterator iter1 = baseTables.begin();
            iter1 != baseTables.end(); iter1++) {
         // Make the new delta rule and predicate head.
@@ -341,6 +348,7 @@ namespace compile {
   
       /** Create the trigger rule head tuple */
       head->append((*triggerRule)[TUPLE_ID]); // The "trigger" rule identifier
+      head->append(Val_UInt32::mk(false));      // NOTIN
       head->append(Val_Str::mk(triggerName)); // Event name
       head->append(Val_Null::mk());           // Reference table (event -> none)
       head->append(Val_Str::mk("SEND"));      // ECA action type
@@ -353,6 +361,7 @@ namespace compile {
   
       /** Create the trigger rule event tuple, assigning it to the origianl rule */
       event->append((*rule)[TUPLE_ID]);        // The original rule identifier
+      event->append(Val_UInt32::mk(false));      // NOTIN
       event->append(Val_Str::mk(triggerName)); // Event name
       event->append(Val_Null::mk());           // Reference table (event -> none)
       event->append(Val_Str::mk("RECV"));      // ECA event type

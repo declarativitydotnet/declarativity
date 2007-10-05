@@ -45,6 +45,7 @@
 #include "mux.h"
 #include "noNullField.h"
 #include "noNull.h"
+#include "onlyNullField.h"
 #include "noNullSignal.h"
 #include "pelTransform.h"
 #include "print.h"
@@ -99,6 +100,7 @@ ElementLoader::loadElements()
   Mux::ensureInit();
   NoNull::ensureInit();
   NoNullField::ensureInit();
+  OnlyNullField::ensureInit();
   NoNullSignal::ensureInit();
   PelTransform::ensureInit();
   Print::ensureInit();

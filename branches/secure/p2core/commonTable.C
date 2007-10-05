@@ -512,6 +512,9 @@ CommonTable::Initializer::Initializer()
   theKEY38.push_back(3);
   theKEY38.push_back(8);
 
+  theKEY39.push_back(3);
+  theKEY39.push_back(9);
+
   theKEY45.push_back(4);
   theKEY45.push_back(5);
 
@@ -600,6 +603,9 @@ CommonTable::theKey(CommonTable::KeyName keyID)
     break;
   case KEY38:
     return initializer->theKEY38;
+    break;
+  case KEY39:
+    return initializer->theKEY39;
     break;
   case KEY45:
     return initializer->theKEY45;
@@ -775,7 +781,8 @@ CommonTable::lookup(const CommonTable::Key& lookupKey,
     // If not, return null
     if (indexIter == _indices.end()) {
       /**How could this be possible? no secondary Index?!*/
-      TELL_ERROR<<"Table "<<_name<<" does not have a secondary index for "<<t->toString()<<"!!!??\n";
+      TELL_ERROR<<"Table "<<_name<<" does not have a secondary index for "
+                << t->toString() <<"!!!??\n";
       return Iterator();
     }
     // Otherwise, create the iterator from all the matches and return it

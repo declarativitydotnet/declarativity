@@ -113,14 +113,6 @@ Lookup2::push(int port,
       _pullCallback();
       _pullCallback = 0;
     }
-    
-    // Fetch the iterator.
-    if (_project) {
-      _iterator = _table->lookup(_lookupKey, _indexKey, _lookupTuple);
-    } else {
-      _iterator = _table->lookup(_indexKey, _lookupTuple);
-    }
-    assert(_iterator);
 
     // And stop the pusher since we have to wait until the iterator is
     // flushed one way or another
@@ -163,12 +155,32 @@ Lookup2::pull(int port,
     }
     return TuplePtr();
   } else {
-    assert(_iterator);
+	  // Is the iterator at its end?
+	  TuplePtr returnTuple;
+	    
+	  if (_iterator.get() == NULL) {
+		    // Fetch the iterator.
+		    if (_project) {
+		      _iterator = _table->lookup(_lookupKey, _indexKey, _lookupTuple);
+		    } else {
+		      _iterator = _table->lookup(_indexKey, _lookupTuple);
+		    }
+		    assert(_iterator);
+		    if (_iterator->done()) {
+		    	 // Make a result tuple containing first the lookup tuple and then
+		    	 // the lookup result
+		    	 returnTuple = Tuple::mk();
+		    	 returnTuple->append(_lookupTupleValue);
+		    	 returnTuple->append(Val_Tuple::mk(Tuple::EMPTY()));
 
-    // Is the iterator at its end?
-    TuplePtr returnTuple;
+		    	 returnTuple->freeze();
+		    	 return returnTuple;
+		    }
+	  }
+
     if (_iterator->done()) {
-      // Return the empty tuple and complete this lookup.
+      // Make a result tuple containing first the lookup tuple and then
+      // the empty tuple
       returnTuple = Tuple::EMPTY();
 
       ELEM_INFO("pull: Finished search on tuple "

@@ -42,6 +42,7 @@
 %left OLG_PLUS OLG_MINUS 
 %left OLG_EXP OLG_TIMES OLG_DIVIDE OLG_MODULUS
 %right OLG_NOT
+%right OLG_NOTIN
 %left OLG_IN
 %nonassoc OLG_ASSIGN
 
@@ -288,7 +289,7 @@ functor: OLG_NAME functorbody
 	   $$=new compile::parse::Functor($1, $2); 
 	   //std::cout<<std::endl<<"Executing functor: found"<<$$->toString();  
 	 }  
-       | OLG_NOT OLG_NAME functorbody
+       | OLG_NOTIN OLG_NAME functorbody
          { $$=new compile::parse::Functor($2, $3, true); }           
        ;
 

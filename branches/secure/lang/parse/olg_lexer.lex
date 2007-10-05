@@ -116,6 +116,7 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>materializeSays { return OLG_SAYSMATERIALIZE; }
 <INITIAL>namespace { return OLG_NAMESPACE; }
 <INITIAL>keys { return OLG_KEYS; }
+<INITIAL>notin { return OLG_NOTIN; }
 <INITIAL>in { return OLG_IN; }
 <INITIAL>says { return OLG_SAYS;}
 <INITIAL>new { return OLG_NEW;}

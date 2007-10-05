@@ -22,6 +22,8 @@
 #include "val_int64.h"
 #include "oper.h"
 
+using namespace opr;
+
 namespace compile {
   namespace planner {
 
@@ -79,53 +81,45 @@ namespace compile {
     bool 
     Context::watched(string name, string mod)
     {
-      //      cout << "Asked if table " << name << " contains modifier " << mod
-      //    << "\n";
-      CommonTable::ManagerPtr catalog = Plumber::catalog();
-      CommonTablePtr watchTbl = catalog->table(WATCH);
-      TuplePtr lookup = Tuple::mk(WATCH);
-      lookup->append(Val_Str::mk(name));
-      lookup->append(Val_Null::mk());
-      lookup->freeze();
-      CommonTable::Key indexKey;
-      indexKey.push_back(catalog->attribute(WATCH, "NAME"));
+    	CommonTable::ManagerPtr catalog = Plumber::catalog();
+    	CommonTablePtr watchTbl = catalog->table(WATCH);
+    	TuplePtr lookup = Tuple::mk(WATCH);
+    	lookup->append(Val_Str::mk(name));
+    	lookup->append(Val_Null::mk());
+    	lookup->freeze();
+    	CommonTable::Key indexKey;
+    	indexKey.push_back(catalog->attribute(WATCH, "NAME"));
 
-      CommonTable::Iterator i = 
-        watchTbl->lookup(CommonTable::theKey(CommonTable::KEY2),
-                         CommonTable::theKey(CommonTable::KEY4),
-                         lookup); 
-      if (!i->done()) {
-	TuplePtr theWatchSpec = i->next();
-        // Found something.
-	if (mod == "") {
-	  //  cout << "It does by default\n";
-	  return true;
-	} 
-	else if ((*theWatchSpec)[catalog->attribute(WATCH,"MOD")] == Val_Null::mk()) {
-	  return true;
-	} 
-	else {
-	  //           Does it contain this explicit modifier?
-          TuplePtr theWatchSpec = i->next();
-          //cout << "The watch record is " << theWatchSpec->toString() << "\n";
-          string theWatchModifier =
-            (*theWatchSpec)[catalog->attribute(WATCH,
-                                               "MOD")]->toString();
-          //cout << "The watch modifieer is " << theWatchModifier << "\n";
-          if (theWatchModifier.find(mod) == theWatchModifier.npos) {
-            // Didn't find it
-            return false;
-          } else {
-            // Found it
-            //cout << "It does explicitly\n";
-            return true; 
-          }
-        }
-      }
-      else {
-        //cout << "Nothing watched about " << name << "\n";
-      }
-      return false;
+    	CommonTable::Iterator i = 
+    		watchTbl->lookup(CommonTable::theKey(CommonTable::KEY2),
+    				CommonTable::theKey(CommonTable::KEY4),
+    				lookup); 
+    	if (!i->done()) {
+    		TuplePtr theWatchSpec = i->next();
+    		if (mod == "") {
+    			return true;
+    		} else if ((*theWatchSpec)[catalog->attribute(WATCH, "MOD")] == Val_Null::mk()) {
+    			return true;
+    		} else {
+    			//cout << "The watch record is " << theWatchSpec->toString() << "\n";
+    			string theWatchModifier =
+    				(*theWatchSpec)[catalog->attribute(WATCH,
+    						"MOD")]->toString();
+    			//cout << "The watch modifieer is " << theWatchModifier << "\n";
+    			if (theWatchModifier.find(mod) == theWatchModifier.npos) {
+    				// Didn't find it
+    				return false;
+    			} else {
+    				// Found it
+    				//cout << "It does explicitly\n";
+    				return true; 
+    			}
+    		}
+    	}
+    	else {
+    		//cout << "Nothing watched about " << name << "\n";
+    	}
+    	return false;
     }
 
     TuplePtr 
@@ -197,7 +191,6 @@ namespace compile {
           throw Exception("No table defined for fact " + fact->toString()); // This sucks
         }
       }
-
       return this->compile::Context::program(catalog, program);
     }
 
@@ -580,7 +573,9 @@ namespace compile {
         if ((*term)[0]->toString() == FUNCTOR) {
           ListPtr schema = Val_List::cast((*term)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
           graphName = probe(oss, indent + "\t\t", catalog, term, tupleSchema, filter);
-          tupleSchema = namestracker::merge(tupleSchema, schema);
+          if ((*term)[catalog->attribute(FUNCTOR, "NOTIN")] == Val_UInt32::mk(false)) {
+              tupleSchema = namestracker::merge(tupleSchema, schema);
+          }
           if (filter) 
             filterGraphName = graphName;
           filter  = false;
@@ -808,6 +803,7 @@ namespace compile {
     {
       ListPtr probeSchema = Val_List::cast((*probeTp)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
       string    tableName = (*probeTp)[catalog->attribute(FUNCTOR, "NAME")]->toString();
+      bool    notin = (*probeTp)[catalog->attribute(FUNCTOR, "NOTIN")] == Val_UInt32::mk(true);
       CommonTable::Key joinKey;
       CommonTable::Key indexKey;
       CommonTable::Key baseKey;
@@ -822,10 +818,13 @@ namespace compile {
       pelProject << "$0 0 field pop "; // Pop the original tuple name.
       for (uint k = 0; k < tupleSchema->size(); k++)
         pelProject << "$0 " << (k+1) << " field pop ";
-  
-      for (CommonTable::Key::iterator iter = baseKey.begin();
-           iter != baseKey.end(); iter++)
-        pelProject << "$1 " << *iter << " field pop "; 
+ 
+      if (!notin) {
+    	  /* Okay add the probe schema to the output schema */
+    	  for (CommonTable::Key::iterator iter = baseKey.begin();
+    	  		iter != baseKey.end(); iter++)
+    		  pelProject << "$1 " << *iter << " field pop "; 
+      }
   
       oss << std::endl;
       if (filter) {
@@ -834,8 +833,13 @@ namespace compile {
         oss << indent << "\tnoNullSignal[1] -> [1]output;\n";
         oss << indent << "\tlookup = Lookup2(\"probeLookup\", \"" << tableName << "\", "
             << int_list_to_str(joinKey) << ", " << int_list_to_str(indexKey) << ");\n"; 
-        oss << indent << "\tinput -> PullPush(\"tpp\", 0) -> lookup -> "
-                      << "noNullSignal ->\n";
+        oss << indent << "\tinput -> PullPush(\"tpp\", 0) -> lookup -> noNullSignal ->\n";
+        if (notin) {
+        	oss << "OnlyNullField(\"onlyNull\", 1) -> ";
+        }
+        else {
+        	oss << "NoNullField(\"noNull\", 1) -> ";
+        }
         oss << indent << "\tPelTransform(\"probeProject\", \"" << pelProject.str() << "\") ->";
         oss << "output;\n";
         oss << indent << "};\n";
@@ -844,8 +848,14 @@ namespace compile {
         oss << indent << "graph " << graphName.str() << "(1, 1, \"l/l\", \"-/-\") {\n";
         oss << indent << "\tlookup = Lookup2(\"probeLookup\", \"" << tableName << "\", "
             << int_list_to_str(joinKey) << ", " << int_list_to_str(indexKey) << ");\n"; 
-        oss << indent << "\tinput -> PullPush(\"tpp\", 0) -> lookup ->" 
-                      << "NoNull(\"filter\") ->\n";
+        oss << indent << "\tinput -> PullPush(\"tpp\", 0) -> lookup -> NoNull(\"filter\") -> ";
+        if (notin) {
+        	oss << "OnlyNullField(\"onlyNull\", 1) -> ";
+        }
+        else {
+        	oss << "NoNullField(\"noNull\", 1) -> ";
+        }
+
         oss << indent << "\tPelTransform(\"probeProject\", \"" << pelProject.str() << "\") -> ";
         oss << "output;\n";
         oss << indent << "};\n";

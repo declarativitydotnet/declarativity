@@ -156,9 +156,9 @@ TABLEDEF(RULE, CommonTable::theKey(CommonTable::KEY2), \
 
 TABLEDEF(FUNCTOR, CommonTable::theKey(CommonTable::KEY2), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("FID", 2) \
-         SCHEMA("RID", 3) SCHEMA("NAME", 4) SCHEMA("TID", 5) \
-         SCHEMA("ECA", 6) SCHEMA("ATTRIBUTES", 7) SCHEMA("POSITION", 8) \
-	 SCHEMA("AM", 9) SCHEMA("NEW", 10)) 
+         SCHEMA("RID", 3) SCHEMA("NOTIN", 4) SCHEMA("NAME", 5) SCHEMA("TID", 6) \
+         SCHEMA("ECA", 7) SCHEMA("ATTRIBUTES", 8) SCHEMA("POSITION", 9) \
+         SCHEMA("AM", 10) SCHEMA("NEW", 11)) 
 
 TABLEDEF(ASSIGN, CommonTable::theKey(CommonTable::KEY2), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("AID", 2) \
@@ -211,8 +211,8 @@ SECONDARY_INDEX(FUNCTION,          CommonTable::theKey(CommonTable::KEY3))
 SECONDARY_INDEX(FUNCTION,          CommonTable::theKey(CommonTable::KEY34))
 SECONDARY_INDEX(RULE,              CommonTable::theKey(CommonTable::KEY3))
 SECONDARY_INDEX(FUNCTOR,           CommonTable::theKey(CommonTable::KEY3))
-SECONDARY_INDEX(FUNCTOR,           CommonTable::theKey(CommonTable::KEY4))
-SECONDARY_INDEX(FUNCTOR,           CommonTable::theKey(CommonTable::KEY38))
+SECONDARY_INDEX(FUNCTOR,           CommonTable::theKey(CommonTable::KEY5))
+SECONDARY_INDEX(FUNCTOR,           CommonTable::theKey(CommonTable::KEY39))
 SECONDARY_INDEX(ASSIGN,            CommonTable::theKey(CommonTable::KEY3))
 SECONDARY_INDEX(ASSIGN,            CommonTable::theKey(CommonTable::KEY36))
 SECONDARY_INDEX(SELECT,            CommonTable::theKey(CommonTable::KEY3))
