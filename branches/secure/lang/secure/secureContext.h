@@ -96,7 +96,7 @@ namespace compile {
       /**
        * modifies the rule which has the head :- table(), says<> into non says rhs
        */
-      void normalizeVerify(CommonTable::ManagerPtr catalog, TuplePtr functor, TuplePtr says, uint32_t &newVar);
+      void normalizeVerify(CommonTable::ManagerPtr catalog, TuplePtr &functor, TuplePtr says, uint32_t &newVar);
 
       // return a list of terms that needs to be added to the rule on converting the 
       // securelog term f into overlog.

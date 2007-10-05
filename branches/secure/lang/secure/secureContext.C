@@ -477,7 +477,7 @@ namespace compile {
       /**
        * modifies the rule which has the head :- table(), says<> into non says rhs
        */
-      void Context::normalizeVerify(CommonTable::ManagerPtr catalog, TuplePtr functor, TuplePtr says, uint32_t &newVariable){
+      void Context::normalizeVerify(CommonTable::ManagerPtr catalog, TuplePtr &functor, TuplePtr says, uint32_t &newVariable){
 	functor = functor->clone();
 	string name = Val_Str::cast((*functor)[catalog->attribute(FUNCTOR, "NAME")]);
 

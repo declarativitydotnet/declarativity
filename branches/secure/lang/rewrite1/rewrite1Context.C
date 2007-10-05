@@ -589,8 +589,8 @@ namespace compile {
       TuplePtr hintVar = (Val_Tuple::cast(*iter))->clone();
       hintVar->freeze();
       iter = verAttr->begin();
+      iter++; count++;// for loc
       if(!says){
-	iter++; count++;// for loc
 	iter++; count++;// for opaque
 	iter++; count++;// for hint
 	iter++; count++;// for destLocSpec
