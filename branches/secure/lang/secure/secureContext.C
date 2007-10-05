@@ -727,6 +727,7 @@ namespace compile {
 	if (!tIter->done()) 
 	  encHintTp->append((*tIter->next())[TUPLE_ID]);
 	else {
+	  assert(0);
 	  encHintTp->append(Val_Null::mk());
 	}
   
@@ -765,6 +766,7 @@ namespace compile {
 	if (!tIter->done()) 
 	  genKeyTp->append((*tIter->next())[TUPLE_ID]);
 	else {
+	  assert(0);
 	  genKeyTp->append(Val_Null::mk());
 	}
   
@@ -830,7 +832,7 @@ namespace compile {
 	  ValuePtr cur = Val_Tuple::mk(table);
 
 	  ListPtr headAttr = Val_List::cast((*head)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
-	  
+
 	  ValuePtr append = Val_Str::mk("|||");
 	  // since loc spec is not included
 	  if(headAttr->size() > 1)
@@ -1316,19 +1318,80 @@ namespace compile {
 
 	Table2::Key vertableKey;
 	vertableKey.push_back(2); 
-	vertableKey.push_back(3); 
 
 	catalog->createTable(VERTABLE, vertableKey, Table2::NO_SIZE, Table2::NO_EXPIRATION);
 
 	//generate materialize for genTable
 	Table2::Key gentableKey;
 	gentableKey.push_back(2); 
-	gentableKey.push_back(3); 
 
 	catalog->createTable(GENTABLE, gentableKey, Table2::NO_SIZE, Table2::NO_EXPIRATION);
+
+	CommonTablePtr functorTbl = catalog->table(FUNCTOR);
+	CommonTable::Iterator funcIter;
+	TuplePtr dummyTpl = Tuple::mk();
+	CommonTablePtr tableTbl = catalog->table(TABLE);
+	CommonTable::Iterator tIter;
+	ValuePtr tid;
+	uint32_t tidPos = catalog->attribute(FUNCTOR, "TID");
+
+	// add materialization statements for ENCHINT
+	dummyTpl->append(Val_Str::mk(ENCHINT));
+	
+	tIter = tableTbl->lookup(CommonTable::theKey(CommonTable::KEY0), CommonTable::theKey(CommonTable::KEY3), dummyTpl);
+	if (!tIter->done()) 
+	  tid = (*tIter->next())[TUPLE_ID];
+	else {
+	  assert(0);
+	}
+
+	for (funcIter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY0), 
+					   CommonTable::theKey(CommonTable::KEY4), dummyTpl);
+	     !funcIter->done(); ) {
+	  TuplePtr functor = funcIter->next()->clone();
+	  functor->set(tidPos, tid);
+	  functor->freeze();
+	  functorTbl->insert(functor);
+	}
+
+	dummyTpl->set(0, Val_Str::mk(VERTABLE));
+	
+	tIter = tableTbl->lookup(CommonTable::theKey(CommonTable::KEY0), CommonTable::theKey(CommonTable::KEY3), dummyTpl);
+	if (!tIter->done()) 
+	  tid = (*tIter->next())[TUPLE_ID];
+	else {
+	  assert(0);
+	}
+
+	for (funcIter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY0), 
+					   CommonTable::theKey(CommonTable::KEY4), dummyTpl);
+	     !funcIter->done(); ) {
+	  TuplePtr functor = funcIter->next()->clone();
+	  functor->set(tidPos, tid);
+	  functor->freeze();
+	  functorTbl->insert(functor);
+	}
+
+
+	dummyTpl->set(0, Val_Str::mk(GENTABLE));
+	
+	tIter = tableTbl->lookup(CommonTable::theKey(CommonTable::KEY0), CommonTable::theKey(CommonTable::KEY3), dummyTpl);
+	if (!tIter->done()) 
+	  tid = (*tIter->next())[TUPLE_ID];
+	else {
+	  assert(0);
+	}
+
+	for (funcIter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY0), 
+					   CommonTable::theKey(CommonTable::KEY4), dummyTpl);
+	     !funcIter->done(); ) {
+	  TuplePtr functor = funcIter->next()->clone();
+	  functor->set(tidPos, tid);
+	  functor->freeze();
+	  functorTbl->insert(functor);
+	}
+	
       }
-
-
  
   }
 }

@@ -876,10 +876,10 @@ DEF_OP(L_CONTAINS) {
 }
 
 DEF_OP(GEN) {
-  ValuePtr key = stackTop(); stackPop();
-  uint32_t type = Val_UInt32::cast(stackTop()); stackPop();
-  ValuePtr serializedMsg = stackTop(); stackPop();
-  ValuePtr res = compile::secure::SecurityAlgorithms::generate(serializedMsg, type, key);
+  ValuePtr serializedMsg_1 = stackTop(); stackPop();
+  uint32_t type_2 = Val_UInt32::cast(stackTop()); stackPop();
+  ValuePtr key_3 = stackTop(); stackPop();
+  ValuePtr res = compile::secure::SecurityAlgorithms::generate(serializedMsg_1, type_2, key_3);
   
   stackPush(res);
 }
@@ -894,30 +894,58 @@ DEF_OP(INITSET) {
 
 DEF_OP(SETMOD) {
   ValuePtr setVPtr = stackTop(); stackPop();
-  SetPtr setPtr = Val_Set::cast(setVPtr);
-  stackPush(Val_UInt32::mk(setPtr->size()));
+  if(setVPtr->typeCode() == Value::SET){
+    SetPtr setPtr = Val_Set::cast(setVPtr);
+    stackPush(Val_UInt32::mk(setPtr->size()));
+  }
+  else{
+    stackPush(Val_UInt32::mk(1));
+  }
 }
 
 
 DEF_OP(VERIFY) {
-  SetPtr V = Val_Set::cast(stackTop()); stackPop();
-  uint32_t K = Val_UInt32::cast(stackTop()); stackPop();
-  SetPtr R = Val_Set::cast(stackTop()); stackPop();
-  SetPtr P = Val_Set::cast(stackTop()); stackPop();
-  ValuePtr proof = stackTop(); stackPop();
-  ValuePtr msg = stackTop(); stackPop();
+  ValuePtr msg_1 = stackTop(); stackPop();
+  ValuePtr proof_2 = stackTop(); stackPop();
+  ValuePtr P_3 = stackTop(); stackPop();
+  ValuePtr R_4 = stackTop(); stackPop();
+  uint32_t K_5 = Val_UInt32::cast(stackTop()); stackPop();
+  ValuePtr V_6 = stackTop(); stackPop();
   ListPtr proofList;
-  
-  if(proof->typeCode() != Value::LIST){
+  SetPtr P, R, V;
+  if(proof_2->typeCode() != Value::LIST){
     proofList = List::mk();
-    proofList->append(proof);
+    proofList->append(proof_2);
   }
   else{
-    proofList = Val_List::cast(proof);
+    proofList = Val_List::cast(proof_2);
   }
 
-  compile::secure::Primitive primitive(P, R, K, V);
-  stackPush(Val_UInt32::mk(compile::secure::SecurityAlgorithms::verify(msg, proofList, &primitive)));
+  if(P_3->typeCode() != Value::SET){
+    P = Set::mk();
+    P->insert(P_3);
+  }
+  else{
+    P = Val_Set::cast(P_3);
+  }
+  if(R_4->typeCode() != Value::SET){
+    R = Set::mk();
+    R->insert(R_4);
+  }
+  else{
+    R = Val_Set::cast(R_4);
+  }
+
+  if(V_6->typeCode() != Value::SET){
+    V = Set::mk();
+    V->insert(V_6);
+  }
+  else{
+    V = Val_Set::cast(V_6);
+  }
+
+  compile::secure::Primitive primitive(P, R, K_5, V);
+  stackPush(Val_UInt32::mk(compile::secure::SecurityAlgorithms::verify(msg_1, proofList, &primitive)));
 }
 
 DEF_OP(L_REMOVELAST) {
@@ -992,13 +1020,17 @@ DEF_OP(BIT_OR) {
 DEF_OP(APPEND) {
   ValuePtr v1 = pop();
   ValuePtr v2 = pop();
-  Fdbuf* fin = new Fdbuf(0);
+  /*  Fdbuf* fin = new Fdbuf(0);
   XDR xdr;
   xdrfdbuf_create(&xdr, fin, false, XDR_ENCODE);
   ValuePtr va;
   v1->xdr_marshal(&xdr);
   v2->xdr_marshal(&xdr);
-  stackPush(Val_Opaque::mk(FdbufPtr(fin)));
+  ValuePtr res = Val_Opaque::mk(FdbufPtr(fin));*/
+  string resStr = v1->toString() + v2->toString();
+  ValuePtr res = Val_Str::mk(resStr);
+  //  std::cout<<"Append of "<< v1->toString() << " and " << v2->toString() << " produced " << res->toString()<<"\n";
+  stackPush(res);
 }
 DEF_OP(BIT_XOR) {
   ValuePtr v1 = pop();

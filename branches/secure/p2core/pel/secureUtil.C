@@ -3,7 +3,8 @@
 #include "val_opaque.h"
 #include "val_set.h"
 #include "val_str.h"
-#include "val_int32.h"
+#include "val_uint32.h"
+#include "value.h"
 //#include "sfslite.h"
 #include "plumber.h"
 #include "systemTable.h"
@@ -14,7 +15,7 @@ namespace compile {
     const int SecurityAlgorithms::hashSize = 20;
     //modify these to account for actual tuple
     const int SecurityAlgorithms::keyPos = 3;
-    const int SecurityAlgorithms::primitivePos = 1;
+    const int SecurityAlgorithms::primitivePos = 2;
 
     FdbufPtr readFromFile(std::string filename){
 
@@ -107,20 +108,8 @@ namespace compile {
     bool SecurityAlgorithms::verify(ValuePtr msg, ListPtr proof, Primitive *p){
       PrimitiveSet pSet;
       CommonTable::ManagerPtr catalog = Plumber::catalog();
-      //	CommonTablePtr functorTbl = catalog->table(FUNCTOR);
 
-      CommonTablePtr encHintTbl = catalog->table("encHint");
-      //       CommonTable::Key nameKey;
-      //       nameKey.push_back(catalog->attribute(FUNCTOR, "NAME"));
-      //       CommonTablePtr tableTbl = catalog->table(TABLE);
-      //       CommonTable::Iterator tIter = 
-      //         tableTbl->lookup(nameKey, CommonTable::theKey(CommonTable::KEY3), functorTp);
-      //       if (!tIter->done()) 
-      //         functorTp->append((*tIter->next())[TUPLE_ID]);
-      //       else {
-      //         functorTp->append(Val_Null::mk());
-      //       }
-  
+      CommonTablePtr encHintTbl = catalog->table("encHint");  
 
       CommonTablePtr verKeyTbl = catalog->table("verKey");
       CommonTable::Iterator encHintIter;
@@ -128,14 +117,15 @@ namespace compile {
       for (encHintIter = encHintTbl->scan(); !encHintIter->done(); ) {
 	TuplePtr encHint = encHintIter->next();
 	CommonTable::Iterator verKeyIter;
-	verKeyIter = verKeyTbl->lookup(CommonTable::theKey(CommonTable::KEY2), 
-				       CommonTable::theKey(CommonTable::KEY5), encHint);
+	verKeyIter = verKeyTbl->lookup(CommonTable::theKey(CommonTable::KEY6), 
+				       CommonTable::theKey(CommonTable::KEY2), 
+				       encHint);
 	for (; !verKeyIter->done(); ) {
 	  ValPtrList::const_iterator iter = proof->begin();
 	  for(; iter != proof->end(); iter++){
 	    bool res = false;
 	    TuplePtr keyTuple = verKeyIter->next();
-	    int encType = Val_Int32::cast((*keyTuple)[SecurityAlgorithms::keyPos]);
+	    int encType = Val_UInt32::cast((*keyTuple)[SecurityAlgorithms::keyPos]);
 	    ValuePtr key = (*keyTuple)[SecurityAlgorithms::keyPos+1];
 	    switch(encType){
 	    case SecurityAlgorithms::RSA:
@@ -146,10 +136,40 @@ namespace compile {
 	      break;
 	    }
 	    if(res){
-	      pSet.insert(new Primitive(Val_Set::cast((*encHint)[SecurityAlgorithms::primitivePos]), 
-					Val_Set::cast((*encHint)[SecurityAlgorithms::primitivePos+1]), 
-					Val_Int32::cast((*encHint)[SecurityAlgorithms::primitivePos+2]), 
-					Val_Set::cast((*encHint)[SecurityAlgorithms::primitivePos+3])));
+	      SetPtr P, R, V;
+	      ValuePtr P_3 = (*encHint)[SecurityAlgorithms::primitivePos];
+	      if(P_3->typeCode() != Value::SET){
+		P = Set::mk();
+		P->insert(P_3);
+	      }
+	      else{
+		P = Val_Set::cast(P_3);
+	      }
+	      ValuePtr R_4 = (*encHint)[SecurityAlgorithms::primitivePos+1]; 
+	      uint32_t k = Val_UInt32::cast((*encHint)[SecurityAlgorithms::primitivePos+2]);
+	      ValuePtr V_6 = (*encHint)[SecurityAlgorithms::primitivePos+3];
+
+	      if(R_4->typeCode() != Value::SET){
+		R = Set::mk();
+		R->insert(R_4);
+	      }
+	      else{
+		R = Val_Set::cast(R_4);
+	      }
+	      
+	      if(V_6->typeCode() != Value::SET){
+		V = Set::mk();
+		V->insert(V_6);
+	      }
+	      else{
+		V = Val_Set::cast(V_6);
+	      }
+	      
+	      Primitive *provedP = new Primitive(P, R, k, V);
+	      if(provedP->smaller(p)){
+		return true;
+	      }
+	      pSet.insert(provedP);
 	    }
 	  }
 
@@ -213,6 +233,8 @@ namespace compile {
       FdbufPtr msg = Val_Opaque::cast(msgPtr);
       FdbufPtr key = Val_Opaque::cast(keyPtr);
       std::string signedMsg = msg->str() + key->str();
+      std::cout<<"signRSA called: with inputs Msg:"<< msgPtr->toString() << " Key: " << keyPtr->toString() << "returning: "<< signedMsg <<"\n";
+
       return Val_Str::mk(signedMsg);
       //      return Val_Opaque::mk(Sfslite::secureSignRSA(msg, key));
     }
@@ -231,8 +253,8 @@ namespace compile {
       FdbufPtr key = Val_Opaque::cast(keyPtr);
 
       std::string signedMsg = msg->str() + key->str();
-    
-      return Val_Str::mk(signedMsg)->compareTo(proofPtr);
+      std::cout<<"signRSA called: with inputs Msg:"<< msgPtr->toString() << " Proof: " << proofPtr->toString() << "returning: "<< signedMsg <<"\n";
+      return (Val_Str::mk(signedMsg)->compareTo(proofPtr) == 0);
       //      return Sfslite::secureVerifyRSA(msg, key, proof);
     }
 

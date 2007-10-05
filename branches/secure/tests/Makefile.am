@@ -24,7 +24,6 @@ bin_PROGRAMS =			runOverLog \
 benchmark_SOURCES =		benchmark.C
 
 benchmark_LDADD =		$(top_builddir)/p2core/pel/libp2pel.la \
-				$(top_builddir)/p2core/secureUtil/libp2secureUtil.la \
 				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/lang/libp2lang.la \
 				$(top_builddir)/lang/parse/libp2parse.la \
@@ -83,7 +82,6 @@ runOverLog_LDADD = 		\
 				$(top_builddir)/aggregates/libp2aggregates.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/p2core/pel/libp2pel.la \
-				$(top_builddir)/p2core/secureUtil/libp2secureUtil.la \
 				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/debugger/libp2debugger.la
 
@@ -101,7 +99,6 @@ p2nc_LDADD =	 		\
 				$(top_builddir)/aggregates/libp2aggregates.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/p2core/pel/libp2pel.la \
-				$(top_builddir)/p2core/secureUtil/libp2secureUtil.la \
 				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/debugger/libp2debugger.la
 
@@ -115,7 +112,6 @@ udpMessage_LDADD =		\
 				$(top_builddir)/net/libp2net.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/p2core/pel/libp2pel.la \
-				$(top_builddir)/p2core/secureUtil/libp2secureUtil.la \
 				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/lang/libp2lang.la \
 				$(top_builddir)/lang/parse/libp2parse.la \
@@ -139,7 +135,6 @@ udpListen_LDADD =		\
 				$(top_builddir)/net/libp2net.la \
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/p2core/pel/libp2pel.la \
-				$(top_builddir)/p2core/secureUtil/libp2secureUtil.la \
 				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/lang/libp2lang.la \
 				$(top_builddir)/lang/parse/libp2parse.la \

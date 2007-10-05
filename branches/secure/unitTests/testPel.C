@@ -506,6 +506,7 @@ testPel::vtests[] = {
   TST(INT32, STACK_UNDERFLOW, "",	"|||"),
   TST(INT32, STACK_UNDERFLOW, "",	"1 |||"),
   TST(INT32, SUCCESS, "1",     "1 0 ||| 1 0 ||| =="),
+  TST(INT32, SUCCESS, "0",     "1 0 ||| 1 1 ||| =="),
   TST(INT32, SUCCESS, "0",     "1 0 ||| 0 1 ||| =="),
   TST(INT32, SUCCESS, "0",     "0 1 ||| 0 \"Hi\" ||| =="),
   // < (string less-than)

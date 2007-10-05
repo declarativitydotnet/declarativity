@@ -446,7 +446,7 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
     expr2Pel(pc, pel, expr->arg(0));
     pel << "mod ";
   }
-  else if (expr->name() == "f_createLocSpec" || expr->name() == "f_createVersion" || expr->name() == "f_serialize" || expr->name() == "f_deserialize" || expr->name() == "f_isLocSpec") {
+  else if (expr->name() == "f_loadKeyFile" || expr->name() == "f_createLocSpec" || expr->name() == "f_createVersion" || expr->name() == "f_serialize" || expr->name() == "f_deserialize" || expr->name() == "f_isLocSpec") {
     for(int i = 0; i < expr->args(); i++){
       expr2Pel(pc, pel, expr->arg(i));
     }

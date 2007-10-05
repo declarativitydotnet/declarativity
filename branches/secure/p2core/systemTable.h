@@ -46,7 +46,7 @@
   #define AGG          "Aggregation"
   #define BOOL         "Bool"
   #define RANGE        "Range"
-  #define SET          "Set"
+  #define SETS         "Set"
   #define MATH         "Math"
   #define VAL          "AtomicValue"
   #define VAR          "Variable"  

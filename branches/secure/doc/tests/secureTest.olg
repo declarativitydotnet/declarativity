@@ -6,7 +6,7 @@ materializeSays (parent, infinity, infinity, keys(1)).
 */
 
 nodes("localhost:10000", "localhost:10000").
-nodes("localhost:10000", "localhost:11111").
+/*nodes("localhost:10000", "localhost:11111").*/
 
 /*trigger*/
 s1 start(@I, Id) :- periodic(@I, E, 1, 1), Id := f_idgen().
@@ -14,7 +14,7 @@ s1 start(@I, Id) :- periodic(@I, E, 1, 1), Id := f_idgen().
 /* key setup stuff*/
 u1 universalCalc(@Me, a_mkSet<N>):- start(@Me, Id), nodes(@Me, N).
 
-u1 universal(@Me, S) :- universalCalc(@Me, S).
+u2 universal(@Me, S) :- universalCalc(@Me, S).
 
 /*load rsa keys*/
 k1 genKey(@Me, Id, RSA, K):- 
@@ -36,7 +36,7 @@ k4 encHint(@Me, Me, U, 1, U, Id):-
 k5 start2(@Me, Me):- encHint(@Me, P, R, K, V, Id).
 
 /*main code starts here*/
-r4 says(Me, N, 1, U) <parent(@Me, C)> :- start2(@I, I), nodes(@Me, N), universal(@Me, U), C := 1.
+r4 says(Me, N, 1, U) <parent(@Me, C)> :- start2(@Me, Me), nodes(@Me, N), universal(@Me, U), C := 1.
 
 r5 parent(@Me, A) :- says(N, Me, 1, U) <parent(@Me, A)>.
 

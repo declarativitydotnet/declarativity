@@ -486,6 +486,8 @@ CommonTable::Initializer::Initializer()
 
   theKEY5.push_back(5);
 
+  theKEY6.push_back(6);
+
   theKEY01.push_back(0);
   theKEY01.push_back(1);
 
@@ -571,6 +573,9 @@ CommonTable::theKey(CommonTable::KeyName keyID)
     break;
   case KEY5:
     return initializer->theKEY5;
+    break;
+  case KEY6:
+    return initializer->theKEY6;
     break;
   case KEY01:
     return initializer->theKEY01;

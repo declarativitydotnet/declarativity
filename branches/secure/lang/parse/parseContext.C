@@ -246,9 +246,9 @@ namespace compile {
     ValuePtr
     Sets::tuple() const 
     {
-      TuplePtr tp = Tuple::mk(SET);
+      TuplePtr tp = Tuple::mk(SETS);
   
-      tp->append(Val_Str::mk(SET));
+      tp->append(Val_Str::mk(SETS));
       tp->append(Val_UInt32::mk(_args->size()));
 
       for (ExpressionList::iterator iter = _args->begin(); 
