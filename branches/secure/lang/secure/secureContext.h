@@ -44,6 +44,7 @@ namespace compile {
     const string SAYSSUFFIX = "Says"; 
     const string MAKESAYS = "makeSays"; 
     const uint32_t NUMSECUREFIELDS = 4;
+    const uint32_t PROOFPOS = 6; // pos of proof field in the says tuple
     class Exception : public compile::Exception {
     public:
       Exception(string msg) : compile::Exception(msg) {};

@@ -1,9 +1,9 @@
 materialize(parent, infinity, infinity, keys(1)).
 materialize(nodes, infinity, infinity, keys(1,2)).
 materialize(universal, infinity, infinity, keys(1)).
-/*
+
 materializeSays (parent, infinity, infinity, keys(1)).
-*/
+
 
 nodes("localhost:10000", "localhost:10000").
 /*nodes("localhost:10000", "localhost:11111").*/

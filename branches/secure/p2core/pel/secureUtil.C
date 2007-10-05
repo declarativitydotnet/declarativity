@@ -253,7 +253,7 @@ namespace compile {
       FdbufPtr key = Val_Opaque::cast(keyPtr);
 
       std::string signedMsg = msg->str() + key->str();
-      std::cout<<"signRSA called: with inputs Msg:"<< msgPtr->toString() << " Proof: " << proofPtr->toString() << "returning: "<< signedMsg <<"\n";
+      std::cout<<"verifyRSA called: with inputs Msg:"<< msgPtr->toString() << " Proof: " << proofPtr->toString() << "returning: "<< signedMsg <<"\n";
       return (Val_Str::mk(signedMsg)->compareTo(proofPtr) == 0);
       //      return Sfslite::secureVerifyRSA(msg, key, proof);
     }

@@ -184,7 +184,7 @@ namespace compile {
 	   // also if compoundHead is false, remove the new field
 
 	   if(!compoundHead){
-	     headProof = Val_Tuple::cast(headAttr->back());
+	     //	     headProof = Val_Tuple::cast(headAttr->back());
 	   }
 	   else{
 	    TuplePtr assignTp  = Tuple::mk(ASSIGN, true);
@@ -245,7 +245,7 @@ namespace compile {
 		  TuplePtr lhs = headProof->clone();
 		  lhs->freeze();
 		  assign->append(Val_Tuple::mk(lhs));
-		  TuplePtr rhs = (Val_Tuple::cast(functorAttr->back()))->clone();
+		  TuplePtr rhs = (Val_Tuple::cast(functorAttr->at(PROOFPOS)))->clone();
 		  rhs->freeze();
 		  assign->append(Val_Tuple::mk(rhs));
 		  assign->append(Val_UInt32::mk(funcpos++));        // Position
@@ -495,23 +495,35 @@ namespace compile {
 	}
 
 	ListPtr attr = Val_List::cast((*functor)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
+
+	ListPtr newAttr = List::mk();
+	ValPtrList::const_iterator iter = attr->begin(); 
+	newAttr->append(*iter);
+	iter++;
+	
 	ListPtr saysAttr = Val_List::cast((*says)[catalog->attribute(SAYS, "ATTRIBUTES")]);
-	for (ValPtrList::const_iterator iter = saysAttr->begin();
-	     iter!= saysAttr->end(); iter++) {
-	  attr->append(*iter);
+	for (ValPtrList::const_iterator saysIter = saysAttr->begin(); 
+	     saysIter != saysAttr->end(); saysIter++){
+	  newAttr->append(*saysIter);
 	}
 	ostringstream var5;
 	var5<< STAGEVARPREFIX << newVariable++ ;
 	TuplePtr proof = Tuple::mk(VAR);
 	proof->append(Val_Str::mk(var5.str()));
 	proof->freeze();
-	attr->append(Val_Tuple::mk(proof));
-	
-	functor->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(attr));
+
+	newAttr->append(Val_Tuple::mk(proof));
+	for (; iter != attr->end(); iter++){
+	  newAttr->append(*iter);
+	}
+
+	attr->prepend(Val_Tuple::mk(proof));
+
+	functor->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(newAttr));
 	functor->freeze();
 	catalog->table(FUNCTOR)->insert(functor);
 
-	verificationTables.insert(new VerificationTuple(name, attr->size()));
+	verificationTables.insert(new VerificationTuple(name, newAttr->size()));
 
       }
 
@@ -903,13 +915,23 @@ namespace compile {
 	  
 	  // now modify the says tuple
 	  
+	  ListPtr newHeadAttr = List::mk();
+	  ValPtrList::const_iterator headIter = headAttr->begin(); 
+	  newHeadAttr->append(*headIter);
+	  headIter++;
+	  
 	  for (ValPtrList::const_iterator iter = saysAttr->begin(); 
 	       iter != saysAttr->end(); iter++){
-	    headAttr->append(*iter);
+	    newHeadAttr->append(*iter);
 	  }
-	  headAttr->append(Val_Tuple::mk(proof));
+	  newHeadAttr->append(Val_Tuple::mk(proof));
+	  for (; headIter != headAttr->end(); headIter++){
+	    newHeadAttr->append(*headIter);
+	  }
+
 	  head = head->clone();
 	  head->set(catalog->attribute(FUNCTOR, "NAME"), Val_Str::mk(tablename + MAKESAYS));	  
+	  head->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(newHeadAttr));	  
 
 	  CommonTable::Key nameKey;
 	  nameKey.push_back(catalog->attribute(FUNCTOR, "NAME"));
@@ -1104,12 +1126,12 @@ namespace compile {
       CommonTablePtr selectTbl = catalog->table(SELECT);
 
       ValuePtr programID = (*program)[TUPLE_ID];
-      VerificationTupleSet::iterator iter = verificationTables.begin();
+      VerificationTupleSet::iterator vtiter = verificationTables.begin();
 
-      for(; iter != verificationTables.end(); iter++){
+      for(; vtiter != verificationTables.end(); vtiter++){
 	uint32_t pos = 0;
 	uint32_t fictVar = 0;
-	VerificationTuple *vt = (*iter);
+	VerificationTuple *vt = (*vtiter);
     
 	ostringstream oss;
 	oss << STAGERULEPREFIX <<ruleCounter++;
@@ -1135,8 +1157,7 @@ namespace compile {
 	rhs->set(catalog->attribute(FUNCTOR, "NAME"), Val_Str::mk(vt->name+MAKESAYS));
 	rhs->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(pos++));
 	rhs->set(catalog->attribute(FUNCTOR, "TID"), Val_Null::mk());
-	rhs->freeze();
-	functorTbl->insert(rhs);
+
 	ruleTp->set(catalog->attribute(RULE, "HEAD_FID"), (*head)[TUPLE_ID]);
 	//create buffer creation logic
 	
@@ -1160,24 +1181,6 @@ namespace compile {
 	ValPtrList::const_iterator iter = headAttr->begin();
 	//exclude location specifier
 	iter++; 
-	  
-	// since loc spec is not included
-	if(headAttr->size() > 6) // for locspec, P, R, k, V and proof
-	{
-	  uint32_t maxCount = headAttr->size() - 6;
-	  uint32_t count = 0;
-	  for (; count < maxCount; iter++, count++){
-	    TuplePtr newcur = Tuple::mk(MATH);
-	    newcur->append(append);
-	    newcur->append(cur);
-	    TuplePtr iterTuple = (Val_Tuple::cast(*iter))->clone();
-	    iterTuple->freeze();
-	    newcur->append(Val_Tuple::mk(iterTuple));
-	    newcur->freeze();
-	    
-	    cur = Val_Tuple::mk(newcur);
-	  }
-	}
 
 	assert(headAttr->size() >= 6);
 	
@@ -1200,6 +1203,25 @@ namespace compile {
 	TuplePtr proof = (Val_Tuple::cast(*iter))->clone();
 	proof->freeze();
 	iter++;
+	  
+	// since loc spec is not included
+	if(headAttr->size() > 6) // for locspec, P, R, k, V and proof
+	{
+	  uint32_t maxCount = headAttr->size();
+	  uint32_t count = 6;
+	  
+	  for (; count < maxCount; iter++, count++){
+	    TuplePtr newcur = Tuple::mk(MATH);
+	    newcur->append(append);
+	    newcur->append(cur);
+	    TuplePtr iterTuple = (Val_Tuple::cast(*iter))->clone();
+	    iterTuple->freeze();
+	    newcur->append(Val_Tuple::mk(iterTuple));
+	    newcur->freeze();
+	    
+	    cur = Val_Tuple::mk(newcur);
+	  }
+	}
 
 	TuplePtr assignTp  = Tuple::mk(ASSIGN, true);
 	assignTp->append(ruleId);   // Should be rule identifier
@@ -1242,7 +1264,25 @@ namespace compile {
 	ruleTp->freeze();
 	ruleTbl->insert(ruleTp);
 
+	ListPtr rhsAttr = List::mk();
+	iter = headAttr->begin();
+	for(; iter != headAttr->end(); iter++){
+	  rhsAttr->append(*iter);
+	}
+	rhs->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(rhsAttr));
+	rhs->freeze();
+	functorTbl->insert(rhs);
+
 	delete vt;
+
+	if((*head)[catalog->attribute(FUNCTOR, "TID")] != Val_Null::mk()){
+	  SetPtr locSpecSet(new Set());
+	  SetPtr strongLocSpecSet(new Set());
+	  ValuePtr eventLocSpec = rhsAttr->front();
+	  ValuePtr ruleId = (*ruleTp)[TUPLE_ID];
+
+	  compile::Context::ruleLocSpecMap->insert(std::pair<ValuePtr, LocSpecInfo*>(ruleId, new LocSpecInfo(eventLocSpec, locSpecSet, strongLocSpecSet))); // insert values into the event loc spec
+	}
       }
       
     }

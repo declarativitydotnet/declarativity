@@ -1171,9 +1171,30 @@ namespace compile {
       }
     
       if (keys) {
-        for (ExpressionList::const_iterator i = keys->begin();
-             i != keys->end(); i++)
-          _keys.push_back(Val_UInt32::cast((*i)->value()));
+	uint32_t fieldNum = 0;
+	ExpressionList::const_iterator i = keys->begin();
+	for (; (i != keys->end()) && (fieldNum <= 1); i++){
+	  fieldNum= Val_UInt32::cast((*i)->value());
+	  if(fieldNum <= 1){
+	      _keys.push_back(fieldNum);
+	  }
+	}       
+	if(says){
+	  _keys.push_back(2); //P
+	  _keys.push_back(3); //R
+	  _keys.push_back(4); //K
+	  _keys.push_back(5); //V
+	  _keys.push_back(6); //Proof
+	}
+        for (;i != keys->end(); i++){
+	  fieldNum= Val_UInt32::cast((*i)->value());
+	  if(says){
+	    if(fieldNum > 1){
+	      fieldNum += TableEntry::numSecureFields;	  
+	      _keys.push_back(fieldNum);
+	    }
+	  }
+	}
       }
     }
     
