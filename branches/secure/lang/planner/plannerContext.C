@@ -95,12 +95,17 @@ namespace compile {
                          CommonTable::theKey(CommonTable::KEY4),
                          lookup); 
       if (!i->done()) {
+	TuplePtr theWatchSpec = i->next();
         // Found something.
-        if (mod == "") {
-          //  cout << "It does by default\n";
-          return true;
-        } else {
-          // Does it contain this explicit modifier?
+	if (mod == "") {
+	  //  cout << "It does by default\n";
+	  return true;
+	} 
+	else if ((*theWatchSpec)[catalog->attribute(WATCH,"MOD")] == Val_Null::mk()) {
+	  return true;
+	} 
+	else {
+	  //           Does it contain this explicit modifier?
           TuplePtr theWatchSpec = i->next();
           //cout << "The watch record is " << theWatchSpec->toString() << "\n";
           string theWatchModifier =
@@ -116,7 +121,8 @@ namespace compile {
             return true; 
           }
         }
-      } else {
+      }
+      else {
         //cout << "Nothing watched about " << name << "\n";
       }
       return false;
