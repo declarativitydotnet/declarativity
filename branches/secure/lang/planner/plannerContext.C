@@ -19,6 +19,7 @@
 #include "val_null.h"
 #include "val_list.h"
 #include "val_tuple.h"
+#include "val_int32.h"
 #include "val_int64.h"
 #include "oper.h"
 
@@ -414,15 +415,8 @@ namespace compile {
         lookup->append(Val_UInt32::mk(pos));
         lookup->freeze();
 
-        TuplePtr lookup2 = Tuple::mk();
-        lookup2->append((*rule)[TUPLE_ID]);
-        lookup2->append(Val_Int64::mk(pos));
-        lookup2->freeze();
-
         TELL_INFO << "LOOKUP TUPLE: " << lookup->toString() << std::endl;
         iter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY01), functorKey, lookup);
-        if (iter->done())
-          iter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY01), functorKey, lookup2);
         if (!iter->done()) {
           TuplePtr term = iter->next();
           TELL_INFO << "\tFUNCTOR TERM POSITION " << pos << ": " 
@@ -432,8 +426,6 @@ namespace compile {
         }
 
         iter = assignTbl->lookup(CommonTable::theKey(CommonTable::KEY01), assignKey, lookup);
-        if (iter->done())
-          iter = assignTbl->lookup(CommonTable::theKey(CommonTable::KEY01), assignKey, lookup2);
         if (!iter->done()) {
           TuplePtr term = iter->next();
           TELL_INFO << "\tASSIGN TERM POSITION " << pos << ": " 
@@ -442,8 +434,6 @@ namespace compile {
           continue;
         }
         iter = selectTbl->lookup(CommonTable::theKey(CommonTable::KEY01), selectKey, lookup);
-        if (iter->done())
-          iter = selectTbl->lookup(CommonTable::theKey(CommonTable::KEY01), selectKey, lookup2);
         if (!iter->done()) {
           TuplePtr term = iter->next();
           TELL_INFO << "\tSELECT TERM POSITION " << pos << ": " 

@@ -138,6 +138,7 @@ namespace compile {
       
           /** Create the trigger rule head tuple */
           triggerHead->append((*triggerRule)[TUPLE_ID]);  // The "trigger" rule identifier
+          triggerHead->append(Val_Int32::mk(false));      // NOTIN
           triggerHead->append(Val_Str::mk(triggerName));  // Event name
           triggerHead->append(Val_Null::mk());            // Reference table (event -> none)
           triggerHead->append(Val_Str::mk("SEND"));       // ECA action type
@@ -151,6 +152,7 @@ namespace compile {
           /** Create the trigger rule event tuple, assigning it to the origianl rule */
           TuplePtr event = Tuple::mk(FUNCTOR, true);
           event->append((*rule)[TUPLE_ID]);          // The original rule identifier
+          event->append(Val_Int32::mk(false));       // NOT IN
           event->append(Val_Str::mk(triggerName));   // Event name
           event->append(Val_Null::mk());             // Reference table (event -> none)
           event->append(Val_Str::mk("RECV"));        // ECA event type

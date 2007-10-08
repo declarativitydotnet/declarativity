@@ -194,12 +194,9 @@ namespace compile {
       for (std::deque<TuplePtr>::iterator iter = baseTables.begin();
            iter != baseTables.end(); iter++) {
         if ((**iter)[catalog->attribute(FUNCTOR, "NOTIN")] == Val_UInt32::mk(true)) {
-          throw Exception("Materialized view can't contain a NOTIN predicate. " + rule->toString());
+          continue; // Don't create DELTA rule for notin table predicate.
         }
-      }
 
-      for (std::deque<TuplePtr>::iterator iter1 = baseTables.begin();
-           iter1 != baseTables.end(); iter1++) {
         // Make the new delta rule and predicate head.
 	uint32_t eventPos = -1;
         TuplePtr deltaRule = rule->clone(RULE, true);
@@ -226,7 +223,7 @@ namespace compile {
           throw Exception("Rewrite View: Can't insert delta head. " + rule->toString());
 
         // Create delta rule event 
-        TuplePtr deltaEvent = (*iter1)->clone(FUNCTOR, true);
+        TuplePtr deltaEvent = (*iter)->clone(FUNCTOR, true);
 	eventPos = Val_UInt32::cast((*deltaEvent)[catalog->attribute(FUNCTOR, "POSITION")]);
         deltaEvent->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("DELTA"));
         deltaEvent->set(catalog->attribute(FUNCTOR, "RID"), (*deltaRule)[TUPLE_ID]);
@@ -239,7 +236,7 @@ namespace compile {
         unsigned position = 2;
         for (std::deque<TuplePtr>::iterator iter2 = baseTables.begin();
              iter2 != baseTables.end(); iter2++) {
-          if (*iter1 != *iter2) {
+          if (*iter != *iter2) {
             TuplePtr deltaProbe = (*iter2)->clone(FUNCTOR, true);
             deltaProbe->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("PROBE"));
             deltaProbe->set(catalog->attribute(FUNCTOR, "RID"), (*deltaRule)[TUPLE_ID]);

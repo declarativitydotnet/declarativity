@@ -914,12 +914,6 @@ namespace compile {
 
       void canonicalizeAttributes(Functor*, TermList*, bool);
 
-      void resetName(){
-	ostringstream ruleName;
-	ruleName << Says::rulePrefix << Rule::ruleId++;
-	_name =  ruleName.str();
-      }
-
       string                    _name;
       bool                      _delete;
       Functor*                  _head;

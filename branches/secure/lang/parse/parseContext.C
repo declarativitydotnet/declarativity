@@ -821,7 +821,14 @@ namespace compile {
 
     Rule::Rule(Term *lhs, TermList *rhs, bool deleteFlag, Expression *n)
     {
-      _name = (n) ? n->toString() : "";
+    	if (n) {
+    		_name = n->toString();
+    	}
+    	else {
+    		ostringstream name;
+    		name << "rule_" << ruleId++;
+    		_name = name.str();
+    	}
       _delete = deleteFlag;
       _new = false;
       _head = dynamic_cast<Functor*>(lhs);
