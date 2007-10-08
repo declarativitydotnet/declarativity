@@ -54,6 +54,7 @@ SOURCE_FILE_ROOTS = 		elementRegistry \
 				noNullSignal \
 				noNullField \
 				unboxField \
+				onlyNullField \
 				printWatch \
 				aggregate \
 				update \
