@@ -26,6 +26,84 @@ namespace compile {
   namespace namestracker {
     using namespace opr;
 
+    ListPtr 
+    getMask(const ValuePtr v)
+    {
+      ListPtr mask = List::mk();
+      //      std::cout<<"Mask for " << v->toString()<<std::endl;
+      calculateMaskRecur(mask, v);
+      //      std::cout<<" is " << mask->toString()<<std::endl;
+      return mask;
+    }
+
+    void calculateMaskRecur(ListPtr &mask, const ValuePtr v)
+    {
+      TuplePtr t = Val_Tuple::cast(v);
+      string type = (*t)[0]->toString();
+      if(type == LOC || type == VAR)
+      {
+	mask->append(Val_Tuple::mk(t));
+      }
+      else if(type == AGG)
+      {
+	calculateMaskRecur(mask, (*t)[2]);
+      }
+      else if(type == BOOL)
+      {
+	calculateMaskRecur(mask, (*t)[3]);
+	calculateMaskRecur(mask, (*t)[4]);
+      }
+      else if(type == RANGE)
+      {
+	calculateMaskRecur(mask, (*t)[3]);
+	calculateMaskRecur(mask, (*t)[4]);
+      }
+      else if(type == MATH)
+      {
+	calculateMaskRecur(mask, (*t)[3]);
+	calculateMaskRecur(mask, (*t)[4]);
+      }
+      else if(type == FUNCTION)
+      {
+	unsigned numArgs = Val_UInt32::cast((*t)[3]);
+	for(unsigned i = 0; i < numArgs; i++)
+	{
+	  calculateMaskRecur(mask, (*t)[4 + i]);
+	}
+      }
+      else if(type == VEC || type == MAT)
+      {
+	assert(0);
+      }
+
+    }
+
+    ListPtr applyMask(ListPtr original, ListPtr mask, unsigned oldPos){
+      ListPtr maskedList = List::mk();
+
+      bool found = false;
+      unsigned count = 0, countEnd = 0;
+      for(ValPtrList::const_iterator outer = original->begin();
+           outer != original->end(); outer++) {
+
+	found = false;
+	count = 0;
+	countEnd = (mask->size() - oldPos + 1u);
+	for(ValPtrList::const_iterator iter = mask->begin();
+	    iter != mask->end() && !found && count < countEnd ; iter++, count++) {
+	  ListPtr maskPart = Val_List::cast(*iter);
+	  found |= (position(maskPart, *outer) >= 0);
+	}
+	if (found)
+	{
+	  maskedList->append(*outer);
+	}
+      }
+      
+      return maskedList;
+    }
+
+
     void 
     exprString(ostringstream *oss, TuplePtr expr)
     {

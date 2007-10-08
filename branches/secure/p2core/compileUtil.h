@@ -30,6 +30,12 @@ namespace compile {
   };
 
   namespace namestracker {
+    
+    ListPtr getMask(const ValuePtr v);
+    
+    void calculateMaskRecur(ListPtr &mask, const ValuePtr v);
+
+    ListPtr applyMask(ListPtr original, ListPtr mask, unsigned oldPos);
 
     void exprString(ostringstream *oss, TuplePtr expr);
 

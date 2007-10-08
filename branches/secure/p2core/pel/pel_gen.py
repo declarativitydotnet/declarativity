@@ -155,7 +155,11 @@ for op, ar, va, desc in [
   ("isLocSpec",1,   "IS_LOCSPEC",   "returns 1 if the passed arg is a loc spec, 0 otherwise"),
   ("getCert",1,   "GET_CERT",   "returns the cert from a strong locspec or version"),
   ("isSays",1,   "IS_SAYS",   "returns the cert from a strong locspec or version"),
-  ("loadKeyFile",1,   "LOADKEYFILE",      "Load a encryption key. from the filename ")
+  ("loadKeyFile",1,   "LOADKEYFILE",      "Load a encryption key. from the filename "),
+  ("initMask",1,   "INITMASK",      "Initialize the mask using a list of fields from the head functor"),
+  ("combineMask",2,   "COMBINEMASK",      "Combine a mask (list) with another mask"),
+  ("getMask",1,   "GETMASK",      "Calculate the mask from an expression"),
+  ("mask",3,   "MASK",      "Apply the mask onto the scheme to get the masked scheme")
   ]:  emit_opcode(op, ar, va, desc)
 
 for op, ar, va, desc in [

@@ -547,6 +547,47 @@ DEF_OP(FUNC0) {
   // Run the function
 }
 
+DEF_OP(INITMASK) { 
+   ValuePtr listVal = stackTop(); stackPop();
+   ListPtr list = List::mk();
+   list->append(listVal);
+   ValuePtr mask = Val_List::mk(list);
+   stackPush(mask);
+}
+
+DEF_OP(GETMASK) { 
+  ValuePtr v = stackTop(); stackPop();
+  ValuePtr mask = Val_List::mk(compile::namestracker::getMask(v));
+  stackPush(mask);
+}
+
+DEF_OP(COMBINEMASK) { 
+  ValuePtr first = stackTop(); stackPop();
+  ValuePtr second = stackTop(); stackPop();
+  ListPtr list = Val_List::cast(first);
+  if (!list) {
+    error = PE_BAD_LIST_FIELD;
+    return;
+  }
+
+  list->append(second);
+  stackPush(first);
+}
+
+DEF_OP(MASK) { 
+  ValuePtr tempSchema = stackTop(); stackPop();
+  ValuePtr maskSchema = stackTop(); stackPop();
+  ValuePtr oldPos = stackTop(); stackPop();
+  ListPtr maskList = Val_List::cast(maskSchema);
+  ListPtr tempList = Val_List::cast(tempSchema);
+  if (!maskList || !tempList) {
+    error = PE_BAD_LIST_FIELD;
+    return;
+  }
+  ListPtr maskedSchema = 
+    compile::namestracker::applyMask(tempList, maskList, Val_UInt32::cast(oldPos));
+  stackPush(Val_List::mk(maskedSchema));
+}
 
 
 DEF_OP(A_TO_VAR) { 
