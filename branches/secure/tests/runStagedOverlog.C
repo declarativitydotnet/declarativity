@@ -111,7 +111,7 @@ string stub(string hostname, string port, TransportConf conf)
           //start the rule output process
        << "\tintDRR -> PullPush(\"SEAOutputPP\",0) -> intExtDemux;\n"
 	  //External events to commitbuf, to netOut
-       << "\tintExtDemux[1] -> CommitBuf(\"NetCommitBuf\") -> netOut;\n"
+       << "\tintExtDemux[1] -> Print(\"NETWORK OUT\") -> CommitBuf(\"NetCommitBuf\") -> netOut;\n"
           //internal events to internal mux
        << "\tintExtDemux[0] -> [1]intQMux;\n";
 

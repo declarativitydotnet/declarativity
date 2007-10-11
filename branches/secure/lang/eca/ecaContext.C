@@ -21,6 +21,8 @@
 #include "val_int32.h"
 #include "val_list.h"
 #include "val_tuple.h"
+#include "oper.h"
+
 namespace compile {
   namespace eca {
     using namespace opr;
@@ -101,22 +103,8 @@ namespace compile {
         ecaEvent->freeze();
         functorTbl->insert(ecaEvent); // Commit the updated event functor
       
-        if ((*ecaHead)[catalog->attribute(FUNCTOR, "TID")] == Val_Null::mk()) {
-          /* The head predicate does not refer to an existing table. This
-             means it is an event to the local node and gets the ECA value 
-             SEND. */
-          ecaHead->set(functorEcaPos, Val_Str::mk("SEND"));
-        }
-        else if ((*rule)[catalog->attribute(RULE, "DELETE")] == Val_UInt32::mk(1)) {
-          /* The rule contains a deletion marker, so the functor ECA type
-             is DELETE. Should we ensure that the head references a local table!! */
-          ecaHead->set(functorEcaPos, Val_Str::mk("DELETE"));
-        }
-        else {
-          /* The event is an insert into a table. Should ensure that
-             the head references a local table!! */
-          ecaHead->set(functorEcaPos, Val_Str::mk("ADD"));
-        }
+        ecaHead->set(functorEcaPos, Val_Str::mk("SEND"));
+        rewriteSideEffect(catalog, rule, ecaHead);
 
         /* Ensure the head appears in position 0. */
         ecaHead->set(functorPosPos, Val_UInt32::mk(0));
@@ -175,6 +163,57 @@ namespace compile {
 
       }
     } 
+
+    void
+    Context::rewriteSideEffect(CommonTable::ManagerPtr catalog, TuplePtr rule,
+                               TuplePtr head) {
+        if ((*head)[catalog->attribute(FUNCTOR, "TID")] != Val_Null::mk()) {
+          /* The head predicate does not refer to an existing table. This
+             means it is an event to the local node and gets the ECA value 
+             SEND. */
+
+          TuplePtr sideEffectTp = Tuple::mk(SIDE_EFFECT, true);
+          sideEffectTp->append((*head)[catalog->attribute(FUNCTOR, "NAME")]);
+          if ((*rule)[catalog->attribute(RULE, "DELETE")] == Val_UInt32::mk(1)) {
+            sideEffectTp->append(Val_Str::mk("DELETE"));
+          }
+          else {
+            sideEffectTp->append(Val_Str::mk("ADD"));
+          }
+          sideEffectTp->freeze();
+          CommonTablePtr sideEffectTbl = catalog->table(SIDE_EFFECT);
+          CommonTable::Iterator iter = sideEffectTbl->lookup(CommonTable::theKey(CommonTable::KEY34),
+                                                             CommonTable::theKey(CommonTable::KEY34), 
+                                                             sideEffectTp);
+
+          if (iter->done()) {
+              string rname = (*rule)[catalog->attribute(RULE, "NAME")]->toString();
+              rname += "_SideEffect_" + (*sideEffectTp)[catalog->attribute(SIDE_EFFECT, "TYPE")]->toString();
+     
+              TuplePtr sideEffectRule = rule->clone(RULE, true);
+              TuplePtr sideEffectHead = head->clone(FUNCTOR, true);
+              TuplePtr sideEffectEvent = head->clone(FUNCTOR, true);
+              sideEffectRule->set(catalog->attribute(RULE, "HEAD_FID"), (*sideEffectHead)[TUPLE_ID]);
+              sideEffectRule->set(catalog->attribute(RULE, "NAME"), Val_Str::mk(rname));
+              sideEffectHead->set(catalog->attribute(FUNCTOR, "RID"), (*sideEffectRule)[TUPLE_ID]);
+              sideEffectEvent->set(catalog->attribute(FUNCTOR, "RID"), (*sideEffectRule)[TUPLE_ID]);
+              sideEffectHead->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(0));
+              sideEffectEvent->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(1));
+
+              sideEffectEvent->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("RECV"));
+              sideEffectHead->set(catalog->attribute(FUNCTOR, "ECA"), 
+                                  (*sideEffectTp)[catalog->attribute(SIDE_EFFECT, "TYPE")]);
+
+              sideEffectRule->freeze();
+              sideEffectHead->freeze();
+              sideEffectEvent->freeze();
+              catalog->table(FUNCTOR)->insert(sideEffectHead);
+              catalog->table(FUNCTOR)->insert(sideEffectEvent);
+              catalog->table(RULE)->insert(sideEffectRule);
+              catalog->table(SIDE_EFFECT)->insert(sideEffectTp);
+          }
+        }
+    }
   
     void
     Context::rewriteView(CommonTable::ManagerPtr catalog, TuplePtr rule, 
@@ -190,6 +229,7 @@ namespace compile {
       if (Iter->done()) 
         throw Exception("No head table predicate in rule: " + rule->toString());
       head = Iter->next();
+      rewriteSideEffect(catalog, rule, head);
 
       for (std::deque<TuplePtr>::iterator iter = baseTables.begin();
            iter != baseTables.end(); iter++) {
@@ -207,12 +247,7 @@ namespace compile {
 	deltaRule->set(catalog->attribute(RULE, "NAME"), Val_Str::mk(oss.str()));
         deltaHead->set(catalog->attribute(FUNCTOR, "RID"), (*deltaRule)[TUPLE_ID]);
 
-        if ((*deltaHead)[catalog->attribute(FUNCTOR, "TID")] == Val_Null::mk())
-          deltaHead->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("SEND"));
-        else if ((*rule)[catalog->attribute(RULE, "DELETE")] == Val_Int32::mk(1))
-          deltaHead->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("DELETE"));
-        else
-          deltaHead->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("ADD"));
+        deltaHead->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("SEND"));
         deltaHead->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(0));
 
         deltaRule->freeze();

@@ -21,6 +21,7 @@
   #define ARGUMENT          "argument"
   #define PROGRAM           "program"
   #define GLOBAL_EVENT      "globalEvent"
+  #define SIDE_EFFECT       "sideEffectRule"
   #define REWRITE           "rewrite"
   #define ATTRIBUTE         "attribute"
   #define TABLE             "table"
@@ -121,6 +122,10 @@ TABLEDEF(ARGUMENT, CommonTable::theKey(CommonTable::KEY2), \
 TABLEDEF(GLOBAL_EVENT, CommonTable::theKey(CommonTable::KEY34), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("EID", 2) \
          SCHEMA("NAME", 3) SCHEMA("TYPE", 4) SCHEMA("TRIGGER", 5))
+
+TABLEDEF(SIDE_EFFECT, CommonTable::theKey(CommonTable::KEY34), \
+         SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("SEID", 2) \
+         SCHEMA("NAME", 3) SCHEMA("TYPE", 4))
          
 TABLEDEF(ATTRIBUTE, CommonTable::theKey(CommonTable::KEY34), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("ATTRID", 2) \

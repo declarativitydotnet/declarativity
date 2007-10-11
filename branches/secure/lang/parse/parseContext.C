@@ -101,7 +101,7 @@ namespace compile {
     uint32_t Functor::fictVarCounter = 0;
     const string Functor::FICTPREFIX = "NH";
     uint32_t Rule::ruleId = 0; 
-    const bool Table::compoundRewrite = true;
+    const bool Table::compoundRewrite = false;
     SetPtr Table::materializedSaysTables(new Set());
     
     string 
@@ -1088,8 +1088,7 @@ namespace compile {
     Fact::Fact(Expression *n, ExpressionList *a)
     {
       TuplePtr tpl = Tuple::mk();
-
-      tpl->append(Val_Str::mk(n->toString())); // my tuple name
+      tpl->append(Val_Str::mk(n->toString()));
 
       // The fields
       uint32_t pos = 1;
