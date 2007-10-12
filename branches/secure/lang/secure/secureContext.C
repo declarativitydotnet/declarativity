@@ -180,7 +180,7 @@ namespace compile {
 	   listAssign = new TupleList();
 	   // create a new field if its not already present
 	   TupleList* newTermsGen = normalizeGenerate(catalog, head, rule, eventLocSpec, newVariable, headpos, 
-						      compoundHead, headProof, headSaysType, keyTypeVar, listAssign); 
+						      !tIter->done(), headProof, headSaysType, keyTypeVar, listAssign); 
 	   // also if compoundHead is false, remove the new field
 
 	   if(!compoundHead){

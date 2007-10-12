@@ -94,7 +94,7 @@ namespace compile {
 	ValuePtr eventLocSpec;
 	TuplePtr headFunctor; 
 	uint32_t fictVar = 0;
-
+	bool headNew = false;
 	for (headIter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY5), 
 					   CommonTable::theKey(CommonTable::KEY2), rule);
 	     !headIter->done(); ) {
@@ -104,9 +104,9 @@ namespace compile {
 	  headFunctor = headIter->next()->clone();
 	  headAttributes = Val_List::cast((*headFunctor)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
 	  headLocAttr = Val_Tuple::cast(headAttributes->front());
-
+	  headNew = Val_Int32::cast((*headFunctor)[catalog->attribute(FUNCTOR, "NEW")]) != 0;
 	  // do anything at all if this rule does not already have a new head Functor
-	  if(Val_Int32::cast((*headFunctor)[catalog->attribute(FUNCTOR, "NEW")]) == 0){
+	  if(!headNew){
 	    headLocAttr = headLocAttr->clone();
 	    headLocAttr->set(TNAME, Val_Str::mk(VAR));//change from loc to var
 
@@ -207,11 +207,12 @@ namespace compile {
 	if(!eventLocSpec){
 	  throw compile::rewrite0::Exception("No new functor found in new rule:" + rule->toString());
 	}
-	headAttributes->prepend(eventLocSpec);
-	headFunctor->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(headAttributes));
-	headFunctor->freeze();
-	functorTbl->insert(headFunctor);
-
+	if(!headNew){
+	  headAttributes->prepend(eventLocSpec);
+	  headFunctor->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(headAttributes));
+	  headFunctor->freeze();
+	  functorTbl->insert(headFunctor);
+	}
       }
       else{
 	for (CommonTable::Iterator funcIter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY2), 
