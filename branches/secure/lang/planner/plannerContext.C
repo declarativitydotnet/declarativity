@@ -161,11 +161,11 @@ namespace compile {
                        + "DDuplicateConservative(\"" + duplicatorName + "\", 1)";
           programEvents.insert(std::make_pair(input, (*program)[TUPLE_ID]));
         }
-        stage_oss << "\t" << intStrandInputElement << " ->  Slot(\"stageSlot\") ->\n\t"
+        stage_oss << "\t" << intStrandInputElement << " ->  Queue(\"stageQueue\", 1000) ->\n\t"
                   << "Stage(\"stage_" << processor << "\", \"" << processor << "\") ->\n\t"
-                  << "PelTransform(\"formatStage\", \"\\\"" 
-                                   << output << "\\\" pop swallow unbox drop popall\")"
-                  << " -> [+]main." << _internalStrandOutputElement << ";\n";
+                  << "PelTransform(\"formatStage\", \"\\\"" << output << "\\\" pop swallow unbox drop popall\") -> "
+                  << "PelTransform(\"package\", \"$1 pop swallow pop\") -> "
+                  << "[+]main." << _internalStrandOutputElement << ";\n";
       }
       stage_oss << "};\n";
 
@@ -227,7 +227,12 @@ namespace compile {
                                                  rule);
         TELL_ERROR << "WE SHOULD HAVE GOT FUNCTORS: " << std::endl;
         while (!iter->done()) {
-           TELL_ERROR << "\t" << iter->next()->toString() << std::endl;
+           TuplePtr tp = iter->next();
+           TELL_ERROR << "\t" << tp->toString() << std::endl;
+           for (int i = 0; i < tp->size(); i++) {
+             TELL_ERROR << (*tp)[i]->typeCode() << ", ";
+           }
+           TELL_ERROR << std::endl;
         }
         TELL_ERROR << "WE ONLY GOT THE FOLLOWING TERMS: " << std::endl;
         for (TuplePtrList::iterator iter = terms.begin(); 
@@ -289,9 +294,9 @@ namespace compile {
       if (epd.inputs) {
         // Must create a duplicator, but its name can't have '::' in it.
         string duplicatorName = "dup_" + eventName;
-        for (string::size_type s = 0;
-             (s = duplicatorName.find("::", s)) != string::npos; s++)
+        for (string::size_type s = 0; (s = duplicatorName.find("::", s)) != string::npos; s++) {
           duplicatorName.replace(s, 2, "_");
+        }
 
         ElementPtr demux = 
           Plumber::dataflow(_mainDataflowName)->find(_internalStrandInputElement)->element();
@@ -415,8 +420,23 @@ namespace compile {
         lookup->append(Val_UInt32::mk(pos));
         lookup->freeze();
 
+        TuplePtr lookup2 = Tuple::mk();
+        lookup2->append((*rule)[TUPLE_ID]);
+        lookup2->append(Val_Int32::mk(pos));
+        lookup2->freeze();
+
+        TuplePtr lookup3 = Tuple::mk();
+        lookup3->append((*rule)[TUPLE_ID]);
+        lookup3->append(Val_Int64::mk(pos));
+        lookup3->freeze();
+
         TELL_INFO << "LOOKUP TUPLE: " << lookup->toString() << std::endl;
         iter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY01), functorKey, lookup);
+        if (iter->done())
+          iter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY01), functorKey, lookup2);
+        if (iter->done())
+          iter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY01), functorKey, lookup3);
+
         if (!iter->done()) {
           TuplePtr term = iter->next();
           TELL_INFO << "\tFUNCTOR TERM POSITION " << pos << ": " 
@@ -426,6 +446,10 @@ namespace compile {
         }
 
         iter = assignTbl->lookup(CommonTable::theKey(CommonTable::KEY01), assignKey, lookup);
+        if (iter->done())
+          iter = assignTbl->lookup(CommonTable::theKey(CommonTable::KEY01), assignKey, lookup2);
+        if (iter->done())
+          iter = assignTbl->lookup(CommonTable::theKey(CommonTable::KEY01), assignKey, lookup3);
         if (!iter->done()) {
           TuplePtr term = iter->next();
           TELL_INFO << "\tASSIGN TERM POSITION " << pos << ": " 
@@ -434,6 +458,10 @@ namespace compile {
           continue;
         }
         iter = selectTbl->lookup(CommonTable::theKey(CommonTable::KEY01), selectKey, lookup);
+        if (iter->done())
+          iter = selectTbl->lookup(CommonTable::theKey(CommonTable::KEY01), selectKey, lookup2);
+        if (iter->done())
+          iter = selectTbl->lookup(CommonTable::theKey(CommonTable::KEY01), selectKey, lookup3);
         if (!iter->done()) {
           TuplePtr term = iter->next();
           TELL_INFO << "\tSELECT TERM POSITION " << pos << ": " 
@@ -701,7 +729,7 @@ namespace compile {
         return (Context::PortDesc) {1, "l", "-", 1, "l", "-"};
       }
       else
-        throw planner::Exception("Unknown action type: " + actionType);
+        throw planner::Exception("Unknown head action type: " + head->toString());
       return (Context::PortDesc) {0, "", "", 0, "", ""};
     }
   

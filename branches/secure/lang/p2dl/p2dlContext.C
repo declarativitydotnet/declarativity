@@ -303,6 +303,7 @@ namespace compile {
             throw Exception(2, "EditStrand: Unknown variable reference. " + ref->toString());
           esp = dataflow->find((*i)->toString());
           if (!esp) {
+            std::cerr << "EditStrand: Unknown variable reference. " << ref->toString() << std::endl;
             throw Exception(3, "EditStrand: Unknown variable reference. " + ref->toString());
           }
           dataflow = dynamic_cast<Plumber::Dataflow*>(esp->element().get()); 

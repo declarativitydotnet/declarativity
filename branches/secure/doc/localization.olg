@@ -64,7 +64,7 @@ watchmod(programEventInitialized, "RECV_EVENT").
      each rule. */
   detect countLocalVar(@A, Pid, Rid, a_countdistinct<Attr>) :-
             startRuleCounter(@A, Pid, Rid, HeadFid),
-            ::functor(@A, FID, Rid, Name, TID, ECA, Attributes, FPos, AM),
+            ::functor(@A, FID, Rid, Notin, Name, TID, ECA, Attributes, FPos, AM),
             Attr := f_getattr("Location", Attributes), 
             FID != HeadFid.
 
@@ -84,7 +84,7 @@ watchmod(programEventInitialized, "RECV_EVENT").
   init1 iterator1(@A, Pid, Rid, OldPos, F_Schema) :-
           countLocalVar(@A, Pid, Rid, C), C > 1,
           ::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count),
-	  ::functor(@A, HeadFid, Rid, Name, TID, ECA, Attributes, Pos, AM),  /* The orginal head functor. */	
+	  ::functor(@A, HeadFid, Rid, Notin, Name, TID, ECA, Attributes, Pos, AM),  /* The orginal head functor. */	
 	  F_Schema := f_initMask(Attributes),
 /*	  F_Schema := 1,*/
           OldPos := Term_Count - 1.
@@ -93,7 +93,7 @@ watchmod(programEventInitialized, "RECV_EVENT").
 /* Iterate over the functor*/
   iterateFunctor iterator1(@A, Pid, Rid, NewOldPos, NewSchema) :-
 	  iterator1(@A, Pid, Rid, OldPos, Cur_Schema),
-          ::functor(@A, F_ID, Rid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM),
+          ::functor(@A, F_ID, Rid, Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM),
           OldPos == F_Pos, NewOldPos := OldPos - 1, OldPos > 0,
 /*	  NewSchema := Cur_Schema.*/
 	  NewSchema := f_combineMask(Cur_Schema, F_Schema).
@@ -132,7 +132,7 @@ watchmod(programEventInitialized, "RECV_EVENT").
   init iterator(@A, Pid, Rid, OldPos, NewRid, NewPos, PrevHeadFid, NewHeadFid, LocAttr, F_Schema, "Functor", F_ID, MaskScheme) :-
 /*princem          countLocalVar(@A, Pid, Rid, C), C > 1,*/
 	  joinMaskCalculated(@A, Pid, Rid, MaskScheme),
-          ::functor(@A, F_ID, Rid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM),
+          ::functor(@A, F_ID, Rid, Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM),
           LocAttr := f_getattr("Location", F_Schema),
           F_Pos == 1,
           NewRid := f_idgen(), PrevHeadFid := null, NewHeadFid := f_idgen(), 
@@ -143,7 +143,7 @@ watchmod(programEventInitialized, "RECV_EVENT").
      Maintain the same location attribute, rule group and position therein. */
   functor iterator(@A, Pid, OldRid, OldPos+1U, NewRid, NewPos+1U, PrevHeadFid, HeadFid, LocAttr, Schema, "Functor", FID, MaskScheme) :-
               iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, PrevSchema, TableName, ID, MaskScheme),
-              ::functor(@A, FID, OldRid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM), /* Functor from old rule */
+              ::functor(@A, FID, OldRid, Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM), /* Functor from old rule */
               F_Pos == OldPos,                            /* Make sure we are considering this functor's position. */
               LocAttr == f_getattr("Location", F_Schema), /* The location attribute matches that of the prior iteration. */
 	      Schema := f_merge(F_Schema, PrevSchema).
@@ -166,9 +166,9 @@ watchmod(programEventInitialized, "RECV_EVENT").
   
   /* Point functors to their new rule. I add 1 to the NewPos since we'll move the previous
      rule's head into the event position. */
-  g7 ::functor(@A, Fid, NewRid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM) :-
+  g7 ::functor(@A, Fid, NewRid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM) :-
         iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, Fid, MaskScheme),
-        ::functor(@A, Fid, OldRid, F_Name, F_TID, F_ECA, F_Schema, F_OldPos, F_AM),
+        ::functor(@A, Fid, OldRid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_OldPos, F_AM),
         TableName == "Functor", 
         F_Pos := NewPos.
   
@@ -185,9 +185,9 @@ watchmod(programEventInitialized, "RECV_EVENT").
         TableName == "Select".
   
   /* Place result event from previous location group into next location group. */
-  g10 ::functor(@A, f_idgen(), NewRid, F_Name, F_TID, "RECV", F_Schema, 1U, "EVENT") :-
+  g10 ::functor(@A, f_idgen(), NewRid, F_Notin, F_Name, F_TID, "RECV", F_Schema, 1U, "EVENT") :-
         iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, Sid, MaskScheme),
-        ::functor(@A, PrevHeadFid, F_NewRid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM),
+        ::functor(@A, PrevHeadFid, F_NewRid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM),
 	break(@A, Pid, OldRid, OldPos, _, _, _, _, _, _, _, _).
 /*princem: added last predicate*/
 
@@ -198,7 +198,7 @@ watchmod(programEventInitialized, "RECV_EVENT").
      within the new rule group. The break event will signal such an occurance. */
   triggerBreak prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, NewLocAttr, NewSchema, TableName, ID, MaskScheme) :-
             iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID, MaskScheme),
-            ::functor(@A, FID, OldRid, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM),
+            ::functor(@A, FID, OldRid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM),
             F_Pos == OldPos,                               /* Considering this functor's position now. */
             LocAttr != f_getattr("Location", F_Schema),    /* Location variable mismatch. */
             NewLocAttr := f_getattr("Location", F_Schema), /* Switch to the new location variable. */
@@ -214,7 +214,7 @@ watchmod(programEventInitialized, "RECV_EVENT").
         NewName := "intermediateRule_" + f_tostr(NewRid).
 
   /* Create the head functor for each new rule */
-  g2 ::functor(@A, HeadFid, NewRid, F_Name, null, "SEND", F_Schema, 0U, null) :-
+  g2 ::functor(@A, HeadFid, NewRid, F_Notin, F_Name, null, "SEND", F_Schema, 0U, null) :-
         prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID, MaskScheme),
         F_Name := "intermediateResult_" + f_tostr(NewRid),
         TempSchema := f_cons(LocAttr, f_cons(f_tovar(f_car(Schema)), f_cdr(Schema))),
@@ -230,9 +230,9 @@ watchmod(programEventInitialized, "RECV_EVENT").
 
   
   /* Point the original head functor to its new rule identifier. */
-  g4 ::functor(@A, HeadFid, NewRid, Name, TID, ECA, Attributes, 0U, AM) :-
+  g4 ::functor(@A, HeadFid, NewRid, Notin, Name, TID, ECA, Attributes, 0U, AM) :-
         terminate(@A, Pid, OldRid, NewRid, HeadFid, Terms),  /* We're done, redirect orginal head functor. */
-        ::functor(@A, HeadFid, OldRid, Name, TID, ECA, Attributes, Pos, AM).  /* The orginal head functor. */
+        ::functor(@A, HeadFid, OldRid, Notin, Name, TID, ECA, Attributes, Pos, AM).  /* The orginal head functor. */
   
   /* Create the final rule group. Carry forward attributes from orginal rule. */
   g5 ::rule(@A, NewRid, PID, RName, HeadFid, P2DL, Delete, RTerms) :-

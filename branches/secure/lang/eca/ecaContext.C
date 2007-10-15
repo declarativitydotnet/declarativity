@@ -103,12 +103,14 @@ namespace compile {
         ecaEvent->freeze();
         functorTbl->insert(ecaEvent); // Commit the updated event functor
       
-        ecaHead->set(functorEcaPos, Val_Str::mk("SEND"));
-        rewriteSideEffect(catalog, rule, ecaHead);
+        headEca(catalog, rule, ecaHead);
 
         /* Ensure the head appears in position 0. */
         ecaHead->set(functorPosPos, Val_UInt32::mk(0));
-        functorTbl->insert(ecaHead); // Commit changes.
+        ecaHead->freeze();
+        if (!functorTbl->insert(ecaHead)) {
+	  throw Exception("ECA Rewrite: Can't update head. " + ecaHead->toString());
+        }
       
         /** Set all table predicates to ECA type PROBE. Also set
             the probe positions to follow the event tuple. */
@@ -122,6 +124,7 @@ namespace compile {
 	      tp->set(functorPosPos, Val_UInt32::mk(oldPos+1));
 	  }
 	  position++;
+          tp->freeze();
           functorTbl->insert(tp);
         }
 
@@ -136,12 +139,12 @@ namespace compile {
 	  uint32_t oldPos = Val_UInt32::cast((*assign)[catalog->attribute(ASSIGN, "POSITION")]);
 	  if(oldPos <= eventPos){
 	    assign->set(catalog->attribute(ASSIGN, "POSITION"), Val_UInt32::mk(oldPos+1));
-	  }
+            assign->freeze();
+            if (!catalog->table(ASSIGN)->insert(assign)){
+	      throw Exception("Rewrite View: Can't insert assignment. " + assign->toString());
+	    }
+          }
 	  position++;
-          assign->freeze();
-          if (!catalog->table(ASSIGN)->insert(assign)){
-	    //            throw Exception("Rewrite View: Can't insert assignment. " + rule->toString());
-	  }
         }
 
         key.clear();
@@ -153,25 +156,31 @@ namespace compile {
 	  uint32_t oldPos = Val_UInt32::cast((*select)[catalog->attribute(SELECT, "POSITION")]);
 	  if(oldPos <= eventPos){
 	    select->set(catalog->attribute(SELECT, "POSITION"), Val_UInt32::mk(oldPos + 1));
+            select->freeze();
+            if (!catalog->table(SELECT)->insert(select)){
+	      throw Exception("Rewrite View: Can't insert selection. " + select->toString());
+            }
 	  }
 	  position++;
-          select->freeze();
-          if (!catalog->table(SELECT)->insert(select)){
-	    //            throw Exception("Rewrite View: Can't insert selection. " + rule->toString());
-	  }
         }
-
       }
     } 
 
     void
-    Context::rewriteSideEffect(CommonTable::ManagerPtr catalog, TuplePtr rule,
-                               TuplePtr head) {
-        if ((*head)[catalog->attribute(FUNCTOR, "TID")] != Val_Null::mk()) {
-          /* The head predicate does not refer to an existing table. This
-             means it is an event to the local node and gets the ECA value 
-             SEND. */
-
+    Context::headEca(CommonTable::ManagerPtr catalog, TuplePtr rule, TuplePtr head) 
+    {
+      if ((*head)[catalog->attribute(FUNCTOR, "TID")] != Val_Null::mk()) {
+        std::string headName = (*head)[catalog->attribute(FUNCTOR, "NAME")]->toString();
+        if (headName.compare(0, 5, "sys::") == 0) {
+          /* System tables do not require this rewrite, since remote updates disallowed!! */
+          if ((*rule)[catalog->attribute(RULE, "DELETE")] == Val_UInt32::mk(1)) {
+            head->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("DELETE"));
+          }
+          else {
+            head->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("ADD"));
+          }
+        } else {
+          /* Create a row in the SIDE_EFFECT table */
           TuplePtr sideEffectTp = Tuple::mk(SIDE_EFFECT, true);
           sideEffectTp->append((*head)[catalog->attribute(FUNCTOR, "NAME")]);
           if ((*rule)[catalog->attribute(RULE, "DELETE")] == Val_UInt32::mk(1)) {
@@ -181,38 +190,47 @@ namespace compile {
             sideEffectTp->append(Val_Str::mk("ADD"));
           }
           sideEffectTp->freeze();
+          /* Check if we've already done this rewrite for this table. */
           CommonTablePtr sideEffectTbl = catalog->table(SIDE_EFFECT);
-          CommonTable::Iterator iter = sideEffectTbl->lookup(CommonTable::theKey(CommonTable::KEY34),
-                                                             CommonTable::theKey(CommonTable::KEY34), 
-                                                             sideEffectTp);
+          CommonTable::Iterator iter = 
+            sideEffectTbl->lookup(CommonTable::theKey(CommonTable::KEY34),
+                                  CommonTable::theKey(CommonTable::KEY34), 
+                                  sideEffectTp);
 
           if (iter->done()) {
-              string rname = (*rule)[catalog->attribute(RULE, "NAME")]->toString();
-              rname += "_SideEffect_" + (*sideEffectTp)[catalog->attribute(SIDE_EFFECT, "TYPE")]->toString();
-     
-              TuplePtr sideEffectRule = rule->clone(RULE, true);
-              TuplePtr sideEffectHead = head->clone(FUNCTOR, true);
-              TuplePtr sideEffectEvent = head->clone(FUNCTOR, true);
-              sideEffectRule->set(catalog->attribute(RULE, "HEAD_FID"), (*sideEffectHead)[TUPLE_ID]);
-              sideEffectRule->set(catalog->attribute(RULE, "NAME"), Val_Str::mk(rname));
-              sideEffectHead->set(catalog->attribute(FUNCTOR, "RID"), (*sideEffectRule)[TUPLE_ID]);
-              sideEffectEvent->set(catalog->attribute(FUNCTOR, "RID"), (*sideEffectRule)[TUPLE_ID]);
-              sideEffectHead->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(0));
-              sideEffectEvent->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(1));
+            /* Do the rewrite. */
+            string rname = (*rule)[catalog->attribute(RULE, "NAME")]->toString();
+            rname += "_SideEffect_" + (*sideEffectTp)[catalog->attribute(SIDE_EFFECT, "TYPE")]->toString();
+   
+            TuplePtr sideEffectRule = rule->clone(RULE, true);
+            TuplePtr sideEffectHead = head->clone(FUNCTOR, true);
+            TuplePtr sideEffectEvent = head->clone(FUNCTOR, true);
+            sideEffectRule->set(catalog->attribute(RULE, "HEAD_FID"), (*sideEffectHead)[TUPLE_ID]);
+            sideEffectRule->set(catalog->attribute(RULE, "NAME"), Val_Str::mk(rname));
+            sideEffectHead->set(catalog->attribute(FUNCTOR, "RID"), (*sideEffectRule)[TUPLE_ID]);
+            sideEffectEvent->set(catalog->attribute(FUNCTOR, "RID"), (*sideEffectRule)[TUPLE_ID]);
+            sideEffectHead->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(0));
+            sideEffectEvent->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(1));
 
-              sideEffectEvent->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("RECV"));
-              sideEffectHead->set(catalog->attribute(FUNCTOR, "ECA"), 
-                                  (*sideEffectTp)[catalog->attribute(SIDE_EFFECT, "TYPE")]);
+            sideEffectEvent->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("RECV"));
+            sideEffectHead->set(catalog->attribute(FUNCTOR, "ECA"), 
+                                (*sideEffectTp)[catalog->attribute(SIDE_EFFECT, "TYPE")]);
 
-              sideEffectRule->freeze();
-              sideEffectHead->freeze();
-              sideEffectEvent->freeze();
-              catalog->table(FUNCTOR)->insert(sideEffectHead);
-              catalog->table(FUNCTOR)->insert(sideEffectEvent);
-              catalog->table(RULE)->insert(sideEffectRule);
-              catalog->table(SIDE_EFFECT)->insert(sideEffectTp);
+            sideEffectRule->freeze();
+            sideEffectHead->freeze();
+            sideEffectEvent->freeze();
+            catalog->table(FUNCTOR)->insert(sideEffectHead);
+            catalog->table(FUNCTOR)->insert(sideEffectEvent);
+            catalog->table(RULE)->insert(sideEffectRule);
+            catalog->table(SIDE_EFFECT)->insert(sideEffectTp);
           }
+          /* Make the head ECA a send, which will loop around to the above rewrite. */
+          head->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("SEND"));
         }
+      }
+      else {
+          head->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("SEND"));
+      }
     }
   
     void
@@ -228,8 +246,11 @@ namespace compile {
                                              key, rule);
       if (Iter->done()) 
         throw Exception("No head table predicate in rule: " + rule->toString());
-      head = Iter->next();
-      rewriteSideEffect(catalog, rule, head);
+      head = Iter->next()->clone();
+
+      std::string headName = (*head)[catalog->attribute(FUNCTOR, "NAME")]->toString();
+      headEca(catalog, rule, head);
+      head->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(0));
 
       for (std::deque<TuplePtr>::iterator iter = baseTables.begin();
            iter != baseTables.end(); iter++) {
@@ -246,9 +267,6 @@ namespace compile {
 	oss<<RULENAMEPREFIX<<ruleCounter++;
 	deltaRule->set(catalog->attribute(RULE, "NAME"), Val_Str::mk(oss.str()));
         deltaHead->set(catalog->attribute(FUNCTOR, "RID"), (*deltaRule)[TUPLE_ID]);
-
-        deltaHead->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("SEND"));
-        deltaHead->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(0));
 
         deltaRule->freeze();
         deltaHead->freeze();
@@ -302,7 +320,7 @@ namespace compile {
 	  position++;
           assign->freeze();
           if (!catalog->table(ASSIGN)->insert(assign)){
-	    //            throw Exception("Rewrite View: Can't insert assignment. " + rule->toString());
+	    throw Exception("Rewrite View: Can't insert assignment. " + assign->toString());
 	  }
         }
 
@@ -321,11 +339,9 @@ namespace compile {
 	  position++;
           select->freeze();
           if (!catalog->table(SELECT)->insert(select)){
-	    //            throw Exception("Rewrite View: Can't insert selection. " + rule->toString());
+	    throw Exception("Rewrite View: Can't insert selection. " + select->toString());
 	  }
         }
-
-        
       }
 
       // Now clean up the mess we've made.

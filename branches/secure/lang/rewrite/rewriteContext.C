@@ -133,22 +133,25 @@ namespace compile {
       /* Create the status table predicate */
       TuplePtr status = Tuple::mk(FUNCTOR, true);
       status->append((*rule)[TUPLE_ID]);             // The "trigger" rule identifier
-      status->append(Val_Str::mk(COMPILE_STATUS)); // Status tablename
+      status->append(Val_Int32::mk(false));          // NOTIN
+      status->append(Val_Str::mk(COMPILE_STATUS));   // Status tablename
       status->append(Val_Null::mk());                // Set TID below
       status->append(Val_Str::mk("PROBE"));          // ECA action type
       status->append(Val_List::mk(schema));          // Schema
       status->append(Val_UInt32::mk(2));             // Position right after event
       status->append(Val_Null::mk());                // Acess method
-      status->append(Val_UInt32::mk(0));           // Access method
+      status->append(Val_UInt32::mk(0));             // NEW?
 
       /* Locate the table id associated with the name COMPILE_STATUS.
          Use the table id to set the TID field of the status table predicate */
       CommonTable::Key indexKey;
       indexKey.push_back(catalog->attribute(TABLE, "TABLENAME"));
-      iter = catalog->table(TABLE)->lookup(CommonTable::theKey(CommonTable::KEY4), 
+      iter = catalog->table(TABLE)->lookup(CommonTable::theKey(CommonTable::KEY5), 
                                            indexKey, status);
-      if (iter->done()) 
+      if (iter->done())  {
+        TELL_ERROR << catalog->table(TABLE)->toString() << std::endl;
         throw Exception(string("Rewrite status table does not exist: ") + COMPILE_STATUS);
+      }
       status->set(catalog->attribute(FUNCTOR, "TID"), (*iter->next())[TUPLE_ID]);
       status->freeze();
       functorTbl->insert(status); // Commit the status predicate to the rule.

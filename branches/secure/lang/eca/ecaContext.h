@@ -45,7 +45,7 @@ namespace compile {
       /* Process the current rule in the program */
       void rule(CommonTable::ManagerPtr catalog, TuplePtr rule);
 
-      void rewriteSideEffect(CommonTable::ManagerPtr catalog, TuplePtr rule, TuplePtr head);
+      void headEca(CommonTable::ManagerPtr catalog, TuplePtr rule, TuplePtr head);
 
       /**
        * A rule containing a periodic will be rewritten to by creating

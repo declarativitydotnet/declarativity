@@ -776,70 +776,6 @@ namespace compile {
       Bool* _select;
     };
     
-    class AggregationView : public Term {
-    public: 
-      AggregationView(string aggName,
-                      ExpressionList *gb, 
-                      ExpressionList *agg, 
-                      Term *bt)
-        : _groupBy(gb),
-          _agg(agg),
-          _operName(aggName)
-      {
-        _baseTable = dynamic_cast<Functor*>(bt);
-      }
-
-      virtual Term* copy() const{
-	AggregationView *v = new AggregationView(*this);
-	return v;
-      }
- 
-      AggregationView(const AggregationView &a) 
-        : _operName(a._operName) {
-
-	ExpressionList *agg = new ExpressionList();
-	ExpressionList::iterator it = a._agg->begin();
-	while (it != a._agg->end()){
-	  agg->push_back((*it)->copy());
-	  it++;
-	}
-	_agg = agg;
-
-	ExpressionList *groupBy = new ExpressionList();
-	ExpressionList::iterator itg = a._groupBy->begin();
-	while (itg != a._groupBy->end()){
-	  groupBy->push_back((*itg)->copy());
-	  itg++;
-	}
-	_groupBy = groupBy;
-
-	_baseTable = new Functor(*a._baseTable);
-
-      };
-    
-      virtual string toString() const;
-    
-      virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string, uint32_t);
-    
-      virtual string operName() const 
-      { return _operName; }
-    
-      virtual const Functor* baseTable() const 
-      { return _baseTable; }
-    
-      virtual const ExpressionList* groupBy() const
-      { return _groupBy; }
-    
-      virtual const ExpressionList* aggregates() const
-      { return _agg; }
-    
-    private:
-      ExpressionList* _groupBy; 
-      ExpressionList* _agg;
-      Functor*                        _baseTable;
-      string                          _operName;
-    };
-    
     /***************************************************
      * STATEMENTS
      ***************************************************/
@@ -929,6 +865,19 @@ namespace compile {
       bool _new;
     };
     typedef std::deque<Rule*> RuleList;
+
+    class Index : public Statement {
+    public:
+      Index(Expression *name, ExpressionList *keys);
+
+      virtual string toString() const;
+    
+      virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string);
+
+    private:
+      string      _name;
+      Table2::Key _keys;
+    };
     
     /* The meta-data of the table */
     class Table : public Statement {

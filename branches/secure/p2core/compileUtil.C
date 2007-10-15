@@ -219,7 +219,7 @@ namespace compile {
         }
         if ((*arg)[0]->toString() == AGG)
           arg = Val_Tuple::cast((*arg)[2]);  // Get the variable
-        if ((*arg)[2] == var)
+        if (arg != NULL && (*arg)[2] == var)
           return index;
       }
       return -1;

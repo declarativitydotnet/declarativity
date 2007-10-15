@@ -101,7 +101,7 @@ public:
    * Create and registers a secondary index on specified table name
    * Throws: TableManager::Exception if table does not exist.
    */
-  virtual void
+  virtual TuplePtr
   createIndex(string tableName, CommonTable::Key& key);
 
   /**

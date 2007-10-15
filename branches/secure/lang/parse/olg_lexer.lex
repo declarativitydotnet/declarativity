@@ -108,6 +108,7 @@ WHITESPACE	[ \t\r\n]+
 }
 
 <INITIAL>materialize { return OLG_MATERIALIZE; }
+<INITIAL>index { return OLG_INDEX; }
 <INITIAL>strong { return OLG_STRONG; }
 <INITIAL>weak { return OLG_WEAK; }
 <INITIAL>strongSays { return OLG_STRONGSAYS; }
@@ -219,7 +220,7 @@ WHITESPACE	[ \t\r\n]+
   return OLG_VALUE;
 }
 
-<INITIAL>("::"|[a-z]){ALNUM}* { 
+<INITIAL>"::"?[a-z]("::"|{ALNUM})* { 
   lvalp->v = new compile::parse::Value(Val_Str::mk(yytext)); 
   return OLG_NAME; 
 }

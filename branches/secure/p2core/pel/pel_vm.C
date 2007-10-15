@@ -175,7 +175,7 @@ uint64_t Pel_VM::pop_unsigned()
 int64_t Pel_VM::pop_signed() 
 {
   ValuePtr t = stackTop(); stackPop();
-  return Val_Int64::cast(t);
+  return Val_Int32::cast(t);
 }
 
 //
@@ -547,6 +547,7 @@ DEF_OP(FUNC0) {
   // Run the function
 }
 
+/*
 DEF_OP(INITMASK) { 
    ValuePtr listVal = stackTop(); stackPop();
    ListPtr list = List::mk();
@@ -588,6 +589,7 @@ DEF_OP(MASK) {
     compile::namestracker::applyMask(tempList, maskList, Val_UInt32::cast(oldPos));
   stackPush(Val_List::mk(maskedSchema));
 }
+*/
 
 
 DEF_OP(A_TO_VAR) { 
@@ -1086,7 +1088,7 @@ DEF_OP(BIT_NOT) {
 // arithmetic operations
 //
 DEF_OP(NEG) {
-  ValuePtr neg = Val_Int64::mk(-1);
+  ValuePtr neg = Val_Int32::mk(-1);
   stackPush(pop() * neg);
 }
 DEF_OP(PLUS) {
@@ -1358,7 +1360,7 @@ DEF_OP(STR_CONV) {
 // Integer arithmetic operations
 //
 DEF_OP(INT_ABS) {
-  stackPush(Val_Int64::mk(llabs(pop_signed())));
+  stackPush(Val_Int32::mk(llabs(pop_signed())));
 }
 
 

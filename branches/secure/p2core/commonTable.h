@@ -869,10 +869,8 @@ public:
 
   /**
    * Create and registers a secondary index on specified table name
-   * Return: true  -- if new secondary index is created.
-   *         false -- if index already exists.
    */
-  virtual void
+  virtual TuplePtr
   createIndex(string tableName, CommonTable::Key& key) = 0;
 
   /**

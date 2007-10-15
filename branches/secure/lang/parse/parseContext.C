@@ -440,7 +440,8 @@ namespace compile {
         if (_complement && pos == 0) {
           throw compile::Exception("NOTIN does not apply to the head predicate."); 
         }
-        functorTp->append((*tIter->next())[TUPLE_ID]);
+        TuplePtr table = tIter->next();
+        functorTp->append((*table)[TUPLE_ID]);
       }
       else {
         if (_complement) {
@@ -715,81 +716,6 @@ namespace compile {
       return selectTp;
     }
     
-    string AggregationView::toString() const {
-      ostringstream aggFieldStr;
-      ostringstream groupByFieldStr;
-    
-      aggFieldStr << "(";
-      groupByFieldStr << "(";
-    
-      for (ExpressionList::iterator iter = _groupBy->begin();
-           iter != _groupBy->end(); iter++) {
-        groupByFieldStr << (*iter)->toString();
-        if (iter + 1 != _groupBy->end()) {
-          groupByFieldStr << ", ";
-        }
-      }
-      groupByFieldStr << ")";
-    
-    
-      for (ExpressionList::iterator iter = _agg->begin();
-           iter != _agg->end(); iter++) {
-        aggFieldStr << (*iter)->toString();
-        if (iter + 1 != _agg->end()) {
-          aggFieldStr << ", "; 
-        }
-      }
-      aggFieldStr << ")";
-      
-      return _operName + "( "
-        + groupByFieldStr.str()
-        + ", "
-        + aggFieldStr.str()
-        + ", "
-        + _baseTable->toString()
-        + " )";    
-    }
-    
-    TuplePtr 
-    AggregationView::materialize(CommonTable::ManagerPtr catalog, ValuePtr ruleId, string ns, uint32_t pos)
-    {
-      CommonTablePtr aggViewTbl = catalog->table(AGG_VIEW);
-      TuplePtr       aggViewTp  = Tuple::mk(AGG_VIEW, true);
-      if (ruleId) {
-        aggViewTp->append(ruleId);
-      }
-      else {
-        aggViewTp->append(Val_Null::mk());
-      }
-  
-      // Add group by variables 
-      ListPtr groupBy = List::mk();
-      for (ExpressionList::iterator iter = _groupBy->begin();
-           iter != _groupBy->end(); iter++) {
-        groupBy->append((*iter)->tuple());
-      }
-    
-      // Add aggregation variables
-      ListPtr aggVar = List::mk();
-      for (ExpressionList::iterator iter = _agg->begin();
-           iter != _agg->end(); iter++) {
-        aggVar->append((*iter)->tuple());
-      }
-  
-      /* Pass the baseTable functor the ruleId 
-         (which is the rule defining this aggView). */
-      TuplePtr baseTableTp = _baseTable->materialize(catalog, ruleId, ns, pos);
-      aggViewTp->append((*baseTableTp)[TUPLE_ID]); // Primary key of functor
-      
-      aggViewTp->append(Val_Str::mk(_operName));   // Aggregation operator
-      aggViewTp->append(Val_List::mk(groupBy));    // Group By variables 
-      aggViewTp->append(Val_List::mk(aggVar));     // Aggregation variables
-  
-      aggViewTp->freeze();
-      aggViewTbl->insert(aggViewTp);
-      return aggViewTp;
-    }
-    
 /***************************************************************************/
 
     Namespace::Namespace(string name, StatementList *s)
@@ -799,11 +725,29 @@ namespace compile {
     Namespace::materialize(CommonTable::ManagerPtr catalog, 
                            ValuePtr programID, string ns)
     {
-      for (StatementList::iterator iter = _statements->begin(); 
-           iter != _statements->end(); iter++) {
-        (*iter)->materialize(catalog, programID, ns + _name + "::");
-      }
-      return TuplePtr();
+        for (StatementList::iterator iter = _statements->begin();
+             iter != _statements->end(); iter++) { 
+          compile::parse::Table *table = dynamic_cast<compile::parse::Table*>(*iter);
+          if (table != NULL) {
+            table->materialize(catalog, programID, ns + _name + "::");
+          }
+        }
+
+        for (StatementList::iterator iter = _statements->begin();
+             iter != _statements->end(); iter++) { 
+          compile::parse::Index *index = dynamic_cast<compile::parse::Index*>(*iter);
+          if (index != NULL) {
+            index->materialize(catalog, programID, ns + _name + "::");
+          }
+        }
+
+        for (StatementList::iterator iter = _statements->begin(); 
+             iter != _statements->end(); iter++) {
+          if (!dynamic_cast<compile::parse::Table*>(*iter) && !dynamic_cast<compile::parse::Index*>(*iter)) {
+            (*iter)->materialize(catalog, programID, ns + _name + "::");
+          }
+        }
+        return TuplePtr();
     }
 
     string 
@@ -1154,6 +1098,49 @@ namespace compile {
       return factTp;
     }
     
+    Index::Index(Expression *name, ExpressionList *keys)
+    {
+      _name = name->toString() ;
+
+      uint32_t fieldNum = 0;
+      ExpressionList::const_iterator i = keys->begin();
+      for (; (i != keys->end()) && (fieldNum <= 1); i++){
+        fieldNum= Val_UInt32::cast((*i)->value());
+        if(fieldNum <= 1){
+          _keys.push_back(fieldNum);
+        }
+      }       
+    }
+
+    string 
+    Index::toString() const 
+    {
+      ostringstream b;
+    
+      b << "Index: " << _name;
+      for (Table2::Key::const_iterator iter = _keys.begin();
+           iter != _keys.end(); iter++) {
+        b << *iter;
+        if (iter + 1 != _keys.end()) b << ", ";
+      }
+      b << ").";
+      return b.str();
+    }
+    
+    TuplePtr 
+    Index::materialize(CommonTable::ManagerPtr catalog, ValuePtr parentKey, string ns)
+    {
+      string scopedName;
+      if (_name.size() >= 2 && _name.substr(0,2) == "::") {
+        scopedName = _name.substr(2, _name.length()-2);
+      }
+      else {
+        scopedName = ns + _name; 
+      }
+
+      return catalog->createIndex(scopedName, _keys);
+    }
+
     Table::Table(Expression *name, 
                  Expression *ttl, 
                  Expression *size, 
@@ -1210,7 +1197,6 @@ namespace compile {
 	  _keys.push_back(++offset); //V
 	  _keys.push_back(++offset); //Proof
 	}
-	
         for (;i1 != keys->end(); i1++){
 	  fieldNum= Val_UInt32::cast((*i1)->value());
 	  if(fieldNum > 1){
@@ -1438,7 +1424,7 @@ namespace compile {
       if(parserCall){
 	for (StatementList::iterator iter = s->begin();
 	     iter != s->end(); iter++) { 
-	  std::cout<<(*iter)->toString()<<std::endl;
+	  std::cout  <<  (*iter)->toString() << std::endl;
 	}
       }
       
@@ -1465,8 +1451,27 @@ namespace compile {
       if (_statements) {
         for (StatementList::iterator iter = _statements->begin();
              iter != _statements->end(); iter++) { 
-          (*iter)->materialize(catalog, pid, ""); 
+          compile::parse::Table *table = dynamic_cast<compile::parse::Table*>(*iter);
+          if (table != NULL) {
+            table->materialize(catalog, pid, ""); 
+          }
         }
+
+        for (StatementList::iterator iter = _statements->begin();
+             iter != _statements->end(); iter++) { 
+          compile::parse::Index *index = dynamic_cast<compile::parse::Index*>(*iter);
+          if (index != NULL) {
+            index->materialize(catalog, pid, ""); 
+          }
+        }
+
+        for (StatementList::iterator iter = _statements->begin();
+             iter != _statements->end(); iter++) { 
+          if (!dynamic_cast<compile::parse::Table*>(*iter) && !dynamic_cast<compile::parse::Index*>(*iter)) {
+            (*iter)->materialize(catalog, pid, ""); 
+          }
+        }
+
         delete _statements;
         _statements = NULL;
       }

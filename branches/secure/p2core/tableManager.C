@@ -220,7 +220,7 @@ TableManager::createTable(string name, CommonTable::Key& key, uint32_t maxSize)
   return tp;
 }
 
-void
+TuplePtr
 TableManager::createIndex(string tableName, CommonTable::Key& key)
 {
 
@@ -249,6 +249,7 @@ TableManager::createIndex(string tableName, CommonTable::Key& key)
       registerIndex(tableName, key, SECONDARY);  // All is well, register new index
     }
   }
+  return tp;
 }
 
 void

@@ -67,6 +67,7 @@
 %token OLG_DEL
 %token OLG_QUERY
 %token OLG_MATERIALIZE
+%token OLG_INDEX
 %token OLG_SAYSMATERIALIZE
 %token OLG_SAYS
 %token OLG_KEYS
@@ -100,11 +101,11 @@
   compile::parse::StatementList             *u_statementlist;
 }
 
-%type<u_statement>     statement nameSpace rule materialize watch watchfine stage fact ref;
+%type<u_statement>     statement nameSpace rule materialize index watch watchfine stage fact ref;
 %type<u_statementlist> statements;
-%type<u_termlist>      termlist aggview newtermlist;
+%type<u_termlist>      termlist newtermlist;
 %type<u_exprlist>      factbody functorbody functorargs functionargs vectorentries;
-%type<u_exprlist>      matrixentry primarykeys keylist; 
+%type<u_exprlist>      matrixentry keys keylist; 
 %type<u_exprlistlist>  matrixentries;
 %type<u_term>          term functor assign select says newFunctor headTerms;
 %type<v>               functorarg locationarg functionarg tablearg atom rel_atom math_atom;
@@ -143,12 +144,16 @@ nameSpace: OLG_NAMESPACE OLG_NAME OLG_LCURB statements OLG_RCURB
          ;
 
 materialize: OLG_MATERIALIZE OLG_LPAR OLG_NAME OLG_COMMA
-             tablearg OLG_COMMA tablearg OLG_COMMA primarykeys OLG_RPAR OLG_DOT 
-             { $$ = new compile::parse::Table($3, $5, $7, $9); } |
+             tablearg OLG_COMMA tablearg OLG_COMMA keys OLG_RPAR OLG_DOT 
+               { $$ = new compile::parse::Table($3, $5, $7, $9); } |
              OLG_SAYSMATERIALIZE OLG_LPAR OLG_NAME OLG_COMMA
-             tablearg OLG_COMMA tablearg OLG_COMMA primarykeys OLG_RPAR OLG_DOT 
-             { $$ = new compile::parse::Table($3, $5, $7, $9, true); } 
-    ;
+             tablearg OLG_COMMA tablearg OLG_COMMA keys OLG_RPAR OLG_DOT 
+               { $$ = new compile::parse::Table($3, $5, $7, $9, true); } 
+          ;
+
+index: OLG_INDEX OLG_LPAR OLG_NAME OLG_COMMA keys OLG_RPAR
+       { $$ = new compile::parse::Index($3, $5); }
+     ;
 
 ref: refType OLG_REF OLG_LPAR OLG_NAME OLG_COMMA
              OLG_NAME OLG_COMMA tablearg OLG_RPAR OLG_DOT 
@@ -165,12 +170,13 @@ tablearg: OLG_VALUE
           { $$ = $1; }
           ;
 
-primarykeys: OLG_KEYS OLG_LPAR keylist OLG_RPAR 
-             { $$ = $3; }
-             ;
+keys: OLG_KEYS OLG_LPAR keylist OLG_RPAR 
+      { $$ = $3; }
+    ;
 
-keylist: OLG_VALUE { $$ = new compile::parse::ExpressionList(); 
-                    $$->push_front($1); }
+keylist: OLG_VALUE 
+         { $$ = new compile::parse::ExpressionList(); 
+           $$->push_front($1); }
          | 
          OLG_VALUE OLG_COMMA keylist 
          { $3->push_front($1); $$=$3; }
@@ -209,14 +215,6 @@ rule: OLG_NAME headTerms OLG_IF termlist OLG_DOT
         { $$ = new compile::parse::Rule($2, $4, true); 
 	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
 	} 
-      | OLG_NAME headTerms OLG_IF aggview OLG_DOT 
-        { $$ = new compile::parse::Rule($2, $4, false, $1); 
-	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
-	} 
-      | headTerms OLG_IF aggview OLG_DOT 
-        { $$ = new compile::parse::Rule($1, $3, false); 
-	//std::cout<<std::endl<<"Found Rule: "<<$$->toString(); 
-	}
       | OLG_NAME headTerms OLG_IF newtermlist OLG_DOT 
         { $$ = new compile::parse::Rule($2, $4, false, $1);
           $$->makeNew();
@@ -231,9 +229,7 @@ rule: OLG_NAME headTerms OLG_IF termlist OLG_DOT
     ;
 
 term: functor | assign | select | says
-        { $$=$1;
-	//std::cout<<std::endl<<"Executing term";
-	}
+        { $$=$1; }
       ;
 
 newFunctor: OLG_NEW OLG_LT OLG_VAR OLG_COMMA functorarg OLG_COMMA functor OLG_GT
@@ -312,12 +308,6 @@ functorargs: functorarg
 functorarg: atom | OLG_VAR | aggregate | math_expr | function
             { $$ = $1; }
           ;
-
-aggview: agg_oper OLG_LPAR functorbody OLG_COMMA functorbody OLG_COMMA functor OLG_RPAR 
-           { $$ = new compile::parse::TermList(); 
-             $$->push_back(new compile::parse::AggregationView($1->toString(),
-                                                               $3, $5, $7)); }
-         ;
 
 function:  OLG_FUNCTION OLG_LPAR functionargs OLG_RPAR
            { $$ = new compile::parse::Function($1, $3); }

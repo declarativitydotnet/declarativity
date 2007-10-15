@@ -140,17 +140,19 @@ CompileStage::initialize()
     rewriteTbl->insert(stage); \
   } while (0);
 
-  const int stageCount = 14;
+  const int stageCount = 9;
   string stages[] = {"compile", 
 		     "parse", 
+		     /*
 		     "secure", 
 		     "compound", 
 		     "rewrite0", 
 		     "rewrite1", 
-		     "rewrite2", 
+		     "rewrite2",
+		     */ 
 		     "eca", 
-		     "debug", 
 		     "rewrite", 
+		     "debug", 
 		     "local", 
 		     "planner", 
 		     "p2dl", 
@@ -159,21 +161,5 @@ CompileStage::initialize()
   for(int i = 0; i < (stageCount - 1); i++){
     STAGE_INIT(stages[i], stages[i+1]);
   }
-  /*
-  STAGE_INIT("compile", "parse")
-  STAGE_INIT("parse",   "rewrite0")
-  STAGE_INIT("rewrite0","rewrite1")
-  STAGE_INIT("rewrite1","compound")
-  STAGE_INIT("compound","eca")
-  STAGE_INIT("rewrite0","compound")
-  STAGE_INIT("compound","rewrite1")
-  STAGE_INIT("rewrite1","eca")
-  STAGE_INIT("eca",     "debug")
-  STAGE_INIT("debug",     "rewrite")
-  STAGE_INIT("rewrite", "local")
-  STAGE_INIT("local",   "planner")
-  STAGE_INIT("planner", "p2dl")
-  STAGE_INIT("p2dl",    "installed")
-  */
   return 0;
 }

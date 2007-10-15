@@ -17,31 +17,30 @@
 #ifndef SYS_TABLE_GLOBALS
 #define SYS_TABLE_GLOBALS
   /** Entity table names */
-  #define NODEID            "nodeId"
-  #define ARGUMENT          "argument"
-  #define PROGRAM           "program"
-  #define GLOBAL_EVENT      "globalEvent"
-  #define SIDE_EFFECT       "sideEffectRule"
-  #define REWRITE           "rewrite"
-  #define ATTRIBUTE         "attribute"
-  #define TABLE             "table"
-  #define REF               "ref"
-  #define TABLESTATS        "tableStats"
-  #define INDEX             "index"
-  #define FACT              "fact"
-  #define SAYS              "says"
-  #define NEW               "new"
-  #define STAGE             "stage"
-  #define RULE              "rule"
-  #define FUNCTOR           "functor"
-  #define FUNCTOR_ATTRIBUTE "functorAttribute"
-  #define ASSIGN            "assign"
-  #define SELECT            "select"
-  #define AGG_VIEW          "aggregationView"
-  #define WATCH             "watch"
-  #define FUNCTION          "function"
-  #define ACCESS_METHOD     "accessMethod"
-  #define COMPILE_STATUS    "compileStatus"
+  #define NODEID            "sys::nodeId"
+  #define ARGUMENT          "sys::argument"
+  #define PROGRAM           "sys::program"
+  #define GLOBAL_EVENT      "sys::globalEvent"
+  #define SIDE_EFFECT       "sys::sideEffectRule"
+  #define REWRITE           "sys::rewrite"
+  #define ATTRIBUTE         "sys::attribute"
+  #define TABLE             "sys::table"
+  #define REF               "sys::ref"
+  #define TABLESTATS        "sys::tableStats"
+  #define INDEX             "sys::index"
+  #define FACT              "sys::fact"
+  #define SAYS              "sys::says"
+  #define NEW               "sys::new"
+  #define STAGE             "sys::stage"
+  #define RULE              "sys::rule"
+  #define FUNCTOR           "sys::functor"
+  #define ASSIGN            "sys::assign"
+  #define SELECT            "sys::select"
+  #define PROJECTION        "sys::projection"
+  #define WATCH             "sys::watch"
+  #define FUNCTION          "sys::function"
+  #define ACCESS_METHOD     "sys::accessMethod"
+  #define COMPILE_STATUS    "sys::compileStatus"
 
   /** The following are expression types */
   #define AGG          "Aggregation"
@@ -93,6 +92,10 @@ TABLEDEF(INDEX, CommonTable::theKey(CommonTable::KEY34), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("IID", 2) \
          SCHEMA("TABLENAME", 3) SCHEMA("KEY", 4) SCHEMA("TYPE", 5))
 
+TABLEDEF(ATTRIBUTE, CommonTable::theKey(CommonTable::KEY34), \
+         SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("ATTRID", 2) \
+         SCHEMA("TABLENAME", 3) SCHEMA("ATTRNAME", 4) SCHEMA("POSITION", 5))
+
 TABLEDEF(REF, CommonTable::theKey(CommonTable::KEY2), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("REFID", 2) \
 	 SCHEMA("PID", 3) SCHEMA("FROM", 4) SCHEMA("TO", 5) \
@@ -127,10 +130,6 @@ TABLEDEF(SIDE_EFFECT, CommonTable::theKey(CommonTable::KEY34), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("SEID", 2) \
          SCHEMA("NAME", 3) SCHEMA("TYPE", 4))
          
-TABLEDEF(ATTRIBUTE, CommonTable::theKey(CommonTable::KEY34), \
-         SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("ATTRID", 2) \
-         SCHEMA("TABLENAME", 3) SCHEMA("ATTRNAME", 4) SCHEMA("POSITION", 5))
-
 TABLEDEF(PROGRAM, CommonTable::theKey(CommonTable::KEY2), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("PID", 2) \
          SCHEMA("NAME", 3) SCHEMA(REWRITE, 4) SCHEMA("STATUS", 5) \
@@ -169,15 +168,14 @@ TABLEDEF(ASSIGN, CommonTable::theKey(CommonTable::KEY2), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("AID", 2) \
          SCHEMA("RID", 3) SCHEMA("VAR", 4) SCHEMA("VALUE", 5) SCHEMA("POSITION", 6))
 
-TABLEDEF(AGG_VIEW, CommonTable::theKey(CommonTable::KEY2), \
-         SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("AVID", 2) \
-         SCHEMA("RID", 3) SCHEMA("FID", 5) \
-         SCHEMA("OPER", 6) SCHEMA("GROUPBY", 7) SCHEMA("AGG", 8))
-
 TABLEDEF(SELECT, CommonTable::theKey(CommonTable::KEY2), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("SID", 2) \
          SCHEMA("RID", 3) SCHEMA("BOOL", 4) SCHEMA("POSITION", 5) \
          SCHEMA("AM", 6))
+
+TABLEDEF(PROJECTION, CommonTable::theKey(CommonTable::KEY2), \
+         SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("PID", 2) \
+         SCHEMA("RID", 3) SCHEMA("ATTRIBUTES", 4) SCHEMA("POSITION", 5))
 
 TABLEDEF(FUNCTION, CommonTable::theKey(CommonTable::KEY2), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("FID", 2) \
@@ -207,7 +205,6 @@ FOREIGN_KEY(SELECT,            CommonTable::theKey(CommonTable::KEY3), RULE)
 #ifndef SECONDARY_INDEX
 #define SECONDARY_INDEX(table, key)
 #endif
-SECONDARY_INDEX(ATTRIBUTE,         CommonTable::theKey(CommonTable::KEY3))
 SECONDARY_INDEX(REF,               CommonTable::theKey(CommonTable::KEY3))
 SECONDARY_INDEX(REF,               CommonTable::theKey(CommonTable::KEY4))
 SECONDARY_INDEX(SAYS,              CommonTable::theKey(CommonTable::KEY3))
@@ -223,10 +220,11 @@ SECONDARY_INDEX(ASSIGN,            CommonTable::theKey(CommonTable::KEY36))
 SECONDARY_INDEX(SELECT,            CommonTable::theKey(CommonTable::KEY3))
 SECONDARY_INDEX(SELECT,            CommonTable::theKey(CommonTable::KEY35))
 SECONDARY_INDEX(FACT,              CommonTable::theKey(CommonTable::KEY3))
-SECONDARY_INDEX(STAGE,              CommonTable::theKey(CommonTable::KEY3))
+SECONDARY_INDEX(STAGE,             CommonTable::theKey(CommonTable::KEY3))
 SECONDARY_INDEX(REWRITE,           CommonTable::theKey(CommonTable::KEY3))
 SECONDARY_INDEX(REWRITE,           CommonTable::theKey(CommonTable::KEY4))
 SECONDARY_INDEX(WATCH,             CommonTable::theKey(CommonTable::KEY3))
+SECONDARY_INDEX(PROJECTION,        CommonTable::theKey(CommonTable::KEY35))
 #undef SECONDARY_INDEX
 
 #ifndef FUNCTIONDEF
