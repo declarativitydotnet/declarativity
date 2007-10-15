@@ -832,6 +832,7 @@ namespace compile {
       _delete = deleteFlag;
       _new = false;
       _head = dynamic_cast<Functor*>(lhs);
+      _head->resetHint(); // reset the hint var to null if its not null already
       _body = rhs;
     }
     
@@ -1188,27 +1189,34 @@ namespace compile {
       if (keys) {
 	uint32_t fieldNum = 0;
 	ExpressionList::const_iterator i = keys->begin();
+	ExpressionList::const_iterator i1 = keys->begin();
 	for (; (i != keys->end()) && (fieldNum <= 1); i++){
 	  fieldNum= Val_UInt32::cast((*i)->value());
 	  if(fieldNum <= 1){
 	      _keys.push_back(fieldNum);
+	      i1++;
 	  }
 	}       
-	if(says){
-	  _keys.push_back(2); //P
-	  _keys.push_back(3); //R
-	  _keys.push_back(4); //K
-	  _keys.push_back(5); //V
-	  _keys.push_back(6); //Proof
+	uint32_t offset = 1; // how much to offset
+	if(compoundRewrite && _versioned){
+	  _keys.push_back(compile::VERPOS); 
+	  ++offset;
+	  assert(compile::VERPOS == offset);
 	}
-        for (;i != keys->end(); i++){
-	  fieldNum= Val_UInt32::cast((*i)->value());
-	  if(says){
-	    if(fieldNum > 1){
-	      fieldNum += TableEntry::numSecureFields;	  
-	      _keys.push_back(fieldNum);
-	    }
+	if(says){
+	  _keys.push_back(++offset); //P
+	  _keys.push_back(++offset); //R
+	  _keys.push_back(++offset); //K
+	  _keys.push_back(++offset); //V
+	  _keys.push_back(++offset); //Proof
+	}
+	
+        for (;i1 != keys->end(); i1++){
+	  fieldNum= Val_UInt32::cast((*i1)->value());
+	  if(fieldNum > 1){
+	    fieldNum += (offset -1);	  
 	  }
+	  _keys.push_back(fieldNum);
 	}
       }
     }
@@ -1248,22 +1256,8 @@ namespace compile {
         scopedName = ns + _name; 
       }
       if(compoundRewrite && _versioned){
-	Table2::Key newKey;
-	newKey.push_back(compile::VERPOS); 
-	for (CommonTable::Key::iterator i = _keys.begin();
-	     i != _keys.end(); i++) {
-	  unsigned fieldNo = *i;
-	  if (fieldNo >= (compile::VERPOS)) {
-	    newKey.push_back(fieldNo + 1);
-	  }
-	  else{
-	    newKey.push_back(fieldNo);
-	  }
-	}
 	compile::Context::materializedTables->insert(Val_Str::mk(scopedName));
-	return catalog->createTable(scopedName, newKey, _size, _lifetime);
-      }
-      
+      }      
 
       return catalog->createTable(scopedName, _keys, _size, _lifetime);
     }

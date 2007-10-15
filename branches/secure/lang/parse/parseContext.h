@@ -625,7 +625,15 @@ namespace compile {
 	_new = true;
 	_locSpec = locSpec;
 	_opaque = opaque;
-	_hint = new Value(Val_Null::mk());
+	ostringstream oss;
+	oss << FICTPREFIX << fictVarCounter++; 
+        _hint = new compile::parse::Variable(Val_Str::mk(oss.str())); 
+      }
+
+      void resetHint(){
+	if(_new){
+	  _hint = new Value(Val_Null::mk());
+	}
       }
 
       void processNew(TermList *t = NULL, Expression *val = NULL);
