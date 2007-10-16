@@ -547,7 +547,7 @@ DEF_OP(FUNC0) {
   // Run the function
 }
 
-/*
+
 DEF_OP(INITMASK) { 
    ValuePtr listVal = stackTop(); stackPop();
    ListPtr list = List::mk();
@@ -589,7 +589,7 @@ DEF_OP(MASK) {
     compile::namestracker::applyMask(tempList, maskList, Val_UInt32::cast(oldPos));
   stackPush(Val_List::mk(maskedSchema));
 }
-*/
+
 
 
 DEF_OP(A_TO_VAR) { 
