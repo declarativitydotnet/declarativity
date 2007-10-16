@@ -542,7 +542,7 @@ namespace compile {
     TuplePtr Context::createLinkExpanderTuple(ValuePtr ruleId, TuplePtr location, TuplePtr locSpec, TuplePtr linkExpanderSet, CommonTable::ManagerPtr catalog){
       TuplePtr     functorTp = Tuple::mk(FUNCTOR, true);
       functorTp->append(ruleId);
-
+      functorTp->append(Val_UInt32::mk(0)); // NOTIN?
       functorTp->append(Val_Str::mk(compile::LINKEXPANDERTABLE));   // Functor name
   
       // Fill in table reference if functor is materialized

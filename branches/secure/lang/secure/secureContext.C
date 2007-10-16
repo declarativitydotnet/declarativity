@@ -60,7 +60,7 @@ namespace compile {
 	    CommonTablePtr refTbl = catalog->table(REF);
 	    CommonTable::Iterator refIter;
 	      
-	    for (refIter = refTbl->lookup(CommonTable::theKey(CommonTable::KEY4), CommonTable::theKey(CommonTable::KEY4), functor);
+	    for (refIter = refTbl->lookup(CommonTable::theKey(CommonTable::KEY5), CommonTable::theKey(CommonTable::KEY4), functor);
 		 !refIter->done(); ) {
 	      TuplePtr ref = refIter->next();
 	      uint32_t refPosVal = Val_UInt32::cast((*ref)[refPosPos]);
@@ -136,7 +136,7 @@ namespace compile {
 	  CommonTable::Key nameKey;
 	  nameKey.push_back(catalog->attribute(FUNCTOR, "NAME"));
 	  CommonTable::Iterator tIter = tableTbl->lookup(nameKey, CommonTable::theKey(CommonTable::KEY3), head);
-	  CommonTable::Iterator rIter = refTbl->lookup(CommonTable::theKey(CommonTable::KEY4), CommonTable::theKey(CommonTable::KEY4), head);
+	  CommonTable::Iterator rIter = refTbl->lookup(nameKey, CommonTable::theKey(CommonTable::KEY4), head);
 	  TuplePtr headSays;
 	  TuplePtr headSaysType;
 	  TuplePtr keyTypeVar;
@@ -728,6 +728,7 @@ namespace compile {
 	// create encryption hint
 	TuplePtr     encHintTp = Tuple::mk(FUNCTOR, true);
         encHintTp->append(ruleId);
+	encHintTp->append(Val_UInt32::mk(0)); // NOTIN?
 	encHintTp->append(Val_Str::mk(ENCHINT));   // Functor name
   
 	// Fill in table reference if functor is materialized
@@ -769,6 +770,7 @@ namespace compile {
 
 	TuplePtr     genKeyTp = Tuple::mk(FUNCTOR, true);
         genKeyTp->append(ruleId);
+	genKeyTp->append(Val_UInt32::mk(0)); // NOTIN?
 	genKeyTp->append(Val_Str::mk(GENTABLE));   // Functor name
   
 	// Fill in table reference if functor is materialized
@@ -1296,7 +1298,7 @@ namespace compile {
       else {
 	functorTp->append(Val_Null::mk());
       }
-    
+      functorTp->append(Val_UInt32::mk(0)); // NOTIN?
       functorTp->append(Val_Str::mk(name));   // Functor name
     
       CommonTable::Key nameKey;
@@ -1386,7 +1388,7 @@ namespace compile {
 	}
 
 	for (funcIter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY0), 
-					   CommonTable::theKey(CommonTable::KEY4), dummyTpl);
+					   CommonTable::theKey(CommonTable::KEY5), dummyTpl);
 	     !funcIter->done(); ) {
 	  TuplePtr functor = funcIter->next()->clone();
 	  functor->set(tidPos, tid);
@@ -1404,7 +1406,7 @@ namespace compile {
 	}
 
 	for (funcIter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY0), 
-					   CommonTable::theKey(CommonTable::KEY4), dummyTpl);
+					   CommonTable::theKey(CommonTable::KEY5), dummyTpl);
 	     !funcIter->done(); ) {
 	  TuplePtr functor = funcIter->next()->clone();
 	  functor->set(tidPos, tid);
@@ -1423,7 +1425,7 @@ namespace compile {
 	}
 
 	for (funcIter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY0), 
-					   CommonTable::theKey(CommonTable::KEY4), dummyTpl);
+					   CommonTable::theKey(CommonTable::KEY5), dummyTpl);
 	     !funcIter->done(); ) {
 	  TuplePtr functor = funcIter->next()->clone();
 	  functor->set(tidPos, tid);

@@ -446,6 +446,8 @@ namespace compile {
 
       TuplePtr head = Tuple::mk(FUNCTOR, true);
       head->append(ruleId);
+      head->append(Val_UInt32::mk(0)); // NOTIN?
+
       head->append(Val_Str::mk(compile::LOCSPECTABLE));   // Functor name
   
       // Fill in table reference if functor is materialized
@@ -558,6 +560,7 @@ namespace compile {
 
       TuplePtr head = Tuple::mk(FUNCTOR, true);
       head->append(ruleId);
+      head->append(Val_UInt32::mk(0)); // NOTIN?
       head->append(Val_Str::mk(headname));   // Functor name
   
       // Fill in table reference if functor is materialized
@@ -1071,7 +1074,7 @@ namespace compile {
       else {
         functorTp->append(Val_Null::mk());
       }
-  
+      functorTp->append(Val_UInt32::mk(0)); // NOTIN?
       functorTp->append(Val_Str::mk(name));   // Functor name
 
       CommonTable::Key nameKey;

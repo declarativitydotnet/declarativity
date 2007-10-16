@@ -66,8 +66,9 @@ enum SchemaGlobal{TNAME=0, NODE_ID, TUPLE_ID};
 enum VariableTuple{CONTENTPOS=2}; //pos of content in variable tuple
 enum GLOBALUNIQUE{NAME = 0, NODE, ID, STRONGPOS, HASHPOS};
 enum RefType{WEAKLINK = 0, STRONGLINK, WEAKSAYS, STRONGSAYS, ROOT, ROOTSAYS};
-enum NewPos{LOCPOS = 0, OPAQUEPOS, HINTPOS};
+enum NewPos{LOCPOS = 1, OPAQUEPOS, HINTPOS};
 enum TypeCode{CREATESAYS = 0, COPYSAYS};
+enum SaysTuple{LOC_POS = 1, PPOS, RPOS, KPOS, VPOS, PROOFPOS};
 
 #endif
 

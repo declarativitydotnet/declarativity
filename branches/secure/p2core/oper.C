@@ -24,6 +24,7 @@
 #include "val_tuple.h"
 #include "val_time.h"
 #include "val_set.h"
+#include "val_list.h"
 #include "val_id.h"
 #include "val_ip_addr.h"
 
@@ -149,7 +150,15 @@ namespace opr {
      &Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_, 
      &Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_,
      &Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_,
-	 &Val_Set::oper_, &Val_Set::oper_}
+     &Val_Set::oper_, &Val_Set::oper_},
+    /*LIST*/
+    {&Val_List::oper_, &Val_List::oper_, &Val_List::oper_, 
+     &Val_List::oper_, &Val_List::oper_, &Val_List::oper_, 
+     &Val_List::oper_, &Val_List::oper_, &Val_List::oper_, 
+     &Val_List::oper_, &Val_List::oper_, &Val_List::oper_,
+     &Val_List::oper_, &Val_List::oper_, &Val_List::oper_,
+	 &Val_List::oper_, &Val_List::oper_}
+
 
   };
   // const Oper** Oper::oper_table_[Value::TYPES][Value::TYPES] = {

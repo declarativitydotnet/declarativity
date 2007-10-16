@@ -13,7 +13,11 @@ r3 new<@I, null, parent(@X, C, &B)>:- event(@I, C), link(@I, X).
 
 r4 event(@I, C):- child(@I, C).
 
+/*
 r5 child(@L1, B):- new<@Me, null, parent(@X, C, L1)>, child(@Me, B).
+*/
+
+r8 new<@Me, null, child(@L1, B)>:- new<@Me, null, parent(@X, C, L1)>, child(@Me, B).
 
 r6 receiveEventTest(@I, C):-parent(@I, C, L).
 

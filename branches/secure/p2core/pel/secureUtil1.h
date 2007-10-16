@@ -24,6 +24,8 @@ namespace compile {
   
   namespace secure {
 
+    ValuePtr serializeTuple1(TuplePtr tuple, string name, std::set<uint32_t> linkSet, std::set<uint32_t> skipFields, uint32_t linkSetOffset);
+
     ValuePtr generateLocSpec(bool strong = false);
 
     ValuePtr generateVersion(bool strong = false);
