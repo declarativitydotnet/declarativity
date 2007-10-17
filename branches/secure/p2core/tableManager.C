@@ -19,6 +19,7 @@
 #include "val_str.h"
 #include "val_time.h"
 #include "val_uint32.h"
+#include "val_double.h"
 #include "val_list.h"
 #include "val_null.h"
 #include "list.h"
@@ -157,7 +158,7 @@ TableManager::nodeid()
 unsigned
 TableManager::uniqueIdentifier()
 {
-  static unsigned identifier = 0;
+  static unsigned identifier = 1;
   return identifier++;
 }
 
@@ -394,6 +395,7 @@ void TableManager::registerIndex(string tableName, CommonTable::Key& key, string
   tp->append(Val_Str::mk(tableName));
   tp->append(Val_List::mk(keys));
   tp->append(Val_Str::mk(type));
+  tp->append(Val_Double::mk(0.3));
   tp->freeze();
   index->insert(tp);
 }

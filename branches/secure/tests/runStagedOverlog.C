@@ -34,6 +34,7 @@
 #include "aggFuncLoader.h"
 #include "langLoader.h"
 #include "functionLoader.h"
+#include "programLoader.h"
 
 enum TransportConf {NONE=0, RELIABLE=1, ORDERED=2, CC=4, RCC=5, TERMINAL=6};
 
@@ -162,7 +163,7 @@ string stub(string hostname, string port, TransportConf conf)
        << "\tInsert2(\"installInsert\", \"" << PROGRAM << "\");\n";
 
   if(conf & TERMINAL) {
-    stub << "\t\tCompileTerminal(\"ct\") -> Insert2(\"ctInsert\", \"" << PROGRAM << "\");\n";
+    stub << "\t\tProgramLoader(\"loader\") -> Insert2(\"ctInsert\", \"" << PROGRAM << "\");\n";
   }
   stub << "};/**END MAIN*/\n\n";
 
@@ -213,7 +214,6 @@ main(int argc, char **argv)
 
 
   string overLogFile("-");
-  string derivativeFile("stdin");
   double delay = 0.0;
   bool outputDot = false;
   bool run = true;
@@ -257,11 +257,6 @@ main(int argc, char **argv)
 
     case 'o':
       overLogFile = optarg;
-      if (overLogFile == "-") {
-        derivativeFile = "stdin";
-      } else {
-        derivativeFile = overLogFile;
-      }
       break;
 
     case 'g':
@@ -303,16 +298,6 @@ main(int argc, char **argv)
   }
   TELL_INFO << "\n";
 
-
-
-
-
-  if (overLogFile == "-") {
-    derivativeFile = "stdin";
-  } else {
-    derivativeFile = overLogFile;
-  }
-  
   TELL_INFO << "Running from translated file \"" << overLogFile << "\"\n";
 
   std::ostringstream myAddressBuf, myPortBuf;
@@ -323,12 +308,6 @@ main(int argc, char **argv)
   TELL_INFO << "My address is \"" << myAddress << "\"\n";
   
   TELL_INFO << "My start delay is " << delay << "\n";
-
-
-
-
-
-
 
   try {
     loadAllModules();
@@ -384,6 +363,13 @@ main(int argc, char **argv)
 
     eventLoopInitialize();
     compile::Context *context = new compile::p2dl::Context("p2dl", dfdesc);
+    if (overLogFile != "-") {
+      Plumber::DataflowPtr main = Plumber::dataflow("main");
+      ElementPtr loaderElement = main->find("loader")->element();
+      ProgramLoader *loader = dynamic_cast<ProgramLoader*>(loaderElement.get());
+      loader->program("commandLine", overLogFile);
+      loader->term(false);
+    }
     Plumber::toDot("runOverlog.dot");
     delete context;
     eventLoop(); 

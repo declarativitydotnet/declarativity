@@ -91,7 +91,8 @@ TABLEDEF(TABLE, CommonTable::theKey(CommonTable::KEY3), \
 
 TABLEDEF(INDEX, CommonTable::theKey(CommonTable::KEY34), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("IID", 2) \
-         SCHEMA("TABLENAME", 3) SCHEMA("KEY", 4) SCHEMA("TYPE", 5))
+         SCHEMA("TABLENAME", 3) SCHEMA("KEY", 4) SCHEMA("TYPE", 5) \
+         SCHEMA("SELECTIVITY", 6))
 
 TABLEDEF(ATTRIBUTE, CommonTable::theKey(CommonTable::KEY34), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("ATTRID", 2) \
@@ -233,6 +234,7 @@ SECONDARY_INDEX(PROJECTION,        CommonTable::theKey(CommonTable::KEY35))
 #endif
 FUNCTIONDEF("f_coinFlip",    1, "coin")
 FUNCTIONDEF("f_rand",        0, "rand")
+FUNCTIONDEF("f_drand",        0, "drand48")
 FUNCTIONDEF("f_now",         0, "now")
 FUNCTIONDEF("f_sha1",        1, "sha1")
 FUNCTIONDEF("f_match",       2, "match")
@@ -286,4 +288,5 @@ FUNCTIONDEF("f_initMask",     1, "initMask")
 FUNCTIONDEF("f_combineMask",  2, "combineMask")
 FUNCTIONDEF("f_getMask",      1, "getMask")
 FUNCTIONDEF("f_mask",         3, "mask")
+FUNCTIONDEF("f_indexMatch",   3, "indexMatch")
 #undef FUNCTIONDEF

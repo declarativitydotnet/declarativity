@@ -9,7 +9,7 @@
  * 
  */
 
-#include "compileTerminal.h"
+#include "programLoader.h"
 #include "plumber.h"
 #include "loop.h"
 #include "commonTable.h"
@@ -24,12 +24,19 @@
 #include <unistd.h>
 #include "boost/bind.hpp"
 
-DEFINE_ELEMENT_INITS(CompileTerminal, "CompileTerminal");
+#define LOAD(name, file, prev) do {\
+  ProgramPtr program(new Program((name), (file), (prev))); \
+  programs.push_back(program); \
+} while (0);
 
-CompileTerminal::CompileTerminal(string name)
-  : Element(name, 0, 1)
+DEFINE_ELEMENT_INITS(ProgramLoader, "ProgramLoader");
+
+ProgramLoader::ProgramLoader(string name)
+  : Element(name, 0, 1), terminal(true)
 {
-  initDefaultStages();
+  LOAD("stats", "/Users/tcondie/workspace/secure/doc/stats.olg", "eca");
+  LOAD("systemr", "/Users/tcondie/workspace/secure/doc/systemr.olg", "stats");
+  // LOAD("localize", "/Users/tcondie/workspace/secure/doc/localize.olg", "systemr");
 }
 
 /**
@@ -38,47 +45,41 @@ CompileTerminal::CompileTerminal(string name)
  * 2. Val_Str: Name.
  * 3. Val_Str: Event Name.
  */
-CompileTerminal::CompileTerminal(TuplePtr args)
-  : Element(Val_Str::cast((*args)[2]), 0, 1)
+ProgramLoader::ProgramLoader(TuplePtr args)
+  : Element(Val_Str::cast((*args)[2]), 0, 1), terminal(true)
 {
-  initDefaultStages();
+  LOAD("stats", "/Users/tcondie/workspace/secure/doc/stats.olg", "eca");
+  LOAD("systemr", "/Users/tcondie/workspace/secure/doc/systemr.olg", "stats");
+  // LOAD("localize", "/Users/tcondie/workspace/secure/doc/localize.olg", "systemr");
 }
 
-CompileTerminal::~CompileTerminal()
+ProgramLoader::~ProgramLoader()
 {
-  delete[] defaultStages;
 }
 
+void
+ProgramLoader::program(string name, string file, string stage) 
+{
+  LOAD(name, file, stage);
+}
 
 void 
-CompileTerminal::programUpdate(TuplePtr program)
+ProgramLoader::programUpdate(TuplePtr program)
 {
-  if ((*program)[Plumber::catalog()->
-                 attribute(PROGRAM, "STATUS")]->toString() == "installed") {
+  ELEM_INFO("Current program status: " 
+            << (*program)[Plumber::catalog()->
+                          attribute(PROGRAM, "STATUS")]->toString());
+
+  if ((*program)[Plumber::catalog()->attribute(PROGRAM, "STATUS")]->toString() == "installed") {
     Plumber::toDot("compileTerminal.dot");
     ELEM_OUTPUT("Program successfully installed. "
                 << "See compileTerminal.dot for dataflow description.");
-
-  if (more.size() > 0 && (more[0] == 'y' || more[0] == 'Y')) {
-    terminal();
-    //    delayCB(1, boost::bind(&CompileTerminal::terminal, this), this);
-  }
-  else {
-    // do nothing: no more call backs needed 
-  }
-    
-    //    if (!counter) delayCB(1, boost::bind(&CompileTerminal::terminal, this), this);
-    //    counter++;
-  }
-  else {
-    ELEM_INFO("Current program status: " 
-              << (*program)[Plumber::catalog()->
-                            attribute(PROGRAM, "STATUS")]->toString());
+    loader();
   }
 }
 
 void
-CompileTerminal::terminal()
+ProgramLoader::loader()
 {
   static int counter = 0;
   string filename = "";
@@ -86,8 +87,17 @@ CompileTerminal::terminal()
   string name;
   string rewrite = "n";
 
-  if(numDefaultStages <= counter)
+  if (programIter != programs.end())
   {
+    ProgramPtr program = *programIter++;
+    filename = program->file;
+    name = program->name;
+    rewrite = program->stage;
+  }
+  else if (terminal)
+  {
+    string more;
+
     std::cout << "filename? > ";
     std::cin >> filename;
     if (filename == "") return;
@@ -105,18 +115,8 @@ CompileTerminal::terminal()
     std::cout << "More inputs(y/n) ? > ";
     std::cin >> more;
     std::cout << std::endl;
+    terminal = more == "Y" || more == "y";
   }
-  else
-  {
-    filename = defaultStages[counter].file;
-    name = defaultStages[counter].name;
-    rewrite = defaultStages[counter].prevStageName;
-    if(numDefaultStages >= (counter -1) )
-      more = "y";
-    else
-      more = originalmore;
-  }
-  counter++;
 
   string processed(filename+".processed");
 
@@ -155,46 +155,17 @@ CompileTerminal::terminal()
   program->append(Val_Null::mk());           // Program message
   program->append(Val_Null::mk());           // P2DL for program installation
   program->freeze();
-  output(0)->push(program, boost::bind(&CompileTerminal::terminal, this));
-
+  output(0)->push(program, boost::bind(&ProgramLoader::terminal, this));
 }
 
 /* Set up the initial stages in the rewrite table */
 int
-CompileTerminal::initialize()
+ProgramLoader::initialize()
 {
   CommonTablePtr programTbl = Plumber::catalog()->table(PROGRAM);
-  programTbl->updateListener(boost::bind(&CompileTerminal::programUpdate, this, _1));
-  delayCB(0, boost::bind(&CompileTerminal::terminal, this), this);
+  programTbl->updateListener(boost::bind(&ProgramLoader::programUpdate, this, _1));
+  delayCB(1, boost::bind(&ProgramLoader::loader, this), this);
 
+  programIter = programs.begin();
   return 0;
 }
-
-/**
- *localization code: change the numDefaultStages value to reflect the number of default stages you want to be inserted
- * Also comment out the defaultStages creation code if numDefaultStages = 0
- * more should be set to "y" by default if there's at least 1 default or user entered olg program, "n" otherwise
- * originalMore should be set to "y" if there's at least 1 user entered program, "n" otherwise
- */
-
-void 
-CompileTerminal::initDefaultStages()
-{
-  originalmore = "y";
-  more="y";
-  numDefaultStages = 0;
-  int count = 0;
-  defaultStages = new StageInformation[numDefaultStages];
-  /*defaultStages[count].name = "secureTest";
-  //  defaultStages[count].file = "../unitTests/olg/localCounter.olg";
-  defaultStages[count].file = "../doc/tests/secureTest.olg";
-  defaultStages[count++].prevStageName = "";
-  */
-  /*
-  defaultStages[count].name = "localization";
-  defaultStages[count].file = "../doc/localization.olg";
-  defaultStages[count++].prevStageName = "eca";
-  */
-  
-}
-

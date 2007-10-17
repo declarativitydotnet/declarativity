@@ -50,7 +50,11 @@ namespace compile {
         TuplePtr functor = funcIter->next();
         if ((*functor)[TUPLE_ID] != (*rule)[catalog->attribute(RULE, "HEAD_FID")]) {
           if ((*functor)[catalog->attribute(FUNCTOR, "TID")] == Val_Null::mk()) {
-            if (event) throw compile::eca::Exception("More than one event in rule");
+            if (event) {
+              std::cerr << "EVENT1: " << event->toString() << std::endl;
+              std::cerr << "EVENT2: " << functor->toString() << std::endl;
+              throw compile::eca::Exception("More than one event in rule: " + rule->toString());
+            }
             event = functor;
           } else probes.push_back(functor);
         }

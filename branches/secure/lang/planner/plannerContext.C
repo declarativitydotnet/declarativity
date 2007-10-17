@@ -819,14 +819,17 @@ namespace compile {
                    CommonTable::ManagerPtr catalog, 
                    TuplePtr probeTp, ListPtr tupleSchema, bool filter)
     {
-      ListPtr probeSchema = Val_List::cast((*probeTp)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
-      string    tableName = (*probeTp)[catalog->attribute(FUNCTOR, "NAME")]->toString();
+      ListPtr probeSchema  = Val_List::cast((*probeTp)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
+      ListPtr accessMethod = Val_List::cast((*probeTp)[catalog->attribute(FUNCTOR, "AM")]);
+      string    tableName  = (*probeTp)[catalog->attribute(FUNCTOR, "NAME")]->toString();
       bool    notin = (*probeTp)[catalog->attribute(FUNCTOR, "NOTIN")] == Val_UInt32::mk(true);
       CommonTable::Key joinKey;
       CommonTable::Key indexKey;
       CommonTable::Key baseKey;
       namestracker::joinKeys(tupleSchema, probeSchema, joinKey, indexKey, baseKey);
       catalog->createIndex(tableName, indexKey);
+
+      std::cerr << "ACCESS METHOD FOR PROBE " << tableName << " = " << accessMethod->toString() << std::endl;
 
       // Create a unique graph name for this probe
       ostringstream graphName;

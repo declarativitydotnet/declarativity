@@ -19,7 +19,7 @@ ADD_LIBRARY(p2elements
             aggwrap2Callback.C
             commitBuf.C
             compileStage.C
-            compileTerminal.C 
+            programLoader.C 
             dDuplicateConservative.C 
             dRoundRobin.C 
             ddemux.C 

@@ -547,7 +547,6 @@ DEF_OP(FUNC0) {
   // Run the function
 }
 
-
 DEF_OP(INITMASK) { 
    ValuePtr listVal = stackTop(); stackPop();
    ListPtr list = List::mk();
@@ -590,8 +589,6 @@ DEF_OP(MASK) {
   stackPush(Val_List::mk(maskedSchema));
 }
 
-
-
 DEF_OP(A_TO_VAR) { 
    ValuePtr attr = stackTop(); stackPop();
    stackPush(compile::namestracker::toVar(attr));
@@ -601,6 +598,37 @@ DEF_OP(A_TO_VAR) {
  * List operations
  *
  */
+DEF_OP(L_INDEXMATCH) { 
+   ValuePtr val1 = stackTop(); stackPop();
+   ValuePtr val2 = stackTop(); stackPop();
+   ValuePtr val3 = stackTop(); stackPop();
+   ListPtr outer = Val_List::cast(val1);
+   ListPtr inner = Val_List::cast(val2);
+   ListPtr index   = Val_List::cast(val3);
+
+   CommonTable::Key joinKey;
+   CommonTable::Key indexKey;
+   CommonTable::Key baseKey;
+
+   /* We need to ensure that the index is contained by the 
+      indexKey returned by joinKeys(...). This basically means
+      we can use the index. */
+   compile::namestracker::joinKeys(outer, inner, joinKey, indexKey, baseKey); 
+   bool match = true;
+   for (ValPtrList::const_iterator kiter = index->begin(); 
+        match && kiter != index->end(); kiter++) {
+     int pos = Val_UInt32::cast(*kiter);
+     CommonTable::Key::const_iterator iiter = indexKey.begin();
+     for ( ; iiter != indexKey.end(); iiter++) {
+       if (*iiter == pos) {
+         break;
+       }
+     }
+     match = iiter != indexKey.end();
+   }
+   
+   stackPush(Val_UInt32::mk(match));
+}
 
 DEF_OP(L_MERGE) { 
    ValuePtr val1 = stackTop(); stackPop();

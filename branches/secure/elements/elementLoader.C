@@ -20,7 +20,7 @@
 #include "commitBuf.h"
 #include "compileStage.h"
 #include "stage.h"
-#include "compileTerminal.h"
+#include "programLoader.h"
 #include "ddemux.h"
 #include "dDuplicateConservative.h"
 #include "delete2.h"
@@ -77,7 +77,7 @@ ElementLoader::loadElements()
   CommitBuf::ensureInit();
   CompileStage::ensureInit();
   Stage::ensureInit();
-  CompileTerminal::ensureInit();
+  ProgramLoader::ensureInit();
   DDemux::ensureInit();
   DDuplicateConservative::ensureInit();
   Delete2::ensureInit();

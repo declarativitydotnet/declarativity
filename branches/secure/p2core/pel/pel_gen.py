@@ -141,6 +141,7 @@ for op, ar, va, desc in [
   ("getattr",2, "L_GET_ATTR",   "Extract attribute from list."),
   ("posattr",2, "L_POS_ATTR",   "Get the attribute position from list."),
   ("aggattr",1, "L_AGG_ATTR",   "Get the aggregation position from list."),
+  ("indexMatch",3, "L_INDEXMATCH", "Tests index key according to join operation."),
   ("merge",2,   "L_MERGE",      "Merge two argument lists according join operation."),
   ("verify",6,   "VERIFY",      "Decrypt the first argument decrypted using the second key."),
   ("gen",3,   "GEN",      "encrypt the first argument using the second encryption algorithm and the third key."),
