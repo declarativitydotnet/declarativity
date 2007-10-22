@@ -1,0 +1,130 @@
+materialize(plan, infinity, infinity, keys(2)).
+materialize(bestPlan, infinity, infinity, keys(2)).
+materialize(workPlan, infinity, infinity, keys(2)).
+
+
+/* Start the optimization process */
+
+/* Get the program event and seed the optimization with the event functor. */
+begin begin(@A, OriginalRid, Plan, Schema, Card, TupleSize, Pos) :-
+begin plan(@A, PlanID, Pid, Rid, Plan, PlanSchema, PlanCard, OperType, OperID, Pos, AM, Cost).
+          programEvent(@A, Pid, P_Name, P_Status, P_Text, P_Msg, P_P2DL),
+          rule(@A, Rid, Pid, R_Name, R_HeadFid, R_P2DL, R_Delete),
+          functor(@A, Fid, Rid, F_Name, F_Tid, F_ECA, F_Schema, F_Pos, F_AM),
+          F_Pos == 1,
+          Plan      := f_cons(Fid, null),
+          Card      := 1,
+          TupleSize := 1,
+          Pos       := 1.
+
+status workPlan(@A, Pid, Status) :-
+         programEvent(@A, Pid, Name, ProgramStatus, Text, Msg, P2DL),
+         Status := "working".
+
+statusCheck workPlan(@A, Pid, Status) :-
+              periodic(@A, E, 1), 
+              workPlan(@A, Pid, OldStatus),
+              Status := f_status("AM", Pid).
+
+complete workComplete(@A, Pid) :- workPlan(@A, Pid, Status), Status == "complete".
+
+cleanup delete workPlan(@A, Pid, Status) :- workComplete(@A, Pid), 
+                                            workPlan(@A, Pid, Status).
+
+end programEvent(@A, Pid, Name, Status, Text, Msg, P2DL) :-
+      workComplete(@A, Pid),
+      program(@A, Pid, Name, Status, Text, Msg, P2DL).
+
+/* Maintain state for best plan so far. */
+
+/* Detect an update to the local plan table */
+o1 planUpdate(@A, PlanID, OrginalRid, Plan, Cost) :- 
+      plan(@A, PlanID, OriginalRid, Plan, PlanSchema, PlanCard, OperType, OperID, Pos, AM, Cost).
+
+/* Pick the minimum cost over the plans with the max size. */
+o2 bestPlan(@A, PlanID, OriginalRid, BestPlan, Cost) :-
+      planUpdate(@A, PlanID, OriginalRid, Plan, PlanCost),
+      bestPlan(@A, BestPlanID, OriginalRid, BestPlan, BestCost),
+      (   (f_size(BestPlan) == f_size(Plan) && PlanCost < BestCost) 
+       || (f_size(BestPlan < f_size(Plan)) 
+      ). 
+
+/* Initialize best cost */
+o3 bestPlan(@A, f_idgen(), OriginalRid, null, infinity) :-
+     begin(@A, OriginalRid, OuterPlan, OuterSchema, OuterCard, OuterTupleSize, StartPos).
+
+o2 newBestPlan(@A, PlanID, OriginalRid, BestPlan, Cost) :-
+     bestPlan(@A, PlanID, OriginalRid, BestPlan, Cost).
+
+/* Start things off by generating all single relation index lookup access methods. */
+o4 plan(@A, PlanID, OriginalRid, Plan, PlanSchema, PlanCard, OperType, OperID, Pos, AM, Cost) :-
+      begin(@A, OriginalRid, OuterPlan, OuterSchema, OuterCard, OuterTupleSize, StartPos),
+      functor(@A, Fid, OriginalRid, F_Name, F_Tid, F_ECA, F_Schema, F_Pos, F_AM),
+      tableStats(@A, Tid, TableCard, TupleSize),
+      PlanID := f_idgen(), Plan := f_cons(Fid, OuterPlan), PlanSchema := f_merge(OuterSchema, Schema),
+      PlanCard := f_selectivity(OuterSchema, Schema, Tid) * OuterCard * TableCard,
+      OperType := "Functor", OperID := Fid, 
+      Pos := StartPos + 1, AM := "INDEX", 
+      Cost := PlanCard * TupleSize. 
+
+/* Check for range access method. */
+o5 plan(@A, PlanID, OriginalRid, Plan, Schema, Card, OperType, OperID, Pos, AM, Cost) :-
+      plan(@A, PlanID, OriginalRid, P_Plan, P_Schema, P_Card, P_OperType, P_OperID, P_Pos, P_AM, P_Cost),
+      select(@A, Sid, OriginalRid, S_Bool, S_Pos),
+      P_OperType == "Functor", f_rangeAM(P_Schema, S_Bool) == true,
+      Plan       := f_cons(Sid, P_Plan), 
+      PlanSchema := P_Schema,
+      PlanCard   := P_Card / 3,
+      OperType   := "Select", 
+      OperID     := Sid, 
+      Pos        := P_Pos + 1, 
+      AM         := "RANGE_LOOKUP", 
+      Cost       := P_Cost / 3.
+
+/* Perform next join? */
+o6 plan(@A, PlanID, OriginalRid, Plan, Schema, Card, OperType, OperID, Pos, AM, Cost) :-
+      newBestPlan(@A, PlanID, OriginalRid, BestPlan, BestCost),
+      plan(@A, PlanID, OriginalRid, P_Plan, P_Schema, P_Card, P_OperType, P_OperID, P_Pos, P_AM, P_Cost),
+      functor(@A, Fid, OriginalRid, F_Name, F_Tid, F_ECA, F_Schema, F_Pos, F_AM),
+      tableStats(@A, F_Tid, TableCard, TupleSize),
+      Plan       := f_cons(Fid, P_Plan), 
+      PlanSchema := f_merge(P_Schema, F_Schema),
+      PlanCard   := f_selectivity(P_Schema, F_Schema, Tid) * OuterCard * TableCard,
+      OperType   := "Functor", 
+      OperID     := Fid, 
+      Pos        := P_Pos + 1, 
+      AM         := "INDEX_JOIN", 
+      Cost       := P_Cost + PlanCard * TupleSize.
+
+/* Perform next selection? */
+o7 plan(@A, PlanID, OriginalRid, Plan, Schema, Card, OperType, OperID, Pos, AM, Cost) :-
+      newBestPlan(@A, PlanID, OriginalRid, BestPlan, BestCost),
+      plan(@A, PlanID, OriginalRid, P_Plan, P_Schema, P_Card, P_OperType, P_OperID, P_Pos, P_AM, P_Cost),
+      select(@A, Sid, OriginalRid, Bool, SPos),
+      f_filter(P_Schema, Bool) == true,
+      Plan       := f_cons(Sid, P_Plan), 
+      PlanSchema := P_Schema,
+      PlanCard   := P_Card / 3,
+      OperType   := "Select", 
+      OperID     := Sid, 
+      Pos        := P_Pos + 1, 
+      AM         := "FILTER", 
+      Cost       := P_Cost / 3.
+
+
+/* Update the functor and selection tables with the new position and access method. */
+u1 functor(@A, Fid, NewRid, Name, TID, ECA, Attributes, Pos, AM) :-
+      newBestPlan(@A, PlanID, OriginalRid, BestPlan, BestCost),
+      plan(@A, PlanID, OriginalRid, P_Plan, P_Schema, P_Card, P_OperType, P_OperID, P_Pos, P_AM, P_Cost),
+      functor(@A, Fid, OriginalRid, Name, TID, ECA, Attributes, OldPos, AM),
+      TableName == "Functor" && P_OperID == Fid,
+      Pos := P_Pos.
+
+u2 select(@A, Sid, OriginalRid, Bool, Pos, AM) :-
+      newBestPlan(@A, PlanID, OriginalRid, BestPlan, BestCost),
+      plan(@A, PlanID, OriginalRid, P_Plan, P_Schema, P_Card, P_OperType, P_OperID, P_Pos, P_AM, P_Cost),
+      select(@A, Sid, OriginalRid, Bool, OldPos, AM),
+      P_OperType == "Select" && P_OperID == Sid,
+      Pos := P_Pos.
+
+
