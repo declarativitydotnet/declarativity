@@ -874,6 +874,11 @@ namespace compile {
     
       virtual TuplePtr materialize(CommonTable::ManagerPtr, ValuePtr, string);
 
+      virtual Statement* copy() const{
+	Index *v = new Index(*this);
+	return v;
+      }
+
     private:
       string      _name;
       Table2::Key _keys;

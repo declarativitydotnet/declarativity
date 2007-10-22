@@ -132,6 +132,7 @@ statements: statement
 statement:   nameSpace   { $$ = $1; }
            | rule        { $$ = $1; }
            | materialize { $$ = $1; }
+           | index       { $$ = $1; }
            | watch       { $$ = $1; }
            | watchfine   { $$ = $1; }
            | stage       { $$ = $1; }
@@ -151,7 +152,7 @@ materialize: OLG_MATERIALIZE OLG_LPAR OLG_NAME OLG_COMMA
                { $$ = new compile::parse::Table($3, $5, $7, $9, true); } 
           ;
 
-index: OLG_INDEX OLG_LPAR OLG_NAME OLG_COMMA keys OLG_RPAR
+index: OLG_INDEX OLG_LPAR OLG_NAME OLG_COMMA keys OLG_RPAR OLG_DOT
        { $$ = new compile::parse::Index($3, $5); }
      ;
 

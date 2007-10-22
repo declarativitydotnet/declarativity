@@ -1420,15 +1420,6 @@ namespace compile {
 	}
 
       }
-
-      if(parserCall){
-	for (StatementList::iterator iter = s->begin();
-	     iter != s->end(); iter++) { 
-	  std::cout  <<  (*iter)->toString() << std::endl;
-	}
-      }
-      
-      
     }
 
     TuplePtr 

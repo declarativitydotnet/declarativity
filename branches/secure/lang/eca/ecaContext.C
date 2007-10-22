@@ -186,11 +186,15 @@ namespace compile {
         } else {
           /* Create a row in the SIDE_EFFECT table */
           TuplePtr sideEffectTp = Tuple::mk(SIDE_EFFECT, true);
-          sideEffectTp->append((*head)[catalog->attribute(FUNCTOR, "NAME")]);
+          string sideEffectName = headName; 
           if ((*rule)[catalog->attribute(RULE, "DELETE")] == Val_UInt32::mk(1)) {
+            sideEffectName += "_delete";
+            sideEffectTp->append(Val_Str::mk(sideEffectName));
             sideEffectTp->append(Val_Str::mk("DELETE"));
           }
           else {
+            sideEffectName += "_add";
+            sideEffectTp->append(Val_Str::mk(sideEffectName));
             sideEffectTp->append(Val_Str::mk("ADD"));
           }
           sideEffectTp->freeze();
@@ -202,8 +206,29 @@ namespace compile {
                                   sideEffectTp);
 
           if (iter->done()) {
+            ListPtr oldSchema = Val_List::cast((*head)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
+            ListPtr newSchema = List::mk(); 
+            int varNumber = 0;
+            for (ValPtrList::const_iterator iter = oldSchema->begin(); iter != oldSchema->end(); iter++) {
+              TuplePtr attr = Val_Tuple::cast(*iter);
+              if ((*attr)[TNAME]->toString() == AGG) {
+                if ((*attr)[2] == Val_Null::mk()) {
+                  TuplePtr newAttr = Tuple::mk(VAR);
+                  newAttr->append(Val_Str::mk("$SVAR_" + varNumber));
+                  varNumber++;
+                  newAttr->freeze();
+                  newSchema->append(Val_Tuple::mk(newAttr));
+                } else newSchema->append((*attr)[2]);
+              }
+              else {
+                newSchema->append(Val_Tuple::mk(attr));
+              }
+            } 
             /* Do the rewrite. */
-            string rname = (*rule)[catalog->attribute(RULE, "NAME")]->toString();
+            string rname = (*head)[catalog->attribute(FUNCTOR, "NAME")]->toString(); 
+            for (string::size_type s = 0; (s = rname.find("::", s)) != string::npos; s++) {
+              rname.replace(s, 2, "_");
+            }
             rname += "_SideEffect_" + (*sideEffectTp)[catalog->attribute(SIDE_EFFECT, "TYPE")]->toString();
    
             TuplePtr sideEffectRule = rule->clone(RULE, true);
@@ -211,12 +236,15 @@ namespace compile {
             TuplePtr sideEffectEvent = head->clone(FUNCTOR, true);
             sideEffectRule->set(catalog->attribute(RULE, "HEAD_FID"), (*sideEffectHead)[TUPLE_ID]);
             sideEffectRule->set(catalog->attribute(RULE, "NAME"), Val_Str::mk(rname));
+            sideEffectHead->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(newSchema));
+            sideEffectEvent->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(newSchema));
             sideEffectHead->set(catalog->attribute(FUNCTOR, "RID"), (*sideEffectRule)[TUPLE_ID]);
             sideEffectEvent->set(catalog->attribute(FUNCTOR, "RID"), (*sideEffectRule)[TUPLE_ID]);
             sideEffectHead->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(0));
             sideEffectEvent->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(1));
 
             sideEffectEvent->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("RECV"));
+            sideEffectEvent->set(catalog->attribute(FUNCTOR, "NAME"), Val_Str::mk(sideEffectName));
             sideEffectHead->set(catalog->attribute(FUNCTOR, "ECA"), 
                                 (*sideEffectTp)[catalog->attribute(SIDE_EFFECT, "TYPE")]);
 
@@ -228,8 +256,9 @@ namespace compile {
             catalog->table(RULE)->insert(sideEffectRule);
             catalog->table(SIDE_EFFECT)->insert(sideEffectTp);
           }
-          /* Make the head ECA a send, which will loop around to the above rewrite. */
+          /* The orginal rule will now send its tuples to the side effect rule. */
           head->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("SEND"));
+          head->set(catalog->attribute(FUNCTOR, "NAME"), Val_Str::mk(sideEffectName));
         }
       }
       else {

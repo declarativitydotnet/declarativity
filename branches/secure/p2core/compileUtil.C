@@ -240,6 +240,21 @@ namespace compile {
       return join;
     }
 
+    ListPtr 
+    assignSchema(const ListPtr outer, const ValuePtr var)
+    {
+      ListPtr schema = List::mk();
+      for (ValPtrList::const_iterator i = outer->begin(); 
+           i != outer->end(); i++) {
+        schema->append(*i);
+      }
+      if (position(outer, var) < 0) {
+        TuplePtr tp = Val_Tuple::cast(var);
+        schema->append(Val_Tuple::mk(tp->clone()));
+      }
+      return schema;
+    }
+
     void
     joinKeys(const ListPtr outer, const ListPtr inner,
           CommonTable::Key& joinKey, CommonTable::Key& indexKey, CommonTable::Key& baseKey) 
@@ -256,6 +271,30 @@ namespace compile {
           indexKey.push_back(innerPos);
         }
       }
+    }
+
+    ValuePtr
+    castassign(const ListPtr outer, const ListPtr inner, const TuplePtr boolv)
+    {
+      if ((*boolv)[TNAME]->toString() == BOOL && (*boolv)[4] != Val_Null::mk()) {
+        ValuePtr lhs = (*boolv)[3];
+        ValuePtr rhs = (*boolv)[4];
+        if (position(outer, lhs) >= 0 && 
+            position(inner, rhs) >= 0) {
+          ListPtr assign = List::mk();
+          assign->append(rhs);
+          assign->append(lhs);
+          return Val_List::mk(assign);
+        }
+        else if (position(outer, rhs) >= 0 && 
+                 position(inner, lhs) >= 0) {
+          ListPtr assign = List::mk();
+          assign->append(lhs);
+          assign->append(rhs);
+          return Val_List::mk(assign);
+        }
+      }
+      return Val_Null::mk();
     }
   } // END NAMESTRACKER
 

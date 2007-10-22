@@ -291,7 +291,11 @@ namespace opr {
   };
   
   bool operator==(const ValuePtr& v1, const ValuePtr& v2) { 
-    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_eq(v1, v2);
+    try {
+      return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_eq(v1, v2);
+    } catch (Value::TypeError e) {
+      return false;
+    }
   };
   bool operator!=(const ValuePtr& v1, const ValuePtr& v2) { 
     return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_neq(v1, v2);

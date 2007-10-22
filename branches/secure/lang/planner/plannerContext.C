@@ -680,8 +680,7 @@ namespace compile {
       if (actionType == "ADD") {
         oss << indent << "graph action(1, 0, \"l/\", \"-/\") {\n";
         oss << indent << "\tinput -> PullPush(\"actionPull\", 0) ->\n";
-        if (watched(funcName, "ADD_ACTION") ||
-            watched(funcName, "a"))
+        if (watched(funcName, "ADD_ACTION") || watched(funcName, "a"))
           oss << indent << "\tPrint(\"MODIFIER: ADD_ACTION RULE "
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         oss << indent << "\tInsert2(\"actionInsert\", \"" << funcName << "\");\n";
@@ -892,11 +891,8 @@ namespace compile {
     {
       // Create a unique graph name for this assignment
       ostringstream graphName;
-      //      ListPtr schema = List::mk();
-      //      TuplePtr assignedVar = (Val_Tuple::cast((*asmt)[catalog->attribute(ASSIGN, "VAR")]))->clone();
-      //      assignedVar->freeze();
-      //      schema->append(Val_Tuple::mk(assignedVar));
-      //      tupleSchema = namestracker::merge(tupleSchema, schema);
+      ValuePtr var = (*asmt)[catalog->attribute(ASSIGN, "VAR")];
+      tupleSchema = namestracker::assignSchema(tupleSchema, var);
       graphName << "assign_" << _nameCounter++;
 
       oss << std::endl;

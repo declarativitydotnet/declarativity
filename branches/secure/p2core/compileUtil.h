@@ -63,10 +63,16 @@ namespace compile {
      * a join.  */
     ListPtr merge(const ListPtr outer, const ListPtr inner);
 
+    ListPtr assignSchema(const ListPtr outer, const ValuePtr var);
+
     void joinKeys(const ListPtr outer, const ListPtr inner,
                   CommonTable::Key& joinKey, 
                   CommonTable::Key& indexKey, 
                   CommonTable::Key& baseKey); 
+
+    ValuePtr castassign(const ListPtr outer, 
+                        const ListPtr inner, 
+                        const TuplePtr select);
   };
 
   namespace pel {

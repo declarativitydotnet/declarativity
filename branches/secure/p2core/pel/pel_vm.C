@@ -604,7 +604,7 @@ DEF_OP(L_INDEXMATCH) {
    ValuePtr val3 = stackTop(); stackPop();
    ListPtr outer = Val_List::cast(val1);
    ListPtr inner = Val_List::cast(val2);
-   ListPtr index   = Val_List::cast(val3);
+   ListPtr index = Val_List::cast(val3);
 
    CommonTable::Key joinKey;
    CommonTable::Key indexKey;
@@ -630,6 +630,18 @@ DEF_OP(L_INDEXMATCH) {
    stackPush(Val_UInt32::mk(match));
 }
 
+DEF_OP(L_CASTASSIGN) { 
+   ValuePtr val1 = stackTop(); stackPop();
+   ValuePtr val2 = stackTop(); stackPop();
+   ValuePtr val3 = stackTop(); stackPop();
+   ListPtr outer = Val_List::cast(val1);
+   ListPtr inner = Val_List::cast(val2);
+   TuplePtr select = Val_Tuple::cast(val3);
+
+   ValuePtr value = compile::namestracker::castassign(outer,inner,select);
+   stackPush(value);
+}
+
 DEF_OP(L_MERGE) { 
    ValuePtr val1 = stackTop(); stackPop();
    ValuePtr val2 = stackTop(); stackPop();
@@ -637,6 +649,14 @@ DEF_OP(L_MERGE) {
    ListPtr list2 = Val_List::cast(val2);
    
    stackPush(Val_List::mk(compile::namestracker::merge(list1, list2)));
+}
+
+DEF_OP(L_ASSIGNSCHEMA) { 
+   ValuePtr first = stackTop(); stackPop();
+   ValuePtr var = stackTop(); stackPop();
+   ListPtr schema = Val_List::cast(first);
+   
+   stackPush(Val_List::mk(compile::namestracker::assignSchema(schema, var)));
 }
 
 DEF_OP(L_POS_ATTR) { 
@@ -940,6 +960,9 @@ DEF_OP(L_CONTAINS) {
 
   ListPtr list = Val_List::cast(first);
   if (!list) {
+    TELL_ERROR << "PEL CONTAINS: " 
+               << second->toString() << " in " 
+               << first->toString() << std::endl;
     error = PE_BAD_LIST_FIELD;
     return;
   }
@@ -1473,6 +1496,9 @@ DEF_OP(O_RANGEAM) {
 DEF_OP(O_FILTER) {
   ValuePtr second = stackTop(); stackPop();
   ValuePtr first = stackTop(); stackPop();
+  ListPtr list = Val_List::cast(second);
+
+  stackPush(Val_Int32::mk(compile::namestracker::position(list, first) >= 0));
 }
 
 
