@@ -63,7 +63,7 @@ SOURCE_FILE_ROOTS = 		elementRegistry \
 				compileStage \
 				stage \
 				stageRegistry \
-				compileTerminal \
+				programLoader \
 				identity \
 				removed \
 				pullPush \
