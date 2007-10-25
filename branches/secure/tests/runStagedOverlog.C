@@ -107,7 +107,7 @@ string stub(string hostname, string port, TransportConf conf)
 	  //in theory, internal queue must be made infinite to avoid deadlock
  	  //to be absolutely sure.
        << "\tseaInput -> [0]intQMux -> PelTransform(\"unpackage\", \"$1 unboxPop\") -> "
-       << "\tQueue(\"intQ\", 100,\"internal\") -> PullPush(\"IntQPP\",0) -> intDemux[0] -> "
+       << "\tQueue(\"intQ\", 100000,\"internal\") -> PullPush(\"IntQPP\",0) -> intDemux[0] -> "
        << "Print(\"Unrecognized Message\") -> Discard(\"discard\");\n"
           //start the rule output process
        << "\tintDRR -> PullPush(\"SEAOutputPP\",0) -> intExtDemux;\n"
@@ -313,12 +313,7 @@ main(int argc, char **argv)
     loadAllModules();
 
     // Set up my NodeID table
-    CommonTablePtr nodeIDTbl = Plumber::catalog()->table(NODEID);
-    TuplePtr nodeIDTp = Tuple::mk(NODEID);
-    nodeIDTp->append(Val_Str::mk(myAddress));
-    nodeIDTp->append(Val_Str::mk(myAddress));
-    nodeIDTp->freeze();
-    assert(nodeIDTbl->insert(nodeIDTp));
+    Plumber::catalog()->nodeid(Val_Str::mk(myAddress), Val_Str::mk(myAddress));
     assert(Plumber::catalog()->nodeid());
 
     // Set up my arguments table

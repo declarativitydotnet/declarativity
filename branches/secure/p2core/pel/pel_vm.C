@@ -642,6 +642,29 @@ DEF_OP(L_CASTASSIGN) {
    stackPush(value);
 }
 
+DEF_OP(L_ADORNMENT) { 
+   ValuePtr first  = stackTop(); stackPop();
+   ValuePtr second = stackTop(); stackPop();
+
+   ListPtr bound = List::mk();
+   if (first != Val_Null::mk()) {
+     bound = Val_List::cast(first);
+   }
+   ListPtr schema = Val_List::cast(second);
+
+   stackPush(Val_List::mk(compile::namestracker::adornment(bound, schema)));
+}
+
+DEF_OP(L_PROJECT) { 
+   ValuePtr first  = stackTop(); stackPop();
+   ValuePtr second = stackTop(); stackPop();
+  
+   ListPtr positions = Val_List::cast(first);
+   ListPtr schema    = Val_List::cast(second);
+
+   stackPush(Val_List::mk(compile::namestracker::project(positions, schema)));
+}
+
 DEF_OP(L_MERGE) { 
    ValuePtr val1 = stackTop(); stackPop();
    ValuePtr val2 = stackTop(); stackPop();
@@ -1494,11 +1517,12 @@ DEF_OP(O_RANGEAM) {
 }
 
 DEF_OP(O_FILTER) {
-  ValuePtr second = stackTop(); stackPop();
   ValuePtr first = stackTop(); stackPop();
-  ListPtr list = Val_List::cast(second);
+  ValuePtr second = stackTop(); stackPop();
+  ListPtr schema = Val_List::cast(first);
 
-  stackPush(Val_Int32::mk(compile::namestracker::position(list, first) >= 0));
+  bool f = compile::namestracker::filter(schema, second);
+  stackPush(Val_Int32::mk(f));
 }
 
 

@@ -155,6 +155,33 @@ TableManager::nodeid()
   return ValuePtr();
 }
 
+void
+TableManager::nodeid(ValuePtr id, ValuePtr addr)
+{
+  CommonTable::Iterator i = table(TABLE)->scan();
+  while (!i->done()) {
+    TuplePtr t = i->next()->clone();
+    table(TABLE)->remove(t);
+    t->set(NODE_ID, id);
+    table(TABLE)->insert(t);
+
+    string name = Val_Str::cast((*t)[attribute(TABLE, "TABLENAME")]);
+    CommonTable::Iterator i2 = table(name)->scan();
+    while (!i2->done()) {
+      TuplePtr t2 = i2->next()->clone();
+      table(name)->remove(t2);
+      t2->set(NODE_ID, id);
+      table(name)->insert(t2);
+    }
+  }
+
+  TuplePtr nid = Tuple::mk(NODEID);
+  nid->append(id);
+  nid->append(addr);
+  nid->freeze();
+  table(NODEID)->insert(nid);
+}
+
 unsigned
 TableManager::uniqueIdentifier()
 {

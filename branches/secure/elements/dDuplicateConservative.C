@@ -92,6 +92,7 @@ int DDuplicateConservative::push(int port, TuplePtr p, b_cbv cb)
 
     // If it can take no more
     if (result == 0) {
+      std::cerr << "DUPLICATE CONSERVATIVE BLOCKED FROM ELEMENT " << output(i)->element()->name() << " TUPLE: " << p->toString() << std::endl;
       // update the flags
       _block_flags[i] = true;
       _block_flag_count++;

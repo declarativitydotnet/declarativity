@@ -236,6 +236,7 @@ namespace compile {
             TuplePtr sideEffectEvent = head->clone(FUNCTOR, true);
             sideEffectRule->set(catalog->attribute(RULE, "HEAD_FID"), (*sideEffectHead)[TUPLE_ID]);
             sideEffectRule->set(catalog->attribute(RULE, "NAME"), Val_Str::mk(rname));
+            sideEffectRule->set(catalog->attribute(RULE, "TERM_COUNT"), Val_Int32::mk(2));
             sideEffectHead->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(newSchema));
             sideEffectEvent->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(newSchema));
             sideEffectHead->set(catalog->attribute(FUNCTOR, "RID"), (*sideEffectRule)[TUPLE_ID]);

@@ -98,6 +98,14 @@ namespace compile {
                            CommonTable::ManagerPtr catalog,
                            TuplePtr head, TuplePtr event);
   
+      ListPtr
+      canonicalizeEvent(TuplePtrList& selections, ListPtr schema);
+
+      ListPtr
+      canonicalizeSchema(ostringstream&, string, 
+                         CommonTable::ManagerPtr, std::deque<string>&,
+                         ListPtr&, ListPtr);
+
       string probe(ostringstream& oss, string indent,
                    CommonTable::ManagerPtr catalog, 
                    TuplePtr probe, ListPtr tupleSchema, bool filter);

@@ -324,7 +324,8 @@ namespace compile {
       if (epd.inputs && apd.outputs) {
         if (aggPosition >= 0) {
           oss << "\t" << aggwrap.str(); // Create the aggwrap
-          oss << "\tinput -> aggwrap[1] -> event -> condition -> ";
+          oss << "\tinput -> Queue(\"aggQueue\", 1000) -> PullPush(\"aggInput\", 0) ->";
+          oss << "\taggwrap[1] -> event -> condition -> ";
           oss << "PullPush(\"aggpp\", 0) -> [1]aggwrap -> ";
           oss << "Queue(\"actionBuf\", 1000) -> action -> output;\n";
           oss << "\tcondition[1] -> [2]aggwrap;\n};\n"; // End signal
@@ -346,7 +347,7 @@ namespace compile {
           oss << "\t" << aggwrap.str(); // Create the aggwrap
           oss << "\tinput -> aggwrap[1] -> event -> condition -> ";
           oss << "PullPush(\"aggpp\", 0) -> [1]aggwrap -> ";
-          oss << "Queue(\"actionBuf\", 10) -> action;\n";
+          oss << "Queue(\"actionBuf\", 1000) -> action;\n";
           oss << "\tcondition[1] -> [2]aggwrap;\n};\n"; // End signal
         }
         else {
@@ -481,13 +482,28 @@ namespace compile {
                    CommonTable::ManagerPtr catalog, TuplePtrList& terms)
     {
       assert (terms.size() >= 2);	// Must have a least a head and an event
-      TuplePtr head      = terms.at(0);
-      TuplePtr event     = terms.at(1); 
+      TuplePtr head  = terms.at(0);
+      TuplePtr event = terms.at(1); 
       string   eventType = (*event)[catalog->attribute(FUNCTOR, "ECA")]->toString();
       string   eventName = (*event)[catalog->attribute(FUNCTOR, "NAME")]->toString();
       ListPtr  headArgs  = Val_List::cast((*head)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]); 
-      ListPtr  eventArgs = Val_List::cast((*event)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]); 
-  
+
+      if (eventName != "periodic") {
+        ListPtr  schema = Val_List::cast((*event)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]); 
+        TuplePtrList selections;
+        schema = canonicalizeEvent(selections, schema);
+        if (selections.size() > 0) {
+          event = event->clone();
+          event->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(schema));
+          event->freeze();
+          terms[1] = event;
+          terms.insert(terms.begin() + 2, selections.begin(), selections.end());
+          for (TuplePtrList::iterator iter = terms.begin(); iter != terms.end(); iter++) {
+            std::cerr << "\t" << (*iter)->toString() << std::endl;
+          }
+        }
+      }
+
       if (eventType == "RECV") {
         oss << indent << "graph event(1, 1, \"h/l\", \"-/-\") {\n";
         oss << indent << "\tinput -> " << "Queue(\"" << eventName << "\", 1000) -> \n"; 
@@ -590,6 +606,9 @@ namespace compile {
         string graphName;
         if ((*term)[0]->toString() == FUNCTOR) {
           ListPtr schema = Val_List::cast((*term)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
+          schema = canonicalizeSchema(oss, indent+"\t\t", catalog, graphNames, tupleSchema, schema);
+          term = term->clone();
+          term->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(schema));
           graphName = probe(oss, indent + "\t\t", catalog, term, tupleSchema, filter);
           if ((*term)[catalog->attribute(FUNCTOR, "NOTIN")] == Val_UInt32::mk(false)) {
               tupleSchema = namestracker::merge(tupleSchema, schema);
@@ -813,6 +832,82 @@ namespace compile {
       return (Context::PortDesc) {0, "", "", 0, "", ""};
     }
   
+    ListPtr
+    Context::canonicalizeSchema(ostringstream& oss, string indent, 
+                                CommonTable::ManagerPtr catalog, std::deque<string>& graphs,
+                                ListPtr& outerSchema, ListPtr innerSchema)
+    {
+      static long fictNum = 0;
+
+      ListPtr cschema = List::mk();
+      for (ValPtrList::const_iterator iter = innerSchema->begin(); 
+           iter != innerSchema->end(); iter++) {
+        TuplePtr attr = Val_Tuple::cast(*iter);
+        if ((*attr)[TNAME]->toString() != VAR &&
+            (*attr)[TNAME]->toString() != LOC) {
+          ostringstream name;
+          name <<"$PVPROBEGEN_" << fictNum++;
+          TuplePtr varAttr = Tuple::mk(VAR);
+          varAttr->append(Val_Str::mk(name.str()));
+          varAttr->freeze();
+          
+          TuplePtr assignTp = Tuple::mk(ASSIGN, true);
+          assignTp->append(Val_Null::mk());
+          assignTp->append(Val_Tuple::mk(varAttr));
+          assignTp->append(Val_Tuple::mk(attr));
+          assignTp->append(Val_Null::mk());
+          assignTp->freeze();
+ 
+          graphs.push_back(assign(oss, indent, catalog, assignTp, outerSchema));
+          cschema->append(Val_Tuple::mk(varAttr));
+        }
+        else {
+          cschema->append(Val_Tuple::mk(attr));
+        }
+      } 
+      return cschema;
+    }
+
+    ListPtr
+    Context::canonicalizeEvent(std::deque<TuplePtr>& selections, ListPtr schema)
+    {
+      static long fictNum = 0;
+
+      ListPtr cschema = List::mk();
+      for (ValPtrList::const_iterator iter = schema->begin(); 
+           iter != schema->end(); iter++) {
+        TuplePtr attr = Val_Tuple::cast(*iter);
+        if ((*attr)[TNAME]->toString() != VAR &&
+            (*attr)[TNAME]->toString() != LOC) {
+          ostringstream name;
+          name << "$PVEVENTGEN_" << fictNum++;
+          TuplePtr varAttr = Tuple::mk(VAR);
+          varAttr->append(Val_Str::mk(name.str()));
+          varAttr->freeze();
+          
+          TuplePtr boolTp = Tuple::mk(BOOL);
+          boolTp->append(Val_Str::mk("=="));
+          boolTp->append(Val_Tuple::mk(varAttr));
+          boolTp->append(Val_Tuple::mk(attr));
+          boolTp->freeze();
+
+          TuplePtr selectTp = Tuple::mk(SELECT, true);
+          selectTp->append(Val_Null::mk());
+          selectTp->append(Val_Tuple::mk(boolTp));
+          selectTp->append(Val_Null::mk());
+          selectTp->freeze();
+          selections.push_back(selectTp);
+ 
+          cschema->append(Val_Tuple::mk(varAttr));
+        }
+        else {
+          cschema->append(Val_Tuple::mk(attr));
+        }
+      } 
+
+      return cschema;
+    }
+
     string
     Context::probe(ostringstream& oss, string indent,
                    CommonTable::ManagerPtr catalog, 
@@ -914,7 +1009,7 @@ namespace compile {
       graphName << "select_" << _nameCounter++;
 
       oss << std::endl;
-      oss << indent << "graph " << graphName.str() << "(1, 1, \"l/l\", \"-/-\") {\n";
+      oss << indent << "graph " << graphName.str() << "(1, 1, \"a/a\", \"-/-\") {\n";
       oss << indent << "\tinput -> "
                     << "PelTransform(\"selection\", \""
                     << pel::gen(tupleSchema, selection) << "\") -> "

@@ -47,6 +47,9 @@ public:
   virtual ValuePtr
   nodeid();
 
+  virtual void
+  nodeid(ValuePtr, ValuePtr);
+
   virtual unsigned
   uniqueIdentifier();
 

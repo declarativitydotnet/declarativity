@@ -29,6 +29,7 @@ namespace compile {
       string desc_;
   };
 
+
   namespace namestracker {
     
     ListPtr getMask(const ValuePtr v);
@@ -48,6 +49,8 @@ namespace compile {
         to a regular variable. */
     ValuePtr toVar(ValuePtr var);
 
+    ValuePtr varCast(ValuePtr variable);
+
     /** Find the location attribute in the schema */
     ValuePtr location(const ListPtr args);
 
@@ -63,7 +66,15 @@ namespace compile {
      * a join.  */
     ListPtr merge(const ListPtr outer, const ListPtr inner);
 
+    ListPtr adornment(const ListPtr bound, const ListPtr schema);
+
+    ListPtr project(const ListPtr positions, const ListPtr schema);
+
     ListPtr assignSchema(const ListPtr outer, const ValuePtr var);
+
+    bool filter(const ListPtr schema, const ValuePtr var);
+
+    ListPtr variables(const ValuePtr var);
 
     void joinKeys(const ListPtr outer, const ListPtr inner,
                   CommonTable::Key& joinKey, 
@@ -81,6 +92,7 @@ namespace compile {
     gen(const ListPtr schema, TuplePtr expr);
 
   };
+
 };
 
 #endif

@@ -830,6 +830,8 @@ public:
 
   virtual ValuePtr nodeid() = 0;
 
+  virtual void nodeid(ValuePtr, ValuePtr) = 0;
+
   /** Generates a unique identifier */
   virtual unsigned uniqueIdentifier() = 0;
 

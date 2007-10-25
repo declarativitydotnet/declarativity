@@ -171,6 +171,13 @@ ListPtr List::multiset_intersect(ListPtr l) const
   return output;
 }
 
+void List::append(ListPtr list)
+{
+  ValPtrList::const_iterator listp = list->begin();
+  while(listp != list->end())
+    append(*listp++);
+}
+
 void List::append(ValuePtr val)
 {
   vpl.push_back(val);

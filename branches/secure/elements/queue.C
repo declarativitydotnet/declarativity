@@ -83,6 +83,7 @@ int Queue::push(int port, TuplePtr p, b_cbv cb)
 
   // have we reached the max size? If so, we have to wait
   if (_q.size() == _size) {
+    std::cerr << "QUEUE REACHED MAX SIZE FROM TUPLE: " << p->toString() << std::endl;
     ELEM_INFO("Queue has reach max size, queuesize=" << _q.size());
     _pushCB = cb;
     return 0;

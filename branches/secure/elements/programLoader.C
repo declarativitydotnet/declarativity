@@ -117,6 +117,7 @@ ProgramLoader::loader()
     std::cout << std::endl;
     terminal = more == "Y" || more == "y";
   }
+  else return;
 
   string processed(filename+".processed");
 

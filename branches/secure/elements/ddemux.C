@@ -175,6 +175,7 @@ int DDemux::push(int port, TuplePtr p, b_cbv cb)
     if (_block_flags[i]) {
       // No can do. Drop the tuple and return 0 if all outputs are
       // blocked
+      TELL_ERROR << "DDemux tuple dropped!: " << p->toString() << std::endl;
       ELEM_WARN("push: Matched blocked output");
 
       // Of course, our input is not blocked, or we wouldn't be here,
@@ -206,6 +207,7 @@ int DDemux::push(int port, TuplePtr p, b_cbv cb)
     if (_block_flags[0]) {
       // No can do. 
       // Drop the tuple and return 0 if all outputs are blocked
+      TELL_ERROR << "DDemux tuple dropped!: " << p->toString() << std::endl;
       ELEM_WARN("push: Default output blocked");
     
       // Of course, our input is not blocked, or we wouldn't be here,

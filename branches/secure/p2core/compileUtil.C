@@ -193,7 +193,10 @@ namespace compile {
     position(const ListPtr args, const ValuePtr variable)
     {
       ValuePtr var;
-      if ((*Val_Tuple::cast(variable))[0]->toString() == VAR ||
+      if (variable == Val_Null::mk()) {
+        return -1;
+      }
+      else if ((*Val_Tuple::cast(variable))[0]->toString() == VAR ||
           (*Val_Tuple::cast(variable))[0]->toString() == LOC) {
         var = (*Val_Tuple::cast(variable))[2];
       }
@@ -213,9 +216,7 @@ namespace compile {
         if ((*arg)[0]->toString() != AGG && 
             (*arg)[0]->toString() != VAR && 
             (*arg)[0]->toString() != LOC) {
-          TELL_ERROR << "ARGS: " << args->toString() << " VARIABLE: " 
-                    << variable->toString() << std::endl;
-          throw compile::Exception("FieldNamesTracker: Fields must be variables!");
+          continue;
         }
         if ((*arg)[0]->toString() == AGG)
           arg = Val_Tuple::cast((*arg)[2]);  // Get the variable
@@ -223,6 +224,68 @@ namespace compile {
           return index;
       }
       return -1;
+    }
+
+    bool
+    filter(const ListPtr schema, const ValuePtr value) 
+    {
+      ListPtr vars = variables(value);
+      for (ValPtrList::const_iterator iter = vars->begin();
+           iter != vars->end(); iter++) {
+        if (!schema->member(*iter)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    ListPtr 
+    variables(const ValuePtr value)
+    {
+      ListPtr vars  = List::mk();
+      TuplePtr expr = Val_Tuple::cast(value);
+
+      if ((*expr)[TNAME]->toString() == BOOL ||
+          (*expr)[TNAME]->toString() == MATH) {
+        ValuePtr lhs = (*expr)[3];
+        ValuePtr rhs = (*expr)[4];
+        if (!varCast(lhs)) {
+          vars->append(variables(lhs));
+        }
+        else {
+          vars->append(varCast(lhs));
+        }
+
+        if (rhs != Val_Null::mk()) {
+          if (!varCast(lhs)) {
+            vars->append(variables(lhs));
+          }
+          else {
+            vars->append(varCast(lhs));
+          }
+        }
+      }
+      else if (varCast(value)) {
+        vars->append(varCast(value));
+      }
+      return vars;
+    }
+
+    ValuePtr
+    varCast(ValuePtr variable) {
+      if (variable == Val_Null::mk()) {
+        return ValuePtr();
+      }
+      else if ((*Val_Tuple::cast(variable))[0]->toString() == VAR ||
+          (*Val_Tuple::cast(variable))[0]->toString() == LOC) {
+        return variable;
+      }
+      else if ((*Val_Tuple::cast(variable))[0]->toString() == AGG) {
+        ValuePtr var = (*Val_Tuple::cast(variable))[2];
+        if (var != Val_Null::mk()) 
+          return var;
+      }
+      return ValuePtr();
     }
     
     ListPtr 
@@ -238,6 +301,45 @@ namespace compile {
         if (position(outer, *i) < 0) join->append(*i);
       }
       return join;
+    }
+
+    ListPtr 
+    project(const ListPtr positions, const ListPtr schema)
+    {
+      ListPtr projection = List::mk();
+      for (ValPtrList::const_iterator iter = positions->begin();
+           iter != positions->end(); iter++) {
+        int pos = Val_UInt32::cast(*iter);
+        if (pos < schema->size()) {
+          projection->append(schema->at(pos));
+        }
+        else {
+          TELL_ERROR << "NAMESTRACKER PROJECT: "
+                     << positions->toString() << " on "
+                     << schema->toString() << std::endl;
+          return schema;
+        }
+      }
+      return projection;
+    }
+
+    ListPtr 
+    adornment(const ListPtr bound, const ListPtr schema)
+    {
+      ListPtr adorn = List::mk();
+   
+      int pos = 0;
+      for (ValPtrList::const_iterator iter = schema->begin();
+           iter != schema->end(); iter++, pos++) {
+        TuplePtr arg = Val_Tuple::cast(*iter);
+        if (compile::namestracker::position(bound, *iter) >= 0) {
+          adorn->append(Val_UInt32::mk(pos));
+        }
+        else if ((*arg)[TNAME]->toString() != VAR) {
+          adorn->append(Val_UInt32::mk(pos));
+        }
+      }
+      return adorn;
     }
 
     ListPtr 

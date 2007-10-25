@@ -144,6 +144,8 @@ for op, ar, va, desc in [
   ("indexMatch",3, "L_INDEXMATCH", "Tests index key according to join operation."),
   ("castassign",3, "L_CASTASSIGN", "Substitute a selection predicate for an assignment."),
   ("merge",2,   "L_MERGE",      "Merge two argument lists according join operation."),
+  ("project",2,   "L_PROJECT",  "Project the schema (arg 2) onto the fields in arg 1."),
+  ("adornment",2,   "L_ADORNMENT",  "Determine the adornment from bound variables and schema."),
   ("assignschema",2, "L_ASSIGNSCHEMA", "Determine output schema of assignment operation."),
   ("verify",6,   "VERIFY",      "Decrypt the first argument decrypted using the second key."),
   ("gen",3,   "GEN",      "encrypt the first argument using the second encryption algorithm and the third key."),

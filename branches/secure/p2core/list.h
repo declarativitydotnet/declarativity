@@ -64,6 +64,8 @@ public:
    // Appends a value to a list.
    void append(ValuePtr val);
 
+   void append(ListPtr list);
+
    // Prepends a value to a list.
    void prepend(ValuePtr val);
    

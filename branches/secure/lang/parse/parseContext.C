@@ -818,7 +818,7 @@ namespace compile {
       static int fict_varnum = 1; // Counter for inventing anonymous variables. 
 
       // We should not be canonicalize periodics
-      if (pred->name() == "periodic") {
+      if (pred->name() == "periodic" || headPred == false) {
         // Skip this one
         return;
       }
