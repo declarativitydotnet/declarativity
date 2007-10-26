@@ -27,7 +27,7 @@ namespace compile {
   namespace compound{
     using namespace opr;
     
-    bool debug = false;
+    bool debug = true;
     DEFINE_ELEMENT_INITS_NS(Context, "CompoundContext", compile::compound)
 
     Context::Context(string name)
@@ -64,6 +64,7 @@ namespace compile {
       oss << ((Val_UInt32::cast((*rule)[catalog->attribute(RULE, "DELETE")]) == 1)?"delete ":"") ;
 
       CommonTable::Iterator iter;
+
       for (int pos = 0; true; pos++) {
         TuplePtr lookup = Tuple::mk();
         lookup->append((*rule)[TUPLE_ID]);
@@ -170,6 +171,7 @@ namespace compile {
       CommonTablePtr selectTbl  = catalog->table(SELECT);
       CommonTablePtr ruleTbl  = catalog->table(RULE);
       CommonTablePtr tableTbl  = catalog->table(TABLE);
+      CommonTablePtr factTbl = catalog->table(FACT);
 
       CommonTable::Iterator iter;
       // first display all functors
@@ -204,7 +206,14 @@ namespace compile {
 	TuplePtr term = iter->next();
 	TELL_OUTPUT << term->toString()<<"\n";
       }
-  
+
+      TELL_OUTPUT << "\n FACTS \n";
+      for (iter = factTbl->scan();!iter->done(); ) {
+	TuplePtr functor = iter->next();
+	TELL_OUTPUT << functor->toString()<<"\n";
+      }
+
+
     }   
 
 
@@ -306,6 +315,7 @@ namespace compile {
     {
       if(debug){
 	dump(catalog);
+
       }
 
       return this->compile::Context::program(catalog, program);
