@@ -23,7 +23,7 @@ namespace systemr {
                  programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
                  Val := true.
  
-  checkComplete checkComplete(@A, Pid, Val) :- periodic(@A, E, 10),
+  checkComplete checkComplete(@A, Pid, Val) :- periodic(@A, E, 2),
                                                complete(@A, Pid, Val).
 
   setComplete complete(@A, Pid, true) :- checkComplete(@A, Pid, Val), Val == false.
@@ -32,10 +32,8 @@ namespace systemr {
 
   signalComplete ::sys::program(@A, Pid, Name, Rewrite, "systemr", Text, Msg, P2DL) :-
                    checkComplete(@A, Pid, Val), Val == true,
-/*
                    rules(@A, Pid, Count),       
                    bestPlans(@A, Pid, Count),       
-*/
                    ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL).
   
 

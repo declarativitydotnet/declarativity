@@ -22,10 +22,10 @@
 #include "loop.h"
 
 #include "val_int32.h"
-#include "val_int64.h"
-#include "val_uint64.h"
 #include "val_str.h"
 #include "val_double.h"
+#include "val_int32.h"
+#include "val_uint32.h"
 #include "val_null.h"
 #include "val_list.h"
 #include "val_id.h"
@@ -55,9 +55,8 @@ private:
 
   virtual int yylex();
 
-  void add_const_int(int v) { add_const(Val_Int32::mk(v));};
-  void add_const_int(int64_t v) { add_const(Val_Int64::mk(v));};
-  void add_const_int(uint64_t v) { add_const(Val_UInt64::mk(v));};
+  void add_const_int(int32_t v) { add_const(Val_Int32::mk(v));};
+  void add_const_int(uint32_t v) { add_const(Val_UInt32::mk(v));};
   void add_const_str(string s) { add_const(Val_Str::mk(s));};
   void add_const_dbl(double d) { add_const(Val_Double::mk(d));};
   void add_const(ValuePtr f);

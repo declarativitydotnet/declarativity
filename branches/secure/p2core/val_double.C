@@ -119,14 +119,11 @@ Val_Double::cast(ValuePtr v)
 
 int Val_Double::compareTo(ValuePtr other) const
 {
-  if (other->typeCode() != Value::DOUBLE) {
-    if (Value::DOUBLE < other->typeCode()) {
-      return -1;
-    } else if (Value::DOUBLE > other->typeCode()) {
-      return 1;
-    }
-  }
-  if (d < cast(other)) {
+  if (Value::DOUBLE < other->typeCode()) {
+    return -1;
+  } else if (Value::DOUBLE > other->typeCode()) {
+    return 1;
+  } else if (d < cast(other)) {
     return -1;
   } else if (d > cast(other)) {
     return 1;

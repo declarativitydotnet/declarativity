@@ -171,7 +171,7 @@ editstrandlink: editstrandatom
               ;
 
 graph: P2DL_GRAPH P2DL_VAR 
-       P2DL_LPAR P2DL_UNSIGNED P2DL_COMMA P2DL_UNSIGNED 
+       P2DL_LPAR P2DL_NUMBER P2DL_COMMA P2DL_NUMBER 
        P2DL_COMMA P2DL_STRING P2DL_COMMA P2DL_STRING P2DL_RPAR
        P2DL_LCURB graphbody P2DL_RCURB
          { $$ = new compile::p2dl::Graph($2, $4, $6, $8, $10, $13); }
@@ -203,12 +203,12 @@ key: P2DL_LPAR keylist P2DL_RPAR
        { $$ = $2; }
    ;
 
-keylist: P2DL_UNSIGNED 
+keylist: P2DL_NUMBER 
            { unsigned k = Val_UInt32::cast(dynamic_cast<compile::p2dl::Value*>($1)->value());
              $$ = new Table2::Key(); 
              $$->push_back(k); }
          | 
-         P2DL_UNSIGNED P2DL_COMMA keylist 
+         P2DL_NUMBER P2DL_COMMA keylist 
            { unsigned k = Val_UInt32::cast(dynamic_cast<compile::p2dl::Value*>($1)->value());
              $$ = $3; 
              $$->insert($$->begin(), k); }
@@ -265,7 +265,7 @@ strandlink: strandatom
        { $$ = new compile::p2dl::Link($4, $2, $6); }
     ; 
 
-port: P2DL_UNSIGNED 
+port: P2DL_NUMBER 
         { $$ = new compile::p2dl::Port($1); }
       | P2DL_STRING
         { $$ = new compile::p2dl::Port($1); }

@@ -73,14 +73,11 @@ uint32_t Val_UInt32::cast(ValuePtr v) {
 
 int Val_UInt32::compareTo(ValuePtr other) const
 {
-  if (other->typeCode() != Value::UINT32) {
-    if (Value::UINT32 < other->typeCode()) {
-      return -1;
-    } else if (Value::UINT32 > other->typeCode()) {
-      return 1;
-    }
-  }
-  if (i < cast(other)) {
+  if (Value::UINT32 < other->typeCode()) {
+    return -1;
+  } else if (Value::UINT32 > other->typeCode()) {
+    return 1;
+  } else if (i < cast(other)) {
     return -1;
   } else if (i > cast(other)) {
     return 1;

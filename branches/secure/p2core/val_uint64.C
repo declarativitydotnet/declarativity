@@ -84,14 +84,11 @@ Val_UInt64::cast(ValuePtr v) {
 
 int Val_UInt64::compareTo(ValuePtr other) const
 {
-  if (other->typeCode() != Value::UINT64) {
-    if (Value::UINT64 < other->typeCode()) {
-      return -1;
-    } else if (Value::UINT64 > other->typeCode()) {
-      return 1;
-    }
-  }
-  if (i < cast(other)) {
+  if (Value::UINT64 < other->typeCode()) {
+    return -1;
+  } else if (Value::UINT64 > other->typeCode()) {
+    return 1;
+  } else if (i < cast(other)) {
     return -1;
   } else if (i > cast(other)) {
     return 1;

@@ -166,7 +166,7 @@ ValuePtr Pel_VM::pop()
 uint64_t Pel_VM::pop_unsigned() 
 {
   ValuePtr t = stackTop(); stackPop();
-  return Val_UInt64::cast(t);
+  return Val_UInt32::cast(t);
 }
 
 //
@@ -1168,8 +1168,9 @@ DEF_OP(NEG) {
 DEF_OP(PLUS) {
   ValuePtr v2 = pop();
   ValuePtr v1 = pop();
-  ValuePtr r = v1 + v2;
-  stackPush(r);
+  ValuePtr r1 = v1 + v2;
+  ValuePtr r2 = v2 + v1;
+  stackPush((r1->typeCode() < r2->typeCode() ? r2 : r1));
 }
 DEF_OP(MINUS) {
   // Be careful of undefined evaluation order in C++!
@@ -1194,7 +1195,7 @@ DEF_OP(DIV) {
   // Be careful of undefined evaluation order in C++!
   ValuePtr v1 = pop();
   ValuePtr v2 = pop();
-  if (v1 != Val_UInt64::mk(0)) { 
+  if (v1 != Val_UInt32::mk(0)) { 
     try {
       stackPush((v2 / v1));
     } catch (opr::Oper::DivisionByZeroException e) {
@@ -1208,7 +1209,7 @@ DEF_OP(MOD) {
   // Be careful of undefined evaluation order in C++!
   ValuePtr v1 = pop();
   ValuePtr v2 = pop();
-  if (v1 != Val_UInt64::mk(0)) { 
+  if (v1 != Val_UInt32::mk(0)) { 
     stackPush((v2 % v1));
   } else if (error == PE_SUCCESS) {
     error = PE_DIVIDE_BY_ZERO;

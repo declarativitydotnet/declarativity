@@ -153,7 +153,7 @@ WHITESPACE	[ \t\r\n]+
   return P2DL_NAME; 
 }
 
-<INITIAL>({DIGIT}+|0[xX]{HEXDIGIT}+) {
+<INITIAL>({DIGIT}+|0[xX]{HEXDIGIT}+)U {
   // Unsigned integer literal (including octal and/or hex
   lvalp->v = new compile::p2dl::Value(Val_UInt32::mk(strtoul(yytext,NULL,0)));
   return P2DL_UNSIGNED;

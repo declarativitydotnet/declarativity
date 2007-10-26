@@ -92,7 +92,8 @@ namespace compile {
       else {
         if (!v) throw p2dl::Exception(0, "Bad port value! " + _port->toString());
         
-        if (v->value()->typeCode() == ::Value::UINT32) 
+        if (v->value()->typeCode() == ::Value::INT32 || 
+            v->value()->typeCode() == ::Value::UINT32) 
           return Val_UInt32::cast(v->value());
         else return e->element()->input(v->value());
       }
@@ -110,7 +111,8 @@ namespace compile {
       else {
         if (!v) throw p2dl::Exception(0, "Bad port value! " + _port->toString());
         
-        if (v->value()->typeCode() == ::Value::UINT32) 
+        if (v->value()->typeCode() == ::Value::INT32 || 
+            v->value()->typeCode() == ::Value::UINT32) 
           return Val_UInt32::cast(v->value());
         else return e->element()->output(v->value());
       }

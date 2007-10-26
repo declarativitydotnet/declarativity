@@ -227,9 +227,9 @@ namespace compile {
     }
 
     bool
-    filter(const ListPtr schema, const ValuePtr value) 
+    filter(const ListPtr schema, const ValuePtr boolv) 
     {
-      ListPtr vars = variables(value);
+      ListPtr vars = variables(boolv);
       for (ValPtrList::const_iterator iter = vars->begin();
            iter != vars->end(); iter++) {
         if (!schema->member(*iter)) {
@@ -258,10 +258,10 @@ namespace compile {
 
         if (rhs != Val_Null::mk()) {
           if (!varCast(lhs)) {
-            vars->append(variables(lhs));
+            vars->append(variables(rhs));
           }
           else {
-            vars->append(varCast(lhs));
+            vars->append(varCast(rhs));
           }
         }
       }

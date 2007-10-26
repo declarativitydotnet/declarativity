@@ -34,8 +34,8 @@ DEFINE_ELEMENT_INITS(ProgramLoader, "ProgramLoader");
 ProgramLoader::ProgramLoader(string name)
   : Element(name, 0, 1), terminal(true)
 {
-  LOAD("stats", "/Users/tcondie/workspace/secure/doc/stats.olg", "eca");
-  LOAD("systemr", "/Users/tcondie/workspace/secure/doc/systemr.olg", "stats");
+  // LOAD("stats", "/Users/tcondie/workspace/secure/doc/stats.olg", "eca");
+  // LOAD("systemr", "/Users/tcondie/workspace/secure/doc/systemr.olg", "stats");
   // LOAD("localize", "/Users/tcondie/workspace/secure/doc/localize.olg", "systemr");
 }
 
@@ -48,8 +48,10 @@ ProgramLoader::ProgramLoader(string name)
 ProgramLoader::ProgramLoader(TuplePtr args)
   : Element(Val_Str::cast((*args)[2]), 0, 1), terminal(true)
 {
-  LOAD("stats", "/Users/tcondie/workspace/secure/doc/stats.olg", "eca");
-  LOAD("systemr", "/Users/tcondie/workspace/secure/doc/systemr.olg", "stats");
+  LOAD("magic", "/Users/tcondie/workspace/secure/doc/magic.olg", "eca");
+
+  // LOAD("stats", "/Users/tcondie/workspace/secure/doc/stats.olg", "eca");
+  // LOAD("systemr", "/Users/tcondie/workspace/secure/doc/systemr.olg", "stats");
   // LOAD("localize", "/Users/tcondie/workspace/secure/doc/localize.olg", "systemr");
 }
 
