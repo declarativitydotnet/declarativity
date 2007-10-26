@@ -27,7 +27,7 @@ namespace compile {
   namespace compound{
     using namespace opr;
     
-    bool debug = true;
+    bool debug = false;
     DEFINE_ELEMENT_INITS_NS(Context, "CompoundContext", compile::compound)
 
     Context::Context(string name)
