@@ -16,6 +16,7 @@
 #include "secureContext.h"
 #include "plumber.h"
 #include "systemTable.h"
+#include "tableManager.h"
 #include "value.h"
 #include "val_str.h"
 #include "val_null.h"
@@ -1354,20 +1355,49 @@ namespace compile {
 	encHintKey.push_back(5); 
 	encHintKey.push_back(6); 
 
-	catalog->createTable(ENCHINT, encHintKey, Table2::NO_SIZE, Table2::NO_EXPIRATION);
+	try{
+	  catalog->createTable(ENCHINT, encHintKey, Table2::NO_SIZE, Table2::NO_EXPIRATION);
+	  TELL_ERROR<<" Successfully created table encHint"
+	            << "\n";
+	}
+	catch(TableManager::Exception e){
+	  TELL_ERROR << "generateMaterialize caught a table creation exception: '"
+                 << e.toString()
+                 << "\n";
+
+	}
       
 	//generate materialize for verTable
 
 	Table2::Key vertableKey;
 	vertableKey.push_back(2); 
-
+	try{
 	catalog->createTable(VERTABLE, vertableKey, Table2::NO_SIZE, Table2::NO_EXPIRATION);
+	TELL_ERROR<<" Successfully created table verTable"
+	            << "\n";
+	}
+	catch(TableManager::Exception e){
+	  TELL_ERROR << "generateMaterialize caught a table creation exception: '"
+                 << e.toString()
+                 << "\n";
+
+	}
 
 	//generate materialize for genTable
 	Table2::Key gentableKey;
 	gentableKey.push_back(2); 
 
+	try{
 	catalog->createTable(GENTABLE, gentableKey, Table2::NO_SIZE, Table2::NO_EXPIRATION);
+	TELL_ERROR<<" Successfully created table genTable"
+	            << "\n";
+	}
+	catch(TableManager::Exception e){
+	  TELL_ERROR << "generateMaterialize caught a table creation exception: '"
+                 << e.toString()
+                 << "\n";
+
+	}
 
 	CommonTablePtr functorTbl = catalog->table(FUNCTOR);
 	CommonTable::Iterator funcIter;

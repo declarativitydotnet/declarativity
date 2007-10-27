@@ -33,6 +33,7 @@ namespace compile {
     const uint32_t CURVERSION = 0;
     static string refSuffix[] = {"", "", NEWSAYSSUFFIX, NEWSAYSSUFFIX, ""}; // suffix for the tuple name based on the ref type
     static uint32_t idCounter = 0;
+    static bool debug = true;
     void
     dump(CommonTable::ManagerPtr catalog)
     {
@@ -93,7 +94,7 @@ namespace compile {
     }   
 
     ValuePtr generateLocSpec(bool strong){
-      std::cout<<"generate loc spec called \n";
+      if(debug)std::cout<<"generate loc spec called \n";
       CommonTable::ManagerPtr catalog = Plumber::catalog();
       TuplePtr locSpec = Tuple::mk();
       locSpec->append(Val_Str::mk(LOCSPECTUPLE));
@@ -107,7 +108,7 @@ namespace compile {
     }
 
     ValuePtr generateVersion(bool strong){
-      std::cout<<"generate version called \n";
+      if(debug)std::cout<<"generate version called \n";
       CommonTable::ManagerPtr catalog = Plumber::catalog();
       TuplePtr version = Tuple::mk();
       version->append(Val_Str::mk(VERSIONTUPLE));
@@ -126,7 +127,7 @@ namespace compile {
 	TuplePtr tuple = Val_Tuple::cast(v);
 	rVal = (Val_Str::cast((*tuple)[TNAME]) == LOCSPECTUPLE);
       }
-      std::cout<<"is locspec called with arg " << v->toString() << ": returned " << rVal << "\n";
+      if(debug)std::cout<<"is locspec called with arg " << v->toString() << ": returned " << rVal << "\n";
       return rVal;
 
     }
@@ -150,9 +151,9 @@ namespace compile {
       // find out all the linked tuples and recursively find their linked tuples and add it to the list
 
       // assert that the table name is materialized and has key 2
-      std::cout<<"processGen called with arg" << tableName->toString() << " and time stamp " << key->toString()<< " \n";
+      if(debug)std::cout<<"processGen called with arg" << tableName->toString() << " and time stamp " << key->toString()<< " \n";
       CommonTable::ManagerPtr catalog = Plumber::catalog();
-      dump(catalog);
+      if(debug) dump(catalog);
        CommonTablePtr parentTbl = catalog->table(Val_Str::cast(tableName) + ROOTSUFFIX);      
       TuplePtr dummyTpl = Tuple::mk(Val_Str::cast(tableName) + ROOTSUFFIX);
       dummyTpl->append(key);
@@ -167,13 +168,13 @@ namespace compile {
       ValuePtr hint = (*parentProcessTuple)[HINTPOS + 1]; // +1 because of timestamp
       uint32_t myRefType = (isSaysHint(hint)?ROOTSAYS:ROOT);
       serialize(catalog, parentProcessTuple, Val_Str::cast(tableName), buf, myRefType, true);
-      std::cout<<"serialized buffer"<<"\n"<<buf->toString()<<"\n";
+      if(debug)std::cout<<"serialized buffer"<<"\n"<<buf->toString()<<"\n";
       return Val_List::mk(buf);
       
     }
 
     ValuePtr processExtract(ValuePtr tableName, ValuePtr buf){
-      std::cout<<"processExtract called with arg" << tableName->toString() << " and buffer " << buf->toString()<< " \n";
+      if(debug)std::cout<<"processExtract called with arg" << tableName->toString() << " and buffer " << buf->toString()<< " \n";
       CommonTable::ManagerPtr catalog = Plumber::catalog();
       ValuePtr nodeId = catalog->nodeid();
       ListPtr serialBuf = Val_List::cast(buf);
@@ -198,7 +199,7 @@ namespace compile {
 	  ValuePtr embeddedHash = (*locSpec)[HASHPOS];
 	  if(embeddedHash->compareTo(hash) != 0){
 	    install = false;
-	    std::cout<<"calculated hash"<<hash->toString()<<"\n embedded hash"<<(*locSpec)[HASHPOS]->toString();
+	    if(debug)std::cout<<"calculated hash"<<hash->toString()<<"\n embedded hash"<<(*locSpec)[HASHPOS]->toString();
 	  }
 	}
 	else { // handle version tuples
@@ -240,7 +241,7 @@ namespace compile {
 	    linkSet.insert(refPos);
 	    
 	    if(!isLocSpec((*tuple)[refPos + offset])){
-	      std::cout<<"Invalid tuple received: location specifier field "<<refPos<<" corrupted "<<(*tuple)[refPos + offset]->toString();
+	      if(debug)std::cout<<"Invalid tuple received: location specifier field "<<refPos<<" corrupted "<<(*tuple)[refPos + offset]->toString();
 	      install = false; 
 	      continue;
 	    }
@@ -250,7 +251,7 @@ namespace compile {
 	      if(refType == STRONGLINK || refType == STRONGSAYS){
 		TuplePtr locSpecTuple = Val_Tuple::cast((*tuple)[refPos + offset]);
 		if((*locSpecTuple)[HASHPOS] == null){
-		  std::cout<<"Invalid tuple received: strong location specifier field "<<(refPos + offset)<<" is missing hash "<<(*tuple)[refPos+offset]->toString();
+		  if(debug)std::cout<<"Invalid tuple received: strong location specifier field "<<(refPos + offset)<<" is missing hash "<<(*tuple)[refPos+offset]->toString();
 		  install = false;
 		  continue;
 		}
@@ -335,13 +336,13 @@ namespace compile {
 	CommonTablePtr table = catalog->table(tablename);
 	if(install){
 	  if(!table->insert(tuple))
-	    std::cout<<"Failed to insert "<< tuple->toString();
+	    if(debug)std::cout<<"Failed to insert "<< tuple->toString();
 	}
 	else{
-	  std::cout<<"Failed to validate tuple"<<tuple->toString();
+	  if(debug)std::cout<<"Failed to validate tuple"<<tuple->toString();
 	}
       }
-      dump(catalog);
+      if(debug) dump(catalog);
       return tableName;
       // traverse the graph and return the serialized graph
     }
@@ -473,7 +474,7 @@ namespace compile {
 	// return local hash
 
       string tuplename = Val_Str::cast((*parent)[0]);
-      std::cout<<"serializing " << tuplename <<" tuple \n";
+      if(debug)std::cout<<"serializing " << tuplename <<" tuple \n";
       uint32_t refPosPos = catalog->attribute(REF, "LOCSPECFIELD");
       uint32_t refTypePos = catalog->attribute(REF, "REFTYPE");
       uint32_t refToPos = catalog->attribute(REF, "TO");

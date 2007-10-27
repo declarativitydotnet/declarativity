@@ -12,6 +12,7 @@
 namespace compile {
 
   namespace secure {
+    bool debug = false;
     const int SecurityAlgorithms::hashSize = 20;
     //modify these to account for actual tuple
     const int SecurityAlgorithms::keyPos = 3;
@@ -233,7 +234,7 @@ namespace compile {
       FdbufPtr msg = Val_Opaque::cast(msgPtr);
       FdbufPtr key = Val_Opaque::cast(keyPtr);
       std::string signedMsg = msg->str() + key->str();
-      std::cout<<"signRSA called: with inputs Msg:"<< msgPtr->toString() << " Key: " << keyPtr->toString() << "returning: "<< signedMsg <<"\n";
+      if(debug)std::cout<<"signRSA called: with inputs Msg:"<< msgPtr->toString() << " Key: " << keyPtr->toString() << "returning: "<< signedMsg <<"\n";
 
       return Val_Str::mk(signedMsg);
       //      return Val_Opaque::mk(Sfslite::secureSignRSA(msg, key));
@@ -253,7 +254,7 @@ namespace compile {
       FdbufPtr key = Val_Opaque::cast(keyPtr);
 
       std::string signedMsg = msg->str() + key->str();
-      std::cout<<"verifyRSA called: with inputs Msg:"<< msgPtr->toString() << " Proof: " << proofPtr->toString() << "returning: "<< signedMsg <<"\n";
+      if(debug)std::cout<<"verifyRSA called: with inputs Msg:"<< msgPtr->toString() << " Proof: " << proofPtr->toString() << "returning: "<< signedMsg <<"\n";
       return (Val_Str::mk(signedMsg)->compareTo(proofPtr) == 0);
       //      return Sfslite::secureVerifyRSA(msg, key, proof);
     }

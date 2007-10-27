@@ -1,4 +1,4 @@
-r2 new<@X, Y, parent(@A)>:- parent(@X), link(@Y, A).
+r2 parent(@X):- says(N, M, 1, U) <parent(@X)>.
 
 
 

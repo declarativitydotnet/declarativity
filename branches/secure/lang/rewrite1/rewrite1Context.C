@@ -27,6 +27,7 @@
 #include "rewrite1Context.h"
 #include "plumber.h"
 #include "systemTable.h"
+#include "tableManager.h"
 #include "value.h"
 #include "val_str.h"
 #include "val_null.h"
@@ -1041,18 +1042,37 @@ namespace compile {
       _keys.push_back(3); // ver location
       _keys.push_back(4); // ver
 
-      catalog->createTable(scopedName, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
-      catalog->createIndex(scopedName, CommonTable::theKey(CommonTable::KEY2));
-
+      try{
+	catalog->createTable(scopedName, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
+	catalog->createIndex(scopedName, CommonTable::theKey(CommonTable::KEY2));
+	TELL_ERROR<<" Successfully created table "<< scopedName
+	            << "\n";
+	}
+      catch(TableManager::Exception e){
+	TELL_ERROR << "generateMaterialize caught a table creation exception: '"
+		   << e.toString()
+		   << "\n";
+	
+      }
+      
       scopedName = compile::LINKEXPANDERTABLE;
-
+      
       _keys.clear();
       _keys.push_back(2); // loc spec
-
-      catalog->createTable(scopedName, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
-
+      try{
+	catalog->createTable(scopedName, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
+	TELL_ERROR<<" Successfully created table"<< scopedName
+		  << "\n";
+      }
+      catch(TableManager::Exception e){
+	TELL_ERROR << "generateMaterialize caught a table creation exception: '"
+		   << e.toString()
+		   << "\n";
+	
+      }
+      
       TuplePtr newProgram = this->compile::Context::program(catalog, program);
-
+      
       pass2(catalog, program);
       pass3(catalog, program);
       ValuePtr programID = (*program)[catalog->attribute(PROGRAM, "PID")];
