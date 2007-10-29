@@ -19,10 +19,12 @@
 #include "val_str.h"
 #include "val_time.h"
 #include "val_uint32.h"
+#include "val_int32.h"
 #include "val_double.h"
 #include "val_list.h"
 #include "val_null.h"
 #include "list.h"
+#include "boost/bind.hpp"
 
 #define PRIMARY   "primary"
 #define SECONDARY "secondary"
@@ -121,6 +123,53 @@ if (name != TABLE && name != INDEX) createTable((name), (key));
   assert(table(FUNCTION)->insert(func)); \
 } while(0);
 #include "systemTable.h"
+
+  /* Install a create table listener */
+  table(TABLE)->updateListener(boost::bind(&TableManager::createTableListener, this, _1));
+
+}
+
+void
+TableManager::createTableListener(TuplePtr table)
+{
+  string name  = (*table)[attribute(TABLE, "TABLENAME")]->toString();
+  int32_t size = Val_Int32::cast((*table)[attribute(TABLE, "SIZE")]);
+  ValuePtr lt  = (*table)[attribute(TABLE, "LIFETIME")];
+  ValuePtr pk  = (*table)[attribute(TABLE, "KEY")];
+
+  TableMap::const_iterator titer = _tables.find(name);
+  if (titer != _tables.end()) {
+    return;
+  }
+ 
+  boost::posix_time::time_duration lifetime;
+  if (lt->typeCode() == ::Value::TIME_DURATION) {
+    lifetime = Val_Time_Duration::cast(lt);
+  } else if (Val_Int32::cast(lt) == -1) {
+    lifetime = Table2::NO_EXPIRATION;
+  } else {
+    lifetime = Val_Time_Duration::cast(lt);
+  }
+
+  if (size == -1) {
+    size = Table2::NO_SIZE;
+  }
+
+  CommonTable::Key primayKey;
+  if (pk == Val_Null::mk()) {
+    primayKey = CommonTable::theKey(CommonTable::KEYID);
+  }
+  else {
+    ListPtr keys = Val_List::cast(pk);
+    for (ValPtrList::const_iterator iter = keys->begin();
+         iter != keys->end(); iter++) {
+      primayKey.push_back(Val_UInt32::cast(*iter));
+    }
+  }
+
+  _tables.insert(std::make_pair(
+                 name, CommonTablePtr(new Table2(name, primayKey, size, lifetime))));
+  registerIndex(name, primayKey, PRIMARY);
 }
 
 string

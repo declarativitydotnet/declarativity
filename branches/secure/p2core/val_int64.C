@@ -40,9 +40,7 @@ ValuePtr Val_Int64::xdr_unmarshal( XDR *x )
 
 string Val_Int64::toConfString() const
 {
-  ostringstream conf;
-  conf << "Val_Int64(" << i << ")";
-  return conf.str();
+  return toString();
 }
 
 //

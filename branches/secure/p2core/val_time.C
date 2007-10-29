@@ -52,9 +52,7 @@ const opr::Oper* Val_Time::oper_ = new OperTime();
 
 string Val_Time::toConfString() const
 {
-  ostringstream conf;
-  conf << "Val_Time(" << to_simple_string(t)<< ")";
-  return conf.str();
+  return toString();
 }
 
 //

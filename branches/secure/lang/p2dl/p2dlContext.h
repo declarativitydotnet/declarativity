@@ -272,13 +272,13 @@ namespace compile {
     
     class Fact : public Statement {
     public:
-      Fact(Expression* n, ValueList *v);
+      Fact(ValueList *v);
     
       void commit(ScopeTable&);
 
       string toString() const;
     private:
-      string   _tablename;
+      string _tablename;
       TuplePtr _fact;
     };
   

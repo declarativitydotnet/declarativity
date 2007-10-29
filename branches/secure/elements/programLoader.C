@@ -48,7 +48,7 @@ ProgramLoader::ProgramLoader(string name)
 ProgramLoader::ProgramLoader(TuplePtr args)
   : Element(Val_Str::cast((*args)[2]), 0, 1), terminal(true)
 {
-  LOAD("magic", "/Users/tcondie/workspace/secure/doc/magic.olg", "eca");
+  LOAD("localize", "/Users/tcondie/workspace/secure/doc/localize.olg", "eca");
 
   // LOAD("stats", "/Users/tcondie/workspace/secure/doc/stats.olg", "eca");
   // LOAD("systemr", "/Users/tcondie/workspace/secure/doc/systemr.olg", "stats");

@@ -332,10 +332,12 @@ namespace compile {
       for (ValPtrList::const_iterator iter = schema->begin();
            iter != schema->end(); iter++, pos++) {
         TuplePtr arg = Val_Tuple::cast(*iter);
-        if (compile::namestracker::position(bound, *iter) >= 0) {
+        if ((*arg)[TNAME]->toString() == VAR &&
+            compile::namestracker::position(bound, *iter) >= 0) {
           adorn->append(Val_UInt32::mk(pos));
         }
-        else if ((*arg)[TNAME]->toString() != VAR) {
+        else if ((*arg)[TNAME]->toString() != VAR &&
+                 (*arg)[TNAME]->toString() != LOC) {
           adorn->append(Val_UInt32::mk(pos));
         }
       }

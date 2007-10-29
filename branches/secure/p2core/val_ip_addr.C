@@ -40,9 +40,7 @@ ValuePtr Val_IP_ADDR::xdr_unmarshal( XDR *x )
 
 string Val_IP_ADDR::toConfString() const
 {
-  ostringstream conf;
-  conf << "Val_IP_ADDR(" << _s << ")";
-  return conf.str();
+  return toString();
 }
 
 //

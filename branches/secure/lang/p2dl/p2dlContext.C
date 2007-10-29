@@ -348,19 +348,26 @@ namespace compile {
       return "";
     }
 
-    Fact::Fact(Expression* t, ValueList *v) : _tablename(t->toString()) {
-      _fact = ::Tuple::mk(_tablename);
+    Fact::Fact(ValueList *v) {
+      _fact = ::Tuple::mk();
       for (ValueList::iterator i = v->begin(); i != v->end(); i++)
         _fact->append(*i); 
+      _tablename = (*_fact)[TNAME]->toString();
     }
 
     void Fact::commit(ScopeTable& scope) {
       CommonTablePtr table = Plumber::catalog()->table(_tablename);
-      table->insert(_fact);
+      if (table) {
+        table->insert(_fact);
+      }
+      else {
+        TELL_ERROR << "P2DL ERROR: fact table " << _tablename << " does not exist!";
+        throw compile::p2dl::Exception(0, "FACT TABLE DOES NOT EXIST!");
+      }
     }
 
     string Fact::toString() const {
-      return "";
+      return _fact->toString();
     }
     
     /***************************************************
@@ -435,11 +442,6 @@ namespace compile {
            i != _watches.end(); i++) {
         (*i)->commit(scope);
       }
-      TELL_INFO << "COMMIT FACTS" << std::endl;
-      for (StatementList::iterator i = _facts.begin();
-           i != _facts.end(); i++) {
-        (*i)->commit(scope);
-      }
       TELL_INFO << "COMMIT GRAPHS" << std::endl;
       for (StatementList::iterator i = _graphs.begin();
            i != _graphs.end(); i++) {
@@ -448,6 +450,11 @@ namespace compile {
       TELL_INFO << "COMMIT EDITS" << std::endl;
       for (StatementList::iterator i = _edits.begin();
            i != _edits.end(); i++) {
+        (*i)->commit(scope);
+      }
+      TELL_INFO << "COMMIT FACTS" << std::endl;
+      for (StatementList::iterator i = _facts.begin();
+           i != _facts.end(); i++) {
         (*i)->commit(scope);
       }
     }

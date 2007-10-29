@@ -151,8 +151,8 @@ CompileStage::initialize()
 		     "rewrite2",
 		     */ 
 		     "eca", 
-		     "rewrite", 
 		     "debug", 
+		     "rewrite", 
 		     "local", 
 		     "planner", 
 		     "p2dl", 

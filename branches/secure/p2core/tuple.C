@@ -132,10 +132,9 @@ Tuple::toConfString() const
   } else {
     ostringstream sb;
 
-    sb << fields[0]->toConfString()
-       << "(";
+    sb << "(";
 
-    for (uint32_t i = 1;
+    for (uint32_t i = 0;
          i < fields.size() - 1;
          i++) {
       sb << fields[i]->toConfString()

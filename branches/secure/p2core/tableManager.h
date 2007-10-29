@@ -135,6 +135,8 @@ public:
 private:
   void initialize();
 
+  void createTableListener(TuplePtr table);
+
   TuplePtr registerTable(string name, boost::posix_time::time_duration lifetime,
                          uint size, CommonTable::Key& primaryKey);
   void registerIndex(string tableName, CommonTable::Key& key, string type);

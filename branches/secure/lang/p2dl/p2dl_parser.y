@@ -218,8 +218,8 @@ watch: P2DL_WATCH P2DL_LPAR P2DL_NAME P2DL_RPAR P2DL_SEMICOLON
          { $$ = new compile::p2dl::Watch($3); }
        ;
 
-fact: P2DL_FACT P2DL_NAME P2DL_LPAR factbody P2DL_RPAR P2DL_SEMICOLON
-        { $$ = new compile::p2dl::Fact($2, $4); }
+fact: P2DL_FACT P2DL_LPAR factbody P2DL_RPAR
+        { $$ = new compile::p2dl::Fact($3); }
     ;
 
 factbody: value

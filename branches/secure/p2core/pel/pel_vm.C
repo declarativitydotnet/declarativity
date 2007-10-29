@@ -598,6 +598,28 @@ DEF_OP(A_TO_VAR) {
  * List operations
  *
  */
+DEF_OP(L_FACT) { 
+   ValuePtr first  = stackTop(); stackPop();
+   ValuePtr second  = stackTop(); stackPop();
+   ValuePtr third = stackTop(); stackPop();
+  
+   TuplePtr fact  = Tuple::mk(second->toString());
+   ListPtr values = Val_List::cast(third);
+
+   fact->append(first); // The PID.
+
+   for (ValPtrList::const_iterator iter = values->begin(); 
+        iter != values->end(); iter++) {
+     ValuePtr val = *iter;
+     if (val->typeCode() == Value::TUPLE) {
+       val = (*Val_Tuple::cast(val))[2]; // unbox the datatype
+     }
+     fact->append(val);
+   } 
+   fact->freeze();
+   stackPush(Val_Tuple::mk(fact));
+}
+
 DEF_OP(L_INDEXMATCH) { 
    ValuePtr val1 = stackTop(); stackPop();
    ValuePtr val2 = stackTop(); stackPop();

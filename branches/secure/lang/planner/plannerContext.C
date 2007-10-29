@@ -137,8 +137,8 @@ namespace compile {
       indexKey.push_back(catalog->attribute(STAGE, "PID"));
       iter =
         catalog->table(STAGE)->lookup(CommonTable::theKey(CommonTable::KEY2), indexKey, program); 
-      bool hasStages = !iter->done();
-      stage_oss << "edit main {\n";
+      bool globalP2DL = !iter->done();
+      if (globalP2DL) stage_oss << "edit main {\n";
       while (!iter->done()) {
         TuplePtr stage = iter->next();
         string processor = (*stage)[catalog->attribute(STAGE, "PROCESSOR")]->toString();
@@ -167,30 +167,24 @@ namespace compile {
                   << "PelTransform(\"package\", \"$1 pop swallow pop\") -> "
                   << "[+]main." << _internalStrandOutputElement << ";\n";
       }
-      stage_oss << "};\n";
-
-      if (hasStages) {
-        program = program->clone();
-        program->set(catalog->attribute(PROGRAM, "P2DL"), Val_Str::mk(stage_oss.str()));
-      }
+      if (globalP2DL) stage_oss << "};\n";
 
       // Add all facts asserted by this program
       indexKey.clear();
       indexKey.push_back(catalog->attribute(FACT, "PID"));
-      iter =
-        catalog->table(FACT)->
-        lookup(CommonTable::theKey(CommonTable::KEY2), indexKey, program); 
+      iter = catalog->table(FACT)->
+               lookup(CommonTable::theKey(CommonTable::KEY2), indexKey, program); 
       while (!iter->done()) {
-        TuplePtr fact = iter->next();                                        // The row in the fact table
-        fact = Val_Tuple::cast((*fact)[catalog->attribute(FACT, "TUPLE")]);  // The actual fact to assert
-        CommonTablePtr table = catalog->table((*fact)[TNAME]->toString());   // The table refered to
-        if (table) {
-          table->insert(fact); // Assert the fact to be true
-          TELL_INFO << "ASSERT FACT : " << fact->toString() << std::endl;
-        }
-        else {
-          throw Exception("No table defined for fact " + fact->toString()); // This sucks
-        }
+        TuplePtr fact = iter->next(); // The row in the fact table
+        string tablename = (*fact)[catalog->attribute(FACT, "TABLENAME")]->toString();
+        fact = Val_Tuple::cast((*fact)[catalog->attribute(FACT, "TUPLE")]);
+        stage_oss << "fact " << fact->toConfString() << ";"; 
+        globalP2DL = true;
+      }
+
+      if (globalP2DL) {
+        program = program->clone();
+        program->set(catalog->attribute(PROGRAM, "P2DL"), Val_Str::mk(stage_oss.str()));
       }
       return this->compile::Context::program(catalog, program);
     }
@@ -498,9 +492,6 @@ namespace compile {
           event->freeze();
           terms[1] = event;
           terms.insert(terms.begin() + 2, selections.begin(), selections.end());
-          for (TuplePtrList::iterator iter = terms.begin(); iter != terms.end(); iter++) {
-            std::cerr << "\t" << (*iter)->toString() << std::endl;
-          }
         }
       }
 

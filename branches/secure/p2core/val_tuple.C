@@ -60,15 +60,7 @@ int Val_Tuple::compareTo(ValuePtr other) const
 
 string Val_Tuple::toConfString() const
 {
-  ostringstream conf;
-  conf << "<";
-  for (unsigned i = 0; i < t->size(); i++) {
-    conf << (*t)[i]->toConfString();
-    if (i < t->size() - 1)
-      conf << ", ";
-  }
-  conf << ">";
-  return conf.str();
+  return t->toConfString();
 }
 
 

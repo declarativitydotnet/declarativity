@@ -60,9 +60,7 @@ string Val_Double::toString() const
 
 string Val_Double::toConfString() const
 {
-  ostringstream conf;
-  conf << "Val_Double(" << d << ")";
-  return conf.str();
+  return toString();
 }
 
 //
