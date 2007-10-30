@@ -17,7 +17,6 @@ SOURCE_FILE_ROOTS =		\
 				testFdbufs \
 				testMarshal \
 				testPel \
-				testSecure \
 				testLists \
 				testSets \
 				testAggwrap
@@ -29,7 +28,6 @@ p2Test_SOURCES =		p2Test.C \
 
 AM_CPPFLAGS =			@BOOST_INC@ \
 				-I$(top_builddir)/p2core \
-				-I$(top_builddir)/p2core/secureUtil \
 				-I$(top_builddir)/p2core/pel \
 				-I$(top_builddir)/elements \
 				-I$(top_builddir)/stages \
@@ -55,7 +53,6 @@ LDADD =		\
 				$(top_builddir)/elements/libp2elements.la \
 				$(top_builddir)/debugger/libp2debugger.la \
 				$(top_builddir)/p2core/pel/libp2pel.la \
-				$(top_builddir)/p2core/secureUtil/libp2secureUtil.la \
 				$(top_builddir)/p2core/libp2core.la \
 				$(top_builddir)/lang/libp2lang.la \
 				$(top_builddir)/lang/parse/libp2parse.la \
