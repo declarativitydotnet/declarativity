@@ -13,7 +13,7 @@
 # DESCRIPTION: Makefile for the P2 core library
 #
 
-SUBDIRS=secureUtil pel
+SUBDIRS=pel
 
 lib_LTLIBRARIES =	libp2core.la
 

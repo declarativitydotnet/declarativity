@@ -17,6 +17,8 @@ ADD_LIBRARY(p2pel
             pel_opcode_decls.gen.h  
             pel_lexer.C
             pel_vm.C 
+            secureUtil.C 
+            secureUtil1.C 
 )
 INCLUDE(FindPythonInterp)
 
