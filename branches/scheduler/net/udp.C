@@ -171,7 +171,7 @@ Udp::Udp(string name,
     rx(new Udp::Rx(_name + "Rx", *this)),
     tx(new Udp::Tx(_name + "Tx", *this))
 {
-  sd = P2Net::inetSocket(SOCK_DGRAM, port, addr);
+  sd = P2Net::inetSocket(SOCK_DGRAM, addr, port);
   if (sd < 0) {
     // Couldn't allocate network socket
     throw NetworkException("Couldn't allocate network socket");
@@ -186,12 +186,12 @@ Udp::Udp(TuplePtr args)
 {
   if (args->size() > 4) {
     sd = P2Net::inetSocket(SOCK_DGRAM, 
-			   Val_Int64::cast((*args)[3]), 
-			   Val_Int64::cast((*args)[4]));
+			   Val_Int64::cast((*args)[4]), 
+			   Val_Int64::cast((*args)[3]));
   }
   else {
-    sd = P2Net::inetSocket(SOCK_DGRAM, 
-			   (in_addr_t)Val_Int64::cast((*args)[3]), INADDR_ANY); 
+    sd = P2Net::inetSocket(SOCK_DGRAM, INADDR_ANY,
+			   (in_addr_t)Val_Int64::cast((*args)[3]) ); 
   }
 
   if (sd < 0) {
