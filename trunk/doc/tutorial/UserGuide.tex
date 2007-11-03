@@ -646,6 +646,27 @@ message becomes itself the predecessor of the recipient, if its
 identifier lies between the recipient's previous predecessor's identifier and its
 current identifier.
 
+\begin{itemize}
+\item[$\Longrightarrow$] Currently, P2 does not do
+  \emph{content-addressable routing} natively (though we just showed 
+  how that can be implemented in OverLog). In other words, you cannot have
+  distributed rules in which it is not clear how tuples at different
+  location specifiers will ``meet.''  In the example above,
+  \lstinline$notify$ contains the information necessary to find
+  \lstinline$identifier$ at \lstinline$SomeGuy$.  For instance, a rule
+  with a right-hand side tha looks like \lstinline$a(@X, Y), b(@Z, Y)$
+  will not work, since there is no way to help \lstinline$a$ and
+  \lstinline$b$ tuples with matching \lstinline$Y$'s meet.  You can
+  certainly deal with this by using this content-addressable ring
+  implementation in OverLog to place tuples \lstinline$a$ and
+  \lstinline$b$ to the nodes that succeed their \lstinline$Y$ values on
+  the ring.  In the future,  we hope to make it
+  easy to say that tuples are routable not only by location specifier
+  but also by value, perhaps using an implementation based on an OverLog
+  content-addressable network such as this ring.
+\end{itemize}
+
+
 Similarly to our static ring, lookups are specified in a dynamic ring as
 follows:
 \begin{lstlisting}
