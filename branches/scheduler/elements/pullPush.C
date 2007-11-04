@@ -32,7 +32,8 @@ PullPush::PullPush(string name)
     pull_cb(boost::bind(&PullPush::pull_fn, this)),
     pull_ready(false),
     push_cb(boost::bind(&PullPush::push_fn, this)),
-    push_ready(true)
+    push_ready(true),
+    run_cb(boost::bind(&PullPush::run, this))
 {
 }
 
@@ -41,7 +42,8 @@ PullPush::PullPush(TuplePtr args)
     pull_cb(boost::bind(&PullPush::pull_fn, this)),
     pull_ready(false),
     push_cb(boost::bind(&PullPush::push_fn, this)),
-    push_ready(true)
+    push_ready(true),
+    run_cb(boost::bind(&PullPush::run, this))
 {
 }
 
@@ -61,13 +63,13 @@ int PullPush::initialize()
 void PullPush::pull_fn()
 {
   pull_ready = true;
-  run();
+  EventLoop::loop()->enqueue_dpc(run_cb);
 }
 
 void PullPush::push_fn()
 {
   push_ready = true;
-  run();
+  EventLoop::loop()->enqueue_dpc(run_cb);
 }
 
 void PullPush::run() {
