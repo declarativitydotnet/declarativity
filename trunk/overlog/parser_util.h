@@ -188,9 +188,21 @@ public:
                  BIT_OR,
                  BIT_NOT,
                  NOP};
-  Parse_Math(Operator o, Parse_Expr *l, Parse_Expr *r=NULL, bool i = false) 
-    : oper(o), id(i), lhs(l), rhs(r) {
-      // TODO: if (oper != NOP && rhs == NULL) ERROR!
+  Parse_Math(Operator o, Parse_Expr *l, Parse_Expr *r) 
+    : oper(o), lhs(l), rhs(r) {
+    // TODO: if (oper != NOP && rhs == NULL) ERROR!
+    if (r == NULL) {
+      // This had better be a unary operator
+      if (o != BIT_NOT) {
+        // No second operand with binary operator
+        // Error
+      }
+    } else {
+      if (o != BIT_NOT) {
+        // Second operand with unary operator
+        // Error
+      }
+    }
   };
   ~Parse_Math() { delete lhs; if (rhs) delete rhs; };
 
@@ -201,7 +213,6 @@ public:
   virtual ValuePtr value();
 
   Operator   oper;
-  bool       id;
   Parse_Expr *lhs;
   Parse_Expr *rhs;
 };

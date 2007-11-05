@@ -238,8 +238,7 @@ string Parse_Math::toString() {
     case BIT_NOT: m << "~"; break;
     default: assert(0);
   }
-  if (id) m << "id ";
-  else m << " ";
+  m << " ";
 
   if (rpar) m << "(";
   m << rhs->toString();

@@ -1,0 +1,50 @@
+/*
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
+ * 
+ * DESCRIPTION: Regression test for math productions
+ *
+ * run with
+ * 
+ * tests/runOverLog -o unitTests/olg/mathProduction.olg
+ *
+ * There should be one output each about result, inclusion,
+ * constantInclusion, notInclusion, and notConstantInclusion. The
+ * "result" output should contain the value 23.
+ */
+
+
+r result(@X, Result) :-
+	periodic(@X, E, 0, 1), Result := 3+4*5.
+
+r inclusion(@X) :-
+	periodic(@X, E, 0, 1), Value := 25,
+	Value in [3+4*5, 30].
+
+r constantInclusion(@X) :-
+	periodic(@X, E, 0, 1), 25 in [3+4*5, 30].
+
+
+r notInclusion(@X) :-
+	periodic(@X, E, 0, 1), Value := 20,
+	!(Value in [3+4*5, 30]).
+
+r notConstantInclusion(@X) :-
+	periodic(@X, E, 0, 1), !(20 in [3+4*5, 30]).
+
+
+watchmod(result, "c").
+
+watchmod(inclusion, "c").
+
+watchmod(constantInclusion, "c").
+
+watchmod(notInclusion, "c").
+
+watchmod(notConstantInclusion, "c").
+
