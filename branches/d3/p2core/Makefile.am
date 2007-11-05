@@ -55,7 +55,8 @@ SOURCE_FILE_ROOTS =	reporting \
 			loop \
 			scheduler \
 			p2Time \
-			commitManager
+			commitManager \
+			XTraceLex
 
 
 libp2core_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C) \
