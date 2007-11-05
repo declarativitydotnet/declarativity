@@ -16,6 +16,7 @@
 ADD_LIBRARY(p2aggregates
             aggCount.C
             aggMkSet.C
+            aggMkList.C
             aggCountDistinct.C
             aggFuncLoader.C
             aggMin.C

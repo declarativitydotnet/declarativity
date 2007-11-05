@@ -161,6 +161,8 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>":=" { return OLG_ASSIGN; }
 <INITIAL>"." { return OLG_DOT; }
 <INITIAL>":-" { return OLG_IF; }
+<INITIAL>"?" { return OLG_QUESTION; }
+<INITIAL>":" { return OLG_COLON; }
 <INITIAL>"watch" { return OLG_WATCH; }
 <INITIAL>"watchmod" { return OLG_WATCHFINE; }
 <INITIAL>"stage" { return OLG_STAGE; }

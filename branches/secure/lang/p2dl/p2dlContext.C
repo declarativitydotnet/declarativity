@@ -479,6 +479,7 @@ namespace compile {
       ValuePtr ruleText = (*rule)[catalog->attribute(RULE, "P2DL")];
 
       if (ruleText != Val_Null::mk()) {
+        // if ((*rule)[catalog->attribute(RULE, "NAME")]->toString() == "t1") 
         TELL_INFO << "RULE P2DL TEXT: " << std::endl << ruleText->toString() << std::endl;
         std::istringstream p2dl(ruleText->toString(), std::istringstream::in);
         parse_stream(&p2dl);

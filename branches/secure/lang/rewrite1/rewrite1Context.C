@@ -248,7 +248,7 @@ namespace compile {
 	    }
 	    string scopedName = state->newRuleBase.substr(0, lastnewpos);
 	    assert(scopedName + compile::NEWSUFFIX == state->newRuleBase);
-	    catalog->createIndex(scopedName, CommonTable::theKey(CommonTable::KEY2));
+	    catalog->createIndex(scopedName, HASH_INDEX, CommonTable::theKey(CommonTable::KEY2));
 
 	    // now do assuming that its a says link
 	    says = false;
@@ -1044,7 +1044,7 @@ namespace compile {
 
       try{
 	catalog->createTable(scopedName, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
-	catalog->createIndex(scopedName, CommonTable::theKey(CommonTable::KEY2));
+	catalog->createIndex(scopedName, HASH_INDEX, CommonTable::theKey(CommonTable::KEY2));
 	TELL_ERROR<<" Successfully created table "<< scopedName
 	            << "\n";
 	}

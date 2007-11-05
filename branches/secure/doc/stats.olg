@@ -2,16 +2,16 @@ namespace stats {
 
 materialize (done, infinity, infinity, keys(2)).
 
-  table1 ::sys::table(@A, ID, Tablename, TTL, Size, Key, Card) :- 
+  table1 ::sys::table(@A, ID, Tablename, TTL, Size, Key, Card, Sort) :- 
               programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
-              ::sys::table(@A, ID, Tablename, TTL, Size, Key, Card),
+              ::sys::table(@A, ID, Tablename, TTL, Size, Key, Card, Sort),
               Size == 0,
               Card == 0,
-              Card := f_rand().
+              Card := f_rand() % 11113.
 
-  table2 ::sys::table(@A, ID, Tablename, TTL, Size, Key, Card) :- 
+  table2 ::sys::table(@A, ID, Tablename, TTL, Size, Key, Card, Sort) :- 
               programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
-              ::sys::table(@A, ID, Tablename, TTL, Size, Key, Card),
+              ::sys::table(@A, ID, Tablename, TTL, Size, Key, Card, Sort),
               Size != 0,
               Card == 0,
               Card := Size.
@@ -19,7 +19,7 @@ materialize (done, infinity, infinity, keys(2)).
   indexStat ::sys::index(@A, ID, Tablename, Key, Type, Selectivity) :-
               programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
               ::sys::index(@A, ID, Tablename, Key, Type, Selectivity),
-              Selectivity := f_drand().
+              Selectivity := f_drand() / 3.0.
 
   done done(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL) :-
               programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL).

@@ -1098,17 +1098,16 @@ namespace compile {
       return factTp;
     }
     
-    Index::Index(Expression *name, ExpressionList *keys)
+    Index::Index(Expression *name, Expression *type, ExpressionList *keys)
     {
       _name = name->toString() ;
+      _type = type->toString() ;
 
       uint32_t fieldNum = 0;
       ExpressionList::const_iterator i = keys->begin();
       for (; (i != keys->end()) && (fieldNum <= 1); i++){
         fieldNum= Val_UInt32::cast((*i)->value());
-        if(fieldNum <= 1){
-          _keys.push_back(fieldNum);
-        }
+        _keys.push_back(fieldNum);
       }       
     }
 
@@ -1117,13 +1116,13 @@ namespace compile {
     {
       ostringstream b;
     
-      b << "Index: " << _name;
+      b << "Index: " << _name << "( ";
       for (Table2::Key::const_iterator iter = _keys.begin();
            iter != _keys.end(); iter++) {
         b << *iter;
         if (iter + 1 != _keys.end()) b << ", ";
       }
-      b << ").";
+      b << " ).";
       return b.str();
     }
     
@@ -1138,7 +1137,7 @@ namespace compile {
         scopedName = ns + _name; 
       }
 
-      return catalog->createIndex(scopedName, _keys);
+      return catalog->createIndex(scopedName, _type, _keys);
     }
 
     Table::Table(Expression *name, 

@@ -153,6 +153,31 @@ namespace compile {
       }
     }
 
+    bool
+    isTheta(ValuePtr boolv)
+    {
+      TuplePtr tp = Val_Tuple::cast(boolv);
+      if ((*tp)[TNAME]->toString() == BOOL) {
+        ValuePtr lhs = (*tp)[3];
+        ValuePtr rhs = (*tp)[4];
+
+        if (rhs != Val_Null::mk()) {
+          if ((*tp)[2]->toString() == "==") {
+            return false;
+          } 
+          else if ((*Val_Tuple::cast(lhs))[0]->toString() == VAR &&
+                   (*Val_Tuple::cast(rhs))[0]->toString() == VAL) {
+            return true;
+          }
+          else if ((*Val_Tuple::cast(rhs))[0]->toString() == VAR &&
+                   (*Val_Tuple::cast(lhs))[0]->toString() == VAL) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
     ValuePtr
     toVar(ValuePtr var)
     {
@@ -257,7 +282,7 @@ namespace compile {
         }
 
         if (rhs != Val_Null::mk()) {
-          if (!varCast(lhs)) {
+          if (!varCast(rhs)) {
             vars->append(variables(rhs));
           }
           else {
@@ -288,6 +313,41 @@ namespace compile {
       return ValuePtr();
     }
     
+    ValuePtr 
+    sortAttr(const ListPtr outer, const ListPtr outerOrder,
+             const ListPtr inner, const ListPtr innerOrder)
+    {
+      if (outerOrder->size() > 0 && outerOrder == innerOrder) {
+        return Val_List::mk(outerOrder);
+      }
+
+      ListPtr join = List::mk();
+      for (ValPtrList::const_iterator i = inner->begin(); 
+           i != inner->end(); i++) {
+        if (position(outer, *i) >= 0) join->append(*i);
+      }
+
+
+      if (outerOrder->size() > 0 && prefix(outerOrder, join)) {
+        return Val_List::mk(outerOrder);
+      }
+      else if (innerOrder->size() > 0 && prefix(innerOrder, join)) {
+        return Val_List::mk(outerOrder);
+      }
+      else {
+        for (ValPtrList::const_iterator i = join->begin(); 
+             i != join->end(); i++) {
+          if ((*Val_Tuple::cast(*i))[TNAME]->toString() == VAR) {
+            ListPtr sortAttr = List::mk();
+            sortAttr->append(*i);
+            return Val_List::mk(sortAttr);
+          }
+        }
+      }
+
+      return Val_Null::mk();
+    }
+
     ListPtr 
     merge(const ListPtr outer, const ListPtr inner)
     {
@@ -303,13 +363,26 @@ namespace compile {
       return join;
     }
 
+    bool 
+    prefix(const ListPtr prefix, const ListPtr schema)
+    {
+      int pos = 0;
+      for (ValPtrList::const_iterator i = prefix->begin(); 
+           i != prefix->end(); i++) {
+        int attrPos = position(schema, *i);
+        if (attrPos < pos) return false;
+        pos = attrPos;
+      }
+      return true;
+    }
+
     ListPtr 
     project(const ListPtr positions, const ListPtr schema)
     {
       ListPtr projection = List::mk();
       for (ValPtrList::const_iterator iter = positions->begin();
            iter != positions->end(); iter++) {
-        int pos = Val_UInt32::cast(*iter);
+        int pos = Val_UInt32::cast(*iter) - 1;
         if (pos < schema->size()) {
           projection->append(schema->at(pos));
         }
@@ -328,7 +401,7 @@ namespace compile {
     {
       ListPtr adorn = List::mk();
    
-      int pos = 0;
+      int pos = 1; // Schema variables start at position 1.
       for (ValPtrList::const_iterator iter = schema->begin();
            iter != schema->end(); iter++, pos++) {
         TuplePtr arg = Val_Tuple::cast(*iter);

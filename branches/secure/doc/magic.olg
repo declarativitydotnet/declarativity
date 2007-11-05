@@ -151,9 +151,9 @@ namespace magic {
 
   /********************************************************************/
   /* GROUP V: Create the magic predicate table. */
-  r18a ::sys::table(@A, Tid, Tablename, infinity, infinity, Sig, 0U) :-
+  r18a ::sys::table(@A, Tid, Tablename, infinity, infinity, Sig, 0U, null) :-
         commitMagicPred(@A, Pid, Name, Sig, Tablename, Tid),
-        notin ::sys::table(@A, Tid, Tablename, Lifetime, Size, PK, Card).
+        notin ::sys::table(@A, Tid, Tablename, Lifetime, Size, PK, Card, Sort).
 
   /* GROUP V: Create the magic predicate fact tuple. */
   r18b ::sys::fact(@A, f_idgen(), Pid, Tablename, Fact) :-
@@ -241,16 +241,16 @@ namespace magic {
 
   /********************************************************************/
   /* Create sup relations: sup(r, i) and sup(r, i-1). */
-  r25a ::sys::table(@A, Tid, Tablename, infinity, infinity, null, 0U) :-
+  r25a ::sys::table(@A, Tid, Tablename, infinity, infinity, null, 0U, null) :-
          break(@A, Pid, Rid, Name, Bound, Pos, NewRid, HeadFid, NewPos),
          sup(@A, Pid, Rid, SupPos, Tablename, Schema, Tid),
-         notin ::sys::table(@A, Tid, Tablename, Lifetime, Size, PK, Card),
+         notin ::sys::table(@A, Tid, Tablename, Lifetime, Size, PK, Card, Sort),
          SupPos == Pos - 1.
 
-  r25b ::sys::table(@A, Tid, Tablename, infinity, infinity, null, 0U) :-
+  r25b ::sys::table(@A, Tid, Tablename, infinity, infinity, null, 0U, null) :-
          break(@A, Pid, Rid, Name, Bound, Pos, NewRid, HeadFid, NewPos),
          sup(@A, Pid, Rid, Pos, Tablename, Schema, Tid),
-         notin ::sys::table(@A, Tid, Tablename, Lifetime, Size, PK, Card).
+         notin ::sys::table(@A, Tid, Tablename, Lifetime, Size, PK, Card, Sort).
 
   /********************************************************************/
   /* FINALIZE RULE: sup(rid, i-1) :- sup(rid, i-j) & Gj & Gj+1 ... @ Gi-1. */

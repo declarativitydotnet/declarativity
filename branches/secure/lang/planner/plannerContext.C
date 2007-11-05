@@ -912,7 +912,7 @@ namespace compile {
       CommonTable::Key indexKey;
       CommonTable::Key baseKey;
       namestracker::joinKeys(tupleSchema, probeSchema, joinKey, indexKey, baseKey);
-      catalog->createIndex(tableName, indexKey);
+      catalog->createIndex(tableName, HASH_INDEX, indexKey);
 
       std::cerr << "ACCESS METHOD FOR PROBE " << tableName << " = " << accessMethod->toString() << std::endl;
 

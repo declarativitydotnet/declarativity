@@ -213,9 +213,10 @@ namespace compile {
               TuplePtr attr = Val_Tuple::cast(*iter);
               if ((*attr)[TNAME]->toString() == AGG) {
                 if ((*attr)[2] == Val_Null::mk()) {
+                  ostringstream varName;
+                  varName << "$SVAR_" << varNumber++;
                   TuplePtr newAttr = Tuple::mk(VAR);
-                  newAttr->append(Val_Str::mk("$SVAR_" + varNumber));
-                  varNumber++;
+                  newAttr->append(Val_Str::mk(varName.str()));
                   newAttr->freeze();
                   newSchema->append(Val_Tuple::mk(newAttr));
                 } else newSchema->append((*attr)[2]);

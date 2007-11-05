@@ -56,6 +56,8 @@
   #define MAT          "Matrix"
   #define LOCSPECTUPLE "LocSpec"
   #define VERSIONTUPLE "Version"
+  #define HASH_INDEX   "Hash"
+  #define BTREE_INDEX   "BTree"
 
 /**
  * Every schema has a table name and tuple identifier.
@@ -87,7 +89,7 @@ enum SaysTuple{LOC_POS = 1, PPOS, RPOS, KPOS, VPOS, PROOFPOS};
 TABLEDEF(TABLE, CommonTable::theKey(CommonTable::KEY3), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("TID", 2) \
          SCHEMA("TABLENAME", 3) SCHEMA("LIFETIME", 4) SCHEMA("SIZE", 5) \
-         SCHEMA("KEY", 6) SCHEMA("CARD", 7))
+         SCHEMA("KEY", 6) SCHEMA("CARD", 7) SCHEMA("SORT", 8))
 
 TABLEDEF(INDEX, CommonTable::theKey(CommonTable::KEY34), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("IID", 2) \
@@ -233,8 +235,9 @@ SECONDARY_INDEX(PROJECTION,        CommonTable::theKey(CommonTable::KEY35))
 #define FUNCTIONDEF(name, numargs, pel)
 #endif
 FUNCTIONDEF("f_coinFlip",    1, "coin")
+FUNCTIONDEF("f_ifelse",      3, "ifelse")
 FUNCTIONDEF("f_rand",        0, "rand")
-FUNCTIONDEF("f_drand",        0, "drand48")
+FUNCTIONDEF("f_drand",       0, "drand48")
 FUNCTIONDEF("f_now",         0, "now")
 FUNCTIONDEF("f_sha1",        1, "sha1")
 FUNCTIONDEF("f_match",       2, "match")
@@ -263,6 +266,8 @@ FUNCTIONDEF("f_getattr",     2, "getattr")
 FUNCTIONDEF("f_posattr",     2, "posattr")
 FUNCTIONDEF("f_aggattr",     1, "aggattr")
 FUNCTIONDEF("f_merge",       2, "merge")
+FUNCTIONDEF("f_sortattr",    4, "sortattr")
+FUNCTIONDEF("f_prefix",      2, "prefix")
 FUNCTIONDEF("f_adornment",   2, "adornment")
 FUNCTIONDEF("f_project",     2, "project")
 FUNCTIONDEF("f_fact",        3, "fact")
@@ -270,6 +275,7 @@ FUNCTIONDEF("f_assignschema",2, "assignschema")
 FUNCTIONDEF("f_idgen",       0, "idgen")
 FUNCTIONDEF("f_tostr",       1, "tostr")
 FUNCTIONDEF("f_tovar",       1, "tovar")
+FUNCTIONDEF("f_istheta",     1, "istheta")
 
 FUNCTIONDEF("f_status",       2, "status")
 FUNCTIONDEF("f_selectivity",  3, "selectivity")
@@ -294,4 +300,5 @@ FUNCTIONDEF("f_getMask",      1, "getMask")
 FUNCTIONDEF("f_mask",         3, "mask")
 FUNCTIONDEF("f_indexMatch",   3, "indexMatch")
 FUNCTIONDEF("f_castassign",   3, "castassign")
+FUNCTIONDEF("f_variables",   1, "variables")
 #undef FUNCTIONDEF

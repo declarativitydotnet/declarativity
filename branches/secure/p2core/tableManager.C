@@ -26,9 +26,6 @@
 #include "list.h"
 #include "boost/bind.hpp"
 
-#define PRIMARY   "primary"
-#define SECONDARY "secondary"
-
 TableManager::ForeignKeyHandler::ForeignKeyHandler(CommonTablePtr src, 
                                                    CommonTable::Key& fk, 
                                                    CommonTablePtr dest)
@@ -69,18 +66,19 @@ void TableManager::initialize()
 #define TABLEDEF(name, key, schema) \
 if (name == TABLE || name == INDEX) { \
   _tables.insert(std::make_pair(name, CommonTablePtr(new RefTable(name, key)))); \
-  registerTable(name, boost::posix_time::time_duration(boost::date_time::pos_infin), 0, key); \
+  registerTable(name, boost::posix_time::time_duration(boost::date_time::pos_infin), \
+                0, key, ListPtr()); \
 }
 #include "systemTable.h"
 
 #define TABLEDEF(name, key, schema) \
 if (name == TABLE || name == INDEX) { \
-  registerIndex(name, key, PRIMARY); \
+  registerIndex(name, key, HASH_INDEX); \
 }
 #include "systemTable.h"
 
 #define TABLEDEF(name, key, schema) \
-if (name != TABLE && name != INDEX) createTable((name), (key));
+if (name != TABLE && name != INDEX) createTable((name), (key), ListPtr());
 #include "systemTable.h"
 
 #define SCHEMA(name, pos) do {\
@@ -104,12 +102,12 @@ if (name != TABLE && name != INDEX) createTable((name), (key));
 } while(0);
 #include "systemTable.h"
 
-#define SECONDARY_INDEX(table, key) createIndex(table, key);
+#define SECONDARY_INDEX(table, key) createIndex(table, HASH_INDEX, key);
 #include "systemTable.h"
 
 #define FOREIGN_KEY(src, key, dest) do { \
   createForeignKey(src, key, dest); \
-  createIndex(dest, key); \
+  createIndex(dest, HASH_INDEX, key); \
 } while(0);
 #include "systemTable.h"
 
@@ -125,17 +123,45 @@ if (name != TABLE && name != INDEX) createTable((name), (key));
 #include "systemTable.h"
 
   /* Install a create table listener */
-  table(TABLE)->updateListener(boost::bind(&TableManager::createTableListener, this, _1));
+  table(TABLE)->updateListener(boost::bind(&TableManager::tableListener, this, _1));
+  table(INDEX)->updateListener(boost::bind(&TableManager::indexListener, this, _1));
 
 }
 
 void
-TableManager::createTableListener(TuplePtr table)
+TableManager::indexListener(TuplePtr index)
 {
-  string name  = (*table)[attribute(TABLE, "TABLENAME")]->toString();
-  int32_t size = Val_Int32::cast((*table)[attribute(TABLE, "SIZE")]);
-  ValuePtr lt  = (*table)[attribute(TABLE, "LIFETIME")];
-  ValuePtr pk  = (*table)[attribute(TABLE, "KEY")];
+  string name = (*index)[attribute(INDEX, "TABLENAME")]->toString();
+  string type = (*index)[attribute(INDEX, "TYPE")]->toString();
+  ValuePtr kv = (*index)[attribute(INDEX, "KEY")];
+
+  TableMap::const_iterator titer = _tables.find(name);
+  if (titer == _tables.end()) {
+    return;
+  }
+
+  CommonTable::Key keys;
+  if (kv == Val_Null::mk()) {
+    keys = CommonTable::theKey(CommonTable::KEYID);
+  }
+  else {
+    ListPtr kl = Val_List::cast(kv);
+    for (ValPtrList::const_iterator iter = kl->begin();
+         iter != kl->end(); iter++) {
+      keys.push_back(Val_UInt32::cast(*iter));
+    }
+  }
+  createIndex(name, HASH_INDEX, keys);
+}
+
+void
+TableManager::tableListener(TuplePtr table)
+{
+  string name   = (*table)[attribute(TABLE, "TABLENAME")]->toString();
+  int32_t size  = Val_Int32::cast((*table)[attribute(TABLE, "SIZE")]);
+  ValuePtr lt   = (*table)[attribute(TABLE, "LIFETIME")];
+  ValuePtr pk   = (*table)[attribute(TABLE, "KEY")];
+  ValuePtr sort = (*table)[attribute(TABLE, "SORT")];
 
   TableMap::const_iterator titer = _tables.find(name);
   if (titer != _tables.end()) {
@@ -169,7 +195,7 @@ TableManager::createTableListener(TuplePtr table)
 
   _tables.insert(std::make_pair(
                  name, CommonTablePtr(new Table2(name, primayKey, size, lifetime))));
-  registerIndex(name, primayKey, PRIMARY);
+  registerIndex(name, primayKey, HASH_INDEX);
 }
 
 string
@@ -239,7 +265,7 @@ TableManager::uniqueIdentifier()
 }
 
 TuplePtr 
-TableManager::createTable(string name, CommonTable::Key& key)
+TableManager::createTable(string name, CommonTable::Key& key, ListPtr sort)
 {
   CommonTablePtr t = table(name);
   if (t) throw TableManager::Exception("Table already exists! " + name); 
@@ -248,28 +274,29 @@ TableManager::createTable(string name, CommonTable::Key& key)
 
   TuplePtr tp = 
     registerTable(name, boost::posix_time::time_duration(boost::date_time::pos_infin), 
-                  0, key);
-  registerIndex(name, key, PRIMARY);
+                  0, key, sort);
+  registerIndex(name, key, HASH_INDEX);
   return tp;
 }
 
 TuplePtr 
 TableManager::createTable(string name, CommonTable::Key& key, uint32_t maxSize,
-                          boost::posix_time::time_duration& lifetime)
+                          boost::posix_time::time_duration& lifetime,
+                          ListPtr sort)
 {
   CommonTablePtr t = table(name);
   if (t) throw TableManager::Exception("Table already exists! " + name); 
   _tables.insert(std::make_pair(
                  name, CommonTablePtr(new Table2(name, key, maxSize, lifetime))));
 
-  TuplePtr tp = registerTable(name, lifetime, maxSize, key);
-  registerIndex(name, key, PRIMARY);
+  TuplePtr tp = registerTable(name, lifetime, maxSize, key, sort);
+  registerIndex(name, key, HASH_INDEX);
   return tp;
 }
 
 TuplePtr 
 TableManager::createTable(string name, CommonTable::Key& key, uint32_t maxSize, 
-                          string lifetime)
+                          string lifetime, ListPtr sort)
 {
   CommonTablePtr t = table(name);
   if (t) throw TableManager::Exception("Table already exists! " + name); 
@@ -277,13 +304,14 @@ TableManager::createTable(string name, CommonTable::Key& key, uint32_t maxSize,
                  name, CommonTablePtr(new Table2(name, key, maxSize, lifetime))));
 
   TuplePtr tp = registerTable(name, boost::posix_time::duration_from_string(lifetime), 
-                              maxSize, key);
-  registerIndex(name, key, PRIMARY);
+                              maxSize, key, sort);
+  registerIndex(name, key, HASH_INDEX);
   return tp;
 }
   
 TuplePtr 
-TableManager::createTable(string name, CommonTable::Key& key, uint32_t maxSize)
+TableManager::createTable(string name, CommonTable::Key& key, 
+                          uint32_t maxSize, ListPtr sort)
 {
   CommonTablePtr t = table(name);
   if (t) throw TableManager::Exception("Table already exists! " + name); 
@@ -292,13 +320,13 @@ TableManager::createTable(string name, CommonTable::Key& key, uint32_t maxSize)
 
   TuplePtr tp = 
     registerTable(name, boost::posix_time::time_duration(boost::date_time::pos_infin), 
-                  maxSize, key);
-  registerIndex(name, key, PRIMARY);
+                  maxSize, key, sort);
+  registerIndex(name, key, HASH_INDEX);
   return tp;
 }
 
 TuplePtr
-TableManager::createIndex(string tableName, CommonTable::Key& key)
+TableManager::createIndex(string tableName, string type, CommonTable::Key& key)
 {
 
   /** First check if the index has already been created */
@@ -323,7 +351,7 @@ TableManager::createIndex(string tableName, CommonTable::Key& key)
                                     tableName);
     } 
     else if (t->secondaryIndex(key)) {
-      registerIndex(tableName, key, SECONDARY);  // All is well, register new index
+      registerIndex(tableName, key, type);  // All is well, register new index
     }
   }
   return tp;
@@ -420,7 +448,7 @@ TableManager::relation(string name, string table1,
       CommonTable::Key::iterator iter = key.begin();
       for (uint k=0; k < pk1.size(); fk1->push_back(*iter), iter++, k++);
       for (uint k=0; k < pk2.size(); fk2->push_back(*iter), iter++, k++);
-      createTable(name, key);
+      createTable(name, key, ListPtr());
       createForeignKey(name, *fk1, table1); 
       createForeignKey(name, *fk2, table2); 
       return;
@@ -435,7 +463,7 @@ TableManager::relation(string name, string table1,
 
 TuplePtr 
 TableManager::registerTable(string name, boost::posix_time::time_duration lifetime,
-                            uint size, CommonTable::Key& primaryKey)
+                            uint size, CommonTable::Key& primaryKey, ListPtr sort)
 {
   CommonTablePtr t = table(TABLE); assert(t);
   TuplePtr tp = Tuple::mk(TABLE);
@@ -450,7 +478,8 @@ TableManager::registerTable(string name, boost::posix_time::time_duration lifeti
     keys->append(Val_UInt32::mk(*iter));
   }
   tp->append(Val_List::mk(keys));
-  tp->append(Val_UInt32::mk(0));
+  tp->append(Val_UInt32::mk(0));      // Cardinality
+  tp->append((sort ? Val_List::mk(sort) : Val_Null::mk())); // Sorted
   tp->freeze();
  
   t->insert(tp);

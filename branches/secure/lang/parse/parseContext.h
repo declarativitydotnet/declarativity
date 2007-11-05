@@ -868,7 +868,7 @@ namespace compile {
 
     class Index : public Statement {
     public:
-      Index(Expression *name, ExpressionList *keys);
+      Index(Expression *name, Expression *type, ExpressionList *keys);
 
       virtual string toString() const;
     
@@ -881,6 +881,7 @@ namespace compile {
 
     private:
       string      _name;
+      string      _type;
       Table2::Key _keys;
     };
     

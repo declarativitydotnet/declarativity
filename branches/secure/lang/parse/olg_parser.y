@@ -45,6 +45,8 @@
 %right OLG_NOTIN
 %left OLG_IN
 %nonassoc OLG_ASSIGN
+%nonassoc OLG_QUESTION
+%nonassoc OLG_COLON
 
 %token<v> OLG_NAME 
 %token OLG_NAMESPACE
@@ -105,11 +107,11 @@
 %type<u_statementlist> statements;
 %type<u_termlist>      termlist newtermlist;
 %type<u_exprlist>      factbody functorbody functorargs functionargs vectorentries;
-%type<u_exprlist>      matrixentry keys keylist; 
+%type<u_exprlist>      matrixentry keys keylist ifexpr; 
 %type<u_exprlistlist>  matrixentries;
 %type<u_term>          term functor assign select says newFunctor headTerms;
 %type<v>               functorarg locationarg functionarg tablearg atom rel_atom math_atom;
-%type<v>               function math_expr bool_expr range_expr range_atom aggregate;
+%type<v>               function ifthenelse ifpred ifcase math_expr bool_expr aggregate;
 %type<v>               vectorentry vector_expr matrix_expr;
 %type<u_boper>         rel_oper;
 %type<u_moper>         math_oper;
@@ -152,8 +154,8 @@ materialize: OLG_MATERIALIZE OLG_LPAR OLG_NAME OLG_COMMA
                { $$ = new compile::parse::Table($3, $5, $7, $9, true); } 
           ;
 
-index: OLG_INDEX OLG_LPAR OLG_NAME OLG_COMMA keys OLG_RPAR OLG_DOT
-       { $$ = new compile::parse::Index($3, $5); }
+index: OLG_INDEX OLG_LPAR OLG_NAME OLG_COMMA OLG_STRING OLG_COMMA keys OLG_RPAR OLG_DOT
+       { $$ = new compile::parse::Index($3, $5, $7); }
      ;
 
 ref: refType OLG_REF OLG_LPAR OLG_NAME OLG_COMMA
@@ -306,7 +308,7 @@ functorargs: functorarg
              { $3->push_front($1); $$=$3; }
            ;
 
-functorarg: atom | OLG_VAR | aggregate | math_expr | function
+functorarg: atom | OLG_VAR | aggregate | math_expr | function | ifthenelse
             { $$ = $1; }
           ;
 
@@ -323,9 +325,35 @@ functionargs: functionarg
               { $3->push_front($1); $$=$3; }
             ;
 
-functionarg: math_expr | atom | OLG_VAR | function
+functionarg: math_expr | atom | OLG_VAR | function | ifthenelse
              { $$ = $1; }
            ;
+
+ifthenelse: ifexpr 
+              { compile::parse::Variable *fn = 
+                  new compile::parse::Variable(Val_Str::mk("f_ifelse")); 
+                $$ = new compile::parse::Function(fn, $1); }
+          |
+            OLG_LPAR ifthenelse OLG_RPAR
+                { $$ = $2; }
+         ;
+
+ifpred: bool_expr | OLG_VALUE | OLG_VAR | OLG_STRING
+          { $$ = $1; }
+        ; 
+
+ifexpr: ifpred OLG_QUESTION ifcase OLG_COLON ifcase
+        { compile::parse::ExpressionList *body = new compile::parse::ExpressionList();
+          body->push_back($5); body->push_back($3); body->push_back($1); 
+          $$ = body; }
+        ; 
+
+ifcase: functionarg
+          { $$ = $1; }
+       |
+       OLG_RPAR ifcase OLG_LPAR
+          { $$ = $2; }
+       ; 
 
 select: bool_expr 
         { $$ = new compile::parse::Select($1); }
@@ -333,14 +361,12 @@ select: bool_expr
 
 assign: OLG_VAR OLG_ASSIGN rel_atom
         { $$ = new compile::parse::Assign($1, $3); }
-      | OLG_VAR OLG_ASSIGN bool_expr
+      | OLG_VAR OLG_ASSIGN ifthenelse
         { $$ = new compile::parse::Assign($1, $3); }
       ;
 
 bool_expr: OLG_LPAR bool_expr OLG_RPAR 
            { $$ = $2; }
-         | OLG_VAR OLG_IN range_expr 
-           { $$ = new compile::parse::Bool(compile::parse::Bool::RANGEI, $1, $3); } 
          | OLG_NOT bool_expr 
            { $$ = new compile::parse::Bool(compile::parse::Bool::NOT, $2); } 
          | bool_expr OLG_OR bool_expr
@@ -351,7 +377,7 @@ bool_expr: OLG_LPAR bool_expr OLG_RPAR
            { $$ = new compile::parse::Bool($2, $1, $3 ); }
          ;
 
-rel_atom: math_expr | function | atom | OLG_VAR
+rel_atom: math_expr | function | OLG_VAR | atom
           { $$ = $1; }
         ;
 
@@ -373,6 +399,8 @@ math_atom: atom | OLG_VAR | function
            { $$ = $1; }
          | OLG_LPAR math_expr OLG_RPAR 
            { $$ = $2; }
+         | OLG_LPAR ifthenelse OLG_RPAR 
+           { $$ = $2; }
          ;
 
 math_oper: OLG_LSHIFT  { $$ = compile::parse::Math::LSHIFT; } 
@@ -387,20 +415,6 @@ math_oper: OLG_LSHIFT  { $$ = compile::parse::Math::LSHIFT; }
          | OLG_APPEND { $$ = compile::parse::Math::APPEND; }
          ;
 
-
-range_expr: OLG_LPAR range_atom OLG_COMMA range_atom OLG_RPAR 
-            { $$ = new compile::parse::Range(compile::parse::Range::RANGEOO, $2, $4); } 
-          | OLG_LPAR range_atom OLG_COMMA range_atom OLG_RSQUB
-            { $$ = new compile::parse::Range(compile::parse::Range::RANGEOC, $2, $4); } 
-          | OLG_LSQUB range_atom OLG_COMMA range_atom OLG_RPAR
-            { $$ = new compile::parse::Range(compile::parse::Range::RANGECO, $2, $4); } 
-          | OLG_LSQUB range_atom OLG_COMMA range_atom OLG_RSQUB
-            { $$ = new compile::parse::Range(compile::parse::Range::RANGECC, $2, $4); } 
-          ;
-
-range_atom: math_expr | atom | OLG_VAR
-            { $$ = $1; }
-          ;
 
 vector_expr: OLG_LSQUB vectorentries OLG_RSQUB
              { $$ = new compile::parse::Vector($2); }

@@ -51,6 +51,8 @@ namespace compile {
 
     ValuePtr varCast(ValuePtr variable);
 
+    bool isTheta(ValuePtr boolv);
+
     /** Find the location attribute in the schema */
     ValuePtr location(const ListPtr args);
 
@@ -65,6 +67,11 @@ namespace compile {
      * formed list represents the tuple schema formed by
      * a join.  */
     ListPtr merge(const ListPtr outer, const ListPtr inner);
+
+    bool prefix(const ListPtr prefix, const ListPtr schema);
+
+    ValuePtr sortAttr(const ListPtr outer, const ListPtr outerOrder,
+                      const ListPtr inner, const ListPtr innerOrder);
 
     ListPtr adornment(const ListPtr bound, const ListPtr schema);
 

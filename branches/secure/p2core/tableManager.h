@@ -72,7 +72,8 @@ public:
    * Throws: TableManager::Exception if table already exists
    */
   virtual TuplePtr 
-  createTable(string name, CommonTable::Key& key);
+  createTable(string name, CommonTable::Key& key, 
+              ListPtr sort);
 
   /**
    * Creates and registers a new Table with the system.
@@ -81,7 +82,8 @@ public:
    */
   virtual TuplePtr 
   createTable(string name, CommonTable::Key& key, uint32_t maxSize,
-              boost::posix_time::time_duration& lifetime);
+              boost::posix_time::time_duration& lifetime, 
+              ListPtr sort);
 
   /**
    * Creates and registers a new Table with the system.
@@ -90,7 +92,8 @@ public:
    */
   virtual TuplePtr 
   createTable(string name, CommonTable::Key& key, uint32_t maxSize, 
-              string lifetime);
+              string lifetime, 
+              ListPtr sort);
   
   /**
    * Creates and registers a new Table with the system.
@@ -98,14 +101,15 @@ public:
    *         TableManager::Exception if table already exists
    */
   virtual TuplePtr 
-  createTable(string name, CommonTable::Key& key, uint32_t maxSize);
+  createTable(string name, CommonTable::Key& key, uint32_t maxSize, 
+              ListPtr sort);
 
   /**
    * Create and registers a secondary index on specified table name
    * Throws: TableManager::Exception if table does not exist.
    */
   virtual TuplePtr
-  createIndex(string tableName, CommonTable::Key& key);
+  createIndex(string tableName, string type, CommonTable::Key& key);
 
   /**
    * Create foreign key relationship from table 'src' on 
@@ -135,13 +139,15 @@ public:
 private:
   void initialize();
 
-  void createTableListener(TuplePtr table);
+  void indexListener(TuplePtr table);
+  void tableListener(TuplePtr table);
 
   TuplePtr registerTable(string name, boost::posix_time::time_duration lifetime,
-                         uint size, CommonTable::Key& primaryKey);
+                         uint size, CommonTable::Key& primaryKey, ListPtr sort);
+
   void registerIndex(string tableName, CommonTable::Key& key, string type);
-  void relation(string name, string table1, string table2, 
-                CommonTable::Key& key);
+
+  void relation(string name, string table1, string table2, CommonTable::Key& key);
 
   typedef std::map<string, CommonTablePtr> TableMap;
   TableMap _tables;

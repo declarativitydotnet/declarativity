@@ -399,7 +399,7 @@ DEF_OP(PEEK) {
 DEF_OP(IFELSE) {
   ValuePtr elseVal = stackTop(); stackPop();
   ValuePtr thenVal = stackTop(); stackPop();
-  int64_t ifVal = pop_unsigned();
+  uint ifVal = pop_unsigned();
   if (ifVal) {
     stackPush(thenVal);
   } else {
@@ -594,6 +594,11 @@ DEF_OP(A_TO_VAR) {
    stackPush(compile::namestracker::toVar(attr));
 }
 
+DEF_OP(ISTHETA) { 
+   ValuePtr boolv = stackTop(); stackPop();
+   stackPush(Val_UInt32::mk(compile::namestracker::isTheta(boolv)));
+}
+
 /**
  * List operations
  *
@@ -652,6 +657,11 @@ DEF_OP(L_INDEXMATCH) {
    stackPush(Val_UInt32::mk(match));
 }
 
+DEF_OP(L_VARIABLES) { 
+   ValuePtr expr = stackTop(); stackPop();
+   stackPush(Val_List::mk(compile::namestracker::variables(expr)));
+}
+
 DEF_OP(L_CASTASSIGN) { 
    ValuePtr val1 = stackTop(); stackPop();
    ValuePtr val2 = stackTop(); stackPop();
@@ -687,6 +697,32 @@ DEF_OP(L_PROJECT) {
    stackPush(Val_List::mk(compile::namestracker::project(positions, schema)));
 }
 
+DEF_OP(L_SORTATTR) { 
+   ValuePtr val1 = stackTop(); stackPop();
+   ValuePtr val2 = stackTop(); stackPop();
+   ValuePtr val3 = stackTop(); stackPop();
+   ValuePtr val4 = stackTop(); stackPop();
+   ListPtr outer  = Val_List::cast(val1);
+   ListPtr oorder = val2 == Val_Null::mk() ? List::mk() : Val_List::cast(val2);
+   ListPtr inner  = Val_List::cast(val3);
+   ListPtr iorder = val4 == Val_Null::mk() ? List::mk() : Val_List::cast(val4);
+   
+   stackPush(compile::namestracker::sortAttr(outer, oorder, inner, iorder));
+}
+
+DEF_OP(L_PREFIX) { 
+   ValuePtr val1 = stackTop(); stackPop();
+   ValuePtr val2 = stackTop(); stackPop();
+
+   if (val1 == Val_Null::mk() || val2 == Val_Null::mk()) {
+     stackPush(Val_UInt32::mk(0));
+   }
+   else {
+     ListPtr list1 = Val_List::cast(val1);
+     ListPtr list2 = Val_List::cast(val2);
+     stackPush(Val_UInt32::mk(compile::namestracker::prefix(list1, list2)));
+   }
+}
 DEF_OP(L_MERGE) { 
    ValuePtr val1 = stackTop(); stackPop();
    ValuePtr val2 = stackTop(); stackPop();

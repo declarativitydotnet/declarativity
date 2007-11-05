@@ -30,6 +30,7 @@
 
 #include "value.h"
 #include "tuple.h"
+#include "list.h"
 #include <set>
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include <boost/function.hpp>
@@ -841,7 +842,8 @@ public:
    *         0 if table already exists
    */
   virtual TuplePtr 
-  createTable(string name, CommonTable::Key& key) = 0;
+  createTable(string name, CommonTable::Key& key, 
+              ListPtr sort=ListPtr()) = 0;
 
   /**
    * Creates and registers a new Table with the system.
@@ -850,7 +852,8 @@ public:
    */
   virtual TuplePtr 
   createTable(string name, CommonTable::Key& key, uint32_t maxSize,
-              boost::posix_time::time_duration& lifetime) = 0;
+              boost::posix_time::time_duration& lifetime, 
+              ListPtr sort=ListPtr()) = 0;
 
   /**
    * Creates and registers a new Table with the system.
@@ -859,7 +862,7 @@ public:
    */
   virtual TuplePtr 
   createTable(string name, CommonTable::Key& key, uint32_t maxSize, 
-              string lifetime) = 0;
+              string lifetime, ListPtr sort=ListPtr()) = 0;
   
   /**
    * Creates and registers a new Table with the system.
@@ -867,13 +870,14 @@ public:
    *         0 if table already exists
    */
   virtual TuplePtr 
-  createTable(string name, CommonTable::Key& key, uint32_t maxSize) = 0;
+  createTable(string name, CommonTable::Key& key, 
+              uint32_t maxSize, ListPtr sort=ListPtr()) = 0;
 
   /**
    * Create and registers a secondary index on specified table name
    */
   virtual TuplePtr
-  createIndex(string tableName, CommonTable::Key& key) = 0;
+  createIndex(string tableName, string type, CommonTable::Key& key) = 0;
 
   /**
    * Create foreign key relationship from table 'src' on 
