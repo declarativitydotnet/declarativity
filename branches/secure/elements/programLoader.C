@@ -53,7 +53,7 @@ ProgramLoader::ProgramLoader(TuplePtr args)
   LOAD("stats", "/Users/tcondie/workspace/secure/doc/stats.olg", "eca");
   LOAD("systemr", "/Users/tcondie/workspace/secure/doc/systemr.olg", "stats");
 */
-  LOAD("localize", "/Users/tcondie/workspace/secure/doc/localize.olg", "eca");
+  LOAD("localize", "doc/localize.olg", "eca");
 }
 
 ProgramLoader::~ProgramLoader()
