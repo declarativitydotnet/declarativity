@@ -7,6 +7,7 @@ namespace magic {
   materialize(sup, infinity, infinity, keys(2,3,4)).
   materialize(ruleComplete, infinity, infinity, keys(2,3)).
   materialize(rules, infinity, infinity, keys(2,3)).
+  materialize(finalPredicate, infinity, infinity, keys(2,3)).
   materialize(ignoreRules, infinity, infinity, keys(2,3)).
   materialize(countComplete, infinity, infinity, keys(2,3)).
   materialize(rewriteRule, infinity, infinity, keys(2,3)).
@@ -14,29 +15,36 @@ namespace magic {
   materialize(rewriteCount, infinity, 1, keys(2)).
   materialize(completeCount, infinity, 1, keys(2)).
 
-  signalComplete ::sys::program(@A, Pid, Name, Rewrite, "magic", Text, Msg, P2DL) :-
-                   done(@A, Pid),
-                   ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL).
+  i0 ::sys::program(@A, Pid, Name, Rewrite, "magic", Text, Msg, P2DL) :-
+         done(@A, Pid),
+         ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL).
 
-  initRules rules(@A, Pid, a_count<*>) :-
+  i1 rules(@A, Pid, a_count<*>) :-
               programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
               ::sys::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count).
 
-  initIDB idbPredicate(@A, Pid, FName) :-
-           programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
-           ::sys::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count),
-           ::sys::functor(@A, HeadFid, Rid, FNotin, FName, FTID, FECA, FSchema, FPos, FAM, FNew).
+  i2 initRule(@A, Pid, Rid) :-
+       programEvent(@A, Pid, _, _, _, _, _, _),
+       ::sys::rule(@A, Rid, Pid, _, _, _, _, _).
 
-  initMP queryAdorn(@A, Pid, Rid, FName, Sig) :-
-           programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
-           ::sys::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count),
-           ::sys::functor(@A, HeadFid, Rid, HFNotin, HFName, HFTID, HFECA, HFSchema, HFPos, HFAM, HFNew),
-           ::sys::functor(@A, Fid, Rid, FNotin, FName, FTID, FECA, FSchema, FPos, FAM, FNew),
-           FPos == 1,
-           Term_Count == 2,
-           f_size(f_adornment(null, FSchema)) > 0,
-           HFName != FName,
-           Sig := f_adornment(null, FSchema).
+  i3 finalPredicate(@A, Pid, Rid, a_max<Pos>) :-
+       initRule(@A, Pid, Rid),
+       ::sys::functor(@A, Fid, Rid, _, _, _, _, _, Pos, _, _).
+
+  i4 idbPredicate(@A, Pid, Name) :-
+       initRule(@A, Pid, Rid),
+       ::sys::rule(@A, Rid, Pid, _, HeadFid, _, _, _),
+       ::sys::functor(@A, HeadFid, Rid, _, Name, _, _, _, _, _, _).
+
+  i5 queryAdorn(@A, Pid, Rid, Name, Sig) :-
+       initRule(@A, Pid, Rid),
+       ::sys::rule(@A, Rid, Pid, _, HeadFid, _, _, Term_Count),
+       ::sys::functor(@A, HeadFid, Rid, _, _, _, _, _, _, _, _),
+       ::sys::functor(@A, Fid, Rid, _, Name, _, _, Schema, _, _, _),
+       Term_Count == 2,
+       f_size(f_adornment(null, Schema)) > 0,
+       HeadFid != Fid,
+       Sig := f_adornment(null, Schema).
 
   newProgram newProgram(@A, Pid) :-
                programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL).
@@ -160,16 +168,16 @@ namespace magic {
         commitMagicPred(@A, Pid, Name, Sig, Tablename, Tid),
         ::sys::functor(@A, Fid, Rid, FNotin, Name, FTid, FECA, FSchema, Pos, FAM, FNew),
         Pos == 1,
-        Fact := f_fact(Pid, Tablename, f_project(Sig, FSchema)).
+        Fact := f_fact(Tablename, f_project(Sig, FSchema)).
 
   /********************************************************************/
   /* Rewrite all non-query rules that contain the commit magic predicate. */
   r19a rewriteRule(@A, Pid, Rid) :-
-         commitMagicPred(@A, Pid, Name, Sig, Tablename, Tid),
-         ::sys::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count),
-         ::sys::functor(@A, Fid, Rid, FNotin, Name, FTID, FECA, FSchema, Pos, FAM, FNew),
+         commitMagicPred(@A, Pid, Name, _, _, _),
+         ::sys::rule(@A, Rid, Pid, _, HeadFid, _, _, _),
+         ::sys::functor(@A, HeadFid, Rid, _, Name, _, _, _, _, _, _),
          notin rewriteRule(@A, Pid, Rid),
-         notin queryAdorn(@A, Pid, Rid, QName, QSig).
+         notin queryAdorn(@A, Pid, Rid, _, _).
 
   /********************************************************************/
   /* If the head predicate is a magic predicate then start rule with
@@ -219,6 +227,12 @@ namespace magic {
         ::sys::functor(@A, Fid, Rid, NotIn, Name, Tid, ECA, Schema, SupPos, AM, New),
         notin magicPred(@A, Pid, Name, Sig).
 
+  r24a rewriteIter(@A, Pid, Rid, SupPos+1U, NewRid, HeadFid, NewPos+1U) :-
+        rewriteIter(@A, Pid, Rid, SupPos, NewRid, HeadFid, NewPos),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, TC),
+        notin ::sys::functor(@A, Fid, Rid, NotIn, Name, Tid, ECA, Schema, SupPos, AM, New),
+        SupPos < TC.
+
   /* Goal node Gi is a magic predicate. */
   r24b break(@A, Pid, Rid, Name, Bound, SupPos, NewRid, HeadFid, NewPos) :-
         rewriteIter(@A, Pid, Rid, SupPos, NewRid, HeadFid, NewPos),
@@ -228,12 +242,12 @@ namespace magic {
 
   r24c rewriteComplete(@A, Pid, Rid) :-
         rewriteIter(@A, Pid, Rid, SupPos, NewRid, HeadFid, NewPos),
-        ::sys::rule(@A, Rid, Pid, RName, RHeadFid, RP2DL, RDelete, SupPos).
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, SupPos).
 
   r24d ::sys::functor(@A, OldHead, NewRid, NotIn, Name, Tid, ECA, Schema, 0U, AM, New) :-
          rewriteIter(@A, Pid, Rid, SupPos, NewRid, HeadFid, NewPos),
-         ::sys::rule(@A, Rid, Pid, RName, OldHead, RP2DL, RDelete, SupPos),
-         ::sys::functor(@A, OldHead, Rid, NotIn, Name, Tid, ECA, Schema, FPos, AM, New).
+         ::sys::rule(@A, Rid, Pid, _, OldHead, _, _, SupPos),
+         ::sys::functor(@A, OldHead, Rid, NotIn, Name, Tid, ECA, Schema, _, AM, New).
 
   r24e ::sys::rule(@A, NewRid, Pid, RName, OldHead, RP2DL, RDelete, NewPos) :-
          rewriteIter(@A, Pid, Rid, SupPos, NewRid, HeadFid, NewPos),
@@ -280,7 +294,7 @@ namespace magic {
          MPSchema := f_cons(f_getattr("Location", Schema), MPSchema).
 
   /* sup(rid, i-1) will feed the magic predicate. */
-  r27b ::sys::functor(@A, f_idgen(), NewRid, false, Name, Tid, "INSERT", Schema, 1U, null, 0) :-
+  r27b ::sys::functor(@A, f_idgen(), NewRid, false, Name, Tid, "DELTA", Schema, 1U, null, 0) :-
          group1(@A, Pid, Rid, Pos, NewRid, HeadFid, MPName, MPSchema, MPTid),
          sup(@A, Pid, Rid, SupPos, Name, Schema, Tid),
          SupPos == Pos - 1.
@@ -302,7 +316,7 @@ namespace magic {
          sup(@A, Pid, Rid, Pos, Name, Schema, Tid).
 
   /* Create sup(rid, i-1) for the event position. */
-  r28b ::sys::functor(@A, f_idgen(), NewRid, false, Name, Tid, "INSERT", Schema, 1U, null, 0) :-
+  r28b ::sys::functor(@A, f_idgen(), NewRid, false, Name, Tid, "DELTA", Schema, 1U, null, 0) :-
          group3(@A, Pid, Rid, Pos, NewRid, HeadFid),
          sup(@A, Pid, Rid, SupPos, Name, Schema, Tid),
          SupPos == Pos - 1.
@@ -324,7 +338,7 @@ namespace magic {
          break(@A, Pid, Rid, Name, Bound, SupPos, NewRid, HeadFid, NewPos).
 
   /* Place sup(rid, i) in the event position of the newly restarted rule. */
-  r29a ::sys::functor(@A, f_idgen(), NewRid, false, Name, Tid, "INSERT", Schema, NewPos, null, 0) :-
+  r29a ::sys::functor(@A, f_idgen(), NewRid, false, Name, Tid, "DELTA", Schema, NewPos, null, 0) :-
          restart(@A, Pid, Rid, Pos, NewRid, HeadFid, NewPos),
          sup(@A, Pid, Rid, Pos, Name, Schema, Tid).
 

@@ -62,7 +62,7 @@ for op, ar, va, desc in [
   ("typeOf", 1, "TYPEOF", "Get the type name of a value"),
   ("totalComp", 2, "TOTALCOMP", "Compare two value in the total order of the type system"),
 
-  ("fact", 3, "L_FACT", "Creates a fact tuple: 1st arg = PID, 2nd arg = tablename, 2nd arg = fact values."),
+  ("fact", 2, "L_FACT", "Creates a fact tuple: 1st arg = tablename, 2nd arg = fact values."),
   ("lappend", 2, "L_APPEND", "Insert first element into second list, or create liust if second list is null"),
   ("concat", 2, "L_CONCAT", "Insert all elements of first list into second list"),
   ("member", 2, "L_MEMBER", "Push 1 if first arg is in second list, 0 otherwise"),

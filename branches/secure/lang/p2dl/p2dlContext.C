@@ -462,15 +462,16 @@ namespace compile {
     TuplePtr 
     Context::program(CommonTable::ManagerPtr catalog, TuplePtr program)
     {
+      program = this->compile::Context::program(catalog, program);
+
       if ((*program)[catalog->attribute(PROGRAM, "P2DL")] != Val_Null::mk()) {
         ValuePtr programP2DL = (*program)[catalog->attribute(PROGRAM, "P2DL")];
         if (programP2DL != Val_Null::mk()) {
-          TELL_INFO << "PROGRAM P2DL TEXT: " << std::endl << programP2DL->toString() << std::endl;
           std::istringstream p2dl(programP2DL->toString(), std::istringstream::in);
           parse_stream(&p2dl);
         }
       }
-      return this->compile::Context::program(catalog, program);
+      return program;
     }
 
     void
@@ -479,8 +480,8 @@ namespace compile {
       ValuePtr ruleText = (*rule)[catalog->attribute(RULE, "P2DL")];
 
       if (ruleText != Val_Null::mk()) {
-        // if ((*rule)[catalog->attribute(RULE, "NAME")]->toString() == "t1") 
-        TELL_INFO << "RULE P2DL TEXT: " << std::endl << ruleText->toString() << std::endl;
+        // if ((*rule)[catalog->attribute(RULE, "NAME")]->toString() == "r1") 
+        // std::cerr << "RULE P2DL TEXT: " << std::endl << ruleText->toString() << std::endl;
         std::istringstream p2dl(ruleText->toString(), std::istringstream::in);
         parse_stream(&p2dl);
       }

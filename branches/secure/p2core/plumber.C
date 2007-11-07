@@ -113,7 +113,11 @@ Plumber::Dataflow::checkInput(ElementSpecPtr element, unsigned port)
 ElementSpecPtr
 Plumber::Dataflow::output(unsigned* port)
 {
-  assert (*port < outputs_.size());
+  if (!(*port < outputs_.size())) {
+    TELL_ERROR << "DATAFLOW PORT ERROR: " << name() << " invalid port " << *port << std::endl;
+    assert(0);
+  }
+
   for (std::vector<ElementSpec::HookupPtr>::iterator i = outputs_.begin();
        i != outputs_.end(); i++)
     if ((*i)->toPortNumber == *port) {

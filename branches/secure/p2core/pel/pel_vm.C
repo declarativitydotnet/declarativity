@@ -605,13 +605,10 @@ DEF_OP(ISTHETA) {
  */
 DEF_OP(L_FACT) { 
    ValuePtr first  = stackTop(); stackPop();
-   ValuePtr second  = stackTop(); stackPop();
-   ValuePtr third = stackTop(); stackPop();
+   ValuePtr second = stackTop(); stackPop();
   
-   TuplePtr fact  = Tuple::mk(second->toString());
-   ListPtr values = Val_List::cast(third);
-
-   fact->append(first); // The PID.
+   TuplePtr fact  = Tuple::mk(first->toString(), false);
+   ListPtr values = Val_List::cast(second);
 
    for (ValPtrList::const_iterator iter = values->begin(); 
         iter != values->end(); iter++) {

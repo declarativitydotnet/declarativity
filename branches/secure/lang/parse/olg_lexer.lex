@@ -79,13 +79,11 @@ WHITESPACE	[ \t\r\n]+
  }
 }
 <INITIAL>\" { 
-  std::cout << "Starting string with '" << yytext << "'";
   assert(cstring == NULL);
   cstring = new ostringstream();
   BEGIN(CSTRING); 
 }
 <CSTRING>\" { 
-  std::cout << "Finishing string with '" << yytext << "'";
   assert(cstring != NULL);
   lvalp->v = new compile::parse::Value(Val_Str::mk(cstring->str()));
   delete cstring;

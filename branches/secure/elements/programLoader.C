@@ -48,12 +48,13 @@ ProgramLoader::ProgramLoader(string name)
 ProgramLoader::ProgramLoader(TuplePtr args)
   : Element(Val_Str::cast((*args)[2]), 0, 1), terminal(true)
 {
+  LOAD("localize", "/Users/tcondie/workspace/secure/doc/localize.olg", "parse");
+  LOAD("magic", "/Users/tcondie/workspace/secure/doc/magic.olg", "localize");
 /*
-  LOAD("magic", "/Users/tcondie/workspace/secure/doc/magic.olg", "parse");
   LOAD("stats", "/Users/tcondie/workspace/secure/doc/stats.olg", "eca");
   LOAD("systemr", "/Users/tcondie/workspace/secure/doc/systemr.olg", "stats");
+  LOAD("localize", "/Users/tcondie/workspace/secure/doc/localize.olg", "eca");
 */
-  LOAD("localize", "doc/localize.olg", "eca");
 }
 
 ProgramLoader::~ProgramLoader()

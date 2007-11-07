@@ -43,6 +43,7 @@ namespace compile {
 
       /** Separate the event and probe functor terms */
       TuplePtr event;
+      TuplePtr alternate;
       std::deque<TuplePtr> probes; 
       for (funcIter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY2), 
                                          CommonTable::theKey(CommonTable::KEY3), rule);
@@ -57,6 +58,27 @@ namespace compile {
             }
             event = functor;
           } else probes.push_back(functor);
+
+          if ((*functor)[catalog->attribute(FUNCTOR, "ECA")] != Val_Null::mk() &&
+              (*functor)[catalog->attribute(FUNCTOR, "ECA")]->toString() != "PROBE") {
+            if (alternate) {
+              std::cerr << "ALTERNATE EVENT1: " << alternate->toString() << std::endl;
+              std::cerr << "ALTERNATE EVENT2: " << functor->toString() << std::endl;
+              throw compile::eca::Exception("More than one event in rule: " + rule->toString());
+            }
+            alternate = functor;
+          }
+        }
+      }
+
+      if (!event && alternate) {
+        event = alternate;
+        for (std::deque<TuplePtr>::iterator iter = probes.begin();
+             iter != probes.end(); iter++) {
+          if ((*iter).get() == event.get()) {
+            probes.erase(iter);
+            break;
+          }
         }
       }
 
@@ -95,7 +117,7 @@ namespace compile {
           }
           ecaEvent->set(functorNamePos, Val_Str::mk("periodic"));
         }
-        else {
+        else if ((*event)[catalog->attribute(FUNCTOR,"ECA")] == Val_Null::mk()) {
           /* All other event types are receive (like network packet).
              The reason being that we can not express table side effect
              events in OverLog. */

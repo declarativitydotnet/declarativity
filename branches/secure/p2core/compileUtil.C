@@ -301,9 +301,11 @@ namespace compile {
       if (variable == Val_Null::mk()) {
         return ValuePtr();
       }
-      else if ((*Val_Tuple::cast(variable))[0]->toString() == VAR ||
-          (*Val_Tuple::cast(variable))[0]->toString() == LOC) {
-        return variable;
+      else if ((*Val_Tuple::cast(variable))[0]->toString() == VAR) {
+          return variable;
+      } 
+      else if ((*Val_Tuple::cast(variable))[0]->toString() == LOC) {
+          return toVar(variable);
       }
       else if ((*Val_Tuple::cast(variable))[0]->toString() == AGG) {
         ValuePtr var = (*Val_Tuple::cast(variable))[2];
@@ -358,7 +360,7 @@ namespace compile {
       }
       for (ValPtrList::const_iterator i = inner->begin(); 
            i != inner->end(); i++) {
-        if (position(outer, *i) < 0) join->append(*i);
+        if (position(outer, *i) < 0) join->append(varCast(*i));
       }
       return join;
     }
