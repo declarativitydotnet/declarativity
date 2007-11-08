@@ -98,7 +98,7 @@ string stub(string hostname, string port, TransportConf conf)
 	  //get netin/out OK
        << "\tudp -> netIn; /* Connect UDP to net input */\n"
        << "\tnetOut -> udp;\n"
-       << "\tnetIn -> [+]extDRR;\n"
+       << "\tnetIn -> TupleCounter(\"netInCounter\", \"\") -> [+]extDRR;\n"
        << "\tUpdate(\"programUpdate\",\"" << PROGRAM << "\") -> "
        << "PelTransform(\"packageUpdate\", \"$1 pop swallow pop\") -> [+]extDRR;\n"
           //hook extDRR to seaInput, then to intQMux
@@ -107,12 +107,13 @@ string stub(string hostname, string port, TransportConf conf)
 	  //in theory, internal queue must be made infinite to avoid deadlock
  	  //to be absolutely sure.
        << "\tseaInput -> [0]intQMux -> PelTransform(\"unpackage\", \"$1 unboxPop\") -> "
-       << "\tQueue(\"intQ\", 100000,\"internal\") -> PullPush(\"IntQPP\",0) -> intDemux[0] -> "
+       << "\tQueue(\"intQ\", 100000,\"internal\") -> PullPush(\"IntQPP\",0) -> "
+       << "\tTupleCounter(\"internalEventCounter\", \"path_add\") -> intDemux[0] -> "
        << "Print(\"Unrecognized Message\") -> Discard(\"discard\");\n"
           //start the rule output process
        << "\tintDRR -> PullPush(\"SEAOutputPP\",0) -> intExtDemux;\n"
 	  //External events to commitbuf, to netOut
-       << "\tintExtDemux[1] -> CommitBuf(\"NetCommitBuf\") -> netOut;\n"
+       << "\tintExtDemux[1] -> CommitBuf(\"NetCommitBuf\") -> TupleCounter(\"netOutCounter\", \"\") -> netOut;\n"
           //internal events to internal mux
        << "\tintExtDemux[0] -> [1]intQMux;\n";
 

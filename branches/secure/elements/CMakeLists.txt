@@ -48,6 +48,7 @@ ADD_LIBRARY(p2elements
             noNullSignal.C
             pelTransform.C 
             print.C 
+            tupleCounter.C 
             printTime.C 
             printWatch.C 
             pullPush.C

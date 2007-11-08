@@ -49,6 +49,7 @@
 #include "noNullSignal.h"
 #include "pelTransform.h"
 #include "print.h"
+#include "tupleCounter.h"
 #include "printTime.h"
 #include "printWatch.h"
 #include "pullPush.h"
@@ -104,6 +105,7 @@ ElementLoader::loadElements()
   NoNullSignal::ensureInit();
   PelTransform::ensureInit();
   Print::ensureInit();
+  TupleCounter::ensureInit();
   PrintTime::ensureInit();
   PrintWatch::ensureInit();
   PullPush::ensureInit();

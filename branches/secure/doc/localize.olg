@@ -128,13 +128,14 @@ namespace localize {
  
   /* Create the new rule. Could be done multiple times but always the same tuple. */
   g1 ::sys::rule(@A, NewRid, Pid, NewName, HeadFid, null, false, NewPos) :-
-        prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
+        prebreak(@A, Pid, Rid, Pos, NewRid, NewPos, _, HeadFid, _, _, _, _),
         NewName := "intermediateRule_" + f_tostr(NewRid).
 
   /* Create the head functor for each new rule */
   g2 ::sys::functor(@A, HeadFid, NewRid, false, F_Name, null, "SEND", F_Schema, 0U, null, 0) :-
-        prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
-        F_Name := "intermediateResult_" + f_tostr(NewRid),
+        prebreak(@A, Pid, Rid, Pos, NewRid, _, _, HeadFid, LocAttr, Schema, _, _),
+        ::sys::rule(@A, Rid, Pid, Name, _, _, _, _),
+        F_Name := "intermediateResult_" + f_tostr(Name) + "_" + f_tostr(Pos),
         F_Schema := f_cons(LocAttr, f_cons(f_tovar(f_car(Schema)), f_cdr(Schema))).
   
   /* Point the original head functor to its new rule identifier. */

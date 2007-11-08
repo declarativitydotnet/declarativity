@@ -23,9 +23,14 @@ namespace magic {
               programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
               ::sys::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count).
 
+  i1b done(@A, Pid) :-
+       programEvent(@A, Pid, _, Rewrite, _, _, _, _),
+       Rewrite != null.
+
   i2 initRule(@A, Pid, Rid) :-
-       programEvent(@A, Pid, _, _, _, _, _, _),
-       ::sys::rule(@A, Rid, Pid, _, _, _, _, _).
+       programEvent(@A, Pid, _, Rewrite, _, _, _, _),
+       ::sys::rule(@A, Rid, Pid, _, _, _, _, _),
+       Rewrite == null.
 
   i3 finalPredicate(@A, Pid, Rid, a_max<Pos>) :-
        initRule(@A, Pid, Rid),
@@ -47,7 +52,8 @@ namespace magic {
        Sig := f_adornment(null, Schema).
 
   newProgram newProgram(@A, Pid) :-
-               programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL).
+               programEvent(@A, Pid, _, Rewrite, _, _, _, _),
+               Rewrite == null.
 
   initComplete init(@A, Pid) :- newProgram(@A, Pid).
 
@@ -88,7 +94,7 @@ namespace magic {
        ::sys::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count),
        ::sys::functor(@A, Fid, Rid, FNotin, FName, FTID, FECA, FSchema, Pos, FAM, FNew),
        SupName := "sup_" + RName + "_" + f_tostr(Pos),
-       NewSchema := f_merge(FSchema, Schema).
+       NewSchema := f_merge(Schema, FSchema).
 
   /* no sup relation created for assignment, just more bindings. */
   r7 sup(@A, Pid, Rid, Pos, SupName, NewSchema, f_idgen()) :-
