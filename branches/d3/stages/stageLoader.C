@@ -16,6 +16,7 @@
 #include "tokenizer.h"
 #include "CSVstage.h"
 #include "XTraceStage.h"
+#include "CSVtail.h"
 
 void
 StageLoader::loadStages()
@@ -23,5 +24,6 @@ StageLoader::loadStages()
   Tokenizer::ensureInit();
   CSVstage::ensureInit();
   XTraceStage::ensureInit();
+  CSVtail::ensureInit();
 }
 

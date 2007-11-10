@@ -20,7 +20,8 @@ SOURCE_FILE_ROOTS =		\
 				stageLoader \
 				tokenizer \
 				CSVstage \
-				XTraceStage
+				XTraceStage \
+				CSVtail
 
 libp2stages_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C)
 
