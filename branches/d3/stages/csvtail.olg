@@ -1,0 +1,28 @@
+/**************
+test olg file for CSVtail stage. 
+
+CSVtail is modified version of CSVstage. 
+When receives an input, it reads appended file contents and inject tuples 
+
+To run:
+
+$ ../tests/runOverLog -o csvtail.olg
+
+and then 
+
+$ cat >> testinput
+1, 2, 3, 4
+6, 5, 4, 3
+
+*****************/
+
+
+
+stage("CSVtail", csvInput, csvOutput).
+
+/* push input to CSVtail stage every 2 seconds, infinitely */
+
+l2 csvInput(@X, "testinput") :- periodic(@X, E, 2, 0).
+
+watch(csvOutput).
+
