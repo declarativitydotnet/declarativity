@@ -68,35 +68,43 @@ Stage::pull(int port,
   // Is this the right port?
   assert(port == 0);
 
+
+
+
   // Am I blocked?
   if (_pullCallback) {
     // I am blocked. This is an underrun
     ELEM_WARN("pull: callback underrun");
+
     return TuplePtr();
   } else {
     // I am not blocked.
   
     // Keep trying until I block or return a result
     while (true) {
+
       // Do I have a pending input?
       if (_pendingInput == 0) {
         // Nope, no pending input. Attempt to fetch a new one.
-        
+
         // Is my upstream element blocked?
         if (_upstreamBlocked) {
           // Yup, he's blocked. Register the downstream element's
           // callback and do nothing.
           _pullCallback = cb;
+
           return TuplePtr();
         } else {
           // No, he's not blocked. Get a new input tuple.
           _pendingInput = input(0)->pull(boost::bind(&Stage::unblock, this));
           if (_pendingInput != 0) {
             // Got an actual input
+
             _processor->newInput(_pendingInput);
           } else {
             // He has nothing to give me, and he has my callback. Block
             // my downstream puller as well.
+
             _upstreamBlocked = true;
             _pullCallback = cb;
             return TuplePtr();
@@ -106,7 +114,7 @@ Stage::pull(int port,
       
       // At this point, we have a pending computation and we are not
       // blocked
-      
+
       // Now try to get an output
       std::pair< TuplePtr, Status > result =
         _processor->newOutput();
@@ -115,6 +123,8 @@ Stage::pull(int port,
         // I got an empty result.  Am I done with this input?
         if (result.second == MORE) {
           // There's more outputs to come. Take a callback
+
+	  _processingBlocked = true; // gunho
           _pullCallback = cb;
           return TuplePtr();
         } else {
@@ -133,6 +143,7 @@ Stage::pull(int port,
 void
 Stage::unblock()
 {
+
   if (!_upstreamBlocked) {
     // I shouldn't be called if I wasn't blocked.
     ELEM_WARN("unblock: called while not blocked");
@@ -150,6 +161,7 @@ Stage::unblock()
 void
 Stage::resume()
 {
+
   if (!_processingBlocked) {
     // I shouldn't be called if my processor wasn't blocked.
     ELEM_WARN("resume: called while not blocked");
