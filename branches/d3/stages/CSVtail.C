@@ -16,6 +16,7 @@
 
 #include "CSVtail.h"
 #include "val_int32.h"
+#include "loop.h"
 
 // Constructor
 CSVtail::CSVtail(Stage* myStage)
@@ -42,7 +43,7 @@ CSVtail::newOutput()
 
 	// If we have nothing enqueued from before, read more text from the input file
 	// and enqueue resulting tuples
-	while (_q.empty()) {
+	while (_q.empty() && _fd) {
 
 
 		struct stat sbuf;
@@ -103,9 +104,12 @@ CSVtail::newOutput()
 	  	STAGE_WARN("newOutput: last line of CSV not terminate by newline, didn't get consumed: _acc = \"" << _acc <<"\"");
 
 
+//		return std::make_pair(TuplePtr(), Stage::DONE);
 
-		return std::make_pair(TuplePtr(), Stage::DONE);
-//		return std::make_pair(TuplePtr(), Stage::MORE);
+		// register delayed callback to resume
+		delayCB(2,boost::bind(&Stage::resume, _stage), _stage);
+		return std::make_pair(TuplePtr(), Stage::MORE);
+
 	}
 	else {
 		// there's a good tuple in the queue
@@ -116,7 +120,7 @@ CSVtail::newOutput()
   // Prepare result
   TuplePtr resultTuple =
     Tuple::mk();
-  resultTuple->append(CSVTuple);
+  resultTuple->append(CSVTail);
   resultTuple->append(_locationSpecifier);
   // iterate through tuple fields and append
   for (unsigned int i = 0; i < p->size(); i++) {
@@ -172,6 +176,8 @@ CSVtail::newInput(TuplePtr inputTuple)
 			}
 			else
 			{
+				STAGE_ERROR("Failed to open file " << _fileName <<"\n" );
+
 			    // Inappropriate input values
 			      STAGE_WARN("newInput: failed to open file "
 			                << fileName
@@ -190,7 +196,7 @@ CSVtail::newInput(TuplePtr inputTuple)
 			if (sbuf.st_size == _size && sbuf.st_mtime == _mtime)
 */
 
-ValuePtr CSVtail::CSVTuple = Val_Str::mk(std::string("CSVtuple"));
+ValuePtr CSVtail::CSVTail = Val_Str::mk(std::string("CSVtail"));
 
 
 

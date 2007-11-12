@@ -73,7 +73,7 @@ private:
     long _mtime;	/* modification time last time checked		*/
 
   /** The name of output tuples */
-  static ValuePtr CSVTuple;
+  static ValuePtr CSVTail;
 
 
   /** My current location specifier */
