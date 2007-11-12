@@ -20,9 +20,9 @@ $ cat >> testinput
 
 stage("CSVtail", csvInput, csvOutput).
 
-/* push input to CSVtail stage every 2 seconds, infinitely */
+/* push input to CSVtail stage one time */
 
-l2 csvInput(@X, "testinput") :- periodic(@X, E, 2, 0).
+l2 csvInput(@X, "testinput") :- periodic(@X, E, 2, 1).
 
 watch(csvOutput).
 
