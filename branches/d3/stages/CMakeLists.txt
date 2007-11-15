@@ -1,4 +1,4 @@
-ADD_LIBRARY(p2stages stageLoader.C tokenizer.C CSVstage.C)
+ADD_LIBRARY(p2stages stageLoader.C tokenizer.C CSVstage.C XTraceStage.C CSVtail.C)
 
 TARGET_LINK_LIBRARIES(p2stages p2core)
 

@@ -56,6 +56,7 @@ ADD_LIBRARY(p2core
             val_vector.C 
             value.C 
             xdrbuf.C 
+	    XTraceLex.C
 )
 INCLUDE(FindPythonInterp)
 
