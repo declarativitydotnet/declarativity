@@ -28,14 +28,14 @@
 #include "ID.h"
 
 #ifndef yyFlexLexer
-#define yyFlexLexer OLBaseFlexLexer
+#define yyFlexLexer OLGBaseFlexLexer
 #include <FlexLexer.h>
 #endif
 
 #include "parseContext.h"
 #include "olg_parser.H"
 
-class OLG_Lexer : public OLBaseFlexLexer {
+class OLG_Lexer : public OLGBaseFlexLexer {
 
 private:
   int comment_depth;
