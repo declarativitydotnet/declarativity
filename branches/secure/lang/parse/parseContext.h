@@ -158,12 +158,14 @@ namespace compile {
       : _value(var), _location(l), _newLocSpec(newLocSpec) {};
     
       Variable(const string& var, bool l=false, bool newLocSpec = false) 
-      : _location(l),_newLocSpec(newLocSpec), 
-	_value(Val_Str::mk(var))  {};
+        : _value(Val_Str::mk(var)),
+          _location(l),
+          _newLocSpec(newLocSpec)   {};
   
       Variable(const Variable& var) 
-      : _location(var._location), _value(var._value), 
-	_newLocSpec(var._newLocSpec)  {};
+      : _value(var._value), 
+	_location(var._location),
+        _newLocSpec(var._newLocSpec)  {};
 
       virtual Expression* copy() const{
 	Variable *v = new Variable(*this);
@@ -551,7 +553,9 @@ namespace compile {
       // deep copy
       Functor(const Functor &f) 
         : _name(f._name), _complement(f._complement),
-	_opaque(f._opaque), _locSpec(f._locSpec), _hint(f._hint){ 
+          _locSpec(f._locSpec),
+          _opaque(f._opaque),
+          _hint(f._hint){ 
 	ExpressionList *a = new ExpressionList();
 	ExpressionList::iterator it = f._args->begin();
 	while (it != f._args->end()){
