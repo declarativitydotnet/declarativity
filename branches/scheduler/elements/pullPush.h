@@ -49,8 +49,8 @@ private:
   void  push_fn();
   bool  push_ready;
   
-  b_cbv run_cb;
   void  run();
+  b_cbv run_cb;
 
   DECLARE_PRIVATE_ELEMENT_INITS
 };
