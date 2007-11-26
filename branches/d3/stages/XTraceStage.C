@@ -133,7 +133,11 @@ XTraceStage::newOutput()
 			else if (sKey=="Host") _Host = sValue;
 			else if (sKey=="Agent") _Agent = sValue;
 			else if (sKey=="Label") _Label = sValue;
-			else if (sKey=="Timestamp") _TS = sValue;
+			else if (sKey=="Timestamp") 
+			{
+				sValue = sValue.substr(0, 14);
+				_TS = sValue;
+			}				
 			else if (sKey=="NextHost") _NextHost = sValue;
 		}
 	  }
