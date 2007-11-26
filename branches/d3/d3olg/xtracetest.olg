@@ -1,0 +1,3 @@
+stage("XTraceTuple", csvInput, csvOutput).
+l1 csvInput(@X, "xtrace.txt") :- periodic(@X, E, 2, 1).
+watch(csvOutput).

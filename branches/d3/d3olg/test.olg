@@ -1,0 +1,74 @@
+/*
+Hi,
+This is a question about str/int/flt types, significant digits and reading numbers with Stages. 
+Basically, we're observing the following strangeness. 
+	1195631201 - 1195631200.001 -> 1
+	1195631201.001 - 1195631200 -> -0.999
+	1195631201.0 - 1195631200.001 -> -1200
+	1195631201.001 - 1195631200.000 -> 1200
+
+The first two are correct, the next two lose significant digits in the process. Trying to multiply by 1000 does not preserve the significant digits either. Help? Thanks!!
+
+(- more details -)
+
+We are doing this because we are trying to match up timestamps from two log files A and B. Given a timestamp in A, find the closet timestamp in B. This is straightforward. Roughly, we read in the log files with CsvStage, and do the following: 
+	...
+	Diff = Atimestamp - Btimestamp
+	...
+	a_MIN(Diff)
+
+The first problem we are having is that P2 keeps thinking Atimestamp is str:
+	##Pel_VM caught an operator exception: 'Oper(-) not supported for types str, str
+
+I wrote some test rules to figure out what's happening (OverLog and output follows, questions below that):
+
+*/
+
+materialize(timestamp, infinity, infinity, keys(1,2)).
+timestamp("localhost:10000", 1195631200.001).
+timestamp("localhost:10000", 1195631201.000).
+timestamp("localhost:10000", 1195631201.050).
+
+t1 resultS(@Current, TimeMs, Result1, Result2, Result3, Result4, Result5, Result6) :- periodic(@Current, E, 0, 1),
+	timestamp(@Current, TimeMs),
+	Result1 := 1195631201 - TimeMs,
+	Result2 := TimeMs - 1195631201,
+	Result3 := 1195631201.0 - TimeMs,
+	Result4 := TimeMs - 1195631201.0,
+	Result5 := 1195631201.000 - TimeMs,
+	Result6 := TimeMs - 1195631201.000.
+	
+t2 resultM(@Current, TimeMs, Result, Result2, Result3) :- periodic(@Current, E, 0, 1),
+	timestamp(@Current, TimeMs),
+	Result := TimeMs * 1000,
+	Result2 := Result / 1000,
+	Result3 := TimeMs - Result2.
+
+/*t3 resultI(@Current, TimeMs) :- periodic(@Current, E, 0, 1),
+	timestamp(@Current, TimeMs),
+	TimeMS in [1195631201, 1195631202].*/
+	
+watchmod(resultS, "s").
+watchmod(resultM, "s").
+watchmod(resultI, "s").
+
+/*
+##Print[SendAction!...
+	[resultS(localhost:10000, 1.19563e+09, 1, -0.999, -1200, 1200, -1200, 1200)]
+	[resultS(localhost:10000, 1.19563e+09, 0, 0, -1201, 1201, -1201, 1201)]
+	[resultS(localhost:10000, 1.19563e+09, 0, 0.05, -1201.05, 1201.05, -1201.05, 1201.05)]
+	[resultM(localhost:10000, 1.19563e+09, 1.19563e+12, 1.19563e+12)]
+	[resultM(localhost:10000, 1.19563e+09, 1.19563e+12, 1.19563e+12)]
+	[resultM(localhost:10000, 1.19563e+09, 1.19563e+12, 1.19563e+12)]
+
+Questions:
+- Is this a bug?
+- How can I subtract two numbers like 1195631200.001 correctly (w/o losing significant digits?
+- Can I "cast" a number like 1195631201.000 into P2's time type in OverLog?
+- Rule T3 above generates an error:
+	##Planner, -:-, 4, 0, Error in pel generation TimeMS in [1195631201, 1195631202]
+	What is the correct way to use the 'in' operator?
+	
+Thanks,
+kuang
+*/

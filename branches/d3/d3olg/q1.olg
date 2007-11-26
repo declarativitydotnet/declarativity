@@ -1,0 +1,48 @@
+/* 	
+~/workspace/p2/d3-build/tests/runOverLog -o q1.olg -DADDR=\"localhost:22222\" -DXTFILENAME=\"xtrace.txt\" -DGTFILENAME=\"ganglia.txt\"
+*/
+
+/********************
+X-Trace loader
+*********************/
+#define TIMEHACK 1195600000
+
+stage("XTraceTuple", xtInput, xtOutput).
+/* xtTask(@ME, TaskID, OpID, ChainID, Host, Agent, Label, TS, Next_host) */
+materialize(xtTask, infinity, infinity, keys(1, 2, 3, 4)).
+/* xtEdge(@ME, TasiID, OpID, ChainID, Parent op id, type) */
+materialize(xtEdge, infinity, infinity, keys(1, 2, 3, 4, 5, 6)).
+
+xtload1 xtInput(@Current, File) :- periodic(@Current, E, 0, 1), File := XTFILENAME.
+xtload2 xtTask(@X, TaskID, OpID, ChainID, Host, Agent, Label, TimestampHack, Next_host) :- xtOutput(@X, TaskID, OpID, ChainID, OutputType, Host, Agent, Label, TS, Next_host), OutputType=="task",
+TimestampHack := TIMEHACK - TS.
+
+xtload3 xtEdge(@X, TaskID, OpID, ChainID, ParentOpID, EdgeType) :- xtOutput(@X, TaskID, OpID, ChainID, OutputType, ParentOpID, EdgeType), OutputType=="edge".
+watchmod(xtTask, "ia").
+/*
+watchmod(xtEdge, "ia").
+*/
+
+stage("CSVtail", gtInput, gtOutput).
+/* GangliaEvent(@ME) */
+materialize(gtEvent, infinity, infinity, keys(1, 2)).
+gtread1 gtInput(@Current, File) :- periodic(@Current, E, 0, 1), File := GTFILENAME.
+gtEvent(@Current, TimestampHack, Boottime,Bytes_in,Bytes_out,Cpu_aidle,Cpu_idle,Cpu_nice,Cpu_num,Cpu_speed,Cpu_system,Cpu_user,Cpu_wio,Disk_free,Disk_total,Gexec,Load_fifteen,Load_five,Load_one,Machine_type,Mem_buffers,Mem_cached,Mem_free,Mem_shared,Mem_total,Os_name,Os_release,Part_max_used,Pkts_in,Pkts_out,Proc_run,Proc_total,Swap_free,Swap_total) :- gtOutput(@Current, Timestamp,Disk_total,Cpu_speed,Part_max_used,Swap_total,Os_name,Cpu_user,Cpu_system,Cpu_aidle,Load_five,Proc_run,Mem_free,Mem_buffers,Swap_free,Bytes_in,Pkts_out,Cpu_num,Disk_free,Mem_total,Cpu_wio,Boottime,Machine_type,Os_release,Cpu_nice,Cpu_idle,Load_one,Load_fifteen,Proc_total,Mem_shared,Mem_cached,Gexec,Bytes_out,Pkts_in),
+TimestampHack := TIMEHACK - Timestamp.
+/*
+*/
+watchmod(gtEvent, "ia").
+
+lookup0 xtLookup(@Current, XtTimestamp) :- 
+	periodic(@Current, E, 5, 1),
+	xtTask(@Current, TaskID, OpID, ChainID, Host, Agent, Label, XtTimestamp), 
+	XtTimestamp in (-31200,-31202).
+watchmod(xtLookup, "s").
+
+/*lookup1 gtFound(@Current, XtTimestamp, a_MIN<Difference>) :- 
+lookup1 gtFound(@Current, XtTimestamp, Difference) :-
+	xtLookup(@Current, XtTimestamp), 
+	gtEvent(@Current, GtTimestamp),
+	Difference := XtTimestamp - GtTimestamp.
+*/
+watchmod(gtFound, "s").

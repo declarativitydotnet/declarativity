@@ -1,0 +1,1745 @@
+X-Trace Report ver 1.0
+Host: r10
+Edge: D8943F55, next
+Agent: DataNode
+Timestamp: 1195628798.558
+Label: OP_WRITE_BLOCK call
+X-Trace: 01BADC0DE0B3F560952EEDDF53
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 2EEDDF53, next
+Edge: ACCDAA69, next
+Agent: DataNode
+Timestamp: 1195628811.640
+Label: OP_WRITE_BLOCK return
+X-Trace: 01BADC0DE0B3F5609522DB0FDE
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 4E7AB0AB, next
+Agent: DataNode
+Timestamp: 1195628833.436
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0737ABB5BEE28BB25
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: EE28BB25, next
+Agent: DataNode
+Timestamp: 1195628882.279
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0737ABB5B531AB0B4
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 17603230, next
+Agent: DataNode
+Timestamp: 1195628882.915
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0737ABB5B2C3EE984
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: A690B7EA, next
+Agent: DataNode
+Timestamp: 1195628883.101
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0737ABB5B4AFB5E16
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 2C3EE984, next
+Agent: DataNode
+Timestamp: 1195628883.103
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0737ABB5B9B2FD9EE
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 4AFB5E16, next
+Agent: DataNode
+Timestamp: 1195628883.228
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0737ABB5BAA9A0B6E
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 599F1994, next
+Agent: DataNode
+Timestamp: 1195628885.234
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0737ABB5B35244BD6
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 35244BD6, next
+Agent: DataNode
+Timestamp: 1195628885.261
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0737ABB5B2DA16FDC
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 38F8B613, next
+Agent: DataNode
+Timestamp: 1195628888.397
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0737ABB5B3C74296D
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 3C74296D, next
+Agent: DataNode
+Timestamp: 1195628888.413
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0737ABB5B0F466A65
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 8AA0C84E, next
+Agent: DataNode
+Timestamp: 1195628961.194
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0737ABB5BF92A8EED
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: F92A8EED, next
+Agent: DataNode
+Timestamp: 1195628962.453
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0737ABB5B646B7542
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 0BF0894B, next
+Agent: DataNode
+Timestamp: 1195628965.022
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0737ABB5B167F8B45
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 167F8B45, next
+Agent: DataNode
+Timestamp: 1195628965.296
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0737ABB5B66588D64
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 1588B592, next
+Agent: DataNode
+Timestamp: 1195628974.319
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0737ABB5B243529A7
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 243529A7, next
+Agent: DataNode
+Timestamp: 1195628981.119
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0737ABB5BF50FAC2E
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: A87B9EA0, next
+Agent: DataNode
+Timestamp: 1195629000.422
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F560957D875D4E
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 7D875D4E, next
+Agent: DataNode
+Timestamp: 1195629000.423
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F56095D3157636
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 1809C94C, next
+Agent: DataNode
+Timestamp: 1195629015.019
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0737ABB5BCFBB5AAD
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: CFBB5AAD, next
+Agent: DataNode
+Timestamp: 1195629015.022
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0737ABB5BB656DF69
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: ADA56C1D, next
+Agent: DataNode
+Timestamp: 1195629021.573
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F56095A755307E
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: A755307E, next
+Agent: DataNode
+Timestamp: 1195629021.575
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F560957F142D56
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: D7E2A5A2, next
+Agent: DataNode
+Timestamp: 1195629044.443
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F560952A75256A
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 2A75256A, next
+Agent: DataNode
+Timestamp: 1195629044.515
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F56095DC02E641
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: E733BABA, next
+Agent: DataNode
+Timestamp: 1195629047.676
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F56095FFEECDFA
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: FFEECDFA, next
+Agent: DataNode
+Timestamp: 1195629047.797
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F56095EDA08437
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: C197C74A, next
+Agent: DataNode
+Timestamp: 1195629066.827
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F56095A1DBB397
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: A5C8BD96, next
+Agent: DataNode
+Timestamp: 1195629066.830
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F560953CF2E6E0
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 3CF2E6E0, next
+Agent: DataNode
+Timestamp: 1195629066.832
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F56095C227E0E7
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: A1DBB397, next
+Agent: DataNode
+Timestamp: 1195629066.922
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F560950AF50710
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 1A2DCF42, next
+Agent: DataNode
+Timestamp: 1195629103.088
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F56095D4804B32
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: D4804B32, next
+Agent: DataNode
+Timestamp: 1195629103.181
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F56095C45EEC49
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: A275704E, next
+Agent: DataNode
+Timestamp: 1195629118.466
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F560953FC6080C
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 3FC6080C, next
+Agent: DataNode
+Timestamp: 1195629118.469
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F560954C031B40
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 9A76F33F, next
+Agent: DataNode
+Timestamp: 1195629144.163
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F56095AE733532
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: E4E6DFF0, next
+Agent: DataNode
+Timestamp: 1195629144.166
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F5609542EE74B6
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 42EE74B6, next
+Agent: DataNode
+Timestamp: 1195629144.168
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F56095D40A6FE9
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 90DF9D96, next
+Agent: DataNode
+Timestamp: 1195629144.170
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F56095A41CBFB4
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: A41CBFB4, next
+Agent: DataNode
+Timestamp: 1195629146.647
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F56095AB15AF44
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: AE733532, next
+Agent: DataNode
+Timestamp: 1195629146.649
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F560957F0D48D8
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: BAD54297, next
+Agent: DataNode
+Timestamp: 1195629152.747
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F56095F6C885D9
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: F6C885D9, next
+Agent: DataNode
+Timestamp: 1195629152.826
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F56095A40700DE
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 55C59A32, next
+Agent: DataNode
+Timestamp: 1195629161.206
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F56095DD6D32AD
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: DD6D32AD, next
+Agent: DataNode
+Timestamp: 1195629161.207
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F56095C60CFEEA
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 229DD9FE, next
+Agent: DataNode
+Timestamp: 1195629162.666
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F560953A6D0562
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 3A6D0562, next
+Agent: DataNode
+Timestamp: 1195629162.753
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F56095ED4A9F6E
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 4DB9DA3F, next
+Agent: DataNode
+Timestamp: 1195629247.254
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F56095B5266088
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: B5266088, next
+Agent: DataNode
+Timestamp: 1195629247.280
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F560958945DA78
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: B38E4DE1, next
+Agent: DataNode
+Timestamp: 1195629298.708
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F5609508A22555
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 08A22555, next
+Agent: DataNode
+Timestamp: 1195629298.783
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F56095DC0BEF24
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 25E20855, next
+Agent: DataNode
+Timestamp: 1195629332.937
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F560951B56B9D6
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 1B56B9D6, next
+Agent: DataNode
+Timestamp: 1195629332.984
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F5609598CE737E
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 36F5EF1D, next
+Agent: DataNode
+Timestamp: 1195629348.578
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F560958DD4A79D
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 8DD4A79D, next
+Agent: DataNode
+Timestamp: 1195629348.697
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F56095014CE239
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 0C5965DA, next
+Agent: DataNode
+Timestamp: 1195629404.645
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F560953B72C911
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 3B72C911, next
+Agent: DataNode
+Timestamp: 1195629404.674
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F560950843C6C1
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 518A6759, next
+Agent: DataNode
+Timestamp: 1195629459.747
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F56095DA59B858
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: DA59B858, next
+Agent: DataNode
+Timestamp: 1195629459.851
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F560959051F9B2
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: B4622C3C, next
+Agent: DataNode
+Timestamp: 1195629489.088
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F560957626E0A9
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 7626E0A9, next
+Agent: DataNode
+Timestamp: 1195629489.258
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F56095E274CA68
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 6B344339, next
+Agent: DataNode
+Timestamp: 1195629493.979
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F56095742A8CCA
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 91BDC5D0, next
+Agent: DataNode
+Timestamp: 1195629493.978
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F560950D891D72
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 742A8CCA, next
+Agent: DataNode
+Timestamp: 1195629494.069
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F560952F1F198A
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 0D891D72, next
+Agent: DataNode
+Timestamp: 1195629494.105
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F560957A7B71DC
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: F2D78E55, next
+Agent: DataNode
+Timestamp: 1195629502.156
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F56095B2C39B9A
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: B2C39B9A, next
+Agent: DataNode
+Timestamp: 1195629502.231
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F5609588FDFF7B
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 96FA201E, next
+Agent: DataNode
+Timestamp: 1195629506.447
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F5609514F802B5
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 14F802B5, next
+Agent: DataNode
+Timestamp: 1195629506.448
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F5609558E0F5A6
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 616F01F5, next
+Agent: DataNode
+Timestamp: 1195629506.648
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F56095611B5231
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 611B5231, next
+Agent: DataNode
+Timestamp: 1195629506.724
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F56095F2747266
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 67B6EEE1, next
+Agent: DataNode
+Timestamp: 1195629507.698
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F5609565E18F17
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 65E18F17, next
+Agent: DataNode
+Timestamp: 1195629507.699
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F5609526BF2B5E
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: FB7F6F12, next
+Agent: DataNode
+Timestamp: 1195629544.767
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F56095A278181C
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: A278181C, next
+Agent: DataNode
+Timestamp: 1195629544.878
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F5609534909243
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 878A5D19, next
+Agent: DataNode
+Timestamp: 1195629545.388
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F5609586375C48
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 86375C48, next
+Agent: DataNode
+Timestamp: 1195629545.390
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F56095FA25FC78
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 5F970941, next
+Agent: DataNode
+Timestamp: 1195629584.796
+Label: OP_READ_BLOCK call
+X-Trace: 01BADC0DE0B3F56095AA7ED258
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: AA7ED258, next
+Agent: DataNode
+Timestamp: 1195629584.797
+Label: OP_READ_BLOCK return
+X-Trace: 01BADC0DE0B3F560954B5D96F2
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: A49D34B8, next
+NextHost: r22.Millennium.Berkeley.EDU
+Agent: DNAddrPair created
+Timestamp: 1195629654.608
+Label: read block connect
+X-Trace: 01BADC0DE0737ABB5B0AD3C127
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 0AD3C127, next
+Agent: DFSClient
+Timestamp: 1195629654.615
+Label: newBlockReader
+X-Trace: 01BADC0DE0737ABB5BE7B9136C
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 5D302BF6, next
+Edge: E7B9136C, next
+Agent: DFSClient
+Timestamp: 1195629654.618
+Label: OP_READ_BLOCK complete
+X-Trace: 01BADC0DE0737ABB5B547A1E6F
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 547A1E6F, next
+Edge: A49D34B8, next
+Agent: MapTask: task_200711191059_0010_m_000024_0
+Timestamp: 1195629654.620
+Label: run MapRunner: MapRunner end
+X-Trace: 01BADC0DE0737ABB5B972642E2
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 903B5AAC, next
+NextHost: r18.Millennium.Berkeley.EDU
+Agent: DNAddrPair created
+Timestamp: 1195629665.770
+Label: read block connect
+X-Trace: 01BADC0DE0737ABB5BA29B3C64
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: A29B3C64, next
+Agent: DFSClient
+Timestamp: 1195629665.774
+Label: newBlockReader
+X-Trace: 01BADC0DE0737ABB5BDA58546C
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: C458BBDF, next
+Edge: DA58546C, next
+Agent: DFSClient
+Timestamp: 1195629665.793
+Label: OP_READ_BLOCK complete
+X-Trace: 01BADC0DE0737ABB5BD65AE0A9
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: D65AE0A9, next
+Edge: 903B5AAC, next
+Agent: MapTask: task_200711191059_0010_m_000076_0
+Timestamp: 1195629665.795
+Label: run MapRunner: MapRunner end
+X-Trace: 01BADC0DE0737ABB5BDD13508E
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 11B79D58, next
+NextHost: r24.Millennium.Berkeley.EDU
+Agent: DNAddrPair created
+Timestamp: 1195629666.819
+Label: read block connect
+X-Trace: 01BADC0DE0737ABB5B1AE81352
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 1AE81352, next
+Agent: DFSClient
+Timestamp: 1195629666.826
+Label: newBlockReader
+X-Trace: 01BADC0DE0737ABB5B1CB6FD98
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 44E3FE31, next
+Edge: 1CB6FD98, next
+Agent: DFSClient
+Timestamp: 1195629666.828
+Label: OP_READ_BLOCK complete
+X-Trace: 01BADC0DE0737ABB5BAC420987
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: AC420987, next
+Edge: 11B79D58, next
+Agent: MapTask: task_200711191059_0010_m_000067_0
+Timestamp: 1195629666.830
+Label: run MapRunner: MapRunner end
+X-Trace: 01BADC0DE0737ABB5B78F780AA
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 972642E2, next
+Edge: E323C196, next
+Agent: MapTask: task_200711191059_0010_m_000024_0
+Timestamp: 1195629667.618
+Label: run end
+X-Trace: 01BADC0DE0737ABB5BA957EE2B
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: A957EE2B, next
+Agent: Task: task_200711191059_0010_m_000024_0
+Timestamp: 1195629667.619
+Label: done
+X-Trace: 01BADC0DE0737ABB5B5BCAE2B1
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 40251393, next
+Edge: 40251393, next
+Agent: MapTask: task_200711191059_0010_m_000059_0
+Timestamp: 1195629669.663
+Label: run MapRunner: MapRunner end
+X-Trace: 01BADC0DE0737ABB5B0D4209D7
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 78F780AA, next
+Edge: 4A24BFC2, next
+Agent: MapTask: task_200711191059_0010_m_000067_0
+Timestamp: 1195629675.442
+Label: run end
+X-Trace: 01BADC0DE0737ABB5BE309C97D
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: E309C97D, next
+Agent: Task: task_200711191059_0010_m_000067_0
+Timestamp: 1195629675.444
+Label: done
+X-Trace: 01BADC0DE0737ABB5B2AD7117F
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: DD13508E, next
+Edge: FDC091C4, next
+Agent: MapTask: task_200711191059_0010_m_000076_0
+Timestamp: 1195629675.458
+Label: run end
+X-Trace: 01BADC0DE0737ABB5B14ED58F3
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 14ED58F3, next
+Agent: Task: task_200711191059_0010_m_000076_0
+Timestamp: 1195629675.459
+Label: done
+X-Trace: 01BADC0DE0737ABB5B9323D67A
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 0D4209D7, next
+Edge: A532A7A1, next
+Agent: MapTask: task_200711191059_0010_m_000059_0
+Timestamp: 1195629678.561
+Label: run end
+X-Trace: 01BADC0DE0737ABB5B3DFF27E8
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 3DFF27E8, next
+Agent: Task: task_200711191059_0010_m_000059_0
+Timestamp: 1195629678.563
+Label: done
+X-Trace: 01BADC0DE0737ABB5B00D1240D
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: C02386DA, next
+Agent: TaskTracker
+Timestamp: 1195630349.174
+Label: startNewTask: task_200711191059_0010_r_000000_2
+X-Trace: 01BADC0DE0737ABB5B07DBD6E9
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 07DBD6E9, next
+Agent: TaskTracker
+Timestamp: 1195630349.687
+Label: localizeJob start
+X-Trace: 01BADC0DE0737ABB5BC0105644
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: C0105644, next
+Agent: TaskTracker
+Timestamp: 1195630349.724
+Label: launchTaskForJob: task_200711191059_0010_r_000000_2 start
+X-Trace: 01BADC0DE0737ABB5B9C57399F
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 9C57399F, next
+Agent: TaskTracker TaskInProgress: task_200711191059_0010_r_000000_2
+Timestamp: 1195630352.749
+Label: launchTask start
+X-Trace: 01BADC0DE0737ABB5B173D15B5
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 173D15B5, next
+Agent: ReduceTaskRunner: task_200711191059_0010_r_000000_2
+Timestamp: 1195630353.057
+Label: run start
+X-Trace: 01BADC0DE0737ABB5BD74E2AB6
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: D74E2AB6, next
+Agent: ReduceTaskRunner: task_200711191059_0010_r_000000_2
+Timestamp: 1195630353.158
+Label: start JVM
+X-Trace: 01BADC0DE0737ABB5B2FB48F07
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 2FB48F07, next
+Agent: TaskTracker Child: task_200711191059_0010_r_000000_2
+Timestamp: 1195630361.882
+Label: start child
+X-Trace: 01BADC0DE0737ABB5B6FD16A76
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 6FD16A76, next
+Agent: VersionedProtocol client
+Timestamp: 1195630362.344
+Label: getProtocolVersion call
+X-Trace: 01BADC0DE0737ABB5BFDB27387
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 7CDC5ACD, next
+Edge: FDB27387, next
+Agent: VersionedProtocol client
+Timestamp: 1195630362.373
+Label: getProtocolVersion return
+X-Trace: 01BADC0DE0737ABB5BCEE4509F
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: CEE4509F, next
+Agent: ReduceTask: task_200711191059_0010_r_000000_2
+Timestamp: 1195630362.645
+Label: run start
+X-Trace: 01BADC0DE0737ABB5B304FBFE5
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 304FBFE5, next
+Agent: ReduceTask: task_200711191059_0010_r_000000_2
+Timestamp: 1195630362.866
+Label: construct Reducer: Reduce
+X-Trace: 01BADC0DE0737ABB5BA4D1CF99
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: A4D1CF99, next
+Agent: ReduceTask: task_200711191059_0010_r_000000_2
+Timestamp: 1195630362.871
+Label: start copy phase
+X-Trace: 01BADC0DE0737ABB5BBBB597F5
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: BBB597F5, next
+Agent: ReduceTask: task_200711191059_0010_r_000000_2
+Timestamp: 1195630442.189
+Label: start merge phase
+X-Trace: 01BADC0DE0737ABB5B524C18DF
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 524C18DF, next
+Agent: ReduceTask: task_200711191059_0010_r_000000_2
+Timestamp: 1195630442.215
+Label: start sort phase
+X-Trace: 01BADC0DE0737ABB5B1DB7B472
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 1DB7B472, next
+Agent: ReduceTask: task_200711191059_0010_r_000000_2
+Timestamp: 1195630729.690
+Label: start reduce phase
+X-Trace: 01BADC0DE0737ABB5B97E14FB3
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 97E14FB3, next
+Agent: ClientProtocol client
+Timestamp: 1195630729.856
+Label: exists call
+X-Trace: 01BADC0DE0737ABB5B5656E1AF
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 84F39551, next
+Edge: 5656E1AF, next
+Agent: ClientProtocol client
+Timestamp: 1195630729.862
+Label: exists return
+X-Trace: 01BADC0DE0737ABB5B00CBC2E3
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 00CBC2E3, next
+Agent: ClientProtocol client
+Timestamp: 1195630729.862
+Label: mkdirs call
+X-Trace: 01BADC0DE0737ABB5B93E036CC
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 9D495FFA, next
+Edge: 93E036CC, next
+Agent: ClientProtocol client
+Timestamp: 1195630729.871
+Label: mkdirs return
+X-Trace: 01BADC0DE0737ABB5B13DDC846
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 13DDC846, next
+Agent: DFSClient
+Timestamp: 1195630999.803
+Label: nextBlockOutputStream
+X-Trace: 01BADC0DE0737ABB5B10A2139B
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 10A2139B, next
+Agent: ClientProtocol client
+Timestamp: 1195630999.804
+Label: create call
+X-Trace: 01BADC0DE0737ABB5B92C7DD7D
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: D4260C58, next
+Edge: 92C7DD7D, next
+Agent: ClientProtocol client
+Timestamp: 1195630999.933
+Label: create return
+X-Trace: 01BADC0DE0737ABB5B14D21C38
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 14D21C38, next
+Agent: DataNode
+Timestamp: 1195631000.151
+Label: OP_WRITE_BLOCK call
+X-Trace: 01BADC0DE0737ABB5B3D74B7E8
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 3D74B7E8, next
+Edge: A8361B05, next
+Agent: DataNode
+Timestamp: 1195631000.962
+Label: OP_WRITE_BLOCK return
+X-Trace: 01BADC0DE0737ABB5BF8884E64
+
+X-Trace Report ver 1.0
+Status: 0
+Host: r10
+NumSuccessfulWrites: 1
+Edge: F8884E64, next
+Edge: 14D21C38, next
+Agent: DFSClient
+Timestamp: 1195631000.981
+Label: OP_WRITE_BLOCK complete
+X-Trace: 01BADC0DE0737ABB5BB764674B
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: B764674B, next
+Agent: ClientProtocol client
+Timestamp: 1195631001.141
+Label: complete call
+X-Trace: 01BADC0DE0737ABB5B6478B84B
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 729D801E, next
+Edge: 6478B84B, next
+Agent: ClientProtocol client
+Timestamp: 1195631001.150
+Label: complete return
+X-Trace: 01BADC0DE0737ABB5B4504AEFF
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 4504AEFF, next
+Edge: 304FBFE5, next
+Agent: ReduceTask: task_200711191059_0010_r_000000_2
+Timestamp: 1195631001.151
+Label: run end
+X-Trace: 01BADC0DE0737ABB5B7EEDF676
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 7EEDF676, next
+Agent: Task: task_200711191059_0010_r_000000_2
+Timestamp: 1195631001.152
+Label: done
+X-Trace: 01BADC0DE0737ABB5BCE0D2C8C
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: D89EDB86, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631003.809
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BEBACBE36
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 7C3AB26A, next
+Edge: EBACBE36, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631003.818
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B2A0B5A69
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 2A0B5A69, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631011.544
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B05891765
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 1C4B4E7F, next
+Edge: 05891765, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631011.547
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5BF0AC5066
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: F0AC5066, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631013.824
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B4C883012
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 48B23173, next
+Edge: 4C883012, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631013.827
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5BD58EBD84
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: D58EBD84, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631021.552
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B598881A5
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 62E9EA14, next
+Edge: 598881A5, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631021.555
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5BA558335A
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: A558335A, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631023.832
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B5B395214
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: B9399256, next
+Edge: 5B395214, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631023.834
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B83ECA200
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 83ECA200, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631031.560
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B6979EFF5
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 5DE8056D, next
+Edge: 6979EFF5, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631031.562
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B550C0764
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 550C0764, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631033.843
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BB648CC4A
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 34DC9850, next
+Edge: B648CC4A, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631033.846
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B0E88DB02
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 0E88DB02, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631041.571
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BDE37C700
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 4B5A3415, next
+Edge: DE37C700, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631041.574
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B33560B9D
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 33560B9D, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631043.851
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B98E518A7
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 937B572C, next
+Edge: 98E518A7, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631043.854
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5BF63A49E7
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: F63A49E7, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631051.579
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BEFC3372B
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 05A34AE1, next
+Edge: EFC3372B, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631051.581
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B6E08CBDB
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 6E08CBDB, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631053.859
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BA0F1C292
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: C125CF7F, next
+Edge: A0F1C292, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631053.861
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B6DEE908E
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 6DEE908E, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631061.586
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BAFDD8948
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 1028DCED, next
+Edge: AFDD8948, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631061.589
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B310176AF
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 310176AF, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631063.870
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BC8BFC28C
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 93EDE1D5, next
+Edge: C8BFC28C, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631063.873
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B1EAE23CC
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 1EAE23CC, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631071.594
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B2140F527
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 39B29082, next
+Edge: 2140F527, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631071.597
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B05A4FCBF
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 05A4FCBF, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631073.878
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BE59A0039
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 7284A936, next
+Edge: E59A0039, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631073.880
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5BF2BF25D1
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: F2BF25D1, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631081.601
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B804DA1D8
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: D4FA826B, next
+Edge: 804DA1D8, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631081.604
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B254EF833
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 254EF833, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631083.889
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BDF20F049
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 49A5E41C, next
+Edge: DF20F049, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631084.195
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5BF81C5B99
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: F81C5B99, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631091.609
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B25B7F587
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 37946FDC, next
+Edge: 25B7F587, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631091.612
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B0E59E0E2
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 0E59E0E2, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631094.201
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BED64B8E7
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 3ECDAA1C, next
+Edge: ED64B8E7, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631094.204
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5BE599DAEF
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: E599DAEF, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631101.617
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B8CC941CB
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 39E65E56, next
+Edge: 8CC941CB, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631101.619
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5BC532C40A
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: C532C40A, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631104.209
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B98FB911D
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 7328422A, next
+Edge: 98FB911D, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631104.211
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B2C44A5EA
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 2C44A5EA, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631111.624
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B64FA9A53
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 9EF0F594, next
+Edge: 64FA9A53, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631111.627
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5BF692AC3C
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: F692AC3C, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631114.220
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B174E358A
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: D219EC51, next
+Edge: 174E358A, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631114.223
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B4E1338B3
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 4E1338B3, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631121.636
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BDE3FC48B
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 17CB0BFB, next
+Edge: DE3FC48B, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631121.639
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B2F3FEACB
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 2F3FEACB, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631124.228
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BCE718AB2
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 225C6B4C, next
+Edge: CE718AB2, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631124.231
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B3AB8D2A9
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 3AB8D2A9, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631131.647
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B9AEB478D
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: AD893490, next
+Edge: 9AEB478D, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631131.650
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B120BF8B0
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 120BF8B0, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631134.239
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BCA0FC1B9
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: EED0791D, next
+Edge: CA0FC1B9, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631134.242
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5BC0246E14
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: C0246E14, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631141.655
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B415D3197
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: F2F3B9F4, next
+Edge: 415D3197, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631141.658
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B0FFB6F7F
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 0FFB6F7F, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631144.247
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B44EE58CB
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 2EB548F5, next
+Edge: 44EE58CB, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631144.249
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5BDAF94404
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: DAF94404, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631151.663
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BFDF81DB8
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 85FF16EF, next
+Edge: FDF81DB8, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631151.665
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B8209494C
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 8209494C, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631154.258
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BC5694E9C
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 5CDF423D, next
+Edge: C5694E9C, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631154.262
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5BCDDB460E
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: CDDB460E, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631161.670
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BFC0A7F3E
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 69238A59, next
+Edge: FC0A7F3E, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631161.673
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B8FE47841
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 8FE47841, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631164.270
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BC2F95893
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 1C135111, next
+Edge: C2F95893, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631164.273
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B55588E39
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 55588E39, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631171.678
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BC7492CC3
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 0096647B, next
+Edge: C7492CC3, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631171.681
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B2361C709
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 2361C709, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631174.282
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B680BA85F
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 6BDABEA5, next
+Edge: 680BA85F, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631174.284
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5BBFA1B21D
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: BFA1B21D, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631181.689
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BA74C08CB
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 79C0E34B, next
+Edge: A74C08CB, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631181.692
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B24AAB99E
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 24AAB99E, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631184.289
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B23E24580
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 5A9B7995, next
+Edge: 23E24580, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631184.292
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B45837B19
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 45837B19, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631191.697
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BD38D4377
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 5A5A1B3E, next
+Edge: D38D4377, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631191.700
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5BCD203835
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: CD203835, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631194.297
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5BF2D5731D
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 6948E2DA, next
+Edge: F2D5731D, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631194.300
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B5F596693
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: 5F596693, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631201.709
+Label: heartbeat call
+X-Trace: 01BADC0DE0737ABB5B9D3C5993
+
+X-Trace Report ver 1.0
+Host: r10
+Edge: B6232AE5, next
+Edge: 9D3C5993, next
+Agent: InterTrackerProtocol client
+Timestamp: 1195631201.760
+Label: heartbeat return
+X-Trace: 01BADC0DE0737ABB5B7F009088
+
