@@ -61,7 +61,7 @@ private:
   std::queue<TuplePtr> _edgeQ;
 
   string 	_TaskId, _OpId, _ChainId;
-  string	_Host, _Agent, _Label, _TS, _Next_host;
+  string	_Host, _Agent, _Label, _TS, _NextHost;
 
   bool	_bGotIds;
 

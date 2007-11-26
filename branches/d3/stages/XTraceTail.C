@@ -163,7 +163,7 @@ XTraceTail::newOutput()
 			else if (sKey=="Agent") _Agent = sValue;
 			else if (sKey=="Label") _Label = sValue;
 			else if (sKey=="Timestamp") _TS = sValue;
-			else if (sKey=="Next_host") _Next_host = sValue;
+			else if (sKey=="NextHost") _Next_host = sValue;
 		}
 	  }
 			

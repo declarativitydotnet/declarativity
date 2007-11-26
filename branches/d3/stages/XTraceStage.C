@@ -67,13 +67,13 @@ XTraceStage::newOutput()
 				t->append(Val_Str::mk(_Agent));
 				t->append(Val_Str::mk(_Label));
 				t->append(Val_Str::mk(_TS));
-				t->append(Val_Str::mk(_Next_host));
+				t->append(Val_Str::mk(_NextHost));
 				_q.push(t);
 				_Host = "";
 				_Agent = "";
 				_Label = "";
 				_TS = "";
-				_Next_host = "";
+				_NextHost = "";
 			}
 
 			while (!_edgeQ.empty())
@@ -134,7 +134,7 @@ XTraceStage::newOutput()
 			else if (sKey=="Agent") _Agent = sValue;
 			else if (sKey=="Label") _Label = sValue;
 			else if (sKey=="Timestamp") _TS = sValue;
-			else if (sKey=="Next_host") _Next_host = sValue;
+			else if (sKey=="NextHost") _NextHost = sValue;
 		}
 	  }
 			

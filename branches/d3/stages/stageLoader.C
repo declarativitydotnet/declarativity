@@ -17,6 +17,7 @@
 #include "CSVstage.h"
 #include "XTraceStage.h"
 #include "CSVtail.h"
+#include "XTraceTail.h"
 
 void
 StageLoader::loadStages()
@@ -25,5 +26,6 @@ StageLoader::loadStages()
   CSVstage::ensureInit();
   XTraceStage::ensureInit();
   CSVtail::ensureInit();
+  XTraceTail::ensureInit(); 
 }
 
