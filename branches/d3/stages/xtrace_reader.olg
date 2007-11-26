@@ -1,0 +1,25 @@
+#define XTRACELOGFILE "/scratch/gunho/xtrace/xtrace_reports.txt"
+/*
+stage("XTraceTail", xtraceInput, xtraceOutput).
+*/
+
+stage("XTraceTuple", xtraceInput, xtraceOutput).
+
+/* xtraceTask(@ME, TaskID, OpID, ChainID, Host, Agent, Label, TS, NextHost) */
+materialize(xtraceTask, infinity, infinity, keys(1, 2, 3, 4)).
+
+/* xtraceEdge(@ME, TasiID, OpID, ChainID, Parent op id, type) */
+materialize(xtraceEdge, infinity, infinity, keys(1, 2, 3, 4, 5, 6)).
+
+l1 xtraceInput(@X, File) :- periodic(@X, E, 0, 1), File := XTRACELOGFILE.
+
+x1 xtraceTask(@X, TaskID, OpID, ChainID, Host, Agent, Label, TS, NextHost) :- xtraceOutput(@X, TaskID, OpID, ChainID, OutputType, Host, Agent, Label, TS, NextHost), OutputType=="task".
+
+x2 xtraceEdge(@X, TaskID, OpID, ChainID, ParentOpID, EdgeType) :- xtraceOutput(@X, TaskID, OpID, ChainID, OutputType, ParentOpID, EdgeType), OutputType=="edge".
+
+watch(xtraceTask).
+/*
+watch(xtraceEdge).
+*/
+
+
