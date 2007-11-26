@@ -26,7 +26,7 @@
 %option yylineno
 %option noyywrap
 %option yyclass="OLG_Lexer"
-%option prefix="OLBase"
+%option prefix="OLGBase"
 %start CCOMMENT CSTRING
 %{
 #include "olg_lexer.h"
@@ -257,5 +257,5 @@ OLG_Lexer::OLG_Lexer(const char *prog)
 };
 
 OLG_Lexer::~OLG_Lexer() { 
-  // if (bufstate) yy_delete_buffer(bufstate); 
+  yy_delete_buffer(bufstate); 
 };
