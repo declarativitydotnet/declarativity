@@ -63,6 +63,7 @@ for op, ar, va, desc in [
   ("totalComp", 2, "TOTALCOMP", "Compare two value in the total order of the type system"),
 
   ("fact", 2, "L_FACT", "Creates a fact tuple: 1st arg = tablename, 2nd arg = fact values."),
+  ("createkey", 1, "L_CREATEKEY", "Create key from all passed in schema values."),
   ("lappend", 2, "L_APPEND", "Insert first element into second list, or create liust if second list is null"),
   ("concat", 2, "L_CONCAT", "Insert all elements of first list into second list"),
   ("member", 2, "L_MEMBER", "Push 1 if first arg is in second list, 0 otherwise"),
@@ -147,6 +148,7 @@ for op, ar, va, desc in [
   ("castassign",3, "L_CASTASSIGN", "Substitute a selection predicate for an assignment."),
   ("variables",1, "L_VARIABLES", "Extracts all variables from a math or boolean expression."),
   ("merge",2,   "L_MERGE",      "Merge two argument lists according join operation."),
+  ("equivalent",2,"L_EQUIVALENT","Checks if the two plans are equivalent."),
   ("prefix",2,   "L_PREFIX",      "Is the first list a prefix of the second?"),
   ("sortattr",4,   "L_SORTATTR", "REturn sort attributes ."),
   ("project",2,   "L_PROJECT",  "Project the schema (arg 2) onto the fields in arg 1."),

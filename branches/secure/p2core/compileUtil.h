@@ -49,8 +49,6 @@ namespace compile {
         to a regular variable. */
     ValuePtr toVar(ValuePtr var);
 
-    ValuePtr varCast(ValuePtr variable);
-
     bool isTheta(ValuePtr boolv);
 
     /** Find the location attribute in the schema */
@@ -68,10 +66,12 @@ namespace compile {
      * a join.  */
     ListPtr merge(const ListPtr outer, const ListPtr inner);
 
+    bool equivalent(const ListPtr plan1, const ListPtr plan1);
+
     bool prefix(const ListPtr prefix, const ListPtr schema);
 
-    ValuePtr sortAttr(const ListPtr outer, const ListPtr outerOrder,
-                      const ListPtr inner, const ListPtr innerOrder);
+    ValuePtr sortAttr(const ListPtr outer, const ValuePtr outerOrder,
+                      const ListPtr inner, const ValuePtr innerOrder);
 
     ListPtr adornment(const ListPtr bound, const ListPtr schema);
 

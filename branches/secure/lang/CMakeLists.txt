@@ -17,6 +17,6 @@ ADD_LIBRARY(p2lang
             langLoader.C
 )
 
-SUBDIRS(parse eca local rewrite debug planner p2dl compound rewrite0 rewrite1 rewrite2 secure)
+SUBDIRS(parse eca rewrite debug planner p2dl compound rewrite0 rewrite1 rewrite2 secure)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})

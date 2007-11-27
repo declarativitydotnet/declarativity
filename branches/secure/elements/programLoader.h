@@ -30,18 +30,19 @@ public:
   const char *processing() const { return "/h"; }
   const char *flow_code() const	 { return "/-"; }
 
-  void program(string name, string file, string stage="");
-  void term(bool t) { terminal = t; } 
+  void program(string, string, string, std::vector<std::string>*);
+  void dot(string name);
 
   DECLARE_PUBLIC_ELEMENT_INITS
 
 private:
   struct Program {
-    Program(string n, string f, string s) 
-      : name(n), file(f), stage(s) {};
+    Program(string n, string f, string s, std::vector<std::string>* d) 
+      : name(n), file(f), stage(s), defs(d) {};
     string name;
     string file;
     string stage;
+    std::vector<std::string>* defs;
   };
   typedef boost::shared_ptr<Program> ProgramPtr;
   std::vector<ProgramPtr> programs;
@@ -51,7 +52,7 @@ private:
   void loader();
   void programUpdate(TuplePtr program);
   
-  bool terminal; // Should we prompt the user?
+  string dotFile;
 
   DECLARE_PRIVATE_ELEMENT_INITS
 };

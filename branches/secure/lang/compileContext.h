@@ -117,6 +117,8 @@ namespace compile {
     TuplePtr simple_action(TuplePtr p);
 
   protected:
+    virtual int initialize();
+
     /** Performs rewrite stage on the given program. */ 
     virtual TuplePtr program(CommonTable::ManagerPtr catalog, TuplePtr program);
     /** Performs rewrite stage on the given rule. */

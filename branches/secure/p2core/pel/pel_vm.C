@@ -603,6 +603,19 @@ DEF_OP(ISTHETA) {
  * List operations
  *
  */
+DEF_OP(L_CREATEKEY) { 
+   ValuePtr first = stackTop(); stackPop();
+   ListPtr schema = Val_List::cast(first);
+
+   uint pos = 1;
+   ListPtr key = List::mk();
+   for (ValPtrList::const_iterator iter = schema->begin(); 
+        iter != schema->end(); iter++) {
+     key->append(Val_UInt32::mk(pos++));
+   }
+   stackPush(Val_List::mk(key));
+}
+
 DEF_OP(L_FACT) { 
    ValuePtr first  = stackTop(); stackPop();
    ValuePtr second = stackTop(); stackPop();
@@ -695,14 +708,12 @@ DEF_OP(L_PROJECT) {
 }
 
 DEF_OP(L_SORTATTR) { 
-   ValuePtr val1 = stackTop(); stackPop();
-   ValuePtr val2 = stackTop(); stackPop();
-   ValuePtr val3 = stackTop(); stackPop();
-   ValuePtr val4 = stackTop(); stackPop();
-   ListPtr outer  = Val_List::cast(val1);
-   ListPtr oorder = val2 == Val_Null::mk() ? List::mk() : Val_List::cast(val2);
-   ListPtr inner  = Val_List::cast(val3);
-   ListPtr iorder = val4 == Val_Null::mk() ? List::mk() : Val_List::cast(val4);
+   ValuePtr val1   = stackTop(); stackPop();
+   ValuePtr oorder = stackTop(); stackPop();
+   ValuePtr val3   = stackTop(); stackPop();
+   ValuePtr iorder = stackTop(); stackPop();
+   ListPtr outer   = Val_List::cast(val1);
+   ListPtr inner   = Val_List::cast(val3);
    
    stackPush(compile::namestracker::sortAttr(outer, oorder, inner, iorder));
 }
@@ -720,6 +731,16 @@ DEF_OP(L_PREFIX) {
      stackPush(Val_UInt32::mk(compile::namestracker::prefix(list1, list2)));
    }
 }
+
+DEF_OP(L_EQUIVALENT) { 
+   ValuePtr val1 = stackTop(); stackPop();
+   ValuePtr val2 = stackTop(); stackPop();
+   ListPtr plan1 = Val_List::cast(val1);
+   ListPtr plan2 = Val_List::cast(val2);
+
+   stackPush(Val_UInt32::mk(compile::namestracker::equivalent(plan1, plan2)));
+}
+
 DEF_OP(L_MERGE) { 
    ValuePtr val1 = stackTop(); stackPop();
    ValuePtr val2 = stackTop(); stackPop();
@@ -1481,6 +1502,19 @@ DEF_OP(STR_CONV) {
   if (t->typeCode() == Value::TUPLE) {
     ostringstream oss;
     compile::namestracker::exprString(&oss, Val_Tuple::cast(t));
+    stackPush(Val_Str::mk(oss.str()));
+  }
+  else if (t->typeCode() == Value::LIST) {
+    ListPtr list = Val_List::cast(t);
+    ostringstream oss;
+    for (ValPtrList::const_iterator iter = list->begin();
+         iter != list->end(); iter++) {
+      ValuePtr v = *iter;
+      if (v->typeCode() == Value::TUPLE) {
+        compile::namestracker::exprString(&oss, Val_Tuple::cast(v));
+      }
+      else oss << v->toString();
+    }
     stackPush(Val_Str::mk(oss.str()));
   }
   else stackPush(Val_Str::mk(t->toString()));

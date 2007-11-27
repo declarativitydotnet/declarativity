@@ -147,9 +147,6 @@ string stub(string hostname, string port, TransportConf conf)
   stub << "\tintDemux[+ \"debug::programEvent\"] -> DebugContext(\"debug\") -> "
        << "\tInsert2(\"debugInsert\", \"" << PROGRAM << "\");\n";
 
-  stub << "\tintDemux[+ \"local::programEvent\"] -> LocalContext(\"local\") -> "
-       << "\tInsert2(\"localInsert\", \"" << PROGRAM << "\");\n";
-
   stub << "\tintDemux[+ \"rewrite::programEvent\"] -> RewriteContext(\"rewrite\") -> "
        << "\tInsert2(\"rewriteInsert\", \"" << PROGRAM << "\");\n";
 
@@ -197,7 +194,7 @@ static char* USAGE = "Usage:\n\t runStagedOverLog\n"
 
                      "\t\t[-o <overLogFile> (default: standard input)]\n"
                      "\t\t[-d <startDelay> (default: 0)]\n"
-                     "\t\t[-g (produce a DOT graph)]\n"
+                     "\t\t[-g <filename> (produce a DOT graph)]\n"
                      "\t\t[-c (output canonical form)]\n"
                      "\t\t[-v (show stages of planning)]\n"
                      "\t\t[-x (dry run, don't start dataflow)]\n"
@@ -215,11 +212,13 @@ main(int argc, char **argv)
 
 
   string overLogFile("-");
+  string dotFile("-");
   double delay = 0.0;
   bool outputDot = false;
   bool run = true;
   bool outputCanonicalForm = false;
   bool outputStages = false;
+  bool preprocess = true;
 
   Reporting::setLevel(Reporting::ERROR);
   // Parse command line options
@@ -252,20 +251,20 @@ main(int argc, char **argv)
       seed = atoi(optarg);
       break;
 
-
-
-
-
     case 'o':
       overLogFile = optarg;
       break;
 
     case 'g':
-      outputDot = true;
+      dotFile = optarg;
       break;
 
     case 'c':
       outputCanonicalForm = true;
+      break;
+
+    case 'm':
+      preprocess = false;
       break;
 
     case 'x':
@@ -359,14 +358,24 @@ main(int argc, char **argv)
 
     eventLoopInitialize();
     compile::Context *context = new compile::p2dl::Context("p2dl", dfdesc);
+
+    Plumber::DataflowPtr main = Plumber::dataflow("main");
+    ElementPtr loaderElement = main->find("loader")->element();
+    ProgramLoader *loader = dynamic_cast<ProgramLoader*>(loaderElement.get());
     if (overLogFile != "-") {
-      Plumber::DataflowPtr main = Plumber::dataflow("main");
-      ElementPtr loaderElement = main->find("loader")->element();
-      ProgramLoader *loader = dynamic_cast<ProgramLoader*>(loaderElement.get());
-      loader->program("commandLine", overLogFile);
-      loader->term(false);
+      if (!definitions.empty() && !preprocess) {
+        TELL_WARN << "You are suppressed preprocessing (via -m) "
+                  << "but have also supplied extra macros (via -D). "
+                  << "All macro definitions will be ignored.\n";
+      }   
+      
+      loader->program("commandLine", overLogFile, "",
+                      (preprocess && !definitions.empty()) ? &definitions : NULL);
     }
-    Plumber::toDot("runOverlog.dot");
+
+    if (dotFile != "-") {
+      loader->dot(dotFile);
+    }
     delete context;
     eventLoop(); 
   } catch (TableManager::Exception& e) {

@@ -36,6 +36,19 @@ namespace compile {
     Context::Context(TuplePtr args)
     : compile::Context((*args)[2]->toString()) { }
 
+    TuplePtr 
+    Context::program(CommonTable::ManagerPtr catalog, TuplePtr program)
+    {
+      if ((*program)[catalog->attribute(PROGRAM, REWRITE)] != Val_Null::mk()) {
+        /* Override the parent program method... In otherwords do nothing. */
+        program = program->clone(PROGRAM);
+        program->freeze();
+        return program;
+      }
+      TELL_OUTPUT << "======================= PROGRAM VIEW POST REWRITES ======================\n";
+      return this->compile::Context::program(catalog, program);
+    }
+
     void
     Context::rule(CommonTable::ManagerPtr catalog, TuplePtr rule)
     {

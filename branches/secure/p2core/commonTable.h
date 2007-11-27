@@ -843,7 +843,7 @@ public:
    */
   virtual TuplePtr 
   createTable(string name, CommonTable::Key& key, 
-              ListPtr sort=ListPtr()) = 0;
+              ListPtr sort, ValuePtr pid) = 0;
 
   /**
    * Creates and registers a new Table with the system.
@@ -853,7 +853,7 @@ public:
   virtual TuplePtr 
   createTable(string name, CommonTable::Key& key, uint32_t maxSize,
               boost::posix_time::time_duration& lifetime, 
-              ListPtr sort=ListPtr()) = 0;
+              ListPtr sort, ValuePtr pid) = 0;
 
   /**
    * Creates and registers a new Table with the system.
@@ -862,7 +862,7 @@ public:
    */
   virtual TuplePtr 
   createTable(string name, CommonTable::Key& key, uint32_t maxSize, 
-              string lifetime, ListPtr sort=ListPtr()) = 0;
+              string lifetime, ListPtr sort, ValuePtr pid) = 0;
   
   /**
    * Creates and registers a new Table with the system.
@@ -871,7 +871,7 @@ public:
    */
   virtual TuplePtr 
   createTable(string name, CommonTable::Key& key, 
-              uint32_t maxSize, ListPtr sort=ListPtr()) = 0;
+              uint32_t maxSize, ListPtr sort, ValuePtr pid) = 0;
 
   /**
    * Create and registers a secondary index on specified table name

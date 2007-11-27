@@ -78,7 +78,6 @@ INCLUDE_DIRECTORIES(
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/debug
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/eca
-                    ${CMAKE_CURRENT_SOURCE_DIR}/lang/local
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/p2dl
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/parse
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/planner
@@ -110,7 +109,6 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS}
 		${P2_BINARY_DIR}/lang
 		${P2_BINARY_DIR}/lang/debug
 		${P2_BINARY_DIR}/lang/eca
-		${P2_BINARY_DIR}/lang/local
 		${P2_BINARY_DIR}/lang/p2dl
 		${P2_BINARY_DIR}/lang/parse
 		${P2_BINARY_DIR}/lang/planner
@@ -136,7 +134,6 @@ SET(COMMON_LIBRARIES p2core
 					 p2lang
 					 p2parse
 					 p2eca
-					 p2local
 					 p2rewrite
 					 p2rewrite0
 					 p2rewrite1

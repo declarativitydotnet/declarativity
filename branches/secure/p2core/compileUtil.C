@@ -15,9 +15,11 @@
 #include "plumber.h"
 #include "commonTable.h"
 #include "oper.h"
+#include "list.h"
 #include "systemTable.h"
 #include "val_tuple.h"
 #include "val_list.h"
+#include "val_str.h"
 #include "val_uint32.h"
 #include "val_null.h"
 
@@ -179,13 +181,50 @@ namespace compile {
     }
 
     ValuePtr
-    toVar(ValuePtr var)
+    toVar(ValuePtr value)
     {
-      TuplePtr tp = Val_Tuple::cast(var);
-      TuplePtr variable = Tuple::mk(VAR);
-      variable->append((*tp)[2]);
-      variable->freeze();
-      return Val_Tuple::mk(variable);
+      if (value->typeCode() == Value::LIST) {
+        ListPtr list = Val_List::cast(value);
+        ListPtr varList = List::mk();
+        for (ValPtrList::const_iterator iter = list->begin();
+             iter != list->end(); iter++) {
+          if ((*Val_Tuple::cast(*iter))[0]->toString() == LOC) {
+            varList->append(*iter);
+          }
+          else {
+            ValuePtr var = toVar(*iter);
+            if (var) {
+              varList->append(var);
+            }
+          }
+        }
+        return Val_List::mk(varList);
+      }
+      else {
+        static int fictVar = 0;
+        if (value == Val_Null::mk()) {
+            ostringstream oss;
+            oss << "$_" + fictVar++;
+            TuplePtr var = Tuple::mk(VAR);
+            var->append(Val_Str::mk(oss.str()));
+            var->freeze();
+            return Val_Tuple::mk(var);
+        }
+        else if ((*Val_Tuple::cast(value))[0]->toString() == VAR) {
+            return value;
+        } 
+        else if ((*Val_Tuple::cast(value))[0]->toString() == LOC) {
+            TuplePtr tp = Val_Tuple::cast(value);
+            TuplePtr var = Tuple::mk(VAR);
+            var->append((*tp)[2]);
+            var->freeze();
+            return Val_Tuple::mk(var);
+        }
+        else if ((*Val_Tuple::cast(value))[0]->toString() == AGG) {
+          return toVar((*Val_Tuple::cast(value))[2]);
+        }
+      }
+      return ValuePtr();
     }
 
     int
@@ -274,53 +313,34 @@ namespace compile {
           (*expr)[TNAME]->toString() == MATH) {
         ValuePtr lhs = (*expr)[3];
         ValuePtr rhs = (*expr)[4];
-        if (!varCast(lhs)) {
+        if (!toVar(lhs)) {
           vars->append(variables(lhs));
         }
         else {
-          vars->append(varCast(lhs));
+          vars->append(toVar(lhs));
         }
 
         if (rhs != Val_Null::mk()) {
-          if (!varCast(rhs)) {
+          if (!toVar(rhs)) {
             vars->append(variables(rhs));
           }
           else {
-            vars->append(varCast(rhs));
+            vars->append(toVar(rhs));
           }
         }
       }
-      else if (varCast(value)) {
-        vars->append(varCast(value));
+      else if (toVar(value)) {
+        vars->append(toVar(value));
       }
       return vars;
     }
 
-    ValuePtr
-    varCast(ValuePtr variable) {
-      if (variable == Val_Null::mk()) {
-        return ValuePtr();
-      }
-      else if ((*Val_Tuple::cast(variable))[0]->toString() == VAR) {
-          return variable;
-      } 
-      else if ((*Val_Tuple::cast(variable))[0]->toString() == LOC) {
-          return toVar(variable);
-      }
-      else if ((*Val_Tuple::cast(variable))[0]->toString() == AGG) {
-        ValuePtr var = (*Val_Tuple::cast(variable))[2];
-        if (var != Val_Null::mk()) 
-          return var;
-      }
-      return ValuePtr();
-    }
-    
     ValuePtr 
-    sortAttr(const ListPtr outer, const ListPtr outerOrder,
-             const ListPtr inner, const ListPtr innerOrder)
+    sortAttr(const ListPtr outer, const ValuePtr outerOrder,
+             const ListPtr inner, const ValuePtr innerOrder)
     {
       if (outerOrder->size() > 0 && outerOrder == innerOrder) {
-        return Val_List::mk(outerOrder);
+        return outerOrder;
       }
 
       ListPtr join = List::mk();
@@ -330,24 +350,36 @@ namespace compile {
       }
 
 
-      if (outerOrder->size() > 0 && prefix(outerOrder, join)) {
-        return Val_List::mk(outerOrder);
+      if (outerOrder->size() > 0 && position(join, outerOrder) > 0) {
+        return outerOrder;
       }
-      else if (innerOrder->size() > 0 && prefix(innerOrder, join)) {
-        return Val_List::mk(outerOrder);
+      else if (innerOrder->size() > 0 && position(join, innerOrder) > 0) {
+        return innerOrder;
       }
       else {
         for (ValPtrList::const_iterator i = join->begin(); 
              i != join->end(); i++) {
           if ((*Val_Tuple::cast(*i))[TNAME]->toString() == VAR) {
-            ListPtr sortAttr = List::mk();
-            sortAttr->append(*i);
-            return Val_List::mk(sortAttr);
+            return *i;
           }
         }
       }
 
       return Val_Null::mk();
+    }
+
+    bool equivalent(const ListPtr plan1, const ListPtr plan2)
+    {
+      for (ValPtrList::const_iterator i1 = plan1->begin(); 
+           i1 != plan1->end(); i1++) {
+        bool found = false;
+        for (ValPtrList::const_iterator i2 = plan2->begin(); 
+             !found && i2 != plan2->end(); i2++) {
+          if (*i1 == *i2) found = true;
+        }
+        if (!found) return false;
+      }
+      return true;
     }
 
     ListPtr 
@@ -360,7 +392,7 @@ namespace compile {
       }
       for (ValPtrList::const_iterator i = inner->begin(); 
            i != inner->end(); i++) {
-        if (position(outer, *i) < 0) join->append(varCast(*i));
+        if (position(outer, *i) < 0) join->append(toVar(*i));
       }
       return join;
     }

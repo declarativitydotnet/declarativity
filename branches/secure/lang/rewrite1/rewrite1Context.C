@@ -538,7 +538,7 @@ namespace compile {
 	  // need to materialize the lhs
 	  Table2::Key _keys;
 	  _keys.push_back(UNIQUEIDPOS); // since the count for keys start from 0
-	  catalog->createTable(headname, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
+	  catalog->createTable(headname, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION, ListPtr(), programID);
 	  materializedSaysTable->insert(Val_Str::mk(headname));
 	}
       }
@@ -675,7 +675,7 @@ namespace compile {
 	// need to materialize the lhs
 	Table2::Key _keys;
 	_keys.push_back(UNIQUEIDPOS); // since the count for keys start from 0
-	catalog->createTable(lhsname, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
+	catalog->createTable(lhsname, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION, ListPtr(), programID);
 	materializedTable->insert(Val_Str::mk(lhsname));
       }
 
@@ -1043,7 +1043,7 @@ namespace compile {
       _keys.push_back(4); // ver
 
       try{
-	catalog->createTable(scopedName, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
+	catalog->createTable(scopedName, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION, ListPtr(), (*program)[catalog->attribute(PROGRAM, "PID")]);
 	catalog->createIndex(scopedName, HASH_INDEX, CommonTable::theKey(CommonTable::KEY2));
 	TELL_ERROR<<" Successfully created table "<< scopedName
 	            << "\n";
@@ -1060,7 +1060,7 @@ namespace compile {
       _keys.clear();
       _keys.push_back(2); // loc spec
       try{
-	catalog->createTable(scopedName, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION);
+	catalog->createTable(scopedName, _keys, Table2::NO_SIZE, Table2::NO_EXPIRATION, ListPtr(), (*program)[catalog->attribute(PROGRAM, "PID")]);
 	TELL_ERROR<<" Successfully created table"<< scopedName
 		  << "\n";
       }

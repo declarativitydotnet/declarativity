@@ -73,7 +73,7 @@ public:
    */
   virtual TuplePtr 
   createTable(string name, CommonTable::Key& key, 
-              ListPtr sort);
+              ListPtr sort, ValuePtr pid);
 
   /**
    * Creates and registers a new Table with the system.
@@ -83,7 +83,7 @@ public:
   virtual TuplePtr 
   createTable(string name, CommonTable::Key& key, uint32_t maxSize,
               boost::posix_time::time_duration& lifetime, 
-              ListPtr sort);
+              ListPtr sort, ValuePtr pid);
 
   /**
    * Creates and registers a new Table with the system.
@@ -92,8 +92,7 @@ public:
    */
   virtual TuplePtr 
   createTable(string name, CommonTable::Key& key, uint32_t maxSize, 
-              string lifetime, 
-              ListPtr sort);
+              string lifetime, ListPtr sort, ValuePtr pid);
   
   /**
    * Creates and registers a new Table with the system.
@@ -102,7 +101,7 @@ public:
    */
   virtual TuplePtr 
   createTable(string name, CommonTable::Key& key, uint32_t maxSize, 
-              ListPtr sort);
+              ListPtr sort, ValuePtr pid);
 
   /**
    * Create and registers a secondary index on specified table name
@@ -143,11 +142,9 @@ private:
   void tableListener(TuplePtr table);
 
   TuplePtr registerTable(string name, boost::posix_time::time_duration lifetime,
-                         uint size, CommonTable::Key& primaryKey, ListPtr sort);
+                         uint size, CommonTable::Key& primaryKey, ListPtr sort, ValuePtr pid);
 
   void registerIndex(string tableName, CommonTable::Key& key, string type);
-
-  void relation(string name, string table1, string table2, CommonTable::Key& key);
 
   typedef std::map<string, CommonTablePtr> TableMap;
   TableMap _tables;

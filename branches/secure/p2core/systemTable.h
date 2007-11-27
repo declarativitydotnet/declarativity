@@ -21,7 +21,7 @@
   #define ARGUMENT          "sys::argument"
   #define PROGRAM           "sys::program"
   #define GLOBAL_EVENT      "sys::globalEvent"
-  #define SIDE_EFFECT       "sys::sideEffectRule"
+  #define SIDE_AFFECT       "sys::sideAffect"
   #define REWRITE           "sys::rewrite"
   #define ATTRIBUTE         "sys::attribute"
   #define TABLE             "sys::table"
@@ -33,7 +33,7 @@
   #define NEW               "sys::new"
   #define STAGE             "sys::stage"
   #define RULE              "sys::rule"
-  #define FUNCTOR           "sys::functor"
+  #define FUNCTOR           "sys::predicate"
   #define ASSIGN            "sys::assign"
   #define SELECT            "sys::select"
   #define PROJECTION        "sys::projection"
@@ -89,7 +89,7 @@ enum SaysTuple{LOC_POS = 1, PPOS, RPOS, KPOS, VPOS, PROOFPOS};
 TABLEDEF(TABLE, CommonTable::theKey(CommonTable::KEY3), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("TID", 2) \
          SCHEMA("TABLENAME", 3) SCHEMA("LIFETIME", 4) SCHEMA("SIZE", 5) \
-         SCHEMA("KEY", 6) SCHEMA("CARD", 7) SCHEMA("SORT", 8))
+         SCHEMA("KEY", 6) SCHEMA("CARD", 7) SCHEMA("SORT", 8) SCHEMA("PID", 9))
 
 TABLEDEF(INDEX, CommonTable::theKey(CommonTable::KEY34), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("IID", 2) \
@@ -114,10 +114,6 @@ TABLEDEF(NEW, CommonTable::theKey(CommonTable::KEY2), \
 	 SCHEMA("FID", 3) SCHEMA("EVENTLOC", 4) SCHEMA("OPAQUE", 5) \
 	 SCHEMA("SYSTEMINFO", 6))
 
-TABLEDEF(ACCESS_METHOD, CommonTable::theKey(CommonTable::KEY3), \
-         SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("AMID", 2) \
-         SCHEMA("NAME", 3) SCHEMA("INPUTS", 4) SCHEMA("ARGUMENTS", 5))
-
 TABLEDEF(NODEID, CommonTable::theKey(CommonTable::KEY3), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("NID", 2) \
          SCHEMA("ADDRESS", 3))
@@ -126,13 +122,15 @@ TABLEDEF(ARGUMENT, CommonTable::theKey(CommonTable::KEY2), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("KEY", 2) \
          SCHEMA("VALUE", 3))
 
-TABLEDEF(GLOBAL_EVENT, CommonTable::theKey(CommonTable::KEY34), \
+TABLEDEF(GLOBAL_EVENT, CommonTable::theKey(CommonTable::KEY45), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("EID", 2) \
-         SCHEMA("NAME", 3) SCHEMA("TYPE", 4) SCHEMA("TRIGGER", 5))
+         SCHEMA("PID", 3) SCHEMA("NAME", 4) SCHEMA("TYPE", 5) \
+         SCHEMA("TRIGGER", 6) SCHEMA("SCHEMA", 7))
 
-TABLEDEF(SIDE_EFFECT, CommonTable::theKey(CommonTable::KEY34), \
-         SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("SEID", 2) \
-         SCHEMA("NAME", 3) SCHEMA("TYPE", 4))
+TABLEDEF(SIDE_AFFECT, CommonTable::theKey(CommonTable::KEY45), \
+         SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("SID", 2) \
+         SCHEMA("PID", 3) SCHEMA("NAME", 4) SCHEMA("TYPE", 5) \
+         SCHEMA("TRIGGER", 6) SCHEMA("SCHEMA", 7))
          
 TABLEDEF(PROGRAM, CommonTable::theKey(CommonTable::KEY2), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("PID", 2) \
@@ -255,6 +253,7 @@ FUNCTIONDEF("f_contains",    2, "contains")
 FUNCTIONDEF("f_removeLast",  1, "removeLast")
 FUNCTIONDEF("f_last",        1, "last")
 FUNCTIONDEF("f_size",        1, "size")
+FUNCTIONDEF("f_equivalent",  2, "equivalent")
 FUNCTIONDEF("f_offset",      2, "offset")    // For vector
 FUNCTIONDEF("f_offset",      3, "offset")    // For matrix
 FUNCTIONDEF("f_setOffset",   3, "setoffset") // For vector
@@ -301,4 +300,5 @@ FUNCTIONDEF("f_mask",         3, "mask")
 FUNCTIONDEF("f_indexMatch",   3, "indexMatch")
 FUNCTIONDEF("f_castassign",   3, "castassign")
 FUNCTIONDEF("f_variables",   1, "variables")
+FUNCTIONDEF("f_createKey",   1, "createkey")
 #undef FUNCTIONDEF

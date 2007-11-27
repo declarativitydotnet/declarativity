@@ -20,7 +20,6 @@
 #include "p2dlContext.h"
 #include "debugContext.h"
 #include "secureContext.h"
-#include "localContext.h"
 #include "parseContext.h"
 #include "plannerContext.h"
 #include "rewriteContext.h"
@@ -40,7 +39,6 @@ LangLoader::loadElements()
   compile::eca::Context::ensureInit();
   compile::p2dl::Context::ensureInit();
   compile::debug::Context::ensureInit();
-  compile::local::Context::ensureInit();
   compile::parse::Context::ensureInit();
   compile::planner::Context::ensureInit();
   compile::rewrite::Context::ensureInit();

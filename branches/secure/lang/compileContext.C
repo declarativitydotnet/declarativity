@@ -89,4 +89,10 @@ namespace compile {
     throw compile::Exception("Unknown rule rewrite.");
   }
 
+  int Context::initialize()
+  {
+    TELL_OUTPUT << "Default compile stage: " << name() << " loaded." << std::endl;
+    return true;
+  }
+
 };

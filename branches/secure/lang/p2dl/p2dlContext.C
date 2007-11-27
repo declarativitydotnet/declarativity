@@ -322,24 +322,6 @@ namespace compile {
       return ElementSpecPtr();
     }
 
-    Table::Table(Expression*  name, Expression*  ttl, 
-                 Expression*  size, Table2::Key* key) {
-      Value *v = dynamic_cast<Value*>(size);
-
-      _name = name->toString(); 
-      _ttl  = boost::posix_time::duration_from_string(ttl->toString());
-      _size = Val_UInt32::cast(v->value());
-      _key  = key;
-    }
-
-    void Table::commit(ScopeTable& scope) {
-      Plumber::catalog()->createTable(_name, *_key, _size, _ttl);
-    }
-
-    string Table::toString() const {
-      return "";
-    }
-  
     void Watch::commit(ScopeTable& scope) {
 
     }

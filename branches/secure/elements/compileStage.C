@@ -100,10 +100,10 @@ TuplePtr CompileStage::simple_action(TuplePtr p)
     TuplePtr prevStage = Iter->next();
     TuplePtr copyStage = prevStage->clone(REWRITE, true);
     TuplePtr newStage  = Tuple::mk(REWRITE, true);
-    newStage->append((*program)[catalog->attribute(PROGRAM, "NAME")]);
+    ValuePtr rewriteName = (*program)[catalog->attribute(PROGRAM, "NAME")];
+    newStage->append(rewriteName);
     newStage->append((*prevStage)[catalog->attribute(REWRITE, "OUTPUT")]);
-    copyStage->set(catalog->attribute(REWRITE, "OUTPUT"), 
-                   (*program)[catalog->attribute(PROGRAM, "NAME")]);
+    copyStage->set(catalog->attribute(REWRITE, "OUTPUT"), rewriteName); 
     newStage->freeze();
     prevStage->freeze();
     if (!rewriteTbl->insert(copyStage) || !rewriteTbl->insert(newStage) || 
@@ -116,6 +116,7 @@ TuplePtr CompileStage::simple_action(TuplePtr p)
                  << rewriteTbl->toString());
       return TuplePtr();
     }
+    TELL_OUTPUT << "Overlog compile stage: " << rewriteName->toString() << " loaded." << std::endl;
     
     ELEM_INFO("NEW REWRITE TABLE: "
               << rewriteTbl->toString());
@@ -140,7 +141,7 @@ CompileStage::initialize()
     rewriteTbl->insert(stage); \
   } while (0);
 
-  const int stageCount = 9;
+  const int stageCount = 8;
   string stages[] = {"compile", 
 		     "parse", 
 		     /*
@@ -151,9 +152,8 @@ CompileStage::initialize()
 		     "rewrite2",
 		     */ 
 		     "eca", 
-		     "debug", 
 		     "rewrite", 
-		     "local", 
+		     "debug", 
 		     "planner", 
 		     "p2dl", 
 		     "installed"};

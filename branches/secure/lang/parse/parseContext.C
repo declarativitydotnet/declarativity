@@ -1244,7 +1244,7 @@ namespace compile {
 	compile::Context::materializedTables->insert(Val_Str::mk(scopedName));
       }      
 
-      return catalog->createTable(scopedName, _keys, _size, _lifetime);
+      return catalog->createTable(scopedName, _keys, _size, _lifetime, ListPtr(), parentKey);
     }
 
     Ref::Ref(int refType, 

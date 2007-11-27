@@ -10,6 +10,7 @@
  */
 
 #include "programLoader.h"
+#include "p2.h"
 #include "plumber.h"
 #include "loop.h"
 #include "commonTable.h"
@@ -24,19 +25,16 @@
 #include <unistd.h>
 #include "boost/bind.hpp"
 
-#define LOAD(name, file, prev) do {\
-  ProgramPtr program(new Program((name), (file), (prev))); \
+#define LOAD(name, file, prev, defs) do {\
+  ProgramPtr program(new Program((name), (file), (prev), (defs))); \
   programs.push_back(program); \
 } while (0);
 
 DEFINE_ELEMENT_INITS(ProgramLoader, "ProgramLoader");
 
 ProgramLoader::ProgramLoader(string name)
-  : Element(name, 0, 1), terminal(true)
+  : Element(name, 0, 1), dotFile("")
 {
-  // LOAD("stats", "/Users/tcondie/workspace/secure/doc/stats.olg", "eca");
-  // LOAD("systemr", "/Users/tcondie/workspace/secure/doc/systemr.olg", "stats");
-  // LOAD("localize", "/Users/tcondie/workspace/secure/doc/localize.olg", "systemr");
 }
 
 /**
@@ -46,14 +44,18 @@ ProgramLoader::ProgramLoader(string name)
  * 3. Val_Str: Event Name.
  */
 ProgramLoader::ProgramLoader(TuplePtr args)
-  : Element(Val_Str::cast((*args)[2]), 0, 1), terminal(true)
+  : Element(Val_Str::cast((*args)[2]), 0, 1), dotFile("")
 {
-  // LOAD("magic", "/Users/tcondie/workspace/secure/doc/magic.olg", "parse");
-  LOAD("localize", "/Users/tcondie/workspace/secure/doc/localize.olg", "parse");
+  // LOAD("magic", "/Users/tcondie/workspace/secure/doc/magic.olg", "parse", NULL);
+
+  LOAD("gevent", "/Users/tcondie/workspace/secure/doc/gevent.olg", "eca", NULL);
+  LOAD("saffect", "/Users/tcondie/workspace/secure/doc/saffect.olg", "parse", NULL);
+  LOAD("mview", "/Users/tcondie/workspace/secure/doc/mview.olg", "saffect", NULL);
+  LOAD("localize", "/Users/tcondie/workspace/secure/doc/localize.olg", "saffect", NULL);
+
 /*
-  LOAD("stats", "/Users/tcondie/workspace/secure/doc/stats.olg", "eca");
-  LOAD("systemr", "/Users/tcondie/workspace/secure/doc/systemr.olg", "stats");
-  LOAD("localize", "/Users/tcondie/workspace/secure/doc/localize.olg", "eca");
+  LOAD("stats", "/Users/tcondie/workspace/secure/doc/stats.olg", "eca", NULL);
+  LOAD("systemr", "/Users/tcondie/workspace/secure/doc/systemr.olg", "stats", NULL);
 */
 }
 
@@ -62,10 +64,16 @@ ProgramLoader::~ProgramLoader()
 }
 
 void
-ProgramLoader::program(string name, string file, string stage) 
+ProgramLoader::program(string name, string file, string stage, std::vector<std::string>* defs) 
 {
-  LOAD(name, file, stage);
+  LOAD(name, file, stage, defs);
   programIter = programs.begin();
+}
+
+void
+ProgramLoader::dot(string name) 
+{
+  dotFile = name;
 }
 
 void 
@@ -76,9 +84,14 @@ ProgramLoader::programUpdate(TuplePtr program)
                           attribute(PROGRAM, "STATUS")]->toString());
 
   if ((*program)[Plumber::catalog()->attribute(PROGRAM, "STATUS")]->toString() == "installed") {
-    Plumber::toDot("compileTerminal.dot");
-    ELEM_OUTPUT("Program successfully installed. "
-                << "See compileTerminal.dot for dataflow description.");
+    if ((*program)[Plumber::catalog()->attribute(PROGRAM, REWRITE)] == Val_Null::mk()) {
+      string name = (*program)[Plumber::catalog()->attribute(PROGRAM, "NAME")]->toString();
+      TELL_OUTPUT << "Program " << name << " installed.";
+      if (dotFile != "") {
+        Plumber::toDot(dotFile);
+        TELL_OUTPUT << "Dot file " << dotFile << " generated.";
+      }
+    }
     loader();
   }
 }
@@ -86,66 +99,30 @@ ProgramLoader::programUpdate(TuplePtr program)
 void
 ProgramLoader::loader()
 {
-  string filename = "";
-  ostringstream text;
+  string filename;
   string name;
-  string rewrite = "n";
+  string rewrite;
+  std::vector<std::string>* defs;
 
   if (programIter != programs.end())
   {
     ProgramPtr program = *programIter++;
     filename = program->file;
-    name = program->name;
-    rewrite = program->stage;
-  }
-  else if (terminal)
-  {
-    string more;
-
-    std::cout << "filename? > ";
-    std::cin >> filename;
-    if (filename == "") return;
-    std::cout << "Program name? > ";
-    std::cin >> name;
-    std::cout << "Rewrite stage? y/n> ";
-    std::cin >> rewrite;
-    if (rewrite.size() > 0 && (rewrite[0] == 'y' || rewrite[0] == 'Y')) {
-      std::cout << "Rewrite stage predecessor name? > ";
-      std::cin >> rewrite;
-    }
-    else {
-      rewrite = "";
-    }
-    std::cout << "More inputs(y/n) ? > ";
-    std::cin >> more;
-    std::cout << std::endl;
-    terminal = more == "Y" || more == "y";
+    name     = program->name;
+    rewrite  = program->stage;
+    defs     = program->defs;
   }
   else return;
 
-  string processed(filename+".processed");
-
-  // Run the OverLog through the preprocessor
-  pid_t pid = fork();
-  if (pid == -1) {
-    std::cerr << "Cannot fork a preprocessor\n";
-    exit(-1);
-  } else if (pid == 0) {
-    // I am the preprocessor
-    execlp("cpp", "cpp", "-P", filename.c_str(), processed.c_str(),
-           (char*) NULL);
-    // If I'm here, I failed
-    std::cerr << "Preprocessor execution failed" << std::endl;;
-    exit(-1);
+  // Preprocess and/or read in the program
+  string programText;
+  if (defs) {
+    programText = P2::preprocessReadOverLogProgram(filename,
+                                                   filename,
+                                                   *defs);
   } else {
-    // I am the child
-    wait(NULL);
+    programText = P2::readOverLogProgram(filename);
   }
-  // Parse the preprocessed file
-  std::ifstream pstream(processed.c_str());
-  text << pstream.rdbuf();
-  unlink(processed.c_str());
-
 
   CommonTable::ManagerPtr catalog = Plumber::catalog();
   string message = "";
@@ -156,11 +133,11 @@ ProgramLoader::loader()
   else
     program->append(Val_Str::mk(rewrite));   // Predecessor stage
   program->append(Val_Str::mk("compile"));   // Program status
-  program->append(Val_Str::mk(text.str()));  // Program text
+  program->append(Val_Str::mk(programText)); // Program text
   program->append(Val_Null::mk());           // Program message
   program->append(Val_Null::mk());           // P2DL for program installation
   program->freeze();
-  output(0)->push(program, boost::bind(&ProgramLoader::terminal, this));
+  output(0)->push(program, NULL);
 }
 
 /* Set up the initial stages in the rewrite table */

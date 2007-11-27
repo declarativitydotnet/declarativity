@@ -114,7 +114,6 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>graph   { return P2DL_GRAPH; }
 <INITIAL>install { return P2DL_INSTALL; }
 <INITIAL>edit    { return P2DL_EDIT; }
-<INITIAL>table   { return P2DL_TABLE; }
 <INITIAL>watch   { return P2DL_WATCH; }
 <INITIAL>fact    { return P2DL_FACT; }
 <INITIAL>"->"    { return P2DL_LINK; }

@@ -308,7 +308,11 @@ namespace compile {
           
       string eventType = (*event)[catalog->attribute(FUNCTOR, "ECA")]->toString();
 
-      oss << "graph " << rname->toString() 
+      string graphName = rname->toString();
+      for (string::size_type s = 0; (s = graphName.find("::", s)) != string::npos; s++) {
+         graphName.replace(s, 2, "_");
+      }
+      oss << "graph " << graphName
           << "(" << epd.inputs << ", " << apd.outputs << ", \""
           <<  epd.inProc << "/" << apd.outProc << "\", \""
           <<  epd.inFlow << "/" << apd.outFlow << "\") {\n";
@@ -318,10 +322,10 @@ namespace compile {
       if (epd.inputs && apd.outputs) {
         if (aggPosition >= 0) {
           oss << "\t" << aggwrap.str(); // Create the aggwrap
-          oss << "\tinput -> Queue(\"aggQueue\", 1000) -> PullPush(\"aggInput\", 0) ->";
+          oss << "\tinput -> Queue(\"aggQueue\", 10000) -> PullPush(\"aggInput\", 0) ->";
           oss << "\taggwrap[1] -> event -> condition -> ";
           oss << "PullPush(\"aggpp\", 0) -> [1]aggwrap -> ";
-          oss << "Queue(\"actionBuf\", 1000) -> action -> output;\n";
+          oss << "Queue(\"actionBuf\", 10000) -> action -> output;\n";
           oss << "\tcondition[1] -> [2]aggwrap;\n};\n"; // End signal
         }
         else {
@@ -330,7 +334,7 @@ namespace compile {
         //now, link it up to the main engine body
 	if(eventType == "RECV"){
           oss << "edit main { " << intStrandInputElement << " -> "; 
-          oss << rname->toString() << " -> [+]" << intStrandOutputElement << "; };\n";
+          oss << graphName << " -> [+]" << intStrandOutputElement << "; };\n";
 	}else{
 	  TELL_INFO<<"ext event has inputs!? not handled"<<std::endl; 
 	  assert(0);
@@ -338,17 +342,22 @@ namespace compile {
       }
       else if (epd.inputs) {
         if (aggPosition >= 0) {
+          TELL_ERROR << "Side affect rule should not have aggregation. RULE: " 
+                     << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << std::endl; 
+          assert(0);
+/*
           oss << "\t" << aggwrap.str(); // Create the aggwrap
           oss << "\tinput -> aggwrap[1] -> event -> condition -> ";
           oss << "PullPush(\"aggpp\", 0) -> [1]aggwrap -> ";
           oss << "Queue(\"actionBuf\", 1000) -> action;\n";
           oss << "\tcondition[1] -> [2]aggwrap;\n};\n"; // End signal
+*/
         }
         else {
           oss << "\tinput -> event -> condition -> action;\n};\n";
         }
         oss << "edit main { " << intStrandInputElement << " -> " 
-            << rname->toString() << "; };\n";
+            << graphName << "; };\n";
 	if(eventType != "RECV"){
 	  TELL_INFO<<"ext event but have inputs!?";
 	  assert(0);
@@ -357,10 +366,10 @@ namespace compile {
       else if (apd.outputs) {
         oss << "\tevent -> condition -> action -> output;\n};\n";
 	if(eventType == "RECV"){
-          oss << "edit main { " << rname->toString() 
+          oss << "edit main { " << graphName
               << " -> [+]" << intStrandOutputElement << "; };\n";
 	}else{
-	  oss << "edit main { " << rname->toString()
+	  oss << "edit main { " << graphName
 	      << " -> [+]" << extStrandOutputElement<<"; };\n";
 	}
       }
@@ -913,8 +922,6 @@ namespace compile {
       CommonTable::Key baseKey;
       namestracker::joinKeys(tupleSchema, probeSchema, joinKey, indexKey, baseKey);
       catalog->createIndex(tableName, HASH_INDEX, indexKey);
-
-      std::cerr << "ACCESS METHOD FOR PROBE " << tableName << " = " << accessMethod->toString() << std::endl;
 
       // Create a unique graph name for this probe
       ostringstream graphName;
