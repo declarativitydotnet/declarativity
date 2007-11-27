@@ -1,0 +1,131 @@
+#include "xtrace_reader.olg"
+#include "ganglia_reader.olg"
+
+
+/*
+watchmod(gangOut, "s").
+
+gang1 gangOut(@X, Cpu_user, TS) :-
+	ganglia(@X, TS,  
+Boottime,Bytes_in,Bytes_out,Cpu_aidle,Cpu_idle,Cpu_nice,Cpu_num,Cpu_speed,Cpu_system,Cpu_user,Cpu_wio,Disk_free,Disk_total,Gexec,Load_fifteen,Load_five,Load_one,Machine_type,Mem_buffers,Mem_cached,Mem_free,Mem_shared,Mem_total,Os_name,Os_release,Part_max_used,Pkts_in,Pkts_out,Proc_run,Proc_total,Swap_free,Swap_total), 
+	periodic(@X, E, 2, 1),
+	TS in [1195867334500, 1195867344600].
+*/
+/*
+	TS > 1195867334500, TS < 1195867344600.
+
+	TS in [1195867334500, 1195867334600].
+        TS < 1195867942166.
+
+*/	
+/*
+materialize(findTaskRange, infinity, infinity, keys(1, 2)).
+materialize(findTaskMin, infinity, infinity, keys(1, 2)).
+materialize(findTaskMax, infinity, infinity, keys(1, 2)).
+
+watchmod(findTaskRange, "ia").
+
+range1 findTaskMin(@X, TaskID, a_MIN<TS>) :-
+	xtraceTask(@X, TaskID, _, _, _, _, _, TS).
+	
+range2 findTaskMax(@X, TaskID, a_MAX<TS>) :-
+	xtraceTask(@X, TaskID, _, _, _, _, _, TS).
+
+range3 findTaskRange(@X, TaskID, Min, Max) :-
+	findTaskMin(@X, TaskID, Min), 
+	findTaskMax(@X, TaskID, Max).
+*/
+
+
+/* this code is finding start&end time of each task in the node. */
+
+/*
+watchmod(findRunStartEndPair, "s").
+*/
+/*
+materialize(findRunStartEndPair, infinity, infinity, keys(1, 2, 3)).
+*/
+watch(req).
+
+find1 findRunEnd(@Center, TaskID, OpID, Agent, TS) :- 
+	req(@X, Center),
+	xtraceTask(@X, TaskID, OpID, ChainID, Host, Agent, Label, TS, NextHost), 
+	Label=="run end".
+
+find2 findRunStartEndPair(@X, TaskID, Agent, StartOpID, StartTS, EndOpID, EndTS) :-
+	findRunEnd(@X, TaskID, EndOpID, Agent, EndTS), 
+	xtraceEdge(@X, TaskID, EndOpID, _, StartOpID, _), 
+	xtraceTask(@X, TaskID, StartOpID, _, _, _, StartLabel, StartTS, _), 
+	StartLabel=="run start". 
+/*
+watchmod(gangMaxCPU, "s").
+watchmod(gangMinCPU, "s").
+watchmod(gangCountCPU, "s").
+watchmod(gangSumCPU, "s").
+watchmod(gangAvgCPUUser, "s").
+*/
+
+/*
+gang1 gangMaxCPU(@X, TaskID, Agent, a_MAX<Cpu_user>) :-
+	ganglia(@X, TS,  
+Boottime,Bytes_in,Bytes_out,Cpu_aidle,Cpu_idle,Cpu_nice,Cpu_num,Cpu_speed,Cpu_system,Cpu_user,Cpu_wio,Disk_free,Disk_total,Gexec,Load_fifteen,Load_five,Load_one,Machine_type,Mem_buffers,Mem_cached,Mem_free,Mem_shared,Mem_total,Os_name,Os_release,Part_max_used,Pkts_in,Pkts_out,Proc_run,Proc_total,Swap_free,Swap_total), 
+	findRunStartEndPair(@X, TaskID, Agent, StartOpID, StartTS, EndOpID, EndTS),
+	TS in [StartTS, EndTS].
+
+gang1 gangMinCPU(@X, TaskID, Agent, a_MIN<Cpu_user>) :-
+	ganglia(@X, TS,  
+Boottime,Bytes_in,Bytes_out,Cpu_aidle,Cpu_idle,Cpu_nice,Cpu_num,Cpu_speed,Cpu_system,Cpu_user,Cpu_wio,Disk_free,Disk_total,Gexec,Load_fifteen,Load_five,Load_one,Machine_type,Mem_buffers,Mem_cached,Mem_free,Mem_shared,Mem_total,Os_name,Os_release,Part_max_used,Pkts_in,Pkts_out,Proc_run,Proc_total,Swap_free,Swap_total), 
+	findRunStartEndPair(@X, TaskID, Agent, StartOpID, StartTS, EndOpID, EndTS),
+	TS in [StartTS, EndTS].
+
+gang1 gangCountCPU(@X, TaskID, Agent, a_COUNT<Cpu_user>) :-
+	ganglia(@X, TS,  
+Boottime,Bytes_in,Bytes_out,Cpu_aidle,Cpu_idle,Cpu_nice,Cpu_num,Cpu_speed,Cpu_system,Cpu_user,Cpu_wio,Disk_free,Disk_total,Gexec,Load_fifteen,Load_five,Load_one,Machine_type,Mem_buffers,Mem_cached,Mem_free,Mem_shared,Mem_total,Os_name,Os_release,Part_max_used,Pkts_in,Pkts_out,Proc_run,Proc_total,Swap_free,Swap_total), 
+	findRunStartEndPair(@X, TaskID, Agent, StartOpID, StartTS, EndOpID, EndTS),
+	TS in [StartTS, EndTS].
+*/
+/*
+gangreq gangAvgCPUUserReq(@X) :- periodic(@X, E, 5, 1).
+
+gang1 gangAvgCPUUser(@X, TaskID, Agent, a_AVG<Cpu_user>) :-
+	gangAvgCPUUserReq(@X), 
+	findRunStartEndPair(@X, TaskID, Agent, _, StartTS, _, EndTS),
+	ganglia(@X, TS, _,_,_,Cpu_user,_), 
+	TS in [StartTS, EndTS].
+*/
+/*
+gang1 gangAvgCPUUser(@X, TaskID, Agent, a_AVG<Cpu_user>) :-
+	findRunStartEndPair(@X, TaskID, Agent, _, StartTS, _, EndTS),
+	ganglia(@X, TS, _,_,_,Cpu_user,_), 
+	TS in [StartTS, EndTS].
+*/
+/*
+xtraceTask(@X, TaskID, OpID, ChainID, Host, Agent, Label, TS, NextHost) 
+xtraceEdge(@X, TaskID, OpID, ChainID, ParentOpID, EdgeType) 
+*/
+/*
+watch(tsMatch).
+
+materialize(tsMatch, infinity, infinity, keys(1, 2)).
+
+diff2 tsMatch(@X, TS, Time, D1, D2, D3, Diff1, Diff2) :- 
+	xtraceTask(@X, TaskID, OpID, ChainID, Host, Agent, Label, TS, NextHost),
+	ganglia(@X, Time),
+	tsMatch(@X, TS, OrgMatch),
+	periodic(@X, E, 5, 1),
+	D1 := 1 * TS,
+	D2 := 1 * Time,
+	D3 := 1 * OrgMatch,
+	Diff1 := D1 - D2,
+	Diff2 := D1 - D3.
+*/
+/*
+diff1 findDiff(@X, D1, D2, Diff) :-
+	xtraceTask(@X, TaskID, OpID, ChainID, Host, Agent, Label, TS, NextHost), 
+	ganglia(@X, Time),
+	periodic(@X, E, 3, 1), 
+	D1 := 0 + TS,
+	D2 := 0 + Time,
+	Diff = D1-D2.
+*/
+

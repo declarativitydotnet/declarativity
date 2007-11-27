@@ -1,0 +1,10 @@
+#define REMOTEADDR "localhost:10000"
+
+q1 req(@Remote, Me) :-
+	periodic(@Me, E, 0, 1),
+	Remote := REMOTEADDR.
+
+watch(req).
+watch(findRunEnd).
+watch(findRunStartEndPair).
+
