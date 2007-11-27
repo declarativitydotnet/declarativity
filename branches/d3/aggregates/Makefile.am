@@ -21,7 +21,9 @@ SOURCE_FILE_ROOTS =		\
 				aggMin \
 				aggMax \
 				aggCount \
-				aggCountDistinct
+				aggCountDistinct \
+				aggSum \
+				aggAvg
 
 libp2aggregates_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C)
 

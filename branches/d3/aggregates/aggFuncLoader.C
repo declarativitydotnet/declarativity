@@ -18,7 +18,8 @@
 #include "aggMax.h"
 #include "aggCount.h"
 #include "aggCountDistinct.h"
-
+#include "aggSum.h"
+#include "aggAvg.h"
 
 void
 AggFuncLoader::loadAggFunctions()
@@ -27,5 +28,7 @@ AggFuncLoader::loadAggFunctions()
   AggMin::ensureInit();
   AggMax::ensureInit();
   AggCountDistinct::ensureInit();
+  AggSum::ensureInit();
+  AggAvg::ensureInit();
 }
 

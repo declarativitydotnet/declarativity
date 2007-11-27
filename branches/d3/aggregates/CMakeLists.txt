@@ -18,6 +18,8 @@ ADD_LIBRARY(p2aggregates
             aggCountDistinct.C
             aggFuncLoader.C
             aggMin.C
-            aggMax.C)
+            aggMax.C
+	    aggSum.C
+	    aggAvg.C)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
