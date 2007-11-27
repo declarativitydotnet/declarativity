@@ -331,37 +331,20 @@ namespace compile {
         else {
           oss << "\tinput -> event -> condition -> action -> output;\n};\n";
         }
-        //now, link it up to the main engine body
-	if(eventType == "RECV"){
-          oss << "edit main { " << intStrandInputElement << " -> "; 
-          oss << graphName << " -> [+]" << intStrandOutputElement << "; };\n";
-	}else{
-	  TELL_INFO<<"ext event has inputs!? not handled"<<std::endl; 
-	  assert(0);
-	}
+        oss << "edit main { " << intStrandInputElement << " -> "; 
+        oss << graphName << " -> [+]" << intStrandOutputElement << "; };\n";
       }
       else if (epd.inputs) {
         if (aggPosition >= 0) {
           TELL_ERROR << "Side affect rule should not have aggregation. RULE: " 
                      << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << std::endl; 
-          assert(0);
-/*
-          oss << "\t" << aggwrap.str(); // Create the aggwrap
-          oss << "\tinput -> aggwrap[1] -> event -> condition -> ";
-          oss << "PullPush(\"aggpp\", 0) -> [1]aggwrap -> ";
-          oss << "Queue(\"actionBuf\", 1000) -> action;\n";
-          oss << "\tcondition[1] -> [2]aggwrap;\n};\n"; // End signal
-*/
+          throw planner::Exception("Side effect rule should not have aggregate!");
         }
         else {
           oss << "\tinput -> event -> condition -> action;\n};\n";
         }
         oss << "edit main { " << intStrandInputElement << " -> " 
             << graphName << "; };\n";
-	if(eventType != "RECV"){
-	  TELL_INFO<<"ext event but have inputs!?";
-	  assert(0);
-	}
       }
       else if (apd.outputs) {
         oss << "\tevent -> condition -> action -> output;\n};\n";

@@ -46,16 +46,16 @@ ProgramLoader::ProgramLoader(string name)
 ProgramLoader::ProgramLoader(TuplePtr args)
   : Element(Val_Str::cast((*args)[2]), 0, 1), dotFile("")
 {
-  // LOAD("magic", "/Users/tcondie/workspace/secure/doc/magic.olg", "parse", NULL);
-
-  LOAD("gevent", "/Users/tcondie/workspace/secure/doc/gevent.olg", "eca", NULL);
-  LOAD("saffect", "/Users/tcondie/workspace/secure/doc/saffect.olg", "parse", NULL);
-  LOAD("mview", "/Users/tcondie/workspace/secure/doc/mview.olg", "saffect", NULL);
-  LOAD("localize", "/Users/tcondie/workspace/secure/doc/localize.olg", "saffect", NULL);
+  string source = P2_SOURCE_DIR;
+  LOAD("gevent",   source + "/lang/olg/gevent.olg",   "eca",     NULL);
+  LOAD("saffect",  source + "/lang/olg/saffect.olg",  "parse",   NULL);
+  LOAD("mview",    source + "/lang/olg/mview.olg",    "saffect", NULL);
+  LOAD("localize", source + "/lang/olg/localize.olg", "saffect", NULL);
 
 /*
-  LOAD("stats", "/Users/tcondie/workspace/secure/doc/stats.olg", "eca", NULL);
-  LOAD("systemr", "/Users/tcondie/workspace/secure/doc/systemr.olg", "stats", NULL);
+  LOAD("magic", source + "/lang/olg/magic.olg", "parse", NULL);
+  LOAD("stats", source + "/lang/olg/stats.olg", "eca", NULL);
+  LOAD("systemr", source + "/lang/olg/systemr.olg", "stats", NULL);
 */
 }
 
