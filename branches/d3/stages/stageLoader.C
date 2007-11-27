@@ -18,6 +18,7 @@
 #include "XTraceStage.h"
 #include "CSVtail.h"
 #include "XTraceTail.h"
+#include "GangliaTail.h"
 
 void
 StageLoader::loadStages()
@@ -27,5 +28,6 @@ StageLoader::loadStages()
   XTraceStage::ensureInit();
   CSVtail::ensureInit();
   XTraceTail::ensureInit(); 
+  GangliaTail::ensureInit();
 }
 

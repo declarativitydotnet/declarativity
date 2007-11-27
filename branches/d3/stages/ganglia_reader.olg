@@ -1,4 +1,4 @@
-stage("CSVtail", csvInput, csvOutput).
+stage("GangliaTail", csvInput, csvOutput).
 
 /* push input to CSVtail stage one time */
 materialize(ganglia, infinity, infinity, keys(1, 2)).
@@ -6,16 +6,24 @@ materialize(ganglia, infinity, infinity, keys(1, 2)).
 i1 csvInput(@X, GANGLIA_FILE) :- periodic(@X, E, 0, 1).
 */
 
-i1 csvInput(@X, "/scratch/gunho/ganglia/ganglia.log") :- periodic(@X, E, 0, 1).
-i2 ganglia(@X, Time, 
-	A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, 
-	A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, 
-	A21, A22, A23, A24, A25, A26, A27, A28, A29, A30,
-	A31, A32, A33, A34, A35, A36, A37, A38, A39, A40)
-	:- csvOutput(@X, Time, 
-	A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, 
-	A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, 
-	A21, A22, A23, A24, A25, A26, A27, A28, A29, A30,
-	A31, A32, A33, A34, A35, A36, A37, A38, A39, A40).
+i1 csvInput(@X, "ganglia.log") :- periodic(@X, E, 0, 1).
 
+/*
+i2 ganglia(@X, Time, 
+Boottime,Bytes_in,Bytes_out,Cpu_aidle,Cpu_idle,Cpu_nice,Cpu_num,Cpu_speed,Cpu_system,Cpu_user,Cpu_wio,Disk_free,Disk_total,Gexec,Load_fifteen,Load_five,Load_one,Machine_type,Mem_buffers,Mem_cached,Mem_free,Mem_shared,Mem_total,Os_name,Os_release,Part_max_used,Pkts_in,Pkts_out,Proc_run,Proc_total,Swap_free,Swap_total) 
+:-csvOutput(@X, Time, 
+Disk_total,Cpu_speed,Part_max_used,Swap_total,Os_name,Cpu_user,Cpu_system,Cpu_aidle,Load_five,Proc_run,Mem_free,Mem_buffers,Swap_free,Bytes_in,Pkts_out,Cpu_num,Disk_free,Mem_total,Cpu_wio,Boottime,Machine_type,Os_release,Cpu_nice,Cpu_idle,Load_one,Load_fifteen,Proc_total,Mem_shared,Mem_cached,Gexec,Bytes_out,Pkts_in)
+.
+*/
+
+i2 ganglia(@X, Time, 
+Bytes_in,Bytes_out,Cpu_system,Cpu_user,Mem_free) 
+:-csvOutput(@X, Time, 
+Disk_total,Cpu_speed,Part_max_used,Swap_total,Os_name,Cpu_user,Cpu_system,Cpu_aidle,Load_five,Proc_run,Mem_free,Mem_buffers,Swap_free,Bytes_in,Pkts_out,Cpu_num,Disk_free,Mem_total,Cpu_wio,Boottime,Machine_type,Os_release,Cpu_nice,Cpu_idle,Load_one,Load_fifteen,Proc_total,Mem_shared,Mem_cached,Gexec,Bytes_out,Pkts_in)
+.
+
+
+/*
 watch(ganglia).
+*/
+watch(csvInput).

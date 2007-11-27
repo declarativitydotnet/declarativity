@@ -24,6 +24,8 @@
 #include <boost/regex.hpp>
 #include "stage.h"
 #include "val_str.h"
+#include "val_double.h"
+#include "val_int64.h"
 #include "stageRegistry.h"
 #include "XTraceLex.h"
 

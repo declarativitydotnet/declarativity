@@ -22,7 +22,8 @@ SOURCE_FILE_ROOTS =		\
 				CSVstage \
 				XTraceStage \
 				CSVtail \
-				XTraceTail
+				XTraceTail \
+				GangliaTail
 
 libp2stages_la_SOURCES =	$(SOURCE_FILE_ROOTS:=.h) $(SOURCE_FILE_ROOTS:=.C)
 

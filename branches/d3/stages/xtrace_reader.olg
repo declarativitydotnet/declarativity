@@ -1,4 +1,4 @@
-#define XTRACELOGFILE "/scratch/gunho/xtrace/xtrace_reports.txt"
+#define XTRACELOGFILE "xtrace.log"
 /*
 stage("XTraceTail", xtraceInput, xtraceOutput).
 */
@@ -17,7 +17,10 @@ x1 xtraceTask(@X, TaskID, OpID, ChainID, Host, Agent, Label, TS, NextHost) :- xt
 
 x2 xtraceEdge(@X, TaskID, OpID, ChainID, ParentOpID, EdgeType) :- xtraceOutput(@X, TaskID, OpID, ChainID, OutputType, ParentOpID, EdgeType), OutputType=="edge".
 
+watch(xtraceInput).
+/*
 watch(xtraceTask).
+*/
 /*
 watch(xtraceEdge).
 */

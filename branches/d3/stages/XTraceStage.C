@@ -15,7 +15,8 @@
  */
 
 #include "XTraceStage.h"
-#include "val_int32.h"
+
+
 
 // Constructor
 XTraceStage::XTraceStage(Stage* myStage)
@@ -66,7 +67,8 @@ XTraceStage::newOutput()
 				t->append(Val_Str::mk(_Host));
 				t->append(Val_Str::mk(_Agent));
 				t->append(Val_Str::mk(_Label));
-				t->append(Val_Str::mk(_TS));
+				//t->append(Val_Str::mk(_TS));
+				t->append(Val_Int64::mk(strtoll(_TS.c_str(), NULL, 0)));
 				t->append(Val_Str::mk(_NextHost));
 				_q.push(t);
 				_Host = "";
@@ -135,7 +137,7 @@ XTraceStage::newOutput()
 			else if (sKey=="Label") _Label = sValue;
 			else if (sKey=="Timestamp") 
 			{
-				sValue = sValue.substr(0, 14);
+				sValue = sValue.substr(0, 10)+sValue.substr(11, 3);
 				_TS = sValue;
 			}				
 			else if (sKey=="NextHost") _NextHost = sValue;
