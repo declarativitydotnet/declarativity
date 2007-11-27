@@ -202,9 +202,10 @@ namespace compile {
       }
       else {
         static int fictVar = 0;
-        if (value == Val_Null::mk()) {
+        if (value == Val_Null::mk() ||
+            (*Val_Tuple::cast(value))[0]->toString() == VAL) {
             ostringstream oss;
-            oss << "$_" + fictVar++;
+            oss << "$_" << fictVar++;
             TuplePtr var = Tuple::mk(VAR);
             var->append(Val_Str::mk(oss.str()));
             var->freeze();

@@ -86,7 +86,7 @@ ProgramLoader::programUpdate(TuplePtr program)
   if ((*program)[Plumber::catalog()->attribute(PROGRAM, "STATUS")]->toString() == "installed") {
     if ((*program)[Plumber::catalog()->attribute(PROGRAM, REWRITE)] == Val_Null::mk()) {
       string name = (*program)[Plumber::catalog()->attribute(PROGRAM, "NAME")]->toString();
-      TELL_OUTPUT << "Program " << name << " installed.";
+      TELL_OUTPUT << "Program " << name << " installed.\n";
       if (dotFile != "") {
         Plumber::toDot(dotFile);
         TELL_OUTPUT << "Dot file " << dotFile << " generated.";

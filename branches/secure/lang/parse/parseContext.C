@@ -518,35 +518,32 @@ namespace compile {
       Variable    *var;
       Aggregation *agg;
       _new = newF;
+      bool locSpec   = false;
+      bool aggregate = false;
 
-      /** Ensure location sepecifier is first */
+      /** Ensure location sepecifier exists */
       for (ExpressionList::iterator iter = a->begin(); iter != a->end(); iter++) {
-        if ((var = dynamic_cast<Variable*>(a->at(0))) != NULL && var->location()) {
-          a->erase(iter);
-          a->push_front(var);
-          break;
+        if ((var = dynamic_cast<Variable*>(*iter)) != NULL && var->location()) {
+          if (locSpec) {
+            throw compile::Exception("Predicate " + n->toString() +
+                                     " must define a unique predicate!");
+          }
+          locSpec = true;
         }
-        else if ((agg = dynamic_cast<Aggregation*>(a->at(0))) != NULL &&
-               !agg->variable()->location()) {
-          a->erase(iter);
-          a->push_front(agg);
-          break;
+        else if ((agg = dynamic_cast<Aggregation*>(*iter)) != NULL) {
+          if (agg->variable() != NULL && agg->variable()->location()) {
+            throw compile::Exception("Invalid location specifier. Aggregate: " 
+                                      + agg->toString());
+          }
+          if (aggregate) {
+            throw compile::Exception("Only 1 aggregate can appear in a rule.");
+          }
+          aggregate = true;
         }
       }
-  
-      if ((var = dynamic_cast<Variable*>(a->at(0))) != NULL &&
-          !var->location()) {
-        throw compile::Exception("Invalid location specifier. Variable: " 
-                                        + var->toString());
-      }
-      else if ((agg = dynamic_cast<Aggregation*>(a->at(0))) != NULL &&
-               !agg->variable()->location()) {
-        throw compile::Exception("Invalid location specifier. Aggregate: " 
-                                        + agg->toString());
-      }
-      else if (var == NULL && agg == NULL) {
-        throw compile::Exception("Invalid location specifier. Not variable or aggregate: "
-                                         + a->at(0)->toString());
+
+      if (!locSpec) {
+        throw compile::Exception("No location specifier in predicate " + n->toString() + ".");
       }
     }
     

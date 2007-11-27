@@ -115,7 +115,6 @@ P2::preprocessReadOverLogProgram(std::string overLogFilename,
     file.close();
     std::string script = scriptStream.str();
 
-
     return script;
   }
 }
