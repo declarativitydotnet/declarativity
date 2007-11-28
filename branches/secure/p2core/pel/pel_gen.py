@@ -142,6 +142,8 @@ for op, ar, va, desc in [
   ("tovar",1,   "A_TO_VAR",   "Convert attribute to a variable."),
   ("istheta",1,   "ISTHETA",   "Test the boolean predicate for theta."),
   ("getattr",2, "L_GET_ATTR",   "Extract attribute from list."),
+  ("mktype",2, "T_MK_TYPE",   "Make a Type Tuple."),
+  ("mkbool",3, "T_MK_BOOL",   "Make a Bool Tuple."),
   ("posattr",2, "L_POS_ATTR",   "Get the attribute position from list."),
   ("aggattr",1, "L_AGG_ATTR",   "Get the aggregation position from list."),
   ("indexMatch",3, "L_INDEXMATCH", "Tests index key according to join operation."),

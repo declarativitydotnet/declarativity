@@ -40,7 +40,7 @@ namespace compile {
     Context::program(CommonTable::ManagerPtr catalog, TuplePtr program)
     {
       if ((*program)[catalog->attribute(PROGRAM, REWRITE)] != Val_Null::mk()) {
-        /* Override the parent program method... In otherwords do nothing. */
+        // Override the parent program method... In otherwords do nothing.
         program = program->clone(PROGRAM);
         program->freeze();
         return program;

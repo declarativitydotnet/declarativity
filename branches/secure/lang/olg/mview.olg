@@ -14,7 +14,8 @@ namespace mview {
   mv2 rewrite(@A, Pid, Rid, PredID, f_idgen(), f_idgen()) :-
         eventCount(@A, Pid, Rid, Events),
         ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
-        ::sys::predicate(@A, PredID, Rid, _, _, Tid, _, _, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, _, Name, Tid, _, _, _, _, _),
+        Name != "sys::compileStatus",
         Events == 0, HeadID != PredID.
 
   /* Put the DELTA predicate in the first postiion. */

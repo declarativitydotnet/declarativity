@@ -82,7 +82,6 @@ INCLUDE_DIRECTORIES(
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/p2dl
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/parse
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/planner
-                    ${CMAKE_CURRENT_SOURCE_DIR}/lang/rewrite
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/rewrite0
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/rewrite1
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/rewrite2
@@ -113,7 +112,6 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS}
 		${P2_BINARY_DIR}/lang/p2dl
 		${P2_BINARY_DIR}/lang/parse
 		${P2_BINARY_DIR}/lang/planner
-		${P2_BINARY_DIR}/lang/rewrite
 		${P2_BINARY_DIR}/lang/rewrite0
 		${P2_BINARY_DIR}/lang/rewrite1
 		${P2_BINARY_DIR}/lang/rewrite2
@@ -135,7 +133,6 @@ SET(COMMON_LIBRARIES p2core
 					 p2lang
 					 p2parse
 					 p2eca
-					 p2rewrite
 					 p2rewrite0
 					 p2rewrite1
 					 p2rewrite2

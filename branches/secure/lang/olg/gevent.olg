@@ -1,8 +1,9 @@
 namespace gevent {
-  materialize(commit, 1, 1, keys(2)).
+  materialize(commit, infinity, 1, keys(2)).
 
   i0 ::sys::program(@A, Pid, Name, Rewrite, "gevent", Text, Msg, P2DL) :-
         commitRewrite(@A, Pid),
+        commit(@A, Pid),
         ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL).
 
   i1 commit(@A, Pid) :-
@@ -37,6 +38,7 @@ namespace gevent {
 
   ge4a ::sys::predicate(@A, PredID, Rid, NotIn, Trigger, Tid, "RECV", Schema, Pos, AM, New) :-
         commitRewrite(@A, Pid),
+        commit(@A, Pid),
         ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
         ::sys::predicate(@A, PredID, Rid, NotIn, Name, Tid, ECA, Schema, Pos, AM, New),
         ::sys::globalEvent(@A, _, _, Name, ECA, Trigger, _),
@@ -44,6 +46,7 @@ namespace gevent {
 
   ge4b ::sys::predicate(@A, PredID, Rid, NotIn, Trigger, Tid, "RECV", TriggerSchema, Pos, AM, New) :-
         commitRewrite(@A, Pid),
+        commit(@A, Pid),
         ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
         ::sys::predicate(@A, PredID, Rid, NotIn, Name, Tid, _, PeriodicSchema, Pos, AM, New),
         ::sys::globalEvent(@A, _, _, Name, Type, Trigger, TriggerSchema),
@@ -52,6 +55,7 @@ namespace gevent {
 
   ge5 globalEventRule(@A, Pid, Eid, f_idgen(), f_idgen(), Name, Type, Trigger, Schema) :-
         commitRewrite(@A, Pid),
+        commit(@A, Pid),
         ::sys::globalEvent(@A, Eid, Pid, Name, Type, Trigger, Schema).
         
   ge6 ::sys::rule(@A, NewRid, Pid, Name, HeadID, null, false, 2U, false) :-

@@ -51,6 +51,7 @@
 #include "set.h"
 #include "fdbuf.h"
 #include "xdrbuf.h"
+#include "systemTable.h"
 
 
 
@@ -764,6 +765,29 @@ DEF_OP(L_POS_ATTR) {
    ListPtr  list    = Val_List::cast(listVal);
    
    stackPush(Val_Int32::mk(compile::namestracker::position(list, var)));
+}
+
+DEF_OP(T_MK_TYPE) { 
+   ValuePtr type = stackTop(); stackPop();
+   ValuePtr val  = stackTop(); stackPop();
+
+   TuplePtr tp = Tuple::mk(type->toString());
+   tp->append(val);
+   tp->freeze();
+   stackPush(Val_Tuple::mk(tp));
+}
+
+DEF_OP(T_MK_BOOL) { 
+   ValuePtr type = stackTop(); stackPop();
+   ValuePtr val1  = stackTop(); stackPop();
+   ValuePtr val2  = stackTop(); stackPop();
+
+   TuplePtr tp = Tuple::mk(BOOL);
+   tp->append(type);
+   tp->append(val1);
+   tp->append(val2);
+   tp->freeze();
+   stackPush(Val_Tuple::mk(tp));
 }
 
 DEF_OP(L_GET_ATTR) { 

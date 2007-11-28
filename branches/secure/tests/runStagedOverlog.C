@@ -147,9 +147,6 @@ string stub(string hostname, string port, TransportConf conf)
   stub << "\tintDemux[+ \"debug::programEvent\"] -> DebugContext(\"debug\") -> "
        << "\tInsert2(\"debugInsert\", \"" << PROGRAM << "\");\n";
 
-  stub << "\tintDemux[+ \"rewrite::programEvent\"] -> RewriteContext(\"rewrite\") -> "
-       << "\tInsert2(\"rewriteInsert\", \"" << PROGRAM << "\");\n";
-
   stub << "\tintDemux[+ \"planner::programEvent\"] -> "
        << "PlannerContext(\"planner\", \"main\", \"intDemux\", \"intDRR\", \"extDRR\") -> "
        << "\tInsert2(\"plannerInsert\", \"" << PROGRAM << "\");\n";

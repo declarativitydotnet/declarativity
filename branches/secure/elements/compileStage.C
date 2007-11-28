@@ -141,7 +141,7 @@ CompileStage::initialize()
     rewriteTbl->insert(stage); \
   } while (0);
 
-  const int stageCount = 8;
+  const int stageCount = 7;
   string stages[] = {"compile", 
 		     "parse", 
 		     /*
@@ -152,7 +152,6 @@ CompileStage::initialize()
 		     "rewrite2",
 		     */ 
 		     "eca", 
-		     "rewrite", 
 		     "debug", 
 		     "planner", 
 		     "p2dl", 

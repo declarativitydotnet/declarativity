@@ -22,7 +22,6 @@
 #include "secureContext.h"
 #include "parseContext.h"
 #include "plannerContext.h"
-#include "rewriteContext.h"
 #include "rewrite0Context.h"
 #include "rewrite1Context.h"
 #include "rewrite2Context.h"
@@ -41,6 +40,5 @@ LangLoader::loadElements()
   compile::debug::Context::ensureInit();
   compile::parse::Context::ensureInit();
   compile::planner::Context::ensureInit();
-  compile::rewrite::Context::ensureInit();
 }
 
