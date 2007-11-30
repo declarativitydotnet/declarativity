@@ -136,7 +136,7 @@ unsigned DRoundRobin::add_input()
     _block_flags[port] = true;
   }
   _block_flag_count++;
-  delayCB(1, boost::bind(&DRoundRobin::unblock, this, port), this);
+  delayCB(0, boost::bind(&DRoundRobin::unblock, this, port), this);
 
   return port;
 }

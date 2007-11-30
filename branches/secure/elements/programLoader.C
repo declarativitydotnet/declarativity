@@ -149,7 +149,7 @@ ProgramLoader::initialize()
 {
   CommonTablePtr programTbl = Plumber::catalog()->table(PROGRAM);
   programTbl->updateListener(boost::bind(&ProgramLoader::programUpdate, this, _1));
-  delayCB(1, boost::bind(&ProgramLoader::loader, this), this);
+  delayCB(0, boost::bind(&ProgramLoader::loader, this), this);
 
   programIter = programs.begin();
   return 0;
