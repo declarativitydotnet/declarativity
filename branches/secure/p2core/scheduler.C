@@ -36,46 +36,6 @@ Scheduler::registerSwitch(IRunnablePtr r)
   mpSwitch = r;
 }
 
-/*
-void Scheduler::initialize(Plumber::DataflowPtr aDF)
-{
-  std::vector<ElementSpecPtr>::iterator it = aDF->elements_.begin();
-  for(;it!= aDF->elements_.end();it++)
-  {
-    ElementPtr e( (*it)->element() );
-    TELL_INFO<<"Checking Element: Class="<<e->class_name()<<" Instance="<<e->name()<<"\n";
-    std::string eclass(e->class_name());
-
-    //If this is a dataflow element, then dig in...
-    if("Dataflow" == eclass){
-      initialize(boost::dynamic_pointer_cast<Plumber::Dataflow, Element>(e));
-    }
-    else if("PullPush" == eclass){
-      //PullPush* pp = dynamic_cast<PullPush*>(e.get());
-      TELL_INFO<<"Adding Runnable "<<e->name()<<"\n";
-      addRunnable(boost::any_cast<IRunnablePtr>(e->getProxy()));
-    }
-    else if( ("Queue" == eclass) || ("RangeLookup" == eclass) || ("Lookup2" == eclass)){
-      addStateful(boost::any_cast<IStatefulPtr> (e->getProxy()));
-      TELL_INFO<<"Adding Stateful "<<e->name()<<"\n";
-      if(e->name() == "SEAInternalQ")
-	      mpIntQ = boost::any_cast<IStatefulPtr> (e->getProxy());
-      if(e->name() == "SEAExternalQ")
-	      mpExtQ = boost::any_cast<IStatefulPtr> (e->getProxy());
-    }else if( ("CommitBuf" == eclass) || ("Insert2" == eclass) || ("Delete2" == eclass)){
-      TELL_INFO<<"Adding Action! Class="<<e->class_name()<< "Instance = "<<e->name()<<"\n";
-      mpCommitManager->addAction(boost::any_cast<CommitManager::ActionPtr>(e->getProxy()));
-    }
-    else if("ExtQGateSwitch" == e->name()){
-      TELL_INFO<<"Found the GATE!"<<e->name()<<"\n";
-      mpSwitch = boost::any_cast<IRunnablePtr> (e->getProxy());
-      addRunnable(mpSwitch);
-    }
-
-  }
-}
-*/
-
 
 
 bool Scheduler::stateful(IStatefulPtr aStateful)

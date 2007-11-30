@@ -38,26 +38,6 @@ Tuple::xdr_marshal( XDR *x )
       i++) {
     fields[i]->xdr_marshal(x);
   };
-
-  // Metadata to handle tuple tracing across wire
-  // Add following bits to the fields
-  // 1. ID of the tuple
-  // 2. ID of local node
-  // this is used during unmarshalling at destination
-  // to set the tags of the newly created tuple
-  int count = 0;
-  if(_tags){
-    count = _tags->size();
-    (Val_Int32::mk(count))->xdr_marshal(x);
-    (Val_Str::mk("sourceNode"))->xdr_marshal(x);
-    tag("localNode")->xdr_marshal(x);
-    (Val_Str::mk("ID"))->xdr_marshal(x);
-    (Val_UInt32::mk(ID()))->xdr_marshal(x);
-  }
-  else {
-    (Val_Int32::mk(count))->xdr_marshal(x);
-  }
-
 }
 
 
@@ -74,20 +54,6 @@ Tuple::xdr_unmarshal(XDR* x)
       i < sz;
       i++) {
     t->append(Value::xdr_unmarshal(x));
-  }
-
-  // retrieve debugging metadata in the tags
-  int numTags = Val_Int32::cast(Value::xdr_unmarshal(x));
-  if(numTags > 0){
-    // create a tag depending on the tags coming from wire
-    ValuePtr sourceNodeTag = Value::xdr_unmarshal(x);
-    ValuePtr sn = Value::xdr_unmarshal(x);
-    ValuePtr idTag = Value::xdr_unmarshal(x);
-    ValuePtr idt = Value::xdr_unmarshal(x);
-
-    t->tag(sourceNodeTag->toString(), sn);
-    t->tag(idTag->toString(), idt);
-
   }
 
   return t;
@@ -179,51 +145,6 @@ Tuple::compareTo(TuplePtr other) const
 }
 
 
-void
-Tuple::tag(string key,
-           ValuePtr value)
-{
-  // Tags could be added later after
-  // constructing the tuple, especially
-  // for debugging purposes -- Atul.
-
-  //assert(!frozen);
-
-  // Is the tag map created?
-  if (_tags == 0) {
-    // Create it
-    _tags = new std::map< string, ValuePtr >();
-
-    // We'd better still have memory for this
-    assert(_tags != 0);
-  }
-
-  _tags->insert(std::make_pair(key, value));
-}
-
-
-ValuePtr
-Tuple::tag(string key)
-{
-  // Do we have a tag map?
-  if (_tags == 0) {
-    // Nope, just say no
-    return ValuePtr();
-  } else {
-    // Find the pair for that map
-    std::map< string, ValuePtr >::iterator result = _tags->find(key);
-
-    // Did we get it?
-    if (result == _tags->end()) {
-      // Nope, no such tag
-      return ValuePtr();
-    } else {
-      return result->second;
-    }
-  }
-}
-
-
 TuplePtr
 Tuple::EMPTY()
 {
@@ -262,10 +183,6 @@ Tuple::~Tuple()
 //             << " with ID "
 //             << _ID
 //             << "\n";
-
-  if (_tags) {
-    delete _tags;
-  }
 }
 
 
@@ -279,7 +196,6 @@ Tuple::ID()
 Tuple::Tuple()
   : fields(),
     frozen(false),
-    _tags(0),
     _ID(_tupleIDCounter++)
 {
 //   TELL_WORDY << "Creating tuple " << toString()

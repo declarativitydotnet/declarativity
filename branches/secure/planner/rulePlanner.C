@@ -69,9 +69,6 @@
 #include "aggwrap2.h"
 #include "tupleseq.h"
 #include "loop.h"
-#include "ruleTracer.h"
-#include "tap.h"
-#include "traceTuple.h"
 #include "update.h"
 #include "removed.h"
 

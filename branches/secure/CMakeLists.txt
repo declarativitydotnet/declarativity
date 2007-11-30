@@ -1,6 +1,6 @@
 Project(P2)
 
-SUBDIRS(p2core aggregates functions p2cpp lang elements stages net overlog planner debugger unitTests tests python)
+SUBDIRS(p2core aggregates functions p2cpp lang elements stages net overlog planner unitTests tests python)
 
 # Main decisions
 SET(BUILD_SHARED_LIBS ON)
@@ -74,7 +74,6 @@ INCLUDE_DIRECTORIES(
                     ${CMAKE_CURRENT_SOURCE_DIR}/net
                     ${CMAKE_CURRENT_SOURCE_DIR}/overlog
                     ${CMAKE_CURRENT_SOURCE_DIR}/planner
-                    ${CMAKE_CURRENT_SOURCE_DIR}/debugger
                     ${CMAKE_CURRENT_SOURCE_DIR}/p2cpp
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/debug
@@ -88,7 +87,6 @@ INCLUDE_DIRECTORIES(
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/compound
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/secure
                     ${CMAKE_CURRENT_SOURCE_DIR}/functions
-                    ${CMAKE_CURRENT_SOURCE_DIR}/debugger
 		    ${Boost_INCLUDE_DIRS} 
 		    ${PYTHON_INCLUDE_PATH} 
 		    /usr/include)
@@ -99,7 +97,6 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS}
 		${P2_BINARY_DIR}/net 
 		${P2_BINARY_DIR}/stages 
 		${P2_BINARY_DIR}/elements 
-		${P2_BINARY_DIR}/debugger 
 		${P2_BINARY_DIR}/p2core  
 		${P2_BINARY_DIR}/p2core/pel
 		${P2_BINARY_DIR}/p2core/secureUtil
@@ -125,7 +122,6 @@ SET(COMMON_LIBRARIES p2core
 					 p2net
 					 p2stages
 					 p2elements
-					 p2debugger
 					 p2aggregates
 					 p2cpp
 					 p2functions

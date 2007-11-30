@@ -155,28 +155,28 @@ Lookup2::pull(int port,
     }
     return TuplePtr();
   } else {
-	  // Is the iterator at its end?
-	  TuplePtr returnTuple;
-	    
-	  if (_iterator.get() == NULL) {
-		    // Fetch the iterator.
-		    if (_project) {
-		      _iterator = _table->lookup(_lookupKey, _indexKey, _lookupTuple);
-		    } else {
-		      _iterator = _table->lookup(_indexKey, _lookupTuple);
-		    }
-		    assert(_iterator);
-		    if (_iterator->done()) {
-		    	 // Make a result tuple containing first the lookup tuple and then
-		    	 // the lookup result
-		    	 returnTuple = Tuple::mk();
-		    	 returnTuple->append(_lookupTupleValue);
-		    	 returnTuple->append(Val_Tuple::mk(Tuple::EMPTY()));
-
-		    	 returnTuple->freeze();
-		    	 return returnTuple;
-		    }
-	  }
+    // Is the iterator at its end?
+    TuplePtr returnTuple;
+    
+    if (_iterator.get() == NULL) {
+      // Fetch the iterator.
+      if (_project) {
+        _iterator = _table->lookup(_lookupKey, _indexKey, _lookupTuple);
+      } else {
+        _iterator = _table->lookup(_indexKey, _lookupTuple);
+      }
+      assert(_iterator);
+      if (_iterator->done()) {
+        // Make a result tuple containing first the lookup tuple and then
+        // the lookup result
+        returnTuple = Tuple::mk();
+        returnTuple->append(_lookupTupleValue);
+        returnTuple->append(Val_Tuple::mk(Tuple::EMPTY()));
+        
+        returnTuple->freeze();
+        return returnTuple;
+      }
+    }
 
     if (_iterator->done()) {
       // Make a result tuple containing first the lookup tuple and then

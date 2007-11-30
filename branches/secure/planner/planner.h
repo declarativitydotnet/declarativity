@@ -62,9 +62,6 @@
 #include "aggwrap2.h"
 #include "tupleseq.h"
 #include "loop.h"
-#include "ruleTracer.h"
-#include "tap.h"
-#include "traceTuple.h"
 
 #include "tableStore.h"
 #include "eca_context.h"
