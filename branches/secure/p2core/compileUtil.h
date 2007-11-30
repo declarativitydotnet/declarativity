@@ -38,7 +38,7 @@ namespace compile {
 
     ListPtr applyMask(ListPtr original, ListPtr mask, unsigned oldPos);
 
-    void exprString(ostringstream *oss, TuplePtr expr);
+    string exprString(TuplePtr expr);
 
     /**
      * Utility function that locates the variable name

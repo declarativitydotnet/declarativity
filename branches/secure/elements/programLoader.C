@@ -47,11 +47,13 @@ ProgramLoader::ProgramLoader(TuplePtr args)
   : Element(Val_Str::cast((*args)[2]), 0, 1), dotFile("")
 {
   string source = P2_SOURCE_DIR;
-  LOAD("gevent",     source + "/lang/olg/gevent.olg",     "eca",    NULL);
-  LOAD("stageGuard", source + "/lang/olg/stageGuard.olg", "eca",    NULL);
-  LOAD("seffect",    source + "/lang/olg/seffect.olg",    "parse",  NULL);
-  LOAD("mview",      source + "/lang/olg/mview.olg",      "seffect",NULL);
-  LOAD("localize",   source + "/lang/olg/localize.olg",   "seffect",NULL);
+  LOAD("gevent",     source + "/lang/olg/gevent.olg",     "eca",     NULL);
+  LOAD("stageGuard", source + "/lang/olg/stageGuard.olg", "eca",     NULL);
+  LOAD("seffect",    source + "/lang/olg/seffect.olg",    "parse",   NULL);
+  LOAD("aggview1",   source + "/lang/olg/aggview1.olg",   "seffect", NULL);
+  LOAD("aggview2",   source + "/lang/olg/aggview2.olg",   "aggview1",NULL);
+  LOAD("mview",      source + "/lang/olg/mview.olg",      "aggview2",NULL);
+  LOAD("localize",   source + "/lang/olg/localize.olg",   "aggview2",NULL);
 
 /*
   LOAD("magic", source + "/lang/olg/magic.olg", "parse", NULL);

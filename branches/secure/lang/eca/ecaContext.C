@@ -111,7 +111,8 @@ namespace compile {
           /* Set the ECA type of the periodic event to be insert. */
           ecaEvent->set(functorEcaPos, Val_Str::mk("INSERT"));
       }
-      else if ((*event)[catalog->attribute(FUNCTOR,"TID")] != Val_Null::mk()) {
+      else if ((*event)[catalog->attribute(FUNCTOR,"TID")] != Val_Null::mk() &&
+               (*event)[catalog->attribute(FUNCTOR, "ECA")] == Val_Null::mk()) {
           ecaEvent->set(functorEcaPos, Val_Str::mk("DELTA"));
       }
       else if ((*event)[catalog->attribute(FUNCTOR,"ECA")] == Val_Null::mk()) {

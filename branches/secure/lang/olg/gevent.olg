@@ -15,9 +15,11 @@ namespace gevent {
 
   ge1 globalEvent(@A, Pid, Rid, PredID, Name, ECA, f_tovar(Schema)) :-
         programEvent(@A, Pid, _, _, _, _, _, _),
-        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
+        ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
+        ::sys::predicate(@A, HeadID, Rid, _, _, _, _, HeadSchema, _, _, _),
         ::sys::predicate(@A, PredID, Rid, _, Name, _, ECA, Schema, Pos, _, _),
         Name != "periodic",
+        f_aggattr(HeadSchema) < 0,
         Pos == 1, ECA != "RECV".
 
   ge2 periodicEvent(@A, Pid, Rid, PredID, Name, ECA, Schema) :-
@@ -36,7 +38,7 @@ namespace gevent {
         Trigger := Name + "_" + Type,
         Schema := f_cons(f_car(Schema), f_car(f_cdr(Schema))).
 
-  ge4a ::sys::predicate(@A, PredID, Rid, NotIn, Trigger, Tid, "RECV", Schema, Pos, AM, New) :-
+  ge4a ::sys::predicate(@A, PredID, Rid, NotIn, Trigger, null, "RECV", Schema, Pos, AM, New) :-
         commitRewrite(@A, Pid),
         commit(@A, Pid),
         ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
@@ -44,7 +46,7 @@ namespace gevent {
         ::sys::globalEvent(@A, _, _, Name, ECA, Trigger, _),
         Name != "periodic".
 
-  ge4b ::sys::predicate(@A, PredID, Rid, NotIn, Trigger, Tid, "RECV", TriggerSchema, Pos, AM, New) :-
+  ge4b ::sys::predicate(@A, PredID, Rid, NotIn, Trigger, null, "RECV", TriggerSchema, Pos, AM, New) :-
         commitRewrite(@A, Pid),
         commit(@A, Pid),
         ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),

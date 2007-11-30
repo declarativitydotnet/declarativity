@@ -349,15 +349,14 @@ namespace compile {
       else if (apd.outputs) {
         oss << "\tevent -> condition -> action -> output;\n};\n";
 	if(eventType == "RECV"){
-          oss << "edit main { " << graphName
-              << " -> [+]" << intStrandOutputElement << "; };\n";
-	}else{
+          throw planner::Exception("Receive event should have an input!");
+	} else{
 	  oss << "edit main { " << graphName
 	      << " -> [+]" << extStrandOutputElement<<"; };\n";
 	}
       }
       else {
-        oss << "\tevent -> condition -> action;\n};\n";
+        throw planner::Exception("Disconnected rule should not be planned!");
       }
 
  
@@ -555,7 +554,8 @@ namespace compile {
       int     aggPosition = namestracker::aggregation(headSchema);
       bool    filter      = false;
   
-      if (aggPosition >= 0) {
+      if (aggPosition >= 0 &&
+          (*event)[catalog->attribute(FUNCTOR, "ECA")]->toString() == "RECV") {
         oss << indent << "graph condition(1, 2, \"l/lh\", \"-/--\") {\n";  
         filter = true;
       }
@@ -751,9 +751,11 @@ namespace compile {
         for (ValPtrList::const_iterator iter = headArgs->begin();
              iter != headArgs->end(); iter++) {
           TuplePtr arg = Val_Tuple::cast(*iter);
-          if ((*arg)[0]->toString() == VAR) {
+          if ((*arg)[0]->toString() == VAR || (*arg)[0]->toString() == LOC) {
             int pos = namestracker::position(eventArgs, *iter);
-            assert (pos > 0);
+            if (pos < 0) {
+              throw planner::Exception("Group by variables must come from body predicate! " + rule->toString());
+            }
             groupByFields.push_back(pos+1);          
           }
           else {
@@ -773,7 +775,7 @@ namespace compile {
         oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
         oss << indent << "\t"
             << "agg = Aggregate(\"" << aggOper << "_" << aggTable 
-            << "\", " << aggTable << ", " << aggOper << ", " << aggField 
+            << "\", \"" << aggTable << "\", \"" << aggOper << "\", " << aggField 
             << ", " << int_list_to_str(groupByFields) << ");\n";
         oss << indent << "\tagg -> ";
         if (watched(eventName, "INSERT_EVENT") ||

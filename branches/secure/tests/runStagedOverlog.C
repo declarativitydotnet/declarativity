@@ -367,7 +367,7 @@ main(int argc, char **argv)
       }   
       
       loader->program("commandLine", overLogFile, "",
-                      (preprocess && !definitions.empty()) ? &definitions : NULL);
+                      (preprocess ) ? &definitions : NULL);
     }
 
     if (dotFile != "-") {

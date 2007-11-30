@@ -106,53 +106,57 @@ namespace compile {
     }
 
 
-    void 
-    exprString(ostringstream *oss, TuplePtr expr)
+    string 
+    exprString(TuplePtr expr)
     {
+      ostringstream oss;
       string type = (*expr)[TNAME]->toString();
       if (type == VAR || type == VAL) {
         ValuePtr val = (*expr)[2];
         if (type == VAL && val->typeCode() == Value::STR)
-          *oss << "\"" << val->toString() << "\""; 
+          oss << "\"" << val->toString() << "\""; 
         else
-          *oss << val->toString();
+          oss << val->toString();
       }
       else if (type == LOC) {
-        *oss << "@" << (*expr)[2]->toString(); 
+        oss << "@" << (*expr)[2]->toString(); 
       }
       else if (type == NEWLOCSPEC) {
-        *oss << "&" << (*expr)[2]->toString(); 
+        oss << "&" << (*expr)[2]->toString(); 
       }
       else if (type == AGG) {
-        *oss << (*expr)[3]->toString() << "< "  << (*expr)[2]->toString() << " >"; 
+        oss << (*expr)[3]->toString() << "< "  
+             << ((*expr)[2] == Val_Null::mk() ? "*" : exprString(Val_Tuple::cast((*expr)[2])))
+             << " >"; 
       }
       else if (type == BOOL) {
         if ((*expr)[4] != Val_Null::mk()) {
           // Binary boolean expression
-          exprString(oss, Val_Tuple::cast((*expr)[3])); 
-          *oss << " " << (*expr)[2]->toString() << " ";
-          exprString(oss, Val_Tuple::cast((*expr)[4])); 
+          oss << exprString(Val_Tuple::cast((*expr)[3])); 
+          oss << " " << (*expr)[2]->toString() << " ";
+          oss << exprString(Val_Tuple::cast((*expr)[4])); 
         }
         else {
           // Uniary boolean expression
-          *oss << (*expr)[2]->toString() << " ";
-          exprString(oss, Val_Tuple::cast((*expr)[3])); 
+          oss << (*expr)[2]->toString() << " ";
+          oss << exprString(Val_Tuple::cast((*expr)[3])); 
         } 
       }
       else if (type == MATH) {
-        exprString(oss, Val_Tuple::cast((*expr)[3])); 
-        *oss << " " << (*expr)[2]->toString() << " ";
-        exprString(oss, Val_Tuple::cast((*expr)[4])); 
+        oss << exprString(Val_Tuple::cast((*expr)[3])); 
+        oss << " " << (*expr)[2]->toString() << " ";
+        oss << exprString(Val_Tuple::cast((*expr)[4])); 
       }
       else if (type == FUNCTION) {
         unsigned args = Val_UInt32::cast((*expr)[3]);
-        *oss << (*expr)[2]->toString() << "("; // Function name
+        oss << (*expr)[2]->toString() << "("; // Function name
         for (unsigned int i = 0; i < args; i++) {
-          exprString(oss, Val_Tuple::cast((*expr)[4 + i])); 
-          if (i + 1 != args) *oss << ", ";
+          oss << exprString(Val_Tuple::cast((*expr)[4 + i])); 
+          if (i + 1 != args) oss << ", ";
         }
-        *oss << ")";
+        oss << ")";
       }
+      return oss.str();
     }
 
     bool

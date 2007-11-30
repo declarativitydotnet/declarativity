@@ -1524,9 +1524,8 @@ DEF_OP(STR_CONV) {
   ValuePtr t = stackTop(); stackPop();
 
   if (t->typeCode() == Value::TUPLE) {
-    ostringstream oss;
-    compile::namestracker::exprString(&oss, Val_Tuple::cast(t));
-    stackPush(Val_Str::mk(oss.str()));
+    string expr = compile::namestracker::exprString(Val_Tuple::cast(t));
+    stackPush(Val_Str::mk(expr));
   }
   else if (t->typeCode() == Value::LIST) {
     ListPtr list = Val_List::cast(t);
@@ -1535,7 +1534,7 @@ DEF_OP(STR_CONV) {
          iter != list->end(); iter++) {
       ValuePtr v = *iter;
       if (v->typeCode() == Value::TUPLE) {
-        compile::namestracker::exprString(&oss, Val_Tuple::cast(v));
+        oss << compile::namestracker::exprString(Val_Tuple::cast(v));
       }
       else oss << v->toString();
     }

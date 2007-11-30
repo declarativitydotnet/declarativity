@@ -36,9 +36,9 @@ Aggregate::Aggregate(string name,
  * Arguments:
  * 2. Val_Str:    Element Name.
  * 3. Val_Str:    Table Name.
- * 4. Val_List:   Group by attributes.
+ * 4. Val_Str:    Aggregation function name.
  * 5. Val_UInt32: Aggregation field postion.
- * 6. Val_Str:    Aggregation function name.
+ * 6. Val_List:   Group by attributes.
  */
 Aggregate::Aggregate(TuplePtr args)
   : Element(Val_Str::cast((*args)[2]), 0, 1),
@@ -46,9 +46,9 @@ Aggregate::Aggregate(TuplePtr args)
     _pending(false)
 {
   string  tableName = Val_Str::cast((*args)[3]);
-  ListPtr groupBy   = Val_List::cast((*args)[4]);
+  string  function  = Val_Str::cast((*args)[4]);
   uint    fieldNo   = Val_UInt32::cast((*args)[5]);
-  string  function  = Val_Str::cast((*args)[6]);
+  ListPtr groupBy   = Val_List::cast((*args)[6]);
     
   CommonTablePtr table = Plumber::catalog()->table(tableName); 
   CommonTable::Key groupByKey;

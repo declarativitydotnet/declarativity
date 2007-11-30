@@ -88,13 +88,13 @@ namespace compile {
 	  
 	    oss << "new (";
 	    TuplePtr loc = Val_Tuple::cast((*newPtr)[catalog->attribute(NEW, "EVENTLOC")]);
-	    namestracker::exprString(&oss, loc);
+	    oss << namestracker::exprString(loc);
 	    oss << ", ";
 	    TuplePtr opaque = Val_Tuple::cast((*newPtr)[catalog->attribute(NEW, "OPAQUE")]);
-	    namestracker::exprString(&oss, opaque);
+	    oss << namestracker::exprString(opaque);
 	    oss << ", ";
 	    TuplePtr systeminfo = Val_Tuple::cast((*newPtr)[catalog->attribute(NEW, "SYSTEMINFO")]);
-	    namestracker::exprString(&oss, systeminfo);
+	    oss << namestracker::exprString(systeminfo);
 	    oss << ")";
 	    
 	  }
@@ -109,7 +109,7 @@ namespace compile {
 	    for (ValPtrList::const_iterator siter = saysSchema->begin(); 
 		 siter != saysSchema->end(); ) {
 	      TuplePtr arg = Val_Tuple::cast(*siter);
-	      namestracker::exprString(&oss, arg);
+	      oss << namestracker::exprString(arg);
 	      siter++;
 	      if (siter != saysSchema->end()) oss << ", ";
 	    }
@@ -124,7 +124,7 @@ namespace compile {
           for (ValPtrList::const_iterator siter = schema->begin(); 
                siter != schema->end(); ) {
             TuplePtr arg = Val_Tuple::cast(*siter);
-            namestracker::exprString(&oss, arg);
+            oss << namestracker::exprString(arg);
             siter++;
             if (siter != schema->end()) oss << ", ";
           }
@@ -140,9 +140,9 @@ namespace compile {
         if (!iter->done()) {
           if (pos > 1) oss << ",\n\t";
           TuplePtr assign = iter->next();
-          namestracker::exprString(&oss, Val_Tuple::cast((*assign)[catalog->attribute(ASSIGN, "VAR")])); 
+          oss << namestracker::exprString(Val_Tuple::cast((*assign)[catalog->attribute(ASSIGN, "VAR")])); 
           oss << " := ";
-          namestracker::exprString(&oss, Val_Tuple::cast((*assign)[catalog->attribute(ASSIGN, "VALUE")])); 
+          oss << namestracker::exprString(Val_Tuple::cast((*assign)[catalog->attribute(ASSIGN, "VALUE")])); 
           continue;
         }
 
@@ -152,7 +152,7 @@ namespace compile {
         if (!iter->done()) {
           if (pos > 1) oss << ",\n\t";
           TuplePtr select = iter->next();
-          namestracker::exprString(&oss, Val_Tuple::cast((*select)[catalog->attribute(SELECT, "BOOL")])); 
+          oss << namestracker::exprString(Val_Tuple::cast((*select)[catalog->attribute(SELECT, "BOOL")])); 
 
           continue;
         }

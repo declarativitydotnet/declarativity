@@ -11,12 +11,17 @@ namespace mview {
         ::sys::predicate(@A, PredID, Rid, _, _, Tid, _, _, _, _, _),
         Tid == null, HeadID != PredID.
 
-  mv2 rewrite(@A, Pid, Rid, PredID, f_idgen(), f_idgen()) :-
+  mv2 predCount(@A, Pid, Rid, a_count<PredID>) :-
         eventCount(@A, Pid, Rid, Events),
+        ::sys::predicate(@A, PredID, Rid, _, _, _, _, _, Pos, _, _),
+        Events == 0, Pos > 0.
+
+  mv2 rewrite(@A, Pid, Rid, PredID, f_idgen(), f_idgen()) :-
+        predCount(@A, Pid, Rid, Preds),
         ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
         ::sys::predicate(@A, PredID, Rid, _, Name, Tid, _, _, _, _, _),
         Name != "sys::compileStatus",
-        Events == 0, HeadID != PredID.
+        Preds > 1, HeadID != PredID.
 
   /* Put the DELTA predicate in the first postiion. */
   mv3 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, "DELTA", Schema, 1U, AM, New) :-
