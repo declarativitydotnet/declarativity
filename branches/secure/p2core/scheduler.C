@@ -113,11 +113,15 @@ bool Scheduler::runRunnables()
     //a small opt: always get the switch to run first:
     //if(mp1OffSwitch->getState() == IRunnable::ACTIVE)
 	//    mp1OffSwitch->run();
-    /*we have to do this per iteration since elements could turn from blocked to active after some runnables are runned*/
-    for(tRunnables::iterator it = mRunnables.begin();it != mRunnables.end(); it++)
+    /*we have to do this per iteration since elements could turn from
+      blocked to active after some runnables are run*/
+    for(tRunnables::iterator it = mRunnables.begin();
+        it != mRunnables.end();
+        it++)
     {
       if( (*it)->state() == IRunnable::ACTIVE ){
-	//TELL_INFO<<"Running element "<<boost::dynamic_pointer_cast<Element,IRunnable>(*it)->name()<<"\n";
+	//TELL_INFO<<"Running element
+	//"<<boost::dynamic_pointer_cast<Element,IRunnable>(*it)->name()<<"\n";
 	(*it)->run();
 	// Remember if there was anything to run.  (mpSwitch will always be
 	// ready the first time through, so ignore it).
@@ -138,8 +142,9 @@ bool Scheduler::runRunnables()
     }
 
     //check it up again in case some people got activated after others!
-    for(tRunnables::iterator it = mRunnables.begin();it != mRunnables.end() && hasNoRunnables;it++)
-    {
+    for(tRunnables::iterator it = mRunnables.begin();
+        it != mRunnables.end() && hasNoRunnables;
+        it++) {
       if( (*it)->state() == IRunnable::ACTIVE  ) {
 	hasNoRunnables = false;
       }
@@ -151,30 +156,8 @@ bool Scheduler::runRunnables()
   return ranSomething;
 }
 
-/*
-bool Scheduler::runStatefuls()
-{
-  bool hasNoStatefuls = false;
-
-  if(mStatefuls.empty())
-    return true;
-
-  while(!hasNoStatefuls){
-    hasNoStatefuls = true;
-    for(tStatefuls::iterator it = mStatefuls.begin();it != mStatefuls.end();it++)
-    {
-      if( (*it)->state() == IStateful::STATEFUL )
-        (*it)->run();
-      if( (*it)->state() == IStateful::STATEFUL)
-        hasNoStatefuls = false;
-    }
-  }
-  return hasNoStatefuls;
-}
-
-*/
-
-void Scheduler::proc(boost::posix_time::time_duration* waitDuration)
+void
+Scheduler::proc(boost::posix_time::time_duration* waitDuration)
 {
   TELL_WORDY << "Entering Scheduler::proc()\n";
   phase1(waitDuration);
@@ -182,9 +165,12 @@ void Scheduler::proc(boost::posix_time::time_duration* waitDuration)
   TELL_WORDY << "Leaving Scheduler::proc()\n";
 }
 
-void Scheduler::phase1(boost::posix_time::time_duration* waitDuration)
+
+void
+Scheduler::phase1(boost::posix_time::time_duration* waitDuration)
 {
 }
+
 
 void
 Scheduler::phase2(boost::posix_time::time_duration* waitDuration)
