@@ -1,0 +1,52 @@
+/*
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
+ * 
+ * DESCRIPTION: Tables respect their size constraint.
+ *
+ * Execute with
+ * tests/runOverLog -o unitTests/olg/tableExpiration.olg
+ *
+ * At the end of the execution (after 8 seconds), there should be 3
+ * printed tuples, two foundTable tuples (indicating there are exactly
+ * a maximum of 2 tuples left in table), and one foundOtherTable tuple
+ * (indicating that at time 8.5, one tuple from otherTable is still
+ * unexpired, the one inserted at time 6 that expires at 6+3=9).
+ *
+*/
+
+materialize(table, infinity, 2, keys(1,2)).
+materialize(otherTable, 3, infinity, keys(1,2)).
+
+
+q0 insertEvent(@NI, E) :-
+	periodic(@NI, E, 1, 6).
+
+q1 checkEvent(@NI, E) :-
+	periodic(@NI, E, 8.5, 1).
+
+
+
+q2 table(@NI, E) :-
+	insertEvent(@NI, E).
+
+q4 otherTable(@NI, E) :-
+	insertEvent(@NI, E).
+
+q5 foundOtherTable(@NI, E, L) :-
+	checkEvent(@NI, E),
+	otherTable(@NI, L).
+
+q3 foundTable(@NI, E, L) :-
+	checkEvent(@NI, E), 
+	table(@NI, L).
+
+watchmod(foundTable, "s").
+watchmod(foundOtherTable, "s").
+
+
