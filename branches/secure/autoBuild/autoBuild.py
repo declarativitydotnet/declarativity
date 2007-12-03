@@ -76,7 +76,7 @@ def succeeded(revision):
 
 #Get revsion number of the repository
 def get_svn_revision(svnroot):
-	revision = os.popen(svn_path + 'svn log \-rHEAD ' + svnroot)
+	revision = os.popen(svn_path + ' log \-rHEAD ' + svnroot)
 	mod_rev = ""
 	for file in revision.readlines():
         	file = file.replace("\n", "")
@@ -90,9 +90,9 @@ def get_svn_revision(svnroot):
 
 #cmake function
 def cmake(cmake_parameters, sourcedir, branch, fileHandle):
-        cmd = "cmake "
+        cmd = parameters['cmake_path']
         for k in cmake_parameters.keys():
-        	cmd = cmd + k + " " + cmake_parameters[k] + " "
+        	cmd = cmd + " " + k + " " + cmake_parameters[k] + " "
  
 	print cmd
 	#print os.getcwd()
@@ -188,7 +188,6 @@ def loadConfigParameters(file, parameters, cmake_parameters):
                 	if len(temp) == 2:
                         	temp[1] = (temp[1].rstrip("\n")).lstrip()
                         	parameters[(temp[0].rstrip()).lstrip()] = temp[1]
-			
 		else:
 			temp = line.split("=")
                         if len(temp) == 2:
@@ -220,9 +219,6 @@ for key,val in opt:
                 sys.exit(0)     
 
                                
-if(parameters['sourcedir'] != ""):
-	sourcedir = parameters['sourcedir']
-
 svnroot = parameters['svnroot'] 
 svn_path = parameters['svn_path']       
 python_path = parameters['python_path'] 
@@ -266,7 +262,7 @@ if os.path.exists(branch) != True:
 os.chdir(branch)
 
 #Update the branch from svn
-os.system(svn_path + "svn co " + svnroot + branch + " ./")
+os.system(svn_path + " co " + svnroot + branch + " ./")
 
 os.mkdir("builds")
 #changing working directory to local directory 
@@ -275,7 +271,7 @@ os.chdir("builds")
 
 cmake(cmake_parameters, sourcedir, branch, fileHandle)
 
-cmd = "make -j4 2>&1"
+cmd = parameters['make_path'] + " -j4 2>&1"
 make(cmd, fileHandle)
 
 #running the scrips now
