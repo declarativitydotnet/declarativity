@@ -270,7 +270,7 @@ elementarg: value | tuple
               { $$ = new compile::p2dl::Value(Val_List::mk(List::mk($1))); }
           ;
 
-value: P2DL_NUMBER | P2DL_UNSIGNED | P2DL_ID | P2DL_STRING 
+value: P2DL_DOUBLE | P2DL_NUMBER | P2DL_UNSIGNED | P2DL_ID | P2DL_STRING 
          { $$ = $1; }
      ;
 

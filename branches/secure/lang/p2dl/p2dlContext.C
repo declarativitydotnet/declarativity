@@ -449,6 +449,7 @@ namespace compile {
       if ((*program)[catalog->attribute(PROGRAM, "P2DL")] != Val_Null::mk()) {
         ValuePtr programP2DL = (*program)[catalog->attribute(PROGRAM, "P2DL")];
         if (programP2DL != Val_Null::mk()) {
+          std::cerr << "INSTALLING FACTS" << std::endl << programP2DL->toString() << std::endl;
           std::istringstream p2dl(programP2DL->toString(), std::istringstream::in);
           parse_stream(&p2dl);
         }
