@@ -44,8 +44,6 @@ timeCBHandle*
 delayCB(double secondDelay, b_cbv cb, Element* owner)
 {
   assert(secondDelay >= 0.0);
-  assert(secondDelay < 0.002);
-
 
   LOOP_INFO("delayCB delaying call back by "<<secondDelay<<" seconds. ");
 
