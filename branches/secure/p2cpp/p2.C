@@ -109,7 +109,7 @@ P2::preprocessReadOverLogProgram(std::string overLogFilename,
 
   // Turn definitions vector into a cpp argument array.
   int defSize = definitions.size();
-  char * args[(defSize*2)  // *2 because we need to add -D before each def
+  char * args[(defSize)  
              + 1                // for cpp
              + 2                // for flags -C and -P
              + 2                // for filenames
@@ -125,9 +125,10 @@ P2::preprocessReadOverLogProgram(std::string overLogFilename,
          definitions.begin();
        i != definitions.end();
        i++) {
-    args[count] = "-D";
-    count++;
-    args[count] = (char*) (*i).c_str();
+    if (i->substr(2) != "-D") {
+      i->insert(0, "-D");
+    }
+    args[count] = (char*) i->c_str();
     count++;
   }
 
