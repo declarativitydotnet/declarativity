@@ -27,7 +27,7 @@ public:
   // The type name
   const Value::TypeCode typeCode() const { return Value::UINT32; };
   const char *typeName() const { return "uint32"; };
-  virtual string toString() const { ostringstream s; s << i << "U"; return s.str(); };
+  virtual string toString() const { ostringstream s; s << i; return s.str(); };
   virtual string toConfString() const;
   virtual unsigned int size() const { return sizeof(uint32_t); }
 

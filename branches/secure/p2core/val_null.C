@@ -37,7 +37,7 @@ const opr::Oper* Val_Null::oper_ = new OperNull();
 
 string Val_Null::toConfString() const
 {
-  return "Val_Null()";
+  return toString();
 }
 
 //

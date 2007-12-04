@@ -59,8 +59,7 @@ ValuePtr Val_Opaque::xdr_unmarshal( XDR *x )
 
 string Val_Opaque::toConfString() const
 {
-  TELL_WARN << "Cannot get conf string for an OPAQUE value\n";
-  return "";
+  return toString();
 }
 
 //

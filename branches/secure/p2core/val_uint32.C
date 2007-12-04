@@ -26,7 +26,9 @@ const opr::Oper* Val_UInt32::oper_ = new opr::OperImpl<Val_UInt32>();
 
 string Val_UInt32::toConfString() const
 {
-  return toString();
+  ostringstream s; 
+  s << i << "U"; 
+  return s.str();
 }
 
 //
