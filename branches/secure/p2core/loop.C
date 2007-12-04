@@ -503,7 +503,6 @@ eventLoop()
 
 	boost::posix_time::time_duration newDur = (*callbacks.begin())->time - now;
 	if(waitDuration > newDur) {
-	  std::cout << "setting duration for time till next callback: " << (*callbacks.begin())->toString() << std::endl;
 	  waitDuration = newDur;
 	}
       }

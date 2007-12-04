@@ -807,6 +807,13 @@ DEF_OP(L_GET_ATTR) {
    }
    else if (attr->typeCode() == Value::STR) {
      string type = Val_Str::cast(attr);
+     if (type == LOC) {
+       TuplePtr loc = Tuple::mk(LOC);
+       loc->append(compile::namestracker::location(list));
+       loc->freeze();
+       stackPush(Val_Tuple::mk(loc));
+       return;
+     }
      for (ValPtrList::const_iterator iter = list->begin();
           iter != list->end(); iter++) {
        if ((*Val_Tuple::cast(*iter))[0]->toString() == type) {

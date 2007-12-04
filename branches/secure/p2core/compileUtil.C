@@ -254,6 +254,13 @@ namespace compile {
         if ((*attribute)[0]->toString() == LOC) {
           return (*attribute)[2];  // return the variable
         }
+        else if ((*attribute)[0]->toString() == AGG &&
+                 (*attribute)[2] != Val_Null::mk()) {
+          TuplePtr tp = Val_Tuple::cast((*attribute)[2]);
+          if ((*tp)[0]->toString() == LOC) {
+            return (*attribute)[2];
+          }
+        }
       }
       return ValuePtr();
     }
@@ -261,21 +268,23 @@ namespace compile {
     int
     position(const ListPtr args, const ValuePtr variable)
     {
-      ValuePtr var;
+      ValuePtr var = variable;
       if (variable == Val_Null::mk()) {
         return -1;
       }
-      else if ((*Val_Tuple::cast(variable))[0]->toString() == VAR ||
-          (*Val_Tuple::cast(variable))[0]->toString() == LOC) {
-        var = (*Val_Tuple::cast(variable))[2];
-      }
-      else if ((*Val_Tuple::cast(variable))[0]->toString() == AGG) {
-        var = (*Val_Tuple::cast(variable))[2];
-        if (var != Val_Null::mk()) 
-          var = (*Val_Tuple::cast(var))[2];
-      }
-      else {
-        var = variable;
+      else if (variable->typeCode() == Value::TUPLE) {
+        if ((*Val_Tuple::cast(variable))[0]->toString() == VAR ||
+            (*Val_Tuple::cast(variable))[0]->toString() == LOC) {
+          var = (*Val_Tuple::cast(variable))[2];
+        }
+        else if ((*Val_Tuple::cast(variable))[0]->toString() == AGG) {
+          var = (*Val_Tuple::cast(variable))[2];
+          if (var != Val_Null::mk()) 
+            var = (*Val_Tuple::cast(var))[2];
+        }
+        else {
+          var = variable;
+        }
       }
 
       int index = 0;

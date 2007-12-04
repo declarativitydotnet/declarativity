@@ -707,16 +707,11 @@ namespace compile {
          *  The locaction will be extracted from the tuple, via pel, and placed in
          *  position 0 followed by an encapsulation of the orginal tuple. */ 
         ListPtr headSchema = Val_List::cast((*head)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
-        ValPtrList::const_iterator iter = headSchema->begin(); 
-        for (unsigned pos = 1; iter != headSchema->end(); iter++, pos++) {
-          TuplePtr arg = Val_Tuple::cast(*iter);
-          if ((*arg)[TNAME]->toString() == LOC) {
-            package << "$" << pos; // Location attribute position
-            break;
-          }
-        }
-        if (iter == headSchema->end()) 
+        int pos = namestracker::position(headSchema, namestracker::location(headSchema));
+        if (pos < 0)
           throw planner::Exception("No location variable in schema: " + headSchema->toString());
+
+        package << "$" << (pos + 1);   // Location attribute position
         package << " pop swallow pop"; // Encapsulate the tuple in a value type field.
          
         oss << indent << "graph action(1, 1, \"a/a\", \"x/x\") {\n";

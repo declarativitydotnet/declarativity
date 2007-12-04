@@ -532,9 +532,9 @@ namespace compile {
         }
         else if ((agg = dynamic_cast<Aggregation*>(*iter)) != NULL) {
           if (agg->variable() != NULL && agg->variable()->location()) {
-            throw compile::Exception("Invalid location specifier. Aggregate: " 
-                                      + agg->toString());
+            locSpec = true;
           }
+
           if (aggregate) {
             throw compile::Exception("Only 1 aggregate can appear in a rule.");
           }
