@@ -22,9 +22,9 @@ import subprocess
 def usage():                                            
 	print """
 		autobuild: Autobuild for nightly build of P2
-		autobuild -C <configuration file>>
+		autobuild -C <configuration file directory path>
 
-		-C		configuration file.
+		-C		configuration file directory path.
  		-h              prints usage message
 	"""
 # Function to send mail with the log file information if the build failed
@@ -42,7 +42,7 @@ def failed (log, revision, fileHandle):
 	p = os.popen("%s -t -i" % SENDMAIL, "w")
 	p.write("To: " + parameters['to_address'] + "\n")
 	p.write("From: P2 Automated Build <" + mailfrom + ">\n")
-	p.write("Subject: Build Failed : r" + revision + " - " + branch + "\n")
+	p.write("Subject: Build Failed : r" + revision + " - " + branch_name + "\n")
 	p.write("Content-type: text/plain\n")
 	p.write("\n") # blank line separating headers from body
 	p.write(text + "\n")
@@ -65,7 +65,7 @@ def succeeded(revision):
         p = os.popen("%s -t -i" % SENDMAIL, "w")
         p.write("To: " + parameters['to_address'] + "\n")
         p.write("From: P2 Automated Build <" + mailfrom + ">\n")
-        p.write("Subject: Build Succeeded : r" + revision  + " - " + branch + "\n")
+        p.write("Subject: Build Succeeded : r" + revision  + " - " + branch_name + "\n")
 	p.write("Content-type: text/plain\n")
         p.write("\n") # blank line separating headers from body
         p.write(text + "\n")
@@ -135,6 +135,7 @@ def run_scripts(opt, sourcedir, branch, fileHandle):
 	olg_path = sourcedir + "/" + branch + "/unitTests/olg/"
 	branch_path = sourcedir + "/" + branch
 	script_path = sourcedir + "/" + branch + "/tests/unitTests/scripts/"
+	#script_path = "/home/aatul/secure/tests/unitTests/scripts/"
 
 	#print runOverLog_path
 	#print olg_path
@@ -202,82 +203,116 @@ def loadConfigParameters(file, parameters, cmake_parameters):
 	#print parameters
 
 
+def removeall(path):
+
+    if not os.path.isdir(path):
+        return
+    
+    files=os.listdir(path)
+
+    for x in files:
+        fullpath=os.path.join(path, x)
+        if os.path.isfile(fullpath):
+            f=os.remove
+        elif os.path.isdir(fullpath):
+            removeall(fullpath)
+            f=os.rmdir
 
 sourcedir = os.getcwd()
-#print sourcedir
 
 # Configuration variables
 ####### read configuration paramemters ########
 parameters = {}
 cmake_parameters = {}
 opt, arg = getopt.getopt(sys.argv[1:], 'C:h')
+
 for key,val in opt:
-        if key=='-C':   
-                loadConfigParameters(val, parameters,cmake_parameters)
-        elif key == '-h':       
-                usage()         
-                sys.exit(0)     
+        if key == '-h':
+                usage()
+                sys.exit(0)
+	if key == '-C':
+		current_dir = os.getcwd()
+		for f in os.listdir(val):
+                	if f.endswith('.conf'):
+				os.chdir(current_dir)
+				path = os.path.join(val, f)	
+				loadConfigParameters(path, parameters,cmake_parameters)
+		
+				svn_path = parameters['svn_path']       
+				python_path = parameters['python_path'] 
+				sendmail_path = parameters['sendmail_path'] 
+				to_address = parameters['to_address']
+				from_address = parameters['from_address']
+				branch = parameters['branch']
+				planner = parameters['planner']
+				revision_number = parameters['revision']
 
-                               
-svnroot = parameters['svnroot'] 
-svn_path = parameters['svn_path']       
-python_path = parameters['python_path'] 
-sendmail_path = parameters['sendmail_path'] 
-to_address = parameters['to_address']
-from_address = parameters['from_address']
-branch = parameters['branch']
-planner = parameters['planner']
+				curr_time = datetime.datetime.now()
+				EpochSeconds = time.mktime(curr_time.timetuple())
+				date = datetime.datetime.fromtimestamp(EpochSeconds)
+				
+				if(revision_number.rstrip() == ""):
+					revision = get_svn_revision(branch)
+				else:
+					revision = revision_number.rstrip()
 
-curr_time = datetime.datetime.now()
-EpochSeconds = time.mktime(curr_time.timetuple())
-date = datetime.datetime.fromtimestamp(EpochSeconds)
-
-revision = get_svn_revision(svnroot)
-
-rev= "date" + date.strftime("%Y.%m.%d.%H.%M.%S")
-dir= "src-" + rev
-log= "LOG-" + rev
-
-
-# creating build directory
-try:
-        os.makedirs(dir)
-except:
-        failed(log, revision)
-
-# changing cwd to build directory
-os.chdir(dir)
-
-sourcedir = os.getcwd()
-
-# creating handle to log file
-fileHandle = open (log, 'a' )
-fileHandle.write("Repository version:" +  revision)
+				print "revision" , revision
+				rev= date.strftime("%Y.%m.%d.%H.%M.%S")
+				dir= "src_" + f.rstrip(".conf") + "_" + rev
+				log= "LOG_" + f.rstrip(".conf") + "_" + rev
 
 
-if os.path.exists(branch) != True:
-        os.makedirs(branch)
+				# creating build directory
+				if os.path.exists(dir) != True:
+        				os.makedirs(dir)
+				else:
+					removeall(os.getcwd() + "/" + dir)	
 
-#Changing current working directory to point to branch
-os.chdir(branch)
+				# changing cwd to build directory
+				os.chdir(dir)
 
-#Update the branch from svn
-os.system(svn_path + " co " + svnroot + branch + " ./")
+				sourcedir = os.getcwd()
 
-os.mkdir("builds")
-#changing working directory to local directory 
-os.chdir("builds")
-#print "Entered " + os.getcwd()
+				# creating handle to log file
+				fileHandle = open (log, 'a' )
+				fileHandle.write("Repository version:" +  revision)
 
-cmake(cmake_parameters, sourcedir, branch, fileHandle)
 
-cmd = parameters['make_path'] + " -j4 2>&1"
-make(cmd, fileHandle)
+				#if os.path.exists(branch) != True:
+        			#	os.makedirs(branch)
+				
+				if(branch.rfind('/') == -1):
+                                        print "Wrong branch path"
+                                        sys.exit(0)
+                                else:
+                                        branch_name = branch[branch.rfind('/')+1:len(branch)]
+                                        print branch_name
+                                        os.mkdir(branch_name)
 
-#running the scrips now
-run_scripts(opt, sourcedir, branch, fileHandle)
-run_p2Test(sourcedir, branch, fileHandle)
+				#Changing current working directory to point to branch
+				os.chdir(branch_name)
 
-fileHandle.close()
+				#Update the branch from svn
+				os.system(svn_path + " co -r " + revision + " " + branch + " ./")
+	
+				os.mkdir("builds")
+				#changing working directory to local directory 
+				os.chdir("builds")
+				#print "Entered " + os.getcwd()
 
-succeeded(revision)
+				cmake(cmake_parameters, sourcedir, branch_name, fileHandle)
+
+				cmd = parameters['make_path'] + " -j4 2>&1"
+				make(cmd, fileHandle)
+
+				#running the scrips now
+				run_scripts(opt, sourcedir, branch_name, fileHandle)
+				run_p2Test(sourcedir, branch_name, fileHandle)
+
+				fileHandle.close()
+
+				succeeded(revision)
+				if(parameters['keep_build'] == 'No'):
+					os.chdir(current_dir)
+					removeall(os.getcwd() + "/" + dir)
+					os.rmdir(dir)
