@@ -3,8 +3,9 @@ namespace aggview1 {
    * This rewrite reduces an aggregation over a multiple table view to
    * an aggregation over a single table view.
    * EXAMPLE:
-   * predicate(@A, ..., agg<?>) :- table1(...), table2(...), ...
+   * predicate(@A, ..., agg<?>) :- table1(...), table2(...), ....
    * REWRITE:
+   * materialie_view_predicate(@A, ...) :- table1(...), table2(...), ....
    * predicate(@A, ..., agg<?>) :- materialize_view_predicate(@A, ...).
    */
 
