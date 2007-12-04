@@ -550,8 +550,9 @@ namespace compile {
 
     string value(ListPtr schema, TuplePtr valTp) {
       ValuePtr val = (*valTp)[2];
-      
-      return val->toConfString() + " ";
+      return (val->typeCode() == Value::STR) ? 
+                "\\\"" + val->toString() + "\\\" " :
+                val->toConfString() + " ";
     }
 
     string variable(ListPtr schema, TuplePtr varTp) {

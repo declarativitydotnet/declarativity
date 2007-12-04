@@ -316,7 +316,7 @@ static int p2dl_parser_lex (YYSTYPE *lvalp, compile::p2dl::Context *ctxt)
 static void p2dl_parser_error(compile::p2dl::Context *ctxt, string msg)
 {
   std::cerr << "PARSE ERROR: line " << ctxt->lexer->line_num() << ", " 
-            << "token: " << ctxt->lexer->current_token() << ", " << msg << std::endl;
+            << "token: " << ctxt->lexer->current_token() << ". " << msg << std::endl;
   ctxt->error(msg);
 }
 

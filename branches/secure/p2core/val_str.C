@@ -26,7 +26,7 @@ const opr::Oper* Val_Str::oper_ = new OperStr();
 string Val_Str::toConfString() const
 {
   ostringstream conf;
-  conf << "\\\"" << s << "\\\"";
+  conf << "\"" << s << "\"";
   return conf.str();
 }
 
