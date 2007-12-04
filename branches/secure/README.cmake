@@ -1,4 +1,4 @@
-CMake (www.cmake.org) is an open-source, cross-platfom build environment. It
+CMake (www.cmake.org) is an open-source, cross-platform build environment. It
 supports native build processes on Unix and Windows platforms under a variety
 of compilers. It can generate:
 
@@ -35,10 +35,13 @@ directory. Cmake will put your output files (flex/bison output, .a's, and
 binaries) in fairly natural places under the build directory.
 
 If you run into trouble, you can use "ccmake" instead of cmake in the
-instructions above, which will give you a (somewhat crude) curses-based
-program that will allow you to type in any paths, etc. that CMake couldn't
-figure out on its own
+instructions above, which will give you a (somewhat crude)
+curses-based program that will allow you to type in any paths,
+etc. that CMake couldn't figure out on its own.  Alternatively, you
+can edit CMakeCache.txt after cmake generates it.  There is no need to
+run "make clean" after modifying these files; cmake will rebuild
+targets as necessary.
 
 When you want to clean up, you can simply run "rm -rf ~/devel/build". There is
-no "make clean" target in cmake, you simply blow away the directory where you
+no "make distclean" target in cmake, you simply blow away the directory where you
 did the build.
