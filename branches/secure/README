@@ -17,28 +17,10 @@
 -- BUILDING
 ------------------------------------------------------------
 
-When you've checked out a fresh repository or modified the autoconf
-macros, first run setup to configure your new source tree:
+P2's makefiles are generated with cmake.  See README.cmake for more
+information.
 
-   # ./setup
-
-Then configure:
-
-   # ./configure
-
-Typically, we expect the distribution to run with the following
-configure invocation:
-
-   # ./configure CXXFLAGS="-g -Wall -DTRACE_OFF"
-
-For running "make install", you may want to pass a "prefix" to
-configure; otherwise libraries and binaries will be installed under /usr/local.
-
-   # ./configure --prefix /path/to/your/spot CXXFLAGS="-g -Wall -DTRACE_OFF"
-
-(and of course replace "/path/to/your/spot" with a path of your choice.)
-
-Finally build: 
+Once you're happy with the cmake configuration, run:
 
    # make
 
@@ -49,9 +31,9 @@ and if that goes well, install:
 If you install into /usr/local or another shared prefix, you may need
 to run the "make install" command as root.
 
-Remember never to edit Makefile or Makefile.in.  Instead, make your
-changes to Makefile.am.  If you're still having problems, ask the nice
-folks on p2devel@yahoogroups.com.
+Remember never to edit Makefile.  Instead, edit CMakeCache.txt or use
+ccmake.  If you're still having problems, ask the nice folks on
+p2devel@yahoogroups.com.
 
 NOTE ABOUT FLEX:
 
@@ -63,8 +45,10 @@ install a newer flex package. For instance, prebuilt binaries for
 
 NOTE ABOUT AUTOMAKE:
 
-If you want to run automake (i.e., if you want to run ./setup), make
-sure you have automake version 1.9 or greater.
+P2's automake files are deprecated, and have been replaced with cmake.
+
+If you still want to run automake (i.e., if you want to run ./setup),
+make sure you have automake version 1.9 or greater.
 
 NOTE ABOUT GCC:
 
@@ -75,7 +59,20 @@ this is usually the case.
 
 NOTE ABOUT BOOST:
 
-This release is known to work with Boost version 1.32.0.
+Most of us develop against Boost version 1.33 or 1.34.
+
+It is difficult to get boost test to link in a portable fashion.  If
+you receive a bus error when running p2Test, then try adding this to
+CMakeCache.txt:
+
+CMAKE_CXX_FLAGS:STRING=-DP2_LINK_WITH_BOOST_TEST
+
+Alternatively, if p2Test says "Test setup error: test tree is empty",
+then make sure that P2_LINK_WITH_BOOST_TEST is *not* defined.  If you
+still can't get it to work, please send a message to
+p2devel@yahoogroups.com with your operating system and boost versions.
+Tell us where your copy of boost came from.  (Is it a precompiled
+package?  Did you build it yourself?)
 
 NOTE ABOUT libtool:
 
@@ -91,8 +88,15 @@ You can run our measly unit tests:
 
    # unitTests/p2Test
 
+This will execute portions of the p2 implementation in isolation.
 
-You can look at some of our test programs under tests/.  
+You can look at some of our test programs under unitTests/olg/.
+
+TODO: The rest of this section seems to be out of date.  tests/join no
+longer exists, and we should explain how to automatically run the
+nightly regression tests.
+
+------------------------------------------------------------
 
 tests/join is a test that demonstrates a dataflow graph that performs
 some matching of semi-random tuples produced over time.  It does not use
