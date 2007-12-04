@@ -13,10 +13,10 @@
 
 #include "p2.h"
 #include "loop.h"
-
-// For (2)wait
+// For (2)wait and kill
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <signal.h>
 
 
 #include "udp.h"
