@@ -161,10 +161,17 @@ namespace compile {
                        + "DDuplicateConservative(\"" + duplicatorName + "\", 1)";
           programEvents.insert(std::make_pair(input, (*program)[TUPLE_ID]));
         }
-        stage_oss << "\t" << intStrandInputElement << " ->  Queue(\"stageQueue\", 1000) ->\n\t"
+        stage_oss << "\t" << intStrandInputElement; 
+        if (watched(input, "c")) {
+          stage_oss << " -> Print(\"RecvEvent: STAGE " << processor << "\")"; 
+        }
+        stage_oss << " ->  Queue(\"stageQueue\", 1000) ->\n\t"
                   << "Stage(\"stage_" << processor << "\", \"" << processor << "\") ->\n\t"
-                  << "PelTransform(\"formatStage\", \"\\\"" << output << "\\\" pop swallow unbox drop popall\") -> "
-                  << "PelTransform(\"package\", \"$1 pop swallow pop\") -> "
+                  << "PelTransform(\"formatStage\", \"\\\"" << output << "\\\" pop swallow unbox drop popall\") -> ";
+        if (watched(output, "s")) {
+          stage_oss << " -> Print(\"SendAction: STAGE " << processor << "\")"; 
+        }
+        stage_oss << "PelTransform(\"package\", \"$1 pop swallow pop\") -> "
                   << "[+]main." << _internalStrandOutputElement << ";\n";
       }
       if (globalP2DL) stage_oss << "};\n";
@@ -489,10 +496,10 @@ namespace compile {
       if (eventType == "RECV") {
         oss << indent << "graph event(1, 1, \"h/l\", \"-/-\") {\n";
         oss << indent << "\tinput -> " << "Queue(\"" << eventName << "\", 1000) -> \n"; 
-        if (watched(eventName, "RECV_EVENT") ||
-            watched(eventName, "c"))
-          oss << indent << "\tPrint(\"MODIFIER: RECV_EVENT RULE " 
+        if (watched(eventName, "c")) {
+          oss << indent << "\tPrint(\"RecvEvent RULE " 
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        }
         oss << indent << "\toutput;\n};\n";
         return (Context::PortDesc) {1, "h", "-", 1, "l", "-"};
       }
@@ -502,10 +509,10 @@ namespace compile {
       else if (eventType == "REFRESH") {
         oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
         oss << indent << "\tRefresh(\"refresh_" << eventName << "\", \"" << eventName << "\") -> \n";
-        if (watched(eventName, "REFRESH_EVENT") ||
-            watched(eventName, "r"))
-          oss << indent << "\tPrint(\"MODIFIER: REFRESH_EVENT RULE "
+        if (watched(eventName, "r")) {
+          oss << indent << "\tPrint(\"RefreshEvent RULE "
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        }
         oss << indent << "\toutput;\n";
         oss << indent << "};\n";
         return (Context::PortDesc) {0, "", "", 1, "l", "-"};
@@ -513,10 +520,10 @@ namespace compile {
       else if (eventType == "DELETE") {
         oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
         oss << indent << "\tRemoved(\"delete_" << eventName << "\", \"" << eventName << "\") -> \n";
-        if (watched(eventName, "DELETE_EVENT") ||
-            watched(eventName, "d"))
-          oss << indent << "\tPrint(\"MODIFIER: REFRESH_EVENT RULE "
+        if (watched(eventName, "d")) {
+          oss << indent << "\tPrint(\"DeleteEdvent RULE "
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        }
         oss << indent << "\toutput;\n";
         oss << indent << "};\n";
         return (Context::PortDesc) {0, "", "", 1, "l", "-"};
@@ -524,14 +531,25 @@ namespace compile {
       else if (eventType == "DELTA") {
         oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
         oss << indent << "\trr = RoundRobin(\"deltaRR_" << eventName << "\", 3);\n";
-        oss << indent << "\tUpdate(\"update_"<<eventName<<"\",\""<<eventName<<"\")    -> [0]rr;\n";
-        oss << indent << "\tRemoved(\"delete_"<<eventName<<"\",\""<<eventName<<"\")   -> [1]rr;\n";
-        oss << indent << "\tRefresh(\"refresh_"<<eventName<<"\",\""<<eventName<< "\") -> [2]rr;\n";
-        oss << indent << "\trr -> \n"; 
-        if (watched(eventName, "DELTA_EVENT"))
-          oss << indent << "\tPrint(\"MODIFIER: DELTA_EVENT RULE "
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
-        oss << indent << "\toutput;\n};\n";
+        oss << indent << "\tUpdate(\"update_"<<eventName<<"\",\""<<eventName<<"\") -> ";
+        if (watched(eventName, "a")) {
+          oss << "Print(\"InsertEvent: RULE "
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") -> "; 
+        }
+        oss << "[0]rr;\n";
+        oss << indent << "\tRemoved(\"delete_"<<eventName<<"\",\""<<eventName<<"\") -> ";
+        if (watched(eventName, "d")) {
+          oss << "Print(\"DeleteEvent: RULE "
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") -> "; 
+        }
+        oss << "[1]rr;\n";
+        oss << indent << "\tRefresh(\"refresh_"<<eventName<<"\",\""<<eventName<< "\") -> ";
+        if (watched(eventName, "r")) {
+          oss << "Print(\"RefreshEvent: RULE "
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") -> "; 
+        }
+        oss << "[2]rr;\n";
+        oss << indent << "\trr -> output;\n};\n";
         return (Context::PortDesc) {0, "", "", 1, "l", "-"};
       }
       else {
@@ -653,8 +671,12 @@ namespace compile {
 
       oss << indent << "\tgraph project(1, 1, \"a/a\", \"x/x\") {\n";
       oss << indent << "\t\tinput -> "
-                    << "PelTransform(\"project\", \"" << pel.str() << "\") -> "
-                    << "output;\n";
+                    << "PelTransform(\"project\", \"" << pel.str() << "\") -> ";
+      if (watched((*head)[catalog->attribute(FUNCTOR, "NAME")]->toString(), "h")) {
+          oss << "Print(\"HeadProjection: RULE "
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") -> "; 
+      }
+      oss << "output;\n";
       oss << indent << "\t};\n";
   
       oss << indent << "\tinput -> " << termName.str() << " -> project -> output;\n";
@@ -682,9 +704,10 @@ namespace compile {
       if (actionType == "ADD") {
         oss << indent << "graph action(1, 0, \"l/\", \"-/\") {\n";
         oss << indent << "\tinput -> PullPush(\"actionPull\", 0) ->\n";
-        if (watched(funcName, "ADD_ACTION") || watched(funcName, "a"))
-          oss << indent << "\tPrint(\"MODIFIER: ADD_ACTION RULE "
+        if (watched(funcName, "a")) {
+          oss << indent << "\tPrint(\"AddAction: RULE "
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        }
         oss << indent << "\tInsert2(\"actionInsert\", \"" << funcName << "\");\n";
         oss << indent << "};\n";
         return (Context::PortDesc) {1, "l", "-", 0, "", ""};
@@ -692,10 +715,10 @@ namespace compile {
       else if (actionType == "DELETE") {
         oss << indent << "graph action(1, 0, \"l/\", \"-/\") {\n";
         oss << indent << "\tinput -> PullPush(\"actionPull\", 0) ->\n";
-        if (watched(funcName, "DELETE_ACTION") ||
-            watched(funcName, "z"))
-          oss << indent << "\tPrint(\"MODIFIER: DELETE_ACTION RULE "
+        if (watched(funcName, "z")) {
+          oss << indent << "\tPrint(\"DeleteAction: RULE "
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        }
         oss << indent << "\tDelete2(\"actionDelete\", \"" << funcName << "\");\n";
         oss << indent << "};\n";
         return (Context::PortDesc) {1, "l", "-", 0, "", ""};
@@ -716,12 +739,11 @@ namespace compile {
          
         oss << indent << "graph action(1, 1, \"a/a\", \"x/x\") {\n";
         oss << indent << "\tinput -> ";
-        oss << indent << "PelTransform(\"actionPel\", \"" << package.str() << "\") -> ";
-        if (watched(funcName, "SEND_ACTION") ||
-            watched(funcName, "s"))
-          oss << indent << "\tPrint(\"MODIFIER: SEND_ACTION RULE "
+        if (watched(funcName, "s")) {
+          oss << indent << "\tPrint(\"SendAction: RULE "
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
-        oss << indent << "output;\n};\n";
+        }
+        oss << indent << "PelTransform(\"actionPel\", \"" << package.str() << "\") -> output;\n};\n";
         return (Context::PortDesc) {1, "l", "-", 1, "l", "-"};
       }
       else
@@ -773,10 +795,10 @@ namespace compile {
             << "\", \"" << aggTable << "\", \"" << aggOper << "\", " << aggField 
             << ", " << int_list_to_str(groupByFields) << ");\n";
         oss << indent << "\tagg -> ";
-        if (watched(eventName, "INSERT_EVENT") ||
-            watched(eventName, "i"))
-          oss << indent << "\tPrint(\"MODIFIER: INSERT_EVENT RULE "
+        if (watched(eventName, "i")) {
+          oss << indent << "\tPrint(\"InsertEvent: RULE "
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        }
         oss << indent << "\toutput;\n};\n";
         return (Context::PortDesc) {0, "", "", 1, "l", "-"};
       }
@@ -802,10 +824,10 @@ namespace compile {
         oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
         oss << indent << "\tUpdate(\"update_" << eventName << "\", \"" 
                       << eventName << "\") -> \n";
-        if (watched(eventName, "INSERT_EVENT") ||
-            watched(eventName, "i"))
-          oss << indent << "\tPrint(\"MODIFIER: INSERT_EVENT RULE "
+        if (watched(eventName, "i")) {
+          oss << indent << "\tPrint(\"InsertEvent: RULE "
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        }
         oss << indent << "\toutput;\n};\n";
         return (Context::PortDesc) {0, "", "", 1, "l", "-"};
       }
