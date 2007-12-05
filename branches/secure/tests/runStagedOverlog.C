@@ -109,7 +109,7 @@ string stub(string hostname, string port, TransportConf conf)
        << "\tseaInput -> [0]intQMux -> PelTransform(\"unpackage\", \"$1 unboxPop\") -> "
        << "\tQueue(\"intQ\", 100000,\"internal\") -> PullPush(\"IntQPP\",0) -> "
        << "\tintDemux[0] -> "
-       << "Print(\"Unrecognized Message\") -> Discard(\"discard\");\n"
+       << "Discard(\"discard\");\n"
           //start the rule output process
        << "\tintDRR -> PullPush(\"SEAOutputPP\",0) -> intExtDemux;\n"
 	  //External events to commitbuf, to netOut
