@@ -36,7 +36,7 @@ def usage():
                 aggCountDisctinct.py -E <planner path> -B <Branch path>
 
                 -E              planner path
-                -B              olg path 
+                -B              unit test overlog path 
                 -h              prints usage message
         """
 
@@ -46,19 +46,16 @@ def script_output(stdout):
 	for line in stdout.readlines():
 		output = output + line
 
+	#print output
 	p = re.compile(r"""
-		(^[#][#]Print\[SendAction!countResult!q1_eca!localhost:10000\]:				#SendActipn tuple for countResult
-		[ ][ ]\[countResult\(localhost:10000,[ ] 6\)\]						#countResult value
-		[\n][#][#]Print\[SendAction!countDistinctRes!q3_eca!localhost:10000\]:			#SendAction tuple for countDistinctRes
-		[ ][ ]\[countDistinctRes\(localhost:10000,[ ]3\)\]$)					#countDistinctRes value
+		([#][#]Print\[SendAction: \s* RULE \s* q1\]: \s* \[countResult\(localhost:10000, \s* 6\)\] \s*
+		[#][#]Print\[SendAction: \s* RULE \s* q3\]: \s*  \[countDistinctRes\(localhost:10000, \s* 3\)\] \s*
 		|
-		(^[#][#]Print\[SendAction!countDistinctRes!q3_eca!localhost:10000\]:                    #SendAction tuple for countDistinctRes
-                [ ][ ]\[countDistinctRes\(localhost:10000,[ ]3\)\]					#countDistinceRes value
-		[\n][#][#]Print\[SendAction!countResult!q1_eca!localhost:10000\]:                       #SendActipn tuple for countResult
-                [ ][ ]\[countResult\(localhost:10000,[ ] 6\)\]$) 					#countResult value
+		[#][#]Print\[SendAction: \s* RULE \s* q3\]: \s*  \[countDistinctRes\(localhost:10000, \s* 3\)\] \s*
+		[#][#]Print\[SendAction: \s* RULE \s* q1\]: \s* \[countResult\(localhost:10000, \s* 6\)\] \s*)
 		""", re.VERBOSE)
 
-	flag = p.match(output)
+	flag = p.search(output)
 	if flag:
 		print "Test passed" 
 	else:
@@ -92,5 +89,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(3, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(40, kill_pid, [p.stdout, p.pid])
         t.start()

@@ -55,4 +55,4 @@ watchmod(eventJoin, "h").
 watchmod(tableTableJoin, "h").
 watchmod(newTableOldTableConstantJoin, "h").
 watchmod(newTableConstantOldTableJoin, "h").
-watchmod(bothtablesConstantJoin, "h").
+watchmod(bothTablesConstantJoin, "h").

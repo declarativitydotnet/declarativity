@@ -14,15 +14,14 @@
 #
 # Assumption - program is running at localhost:10000
 #
-#Expected output - (the order of hte tuples can vary and E is a random number)
-#	##Print[SendAction!prodEvent1!q1_eca!localhost:10000]:  [prodEvent1(localhost:10000, 4)]
-#	##Print[SendAction!prodEvent2!q2_eca!localhost:10000]:  [prodEvent2(4, localhost:10000)]
-#	##Print[SendAction!prodEvent3!q3_eca!localhost:10000]:  [prodEvent3(4, E, localhost:10000)]
-#	##Print[SendAction!prodEvent1Empty!q1empty_eca!localhost:10000]:  [prodEvent1Empty(localhost:10000, 0)]
-#	##Print[SendAction!prodEvent2Empty!q2empty_eca!localhost:10000]:  [prodEvent2Empty(0, localhost:10000)]
-#	##Print[SendAction!prodEvent3Empty!q3empty_eca!localhost:10000]:  [prodEvent3Empty(0, E, localhost:10000)]
-#
-#
+#Expected output - (the order of the tuples can vary and E is a random number)
+#	##Print[SendAction: RULE q1]:  [prodEvent1(localhost:10000, 4)]
+#	##Print[SendAction: RULE q2]:  [prodEvent2(4, localhost:10000)]
+#	##Print[SendAction: RULE q3]:  [prodEvent3(4, E, localhost:10000)]
+#	##Print[SendAction: RULE q1empty]:  [prodEvent1Empty(localhost:10000, 0)]
+#	##Print[SendAction: RULE q2empty]:  [prodEvent2Empty(0, localhost:10000)]
+#	##Print[SendAction: RULE q3empty]:  [prodEvent3Empty(0, E, localhost:10000)]
+
 ####################################
 
 #!/usr/bin/python
@@ -38,10 +37,10 @@ import sys
 # Usage function
 def usage():
         print """
-                aggStar.py -E <planner path> -B <olg path>
+                aggStar.py -E <planner path> -B <unitTest olg dir path>
 
                 -E              planner path
-                -B              olg path
+                -B              unitTest olg dir path
                 -h              prints usage message
         """
 
@@ -49,34 +48,36 @@ def usage():
 def script_output(stdout):
        	lines=[]
         for line in stdout.readlines():
-		lines.append(line.rstrip())
+		p = re.compile('^[#][#]Print.*$',re.DOTALL) 
+		if(p.match(line)):
+			lines.append(line.rstrip())
 	
 	lines.sort()
-	i =1
+	i = 1
 	for line in lines:
 		if i == 1:
 			p = re.compile(r"""
-				(^[#][#]Print\[SendAction!prodEvent1!q1_eca!localhost:10000\]: \s* \[prodEvent1\(localhost:10000, \s* 4\)\])
+				(^[#][#]Print\[SendAction: \s* RULE \s* q1\]: \s* \[prodEvent1\(localhost:10000, \s* 4\)\])
                         	""", re.VERBOSE)
 		elif i == 2:
 			p = re.compile(r"""
-				(^[#][#]Print\[SendAction!prodEvent1Empty!q1empty_eca!localhost:10000\]: \s* \[prodEvent1Empty\(localhost:10000, \s* 0\)\])
+				(^[#][#]Print\[SendAction: \s* RULE \s* q1empty\]: \s* \[prodEvent1Empty\(localhost:10000, \s* 0\)\])
                                 """, re.VERBOSE)
 		elif i == 3:
 			p = re.compile(r"""
-                                (^[#][#]Print\[SendAction!prodEvent2!q2_eca!localhost:10000\]: \s* \[prodEvent2\(4, \s* localhost:10000\)\])
+				(^[#][#]Print\[SendAction: \s* RULE \s* q2\]: \s* \[prodEvent2\(4, \s* localhost:10000\)\])
                                 """, re.VERBOSE)
 		elif i == 4:
 			p = re.compile(r"""
-                                (^[#][#]Print\[SendAction!prodEvent2Empty!q2empty_eca!localhost:10000\]: \s* \[prodEvent2Empty\(0, \s* localhost:10000\)\])
+				(^[#][#]Print\[SendAction: \s* RULE \s* q2empty\]: \s* \[prodEvent2Empty\(0, \s* localhost:10000\)\])
                                 """, re.VERBOSE)
 		elif i == 5:
 			p = re.compile(r"""
-                                (^[#][#]Print\[SendAction!prodEvent3!q3_eca!localhost:10000\]: \s* \[prodEvent3\(4, \s* [0-9]+, \s* localhost:10000\)\])
+				(^[#][#]Print\[SendAction: \s* RULE \s* q3\]: \s* \[prodEvent3\(4, \s* [0-9]+, \s* localhost:10000\)\])
                                 """, re.VERBOSE)
 		elif i == 6:
 			p = re.compile(r"""
-                                (^[#][#]Print\[SendAction!prodEvent3Empty!q3empty_eca!localhost:10000\]: \s* \[prodEvent3Empty\(0, \s* [0-9]+, \s* localhost:10000\)\])
+				(^[#][#]Print\[SendAction: \s* RULE \s* q3empty\]: \s* \[prodEvent3Empty\(0, \s* [0-9]+, \s* localhost:10000\)\])
 				""", re.VERBOSE)
 		else:
 			print "Test failed"
@@ -124,5 +125,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(3, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(40, kill_pid, [p.stdout, p.pid])
         t.start()

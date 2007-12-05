@@ -66,19 +66,18 @@ def script_output(stdout_20202, stdout_20203, stdout_20204):
         for line in stdout_20202.readlines():
                 output = output + line
 	p = re.compile(r"""
-		([#][#]Print \[RecvEvent!smallestNeighborOf!d2_eca!localhost:20202 \] : \s*		#RecvEvent tuple of smallestNeighborOf 
-		\[smallestNeighborOf \(localhost:20202, \s* localhost:20203 \)\])			#smallestNeighborOf tuple value
+		([#][#]Print\[RecvEvent \s* RULE \s* d2\]: \s*  \[smallestNeighborOf\(localhost:20202, \s* localhost:20203\)\]
+ 		.*
+		[#][#]Print\[RecvEvent \s* RULE \s* d2\]: \s* \[smallestNeighborOf\(localhost:20202, \s* localhost:20204\)\]
 		|
-		([#][#]Print \[RecvEvent!smallestNeighborOf!d2_eca!localhost:20202 \] : \s*		#RecvEvent tuple of smallestNeighborOf 
-		\[smallestNeighborOf \(localhost:20202, \s* localhost:20204 \)\])			#smallestNeighborOf tuple value 
-		""", re.VERBOSE|re.MULTILINE)
-	
-	#Replacing all the matching strings with ''
-	output_modified = p.sub('', output)
+		[#][#]Print\[RecvEvent \s* RULE \s* d2\]: \s* \[smallestNeighborOf\(localhost:20202, \s* localhost:20204\)\]
+		.*
+		[#][#]Print\[RecvEvent \s* RULE \s* d2\]: \s*  \[smallestNeighborOf\(localhost:20202, \s* localhost:20203\)\])
+		""", re.VERBOSE|re.DOTALL)
 
-	flag = re.search(r'[^\n]', output_modified)
+	flag = p.search(output)
 	
-	if flag:
+	if flag == 0:
 		print "Test failed"
 		return
 
@@ -87,35 +86,38 @@ def script_output(stdout_20202, stdout_20203, stdout_20204):
         for line in stdout_20203.readlines():
                 output = output + line
         p = re.compile(r"""
-                ([#][#]Print \[RecvEvent!smallestNeighborOf!d2_eca!localhost:20203 \] : \s* 
-		\[smallestNeighborOf \(localhost:20203, \s* localhost:20202 \)\])
+		([#][#]Print\[RecvEvent \s* RULE \s* d2\]: \s* \[smallestNeighborOf\(localhost:20203, \s* localhost:20202\)\]
+		.*
+		[#][#]Print\[RecvEvent \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20203, \s* localhost:20204\)\]
 		|
-                ([#][#]Print \[RecvEvent!largestNeighborOf!d1_eca!localhost:20203 \] : \s* 
-		\[largestNeighborOf \(localhost:20203, \s* localhost:20204 \)\])
-                """, re.VERBOSE)
+		[#][#]Print\[RecvEvent \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20203, \s* localhost:20204\)\]
+		.*
+		[#][#]Print\[RecvEvent \s* RULE \s* d2\]: \s* \[smallestNeighborOf\(localhost:20203, \s* localhost:20202\)\])
+                """, re.VERBOSE|re.DOTALL)
 
-	output_modified = p.sub('', output)
-        flag = re.search(r'[^\n]', output_modified)
+        flag = p.search(output)
 
-        if flag:
+	if flag == 0:
                 print "Test failed"
                 return
+
 
 	output = ""
         for line in stdout_20204.readlines():
                 output = output + line
         p = re.compile(r"""
-                ([#][#]Print \[RecvEvent!largestNeighborOf!d1_eca!localhost:20204 \] : \s* 
-		\[largestNeighborOf \(localhost:20204, \s* localhost:20203 \)\])
-                |
-		([#][#]Print \[RecvEvent!largestNeighborOf!d1_eca!localhost:20204 \] : \s* 
-		\[largestNeighborOf \(localhost:20204, \s* localhost:20202 \)\])
-                """, re.VERBOSE)
+		([#][#]Print\[RecvEvent \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20204, \s* localhost:20203\)\]
+		.*
+		[#][#]Print\[RecvEvent \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20204, \s* localhost:20202\)\]
+		|
+		[#][#]Print\[RecvEvent \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20204, \s* localhost:20202\)\]
+		.*
+		[#][#]Print\[RecvEvent \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20204, \s* localhost:20203\)\])	
+                """, re.VERBOSE|re.DOTALL)
 
-	output_modified = p.sub('', output)
-        flag = re.search(r'[^\s]', output_modified)
-
-        if flag:
+	flag = p.search(output)
+	
+	if flag == 0:
                 print "Test failed"
                 return
         else:
@@ -176,5 +178,5 @@ pid_20204 = p_20204.pid
 
 
 if os.getpid() != pid_20202 and os.getpid() != pid_20203 and os.getpid() != pid_20204:
-	t = threading.Timer(20, kill_pid, [p_20202.stdout, p_20203.stdout, p_20204.stdout, pid_20202, pid_20203, pid_20204])
+	t = threading.Timer(60, kill_pid, [p_20202.stdout, p_20203.stdout, p_20204.stdout, pid_20202, pid_20203, pid_20204])
         t.start()
