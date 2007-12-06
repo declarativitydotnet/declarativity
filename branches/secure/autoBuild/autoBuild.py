@@ -28,7 +28,7 @@ def usage():
  		-h              prints usage message
 	"""
 # Function to send mail with the log file information if the build failed
-def failed (log, revision, fileHandle):
+def failed (revision, branch_name):
 	fileHandle.close()
 	mailfrom = parameters['from_address']
 	mailheader = "To:" + parameters['to_address'] + "From: P2 Automated Build <" + mailfrom + ">"
@@ -52,7 +52,7 @@ def failed (log, revision, fileHandle):
 	sys.exit(0)
 
 # Function to send mail with the log file information
-def succeeded(revision):
+def succeeded(revision, branch_name):
 	mailfrom = parameters['from_address']
         mailheader = "To:" + parameters['to_address'] + "From: P2 Automated Build <" + mailfrom + ">"
 
@@ -112,7 +112,7 @@ def cmake(cmake_parameters, sourcedir, branch, fileHandle):
                 fileHandle.write(file)
 	
 	if cmake_output.close():
-        	failed(log, revision, fileHandle)
+        	failed(revision, branch_name)
 	fileHandle.write("****************** SUCCESSFUL ******************")
 
 
@@ -124,22 +124,16 @@ def make(cmd, fileHandle):
 	for file in make_output.readlines():
         	fileHandle.write(file)
 	if make_output.close():
-        	failed(log, revision, fileHandle)
+        	failed(revision, branch_name)
 	fileHandle.write("****************** SUCCESSFUL ******************")
 
 
 #Function to run all test scripts
-def run_scripts(opt, sourcedir, branch, fileHandle):
-	#print os.getcwd()
-	runOverLog_path = sourcedir + "/" + branch + "/builds/tests/" + planner
-	olg_path = sourcedir + "/" + branch + "/unitTests/olg/"
-	branch_path = sourcedir + "/" + branch
-	script_path = sourcedir + "/" + branch + "/tests/unitTests/scripts/"
-	#script_path = "/home/aatul/secure/tests/unitTests/scripts/"
+def run_scripts(runOverLog_path, olg_path, script_path, fileHandle):
 
 	#print runOverLog_path
 	#print olg_path
-	#print branch_path
+	#print script_path
 	
 	fileHandle.write("\n\nExecuting scripts \n")
 	fileHandle.write("----------------- \n\n")
@@ -149,10 +143,11 @@ def run_scripts(opt, sourcedir, branch, fileHandle):
 			try:
 				fileHandle.write(str(i) + ". " + f + " - ")
 				script_py = f.rstrip(".olg")
-				script = script_path + script_py + ".py"
-        			about = os.stat(script)
+				script = os.path.join(script_path, script_py) + ".py"
+        			print "Running", script
+				about = os.stat(script)
 				
-				args=[python_path, script, '-E', runOverLog_path, '-B', olg_path, '2>&1']
+				args=[python_path, script, '-E', runOverLog_path, '-B', olg_path, '-T', '100', '2>&1']
         			#print args
 				p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 				for line in (p.stdout).readlines():
@@ -166,11 +161,11 @@ def run_scripts(opt, sourcedir, branch, fileHandle):
         			#failed(log, revision, filehandle)	
 
 
-def run_p2Test(sourcedir, branch, fileHandle):
+def run_p2Test(build_path):
 	fileHandle.write("\n\nExecuting p2Test \n")
         fileHandle.write("----------------- \n\n")
-        p2Test_path = sourcedir + "/" + branch + "/builds/unitTests/p2Test"
-	print p2Test_path	
+        p2Test_path =os.path.join(build_path, 'unitTests/p2Test')
+	#print p2Test_path	
 	args=[p2Test_path]
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
         for line in (p.stdout).readlines():
@@ -246,7 +241,9 @@ for key,val in opt:
 				branch = parameters['branch']
 				planner = parameters['planner']
 				revision_number = parameters['revision']
-
+				build_path = parameters['build_path'].rstrip().lstrip()
+				unitTests_path = parameters['unitTests_path'].rstrip().lstrip()
+				run_build = parameters['run_build'].rstrip()
 				curr_time = datetime.datetime.now()
 				EpochSeconds = time.mktime(curr_time.timetuple())
 				date = datetime.datetime.fromtimestamp(EpochSeconds)
@@ -256,63 +253,88 @@ for key,val in opt:
 				else:
 					revision = revision_number.rstrip()
 
-				print "revision" , revision
-				rev= date.strftime("%Y.%m.%d.%H.%M.%S")
-				dir= "src_" + f.rstrip(".conf") + "_" + rev
-				log= "LOG_" + f.rstrip(".conf") + "_" + rev
-
-
-				# creating build directory
-				if os.path.exists(dir) != True:
-        				os.makedirs(dir)
-				else:
-					removeall(os.getcwd() + "/" + dir)	
-
-				# changing cwd to build directory
-				os.chdir(dir)
-
-				sourcedir = os.getcwd()
-
-				# creating handle to log file
-				fileHandle = open (log, 'a' )
-				fileHandle.write("Repository version:" +  revision)
-
-
-				#if os.path.exists(branch) != True:
-        			#	os.makedirs(branch)
+				if(run_build == 'No' and (build_path == "" or unitTests_path == "")):
+					print "Build path and unitTests path have to be specified if run_build option is set to No" 
+					sys.exit(0)
 				
-				if(branch.rfind('/') == -1):
-                                        print "Wrong branch path"
-                                        sys.exit(0)
-                                else:
-                                        branch_name = branch[branch.rfind('/')+1:len(branch)]
-                                        print branch_name
-                                        os.mkdir(branch_name)
 
-				#Changing current working directory to point to branch
-				os.chdir(branch_name)
+				if(run_build == 'Yes'):	
+					print "revision" , revision
+					rev= date.strftime("%Y.%m.%d.%H.%M.%S")
+					dir= "src_" + f.rstrip(".conf") + "_" + rev
+					log= "LOG_" + f.rstrip(".conf") + "_" + rev
 
-				#Update the branch from svn
-				os.system(svn_path + " co -r " + revision + " " + branch + " ./")
+
+					# creating build directory
+					if os.path.exists(dir) != True:
+        					os.makedirs(dir)
+					else:
+						removeall(os.getcwd() + "/" + dir)	
+
+					# changing cwd to build directory
+					os.chdir(dir)
+
+					sourcedir = os.getcwd()
+
+					# creating handle to log file
+					fileHandle = open (log, 'a' )
+					fileHandle.write("Repository version:" +  revision)
+
+
+				
+					if(branch.rfind('/') == -1):
+                                        	print "Wrong branch path"
+                                        	sys.exit(0)
+                                	else:
+                                        	branch_name = branch[branch.rfind('/')+1:len(branch)]
+                                        	print branch_name
+                                        	os.mkdir(branch_name)
+
+					#Changing current working directory to point to branch
+					os.chdir(branch_name)
+
+					#Update the branch from svn
+					os.system(svn_path + " co -r " + revision + " " + branch + " ./")
 	
-				os.mkdir("builds")
-				#changing working directory to local directory 
-				os.chdir("builds")
-				#print "Entered " + os.getcwd()
+					os.mkdir("builds")
+					#changing working directory to local directory 
+					os.chdir("builds")
+					#print "Entered " + os.getcwd()
 
-				cmake(cmake_parameters, sourcedir, branch_name, fileHandle)
+					cmake(cmake_parameters, sourcedir, branch_name, fileHandle)
 
-				cmd = parameters['make_path'] + " -j4 2>&1"
-				make(cmd, fileHandle)
+					cmd = parameters['make_path'] + " -j4 2>&1"
+					make(cmd, fileHandle)
+					
+					runOverLog_path = os.path.join(sourcedir, branch_name, 'builds/tests', planner)
+        				olg_path = os.path.join(sourcedir, branch_name, 'tests/unitTests/olg')
+        				script_path = os.path.join(sourcedir, branch_name, 'tests/unitTests/scripts')
 
-				#running the scrips now
-				run_scripts(opt, sourcedir, branch_name, fileHandle)
-				run_p2Test(sourcedir, branch_name, fileHandle)
+					run_scripts(runOverLog_path, olg_path, script_path, fileHandle)
+					
+					build_path = os.path.join(sourcedir, branch_name, 'builds')
+					run_p2Test(build_path)
+					fileHandle.close()
+					if(parameters['to_address'] != '' and parameters['to_address'] != ''):
+                            			succeeded(revision, branch_name)
+					if(parameters['keep_build'] == 'No'):
+                                        	os.chdir(current_dir)
+                                        	removeall(os.getcwd() + "/" + dir)
+                                        	os.rmdir(dir)
+				else:
+					# creating handle to log file
+					rev= date.strftime("%Y.%m.%d.%H.%M.%S")
+					log= "LOG_" + f.rstrip(".conf") + "_" + rev
+                                        fileHandle = open (log, 'a' )
+                                        fileHandle.write("Build:" +  build_path)
 
-				fileHandle.close()
+					runOverLog_path = os.path.join(build_path, 'tests', planner)
+                                        olg_path = os.path.join(unitTests_path, 'olg')
+                                        script_path = os.path.join(unitTests_path, 'scripts')
+					run_scripts(runOverLog_path, olg_path, script_path, fileHandle)
 
-				succeeded(revision)
-				if(parameters['keep_build'] == 'No'):
-					os.chdir(current_dir)
-					removeall(os.getcwd() + "/" + dir)
-					os.rmdir(dir)
+					run_p2Test(build_path)
+					fileHandle.close()
+					if(parameters['to_address'] != '' and parameters['from_address'] != ''):
+                                                succeeded(build_path, "")
+					print "tests have been run"
