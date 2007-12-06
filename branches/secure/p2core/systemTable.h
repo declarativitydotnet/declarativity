@@ -43,6 +43,9 @@
   #define ACCESS_METHOD     "sys::accessMethod"
   #define COMPILE_STATUS    "sys::compileStatus"
 
+  #define PROGRAM_STREAM  "sys::program_add"
+  #define ERROR_STREAM    "sys::error_add"
+
   /** The following are expression types */
   #define AGG          "Aggregation"
   #define BOOL         "Bool"
@@ -257,6 +260,7 @@ FUNCTIONDEF("f_cons",        2, "cons")
 FUNCTIONDEF("f_car",         1, "car")
 FUNCTIONDEF("f_cdr",         1, "cdr")
 FUNCTIONDEF("f_contains",    2, "contains")
+FUNCTIONDEF("f_posattr",     2, "posattr")
 FUNCTIONDEF("f_removeLast",  1, "removeLast")
 FUNCTIONDEF("f_last",        1, "last")
 FUNCTIONDEF("f_size",        1, "size")

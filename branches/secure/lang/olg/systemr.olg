@@ -66,7 +66,7 @@ namespace systemr {
   t1 committedPlans(@A, Pid, a_count<Rid>) :- 
        planCommit(@A, Pid), commitPlan(@A, Pid, Rid, PlanID).
 
-  t2 ::sys::program(@A, Pid, Name, Rewrite, "systemr", Text, Msg, P2DL, Src) :-
+  t2 ::sys::program_add(@A, Pid, Name, Rewrite, "systemr", Text, Msg, P2DL, Src) :-
          committedPlans(@A, Pid, Count),
          rules(@A, Pid, Count),
          ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).

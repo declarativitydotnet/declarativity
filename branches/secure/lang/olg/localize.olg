@@ -32,7 +32,7 @@ namespace localize {
   /* Check that we are done with the rewrite by testing the count of
      completed rules with the total number of rules in the program.
      When done, generate a global programEvent tuple. */
-  end ::sys::program(@A, Pid, Name, Rewrite, "localize", Text, Msg, P2DL, Src) :-
+  end ::sys::program_add(@A, Pid, Name, Rewrite, "localize", Text, Msg, P2DL, Src) :-
         ruleCompletion(@A, Pid, C),
         totalRules(@A, Pid, T),
         ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src),

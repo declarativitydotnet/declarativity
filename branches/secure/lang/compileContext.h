@@ -105,8 +105,7 @@ namespace compile {
     
     static SetPtr materializedTables;
   
-    Context(string name) 
-    : Element(name, 1, 1) {};
+    Context(string name); 
 
     virtual ~Context() {};
 
@@ -123,6 +122,9 @@ namespace compile {
     virtual TuplePtr program(CommonTable::ManagerPtr catalog, TuplePtr program);
     /** Performs rewrite stage on the given rule. */
     virtual void rule(CommonTable::ManagerPtr catalog, TuplePtr rule);
+
+    /** Stops program compilation and inserts an error into the source node's error table. */
+    void error(CommonTable::ManagerPtr catalog, TuplePtr program, int code, string desc); 
   };
 };
 

@@ -48,6 +48,10 @@ TuplePtr CompileStage::simple_action(TuplePtr p)
   CommonTablePtr       programTbl = catalog->table(PROGRAM);
   CommonTablePtr       rewriteTbl = catalog->table(REWRITE);
 
+  if ((*p)[catalog->attribute(PROGRAM, "STATUS")]->toString() == "installed") {
+    return TuplePtr();
+  }
+
   CommonTable::Key indexKey;
   CommonTable::Key lookupKey;
   indexKey.push_back(catalog->attribute(REWRITE, "INPUT"));
@@ -80,42 +84,44 @@ TuplePtr CompileStage::simple_action(TuplePtr p)
   statusTbl->insert(compileStatus);
   
   /** Check if we need to install the rewrite in the REWRITE table */
-  if ((*program)[catalog->attribute(PROGRAM, REWRITE)] != Val_Null::mk() &&
-      (*program)[catalog->attribute(PROGRAM, "STATUS")]->toString() == "installed") {
-    indexKey.clear(); lookupKey.clear();
-    indexKey.push_back(catalog->attribute(REWRITE, "INPUT"));
-    lookupKey.push_back(catalog->attribute(PROGRAM, REWRITE));
-    Iter = rewriteTbl->lookup(lookupKey, indexKey, program);
-    if (Iter->done()) {
-      ELEM_ERROR("Unknown rewrite input! "
-                 << p->toString()
-                 << ". "
-                 << rewriteTbl->toString());
-      return TuplePtr();
-    }
-    TuplePtr prevStage = Iter->next();
-    TuplePtr copyStage = prevStage->clone(REWRITE, true);
-    TuplePtr newStage  = Tuple::mk(REWRITE, true);
-    ValuePtr rewriteName = (*program)[catalog->attribute(PROGRAM, "NAME")];
-    newStage->append(rewriteName);
-    newStage->append((*prevStage)[catalog->attribute(REWRITE, "OUTPUT")]);
-    copyStage->set(catalog->attribute(REWRITE, "OUTPUT"), rewriteName); 
-    newStage->freeze();
-    prevStage->freeze();
-    if (!rewriteTbl->insert(copyStage) || !rewriteTbl->insert(newStage) || 
-        !rewriteTbl->remove(prevStage)) {
-      ELEM_ERROR("Rewrite latice update error! Prev stage:"
-                 << prevStage->toString() 
-                 << ", New stage: "
-                 << newStage->toString()
-                 << ". "
-                 << rewriteTbl->toString());
-      return TuplePtr();
-    }
-    TELL_OUTPUT << "Overlog compile stage: " << rewriteName->toString() << " loaded." << std::endl;
+  if ((*program)[catalog->attribute(PROGRAM, "STATUS")]->toString() == "installed") {
+    program->set(TNAME, Val_Str::mk(PROGRAM_STREAM)); // Insert into program table.
+    if ((*program)[catalog->attribute(PROGRAM, REWRITE)] != Val_Null::mk()) {
+      indexKey.clear(); lookupKey.clear();
+      indexKey.push_back(catalog->attribute(REWRITE, "INPUT"));
+      lookupKey.push_back(catalog->attribute(PROGRAM, REWRITE));
+      Iter = rewriteTbl->lookup(lookupKey, indexKey, program);
+      if (Iter->done()) {
+        ELEM_ERROR("Unknown rewrite input! "
+                   << p->toString()
+                   << ". "
+                   << rewriteTbl->toString());
+        return TuplePtr();
+      }
+      TuplePtr prevStage = Iter->next();
+      TuplePtr copyStage = prevStage->clone(REWRITE, true);
+      TuplePtr newStage  = Tuple::mk(REWRITE, true);
+      ValuePtr rewriteName = (*program)[catalog->attribute(PROGRAM, "NAME")];
+      newStage->append(rewriteName);
+      newStage->append((*prevStage)[catalog->attribute(REWRITE, "OUTPUT")]);
+      copyStage->set(catalog->attribute(REWRITE, "OUTPUT"), rewriteName); 
+      newStage->freeze();
+      prevStage->freeze();
+      if (!rewriteTbl->insert(copyStage) || !rewriteTbl->insert(newStage) || 
+          !rewriteTbl->remove(prevStage)) {
+        ELEM_ERROR("Rewrite latice update error! Prev stage:"
+                   << prevStage->toString() 
+                   << ", New stage: "
+                   << newStage->toString()
+                   << ". "
+                   << rewriteTbl->toString());
+        return TuplePtr();
+      }
+      TELL_OUTPUT << "Overlog compile stage: " << rewriteName->toString() << " loaded." << std::endl;
     
-    ELEM_INFO("NEW REWRITE TABLE: "
-              << rewriteTbl->toString());
+      ELEM_INFO("NEW REWRITE TABLE: "
+                << rewriteTbl->toString());
+    }
   }
   program->freeze();
   

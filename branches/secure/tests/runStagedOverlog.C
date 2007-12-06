@@ -35,6 +35,7 @@
 #include "langLoader.h"
 #include "functionLoader.h"
 #include "programLoader.h"
+#include "compileContext.h"
 
 enum TransportConf {NONE=0, RELIABLE=1, ORDERED=2, CC=4, RCC=5, TERMINAL=6};
 
@@ -123,39 +124,59 @@ string stub(string hostname, string port, TransportConf conf)
        << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
        << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
+  stub << "\tintDemux[+ \"" << ERROR_STREAM << "\"] -> "
+       << "PelTransform(\"errorStreamPel\",  \"\\\"" << PERROR << "\\\" pop swallow unbox drop popall\") -> " 
+       << "\tInsert2(\"errorStreamAdd\", \"" << PERROR << "\");\n";
+
+  stub << "\tintDemux[+ \"" << PROGRAM_STREAM << "\"] -> "
+       << "PelTransform(\"programStreamPel\",  \"\\\"" << PROGRAM << "\\\" pop swallow unbox drop popall\") -> " 
+       << "\tInsert2(\"programStreamAdd\", \"" << PROGRAM << "\");\n";
+
+
   stub << "\tintDemux[+ \"parse::programEvent\"] -> ParseContext(\"parse\") -> "
-       << "\tInsert2(\"parseInsert\", \"" << PROGRAM << "\");\n";
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"rewrite0::programEvent\"]   -> Rewrite0Context(\"rewrite0\") -> "
-       << "\tInsert2(\"rewrite0Insert\", \"" << PROGRAM << "\");\n";
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"secure::programEvent\"]   -> SecureContext(\"secure\") -> "
-       << "\tInsert2(\"secureInsert\", \"" << PROGRAM << "\");\n";
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"rewrite1::programEvent\"]   -> Rewrite1Context(\"rewrite1\") -> "
-       << "\tInsert2(\"rewrite1Insert\", \"" << PROGRAM << "\");\n";
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"rewrite2::programEvent\"]   -> Rewrite2Context(\"rewrite2\") -> "
-       << "\tInsert2(\"rewrite2Insert\", \"" << PROGRAM << "\");\n";
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"eca::programEvent\"]   -> EcaContext(\"eca\") -> "
-       << "\tInsert2(\"ecaInsert\", \"" << PROGRAM << "\");\n";
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"compound::programEvent\"]   -> CompoundContext(\"compound\") -> "
-       << "\tInsert2(\"compoundInsert\", \"" << PROGRAM << "\");\n";
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"debug::programEvent\"] -> DebugContext(\"debug\") -> "
-       << "\tInsert2(\"debugInsert\", \"" << PROGRAM << "\");\n";
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"planner::programEvent\"] -> "
        << "PlannerContext(\"planner\", \"main\", \"intDemux\", \"intDRR\", \"extDRR\") -> "
-       << "\tInsert2(\"plannerInsert\", \"" << PROGRAM << "\");\n";
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"p2dl::programEvent\"] -> P2DLContext(\"p2dl\") -> "
-       << "\tInsert2(\"p2dlInsert\", \"" << PROGRAM << "\");\n";
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"installed::programEvent\"] -> "
-       << "\tInsert2(\"installInsert\", \"" << PROGRAM << "\");\n";
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
   if(conf & TERMINAL) {
     stub << "\t\tProgramLoader(\"loader\") -> Insert2(\"ctInsert\", \"" << PROGRAM << "\");\n";

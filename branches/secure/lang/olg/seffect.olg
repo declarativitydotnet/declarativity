@@ -1,7 +1,7 @@
 namespace seffect {
   materialize(commit, 1, 1, keys(2)).
 
-  i0 ::sys::program(@A, Pid, Name, Rewrite, "seffect", Text, Msg, P2DL, Src) :-
+  i0 ::sys::program_add(@A, Pid, Name, Rewrite, "seffect", Text, Msg, P2DL, Src) :-
         commitRewrite(@A, Pid),
         commit(@A, Pid),
         ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).

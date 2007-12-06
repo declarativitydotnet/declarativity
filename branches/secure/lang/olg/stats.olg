@@ -21,7 +21,7 @@ materialize (done, infinity, infinity, keys(2)).
               ::sys::index(@A, ID, Tablename, Key, Type, Selectivity),
               Selectivity := f_drand() / 3.0.
 
-  finish ::sys::program(@A, Pid, Name, Rewrite, "stats", Text, Msg, P2DL, Src) :-
+  finish ::sys::program_add(@A, Pid, Name, Rewrite, "stats", Text, Msg, P2DL, Src) :-
               programEvent(@A, Pid, Name, Rewrite, _, Text, Msg, P2DL, Src).
   
 }

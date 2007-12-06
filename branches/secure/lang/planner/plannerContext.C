@@ -168,7 +168,7 @@ namespace compile {
                   << "Stage(\"stage_" << processor << "\", \"" << processor << "\") ->\n\t"
                   << "PelTransform(\"formatStage\", \"\\\"" << output << "\\\" pop swallow unbox drop popall\") -> ";
         if (watched(output, "s")) {
-          stage_oss << " -> Print(\"SendAction: STAGE " << processor << "\")"; 
+          stage_oss << " -> Print(\"SendAction: STAGE " << processor << "\") -> "; 
         }
         stage_oss << "PelTransform(\"package\", \"$1 pop swallow pop\") -> "
                   << "[+]main." << _internalStrandOutputElement << ";\n";

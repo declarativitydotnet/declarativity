@@ -15,7 +15,7 @@ namespace magic {
   materialize(rewriteCount, infinity, 1, keys(2)).
   materialize(completeCount, infinity, 1, keys(2)).
 
-  i0 ::sys::program(@A, Pid, Name, Rewrite, "magic", Text, Msg, P2DL, Src) :-
+  i0 ::sys::program_add(@A, Pid, Name, Rewrite, "magic", Text, Msg, P2DL, Src) :-
          done(@A, Pid),
          ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
 

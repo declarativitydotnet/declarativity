@@ -1424,7 +1424,7 @@ namespace compile {
       string ptext = (*program)[catalog->attribute(PROGRAM, "TEXT")]->toString();
       std::istringstream overlog(ptext, std::istringstream::in);
       parse(catalog, (*program)[TUPLE_ID], &overlog); 
-      program = program->clone(PROGRAM);
+      program = program->clone(PROGRAM_STREAM);
       program->freeze();
       return program;
     }
@@ -1486,9 +1486,7 @@ namespace compile {
         int line = lexer->line_num();
         delete lexer; 
         lexer = NULL;
-
-        TELL_ERROR << "compile::Exception: " << e.toString() << std::endl;
-        throw compile::parse::Exception(line, e.toString());
+        throw e;
       }
     }
     

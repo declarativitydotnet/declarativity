@@ -498,8 +498,9 @@ static int olg_parser_lex (YYSTYPE *lvalp, compile::parse::Context *ctxt)
 }
 static void olg_parser_error(compile::parse::Context *ctxt, string msg)
 {
-  TELL_ERROR << "PARSE ERROR " << msg << ": line " << (ctxt->lexer->line_num() - 2) 
-             << ", token '" << ctxt->lexer->text() << "'" << std::endl;
-  ctxt->error(msg);
+  ostringstream oss;
+  oss << "PARSE ERROR " << msg << ": line " << (ctxt->lexer->line_num() - 2) 
+      << ", token '" << ctxt->lexer->text() << "'" << std::endl;
+  ctxt->error(oss.str());
 }
 

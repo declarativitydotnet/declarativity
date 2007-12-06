@@ -13,7 +13,7 @@ namespace error {
 
   d4 delete error(@A, Pid) :- finalize(@A, Pid).
 
-  d5 ::sys::program(@A, Pid, Name, Rewrite, "error", Text, Msg, P2DL, Src) :-
+  d5 ::sys::program_add(@A, Pid, Name, Rewrite, "error", Text, Msg, P2DL, Src) :-
        finalize(@A, Pid),
        done(@A, Pid),
        notin error(@A, Pid, _, _, _, _),
@@ -109,7 +109,7 @@ namespace error {
   daw3 validateSchema(@A, Pid, Rid, Schema, Pos + 1) :-
          validateSchema(@A, Pid, Rid, OuterSchema, Pos),
          ::sys::predicate(@A, _, Rid, _, _, _, _, Schema, Pos, _, _),
-         f_contains(f_getattr("Location", Schema), OuterSchema) == true,
+         f_posattr(f_getattr("Location", Schema), OuterSchema) >= 0,
          Schema := f_merge(OuterSchema, Schema).
 
   daw4 error(@A, Pid, PName, Src, 2, Desc) :-
@@ -117,7 +117,7 @@ namespace error {
          ::sys::program(@A, Pid, PName, _, _, _, _, _, Src),
          ::sys::rule(@A, Rid, Pid, RName, _, _, _, _, _),
          ::sys::predicate(@A, _, Rid, _, _, _, _, Schema, Pos, _, _),
-         f_contains(f_getattr("Location", Schema), OuterSchema) == false,
+         f_posattr(f_getattr("Location", Schema), OuterSchema) < 0,
          Loc := f_tostr(f_getattr("Location", Schema)),
          Desc := "Rule " + RName + " location variable " + Loc + " not found in base tables.". 
 
@@ -130,12 +130,12 @@ namespace error {
   dv2 validateView(@A, Pid, Rid, Schema, Pos + 1) :-
          checkDistView(@A, Pid, Rid),
          ::sys::predicate(@A, _, Rid, _, _, _, _, Schema, Pos, _, _),
-         Pos == 2.
+         Pos == 1.
 
   dv3 validateView(@A, Pid, Rid, Schema, Pos + 1) :-
          validateView(@A, Pid, Rid, OuterSchema, Pos),
          ::sys::predicate(@A, _, Rid, _, _, _, _, Schema, Pos, _, _),
-         f_contains(f_getattr("Location", Schema), OuterSchema) == true,
+         f_posattr(f_getattr("Location", Schema), OuterSchema) >= 0,
          Schema := f_merge(OuterSchema, Schema).
 
   dv4 error(@A, Pid, PName, Src, 3, Desc) :-
@@ -143,7 +143,7 @@ namespace error {
          ::sys::program(@A, Pid, PName, _, _, _, _, _, Src),
          ::sys::rule(@A, Rid, Pid, RName, _, _, _, _, _),
          ::sys::predicate(@A, _, Rid, _, _, _, _, Schema, Pos, _, _),
-         f_contains(f_getattr("Location", Schema), OuterSchema) == false,
+         f_posattr(f_getattr("Location", Schema), OuterSchema) < 0,
          Loc := f_tostr(f_getattr("Location", Schema)),
          Desc := "Rule " + RName + " location variable " + Loc + " not found in left to right order of base tables.". 
 

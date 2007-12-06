@@ -459,7 +459,7 @@ namespace compile {
     {
       program = this->compile::Context::program(catalog, program);
 
-      if ((*program)[catalog->attribute(PROGRAM, "P2DL")] != Val_Null::mk()) {
+      if (program && (*program)[catalog->attribute(PROGRAM, "P2DL")] != Val_Null::mk()) {
         ValuePtr programP2DL = (*program)[catalog->attribute(PROGRAM, "P2DL")];
         if (programP2DL != Val_Null::mk()) {
           // std::cerr << programP2DL->toString() << std::endl;

@@ -40,7 +40,7 @@ namespace compile {
     class Exception : public compile::Exception {
     public:
       Exception(uint line, string msg) 
-      : lineNumber_(line), message_(msg) {}
+      : compile::Exception(msg), lineNumber_(line), message_(msg) {}
       virtual ~Exception() {};
     
       virtual string toString() const { 
