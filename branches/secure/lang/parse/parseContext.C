@@ -1352,6 +1352,7 @@ namespace compile {
       programTp->append(Val_Str::mk(prog));             // Program text/filename
       programTp->append(Val_Null::mk());                // Result
       programTp->append(Val_Null::mk());                // P2DL text
+      programTp->append(Plumber::catalog()->nodeid());  // Source address 
       programTp->freeze();
       
       parse(Plumber::catalog(), (*programTp)[TUPLE_ID], pstream);
@@ -1372,6 +1373,7 @@ namespace compile {
         programTp->append(Val_Str::mk((*args)[3]->toString())); // Program text/filename
         programTp->append(Val_Null::mk());                      // Result
         programTp->append(Val_Null::mk());                      // P2DL text
+        programTp->append(Plumber::catalog()->nodeid());        // Source address 
         programTp->freeze();
       
         std::istringstream overlog(Val_Str::cast((*args)[3]), std::istringstream::in);

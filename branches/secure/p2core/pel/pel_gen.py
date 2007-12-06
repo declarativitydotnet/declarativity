@@ -67,6 +67,7 @@ for op, ar, va, desc in [
   ("lappend", 2, "L_APPEND", "Insert first element into second list, or create liust if second list is null"),
   ("concat", 2, "L_CONCAT", "Insert all elements of first list into second list"),
   ("member", 2, "L_MEMBER", "Push 1 if first arg is in second list, 0 otherwise"),
+  ("subset", 2, "L_SUBSET", "Push 1 if first list is subset second list, 0 otherwise"),
   ("intersect", 2, "L_INTERSECT", "Intersects first list with second, using Lisp intersection rules"),
   ("msintersect", 2, "L_MULTISET_INTERSECT", "Intersects first list with second, using multiset intersection rules"),
 
@@ -146,6 +147,7 @@ for op, ar, va, desc in [
   ("mkbool",3, "T_MK_BOOL",   "Make a Bool Tuple."),
   ("posattr",2, "L_POS_ATTR",   "Get the attribute position from list."),
   ("aggattr",1, "L_AGG_ATTR",   "Get the aggregation position from list."),
+  ("groupbyattr",1, "L_GROUPBY_ATTR",   "Get the groupby attributes from schema."),
   ("indexMatch",3, "L_INDEXMATCH", "Tests index key according to join operation."),
   ("castassign",3, "L_CASTASSIGN", "Substitute a selection predicate for an assignment."),
   ("variables",1, "L_VARIABLES", "Extracts all variables from a math or boolean expression."),

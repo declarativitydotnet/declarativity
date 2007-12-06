@@ -138,7 +138,8 @@ public:
 private:
   void initialize();
 
-  void indexListener(TuplePtr table);
+  void errorListener(TuplePtr error);
+  void indexListener(TuplePtr index);
   void tableListener(TuplePtr table);
 
   TuplePtr registerTable(string name, boost::posix_time::time_duration lifetime,

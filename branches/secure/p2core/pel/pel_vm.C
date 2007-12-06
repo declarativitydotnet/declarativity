@@ -825,6 +825,12 @@ DEF_OP(L_GET_ATTR) {
    stackPush(Val_Null::mk());
 }
 
+DEF_OP(L_GROUPBY_ATTR) { 
+   ValuePtr listVal = stackTop(); stackPop();
+   ListPtr  list    = Val_List::cast(listVal);
+   stackPush(Val_List::mk(compile::namestracker::groupby(list)));
+}
+
 DEF_OP(L_AGG_ATTR) { 
    ValuePtr listVal = stackTop(); stackPop();
    ListPtr  list    = Val_List::cast(listVal);
@@ -854,9 +860,27 @@ DEF_OP(L_APPEND) {
    }
 }
 
+DEF_OP(L_SUBSET) {
+   ValuePtr first = stackTop(); stackPop();
+   ValuePtr second = stackTop(); stackPop();
+
+   if (first->typeCode() == Value::LIST &&
+       second->typeCode() == Value::LIST)
+   {
+     ListPtr s1 = Val_List::cast(first);
+     ListPtr s2 = Val_List::cast(second);
+     stackPush(Val_Int32::mk(compile::namestracker::subset(s1, s2)));
+     return;
+   }
+   error = PE_BAD_LIST_FIELD;
+   return;
+}
+
+
 DEF_OP(L_MEMBER) {
    ValuePtr value = stackTop(); stackPop();
-   ValuePtr listVal = stackTop();
+   ValuePtr listVal = stackTop(); stackPop();
+
    int isMember = 0;
    if(listVal->typeCode() == Value::LIST){
     isMember = (Val_List::cast(listVal))->member(value);

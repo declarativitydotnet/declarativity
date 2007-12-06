@@ -10,7 +10,7 @@ namespace systemr {
   materialize(commitPlan, infinity, infinity, keys(2, 3)).
 
   i0 counter(@A, Pid, Rid) :-
-       programEvent(@A, Pid, _, _, _, _, _, _),
+       programEvent(@A, Pid, _, _, _, _, _, _, _),
        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _).
 
   i1 assigns(@A, Pid, Rid, a_count<*>) :-
@@ -18,12 +18,11 @@ namespace systemr {
        ::sys::assign(@A, Aid, Rid, Var, Value, Pos).
 
   i2 rules(@A, Pid, a_count<Rid>) :-
-       programEvent(@A, Pid, _, _, _, _, _, _),
+       programEvent(@A, Pid, _, _, _, _, _, _, _),
        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _).
 
-  i3 complete(@A, Pid, Val) :- 
-       programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
-       Val := true.
+  i3 complete(@A, Pid, true) :- 
+       programEvent(@A, Pid, _, _, _, _, _, _, _).
  
   i4 checkComplete(@A, Pid, Val) :- 
        periodic(@A, E, 2), complete(@A, Pid, Val).
@@ -67,15 +66,15 @@ namespace systemr {
   t1 committedPlans(@A, Pid, a_count<Rid>) :- 
        planCommit(@A, Pid), commitPlan(@A, Pid, Rid, PlanID).
 
-  t2 ::sys::program(@A, Pid, Name, Rewrite, "systemr", Text, Msg, P2DL) :-
+  t2 ::sys::program(@A, Pid, Name, Rewrite, "systemr", Text, Msg, P2DL, Src) :-
          committedPlans(@A, Pid, Count),
          rules(@A, Pid, Count),
-         ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL).
+         ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
 
   /***********************************************************************/
   /* Start the optimization process */
   t1 thetaPredicates(@A, Pid, Rid, Sid, Bool) :-
-        programEvent(@A, Pid, _, _, _, _, _, _),
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
         ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
         ::sys::select(@A, Sid, Rid, Bool, _, _),
         f_istheta(Bool) == true.
@@ -84,7 +83,7 @@ namespace systemr {
   /* Get the program event and seed the optimization with the event predicate. */
   o1a plan(@A, Pid, Rid, PlanID, SubPlanID, Type, TypeID, 
             Plan, Schema, Card, Cost, Pos, AM, Sort) :-
-            programEvent(@A, Pid, _, _, _, _, _, _),
+            programEvent(@A, Pid, _, _, _, _, _, _, _),
             ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
             ::sys::predicate(@A, Fid, Rid, _, _, _, _, Schema, Pos, _, _),
             Pos == 1,

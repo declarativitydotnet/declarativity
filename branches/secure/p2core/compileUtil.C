@@ -21,6 +21,7 @@
 #include "val_list.h"
 #include "val_str.h"
 #include "val_uint32.h"
+#include "val_int32.h"
 #include "val_null.h"
 
 namespace compile {
@@ -232,6 +233,19 @@ namespace compile {
       return ValuePtr();
     }
 
+    ListPtr groupby(const ListPtr args)
+    {
+      ListPtr gb = List::mk();
+      for (ValPtrList::const_iterator i = args->begin(); 
+           i != args->end(); i++) {
+        TuplePtr arg = Val_Tuple::cast(*i);
+        if ((*arg)[TNAME]->toString() != AGG) {
+          gb->append(toVar(*i));
+        }
+      }
+      return gb;
+    }
+
     int
     aggregation(const ListPtr args)
     {
@@ -263,6 +277,27 @@ namespace compile {
         }
       }
       return ValuePtr();
+    }
+
+    int
+    subset(const ListPtr schema1, const ListPtr schema2) 
+    {
+      for (ValPtrList::const_iterator i = schema1->begin(); 
+           i != schema1->end(); i++) {
+        TuplePtr tp = Val_Tuple::cast(*i);
+        if ((*tp)[0]->toString() == VAL) {
+          continue;
+        }
+        else if (position(schema2, toVar(*i)) < 0) {
+/*
+          std::cerr << "SUBSET FAIL: " << "\n\t" 
+                    << schema1->toString() << "\n\t" 
+                    << schema2->toString() << std::endl;
+*/
+          return false;
+        }
+      }
+      return true;
     }
 
     int
@@ -310,7 +345,7 @@ namespace compile {
       ListPtr vars = variables(boolv);
       for (ValPtrList::const_iterator iter = vars->begin();
            iter != vars->end(); iter++) {
-        if (!schema->member(*iter)) {
+        if (position(schema, toVar(*iter)) < 0) {
           return false;
         }
       }
@@ -321,30 +356,32 @@ namespace compile {
     variables(const ValuePtr value)
     {
       ListPtr vars  = List::mk();
-      TuplePtr expr = Val_Tuple::cast(value);
+      if (value == Val_Null::mk()) {
+        return vars;
+      }
 
+      TuplePtr expr = Val_Tuple::cast(value);
       if ((*expr)[TNAME]->toString() == BOOL ||
           (*expr)[TNAME]->toString() == MATH) {
         ValuePtr lhs = (*expr)[3];
         ValuePtr rhs = (*expr)[4];
-        if (!toVar(lhs)) {
-          vars->append(variables(lhs));
-        }
-        else {
-          vars->append(toVar(lhs));
-        }
-
-        if (rhs != Val_Null::mk()) {
-          if (!toVar(rhs)) {
-            vars->append(variables(rhs));
-          }
-          else {
-            vars->append(toVar(rhs));
-          }
-        }
+        vars->append(variables(lhs));
+        vars->append(variables(rhs));
       }
-      else if (toVar(value)) {
-        vars->append(toVar(value));
+      else if ((*expr)[TNAME]->toString() == VAR) {
+        vars->append(value);
+      }
+      else if ((*expr)[TNAME]->toString() == LOC) {
+        vars->append(value);
+      }
+      else if ((*expr)[TNAME]->toString() == AGG) {
+        vars->append(variables((*expr)[2]));
+      }
+      else if ((*expr)[TNAME]->toString() == FUNCTION) {
+        int args = Val_Int32::cast((*expr)[3]);
+        while (args > 0) {
+          vars->append(variables((*expr)[3+args--]));
+        }
       }
       return vars;
     }

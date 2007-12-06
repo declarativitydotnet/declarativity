@@ -107,6 +107,7 @@ public:
     KEY01,
     KEY12,
     KEY23,
+    KEY25,
     KEY13,
     KEY34,
     KEY35,
@@ -690,6 +691,7 @@ protected:
     Key theKEY01;
     Key theKEY12;
     Key theKEY23;
+    Key theKEY25;
     Key theKEY13;
     Key theKEY34;
     Key theKEY35;

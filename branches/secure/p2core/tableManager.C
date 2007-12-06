@@ -125,8 +125,22 @@ if (name != TABLE && name != INDEX) createTable((name), (key), ListPtr(), Val_Nu
   /* Install a create table listener */
   table(TABLE)->updateListener(boost::bind(&TableManager::tableListener, this, _1));
   table(INDEX)->updateListener(boost::bind(&TableManager::indexListener, this, _1));
-
+  table(PERROR)->updateListener(boost::bind(&TableManager::errorListener, this, _1));
 }
+
+void
+TableManager::errorListener(TuplePtr error)
+{
+  string name = (*error)[attribute(PERROR, "PNAME")]->toString();
+  string node = (*error)[attribute(PERROR, "NODEID")]->toString();
+  string code = (*error)[attribute(PERROR, "CODE")]->toString();
+  string desc = (*error)[attribute(PERROR, "DESC")]->toString();
+
+  TELL_ERROR << "COMPILE ERROR: program " << name
+             << ", node " << node << ", error code " 
+             << code << ": " << desc << std::endl;
+}
+
 
 void
 TableManager::indexListener(TuplePtr index)

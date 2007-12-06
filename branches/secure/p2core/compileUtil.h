@@ -45,6 +45,8 @@ namespace compile {
      * within the argument list.  */
     int position(const ListPtr args, const ValuePtr var);
 
+    int subset(const ListPtr schema1, const ListPtr schema2);
+
     /** Converts the argument (variable, location, or aggregation)
         to a regular variable. */
     ValuePtr toVar(ValuePtr var);
@@ -58,6 +60,8 @@ namespace compile {
      * Determine the position of an aggregation arguement 
      * if one exists. */
     int aggregation(const ListPtr args);
+
+    ListPtr groupby(const ListPtr args);
   
     /**
      * Utility function that forms a new argument list

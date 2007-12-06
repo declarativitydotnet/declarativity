@@ -49,8 +49,9 @@ ProgramLoader::ProgramLoader(TuplePtr args)
   string source = P2_SOURCE_DIR;
   LOAD("gevent",     source + "/lang/olg/gevent.olg",     "eca",     NULL);
   LOAD("stageGuard", source + "/lang/olg/stageGuard.olg", "eca",     NULL);
+  LOAD("error",      source + "/lang/olg/error.olg",      "parse",   NULL);
   LOAD("seffect",    source + "/lang/olg/seffect.olg",    "eca",     NULL);
-  LOAD("aggview1",   source + "/lang/olg/aggview1.olg",   "parse",   NULL);
+  LOAD("aggview1",   source + "/lang/olg/aggview1.olg",   "error",   NULL);
   LOAD("aggview2",   source + "/lang/olg/aggview2.olg",   "aggview1",NULL);
   LOAD("aggview3",   source + "/lang/olg/aggview3.olg",   "aggview2",NULL);
   LOAD("mview",      source + "/lang/olg/mview.olg",      "aggview3",NULL);
@@ -140,6 +141,7 @@ ProgramLoader::loader()
   program->append(Val_Str::mk(programText)); // Program text
   program->append(Val_Null::mk());           // Program message
   program->append(Val_Null::mk());           // P2DL for program installation
+  program->append(catalog->nodeid());        // Source address
   program->freeze();
   output(0)->push(program, NULL);
 }

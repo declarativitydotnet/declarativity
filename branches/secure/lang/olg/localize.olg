@@ -5,7 +5,7 @@ namespace localize {
   materialize(totalRules, 1, infinity, keys(2)).
 
   initialization programEventInitialized(@A, Pid, Rid, HeadFid) :- 
-                   programEvent(@A, Pid, _, _, _, _, _, _),
+                   programEvent(@A, Pid, _, _, _, _, _, _, _),
                    ::sys::rule(@A, Rid, Pid, _, HeadFid, _, _, _, _).
 
   /* Begin the localization rewrite by triggering a count of
@@ -14,10 +14,10 @@ namespace localize {
            programEventInitialized(@A, Pid, Rid, HeadFid).
 
   begin2 rulesComplete(@A, Pid, 0) :-
-          programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL).
+          programEvent(@A, Pid, _, _, _, _, _, _, _).
 
   totalRules totalRules(@A, Pid, a_count<*>) :-
-               programEvent(@A, Pid, _, _, _, _, _, _),
+               programEvent(@A, Pid, _, _, _, _, _, _, _),
                ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _).
   
   /** The following rules deal with termination checks */
@@ -32,10 +32,10 @@ namespace localize {
   /* Check that we are done with the rewrite by testing the count of
      completed rules with the total number of rules in the program.
      When done, generate a global programEvent tuple. */
-  end ::sys::program(@A, Pid, Name, Rewrite, "localize", Text, Msg, P2DL) :-
+  end ::sys::program(@A, Pid, Name, Rewrite, "localize", Text, Msg, P2DL, Src) :-
         ruleCompletion(@A, Pid, C),
         totalRules(@A, Pid, T),
-        ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL),
+        ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src),
         T == C.
 
 

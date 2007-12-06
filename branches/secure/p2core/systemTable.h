@@ -20,6 +20,7 @@
   #define NODEID            "sys::nodeId"
   #define ARGUMENT          "sys::argument"
   #define PROGRAM           "sys::program"
+  #define PERROR            "sys::error"
   #define GLOBAL_EVENT      "sys::globalEvent"
   #define SIDE_AFFECT       "sys::sideAffect"
   #define REWRITE           "sys::rewrite"
@@ -135,7 +136,13 @@ TABLEDEF(SIDE_AFFECT, CommonTable::theKey(CommonTable::KEY45), \
 TABLEDEF(PROGRAM, CommonTable::theKey(CommonTable::KEY2), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("PID", 2) \
          SCHEMA("NAME", 3) SCHEMA(REWRITE, 4) SCHEMA("STATUS", 5) \
-         SCHEMA("TEXT", 6) SCHEMA("RESULT_MESSAGE", 7) SCHEMA("P2DL", 8))
+         SCHEMA("TEXT", 6) SCHEMA("RESULT_MESSAGE", 7) SCHEMA("P2DL", 8) \
+         SCHEMA("SOURCE", 9))
+
+TABLEDEF(PERROR, CommonTable::theKey(CommonTable::KEY25), \
+         SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("PID", 2) \
+         SCHEMA("PNAME", 3) SCHEMA("NODEID", 4) SCHEMA("CODE", 5) \
+         SCHEMA("DESC", 6))
 
 TABLEDEF(REWRITE, CommonTable::theKey(CommonTable::KEY34),
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("RID", 2) \
@@ -266,6 +273,7 @@ FUNCTIONDEF("f_mktype",      2, "mktype")
 FUNCTIONDEF("f_mkbool",      3, "mkbool")
 FUNCTIONDEF("f_posattr",     2, "posattr")
 FUNCTIONDEF("f_aggattr",     1, "aggattr")
+FUNCTIONDEF("f_groupbyattr", 1, "groupbyattr")
 FUNCTIONDEF("f_merge",       2, "merge")
 FUNCTIONDEF("f_sortattr",    4, "sortattr")
 FUNCTIONDEF("f_prefix",      2, "prefix")
@@ -277,6 +285,7 @@ FUNCTIONDEF("f_idgen",       0, "idgen")
 FUNCTIONDEF("f_tostr",       1, "tostr")
 FUNCTIONDEF("f_tovar",       1, "tovar")
 FUNCTIONDEF("f_istheta",     1, "istheta")
+FUNCTIONDEF("f_subset",      2, "subset")
 
 FUNCTIONDEF("f_status",       2, "status")
 FUNCTIONDEF("f_selectivity",  3, "selectivity")

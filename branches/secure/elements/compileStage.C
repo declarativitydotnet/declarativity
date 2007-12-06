@@ -48,10 +48,6 @@ TuplePtr CompileStage::simple_action(TuplePtr p)
   CommonTablePtr       programTbl = catalog->table(PROGRAM);
   CommonTablePtr       rewriteTbl = catalog->table(REWRITE);
 
-  if ((*p)[catalog->attribute(PROGRAM, "STATUS")]->toString() == "error") {
-    return TuplePtr(); 
-  }
-
   CommonTable::Key indexKey;
   CommonTable::Key lookupKey;
   indexKey.push_back(catalog->attribute(REWRITE, "INPUT"));

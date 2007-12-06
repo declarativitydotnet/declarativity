@@ -1,20 +1,20 @@
 namespace gevent {
   materialize(commit, infinity, 1, keys(2)).
 
-  i0 ::sys::program(@A, Pid, Name, Rewrite, "gevent", Text, Msg, P2DL) :-
+  i0 ::sys::program(@A, Pid, Name, Rewrite, "gevent", Text, Msg, P2DL, Src) :-
         commitRewrite(@A, Pid),
         commit(@A, Pid),
-        ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL).
+        ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
 
   i1 commit(@A, Pid) :-
-        programEvent(@A, Pid, _, _, _, _, _, _).
+        programEvent(@A, Pid, _, _, _, _, _, _, Src).
 
   i2 commitRewrite(@A, Pid) :- commit(@A, Pid).
 
   i3 delete commit(@A, Pid) :- commitRewrite(@A, Pid).
 
   ge1 globalEvent(@A, Pid, Rid, PredID, Name, ECA, f_tovar(Schema)) :-
-        programEvent(@A, Pid, _, _, _, _, _, _),
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
         ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
         ::sys::predicate(@A, HeadID, Rid, _, _, _, _, HeadSchema, _, _, _),
         ::sys::predicate(@A, PredID, Rid, _, Name, _, ECA, Schema, Pos, _, _),
@@ -23,7 +23,7 @@ namespace gevent {
         Pos == 1, ECA != "RECV".
 
   ge2 periodicEvent(@A, Pid, Rid, PredID, Name, ECA, Schema) :-
-        programEvent(@A, Pid, _, _, _, _, _, _),
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
         ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
         ::sys::predicate(@A, PredID, Rid, _, Name, _, ECA, Schema, _, _, _),
         Name == "periodic".
