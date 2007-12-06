@@ -57,15 +57,18 @@ def usage():
 def script_output(stdout_11111, stdout_22222):
 	output = ""
         for line in stdout_11111.readlines():
-		print line
+		#print line
 		p = re.compile('^[#][#]Print.*$',re.DOTALL)
                 if(p.match(line)):
                         output = output + line
 	
 	p = re.compile(r"""
-		(^[#][#] Print \[AddAction!link!r5ECAMat!localhost:11111\]: \s*
-		\[link \(localhost:22222, \s* localhost:11111, \s* 235691, \s* secondLocSpec \)\])
-		""", re.VERBOSE)
+		([#][#]Print\[AddAction: \s* RULE \s* rule_link_add\]: \s*
+                \[link\(localhost:22222, \s* localhost:11111, \s* [0-9]+, \s* secondLocSpec\)\]
+                .*
+                [#][#]Print\[InsertEvent: \s* RULE \s* rule_link_DELTA\]: \s*
+                \[link\(localhost:22222, \s* localhost:11111, \s* [0-9]+, \s* secondLocSpec\)\])
+                """, re.VERBOSE|re.DOTALL)
 	
 	flag = p.match(output)
         if flag == 0:
@@ -74,14 +77,19 @@ def script_output(stdout_11111, stdout_22222):
 
 	output = ""
         for line in stdout_22222.readlines():
-                output = output + line
+                p = re.compile('^[#][#]Print.*$',re.DOTALL)
+                if(p.match(line)):
+                        output = output + line
 
 	p = re.compile(r"""
-                (^[#][#] Print \[AddAction!link!r3_eca!localhost:22222 \]: \s*
-		\[link \(localhost:22222, \s* localhost:11111, \s* 235691, \s* firstLocSpec \)\])
-		""", re.VERBOSE)
+                ([#][#]Print\[AddAction: \s* RULE \s* rule_link_add\]: \s*
+                \[link\(localhost:22222, \s* localhost:11111, \s* [0-9]+, \s* firstLocSpec\)\]
+                .*
+                [#][#]Print\[InsertEvent: \s* RULE \s* rule_link_DELTA\]: \s*
+                \[link\(localhost:22222, \s* localhost:11111, \s* [0-9]+, \s* firstLocSpec\)\])
+                """, re.VERBOSE|re.DOTALL)
 
-        flag = p.match(output)
+        flag = p.search(output)
         if flag:
                 print "Test passed"
                 #print flag.group()
