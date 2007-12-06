@@ -33,10 +33,11 @@ import sys
 # Usage function
 def usage():
         print """
-                joinOrder.py -E <planner path> -B <olg path>
+                joinOrder.py -E <planner path> -B <olg path> -T <time in seconds>
 
                 -E              planner path
                 -B              olg path
+		-T              time (secs) for test to run
                 -h              prints usage message
         """
 
@@ -44,18 +45,16 @@ def usage():
 def script_output(stdout):
         output = ""
         for line in stdout.readlines():
-                output = output + line
+		p = re.compile('^[#][#]Print.*$',re.DOTALL)
+                if(p.match(line)):
+                	output = output + line
 
 	p = re.compile(r"""
-		(^[#][#]Print\[SendAction!prodEvent1!q1_eca!localhost:10000\]:\s*
-		\[prodEvent1\(localhost:10000,\s* 1 \)\]
-        	[\n][#][#]Print\[SendAction!prodEvent2!q2_eca!localhost:10000\]:\s*
-		\[prodEvent2\(localhost:10000,\s* 1 \)\]$)
+		(^[#][#]Print\[SendAction: \s* RULE \s* q1\]: \s* \[prodEvent1\(localhost:10000, \s* 1\)\] \s*
+		[#][#]Print\[SendAction: \s* RULE \s* q2\]: \s* \[prodEvent2\(localhost:10000, \s* 1\)\]$)
 		|
-		(^[#][#]Print\[SendAction!prodEvent2!q2_eca!localhost:10000\]:\s*  
-                \[prodEvent2\(localhost:10000,\s* 1 \)\]		
-    		[\n][#][#]Print\[SendAction!prodEvent1!q1_eca!localhost:10000\]:\s*  
-                \[prodEvent1\(localhost:10000,\s* 1 \)\]$)
+		(^[#][#]Print\[SendAction: \s* RULE \s* q2\]: \s* \[prodEvent2\(localhost:10000, \s* 1\)\]
+		[#][#]Print\[SendAction: \s* RULE \s* q1\]: \s* \[prodEvent1\(localhost:10000, \s* 1\)\]$)
 		""", re.VERBOSE)
 
 	flag = p.match(output)
@@ -73,18 +72,20 @@ def kill_pid(stdout, pid):
         #print "program killed"
         script_output(stdout)
 
-opt, arg = getopt.getopt(sys.argv[1:], 'B:E:h')
+opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
 
 for key,val in opt:
         if key=='-B':
                 olg_path = val
         elif key == '-E':
                 executable_path = val
+	elif key == '-T':
+                time_interval = val
         elif key == '-h':
                 usage()
                 sys.exit(0)
 try:
-        args=[executable_path , '-o', olg_path +'/joinOrder.olg', '2>&1']
+        args=[executable_path , '-o', os.path.join(olg_path, 'joinOrder.olg'), '2>&1']
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 except OSError, e:
         #print "Execution failed"
@@ -94,5 +95,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(3, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(int(time_interval), kill_pid, [p.stdout, p.pid])
         t.start()

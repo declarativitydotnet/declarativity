@@ -53,10 +53,11 @@ import subprocess
 # Usage function
 def usage():
         print """
-                aggregates.py -E <planner path> -B <olg path>
+                aggregates.py -E <planner path> -B <olg path> -T <time in seconds>
 
                 -E              planner path
                 -B              olg path
+	        -T              time (secs) for test to run
                 -h              prints usage message
         """
 
@@ -134,18 +135,20 @@ def kill_pid(stdout_20202, stdout_20203, stdout_20204, pid_20202, pid_20203, pid
 	script_output(stdout_20202, stdout_20203, stdout_20204)
 
 
-opt, arg = getopt.getopt(sys.argv[1:], 'B:E:h')
+opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
 
 for key,val in opt:
         if key=='-B':
                 olg_path = val
         elif key == '-E':
                 executable_path = val
+	elif key == '-T':
+                time_interval = val
         elif key == '-h':
                 usage()
                 sys.exit(0)
 try:
-        args=[executable_path , '-DME=\"localhost:20202\"', '-DNEIGHBOR1=\"localhost:20203\"', '-DNEIGHBOR2=\"localhost:20204\"', '-o', olg_path +'/aggregates.olg', '-n', 'localhost', '-p', '20202', '2>&1']
+        args=[executable_path , '-DME=\"localhost:20202\"', '-DNEIGHBOR1=\"localhost:20203\"', '-DNEIGHBOR2=\"localhost:20204\"', '-o', os.path.join(olg_path,'aggregates.olg'), '-n', 'localhost', '-p', '20202', '2>&1']
         p_20202 = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 except OSError, e:
         #print "Execution failed"
@@ -156,7 +159,7 @@ pid_20202 = p_20202.pid
 #print pid_20202
 
 try:
-        args=[executable_path , '-DME=\"localhost:20203\"', '-DNEIGHBOR1=\"localhost:20202\"', '-DNEIGHBOR2=\"localhost:20204\"', '-o', olg_path +'/aggregates.olg', '-n', 'localhost', '-p', '20203', '2>&1']
+        args=[executable_path , '-DME=\"localhost:20203\"', '-DNEIGHBOR1=\"localhost:20202\"', '-DNEIGHBOR2=\"localhost:20204\"', '-o', os.path.join(olg_path,'aggregates.olg'), '-n', 'localhost', '-p', '20203', '2>&1']
 	p_20203 = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 except OSError, e:
         #print "Execution failed"
@@ -167,7 +170,7 @@ pid_20203 = p_20203.pid
 #print pid_20203
 
 try:
-        args=[executable_path , '-DME=\"localhost:20204\"', '-DNEIGHBOR1=\"localhost:20202\"', '-DNEIGHBOR2=\"localhost:20203\"', '-o', olg_path +'/aggregates.olg', '-n', 'localhost', '-p', '20204', '2>&1']
+        args=[executable_path , '-DME=\"localhost:20204\"', '-DNEIGHBOR1=\"localhost:20202\"', '-DNEIGHBOR2=\"localhost:20203\"', '-o', os.path.join(olg_path,'aggregates.olg'), '-n', 'localhost', '-p', '20204', '2>&1']
 	p_20204 = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 except OSError, e:
         #print "Execution failed"
@@ -178,5 +181,5 @@ pid_20204 = p_20204.pid
 
 
 if os.getpid() != pid_20202 and os.getpid() != pid_20203 and os.getpid() != pid_20204:
-	t = threading.Timer(60, kill_pid, [p_20202.stdout, p_20203.stdout, p_20204.stdout, pid_20202, pid_20203, pid_20204])
+	t = threading.Timer(int(time_interval), kill_pid, [p_20202.stdout, p_20203.stdout, p_20204.stdout, pid_20202, pid_20203, pid_20204])
         t.start()

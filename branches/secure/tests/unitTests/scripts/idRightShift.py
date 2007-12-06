@@ -33,10 +33,11 @@ import sys
 # Usage function
 def usage():
         print """
-                idRightShift.py -E <planner path> -B <unit test overlog path>
+                idRightShift.py -E <planner path> -B <unit test overlog path> -T <time in seconds>
 
                 -E              planner path
                 -B              unit test overlog path
+		-T              time (secs) for test to run
                 -h              prints usage message
         """
 
@@ -70,13 +71,15 @@ def kill_pid(stdout, pid):
         script_output(stdout)
 
 
-opt, arg = getopt.getopt(sys.argv[1:], 'B:E:h')
+opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
 
 for key,val in opt:
         if key=='-B':
                 olg_path = val
         elif key == '-E':
                 executable_path = val
+	elif key == '-T':
+                time_interval = val
         elif key == '-h':
                 usage()
                 sys.exit(0)
@@ -91,5 +94,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(40, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(int(time_interval), kill_pid, [p.stdout, p.pid])
         t.start()

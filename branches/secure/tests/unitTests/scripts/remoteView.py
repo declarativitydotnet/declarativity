@@ -80,7 +80,7 @@ def kill_pid(stdout_10001, stdout_10000 , pid_10001, pid_10000):
         script_output(stdout_10001, stdout_10000)
 
 
-opt, arg = getopt.getopt(sys.argv[1:], 'B:E:h')
+opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
 
 for key,val in opt:
         if key=='-B':
