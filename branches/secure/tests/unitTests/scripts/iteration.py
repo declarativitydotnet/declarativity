@@ -15,9 +15,9 @@
 # Assumption - program is running at localhost:10000
 #
 # Expected output - (here the order of the tuples should be the same as written below)
-#	##Print[SendAction!createDigit!i1_eca!localhost:10000]:  [createDigit(localhost:10000, 1)]
-#	##Print[SendAction!createDigit!i2_eca!localhost:10000]:  [createDigit(localhost:10000, 2)]
-#	##Print[SendAction!createDigit!i2_eca!localhost:10000]:  [createDigit(localhost:10000, 3)]
+#	##Print[SendAction: RULE i1]:  [createDigit(localhost:10000, 1)]
+#	##Print[SendAction: RULE i2]:  [createDigit(localhost:10000, 2)]
+#	##Print[SendAction: RULE i2]:  [createDigit(localhost:10000, 3)]
 #
 #
 ####################################
@@ -47,15 +47,14 @@ def usage():
 def script_output(stdout):
         output = ""
         for line in stdout.readlines():
-                output = output + line
+                p = re.compile('^[#][#]Print.*$',re.DOTALL)
+                if(p.match(line)):
+                        output = output + line
 
 	p = re.compile(r"""
-		(^[#][#]Print\[SendAction!createDigit!i1_eca!localhost:10000\]:\s+
-		\[createDigit\(localhost:10000,\s* 1 \)\]
-		[\n][#][#]Print\[SendAction!createDigit!i2_eca!localhost:10000\]:\s+
-		\[createDigit\(localhost:10000,\s* 2 \)\]
-		[\n][#][#]Print\[SendAction!createDigit!i2_eca!localhost:10000\]:\s+
-		\[createDigit\(localhost:10000,\s* 3 \)\]$)
+		(^[#][#]Print\[SendAction: \s* RULE \s* i1\]: \s* \[createDigit\(localhost:10000, \s* 1\)\] \s*
+		[#][#]Print\[SendAction: \s* RULE \s* i2\]: \s* \[createDigit\(localhost:10000, \s* 2\)\] \s*
+	        [#][#]Print\[SendAction: \s* RULE \s* i2\]: \s* \[createDigit\(localhost:10000, \s* 3\)\]$)
 		""", re.VERBOSE)
 
 	flag = p.match(output)
@@ -95,5 +94,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(3, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(40, kill_pid, [p.stdout, p.pid])
         t.start()

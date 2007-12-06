@@ -15,8 +15,8 @@
 # Assumption - program is running at localhost:10000
 #
 # Expected output - (the order of the results can vary)
-#	##Print[SendAction!generateUpdateEvent!g1_eca!localhost:10000]:  [generateUpdateEvent(localhost:10000, localhost:10001)]
-#	##Print[SendAction!generateUpdateEvent!g1_eca!localhost:10000]:  [generateUpdateEvent(localhost:10000, localhost:10002)]
+#	##Print[SendAction: RULE g1]:  [generateUpdateEvent(localhost:10000, localhost:10002)]
+	##Print[SendAction: RULE g1]:  [generateUpdateEvent(localhost:10000, localhost:10001)]	
 #
 #
 ####################################
@@ -45,18 +45,16 @@ def usage():
 def script_output(stdout):
         output = ""
         for line in stdout.readlines():
-                output = output + line
+		p = re.compile('^[#][#]Print.*$',re.DOTALL)
+                if(p.match(line)):
+                	output = output + line
 	
 	p = re.compile(r"""
-  		(^[#][#]Print\[SendAction!generateUpdateEvent!g1_eca!localhost:10000\]:
-		[ ][ ]\[generateUpdateEvent\(localhost:10000,[ ]localhost:10001\)\]
-       		[\n][#][#]Print\[SendAction!generateUpdateEvent!g1_eca!localhost:10000\]:
-		[ ][ ]\[generateUpdateEvent\(localhost:10000,[ ]localhost:10002\)\]$)
+  		(^[#][#]Print\[SendAction: \s* RULE \s* g1\]: \s* \[generateUpdateEvent\(localhost:10000, \s* localhost:10002\)\]\s*
+		[#][#]Print\[SendAction: \s* RULE \s* g1\]: \s* \[generateUpdateEvent\(localhost:10000, \s* localhost:10001\)\]
 		|
-		(^[#][#]Print\[SendAction!generateUpdateEvent!g1_eca!localhost:10000\]:  
-                [ ][ ]\[generateUpdateEvent\(localhost:10000,[ ]localhost:10002\)\]
-		[\n][#][#]Print\[SendAction!generateUpdateEvent!g1_eca!localhost:10000\]:
-                [ ][ ]\[generateUpdateEvent\(localhost:10000,[ ]localhost:10001\)\]$)
+		[#][#]Print\[SendAction: \s* RULE \s* g1\]: \s* \[generateUpdateEvent\(localhost:10000, \s* localhost:10001\)\]
+		[#][#]Print\[SendAction: \s* RULE \s* g1\]: \s* \[generateUpdateEvent\(localhost:10000, \s* localhost:10002\)\]$)
 		""", re.VERBOSE)
 
 	flag = p.match(output)
@@ -94,5 +92,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(3, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(40, kill_pid, [p.stdout, p.pid])
         t.start()

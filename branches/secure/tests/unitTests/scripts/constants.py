@@ -55,7 +55,6 @@ def script_output(stdout):
 			lines.append(line.rstrip())
 	
 	lines.sort()
-	print lines
 	i = 1
 	for line in lines:
 		if i == 1:

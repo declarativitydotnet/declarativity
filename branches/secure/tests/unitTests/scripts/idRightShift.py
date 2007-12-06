@@ -15,7 +15,7 @@
 # Assumption - program is running at localhost:10000
 #
 #Expected output - 
-#	##Print[SendAction!tableInitialization!rt0_eca!localhost:10000]:  [tableInitialization(localhost:10000, 0x000000000000000000000000000002468acf1215I)]
+#	##Print[SendAction: RULE rt0]:  [tableInitialization(localhost:10000, 0x000000000000000000000000000002468acf1215I)]
 #
 #
 ####################################
@@ -33,10 +33,10 @@ import sys
 # Usage function
 def usage():
         print """
-                idRightShift.py -E <planner path> -B <olg path>
+                idRightShift.py -E <planner path> -B <unit test overlog path>
 
                 -E              planner path
-                -B              olg path
+                -B              unit test overlog path
                 -h              prints usage message
         """
 
@@ -44,10 +44,12 @@ def usage():
 def script_output(stdout):
         output = ""
         for line in stdout.readlines():
-                output = output + line
+                p = re.compile('^[#][#]Print.*$',re.DOTALL)
+                if(p.match(line)):
+                        output = output + line
 
 	p = re.compile(r"""
-                (^[#][#] Print\[SendAction!tableInitialization!rt0_eca!localhost:10000\]: \s*
+                (^[#][#]Print\[SendAction: \s* RULE \s* rt0\]: \s*
 		\[tableInitialization\(localhost:10000, \s* 0x000000000000000000000000000002468acf1215I\)\])
 		""", re.VERBOSE)
 	
@@ -79,7 +81,7 @@ for key,val in opt:
                 usage()
                 sys.exit(0)
 try:
-        args=[executable_path , '-o', olg_path +'/idRightShift.olg', '2>&1']
+        args=[executable_path , '-o', os.path.join(olg_path, 'idRightShift.olg'), '2>&1']
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 except OSError, e:
         #print "Execution failed"
@@ -89,5 +91,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(3, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(40, kill_pid, [p.stdout, p.pid])
         t.start()
