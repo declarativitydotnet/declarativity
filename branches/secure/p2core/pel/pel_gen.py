@@ -204,7 +204,7 @@ for op, ar, va, desc in [
 
 
 
-for i in [ "i32", "u32", "i64", "u64", "dbl", "str", "time", "time_duration", "id" ]:
+for i in [ "i64", "dbl", "str", "time", "time_duration", "id" ]:
   emit_opcode("->"+i, 1, "CONV_" + i.upper(), "Convert to type "+i)
 
 warning="""

@@ -12,8 +12,7 @@
 
 #include <iostream>
 #include "dupRemove.h"
-#include "val_uint64.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "val_double.h"
 #include "val_str.h"
 #include "val_tuple.h"
@@ -29,8 +28,8 @@ DupRemove::DupRemove(TuplePtr args)
 
 bool DupRemove::Connection::received(TuplePtr tp) {
   ValuePtr src = (*tp)[SRC]; 
-  SeqNum seq  = Val_UInt64::cast((*tp)[SEQ]);
-  SeqNum cseq = Val_UInt64::cast((*tp)[CUMSEQ]);
+  SeqNum seq  = Val_Int64::cast((*tp)[SEQ]);
+  SeqNum cseq = Val_Int64::cast((*tp)[CUMSEQ]);
 
   if (_cum_seq < cseq) {
     if (_cum_seq && _receiveMap.size() > 0) {
@@ -68,7 +67,7 @@ int DupRemove::push(int port, TuplePtr tp, b_cbv cb)
   assert(port == 0);
 
   ValuePtr src = (*tp)[SRC];
-  SeqNum  cseq = Val_UInt64::cast((*tp)[CUMSEQ]);
+  SeqNum  cseq = Val_Int64::cast((*tp)[CUMSEQ]);
   ConnectionPtr cp = lookup(src);
 
   if (cseq == 0 && cp) {

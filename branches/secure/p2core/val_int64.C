@@ -15,9 +15,6 @@
 
 #include "val_int64.h"
 
-#include "val_uint32.h"
-#include "val_int32.h"
-#include "val_uint64.h"
 #include "val_double.h"
 #include "val_str.h"
 #include "val_null.h"
@@ -50,12 +47,6 @@ int64_t Val_Int64::cast(ValuePtr v) {
   switch (v->typeCode()) {
   case Value::INT64:
     return (static_cast<Val_Int64 *>(v.get()))->i;
-  case Value::INT32:
-    return (int64_t)(Val_Int32::cast(v));
-  case Value::UINT32:
-    return (int64_t)(Val_UInt32::cast(v));
-  case Value::UINT64:
-    return (int64_t)(Val_UInt64::cast(v));
   case Value::DOUBLE:
     return (int64_t)(Val_Double::cast(v));
   case Value::NULLV:

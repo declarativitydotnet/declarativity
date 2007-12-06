@@ -15,16 +15,12 @@
 #include "value.h"
 #include "val_null.h"
 #include "val_str.h"
-#include "val_int32.h"
-#include "val_uint32.h"
 #include "val_int64.h"
-#include "val_uint64.h"
 #include "val_double.h"
 #include "val_opaque.h"
 #include "val_tuple.h"
 #include "val_time.h"
 #include "val_id.h"
-#include "val_ip_addr.h"
 #include "val_set.h"
 
 #include "testSets.h"
@@ -285,18 +281,18 @@ void testIntersection()
    
    // Populate the sets with values (which should henceforth retain 
    // their ordering.
-   test1->insert(Val_Int32::mk(42));
-   test1->insert(Val_Int32::mk(17));
-   test1->insert(Val_Int32::mk(570));
-   test1->insert(Val_Int32::mk(-12));
-   test1->insert(Val_Int32::mk(0));
-   test1->insert(Val_Int32::mk(-450));
+   test1->insert(Val_Int64::mk(42));
+   test1->insert(Val_Int64::mk(17));
+   test1->insert(Val_Int64::mk(570));
+   test1->insert(Val_Int64::mk(-12));
+   test1->insert(Val_Int64::mk(0));
+   test1->insert(Val_Int64::mk(-450));
    
-   test2->insert(Val_Int32::mk(42));
-   test2->insert(Val_Int32::mk(97));
-   test2->insert(Val_Int32::mk(-12));
-   test2->insert(Val_Int32::mk(-5));   
-   test2->insert(Val_Int32::mk(570));
+   test2->insert(Val_Int64::mk(42));
+   test2->insert(Val_Int64::mk(97));
+   test2->insert(Val_Int64::mk(-12));
+   test2->insert(Val_Int64::mk(-5));   
+   test2->insert(Val_Int64::mk(570));
 
    test3->insert(Val_Str::mk("garply"));
    test3->insert(Val_Str::mk("bar"));
@@ -311,20 +307,20 @@ void testIntersection()
    testSetsSize(*empty, 0);
 
    SetPtr intersectSet = Set::mk();
-   intersectSet->insert(Val_Int32::mk(-12));
-   intersectSet->insert(Val_Int32::mk(42));
-   intersectSet->insert(Val_Int32::mk(570));
+   intersectSet->insert(Val_Int64::mk(-12));
+   intersectSet->insert(Val_Int64::mk(42));
+   intersectSet->insert(Val_Int64::mk(570));
 
    testSetsIntersect(test1, test2, intersectSet);
    
    SetPtr test1sorted = Set::mk();
    
-   test1sorted->insert(Val_Int32::mk(-450));
-   test1sorted->insert(Val_Int32::mk(-12));
-   test1sorted->insert(Val_Int32::mk(0));
-   test1sorted->insert(Val_Int32::mk(17));
-   test1sorted->insert(Val_Int32::mk(42));
-   test1sorted->insert(Val_Int32::mk(570));
+   test1sorted->insert(Val_Int64::mk(-450));
+   test1sorted->insert(Val_Int64::mk(-12));
+   test1sorted->insert(Val_Int64::mk(0));
+   test1sorted->insert(Val_Int64::mk(17));
+   test1sorted->insert(Val_Int64::mk(42));
+   test1sorted->insert(Val_Int64::mk(570));
    
    testSetsIntersect(test1, empty, empty);
    testSetsIntersect(test1, test3, empty);
@@ -345,21 +341,21 @@ void testSubset()
    
    // Populate the sets with values (which should henceforth retain 
    // their ordering.
-   test1->insert(Val_Int32::mk(42));
-   test1->insert(Val_Int32::mk(17));
-   test1->insert(Val_Int32::mk(570));
-   test1->insert(Val_Int32::mk(-12));
-   test1->insert(Val_Int32::mk(0));
-   test1->insert(Val_Int32::mk(-450));
+   test1->insert(Val_Int64::mk(42));
+   test1->insert(Val_Int64::mk(17));
+   test1->insert(Val_Int64::mk(570));
+   test1->insert(Val_Int64::mk(-12));
+   test1->insert(Val_Int64::mk(0));
+   test1->insert(Val_Int64::mk(-450));
    
-   test2->insert(Val_Int32::mk(42));
-   test2->insert(Val_Int32::mk(-12));
-   test2->insert(Val_Int32::mk(570));
+   test2->insert(Val_Int64::mk(42));
+   test2->insert(Val_Int64::mk(-12));
+   test2->insert(Val_Int64::mk(570));
 
-   test3->insert(Val_Int32::mk(32));
-   test3->insert(Val_Int32::mk(42));
-   test3->insert(Val_Int32::mk(-12));
-   test3->insert(Val_Int32::mk(570));
+   test3->insert(Val_Int64::mk(32));
+   test3->insert(Val_Int64::mk(42));
+   test3->insert(Val_Int64::mk(-12));
+   test3->insert(Val_Int64::mk(570));
 
    // Test set sizes
    testSetsSize(*test1, 6);
@@ -392,18 +388,18 @@ void testDifference()
    
    // Populate the sets with values (which should henceforth retain 
    // their ordering.
-   test1->insert(Val_Int32::mk(42));
-   test1->insert(Val_Int32::mk(17));
-   test1->insert(Val_Int32::mk(570));
-   test1->insert(Val_Int32::mk(-12));
-   test1->insert(Val_Int32::mk(0));
-   test1->insert(Val_Int32::mk(-450));
+   test1->insert(Val_Int64::mk(42));
+   test1->insert(Val_Int64::mk(17));
+   test1->insert(Val_Int64::mk(570));
+   test1->insert(Val_Int64::mk(-12));
+   test1->insert(Val_Int64::mk(0));
+   test1->insert(Val_Int64::mk(-450));
    
-   test2->insert(Val_Int32::mk(42));
-   test2->insert(Val_Int32::mk(97));
-   test2->insert(Val_Int32::mk(-12));
-   test2->insert(Val_Int32::mk(-5));   
-   test2->insert(Val_Int32::mk(570));
+   test2->insert(Val_Int64::mk(42));
+   test2->insert(Val_Int64::mk(97));
+   test2->insert(Val_Int64::mk(-12));
+   test2->insert(Val_Int64::mk(-5));   
+   test2->insert(Val_Int64::mk(570));
 
    test3->insert(Val_Str::mk("garply"));
    test3->insert(Val_Str::mk("bar"));
@@ -424,9 +420,9 @@ void testDifference()
    testSetsSize(*empty, 0);
 
    SetPtr differenceSets = Set::mk();
-   differenceSets->insert(Val_Int32::mk(17));
-   differenceSets->insert(Val_Int32::mk(0));
-   differenceSets->insert(Val_Int32::mk(-450));
+   differenceSets->insert(Val_Int64::mk(17));
+   differenceSets->insert(Val_Int64::mk(0));
+   differenceSets->insert(Val_Int64::mk(-450));
 
    SetPtr differenceSetsStr = Set::mk();
    differenceSetsStr->insert(Val_Str::mk("garply"));
@@ -435,12 +431,12 @@ void testDifference()
    
    SetPtr test1sorted = Set::mk();
    
-   test1sorted->insert(Val_Int32::mk(-450));
-   test1sorted->insert(Val_Int32::mk(-12));
-   test1sorted->insert(Val_Int32::mk(0));
-   test1sorted->insert(Val_Int32::mk(17));
-   test1sorted->insert(Val_Int32::mk(42));
-   test1sorted->insert(Val_Int32::mk(570));
+   test1sorted->insert(Val_Int64::mk(-450));
+   test1sorted->insert(Val_Int64::mk(-12));
+   test1sorted->insert(Val_Int64::mk(0));
+   test1sorted->insert(Val_Int64::mk(17));
+   test1sorted->insert(Val_Int64::mk(42));
+   test1sorted->insert(Val_Int64::mk(570));
    
    testSetsDifference(test1, empty, test1);
    testSetsDifference(test1, test3, test1);
@@ -461,18 +457,18 @@ void testMembership()
    
    // Populate the sets with values (which should henceforth retain 
    // their ordering.
-   test1->insert(Val_Int32::mk(42));
-   test1->insert(Val_Int32::mk(17));
-   test1->insert(Val_Int32::mk(570));
-   test1->insert(Val_Int32::mk(-12));
-   test1->insert(Val_Int32::mk(0));
-   test1->insert(Val_Int32::mk(-450));
+   test1->insert(Val_Int64::mk(42));
+   test1->insert(Val_Int64::mk(17));
+   test1->insert(Val_Int64::mk(570));
+   test1->insert(Val_Int64::mk(-12));
+   test1->insert(Val_Int64::mk(0));
+   test1->insert(Val_Int64::mk(-450));
    
-   test2->insert(Val_Int32::mk(42));
-   test2->insert(Val_Int32::mk(97));
-   test2->insert(Val_Int32::mk(-12));
-   test2->insert(Val_Int32::mk(-5));   
-   test2->insert(Val_Int32::mk(570));
+   test2->insert(Val_Int64::mk(42));
+   test2->insert(Val_Int64::mk(97));
+   test2->insert(Val_Int64::mk(-12));
+   test2->insert(Val_Int64::mk(-5));   
+   test2->insert(Val_Int64::mk(570));
 
    test3->insert(Val_Str::mk("garply"));
    test3->insert(Val_Str::mk("bar"));
@@ -490,9 +486,9 @@ void testMembership()
    TEST_SETMEMBER(*test3, Str, "garply", true);
    TEST_SETMEMBER(*test3, Str, "nothere", false);
    TEST_SETMEMBER(*test3, Double, 4.2, false);
-   TEST_SETMEMBER(*test3, Int32, 75, false);
-   TEST_SETMEMBER(*test2, Int32, 75, false);
-   TEST_SETMEMBER(*test1, Int32, -12, true);
+   TEST_SETMEMBER(*test3, Int64, 75, false);
+   TEST_SETMEMBER(*test2, Int64, 75, false);
+   TEST_SETMEMBER(*test1, Int64, -12, true);
    TEST_SETMEMBER(*test1, Str, "NotANumber", false);
 }
 
@@ -510,18 +506,18 @@ void testSetUnion()
    
    // Populate the sets with values (which should henceforth retain 
    // their ordering.
-   test1->insert(Val_Int32::mk(42));
-   test1->insert(Val_Int32::mk(17));
-   test1->insert(Val_Int32::mk(570));
-   test1->insert(Val_Int32::mk(-12));
-   test1->insert(Val_Int32::mk(0));
-   test1->insert(Val_Int32::mk(-450));
+   test1->insert(Val_Int64::mk(42));
+   test1->insert(Val_Int64::mk(17));
+   test1->insert(Val_Int64::mk(570));
+   test1->insert(Val_Int64::mk(-12));
+   test1->insert(Val_Int64::mk(0));
+   test1->insert(Val_Int64::mk(-450));
    
-   test2->insert(Val_Int32::mk(42));
-   test2->insert(Val_Int32::mk(97));
-   test2->insert(Val_Int32::mk(-12));
-   test2->insert(Val_Int32::mk(-5));   
-   test2->insert(Val_Int32::mk(570));
+   test2->insert(Val_Int64::mk(42));
+   test2->insert(Val_Int64::mk(97));
+   test2->insert(Val_Int64::mk(-12));
+   test2->insert(Val_Int64::mk(-5));   
+   test2->insert(Val_Int64::mk(570));
 
    test3->insert(Val_Str::mk("garply"));
    test3->insert(Val_Str::mk("bar"));
@@ -541,23 +537,23 @@ void testSetUnion()
 void testCompare() {
    // (1,2,3)
    SetPtr test1 = Set::mk();
-   test1->insert(Val_Int32::mk(1));
-   test1->insert(Val_Int32::mk(2));
-   test1->insert(Val_Int32::mk(3));
+   test1->insert(Val_Int64::mk(1));
+   test1->insert(Val_Int64::mk(2));
+   test1->insert(Val_Int64::mk(3));
    // (2,3,4)
    SetPtr test2 = Set::mk();
-   test2->insert(Val_Int32::mk(2));
-   test2->insert(Val_Int32::mk(3));
-   test2->insert(Val_Int32::mk(4));
+   test2->insert(Val_Int64::mk(2));
+   test2->insert(Val_Int64::mk(3));
+   test2->insert(Val_Int64::mk(4));
    // (5)
    SetPtr test3 = Set::mk();
-   test3->insert(Val_Int32::mk(5));
+   test3->insert(Val_Int64::mk(5));
    // (1,2,3,4)
    SetPtr test4 = Set::mk();
-   test4->insert(Val_Int32::mk(1));
-   test4->insert(Val_Int32::mk(2));
-   test4->insert(Val_Int32::mk(3));
-   test4->insert(Val_Int32::mk(4));
+   test4->insert(Val_Int64::mk(1));
+   test4->insert(Val_Int64::mk(2));
+   test4->insert(Val_Int64::mk(3));
+   test4->insert(Val_Int64::mk(4));
    
    testSetsCompare(test1, test1, 0);
    

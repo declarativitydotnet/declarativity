@@ -19,9 +19,7 @@
 #include <sstream>
 #include <iostream>
 
-#include "val_int32.h"
 #include "val_int64.h"
-#include "val_uint64.h"
 #include "val_str.h"
 #include "val_double.h"
 #include "val_null.h"

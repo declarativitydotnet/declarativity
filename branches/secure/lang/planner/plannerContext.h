@@ -22,7 +22,7 @@
 #include "commonTable.h"
 #include "tuple.h"
 #include "val_str.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "element.h"
 #include "elementRegistry.h"
 

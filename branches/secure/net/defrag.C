@@ -14,8 +14,7 @@
 #include "val_str.h"
 #include "val_tuple.h"
 #include "val_null.h"
-#include "val_uint64.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "val_opaque.h"
 #include "xdrbuf.h"
 #include "netglobals.h"
@@ -78,13 +77,13 @@ TuplePtr Defrag::pull(int port, b_cbv cb)
 
 void Defrag::defragment(TuplePtr t)
 {
-  uint64_t seq_num = Val_UInt64::cast((*t)[SEQ]);
-  unsigned offset  = Val_UInt32::cast((*t)[SEQ+1]);
-  unsigned chunks  = Val_UInt32::cast((*t)[SEQ+2]);
+  uint64_t seq_num = Val_Int64::cast((*t)[SEQ]);
+  unsigned offset  = Val_Int64::cast((*t)[SEQ+1]);
+  unsigned chunks  = Val_Int64::cast((*t)[SEQ+2]);
 
   for (FragMap::iterator iter = fragments_.find(seq_num); 
        iter != fragments_.end(); iter++) {
-    if (Val_UInt32::cast((*iter->second)[SEQ+1]) == offset) {
+    if (Val_Int64::cast((*iter->second)[SEQ+1]) == offset) {
       ELEM_INFO( "defragment: duplicate offset");
       return;
     }
@@ -99,7 +98,7 @@ void Defrag::defragment(TuplePtr t)
       TuplePtr p;
       for (FragMap::iterator iter = fragments_.find(seq_num); 
            iter != fragments_.end(); iter++) {
-        if (Val_UInt32::cast((*iter->second)[SEQ+1]) == i) {
+        if (Val_Int64::cast((*iter->second)[SEQ+1]) == i) {
           p = iter->second;
           fragments_.erase(iter);
           break;

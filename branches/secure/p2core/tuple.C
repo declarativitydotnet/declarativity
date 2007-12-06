@@ -17,9 +17,8 @@
 #include "value.h"
 #include "tuple.h"
 #include <assert.h>
-#include "val_uint32.h"
 #include "val_str.h"
-#include "val_int32.h"
+#include "val_int64.h"
 #include "val_null.h"
 #include "reporting.h"
 
@@ -223,7 +222,7 @@ Tuple::mk(string name, bool id)
     p->append(Val_Null::mk());
 
   if (id)
-    p->append(Val_UInt32::mk(Plumber::catalog()->uniqueIdentifier()));
+    p->append(Val_Int64::mk(Plumber::catalog()->uniqueIdentifier()));
   return p;
 };
 

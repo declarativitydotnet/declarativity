@@ -27,7 +27,7 @@
 #include "ol_lexer.h"
 #include "tuple.h"
 #include "plumber.h"
-#include "val_int32.h"
+#include "val_int64.h"
 #include "val_str.h"
 #include "print.h"
 #include "discard.h"

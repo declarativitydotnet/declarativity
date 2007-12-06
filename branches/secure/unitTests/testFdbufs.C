@@ -18,10 +18,7 @@
 
 #include "val_null.h"
 #include "val_str.h"
-#include "val_int32.h"
-#include "val_uint32.h"
 #include "val_int64.h"
-#include "val_uint64.h"
 #include "val_double.h"
 #include "val_opaque.h"
 #include "val_tuple.h"
@@ -104,15 +101,15 @@ public:
   {
     xdrTest(Val_Null::mk());
     xdrTest(Val_Str::mk("Test String"));
-    xdrTest(Val_Int32::mk(-12));
-    xdrTest(Val_UInt32::mk(12));
+    xdrTest(Val_Int64::mk(-12));
+    xdrTest(Val_Int64::mk(12));
     xdrTest(Val_Int64::mk(-24));
-    xdrTest(Val_UInt64::mk(24));
+    xdrTest(Val_Int64::mk(24));
     xdrTest(Val_Double::mk(0.1856));
 
     TuplePtr t = Tuple::mk();
     t->append(Val_Str::mk("Flat"));
-    t->append(Val_UInt64::mk(13500975));
+    t->append(Val_Int64::mk(13500975));
     t->freeze();  
     xdrTest(Val_Tuple::mk(t));
     
@@ -120,8 +117,8 @@ public:
     
     ListPtr l = List::mk();
     l->append(Val_Str::mk("Foo"));
-    l->append(Val_UInt64::mk(13117));
-    l->append(Val_Int32::mk(42));
+    l->append(Val_Int64::mk(13117));
+    l->append(Val_Int64::mk(42));
     
     xdrTest(Val_List::mk(l));
     

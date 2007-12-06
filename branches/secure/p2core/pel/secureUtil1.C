@@ -2,7 +2,7 @@
 #include <openssl/sha.h>
 #include "secureUtil1.h"
 #include "secureUtil.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "val_tuple.h"
 #include "val_null.h"
 #include "val_opaque.h"
@@ -100,8 +100,8 @@ namespace compile {
       locSpec->append(Val_Str::mk(LOCSPECTUPLE));
       locSpec->append(catalog->nodeid());
       //locSpec->append(Val_Str::mk("Hi there!"));
-      locSpec->append(Val_UInt32::mk(idCounter++));
-      locSpec->append(Val_UInt32::mk(strong?1:0)); // strong or weak
+      locSpec->append(Val_Int64::mk(idCounter++));
+      locSpec->append(Val_Int64::mk(strong?1:0)); // strong or weak
       locSpec->append(Val_Null::mk()); //for the self-certifying hash
       locSpec->freeze();
       return Val_Tuple::mk(locSpec);
@@ -114,8 +114,8 @@ namespace compile {
       version->append(Val_Str::mk(VERSIONTUPLE));
       version->append(catalog->nodeid());
       //version->append(Val_Str::mk("Hi there!"));
-      version->append(Val_UInt32::mk(idCounter++));
-      version->append(Val_UInt32::mk(strong?1:0)); // strong or weak
+      version->append(Val_Int64::mk(idCounter++));
+      version->append(Val_Int64::mk(strong?1:0)); // strong or weak
       version->append(Val_Null::mk()); //for the self-certifying hash
       version->freeze();
       return Val_Tuple::mk(version);
@@ -216,7 +216,7 @@ namespace compile {
 
 	  if(isVersion(version)){ // if its a non-current version field
 	    verTp = Val_Tuple::cast(version);
-	    strong = (Val_UInt32::cast((*verTp)[STRONGLINK]) == 1);
+	    strong = (Val_Int64::cast((*verTp)[STRONGLINK]) == 1);
 	  }
 
 	  // can handle other cases here
@@ -236,8 +236,8 @@ namespace compile {
 	      !refIter->done() && install;){
 	    
 	    TuplePtr refTpl = refIter->next();		
-	    uint32_t refType = Val_UInt32::cast((*refTpl)[refTypePos]);
-	    uint32_t refPos = Val_UInt32::cast((*refTpl)[refPosPos]);
+	    uint32_t refType = Val_Int64::cast((*refTpl)[refTypePos]);
+	    uint32_t refPos = Val_Int64::cast((*refTpl)[refPosPos]);
 	    linkSet.insert(refPos);
 	    
 	    if(!isLocSpec((*tuple)[refPos + offset])){
@@ -291,7 +291,7 @@ namespace compile {
 	    ValuePtr proof_2 = (*tuple)[PROOFPOS + 1];
 	    ValuePtr P_3 = (*tuple)[PPOS + 1];
 	    ValuePtr R_4 =  (*tuple)[RPOS + 1];
-	    uint32_t K_5 = Val_UInt32::cast((*tuple)[KPOS + 1]);
+	    uint32_t K_5 = Val_Int64::cast((*tuple)[KPOS + 1]);
 	    ValuePtr V_6 =  (*tuple)[VPOS + 1];
 	    ListPtr proofList;
 	    SetPtr P, R, V;
@@ -428,7 +428,7 @@ namespace compile {
 	TuplePtr locSpecTuple = Val_Tuple::cast(*iter);
 	TuplePtr locSpecField = (Val_Tuple::cast((*locSpecTuple)[2]))->clone();
 	locSpecField->set(HASHPOS, merkleHash);
-	locSpecField->set(STRONGPOS, Val_UInt32::mk(1));
+	locSpecField->set(STRONGPOS, Val_Int64::mk(1));
 	locSpecField->freeze();
 	locSpecTuple->set(LOCSPECLOCSPECPOS, Val_Tuple::mk(locSpecField));
 	locSpecTuple->freeze();
@@ -444,11 +444,11 @@ namespace compile {
 	ListPtr l = Val_List::cast(v);
 	ValuePtr front = l->front();
 	int typeCode = front->typeCode();
-	if(typeCode != Value::UINT32 && typeCode != Value::INT32 && typeCode != Value::UINT64 && typeCode != Value::INT64){
+	if(typeCode != Value::INT64){
 	  return false;
 	}
 	else{
-	  uint32_t typeCode = Val_UInt32::cast(front);
+	  uint32_t typeCode = Val_Int64::cast(front);
 	  return (typeCode == CREATESAYS || typeCode == COPYSAYS);
 	}
       }
@@ -516,9 +516,9 @@ namespace compile {
       
 	TuplePtr refTpl = refIter->next();
 	
-	uint32_t refType = Val_UInt32::cast((*refTpl)[refTypePos]);
+	uint32_t refType = Val_Int64::cast((*refTpl)[refTypePos]);
 	string childTableName = Val_Str::cast((*refTpl)[refToPos]);
-	uint32_t refPosVal = Val_UInt32::cast((*refTpl)[refPosPos]);
+	uint32_t refPosVal = Val_Int64::cast((*refTpl)[refPosPos]);
 	CommonTable::Key key;
 	key.push_back(refPosVal + offset);
 	linkSet.insert(refPosVal);
@@ -557,7 +557,7 @@ namespace compile {
 		  // However, we need to include this proof in the version field in the locSpec tuple
 		  TuplePtr version = (Val_Tuple::cast((*locSpec)[4]))->clone();
 		  version->set(HASHPOS, proof);
-		  version->set(STRONGPOS, Val_UInt32::mk(1));
+		  version->set(STRONGPOS, Val_Int64::mk(1));
 		  version->freeze();
 		  locSpec->set(4, Val_Tuple::mk(version));
 		}
@@ -579,7 +579,7 @@ namespace compile {
 	    
 	      ValuePtr merkleHash = makeLocSpecStrong(locSpecSet, hashSet);
 	      parentLocSpecTuple->set(HASHPOS, merkleHash);
-	      parentLocSpecTuple->set(STRONGPOS, Val_UInt32::mk(1));
+	      parentLocSpecTuple->set(STRONGPOS, Val_Int64::mk(1));
 	      parentLocSpecTuple->freeze();
 	      parent->set(refPosVal + offset, Val_Tuple::mk(parentLocSpecTuple));
 	   
@@ -622,7 +622,7 @@ namespace compile {
 	}
 	parentCopy = Tuple::mk(parentNewName);
 	if(myRefType == ROOT || myRefType == ROOTSAYS){
-	  parentCopy->append(Val_UInt32::mk(CURVERSION));
+	  parentCopy->append(Val_Int64::mk(CURVERSION));
 	  if(myRefType == ROOT){
 	    // +2: +1 for location as it is also automatically created, and +1 because the relevant fields start from 1 not 0
 	    for(uint32_t i = offset + 2; i < tupleSize; i++) 
@@ -642,9 +642,9 @@ namespace compile {
 	  assert(hintField != Val_Null::mk());
 	  ListPtr hintList = Val_List::cast(hintField);
 	  // the structure of hintList: [Type<COPYSAYS/CREATESAYS>, EncType<RSA/AES>(only relevant if prev field is CREATE), Key/Proof, P, R, K, V]
-	  uint32_t saysType = Val_UInt32::cast(hintList->front());
+	  uint32_t saysType = Val_Int64::cast(hintList->front());
 	  hintList->pop_front();
-	  uint32_t encType = ((hintList->front() != Val_Null::mk())?Val_UInt32::cast(hintList->front()):0);
+	  uint32_t encType = ((hintList->front() != Val_Null::mk())?Val_Int64::cast(hintList->front()):0);
 	  hintList->pop_front();
 	  ValuePtr keyProof = hintList->front();
 	  hintList->pop_front();
@@ -703,7 +703,7 @@ namespace compile {
 	retVal = sha1(serializedTuple);
 	TuplePtr version = (Val_Tuple::cast((*parentCopy)[2]))->clone();
 	version->set(HASHPOS, retVal);
-	version->set(STRONGPOS, Val_UInt32::mk(1));
+	version->set(STRONGPOS, Val_Int64::mk(1));
 	version->freeze();
 	parentCopy->set(TUPLEVERPOS, Val_Tuple::mk(version));
       }

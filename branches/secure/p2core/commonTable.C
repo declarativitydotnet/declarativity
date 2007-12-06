@@ -21,10 +21,10 @@
 #include "aggFactory.h"
 #include "val_null.h"
 #include "val_str.h"
-#include "val_uint32.h"
 #include "plumber.h"
 #include "systemTable.h"
 #include "tuple.h"
+#include "val_int64.h"
 
 ////////////////////////////////////////////////////////////
 // Sorters
@@ -388,7 +388,7 @@ CommonTable::commonInsertTuple(Entry* newEntry,
                                                  tableNameTp); 
       if (!iter->done()) {
         TuplePtr tp = iter->next()->clone();
-        tp->set(cardPos, Val_UInt32::mk(size()));
+        tp->set(cardPos, Val_Int64::mk(size()));
       }
     }
   }
@@ -463,7 +463,7 @@ CommonTable::removeTupleOfEntry(Entry* theEntry)
                                                  tableNameTp); 
       if (!iter->done()) {
         TuplePtr tp = iter->next()->clone();
-        tp->set(cardPos, Val_UInt32::mk(size()));
+        tp->set(cardPos, Val_Int64::mk(size()));
       }
     }
   }

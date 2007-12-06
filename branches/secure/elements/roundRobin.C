@@ -14,7 +14,7 @@
 
 #include "roundRobin.h"
 #include "val_str.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include <boost/bind.hpp>
 
 DEFINE_ELEMENT_INITS(RoundRobin, "RoundRobin")
@@ -38,7 +38,7 @@ RoundRobin::RoundRobin(string name,
  * 3. Val_UInt32: Number of inputs.
  */
 RoundRobin::RoundRobin(TuplePtr args)
-  : Element(Val_Str::cast((*args)[2]), Val_UInt32::cast((*args)[3]), 1),
+  : Element(Val_Str::cast((*args)[2]), Val_Int64::cast((*args)[3]), 1),
     _pull_cb(0),
     _block_flags(),
     _block_flag_count(0),

@@ -44,23 +44,23 @@ namespace aggview1 {
         ::sys::predicate(@A, HeadID, Rid, NotIn, _, _, _, _, Pos, AM, New).
 
   /* Create the intermediate table. */
-  av3 ::sys::table(@A, ViewTid, ViewName, infinity, infinity, f_createKey(Schema), 0U, null, Pid) :-
+  av3 ::sys::table(@A, ViewTid, ViewName, infinity, infinity, f_createKey(Schema), 0, null, Pid) :-
         rewrite(@A, Pid, Rid, ViewName, Schema, ViewTid, _, _).
 
   
   /* Create the new rule that performs the aggregation over the single intermediate table. */
-  av4 ::sys::rule(@A, NewRid, Pid, Name, NewHeadID, null, false, 2U, false) :-
+  av4 ::sys::rule(@A, NewRid, Pid, Name, NewHeadID, null, false, 2, false) :-
         rewrite(@A, Pid, Rid, ViewName, Schema, _, NewRid, NewHeadID),
         Name := "rule_" + ViewName.
 
   /* Copy the original head predicate to be the head of this rule. Keep the aggregation. */
-  av5 ::sys::predicate(@A, NewHeadID, NewRid, false, Name, Tid, ECA, Schema, 0U, AM, New) :-
+  av5 ::sys::predicate(@A, NewHeadID, NewRid, false, Name, Tid, ECA, Schema, 0, AM, New) :-
         rewrite(@A, Pid, Rid, _, _, _, NewRid, NewHeadID),
         ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
         ::sys::predicate(@A, HeadID, Rid, _, Name, Tid, ECA, Schema, Pos, AM, New).
 
   /* The rule body only contains the intermediate table predicate. */
-  av6 ::sys::predicate(@A, f_idgen(), NewRid, false, ViewName, ViewTid, null, f_tovar(Schema), 1U, null, false) :-
+  av6 ::sys::predicate(@A, f_idgen(), NewRid, false, ViewName, ViewTid, null, f_tovar(Schema), 1, null, false) :-
         rewrite(@A, Pid, Rid, ViewName, Schema, ViewTid, NewRid, NewHeadID).
 
 }

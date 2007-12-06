@@ -16,8 +16,7 @@
 #include "rccr.h"
 #include "rcct.h"
 #include "p2Time.h"
-#include "val_uint64.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "val_double.h"
 #include "val_str.h"
 #include "val_time.h"
@@ -264,8 +263,8 @@ TuplePtr RateCCR::simple_action(TuplePtr tp)
 {
   Connection *c  = NULL;
   ValuePtr  src  = (*tp)[SRC+2];
-  SeqNum    seq  = Val_UInt64::cast((*tp)[SEQ+2]);
-  int       rtt  = Val_UInt32::cast((*tp)[RTT+2]);
+  SeqNum    seq  = Val_Int64::cast((*tp)[SEQ+2]);
+  int       rtt  = Val_Int64::cast((*tp)[RTT+2]);
   boost::posix_time::ptime ts = Val_Time::cast((*tp)[TS+2]);
 
   if (!seq || !rtt) {
@@ -284,7 +283,7 @@ TuplePtr RateCCR::simple_action(TuplePtr tp)
   TuplePtr rack = Tuple::mk();
   for(unsigned i = 0; i < tp->size(); i++) {
     if (i == RRATE+2)
-      rack->append(Val_UInt32::mk(c->receiveRate()));	// Rate observed in past rtt
+      rack->append(Val_Int64::mk(c->receiveRate()));	// Rate observed in past rtt
     else if (i == LRATE+2)
       rack->append(Val_Double::mk(c->lossRate()));	// Loss event rate
     else 

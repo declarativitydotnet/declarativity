@@ -12,8 +12,7 @@
 
 #include <iostream>
 #include "tupleseq.h"
-#include "val_uint64.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "val_str.h"
 #include "val_tuple.h"
 #include "netglobals.h"
@@ -27,7 +26,7 @@ Sequence::Sequence(string name, SeqNum start)
 
 Sequence::Sequence(TuplePtr args)
   : Element(Val_Str::cast((*args)[2]),1,1), 
-    _start_seq(Val_UInt64::cast((*args)[3])) { }
+    _start_seq(Val_Int64::cast((*args)[3])) { }
 
 
 TuplePtr Sequence::simple_action(TuplePtr p)
@@ -47,7 +46,7 @@ TuplePtr Sequence::simple_action(TuplePtr p)
   TuplePtr tp = Tuple::mk();
   for (unsigned i = 0; i < p->size(); i++) {
     if (i == SEQ) {
-      tp->append(Val_UInt64::mk(seq));
+      tp->append(Val_Int64::mk(seq));
     }
     else {
       tp->append((*p)[i]);

@@ -15,9 +15,7 @@
 
 #include "val_str.h"
 #include "val_tuple.h"
-#include "val_int32.h"
-#include "val_uint32.h"
-#include "val_uint64.h"
+#include "val_int64.h"
 #include "val_id.h"
 #include "val_null.h"
 #include "ID.h"
@@ -190,7 +188,7 @@ testAggwrap::simpleTestFeeder(TuplePtr p)
   joined->append(Val_Str::mk("joined"));
   joined->append((*p)[1]);
   joined->append((*p)[2]);
-  joined->append(Val_Int32::mk(_simpleTestCounter++));
+  joined->append(Val_Int64::mk(_simpleTestCounter++));
   joined->freeze();
   return joined;
 }
@@ -204,7 +202,7 @@ testAggwrap::simpleTestReceiver(TuplePtr p)
                       << "but got tuple of size "
                       << p->size());
   if (p->size() >= 4) {
-    BOOST_CHECK_MESSAGE((*p)[3]->compareTo(Val_Int32::mk(0)) == 0,
+    BOOST_CHECK_MESSAGE((*p)[3]->compareTo(Val_Int64::mk(0)) == 0,
                         "Expected aggregate value 0 " 
                         << "but got instead "
                         << (*p)[3]->toString());
@@ -572,7 +570,7 @@ AggwrapTracker::test()
 
           _aggwrap = new Aggwrap2("TestedAggwrap",
                                   Val_Str::cast((*_tuple)[0]),
-                                  Val_UInt32::cast((*_tuple)[1]),
+                                  Val_Int64::cast((*_tuple)[1]),
                                   false, // not a * aggregate
                                   Val_Str::cast((*_tuple)[3]));
           
@@ -596,7 +594,7 @@ AggwrapTracker::test()
 
 
           // Set up the join callbacks
-          int joins = Val_Int32::cast((*_tuple)[2]);
+          int joins = Val_Int64::cast((*_tuple)[2]);
           for (int i = 0;
                i < joins;
                i++) {
@@ -609,7 +607,7 @@ AggwrapTracker::test()
                i < _tuple->size();
                i++) {
             _aggwrap->
-              registerGroupbyField(Val_UInt32::cast((*_tuple)[i]));
+              registerGroupbyField(Val_Int64::cast((*_tuple)[i]));
           }
         }
         break;
@@ -627,7 +625,7 @@ AggwrapTracker::test()
       case 'j':
         // Invoke the given join callback
         {
-          int joinNum = Val_Int32::cast((*_tuple)[0]);
+          int joinNum = Val_Int64::cast((*_tuple)[0]);
           b_cbv joinCallback = _joinCallbacks.at(joinNum);
           joinCallback();
         }
@@ -837,20 +835,8 @@ AggwrapTracker::fetchCommand()
     } else {
       // Identify any type information.
       ValuePtr intField;
-      switch (field[field.length() - 1]) {
-      case 'U':
-        // This should be unsigned 64bit
-        intField = Val_UInt64::mk(Val_UInt64::cast(Val_Str::mk(field)));
-        break;
-      case 'u':
-        // This should be unsigned 32bit
-        intField = Val_UInt32::mk(Val_UInt32::cast(Val_Str::mk(field)));
-        break;
-      default:
-        // Interpret as signed 32bit
-        intField = Val_Int32::mk(Val_Int32::cast(Val_Str::mk(field)));
-        break;
-      }
+      // Interpret as signed 64bit
+      intField = Val_Int64::mk(Val_Int64::cast(Val_Str::mk(field)));
       _tuple->append(intField);
     }
   }

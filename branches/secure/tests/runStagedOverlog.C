@@ -354,6 +354,9 @@ main(int argc, char **argv)
     string dfdesc = stub(myHostname, myPort, TERMINAL);
 
     eventLoopInitialize();
+    TELL_INFO << "Stub dataflow is:\n----\n"
+              << dfdesc
+              << "\n----\n";
     compile::Context *context = new compile::p2dl::Context("p2dl", dfdesc);
 
     Plumber::DataflowPtr main = Plumber::dataflow("main");

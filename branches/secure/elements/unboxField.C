@@ -17,7 +17,7 @@
 #include "val_opaque.h"
 #include "val_tuple.h"
 #include "val_str.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 
 DEFINE_ELEMENT_INITS(UnboxField, "UnboxField")
 
@@ -35,7 +35,7 @@ UnboxField::UnboxField(string name, unsigned fieldNo)
  */
 UnboxField::UnboxField(TuplePtr args)
   : Element(Val_Str::cast((*args)[2]), 1, 1),
-    _fieldNo(Val_UInt32::cast((*args)[3]))
+    _fieldNo(Val_Int64::cast((*args)[3]))
 {
 }
 

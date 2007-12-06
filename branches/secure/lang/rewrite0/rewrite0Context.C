@@ -26,11 +26,10 @@
 #include "value.h"
 #include "val_str.h"
 #include "val_null.h"
-#include "val_uint32.h"
-#include "val_int32.h"
 #include "val_list.h"
 #include "set.h"
 #include "val_tuple.h"
+#include "val_int64.h"
 
 namespace compile {
   namespace rewrite0{
@@ -50,7 +49,7 @@ namespace compile {
     void Context::serializeNewFunctor(CommonTable::ManagerPtr catalog, TuplePtr& functor){
       CommonTablePtr newTbl = catalog->table(NEW);
       CommonTablePtr functorTbl = catalog->table(FUNCTOR);
-      assert(Val_UInt32::cast((*functor)[catalog->attribute(FUNCTOR, "NEW")]) == 1);
+      assert(Val_Int64::cast((*functor)[catalog->attribute(FUNCTOR, "NEW")]) == 1);
       CommonTable::Iterator iter = newTbl->lookup(CommonTable::theKey(CommonTable::KEY2), CommonTable::theKey(CommonTable::KEY3), functor);
       if(!iter->done()){
 	TuplePtr newPtr = iter->next();
@@ -84,7 +83,7 @@ namespace compile {
       // do stuff corresponding to pass1 right here
       CommonTablePtr functorTbl = catalog->table(FUNCTOR);
 
-      if(Val_Int32::cast((*rule)[catalog->attribute(RULE, "NEW")]) == 1){
+      if(Val_Int64::cast((*rule)[catalog->attribute(RULE, "NEW")]) == 1){
 	CommonTablePtr ruleTbl = catalog->table(RULE);
 	CommonTablePtr assignTbl = catalog->table(ASSIGN);
 	CommonTable::Iterator headIter;
@@ -104,7 +103,7 @@ namespace compile {
 	  headFunctor = headIter->next()->clone();
 	  headAttributes = Val_List::cast((*headFunctor)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
 	  headLocAttr = Val_Tuple::cast(headAttributes->front());
-	  headNew = Val_Int32::cast((*headFunctor)[catalog->attribute(FUNCTOR, "NEW")]) != 0;
+	  headNew = Val_Int64::cast((*headFunctor)[catalog->attribute(FUNCTOR, "NEW")]) != 0;
 	  // do anything at all if this rule does not already have a new head Functor
 	  if(!headNew){
 	    headLocAttr = headLocAttr->clone();
@@ -114,7 +113,7 @@ namespace compile {
 	    headFunctor->set(catalog->attribute(FUNCTOR, "NAME"), Val_Str::mk(newname));
 	    headFunctor->set(catalog->attribute(FUNCTOR, "TID"), Val_Null::mk());
 
-	    headFunctor->set(catalog->attribute(FUNCTOR, "NEW"), Val_Int32::mk(1)); // make new
+	    headFunctor->set(catalog->attribute(FUNCTOR, "NEW"), Val_Int64::mk(1)); // make new
 	    headAttributes->pop_front();
 	    headLocAttr->freeze();
 	    headAttributes->prepend(Val_Tuple::mk(headLocAttr));
@@ -141,7 +140,7 @@ namespace compile {
 	    
 	    rule = rule->clone();
 	    ValuePtr ruleId = (*rule)[TUPLE_ID];
-	    uint32_t ruleSize = Val_UInt32::cast((*rule)[catalog->attribute(RULE, "TERM_COUNT")]);
+	    uint32_t ruleSize = Val_Int64::cast((*rule)[catalog->attribute(RULE, "TERM_COUNT")]);
 
 	    TuplePtr assignTp  = Tuple::mk(ASSIGN, true);
 	    assignTp->append(ruleId);
@@ -149,7 +148,7 @@ namespace compile {
 	    varCopy->freeze();
 	    assignTp->append(Val_Tuple::mk(varCopy));               // Assignment variable
 	    assignTp->append(Val_Tuple::mk(val));                  // Assignemnt value
-	    assignTp->append(Val_UInt32::mk(ruleSize++));         // Position
+	    assignTp->append(Val_Int64::mk(ruleSize++));         // Position
 	    assignTp->freeze();
 	    assignTbl->insert(assignTp);
 
@@ -159,11 +158,11 @@ namespace compile {
 	    varCopy1->freeze();
 	    assignTp1->append(Val_Tuple::mk(varCopy1));               // Assignment variable
 	    assignTp1->append(Val_Tuple::mk(val1));                  // Assignemnt value
-	    assignTp1->append(Val_UInt32::mk(ruleSize++));         // Position
+	    assignTp1->append(Val_Int64::mk(ruleSize++));         // Position
 	    assignTp1->freeze();
 	    assignTbl->insert(assignTp1);
 
-	    rule->set(catalog->attribute(RULE, "TERM_COUNT"), Val_UInt32::mk(ruleSize));
+	    rule->set(catalog->attribute(RULE, "TERM_COUNT"), Val_Int64::mk(ruleSize));
 	    rule->freeze();
 	    ruleTbl->insert(rule);
 
@@ -178,7 +177,7 @@ namespace compile {
 	     !funcIter->done(); ) {
 	  TuplePtr functor = funcIter->next();
 	  if ((*functor)[TUPLE_ID] != (*rule)[catalog->attribute(RULE, "HEAD_FID")]) {
-	    if(Val_Int32::cast((*functor)[catalog->attribute(FUNCTOR, "NEW")]) == 1){
+	    if(Val_Int64::cast((*functor)[catalog->attribute(FUNCTOR, "NEW")]) == 1){
 	      serializeNewFunctor(catalog, functor);
 	      functor = functor->clone();
 	      ListPtr attributes = Val_List::cast((*functor)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
@@ -219,7 +218,7 @@ namespace compile {
 					   CommonTable::theKey(CommonTable::KEY3), rule);
 	     !funcIter->done(); ) {
 	  TuplePtr functor = funcIter->next();
-	  if(Val_Int32::cast((*functor)[catalog->attribute(FUNCTOR, "NEW")]) == 1){
+	  if(Val_Int64::cast((*functor)[catalog->attribute(FUNCTOR, "NEW")]) == 1){
 	    serializeNewFunctor(catalog, functor);
 	  }	 
 	}

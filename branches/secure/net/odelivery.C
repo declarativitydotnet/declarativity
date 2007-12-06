@@ -12,8 +12,7 @@
 
 #include <iostream>
 #include "odelivery.h"
-#include "val_uint64.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "val_double.h"
 #include "val_str.h"
 #include "val_tuple.h"
@@ -25,7 +24,7 @@ DEFINE_ELEMENT_INITS(ODelivery, "ODelivery")
 #define CONNECTION_TIMEOUT 240
 
 void ODelivery::Connection::insert(TuplePtr tp) {
-  SeqNum seq = Val_UInt64::cast((*tp)[SEQ]);
+  SeqNum seq = Val_Int64::cast((*tp)[SEQ]);
 
   if (queue_.size() == 0 && next_seq_ <= seq) {
     queue_.push_back(tp);
@@ -34,7 +33,7 @@ void ODelivery::Connection::insert(TuplePtr tp) {
     // Insert the tuple in sequence order
     std::vector<TuplePtr>::iterator iter; 
     for (iter = queue_.begin(); iter != queue_.end(); iter++) {
-      SeqNum seq2 = Val_UInt64::cast((**iter)[SEQ]);
+      SeqNum seq2 = Val_Int64::cast((**iter)[SEQ]);
       if (seq == seq2) {
         return;		// We already have it
       }
@@ -50,7 +49,7 @@ void ODelivery::Connection::insert(TuplePtr tp) {
   // Move the next sequence pointer if we've filled a hole
   for (std::vector<TuplePtr>::iterator iter = queue_.begin(); 
        iter != queue_.end(); iter++) {
-    SeqNum seq3 = Val_UInt64::cast((**iter)[SEQ]);
+    SeqNum seq3 = Val_Int64::cast((**iter)[SEQ]);
     if (seq3 == next_seq_) next_seq_++;
     else break;
   }
@@ -81,8 +80,8 @@ int ODelivery::push(int port, TuplePtr tp, b_cbv cb)
   assert(port == 0);
 
   ValuePtr src = (*tp)[SRC];
-  SeqNum   seq = Val_UInt64::cast((*tp)[SEQ]);
-  SeqNum  cseq = Val_UInt64::cast((*tp)[CUMSEQ]);
+  SeqNum   seq = Val_Int64::cast((*tp)[SEQ]);
+  SeqNum  cseq = Val_Int64::cast((*tp)[CUMSEQ]);
   ConnectionPtr cp = lookup(src);
 
   if (cseq == 0 && cp) {
@@ -114,7 +113,7 @@ REMOVABLE_INLINE void ODelivery::flush(ConnectionPtr cp) {
   while ( out_on_ && cp->queue_.size() > 0 ) {
     TuplePtr tpl = cp->queue_.front();
     ValuePtr src = (*tpl)[SRC];
-    SeqNum   seq = Val_UInt64::cast((*tpl)[SEQ]);
+    SeqNum   seq = Val_Int64::cast((*tpl)[SEQ]);
     double   rto = Val_Double::cast((*tpl)[RTT]); 
     if (seq <= cp->next_seq_) {
       out_on_ = output(0)->push(tpl, boost::bind(&ODelivery::out_cb, this));
@@ -164,7 +163,7 @@ REMOVABLE_INLINE void ODelivery::flushConnectionQ(ValuePtr src)
 
   if (cp->queue_.size() > 0) {
     TuplePtr t = cp->queue_.back();
-    SeqNum   s = Val_UInt64::cast((*t)[SEQ]);
+    SeqNum   s = Val_Int64::cast((*t)[SEQ]);
     cp->next_seq_ = s + 1;
     flush(cp); 
   }

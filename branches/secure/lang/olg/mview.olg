@@ -24,12 +24,12 @@ namespace mview {
         Preds > 1, HeadID != PredID.
 
   /* Put the DELTA predicate in the first postiion. */
-  mv3 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, "DELTA", Schema, 1U, AM, New) :-
+  mv3 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, "DELTA", Schema, 1, AM, New) :-
         rewrite(@A, Pid, Rid, DeltaPredID, NewRid, NewHeadID),
         ::sys::predicate(@A, DeltaPredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, AM, New).
 
   /* Make a new head predicate for the rewritten rule. */
-  mv4 ::sys::predicate(@A, NewHeadID, NewRid, Notin, Name, Tid, ECA, Schema, 0U, AM, New) :-
+  mv4 ::sys::predicate(@A, NewHeadID, NewRid, Notin, Name, Tid, ECA, Schema, 0, AM, New) :-
         rewrite(@A, Pid, Rid, DeltaPredID, NewRid, NewHeadID),
         ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
         ::sys::predicate(@A, HeadID, Rid, Notin, Name, Tid, _, Schema, _, AM, New),
@@ -38,15 +38,15 @@ namespace mview {
 
 
   /* Kick off an iterator for the remaining rule terms. */
-  mv5 remainder(@A, Pid, Rid, DeltaPredID, NewRid, 1U, 2U) :-
+  mv5 remainder(@A, Pid, Rid, DeltaPredID, NewRid, 1, 2) :-
         rewrite(@A, Pid, Rid, DeltaPredID, NewRid, _).
 
-  mv6 remainder(@A, Pid, Rid, DeltaPredID, NewRid, OldPos+1U, NewPos) :-
+  mv6 remainder(@A, Pid, Rid, DeltaPredID, NewRid, OldPos+1, NewPos) :-
         remainder(@A, Pid, Rid, DeltaPredID, NewRid, OldPos, NewPos),
         ::sys::rule(@A, Rid, Pid, _, _, _, _, Term_Count, _),
         ::sys::predicate(@A, DeltaPredID, Rid, _, _, _, _, _, Pos, _, _),
         OldPos < Term_Count - 1,
-        NewPos := OldPos == Pos ? NewPos : NewPos + 1U.
+        NewPos := OldPos == Pos ? NewPos : NewPos + 1.
 
   /* Add the probe table to the rewritten rule. */
   mv7 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, "PROBE", Schema, NewPos, AM, New) :-

@@ -12,7 +12,7 @@
 
 #include "ddemux.h"
 #include "val_str.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "val_list.h"
 #include "oper.h"
 #include <boost/bind.hpp>
@@ -54,7 +54,7 @@ DDemux::DDemux(TuplePtr args)
   for (ValPtrList::const_iterator i = keys->begin(); 
        i != keys->end(); i++) 
     assert(add_output(*i) > 0);
-  _inputFieldNo = args->size() > 4 ? Val_UInt32::cast((*args)[4]) : 0;
+  _inputFieldNo = args->size() > 4 ? Val_Int64::cast((*args)[4]) : 0;
 }
 
 int 

@@ -3,7 +3,7 @@
 #include "val_opaque.h"
 #include "val_set.h"
 #include "val_str.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "value.h"
 //#include "sfslite.h"
 #include "plumber.h"
@@ -126,7 +126,7 @@ namespace compile {
 	  for(; iter != proof->end(); iter++){
 	    bool res = false;
 	    TuplePtr keyTuple = verKeyIter->next();
-	    int encType = Val_UInt32::cast((*keyTuple)[SecurityAlgorithms::keyPos]);
+	    int encType = Val_Int64::cast((*keyTuple)[SecurityAlgorithms::keyPos]);
 	    ValuePtr key = (*keyTuple)[SecurityAlgorithms::keyPos+1];
 	    switch(encType){
 	    case SecurityAlgorithms::RSA:
@@ -147,7 +147,7 @@ namespace compile {
 		P = Val_Set::cast(P_3);
 	      }
 	      ValuePtr R_4 = (*encHint)[SecurityAlgorithms::primitivePos+1]; 
-	      uint32_t k = Val_UInt32::cast((*encHint)[SecurityAlgorithms::primitivePos+2]);
+	      uint32_t k = Val_Int64::cast((*encHint)[SecurityAlgorithms::primitivePos+2]);
 	      ValuePtr V_6 = (*encHint)[SecurityAlgorithms::primitivePos+3];
 
 	      if(R_4->typeCode() != Value::SET){

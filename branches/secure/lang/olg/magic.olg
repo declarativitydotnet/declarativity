@@ -46,7 +46,7 @@ namespace magic {
        ::sys::rule(@A, Rid, Pid, _, HeadFid, _, _, _, _),
        ::sys::predicate(@A, HeadFid, Rid, _, _, _, _, _, _, _, _),
        ::sys::predicate(@A, Fid, Rid, _, Name, _, _, Schema, Pos, _, _),
-       Pos == 1U,
+       Pos == 1,
        f_size(f_adornment(null, Schema)) > 0,
        HeadFid != Fid,
        Sig := f_adornment(null, Schema).
@@ -76,7 +76,7 @@ namespace magic {
   r3 applyMagicPred(@A, Pid, Name, Sig) :- 
        magicPred(@A, Pid, Name, Sig).
 
-  r4 supNext(@A, Pid, Rid, Pos+1U, Schema) :-
+  r4 supNext(@A, Pid, Rid, Pos+1, Schema) :-
        sup(@A, Pid, Rid, Pos, Name, Schema, Tid).
 
   /* Initialize all sup(Rid, 0) values, where the rule head
@@ -87,7 +87,7 @@ namespace magic {
        ::sys::predicate(@A, HeadFid, Rid, FNotin, Name, FTID, FECA, FSchema, Pos, FAM, FNew),
        Schema := f_cons(f_getattr("Location", FSchema), f_project(Sig, FSchema)),
        SupName := "magicPred_" + Name,
-       Pos := 0U.
+       Pos := 0.
 
   r6 sup(@A, Pid, Rid, Pos, SupName, NewSchema, f_idgen()) :-
        supNext(@A, Pid, Rid, Pos, Schema),
@@ -165,7 +165,7 @@ namespace magic {
 
   /********************************************************************/
   /* GROUP V: Create the magic predicate table. */
-  r18a ::sys::table(@A, Tid, Tablename, infinity, infinity, Sig, 0U, null, Pid) :-
+  r18a ::sys::table(@A, Tid, Tablename, infinity, infinity, Sig, 0, null, Pid) :-
         commitMagicPred(@A, Pid, Name, Sig, Tablename, Tid),
         notin ::sys::table(@A, Tid, Tablename, Lifetime, Size, PK, Card, Sort, Pid).
 
@@ -197,19 +197,19 @@ namespace magic {
          ::sys::predicate(@A, HeadFid, Rid, FNotin, Name, FTID, FECA, FSchema, Pos, FAM, FNew),
          magicPred(@A, Pid, Name, Sig).
 
-  r20c rewriteIter(@A, Pid, Rid, 1U, NewRid, NewHeadFid, 2U) :-
+  r20c rewriteIter(@A, Pid, Rid, 1, NewRid, NewHeadFid, 2) :-
         writeMagic(@A, Pid, Rid, NewRid, NewHeadFid).
 
-  r20d rewriteIter(@A, Pid, Rid, 1U, NewRid, NewHeadFid, 1U) :-
+  r20d rewriteIter(@A, Pid, Rid, 1, NewRid, NewHeadFid, 1) :-
          initRewrite(@A, Pid, Rid, NewRid, NewHeadFid),
          ::sys::rule(@A, Rid, Pid, RName, HeadFid, P2DL, Del, TC, _),
          ::sys::predicate(@A, HeadFid, Rid, FNI, Name, FTID, FECA, FS, FP, FAM, FNew),
          notin magicPred(@A, Pid, Name, Sig).
 
   /* Start the new rule with the magic predicate. */
-  r22 ::sys::predicate(@A, f_idgen(), NewRid, false, Name, Tid, "PROBE", Schema, 1U, null, 0) :-
+  r22 ::sys::predicate(@A, f_idgen(), NewRid, false, Name, Tid, "PROBE", Schema, 1, null, 0) :-
         writeMagic(@A, Pid, Rid, NewRid, NewHead),
-        sup(@A, Pid, Rid, 0U, Name, Schema, Tid).
+        sup(@A, Pid, Rid, 0, Name, Schema, Tid).
 
   /* Point non-magicPred Goal node (Gi) to the new rule. */
   r23a ::sys::predicate(@A, Fid, NewRid, NotIn, Name, Tid, ECA, Schema, NewPos, AM, New) :-
@@ -228,12 +228,12 @@ namespace magic {
         ::sys::select(@A, Sid, Rid, Bool, SupPos, AM).
 
   /* Goal node Gi is not a magic predicate... Keep going. */
-  r24a rewriteIter(@A, Pid, Rid, SupPos+1U, NewRid, HeadFid, NewPos+1U) :-
+  r24a rewriteIter(@A, Pid, Rid, SupPos+1, NewRid, HeadFid, NewPos+1) :-
         rewriteIter(@A, Pid, Rid, SupPos, NewRid, HeadFid, NewPos),
         ::sys::predicate(@A, Fid, Rid, NotIn, Name, Tid, ECA, Schema, SupPos, AM, New),
         notin magicPred(@A, Pid, Name, Sig).
 
-  r24a rewriteIter(@A, Pid, Rid, SupPos+1U, NewRid, HeadFid, NewPos+1U) :-
+  r24a rewriteIter(@A, Pid, Rid, SupPos+1, NewRid, HeadFid, NewPos+1) :-
         rewriteIter(@A, Pid, Rid, SupPos, NewRid, HeadFid, NewPos),
         ::sys::rule(@A, Rid, Pid, _, _, _, _, TC, _),
         notin ::sys::predicate(@A, Fid, Rid, NotIn, Name, Tid, ECA, Schema, SupPos, AM, New),
@@ -250,7 +250,7 @@ namespace magic {
         rewriteIter(@A, Pid, Rid, SupPos, NewRid, HeadFid, NewPos),
         ::sys::rule(@A, Rid, Pid, _, _, _, _, SupPos, _).
 
-  r24d ::sys::predicate(@A, OldHead, NewRid, NotIn, Name, Tid, ECA, Schema, 0U, AM, New) :-
+  r24d ::sys::predicate(@A, OldHead, NewRid, NotIn, Name, Tid, ECA, Schema, 0, AM, New) :-
          rewriteIter(@A, Pid, Rid, SupPos, NewRid, HeadFid, NewPos),
          ::sys::rule(@A, Rid, Pid, _, OldHead, _, _, SupPos, _),
          ::sys::predicate(@A, OldHead, Rid, NotIn, Name, Tid, ECA, Schema, _, AM, New).
@@ -261,13 +261,13 @@ namespace magic {
 
   /********************************************************************/
   /* Create sup relations: sup(r, i) and sup(r, i-1). */
-  r25a ::sys::table(@A, Tid, Tablename, infinity, infinity, f_createKey(Schema), 0U, null, Pid) :-
+  r25a ::sys::table(@A, Tid, Tablename, infinity, infinity, f_createKey(Schema), 0, null, Pid) :-
          break(@A, Pid, Rid, Name, Bound, Pos, NewRid, HeadFid, NewPos),
          sup(@A, Pid, Rid, SupPos, Tablename, Schema, Tid),
          notin ::sys::table(@A, Tid, Tablename, Lifetime, Size, PK, Card, Sort, Pid),
          SupPos == Pos - 1.
 
-  r25b ::sys::table(@A, Tid, Tablename, infinity, infinity, f_createKey(Schema), 0U, null, Pid) :-
+  r25b ::sys::table(@A, Tid, Tablename, infinity, infinity, f_createKey(Schema), 0, null, Pid) :-
          break(@A, Pid, Rid, Name, Bound, Pos, NewRid, HeadFid, NewPos),
          sup(@A, Pid, Rid, Pos, Tablename, Schema, Tid),
          notin ::sys::table(@A, Tid, Tablename, Lifetime, Size, PK, Card, Sort, Pid).
@@ -275,7 +275,7 @@ namespace magic {
   /********************************************************************/
   /* FINALIZE RULE: sup(rid, i-1) :- sup(rid, i-j) & Gj & Gj+1 ... @ Gi-1. */
   /* Still need to create sup(rid, i-1) head predicate. */
-  r26a ::sys::predicate(@A, HeadFid, NewRid, false, SupName, SupTid, null, Schema, 0U, null, 0) :-
+  r26a ::sys::predicate(@A, HeadFid, NewRid, false, SupName, SupTid, null, Schema, 0, null, 0) :-
          break(@A, Pid, Rid, Name, Bound, Pos, NewRid, HeadFid, NewPos),
          sup(@A, Pid, Rid, SupPos, SupName, Schema, SupTid),
          SupPos == Pos - 1.
@@ -293,20 +293,20 @@ namespace magic {
          break(@A, Pid, Rid, Name, Bound, Pos, NewRid, HeadFid, NewPos),
          MPName := "magicPred_" + Name.
 
-  r27a ::sys::predicate(@A, HeadFid, NewRid, false, MPName, MPTid, null, MPSchema, 0U, null, 0) :-
+  r27a ::sys::predicate(@A, HeadFid, NewRid, false, MPName, MPTid, null, MPSchema, 0, null, 0) :-
          group1(@A, Pid, Rid, Pos, NewRid, HeadFid, MPName, MPSchema, MPTid),
          sup(@A, Pid, Rid, SupPos, Name, Schema, Tid),
          SupPos == Pos - 1,
          MPSchema := f_cons(f_getattr("Location", Schema), MPSchema).
 
   /* sup(rid, i-1) will feed the magic predicate. */
-  r27b ::sys::predicate(@A, f_idgen(), NewRid, false, Name, Tid, "DELTA", Schema, 1U, null, 0) :-
+  r27b ::sys::predicate(@A, f_idgen(), NewRid, false, Name, Tid, "DELTA", Schema, 1, null, 0) :-
          group1(@A, Pid, Rid, Pos, NewRid, HeadFid, MPName, MPSchema, MPTid),
          sup(@A, Pid, Rid, SupPos, Name, Schema, Tid),
          SupPos == Pos - 1.
 
   /* Commit the new Rule. */
-  r27c ::sys::rule(@A, NewRid, Pid, RName, HeadFid, null, false, 2U, New) :-
+  r27c ::sys::rule(@A, NewRid, Pid, RName, HeadFid, null, false, 2, New) :-
          group1(@A, Pid, Rid, Pos, NewRid, HeadFid, MPName, MPSchema, MPTid),
          ::sys::rule(@A, Rid, Pid, RName, RHeadFid, RP2DL, RDelete, RTC, New),
          RName := "magicPredFill_" + RName + "_" + f_tostr(Pos).
@@ -317,30 +317,30 @@ namespace magic {
          break(@A, Pid, Rid, Name, Bound, Pos, NewRid, HeadFid, NewPos).
 
   /* Create sup(rid, i). */
-  r28a ::sys::predicate(@A, HeadFid, NewRid, false, Name, Tid, null, Schema, 0U, null, 0) :-
+  r28a ::sys::predicate(@A, HeadFid, NewRid, false, Name, Tid, null, Schema, 0, null, 0) :-
          group3(@A, Pid, Rid, Pos, NewRid, HeadFid),
          sup(@A, Pid, Rid, Pos, Name, Schema, Tid).
 
   /* Create sup(rid, i-1) for the event position. */
-  r28b ::sys::predicate(@A, f_idgen(), NewRid, false, Name, Tid, "DELTA", Schema, 1U, null, 0) :-
+  r28b ::sys::predicate(@A, f_idgen(), NewRid, false, Name, Tid, "DELTA", Schema, 1, null, 0) :-
          group3(@A, Pid, Rid, Pos, NewRid, HeadFid),
          sup(@A, Pid, Rid, SupPos, Name, Schema, Tid),
          SupPos == Pos - 1.
 
   /* Put Gi in its proper position of the new rule. */
-  r28c ::sys::predicate(@A, Fid, NewRid, false, Name, Tid, "PROBE", Schema, 2U, AM, New) :-
+  r28c ::sys::predicate(@A, Fid, NewRid, false, Name, Tid, "PROBE", Schema, 2, AM, New) :-
          group3(@A, Pid, Rid, Pos, NewRid, HeadFid),
          ::sys::predicate(@A, Fid, Rid, NotIn, Name, Tid, ECA, Schema, Pos, AM, New).
 
   /* Commit the new Rule. */
-  r28c ::sys::rule(@A, NewRid, Pid, RName, HeadFid, null, false, 3U, New) :-
+  r28c ::sys::rule(@A, NewRid, Pid, RName, HeadFid, null, false, 3, New) :-
          group3(@A, Pid, Rid, Pos, NewRid, HeadFid),
          ::sys::rule(@A, Rid, Pid, RName, HF, P2DL, Delete, TC, New),
          RName := "supFill_" + RName + "_" + f_tostr(Pos).
 
   /********************************************************************/
   /* Restart the rule rewrite process right after magic predicate Gi. */
-  r29 restart(@A, Pid, Rid, SupPos, f_idgen(), f_idgen(), 1U) :-
+  r29 restart(@A, Pid, Rid, SupPos, f_idgen(), f_idgen(), 1) :-
          break(@A, Pid, Rid, Name, Bound, SupPos, NewRid, HeadFid, NewPos).
 
   /* Place sup(rid, i) in the event position of the newly restarted rule. */
@@ -349,7 +349,7 @@ namespace magic {
          sup(@A, Pid, Rid, Pos, Name, Schema, Tid).
 
   /* Restart iterator. */
-  r29b rewriteIter(@A, Pid, Rid, Pos+1U, NewRid, HeadFid, NewPos+1U) :-
+  r29b rewriteIter(@A, Pid, Rid, Pos+1, NewRid, HeadFid, NewPos+1) :-
          restart(@A, Pid, Rid, Pos, NewRid, HeadFid, NewPos).
 
 

@@ -31,8 +31,7 @@
 #include "value.h"
 #include "val_str.h"
 #include "val_null.h"
-#include "val_uint32.h"
-#include "val_int32.h"
+#include "val_int64.h"
 #include "val_list.h"
 #include "set.h"
 #include "val_tuple.h"
@@ -67,16 +66,16 @@ namespace compile {
 	assert(!head);
         head = headIter->next()->clone();
 	// do anything at all if this rule has a new head functor
-	if(Val_Int32::cast((*head)[catalog->attribute(FUNCTOR, "NEW")]) == 1){
+	if(Val_Int64::cast((*head)[catalog->attribute(FUNCTOR, "NEW")]) == 1){
 	  string basename = Val_Str::cast((*head)[catalog->attribute(FUNCTOR, "NAME")]);
 	  ListPtr attributes = Val_List::cast((*head)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
 	  uint32_t size = attributes->size();
-	  bool newRule = Val_UInt32::cast((*rule)[catalog->attribute(RULE, "NEW")]) == 1;
+	  bool newRule = Val_Int64::cast((*rule)[catalog->attribute(RULE, "NEW")]) == 1;
 	  NewHeadState *state = new NewHeadState(basename, size, newRule);
 	  
 	  uint32_t count = 1; //hack to ensure that the pos field correctly reflects the position of the new loc spec
 	  // i.e. it excludes the fields because of the external "new" wrapper: location and opaque
-	  uint32_t ruleSize = Val_UInt32::cast((*rule)[catalog->attribute(RULE, "TERM_COUNT")]);
+	  uint32_t ruleSize = Val_Int64::cast((*rule)[catalog->attribute(RULE, "TERM_COUNT")]);
 	  ListPtr copyAttributes = List::mk();
 	  ValPtrList::const_iterator iter = attributes->begin();
 	  copyAttributes->append(*iter);
@@ -111,7 +110,7 @@ namespace compile {
 	  headState.insert(state);
 	  if(state->posSet.size() > 0){
 	    TuplePtr ruleCopy = rule->clone();
-	    ruleCopy->set(catalog->attribute(RULE, "TERM_COUNT"), Val_UInt32::mk(ruleSize));
+	    ruleCopy->set(catalog->attribute(RULE, "TERM_COUNT"), Val_Int64::mk(ruleSize));
 	    ruleCopy->freeze();
 	    CommonTablePtr ruleTbl = catalog->table(RULE);
 	    ruleTbl->insert(ruleCopy);
@@ -165,12 +164,12 @@ namespace compile {
 
 	    ruleTp->append(Val_Null::mk());             // Add the "head" functor identifer.
 	    ruleTp->append(Val_Null::mk());                  // The P2DL desc. of this rule
-	    ruleTp->append(Val_UInt32::mk(false));         // Delete rule?
-	    ruleTp->append(Val_UInt32::mk(2)); // Term count?
-	    ruleTp->append(Val_Int32::mk(0));
+	    ruleTp->append(Val_Int64::mk(false));         // Delete rule?
+	    ruleTp->append(Val_Int64::mk(2)); // Term count?
+	    ruleTp->append(Val_Int64::mk(0));
 
 	    TuplePtr head = Context::generateFunctor(catalog, fictVar, lhsname, (*ruleTp)[TUPLE_ID], state->numVars);
-	    head->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(0));
+	    head->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(0));
 	    head->freeze();
 	    functorTbl->insert(head);
 	    ruleTp->set(catalog->attribute(RULE, "HEAD_FID"), (*head)[TUPLE_ID]);
@@ -178,7 +177,7 @@ namespace compile {
 	    ruleTbl->insert(ruleTp);	               // Add rule to rule table.
 	    
 	    TuplePtr rhs = head->clone(FUNCTOR, true);
-	    rhs->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(1));	    
+	    rhs->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(1));	    
 	    rhs->set(catalog->attribute(FUNCTOR, "NAME"), Val_Str::mk(state->newRuleHead));
 	    rhs->set(catalog->attribute(FUNCTOR, "TID"), Val_Null::mk());
 	    rhs->freeze();
@@ -197,12 +196,12 @@ namespace compile {
 
 	    ruleTp->append(Val_Null::mk());             // Add the "head" functor identifer.
 	    ruleTp->append(Val_Null::mk());                  // The P2DL desc. of this rule
-	    ruleTp->append(Val_UInt32::mk(false));         // Delete rule?
-	    ruleTp->append(Val_UInt32::mk(2)); // Term count?
-	    ruleTp->append(Val_Int32::mk(0));
+	    ruleTp->append(Val_Int64::mk(false));         // Delete rule?
+	    ruleTp->append(Val_Int64::mk(2)); // Term count?
+	    ruleTp->append(Val_Int64::mk(0));
 
 	    TuplePtr head = Context::generateFunctor(catalog, fictVar, lhsname, (*ruleTp)[TUPLE_ID], state->numVars);
-	    head->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(0));
+	    head->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(0));
 	    head->freeze();
 	    functorTbl->insert(head);
 	    ruleTp->set(catalog->attribute(RULE, "HEAD_FID"), (*head)[TUPLE_ID]);
@@ -210,7 +209,7 @@ namespace compile {
 	    ruleTbl->insert(ruleTp);	               // Add rule to rule table.
 	    
 	    TuplePtr rhs = head->clone(FUNCTOR, true);
-	    rhs->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(1));	    
+	    rhs->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(1));	    
 	    rhs->set(catalog->attribute(FUNCTOR, "NAME"), Val_Str::mk(state->newRuleHead));
 	    rhs->set(catalog->attribute(FUNCTOR, "TID"), Val_Null::mk());
 	    rhs->freeze();
@@ -269,7 +268,7 @@ namespace compile {
       TuplePtr fntp = Tuple::mk(FUNCTION);
       
       fntp->append(Val_Str::mk(CREATELOCSPECFN));
-      fntp->append(Val_UInt32::mk(LOCSPECFNARGS));
+      fntp->append(Val_Int64::mk(LOCSPECFNARGS));
       fntp->freeze();
 
       TuplePtr assignTp  = Tuple::mk(ASSIGN, true);
@@ -277,7 +276,7 @@ namespace compile {
       assert(Val_Str::cast((*locSpec)[TNAME]) == VAR);
       assignTp->append(Val_Tuple::mk(locSpec));               // Assignment variable
       assignTp->append(Val_Tuple::mk(fntp));                  // Assignemnt value
-      assignTp->append(Val_UInt32::mk(pos));         // Position
+      assignTp->append(Val_Int64::mk(pos));         // Position
       return assignTp;
     }
     
@@ -304,13 +303,13 @@ namespace compile {
       
       ruleTp->append(Val_Null::mk());             // Add the "head" functor identifer.
       ruleTp->append(Val_Null::mk());                  // The P2DL desc. of this rule
-      ruleTp->append(Val_UInt32::mk(false));         // Delete rule?
-      ruleTp->append(Val_UInt32::mk(termCount)); // Term count?
-      ruleTp->append(Val_Int32::mk(0)); // new
+      ruleTp->append(Val_Int64::mk(false));         // Delete rule?
+      ruleTp->append(Val_Int64::mk(termCount)); // Term count?
+      ruleTp->append(Val_Int64::mk(0)); // new
       
       ValuePtr ruleId = (*ruleTp)[TUPLE_ID];
       TuplePtr head = Context::generateFunctor(catalog, fictVar, lhsname, ruleId, state->numVars + 1);
-      head->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(pos++));
+      head->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(pos++));
       head->freeze();
       functorTbl->insert(head);
       ruleTp->set(catalog->attribute(RULE, "HEAD_FID"), (*head)[TUPLE_ID]);
@@ -318,7 +317,7 @@ namespace compile {
       ruleTbl->insert(ruleTp);	               // Add rule to rule table.
 	    
       TuplePtr rhs = head->clone(FUNCTOR, true);
-      rhs->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(pos++));	    
+      rhs->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(pos++));	    
       rhs->set(catalog->attribute(FUNCTOR, "NAME"), Val_Str::mk(state->newRuleBase));
       rhs->set(catalog->attribute(FUNCTOR, "TID"), Val_Null::mk());
       
@@ -346,14 +345,14 @@ namespace compile {
       
       TuplePtr isLocSpecFn = Tuple::mk(FUNCTION);
       isLocSpecFn->append(Val_Str::mk(ISLOCSPECFN)); // fn name
-      isLocSpecFn->append(Val_UInt32::mk(ISLOCSPECFNARGS)); // num of args
+      isLocSpecFn->append(Val_Int64::mk(ISLOCSPECFNARGS)); // num of args
       TuplePtr  locSpecVar = Val_Tuple::cast(attributes->at(compile::LOCSPECPOS));
       isLocSpecFn->append(Val_Tuple::mk(locSpecVar->clone())); // args
       isLocSpecFn->freeze();
 
       assignIsLocSpec->append(Val_Tuple::mk(tempIsLocSpecVar));
       assignIsLocSpec->append(Val_Tuple::mk(isLocSpecFn));
-      assignIsLocSpec->append(Val_UInt32::mk(pos++));
+      assignIsLocSpec->append(Val_Int64::mk(pos++));
       assignIsLocSpec->freeze();
       assignTbl->insert(assignIsLocSpec);
 
@@ -375,7 +374,7 @@ namespace compile {
       TuplePtr expr3 = Tuple::mk(BOOL);
       expr3->append(Val_Str::mk("=="));
       TuplePtr val = Tuple::mk(VAL);
-      val->append(Val_UInt32::mk(1));
+      val->append(Val_Int64::mk(1));
       expr3->append(Val_Tuple::mk(expr2));
       expr3->append(Val_Tuple::mk(val));
       expr3->freeze();*/
@@ -383,7 +382,7 @@ namespace compile {
       TuplePtr expr3 = Tuple::mk(BOOL);
       expr3->append(Val_Str::mk("=="));
       TuplePtr val = Tuple::mk(VAL);
-      val->append(Val_UInt32::mk(1));
+      val->append(Val_Int64::mk(1));
       val->freeze();
       TuplePtr isLocSpecVar = tempIsLocSpecVar->clone();
       isLocSpecVar->freeze();
@@ -393,7 +392,7 @@ namespace compile {
       TuplePtr       selectTp  = Tuple::mk(SELECT, true);
       selectTp->append(ruleId);   // Should be rule identifier
       selectTp->append(Val_Tuple::mk(expr3));              // Boolean expression
-      selectTp->append(Val_UInt32::mk(pos++));        // Position
+      selectTp->append(Val_Int64::mk(pos++));        // Position
       selectTp->append(Val_Null::mk());        // Access method
       selectTp->freeze();
       selectTbl->insert(selectTp); 
@@ -408,11 +407,11 @@ namespace compile {
 
       TuplePtr createVerFn = Tuple::mk(FUNCTION);
       createVerFn->append(Val_Str::mk(CREATEVERFN)); // fn name
-      createVerFn->append(Val_UInt32::mk(0)); // num of args
+      createVerFn->append(Val_Int64::mk(0)); // num of args
       createVerFn->freeze();
       
       assignVer->append(Val_Tuple::mk(createVerFn));
-      assignVer->append(Val_UInt32::mk(pos++));
+      assignVer->append(Val_Int64::mk(pos++));
       assignVer->freeze();
       assignTbl->insert(assignVer);
 
@@ -439,15 +438,15 @@ namespace compile {
       
       ruleTp->append(Val_Null::mk());             // Add the "head" functor identifer.
       ruleTp->append(Val_Null::mk());                  // The P2DL desc. of this rule
-      ruleTp->append(Val_UInt32::mk(false));         // Delete rule?
-      ruleTp->append(Val_UInt32::mk(termCount)); // Term count?
-      ruleTp->append(Val_Int32::mk(0)); // new
+      ruleTp->append(Val_Int64::mk(false));         // Delete rule?
+      ruleTp->append(Val_Int64::mk(termCount)); // Term count?
+      ruleTp->append(Val_Int64::mk(0)); // new
       
       ValuePtr ruleId = (*ruleTp)[TUPLE_ID];
 
       TuplePtr head = Tuple::mk(FUNCTOR, true);
       head->append(ruleId);
-      head->append(Val_UInt32::mk(0)); // NOTIN?
+      head->append(Val_Int64::mk(0)); // NOTIN?
 
       head->append(Val_Str::mk(compile::LOCSPECTABLE));   // Functor name
   
@@ -485,9 +484,9 @@ namespace compile {
       attributes->append(Val_Tuple::mk(ver->clone()));
 
       head->append(Val_List::mk(attributes));// the attribute field
-      head->append(Val_UInt32::mk(pos++));          // The position field
+      head->append(Val_Int64::mk(pos++));          // The position field
       head->append(Val_Null::mk());          // The access method
-      head->append(Val_Int32::mk(0));        // The new field
+      head->append(Val_Int64::mk(0));        // The new field
 
       head->freeze();
       functorTbl->insert(head);
@@ -496,7 +495,7 @@ namespace compile {
       ruleTbl->insert(ruleTp);	               // Add rule to rule table.
       
       newTuple->set(catalog->attribute(FUNCTOR, "RID"), ruleId);
-      newTuple->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(pos++));
+      newTuple->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(pos++));
       ListPtr tempargs = Val_List::cast((*newTuple)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
       ListPtr newattributes = List::mk();
       for (ValPtrList::const_iterator iter = tempargs->begin();
@@ -553,15 +552,15 @@ namespace compile {
       
       ruleTp->append(Val_Null::mk());             // Add the "head" functor identifer.
       ruleTp->append(Val_Null::mk());                  // The P2DL desc. of this rule
-      ruleTp->append(Val_UInt32::mk(false));         // Delete rule?
-      ruleTp->append(Val_UInt32::mk(termCount)); // Term count?
-      ruleTp->append(Val_Int32::mk(0)); // new
+      ruleTp->append(Val_Int64::mk(false));         // Delete rule?
+      ruleTp->append(Val_Int64::mk(termCount)); // Term count?
+      ruleTp->append(Val_Int64::mk(0)); // new
       
       ValuePtr ruleId = (*ruleTp)[TUPLE_ID];
 
       TuplePtr head = Tuple::mk(FUNCTOR, true);
       head->append(ruleId);
-      head->append(Val_UInt32::mk(0)); // NOTIN?
+      head->append(Val_Int64::mk(0)); // NOTIN?
       head->append(Val_Str::mk(headname));   // Functor name
   
       // Fill in table reference if functor is materialized
@@ -607,9 +606,9 @@ namespace compile {
       }
 
       head->append(Val_List::mk(attributes));// the attribute field
-      head->append(Val_UInt32::mk(pos++));          // The position field
+      head->append(Val_Int64::mk(pos++));          // The position field
       head->append(Val_Null::mk());          // The access method
-      head->append(Val_Int32::mk(0));        // The new field
+      head->append(Val_Int64::mk(0));        // The new field
 
       head->freeze();
       functorTbl->insert(head);
@@ -618,7 +617,7 @@ namespace compile {
       ruleTbl->insert(ruleTp);	               // Add rule to rule table.
       
       newTuple->set(catalog->attribute(FUNCTOR, "RID"), ruleId);
-      newTuple->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(pos++));
+      newTuple->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(pos++));
       ListPtr tempargs = Val_List::cast((*newTuple)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
       ListPtr newattributes = List::mk();
       for (ValPtrList::const_iterator iter = tempargs->begin();
@@ -634,12 +633,12 @@ namespace compile {
       TuplePtr expr3 = Tuple::mk(BOOL);
       expr3->append(Val_Str::mk("=="));
       TuplePtr val = Tuple::mk(VAL);
-      val->append(Val_UInt32::mk(says?1:0));
+      val->append(Val_Int64::mk(says?1:0));
       val->freeze();
 
       TuplePtr f_isSays = Tuple::mk(FUNCTION);
       f_isSays->append(Val_Str::mk(ISSAYSFN));
-      f_isSays->append(Val_UInt32::mk(ISSAYSFNARGS));
+      f_isSays->append(Val_Int64::mk(ISSAYSFNARGS));
       f_isSays->append(Val_Tuple::mk(hintVar));
       f_isSays->freeze();
       expr3->append(Val_Tuple::mk(val));
@@ -649,7 +648,7 @@ namespace compile {
       TuplePtr       selectTp  = Tuple::mk(SELECT, true);
       selectTp->append(ruleId);   // Should be rule identifier
       selectTp->append(Val_Tuple::mk(expr3));              // Boolean expression
-      selectTp->append(Val_UInt32::mk(pos++));        // Position
+      selectTp->append(Val_Int64::mk(pos++));        // Position
       selectTp->append(Val_Null::mk());        // Access method
       selectTp->freeze();
       selectTbl->insert(selectTp); 
@@ -689,13 +688,13 @@ namespace compile {
       
       ruleTp->append(Val_Null::mk());             // Add the "head" functor identifer.
       ruleTp->append(Val_Null::mk());                  // The P2DL desc. of this rule
-      ruleTp->append(Val_UInt32::mk(false));         // Delete rule?
-      ruleTp->append(Val_UInt32::mk(termCount)); // Term count?
-      ruleTp->append(Val_Int32::mk(0)); // new
+      ruleTp->append(Val_Int64::mk(false));         // Delete rule?
+      ruleTp->append(Val_Int64::mk(termCount)); // Term count?
+      ruleTp->append(Val_Int64::mk(0)); // new
       
       ValuePtr ruleId = (*ruleTp)[TUPLE_ID];
       TuplePtr head = Context::generateFunctor(catalog, fictVar, lhsname, ruleId, state->numVars + 1); // an additional term for timestamp
-      head->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(pos++));
+      head->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(pos++));
       head->freeze();
       functorTbl->insert(head);
       ruleTp->set(catalog->attribute(RULE, "HEAD_FID"), (*head)[TUPLE_ID]);
@@ -703,7 +702,7 @@ namespace compile {
       ruleTbl->insert(ruleTp);	               // Add rule to rule table.
 	    
       TuplePtr rhs = head->clone(FUNCTOR, true);
-      rhs->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(pos++));	    
+      rhs->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(pos++));	    
       rhs->set(catalog->attribute(FUNCTOR, "NAME"), Val_Str::mk(rhsname));
       
       CommonTable::Key nameKey;
@@ -740,7 +739,7 @@ namespace compile {
       // first make the f_isLocSpec fn
       TuplePtr isLocSpecFn = Tuple::mk(FUNCTION);
       isLocSpecFn->append(Val_Str::mk(ISLOCSPECFN)); // fn name
-      isLocSpecFn->append(Val_UInt32::mk(ISLOCSPECFNARGS)); // num of args
+      isLocSpecFn->append(Val_Int64::mk(ISLOCSPECFNARGS)); // num of args
       TuplePtr  locSpecVar = Val_Tuple::cast(attributes->at(compile::LOCSPECPOS));
       isLocSpecFn->append(Val_Tuple::mk(locSpecVar->clone())); // args
       isLocSpecFn->freeze();
@@ -748,7 +747,7 @@ namespace compile {
       //next make the 0
       
       TuplePtr zeroVal = Tuple::mk(VAL);
-      zeroVal->append(Val_UInt32::mk(0));
+      zeroVal->append(Val_Int64::mk(0));
       zeroVal->freeze();
 
       // now the select statement (IsLocSpec || Me == DestLocSpec) == 1
@@ -761,7 +760,7 @@ namespace compile {
       TuplePtr       selectTp  = Tuple::mk(SELECT, true);
       selectTp->append(ruleId);   // Should be rule identifier
       selectTp->append(Val_Tuple::mk(expr1));              // Boolean expression
-      selectTp->append(Val_UInt32::mk(pos++));        // Position
+      selectTp->append(Val_Int64::mk(pos++));        // Position
       selectTp->append(Val_Null::mk());        // Access method
       selectTp->freeze();
       selectTbl->insert(selectTp); 
@@ -773,12 +772,12 @@ namespace compile {
       
       TuplePtr timeStampFn = Tuple::mk(FUNCTION);
       timeStampFn->append(Val_Str::mk(TIMESTAMPFN)); // fn name
-      timeStampFn->append(Val_UInt32::mk(0)); // num of args
+      timeStampFn->append(Val_Int64::mk(0)); // num of args
       timeStampFn->freeze();
 
       assignTimeStamp->append(Val_Tuple::mk(uniqueId->clone()));
       assignTimeStamp->append(Val_Tuple::mk(timeStampFn));
-      assignTimeStamp->append(Val_UInt32::mk(pos++));
+      assignTimeStamp->append(Val_Int64::mk(pos++));
       assignTimeStamp->freeze();
       assignTbl->insert(assignTimeStamp);
 
@@ -806,7 +805,7 @@ namespace compile {
       ListPtr tempargs =  Val_List::cast((*newTuple)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
 
       TuplePtr head = newTuple->clone(FUNCTOR, true);
-      head->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(pos++));      
+      head->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(pos++));      
       ListPtr headattributes = List::mk();
       for (ValPtrList::const_iterator iter = tempargs->begin();
            iter != tempargs->end(); iter++) {
@@ -816,7 +815,7 @@ namespace compile {
       head->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(headattributes));
       head->freeze();
       TuplePtr rhs = newTuple;
-      rhs->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(pos++));      
+      rhs->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(pos++));      
       ListPtr rhsattributes = List::mk();
       for (ValPtrList::const_iterator iter = tempargs->begin();
            iter != tempargs->end(); iter++) {
@@ -830,9 +829,9 @@ namespace compile {
       ruleTp->append(Val_Str::mk(rulename));
       ruleTp->append( (*head)[TUPLE_ID]);             // Add the "head" functor identifer.
       ruleTp->append(Val_Null::mk());                  // The P2DL desc. of this rule
-      ruleTp->append(Val_UInt32::mk(true));         // Delete rule?
-      ruleTp->append(Val_UInt32::mk(termCount)); // Term count?
-      ruleTp->append(Val_Int32::mk(0)); // new
+      ruleTp->append(Val_Int64::mk(true));         // Delete rule?
+      ruleTp->append(Val_Int64::mk(termCount)); // Term count?
+      ruleTp->append(Val_Int64::mk(0)); // new
       ruleTp->freeze();
 
       ruleTbl->insert(ruleTp);
@@ -867,13 +866,13 @@ namespace compile {
       
       ruleTp->append(Val_Null::mk());             // Add the "head" functor identifer.
       ruleTp->append(Val_Null::mk());                  // The P2DL desc. of this rule
-      ruleTp->append(Val_UInt32::mk(false));         // Delete rule?
-      ruleTp->append(Val_UInt32::mk(termCount)); // Term count?
-      ruleTp->append(Val_Int32::mk(0)); // new
+      ruleTp->append(Val_Int64::mk(false));         // Delete rule?
+      ruleTp->append(Val_Int64::mk(termCount)); // Term count?
+      ruleTp->append(Val_Int64::mk(0)); // new
       
       ValuePtr ruleId = (*ruleTp)[TUPLE_ID];
       TuplePtr head = Context::generateFunctor(catalog, fictVar, lhsname, ruleId, 2);
-      head->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(pos++));
+      head->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(pos++));
       ListPtr headargs = Val_List::cast((*head)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
       TuplePtr curHeadDest = (Val_Tuple::cast(headargs->front()))->clone();
       headargs->pop_front();
@@ -890,7 +889,7 @@ namespace compile {
       ruleTbl->insert(ruleTp);	               // Add rule to rule table.
 	    
       TuplePtr rhs = newTuple;
-      rhs->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(pos++));
+      rhs->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(pos++));
       rhs->set(catalog->attribute(FUNCTOR, "RID"), ruleId);
 
       //copy attributes
@@ -923,7 +922,7 @@ namespace compile {
       val->append(Val_Str::mk(headname));
       val->freeze();
       assignTblName->append(Val_Tuple::mk(val));
-      assignTblName->append(Val_UInt32::mk(pos++));
+      assignTblName->append(Val_Int64::mk(pos++));
       assignTblName->freeze();
       assignTbl->insert(assignTblName);
 
@@ -932,7 +931,7 @@ namespace compile {
       
       TuplePtr serializeFn = Tuple::mk(FUNCTION);
       serializeFn->append(Val_Str::mk(SERIALIZEFN)); // fn name
-      serializeFn->append(Val_UInt32::mk(SERIALIZEFNARGS)); // num of args
+      serializeFn->append(Val_Int64::mk(SERIALIZEFNARGS)); // num of args
 
       serializeFn->append(Val_Tuple::mk(var->clone())); // num of args
       TuplePtr uniqueId = Val_Tuple::cast(tempargs->at(UNIQUEIDPOS));
@@ -943,7 +942,7 @@ namespace compile {
       bufVar->freeze();
       assignSerialized->append(Val_Tuple::mk(bufVar));
       assignSerialized->append(Val_Tuple::mk(serializeFn));
-      assignSerialized->append(Val_UInt32::mk(pos++));
+      assignSerialized->append(Val_Int64::mk(pos++));
       assignSerialized->freeze();
       assignTbl->insert(assignSerialized);
       return head;
@@ -971,13 +970,13 @@ namespace compile {
       
       ruleTp->append(Val_Null::mk());             // Add the "head" functor identifer.
       ruleTp->append(Val_Null::mk());                  // The P2DL desc. of this rule
-      ruleTp->append(Val_UInt32::mk(false));         // Delete rule?
-      ruleTp->append(Val_UInt32::mk(termCount)); // Term count?
-      ruleTp->append(Val_Int32::mk(0)); // new
+      ruleTp->append(Val_Int64::mk(false));         // Delete rule?
+      ruleTp->append(Val_Int64::mk(termCount)); // Term count?
+      ruleTp->append(Val_Int64::mk(0)); // new
       
       ValuePtr ruleId = (*ruleTp)[TUPLE_ID];
       TuplePtr head = Context::generateFunctor(catalog, fictVar, lhsname, ruleId, DUMMYARGS-1);
-      head->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(pos++));
+      head->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(pos++));
       ListPtr headargs = Val_List::cast((*head)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
 
       ruleTp->set(catalog->attribute(RULE, "HEAD_FID"), (*head)[TUPLE_ID]);
@@ -985,7 +984,7 @@ namespace compile {
       ruleTbl->insert(ruleTp);	               // Add rule to rule table.
 	    
       TuplePtr rhs = Context::generateFunctor(catalog, fictVar, rhsname, ruleId, DESERIALIZEFNARGS + 1); //+1 for location
-      rhs->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(pos++));
+      rhs->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(pos++));
 
       rhs->freeze();
       functorTbl->insert(rhs);
@@ -1002,7 +1001,7 @@ namespace compile {
       
       TuplePtr deserializeFn = Tuple::mk(FUNCTION);
       deserializeFn->append(Val_Str::mk(DESERIALIZEFN)); // fn name
-      deserializeFn->append(Val_UInt32::mk(DESERIALIZEFNARGS)); // num of args
+      deserializeFn->append(Val_Int64::mk(DESERIALIZEFNARGS)); // num of args
       
       ValPtrList::const_iterator iter = attributes->begin();
       for (iter++; iter != attributes->end(); iter++) {
@@ -1018,7 +1017,7 @@ namespace compile {
 
       assignDeserialized->append(Val_Tuple::mk(var));
       assignDeserialized->append(Val_Tuple::mk(deserializeFn));
-      assignDeserialized->append(Val_UInt32::mk(pos++));
+      assignDeserialized->append(Val_Int64::mk(pos++));
       assignDeserialized->freeze();
       assignTbl->insert(assignDeserialized);
 
@@ -1094,7 +1093,7 @@ namespace compile {
       else {
         functorTp->append(Val_Null::mk());
       }
-      functorTp->append(Val_UInt32::mk(0)); // NOTIN?
+      functorTp->append(Val_Int64::mk(0)); // NOTIN?
       functorTp->append(Val_Str::mk(name));   // Functor name
 
       CommonTable::Key nameKey;
@@ -1134,7 +1133,7 @@ namespace compile {
       functorTp->append(Val_List::mk(attributes));// the attribute field
       functorTp->append(Val_Null::mk());          // The position field
       functorTp->append(Val_Null::mk());          // The access method
-      functorTp->append(Val_Int32::mk(0));        // The new field
+      functorTp->append(Val_Int64::mk(0));        // The new field
       return functorTp;
       
     }

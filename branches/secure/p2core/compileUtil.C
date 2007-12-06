@@ -20,8 +20,7 @@
 #include "val_tuple.h"
 #include "val_list.h"
 #include "val_str.h"
-#include "val_uint32.h"
-#include "val_int32.h"
+#include "val_int64.h"
 #include "val_null.h"
 
 namespace compile {
@@ -68,7 +67,7 @@ namespace compile {
       }
       else if(type == FUNCTION)
       {
-	unsigned numArgs = Val_UInt32::cast((*t)[3]);
+	unsigned numArgs = Val_Int64::cast((*t)[3]);
 	for(unsigned i = 0; i < numArgs; i++)
 	{
 	  calculateMaskRecur(mask, (*t)[4 + i]);
@@ -149,7 +148,7 @@ namespace compile {
         oss << exprString(Val_Tuple::cast((*expr)[4])); 
       }
       else if (type == FUNCTION) {
-        unsigned args = Val_UInt32::cast((*expr)[3]);
+        unsigned args = Val_Int64::cast((*expr)[3]);
         oss << (*expr)[2]->toString() << "("; // Function name
         for (unsigned int i = 0; i < args; i++) {
           oss << exprString(Val_Tuple::cast((*expr)[4 + i])); 
@@ -378,7 +377,7 @@ namespace compile {
         vars->append(variables((*expr)[2]));
       }
       else if ((*expr)[TNAME]->toString() == FUNCTION) {
-        int args = Val_Int32::cast((*expr)[3]);
+        int args = Val_Int64::cast((*expr)[3]);
         while (args > 0) {
           vars->append(variables((*expr)[3+args--]));
         }
@@ -467,7 +466,7 @@ namespace compile {
       ListPtr projection = List::mk();
       for (ValPtrList::const_iterator iter = positions->begin();
            iter != positions->end(); iter++) {
-        int pos = Val_UInt32::cast(*iter) - 1;
+        uint pos = Val_Int64::cast(*iter) - 1;
         if (pos < schema->size()) {
           projection->append(schema->at(pos));
         }
@@ -492,11 +491,11 @@ namespace compile {
         TuplePtr arg = Val_Tuple::cast(*iter);
         if ((*arg)[TNAME]->toString() == VAR &&
             compile::namestracker::position(bound, *iter) >= 0) {
-          adorn->append(Val_UInt32::mk(pos));
+          adorn->append(Val_Int64::mk(pos));
         }
         else if ((*arg)[TNAME]->toString() != VAR &&
                  (*arg)[TNAME]->toString() != LOC) {
-          adorn->append(Val_UInt32::mk(pos));
+          adorn->append(Val_Int64::mk(pos));
         }
       }
       return adorn;
@@ -576,7 +575,7 @@ namespace compile {
       }
       string name = (*Iter->next())[Plumber::catalog()->attribute(FUNCTION, "PEL")]->toString();
         
-      unsigned args = Val_UInt32::cast((*funcTp)[3]);
+      unsigned args = Val_Int64::cast((*funcTp)[3]);
       while (args > 0) {
          pel << gen(schema, Val_Tuple::cast((*funcTp)[3+args--])) << " ";
       } 

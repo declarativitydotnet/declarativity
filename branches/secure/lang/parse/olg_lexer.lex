@@ -34,6 +34,10 @@
 #include <limits.h>
 #include <stdlib.h>
 
+#include "reporting.h"
+#define LOG_ERROR(_x) { TELL_ERROR << "OLG_Lexer: " << _x << "\n"; }
+#define LOG_WARN(_x) { TELL_WARN << "OLG_Lexer: " << _x << "\n"; }
+
 #ifdef YY_DECL
 #undef YY_DECL
 #endif
@@ -176,13 +180,13 @@ WHITESPACE	[ \t\r\n]+
 
 <INITIAL>"true" {
   // Unsigned integer literal (including octal and/or hex)
-  lvalp->v = new compile::parse::Value(Val_Int32::mk(1));
+  lvalp->v = new compile::parse::Value(Val_Int64::mk(1));
   return OLG_VALUE;
 }
 
 <INITIAL>"false" {
   // Unsigned integer literal (including octal and/or hex)
-  lvalp->v = new compile::parse::Value(Val_Int32::mk(0));
+  lvalp->v = new compile::parse::Value(Val_Int64::mk(0));
   return OLG_VALUE;
 }
 
@@ -218,7 +222,7 @@ WHITESPACE	[ \t\r\n]+
 
 <INITIAL>infinity {
   // Unsigned integer literal (including octal and/or hex)
-  lvalp->v = new compile::parse::Value(Val_Int32::mk(-1));
+  lvalp->v = new compile::parse::Value(Val_Int64::mk(-1));
   return OLG_VALUE;
 }
 
@@ -227,15 +231,19 @@ WHITESPACE	[ \t\r\n]+
   return OLG_NAME; 
 }
 
-<INITIAL>({DIGIT}+|0[xX]{HEXDIGIT}+)U {
-  // Unsigned integer literal (including octal and/or hex)
-  lvalp->v = new compile::parse::Value(Val_UInt32::mk(strtoull(yytext,NULL,0)));
+<INITIAL>(-?{DIGIT}+|0[xX]{HEXDIGIT}+) {
+  // Some integer literal (including octal and/or hex)
+  lvalp->v = new compile::parse::Value(Val_Int64::mk(strtoll(yytext,NULL,0)));
   return OLG_VALUE;
 }
 
-<INITIAL>(-?{DIGIT}+|0[xX]{HEXDIGIT}+) {
+<INITIAL>(-?{DIGIT}+|0[xX]{HEXDIGIT}+)U {
   // Some integer literal (including octal and/or hex)
-  lvalp->v = new compile::parse::Value(Val_Int32::mk(strtoll(yytext,NULL,0)));
+  LOG_WARN("Unsigned integers of the form '"
+           << yytext
+           << "' have been deprecated. For backward compatibility "
+           << "they are interpreted as signed 64-bit integers.");
+  lvalp->v = new compile::parse::Value(Val_Int64::mk(strtoll(yytext,NULL,0)));
   return OLG_VALUE;
 }
 

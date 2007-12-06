@@ -140,6 +140,8 @@ namespace opr {
       { NOSUP2("+", v1->typeName(), v2->typeName()); return ValuePtr(); };
     virtual ValuePtr _minus (const ValuePtr& v1, const ValuePtr& v2) const
       { NOSUP2("-", v1->typeName(), v2->typeName()); return ValuePtr(); };
+    virtual ValuePtr _neg (const ValuePtr& v1) const
+      { NOSUP1("-", v1->typeName()); return ValuePtr(); };
     virtual ValuePtr _times (const ValuePtr& v1, const ValuePtr& v2) const
       { NOSUP2("*", v1->typeName(), v2->typeName()); return ValuePtr(); };
     virtual ValuePtr _divide (const ValuePtr& v1, const ValuePtr& v2) const
@@ -197,6 +199,7 @@ namespace opr {
   ValuePtr operator+ (const ValuePtr& v1, const ValuePtr& v2); 
   struct timespec operator+ (const struct timespec& v1, const struct timespec& v2); 
   ValuePtr operator- (const ValuePtr& v1, const ValuePtr& v2); 
+  ValuePtr operator- (const ValuePtr& v1); 
   struct timespec operator- (const struct timespec& v1, const struct timespec& v2); 
   ValuePtr operator--(const ValuePtr& v1); 
   ValuePtr operator++(const ValuePtr& v1); 
@@ -310,7 +313,7 @@ namespace opr {
    * Basic Operator Function Template.
    * This template provides basic functionality for ALL operator functions
    * defined in Oper. Only the most basic concrete types will be able to
-   * make use of this template (e.g., Int32, UInt32, Int64, UInt64, Double).
+   * make use of this template (e.g., Int64, Double).
    */
   template <class T> class OperImpl : public OperCompare<T> { 
   public: 
@@ -340,6 +343,9 @@ namespace opr {
     };
     virtual ValuePtr _minus (const ValuePtr& v1, const ValuePtr& v2) const {
       return T::mk(T::cast(v1) - T::cast(v2));
+    };
+    virtual ValuePtr _neg (const ValuePtr& v1) const {
+      return T::mk(-T::cast(v1));
     };
     virtual ValuePtr _times (const ValuePtr& v1, const ValuePtr& v2) const {
       return T::mk(T::cast(v1) * T::cast(v2));

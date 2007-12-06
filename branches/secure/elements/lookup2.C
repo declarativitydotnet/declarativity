@@ -14,7 +14,7 @@
 #include "lookup2.h"
 #include "val_str.h"
 #include "val_list.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "plumber.h"
 #include "scheduler.h"
 
@@ -57,12 +57,12 @@ Lookup2::Lookup2(TuplePtr args)
   ListPtr lookupKey = Val_List::cast((*args)[4]);
   for (ValPtrList::const_iterator i = lookupKey->begin();
        i != lookupKey->end(); i++)
-    _lookupKey.push_back(Val_UInt32::cast(*i));
+    _lookupKey.push_back(Val_Int64::cast(*i));
 
   ListPtr indexKey = Val_List::cast((*args)[5]);
   for (ValPtrList::const_iterator i = indexKey->begin();
        i != indexKey->end(); i++)
-    _indexKey.push_back(Val_UInt32::cast(*i));
+    _indexKey.push_back(Val_Int64::cast(*i));
 
   // If the two keys are identical, then we need not use projections.
   _project = (_lookupKey != _indexKey);

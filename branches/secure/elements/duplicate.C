@@ -14,7 +14,7 @@
 
 #include "duplicate.h"
 #include "val_str.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include <boost/bind.hpp>
 
 DEFINE_ELEMENT_INITS(Duplicate, "Duplicate")
@@ -36,7 +36,7 @@ Duplicate::Duplicate(string name, int outputs)
  * 3. Val_UInt32: Number of outputs.
  */
 Duplicate::Duplicate(TuplePtr args)
-  : Element(Val_Str::cast((*args)[2]), 1, Val_UInt32::cast((*args)[3]))
+  : Element(Val_Str::cast((*args)[2]), 1, Val_Int64::cast((*args)[3]))
 {
   // Clean out the block flags
   _block_flags.resize(noutputs());

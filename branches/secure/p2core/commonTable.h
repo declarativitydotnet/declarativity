@@ -809,7 +809,7 @@ typedef boost::shared_ptr< CommonTable > CommonTablePtr;
 #define TABLE_LOG(_table,_reportingLevel,_rest) "CommonTable, " \
   << _table->_name                                              \
   << ", "                                                       \
-  << _reportingLevel                                            \
+  << Reporting::levelToName()[_reportingLevel]                    \
   << ", "                                                       \
   << errno                                                      \
   << ", "                                                       \

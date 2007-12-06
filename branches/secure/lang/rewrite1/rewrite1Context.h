@@ -20,7 +20,7 @@
 #include "elementRegistry.h"
 #include "compileContext.h"
 #include "val_str.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "set.h"
 
 namespace compile {
@@ -46,8 +46,8 @@ namespace compile {
     const uint32_t LOCSPECFNARGS = 0;
     const uint32_t ISLOCSPECFNARGS = 1;
     const uint32_t UNIQUEIDPOS = 2 ; // in TnewV tuples
-    static uint32_t ruleCounter = 0;
-    static bool needRecvTuple = false;
+    uint32_t ruleCounter = 0;
+    bool needRecvTuple = false;
 
     class Exception : public compile::Exception {
     public:

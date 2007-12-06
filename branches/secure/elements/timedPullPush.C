@@ -18,9 +18,8 @@
 
 #include "loop.h"
 #include "val_str.h"
-#include "val_uint64.h"
+#include "val_int64.h"
 #include "val_double.h"
-#include "val_uint32.h"
 #include <boost/bind.hpp>
 
 DEFINE_ELEMENT_INITS(TimedPullPush, "TimedPullPush")
@@ -69,7 +68,7 @@ TimedPullPush::TimedPullPush(TuplePtr args)
     _timeCallback(NULL)
 {
   if (args->size() > 4)
-    _tuples = Val_UInt32::cast((*args)[4]);
+    _tuples = Val_Int64::cast((*args)[4]);
   //std::cout<<"\nTUPLES = "<<_tuples<<std::endl; std::cout.flush();
 }
 

@@ -18,8 +18,6 @@
 #include "value.h"
 #include "val_str.h"
 #include "val_null.h"
-#include "val_uint32.h"
-#include "val_int32.h"
 #include "val_int64.h"
 #include "val_list.h"
 #include "val_tuple.h"
@@ -61,14 +59,14 @@ namespace compile {
       ostringstream oss;
       if ((*rule)[catalog->attribute(RULE, "NAME")] != Val_Null::mk())
         oss << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << " ";
-      oss << ((Val_UInt32::cast((*rule)[catalog->attribute(RULE, "DELETE")]) == 1)?"delete ":"") ;
+      oss << ((Val_Int64::cast((*rule)[catalog->attribute(RULE, "DELETE")]) == 1)?"delete ":"") ;
 
       CommonTable::Iterator iter;
 
       for (int pos = 0; true; pos++) {
         TuplePtr lookup = Tuple::mk();
         lookup->append((*rule)[TUPLE_ID]);
-        lookup->append(Val_UInt32::mk(pos));
+        lookup->append(Val_Int64::mk(pos));
         lookup->freeze();
         TuplePtr lookup2 = Tuple::mk();
         lookup2->append((*rule)[TUPLE_ID]);
@@ -119,7 +117,7 @@ namespace compile {
 	  
           ListPtr  schema  = Val_List::cast((*functor)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
           oss << (*functor)[catalog->attribute(FUNCTOR, "NAME")]->toString() 
-	      << ((Val_UInt32::cast((*functor)[catalog->attribute(FUNCTOR, "NEW")]) == 1)?"*":"")
+	      << ((Val_Int64::cast((*functor)[catalog->attribute(FUNCTOR, "NEW")]) == 1)?"*":"")
 	      <<"(";
           for (ValPtrList::const_iterator siter = schema->begin(); 
                siter != schema->end(); ) {
@@ -250,7 +248,7 @@ namespace compile {
       for (int pos = 0; true; pos++) {
         TuplePtr lookup = Tuple::mk();
         lookup->append((*rule)[TUPLE_ID]);
-        lookup->append(Val_UInt32::mk(pos));
+        lookup->append(Val_Int64::mk(pos));
         lookup->freeze();
         TuplePtr lookup2 = Tuple::mk();
         lookup2->append((*rule)[TUPLE_ID]);

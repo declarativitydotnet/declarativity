@@ -48,15 +48,15 @@ namespace saffect {
         commitRewrite(@A, Pid),
         ::sys::sideAffect(@A, Sid, Pid, Tablename, Type, Trigger, Schema).
         
-  sa7 ::sys::rule(@A, Rid, Pid, Name, HeadID, null, false, 2U, false) :-
+  sa7 ::sys::rule(@A, Rid, Pid, Name, HeadID, null, false, 2, false) :-
         sideAffectRule(@A, Pid, Rid, HeadID, _, _, Trigger, _),
         Name := "rule_" + Trigger.
 
-  sa8 ::sys::predicate(@A, HeadID, Rid, false, Tablename, Tid, Type, Schema, 0U, null, false) :-
+  sa8 ::sys::predicate(@A, HeadID, Rid, false, Tablename, Tid, Type, Schema, 0, null, false) :-
         sideAffectRule(@A, _, Rid, HeadID, Tablename, Type, Trigger, Schema),
         ::sys::table(@A, Tid, Tablename, _, _, _, _, _, Pid).
 
-  sa8 ::sys::predicate(@A, f_idgen(), Rid, false, Trigger, null, "RECV", Schema, 1U, null, false) :-
+  sa8 ::sys::predicate(@A, f_idgen(), Rid, false, Trigger, null, "RECV", Schema, 1, null, false) :-
         sideAffectRule(@A, _, Rid, _, _, _, Trigger, Schema).
 
 }

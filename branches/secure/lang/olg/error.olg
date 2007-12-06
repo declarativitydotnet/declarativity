@@ -49,7 +49,7 @@ namespace error {
 
   /* Add assignment variables to body predicate schema. 
      This will be the final body predicate schema. */
-  e5 addAssign(@A, Pid, Rid, Schema, 2U) :-
+  e5 addAssign(@A, Pid, Rid, Schema, 2) :-
          predSchema(@A, Pid, Rid, Schema).
 
   e6 addAssign(@A, Pid, Rid, Schema, Pos+1) :-

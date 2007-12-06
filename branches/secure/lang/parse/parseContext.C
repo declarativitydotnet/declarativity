@@ -26,9 +26,6 @@
 #include "val_vector.h"
 #include "val_matrix.h"
 #include "val_list.h"
-#include "val_uint32.h"
-#include "val_int32.h"
-#include "val_uint64.h"
 #include "val_int64.h"
 #include "val_str.h"
 #include "val_time.h"
@@ -220,7 +217,7 @@ namespace compile {
       TuplePtr tp = Tuple::mk(FUNCTION);
   
       tp->append(Val_Str::mk(_name));
-      tp->append(Val_UInt32::mk(_args->size()));
+      tp->append(Val_Int64::mk(_args->size()));
       for (ExpressionList::iterator iter = _args->begin(); 
            iter != _args->end(); iter++) {
         tp->append((*iter)->tuple());
@@ -249,7 +246,7 @@ namespace compile {
       TuplePtr tp = Tuple::mk(SETS);
   
       tp->append(Val_Str::mk(SETS));
-      tp->append(Val_UInt32::mk(_args->size()));
+      tp->append(Val_Int64::mk(_args->size()));
 
       for (ExpressionList::iterator iter = _args->begin(); 
            iter != _args->end(); iter++) {
@@ -426,7 +423,7 @@ namespace compile {
       else {
         name = ns + _name;
       }
-      functorTp->append(Val_UInt32::mk(_complement)); // NOTIN?
+      functorTp->append(Val_Int64::mk(_complement)); // NOTIN?
       functorTp->append(Val_Str::mk(name));   // Functor name
   
       // Fill in table reference if functor is materialized
@@ -452,9 +449,9 @@ namespace compile {
   
       functorTp->append(Val_Null::mk());          // The ECA flag
       functorTp->append(Val_Null::mk());          // The attributes field
-      functorTp->append(Val_UInt32::mk(pos));     // The position field
+      functorTp->append(Val_Int64::mk(pos));     // The position field
       functorTp->append(Val_Null::mk());          // The access method
-      functorTp->append(Val_UInt32::mk(_new?1:0)); // The new field
+      functorTp->append(Val_Int64::mk(_new?1:0)); // The new field
       funcTbl->insert(functorTp);                 // Add new functor to functor table
 
       // Now take care of the functor arguments and variable dependencies
@@ -682,7 +679,7 @@ namespace compile {
   
       assignTp->append(variable);               // Assignment variable
       assignTp->append(value);                  // Assignemnt value
-      assignTp->append(Val_UInt32::mk(pos));         // Position
+      assignTp->append(Val_Int64::mk(pos));         // Position
       assignTp->freeze();
       assignTbl->insert(assignTp); 
       return assignTp;
@@ -706,7 +703,7 @@ namespace compile {
       ValuePtr boolExpr = _select->tuple();
      
       selectTp->append(boolExpr);              // Boolean expression
-      selectTp->append(Val_UInt32::mk(pos));        // Position
+      selectTp->append(Val_Int64::mk(pos));        // Position
       selectTp->append(Val_Null::mk());        // Access method
       selectTp->freeze();
       selectTbl->insert(selectTp); 
@@ -941,9 +938,9 @@ namespace compile {
       TuplePtr headTp = _head->materialize(catalog, (*ruleTp)[TUPLE_ID], ns, pos++);
       ruleTp->append((*headTp)[TUPLE_ID]);             // Add the "head" functor identifer.
       ruleTp->append(Val_Null::mk());                  // The P2DL desc. of this rule
-      ruleTp->append(Val_UInt32::mk(_delete));         // Delete rule?
-      ruleTp->append(Val_UInt32::mk(_body->size()+1)); // Term count?
-      ruleTp->append(Val_UInt32::mk(_new?1:0)); // The access method
+      ruleTp->append(Val_Int64::mk(_delete));         // Delete rule?
+      ruleTp->append(Val_Int64::mk(_body->size()+1)); // Term count?
+      ruleTp->append(Val_Int64::mk(_new?1:0)); // The access method
       ruleTp->freeze();
       ruleTbl->insert(ruleTp);	               // Add rule to rule table.
     
@@ -1038,7 +1035,7 @@ namespace compile {
 
       for (iter = a->begin(); iter != a->end(); iter++, pos++) {
 	if(pos == compile::VERPOS && Table::compoundRewrite){
-	  tpl->append(Val_UInt32::mk(0));
+	  tpl->append(Val_Int64::mk(0));
 	}
         Value *v = dynamic_cast<Value*>(*iter);
         Math  *m = dynamic_cast<Math*>(*iter);
@@ -1103,7 +1100,7 @@ namespace compile {
       uint32_t fieldNum = 0;
       ExpressionList::const_iterator i = keys->begin();
       for (; (i != keys->end()) && (fieldNum <= 1); i++){
-        fieldNum= Val_UInt32::cast((*i)->value());
+        fieldNum= Val_Int64::cast((*i)->value());
         _keys.push_back(fieldNum);
       }       
     }
@@ -1174,7 +1171,7 @@ namespace compile {
 	ExpressionList::const_iterator i = keys->begin();
 	ExpressionList::const_iterator i1 = keys->begin();
 	for (; (i != keys->end()) && (fieldNum <= 1); i++){
-	  fieldNum= Val_UInt32::cast((*i)->value());
+	  fieldNum= Val_Int64::cast((*i)->value());
 	  if(fieldNum <= 1){
 	      _keys.push_back(fieldNum);
 	      i1++;
@@ -1194,7 +1191,7 @@ namespace compile {
 	  _keys.push_back(++offset); //Proof
 	}
         for (;i1 != keys->end(); i1++){
-	  fieldNum= Val_UInt32::cast((*i1)->value());
+	  fieldNum= Val_Int64::cast((*i1)->value());
 	  if(fieldNum > 1){
 	    fieldNum += (offset -1);	  
 	  }
@@ -1250,7 +1247,7 @@ namespace compile {
 	     Expression *locSpecField){
       _from = from->toString() ;
       _to = to->toString() ;
-      _locSpecField = Val_Int32::cast(locSpecField->value());
+      _locSpecField = Val_Int64::cast(locSpecField->value());
       _refType = refType;
 
     }
@@ -1288,8 +1285,8 @@ namespace compile {
       tpl->append(parentKey);      
       tpl->append(Val_Str::mk(scopedFrom));
       tpl->append(Val_Str::mk(scopedTo));
-      tpl->append(Val_UInt32::mk(_locSpecField));
-      tpl->append(Val_UInt32::mk(_refType));
+      tpl->append(Val_Int64::mk(_locSpecField));
+      tpl->append(Val_Int64::mk(_refType));
       tpl->freeze();
 
       // Update the the ref table to contain this fact as being installed

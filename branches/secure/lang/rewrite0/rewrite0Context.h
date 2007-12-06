@@ -20,7 +20,6 @@
 #include "elementRegistry.h"
 #include "compileContext.h"
 #include "val_str.h"
-#include "val_uint32.h"
 #include "set.h"
 
 namespace compile {

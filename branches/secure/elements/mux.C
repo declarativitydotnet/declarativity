@@ -15,7 +15,7 @@
 #include "mux.h"
 #include "loop.h"
 #include "val_str.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include <boost/bind.hpp>
 
 DEFINE_ELEMENT_INITS(Mux, "Mux");
@@ -45,7 +45,7 @@ Mux::Mux(string name,
  * 3. Val_UInt32: The number of inputs.
  */
 Mux::Mux(TuplePtr args)
-  : Element(Val_Str::cast((*args)[2]), Val_UInt32::cast((*args)[3]), 1),
+  : Element(Val_Str::cast((*args)[2]), Val_Int64::cast((*args)[3]), 1),
     _blocked(false),
     _pushCallbacks(),
     _inputTuples(),

@@ -11,7 +11,7 @@
 
 #include "val_null.h"
 #include "val_vector.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 
 class OperVector : public opr::OperCompare<Val_Vector> {
 };

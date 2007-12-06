@@ -13,8 +13,7 @@
 #include <iostream>
 #include "rdelivery.h"
 #include "p2Time.h"
-#include "val_uint64.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "val_double.h"
 #include "val_str.h"
 #include "val_tuple.h"
@@ -36,7 +35,7 @@ RDelivery::RDelivery(TuplePtr args)
   : Element((*args)[2]->toString(), 2, 2),
     _out_cb(0),
     _in_on(true),
-    _max_retry(args->size() > 3 ? Val_UInt32::cast((*args)[3]) : 3) { }
+    _max_retry(args->size() > 3 ? Val_Int64::cast((*args)[3]) : 3) { }
 
 
 /**
@@ -148,7 +147,7 @@ void RDelivery::unmap(ValuePtr dest)
 TuplePtr RDelivery::tuple(TuplePtr tp)
 {
   ValuePtr dest = (*tp)[DEST];
-  SeqNum   seq  = Val_UInt64::cast((*tp)[SEQ]);
+  SeqNum   seq  = Val_Int64::cast((*tp)[SEQ]);
   double   rtt  = Val_Double::cast((*tp)[RTT]);
 
   RDelivery::ConnectionPtr cp = lookup(dest);  
@@ -160,7 +159,7 @@ TuplePtr RDelivery::tuple(TuplePtr tp)
   TuplePtr rtp = Tuple::mk();
   for (unsigned i = 0; i < tp->size(); i++) {
     if (i == CUMSEQ) {
-      rtp->append(Val_UInt64::mk(cp->_cum_seq));
+      rtp->append(Val_Int64::mk(cp->_cum_seq));
     }
     else {
       rtp->append((*tp)[i]);
@@ -181,7 +180,7 @@ void RDelivery::ack(TuplePtr tp)
 {
   ValuePtr      dest = (*tp)[DEST + 2];
   ConnectionPtr cp   = lookup(dest);
-  SeqNum        cseq = Val_UInt64::cast((*tp)[CUMSEQ + 2]); 
+  SeqNum        cseq = Val_Int64::cast((*tp)[CUMSEQ + 2]); 
 
   if (cp && cp->_cum_seq < cseq) {
     if (cp->_tcb != NULL) {

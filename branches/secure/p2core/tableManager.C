@@ -18,8 +18,7 @@
 #include "table2.h"
 #include "val_str.h"
 #include "val_time.h"
-#include "val_uint32.h"
-#include "val_int32.h"
+#include "val_int64.h"
 #include "val_double.h"
 #include "val_list.h"
 #include "val_null.h"
@@ -83,7 +82,7 @@ if (name != TABLE && name != INDEX) createTable((name), (key), ListPtr(), Val_Nu
 
 #define SCHEMA(name, pos) do {\
   attributes.push_back(Val_Str::mk(name)); \
-  attributes.push_back(Val_UInt32::mk(pos)); \
+  attributes.push_back(Val_Int64::mk(pos)); \
 } while(0);
 #define TABLEDEF(name, key, schema) do {\
   CommonTablePtr attrTbl = table(ATTRIBUTE); \
@@ -92,7 +91,7 @@ if (name != TABLE && name != INDEX) createTable((name), (key), ListPtr(), Val_Nu
   for (std::deque<ValuePtr>::iterator i = attributes.begin(); \
        i != attributes.end(); i += 2) { \
     TuplePtr attrTp = Tuple::mk(ATTRIBUTE); \
-    attrTp->append(Val_UInt32::mk(uniqueIdentifier())); \
+    attrTp->append(Val_Int64::mk(uniqueIdentifier())); \
     attrTp->append(Val_Str::mk(name)); \
     attrTp->append(*i); \
     attrTp->append(*(i+1)); \
@@ -113,9 +112,9 @@ if (name != TABLE && name != INDEX) createTable((name), (key), ListPtr(), Val_Nu
 
 #define FUNCTIONDEF(name, numargs, pel) do { \
   TuplePtr func = Tuple::mk(FUNCTION); \
-  func->append(Val_UInt32::mk(uniqueIdentifier())); \
+  func->append(Val_Int64::mk(uniqueIdentifier())); \
   func->append(Val_Str::mk((name))); \
-  func->append(Val_UInt32::mk((numargs))); \
+  func->append(Val_Int64::mk((numargs))); \
   func->append(Val_Str::mk((pel))); \
   func->freeze(); \
   assert(table(FUNCTION)->insert(func)); \
@@ -162,7 +161,7 @@ TableManager::indexListener(TuplePtr index)
     ListPtr kl = Val_List::cast(kv);
     for (ValPtrList::const_iterator iter = kl->begin();
          iter != kl->end(); iter++) {
-      keys.push_back(Val_UInt32::cast(*iter));
+      keys.push_back(Val_Int64::cast(*iter));
     }
   }
   createIndex(name, HASH_INDEX, keys);
@@ -172,7 +171,7 @@ void
 TableManager::tableListener(TuplePtr table)
 {
   string name   = (*table)[attribute(TABLE, "TABLENAME")]->toString();
-  int32_t size  = Val_Int32::cast((*table)[attribute(TABLE, "SIZE")]);
+  int32_t size  = Val_Int64::cast((*table)[attribute(TABLE, "SIZE")]);
   ValuePtr lt   = (*table)[attribute(TABLE, "LIFETIME")];
   ValuePtr pk   = (*table)[attribute(TABLE, "KEY")];
   ValuePtr sort = (*table)[attribute(TABLE, "SORT")];
@@ -185,7 +184,7 @@ TableManager::tableListener(TuplePtr table)
   boost::posix_time::time_duration lifetime;
   if (lt->typeCode() == ::Value::TIME_DURATION) {
     lifetime = Val_Time_Duration::cast(lt);
-  } else if (Val_Int32::cast(lt) == -1) {
+  } else if (Val_Int64::cast(lt) == -1) {
     lifetime = Table2::NO_EXPIRATION;
   } else {
     lifetime = Val_Time_Duration::cast(lt);
@@ -203,7 +202,7 @@ TableManager::tableListener(TuplePtr table)
     ListPtr keys = Val_List::cast(pk);
     for (ValPtrList::const_iterator iter = keys->begin();
          iter != keys->end(); iter++) {
-      primayKey.push_back(Val_UInt32::cast(*iter));
+      primayKey.push_back(Val_Int64::cast(*iter));
     }
   }
 
@@ -348,10 +347,10 @@ TableManager::createIndex(string tableName, string type, CommonTable::Key& key)
   ListPtr keys = List::mk();
   for (CommonTable::Key::iterator iter = key.begin();
        iter != key.end(); iter++) 
-    keys->append(Val_UInt32::mk(*iter));
+    keys->append(Val_Int64::mk(*iter));
 
   TuplePtr tp = Tuple::mk(INDEX);
-  tp->append(Val_UInt32::mk(uniqueIdentifier()));
+  tp->append(Val_Int64::mk(uniqueIdentifier()));
   tp->append(Val_Str::mk(tableName));
   tp->append(Val_List::mk(keys));
 
@@ -429,7 +428,7 @@ TableManager::attribute(string tablename, string attrname) const
   if(iter->done()){
     throw TableManager::Exception("Non-existing field " + attrname + " searched in table " + tablename );
   }
-  return iter->done() ? -1 : Val_UInt32::cast((*iter->next())[5]); 
+  return iter->done() ? -1 : Val_Int64::cast((*iter->next())[5]); 
 }
 
 int
@@ -452,18 +451,18 @@ TableManager::registerTable(string name, boost::posix_time::time_duration lifeti
 {
   CommonTablePtr t = table(TABLE); assert(t);
   TuplePtr tp = Tuple::mk(TABLE);
-  tp->append(Val_UInt32::mk(uniqueIdentifier()));
+  tp->append(Val_Int64::mk(uniqueIdentifier()));
   tp->append(Val_Str::mk(name));
   tp->append(Val_Time_Duration::mk(lifetime));
-  tp->append(Val_UInt32::mk(size));
+  tp->append(Val_Int64::mk(size));
 
   ListPtr keys = List::mk();
   for (CommonTable::Key::const_iterator iter = primaryKey.begin();
        iter != primaryKey.end(); iter++) {
-    keys->append(Val_UInt32::mk(*iter));
+    keys->append(Val_Int64::mk(*iter));
   }
   tp->append(Val_List::mk(keys));
-  tp->append(Val_UInt32::mk(0));      // Cardinality
+  tp->append(Val_Int64::mk(0));      // Cardinality
   tp->append((sort ? Val_List::mk(sort) : Val_Null::mk())); // Sorted
   tp->append(pid); // Program ID
   tp->freeze();
@@ -479,10 +478,10 @@ void TableManager::registerIndex(string tableName, CommonTable::Key& key, string
   ListPtr keys = List::mk();
   for (CommonTable::Key::iterator iter = key.begin();
        iter != key.end(); iter++) 
-    keys->append(Val_UInt32::mk(*iter));
+    keys->append(Val_Int64::mk(*iter));
 
   TuplePtr tp = Tuple::mk(INDEX);
-  tp->append(Val_UInt32::mk(uniqueIdentifier()));
+  tp->append(Val_Int64::mk(uniqueIdentifier()));
   tp->append(Val_Str::mk(tableName));
   tp->append(Val_List::mk(keys));
   tp->append(Val_Str::mk(type));

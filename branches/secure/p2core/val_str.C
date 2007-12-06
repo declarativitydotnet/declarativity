@@ -85,7 +85,12 @@ int Val_Str::compareTo(ValuePtr other) const
 //
 string Val_Str::cast(ValuePtr v)
 {
-  return v->toString();
+  switch (v->typeCode()) {
+  case Value::NULLV:
+    return string("NULL");
+  default:
+    return v->toString();
+  }
 }
 
 /* 

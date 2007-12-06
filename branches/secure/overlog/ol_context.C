@@ -16,7 +16,7 @@
 
 #include "ol_context.h"
 #include "ol_lexer.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "tuple.h"
 #include "reporting.h"
 
@@ -347,7 +347,7 @@ OL_Context::table(Parse_Expr *name,
     for (Parse_ExprList::iterator i = keys->begin();
          i != keys->end();
          i++)
-      tableInfo->primaryKeys.push_back(Val_UInt32::cast((*i)->v));
+      tableInfo->primaryKeys.push_back(Val_Int64::cast((*i)->v));
   } else {
       // If keys was NULL, then I'm going to leave primaryKeys
       // alone, which means it is going to be empty

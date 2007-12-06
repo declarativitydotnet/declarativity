@@ -14,7 +14,7 @@
 
 #include "delete.h"
 #include "val_str.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "plumber.h"
 
 DEFINE_ELEMENT_INITS(Delete, "Delete")

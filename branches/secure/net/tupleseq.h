@@ -16,9 +16,9 @@
 #include <map>
 #include "element.h"
 #include "elementRegistry.h"
-#include "val_uint64.h"
+#include "val_int64.h"
 
-typedef uint64_t SeqNum;
+typedef int64_t SeqNum;
 
 class Sequence : public Element {
 public:

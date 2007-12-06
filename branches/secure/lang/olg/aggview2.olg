@@ -44,11 +44,11 @@ namespace aggview2 {
         ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
         ::sys::predicate(@A, HeadID, Rid, NotIn, Name, Tid, ECA, Schema, Pos, AM, New).
 
-  av4 ::sys::rule(@A, NewRid, Pid, Name, NewHeadID, null, false, 2U, false) :-
+  av4 ::sys::rule(@A, NewRid, Pid, Name, NewHeadID, null, false, 2, false) :-
         rewrite(@A, Pid, Rid, Trigger, Schema, NewRid, NewHeadID),
         Name := "rule_" + Trigger.
 
-  av5 ::sys::predicate(@A, NewHeadID, NewRid, false, Trigger, null, "SEND", Schema, 0U, null, false) :-
+  av5 ::sys::predicate(@A, NewHeadID, NewRid, false, Trigger, null, "SEND", Schema, 0, null, false) :-
         rewrite(@A, Pid, Rid, Trigger, Schema, NewRid, NewHeadID).
 
   av6 ::sys::predicate(@A, PredID, NewRid, NotIn, Name, Tid, "INSERT", Schema, Pos, AM, New) :-

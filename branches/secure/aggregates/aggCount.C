@@ -11,8 +11,8 @@
  */
 
 #include "aggCount.h"
-#include "val_uint64.h"
 #include "aggFactory.h"
+#include "val_int64.h"
 
 AggCount::AggCount()
 {
@@ -48,7 +48,7 @@ AggCount::process(ValuePtr v)
 ValuePtr 
 AggCount::result()
 {
-  return Val_UInt64::mk(_current);
+  return Val_Int64::mk(_current);
 }
 
 

@@ -17,11 +17,10 @@
 #include "value.h"
 #include "val_str.h"
 #include "val_null.h"
-#include "val_uint32.h"
-#include "val_int32.h"
 #include "val_list.h"
 #include "val_tuple.h"
 #include "oper.h"
+#include "val_int64.h"
 
 namespace compile {
   namespace eca {
@@ -122,15 +121,15 @@ namespace compile {
           ecaEvent->set(functorEcaPos, Val_Str::mk("RECV"));
       }
       /* Make sure the event appears in position 1 of the rule. */
-      eventPos = Val_UInt32::cast((*ecaEvent)[functorPosPos]);
-      ecaEvent->set(functorPosPos, Val_UInt32::mk(1));
+      eventPos = Val_Int64::cast((*ecaEvent)[functorPosPos]);
+      ecaEvent->set(functorPosPos, Val_Int64::mk(1));
       ecaEvent->freeze();
       functorTbl->insert(ecaEvent); // Commit the updated event functor
       
       headEca(catalog, rule, ecaHead);
 
       /* Ensure the head appears in position 0. */
-      ecaHead->set(functorPosPos, Val_UInt32::mk(0));
+      ecaHead->set(functorPosPos, Val_Int64::mk(0));
       ecaHead->freeze();
       functorTbl->remove(ecaHead);
       if (!functorTbl->insert(ecaHead)) {
@@ -144,9 +143,9 @@ namespace compile {
            iter != probes.end(); iter++) {
           TuplePtr tp = (*iter)->clone();
           tp->set(functorEcaPos, Val_Str::mk("PROBE"));
-	  uint32_t oldPos = Val_UInt32::cast((*tp)[catalog->attribute(FUNCTOR, "POSITION")]);
+	  uint32_t oldPos = Val_Int64::cast((*tp)[catalog->attribute(FUNCTOR, "POSITION")]);
 	  if(oldPos <= eventPos){
-	      tp->set(functorPosPos, Val_UInt32::mk(oldPos+1));
+	      tp->set(functorPosPos, Val_Int64::mk(oldPos+1));
 	  }
 	  position++;
           tp->freeze();
@@ -161,9 +160,9 @@ namespace compile {
       Iter = catalog->table(ASSIGN)->lookup(CommonTable::theKey(CommonTable::KEY2), key, rule); 
       while (!Iter->done()) {
           TuplePtr assign = Iter->next()->clone();
-	  uint32_t oldPos = Val_UInt32::cast((*assign)[catalog->attribute(ASSIGN, "POSITION")]);
+	  uint32_t oldPos = Val_Int64::cast((*assign)[catalog->attribute(ASSIGN, "POSITION")]);
 	  if(oldPos <= eventPos){
-	    assign->set(catalog->attribute(ASSIGN, "POSITION"), Val_UInt32::mk(oldPos+1));
+	    assign->set(catalog->attribute(ASSIGN, "POSITION"), Val_Int64::mk(oldPos+1));
             assign->freeze();
             if (!catalog->table(ASSIGN)->insert(assign)){
 	      throw Exception("Rewrite View: Can't insert assignment. " + assign->toString());
@@ -178,9 +177,9 @@ namespace compile {
       Iter = catalog->table(SELECT)->lookup(CommonTable::theKey(CommonTable::KEY2), key, rule); 
       while (!Iter->done()) {
           TuplePtr select = Iter->next()->clone();
-	  uint32_t oldPos = Val_UInt32::cast((*select)[catalog->attribute(SELECT, "POSITION")]);
+	  uint32_t oldPos = Val_Int64::cast((*select)[catalog->attribute(SELECT, "POSITION")]);
 	  if(oldPos <= eventPos){
-	    select->set(catalog->attribute(SELECT, "POSITION"), Val_UInt32::mk(oldPos + 1));
+	    select->set(catalog->attribute(SELECT, "POSITION"), Val_Int64::mk(oldPos + 1));
             select->freeze();
             if (!catalog->table(SELECT)->insert(select)){
 	      throw Exception("Rewrite View: Can't insert selection. " + select->toString());
@@ -194,7 +193,7 @@ namespace compile {
     Context::headEca(CommonTable::ManagerPtr catalog, TuplePtr rule, TuplePtr head) 
     {
       if ((*head)[catalog->attribute(FUNCTOR, "TID")] != Val_Null::mk()) {
-        if (Val_UInt32::cast((*rule)[catalog->attribute(RULE, "DELETE")])) {
+        if (Val_Int64::cast((*rule)[catalog->attribute(RULE, "DELETE")])) {
           head->set(catalog->attribute(FUNCTOR, "ECA"), Val_Str::mk("DELETE"));
         }
         else {

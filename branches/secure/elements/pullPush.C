@@ -18,9 +18,8 @@
 
 #include "loop.h"
 #include "val_str.h"
-#include "val_uint64.h"
+#include "val_int64.h"
 #include "reporting.h"
-#include "val_int32.h"
 #include "scheduler.h"
 #include "boost/bind.hpp"
 

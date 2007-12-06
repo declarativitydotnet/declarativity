@@ -24,8 +24,6 @@
 #include "value.h"
 #include "val_str.h"
 #include "val_null.h"
-#include "val_uint32.h"
-#include "val_int32.h"
 #include "val_int64.h"
 #include "val_list.h"
 #include "set.h"
@@ -68,13 +66,13 @@ namespace compile {
       ostringstream oss;
       if ((*rule)[catalog->attribute(RULE, "NAME")] != Val_Null::mk())
         oss << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << " ";
-      oss << ((Val_UInt32::cast((*rule)[catalog->attribute(RULE, "DELETE")]) == 1)?"delete ":"") ;
+      oss << ((Val_Int64::cast((*rule)[catalog->attribute(RULE, "DELETE")]) == 1)?"delete ":"") ;
 
       CommonTable::Iterator iter;
       for (int pos = 0; true; pos++) {
         TuplePtr lookup = Tuple::mk();
         lookup->append((*rule)[TUPLE_ID]);
-        lookup->append(Val_UInt32::mk(pos));
+        lookup->append(Val_Int64::mk(pos));
         lookup->freeze();
         TuplePtr lookup2 = Tuple::mk();
         lookup2->append((*rule)[TUPLE_ID]);
@@ -90,7 +88,7 @@ namespace compile {
           TuplePtr functor = iter->next();
           ListPtr  schema  = Val_List::cast((*functor)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
           oss << (*functor)[catalog->attribute(FUNCTOR, "NAME")]->toString() 
-	      << ((Val_UInt32::cast((*functor)[catalog->attribute(FUNCTOR, "NEW")]) == 1)?"*":"")
+	      << ((Val_Int64::cast((*functor)[catalog->attribute(FUNCTOR, "NEW")]) == 1)?"*":"")
 	      <<"(";
           for (ValPtrList::const_iterator siter = schema->begin(); 
                siter != schema->end(); ) {
@@ -162,7 +160,7 @@ namespace compile {
       for (uint32_t pos = 0; true; pos++) {
         TuplePtr lookup = Tuple::mk();
         lookup->append((*rule)[TUPLE_ID]);
-        lookup->append(Val_UInt32::mk(pos));
+        lookup->append(Val_Int64::mk(pos));
         lookup->freeze();
         TuplePtr lookup2 = Tuple::mk();
         lookup2->append((*rule)[TUPLE_ID]);
@@ -217,12 +215,12 @@ namespace compile {
       //      rule2(catalog, rule);
       SetPtr locSpecSet;      
       SetPtr strongLocSpecSet;
-      bool newRule = ((Val_UInt32::cast((*rule)[catalog->attribute(RULE, "NEW")]) == 1)?true:false);
+      bool newRule = ((Val_Int64::cast((*rule)[catalog->attribute(RULE, "NEW")]) == 1)?true:false);
       CommonTablePtr functorTbl = catalog->table(FUNCTOR);
       CommonTable::Iterator funcIter;
       ValuePtr eventLocSpec;
       ValuePtr ruleId = (*rule)[TUPLE_ID];
-      uint32_t termCount = Val_UInt32::cast((*rule)[catalog->attribute(RULE, "TERM_COUNT")]);
+      uint32_t termCount = Val_Int64::cast((*rule)[catalog->attribute(RULE, "TERM_COUNT")]);
       TuplePtr *termList = new TuplePtr[termCount];
       std::vector<TuplePtr> newTermList;
       uint32_t varSuffix = 0;
@@ -242,7 +240,7 @@ namespace compile {
                                          CommonTable::theKey(CommonTable::KEY3), rule);
            !funcIter->done(); ) {
         TuplePtr functor = funcIter->next();
-	uint32_t functorPos = Val_UInt32::cast((*functor)[catalog->attribute(FUNCTOR, "POSITION")]);
+	uint32_t functorPos = Val_Int64::cast((*functor)[catalog->attribute(FUNCTOR, "POSITION")]);
 	termList[functorPos] = functor;
       }
 
@@ -254,7 +252,7 @@ namespace compile {
                                          CommonTable::theKey(CommonTable::KEY3), rule);
            !assignIter->done(); ) {
         TuplePtr assign = assignIter->next();
-	uint32_t assignPos = Val_UInt32::cast((*assign)[catalog->attribute(ASSIGN, "POSITION")]);
+	uint32_t assignPos = Val_Int64::cast((*assign)[catalog->attribute(ASSIGN, "POSITION")]);
 	termList[assignPos] = assign;
       }
 
@@ -266,7 +264,7 @@ namespace compile {
                                          CommonTable::theKey(CommonTable::KEY3), rule);
            !selectIter->done(); ) {
         TuplePtr select = selectIter->next();
-	uint32_t selectPos = Val_UInt32::cast((*select)[catalog->attribute(SELECT, "POSITION")]);
+	uint32_t selectPos = Val_Int64::cast((*select)[catalog->attribute(SELECT, "POSITION")]);
 	termList[selectPos] = select;
       }
 
@@ -286,7 +284,7 @@ namespace compile {
 	if(tname == ASSIGN){
 	  if(newpos != i){
 	    TuplePtr copyAssign = termList[i]->clone();
-	    copyAssign->set(catalog->attribute(ASSIGN, "POSITION"), Val_UInt32::mk(newpos++));
+	    copyAssign->set(catalog->attribute(ASSIGN, "POSITION"), Val_Int64::mk(newpos++));
 	    copyAssign->freeze();
 	    assignTbl->insert(copyAssign);
 	  }
@@ -298,7 +296,7 @@ namespace compile {
 	else if(tname == SELECT){
 	  if(newpos != i){
 	    TuplePtr copySelect = termList[i]->clone();
-	    copySelect->set(catalog->attribute(SELECT, "POSITION"), Val_UInt32::mk(newpos++));
+	    copySelect->set(catalog->attribute(SELECT, "POSITION"), Val_Int64::mk(newpos++));
 	    copySelect->freeze();
 	    selectTbl->insert(copySelect);
 	  }
@@ -321,7 +319,7 @@ namespace compile {
 	    TuplePtr tupleLocTuple = Val_Tuple::cast(attributes->front()); // tuple for the location var of the functor
 	    TuplePtr tupleLocTupleClone = tupleLocTuple->clone(); 
 	    ValuePtr tupleLoc = (*tupleLocTuple)[CONTENTPOS];
-	    bool newFunctor = ((Val_UInt32::cast((*termList[i])[catalog->attribute(FUNCTOR, "NEW")]) == 1)?true:false);
+	    bool newFunctor = ((Val_Int64::cast((*termList[i])[catalog->attribute(FUNCTOR, "NEW")]) == 1)?true:false);
 	    //if locSpec in locSpecSet, then add locSpec(@eventLocSpec, S, N, V), tableVersion(@N, V,...)
 	    // otherwise: simply change the name to add version, and add the 0 version
 	    if(!newFunctor){
@@ -346,7 +344,7 @@ namespace compile {
 							     verLocTupleField, // location of the version tuple
 							     verTuple, // version field
 							     catalog);
-		  locSpecTuple->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(newpos++));
+		  locSpecTuple->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(newpos++));
 		  locSpecTuple->freeze();
 		  if(!functorTbl->insert(locSpecTuple)){
 		    throw compile::rewrite2::Exception("Failed to insert functor" + locSpecTuple->toString());
@@ -372,7 +370,7 @@ namespace compile {
 									 linkExpanderSetTuple,
 									 catalog);
 		    
-		    linkExpanderTuple->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(newpos++));
+		    linkExpanderTuple->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(newpos++));
 		    linkExpanderTuple->freeze();
 
 		    if(!functorTbl->insert(linkExpanderTuple)){
@@ -389,7 +387,7 @@ namespace compile {
 									 linkExpanderSetTupleCopy,
 									 verTupleClone);
 
-		    linkExpanderCheck->set(catalog->attribute(SELECT, "POSITION"), Val_UInt32::mk(newpos++));
+		    linkExpanderCheck->set(catalog->attribute(SELECT, "POSITION"), Val_Int64::mk(newpos++));
 		    linkExpanderCheck->freeze();
 
 		    if(!selectTbl->insert(linkExpanderCheck)){
@@ -397,7 +395,7 @@ namespace compile {
 		    }
 		    
 		  }
-		  version->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(newpos++));
+		  version->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(newpos++));
 		  version->freeze();
 		  functorTbl->insert(version);
 
@@ -410,12 +408,12 @@ namespace compile {
 	      else{
 		tupleLocTupleClone->freeze();
 		TuplePtr version = makeVersionedTuple(varSuffix, termList[i], tupleLocTupleClone, catalog);
-		version->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(newpos++));
+		version->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(newpos++));
 		ListPtr verAttr = Val_List::cast((*version)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
 		TuplePtr verVarTuple = Val_Tuple::cast(verAttr->at(compile::VERPOS));
 		if(i != 0){
 		  TuplePtr select = createCurVerSelect(ruleId, verVarTuple->clone());
-		  select->set(catalog->attribute(SELECT, "POSITION"), Val_UInt32::mk(newpos++));
+		  select->set(catalog->attribute(SELECT, "POSITION"), Val_Int64::mk(newpos++));
 		  select->freeze();
 		  if(!selectTbl->insert(select)){
 		    throw compile::rewrite2::Exception("Failed to insert select" + select->toString());
@@ -423,7 +421,7 @@ namespace compile {
 		}
 		else{
 		  TuplePtr assign = createCurVerAssign(ruleId, verVarTuple->clone());
-		  assign->set(catalog->attribute(ASSIGN, "POSITION"), Val_UInt32::mk(newpos++));
+		  assign->set(catalog->attribute(ASSIGN, "POSITION"), Val_Int64::mk(newpos++));
 		  assign->freeze();
 		  if(!assignTbl->insert(assign)){
 		    throw compile::rewrite2::Exception("Failed to insert assign" + assign->toString());
@@ -445,7 +443,7 @@ namespace compile {
 	    //event: simply copy
 	    if(newpos != i){
 	      TuplePtr copyFunctor = termList[i]->clone();
-	      copyFunctor->set(catalog->attribute(FUNCTOR, "POSITION"), Val_UInt32::mk(newpos++));
+	      copyFunctor->set(catalog->attribute(FUNCTOR, "POSITION"), Val_Int64::mk(newpos++));
 	      copyFunctor->freeze();
 	      if(!functorTbl->insert(copyFunctor)){
 		throw compile::rewrite2::Exception("Failed to insert functor" + copyFunctor->toString());
@@ -464,7 +462,7 @@ namespace compile {
       if(newpos > termCount){
 	TuplePtr ruleCopy = rule->clone();
 	CommonTablePtr ruleTbl = catalog->table(RULE);	
-	ruleCopy->set(catalog->attribute(RULE, "TERM_COUNT"), Val_UInt32::mk(newpos));
+	ruleCopy->set(catalog->attribute(RULE, "TERM_COUNT"), Val_Int64::mk(newpos));
 	ruleCopy->freeze();
 	if(!ruleTbl->insert(ruleCopy)){
 	  throw compile::rewrite2::Exception("Failed to insert rule" + ruleCopy->toString());
@@ -505,7 +503,7 @@ namespace compile {
 				TuplePtr ver, CommonTable::ManagerPtr catalog){
       TuplePtr     functorTp = Tuple::mk(FUNCTOR, true);
       functorTp->append(ruleId);
-      functorTp->append(Val_UInt32::mk(0)); // NOTIN?
+      functorTp->append(Val_Int64::mk(0)); // NOTIN?
       functorTp->append(Val_Str::mk(compile::LOCSPECTABLE));   // Functor name
   
       // Fill in table reference if functor is materialized
@@ -524,7 +522,7 @@ namespace compile {
       functorTp->append(Val_Null::mk());          // The attributes field
       functorTp->append(Val_Null::mk());          // The position field
       functorTp->append(Val_Null::mk());          // The access method
-      functorTp->append(Val_Int32::mk(0)); // The new field
+      functorTp->append(Val_Int64::mk(0)); // The new field
 
       // Now take care of the functor arguments and variable dependencies
       ListPtr attributes = List::mk();
@@ -542,7 +540,7 @@ namespace compile {
     TuplePtr Context::createLinkExpanderTuple(ValuePtr ruleId, TuplePtr location, TuplePtr locSpec, TuplePtr linkExpanderSet, CommonTable::ManagerPtr catalog){
       TuplePtr     functorTp = Tuple::mk(FUNCTOR, true);
       functorTp->append(ruleId);
-      functorTp->append(Val_UInt32::mk(0)); // NOTIN?
+      functorTp->append(Val_Int64::mk(0)); // NOTIN?
       functorTp->append(Val_Str::mk(compile::LINKEXPANDERTABLE));   // Functor name
   
       // Fill in table reference if functor is materialized
@@ -561,7 +559,7 @@ namespace compile {
       functorTp->append(Val_Null::mk());          // The attributes field
       functorTp->append(Val_Null::mk());          // The position field
       functorTp->append(Val_Null::mk());          // The access method
-      functorTp->append(Val_Int32::mk(0)); // The new field
+      functorTp->append(Val_Int64::mk(0)); // The new field
 
       // Now take care of the functor arguments and variable dependencies
       ListPtr attributes = List::mk();
@@ -586,7 +584,7 @@ namespace compile {
 
       TuplePtr certFn = Tuple::mk(FUNCTION);
       certFn->append(Val_Str::mk(CERTFN));
-      certFn->append(Val_UInt32::mk(1));
+      certFn->append(Val_Int64::mk(1));
       certFn->append(Val_Tuple::mk(ver));
       certFn->freeze();
 
@@ -602,7 +600,7 @@ namespace compile {
     
     TuplePtr Context::createCurVerAssign(ValuePtr ruleId, TuplePtr ver){
       TuplePtr val = Tuple::mk(VAL);
-      val->append(Val_UInt32::mk(CURVERSION));
+      val->append(Val_Int64::mk(CURVERSION));
       val->freeze();
       ver->freeze();
 
@@ -617,7 +615,7 @@ namespace compile {
     TuplePtr Context::createCurVerSelect(ValuePtr ruleId, TuplePtr ver){
       ValuePtr eq = Val_Str::mk("==");
       TuplePtr val = Tuple::mk(VAL);
-      val->append(Val_UInt32::mk(CURVERSION));
+      val->append(Val_Int64::mk(CURVERSION));
       val->freeze();
       ver->freeze();
 

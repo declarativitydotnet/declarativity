@@ -41,9 +41,7 @@ ADD_LIBRARY(p2core
             val_set.C 
             val_double.C 
             val_id.C 
-            val_int32.C 
             val_int64.C 
-            val_ip_addr.C 
             val_list.C 
             val_matrix.C
             val_null.C 
@@ -51,8 +49,6 @@ ADD_LIBRARY(p2core
             val_str.C 
             val_time.C 
             val_tuple.C 
-            val_uint32.C 
-            val_uint64.C 
             val_vector.C 
             value.C 
             xdrbuf.C 

@@ -15,16 +15,12 @@
 #include "value.h"
 #include "val_null.h"
 #include "val_str.h"
-#include "val_int32.h"
-#include "val_uint32.h"
 #include "val_int64.h"
-#include "val_uint64.h"
 #include "val_double.h"
 #include "val_opaque.h"
 #include "val_tuple.h"
 #include "val_time.h"
 #include "val_id.h"
-#include "val_ip_addr.h"
 #include "val_list.h"
 
 #include "testLists.h"
@@ -64,7 +60,7 @@ void testListSize(List theList, uint32_t expected)
     std::string testID; \
     { \
       std::ostringstream ID; \
-      ID << "Value casting test. "; \
+      ID << "List containment test. "; \
       testID = ID.str(); \
     } \
  \
@@ -73,7 +69,7 @@ void testListSize(List theList, uint32_t expected)
     std::ostringstream message;                 \
     message << testID                                          \
             << "Checking whether " #value   \
-            << " is a present at " << pos << " position of " << (list).toString() \
+            << " is present at " << pos << " position of " << (list).toString() \
             << " returned an unexpected result (" \
             << v->toString() \
             << ")."; \
@@ -263,18 +259,18 @@ void testIntersection()
    
    // Populate the lists with values (which should henceforth retain 
    // their ordering.
-   test1->append(Val_Int32::mk(42));
-   test1->append(Val_Int32::mk(17));
-   test1->append(Val_Int32::mk(570));
-   test1->append(Val_Int32::mk(-12));
-   test1->append(Val_Int32::mk(0));
-   test1->append(Val_Int32::mk(-450));
+   test1->append(Val_Int64::mk(42));
+   test1->append(Val_Int64::mk(17));
+   test1->append(Val_Int64::mk(570));
+   test1->append(Val_Int64::mk(-12));
+   test1->append(Val_Int64::mk(0));
+   test1->append(Val_Int64::mk(-450));
    
-   test2->append(Val_Int32::mk(42));
-   test2->append(Val_Int32::mk(97));
-   test2->append(Val_Int32::mk(-12));
-   test2->append(Val_Int32::mk(-5));   
-   test2->append(Val_Int32::mk(570));
+   test2->append(Val_Int64::mk(42));
+   test2->append(Val_Int64::mk(97));
+   test2->append(Val_Int64::mk(-12));
+   test2->append(Val_Int64::mk(-5));   
+   test2->append(Val_Int64::mk(570));
 
    test3->append(Val_Str::mk("garply"));
    test3->append(Val_Str::mk("bar"));
@@ -289,20 +285,20 @@ void testIntersection()
    testListSize(*empty, 0);
 
    ListPtr intersectList = List::mk();
-   intersectList->append(Val_Int32::mk(-12));
-   intersectList->append(Val_Int32::mk(42));
-   intersectList->append(Val_Int32::mk(570));
+   intersectList->append(Val_Int64::mk(-12));
+   intersectList->append(Val_Int64::mk(42));
+   intersectList->append(Val_Int64::mk(570));
 
    testListIntersect(test1, test2, intersectList);
    
    ListPtr test1sorted = List::mk();
    
-   test1sorted->append(Val_Int32::mk(-450));
-   test1sorted->append(Val_Int32::mk(-12));
-   test1sorted->append(Val_Int32::mk(0));
-   test1sorted->append(Val_Int32::mk(17));
-   test1sorted->append(Val_Int32::mk(42));
-   test1sorted->append(Val_Int32::mk(570));
+   test1sorted->append(Val_Int64::mk(-450));
+   test1sorted->append(Val_Int64::mk(-12));
+   test1sorted->append(Val_Int64::mk(0));
+   test1sorted->append(Val_Int64::mk(17));
+   test1sorted->append(Val_Int64::mk(42));
+   test1sorted->append(Val_Int64::mk(570));
    
    testListIntersect(test1, empty, empty);
    testListIntersect(test1, test3, empty);
@@ -324,18 +320,18 @@ void testMembership()
    
    // Populate the lists with values (which should henceforth retain 
    // their ordering.
-   test1->append(Val_Int32::mk(42));
-   test1->append(Val_Int32::mk(17));
-   test1->append(Val_Int32::mk(570));
-   test1->append(Val_Int32::mk(-12));
-   test1->append(Val_Int32::mk(0));
-   test1->append(Val_Int32::mk(-450));
+   test1->append(Val_Int64::mk(42));
+   test1->append(Val_Int64::mk(17));
+   test1->append(Val_Int64::mk(570));
+   test1->append(Val_Int64::mk(-12));
+   test1->append(Val_Int64::mk(0));
+   test1->append(Val_Int64::mk(-450));
    
-   test2->append(Val_Int32::mk(42));
-   test2->append(Val_Int32::mk(97));
-   test2->append(Val_Int32::mk(-12));
-   test2->append(Val_Int32::mk(-5));   
-   test2->append(Val_Int32::mk(570));
+   test2->append(Val_Int64::mk(42));
+   test2->append(Val_Int64::mk(97));
+   test2->append(Val_Int64::mk(-12));
+   test2->append(Val_Int64::mk(-5));   
+   test2->append(Val_Int64::mk(570));
 
    test3->append(Val_Str::mk("garply"));
    test3->append(Val_Str::mk("bar"));
@@ -353,13 +349,13 @@ void testMembership()
    TEST_LISTMEMBER(*test3, Str, "garply", true);
    TEST_LISTMEMBER(*test3, Str, "nothere", false);
    TEST_LISTMEMBER(*test3, Double, 4.2, false);
-   TEST_LISTMEMBER(*test3, Int32, 75, false);
-   TEST_LISTMEMBER(*test2, Int32, 75, false);
-   TEST_LISTMEMBER(*test1, Int32, -12, true);
+   TEST_LISTMEMBER(*test3, Int64, 75, false);
+   TEST_LISTMEMBER(*test2, Int64, 75, false);
+   TEST_LISTMEMBER(*test1, Int64, -12, true);
    TEST_LISTMEMBER(*test1, Str, "NotANumber", false);
 
    TEST_LISTAT(*test3, Str, "garply", 1);
-   TEST_LISTAT(*test1, Int32, -12, 4);
+   TEST_LISTAT(*test1, Int64, -12, 4);
 
 
 }
@@ -378,18 +374,18 @@ void testConcat()
    
    // Populate the lists with values (which should henceforth retain 
    // their ordering.
-   test1->append(Val_Int32::mk(42));
-   test1->append(Val_Int32::mk(17));
-   test1->append(Val_Int32::mk(570));
-   test1->append(Val_Int32::mk(-12));
-   test1->append(Val_Int32::mk(0));
-   test1->append(Val_Int32::mk(-450));
+   test1->append(Val_Int64::mk(42));
+   test1->append(Val_Int64::mk(17));
+   test1->append(Val_Int64::mk(570));
+   test1->append(Val_Int64::mk(-12));
+   test1->append(Val_Int64::mk(0));
+   test1->append(Val_Int64::mk(-450));
    
-   test2->append(Val_Int32::mk(42));
-   test2->append(Val_Int32::mk(97));
-   test2->append(Val_Int32::mk(-12));
-   test2->append(Val_Int32::mk(-5));   
-   test2->append(Val_Int32::mk(570));
+   test2->append(Val_Int64::mk(42));
+   test2->append(Val_Int64::mk(97));
+   test2->append(Val_Int64::mk(-12));
+   test2->append(Val_Int64::mk(-5));   
+   test2->append(Val_Int64::mk(570));
 
    test3->append(Val_Str::mk("garply"));
    test3->append(Val_Str::mk("bar"));
@@ -409,23 +405,23 @@ void testConcat()
 void testCompare() {
    // (1,2,3)
    ListPtr test1 = List::mk();
-   test1->append(Val_Int32::mk(1));
-   test1->append(Val_Int32::mk(2));
-   test1->append(Val_Int32::mk(3));
+   test1->append(Val_Int64::mk(1));
+   test1->append(Val_Int64::mk(2));
+   test1->append(Val_Int64::mk(3));
    // (2,3,4)
    ListPtr test2 = List::mk();
-   test2->append(Val_Int32::mk(2));
-   test2->append(Val_Int32::mk(3));
-   test2->append(Val_Int32::mk(4));
+   test2->append(Val_Int64::mk(2));
+   test2->append(Val_Int64::mk(3));
+   test2->append(Val_Int64::mk(4));
    // (5)
    ListPtr test3 = List::mk();
-   test3->append(Val_Int32::mk(5));
+   test3->append(Val_Int64::mk(5));
    // (1,2,3,4)
    ListPtr test4 = List::mk();
-   test4->append(Val_Int32::mk(1));
-   test4->append(Val_Int32::mk(2));
-   test4->append(Val_Int32::mk(3));
-   test4->append(Val_Int32::mk(4));
+   test4->append(Val_Int64::mk(1));
+   test4->append(Val_Int64::mk(2));
+   test4->append(Val_Int64::mk(3));
+   test4->append(Val_Int64::mk(4));
    
    testListCompare(test1, test1, 0);
    

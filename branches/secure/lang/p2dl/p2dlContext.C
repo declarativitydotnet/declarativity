@@ -26,9 +26,6 @@
 #include "val_vector.h"
 #include "val_matrix.h"
 #include "val_list.h"
-#include "val_uint32.h"
-#include "val_int32.h"
-#include "val_uint64.h"
 #include "val_int64.h"
 #include "val_str.h"
 #include "val_time.h"
@@ -90,12 +87,16 @@ namespace compile {
         else   return e->add_input();
       }
       else {
-        if (!v) throw p2dl::Exception(0, "Bad port value! " + _port->toString());
-        
-        if (v->value()->typeCode() == ::Value::INT32 || 
-            v->value()->typeCode() == ::Value::UINT32) 
-          return Val_UInt32::cast(v->value());
-        else return e->element()->input(v->value());
+        if (!v) {
+          throw p2dl::Exception(0, "Bad port value! " +
+                                _port->toString());
+        }
+
+        if (v->value()->typeCode() == ::Value::INT64) {
+          return Val_Int64::cast(v->value());
+        } else {
+          return e->element()->input(v->value());
+        }
       }
       assert(0);
       return 0;
@@ -109,12 +110,16 @@ namespace compile {
         else   return e->add_output();
       }
       else {
-        if (!v) throw p2dl::Exception(0, "Bad port value! " + _port->toString());
+        if (!v) {
+          throw p2dl::Exception(0, "Bad port value! " +
+                                _port->toString());
+        }
         
-        if (v->value()->typeCode() == ::Value::INT32 || 
-            v->value()->typeCode() == ::Value::UINT32) 
-          return Val_UInt32::cast(v->value());
-        else return e->element()->output(v->value());
+        if (v->value()->typeCode() == ::Value::INT64) {
+          return Val_Int64::cast(v->value());
+        } else {
+          return e->element()->output(v->value());
+        }
       }
       assert(0);
       return 0;
@@ -141,8 +146,8 @@ namespace compile {
 
       _dataflow.reset(
         new Plumber::Dataflow(n->toString(), 
-                              Val_UInt32::cast(inputs->value()),
-                              Val_UInt32::cast(outputs->value()),
+                              Val_Int64::cast(inputs->value()),
+                              Val_Int64::cast(outputs->value()),
                               Val_Str::cast(proccessing->value()),
                               Val_Str::cast(flow_code->value())));
       _statements = s;
@@ -416,27 +421,35 @@ namespace compile {
       ScopeTable scope;
       TELL_INFO << "COMMIT TABLES" << std::endl;
       for (StatementList::iterator i = _tables.begin();
-           i != _tables.end(); i++) {
+           i != _tables.end();
+           i++) {
+        TELL_WORDY << (*i)->toString() << std::endl;
         (*i)->commit(scope);
       }
       TELL_INFO << "COMMIT WATCHES" << std::endl;
       for (StatementList::iterator i = _watches.begin();
-           i != _watches.end(); i++) {
+           i != _watches.end();
+           i++) {
+        TELL_WORDY << (*i)->toString() << std::endl;
         (*i)->commit(scope);
       }
       TELL_INFO << "COMMIT GRAPHS" << std::endl;
       for (StatementList::iterator i = _graphs.begin();
-           i != _graphs.end(); i++) {
+           i != _graphs.end();
+           i++) {
+        TELL_WORDY << (*i)->toString() << std::endl;
         (*i)->commit(scope);
       }
       TELL_INFO << "COMMIT EDITS" << std::endl;
       for (StatementList::iterator i = _edits.begin();
-           i != _edits.end(); i++) {
+           i != _edits.end();
+           i++) {
         (*i)->commit(scope);
       }
       TELL_INFO << "COMMIT FACTS" << std::endl;
       for (StatementList::iterator i = _facts.begin();
-           i != _facts.end(); i++) {
+           i != _facts.end();
+           i++) {
         (*i)->commit(scope);
       }
     }
@@ -463,11 +476,11 @@ namespace compile {
       ValuePtr ruleText = (*rule)[catalog->attribute(RULE, "P2DL")];
 
       if (ruleText != Val_Null::mk()) {
-/*
-        if ((*rule)[catalog->attribute(RULE, "NAME")]->toString() == "rule_aggview_rule_mv_r1") { 
-          std::cerr << "RULE P2DL TEXT: " << std::endl << ruleText->toString() << std::endl;
-        }
-*/
+
+        //        if ((*rule)[catalog->attribute(RULE, "NAME")]->toString() == "rule_aggview_rule_mv_r1") { 
+        //std::cerr << "RULE P2DL TEXT: " << std::endl << ruleText->toString() << std::endl;
+        //}
+
         std::istringstream p2dl(ruleText->toString(), std::istringstream::in);
         parse_stream(&p2dl);
       }

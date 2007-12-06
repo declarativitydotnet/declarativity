@@ -27,22 +27,22 @@ namespace stageGuard {
         Rewrite != null.
 
   /* Shift predicates (except stream), selections, and assignments by 2 */
-  sg2 ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos+2U, AM, New) :-
+  sg2 ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos+2, AM, New) :-
         rewrite(@A, Pid, Rid),
         ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, AM, New),
         Pos > 1.
 
-  sg3 ::sys::assign(@A, Aid, Rid, Var, Value, Pos + 2U) :-
+  sg3 ::sys::assign(@A, Aid, Rid, Var, Value, Pos + 2) :-
         rewrite(@A, Pid, Rid),
         ::sys::assign(@A, Aid, Rid, Var, Value, Pos).
 
-  sg4 ::sys::select(@A, Sid, Rid, Bool, Pos + 2U, AM) :-
+  sg4 ::sys::select(@A, Sid, Rid, Bool, Pos + 2, AM) :-
         rewrite(@A, Pid, Rid),
         ::sys::select(@A, Sid, Rid, Bool, Pos, AM).
 
 
   /* Create the predicate and selection guard. */
-  sg5 ::sys::predicate(@A, f_idgen(), Rid, false, Name, Tid, "PROBE", NewSchema, 2U, null, false) :-
+  sg5 ::sys::predicate(@A, f_idgen(), Rid, false, Name, Tid, "PROBE", NewSchema, 2, null, false) :-
         rewrite(@A, Pid, Rid),
         ::sys::table(@A, Tid, Name, _, _, _, _, _, _),
         ::sys::predicate(@A, PredID, Rid, _, _, _, _, Schema, Pos, _, _),
@@ -50,13 +50,13 @@ namespace stageGuard {
         Name == "sys::compileStatus",
         NewSchema := f_cons(f_getattr("Location", Schema), f_mktype("Variable", "$_Status")). 
 
-  sg6 ::sys::select(@A, f_idgen(), Rid, Bool, 3U, "FILTER") :-
+  sg6 ::sys::select(@A, f_idgen(), Rid, Bool, 3, "FILTER") :-
         rewrite(@A, Pid, Rid),
         ::sys::program(@A, Pid, Name, _, _, _, _, _, _),
         Bool := f_mkbool("==", f_mktype("Variable", "$_Status"), f_mktype("AtomicValue", Name)). 
 
   /* Update rule term count to include the new predicate and selection. */
-  sg7 ::sys::rule(@A, Rid, Pid, Name, HeadID, P2DL, Delete, Terms+2U, New) :-
+  sg7 ::sys::rule(@A, Rid, Pid, Name, HeadID, P2DL, Delete, Terms+2, New) :-
         rewrite(@A, Pid, Rid),
         ::sys::rule(@A, Rid, Pid, Name, HeadID, P2DL, Delete, Terms, New).
 

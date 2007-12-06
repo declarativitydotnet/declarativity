@@ -15,8 +15,7 @@
 #include <element.h>
 #include <elementSpec.h>
 #include <iostream>
-#include "val_int32.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "reporting.h"
 
 void

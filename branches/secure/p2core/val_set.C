@@ -11,7 +11,7 @@
 
 #include "val_null.h"
 #include "val_set.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 
 class OperSet : public opr::OperCompare<Val_Set> {
 
@@ -33,7 +33,7 @@ class OperSet : public opr::OperCompare<Val_Set> {
   };
   // size
   virtual ValuePtr _bnot (const ValuePtr& v) const
-  { return Val_UInt32::mk(Val_Set::cast(v)->size()); };
+  { return Val_Int64::mk(Val_Set::cast(v)->size()); };
   // proper subset
   virtual bool _gt (const ValuePtr& v1, const ValuePtr& v2) const
   { 

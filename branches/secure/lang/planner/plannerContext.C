@@ -19,7 +19,6 @@
 #include "val_null.h"
 #include "val_list.h"
 #include "val_tuple.h"
-#include "val_int32.h"
 #include "val_int64.h"
 #include "oper.h"
 
@@ -230,7 +229,7 @@ namespace compile {
         while (!iter->done()) {
            TuplePtr tp = iter->next();
            TELL_ERROR << "\t" << tp->toString() << std::endl;
-           for (int i = 0; i < tp->size(); i++) {
+           for (uint i = 0; i < tp->size(); i++) {
              TELL_ERROR << (*tp)[i]->typeCode() << ", ";
            }
            TELL_ERROR << std::endl;
@@ -410,12 +409,12 @@ namespace compile {
       for (unsigned pos = 0; true; pos++) {
         TuplePtr lookup = Tuple::mk();
         lookup->append((*rule)[TUPLE_ID]);
-        lookup->append(Val_UInt32::mk(pos));
+        lookup->append(Val_Int64::mk(pos));
         lookup->freeze();
 
         TuplePtr lookup2 = Tuple::mk();
         lookup2->append((*rule)[TUPLE_ID]);
-        lookup2->append(Val_Int32::mk(pos));
+        lookup2->append(Val_Int64::mk(pos));
         lookup2->freeze();
 
         TuplePtr lookup3 = Tuple::mk();
@@ -611,7 +610,7 @@ namespace compile {
           term = term->clone();
           term->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(schema));
           graphName = probe(oss, indent + "\t\t", catalog, term, tupleSchema, filter);
-          if ((*term)[catalog->attribute(FUNCTOR, "NOTIN")] == Val_UInt32::mk(false)) {
+          if ((*term)[catalog->attribute(FUNCTOR, "NOTIN")] == Val_Int64::mk(false)) {
               tupleSchema = namestracker::merge(tupleSchema, schema);
           }
           if (filter) 
@@ -918,7 +917,7 @@ namespace compile {
       ListPtr probeSchema  = Val_List::cast((*probeTp)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
       ListPtr accessMethod = Val_List::cast((*probeTp)[catalog->attribute(FUNCTOR, "AM")]);
       string    tableName  = (*probeTp)[catalog->attribute(FUNCTOR, "NAME")]->toString();
-      bool    notin = (*probeTp)[catalog->attribute(FUNCTOR, "NOTIN")] == Val_UInt32::mk(true);
+      bool    notin = (*probeTp)[catalog->attribute(FUNCTOR, "NOTIN")] == Val_Int64::mk(true);
       CommonTable::Key joinKey;
       CommonTable::Key indexKey;
       CommonTable::Key baseKey;
