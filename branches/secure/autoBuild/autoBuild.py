@@ -219,6 +219,9 @@ sourcedir = os.getcwd()
 ####### read configuration paramemters ########
 parameters = {}
 cmake_parameters = {}
+pathname = os.path.dirname(sys.argv[0]) 
+print pathname
+#os.chdir(os.path.join(os.getcwd(), pathname))
 opt, arg = getopt.getopt(sys.argv[1:], 'C:h')
 
 for key,val in opt:
@@ -227,7 +230,7 @@ for key,val in opt:
                 sys.exit(0)
 	if key == '-C':
 		current_dir = os.getcwd()
-		for f in os.listdir(val):
+		for f in os.listdir(os.path.join(os.getcwd(), val)):
                 	if f.endswith('.conf'):
 				os.chdir(current_dir)
 				path = os.path.join(val, f)	
