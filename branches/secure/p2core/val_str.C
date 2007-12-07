@@ -92,7 +92,10 @@ string Val_Str::cast(ValuePtr v)
     return v->toString();
   }
 }
-
+string Val_Str::raw_val(Val_Str& v)
+{
+  return v.toString();
+}
 /* 
  * End of file
  */

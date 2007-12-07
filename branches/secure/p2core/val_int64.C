@@ -58,7 +58,9 @@ int64_t Val_Int64::cast(ValuePtr v) {
                            Value::INT64, "int64");
   }
 }
-
+int64_t Val_Int64::raw_val(Val_Int64& v) {
+  return v.i;
+}
 int Val_Int64::compareTo(ValuePtr other) const
 {
   if (Value::INT64 < other->typeCode()) {

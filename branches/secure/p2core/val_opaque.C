@@ -57,6 +57,19 @@ ValuePtr Val_Opaque::xdr_unmarshal( XDR *x )
 }
 
 
+string Val_Opaque::toString() const
+{
+    unsigned char * cstr = (unsigned char*)b->cstr();
+    std::string s = "opaque(0x";
+    char buf[3];
+    for(int i = 0; i < b->length(); i++) {
+      snprintf(buf,3,"%02x",cstr[i]);
+      s+=buf;
+    }
+    s+=')';
+    return s;
+}
+
 string Val_Opaque::toConfString() const
 {
   return toString();
@@ -81,7 +94,9 @@ FdbufPtr Val_Opaque::cast(ValuePtr v)
                            Value::OPAQUE, "opaque");
   }
 }
-  
+FdbufPtr Val_Opaque::raw_val(Val_Opaque& v) {
+  return v.b;
+}
 int Val_Opaque::compareTo(ValuePtr other) const
 {
   if (other->typeCode() != Value::OPAQUE) {

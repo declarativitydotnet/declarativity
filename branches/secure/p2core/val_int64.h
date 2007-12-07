@@ -46,6 +46,7 @@ public:
 
   // Casting
   static int64_t cast(ValuePtr v);
+  static int64_t raw_val(Val_Int64& v);
   const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
   
   static const opr::Oper* oper_;
