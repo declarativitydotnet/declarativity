@@ -28,6 +28,7 @@ namespace compile {
     class Exception : public compile::Exception {
     public:
       Exception(string msg) : compile::Exception(msg) {};
+      virtual ~Exception() {};
     };
 
     class Context : public compile::Context {

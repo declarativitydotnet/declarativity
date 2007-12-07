@@ -117,7 +117,8 @@ TuplePtr CompileStage::simple_action(TuplePtr p)
                    << rewriteTbl->toString());
         return TuplePtr();
       }
-      TELL_OUTPUT << "Overlog compile stage: " << rewriteName->toString() << " loaded." << std::endl;
+      ELEM_INFO("Overlog compile stage: " << rewriteName->toString()
+                << " loaded.");
     
       ELEM_INFO("NEW REWRITE TABLE: "
                 << rewriteTbl->toString());

@@ -25,6 +25,7 @@ namespace compile {
     public:
       Exception(string d="Compile Exception") : desc_(d) {};
       virtual string toString() { return desc_; };
+      virtual ~Exception() {};
     private:
       string desc_;
   };

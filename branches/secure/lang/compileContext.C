@@ -73,7 +73,7 @@ namespace compile {
 
   int Context::initialize()
   {
-    TELL_OUTPUT << "Default compile stage: " << name() << " loaded." << std::endl;
+    TELL_INFO << "Default compile stage: " << name() << " loaded." << std::endl;
     return true;
   }
 
