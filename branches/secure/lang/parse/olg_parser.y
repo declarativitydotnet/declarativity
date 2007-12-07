@@ -175,6 +175,10 @@ tablearg: OLG_VALUE
 
 keys: OLG_KEYS OLG_LPAR keylist OLG_RPAR 
       { $$ = $3; }
+    |
+      OLG_KEYS OLG_LPAR OLG_RPAR 
+      { $$ = new compile::parse::ExpressionList(); 
+        /*$$->push_back(new compile::parse::Value(Val_Int64::mk(0))); */}
     ;
 
 keylist: OLG_VALUE 

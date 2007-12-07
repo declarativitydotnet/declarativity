@@ -63,6 +63,8 @@ namespace compile {
     int aggregation(const ListPtr args);
 
     ListPtr groupby(const ListPtr args);
+
+    ListPtr flatten(const ListPtr args);
   
     /**
      * Utility function that forms a new argument list

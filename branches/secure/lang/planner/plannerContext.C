@@ -168,7 +168,7 @@ namespace compile {
                   << "Stage(\"stage_" << processor << "\", \"" << processor << "\") ->\n\t"
                   << "PelTransform(\"formatStage\", \"\\\"" << output << "\\\" pop swallow unbox drop popall\") -> ";
         if (watched(output, "s")) {
-          stage_oss << " -> Print(\"SendAction: STAGE " << processor << "\") -> "; 
+          stage_oss << "Print(\"SendAction: STAGE " << processor << "\") -> "; 
         }
         stage_oss << "PelTransform(\"package\", \"$1 pop swallow pop\") -> "
                   << "[+]main." << _internalStrandOutputElement << ";\n";
@@ -651,19 +651,28 @@ namespace compile {
            iter != headSchema->end(); iter++) {
         ValuePtr arg = *iter;
         TuplePtr argTp = Val_Tuple::cast(arg);
-        int pos = namestracker::position(tupleSchema, arg);
-        if (pos >= 0) {
-          pel << "$" << (pos + 1) << " pop ";
-        }
-        else if ((*argTp)[0]->toString() == AGG && (*argTp)[2] == Val_Null::mk()) {
-          // Ignore '*' aggregates.  
+
+        if ((*argTp)[0]->toString() == AGG &&
+            (*event)[catalog->attribute(FUNCTOR, "ECA")]->toString() == "INSERT") {
+          /* An Aggregation element is planned in this case, which will always place
+             the aggregate value in the last position. */
+          pel << "$" << (tupleSchema->size() + 1) << " pop ";
         }
         else {
-          throw planner::Exception("ERROR Rule: " +
-                                   (*rule)[catalog->attribute(RULE, "NAME")]->toString() +
-                                   "\n\tUnknown variable: " + 
-                                    arg->toString() + "\n\tSCHEMA: " + 
-                                    tupleSchema->toString());
+          int pos = namestracker::position(tupleSchema, arg);
+          if (pos >= 0) {
+            pel << "$" << (pos + 1) << " pop ";
+          }
+          else if ((*argTp)[0]->toString() == AGG && (*argTp)[2] == Val_Null::mk()) {
+            /* This field is handled by the Aggwrap element. */
+          }
+          else {
+            throw planner::Exception("ERROR Rule: " +
+                                     (*rule)[catalog->attribute(RULE, "NAME")]->toString() +
+                                     "\n\tUnknown variable: " + 
+                                      arg->toString() + "\n\tSCHEMA: " + 
+                                      tupleSchema->toString());
+          }
         }
       }
       TELL_INFO << "\tPEL: " << pel.str() << std::endl;
@@ -777,7 +786,7 @@ namespace compile {
           else {
             aggOper  = (*arg)[3]->toString();
             if ((*arg)[2] == Val_Null::mk()) {
-              aggField = -1;
+              aggField = 0; 
             }
             else {
               aggField = namestracker::position(eventArgs, *iter) + 1;
@@ -794,6 +803,8 @@ namespace compile {
             << "\", \"" << aggTable << "\", \"" << aggOper << "\", " << aggField 
             << ", " << int_list_to_str(groupByFields) << ");\n";
         oss << indent << "\tagg -> ";
+        oss << "PelTransform(\"tableName\", \"\\\"" << aggTable
+            << "\\\" pop swallow unbox popall\") -> "; 
         if (watched(eventName, "i")) {
           oss << indent << "\tPrint(\"InsertEvent: RULE "
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 

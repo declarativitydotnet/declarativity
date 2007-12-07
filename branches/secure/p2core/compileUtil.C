@@ -113,10 +113,10 @@ namespace compile {
       string type = (*expr)[TNAME]->toString();
       if (type == VAR || type == VAL) {
         ValuePtr val = (*expr)[2];
-        if (type == VAL && val->typeCode() == Value::STR)
+        if (type == VAL && val->typeCode() == Value::STR) {
           oss << "\"" << val->toString() << "\""; 
-        else
-          oss << val->toString();
+        }
+        else oss << val->toString();
       }
       else if (type == LOC) {
         oss << "@" << (*expr)[2]->toString(); 
@@ -232,6 +232,26 @@ namespace compile {
       return ValuePtr();
     }
 
+    ListPtr flatten(const ListPtr args)
+    {
+      ListPtr schema = List::mk();
+      for (ValPtrList::const_iterator i = args->begin(); 
+           i != args->end(); i++) {
+        TuplePtr arg = Val_Tuple::cast(*i);
+        if ((*arg)[TNAME]->toString() == LOC) {
+          schema->append(*i);
+        }
+        else if ((*arg)[TNAME]->toString() != AGG) {
+          schema->append(toVar(*i));
+        }
+        else {
+          schema->append(toVar(Val_Null::mk()));
+        }
+      }
+      return schema;
+
+    }
+
     ListPtr groupby(const ListPtr args)
     {
       ListPtr gb = List::mk();
@@ -288,11 +308,6 @@ namespace compile {
           continue;
         }
         else if (position(schema2, toVar(*i)) < 0) {
-/*
-          std::cerr << "SUBSET FAIL: " << "\n\t" 
-                    << schema1->toString() << "\n\t" 
-                    << schema2->toString() << std::endl;
-*/
           return false;
         }
       }

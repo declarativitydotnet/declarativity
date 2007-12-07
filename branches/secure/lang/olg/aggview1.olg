@@ -38,7 +38,7 @@ namespace aggview1 {
         Name := "mv_" + Name.
 
   /* Change the original head to be the materialized intermediate table. */
-  av2 ::sys::predicate(@A, HeadID, Rid, NotIn, ViewName, ViewTid, null, f_tovar(Schema), Pos, AM, New) :-
+  av2 ::sys::predicate(@A, HeadID, Rid, NotIn, ViewName, ViewTid, null, f_flatten(Schema), Pos, AM, New) :-
         rewrite(@A, Pid, Rid, ViewName, Schema, ViewTid, _, _),
         ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
         ::sys::predicate(@A, HeadID, Rid, NotIn, _, _, _, _, Pos, AM, New).
@@ -60,7 +60,7 @@ namespace aggview1 {
         ::sys::predicate(@A, HeadID, Rid, _, Name, Tid, ECA, Schema, Pos, AM, New).
 
   /* The rule body only contains the intermediate table predicate. */
-  av6 ::sys::predicate(@A, f_idgen(), NewRid, false, ViewName, ViewTid, null, f_tovar(Schema), 1, null, false) :-
+  av6 ::sys::predicate(@A, f_idgen(), NewRid, false, ViewName, ViewTid, null, f_flatten(Schema), 1, null, false) :-
         rewrite(@A, Pid, Rid, ViewName, Schema, ViewTid, NewRid, NewHeadID).
 
 }

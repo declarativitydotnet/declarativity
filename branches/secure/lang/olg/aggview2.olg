@@ -20,7 +20,7 @@ namespace aggview2 {
        Events == 0.
 
 
-  av1 rewrite(@A, Pid, Rid, Name, Schema, f_idgen(), f_idgen()) :-
+  av1 rewrite(@A, Pid, Rid, Name, f_flatten(Schema), f_idgen(), f_idgen()) :-
         viewRule(@A, Pid, Rid, Preds),
         ::sys::rule(@A, Rid, Pid, Name, HeadID, _, _, _, _),
         ::sys::predicate(@A, HeadID, Rid, _, _, _, _, Schema, _, _, _),
@@ -32,25 +32,27 @@ namespace aggview2 {
         Name := "aggview_" + Name.
 
   /* Replace single table view with aggregation event. */
-  av2 ::sys::predicate(@A, f_idgen(), Rid, NotIn, Trigger, null, null, f_tovar(Schema), Pos, AM, New) :-
-        rewrite(@A, Pid, Rid, Trigger, Schema, _, _),
-        ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
-        ::sys::predicate(@A, PredID, Rid, NotIn, Name, Tid, ECA, _, Pos, AM, New),
-        PredID != HeadID.
+  av2 ::sys::predicate(@A, f_idgen(), Rid, false, Trigger, null, null, TSchema, 1, null, false) :-
+        rewrite(@A, Pid, Rid, Trigger, TSchema, _, _).
 
   /* Remove aggregation from orginal head predicate schema. */
-  av3 ::sys::predicate(@A, HeadID, Rid, NotIn, Name, null, null, f_tovar(Schema), Pos, AM, New) :-
-        rewrite(@A, Pid, Rid, Trigger, _, _, _),
+  av3 ::sys::predicate(@A, HeadID, Rid, NotIn, Name, Tid, ECA, TSchema, Pos, AM, New) :-
+        rewrite(@A, Pid, Rid, _, TSchema, _, _),
         ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
-        ::sys::predicate(@A, HeadID, Rid, NotIn, Name, Tid, ECA, Schema, Pos, AM, New).
+        ::sys::predicate(@A, HeadID, Rid, NotIn, Name, Tid, ECA, _, Pos, AM, New).
 
+  /* Create the new aggregation trigger rule. */
   av4 ::sys::rule(@A, NewRid, Pid, Name, NewHeadID, null, false, 2, false) :-
         rewrite(@A, Pid, Rid, Trigger, Schema, NewRid, NewHeadID),
         Name := "rule_" + Trigger.
 
+  /* Create the trigger rule head with the same schema as the original head. */
   av5 ::sys::predicate(@A, NewHeadID, NewRid, false, Trigger, null, "SEND", Schema, 0, null, false) :-
-        rewrite(@A, Pid, Rid, Trigger, Schema, NewRid, NewHeadID).
+        rewrite(@A, Pid, Rid, Trigger, _, NewRid, NewHeadID),
+        ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
+        ::sys::predicate(@A, HeadID, _, _, _, _, _, Schema, _, _, _).
 
+  /* Move the original table body predicate to the new trigger rule. */
   av6 ::sys::predicate(@A, PredID, NewRid, NotIn, Name, Tid, "INSERT", Schema, Pos, AM, New) :-
         rewrite(@A, Pid, Rid, _, _, NewRid, _),
         ::sys::predicate(@A, PredID, Rid, NotIn, Name, Tid, _, Schema, Pos, AM, New),

@@ -28,6 +28,6 @@ r1 event(@NI) :- periodic(@NI, E, 1, 5).
 
 r2 keyLess(@NI) :- event(@NI).
 
-r3 keyLessCount(@NI, a_COUNT<*>) :- keyLess(@NI).
+r3 keyLessCount(@NI, a_COUNT<@NI>) :- keyLess(@NI).
 
 

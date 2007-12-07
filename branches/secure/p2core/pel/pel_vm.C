@@ -796,10 +796,17 @@ DEF_OP(L_GET_ATTR) {
    else if (attr->typeCode() == Value::STR) {
      string type = Val_Str::cast(attr);
      if (type == LOC) {
-       TuplePtr loc = Tuple::mk(LOC);
-       loc->append(compile::namestracker::location(list));
-       loc->freeze();
-       stackPush(Val_Tuple::mk(loc));
+       ValuePtr location = compile::namestracker::location(list);
+       if (!location) {
+         TELL_ERROR << "NO LOCATION VARIABLE IN SCHEMA: " << list->toString() << std::endl;
+         error = PE_BAD_LIST_FIELD;
+       }
+       else {
+         TuplePtr loc = Tuple::mk(LOC);
+         loc->append(compile::namestracker::location(list));
+         loc->freeze();
+         stackPush(Val_Tuple::mk(loc));
+       }
        return;
      }
      for (ValPtrList::const_iterator iter = list->begin();
@@ -811,6 +818,12 @@ DEF_OP(L_GET_ATTR) {
      } 
    }
    stackPush(Val_Null::mk());
+}
+
+DEF_OP(L_FLATTEN) { 
+   ValuePtr listVal = stackTop(); stackPop();
+   ListPtr  list    = Val_List::cast(listVal);
+   stackPush(Val_List::mk(compile::namestracker::flatten(list)));
 }
 
 DEF_OP(L_GROUPBY_ATTR) { 
@@ -1537,6 +1550,22 @@ DEF_OP(STR_MATCH) {
     stackPush(Val_Int64::mk(false));
   }
 }
+
+DEF_OP(STR_REPLACE) {
+  ValuePtr first  = stackTop(); stackPop();
+  ValuePtr second = stackTop(); stackPop();
+  ValuePtr third  = stackTop(); stackPop();
+
+  string pattern = first->toString();
+  string replace = second->toString();
+  string value   = third->toString();
+
+  for (string::size_type s = 0;
+       (s = value.find(pattern, s)) != string::npos; s++)
+          value.replace(s, pattern.length(), replace);
+  stackPush(Val_Str::mk(value));
+}
+
 DEF_OP(STR_CONV) {
   ValuePtr t = stackTop(); stackPop();
 

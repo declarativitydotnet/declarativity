@@ -35,6 +35,7 @@ namespace gevent {
   ge3b ::sys::globalEvent(@A, PredID, Pid, Name, Type, Trigger, Schema) :-
         periodicEvent(@A, Pid, Rid, PredID, Name, Type, Schema),
         Type := f_tostr(f_cdr(f_cdr(Schema))),
+        Type := f_strReplace(".", "_", Type),
         Trigger := Name + "_" + Type,
         Schema := f_cons(f_car(Schema), f_car(f_cdr(Schema))).
 

@@ -134,6 +134,7 @@ for op, ar, va, desc in [
   ("substr",3,	"STR_SUBSTR",   "Extract substring"),
   ("match",2,	"STR_MATCH",    "Perl regular expression matching"),
   ("tostr",1,   "STR_CONV",     "Convert to a string (not ->s)"),
+  ("strreplace",3,   "STR_REPLACE", "Replace string"),
 
   ("status",     2, "O_STATUS", "Extract the overlog program status of a program attribute."),
   ("selectivity",3, "O_SELECT", "Compute the selectivity of a join."),
@@ -148,6 +149,7 @@ for op, ar, va, desc in [
   ("posattr",2, "L_POS_ATTR",   "Get the attribute position from list."),
   ("aggattr",1, "L_AGG_ATTR",   "Get the aggregation position from list."),
   ("groupbyattr",1, "L_GROUPBY_ATTR",   "Get the groupby attributes from schema."),
+  ("flatten",1, "L_FLATTEN",   "Flatten all arguments in the schema to be variables."),
   ("indexMatch",3, "L_INDEXMATCH", "Tests index key according to join operation."),
   ("castassign",3, "L_CASTASSIGN", "Substitute a selection predicate for an assignment."),
   ("variables",1, "L_VARIABLES", "Extracts all variables from a math or boolean expression."),
