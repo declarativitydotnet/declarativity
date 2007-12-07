@@ -15,7 +15,7 @@
 # Assumption - program is running at localhost:10000
 #
 # Expected output -
-#	##Planner, -:-, 4, 0, Rule 'r1 matches(@A, B, COUNT< * >) :- event(@A, B, C), otherTable(@D, L), table(A, @C, D, E).' is a non-local streaming aggregate, which is not currently supported.
+#	##COMPILE ERROR: program commandLine, node localhost:10000, error code 2: Rule r1 location variable @C not found in base tables.
 #
 #
 ####################################
@@ -32,10 +32,11 @@ import subprocess
 # Usage function
 def usage():
         print """
-                distributedAggregate.py -E <planner path> -B <olg path>
+                distributedAggregate.py -E <planner path> -B <olg path> -T <time in seconds>
 
                 -E              planner path
                 -B              olg path
+		-T              time (secs) for test to run
                 -h              prints usage message
         """
 
@@ -43,13 +44,13 @@ def usage():
 def script_output(stdout):
 	output = ""
         for line in stdout.readlines():
-                output = output + line
+                p = re.compile('^[#][#] COMPILE \s* ERROR:.*$',re.VERBOSE|re.DOTALL) 
+                if(p.match(line)):
+			output = output + line
 
 	p = re.compile(r"""
-  		(^[#][#]Planner, .*
-		Rule \s* \' r1 \s* matches \(@A, \s* B, \s* COUNT\< \s* \* \s* \>\) \s*
-		:- \s* event\(@A, \s* B, \s* C\), \s* otherTable\(@D, \s* L\), \s* table\(A, \s* @C, \s* D, \s* E\) \s*
-		.*) 
+		(^[#][#] COMPILE \s* ERROR: \s* program \s* commandLine, \s* node \s* localhost:10000, \s*
+		error \s* code \s* 2: \s* Rule \s* r1 \s* location \s* variable \s* [@]C \s* not \s* found \s* in \s* base \s* tables\.\s*)
 		""", re.VERBOSE)
 
 	flag = p.match(output)
@@ -73,11 +74,13 @@ for key,val in opt:
                 olg_path = val
         elif key == '-E':
                 executable_path = val
+	elif key == '-T': 
+                time_interval = val
         elif key == '-h':
                 usage()
                 sys.exit(0)
 try:
-        args=[executable_path , '-o', olg_path +'/distributedAggregate.olg', '2>&1']
+        args=[executable_path , '-o', os.path.join(olg_path, 'distributedAggregate.olg'), '2>&1']
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 except OSError, e:
         #print "Execution failed"
@@ -87,5 +90,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(3, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(int(time_interval), kill_pid, [p.stdout, p.pid])
         t.start()

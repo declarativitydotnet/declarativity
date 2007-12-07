@@ -15,7 +15,8 @@
 # Assumption - program is running at localhost:10000
 #
 # Expected output -
-#	##Print[SendAction!someEvent!r2_eca!localhost:10000]:  [someEvent(localhost:10000, 4)]
+#	
+#	##Print[SendAction: RULE r2]:  [someEvent(localhost:10000, 4)]
 #
 #
 ####################################
@@ -32,10 +33,11 @@ import sys
 # Usage function
 def usage():
         print """
-                periodicAggregation.py -E <planner path> -B <olg path>
+                periodicAggregation.py -E <planner path> -B <olg path> -T <time in seconds>
 
                 -E              planner path
                 -B              olg path
+		-T              time (secs) for test to run
                 -h              prints usage message
         """
 
@@ -44,11 +46,12 @@ def usage():
 def script_output(stdout):
         output = ""
         for line in stdout.readlines():
-                output = output + line
-
+                p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
+                if(p.match(line)):
+                        output = output + line
+	
 	p = re.compile(r"""
-		(^[#][#]Print\[SendAction!someEvent!r2_eca!localhost:10000\]:\s*
-		\[someEvent\(localhost:10000,\s* 4\)\]$)
+		(^[#][#] Print\[SendAction: \s* RULE \s* r2\]: \s* \[someEvent\(localhost:10000, \s* 4\)\])
 		""", re.VERBOSE)
 
 	flag = p.match(output)
@@ -73,11 +76,13 @@ for key,val in opt:
                 olg_path = val
         elif key == '-E':
                 executable_path = val
+	elif key == '-T':
+                time_interval = val
         elif key == '-h':
                 usage()
                 sys.exit(0)
 try:
-        args=[executable_path , '-o', olg_path +'/periodicAggregation.olg', '-DLOCALADDR=\"localhost:10000\"', '2>&1']
+        args=[executable_path , '-o', os.path.join(olg_path, 'periodicAggregation.olg'), '-DLOCALADDR=\"localhost:10000\"', '2>&1']
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 except OSError, e:
         #print "Execution failed"
@@ -87,5 +92,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(3, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(int(time_interval), kill_pid, [p.stdout, p.pid])
         t.start()

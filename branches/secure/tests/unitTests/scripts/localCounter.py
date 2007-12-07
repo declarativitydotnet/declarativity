@@ -47,7 +47,7 @@ def script_output(stdout):
 	i = 1
 	result = 1
         for line in stdout.readlines():
-		p = re.compile('^[#][#]Print.*$',re.DOTALL)
+		p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
                 if(p.match(line)):
 			p = re.compile(r"""
 				(^[#][#]Print\[AddAction: \s* RULE \s* rule_counter_add\]: \s*

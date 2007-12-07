@@ -51,7 +51,7 @@ def usage():
 def script_output(stdout):
        	lines=[]
         for line in stdout.readlines():
-		p = re.compile('^[#][#]Print.*$',re.DOTALL) 
+		p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL) 
 		if(p.match(line)):
 			lines.append(line.rstrip())
 	

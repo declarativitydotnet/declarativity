@@ -10,12 +10,14 @@
 ########### Description ###########
 #
 #
-# Given script runs multiResultAggregate.olg test and checks the test output
+# Given script runs unboundHeadVariables.olg test and checks the test output
 #
-# Assumption - program is running at localhost:10000
+# Assumption - program is runing at localhost:10000
 #
 # Expected output -
-#	##Planner, -:-, 4, 0, PLANNER ERROR: Group-by field E does not come from the event in the aggregation rule.  Currently, only group-by fields from the event are supported for event-table aggregates,  for rule ECA Rule r1_eca ACTION_SEND<matches(@A, E, COUNT< * >)> :- EVENT_RECV<event(@A, B, C)>, table(@A, C, D, E).. Planner exits.
+#	##COMPILE ERROR: program commandLine, node localhost:10000, error code 0: ERROR Rule: q1
+#        Unknown variable: Variable(localhost:10000, C)
+#        SCHEMA: (Location(localhost:10000, NI), Variable(localhost:10000, A), Variable(localhost:10000, B))
 #
 #
 ####################################
@@ -32,10 +34,11 @@ import sys
 # Usage function
 def usage():
         print """
-                multiResultAggregate.py -E <planner path> -B <olg path>
+                unboundHeadVariables.py -E <planner path> -B <olg path> -T <time in seconds>
 
                 -E              planner path
                 -B              olg path
+		-T              time (secs) for test to run
                 -h              prints usage message
         """
 
@@ -45,15 +48,16 @@ def script_output(stdout):
         output = ""
         for line in stdout.readlines():
                 output = output + line
-
+	
 	p = re.compile(r"""
-                (^[#][#]Planner, .*
-                PLANNER \s* ERROR: .*
-                ECA \s* Rule \s* r1_eca \s* ACTION_SEND \<matches\(@A, \s* E, \s* COUNT \< \s* \* \s* \>\)\> \s* :- \s* 
-		EVENT_RECV\<event\(@A, \s* B, \s* C\)\>, \s* table\(@A, \s* C, \s* D, \s* E\) .*)
+		([#][#] COMPILE \s* ERROR: \s* program \s* commandLine, \s* node \s* localhost:10000, \s*
+		error \s* code \s* 0: \s* ERROR \s* Rule: \s* q1 \s*
+	        Unknown \s* variable: \s* Variable\(localhost:10000, \s* C\) \s*
+	        SCHEMA: \s* \(Location\(localhost:10000, \s* NI\), \s* Variable\(localhost:10000, \s* A\), \s* 
+		Variable\(localhost:10000, \s* B\)\))
 		""", re.VERBOSE)
 
-	flag = p.match(output)
+	flag = p.search(output)
 	if flag:
 		print "Test passed"
 		#print flag.group()
@@ -67,7 +71,6 @@ def kill_pid(stdout, pid):
         #print "program killed"
         script_output(stdout)
 
-
 opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
 
 for key,val in opt:
@@ -75,11 +78,13 @@ for key,val in opt:
                 olg_path = val
         elif key == '-E':
                 executable_path = val
+	elif key == '-T':
+                time_interval = val
         elif key == '-h':
                 usage()
                 sys.exit(0)
 try:
-        args=[executable_path , '-o', olg_path +'/multiResultAggregate.olg', '2>&1']
+        args=[executable_path , '-o', os.path.join(olg_path, 'unboundHeadVariables.olg'), '2>&1']
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 except OSError, e:
         #print "Execution failed"
@@ -89,5 +94,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(3, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(int(time_interval), kill_pid, [p.stdout, p.pid])
         t.start()

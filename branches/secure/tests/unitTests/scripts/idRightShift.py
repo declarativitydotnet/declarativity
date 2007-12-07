@@ -45,13 +45,13 @@ def usage():
 def script_output(stdout):
         output = ""
         for line in stdout.readlines():
-                p = re.compile('^[#][#]Print.*$',re.DOTALL)
+                p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
                 if(p.match(line)):
                         output = output + line
 
 	p = re.compile(r"""
-                (^[#][#]Print\[SendAction: \s* RULE \s* rt0\]: \s*
-		\[tableInitialization\(localhost:10000, \s* 0x000000000000000000000000000002468acf1215I\)\])
+		(^[#][#]Print\[SendAction: \s* RULE \s* rt0\]: \s* \[tableInitialization\(localhost:10000, \s* 
+		0x000000000000000000000000000002468acf1215I\)\])
 		""", re.VERBOSE)
 	
 	flag = p.match(output)

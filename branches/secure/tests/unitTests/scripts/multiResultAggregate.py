@@ -10,12 +10,12 @@
 ########### Description ###########
 #
 #
-# Given script runs unboundHeadVariables.olg test and checks the test output
+# Given script runs multiResultAggregate.olg test and checks the test output
 #
-# Assumption - program is runing at localhost:10000
+# Assumption - program is running at localhost:10000
 #
 # Expected output -
-#	##Planner, q1_eca:0-localhost:10000, 4, 0, Rule head for rule 'ECA Rule q1_eca ACTION_SEND<event1(@NI, C)> :- EVENT_RECV<event(@NI, A)>, table(@NI, B).' contains unbound variable 'C'. All rule head variables must be bound to variables in the rule body.
+#	##COMPILE ERROR: program commandLine, node localhost:10000, error code 0: Rule r1: group by variables must be contained by event schema.
 #
 #
 ####################################
@@ -32,10 +32,11 @@ import sys
 # Usage function
 def usage():
         print """
-                unboundHeadVariables.py -E <planner path> -B <olg path>
+                multiResultAggregate.py -E <planner path> -B <olg path> -T <time in seconds>
 
                 -E              planner path
                 -B              olg path
+		-T              time (secs) for test to run
                 -h              prints usage message
         """
 
@@ -44,14 +45,13 @@ def usage():
 def script_output(stdout):
         output = ""
         for line in stdout.readlines():
-                output = output + line
-
+		p = re.compile('^[#][#] COMPILE \s* ERROR:.*$',re.VERBOSE|re.DOTALL)
+                if(p.match(line)):
+                        output = output + line
+	
 	p = re.compile(r"""
-                (^[#][#]Planner, \s*
-		q1_eca:0-localhost:10000, .*
-		Rule \s* head \s* for \s* rule \s* ['] ECA \s* Rule \s* q1_eca \s*
-		ACTION_SEND \<event1 \(@NI, \s* C \)\> \s* :- \s* EVENT_RECV \<event \(@NI, \s* A \)\>, \s* table \(@NI, \s* B \) \. ['] \s*
-		contains \s* unbound \s* variable \s* ['] C ['] .*)
+                (^[#][#]COMPILE \s* ERROR: \s* program \s* commandLine, \s* node \s* localhost:10000, \s* error \s* code \s* 0: \s* 
+		Rule \s* r1: \s* group \s* by \s* variables \s* must \s* be \s* contained \s* by \s* event \s* schema\.)
 		""", re.VERBOSE)
 
 	flag = p.match(output)
@@ -68,6 +68,7 @@ def kill_pid(stdout, pid):
         #print "program killed"
         script_output(stdout)
 
+
 opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
 
 for key,val in opt:
@@ -75,11 +76,13 @@ for key,val in opt:
                 olg_path = val
         elif key == '-E':
                 executable_path = val
+	elif key == '-T':
+                time_interval = val
         elif key == '-h':
                 usage()
                 sys.exit(0)
 try:
-        args=[executable_path , '-o', olg_path +'/unboundHeadVariables.olg', '2>&1']
+        args=[executable_path , '-o', os.path.join(olg_path, 'multiResultAggregate.olg'), '2>&1']
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 except OSError, e:
         #print "Execution failed"
@@ -89,5 +92,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(3, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(int(time_interval), kill_pid, [p.stdout, p.pid])
         t.start()

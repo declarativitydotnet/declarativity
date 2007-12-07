@@ -58,7 +58,7 @@ def script_output(stdout_11111, stdout_22222):
 	output = ""
         for line in stdout_11111.readlines():
 		#print line
-		p = re.compile('^[#][#]Print.*$',re.DOTALL)
+		p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
                 if(p.match(line)):
                         output = output + line
 	
@@ -77,7 +77,7 @@ def script_output(stdout_11111, stdout_22222):
 
 	output = ""
         for line in stdout_22222.readlines():
-                p = re.compile('^[#][#]Print.*$',re.DOTALL)
+                p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
                 if(p.match(line)):
                         output = output + line
 

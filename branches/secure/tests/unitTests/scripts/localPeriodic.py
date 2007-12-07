@@ -46,7 +46,7 @@ def script_output(stdout):
         output = ""
 	i = 0
         for line in stdout.readlines():
-		p = re.compile('^[#][#]Print.*$',re.DOTALL)
+		p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
                 if(p.match(line)):
                 	output = output + line
 			i = i+1
