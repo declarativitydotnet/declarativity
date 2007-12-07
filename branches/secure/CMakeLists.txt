@@ -1,6 +1,6 @@
 Project(P2)
 
-SUBDIRS(p2core aggregates functions p2cpp lang elements stages net overlog planner unitTests tests python)
+SUBDIRS(p2core aggregates functions p2cpp lang elements stages net overlog planner unitTests tests python oni)
 
 # Main decisions
 SET(BUILD_SHARED_LIBS ON)
@@ -72,6 +72,7 @@ INCLUDE_DIRECTORIES(
                     ${CMAKE_CURRENT_SOURCE_DIR}/elements
                     ${CMAKE_CURRENT_SOURCE_DIR}/stages
                     ${CMAKE_CURRENT_SOURCE_DIR}/net
+                    ${CMAKE_CURRENT_SOURCE_DIR}/oni
                     ${CMAKE_CURRENT_SOURCE_DIR}/overlog
                     ${CMAKE_CURRENT_SOURCE_DIR}/planner
                     ${CMAKE_CURRENT_SOURCE_DIR}/p2cpp
@@ -139,6 +140,7 @@ SET(COMMON_LIBRARIES p2core
 					 p2planner2 
 					 p2dl
 					 p2pel
+					 p2oni
 	   				 )
 
 # uncomment the following line to get CMake variables to print to screen

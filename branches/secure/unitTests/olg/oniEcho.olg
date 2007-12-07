@@ -1,0 +1,21 @@
+/*
+   Test ONI (Overlog Native Interface)
+
+   The echo stage is dynamically linked.  Make sure that
+   LD_LIBRARY_PATH contains your build path's "oni" directory (which
+   should contain the file liboniecho.so or liboniecho.dylib)
+
+   Echo prints its inputs directly to standard out, and then returns
+   them.
+*/
+
+stage("echo",echo_in,echo_out).
+
+materialize(foo,infinity,infinity,keys(1,2,3)).
+
+foo("localhost:10000",0,"a").
+foo("localhost:10000",1,"b").
+foo("localhost:10000",2,"c").
+
+r1 echo_in(@NI, N, S) :- foo(@NI,N,S).
+r2 foo(@NI,N+1,S) :- echo_out(@NI,N,S), N < 10.
