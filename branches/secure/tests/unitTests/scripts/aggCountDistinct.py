@@ -15,8 +15,8 @@
 # Assumption - program is running at localhost:10000
 #
 # Expected output - (the order of the results can vary)
-#	##Print[SendAction!countResult!q1_eca!localhost:10000]:  [countResult(localhost:10000, 6)]
-#	##Print[SendAction!countDistinctRes!q3_eca!localhost:10000]:  [countDistinctRes(localhost:10000, 3)]
+#	##Print[SendAction: RULE q1]:  [countResult(localhost:10000, 6)]
+#       ##Print[SendAction: RULE q3]:  [countDistinctRes(localhost:10000, 3)]
 #
 #
 ####################################

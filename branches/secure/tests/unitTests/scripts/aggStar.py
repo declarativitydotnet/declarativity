@@ -118,7 +118,7 @@ for key,val in opt:
                 usage()
                 sys.exit(0)
 try:
-        args=[executable_path , '-o', olg_path + '/aggStar.olg', '2>&1']
+        args=[executable_path , '-o', os.path.join(olg_path, 'aggStar.olg'), '2>&1']
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 except OSError, e:
         #print "Execution failed"

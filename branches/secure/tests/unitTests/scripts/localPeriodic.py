@@ -10,12 +10,12 @@
 ########### Description ###########
 #
 #
-# Given script runs localCounter.olg test and checks the test output
+# Given script runs localPeriodic.olg test and checks the test output
 #
 # Assumption - program is running at localhost:10000
 #
-#Expected output - (should get 100 tuples of the type given below where i increments from 1 to 100 with step 1)
-#	##Print[AddAction!counter!g1_eca!localhost:10000]:  [counter(localhost:10000, i)]
+#Expected output - (should get 20 tuples of the type given below where E is a random number)
+#	##Print[SendAction: RULE g2]:  [per(localhost:10000, E)]
 #
 #
 ####################################
@@ -33,41 +33,34 @@ import sys
 # Usage function
 def usage():
         print """
-                localCounter.py -E <planner path> -B <olg path>
+                localPeriodic.py -E <planner path> -B <olg path> -T <time in seconds>
 
                 -E              planner path
                 -B              olg path
+		-T              time (secs) for test to run
                 -h              prints usage message
         """
 
 # Function to parse the output file and check whether the output matches the expected value
 def script_output(stdout):
         output = ""
-	i = 1
-	result = 1
+	i = 0
         for line in stdout.readlines():
-		p = re.compile(r"""
-			(^[#][#]Print\[AddAction!counter!g1_eca!localhost:10000\]: \s* 
-			\[counter\(localhost:10000, \s* """ + 
-			str(i) + 
-			"""\)\])
-			""", re.VERBOSE|re.MULTILINE)
-	
-		flag = p.match(line)
-		if flag:
+		p = re.compile('^[#][#]Print.*$',re.DOTALL)
+                if(p.match(line)):
+                	output = output + line
 			i = i+1
-			#print "Test passed" 
-		else:
-			#print "Test failed"
-			result = 0
-			break
-
-	if result == 0 and i <= 100:
-		print "Test failed"
-	elif i > 101 or i < 101:
-		print "Test failed"
+	
+	p = re.compile(r"""
+		(^[#][#]Print\[SendAction: \s* RULE \s* g2\]: \s* \[per\(localhost:10000, \s* [0-9]+\)\]) 
+		""", re.VERBOSE|re.MULTILINE)
+	
+	flag = p.match(output)
+	if flag and i==20:
+		print "Test passed" 
 	else:
-		print "Test passed"
+		print "Test failed"
+
 
 #Function to kill the child after a set time
 def kill_pid(stdout, pid):
@@ -84,11 +77,13 @@ for key,val in opt:
                 olg_path = val
         elif key == '-E':
                 executable_path = val
+	elif key == '-T':
+                time_interval = val
         elif key == '-h':
                 usage()
                 sys.exit(0)
 try:
-        args=[executable_path , '-o', olg_path +'/localCounter.olg', '2>&1']
+        args=[executable_path , '-o', os.path.join(olg_path, 'localPeriodic.olg'), '2>&1']
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 except OSError, e:
         #print "Execution failed"
@@ -98,5 +93,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(3, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(int(time_interval), kill_pid, [p.stdout, p.pid])
         t.start()
