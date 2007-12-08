@@ -1,6 +1,6 @@
 Project(P2)
 
-SUBDIRS(p2core aggregates functions p2cpp lang elements stages net overlog planner unitTests tests python oni)
+SUBDIRS(p2core aggregates functions p2cpp lang elements stages net overlog planner unitTests tests python oni doc)
 
 # Main decisions
 SET(BUILD_SHARED_LIBS ON)
@@ -17,6 +17,8 @@ INCLUDE(FindPythonLibs)
 ## FindFLEX from http://www.cmake.org/Bug/bug.php?op=show&bugid=4018&pos=4
 FIND_PACKAGE(FLEX)
 FIND_PACKAGE(BISON)
+
+FIND_PACKAGE(LATEX)
 
 # Look for include files
 INCLUDE (CheckIncludeFiles)
