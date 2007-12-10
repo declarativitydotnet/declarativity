@@ -12,7 +12,8 @@ void OniStageFactoryInit() {
   _sharedObjects = new SoSet();
 }
 
-Stage::Processor* OniStageFactory(std::string stageProcessorName, Stage* theStageElement) {
+Stage::Processor*
+OniStageFactory(std::string stageProcessorName, Stage* theStageElement) {
   // Someone needs to implement a Windows version of this function.
 
   // What is the .so called?  It's liboni{dlname}.so.  If the stage

@@ -57,22 +57,28 @@ ValuePtr Val_Opaque::xdr_unmarshal( XDR *x )
 }
 
 
-string Val_Opaque::toString() const
+string
+Val_Opaque::toString() const
 {
-    unsigned char * cstr = (unsigned char*)b->cstr();
-    std::string s = "opaque(0x";
-    char buf[3];
-    for(int i = 0; i < b->length(); i++) {
-      snprintf(buf,3,"%02x",cstr[i]);
-      s+=buf;
-    }
-    s+=')';
-    return s;
+  unsigned char * cstr = (unsigned char*)b->cstr();
+  std::string s = "0x";
+  char buf[3];
+  for(uint i = 0;
+      i < b->length();
+      i++) {
+    snprintf(buf, 3, "%02x", cstr[i]);
+    s+=buf;
+  }
+  return s;
 }
 
 string Val_Opaque::toConfString() const
 {
-  return toString();
+  ostringstream s;
+  s << "opaque("
+    << toString()
+    << ")";
+  return s.str();
 }
 
 //

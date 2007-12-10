@@ -1483,7 +1483,6 @@ namespace compile {
         lexer = NULL;
       } 
       catch (compile::Exception e) {
-        int line = lexer->line_num();
         delete lexer; 
         lexer = NULL;
         throw e;

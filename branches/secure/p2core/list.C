@@ -34,7 +34,9 @@ ListPtr List::clone() const
   return l; 
 }
 
-ValuePtr List::at(uint32_t pos) const
+
+ValuePtr
+List::at(uint32_t pos) const
 { 
   assert(pos >= 0 && pos < vpl.size());
   ValPtrList::const_iterator iter = vpl.begin();
@@ -46,7 +48,9 @@ ValuePtr List::at(uint32_t pos) const
   return (*iter);
 }
 
-int List::member(ValuePtr val) const
+
+int
+List::member(ValuePtr val) const
 {
   ValPtrList::const_iterator listp = vpl.begin();
    
@@ -241,33 +245,33 @@ int List::compareTo(ListPtr other) const
   }*/
 
   ValPtrList myList = vpl;
-
-   ValPtrList::const_iterator i1 = myList.begin();
-   ValPtrList::const_iterator e1 = myList.end();
-   ValPtrList::const_iterator i2 = other->begin();
-   ValPtrList::const_iterator e2 = other->end();
-   
-   while(i1 != e1 && i2 != e2) {
-      if((*i1)->compareTo(*i2) != 0) {
-         return (*i1)->compareTo(*i2);
-      } else {
-         i1++;
-         i2++;
-      }
-   }
-   
-   bool l1Done = (i1 == e1);
-   bool l2Done = (i2 == e2);
-   
-   if(l1Done && !l2Done) {
-      // L1 is a prefix of L2
-      return -1;
-   } else if (l2Done && !l1Done) {
-      // L2 is a prefix of L1
-      return 1;
-   } else {
-      return 0;
-   }
+  
+  ValPtrList::const_iterator i1 = myList.begin();
+  ValPtrList::const_iterator e1 = myList.end();
+  ValPtrList::const_iterator i2 = other->begin();
+  ValPtrList::const_iterator e2 = other->end();
+  
+  while(i1 != e1 && i2 != e2) {
+    if((*i1)->compareTo(*i2) != 0) {
+      return (*i1)->compareTo(*i2);
+    } else {
+      i1++;
+      i2++;
+    }
+  }
+  
+  bool l1Done = (i1 == e1);
+  bool l2Done = (i2 == e2);
+  
+  if(l1Done && !l2Done) {
+    // L1 is a prefix of L2
+    return -1;
+  } else if (l2Done && !l1Done) {
+    // L2 is a prefix of L1
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 string List::toString() const 

@@ -354,8 +354,8 @@ void testMembership()
    TEST_LISTMEMBER(*test1, Int64, -12, true);
    TEST_LISTMEMBER(*test1, Str, "NotANumber", false);
 
-   TEST_LISTAT(*test3, Str, "garply", 1);
-   TEST_LISTAT(*test1, Int64, -12, 4);
+   TEST_LISTAT(*test3, Str, "garply", 0); // start counting at 0
+   TEST_LISTAT(*test1, Int64, -12, 3);
 
 
 }

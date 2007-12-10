@@ -24,18 +24,32 @@ const opr::Oper* Val_Int64::oper_ = new opr::OperImpl<Val_Int64>();
 //
 // Marshalling and unmarshallng
 //
-void Val_Int64::xdr_marshal_subtype( XDR *x )
+void
+Val_Int64::xdr_marshal_subtype( XDR *x )
 {
   xdr_int64_t(x, &i);
 }
-ValuePtr Val_Int64::xdr_unmarshal( XDR *x )
+
+
+ValuePtr
+Val_Int64::xdr_unmarshal( XDR *x )
 {
   int64_t i;
   xdr_int64_t(x, &i);
   return mk(i);
 }
 
-string Val_Int64::toConfString() const
+
+string
+Val_Int64::toString() const
+{
+  ostringstream s;
+  s << i;
+  return s.str();
+}
+
+string
+Val_Int64::toConfString() const
 {
   return toString();
 }

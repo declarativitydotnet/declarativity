@@ -432,7 +432,7 @@ public:
   
   FdbufPtr u2(new Fdbuf());
   u2->pushBack("This is UIO 2");
-  TEST_CAST_T(Opaque, u2, "This is UIO 2");
+  TEST_CAST_T(Opaque, u2, "0x546869732069732055494f2032");
 
 
 #undef TEST_CAST_T

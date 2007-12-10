@@ -232,7 +232,7 @@ main(int argc, char **argv)
   string overLogFile("-");
   string dotFile("-");
   double delay = 0.0;
-  bool outputDot = false;
+  //  bool outputDot = false;
   bool run = true;
   bool outputCanonicalForm = false;
   bool outputStages = false;
