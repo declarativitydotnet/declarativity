@@ -14,9 +14,9 @@
 #
 # Assumption - program is running at localhost:10000
 #
-#Expected output - (Order does not vary) 
-#	##Print[RecvEvent!insertEvent!q2_eca!localhost:10000]:  [insertEvent(localhost:10000, E (random value))]
-#	##Print[InsertEvent!table!table_insertWatchStub!localhost:10000]:  [table(localhost:10000, E (random value))]
+#Expected output - (Order does not vary. E is a random number) 
+#	##Print[RecvEvent RULE q2]:  [insertEvent(localhost:10000, E)]
+#	##Print[AddAction: RULE rule_table_add]:  [table(localhost:10000, E)]
 #
 #
 ####################################
@@ -34,10 +34,11 @@ import sys
 # Usage function
 def usage():
         print """
-                watchedTable.py -E <planner path> -B <olg path>
+                watchedTable.py -E <planner path> -B <olg path> -T <time in seconds>
 
                 -E              planner path
                 -B              olg path
+		-T              time (secs) for test to run
                 -h              prints usage message
         """
 
@@ -45,13 +46,14 @@ def usage():
 def script_output(stdout):
         output = ""
         for line in stdout.readlines():
-                output = output + line
+		p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
+                if(p.match(line)):
+                        output = output + line
 
+	print output
 	p = re.compile(r"""
-		(^[#][#] Print\[RecvEvent!insertEvent!q2_eca!localhost:10000\]: \s*
-		\[insertEvent\(localhost:10000, \s* [0-9]+ \)\] \s*
-	        [#][#] Print\[InsertEvent!table!table_insertWatchStub!localhost:10000\]: \s*
-                \[table\(localhost:10000, \s* [0-9]+ \)\])
+		(^[#][#] Print\[RecvEvent \s* RULE \s* q2\]: \s* \[insertEvent\(localhost:10000, \s* [0-9]+\)\] \s*
+		[#][#] Print\[AddAction: \s* RULE \s* rule_table_add\]: \s* \[table\(localhost:10000, \s* [0-9]+\)\])
 		""", re.VERBOSE)
 	
 	flag = p.match(output)
@@ -76,11 +78,13 @@ for key,val in opt:
                 olg_path = val
         elif key == '-E':
                 executable_path = val
+	elif key == '-T':
+                time_interval = val
         elif key == '-h':
                 usage()
                 sys.exit(0)
 try:
-        args=[executable_path , '-o', olg_path +'/watchedTable.olg', '2>&1']
+        args=[executable_path , '-o', os.path.join(olg_path, 'watchedTable.olg'), '2>&1']
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 except OSError, e:
         #print "Execution failed"
@@ -90,5 +94,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(3, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(int(time_interval), kill_pid, [p.stdout, p.pid])
         t.start()
