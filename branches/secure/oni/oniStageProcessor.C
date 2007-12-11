@@ -99,6 +99,6 @@ std::pair< TuplePtr, Stage::Status > OniStageProcessor::newOutput() {
     return std::make_pair(TuplePtr(),Stage::DONE);
   } else {
     _ready = false;
-    return std::make_pair(_out,Stage::DONE);
+    return std::make_pair(_out,Stage::MORE);
   }
 }
