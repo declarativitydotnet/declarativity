@@ -15,9 +15,9 @@
 # Assumption - program is running at localhost:10000
 #
 #Expected output - (the order of the tuples can vary)
-#	##Print[SendAction!foundOtherTable!q5_eca!localhost:10000]:  [foundOtherTable(localhost:10000, 725992962, 1903093295)]
-#	##Print[SendAction!foundTable!q3_eca!localhost:10000]:  [foundTable(localhost:10000, 725992962, 541917479)]
-#	##Print[SendAction!foundTable!q3_eca!localhost:10000]:  [foundTable(localhost:10000, 725992962, 1903093295)]
+#	##Print[SendAction: RULE q5]:  [foundOtherTable(localhost:10000, 719885386, 1714636915)]
+#	##Print[SendAction: RULE q3]:  [foundTable(localhost:10000, 719885386, 1957747793)]
+#	##Print[SendAction: RULE q3]:  [foundTable(localhost:10000, 719885386, 424238335)]
 #
 #
 ####################################
@@ -35,36 +35,43 @@ import sys
 # Usage function
 def usage():
         print """
-                tableExpiration.py -E <planner path> -B <olg path>
+                tableExpiration.py -E <planner path> -B <olg path> -T <time in seconds>
 
                 -E              planner path
                 -B              olg path
+		-T              time (secs) for test to run
                 -h              prints usage message
         """
 
 # Function to parse the output file and check whether the output matches the expected value
 def script_output(stdout):
-       	lines=[]
+       	lines=[]	
+	whole_output = ""
         for line in stdout.readlines():
-		lines.append(line.rstrip())
+		whole_output = whole_output + line
+                p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
+                if(p.match(line)):
+                        lines.append(line.rstrip().lstrip())
 	
 	lines.sort()
 	i =1
+	result = 1
+
 	for line in lines:
 		if i == 1:
 			p = re.compile(r"""
-				(^[#][#]Print\[SendAction!foundOtherTable!q5_eca!localhost:10000\]: \s* \[foundOtherTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
+				(^[#][#] Print\[SendAction: \s* RULE \s* q5]: \s* \[foundOtherTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
                         	""", re.VERBOSE)
 		elif i == 2:
 			p = re.compile(r"""
-				(^[#][#]Print\[SendAction!foundTable!q3_eca!localhost:10000\]: \s* \[foundTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
+				(^[#][#] Print \[SendAction: \s* RULE \s* q3\]: \s* \[foundTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
                                 """, re.VERBOSE)
 		elif i == 3:
 			p = re.compile(r"""
-				(^[#][#]Print\[SendAction!foundTable!q3_eca!localhost:10000\]: \s* \[foundTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
+				(^[#][#] Print \[SendAction: \s* RULE \s* q3\]: \s* \[foundTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
                                 """, re.VERBOSE)
 		else:
-			print "Test failed"
+			result = 0
 			break
 	
 		flag = p.match(line)
@@ -74,8 +81,10 @@ def script_output(stdout):
                 	result = 0
                 	break
 	
-	if i>4 or i<4:
+	if i>4 or i<4 or result == 0:
 		print "Test failed"
+		print "Port 10000 output:"
+                print whole_output
 	else:
 		print "Test passed"
 
@@ -95,11 +104,13 @@ for key,val in opt:
                 olg_path = val
         elif key == '-E':
                 executable_path = val
+	elif key == '-T':
+                time_interval = val
         elif key == '-h':
                 usage()
                 sys.exit(0)
 try:
-        args=[executable_path , '-o', olg_path +'/tableExpiration.olg', '2>&1']
+        args=[executable_path , '-o', os.path.join(olg_path, 'tableExpiration.olg'), '2>&1']
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 except OSError, e:
         #print "Execution failed"
@@ -109,5 +120,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(10, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(int(time_interval), kill_pid, [p.stdout, p.pid])
         t.start()
