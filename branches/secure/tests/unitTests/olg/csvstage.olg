@@ -20,7 +20,7 @@ stage("CSVtuple", filerule, out).
 
 materialize(files, infinity, infinity, keys(1,2)).
 
-files("localhost:10000", "unitTests/olg/test.csv").
+files("localhost:10000", CSVFILE).
 
 r1 filerule(@NI, Filename) :- 
 	periodic(@NI, E, 1, 1), 

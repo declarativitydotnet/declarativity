@@ -1,4 +1,0 @@
-materialize(foo, infinity, infinity, keys(1,2)).
-materialize(baz, infinity, infinity, keys(1,2)).
-
-bar(@A, B, C) :- event(@A, B, C), foo(@B, C, D), baz(@C, D, F).

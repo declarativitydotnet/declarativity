@@ -44,8 +44,10 @@ def usage():
 # Function to parse the output file and check whether the output matches the expected value
 def script_output(stdout):
 	output = ""
+	whole_output = ""
 	for line in stdout.readlines():
 		output = output + line
+		whole_output = whole_output + line
 
 	#print output
 	p = re.compile(r"""
@@ -61,7 +63,9 @@ def script_output(stdout):
 		print "Test passed" 
 	else:
 		print "Test failed"
-
+		print "Port 10000 output:"
+		print whole_output
+	
 #Function to kill the child after a set time
 def kill_pid(stdout, pid):
         #print "killing child"

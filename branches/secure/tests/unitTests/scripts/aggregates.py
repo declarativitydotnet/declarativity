@@ -63,9 +63,13 @@ def usage():
 
 # Function to parse the output file and check whether the output matches the expected value
 def script_output(stdout_20202, stdout_20203, stdout_20204):
+	fail = 0
 	output = ""
+	whole_output_20202 = ""
         for line in stdout_20202.readlines():
                 output = output + line
+		whole_output_20202 = whole_output_20202 + line
+
 	p = re.compile(r"""
 		([#][#]Print\[RecvEvent \s* RULE \s* d2\]: \s*  \[smallestNeighborOf\(localhost:20202, \s* localhost:20203\)\]
  		.*
@@ -80,12 +84,14 @@ def script_output(stdout_20202, stdout_20203, stdout_20204):
 	
 	if flag == 0:
 		print "Test failed"
-		return
+		fail = 1
 
-
+	whole_output_20203 = ""
 	output = ""
         for line in stdout_20203.readlines():
                 output = output + line
+		whole_output_20203 = whole_output_20203 + line
+
         p = re.compile(r"""
 		([#][#]Print\[RecvEvent \s* RULE \s* d2\]: \s* \[smallestNeighborOf\(localhost:20203, \s* localhost:20202\)\]
 		.*
@@ -100,13 +106,15 @@ def script_output(stdout_20202, stdout_20203, stdout_20204):
 
 	if flag == 0:
                 print "Test failed"
-                return
-
+		fail = 1
 
 	output = ""
+	whole_output_20204 = ""
         for line in stdout_20204.readlines():
                 output = output + line
-        p = re.compile(r"""
+		whole_output_20204 = whole_output_20204 + line
+        
+	p = re.compile(r"""
 		([#][#]Print\[RecvEvent \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20204, \s* localhost:20203\)\]
 		.*
 		[#][#]Print\[RecvEvent \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20204, \s* localhost:20202\)\]
@@ -118,9 +126,15 @@ def script_output(stdout_20202, stdout_20203, stdout_20204):
 
 	flag = p.search(output)
 	
-	if flag == 0:
+	if flag == 0 or fail == 1:
                 print "Test failed"
-                return
+                print "Port 20202 output:"
+		print whole_output_20202
+		print "Port 20203 output:"
+                print whole_output_20203
+		print "Port 20204 output:"
+                print whole_output_20204
+		return
         else:
                 print "Test passed"
 	

@@ -14,8 +14,8 @@
 #
 # Assumption - program is runing at localhost:10000
 #
-# Expected output -
-#	##Planner, -:-, 4, 0, PLANNER ERROR: Error parsing Pel expression Z for rule ECA Rule r2_eca ACTION_SEND<out(@I, M, Z, $1)> :- EVENT_RECV<r2_ecaperiodic(@I, E)>, try(@I, M), $1 := Z, Z := 1.. Planner exits.
+# Expected output - (there should be three such tuples)
+#	##Print[SendAction: RULE r2]:  [out(localhost:10000, 1, 1, 1)]
 #
 #
 ####################################
@@ -32,10 +32,11 @@ import sys
 # Usage function
 def usage():
         print """
-                repeatedVariables.py -E <planner path> -B <olg path>
+                repeatedVariables.py -E <planner path> -B <olg path> -T <time in seconds>
 
                 -E              planner path
                 -B              olg path
+		-T              time (secs) for test to run
                 -h              prints usage message
         """
 
@@ -43,23 +44,35 @@ def usage():
 # Function to parse the output file and check whether the output matches the expected value
 def script_output(stdout):
         output = ""
+	whole_output = ""
+	lines = []
         for line in stdout.readlines():
-                output = output + line
+                #print line
+                whole_output = whole_output + line
+                p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
+                if(p.match(line)):
+                        lines.append(line.rstrip().lstrip())
+        i = 1
+	result = 1
+	for line in lines:
+        	p = re.compile(r"""
+			(^[#][#] Print\[SendAction: \s* RULE \s* r2\]: \s*  
+			\[out\(localhost:10000, \s* 1, \s* 1, \s* 1\)\])
+                        """, re.VERBOSE)        
+		
+		flag = p.match(line)
+                if flag:
+                	i = i + 1
+                else:
+                        result = 0
+                        break
 
-	p = re.compile(r"""
-                (^[#][#]Planner, .*
-                PLANNER \s* ERROR: .*
-		[Z] \s* for \s* rule \s*
-                ECA \s* Rule \s* r2_eca \s* ACTION_SEND \<out\(@I, \s* M, \s* Z, \s* [\$] [1] \)\> \s* :- \s*
-		EVENT_RECV \<r2_ecaperiodic\(@I, \s* E\)\>, \s* try\(@I, \s* M\), \s* [\$] [1] \s* := \s* [Z], \s* [Z] \s* := \s* [1] .*)
-		""", re.VERBOSE)
-
-	flag = p.match(output)
-	if flag:
-		print "Test passed"
-		#print flag.group()
-	else:
+	if i>4 or i<4 or result == 0:
 		print "Test failed"
+                print "Port 10000 output:"
+                print whole_output
+	else:
+		print "Test passed"
 
 
 #Function to kill the child after a set time
@@ -76,6 +89,8 @@ for key,val in opt:
                 olg_path = val
         elif key == '-E':
                 executable_path = val
+	elif key == '-T':
+                time_interval = val
         elif key == '-h':
                 usage()
                 sys.exit(0)
@@ -90,5 +105,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(3, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(int(time_interval), kill_pid, [p.stdout, p.pid])
         t.start()

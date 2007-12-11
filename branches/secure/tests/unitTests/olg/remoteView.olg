@@ -39,5 +39,4 @@ i2 send1(@Y, E) :-
 i3 out(@X, E) :- send1(@X, E).
 
 
-watchmod(out, "c").
-
+watchmod(out, "s").

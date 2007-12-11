@@ -30,4 +30,5 @@ r1 inputString(@NI, Delimiters, String) :-
  	inputs(@NI, String),
 	Delimiters := " ".
 
+r2 foo(@A) :- outToken(@A).
 watchmod(outToken, "c").

@@ -63,6 +63,8 @@ def script_output(stdout):
 		#print flag.group()
 	else:
 		print "Test failed"
+		print "Port 10000 output:"
+		print output
 
 #Function to kill the child after a set time
 def kill_pid(stdout, pid):

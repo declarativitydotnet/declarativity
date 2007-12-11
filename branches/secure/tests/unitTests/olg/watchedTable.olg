@@ -28,7 +28,7 @@ q0 insertEvent(@NI, E) :-
 q2 table(@NI, E) :-
 	insertEvent(@NI, E).
 
-watchmod(table, "ai").
+watchmod(table, "ia").
 watchmod(insertEvent, "c").
 
 

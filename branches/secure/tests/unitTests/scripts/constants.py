@@ -50,7 +50,9 @@ def usage():
 # Function to parse the output file and check whether the output matches the expected value
 def script_output(stdout):
        	lines=[]
+	whole_output = ""
         for line in stdout.readlines():
+		whole_output = whole_output + line
 		p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL) 
 		if(p.match(line)):
 			lines.append(line.rstrip())
@@ -83,7 +85,6 @@ def script_output(stdout):
 				(^[#][#]Print\[HeadProjection: \s* RULE \s* r6\]: \s* \[newTableConstantOldTableJoin\(localhost:11111\)\])
 				""", re.VERBOSE)
 		else:
-			print "Test failed"
 			break
 	
 		flag = p.match(line)
@@ -95,6 +96,8 @@ def script_output(stdout):
 	
 	if i >7 or i <7:
 		print "Test failed"
+		print "Port 10000 output:"
+		print whole_output
 	else:
 		print "Test passed"
 		

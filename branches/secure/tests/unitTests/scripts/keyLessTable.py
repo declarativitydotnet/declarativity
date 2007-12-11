@@ -15,11 +15,11 @@
 # Assumption - program is running at localhost:10000
 #
 # Expected output - (the order of the results should be the same as below)
-#	##Print[SendAction!keyLessCount!r3eca!localhost:10000]:  [keyLessCount(localhost:10000, 1)]
-#	##Print[SendAction!keyLessCount!r3eca!localhost:10000]:  [keyLessCount(localhost:10000, 2)]
-#	##Print[SendAction!keyLessCount!r3eca!localhost:10000]:  [keyLessCount(localhost:10000, 3)]
-#	##Print[SendAction!keyLessCount!r3eca!localhost:10000]:  [keyLessCount(localhost:10000, 4)]
-#	##Print[SendAction!keyLessCount!r3eca!localhost:10000]:  [keyLessCount(localhost:10000, 5)]
+#	##Print[SendAction: RULE r3]:  [keyLessCount(localhost:10000, 1)]
+#	##Print[SendAction: RULE r3]:  [keyLessCount(localhost:10000, 2)]
+#	##Print[SendAction: RULE r3]:  [keyLessCount(localhost:10000, 3)]
+#	##Print[SendAction: RULE r3]:  [keyLessCount(localhost:10000, 4)]
+#	##Print[SendAction: RULE r3]:  [keyLessCount(localhost:10000, 5)]
 #
 #
 ####################################
@@ -49,22 +49,19 @@ def usage():
 # Function to parse the output file and check whether the output matches the expected value
 def script_output(stdout):
         output = ""
+	whole_output = ""
         for line in stdout.readlines():
+		whole_output += line
 		p = re.compile('^[#][#]Print.*$',re.DOTALL)
                 if(p.match(line)):
                         output = output + line
 	
 	p = re.compile(r"""
-		(^[#][#]Print\[SendAction!keyLessCount!r3eca!localhost:10000\]:\s*
-		\[keyLessCount\(localhost:10000, \s* 1\)\]
-		[\n][#][#]Print\[SendAction!keyLessCount!r3eca!localhost:10000\]:\s*  
-                \[keyLessCount\(localhost:10000, \s* 2\)\]
-		[\n][#][#]Print\[SendAction!keyLessCount!r3eca!localhost:10000\]:\s*  
-                \[keyLessCount\(localhost:10000, \s* 3\)\]
-		[\n][#][#]Print\[SendAction!keyLessCount!r3eca!localhost:10000\]:\s*  
-                \[keyLessCount\(localhost:10000, \s* 4\)\]
-		[\n][#][#]Print\[SendAction!keyLessCount!r3eca!localhost:10000\]:\s*  
-                \[keyLessCount\(localhost:10000, \s* 5\)\]$)
+		(^[#][#]Print\[SendAction: \s* RULE \s* r3\]: \s* \[keyLessCount\(localhost:10000,\s* 1\)\] \s*
+		[#][#]Print\[SendAction: \s* RULE \s* r3\]: \s* \[keyLessCount\(localhost:10000,\s* 2\)\] \s*
+		[#][#]Print\[SendAction: \s* RULE \s* r3\]: \s* \[keyLessCount\(localhost:10000,\s* 3\)\] \s*
+		[#][#]Print\[SendAction: \s* RULE \s* r3\]: \s* \[keyLessCount\(localhost:10000,\s* 4\)\] \s*
+		[#][#]Print\[SendAction: \s* RULE \s* r3\]: \s* \[keyLessCount\(localhost:10000,\s* 5\)\] \s*)
 		""", re.VERBOSE)
 
 	flag = p.match(output)
@@ -73,6 +70,8 @@ def script_output(stdout):
 		#print flag.group()
 	else:
 		print "Test failed"
+		print "Port 10000 output:"
+		print whole_output
 
 
 #Function to kill the child after a set time

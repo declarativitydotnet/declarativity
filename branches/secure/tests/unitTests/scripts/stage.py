@@ -15,22 +15,22 @@
 # Assumption - program is running at localhost:10000
 #
 # Expected output - (the order of the tuples should be same as listed below) ******** (DONT KNOW WHETHER abcd SHOULD BE FIRST or 1234)
-#	##Print[RecvEvent!outToken!outToken_watchStub!localhost:10000]:  [outToken(localhost:10000, 1)]
-#	##Print[RecvEvent!outToken!outToken_watchStub!localhost:10000]:  [outToken(localhost:10000, 2)]
-#	##Print[RecvEvent!outToken!outToken_watchStub!localhost:10000]:  [outToken(localhost:10000, 3)]
-#	##Print[RecvEvent!outToken!outToken_watchStub!localhost:10000]:  [outToken(localhost:10000, 4)]
-#	##Print[RecvEvent!outToken!outToken_watchStub!localhost:10000]:  [outToken(localhost:10000, a)]
-#	##Print[RecvEvent!outToken!outToken_watchStub!localhost:10000]:  [outToken(localhost:10000, b)]
-#	##Print[RecvEvent!outToken!outToken_watchStub!localhost:10000]:  [outToken(localhost:10000, c)]
-#	##Print[RecvEvent!outToken!outToken_watchStub!localhost:10000]:  [outToken(localhost:10000, d)]
-#	##Print[RecvEvent!outToken!outToken_watchStub!localhost:10000]:  [outToken(localhost:10000, 1)]
-#	##Print[RecvEvent!outToken!outToken_watchStub!localhost:10000]:  [outToken(localhost:10000, 2)]
-#	##Print[RecvEvent!outToken!outToken_watchStub!localhost:10000]:  [outToken(localhost:10000, 3)]
-#	##Print[RecvEvent!outToken!outToken_watchStub!localhost:10000]:  [outToken(localhost:10000, 4)]
-#	##Print[RecvEvent!outToken!outToken_watchStub!localhost:10000]:  [outToken(localhost:10000, a)]
-#	##Print[RecvEvent!outToken!outToken_watchStub!localhost:10000]:  [outToken(localhost:10000, b)]
-#	##Print[RecvEvent!outToken!outToken_watchStub!localhost:10000]:  [outToken(localhost:10000, c)]
-#	##Print[RecvEvent!outToken!outToken_watchStub!localhost:10000]:  [outToken(localhost:10000, d)]
+#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, a)]
+#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, b)]
+#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, c)]
+#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, d)]
+#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, 1)]
+#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, 2)]
+#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, 3)]
+#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, 4)]
+#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, a)]
+#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, b)]
+#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, c)]
+#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, d)]
+#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, 1)]
+#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, 2)]
+#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, 3)]
+#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, 4)]
 #
 #
 ####################################
@@ -47,32 +47,42 @@ import sys
 # Usage function
 def usage():
         print """
-                stage.py -E <planner path> -B <olg path>
+                stage.py -E <planner path> -B <olg path> -T <time in seconds>
 
                 -E              planner path
                 -B              olg path
+		-T              time (secs) for test to run
                 -h              prints usage message
         """
 
 
 # Function to parse the output file and check whether the output matches the expected value
 def script_output(stdout):
-        output = ""
+	lines=[]
+	whole_output = ""
+        for line in stdout.readlines():
+		whole_output += line
+                p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
+                if(p.match(line)):
+                        lines.append(line.rstrip())
+
         i = 1
 	j = 1
 	letters = ["a", "b", "c", "d"]
         result = 1
-        for line in stdout.readlines():
-                if j%2 == 1:
+        for line in lines:
+                if j%2 == 0:
 			p = re.compile(r"""
-                        	(^[#][#]Print\[RecvEvent!outToken!outToken_watchStub!localhost:10000\]: \s* \[outToken\(localhost:10000, \s* """ + 
+				(^[#][#] Print \[RecvEvent \s* RULE \s* r2\]: \s* 
+				\[outToken\(localhost:10000, \s* """ + 
 				str(i) + 
 				"""\)\])
                         	""", re.VERBOSE|re.MULTILINE)
 		else:
 			#print letters[i-1]
 			p = re.compile(r"""
-                                (^[#][#]Print\[RecvEvent!outToken!outToken_watchStub!localhost:10000\]: \s* \[outToken\(localhost:10000, \s* """ +  
+                               (^[#][#] Print \[RecvEvent \s* RULE \s* r2\]: \s*                                 
+				\[outToken\(localhost:10000, \s* """ + 
                                 letters[i-1] + 
                                 """\)\])
                                 """, re.VERBOSE|re.MULTILINE)
@@ -90,8 +100,12 @@ def script_output(stdout):
 
 	if result == 0 and j <= 4:
                 print "Test failed"
+		print "Port 10000 output:"
+		print whole_output
         elif j > 5 or j < 5:
                 print "Test failed"
+		print "Port 10000 output:"
+                print whole_output
         else:
                 print "Test passed"	
 
@@ -109,11 +123,13 @@ for key,val in opt:
                 olg_path = val
         elif key == '-E':
                 executable_path = val
+	elif key == '-T':
+                time_interval = val
         elif key == '-h':
                 usage()
                 sys.exit(0)
 try:
-        args=[executable_path , '-o', olg_path +'/stage.olg', '2>&1']
+        args=[executable_path , '-o', os.path.join(olg_path, 'stage.olg'), '2>&1']
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 except OSError, e:
         #print "Execution failed"
@@ -123,5 +139,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(3, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(int(time_interval), kill_pid, [p.stdout, p.pid])
         t.start()

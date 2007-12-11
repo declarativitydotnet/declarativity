@@ -45,7 +45,9 @@ def usage():
 def script_output(stdout):
         output = ""
 	i = 0
-        for line in stdout.readlines():
+        whole_output = ""
+	for line in stdout.readlines():
+		whole_output += line
 		p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
                 if(p.match(line)):
                 	output = output + line
@@ -60,6 +62,8 @@ def script_output(stdout):
 		print "Test passed" 
 	else:
 		print "Test failed"
+		print "Port 10000 output:"
+		print whole_output
 
 
 #Function to kill the child after a set time

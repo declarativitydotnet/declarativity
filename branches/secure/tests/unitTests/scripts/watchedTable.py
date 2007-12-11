@@ -45,12 +45,13 @@ def usage():
 # Function to parse the output file and check whether the output matches the expected value
 def script_output(stdout):
         output = ""
+	whole_output = ""
         for line in stdout.readlines():
+		whole_output += line
 		p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
                 if(p.match(line)):
                         output = output + line
 
-	print output
 	p = re.compile(r"""
 		(^[#][#] Print\[RecvEvent \s* RULE \s* q2\]: \s* \[insertEvent\(localhost:10000, \s* [0-9]+\)\] \s*
 		[#][#] Print\[AddAction: \s* RULE \s* rule_table_add\]: \s* \[table\(localhost:10000, \s* [0-9]+\)\])
@@ -61,6 +62,8 @@ def script_output(stdout):
 		print "Test passed" 
 	else:
 		print "Test failed"
+		print "Port 10000 output:"
+		print whole_output
 
 
 #Function to kill the child after a set time

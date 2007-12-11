@@ -44,9 +44,11 @@ def usage():
 # Function to parse the output file and check whether the output matches the expected value
 def script_output(stdout):
         output = ""
+	whole_output = ""
 	i = 1
 	result = 1
         for line in stdout.readlines():
+		whole_output += line
 		p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
                 if(p.match(line)):
 			p = re.compile(r"""
@@ -67,8 +69,13 @@ def script_output(stdout):
 
 	if result == 0 and i <= 100:
 		print "Test failed"
+		print "Port 10000 output:"
+		print whole_output
 	elif i > 101 or i < 101:
 		print "Test failed"
+		fail = 1
+		print "Port 10000 output:"
+                print whole_output
 	else:
 		print "Test passed"
 

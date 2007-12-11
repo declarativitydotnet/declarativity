@@ -21,10 +21,10 @@
 #	* tests/runOverLog -o unitTests/olg/remoteView.olg
 #
 #
-# Expected output - 
+# Expected output - where E is a random variable 
 #
 #	* At 10001:
-#	* ##Print[RecvEvent!out!out_watchStub!localhost:10001]:  [out(localhost:10001, 577655601)]
+#	##Print[SendAction: RULE i3]:  [out(localhost:10001, E)]
 #
 #	* At 10000: (No check for this right now)
 #	* No output
@@ -56,16 +56,17 @@ def usage():
 # Function to parse the output file and check whether the output matches the expected value
 def script_output(stdout_10001, stdout_10000):
         output = ""
+	whole_output = ""
         for line in stdout_10001.readlines():
 		#print line
+		whole_output = whole_output + line
                 p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
                 if(p.match(line)):
                         output = output + line
-	#print output
 	
 	p = re.compile(r"""
-		(^[#][#] Print \[RecvEvent!out!out_watchStub!localhost:10001 \]: \s*
-		\[out \(localhost:10001, \s* 577655601 \)\])
+		(^[#][#] Print\[SendAction: \s* RULE \s* i3\]: \s*
+		\[out\(localhost:10001, \s* [0-9]+\)\])
 		""", re.VERBOSE)
 	
 	flag = p.match(output)
@@ -74,6 +75,11 @@ def script_output(stdout_10001, stdout_10000):
                 #print flag.group()
         else:
 		print "Test failed"
+	        print "Port 10001 output"
+		print whole_output
+		print "\n Port 10000 output"
+		for line in stdout_10000.readlines():
+                	print line
 		return
 	
 #Function to kill the child after a set time

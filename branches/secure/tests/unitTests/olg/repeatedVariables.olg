@@ -16,7 +16,7 @@
 */
 
 materialize(try, infinity, infinity, keys(1,2)).
-watch(out).
+watchmod(out, "s").
 
 r1 try(@I, M) :- periodic(@I,E,0,1), M := 1.
 

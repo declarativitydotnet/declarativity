@@ -56,8 +56,10 @@ def usage():
 # Function to parse the output file and check whether the output matches the expected value
 def script_output(stdout_11111, stdout_22222):
 	output = ""
+	whole_output_11111 = ""
+	result = 0
         for line in stdout_11111.readlines():
-		#print line
+		whole_output_11111 += line
 		p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
                 if(p.match(line)):
                         output = output + line
@@ -73,11 +75,13 @@ def script_output(stdout_11111, stdout_22222):
 	flag = p.match(output)
         if flag == 0:
 		print "Test failed"
-		return
+		result = 1
 
 	output = ""
+	whole_output_22222 = ""
         for line in stdout_22222.readlines():
-                p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
+                whole_output_22222 += line
+		p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
                 if(p.match(line)):
                         output = output + line
 
@@ -95,7 +99,14 @@ def script_output(stdout_11111, stdout_22222):
                 #print flag.group()
         else:
                 print "Test failed"
-                return
+                result = 1
+
+	if flag == 1:
+		print "Port 11111 output:"
+		print whole_output_11111
+		print "Port 22222 output:"
+                print whole_output_22222
+
 
 #Function to kill the child after a set time
 def kill_pid(stdout_11111, stdout_22222, pid_11111, pid_22222):
