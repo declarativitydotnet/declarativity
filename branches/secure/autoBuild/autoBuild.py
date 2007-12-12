@@ -253,7 +253,7 @@ def loadConfigParameters(file, parameters, cmake_parameters):
 	#print cmake_parameters
 	#print parameters
 
-def autoBuild(file_path, file):
+def autoBuild(file_path, file, current_dir):
         parameters = {}
 	cmake_parameters = {}
         loadConfigParameters(file_path, parameters,cmake_parameters)
@@ -294,7 +294,7 @@ def autoBuild(file_path, file):
         	if os.path.exists(dir) != True:
                 	os.makedirs(dir)
                 else:
-                        removeall(os.getcwd() + "/" + dir)
+                        removeall(os.apth.join(os.getcwd(), dir))
 
 		# changing cwd to build directory
                 os.chdir(dir)
@@ -323,8 +323,8 @@ def autoBuild(file_path, file):
                 #changing working directory to local directory 
                 os.chdir("builds")
                 #print "Entered " + os.getcwd()
-
-                result = cmake(cmake_parameters, sourcedir, branch_name, fileHandle, parameters['cmake_path'], verbose_output)
+                
+		result = cmake(cmake_parameters, sourcedir, branch_name, fileHandle, parameters['cmake_path'], verbose_output)
 		if(result == 0):
 			email(from_address, to_address, 0, log, sendmail_path, revision, branch_name, sourcedir)
 			sys.exit(0)
@@ -340,8 +340,8 @@ def autoBuild(file_path, file):
                 script_path = os.path.join(sourcedir, branch_name, 'tests/unitTests/scripts')
 
                 result = run_scripts(runOverLog_path, olg_path, script_path, fileHandle, python_path, verbose_output)
-
-	        build_path = os.path.join(sourcedir, branch_name, 'builds')
+	        
+		build_path = os.path.join(sourcedir, branch_name, 'builds')
                 run_p2Test(build_path, fileHandle)
                 
 		fileHandle.close()
@@ -354,12 +354,13 @@ def autoBuild(file_path, file):
                 
 		if(parameters['keep_build'] == 'No'):
                       	os.chdir(current_dir)
-                        removeall(os.getcwd() + "/" + dir)
+                        removeall(os.path.join(os.getcwd(), dir))
                         os.rmdir(dir)
 		
 	else:
         	# creating handle to log file
-                rev= date.strftime("%Y.%m.%d.%H.%M.%S")
+                result = 1
+		rev= date.strftime("%Y.%m.%d.%H.%M.%S")
                 log= "LOG_" + file.rstrip(".conf") + "_" + rev
                 fileHandle = open (log, 'a' )
                 fileHandle.write("Build:" +  build_path)
@@ -380,6 +381,17 @@ def autoBuild(file_path, file):
                 print "tests have been run"
 
 
+# Remove dir code from http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/193736
+ERROR_STR= """Error removing %(path)s, %(error)s """
+
+def rmgeneric(path, __func__):
+
+    try:
+        __func__(path)
+        #print 'Removed ', path
+    except OSError, (errno, strerror):
+        print ERROR_STR % {'path' : path, 'error': strerror }
+            
 def removeall(path):
 
     if not os.path.isdir(path):
@@ -391,9 +403,11 @@ def removeall(path):
         fullpath=os.path.join(path, x)
         if os.path.isfile(fullpath):
             f=os.remove
+            rmgeneric(fullpath, f)
         elif os.path.isdir(fullpath):
             removeall(fullpath)
             f=os.rmdir
+            rmgeneric(fullpath, f)
 
 sourcedir = os.getcwd()
 
@@ -424,7 +438,7 @@ for key,val in opt:
                 	if f.endswith('.conf'):
 				os.chdir(current_dir)
 				path = os.path.join(val, f)	
-				autoBuild(path, f)
+				autoBuild(path, f, current_dir)
 	elif key == '-F':
 		 os.chdir(current_dir)	
 		 path = os.path.join(os.getcwd(), val)	
@@ -432,7 +446,7 @@ for key,val in opt:
 			f = val
                  else:
                         f = val[val.rfind('/')+1:len(val)]
-		 autoBuild(path, f)
+		 autoBuild(path, f, current_dir)
 	else:
 		usage()
                 sys.exit(0)	
