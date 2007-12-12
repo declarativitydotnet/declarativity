@@ -12,8 +12,8 @@
  * Execute with
  * tests/runOverLog -o unitTests/olg/stage.olg
  *
- * outToken tuples should be generated, one for each of a, b, c, 1, 2,
- * 3.  Each should be generated in order twice.
+ * outToken tuples should be generated, one for each of a, b, c, d, 1, 2,
+ * 3, 4.  Each should be generated in order twice.
 */
 
 stage("TOKENIZER", inputString, outToken).

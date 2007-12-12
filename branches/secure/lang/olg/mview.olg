@@ -33,8 +33,8 @@ namespace mview {
         rewrite(@A, Pid, Rid, DeltaPredID, NewRid, NewHeadID),
         ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
         ::sys::predicate(@A, HeadID, Rid, Notin, Name, Tid, _, Schema, _, AM, New),
-        ECA := Tid != null ? "INSERT" : "SEND",
-        ECA := Notin == true ? "DELETE" : ECA.
+        ECA := (Tid != null ? "INSERT" : "SEND"),
+        ECA := (Notin == true ? "DELETE" : ECA).
 
 
   /* Kick off an iterator for the remaining rule terms. */
@@ -46,7 +46,7 @@ namespace mview {
         ::sys::rule(@A, Rid, Pid, _, _, _, _, Term_Count, _),
         ::sys::predicate(@A, DeltaPredID, Rid, _, _, _, _, _, Pos, _, _),
         OldPos < Term_Count - 1,
-        NewPos := OldPos == Pos ? NewPos : NewPos + 1.
+        NewPos := (OldPos == Pos ? NewPos : NewPos + 1).
 
   /* Add the probe table to the rewritten rule. */
   mv7 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, "PROBE", Schema, NewPos, AM, New) :-

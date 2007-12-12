@@ -290,7 +290,7 @@ namespace compile {
       Range(Operator o, 
             Expression *l, 
             Expression *r)
-        : _lhs(l), _rhs(r) { 
+        : _lhs(l), _rhs(r), _type(o) { 
         switch(o) {
           case RANGEOO: _operName = "()"; break;
           case RANGEOC: _operName = "(]"; break; 
@@ -326,11 +326,13 @@ namespace compile {
       string      _operName;
       Expression* _lhs;
       Expression* _rhs;
+      Operator _type;
     };
     
     class Math : public Expression {
     public:
-      enum Operator {LSHIFT, RSHIFT, PLUS, MINUS, TIMES, DIVIDE, MODULUS, BITOR, BITAND, APPEND, NOP};
+      enum Operator {LSHIFT, RSHIFT, PLUS, MINUS, TIMES, DIVIDE,
+                     MODULUS, BITOR, BITAND, BITXOR, BITNOT, APPEND, NOP};
     
       Math(Operator o, 
            Expression *l, 
@@ -338,17 +340,19 @@ namespace compile {
         : _lhs(l), _rhs(r) {
         // TODO: if (oper != NOP && rhs == NULL) ERROR!
         switch(o) {
-          case LSHIFT:  _operName = "<<"; break;
-          case RSHIFT:  _operName = ">>"; break;
-          case PLUS:    _operName = "+";  break;
-          case MINUS:   _operName = "-";  break;
-          case TIMES:   _operName = "*";  break;
-          case DIVIDE:  _operName = "/";  break;
-          case MODULUS: _operName = "%";  break;
-          case BITOR: _operName = "|";  break;
-          case BITAND: _operName = "&";  break;
-          case APPEND: _operName = "|||";  break;
-          default: assert(0);
+        case LSHIFT:  _operName = "<<"; break;
+        case RSHIFT:  _operName = ">>"; break;
+        case PLUS:    _operName = "+";  break;
+        case MINUS:   _operName = "-";  break;
+        case TIMES:   _operName = "*";  break;
+        case DIVIDE:  _operName = "/";  break;
+        case MODULUS: _operName = "%";  break;
+        case BITAND: _operName = "&";  break;
+        case BITOR: _operName = "|";  break;
+        case BITXOR: _operName = "^"; break;
+        case BITNOT: _operName = "~"; break;
+        case APPEND: _operName = "|||";  break;
+        default: assert(0);
         }
       }
     

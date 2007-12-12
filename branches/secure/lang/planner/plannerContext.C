@@ -81,45 +81,47 @@ namespace compile {
     bool 
     Context::watched(string name, string mod)
     {
-    	CommonTable::ManagerPtr catalog = Plumber::catalog();
-    	CommonTablePtr watchTbl = catalog->table(WATCH);
-    	TuplePtr lookup = Tuple::mk(WATCH);
-    	lookup->append(Val_Str::mk(name));
-    	lookup->append(Val_Null::mk());
-    	lookup->freeze();
-    	CommonTable::Key indexKey;
-    	indexKey.push_back(catalog->attribute(WATCH, "NAME"));
+      //      cout << "Asked if table " << name << " contains modifier " << mod
+      //    << "\n";
+      CommonTable::ManagerPtr catalog = Plumber::catalog();
+      CommonTablePtr watchTbl = catalog->table(WATCH);
+      TuplePtr lookup = Tuple::mk(WATCH);
+      lookup->append(Val_Str::mk(name));
+      lookup->append(Val_Null::mk());
+      lookup->freeze();
+      CommonTable::Key indexKey;
+      indexKey.push_back(catalog->attribute(WATCH, "NAME"));
 
-    	CommonTable::Iterator i = 
-    		watchTbl->lookup(CommonTable::theKey(CommonTable::KEY2),
-    				CommonTable::theKey(CommonTable::KEY4),
-    				lookup); 
-    	if (!i->done()) {
-    		TuplePtr theWatchSpec = i->next();
-    		if (mod == "") {
-    			return true;
-    		} else if ((*theWatchSpec)[catalog->attribute(WATCH, "MOD")] == Val_Null::mk()) {
-    			return true;
-    		} else {
-    			//cout << "The watch record is " << theWatchSpec->toString() << "\n";
-    			string theWatchModifier =
-    				(*theWatchSpec)[catalog->attribute(WATCH,
-    						"MOD")]->toString();
-    			//cout << "The watch modifieer is " << theWatchModifier << "\n";
-    			if (theWatchModifier.find(mod) == theWatchModifier.npos) {
-    				// Didn't find it
-    				return false;
-    			} else {
-    				// Found it
-    				//cout << "It does explicitly\n";
-    				return true; 
-    			}
-    		}
-    	}
-    	else {
-    		//cout << "Nothing watched about " << name << "\n";
-    	}
-    	return false;
+      CommonTable::Iterator i = 
+        watchTbl->lookup(CommonTable::theKey(CommonTable::KEY2),
+                         CommonTable::theKey(CommonTable::KEY4),
+                         lookup); 
+      if (!i->done()) {
+        // Found something.
+        if (mod == "") {
+          //  cout << "It does by default\n";
+          return true;
+        } else {
+          // Does it contain this explicit modifier?
+          TuplePtr theWatchSpec = i->next();
+          //cout << "The watch record is " << theWatchSpec->toString() << "\n";
+          string theWatchModifier =
+            (*theWatchSpec)[catalog->attribute(WATCH,
+                                               "MOD")]->toString();
+          //cout << "The watch modifieer is " << theWatchModifier << "\n";
+          if (theWatchModifier.find(mod) == theWatchModifier.npos) {
+            // Didn't find it
+            return false;
+          } else {
+            // Found it
+            //cout << "It does explicitly\n";
+            return true; 
+          }
+        }
+      } else {
+        //cout << "Nothing watched about " << name << "\n";
+      }
+      return false;
     }
 
     TuplePtr 
@@ -179,7 +181,8 @@ namespace compile {
       indexKey.clear();
       indexKey.push_back(catalog->attribute(FACT, "PID"));
       iter = catalog->table(FACT)->
-               lookup(CommonTable::theKey(CommonTable::KEY2), indexKey, program); 
+        lookup(CommonTable::theKey(CommonTable::KEY2), indexKey, program); 
+
       while (!iter->done()) {
         TuplePtr fact = iter->next(); // The row in the fact table
         string tablename = (*fact)[catalog->attribute(FACT, "TABLENAME")]->toString();
@@ -497,7 +500,7 @@ namespace compile {
         oss << indent << "\tinput -> " << "Queue(\"" << eventName << "\", 1000) -> \n"; 
         if (watched(eventName, "c")) {
           oss << indent << "\tPrint(\"RecvEvent RULE " 
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         }
         oss << indent << "\toutput;\n};\n";
         return (Context::PortDesc) {1, "h", "-", 1, "l", "-"};
@@ -510,7 +513,7 @@ namespace compile {
         oss << indent << "\tRefresh(\"refresh_" << eventName << "\", \"" << eventName << "\") -> \n";
         if (watched(eventName, "r")) {
           oss << indent << "\tPrint(\"RefreshEvent RULE "
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         }
         oss << indent << "\toutput;\n";
         oss << indent << "};\n";
@@ -521,7 +524,7 @@ namespace compile {
         oss << indent << "\tRemoved(\"delete_" << eventName << "\", \"" << eventName << "\") -> \n";
         if (watched(eventName, "d")) {
           oss << indent << "\tPrint(\"DeleteEdvent RULE "
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         }
         oss << indent << "\toutput;\n";
         oss << indent << "};\n";
@@ -714,7 +717,7 @@ namespace compile {
         oss << indent << "\tinput -> PullPush(\"actionPull\", 0) ->\n";
         if (watched(funcName, "a")) {
           oss << indent << "\tPrint(\"AddAction: RULE "
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         }
         oss << indent << "\tInsert2(\"actionInsert\", \"" << funcName << "\");\n";
         oss << indent << "};\n";
@@ -725,7 +728,7 @@ namespace compile {
         oss << indent << "\tinput -> PullPush(\"actionPull\", 0) ->\n";
         if (watched(funcName, "z")) {
           oss << indent << "\tPrint(\"DeleteAction: RULE "
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         }
         oss << indent << "\tDelete2(\"actionDelete\", \"" << funcName << "\");\n";
         oss << indent << "};\n";
@@ -749,7 +752,7 @@ namespace compile {
         oss << indent << "\tinput -> ";
         if (watched(funcName, "s")) {
           oss << indent << "\tPrint(\"SendAction: RULE "
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         }
         oss << indent << "PelTransform(\"actionPel\", \"" << package.str() << "\") -> output;\n};\n";
         return (Context::PortDesc) {1, "l", "-", 1, "l", "-"};
@@ -807,7 +810,7 @@ namespace compile {
             << "\\\" pop swallow unbox popall\") -> "; 
         if (watched(eventName, "i")) {
           oss << indent << "\tPrint(\"InsertEvent: RULE "
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         }
         oss << indent << "\toutput;\n};\n";
         return (Context::PortDesc) {0, "", "", 1, "l", "-"};
@@ -836,7 +839,7 @@ namespace compile {
                       << eventName << "\") -> \n";
         if (watched(eventName, "i")) {
           oss << indent << "\tPrint(\"InsertEvent: RULE "
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         }
         oss << indent << "\toutput;\n};\n";
         return (Context::PortDesc) {0, "", "", 1, "l", "-"};

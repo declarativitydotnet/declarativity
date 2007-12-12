@@ -30,5 +30,3 @@ q2 table(@NI, E) :-
 
 watchmod(table, "a").
 watchmod(insertEvent, "c").
-
-

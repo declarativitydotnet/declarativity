@@ -132,7 +132,23 @@ namespace compile {
     
     string 
     Range::toString() const {
-      return _lhs->toString() + " " + _operName + " " + _rhs->toString();
+      switch (_type) {
+      case RANGEOO: 
+        return "(" + _lhs->toString() + ", " + _rhs->toString() + ")"; break;
+      case RANGEOC: 
+        return "(" + _lhs->toString() + ", " + _rhs->toString() + "]"; break;
+      case RANGECO: 
+        return "[" + _lhs->toString() + ", " + _rhs->toString() + ")"; break;
+      case RANGECC: 
+        return "[" + _lhs->toString() + ", " + _rhs->toString() + "]"; break;
+      default:
+        ostringstream f;
+        f << "parseContext.C: Unrecognized range type '"
+          << _type
+          << "'";
+        throw compile::parse::Exception(__LINE__, f.str());
+        return "";
+      }
     }
     
     ValuePtr

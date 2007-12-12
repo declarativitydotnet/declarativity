@@ -9,7 +9,7 @@
  * DESCRIPTION: Lexer for OverLog, the P2 Datalog variant
  *
  * Originally hacked up from a C-like Lexer by David Gay and Gustav
- * HÃ¥llberg (thanks David!):
+ * Hållberg (thanks David!):
  *
  */
 
@@ -231,18 +231,18 @@ WHITESPACE	[ \t\r\n]+
   return OLG_NAME; 
 }
 
-<INITIAL>(-?{DIGIT}+|0[xX]{HEXDIGIT}+) {
-  // Some integer literal (including octal and/or hex)
-  lvalp->v = new compile::parse::Value(Val_Int64::mk(strtoll(yytext,NULL,0)));
-  return OLG_VALUE;
-}
-
-<INITIAL>(-?{DIGIT}+|0[xX]{HEXDIGIT}+)U {
-  // Some integer literal (including octal and/or hex)
+<INITIAL>({DIGIT}+|0[xX]{HEXDIGIT}+)U {
+  // Some unsigned integer literal (including octal and/or hex)
   LOG_WARN("Unsigned integers of the form '"
            << yytext
            << "' have been deprecated. For backward compatibility "
            << "they are interpreted as signed 64-bit integers.");
+  lvalp->v = new compile::parse::Value(Val_Int64::mk(strtoll(yytext,NULL,0)));
+  return OLG_VALUE;
+}
+
+<INITIAL>(-?{DIGIT}+|0[xX]{HEXDIGIT}+) {
+  // Some integer literal (including octal and/or hex)
   lvalp->v = new compile::parse::Value(Val_Int64::mk(strtoll(yytext,NULL,0)));
   return OLG_VALUE;
 }
