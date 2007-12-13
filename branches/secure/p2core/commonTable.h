@@ -39,7 +39,30 @@
 #include "errno.h"
 
 class CommonTable {
+
+public:
+
+  ////////////////////////////////////////////////////////////
+  // Special constants
+  ////////////////////////////////////////////////////////////
+
+  /** The non-expiring expiration time */
+  static boost::posix_time::time_duration NO_EXPIRATION;
+
+
+  /** The default table expiration time */
+  static boost::posix_time::time_duration DEFAULT_EXPIRATION;
+
+
+  /** The non-size-limited size */
+  static uint32_t NO_SIZE;
+
+
+  /** The default table size */
+  static uint32_t DEFAULT_SIZE;
+
 protected:
+
   ////////////////////////////////////////////////////////////
   // Tuple wrapper
   ////////////////////////////////////////////////////////////
@@ -186,6 +209,7 @@ public:
 
 
 protected:
+
   ////////////////////////////////////////////////////////////
   // Indices
   ////////////////////////////////////////////////////////////
@@ -839,44 +863,29 @@ public:
   virtual unsigned uniqueIdentifier() = 0;
 
   /**
-   * Creates and registers a new Table with the system.
-   * Return: Creates a RefTable instance if table does not exist
-   *         0 if table already exists
+   * Registers a new Table with the system.
+   * Return: Tuple corresponding to table instance.
+   *
+   * Throws: TableManager::Exception if table already exists
    */
-  virtual TuplePtr 
-  createTable(string name, CommonTable::Key& key, 
-              ListPtr sort, ValuePtr pid) = 0;
-
+  virtual TuplePtr
+    registerTable(CommonTablePtr table, string name,
+		boost::posix_time::time_duration lifetime,
+		uint size,
+		CommonTable::Key& primaryKey,
+		ListPtr sort,
+		ValuePtr pid) = 0;
   /**
-   * Creates and registers a new Table with the system.
-   * Return: Table2 instance with specified maxSize and lifetime
-   *         0 if table already exists
+   * Register an existing index on specified table name.  Typically
+   * used to register primary index after registerTable is called.
+   *
+   * Throws: TableManager::Exception if table does not exist, or if
+   * index already exists.
    */
-  virtual TuplePtr 
-  createTable(string name, CommonTable::Key& key, uint32_t maxSize,
-              boost::posix_time::time_duration& lifetime, 
-              ListPtr sort, ValuePtr pid) = 0;
-
-  /**
-   * Creates and registers a new Table with the system.
-   * Return: Table2 instance with specified maxSize and lifetime
-   *         0 if table already exists
-   */
-  virtual TuplePtr 
-  createTable(string name, CommonTable::Key& key, uint32_t maxSize, 
-              string lifetime, ListPtr sort, ValuePtr pid) = 0;
-  
-  /**
-   * Creates and registers a new Table with the system.
-   * Return: Table2 instance with specified maxSize and infinite lifetime
-   *         0 if table already exists
-   */
-  virtual TuplePtr 
-  createTable(string name, CommonTable::Key& key, 
-              uint32_t maxSize, ListPtr sort, ValuePtr pid) = 0;
-
+  virtual void registerIndex(string tableName, string type, CommonTable::Key& key) = 0;
   /**
    * Create and registers a secondary index on specified table name
+   * Throws: TableManager::Exception if table does not exist.
    */
   virtual TuplePtr
   createIndex(string tableName, string type, CommonTable::Key& key) = 0;

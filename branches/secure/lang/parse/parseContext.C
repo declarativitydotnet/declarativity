@@ -1168,7 +1168,7 @@ namespace compile {
 
       int myTtl = Val_Int64::cast(ttl->value());
       if (myTtl == -1) {
-        _lifetime = Table2::NO_EXPIRATION;
+        _lifetime = CommonTable::NO_EXPIRATION;
       } else if (myTtl == 0) {
         // error("bad timeout for materialized table");
       } else {
@@ -1179,7 +1179,7 @@ namespace compile {
       _size = Val_Int64::cast(size->value());
       // Hack because infinity token has a -1 value
       if (_size == -1) {
-        _size = Table2::NO_SIZE;
+        _size = CommonTable::NO_SIZE;
       }
     
       if (keys) {
@@ -1253,8 +1253,7 @@ namespace compile {
       if(compoundRewrite && _versioned){
 	compile::Context::materializedTables->insert(Val_Str::mk(scopedName));
       }      
-
-      return catalog->createTable(scopedName, _keys, _size, _lifetime, ListPtr(), parentKey);
+      return Table2::mk(*catalog,scopedName,_lifetime, _size, _keys, ListPtr(), parentKey);
     }
 
     Ref::Ref(int refType, 

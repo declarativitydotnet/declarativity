@@ -327,7 +327,7 @@ OL_Context::table(Parse_Expr *name,
   
   int myTtl = Val_Int64::cast(ttl->v);
   if (myTtl == -1) {
-    tableInfo->timeout = Table2::NO_EXPIRATION;
+    tableInfo->timeout = CommonTable::NO_EXPIRATION;
   } else if (myTtl == 0) {
     error("bad timeout for materialized table");
   } else {
@@ -338,7 +338,7 @@ OL_Context::table(Parse_Expr *name,
   int mySize = Val_Int64::cast(size->v);
   // Hack because infinity token has a -1 value
   if (mySize == -1) {
-    tableInfo->size = Table2::NO_SIZE;
+    tableInfo->size = CommonTable::NO_SIZE;
   } else {
     tableInfo->size = mySize;
   }

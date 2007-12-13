@@ -27,6 +27,31 @@
 #include "val_int64.h"
 
 ////////////////////////////////////////////////////////////
+// Constants
+////////////////////////////////////////////////////////////
+
+
+/** No expiration is represented as positive infinity. */
+boost::posix_time::time_duration
+CommonTable::NO_EXPIRATION(boost::date_time::pos_infin);
+
+
+/** Default table expiration time is no expiration */
+boost::posix_time::time_duration
+CommonTable::DEFAULT_EXPIRATION(CommonTable::NO_EXPIRATION);
+
+
+/** No size is represented as 0 size. */
+uint32_t
+CommonTable::NO_SIZE = 0;
+
+
+/** Default table max size is no max size */
+uint32_t
+CommonTable::DEFAULT_SIZE(CommonTable::NO_SIZE);
+
+
+////////////////////////////////////////////////////////////
 // Sorters
 ////////////////////////////////////////////////////////////
 

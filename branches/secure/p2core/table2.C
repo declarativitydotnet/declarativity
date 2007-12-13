@@ -540,28 +540,3 @@ Table2::toString()
   }
   return oss.str();
 }
-
-
-////////////////////////////////////////////////////////////
-// Constants
-////////////////////////////////////////////////////////////
-
-
-/** No expiration is represented as positive infinity. */
-boost::posix_time::time_duration
-Table2::NO_EXPIRATION(boost::date_time::pos_infin);
-
-
-/** Default table expiration time is no expiration */
-boost::posix_time::time_duration
-Table2::DEFAULT_EXPIRATION(Table2::NO_EXPIRATION);
-
-
-/** No size is represented as 0 size. */
-uint32_t
-Table2::NO_SIZE = 0;
-
-
-/** Default table max size is no max size */
-uint32_t
-Table2::DEFAULT_SIZE(Table2::NO_SIZE);

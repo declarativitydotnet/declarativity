@@ -621,13 +621,13 @@ ECA_Context::rewriteViewRule(OL_Context::Rule* rule,
       continue;
     }
     OL_Context::TableInfo* tableInfo = tableStore->getTableInfo(nextFunctor->fn->name);   
-    if (tableInfo == NULL || tableInfo->timeout != Table2::NO_EXPIRATION) {
+    if (tableInfo == NULL || tableInfo->timeout != CommonTable::NO_EXPIRATION) {
       softStateRule = true; // if any rule body is soft-state, rule is soft-state
       break;
     }
   }
   if (headTableInfo == NULL ||
-      headTableInfo->timeout != Table2::NO_EXPIRATION) {
+      headTableInfo->timeout != CommonTable::NO_EXPIRATION) {
     softStateRule = true;     // if head is unmaterialized or softstate,
                               // then the rule is soft-state
   }
@@ -690,7 +690,7 @@ ECA_Context::rewriteViewRule(OL_Context::Rule* rule,
 
     bool softStatePredicate = false;
     OL_Context::TableInfo* tableInfo = tableStore->getTableInfo(nextFunctor->fn->name);   
-    if (tableInfo == NULL || tableInfo->timeout != Table2::NO_EXPIRATION) {
+    if (tableInfo == NULL || tableInfo->timeout != CommonTable::NO_EXPIRATION) {
       softStatePredicate = true;
     }
 

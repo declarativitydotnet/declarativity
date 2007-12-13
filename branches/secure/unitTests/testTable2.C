@@ -1699,7 +1699,7 @@ testTable2::testPseudoRandomInsertDeleteSequences()
     // Create a table with fixed lifetime but no size
     boost::posix_time::
       time_duration expiration(boost::posix_time::milliseconds(200));
-    Table2 t("succ", Table2::theKey(CommonTable::KEY2), Table2::NO_SIZE, expiration);
+    Table2 t("succ", Table2::theKey(CommonTable::KEY2), CommonTable::NO_SIZE, expiration);
     for (uint i = 0;
          i < SIZE + EXTRA_TUPLES;
          i++) {
@@ -1742,7 +1742,7 @@ testTable2::testPseudoRandomInsertDeleteSequences()
   }
   {
     // Create a table with fixed size but not lifetime
-    Table2 t("succ", Table2::theKey(CommonTable::KEY2), 100, Table2::NO_EXPIRATION);
+    Table2 t("succ", Table2::theKey(CommonTable::KEY2), 100, CommonTable::NO_EXPIRATION);
     for (uint i = 0;
          i < SIZE + EXTRA_TUPLES;
          i++) {

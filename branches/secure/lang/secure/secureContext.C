@@ -1354,7 +1354,7 @@ namespace compile {
 	encHintKey.push_back(6); 
 
 	try{
-	  catalog->createTable(ENCHINT, encHintKey, Table2::NO_SIZE, Table2::NO_EXPIRATION, ListPtr(), Val_Null::mk());
+	  Table2::mk(*catalog,ENCHINT,CommonTable::NO_EXPIRATION, CommonTable::NO_SIZE, encHintKey, ListPtr(), Val_Null::mk());
 	  TELL_ERROR<<" Successfully created table encHint"
 	            << "\n";
 	}
@@ -1370,7 +1370,7 @@ namespace compile {
 	Table2::Key vertableKey;
 	vertableKey.push_back(2); 
 	try{
-	catalog->createTable(VERTABLE, vertableKey, Table2::NO_SIZE, Table2::NO_EXPIRATION, ListPtr(), Val_Null::mk());
+	  Table2::mk(*catalog,VERTABLE,CommonTable::NO_EXPIRATION, CommonTable::NO_SIZE, vertableKey, ListPtr(), Val_Null::mk());
 	TELL_ERROR<<" Successfully created table verTable"
 	            << "\n";
 	}
@@ -1386,7 +1386,7 @@ namespace compile {
 	gentableKey.push_back(2); 
 
 	try{
-	catalog->createTable(GENTABLE, gentableKey, Table2::NO_SIZE, Table2::NO_EXPIRATION, ListPtr(), Val_Null::mk());
+	  Table2::mk(*catalog,GENTABLE,CommonTable::NO_EXPIRATION, CommonTable::NO_SIZE, gentableKey, ListPtr(), Val_Null::mk());
 	TELL_ERROR<<" Successfully created table genTable"
 	            << "\n";
 	}
