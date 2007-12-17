@@ -39,9 +39,9 @@ range3 findTaskRange(@X, TaskID, Min, Max) :-
 
 /* this code is finding start&end time of each task in the node. */
 
-/*
+
 watchmod(findRunStartEndPair, "s").
-*/
+
 /*
 materialize(findRunStartEndPair, infinity, infinity, keys(1, 2, 3)).
 */
@@ -55,12 +55,13 @@ find2 findRunStartEndPair(@X, TaskID, Agent, StartOpID, StartTS, EndOpID, EndTS)
 	xtraceEdge(@X, TaskID, EndOpID, _, StartOpID, _), 
 	xtraceTask(@X, TaskID, StartOpID, _, _, _, StartLabel, StartTS, _), 
 	StartLabel=="run start". 
-
+/*
 watchmod(gangMaxCPU, "s").
 watchmod(gangMinCPU, "s").
 watchmod(gangCountCPU, "s").
 watchmod(gangSumCPU, "s").
 watchmod(gangAvgCPUUser, "s").
+*/
 
 /*
 gang1 gangMaxCPU(@X, TaskID, Agent, a_MAX<Cpu_user>) :-
@@ -90,12 +91,12 @@ gang1 gangAvgCPUUser(@X, TaskID, Agent, a_AVG<Cpu_user>) :-
 	ganglia(@X, TS, _,_,_,Cpu_user,_), 
 	TS in [StartTS, EndTS].
 */
-
+/*
 gang1 gangAvgCPUUser(@X, TaskID, Agent, a_AVG<Cpu_user>) :-
 	findRunStartEndPair(@X, TaskID, Agent, _, StartTS, _, EndTS),
 	ganglia(@X, TS, _,_,_,Cpu_user,_), 
 	TS in [StartTS, EndTS].
-
+*/
 /*
 xtraceTask(@X, TaskID, OpID, ChainID, Host, Agent, Label, TS, NextHost) 
 xtraceEdge(@X, TaskID, OpID, ChainID, ParentOpID, EdgeType) 

@@ -17,7 +17,7 @@ Disk_total,Cpu_speed,Part_max_used,Swap_total,Os_name,Cpu_user,Cpu_system,Cpu_ai
 */
 
 i2 ganglia(@X, Time, 
-Bytes_in,Bytes_out,Cpu_system,Cpu_user,Mem_free) 
+Bytes_in,Bytes_out,Cpu_system,Cpu_user,Mem_free, Swap_total, Swap_free, Cpu_wio) 
 :-csvOutput(@X, Time, 
 Disk_total,Cpu_speed,Part_max_used,Swap_total,Os_name,Cpu_user,Cpu_system,Cpu_aidle,Load_five,Proc_run,Mem_free,Mem_buffers,Swap_free,Bytes_in,Pkts_out,Cpu_num,Disk_free,Mem_total,Cpu_wio,Boottime,Machine_type,Os_release,Cpu_nice,Cpu_idle,Load_one,Load_fifteen,Proc_total,Mem_shared,Mem_cached,Gexec,Bytes_out,Pkts_in)
 .
