@@ -1,0 +1,69 @@
+#define REMOTEADDR "localhost:10000"
+
+
+watch(taskFound). 
+
+q1 req(@Remote, Me, TaskID) :-
+	periodic(@Me, E, 0, 1),
+	Remote := REMOTEADDR, 
+	TaskID := "BADC0DE06C1C9306".
+/*
+q2 reqCount(@Remote, Me) :-
+	periodic(@Me, E, 3, 1),
+	Remote := REMOTEADDR.
+
+q3 reqMin(@Remote, Me) :-
+	periodic(@Me, E, 3, 1),
+	Remote := REMOTEADDR.
+
+q4 reqMax(@Remote, Me) :-
+	periodic(@Me, E, 3, 1),
+	Remote := REMOTEADDR.
+
+q5 reqAvg(@Remote, Me) :-
+	periodic(@Me, E, 3, 1),
+	Remote := REMOTEADDR.
+*/
+
+
+watchmod(sumup2, "s").
+watchmod(ssumup2, "s").
+materialize(sumup1, infinity, infinity, keys(1, 2)).
+materialize(ssumup1, infinity, infinity, keys(1, 2)).
+/*
+
+
+s1 sumup1(@X, Agent, AvgValue2) :-
+	gangAvgCPUUser(@X, TaskID, Agent, AvgValue), 
+	AvgValue2 := 1.0* AvgValue, 
+	AvgValue2>=0.0, 
+	AvgValue2<=100.0.
+
+
+s2 sumup2(@X, a_AVG<AvgValue>) :-
+	periodic(@X, E, 2, 0), 
+	sumup1(@X, Agent, AvgValue). 
+
+
+s1 ssumup1(@X, Agent, AvgValue2) :-
+	gangAvgCPUwio(@X, TaskID, Agent, AvgValue), 
+	AvgValue2 := 1.0* AvgValue, 
+	AvgValue2>=0.0, 
+	AvgValue2<=100.0.
+
+
+s2 ssumup2(@X, a_AVG<AvgValue>) :-
+	periodic(@X, E, 2, 0), 
+	ssumup1(@X, Agent, AvgValue). 
+*/
+watch(req).
+watch(findRunEnd).
+watch(findRunStartEndPair).
+watch(gangAvgCPUUser).
+watch(gangAvgCPUwio).
+watch(timeMax).
+watch(timeMin).
+watch(timeAvg).
+watch(numJobs).
+
+
