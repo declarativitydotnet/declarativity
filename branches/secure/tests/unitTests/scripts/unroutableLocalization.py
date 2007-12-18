@@ -15,8 +15,9 @@
 # Assumption - program is runing at localhost:10000
 #
 # Expected output -
-#	##Planner, -:-, 4, 0, Unable to localize rule 's1 separator(@I, J, V) :- clique(@I, V), clique(@J, V), I != J.'. I don't have enough information to forward partial results to subsequent nodes. If the right hand side of the rule has something like 'x(@A, B), y(@C, D)', make sure that 'C' is one of 'A' or 'B'.
-#
+#	##COMPILE ERROR: program commandLine, node localhost:10000, 
+#	error code 3: Rule s1 location variable @J not found in left to right order of base tables.
+
 #
 ####################################
 
@@ -32,31 +33,37 @@ import sys
 # Usage function
 def usage():
         print """
-                unroutableLocalization.py -E <planner path> -B <olg path>
+                unroutableLocalization.py -E <planner path> -B <olg path> -T <time in seconds>
 
                 -E              planner path
                 -B              olg path
+		-T              time (secs) for test to run
                 -h              prints usage message
         """
 
 
 # Function to parse the output file and check whether the output matches the expected value
 def script_output(stdout):
-        output = ""
+	output = ""
+        whole_output = ""
         for line in stdout.readlines():
                 output = output + line
+                whole_output = whole_output + line
 	
 	p = re.compile(r"""
-		(^[#][#]Planner, \s* [-]:[-], \s* 4, \s* 0, \s* Unable \s* to \s* localize \s* rule \s* ['] s1 \s* separator\(@I, \s* J, \s* V\)\s* :[-] \s* clique\(@I, \s* V\), \s* clique\(@J, \s* V\), \s* I \s* [!][=] \s* J[.]['][.] \s* I \s* don[']t \s* have \s* enough \s* information \s* to \s* forward \s* partial \s* results \s* to \s* subsequent \s* nodes[.] \s* If \s* the \s* right \s* hand \s* side \s* of \s* the \s* rule \s* has \s* something \s* like \s* [']x\(@A, \s* B\), \s* y\(@C, \s* D\)['], \s* make \s* sure \s* that \s* [']C['] \s* is \s* one \s* of \s* [']A['] \s* or \s* [']B['][.])
+		(^[#][#] COMPILE \s* ERROR: \s* program \s* commandLine, \s* node \s* localhost:10000, \s*
+		\s* error \s* code \s* 3: \s* Rule \s* s1 \s* location \s* variable \s* @J \s*  
+		\s* not \s* found \s* in \s* left \s* to \s* right \s* order \s* of \s* base \s* tables[.])
 		""", re.VERBOSE)
 
-	flag = p.match(output)
+	flag = p.search(output)
 	if flag:
 		print "Test passed"
 		#print flag.group()
 	else:
 		print "Test failed"
-
+		print "Port 10000 output:"
+                print whole_output
 
 #Function to kill the child after a set time
 def kill_pid(stdout, pid):
@@ -65,18 +72,29 @@ def kill_pid(stdout, pid):
         #print "program killed"
         script_output(stdout)
 
-opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
+
+try:
+        opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
+except getopt.GetoptError:
+        usage()
+        sys.exit(1)
+
+if len(opt) != 3:
+        usage()
+        sys.exit(1)
 
 for key,val in opt:
         if key=='-B':
                 olg_path = val
         elif key == '-E':
                 executable_path = val
+	elif key == '-T':
+                time_interval = val
         elif key == '-h':
                 usage()
                 sys.exit(0)
 try:
-        args=[executable_path , '-o', olg_path +'/unroutableLocalization.olg', '2>&1']
+        args=[executable_path , '-o', os.path.join(olg_path,'unroutableLocalization.olg'), '2>&1']
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 except OSError, e:
         #print "Execution failed"
@@ -86,5 +104,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(3, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(int(time_interval), kill_pid, [p.stdout, p.pid])
         t.start()

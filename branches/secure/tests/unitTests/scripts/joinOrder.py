@@ -15,8 +15,8 @@
 # Assumption - program is running at localhost:10000
 #
 # Expected output - (the order of the tuples can vary)
-#	##Print[SendAction!prodEvent1!q1_eca!localhost:10000]:  [prodEvent1(localhost:10000, 1)]
-#	##Print[SendAction!prodEvent2!q2_eca!localhost:10000]:  [prodEvent2(localhost:10000, 1)]
+#	##Print[SendAction RULE q1]:  [prodEvent1(localhost:10000, 1)]
+#	##Print[SendAction RULE q2]:  [prodEvent2(localhost:10000, 1)]
 #
 #
 ####################################
@@ -76,7 +76,15 @@ def kill_pid(stdout, pid):
         #print "program killed"
         script_output(stdout)
 
-opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
+try:
+        opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
+except getopt.GetoptError:
+        usage()
+        sys.exit(1)
+
+if len(opt) != 3:
+        usage()
+        sys.exit(1)
 
 for key,val in opt:
         if key=='-B':

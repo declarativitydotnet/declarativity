@@ -117,7 +117,15 @@ def kill_pid(stdout_11111, stdout_22222, pid_11111, pid_22222):
         script_output(stdout_11111, stdout_22222)
 	
 
-opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
+try:
+        opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
+except getopt.GetoptError:
+        usage()
+        sys.exit(1)
+
+if len(opt) != 3:
+        usage()
+        sys.exit(1)
 
 for key,val in opt:
         if key=='-B':

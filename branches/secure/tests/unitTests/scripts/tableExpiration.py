@@ -60,15 +60,18 @@ def script_output(stdout):
 	for line in lines:
 		if i == 1:
 			p = re.compile(r"""
-				(^[#][#] Print\[SendAction: \s* RULE \s* q5]: \s* \[foundOtherTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
+				(^[#][#] Print\[SendAction: \s* RULE \s* q5]: \s* 
+				\[foundOtherTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
                         	""", re.VERBOSE)
 		elif i == 2:
 			p = re.compile(r"""
-				(^[#][#] Print \[SendAction: \s* RULE \s* q3\]: \s* \[foundTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
+				(^[#][#] Print \[SendAction: \s* RULE \s* q3\]: \s* 
+				\[foundTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
                                 """, re.VERBOSE)
 		elif i == 3:
 			p = re.compile(r"""
-				(^[#][#] Print \[SendAction: \s* RULE \s* q3\]: \s* \[foundTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
+				(^[#][#] Print \[SendAction: \s* RULE \s* q3\]: \s* 
+				\[foundTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
                                 """, re.VERBOSE)
 		else:
 			result = 0
@@ -97,7 +100,15 @@ def kill_pid(stdout, pid):
         script_output(stdout)
 
 
-opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
+try:
+        opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
+except getopt.GetoptError:
+        usage()
+        sys.exit(1)
+
+if len(opt) != 3:
+        usage()
+        sys.exit(1)
 
 for key,val in opt:
         if key=='-B':

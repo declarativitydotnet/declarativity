@@ -15,11 +15,11 @@
 # Assumption - program is running at localhost:10000
 #
 #Expected output - (the order of the tuples can vary)
-#	##Print[RecvEvent!result!result_watchStub!localhost:10000]:  [result(localhost:10000, 23)]
-#	##Print[RecvEvent!inclusion!inclusion_watchStub!localhost:10000]:  [inclusion(localhost:10000)]
-#	##Print[RecvEvent!constantInclusion!constantInclusion_watchStub!localhost:10000]:  [constantInclusion(localhost:10000)]
-#	##Print[RecvEvent!notInclusion!notInclusion_watchStub!localhost:10000]:  [notInclusion(localhost:10000)]
-#
+#	##Print[RecvEvent RULE result]:  [result(localhost:10000, 23)]
+#	##Print[RecvEvent RULE inclusion]:  [inclusion(localhost:10000)]
+#	##Print[RecvEvent RULE constantInclusion]:  [constantInclusion(localhost:10000)]
+#	##Print[RecvEvent RULE notInclusion]:  [notInclusion(localhost:10000)]
+#	##Print[RecvEvent RULE notConstantInclusion]:  [notConstantInclusion(localhost:10000)]
 #
 ####################################
 
@@ -36,55 +36,68 @@ import sys
 # Usage function
 def usage():
         print """
-                mathProduction.py -E <planner path> -B <olg path>
+                mathProduction.py -E <planner path> -B <olg path> -T <time in seconds>
 
                 -E              planner path
                 -B              olg path
+		-T              time (secs) for test to run
                 -h              prints usage message
         """
 
 # Function to parse the output file and check whether the output matches the expected value
 def script_output(stdout):
-       	lines=[]
+	lines=[]
+        whole_output = ""
         for line in stdout.readlines():
-		lines.append(line.rstrip())
+                whole_output += line
+                p = re.compile('^[#][#]Print.*$',re.VERBOSE|re.DOTALL)
+                if(p.match(line)):
+                        lines.append(line.rstrip())
 	
 	lines.sort()
 	i =1
+	result = 0
 	for line in lines:
 		if i == 1:
 			p = re.compile(r"""
-				(^[#][#]Print\[RecvEvent!constantInclusion!constantInclusion_watchStub!localhost:10000\]: \s* \[constantInclusion\(localhost:10000\)\])
+				(^[#][#] Print\[RecvEvent \s* RULE \s* constantInclusion\]: \s*
+				\[constantInclusion\(localhost:10000\)\])
                         	""", re.VERBOSE)
 		elif i == 2:
 			p = re.compile(r"""
-				(^[#][#]Print\[RecvEvent!inclusion!inclusion_watchStub!localhost:10000\]: \s* \[inclusion\(localhost:10000\)\])
+				(^[#][#]Print\[RecvEvent \s* RULE \s* inclusion\]: \s*
+				\[inclusion\(localhost:10000\)\])
                                 """, re.VERBOSE)
 		elif i == 3:
 			p = re.compile(r"""
-                                (^[#][#]Print\[RecvEvent!notConstantInclusion!notConstantInclusion_watchStub!localhost:10000\]: \s* \[notConstantInclusion\(localhost:10000\)\])
+                                (^[#][#] Print\[RecvEvent \s* RULE \s* notConstantInclusion\]: \s*
+				\[notConstantInclusion\(localhost:10000\)\])
                                 """, re.VERBOSE)
 		elif i == 4:
 			p = re.compile(r"""
-				(^[#][#]Print\[RecvEvent!notInclusion!notInclusion_watchStub!localhost:10000\]: \s* \[notInclusion\(localhost:10000\)\])
+				(^[#][#] Print\[RecvEvent \s* RULE \s* notInclusion\]: \s*
+				\[notInclusion\(localhost:10000\)\])
                                 """, re.VERBOSE)
 		elif i == 5:
 			p = re.compile(r"""
-                                (^[#][#]Print\[RecvEvent!result!result_watchStub!localhost:10000\]: \s* \[result\(localhost:10000, \s* 23\)\])
+                                (^[#][#] Print\[RecvEvent \s* RULE \s* result\]: \s*
+				\[result\(localhost:10000, \s* 23\)\])
                                 """, re.VERBOSE)
 		else:
-			print "Test failed"
+			result = 1
 			break
 	
 		flag = p.match(line)
         	if flag:
         		i = i+1
        	 	else:
-                	result = 0
+                	result = 1
                 	break
 	
-	if i>6 or i<6:
+	if i>6 or i<6 or result == 1:
 		print "Test failed"
+		print "Port 10000 output:"
+                print whole_output
 	else:
 		print "Test passed"
 		
@@ -97,18 +110,28 @@ def kill_pid(stdout, pid):
         script_output(stdout)
 
 
-opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
+try:
+        opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
+except getopt.GetoptError:
+        usage()
+        sys.exit(1)
+
+if len(opt) != 3:
+        usage()
+        sys.exit(1)
 
 for key,val in opt:
         if key=='-B':
                 olg_path = val
         elif key == '-E':
                 executable_path = val
+	elif key == '-T': 
+                time_interval = val	
         elif key == '-h':
                 usage()
                 sys.exit(0)
 try:
-        args=[executable_path , '-o', olg_path +'/mathProduction.olg', '2>&1']
+        args=[executable_path , '-o', os.path.join(olg_path,'mathProduction.olg'), '2>&1']
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 except OSError, e:
         #print "Execution failed"
@@ -118,5 +141,5 @@ except OSError, e:
 #print p.pid
 
 if os.getpid() != p.pid:
-        t = threading.Timer(3, kill_pid, [p.stdout, p.pid])
+        t = threading.Timer(int(time_interval), kill_pid, [p.stdout, p.pid])
         t.start()

@@ -14,7 +14,7 @@
 #
 # Assumption - program is running at localhost:10000
 #
-# Expected output - (the order of the tuples should be same as listed below) ******** (DONT KNOW WHETHER abcd SHOULD BE FIRST or 1234)
+# Expected output - (the order of the tuples should be same as listed below)
 #	##Print[SendAction: STAGE CSVtuple]:  [out(localhost:10000, 0, boon, 14000)]
 #	##Print[SendAction: STAGE CSVtuple]:  [out(localhost:10000, 1, tyson, 1300)]
 #	##Print[SendAction: STAGE CSVtuple]:  [out(localhost:10000, 2, alex, 400)]
@@ -113,7 +113,15 @@ def kill_pid(stdout, pid):
         #print "program killed"
         script_output(stdout)
 
-opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
+try:
+        opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
+except getopt.GetoptError:
+        usage()
+        sys.exit(1)
+
+if len(opt) != 3:
+        usage()
+        sys.exit(1)
 
 for key,val in opt:
         if key=='-B':

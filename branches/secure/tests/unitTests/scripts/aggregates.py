@@ -26,17 +26,17 @@
 # Expected output - (multiple tuples may be present in the output and the order of the results can vary)
 #
 #	* At 20202:
-#	##Print[RecvEvent!smallestNeighborOf!d2_eca!localhost:20202]:  [smallestNeighborOf(localhost:20202, localhost:20203)]
-#	##Print[RecvEvent!smallestNeighborOf!d2_eca!localhost:20202]:  [smallestNeighborOf(localhost:20202, localhost:20204)]
+#	##Print[RecvEvent RULE d2]:  [smallestNeighborOf(localhost:20202, localhost:20203)]
+#	##Print[RecvEvent RULE d2]:  [smallestNeighborOf(localhost:20202, localhost:20204)]
 #
 #	* At 20203
 #
-#	##Print[RecvEvent!smallestNeighborOf!d2_eca!localhost:20203]:  [smallestNeighborOf(localhost:20203, localhost:20202)]
-#	##Print[RecvEvent!largestNeighborOf!d1_eca!localhost:20203]:  [largestNeighborOf(localhost:20203, localhost:20204)]
+#	##Print[RecvEvent RULE d2]:  [smallestNeighborOf(localhost:20203, localhost:20202)]
+#	##Print[RecvEvent RULE d1]:  [largestNeighborOf(localhost:20203, localhost:20204)]
 #
 #	*At 20204
-#	##Print[RecvEvent!largestNeighborOf!d1_eca!localhost:20204]:  [largestNeighborOf(localhost:20204, localhost:20203)]
-#	##Print[RecvEvent!largestNeighborOf!d1_eca!localhost:20204]:  [largestNeighborOf(localhost:20204, localhost:20202)]
+#	##Print[RecvEvent RULE d1]:  [largestNeighborOf(localhost:20204, localhost:20203)]
+#	##Print[RecvEvent RULE d1]:  [largestNeighborOf(localhost:20204, localhost:20202)]
 #
 #
 ####################################
@@ -148,8 +148,15 @@ def kill_pid(stdout_20202, stdout_20203, stdout_20204, pid_20202, pid_20203, pid
 	#print "program killed"
 	script_output(stdout_20202, stdout_20203, stdout_20204)
 
+try:
+	opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
+except getopt.GetoptError:
+        usage()
+        sys.exit(1)
 
-opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
+if len(opt) != 3:
+        usage()
+        sys.exit(1)
 
 for key,val in opt:
         if key=='-B':

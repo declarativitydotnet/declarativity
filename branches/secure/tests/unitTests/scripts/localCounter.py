@@ -15,7 +15,7 @@
 # Assumption - program is running at localhost:10000
 #
 #Expected output - (should get 100 tuples of the type given below where i increments from 1 to 100 with step 1)
-#	##Print[AddAction!counter!g1_eca!localhost:10000]:  [counter(localhost:10000, i)]
+#	##Print[AddAction RULE g1]:  [counter(localhost:10000, i)]
 #
 #
 ####################################
@@ -86,8 +86,15 @@ def kill_pid(stdout, pid):
         #print "program killed"
         script_output(stdout)
 
+try:
+        opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
+except getopt.GetoptError:
+        usage()
+        sys.exit(1)
 
-opt, arg = getopt.getopt(sys.argv[1:], 'B:E:T:h')
+if len(opt) != 3:
+        usage()
+        sys.exit(1)
 
 for key,val in opt:
         if key=='-B':
