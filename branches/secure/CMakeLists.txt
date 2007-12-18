@@ -53,6 +53,9 @@ ADD_DEFINITIONS(-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG)
 ADD_DEFINITIONS(-DBOOST_ALL_DYN_LINK)
 ADD_DEFINITIONS(-DP2_SOURCE_DIR="\\\"${P2_SOURCE_DIR}\\\"")
 
+# Remove tracing by default
+ADD_DEFINITIONS(-DTRACE_OFF)
+
 IF(WIN32)
   SET(PLATFORM_INCLUDE_DIR ${P2_BINARY_DIR}/getopt)
   SET(PLATFORM_LIB_DIR ${P2_BINARY_DIR}/getopt)
@@ -144,6 +147,11 @@ SET(COMMON_LIBRARIES p2core
 					 p2pel
 					 p2oni
 	   				 )
+
+#Default build type and some variables (PM)
+SET(CMAKE_CXX_FLAGS_DEBUG "-Wall -gdwarf-2 -DTRACE_OFF")
+SET(CMAKE_BUILD_TYPE Debug)
+
 
 # uncomment the following line to get CMake variables to print to screen
 # INCLUDE(CMakePrintSystemInformation)
