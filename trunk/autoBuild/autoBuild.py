@@ -220,7 +220,7 @@ def run_scripts(runOverLog_path, olg_path, script_path, fileHandle, python_path,
 def run_p2Test(build_path, fileHandle):
 	fileHandle.write("\n\nExecuting p2Test \n")
         fileHandle.write("----------------- \n\n")
-        p2Test_path =os.path.join(build_path, 'unitTests/p2Test')
+        p2Test_path =os.path.join(build_path, 'tests/unitTests/p2Test')
 	#print p2Test_path	
 	args=[p2Test_path]
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)

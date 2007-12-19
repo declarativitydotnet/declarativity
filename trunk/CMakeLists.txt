@@ -1,6 +1,6 @@
 Project(P2)
 
-SUBDIRS(p2core aggregates functions p2cpp lang elements stages net overlog planner unitTests tests python oni doc)
+SUBDIRS(p2core aggregates functions p2cpp lang elements stages net overlog planner tests python oni doc)
 
 # Main decisions
 SET(BUILD_SHARED_LIBS ON)

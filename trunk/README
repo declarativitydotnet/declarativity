@@ -81,7 +81,7 @@ package?  Did you build it yourself?)
 
 You can run our measly unit tests:
 
-   # unitTests/p2Test
+   # tesets/unitTests/p2Test
 
 This will execute portions of the p2 implementation in isolation.
 

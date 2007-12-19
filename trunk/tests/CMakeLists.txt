@@ -1,3 +1,5 @@
+SUBDIRS(unitTests)
+
 ADD_EXECUTABLE(benchmark benchmark.C)
 ADD_EXECUTABLE(runOverLog runOverLog.C)
 ADD_EXECUTABLE(runStagedOverlog runStagedOverlog.C)
