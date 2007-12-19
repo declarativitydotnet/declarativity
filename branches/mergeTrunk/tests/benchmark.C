@@ -27,10 +27,7 @@
 
 #include "val_null.h"
 #include "val_str.h"
-#include "val_int32.h"
-#include "val_uint32.h"
 #include "val_int64.h"
-#include "val_uint64.h"
 #include "val_double.h"
 #include "val_time.h"
 #include "testerr.h"
@@ -121,23 +118,13 @@ static void create_lots_val_null() {
   }
 }
 
-static ValuePtr create_val_uint64_1() {
-  return Val_UInt64::mk((uint64_t)64);
+static ValuePtr create_val_int64_1() {
+  return Val_Int64::mk((int64_t)64);
 }
 
-static void create_lots_val_uint64() {
+static void create_lots_val_int64() {
   for (int i = 0; i < FIELD_TST_SZ; i++) {
-    va[i] = create_val_uint64_1();
-  }
-}
-
-static ValuePtr create_val_int32_1() {
-  return Val_Int32::mk((int32_t)-32);
-}
-
-static void create_lots_val_int32() {
-  for (int i = 0; i < FIELD_TST_SZ; i++) {
-    va[i] = create_val_int32_1();
+    va[i] = create_val_int64_1();
   }
 }
 
@@ -181,8 +168,7 @@ static void unmarshal_lots_of(Value::TypeCode t) {
     for (int i = 0; i < MARSHAL_CHUNK_SZ; i++) {
       switch (t) {
         case Value::NULLV:   va[i] = Val_Null::xdr_unmarshal(&xdrs);   break;
-        case Value::UINT64:  va[i] = Val_UInt64::xdr_unmarshal(&xdrs); break;
-        case Value::INT32:   va[i] = Val_Int32::xdr_unmarshal(&xdrs);  break;
+        case Value::INT64:  va[i] = Val_Int64::xdr_unmarshal(&xdrs); break;
         case Value::DOUBLE:  va[i] = Val_Double::xdr_unmarshal(&xdrs); break;
         case Value::STR:     va[i] = Val_Str::xdr_unmarshal(&xdrs);    break;
         default: FAIL << "TypeCode: " << t << " not handle\n";       break;
@@ -195,12 +181,8 @@ static void unmarshal_lots_of_null() {
   unmarshal_lots_of(Value::NULLV);
 }
 
-static void unmarshal_lots_of_uint64() {
-  unmarshal_lots_of(Value::UINT64);
-}
-
-static void unmarshal_lots_of_int32() {
-  unmarshal_lots_of(Value::INT32);
+static void unmarshal_lots_of_int64() {
+  unmarshal_lots_of(Value::INT64);
 }
 
 static void unmarshal_lots_of_double() {
@@ -218,8 +200,8 @@ static TuplePtr ta[TUPLE_TST_SZ];
 static TuplePtr create_tuple_1() {
   TuplePtr t = Tuple::mk();
   t->append(create_val_null_1());
-  t->append(create_val_int32_1());
-  t->append(create_val_uint64_1());
+  t->append(create_val_int64_1());
+  t->append(create_val_int64_1());
   t->append(create_val_double_1());
   t->append(create_val_str_1());
   t->freeze();
@@ -271,22 +253,13 @@ static void unit_test_for(Value::TypeCode t ) {
       time_fn(boost::bind(unmarshal_lots_of_null));  
       TELL_INFO << "\n";
       break;
-    case Value::INT32: 
-      TELL_INFO << "INT32: creating:"; 
-      time_fn(boost::bind(create_lots_val_int32));
+    case Value::INT64:
+      TELL_INFO << "INT64:\ncreating:";
+      time_fn(boost::bind(create_lots_val_int64));
       TELL_INFO << "marshalling:";
       time_fn(boost::bind(marshal_lots_of_values));
       TELL_INFO << "unmarshalling:";
-      time_fn(boost::bind(unmarshal_lots_of_int32));  
-      TELL_INFO << "\n";
-      break;
-    case Value::UINT64:
-      TELL_INFO << "UINT64:\ncreating:";
-      time_fn(boost::bind(create_lots_val_uint64));
-      TELL_INFO << "marshalling:";
-      time_fn(boost::bind(marshal_lots_of_values));
-      TELL_INFO << "unmarshalling:";
-      time_fn(boost::bind(unmarshal_lots_of_uint64));  
+      time_fn(boost::bind(unmarshal_lots_of_int64));  
       TELL_INFO << "\n";
       break;
     case Value::DOUBLE:

@@ -36,46 +36,6 @@ Scheduler::registerSwitch(IRunnablePtr r)
   mpSwitch = r;
 }
 
-/*
-void Scheduler::initialize(Plumber::DataflowPtr aDF)
-{
-  std::vector<ElementSpecPtr>::iterator it = aDF->elements_.begin();
-  for(;it!= aDF->elements_.end();it++)
-  {
-    ElementPtr e( (*it)->element() );
-    TELL_INFO<<"Checking Element: Class="<<e->class_name()<<" Instance="<<e->name()<<"\n";
-    std::string eclass(e->class_name());
-
-    //If this is a dataflow element, then dig in...
-    if("Dataflow" == eclass){
-      initialize(boost::dynamic_pointer_cast<Plumber::Dataflow, Element>(e));
-    }
-    else if("PullPush" == eclass){
-      //PullPush* pp = dynamic_cast<PullPush*>(e.get());
-      TELL_INFO<<"Adding Runnable "<<e->name()<<"\n";
-      addRunnable(boost::any_cast<IRunnablePtr>(e->getProxy()));
-    }
-    else if( ("Queue" == eclass) || ("RangeLookup" == eclass) || ("Lookup2" == eclass)){
-      addStateful(boost::any_cast<IStatefulPtr> (e->getProxy()));
-      TELL_INFO<<"Adding Stateful "<<e->name()<<"\n";
-      if(e->name() == "SEAInternalQ")
-	      mpIntQ = boost::any_cast<IStatefulPtr> (e->getProxy());
-      if(e->name() == "SEAExternalQ")
-	      mpExtQ = boost::any_cast<IStatefulPtr> (e->getProxy());
-    }else if( ("CommitBuf" == eclass) || ("Insert2" == eclass) || ("Delete2" == eclass)){
-      TELL_INFO<<"Adding Action! Class="<<e->class_name()<< "Instance = "<<e->name()<<"\n";
-      mpCommitManager->addAction(boost::any_cast<CommitManager::ActionPtr>(e->getProxy()));
-    }
-    else if("ExtQGateSwitch" == e->name()){
-      TELL_INFO<<"Found the GATE!"<<e->name()<<"\n";
-      mpSwitch = boost::any_cast<IRunnablePtr> (e->getProxy());
-      addRunnable(mpSwitch);
-    }
-
-  }
-}
-*/
-
 
 
 bool Scheduler::stateful(IStatefulPtr aStateful)
@@ -105,7 +65,7 @@ bool Scheduler::action(CommitManager::ActionPtr action)
 bool Scheduler::runRunnables()
 {
   bool hasNoRunnables = false;
-
+  bool ranSomething = false;
   assert(!mRunnables.empty());
   /*Run until there is no runnables can be run*/
   while(!hasNoRunnables){
@@ -113,52 +73,51 @@ bool Scheduler::runRunnables()
     //a small opt: always get the switch to run first:
     //if(mp1OffSwitch->getState() == IRunnable::ACTIVE)
 	//    mp1OffSwitch->run();
-    /*we have to do this per iteration since elements could turn from blocked to active after some runnables are runned*/
-    for(tRunnables::iterator it = mRunnables.begin();it != mRunnables.end(); it++)
+    /*we have to do this per iteration since elements could turn from
+      blocked to active after some runnables are run*/
+    for(tRunnables::iterator it = mRunnables.begin();
+        it != mRunnables.end();
+        it++)
     {
       if( (*it)->state() == IRunnable::ACTIVE ){
-	//TELL_INFO<<"Running element "<<boost::dynamic_pointer_cast<Element,IRunnable>(*it)->name()<<"\n";
+	//TELL_INFO<<"Running element
+	//"<<boost::dynamic_pointer_cast<Element,IRunnable>(*it)->name()<<"\n";
 	(*it)->run();
+	// Remember if there was anything to run.  (mpSwitch will always be
+	// ready the first time through, so ignore it).
+	if(*it != mpSwitch) {
+	  ranSomething = true;
+	} else {
+	  // A comment elsewhere in this file suggests that we should
+	  // get *exactly one* tuple from mpSwitch per fixpoint.  If
+	  // we see more than one, let's crash, and let the hapless
+	  // person who hits this assert fix P2's atomicity semantics.
+	  assert((*it)->state() != IRunnable::ACTIVE);
+	}
       }
       /**Hmm, is it still active?*/
-      if( (*it)->state() == IRunnable::ACTIVE )
+      if( (*it)->state() == IRunnable::ACTIVE  ) {
 	hasNoRunnables = false;
+      }
     }
 
     //check it up again in case some people got activated after others!
-    for(tRunnables::iterator it = mRunnables.begin();it != mRunnables.end();it++)
-    {
-      if( (*it)->state() == IRunnable::ACTIVE  )
+    for(tRunnables::iterator it = mRunnables.begin();
+        it != mRunnables.end() && hasNoRunnables;
+        it++) {
+      if( (*it)->state() == IRunnable::ACTIVE  ) {
 	hasNoRunnables = false;
+      }
     }
   }
-  return hasNoRunnables;
+  // Returning hasNoRunnables was pointless (the loop ensures that
+  // it's always "true").  Now we return ranSomething instead.
+  //  return hasNoRunnables;
+  return ranSomething;
 }
 
-/*
-bool Scheduler::runStatefuls()
-{
-  bool hasNoStatefuls = false;
-
-  if(mStatefuls.empty())
-    return true;
-
-  while(!hasNoStatefuls){
-    hasNoStatefuls = true;
-    for(tStatefuls::iterator it = mStatefuls.begin();it != mStatefuls.end();it++)
-    {
-      if( (*it)->state() == IStateful::STATEFUL )
-        (*it)->run();
-      if( (*it)->state() == IStateful::STATEFUL)
-        hasNoStatefuls = false;
-    }
-  }
-  return hasNoStatefuls;
-}
-
-*/
-
-void Scheduler::proc(boost::posix_time::time_duration* waitDuration)
+void
+Scheduler::proc(boost::posix_time::time_duration* waitDuration)
 {
   TELL_WORDY << "Entering Scheduler::proc()\n";
   phase1(waitDuration);
@@ -166,9 +125,12 @@ void Scheduler::proc(boost::posix_time::time_duration* waitDuration)
   TELL_WORDY << "Leaving Scheduler::proc()\n";
 }
 
-void Scheduler::phase1(boost::posix_time::time_duration* waitDuration)
+
+void
+Scheduler::phase1(boost::posix_time::time_duration* waitDuration)
 {
 }
+
 
 void
 Scheduler::phase2(boost::posix_time::time_duration* waitDuration)
@@ -181,33 +143,58 @@ Scheduler::phase2(boost::posix_time::time_duration* waitDuration)
     blocks, we might run out of runnables and statefuls
     while the states are still being pulled out of the disk.
   */
+  /*
+    Rusty 2007-11-26
+    The scheduler was blocking unnecessarily.  I've tried to
+    remove some of the excess state, and clean this up a bit.
 
-  bool hasNoRunnables = false;
-  bool hasNoStates = true;
+    I'm not convinced this code is correct, but it's faster. :)
+
+    (See XXX below.)
+
+   */
+  bool ranSomething = false;
   if (mpExtQ != NULL) {
-    while(!(mpExtQ->size() == 0 &&
-            hasNoRunnables &&
-            hasNoStates)){
+    bool first = true;
+    while(mpExtQ->size() != 0 || first) {
       //turn on the gate for exactly 1 external event to flow
       //through
       mpSwitch->state(IRunnable::ACTIVE);
-      hasNoRunnables = false; //by turning on the 1off switch
+
+      first = false; //by turning on the 1off switch
+
       TELL_INFO << "\n===<FIXPOINT> A BIG MSG FOR A LOCAL FIXPOINT START! ExtQ size=" 
                 << mpExtQ->size() << "===\n";
       //start processing it
-      while(!hasNoRunnables){
-        /*Run these guys until quiescene*/
-        hasNoRunnables = runRunnables();
-        TELL_INFO << "\t ++++ Inner Q: "
-                  << mpIntQ->size() 
-                  << " HasNoRunnables?" << hasNoRunnables << " ...\n";
-      }
+
+      /*Run these guys until quiescene*/
+
+      bool newRanSomething = runRunnables();
+      if(newRanSomething) ranSomething = true;
+
+      TELL_INFO << "\t ++++ Inner Q: "
+		<< mpIntQ->size();
       //fixpoint is reached, commit all updates
       mpCommitManager->commit();
       TELL_INFO << "\t Leaving fixpoint check: IntQ.size() = " << mpIntQ->size() 
                 << " ExtQ.size() = " << mpExtQ->size();
       TELL_INFO<<"\n===</FIXPOINT> A BIG & SHINY MSG FOR A LOCAL FIXPOINT END!!===\n";
     }
+  }
+  if(ranSomething) {
+    // OK, we emptied the external event queue.  That (apparently)
+    // doesn't mean that there's no more work to be done before the
+    // next network event or callback.  Immediately run through the
+    // event loop again.
+
+    // XXX I don't understand why this is necessary.  The old code
+    // blocks in the same (a similar) way as the old code.  Perhaps
+    // we're getting events from somewhere other than the external
+    // event queue, and those events aren't part of an atomic
+    // fixpoint.
+    //                         -Rusty
+    TELL_INFO<<"ran something, and resetting wait time to zero\n"<< std::endl;
+    *waitDuration = boost::posix_time::seconds(0);
   }
 
 }

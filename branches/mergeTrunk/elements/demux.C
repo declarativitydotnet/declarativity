@@ -14,7 +14,7 @@
 
 #include "demux.h"
 #include "val_str.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "val_list.h"
 #include <boost/bind.hpp>
 
@@ -56,7 +56,7 @@ Demux::Demux(TuplePtr args)
   for (ValPtrList::const_iterator i = keys->begin();
        i != keys->end(); i++)
     _demuxKeys.push_back(*i);
-  _inputFieldNo = args->size() > 4 ? Val_UInt32::cast((*args)[4]) : 0;
+  _inputFieldNo = args->size() > 4 ? Val_Int64::cast((*args)[4]) : 0;
 }
 
 

@@ -42,6 +42,28 @@ pingHandler(P2::DataflowHandle dataflow,
 }
 
 
+
+/**
+   An example of a method that shows using dataflow handles outside
+   where they're returned.
+*/
+P2::DataflowHandle
+createDataflow(std::string myAddress,
+               int port,
+               std::string derivativeFile,
+               std::string program)
+{
+  return P2::createDataflow("ponger",
+                            myAddress,
+                            port,
+                            derivativeFile,
+                            program,
+                            false,
+                            false,
+                            false);
+}
+
+
 /**
    My usage string
 */
@@ -87,16 +109,11 @@ main(int argc,
   std::string myAddress = myAddressBuf.str();
   string program("");
   P2::DataflowHandle dataflow =
-    P2::createDataflow("ponger",
-                       myAddress,
-                       port,
-                       derivativeFile,
-                       program,
-                       false,
-                       false,
-                       false);
-
-
+    createDataflow(myAddress,
+                   port,
+                   derivativeFile,
+                   program);
+  
   // Subscribe to ping tuples
   P2::subscribe(dataflow,
                 "ping",

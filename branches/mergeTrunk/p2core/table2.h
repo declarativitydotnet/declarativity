@@ -35,29 +35,6 @@
 class Table2 : public CommonTable {
 public:
   ////////////////////////////////////////////////////////////
-  // Special constants
-  ////////////////////////////////////////////////////////////
-
-  /** The non-expiring expiration time */
-  static boost::posix_time::time_duration NO_EXPIRATION;
-
-
-  /** The default table expiration time */
-  static boost::posix_time::time_duration DEFAULT_EXPIRATION;
-
-
-  /** The non-size-limited size */
-  static uint32_t NO_SIZE;
-
-
-  /** The default table size */
-  static uint32_t DEFAULT_SIZE;
-
-
-
-
-public:
-  ////////////////////////////////////////////////////////////
   // Constructors
   ////////////////////////////////////////////////////////////
 
@@ -97,7 +74,17 @@ public:
   /** A destructor. It empties out the table and then destroys it. */
   ~Table2();
 
-
+  static TuplePtr mk(CommonTable::Manager& catalog, std::string name, 
+		  boost::posix_time::time_duration& lifetime,
+		  uint max_size, CommonTable::Key& keys,
+		  ListPtr sort, ValuePtr programId) {
+    TuplePtr ret = catalog.registerTable(CommonTablePtr(new Table2(name,keys,max_size,lifetime)),
+			   name, lifetime, max_size, keys, sort, programId);
+    catalog.registerIndex(name, "Hash", keys); // XXX HASH_INDEX is included in systemTable.h(!)
+    return ret;
+  }
+		  
+		  
 
 
 public:

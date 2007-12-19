@@ -18,7 +18,7 @@
 
 #include "val_str.h"
 #include "val_tuple.h"
-#include "val_uint64.h"
+#include "val_int64.h"
 #include "val_vector.h"
 #include "val_matrix.h"
 
@@ -46,7 +46,7 @@ public:
     // The input tuple
     flat = Tuple::mk();
     flat->append(Val_Str::mk("Flat"));
-    flat->append(Val_UInt64::mk(13500975));
+    flat->append(Val_Int64::mk(13500975));
     flat->freeze();  
 
     // Create a nested tuple
@@ -67,16 +67,16 @@ public:
 	Val_Vector *v = new Val_Vector(four);
 	Val_Matrix *m = new Val_Matrix(two, three);
 	
-	v->insert(zero, Val_UInt64::mk(one));
-	v->insert(one, Val_UInt64::mk(two));
-	v->insert(two, Val_UInt64::mk(three));
-	v->insert(three, Val_UInt64::mk(four));
-	m->insert(zero, zero, Val_UInt64::mk(one));
-	m->insert(zero, one, Val_UInt64::mk(two));
-	m->insert(zero, two, Val_UInt64::mk(three));
-	m->insert(one, zero, Val_UInt64::mk(four));
-	m->insert(one, one, Val_UInt64::mk(five));
-	m->insert(one, two, Val_UInt64::mk(six));
+	v->insert(zero, Val_Int64::mk(one));
+	v->insert(one, Val_Int64::mk(two));
+	v->insert(two, Val_Int64::mk(three));
+	v->insert(three, Val_Int64::mk(four));
+	m->insert(zero, zero, Val_Int64::mk(one));
+	m->insert(zero, one, Val_Int64::mk(two));
+	m->insert(zero, two, Val_Int64::mk(three));
+	m->insert(one, zero, Val_Int64::mk(four));
+	m->insert(one, one, Val_Int64::mk(five));
+	m->insert(one, two, Val_Int64::mk(six));
 
     vecmat->append(Val_Str::mk("vecmat"));
 	ValuePtr vp(v);

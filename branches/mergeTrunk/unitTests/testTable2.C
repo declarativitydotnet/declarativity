@@ -15,9 +15,7 @@
 
 #include "val_str.h"
 #include "val_tuple.h"
-#include "val_int32.h"
-#include "val_uint32.h"
-#include "val_uint64.h"
+#include "val_int64.h"
 #include "val_id.h"
 #include "val_null.h"
 #include "ID.h"
@@ -229,7 +227,7 @@ testTable2::testSizeLimitSingle()
     // Field 1 is the counter
     TuplePtr t(new Tuple());
     t->append(Val_Str::mk("testTuple"));
-    t->append(Val_Int32::mk(i));
+    t->append(Val_Int64::mk(i));
     t->freeze();
 
     // The insertion should return true
@@ -249,7 +247,7 @@ testTable2::testSizeLimitSingle()
     // Field 1 is the counter
     TuplePtr t(new Tuple());
     t->append(Val_Str::mk("testTuple"));
-    t->append(Val_Int32::mk(i));
+    t->append(Val_Int64::mk(i));
     t->freeze();
 
     // The insertion should return false
@@ -269,7 +267,7 @@ testTable2::testSizeLimitSingle()
        i++) {
     TuplePtr t(new Tuple());
     t->append(Val_Str::mk("testTuple"));
-    t->append(Val_Int32::mk(i + SIZE));
+    t->append(Val_Int64::mk(i + SIZE));
     t->freeze();
 
     // The insertion should return true
@@ -297,9 +295,9 @@ testTable2::testSizeLimitMulti()
     // Fields 1 and 3 are the counter
     TuplePtr t(new Tuple());
     t->append(Val_Str::mk("testTuple"));
-    t->append(Val_Int32::mk(i));
+    t->append(Val_Int64::mk(i));
     t->append(Val_Str::mk("middle"));
-    t->append(Val_Int32::mk(i));
+    t->append(Val_Int64::mk(i));
     t->freeze();
 
     // The insertion should return true
@@ -319,9 +317,9 @@ testTable2::testSizeLimitMulti()
     // Fields 1 and 3 are the counter
     TuplePtr t(new Tuple());
     t->append(Val_Str::mk("testTuple"));
-    t->append(Val_Int32::mk(i));
+    t->append(Val_Int64::mk(i));
     t->append(Val_Str::mk("middle"));
-    t->append(Val_Int32::mk(i));
+    t->append(Val_Int64::mk(i));
     t->freeze();
 
     // The insertion should return false
@@ -342,9 +340,9 @@ testTable2::testSizeLimitMulti()
        i++) {
     TuplePtr t(new Tuple());
     t->append(Val_Str::mk("testTuple"));
-    t->append(Val_Int32::mk(i + SIZE));
+    t->append(Val_Int64::mk(i + SIZE));
     t->append(Val_Str::mk("middle"));
-    t->append(Val_Int32::mk(i + SIZE));
+    t->append(Val_Int64::mk(i + SIZE));
     t->freeze();
 
     // The insertion should return true
@@ -370,18 +368,18 @@ void
 testTable2::testSuperimposedIndexRemoval()
 {
   TuplePtr a = Tuple::mk();
-  a->append(Val_Int32::mk(0));
-  a->append(Val_Int32::mk(10));
+  a->append(Val_Int64::mk(0));
+  a->append(Val_Int64::mk(10));
   a->freeze();
   
   TuplePtr b = Tuple::mk();
-  b->append(Val_Int32::mk(0));
-  b->append(Val_Int32::mk(15));
+  b->append(Val_Int64::mk(0));
+  b->append(Val_Int64::mk(15));
   b->freeze();
   
   TuplePtr c = Tuple::mk();
-  c->append(Val_Int32::mk(0));
-  c->append(Val_Int32::mk(5));
+  c->append(Val_Int64::mk(0));
+  c->append(Val_Int64::mk(5));
   c->freeze();
   
 
@@ -443,13 +441,13 @@ void
 testTable2::testPrimaryOverwrite()
 {
   TuplePtr a = Tuple::mk();
-  a->append(Val_Int32::mk(0));
-  a->append(Val_Int32::mk(10));
+  a->append(Val_Int64::mk(0));
+  a->append(Val_Int64::mk(10));
   a->freeze();
   
   TuplePtr b = Tuple::mk();
-  b->append(Val_Int32::mk(0));
-  b->append(Val_Int32::mk(15));
+  b->append(Val_Int64::mk(0));
+  b->append(Val_Int64::mk(15));
   b->freeze();
   
   // Create a table with unique first fields.
@@ -495,14 +493,14 @@ void
 testTable2::testProjectedLookups()
 {
   TuplePtr a = Tuple::mk();
-  a->append(Val_Int32::mk(0));
-  a->append(Val_Int32::mk(10));
-  a->append(Val_Int32::mk(0));
+  a->append(Val_Int64::mk(0));
+  a->append(Val_Int64::mk(10));
+  a->append(Val_Int64::mk(0));
   a->freeze();
   
   TuplePtr b = Tuple::mk();
-  b->append(Val_Int32::mk(1));
-  b->append(Val_Int32::mk(0));
+  b->append(Val_Int64::mk(1));
+  b->append(Val_Int64::mk(0));
   b->freeze();
   
   // Create a table with unique first fields.
@@ -754,7 +752,7 @@ Tracker2::test()
           for (uint i = 0;
                i < _tuple->size();
                i++) {
-            k.push_back(Val_UInt32::cast((*_tuple)[i]));
+            k.push_back(Val_Int64::cast((*_tuple)[i]));
           }
           _table.secondaryIndex(k);
         }
@@ -881,20 +879,8 @@ Tracker2::fetchCommand()
     } else {
       // Identify any type information.
       ValuePtr intField;
-      switch (field[field.length() - 1]) {
-      case 'U':
-        // This should be unsigned 64bit
-        intField = Val_UInt64::mk(Val_UInt64::cast(Val_Str::mk(field)));
-        break;
-      case 'u':
-        // This should be unsigned 32bit
-        intField = Val_UInt32::mk(Val_UInt32::cast(Val_Str::mk(field)));
-        break;
-      default:
-        // Interpret as signed 32bit
-        intField = Val_Int32::mk(Val_Int32::cast(Val_Str::mk(field)));
-        break;
-      }
+      // Interpret as signed 32bit
+      intField = Val_Int64::mk(Val_Int64::cast(Val_Str::mk(field)));
       _tuple->append(intField);
     }
   }
@@ -1036,8 +1022,8 @@ testTable2::testSecondaryEquivalence()
        i < TUPLES;
        i++) {
     TuplePtr t = Tuple::mk();
-    t->append(Val_Str::mk(Val_Str::cast(Val_UInt32::mk((i + ((i + 1) % (GROUPS - 1)))/(GROUPS)))));
-    t->append(Val_UInt32::mk(i % GROUPS));
+    t->append(Val_Str::mk(Val_Str::cast(Val_Int64::mk((i + ((i + 1) % (GROUPS - 1)))/(GROUPS)))));
+    t->append(Val_Int64::mk(i % GROUPS));
     t->freeze();
   }
 
@@ -1049,7 +1035,7 @@ testTable2::testSecondaryEquivalence()
   for (uint i = 0;
        i < GROUPS;
        i++) {
-    ValuePtr iVal = Val_UInt32::mk(i);
+    ValuePtr iVal = Val_Int64::mk(i);
     TuplePtr lookupT = Tuple::mk();
     lookupT->append(emptyString);
     lookupT->append(iVal);
@@ -1423,11 +1409,11 @@ testTable2::testIndexing()
       i < SIZE;
       i++) {
     TuplePtr t = Tuple::mk();
-    t->append(Val_UInt32::mk(i));
-    t->append(Val_UInt32::mk(i/2));
-    t->append(Val_UInt32::mk(i/4));
-    t->append(Val_UInt32::mk(i % (SIZE/2)));
-    t->append(Val_UInt32::mk(i % (SIZE/4)));
+    t->append(Val_Int64::mk(i));
+    t->append(Val_Int64::mk(i/2));
+    t->append(Val_Int64::mk(i/4));
+    t->append(Val_Int64::mk(i % (SIZE/2)));
+    t->append(Val_Int64::mk(i % (SIZE/4)));
     t->freeze();
     tpls[i] = t;
   }
@@ -1447,11 +1433,11 @@ testTable2::testIndexing()
         i< SIZE/2;
         i++) { 
       TuplePtr t = Tuple::mk();
-      t->append(Val_UInt32::mk(i));
-      t->append(Val_UInt32::mk(i/2));
-      t->append(Val_UInt32::mk(i/4));
-      t->append(Val_UInt32::mk(i % (SIZE/2)));
-      t->append(Val_UInt32::mk(i));
+      t->append(Val_Int64::mk(i));
+      t->append(Val_Int64::mk(i/2));
+      t->append(Val_Int64::mk(i/4));
+      t->append(Val_Int64::mk(i % (SIZE/2)));
+      t->append(Val_Int64::mk(i));
       t->freeze();
       BOOST_CHECK_MESSAGE(!tbl.lookup(Table2::theKey(CommonTable::KEY0), t)->done(),
                           "Table test. Lookup "
@@ -1459,11 +1445,11 @@ testTable2::testIndexing()
                           << ".  Tuple is not in the table but should.");
       
       t = Tuple::mk();
-      t->append(Val_UInt32::mk(i + SIZE/2));
-      t->append(Val_UInt32::mk(i/2));
-      t->append(Val_UInt32::mk(i/4));
-      t->append(Val_UInt32::mk(i % (SIZE/2)));
-      t->append(Val_UInt32::mk(i));
+      t->append(Val_Int64::mk(i + SIZE/2));
+      t->append(Val_Int64::mk(i/2));
+      t->append(Val_Int64::mk(i/4));
+      t->append(Val_Int64::mk(i % (SIZE/2)));
+      t->append(Val_Int64::mk(i));
       t->freeze();
       BOOST_CHECK_MESSAGE(tbl.lookup(Table2::theKey(CommonTable::KEY0), t)->done(),
                           "Table test. Lookup "
@@ -1487,11 +1473,11 @@ testTable2::testIndexing()
         i < SIZE / 4;
         i++) { 
       TuplePtr t = Tuple::mk();
-      t->append(Val_UInt32::mk(i));
-      t->append(Val_UInt32::mk(i));
-      t->append(Val_UInt32::mk(i));
-      t->append(Val_UInt32::mk(i));
-      t->append(Val_UInt32::mk(i));
+      t->append(Val_Int64::mk(i));
+      t->append(Val_Int64::mk(i));
+      t->append(Val_Int64::mk(i));
+      t->append(Val_Int64::mk(i));
+      t->append(Val_Int64::mk(i));
       t->freeze();
       Table2::Iterator iter = tbl.lookup(Table2::theKey(CommonTable::KEY4), t);
       for (uint counter = 0;
@@ -1548,7 +1534,7 @@ testTable2::testAvoidIndexTail()
   TuplePtr per = Tuple::mk();
   per->append(Val_Str::mk("per"));
   per->append(Val_Str::mk("localhost:10001"));
-  per->append(Val_Int32::mk(0));
+  per->append(Val_Int64::mk(0));
   per->freeze();
 
   Table2::Iterator i = table.lookup(Table2::theKey(CommonTable::KEY1), per);
@@ -1579,11 +1565,11 @@ testTable2::testBatchRemovals()
       i < SIZE;
       i++) {
     TuplePtr t = Tuple::mk();
-    t->append(Val_Int32::mk(i));
-    t->append(Val_Int32::mk(i/2));
-    t->append(Val_Int32::mk(i/4));
-    t->append(Val_Int32::mk(i % (SIZE/2)));
-    t->append(Val_Int32::mk(i % (SIZE/4)));
+    t->append(Val_Int64::mk(i));
+    t->append(Val_Int64::mk(i/2));
+    t->append(Val_Int64::mk(i/4));
+    t->append(Val_Int64::mk(i % (SIZE/2)));
+    t->append(Val_Int64::mk(i % (SIZE/4)));
     t->freeze();
     tpls[i] = t;
   }
@@ -1623,11 +1609,11 @@ testTable2::testBatchMultikeyRemovals()
       i < SIZE;
       i++) {
     TuplePtr t = Tuple::mk();
-    t->append(Val_Int32::mk(i));
-    t->append(Val_Int32::mk(i/2));
-    t->append(Val_Int32::mk(i/4));
-    t->append(Val_Int32::mk(i % (SIZE/2)));
-    t->append(Val_Int32::mk(i % (SIZE/4)));
+    t->append(Val_Int64::mk(i));
+    t->append(Val_Int64::mk(i/2));
+    t->append(Val_Int64::mk(i/4));
+    t->append(Val_Int64::mk(i % (SIZE/2)));
+    t->append(Val_Int64::mk(i % (SIZE/4)));
     t->freeze();
     tpls[i] = t;
   }
@@ -1668,11 +1654,11 @@ testTable2::testUniqueTupleRemovals()
       i < SIZE;
       i++) {
     TuplePtr t = Tuple::mk();
-    t->append(Val_Int32::mk(i));
-    t->append(Val_Int32::mk(i/2));
-    t->append(Val_Int32::mk(i/4));
-    t->append(Val_Int32::mk(i % (SIZE/2)));
-    t->append(Val_Int32::mk(i % (SIZE/4)));
+    t->append(Val_Int64::mk(i));
+    t->append(Val_Int64::mk(i/2));
+    t->append(Val_Int64::mk(i/4));
+    t->append(Val_Int64::mk(i % (SIZE/2)));
+    t->append(Val_Int64::mk(i % (SIZE/4)));
     t->freeze();
     tpls[i] = t;
   }
@@ -1713,7 +1699,7 @@ testTable2::testPseudoRandomInsertDeleteSequences()
     // Create a table with fixed lifetime but no size
     boost::posix_time::
       time_duration expiration(boost::posix_time::milliseconds(200));
-    Table2 t("succ", Table2::theKey(CommonTable::KEY2), Table2::NO_SIZE, expiration);
+    Table2 t("succ", Table2::theKey(CommonTable::KEY2), CommonTable::NO_SIZE, expiration);
     for (uint i = 0;
          i < SIZE + EXTRA_TUPLES;
          i++) {
@@ -1756,7 +1742,7 @@ testTable2::testPseudoRandomInsertDeleteSequences()
   }
   {
     // Create a table with fixed size but not lifetime
-    Table2 t("succ", Table2::theKey(CommonTable::KEY2), 100, Table2::NO_EXPIRATION);
+    Table2 t("succ", Table2::theKey(CommonTable::KEY2), 100, CommonTable::NO_EXPIRATION);
     for (uint i = 0;
          i < SIZE + EXTRA_TUPLES;
          i++) {

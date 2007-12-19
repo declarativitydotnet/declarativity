@@ -41,7 +41,7 @@
 #include "slot.h"
 #include "val_str.h"
 #include "val_tuple.h"
-#include "val_uint64.h"
+#include "val_int64.h"
 #include "demux.h"
 #include "roundRobin.h"
 #include "marshalField.h"
@@ -76,7 +76,7 @@ sendMessages(std::string udpAddress)
     conf->addElement(ElementPtr(new StaticTupleSource("Source",
                                                       tuple)));
   ElementSpecPtr pusherS =
-    conf->addElement(ElementPtr(new TimedPullPush("Push", 0.5)));
+    conf->addElement(ElementPtr(new TimedPullPush("Push", 0.5, 0)));
   ElementSpecPtr slotS =
     conf->addElement(ElementPtr(new Slot("Slot")));
   ElementSpecPtr marshalS =

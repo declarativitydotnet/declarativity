@@ -17,7 +17,7 @@
 #include<iostream>
 #include "loop.h"
 #include "val_str.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "scheduler.h"
 
 DEFINE_ELEMENT_INITS(Queue, "Queue")
@@ -44,7 +44,7 @@ Queue::Queue(TuplePtr args)
     _stateProxy(new IStateful()),
     _pullCB(0),
     _pushCB(0),
-    _size(Val_UInt32::cast((*args)[3])),
+    _size(Val_Int64::cast((*args)[3])),
     _type(args->size() > 4 ? Val_Str::cast((*args)[4]) : "basic")
 {
 }
@@ -69,9 +69,9 @@ int Queue::push(int port, TuplePtr p, b_cbv cb)
   _stateProxy->size(_q.size());
 
 
-  ELEM_INFO("Push "
+  ELEM_INFO("Just received Push of '"
             << p->toString()
-            << ", queuesize="
+            << "', current queuesize="
             << _q.size());
   if (_pullCB) {
     // is there a pending callback? If so, wake it up
@@ -83,6 +83,7 @@ int Queue::push(int port, TuplePtr p, b_cbv cb)
 
   // have we reached the max size? If so, we have to wait
   if (_q.size() == _size) {
+    std::cerr << "QUEUE REACHED MAX SIZE FROM TUPLE: " << p->toString() << std::endl;
     ELEM_INFO("Queue has reach max size, queuesize=" << _q.size());
     _pushCB = cb;
     return 0;

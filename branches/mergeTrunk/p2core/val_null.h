@@ -27,7 +27,7 @@ public:
   // The type name
   const Value::TypeCode typeCode() const { return Value::NULLV; };
   const char *typeName() const { return "null"; };
-  string toString() const { return "NULL"; };
+  string toString() const;
   virtual string toConfString() const;
   virtual unsigned int
   size() const;

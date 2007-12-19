@@ -48,7 +48,7 @@ PelTransform::simple_action(TuplePtr p)
     // The transform failed.  Return nothing
     ELEM_ERROR("Pel VM execution on "
                << p->toString()
-               << " failed.");
+               << " failed. PEL CODE: " + _pelCode);
     return TuplePtr();
   } else {
     // The transform succeeded.

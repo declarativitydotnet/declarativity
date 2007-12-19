@@ -34,6 +34,8 @@
 #include "aggFuncLoader.h"
 #include "langLoader.h"
 #include "functionLoader.h"
+#include "programLoader.h"
+#include "compileContext.h"
 
 enum TransportConf {NONE=0, RELIABLE=1, ORDERED=2, CC=4, RCC=5, TERMINAL=6};
 
@@ -106,8 +108,9 @@ string stub(string hostname, string port, TransportConf conf)
 	  //in theory, internal queue must be made infinite to avoid deadlock
  	  //to be absolutely sure.
        << "\tseaInput -> [0]intQMux -> PelTransform(\"unpackage\", \"$1 unboxPop\") -> "
-       << "\tQueue(\"intQ\", 100,\"internal\") -> PullPush(\"IntQPP\",0) -> intDemux[0] -> "
-       << "Print(\"Unrecognized Message\") -> Discard(\"discard\");\n"
+       << "\tQueue(\"intQ\", 100000,\"internal\") -> PullPush(\"IntQPP\",0) -> "
+       << "\tintDemux[0] -> "
+       << "Discard(\"discard\");\n"
           //start the rule output process
        << "\tintDRR -> PullPush(\"SEAOutputPP\",0) -> intExtDemux;\n"
 	  //External events to commitbuf, to netOut
@@ -116,37 +119,67 @@ string stub(string hostname, string port, TransportConf conf)
        << "\tintExtDemux[0] -> [1]intQMux;\n";
 
   /* Connect the default compiler stages */
-  stub << "\tintDemux[+ \"" << PROGRAM << "\"] -> CompileStage(\"compileStage\") -> "
-       << "\tPelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
-       << "\tQueue(\"csQ\", 10) -> [+]extDRR;\n";
+  stub << "\tintDemux[+ \"" << PROGRAM << "\"] -> "
+       << "CompileStage(\"compileStage\") -> "
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
+
+  stub << "\tintDemux[+ \"" << ERROR_STREAM << "\"] -> "
+       << "PelTransform(\"errorStreamPel\",  \"\\\"" << PERROR << "\\\" pop swallow unbox drop popall\") -> " 
+       << "\tInsert2(\"errorStreamAdd\", \"" << PERROR << "\");\n";
+
+  stub << "\tintDemux[+ \"" << PROGRAM_STREAM << "\"] -> "
+       << "PelTransform(\"programStreamPel\",  \"\\\"" << PROGRAM << "\\\" pop swallow unbox drop popall\") -> " 
+       << "\tInsert2(\"programStreamAdd\", \"" << PROGRAM << "\");\n";
+
 
   stub << "\tintDemux[+ \"parse::programEvent\"] -> ParseContext(\"parse\") -> "
-       << "\tInsert2(\"parseInsert\", \"" << PROGRAM << "\");\n";
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
+
+  stub << "\tintDemux[+ \"rewrite0::programEvent\"]   -> Rewrite0Context(\"rewrite0\") -> "
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
+
+  stub << "\tintDemux[+ \"secure::programEvent\"]   -> SecureContext(\"secure\") -> "
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
+
+  stub << "\tintDemux[+ \"rewrite1::programEvent\"]   -> Rewrite1Context(\"rewrite1\") -> "
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
+
+  stub << "\tintDemux[+ \"rewrite2::programEvent\"]   -> Rewrite2Context(\"rewrite2\") -> "
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"eca::programEvent\"]   -> EcaContext(\"eca\") -> "
-       << "\tInsert2(\"ecaInsert\", \"" << PROGRAM << "\");\n";
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
-  stub << "\tintDemux[+ \"local::programEvent\"] -> LocalContext(\"local\") -> "
-       << "\tInsert2(\"localInsert\", \"" << PROGRAM << "\");\n";
-
-  stub << "\tintDemux[+ \"rewrite::programEvent\"] -> RewriteContext(\"rewrite\") -> "
-       << "\tInsert2(\"rewriteInsert\", \"" << PROGRAM << "\");\n";
+  stub << "\tintDemux[+ \"compound::programEvent\"]   -> CompoundContext(\"compound\") -> "
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"debug::programEvent\"] -> DebugContext(\"debug\") -> "
-       << "\tInsert2(\"debugInsert\", \"" << PROGRAM << "\");\n";
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"planner::programEvent\"] -> "
        << "PlannerContext(\"planner\", \"main\", \"intDemux\", \"intDRR\", \"extDRR\") -> "
-       << "\tInsert2(\"plannerInsert\", \"" << PROGRAM << "\");\n";
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"p2dl::programEvent\"] -> P2DLContext(\"p2dl\") -> "
-       << "\tInsert2(\"p2dlInsert\", \"" << PROGRAM << "\");\n";
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"installed::programEvent\"] -> "
-       << "\tInsert2(\"installInsert\", \"" << PROGRAM << "\");\n";
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
   if(conf & TERMINAL) {
-    stub << "\t\tCompileTerminal(\"ct\") -> Insert2(\"ctInsert\", \"" << PROGRAM << "\");\n";
+    stub << "\t\tProgramLoader(\"loader\") -> Insert2(\"ctInsert\", \"" << PROGRAM << "\");\n";
   }
   stub << "};/**END MAIN*/\n\n";
 
@@ -179,7 +212,7 @@ static char* USAGE = "Usage:\n\t runStagedOverLog\n"
 
                      "\t\t[-o <overLogFile> (default: standard input)]\n"
                      "\t\t[-d <startDelay> (default: 0)]\n"
-                     "\t\t[-g (produce a DOT graph)]\n"
+                     "\t\t[-g <filename> (produce a DOT graph)]\n"
                      "\t\t[-c (output canonical form)]\n"
                      "\t\t[-v (show stages of planning)]\n"
                      "\t\t[-x (dry run, don't start dataflow)]\n"
@@ -197,12 +230,13 @@ main(int argc, char **argv)
 
 
   string overLogFile("-");
-  string derivativeFile("stdin");
+  string dotFile("-");
   double delay = 0.0;
-  bool outputDot = false;
+  //  bool outputDot = false;
   bool run = true;
   bool outputCanonicalForm = false;
   bool outputStages = false;
+  bool preprocess = true;
 
   Reporting::setLevel(Reporting::ERROR);
   // Parse command line options
@@ -235,25 +269,20 @@ main(int argc, char **argv)
       seed = atoi(optarg);
       break;
 
-
-
-
-
     case 'o':
       overLogFile = optarg;
-      if (overLogFile == "-") {
-        derivativeFile = "stdin";
-      } else {
-        derivativeFile = overLogFile;
-      }
       break;
 
     case 'g':
-      outputDot = true;
+      dotFile = optarg;
       break;
 
     case 'c':
       outputCanonicalForm = true;
+      break;
+
+    case 'm':
+      preprocess = false;
       break;
 
     case 'x':
@@ -287,16 +316,6 @@ main(int argc, char **argv)
   }
   TELL_INFO << "\n";
 
-
-
-
-
-  if (overLogFile == "-") {
-    derivativeFile = "stdin";
-  } else {
-    derivativeFile = overLogFile;
-  }
-  
   TELL_INFO << "Running from translated file \"" << overLogFile << "\"\n";
 
   std::ostringstream myAddressBuf, myPortBuf;
@@ -308,22 +327,11 @@ main(int argc, char **argv)
   
   TELL_INFO << "My start delay is " << delay << "\n";
 
-
-
-
-
-
-
   try {
     loadAllModules();
 
     // Set up my NodeID table
-    CommonTablePtr nodeIDTbl = Plumber::catalog()->table(NODEID);
-    TuplePtr nodeIDTp = Tuple::mk(NODEID);
-    nodeIDTp->append(Val_Str::mk(myAddress));
-    nodeIDTp->append(Val_Str::mk(myAddress));
-    nodeIDTp->freeze();
-    assert(nodeIDTbl->insert(nodeIDTp));
+    Plumber::catalog()->nodeid(Val_Str::mk(myAddress), Val_Str::mk(myAddress));
     assert(Plumber::catalog()->nodeid());
 
     // Set up my arguments table
@@ -367,8 +375,28 @@ main(int argc, char **argv)
     string dfdesc = stub(myHostname, myPort, TERMINAL);
 
     eventLoopInitialize();
+    TELL_INFO << "Stub dataflow is:\n----\n"
+              << dfdesc
+              << "\n----\n";
     compile::Context *context = new compile::p2dl::Context("p2dl", dfdesc);
-    Plumber::toDot("runOverlog.dot");
+
+    Plumber::DataflowPtr main = Plumber::dataflow("main");
+    ElementPtr loaderElement = main->find("loader")->element();
+    ProgramLoader *loader = dynamic_cast<ProgramLoader*>(loaderElement.get());
+    if (overLogFile != "-") {
+      if (!definitions.empty() && !preprocess) {
+        TELL_WARN << "You are suppressed preprocessing (via -m) "
+                  << "but have also supplied extra macros (via -D). "
+                  << "All macro definitions will be ignored.\n";
+      }   
+      
+      loader->program("commandLine", overLogFile, "",
+                      (preprocess ) ? &definitions : NULL);
+    }
+
+    if (dotFile != "-") {
+      loader->dot(dotFile);
+    }
     delete context;
     eventLoop(); 
   } catch (TableManager::Exception& e) {

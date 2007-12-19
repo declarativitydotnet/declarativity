@@ -14,7 +14,7 @@
   #include <iostream>
   #include "val_str.h"
   #include "val_list.h"
-  #include "val_uint32.h"
+  #include "val_int64.h"
   #include "val_tuple.h"
   #include "p2dlContext.h"
 
@@ -55,7 +55,6 @@
 %token P2DL_MINUS
 %token P2DL_ASSIGN
 %token P2DL_WATCH
-%token P2DL_TABLE
 %token P2DL_FACT
 %token P2DL_EOF 
 
@@ -76,18 +75,14 @@
   compile::p2dl::StatementList  *u_stmtlist;
   compile::p2dl::Graph          *u_graph;
   compile::p2dl::Edit           *u_edit;
-  compile::p2dl::Table          *u_table;
   compile::p2dl::Watch          *u_watch;
   compile::p2dl::Fact           *u_fact;
-  Table2::Key                   *u_key;
   ValueList                     *u_valuelist;
 }
 
 %type<u_graph>     graph;
 %type<u_edit>      edit;
 %type<u_stmtlist>  graphbody editbody;
-%type<u_table>     table;
-%type<u_key>       key keylist;
 %type<u_watch>     watch;
 %type<u_fact>      fact;
 %type<u_valuelist> factbody elementargs;
@@ -112,7 +107,6 @@ clauselist: clause
 
 clause:  graph P2DL_SEMICOLON  { ctxt->graph($1); }
       |  edit  P2DL_SEMICOLON  { ctxt->edit($1); }
-      |  table P2DL_SEMICOLON  { ctxt->table($1); }
       |  fact  P2DL_SEMICOLON  { ctxt->fact($1); }
       |  watch P2DL_SEMICOLON  { ctxt->watch($1); }
       ; 
@@ -157,21 +151,21 @@ editstrandlist: editstrandlink
 
 editstrandlink: editstrandatom 
                   { $$ = new compile::p2dl::Link($1, 
-                    new compile::p2dl::Port(new compile::p2dl::Value(Val_UInt32::mk(0))), 
-                    new compile::p2dl::Port(new compile::p2dl::Value(Val_UInt32::mk(0)))); }
+                    new compile::p2dl::Port(new compile::p2dl::Value(Val_Int64::mk(0))), 
+                    new compile::p2dl::Port(new compile::p2dl::Value(Val_Int64::mk(0)))); }
               | P2DL_LSQUB port P2DL_RSQUB editstrandatom
                   { $$ = new compile::p2dl::Link($4, $2, 
-                    new compile::p2dl::Port(new compile::p2dl::Value(Val_UInt32::mk(0)))); }
+                    new compile::p2dl::Port(new compile::p2dl::Value(Val_Int64::mk(0)))); }
               | editstrandatom P2DL_LSQUB port P2DL_RSQUB
                   { $$ = new compile::p2dl::Link($1, 
-                    new compile::p2dl::Port(new compile::p2dl::Value(Val_UInt32::mk(0))), $3); }
+                    new compile::p2dl::Port(new compile::p2dl::Value(Val_Int64::mk(0))), $3); }
               | P2DL_LSQUB port P2DL_RSQUB 
                 editstrandatom P2DL_LSQUB port P2DL_RSQUB
                   { $$ = new compile::p2dl::Link($4, $2, $6); }
               ;
 
 graph: P2DL_GRAPH P2DL_VAR 
-       P2DL_LPAR P2DL_UNSIGNED P2DL_COMMA P2DL_UNSIGNED 
+       P2DL_LPAR P2DL_NUMBER P2DL_COMMA P2DL_NUMBER 
        P2DL_COMMA P2DL_STRING P2DL_COMMA P2DL_STRING P2DL_RPAR
        P2DL_LCURB graphbody P2DL_RCURB
          { $$ = new compile::p2dl::Graph($2, $4, $6, $8, $10, $13); }
@@ -194,32 +188,12 @@ graphbody: assign P2DL_SEMICOLON
              { $$ = $3; $$->push_front($1); }
          ;
 
-table: P2DL_TABLE P2DL_LPAR P2DL_NAME P2DL_COMMA
-       P2DL_STRING P2DL_COMMA P2DL_NUMBER P2DL_COMMA key P2DL_RPAR P2DL_SEMICOLON 
-         { $$ = new compile::p2dl::Table($3, $5, $7, $9); } 
-     ;
-
-key: P2DL_LPAR keylist P2DL_RPAR 
-       { $$ = $2; }
-   ;
-
-keylist: P2DL_UNSIGNED 
-           { unsigned k = Val_UInt32::cast(dynamic_cast<compile::p2dl::Value*>($1)->value());
-             $$ = new Table2::Key(); 
-             $$->push_back(k); }
-         | 
-         P2DL_UNSIGNED P2DL_COMMA keylist 
-           { unsigned k = Val_UInt32::cast(dynamic_cast<compile::p2dl::Value*>($1)->value());
-             $$ = $3; 
-             $$->insert($$->begin(), k); }
-         ; 
-
 watch: P2DL_WATCH P2DL_LPAR P2DL_NAME P2DL_RPAR P2DL_SEMICOLON 
          { $$ = new compile::p2dl::Watch($3); }
        ;
 
-fact: P2DL_FACT P2DL_NAME P2DL_LPAR factbody P2DL_RPAR P2DL_SEMICOLON
-        { $$ = new compile::p2dl::Fact($2, $4); }
+fact: P2DL_FACT P2DL_LPAR factbody P2DL_RPAR
+        { $$ = new compile::p2dl::Fact($3); }
     ;
 
 factbody: value
@@ -252,20 +226,20 @@ strandlist: strandlink
 
 strandlink: strandatom 
        { $$ = new compile::p2dl::Link($1, 
-         new compile::p2dl::Port(new compile::p2dl::Value(Val_UInt32::mk(0))), 
-         new compile::p2dl::Port(new compile::p2dl::Value(Val_UInt32::mk(0)))); }
+         new compile::p2dl::Port(new compile::p2dl::Value(Val_Int64::mk(0))), 
+         new compile::p2dl::Port(new compile::p2dl::Value(Val_Int64::mk(0)))); }
     | P2DL_LSQUB port P2DL_RSQUB strandatom
        { $$ = new compile::p2dl::Link($4, $2, 
-         new compile::p2dl::Port(new compile::p2dl::Value(Val_UInt32::mk(0)))); }
+         new compile::p2dl::Port(new compile::p2dl::Value(Val_Int64::mk(0)))); }
     | strandatom P2DL_LSQUB port P2DL_RSQUB
        { $$ = new compile::p2dl::Link($1, 
-         new compile::p2dl::Port(new compile::p2dl::Value(Val_UInt32::mk(0))), $3); }
+         new compile::p2dl::Port(new compile::p2dl::Value(Val_Int64::mk(0))), $3); }
     | P2DL_LSQUB port P2DL_RSQUB 
       strandatom P2DL_LSQUB port P2DL_RSQUB
        { $$ = new compile::p2dl::Link($4, $2, $6); }
     ; 
 
-port: P2DL_UNSIGNED 
+port: P2DL_NUMBER 
         { $$ = new compile::p2dl::Port($1); }
       | P2DL_STRING
         { $$ = new compile::p2dl::Port($1); }
@@ -296,7 +270,7 @@ elementarg: value | tuple
               { $$ = new compile::p2dl::Value(Val_List::mk(List::mk($1))); }
           ;
 
-value: P2DL_NUMBER | P2DL_UNSIGNED | P2DL_ID | P2DL_STRING 
+value: P2DL_DOUBLE | P2DL_NUMBER | P2DL_UNSIGNED | P2DL_ID | P2DL_STRING 
          { $$ = $1; }
      ;
 
@@ -342,7 +316,7 @@ static int p2dl_parser_lex (YYSTYPE *lvalp, compile::p2dl::Context *ctxt)
 static void p2dl_parser_error(compile::p2dl::Context *ctxt, string msg)
 {
   std::cerr << "PARSE ERROR: line " << ctxt->lexer->line_num() << ", " 
-            << "token: " << ctxt->lexer->current_token() << ", " << msg << std::endl;
+            << "token: " << ctxt->lexer->current_token() << ". " << msg << std::endl;
   ctxt->error(msg);
 }
 

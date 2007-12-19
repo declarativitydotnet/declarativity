@@ -13,8 +13,7 @@
 #include <iostream>
 #include "roundTripTimer.h"
 #include "loop.h"
-#include "val_uint64.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "val_double.h"
 #include "val_str.h"
 #include "val_tuple.h"
@@ -84,7 +83,7 @@ int RoundTripTimer::push(int port, TuplePtr tp, b_cbv cb)
     if ((*tp)[1]->typeCode() == Value::STR && Val_Str::cast((*tp)[1]) == "ACK") {
       // Acknowledge tuple and update measurements.
       ValuePtr dest = (*tp)[DEST+2];			// Destination address
-      SeqNum   seq  = Val_UInt64::cast((*tp)[SEQ+2]);	// Sequence number
+      SeqNum   seq  = Val_Int64::cast((*tp)[SEQ+2]);	// Sequence number
       RTTIndex::iterator iter = rttmap_.find(dest);
       if (iter == rttmap_.end()) {
         TELL_INFO << "RTT TIMER UNKNOWN DESTINATION: " << dest->toString() << std::endl;
@@ -102,7 +101,7 @@ int RoundTripTimer::push(int port, TuplePtr tp, b_cbv cb)
  */
 TuplePtr RoundTripTimer::simple_action(TuplePtr p)
 {
-  SeqNum   seq  = Val_UInt64::cast((*p)[SEQ]);
+  SeqNum   seq  = Val_Int64::cast((*p)[SEQ]);
   ValuePtr dest = (*p)[DEST];
 
   RTTIndex::iterator iter = rttmap_.find(dest);

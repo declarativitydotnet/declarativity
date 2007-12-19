@@ -28,10 +28,13 @@
 #include <limits.h>
 #include <stdlib.h>
 #include "val_null.h"
-#include "val_int32.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "val_double.h"
 #include "val_id.h"
+
+#include "reporting.h"
+#define LOG_ERROR(_x) { TELL_ERROR << "P2DL_Lexer: " << _x << "\n"; }
+#define LOG_WARN(_x) { TELL_WARN << "P2DL_Lexer: " << _x << "\n"; }
 
 #ifdef YY_DECL
 #undef YY_DECL
@@ -114,7 +117,6 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>graph   { return P2DL_GRAPH; }
 <INITIAL>install { return P2DL_INSTALL; }
 <INITIAL>edit    { return P2DL_EDIT; }
-<INITIAL>table   { return P2DL_TABLE; }
 <INITIAL>watch   { return P2DL_WATCH; }
 <INITIAL>fact    { return P2DL_FACT; }
 <INITIAL>"->"    { return P2DL_LINK; }
@@ -140,9 +142,9 @@ WHITESPACE	[ \t\r\n]+
   lvalp->v = new compile::p2dl::Value(Val_Null::mk()); return P2DL_NULL; }
 
 <INITIAL>"true" { 
-  lvalp->v = new compile::p2dl::Value(Val_UInt32::mk(1)); return P2DL_UNSIGNED; }
+  lvalp->v = new compile::p2dl::Value(Val_Int64::mk(1)); return P2DL_UNSIGNED; }
 <INITIAL>"false" { 
-  lvalp->v = new compile::p2dl::Value(Val_UInt32::mk(0)); return P2DL_UNSIGNED; }
+  lvalp->v = new compile::p2dl::Value(Val_Int64::mk(0)); return P2DL_UNSIGNED; }
 
 <INITIAL>[a-z]{ALNUM}* { 
   lvalp->v = new compile::p2dl::Variable(Val_Str::mk(yytext)); 
@@ -153,15 +155,19 @@ WHITESPACE	[ \t\r\n]+
   return P2DL_NAME; 
 }
 
-<INITIAL>({DIGIT}+|0[xX]{HEXDIGIT}+) {
+<INITIAL>({DIGIT}+|0[xX]{HEXDIGIT}+)U {
   // Unsigned integer literal (including octal and/or hex
-  lvalp->v = new compile::p2dl::Value(Val_UInt32::mk(strtoul(yytext,NULL,0)));
+  LOG_WARN("Unsigned integers of the form '"
+           << yytext
+           << "' have been deprecated. For backward compatibility "
+           << "they are interpreted as signed 64-bit integers.");
+  lvalp->v = new compile::p2dl::Value(Val_Int64::mk(strtoul(yytext,NULL,0)));
   return P2DL_UNSIGNED;
 }
 
 <INITIAL>(-?{DIGIT}+|0[xX]{HEXDIGIT}+) {
   // Some integer literal (including octal and/or hex
-  lvalp->v = new compile::p2dl::Value(Val_Int32::mk(strtol(yytext,NULL,0)));
+  lvalp->v = new compile::p2dl::Value(Val_Int64::mk(strtol(yytext,NULL,0)));
   return P2DL_NUMBER;
 }
 

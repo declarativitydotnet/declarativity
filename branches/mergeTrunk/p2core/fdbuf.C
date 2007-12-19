@@ -15,7 +15,6 @@
  */
 
 #include "fdbuf.h"
-
 #include <cerrno>
 #include <unistd.h>
 #include <sys/types.h>
@@ -25,26 +24,30 @@
 //
 // Constructor
 //
-Fdbuf::Fdbuf(int init_capacity, bool is_safe)
+Fdbuf::Fdbuf(int init_capacity, bool is_safe, bool _reader)
   : capacity(align(init_capacity)),
     len(0),
     start(0),
     err(0),
     data(new char[capacity]),
-    safe(is_safe)
+    safe(is_safe),
+    reader(_reader)
 {
 }
+
 
 // 
 // Destructor
 //
 Fdbuf::~Fdbuf()
 {
-  if (data) {
-    if (safe) {
-      memset(data, 0, capacity);
+  if(!reader){
+    if (data) {
+      if (safe) {
+	memset(data, 0, capacity);
+      }
+      delete[] data;
     }
-    delete[] data;
   }
 }
 
@@ -77,6 +80,7 @@ ssize_t Fdbuf::recvfrom(int sd, uint32_t max_read, int flags,
 // Appending a string
 Fdbuf &Fdbuf::pushString(const std::string &s)
 {
+  assert(!reader);
   ensure_additional(s.length());
   s.copy(data + start + len, s.length(), 0);
   len += s.length();
@@ -85,11 +89,13 @@ Fdbuf &Fdbuf::pushString(const std::string &s)
 
 Fdbuf &Fdbuf::pushString(const char *str)
 {
+  assert(!reader);
   return push_bytes(str, strlen(str));
 }
 
 Fdbuf &Fdbuf::pushFdbuf(const Fdbuf &fb, uint32_t max_size)
 {
+  assert(!reader);
   return push_bytes(fb.data + fb.start, std::min(fb.len, max_size));
 }
 
@@ -125,6 +131,35 @@ ssize_t Fdbuf::sendto(int sd, ssize_t max_write, int flags,
 			     flags, to, tolen));
 }
 
+/**
+ larger buffer is bigger
+ **/
+int Fdbuf::compareTo(FdbufPtr f) const{
+  if(f == NULL)
+  {
+    if(len == 0){
+      return 0;
+    }
+    else{
+      return 1;
+    }
+  }
+  else{
+    if(len < f->length()){
+      return -1;
+    }
+    else if(len > f->length()){
+      return 1;
+    }
+    else{
+      //compare buffers:
+      char *me = raw_inline();
+      char *other = f->raw_inline();
+      return memcmp( me, other, len );
+    }
+  }
+  
+}
 //
 // Extracting values
 //
@@ -136,6 +171,7 @@ Fdbuf::pop_uint32()
     v = *((u_int32_t *)(data + start));
     len -= sizeof(u_int32_t);
     start += sizeof(u_int32_t);
+
   }
   return v;
 }
@@ -144,12 +180,37 @@ Fdbuf::pop_uint32()
 Fdbuf&
 Fdbuf::push_uint32(const u_int32_t l)
 {
+  assert(!reader);
   ensure_additional(sizeof(u_int32_t));
   *((u_int32_t *)(data + start + len)) = l;
   len += sizeof(u_int32_t);
   return *this;
 }
 
+
+u_int64_t
+Fdbuf::pop_uint64()
+{
+  u_int64_t v = 0;
+  if (len >= sizeof(u_int64_t)) {
+    v = *((u_int64_t *)(data + start));
+    len -= sizeof(u_int64_t);
+    start += sizeof(u_int64_t);
+
+  }
+  return v;
+}
+
+
+Fdbuf&
+Fdbuf::push_uint64(const u_int64_t l)
+{
+  assert(!reader);
+  ensure_additional(sizeof(u_int64_t));
+  *((u_int64_t *)(data + start + len)) = l;
+  len += sizeof(u_int64_t);
+  return *this;
+}
 
 bool Fdbuf::pop_bytes(char *buf, uint32_t sz)
 {
@@ -167,6 +228,7 @@ bool Fdbuf::pop_bytes(char *buf, uint32_t sz)
 Fdbuf&
 Fdbuf::push_bytes(const char *buf, uint32_t sz)
 {
+  assert(!reader);
   ensure_additional(sz);
   memcpy(data + start + len, buf, sz);
   len += sz;
@@ -190,6 +252,7 @@ Fdbuf::pop_to_fdbuf(Fdbuf &fb, uint32_t to_write)
 void Fdbuf::ensure(uint32_t new_capacity)
 {
   // Always give us aligned headroom.
+  //  assert(!reader);
   new_capacity = align(new_capacity);
   if (capacity < new_capacity) {
     uint32_t new_size = (new_capacity + BUF_INCREMENT - 1) / BUF_INCREMENT * BUF_INCREMENT;
@@ -208,6 +271,7 @@ void Fdbuf::ensure(uint32_t new_capacity)
   if (capacity - start < new_capacity) {
     memcpy(data, data + start, len);
   }
+
   assert(capacity >= start + len);
 }
 

@@ -22,7 +22,7 @@
 #include "commonTable.h"
 #include "tuple.h"
 #include "val_str.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "element.h"
 #include "elementRegistry.h"
 
@@ -98,13 +98,21 @@ namespace compile {
                            CommonTable::ManagerPtr catalog,
                            TuplePtr head, TuplePtr event);
   
+      ListPtr
+      canonicalizeEvent(TuplePtrList& selections, ListPtr schema);
+
+      ListPtr
+      canonicalizeSchema(ostringstream&, string, 
+                         CommonTable::ManagerPtr, std::deque<string>&,
+                         ListPtr&, ListPtr);
+
       string probe(ostringstream& oss, string indent,
                    CommonTable::ManagerPtr catalog, 
                    TuplePtr probe, ListPtr tupleSchema, bool filter);
   
       string assign(ostringstream& oss, string indent,
                     CommonTable::ManagerPtr catalog, 
-                    TuplePtr assign, ListPtr tupleSchema);
+                    TuplePtr assign, ListPtr &tupleSchema);
   
       string select(ostringstream& oss, string indent,
                     CommonTable::ManagerPtr catalog, 

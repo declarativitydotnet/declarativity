@@ -13,10 +13,10 @@
 
 #include "p2.h"
 #include "loop.h"
-
-// For (2)wait
+// For (2)wait and kill
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <signal.h>
 
 
 #include "udp.h"
@@ -45,6 +45,59 @@
 #include "aggFuncLoader.h"
 #include "functionLoader.h"
 
+static void TELL_CPP_ERROR(char *exename, char * args[]) {
+  assert(args[0]);
+  string cmdline = args[0];
+  for(int i = 1; args[i] != NULL; i++) {
+    cmdline += " ";
+    cmdline += args[i];
+  }
+  TELL_ERROR << "The preprocessor executable is called \"" << exename << "\"\n";
+  TELL_ERROR << "It's argv was \"" << cmdline << "\"! \n";
+}
+/**
+   Run the program encoded in args.  If the process runs to completion
+   and exits normally, return it's return value.  Otherwise, exit /
+   abort.
+ */
+static int mySystem(char * args[]) {
+  pid_t pid = fork();
+  if(pid == -1) {
+    TELL_ERROR << "Cannot fork a preprocessor\n";
+    exit(1);
+  } else if(pid == 0) {
+    // child
+    if(execvp(args[0],args) == -1) {
+      TELL_ERROR << "execvp failed while invoking preprocessor" << std::endl;
+      exit(1);
+    }
+    abort(); // execvp can only return -1.
+  } else {
+    // parent
+    int status;
+    wait(&status);
+    while(!(WIFEXITED(status))) {
+      if(WIFSIGNALED(status)) {
+	// child killed by signal.  Let's kill ourselves too.
+	// (propogate signal up).
+	TELL_ERROR << "Preprocessor killed by signal "
+		   << WTERMSIG(status) << "\n";
+	TELL_CPP_ERROR(args[0],args);
+	kill(getpid(),WTERMSIG(status));
+      } else {
+	// we didn't ask to hear about this signal.  Let's be antisocial.
+	TELL_ERROR
+	  << "Something unexpected happened while running preprocessor\n";
+	TELL_CPP_ERROR(args[0],args);
+	abort();
+      }
+    }
+    // Child exited.
+    int retval = WEXITSTATUS(status);
+    return retval;
+  }
+}
+
 string
 P2::preprocessReadOverLogProgram(std::string overLogFilename,
                                  std::string derivedFilename,
@@ -52,10 +105,11 @@ P2::preprocessReadOverLogProgram(std::string overLogFilename,
 {
   string processed = derivedFilename + ".cpp";
   
+  char * cpp = "cpp";
 
   // Turn definitions vector into a cpp argument array.
   int defSize = definitions.size();
-  char* args[defSize
+  char * args[(defSize)  
              + 1                // for cpp
              + 2                // for flags -C and -P
              + 2                // for filenames
@@ -63,7 +117,7 @@ P2::preprocessReadOverLogProgram(std::string overLogFilename,
 
   int count = 0;
 
-  args[count++] = "cpp";
+  args[count++] = cpp;
   args[count++] = "-P";
   args[count++] = "-C";
 
@@ -71,7 +125,10 @@ P2::preprocessReadOverLogProgram(std::string overLogFilename,
          definitions.begin();
        i != definitions.end();
        i++) {
-    args[count] = (char*) (*i).c_str();
+    if (i->substr(2) != "-D") {
+      i->insert(0, "-D");
+    }
+    args[count] = (char*) i->c_str();
     count++;
   }
 
@@ -79,21 +136,13 @@ P2::preprocessReadOverLogProgram(std::string overLogFilename,
   args[count++] = (char*) processed.c_str();
   args[count++] = NULL;
 
-
   // Invoke the preprocessor
-  pid_t pid = fork();
-  if (pid == -1) {
-    TELL_ERROR << "Cannot fork a preprocessor\n";
-    exit(1);
-  } else if (pid == 0) {
-    if (execvp("cpp", args) < 0) {
-      TELL_ERROR << "CPP ERROR" << std::endl;
-    }
-    exit(1);
-  } else {
-    wait(NULL);
+  int ret = mySystem(args);
+  if(ret) {
+    TELL_ERROR << "Preprocessor exited with error: " << ret << std::endl;
+    TELL_CPP_ERROR(args[0], args);
+    exit(ret);
   }
-
 
   // Read processed script.
   std::ifstream file;
@@ -102,6 +151,8 @@ P2::preprocessReadOverLogProgram(std::string overLogFilename,
   if (!file.is_open()) {
     TELL_ERROR << "Cannot open processed Overlog file \""
                << processed << "\"!\n";
+    TELL_CPP_ERROR(args[0],args);
+
     return std::string();
   } else {
 
@@ -114,7 +165,6 @@ P2::preprocessReadOverLogProgram(std::string overLogFilename,
 
     file.close();
     std::string script = scriptStream.str();
-
 
     return script;
   }

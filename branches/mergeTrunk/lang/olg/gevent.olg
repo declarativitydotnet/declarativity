@@ -1,0 +1,81 @@
+namespace gevent {
+  materialize(commit, infinity, 1, keys(2)).
+
+  i0 ::sys::program_add(@A, Pid, Name, Rewrite, "gevent", Text, Msg, P2DL, Src) :-
+        commitRewrite(@A, Pid),
+        commit(@A, Pid),
+        ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
+
+  i1 commit(@A, Pid) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, Src).
+
+  i2 commitRewrite(@A, Pid) :- commit(@A, Pid).
+
+  i3 delete commit(@A, Pid) :- commitRewrite(@A, Pid).
+
+  ge1 globalEvent(@A, Pid, Rid, PredID, Name, ECA, f_tovar(Schema)) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
+        ::sys::predicate(@A, HeadID, Rid, _, _, _, _, HeadSchema, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, _, Name, _, ECA, Schema, Pos, _, _),
+        Name != "periodic",
+        f_aggattr(HeadSchema) < 0,
+        Pos == 1, ECA != "RECV".
+
+  ge2 periodicEvent(@A, Pid, Rid, PredID, Name, ECA, Schema) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, _, Name, _, ECA, Schema, _, _, _),
+        Name == "periodic".
+
+  ge3a ::sys::globalEvent(@A, PredID, Pid, Name, Type, Trigger, Schema) :-
+        globalEvent(@A, Pid, Rid, PredID, Name, Type, Schema),
+        Trigger := Name + "_" + Type.
+
+  ge3b ::sys::globalEvent(@A, PredID, Pid, Name, Type, Trigger, Schema) :-
+        periodicEvent(@A, Pid, Rid, PredID, Name, Type, Schema),
+        Type := f_tostr(f_cdr(f_cdr(Schema))),
+        Type := f_strReplace(".", "_", Type),
+        Trigger := Name + "_" + Type,
+        Schema := f_cons(f_car(Schema), f_car(f_cdr(Schema))).
+
+  ge4a ::sys::predicate(@A, PredID, Rid, NotIn, Trigger, null, "RECV", Schema, Pos, AM, New) :-
+        commitRewrite(@A, Pid),
+        commit(@A, Pid),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, NotIn, Name, Tid, ECA, Schema, Pos, AM, New),
+        ::sys::globalEvent(@A, _, _, Name, ECA, Trigger, _),
+        Name != "periodic".
+
+  ge4b ::sys::predicate(@A, PredID, Rid, NotIn, Trigger, null, "RECV", TriggerSchema, Pos, AM, New) :-
+        commitRewrite(@A, Pid),
+        commit(@A, Pid),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, NotIn, Name, Tid, _, PeriodicSchema, Pos, AM, New),
+        ::sys::globalEvent(@A, _, _, Name, Type, Trigger, TriggerSchema),
+        Name == "periodic",
+        f_tostr(f_cdr(f_cdr(PeriodicSchema))) == Type.
+
+  ge5 globalEventRule(@A, Pid, Eid, f_idgen(), f_idgen(), Name, Type, Trigger, Schema) :-
+        commitRewrite(@A, Pid),
+        commit(@A, Pid),
+        ::sys::globalEvent(@A, Eid, Pid, Name, Type, Trigger, Schema).
+        
+  ge6 ::sys::rule(@A, NewRid, Pid, Name, HeadID, null, false, 2, false) :-
+        globalEventRule(@A, Pid, PredID, NewRid, HeadID, _, _, Trigger, _),
+        Name := "rule_" + Trigger.
+
+  ge7 ::sys::predicate(@A, HeadID, NewRid, false, Trigger, null, "SEND", Schema, 0, null, false) :-
+        globalEventRule(@A, _, _, NewRid, HeadID, Name, Type, Trigger, Schema).
+
+  ge8 ::sys::predicate(@A, f_idgen(), NewRid, NotIn, Name, Tid, ECA, Schema, 1, AM, New) :-
+        globalEventRule(@A, Pid, PredID, NewRid, _, Name, _, _, _),
+        ::sys::predicate(@A, PredID, _, NotIn, Name, Tid, ECA, Schema, Pos, AM, New),
+        Name == "periodic".
+
+  ge9 ::sys::predicate(@A, f_idgen(), NewRid, NotIn, Name, Tid, ECA, Schema, 1, AM, New) :-
+        globalEventRule(@A, Pid, PredID, NewRid, _, Name, _, _, Schema),
+        ::sys::predicate(@A, PredID, _, NotIn, Name, Tid, ECA, _, Pos, AM, New),
+        Name != "periodic".
+
+}

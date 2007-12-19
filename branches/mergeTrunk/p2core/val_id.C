@@ -12,20 +12,19 @@
  */
 
 #include "val_id.h"
-#include "val_uint32.h"
-#include "val_uint64.h"
+#include "val_int64.h"
 #include "val_str.h"
 
 class OperID : public opr::OperCompare<Val_ID> {
   virtual ValuePtr _lshift (const ValuePtr& v1, const ValuePtr& v2) const {
     IDPtr   id = Val_ID::cast(v1);
-    uint32_t s = Val_UInt32::cast(v2);
+    uint32_t s = Val_Int64::cast(v2);
     return Val_ID::mk(id->lshift(s));
   };
 
   virtual ValuePtr _rshift (const ValuePtr& v1, const ValuePtr& v2) const {
     IDPtr id = Val_ID::cast(v1);
-    uint32_t s = Val_UInt32::cast(v2);
+    uint32_t s = Val_Int64::cast(v2);
     return Val_ID::mk(id->rshift(s));
   };
 
@@ -127,7 +126,7 @@ string
 Val_ID::toConfString() const
 {
   ostringstream conf;
-  conf << "Val_ID(\"" << i->toConfString() << "\")";
+  conf << i->toConfString();
   return conf.str();
 }
 
@@ -141,28 +140,16 @@ Val_ID::cast(ValuePtr v) {
   switch (v->typeCode()) {
   case Value::ID:
     return (static_cast<Val_ID *>(v.get()))->i;
-  case Value::INT32: {
-    if (Val_UInt32::cast(v) < 0)
-      throw Value::TypeError(v->typeCode(),
-                             v->typeName(),
-                             Value::ID,
-                             "ID");
-    return ID::mk(Val_UInt32::cast(v));
-  }
   case Value::INT64: {
-    if (Val_UInt64::cast(v) < 0)
+    if (Val_Int64::cast(v) < 0)
       throw Value::TypeError(v->typeCode(),
                              v->typeName(),
                              Value::ID,
                              "ID");
-    return ID::mk(Val_UInt64::cast(v));
+    return ID::mk(Val_Int64::cast(v));
   }
-  case Value::UINT32:
-    return ID::mk(Val_UInt32::cast(v));
-  case Value::UINT64:
-    return ID::mk(Val_UInt64::cast(v));
   case Value::DOUBLE:
-    return ID::mk(Val_UInt64::cast(v));
+    return ID::mk(Val_Int64::cast(v));
   case Value::STR:
     return ID::mk(Val_Str::cast(v));
   default:

@@ -14,8 +14,7 @@
 #include <math.h>
 #include "rcct.h"
 #include "loop.h"
-#include "val_uint64.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "val_double.h"
 #include "val_str.h"
 #include "val_time.h"
@@ -86,9 +85,9 @@ int RateCCT::push(int port, TuplePtr tp, b_cbv cb)
   if ((*tp)[1]->typeCode() == Value::STR && Val_Str::cast((*tp)[1]) == "ACK") {
     // Acknowledge tuple with rate feedback.
     ValuePtr               dest = (*tp)[DEST + 2];
-    SeqNum                  seq = Val_UInt64::cast((*tp)[SEQ + 2]);
+    SeqNum                  seq = Val_Int64::cast((*tp)[SEQ + 2]);
     boost::posix_time::ptime ts = Val_Time::cast(  (*tp)[TS + 2]);
-    uint32_t                 rr = Val_UInt32::cast((*tp)[STACK_SIZE]);
+    uint32_t                 rr = Val_Int64::cast((*tp)[STACK_SIZE]);
     double                   p  = Val_Double::cast((*tp)[STACK_SIZE + 1]);
 
     unmap(dest, seq);
@@ -198,7 +197,7 @@ REMOVABLE_INLINE uint32_t RateCCT::delay(boost::posix_time::ptime *ts)
 REMOVABLE_INLINE TuplePtr RateCCT::package(TuplePtr tp)
 {
   ValuePtr dest = (*tp)[DEST];
-  SeqNum   seq  = Val_UInt64::cast((*tp)[SEQ]);
+  SeqNum   seq  = Val_Int64::cast((*tp)[SEQ]);
   boost::posix_time::ptime now;
   getTime(now);
   map(dest, seq);	// Set a timer for this tuple
@@ -206,7 +205,7 @@ REMOVABLE_INLINE TuplePtr RateCCT::package(TuplePtr tp)
   TuplePtr p = Tuple::mk();
   for (unsigned i = 0; i < tp->size(); i++) {
     if (i == RTT) {
-      p->append(Val_UInt32::mk(rtt_));
+      p->append(Val_Int64::mk(rtt_));
     }
     else if (i == TS) {
       p->append(Val_Time::mk(now));

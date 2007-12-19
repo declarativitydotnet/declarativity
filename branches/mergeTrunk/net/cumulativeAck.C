@@ -12,8 +12,7 @@
 
 #include <iostream>
 #include "cumulativeAck.h"
-#include "val_uint64.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "val_double.h"
 #include "val_str.h"
 #include "val_tuple.h"
@@ -72,8 +71,8 @@ CumulativeAck::CumulativeAck(TuplePtr args)
 TuplePtr CumulativeAck::simple_action(TuplePtr tp)
 {
   ValuePtr src = (*tp)[SRC+2];
-  SeqNum   seq = Val_UInt64::cast((*tp)[SEQ+2]);
-  SeqNum   srcCumulativeSeq = Val_UInt64::cast((*tp)[CUMSEQ+2]);
+  SeqNum   seq = Val_Int64::cast((*tp)[SEQ+2]);
+  SeqNum   srcCumulativeSeq = Val_Int64::cast((*tp)[CUMSEQ+2]);
   ConnectionPtr cp = lookup(src);
 
   if (srcCumulativeSeq == 0 && cp) {
@@ -98,7 +97,7 @@ TuplePtr CumulativeAck::simple_action(TuplePtr tp)
   TuplePtr cack = Tuple::mk();
   for (unsigned i = 0; i < tp->size(); i++) {
     if (i == CUMSEQ+2) {
-      cack->append(Val_UInt64::mk(cp->_cum_seq));
+      cack->append(Val_Int64::mk(cp->_cum_seq));
     }
     else {
       cack->append((*tp)[i]);

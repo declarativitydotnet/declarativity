@@ -109,6 +109,19 @@ namespace compile {
       return pel.str();
     }
 
+    string sets(ListPtr schema, TuplePtr funcTp) 
+    {
+      ostringstream pel;
+
+      unsigned args = Val_UInt32::cast((*funcTp)[3]);
+      while (args > 0) {
+         pel << gen(schema, Val_Tuple::cast((*funcTp)[4+args--])) << " ";
+      } 
+      pel << (*funcTp)[2]->toString() << " ";
+
+      return pel.str();
+    }
+
     string value(ListPtr schema, TuplePtr valTp) {
       return (*valTp)[2]->toString() + " ";
     }
@@ -202,6 +215,9 @@ namespace compile {
       }
       else if (type == RANGE) {
         return range(schema, exprTp); 
+      }
+      else if (type == SET) {
+        return sets(schema, exprTp); 
       }
       else if (type == SELECT) {
         return select(schema, exprTp); 

@@ -18,9 +18,7 @@
 
 string Val_Var::toConfString() const
 {
-  ostringstream conf;
-  conf << "Val_Var(\"" << s << "\")";
-  return conf.str();
+  return toString();
 }
 
 //

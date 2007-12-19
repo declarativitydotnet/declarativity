@@ -21,9 +21,8 @@
 #include "p2Time.h"
 
 #include "val_double.h"
-#include "val_uint64.h"
+#include "val_int64.h"
 #include "val_str.h"
-#include "val_int32.h"
 #include "val_time.h"
 #include "reporting.h"
 
@@ -63,11 +62,11 @@ Logger::log(string classname,
     getTime(now_ts);
     TuplePtr t = Tuple::mk();
     t->append(Val_Time::mk(now_ts));
-    t->append(Val_UInt64::mk(seq++));
+    t->append(Val_Int64::mk(seq++));
     t->append(Val_Str::mk(classname));
     t->append(Val_Str::mk(instancename));
-    t->append(Val_Int32::mk(severity));
-    t->append(Val_Int32::mk(errnum));
+    t->append(Val_Int64::mk(severity));
+    t->append(Val_Int64::mk(errnum));
     t->append(Val_Str::mk(explanation));
     t->freeze();
     if (push(1, t, 0) == 0) {

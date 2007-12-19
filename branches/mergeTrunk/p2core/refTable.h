@@ -62,6 +62,17 @@ public:
   /** A destructor. It empties out the table and then destroys it. */
   ~RefTable();
 
+  static TuplePtr mk(CommonTable::Manager& catalog, std::string name, 
+		  boost::posix_time::time_duration& lifetime,
+		  uint max_size, CommonTable::Key& keys,
+		  ListPtr sort, ValuePtr programId) {
+    assert(lifetime == CommonTable::NO_EXPIRATION);
+    assert(max_size == CommonTable::NO_SIZE);
+    TuplePtr ret = catalog.registerTable(CommonTablePtr(new RefTable(name,keys)),
+				 name, lifetime, max_size, keys, sort, programId);
+    catalog.registerIndex(name, "Hash", keys);
+    return ret;
+  }
 
 
   

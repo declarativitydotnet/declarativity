@@ -1,0 +1,14 @@
+
+
+materialize(parent, infinity, infinity, keys(1,2)).
+
+materialize ( child, infinity, infinity, keys(1,2)).
+
+
+
+r1 new <@Me, X, parent(@Me, A, C)> :- test(@Me, A, C, X).
+
+r2 child(@C, A):- new <@Me, X, parent(@Me, A, C)>, 
+	child(@Me, A).
+
+r3 new <@Me, X, parent(@Me, A, &C)> :- test(@Me, A, Z, X).

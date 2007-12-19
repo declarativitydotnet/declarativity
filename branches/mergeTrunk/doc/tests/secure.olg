@@ -1,0 +1,21 @@
+
+
+materialize(test, infinity, infinity, keys(1,2)).
+
+
+materializeSays ( testtable, infinity, infinity, keys(1,2)).
+
+
+
+r1 says(P, R, 1, U) <testtable(@Me, A, C)> :- test(@Me, A, P, R, U, C).
+
+
+r3 test(@Me, A) :- says(P, R, 1, U) <testtable(@Me, A, B, C)>.
+
+r2 says(P, R, 1, U) <testtable(@Me, A, B, C)> :- says(P, R, 1, U) <testtable(@Me, A, B, C)>, test(@Me, A).
+
+r4 says(P, R, 1, U) <testtable(@Me, A, B, C)> :- says(P1, R1, 1, U) <testtable(@Me, A, B, C)>, test(@Me, A), P := P1, R := R1.
+
+
+
+

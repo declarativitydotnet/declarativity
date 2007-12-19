@@ -5,6 +5,8 @@
 \usepackage{curves}
 \usepackage{url}
 
+\usepackage[pdftex]{graphicx}  
+
 \title{Getting Started with Overlog and P2}
 \author{Joe Hellerstein \and Petros Maniatis}
 
@@ -646,6 +648,27 @@ message becomes itself the predecessor of the recipient, if its
 identifier lies between the recipient's previous predecessor's identifier and its
 current identifier.
 
+\begin{itemize}
+\item[$\Longrightarrow$] Currently, P2 does not do
+  \emph{content-addressable routing} natively (though we just showed 
+  how that can be implemented in OverLog). In other words, you cannot have
+  distributed rules in which it is not clear how tuples at different
+  location specifiers will ``meet.''  In the example above,
+  \lstinline$notify$ contains the information necessary to find
+  \lstinline$identifier$ at \lstinline$SomeGuy$.  For instance, a rule
+  with a right-hand side tha looks like \lstinline$a(@X, Y), b(@Z, Y)$
+  will not work, since there is no way to help \lstinline$a$ and
+  \lstinline$b$ tuples with matching \lstinline$Y$'s meet.  You can
+  certainly deal with this by using this content-addressable ring
+  implementation in OverLog to place tuples \lstinline$a$ and
+  \lstinline$b$ to the nodes that succeed their \lstinline$Y$ values on
+  the ring.  In the future,  we hope to make it
+  easy to say that tuples are routable not only by location specifier
+  but also by value, perhaps using an implementation based on an OverLog
+  content-addressable network such as this ring.
+\end{itemize}
+
+
 Similarly to our static ring, lookups are specified in a dynamic ring as
 follows:
 \begin{lstlisting}
@@ -1214,6 +1237,15 @@ offers a bit more functionality that the C++ standard.  The
 our \texttt{pingHandler}, however always setting its first parameter to
 the dataflow, and leaving its next parameter unbound.
 
+\begin{itemize}
+\item[$\Longrightarrow$] It is important to point out that the current
+  system only supports subscriptions to non-materialized tuples. You
+  cannot subscribe to a materialized table tuple or to table updates,
+  for example.  This is in feature wish list and will be coming in a
+  release soon.
+\end{itemize}
+
+
 That's it. The full program can be found in
 \url{tutorial/c++/ponger.C}. When executed on the same hostname and port
 number as \url{tutorial/olg/ponger.olg} had been in
@@ -1296,12 +1328,166 @@ create a filereader class under \url{stages/} that takes as input
 line \lstinline$line(locspec, filename, linenumber, linestring)$ at a
 time.
 
+\section{ONI: Overlog Native Interface}
 
+\begin{center}
+%%% Image copied from wikipedia commons.
+% http://en.wikipedia.org/wiki/Image:Oni.jpg
+%
+% Copyright notice:
+%
+% Public domain I, the copyright holder of this work, hereby release it
+% into the public domain. This applies worldwide.
+%
+% In case this is not legally possible:
+%
+% I grant anyone the right to use this work for any purpose, without
+% any conditions, unless such conditions are required by law.
+\includegraphics[width=1.4in]{Oni.jpg}
 
+A picture of an Oni.
+\end{center}
+ONI provides a simple C API that simplifies the process of
+implementing Overlog bindings for functions written in C.  It is
+designed to be as simple as possible, and is currently incomplete.  If
+you find that you need more functionality than is currently available,
+email {\tt p2devel@yahoogroups.com}.
 
+\subsection{A sample ONI stage}
 
+Here is the C implementation of an ONI stage:
+\begin{verbatim}
+1  ONI_TUP_STAGE(hello_world) {
+2    const char * str = str_Val(Val_Tup(tup,2));
+3    const char * hello = "Hello ";
+4    char * tmpstr = malloc(strlen(str)+strlen(hello)+1);
+5    tmpstr[0] = 0;
+6    strcat(tmpstr,hello);
+7    strcat(tmpstr,str);
+8    Tup_Push_str(tmpstr);
+9    free(tmpstr);
+10   return 0;
+11 } END_ONI_STAGE
+\end{verbatim}
+The stage takes input tuples of the form \lstinline$(@loc, ``name'')$
+and returns tuples of the form \lstinline$(@loc, ``Hello name'')$.
+For now, all ONI stages produce exactly one output tuple for each
+input tuple.  We plan to change this in future releases.
 
+Lines 1 and 11 call C compiler macros, and define a function that will
+be located and called by the ONI runtime.  The function defines two
+variables of type {\tt tup\_t*}.  The first, {\tt tup}, is the input to
+the stage.  The second, {\tt ret}, is the output tuple.
 
+Line 2 unpacks the second value from the tuple, and performs a checked
+cast to a C string.  ONI's interface to Overlog data structures
+follows a simple naming convention.  Casting and accessor functions
+are named {\tt foo\_bar()}, and produce something of type {\tt foo}
+from something of type {\tt bar}.  For example, the call to {\tt
+  str\_Val(...)} converts a P2 Value ({\tt val\_t*}) to a C-style
+string ({\tt const char *}).  Similarly, {\tt Val\_Tup(tup,2)} returns
+the third value in the tuple {\tt tup}.  ONI tuples are zero indexed.
+P2 prepends a string containing the stage name to each input tuple.
+
+Lines 3-7 are standard C string manipulation code.  Line 8 introduces
+a new type of ONI function.  Functions that begin with {\tt Tup\_Push}
+append a value to the end of a tuple.  Like the stage input tuple, all
+tuples output by P2 stages must begin with a string containing the
+name of the stage and a location specifier.  ONI automatically adds
+these values to {\tt ret}.  If it did not, then we would need to
+manually push them onto {\tt ret} before pushing the C string.
+
+{\tt Tup\_Push\_str()} makes a copy of {\tt tmpstr}.  Line 9 frees the
+now-unneeded copy of the C string.  Line 10 returns 0 to indicate
+success.  Non-zero values are treated as internal errors in the P2
+runtime.  For now, when a non-zero value is encountered, it is
+reported to the user, and P2 immediately exits.  Errors that can be
+handled in Overlog should be reported via the {\tt ret} tuple, and not
+returned to ONI.
+
+\subsection{ONI stage instantiation}
+ONI stage instantiations look just like normal stage instantiations:
+\begin{lstlisting}
+stage("hello_world",hello_world_in,hello_world_out).
+\end{lstlisting}
+However, they are handled with a different set of runtime mechanisms.
+Normal C++ stages are registered (at compile time) with {\tt
+  stageRegistry.C}.  ONI stages are resolved at runtime by using C
+dynamic linking.  Upon encountering a stage name that is unknown to
+the {\tt StageRegistry}, P2 falls back on ONI's stage loader.  The
+stage loader examines the stage name.  ONI stages are grouped into
+modules according to a simple naming convention; all text before the
+first ``{\tt\_}'' is treated as a module name.
+
+Upon encountering a new module name, ONI attempts to open the
+appropriate shared library and then searches the shared library's
+symbol table for the correct stage implementation.  It would decide
+that our hello\_world stage belongs in a module named ``hello''.
+Under Linux, it would then attempt to {\tt dlopen()}
+{\tt libonihello.so}\footnote{On Mac OS X, it still uses dlopen(), but
+  looks for {\tt libonihello.dylib}.  Windows is not supported by ONI.},
+and look for a function named ``{\tt \_Onihello\_worldFunc}''.  For
+dynamic linking to succeed, {\tt libonihello.so} must be in a standard
+shared library location ({\tt man dlopen} for more information), or in
+a directory mentioned in {\tt LD\_LIBRARY\_PATH}.  Running
+
+\begin{verbatim}
+~/p2/build$ LD_LIBRARY_PATH=./oni ./tests/runStagedOverlog
+    -o ../unitTests/olg/oniEcho.olg
+\end{verbatim}
+(all one line) will load and execute a sample ONI stage
+under Linux and MacOS X.
+
+{\em This is placeholder text:} The file {\tt oni/CMakeLists.txt}
+builds a number of ONI stages.  For now, it is the best documentation
+of ONI's compilation process.
+
+\subsection{ONI {\em f\_functions}}
+
+ONI does not support {\em f\_functions} yet.  ONI's C bindings into
+P2's type system should transfer directly over to {\em f\_function}
+implementations.  Adding ONI support for {\em f\_function}'s should be
+matter of adding support for dynamic registration of new {\em f\_function}
+definitions to P2.
+
+\subsection{Manipulating Overlog types from C}
+
+{\em This is placeholder text:} A number of other Overlog type
+manipulation functions ({\tt int\_Val()}, {\tt Tup\_Push\_int()}, {\tt
+  opaque\_Val()}, and {\tt Tup\_Push\_opaque()}) are available.  See
+{\tt oni.h} for a current list.
+
+Because of P2's heavy use of {\tt boost::shared\_ptr}, passing P2 {\tt
+  Value}'s and {\tt Tuple}'s to and from C code is not entirely
+straightforward.  The problem is that {\tt shared\_ptr} values cannot
+be passed by value into C code.  This forces us to either obtain raw
+pointers from P2's shared pointers (the current approach), or to pass
+pointers to {\tt shared\_ptr}'s into the C code.  So far, we have
+managed to hide P2's memory management from ONI bindings.  This
+situation may change if we allow ONI to perform callbacks into P2.
+
+A set of functions not mentioned above allow C code to allocate new P2
+{\tt Value} objects.  It is unclear that these functions are needed, and
+they may be removed in future releases. (Their names begin with ``{\tt
+  alloc\_}'' and ``{\tt free\_}''.)  
+
+Also, the Stasis ONI bindings (for which ONI was written) manipulate a
+number of C structs.  The file {\tt oni/stasisTypes.C} provides some
+examples of C struct packing and unpacking and other convenience
+methods that may be instructive when developing Overlog bindings for
+other C libraries that manipulate special-purpose data structures.
+
+\subsection{The future of ONI}
+
+ONI is in very early stages of development, and its API could change.
+In the short term we plan to add support for more types of stages
+(such as allowing ONI stages to produce variable numbers of tuples for
+each input).
+
+We are considering adding type-safe ONI stages.  The idea here is to
+automatically generate the calls to {\tt str\_Val(), int\_Val(),
+  etc.}, simplifying ONI bindings considerably, and (eventually)
+exposing stage type information to the P2 runtime environment.
 
 \section{PlanetLab Deployment}
 \emph{This is placeholder text}
@@ -1462,20 +1648,20 @@ is equivalent to the \lstinline$watch$ fact above.
 
 Here are the different possible modifiers:
 \begin{itemize}
-\item InsertEvent, i, is issued right after a tuple is inserted into
+\item InsertEvent, (i or INSERT\_EVENT), is issued right after a tuple is inserted into
   a table by the same name.
-\item RefreshEvent, r, is issued right after a tuple has been refreshed
+\item RefreshEvent, (r or REFRESH\_EVENT), is issued right after a tuple has been refreshed
   in a table by the same name.
-\item DeleteEvent, d, is issued right after a tuple is deleted from a
+\item DeleteEvent, (d or DELETE\_EVENT), is issued right after a tuple is deleted from a
   table by the same name.
-\item RecvEvent, c, is issued right after a tuple has been received from
+\item RecvEvent, (c or RECV\_EVENT), is issued right after a tuple has been received from
   the network.
 \item PeriodicEvent, p, is issued right after a periodic event has been issued.
-\item AddAction, a, is issued right before a tuple is inserted into the
+\item AddAction, (a or ADD\_ACTION), is issued right before a tuple is inserted into the
   table by the same name.
-\item DeleteAction, z, is issued right before a tuple is removed from
+\item DeleteAction, (z or DELETE\_ACTION), is issued right before a tuple is removed from
   the table by the same name.
-\item SendAction, s, is issued right before a tuple is transmitted.
+\item SendAction, (s or SEND\_ACTION), is issued right before a tuple is transmitted.
 \item BeforeJoin, b, is issued right before a tuple by that name is used
   to join with a table.
 \item AfterJoin, j, is issued right after a join that created the tuple
@@ -1483,6 +1669,8 @@ Here are the different possible modifiers:
 \item HeadProjection, h, is issued right after a tuple by that name is
   produced as the head of a rule (within or without an aggregation rule).
 \end{itemize}
+Note that for the moment, the incremental planner only supports
+modifiers that also have a long name.
 
 An important note is that, though a tuple type may be received at a P2
 node over the network, it may not be necessarily reported via

@@ -13,8 +13,7 @@
 #include "frag.h"
 #include "val_tuple.h"
 #include "val_null.h"
-#include "val_uint64.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "val_opaque.h"
 #include "math.h"
 #include "xdrbuf.h"
@@ -33,8 +32,8 @@ Frag::Frag(string name, unsigned bs, unsigned mqs)
 Frag::Frag(TuplePtr args)
   : Element(args->size() > 2 ? (*args)[2]->toString() : "frag", 1, 1),
     _push_cb(0), _pull_cb(0),
-    block_size_(args->size() > 3 ? Val_UInt32::cast((*args)[3]) : 1024),
-    max_queue_size_(args->size() > 4 ? Val_UInt32::cast((*args)[4]) : 1000)
+    block_size_(args->size() > 3 ? Val_Int64::cast((*args)[3]) : 1024),
+    max_queue_size_(args->size() > 4 ? Val_Int64::cast((*args)[4]) : 1000)
 {
   assert (block_size_ % 4 == 0);
 }
@@ -123,8 +122,8 @@ void Frag::fragment(TuplePtr t)
 
     FdbufPtr fb(new Fdbuf());
     payload_fb->pop_to_fdbuf(*fb, block_size_);
-    p->append(Val_UInt32::mk(bn));		// Block Number
-    p->append(Val_UInt32::mk(num_chunks));	// Total blocks
+    p->append(Val_Int64::mk(bn));		// Block Number
+    p->append(Val_Int64::mk(num_chunks));	// Total blocks
     p->append(Val_Opaque::mk(fb));		// The payload
     p->freeze();
     fragments_.push_back(p);

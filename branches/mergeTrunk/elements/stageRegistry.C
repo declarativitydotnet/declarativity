@@ -12,6 +12,7 @@
  */
 
 #include "stageRegistry.h"
+#include "oniStageProcessor.h"
 #include <boost/function.hpp>
 #include "stage.h"
 
@@ -33,8 +34,8 @@ StageRegistry::mk(std::string stageProcessorName,
 
   // Do we have it?
   if (i == _factories->end()) {
-    // Nope. Throw exception
-    throw StageNotFound(stageProcessorName);
+    // Nope.  Try to dynamically link to it. (throws StageNotFound exception)
+    return OniStageFactory(stageProcessorName, theStageElement); 
   } else {
     // Execute it to create the processor
     Stage::Processor* processor = ((*i).second)(theStageElement);
@@ -93,6 +94,7 @@ StageRegistry::theInitializer()
 StageRegistry::Initializer::Initializer()
 {
   _factories = new FactorySet();
+  OniStageFactoryInit();
 }
 
 

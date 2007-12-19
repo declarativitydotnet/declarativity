@@ -16,10 +16,17 @@
 #include "systemTable.h"
 #include "val_list.h"
 #include "val_str.h"
-#include "val_uint32.h"
 #include "val_tuple.h"
+#include "val_int64.h"
 
 namespace compile {
+  SetPtr Context::materializedTables(new Set());
+  LocSpecMap* Context::ruleLocSpecMap = new LocSpecMap();
+
+  Context::Context(string name) 
+    : Element(name, 1, 1) 
+  {
+  }
 
   TuplePtr 
   Context::simple_action(TuplePtr p)
@@ -30,20 +37,12 @@ namespace compile {
         p = program(catalog, p);
       }
       catch (compile::Exception e) {
-        TELL_ERROR << "Compile Exception: Program "
-                   << (*p)[catalog->attribute(PROGRAM, "NAME")]->toString() << std::endl
-                   << "\t" << e.toString() << std::endl;
-        p = p->clone();
-        p->set(catalog->attribute(PROGRAM, "STATUS"), Val_Str::mk("error"));
-        p->freeze();
+        this->error(catalog, p, 0, e.toString());
+        return TuplePtr();
       }
       catch (Element::Exception e) {
-        TELL_ERROR << "Element Exception: Program " 
-                   << (*p)[catalog->attribute(PROGRAM, "NAME")]->toString() << std::endl
-                   << "\t" << e.toString() << std::endl;
-        p = p->clone();
-        p->set(catalog->attribute(PROGRAM, "STATUS"), Val_Str::mk("error"));
-        p->freeze();
+        this->error(catalog, p, 0, e.toString());
+        return TuplePtr();
       }
     return p;
   }
@@ -53,30 +52,15 @@ namespace compile {
   {
     TELL_INFO << "PROGRAM TUPLE ID: " << (*program)[TUPLE_ID]->toString() << std::endl;
     TuplePtr ruleTp;
-    try {
-      CommonTablePtr ruleTbl = catalog->table(RULE);
-      CommonTable::Iterator rIter;
-      for(rIter = ruleTbl->lookup(CommonTable::theKey(CommonTable::KEY2), 
-                                  CommonTable::theKey(CommonTable::KEY3), program);
-          !rIter->done(); ) {
-        ruleTp = rIter->next();
-        rule(catalog, ruleTp);
-      }
+    CommonTablePtr ruleTbl = catalog->table(RULE);
+    CommonTable::Iterator rIter;
+    for(rIter = ruleTbl->lookup(CommonTable::theKey(CommonTable::KEY2), 
+                                CommonTable::theKey(CommonTable::KEY3), program);
+        !rIter->done(); ) {
+      ruleTp = rIter->next();
+      rule(catalog, ruleTp);
     }
-    catch (compile::Exception e) {
-      TELL_ERROR << "Compile Exception: Program " 
-                 << (*program)[catalog->attribute(PROGRAM, "NAME")]->toString() << std::endl
-                 << "\t" << e.toString() << std::endl
-                 << "Rule " << (*ruleTp)[catalog->attribute(RULE, "NAME")]->toString() << std::endl; 
-    }
-    catch (Element::Exception e) {
-      TELL_ERROR << "Element Exception: Program " 
-                 << (*program)[catalog->attribute(PROGRAM, "NAME")]->toString() << std::endl
-                 << "\t" << e.toString() << std::endl
-                 << "Rule " << (*ruleTp)[catalog->attribute(RULE, "NAME")]->toString() << std::endl; 
-   
-    }
-    program = program->clone(PROGRAM);
+    program = program->clone(PROGRAM_STREAM);
     program->freeze();
     return program;
   }
@@ -86,5 +70,26 @@ namespace compile {
   {
     throw compile::Exception("Unknown rule rewrite.");
   }
+
+  int Context::initialize()
+  {
+    TELL_INFO << "Default compile stage: " << name() << " loaded." << std::endl;
+    return true;
+  }
+
+  void
+  Context::error(CommonTable::ManagerPtr catalog, TuplePtr program, int code, string desc) 
+  {
+    TuplePtr errorTp = Tuple::mk();
+    errorTp->append(Val_Str::mk(ERROR_STREAM));
+    errorTp->append((*program)[catalog->attribute(PROGRAM, "SOURCE")]);
+    errorTp->append((*program)[catalog->attribute(PROGRAM, "PID")]);
+    errorTp->append((*program)[catalog->attribute(PROGRAM, "NAME")]);
+    errorTp->append(catalog->nodeid());
+    errorTp->append(Val_Int64::mk(code));
+    errorTp->append(Val_Str::mk(desc));
+    errorTp->freeze();
+    catalog->table(PERROR)->insert(errorTp);
+  } 
 
 };

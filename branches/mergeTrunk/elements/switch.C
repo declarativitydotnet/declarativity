@@ -15,7 +15,7 @@
 #include "switch.h"
 #include "reporting.h"
 #include "val_str.h"
-#include "val_int32.h"
+#include "val_int64.h"
 #include "boost/bind.hpp"
 #include "scheduler.h"
 
@@ -40,10 +40,10 @@ Switch::Switch(TuplePtr args)
     mPushUnblock(boost::bind(&Switch::pushWakeup,this))
 {
   if (args->size() > 3) {
-    mNTuple = Val_Int32::cast((*args)[3]);
+    mNTuple = Val_Int64::cast((*args)[3]);
   }
   if (args->size() > 4) {
-    _register = bool(Val_Int32::cast((*args)[4]));
+    _register = bool(Val_Int64::cast((*args)[4]));
   }
 }
 

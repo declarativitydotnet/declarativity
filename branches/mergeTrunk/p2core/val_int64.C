@@ -15,9 +15,6 @@
 
 #include "val_int64.h"
 
-#include "val_uint32.h"
-#include "val_int32.h"
-#include "val_uint64.h"
 #include "val_double.h"
 #include "val_str.h"
 #include "val_null.h"
@@ -27,22 +24,34 @@ const opr::Oper* Val_Int64::oper_ = new opr::OperImpl<Val_Int64>();
 //
 // Marshalling and unmarshallng
 //
-void Val_Int64::xdr_marshal_subtype( XDR *x )
+void
+Val_Int64::xdr_marshal_subtype( XDR *x )
 {
   xdr_int64_t(x, &i);
 }
-ValuePtr Val_Int64::xdr_unmarshal( XDR *x )
+
+
+ValuePtr
+Val_Int64::xdr_unmarshal( XDR *x )
 {
   int64_t i;
   xdr_int64_t(x, &i);
   return mk(i);
 }
 
-string Val_Int64::toConfString() const
+
+string
+Val_Int64::toString() const
 {
-  ostringstream conf;
-  conf << "Val_Int64(" << i << ")";
-  return conf.str();
+  ostringstream s;
+  s << i;
+  return s.str();
+}
+
+string
+Val_Int64::toConfString() const
+{
+  return toString();
 }
 
 //
@@ -52,12 +61,6 @@ int64_t Val_Int64::cast(ValuePtr v) {
   switch (v->typeCode()) {
   case Value::INT64:
     return (static_cast<Val_Int64 *>(v.get()))->i;
-  case Value::INT32:
-    return (int64_t)(Val_Int32::cast(v));
-  case Value::UINT32:
-    return (int64_t)(Val_UInt32::cast(v));
-  case Value::UINT64:
-    return (int64_t)(Val_UInt64::cast(v));
   case Value::DOUBLE:
     return (int64_t)(Val_Double::cast(v));
   case Value::NULLV:
@@ -69,7 +72,9 @@ int64_t Val_Int64::cast(ValuePtr v) {
                            Value::INT64, "int64");
   }
 }
-
+int64_t Val_Int64::raw_val(Val_Int64& v) {
+  return v.i;
+}
 int Val_Int64::compareTo(ValuePtr other) const
 {
   if (Value::INT64 < other->typeCode()) {

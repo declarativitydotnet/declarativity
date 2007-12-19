@@ -1,0 +1,5 @@
+materialize(parent, infinity, infinity, keys(1)).
+materialize(child, infinity, infinity, keys(1)).
+weak ref(parent, child, 2).
+
+r1 child(@A, B):- new<@X, Y, parent(@Me, A)>, child(@X, B).

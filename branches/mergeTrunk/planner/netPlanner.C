@@ -24,7 +24,8 @@ NetPlanner::generateNetworkOutElements(boost::shared_ptr<Udp> udp)
   // <dst, <t>>
   
   ElementSpecPtr pullPush =
-    _conf->addElement(ElementPtr(new TimedPullPush("SendPullPush", 0)));
+    _conf->addElement(ElementPtr(new TimedPullPush("SendPullPush",
+                                                   0, 0)));
   
   ElementSpecPtr sendQueue = 
     _conf->addElement(ElementPtr(new Queue("SendQueue", QUEUESIZE)));
@@ -72,7 +73,8 @@ NetPlanner::generateNetworkInElements(boost::shared_ptr<Udp> udp)
     _conf->addElement(ElementPtr(new Queue("ReceiveQueue", QUEUESIZE)));
 
   ElementSpecPtr bufferQueuePullPush = 
-    _conf->addElement(ElementPtr(new TimedPullPush("ReceiveQueuePullPush", 0)));
+    _conf->addElement(ElementPtr(new TimedPullPush("ReceiveQueuePullPush",
+                                                   0, 0)));
 
   ElementSpecPtr receiveMux = _conf->addElement(ElementPtr(new Mux("wrapAroundSendMux:", 2)));
 

@@ -11,7 +11,7 @@
  */
 
 #include "aggCountDistinct.h"
-#include "val_uint64.h"
+#include "val_int64.h"
 #include "aggFactory.h"
 
 AggCountDistinct::AggCountDistinct()
@@ -48,7 +48,7 @@ AggCountDistinct::process(ValuePtr v)
 ValuePtr 
 AggCountDistinct::result()
 {
-  return Val_UInt64::mk(_valueSet.size());
+  return Val_Int64::mk(_valueSet.size());
 }
 
 

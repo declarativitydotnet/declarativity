@@ -14,8 +14,7 @@
 #include "skr.h"
 #include "val_tuple.h"
 #include "val_str.h"
-#include "val_int32.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 
 class Route {
 public:
@@ -76,7 +75,7 @@ boost::shared_ptr< std::vector< ValuePtr > > SimpleKeyRouter::neighbors() {
 
 boost::shared_ptr< std::vector< ValuePtr > > SimpleKeyRouter::routes() {
   boost::shared_ptr< std::vector< ValuePtr > > r(new std::vector< ValuePtr >);
-  for (uint i = 0; i < routes_.size(); r->push_back(Val_UInt32::mk(i++)))
+  for (uint i = 0; i < routes_.size(); r->push_back(Val_Int64::mk(i++)))
     ;
   return r;
 }
@@ -103,7 +102,7 @@ REMOVABLE_INLINE TuplePtr SimpleKeyRouter::tagRoute(TuplePtr tp, uint r) {
 
   TuplePtr tag   = Tuple::mk();
   tag->append(Val_Str::mk("ROUTE"));
-  tag->append(Val_UInt32::mk(r));
+  tag->append(Val_Int64::mk(r));
   tag->append(routes_[r]->location_);
   tag->freeze();
   tuple->append(Val_Tuple::mk(tag));
@@ -130,7 +129,7 @@ REMOVABLE_INLINE int SimpleKeyRouter::getRoute(TuplePtr tp) {
   for (uint i = 0; i < tp->size(); i++) {
     try {
       TuplePtr t = Val_Tuple::cast((*tp)[i]); 
-      if (Val_Str::cast((*t)[0]) == "ROUTE") return Val_Int32::cast((*t)[1]);
+      if (Val_Str::cast((*t)[0]) == "ROUTE") return Val_Int64::cast((*t)[1]);
     }
     catch (Value::TypeError e) { } 
   }

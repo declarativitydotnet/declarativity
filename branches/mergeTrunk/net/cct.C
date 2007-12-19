@@ -13,8 +13,7 @@
 #include <iostream>
 #include "loop.h"
 #include "cct.h"
-#include "val_uint64.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "val_double.h"
 #include "val_str.h"
 #include "val_tuple.h"
@@ -91,7 +90,7 @@ int CCT::push(int port, TuplePtr tp, b_cbv cb)
   if ((*tp)[1]->typeCode() == Value::STR && Val_Str::cast((*tp)[1]) == "ACK") {
     // Acknowledge tuple and update measurements.
     ValuePtr dest = (*tp)[DEST+2];			// Destination address
-    SeqNum   seq  = Val_UInt64::cast((*tp)[SEQ+2]);	// Sequence number
+    SeqNum   seq  = Val_Int64::cast((*tp)[SEQ+2]);	// Sequence number
     dealloc(dest, seq);
     successTransmit();
   }
@@ -109,7 +108,7 @@ TuplePtr CCT::pull(int port, b_cbv cb)
 
   if (current_window() < max_window() && 
       (data_on_ = (tp = input(0)->pull(boost::bind(&CCT::data_ready, this))) != NULL)) {
-    SeqNum   seq  = Val_UInt64::cast((*tp)[SEQ]);
+    SeqNum   seq  = Val_Int64::cast((*tp)[SEQ]);
     ValuePtr dest = (*tp)[DEST];
     double   rtt  = Val_Double::cast((*tp)[RTT]);
 

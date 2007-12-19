@@ -1,0 +1,32 @@
+/**
+  * This file is distributed under the terms in the attached LICENSE file.
+  * If you do not find this file, copies can be found by writing to:
+  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+  * Or
+  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+  * Berkeley, CA,  94707. Attention: P2 Group.
+  * 
+  * $Id: doublePeriodic.olg 1211 2007-01-24 00:57:03Z maniatis $
+  * 
+  * DESCRIPTION: This regression test is meant to ensure that local
+  * counters are consistent with the single-event atomicity semantics.
+  * 
+  * tests/runOverLog -o unitTests/olg/localCounter.olg
+  *
+  * this program should increment the tuple in the counter table up to
+  * 100.
+***/
+
+materialize(counter, infinity, infinity, keys(1)).
+materialize(spreader, infinity, infinity, keys(1, 2)).
+
+counter("localhost:10000", 0).
+
+watchmod(counter, "a").
+
+g1 counter(@I, NewCount) :- periodic(@I, E, 0, 100),
+   counter(@I, C), NewCount := C+1.
+
+
+

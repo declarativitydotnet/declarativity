@@ -47,6 +47,9 @@ public:
   virtual ValuePtr
   nodeid();
 
+  virtual void
+  nodeid(ValuePtr, ValuePtr);
+
   virtual unsigned
   uniqueIdentifier();
 
@@ -64,45 +67,32 @@ public:
   attributes(string tablename) const;
 
   /**
-   * Creates and registers a new Table with the system.
-   * Return: A RefTable instance if table does not exist
+   * Registers a new Table with the system.
+   * Return: Tuple corresponding to table instance.
    * Throws: TableManager::Exception if table already exists
    */
-  virtual TuplePtr 
-  createTable(string name, CommonTable::Key& key);
-
-  /**
-   * Creates and registers a new Table with the system.
-   * Return: Table2 instance with specified maxSize and lifetime
-   * Throws: TableManager::Exception if table already exists
-   */
-  virtual TuplePtr 
-  createTable(string name, CommonTable::Key& key, uint32_t maxSize,
-              boost::posix_time::time_duration& lifetime);
-
-  /**
-   * Creates and registers a new Table with the system.
-   * Return: Table2 instance with specified maxSize and lifetime
-   * Throws: TableManager::Exception if table already exists
-   */
-  virtual TuplePtr 
-  createTable(string name, CommonTable::Key& key, uint32_t maxSize, 
-              string lifetime);
-  
-  /**
-   * Creates and registers a new Table with the system.
-   * Return: Table2 instance with specified maxSize and infinite lifetime
-   *         TableManager::Exception if table already exists
-   */
-  virtual TuplePtr 
-  createTable(string name, CommonTable::Key& key, uint32_t maxSize);
+  virtual TuplePtr
+    registerTable(CommonTablePtr table, string name,
+		  boost::posix_time::time_duration lifetime,
+		  uint size,
+		  CommonTable::Key& primaryKey,
+		  ListPtr sort,
+		  ValuePtr pid);
 
   /**
    * Create and registers a secondary index on specified table name
    * Throws: TableManager::Exception if table does not exist.
    */
+  virtual TuplePtr
+  createIndex(string tableName, string type, CommonTable::Key& key);
+  /**
+   * Register an existing index on specified table name.  Typically
+   * used to register primary index after registerTable is called.
+   *
+   * Throws: TableManager::Exception if table does not exist.
+   */
   virtual void
-  createIndex(string tableName, CommonTable::Key& key);
+    registerIndex(string tableName, string type, CommonTable::Key& key);
 
   /**
    * Create foreign key relationship from table 'src' on 
@@ -132,11 +122,9 @@ public:
 private:
   void initialize();
 
-  TuplePtr registerTable(string name, boost::posix_time::time_duration lifetime,
-                         uint size, CommonTable::Key& primaryKey);
-  void registerIndex(string tableName, CommonTable::Key& key, string type);
-  void relation(string name, string table1, string table2, 
-                CommonTable::Key& key);
+  void errorListener(TuplePtr error);
+  void indexListener(TuplePtr index);
+  void tableListener(TuplePtr table);
 
   typedef std::map<string, CommonTablePtr> TableMap;
   TableMap _tables;

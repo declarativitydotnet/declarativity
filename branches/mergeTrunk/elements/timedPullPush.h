@@ -30,7 +30,7 @@ class TimedPullPush : public Element {
  public:
   
   /** Initialized with the interval between forwards. */
-  TimedPullPush(string name, double seconds, int tuples = 0);
+  TimedPullPush(string name, double seconds, int tuples);
   TimedPullPush(TuplePtr args);
 
   const char *class_name() const		{ return "TimedPullPush"; }

@@ -1,0 +1,186 @@
+namespace localize {
+  materialize(programEventInitialized, 1, infinity, keys(2,3)).
+  materialize(break, infinity, infinity, keys(2,3,5)).
+  materialize(rulesComplete, 1, infinity, keys(2)).
+  materialize(totalRules, 1, infinity, keys(2)).
+
+  initialization programEventInitialized(@A, Pid, Rid, HeadFid) :- 
+                   programEvent(@A, Pid, _, _, _, _, _, _, _),
+                   ::sys::rule(@A, Rid, Pid, _, HeadFid, _, _, _, _).
+
+  /* Begin the localization rewrite by triggering a count of
+     distinct location attributes for each rule in the program. */
+  begin1 startRuleCounter(@A, Pid, Rid, HeadFid) :-
+           programEventInitialized(@A, Pid, Rid, HeadFid).
+
+  begin2 rulesComplete(@A, Pid, 0) :-
+          programEvent(@A, Pid, _, _, _, _, _, _, _).
+
+  totalRules totalRules(@A, Pid, a_count<*>) :-
+               programEvent(@A, Pid, _, _, _, _, _, _, _),
+               ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _).
+  
+  /** The following rules deal with termination checks */
+  completion1 rulesComplete(@A, Pid, C) :-
+                terminate(@A, Pid, OldRid, NewRid, HeadFid, Terms),
+                rulesComplete(@A, Pid, C2),
+                C := C2 + 1.
+
+  /* Signal the completion of a rule */
+  completion2 ruleCompletion(@A, Pid, C) :- rulesComplete(@A, Pid, C).
+
+  /* Check that we are done with the rewrite by testing the count of
+     completed rules with the total number of rules in the program.
+     When done, generate a global programEvent tuple. */
+  end ::sys::program_add(@A, Pid, Name, Rewrite, "localize", Text, Msg, P2DL, Src) :-
+        ruleCompletion(@A, Pid, C),
+        totalRules(@A, Pid, T),
+        ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src),
+        T == C.
+
+
+  /* Given a new program, go through the rules contained within and
+     count the number of distinct location attributes apprearing in
+     each rule. */
+  detect countLocalVar(@A, Pid, Rid, a_countdistinct<Attr>) :-
+            startRuleCounter(@A, Pid, Rid, HeadFid),
+            ::sys::predicate(@A, FID, Rid, Notin, Name, TID, ECA, Attributes, FPos, AM, New),
+            Attr := f_getattr("Location", Attributes), 
+            FID != HeadFid.
+  
+  notrigger rulesComplete(@A, Pid, C) :-
+              countLocalVar(@A, Pid, Rid, C1),
+              rulesComplete(@A, Pid, C2),
+              C1 <= 1,
+              C := C2 + 1.
+  
+  
+
+  /* If we have more than 1 location variable within a rule trigger the rewrite. */
+  /* Start the iteration process: We iterate over each term in the body, starting with the event,
+     of the orginal rule. */
+  i0 iterator(@A, Pid, Rid, OldPos, NewRid, NewPos, PrevHeadFid, NewHeadFid, LocAttr, F_Schema, "Predicate", F_ID) :-
+          countLocalVar(@A, Pid, Rid, C), C > 1,
+          ::sys::predicate(@A, F_ID, Rid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM, F_New),
+          LocAttr := f_getattr("Location", F_Schema),
+          F_Pos == 1,
+          NewRid := f_idgen(), PrevHeadFid := null, NewHeadFid := f_idgen(), 
+          OldPos := 2, NewPos := 1.
+  
+  /* Case: Next predicate's location attribute matches previous predicate's location attribute. 
+     Maintain the same location attribute, rule group and position therein. */
+  i1 iterator(@A, Pid, OldRid, OldPos+1, NewRid, NewPos+1, PrevHeadFid, HeadFid, LocAttr, Schema, "Predicate", FID) :-
+              iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, PrevSchema, TableName, ID),
+              ::sys::predicate(@A, FID, OldRid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM, F_New), /* Predicate from old rule */
+              F_Pos == OldPos,                            /* Make sure we are considering this predicate's position. */
+              LocAttr == f_getattr("Location", F_Schema), /* The location attribute matches that of the prior iteration. */
+              Schema := f_merge(PrevSchema, F_Schema).
+  
+  /* Next predicate's location attribute does not match previous predicate's location attribute. 
+     Must switch to a new rule id group with a new location attribute and a new position 
+     within the new rule group. The break event will signal such an occurance. */
+  triggerBreak prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, NewLocAttr, NewSchema, TableName, ID) :-
+            iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
+            ::sys::predicate(@A, FID, OldRid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM, F_New),
+            F_Pos == OldPos,                               /* Considering this predicate's position now. */
+            LocAttr != f_getattr("Location", F_Schema),    /* Location variable mismatch. */
+            NewLocAttr := f_getattr("Location", F_Schema), /* Switch to the new location variable. */
+            NewSchema := f_cons(f_tovar(f_car(Schema)), f_cdr(Schema)).
+
+  /* Have we reached the end? If so trigger one last break so that we update the logical plan state
+     for the last rule group. */
+  lastBreak finalize(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID) :-
+               iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
+               ::sys::rule(@A, OldRid, Pid, R_Name, R_HeadFid, R_P2DL, R_Delete, R_Term_Count, _),
+               OldPos == R_Term_Count.  /* If true, we've reached the end. */
+
+  break break(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, NewLocAttr, NewSchema, TableName, ID) :-
+          prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, NewLocAttr, NewSchema, TableName, ID).
+  
+  /* Have we reached the end? If so trigger one last break so that we update the logical plan state
+     for the last rule group. */
+  terminate terminate(@A, Pid, OldRid, NewRid, R_HeadFid, NewPos) :-
+               finalize(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
+               ::sys::rule(@A, OldRid, Pid, R_Name, R_HeadFid, R_P2DL, R_Delete, R_Term_Count, _).
+  
+  /* If we have not reached the end then restart the iteration process. We must create a new rule 
+     identifier for the next rule group. We also need to create a new head identifier for the new
+     group, and move the previous head identifier to the correct position. The location attribute
+     and position have already been set in rule break1. */
+  restart iterator(@A, Pid, OldRid, OldPos, f_idgen(), 1, HeadFid, f_idgen(), LocAttr, NewSchema, TableName, ID) :-
+              break(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, PrevSchema, TableName, ID),
+              NewSchema := f_cons(f_cdr(PrevSchema), f_car(PrevSchema)).
+  
+  /* Assign the assignment term to the current rule id group. */
+  assign iterator(@A, Pid, OldRid, OldPos+1, NewRid, NewPos+1, PrevHeadFid, HeadFid, LocAttr, Schema, "Assign", Aid) :-
+            iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
+            ::sys::assign(@A, Aid, OldRid, A_Var, A_Value, A_Pos),
+            A_Pos == OldPos.
+  
+  /* Assign the select term to the current rule id group. */
+  select iterator(@A, Pid, OldRid, OldPos+1, NewRid, NewPos+1, PrevHeadFid, HeadFid, LocAttr, Schema, "Select", Sid) :-
+            iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
+            ::sys::select(@A, Sid, OldRid, S_Bool, S_Pos, S_AM),
+            S_Pos == OldPos.
+  
+  /***********************************************/
+  /* Generate the new local join rules. */
+ 
+  /* Create the new rule. Could be done multiple times but always the same tuple. */
+  g1 ::sys::rule(@A, NewRid, Pid, NewName, HeadFid, null, false, NewPos, false) :-
+        prebreak(@A, Pid, Rid, Pos, NewRid, NewPos, _, HeadFid, _, _, _, _),
+        NewName := "intermediateRule_" + f_tostr(NewRid).
+
+  /* Create the head predicate for each new rule */
+  g2 ::sys::predicate(@A, HeadFid, NewRid, false, F_Name, null, "SEND", F_Schema, 0, null, 0) :-
+        prebreak(@A, Pid, Rid, Pos, NewRid, _, _, HeadFid, LocAttr, Schema, _, _),
+        ::sys::rule(@A, Rid, Pid, Name, _, _, _, _, _),
+        F_Name := "intermediateResult_" + f_tostr(Name) + "_" + f_tostr(Pos),
+        F_Schema := f_cons(LocAttr, f_cons(f_tovar(f_car(Schema)), f_cdr(Schema))).
+  
+  /* Point the original head predicate to its new rule identifier. */
+  g4 ::sys::predicate(@A, HeadFid, NewRid, Notin, Name, TID, ECA, Attributes, 0, AM, New) :-
+        terminate(@A, Pid, OldRid, NewRid, HeadFid, Terms),  /* We're done, redirect orginal head predicate. */
+        ::sys::predicate(@A, HeadFid, OldRid, Notin, Name, TID, ECA, Attributes, Pos, AM, New).  /* The orginal head predicate. */
+  
+  /* Create the final rule group. Carry forward attributes from orginal rule. */
+  g5 ::sys::rule(@A, NewRid, PID, RName, HeadFid, P2DL, Delete, RTerms, New) :-
+        terminate(@A, Pid, OldRid, NewRid, HeadFid, Terms),  /* We're done, redirect orginal head predicate. */
+        ::sys::rule(@A, OldRid, PID, RName, HeadFid, P2DL, Delete, Term_Count, New),
+        RTerms := Terms.
+  
+  /* Delete the original rule. */
+  g6 delete ::sys::rule(@A, OldRid, Pid, R_Name, R_HeadFid, R_P2DL, R_Delete, R_Term_Count) :-
+        terminate(@A, Pid, OldRid, NewRid, HeadFid, Terms),
+        ::sys::rule(@A, OldRid, Pid, R_Name, R_HeadFid, R_P2DL, R_Delete, R_Term_Count).
+  
+  /* Point predicate to their new rule. I add 1 to the NewPos since we'll move the previous
+     rule's head into the event position. */
+  g7 ::sys::predicate(@A, Fid, NewRid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM, F_New) :-
+        iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, Fid),
+        ::sys::predicate(@A, Fid, OldRid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_OldPos, F_AM, F_New),
+        TableName == "Predicate",
+        F_Pos := NewPos.
+  
+  /* Point old assignments to the new rule. Adding 1 to the AssinPos for reasons described in g7. */
+  g8 ::sys::assign(@A, Aid, NewRid, Var, Value, NewPos) :-
+        iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, Aid),
+        ::sys::assign(@A, Aid, OldRid, Var, Value, AssignPos),
+        TableName == "Assign".
+  
+  /* Point old selections to the new rule. Adding 1 to the SelectPos for reasons described in g7. */
+  g9 ::sys::select(@A, Sid, NewRid, Bool, NewPos, AM) :-
+        iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, Sid),
+        ::sys::select(@A, Sid, OldRid, Bool, SelectPos, AM),
+        TableName == "Select".
+  
+  /* Place result event from previous location group into next location group. */
+  g10 ::sys::predicate(@A, f_idgen(), NewRid, F_Notin, F_Name, F_TID, "RECV", F_Schema, 1, "EVENT", F_New) :-
+        prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
+        ::sys::predicate(@A, PrevHeadFid, F_NewRid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM, F_New).
+
+  g11 ::sys::predicate(@A, f_idgen(), NewRid, F_Notin, F_Name, F_TID, "RECV", F_Schema, 1, "EVENT", F_New) :-
+        finalize(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
+        ::sys::predicate(@A, PrevHeadFid, F_NewRid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM, F_New).
+
+} /* END: namespace localiztion */

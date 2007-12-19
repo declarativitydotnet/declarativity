@@ -20,7 +20,7 @@
 #include "commitBuf.h"
 #include "compileStage.h"
 #include "stage.h"
-#include "compileTerminal.h"
+#include "programLoader.h"
 #include "ddemux.h"
 #include "dDuplicateConservative.h"
 #include "delete2.h"
@@ -45,9 +45,11 @@
 #include "mux.h"
 #include "noNullField.h"
 #include "noNull.h"
+#include "onlyNullField.h"
 #include "noNullSignal.h"
 #include "pelTransform.h"
 #include "print.h"
+#include "tupleCounter.h"
 #include "printTime.h"
 #include "printWatch.h"
 #include "pullPush.h"
@@ -76,7 +78,7 @@ ElementLoader::loadElements()
   CommitBuf::ensureInit();
   CompileStage::ensureInit();
   Stage::ensureInit();
-  CompileTerminal::ensureInit();
+  ProgramLoader::ensureInit();
   DDemux::ensureInit();
   DDuplicateConservative::ensureInit();
   Delete2::ensureInit();
@@ -99,9 +101,11 @@ ElementLoader::loadElements()
   Mux::ensureInit();
   NoNull::ensureInit();
   NoNullField::ensureInit();
+  OnlyNullField::ensureInit();
   NoNullSignal::ensureInit();
   PelTransform::ensureInit();
   Print::ensureInit();
+  TupleCounter::ensureInit();
   PrintTime::ensureInit();
   PrintWatch::ensureInit();
   PullPush::ensureInit();

@@ -45,6 +45,8 @@ delayCB(double secondDelay, b_cbv cb, Element* owner)
 {
   assert(secondDelay >= 0.0);
 
+  LOOP_INFO("delayCB delaying call back by "<<secondDelay<<" seconds. ");
+
   unsigned long secs = (unsigned long) secondDelay; 
   boost::posix_time::ptime expiration;
   boost::posix_time::
@@ -54,7 +56,7 @@ delayCB(double secondDelay, b_cbv cb, Element* owner)
   // When will this expire?
   getTime(expiration);
   expiration += dlay;
-  
+
   // Create handle for this request
   timeCBHandle* handle = new timeCBHandle(expiration, cb, owner);
 
@@ -109,6 +111,9 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
     callbackQueueT::iterator toErase = iter;
     iter++;
     callbacks.erase(toErase);
+
+    LOOP_INFO("Handling callback "
+              << theCallback->toString());
     
     // Run it
     if (theCallback->active &&
@@ -152,37 +157,6 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
       delete theCallback;
     } else {
       iter++;
-    }
-  }
-
-  ////////////////////////////////////////////////////////////
-  // Set the wait duration to be the time from now till the first
-  // scheduled event
-  
-  // Update current time
-  try {
-    getTime(now);
-  } catch (std::exception e) {
-    LOOP_ERROR("timeCBCatchup exception getting current time C: '"
-               << e.what()
-               << "'");
-  }
-
-  // Get first waiting time
-  if (callbacks.empty()) {
-    // Nothing to worry about. Leave the wait duration alone
-  } else {
-    iter = callbacks.begin();
-    assert(iter != callbacks.end()); // since it's not empty
-
-    if ((*iter)->time < now) {
-      // Oops, the first callback has already expired. Don't wait, just
-      // poll
-      waitDuration = boost::posix_time::minutes(0);
-    } else {
-      // Update the wait duration to be what's left until the next
-      // deadline.
-      waitDuration = (*iter)->time - now;
     }
   }
 }
@@ -357,6 +331,8 @@ fileDescriptorCatchup(boost::posix_time::time_duration& waitDuration)
   td_ts.tv_nsec = waitDuration.fractional_seconds() * PTIME_SECS_FACTOR;
   assert(td_ts.tv_nsec >= 0);
 
+  LOOP_WORDY("pselect sleeping " << ((double)td_ts.tv_sec) + ((double)td_ts.tv_nsec/1000000000.0) << " seconds");
+
   int result = pselect(nextFD, &readResultBits, &writeResultBits,
                        NULL, &td_ts, NULL);
   if (result == -1) {
@@ -451,6 +427,7 @@ processCatchup(boost::posix_time::time_duration& waitDuration)
   for(;
       it != procs()->end();
       it++) {
+    LOOP_WORDY("processCatchup invoking proc()");
     (*it)->proc(&w2);
     if(w2 < waitDuration) {
       waitDuration = w2;
@@ -480,13 +457,17 @@ eventLoopInitialize()
 void
 eventLoop()
 {
-  // The wait duration for file descriptor waits. It is set by
-  // timeCBCatchup and used by fileDescriptorCatchup.  Equivalent to
-  // selwait in libasync
-  boost::posix_time::time_duration waitDuration =
-    boost::posix_time::seconds(1);
-
   while (1) {
+
+    // The wait duration for file descriptor waits. It is set by
+    // timeCBCatchup and used by fileDescriptorCatchup.  Equivalent to
+    // selwait in libasync
+
+    // 10 seconds was chosen to make scheduler wedging painful enough
+    // to be noticed.
+    boost::posix_time::time_duration waitDuration =
+      boost::posix_time::seconds(10);
+
     try {
       timeCBCatchup(waitDuration);
     } catch (std::exception e) {
@@ -496,7 +477,37 @@ eventLoop()
     }
 
     processCatchup(waitDuration);
-    
+
+    ////////////////////////////////////////////////////////////
+    // Set the wait duration to be the time from now till the first
+    // scheduled event
+
+    // Update current time
+    boost::posix_time::ptime now;
+    try {
+      getTime(now);
+    } catch (std::exception e) {
+      LOOP_ERROR("timeCBCatchup exception getting current time A: '"
+		 << e.what()
+		 << "'");
+    }
+    // Get first wakeup time from event queue
+    if (!callbacks.empty()) {
+      if((*callbacks.begin())->time < now) {
+	// Oops, the first callback has already expired. Don't wait, just
+	// poll
+	waitDuration = boost::posix_time::minutes(0);
+      } else {
+	// Update the wait duration to be what's left until the next
+	// deadline.
+
+	boost::posix_time::time_duration newDur = (*callbacks.begin())->time - now;
+	if(waitDuration > newDur) {
+	  waitDuration = newDur;
+	}
+      }
+    }
+
     try {
       fileDescriptorCatchup(waitDuration);
     } catch (std::exception e) {

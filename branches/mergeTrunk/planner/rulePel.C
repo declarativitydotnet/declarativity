@@ -123,11 +123,6 @@ string pelMath(PlanContext* pc, Parse_Math *expr)
 {
   ostringstream  pel;  
   
-  if (expr->id && expr->oper == Parse_Math::MINUS) {
-    Parse_Expr *tmp = expr->lhs;
-    expr->lhs = expr->rhs;
-    expr->rhs = tmp;
-  }
   expr2Pel(pc, pel, expr->lhs);
   expr2Pel(pc, pel, expr->rhs);
 
@@ -143,6 +138,7 @@ string pelMath(PlanContext* pc, Parse_Math *expr)
   case Parse_Math::BIT_OR:  pel << "| "; break;
   case Parse_Math::BIT_XOR: pel << "^ "; break;
   case Parse_Math::BIT_NOT: pel << "~ "; break;
+  case Parse_Math::APPEND: pel << "||| "; break;
   default: error(pc, "Pel Math error" + expr->toString());
   }
 
@@ -150,30 +146,30 @@ string pelMath(PlanContext* pc, Parse_Math *expr)
 }
 
 
-string pelRange(PlanContext* pc, Parse_Bool *expr) 
+string
+pelRange(PlanContext* pc, Parse_Bool *expr) 
 {
-  PlanContext::FieldNamesTracker* names = pc->_namesTracker;
-  Parse_Var*   range_var = dynamic_cast<Parse_Var*>(expr->lhs);
+  Parse_Expr*  targetExpression = dynamic_cast<Parse_Expr*>(expr->lhs);
   Parse_Range* range     = dynamic_cast<Parse_Range*>(expr->rhs);
   ostringstream pel;
-  int          pos;
 
-  if (!range || !range_var) {
-    PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
+  if (!targetExpression) {
+    PLANNER_ERROR_NOPC("Error in range pel generation "
+                       << expr->toString()
+                       << ". Target expression is not a math "
+                       << "expression.");
     exit(-1);
     return "ERROR";
   }
 
-  pos = names->fieldPosition(range_var->toString());
-  if (pos < 0) {
-    PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
-    exit(-1);
-    return "ERROR";
-  }
-  pel << "$" << (pos + 1) << " ";
+  // The target expression first.
+  expr2Pel(pc, pel, targetExpression);
 
+  // Now the range expressions.
   expr2Pel(pc, pel, range->lhs);
   expr2Pel(pc, pel, range->rhs);
+
+  // And the operator
   switch (range->type) {
     case Parse_Range::RANGEOO: pel << "() "; break;
     case Parse_Range::RANGEOC: pel << "(] "; break;
@@ -423,6 +419,34 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
     expr2Pel(pc, pel, expr->arg(0));
     expr2Pel(pc, pel, expr->arg(1));
     pel << "totalComp ";
+  }
+  else if (expr->name() == "f_empty") {
+    pel << "empty ";
+  }
+  else if (expr->name() == "f_initSet") {
+    if (expr->args() != 1) {
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
+      exit(-1);
+      return "ERROR.";
+    }
+    expr2Pel(pc, pel, expr->arg(0));
+    pel << "initSet ";
+  }
+  else if (expr->name() == "f_mod") {
+    if (expr->args() != 1) {
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
+      exit(-1);
+      return "ERROR.";
+    }
+    expr2Pel(pc, pel, expr->arg(0));
+    pel << "mod ";
+  }
+  else if (expr->name() == "f_loadKeyFile" || expr->name() == "f_createLocSpec" || expr->name() == "f_createVersion" || expr->name() == "f_serialize" || expr->name() == "f_deserialize" || expr->name() == "f_isLocSpec") {
+    for(int i = 0; i < expr->args(); i++){
+      expr2Pel(pc, pel, expr->arg(i));
+    }
+    string pelFuncName = expr->name().substr(2);
+    pel << pelFuncName << " ";
   }
 
   else {

@@ -22,6 +22,8 @@
 #include "val_int64.h"
 #include "oper.h"
 
+using namespace opr;
+
 namespace compile {
   namespace planner {
 
@@ -79,21 +81,46 @@ namespace compile {
     bool 
     Context::watched(string name, string mod)
     {
+      //      cout << "Asked if table " << name << " contains modifier " << mod
+      //    << "\n";
       CommonTable::ManagerPtr catalog = Plumber::catalog();
       CommonTablePtr watchTbl = catalog->table(WATCH);
       TuplePtr lookup = Tuple::mk(WATCH);
       lookup->append(Val_Str::mk(name));
-      lookup->append((mod == "" ? Val_Null::mk() : Val_Str::mk(mod)));
+      lookup->append(Val_Null::mk());
       lookup->freeze();
       CommonTable::Key indexKey;
       indexKey.push_back(catalog->attribute(WATCH, "NAME"));
-      indexKey.push_back(catalog->attribute(WATCH, "MOD"));
 
       CommonTable::Iterator i = 
-        watchTbl->lookup(CommonTable::theKey(CommonTable::KEY23), CommonTable::theKey(CommonTable::KEY45), lookup); 
+        watchTbl->lookup(CommonTable::theKey(CommonTable::KEY2),
+                         CommonTable::theKey(CommonTable::KEY4),
+                         lookup); 
       if (!i->done()) {
-        return true; 
-      } 
+        // Found something.
+        if (mod == "") {
+          //  cout << "It does by default\n";
+          return true;
+        } else {
+          // Does it contain this explicit modifier?
+          TuplePtr theWatchSpec = i->next();
+          //cout << "The watch record is " << theWatchSpec->toString() << "\n";
+          string theWatchModifier =
+            (*theWatchSpec)[catalog->attribute(WATCH,
+                                               "MOD")]->toString();
+          //cout << "The watch modifieer is " << theWatchModifier << "\n";
+          if (theWatchModifier.find(mod) == theWatchModifier.npos) {
+            // Didn't find it
+            return false;
+          } else {
+            // Found it
+            //cout << "It does explicitly\n";
+            return true; 
+          }
+        }
+      } else {
+        //cout << "Nothing watched about " << name << "\n";
+      }
       return false;
     }
 
@@ -111,8 +138,8 @@ namespace compile {
       indexKey.push_back(catalog->attribute(STAGE, "PID"));
       iter =
         catalog->table(STAGE)->lookup(CommonTable::theKey(CommonTable::KEY2), indexKey, program); 
-      bool hasStages = !iter->done();
-      stage_oss << "edit main {\n";
+      bool globalP2DL = !iter->done();
+      if (globalP2DL) stage_oss << "edit main {\n";
       while (!iter->done()) {
         TuplePtr stage = iter->next();
         string processor = (*stage)[catalog->attribute(STAGE, "PROCESSOR")]->toString();
@@ -135,37 +162,39 @@ namespace compile {
                        + "DDuplicateConservative(\"" + duplicatorName + "\", 1)";
           programEvents.insert(std::make_pair(input, (*program)[TUPLE_ID]));
         }
-        stage_oss << "\t" << intStrandInputElement << " ->  Slot(\"stageSlot\") ->\n\t"
+        stage_oss << "\t" << intStrandInputElement; 
+        if (watched(input, "c")) {
+          stage_oss << " -> Print(\"RecvEvent: STAGE " << processor << "\")"; 
+        }
+        stage_oss << " ->  Queue(\"stageQueue\", 1000) ->\n\t"
                   << "Stage(\"stage_" << processor << "\", \"" << processor << "\") ->\n\t"
-                  << "PelTransform(\"formatStage\", \"\\\"" 
-                                   << output << "\\\" pop swallow unbox drop popall\")"
-                  << " -> [+]main." << _internalStrandOutputElement << ";\n";
+                  << "PelTransform(\"formatStage\", \"\\\"" << output << "\\\" pop swallow unbox drop popall\") -> ";
+        if (watched(output, "s")) {
+          stage_oss << "Print(\"SendAction: STAGE " << processor << "\") -> "; 
+        }
+        stage_oss << "PelTransform(\"package\", \"$1 pop swallow pop\") -> "
+                  << "[+]main." << _internalStrandOutputElement << ";\n";
       }
-      stage_oss << "};\n";
-
-      if (hasStages) {
-        program = program->clone();
-        program->set(catalog->attribute(PROGRAM, "P2DL"), Val_Str::mk(stage_oss.str()));
-      }
+      if (globalP2DL) stage_oss << "};\n";
 
       // Add all facts asserted by this program
       indexKey.clear();
       indexKey.push_back(catalog->attribute(FACT, "PID"));
-      iter =
-        catalog->table(FACT)->lookup(CommonTable::theKey(CommonTable::KEY2), indexKey, program); 
+      iter = catalog->table(FACT)->
+        lookup(CommonTable::theKey(CommonTable::KEY2), indexKey, program); 
+
       while (!iter->done()) {
-        TuplePtr fact = iter->next();                                        // The row in the fact table
-        fact = Val_Tuple::cast((*fact)[catalog->attribute(FACT, "TUPLE")]);  // The actual fact to assert
-        CommonTablePtr table = catalog->table((*fact)[TNAME]->toString());   // The table refered to
-        if (table) {
-          table->insert(fact); // Assert the fact to be true
-          TELL_INFO << "ASSERT FACT : " << fact->toString() << std::endl;
-        }
-        else {
-          throw Exception("No table defined for fact " + fact->toString()); // This sucks
-        }
+        TuplePtr fact = iter->next(); // The row in the fact table
+        string tablename = (*fact)[catalog->attribute(FACT, "TABLENAME")]->toString();
+        fact = Val_Tuple::cast((*fact)[catalog->attribute(FACT, "TUPLE")]);
+        stage_oss << "fact " << fact->toConfString() << ";"; 
+        globalP2DL = true;
       }
 
+      if (globalP2DL) {
+        program = program->clone();
+        program->set(catalog->attribute(PROGRAM, "P2DL"), Val_Str::mk(stage_oss.str()));
+      }
       return this->compile::Context::program(catalog, program);
     }
 
@@ -201,7 +230,12 @@ namespace compile {
                                                  rule);
         TELL_ERROR << "WE SHOULD HAVE GOT FUNCTORS: " << std::endl;
         while (!iter->done()) {
-           TELL_ERROR << "\t" << iter->next()->toString() << std::endl;
+           TuplePtr tp = iter->next();
+           TELL_ERROR << "\t" << tp->toString() << std::endl;
+           for (uint i = 0; i < tp->size(); i++) {
+             TELL_ERROR << (*tp)[i]->typeCode() << ", ";
+           }
+           TELL_ERROR << std::endl;
         }
         TELL_ERROR << "WE ONLY GOT THE FOLLOWING TERMS: " << std::endl;
         for (TuplePtrList::iterator iter = terms.begin(); 
@@ -263,9 +297,9 @@ namespace compile {
       if (epd.inputs) {
         // Must create a duplicator, but its name can't have '::' in it.
         string duplicatorName = "dup_" + eventName;
-        for (string::size_type s = 0;
-             (s = duplicatorName.find("::", s)) != string::npos; s++)
+        for (string::size_type s = 0; (s = duplicatorName.find("::", s)) != string::npos; s++) {
           duplicatorName.replace(s, 2, "_");
+        }
 
         ElementPtr demux = 
           Plumber::dataflow(_mainDataflowName)->find(_internalStrandInputElement)->element();
@@ -283,7 +317,11 @@ namespace compile {
           
       string eventType = (*event)[catalog->attribute(FUNCTOR, "ECA")]->toString();
 
-      oss << "graph " << rname->toString() 
+      string graphName = rname->toString();
+      for (string::size_type s = 0; (s = graphName.find("::", s)) != string::npos; s++) {
+         graphName.replace(s, 2, "_");
+      }
+      oss << "graph " << graphName
           << "(" << epd.inputs << ", " << apd.outputs << ", \""
           <<  epd.inProc << "/" << apd.outProc << "\", \""
           <<  epd.inFlow << "/" << apd.outFlow << "\") {\n";
@@ -293,53 +331,41 @@ namespace compile {
       if (epd.inputs && apd.outputs) {
         if (aggPosition >= 0) {
           oss << "\t" << aggwrap.str(); // Create the aggwrap
-          oss << "\tinput -> aggwrap[1] -> event -> condition -> ";
+          oss << "\tinput -> Queue(\"aggQueue\", 10000) -> PullPush(\"aggInput\", 0) ->";
+          oss << "\taggwrap[1] -> event -> condition -> ";
           oss << "PullPush(\"aggpp\", 0) -> [1]aggwrap -> ";
-          oss << "Queue(\"actionBuf\", 1000) -> action -> output;\n";
+          oss << "Queue(\"actionBuf\", 10000) -> action -> output;\n";
           oss << "\tcondition[1] -> [2]aggwrap;\n};\n"; // End signal
         }
         else {
           oss << "\tinput -> event -> condition -> action -> output;\n};\n";
         }
-        //now, link it up to the main engine body
-	if(eventType == "RECV"){
-          oss << "edit main { " << intStrandInputElement << " -> "; 
-          oss << rname->toString() << " -> [+]" << intStrandOutputElement << "; };\n";
-	}else{
-	  TELL_INFO<<"ext event has inputs!? not handled"<<std::endl; 
-	  assert(0);
-	}
+        oss << "edit main { " << intStrandInputElement << " -> "; 
+        oss << graphName << " -> [+]" << intStrandOutputElement << "; };\n";
       }
       else if (epd.inputs) {
         if (aggPosition >= 0) {
-          oss << "\t" << aggwrap.str(); // Create the aggwrap
-          oss << "\tinput -> aggwrap[1] -> event -> condition -> ";
-          oss << "PullPush(\"aggpp\", 0) -> [1]aggwrap -> ";
-          oss << "Queue(\"actionBuf\", 10) -> action;\n";
-          oss << "\tcondition[1] -> [2]aggwrap;\n};\n"; // End signal
+          TELL_ERROR << "Side affect rule should not have aggregation. RULE: " 
+                     << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << std::endl; 
+          throw planner::Exception("Side effect rule should not have aggregate!");
         }
         else {
           oss << "\tinput -> event -> condition -> action;\n};\n";
         }
         oss << "edit main { " << intStrandInputElement << " -> " 
-            << rname->toString() << "; };\n";
-	if(eventType != "RECV"){
-	  TELL_INFO<<"ext event but have inputs!?";
-	  assert(0);
-	}
+            << graphName << "; };\n";
       }
       else if (apd.outputs) {
         oss << "\tevent -> condition -> action -> output;\n};\n";
 	if(eventType == "RECV"){
-          oss << "edit main { " << rname->toString() 
-              << " -> [+]" << intStrandOutputElement << "; };\n";
-	}else{
-	  oss << "edit main { " << rname->toString()
+          throw planner::Exception("Receive event should have an input!");
+	} else{
+	  oss << "edit main { " << graphName
 	      << " -> [+]" << extStrandOutputElement<<"; };\n";
 	}
       }
       else {
-        oss << "\tevent -> condition -> action;\n};\n";
+        throw planner::Exception("Disconnected rule should not be planned!");
       }
 
  
@@ -386,7 +412,7 @@ namespace compile {
       for (unsigned pos = 0; true; pos++) {
         TuplePtr lookup = Tuple::mk();
         lookup->append((*rule)[TUPLE_ID]);
-        lookup->append(Val_UInt32::mk(pos));
+        lookup->append(Val_Int64::mk(pos));
         lookup->freeze();
 
         TuplePtr lookup2 = Tuple::mk();
@@ -394,10 +420,18 @@ namespace compile {
         lookup2->append(Val_Int64::mk(pos));
         lookup2->freeze();
 
+        TuplePtr lookup3 = Tuple::mk();
+        lookup3->append((*rule)[TUPLE_ID]);
+        lookup3->append(Val_Int64::mk(pos));
+        lookup3->freeze();
+
         TELL_INFO << "LOOKUP TUPLE: " << lookup->toString() << std::endl;
         iter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY01), functorKey, lookup);
         if (iter->done())
           iter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY01), functorKey, lookup2);
+        if (iter->done())
+          iter = functorTbl->lookup(CommonTable::theKey(CommonTable::KEY01), functorKey, lookup3);
+
         if (!iter->done()) {
           TuplePtr term = iter->next();
           TELL_INFO << "\tFUNCTOR TERM POSITION " << pos << ": " 
@@ -409,6 +443,8 @@ namespace compile {
         iter = assignTbl->lookup(CommonTable::theKey(CommonTable::KEY01), assignKey, lookup);
         if (iter->done())
           iter = assignTbl->lookup(CommonTable::theKey(CommonTable::KEY01), assignKey, lookup2);
+        if (iter->done())
+          iter = assignTbl->lookup(CommonTable::theKey(CommonTable::KEY01), assignKey, lookup3);
         if (!iter->done()) {
           TuplePtr term = iter->next();
           TELL_INFO << "\tASSIGN TERM POSITION " << pos << ": " 
@@ -419,6 +455,8 @@ namespace compile {
         iter = selectTbl->lookup(CommonTable::theKey(CommonTable::KEY01), selectKey, lookup);
         if (iter->done())
           iter = selectTbl->lookup(CommonTable::theKey(CommonTable::KEY01), selectKey, lookup2);
+        if (iter->done())
+          iter = selectTbl->lookup(CommonTable::theKey(CommonTable::KEY01), selectKey, lookup3);
         if (!iter->done()) {
           TuplePtr term = iter->next();
           TELL_INFO << "\tSELECT TERM POSITION " << pos << ": " 
@@ -438,19 +476,32 @@ namespace compile {
                    CommonTable::ManagerPtr catalog, TuplePtrList& terms)
     {
       assert (terms.size() >= 2);	// Must have a least a head and an event
-      TuplePtr head      = terms.at(0);
-      TuplePtr event     = terms.at(1); 
+      TuplePtr head  = terms.at(0);
+      TuplePtr event = terms.at(1); 
       string   eventType = (*event)[catalog->attribute(FUNCTOR, "ECA")]->toString();
       string   eventName = (*event)[catalog->attribute(FUNCTOR, "NAME")]->toString();
       ListPtr  headArgs  = Val_List::cast((*head)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]); 
-      ListPtr  eventArgs = Val_List::cast((*event)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]); 
-  
+
+      if (eventName != "periodic") {
+        ListPtr  schema = Val_List::cast((*event)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]); 
+        TuplePtrList selections;
+        schema = canonicalizeEvent(selections, schema);
+        if (selections.size() > 0) {
+          event = event->clone();
+          event->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(schema));
+          event->freeze();
+          terms[1] = event;
+          terms.insert(terms.begin() + 2, selections.begin(), selections.end());
+        }
+      }
+
       if (eventType == "RECV") {
         oss << indent << "graph event(1, 1, \"h/l\", \"-/-\") {\n";
         oss << indent << "\tinput -> " << "Queue(\"" << eventName << "\", 1000) -> \n"; 
-        if (watched(eventName, "RECV_EVENT") || watched(eventName, ""))
-          oss << indent << "\tPrint(\"MODIFIER: RECV_EVENT RULE " 
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        if (watched(eventName, "c")) {
+          oss << indent << "\tPrint(\"RecvEvent RULE " 
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        }
         oss << indent << "\toutput;\n};\n";
         return (Context::PortDesc) {1, "h", "-", 1, "l", "-"};
       }
@@ -460,9 +511,10 @@ namespace compile {
       else if (eventType == "REFRESH") {
         oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
         oss << indent << "\tRefresh(\"refresh_" << eventName << "\", \"" << eventName << "\") -> \n";
-        if (watched(eventName, "REFRESH_EVENT") || watched(eventName, ""))
-          oss << indent << "\tPrint(\"MODIFIER: REFRESH_EVENT RULE "
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        if (watched(eventName, "r")) {
+          oss << indent << "\tPrint(\"RefreshEvent RULE "
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        }
         oss << indent << "\toutput;\n";
         oss << indent << "};\n";
         return (Context::PortDesc) {0, "", "", 1, "l", "-"};
@@ -470,9 +522,10 @@ namespace compile {
       else if (eventType == "DELETE") {
         oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
         oss << indent << "\tRemoved(\"delete_" << eventName << "\", \"" << eventName << "\") -> \n";
-        if (watched(eventName, "REFRESH_EVENT") || watched(eventName, ""))
-          oss << indent << "\tPrint(\"MODIFIER: REFRESH_EVENT RULE "
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        if (watched(eventName, "d")) {
+          oss << indent << "\tPrint(\"DeleteEdvent RULE "
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        }
         oss << indent << "\toutput;\n";
         oss << indent << "};\n";
         return (Context::PortDesc) {0, "", "", 1, "l", "-"};
@@ -480,14 +533,25 @@ namespace compile {
       else if (eventType == "DELTA") {
         oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
         oss << indent << "\trr = RoundRobin(\"deltaRR_" << eventName << "\", 3);\n";
-        oss << indent << "\tUpdate(\"update_"<<eventName<<"\",\""<<eventName<<"\")    -> [0]rr;\n";
-        oss << indent << "\tRemoved(\"delete_"<<eventName<<"\",\""<<eventName<<"\")   -> [1]rr;\n";
-        oss << indent << "\tRefresh(\"refresh_"<<eventName<<"\",\""<<eventName<< "\") -> [2]rr;\n";
-        oss << indent << "\trr -> \n"; 
-        if (watched(eventName, "DELTA_EVENT") || watched(eventName, ""))
-          oss << indent << "\tPrint(\"MODIFIER: DELTA_EVENT RULE "
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
-        oss << indent << "\toutput;\n};\n";
+        oss << indent << "\tUpdate(\"update_"<<eventName<<"\",\""<<eventName<<"\") -> ";
+        if (watched(eventName, "a")) {
+          oss << "Print(\"InsertEvent: RULE "
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") -> "; 
+        }
+        oss << "[0]rr;\n";
+        oss << indent << "\tRemoved(\"delete_"<<eventName<<"\",\""<<eventName<<"\") -> ";
+        if (watched(eventName, "d")) {
+          oss << "Print(\"DeleteEvent: RULE "
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") -> "; 
+        }
+        oss << "[1]rr;\n";
+        oss << indent << "\tRefresh(\"refresh_"<<eventName<<"\",\""<<eventName<< "\") -> ";
+        if (watched(eventName, "r")) {
+          oss << "Print(\"RefreshEvent: RULE "
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") -> "; 
+        }
+        oss << "[2]rr;\n";
+        oss << indent << "\trr -> output;\n};\n";
         return (Context::PortDesc) {0, "", "", 1, "l", "-"};
       }
       else {
@@ -510,7 +574,8 @@ namespace compile {
       int     aggPosition = namestracker::aggregation(headSchema);
       bool    filter      = false;
   
-      if (aggPosition >= 0) {
+      if (aggPosition >= 0 &&
+          (*event)[catalog->attribute(FUNCTOR, "ECA")]->toString() == "RECV") {
         oss << indent << "graph condition(1, 2, \"l/lh\", \"-/--\") {\n";  
         filter = true;
       }
@@ -544,8 +609,13 @@ namespace compile {
         string graphName;
         if ((*term)[0]->toString() == FUNCTOR) {
           ListPtr schema = Val_List::cast((*term)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
+          schema = canonicalizeSchema(oss, indent+"\t\t", catalog, graphNames, tupleSchema, schema);
+          term = term->clone();
+          term->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(schema));
           graphName = probe(oss, indent + "\t\t", catalog, term, tupleSchema, filter);
-          tupleSchema = namestracker::merge(tupleSchema, schema);
+          if ((*term)[catalog->attribute(FUNCTOR, "NOTIN")] == Val_Int64::mk(false)) {
+              tupleSchema = namestracker::merge(tupleSchema, schema);
+          }
           if (filter) 
             filterGraphName = graphName;
           filter  = false;
@@ -584,27 +654,40 @@ namespace compile {
            iter != headSchema->end(); iter++) {
         ValuePtr arg = *iter;
         TuplePtr argTp = Val_Tuple::cast(arg);
-        int pos = namestracker::position(tupleSchema, arg);
-        if (pos >= 0) {
-          pel << "$" << (pos + 1) << " pop ";
-        }
-        else if ((*argTp)[0]->toString() == AGG && (*argTp)[2] == Val_Null::mk()) {
-          // Ignore '*' aggregates.  
+
+        if ((*argTp)[0]->toString() == AGG &&
+            (*event)[catalog->attribute(FUNCTOR, "ECA")]->toString() == "INSERT") {
+          /* An Aggregation element is planned in this case, which will always place
+             the aggregate value in the last position. */
+          pel << "$" << (tupleSchema->size() + 1) << " pop ";
         }
         else {
-          throw planner::Exception("ERROR Rule: " +
-                                   (*rule)[catalog->attribute(RULE, "NAME")]->toString() +
-                                   "\n\tUnknown variable: " + 
-                                    arg->toString() + "\n\tSCHEMA: " + 
-                                    tupleSchema->toString());
+          int pos = namestracker::position(tupleSchema, arg);
+          if (pos >= 0) {
+            pel << "$" << (pos + 1) << " pop ";
+          }
+          else if ((*argTp)[0]->toString() == AGG && (*argTp)[2] == Val_Null::mk()) {
+            /* This field is handled by the Aggwrap element. */
+          }
+          else {
+            throw planner::Exception("ERROR Rule: " +
+                                     (*rule)[catalog->attribute(RULE, "NAME")]->toString() +
+                                     "\n\tUnknown variable: " + 
+                                      arg->toString() + "\n\tSCHEMA: " + 
+                                      tupleSchema->toString());
+          }
         }
       }
       TELL_INFO << "\tPEL: " << pel.str() << std::endl;
 
       oss << indent << "\tgraph project(1, 1, \"a/a\", \"x/x\") {\n";
       oss << indent << "\t\tinput -> "
-                    << "PelTransform(\"project\", \"" << pel.str() << "\") -> "
-                    << "output;\n";
+                    << "PelTransform(\"project\", \"" << pel.str() << "\") -> ";
+      if (watched((*head)[catalog->attribute(FUNCTOR, "NAME")]->toString(), "h")) {
+          oss << "Print(\"HeadProjection: RULE "
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") -> "; 
+      }
+      oss << "output;\n";
       oss << indent << "\t};\n";
   
       oss << indent << "\tinput -> " << termName.str() << " -> project -> output;\n";
@@ -632,9 +715,10 @@ namespace compile {
       if (actionType == "ADD") {
         oss << indent << "graph action(1, 0, \"l/\", \"-/\") {\n";
         oss << indent << "\tinput -> PullPush(\"actionPull\", 0) ->\n";
-        if (watched(funcName, "ADD_ACTION"))
-          oss << indent << "\tPrint(\"MODIFIER: ADD_ACTION RULE "
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        if (watched(funcName, "a")) {
+          oss << indent << "\tPrint(\"AddAction: RULE "
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        }
         oss << indent << "\tInsert2(\"actionInsert\", \"" << funcName << "\");\n";
         oss << indent << "};\n";
         return (Context::PortDesc) {1, "l", "-", 0, "", ""};
@@ -642,9 +726,10 @@ namespace compile {
       else if (actionType == "DELETE") {
         oss << indent << "graph action(1, 0, \"l/\", \"-/\") {\n";
         oss << indent << "\tinput -> PullPush(\"actionPull\", 0) ->\n";
-        if (watched(funcName, "DELETE_ACTION"))
-          oss << indent << "\tPrint(\"MODIFIER: DELETE_ACTION RULE "
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        if (watched(funcName, "z")) {
+          oss << indent << "\tPrint(\"DeleteAction: RULE "
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        }
         oss << indent << "\tDelete2(\"actionDelete\", \"" << funcName << "\");\n";
         oss << indent << "};\n";
         return (Context::PortDesc) {1, "l", "-", 0, "", ""};
@@ -656,29 +741,24 @@ namespace compile {
          *  The locaction will be extracted from the tuple, via pel, and placed in
          *  position 0 followed by an encapsulation of the orginal tuple. */ 
         ListPtr headSchema = Val_List::cast((*head)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
-        ValPtrList::const_iterator iter = headSchema->begin(); 
-        for (unsigned pos = 1; iter != headSchema->end(); iter++, pos++) {
-          TuplePtr arg = Val_Tuple::cast(*iter);
-          if ((*arg)[TNAME]->toString() == LOC) {
-            package << "$" << pos; // Location attribute position
-            break;
-          }
-        }
-        if (iter == headSchema->end()) 
+        int pos = namestracker::position(headSchema, namestracker::location(headSchema));
+        if (pos < 0)
           throw planner::Exception("No location variable in schema: " + headSchema->toString());
+
+        package << "$" << (pos + 1);   // Location attribute position
         package << " pop swallow pop"; // Encapsulate the tuple in a value type field.
          
         oss << indent << "graph action(1, 1, \"a/a\", \"x/x\") {\n";
         oss << indent << "\tinput -> ";
-        oss << indent << "PelTransform(\"actionPel\", \"" << package.str() << "\") -> ";
-        if (watched(funcName, "SEND_ACTION"))
-          oss << indent << "\tPrint(\"MODIFIER: SEND_ACTION RULE "
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
-        oss << indent << "output;\n};\n";
+        if (watched(funcName, "s")) {
+          oss << indent << "\tPrint(\"SendAction: RULE "
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        }
+        oss << indent << "PelTransform(\"actionPel\", \"" << package.str() << "\") -> output;\n};\n";
         return (Context::PortDesc) {1, "l", "-", 1, "l", "-"};
       }
       else
-        throw planner::Exception("Unknown action type: " + actionType);
+        throw planner::Exception("Unknown head action type: " + head->toString());
       return (Context::PortDesc) {0, "", "", 0, "", ""};
     }
   
@@ -699,15 +779,17 @@ namespace compile {
         for (ValPtrList::const_iterator iter = headArgs->begin();
              iter != headArgs->end(); iter++) {
           TuplePtr arg = Val_Tuple::cast(*iter);
-          if ((*arg)[0]->toString() == VAR) {
+          if ((*arg)[0]->toString() == VAR || (*arg)[0]->toString() == LOC) {
             int pos = namestracker::position(eventArgs, *iter);
-            assert (pos > 0);
+            if (pos < 0) {
+              throw planner::Exception("Group by variables must come from body predicate! " + rule->toString());
+            }
             groupByFields.push_back(pos+1);          
           }
           else {
             aggOper  = (*arg)[3]->toString();
             if ((*arg)[2] == Val_Null::mk()) {
-              aggField = -1;
+              aggField = 0; 
             }
             else {
               aggField = namestracker::position(eventArgs, *iter) + 1;
@@ -721,12 +803,15 @@ namespace compile {
         oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
         oss << indent << "\t"
             << "agg = Aggregate(\"" << aggOper << "_" << aggTable 
-            << "\", " << aggTable << ", " << aggOper << ", " << aggField 
+            << "\", \"" << aggTable << "\", \"" << aggOper << "\", " << aggField 
             << ", " << int_list_to_str(groupByFields) << ");\n";
         oss << indent << "\tagg -> ";
-        if (watched(eventName, "INSERT_EVENT") || watched(eventName, ""))
-          oss << indent << "\tPrint(\"MODIFIER: INSERT_EVENT RULE "
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        oss << "PelTransform(\"tableName\", \"\\\"" << aggTable
+            << "\\\" pop swallow unbox popall\") -> "; 
+        if (watched(eventName, "i")) {
+          oss << indent << "\tPrint(\"InsertEvent: RULE "
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        }
         oss << indent << "\toutput;\n};\n";
         return (Context::PortDesc) {0, "", "", 1, "l", "-"};
       }
@@ -742,7 +827,7 @@ namespace compile {
         oss << indent << "\tsource = StaticTupleSource(\"periodicSource\", periodic<\""
                       << Plumber::catalog()->nodeid()->toString() << "\">);\n";
         oss << indent << "\tpel = PelTransform(\"periodicPel\", \"$0 pop $1 pop rand pop\");\n";
-        oss << indent << "\ttimer = TimedPullPush(\"periodicTimer\", "<<period;
+        oss << indent << "\ttimer = TimedPullPush(\"periodicTimer\", ";
         oss << period << ", " << count << ");\n";
         oss << indent << "\tsource -> pel -> timer -> Slot(\"periodicSlot\") -> output;\n";
         oss << indent << "};\n";
@@ -752,27 +837,106 @@ namespace compile {
         oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
         oss << indent << "\tUpdate(\"update_" << eventName << "\", \"" 
                       << eventName << "\") -> \n";
-        if (watched(eventName, "INSERT_EVENT") || watched(eventName, ""))
-          oss << indent << "\tPrint(\"MODIFIER: INSERT_EVENT RULE "
-                        << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        if (watched(eventName, "i")) {
+          oss << indent << "\tPrint(\"InsertEvent: RULE "
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        }
         oss << indent << "\toutput;\n};\n";
         return (Context::PortDesc) {0, "", "", 1, "l", "-"};
       }
       return (Context::PortDesc) {0, "", "", 0, "", ""};
     }
   
+    ListPtr
+    Context::canonicalizeSchema(ostringstream& oss, string indent, 
+                                CommonTable::ManagerPtr catalog, std::deque<string>& graphs,
+                                ListPtr& outerSchema, ListPtr innerSchema)
+    {
+      static long fictNum = 0;
+
+      ListPtr cschema = List::mk();
+      for (ValPtrList::const_iterator iter = innerSchema->begin(); 
+           iter != innerSchema->end(); iter++) {
+        TuplePtr attr = Val_Tuple::cast(*iter);
+        if ((*attr)[TNAME]->toString() != VAR &&
+            (*attr)[TNAME]->toString() != LOC) {
+          ostringstream name;
+          name <<"$PVPROBEGEN_" << fictNum++;
+          TuplePtr varAttr = Tuple::mk(VAR);
+          varAttr->append(Val_Str::mk(name.str()));
+          varAttr->freeze();
+          
+          TuplePtr assignTp = Tuple::mk(ASSIGN, true);
+          assignTp->append(Val_Null::mk());
+          assignTp->append(Val_Tuple::mk(varAttr));
+          assignTp->append(Val_Tuple::mk(attr));
+          assignTp->append(Val_Null::mk());
+          assignTp->freeze();
+ 
+          graphs.push_back(assign(oss, indent, catalog, assignTp, outerSchema));
+          cschema->append(Val_Tuple::mk(varAttr));
+        }
+        else {
+          cschema->append(Val_Tuple::mk(attr));
+        }
+      } 
+      return cschema;
+    }
+
+    ListPtr
+    Context::canonicalizeEvent(std::deque<TuplePtr>& selections, ListPtr schema)
+    {
+      static long fictNum = 0;
+
+      ListPtr cschema = List::mk();
+      for (ValPtrList::const_iterator iter = schema->begin(); 
+           iter != schema->end(); iter++) {
+        TuplePtr attr = Val_Tuple::cast(*iter);
+        if ((*attr)[TNAME]->toString() != VAR &&
+            (*attr)[TNAME]->toString() != LOC) {
+          ostringstream name;
+          name << "$PVEVENTGEN_" << fictNum++;
+          TuplePtr varAttr = Tuple::mk(VAR);
+          varAttr->append(Val_Str::mk(name.str()));
+          varAttr->freeze();
+          
+          TuplePtr boolTp = Tuple::mk(BOOL);
+          boolTp->append(Val_Str::mk("=="));
+          boolTp->append(Val_Tuple::mk(varAttr));
+          boolTp->append(Val_Tuple::mk(attr));
+          boolTp->freeze();
+
+          TuplePtr selectTp = Tuple::mk(SELECT, true);
+          selectTp->append(Val_Null::mk());
+          selectTp->append(Val_Tuple::mk(boolTp));
+          selectTp->append(Val_Null::mk());
+          selectTp->freeze();
+          selections.push_back(selectTp);
+ 
+          cschema->append(Val_Tuple::mk(varAttr));
+        }
+        else {
+          cschema->append(Val_Tuple::mk(attr));
+        }
+      } 
+
+      return cschema;
+    }
+
     string
     Context::probe(ostringstream& oss, string indent,
                    CommonTable::ManagerPtr catalog, 
                    TuplePtr probeTp, ListPtr tupleSchema, bool filter)
     {
-      ListPtr probeSchema = Val_List::cast((*probeTp)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
-      string    tableName = (*probeTp)[catalog->attribute(FUNCTOR, "NAME")]->toString();
+      ListPtr probeSchema  = Val_List::cast((*probeTp)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
+      ListPtr accessMethod = Val_List::cast((*probeTp)[catalog->attribute(FUNCTOR, "AM")]);
+      string    tableName  = (*probeTp)[catalog->attribute(FUNCTOR, "NAME")]->toString();
+      bool    notin = (*probeTp)[catalog->attribute(FUNCTOR, "NOTIN")] == Val_Int64::mk(true);
       CommonTable::Key joinKey;
       CommonTable::Key indexKey;
       CommonTable::Key baseKey;
       namestracker::joinKeys(tupleSchema, probeSchema, joinKey, indexKey, baseKey);
-      catalog->createIndex(tableName, indexKey);
+      catalog->createIndex(tableName, HASH_INDEX, indexKey);
 
       // Create a unique graph name for this probe
       ostringstream graphName;
@@ -782,10 +946,13 @@ namespace compile {
       pelProject << "$0 0 field pop "; // Pop the original tuple name.
       for (uint k = 0; k < tupleSchema->size(); k++)
         pelProject << "$0 " << (k+1) << " field pop ";
-  
-      for (CommonTable::Key::iterator iter = baseKey.begin();
-           iter != baseKey.end(); iter++)
-        pelProject << "$1 " << *iter << " field pop "; 
+ 
+      if (!notin) {
+    	  /* Okay add the probe schema to the output schema */
+    	  for (CommonTable::Key::iterator iter = baseKey.begin();
+    	  		iter != baseKey.end(); iter++)
+    		  pelProject << "$1 " << *iter << " field pop "; 
+      }
   
       oss << std::endl;
       if (filter) {
@@ -794,8 +961,13 @@ namespace compile {
         oss << indent << "\tnoNullSignal[1] -> [1]output;\n";
         oss << indent << "\tlookup = Lookup2(\"probeLookup\", \"" << tableName << "\", "
             << int_list_to_str(joinKey) << ", " << int_list_to_str(indexKey) << ");\n"; 
-        oss << indent << "\tinput -> PullPush(\"tpp\", 0) -> lookup -> "
-                      << "noNullSignal ->\n";
+        oss << indent << "\tinput -> PullPush(\"tpp\", 0) -> lookup -> noNullSignal ->\n";
+        if (notin) {
+        	oss << "OnlyNullField(\"onlyNull\", 1) -> ";
+        }
+        else {
+        	oss << "NoNullField(\"noNull\", 1) -> ";
+        }
         oss << indent << "\tPelTransform(\"probeProject\", \"" << pelProject.str() << "\") ->";
         oss << "output;\n";
         oss << indent << "};\n";
@@ -804,8 +976,14 @@ namespace compile {
         oss << indent << "graph " << graphName.str() << "(1, 1, \"l/l\", \"-/-\") {\n";
         oss << indent << "\tlookup = Lookup2(\"probeLookup\", \"" << tableName << "\", "
             << int_list_to_str(joinKey) << ", " << int_list_to_str(indexKey) << ");\n"; 
-        oss << indent << "\tinput -> PullPush(\"tpp\", 0) -> lookup ->" 
-                      << "NoNull(\"filter\") ->\n";
+        oss << indent << "\tinput -> PullPush(\"tpp\", 0) -> lookup -> NoNull(\"filter\") -> ";
+        if (notin) {
+        	oss << "OnlyNullField(\"onlyNull\", 1) -> ";
+        }
+        else {
+        	oss << "NoNullField(\"noNull\", 1) -> ";
+        }
+
         oss << indent << "\tPelTransform(\"probeProject\", \"" << pelProject.str() << "\") -> ";
         oss << "output;\n";
         oss << indent << "};\n";
@@ -817,10 +995,12 @@ namespace compile {
     string
     Context::assign(ostringstream& oss, string indent,
                     CommonTable::ManagerPtr catalog, 
-                    TuplePtr asmt, ListPtr tupleSchema)
+                    TuplePtr asmt, ListPtr &tupleSchema)
     {
       // Create a unique graph name for this assignment
       ostringstream graphName;
+      ValuePtr var = (*asmt)[catalog->attribute(ASSIGN, "VAR")];
+      tupleSchema = namestracker::assignSchema(tupleSchema, var);
       graphName << "assign_" << _nameCounter++;
 
       oss << std::endl;
@@ -842,7 +1022,7 @@ namespace compile {
       graphName << "select_" << _nameCounter++;
 
       oss << std::endl;
-      oss << indent << "graph " << graphName.str() << "(1, 1, \"l/l\", \"-/-\") {\n";
+      oss << indent << "graph " << graphName.str() << "(1, 1, \"a/a\", \"-/-\") {\n";
       oss << indent << "\tinput -> "
                     << "PelTransform(\"selection\", \""
                     << pel::gen(tupleSchema, selection) << "\") -> "

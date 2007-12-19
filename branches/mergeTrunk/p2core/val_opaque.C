@@ -56,10 +56,29 @@ ValuePtr Val_Opaque::xdr_unmarshal( XDR *x )
   return mk(fb);
 }
 
+
+string
+Val_Opaque::toString() const
+{
+  unsigned char * cstr = (unsigned char*)b->cstr();
+  std::string s = "0x";
+  char buf[3];
+  for(uint i = 0;
+      i < b->length();
+      i++) {
+    snprintf(buf, 3, "%02x", cstr[i]);
+    s+=buf;
+  }
+  return s;
+}
+
 string Val_Opaque::toConfString() const
 {
-  TELL_WARN << "Cannot get conf string for an OPAQUE value\n";
-  return "";
+  ostringstream s;
+  s << "opaque("
+    << toString()
+    << ")";
+  return s.str();
 }
 
 //
@@ -81,7 +100,9 @@ FdbufPtr Val_Opaque::cast(ValuePtr v)
                            Value::OPAQUE, "opaque");
   }
 }
-  
+FdbufPtr Val_Opaque::raw_val(Val_Opaque& v) {
+  return v.b;
+}
 int Val_Opaque::compareTo(ValuePtr other) const
 {
   if (other->typeCode() != Value::OPAQUE) {
@@ -91,10 +112,12 @@ int Val_Opaque::compareTo(ValuePtr other) const
       return 1;
     }
   }
-  TELL_WARN << "Comparing opaques. Not implemented yet!!!\n";
-  exit(-1);
+  //  TELL_WARN << "Comparing opaques. Not implemented yet!!!\n";
+  FdbufPtr f = static_cast<Val_Opaque *>(other.get())->b;
+  return b->compareTo(f);
+  //  exit(-1);
   //  return cmp(b, cast(other));
-  return -1;
+  //  return -1;
 }
 
 /* 

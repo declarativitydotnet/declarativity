@@ -36,11 +36,10 @@
  */
 
 #include "aggwrap2.h"
-#include "val_int32.h"
+#include "val_int64.h"
 #include "val_str.h"
 #include "val_null.h"
 #include "loop.h"
-#include "val_uint32.h"
 #include "list.h"
 #include "val_list.h"
 #include <boost/bind.hpp>
@@ -115,8 +114,8 @@ Aggwrap2::Aggwrap2(TuplePtr args)
 {
   string functionName = Val_Str::cast((*args)[3]);
 
-  _aggField = Val_Int32::cast((*args)[4]);
-  _starAgg = Val_UInt32::cast((*args)[5]);
+  _aggField = Val_Int64::cast((*args)[4]);
+  _starAgg = Val_Int64::cast((*args)[5]);
 
   try {
     _aggregateFn = AggFactory::mk(functionName);
@@ -130,7 +129,7 @@ Aggwrap2::Aggwrap2(TuplePtr args)
   ListPtr groupByFields = Val_List::cast((*args)[6]);
   for (ValPtrList::const_iterator i = groupByFields->begin();
        i != groupByFields->end(); i++)
-    registerGroupbyField(Val_UInt32::cast(*i));
+    registerGroupbyField(Val_Int64::cast(*i));
 
   _resultTupleName = Val_Str::cast((*args)[7]);
 }

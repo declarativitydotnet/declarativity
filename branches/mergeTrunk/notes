@@ -1,0 +1,26 @@
+1> Semantics of compound tuple: The versioning approach offers the slightly non-intutive behavior where a given locspec can contain multiple tuples of a given type with same key as the version (which is included in the implicit key) will be different for all such tuples.
+Possible Sol: Include the table key in the locSpec table making the locSpecTable table specific. Thus the key for locSpec table will comprise of Node containing the version tuple(to avoid DOS attacks by attacker), node referencing the locSpec, locSpec, and the key for the referenced table (note that the version is now excluded from the key)1> 
+4> It is assumed that there are no distributed views in the program. This assumption is used in the rewrite1 stage where in rules where no event exists, any non-locSpec location is used as the event locspec for the rule to generate the locSpecTable functors.
+5> currently, as an implementation artifact (due to insufficient checks in rewrite1 stage), only locSpecs appearing in direct locSpec positions are considered locSpecs and others are considered normal location fields. Thus if l is a locSpec, then m == l and child(@m,...) will not be correctly interpreted.
+8> What does a rule like this mean?
+	res(@...) :- x := 0, rel(@Q, x).
+what happens to the rewritten form of this rule:
+	res(@...) :- rel(@Q, x), x:= 0.
+10> CRITICAL: in the implementation for the serialization and securification functions, make sure that the tuples are written at the end of the function and through the ADD_ACTION strategy used in the insert2 function.
+12> says on new graphs can't be copied: even if they have all the data same as the included says on rhs.
+17> semantics for says on rhs: do we assume that the says primitive contains the bounded vars and hence should match precisely or do we assume that they are unbounded variables and should be matched using algebra. In compound tuple scenario, it probably makes a lot more sense to do all the rhs side algebra explicitly by the programmer.
+19> weird parse semantics for location specifiers: comparison in canonicalization stage is weird
+20> need to add dest to genfunc to ensure that the serialization doesn't take place if the dest is same as the source
+List of functions to be added:
+21> Why does reordering in oper.h leads to different behavior in both runStagedOverlog and runOverLog? 1399 and 1401
+22> delete semantics: deleting before the end of fix-point
+24> false views?
+25> rewrite will not work for non-local locSpec based references
+26> Multiple triggerings of the rules containing locspec based references: because of the event corresponding to child tuple, locSpec, link etc
+Minor error's log:
+
+
+Implementation notes: secure compound tuples
+
+8> fwding scenario of says can be handled as it is done currently with one difference: says tuple are transformed into new<makeSays..> tuples. OR maybe a cleaner approach is to embed the necessary proof with some hint that this proof has already been contructed so only do stuff related to the deepcopy and not the says part OR maybe another approach could be to transform says<...> into new<saysTable> and if saysTable was materialized, then all the corresponding references (corresponding to the original table) can be traversed.
+

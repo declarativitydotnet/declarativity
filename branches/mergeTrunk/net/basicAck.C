@@ -13,8 +13,7 @@
 #include <algorithm>
 #include <stdlib.h>
 #include "basicAck.h"
-#include "val_uint64.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "val_str.h"
 #include "val_tuple.h"
 #include "netglobals.h"

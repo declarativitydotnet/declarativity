@@ -22,9 +22,13 @@
 
 namespace compile {
   namespace eca {
+    const string RULENAMEPREFIX = "eca_";
+    uint32_t ruleCounter = 0; 
+    
     class Exception : public compile::Exception {
     public:
       Exception(string msg) : compile::Exception(msg) {};
+      virtual ~Exception() {};
     };
 
     class Context : public compile::Context {
@@ -42,20 +46,7 @@ namespace compile {
       /* Process the current rule in the program */
       void rule(CommonTable::ManagerPtr catalog, TuplePtr rule);
 
-      /**
-       * A rule containing a periodic will be rewritten to by creating
-       * a new rule that contains only the periodic in the body and
-       * a periodicTrigger in the head. This periodicTrigger event will
-       * replace the periodic event in the original rule. */
-      void rewritePeriodic(CommonTable::ManagerPtr catalog, 
-                           TuplePtr rule, TuplePtr periodic, string name_space);
-
-      /** 
-       * If the view is a materialized view then rewrite it into a set
-       * of rules triggered by the DELTA of each base table. The old
-       * rule will be replaced by the generated new rules. */
-      void rewriteView(CommonTable::ManagerPtr catalog, TuplePtr rule, 
-                       std::deque<TuplePtr>& baseTables);
+      void headEca(CommonTable::ManagerPtr catalog, TuplePtr rule, TuplePtr head);
 
       DECLARE_PRIVATE_ELEMENT_INITS
     };

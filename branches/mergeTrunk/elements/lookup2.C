@@ -14,7 +14,7 @@
 #include "lookup2.h"
 #include "val_str.h"
 #include "val_list.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "plumber.h"
 #include "scheduler.h"
 
@@ -57,12 +57,12 @@ Lookup2::Lookup2(TuplePtr args)
   ListPtr lookupKey = Val_List::cast((*args)[4]);
   for (ValPtrList::const_iterator i = lookupKey->begin();
        i != lookupKey->end(); i++)
-    _lookupKey.push_back(Val_UInt32::cast(*i));
+    _lookupKey.push_back(Val_Int64::cast(*i));
 
   ListPtr indexKey = Val_List::cast((*args)[5]);
   for (ValPtrList::const_iterator i = indexKey->begin();
        i != indexKey->end(); i++)
-    _indexKey.push_back(Val_UInt32::cast(*i));
+    _indexKey.push_back(Val_Int64::cast(*i));
 
   // If the two keys are identical, then we need not use projections.
   _project = (_lookupKey != _indexKey);
@@ -113,14 +113,6 @@ Lookup2::push(int port,
       _pullCallback();
       _pullCallback = 0;
     }
-    
-    // Fetch the iterator.
-    if (_project) {
-      _iterator = _table->lookup(_lookupKey, _indexKey, _lookupTuple);
-    } else {
-      _iterator = _table->lookup(_indexKey, _lookupTuple);
-    }
-    assert(_iterator);
 
     // And stop the pusher since we have to wait until the iterator is
     // flushed one way or another
@@ -163,13 +155,33 @@ Lookup2::pull(int port,
     }
     return TuplePtr();
   } else {
-    assert(_iterator);
-
     // Is the iterator at its end?
     TuplePtr returnTuple;
+    
+    if (_iterator.get() == NULL) {
+      // Fetch the iterator.
+      if (_project) {
+        _iterator = _table->lookup(_lookupKey, _indexKey, _lookupTuple);
+      } else {
+        _iterator = _table->lookup(_indexKey, _lookupTuple);
+      }
+      assert(_iterator);
+      if (_iterator->done()) {
+        // Make a result tuple containing first the lookup tuple and then
+        // the lookup result
+        returnTuple = Tuple::mk();
+        returnTuple->append(_lookupTupleValue);
+        returnTuple->append(Val_Tuple::mk(Tuple::EMPTY()));
+        
+        returnTuple->freeze();
+        return returnTuple;
+      }
+    }
+
     if (_iterator->done()) {
-      // Return the empty tuple and complete this lookup.
-      returnTuple = Tuple::EMPTY;
+      // Make a result tuple containing first the lookup tuple and then
+      // the empty tuple
+      returnTuple = Tuple::EMPTY();
 
       ELEM_INFO("pull: Finished search on tuple "
                 << _lookupTuple->toString());

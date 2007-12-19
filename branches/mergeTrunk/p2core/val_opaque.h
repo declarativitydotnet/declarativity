@@ -30,7 +30,7 @@ public:
   // The type name
   const Value::TypeCode typeCode() const { return Value::OPAQUE; };
   const char *typeName() const { return "opaque"; };
-  string toString() const { return b->str(); };
+  string toString() const;
   virtual string toConfString() const;
   virtual unsigned int size() const { return (b ? b->length() : 0); }
 
@@ -50,6 +50,7 @@ public:
 
   // Casting
   static FdbufPtr cast(ValuePtr v);
+  static FdbufPtr raw_val(Val_Opaque& v);
   const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
   
   static const opr::Oper* oper_;

@@ -18,26 +18,25 @@
 
 #include "loop.h"
 #include "val_str.h"
-#include "val_uint64.h"
+#include "val_int64.h"
 #include "val_double.h"
-#include "val_uint32.h"
 #include <boost/bind.hpp>
 
 DEFINE_ELEMENT_INITS(TimedPullPush, "TimedPullPush")
 
-TimedPullPush::TimedPullPush(string name,
-                             double seconds,
-                             int tuples)
-  : Element(name, 1, 1),
-    _seconds(seconds),
-    _tuples(tuples),
-    _counter(0),
-    _unblockPull(boost::bind(&TimedPullPush::pullWakeup, this)),
-    _pendingPull(false),
-    _unblockPush(boost::bind(&TimedPullPush::pushWakeup, this)),
-    _pendingPush(false),
-    _runTimerCB(boost::bind(&TimedPullPush::runTimer, this)),
-    _timeCallback(NULL)
+  TimedPullPush::TimedPullPush(string name,
+                               double seconds,
+                               int tuples)
+    : Element(name, 1, 1),
+      _seconds(seconds),
+      _tuples(tuples),
+      _counter(0),
+      _unblockPull(boost::bind(&TimedPullPush::pullWakeup, this)),
+      _pendingPull(false),
+      _unblockPush(boost::bind(&TimedPullPush::pushWakeup, this)),
+      _pendingPush(false),
+      _runTimerCB(boost::bind(&TimedPullPush::runTimer, this)),
+      _timeCallback(NULL)
 {
   assert(_tuples >= 0);
 }
@@ -69,7 +68,7 @@ TimedPullPush::TimedPullPush(TuplePtr args)
     _timeCallback(NULL)
 {
   if (args->size() > 4)
-    _tuples = Val_UInt32::cast((*args)[4]);
+    _tuples = Val_Int64::cast((*args)[4]);
   //std::cout<<"\nTUPLES = "<<_tuples<<std::endl; std::cout.flush();
 }
 
@@ -93,7 +92,7 @@ TimedPullPush::runTimer()
   ELEM_INFO("runTimer: called back");
   
   if(_pendingPush || _pendingPull){
-	  reschedule(); return;
+    reschedule(); return;
   }
 
 
@@ -104,6 +103,7 @@ TimedPullPush::runTimer()
   // Was it there?
   if (p) {
     // Goody, just push it out
+    _counter++;
     int result = output(0)->push(p, _unblockPush);
 
     // Were we pushed back?
@@ -130,8 +130,9 @@ TimedPullPush::pullWakeup()
   ELEM_INFO("pullWakeup");
 
   _pendingPull = false;
-  if(_timeCallback != 0)
-	  return;
+  if (_timeCallback != 0) {
+    return;
+  }
 
   // Okey dokey.  Reschedule me into the future
   reschedule();
@@ -144,8 +145,9 @@ TimedPullPush::pushWakeup()
   ELEM_INFO("pushWakeup");
 
   _pendingPush = false;
-  if(_timeCallback != 0)
-	  return;
+  if (_timeCallback != 0) {
+    return;
+  }
   // Okey dokey.  Reschedule me into the future
   reschedule();
 }
@@ -158,9 +160,11 @@ TimedPullPush::reschedule()
 
   if ((_tuples == 0) ||
       ((_tuples > 0) && (_counter < _tuples))) {
-    _counter++;
-
-    ELEM_INFO("reschedule: rescheduling");
+    ELEM_INFO("reschedule: rescheduling ("
+              << _counter
+              << "/"
+              << _tuples
+              << ")");
     // Okey dokey.  Reschedule me into the future
     _timeCallback = delayCB(_seconds, _runTimerCB, this);
   } else {

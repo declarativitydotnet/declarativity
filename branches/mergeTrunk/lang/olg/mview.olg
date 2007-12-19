@@ -1,0 +1,90 @@
+namespace mview {
+  end ::sys::program_add(@A, Pid, Name, Rewrite, "mview", Text, Msg, P2DL, Src) :-
+        programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
+
+  mv0 ruleCount(@A, Pid, Rid, HeadID) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _).
+
+  mv1 eventCount(@A, Pid, Rid, a_count<*>) :- 
+        ruleCount(@A, Pid, Rid, HeadID),
+        ::sys::predicate(@A, PredID, Rid, _, _, Tid, _, _, _, _, _),
+        Tid == null, HeadID != PredID.
+
+  mv2 predCount(@A, Pid, Rid, a_count<PredID>) :-
+        eventCount(@A, Pid, Rid, Events),
+        ::sys::predicate(@A, PredID, Rid, _, _, _, _, _, Pos, _, _),
+        Events == 0, Pos > 0.
+
+  mv2 rewrite(@A, Pid, Rid, PredID, f_idgen(), f_idgen()) :-
+        predCount(@A, Pid, Rid, Preds),
+        ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, _, Name, Tid, _, _, _, _, _),
+        Name != "sys::compileStatus",
+        Preds > 1, HeadID != PredID.
+
+  /* Put the DELTA predicate in the first postiion. */
+  mv3 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, "DELTA", Schema, 1, AM, New) :-
+        rewrite(@A, Pid, Rid, DeltaPredID, NewRid, NewHeadID),
+        ::sys::predicate(@A, DeltaPredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, AM, New).
+
+  /* Make a new head predicate for the rewritten rule. */
+  mv4 ::sys::predicate(@A, NewHeadID, NewRid, Notin, Name, Tid, ECA, Schema, 0, AM, New) :-
+        rewrite(@A, Pid, Rid, DeltaPredID, NewRid, NewHeadID),
+        ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
+        ::sys::predicate(@A, HeadID, Rid, Notin, Name, Tid, _, Schema, _, AM, New),
+        ECA := (Tid != null ? "INSERT" : "SEND"),
+        ECA := (Notin == true ? "DELETE" : ECA).
+
+
+  /* Kick off an iterator for the remaining rule terms. */
+  mv5 remainder(@A, Pid, Rid, DeltaPredID, NewRid, 1, 2) :-
+        rewrite(@A, Pid, Rid, DeltaPredID, NewRid, _).
+
+  mv6 remainder(@A, Pid, Rid, DeltaPredID, NewRid, OldPos+1, NewPos) :-
+        remainder(@A, Pid, Rid, DeltaPredID, NewRid, OldPos, NewPos),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, Term_Count, _),
+        ::sys::predicate(@A, DeltaPredID, Rid, _, _, _, _, _, Pos, _, _),
+        OldPos < Term_Count - 1,
+        NewPos := (OldPos == Pos ? NewPos : NewPos + 1).
+
+  /* Add the probe table to the rewritten rule. */
+  mv7 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, "PROBE", Schema, NewPos, AM, New) :-
+        remainder(@A, Pid, Rid, DeltaPredID, NewRid, OldPos, NewPos),
+        ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, _, Schema, OldPos, AM, New),
+        DeltaPredID != PredID.
+
+  /* Make a new assignement for the rewritten rule. */
+  mv8 ::sys::assign(@A, f_idgen(), NewRid, Var, Value, NewPos) :-
+        remainder(@A, Pid, Rid, _, NewRid, OldPos, NewPos),
+        ::sys::assign(@A, Aid, Rid, Var, Value, OldPos).
+
+  /* Make a new selection for the rewritten rule. */
+  mv9 ::sys::select(@A, f_idgen(), NewRid, Bool, NewPos, AM) :-
+        remainder(@A, Pid, Rid, _, NewRid, OldPos, NewPos),
+        ::sys::select(@A, Sid, Rid, Bool, OldPos, AM).
+
+  /* Create the new rule */
+  mv10 ::sys::rule(@A, NewRid, Pid, Name, NewHeadID, P2DL, Delete, Term_Count, New) :-
+        rewrite(@A, Pid, Rid, DeltaPredID, NewRid, NewHeadID),
+        ::sys::predicate(@A, DeltaPredID, Rid, _, PredName, _, _, _, Pos, _, _),
+        ::sys::rule(@A, Rid, Pid, RuleName, _, P2DL, Delete, Term_Count, New),
+        Name := RuleName + "_delta_" + PredName + "_" + f_tostr(Pos).
+
+  /* Clean up old rule state */
+  mv11 delete ::sys::rule(@A, Rid, Pid, Name, HeadID, P2DL, Delete, Term_Count, New) :-
+        rewrite(@A, Pid, Rid, _, _, _),
+        ::sys::rule(@A, Rid, Pid, Name, HeadID, P2DL, Delete, Term_Count, New).
+
+  mv12 delete ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, OldPos, AM, New) :-
+        rewrite(@A, Pid, Rid, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, OldPos, AM, New).
+
+  mv13 delete ::sys::assign(@A, Aid, Rid, Var, Value, Pos) :-
+        rewrite(@A, Pid, Rid, _, _, _),
+        ::sys::assign(@A, Aid, Rid, Var, Value, Pos).
+
+  mv14 delete ::sys::select(@A, Sid, Rid, Bool, Pos, AM) :-
+        rewrite(@A, Pid, Rid, _, _, _),
+        ::sys::select(@A, Sid, Rid, Bool, Pos, AM).
+}

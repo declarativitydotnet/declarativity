@@ -20,8 +20,7 @@
 
 #include "val_str.h"
 #include "val_opaque.h"
-#include "val_int32.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 
 DEFINE_ELEMENT_INITS(Udp2, "Udp2")
 
@@ -182,12 +181,12 @@ Udp2::Udp2(TuplePtr args)
 {
   if (args->size() > 4) {
     sd = networkSocket(SOCK_DGRAM, 
-                       Val_UInt32::cast((*args)[3]), 
-                       Val_UInt32::cast((*args)[4]));
+                       Val_Int64::cast((*args)[3]), 
+                       Val_Int64::cast((*args)[4]));
   }
   else {
     sd = networkSocket(SOCK_DGRAM, 
-                       Val_UInt32::cast((*args)[3]), INADDR_ANY); 
+                       Val_Int64::cast((*args)[3]), INADDR_ANY); 
   }
 
   if (sd < 0) {

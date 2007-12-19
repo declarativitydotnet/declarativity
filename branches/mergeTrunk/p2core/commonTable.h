@@ -30,6 +30,7 @@
 
 #include "value.h"
 #include "tuple.h"
+#include "list.h"
 #include <set>
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include <boost/function.hpp>
@@ -38,7 +39,30 @@
 #include "errno.h"
 
 class CommonTable {
+
+public:
+
+  ////////////////////////////////////////////////////////////
+  // Special constants
+  ////////////////////////////////////////////////////////////
+
+  /** The non-expiring expiration time */
+  static boost::posix_time::time_duration NO_EXPIRATION;
+
+
+  /** The default table expiration time */
+  static boost::posix_time::time_duration DEFAULT_EXPIRATION;
+
+
+  /** The non-size-limited size */
+  static uint32_t NO_SIZE;
+
+
+  /** The default table size */
+  static uint32_t DEFAULT_SIZE;
+
 protected:
+
   ////////////////////////////////////////////////////////////
   // Tuple wrapper
   ////////////////////////////////////////////////////////////
@@ -47,7 +71,8 @@ protected:
       reference counter (each of which is interpreted by the sublass of
       CommonTable).  It is used to place tuples in all indices. */
   struct Entry {
-    /** Which tuple am I wrapping? */
+    /** Which tuple am I wrapping? If the tuple pointer is 0, then the
+        enclosed tuple has been already removed before. */
     TuplePtr tuple;
     
     
@@ -101,17 +126,21 @@ public:
     KEY3,
     KEY4,
     KEY5,
+    KEY6,
     KEY01,
     KEY12,
     KEY23,
+    KEY25,
     KEY13,
     KEY34,
     KEY35,
     KEY36,
     KEY38,
+    KEY39,
     KEY45,
     KEY012,
     KEY123,
+    KEY345,
     KEY01234
   } KeyName;
 
@@ -180,6 +209,7 @@ public:
 
 
 protected:
+
   ////////////////////////////////////////////////////////////
   // Indices
   ////////////////////////////////////////////////////////////
@@ -558,7 +588,7 @@ public:
       lookup(Key, TuplePtr) should be used instead for peformance
       reasons.  */
   virtual Iterator
-  lookup(Key& lookupKey, Key& indexKey, TuplePtr t);
+  lookup(const Key& lookupKey, const Key& indexKey, TuplePtr t);
 
 
   /** Looks up tuple t in the index defined by indexKey.  If no such
@@ -572,7 +602,7 @@ public:
       slightly faster than that method since it does not perform the
       projection. */
   virtual Iterator
-  lookup(Key& indexKey, TuplePtr t);
+  lookup(const Key& indexKey, TuplePtr t);
 
 
 
@@ -681,17 +711,21 @@ protected:
     Key theKEY3;
     Key theKEY4;
     Key theKEY5;
+    Key theKEY6;
     Key theKEY01;
     Key theKEY12;
     Key theKEY23;
+    Key theKEY25;
     Key theKEY13;
     Key theKEY34;
     Key theKEY35;
     Key theKEY36;
     Key theKEY38;
+    Key theKEY39;
     Key theKEY45;
     Key theKEY012;
     Key theKEY123;
+    Key theKEY345;
     Key theKEY01234;
   };
 
@@ -749,7 +783,7 @@ protected:
       a tuple to be removed from the table and therefore always calls
       any deletion listeners. */
   void
-  removeTuple(PrimaryIndex::iterator primaryPosition);
+  removeTupleOfEntry(Entry* theEntry);
 
 
   /** Flush an entry with an existing tuple from the table and all
@@ -788,9 +822,9 @@ protected:
       the destination tuple is not frozen. */
   void
   project(TuplePtr source,
-          Key& sourceKey,
+          const Key& sourceKey,
           TuplePtr destination,
-          Key& destinationKey);
+          const Key& destinationKey);
 };
 
 /** A pointer to tables */
@@ -799,7 +833,7 @@ typedef boost::shared_ptr< CommonTable > CommonTablePtr;
 #define TABLE_LOG(_table,_reportingLevel,_rest) "CommonTable, " \
   << _table->_name                                              \
   << ", "                                                       \
-  << _reportingLevel                                            \
+  << Reporting::levelToName()[_reportingLevel]                    \
   << ", "                                                       \
   << errno                                                      \
   << ", "                                                       \
@@ -823,50 +857,38 @@ public:
 
   virtual ValuePtr nodeid() = 0;
 
+  virtual void nodeid(ValuePtr, ValuePtr) = 0;
+
   /** Generates a unique identifier */
   virtual unsigned uniqueIdentifier() = 0;
 
   /**
-   * Creates and registers a new Table with the system.
-   * Return: Creates a RefTable instance if table does not exist
-   *         0 if table already exists
+   * Registers a new Table with the system.
+   * Return: Tuple corresponding to table instance.
+   *
+   * Throws: TableManager::Exception if table already exists
    */
-  virtual TuplePtr 
-  createTable(string name, CommonTable::Key& key) = 0;
-
+  virtual TuplePtr
+    registerTable(CommonTablePtr table, string name,
+		boost::posix_time::time_duration lifetime,
+		uint size,
+		CommonTable::Key& primaryKey,
+		ListPtr sort,
+		ValuePtr pid) = 0;
   /**
-   * Creates and registers a new Table with the system.
-   * Return: Table2 instance with specified maxSize and lifetime
-   *         0 if table already exists
+   * Register an existing index on specified table name.  Typically
+   * used to register primary index after registerTable is called.
+   *
+   * Throws: TableManager::Exception if table does not exist, or if
+   * index already exists.
    */
-  virtual TuplePtr 
-  createTable(string name, CommonTable::Key& key, uint32_t maxSize,
-              boost::posix_time::time_duration& lifetime) = 0;
-
-  /**
-   * Creates and registers a new Table with the system.
-   * Return: Table2 instance with specified maxSize and lifetime
-   *         0 if table already exists
-   */
-  virtual TuplePtr 
-  createTable(string name, CommonTable::Key& key, uint32_t maxSize, 
-              string lifetime) = 0;
-  
-  /**
-   * Creates and registers a new Table with the system.
-   * Return: Table2 instance with specified maxSize and infinite lifetime
-   *         0 if table already exists
-   */
-  virtual TuplePtr 
-  createTable(string name, CommonTable::Key& key, uint32_t maxSize) = 0;
-
+  virtual void registerIndex(string tableName, string type, CommonTable::Key& key) = 0;
   /**
    * Create and registers a secondary index on specified table name
-   * Return: true  -- if new secondary index is created.
-   *         false -- if index already exists.
+   * Throws: TableManager::Exception if table does not exist.
    */
-  virtual void
-  createIndex(string tableName, CommonTable::Key& key) = 0;
+  virtual TuplePtr
+  createIndex(string tableName, string type, CommonTable::Key& key) = 0;
 
   /**
    * Create foreign key relationship from table 'src' on 

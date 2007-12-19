@@ -16,7 +16,7 @@
  */
 
 #include "tableStore.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "tuple.h"
 #include "loop.h"
 #include "planner.h"
@@ -57,7 +57,7 @@ TableStore::createTable(OL_Context::TableInfo* tableInfo)
   
   // Create the table. 
   CommonTablePtr newTable;
-  if ((expiration == Table2::NO_EXPIRATION) &&
+  if ((expiration == CommonTable::NO_EXPIRATION) &&
       (tableSize == 0)) {
     newTable.reset(new RefTable(tableInfo->tableName,
 				key));

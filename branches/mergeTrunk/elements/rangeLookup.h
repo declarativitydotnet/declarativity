@@ -74,9 +74,6 @@ public:
   pull(int port, b_cbv cb);
 
   
-  /** The END_OF_SEARCH tuple tag. */
-  static string END_OF_SEARCH;
-  
 
 
 
@@ -100,8 +97,8 @@ private:
   b_cbv _pullCallback;
 
   
-  /** My completion callback */
-  b_cbv _compCallback;
+  /** My completion state callback */
+  b_cbv _stateCallback;
 
   
   /** My current lookup tuple */

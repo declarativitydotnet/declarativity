@@ -33,6 +33,9 @@
 
 #include <limits.h>
 #include <stdlib.h>
+#include "reporting.h"
+#define LOG_ERROR(_x) { TELL_ERROR << "OL_Lexer: " << _x << "\n"; }
+#define LOG_WARN(_x) { TELL_WARN << "OL_Lexer: " << _x << "\n"; }
 
 #ifdef YY_DECL
 #undef YY_DECL
@@ -147,6 +150,8 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>"&&" { return OL_AND; }
 <INITIAL>"||" { return OL_OR; } 
 
+<INITIAL>"|||" { return OL_APPEND; } 
+
 <INITIAL>":=" { return OL_ASSIGN; }
 <INITIAL>"." { return OL_DOT; }
 <INITIAL>":-" { return OL_IF; }
@@ -194,7 +199,11 @@ WHITESPACE	[ \t\r\n]+
 
 <INITIAL>({DIGIT}+|0[xX]{HEXDIGIT}+)U {
   // Unsigned integer literal (including octal and/or hex)
-  lvalp->v = new Parse_Val(Val_UInt64::mk(strtoull(yytext,NULL,0)));
+  LOG_WARN("Unsigned integers of the form '"
+           << yytext
+           << "' have been deprecated. For backward compatibility "
+           << "they are interpreted as signed 64-bit integers.");
+  lvalp->v = new Parse_Val(Val_Int64::mk(strtoull(yytext,NULL,0)));
   return OL_VALUE;
 }
 

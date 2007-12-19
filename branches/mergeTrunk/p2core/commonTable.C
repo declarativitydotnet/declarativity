@@ -21,10 +21,35 @@
 #include "aggFactory.h"
 #include "val_null.h"
 #include "val_str.h"
-#include "val_uint32.h"
 #include "plumber.h"
 #include "systemTable.h"
 #include "tuple.h"
+#include "val_int64.h"
+
+////////////////////////////////////////////////////////////
+// Constants
+////////////////////////////////////////////////////////////
+
+
+/** No expiration is represented as positive infinity. */
+boost::posix_time::time_duration
+CommonTable::NO_EXPIRATION(boost::date_time::pos_infin);
+
+
+/** Default table expiration time is no expiration */
+boost::posix_time::time_duration
+CommonTable::DEFAULT_EXPIRATION(CommonTable::NO_EXPIRATION);
+
+
+/** No size is represented as 0 size. */
+uint32_t
+CommonTable::NO_SIZE = 0;
+
+
+/** Default table max size is no max size */
+uint32_t
+CommonTable::DEFAULT_SIZE(CommonTable::NO_SIZE);
+
 
 ////////////////////////////////////////////////////////////
 // Sorters
@@ -322,6 +347,7 @@ CommonTable::findSecondaryIndex(CommonTable::Key& key)
 CommonTable::Entry::Entry(TuplePtr tp)
   : tuple(tp)
 {
+  assert(tp.get() != NULL);
   //  TELL_WORDY << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@Creating entry at address " << this << "\n";
   getTime(time);
   refCount = 0;
@@ -387,7 +413,7 @@ CommonTable::commonInsertTuple(Entry* newEntry,
                                                  tableNameTp); 
       if (!iter->done()) {
         TuplePtr tp = iter->next()->clone();
-        tp->set(cardPos, Val_UInt32::mk(size()));
+        tp->set(cardPos, Val_Int64::mk(size()));
       }
     }
   }
@@ -404,7 +430,7 @@ CommonTable::removeDerivatives(TuplePtr t)
     
     // Now find the tuple removed from the primary index in this
     // secondary index and erase it
-    static Entry searchEntry(Tuple::EMPTY);
+    static Entry searchEntry(Tuple::EMPTY());
     searchEntry.tuple = t;
     SecondaryIndex::iterator secIter = index.lower_bound(&searchEntry);
     SecondaryIndex::iterator secIterEnd = index.upper_bound(&searchEntry);
@@ -437,18 +463,18 @@ CommonTable::removeDerivatives(TuplePtr t)
 
 
 void
-CommonTable::removeTuple(PrimaryIndex::iterator position)
+CommonTable::removeTupleOfEntry(Entry* theEntry)
 {
   // Set the search entry to the tuple from the primary index. This is
   // the tuple we want to remove from all secondary indices below.
-  TuplePtr toRemove = (*position)->tuple;
+  TuplePtr toRemove = theEntry->tuple;
 
   // Remove from derivatives
   removeDerivatives(toRemove);
 
   // The subclass finishes it off from the primary index
 
-  // Update table information
+  // Update table statistics
   CommonTable::ManagerPtr catalog = Plumber::catalog();
   if (catalog) {
     CommonTablePtr table = catalog->table(TABLE);
@@ -462,7 +488,7 @@ CommonTable::removeTuple(PrimaryIndex::iterator position)
                                                  tableNameTp); 
       if (!iter->done()) {
         TuplePtr tp = iter->next()->clone();
-        tp->set(cardPos, Val_UInt32::mk(size()));
+        tp->set(cardPos, Val_Int64::mk(size()));
       }
     }
   }
@@ -485,6 +511,8 @@ CommonTable::Initializer::Initializer()
 
   theKEY5.push_back(5);
 
+  theKEY6.push_back(6);
+
   theKEY01.push_back(0);
   theKEY01.push_back(1);
 
@@ -493,6 +521,9 @@ CommonTable::Initializer::Initializer()
 
   theKEY23.push_back(2);
   theKEY23.push_back(3);
+
+  theKEY25.push_back(2);
+  theKEY25.push_back(5);
 
   theKEY13.push_back(1);
   theKEY13.push_back(3);
@@ -509,6 +540,9 @@ CommonTable::Initializer::Initializer()
   theKEY38.push_back(3);
   theKEY38.push_back(8);
 
+  theKEY39.push_back(3);
+  theKEY39.push_back(9);
+
   theKEY45.push_back(4);
   theKEY45.push_back(5);
 
@@ -519,6 +553,10 @@ CommonTable::Initializer::Initializer()
   theKEY123.push_back(1);
   theKEY123.push_back(2);
   theKEY123.push_back(3);
+
+  theKEY345.push_back(3);
+  theKEY345.push_back(4);
+  theKEY345.push_back(5);
 
   theKEY01234.push_back(0);
   theKEY01234.push_back(1);
@@ -567,6 +605,9 @@ CommonTable::theKey(CommonTable::KeyName keyID)
   case KEY5:
     return initializer->theKEY5;
     break;
+  case KEY6:
+    return initializer->theKEY6;
+    break;
   case KEY01:
     return initializer->theKEY01;
     break;
@@ -575,6 +616,9 @@ CommonTable::theKey(CommonTable::KeyName keyID)
     break;
   case KEY23:
     return initializer->theKEY23;
+    break;
+  case KEY25:
+    return initializer->theKEY25;
     break;
   case KEY13:
     return initializer->theKEY13;
@@ -591,6 +635,9 @@ CommonTable::theKey(CommonTable::KeyName keyID)
   case KEY38:
     return initializer->theKEY38;
     break;
+  case KEY39:
+    return initializer->theKEY39;
+    break;
   case KEY45:
     return initializer->theKEY45;
     break;
@@ -599,6 +646,9 @@ CommonTable::theKey(CommonTable::KeyName keyID)
     break;
   case KEY123:
     return initializer->theKEY123;
+    break;
+  case KEY345:
+    return initializer->theKEY345;
     break;
   case KEY01234:
     return initializer->theKEY01234;
@@ -734,8 +784,8 @@ CommonTable::primaryKey() const
 ////////////////////////////////////////////////////////////
 
 CommonTable::Iterator
-CommonTable::lookup(CommonTable::Key& lookupKey,
-                    CommonTable::Key& indexKey,
+CommonTable::lookup(const CommonTable::Key& lookupKey,
+                    const CommonTable::Key& indexKey,
                     TuplePtr t)  
 {
   TABLE_WORDY("Lookup with projection of tuple "
@@ -762,7 +812,8 @@ CommonTable::lookup(CommonTable::Key& lookupKey,
     // If not, return null
     if (indexIter == _indices.end()) {
       /**How could this be possible? no secondary Index?!*/
-      TELL_ERROR<<"Table "<<_name<<" does not have a secondary index for "<<t->toString()<<"!!!??\n";
+      TELL_ERROR<<"Table "<<_name<<" does not have a secondary index for "
+                << t->toString() <<"!!!??\n";
       return Iterator();
     }
     // Otherwise, create the iterator from all the matches and return it
@@ -780,7 +831,7 @@ CommonTable::lookup(CommonTable::Key& lookupKey,
 
 
 CommonTable::Iterator
-CommonTable::lookup(CommonTable::Key& indexKey,
+CommonTable::lookup(const CommonTable::Key& indexKey,
                     TuplePtr t)  
 {
   TABLE_WORDY("Lookup without projection of tuple "
@@ -788,7 +839,7 @@ CommonTable::lookup(CommonTable::Key& indexKey,
 
   // The search entry.  We don't need to project for this one so the
   // search entry can be initialized with a known tuple.
-  static Entry searchEntry(Tuple::EMPTY);
+  static Entry searchEntry(Tuple::EMPTY());
 
   // Prepare the search entry by copying the tuple into it (no
   // projection needed).
@@ -858,7 +909,8 @@ CommonTable::lookupPrimary(CommonTable::Entry* searchEntry)
 } 
 
 
-void initTupleEntry(TuplePtr tuple, CommonTable::Key& key)
+void
+initTupleEntry(TuplePtr tuple, CommonTable::Key& key)
 {
   for (CommonTable::Key::iterator i = key.begin();
        i != key.end();
@@ -949,12 +1001,12 @@ CommonTable::range1DLookupSecondary(bool openL, CommonTable::Entry* lb,
 
 void
 CommonTable::project(TuplePtr source,
-                     Key& sourceKey,
+                     const Key& sourceKey,
                      TuplePtr destination,
-                     Key& destinationKey)
+                     const Key& destinationKey)
 {
-  Key::iterator s;
-  Key::iterator d;
+  Key::const_iterator s;
+  Key::const_iterator d;
   for (s = sourceKey.begin(),
          d = destinationKey.begin();
        s != sourceKey.end();
@@ -1131,7 +1183,7 @@ CommonTable::AggregateObj::update(TuplePtr changedTuple)
   bool seenTuples = false;
 
   // Scan the index on the group-by fields
-  static Entry searchEntry(Tuple::EMPTY);
+  static Entry searchEntry(Tuple::EMPTY());
   searchEntry.tuple = changedTuple;
   for (SecondaryIndex::iterator i = _index->lower_bound(&searchEntry);
        i != _index->upper_bound(&searchEntry);

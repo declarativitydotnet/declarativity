@@ -40,6 +40,7 @@ namespace compile {
       DECLARE_PUBLIC_ELEMENT_INITS
 
     private:
+      TuplePtr program(CommonTable::ManagerPtr catalog, TuplePtr program);
       void rule(CommonTable::ManagerPtr catalog, TuplePtr rule);
 
       DECLARE_PRIVATE_ELEMENT_INITS

@@ -15,10 +15,7 @@
 
 #include "val_double.h"
 
-#include "val_int32.h"
-#include "val_uint32.h"
 #include "val_int64.h"
-#include "val_uint64.h"
 #include "val_str.h"
 #include "val_null.h"
 
@@ -28,6 +25,9 @@ class OperDouble : public opr::OperCompare<Val_Double> {
   };
   virtual ValuePtr _minus (const ValuePtr& v1, const ValuePtr& v2) const {
     return Val_Double::mk(Val_Double::cast(v1) - Val_Double::cast(v2));
+  };
+  virtual ValuePtr _neg (const ValuePtr& v1) const {
+    return Val_Double::mk(-Val_Double::cast(v1));
   };
   virtual ValuePtr _times (const ValuePtr& v1, const ValuePtr& v2) const {
     return Val_Double::mk(Val_Double::cast(v1) * Val_Double::cast(v2));
@@ -60,9 +60,7 @@ string Val_Double::toString() const
 
 string Val_Double::toConfString() const
 {
-  ostringstream conf;
-  conf << "Val_Double(" << d << ")";
-  return conf.str();
+  return toString();
 }
 
 //
@@ -90,17 +88,8 @@ Val_Double::cast(ValuePtr v)
   case Value::DOUBLE:
     returnValue = (static_cast<Val_Double *>(v.get()))->d;
     break;
-  case Value::INT32:
-    returnValue = (double)(Val_Int32::cast(v));
-    break;
-  case Value::UINT32:
-    returnValue = (double)(Val_UInt32::cast(v));
-    break;
   case Value::INT64:
     returnValue = (double)(Val_Int64::cast(v));
-    break;
-  case Value::UINT64:
-    returnValue = (double)(Val_UInt64::cast(v));
     break;
   case Value::NULLV:
     returnValue = 0;
@@ -119,14 +108,11 @@ Val_Double::cast(ValuePtr v)
 
 int Val_Double::compareTo(ValuePtr other) const
 {
-  if (other->typeCode() != Value::DOUBLE) {
-    if (Value::DOUBLE < other->typeCode()) {
-      return -1;
-    } else if (Value::DOUBLE > other->typeCode()) {
-      return 1;
-    }
-  }
-  if (d < cast(other)) {
+  if (Value::DOUBLE < other->typeCode()) {
+    return -1;
+  } else if (Value::DOUBLE > other->typeCode()) {
+    return 1;
+  } else if (d < cast(other)) {
     return -1;
   } else if (d > cast(other)) {
     return 1;

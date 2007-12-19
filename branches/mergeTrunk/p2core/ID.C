@@ -44,18 +44,6 @@ ID::ID(uint32_t word)
 }
 
 
-ID::ID(uint64_t doubleword)
-{
-  for (unsigned i = 0;
-       i < WORDS;
-       i++) {
-    words[i] = 0;
-  }
-  words[WORDS - 1] = doubleword & 0xFFFFFFFF;
-  words[WORDS - 2] = (doubleword >> 32) & 0xFFFFFFFF;
-}
-
-
 ID::ID(std::string hexString)
 {
   static const std::string zeros(WORDS * 8, '0');

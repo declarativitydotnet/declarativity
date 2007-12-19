@@ -26,7 +26,7 @@ const opr::Oper* Val_Str::oper_ = new OperStr();
 string Val_Str::toConfString() const
 {
   ostringstream conf;
-  conf << "Val_Str(\"" << s << "\")";
+  conf << "\"" << s << "\"";
   return conf.str();
 }
 
@@ -85,9 +85,17 @@ int Val_Str::compareTo(ValuePtr other) const
 //
 string Val_Str::cast(ValuePtr v)
 {
-  return v->toString();
+  switch (v->typeCode()) {
+  case Value::NULLV:
+    return string("NULL");
+  default:
+    return v->toString();
+  }
 }
-
+string Val_Str::raw_val(Val_Str& v)
+{
+  return v.toString();
+}
 /* 
  * End of file
  */

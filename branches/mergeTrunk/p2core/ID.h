@@ -154,7 +154,6 @@ public:
   static IDPtr mk()                  { IDPtr p(new ID());  return p; }
   static IDPtr mk(uint32_t w[WORDS]) { IDPtr p(new ID(w)); return p; }
   static IDPtr mk(uint32_t u)        { IDPtr p(new ID(u)); return p; }
-  static IDPtr mk(uint64_t u)        { IDPtr p(new ID(u)); return p; }
   static IDPtr mk(std::string s)     { IDPtr p(new ID(s)); return p; }
 };
 

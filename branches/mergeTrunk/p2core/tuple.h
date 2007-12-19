@@ -42,12 +42,6 @@ private:
   /** Is this tuple frozen, i.e., made immutable yet? */
   bool frozen;
 
-  /** A sorted map of tag names to optional tag values.  Only
-      initialized if there is at least one tag.  Only a single tag of
-      each type is allowed; for multi-value tags, store a vector as the
-      value. */
-  std::map< string, ValuePtr > * _tags;
-
   /** The static counter of tuple IDs, unique to a process */
   static uint32_t
   _tupleIDCounter;
@@ -98,20 +92,6 @@ public:
   concat(TuplePtr t);
 
 
-  /** Attach a named tag to the tuple. The tuple must not be frozen. To
-      store a tag with no value use Val_Null::mk() to return the
-      (single, static, constant) NULL P2 value, which is different from
-      plain old NULL. */
-  void
-  tag(string, ValuePtr);
-
-
-  /** Lookup a name tag in the tuple.  If not found, null is returned.
-      If found, a real ValuePtr is returned. */
-  ValuePtr
-  tag(string);
-
-
   /** The tuple becomes immutable. It will not allow further appends or
       concats to itself. */
   void
@@ -157,14 +137,17 @@ public:
       different field counts, compare their field counts instead.  */
   int compareTo(TuplePtr) const;
 
+
   /** The empty untagged tuple. */
-  static TuplePtr EMPTY;
+  static TuplePtr
+  EMPTY();
+  
 
   /** The empty static initializer class */
   class EmptyInitializer {
   public:
     EmptyInitializer() {
-      EMPTY->freeze();
+      EMPTY()->freeze();
     }
   };
 

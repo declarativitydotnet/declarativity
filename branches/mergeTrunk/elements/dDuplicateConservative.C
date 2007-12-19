@@ -11,7 +11,7 @@
 
 #include "dDuplicateConservative.h"
 #include "val_str.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include <boost/bind.hpp>
 
 DEFINE_ELEMENT_INITS(DDuplicateConservative, "DDuplicateConservative");
@@ -33,7 +33,7 @@ DDuplicateConservative::DDuplicateConservative(string name, int outputs)
  * 3. Val_UInt32: Number of outputs.
  */
 DDuplicateConservative::DDuplicateConservative(TuplePtr args)
-  : Element(Val_Str::cast((*args)[2]), 1, Val_UInt32::cast((*args)[3])),
+  : Element(Val_Str::cast((*args)[2]), 1, Val_Int64::cast((*args)[3])),
     _push_cb(0),
     _block_flags(),
     _block_flag_count(0)
@@ -92,6 +92,7 @@ int DDuplicateConservative::push(int port, TuplePtr p, b_cbv cb)
 
     // If it can take no more
     if (result == 0) {
+      std::cerr << "DUPLICATE CONSERVATIVE BLOCKED FROM ELEMENT " << output(i)->element()->name() << " TUPLE: " << p->toString() << std::endl;
       // update the flags
       _block_flags[i] = true;
       _block_flag_count++;

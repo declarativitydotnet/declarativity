@@ -27,7 +27,7 @@ public:
   // The type name
   const Value::TypeCode typeCode() const { return Value::INT64; };
   const char *typeName() const { return "int64"; };
-  virtual string toString() const { ostringstream s; s << i; return s.str(); };
+  virtual string toString() const;
   virtual string toConfString() const;
   virtual unsigned int size() const { return sizeof(int64_t); }
 
@@ -46,6 +46,7 @@ public:
 
   // Casting
   static int64_t cast(ValuePtr v);
+  static int64_t raw_val(Val_Int64& v);
   const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
   
   static const opr::Oper* oper_;

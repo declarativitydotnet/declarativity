@@ -14,7 +14,7 @@
 
 #include "dupElim.h"
 #include "val_str.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 
 DEFINE_ELEMENT_INITS(DupElim, "DupElim");
 

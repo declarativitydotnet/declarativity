@@ -36,7 +36,7 @@
 #include "ol_lexer.h"
 #include "tuple.h"
 #include "plumber.h"
-#include "val_int32.h"
+#include "val_int64.h"
 #include "val_str.h"
 #include "print.h"
 #include "discard.h"
@@ -69,9 +69,6 @@
 #include "aggwrap2.h"
 #include "tupleseq.h"
 #include "loop.h"
-#include "ruleTracer.h"
-#include "tap.h"
-#include "traceTuple.h"
 #include "update.h"
 #include "removed.h"
 
@@ -186,9 +183,11 @@ generateInsertEvent(PlanContext* pc)
   if (curRule->_probeTerms.size() > 0) {
     // if we are doing a join
     ElementSpecPtr pullPush = 
-      pc->createElementSpec(ElementPtr(new TimedPullPush("InsertEventTimedPullPush!"
-							 + curRule->_ruleID 
-							 + "!" + pc->_nodeID, 0)));
+      pc->createElementSpec(ElementPtr(new
+                                       TimedPullPush("InsertEventTimedPullPush!"
+                                                     + curRule->_ruleID 
+                                                     + "!" +
+                                                     pc->_nodeID, 0, 0)));
     pc->addElementSpec(pullPush);
   }
 }
@@ -216,9 +215,11 @@ generateRefreshEvent(PlanContext* pc)
   if (curRule->_probeTerms.size() > 0) {
     // if we are doing a join
     ElementSpecPtr pullPush = 
-      pc->createElementSpec(ElementPtr(new TimedPullPush("RefreshEventTimedPullPush!"
-							 + curRule->_ruleID 
-							 + "!" + pc->_nodeID, 0)));
+      pc->createElementSpec(ElementPtr(new
+                                       TimedPullPush("RefreshEventTimedPullPush!"
+                                                     + curRule->_ruleID 
+                                                     + "!" +
+                                                     pc->_nodeID, 0, 0)));
     pc->addElementSpec(pullPush);
   }
 }
@@ -250,10 +251,11 @@ generateDeleteEvent(PlanContext* pc)
   if (curRule->_probeTerms.size() > 0) {
     // if we are doing a join
     ElementSpecPtr pullPush = 
-      pc->createElementSpec(ElementPtr(new TimedPullPush("RemovedEventTimedPullPush!"
-							 + curRule->_ruleID 
-							 + "!" + pc->_nodeID, 
-							 0)));
+      pc->createElementSpec(ElementPtr(new
+                                       TimedPullPush("RemovedEventTimedPullPush!"
+                                                     + curRule->_ruleID 
+                                                     + "!" + pc->_nodeID, 
+                                                     0, 0)));
     pc->addElementSpec(pullPush);
   }
 }
@@ -447,35 +449,40 @@ generateEventElement(PlanContext* pc)
   RuleStrand* rs = pc->_ruleStrand;
   int aggField = pc->getRule()->_action->_pf->aggregate();
 
-  if (rs->eventType() == Parse_Event::REFRESH) {
+  switch (rs->eventType()) {
+  case Parse_Event::REFRESH:
     generateRefreshEvent(pc);
-  }
+    break;
 
-  // update, create an updater
-  if (rs->eventType() == Parse_Event::INSERT) {
-
+  case Parse_Event::INSERT:
     // is this an agg table type?
     if (aggField >= 0) {
       generateAggEvent(pc);
       return;
     }
-
+    
     if (pc->getRule()->getEventName() == "periodic") {
       generatePeriodicEvent(pc);
       return;
     }
-
+    
     generateInsertEvent(pc);
+    break;
 
-    // check for periodic as well
-  }
-  
-  if (rs->eventType() == Parse_Event::DELETE) {
+  case Parse_Event::DELETE:
     generateDeleteEvent(pc);
-  }
-  
-  if (rs->eventType() == Parse_Event::RECV) {
+    break;
+
+  case Parse_Event::RECV:
     generateReceiveEvent(pc);
+    break;
+
+  default:
+    PLANNER_WARN(pc, "Rule strand '"
+                 << rs->toString()
+                 << "' has unknown event type '"
+                 << rs->eventType()
+                 << "'. Skipping.");
   }
 }
 
@@ -493,7 +500,7 @@ generateAddAction(PlanContext* pc)
     pc->createElementSpec(ElementPtr(new TimedPullPush("Insert!" 
 						       + curRule->_ruleID 
 						       + "!" + pc->_nodeID, 
-						       0)));
+						       0, 0)));
   
   addPrint(pc, "AddAction", rs->actionFunctorName(), "a");
   
@@ -531,7 +538,7 @@ generateDeleteAction(PlanContext* pc)
     pc->_conf->addElement(ElementPtr(new TimedPullPush("Delete!" 
 						       + curRule->_ruleID 
 						       + "!" + pc->_nodeID, 
-						       0)));
+						       0, 0)));
   
   CommonTablePtr tablePtr 
     = pc->_tableStore->getTableByName(rs->actionFunctorName()); 
@@ -600,13 +607,12 @@ generateDropAction(PlanContext* pc)
   //Connect an active discard sink in
   ECA_Rule* curRule = pc->getRule();
 
-
-
   ElementSpecPtr pullPush = 
     pc->createElementSpec(ElementPtr
                           (new TimedPullPush("DiscardPullPush!"
                                              + curRule->_ruleID 
-                                             + "!" + pc->_nodeID, 0)));
+                                             + "!" + pc->_nodeID,
+                                             0, 0)));
   pc->addElementSpec(pullPush);
 
   string elementName = "Discard!"
@@ -863,11 +869,13 @@ void generateMultipleProbeElements(PlanContext* pc)
       joinProbeName = generateProbeElements(pc, pf, joinProbeName, &comp_cb);
     }
 
-     if (curRule->_probeTerms.size() - 1 != k) {
+    if (curRule->_probeTerms.size() - 1 != k) {
       ElementSpecPtr pullPush =
-	pc->createElementSpec(ElementPtr(new TimedPullPush("ProbePullPush!" 
-							   + curRule->_ruleID + "!" 
-							   + pc->_nodeID, 0)));
+	pc->createElementSpec(ElementPtr(new
+                                         TimedPullPush("ProbePullPush!" 
+                                                       + curRule->_ruleID + "!" 
+                                                       + pc->_nodeID, 0,
+                                                       0)));
       pc->addElementSpec(pullPush);
     }
   }

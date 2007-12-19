@@ -18,7 +18,7 @@
 #include "tman.h"
 #include "loop.h"
 #include "val_str.h"
-#include "val_uint32.h"
+#include "val_int64.h"
 #include "val_tuple.h"
 #include "val_time.h"
 #include <boost/bind.hpp>
@@ -71,11 +71,11 @@ void TrafficManager::runTimer()
   // Create a tuple
   TuplePtr tuple = Tuple::mk();
   tuple->append(Val_Str::mk("LOOKUP"));
-  tuple->append(Val_UInt32::mk(genLookupKey()));
+  tuple->append(Val_Int64::mk(genLookupKey()));
   tuple->append(Val_Str::mk(my_addr_));
   tuple->append(Val_Time::mk(now));
-  tuple->append(Val_UInt32::mk(0));	// Hop count
-  tuple->append(Val_UInt32::mk(0));	// Retries
+  tuple->append(Val_Int64::mk(0));	// Hop count
+  tuple->append(Val_Int64::mk(0));	// Retries
   tuple->freeze();
 
   // Attempt to push it
@@ -110,7 +110,7 @@ REMOVABLE_INLINE int TrafficManager::getKey(TuplePtr tp) {
   for (uint i = 0; i < tp->size(); i++) {
     try {
       if (Val_Str::cast((*tp)[i]) == "LOOKUP") {
-        return Val_UInt32::cast((*tp)[i+1]);
+        return Val_Int64::cast((*tp)[i+1]);
       }
     }
     catch (Value::TypeError e) { } 
@@ -123,8 +123,8 @@ REMOVABLE_INLINE bool TrafficManager::processResponse(TuplePtr tp) {
     try {
       if (Val_Str::cast((*tp)[i]) == "RESPONSE") {
 		boost::posix_time::ptime t = Val_Time::cast((*tp)[i+2]); 
-        uint    hc = Val_UInt32::cast((*tp)[i+3]);
-        uint    rc = Val_UInt32::cast((*tp)[i+4]);
+        uint    hc = Val_Int64::cast((*tp)[i+3]);
+        uint    rc = Val_Int64::cast((*tp)[i+4]);
         TELL_INFO << "RECEIVE RESPONSE: delay " << delay(&t) << ", hop count "
                   << hc << ", retry count " << rc << std::endl;
         return true;
@@ -146,9 +146,9 @@ REMOVABLE_INLINE TuplePtr TrafficManager::mkResponse(TuplePtr tp) {
         resp->append((*tp)[i+3]);		// Lookup time
         resp->append((*tp)[i+4]);		// Hop Count
         resp->append((*tp)[i+5]);		// Retry count
-        resp->append(Val_UInt32::mk(0));	// HACK: PAD FOR DATA PEL TRANSFORM
-        resp->append(Val_UInt32::mk(0));	// HACK: PAD FOR DATA PEL TRANSFORM
-        resp->append(Val_UInt32::mk(0));	// HACK: PAD FOR DATA PEL TRANSFORM
+        resp->append(Val_Int64::mk(0));	// HACK: PAD FOR DATA PEL TRANSFORM
+        resp->append(Val_Int64::mk(0));	// HACK: PAD FOR DATA PEL TRANSFORM
+        resp->append(Val_Int64::mk(0));	// HACK: PAD FOR DATA PEL TRANSFORM
         resp->freeze();
         return resp;
       }

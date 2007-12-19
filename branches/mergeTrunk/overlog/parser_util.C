@@ -16,7 +16,7 @@
 
 #include "parser_util.h"
 #include "ol_context.h"
-#include "val_int32.h"
+#include "val_int64.h"
 #include "oper.h"
 
 using namespace opr;
@@ -236,10 +236,10 @@ string Parse_Math::toString() {
     case BIT_OR:  m << "|"; break;
     case BIT_XOR: m << "^"; break;
     case BIT_NOT: m << "~"; break;
+    case APPEND: m << "|||"; break;
     default: assert(0);
   }
-  if (id) m << "id ";
-  else m << " ";
+  m << " ";
 
   if (rpar) m << "(";
   m << rhs->toString();

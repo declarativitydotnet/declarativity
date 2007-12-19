@@ -241,24 +241,6 @@ namespace compile {
       ::ElementSpecPtr resolve(ScopeTable&, Expression*);
     };
     
-    class Table : public Statement {
-    public:
-      Table(Expression*  name, 
-            Expression*  ttl, 
-            Expression*  size, 
-            Table2::Key* key);
-    
-      void commit(ScopeTable&);
-
-      string toString() const;
-    
-    private:
-      string                           _name;
-      boost::posix_time::time_duration _ttl;
-      unsigned                         _size;
-      Table2::Key*                     _key;
-    };
-    
     class Watch : public Statement {
     public:
       Watch(Expression* w) : _watch(w->toString()) {}
@@ -272,13 +254,13 @@ namespace compile {
     
     class Fact : public Statement {
     public:
-      Fact(Expression* n, ValueList *v);
+      Fact(ValueList *v);
     
       void commit(ScopeTable&);
 
       string toString() const;
     private:
-      string   _tablename;
+      string _tablename;
       TuplePtr _fact;
     };
   
@@ -401,8 +383,6 @@ namespace compile {
 
       void edit(Edit *e)       { _edits.push_back(e); }
 
-      void table(Table *t)     { _tables.push_back(t); }
-    
       void fact(Fact *f)       { _facts.push_back(f); }
     
       void watch(Watch *w)     { _watches.push_back(w); }

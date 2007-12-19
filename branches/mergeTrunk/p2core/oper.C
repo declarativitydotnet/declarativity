@@ -15,16 +15,14 @@
 #include "oper.h"
 #include "val_null.h"
 #include "val_str.h"
-#include "val_int32.h"
-#include "val_uint32.h"
 #include "val_int64.h"
-#include "val_uint64.h"
 #include "val_double.h"
 #include "val_opaque.h"
 #include "val_tuple.h"
 #include "val_time.h"
+#include "val_set.h"
+#include "val_list.h"
 #include "val_id.h"
-#include "val_ip_addr.h"
 
 namespace opr {
 
@@ -38,173 +36,86 @@ namespace opr {
    * concrete type.  
    *
    * CHEAT SHEET: type of each column entry.
-   * NULLV,  STR,    INT32,  
-   * UINT32, INT64,  UINT64, 
+   * NULLV,  STR,    INT64,  
    * DOUBLE, OPAQUE, TUPLE,  
-   * TIME,   ID,     IP_ADDR,
-   * TIME_DURATION, LIST, VECTOR,
+   * TIME,   ID,     
+   * TIME_DURATION, SET, LIST, VECTOR,
    * MATRIX
    */
   const Oper** Oper::oper_table_[Value::TYPES][Value::TYPES] = {
     /* NULLV */
     {&Val_Null::oper_, &Val_Null::oper_, &Val_Null::oper_, 
      &Val_Null::oper_, &Val_Null::oper_, &Val_Null::oper_, 
-     &Val_Null::oper_, &Val_Null::oper_, &Val_Null::oper_, 
+     &Val_Null::oper_, &Val_Null::oper_,
      &Val_Null::oper_, &Val_Null::oper_, &Val_Null::oper_,
-     &Val_Null::oper_, &Val_Null::oper_, &Val_Null::oper_,
-     &Val_Null::oper_},
+     &Val_Null::oper_, &Val_Null::oper_},
     /* STR */
     {&Val_Str::oper_, &Val_Str::oper_, &Val_Str::oper_, 
      &Val_Str::oper_, &Val_Str::oper_, &Val_Str::oper_, 
-     &Val_Str::oper_, &Val_Str::oper_, &Val_Str::oper_, 
+     &Val_Str::oper_, &Val_Str::oper_,
      &Val_Str::oper_, &Val_Str::oper_, &Val_Str::oper_,
-     &Val_Str::oper_, &Val_Str::oper_, &Val_Str::oper_,
-	 &Val_Str::oper_},
-    /* INT32 */
-    {&Val_Int32::oper_, &Val_Int32::oper_, &Val_Int32::oper_, 
-     &Val_Int32::oper_, &Val_Int32::oper_, &Val_Int32::oper_, 
-     &Val_Int32::oper_, &Val_Int32::oper_, &Val_Int32::oper_, 
-     &Val_Int32::oper_, &Val_Int32::oper_, &Val_Int32::oper_,
-     &Val_Int32::oper_, &Val_Int32::oper_, &Val_Int32::oper_,
-	 &Val_Int32::oper_},
-    /* UINT32 */
-    {&Val_UInt32::oper_, &Val_UInt32::oper_, &Val_UInt32::oper_, 
-     &Val_UInt32::oper_, &Val_UInt32::oper_, &Val_UInt32::oper_, 
-     &Val_UInt32::oper_, &Val_UInt32::oper_, &Val_UInt32::oper_, 
-     &Val_UInt32::oper_, &Val_UInt32::oper_, &Val_UInt32::oper_,
-     &Val_UInt32::oper_, &Val_UInt32::oper_, &Val_UInt32::oper_,
-	 &Val_UInt32::oper_},
+	 &Val_Str::oper_, &Val_Str::oper_},
     /* INT64 */
     {&Val_Int64::oper_, &Val_Int64::oper_, &Val_Int64::oper_, 
      &Val_Int64::oper_, &Val_Int64::oper_, &Val_Int64::oper_, 
-     &Val_Int64::oper_, &Val_Int64::oper_, &Val_Int64::oper_, 
+     &Val_Int64::oper_, &Val_Int64::oper_,
      &Val_Int64::oper_, &Val_Int64::oper_, &Val_Int64::oper_,
-     &Val_Int64::oper_, &Val_Int64::oper_, &Val_Int64::oper_,
-	 &Val_Int64::oper_},
-    /* INT64 */
-    {&Val_UInt64::oper_, &Val_UInt64::oper_, &Val_UInt64::oper_, 
-     &Val_UInt64::oper_, &Val_UInt64::oper_, &Val_UInt64::oper_, 
-     &Val_UInt64::oper_, &Val_UInt64::oper_, &Val_UInt64::oper_, 
-     &Val_UInt64::oper_, &Val_UInt64::oper_, &Val_UInt64::oper_,
-     &Val_UInt64::oper_, &Val_UInt64::oper_, &Val_UInt64::oper_,
-	 &Val_UInt64::oper_},
+	 &Val_Int64::oper_, &Val_Int64::oper_},
     /* Double */
     {&Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_, 
      &Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_, 
-     &Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_, 
+     &Val_Double::oper_, &Val_Double::oper_,
      &Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_,
-     &Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_,
-	 &Val_Double::oper_},
+	 &Val_Double::oper_, &Val_Double::oper_},
     /* Opaque */
     {&Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_, 
      &Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_, 
-     &Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_, 
+     &Val_Opaque::oper_, &Val_Opaque::oper_,
      &Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_,
-     &Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_,
-	 &Val_Opaque::oper_},
+	 &Val_Opaque::oper_, &Val_Opaque::oper_},
     /* Tuple */
     {&Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_, 
      &Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_, 
-     &Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_, 
+     &Val_Tuple::oper_, &Val_Tuple::oper_,
      &Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_,
-     &Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_,
-	 &Val_Tuple::oper_},
+	 &Val_Tuple::oper_, &Val_Tuple::oper_},
     /* Time */
     {&Val_Time::oper_, &Val_Time::oper_, &Val_Time::oper_, 
      &Val_Time::oper_, &Val_Time::oper_, &Val_Time::oper_, 
-     &Val_Time::oper_, &Val_Time::oper_, &Val_Time::oper_, 
+     &Val_Time::oper_, &Val_Time::oper_,
      &Val_Time::oper_, &Val_Time::oper_, &Val_Time::oper_,
-     &Val_Time::oper_, &Val_Time::oper_, &Val_Time::oper_,
-	 &Val_Time::oper_},
+	 &Val_Time::oper_, &Val_Time::oper_},
     /* ID */
     {&Val_ID::oper_, &Val_ID::oper_, &Val_ID::oper_, 
      &Val_ID::oper_, &Val_ID::oper_, &Val_ID::oper_, 
-     &Val_ID::oper_, &Val_ID::oper_, &Val_ID::oper_, 
+     &Val_ID::oper_, &Val_ID::oper_,
      &Val_ID::oper_, &Val_ID::oper_, &Val_ID::oper_,
-     &Val_ID::oper_, &Val_ID::oper_, &Val_ID::oper_,
-	 &Val_ID::oper_},
-    /* IP_ADDR */
-    {&Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, 
-     &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, 
-     &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, 
-     &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_,
-     &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_,
-	 &Val_IP_ADDR::oper_},
+	 &Val_ID::oper_, &Val_ID::oper_},
     /* TIME_DURATION */
     {&Val_Time_Duration::oper_, &Val_Time_Duration::oper_,
               &Val_Time_Duration::oper_, 
      &Val_Time_Duration::oper_, &Val_Time_Duration::oper_,
               &Val_Time_Duration::oper_, 
      &Val_Time_Duration::oper_, &Val_Time_Duration::oper_,
-              &Val_Time_Duration::oper_, 
+
      &Val_Time_Duration::oper_, &Val_Time_Duration::oper_,
               &Val_Time_Duration::oper_,
-     &Val_Time_Duration::oper_, &Val_Time_Duration::oper_,
-              &Val_Time_Duration::oper_,
-	 &Val_Time_Duration::oper_}
+     &Val_Time_Duration::oper_, &Val_Time_Duration::oper_},
+    /* SET */
+    {&Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_, 
+     &Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_, 
+     &Val_Set::oper_, &Val_Set::oper_,
+     &Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_,
+     &Val_Set::oper_, &Val_Set::oper_},
+    /*LIST*/
+    {&Val_List::oper_, &Val_List::oper_, &Val_List::oper_, 
+     &Val_List::oper_, &Val_List::oper_, &Val_List::oper_, 
+     &Val_List::oper_, &Val_List::oper_,
+     &Val_List::oper_, &Val_List::oper_, &Val_List::oper_,
+	 &Val_List::oper_, &Val_List::oper_}
+
+
   };
-  // const Oper** Oper::oper_table_[Value::TYPES][Value::TYPES] = {
-  //   /* NULLV */
-  //   {&Val_Null::oper_,   &Val_Null::oper_,   &Val_Int32::oper_, 
-  //    &Val_UInt32::oper_, &Val_Int64::oper_,  &Val_UInt64::oper_, 
-  //    &Val_Double::oper_, &Val_Null::oper_,   &Val_Null::oper_,   
-  //    &Val_Time::oper_,   &Val_Null::oper_, &Val_IP_ADDR::oper_},
-  //   /* STR */
-  //   {&Val_Null::oper_, &Val_Str::oper_,    &Val_Str::oper_,    
-  //    &Val_Str::oper_,  &Val_Str::oper_,    &Val_Str::oper_,  
-  //    &Val_Str::oper_,  &Val_Opaque::oper_, &Val_Tuple::oper_, 
-  //    &Val_Str::oper_,  &Val_Str::oper_,  &Val_IP_ADDR::oper_},
-  //   /* INT32 */
-  //   {&Val_Null::oper_,   &Val_Str::oper_,    &Val_Int32::oper_,  
-  //    &Val_UInt32::oper_, &Val_Int64::oper_,  &Val_UInt64::oper_, 
-  //    &Val_Double::oper_, &Val_Opaque::oper_, &Val_Tuple::oper_,  
-  //    &Val_Time::oper_,   &Val_ID::oper_,  &Val_IP_ADDR::oper_},
-  //   /* UINT32 */
-  //   {&Val_Null::oper_,   &Val_Str::oper_,    &Val_UInt32::oper_, 
-  //    &Val_UInt32::oper_, &Val_Int64::oper_,  &Val_UInt64::oper_, 
-  //    &Val_Double::oper_, &Val_Opaque::oper_, &Val_Tuple::oper_,  
-  //    &Val_Time::oper_,   &Val_ID::oper_, &Val_IP_ADDR::oper_},
-  //   /* INT64 */
-  //   {&Val_Null::oper_,   &Val_Str::oper_,    &Val_Int64::oper_,  
-  //    &Val_Int64::oper_,  &Val_Int64::oper_,  &Val_UInt64::oper_, 
-  //    &Val_Double::oper_, &Val_Opaque::oper_, &Val_Tuple::oper_, 
-  //    &Val_Time::oper_,   &Val_ID::oper_, &Val_IP_ADDR::oper_},
-  //   /* UINT64 */
-  //   {&Val_Null::oper_,   &Val_Str::oper_,    &Val_UInt64::oper_,  
-  //    &Val_UInt64::oper_, &Val_UInt64::oper_, &Val_UInt64::oper_, 
-  //    &Val_Double::oper_, &Val_Opaque::oper_, &Val_Tuple::oper_,  
-  //    &Val_Time::oper_,   &Val_ID::oper_, &Val_IP_ADDR::oper_},
-  //   /* DOUBLE */
-  //   {&Val_Null::oper_,   &Val_Str::oper_,    &Val_Double::oper_, 
-  //    &Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_, 
-  //    &Val_Double::oper_, &Val_Opaque::oper_, &Val_Tuple::oper_,  
-  //    &Val_Time::oper_,   &Val_ID::oper_, &Val_IP_ADDR::oper_},
-  //   /* OPAQUE */
-  //   {&Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_, 
-  //    &Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_, 
-  //    &Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_, 
-  //    &Val_Opaque::oper_, &Val_Opaque::oper_, &Val_IP_ADDR::oper_},
-  //   /* TUPLE */
-  //   {&Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_, 
-  //    &Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_, 
-  //    &Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_, 
-  //    &Val_Tuple::oper_, &Val_Tuple::oper_, &Val_IP_ADDR::oper_},
-  //   /* TIME */
-  //   {&Val_Null::oper_, &Val_Str::oper_,    &Val_Time::oper_,   
-  //    &Val_Time::oper_, &Val_Time::oper_,   &Val_Time::oper_, 
-  //    &Val_Time::oper_, &Val_Opaque::oper_, &Val_Tuple::oper_, 
-  //    &Val_Time::oper_, &Val_Str::oper_, &Val_IP_ADDR::oper_},
-  //   /* ID */
-  //   {&Val_Null::oper_, &Val_Str::oper_,    &Val_ID::oper_,     
-  //    &Val_ID::oper_,   &Val_ID::oper_,     &Val_ID::oper_,   
-  //    &Val_ID::oper_,   &Val_Opaque::oper_, &Val_Tuple::oper_, 
-  //    &Val_Str::oper_,  &Val_ID::oper_, &Val_IP_ADDR::oper_},
-  //   /* IP_ADDR */
-  //   {&Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_,
-  //    &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_,
-  //    &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_,
-  //    &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_, &Val_IP_ADDR::oper_}
-  // };
   
   ValuePtr operator<<(const ValuePtr& v1, const ValuePtr& v2) {
     return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_lshift(v1, v2);
@@ -227,6 +138,9 @@ namespace opr {
     // Changed to have the first argument determine how the second
     // argument casts
     return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_minus(v1, v2);
+  };
+  ValuePtr operator-(const ValuePtr& v1) { 
+    return (*Oper::oper_table_[v1->typeCode()][v1->typeCode()])->_neg(v1);
   };
 //   struct timespec operator-(const struct timespec& v1, const struct timespec& v2) { 
 //     struct timespec ts = {0};
@@ -273,7 +187,11 @@ namespace opr {
   };
   
   bool operator==(const ValuePtr& v1, const ValuePtr& v2) { 
-    return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_eq(v1, v2);
+    try {
+      return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_eq(v1, v2);
+    } catch (Value::TypeError e) {
+      return false;
+    }
   };
   bool operator!=(const ValuePtr& v1, const ValuePtr& v2) { 
     return (*Oper::oper_table_[v1->typeCode()][v2->typeCode()])->_neq(v1, v2);

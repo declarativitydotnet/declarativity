@@ -13,10 +13,7 @@
 
 #include "val_time.h"
 
-#include "val_int32.h"
-#include "val_uint32.h"
 #include "val_int64.h"
-#include "val_uint64.h"
 #include "val_double.h"
 #include "val_str.h"
 #include "val_null.h"
@@ -52,9 +49,7 @@ const opr::Oper* Val_Time::oper_ = new OperTime();
 
 string Val_Time::toConfString() const
 {
-  ostringstream conf;
-  conf << "Val_Time(" << to_simple_string(t)<< ")";
-  return conf.str();
+  return toString();
 }
 
 //
@@ -141,27 +136,9 @@ boost::posix_time::ptime Val_Time::cast(ValuePtr v) {
       ptime t;
       return t;
     }
-  case Value::INT32:
-    {
-      time_duration elapsed(0,0,Val_Int32::cast(v), 0);
-      ptime pt = epoch + elapsed;
-      return pt;
-    }
-  case Value::UINT32:
-    {
-      time_duration elapsed(0,0,Val_UInt32::cast(v), 0);
-      ptime pt = epoch + elapsed;
-      return pt;
-    }
   case Value::INT64:
     {
       time_duration elapsed(0,0,Val_Int64::cast(v), 0);
-      ptime pt = epoch + elapsed;
-      return pt;
-    }
-  case Value::UINT64:
-    {
-      time_duration elapsed(0,0,Val_UInt64::cast(v), 0);
       ptime pt = epoch + elapsed;
       return pt;
     }
@@ -271,6 +248,11 @@ class OperTime_Duration : public opr::OperCompare<Val_Time_Duration> {
     boost::posix_time::time_duration t2 = Val_Time_Duration::cast(v2);
     return Val_Time_Duration::mk(t1 - t2);
   };
+
+  virtual ValuePtr _neg (const ValuePtr& v1) const {
+    boost::posix_time::time_duration t1 = Val_Time_Duration::cast(v1);
+    return Val_Time_Duration::mk(-t1);
+  };
 };
 const opr::Oper* Val_Time_Duration::oper_ = new OperTime_Duration();
 
@@ -330,28 +312,10 @@ boost::posix_time::time_duration Val_Time_Duration::cast(ValuePtr v) {
   switch (v->typeCode()) {
   case Value::TIME_DURATION:
     return (static_cast<Val_Time_Duration *>(v.get()))->td;
-  case Value::INT32:
-    {
-      // treat the input as seconds
-      boost::posix_time::time_duration td(0,0,Val_Int32::cast(v), 0);
-      return td;
-    }
-  case Value::UINT32:
-    {
-      // treat the input as seconds
-      boost::posix_time::time_duration td(0,0,Val_UInt32::cast(v), 0);       
-      return td;
-    }
   case Value::INT64:
     {
       // treat the input as seconds
       boost::posix_time::time_duration td(0,0,Val_Int64::cast(v), 0);       
-      return td;
-    }
-  case Value::UINT64:
-    {
-      // treat the input as seconds
-      boost::posix_time::time_duration td(0,0,Val_UInt64::cast(v), 0);       
       return td;
     }
   case Value::DOUBLE:
@@ -377,10 +341,10 @@ boost::posix_time::time_duration Val_Time_Duration::cast(ValuePtr v) {
       time_duration td;
       if (theTuple->size() >= 2) {
         // treat the input as seconds and nanoseconds
-        uint32_t secs = Val_Int32::cast((*theTuple)[0]);
+        uint32_t secs = Val_Int64::cast((*theTuple)[0]);
         // ensure we interpret this as nanosecs (1/(10^9) sec) 
         // even if boost is compiled to lower precision 
-        uint32_t nsecs = (uint32_t) round((Val_Int32::cast((*theTuple)[1]))
+        uint32_t nsecs = (uint32_t) round((Val_Int64::cast((*theTuple)[1]))
                                           / PTIME_SECS_FACTOR);
         td = time_duration(0,0,secs,nsecs);
       } 

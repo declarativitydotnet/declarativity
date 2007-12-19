@@ -18,17 +18,14 @@
 
 #include "val_null.h"
 #include "val_str.h"
-#include "val_int32.h"
-#include "val_uint32.h"
 #include "val_int64.h"
-#include "val_uint64.h"
 #include "val_double.h"
 #include "val_opaque.h"
 #include "val_tuple.h"
 #include "val_time.h"
 #include "val_list.h"
+#include "val_set.h"
 #include "val_id.h"
-#include "val_ip_addr.h"
 #include "val_vector.h"
 #include "val_matrix.h"
 
@@ -38,21 +35,29 @@ typedef ValuePtr (*_unmarshal_fn)( XDR *);
 static _unmarshal_fn jump_tab[] = {
   Val_Null::xdr_unmarshal,
   Val_Str::xdr_unmarshal,
-  Val_Int32::xdr_unmarshal,
-  Val_UInt32::xdr_unmarshal,
   Val_Int64::xdr_unmarshal,
-  Val_UInt64::xdr_unmarshal,
   Val_Double::xdr_unmarshal,
   Val_Opaque::xdr_unmarshal,
   Val_Tuple::xdr_unmarshal,
   Val_Time::xdr_unmarshal,
   Val_ID::xdr_unmarshal,
-  Val_IP_ADDR::xdr_unmarshal,
   Val_Time_Duration::xdr_unmarshal,
+  Val_Set::xdr_unmarshal,
   Val_List::xdr_unmarshal,
   Val_Vector::xdr_unmarshal,
   Val_Matrix::xdr_unmarshal
 };
+
+#include <time.h>
+Value::Value() 
+{
+  //  TELL_ERROR << "Create_value " << time(NULL) << "\n";
+}
+
+Value::~Value()
+{
+  // TELL_ERROR << "Destroy_value " << time(NULL) << "\n";
+}
 
 //
 // Marshalling

@@ -26,9 +26,6 @@
 #include "val_vector.h"
 #include "val_matrix.h"
 #include "val_list.h"
-#include "val_uint32.h"
-#include "val_int32.h"
-#include "val_uint64.h"
 #include "val_int64.h"
 #include "val_str.h"
 #include "val_time.h"
@@ -90,11 +87,16 @@ namespace compile {
         else   return e->add_input();
       }
       else {
-        if (!v) throw p2dl::Exception(0, "Bad port value! " + _port->toString());
-        
-        if (v->value()->typeCode() == ::Value::UINT32) 
-          return Val_UInt32::cast(v->value());
-        else return e->element()->input(v->value());
+        if (!v) {
+          throw p2dl::Exception(0, "Bad port value! " +
+                                _port->toString());
+        }
+
+        if (v->value()->typeCode() == ::Value::INT64) {
+          return Val_Int64::cast(v->value());
+        } else {
+          return e->element()->input(v->value());
+        }
       }
       assert(0);
       return 0;
@@ -108,11 +110,16 @@ namespace compile {
         else   return e->add_output();
       }
       else {
-        if (!v) throw p2dl::Exception(0, "Bad port value! " + _port->toString());
+        if (!v) {
+          throw p2dl::Exception(0, "Bad port value! " +
+                                _port->toString());
+        }
         
-        if (v->value()->typeCode() == ::Value::UINT32) 
-          return Val_UInt32::cast(v->value());
-        else return e->element()->output(v->value());
+        if (v->value()->typeCode() == ::Value::INT64) {
+          return Val_Int64::cast(v->value());
+        } else {
+          return e->element()->output(v->value());
+        }
       }
       assert(0);
       return 0;
@@ -139,8 +146,8 @@ namespace compile {
 
       _dataflow.reset(
         new Plumber::Dataflow(n->toString(), 
-                              Val_UInt32::cast(inputs->value()),
-                              Val_UInt32::cast(outputs->value()),
+                              Val_Int64::cast(inputs->value()),
+                              Val_Int64::cast(outputs->value()),
                               Val_Str::cast(proccessing->value()),
                               Val_Str::cast(flow_code->value())));
       _statements = s;
@@ -303,6 +310,7 @@ namespace compile {
             throw Exception(2, "EditStrand: Unknown variable reference. " + ref->toString());
           esp = dataflow->find((*i)->toString());
           if (!esp) {
+            std::cerr << "EditStrand: Unknown variable reference. " << ref->toString() << std::endl;
             throw Exception(3, "EditStrand: Unknown variable reference. " + ref->toString());
           }
           dataflow = dynamic_cast<Plumber::Dataflow*>(esp->element().get()); 
@@ -319,24 +327,6 @@ namespace compile {
       return ElementSpecPtr();
     }
 
-    Table::Table(Expression*  name, Expression*  ttl, 
-                 Expression*  size, Table2::Key* key) {
-      Value *v = dynamic_cast<Value*>(size);
-
-      _name = name->toString(); 
-      _ttl  = boost::posix_time::duration_from_string(ttl->toString());
-      _size = Val_UInt32::cast(v->value());
-      _key  = key;
-    }
-
-    void Table::commit(ScopeTable& scope) {
-      Plumber::catalog()->createTable(_name, *_key, _size, _ttl);
-    }
-
-    string Table::toString() const {
-      return "";
-    }
-  
     void Watch::commit(ScopeTable& scope) {
 
     }
@@ -345,19 +335,26 @@ namespace compile {
       return "";
     }
 
-    Fact::Fact(Expression* t, ValueList *v) : _tablename(t->toString()) {
-      _fact = ::Tuple::mk(_tablename);
+    Fact::Fact(ValueList *v) {
+      _fact = ::Tuple::mk();
       for (ValueList::iterator i = v->begin(); i != v->end(); i++)
         _fact->append(*i); 
+      _tablename = (*_fact)[TNAME]->toString();
     }
 
     void Fact::commit(ScopeTable& scope) {
       CommonTablePtr table = Plumber::catalog()->table(_tablename);
-      table->insert(_fact);
+      if (table) {
+        table->insert(_fact);
+      }
+      else {
+        TELL_ERROR << "P2DL ERROR: fact table " << _tablename << " does not exist!";
+        throw compile::p2dl::Exception(0, "FACT TABLE DOES NOT EXIST!");
+      }
     }
 
     string Fact::toString() const {
-      return "";
+      return _fact->toString();
     }
     
     /***************************************************
@@ -424,27 +421,35 @@ namespace compile {
       ScopeTable scope;
       TELL_INFO << "COMMIT TABLES" << std::endl;
       for (StatementList::iterator i = _tables.begin();
-           i != _tables.end(); i++) {
+           i != _tables.end();
+           i++) {
+        TELL_WORDY << (*i)->toString() << std::endl;
         (*i)->commit(scope);
       }
       TELL_INFO << "COMMIT WATCHES" << std::endl;
       for (StatementList::iterator i = _watches.begin();
-           i != _watches.end(); i++) {
-        (*i)->commit(scope);
-      }
-      TELL_INFO << "COMMIT FACTS" << std::endl;
-      for (StatementList::iterator i = _facts.begin();
-           i != _facts.end(); i++) {
+           i != _watches.end();
+           i++) {
+        TELL_WORDY << (*i)->toString() << std::endl;
         (*i)->commit(scope);
       }
       TELL_INFO << "COMMIT GRAPHS" << std::endl;
       for (StatementList::iterator i = _graphs.begin();
-           i != _graphs.end(); i++) {
+           i != _graphs.end();
+           i++) {
+        TELL_WORDY << (*i)->toString() << std::endl;
         (*i)->commit(scope);
       }
       TELL_INFO << "COMMIT EDITS" << std::endl;
       for (StatementList::iterator i = _edits.begin();
-           i != _edits.end(); i++) {
+           i != _edits.end();
+           i++) {
+        (*i)->commit(scope);
+      }
+      TELL_INFO << "COMMIT FACTS" << std::endl;
+      for (StatementList::iterator i = _facts.begin();
+           i != _facts.end();
+           i++) {
         (*i)->commit(scope);
       }
     }
@@ -452,15 +457,17 @@ namespace compile {
     TuplePtr 
     Context::program(CommonTable::ManagerPtr catalog, TuplePtr program)
     {
-      if ((*program)[catalog->attribute(PROGRAM, "P2DL")] != Val_Null::mk()) {
+      program = this->compile::Context::program(catalog, program);
+
+      if (program && (*program)[catalog->attribute(PROGRAM, "P2DL")] != Val_Null::mk()) {
         ValuePtr programP2DL = (*program)[catalog->attribute(PROGRAM, "P2DL")];
         if (programP2DL != Val_Null::mk()) {
-          TELL_INFO << "PROGRAM P2DL TEXT: " << std::endl << programP2DL->toString() << std::endl;
+          // std::cerr << programP2DL->toString() << std::endl;
           std::istringstream p2dl(programP2DL->toString(), std::istringstream::in);
           parse_stream(&p2dl);
         }
       }
-      return this->compile::Context::program(catalog, program);
+      return program;
     }
 
     void
@@ -469,7 +476,11 @@ namespace compile {
       ValuePtr ruleText = (*rule)[catalog->attribute(RULE, "P2DL")];
 
       if (ruleText != Val_Null::mk()) {
-        TELL_INFO << "RULE P2DL TEXT: " << std::endl << ruleText->toString() << std::endl;
+
+        //        if ((*rule)[catalog->attribute(RULE, "NAME")]->toString() == "rule_aggview_rule_mv_r1") { 
+        //std::cerr << "RULE P2DL TEXT: " << std::endl << ruleText->toString() << std::endl;
+        //}
+
         std::istringstream p2dl(ruleText->toString(), std::istringstream::in);
         parse_stream(&p2dl);
       }
