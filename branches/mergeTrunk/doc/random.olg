@@ -1,0 +1,52 @@
+/**
+ * Construct a random topology out of planetlab 
+ * nodes taken from sliceNodeEvent, which indicate. 
+ * the set of nodes in a slice.
+ */
+
+materialize(overlog, infinity, infinity, keys(3)).
+materialize(sliceNodes, infinity, infinity, keys(2)).
+materialize(neighbors, infinity, infinity, keys(2)).
+materialize(neighborCount, infinity, 1, keys(2)).
+
+watch(overlogInstall).
+
+r0a sliceEvent(@J, E) :- periodic(@J, E, 0, 1).
+r0b sliceNodes(@J, N) :- sliceNodeEvent(@J, N).
+
+r1 neighborCount(@J, C) :- periodic(@J, E, 0, 1), C:=0.
+
+r2 neighborCount(@J, count<N>) :- neighbors(@J, N).
+
+r3 neighborRequest(@N, J) :- periodic(@J, E, 5),
+                              neighborCount(@J, C), 
+                              sliceNodes(@J, N),
+                              f_coinFlip(0.1) == 1,
+                              C < NUM_NEIGHBORS.
+
+r4 neighborResponse(@N, J) :- neighborRequest(@J, N).
+
+r5 neighbors(@J, N) :- neighborResponse(@J, N),
+                        neighborCount(@J, C),
+                        C < NUM_NEIGHBORS.
+
+r6 neighborPing(@N, J) :- periodic(@J, E, 30),
+                           neighbors(@J, N).
+r7 neighborPong(@N, J) :- neighborPing(@J, N).
+r8 neighbors(@J, N)    :- neighborPong(@J, N).
+
+r9 delete neighbors(@J,N) :- periodic(@J,E,10),
+                              neighbors(@J,N),
+                              neighborCount(@J,C),
+                              C > NUM_NEIGHBORS. 
+
+/** Overlog installation rules */
+p0 overlog(@J, T, P)           :- overlogEvent(@J, S, T, P).
+p1 overlogInstall(@J, J, T, P) :- overlog(@J, T, P).
+p3 displayEvent(@M, I, J, T)   :- overlogInstall(@J, S, T, P), M:=MASTER, I:="I".
+
+/** Tell all my neighbors about the new install */
+p2 overlogEvent(@N, J, T, P)   :- overlogInstall(@J, S, T, P), neighbors(@J, N).
+
+/** Tell the dude connecting about all the past overlog programs */
+p3 overlogEvent(@N, J, T, P)   :- overlog(@J, T, P), neighborRequest(@J, N).
