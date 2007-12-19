@@ -1,3 +1,0 @@
-.deps Makefile Makefile.in
-ol_lexer.C ol_parser.C ol_parser.H ol_parser.output
-*.la *.lo .libs
