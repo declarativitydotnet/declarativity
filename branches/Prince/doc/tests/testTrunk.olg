@@ -1,0 +1,2 @@
+r1 table(@Me, D) :- test(@Me, C), D := !(C) .
+

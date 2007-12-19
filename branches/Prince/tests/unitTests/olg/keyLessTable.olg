@@ -1,0 +1,33 @@
+/**
+  * This file is distributed under the terms in the attached LICENSE file.
+  * If you do not find this file, copies can be found by writing to:
+  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+  * Or
+  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+  * Berkeley, CA,  94707. Attention: P2 Group.
+  * 
+  * $Id: keyLessTable.olg 1243 2007-07-16 19:05:00Z maniatis $
+  * 
+  * DESCRIPTION: OverLog test for tables without a key, in which tuples
+  * are indexed by their identifier.
+  * 
+  * Run me as follows:
+  *
+  * tests/runOverLog -o unitTests/olg/keyLessTable.olg
+  *
+  * Every second for five iterations, a new keyLess tuple should be produced with an
+  * increasing count.
+***/
+
+materialize(keyLess, infinity, infinity, keys()).
+
+watchmod(keyLessCount, "s").
+
+r1 event(@NI) :- periodic(@NI, E, 1, 5).
+
+r2 keyLess(@NI) :- event(@NI).
+
+r3 keyLessCount(@NI, a_COUNT<*>) :- keyLess(@NI).
+
+

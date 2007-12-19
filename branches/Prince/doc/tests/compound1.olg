@@ -1,0 +1,11 @@
+materialize(parent, infinity, infinity, keys(1)).
+materialize(childA, infinity, infinity, keys(1)).
+materialize(child, infinity, infinity, keys(1)).
+weak ref(parent, child, 2).
+weak ref(parent, childA, 3).
+
+r1 child(@L1, B):- new<@X, Y, parent(@Me, L1, L2)>, child(@X, B).
+
+r3 childA(@L2, B):- new<@X, Y, parent(@Me, L1, L2)>, childA(@X, B).
+
+r2 new<@X, Y, parent(@A, &B, &C)>:- parent(@X, Y, V), link(@X, A).

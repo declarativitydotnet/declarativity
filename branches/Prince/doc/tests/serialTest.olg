@@ -1,0 +1,35 @@
+materialize(link, infinity, infinity, keys(1, 2)).
+materialize(parent, infinity, infinity, keys(2)).
+materialize(child, infinity, infinity, keys(2)).
+weak ref(parent, child, 3).
+
+link("127.0.0.1:11111", "127.0.0.1:22222").
+
+r1 test(@I, I) :- periodic(@I, E, 1, 1).
+
+r2 child(@I, NewC):- test(@I, I), link(@I, K), NewC := 1.
+
+r3 new<@I, null, parent(@X, C, &B)>:- event(@I, C), link(@I, X).
+
+r4 event(@I, C):- child(@I, C).
+
+/*
+r5 child(@L1, B):- new<@Me, null, parent(@X, C, L1)>, child(@Me, B).
+*/
+
+r8 new<@Me, null, child(@L1, B)>:- new<@Me, null, parent(@X, C, L1)>, child(@Me, B).
+
+r6 receiveEventTest(@I, C):-parent(@I, C, L).
+
+r7 receiveLocTest(@I, C, C1):-parent(@I, C, L), child(@L, C1).
+
+watch(child).
+watch(parent).
+watch(parentNew).
+watch(childNew).
+watch(childNewVer).
+watch(event).
+watch(receiveEventTest).
+watch(receiveLocTest).
+watch(test).
+

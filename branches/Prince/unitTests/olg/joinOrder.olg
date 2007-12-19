@@ -1,0 +1,40 @@
+/*
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
+ * 
+ * DESCRIPTION: Regression test for join ordering in aggwrap
+ *
+ * Execute with
+ * tests/runOverLog -o unitTests/olg/joinOrder.olg
+ *
+ * A single result should come from each of q1 and q2 with count 1 in each.
+*/
+
+materialize(outstanding, infinity, infinity, keys(2)).
+materialize(result, infinity, infinity, keys(2)).
+
+outstanding("localhost:10000", "localhost:10001", 1.5).
+
+result("localhost:10000", 7, "localhost:10001", 1.5).
+result("localhost:10000", 4, "localhost:10002", 5.0).
+result("localhost:10000", 2, "localhost:10006", 6.0).
+result("localhost:10000", 3, "localhost:10007", 7.0).
+
+q1 prodEvent1(@J, a_COUNT<*>) :- periodic(@J, E, 1, 1),
+                              outstanding(@J, N2, V2),
+                              result(@J, S, N, V),
+                              N == N2.
+
+q2 prodEvent2(@J, a_COUNT<*>) :- periodic(@J, E, 1, 1),
+                              result(@J, S, N, V),
+                              outstanding(@J, N2, V2),
+                              N == N2.
+
+
+watchmod(prodEvent1, "s").
+watchmod(prodEvent2, "s").

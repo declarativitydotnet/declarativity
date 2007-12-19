@@ -1,0 +1,27 @@
+namespace stats {
+
+materialize (done, infinity, infinity, keys(2)).
+
+  table1 ::sys::table(@A, ID, Tablename, TTL, Size, Key, Card, Sort) :- 
+              programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src),
+              ::sys::table(@A, ID, Tablename, TTL, Size, Key, Card, Sort),
+              Size == 0,
+              Card == 0,
+              Card := f_rand() % 11113.
+
+  table2 ::sys::table(@A, ID, Tablename, TTL, Size, Key, Card, Sort) :- 
+              programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src),
+              ::sys::table(@A, ID, Tablename, TTL, Size, Key, Card, Sort),
+              Size != 0,
+              Card == 0,
+              Card := Size.
+
+  indexStat ::sys::index(@A, ID, Tablename, Key, Type, Selectivity) :-
+              programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src),
+              ::sys::index(@A, ID, Tablename, Key, Type, Selectivity),
+              Selectivity := f_drand() / 3.0.
+
+  finish ::sys::program_add(@A, Pid, Name, Rewrite, "stats", Text, Msg, P2DL, Src) :-
+              programEvent(@A, Pid, Name, Rewrite, _, Text, Msg, P2DL, Src).
+  
+}

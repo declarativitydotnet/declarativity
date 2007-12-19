@@ -1,0 +1,165 @@
+materialize(parent, infinity, infinity, keys(2, 3)).
+materialize(child, infinity, infinity, keys(2, 3)).
+materialize(parentNewProcess, infinity, infinity, keys(2)).
+
+child("localhost:10000", 0, 0).
+
+watch ( child ).
+watch ( parent ).
+watch ( parentNew ).
+watch ( parentNewProcess ).
+watch ( childNew ).
+watch ( event ).
+watch ( test ).
+
+
+/*
+rgen test(@I, I) :-
+        periodic(@I, E, 1, 1).
+
+
+rw1_0 parentNew(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5) :-
+        parentNew_3(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5).
+
+
+rw1_1 childNewVer(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5) :-
+        childNew(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4),
+        RW1_6 := f_isLocSpec(RW1_3),
+        RW1_6 == 1,
+        RW1_5 := f_createVersion().
+
+
+rw1_2 locSpecTable(@RW1_0, RW1_3, RW1_0, RW1_5) :-
+        childNewVer(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5).
+
+
+rw1_3 child(@RW1_0, RW1_5, RW1_4) :-
+        childNewVer(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5).
+
+
+rw1_4 parentNewProcess(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5, RW1_6) :-
+        parentNew(@RW1_0, RW1_2, RW1_3, RW1_4, RW1_5, RW1_6),
+        f_isLocSpec(RW1_4) == 0,
+        RW1_1 := f_now().
+
+
+rw1_5 delete parentNewProcess(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5, RW1_6) :-
+        parentNewProcess(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5, RW1_6).
+
+
+rw1_6 sendtuple(@RW1_4, RW1_7, RW1_8) :-
+        parentNewProcess(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5, RW1_6),
+        RW1_7 := "parent",
+        RW1_8 := f_serialize(RW1_7, RW1_1).
+
+
+rw1_7 dummy(@RW1_0) :-
+        sendtuple(@RW1_0, RW1_1, RW1_2),
+        RW1_3 := f_deserialize(RW1_1, RW1_2).
+
+
+r2 child(@I, RW2_0, NewC) :-
+        RW2_0 := 0,
+        child(@I, RW2_1, Count),
+        RW2_1 == 0,
+        test(@I, I),
+        NewC := Count + 1.
+
+
+r4 event(@I, C) :-
+        child(@I, RW2_0, C),
+        RW2_0 == 0.
+
+
+r1 childNew(@Me, RW0_1, RW0_0, L1, B) :-
+        parentNew3(@Me, PS_3, PS_4, X, C, L1),
+        child(@Me, RW2_0, B),
+        RW2_0 == 0,
+        X == Me,
+        PS_3 == null,
+        PS_4 == null,
+        RW0_0 := null,
+        RW0_1 := null.
+
+
+r3 parentNew_3(@I, PS_1, PS_2, J, C, B) :-
+        child(@I, RW2_0, C),
+        RW2_0 == 0,
+        PS_1 := null,
+        PS_2 := null,
+	J := I,
+        B := f_createLocSpec().
+*/
+r1 test(@I, I) :-
+        periodic(@I, E, 1, 1).
+
+
+rw1_0 parentNew(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5) :-
+        parentNew_3(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5).
+
+
+rw1_1 childNewVer(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5) :-
+        childNew(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4),
+        RW1_6 := f_isLocSpec(RW1_3),
+        RW1_6 == 1,
+        RW1_5 := f_createVersion().
+
+
+rw1_2 locSpecTable(@RW1_0, RW1_3, RW1_0, RW1_5) :-
+        childNewVer(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5).
+
+
+rw1_3 child(@RW1_0, RW1_5, RW1_4) :-
+        childNewVer(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5).
+
+
+rw1_4 parentNewProcess(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5, RW1_6) :-
+        parentNew(@RW1_0, RW1_2, RW1_3, RW1_4, RW1_5, RW1_6),
+        f_isLocSpec(RW1_4) == 0,
+        RW1_1 := f_now().
+
+
+rw1_5 delete parentNewProcess(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5, RW1_6) :-
+        parentNewProcess(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5, RW1_6).
+
+
+rw1_6 sendtuple(@RW1_4, RW1_7, RW1_8) :-
+        parentNewProcess(@RW1_0, RW1_1, RW1_2, RW1_3, RW1_4, RW1_5, RW1_6),
+        RW1_7 := "parent",
+        RW1_8 := f_serialize(RW1_7, RW1_1).
+
+
+rw1_7 dummy(@RW1_0) :-
+        sendtuple(@RW1_0, RW1_1, RW1_2),
+        RW1_3 := f_deserialize(RW1_1, RW1_2).
+
+
+r2 child(@I, RW2_0, NewC) :-
+        RW2_0 := 0,
+        test(@I, I),
+        NewC := 1.
+
+
+r4 event(@I, C) :-
+        child(@I, RW2_0, C),
+        RW2_0 == 0.
+
+
+r5 childNew(@Me, RW0_1, RW0_0, L1, B) :-
+        parentNew_3(@Me, PS_3, PS_4, X, C, L1),
+        child(@Me, RW2_0, B),
+        RW2_0 == 0,
+        X == Me,
+        PS_3 == null,
+        PS_4 == null,
+        RW0_0 := null,
+        RW0_1 := null.
+
+
+r3 parentNew_3(@I, PS_1, PS_2, X, C, B) :-
+        child(@I, RW2_0, C),
+        RW2_0 == 0,
+        X := I,
+        PS_1 := null,
+        PS_2 := null,
+        B := f_createLocSpec().

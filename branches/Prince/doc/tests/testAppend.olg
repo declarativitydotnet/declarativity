@@ -1,0 +1,32 @@
+/**
+  * This file is distributed under the terms in the attached LICENSE file.
+  * If you do not find this file, copies can be found by writing to:
+  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+  * Or
+  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+  * Berkeley, CA,  94707. Attention: P2 Group.
+  * 
+  * $Id: pinger.olg 1243 2007-07-16 19:05:00Z maniatis $
+  * 
+  * DESCRIPTION: The pinger, as per the UserGuide.
+  * 
+  * Execute as follows:
+  *
+  * tests/runOverLog -o doc/tutorial/pinger.olg -p 11111 -n 127.0.0.1 
+***/
+materialize(test1, infinity, infinity, keys(1)).
+materialize(test2, infinity, infinity, keys(1)).
+
+r1 test1(@I, T1) :- periodic(@I, E, 1, 20), T1 := 2U ||| 2U.
+
+r2 test2(@I, T1) :- periodic(@I, E, 1, 20), T1 := 1U ||| 2U.
+
+r3 equal(@I) :- test1(@I, T1), test2(@I, T2), T1 == T2.
+
+r3 unequal(@I) :- test1(@I, T1), test2(@I, T2), T1 != T2.
+
+watch(unequal).
+watch(equal).
+/*watch(test2).
+watch(test1).*/

@@ -1,0 +1,82 @@
+namespace aggview3 {
+  /**
+   * This rewrite reduces an aggregation over a multiple table view to
+   * an aggregation over a single table view.
+   * EXAMPLE:
+   * predicate(@A, ..., agg<?>) :- event(@A, ...), table1(@[^A],...), table2(@[^A],...), ....
+   * REWRITE:
+   * materialie_view_predicate(@A, ...) :- table1(@[^A], ...), table2(@[^A], ...), ....
+   * predicate(@A, ..., agg<?>) :- event(@A, ...), materialize_view_predicate(@A, ...).
+   */
+
+  i0 ::sys::program_add(@A, Pid, Name, Rewrite, "aggview3", Text, Msg, P2DL, Src) :-
+        programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
+
+  i1 count(@A, Pid, Rid) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _).
+
+  i2 eventCount(@A, Pid, Rid, a_count<*>) :-
+       count(@A, Pid, Rid),
+       ::sys::predicate(@A, PredID, Rid, _, _, Tid, _, _, Pos, _, _),
+       Pos > 0,
+       Tid == null.
+
+  i3 distRule(@A, Pid, Rid, a_countdistinct<Loc>) :-
+       eventCount(@A, Pid, Rid, Events),
+       ::sys::predicate(@A, PredID, Rid, _, _, _, _, Schema, Pos, _, _),
+       Pos > 0,
+       Events == 1,
+       Loc := f_getattr("Location", Schema).
+
+  i4 viewRule(@A, Pid, Rid, Locs, a_schema<Schema>) :-
+       distRule(@A, Pid, Rid, Locs),
+       ::sys::predicate(@A, _, Rid, _, _, _, _, Schema, Pos, _, _),
+       Locs > 1, Pos > 1.
+
+  av1 rewrite(@A, Pid, Rid, Name, ViewSchema, f_idgen(), f_idgen(), f_idgen()) :-
+        viewRule(@A, Pid, Rid, Locs, ViewSchema),
+        ::sys::rule(@A, Rid, Pid, Name, HeadID, _, _, _, _),
+        ::sys::predicate(@A, HeadID, Rid, _, _, _, _, Schema, _, _, _),
+        f_aggattr(Schema) >= 0,
+        Locs > 1,
+        Name := "mv_" + Name.
+
+  /* Change the original head to be the materialized intermediate table. */
+  av2 ::sys::predicate(@A, HeadID, Rid, NotIn, ViewName, ViewTid, null, ViewSchema, Pos, AM, New) :-
+        rewrite(@A, Pid, Rid, ViewName, ViewSchema, ViewTid, _, _),
+        ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
+        ::sys::predicate(@A, HeadID, Rid, NotIn, _, _, _, _, Pos, AM, New).
+
+  /* Create the intermediate table. */
+  av3 ::sys::table(@A, ViewTid, ViewName, infinity, infinity, f_createKey(ViewSchema), 0, null, Pid) :-
+        rewrite(@A, Pid, Rid, ViewName, ViewSchema, ViewTid, _, _).
+
+  /* Shift the table predicates in the original rule down by 1. */
+  av4 ::sys::predicate(@A, PredID, Rid, NotIn, Name, Tid, ECA, Schema, Pos - 1, AM, New) :-
+        rewrite(@A, Pid, Rid, _, _, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, NotIn, Name, Tid, ECA, Schema, Pos, AM, New),
+        Pos > 1.
+
+  /* Create the new rule that performs the aggregation over the single intermediate table. */
+  av5 ::sys::rule(@A, NewRid, Pid, Name, NewHeadID, null, false, 3, false) :-
+        rewrite(@A, Pid, Rid, ViewName, _, _, NewRid, NewHeadID),
+        Name := "rule_" + ViewName.
+
+  /* Copy the original head predicate to be the head of this rule. Keep the aggregation. */
+  av6 ::sys::predicate(@A, NewHeadID, NewRid, false, Name, Tid, ECA, Schema, 0, AM, New) :-
+        rewrite(@A, Pid, Rid, _, _, _, NewRid, NewHeadID),
+        ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
+        ::sys::predicate(@A, HeadID, Rid, _, Name, Tid, ECA, Schema, Pos, AM, New).
+
+  /* Move the original event predicate to the new rule. */
+  av7 ::sys::predicate(@A, PredID, NewRid, false, Name, Tid, ECA, Schema, 1, AM, New) :-
+        rewrite(@A, Pid, Rid, _, _, _, NewRid, _),
+        ::sys::predicate(@A, PredID, Rid, _, Name, Tid, ECA, Schema, Pos, AM, New),
+        Pos == 1.
+
+  /* The rule body contains the intermediate table predicate. */
+  av8 ::sys::predicate(@A, f_idgen(), NewRid, false, ViewName, ViewTid, null, ViewSchema, 2, null, false) :-
+        rewrite(@A, Pid, Rid, ViewName, ViewSchema, ViewTid, NewRid, NewHeadID).
+
+}

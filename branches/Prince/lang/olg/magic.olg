@@ -1,0 +1,390 @@
+namespace magic {
+
+  materialize(newProgram, infinity, infinity, keys(2,3)).
+  materialize(idbPredicate, infinity, infinity, keys(2,3)).
+  materialize(queryAdorn, infinity, infinity, keys(2,3,4)).
+  materialize(magicPred, infinity, infinity, keys(2,3,4)).
+  materialize(sup, infinity, infinity, keys(2,3,4)).
+  materialize(ruleComplete, infinity, infinity, keys(2,3)).
+  materialize(rules, infinity, infinity, keys(2,3)).
+  materialize(finalPredicate, infinity, infinity, keys(2,3)).
+  materialize(ignoreRules, infinity, infinity, keys(2,3)).
+  materialize(countComplete, infinity, infinity, keys(2,3)).
+  materialize(rewriteRule, infinity, infinity, keys(2,3)).
+  materialize(rewriteComplete, infinity, infinity, keys(2,3)).
+  materialize(rewriteCount, infinity, 1, keys(2)).
+  materialize(completeCount, infinity, 1, keys(2)).
+
+  i0 ::sys::program_add(@A, Pid, Name, Rewrite, "magic", Text, Msg, P2DL, Src) :-
+         done(@A, Pid),
+         ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
+
+  i1 rules(@A, Pid, a_count<*>) :-
+              programEvent(@A, Pid, _, _, _, _, _, _, _),
+              ::sys::rule(@A, _, Pid, _, _, _, _, _, _).
+
+  i1b done(@A, Pid) :-
+       programEvent(@A, Pid, _, Rewrite, _, _, _, _, _),
+       Rewrite != null.
+
+  i2 initRule(@A, Pid, Rid) :-
+       programEvent(@A, Pid, _, Rewrite, _, _, _, _, _),
+       ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
+       Rewrite == null.
+
+  i3 finalPredicate(@A, Pid, Rid, a_max<Pos>) :-
+       initRule(@A, Pid, Rid),
+       ::sys::predicate(@A, Fid, Rid, _, _, _, _, _, Pos, _, _).
+
+  i4 idbPredicate(@A, Pid, Name) :-
+       initRule(@A, Pid, Rid),
+       ::sys::rule(@A, Rid, Pid, _, HeadFid, _, _, _, _),
+       ::sys::predicate(@A, HeadFid, Rid, _, Name, _, _, _, _, _, _).
+
+  i5 queryAdorn(@A, Pid, Rid, Name, Sig) :-
+       initRule(@A, Pid, Rid),
+       ::sys::rule(@A, Rid, Pid, _, HeadFid, _, _, _, _),
+       ::sys::predicate(@A, HeadFid, Rid, _, _, _, _, _, _, _, _),
+       ::sys::predicate(@A, Fid, Rid, _, Name, _, _, Schema, Pos, _, _),
+       Pos == 1,
+       f_size(f_adornment(null, Schema)) > 0,
+       HeadFid != Fid,
+       Sig := f_adornment(null, Schema).
+
+  newProgram newProgram(@A, Pid) :-
+               programEvent(@A, Pid, _, Rewrite, _, _, _, _, _),
+               Rewrite == null.
+
+  initComplete init(@A, Pid) :- newProgram(@A, Pid).
+
+  r0 countIdbQueryAdornments(@A, Pid, Name) :-
+        init(@A, Pid),
+        idbPredicate(@A, Pid, Name).
+
+  /* Count the number of adornments for a given IDB predicate. */
+  r1 idbQueryAdornments(@A, Pid, Name, a_count<*>) :- 
+        countIdbQueryAdornments(@A, Pid, Name),
+        idbPredicate(@A, Pid, Name),
+        queryAdorn(@A, Pid, Rid, Name, Sig).
+        
+  /* A magic predicate must have a unique adornment. */
+  r2 magicPred(@A, Pid, Name, Sig) :-
+        idbQueryAdornments(@A, Pid, Name, Count),
+        queryAdorn(@A, Pid, Rid, Name, Sig),
+        Count == 1.
+
+  r3 applyMagicPred(@A, Pid, Name, Sig) :- 
+       magicPred(@A, Pid, Name, Sig).
+
+  r4 supNext(@A, Pid, Rid, Pos+1, Schema) :-
+       sup(@A, Pid, Rid, Pos, Name, Schema, Tid).
+
+  /* Initialize all sup(Rid, 0) values, where the rule head
+     is the same as the magic predicate. */
+  r5 sup(@A, Pid, Rid, Pos, SupName, Schema, f_idgen()) :-
+       applyMagicPred(@A, Pid, Name, Sig),
+       ::sys::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, _),
+       ::sys::predicate(@A, HeadFid, Rid, FNotin, Name, FTID, FECA, FSchema, Pos, FAM, FNew),
+       Schema := f_cons(f_getattr("Location", FSchema), f_project(Sig, FSchema)),
+       SupName := "magicPred_" + Name,
+       Pos := 0.
+
+  r6 sup(@A, Pid, Rid, Pos, SupName, NewSchema, f_idgen()) :-
+       supNext(@A, Pid, Rid, Pos, Schema),
+       ::sys::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, _),
+       ::sys::predicate(@A, Fid, Rid, FNotin, FName, FTID, FECA, FSchema, Pos, FAM, FNew),
+       SupName := "sup_" + RName + "_" + f_tostr(Pos),
+       NewSchema := f_merge(Schema, FSchema).
+
+  /* no sup relation created for assignment, just more bindings. */
+  r7 sup(@A, Pid, Rid, Pos, SupName, NewSchema, f_idgen()) :-
+       supNext(@A, Pid, Rid, Pos, Schema),
+       ::sys::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, _),
+       ::sys::assign(@A, Aid, Rid, Var, Value, Pos),
+       SupName := "sup_" + RName + "_" + f_tostr(Pos),
+       NewSchema := f_assignschema(Schema, Var).
+
+  r8 sup(@A, Pid, Rid, Pos, SupName, Schema, f_idgen()) :-
+       supNext(@A, Pid, Rid, Pos, Schema),
+       ::sys::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, _),
+       notin ::sys::predicate(@A, Fid, Rid, FNotin, Name, FTID, FECA, FSchema, Pos, FAM, FNew),
+       notin ::sys::assign(@A, Aid, Rid, Var, Value, Pos),
+       Pos < Term_Count,
+       SupName := "sup_" + RName + "_" + f_tostr(Pos).
+
+
+  /* We've encountered a magic predicate in the body of a rule. 
+     Compute its adornment based on current bound variables. */
+  r9 magicPred(@A, Pid, FName, Sig) :-
+       supNext(@A, Pid, Rid, Pos, Schema),
+       ::sys::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, _),
+       ::sys::predicate(@A, Fid, Rid, FNotin, FName, FTID, FECA, FSchema, Pos, FAM, FNew),
+       magicPred(@A, Pid, FName, Sig),
+       Sig := f_adornment(Schema, FSchema).
+
+       
+  /* Write a complete. */
+  r10 ruleComplete(@A, Pid, Rid, RName) :-
+       supNext(@A, Pid, Rid, Pos, Schema),
+       ::sys::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, _),
+       Pos >= Term_Count.
+
+  r11 checkCount(@A, Pid) :- ruleComplete(@A, Pid, Rid, RName).
+
+  /* A rule will be ignored if its head predicate did not get a magic predicate. */
+  r12 ignoreRules(@A, Pid, a_count<*>) :-
+        checkCount(@A, Pid),
+        ::sys::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, _),
+        ::sys::predicate(@A, HeadFid, Rid, FNotin, Name, FTID, FECA, FSchema, Pos, FAM, FNew),
+        notin magicPred(@A, Pid, Name, Sig).
+
+  /* Count how many rules have finished. */
+  r13 countComplete(@A, Pid, a_count<*>) :- 
+        checkCount(@A, Pid), ruleComplete(@A, Pid, Rid).
+
+  /* If the finished rules == the total rules we're done. 
+     Then we want to check the adornments for each IDB predicate. */
+  r14 checkAdornments(@A, Pid, Name) :-
+        countComplete(@A, Pid, CCount),
+        ignoreRules(@A, Pid, ICount),
+        rules(@A, Pid, RuleCount),
+        magicPred(@A, Pid, Name, Sig),
+        RuleCount == CCount + ICount.
+
+  /* Count the number of adornments for a given IDB predicate. */
+  r15 countAdornments(@A, Pid, Name, a_count<*>) :- 
+        checkAdornments(@A, Pid, Name),
+        magicPred(@A, Pid, Name, Sig).
+        
+  /* A magic predicate must have a unique adornment. */
+  r16 commitMagicPred(@A, Pid, Name, Sig, Tablename, f_idgen()) :-
+        countAdornments(@A, Pid, Name, Count),
+        queryAdorn(@A, Pid, Rid, Name, Sig),
+        Tablename := "magicPred_" + Name,
+        Count == 1.
+
+  /********************************************************************/
+  /* GROUP V: Create the magic predicate table. */
+  r18a ::sys::table(@A, Tid, Tablename, infinity, infinity, Sig, 0, null, Pid) :-
+        commitMagicPred(@A, Pid, Name, Sig, Tablename, Tid),
+        notin ::sys::table(@A, Tid, Tablename, Lifetime, Size, PK, Card, Sort, Pid).
+
+  /* GROUP V: Create the magic predicate fact tuple. */
+  r18b ::sys::fact(@A, f_idgen(), Pid, Tablename, Fact) :-
+        commitMagicPred(@A, Pid, Name, Sig, Tablename, Tid),
+        ::sys::predicate(@A, Fid, Rid, FNotin, Name, FTid, FECA, FSchema, Pos, FAM, FNew),
+        Pos == 1,
+        Fact := f_fact(Tablename, f_project(Sig, FSchema)).
+
+  /********************************************************************/
+  /* Rewrite all non-query rules that contain the commit magic predicate. */
+  r19a rewriteRule(@A, Pid, Rid) :-
+         commitMagicPred(@A, Pid, Name, _, _, _),
+         ::sys::rule(@A, Rid, Pid, _, HeadFid, _, _, _, _),
+         ::sys::predicate(@A, HeadFid, Rid, _, Name, _, _, _, _, _, _),
+         notin rewriteRule(@A, Pid, Rid),
+         notin queryAdorn(@A, Pid, Rid, _, _).
+
+  /********************************************************************/
+  /* If the head predicate is a magic predicate then start rule with
+     the that magic predicate. */
+  r20a initRewrite(@A, Pid, Rid, f_idgen(), f_idgen()) :- 
+         rewriteRule(@A, Pid, Rid).
+
+  r20b writeMagic(@A, Pid, Rid, NewRid, NewHeadFid) :-
+         initRewrite(@A, Pid, Rid, NewRid, NewHeadFid),
+         ::sys::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, _),
+         ::sys::predicate(@A, HeadFid, Rid, FNotin, Name, FTID, FECA, FSchema, Pos, FAM, FNew),
+         magicPred(@A, Pid, Name, Sig).
+
+  r20c rewriteIter(@A, Pid, Rid, 1, NewRid, NewHeadFid, 2) :-
+        writeMagic(@A, Pid, Rid, NewRid, NewHeadFid).
+
+  r20d rewriteIter(@A, Pid, Rid, 1, NewRid, NewHeadFid, 1) :-
+         initRewrite(@A, Pid, Rid, NewRid, NewHeadFid),
+         ::sys::rule(@A, Rid, Pid, RName, HeadFid, P2DL, Del, TC, _),
+         ::sys::predicate(@A, HeadFid, Rid, FNI, Name, FTID, FECA, FS, FP, FAM, FNew),
+         notin magicPred(@A, Pid, Name, Sig).
+
+  /* Start the new rule with the magic predicate. */
+  r22 ::sys::predicate(@A, f_idgen(), NewRid, false, Name, Tid, "PROBE", Schema, 1, null, 0) :-
+        writeMagic(@A, Pid, Rid, NewRid, NewHead),
+        sup(@A, Pid, Rid, 0, Name, Schema, Tid).
+
+  /* Point non-magicPred Goal node (Gi) to the new rule. */
+  r23a ::sys::predicate(@A, Fid, NewRid, NotIn, Name, Tid, ECA, Schema, NewPos, AM, New) :-
+        rewriteIter(@A, Pid, Rid, SupPos, NewRid, NewHeadFid, NewPos),
+        ::sys::predicate(@A, Fid, Rid, NotIn, Name, Tid, ECA, Schema, SupPos, AM, New),
+        notin magicPred(@A, Pid, Name, Sig).
+
+  /* Point assignement to the new rule. */
+  r23b ::sys::assign(@A, Aid, NewRid, Var, Value, NewPos) :-
+        rewriteIter(@A, Pid, Rid, SupPos, NewRid, NewHeadFid, NewPos),
+        ::sys::assign(@A, Aid, Rid, Var, Value, SupPos).
+
+  /* Point selection to the new rule. */
+  r23c ::sys::select(@A, Sid, NewRid, Bool, NewPos, AM) :-
+        rewriteIter(@A, Pid, Rid, SupPos, NewRid, NewHeadFid, NewPos),
+        ::sys::select(@A, Sid, Rid, Bool, SupPos, AM).
+
+  /* Goal node Gi is not a magic predicate... Keep going. */
+  r24a rewriteIter(@A, Pid, Rid, SupPos+1, NewRid, HeadFid, NewPos+1) :-
+        rewriteIter(@A, Pid, Rid, SupPos, NewRid, HeadFid, NewPos),
+        ::sys::predicate(@A, Fid, Rid, NotIn, Name, Tid, ECA, Schema, SupPos, AM, New),
+        notin magicPred(@A, Pid, Name, Sig).
+
+  r24a rewriteIter(@A, Pid, Rid, SupPos+1, NewRid, HeadFid, NewPos+1) :-
+        rewriteIter(@A, Pid, Rid, SupPos, NewRid, HeadFid, NewPos),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, TC, _),
+        notin ::sys::predicate(@A, Fid, Rid, NotIn, Name, Tid, ECA, Schema, SupPos, AM, New),
+        SupPos < TC.
+
+  /* Goal node Gi is a magic predicate. */
+  r24b break(@A, Pid, Rid, Name, Bound, SupPos, NewRid, HeadFid, NewPos) :-
+        rewriteIter(@A, Pid, Rid, SupPos, NewRid, HeadFid, NewPos),
+        ::sys::predicate(@A, Fid, Rid, NotIn, Name, Tid, ECA, Schema, SupPos, AM, New),
+        magicPred(@A, Pid, Name, Sig),
+        Bound := f_project(Sig, Schema).
+
+  r24c rewriteComplete(@A, Pid, Rid) :-
+        rewriteIter(@A, Pid, Rid, SupPos, NewRid, HeadFid, NewPos),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, SupPos, _).
+
+  r24d ::sys::predicate(@A, OldHead, NewRid, NotIn, Name, Tid, ECA, Schema, 0, AM, New) :-
+         rewriteIter(@A, Pid, Rid, SupPos, NewRid, HeadFid, NewPos),
+         ::sys::rule(@A, Rid, Pid, _, OldHead, _, _, SupPos, _),
+         ::sys::predicate(@A, OldHead, Rid, NotIn, Name, Tid, ECA, Schema, _, AM, New).
+
+  r24e ::sys::rule(@A, NewRid, Pid, RName, OldHead, RP2DL, RDelete, NewPos, New) :-
+         rewriteIter(@A, Pid, Rid, SupPos, NewRid, HeadFid, NewPos),
+         ::sys::rule(@A, Rid, Pid, RName, OldHead, RP2DL, RDelete, SupPos, New).
+
+  /********************************************************************/
+  /* Create sup relations: sup(r, i) and sup(r, i-1). */
+  r25a ::sys::table(@A, Tid, Tablename, infinity, infinity, f_createKey(Schema), 0, null, Pid) :-
+         break(@A, Pid, Rid, Name, Bound, Pos, NewRid, HeadFid, NewPos),
+         sup(@A, Pid, Rid, SupPos, Tablename, Schema, Tid),
+         notin ::sys::table(@A, Tid, Tablename, Lifetime, Size, PK, Card, Sort, Pid),
+         SupPos == Pos - 1.
+
+  r25b ::sys::table(@A, Tid, Tablename, infinity, infinity, f_createKey(Schema), 0, null, Pid) :-
+         break(@A, Pid, Rid, Name, Bound, Pos, NewRid, HeadFid, NewPos),
+         sup(@A, Pid, Rid, Pos, Tablename, Schema, Tid),
+         notin ::sys::table(@A, Tid, Tablename, Lifetime, Size, PK, Card, Sort, Pid).
+
+  /********************************************************************/
+  /* FINALIZE RULE: sup(rid, i-1) :- sup(rid, i-j) & Gj & Gj+1 ... @ Gi-1. */
+  /* Still need to create sup(rid, i-1) head predicate. */
+  r26a ::sys::predicate(@A, HeadFid, NewRid, false, SupName, SupTid, null, Schema, 0, null, 0) :-
+         break(@A, Pid, Rid, Name, Bound, Pos, NewRid, HeadFid, NewPos),
+         sup(@A, Pid, Rid, SupPos, SupName, Schema, SupTid),
+         SupPos == Pos - 1.
+
+  r26b ::sys::rule(@A, NewRid, Pid, RName, HeadFid, null, false, NewPos, New) :-
+         break(@A, Pid, Rid, Name, Bound, SupPos, NewRid, HeadFid, NewPos),
+         ::sys::rule(@A, Rid, Pid, RName, RHeadFid, RP2DL, RDelete, RTC, New),
+         RName := "sup_" + RName + "_" + f_tostr(SupPos).
+
+
+  /********************************************************************/
+  /* r27 magicPred(bound args of Gi) :- sup(rid, i-1). */
+  /* Create magic predicate head: magicPred_q(bound args of Gi) */
+  r27 group1(@A, Pid, Rid, Pos, f_idgen(), f_idgen(), MPName, Bound, f_idgen()) :-
+         break(@A, Pid, Rid, Name, Bound, Pos, NewRid, HeadFid, NewPos),
+         MPName := "magicPred_" + Name.
+
+  r27a ::sys::predicate(@A, HeadFid, NewRid, false, MPName, MPTid, null, MPSchema, 0, null, 0) :-
+         group1(@A, Pid, Rid, Pos, NewRid, HeadFid, MPName, MPSchema, MPTid),
+         sup(@A, Pid, Rid, SupPos, Name, Schema, Tid),
+         SupPos == Pos - 1,
+         MPSchema := f_cons(f_getattr("Location", Schema), MPSchema).
+
+  /* sup(rid, i-1) will feed the magic predicate. */
+  r27b ::sys::predicate(@A, f_idgen(), NewRid, false, Name, Tid, "DELTA", Schema, 1, null, 0) :-
+         group1(@A, Pid, Rid, Pos, NewRid, HeadFid, MPName, MPSchema, MPTid),
+         sup(@A, Pid, Rid, SupPos, Name, Schema, Tid),
+         SupPos == Pos - 1.
+
+  /* Commit the new Rule. */
+  r27c ::sys::rule(@A, NewRid, Pid, RName, HeadFid, null, false, 2, New) :-
+         group1(@A, Pid, Rid, Pos, NewRid, HeadFid, MPName, MPSchema, MPTid),
+         ::sys::rule(@A, Rid, Pid, RName, RHeadFid, RP2DL, RDelete, RTC, New),
+         RName := "magicPredFill_" + RName + "_" + f_tostr(Pos).
+
+  /**************************************************************************/
+  /* r28: sup(rid, i) :- sup(rid, i-1) & Gi, where Gi is a magic predicate. */
+  r28 group3(@A, Pid, Rid, Pos, f_idgen(), f_idgen()) :-
+         break(@A, Pid, Rid, Name, Bound, Pos, NewRid, HeadFid, NewPos).
+
+  /* Create sup(rid, i). */
+  r28a ::sys::predicate(@A, HeadFid, NewRid, false, Name, Tid, null, Schema, 0, null, 0) :-
+         group3(@A, Pid, Rid, Pos, NewRid, HeadFid),
+         sup(@A, Pid, Rid, Pos, Name, Schema, Tid).
+
+  /* Create sup(rid, i-1) for the event position. */
+  r28b ::sys::predicate(@A, f_idgen(), NewRid, false, Name, Tid, "DELTA", Schema, 1, null, 0) :-
+         group3(@A, Pid, Rid, Pos, NewRid, HeadFid),
+         sup(@A, Pid, Rid, SupPos, Name, Schema, Tid),
+         SupPos == Pos - 1.
+
+  /* Put Gi in its proper position of the new rule. */
+  r28c ::sys::predicate(@A, Fid, NewRid, false, Name, Tid, "PROBE", Schema, 2, AM, New) :-
+         group3(@A, Pid, Rid, Pos, NewRid, HeadFid),
+         ::sys::predicate(@A, Fid, Rid, NotIn, Name, Tid, ECA, Schema, Pos, AM, New).
+
+  /* Commit the new Rule. */
+  r28c ::sys::rule(@A, NewRid, Pid, RName, HeadFid, null, false, 3, New) :-
+         group3(@A, Pid, Rid, Pos, NewRid, HeadFid),
+         ::sys::rule(@A, Rid, Pid, RName, HF, P2DL, Delete, TC, New),
+         RName := "supFill_" + RName + "_" + f_tostr(Pos).
+
+  /********************************************************************/
+  /* Restart the rule rewrite process right after magic predicate Gi. */
+  r29 restart(@A, Pid, Rid, SupPos, f_idgen(), f_idgen(), 1) :-
+         break(@A, Pid, Rid, Name, Bound, SupPos, NewRid, HeadFid, NewPos).
+
+  /* Place sup(rid, i) in the event position of the newly restarted rule. */
+  r29a ::sys::predicate(@A, f_idgen(), NewRid, false, Name, Tid, "DELTA", Schema, NewPos, null, 0) :-
+         restart(@A, Pid, Rid, Pos, NewRid, HeadFid, NewPos),
+         sup(@A, Pid, Rid, Pos, Name, Schema, Tid).
+
+  /* Restart iterator. */
+  r29b rewriteIter(@A, Pid, Rid, Pos+1, NewRid, HeadFid, NewPos+1) :-
+         restart(@A, Pid, Rid, Pos, NewRid, HeadFid, NewPos).
+
+
+  /********************************************************************/
+  r30a countRewrites(@A, Pid) :- 
+         rewriteRule(@A, Pid, Rid).
+
+  r30b rewriteCount(@A, Pid, a_count<*>) :- 
+         countRewrites(@A, Pid), rewriteRule(@A, Pid, Rid).
+
+  r30c countCompletes(@A, Pid) :- 
+         rewriteComplete(@A, Pid, Rid).
+
+  r30d completeCount(@A, Pid, a_count<*>) :- 
+         countCompletes(@A, Pid), rewriteComplete(@A, Pid, Rid).
+
+  r30e checkDone(@A, Pid) :- 
+        completeCount(@A, Pid, Count).
+
+  r30f done(@A, Pid) :- checkDone(@A, Pid),
+                        rewriteCount(@A, Pid, Count),
+                        completeCount(@A, Pid, Count).
+
+  /********************************************************************/
+  /* Clean up */
+
+  r31a delete ::sys::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, New) :-
+               done(@A, Pid),
+               rewriteRule(@A, Pid, Rid),
+               ::sys::rule(@A, Rid, Pid, RName, HeadFid, RP2DL, Delete, Term_Count, New).
+
+  r31b delete sup(@A, Pid, Rid, Pos, Name, Schema, Tid) :-
+               done(@A, Pid),
+               sup(@A, Pid, Rid, Pos, Name, Schema, Tid).
+
+  r31c delete idbPredicate(@A, Pid, FName) :-
+               done(@A, Pid), idbPredicate(@A, Pid, FName).
+}

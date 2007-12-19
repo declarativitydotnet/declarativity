@@ -1,0 +1,174 @@
+namespace error {
+  /**
+   */
+  materialize(done, infinity, infinity, keys(2)).
+  materialize(error, infinity, infinity, keys(2, 5)).
+
+  d1 done(@A, Pid) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _).
+
+  d2 finalize(@A, Pid) :- done(@A, Pid).
+        
+  d3 delete done(@A, Pid) :- finalize(@A, Pid).
+
+  d4 delete error(@A, Pid) :- finalize(@A, Pid).
+
+  d5 ::sys::program_add(@A, Pid, Name, Rewrite, "error", Text, Msg, P2DL, Src) :-
+       finalize(@A, Pid),
+       done(@A, Pid),
+       notin error(@A, Pid, _, _, _, _),
+       ::sys::program(@A, Pid, Name, Rewrite, _, Text, Msg, P2DL, Src).
+  
+  d6 ::sys::error(@Src, Pid, Name, A, Code, Desc) :-
+       finalize(@A, Pid),
+       error(@A, Pid, Name, Src, Code, Desc).
+
+  /**********************************************************/
+
+  e1 rule(@A, Pid, Rid) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _).
+
+  e2 eventCount(@A, Pid, Rid, a_count<*>) :-
+       rule(@A, Pid, Rid),
+       ::sys::predicate(@A, PredID, Rid, _, _, Tid, _, _, Pos, _, _),
+       Pos > 0,
+       Tid == null.
+
+  e3 locCount(@A, Pid, Rid, Events, a_countdistinct<Loc>) :-
+       eventCount(@A, Pid, Rid, Events),
+       ::sys::predicate(@A, PredID, Rid, _, _, _, _, Schema, Pos, _, _),
+       Pos > 0,
+       Loc := f_getattr("Location", Schema).
+
+  /* Get the body schema from all body predicates. */
+  e4 predSchema(@A, Pid, Rid, a_schema<Schema>) :-
+         rule(@A, Pid, Rid), 
+         ::sys::predicate(@A, _, Rid, _, _, _, _, Schema, Pos, _, _),
+         Pos > 0.
+
+  /* Add assignment variables to body predicate schema. 
+     This will be the final body predicate schema. */
+  e5 addAssign(@A, Pid, Rid, Schema, 2) :-
+         predSchema(@A, Pid, Rid, Schema).
+
+  e6 addAssign(@A, Pid, Rid, Schema, Pos+1) :-
+         addAssign(@A, Pid, Rid, Schema, Pos),
+         ::sys::assign(@A, _, Rid, Var, _, Pos),
+         Schema := f_assignschema(Schema, Var).
+
+  e7 addAssign(@A, Pid, Rid, Schema, Pos+1) :-
+         addAssign(@A, Pid, Rid, Schema, Pos),
+         ::sys::rule(@A, Rid, Pid, _, _, _, _, Terms, _),
+         notin ::sys::assign(@A, _, Rid, _, _, Pos),
+         Pos < Terms.
+
+  e8 bodySchema(@A, Pid, Rid, Schema) :-
+         addAssign(@A, Pid, Rid, Schema, Pos),
+         ::sys::rule(@A, Rid, Pid, _, _, _, _, _, Terms),
+         Pos == Terms.
+
+  /*********************************************************/
+  /* Check for multiple events in single rule. */
+  ag1 error(@A, Pid, PName, Src, 0, Desc) :-
+        rule(@A, Pid, Rid),
+        ::sys::program(@A, Pid, PName, _, _, _, _, _, Src),
+        ::sys::rule(@A, Rid, Pid, RName, HeadID, _, _, _, _),
+        ::sys::predicate(@A, HeadID, Rid, _, _, _, _, HSchema, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, _, _, Tid, _, ESchema, Pos, _, _),
+        HeadID != PredID, Tid == null, Pos == 1,
+        f_aggattr(HSchema) >= 0,
+        f_subset(f_groupbyattr(HSchema), ESchema) == false,
+        Desc := "Rule " + RName + ": group by variables must be contained by event schema.". 
+
+
+  /*********************************************************/
+  /* Check for multiple events in single rule. */
+
+  de1 error(@A, Pid, PName, Src, 1, Desc) :-
+        eventCount(@A, Pid, Rid, Events),
+        ::sys::program(@A, Pid, PName, _, _, _, _, _, Src),
+        ::sys::rule(@A, Rid, Pid, RName, _, _, _, _, _),
+        Events > 1,
+        Desc := "Rule " + RName + " contains multiple event predicates.". 
+
+  /*********************************************************/
+  /* Check for valid distributed aggregation with event.   */
+  daw1 checkDistAggwrap(@A, Pid, Rid) :-
+         locCount(@A, Pid, Rid, Events, Locs),
+         ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
+         ::sys::predicate(@A, HeadID, Rid, _, _, _, _, Schema, _, _, _),
+         f_aggattr(Schema) >= 0,
+         Events == 1, Locs > 1.
+
+  daw2 validateSchema(@A, Pid, Rid, Schema, Pos + 1) :-
+         checkDistAggwrap(@A, Pid, Rid),
+         ::sys::predicate(@A, _, Rid, _, _, _, _, Schema, Pos, _, _),
+         Pos == 2.
+
+  daw3 validateSchema(@A, Pid, Rid, Schema, Pos + 1) :-
+         validateSchema(@A, Pid, Rid, OuterSchema, Pos),
+         ::sys::predicate(@A, _, Rid, _, _, _, _, Schema, Pos, _, _),
+         f_posattr(f_getattr("Location", Schema), OuterSchema) >= 0,
+         Schema := f_merge(OuterSchema, Schema).
+
+  daw4 error(@A, Pid, PName, Src, 2, Desc) :-
+         validateSchema(@A, Pid, Rid, OuterSchema, Pos),
+         ::sys::program(@A, Pid, PName, _, _, _, _, _, Src),
+         ::sys::rule(@A, Rid, Pid, RName, _, _, _, _, _),
+         ::sys::predicate(@A, _, Rid, _, _, _, _, Schema, Pos, _, _),
+         f_posattr(f_getattr("Location", Schema), OuterSchema) < 0,
+         Loc := f_tostr(f_getattr("Location", Schema)),
+         Desc := "Rule " + RName + " location variable " + Loc + " not found in base tables.". 
+
+  /*********************************************************/
+  /* Check for valid distributed view.   */
+  dv1 checkDistView(@A, Pid, Rid) :-
+         locCount(@A, Pid, Rid, Events, Locs),
+         Events == 0, Locs > 1.
+
+  dv2 validateView(@A, Pid, Rid, Schema, Pos + 1) :-
+         checkDistView(@A, Pid, Rid),
+         ::sys::predicate(@A, _, Rid, _, _, _, _, Schema, Pos, _, _),
+         Pos == 1.
+
+  dv3 validateView(@A, Pid, Rid, Schema, Pos + 1) :-
+         validateView(@A, Pid, Rid, OuterSchema, Pos),
+         ::sys::predicate(@A, _, Rid, _, _, _, _, Schema, Pos, _, _),
+         f_posattr(f_getattr("Location", Schema), OuterSchema) >= 0,
+         Schema := f_merge(OuterSchema, Schema).
+
+  dv4 error(@A, Pid, PName, Src, 3, Desc) :-
+         validateView(@A, Pid, Rid, OuterSchema, Pos),
+         ::sys::program(@A, Pid, PName, _, _, _, _, _, Src),
+         ::sys::rule(@A, Rid, Pid, RName, _, _, _, _, _),
+         ::sys::predicate(@A, _, Rid, _, _, _, _, Schema, Pos, _, _),
+         f_posattr(f_getattr("Location", Schema), OuterSchema) < 0,
+         Loc := f_tostr(f_getattr("Location", Schema)),
+         Desc := "Rule " + RName + " location variable " + Loc + " not found in left to right order of base tables.". 
+
+  /*********************************************************/
+  /* Validate head schema.                                 */
+
+  vhs1 error(@A, Pid, PName, Src, 4, Desc) :-
+         bodySchema(@A, Pid, Rid, BodySchema),
+         ::sys::program(@A, Pid, PName, _, _, _, _, _, Src),
+         ::sys::rule(@A, Rid, Pid, RName, HeadID, _, _, _, _),
+         ::sys::predicate(@A, HeadID, Rid, _, _, _, _, HeadSchema, _, _, _),
+         f_subset(HeadSchema, BodySchema) == false,
+         Desc := "Rule " + RName + " defines a head predicate with missing variables.".
+
+  /*********************************************************/
+  /* Validate selection predicates.                        */
+
+  vsp1 error(@A, Pid, PName, Src, 5, Desc) :- 
+         bodySchema(@A, Pid, Rid, Schema),
+         ::sys::program(@A, Pid, PName, _, _, _, _, _, Src),
+         ::sys::rule(@A, Rid, Pid, RName, _, _, _, _, _),
+         ::sys::select(@A, Sid, Rid, Bool, _, _),
+         f_filter(Schema, Bool) == false,
+         Desc := "Rule " + RName + 
+                 " selection predicate [" + f_tostr(Bool) + 
+                 "] cannot be evaluated from body schema.".
+
+}
