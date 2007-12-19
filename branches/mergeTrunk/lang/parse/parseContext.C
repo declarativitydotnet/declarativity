@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include "parseContext.h"
 #include "plumber.h"
-#include "olg_lexer.h"
+#include "ol_lexer.h"
 #include "tuple.h"
 
 #include "systemTable.h"
@@ -761,15 +761,10 @@ namespace compile {
 
     Fact::Fact(Expression *n, ExpressionList *a)
     {
-      TuplePtr tpl = Tuple::mk();
-
-      tpl->append(Val_Str::mk(n->toString())); // my tuple name
-
-      // The fields
+      TuplePtr tpl = Tuple::mk(n->toString());
+    
       ExpressionList::const_iterator iter;
-      for (iter = a->begin();
-           iter != a->end();
-           iter++) {
+      for (iter = a->begin(); iter != a->end(); iter++) {
         Value *v = dynamic_cast<Value*>(*iter);
         Math  *m = dynamic_cast<Math*>(*iter);
         if (v != NULL) {
@@ -1011,8 +1006,8 @@ namespace compile {
     {
       try {
         assert(lexer==NULL);
-        lexer = new OLG_Lexer(str);
-        olg_parser_parse(this);
+        lexer = new OL_Lexer(str);
+        ol_parser_parse(this);
         delete lexer; 
         lexer = NULL;
       } 

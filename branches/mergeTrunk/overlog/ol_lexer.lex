@@ -115,8 +115,6 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>"," { return OL_COMMA; }
 <INITIAL>"(" { return OL_LPAR; }
 <INITIAL>")" { return OL_RPAR; }
-<INITIAL>"(" { return OL_LPAR; }
-<INITIAL>")" { return OL_RPAR; }
 <INITIAL>"[" { return OL_LSQUB; }
 <INITIAL>"]" { return OL_RSQUB; }
 <INITIAL>"{" { return OL_LCURB; }

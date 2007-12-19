@@ -141,8 +141,7 @@ RuleStrand::aggWrapperElement(Plumber::DataflowPtr conf,
 
   ElementSpecPtr pullPush =
     conf->addElement(ElementPtr(new TimedPullPush("AggWrapPullPush!" 
-						  + _eca_rule->_ruleID,
-                                                  0, 0)));
+						  + _eca_rule->_ruleID, 0)));
   addElement(conf, pullPush);
   
   // push from aggwrap into start of strand

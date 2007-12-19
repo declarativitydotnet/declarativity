@@ -79,46 +79,21 @@ namespace compile {
     bool 
     Context::watched(string name, string mod)
     {
-      //      cout << "Asked if table " << name << " contains modifier " << mod
-      //    << "\n";
       CommonTable::ManagerPtr catalog = Plumber::catalog();
       CommonTablePtr watchTbl = catalog->table(WATCH);
       TuplePtr lookup = Tuple::mk(WATCH);
       lookup->append(Val_Str::mk(name));
-      lookup->append(Val_Null::mk());
+      lookup->append((mod == "" ? Val_Null::mk() : Val_Str::mk(mod)));
       lookup->freeze();
       CommonTable::Key indexKey;
       indexKey.push_back(catalog->attribute(WATCH, "NAME"));
+      indexKey.push_back(catalog->attribute(WATCH, "MOD"));
 
       CommonTable::Iterator i = 
-        watchTbl->lookup(CommonTable::theKey(CommonTable::KEY2),
-                         CommonTable::theKey(CommonTable::KEY4),
-                         lookup); 
+        watchTbl->lookup(CommonTable::theKey(CommonTable::KEY23), CommonTable::theKey(CommonTable::KEY45), lookup); 
       if (!i->done()) {
-        // Found something.
-        if (mod == "") {
-          //  cout << "It does by default\n";
-          return true;
-        } else {
-          // Does it contain this explicit modifier?
-          TuplePtr theWatchSpec = i->next();
-          //cout << "The watch record is " << theWatchSpec->toString() << "\n";
-          string theWatchModifier =
-            (*theWatchSpec)[catalog->attribute(WATCH,
-                                               "MOD")]->toString();
-          //cout << "The watch modifieer is " << theWatchModifier << "\n";
-          if (theWatchModifier.find(mod) == theWatchModifier.npos) {
-            // Didn't find it
-            return false;
-          } else {
-            // Found it
-            //cout << "It does explicitly\n";
-            return true; 
-          }
-        }
-      } else {
-        //cout << "Nothing watched about " << name << "\n";
-      }
+        return true; 
+      } 
       return false;
     }
 
@@ -177,8 +152,7 @@ namespace compile {
       indexKey.clear();
       indexKey.push_back(catalog->attribute(FACT, "PID"));
       iter =
-        catalog->table(FACT)->
-        lookup(CommonTable::theKey(CommonTable::KEY2), indexKey, program); 
+        catalog->table(FACT)->lookup(CommonTable::theKey(CommonTable::KEY2), indexKey, program); 
       while (!iter->done()) {
         TuplePtr fact = iter->next();                                        // The row in the fact table
         fact = Val_Tuple::cast((*fact)[catalog->attribute(FACT, "TUPLE")]);  // The actual fact to assert
@@ -474,8 +448,7 @@ namespace compile {
       if (eventType == "RECV") {
         oss << indent << "graph event(1, 1, \"h/l\", \"-/-\") {\n";
         oss << indent << "\tinput -> " << "Queue(\"" << eventName << "\", 1000) -> \n"; 
-        if (watched(eventName, "RECV_EVENT") ||
-            watched(eventName, "c"))
+        if (watched(eventName, "RECV_EVENT") || watched(eventName, ""))
           oss << indent << "\tPrint(\"MODIFIER: RECV_EVENT RULE " 
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         oss << indent << "\toutput;\n};\n";
@@ -487,8 +460,7 @@ namespace compile {
       else if (eventType == "REFRESH") {
         oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
         oss << indent << "\tRefresh(\"refresh_" << eventName << "\", \"" << eventName << "\") -> \n";
-        if (watched(eventName, "REFRESH_EVENT") ||
-            watched(eventName, "r"))
+        if (watched(eventName, "REFRESH_EVENT") || watched(eventName, ""))
           oss << indent << "\tPrint(\"MODIFIER: REFRESH_EVENT RULE "
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         oss << indent << "\toutput;\n";
@@ -498,8 +470,7 @@ namespace compile {
       else if (eventType == "DELETE") {
         oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
         oss << indent << "\tRemoved(\"delete_" << eventName << "\", \"" << eventName << "\") -> \n";
-        if (watched(eventName, "DELETE_EVENT") ||
-            watched(eventName, "d"))
+        if (watched(eventName, "REFRESH_EVENT") || watched(eventName, ""))
           oss << indent << "\tPrint(\"MODIFIER: REFRESH_EVENT RULE "
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         oss << indent << "\toutput;\n";
@@ -513,7 +484,7 @@ namespace compile {
         oss << indent << "\tRemoved(\"delete_"<<eventName<<"\",\""<<eventName<<"\")   -> [1]rr;\n";
         oss << indent << "\tRefresh(\"refresh_"<<eventName<<"\",\""<<eventName<< "\") -> [2]rr;\n";
         oss << indent << "\trr -> \n"; 
-        if (watched(eventName, "DELTA_EVENT"))
+        if (watched(eventName, "DELTA_EVENT") || watched(eventName, ""))
           oss << indent << "\tPrint(\"MODIFIER: DELTA_EVENT RULE "
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         oss << indent << "\toutput;\n};\n";
@@ -661,8 +632,7 @@ namespace compile {
       if (actionType == "ADD") {
         oss << indent << "graph action(1, 0, \"l/\", \"-/\") {\n";
         oss << indent << "\tinput -> PullPush(\"actionPull\", 0) ->\n";
-        if (watched(funcName, "ADD_ACTION") ||
-            watched(funcName, "a"))
+        if (watched(funcName, "ADD_ACTION"))
           oss << indent << "\tPrint(\"MODIFIER: ADD_ACTION RULE "
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         oss << indent << "\tInsert2(\"actionInsert\", \"" << funcName << "\");\n";
@@ -672,8 +642,7 @@ namespace compile {
       else if (actionType == "DELETE") {
         oss << indent << "graph action(1, 0, \"l/\", \"-/\") {\n";
         oss << indent << "\tinput -> PullPush(\"actionPull\", 0) ->\n";
-        if (watched(funcName, "DELETE_ACTION") ||
-            watched(funcName, "z"))
+        if (watched(funcName, "DELETE_ACTION"))
           oss << indent << "\tPrint(\"MODIFIER: DELETE_ACTION RULE "
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         oss << indent << "\tDelete2(\"actionDelete\", \"" << funcName << "\");\n";
@@ -702,8 +671,7 @@ namespace compile {
         oss << indent << "graph action(1, 1, \"a/a\", \"x/x\") {\n";
         oss << indent << "\tinput -> ";
         oss << indent << "PelTransform(\"actionPel\", \"" << package.str() << "\") -> ";
-        if (watched(funcName, "SEND_ACTION") ||
-            watched(funcName, "s"))
+        if (watched(funcName, "SEND_ACTION"))
           oss << indent << "\tPrint(\"MODIFIER: SEND_ACTION RULE "
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         oss << indent << "output;\n};\n";
@@ -756,8 +724,7 @@ namespace compile {
             << "\", " << aggTable << ", " << aggOper << ", " << aggField 
             << ", " << int_list_to_str(groupByFields) << ");\n";
         oss << indent << "\tagg -> ";
-        if (watched(eventName, "INSERT_EVENT") ||
-            watched(eventName, "i"))
+        if (watched(eventName, "INSERT_EVENT") || watched(eventName, ""))
           oss << indent << "\tPrint(\"MODIFIER: INSERT_EVENT RULE "
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         oss << indent << "\toutput;\n};\n";
@@ -775,7 +742,7 @@ namespace compile {
         oss << indent << "\tsource = StaticTupleSource(\"periodicSource\", periodic<\""
                       << Plumber::catalog()->nodeid()->toString() << "\">);\n";
         oss << indent << "\tpel = PelTransform(\"periodicPel\", \"$0 pop $1 pop rand pop\");\n";
-        oss << indent << "\ttimer = TimedPullPush(\"periodicTimer\", ";
+        oss << indent << "\ttimer = TimedPullPush(\"periodicTimer\", "<<period;
         oss << period << ", " << count << ");\n";
         oss << indent << "\tsource -> pel -> timer -> Slot(\"periodicSlot\") -> output;\n";
         oss << indent << "};\n";
@@ -785,8 +752,7 @@ namespace compile {
         oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
         oss << indent << "\tUpdate(\"update_" << eventName << "\", \"" 
                       << eventName << "\") -> \n";
-        if (watched(eventName, "INSERT_EVENT") ||
-            watched(eventName, "i"))
+        if (watched(eventName, "INSERT_EVENT") || watched(eventName, ""))
           oss << indent << "\tPrint(\"MODIFIER: INSERT_EVENT RULE "
                         << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         oss << indent << "\toutput;\n};\n";

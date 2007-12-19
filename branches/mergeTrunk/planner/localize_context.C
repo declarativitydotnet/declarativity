@@ -52,7 +52,6 @@ Localize_Context::addSendRule(OL_Context::Rule* nextRule,
 			      TableStore* tableStore)
 {
   Parse_ExprList* pe = new Parse_ExprList();
-  bool foundLocspec = false;
   for (uint k = 0; k < fieldNames.size(); k++) {
 
     std::string varName = fieldNames.at(k);
@@ -60,22 +59,8 @@ Localize_Context::addSendRule(OL_Context::Rule* nextRule,
     if (fieldNameEq(loc, varName)) {
       // The new variable should be a locspec
       pv->setLocspec();
-      foundLocspec = true;
     }
     pe->push_back(pv);
-  }
-
-  if (!foundLocspec) {
-    // I didn't find the intended location specifier in the attributes
-    // of the right hand side. Don't know how to forward this info
-    PLANNER_ERROR_NOPC("Unable to localize rule '"
-                       << nextRule->toString()
-                       << "'. I don't have enough information "
-                       << "to forward partial results to subsequent "
-                       << "nodes. If the right hand side of the rule "
-                       << "has something like 'x(@A, B), y(@C, D)', "
-                       << "make sure that 'C' is one of 'A' or 'B'.");
-    exit(-1);
   }
   
   Parse_Functor* newHead 
@@ -154,7 +139,7 @@ Localize_Context::rewriteRule(OL_Context::Rule* nextRule,
         // This is materialized
 	probeTerms.push_back(functor);
 
-        // Its locspec is
+        // It's locspec is
         string locspec = functor->getlocspec();
         probeLocales.insert(locspec);
       } else {

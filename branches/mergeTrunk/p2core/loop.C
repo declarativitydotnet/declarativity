@@ -109,9 +109,6 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
     callbackQueueT::iterator toErase = iter;
     iter++;
     callbacks.erase(toErase);
-
-    LOOP_INFO("Handling callback "
-              << theCallback->toString());
     
     // Run it
     if (theCallback->active &&

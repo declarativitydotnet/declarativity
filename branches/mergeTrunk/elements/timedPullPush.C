@@ -25,19 +25,19 @@
 
 DEFINE_ELEMENT_INITS(TimedPullPush, "TimedPullPush")
 
-  TimedPullPush::TimedPullPush(string name,
-                               double seconds,
-                               int tuples)
-    : Element(name, 1, 1),
-      _seconds(seconds),
-      _tuples(tuples),
-      _counter(0),
-      _unblockPull(boost::bind(&TimedPullPush::pullWakeup, this)),
-      _pendingPull(false),
-      _unblockPush(boost::bind(&TimedPullPush::pushWakeup, this)),
-      _pendingPush(false),
-      _runTimerCB(boost::bind(&TimedPullPush::runTimer, this)),
-      _timeCallback(NULL)
+TimedPullPush::TimedPullPush(string name,
+                             double seconds,
+                             int tuples)
+  : Element(name, 1, 1),
+    _seconds(seconds),
+    _tuples(tuples),
+    _counter(0),
+    _unblockPull(boost::bind(&TimedPullPush::pullWakeup, this)),
+    _pendingPull(false),
+    _unblockPush(boost::bind(&TimedPullPush::pushWakeup, this)),
+    _pendingPush(false),
+    _runTimerCB(boost::bind(&TimedPullPush::runTimer, this)),
+    _timeCallback(NULL)
 {
   assert(_tuples >= 0);
 }
@@ -93,7 +93,7 @@ TimedPullPush::runTimer()
   ELEM_INFO("runTimer: called back");
   
   if(_pendingPush || _pendingPull){
-    reschedule(); return;
+	  reschedule(); return;
   }
 
 
@@ -104,7 +104,6 @@ TimedPullPush::runTimer()
   // Was it there?
   if (p) {
     // Goody, just push it out
-    _counter++;
     int result = output(0)->push(p, _unblockPush);
 
     // Were we pushed back?
@@ -131,9 +130,8 @@ TimedPullPush::pullWakeup()
   ELEM_INFO("pullWakeup");
 
   _pendingPull = false;
-  if (_timeCallback != 0) {
-    return;
-  }
+  if(_timeCallback != 0)
+	  return;
 
   // Okey dokey.  Reschedule me into the future
   reschedule();
@@ -146,9 +144,8 @@ TimedPullPush::pushWakeup()
   ELEM_INFO("pushWakeup");
 
   _pendingPush = false;
-  if (_timeCallback != 0) {
-    return;
-  }
+  if(_timeCallback != 0)
+	  return;
   // Okey dokey.  Reschedule me into the future
   reschedule();
 }
@@ -161,11 +158,9 @@ TimedPullPush::reschedule()
 
   if ((_tuples == 0) ||
       ((_tuples > 0) && (_counter < _tuples))) {
-    ELEM_INFO("reschedule: rescheduling ("
-              << _counter
-              << "/"
-              << _tuples
-              << ")");
+    _counter++;
+
+    ELEM_INFO("reschedule: rescheduling");
     // Okey dokey.  Reschedule me into the future
     _timeCallback = delayCB(_seconds, _runTimerCB, this);
   } else {

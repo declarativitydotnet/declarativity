@@ -101,7 +101,7 @@ bool
 RefTable::insert(TuplePtr t)
 {
   // Find tuple with same primary key
-  static Entry searchEntry(Tuple::EMPTY());
+  static Entry searchEntry(Tuple::EMPTY);
   searchEntry.tuple = t;
   PrimaryIndex::iterator found = _primaryIndex.find(&searchEntry);
 
@@ -148,7 +148,7 @@ bool
 RefTable::remove(TuplePtr t)
 {
   // Find tuple with same primary key
-  static Entry searchEntry(Tuple::EMPTY());
+  static Entry searchEntry(Tuple::EMPTY);
   searchEntry.tuple = t;
   PrimaryIndex::iterator found = _primaryIndex.find(&searchEntry);
 
@@ -198,11 +198,10 @@ RefTable::insertTuple(TuplePtr t,
 void
 RefTable::removeTuple(PrimaryIndex::iterator position)
 {
-  Entry* toKill = *position;
-
-  CommonTable::removeTupleOfEntry(toKill);
+  CommonTable::removeTuple(position);
 
   // I have to delete the entry now.
+  Entry* toKill = *position;
   _primaryIndex.erase(position);
   delete toKill;
 }

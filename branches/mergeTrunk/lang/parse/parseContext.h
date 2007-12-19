@@ -25,7 +25,7 @@
 #include "value.h"
 #include "val_str.h"
 
-class OLG_Lexer;
+class OL_Lexer;
 
 namespace compile {
   namespace parse {
@@ -585,7 +585,7 @@ namespace compile {
 
       void error(string msg);
     
-      OLG_Lexer *lexer;
+      OL_Lexer *lexer;
     
       DECLARE_PUBLIC_ELEMENT_INITS
 
@@ -609,6 +609,6 @@ namespace compile {
   }
 }
   
-extern int olg_parser_parse(compile::parse::Context *env );
+extern int ol_parser_parse(compile::parse::Context *env );
   
 #endif /* __PARSE_CONTEXT_H__ */

@@ -99,8 +99,9 @@
 %type<u_functorname> functorname;
 %type<u_term>        term functor assign select;
 %type<u_aggterm>     aggview;
-%type<v>             functorarg functionarg tablearg atom function math_expr bool_expr range_expr aggregate vectorentry vectoratom matrixatom;
+%type<v>             functorarg functionarg tablearg atom rel_atom math_atom function math_expr bool_expr range_expr range_atom aggregate vectorentry vectoratom matrixatom;
 %type<u_boper>       rel_oper;
+%type<u_moper>       math_oper;
 %type<u_aoper>       agg_oper;
 %type<u_vector>  vector_expr;
 %type<u_matrix>  matrix_expr;
@@ -281,13 +282,15 @@ functionargs:	functionarg {
 
 functionarg:	math_expr 
 			{ $$ = $1; }
+		| atom
+			{ $$ = $1; }
 		;
 
 select:    	bool_expr
 			{ $$ = new Parse_Select($1); }
 		;
 
-assign:		OL_VAR OL_ASSIGN math_expr
+assign:		OL_VAR OL_ASSIGN rel_atom
 			{ $$ = new Parse_Assign($1, $3); }
 		| OL_VAR OL_ASSIGN bool_expr
 			{ $$ = new Parse_Assign($1, $3); }
@@ -295,7 +298,7 @@ assign:		OL_VAR OL_ASSIGN math_expr
 
 bool_expr:	OL_LPAR bool_expr OL_RPAR 
 			{ $$ = $2; }
-		| math_expr OL_IN range_expr 
+		| OL_VAR OL_IN range_expr 
 			{ $$ = new Parse_Bool(Parse_Bool::RANGE, $1, $3); } 
 		| OL_NOT bool_expr 
 			{ $$ = new Parse_Bool(Parse_Bool::NOT, $2 ); } 
@@ -303,8 +306,16 @@ bool_expr:	OL_LPAR bool_expr OL_RPAR
 			{ $$ = new Parse_Bool(Parse_Bool::OR, $1, $3 ); }
 		| bool_expr OL_AND bool_expr
 			{ $$ = new Parse_Bool(Parse_Bool::AND, $1, $3 ); }
-		| math_expr rel_oper math_expr
+		| rel_atom rel_oper rel_atom
 			{ $$ = new Parse_Bool($2, $1, $3 ); }
+		;
+
+rel_atom:	math_expr 
+			{ $$ = $1; }
+		| function
+			{ $$ = $1; }
+		| atom
+			{ $$ = $1; }
 		;
 
 rel_oper:	  OL_EQ  { $$ = Parse_Bool::EQ; } 
@@ -315,49 +326,52 @@ rel_oper:	  OL_EQ  { $$ = Parse_Bool::EQ; }
 		| OL_LTE { $$ = Parse_Bool::LTE; }
 		;
 
-math_expr:	  math_expr OL_LSHIFT math_expr 
-                             { $$ = new Parse_Math(Parse_Math::LSHIFT, $1, $3); } 
-		| math_expr OL_RSHIFT math_expr 
-                             { $$ = new Parse_Math(Parse_Math::RSHIFT, $1, $3); }
-		| math_expr OL_PLUS math_expr   
-                             { $$ = new Parse_Math(Parse_Math::PLUS, $1, $3); }
-		| math_expr OL_MINUS math_expr  
-                             { $$ = new Parse_Math(Parse_Math::MINUS, $1, $3); }
-		| math_expr OL_TIMES math_expr  
-                             { $$ = new Parse_Math(Parse_Math::TIMES, $1, $3); }
-		| math_expr OL_DIVIDE math_expr 
-                             { $$ = new Parse_Math(Parse_Math::DIVIDE, $1, $3); }
-		| math_expr OL_MODULUS math_expr
-                             { $$ = new Parse_Math(Parse_Math::MODULUS, $1, $3); }
-		| math_expr OL_BITXOR math_expr 
-                             { $$ = new Parse_Math(Parse_Math::BIT_XOR, $1, $3); }
-		| math_expr OL_BITAND math_expr 
-                             { $$ = new Parse_Math(Parse_Math::BIT_AND, $1, $3); }
-		| math_expr OL_BITOR math_expr  
-                             { $$ = new Parse_Math(Parse_Math::BIT_OR, $1, $3); }
-		| OL_BITNOT math_expr 
-                             { $$ = new Parse_Math(Parse_Math::BIT_NOT, $2, NULL); }
-		| vectoratom
+math_expr:	math_expr math_oper math_atom
+			{ $$ = new Parse_Math($2, $1, $3 ); }
+		| math_atom math_oper math_atom
+			{ $$ = new Parse_Math($2, $1, $3 ); }
+                | vectoratom
                         { $$ = $1; }
                 | matrixatom
                         { $$ = $1; }
-                | function
-                        { $$ = $1; }
-                | atom
-                        { $$ = $1; }
+		;
+
+math_atom:	atom 
+			{ $$ = $1; }
+		| function
+			{ $$ = $1; }
 		| OL_LPAR math_expr OL_RPAR 
 			{ $$ = $2; }
 		;
 
+math_oper:	  OL_LSHIFT  { $$ = Parse_Math::LSHIFT; } 
+		| OL_RSHIFT  { $$ = Parse_Math::RSHIFT; }
+		| OL_PLUS    { $$ = Parse_Math::PLUS; }
+		| OL_MINUS   { $$ = Parse_Math::MINUS; }
+		| OL_TIMES   { $$ = Parse_Math::TIMES; }
+		| OL_DIVIDE  { $$ = Parse_Math::DIVIDE; }
+		| OL_MODULUS { $$ = Parse_Math::MODULUS; }
+		| OL_BITXOR  { $$ = Parse_Math::BIT_XOR; }
+		| OL_BITAND  { $$ = Parse_Math::BIT_AND; }
+		| OL_BITOR   { $$ = Parse_Math::BIT_OR; }
+		| OL_BITNOT  { $$ = Parse_Math::BIT_NOT; }
+		;
 
-range_expr:	OL_LPAR math_expr OL_COMMA math_expr OL_RPAR 
+
+range_expr:	OL_LPAR range_atom OL_COMMA range_atom OL_RPAR 
 			{ $$ = new Parse_Range(Parse_Range::RANGEOO, $2, $4); } 
-		| OL_LPAR math_expr OL_COMMA math_expr OL_RSQUB
+		| OL_LPAR range_atom OL_COMMA range_atom OL_RSQUB
 			{ $$ = new Parse_Range(Parse_Range::RANGEOC, $2, $4); } 
-		| OL_LSQUB math_expr OL_COMMA math_expr OL_RPAR
+		| OL_LSQUB range_atom OL_COMMA range_atom OL_RPAR
 			{ $$ = new Parse_Range(Parse_Range::RANGECO, $2, $4); } 
-		| OL_LSQUB math_expr OL_COMMA math_expr OL_RSQUB
+		| OL_LSQUB range_atom OL_COMMA range_atom OL_RSQUB
 			{ $$ = new Parse_Range(Parse_Range::RANGECC, $2, $4); } 
+		;
+
+range_atom:	math_expr
+			{ $$ = $1; }
+		| atom
+			{ $$ = $1; }
 		;
 
 vector_expr: OL_LSQUB vectorentries OL_RSQUB
@@ -381,8 +395,7 @@ matrixentries: matrixentry {
        			$3->push_front($1); 
 			$$=$3; }
 		;
-vectorentry:    math_expr
-                        { $$ = $1; };  
+vectorentry: math_atom { $$ = $1; };  
 
 matrixentry: OL_LSQUB vectorentries OL_RSQUB
          { $$ = $2; };

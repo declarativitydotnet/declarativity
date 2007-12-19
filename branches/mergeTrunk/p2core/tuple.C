@@ -226,11 +226,7 @@ Tuple::tag(string key)
 
 
 TuplePtr
-Tuple::EMPTY()
-{
-  static TuplePtr __theEmptyTuple = Tuple::mk();
-  return __theEmptyTuple;
-}
+Tuple::EMPTY = Tuple::mk();
 
 
 uint

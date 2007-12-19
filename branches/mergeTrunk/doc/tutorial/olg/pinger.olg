@@ -13,7 +13,7 @@
   * 
   * Execute as follows:
   *
-  * tests/runOverLog -o doc/tutorial/olg/pinger.olg -p 11111 -n 127.0.0.1 
+  * tests/runOverLog -o doc/tutorial/pinger.olg -p 11111 -n 127.0.0.1 
 ***/
 materialize(link, infinity, infinity, keys(1,2)).
 materialize(pong, infinity, infinity, keys(1,2)).
@@ -23,5 +23,4 @@ link("127.0.0.1:11111", "127.0.0.1:22222").
 r1 ping(@J, I) :- periodic(@I, E, 1, 20), link(@I, J).
 
 watchmod(pong, "c").
-watch(ping).
 

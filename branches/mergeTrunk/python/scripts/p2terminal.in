@@ -1,4 +1,4 @@
-#!@PYTHON_EXECUTABLE@
+#!@PYTHON@
 import dfparser
 from libp2python import *
 import sys

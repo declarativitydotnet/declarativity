@@ -1,4 +1,4 @@
-#!@PYTHON_EXECUTABLE@
+#!@PYTHON@
 import xmlrpclib
 import libp2python
 import sys

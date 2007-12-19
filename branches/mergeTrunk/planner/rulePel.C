@@ -123,6 +123,11 @@ string pelMath(PlanContext* pc, Parse_Math *expr)
 {
   ostringstream  pel;  
   
+  if (expr->id && expr->oper == Parse_Math::MINUS) {
+    Parse_Expr *tmp = expr->lhs;
+    expr->lhs = expr->rhs;
+    expr->rhs = tmp;
+  }
   expr2Pel(pc, pel, expr->lhs);
   expr2Pel(pc, pel, expr->rhs);
 
@@ -145,30 +150,30 @@ string pelMath(PlanContext* pc, Parse_Math *expr)
 }
 
 
-string
-pelRange(PlanContext* pc, Parse_Bool *expr) 
+string pelRange(PlanContext* pc, Parse_Bool *expr) 
 {
-  Parse_Expr*  targetExpression = dynamic_cast<Parse_Expr*>(expr->lhs);
+  PlanContext::FieldNamesTracker* names = pc->_namesTracker;
+  Parse_Var*   range_var = dynamic_cast<Parse_Var*>(expr->lhs);
   Parse_Range* range     = dynamic_cast<Parse_Range*>(expr->rhs);
   ostringstream pel;
+  int          pos;
 
-  if (!targetExpression) {
-    PLANNER_ERROR_NOPC("Error in range pel generation "
-                       << expr->toString()
-                       << ". Target expression is not a math "
-                       << "expression.");
+  if (!range || !range_var) {
+    PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
     exit(-1);
     return "ERROR";
   }
 
-  // The target expression first.
-  expr2Pel(pc, pel, targetExpression);
+  pos = names->fieldPosition(range_var->toString());
+  if (pos < 0) {
+    PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
+    exit(-1);
+    return "ERROR";
+  }
+  pel << "$" << (pos + 1) << " ";
 
-  // Now the range expressions.
   expr2Pel(pc, pel, range->lhs);
   expr2Pel(pc, pel, range->rhs);
-
-  // And the operator
   switch (range->type) {
     case Parse_Range::RANGEOO: pel << "() "; break;
     case Parse_Range::RANGEOC: pel << "(] "; break;
