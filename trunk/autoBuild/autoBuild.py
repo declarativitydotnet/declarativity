@@ -100,17 +100,17 @@ def email(from_address, to_address, flag, log, sendmail_path, revision, branch_n
 
 #Get revsion number of the repository
 def get_svn_revision(svnroot, svn_path):
-	revision = os.popen(svn_path + ' log \-rHEAD ' + svnroot)
-	mod_rev = ""
-	for file in revision.readlines():
-        	file = file.replace("\n", "")
-        	mod_rev = mod_rev + file
-
-	revision_number =  (re.search("r[0-9]*\s",mod_rev)).group()
-	revision.close()
-	rev_final = revision_number[1:]
-	return rev_final
-
+	revision = os.popen(svn_path + ' info -rHEAD ' + svnroot + ' |grep "^Revision"')
+        mod_rev = ""
+        for file in revision.readlines():
+                print file
+                #file = file.replace("\n", "")
+                mod_rev = mod_rev + file
+        revision_number =  (re.search("Revision:\s*[0-9]*\s",mod_rev)).group()
+        revision.close()
+        revision_number = revision_number.lstrip().rstrip()
+        rev_final = revision_number[revision_number.rfind(" ")+1:]
+        return rev_final
 
 #cmake function
 def cmake(cmake_parameters, sourcedir, branch, fileHandle, cmake_path, verbose_output):
