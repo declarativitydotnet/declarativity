@@ -244,8 +244,8 @@ namespace compile {
         else if ((*arg)[TNAME]->toString() != AGG) {
           schema->append(toVar(*i));
         }
-        else {
-          schema->append(toVar(Val_Null::mk()));
+        else if ((*arg)[2] != Val_Null::mk()) {
+          schema->append(toVar(*i));
         }
       }
       return schema;

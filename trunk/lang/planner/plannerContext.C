@@ -530,27 +530,31 @@ namespace compile {
         oss << indent << "};\n";
         return (Context::PortDesc) {0, "", "", 1, "l", "-"};
       }
-      else if (eventType == "DELTA") {
+      else if (eventType == "DELTA_DELETE") {
         oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
-        oss << indent << "\trr = RoundRobin(\"deltaRR_" << eventName << "\", 3);\n";
+        oss << indent << "\tRemoved(\"delete_"<<eventName<<"\",\""<<eventName<<"\") -> ";
+        if (watched(eventName, "d")) {
+          oss << "Print(\"DeleteEvent: RULE "
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") -> "; 
+        }
+        oss << indent << "output;\n};\n";
+        return (Context::PortDesc) {0, "", "", 1, "l", "-"};
+      }
+      else if (eventType == "DELTA_INSERT") {
+        oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
+        oss << indent << "\trr = RoundRobin(\"deltaRR_" << eventName << "\", 2);\n";
         oss << indent << "\tUpdate(\"update_"<<eventName<<"\",\""<<eventName<<"\") -> ";
         if (watched(eventName, "a")) {
           oss << "Print(\"InsertEvent: RULE "
               << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") -> "; 
         }
         oss << "[0]rr;\n";
-        oss << indent << "\tRemoved(\"delete_"<<eventName<<"\",\""<<eventName<<"\") -> ";
-        if (watched(eventName, "d")) {
-          oss << "Print(\"DeleteEvent: RULE "
-              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") -> "; 
-        }
-        oss << "[1]rr;\n";
         oss << indent << "\tRefresh(\"refresh_"<<eventName<<"\",\""<<eventName<< "\") -> ";
         if (watched(eventName, "r")) {
           oss << "Print(\"RefreshEvent: RULE "
               << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") -> "; 
         }
-        oss << "[2]rr;\n";
+        oss << "[1]rr;\n";
         oss << indent << "\trr -> output;\n};\n";
         return (Context::PortDesc) {0, "", "", 1, "l", "-"};
       }

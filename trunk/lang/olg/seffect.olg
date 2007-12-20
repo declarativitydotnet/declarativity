@@ -52,9 +52,10 @@ namespace seffect {
         commit(@A, Pid),
         ::sys::sideAffect(@A, Sid, Pid, Tablename, Type, Trigger, Schema).
         
-  sa7 ::sys::rule(@A, Rid, Pid, Name, HeadID, null, false, 2, false) :-
-        sideAffectRule(@A, Pid, Rid, HeadID, _, _, Trigger, _),
-        Name := "rule_" + Trigger.
+  sa7 ::sys::rule(@A, Rid, Pid, Name, HeadID, null, Delete, 2, false) :-
+        sideAffectRule(@A, Pid, Rid, HeadID, _, Type, Trigger, _),
+        Name := "rule_" + Trigger,
+        Delete := (Type == "DELETE" ? true : false).
 
   sa8 ::sys::predicate(@A, HeadID, Rid, false, Tablename, Tid, Type, Schema, 0, null, false) :-
         sideAffectRule(@A, _, Rid, HeadID, Tablename, Type, Trigger, Schema),

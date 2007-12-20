@@ -112,7 +112,7 @@ namespace compile {
       }
       else if ((*event)[catalog->attribute(FUNCTOR,"TID")] != Val_Null::mk() &&
                (*event)[catalog->attribute(FUNCTOR, "ECA")] == Val_Null::mk()) {
-          ecaEvent->set(functorEcaPos, Val_Str::mk("DELTA"));
+          ecaEvent->set(functorEcaPos, Val_Str::mk("DELTA_INSERT"));
       }
       else if ((*event)[catalog->attribute(FUNCTOR,"ECA")] == Val_Null::mk()) {
           /* All other event types are receive (like network packet).

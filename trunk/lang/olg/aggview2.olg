@@ -1,4 +1,7 @@
-namespace aggview2 {
+namespace aggview2 { 
+  /* This version of aggview rewrites single table aggregation rules into a trigger
+     rule that contains the aggregate value. The trigger predicate will replace
+     the original predicate in the original rule. This must run after aggview1. */
 
   i0 ::sys::program_add(@A, Pid, Name, Rewrite, "aggview2", Text, Msg, P2DL, Src) :-
         programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
@@ -29,7 +32,7 @@ namespace aggview2 {
         f_aggattr(Schema) >= 0,
         Tid != null,
         Preds == 1,
-        Name := "aggview_" + Name.
+        Name := "aggview2_" + Name.
 
   /* Replace single table view with aggregation event. */
   av2 ::sys::predicate(@A, f_idgen(), Rid, false, Trigger, null, null, TSchema, 1, null, false) :-

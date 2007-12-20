@@ -55,6 +55,7 @@ ProgramLoader::ProgramLoader(TuplePtr args)
   LOAD("aggview2",   source + "/lang/olg/aggview2.olg",   "aggview1",NULL);
   LOAD("aggview3",   source + "/lang/olg/aggview3.olg",   "aggview2",NULL);
   LOAD("mview",      source + "/lang/olg/mview.olg",      "aggview3",NULL);
+  LOAD("delta",      source + "/lang/olg/delta.olg",      "mview",   NULL);
   LOAD("localize",   source + "/lang/olg/localize.olg",   "aggview3",NULL);
 
 /*
