@@ -32,13 +32,34 @@ public:
 
   /** What are the different reporting levels? */
   enum
-  Level { ALL = 0,              // Print everything
-          WORDY,                // Print excruciatingly detailed info
-          INFO,                 // Print informational messages
-          WARN,                 // Print warnings
-          ERROR,                // Print outright errors
+  Level { ALL = 0,              // Print everything. This means WORDY
+                                // currently, unless another level is
+                                // added below WORDY.
+
+          WORDY,                // Print excruciatingly detailed
+                                // info. This is where per-tuple, per
+                                // event, per fixpoint details belong.
+
+          INFO,                 // Print informational messages (setup,
+                                // configuration, etc.) No per-tuple,
+                                // per runtime iteration messages should
+                                // be here!
+
+          WARN,                 // Print warnings. The system can keep
+                                // going but these are things someone
+                                // should look at.
+
+          ERROR,                // Print outright errors. The system
+                                // can't keep going and this will help
+                                // someone fix the problem. All
+                                // assertions should be accompanied by
+                                // such error messages and, eventually,
+                                // replaced by them.
+
           OUTPUT,               // Print application output
-          NONE                  // Print nothing
+
+          NONE                  // Print nothing. This means not even
+                                // OUTPUT.
   };
 
 

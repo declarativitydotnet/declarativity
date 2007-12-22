@@ -228,7 +228,7 @@ Element::push(int port, TuplePtr p, b_cbv cb)
   // Did we get a result?
   if (result == 0 || result->size() == 0) {
     // No result
-    ELEM_INFO("push: Input tuple yielded no output tuple");
+    ELEM_WORDY("push: Input tuple yielded no output tuple");
     return 1;
   } else {
     return output(0)->push(result, cb);
@@ -246,7 +246,7 @@ Element::pull(int port, b_cbv cb)
         return result;
       } else {
         // This input yielded no result. Try again.
-        ELEM_INFO("pull: Input tuple yielded no output tuple");
+        ELEM_WORDY("pull: Input tuple yielded no output tuple");
       }
     } else {
       // Didn't get any tuples from my input. Fail.

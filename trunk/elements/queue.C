@@ -69,7 +69,7 @@ int Queue::push(int port, TuplePtr p, b_cbv cb)
   _stateProxy->size(_q.size());
 
 
-  ELEM_INFO("Just received Push of '"
+  ELEM_WORDY("Just received Push of '"
             << p->toString()
             << "', current queuesize="
             << _q.size());
@@ -78,13 +78,13 @@ int Queue::push(int port, TuplePtr p, b_cbv cb)
     _pullCB();
     _pullCB = 0;
   } else {
-    ELEM_INFO("No pending pull callbacks");
+    ELEM_WORDY("No pending pull callbacks");
   }
 
   // have we reached the max size? If so, we have to wait
   if (_q.size() == _size) {
     std::cerr << "QUEUE REACHED MAX SIZE FROM TUPLE: " << p->toString() << std::endl;
-    ELEM_INFO("Queue has reach max size, queuesize=" << _q.size());
+    ELEM_WORDY("Queue has reach max size, queuesize=" << _q.size());
     _pushCB = cb;
     return 0;
   }
@@ -97,7 +97,7 @@ int Queue::push(int port, TuplePtr p, b_cbv cb)
 TuplePtr Queue::pull(int port, b_cbv cb)
 {
   if (_q.size() == 0) { 
-    ELEM_INFO("Queue is empty during pull");
+    ELEM_WORDY("Queue is empty during pull");
     _pullCB = cb;
     return TuplePtr(); 
   }
@@ -112,7 +112,7 @@ TuplePtr Queue::pull(int port, b_cbv cb)
     _pushCB = 0;
   }
 
-  ELEM_INFO("Pull succeed " << p->toString() << ", queuesize=" << _q.size());
+  ELEM_WORDY("Pull succeed " << p->toString() << ", queuesize=" << _q.size());
   return p;
 }
 

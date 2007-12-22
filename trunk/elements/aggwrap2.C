@@ -66,15 +66,15 @@ Aggwrap2::Aggwrap2(std::string n,
     ext_in_cb(0),
     _eventTuple()
 {
-  ELEM_WORDY("Creating aggwrap "
-             << n
-             << " on agg function "
-             << aggregateFunctionName
-             << " with aggregate field number "
-             << aggfield
-             << (starAgg ? "starred " : "not starred ")
-             << "resulting in tuples of name "
-             << resultTupleName);
+  ELEM_INFO("Creating aggwrap "
+            << n
+            << " on agg function "
+            << aggregateFunctionName
+            << " with aggregate field number "
+            << aggfield
+            << (starAgg ? "starred " : "not starred ")
+            << "resulting in tuples of name "
+            << resultTupleName);
 
   try {
     _aggregateFn = AggFactory::mk(aggregateFunctionName);
@@ -152,7 +152,7 @@ Aggwrap2::~Aggwrap2()
 int
 Aggwrap2::push(int port, TuplePtr t, b_cbv cb)
 {
-  ELEM_INFO(" Push: " << port << "," << t->toString());
+  ELEM_WORDY(" Push: " << port << "," << t->toString());
   // if receive the next one when previous has not finished, then keep
   // in queue?
 
@@ -381,7 +381,7 @@ Aggwrap2::agg_finalize() {
 
   // Aggregation complete. Switch back to welcoming state.
   if (ext_in_cb) {
-    ELEM_INFO("Invoke push callback for more tuples");
+    ELEM_WORDY("Invoke push callback for more tuples");
     // accept new tuples to be pushed in via outer regardless of any outputs
     ext_in_cb(); 
     ext_in_cb = 0;
@@ -405,8 +405,8 @@ Aggwrap2::registerGroupbyField(uint32_t outerField)
     }
     _innerGroupBy.push_back(nextInnerFieldNo);
 
-    ELEM_WORDY("Register group by from the event's "
-               << outerField
-               << " field.");
+    ELEM_INFO("Register group by from the event's "
+              << outerField
+              << " field.");
   }
 }

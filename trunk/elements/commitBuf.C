@@ -30,11 +30,11 @@ CommitBuf::CommitBuf(TuplePtr args)
 
 void CommitBuf::flush(TupleSet *buffer)
 {
-  ELEM_INFO("CommitBuf Flushing "
-            << buffer->size()
-            << " Tuples");
+  ELEM_WORDY("CommitBuf Flushing "
+             << buffer->size()
+             << " Tuples");
   for (TupleSet::iterator it = buffer->begin(); 
-      it!= buffer->end();it++){
+       it!= buffer->end();it++){
     if (!output(0)->push(*it, 0) == 1) {
       throw Element::Exception("COMMIT BUFFER: down stream element can't handle all tuples!");
     }

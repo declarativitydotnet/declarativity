@@ -89,7 +89,7 @@ TimedPullPush::runTimer()
   // remove the timer id
   _timeCallback = 0;
 
-  ELEM_INFO("runTimer: called back");
+  ELEM_WORDY("runTimer: called back");
   
   if(_pendingPush || _pendingPull){
     reschedule(); return;
@@ -109,7 +109,7 @@ TimedPullPush::runTimer()
     // Were we pushed back?
     if (result == 0) {
       // Yup.  Don't reschedule until my _unblockPush is invoked.
-      ELEM_INFO("runTimer: push blocked");
+      ELEM_WORDY("runTimer: push blocked");
       _pendingPush = true;
     } 
     // Reschedule me
@@ -118,7 +118,7 @@ TimedPullPush::runTimer()
   } else {
     // Didn't get any tuples from my input. Don't reschedule me until my
     // _unblockPull is invoked
-    ELEM_INFO("runTimer: pull blocked");
+    ELEM_WORDY("runTimer: pull blocked");
     _pendingPull = true;
   }
 }
@@ -127,7 +127,7 @@ TimedPullPush::runTimer()
 void
 TimedPullPush::pullWakeup()
 {
-  ELEM_INFO("pullWakeup");
+  ELEM_WORDY("pullWakeup");
 
   _pendingPull = false;
   if (_timeCallback != 0) {
@@ -142,7 +142,7 @@ TimedPullPush::pullWakeup()
 void
 TimedPullPush::pushWakeup()
 {
-  ELEM_INFO("pushWakeup");
+  ELEM_WORDY("pushWakeup");
 
   _pendingPush = false;
   if (_timeCallback != 0) {
@@ -160,7 +160,7 @@ TimedPullPush::reschedule()
 
   if ((_tuples == 0) ||
       ((_tuples > 0) && (_counter < _tuples))) {
-    ELEM_INFO("reschedule: rescheduling ("
+    ELEM_WORDY("reschedule: rescheduling ("
               << _counter
               << "/"
               << _tuples
@@ -168,6 +168,6 @@ TimedPullPush::reschedule()
     // Okey dokey.  Reschedule me into the future
     _timeCallback = delayCB(_seconds, _runTimerCB, this);
   } else {
-    ELEM_INFO("reschedule: DONE!");
+    ELEM_WORDY("reschedule: DONE!");
   }
 }

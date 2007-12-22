@@ -79,23 +79,23 @@ void Switch::pushWakeup()
 
 void Switch::run()
 {
-  ELEM_INFO("Running run()!");
+  ELEM_WORDY("Running run()!");
 
   for (int i = 0; !mNTuple || i < mNTuple; i++) {
     TuplePtr t = input(0)->pull(mPullUnblock);
     if (t) { //OK, I've got something to push baby...
-      ELEM_INFO("Switch Pulling...");
+      ELEM_WORDY("Switch Pulling...");
       int r = output(0)->push(t,mPushUnblock);
       if (r==0) {
 	_runnable->mPushPending = true;
 	_runnable->state(IRunnable::BLOCKED);
-	ELEM_INFO("Switch BLOCKED!");
+	ELEM_WORDY("Switch BLOCKED!");
 	return;
       }
     } else { //no pull nor pending tuple available
       _runnable->state(IRunnable::QUIECENE);
       _runnable->mPullPending = true;
-      ELEM_INFO("Switch Quiesced");
+      ELEM_WORDY("Switch Quiesced");
       return;
     }
   }

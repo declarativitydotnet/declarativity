@@ -8,7 +8,7 @@
 \usepackage[pdftex]{graphicx}  
 
 \title{Getting Started with Overlog and P2}
-\author{Joe Hellerstein \and Petros Maniatis}
+\author{The P2 Team}
 
 \begin{document}
 \date{}
@@ -32,52 +32,54 @@
 %        numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=5pt
 }
 
-	
+\newcommand{\ol}{OverLog\xspace}
+
+
 This document is an informal introduction to programming the P2
-overlay network engine via its declarative language, Overlog.  After
+overlay network engine via its declarative language, \ol.  After
 reading this document and working through the examples, you should
-be ready to try writing Overlog programs of your own.
+be ready to try writing \ol programs of your own.
 
 \section{The Basics: Relations and Tuples}
-Overlog is a logic programming language designed for specifying
+\ol is a logic programming language designed for specifying
 distributed protocols and algorithms as overlay networks.  As with
-other logic languages, the most basic concept in Overlog is the {\em
+other logic languages, the most basic concept in \ol is the {\em
   relation}, which is like a database table: a set of
 (unordered) but similarly-structured rows called {\em tuples}.  A
 relation is described by a list of fields, and a tuple in the
 relation is an assignment of values to each of the fields.  Data types
 for the fields are simple scalars like integers, floats, and so
-on. Fields with ``structured'' types -- such as
-nested tuples or relations -- are not explicitly available in the
+on. Fields with ``structured'' types---such as
+nested tuples or relations---are not explicitly available in the
 language, though they can be emulated if necessary.
 
-Overlog differs from relational databases in having two types of
+\ol differs from relational databases in having two types of
 relations: traditional ``materialized'' (stored) relations, and
 {\em streaming} relations.  Tuples in a streaming relation can be thought of
-as events -- they are handled by Overlog logic as they are generated,
+as events---they are handled by \ol logic as they are generated,
 but once handled they are discarded.  Tuples in a materialized
 relation are stored for subsequent use; materialized relations can be
 configured either for long-term storage, or as ``soft state,'' with a
 lifetime for each tuple before it expires and is deleted.
 
-Another distinction between Overlog and relational tables is that
-Overlog requires each tuple to have a network address embedded in it.
+Another distinction between \ol and relational tables is that
+\ol requires each tuple to have a network address embedded in it.
 This is done by designating a field in a tuple as the \emph{location
   specifier}; location specifiers are typically strings of the form
 ``IP:port'' though others, such as multicast addresses or content-based
 names are also possible; a tuple is intended to appear at the
 address specified in its location specifier. 
 
-As an example, an Overlog program might define a network link relation
+As an example, an \ol program might define a network link relation
 named \lstinline$link$ with two string-valued fields: one for the
 source IP:port pair, and another for the destination IP:port pair.  An
-example tuple from this relation would be notated in Overlog as
+example tuple from this relation would be notated in \ol as
 follows:
 \begin{lstlisting}
 link("127.0.0.1:10000", "127.0.0.1:10001").
 \end{lstlisting}
 
-Within an Overlog program, a tuple of the \lstinline$link$ relation
+Within an \ol program, a tuple of the \lstinline$link$ relation
 might have its first or its second fields designated as the location
 specifier. In the former case, a \lstinline$link$ tuple is intended to
 appear at its source node, whereas in the latter it is intended to
@@ -85,50 +87,50 @@ appear at its destination node.
 
 
 
-\section{Overlog Rules: The Ping-Pong Example}
+\section{\ol Rules: The Ping-Pong Example}
 \label{sec:pingPong}
-Given that introduction on the basics of the Overlog data model, it's
-time to write our first Overlog program.  This program will simply get
+Given that introduction on the basics of the \ol data model, it's
+time to write our first \ol program.  This program will simply get
 two machines to ``ping'' each other periodically, and acknowledge the
 pings with ``pong'' messages.
 
-Overlog programs are constructed from {\em rules}, which specify how
+\ol programs are constructed from {\em rules}, which specify how
 tuples are generated from each other.  The first rule we'll look at in
 our ping-pong program is one that generates a pong on the arrival of a
 ping.  It looks like this:
 \begin{lstlisting}
 r1 pong(@J, I) :- ping(@I, J).
 \end{lstlisting}
-Like all Overlog rules, \lstinline$r1$ has three parts: from left to
+Like all \ol rules, \lstinline$r1$ has three parts: from left to
 right, it has a {\em rule name}, a {\em head}, and a {\em body}. This
 rule is named \lstinline$r1$.  The head and body are separated by the
 delimiter \lstinline$:-$, and the rule is most easily read from right
-to left, interpreted as ``body implies head''.  Informally, it says
+to left, interpreted as ``body implies head.''  Informally, it says
 that if some node at address \lstinline$I$ receives a \lstinline$ping$
 tuple whose second field is an address \lstinline$J$, then the node at
 address \lstinline$J$ should in turn receive a \lstinline$pong$ tuple
 whose second field is the address \lstinline$I$.  By convention,
-Overlog variable names begin with capital letters.
+\ol variable names begin with capital letters.
 
 \begin{itemize}
 \item[$\Longrightarrow$] This simple rule illustrates a number of the
-  key features of Overlog.  The first thing to observe is how the reuse
+  key features of \ol.  The first thing to observe is how the reuse
   of the variables \lstinline$I$ and \lstinline$J$ tie the tuples from
   the two relations in the rule together, so that the generated
   \lstinline$pong$ tuple matches the arriving \lstinline$ping$ tuple
   with its source and destination field values reversed.  Second, note
   that the specifics of {\em how} the \lstinline$pong$ tuple arrives at
-  node \lstinline$J$ (e.g. the networking issues of packet construction,
-  transport protocols, etc.)  are not specified.  Overlog is a {\em
+  node \lstinline$J$ (e.g., the networking issues of packet construction,
+  transport protocols, etc.)  are not specified.  \ol is a {\em
   declarative} language in which you specify or ``declare'' {\em what},
-  not {\em how} -- i.e., what data should appear at what nodes, but not
-  how that should be made to happen.  So even though Overlog is a
+  not {\em how}---i.e., what data should appear at what nodes, but not
+  how that should be made to happen.  So even though \ol is a
   language for specifying network behaviors, it has no constructs for
   explicitly sending messages!  It just provides rules for specifying
   the appearance of tuples at different addresses, and the P2 engine is
   responsible for making those tuples appear at those
   addresses.\footnote{P2 provides a lower-level language to control
-  ``how'': the P2 {\em dataflow} language, or P2DL.  P2 compiles Overlog
+  ``how'': the P2 {\em dataflow} language, or P2DL.  P2 compiles \ol
   into programs in P2DL. Users can hand-modify those dataflow programs,
   or write their own from scratch.  We defer discussion of P2DL to
   Section~\ref{sec:p2dl}, though many users should never need to use it
@@ -136,7 +138,7 @@ Overlog variable names begin with capital letters.
 \end{itemize}
 
 
-% Statements in Overlog end in periods.  The first two statements of the
+% Statements in \ol end in periods.  The first two statements of the
 % program declare names and some required parameters for two small
 % stored (``materialized'') tables to be used in the program --
 % \lstinline$env$ and \lstinline$link$.  We will return to the details
@@ -148,13 +150,13 @@ we will often use for transient data like network messages.  The next
 step in our example is to specify network routing tables, which are
 {\em materialized} (stored) relations.  To do this, we specify a
 materialized table called \lstinline$link$ using a special construct
-in Overlog:
+in \ol:
 
 \begin{lstlisting}
 materialize(link, infinity, infinity, keys(1,2)).
 \end{lstlisting}
-This Overlog statement is not a rule like \lstinline$r1$; it is an
-Overlog command specifying that \lstinline$link$ is the name of a
+This \ol statement is not a rule like \lstinline$r1$; it is an
+\ol command specifying that \lstinline$link$ is the name of a
 materialized relation (by default, relations are assumed to be
 streaming).  The second field of the \lstinline$materialize$ command
 specifies the lifetime of tuples in the table before the system should
@@ -178,7 +180,7 @@ materialize(link, infinity, 55, keys(1,2)).
 
 
 Note that the \lstinline$materialize$ statement does not actually
-specify the number or types of fields of the table.  Instead, Overlog
+specify the number or types of fields of the table.  Instead, \ol
 uses a dynamic typing system like a scripting language, detecting the number and types of
 fields automatically by the way the table is used in the program.
 
@@ -191,12 +193,12 @@ r2 ping(@J, I) :- periodic(@I,E,1,20), link(@I,J).
 
 \begin{itemize}
 \item[$\Longrightarrow$] This rule contains two features we have not
-  seen before.  First, it uses the special ``built-in'' Overlog relation
+  seen before.  First, it uses the special ``built-in'' \ol relation
   \lstinline$periodic$, which is only allowed in the body of rules.  The
   \lstinline$periodic$ relation is a streaming relation for which tuples
   automatically arrive at fixed intervals in time. Briefly, the first
   field of \lstinline$periodic$ is the location specifier, the second
-  field is a random 32-bit, signed event identifier, the third field is
+  field is a random 64-bit, signed event identifier, the third field is
   the period in seconds, and the fourth field is the number of
   repetitions. A syntactic shortcut for specifying an infinite number of
   repetitions is to write \lstinline$periodic(Location,EventID,Period)$
@@ -228,7 +230,7 @@ neighbors every second for 20 seconds.
   of \lstinline$pong$ messages in the opposite direction.
 \end{itemize}
 
-% Overlog rules have the general form 
+% \ol rules have the general form 
 % \begin{quote}
 %   [{\it $<$name$>$}] {\it $<$head$>$} :- {\it $<$body$>$}
 % \end{quote}
@@ -236,15 +238,21 @@ neighbors every second for 20 seconds.
 
 \subsection{Playing Ping-Pong with P2}
 At this point we are ready to test our our ping-pong program in P2.  We
-assume you have already successfully run ``make install'' on the P2
-source code.
+assume you have successfully compiled the P2 source code. All examples
+will be described assuming your current working directory (in Unix) is
+the root P2 directory that contains, for example, the \url{p2core} and
+\url{elements} directories. 
 
 To simplify the setup, we will do this by running P2 twice on a single
 computer, using two different network ports for the two instances of the
 system.  One instance will be the ``pinger'' sending ping messages and
-the other instance will be the ``ponger'' responding to received pings.
+the other instance will be the ``ponger'' responding to received
+pings.\footnote{Note that if either port is currently occupied (e.g.,
+  you have a service listening on it), the P2 executable will fail with
+  a ``Network exception.''  You can see which ports are currently
+  occupied by doing \texttt{netstat\ -tuln} on Linux.}
 
-The OverLog for the pinger is:
+The \ol for the pinger is:
 \begin{lstlisting}
 materialize(link, infinity, infinity, keys(1,2)).
 
@@ -252,29 +260,30 @@ link("127.0.0.1:11111", "127.0.0.1:22222").
 
 r1 ping(@J, I) :- periodic(@I,E,1,20), link(@I,J).
 \end{lstlisting}
-The file can be found at \url{olg/pinger.olg} in the tutorial directory.
+The file can be found at \url{[olg]/pinger.olg} in the tutorial
+directory.~\footnote{In the current file organization, this is \url{P2Root/doc/tutorial/olg/pinger.olg}.}
 In our example, the pinger will reside at
 node address ``127.0.0.1:11111''.
 
-The OverLog for the ponger is:
+The \ol for the ponger is:
 \begin{lstlisting}
 r2 pong(@J, I) :- ping(@I, J).
 \end{lstlisting}
-The file can be found at \url{olg/ponger.olg}. The ponger will reside at
+The file can be found at \url{[olg]/ponger.olg}. The ponger will reside at
 node address ``127.0.0.1:22222''.
 
 First, start the ponger on a system prompt, by invoking:
 \begin{verbatim}
-runOverLog -n 127.0.0.1 -p 22222 -o tutorial/olg/ponger.olg 
+runOverLog -n 127.0.0.1 -p 22222 -o [olg]/ponger.olg 
 \end{verbatim}
 This command asks P2 to start up with IP address 127.0.0.1 and port
 number 22222 (that is, node address ``127.0.0.1:22222''), load the
-OverLog file ``ponger.olg'', and execute.
+\ol file ``ponger.olg'', and execute.
 
 Similarly, on another system prompt, you can start the pinger by
 invoking:
 \begin{verbatim}
-runOverLog -n 127.0.0.1 -p 11111 -o tutorial/olg/pinger.olg 
+runOverLog -n 127.0.0.1 -p 11111 -o [olg]/pinger.olg 
 \end{verbatim}
 
 If all went well, two instances of P2 are running in your system
@@ -327,7 +336,7 @@ integer identifier, and contains tuples of the form
 \begin{lstlisting}
 identifier(Node, NodeID)
 \end{lstlisting}
-The materialization command in OverLog is:
+The materialization command in \ol is:
 \begin{lstlisting}
 materialize(identifier, infinity, 1, keys(1)).
 \end{lstlisting}
@@ -378,15 +387,15 @@ the successor, who will recursively apply the same algorithm.
 Note that, in addition to predicates, these rules also contain some
 mathematical expressions: the \lstinline$in (...]$ expression denotes
 interval inclusion (with wraparound), and \lstinline$!$ denotes boolean
-negation.  OverLog allows many typical, C-style mathematical symbols in
+negation.  \ol allows many typical, C-style mathematical symbols in
 expressions, such as bit-wise operators, standard arithmetic, as well
 as arbitrary functions, which we come back to in Section~\ref{sec:functions}.
 
 
 \subsection{A Static Ring}
 \label{sec:staticRing}
-Now let's put together a static ring -- \emph{static} in the sense that
-we will form it manually -- and try performing some lookups. Our ring
+Now let's put together a static ring---\emph{static} in the sense that
+we will form it manually---and try performing some lookups. Our ring
 will consist of three nodes: \lstinline$localhost:11111$,
 \lstinline$localhost:22222$, and \lstinline$localhost:33333$, with
 identifiers $200000$, $100000$, and $300000$, respectively.  Note that
@@ -421,7 +430,7 @@ creating the facts
 identifier(ME, MYID).
 successor(ME, SUCCESSOR, SUCCESSORID).
 \end{lstlisting}
-The static ring and facts can be found in \url{olg/ring.olg}.
+The static ring and facts can be found in \url{[olg]/ring.olg}.
 These facts contain the macros \lstinline$ME$, \lstinline$MYID$,
 \lstinline$SUCCESSOR$, and \lstinline$SUCCESSORID$. We can instantiate
 these macros via a standard preprocessor macro definition, as
@@ -429,13 +438,13 @@ follows. For example, to start up node \lstinline$localhost:11111$ with
 identifier $200000$ and successor \lstinline$localhost:33333$ with
 identifier $300000$), we execute the following:
 \begin{verbatim}
-runOverLog -o tutorial/olg/ring.olg -DME=\"localhost:11111\"
+runOverLog -o [olg]/ring.olg -DME=\"localhost:11111\"
   -DMYID=200000 -DSUCCESSOR=\"localhost:22222\"
   -DSUCCESSORID=300000 -p 11111 -n localhost
 \end{verbatim}
 All \texttt{-D} parameters contain assignments of actual constants to the
-macros, which the OverLog compiler will replace during preprocessing
-into the OverLog program.
+macros, which the \ol compiler will replace during preprocessing
+into the \ol program.
 
 Start in three terminals the three processes for the threee nodes, by
 replacing each node's local port number in the \texttt{ME} macro definition and the
@@ -447,7 +456,7 @@ its successor identifier in the \texttt{SUCCESSORID} macro definition.
 
 The requester at address \lstinline$localhost:44444$ must ask some
 \lstinline$lookup$ questions. We will issue those with the following
-OverLog program (in \url{olg/ringRequester.olg}):
+\ol program (in \url{[olg]/ringRequester.olg}):
 \begin{lstlisting}
 materialize(ringNode, infinity, infinity, keys(2)).
 
@@ -475,7 +484,7 @@ tuples leave the requester and when
 
 Start the requester as follows:
 \begin{verbatim}
-runOverLog -o tutorial/olg/ringRequester.olg
+runOverLog -o [olg]/ringRequester.olg
    -DME=\"localhost:44444\" -DTARGET=\"localhost:11111\"
    -p 44444 -n localhost
 \end{verbatim}
@@ -505,7 +514,7 @@ responsible node for it.
 Now that we know how to route on a content-addressable ring, let's see
 how to build one dynamically.  In a simplified approach, a new node
 wishing to join a ring need only know one node that is currently in the
-ring -- much like a requester in the previous example over static
+ring---much like a requester in the previous example over static
 rings.  Armed with that information, a newcomer need only choose an
 identifier for itself, ask the ring for the responsible node for its new
 identifier, and place itself in between the responsible node and the
@@ -523,7 +532,7 @@ Note that a node now maintains not only its successor but also its
 predecessor. Note also that whereas in the Chord protocol pseudocode
 ``n'' is a structure that contains the identifier of a node, we have
 used thus far the \lstinline$identifier$ table to capture a node's
-identifier.  The equivalent OverLog code is:
+identifier.  The equivalent \ol code is:
 \begin{lstlisting}
 create1 predecessor(@Me, "NIL") :-
 	create(@Me).
@@ -541,7 +550,7 @@ n.join(n')
   predecessor = nil;
   successor = n'.find_successor(n);
 \end{verbatim}
-In OverLog we specify this part of the protocol as follows:
+In \ol we specify this part of the protocol as follows:
 \begin{lstlisting}
 join1 pendingJoin(@Me) :-
 	join(@Me, CurrentNode).
@@ -586,7 +595,7 @@ n.notify(n')
 if (predecessor is nil or n'.id in (predecessor.id, n.id))
   predecessor = n';
 \end{verbatim}
-In OverLog, a periodic stabilization is specified with
+In \ol, a periodic stabilization is specified with
 \begin{lstlisting}
 stabilize1 stabilize(@Me) :-
 	periodic(@Me, EventID, STABILIZATIONPERIOD).
@@ -594,13 +603,13 @@ stabilize1 stabilize(@Me) :-
 Node that \texttt{STABILIZATIONPERIOD} here can be a standard
 preprocessor macro, which can be defined via a \texttt{\#define} command, much
 like other preprocessed languages such as C and C++. For instance, the
-OverLog program can contain the command:
+\ol program can contain the command:
 \begin{lstlisting}
 #define STABILIZATIONPERIOD 5
 \end{lstlisting}
 to set the constant to 5 seconds.
 
-When the periodic stabilization is initiated, the OverLog specification
+When the periodic stabilization is initiated, the \ol specification
 allows a node to see if its successor's predecessor should be its own
 successor
 \begin{lstlisting}
@@ -626,7 +635,7 @@ in the end.  The latter rule is much simpler, and generates only a
 \lstinline$notify$ tuple at the current successor.
 
 When a \lstinline$notify$ tuple is received, a node handles it with the
-following two OverLog rules:
+following two \ol rules:
 \begin{lstlisting}
 stabilize4 predecessor(@Me, SomeGuy) :-
 	notify(@Me, SomeGuy),
@@ -651,7 +660,7 @@ current identifier.
 \begin{itemize}
 \item[$\Longrightarrow$] Currently, P2 does not do
   \emph{content-addressable routing} natively (though we just showed 
-  how that can be implemented in OverLog). In other words, you cannot have
+  how that can be implemented in \ol). In other words, you cannot have
   distributed rules in which it is not clear how tuples at different
   location specifiers will ``meet.''  In the example above,
   \lstinline$notify$ contains the information necessary to find
@@ -660,11 +669,11 @@ current identifier.
   will not work, since there is no way to help \lstinline$a$ and
   \lstinline$b$ tuples with matching \lstinline$Y$'s meet.  You can
   certainly deal with this by using this content-addressable ring
-  implementation in OverLog to place tuples \lstinline$a$ and
+  implementation in \ol to place tuples \lstinline$a$ and
   \lstinline$b$ to the nodes that succeed their \lstinline$Y$ values on
   the ring.  In the future,  we hope to make it
   easy to say that tuples are routable not only by location specifier
-  but also by value, perhaps using an implementation based on an OverLog
+  but also by value, perhaps using an implementation based on an \ol
   content-addressable network such as this ring.
 \end{itemize}
 
@@ -699,14 +708,14 @@ successor's identifier along with the successor's address in a node's
   rules that information must be fetched from its owning node.  However,
   static analysis can detect, for instance, that \lstinline$identifier$
   tuples are never overwritten and cache them everywhere. We leave this
-  fine-tuning point outside this primer of OverLog. For now, to obtain
+  fine-tuning point outside this primer of \ol. For now, to obtain
   this kind of efficiency, favoring the former lookup rules that cache
   identifiers of successors (and here, also predecessors) would solve
   this problem.
 \end{itemize}
 
-The complete OverLog listing for a dynamic ring is as follows (it can be
-found in \url{olg/dynamicRing.olg}):
+The complete \ol listing for a dynamic ring is as follows (it can be
+found in \url{[olg]/dynamicRing.olg}):
 \begin{lstlisting}
 #define STABILIZATIONPERIOD 5
 
@@ -800,13 +809,13 @@ to define the \texttt{ME} constant to be the node's address, and the
 \texttt{MYID} constant to be that node's identifier. For example, to
 start the third node, the command line is:
 \begin{verbatim}
-runOverLog -o tutorial/olg/dynamicRing.olg -DME=\"localhost:11111\"
+runOverLog -o [olg]/dynamicRing.olg -DME=\"localhost:11111\"
   -DMYID=200000 -p 11111 -n localhost
 \end{verbatim}
 Once all nodes are started, they do nothing other than waiting for a
 \lstinline$create$ or \lstinline$join$ command.
 
-To supply such commands, we will use a small OverLog program (store it
+To supply such commands, we will use a small \ol program (store it
 under \texttt{dynamicRingControl.olg})
 \begin{lstlisting}
 t trigger(@Me) :-
@@ -839,7 +848,7 @@ sent to the \texttt{TARGET} node containing a landmark already in the ring.
 To create a ring containing only node 
 \lstinline$localhost:22222$, issue the following:
 \begin{verbatim}
-runOverLog -o tutorial/olg/dynamicRingControl.olg
+runOverLog -o [olg]/dynamicRingControl.olg
   -DTARGET=\"localhost:22222\" -DCOMMAND=\"create\"
   -DLANDMARK=\"\"
 \end{verbatim}
@@ -860,7 +869,7 @@ sets its predecessor to be itself as well:
 
 Now let's join \lstinline$localhost:11111$ into the ring:
 \begin{verbatim}
-runOverLog -o tutorial/olg/dynamicRingControl.olg
+runOverLog -o [olg]/dynamicRingControl.olg
   -DTARGET=\"localhost:11111\"
   -DCOMMAND=\"join\" -DLANDMARK=\"localhost:22222\"
 \end{verbatim}
@@ -888,7 +897,7 @@ newcomer:
 \end{verbatim}
 Finally, let's join the last node into the ring via the most recent one:
 \begin{verbatim}
-runOverLog -o tutorial/olg/dynamicRingControl.olg
+runOverLog -o [olg]/dynamicRingControl.olg
   -DTARGET=\"localhost:33333\"
   -DCOMMAND=\"join\" -DLANDMARK=\"localhost:11111\"
 \end{verbatim}
@@ -940,7 +949,7 @@ successor maintained in previous descriptions of the protocol. The
 successor list is maintained during stabilization. A node updates its
 successor list to contain its own successor as the first entry, and the
 first $l-1$ entries of its successor's successor list as the subsequent
-entries. We present this mechanism in OverLog below.
+entries. We present this mechanism in \ol below.
 \begin{lstlisting}
 #define SUCCLISTSIZE 2
 materialize(succList, infinity, SUCCLISTSIZE, keys(1,2)).
@@ -971,8 +980,8 @@ We move on to connectivity monitoring. The mechanism we use is based on
 periodic pings of monitored nodes.  The monitoring node remembers whom
 it has pinged when. When it receives a pong, it removes all prior
 remembered pings. Periodically, the node checks the oldest remembered
-ping; if it was performed long enough into the past -- and by virtue of
-being there, it has not been removed by a corresponding pong -- it is
+ping; if it was performed long enough into the past---and by virtue of
+being there, it has not been removed by a corresponding pong---it is
 taken to indicate a dead node. A dead successor causes the next
 available entry in the successor list to become the new successor. A
 dead predecessor resets the predecessor to ``NIL'' as when first joining
@@ -1048,7 +1057,7 @@ predecessor, rule \lstinline$conn14$ resets the predecessor to ``NIL.''
 \begin{itemize}
 \item[$\Longrightarrow$] An important new feature demonstrated here is
   the specification of \emph{aggregates}, as with rules
-  \lstinline$conn9$ and \lstinline$conn12$.  In OverLog, aggregates are
+  \lstinline$conn9$ and \lstinline$conn12$.  In \ol, aggregates are
   denoted with the \texttt{a\_} prefix. A few simple ones that are
   already defined are \lstinline$MIN$, \lstinline$MAX$ (shown here),
   \lstinline$COUNT$, \lstinline$COUNTDISTINCT$, and
@@ -1094,17 +1103,17 @@ distributed logic of an application, leaving the custom, local,
 fine-tuned processing to the application's own executable, if desired.
 
 The programmatic P2 interface provides facilities for starting a P2
-forwarding engine with a particular OverLog program, for subscribing to
+forwarding engine with a particular \ol program, for subscribing to
 particular tuples, and for injecting tuples into the forwarding engine.
 
 We will walk through a few simple examples to illustrate how the
 interface works.
 
 \subsection{Programmatic Ring Control}
-First, consider the ring control OverLog program we
+First, consider the ring control \ol program we
 used to get some ring nodes to create a new ring, and others to join it,
 in Sections~\ref{sec:dynamicRing} and \ref{sec:robustRing}. The ring
-controller was excessively arcane an OverLog program since all it needs
+controller was excessively arcane an \ol program since all it needs
 to do is figure out whether to send a \lstinline$create$ or a
 \lstinline$join$ tuple, and then just send it; no need for complex
 distributed logic here.
@@ -1132,7 +1141,7 @@ is done, \texttt{freeze} must be invoked to close it; tuples in P2 a
 immutable, so once a tuple has been frozen it can no longer be changed.
 The code above chooses whether to create a \lstinline$create$ or
 \lstinline$join$ tuple with the appropriate contents matching what
-\url{olg/dynamicRingControl.olg} offered.
+\url{[olg]/dynamicRingControl.olg} offered.
 
 \texttt{P2::injectTuple} is
 the first P2 interface method we encounter. It takes three
@@ -1152,12 +1161,12 @@ above). This is a fairly simple process in the easiest case:
                        "localhost:10000", // local address
                        10000,             // port number
                        "/tmp/tmpfile",    // a temporary filename
-                       "");               // OverLog program (empty)
+                       "");               // \ol program (empty)
 \end{verbatim}
 The only non-self-explanatory part of this invocation is the empty
-OverLog program; our ring controller doesn't need to do anything other
-than sending the appropriate tuple out. So the OverLog program is
-empty. We will see an example with a non-empty OverLog program shortly.
+\ol program; our ring controller doesn't need to do anything other
+than sending the appropriate tuple out. So the \ol program is
+empty. We will see an example with a non-empty \ol program shortly.
 
 The last bit of this very simple example is the part that actually sets
 P2 in motion:
@@ -1168,7 +1177,7 @@ And that's it! Now P2's execution begins, sending out any injected
 tuple, and waiting for further network messages to arrive. The full
 version of the C++ program, including command line option parsing and a
 bit more customization can be found in \url{tutorial/c++/ringControl.C}. As with
-\url{olg/dynamicRingControl.olg}, when you're done, you can interrupt
+\url{[olg]/dynamicRingControl.olg}, when you're done, you can interrupt
 the program.
 
 
@@ -1177,13 +1186,13 @@ the program.
 In addition to injecting tuples into the system, the P2 interface allows
 non-P2 programs to react to incoming tuples as well. For example, an
 application may wish to perform custom processing for a tuple that is
-not easily expressible in OverLog, or interface with custom code.
+not easily expressible in \ol, or interface with custom code.
 
 In the next example, we will revisit the simple ping-pong scenario from
 Section~\ref{sec:pingPong}. In that scenario, a ``pinger'' sends 20
 \lstinline$ping$ messages to a destination, and the ``ponger'' echoes
 those messages back to the pinger in \lstinline$pong$ messages.  Here we
-will keep \url{olg/pinger.olg} as the OverLog specification of the
+will keep \url{[olg]/pinger.olg} as the \ol specification of the
 pinger, but use the programmatic P2 interface to implement the ponger.
 
 The major difference in this example from
@@ -1211,7 +1220,7 @@ tuples using \texttt{TuplePtr} objects, shared pointers to
 tuples. Otherwise, this handler is straightforward: when it is invoked
 with a tuple, we create a new tuple, we name it \lstinline$pong$, and we
 swap the last two tuples from the incoming tuple. This what the
-OverLog-defined ponger used to do:
+\ol-defined ponger used to do:
 \begin{lstlisting}
 r2 pong(@J, I) :- ping(@I, J).
 \end{lstlisting}
@@ -1248,9 +1257,9 @@ the dataflow, and leaving its next parameter unbound.
 
 That's it. The full program can be found in
 \url{tutorial/c++/ponger.C}. When executed on the same hostname and port
-number as \url{tutorial/olg/ponger.olg} had been in
+number as \url{[olg]/ponger.olg} had been in
 Section~\ref{sec:pingPong}, along with the regular
-\url{tutorial/olg/pinger.olg}, it will cause \lstinline$pong$ messages
+\url{[olg]/pinger.olg}, it will cause \lstinline$pong$ messages
 to be echoed back, which the pinger captures and prints out on the
 screen.
 
@@ -1298,7 +1307,7 @@ aggregates, aggregates of empty relations.
 \emph{This is placeholder text.}
 
 Stages are a way to support reusable non-P2 functionality in a P2
-program written in OverLog. You create such functionality by creating a
+program written in \ol. You create such functionality by creating a
 class within the \url{stages/} directory. Such classes have two methods:
 \texttt{newInput} and \texttt{newOutput}. \texttt{newInput} resets the
 function with a new tuple. \texttt{newOutput} keeps producing results
@@ -1312,7 +1321,7 @@ produces outputs of the form
 \lstinline$anotherTupleName(@locspec, token)$, one for each token of the content, given the delimiters. 
 
 Once you have created such a function implementation, you can put it
-into an OverLog program using the \lstinline$stage$ command, as follows: 
+into an \ol program using the \lstinline$stage$ command, as follows: 
 \begin{lstlisting}
 stage(stageName, inputName, outputName).
 \end{lstlisting}
@@ -1328,7 +1337,7 @@ create a filereader class under \url{stages/} that takes as input
 line \lstinline$line(locspec, filename, linenumber, linestring)$ at a
 time.
 
-\section{ONI: Overlog Native Interface}
+\section{ONI: \ol Native Interface}
 
 \begin{center}
 %%% Image copied from wikipedia commons.
@@ -1348,7 +1357,7 @@ time.
 A picture of an Oni.
 \end{center}
 ONI provides a simple C API that simplifies the process of
-implementing Overlog bindings for functions written in C.  It is
+implementing \ol bindings for functions written in C.  It is
 designed to be as simple as possible, and is currently incomplete.  If
 you find that you need more functionality than is currently available,
 email {\tt p2devel@yahoogroups.com}.
@@ -1380,7 +1389,7 @@ variables of type {\tt tup\_t*}.  The first, {\tt tup}, is the input to
 the stage.  The second, {\tt ret}, is the output tuple.
 
 Line 2 unpacks the second value from the tuple, and performs a checked
-cast to a C string.  ONI's interface to Overlog data structures
+cast to a C string.  ONI's interface to \ol data structures
 follows a simple naming convention.  Casting and accessor functions
 are named {\tt foo\_bar()}, and produce something of type {\tt foo}
 from something of type {\tt bar}.  For example, the call to {\tt
@@ -1402,7 +1411,7 @@ now-unneeded copy of the C string.  Line 10 returns 0 to indicate
 success.  Non-zero values are treated as internal errors in the P2
 runtime.  For now, when a non-zero value is encountered, it is
 reported to the user, and P2 immediately exits.  Errors that can be
-handled in Overlog should be reported via the {\tt ret} tuple, and not
+handled in \ol should be reported via the {\tt ret} tuple, and not
 returned to ONI.
 
 \subsection{ONI stage instantiation}
@@ -1432,7 +1441,7 @@ shared library location ({\tt man dlopen} for more information), or in
 a directory mentioned in {\tt LD\_LIBRARY\_PATH}.  Running
 
 \begin{verbatim}
-~/p2/build$ LD_LIBRARY_PATH=./oni ./tests/runStagedOverlog
+# LD_LIBRARY_PATH=./oni ./tests/runStagedOverlog
     -o ../unitTests/olg/oniEcho.olg
 \end{verbatim}
 (all one line) will load and execute a sample ONI stage
@@ -1450,9 +1459,9 @@ implementations.  Adding ONI support for {\em f\_function}'s should be
 matter of adding support for dynamic registration of new {\em f\_function}
 definitions to P2.
 
-\subsection{Manipulating Overlog types from C}
+\subsection{Manipulating \ol types from C}
 
-{\em This is placeholder text:} A number of other Overlog type
+{\em This is placeholder text:} A number of other \ol type
 manipulation functions ({\tt int\_Val()}, {\tt Tup\_Push\_int()}, {\tt
   opaque\_Val()}, and {\tt Tup\_Push\_opaque()}) are available.  See
 {\tt oni.h} for a current list.
@@ -1474,7 +1483,7 @@ they may be removed in future releases. (Their names begin with ``{\tt
 Also, the Stasis ONI bindings (for which ONI was written) manipulate a
 number of C structs.  The file {\tt oni/stasisTypes.C} provides some
 examples of C struct packing and unpacking and other convenience
-methods that may be instructive when developing Overlog bindings for
+methods that may be instructive when developing \ol bindings for
 other C libraries that manipulate special-purpose data structures.
 
 \subsection{The future of ONI}
@@ -1501,13 +1510,13 @@ username \texttt{<username>}, and password \texttt{<password>}.
 that is Fedora Core 4; later Fedora distributions run a later version of libc and
 their executables will not run on PlanetLab.  Let \url{runOverLog} be that
 executable. 
-\item Figure out what OverLog program you'd like to run, and what
+\item Figure out what \ol program you'd like to run, and what
 parametrizations you require (e.g., for landmark nodes and for other
 nodes).  The example we will use is \url{doc/chord.olg}.
 \item Figure out what parametrizations need to happen on each node.  To
 automate this, produce a script \texttt{generator} in any language (we have
 used python in this example) to figure out how to parametrize the
-OverLog program. If you have no parametrizations, then just create an
+\ol program. If you have no parametrizations, then just create an
 empty script.  The command line interface to the script should be:
 \begin{verbatim}
 <generator> <sourceOverLogFilename> <random seed> <target hostname>
@@ -1541,7 +1550,7 @@ Run the script as follows:
 
 \begin{verbatim}
 python python/scripts/setupMonolithic.py -n <slice> -o
-<SourceOverlogFilename> -u <username> -w <password> -j <parallelism> -g
+<SourceOverLogFilename> -u <username> -w <password> -j <parallelism> -g
 <generator script> [-Dkey=value]* -p portNumber -x <runOverLog>
 [-z <excluded node>]* [-l <included node>]*  {-a|-d|-c|-k}  [-i] [-I]
 \end{verbatim}
@@ -1725,7 +1734,7 @@ is handled correctly and the workaround is not required.
 
 In this section, we describe the new P2 Dataflow Language (P2DL). The purpose
 of this language is to serve as an intermediate compilation language for the
-new P2 Overlog Compiler. In prior versions of the Overlog compiler, the dataflow
+new P2 \ol Compiler. In prior versions of the \ol compiler, the dataflow
 graph was created directly in the Planner. The result was complex code that only
 few knew how to navigate. The complexity came from the need to directly create
 and configure the C++ objects that make up the dataflow graph. The dataflow

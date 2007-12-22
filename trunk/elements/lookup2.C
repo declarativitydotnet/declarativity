@@ -103,13 +103,13 @@ Lookup2::push(int port,
     _lookupTupleValue = Val_Tuple::mk(t);
     
     // Groovy.  Signal puller that we're ready to give results
-    ELEM_INFO("push: accepted lookup for tuple "
+    ELEM_WORDY("push: accepted lookup for tuple "
               << _lookupTuple->toString());
     
     _stateProxy->state(IStateful::STATEFUL);
     // Unblock the puller if one is waiting
     if (_pullCallback) {
-      ELEM_INFO("push: wakeup puller");
+      ELEM_WORDY("push: wakeup puller");
       _pullCallback();
       _pullCallback = 0;
     }
@@ -147,7 +147,7 @@ Lookup2::pull(int port,
     
     if (!_pullCallback) {
       // Accept the callback
-      ELEM_INFO("pull: registered callback");
+      ELEM_WORDY("pull: registered callback");
       _pullCallback = cb;
     } else {
       // I already have a pull callback
@@ -183,7 +183,7 @@ Lookup2::pull(int port,
       // the empty tuple
       returnTuple = Tuple::EMPTY();
 
-      ELEM_INFO("pull: Finished search on tuple "
+      ELEM_WORDY("pull: Finished search on tuple "
                 << _lookupTuple->toString());
       
       // Clean the lookup state
@@ -196,13 +196,13 @@ Lookup2::pull(int port,
 
       // Wake up any pusher
       if (_pushCallback) {
-        ELEM_INFO("pull: wakeup pusher");
+        ELEM_WORDY("pull: wakeup pusher");
         _pushCallback();
         _pushCallback = 0;
       }
       // Notify any state listeners
       if (_stateCallback) {
-        ELEM_INFO("My state callback was invoked with false.");
+        ELEM_WORDY("My state callback was invoked with false.");
         _stateCallback();
       }
     } else {

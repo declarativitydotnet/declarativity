@@ -996,7 +996,7 @@ DEF_OP(OR) {
   stackPush(Val_Int64::mk(v1 || v2));
 }
 DEF_OP(RAND) {
-  int32_t r = random();
+  int64_t r = random();
   stackPush(Val_Int64::mk(r));
 }
 DEF_OP(COIN) {

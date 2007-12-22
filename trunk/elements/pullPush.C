@@ -49,7 +49,7 @@ int PullPush::initialize()
 }
 
 void PullPush::run() {
-  ELEM_INFO("PullPush running..."); 
+  ELEM_WORDY("PullPush running..."); 
 
   //keep pushing until either blocked or quiesced
   while(true) {
@@ -57,7 +57,7 @@ void PullPush::run() {
     if(p){
       int r = output(0)->push(p, _unblockPush);
       if(r==0){
-	ELEM_INFO("PullPush BLOCKED!");
+	ELEM_WORDY("PullPush BLOCKED!");
         _runnable->_pushPending = true;
 	//as the element itself does not require such info
 	//states are stored in the proxy object for that purpose
@@ -65,7 +65,7 @@ void PullPush::run() {
         return;
       }
     }else{
-      ELEM_INFO("PullPush QUIESCED!");
+      ELEM_WORDY("PullPush QUIESCED!");
       _runnable->_pullPending = true;
       _runnable->state(IRunnable::QUIECENE);
       return;

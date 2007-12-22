@@ -80,7 +80,7 @@ bool Scheduler::runRunnables()
         it++)
     {
       if( (*it)->state() == IRunnable::ACTIVE ){
-	//TELL_INFO<<"Running element
+	//TELL_WORDY<<"Running element
 	//"<<boost::dynamic_pointer_cast<Element,IRunnable>(*it)->name()<<"\n";
 	(*it)->run();
 	// Remember if there was anything to run.  (mpSwitch will always be
@@ -156,29 +156,34 @@ Scheduler::phase2(boost::posix_time::time_duration* waitDuration)
   bool ranSomething = false;
   if (mpExtQ != NULL) {
     bool first = true;
-    while(mpExtQ->size() != 0 || first) {
+    while (mpExtQ->size() != 0 || first) {
       //turn on the gate for exactly 1 external event to flow
       //through
       mpSwitch->state(IRunnable::ACTIVE);
 
       first = false; //by turning on the 1off switch
 
-      TELL_INFO << "\n===<FIXPOINT> A BIG MSG FOR A LOCAL FIXPOINT START! ExtQ size=" 
-                << mpExtQ->size() << "===\n";
+      TELL_WORDY << "\n===Dataflow fixpoint beginning. ExtQ size = " 
+                 << mpExtQ->size()
+                 << "===\n";
       //start processing it
 
-      /*Run these guys until quiescene*/
+      /* Run these guys until quiescence */
 
       bool newRanSomething = runRunnables();
-      if(newRanSomething) ranSomething = true;
+      if (newRanSomething) {
+        ranSomething = true;
+      }
 
-      TELL_INFO << "\t ++++ Inner Q: "
-		<< mpIntQ->size();
+      TELL_WORDY << "\t ++++ Inner Q: "
+                 << mpIntQ->size()
+                 << "\n";
       //fixpoint is reached, commit all updates
       mpCommitManager->commit();
-      TELL_INFO << "\t Leaving fixpoint check: IntQ.size() = " << mpIntQ->size() 
-                << " ExtQ.size() = " << mpExtQ->size();
-      TELL_INFO<<"\n===</FIXPOINT> A BIG & SHINY MSG FOR A LOCAL FIXPOINT END!!===\n";
+      TELL_WORDY<<"===Dataflow fixpoint done. "
+                << "IntQ.size() = " << mpIntQ->size() 
+                << ". ExtQ.size() = " << mpExtQ->size()
+                << ".===\n";
     }
   }
   if(ranSomething) {
@@ -193,7 +198,7 @@ Scheduler::phase2(boost::posix_time::time_duration* waitDuration)
     // event queue, and those events aren't part of an atomic
     // fixpoint.
     //                         -Rusty
-    TELL_INFO<<"ran something, and resetting wait time to zero\n"<< std::endl;
+    TELL_WORDY<<"ran something, and resetting wait time to zero\n"<< std::endl;
     *waitDuration = boost::posix_time::seconds(0);
   }
 

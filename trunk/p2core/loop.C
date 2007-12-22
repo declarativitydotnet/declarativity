@@ -45,7 +45,9 @@ delayCB(double secondDelay, b_cbv cb, Element* owner)
 {
   assert(secondDelay >= 0.0);
 
-  LOOP_INFO("delayCB delaying call back by "<<secondDelay<<" seconds. ");
+  LOOP_WORDY("delayCB delaying call back by "
+             << secondDelay
+             << " seconds. ");
 
   unsigned long secs = (unsigned long) secondDelay; 
   boost::posix_time::ptime expiration;
@@ -112,7 +114,7 @@ timeCBCatchup(boost::posix_time::time_duration& waitDuration)
     iter++;
     callbacks.erase(toErase);
 
-    LOOP_INFO("Handling callback "
+    LOOP_WORDY("Handling callback "
               << theCallback->toString());
     
     // Run it
