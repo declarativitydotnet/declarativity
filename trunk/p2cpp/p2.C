@@ -220,7 +220,7 @@ P2::createDataflow(string dataflowName,
 
   // Set up the P2 dataflow
   PlumberPtr plumber(new Plumber());
-  Plumber::DataflowPtr dataflow(new Plumber::Dataflow(dataflowName));
+  DataflowPtr dataflow(new Dataflow(dataflowName));
 
 
   // Set up the P2 table environment
@@ -442,7 +442,7 @@ P2::subscribe(DataflowHandle handle,
 
   // Create a new edit 
   string dataflowName = handle._dataflow->name();
-  Plumber::DataflowEditPtr edit =
+  DataflowEditPtr edit =
     handle._plumber->edit(dataflowName);
 
   // We will be creating a new tuple listener
@@ -556,7 +556,7 @@ P2::nullCallback()
 
 P2::DataflowHandle::DataflowHandle(PlumberPtr plumber,
                                    UdpPtr udp,
-                                   Plumber::DataflowPtr dataflow)
+                                   DataflowPtr dataflow)
   : _plumber(plumber),
     _udp(udp),
     _dataflow(dataflow)

@@ -26,7 +26,7 @@
 
 class PlanContext {
 public:
-  PlanContext(Plumber::DataflowPtr conf,
+  PlanContext(DataflowPtr conf,
               TableStore* tableStore, 
 	      RuleStrand* ruleStrand,
               string nodeID);
@@ -42,7 +42,7 @@ public:
   string _nodeID;
 
   /** Dataflow configuration */
-  Plumber::DataflowPtr _conf;
+  DataflowPtr _conf;
 
   /** Aggwrap spec */
   Aggwrap2Callback* _agg_el;

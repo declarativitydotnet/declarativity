@@ -64,7 +64,7 @@
 class NetPlanner
 {
 public:
-  NetPlanner(Plumber::DataflowPtr conf, string nodeID)
+  NetPlanner(DataflowPtr conf, string nodeID)
     : _conf(conf)
   { _nodeID = nodeID; };
 
@@ -98,7 +98,7 @@ private:
 
   ElementSpecPtr _wrapAroundSendDemux;
   string _nodeID;
-  Plumber::DataflowPtr _conf;
+  DataflowPtr _conf;
   std::vector<ElementSpecPtr> _networkIn, _networkOut;
   ReceiverInfoMap _receiverInfo;  
   std::vector<ElementSpecPtr> _senders;

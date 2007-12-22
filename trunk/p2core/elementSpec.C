@@ -170,8 +170,8 @@ const ElementPtr ElementSpec::element()
 
 ElementSpec::PortPtr ElementSpec::input(int pno)
 {
-  Plumber::Dataflow *d = NULL;
-  if ((d = dynamic_cast<Plumber::Dataflow*>(_element.get())) != NULL) {
+  Dataflow *d = NULL;
+  if ((d = dynamic_cast<Dataflow*>(_element.get())) != NULL) {
     /* Resolve to actual input element. Not Dataflow::input will modify
      * pno to correct input port number, which may be different that 
      * what was passed in. */
@@ -182,8 +182,8 @@ ElementSpec::PortPtr ElementSpec::input(int pno)
 
 ElementSpec::PortPtr ElementSpec::output(int pno)
 {
-  Plumber::Dataflow *d = NULL;
-  if ((d = dynamic_cast<Plumber::Dataflow*>(_element.get())) != NULL) {
+  Dataflow *d = NULL;
+  if ((d = dynamic_cast<Dataflow*>(_element.get())) != NULL) {
     /* Resolve to actual input element. Not Dataflow::input will modify
      * pno to correct input port number, which may be different that 
      * what was passed in. */

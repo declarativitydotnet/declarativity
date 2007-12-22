@@ -56,7 +56,7 @@ listenForMessages(std::string ipAddress,
 
   // The sending data flow
   PlumberPtr plumber(new Plumber());
-  Plumber::DataflowPtr conf(new Plumber::Dataflow("test"));
+  DataflowPtr conf(new Dataflow("test"));
 
   Udp udpOut("ListenerUDP", port); // port of the sender    
   std::vector<TuplePtr> buffer;

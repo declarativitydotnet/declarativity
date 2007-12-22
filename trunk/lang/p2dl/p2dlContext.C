@@ -67,7 +67,7 @@ namespace compile {
       return "Element " + _element->name();
     }
 
-    string Dataflow::toString() const {
+    string P2DLDataflow::toString() const {
       return "Dataflow " + _dataflow->name();
     }
 
@@ -145,7 +145,7 @@ namespace compile {
       Value *flow_code   = dynamic_cast<Value*>(f);
 
       _dataflow.reset(
-        new Plumber::Dataflow(n->toString(), 
+        new Dataflow(n->toString(), 
                               Val_Int64::cast(inputs->value()),
                               Val_Int64::cast(outputs->value()),
                               Val_Str::cast(proccessing->value()),
@@ -170,7 +170,7 @@ namespace compile {
       else {
         /* Has inputs/outputs, must be referenced in an edit.
            Store reference in the scope table for later lookup. */
-        scope.map(_dataflow->name(), new Dataflow(_dataflow));
+        scope.map(_dataflow->name(), new P2DLDataflow(_dataflow));
       }
     }
 
@@ -225,7 +225,7 @@ namespace compile {
     void 
     Strand::commit(ScopeTable& scope) 
     {
-      Plumber::DataflowPtr dataflow = scope.dataflow();
+      DataflowPtr dataflow = scope.dataflow();
 
       ExpressionList::iterator first  = _strand->begin();
       ExpressionList::iterator second = first + 1;
@@ -259,7 +259,7 @@ namespace compile {
     {
       Variable *v = NULL;
       Element  *e = NULL;
-      Dataflow *d = NULL;
+      P2DLDataflow *d = NULL;
       if ((v = dynamic_cast<Variable*>(expr)) != NULL) {
         if (v->toString() == "input" || v->toString() == "output")
           return ::ElementSpecPtr(); // Special case
@@ -274,7 +274,7 @@ namespace compile {
       else if ((e = dynamic_cast<Element*>(expr)) != NULL) {
         return scope.dataflow()->addElement(e->element());
       }
-      else if ((d = dynamic_cast<Dataflow*>(expr)) != NULL) {
+      else if ((d = dynamic_cast<P2DLDataflow*>(expr)) != NULL) {
         return scope.dataflow()->addElement(d->dataflow());
       }
       else throw Exception(0, "Strand element not of type Element!"); 
@@ -286,7 +286,7 @@ namespace compile {
       Reference* ref = dynamic_cast<Reference*>(expr);
       if (ref != NULL) {
         ExpressionList*    reflist  = ref->reference();
-        Plumber::Dataflow* dataflow = NULL;
+        Dataflow* dataflow = NULL;
 
         if (reflist->size() == 1) {
           /* Normal resolve will handle single level variable resolution */
@@ -295,7 +295,7 @@ namespace compile {
         else if (reflist->size() != 2)
           throw Exception(1, "EditStrand: Only single level reference name allowed for now.");
 
-        Plumber::DataflowPtr d = scope.dataflow();
+        DataflowPtr d = scope.dataflow();
         if (d->name() != reflist->front()->toString()) {
           throw Exception(1, "EditStrand: top level reference name \
                               must refer to dataflow edit name." + 
@@ -313,7 +313,7 @@ namespace compile {
             std::cerr << "EditStrand: Unknown variable reference. " << ref->toString() << std::endl;
             throw Exception(3, "EditStrand: Unknown variable reference. " + ref->toString());
           }
-          dataflow = dynamic_cast<Plumber::Dataflow*>(esp->element().get()); 
+          dataflow = dynamic_cast<Dataflow*>(esp->element().get()); 
         }
 
         if (!esp) {

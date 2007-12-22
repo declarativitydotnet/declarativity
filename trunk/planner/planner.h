@@ -72,7 +72,7 @@
 class Planner
 {
 public:
-  Planner(Plumber::DataflowPtr conf, TableStore* catalog, 
+  Planner(DataflowPtr conf, TableStore* catalog, 
 	  bool debug, string nodeID); 
 
   ~Planner() { delete _netPlanner; }
@@ -101,7 +101,7 @@ public:
                          std::vector<StageStrand*>);  
 
   void
-  generatePlumberConfig(Plumber::DataflowPtr conf);
+  generatePlumberConfig(DataflowPtr conf);
   
   void
   setupNetwork(boost::shared_ptr<Udp> udp);
@@ -113,7 +113,7 @@ public:
 
 private:
   bool _debug;
-  Plumber::DataflowPtr _conf;
+  DataflowPtr _conf;
   string _nodeID;
   int _ruleCount;
   NetPlanner* _netPlanner;

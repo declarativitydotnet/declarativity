@@ -31,6 +31,8 @@ ADD_LIBRARY(p2core
             oper.C
             p2Time.C 
             plumber.C 
+	    dataflow.C
+	    dataflowEdit.C
             refTable.C 
             reporting.C
             scheduler.C 

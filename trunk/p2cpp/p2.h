@@ -42,7 +42,7 @@ public:
   public:
     DataflowHandle(PlumberPtr plumber,
                    UdpPtr udp,
-                   Plumber::DataflowPtr dataflow);
+                   DataflowPtr dataflow);
 
 
     PlumberPtr
@@ -58,7 +58,7 @@ public:
 
 
     /** My dataflow pointer */
-    Plumber::DataflowPtr _dataflow;
+    DataflowPtr _dataflow;
   };
 
 

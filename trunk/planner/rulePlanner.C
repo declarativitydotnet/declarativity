@@ -128,7 +128,7 @@ addPrint(PlanContext* pc,
 /** Add a print element if the functor name is watched.*/
 void
 addPrint(TableStore* tableStore,
-         Plumber::DataflowPtr _conf,
+         DataflowPtr _conf,
          string nodeID,
          StageStrand* strand,
          string b,
@@ -629,7 +629,7 @@ generateSendAction(TableStore* tableStore,
                    string nodeID,
                    StageStrand* strand,
                    const OL_Context::ExtStageSpec* aSpec,
-                   Plumber::DataflowPtr _conf)
+                   DataflowPtr _conf)
 {
   // The first field after the tuple name is always the location
   // specifier

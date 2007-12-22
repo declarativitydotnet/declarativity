@@ -91,7 +91,7 @@ StageStrand::toString()
 
 
 void
-StageStrand::addElement(Plumber::DataflowPtr conf,
+StageStrand::addElement(DataflowPtr conf,
                         ElementPtr elementPtr)
 {
   ElementSpecPtr elementSpecPtr =

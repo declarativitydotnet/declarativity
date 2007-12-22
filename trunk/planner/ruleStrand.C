@@ -117,7 +117,7 @@ RuleStrand::toString()
 
 
 void
-RuleStrand::addElement(Plumber::DataflowPtr conf, ElementSpecPtr elementSpecPtr)
+RuleStrand::addElement(DataflowPtr conf, ElementSpecPtr elementSpecPtr)
 {
   if (_elementChain.size() > 0) {
     conf->hookUp(_elementChain.at(_elementChain.size()-1), 0, elementSpecPtr, 0);
@@ -127,7 +127,7 @@ RuleStrand::addElement(Plumber::DataflowPtr conf, ElementSpecPtr elementSpecPtr)
 
 
 void
-RuleStrand::aggWrapperElement(Plumber::DataflowPtr conf,
+RuleStrand::aggWrapperElement(DataflowPtr conf,
                               ElementSpecPtr aggWrapperSpec)
 {
   _aggWrapperSpec = aggWrapperSpec;

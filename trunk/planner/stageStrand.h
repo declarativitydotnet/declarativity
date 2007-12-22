@@ -41,7 +41,7 @@ public:
 
 
   void
-  addElement(Plumber::DataflowPtr conf,
+  addElement(DataflowPtr conf,
              ElementPtr elementSpecPtr);
 
   

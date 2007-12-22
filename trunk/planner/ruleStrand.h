@@ -52,10 +52,10 @@ public:
   getActionElement();
 
   void
-  aggWrapperElement(Plumber::DataflowPtr conf, ElementSpecPtr aggWrapperSpec);
+  aggWrapperElement(DataflowPtr conf, ElementSpecPtr aggWrapperSpec);
 
   void
-  addElement(Plumber::DataflowPtr conf, ElementSpecPtr elementSpecPtr);
+  addElement(DataflowPtr conf, ElementSpecPtr elementSpecPtr);
 
   string
   getRuleID();

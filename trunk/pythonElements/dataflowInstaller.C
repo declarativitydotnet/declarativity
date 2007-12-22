@@ -85,7 +85,7 @@ DataflowInstaller::install(string script,
     tuple t = dataflows.popitem();
     char* name = extract<char*>(t[0]);
     t[1].attr("eval_dataflow")();
-    Plumber::DataflowPtr d = extract<Plumber::DataflowPtr>(t[1].attr("conf"));
+    DataflowPtr d = extract<DataflowPtr>(t[1].attr("conf"));
     if (plumber_->install(d) < 0) {
       status << "DATAFLOW INSTALLATION FAILURE FOR " << name << std::endl;
       return -1;
@@ -96,7 +96,7 @@ DataflowInstaller::install(string script,
   }
   for (int i = 0; i < nedits; i++) {
     edits[i].attr("eval_dataflow")();
-    Plumber::DataflowEditPtr e = extract<Plumber::DataflowEditPtr>(edits[i].attr("conf"));
+    DataflowEditPtr e = extract<DataflowEditPtr>(edits[i].attr("conf"));
     if (plumber_->install(e) < 0) {
       status << "EDIT INSTALLATION FAILURE FOR " << e->name() << std::endl;
       return -1;
@@ -144,7 +144,7 @@ string DataflowInstaller::readScript(string fileName)
 
 /*
 void
-DataflowInstaller::initializeChordBaseTables(Plumber::DataflowPtr d) {
+DataflowInstaller::initializeChordBaseTables(DataflowPtr d) {
   // create information on the node itself  
   if (d->getTable("node") != 0 && d->getTable("node")->size() == 0) {
     uint32_t random[ID::WORDS];

@@ -23,7 +23,7 @@
 #include "rulePlanner.C"
 #include "stageRegistry.h"
 
-Planner::Planner(Plumber::DataflowPtr conf, TableStore* tableStore, 
+Planner::Planner(DataflowPtr conf, TableStore* tableStore, 
 		 bool debug, string nodeID) 
   : _conf(conf)
 { 

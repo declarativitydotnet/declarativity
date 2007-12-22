@@ -123,15 +123,15 @@ namespace compile {
       ::ElementPtr _element;
     };
 
-    class Dataflow : public Expression {
+    class P2DLDataflow : public Expression {
     public:
-      Dataflow(Plumber::DataflowPtr d) { _dataflow = d; }
+      P2DLDataflow(DataflowPtr d) { _dataflow = d; }
 
-      Plumber::DataflowPtr dataflow() const { return _dataflow; }
+      DataflowPtr dataflow() const { return _dataflow; }
 
       string toString() const;
     private:
-      Plumber::DataflowPtr _dataflow;
+      DataflowPtr _dataflow;
     };
   
     class Port : public Expression {
@@ -188,9 +188,9 @@ namespace compile {
 
       string toString() const;
 
-      Plumber::DataflowPtr dataflow() const{ return _dataflow; }
+      DataflowPtr dataflow() const{ return _dataflow; }
     private:
-      Plumber::DataflowPtr _dataflow;
+      DataflowPtr _dataflow;
       StatementList*       _statements;
     };
 
@@ -202,9 +202,9 @@ namespace compile {
 
       string toString() const;
 
-      Plumber::DataflowPtr dataflow() const { return _dataflow; }
+      DataflowPtr dataflow() const { return _dataflow; }
     private:
-      Plumber::DataflowPtr _dataflow;
+      DataflowPtr _dataflow;
       StatementList*       _statements;
     };
 
@@ -271,7 +271,7 @@ namespace compile {
     public:
       ScopeTable() {
         _variables.push_front(std::map<string, Expression*>()); 
-        _dataflows.push_front(Plumber::DataflowPtr());
+        _dataflows.push_front(DataflowPtr());
       };
 
       string
@@ -293,7 +293,7 @@ namespace compile {
         return "ScopeTable empty."; 
       }
 
-      void enter(Plumber::DataflowPtr d) { 
+      void enter(DataflowPtr d) { 
         _variables.push_front(std::map<string, Expression*>()); 
         _dataflows.push_front(d);
       }
@@ -347,12 +347,12 @@ namespace compile {
         return NULL;
       }
 
-      Plumber::DataflowPtr 
+      DataflowPtr 
       dataflow() const { return _dataflows.front(); }
 
     private:
       std::deque<std::map<string, Expression*> > _variables;
-      std::deque<Plumber::DataflowPtr>           _dataflows;
+      std::deque<DataflowPtr>           _dataflows;
     };
     
     /***************************

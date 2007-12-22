@@ -70,7 +70,10 @@ ProgramLoader::~ProgramLoader()
 }
 
 void
-ProgramLoader::program(string name, string file, string stage, std::vector<std::string>* defs) 
+ProgramLoader::program(string name,
+                       string file,
+                       string stage,
+                       std::vector<std::string>* defs) 
 {
   LOAD(name, file, stage, defs);
   programIter = programs.begin();
@@ -95,7 +98,7 @@ ProgramLoader::programUpdate(TuplePtr program)
       TELL_OUTPUT << "Program " << name << " installed.\n";
       if (dotFile != "") {
         Plumber::toDot(dotFile);
-        TELL_OUTPUT << "Dot file " << dotFile << " generated.";
+        TELL_OUTPUT << "Dot file " << dotFile << " generated.\n";
       }
     }
     loader();

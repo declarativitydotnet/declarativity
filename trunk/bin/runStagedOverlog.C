@@ -232,7 +232,7 @@ main(int argc, char **argv)
   string overLogFile("-");
   string dotFile("-");
   double delay = 0.0;
-  //  bool outputDot = false;
+  bool outputDot = false;
   bool run = true;
   bool outputCanonicalForm = false;
   bool outputStages = false;
@@ -274,7 +274,7 @@ main(int argc, char **argv)
       break;
 
     case 'g':
-      dotFile = optarg;
+      outputDot = true;
       break;
 
     case 'c':
@@ -317,6 +317,26 @@ main(int argc, char **argv)
   TELL_INFO << "\n";
 
   TELL_INFO << "Running from translated file \"" << overLogFile << "\"\n";
+
+
+
+  ////////////////////////////////////////////////////////////
+  // Get a temporary file name for the derivatives
+  char derivativeFileName[17] = "";
+  int fd = -1;
+  strncpy(derivativeFileName, "/tmp/p2.XXXXXX", sizeof derivativeFileName);
+  if ((fd = mkstemp(derivativeFileName)) == -1) {
+    TELL_ERROR << "Could not generate temporary filename '"
+               << derivativeFileName
+               << "' due to error "
+               << strerror(errno)
+               << "\n";
+    exit(-1);
+  }
+  TELL_INFO << "Temporary files will have the prefix "
+            << derivativeFileName
+            << "\n";
+
 
   std::ostringstream myAddressBuf, myPortBuf;
   myAddressBuf <<  myHostname << ":" << port;
@@ -380,12 +400,12 @@ main(int argc, char **argv)
               << "\n----\n";
     compile::Context *context = new compile::p2dl::Context("p2dl", dfdesc);
 
-    Plumber::DataflowPtr main = Plumber::dataflow("main");
+    DataflowPtr main = Plumber::dataflow("main");
     ElementPtr loaderElement = main->find("loader")->element();
     ProgramLoader *loader = dynamic_cast<ProgramLoader*>(loaderElement.get());
     if (overLogFile != "-") {
       if (!definitions.empty() && !preprocess) {
-        TELL_WARN << "You are suppressed preprocessing (via -m) "
+        TELL_WARN << "You have suppressed preprocessing (via -m) "
                   << "but have also supplied extra macros (via -D). "
                   << "All macro definitions will be ignored.\n";
       }   
@@ -394,9 +414,13 @@ main(int argc, char **argv)
                       (preprocess ) ? &definitions : NULL);
     }
 
-    if (dotFile != "-") {
+
+    // Output the graph if requested using the temporary file name
+    if (outputDot) {
+      dotFile = string(derivativeFileName) + ".dot";
       loader->dot(dotFile);
     }
+
     delete context;
     eventLoop(); 
   } catch (TableManager::Exception& e) {
