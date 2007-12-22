@@ -1086,6 +1086,18 @@ will otherwise move onwards.
 
 
 
+\section{Command-Line Options}
+\label{sec:commandLine}
+
+\begin{itemize}
+\item \texttt{-g} requests the runtime to output a graph representation
+  of the compiled OverLog program. This representation uses the DOT
+  format (from the graphviz~\cite{graphviz} package). If you have
+  graphviz installed, you can use the \texttt{dotty} program to view the
+  P2 output (invoke it with \texttt{dotty p2output.dot}.  The output file lives under a temporary name in
+  \texttt{/tmp} and has the suffix \texttt{.dot}.
+\end{itemize}
+
 
 
 \section{Programmatic P2 Interface}
