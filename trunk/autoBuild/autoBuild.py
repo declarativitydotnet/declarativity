@@ -275,16 +275,16 @@ def autoBuild(file_path, file, current_dir):
         EpochSeconds = time.mktime(curr_time.timetuple())
         date = datetime.datetime.fromtimestamp(EpochSeconds)
 
-        if(revision_number.rstrip().lstrip() == ""):
-        	revision = get_svn_revision(branch, svn_path)
-        else:
-                revision = revision_number.rstrip()
-
-        if(run_build == 'No' and (build_path == "" or unitTests_path == "")):
+	if(run_build == 'No' and (build_path == "" or unitTests_path == "")):
                 print "Build path and unitTests path have to be specified if run_build option is set to No"
                 sys.exit(0)
 
-        if(run_build == 'Yes'):
+	if(run_build == 'Yes'):
+        	if(revision_number.rstrip().lstrip() == ""):
+        		revision = get_svn_revision(branch, svn_path)
+        	else:
+                	revision = revision_number.rstrip()
+
         	print "revision" , revision
                 rev= date.strftime("%Y.%m.%d.%H.%M.%S")
                 dir= "src_" + file.rstrip(".conf") + "_" + rev
@@ -335,7 +335,7 @@ def autoBuild(file_path, file, current_dir):
                         email(from_address, to_address, 0, log, sendmail_path, revision, branch_name, sourcedir)
                         sys.exit(0)
 		
-                runOverLog_path = os.path.join(sourcedir, branch_name, 'builds/tests', planner)
+                runOverLog_path = os.path.join(sourcedir, branch_name, 'builds/bin', planner)
                 olg_path = os.path.join(sourcedir, branch_name, 'tests/unitTests/olg')
                 script_path = os.path.join(sourcedir, branch_name, 'tests/unitTests/scripts')
 
@@ -365,7 +365,7 @@ def autoBuild(file_path, file, current_dir):
                 fileHandle = open (log, 'a' )
                 fileHandle.write("Build:" +  build_path)
 
-                runOverLog_path = os.path.join(build_path, 'tests', planner)
+                runOverLog_path = os.path.join(build_path, 'bin', planner)
                 olg_path = os.path.join(unitTests_path, 'olg')
                 script_path = os.path.join(unitTests_path, 'scripts')
                 result = run_scripts(runOverLog_path, olg_path, script_path, fileHandle, python_path, verbose_output)
