@@ -179,7 +179,8 @@ def run_scripts(runOverLog_path, olg_path, script_path, fileHandle, python_path,
 				script = os.path.join(script_path, script_py) + ".py"
         			print "Running", script
 				about = os.stat(script)
-				
+				about = os.stat(runOverLog_path)
+			
 				args=[python_path, script, '-E', runOverLog_path, '-B', olg_path, '-T', '100', '2>&1']
         			#print args
 				p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
