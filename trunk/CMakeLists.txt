@@ -21,6 +21,7 @@ FIND_PACKAGE(FLEX)
 FIND_PACKAGE(BISON)
 
 FIND_PACKAGE(LATEX)
+FIND_PACKAGE(RPMBuild QUIET)
 
 # Look for include files
 INCLUDE (CheckIncludeFiles)
