@@ -1,5 +1,7 @@
 Project(P2)
 
+SET(PACKAGE_VERSION 1)
+
 SUBDIRS(p2core aggregates functions p2cpp lang elements stages net
 	       overlog planner tests bin python oni doc)
 
@@ -21,7 +23,12 @@ FIND_PACKAGE(FLEX)
 FIND_PACKAGE(BISON)
 
 FIND_PACKAGE(LATEX)
-## FIND_PACKAGE(RPMBuild QUIET)
+
+FIND_PACKAGE(RPMBuild)
+IF (RPMTools_FOUND)
+  INCLUDE(CPack)
+  RPMTools_ADD_RPM_TARGETS(p2)
+ENDIF (RPMTools_FOUND)
 
 # Look for include files
 INCLUDE (CheckIncludeFiles)
