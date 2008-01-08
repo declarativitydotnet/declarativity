@@ -47,3 +47,5 @@ FLEX_TARGET(PelLexer ${P2_SOURCE_DIR}/p2core/pel/pel_lexer.lex ${CMAKE_CURRENT_B
 TARGET_LINK_LIBRARIES(p2pel boost_regex boost_date_time crypto ssl) 
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+
+INSTALL(TARGETS p2pel LIBRARY DESTINATION lib)

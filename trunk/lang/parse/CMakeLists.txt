@@ -17,3 +17,5 @@ BISON_TARGET(P2Parser2 ${P2_SOURCE_DIR}/lang/parse/olg_parser.y ${P2_BINARY_DIR}
 FLEX_TARGET(P2Lexer2 ${P2_SOURCE_DIR}/lang/parse/olg_lexer.lex ${P2_BINARY_DIR}/lang/parse/olg_lexer.C)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
+
+INSTALL(TARGETS p2parse LIBRARY DESTINATION lib)

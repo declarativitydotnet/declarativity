@@ -23,6 +23,7 @@ FLEX_TARGET(P2Lexer ${P2_SOURCE_DIR}/overlog/ol_lexer.lex ${P2_BINARY_DIR}/overl
 INCLUDE_DIRECTORIES(${P2_BINARY_DIR}/overlog)
 ADD_DEPENDENCIES(p2overlog p2core)
 
+INSTALL(TARGETS p2overlog LIBRARY DESTINATION lib)
 ##
 ## COULD ALSO TRY http://public.kitware.com/pipermail/cmake/2002-September/003028.html
 ##

@@ -85,7 +85,7 @@ Release:        1
 License:        GPL
 Group:          Development
 Source:         ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
-BuildRoot:      %{_builddir}/%{name}-%{version}-%{release}-root
+BuildRoot:      %{_topdir}/%{name}-%{version}-%{release}-root
 BuildRequires:	cmake
 
 %define prefix /opt/${RPMNAME}-%{version}
@@ -95,16 +95,20 @@ BuildRequires:	cmake
 %description
 ${RPMNAME} : No description for now
 
+%define debug_package %{nil}
+
 %prep
 %setup -q -n %{srcdirname}
 
 %build
-cd ..
+cd ../%{srcdirname}/p2core/pel
+python pel_gen.py
+cd ../../..
 rm -rf build_tree
 mkdir build_tree
 cd build_tree
 cmake -DCMAKE_INSTALL_PREFIX=%{rpmprefix} ../%{srcdirname}
-make
+make -j 8
   
 %install 
 cd ../build_tree
@@ -149,12 +153,14 @@ rm -rf build_tree
       ADD_CUSTOM_TARGET(${RPMNAME}_srpm
 	COMMAND cpack -G TGZ --config CPackSourceConfig.cmake
 	COMMAND ${CMAKE_COMMAND} -E copy ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz ${RPM_ROOTDIR}/SOURCES    
+	COMMAND ${CMAKE_COMMAND} -E remove ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
 	COMMAND ${RPMTools_RPMBUILD_EXECUTABLE} -bs --define=\"_topdir ${RPM_ROOTDIR}\" --buildroot=${RPM_ROOTDIR}/tmp ${RPM_ROOTDIR}/SPECS/${SPECFILE_NAME} 
 	)
       
       ADD_CUSTOM_TARGET(${RPMNAME}_rpm
 	COMMAND cpack -G TGZ --config CPackSourceConfig.cmake
 	COMMAND ${CMAKE_COMMAND} -E copy ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz ${RPM_ROOTDIR}/SOURCES    
+	COMMAND ${CMAKE_COMMAND} -E remove ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
 	COMMAND ${RPMTools_RPMBUILD_EXECUTABLE} -bb --define=\"_topdir ${RPM_ROOTDIR}\" --buildroot=${RPM_ROOTDIR}/tmp ${RPM_ROOTDIR}/SPECS/${SPECFILE_NAME} 
 	)  
     ENDMACRO(RPMTools_ADD_RPM_TARGETS)

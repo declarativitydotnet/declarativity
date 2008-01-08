@@ -21,3 +21,4 @@ ADD_LIBRARY(p2debugger
             traceTuple.C
 )
 
+INSTALL(TARGETS p2debugger LIBRARY DESTINATION lib)

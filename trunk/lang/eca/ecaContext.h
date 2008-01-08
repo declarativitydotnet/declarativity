@@ -23,7 +23,6 @@
 namespace compile {
   namespace eca {
     const string RULENAMEPREFIX = "eca_";
-    uint32_t ruleCounter = 0; 
     
     class Exception : public compile::Exception {
     public:
