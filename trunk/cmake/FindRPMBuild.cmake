@@ -88,7 +88,7 @@ Source:         ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
 BuildRoot:      %{_topdir}/%{name}-%{version}-%{release}-root
 BuildRequires:	cmake
 
-%define prefix /opt/${RPMNAME}-%{version}
+%define prefix /usr/local/${RPMNAME}
 %define rpmprefix $RPM_BUILD_ROOT%{prefix}
 %define srcdirname ${CPACK_SOURCE_PACKAGE_FILE_NAME}
 
@@ -107,7 +107,7 @@ cd ../../..
 rm -rf build_tree
 mkdir build_tree
 cd build_tree
-cmake -DCMAKE_INSTALL_PREFIX=%{rpmprefix} ../%{srcdirname}
+cmake -DP2_LANG_DIR:STATIC=%{prefix}/lang -DCMAKE_INSTALL_PREFIX=%{rpmprefix} ../%{srcdirname}
 make -j 8
   
 %install 

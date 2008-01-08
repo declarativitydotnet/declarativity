@@ -46,22 +46,22 @@ ProgramLoader::ProgramLoader(string name)
 ProgramLoader::ProgramLoader(TuplePtr args)
   : Element(Val_Str::cast((*args)[2]), 0, 1), dotFile("")
 {
-  string source = P2_SOURCE_DIR;
-  LOAD("gevent",     source + "/lang/olg/gevent.olg",     "eca",     NULL);
-  LOAD("stageGuard", source + "/lang/olg/stageGuard.olg", "eca",     NULL);
-  LOAD("error",      source + "/lang/olg/error.olg",      "parse",   NULL);
-  LOAD("seffect",    source + "/lang/olg/seffect.olg",    "eca",     NULL);
-  LOAD("aggview1",   source + "/lang/olg/aggview1.olg",   "error",   NULL);
-  LOAD("aggview2",   source + "/lang/olg/aggview2.olg",   "aggview1",NULL);
-  LOAD("aggview3",   source + "/lang/olg/aggview3.olg",   "aggview2",NULL);
-  LOAD("mview",      source + "/lang/olg/mview.olg",      "aggview3",NULL);
-  LOAD("delta",      source + "/lang/olg/delta.olg",      "mview",   NULL);
-  LOAD("localize",   source + "/lang/olg/localize.olg",   "aggview3",NULL);
+  string source = P2_LANG_DIR;
+  LOAD("gevent",     source + "/olg/gevent.olg",     "eca",     NULL);
+  LOAD("stageGuard", source + "/olg/stageGuard.olg", "eca",     NULL);
+  LOAD("error",      source + "/olg/error.olg",      "parse",   NULL);
+  LOAD("seffect",    source + "/olg/seffect.olg",    "eca",     NULL);
+  LOAD("aggview1",   source + "/olg/aggview1.olg",   "error",   NULL);
+  LOAD("aggview2",   source + "/olg/aggview2.olg",   "aggview1",NULL);
+  LOAD("aggview3",   source + "/olg/aggview3.olg",   "aggview2",NULL);
+  LOAD("mview",      source + "/olg/mview.olg",      "aggview3",NULL);
+  LOAD("delta",      source + "/olg/delta.olg",      "mview",   NULL);
+  LOAD("localize",   source + "/olg/localize.olg",   "aggview3",NULL);
 
 /*
-  LOAD("magic", source + "/lang/olg/magic.olg", "parse", NULL);
-  LOAD("stats", source + "/lang/olg/stats.olg", "eca", NULL);
-  LOAD("systemr", source + "/lang/olg/systemr.olg", "stats", NULL);
+  LOAD("magic", source + "/olg/magic.olg", "parse", NULL);
+  LOAD("stats", source + "/olg/stats.olg", "eca", NULL);
+  LOAD("systemr", source + "/olg/systemr.olg", "stats", NULL);
 */
 }
 

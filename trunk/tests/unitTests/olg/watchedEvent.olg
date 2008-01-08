@@ -20,6 +20,6 @@
 
 a am_alive(@I) :- periodic(@I, E, 1, 1).
 
-watchmod(am_alive, "c").
+watch(am_alive).
 
 

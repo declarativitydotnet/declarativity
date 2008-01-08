@@ -9,7 +9,19 @@ SUBDIRS(p2core aggregates functions p2cpp lang elements stages net
 # Main decisions
 SET(BUILD_SHARED_LIBS ON)
 
+# use, i.e. don't skip the full RPATH for the build tree
+SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
 
+# when building, don't use the install RPATH already
+# (but later on when installing)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
+
+# the RPATH to be used when installing
+SET(CMAKE_INSTALL_RPATH "/usr/local/p2/lib")
+
+# add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # find our custom CMake modules
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${P2_SOURCE_DIR}/cmake)
@@ -61,7 +73,11 @@ ADD_DEFINITIONS(-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG)
 
 # ADD_DEFINITIONS(-DBOOST_LIB_DIAGNOSTIC)
 ADD_DEFINITIONS(-DBOOST_ALL_DYN_LINK)
-ADD_DEFINITIONS(-DP2_SOURCE_DIR="\\\"${P2_SOURCE_DIR}\\\"")
+IF (NOT DEFINED P2_LANG_DIR)
+  ADD_DEFINITIONS(-DP2_LANG_DIR="\\\"${P2_SOURCE_DIR}\\\"")
+ELSE (NOT DEFINED P2_LANG_DIR)
+  ADD_DEFINITIONS(-DP2_LANG_DIR="\\\"${P2_LANG_DIR}\\\"")
+ENDIF (NOT DEFINED P2_LANG_DIR)
 
 # Remove tracing by default
 ADD_DEFINITIONS(-DTRACE_OFF)
