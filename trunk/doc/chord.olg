@@ -98,8 +98,7 @@ l3 forwardLookup(@NI,a_MIN<BI>,K,R,E) :- node(@NI,N),
 there are no fingers available with a null min node. Rule l4 ensures
 that only non-trivial destinations receive a lookup message */
 
-l4 lookup(@BI, K, R, E) :- forwardLookup(@NI, BI, K, R, E),
-			f_typeOf(BI) != "null".
+l4 lookup(@BI, K, R, E) :- forwardLookup(@NI, BI, K, R, E), BI != null.
 
 
 
@@ -143,8 +142,7 @@ f1 fFix(@NI,E,I) :- periodic(@NI,E,FINGERFIXPERIOD),
 
 f2 fFixEvent(@NI,E,I) :- fFix(@NI,E,I).
 
-f3 lookup(@NI,K,NI,E) :- fFixEvent(@NI,E,I), node(@NI,N), K:=0x1I << I +
-	N.
+f3 lookup(@NI,K,NI,E) :- fFixEvent(@NI,E,I), node(@NI,N), K:=0x1I << N + I.
 
 f4 eagerFinger(@NI,I,B,BI) :- fFix(@NI,E,I),
 	lookupResults(@NI,K,B,BI,E).
