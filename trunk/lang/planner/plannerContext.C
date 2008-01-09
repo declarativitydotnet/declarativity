@@ -545,7 +545,7 @@ namespace compile {
         oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
         oss << indent << "\trr = RoundRobin(\"deltaRR_" << eventName << "\", 2);\n";
         oss << indent << "\tUpdate(\"update_"<<eventName<<"\",\""<<eventName<<"\") -> ";
-        if (watched(eventName, "a")) {
+        if (watched(eventName, "i")) {
           oss << "Print(\"InsertEvent: RULE "
               << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") -> "; 
         }

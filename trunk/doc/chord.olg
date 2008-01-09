@@ -142,7 +142,7 @@ f1 fFix(@NI,E,I) :- periodic(@NI,E,FINGERFIXPERIOD),
 
 f2 fFixEvent(@NI,E,I) :- fFix(@NI,E,I).
 
-f3 lookup(@NI,K,NI,E) :- fFixEvent(@NI,E,I), node(@NI,N), K:=0x1I << N + I.
+f3 lookup(@NI,K,NI,E) :- fFixEvent(@NI,E,I), node(@NI,N), K:= N + (0x1I << I).
 
 f4 eagerFinger(@NI,I,B,BI) :- fFix(@NI,E,I),
 	lookupResults(@NI,K,B,BI,E).
@@ -150,7 +150,7 @@ f4 eagerFinger(@NI,I,B,BI) :- fFix(@NI,E,I),
 f5 finger(@NI,I,B,BI) :- eagerFinger(@NI,I,B,BI).
 
 f6 eagerFinger(@NI,I,B,BI) :- node(@NI,N), eagerFinger(@NI,I1,B,BI),
-	I:=I1 + 1, K:=0x1I << I + N, K in (N,B), BI != NI.
+	I:=I1 + 1, K:= N + (0x1I << I), K in (N,B), BI != NI.
 
 f7 delete fFix(@NI,E,I1) :- eagerFinger(@NI,I,B,BI), fFix(@NI,E,I1), I >
 	0, I1 == I - 1.
@@ -161,7 +161,7 @@ f8 nextFingerFix(@NI,0) :- eagerFinger(@NI,I,B,BI),
 f9 nextFingerFix(@NI,I) :- node(@NI,N), 
 			   eagerFinger(@NI,I1,B,BI), 
 			   I:=I1 + 1, 
-			   K:=0x1I << I + N,
+			   K:= N + (0x1I << I),
 			   K in (B,N), 
 			   NI != BI.
 
