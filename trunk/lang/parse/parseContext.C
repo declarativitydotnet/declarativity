@@ -993,7 +993,7 @@ namespace compile {
   
       watchTp->append(Val_Str::mk(name)); // Watch name
       if (_modifiers == "") 
-        watchTp->append(Val_Null::mk()); // Watch modifier
+        watchTp->append(Val_Str::mk("")); // Watch modifier
       else
         watchTp->append(Val_Str::mk(_modifiers)); // Watch name
       // TODO Add a field for the modifiers (also in the watch table)

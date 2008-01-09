@@ -109,7 +109,8 @@ namespace compile {
             (*theWatchSpec)[catalog->attribute(WATCH,
                                                "MOD")]->toString();
           //cout << "The watch modifieer is " << theWatchModifier << "\n";
-          if (theWatchModifier.find(mod) == theWatchModifier.npos) {
+          if ((theWatchModifier.find(mod) == theWatchModifier.npos) &&
+              !(theWatchModifier == "")) {
             // Didn't find it
             return false;
           } else {
