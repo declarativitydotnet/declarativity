@@ -103,7 +103,9 @@ public:
       lookup(Key, TuplePtr) should be used instead for peformance
       reasons.  */
   Iterator
-  lookup(Key& lookupKey, Key& indexKey, TuplePtr t);
+  lookup(const Key& lookupKey,
+         const Key& indexKey,
+         TuplePtr t);
 
 
   /** Looks up tuple t in the index defined by indexKey.  If no such
@@ -117,7 +119,8 @@ public:
       slightly faster than that method since it does not perform the
       projection. */
   Iterator
-  lookup(Key& indexKey, TuplePtr t);
+  lookup(const Key& indexKey,
+         TuplePtr t);
 
 
   /**

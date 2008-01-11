@@ -444,8 +444,8 @@ Table2::flush()
 ////////////////////////////////////////////////////////////
 
 Table2::Iterator
-Table2::lookup(Table2::Key& lookupKey,
-               Table2::Key& indexKey,
+Table2::lookup(const Table2::Key& lookupKey,
+               const Table2::Key& indexKey,
                TuplePtr t)  
 {
   // Ensure we're operating on the correct view of the table as of right
@@ -457,7 +457,7 @@ Table2::lookup(Table2::Key& lookupKey,
 
 
 Table2::Iterator
-Table2::lookup(Table2::Key& indexKey,
+Table2::lookup(const Table2::Key& indexKey,
                TuplePtr t)  
 {
   // Ensure we're operating on the correct view of the table as of right
