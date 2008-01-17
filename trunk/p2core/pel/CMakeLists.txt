@@ -30,7 +30,7 @@ ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/pel_opcode_decls.gen.h
                           ${CMAKE_CURRENT_SOURCE_DIR}/pel_opcode_descriptions.gen.txt
                    COMMAND ${PYTHON_EXECUTABLE} 
                    ARGS ${CMAKE_CURRENT_SOURCE_DIR}/pel_gen.py
-                   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/pel_gen.py
+		   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pel_gen.py
                    COMMENT "Generating PEL lexer")
 
 
