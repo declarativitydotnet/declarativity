@@ -57,20 +57,20 @@ def script_output(stdout):
 	i =1
 	result = 1
 
-	for line in lines:
-		if i == 1:
+	for line in lines: # Keep in mind the lines are in alpha-sorted order
+		if i == 3:
 			p = re.compile(r"""
-				(^[#][#] Print\[SendAction: \s* RULE \s* q5]: \s* 
+				(^[#][#] Print\[SendAction: \s* RULE \s* q5\]: \s* 
 				\[foundOtherTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
                         	""", re.VERBOSE)
-		elif i == 2:
+		elif i == 1:
 			p = re.compile(r"""
-				(^[#][#] Print \[SendAction: \s* RULE \s* q3\]: \s* 
+				(^[#][#] Print\[SendAction: \s* RULE \s* q3\]: \s* 
 				\[foundTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
                                 """, re.VERBOSE)
-		elif i == 3:
+		elif i == 2:
 			p = re.compile(r"""
-				(^[#][#] Print \[SendAction: \s* RULE \s* q3\]: \s* 
+				(^[#][#] Print\[SendAction: \s* RULE \s* q3\]: \s* 
 				\[foundTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
                                 """, re.VERBOSE)
 		else:
@@ -81,6 +81,8 @@ def script_output(stdout):
         	if flag:
         		i = i+1
        	 	else:
+			print "Match failed on line ", i
+			print "line is ", line
                 	result = 0
                 	break
 	
