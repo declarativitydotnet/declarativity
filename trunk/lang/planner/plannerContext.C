@@ -500,7 +500,7 @@ namespace compile {
         oss << indent << "graph event(1, 1, \"h/l\", \"-/-\") {\n";
         oss << indent << "\tinput -> " << "Queue(\"" << eventName << "\", 1000) -> \n"; 
         if (watched(eventName, "c")) {
-          oss << indent << "\tPrint(\"RecvEvent RULE " 
+          oss << indent << "\tPrint(\"RecvEvent: RULE " 
               << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         }
         oss << indent << "\toutput;\n};\n";
@@ -513,7 +513,7 @@ namespace compile {
         oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
         oss << indent << "\tRefresh(\"refresh_" << eventName << "\", \"" << eventName << "\") -> \n";
         if (watched(eventName, "r")) {
-          oss << indent << "\tPrint(\"RefreshEvent RULE "
+          oss << indent << "\tPrint(\"RefreshEvent: RULE "
               << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         }
         oss << indent << "\toutput;\n";
@@ -524,7 +524,7 @@ namespace compile {
         oss << indent << "graph event(0, 1, \"/l\", \"/-\") {\n";
         oss << indent << "\tRemoved(\"delete_" << eventName << "\", \"" << eventName << "\") -> \n";
         if (watched(eventName, "d")) {
-          oss << indent << "\tPrint(\"DeleteEdvent RULE "
+          oss << indent << "\tPrint(\"DeleteEvent: RULE "
               << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
         }
         oss << indent << "\toutput;\n";

@@ -15,22 +15,22 @@
 # Assumption - program is running at localhost:10000
 #
 # Expected output - (the order of the tuples should be same as listed below) ******** (DONT KNOW WHETHER abcd SHOULD BE FIRST or 1234)
-#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, a)]
-#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, b)]
-#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, c)]
-#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, d)]
-#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, 1)]
-#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, 2)]
-#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, 3)]
-#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, 4)]
-#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, a)]
-#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, b)]
-#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, c)]
-#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, d)]
-#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, 1)]
-#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, 2)]
-#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, 3)]
-#	##Print[RecvEvent RULE r2]:  [outToken(localhost:10000, 4)]
+#	##Print[RecvEvent: RULE r2]:  [outToken(localhost:10000, a)]
+#	##Print[RecvEvent: RULE r2]:  [outToken(localhost:10000, b)]
+#	##Print[RecvEvent: RULE r2]:  [outToken(localhost:10000, c)]
+#	##Print[RecvEvent: RULE r2]:  [outToken(localhost:10000, d)]
+#	##Print[RecvEvent: RULE r2]:  [outToken(localhost:10000, 1)]
+#	##Print[RecvEvent: RULE r2]:  [outToken(localhost:10000, 2)]
+#	##Print[RecvEvent: RULE r2]:  [outToken(localhost:10000, 3)]
+#	##Print[RecvEvent: RULE r2]:  [outToken(localhost:10000, 4)]
+#	##Print[RecvEvent: RULE r2]:  [outToken(localhost:10000, a)]
+#	##Print[RecvEvent: RULE r2]:  [outToken(localhost:10000, b)]
+#	##Print[RecvEvent: RULE r2]:  [outToken(localhost:10000, c)]
+#	##Print[RecvEvent: RULE r2]:  [outToken(localhost:10000, d)]
+#	##Print[RecvEvent: RULE r2]:  [outToken(localhost:10000, 1)]
+#	##Print[RecvEvent: RULE r2]:  [outToken(localhost:10000, 2)]
+#	##Print[RecvEvent: RULE r2]:  [outToken(localhost:10000, 3)]
+#	##Print[RecvEvent: RULE r2]:  [outToken(localhost:10000, 4)]
 #
 #
 ####################################
@@ -73,7 +73,7 @@ def script_output(stdout):
         for line in lines:
                 if j%2 == 0:
 			p = re.compile(r"""
-				(^[#][#] Print \[RecvEvent \s* RULE \s* r2\]: \s* 
+				(^[#][#] Print \[RecvEvent: \s* RULE \s* r2\]: \s* 
 				\[outToken\(localhost:10000, \s* """ + 
 				str(i) + 
 				"""\)\])
@@ -81,7 +81,7 @@ def script_output(stdout):
 		else:
 			#print letters[i-1]
 			p = re.compile(r"""
-                               (^[#][#] Print \[RecvEvent \s* RULE \s* r2\]: \s*                                 
+                               (^[#][#] Print \[RecvEvent: \s* RULE \s* r2\]: \s*                                 
 				\[outToken\(localhost:10000, \s* """ + 
                                 letters[i-1] + 
                                 """\)\])

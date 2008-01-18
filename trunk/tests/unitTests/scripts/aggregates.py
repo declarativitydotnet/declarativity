@@ -71,13 +71,13 @@ def script_output(stdout_20202, stdout_20203, stdout_20204):
 		whole_output_20202 = whole_output_20202 + line
 
 	p = re.compile(r"""
-		([#][#]Print\[RecvEvent \s* RULE \s* d2\]: \s*  \[smallestNeighborOf\(localhost:20202, \s* localhost:20203\)\]
+		([#][#]Print\[RecvEvent: \s* RULE \s* d2\]: \s*  \[smallestNeighborOf\(localhost:20202, \s* localhost:20203\)\]
  		.*
-		[#][#]Print\[RecvEvent \s* RULE \s* d2\]: \s* \[smallestNeighborOf\(localhost:20202, \s* localhost:20204\)\]
+		[#][#]Print\[RecvEvent: \s* RULE \s* d2\]: \s* \[smallestNeighborOf\(localhost:20202, \s* localhost:20204\)\]
 		|
-		[#][#]Print\[RecvEvent \s* RULE \s* d2\]: \s* \[smallestNeighborOf\(localhost:20202, \s* localhost:20204\)\]
+		[#][#]Print\[RecvEvent: \s* RULE \s* d2\]: \s* \[smallestNeighborOf\(localhost:20202, \s* localhost:20204\)\]
 		.*
-		[#][#]Print\[RecvEvent \s* RULE \s* d2\]: \s*  \[smallestNeighborOf\(localhost:20202, \s* localhost:20203\)\])
+		[#][#]Print\[RecvEvent: \s* RULE \s* d2\]: \s*  \[smallestNeighborOf\(localhost:20202, \s* localhost:20203\)\])
 		""", re.VERBOSE|re.DOTALL)
 
 	flag = p.search(output)
@@ -93,13 +93,13 @@ def script_output(stdout_20202, stdout_20203, stdout_20204):
 		whole_output_20203 = whole_output_20203 + line
 
         p = re.compile(r"""
-		([#][#]Print\[RecvEvent \s* RULE \s* d2\]: \s* \[smallestNeighborOf\(localhost:20203, \s* localhost:20202\)\]
+		([#][#]Print\[RecvEvent: \s* RULE \s* d2\]: \s* \[smallestNeighborOf\(localhost:20203, \s* localhost:20202\)\]
 		.*
-		[#][#]Print\[RecvEvent \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20203, \s* localhost:20204\)\]
+		[#][#]Print\[RecvEvent: \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20203, \s* localhost:20204\)\]
 		|
-		[#][#]Print\[RecvEvent \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20203, \s* localhost:20204\)\]
+		[#][#]Print\[RecvEvent: \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20203, \s* localhost:20204\)\]
 		.*
-		[#][#]Print\[RecvEvent \s* RULE \s* d2\]: \s* \[smallestNeighborOf\(localhost:20203, \s* localhost:20202\)\])
+		[#][#]Print\[RecvEvent: \s* RULE \s* d2\]: \s* \[smallestNeighborOf\(localhost:20203, \s* localhost:20202\)\])
                 """, re.VERBOSE|re.DOTALL)
 
         flag = p.search(output)
@@ -115,13 +115,13 @@ def script_output(stdout_20202, stdout_20203, stdout_20204):
 		whole_output_20204 = whole_output_20204 + line
         
 	p = re.compile(r"""
-		([#][#]Print\[RecvEvent \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20204, \s* localhost:20203\)\]
+		([#][#]Print\[RecvEvent: \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20204, \s* localhost:20203\)\]
 		.*
-		[#][#]Print\[RecvEvent \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20204, \s* localhost:20202\)\]
+		[#][#]Print\[RecvEvent: \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20204, \s* localhost:20202\)\]
 		|
-		[#][#]Print\[RecvEvent \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20204, \s* localhost:20202\)\]
+		[#][#]Print\[RecvEvent: \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20204, \s* localhost:20202\)\]
 		.*
-		[#][#]Print\[RecvEvent \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20204, \s* localhost:20203\)\])	
+		[#][#]Print\[RecvEvent: \s* RULE \s* d1\]: \s* \[largestNeighborOf\(localhost:20204, \s* localhost:20203\)\])	
                 """, re.VERBOSE|re.DOTALL)
 
 	flag = p.search(output)

@@ -15,7 +15,7 @@
 # Assumption - program is running at localhost:10000
 #
 #Expected output - (Order does not vary. E is a random number) 
-#	##Print[RecvEvent RULE q2]:  [insertEvent(localhost:10000, E)]
+#	##Print[RecvEvent: RULE q2]:  [insertEvent(localhost:10000, E)]
 #	##Print[AddAction: RULE rule_table_add]:  [table(localhost:10000, E)]
 #
 #
@@ -53,7 +53,7 @@ def script_output(stdout):
                         output = output + line
 
 	p = re.compile(r"""
-		(^[#][#] Print\[RecvEvent \s* RULE \s* q2\]: \s* \[insertEvent\(localhost:10000, \s* [0-9]+\)\] \s*
+		(^[#][#] Print\[RecvEvent: \s* RULE \s* q2\]: \s* \[insertEvent\(localhost:10000, \s* [0-9]+\)\] \s*
 		[#][#] Print\[AddAction: \s* RULE \s* rule_table_add\]: \s* \[table\(localhost:10000, \s* [0-9]+\)\])
 		""", re.VERBOSE)
 	

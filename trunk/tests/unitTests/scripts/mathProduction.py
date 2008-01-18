@@ -60,27 +60,27 @@ def script_output(stdout):
 	for line in lines:
 		if i == 1:
 			p = re.compile(r"""
-				(^[#][#] Print\[RecvEvent \s* RULE \s* constantInclusion\]: \s*
+				(^[#][#] Print\[RecvEvent: \s* RULE \s* constantInclusion\]: \s*
 				\[constantInclusion\(localhost:10000\)\])
                         	""", re.VERBOSE)
 		elif i == 2:
 			p = re.compile(r"""
-				(^[#][#]Print\[RecvEvent \s* RULE \s* inclusion\]: \s*
+				(^[#][#]Print\[RecvEvent: \s* RULE \s* inclusion\]: \s*
 				\[inclusion\(localhost:10000\)\])
                                 """, re.VERBOSE)
 		elif i == 3:
 			p = re.compile(r"""
-                                (^[#][#] Print\[RecvEvent \s* RULE \s* notConstantInclusion\]: \s*
+                                (^[#][#] Print\[RecvEvent: \s* RULE \s* notConstantInclusion\]: \s*
 				\[notConstantInclusion\(localhost:10000\)\])
                                 """, re.VERBOSE)
 		elif i == 4:
 			p = re.compile(r"""
-				(^[#][#] Print\[RecvEvent \s* RULE \s* notInclusion\]: \s*
+				(^[#][#] Print\[RecvEvent: \s* RULE \s* notInclusion\]: \s*
 				\[notInclusion\(localhost:10000\)\])
                                 """, re.VERBOSE)
 		elif i == 5:
 			p = re.compile(r"""
-                                (^[#][#] Print\[RecvEvent \s* RULE \s* result\]: \s*
+                                (^[#][#] Print\[RecvEvent: \s* RULE \s* result\]: \s*
 				\[result\(localhost:10000, \s* 23\)\])
                                 """, re.VERBOSE)
 		else:

@@ -685,6 +685,17 @@ testPel::vtests[] = {
   TST(STR, SUCCESS, "",	"\"\" lower"),
   TST(STR, SUCCESS, "hello", "\"Hello\" lower"),
   TST(STR, SUCCESS, "string\nwith\rcontrols","\"String\\nwith\\rcontrols\" lower"),
+  // strfind (find first string into second string and return position
+  // or -1 if not found)
+  TST(INT64, STACK_UNDERFLOW, "",	"strfind"),
+  TST(INT64, STACK_UNDERFLOW, "",	"\"a\" strfind"),
+  TST(INT64, SUCCESS, "0",	"\"a\" \"ab\" strfind"),
+  TST(INT64, SUCCESS, "1",	"\"b\" \"ab\" strfind"),
+  TST(INT64, SUCCESS, "-1",	"\"c\" \"ab\" strfind"),
+  TST(INT64, SUCCESS, "0",	"\"ab\" \"abcd\" strfind"),
+  TST(INT64, SUCCESS, "1",	"\"bc\" \"abcd\" strfind"),
+  TST(INT64, SUCCESS, "2",	"\"cd\" \"abcd\" strfind"),
+  TST(INT64, SUCCESS, "-1",	"\"de\" \"abcd\" strfind"),
   // substr (extract substring)
   TST(STR, STACK_UNDERFLOW, "",	"substr"),
   TST(STR, STACK_UNDERFLOW, "",	"\"A\" substr"),

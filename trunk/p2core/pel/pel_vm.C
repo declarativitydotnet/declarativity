@@ -1521,6 +1521,21 @@ DEF_OP(STR_LOWER) {
   std::transform(s.begin(), s.end(), std::back_inserter(result), down);
   stackPush(Val_Str::mk(result));
 }
+DEF_OP(STR_FIND) {
+  // This appears as f_strfind(theStringToLookUp, theStringToLookInto)
+  string theStringToLookInto = pop_string();
+  string theStringToLookUp = pop_string();
+  std::string::size_type pos;
+  int64_t result;
+  pos = theStringToLookInto.find(theStringToLookUp);
+  if (pos == std::string::npos) {
+    // Didn't get it
+    result = -1;
+  } else {
+    result = pos;
+  }
+  stackPush(Val_Int64::mk(result));
+}
 DEF_OP(STR_SUBSTR) {
   int64_t len = pop_signed();
   int64_t pos = pop_signed();
