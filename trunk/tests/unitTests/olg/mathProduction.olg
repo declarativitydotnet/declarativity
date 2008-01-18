@@ -38,13 +38,13 @@ r4 notConstantInclusion(@X) :-
 	periodic(@X, E, 0, 1), !(20 in [3+4*5, 30]).
 
 
-watchmod(result, "c").
+watchmod(result, "s").
 
-watchmod(inclusion, "c").
+watchmod(inclusion, "s").
 
-watchmod(constantInclusion, "c").
+watchmod(constantInclusion, "s").
 
-watchmod(notInclusion, "c").
+watchmod(notInclusion, "s").
 
-watchmod(notConstantInclusion, "c").
+watchmod(notConstantInclusion, "s").
 

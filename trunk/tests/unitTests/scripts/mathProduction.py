@@ -91,6 +91,8 @@ def script_output(stdout):
         	if flag:
         		i = i+1
        	 	else:
+			print "Match failed on line ", i
+			print "line is ", line
                 	result = 1
                 	break
 	

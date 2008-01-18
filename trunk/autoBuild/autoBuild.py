@@ -221,6 +221,7 @@ def run_scripts(runOverLog_path, olg_path, script_path, fileHandle, python_path,
 def run_p2Test(build_path, fileHandle):
 	fileHandle.write("\n\nExecuting p2Test \n")
         fileHandle.write("----------------- \n\n")
+	print "Executing p2Test\n"
         p2Test_path =os.path.join(build_path, 'tests/unitTests/p2Test')
 	#print p2Test_path	
 	args=[p2Test_path]
