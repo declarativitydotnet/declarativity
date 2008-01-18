@@ -23,7 +23,7 @@ namespace aggview2 {
        Events == 0.
 
 
-  av1 rewrite(@A, Pid, Rid, Name, f_flatten(Schema), f_idgen(), f_idgen()) :-
+  av1 rewrite(@A, Pid, Rid, Name, f_tovar(Schema), f_idgen(), f_idgen()) :-
         viewRule(@A, Pid, Rid, Preds),
         ::sys::rule(@A, Rid, Pid, Name, HeadID, _, _, _, _),
         ::sys::predicate(@A, HeadID, Rid, _, _, _, _, Schema, _, _, _),

@@ -22,6 +22,7 @@
 #include "olg_lexer.h"
 #include "tuple.h"
 #include "systemTable.h"
+#include "refTable.h"
 #include "val_tuple.h"
 #include "val_vector.h"
 #include "val_matrix.h"
@@ -1253,6 +1254,9 @@ namespace compile {
       if(compoundRewrite && _versioned){
 	compile::Context::materializedTables->insert(Val_Str::mk(scopedName));
       }      
+      if (_lifetime == CommonTable::NO_EXPIRATION && _size == 0) {
+        return RefTable::mk(*catalog, scopedName, _lifetime, _size, _keys, ListPtr(), parentKey);
+      }
       return Table2::mk(*catalog,scopedName,_lifetime, _size, _keys, ListPtr(), parentKey);
     }
 
