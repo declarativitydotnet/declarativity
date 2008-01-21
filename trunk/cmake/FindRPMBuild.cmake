@@ -108,7 +108,7 @@ rm -rf build_tree
 mkdir build_tree
 cd build_tree
 cmake -DP2_LANG_DIR:STATIC=%{prefix}/lang -DCMAKE_INSTALL_PREFIX=%{rpmprefix} ../%{srcdirname}
-make -j 8
+make
   
 %install 
 cd ../build_tree

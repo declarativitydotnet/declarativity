@@ -8,7 +8,7 @@ sys.path.append(os.path.join(os.getcwd(), "lib")) # NOTE: don't changeme!
 import emulab
 import mkns2
 
-DEFAULT_EXPRARGS = ["-i", "-E", "Run experiement script", "-p", "P2"]
+DEFAULT_EXPRARGS = ["-i", "-w", "-E", "Run experiement script", "-p", "P2"]
 
 ##
 # Print the usage statement to stdout.
@@ -16,8 +16,8 @@ DEFAULT_EXPRARGS = ["-i", "-E", "Run experiement script", "-p", "P2"]
 def usage():
     print "Run experiment on Emulab."
     print ("Usage: " + sys.argv[0]
-                     + " [-h] [-l login] [-s script] [-r p2-rpm-path] name "
-                     + "(-n nsfile | routers hosts)")
+                     + " [-h] [-l login] [-s script] [-r p2-rpm-path] "
+                     + "(-n nsfile | routers hosts) name")
     print
     print "Options:"
     print "  -h, --help \t  Display this help message"
@@ -65,6 +65,7 @@ try:
             rpm = val
             pass
         elif opt in ("-n", "--nsfile"):
+            print "NSFILE", val
             nsfile = val
             pass
         pass
@@ -81,10 +82,12 @@ if len(req_args) < 1:
     pass
 
 ns = None
-if nsfile:
-    f = open(ns, 'r')
+name = None
+if nsfile and len(req_args) == 1:
+    f = open(nsfile)
     ns = f.read()
     f.close()
+    name = req_args[0]
     print ns
 elif len(req_args) != 3:
     usage()
@@ -99,8 +102,9 @@ else:
         ns2argv.append("-p")
         ns2argv.append(script)
 
-    ns2argv.append(req_args[1]) # nrouters
-    ns2argv.append(req_args[2]) # nhosts
+    ns2argv.append(req_args[0]) # nrouters
+    ns2argv.append(req_args[1]) # nhosts
+    name = req_args[2]          # experiement name
    
     myns = mkns2.ns2(argv=ns2argv)
     ns = myns.apply()
@@ -113,7 +117,7 @@ if not ns:
 
 exprargs = DEFAULT_EXPRARGS
 exprargs.append("-e")
-exprargs.append(req_args[0])
+exprargs.append(name)
 exprargs.append("-n")
 exprargs.append(ns)
 
