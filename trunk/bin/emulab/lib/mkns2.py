@@ -71,6 +71,7 @@ class ns2:
         flags["outfile"] = None
         flags["os"]   = "FC6-UPDATE"
         flags["rpms"] = []
+        flags["script"] = None
         opts, args = getopt.getopt(self.argv, shortopts, longopts)
         for o, v in opts:
             if o in ("-o", "--outfile"):
@@ -80,7 +81,7 @@ class ns2:
             elif o in ("-r", "--rpms"):
                 flags["rpms"].append(v)
             elif o in ("-p", "--prog"):
-                flags["prog"].append(v)
+                flags["script"] = v
             elif o in ("-3", "--link_t3"):
                 linkweights["link_t3"] = float(v)
             elif o in ("-1", "--link_t1"):
