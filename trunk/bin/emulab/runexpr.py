@@ -193,9 +193,8 @@ if flags["make-rpm"] == True:
 elif build_only == True:
     build_rpm(flags["proj"], flags["svn-dir"])
 else:
-    # if build: build_rpm(flags["proj"], flags["svn-dir"])
+    if build: build_rpm(flags["proj"], flags["svn-dir"])
 
-    print req_args
     if flags["nsfile"]:
         experiment(req_args[0], flags["nsfile"], None, None, 
                    os.path.join(flags["rpm-dir"], flags["rpm-file"]), flags["prog"])
