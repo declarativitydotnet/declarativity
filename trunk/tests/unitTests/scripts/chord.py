@@ -70,7 +70,7 @@ try:
 except getopt.GetoptError:
     usage()
     sys.exit(1)
-flags = {"olg_path" : "/usr/local/p2/unitTests/chord.olg", 
+flags = {"olg_path" : "/usr/local/p2/unitTests/olg/chord.olg", 
          "exe_path" : "/usr/local/p2/bin/runStagedOverlog",
          "time"     : 600}
 
