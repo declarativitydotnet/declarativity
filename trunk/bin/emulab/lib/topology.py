@@ -153,7 +153,7 @@ class Topology:
         if not self.script:
             return None
         for h in self.hosts:
-            s.write("tb-set-node-startcmd $node%04d %s\n" % (h, self.script))
+            s.write("tb-set-node-startcmd $node%04d \"sudo python %s\"\n" % (h, self.script))
         return s.getvalue()
 
     def get_ns2_rpms(self):
