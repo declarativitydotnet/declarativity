@@ -43,6 +43,9 @@ def usage():
 
 # Function to parse the output file and check whether the output matches the expected value
 def script_output(stdout):
+    hostname = socket.gethostname().split('.')[0]
+    log = open("/proj/P2/logs/%s.log" % (hostname), 'w')
+
     for line in stdout.readlines():
         p = re.compile(r"""
             ^[#][#]Print\[InsertEvent: \s* RULE \s* .*\]: \s* \[bestSucc\(
@@ -53,7 +56,7 @@ def script_output(stdout):
                            """, re.VERBOSE)
         if p.match(line):
             bestSucc = [x for x in p.split(line) if x]
-            print "MATCH: ", bestSucc
+            print >> log, bestSucc
 
 #Function to kill the child after a set time
 def kill_pid(stdout, pid):

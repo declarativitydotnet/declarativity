@@ -20,19 +20,18 @@ login_id = os.environ["USER"]
 def usage():
     print "Run experiment on Emulab."
     print ("Usage: " + sys.argv[0]
-                     + " [-h] [-b] [-B] [-m] [-l login] [-s script] [-r p2-rpm-path] "
-                     + "(-n nsfile | routers hosts) name")
+                     + " [-h] [[-b] [-B] [-S svn-dir]] [-l login] [-p prog] [-r rpm-path] "
+                     + "expr-name (-n nsfile | routers hosts)")
     print
     print "Options:"
     print "  -h, --help       \t  Display this help message"
     print "  -b, --build      \t  Build before running experiment"
     print "  -B  --build-only \t  Build only"
-    print "  -m  --make-rpm   \t  Make the rpm on Emulab."
     print "  -S  --svn-dir    \t  P2 SVN directory (defaults to svn=https://svn.declarativity.net/trunk)"
     print "  -l, --login      \t  Set the login id (defaults to $USER)"
     print "  -p, --prog       \t  A program/script that each node should run upon startup"
-    print "  -r, --rpm        \t  The path to the p2 rpm"
-    print "  -n, --ns         \t  The path to a ns file"
+    print "  -r, --rpm-path   \t  The path to the p2 rpm"
+    print "  -n, --ns         \t  A ns file to use to setup the experiment"
     print
     print "Required arguments for experiements:"
     print "  name   \t  The experiment name (unique, alphanumeric, no blanks)"
@@ -123,8 +122,6 @@ def experiment(expr_name, nsfile, nrouters=None, nhosts=None, rpm=None, script=N
     
     expr = emulab.startexp(exprargs)
     code = expr.apply()
-    sys.exit(code)
-    
 
 #
 # Process program arguments.
@@ -139,7 +136,7 @@ try:
              "rpm-dir"  : "/proj/P2/rpms",
              "make-rpm" : None,
              "nsfile"   : None,
-             "script"   : None,
+             "prog"     : None,
              "rpm-file" : "p2-fc6-update.rpm",
              "proj"    : "P2"}
     build      = None
@@ -153,9 +150,9 @@ try:
             login_id = val
             pass
         elif opt in ("-p", "--prog"):
-            flags["script"] = val
+            flags["prog"] = val
             pass
-        elif opt in ("-r", "--rpm"):
+        elif opt in ("-r", "--rpm-path"):
             flags["rpm-file"] = val
             pass
         elif opt in ("-m", "--make-rpm"):
@@ -200,9 +197,9 @@ else:
 
     if flags["nsfile"]:
         experiment(req_args[0], flags["nsfile"], None, None, 
-                   os.path.join(flags["rpm-dir"]), flags["rpm-file"], flags["script"])
+                   os.path.join(flags["rpm-dir"], flags["rpm-file"]), flags["prog"])
     elif len(req_args) == 3:
         experiment(req_args[0], None, req_args[1], req_args[2], 
-                   os.path.join(flags["rpm-dir"]), flags["rpm-file"], flags["script"])
+                   os.path.join(flags["rpm-dir"], flags["rpm-file"]), flags["prog"])
     else: usage()
    
