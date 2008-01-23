@@ -1,0 +1,262 @@
+/*
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
+ * 
+ * DESCRIPTION: P2Chord in OverLog
+ *
+ * Execute first node with
+ * tests/runOverLog -o doc/chord.olg -D LANDMARK=\"<myhost>:<myport>\" -D LOCALADDRESS=\"<myhost>:<myport>\" -n <myhost> -p <myport> -D NODEID=<mynodeid>
+ *
+ * Execute joining nodes with
+ * tests/runOverLog -o doc/chord.olg -D LANDMARK=\"<landmarkhost>:<landmarkport>\" -D LOCALADDRESS=\"<myhost>:<myport>\" -n <myhost> -p <myport> -D NODEID=<mynodeid>
+ *
+ * For example, the following starts node localhost:10000 with node ID 0 to join via landmark localhost:10101
+ * tests/runOverLog -o doc/chord.olg -D LANDMARK=\"localhost:10101\" -D LOCALADDRESS=\"localhost:10000\" -n localhost -p 10000 -DNODEID=0x0I
+ *
+ * As a quick and dirty test for ring convergence, add a the watch fact
+ * watchmod(bestSucc, "id").
+ * and run three nodes as follows:
+ *
+ * tests/runOverLog -o doc/chord.olg -D LANDMARK=\"localhost:11111\" -D LOCALADDRESS=\"localhost:11111\" -n localhost -p 11111 -D NODEID=0x0I
+ * and then
+ * 
+ * tests/runOverLog -o doc/chord.olg -D LANDMARK=\"localhost:11111\" -D LOCALADDRESS=\"localhost:22222\" -n localhost -p 22222 -D NODEID=0x222222222222222I
+ *
+ * tests/runOverLog -o doc/chord.olg -D LANDMARK=\"localhost:11111\" -D LOCALADDRESS=\"localhost:33333\" -n localhost -p 33333 -D NODEID=0x333333333333333I
+ *
+ * After roughly 10 sec, the 0-ID node should have the 0x2222222 node as
+ * its best successor, that should have the 0x3333333 node as its best
+ * successor , and that should have the 0x0 node as its best successor.
+ */
+
+/* The base tuples */
+
+materialize(node, infinity, 1, keys(1)).
+materialize(landmark, infinity, 1, keys(1)).
+materialize(finger, 180, 160, keys(2)).
+materialize(uniqueFinger, 180, 160, keys(2)).
+materialize(bestSucc, 180, 1, keys(1)).
+materialize(succ, 30, 100, keys(2)).
+materialize(pred, infinity, 1, keys(1)).
+materialize(join, 10, 5, keys(1)).
+materialize(pendingPing, 10, infinity, keys(3)).  
+materialize(fFix, 180, 160, keys(2)).  
+materialize(nextFingerFix, 180, 1, keys(1)).  
+
+
+/** constants */
+#define SUCCESSORS 4
+#define JOINRETRIES 3
+#define JOINPERIOD 5
+#define STABILIZEPERIOD 5
+#define FINGERFIXPERIOD 10
+#define PINGPERIOD 2
+
+
+watchmod(bestSucc, "id").
+watchmod(succ, "id").
+watchmod(pred, "id").
+watchmod(node, "id").
+
+
+
+/** Preexisting state. My landmark and myself. */
+landmark(LOCALADDRESS, LANDMARK).
+node(LOCALADDRESS, NODEID).
+
+/** All nodes start with the nil predecessor */
+pred(LOCALADDRESS, "NIL", "NIL").
+
+/** Finger fixing starts with the 0th entry */
+nextFingerFix(LOCALADDRESS, 0).
+
+
+/** Lookups */
+
+l1 lookupResults(@R,K,S,SI,E) :- node(@NI,N), lookup(@NI,K,R,E),
+	bestSucc(@NI,S,SI), K in (N,S].
+
+
+l2 bestLookupDist(@NI,K,R,E,a_MIN<D>) :- node(@NI,N), 
+					 lookup(@NI,K,R,E), 
+					 finger(@NI,I,B,BI), 
+					 D := K - B - 1, 
+					 B in (N,K).
+
+l3 forwardLookup(@NI,a_MIN<BI>,K,R,E) :- node(@NI,N),	    
+			       bestLookupDist(@NI,K,R,E,D),
+			       finger(@NI,I,B,BI), 
+			       D == K - B - 1,
+			       B in (N,K).
+
+/** This extra rule is required since l3 will produce an output even if
+there are no fingers available with a null min node. Rule l4 ensures
+that only non-trivial destinations receive a lookup message */
+
+l4 lookup(@BI, K, R, E) :- forwardLookup(@NI, BI, K, R, E), BI != null.
+
+
+
+/** Neighbor Selection */
+
+n0 newSuccEvent(@NI) :- succ(@NI,S,SI).
+
+n2 newSuccEvent(@NI) :- deleteSucc(@NI,S,SI).
+
+n1 bestSuccDist(@NI, a_MIN<D>) :- newSuccEvent(@NI), node(@NI, N),
+	succ(@NI, S, SI), D := S - N - 1.
+
+n3 bestSucc(@NI, S, SI) :- succ(@NI, S, SI),
+	bestSuccDist(@NI,D),
+	node(@NI, N), D == S - N - 1.
+
+n4 finger(@NI,0,S,SI) :- bestSucc(@NI,S,SI).
+
+
+/** Successor eviction */
+
+s1 succCount(@NI,a_COUNT<*>) :- newSuccEvent(@NI),
+				succ(@NI,S,SI).
+
+s2 evictSucc(@NI) :- succCount(@NI,C), 
+		    C > SUCCESSORS.
+
+s3 maxSuccDist(@NI,a_MAX<D>) :- succ(@NI,S,SI),
+				node(@NI,N), 
+				evictSucc(@NI),
+				D:=S - N - 1.
+
+s4 delete succ(@NI,S,SI) :- node(@NI,N), succ(@NI,S,SI),
+	maxSuccDist(@NI,D), D == S - N - 1.
+
+
+/** Finger fixing */
+
+f1 fFix(@NI,E,I) :- periodic(@NI,E,FINGERFIXPERIOD),
+	nextFingerFix(@NI,I).
+
+f2 fFixEvent(@NI,E,I) :- fFix(@NI,E,I).
+
+f3 lookup(@NI,K,NI,E) :- fFixEvent(@NI,E,I), node(@NI,N), K:= N + (0x1I << I).
+
+f4 eagerFinger(@NI,I,B,BI) :- fFix(@NI,E,I),
+	lookupResults(@NI,K,B,BI,E).
+
+f5 finger(@NI,I,B,BI) :- eagerFinger(@NI,I,B,BI).
+
+f6 eagerFinger(@NI,I,B,BI) :- node(@NI,N), eagerFinger(@NI,I1,B,BI),
+	I:=I1 + 1, K:= N + (0x1I << I), K in (N,B), BI != NI.
+
+f7 delete fFix(@NI,E,I1) :- eagerFinger(@NI,I,B,BI), fFix(@NI,E,I1), I >
+	0, I1 == I - 1.
+
+f8 nextFingerFix(@NI,0) :- eagerFinger(@NI,I,B,BI), 
+			   ((I == 159) || (BI == NI)).
+
+f9 nextFingerFix(@NI,I) :- node(@NI,N), 
+			   eagerFinger(@NI,I1,B,BI), 
+			   I:=I1 + 1, 
+			   K:= N + (0x1I << I),
+			   K in (B,N), 
+			   NI != BI.
+
+f10 uniqueFinger(@NI,BI) :- finger(@NI,I,B,BI).
+
+
+/** Churn Handling */
+
+
+/* Insert in entries after a delay. Change join. */
+
+c1 joinEvent(@NI,E) :- periodic(@NI, E, JOINPERIOD, JOINRETRIES).
+
+c2 join(@NI,E) :- joinEvent(@NI,E).
+
+c3 joinReq(@LI,N,NI,E) :- joinEvent(@NI, E),
+	node(@NI, N), 
+	landmark(@NI, LI),
+	LI != NI.
+
+c4 succ(@NI, N, NI) :- landmark(@NI, LI),
+	joinEvent(@NI, E),
+	node(@NI, N), 
+	LI == NI.
+
+c5 lookup(@LI,N,NI,E) :- joinReq(@LI,N,NI,E).
+
+c6 succ(@NI,S,SI) :- join(@NI, E), lookupResults(@NI,K,S,SI,E).
+
+
+
+/** Stabilization */
+
+sb0 stabilizeEvent(@NI) :- periodic(@NI, E, STABILIZEPERIOD).
+
+sb1 succ(@NI,P,PI) :- stabilizeEvent(@NI), node(@NI,N),
+	bestSucc(@NI,S,SI), pred(@SI,P,PI), PI != "NIL", P in (N,S).
+
+sb2 succ(@NI, S1, SI1) :- stabilizeEvent(@NI),
+	succ(@NI, S, SI),
+	succ(@SI, S1, SI1).
+
+sb3 pred(@SI, N, NI) :- stabilizeEvent(@NI), node(@NI, N),
+	succ(@NI, S, SI),
+	pred(@SI, P, PI),
+	node(@SI, N1),
+	((PI == "NIL") || (N in (P, N1))) && (NI != SI).
+
+
+
+/** Ping Nodes */
+
+pp1 pendingPing(@NI, SI, E1, T) :- periodic(@NI, E, PINGPERIOD),
+	succ(@NI, S, SI), E1 := f_rand(), SI != NI, T := f_now().
+
+pp2 pendingPing(@NI, PI, E1, T) :- periodic(@NI, E, PINGPERIOD),
+	pred(@NI, P, PI), E1 := f_rand(), PI != "NIL", PI != NI, T := f_now().
+
+pp3 pendingPing(@NI, FI, E1, T) :- periodic(@NI, E, PINGPERIOD),
+	uniqueFinger(@NI, FI), E1 := f_rand(), FI != NI, T := f_now().
+
+pp4 pingResp(@RI, NI, E) :- pingReq(@NI, RI, E).
+
+pp5 pingReq(@PI, NI, E) :- periodic(@NI, E1, 3),
+	pendingPing(@NI, PI, E, T).
+
+/* Once a ping response arrives, remove all pending pings for the same
+   destination */
+pp6 delete pendingPing(@NI, SI, E1, T) :- pingResp(@NI, SI, E),
+	pendingPing(@NI, SI, E1, T).
+
+
+
+/** Failure Detection */
+
+cm1 nodeFailure(@NI,PI,E1,D) :- periodic(@NI, E, 1),
+	pendingPing(@NI,PI,E1,T),
+	T1 := f_now(),
+	D := T1 - T,
+	D > 7.
+
+cm1a delete pendingPing(@NI,PI,E,T) :- nodeFailure(@NI,PI,E,D),
+	pendingPing(@NI,PI,E,T).
+
+cm2a deleteSucc(@NI,S,SI) :- succ(@NI,S,SI), nodeFailure(@NI,SI,E,D).
+
+cm2b delete succ(@NI,S,SI) :- deleteSucc(@NI,S,SI).
+
+cm3 pred(@NI,"NIL","NIL") :- pred(@NI,P,PI), nodeFailure(@NI,PI,E,D).
+
+cm4 delete finger(@NI,I,B,BI) :- finger(@NI,I,B,BI),
+	nodeFailure(@NI,BI,E,D).
+
+cm6 delete uniqueFinger(@NI,FI) :- uniqueFinger(@NI,FI),
+	nodeFailure(@NI,FI,E,D).
+
+
+
