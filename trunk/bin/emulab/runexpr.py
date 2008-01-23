@@ -62,6 +62,7 @@ def build_rpm(proj, svn):
     p = subprocess.Popen(args)
     p.wait()
     experiment("build", "build.ns")
+    endexpr(proj, "build")
     args=["ssh", login_id + "@node.build." + proj + ".emulab.net", "python", sys.argv[0], "-m"]
     p = subprocess.Popen(args)
     p.wait()
@@ -87,6 +88,12 @@ def do_rpm(rpm):
     args=["sudo", "mv", "/tmp/p2/build/RPM/RPMS/i386/p2-1-1.i386.rpm", rpm]
     p = subprocess.Popen(args)
     exitcode = p.wait()
+
+def endexpr(project, name):
+    exprargs = [project, name]
+    expr = emulab.endexpr(exprargs)
+    code = expr.apply()
+
 
 def experiment(expr_name, nsfile, nrouters=None, nhosts=None, rpm=None, script=None):
     if nsfile:
@@ -201,5 +208,7 @@ else:
     elif len(req_args) == 3:
         experiment(req_args[0], None, req_args[1], req_args[2], 
                    os.path.join(flags["rpm-dir"], flags["rpm-file"]), flags["prog"])
-    else: usage()
+    else: 
+        usage()
+        sys.exit(0)
    
