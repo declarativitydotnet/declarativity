@@ -1,8 +1,8 @@
 namespace localize {
   materialize(programEventInitialized, 1, infinity, keys(2,3)).
   materialize(break, infinity, infinity, keys(2,3,5)).
-  materialize(rulesComplete, 1, infinity, keys(2)).
-  materialize(totalRules, 1, infinity, keys(2)).
+  materialize(rulesComplete, infinity, infinity, keys(2,3)).
+  materialize(totalRules, infinity, infinity, keys(2)).
 
   initialization programEventInitialized(@A, Pid, Rid, HeadFid) :- 
                    programEvent(@A, Pid, _, _, _, _, _, _, _),
@@ -13,21 +13,20 @@ namespace localize {
   begin1 startRuleCounter(@A, Pid, Rid, HeadFid) :-
            programEventInitialized(@A, Pid, Rid, HeadFid).
 
-  begin2 rulesComplete(@A, Pid, 0) :-
-          programEvent(@A, Pid, _, _, _, _, _, _, _).
-
   totalRules totalRules(@A, Pid, a_count<*>) :-
                programEvent(@A, Pid, _, _, _, _, _, _, _),
                ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _).
   
   /** The following rules deal with termination checks */
-  completion1 rulesComplete(@A, Pid, C) :-
-                terminate(@A, Pid, OldRid, NewRid, HeadFid, Terms),
-                rulesComplete(@A, Pid, C2),
-                C := C2 + 1.
+  completion1 rulesComplete(@A, Pid, OldRid) :-
+                terminate(@A, Pid, OldRid, NewRid, HeadFid, Terms).
 
   /* Signal the completion of a rule */
-  completion2 ruleCompletion(@A, Pid, C) :- rulesComplete(@A, Pid, C).
+  completion2 checkFinish(@A, Pid) :- rulesComplete(@A, Pid, Rid).
+
+  completion3 ruleCompletion(@A, Pid, a_count<Rid>) :-
+                checkFinish(@A, Pid), rulesComplete(@A, Pid, Rid).
+
 
   /* Check that we are done with the rewrite by testing the count of
      completed rules with the total number of rules in the program.
@@ -48,11 +47,9 @@ namespace localize {
             Attr := f_getattr("Location", Attributes), 
             FID != HeadFid.
   
-  notrigger rulesComplete(@A, Pid, C) :-
+  notrigger rulesComplete(@A, Pid, Rid) :-
               countLocalVar(@A, Pid, Rid, C1),
-              rulesComplete(@A, Pid, C2),
-              C1 <= 1,
-              C := C2 + 1.
+              C1 <= 1.
   
   
 

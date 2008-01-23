@@ -252,7 +252,6 @@ class reboot:
 	print "    -f    - Power cycle nodes (skip reboot!)";
  	print "    -e    - Reboot all nodes in an experiment";
 	print "  node    - Node to reboot (pcXXX)";
-        wrapperoptions();
         return
     pass
 
@@ -351,7 +350,6 @@ class node_list:
 	print "     -h   - Print physical name of host for virtual nodes";
 	print "     -H   - Like -h, but include node auxtypes";
  	print "     -e   - Project and Experiment ID to list";
-        wrapperoptions();
         return
     pass
 
@@ -405,7 +403,6 @@ class node_avail:
         print
         print "example:"
         print "  $ node_avail -t pc850"
-        wrapperoptions()
         return
 
     pass
@@ -506,7 +503,6 @@ class delay_config:
         print " THRESH=NNN      - Minimum threshold for the average Q size";
         print " LINTERM=NNN     - Packet dropping probability";
         print " Q_WEIGHT=NNN    - For calculating the average queue size\n";
-        wrapperoptions();
         return
 
 #
@@ -601,7 +597,6 @@ class wilink_config:
         print "   Use delay_config to change the traffic shaping parameters"
         print "   on normal links and lans."
         print "***************************************************************"
-        wrapperoptions();
         return
 
 #
@@ -656,7 +651,6 @@ class savelogs:
 	print "savelogs pid eid";
 	print "where:";
  	print "     -e   - Project and Experiment ID";
-        wrapperoptions();
         return
     pass
 
@@ -744,7 +738,6 @@ class portstats:
         print "";
         print "In the output, packets described as 'NUnicast' or 'NUcast' are ";
         print "non-unicast (broadcast or multicast) packets.";
-        wrapperoptions();
         return
     pass
 
@@ -809,7 +802,6 @@ class eventsys_control:
         print "   stop   - Stop the event scheduler";
         print "  start   - Start the event stream from time index 0";
         print " replay   - Replay the event stream from time index 0";
-        wrapperoptions();
         return
     pass
 
@@ -857,7 +849,6 @@ class nscheck:
 	print "nscheck nsfile";
 	print "where:";
 	print " nsfile    - Path to NS file you to wish check for parse errors";
-        wrapperoptions();
         return
     pass
 
@@ -960,7 +951,6 @@ class startexp:
         print "   -p   - The project in which to create the experiment";
         print "   -e   - The experiment name (unique, alphanumeric, no blanks)";
         print "nsfile  - NS file to parse for experiment";
-        wrapperoptions();
         return
     pass
 
@@ -1035,7 +1025,6 @@ class swapexp:
         print "By default, swapexp runs in the background, sending you email ";
         print "when the transition has completed. Use the -w option to wait";
         print "in the foreground, returning exit status. Email is still sent.";
-        wrapperoptions();
         return
     pass
 
@@ -1126,7 +1115,6 @@ class modexp:
         print "existing NS file (the virtual topology is updated). If the";
         print "experiment is swapped in (active), the physical topology is";
         print "also updated, subject to the -r and -s options above";
-        wrapperoptions();
         return
     pass
 
@@ -1194,7 +1182,6 @@ class endexp:
         print ""
         print "The experiment can be terminated when it is currently swapped";
         print "in *or* swapped out.";
-        wrapperoptions();
         return
     pass
 
@@ -1272,7 +1259,6 @@ class expinfo:
         print "     -m   - Show node mapping";
         print "     -l   - Show link info";
         print "     -a   - Show all of the above";
-        wrapperoptions();
         return
     pass
 
@@ -1337,7 +1323,6 @@ class tbuisp:
         print
         print "example:"   
         print "  $ tbuisp upload foo.srec mote1"
-        wrapperoptions()
         return
         
     pass
@@ -1404,7 +1389,6 @@ class expwait:
 	print "where:";
  	print "     -e   - Project and Experiment ID";
         print "     -t   - Maximum time to wait (in seconds).";
-        wrapperoptions();
         return
     pass
 
@@ -1455,7 +1439,6 @@ class tipacl:
 	print "tipacl node";
 	print "where:";
 	print "  node    - Node to get tipacl data for (pcXXX)";
-        wrapperoptions();
         return
     pass
 
@@ -1549,7 +1532,6 @@ class template_commit:
         print "Environment:"
         print "  cwd   The template will be inferred from the current"
         print "        working directory if it is inside a template checkout."
-        wrapperoptions();
         return
     pass
 
@@ -1601,7 +1583,6 @@ class template_export:
         print "  cwd   The template GUID will be inferred from the current"
         print "        working directory, if it is inside the templates's"
         print "        directory (e.g. /proj/foo/templates/10005/18)."
-        wrapperoptions();
         return
     pass
 
@@ -1635,7 +1616,6 @@ class template_checkout:
         print ""
         print "Environment:"
         print "  cwd   The template checkout is placed in the current dir"
-        wrapperoptions();
         return
     pass
 
@@ -1755,7 +1735,6 @@ class template_instantiate:
         print "Environment:"
         print "  cwd   The template GUID will be inferred from the current"
         print "        working directory if it is inside a template checkout."
-        wrapperoptions();
         return
     pass
 
@@ -1824,7 +1803,6 @@ class template_swapin:
         print "  cwd   The template GUID will be inferred from the current"
         print "        working directory, if it is inside the templates's"
         print "        directory (e.g. /proj/foo/templates/10005/18)."
-        wrapperoptions();
         return
     pass
 
@@ -1889,7 +1867,6 @@ class template_swapout:
         print "  cwd   The template GUID will be inferred from the current"
         print "        working directory, if it is inside the templates's"
         print "        directory (e.g. /proj/foo/templates/10005/18)."
-        wrapperoptions();
         return
     pass
 
@@ -1999,7 +1976,6 @@ class template_startrun:
         print "  cwd   The template GUID will be inferred from the current"
         print "        working directory, if it is inside the templates's"
         print "        directory (e.g. /proj/foo/templates/10005/18)."
-        wrapperoptions();
         return
     pass
 
@@ -2106,7 +2082,6 @@ class template_modrun:
         print "  cwd   The template GUID will be inferred from the current"
         print "        working directory, if it is inside the templates's"
         print "        directory (e.g. /proj/foo/templates/10005/18)."
-        wrapperoptions();
         return
     pass
 
@@ -2190,7 +2165,6 @@ class template_stoprun:
         print "  cwd   The template GUID will be inferred from the current"
         print "        working directory, if it is inside the templates's"
         print "        directory (e.g. /proj/foo/templates/10005/18)."
-        wrapperoptions();
         return
     pass
 

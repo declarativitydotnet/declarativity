@@ -67,6 +67,9 @@ TuplePtr CompileStage::simple_action(TuplePtr p)
   ValuePtr nextStage = (*stage)[catalog->attribute(REWRITE, "OUTPUT")];
   TuplePtr program = p->clone(nextStage->toString() + "::programEvent");
   program->set(catalog->attribute(PROGRAM, "STATUS"), nextStage);
+  std::cerr << "COMPILE PROGRAM: " 
+            << (*program)[catalog->attribute(PROGRAM, "NAME")]->toString()
+            << ", next stage to execute " << nextStage->toString() << std::endl;
 
   CommonTablePtr statusTbl = catalog->table(COMPILE_STATUS);
   Iter = statusTbl->lookup(CommonTable::theKey(CommonTable::KEY1), program);

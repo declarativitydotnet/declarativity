@@ -1,3 +1,16 @@
+#
+# * This file is distributed under the terms in the attached LICENSE file.
+# * If you do not find this file, copies can be found by writing to:
+# * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+# * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+# * Or
+# * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776,
+# * Berkeley, CA,  94707. Attention: P2 Group.
+#
+########### Description ###########
+#
+#
+###################################
 #!/usr/bin/env python
 
 import sys
@@ -10,8 +23,12 @@ import subprocess
 import sys
 import shutil
 
+# The default arguments for running an expriment.
+# See emulab.py class startexp for details regarding these
+# default arguments.
 DEFAULT_EXPRARGS = ["-i", "-w", "-E", "Run experiement script", "-p", "P2"]
 
+# Default login ID taken from environment
 login_id = os.environ["USER"]
 
 ##
@@ -44,78 +61,112 @@ def usage():
            + " -s ./run.sh -r /proj/P2/rpms/p2-fc6-update.rpm 4 20")
     return
 
+# This function builds the P2 rpm. It will checkout P2 from the
+# main trunk, and compile that code base on an Emulab node with
+# OS = FC6-UPDATE.
 def build_rpm(proj, svn):
-    args=["svn", "co", svn, "p2"]
+    args=["svn", "co", svn, "p2"]         # SVN checkout of p2 trunk
     p = subprocess.Popen(args)
     exitcode = p.wait()
-    args=["tar", "-cvf", "p2.tar", "p2"]
+    args=["tar", "-cvf", "p2.tar", "p2"]  # Tar the p2 directory just checkout
     p = subprocess.Popen(args)
     p.wait()
-    args=["gzip", "-f", "p2.tar"]
+    args=["gzip", "-f", "p2.tar"]         # Gzip the p2 tar file
     p = subprocess.Popen(args)
     p.wait()
-    shutil.rmtree("./p2")
+    shutil.rmtree("./p2")                 # Clean up checkout directory
+
+    # Copy gzip file of p2 over to emulab.
     args=["scp", "p2.tar.gz", login_id + "@users.emulab.net:"]
     p = subprocess.Popen(args)
     p.wait()
+
+    # Copy myself over to emulab
     args=["scp", sys.argv[0], login_id + "@users.emulab.net:"]
     p = subprocess.Popen(args)
     p.wait()
-    experiment("build", "build.ns")
-    endexpr(proj, "build")
+
+    # Create an experiement using the build.ns file, which 
+    # should be a single node with OS = FC6-UPDATE
+    experiment("build", "build.ns") # NOTE: Blocks until node is swapped in.
+
+    # Execute myself on the just created Emulab node with argument '-m', which
+    # simply calls the 'do_rpm' method. 
+    # ASSUMES: node name in build.ns is 'node.build.P2.emulab.net'
     args=["ssh", login_id + "@node.build." + proj + ".emulab.net", "python", sys.argv[0], "-m"]
     p = subprocess.Popen(args)
     p.wait()
 
+    # No longer need build experiement since 'do_rpm' copies newly created
+    # rpm to the /proj/P2/rpms directory. 
+    endexpr(proj, "build") 
+
+# This method is called when given the '-m' arguement. The '-m' arguement
+# is not listed in the help menu because this routine should only 
+# be called on Emulab via an instance of this program on the local node.
+# That is this method should be called from 'build_rpm' only.
 def do_rpm(rpm):
+    # Install 'cmake' on the Emulab node
     args=["sudo", "yum", "-y", "install", "cmake"]
     p = subprocess.Popen(args)
     exitcode = p.wait()
+
+    # Untar the p2 tar file to the /tmp directory
     args=["tar", "-xvf", "p2.tar.gz", "-C", "/tmp"]
     p = subprocess.Popen(args)
     exitcode = p.wait()
+
+    # Ensure we have a build directory under p2.
     if os.access("/tmp/p2/build", os.F_OK) == False:
         args=["mkdir", "/tmp/p2/build"]
         p = subprocess.Popen(args)
         exitcode = p.wait()
-    os.chdir("/tmp/p2/build")
-    args=["cmake", ".."]
+    os.chdir("/tmp/p2/build")      # Go to build directory
+    args=["cmake", ".."]           # Execute cmake
     p = subprocess.Popen(args)
     exitcode = p.wait()
-    args=["make", "p2_rpm"]
+    args=["make", "p2_rpm"]       # make the rpm
     p = subprocess.Popen(args)
     exitcode = p.wait()
+ 
+    # Move the newly created RPM file to the 
+    # project RPM directory e.g., /proj/P2/rpms/p2-fc6-update.rpm
     args=["sudo", "mv", "/tmp/p2/build/RPM/RPMS/i386/p2-1-1.i386.rpm", rpm]
     p = subprocess.Popen(args)
     exitcode = p.wait()
 
+# Terminate an experiment, does not block.
 def endexpr(project, name):
     exprargs = [project, name]
-    expr = emulab.endexpr(exprargs)
+    expr = emulab.endexp(exprargs)
     code = expr.apply()
 
-
+# Create an experiement. Will block until all nodes have been swapped in.
 def experiment(expr_name, nsfile, nrouters=None, nhosts=None, rpm=None, script=None):
     if nsfile:
+        # We have an nsfile, it will be used to start the new experiement.
         f = open(nsfile)
         ns = f.read()
         f.close()
     else:
+        # No nsfile so we need to generate one using Brent's stuff.
         ns2argv = []
         if rpm:
+            # Make sure all nodes install the rpm.
             ns2argv.append("-r")
             ns2argv.append(rpm)
         if script:
+            # Make sure all nodes run the script at startup.
             ns2argv.append("-p")
             ns2argv.append(script)
     
         ns2argv.append(nrouters) # nrouters
         ns2argv.append(nhosts)   # nhosts
        
+        # Call into Brent's code to create an NS description
         myns = mkns2.ns2(argv=ns2argv)
         ns = myns.apply()
-    
-    
+
     if not ns: 
         print "ERROR: No nsfile given or generated!"
         sys.exit(2)
@@ -123,9 +174,9 @@ def experiment(expr_name, nsfile, nrouters=None, nhosts=None, rpm=None, script=N
     
     exprargs = DEFAULT_EXPRARGS
     exprargs.append("-e")
-    exprargs.append(expr_name)
+    exprargs.append(expr_name) # Experiement name
     exprargs.append("-n")
-    exprargs.append(ns)
+    exprargs.append(ns)        # String of the NS file
     
     expr = emulab.startexp(exprargs)
     code = expr.apply()
