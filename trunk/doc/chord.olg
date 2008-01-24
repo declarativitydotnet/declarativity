@@ -241,7 +241,7 @@ cm1 nodeFailure(@NI,PI,E1,D) :- periodic(@NI, E, 1),
 	pendingPing(@NI,PI,E1,T),
 	T1 := f_now(),
 	D := T1 - T,
-	D > 7.
+	D > 20.
 
 cm1a delete pendingPing(@NI,PI,E,T) :- nodeFailure(@NI,PI,E,D),
 	pendingPing(@NI,PI,E,T).
