@@ -20,10 +20,11 @@ namespace mview {
         predCount(@A, Pid, Rid, Preds),
         ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
         ::sys::predicate(@A, PredID, Rid, _, Name, Tid, _, _, _, _, _),
+        Preds > 0,
         Name != "sys::compileStatus",
-        Preds > 1, HeadID != PredID.
+        HeadID != PredID.
 
-  /* Put the DELTA predicate in the first postiion. */
+  /* Put the DELTA predicate in the first postion. */
   mv3 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, "DELTA", Schema, 1, AM, New) :-
         rewrite(@A, Pid, Rid, DeltaPredID, NewRid, NewHeadID),
         ::sys::predicate(@A, DeltaPredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, AM, New).

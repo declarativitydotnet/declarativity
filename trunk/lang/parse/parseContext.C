@@ -1254,7 +1254,7 @@ namespace compile {
       if(compoundRewrite && _versioned){
 	compile::Context::materializedTables->insert(Val_Str::mk(scopedName));
       }      
-      if (_lifetime == CommonTable::NO_EXPIRATION && _size == 0) {
+      if (_lifetime == CommonTable::NO_EXPIRATION && _size == CommonTable::NO_SIZE) {
         return RefTable::mk(*catalog, scopedName, _lifetime, _size, _keys, ListPtr(), parentKey);
       }
       return Table2::mk(*catalog,scopedName,_lifetime, _size, _keys, ListPtr(), parentKey);

@@ -99,7 +99,7 @@ def build_rpm(proj, svn):
 
     # No longer need build experiement since 'do_rpm' copies newly created
     # rpm to the /proj/P2/rpms directory. 
-    endexpr(proj, "build") 
+    #endexpr(proj, "build") 
 
 # This method is called when given the '-m' arguement. The '-m' arguement
 # is not listed in the help menu because this routine should only 
