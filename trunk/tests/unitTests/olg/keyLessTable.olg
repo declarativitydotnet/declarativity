@@ -23,6 +23,8 @@
 materialize(keyLess, infinity, infinity, keys()).
 
 watchmod(keyLessCount, "").
+watchmod(aggview2_r3, "").
+
 
 r1 event(@NI) :- periodic(@NI, E, 1, 5).
 

@@ -1962,6 +1962,155 @@ to the input port $0$ of the existing 'unmarshal' element.
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{autoBuild}
+
+Autobuild is a utility around which P2's regression tests are
+constructed. We repeat here the reference guide for the utility.
+
+\subsection{Name}
+
+autoBuild.py provides functionality to build a specific revision of a
+branch in P2 and run regression tests with that build. Also provides the
+option to run regression tests with a local build.
+
+
+\subsection{Synopsis}
+
+\begin{verbatim}
+python autoBuild.py  [-C config file directory path | -F config file path]
+\end{verbatim}
+
+
+\subsection{Description}
+
+autoBuild.py provides two functionalities:
+
+\begin{enumerate}
+\item checkout a specific revision or latest revision (default) of a
+branch from the svn repository and build
+\item Run regression tests with the build from step 1 or a local build
+\end{enumerate}
+
+autoBuild.py requires a configuration file to set parameters that are
+used for building P2 and running regression tests.
+
+The options are:
+\begin{description}
+\item[-F] Specify the path of a specific configuration file
+\item[-C] Specify the path of a directory that contains configuration
+files. This allows multiple configurations file to be read. Builds with
+respect to each configuration file is made and regression tests are run
+with respect to each build.
+\end{description}
+
+\subsection{Configuration File}
+
+The configuration file contains a list of parameters that are used for
+building P2 and running regression tests with respect to the build.
+
+A configuration file has the following parameters:
+
+\begin{description}
+\item[branch] Specify svn url of the P2 branch that has to be
+             built. E.g. \url{https://svn.declarativity.net/trunk}
+
+\item[revision] Specify which svn revision should be used. If no value
+             is specified then the latest revision is checked out.
+
+\item[\texttt{keep\_build}] Option to keep the build locally. Has no effect if
+             \texttt{run\_build} is No.
+\begin{description}
+\item[Yes] Keep the build locally
+\item[No] Do not keep the build locally
+\end{description}
+
+\item[\texttt{run\_build}] Option to use local build or not.
+\begin{description}
+\item[Yes] checkout a P2 branch and use the build from this branch for
+                          running regression tests
+\item[No] Use local build for running regression tests
+\end{description}
+
+\item[\texttt{verbose\_result}] Option to log the complete result with cmake, make
+               and all regression tests output.
+\begin{description}
+\item[Yes] Log output of cmake, make and all regression tests.
+\item[No] Only failed regression tests output is logged. Log output of
+               cmake/make only if they failed.
+\end{description}
+
+
+\item[\texttt{build\_path}] Required if \texttt{run\_build} is No. Give the path where the
+               local build is residing.
+
+\item[\texttt{unitTests\_path}] Required if \texttt{run\_build} is No. Give the path where
+               the regression tests are residing.
+
+\item[planner] Planner to use for the regression
+               tests. E.g. runStagedOverlog/runOverLog
+
+\item[\texttt{to\_address}] Email address if you want the results to be emailed to
+               you. E.g. \url{xyz@abc.com}
+
+\item[\texttt{from\_address}] Email address if you want the results to be emailed
+               to you. E.g. \url{xyz@abc.com}
+
+\item[\texttt{python\_path}] Python executable path
+
+\item[\texttt{svn\_path}] Svn executable path
+
+\item[\texttt{sendmail\_path}] Sendmail executable path
+
+\item[\texttt{cmake\_path}] Cmake executable path
+
+\item[\texttt{make\_path}] Make executable path
+
+\end{description}
+
+CMAKE Parameters: Default values are picked up if no value is
+specified. Cmake parameters include \texttt{CMAKE\_BUILD\_TYPE}, \texttt{BISON\_EXECUTABLE},
+\texttt{Boost\_INCLUDE\_DIR} etc.
+
+\subsection{Examples}
+
+Sample configuration files are present at
+\url{https://svn.declarativity.net/browser/trunk/autoBuild/configFiles}
+
+\begin{enumerate}
+\item autoBuild.conf checks out the latest revision of branch secure,
+builds for the branch and runs regression tests with respect to the
+build made
+\item \texttt{autoBuild\_local.conf} runs regression tests with a local
+build
+\end{enumerate}
+
+ 
+
+
+
  
 
 

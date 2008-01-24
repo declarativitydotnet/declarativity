@@ -21,42 +21,30 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/Oni.jpg
         ${CMAKE_CURRENT_BINARY_DIR}/Oni.jpg
         COPYONLY)
 
-ADD_CUSTOM_COMMAND(
-  OUTPUT    ${CMAKE_CURRENT_BINARY_DIR}/UserGuide.aux
-  DEPENDS   ${CMAKE_CURRENT_SOURCE_DIR}/UserGuide.tex
-  	    ${CMAKE_CURRENT_BINARY_DIR}/Oni.jpg
-  COMMAND   ${PDFLATEX_COMPILER}
-  ARGS      -interaction=batchmode ${CMAKE_CURRENT_SOURCE_DIR}/UserGuide.tex
-  COMMENT   "Latex (first pass)"
-  )
-
-ADD_CUSTOM_COMMAND(
-  OUTPUT    ${CMAKE_CURRENT_BINARY_DIR}/UserGuide.bbl
-  DEPENDS   ${CMAKE_CURRENT_BINARY_DIR}/UserGuide.aux
-  COMMAND   ${BIBTEX_COMPILER}
-  ARGS      -terse ${CMAKE_CURRENT_BINARY_DIR}/UserGuide
-  COMMENT   "Bibtex"
-  )
-
+## No need for separate target, fixes redundant executions (PM)
 ADD_CUSTOM_COMMAND(
   OUTPUT    ${CMAKE_CURRENT_BINARY_DIR}/UserGuide.pdf
-  DEPENDS   ${CMAKE_CURRENT_BINARY_DIR}/UserGuide.bbl
+  DEPENDS   ${CMAKE_CURRENT_SOURCE_DIR}/UserGuide.tex
+  	    ${CMAKE_CURRENT_BINARY_DIR}/Oni.jpg
+            ${CMAKE_CURRENT_BINARY_DIR}/UserGuide.bib
   COMMAND   ${PDFLATEX_COMPILER}
   ARGS      -interaction=batchmode ${CMAKE_CURRENT_SOURCE_DIR}/UserGuide.tex
-  COMMENT   "Latex (second pass)"
+  COMMAND   ${BIBTEX_COMPILER}
+  ARGS      -terse ${CMAKE_CURRENT_BINARY_DIR}/UserGuide
+  COMMAND   ${PDFLATEX_COMPILER}
+  ARGS      -interaction=batchmode ${CMAKE_CURRENT_SOURCE_DIR}/UserGuide.tex
+  COMMAND   ${PDFLATEX_COMPILER}
+  ARGS      -interaction=batchmode ${CMAKE_CURRENT_SOURCE_DIR}/UserGuide.tex
+  COMMENT   "LaTeX - Bibtex - LaTeX - LaTeX again"
   )
 
-ADD_CUSTOM_COMMAND(
-  OUTPUT    ${CMAKE_CURRENT_BINARY_DIR}/UserGuide.log
-  DEPENDS   ${CMAKE_CURRENT_BINARY_DIR}/UserGuide.bbl
-            ${CMAKE_CURRENT_BINARY_DIR}/UserGuide.pdf
-  COMMAND   ${PDFLATEX_COMPILER}
-  ARGS      -interaction=batchmode ${CMAKE_CURRENT_SOURCE_DIR}/UserGuide.tex
-  COMMENT   "Latex (third pass)"
-  )
+SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
+"${CMAKE_CURRENT_BINARY_DIR}/UserGuide.bbl;${CMAKE_CURRENT_BINARY_DIR}/UserGuide.aux;${CMAKE_CURRENT_BINARY_DIR}/UserGuide.dvi;${CMAKE_CURRENT_BINARY_DIR}/UserGuide.log;${CMAKE_CURRENT_BINARY_DIR}/UserGuide.blg")
+
+
 # Eventually trigger the whole process
 ADD_CUSTOM_TARGET(UserGuide ALL echo
-   DEPENDS   ${CMAKE_CURRENT_BINARY_DIR}/UserGuide.log
+   DEPENDS   ${CMAKE_CURRENT_BINARY_DIR}/UserGuide.pdf
    )
 
 ### End stolen and munged stuff.

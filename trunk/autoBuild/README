@@ -1,0 +1,128 @@
+#####################################################################
+#
+# This file is distributed under the terms in the attached LICENSE file.
+# If you do not find this file, copies can be found by writing to:
+# Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+# Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+# Or
+# UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+# Berkeley, CA,  94707. Attention: P2 Group.
+# 
+# DESCRIPTION: The manual for the autoBuild utility.
+# 
+#   $Id: README 1726 2007-12-19 19:37:14Z maniatis $
+#
+
+
+NAME
+----
+
+    autoBuild.py -- functionality to build a specific revision of a
+branch in P2 and run regression tests with that build. Also provides the
+option to run regression tests with a local build.
+
+
+SYNOPSIS
+--------
+
+python autoBuild.py  [-C config file directory path | -F config file path]
+
+
+DESCRIPTION
+-----------
+
+autoBuild.py provides two functionalities:
+
+1. checkout a specific revision or latest revision (default) of a branch
+from the svn repository and build
+
+2. Run regression tests with the build from step 1 or a local build
+
+autoBuild.py requires a configuration file to set parameters that are
+used for building P2 and running regression tests.
+
+The options are:
+
+-F Specify the path of a specific configuration file
+
+-C Specify the path of a directory that contains configuration
+files. This allows multiple configurations file to be read. Builds with
+respect to each configuration file is made and regression tests are run
+with respect to each build.
+
+
+CONFIGURATION FILE
+------------------
+
+Configuration file contains a list of parameters that are used for
+building P2 and running regression tests with respect to the build.
+
+A configuration file has the following parameters:
+
+branch-------Specify svn url of the P2 branch that has to be
+             built. E.g. https://svn.declarativity.net/trunk
+
+revision-----Specify which svn revision should be used. If no value is
+             specified then the latest revision is checked out.
+
+keep_build---Option to keep the build locally. Has no effect if
+             run_build is No
+                          Yes -  Keep the build locally
+                          No  -  Do not keep the build locally
+
+run_build----Option to use local build or not.
+                          Yes - checkout a P2 branch and use the build
+                                from this branch for running regression
+                                tests
+                          No -- Use local build for running regression
+                                tests
+
+verbose_result-Option to log the complete result with cmake, make and
+               all regression tests output.
+                          Yes - Log output of cmake, make and all
+                                regression tests.
+                          No -- Only failed regression tests output is
+                                logged. Log output of cmake/make only if
+                                they failed.
+
+build_path-----Required if run_build is No. Give the path where the
+               local build is residing.
+
+unitTests_path-Required if run_build is No. Give the path where the
+               regression tests are residing.
+
+planner--------Planner to use for the regression
+               tests. E.g. runStagedOverlog/runOverLog
+
+to_address-----Email address if you want the results to be emailed to
+               you. E.g. xyz@abc.com
+
+from_address---Email address if you want the results to be emailed to
+               you. E.g. xyz@abc.com
+
+python_path----Python executable path
+
+svn_path-------Svn executable path
+
+sendmail_path--Sendmail executable path
+
+cmake_path-----Cmake executable path
+
+make_path------Make executable path
+
+CMAKE Parameters: Default values are picked up if no value is
+specified. Cmake parameters include CMAKE_BUILD_TYPE, BISON_EXECUTABLE,
+Boost_INCLUDE_DIR etc.
+
+EXAMPLES
+--------
+
+Sample configuration files are present at
+https://svn.declarativity.net/browser/trunk/autoBuild/configFiles
+
+  1. autoBuild.conf checks out the latest revision of branch secure,
+builds for the branch and runs regression tests with respect to the
+build made
+  2.  autoBuild_local.conf runs regression tests with a local build
+ 
+

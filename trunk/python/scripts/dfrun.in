@@ -1,3 +1,4 @@
+#
 #!@PYTHON_EXECUTABLE@
 import dfparser
 import libp2python
