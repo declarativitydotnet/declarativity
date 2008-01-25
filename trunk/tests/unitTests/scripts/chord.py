@@ -61,7 +61,7 @@ def script_output(stdout):
 #Function to kill the child after a set time
 def kill_pid(stdout, pid):
     #print "killing child"
-    os.kill(pid, signal.SIG_DFL)
+    os.kill(pid, signal.SIGKILL)
     #print "program killed"
     script_output(stdout)
 
