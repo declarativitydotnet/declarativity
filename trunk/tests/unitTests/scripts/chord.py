@@ -55,8 +55,8 @@ def script_output(stdout):
                         \)\]
                            """, re.VERBOSE)
         if p.match(line):
-            bestSucc = [x for x in p.split(line) if x]
-            print >> log, bestSucc
+            bs = [x for x in p.split(line) if x]
+            print >> log, "%s,%s,%s" % (bs[0], bs[1], bs[2])
 
 #Function to kill the child after a set time
 def kill_pid(stdout, pid):
