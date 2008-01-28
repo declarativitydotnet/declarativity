@@ -1128,7 +1128,7 @@ class endexp:
 
     def apply(self):
         try:
-            opts, req_args = getopt.getopt(self.argv, "we:", [ "help" ]);
+            opts, req_args = getopt.getopt(self.argv, "hwe:", [ "help" ]);
             pass
         except getopt.error, e:
             print e.args[0]

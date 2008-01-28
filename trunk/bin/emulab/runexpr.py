@@ -37,18 +37,21 @@ login_id = os.environ["USER"]
 def usage():
     print "Run experiment on Emulab."
     print ("Usage: " + sys.argv[0]
-                     + " [-h] [[-b] [-B] [-S svn-dir]] [-l login] [-p prog] [-r rpm-path] "
-                     + "expr-name (-n nsfile | routers hosts)")
+                     + " [-h] [-l login] [[-b] [-B] [-S svn-dir]] [-T runtime [-L log-dir]]"
+                     + " [-p prog] [-r rpm-path]"
+                     + " expr-name (-n nsfile | routers hosts)")
     print
     print "Options:"
-    print "  -h, --help       \t  Display this help message"
-    print "  -b, --build      \t  Build before running experiment"
-    print "  -B  --build-only \t  Build only"
+    print "  -h, --help       \t  Display this help message."
+    print "  -b, --build      \t  Build before running experiment."
+    print "  -B  --build-only \t  Build only."
     print "  -S  --svn-dir    \t  P2 SVN directory (defaults to svn=https://svn.declarativity.net/trunk)"
-    print "  -l, --login      \t  Set the login id (defaults to $USER)"
-    print "  -p, --prog       \t  A program/script that each node should run upon startup"
-    print "  -r, --rpm-path   \t  The path to the p2 rpm"
-    print "  -n, --ns         \t  A ns file to use to setup the experiment"
+    print "  -l, --login      \t  Set the login id (defaults to $USER)."
+    print "  -T, --runtime    \t  Total time to run experiement."
+    print "  -L, --logdir     \t  The log directory that should be copied back before terminating experiement."
+    print "  -p, --prog       \t  A program/script that each node should run upon startup."
+    print "  -r, --rpm-path   \t  The path to the p2 rpm."
+    print "  -n, --ns         \t  A ns file to use to setup the experiment."
     print
     print "Required arguments for experiements:"
     print "  name   \t  The experiment name (unique, alphanumeric, no blanks)"
@@ -81,6 +84,9 @@ def build_rpm(proj, svn):
     p = subprocess.Popen(args)
     p.wait()
 
+    # Remove the local P2 tar file.
+    os.remove("./p2.tar.gz")
+
     # Copy myself over to emulab
     args=["scp", sys.argv[0], login_id + "@users.emulab.net:"]
     p = subprocess.Popen(args)
@@ -99,7 +105,7 @@ def build_rpm(proj, svn):
 
     # No longer need build experiement since 'do_rpm' copies newly created
     # rpm to the /proj/P2/rpms directory. 
-    #endexpr(proj, "build") 
+    endexpr(proj, "build") 
 
 # This method is called when given the '-m' arguement. The '-m' arguement
 # is not listed in the help menu because this routine should only 
@@ -137,8 +143,9 @@ def do_rpm(rpm):
 
 # Terminate an experiment, does not block.
 def endexpr(project, name):
-    exprargs = [project, name]
-    expr = emulab.endexp(exprargs)
+    expr = emulab.swapexp(['-w', project, name, "out"])
+    code = expr.apply()
+    expr = emulab.endexp([project, name])
     code = expr.apply()
 
 # Create an experiement. Will block until all nodes have been swapped in.
@@ -187,11 +194,13 @@ def experiment(expr_name, nsfile, nrouters=None, nhosts=None, rpm=None, script=N
 try:
     # Parse the options,
     opts, req_args =  getopt.getopt(sys.argv[1:],
-                      "hbBml:p:r:n:",
+                      "hbBml:p:r:n:T:L:",
                       [ "help", "build", "build-only", "make-rpm", "login", "prog", "rpm", "nsfile"])
     # ... act on them appropriately, and
     flags = {"svn-dir"  : "https://svn.declarativity.net/trunk",
              "rpm-dir"  : "/proj/P2/rpms",
+             "runtime"  : None,
+             "logdir"   : None,
              "make-rpm" : None,
              "nsfile"   : None,
              "prog"     : None,
@@ -206,6 +215,12 @@ try:
             pass
         elif opt in ("-l", "--login"):
             login_id = val
+            pass
+        elif opt in ("-T", "--runtime"):
+            flags["runtime"] = int(val)
+            pass
+        elif opt in ("-L", "--logdir"):
+            flags["logdir"] = val
             pass
         elif opt in ("-p", "--prog"):
             flags["prog"] = val
@@ -251,15 +266,29 @@ if flags["make-rpm"] == True:
 elif build_only == True:
     build_rpm(flags["proj"], flags["svn-dir"])
 else:
-    if build: build_rpm(flags["proj"], flags["svn-dir"])
+    #if build: build_rpm(flags["proj"], flags["svn-dir"])
 
-    if flags["nsfile"]:
-        experiment(req_args[0], flags["nsfile"], None, None, 
-                   os.path.join(flags["rpm-dir"], flags["rpm-file"]), flags["prog"])
-    elif len(req_args) == 3:
-        experiment(req_args[0], None, req_args[1], req_args[2], 
-                   os.path.join(flags["rpm-dir"], flags["rpm-file"]), flags["prog"])
-    else: 
-        usage()
-        sys.exit(0)
+    #if flags["nsfile"]:
+    #    experiment(req_args[0], flags["nsfile"], None, None, 
+    #               os.path.join(flags["rpm-dir"], flags["rpm-file"]), flags["prog"])
+    #elif len(req_args) == 3:
+    #    experiment(req_args[0], None, req_args[1], req_args[2], 
+    #               os.path.join(flags["rpm-dir"], flags["rpm-file"]), flags["prog"])
+    #else: 
+    #    usage()
+    #    sys.exit(0)
+
+    if flags["runtime"]:
+        endexpr("P2", "test")
+        t = threading.Timer(1, endexpr, [flags["proj"], req_args[0]])
+        t.start()
+        if flags["logdir"]:
+            args=["rsync", "-av", 
+                  "--rsh=ssh -l " + login_id + "", 
+                  login_id + "@users.emulab.net:" + flags["logdir"] + "/*.log",
+                  "./logs"]
+            p = subprocess.Popen(args)
+            p.wait()
+            print "RSYNC DONE"
+    sys.exit(0)
    
