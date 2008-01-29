@@ -266,17 +266,17 @@ if flags["make-rpm"] == True:
 elif build_only == True:
     build_rpm(flags["proj"], flags["svn-dir"])
 else:
-    #if build: build_rpm(flags["proj"], flags["svn-dir"])
+    if build: build_rpm(flags["proj"], flags["svn-dir"])
 
-    #if flags["nsfile"]:
-    #    experiment(req_args[0], flags["nsfile"], None, None, 
-    #               os.path.join(flags["rpm-dir"], flags["rpm-file"]), flags["prog"])
-    #elif len(req_args) == 3:
-    #    experiment(req_args[0], None, req_args[1], req_args[2], 
-    #               os.path.join(flags["rpm-dir"], flags["rpm-file"]), flags["prog"])
-    #else: 
-    #    usage()
-    #    sys.exit(0)
+    if flags["nsfile"]:
+        experiment(req_args[0], flags["nsfile"], None, None, 
+                   os.path.join(flags["rpm-dir"], flags["rpm-file"]), flags["prog"])
+    elif len(req_args) == 3:
+        experiment(req_args[0], None, req_args[1], req_args[2], 
+                   os.path.join(flags["rpm-dir"], flags["rpm-file"]), flags["prog"])
+    else: 
+        usage()
+        sys.exit(0)
 
     if flags["runtime"]:
         endexpr("P2", "test")
@@ -289,6 +289,5 @@ else:
                   "./logs"]
             p = subprocess.Popen(args)
             p.wait()
-            print "RSYNC DONE"
     sys.exit(0)
    
