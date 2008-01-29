@@ -1,3 +1,5 @@
+SUBDIRS(emulab)
+
 ADD_EXECUTABLE(runOverLog runOverLog.C)
 ADD_EXECUTABLE(runStagedOverlog runStagedOverlog.C)
 ADD_EXECUTABLE(udpMessage udpMessage.C)
