@@ -37,7 +37,7 @@ login_id = os.environ["USER"]
 def usage():
     print "Run experiment on Emulab."
     print ("Usage: " + sys.argv[0]
-                     + " [-h] [-l login] [[-b] [-B] [-S svn-dir]] [-T runtime [-L log-dir]]"
+                     + " [-h] [-l login] [[-b] [-B] [-S svn-dir]] [-L log-dir]"
                      + " [-p prog] [-r rpm-path]"
                      + " expr-name (-n nsfile | routers hosts)")
     print
@@ -47,7 +47,6 @@ def usage():
     print "  -B  --build-only \t  Build only."
     print "  -S  --svn-dir    \t  P2 SVN directory (defaults to svn=https://svn.declarativity.net/trunk)"
     print "  -l, --login      \t  Set the login id (defaults to $USER)."
-    print "  -T, --runtime    \t  Total time to run experiement."
     print "  -L, --logdir     \t  The log directory that should be copied back before terminating experiement."
     print "  -p, --prog       \t  A program/script that each node should run upon startup."
     print "  -r, --rpm-path   \t  The path to the p2 rpm."
@@ -188,6 +187,14 @@ def experiment(expr_name, nsfile, nrouters=None, nhosts=None, rpm=None, script=N
     expr = emulab.startexp(exprargs)
     code = expr.apply()
 
+def checklogs(stdout):
+    logs = 0
+    for line in stdout.readlines():
+        print line
+        p = re.compile("^.*\.log$", re.VERBOSE)
+        if p.match(line): logs += 1
+    return logs
+
 #
 # Process program arguments.
 # 
@@ -195,11 +202,11 @@ try:
     # Parse the options,
     opts, req_args =  getopt.getopt(sys.argv[1:],
                       "hbBml:p:r:n:T:L:",
-                      [ "help", "build", "build-only", "make-rpm", "login", "prog", "rpm", "nsfile"])
+                      ["help", "build", "build-only", "make-rpm", 
+                       "login", "prog", "rpm", "nsfile"])
     # ... act on them appropriately, and
     flags = {"svn-dir"  : "https://svn.declarativity.net/trunk",
              "rpm-dir"  : "/proj/P2/rpms",
-             "runtime"  : None,
              "logdir"   : None,
              "make-rpm" : None,
              "nsfile"   : None,
@@ -215,9 +222,6 @@ try:
             pass
         elif opt in ("-l", "--login"):
             login_id = val
-            pass
-        elif opt in ("-T", "--runtime"):
-            flags["runtime"] = int(val)
             pass
         elif opt in ("-L", "--logdir"):
             flags["logdir"] = val
@@ -278,16 +282,37 @@ else:
         usage()
         sys.exit(0)
 
-    if flags["runtime"]:
-        endexpr("P2", "test")
-        t = threading.Timer(1, endexpr, [flags["proj"], req_args[0]])
-        t.start()
-        if flags["logdir"]:
-            args=["rsync", "-av", 
-                  "--rsh=ssh -l " + login_id + "", 
-                  login_id + "@users.emulab.net:" + flags["logdir"] + "/*.log",
-                  "./logs"]
-            p = subprocess.Popen(args)
-            p.wait()
+    if flags["logdir"] and not flags["nsfile"]:
+        # Clean all log files
+        args=["ssh", login_id + "@users.emulab.net", 
+              "/bin/rm", flags["logdir"] + "/*.log"]
+        p = subprocess.Popen(args)
+        p.wait()
+
+        # Wait for log files to appear.
+        while True:
+            args=["ssh", login_id + "@users.emulab.net", "ls", flags["logdir"] + "/*.log"]
+            p = subprocess.Popen(args, stdout=subprocess.PIPE, 
+                                 stderr=subprocess.STDOUT, close_fds=True)
+            logs = checklogs(p.stdout)
+            if logs == int(req_args[2]): break
+            else: time.sleep(100)
+
+        # Copy over all logs
+        args=["rsync", "-av", 
+              "--rsh=ssh -l " + login_id + "", 
+              login_id + "@users.emulab.net:" + flags["logdir"] + "/*.log",
+              "./logs"]
+        p = subprocess.Popen(args)
+        p.wait()
+
+        # Clean up log files.
+        args=["ssh", login_id + "@users.emulab.net", 
+              "/bin/rm", flags["logdir"] + "/*.log"]
+        p = subprocess.Popen(args)
+        p.wait()
+
+    # Terminate experiment
+    endexpr(flags["proj"], req_args[0])
     sys.exit(0)
    

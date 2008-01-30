@@ -96,7 +96,7 @@ namespace compile {
         watchTbl->lookup(CommonTable::theKey(CommonTable::KEY2),
                          CommonTable::theKey(CommonTable::KEY4),
                          lookup); 
-      if (!i->done()) {
+      while (!i->done()) {
         // Found something.
         if (mod == "") {
           //  cout << "It does by default\n";
@@ -112,15 +112,12 @@ namespace compile {
           if ((theWatchModifier.find(mod) == theWatchModifier.npos) &&
               !(theWatchModifier == "")) {
             // Didn't find it
-            return false;
           } else {
             // Found it
             //cout << "It does explicitly\n";
             return true; 
           }
         }
-      } else {
-        //cout << "Nothing watched about " << name << "\n";
       }
       return false;
     }
@@ -159,14 +156,16 @@ namespace compile {
           intStrandInputElement = "main." + duplicatorName + "[+]";
         }
         else {
-          intStrandInputElement += "[+ \"" + input + "\"] -> " \
-                       + "DDuplicateConservative(\"" + duplicatorName + "\", 1)";
+          ostringstream oss;
+          oss << "[+ \"" + input + "\"] -> ";
+          if (watched(input, "c")) {
+            oss << "Print(\"RecvEvent\") -> "; 
+          }
+          oss << "DDuplicateConservative(\"" + duplicatorName + "\", 1)";
+          intStrandInputElement += oss.str();
           programEvents.insert(std::make_pair(input, (*program)[TUPLE_ID]));
         }
         stage_oss << "\t" << intStrandInputElement; 
-        if (watched(input, "c")) {
-          stage_oss << " -> Print(\"RecvEvent: STAGE " << processor << "\")"; 
-        }
         stage_oss << " ->  Queue(\"stageQueue\", 1000) ->\n\t"
                   << "Stage(\"stage_" << processor << "\", \"" << processor << "\") ->\n\t"
                   << "PelTransform(\"formatStage\", \"\\\"" << output << "\\\" pop swallow unbox drop popall\") -> ";
@@ -310,8 +309,13 @@ namespace compile {
           intStrandInputElement = "main." + duplicatorName + "[+]";
         }
         else {
-          intStrandInputElement += "[+ \"" + eventName + "\"] -> " \
-                       + "DDuplicateConservative(\"" + duplicatorName + "\", 1)";
+          ostringstream oss;
+          oss << "[+ \"" + eventName + "\"] -> ";
+          if (watched(eventName, "c")) {
+            oss << "Print(\"RecvEvent\") -> "; 
+          }
+          oss << "DDuplicateConservative(\"" + duplicatorName + "\", 1)";
+          intStrandInputElement += oss.str();
           programEvents.insert(std::make_pair(eventName, (*rule)[TUPLE_ID]));
         }
       }
@@ -499,10 +503,6 @@ namespace compile {
       if (eventType == "RECV") {
         oss << indent << "graph event(1, 1, \"h/l\", \"-/-\") {\n";
         oss << indent << "\tinput -> " << "Queue(\"" << eventName << "\", 1000) -> \n"; 
-        if (watched(eventName, "c")) {
-          oss << indent << "\tPrint(\"RecvEvent: RULE " 
-              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
-        }
         oss << indent << "\toutput;\n};\n";
         return (Context::PortDesc) {1, "h", "-", 1, "l", "-"};
       }
@@ -717,7 +717,13 @@ namespace compile {
       string   funcName   = (*head)[catalog->attribute(FUNCTOR, "NAME")]->toString();
       string   actionType = (*head)[catalog->attribute(FUNCTOR, "ECA")]->toString();
   
-      if (actionType == "ADD") {
+      if (funcName == "drop" || actionType == "DROP") {
+        oss << indent << "graph action(1, 0, \"l/\", \"-/\") {\n";
+        oss << indent << "\tinput -> PullPush(\"actionPull\", 0) -> Discard(\"drop\");\n";
+        oss << indent << "};\n";
+        return (Context::PortDesc) {1, "l", "-", 0, "", ""};
+      }
+      else if (actionType == "ADD") {
         oss << indent << "graph action(1, 0, \"l/\", \"-/\") {\n";
         oss << indent << "\tinput -> PullPush(\"actionPull\", 0) ->\n";
         if (watched(funcName, "a")) {

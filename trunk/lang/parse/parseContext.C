@@ -979,28 +979,39 @@ namespace compile {
     Watch::materialize(CommonTable::ManagerPtr catalog, ValuePtr programId, string ns)
     {
       CommonTablePtr watchTbl = catalog->table(WATCH);
-      TuplePtr       watchTp  = Tuple::mk(WATCH, true);
-      if (programId) {
-        watchTp->append(programId);
-      }
+      CommonTable::Key key;
+      key.push_back(catalog->attribute(WATCH, "NAME"));
+      key.push_back(catalog->attribute(WATCH, "MOD"));
 
-      string name;
-      if (_watch.size() >= 2 && _watch.substr(0,2) == "::") {
-        name = _watch.substr(2, _watch.length()-2);
-      }
-      else {
-        name = ns + _watch; 
-      }
+      int mod = 0;
+      do {
+          TuplePtr watchTp = Tuple::mk(WATCH, true);
+          if (programId) {
+              watchTp->append(programId);
+          }
+
+          string name;
+          if (_watch.size() >= 2 && _watch.substr(0,2) == "::") {
+              name = _watch.substr(2, _watch.length()-2);
+          }
+          else {
+              name = ns + _watch; 
+          }
   
-      watchTp->append(Val_Str::mk(name)); // Watch name
-      if (_modifiers == "") 
-        watchTp->append(Val_Str::mk("")); // Watch modifier
-      else
-        watchTp->append(Val_Str::mk(_modifiers)); // Watch name
-      // TODO Add a field for the modifiers (also in the watch table)
-      watchTp->freeze();
-      watchTbl->insert(watchTp); 
-      return watchTp;
+          watchTp->append(Val_Str::mk(name)); // Watch name
+          if (_modifiers == "") 
+              watchTp->append(Val_Str::mk("")); // Watch modifier
+          else
+              watchTp->append(Val_Str::mk(string(_modifiers,mod,1))); // Watch name
+
+          // Fill in table reference if functor is materialized
+          CommonTable::Iterator Iter = watchTbl->lookup(key, key, watchTp);
+          if (Iter->done()) { 
+              watchTp->freeze();
+              watchTbl->insert(watchTp); 
+          }
+      } while (++mod < (int)_modifiers.size());
+      return TuplePtr();
     }
 
     Stage::Stage(string p, string i, string o)

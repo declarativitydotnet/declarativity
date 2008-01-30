@@ -151,7 +151,7 @@ TABLEDEF(REWRITE, CommonTable::theKey(CommonTable::KEY34),
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("RID", 2) \
          SCHEMA("INPUT", 3) SCHEMA("OUTPUT", 4))
 
-TABLEDEF(WATCH, CommonTable::theKey(CommonTable::KEY4), \
+TABLEDEF(WATCH, CommonTable::theKey(CommonTable::KEY45), \
          SCHEMA("TNAME", 0) SCHEMA("LOCATION", 1) SCHEMA("WID", 2) \
          SCHEMA("PID", 3) SCHEMA("NAME", 4) SCHEMA("MOD", 5))
 
@@ -235,7 +235,7 @@ SECONDARY_INDEX(FACT,              CommonTable::theKey(CommonTable::KEY3))
 SECONDARY_INDEX(STAGE,             CommonTable::theKey(CommonTable::KEY3))
 SECONDARY_INDEX(REWRITE,           CommonTable::theKey(CommonTable::KEY3))
 SECONDARY_INDEX(REWRITE,           CommonTable::theKey(CommonTable::KEY4))
-SECONDARY_INDEX(WATCH,             CommonTable::theKey(CommonTable::KEY3))
+SECONDARY_INDEX(WATCH,             CommonTable::theKey(CommonTable::KEY4))
 SECONDARY_INDEX(PROJECTION,        CommonTable::theKey(CommonTable::KEY35))
 #undef SECONDARY_INDEX
 
