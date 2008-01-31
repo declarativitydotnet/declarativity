@@ -1,3 +1,5 @@
+SUBDIRS(scripts)
+
 ADD_EXECUTABLE(p2Test 				
 				p2Test.C
 				testTable2.C 
