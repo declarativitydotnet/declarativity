@@ -37,9 +37,9 @@ login_id = os.environ["USER"]
 def usage():
     print "Run experiment on Emulab."
     print ("Usage: " + sys.argv[0]
-                     + " [-h] [-l login] [[-b] [-B] [-S svn-dir]] [-L log-dir]"
-                     + " [-p prog] [-r rpm-path]"
-                     + " expr-name (-n nsfile | routers hosts)")
+                     + " [-h] [-l login] [[-b] [-B] [-S svn-dir]] [-L log-dir]\n\t\t"
+                     + "  [-p prog] [-r rpm-path]\n\t\t"
+                     + "  (-n nsfile | routers hosts) expr-name")
     print
     print "Options:"
     print "  -h, --help       \t  Display this help message."
@@ -58,9 +58,19 @@ def usage():
     print "  hosts  \t  The number of hosts"
     print
     print "Example:"
-    print ("  "
+    print ("Run chord experiement with 2 lans and 7 hosts randomly distributed.\n"
+           + "The system will not build a new RPM prior to running. The experiement name will be test.\n"
+           + "The experiement will terminate when 7 log files appear in /proj/P2/logs.\n" 
+           + "These 7 log files will be copied back to the local directory under ./logs.\n\t"
            + sys.argv[0]
-           + " -s ./run.sh -r /proj/P2/rpms/p2-fc6-update.rpm 4 20")
+           + " -L /proj/P2/logs -p /usr/local/p2/scripts/emulab/chord.py 2 7 test\n")
+    print ("Same as above but first check out and build a new P2 rpm before running experiement.\n\t"
+           + sys.argv[0]
+           + " -b -L /proj/P2/logs -p /usr/local/p2/scripts/emulab/chord.py 2 7 test\n")
+    print ("Build new P2 rpm. Use the topology specified in topology.ns ns file for experiement.\n"
+           + "The experiement name will be test. Start up each node with the chord.py script.\n\t"
+           + sys.argv[0]
+           + " -b -L /proj/P2/logs -p /usr/local/p2/scripts/emulab/chord.py -n ./topology.ns test")
     return
 
 # This function builds the P2 rpm. It will checkout P2 from the
@@ -270,12 +280,15 @@ elif build_only == True:
     build_rpm(flags["proj"], flags["svn-dir"])
 else:
     if build: build_rpm(flags["proj"], flags["svn-dir"])
+    exprName = None
 
     if flags["nsfile"]:
-        experiment(req_args[0], flags["nsfile"], None, None, 
+        exprName = req_args[0]
+        experiment(exprName, flags["nsfile"], None, None, 
                    os.path.join(flags["rpm-dir"], flags["rpm-file"]), flags["prog"])
     elif len(req_args) == 3:
-        experiment(req_args[0], None, req_args[1], req_args[2], 
+        exprName = req_args[2]
+        experiment(exprName, None, req_args[0], req_args[1], 
                    os.path.join(flags["rpm-dir"], flags["rpm-file"]), flags["prog"])
     else: 
         usage()
@@ -294,7 +307,7 @@ else:
             p = subprocess.Popen(args, stdout=subprocess.PIPE, 
                                  stderr=subprocess.STDOUT, close_fds=True)
             logs = checklogs(p.stdout)
-            if logs == int(req_args[2]): break
+            if logs == int(req_args[1]): break
             else: time.sleep(100)
 
         # Copy over all logs
@@ -312,6 +325,6 @@ else:
         p.wait()
 
     # Terminate experiment
-    endexpr(flags["proj"], req_args[0])
+    endexpr(flags["proj"], exprName)
     sys.exit(0)
    
