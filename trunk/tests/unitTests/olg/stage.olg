@@ -32,4 +32,3 @@ r1 inputString(@NI, Delimiters, String) :-
 
 r2 foo(@A) :- outToken(@A).
 watchmod(outToken, "c").
-watchmod(inputString, "c").
