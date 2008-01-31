@@ -63,14 +63,14 @@ def usage():
            + "The experiement will terminate when 7 log files appear in /proj/P2/logs.\n" 
            + "These 7 log files will be copied back to the local directory under ./logs.\n\t"
            + sys.argv[0]
-           + " -L /proj/P2/logs -p /usr/local/p2/scripts/emulab/chord.py 2 7 test\n")
+           + " -L /proj/P2/logs -p /usr/local/p2/bin/scripts/chord.py 2 7 test\n")
     print ("Same as above but first check out and build a new P2 rpm before running experiement.\n\t"
            + sys.argv[0]
-           + " -b -L /proj/P2/logs -p /usr/local/p2/scripts/emulab/chord.py 2 7 test\n")
+           + " -b -L /proj/P2/logs -p /usr/local/p2/bin/scripts/chord.py 2 7 test\n")
     print ("Build new P2 rpm. Use the topology specified in topology.ns ns file for experiement.\n"
            + "The experiement name will be test. Start up each node with the chord.py script.\n\t"
            + sys.argv[0]
-           + " -b -L /proj/P2/logs -p /usr/local/p2/scripts/emulab/chord.py -n ./topology.ns test")
+           + " -b -L /proj/P2/logs -p /usr/local/p2/bin/scripts/chord.py -n ./topology.ns test")
     return
 
 # This function builds the P2 rpm. It will checkout P2 from the
