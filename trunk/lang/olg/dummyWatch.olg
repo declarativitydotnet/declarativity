@@ -1,49 +1,68 @@
-/*
- * (@#)$Id: ring.olg 1176 2006-09-26 11:06:24Z maniatis $
- *
- * This file is distributed under the terms in the attached LICENSE file.
- * If you do not find this file, copies can be found by writing to:
- * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
- * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
- * Or
- * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
- * Berkeley, CA,  94707. Attention: P2 Group.
- * 
- * DESCRIPTION: A rewrite that inserts a dummy rule for all those events
- * that are being watched but for which there is no listening rule. The
- * rewrite works by finding those watched events (with at least the "c"
- * modifier) that don't have rules reading them. For those it creates a
- * new rule with that event as the right-hand-side, and a DROP ECA
- * action as the left hand side.
- *
- */
-
 namespace dummyWatch {
-
-  /** Entry into this rewrite */
-  a0 startDummyWatch(@A, Pid) :-
-        programEvent(@A, Pid, _, _, _, _, _, _, Src).
-
-
-  /** Find watched events without rules listening for them */
-  f1 blah() :-
-	startDummyWatch(@A, Pid),		/* Rewrite trigger */
-        ::sys::watch(@A, WatchID, Pid, WatchedTuple, Modifier), /* Watches */
-	
-
-
-        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
-        ::sys::predicate(@A, PredID, Rid, _, Name, _, ECA, Schema, _, _, _),
-        Name == "periodic".
-
-
-
-
-	
-
-  /** Exit from this rewrite */
-  z0 ::sys::program_add(@A, Pid, Name, Rewrite, "dummyWatch", Text, Msg,
-	P2DL, Src) :-
-        done(@A, Pid),
+  
+  /* This rewrite finishes in a single dataflow fixpoint. So simply reinject 
+     the program tuple into the dataflow with its status updated to this
+     rewrite. */
+  dw0 ::sys::program_add(@A, Pid, Name, Rewrite, "dummyWatch", Text, Msg, P2DL, Src) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
         ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
+
+  /* Find all recv watch events. */
+  dw1a recvWatch(@A, Pid, Name) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::watch(@A, Wid, Pid, Name, "c").
+
+  dw1b insertWatch(@A, Pid, Name) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::watch(@A, Wid, Pid, Name, "i").
+
+  /* Count all rules that have recv watches as the event. */
+  dw2a eventRuleCount(@A, Pid, Name, a_COUNT<*>) :-
+        recvWatch(@A, Pid, Name),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, _, Name, _, "RECV", _, _, _, _).
+
+  dw2b deltaRuleCount(@A, Pid, Name, a_COUNT<*>) :-
+        insertWatch(@A, Pid, Name),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, _, Name, _, "DELTA_INSERT", _, _, _, _).
+  
+  
+  /* If there are no rules that have this recv watch event we trigger the rewrite. */
+  dw3a doDummyEventRule(@A, Pid, Name, f_idgen(), f_idgen()) :-
+        eventRuleCount(@A, Pid, Name, 0).
+
+  dw3b doDummyInsertRule(@A, Pid, Name, f_idgen(), f_idgen()) :-
+        deltaRuleCount(@A, Pid, Name, 0).
+
+  /* Generate dummy rule. 
+     dummy_Name drop(@A) :- Name(@A). */
+  dw4a ::sys::rule(@A, Rid, Pid, "dummy_" + Name, HeadFid, null, false, 2, false) :-
+        doDummyEventRule(@A, Pid, Name, Rid, HeadFid).
+
+  /* Generate dummy rule. 
+     dummy_Name drop(@A) :- Name(@A). */
+  dw4b ::sys::rule(@A, Rid, Pid, "dummy_" + Name, HeadFid, null, false, 2, false) :-
+        doDummyInsertRule(@A, Pid, Name, Rid, HeadFid).
+
+  /* The dummy head predicate: drop(@A) */
+  dw5a ::sys::predicate(@A, HeadFid, Rid, false, "drop_"+Name, null, "DROP", Schema, 0, null, false) :-
+        doDummyEventRule(@A, Pid, Name, Rid, HeadFid),
+        Schema := f_cons(f_mktype("Location", "A"), null).
+
+  /* The dummy head predicate: drop(@A) */
+  dw5b ::sys::predicate(@A, HeadFid, Rid, false, "drop_"+Name, null, "DROP", Schema, 0, null, false) :-
+        doDummyInsertRule(@A, Pid, Name, Rid, HeadFid),
+        Schema := f_cons(f_mktype("Location", "A"), null).
+
+  /* Event predicate being watched: Name(@A) */
+  dw6a ::sys::predicate(@A, f_idgen(), Rid, false, Name, null, "RECV", Schema, 1, null, false) :-
+        doDummyEventRule(@A, Pid, Name, Rid, HeadFid),
+        Schema := f_cons(f_mktype("Location", "A"), null).
+
+  /* Insert event predicate being watched: Name(@A) */
+  dw6b ::sys::predicate(@A, f_idgen(), Rid, false, Name, Tid, "DELTA_INSERT", Schema, 1, null, false) :-
+        doDummyInsertRule(@A, Pid, Name, Rid, HeadFid),
+        ::sys::table(@A, Tid, Name, _, _, _, _, _, _),
+        Schema := f_cons(f_mktype("Location", "A"), null).
 }
