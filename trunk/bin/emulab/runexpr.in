@@ -190,7 +190,6 @@ def experiment(expr_name, nsfile, nrouters=None, nhosts=None, rpm=None, script=N
 def checklogs(stdout):
     logs = 0
     for line in stdout.readlines():
-        print line
         p = re.compile("^.*\.log$", re.VERBOSE)
         if p.match(line): logs += 1
     return logs
