@@ -54,7 +54,7 @@ def script_output(stdout):
 
 	p = re.compile(r"""
 		(^[#][#] Print\[RecvEvent: \s* RULE \s* q2\]: \s* \[insertEvent\(localhost:10000, \s* [0-9]+\)\] \s*
-		[#][#] Print\[AddAction: \s* RULE \s* rule_table_add\]: \s* \[table\(localhost:10000, \s* [0-9]+\)\])
+		[#][#] Print\[InsertEvent: \s* RULE \s* rule_table_DELTA_INSERT\]: \s* \[table\(localhost:10000, \s* [0-9]+\)\])
 		""", re.VERBOSE)
 	
 	flag = p.match(output)

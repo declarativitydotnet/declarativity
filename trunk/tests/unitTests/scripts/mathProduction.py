@@ -58,29 +58,29 @@ def script_output(stdout):
 	i =1
 	result = 0
 	for line in lines:
-		if i == 1:
+		if i == 3:
 			p = re.compile(r"""
-				(^[#][#] Print\[RecvEvent: \s* RULE \s* constantInclusion\]: \s*
+				(^[#][#] Print\[SendAction: \s* RULE \s* r2\]: \s*
 				\[constantInclusion\(localhost:10000\)\])
                         	""", re.VERBOSE)
 		elif i == 2:
 			p = re.compile(r"""
-				(^[#][#]Print\[RecvEvent: \s* RULE \s* inclusion\]: \s*
+				(^[#][#]Print\[SendAction: \s* RULE \s* r1\]: \s*
 				\[inclusion\(localhost:10000\)\])
                                 """, re.VERBOSE)
-		elif i == 3:
+		elif i == 5:
 			p = re.compile(r"""
-                                (^[#][#] Print\[RecvEvent: \s* RULE \s* notConstantInclusion\]: \s*
+                                (^[#][#] Print\[SendAction: \s* RULE \s* r4\]: \s*
 				\[notConstantInclusion\(localhost:10000\)\])
                                 """, re.VERBOSE)
 		elif i == 4:
 			p = re.compile(r"""
-				(^[#][#] Print\[RecvEvent: \s* RULE \s* notInclusion\]: \s*
+				(^[#][#] Print\[SendAction: \s* RULE \s* r3\]: \s*
 				\[notInclusion\(localhost:10000\)\])
                                 """, re.VERBOSE)
-		elif i == 5:
+		elif i == 1:
 			p = re.compile(r"""
-                                (^[#][#] Print\[RecvEvent: \s* RULE \s* result\]: \s*
+                                (^[#][#] Print\[SendAction: \s* RULE \s* r0\]: \s*
 				\[result\(localhost:10000, \s* 23\)\])
                                 """, re.VERBOSE)
 		else:
