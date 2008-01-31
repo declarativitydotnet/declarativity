@@ -158,14 +158,14 @@ namespace compile {
         else {
           ostringstream oss;
           oss << "[+ \"" + input + "\"] -> ";
-          if (watched(input, "c")) {
-            oss << "Print(\"RecvEvent\") -> "; 
-          }
           oss << "DDuplicateConservative(\"" + duplicatorName + "\", 1)";
           intStrandInputElement += oss.str();
           programEvents.insert(std::make_pair(input, (*program)[TUPLE_ID]));
         }
         stage_oss << "\t" << intStrandInputElement; 
+        if (watched(input, "c")) {
+          stage_oss << " -> Print(\"RecvEvent: STAGE:" << processor << "(" << input << ")\")"; 
+        }
         stage_oss << " ->  Queue(\"stageQueue\", 1000) ->\n\t"
                   << "Stage(\"stage_" << processor << "\", \"" << processor << "\") ->\n\t"
                   << "PelTransform(\"formatStage\", \"\\\"" << output << "\\\" pop swallow unbox drop popall\") -> ";
@@ -311,9 +311,6 @@ namespace compile {
         else {
           ostringstream oss;
           oss << "[+ \"" + eventName + "\"] -> ";
-          if (watched(eventName, "c")) {
-            oss << "Print(\"RecvEvent\") -> "; 
-          }
           oss << "DDuplicateConservative(\"" + duplicatorName + "\", 1)";
           intStrandInputElement += oss.str();
           programEvents.insert(std::make_pair(eventName, (*rule)[TUPLE_ID]));
@@ -321,6 +318,7 @@ namespace compile {
       }
           
       string eventType = (*event)[catalog->attribute(FUNCTOR, "ECA")]->toString();
+      string actionType = (*head)[catalog->attribute(FUNCTOR, "ECA")]->toString();
 
       string graphName = rname->toString();
       for (string::size_type s = 0; (s = graphName.find("::", s)) != string::npos; s++) {
@@ -368,6 +366,9 @@ namespace compile {
 	  oss << "edit main { " << graphName
 	      << " -> [+]" << extStrandOutputElement<<"; };\n";
 	}
+      }
+      else if (actionType == "DROP") {
+        oss << "\tevent -> condition -> action;\n};\n";
       }
       else {
         throw planner::Exception("Disconnected rule should not be planned!");
@@ -503,6 +504,10 @@ namespace compile {
       if (eventType == "RECV") {
         oss << indent << "graph event(1, 1, \"h/l\", \"-/-\") {\n";
         oss << indent << "\tinput -> " << "Queue(\"" << eventName << "\", 1000) -> \n"; 
+        if (watched(eventName, "c")) {
+          oss << indent << "\tPrint(\"RecvEvent: RULE "
+              << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
+        }
         oss << indent << "\toutput;\n};\n";
         return (Context::PortDesc) {1, "h", "-", 1, "l", "-"};
       }
@@ -717,7 +722,7 @@ namespace compile {
       string   funcName   = (*head)[catalog->attribute(FUNCTOR, "NAME")]->toString();
       string   actionType = (*head)[catalog->attribute(FUNCTOR, "ECA")]->toString();
   
-      if (funcName == "drop" || actionType == "DROP") {
+      if (actionType == "DROP") {
         oss << indent << "graph action(1, 0, \"l/\", \"-/\") {\n";
         oss << indent << "\tinput -> PullPush(\"actionPull\", 0) -> Discard(\"drop\");\n";
         oss << indent << "};\n";
