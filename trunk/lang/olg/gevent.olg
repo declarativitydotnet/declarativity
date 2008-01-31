@@ -25,7 +25,7 @@ namespace gevent {
         ::sys::predicate(@A, PredID, Rid, _, Name, _, ECA, Schema, Pos, _, _),
         Name != "periodic",
         f_aggattr(HeadSchema) < 0,
-        Pos == 1, ECA != "RECV".
+        Pos == 1, ECA != "RECV", ECA != "INSERT".
 
   ge2 periodicEvent(@A, Pid, Rid, PredID, Name, ECA, Schema) :-
         programEvent(@A, Pid, _, _, _, _, _, _, _),

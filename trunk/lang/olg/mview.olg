@@ -19,8 +19,8 @@ namespace mview {
   mv2 rewrite(@A, Pid, Rid, PredID, f_idgen(), f_idgen()) :-
         predCount(@A, Pid, Rid, Preds),
         ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
-        ::sys::predicate(@A, PredID, Rid, _, Name, Tid, _, _, _, _, _),
-        Preds > 0,
+        ::sys::predicate(@A, PredID, Rid, _, Name, Tid, ECA, _, _, _, _),
+        Preds > 0, ECA == null,
         Name != "sys::compileStatus",
         HeadID != PredID.
 
