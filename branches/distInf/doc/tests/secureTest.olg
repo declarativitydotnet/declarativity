@@ -1,0 +1,55 @@
+materialize(parent, infinity, infinity, keys(1)).
+materialize(nodes, infinity, infinity, keys(1,2)).
+materialize(universal, infinity, infinity, keys(1)).
+
+materializeSays (parent, infinity, infinity, keys(1)).
+
+
+nodes("localhost:10000", "localhost:10000").
+/*nodes("localhost:10000", "localhost:11111").*/
+
+/*trigger*/
+s1 start(@I, Id) :- periodic(@I, E, 1, 1), Id := f_idgen().
+
+/* key setup stuff*/
+u1 universalCalc(@Me, a_mkSet<N>):- start(@Me, Id), nodes(@Me, N).
+
+u2 universal(@Me, S) :- universalCalc(@Me, S).
+
+/*load rsa keys*/
+k1 genKey(@Me, Id, RSA, K):- 
+	start(@Me, Id),
+	K := f_loadKeyFile("key.priv"),
+	RSA := 0.
+
+k2 verKey(@Me, Id, RSA, K):- 
+	start(@Me, Id), 
+	K := f_loadKeyFile("key.pub"),
+	RSA := 0.
+
+k3 encHint(@Me, Me, U, 1, U, Id):-
+	universal(@Me, U), verKey(@Me, Id, Type, K).
+
+k4 encHint(@Me, Me, U, 1, U, Id):-
+	universal(@Me, U), genKey(@Me, Id, Type, K).
+
+k5 start2(@Me, Me):- encHint(@Me, P, R, K, V, Id).
+
+/*main code starts here*/
+r4 says(Me, N, 1, U) <parent(@Me, C)> :- start2(@Me, Me), nodes(@Me, N), universal(@Me, U), C := 1.
+
+r5 parent(@Me, A) :- says(N, Me, 1, U) <parent(@Me, A)>.
+
+watch(parent).
+watch(parentSays).
+watch(childNew).
+watch(start).
+watch(start2).
+watch(genKey).
+watch(verKey).
+watch(encHint).
+watch(universal).
+watch(universalCalc).
+
+
+

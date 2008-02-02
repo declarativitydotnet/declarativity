@@ -1,0 +1,24 @@
+
+
+materialize(test, infinity, infinity, keys(1,2)).
+materialize(child, infinity, infinity, keys(1)).
+materialize(parent, infinity, infinity, keys(1)).
+weak ref(parent, child, 2).
+
+
+materializeSays ( parent, infinity, infinity, keys(1,2)).
+
+
+/*
+r1 says(P, R, 1, U) <parent(@Me, A, C)> :- test(@Me, A, P, R, U, C).
+
+
+r3 test(@Me, A) :- says(P, R, 1, U) <parent(@Me, A, B, C)>.
+*/
+r2 says(P, R, 1, U) <parent(@Me, A, B, C)> :- says(P, R, 1, U) <parent(@Me, A, B, C)>, test(@Me, A).
+/*
+r4 says(P, R, 1, U) <parent(@Me, A, B, C)> :- says(P1, R1, 1, U) <parent(@Me, A, B, C)>, test(@Me, A), P := P1, R := R1.
+*/
+
+
+

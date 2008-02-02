@@ -1,0 +1,23 @@
+/*
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
+ * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+ * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+ * Or
+ * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+ * Berkeley, CA,  94707. Attention: P2 Group.
+ * 
+ * DESCRIPTION: Repeated variables in rule head
+ *
+ * Execute with
+ * tests/runOverLog -o unitTests/olg/repeatedVariables.olg
+ *
+ * 
+*/
+
+materialize(try, infinity, infinity, keys(1,2)).
+watchmod(out, "s").
+
+r1 try(@I, M) :- periodic(@I,E,0,1), M := 1.
+
+r2 out(@I, M, Z, Z) :- periodic(@I,E,2,3), try(@I, M), Z := 1.

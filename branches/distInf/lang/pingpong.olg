@@ -1,0 +1,13 @@
+materialize(env, infinity, infinity, keys(2,3)).
+materialize(link, infinity, infinity, keys(1,2)).
+
+watch(link).
+watch(ping).
+watch(pong).
+
+link("localhost:10001").
+
+r1 pong(@J, I) :- ping(@I, J).
+r2 ping(@J, I) :- periodic(@I,E,1,1000), link(@I,J).
+r3 test(@J, K) :- link(@J, K).
+r4 testAggwrap(@J, I, a_min<K>) :- ping(@J, I), link(@J, K), link(@J, K).

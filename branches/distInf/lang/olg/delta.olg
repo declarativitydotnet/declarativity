@@ -1,0 +1,54 @@
+namespace delta {
+  end ::sys::program_add(@A, Pid, Name, Rewrite, "delta", Text, Msg, P2DL, Src) :-
+        programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
+
+  d1 rewrite(@A, Pid, Rid, PredID) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, _, _, _, ECA, _, _, _, _),
+        ECA == "DELTA".
+
+  d2 ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, "DELTA_INSERT", Schema, Pos, AM, New) :-
+        rewrite(@A, Pid, Rid, PredID),
+        ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, _, Schema, Pos, AM, New).
+
+  d3 deltaRemoval(@A, Pid, Rid, PredID, f_idgen(), f_idgen()) :-
+        rewrite(@A, Pid, Rid, PredID),
+        ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
+        ::sys::predicate(@A, HeadID, Rid, _, _, Tid, _, _, _, _, _),
+        Tid != null.
+
+  /* Create the removal rule. This rule will be the listen for removal delta
+     events. It will cascade the removal to the head predicate. */
+  d4 ::sys::rule(@A, NewRid, Pid, Name, NewHeadID, P2DL, true, Term_Count, New) :-
+        deltaRemoval(@A, Pid, Rid, _, NewRid, NewHeadID),
+        ::sys::rule(@A, Rid, Pid, Name, _, P2DL, _, Term_Count, New).
+
+  /* Make a new assignement for the removal rule. */
+  d5 ::sys::assign(@A, f_idgen(), NewRid, Var, Value, Pos) :-
+        deltaRemoval(@A, Pid, Rid, _, NewRid, _),
+        ::sys::assign(@A, Aid, Rid, Var, Value, Pos).
+
+  /* Make a new selection for the removal rule. */
+  d6 ::sys::select(@A, f_idgen(), NewRid, Bool, Pos, AM) :-
+        deltaRemoval(@A, Pid, Rid, _, NewRid, _),
+        ::sys::select(@A, Sid, Rid, Bool, Pos, AM).
+
+  /* Head predicate in removal rule. */
+  d7 ::sys::predicate(@A, NewHeadID, NewRid, false, Name, Tid, "DELETE", Schema, Pos, AM, New) :-
+        deltaRemoval(@A, Pid, Rid, _, NewRid, NewHeadID),
+        ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
+        ::sys::predicate(@A, HeadID, Rid, _, Name, Tid, _, Schema, Pos, AM, New).
+
+  /* Event predicate in removal rule. */
+  d8 ::sys::predicate(@A, f_idgen(), NewRid, false, Name, Tid, "DELTA_DELETE", Schema, Pos, AM, New) :-
+        deltaRemoval(@A, Pid, Rid, PredID, NewRid, NewHeadID),
+        ::sys::predicate(@A, PredID, Rid, _, Name, Tid, _, Schema, Pos, AM, New).
+
+  /* All other predicates in removal rule. */
+  d9 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, ECA, Schema, Pos, AM, New) :-
+        deltaRemoval(@A, Pid, Rid, EventID, NewRid, _),
+        ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, AM, New),
+        PredID != EventID, PredID != HeadID.
+}

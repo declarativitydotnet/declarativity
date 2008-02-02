@@ -1,0 +1,67 @@
+/**
+  * This file is distributed under the terms in the attached LICENSE file.
+  * If you do not find this file, copies can be found by writing to:
+  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+  * Or
+  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+  * Berkeley, CA,  94707. Attention: P2 Group.
+  * 
+  * $Id: aggregates.olg 1243 2007-07-16 19:05:00Z maniatis $
+  * 
+  * DESCRIPTION: OverLog test for aggregates as locspecs.
+  * 
+  * Run me as follows:
+  *
+  * Have three nodes with ports 20202, 20203, 20204. Execute the following:
+  * 
+  * At 20202:
+  * tests/runOverLog -DME=\"localhost:20202\" -DNEIGHBOR1=\"localhost:20203\" -DNEIGHBOR2=\"localhost:20204\" -o unitTests/olg/aggregates.olg -n localhost -p 20202 
+  * At 20203:
+  * tests/runOverLog -DME=\"localhost:20203\" -DNEIGHBOR1=\"localhost:20202\" -DNEIGHBOR2=\"localhost:20204\" -o unitTests/olg/aggregates.olg -n localhost -p 20203
+  * At 20204:
+  * tests/runOverLog -DME=\"localhost:20204\" -DNEIGHBOR1=\"localhost:20202\" -DNEIGHBOR2=\"localhost:20203\" -o unitTests/olg/aggregates.olg -n localhost -p 20204
+  *
+  * 20202 should be receiving smallestNeighborOf events from both 20203
+  * and 20204 (i.e., <smallestNeighborOf, localhost:20202, localhost:20203>
+  * and <smallestNeighborOf, localhost:20202, localhost:20204>).
+  * 
+  * 20203 should be receiving largestNeighborOf events from 20202 and smallestNeighborOf events
+  *   from 20204
+  * 
+  * 20204 should be receiving largestNeighborOf events from both 20202 and 20203.
+  *
+  * NEIGHBOR1 is a neighbor host:port
+  * NEIGHBOR2 is another neighbor host:port
+***/
+
+materialize(neighbor, infinity, infinity, keys(1,2)).
+
+neighbor(ME, NEIGHBOR1).
+neighbor(ME, NEIGHBOR2).
+
+r1 pingee(@NI) :- periodic(@NI, E, 1).
+
+/** The following should ping the largest-name neighbor */
+r2 largestNeighborOf(a_MAX<@Neighbor>, NI) :-
+	pingee(@NI),
+	neighbor(@NI, Neighbor).
+
+
+/** The following should ping the smallest-name neighbor */
+r3 smallestNeighborOf(a_MIN<@Neighbor>, NI) :-
+	pingee(@NI),
+	neighbor(@NI, Neighbor).
+
+
+/* Reporting. Rules d1 and d2 are there to enable watching for the
+arrival of largestNeighborOf and smallestNeighborOf */
+watchmod(largestNeighborOf, "c").
+watchmod(smallestNeighborOf, "c").
+
+d1 gotLargestNeighborOf(@NI, Source) :- largestNeighborOf(@NI, Source).
+
+d2 gotSmalee(@NI, Source) :- smallestNeighborOf(@NI, Source).
+
+
+

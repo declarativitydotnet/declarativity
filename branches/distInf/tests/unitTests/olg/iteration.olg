@@ -1,0 +1,32 @@
+/**
+  * This file is distributed under the terms in the attached LICENSE file.
+  * If you do not find this file, copies can be found by writing to:
+  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+  * Or
+  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+  * Berkeley, CA,  94707. Attention: P2 Group.
+  * 
+  * $Id: iteration.olg 1213 2007-03-10 05:38:10Z maniatis $
+  * 
+  * DESCRIPTION: OverLog regression test for local recursive rule blocking.
+  * 
+  * Run me as follows:
+  * tests/runOverLog -o unitTests/olg/iteration.olg
+  *
+  * createDigit events should be generate for counts 1, 2, and 3.
+  *
+***/
+
+materialize(node, infinity, infinity, keys(1)).
+
+i1 createDigit(@X, Cnt) :- periodic(@X, E, 1, 1),
+                           Cnt := 1.
+
+i2 createDigit(@X, NewCnt) :- out(@X, Cnt),
+                              NewCnt := Cnt + 1.
+
+i3 out(@X, Cnt) :- createDigit(@X, Cnt),
+                        Cnt < 3.
+
+watchmod(createDigit, "s").

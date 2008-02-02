@@ -1,0 +1,32 @@
+/**
+  * This file is distributed under the terms in the attached LICENSE file.
+  * If you do not find this file, copies can be found by writing to:
+  * Intel Research Berkeley, 2150 Shattuck Avenue, Suite 1300,
+  * Berkeley, CA, 94704.  Attention:  Intel License Inquiry.
+  * Or
+  * UC Berkeley EECS Computer Science Division, 387 Soda Hall #1776, 
+  * Berkeley, CA,  94707. Attention: P2 Group.
+  * 
+  * $Id: periodicAggregation.olg 1243 2007-07-16 19:05:00Z maniatis $
+  * 
+  * DESCRIPTION: Periodic events triggering aggregation.
+  * 
+  * Run me as follows:
+  * 
+  * tests/runOverLog -o unitTests/olg/periodicAggregation.olg -DLOCALADDR=\"localhost:10000\"
+  *
+  * Exactly one tuple should be produced with value 4.
+  *
+***/
+
+
+materialize(someTable, infinity, infinity, keys(1,2)).
+
+someTable(LOCALADDR, 1, 2).
+someTable(LOCALADDR, 2, 4).
+someTable(LOCALADDR, 3, 1).
+
+watchmod(someEvent, "s").
+
+r2 someEvent(@J, a_MAX<V>) :- periodic(@J, E, 1,1), someTable(@J, N, V).
+

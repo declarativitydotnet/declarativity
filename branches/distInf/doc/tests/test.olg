@@ -1,0 +1,4 @@
+r2 parent(@X):- says(N, M, 1, U) <parent(@X)>.
+
+
+
