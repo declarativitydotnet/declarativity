@@ -40,7 +40,7 @@ namespace opr {
    * DOUBLE, OPAQUE, TUPLE,  
    * TIME,   ID,     
    * TIME_DURATION, SET, LIST, VECTOR,
-   * MATRIX
+   * MATRIX, FACTOR
    */
   const Oper** Oper::oper_table_[Value::TYPES][Value::TYPES] = {
     /* NULLV */
@@ -48,49 +48,49 @@ namespace opr {
      &Val_Null::oper_, &Val_Null::oper_, &Val_Null::oper_, 
      &Val_Null::oper_, &Val_Null::oper_,
      &Val_Null::oper_, &Val_Null::oper_, &Val_Null::oper_,
-     &Val_Null::oper_, &Val_Null::oper_},
+     &Val_Null::oper_, &Val_Null::oper_, &Val_Null::oper_},
     /* STR */
     {&Val_Str::oper_, &Val_Str::oper_, &Val_Str::oper_, 
      &Val_Str::oper_, &Val_Str::oper_, &Val_Str::oper_, 
      &Val_Str::oper_, &Val_Str::oper_,
      &Val_Str::oper_, &Val_Str::oper_, &Val_Str::oper_,
-	 &Val_Str::oper_, &Val_Str::oper_},
+	 &Val_Str::oper_, &Val_Str::oper_, &Val_Str::oper_},
     /* INT64 */
     {&Val_Int64::oper_, &Val_Int64::oper_, &Val_Int64::oper_, 
      &Val_Int64::oper_, &Val_Int64::oper_, &Val_Int64::oper_, 
      &Val_Int64::oper_, &Val_Int64::oper_,
      &Val_Int64::oper_, &Val_Int64::oper_, &Val_Int64::oper_,
-	 &Val_Int64::oper_, &Val_Int64::oper_},
+	 &Val_Int64::oper_, &Val_Int64::oper_, &Val_Int64::oper_},
     /* Double */
     {&Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_, 
      &Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_, 
      &Val_Double::oper_, &Val_Double::oper_,
      &Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_,
-	 &Val_Double::oper_, &Val_Double::oper_},
+	 &Val_Double::oper_, &Val_Double::oper_, &Val_Double::oper_},
     /* Opaque */
     {&Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_, 
      &Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_, 
      &Val_Opaque::oper_, &Val_Opaque::oper_,
      &Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_,
-	 &Val_Opaque::oper_, &Val_Opaque::oper_},
+	 &Val_Opaque::oper_, &Val_Opaque::oper_, &Val_Opaque::oper_},
     /* Tuple */
     {&Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_, 
      &Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_, 
      &Val_Tuple::oper_, &Val_Tuple::oper_,
      &Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_,
-	 &Val_Tuple::oper_, &Val_Tuple::oper_},
+	 &Val_Tuple::oper_, &Val_Tuple::oper_, &Val_Tuple::oper_},
     /* Time */
     {&Val_Time::oper_, &Val_Time::oper_, &Val_Time::oper_, 
      &Val_Time::oper_, &Val_Time::oper_, &Val_Time::oper_, 
      &Val_Time::oper_, &Val_Time::oper_,
      &Val_Time::oper_, &Val_Time::oper_, &Val_Time::oper_,
-	 &Val_Time::oper_, &Val_Time::oper_},
+	 &Val_Time::oper_, &Val_Time::oper_, &Val_Time::oper_},
     /* ID */
     {&Val_ID::oper_, &Val_ID::oper_, &Val_ID::oper_, 
      &Val_ID::oper_, &Val_ID::oper_, &Val_ID::oper_, 
      &Val_ID::oper_, &Val_ID::oper_,
      &Val_ID::oper_, &Val_ID::oper_, &Val_ID::oper_,
-	 &Val_ID::oper_, &Val_ID::oper_},
+	 &Val_ID::oper_, &Val_ID::oper_, &Val_ID::oper_},
     /* TIME_DURATION */
     {&Val_Time_Duration::oper_, &Val_Time_Duration::oper_,
               &Val_Time_Duration::oper_, 
@@ -100,19 +100,19 @@ namespace opr {
 
      &Val_Time_Duration::oper_, &Val_Time_Duration::oper_,
               &Val_Time_Duration::oper_,
-     &Val_Time_Duration::oper_, &Val_Time_Duration::oper_},
+     &Val_Time_Duration::oper_, &Val_Time_Duration::oper_, &Val_Time_Duration::oper_},
     /* SET */
     {&Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_, 
      &Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_, 
      &Val_Set::oper_, &Val_Set::oper_,
      &Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_,
-     &Val_Set::oper_, &Val_Set::oper_},
+     &Val_Set::oper_, &Val_Set::oper_, &Val_Set::oper_},
     /*LIST*/
     {&Val_List::oper_, &Val_List::oper_, &Val_List::oper_, 
      &Val_List::oper_, &Val_List::oper_, &Val_List::oper_, 
      &Val_List::oper_, &Val_List::oper_,
      &Val_List::oper_, &Val_List::oper_, &Val_List::oper_,
-	 &Val_List::oper_, &Val_List::oper_}
+	 &Val_List::oper_, &Val_List::oper_, &Val_List::oper_}
 
 
   };

@@ -400,6 +400,109 @@ string pelFunction(PlanContext* pc, Parse_Function *expr)
     pel << "matrixcompare ";
   }
 
+  else if (expr->name() == "f_matrixTranspose") {
+    if (expr->args() != 1) {
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
+      exit(-1);
+      return "ERROR.";
+    }
+    expr2Pel(pc, pel, expr->arg(0));
+    pel << "matrixtranspose ";
+  }
+
+  else if (expr->name() == "f_initZeroMatrix") {
+    if (expr->args() != 2) {
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
+      exit(-1);
+      return "ERROR.";
+    }
+    expr2Pel(pc, pel, expr->arg(0));
+    expr2Pel(pc, pel, expr->arg(1));
+    pel << "initzero ";
+  }
+
+  // Factor function
+  else if(expr->name() == "f_registerVariable") {
+    //arguments name, type, size
+    if (expr->args() != 3) {
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
+      exit(-1);
+      return "ERROR.";
+    }   
+    expr2Pel(pc, pel, expr->arg(0));
+    expr2Pel(pc, pel, expr->arg(1));
+    expr2Pel(pc, pel, expr->arg(2));
+    pel << "registervar "; 
+  } 
+      
+  else if(expr->name() == "f_combine") {
+    if (expr->args() != 2) {
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
+      exit(-1);
+      return "ERROR.";
+    }
+    expr2Pel(pc, pel, expr->arg(0));
+    expr2Pel(pc, pel, expr->arg(1));
+    pel << "combine ";
+  } 
+      
+  else if(expr->name() == "f_combineAll") {
+    if (expr->args() != 1) {
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
+      exit(-1);
+      return "ERROR.";
+    }
+    expr2Pel(pc, pel, expr->arg(0));
+    pel << "combineall ";
+  } 
+
+  else if(expr->name() == "f_factorCollapse") {
+    if (expr->args() != 2) {
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
+      exit(-1);
+      return "ERROR.";
+    }
+    expr2Pel(pc, pel, expr->arg(0));
+    expr2Pel(pc, pel, expr->arg(1));
+    pel << "factorcollapse ";
+  }
+    
+  else if(expr->name() == "f_createCanonicalFactor") {
+    //arguments varlist, mat, vec  
+    if (expr->args() == 0) {
+      pel << "defaultcanonicalfactor ";
+    } else if (expr->args() == 3) {
+      expr2Pel(pc, pel, expr->arg(0));
+      expr2Pel(pc, pel, expr->arg(1));
+      expr2Pel(pc, pel, expr->arg(2));
+      pel << "createcanonicalfactor ";
+    } else {
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
+      exit(-1);
+      return "ERROR.";
+    } 
+  }   
+      
+  else if(expr->name() == "f_gaussianMean") {
+    if (expr->args() != 1) {
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
+      exit(-1);
+      return "ERROR.";
+    }
+    expr2Pel(pc, pel, expr->arg(0));
+    pel << "gaussianmean ";
+  }   
+
+  else if(expr->name() == "f_gaussianCov") {
+    if (expr->args() != 1) {
+      PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());
+      exit(-1);
+      return "ERROR.";
+    }
+    expr2Pel(pc, pel, expr->arg(0));
+    pel << "gaussiacov ";
+  }
+
   else if (expr->name() == "f_typeOf") {
     if (expr->args() != 1) {
       PLANNER_ERROR_NOPC("Error in pel generation " << expr->toString());

@@ -43,6 +43,7 @@
 #include "val_set.h"
 #include "val_vector.h"
 #include "val_matrix.h"
+#include "val_factor.h"
 #include "oper.h"
 #include "loop.h"
 #include "set.h"
@@ -976,6 +977,99 @@ DEF_OP(M_COMPAREMAT) {
   Val_Matrix mat2(m2);
   stackPush(Val_Int64::mk(mat2.compareTo(val1)));
 }
+
+DEF_OP(M_TRANSPOSE) {
+  ValuePtr val1 = stackTop(); stackPop();
+  MatrixPtr m1 = Val_Matrix::cast(val1);
+  Val_Matrix mat1(m1);
+  stackPush(mat1.transpose());
+}
+
+
+/* Factor operations */
+
+DEF_OP(FACTOR_REGISTERVAR) {
+  //pushing order(name, type, size)
+
+  std::size_t size = pop_unsigned();
+  string type = pop_string();
+  string name = pop_string();
+
+  if(type == "V") {
+    Val_Factor::registerVectorVariable(name, size);
+    stackPush(Val_Int32::mk(1));
+  } else assert(false);
+}
+
+DEF_OP(COMBINE) {
+  ValuePtr val1 = stackTop(); stackPop();
+  ValuePtr val2 = stackTop(); stackPop();
+  const canonical_gaussian fact1 = Val_Factor::cast(val1);
+  const canonical_gaussian fact2 = Val_Factor::cast(val2);
+
+  stackPush(Val_Factor::multiply(fact1, fact2));
+}
+
+DEF_OP(COMBINE_ALL) {
+  ValuePtr val1 = stackTop(); stackPop();
+  ListPtr list = Val_List::cast(val1);
+ 
+  canonical_gaussian fact = Val_Factor::cast(Val_Factor::mk());
+  ValPtrList::const_iterator iter = list->begin();
+  ValPtrList::const_iterator end = list->end();
+
+  while(iter != end) {
+    fact = Val_Factor::cast(Val_Factor::multiply(fact, Val_Factor::cast(*iter)));
+    iter++;
+  }
+
+  stackPush(Val_Factor::mk(fact));
+}
+
+DEF_OP(FACTOR_COLLAPSE) {
+  ValuePtr val1 = stackTop(); stackPop();
+  ValuePtr val2 = stackTop(); stackPop();
+  const canonical_gaussian fact = Val_Factor::cast(val2);
+  ListPtr varlist = Val_List::cast(val1);
+
+  stackPush(Val_Factor::marginal(fact, varlist));
+}
+
+DEF_OP(FACTOR_CREATE_CANONICAL_FACTOR) {
+  /* pushing order varlist, mat, vec */
+  ValuePtr val1 = stackTop(); stackPop();
+  VectorPtr etavec = Val_Vector::cast(val1);
+
+  ValuePtr val2 = stackTop(); stackPop();
+  MatrixPtr lambdamat = Val_Matrix::cast(val2);
+
+  ValuePtr val3 = stackTop(); stackPop();
+  ListPtr varlist = Val_List::cast(val3);
+
+  stackPush(Val_Factor::mk(varlist, lambdamat, etavec));
+}
+
+DEF_OP(FACTOR_DEFAULT_CANONICAL_FACTOR) {
+  /* pushing order varlist, mat, vec */
+  stackPush(Val_Factor::mk());
+}
+
+DEF_OP(FACTOR_GAUSS_MEAN) {
+  ValuePtr val = stackTop(); stackPop();
+  canonical_gaussian fact = Val_Factor::cast(val);
+
+  Val_Factor f(fact);
+  stackPush(f.mean());
+}
+
+DEF_OP(FACTOR_GAUSS_COV) {
+  ValuePtr val = stackTop(); stackPop();
+  canonical_gaussian fact = Val_Factor::cast(val);
+
+  Val_Factor f(fact);
+  stackPush(f.covariance());
+}
+
 
 //
 // Boolean operations

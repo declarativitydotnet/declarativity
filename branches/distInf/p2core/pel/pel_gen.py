@@ -80,7 +80,18 @@ for op, ar, va, desc in [
   ("getmatrixoffset", 3, "M_GETOFFSET", "Extracts a value from a matrix"),
   ("setmatrixoffset", 4, "M_SETOFFSET", "Insert first item into the offsets specified in second and 3rd items of matrix in 4th item"),
   ("matrixcompare", 3, "M_COMPAREMAT", "Compare 2 matrices"),
-  
+  ("matrixtranspose", 1, "M_TRANSPOSE", "Inverse a matrix"),
+  ("initzero", 2, "M_INITMATZERO", "Create a zero matrix of arg1 by arg2"),   
+
+  ("registervar", 3, "FACTOR_REGISTERVAR", "register variable with type, size and name information"),
+  ("combine", 2, "COMBINE", "combine two factors"),
+  ("combineall", 1, "COMBINE_ALL", "combine list of factors"),
+  ("factorcollapse", 2, "FACTOR_COLLAPSE", "collapse a factor to a set of variables"),
+  ("defaultcanonicalfactor", 0, "FACTOR_DEFAULT_CANONICAL_FACTOR", "create a default canonical gaussian factor"),
+  ("createcanonicalfactor", 3, "FACTOR_CREATE_CANONICAL_FACTOR", "create canonical gaussian factor"),
+  ("gaussianmean", 1, "FACTOR_GAUSS_MEAN", "compute gaussian mean of a factor"),
+  ("gaussiacov", 1, "FACTOR_GAUSS_COV", "comput gaussian variance of a factor"),
+ 
   ("not",1, 	"NOT",          "Boolean negation"),
   ("and",2,	"AND",          "Boolean AND"),
   ("or",2,	"OR",           "Boolean inclusive-OR"),

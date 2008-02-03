@@ -42,7 +42,8 @@ ADD_LIBRARY(p2core
             set.C 
             val_set.C 
             val_double.C 
-            val_id.C 
+            val_factor.C
+	    val_id.C 
             val_int64.C 
             val_list.C 
             val_matrix.C
@@ -56,7 +57,7 @@ ADD_LIBRARY(p2core
             xdrbuf.C 
 )
 
-TARGET_LINK_LIBRARIES(p2core boost_regex boost_date_time crypto ssl) 
+TARGET_LINK_LIBRARIES(p2core blas lapack boost_regex boost_serialization boost_date_time crypto ssl) 
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 

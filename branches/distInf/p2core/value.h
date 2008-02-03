@@ -126,6 +126,7 @@ public:
     LIST,
     VECTOR,
     MATRIX,
+    FACTOR,
     /* NEW TYPE DEFINITIONS GO ABOVE HERE */    
     TYPES
   };
