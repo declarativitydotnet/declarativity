@@ -70,7 +70,6 @@ ENDIF(${CMAKE_SYSTEM} MATCHES Darwin)
 # add random environment variable definitions
 # deal with Boost time shtuff: we want nanoseconds!
 ADD_DEFINITIONS(-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG)
-
 # ADD_DEFINITIONS(-DBOOST_LIB_DIAGNOSTIC)
 ADD_DEFINITIONS(-DBOOST_ALL_DYN_LINK)
 IF (NOT DEFINED P2_LANG_DIR)
