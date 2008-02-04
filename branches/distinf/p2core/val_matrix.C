@@ -21,9 +21,7 @@ const opr::Oper* Val_Matrix::oper_ = new OperMatrix();
 ValuePtr Val_Matrix::transpose() {
 
         uint32_t sz1 = size1();
-        u_int32_t i1 = (u_int32_t)sz1;
         uint32_t sz2 = size2();
-        u_int32_t i2 = (u_int32_t)sz2;
 
         MatrixPtr mp(new ublas::matrix<ValuePtr>(sz2, sz1));
         (*mp) = trans((*M));
