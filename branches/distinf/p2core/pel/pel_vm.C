@@ -992,7 +992,7 @@ DEF_OP(M_TRANSPOSE) {
 DEF_OP(FACTOR_REGISTERVAR) {
   //pushing order(name, type, size)
 
-  std::size_t size = pop_unsigned();
+  std::size_t size = pop_signed();
   string type = pop_string();
   string name = pop_string();
 
