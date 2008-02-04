@@ -20,10 +20,10 @@
 #include "oper.h"
 #include <boost/numeric/ublas/matrix.hpp>
 
-using namespace boost::numeric::ublas;
+namespace ublas = boost::numeric::ublas;
 
-typedef boost::shared_ptr< matrix< ValuePtr > > MatrixPtr;
-typedef matrix< ValuePtr > ValPtrMatrix;
+typedef boost::shared_ptr< ublas::matrix< ValuePtr > > MatrixPtr;
+typedef ublas::matrix< ValuePtr > ValPtrMatrix;
 
 class Val_Matrix : public Value {    
 
@@ -52,7 +52,8 @@ public:
   
   // strict comparison
   int compareTo(ValuePtr v) const;
-   
+  
+  ValuePtr transpose(); 
   // Get the size of the matrix as an unsigned int.
   virtual unsigned int size() const { return (M ? M->size1()*M->size2() : 0); }
   virtual unsigned int size1() const { return (M ? M->size1() : 0); }

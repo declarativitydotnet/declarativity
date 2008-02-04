@@ -18,6 +18,18 @@ class OperMatrix : public opr::OperCompare<Val_Matrix> {
 
 const opr::Oper* Val_Matrix::oper_ = new OperMatrix();
 
+ValuePtr Val_Matrix::transpose() {
+
+        uint32_t sz1 = size1();
+        u_int32_t i1 = (u_int32_t)sz1;
+        uint32_t sz2 = size2();
+        u_int32_t i2 = (u_int32_t)sz2;
+
+        MatrixPtr mp(new ublas::matrix<ValuePtr>(sz2, sz1));
+        (*mp) = trans((*M));
+        return Val_Matrix::mk(mp);
+}
+
 MatrixPtr Val_Matrix::cast(ValuePtr v)
 {
    
@@ -65,7 +77,7 @@ ValuePtr Val_Matrix::xdr_unmarshal( XDR *x )
   uint32_t sz1 = ui1;
   uint32_t sz2 = ui2;
 
-  MatrixPtr mp(new matrix<ValuePtr>(sz1, sz2));
+  MatrixPtr mp(new ublas::matrix<ValuePtr>(sz1, sz2));
   // Unmarshal the entries -- we use default (row-major) storage
   for (uint32_t i1 = 0; i1 < sz1; i1++) {
     for (uint32_t i2 = 0; i2 < sz2; i2++) {

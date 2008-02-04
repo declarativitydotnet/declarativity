@@ -54,6 +54,7 @@
 
 
 using namespace opr;
+typedef Val_Factor::canonical_gaussian canonical_gaussian;
 
 typedef void(Pel_VM::*Op_fn_t)(u_int32_t);
 
@@ -997,7 +998,7 @@ DEF_OP(FACTOR_REGISTERVAR) {
 
   if(type == "V") {
     Val_Factor::registerVectorVariable(name, size);
-    stackPush(Val_Int32::mk(1));
+    stackPush(Val_Int64::mk(1));
   } else assert(false);
 }
 
