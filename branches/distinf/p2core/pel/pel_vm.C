@@ -952,6 +952,19 @@ DEF_OP(M_INITMAT) {
   stackPush(matrix);
 }
 
+DEF_OP(M_INITMATZERO) {
+  uint64_t sz2 = pop_signed();
+  uint64_t sz1 = pop_signed();
+
+  MatrixPtr mp(new ublas::matrix<ValuePtr>(sz1, sz2));
+  ValuePtr va = Val_Double::mk(0.0);
+
+  for (uint64_t i = 0; i < sz1; i++)
+      for (uint64_t j = 0; j < sz2; j++)
+        (*mp)(i,j) = va;
+  stackPush(Val_Matrix::mk(mp));
+}
+
 DEF_OP(M_GETOFFSET) {
    int64_t offset1 = pop_signed();
    int64_t offset2 = pop_signed();
