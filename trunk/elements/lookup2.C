@@ -17,6 +17,7 @@
 #include "val_int64.h"
 #include "plumber.h"
 #include "scheduler.h"
+#include "tableManager.h"
 
 DEFINE_ELEMENT_INITS(Lookup2, "Lookup2");
 
@@ -66,6 +67,8 @@ Lookup2::Lookup2(TuplePtr args)
 
   // If the two keys are identical, then we need not use projections.
   _project = (_lookupKey != _indexKey);
+  
+  Plumber::catalog()->createIndex(_table->name(), "HASH", _indexKey);
 }
 
 

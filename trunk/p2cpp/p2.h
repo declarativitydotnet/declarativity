@@ -19,6 +19,8 @@
 #include "tupleInjector.h"
 #include "udp.h"
 
+enum TransportConf {NONE=0, RELIABLE=1, ORDERED=2, CC=4, RCC=5, TERMINAL=6};
+
 class P2 { 
 public:
   /** A handle to return to a subscriber of an event. */
@@ -172,6 +174,13 @@ private:
   /** No instances of this class can be created */
   P2();
 
+  /** Generate a stub of the initial P2 dataflow. */
+  string 
+  stub(string hostname, string port, TransportConf conf);
+
+  void seaPlan(ostringstream& oss, string hostname, string port);
+  void netPlan(ostringstream& stub, string hostname, 
+               string port, TransportConf conf);
 
   /** Load all loadable modules before they can be addressed by the
       compilation stages */

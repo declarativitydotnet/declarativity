@@ -22,7 +22,8 @@ namespace delta {
      events. It will cascade the removal to the head predicate. */
   d4 ::sys::rule(@A, NewRid, Pid, Name, NewHeadID, P2DL, true, Term_Count, New) :-
         deltaRemoval(@A, Pid, Rid, _, NewRid, NewHeadID),
-        ::sys::rule(@A, Rid, Pid, Name, _, P2DL, _, Term_Count, New).
+        ::sys::rule(@A, Rid, Pid, Name, _, P2DL, _, Term_Count, New),
+        Name := "removal_" + Name.
 
   /* Make a new assignement for the removal rule. */
   d5 ::sys::assign(@A, f_idgen(), NewRid, Var, Value, Pos) :-

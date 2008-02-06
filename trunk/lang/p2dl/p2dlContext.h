@@ -205,7 +205,8 @@ namespace compile {
       DataflowPtr dataflow() const { return _dataflow; }
     private:
       DataflowPtr _dataflow;
-      StatementList*       _statements;
+      string      _name;
+      StatementList*  _statements;
     };
 
     class Assign : public Statement {
@@ -250,6 +251,21 @@ namespace compile {
       string toString() const;
     private:
       string _watch; 
+    };
+
+    class Table : public Statement {
+    public:
+      Table(Expression *n, Expression *l, Expression *s, ValueList *k);
+    
+      void commit(ScopeTable&) {};
+      void commit();
+
+      string toString() const;
+    private:
+      string                            _name;
+      boost::posix_time::time_duration  _lifetime;
+      int64_t                           _size;
+      CommonTable::Key                  _keys;
     };
     
     class Fact : public Statement {
@@ -384,6 +400,8 @@ namespace compile {
       void edit(Edit *e)       { _edits.push_back(e); }
 
       void fact(Fact *f)       { _facts.push_back(f); }
+
+      void table(Table *t)     { t->commit(); }
     
       void watch(Watch *w)     { _watches.push_back(w); }
     

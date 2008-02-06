@@ -396,17 +396,27 @@ TableManager::attributes(string tablename) const
 }
 
 TuplePtr
-TableManager::registerTable(CommonTablePtr tbl, string name, boost::posix_time::time_duration lifetime,
-                            uint size, CommonTable::Key& primaryKey, ListPtr sort, ValuePtr pid) {
+TableManager::registerTable(CommonTablePtr tbl, string name, 
+                            boost::posix_time::time_duration lifetime,
+                            uint size, CommonTable::Key& primaryKey, 
+                            ListPtr sort, ValuePtr pid) {
   CommonTablePtr oldtbl = table(name);
   if (oldtbl) throw TableManager::Exception("Table already exists! " + name); 
   _tables.insert(std::make_pair(name, tbl));
+
+  uint64_t ttl = 0;
+  if (lifetime == CommonTable::NO_EXPIRATION) {
+    ttl = -1;
+  }
+  else {
+    ttl = lifetime.seconds();
+  }
 
   CommonTablePtr t = table(TABLE); assert(t);
   TuplePtr tp = Tuple::mk(TABLE);
   tp->append(Val_Int64::mk(uniqueIdentifier()));
   tp->append(Val_Str::mk(name));
-  tp->append(Val_Time_Duration::mk(lifetime));
+  tp->append(Val_Int64::mk(ttl));
   tp->append(Val_Int64::mk(size));
 
   ListPtr keys = List::mk();

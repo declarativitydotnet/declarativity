@@ -177,6 +177,23 @@ namespace compile {
       }
       if (globalP2DL) stage_oss << "};\n";
 
+      // Add all tables defined by this program
+      indexKey.clear();
+      indexKey.push_back(catalog->attribute(TABLE, "PID"));
+      iter = catalog->table(TABLE)->
+        lookup(CommonTable::theKey(CommonTable::KEY2), indexKey, program); 
+
+      while (!iter->done()) {
+        TuplePtr tbl = iter->next(); // The row in the fact table
+        string name  = (*tbl)[catalog->attribute(TABLE, "TABLENAME")]->toString();
+        string ttl   = (*tbl)[catalog->attribute(TABLE, "LIFETIME")]->toString();
+        string size  = (*tbl)[catalog->attribute(TABLE, "SIZE")]->toString();
+        string keys  = (*tbl)[catalog->attribute(TABLE, "KEY")]->toString();
+        stage_oss << "createtable(" << name << ", " << ttl << ", " << size 
+                  << ", keys" << keys << ");" << std::endl; 
+        globalP2DL = true;
+      }
+
       // Add all facts asserted by this program
       indexKey.clear();
       indexKey.push_back(catalog->attribute(FACT, "PID"));

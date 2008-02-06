@@ -23,6 +23,7 @@
 #include <sys/wait.h>
 
 #include "p2dlContext.h"
+#include "p2.h"
 #include "commonTable.h"
 #include "tableManager.h"
 #include "systemTable.h"
@@ -36,8 +37,6 @@
 #include "functionLoader.h"
 #include "programLoader.h"
 #include "compileContext.h"
-
-enum TransportConf {NONE=0, RELIABLE=1, ORDERED=2, CC=4, RCC=5, TERMINAL=6};
 
 void seaPlan(ostringstream& oss, string hostname, string port)
 {
@@ -137,27 +136,7 @@ string stub(string hostname, string port, TransportConf conf)
        << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
        << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
-  stub << "\tintDemux[+ \"rewrite0::programEvent\"]   -> Rewrite0Context(\"rewrite0\") -> "
-       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
-       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
-
-  stub << "\tintDemux[+ \"secure::programEvent\"]   -> SecureContext(\"secure\") -> "
-       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
-       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
-
-  stub << "\tintDemux[+ \"rewrite1::programEvent\"]   -> Rewrite1Context(\"rewrite1\") -> "
-       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
-       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
-
-  stub << "\tintDemux[+ \"rewrite2::programEvent\"]   -> Rewrite2Context(\"rewrite2\") -> "
-       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
-       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
-
   stub << "\tintDemux[+ \"eca::programEvent\"]   -> EcaContext(\"eca\") -> "
-       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
-       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
-
-  stub << "\tintDemux[+ \"compound::programEvent\"]   -> CompoundContext(\"compound\") -> "
        << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
        << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
 
@@ -214,6 +193,7 @@ static char* USAGE = "Usage:\n\t runStagedOverLog\n"
                      "\t\t[-d <startDelay> (default: 0)]\n"
                      "\t\t[-g <filename> (produce a DOT graph)]\n"
                      "\t\t[-c (output canonical form)]\n"
+                     "\t\t[-C (pre-compile into dataflow only)]\n"
                      "\t\t[-v (show stages of planning)]\n"
                      "\t\t[-x (dry run, don't start dataflow)]\n"
                      "\t\t[-h (gets usage help)]\n";
@@ -237,11 +217,12 @@ main(int argc, char **argv)
   bool outputCanonicalForm = false;
   bool outputStages = false;
   bool preprocess = true;
+  bool compileOnly = false;
 
   Reporting::setLevel(Reporting::ERROR);
   // Parse command line options
   int c;
-  while ((c = getopt(argc, argv, "r:n:p:D:ho:s:d:gcvx")) != -1) {
+  while ((c = getopt(argc, argv, "r:n:p:D:ho:f:s:d:gcCvx")) != -1) {
     switch (c) {
     case 'r':
       {
@@ -279,6 +260,10 @@ main(int argc, char **argv)
 
     case 'c':
       outputCanonicalForm = true;
+      break;
+
+    case 'C':
+      compileOnly = true;
       break;
 
     case 'm':
@@ -411,7 +396,7 @@ main(int argc, char **argv)
       }   
       
       loader->program("commandLine", overLogFile, "",
-                      (preprocess ) ? &definitions : NULL);
+                      (preprocess ) ? &definitions : NULL, compileOnly);
     }
 
 
