@@ -20,6 +20,9 @@
 #include "p2dl_lexer.h"
 #include "reporting.h"
 #include "tuple.h"
+#include "table2.h"
+#include "refTable.h"
+#include "commonTable.h"
 
 #include "systemTable.h"
 #include "val_tuple.h"
@@ -182,18 +185,20 @@ namespace compile {
     
     Edit::Edit(Expression *n, StatementList* s) 
     {
-      if (Plumber::dataflow(n->toString())) {
-        _dataflow = Plumber::edit(n->toString());
-      }
-      else {
-        throw Exception(0, "Edit: Unknown dataflow reference. " + n->toString());
-      }
+      _name = n->toString();
       _statements = s;
     }
 
     void 
     Edit::commit(ScopeTable& scope) 
     {
+      if (Plumber::dataflow(_name)) {
+        _dataflow = Plumber::edit(_name);
+      }
+      else {
+        throw Exception(0, "Edit: Unknown dataflow reference. " + _name);
+      }
+
       scope.enter(_dataflow);
       for (StatementList::iterator i = _statements->begin();
            i != _statements->end(); i++) {
@@ -335,6 +340,59 @@ namespace compile {
       return "";
     }
 
+    Table::Table(Expression *n, Expression *l, Expression *s, ValueList *k)
+    {
+      _name = n->toString() ;
+
+      int myTtl = Val_Int64::cast(dynamic_cast<Value*>(l)->value());
+      if (myTtl == -1) {
+        _lifetime = CommonTable::NO_EXPIRATION;
+      } else if (myTtl == 0) {
+        // error("bad timeout for materialized table");
+      } else {
+        _lifetime = boost::posix_time::seconds(myTtl);
+      }   
+        
+      
+      _size = Val_Int64::cast(dynamic_cast<Value*>(s)->value());
+      // Hack because infinity token has a -1 value
+      if (_size == -1) {
+        _size = CommonTable::NO_SIZE;
+      }
+      
+     if (k) {
+        uint32_t fieldNum = 0;
+        ValueList::const_iterator i = k->begin();
+        for ( ;i != k->end(); i++){
+          fieldNum = Val_Int64::cast(*i);
+          _keys.push_back(fieldNum);
+        }
+      }
+    }
+
+    void 
+    Table::commit() {
+      if (Plumber::catalog()->table(_name) != NULL) {
+        return; // Table already exists.
+      }
+
+      TELL_INFO << "P2DL COMMIT TABLE: " << _name << std::endl;
+      if (_lifetime == CommonTable::NO_EXPIRATION && _size == CommonTable::NO_SIZE) { 
+        RefTable::mk(*Plumber::catalog(),_name,_lifetime,_size,_keys, 
+                     ListPtr(), Val_Null::mk());
+      }
+      else {
+        Table2::mk(*Plumber::catalog(),_name,_lifetime,_size,_keys, 
+                   ListPtr(), Val_Null::mk());
+      }
+    }
+
+    string Table::toString() const {
+      ostringstream oss;
+      oss << "TABLE: " << _name << std::endl;
+      return oss.str();
+    }
+
     Fact::Fact(ValueList *v) {
       _fact = ::Tuple::mk();
       for (ValueList::iterator i = v->begin(); i != v->end(); i++)
@@ -419,13 +477,6 @@ namespace compile {
     Context::commit()
     {
       ScopeTable scope;
-      TELL_INFO << "COMMIT TABLES" << std::endl;
-      for (StatementList::iterator i = _tables.begin();
-           i != _tables.end();
-           i++) {
-        TELL_WORDY << (*i)->toString() << std::endl;
-        (*i)->commit(scope);
-      }
       TELL_INFO << "COMMIT WATCHES" << std::endl;
       for (StatementList::iterator i = _watches.begin();
            i != _watches.end();
@@ -462,7 +513,6 @@ namespace compile {
       if (program && (*program)[catalog->attribute(PROGRAM, "P2DL")] != Val_Null::mk()) {
         ValuePtr programP2DL = (*program)[catalog->attribute(PROGRAM, "P2DL")];
         if (programP2DL != Val_Null::mk()) {
-          // std::cerr << programP2DL->toString() << std::endl;
           std::istringstream p2dl(programP2DL->toString(), std::istringstream::in);
           parse_stream(&p2dl);
         }
@@ -476,11 +526,6 @@ namespace compile {
       ValuePtr ruleText = (*rule)[catalog->attribute(RULE, "P2DL")];
 
       if (ruleText != Val_Null::mk()) {
-
-        //        if ((*rule)[catalog->attribute(RULE, "NAME")]->toString() == "rule_aggview_rule_mv_r1") { 
-        //std::cerr << "RULE P2DL TEXT: " << std::endl << ruleText->toString() << std::endl;
-        //}
-
         std::istringstream p2dl(ruleText->toString(), std::istringstream::in);
         parse_stream(&p2dl);
       }

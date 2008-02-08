@@ -119,6 +119,8 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>edit    { return P2DL_EDIT; }
 <INITIAL>watch   { return P2DL_WATCH; }
 <INITIAL>fact    { return P2DL_FACT; }
+<INITIAL>createtable { return P2DL_TABLE; }
+<INITIAL>keys    { return P2DL_KEYS; }
 <INITIAL>"->"    { return P2DL_LINK; }
 <INITIAL>","     { return P2DL_COMMA; }
 <INITIAL>"."     { return P2DL_DOT; }
@@ -146,11 +148,11 @@ WHITESPACE	[ \t\r\n]+
 <INITIAL>"false" { 
   lvalp->v = new compile::p2dl::Value(Val_Int64::mk(0)); return P2DL_UNSIGNED; }
 
-<INITIAL>[a-z]{ALNUM}* { 
+<INITIAL>[a-z]("::"|{ALNUM})* { 
   lvalp->v = new compile::p2dl::Variable(Val_Str::mk(yytext)); 
   return P2DL_VAR; }
 
-<INITIAL>[A-Z]{ALNUM}* { 
+<INITIAL>[A-Z]("::"|{ALNUM})* { 
   lvalp->v = new compile::p2dl::Value(Val_Str::mk(yytext)); 
   return P2DL_NAME; 
 }

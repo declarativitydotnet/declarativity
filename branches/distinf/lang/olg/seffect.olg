@@ -61,7 +61,7 @@ namespace seffect {
         sideAffectRule(@A, _, Rid, HeadID, Tablename, Type, Trigger, Schema),
         ::sys::table(@A, Tid, Tablename, _, _, _, _, _, Pid).
 
-  sa8 ::sys::predicate(@A, f_idgen(), Rid, false, Trigger, null, "RECV", Schema, 1, null, false) :-
+  sa9 ::sys::predicate(@A, f_idgen(), Rid, false, Trigger, null, "RECV", Schema, 1, null, false) :-
         sideAffectRule(@A, _, Rid, _, _, _, Trigger, Schema).
 
 }

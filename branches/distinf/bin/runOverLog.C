@@ -25,7 +25,6 @@
 #include "plumber.h"
 
 bool DEBUG = false;
-bool CC = false;
 
 
 /**

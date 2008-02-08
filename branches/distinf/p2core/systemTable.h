@@ -237,6 +237,7 @@ SECONDARY_INDEX(REWRITE,           CommonTable::theKey(CommonTable::KEY3))
 SECONDARY_INDEX(REWRITE,           CommonTable::theKey(CommonTable::KEY4))
 SECONDARY_INDEX(WATCH,             CommonTable::theKey(CommonTable::KEY4))
 SECONDARY_INDEX(PROJECTION,        CommonTable::theKey(CommonTable::KEY35))
+SECONDARY_INDEX(TABLE,             CommonTable::theKey(CommonTable::KEY9))
 #undef SECONDARY_INDEX
 
 #ifndef FUNCTIONDEF

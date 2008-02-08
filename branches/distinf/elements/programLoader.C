@@ -19,14 +19,25 @@
 #include "val_str.h"
 #include "val_null.h"
 #include "val_tuple.h"
+#include "oper.h"
 
 #include <iostream>
+#include <fstream>
 #include <sys/wait.h>
 #include <unistd.h>
 #include "boost/bind.hpp"
+#include <sys/stat.h>
+#include <time.h>
 
-#define LOAD(name, file, prev, defs) do {\
-  ProgramPtr program(new Program((name), (file), (prev), (defs))); \
+using namespace opr;
+
+#define LOAD2(name, prog) do {\
+  ProgramPtr program(new Program((name), "", "", "", NULL, (prog))); \
+  programs.push_back(program); \
+} while (0);
+
+#define LOAD(name, file, derivativeFile, prev, defs) do {\
+  ProgramPtr program(new Program((name), (file), (derivativeFile), (prev), (defs))); \
   programs.push_back(program); \
 } while (0);
 
@@ -44,20 +55,20 @@ ProgramLoader::ProgramLoader(string name)
  * 3. Val_Str: Event Name.
  */
 ProgramLoader::ProgramLoader(TuplePtr args)
-  : Element(Val_Str::cast((*args)[2]), 0, 1), dotFile("")
+  : Element(Val_Str::cast((*args)[2]), 0, 1), compileOnly(false), dotFile("")
 {
   string source = P2_LANG_DIR;
-  LOAD("gevent",     source + "/olg/gevent.olg",     "eca",     NULL);
-  LOAD("stageGuard", source + "/olg/stageGuard.olg", "eca",     NULL);
-  LOAD("error",      source + "/olg/error.olg",      "parse",   NULL);
-  LOAD("seffect",    source + "/olg/seffect.olg",    "eca",     NULL);
-  LOAD("aggview1",   source + "/olg/aggview1.olg",   "error",   NULL);
-  LOAD("aggview2",   source + "/olg/aggview2.olg",   "aggview1",NULL);
-  LOAD("aggview3",   source + "/olg/aggview3.olg",   "aggview2",NULL);
-  LOAD("mview",      source + "/olg/mview.olg",      "aggview3",NULL);
-  LOAD("delta",      source + "/olg/delta.olg",      "mview",   NULL);
-  LOAD("localize",   source + "/olg/localize.olg",   "aggview3",NULL);
-  LOAD("dummyWatch", source + "/olg/dummyWatch.olg", "eca",     NULL);
+  LOAD("gevent",     source + "/olg/gevent.olg", "",     "eca",     NULL);
+  LOAD("stageGuard", source + "/olg/stageGuard.olg", "", "eca",     NULL);
+  LOAD("error",      source + "/olg/error.olg", "",     "parse",   NULL);
+  LOAD("seffect",    source + "/olg/seffect.olg", "",    "eca",     NULL);
+  LOAD("aggview1",   source + "/olg/aggview1.olg", "",  "error",   NULL);
+  LOAD("aggview2",   source + "/olg/aggview2.olg", "",  "aggview1",NULL);
+  LOAD("aggview3",   source + "/olg/aggview3.olg", "",  "aggview2",NULL);
+  LOAD("mview",      source + "/olg/mview.olg",    "",  "aggview3",NULL);
+  LOAD("delta",      source + "/olg/delta.olg",    "",  "mview",   NULL);
+  LOAD("localize",   source + "/olg/localize.olg", "",  "aggview3",NULL);
+  LOAD("dummyWatch", source + "/olg/dummyWatch.olg", "", "eca",     NULL);
 
 /*
   LOAD("magic", source + "/olg/magic.olg", "parse", NULL);
@@ -71,13 +82,23 @@ ProgramLoader::~ProgramLoader()
 }
 
 void
+ProgramLoader::program(string name, string prog)
+{
+  LOAD2(name, prog);
+  programIter = programs.begin();
+}
+
+void
 ProgramLoader::program(string name,
                        string file,
+		       string derivativeFile,
                        string stage,
-                       std::vector<std::string>* defs) 
+                       std::vector<std::string>* defs,
+                       bool compileOnly) 
 {
-  LOAD(name, file, stage, defs);
+  LOAD(name, file, derivativeFile, stage, defs);
   programIter = programs.begin();
+  this->compileOnly = compileOnly;
 }
 
 void
@@ -104,31 +125,91 @@ ProgramLoader::programUpdate(TuplePtr program)
     }
     loader();
   }
+  else if ((*program)[Plumber::catalog()->attribute(PROGRAM, "STATUS")]->toString() == "p2dl" &&
+           ((*program)[Plumber::catalog()->attribute(PROGRAM, REWRITE)] != Val_Null::mk() ||
+            compileOnly)) {
+    ProgramPtr pdata = *(programIter-1);
+    if (pdata->file == "") return;
+
+    std::ofstream out((pdata->file + ".df").c_str());
+    if ((*program)[Plumber::catalog()->attribute(PROGRAM, "P2DL")] != Val_Null::mk()) {
+      ValuePtr programP2DL = (*program)[Plumber::catalog()->attribute(PROGRAM, "P2DL")];
+      out << programP2DL->toString() << std::endl;
+    }
+    CommonTablePtr ruleTbl = Plumber::catalog()->table(RULE);
+    CommonTable::Iterator Iter;
+    for(Iter = ruleTbl->lookup(CommonTable::theKey(CommonTable::KEY2), 
+                               CommonTable::theKey(CommonTable::KEY3), program);
+        !Iter->done(); ) {
+      TuplePtr rule = Iter->next();
+      ValuePtr text = (*rule)[Plumber::catalog()->attribute(RULE, "P2DL")];
+      out << text->toString() << std::endl;
+    }
+    out.close();
+  }
 }
 
 void
 ProgramLoader::loader()
 {
   string filename;
+  string derivedFile;
   string name;
   string rewrite;
-  std::vector<std::string>* defs;
+  std::vector<std::string>* defs = NULL;
+  string programText = "";
+  string p2dl = "";
+  ProgramPtr program;
 
   if (programIter != programs.end())
   {
-    ProgramPtr program = *programIter++;
+    program = *programIter++;
     filename = program->file;
     name     = program->name;
+    derivedFile = program->derivativeFile;
     rewrite  = program->stage;
     defs     = program->defs;
+    programText = program->prog;
+  }
+  else if (compileOnly) {
+    exit(0);
   }
   else return;
 
+  const char* olgFile = program->file.c_str();
+  ostringstream tmp;
+  tmp << program->file << ".df";
+  const char* dfFile  = tmp.str().c_str();
+
+  struct stat olgAttrib;              // create a file attribute structure
+  struct stat dfAttrib;               // create a file attribute structure
+  /* Get the attributes of files (stat returns 0 on success).
+   * The st_mtime field of stat is passed to difftime to return
+   * the difference in modification times. */
+  if (!stat(olgFile,&olgAttrib) && !stat(dfFile, &dfAttrib) &&
+      difftime(dfAttrib.st_mtime, olgAttrib.st_mtime) > 0) {
+    std::ifstream df (dfFile);
+    if (df.is_open())
+    {
+      ostringstream text;
+      string line;
+      while (! df.eof() )
+      {
+        std::getline (df,line);
+        text << line;
+      }
+      df.close();
+      p2dl = text.str();
+    }
+  }
+
   // Preprocess and/or read in the program
-  string programText;
-  if (defs) {
+  if (programText != "") {
+    /* Do nothing. */
+  }
+  else if (defs) {
     programText = P2::preprocessReadOverLogProgram(filename,
-                                                   filename,
+                                                   derivedFile,
                                                    *defs);
   } else {
     programText = P2::readOverLogProgram(filename);
@@ -136,19 +217,30 @@ ProgramLoader::loader()
 
   CommonTable::ManagerPtr catalog = Plumber::catalog();
   string message = "";
-  TuplePtr program = Tuple::mk(PROGRAM, true);
-  program->append(Val_Str::mk(name));        // Program name
+  TuplePtr ptp = Tuple::mk(PROGRAM, true);
+  ptp->append(Val_Str::mk(name));        // Program name
   if (rewrite == "")
-    program->append(Val_Null::mk());         // No predecessor stage
+    ptp->append(Val_Null::mk());         // No predecessor stage
   else
-    program->append(Val_Str::mk(rewrite));   // Predecessor stage
-  program->append(Val_Str::mk("compile"));   // Program status
-  program->append(Val_Str::mk(programText)); // Program text
-  program->append(Val_Null::mk());           // Program message
-  program->append(Val_Null::mk());           // P2DL for program installation
-  program->append(catalog->nodeid());        // Source address
-  program->freeze();
-  output(0)->push(program, NULL);
+    ptp->append(Val_Str::mk(rewrite));   // Predecessor stage
+  if (p2dl == "") {
+    ptp->append(Val_Str::mk("compile")); // Program status
+  }
+  else {
+    ptp->append(Val_Str::mk("planner")); // Program status
+  }
+  ptp->append(Val_Str::mk(programText)); // Program text
+  ptp->append(Val_Null::mk());           // Program message
+  if (p2dl == "") {
+    ptp->append(Val_Null::mk());         // No P2DL for program installation
+  }
+  else {
+    ptp->append(Val_Str::mk(p2dl));      // P2DL for program installation
+  }
+  ptp->append(catalog->nodeid());        // Source address
+  ptp->freeze();
+  
+  output(0)->push(ptp, NULL);
 }
 
 /* Set up the initial stages in the rewrite table */

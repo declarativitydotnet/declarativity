@@ -30,19 +30,22 @@ public:
   const char *processing() const { return "/h"; }
   const char *flow_code() const	 { return "/-"; }
 
-  void program(string, string, string, std::vector<std::string>*);
+  void program(string, string, string, string, std::vector<std::string>*, bool compileOnly=false);
+  void program(string, string);
   void dot(string name);
 
   DECLARE_PUBLIC_ELEMENT_INITS
 
 private:
   struct Program {
-    Program(string n, string f, string s, std::vector<std::string>* d) 
-      : name(n), file(f), stage(s), defs(d) {};
+    Program(string n, string f, string df, string s, std::vector<std::string>* d, string p="") 
+      : name(n), file(f), derivativeFile(df), stage(s), defs(d), prog(p) {};
     string name;
     string file;
+    string derivativeFile;
     string stage;
     std::vector<std::string>* defs;
+    string prog;
   };
   typedef boost::shared_ptr<Program> ProgramPtr;
   std::vector<ProgramPtr> programs;
@@ -52,6 +55,7 @@ private:
   void loader();
   void programUpdate(TuplePtr program);
   
+  bool compileOnly;
   string dotFile;
 
   DECLARE_PRIVATE_ELEMENT_INITS

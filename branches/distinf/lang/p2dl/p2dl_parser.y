@@ -56,6 +56,8 @@
 %token P2DL_ASSIGN
 %token P2DL_WATCH
 %token P2DL_FACT
+%token P2DL_TABLE
+%token P2DL_KEYS
 %token P2DL_EOF 
 
 %start program
@@ -77,6 +79,7 @@
   compile::p2dl::Edit           *u_edit;
   compile::p2dl::Watch          *u_watch;
   compile::p2dl::Fact           *u_fact;
+  compile::p2dl::Table          *u_table;
   ValueList                     *u_valuelist;
 }
 
@@ -85,8 +88,10 @@
 %type<u_stmtlist>  graphbody editbody;
 %type<u_watch>     watch;
 %type<u_fact>      fact;
+%type<u_table>     table;
 %type<u_valuelist> factbody elementargs;
 %type<u_valuelist> valuelist valuelistargs;
+%type<u_valuelist> keys keylist;
 %type<u_stmt>      assign;
 %type<u_stmt>      strand editstrand;
 %type<u_link>      strandlink editstrandlink;
@@ -108,6 +113,7 @@ clauselist: clause
 clause:  graph P2DL_SEMICOLON  { ctxt->graph($1); }
       |  edit  P2DL_SEMICOLON  { ctxt->edit($1); }
       |  fact  P2DL_SEMICOLON  { ctxt->fact($1); }
+      |  table P2DL_SEMICOLON  { ctxt->table($1); }
       |  watch P2DL_SEMICOLON  { ctxt->watch($1); }
       ; 
 
@@ -188,9 +194,27 @@ graphbody: assign P2DL_SEMICOLON
              { $$ = $3; $$->push_front($1); }
          ;
 
-watch: P2DL_WATCH P2DL_LPAR P2DL_NAME P2DL_RPAR P2DL_SEMICOLON 
+watch: P2DL_WATCH P2DL_LPAR P2DL_VAR P2DL_RPAR
          { $$ = new compile::p2dl::Watch($3); }
        ;
+
+table: P2DL_TABLE P2DL_LPAR P2DL_VAR P2DL_COMMA
+       value P2DL_COMMA value P2DL_COMMA keys P2DL_RPAR
+         { $$ = new compile::p2dl::Table($3,$5,$7,$9); }
+     ;
+
+keys: P2DL_KEYS P2DL_LPAR keylist P2DL_RPAR
+      { $$ = $3; }
+    ;
+
+keylist: value
+         { $$ = new ValueList();
+           $$->push_back(dynamic_cast<compile::p2dl::Value*>($1)->value()); }
+         |
+         value P2DL_COMMA keylist
+         { $3->insert($3->begin(), dynamic_cast<compile::p2dl::Value*>($1)->value()); 
+           $$=$3; }
+         ;
 
 fact: P2DL_FACT P2DL_LPAR factbody P2DL_RPAR
         { $$ = new compile::p2dl::Fact($3); }

@@ -380,6 +380,7 @@ int Dataflow::check_push_and_pull()
         break;
 
       default:
+        // fromElement->element()->toDot(&std::cout);
         TELL_ERROR << "Invalid personality for from element "
                   << fromElement->toString()
                   << " and port "
@@ -452,6 +453,7 @@ int Dataflow::eval_hookups()
       TELL_ERROR << "Output port " << fromPort << " of element "
                 << fromElement->toString()
                 << " reused\n";
+      TELL_ERROR << "TO ELEMENT: " << toElement->toString() << std::endl;
     }
     duplicates += dup;
     dup =
@@ -460,6 +462,7 @@ int Dataflow::eval_hookups()
       TELL_ERROR << "Input port " << toPort << " of element "
                 << toElement->toString()
                 << " reused\n";
+      TELL_ERROR << "FROM ELEMENT: " << fromElement->toString() << std::endl;
     }
     duplicates += dup;
   }
