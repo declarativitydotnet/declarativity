@@ -185,6 +185,34 @@ namespace compile {
     }
 
     ValuePtr
+    uniqueSchema(ValuePtr value)
+    {
+      ListPtr schema = List::mk();
+      if (value->typeCode() == Value::LIST) {
+        ListPtr list = Val_List::cast(value);
+        int fictvar = 0;
+        for (ValPtrList::const_iterator iter = list->begin();
+             iter != list->end(); iter++) {
+          ostringstream oss;
+          oss << "$_" << fictvar++;
+          if ((*Val_Tuple::cast(*iter))[0]->toString() == LOC) {
+            TuplePtr var = Tuple::mk(LOC);
+            var->append(Val_Str::mk(oss.str()));
+            var->freeze();
+            schema->append(Val_Tuple::mk(var));
+          }
+          else {
+            TuplePtr var = Tuple::mk(VAR);
+            var->append(Val_Str::mk(oss.str()));
+            var->freeze();
+            schema->append(Val_Tuple::mk(var));
+          }
+        }
+      }
+      return Val_List::mk(schema);
+    }
+
+    ValuePtr
     toVar(ValuePtr value)
     {
       if (value->typeCode() == Value::LIST) {
