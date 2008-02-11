@@ -292,6 +292,7 @@ FUNCTIONDEF("f_tostr",       1, "tostr")
 FUNCTIONDEF("f_strReplace",  3, "strreplace")
 FUNCTIONDEF("f_strfind",     2, "strfind")
 FUNCTIONDEF("f_tovar",       1, "tovar")
+FUNCTIONDEF("f_uniqueSchema",1, "uniqueSchema")
 FUNCTIONDEF("f_istheta",     1, "istheta")
 FUNCTIONDEF("f_subset",      2, "subset")
 

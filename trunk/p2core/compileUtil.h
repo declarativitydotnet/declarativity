@@ -52,6 +52,9 @@ namespace compile {
         to a regular variable. */
     ValuePtr toVar(ValuePtr var);
 
+    /** Converts list of variables into a unique list of new variables. */
+    ValuePtr uniqueSchema(ValuePtr var);
+
     bool isTheta(ValuePtr boolv);
 
     /** Find the location attribute in the schema */

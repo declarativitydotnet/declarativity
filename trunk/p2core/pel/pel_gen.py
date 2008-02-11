@@ -143,6 +143,7 @@ for op, ar, va, desc in [
   ("filter",     2, "O_FILTER", "Determine if a filter can be applied to the schema."),
 
   ("tovar",1,   "A_TO_VAR",   "Convert attribute to a variable."),
+  ("uniqueSchema",1,   "A_UNIQUE_SCHEMA", "Convert schema into a list of unique variables."),
   ("istheta",1,   "ISTHETA",   "Test the boolean predicate for theta."),
   ("getattr",2, "L_GET_ATTR",   "Extract attribute from list."),
   ("mktype",2, "T_MK_TYPE",   "Make a Type Tuple."),

@@ -583,6 +583,11 @@ DEF_OP(A_TO_VAR) {
    stackPush(compile::namestracker::toVar(attr));
 }
 
+DEF_OP(A_UNIQUE_SCHEMA) { 
+   ValuePtr attr = stackTop(); stackPop();
+   stackPush(compile::namestracker::uniqueSchema(attr));
+}
+
 DEF_OP(ISTHETA) { 
    ValuePtr boolv = stackTop(); stackPop();
    stackPush(Val_Int64::mk(compile::namestracker::isTheta(boolv)));

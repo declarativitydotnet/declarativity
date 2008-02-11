@@ -13,7 +13,7 @@ namespace seffect {
 
   i3 delete commit(@A, Pid) :- commitRewrite(@A, Pid).
 
-  sa1 sideAffect(@A, Pid, Rid, Tablename, f_tovar(Schema)) :-
+  sa1 sideAffect(@A, Pid, Rid, Tablename, f_uniqueSchema(Schema)) :-
         programEvent(@A, Pid, _, _, _, _, _, _, _),
         ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
         ::sys::predicate(@A, HeadID, Rid, _, _, Tid, _, Schema, _, AM, New),
