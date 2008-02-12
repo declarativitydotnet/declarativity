@@ -16,14 +16,20 @@ namespace mview {
         ::sys::predicate(@A, PredID, Rid, _, _, _, _, _, Pos, _, _),
         Events == 0, Pos > 0.
 
-  mv2b rewrite(@A, Pid, Rid, PredID, f_idgen(), f_idgen()) :-
+  mv2b rewrite(@A, Pid, Rid, PredID, f_idgen(), f_idgen(), f_getattr("Location", Schema), Pos) :-
         predCount(@A, Pid, Rid, Preds),
         ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
-        ::sys::predicate(@A, PredID, Rid, _, Name, Tid, ECA, _, _, _, _),
-        Preds > 0, ECA == null,
+        ::sys::predicate(@A, PredID, Rid, _, Name, Tid, ECA, Schema, Pos, _, _),
+        Preds > 0, ECA == null, Pos == 1,
         Name != "sys::compileStatus",
         HeadID != PredID.
 
+  mv2c rewrite(@A, Pid, Rid, PredID, f_idgen(), f_idgen(), Loc, Pos2) :-
+		rewrite(@A, Pid, Rid, _, _, _, Loc, Pos1),
+		::sys::predicate(@A, PredID, Rid, _, _, _, _, Schema, Pos2, _, _),
+		f_getattr("Location", Schema) == Loc,
+		Pos2 == (Pos1+1).
+		
   /* Put the DELTA predicate in the first postion. */
   mv3 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, "DELTA", Schema, 1, AM, New) :-
         rewrite(@A, Pid, Rid, DeltaPredID, NewRid, NewHeadID),
