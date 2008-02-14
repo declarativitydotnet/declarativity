@@ -250,7 +250,7 @@ FUNCTIONDEF("f_drand",       0, "drand48")
 FUNCTIONDEF("f_now",         0, "now")
 FUNCTIONDEF("f_sha1",        1, "sha1")
 FUNCTIONDEF("f_match",       2, "match")
-FUNCTIONDEF("f_append",      1, "lappend") // Append with null
+/*FUNCTIONDEF("f_append",      1, "lappend") // Append with null*/
 FUNCTIONDEF("f_append",      2, "lappend") // Append
 FUNCTIONDEF("f_member",      2, "member")
 FUNCTIONDEF("f_concat",      2, "concat")
@@ -266,10 +266,10 @@ FUNCTIONDEF("f_removeLast",  1, "removeLast")
 FUNCTIONDEF("f_last",        1, "last")
 FUNCTIONDEF("f_size",        1, "size")
 FUNCTIONDEF("f_equivalent",  2, "equivalent")
-FUNCTIONDEF("f_offset",      2, "offset")    // For vector
-FUNCTIONDEF("f_offset",      3, "offset")    // For matrix
-FUNCTIONDEF("f_setOffset",   3, "setoffset") // For vector
-FUNCTIONDEF("f_setOffset",   4, "setoffset") // For matrix
+FUNCTIONDEF("f_moffset",      2, "getmatrixoffset")    // For matrix
+FUNCTIONDEF("f_voffset",      3, "getvectoroffset")    // For vector
+FUNCTIONDEF("f_setVOffset",   3, "setvectoroffset") // For vector
+FUNCTIONDEF("f_setMOffset",   4, "setmatrixoffset") // For matrix
 FUNCTIONDEF("f_compare",     2, "compare")
 FUNCTIONDEF("f_max",         2, "max")
 FUNCTIONDEF("f_min",         2, "min")
@@ -310,7 +310,7 @@ FUNCTIONDEF("f_deserialize",  2, "deserialize")
 FUNCTIONDEF("f_createVersion",0, "createVersion")
 FUNCTIONDEF("f_createLocSpec",0, "createLocSpec")
 FUNCTIONDEF("f_isLocSpec",    1, "isLocSpec")
-FUNCTIONDEF("f_getCert",      1, "getCert")
+FUNCTIONDEF("f_getCer",      1, "getCert")
 FUNCTIONDEF("f_isSays",       1, "isSays")
 FUNCTIONDEF("f_loadKeyFile",  1, "loadKeyFile")
 FUNCTIONDEF("f_initMask",     1, "initMask")
@@ -327,9 +327,9 @@ FUNCTIONDEF("f_registerVariable",      3, "registervar")
 FUNCTIONDEF("f_combine",         2, "combine")
 FUNCTIONDEF("f_combineAll",   1, "combineall")
 FUNCTIONDEF("f_collapse",   2, "collapse")
-FUNCTIONDEF("f_createCanonicalFactor",   0, "defaultcanonicalfactor")
+FUNCTIONDEF("f_defaultCanonicalFactor",   0, "defaultcanonicalfactor")
 FUNCTIONDEF("f_createCanonicalFactor",   3, "createcanonicalfactor")
-FUNCTIONDEF("f_createTableFactor", 0, "defaulttablefactor")
+FUNCTIONDEF("f_defaultTableFactor", 0, "defaulttablefactor")
 FUNCTIONDEF("f_createTableFactor", 2, "createtablefactor")
 FUNCTIONDEF("f_gaussianMean",   1, "gaussianmean")
 FUNCTIONDEF("f_gaussianCov",   1, "gaussiacov")
