@@ -15,6 +15,9 @@
 SUBDIRS(pel)
 
 ADD_LIBRARY(p2core 
+	    val_factor.C
+            val_gaussian_factor.C
+	    val_table_factor.C
             CSVlex.C
             ID.C 
             aggFactory.C 
@@ -42,7 +45,6 @@ ADD_LIBRARY(p2core
             set.C 
             val_set.C 
             val_double.C 
-            val_factor.C
 	    val_id.C 
             val_int64.C 
             val_list.C 

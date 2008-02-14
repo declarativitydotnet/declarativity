@@ -28,7 +28,8 @@
 #include "val_id.h"
 #include "val_vector.h"
 #include "val_matrix.h"
-#include "val_factor.h"
+#include "val_gaussian_factor.h"
+//#include "val_table_factor.h"
 
 typedef ValuePtr (*_unmarshal_fn)( XDR *);
 
@@ -46,7 +47,8 @@ static _unmarshal_fn jump_tab[] = {
   Val_List::xdr_unmarshal,
   Val_Vector::xdr_unmarshal,
   Val_Matrix::xdr_unmarshal,
-  Val_Factor::xdr_unmarshal
+  Val_Gaussian_Factor::xdr_unmarshal
+  /* Val_Table_Factor::xdr_unmarshal */
 };
 
 #include <time.h>

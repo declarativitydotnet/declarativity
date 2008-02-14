@@ -19,29 +19,15 @@
 #include "oper.h"
 #include "val_double.h"
 #include "val_list.h"
-#include "val_matrix.h"
-#include "val_vector.h"
 
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <prl/variable.hpp>
-#include <prl/gaussian_factors.hpp>
-#include <prl/math/bindings/lapack.hpp>
 
 class Val_Factor : public Value {
-public:
-  //! The matrix representation
-  typedef prl::math::bindings::lapack::double_matrix matrix_type;
-
-  //! The vector representation
-  typedef prl::math::bindings::lapack::double_vector vector_type;
-
-  //! The type of factors stored in this value
-  typedef prl::canonical_gaussian<matrix_type, vector_type> canonical_gaussian;
-
-  //! The moment Gaussian factor type (used for mean, covariance)
-  typedef prl::moment_gaussian<matrix_type, vector_type> moment_gaussian;
-
+ public:
   //! The type of argument sets used in the factors
-  typedef canonical_gaussian::domain_type domain_type;
+  typedef prl::domain_t domain_type;
 
   //! The type of variable handles (pointers)
   typedef prl::variable_h variable_h;
@@ -49,72 +35,33 @@ public:
   //! A map from variable names to handles
   typedef prl::map<std::string, variable_h> named_var_map;
 
-  // Required type information
-  const Value::TypeCode typeCode() const { return Value::FACTOR; };
-  const char *typeName() const { return "factor"; };
-
-  static const opr::Oper* oper_;
-
-  // String representation. What exactly is toConfString()?
-  std::string toString() const;
-  std::string toConfString() const;
-
-  // Serialization
-  void xdr_marshal_subtype( XDR *x );
-  static ValuePtr xdr_unmarshal( XDR *x );
-
   // Constructors
   Val_Factor() { }
-  Val_Factor(const canonical_gaussian& factor) : factor(factor) { }
-  ~Val_Factor() {};
+  ~Val_Factor() { };
 
-  // Casting
-  static const canonical_gaussian& cast(ValuePtr v);
-  const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
-
-  // Factory
-  static ValuePtr mk();
-  static ValuePtr mk(const canonical_gaussian& factor);
-  static ValuePtr mk(ListPtr args, MatrixPtr lambda, VectorPtr eta);
+  std::string toConfString() const;
 
   //! Registers the local variable by name
-  static variable_h registerVectorVariable(std::string name, std::size_t size);
-
-  // Comparison
-  int compareTo(ValuePtr v) const;
+  static variable_h 
+    registerVectorVariable(const std::string& name, std::size_t size);
+  static variable_h
+    registerFiniteVariable(const std::string& name, std::size_t size);
 
   // Accessors
   //! What exactly are we supposed to return here? Why is this important?
   unsigned int size() const;
 
   //! Returns the list of arguments of this factor
-  ValuePtr arguments() const;
+  virtual domain_type arguments() const = 0;
+  ValuePtr args() const;
 
-  /**
-   * Returns the mean of the distribution represented by this factor
-   * @return a pointer to a Val_Vector object that represents the mean
-   * @note throws an assertion violation / exception if the
-   *       factor is not normalizable.
-   */
-  ValuePtr mean() const;
-
-  /**
-   * Returns the covariance of the distirbution represented by this factor
-   * @return a pointer to a Val_Matrix object that represents the covariance
-   * @note throws an assertion violation / exception if the
-   *       factor is not normalizable.
-   */
-  ValuePtr covariance() const;
-
-  // Factor operations
   //! Multiplies two factors together
-  static ValuePtr multiply(const canonical_gaussian& f1,
-                           const canonical_gaussian& f2);
+  virtual ValuePtr multiply(ValuePtr factor) const = 0;
 
-  //! Collapses a factor to a subset of variables
-  static ValuePtr marginal(const canonical_gaussian& f1, ListPtr retain);
+  //! Collapses this factor to a subset of variables
+  virtual ValuePtr marginal(ListPtr retain) const = 0;
 
- private:
+ protected:
   //! A functor that transforms a ValuePtr to a double
   struct ValuePtr2double {
     double operator()(const ValuePtr p) { return Val_Double::cast(p); }
@@ -127,9 +74,6 @@ public:
 
   //! Converts a list of variable names to a vector of variable handles
   static std::vector<variable_h> lookupVars(ListPtr list_ptr);
-
-  //! The factor stored in this value
-  canonical_gaussian factor;
 
   //! The set of all variables known to this host.
   static prl::universe u;

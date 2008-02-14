@@ -43,7 +43,8 @@
 #include "val_set.h"
 #include "val_vector.h"
 #include "val_matrix.h"
-#include "val_factor.h"
+#include "val_gaussian_factor.h"
+#include "val_table_factor.h"
 #include "oper.h"
 #include "loop.h"
 #include "set.h"
@@ -54,7 +55,7 @@
 
 
 using namespace opr;
-typedef Val_Factor::canonical_gaussian canonical_gaussian;
+typedef Val_Gaussian_Factor::canonical_gaussian canonical_gaussian;
 
 typedef void(Pel_VM::*Op_fn_t)(u_int32_t);
 
@@ -1014,44 +1015,35 @@ DEF_OP(FACTOR_REGISTERVAR) {
   string type = pop_string();
   string name = pop_string();
 
-  if(type == "V") {
-    Val_Factor::registerVectorVariable(name, size);
-    stackPush(Val_Int64::mk(1));
-  } else assert(false);
+  if(type == "V") Val_Factor::registerVectorVariable(name, size);
+  else if(type == "F") Val_Factor::registerFiniteVariable(name, size);
+  else assert(false);
+  stackPush(Val_Int64::mk(1));
 }
 
 DEF_OP(COMBINE) {
   ValuePtr val1 = stackTop(); stackPop();
   ValuePtr val2 = stackTop(); stackPop();
-  const canonical_gaussian fact1 = Val_Factor::cast(val1);
-  const canonical_gaussian fact2 = Val_Factor::cast(val2);
-
-  stackPush(Val_Factor::multiply(fact1, fact2));
+  stackPush(dynamic_cast<Val_Factor*>(val1.get())->multiply(val2));
 }
 
 DEF_OP(COMBINE_ALL) {
   ValuePtr val1 = stackTop(); stackPop();
   ListPtr list = Val_List::cast(val1);
- 
-  canonical_gaussian fact = Val_Factor::cast(Val_Factor::mk());
-  ValPtrList::const_iterator iter = list->begin();
-  ValPtrList::const_iterator end = list->end();
-
-  while(iter != end) {
-    fact = Val_Factor::cast(Val_Factor::multiply(fact, Val_Factor::cast(*iter)));
-    iter++;
-  }
-
-  stackPush(Val_Factor::mk(fact));
+  
+  assert(list->size()!=0);
+  ValuePtr product = list->front();
+  ValPtrList::const_iterator iter = list->begin()++, end = list->end();
+  while(iter != end) 
+    product = dynamic_cast<Val_Factor*>(product.get())->multiply(*(iter++));
+  stackPush(product);
 }
 
-DEF_OP(FACTOR_COLLAPSE) {
+DEF_OP(COLLAPSE) {
   ValuePtr val1 = stackTop(); stackPop();
   ValuePtr val2 = stackTop(); stackPop();
-  const canonical_gaussian fact = Val_Factor::cast(val2);
   ListPtr varlist = Val_List::cast(val1);
-
-  stackPush(Val_Factor::marginal(fact, varlist));
+  stackPush(dynamic_cast<Val_Factor*>(val2.get())->marginal(varlist));
 }
 
 DEF_OP(FACTOR_CREATE_CANONICAL_FACTOR) {
@@ -1065,28 +1057,31 @@ DEF_OP(FACTOR_CREATE_CANONICAL_FACTOR) {
   ValuePtr val3 = stackTop(); stackPop();
   ListPtr varlist = Val_List::cast(val3);
 
-  stackPush(Val_Factor::mk(varlist, lambdamat, etavec));
+  stackPush(Val_Gaussian_Factor::mk(varlist, lambdamat, etavec));
 }
 
 DEF_OP(FACTOR_DEFAULT_CANONICAL_FACTOR) {
-  /* pushing order varlist, mat, vec */
-  stackPush(Val_Factor::mk());
+  stackPush(Val_Gaussian_Factor::mk());
 }
 
+DEF_OP(CREATE_TABLE_FACTOR) {
+  ListPtr assignments = Val_List::cast(stackTop()); stackPop();
+  ListPtr var_list = Val_List::cast(stackTop()); stackPop();
+  stackPush(Val_Table_Factor::mk(var_list, assignments));
+}
+
+DEF_OP(DEFAULT_TABLE_FACTOR) {
+  stackPush(Val_Table_Factor::mk());
+}
+	    
 DEF_OP(FACTOR_GAUSS_MEAN) {
   ValuePtr val = stackTop(); stackPop();
-  canonical_gaussian fact = Val_Factor::cast(val);
-
-  Val_Factor f(fact);
-  stackPush(f.mean());
+  stackPush(dynamic_cast<Val_Gaussian_Factor*>(val.get())->mean());
 }
 
 DEF_OP(FACTOR_GAUSS_COV) {
   ValuePtr val = stackTop(); stackPop();
-  canonical_gaussian fact = Val_Factor::cast(val);
-
-  Val_Factor f(fact);
-  stackPush(f.covariance());
+  stackPush(dynamic_cast<Val_Gaussian_Factor*>(val.get())->covariance());
 }
 
 

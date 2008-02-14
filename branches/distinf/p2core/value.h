@@ -126,7 +126,8 @@ public:
     LIST,
     VECTOR,
     MATRIX,
-    FACTOR,
+    GAUSSIAN_FACTOR,
+    TABLE_FACTOR,
     /* NEW TYPE DEFINITIONS GO ABOVE HERE */    
     TYPES
   };
