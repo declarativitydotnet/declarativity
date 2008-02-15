@@ -1044,8 +1044,8 @@ DEF_OP(COLLAPSE) {
   ValuePtr val1 = stackTop(); stackPop();
   ValuePtr val2 = stackTop(); stackPop();
   cout << "COLLAPSE: " << val1->toString() << ',' << val2->toString() << endl;
-  ListPtr varlist = Val_List::cast(val1);
-  stackPush(dynamic_cast<Val_Factor*>(val2.get())->marginal(varlist));
+  ListPtr varlist = Val_List::cast(val2);
+  stackPush(dynamic_cast<Val_Factor*>(val1.get())->marginal(varlist));
 }
 
 DEF_OP(FACTOR_CREATE_CANONICAL_FACTOR) {
