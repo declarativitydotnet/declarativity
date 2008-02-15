@@ -122,7 +122,7 @@ ValuePtr Val_Table_Factor::mk(ListPtr args, ListPtr values)
   boost::transform(vec->data(), eta.data().begin(), ValuePtr2double());
   return mk(factor_type(lookupVars(args), lambda, eta));
   */
-  return mk(factor_type(lookupVars(args)));
+  return mk(factor_type(lookupVars(args), 0));
 }
 
 prl::domain_t Val_Table_Factor::arguments() const

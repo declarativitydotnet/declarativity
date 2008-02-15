@@ -1040,8 +1040,10 @@ DEF_OP(COMBINE_ALL) {
 }
 
 DEF_OP(COLLAPSE) {
+  using namespace std;
   ValuePtr val1 = stackTop(); stackPop();
   ValuePtr val2 = stackTop(); stackPop();
+  cout << "COLLAPSE: " << val1->toString() << ',' << val2->toString() << endl;
   ListPtr varlist = Val_List::cast(val1);
   stackPush(dynamic_cast<Val_Factor*>(val2.get())->marginal(varlist));
 }
