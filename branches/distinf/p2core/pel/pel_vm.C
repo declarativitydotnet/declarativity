@@ -1011,9 +1011,9 @@ DEF_OP(M_TRANSPOSE) {
 DEF_OP(FACTOR_REGISTERVAR) {
   //pushing order(name, type, size)
 
-  std::size_t size = pop_signed();
-  string type = pop_string();
   string name = pop_string();
+  string type = pop_string();
+  std::size_t size = pop_signed();
 
   if(type == "V") Val_Factor::registerVectorVariable(name, size);
   else if(type == "F") Val_Factor::registerFiniteVariable(name, size);
@@ -1049,15 +1049,10 @@ DEF_OP(COLLAPSE) {
 }
 
 DEF_OP(FACTOR_CREATE_CANONICAL_FACTOR) {
-  /* pushing order varlist, mat, vec */
-  ValuePtr val1 = stackTop(); stackPop();
-  VectorPtr etavec = Val_Vector::cast(val1);
-
-  ValuePtr val2 = stackTop(); stackPop();
-  MatrixPtr lambdamat = Val_Matrix::cast(val2);
-
-  ValuePtr val3 = stackTop(); stackPop();
-  ListPtr varlist = Val_List::cast(val3);
+  /* popping order varlist, mat, vec */
+  ListPtr varlist = Val_List::cast(stackTop()); stackPop();
+  MatrixPtr lambdamat = Val_Matrix::cast(stackTop()); stackPop();
+  VectorPtr etavec = Val_Vector::cast(stackTop()); stackPop();
 
   stackPush(Val_Gaussian_Factor::mk(varlist, lambdamat, etavec));
 }
@@ -1067,8 +1062,8 @@ DEF_OP(FACTOR_DEFAULT_CANONICAL_FACTOR) {
 }
 
 DEF_OP(CREATE_TABLE_FACTOR) {
-  ListPtr assignments = Val_List::cast(stackTop()); stackPop();
   ListPtr var_list = Val_List::cast(stackTop()); stackPop();
+  ListPtr assignments = Val_List::cast(stackTop()); stackPop();
   stackPush(Val_Table_Factor::mk(var_list, assignments));
 }
 

@@ -18,6 +18,7 @@
 #include "val_str.h"
 
 #include <prl/global.hpp>
+#include <iostream>
 
 #include "prl/detail/shortcuts_def.hpp"
 
@@ -77,9 +78,12 @@ Val_Factor::registerFiniteVariable(const std::string& name, std::size_t size)
 }
 
 std::vector<prl::variable_h> Val_Factor::lookupVars(ListPtr list_ptr) {
+  // using namespace std;
   std::vector<variable_h> vars;
   vars.reserve(list_ptr->size());
+  // cout << named_var << endl;
   foreach(ValuePtr val_ptr, std::make_pair(list_ptr->begin(),list_ptr->end())) {
+    // cout << val_ptr->toString() << endl;
     vars.push_back(named_var.get(val_ptr->toString()));
   }
   return vars;
