@@ -111,7 +111,7 @@ namespace compile {
     {
       ostringstream oss;
       string type = (*expr)[TNAME]->toString();
-      if (type == VAR || type == VAL) {
+      if (type == VAR || type == VAL || type == MAT || type == VEC) {
         ValuePtr val = (*expr)[2];
         if (type == VAL && val->typeCode() == Value::STR) {
           oss << "\"" << val->toString() << "\""; 
