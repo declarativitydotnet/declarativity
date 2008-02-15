@@ -720,6 +720,12 @@ namespace compile {
       else if (type == VAL) {
         return value(schema, exprTp); 
       }
+      else if (type == MAT) {
+        return value(schema, exprTp); 
+      }
+      else if (type == VEC) {
+        return value(schema, exprTp); 
+      }
       else if (type == VAR) {
         return variable(schema, exprTp); 
       }

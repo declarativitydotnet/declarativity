@@ -39,8 +39,14 @@
 
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 #include "math.h"
 #include "reporting.h"
+#include "value.h"
+#include "val_double.h"
+#include "val_int64.h"
+#include "val_matrix.h"
+#include "val_vector.h"
 
 #define LOG_ERROR(_x) { TELL_ERROR << "Pel_Lexer\"" << _programText << "\": " << _x << "\n"; }
 #define LOG_WARN(_x) { TELL_WARN << "Pel_Lexer\"" << _programText << "\": " << _x << "\n"; }
@@ -53,6 +59,62 @@ Pel_Lexer::opcode_token Pel_Lexer::tokens[] = {
 };
 const uint32_t Pel_Lexer::num_tokens = 
 (sizeof(Pel_Lexer::tokens) / sizeof(Pel_Lexer::opcode_token));
+
+ValuePtr 
+parseVector(char *vec) {
+  std::vector<ValuePtr> elements;
+
+  char *tok = strtok(vec, ",");
+  while (tok  != NULL) {
+    ValuePtr element;
+    if (strchr(tok, '.') != NULL) {
+      element = Val_Double::mk(strtod(tok,NULL));
+    }
+    else {
+      element = Val_Int64::mk(strtoull(tok, NULL, 0));
+    }
+    elements.push_back(element);
+    tok = strtok(NULL, ",");
+  }
+  VectorPtr vp(new vector<ValuePtr>(elements.size()));
+  int index = 0;
+  for (std::vector<ValuePtr>::iterator iter = elements.begin();
+       iter != elements.end(); iter++) {
+    (*vp)(index++) = *iter;
+  }
+  return Val_Vector::mk(vp);
+}
+
+ValuePtr 
+parseMatrix(char *mat) {
+  std::vector<char*> rowstr;
+  char *tok = strtok(mat, "%");
+  while (tok != NULL) {
+    char* vec = new char[strlen(tok) - 2];
+    strlcpy(vec, tok+1, strlen(tok) - 1);
+    rowstr.push_back(vec);
+    tok = strtok(NULL, "%");
+  }
+  
+  std::vector<ValuePtr> rows;
+  for (std::vector<char*>::iterator iter = rowstr.begin();
+       iter != rowstr.end(); iter++) {
+    rows.push_back(parseVector(*iter));
+    delete [] *iter;
+  }
+
+  int arity = rows.size() == 0 ? 0 : rows.front()->size();
+  MatrixPtr mp(new matrix<ValuePtr>(rows.size(), arity));
+  int r=0;
+  for (std::vector<ValuePtr>::iterator row = rows.begin();
+       row != rows.end(); row++, r++) {
+    VectorPtr vec = Val_Vector::cast(*row);
+    for (int c = 0; c < arity; c++) {
+      (*mp)(r, c) = (*vec)(c);
+    }
+  }
+  return Val_Matrix::mk(mp);
+}
 
 %}
 
@@ -197,6 +259,20 @@ null|NULL {
 \${DIGIT}+ {
   // $0, $1, $2, etc: loading tuple fields
   add_tuple_load(strtol(yytext+1, NULL, 0));
+}
+
+\{.*\} {
+  char* mat = new char[strlen(yytext) - 2];
+  strlcpy(mat, yytext+1, strlen(yytext) - 1);
+  add_const(parseMatrix(mat));
+  delete [] mat;
+}
+
+\[.*\] {
+  char* vec = new char[strlen(yytext) - 2];
+  strlcpy(vec, yytext+1, strlen(yytext) - 1);
+  add_const(parseVector(vec));
+  delete [] vec;
 }
   
 

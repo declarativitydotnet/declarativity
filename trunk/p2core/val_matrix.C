@@ -118,7 +118,7 @@ string Val_Matrix::toConfString() const
 {
   ostringstream sb;
    
-  sb << "[";
+  sb << "{";
    
   ValPtrMatrix::const_iterator1 iter1 = M->begin1();
   ValPtrMatrix::const_iterator1 end1 = M->end1();
@@ -144,12 +144,12 @@ string Val_Matrix::toConfString() const
     sb << "]";
 
     if (iter1 != almost_end1) {
-      sb << ", ";
+      sb << "%";
     }
     iter1++;
   }
 	
-  sb << "]";
+  sb << "}";
   return sb.str();
 }
 
