@@ -26,20 +26,18 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "boost/bind.hpp"
-
 #include <sys/stat.h>
-#include <unistd.h>
 #include <time.h>
 
 using namespace opr;
 
 #define LOAD2(name, prog) do {\
-  ProgramPtr program(new Program((name), "", "", NULL, (prog))); \
+  ProgramPtr program(new Program((name), "", "", "", NULL, (prog))); \
   programs.push_back(program); \
 } while (0);
 
-#define LOAD(name, file, prev, defs) do {\
-  ProgramPtr program(new Program((name), (file), (prev), (defs))); \
+#define LOAD(name, file, derivativeFile, prev, defs) do {\
+  ProgramPtr program(new Program((name), (file), (derivativeFile), (prev), (defs))); \
   programs.push_back(program); \
 } while (0);
 
@@ -60,17 +58,17 @@ ProgramLoader::ProgramLoader(TuplePtr args)
   : Element(Val_Str::cast((*args)[2]), 0, 1), compileOnly(false), dotFile("")
 {
   string source = P2_LANG_DIR;
-  LOAD("gevent",     source + "/olg/gevent.olg",     "eca",     NULL);
-  LOAD("stageGuard", source + "/olg/stageGuard.olg", "eca",     NULL);
-  LOAD("error",      source + "/olg/error.olg",      "parse",   NULL);
-  LOAD("seffect",    source + "/olg/seffect.olg",    "eca",     NULL);
-  LOAD("aggview1",   source + "/olg/aggview1.olg",   "error",   NULL);
-  LOAD("aggview2",   source + "/olg/aggview2.olg",   "aggview1",NULL);
-  LOAD("aggview3",   source + "/olg/aggview3.olg",   "aggview2",NULL);
-  LOAD("mview",      source + "/olg/mview.olg",      "aggview3",NULL);
-  LOAD("delta",      source + "/olg/delta.olg",      "mview",   NULL);
-  LOAD("localize",   source + "/olg/localize.olg",   "aggview3",NULL);
-  LOAD("dummyWatch", source + "/olg/dummyWatch.olg", "eca",     NULL);
+  LOAD("gevent",     source + "/olg/gevent.olg", "",     "eca",     NULL);
+  LOAD("stageGuard", source + "/olg/stageGuard.olg", "", "eca",     NULL);
+  LOAD("error",      source + "/olg/error.olg", "",     "parse",   NULL);
+  LOAD("seffect",    source + "/olg/seffect.olg", "",    "eca",     NULL);
+  LOAD("aggview1",   source + "/olg/aggview1.olg", "",  "error",   NULL);
+  LOAD("aggview2",   source + "/olg/aggview2.olg", "",  "aggview1",NULL);
+  LOAD("aggview3",   source + "/olg/aggview3.olg", "",  "aggview2",NULL);
+  LOAD("mview",      source + "/olg/mview.olg",    "",  "aggview3",NULL);
+  LOAD("delta",      source + "/olg/delta.olg",    "",  "mview",   NULL);
+  LOAD("localize",   source + "/olg/localize.olg", "",  "delta",NULL);
+  LOAD("dummyWatch", source + "/olg/dummyWatch.olg", "", "eca",     NULL);
 
 /*
   LOAD("magic", source + "/olg/magic.olg", "parse", NULL);
@@ -93,11 +91,12 @@ ProgramLoader::program(string name, string prog)
 void
 ProgramLoader::program(string name,
                        string file,
+		       string derivativeFile,
                        string stage,
                        std::vector<std::string>* defs,
                        bool compileOnly) 
 {
-  LOAD(name, file, stage, defs);
+  LOAD(name, file, derivativeFile, stage, defs);
   programIter = programs.begin();
   this->compileOnly = compileOnly;
 }
@@ -154,6 +153,7 @@ void
 ProgramLoader::loader()
 {
   string filename;
+  string derivedFile;
   string name;
   string rewrite;
   std::vector<std::string>* defs = NULL;
@@ -166,6 +166,7 @@ ProgramLoader::loader()
     program = *programIter++;
     filename = program->file;
     name     = program->name;
+    derivedFile = program->derivativeFile;
     rewrite  = program->stage;
     defs     = program->defs;
     programText = program->prog;
@@ -208,7 +209,7 @@ ProgramLoader::loader()
   }
   else if (defs) {
     programText = P2::preprocessReadOverLogProgram(filename,
-                                                   filename,
+                                                   derivedFile,
                                                    *defs);
   } else {
     programText = P2::readOverLogProgram(filename);
