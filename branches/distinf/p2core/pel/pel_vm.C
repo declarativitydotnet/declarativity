@@ -1043,7 +1043,7 @@ DEF_OP(COLLAPSE) {
   using namespace std;
   ValuePtr val1 = stackTop(); stackPop();
   ValuePtr val2 = stackTop(); stackPop();
-  cout << "COLLAPSE: " << val1->toString() << ',' << val2->toString() << endl;
+  //cout << "COLLAPSE: " << val1->toString() << ',' << val2->toString() << endl;
   ListPtr varlist = Val_List::cast(val2);
   stackPush(dynamic_cast<Val_Factor*>(val1.get())->marginal(varlist));
 }
@@ -1063,7 +1063,7 @@ DEF_OP(FACTOR_DEFAULT_CANONICAL_FACTOR) {
 
 DEF_OP(CREATE_TABLE_FACTOR) {
   ListPtr var_list = Val_List::cast(stackTop()); stackPop();
-  ListPtr assignments = Val_List::cast(stackTop()); stackPop();
+  MatrixPtr assignments = Val_Matrix::cast(stackTop()); stackPop();
   stackPush(Val_Table_Factor::mk(var_list, assignments));
 }
 

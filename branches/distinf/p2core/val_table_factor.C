@@ -17,6 +17,7 @@
 #include "val_null.h"
 #include "val_table_factor.h"
 #include "val_str.h"
+#include "val_int64.h"
 
 #include <prl/global.hpp>
 
@@ -112,17 +113,26 @@ ValuePtr Val_Table_Factor::mk(const factor_type& factor)
   return ValuePtr(new Val_Table_Factor(factor));
 }
 
-ValuePtr Val_Table_Factor::mk(ListPtr args, ListPtr values)
+ValuePtr Val_Table_Factor::mk(ListPtr args, MatrixPtr p_values)
 {
-  /* 
-  matrix_type lambda(mat->size1(), mat->size2());
-  vector_type eta(vec->size());
-  assert(lambda.size1()==lambda.size2());
-  boost::transform(mat->data(), lambda.data().begin(), ValuePtr2double());
-  boost::transform(vec->data(), eta.data().begin(), ValuePtr2double());
-  return mk(factor_type(lookupVars(args), lambda, eta));
-  */
-  return mk(factor_type(lookupVars(args), 0));
+  const ValPtrMatrix& values = *p_values;
+  std::vector<variable_h> vars = lookupVars(args);
+  assert(values.size2() == vars.size()+1);
+  factor_type f(vars, 0);
+
+  prl::assignment_t a;
+  for(size_t i = 0; i<values.size1(); i++) {
+    // construct the assignment
+    for(size_t j = 0; j<vars.size(); j++) {
+      size_t aj = Val_Int64::cast(values[i][j]);
+      assert(aj < vars[j]->size());
+      a[vars[j]] = aj;
+    }
+    // set the factor value for the given assignment of variables
+    f(a) = Val_Double::cast(values[i][vars.size()]);
+  }
+  
+  return mk(f);
 }
 
 prl::domain_t Val_Table_Factor::arguments() const

@@ -19,6 +19,7 @@
 #include "oper.h"
 #include "val_double.h"
 #include "val_list.h"
+#include "val_matrix.h"
 #include "val_factor.h"
 
 #include <prl/variable.hpp>
@@ -55,7 +56,7 @@ public:
   // Factory
   static ValuePtr mk();
   static ValuePtr mk(const factor_type& factor);
-  static ValuePtr mk(ListPtr args, ListPtr values);
+  static ValuePtr mk(ListPtr args, MatrixPtr values);
 
   // Comparison
   int compareTo(ValuePtr v) const;
