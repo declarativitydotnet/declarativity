@@ -222,7 +222,7 @@ main(int argc, char **argv)
   Reporting::setLevel(Reporting::ERROR);
   // Parse command line options
   int c;
-  while ((c = getopt(argc, argv, "r:n:p:D:ho:f:s:d:gcCvx")) != -1) {
+  while ((c = getopt(argc, argv, "r:n:p:D:ho:f:s:d:gcCx")) != -1) {
     switch (c) {
     case 'r':
       {
@@ -395,8 +395,7 @@ main(int argc, char **argv)
                   << "All macro definitions will be ignored.\n";
       }   
      
-      string tempFilename = overLogFile + "_" + myHostname + "_" + myPort;
-      loader->program("commandLine", overLogFile, tempFilename, "",
+      loader->program("commandLine", overLogFile, "",
                       (preprocess ) ? &definitions : NULL, compileOnly);
     }
 

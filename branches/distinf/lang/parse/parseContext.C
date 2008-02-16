@@ -275,7 +275,7 @@ namespace compile {
     }
     
     Vector::Vector(ExpressionList *v) {
-      VectorPtr vp(new vector<ValuePtr>(v->size()));
+      VectorPtr vp(new boost::numeric::ublas::vector<ValuePtr>(v->size()));
       uint i = 0;
       for (ExpressionList::iterator iter = v->begin(); 
            iter != v->end(); iter++) {
@@ -309,7 +309,7 @@ namespace compile {
         }
       }
     
-      MatrixPtr mp(new matrix<ValuePtr>(m->size(), columnArity));
+      MatrixPtr mp(new boost::numeric::ublas::matrix<ValuePtr>(m->size(), columnArity));
       uint r=0;
       for (ExpressionListList::iterator row = m->begin(); 
            row != m->end(); row++, r++) {

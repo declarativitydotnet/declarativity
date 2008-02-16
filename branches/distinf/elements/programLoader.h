@@ -30,7 +30,7 @@ public:
   const char *processing() const { return "/h"; }
   const char *flow_code() const	 { return "/-"; }
 
-  void program(string, string, string, string, std::vector<std::string>*, bool compileOnly=false);
+  void program(string, string, string, std::vector<std::string>*, bool compileOnly=false);
   void program(string, string);
   void dot(string name);
 
@@ -38,11 +38,10 @@ public:
 
 private:
   struct Program {
-    Program(string n, string f, string df, string s, std::vector<std::string>* d, string p="") 
-      : name(n), file(f), derivativeFile(df), stage(s), defs(d), prog(p) {};
+    Program(string n, string f, string s, std::vector<std::string>* d, string p="") 
+      : name(n), file(f), stage(s), defs(d), prog(p) {};
     string name;
     string file;
-    string derivativeFile;
     string stage;
     std::vector<std::string>* defs;
     string prog;

@@ -56,7 +56,7 @@ ValuePtr Val_Vector::xdr_unmarshal( XDR *x )
   xdr_uint32_t(x, &ui);
   uint32_t sz = ui;
 
-  VectorPtr vp(new vector<ValuePtr>(sz));
+  VectorPtr vp(new boost::numeric::ublas::vector<ValuePtr>(sz));
   // Unmarshal the entries
   for (uint32_t i = 0;
        i < sz;

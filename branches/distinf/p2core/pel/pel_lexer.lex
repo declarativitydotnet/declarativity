@@ -104,7 +104,7 @@ parseMatrix(char *mat) {
   }
 
   int arity = rows.size() == 0 ? 0 : rows.front()->size();
-  MatrixPtr mp(new matrix<ValuePtr>(rows.size(), arity));
+  MatrixPtr mp(new boost::numeric::ublas::matrix<ValuePtr>(rows.size(), arity));
   int r=0;
   for (std::vector<ValuePtr>::iterator row = rows.begin();
        row != rows.end(); row++, r++) {
