@@ -182,6 +182,6 @@ SET(COMMON_LIBRARIES p2core
 SET(CMAKE_CXX_FLAGS_DEBUG "-Wall -gdwarf-2 -DTRACE_OFF")
 SET(CMAKE_BUILD_TYPE Debug)
 
-
+ADD_DEFINITIONS(-DBOOST_UBLAS_ENABLE_PROXY_SHORTCUTS)
 # uncomment the following line to get CMake variables to print to screen
 # INCLUDE(CMakePrintSystemInformation)

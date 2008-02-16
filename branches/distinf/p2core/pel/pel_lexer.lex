@@ -76,7 +76,7 @@ parseVector(char *vec) {
     elements.push_back(element);
     tok = strtok(NULL, ",");
   }
-  VectorPtr vp(new vector<ValuePtr>(elements.size()));
+  VectorPtr vp(new boost::numeric::ublas::vector<ValuePtr>(elements.size()));
   int index = 0;
   for (std::vector<ValuePtr>::iterator iter = elements.begin();
        iter != elements.end(); iter++) {

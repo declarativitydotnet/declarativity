@@ -1050,9 +1050,15 @@ DEF_OP(COLLAPSE) {
 
 DEF_OP(FACTOR_CREATE_CANONICAL_FACTOR) {
   /* popping order varlist, mat, vec */
-  ListPtr varlist = Val_List::cast(stackTop()); stackPop();
-  MatrixPtr lambdamat = Val_Matrix::cast(stackTop()); stackPop();
-  VectorPtr etavec = Val_Vector::cast(stackTop()); stackPop();
+  ValuePtr val1 = stackTop(); stackPop();
+  ValuePtr val2 = stackTop(); stackPop();
+  ValuePtr val3 = stackTop(); stackPop();
+  
+std::cout << "COLLAPSE: " << val1->toString() << ',' << val2->toString() << val3->toString() << std::endl;
+
+  ListPtr varlist = Val_List::cast(val1);
+  MatrixPtr lambdamat = Val_Matrix::cast(val2);
+  VectorPtr etavec = Val_Vector::cast(val3);
 
   stackPush(Val_Gaussian_Factor::mk(varlist, lambdamat, etavec));
 }
