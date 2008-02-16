@@ -90,8 +90,11 @@ parseMatrix(char *mat) {
   std::vector<char*> rowstr;
   char *tok = strtok(mat, "%");
   while (tok != NULL) {
-    char* vec = new char[strlen(tok) - 2];
-    strlcpy(vec, tok+1, strlen(tok) - 1);
+    size_t toklen = strlen(tok) + 1;  // strlen doesn't include the terminating null.
+    // toklen --;                     // remove last character from string.
+    char* vec = new char[toklen - 1]; // skip the '%'
+    memcpy(vec, tok+1, toklen - 1);
+    // tok[toklen-1] = 0             // null terminate string (only needed if we are removing last char from token)
     rowstr.push_back(vec);
     tok = strtok(NULL, "%");
   }
@@ -262,15 +265,21 @@ null|NULL {
 }
 
 \{.*\} {
-  char* mat = new char[strlen(yytext) - 2];
-  strlcpy(mat, yytext+1, strlen(yytext) - 1);
+  size_t toklen = strlen(yytext) + 1;  // strlen doesn't include the terminating null.
+  // toklen --;                     // remove last character from string.
+  char* mat = new char[yytext - 1]; // skip the '%'
+  memcpy(mat, tok+1, toklen - 1);
+  // tok[toklen-1] = 0             // null terminate string (only needed if we are removing last char from token)
   add_const(parseMatrix(mat));
   delete [] mat;
 }
 
 \[.*\] {
-  char* vec = new char[strlen(yytext) - 2];
-  strlcpy(vec, yytext+1, strlen(yytext) - 1);
+  size_t toklen = strlen(yytext) + 1;  // strlen doesn't include the terminating null.
+  // toklen --;                     // remove last character from string.
+  char* vec = new char[yytext - 1]; // skip the '%'
+  memcpy(vec, tok+1, toklen - 1);
+  // tok[toklen-1] = 0             // null terminate string (only needed if we are removing last char from token)
   add_const(parseVector(vec));
   delete [] vec;
 }
