@@ -11,6 +11,7 @@
 
 #include "val_null.h"
 #include "val_list.h"
+#include "val_vector.h"
 
 class OperList : public opr::OperCompare<Val_List> {
 };
@@ -24,6 +25,12 @@ ListPtr Val_List::cast(ValuePtr v)
   case Value::LIST:
     {
       return (static_cast<Val_List *>(v.get()))->L;         
+    }
+  case Value::VECTOR:
+    {
+      VectorPtr vp = Val_Vector::cast(v);
+      ValPtrList list(vp->begin(), vp->end());
+      return ListPtr(new List(list));
     }
   case Value::NULLV:
     {
