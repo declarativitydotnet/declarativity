@@ -92,6 +92,7 @@ parseMatrix(char *mat) {
   while (tok != NULL) {
     // char* vec = new char[strlen(tok) - 2];
     char* vec = new char[strlen(tok)]; // fixed by stano
+    vec[strlen(tok)-1] = 0;
     strncpy(vec, tok+1, strlen(tok) - 1);
     rowstr.push_back(vec);
     tok = strtok(NULL, "%");
@@ -263,14 +264,16 @@ null|NULL {
 }
 
 \{.*\} {
-  char* mat = new char[strlen(yytext) - 2];
+  char* mat = new char[strlen(yytext)];
+  mat[strlen(yytext)-1] = 0;
   strncpy(mat, yytext+1, strlen(yytext) - 1);
   add_const(parseMatrix(mat));
   delete [] mat;
 }
 
 \[.*\] {
-  char* vec = new char[strlen(yytext) - 2];
+  char* vec = new char[strlen(yytext)];
+  vec[strlen(yytext)-1] = 0;
   strncpy(vec, yytext+1, strlen(yytext) - 1);
   add_const(parseVector(vec));
   delete [] vec;
