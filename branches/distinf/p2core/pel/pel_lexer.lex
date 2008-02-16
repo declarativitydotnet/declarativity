@@ -90,7 +90,8 @@ parseMatrix(char *mat) {
   std::vector<char*> rowstr;
   char *tok = strtok(mat, "%");
   while (tok != NULL) {
-    char* vec = new char[strlen(tok) - 2];
+    // char* vec = new char[strlen(tok) - 2];
+    char* vec = new char[strlen(tok)]; // fixed by stano
     strncpy(vec, tok+1, strlen(tok) - 1);
     rowstr.push_back(vec);
     tok = strtok(NULL, "%");

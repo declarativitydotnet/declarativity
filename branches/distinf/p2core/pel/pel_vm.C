@@ -952,15 +952,15 @@ DEF_OP(V_COMPAREVEC) {
 
 // Matrix operations
 DEF_OP(M_INITMAT) {
-  uint64_t sz2 = (uint64_t) pop_signed();
   uint64_t sz1 = (uint64_t) pop_signed();
+  uint64_t sz2 = (uint64_t) pop_signed();
   ValuePtr matrix = Val_Matrix::mk2(sz1, sz2);
   stackPush(matrix);
 }
 
 DEF_OP(M_INITMATZERO) {
-  uint64_t sz2 = pop_signed();
   uint64_t sz1 = pop_signed();
+  uint64_t sz2 = pop_signed();
 
   MatrixPtr mp(new ublas::matrix<ValuePtr>(sz1, sz2));
   ValuePtr va = Val_Double::mk(0.0);
