@@ -131,7 +131,8 @@ INCLUDE_DIRECTORIES(
 		    /usr/include)
 
 # set linker path for this and all subdirs
-LINK_DIRECTORIES(${Boost_LIBRARY_DIRS} 
+LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../libs/boost-trunk/libs
+		${Boost_LIBRARY_DIRS} 
 		${P2_BINARY_DIR}/overlog 
 		${P2_BINARY_DIR}/net 
 		${P2_BINARY_DIR}/stages 
