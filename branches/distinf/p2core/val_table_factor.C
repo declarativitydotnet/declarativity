@@ -73,7 +73,7 @@ void Val_Table_Factor::xdr_marshal_subtype(XDR * x)
   // Serialize the factor into a string text archive
   std::stringstream ss;
   boost::archive::text_oarchive oa(ss);
-  oa << const_cast<const Val_Table_Factor*>(this)->factor; // why???
+  oa << const_cast<const Val_Table_Factor*>(this)->factor;
   // std::cerr << "Serialized: " << ss.str() << std::endl;
 
   // Now marshal the string
@@ -82,6 +82,8 @@ void Val_Table_Factor::xdr_marshal_subtype(XDR * x)
 
 ValuePtr Val_Table_Factor::xdr_unmarshal(XDR * x)
 {
+  using namespace std;
+
   // Create the archive and deserialize its content
   std::stringstream ss(Val_Str::xdr_unmarshal(x)->toString());
   boost::archive::text_iarchive ia(ss);
@@ -90,17 +92,18 @@ ValuePtr Val_Table_Factor::xdr_unmarshal(XDR * x)
 
   // Match the factor's variables against the current list
   prl::var_map subst_map;
+  // cerr << "Unmarshaled " << factor << endl;
   foreach(variable_h v, factor.arguments()) {
     subst_map[v] = registerFiniteVariable(v->name(), v->size());
+    // cerr << "(v,subst_map[v])=" << v << "," << subst_map[v] << endl;
+    assert(v != subst_map[v]);
   }
   factor.subst_args(subst_map);
 
   // Delete the variable objects created during deserialization
-//   foreach(prl::var_map::value_type& p, subst_map) {
-//     if (p.first != p.second) // why can they be the same???
-//       delete p.first;
-//   }
-  // std::cerr << "Deserialized " << factor << std::endl;
+  foreach(prl::var_map::value_type& p, subst_map) delete p.first;
+  
+  // cerr << "Deserialized " << factor << endl;
   return mk(factor);
 }
 

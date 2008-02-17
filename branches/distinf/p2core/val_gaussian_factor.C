@@ -90,14 +90,13 @@ ValuePtr Val_Gaussian_Factor::xdr_unmarshal(XDR * x)
   prl::var_map subst_map;
   foreach(variable_h v, factor.arguments()) {
     subst_map[v] = registerVectorVariable(v->name(), v->size());
+    assert(v != subst_map[v]);
   }
   factor.subst_args(subst_map);
 
   // Delete the variable objects created during deserialization
-//   foreach(prl::var_map::value_type& p, subst_map) {
-//     if (p.first != p.second) // why can they be the same???
-//       delete p.first;
-//   }
+  foreach(prl::var_map::value_type& p, subst_map) delete p.first;
+
   // std::cerr << "Deserialized " << factor << std::endl;
   return mk(factor);
 }

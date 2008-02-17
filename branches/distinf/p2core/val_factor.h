@@ -15,11 +15,14 @@
 #ifndef __VAL_FACTOR_H__
 #define __VAL_FACTOR_H__
 
+// #define PRL_PRINT_VARIABLE_ADDRESS
+
 #include "value.h"
 #include "oper.h"
 #include "val_double.h"
 #include "val_list.h"
 
+#include <boost/thread/mutex.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <prl/variable.hpp>
@@ -83,6 +86,8 @@ class Val_Factor : public Value {
 
   //! The variable corresponding to each name
   static named_var_map named_var;
+
+  static boost::mutex mutex;
 };
 
 #endif /* __VAL_FACTOR_H_*/

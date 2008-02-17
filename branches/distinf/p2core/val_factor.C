@@ -26,6 +26,8 @@ prl::universe Val_Factor::u;
 
 Val_Factor::named_var_map Val_Factor::named_var;
 
+boost::mutex Val_Factor::mutex;
+
 std::string Val_Factor::toConfString() const
 {
   return toString();
@@ -49,35 +51,41 @@ ValuePtr Val_Factor::args() const
 prl::variable_h 
 Val_Factor::registerVectorVariable(const std::string& name, std::size_t size)
 {
+  boost::mutex::scoped_lock scoped_lock(mutex);
   using namespace std;
   variable_h v;
   if (named_var.contains(name)) {
     v = named_var[name];
     assert(v->as_vector().size() == size);
   } else {
-    variable_h v = u.new_vector_variable(name, size);
+    v = u.new_vector_variable(name, size);
     named_var[name] = v;
+    // cerr << "Registered new variable " << v << endl;
   }
-  // cerr << "Registered variable " << name << endl;
-  // cerr << named_var << endl;
+  // cerr << "New list of variables: " << named_var << endl;
   return v;
 }
 
 prl::variable_h
 Val_Factor::registerFiniteVariable(const std::string& name, std::size_t size)
 {
+  boost::mutex::scoped_lock scoped_lock(mutex);
+  using namespace std;
   variable_h v;
   if (named_var.contains(name)) {
     v = named_var[name];
     assert(v->size() == size);
   } else {
-    variable_h v = u.new_finite_variable(name, size);
+    v = u.new_finite_variable(name, size);
     named_var[name] = v;
+    // cerr << "Registered new variable " << v << endl;
   }
+  // cerr << "New list of variables: " << named_var << endl;
   return v;
 }
 
 std::vector<prl::variable_h> Val_Factor::lookupVars(ListPtr list_ptr) {
+  boost::mutex::scoped_lock scoped_lock(mutex);
   // using namespace std;
   std::vector<variable_h> vars;
   vars.reserve(list_ptr->size());
