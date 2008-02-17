@@ -8,6 +8,9 @@ SUBDIRS(p2core aggregates functions p2cpp lang elements stages net
 
 # Main decisions
 SET(BUILD_SHARED_LIBS ON)
+#SET(BUILD_SHARED_LIBS OFF)
+
+##SET(CMAKE_EXE_LINKER_FLAGS -static ${CMAKE_EXE_LINKER_FLAGS})
 
 # use, i.e. don't skip the full RPATH for the build tree
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
@@ -154,7 +157,7 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS}
 				)
 		
 # set up standard link libs for our executables
-SET(COMMON_LIBRARIES p2core
+SET(COMMON_LIBRARIES1 p2core
 					 p2net
 					 p2stages
 					 p2elements
@@ -177,6 +180,8 @@ SET(COMMON_LIBRARIES p2core
 					 p2pel
 					 p2oni
 	   				 )
+
+SET(COMMON_LIBRARIES ${COMMON_LIBRARIES1} ${COMMON_LIBRARIES1} ${COMMON_LIBRARIES1})
 
 #Default build type and some variables (PM)
 SET(CMAKE_CXX_FLAGS_DEBUG "-Wall -gdwarf-2 -DTRACE_OFF")

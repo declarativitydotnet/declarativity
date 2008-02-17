@@ -39,6 +39,9 @@
 namespace compile {
   namespace rewrite1{
     using namespace opr;
+
+    uint32_t ruleCounter = 0;
+    bool needRecvTuple = false;    
     
     DEFINE_ELEMENT_INITS_NS(Context, "Rewrite1Context", compile::rewrite1)
       

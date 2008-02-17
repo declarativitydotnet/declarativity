@@ -46,8 +46,8 @@ namespace compile {
     const uint32_t LOCSPECFNARGS = 0;
     const uint32_t ISLOCSPECFNARGS = 1;
     const uint32_t UNIQUEIDPOS = 2 ; // in TnewV tuples
-    uint32_t ruleCounter = 0;
-    bool needRecvTuple = false;
+    extern uint32_t ruleCounter;
+    extern bool needRecvTuple;
 
     class Exception : public compile::Exception {
     public:

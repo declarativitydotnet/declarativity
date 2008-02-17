@@ -41,7 +41,7 @@
 #endif
 #define YY_DECL int P2DL_Lexer::yylex (YYSTYPE *lvalp, compile::p2dl::Context *ctxt)
 
-int dcvar = 0;
+   /* int dcvar = 0; */
 
 %}
 
