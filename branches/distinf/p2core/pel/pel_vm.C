@@ -864,6 +864,7 @@ DEF_OP(L_APPEND) {
    if(list->size() == 0) {
       stackPush(Val_List::mk(ListPtr(new List(value))));
    } else {
+      list = list->clone();
       list->append(value);
       stackPush(Val_List::mk(list));
    }
@@ -1043,7 +1044,7 @@ DEF_OP(COLLAPSE) {
   using namespace std;
   ValuePtr val1 = stackTop(); stackPop();
   ValuePtr val2 = stackTop(); stackPop();
-  //cout << "COLLAPSE: " << val1->toString() << ',' << val2->toString() << endl;
+  cout << "COLLAPSE: " << val1->toString() << ',' << val2->toString() << endl;
   ListPtr varlist = Val_List::cast(val2);
   stackPush(dynamic_cast<Val_Factor*>(val1.get())->marginal(varlist));
 }
