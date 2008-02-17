@@ -72,6 +72,12 @@ public:
   //! Collapses a factor to a subset of variables
   ValuePtr marginal(ListPtr retain) const;
 
+  //! Computes a normalized version of a factor  
+  ValuePtr normalize() const;
+  
+  //! Returns the values of this factor as a vector
+  ValuePtr values() const;
+
  private:
   //! The factor stored in this value
   factor_type factor;

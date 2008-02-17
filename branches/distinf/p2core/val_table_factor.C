@@ -18,6 +18,7 @@
 #include "val_table_factor.h"
 #include "val_str.h"
 #include "val_int64.h"
+#include "val_vector.h"
 
 #include <prl/global.hpp>
 
@@ -148,4 +149,16 @@ ValuePtr Val_Table_Factor::multiply(ValuePtr other) const
 ValuePtr Val_Table_Factor::marginal(ListPtr retain) const
 {
   return mk(factor.marginal(domain_type(lookupVars(retain))));
+}
+
+ValuePtr Val_Table_Factor::normalize() const
+{
+  return mk(factor_type(factor).normalize());
+}
+
+ValuePtr Val_Table_Factor::values() const
+{
+  VectorPtr vector_ptr(new ValPtrVector(factor.size()));
+  boost::transform(factor, vector_ptr->data().begin(), double2ValuePtr());
+  return Val_Vector::mk(vector_ptr);
 }

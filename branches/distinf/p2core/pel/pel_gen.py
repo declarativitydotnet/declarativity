@@ -93,6 +93,8 @@ for op, ar, va, desc in [
   ("gaussiacov", 1, "FACTOR_GAUSS_COV", "comput gaussian variance of a factor"),
   ("defaulttablefactor", 0, "DEFAULT_TABLE_FACTOR", "creates an empty table factor"),
   ("createtablefactor", 2, "CREATE_TABLE_FACTOR", "creates a table factor with teh specified variables and assignments"),
+  ("normalize", 1, "FACTOR_NORMALIZE", "returns a normalized version of a factor"),
+  ("values", 1, "FACTOR_VALUES", "returns the values of a factor as a vector"),
  
   ("not",1, 	"NOT",          "Boolean negation"),
   ("and",2,	"AND",          "Boolean AND"),

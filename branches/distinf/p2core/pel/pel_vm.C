@@ -1082,6 +1082,15 @@ DEF_OP(FACTOR_GAUSS_COV) {
   stackPush(dynamic_cast<Val_Gaussian_Factor*>(val.get())->covariance());
 }
 
+DEF_OP(FACTOR_NORMALIZE) {
+  ValuePtr val = stackTop(); stackPop();
+  stackPush(dynamic_cast<Val_Factor*>(val.get())->normalize());
+}
+
+DEF_OP(FACTOR_VALUES) {
+  ValuePtr val = stackTop(); stackPop();
+  stackPush(dynamic_cast<Val_Table_Factor*>(val.get())->values());
+}
 
 //
 // Boolean operations

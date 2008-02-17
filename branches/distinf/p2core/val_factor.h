@@ -61,6 +61,9 @@ class Val_Factor : public Value {
   //! Collapses this factor to a subset of variables
   virtual ValuePtr marginal(ListPtr retain) const = 0;
 
+  //! Computes a normalized version of a factor
+  virtual ValuePtr normalize() const = 0;
+
  protected:
   //! A functor that transforms a ValuePtr to a double
   struct ValuePtr2double {

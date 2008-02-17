@@ -333,4 +333,6 @@ FUNCTIONDEF("f_defaultTableFactor", 0, "defaulttablefactor")
 FUNCTIONDEF("f_createTableFactor", 2, "createtablefactor")
 FUNCTIONDEF("f_gaussianMean",   1, "gaussianmean")
 FUNCTIONDEF("f_gaussianCov",   1, "gaussiacov")
+FUNCTIONDEF("f_normalize", 1, "normalize")
+FUNCTIONDEF("f_values", 1, "values")
 #undef FUNCTIONDEF

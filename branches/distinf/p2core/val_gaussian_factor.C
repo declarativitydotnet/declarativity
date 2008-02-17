@@ -159,3 +159,8 @@ ValuePtr Val_Gaussian_Factor::marginal(ListPtr retain) const
 {
   return mk(factor.marginal(domain_type(lookupVars(retain))));
 }
+
+ValuePtr Val_Gaussian_Factor::normalize() const
+{
+  return mk(factor); // Gaussians don't need to be normalized
+}

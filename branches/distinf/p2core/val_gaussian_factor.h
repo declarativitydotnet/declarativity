@@ -98,6 +98,9 @@ public:
   //! Collapses a factor to a subset of variables
   ValuePtr marginal(ListPtr retain) const;
 
+  //! Computes a normalized version of a factor
+  ValuePtr normalize() const;
+
  private:
   //! The factor stored in this value
   canonical_gaussian factor;
