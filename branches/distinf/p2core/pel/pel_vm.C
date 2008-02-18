@@ -1034,7 +1034,7 @@ DEF_OP(COMBINE_ALL) {
   
   assert(list->size()!=0);
   ValuePtr product = list->front();
-  ValPtrList::const_iterator iter = list->begin()++, end = list->end();
+  ValPtrList::const_iterator iter = ++(list->begin()), end = list->end();
   while(iter != end) 
     product = dynamic_cast<Val_Factor*>(product.get())->multiply(*(iter++));
   stackPush(product);
@@ -1044,7 +1044,7 @@ DEF_OP(COLLAPSE) {
   using namespace std;
   ValuePtr val1 = stackTop(); stackPop();
   ValuePtr val2 = stackTop(); stackPop();
-  cout << "COLLAPSE: " << val1->toString() << ',' << val2->toString() << endl;
+  //cout << "COLLAPSE: " << val1->toString() << ',' << val2->toString() << endl;
   ListPtr varlist = Val_List::cast(val2);
   stackPush(dynamic_cast<Val_Factor*>(val1.get())->marginal(varlist));
 }

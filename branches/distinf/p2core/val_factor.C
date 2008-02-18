@@ -60,6 +60,7 @@ Val_Factor::registerVectorVariable(const std::string& name, std::size_t size)
   } else {
     v = u.new_vector_variable(name, size);
     named_var[name] = v;
+    TELL_WARN << "Registered variable " << v << endl;
     // cerr << "Registered new variable " << v << endl;
   }
   // cerr << "New list of variables: " << named_var << endl;
@@ -78,6 +79,7 @@ Val_Factor::registerFiniteVariable(const std::string& name, std::size_t size)
   } else {
     v = u.new_finite_variable(name, size);
     named_var[name] = v;
+    TELL_WARN << "Registered variable " << v << endl;
     // cerr << "Registered new variable " << v << endl;
   }
   // cerr << "New list of variables: " << named_var << endl;
@@ -91,7 +93,11 @@ std::vector<prl::variable_h> Val_Factor::lookupVars(ListPtr list_ptr) {
   vars.reserve(list_ptr->size());
   // cout << named_var << endl;
   foreach(ValuePtr val_ptr, std::make_pair(list_ptr->begin(),list_ptr->end())) {
-    // cout << val_ptr->toString() << endl;
+    std::string name = val_ptr->toString();
+    if (!named_var.contains(name)) {
+      std::cerr << "Cannot find variable named " << name << std::endl;
+      assert(false);
+    }
     vars.push_back(named_var.get(val_ptr->toString()));
   }
   return vars;
