@@ -15,6 +15,7 @@
  */
 
 #include "CSVstage.h"
+#include <algorithm>
 
 // Constructor
 CSVstage::CSVstage(Stage* myStage)
@@ -29,6 +30,7 @@ CSVstage::newOutput()
 {
   TuplePtr p;
   char block[_blockSize];
+  std::fill_n(block, _blockSize, 0);
   string blkstring;
 	CSVlex lexer;
 
@@ -38,7 +40,7 @@ CSVstage::newOutput()
 		TuplePtr t;
 		int parsing;
 		
-	  _fileStream.read(block, _blockSize);
+	  _fileStream.read(block, _blockSize-1);
 		// convert C string to std::string
 	  blkstring = block;
 	  _acc += blkstring;
