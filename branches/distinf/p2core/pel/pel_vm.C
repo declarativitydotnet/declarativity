@@ -1787,6 +1787,12 @@ DEF_OP(DRAND48) {
   stackPush(Val_Double::mk(drand48()));
 }
 
+DEF_OP(POW) {
+  double base = pop_double();
+  double exponent = pop_double();
+  stackPush(Val_Double::mk(pow(base, exponent)));
+}
+
 // Extra hacks for System R
 DEF_OP(O_STATUS) {
   ValuePtr second = stackTop(); stackPop();
