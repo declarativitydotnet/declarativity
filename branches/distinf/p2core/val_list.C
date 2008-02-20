@@ -12,6 +12,7 @@
 #include "val_null.h"
 #include "val_list.h"
 #include "val_vector.h"
+#include "val_set.h"
 
 class OperList : public opr::OperCompare<Val_List> {
 };

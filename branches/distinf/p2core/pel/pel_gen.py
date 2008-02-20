@@ -95,6 +95,7 @@ for op, ar, va, desc in [
   ("createtablefactor", 2, "CREATE_TABLE_FACTOR", "creates a table factor with teh specified variables and assignments"),
   ("normalize", 1, "FACTOR_NORMALIZE", "returns a normalized version of a factor"),
   ("values", 1, "FACTOR_VALUES", "returns the values of a factor as a vector"),
+  ("norm1", 2, "FACTOR_NORM1", "returns the sum of absolute differences between two factors"),
  
   ("not",1, 	"NOT",          "Boolean negation"),
   ("and",2,	"AND",          "Boolean AND"),

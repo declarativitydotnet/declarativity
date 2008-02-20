@@ -26,6 +26,8 @@
 #include <prl/table_factor.hpp>
 #include <prl/math/bindings/lapack.hpp>
 
+typedef prl::table_factor<double> table_factor_type;
+
 class Val_Table_Factor : public Val_Factor {
 public:
   //! The type of factors stored in this value

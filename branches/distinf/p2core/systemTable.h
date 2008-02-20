@@ -335,4 +335,6 @@ FUNCTIONDEF("f_gaussianMean",   1, "gaussianmean")
 FUNCTIONDEF("f_gaussianCov",   1, "gaussiacov")
 FUNCTIONDEF("f_normalize", 1, "normalize")
 FUNCTIONDEF("f_values", 1, "values")
+FUNCTIONDEF("f_norm1", 2, "norm1")
+FUNCTIONDEF("f_pow", 2, "pow")
 #undef FUNCTIONDEF
