@@ -12,6 +12,7 @@
 #include "val_null.h"
 #include "val_matrix.h"
 #include "val_int64.h"
+#include "val_list.h"
 
 class OperMatrix : public opr::OperCompare<Val_Matrix> {
 };
@@ -35,13 +36,29 @@ MatrixPtr Val_Matrix::cast(ValuePtr v)
   case Value::MATRIX:
     {
       return (static_cast<Val_Matrix *>(v.get()))->M;         
-    default:
-      {
-        throw Value::TypeError(v->typeCode(),
-                               v->typeName(),
-                               Value::MATRIX,
-                               "matrix");      
+    }
+  case Value::LIST:
+    {
+      ListPtr entries = Val_List::cast(v);
+      assert(entries->size()!=0);
+      size_t m = entries->size();
+      size_t n = Val_List::cast(entries->front())->size();
+      
+      MatrixPtr mp(new ValPtrMatrix(m, n));
+      for(size_t i = 0; i<m; i++) {
+	ListPtr row = Val_List::cast(entries->at(i));
+	assert(row->size() == n);
+	for(size_t j = 0; j<n; j++) (*mp)(i, j) = row->at(j);
       }
+
+      return mp;
+    }
+  default:
+    {
+      throw Value::TypeError(v->typeCode(),
+			     v->typeName(),
+			     Value::MATRIX,
+			     "matrix");      
     }
   }
 }

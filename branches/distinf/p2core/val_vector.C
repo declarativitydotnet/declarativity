@@ -12,6 +12,7 @@
 #include "val_null.h"
 #include "val_vector.h"
 #include "val_int64.h"
+#include "val_list.h"
 
 class OperVector : public opr::OperCompare<Val_Vector> {
 };
@@ -24,14 +25,24 @@ VectorPtr Val_Vector::cast(ValuePtr v)
   switch(v->typeCode()) {
   case Value::VECTOR:
     {
-      return (static_cast<Val_Vector *>(v.get()))->V;         
-    default:
-      {
-        throw Value::TypeError(v->typeCode(),
-                               v->typeName(),
-                               Value::VECTOR,
-                               "vector");      
-      }
+      return (static_cast<Val_Vector *>(v.get()))->V;
+    }
+  case Value::LIST:
+    {
+      ListPtr entries = Val_List::cast(v);
+      size_t n = entries->size();
+      VectorPtr vp(new ValPtrVector(n));
+      
+      for(size_t i = 0; i<n; i++) (*vp)(i) = entries->at(i);
+
+      return vp;
+    }
+  default:
+    {
+      throw Value::TypeError(v->typeCode(),
+			     v->typeName(),
+			     Value::VECTOR,
+			     "vector");      
     }
   }
 }
