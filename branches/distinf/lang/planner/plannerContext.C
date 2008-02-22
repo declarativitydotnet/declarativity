@@ -166,7 +166,7 @@ namespace compile {
         if (watched(input, "c")) {
           stage_oss << " -> Print(\"RecvEvent: STAGE:" << processor << "(" << input << ")\")"; 
         }
-        stage_oss << " ->  Queue(\"stageQueue\", 1000) ->\n\t"
+        stage_oss << " ->  Queue(\"stageQueue\", 5000) ->\n\t"
                   << "Stage(\"stage_" << processor << "\", \"" << processor << "\") ->\n\t"
                   << "PelTransform(\"formatStage\", \"\\\"" << output << "\\\" pop swallow unbox drop popall\") -> ";
         if (watched(output, "s")) {
@@ -520,7 +520,7 @@ namespace compile {
 
       if (eventType == "RECV") {
         oss << indent << "graph event(1, 1, \"h/l\", \"-/-\") {\n";
-        oss << indent << "\tinput -> " << "Queue(\"" << eventName << "\", 1000) -> \n"; 
+        oss << indent << "\tinput -> " << "Queue(\"" << eventName << "\", 5000) -> \n"; 
         if (watched(eventName, "c")) {
           oss << indent << "\tPrint(\"RecvEvent: RULE "
               << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
