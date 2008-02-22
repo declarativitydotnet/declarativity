@@ -74,7 +74,7 @@ void netPlan(ostringstream& stub, string hostname,
        << "\t};/**END NETOUT*/\n\n"; 
 }
 
-string stub(string hostname, string port, TransportConf conf)
+string stub(string hostname, string port, TransportConf conf, bool tupleCountAndBandwidth)
 {
   ostringstream stub;
 
@@ -83,6 +83,11 @@ string stub(string hostname, string port, TransportConf conf)
   netPlan(stub,hostname,port,conf);
   seaPlan(stub,hostname,port);
 
+  string netOut_udp_string = "\tnetOut -> udp;\n";
+  if (tupleCountAndBandwidth) {
+	  netOut_udp_string = "\tnetOut -> Bandwidth(\"bandwidth\") -> TupleCounter(\"counter\", \"anytype\") -> udp;\n";
+  }
+	  
 	  //UDP element for netin/netout
   stub << "\tudp = Udp2(\"udp\","<<port<<");\n"
           //ExtDRR for external strands to hookup to
@@ -97,7 +102,7 @@ string stub(string hostname, string port, TransportConf conf)
        <<"\tintExtDemux = Demux(\"intExtDemux\", {\""<<hostname<<":"<<port<<"\"}, 0);\n"
 	  //get netin/out OK
        << "\tudp -> netIn; /* Connect UDP to net input */\n"
-       << "\tnetOut -> udp;\n"
+       << netOut_udp_string
        << "\tnetIn -> [+]extDRR;\n"
        << "\tUpdate(\"programUpdate\",\"" << PROGRAM << "\") -> "
        << "PelTransform(\"packageUpdate\", \"$1 pop swallow pop\") -> [+]extDRR;\n"
@@ -218,11 +223,13 @@ main(int argc, char **argv)
   bool outputStages = false;
   bool preprocess = true;
   bool compileOnly = false;
+  
+  bool tupleCountAndBandwidth = false;
 
   Reporting::setLevel(Reporting::ERROR);
   // Parse command line options
   int c;
-  while ((c = getopt(argc, argv, "r:n:p:D:ho:f:s:d:gcCx")) != -1) {
+  while ((c = getopt(argc, argv, "r:n:p:D:ho:f:s:d:gcCx:z")) != -1) {
     switch (c) {
     case 'r':
       {
@@ -232,6 +239,10 @@ main(int argc, char **argv)
         Reporting::levelFromName()[levelName];
         Reporting::setLevel(level);
       }
+      break;
+
+    case 'z':
+      tupleCountAndBandwidth = true;
       break;
 
     case 'n':
@@ -377,7 +388,7 @@ main(int argc, char **argv)
       }
     }
 
-    string dfdesc = stub(myHostname, myPort, TERMINAL);
+    string dfdesc = stub(myHostname, myPort, TERMINAL, tupleCountAndBandwidth);
 
     eventLoopInitialize();
     TELL_INFO << "Stub dataflow is:\n----\n"

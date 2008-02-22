@@ -44,7 +44,12 @@ Bandwidth::simple_action(TuplePtr p)
 
   prev_t_ = cur_t;
 
-  ELEM_INFO(bw_);
+//  ELEM_INFO(bw_);
+  
+
+  TELL_OUTPUT << "Bandwidth(bytes)]:  ["
+              << bw_
+              << "]" << std::endl;  
       
   return p;
 }

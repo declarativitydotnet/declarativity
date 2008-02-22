@@ -22,6 +22,7 @@ TupleCounter::TupleCounter(string name, string type)
 {
 }
 
+
 /**
  * Generic constructor.
  * Arguments:
@@ -31,6 +32,7 @@ TupleCounter::TupleCounter(TuplePtr args)
   : Element((*args)[2]->toString(), 1, 1),
     _type((*args)[3]->toString()) 
 {
+	_counter=0;
 }
 
 TupleCounter::~TupleCounter()
@@ -39,7 +41,7 @@ TupleCounter::~TupleCounter()
 
 TuplePtr TupleCounter::simple_action(TuplePtr p)
 {
-  if (_type == "" || (*p)[TNAME]->toString() == _type) {
+/*  if (_type == "" || (*p)[TNAME]->toString() == _type) {
     _counter++;
     TELL_OUTPUT << "TupleCounter[" << name();
 
@@ -49,5 +51,11 @@ TuplePtr TupleCounter::simple_action(TuplePtr p)
                 << _counter
                 << "]" << std::endl;
   }
+*/
+    _counter++;
+
+    TELL_OUTPUT << "TupleCount]:  ["
+                << _counter
+                << "]" << std::endl;
   return p;
 }
