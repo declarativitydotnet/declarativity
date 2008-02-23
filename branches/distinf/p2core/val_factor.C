@@ -86,7 +86,8 @@ Val_Factor::registerFiniteVariable(const std::string& name, std::size_t size)
   return v;
 }
 
-std::vector<prl::variable_h> Val_Factor::lookupVars(ListPtr list_ptr) {
+std::vector<prl::variable_h>
+Val_Factor::lookupVars(ListPtr list_ptr, bool ignore_missing) {
   boost::mutex::scoped_lock scoped_lock(mutex);
   // using namespace std;
   std::vector<variable_h> vars;
@@ -94,11 +95,12 @@ std::vector<prl::variable_h> Val_Factor::lookupVars(ListPtr list_ptr) {
   // cout << named_var << endl;
   foreach(ValuePtr val_ptr, std::make_pair(list_ptr->begin(),list_ptr->end())) {
     std::string name = val_ptr->toString();
-    if (!named_var.contains(name)) {
+    if (named_var.contains(name)) 
+      vars.push_back(named_var.get(val_ptr->toString()));
+    else if (!ignore_missing) {
       std::cerr << "Cannot find variable named " << name << std::endl;
       assert(false);
     }
-    vars.push_back(named_var.get(val_ptr->toString()));
   }
   return vars;
 }

@@ -79,7 +79,8 @@ class Val_Factor : public Value {
   };
 
   //! Converts a list of variable names to a vector of variable handles
-  static std::vector<variable_h> lookupVars(ListPtr list_ptr);
+  static std::vector<variable_h> 
+    lookupVars(ListPtr list_ptr, bool ignore_missing = false);
 
   //! The set of all variables known to this host.
   static prl::universe u;

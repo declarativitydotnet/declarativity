@@ -156,7 +156,7 @@ ValuePtr Val_Gaussian_Factor::multiply(ValuePtr other) const
 
 ValuePtr Val_Gaussian_Factor::marginal(ListPtr retain) const
 {
-  return mk(factor.marginal(domain_type(lookupVars(retain))));
+  return mk(factor.marginal(domain_type(lookupVars(retain, true))));
 }
 
 ValuePtr Val_Gaussian_Factor::normalize() const

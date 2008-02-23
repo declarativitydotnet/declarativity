@@ -151,7 +151,7 @@ ValuePtr Val_Table_Factor::multiply(ValuePtr other) const
 
 ValuePtr Val_Table_Factor::marginal(ListPtr retain) const
 {
-  return mk(factor.marginal(domain_type(lookupVars(retain))));
+  return mk(factor.marginal(domain_type(lookupVars(retain, true))));
 }
 
 ValuePtr Val_Table_Factor::normalize() const
