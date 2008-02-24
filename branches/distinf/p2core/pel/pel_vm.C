@@ -1048,10 +1048,10 @@ DEF_OP(COLLAPSE) {
   using namespace std;
   ValuePtr val1 = stackTop(); stackPop();
   ValuePtr val2 = stackTop(); stackPop();
-  cerr << "COLLAPSE: " << val1->toString() << ',' << val2->toString() << endl;
+  //cerr << "COLLAPSE: " << val1->toString() << ',' << val2->toString() << endl;
   ListPtr varlist = Val_List::cast(val2);
   ValuePtr marginal = dynamic_cast<Val_Factor*>(val1.get())->marginal(varlist);
-  cerr << "RESULT: " << marginal->toString() << endl;
+  //cerr << "RESULT: " << marginal->toString() << endl;
   stackPush(marginal);
 }
 
