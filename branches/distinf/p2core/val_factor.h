@@ -67,6 +67,10 @@ class Val_Factor : public Value {
   //! Computes a normalized version of a factor
   virtual ValuePtr normalize() const = 0;
 
+  //! Converts a list of variable names to a vector of variable handles
+  static std::vector<variable_h> 
+    lookupVars(ListPtr list_ptr, bool ignore_missing = false);
+
  protected:
   //! A functor that transforms a ValuePtr to a double
   struct ValuePtr2double {
@@ -77,10 +81,6 @@ class Val_Factor : public Value {
   struct double2ValuePtr {
     ValuePtr operator()(const double& x) { return Val_Double::mk(x); }
   };
-
-  //! Converts a list of variable names to a vector of variable handles
-  static std::vector<variable_h> 
-    lookupVars(ListPtr list_ptr, bool ignore_missing = false);
 
   //! The set of all variables known to this host.
   static prl::universe u;

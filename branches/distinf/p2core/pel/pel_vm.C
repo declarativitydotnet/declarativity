@@ -52,7 +52,11 @@
 #include "xdrbuf.h"
 #include "systemTable.h"
 
+#include <boost/lexical_cast.hpp>
+#include <boost/tokenizer.hpp>
+#include <pstade/oven/algorithm.hpp>
 
+#include "prl/detail/shortcuts_def.hpp"
 
 using namespace opr;
 typedef Val_Gaussian_Factor::canonical_gaussian canonical_gaussian;
@@ -1066,8 +1070,32 @@ DEF_OP(FACTOR_DEFAULT_CANONICAL_FACTOR) {
 
 DEF_OP(CREATE_TABLE_FACTOR) {
   ListPtr var_list = Val_List::cast(stackTop()); stackPop();
-  MatrixPtr assignments = Val_Matrix::cast(stackTop()); stackPop();
-  stackPush(Val_Table_Factor::mk(var_list, assignments));
+  ValuePtr values = stackTop(); stackPop();
+  switch(values->typeCode()) {
+  case Value::MATRIX: {
+    MatrixPtr assignments = Val_Matrix::cast(stackTop()); stackPop(); 
+    stackPush(Val_Table_Factor::mk(var_list, assignments));
+    break;
+  }
+  case Value::STR: {
+    typedef boost::tokenizer< boost::char_separator<char> > tokenizer;
+    boost::char_separator<char> sep("_");
+
+    std::vector<prl::variable_h> vars = Val_Factor::lookupVars(var_list);
+    table_factor_type f(vars, 0);
+    std::string str = values->toString();
+    tokenizer tokens(str, sep);
+    std::vector<double> entries;
+    foreach(const string& token, tokens)
+      entries.push_back(boost::lexical_cast<double>(token));
+    assert(entries.size() == f.size());
+    pstade::oven::copy(entries, f.begin());
+    stackPush(Val_Table_Factor::mk(f));
+    break;
+  }
+  default:
+    assert(false);
+  }
 }
 
 DEF_OP(DEFAULT_TABLE_FACTOR) {
@@ -1850,6 +1878,8 @@ Pel_VM::stackPush(ValuePtr v)
 {
   _st.push_back(v);
 }
+
+#include "prl/detail/shortcuts_undef.hpp"
 
 /*
  * End of file 
