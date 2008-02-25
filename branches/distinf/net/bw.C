@@ -11,6 +11,7 @@
  */
 
 #include <iostream>
+#include <time.h>
 #include "bw.h"
 #include "val_str.h"
 
@@ -45,11 +46,12 @@ Bandwidth::simple_action(TuplePtr p)
   prev_t_ = cur_t;
 
 //  ELEM_INFO(bw_);
-  
 
-  TELL_OUTPUT << "Bandwidth(bytes)]:  ["
+  TELL_OUTPUT << "Bandwidth, "
               << bw_
-              << "]" << std::endl;  
+              << ", "
+              << boost::posix_time::to_simple_string(boost::posix_time::microsec_clock::local_time())
+  			  << std::endl;
       
   return p;
 }
