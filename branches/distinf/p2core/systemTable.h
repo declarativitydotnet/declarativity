@@ -337,4 +337,5 @@ FUNCTIONDEF("f_normalize", 1, "normalize")
 FUNCTIONDEF("f_values", 1, "values")
 FUNCTIONDEF("f_norm1", 2, "norm1")
 FUNCTIONDEF("f_pow", 2, "pow")
+FUNCTIONDEF("f_quit", 0, "quit")
 #undef FUNCTIONDEF

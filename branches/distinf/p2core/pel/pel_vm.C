@@ -332,6 +332,11 @@ private:
  *
  */
 
+DEF_OP(QUIT) { 
+  std::cerr << "P2 quitting" << std::endl;
+  exit(0);
+}
+
 //
 // Stack operations
 //

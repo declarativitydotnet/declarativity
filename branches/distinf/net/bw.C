@@ -40,6 +40,7 @@ Bandwidth::simple_action(TuplePtr p)
 
   if ((cur_t - prev_t_) > 2) { 
     bw_ = double(bytes_) / double(cur_t - prev_t_);
+    total_bytes += bytes_;
     bytes_ = 0;  
   } else return p;
 
@@ -48,10 +49,10 @@ Bandwidth::simple_action(TuplePtr p)
 //  ELEM_INFO(bw_);
 
   TELL_OUTPUT << "Bandwidth, "
-              << bw_
-              << ", "
+              << bw_ << ", "
+              << total_bytes << ", "
               << boost::posix_time::to_simple_string(boost::posix_time::microsec_clock::local_time())
-  			  << std::endl;
+              << std::endl;
       
   return p;
 }

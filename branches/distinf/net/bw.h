@@ -57,6 +57,7 @@ private:
 
   unsigned int bytes_;
 
+  unsigned long total_bytes;
 
   double bw_;
 
