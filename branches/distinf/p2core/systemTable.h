@@ -340,4 +340,5 @@ FUNCTIONDEF("f_values", 1, "values")
 FUNCTIONDEF("f_norm1", 2, "norm1")
 FUNCTIONDEF("f_pow", 2, "pow")
 FUNCTIONDEF("f_quit", 0, "quit")
+FUNCTIONDEF("f_timeDuration", 1, "->time_duration")
 #undef FUNCTIONDEF

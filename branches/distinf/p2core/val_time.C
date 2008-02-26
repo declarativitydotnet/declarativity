@@ -30,11 +30,9 @@ class OperTime : public opr::OperCompare<Val_Time> {
   // add two absolute calendar times (i.e. boost::ptime's) -- JMH 
   
   virtual ValuePtr _minus (const ValuePtr& v1, const ValuePtr& v2) const {
-    // This is slightly confusing, but based on Boost's time
-    // semantics.
     // Given two Val_Time values, their difference is a
     // Val_Time_Duration.
-    // But the difference between a Val_Time and another numeric type
+    // The difference between a Val_Time and another numeric type
     // is of type Val_Time.
     if (v2->typeCode() == Value::TIME) {
       return Val_Time_Duration::mk(Val_Time::cast(v1) -
@@ -43,7 +41,12 @@ class OperTime : public opr::OperCompare<Val_Time> {
       return Val_Time::mk(Val_Time::cast(v1) -
                           Val_Time_Duration::cast(v2));
     }
-  };
+  }
+
+  virtual ValuePtr _plus(const ValuePtr& v1, const ValuePtr& v2) const {
+    return Val_Time::mk(Val_Time::cast(v1) + Val_Time_Duration::cast(v2));
+  }
+
 };
 const opr::Oper* Val_Time::oper_ = new OperTime();
 
