@@ -18,7 +18,7 @@
 DEFINE_ELEMENT_INITS(Bandwidth, "Bandwidth")
 
 Bandwidth::Bandwidth(string name)
-  : Element(name,1, 1), prev_t_(now_s()), bytes_(0), bw_(0.)
+: Element(name,1, 1), prev_t_(now_s()), bytes_(0), total_bytes(0), bw_(0.)
 {
 }
 
