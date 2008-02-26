@@ -24,7 +24,7 @@ Bandwidth::Bandwidth(string name)
 
 Bandwidth::Bandwidth(TuplePtr args)
   : Element(Val_Str::cast((*args)[2]), 1, 1), 
-    prev_t_(now_s()), bytes_(0), bw_(0.) { }
+    prev_t_(now_s()), bytes_(0), total_bytes(0), bw_(0.) { }
 
 
 TuplePtr
