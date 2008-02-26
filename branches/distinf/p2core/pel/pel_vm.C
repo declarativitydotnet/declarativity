@@ -54,9 +54,13 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/random/lagged_fibonacci.hpp>
+#include <boost/random/exponential_distribution.hpp>
 #include <pstade/oven/algorithm.hpp>
 
 #include "prl/detail/shortcuts_def.hpp"
+
+boost::lagged_fibonacci607 rng_fibonacci;
 
 using namespace opr;
 typedef Val_Gaussian_Factor::canonical_gaussian canonical_gaussian;
@@ -1060,6 +1064,13 @@ DEF_OP(COLLAPSE) {
   stackPush(marginal);
 }
 
+DEF_OP(WEIGHTED_UPDATE) {
+  const table_factor_type& f1 = Val_Table_Factor::cast(stackTop()); stackPop();
+  const table_factor_type& f2 = Val_Table_Factor::cast(stackTop()); stackPop();
+  double alpha = pop_double();
+  stackPush(Val_Table_Factor::mk(weighted_update(f1, f2, alpha)));
+} 
+
 DEF_OP(FACTOR_CREATE_CANONICAL_FACTOR) {
   /* popping order varlist, mat, vec */
   ListPtr varlist = Val_List::cast(stackTop()); stackPop();
@@ -1155,10 +1166,17 @@ DEF_OP(RAND) {
   int64_t r = random();
   stackPush(Val_Int64::mk(r));
 }
+
 DEF_OP(COIN) {
   double r = double(random()) / double(RAND_MAX);
   double p = pop_double();
   stackPush(Val_Int64::mk(r <= p));
+}
+
+DEF_OP(SAMPLE_EXPONENTIAL) {
+  double lambda = pop_double();
+  double x = boost::exponential_distribution<double>(lambda)(rng_fibonacci);
+  stackPush(Val_Double::mk(x));
 }
 
 DEF_OP(L_INIT) {
