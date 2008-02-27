@@ -1144,6 +1144,12 @@ DEF_OP(FACTOR_NORM1) {
   stackPush(Val_Double::mk(norm_1(x, y)));
 }
 
+DEF_OP(FACTOR_NORM_INF) {
+  const table_factor_type& x = Val_Table_Factor::cast(stackTop()); stackPop();
+  const table_factor_type& y = Val_Table_Factor::cast(stackTop()); stackPop();
+  stackPush(Val_Double::mk(norm_inf(x, y)));
+}
+
 //
 // Boolean operations
 //
