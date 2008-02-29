@@ -96,7 +96,7 @@ string Val_Vector::toConfString() const
 {
   ostringstream sb;
    
-  sb << "[";
+  sb << "<";
    
   ValPtrVector::const_iterator iter = V->begin();
   ValPtrVector::const_iterator end = V->end();
@@ -112,7 +112,7 @@ string Val_Vector::toConfString() const
     iter++;
   }
    
-  sb << "]";
+  sb << ">";
    
   return sb.str();
 
