@@ -160,7 +160,7 @@ def make(cmd, fileHandle, verbose_output):
 	return 1
 
 #Function to run all test scripts
-def run_scripts(runOverLog_path, olg_path, script_path, fileHandle, python_path, verbose_output):
+def run_scripts(runOverLog_path, olg_path, script_path, fileHandle, python_path, verbose_output, wait_delay):
 
 	#print runOverLog_path
 	#print olg_path
@@ -181,7 +181,7 @@ def run_scripts(runOverLog_path, olg_path, script_path, fileHandle, python_path,
 				about = os.stat(script)
 				about = os.stat(runOverLog_path)
 			
-				args=[python_path, script, '-E', runOverLog_path, '-B', olg_path, '-T', '100', '2>&1']
+				args=[python_path, script, '-E', runOverLog_path, '-B', olg_path, '-T', wait_delay, '2>&1']
         			#print args
 				p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
 		
@@ -272,6 +272,9 @@ def autoBuild(file_path, file, current_dir):
         unitTests_path = parameters['unitTests_path'].rstrip().lstrip()
         run_build = parameters['run_build'].rstrip()
         verbose_output = parameters['verbose_result'].rstrip().lstrip()
+	wait_delay = parameters['delay']
+
+	print "Delay set to" , wait_delay
 
 	curr_time = datetime.datetime.now()
         EpochSeconds = time.mktime(curr_time.timetuple())
@@ -341,7 +344,7 @@ def autoBuild(file_path, file, current_dir):
                 olg_path = os.path.join(sourcedir, branch_name, 'tests/unitTests/olg')
                 script_path = os.path.join(sourcedir, branch_name, 'tests/unitTests/scripts')
 
-                result = run_scripts(runOverLog_path, olg_path, script_path, fileHandle, python_path, verbose_output)
+                result = run_scripts(runOverLog_path, olg_path, script_path, fileHandle, python_path, verbose_output, wait_delay)
 	        
 		build_path = os.path.join(sourcedir, branch_name, 'builds')
                 run_p2Test(build_path, fileHandle)
@@ -370,7 +373,7 @@ def autoBuild(file_path, file, current_dir):
                 runOverLog_path = os.path.join(build_path, 'bin', planner)
                 olg_path = os.path.join(unitTests_path, 'olg')
                 script_path = os.path.join(unitTests_path, 'scripts')
-                result = run_scripts(runOverLog_path, olg_path, script_path, fileHandle, python_path, verbose_output)
+                result = run_scripts(runOverLog_path, olg_path, script_path, fileHandle, python_path, verbose_output, wait_delay)
 
                 run_p2Test(build_path, fileHandle)
 		
