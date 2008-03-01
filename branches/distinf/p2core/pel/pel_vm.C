@@ -1071,13 +1071,44 @@ DEF_OP(WEIGHTED_UPDATE) {
   stackPush(Val_Table_Factor::mk(weighted_update(f1, f2, alpha)));
 } 
 
+std::vector<double> parse_entries(const std::string& str) {
+  typedef boost::tokenizer< boost::char_separator<char> > tokenizer;
+  boost::char_separator<char> sep("_");
+  
+  tokenizer tokens(str, sep);
+  std::vector<double> entries;
+  foreach(const string& token, tokens)
+    entries.push_back(boost::lexical_cast<double>(token));
+  return entries;
+}
+
 DEF_OP(FACTOR_CREATE_CANONICAL_FACTOR) {
   /* popping order varlist, mat, vec */
   ListPtr varlist = Val_List::cast(stackTop()); stackPop();
-  MatrixPtr lambdamat = Val_Matrix::cast(stackTop()); stackPop();
-  VectorPtr etavec = Val_Vector::cast(stackTop()); stackPop();
-
-  stackPush(Val_Gaussian_Factor::mk(varlist, lambdamat, etavec));
+  ValuePtr lambda = stackTop(); stackPop();
+  ValuePtr eta    = stackTop(); stackPop();
+  switch(lambda->typeCode()) {
+  case Value::MATRIX: {
+    stackPush(Val_Gaussian_Factor::mk(varlist, 
+                                      Val_Matrix::cast(lambda),
+                                      Val_Vector::cast(eta)));
+    break;
+  }
+  case Value::STR: {
+    std::vector<prl::variable_h> vars = Val_Factor::lookupVars(varlist);
+    canonical_gaussian f(vars, 0);
+    std::vector<double> entriesl(parse_entries(lambda->toString()));
+    std::vector<double> entriese(parse_entries(eta->toString()));
+    assert(entriesl.size() == f.inf_matrix().data().size());
+    assert(entriese.size() == f.inf_vector().data().size());
+    pstade::oven::copy(entriesl, f.inf_matrix().data().begin());
+    pstade::oven::copy(entriese, f.inf_vector().data().begin());
+    stackPush(Val_Gaussian_Factor::mk(f));
+    break;
+  }
+  default:
+    assert(false); // Unknown format
+  }
 }
 
 DEF_OP(FACTOR_DEFAULT_CANONICAL_FACTOR) {
@@ -1089,28 +1120,20 @@ DEF_OP(CREATE_TABLE_FACTOR) {
   ValuePtr values = stackTop(); stackPop();
   switch(values->typeCode()) {
   case Value::MATRIX: {
-    MatrixPtr assignments = Val_Matrix::cast(stackTop()); stackPop(); 
-    stackPush(Val_Table_Factor::mk(var_list, assignments));
+    stackPush(Val_Table_Factor::mk(var_list, Val_Matrix::cast(values)));
     break;
   }
   case Value::STR: {
-    typedef boost::tokenizer< boost::char_separator<char> > tokenizer;
-    boost::char_separator<char> sep("_");
-
     std::vector<prl::variable_h> vars = Val_Factor::lookupVars(var_list);
     table_factor_type f(vars, 0);
-    std::string str = values->toString();
-    tokenizer tokens(str, sep);
-    std::vector<double> entries;
-    foreach(const string& token, tokens)
-      entries.push_back(boost::lexical_cast<double>(token));
+    std::vector<double> entries(parse_entries(values->toString()));
     assert(entries.size() == f.size());
     pstade::oven::copy(entries, f.begin());
     stackPush(Val_Table_Factor::mk(f));
     break;
   }
   default:
-    assert(false);
+    assert(false); // Unknown format
   }
 }
 
@@ -1782,6 +1805,19 @@ DEF_OP(STR_CONV) {
     stackPush(Val_Str::mk(oss.str()));
   }
   else stackPush(Val_Str::mk(t->toString()));
+}
+
+DEF_OP(STR_TOK) {
+  typedef boost::tokenizer< boost::char_separator<char> > tokenizer;
+
+  std::string str = pop_string();
+  std::string sep = pop_string();
+  tokenizer tokens(str, boost::char_separator<char>(sep.c_str()));
+  ListPtr list = List::mk();
+
+  foreach(const string& token, tokens) 
+    list->append(Val_Str::mk(token));
+  stackPush(Val_List::mk(list));
 }
 
 //

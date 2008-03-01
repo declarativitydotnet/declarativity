@@ -155,7 +155,7 @@ for op, ar, va, desc in [
   ("tostr",1,   "STR_CONV",     "Convert to a string (not ->s)"),
   ("strreplace",3,   "STR_REPLACE", "Replace string"),
   ("strfind", 2,"STR_FIND",     "Find the first string into the second"),
-
+  ("strtok", 2, "STR_TOK",      "Extracts tokens from a string"),
   ("status",     2, "O_STATUS", "Extract the overlog program status of a program attribute."),
   ("selectivity",3, "O_SELECT", "Compute the selectivity of a join."),
   ("rangeAM",    2, "O_RANGEAM","Determine if a range access method can be used."),
