@@ -71,13 +71,13 @@ namespace djoin {
        replicationSend(@A, Pid, Rid, RLoc, LLoc, JSchema, NewRid, NewHeadID),
        ::sys::rule(@A, Rid, Pid, Name, _, _, _, _, _).
 
-  rs3 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name + "_tmp", null, "SEND", JSchema, 0, AM, New) :-
+  rs3 ::sys::predicate(@A, NewHeadID, NewRid, Notin, Name + "_tmp", null, null, JSchema, 0, AM, New) :-
        replicationSend(@A, Pid, Rid, RLoc, LLoc, JSchema, NewRid, NewHeadID),
        ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
        ::sys::predicate(@A, HeadPredID, Rid, Notin, Name, _, _, Schema, _, AM, New).
 
   /* Copy over predicates that determine replicated location. */
-  rs4 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, ECA, Schema, -1, AM, New) :-
+  rs4 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, null, Schema, -1, AM, New) :-
        replicationSend(@A, Pid, Rid, RLoc, LLoc, JSchema, NewRid, NewHeadID),
        ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, AM, New),
        f_contains(RLoc, Schema) == true.
@@ -117,9 +117,6 @@ namespace djoin {
                ::sys::rule(@A, Rid, Pid, Name, HeadID, P2DL, Delete, Terms, New).
 
   /*************************************************************************************/
-  watchmod(::sys::table, "a").
-  watchmod(::sys::predicate, "a").
-
   /* Create the replicated table: pred_rep(@B,...,A) 
      The key will be on the same fields as the original table. */
   rt ::sys::table(@A, RTid, Name + "_rep", Lifetime, Size, Key, 0, Sort, Pid) :-
