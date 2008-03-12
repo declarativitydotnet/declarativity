@@ -340,7 +340,7 @@ def autoBuild(file_path, file, current_dir):
                         email(from_address, to_address, 0, log, sendmail_path, revision, branch_name, sourcedir)
                         sys.exit(0)
 		
-                runOverLog_path = os.path.join(sourcedir, branch_name, 'builds/bin', planner)
+                runOverLog_path = os.path.join(sourcedir, branch_name, 'build/bin', planner)
                 olg_path = os.path.join(sourcedir, branch_name, 'tests/unitTests/olg')
                 script_path = os.path.join(sourcedir, branch_name, 'tests/unitTests/scripts')
 

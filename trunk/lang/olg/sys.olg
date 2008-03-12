@@ -1,0 +1,21 @@
+namespace sys {
+  namespace histogram {
+    materialize(meta, infinity, infinity, keys(1,2,3,4)).
+    materialize(data, infinity, infinity, keys(1,2,3,4,5)).
+    materialize(min, infinity, infinity, keys(1,2,3)).
+    materialize(max, infinity, infinity, keys(1,2,3)).
+
+    update(@A, Table, Pos, Begin, End, Stride) :-
+      meta(@A, Table, Pos, Buckets),
+      min(@A, Table, Pos, Min),
+      max(@A, Table, Pos, Max),
+      Stride := ((Max - Min) / Buckets),
+      Begin := Min, End := Min + Stride.
+    
+    update(@A, Table, Pos, Begin, End, Stride) :-
+      update(@A, Table, Pos, Begin, End, Stride),
+      max(@A, Table, Pos, Max),
+      End < Max,
+      Begin := End, End := End + Stride.
+  }
+}

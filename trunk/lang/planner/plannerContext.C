@@ -271,12 +271,14 @@ namespace compile {
       TuplePtr event     = terms.at(1); 
       string   headName  = (*head)[catalog->attribute(FUNCTOR, "NAME")]->toString();
       string   eventName = (*event)[catalog->attribute(FUNCTOR, "NAME")]->toString();
+      string   eventType = (*event)[catalog->attribute(FUNCTOR, "ECA")]->toString();
+      string actionType  = (*head)[catalog->attribute(FUNCTOR, "ECA")]->toString();
       ListPtr  headArgs  = Val_List::cast((*head)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
       ListPtr  eventArgs = Val_List::cast((*event)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]); 
-      int   aggPosition  = namestracker::aggregation(headArgs);
+      int   doAggwrap  = namestracker::aggregation(headArgs) > 0 && eventType != "INSERT";
       ostringstream aggwrap;
   
-      if (aggPosition >= 0) {
+      if (doAggwrap) {
         string aggOper  = "";
         int    aggField = 0;
         int    starAgg  = 0;
@@ -334,9 +336,6 @@ namespace compile {
         }
       }
           
-      string eventType = (*event)[catalog->attribute(FUNCTOR, "ECA")]->toString();
-      string actionType = (*head)[catalog->attribute(FUNCTOR, "ECA")]->toString();
-
       string graphName = rname->toString();
       for (string::size_type s = 0; (s = graphName.find("::", s)) != string::npos; s++) {
          graphName.replace(s, 2, "_");
@@ -349,7 +348,7 @@ namespace compile {
           << condition_oss.str() << std::endl
           << action_oss.str()    << std::endl;
       if (epd.inputs && apd.outputs) {
-        if (aggPosition >= 0) {
+        if (doAggwrap) {
           oss << "\t" << aggwrap.str(); // Create the aggwrap
           oss << "\tinput -> Queue(\"aggQueue\", 10000) -> PullPush(\"aggInput\", 0) ->";
           oss << "\taggwrap[1] -> event -> condition -> ";
@@ -364,7 +363,7 @@ namespace compile {
         oss << graphName << " -> [+]" << intStrandOutputElement << "; };\n";
       }
       else if (epd.inputs) {
-        if (aggPosition >= 0) {
+        if (doAggwrap) {
           TELL_ERROR << "Side affect rule should not have aggregation. RULE: " 
                      << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << std::endl; 
           throw planner::Exception("Side effect rule should not have aggregate!");
@@ -814,9 +813,7 @@ namespace compile {
           TuplePtr arg = Val_Tuple::cast(*iter);
           if ((*arg)[0]->toString() == VAR || (*arg)[0]->toString() == LOC) {
             int pos = namestracker::position(eventArgs, *iter);
-            if (pos < 0) {
-              throw planner::Exception("Group by variables must come from body predicate! " + rule->toString());
-            }
+            if (pos < 0) continue;
             groupByFields.push_back(pos+1);          
           }
           else {
@@ -827,7 +824,7 @@ namespace compile {
             else {
               aggField = namestracker::position(eventArgs, *iter) + 1;
               if (!aggField)
-                throw Exception("Aggregation field must be over event tuple!\nRule Head: " +
+                throw Exception("Aggregation field must be over table predicate!\nRule Head: " +
                                 head->toString() + ". Rule Event: " + event->toString());
             }
           }
@@ -962,7 +959,6 @@ namespace compile {
                    TuplePtr probeTp, ListPtr tupleSchema, bool filter)
     {
       ListPtr probeSchema  = Val_List::cast((*probeTp)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
-      ListPtr accessMethod = Val_List::cast((*probeTp)[catalog->attribute(FUNCTOR, "AM")]);
       string    tableName  = (*probeTp)[catalog->attribute(FUNCTOR, "NAME")]->toString();
       bool    notin = (*probeTp)[catalog->attribute(FUNCTOR, "NOTIN")] == Val_Int64::mk(true);
       CommonTable::Key joinKey;

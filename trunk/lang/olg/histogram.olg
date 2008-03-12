@@ -1,0 +1,122 @@
+namespace histogram {
+  
+  h1 ::sys::program_add(@A, Pid, Name, Rewrite, "histogram", Text, Msg, P2DL, Src) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
+
+  h2 rewrite(@A, Pid, Rid, PName, Attr, Schema, Buckets) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+        ::sys::predicate(@A, HeadPredID, Rid, _, "sys::histogram::meta", _, _, Args, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, _, PName, _, _, Schema, _, _, _),
+        HeadPredID != PredID,
+        Attr := f_car(f_cdr(Args)), 
+        Buckets := f_car(f_cdr(f_cdr(Args))).
+
+  h3 delete ::sys::rule(@A, NewRid, Pid, Name, HeadID, P2DL, Delete, Terms, New) :-
+              rewrite(@A, Pid, Rid, _, _, _, _),
+              ::sys::rule(@A, NewRid, Pid, Name, HeadID, P2DL, Delete, Terms, New).
+
+  h4 ::sys::histogram::meta(@A, Name, Pos, Buckets) :-
+       rewrite(@A, Pid, Rid, Name, Attr, Schema, Buckets),
+       Pos := f_posattr(Attr, Schema). 
+
+  /**********************************************************************************/
+
+  mn1 minRule(@A, Pid, Rid, Name, Attr, Schema, Pos, f_idgen(), f_idgen()) :-
+        rewrite(@A, Pid, Rid, Name, Attr, Schema, Buckets),
+        Pos := f_posattr(Attr, Schema).
+
+  mn2 ::sys::rule(@A, NewRid, Pid, Name + "_min", NewHeadID, null, false, 4, false) :-
+        minRule(@A, Pid, Rid, _, _, _, _, NewRid, NewHeadID),
+        ::sys::rule(@A, Rid, Pid, Name, _, _, _, _, _).
+
+  mn3 ::sys::predicate(@A, NewHeadID, NewRid, false, "sys::histogram::min", 
+                       Tid, null, Schema, 0, null, false) :-
+        minRule(@A, Pid, Rid, Name, Attr, Schema, Pos, NewRid, NewHeadID),
+        ::sys::table(@A, Tid, "sys::histogram::min", _, _, _, _, _, _),
+        Schema := f_cons(f_car(Schema), f_cons(f_mktype("Variable", "Name"), 
+                  f_cons(f_mktype("Variable", "Pos"), f_mkagg("MIN", Attr)))). 
+
+  mn4 ::sys::predicate(@A, f_idgen(), NewRid, false, Name, Tid, "INSERT", Schema, 1, null, false) :-
+        minRule(@A, Pid, Rid, Name, _, _, _, NewRid, NewHeadID),
+        ::sys::predicate(@A, _, Rid, _, Name, Tid, _, Schema, _, _, _).
+
+  mn5 ::sys::assign(@A, f_idgen(), NewRid, f_mktype("Variable", "Name"), f_mktype("Value", Name), 2) :-
+        minRule(@A, Pid, Rid, Name, Attr, Schema, Pos, NewRid, NewHeadID).
+
+  mn6 ::sys::assign(@A, f_idgen(), NewRid, f_mktype("Variable", "Pos"), f_mktype("Value", Pos), 3) :-
+        minRule(@A, Pid, Rid, Name, Attr, Schema, Pos, NewRid, NewHeadID).
+
+  /**********************************************************************************/
+
+  mx1 maxRule(@A, Pid, Rid, Name, Attr, Schema, Pos, f_idgen(), f_idgen()) :-
+        rewrite(@A, Pid, Rid, Name, Attr, Schema, Blocksize),
+        Pos := f_posattr(Attr, Schema).
+
+  mx2 ::sys::rule(@A, NewRid, Pid, Name + "_max", NewHeadID, null, false, 4, false) :-
+        maxRule(@A, Pid, Rid, _, _, _, _, NewRid, NewHeadID),
+        ::sys::rule(@A, Rid, Pid, Name, _, _, _, _, _).
+
+  mx3 ::sys::predicate(@A, NewHeadID, NewRid, false, "sys::histogram::max", 
+                       Tid, null, Schema, 0, null, false) :-
+        maxRule(@A, Pid, Rid, Name, Attr, Schema, Pos, NewRid, NewHeadID),
+        ::sys::table(@A, Tid, "sys::histogram::max", _, _, _, _, _, _),
+        Schema := f_cons(f_car(Schema), f_cons(f_mktype("Variable", "Name"), 
+                  f_cons(f_mktype("Variable", "Pos"), f_mkagg("MAX", Attr)))). 
+
+  mx4 ::sys::predicate(@A, f_idgen(), NewRid, false, Name, Tid, "INSERT", Schema, 1, null, false) :-
+        maxRule(@A, Pid, Rid, Name, _, _, _, NewRid, NewHeadID),
+        ::sys::predicate(@A, _, Rid, _, Name, Tid, _, Schema, _, _, _).
+
+  mx5 ::sys::assign(@A, f_idgen(), NewRid, f_mktype("Variable", "Name"), f_mktype("Value", Name), 2) :-
+        maxRule(@A, Pid, Rid, Name, Attr, Schema, Pos, NewRid, NewHeadID).
+
+  mx6 ::sys::assign(@A, f_idgen(), NewRid, f_mktype("Variable", "Pos"), f_mktype("Value", Pos), 3) :-
+        maxRule(@A, Pid, Rid, Name, Attr, Schema, Pos, NewRid, NewHeadID).
+
+  /**********************************************************************************/
+  /**********************************************************************************/
+
+  u1 updateRule(@A, Pid, Rid, Name, Attr, Schema, Pos, f_idgen(), f_idgen()) :-
+        rewrite(@A, Pid, Rid, Name, Attr, Schema, Blocksize),
+        Pos := f_mktype("Value", f_posattr(Attr, Schema)).
+
+  u2 ::sys::rule(@A, NewRid, Pid, Name + "_update", NewHeadID, null, false, 5, false) :-
+        updateRule(@A, Pid, Rid, _, _, _, _, NewRid, NewHeadID),
+        ::sys::rule(@A, Rid, Pid, Name, _, _, _, _, _).
+
+  u3 ::sys::predicate(@A, NewHeadID, NewRid, false, "sys::histogram::data_add", 
+                       null, "SEND", Schema, 0, null, false) :-
+        updateRule(@A, Pid, Rid, Name, Attr, Schema, Pos, NewRid, NewHeadID),
+        Schema := f_cons(f_car(Schema), 
+                         f_cons(f_mktype("Variable", "Name"), 
+                                f_cons(f_mktype("Variable", "Pos"), 
+                                       f_cons(f_mktype("Variable", "B"), 
+                                              f_cons(f_mktype("Variable", "E"), 
+                                                     f_mkagg("COUNT", Attr)))))). 
+
+  /* Listen in on the histogram update event. */
+  u4 ::sys::predicate(@A, f_idgen(), NewRid, false, "sys::histogram::update", 
+                      null, "RECV", Schema, 1, null, false) :-
+        updateRule(@A, Pid, Rid, Name, Attr, Schema, Pos, NewRid, NewHeadID),
+        Schema := f_cons(f_car(Schema), 
+                         f_cons(f_mktype("Variable", "Name"), 
+                                f_cons(f_mktype("Variable", "Pos"), 
+                                       f_cons(f_mktype("Variable", "B"), 
+                                              f_cons(f_mktype("Variable", "E"), 
+                                                     f_mktype("Variable", "S")))))). 
+
+  /* Perform aggregation over original table. */
+  u5 ::sys::predicate(@A, f_idgen(), NewRid, false, Name, Tid, "PROBE", Schema, 2, null, false) :-
+        updateRule(@A, Pid, Rid, Name, Attr, Schema, Pos, NewRid, NewHeadID),
+        ::sys::table(@A, Tid, Name, _, _, _, _, _, _).
+
+  u6 ::sys::select(@A, f_idgen(), NewRid, Bool, 3, null) :-
+        updateRule(@A, Pid, Rid, Name, Attr, Schema, Pos, NewRid, NewHeadID),
+        Bool := f_mkbool("==", f_mktype("Variable", "Name"), f_mktype("Value", Name)). 
+
+  u7 ::sys::select(@A, f_idgen(), NewRid, Bool, 4, null) :-
+        updateRule(@A, Pid, Rid, Name, Attr, Schema, Pos, NewRid, NewHeadID),
+        Bool := f_mkbool("==", f_mktype("Variable", "Pos"), Pos). 
+}

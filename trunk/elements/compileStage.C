@@ -68,6 +68,8 @@ TuplePtr CompileStage::simple_action(TuplePtr p)
   TuplePtr program = p->clone(nextStage->toString() + "::programEvent");
   program->set(catalog->attribute(PROGRAM, "STATUS"), nextStage);
 
+  // std::cerr << "NEXT STAGE: " << nextStage->toString() << std::endl;
+
   CommonTablePtr statusTbl = catalog->table(COMPILE_STATUS);
   Iter = statusTbl->lookup(CommonTable::theKey(CommonTable::KEY1), program);
   TuplePtr compileStatus;
@@ -154,8 +156,8 @@ CompileStage::initialize()
 		     "rewrite1", 
 		     "rewrite2",
 		     */ 
-		     "eca", 
 		     "debug", 
+		     "eca", 
 		     "planner", 
 		     "p2dl", 
 		     "installed"};

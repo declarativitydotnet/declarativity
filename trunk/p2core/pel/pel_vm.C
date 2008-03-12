@@ -744,6 +744,29 @@ DEF_OP(L_MERGE) {
    stackPush(Val_List::mk(compile::namestracker::merge(list1, list2)));
 }
 
+DEF_OP(L_REMOVEVAR) {
+  ValuePtr second = stackTop(); stackPop();
+  ValuePtr first = stackTop(); stackPop();
+
+  ListPtr list = Val_List::cast(first);
+  if (!list) {
+    TELL_ERROR << "PEL CONTAINS: " 
+               << second->toString() << " in " 
+               << first->toString() << std::endl;
+    error = PE_BAD_LIST_FIELD;
+    return;
+  }
+
+  ListPtr newList = List::mk();
+  for (ValPtrList::const_iterator iter = list->begin();
+       iter != list->end(); iter++) {
+    if ((*iter)->compareTo(second) != 0) {
+      newList->append(*iter);
+    }
+  }
+  stackPush(Val_List::mk(newList));
+}
+
 DEF_OP(L_ASSIGNSCHEMA) { 
    ValuePtr first = stackTop(); stackPop();
    ValuePtr var = stackTop(); stackPop();
@@ -766,6 +789,30 @@ DEF_OP(T_MK_TYPE) {
 
    TuplePtr tp = Tuple::mk(type->toString());
    tp->append(val);
+   tp->freeze();
+   stackPush(Val_Tuple::mk(tp));
+}
+
+DEF_OP(T_MK_AGG) { 
+   ValuePtr oper = stackTop(); stackPop();
+   ValuePtr var  = stackTop(); stackPop();
+
+   TuplePtr tp = Tuple::mk(AGG);
+   tp->append(var);
+   tp->append(oper);
+   tp->freeze();
+   stackPush(Val_Tuple::mk(tp));
+}
+
+DEF_OP(T_MK_MATH) { 
+   ValuePtr type = stackTop(); stackPop();
+   ValuePtr val1  = stackTop(); stackPop();
+   ValuePtr val2  = stackTop(); stackPop();
+
+   TuplePtr tp = Tuple::mk(MATH);
+   tp->append(type);
+   tp->append(val1);
+   tp->append(val2);
    tp->freeze();
    stackPush(Val_Tuple::mk(tp));
 }

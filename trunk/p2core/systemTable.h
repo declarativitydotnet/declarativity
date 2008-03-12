@@ -52,7 +52,7 @@
   #define RANGE        "Range"
   #define SETS         "Set"
   #define MATH         "Math"
-  #define VAL          "AtomicValue"
+  #define VAL          "Value"
   #define VAR          "Variable"  
   #define NEWLOCSPEC   "NewLocSpec"
   #define LOC          "Location"
@@ -276,11 +276,14 @@ FUNCTIONDEF("f_min",         2, "min")
 FUNCTIONDEF("f_getattr",     2, "getattr")
 FUNCTIONDEF("f_mktype",      2, "mktype")
 FUNCTIONDEF("f_mkbool",      3, "mkbool")
+FUNCTIONDEF("f_mkmath",      3, "mkmath")
+FUNCTIONDEF("f_mkagg",       2, "mkagg")
 FUNCTIONDEF("f_posattr",     2, "posattr")
 FUNCTIONDEF("f_aggattr",     1, "aggattr")
 FUNCTIONDEF("f_groupbyattr", 1, "groupbyattr")
 FUNCTIONDEF("f_flatten",     1, "flatten")
 FUNCTIONDEF("f_merge",       2, "merge")
+FUNCTIONDEF("f_removevar",   2, "removevar")
 FUNCTIONDEF("f_sortattr",    4, "sortattr")
 FUNCTIONDEF("f_prefix",      2, "prefix")
 FUNCTIONDEF("f_adornment",   2, "adornment")

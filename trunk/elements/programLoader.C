@@ -67,10 +67,13 @@ ProgramLoader::ProgramLoader(TuplePtr args)
   LOAD("aggview1",   source + "/olg/aggview1.olg",   "error",   NULL);
   LOAD("aggview2",   source + "/olg/aggview2.olg",   "aggview1",NULL);
   LOAD("aggview3",   source + "/olg/aggview3.olg",   "aggview2",NULL);
-  LOAD("mview",      source + "/olg/mview.olg",      "aggview3",NULL);
+  LOAD("mview",      source + "/olg/mview.olg",      "aggview3", NULL);
   LOAD("delta",      source + "/olg/delta.olg",      "mview",   NULL);
-  LOAD("localize",   source + "/olg/localize.olg",   "delta",NULL);
+  LOAD("localize",   source + "/olg/localize.olg",   "delta",   NULL);
   LOAD("dummyWatch", source + "/olg/dummyWatch.olg", "eca",     NULL);
+
+  LOAD("sys", source + "/olg/sys.olg", "", NULL);
+  LOAD("histogram", source + "/olg/histogram.olg", "parse", NULL);
 
 /*
   LOAD("magic", source + "/olg/magic.olg", "parse", NULL);
@@ -206,7 +209,7 @@ ProgramLoader::loader()
   if (programText != "") {
     /* Do nothing. */
   }
-  else if (defs) {
+  else if (false && defs) {
     programText = P2::preprocessReadOverLogProgram(filename,
                                                    filename,
                                                    *defs);
