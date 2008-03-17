@@ -72,11 +72,11 @@ ProgramLoader::ProgramLoader(TuplePtr args)
   LOAD("localize",   source + "/olg/localize.olg",   "delta",   NULL);
   LOAD("dummyWatch", source + "/olg/dummyWatch.olg", "eca",     NULL);
 
+/*
   LOAD("sys", source + "/olg/sys.olg", "", NULL);
   LOAD("histogram", source + "/olg/histogram.olg", "parse", NULL);
   LOAD("wireless",  source + "/olg/swireless.olg", "histogram", NULL);
 
-/*
   LOAD("magic", source + "/olg/magic.olg", "parse", NULL);
   LOAD("stats", source + "/olg/stats.olg", "eca", NULL);
   LOAD("systemr", source + "/olg/systemr.olg", "stats", NULL);
