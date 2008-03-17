@@ -15,6 +15,9 @@
 
 #include "val_double.h"
 
+#include <string>
+#include <iostream>
+
 #include "val_int64.h"
 #include "val_str.h"
 #include "val_null.h"
@@ -60,7 +63,11 @@ string Val_Double::toString() const
 
 string Val_Double::toConfString() const
 {
-  return toString();
+  string dbl = toString();
+  if (dbl.find(".", 0) == string::npos) {
+    dbl += ".0";
+  }
+  return dbl;
 }
 
 //
