@@ -184,8 +184,9 @@ TableManager::tableListener(TuplePtr table)
   string name   = (*table)[attribute(TABLE, "TABLENAME")]->toString();
   int32_t size  = Val_Int64::cast((*table)[attribute(TABLE, "SIZE")]);
   ValuePtr lt   = (*table)[attribute(TABLE, "LIFETIME")];
-  ValuePtr pk   = (*table)[attribute(TABLE, "KEY")];
+  ValuePtr key  = (*table)[attribute(TABLE, "KEY")];
   ValuePtr sort = (*table)[attribute(TABLE, "SORT")];
+  ValuePtr pid  = (*table)[attribute(TABLE, "PID")];
 
   TableMap::const_iterator titer = _tables.find(name);
   if (titer != _tables.end()) {
@@ -205,21 +206,24 @@ TableManager::tableListener(TuplePtr table)
     size = CommonTable::NO_SIZE;
   }
 
-  CommonTable::Key primayKey;
-  if (pk == Val_Null::mk()) {
-    primayKey = CommonTable::theKey(CommonTable::KEYID);
+  CommonTable::Key pk;
+  if (key == Val_Null::mk()) {
+    pk = CommonTable::theKey(CommonTable::KEYID);
   }
   else {
-    ListPtr keys = Val_List::cast(pk);
+    ListPtr keys = Val_List::cast(key);
     for (ValPtrList::const_iterator iter = keys->begin();
          iter != keys->end(); iter++) {
-      primayKey.push_back(Val_Int64::cast(*iter));
+      pk.push_back(Val_Int64::cast(*iter));
     }
   }
 
-  _tables.insert(std::make_pair(
-                 name, CommonTablePtr(new Table2(name, primayKey, size, lifetime))));
-  registerIndex(name, HASH_INDEX, primayKey);
+  if (lifetime == CommonTable::NO_EXPIRATION && (unsigned)size == CommonTable::NO_SIZE) {
+    RefTable::mk(*Plumber::catalog(), name, lifetime, size, pk, ListPtr(), pid);
+  }
+  else {
+    Table2::mk(*Plumber::catalog(),name,lifetime, size, pk, ListPtr(), pid);
+  }
 }
 
 string

@@ -651,6 +651,20 @@ namespace compile {
       ostringstream pel;  
     
       string oper = (*boolTp)[2]->toString();
+      if (oper == "in") {
+        TuplePtr tp1 = Val_Tuple::cast((*boolTp)[3]);
+        TuplePtr tp2 = Val_Tuple::cast((*boolTp)[4]);
+        if (((*tp1)[0]->toString() == VAR || (*tp1)[0]->toString() == VAL) && 
+            (*tp2)[0]->toString() == VAR) {
+          TuplePtr fn = Tuple::mk(FUNCTION);
+          fn->append(Val_Str::mk("f_contains"));
+          fn->append(Val_Int64::mk(2));
+          fn->append((*boolTp)[3]);
+          fn->append((*boolTp)[4]);
+          fn->freeze();
+          return func(schema, fn);
+        }
+      }
 
       pel << gen(schema, Val_Tuple::cast((*boolTp)[3]));
       if ((*boolTp)[4] != Val_Null::mk()) {

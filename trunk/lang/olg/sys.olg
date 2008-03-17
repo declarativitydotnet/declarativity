@@ -1,9 +1,15 @@
 namespace sys {
+  materialize(network, infinity, 1, keys(1)).
+  network("localhost:10000", 20, 10, 10).
+
   namespace histogram {
     materialize(meta, infinity, infinity, keys(1,2,3,4)).
     materialize(data, infinity, infinity, keys(1,2,3,4,5)).
     materialize(min, infinity, infinity, keys(1,2,3)).
     materialize(max, infinity, infinity, keys(1,2,3)).
+
+    data(@A, Name, Pos, Blocks, Begin, End, Count) :-
+      data_add(@A, Name, Pos, Blocks, Begin, End, Count).
 
     update(@A, Table, Pos, Begin, End, Stride) :-
       meta(@A, Table, Pos, Buckets),
@@ -17,5 +23,19 @@ namespace sys {
       max(@A, Table, Pos, Max),
       End < Max,
       Begin := End, End := End + Stride.
+  }
+
+  namespace wireless {
+    materialize(link, infinity, infinity, keys(1,2)).
+    materialize(broadcast, infinity, 1, keys(1,2)).
+
+    broadcast("localhost:10000", "255.255.255.255").
+
+    link("localhost:10000", "localhost:10001").
+    link("localhost:10000", "localhost:10002").
+    link("localhost:10000", "localhost:10003").
+    link("localhost:10000", "localhost:10004").
+    link("localhost:10000", "localhost:10005").
+
   }
 }
