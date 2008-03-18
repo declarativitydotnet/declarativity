@@ -44,7 +44,7 @@ public:
     void addTuple(TuplePtr);
     void removeTuple(TuplePtr);
   protected:
-    TupleSet _buffer;
+    TupleMSet _buffer;
   };
   typedef boost::shared_ptr<Action> ActionPtr;
 

@@ -62,7 +62,7 @@ ProgramLoader::ProgramLoader(TuplePtr args)
   string source = P2_LANG_DIR;
   LOAD("gevent",     source + "/olg/gevent.olg",     "eca",     NULL);
   LOAD("stageGuard", source + "/olg/stageGuard.olg", "eca",     NULL);
-  LOAD("error",      source + "/olg/error.olg",      "debug",   NULL);
+  LOAD("error",      source + "/olg/error.olg",      "parse",   NULL);
   LOAD("seffect",    source + "/olg/seffect.olg",    "eca",     NULL);
   LOAD("aggview1",   source + "/olg/aggview1.olg",   "error",   NULL);
   LOAD("aggview2",   source + "/olg/aggview2.olg",   "aggview1",NULL);

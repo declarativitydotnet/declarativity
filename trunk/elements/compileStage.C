@@ -156,8 +156,8 @@ CompileStage::initialize()
 		     "rewrite1", 
 		     "rewrite2",
 		     */ 
-		     "debug", 
 		     "eca", 
+		     "debug", 
 		     "planner", 
 		     "p2dl", 
 		     "installed"};

@@ -48,7 +48,7 @@ public:
   DECLARE_PUBLIC_ELEMENT_INITS
 
 private:
-  typedef boost::function<void (TupleSet*)> FlushCB;
+  typedef boost::function<void (TupleMSet*)> FlushCB;
   class Action : public CommitManager::Action {
   public:
     Action(FlushCB);
@@ -59,7 +59,7 @@ private:
     FlushCB _flush;
   };
 
-  void flush(TupleSet*);
+  void flush(TupleMSet*);
   int initialize();
 
   CommitManager::ActionPtr _action;
