@@ -176,5 +176,6 @@ private:
 
 /** A set of tuples */
 typedef std::set< TuplePtr, Tuple::Comparator > TupleSet;
+typedef std::multiset< TuplePtr, Tuple::Comparator > TupleMSet;
 
 #endif /* __TUPLE_H_ */

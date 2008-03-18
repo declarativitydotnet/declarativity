@@ -53,7 +53,7 @@ namespace stageGuard {
   sg6 ::sys::select(@A, f_idgen(), Rid, Bool, 3, "FILTER") :-
         rewrite(@A, Pid, Rid),
         ::sys::program(@A, Pid, Name, _, _, _, _, _, _),
-        Bool := f_mkbool("==", f_mktype("Variable", "$_Status"), f_mktype("AtomicValue", Name)). 
+        Bool := f_mkbool("==", f_mktype("Variable", "$_Status"), f_mktype("Value", Name)). 
 
   /* Update rule term count to include the new predicate and selection. */
   sg7 ::sys::rule(@A, Rid, Pid, Name, HeadID, P2DL, Delete, Terms+2, New) :-

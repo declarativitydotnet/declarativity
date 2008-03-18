@@ -53,7 +53,7 @@ def script_output(stdout):
                         output = output + line
 
 	p = re.compile(r"""
-		(^[#][#]Print\[RecvEvent: \s* RULE \s* dummy_am_alive\]: \s* \[am_alive\(localhost:10000\)\])
+		(^[#][#]Print\[RecvEvent: \s* RULE \s* .*]: \s* \[am_alive\(localhost:10000\)\])
 		""", re.VERBOSE)
 	
 	flag = p.match(output)

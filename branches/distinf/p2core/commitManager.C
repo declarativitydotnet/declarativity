@@ -50,6 +50,6 @@ CommitManager::Action::~Action()
 
 void CommitManager::Action::removeTuple(TuplePtr t)
 {
-  _buffer.erase(t);
+  _buffer.erase(_buffer.find(t));
 }
 

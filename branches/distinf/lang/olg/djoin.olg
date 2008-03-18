@@ -1,0 +1,207 @@
+namespace djoin {
+  materialize(cycle1, 1, infinity, keys(1,2)).
+  materialize(cycle2, 1, infinity, keys(1,2)).
+  
+  i1 cycle1(@A, Pid) :- programEvent(@A, Pid, _, _, _, _, _, _, _).
+  i2 cycle2(@A, Pid) :- cycle1(@A, Pid).
+  i3 done(@A, Pid)   :- cycle2(@A, Pid).
+
+  c0 ::sys::program_add(@A, Pid, Name, Rewrite, "djoin", Text, Msg, P2DL, Src) :-
+        done(@A, Pid),
+        ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
+
+  c1a countRule(@A, Pid, Rid) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _).
+
+  c1 countLocalVar(@A, Pid, Rid, a_countdistinct<Attr>) :-
+        countRule(@A, Pid, Rid),
+        ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, _, _, _, _, Attributes, _, _, _),
+        Attr := f_getattr("Location", Attributes), 
+        PredID != HeadPredID.
+
+  c2 checkRule(@A, Pid, Rid, f_tovar(f_getattr("Location", HAttr)), 
+               f_tovar(f_getattr("Location", EAttr))) :-
+        countLocalVar(@A, Pid, Rid, Count),
+        ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+        ::sys::predicate(@A, HeadPredID, Rid, _, _, _, _, HAttr, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, _, _, _, _, EAttr, Pos, _, _),
+        f_getattr("Location", HAttr) != f_getattr("Location", EAttr),
+        Pos == 1, Count == 1. 
+
+  c3 countRepTables(@A, Pid, Rid, RLoc, LLoc, a_count<*>) :-
+       checkRule(@A, Pid, Rid, RLoc, LLoc),
+       ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+       ::sys::predicate(@A, PredID, Rid, _, _, _, _, Attr, _, _, _),
+       PredID != HeadPredID, f_contains(f_tovar(RLoc), Attr) == false.
+
+  c4 rewrite(@A, Pid, Rid, RLoc, LLoc) :-
+       countRepTables(@A, Pid, Rid, RLoc, LLoc, Reps),
+       Reps > 0.
+
+  c5 replicate(@A, Pid, Rid, PredID, RLoc, LLoc, f_idgen(), f_idgen()) :-
+       rewrite(@A, Pid, Rid, RLoc, LLoc),
+       ::sys::rule(@A, Rid, Pid, RName, HeadPredID, _, _, _, _),
+       ::sys::predicate(@A, PredID, Rid, _, _, _, _, Attr, _, _, _),
+       PredID != HeadPredID, f_contains(f_tovar(RLoc), Attr) == false.
+
+  c6 replicationLocation(@A, Pid, Rid, PredID, RLoc, LLoc, RLTid, f_idgen(), f_idgen()) :-
+       replicate(@A, Pid, Rid, PredID, RLoc, LLoc, RTid, RLTid).
+
+  c7 replicationTable(@A, Pid, Rid, PredID, RLoc, LLoc, RTid, RLTid, f_idgen(), f_idgen()) :-
+       replicate(@A, Pid, Rid, PredID, RLoc, LLoc, RTid, RLTid).
+
+  /*************************************************************************************/
+  jr1 joinSchema(@A, Pid, Rid, RLoc, LLoc, a_schema<Schema>) :-
+        rewrite(@A, Pid, Rid, RLoc, LLoc),
+        ::sys::predicate(@A, PredID, Rid, _, _, _, _, Schema, Pos, _, _),
+        Pos > 0, f_contains(RLoc, Schema) == true.
+
+  jr2 joinRelation(@A, Pid, Rid, RLoc, LLoc, Schema) :-
+        joinSchema(@A, Pid, Rid, RLoc, LLoc, Schema),
+        Schema := f_cons(f_cons(f_mktype("Location", f_tostr(RLoc)), LLoc), f_removevar(RLoc, f_cdr(Schema))).
+
+  /*************************************************************************************/
+  rs1 replicationSend(@A, Pid, Rid, RLoc, LLoc, JSchema, f_idgen(), f_idgen()) :-
+        joinRelation(@A, Pid, Rid, RLoc, LLoc, JSchema).
+
+  /* Generate replication rule:  pred_tmp_rep(@B,...,A) :- predicates containing RLoc. */
+  rs2 ::sys::rule(@A, NewRid, Pid, Name + "_tmp_rep", NewHeadID, null, false, 0, false) :-
+       replicationSend(@A, Pid, Rid, RLoc, LLoc, JSchema, NewRid, NewHeadID),
+       ::sys::rule(@A, Rid, Pid, Name, _, _, _, _, _).
+
+  rs3 ::sys::predicate(@A, NewHeadID, NewRid, Notin, Name + "_tmp", null, null, JSchema, 0, AM, New) :-
+       replicationSend(@A, Pid, Rid, RLoc, LLoc, JSchema, NewRid, NewHeadID),
+       ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+       ::sys::predicate(@A, HeadPredID, Rid, Notin, Name, _, _, Schema, _, AM, New).
+
+  /* Copy over predicates that determine replicated location. */
+  rs4 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, null, Schema, -1, AM, New) :-
+       replicationSend(@A, Pid, Rid, RLoc, LLoc, JSchema, NewRid, NewHeadID),
+       ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, AM, New),
+       f_contains(RLoc, Schema) == true.
+
+  /*************************************************************************************/
+
+  rj1 replicatedJoin(@A, Pid, Rid, RLoc, LLoc, JSchema, f_idgen()) :-
+        joinRelation(@A, Pid, Rid, RLoc, LLoc, JSchema).
+
+  rj2 ::sys::rule(@A, NewRid, Pid, Name + "_join_rep", HeadID, null, false, 0, false) :-
+       replicatedJoin(@A, Pid, Rid, RLoc, LLoc, JSchema, NewRid),
+       ::sys::rule(@A, Rid, Pid, Name, HeadID, _, _, _, _).
+
+  /* The original rule head predicate. */
+  rj3 ::sys::predicate(@A, HeadPredID, NewRid, Notin, Name, Tid, ECA, Schema, 0, AM, New) :-
+       replicatedJoin(@A, Pid, Rid, RLoc, LLoc, JSchema, NewRid),
+       ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+       ::sys::predicate(@A, HeadPredID, Rid, Notin, Name, Tid, ECA, Schema, _, AM, New).
+
+  /* The join relation predicate on the remote side. */
+  rj4 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name + "_tmp", null, "RECV", JSchema, 1, AM, New) :-
+       replicatedJoin(@A, Pid, Rid, RLoc, LLoc, JSchema, NewRid),
+       ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+       ::sys::predicate(@A, HeadPredID, Rid, Notin, Name, _, _, Schema, _, AM, New),
+       Schema := f_cons(f_mktype("Location", f_tostr(RLoc)), f_cdr(Schema)).
+
+  /* Copy over predicates for replicated tables. */
+  rj5 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name + "_rep", null, "PROBE", Schema, -1, AM, New) :-
+       replicatedJoin(@A, Pid, Rid, RLoc, LLoc, JSchema, NewRid),
+       ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, AM, New),
+       Pos > 0, f_contains(RLoc, Schema) == false,
+       Schema := f_cons(f_cons(f_mktype("Location", f_tostr(RLoc)), f_cdr(Schema)), LLoc).
+
+  /* Cleanup old rule. */
+  rj6 delete ::sys::rule(@A, Rid, Pid, Name, HeadID, P2DL, Delete, Terms, New) :-
+               replicatedJoin(@A, Pid, Rid, _, _, _, _),
+               ::sys::rule(@A, Rid, Pid, Name, HeadID, P2DL, Delete, Terms, New).
+
+  /*************************************************************************************/
+  /* Create the replicated table: pred_rep(@B,...,A) 
+     The key will be on the same fields as the original table. */
+  rt ::sys::table(@A, RTid, Name + "_rep", Lifetime, Size, Key, 0, Sort, Pid) :-
+       replicationTable(@A, Pid, Rid, PredID, RLoc, LLoc, RTid, RLTid, NewRid, NewHeadID),
+       ::sys::predicate(@A, PredID, Rid, _, Name, Tid, _, _, _, _, _),
+       ::sys::table(@A, Tid, Name, Lifetime, Size, Key, Card, Sort, Pid).
+
+  /* Generate replication rule:  pred_rep(@B,...,A) :- pred(@A, ...), pred_rep_loc(@A, B) */
+  rt1 ::sys::rule(@A, NewRid, Pid, PName + "_rep", 
+                  NewHeadID, null, false, 3, false) :-
+       replicationTable(@A, Pid, Rid, PredID, RLoc, LLoc, RTid, RLTid, NewRid, NewHeadID),
+       ::sys::predicate(@A, PredID, Rid, _, PName, _, _, _, _, _, _).
+
+  /* The predicate representing the replicated table: pred_rep(@B,...,A) */
+  rt2 ::sys::predicate(@A, NewHeadID, NewRid, false, Name + "_rep", 
+                       RTid, "SEND", Schema, 0, null, false) :-
+       replicationTable(@A, Pid, Rid, PredID, RLoc, LLoc, RTid, RLTid, NewRid, NewHeadID),
+       ::sys::predicate(@A, PredID, Rid, _, Name, _, _, Schema, _, _, _),
+       Schema := f_cons(f_cons(f_mktype("Location", f_tostr(RLoc)), f_cdr(Schema)), LLoc).
+
+  /* The table being replicated: pred(@A,...) */
+  rt3 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, "DELTA", Schema, 1, AM, New) :-
+       replicationTable(@A, Pid, Rid, PredID, RLoc, LLoc, RTid, RLTid, NewRid, NewHeadID),
+       ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, AM, New).
+
+  /* The location table that says where to replicated: pred_rep_loc(@A, B) */
+  rt4 ::sys::predicate(@A, f_idgen(), NewRid, false, Name + "_rep_loc", 
+                       RLTid, "PROBE", Schema, 2, "PROBE", false) :-
+       replicationTable(@A, Pid, Rid, PredID, RLoc, LLoc, RTid, RLTid, NewRid, NewHeadID),
+       ::sys::predicate(@A, PredID, Rid, _, Name, _, _, _, _, _, _),
+       Schema := f_cons(f_mktype("Location", f_tostr(LLoc)), f_tovar(RLoc)).
+
+  /*************************************************************************************/
+  /* Create the replicated location table: pred_rep_loc(@A, B) */
+  rl ::sys::table(@A, RLTid, Name + "_rep_loc", infinity, infinity, Key, 0, false, Pid) :-
+       replicationLocation(@A, Pid, Rid, PredID, _, _, RLTid, _, _),
+       ::sys::predicate(@A, PredID, Rid, _, Name, _, _, _, _, _, _),
+       Key := f_cons(1, 2).
+
+  /* Generate replication location rule:  pred_rep_loc(@A, B) :- preds containing B */
+  rl1 ::sys::rule(@A, NewRid, Pid, RName + "_" + PName + "_rep_loc", 
+                  NewHeadID, null, false, 1, false) :-
+       replicationLocation(@A, Pid, Rid, PredID, _, _, _, NewRid, NewHeadID),
+       ::sys::rule(@A, Rid, Pid, RName, _, _, _, _, _),
+       ::sys::predicate(@A, PredID, Rid, _, PName, _, _, _, _, _, _).
+
+  /* The loc_rep head predicate: pred_loc_rep(@A, B) */
+  rl2 ::sys::predicate(@A, NewHeadID, NewRid, false, Name + "_rep_loc", 
+                       RLTid, "INSERT", Schema, 0, null, false) :-
+       replicationLocation(@A, Pid, Rid, PredID, RLoc, LLoc, RLTid, NewRid, NewHeadID),
+       ::sys::predicate(@A, PredID, Rid, _, Name, _, _, _, _, _, _),
+       Schema := f_cons(f_mktype("Location", f_tostr(LLoc)), f_tovar(RLoc)).
+
+  /* Copy over predicates that determine replicated location. */
+  rl3 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, ECA, Schema, -1, AM, New) :-
+        replicationLocation(@A, Pid, Rid, _, RLoc, _, _, NewRid, _),
+        ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, AM, New),
+        f_contains(f_tovar(RLoc), Schema) == true. 
+
+  /*************************************************************************************/
+  /* Update the table identifier. */
+  p0 ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, AM, New) :-
+        done(@A, Pid),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, Notin, Name, TmpTid, ECA, Schema, Pos, AM, New),
+        ::sys::table(@A, Tid, Name, _, _, _, _, _, _),
+        Pos > 0, TmpTid == null.
+
+  /* Update the position of any predicate that has an invalid position. */
+  p1 predUpdate(@A, PredID, Rid) :-
+        ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, AM, New),
+        Pos < 0.
+
+  /* Determine the maximum position. */
+  p2 maxPos(@A, PredID, Rid, a_max<Pos>) :- 
+       predUpdate(@A, PredID, Rid),
+       ::sys::predicate(@A, _, Rid, _, _, _, _, _, Pos, _, _).
+
+  /* Update the predicate postion. */
+  p3 ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos+1, AM, New) :-
+       maxPos(@A, PredID, Rid, Pos),
+       ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, OldPos, AM, New).
+
+  /* Update the number of terms in the rule. */
+  p4 ::sys::rule(@A, Rid, Pid, RName, HeadPredID, P2DL, Delete, Pos + 2, New) :-
+       maxPos(@A, PredID, Rid, Pos),
+       ::sys::rule(@A, Rid, Pid, RName, HeadPredID, P2DL, Delete, Terms, New).
+}

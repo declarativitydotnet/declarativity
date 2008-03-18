@@ -86,7 +86,8 @@ namespace compile {
           probes.pop_front();
         }
         else {
-          throw compile::eca::Exception("Can't handle materialize views with more than 1 body predicate!");
+          string rname = (*rule)[catalog->attribute(RULE, "NAME")]->toString();
+          throw compile::eca::Exception("RULE " + rname + ": can't handle materialize views with more than 1 body predicate!");
         }
       }
 
