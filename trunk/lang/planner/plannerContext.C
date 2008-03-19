@@ -286,9 +286,9 @@ namespace compile {
       string actionType  = (*head)[catalog->attribute(FUNCTOR, "ECA")]->toString();
       ListPtr  headArgs  = Val_List::cast((*head)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
       ListPtr  eventArgs = Val_List::cast((*event)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]); 
-      int   doAggwrap  = namestracker::aggregation(headArgs) > 0 && eventType != "INSERT";
+      int   doAggwrap  = namestracker::aggregation(headArgs) >= 0 && eventType != "INSERT";
       ostringstream aggwrap;
-  
+
       if (doAggwrap) {
         string aggOper  = "";
         int    aggField = 0;
@@ -898,7 +898,8 @@ namespace compile {
            iter != schema->end(); iter++) {
         TuplePtr attr = Val_Tuple::cast(*iter);
         if ((*attr)[TNAME]->toString() != VAR &&
-            (*attr)[TNAME]->toString() != LOC) {
+            (*attr)[TNAME]->toString() != LOC &&
+            (*attr)[TNAME]->toString() != AGG) {
           ostringstream name;
           name <<"$CSELECT_" << fictNum++;
           TuplePtr varAttr = Tuple::mk(VAR);
