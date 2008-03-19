@@ -624,10 +624,9 @@ namespace compile {
         }
       }
 
-      ListPtr schema = Val_List::cast((*head)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
-      schema = canonicalizeAssign(terms, schema);
+      headSchema = canonicalizeAssign(terms, headSchema);
       head = head->clone();
-      head->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(schema));
+      head->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(headSchema));
 
       std::deque<string> graphNames;
       string filterGraphName = "";
@@ -887,7 +886,7 @@ namespace compile {
       for (ValPtrList::const_iterator iter = schema->begin(); 
            iter != schema->end(); iter++) {
         TuplePtr attr = Val_Tuple::cast(*iter);
-        if ((*attr)[TNAME]->toString() == VAR &&
+        if ((*attr)[TNAME]->toString() != VAR &&
             (*attr)[TNAME]->toString() != LOC) {
           ostringstream name;
           name <<"$CSELECT_" << fictNum++;
@@ -1028,7 +1027,9 @@ namespace compile {
       // Create a unique graph name for this assignment
       ostringstream graphName;
       ValuePtr var = (*asmt)[catalog->attribute(ASSIGN, "VAR")];
-      tupleSchema = namestracker::assignSchema(tupleSchema, var);
+      if (namestracker::position(tupleSchema, var) < 0) {
+        tupleSchema->append(var);
+      }
       graphName << "assign_" << _nameCounter++;
 
       oss << std::endl;

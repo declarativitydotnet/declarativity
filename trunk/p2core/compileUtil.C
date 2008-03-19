@@ -481,7 +481,8 @@ namespace compile {
       ListPtr join = List::mk();
       for (ValPtrList::const_iterator i = outer->begin(); 
            i != outer->end(); i++) {
-        join->append(*i);
+        if ((*Val_Tuple::cast(*i))[TNAME]->toString() != VAL) 
+          join->append(*i);
       }
       for (ValPtrList::const_iterator i = inner->begin(); 
            i != inner->end(); i++) {
