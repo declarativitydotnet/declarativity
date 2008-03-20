@@ -99,12 +99,11 @@ namespace compile {
                            TuplePtr head, TuplePtr event);
   
       ListPtr
-      canonicalizeEvent(TuplePtrList& selections, ListPtr schema);
+      canonicalizeSelection(TuplePtrList& selections, ListPtr schema);
 
       ListPtr
-      canonicalizeSchema(ostringstream&, string, 
-                         CommonTable::ManagerPtr, std::deque<string>&,
-                         ListPtr&, ListPtr);
+      canonicalizeAssign(TuplePtrList& assigns, ListPtr schema);
+
 
       string probe(ostringstream& oss, string indent,
                    CommonTable::ManagerPtr catalog, 

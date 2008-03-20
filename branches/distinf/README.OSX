@@ -1,5 +1,3 @@
-$Id$
-
 To build P2 on Mac OS X Tiger (OSX Version 10.4.6, either PPC
 or Intel processor):
 
@@ -28,34 +26,13 @@ or Intel processor):
    root (su or sudo).  Make sure that your path is picking up the right
    version of bison after you do the install (by default this should
    be /usr/local/bin/bison) by running "bison --version".
-8) When that's done you should be set to build p2.
-       ./setup
-       ./configure --with-boostlib=/usr/local/lib \
-                   --with-boostinc=/usr/local/include/boost-1_33_1/ \
-                   CXXFLAGS="-g -Wall -DTRACE_OFF"
-       make
-   This may take a while as well.  We've found you can
-   parallelize the make at a factor of about 2 per processor, so on a
-   uniprocessor machine saying "make -j2" is beneficial; on a
-   dual-core machine you might try "make -j4".
+8) When that's done you should be set to build p2 using cmake.
 9) Assuming everything built correctly you should be ready to install
    the libraries and scripts.  You will have to run this command as root:
        make install
 10) Ensure that the "/usr/local/bin" directory is in your path.
 11) Add the "/usr/local/bin" and "/usr/local/lib" directories to
    the PYTHONPATH environment variable (via "export" in bash, or "setenv" in tcsh)
-12) Ensure you have the latest GNU autotools installed.  The current distribution
-   requires automake 1.9.2, which is not included in Xcode. Download automake, autoconf,
-   and libtool from GNU. Make sure you configure them with --prefix=/usr/local/. Also
-   make sure that in libtool's configuration you set --program-prefix=g. OSX has
-   a /usr/bin/libtool program that is completely different from GNU libtool, so
-   typical GNU libtool installations rename libtool and libtoolize to glibtool and
-   glibtoolize, which is what --program-prefix=g does.  The distribution is known
-   to work on OSX with automake 1.10, autoconf 2.60, and libtool 1.5.22.
-12) Due to libtool weirdness (if someone has a fix, let us know!) 
-   "make install" may not create the file /usr/local/lib/libp2python.so which
-   is needed to run the P2 Python scripts.  To fix this simply type
-       cd /usr/local/lib; ln -s libp2python.0.dylib libp2python.so
 
 ---
 NOTE: There are prebuilt boost distributions in the fink (unstable)

@@ -20,8 +20,6 @@
 #include "oper.h"
 #include <boost/numeric/ublas/vector.hpp>
 
-//using namespace boost::numeric::ublas;
-
 typedef boost::shared_ptr< boost::numeric::ublas::vector< ValuePtr > > VectorPtr;
 typedef boost::numeric::ublas::vector< ValuePtr > ValPtrVector;
 

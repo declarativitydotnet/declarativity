@@ -38,7 +38,12 @@ namespace seffect {
         ::sys::sideAffect(@A, Sid, TPid, Tablename, Type, Trigger, _),
         Delete == true, Type == "DELETE".
 
-  sa5 ::sys::predicate(@A, HeadID, Rid, NotIn, Trigger, null, "SEND", Schema, Pos, AM, New) :-
+  sa5 ::sys::rule(@A, Rid, Pid, Name, HeadID, P2DL, false, Terms, New) :-
+        commitRewrite(@A, Pid),
+        commit(@A, Pid),
+        ::sys::rule(@A, Rid, Pid, Name, HeadID, P2DL, Delete, Terms, New).
+
+  sa6 ::sys::predicate(@A, HeadID, Rid, NotIn, Trigger, null, "SEND", Schema, Pos, AM, New) :-
         commitRewrite(@A, Pid),
         commit(@A, Pid),
         ::sys::rule(@A, Rid, Pid, _, HeadID, _, Delete, _, _),
@@ -47,21 +52,21 @@ namespace seffect {
         ::sys::sideAffect(@A, Sid, TPid, Tablename, Type, Trigger, _),
         Delete == false, Type == "ADD".
 
-  sa6 sideAffectRule(@A, Pid, Sid, f_idgen(), Tablename, Type, Trigger, Schema) :-
+  sa7 sideAffectRule(@A, Pid, Sid, f_idgen(), Tablename, Type, Trigger, Schema) :-
         commitRewrite(@A, Pid),
         commit(@A, Pid),
         ::sys::sideAffect(@A, Sid, Pid, Tablename, Type, Trigger, Schema).
         
-  sa7 ::sys::rule(@A, Rid, Pid, Name, HeadID, null, Delete, 2, false) :-
+  sa8 ::sys::rule(@A, Rid, Pid, Name, HeadID, null, Delete, 2, false) :-
         sideAffectRule(@A, Pid, Rid, HeadID, _, Type, Trigger, _),
         Name := "rule_" + Trigger,
         Delete := (Type == "DELETE" ? true : false).
 
-  sa8 ::sys::predicate(@A, HeadID, Rid, false, Tablename, Tid, Type, Schema, 0, null, false) :-
+  sa9 ::sys::predicate(@A, HeadID, Rid, false, Tablename, Tid, Type, Schema, 0, null, false) :-
         sideAffectRule(@A, _, Rid, HeadID, Tablename, Type, Trigger, Schema),
         ::sys::table(@A, Tid, Tablename, _, _, _, _, _, Pid).
 
-  sa9 ::sys::predicate(@A, f_idgen(), Rid, false, Trigger, null, "RECV", Schema, 1, null, false) :-
+  sa10 ::sys::predicate(@A, f_idgen(), Rid, false, Trigger, null, "RECV", Schema, 1, null, false) :-
         sideAffectRule(@A, _, Rid, _, _, _, Trigger, Schema).
 
 }

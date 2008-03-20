@@ -506,15 +506,11 @@ namespace compile {
 
       if (eventName != "periodic") {
         ListPtr  schema = Val_List::cast((*event)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]); 
-        TuplePtrList selections;
-        schema = canonicalizeEvent(selections, schema);
-        if (selections.size() > 0) {
-          event = event->clone();
-          event->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(schema));
-          event->freeze();
-          terms[1] = event;
-          terms.insert(terms.begin() + 2, selections.begin(), selections.end());
-        }
+        schema = canonicalizeSelection(terms, schema);
+        event = event->clone();
+        event->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(schema));
+        event->freeze();
+        terms[1] = event;
       }
 
       if (eventType == "RECV") {
@@ -628,6 +624,10 @@ namespace compile {
         }
       }
 
+      headSchema = canonicalizeAssign(terms, headSchema);
+      head = head->clone();
+      head->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(headSchema));
+
       std::deque<string> graphNames;
       string filterGraphName = "";
       for (uint i = 2; i < terms.size(); i++) {
@@ -635,7 +635,7 @@ namespace compile {
         string graphName;
         if ((*term)[0]->toString() == FUNCTOR) {
           ListPtr schema = Val_List::cast((*term)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
-          schema = canonicalizeSchema(oss, indent+"\t\t", catalog, graphNames, tupleSchema, schema);
+          schema = canonicalizeSelection(terms, schema);
           term = term->clone();
           term->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(schema));
           graphName = probe(oss, indent + "\t\t", catalog, term, tupleSchema, filter);
@@ -878,20 +878,18 @@ namespace compile {
     }
   
     ListPtr
-    Context::canonicalizeSchema(ostringstream& oss, string indent, 
-                                CommonTable::ManagerPtr catalog, std::deque<string>& graphs,
-                                ListPtr& outerSchema, ListPtr innerSchema)
+    Context::canonicalizeAssign(TuplePtrList& assigns, ListPtr schema)
     {
       static long fictNum = 0;
 
       ListPtr cschema = List::mk();
-      for (ValPtrList::const_iterator iter = innerSchema->begin(); 
-           iter != innerSchema->end(); iter++) {
+      for (ValPtrList::const_iterator iter = schema->begin(); 
+           iter != schema->end(); iter++) {
         TuplePtr attr = Val_Tuple::cast(*iter);
         if ((*attr)[TNAME]->toString() != VAR &&
             (*attr)[TNAME]->toString() != LOC) {
           ostringstream name;
-          name <<"$PVPROBEGEN_" << fictNum++;
+          name <<"$CSELECT_" << fictNum++;
           TuplePtr varAttr = Tuple::mk(VAR);
           varAttr->append(Val_Str::mk(name.str()));
           varAttr->freeze();
@@ -903,7 +901,7 @@ namespace compile {
           assignTp->append(Val_Null::mk());
           assignTp->freeze();
  
-          graphs.push_back(assign(oss, indent, catalog, assignTp, outerSchema));
+          assigns.push_back(assignTp);
           cschema->append(Val_Tuple::mk(varAttr));
         }
         else {
@@ -914,7 +912,7 @@ namespace compile {
     }
 
     ListPtr
-    Context::canonicalizeEvent(std::deque<TuplePtr>& selections, ListPtr schema)
+    Context::canonicalizeSelection(TuplePtrList& selections, ListPtr schema)
     {
       static long fictNum = 0;
 
@@ -1029,7 +1027,9 @@ namespace compile {
       // Create a unique graph name for this assignment
       ostringstream graphName;
       ValuePtr var = (*asmt)[catalog->attribute(ASSIGN, "VAR")];
-      tupleSchema = namestracker::assignSchema(tupleSchema, var);
+      if (namestracker::position(tupleSchema, var) < 0) {
+        tupleSchema->append(var);
+      }
       graphName << "assign_" << _nameCounter++;
 
       oss << std::endl;
