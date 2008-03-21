@@ -117,19 +117,20 @@ namespace compile {
             return true;
           } else if (theWatchModifier.find(mod) !=
                      theWatchModifier.npos) {
-            // The watch is not universal, and it doesn't contain my modifier
-            TELL_INFO << "No (only '"
-                 << theWatchModifier
-                 << "' is being watched)\n";
-            return false;
-          } else {
             // The watch is not universal and I found my modifier in it
             TELL_INFO << "Yes (explicitly)\n";
             return true; 
+          } else {
+            // The watch is not universal, and it doesn't contain my
+            // modifier, but there may be another row in the watch table
+            // with a different modifier. Keep looking
+            TELL_INFO << "Unmatched modifier '"
+                      << theWatchModifier
+                      << "', ";
           }
         }
       }
-      TELL_INFO << "No (no watch on this table)\n";
+      TELL_INFO << "No (none of the watches if any contained this modifier)\n";
       return false;
     }
 
