@@ -29,7 +29,7 @@ namespace mview {
 		::sys::predicate(@A, PredID, Rid, _, _, _, _, Schema, Pos2, _, _),
 		f_getattr("Location", Schema) == Loc,
 		Pos2 == (Pos1+1).
-		
+
   /* Put the DELTA predicate in the first postion. */
   mv3 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, "DELTA", Schema, 1, AM, New) :-
         rewrite(@A, Pid, Rid, DeltaPredID, NewRid, NewHeadID),
@@ -45,30 +45,30 @@ namespace mview {
 
 
   /* Kick off an iterator for the remaining rule terms. */
-  mv5 remainder(@A, Pid, Rid, DeltaPredID, NewRid, 1, 2) :-
-        rewrite(@A, Pid, Rid, DeltaPredID, NewRid, _).
+  mv5 remainder(@A, Pid, Rid, NewRid, 1, 2, Pos) :-
+        rewrite(@A, Pid, Rid, DeltaPredID, NewRid, _),
+        ::sys::predicate(@A, DeltaPredID, Rid, _, _, _, _, _, Pos, _, _).
 
-  mv6 remainder(@A, Pid, Rid, DeltaPredID, NewRid, OldPos+1, NewPos) :-
-        remainder(@A, Pid, Rid, DeltaPredID, NewRid, OldPos, NewPos),
+  mv6 remainder(@A, Pid, Rid, NewRid, OldPos+1, NewPos, DeltaPos) :-
+        remainder(@A, Pid, Rid, NewRid, OldPos, NewPos, DeltaPos),
         ::sys::rule(@A, Rid, Pid, _, _, _, _, Term_Count, _),
-        ::sys::predicate(@A, DeltaPredID, Rid, _, _, _, _, _, Pos, _, _),
-        OldPos < Term_Count - 1,
-        NewPos := (OldPos == Pos ? NewPos : NewPos + 1).
+        OldPos < Term_Count,
+        NewPos := (OldPos == DeltaPos ? NewPos : NewPos + 1).
 
   /* Add the probe table to the rewritten rule. */
   mv7 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, "PROBE", Schema, NewPos, AM, New) :-
-        remainder(@A, Pid, Rid, DeltaPredID, NewRid, OldPos, NewPos),
+        remainder(@A, Pid, Rid, NewRid, OldPos, NewPos, DeltaPos),
         ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, _, Schema, OldPos, AM, New),
-        DeltaPredID != PredID.
+        OldPos != DeltaPos.
 
   /* Make a new assignement for the rewritten rule. */
   mv8 ::sys::assign(@A, f_idgen(), NewRid, Var, Value, NewPos) :-
-        remainder(@A, Pid, Rid, _, NewRid, OldPos, NewPos),
+        remainder(@A, Pid, Rid, NewRid, OldPos, NewPos, _),
         ::sys::assign(@A, Aid, Rid, Var, Value, OldPos).
 
   /* Make a new selection for the rewritten rule. */
   mv9 ::sys::select(@A, f_idgen(), NewRid, Bool, NewPos, AM) :-
-        remainder(@A, Pid, Rid, _, NewRid, OldPos, NewPos),
+        remainder(@A, Pid, Rid, NewRid, OldPos, NewPos, _),
         ::sys::select(@A, Sid, Rid, Bool, OldPos, AM).
 
   /* Create the new rule */

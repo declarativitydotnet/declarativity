@@ -16,8 +16,8 @@ namespace seffect {
   sa1 sideAffect(@A, Pid, Rid, Tablename, f_uniqueSchema(Schema)) :-
         programEvent(@A, Pid, _, _, _, _, _, _, _),
         ::sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, _),
-        ::sys::predicate(@A, HeadID, Rid, _, _, Tid, _, Schema, _, AM, New),
-        ::sys::table(@A, Tid, Tablename, _, _, _, _, _, Pid).
+        ::sys::predicate(@A, HeadID, Rid, _, Tablename, _, _, Schema, _, _, _),
+        ::sys::table(@A, _, Tablename, _, _, _, _, _, Pid).
       
   sa2 ::sys::sideAffect(@A, f_idgen(), Pid, Tablename, Type, Trigger, Schema) :-
         sideAffect(@A, Pid, Rid, Tablename, Schema),
@@ -34,7 +34,7 @@ namespace seffect {
         commit(@A, Pid),
         ::sys::rule(@A, Rid, Pid, _, HeadID, _, Delete, _, _),
         ::sys::predicate(@A, HeadID, Rid, NotIn, Name, Tid, ECA, Schema, Pos, AM, New),
-        ::sys::table(@A, Tid, Tablename, _, _, _, _, _, TPid),
+        ::sys::table(@A, _, Name, _, _, _, _, _, TPid),
         ::sys::sideAffect(@A, Sid, TPid, Tablename, Type, Trigger, _),
         Delete == true, Type == "DELETE".
 
@@ -48,7 +48,7 @@ namespace seffect {
         commit(@A, Pid),
         ::sys::rule(@A, Rid, Pid, _, HeadID, _, Delete, _, _),
         ::sys::predicate(@A, HeadID, Rid, NotIn, Tablename, Tid, ECA, Schema, Pos, AM, New),
-        ::sys::table(@A, Tid, Tablename, _, _, _, _, _, TPid),
+        ::sys::table(@A, _, Tablename, _, _, _, _, _, TPid),
         ::sys::sideAffect(@A, Sid, TPid, Tablename, Type, Trigger, _),
         Delete == false, Type == "ADD".
 
