@@ -81,8 +81,11 @@ namespace compile {
     bool 
     Context::watched(string name, string mod)
     {
-      //      cout << "Asked if table " << name << " contains modifier " << mod
-      //    << "\n";
+      TELL_INFO << "Planner: Asked if table "
+                << name
+                << " is watched with modifier '"
+                << mod
+                << "'...";
       CommonTable::ManagerPtr catalog = Plumber::catalog();
       CommonTablePtr watchTbl = catalog->table(WATCH);
       TuplePtr lookup = Tuple::mk(WATCH);
@@ -99,26 +102,35 @@ namespace compile {
       while (!i->done()) {
         // Found something.
         if (mod == "") {
-          //  cout << "It does by default\n";
+          TELL_INFO << "Yes (universal modifier)\n";
           return true;
         } else {
           // Does it contain this explicit modifier?
           TuplePtr theWatchSpec = i->next();
-          //cout << "The watch record is " << theWatchSpec->toString() << "\n";
           string theWatchModifier =
             (*theWatchSpec)[catalog->attribute(WATCH,
                                                "MOD")]->toString();
-          //cout << "The watch modifieer is " << theWatchModifier << "\n";
-          if ((theWatchModifier.find(mod) == theWatchModifier.npos) &&
-              !(theWatchModifier == "")) {
-            // Didn't find it
-          } else {
-            // Found it
-            //cout << "It does explicitly\n";
+          if (theWatchModifier == "") {
+            // The watch is universal, so whatever my modifier is, it's
+            // included
+            TELL_INFO << "Yes (all modifiers are watched)\n";
+            return true;
+          } else if (theWatchModifier.find(mod) !=
+                     theWatchModifier.npos) {
+            // The watch is not universal and I found my modifier in it
+            TELL_INFO << "Yes (explicitly)\n";
             return true; 
+          } else {
+            // The watch is not universal, and it doesn't contain my
+            // modifier, but there may be another row in the watch table
+            // with a different modifier. Keep looking
+            TELL_INFO << "Unmatched modifier '"
+                      << theWatchModifier
+                      << "', ";
           }
         }
       }
+      TELL_INFO << "No (none of the watches if any contained this modifier)\n";
       return false;
     }
 
@@ -275,9 +287,9 @@ namespace compile {
       string actionType  = (*head)[catalog->attribute(FUNCTOR, "ECA")]->toString();
       ListPtr  headArgs  = Val_List::cast((*head)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
       ListPtr  eventArgs = Val_List::cast((*event)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]); 
-      int   doAggwrap  = namestracker::aggregation(headArgs) > 0 && eventType != "INSERT";
+      int   doAggwrap  = namestracker::aggregation(headArgs) >= 0 && eventType != "INSERT";
       ostringstream aggwrap;
-  
+
       if (doAggwrap) {
         string aggOper  = "";
         int    aggField = 0;
@@ -887,7 +899,8 @@ namespace compile {
            iter != schema->end(); iter++) {
         TuplePtr attr = Val_Tuple::cast(*iter);
         if ((*attr)[TNAME]->toString() != VAR &&
-            (*attr)[TNAME]->toString() != LOC) {
+            (*attr)[TNAME]->toString() != LOC &&
+            (*attr)[TNAME]->toString() != AGG) {
           ostringstream name;
           name <<"$CSELECT_" << fictNum++;
           TuplePtr varAttr = Tuple::mk(VAR);

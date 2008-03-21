@@ -7,18 +7,46 @@ namespace dummyWatch {
         programEvent(@A, Pid, _, _, _, _, _, _, _),
         ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
 
+
+  /* Generate special watch events from universal modifier */
+  uni1 recvWatch(@A, Pid, Name) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::watch(@A, Wid, Pid, Name, ""),
+	notin ::sys::table(@A, Tid, Name, _, _, _, _, _, _).
+
+  uni2 insertWatch(@A, Pid, Name) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::watch(@A, Wid, Pid, Name, ""),
+	::sys::table(@A, Tid, Name, _, _, _, _, _, _).
+
+  uni3 deleteWatch(@A, Pid, Name) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::watch(@A, Wid, Pid, Name, ""),
+	::sys::table(@A, Tid, Name, _, _, _, _, _, _).
+
+
+
   /* Find all recv watch events. */
   dw1a recvWatch(@A, Pid, Name) :-
         programEvent(@A, Pid, _, _, _, _, _, _, _),
-        ::sys::watch(@A, Wid, Pid, Name, "c").
+        ::sys::watch(@A, Wid, Pid, Name, "c"),
+	notin ::sys::table(@A, Tid, Name, _, _, _, _, _, _).
 
   dw1b insertWatch(@A, Pid, Name) :-
         programEvent(@A, Pid, _, _, _, _, _, _, _),
-        ::sys::watch(@A, Wid, Pid, Name, "i").
+        ::sys::watch(@A, Wid, Pid, Name, "i"),
+	::sys::table(@A, Tid, Name, _, _, _, _, _, _).
 
   dw1c deleteWatch(@A, Pid, Name) :-
         programEvent(@A, Pid, _, _, _, _, _, _, _),
-        ::sys::watch(@A, Wid, Pid, Name, "d").
+        ::sys::watch(@A, Wid, Pid, Name, "d"),
+	::sys::table(@A, Tid, Name, _, _, _, _, _, _).
+
+
+
+
+
+
 
   /* Count all rules that have recv watches as the event. */
   dw2a eventRuleCount(@A, Pid, Name, a_COUNT<*>) :-
@@ -36,6 +64,9 @@ namespace dummyWatch {
         ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
         ::sys::predicate(@A, PredID, Rid, _, Name, _, "DELTA_DELETE", _, _, _, _).
   
+
+
+
   /* If there are no rules that have this recv watch event we trigger the rewrite. */
   dw3a doDummyEventRule(@A, Pid, Name, f_idgen(), f_idgen()) :-
         eventRuleCount(@A, Pid, Name, 0).
@@ -46,10 +77,16 @@ namespace dummyWatch {
   dw3c doDummyDeleteRule(@A, Pid, Name, f_idgen(), f_idgen()) :-
         deleteRuleCount(@A, Pid, Name, 0).
 
+
+
+
   /* Generate dummy rule. 
      dummy_Name drop(@A) :- Name(@A). */
   dw4a ::sys::rule(@A, Rid, Pid, "dummyEvent_" + Name, HeadFid, null, false, 2, false) :-
         doDummyEventRule(@A, Pid, Name, Rid, HeadFid).
+
+
+
 
   /* Generate dummy rule. 
      dummy_Name drop(@A) :- Name(@A). */
@@ -58,6 +95,9 @@ namespace dummyWatch {
 
   dw4c ::sys::rule(@A, Rid, Pid, "dummyDelete_" + Name, HeadFid, null, false, 2, false) :-
         doDummyDeleteRule(@A, Pid, Name, Rid, HeadFid).
+
+
+
 
   /* The dummy head predicate: drop(@A) */
   dw5a ::sys::predicate(@A, HeadFid, Rid, false, "dropEvent_"+Name, null, "DROP", Schema, 0, null, false) :-

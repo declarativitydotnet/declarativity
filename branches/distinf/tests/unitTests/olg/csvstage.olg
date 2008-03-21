@@ -26,4 +26,4 @@ r1 filerule(@NI, Filename) :-
 	periodic(@NI, E, 1, 1), 
 	files(@NI, Filename).
 
-watch(out).
+watchmod(out, "s").
