@@ -58,20 +58,25 @@ def script_output(stdout):
 	result = 1
 
 	for line in lines: # Keep in mind the lines are in alpha-sorted order
-		if i == 3:
+		if i == 1:
 			p = re.compile(r"""
-				(^[#][#] Print\[SendAction: \s* RULE \s* q5\]: \s* 
-				\[foundOtherTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
+				(^[#][#] Print\[SendAction: \s* RULE \s* r1\]: \s* 
+				\[foundOtherTable\(localhost:10000, \s* [0-9,\[,\],:,\.]+\)\])
                         	""", re.VERBOSE)
-		elif i == 1:
-			p = re.compile(r"""
-				(^[#][#] Print\[SendAction: \s* RULE \s* q3\]: \s* 
-				\[foundTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
-                                """, re.VERBOSE)
 		elif i == 2:
 			p = re.compile(r"""
-				(^[#][#] Print\[SendAction: \s* RULE \s* q3\]: \s* 
-				\[foundTable\(localhost:10000, \s* [0-9]+, \s* [0-9]+\)\])
+				(^[#][#] Print\[SendAction: \s* RULE \s* r1\]: \s* 
+				\[foundOtherTable\(localhost:10000, \s* [0-9,\[,\],:,\.]+\)\])
+                        	""", re.VERBOSE)
+		elif i == 3:
+			p = re.compile(r"""
+				(^[#][#] Print\[SendAction: \s* RULE \s* r2\]: \s* 
+				\[foundTable\(localhost:10000, \s* [[0-9,\[,\],:,\.]+\)\])
+                                """, re.VERBOSE)
+		elif i == 4:
+			p = re.compile(r"""
+				(^[#][#] Print\[SendAction: \s* RULE \s* r2\]: \s* 
+				\[foundTable\(localhost:10000, \s* [[0-9,\[,\],:,\.]+\)\])
                                 """, re.VERBOSE)
 		else:
 			result = 0
@@ -86,7 +91,7 @@ def script_output(stdout):
                 	result = 0
                 	break
 	
-	if i>4 or i<4 or result == 0:
+	if i>5 or i<5 or result == 0:
 		print "Test failed"
 		print "Port 10000 output:"
                 print whole_output
