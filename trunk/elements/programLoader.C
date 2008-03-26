@@ -210,7 +210,7 @@ ProgramLoader::loader()
   if (programText != "") {
     /* Do nothing. */
   }
-  else if (defs) {
+  else if (false && defs) {
     programText = P2::preprocessReadOverLogProgram(filename,
                                                    filename,
                                                    *defs);

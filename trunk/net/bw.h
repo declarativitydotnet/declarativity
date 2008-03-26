@@ -14,6 +14,7 @@
 #define __Bandwidth_H__
 
 #include <sys/time.h>
+#include<map>
 #include "element.h"
 #include "elementRegistry.h"
 
@@ -57,6 +58,7 @@ private:
 
   unsigned int bytes_;
 
+  std::map<string, std::pair<time_t, unsigned int> > *hashtable;
 
   double bw_;
 
