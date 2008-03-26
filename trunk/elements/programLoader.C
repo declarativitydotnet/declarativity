@@ -61,7 +61,7 @@ ProgramLoader::ProgramLoader(TuplePtr args)
 {
   string source = P2_LANG_DIR;
   LOAD("gevent",     source + "/olg/gevent.olg",     "eca",     NULL);
-  LOAD("stageGuard", source + "/olg/stageGuard.olg", "debug",     NULL);
+  LOAD("stageGuard", source + "/olg/stageGuard.olg", "gevent",     NULL);
   LOAD("error",      source + "/olg/error.olg",      "parse",   NULL);
   LOAD("localize",   source + "/olg/localize.olg",   "error",   NULL);
   LOAD("seffect",    source + "/olg/seffect.olg",    "eca",     NULL);
@@ -70,7 +70,7 @@ ProgramLoader::ProgramLoader(TuplePtr args)
   LOAD("aggview3",   source + "/olg/aggview3.olg",   "aggview2",NULL);
   LOAD("mview",      source + "/olg/mview.olg",      "aggview3", NULL);
   LOAD("delta",      source + "/olg/delta.olg",      "mview",   NULL);
-  LOAD("dummyWatch", source + "/olg/dummyWatch.olg", "seffect", NULL);
+  LOAD("dummyWatch", source + "/olg/dummyWatch.olg", "debug", NULL);
 
 /*
   LOAD("sys", source + "/olg/sys.olg", "", NULL);
