@@ -45,7 +45,7 @@ Bandwidth::simple_action(TuplePtr p)
   msg->xdr_marshal(&xe);
   xdr_destroy(&xe);
 
-  std::cerr << "TUPLE NAME: " << name << std::endl;
+  // std::cerr << "TUPLE NAME: " << name << " size " << fb->length() << std::endl;
   std::map<string, std::pair<time_t, unsigned int> >::iterator iter = hashtable->find(name);
   std::pair<time_t, unsigned int> entry = std::make_pair(cur_t, 0);
   if (iter != hashtable->end()) {
@@ -56,8 +56,8 @@ Bandwidth::simple_action(TuplePtr p)
 
   if ((cur_t - entry.first) > 2) { 
     double bandwidth = double(entry.second) / double(cur_t - entry.first);
-    entry.first = 0;
-    entry.second = cur_t;
+    entry.first = cur_t;
+    entry.second = 0;
     std::cerr << "BANDWIDTH " << name << ": " << bandwidth << " bytes/second." << std::endl;
   } 
 
