@@ -70,7 +70,7 @@ ProgramLoader::ProgramLoader(TuplePtr args)
   LOAD("aggview3",   source + "/olg/aggview3.olg",   "aggview2",NULL);
   LOAD("mview",      source + "/olg/mview.olg",      "aggview3", NULL);
   LOAD("delta",      source + "/olg/delta.olg",      "mview",   NULL);
-  LOAD("dummyWatch", source + "/olg/dummyWatch.olg", "debug", NULL);
+  LOAD("dummyWatch", source + "/olg/dummyWatch.olg", "gevent", NULL);
 
 /*
   LOAD("sys", source + "/olg/sys.olg", "", NULL);
