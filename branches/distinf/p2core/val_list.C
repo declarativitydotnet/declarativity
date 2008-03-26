@@ -33,6 +33,12 @@ ListPtr Val_List::cast(ValuePtr v)
       ValPtrList list(vp->begin(), vp->end());
       return ListPtr(new List(list));
     }
+  case Value::SET:
+    {
+      SetPtr vp = Val_Set::cast(v);
+      ValPtrList list(vp->begin(), vp->end());
+      return ListPtr(new List(list));
+    }
   case Value::NULLV:
     {
       return List::mk();

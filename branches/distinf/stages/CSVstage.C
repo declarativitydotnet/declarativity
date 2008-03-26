@@ -124,7 +124,7 @@ CSVstage::newInput(TuplePtr inputTuple)
 		  {
 		    // Inappropriate input values
 	      STAGE_WARN("newInput: failed to open file "
-	                << fileName
+	                << fileNameStr
 	                << ".");
 		  } else
 			{
