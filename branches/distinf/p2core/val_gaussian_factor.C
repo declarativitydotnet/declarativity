@@ -58,9 +58,12 @@ int Val_Gaussian_Factor::compareTo(ValuePtr other) const
   else if(other->typeCode() > Value::GAUSSIAN_FACTOR)
     return 1;
   else {
-    bool result = (factor != Val_Gaussian_Factor::cast(other));
+    canonical_gaussian otherf = Val_Gaussian_Factor::cast(other);
+    if (factor < otherf) 
+      return -1;
+    else 
+      return factor != otherf;
     // std::cerr << "Invoked compareTo: " << result << std::endl;
-    return result;
   }
 }
 

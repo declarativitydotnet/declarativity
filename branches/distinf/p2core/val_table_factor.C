@@ -60,9 +60,12 @@ int Val_Table_Factor::compareTo(ValuePtr other) const
   else if(other->typeCode() > Value::TABLE_FACTOR)
     return 1;
   else {
-    bool result = (factor != Val_Table_Factor::cast(other));
+    factor_type otherf = Val_Table_Factor::cast(other);
+    if (factor < otherf) 
+      return -1;
+    else 
+      return factor != otherf;
     // std::cerr << "Invoked compareTo: " << result << std::endl;
-    return result;
   }
 }
 
