@@ -13,9 +13,11 @@ namespace localize {
   begin1 startRuleCounter(@A, Pid, Rid, HeadFid) :-
            programEventInitialized(@A, Pid, Rid, HeadFid).
 
-  totalRules totalRules(@A, Pid, a_count<*>) :-
+  totalRules totalRulesEvent(@A, Pid, a_count<*>) :-
                programEvent(@A, Pid, _, _, _, _, _, _, _),
                ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _).
+
+  tr2 totalRules(@A, Pid, Count) :- totalRulesEvent(@A, Pid, Count).
   
   /** The following rules deal with termination checks */
   completion1 rulesComplete(@A, Pid, OldRid) :-
@@ -51,13 +53,23 @@ namespace localize {
               countLocalVar(@A, Pid, Rid, C1),
               C1 <= 1.
   
+  s1 begin(@A, Pid, Rid, false) :-
+          countLocalVar(@A, Pid, Rid, C), C > 1,
+          ::sys::predicate(@A, _, Rid, _, Name, null, _, _, Pos, _, _),
+          Pos == 1.
+
+  s2 begin(@A, Pid, Rid, true) :-
+          countLocalVar(@A, Pid, Rid, C), C > 1,
+          ::sys::predicate(@A, _, Rid, _, Name, Tid, _, _, Pos, _, _),
+          Tid != null, Pos == 1.
+         
   
 
   /* If we have more than 1 location variable within a rule trigger the rewrite. */
   /* Start the iteration process: We iterate over each term in the body, starting with the event,
      of the orginal rule. */
-  i0 iterator(@A, Pid, Rid, OldPos, NewRid, NewPos, PrevHeadFid, NewHeadFid, LocAttr, F_Schema, "Predicate", F_ID) :-
-          countLocalVar(@A, Pid, Rid, C), C > 1,
+  i0 iterator(@A, Pid, Rid, OldPos, NewRid, NewPos, PrevHeadFid, NewHeadFid, LocAttr, F_Schema, "Predicate", F_ID, Mat) :-
+          begin(@A, Pid, Rid, Mat),
           ::sys::predicate(@A, F_ID, Rid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM, F_New),
           LocAttr := f_getattr("Location", F_Schema),
           F_Pos == 1,
@@ -66,8 +78,8 @@ namespace localize {
   
   /* Case: Next predicate's location attribute matches previous predicate's location attribute. 
      Maintain the same location attribute, rule group and position therein. */
-  i1 iterator(@A, Pid, OldRid, OldPos+1, NewRid, NewPos+1, PrevHeadFid, HeadFid, LocAttr, Schema, "Predicate", FID) :-
-              iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, PrevSchema, TableName, ID),
+  i1 iterator(@A, Pid, OldRid, OldPos+1, NewRid, NewPos+1, PrevHeadFid, HeadFid, LocAttr, Schema, "Predicate", FID, Mat) :-
+              iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, PrevSchema, TableName, ID, Mat),
               ::sys::predicate(@A, FID, OldRid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM, F_New), /* Predicate from old rule */
               F_Pos == OldPos,                            /* Make sure we are considering this predicate's position. */
               LocAttr == f_getattr("Location", F_Schema), /* The location attribute matches that of the prior iteration. */
@@ -76,8 +88,8 @@ namespace localize {
   /* Next predicate's location attribute does not match previous predicate's location attribute. 
      Must switch to a new rule id group with a new location attribute and a new position 
      within the new rule group. The break event will signal such an occurance. */
-  triggerBreak prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, NewLocAttr, NewSchema, TableName, ID) :-
-            iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
+  triggerBreak prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, NewLocAttr, NewSchema, TableName, ID, Mat) :-
+            iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID, Mat),
             ::sys::predicate(@A, FID, OldRid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM, F_New),
             F_Pos == OldPos,                               /* Considering this predicate's position now. */
             LocAttr != f_getattr("Location", F_Schema),    /* Location variable mismatch. */
@@ -86,37 +98,37 @@ namespace localize {
 
   /* Have we reached the end? If so trigger one last break so that we update the logical plan state
      for the last rule group. */
-  lastBreak finalize(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID) :-
-               iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
+  lastBreak finalize(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID, Mat) :-
+               iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID, Mat),
                ::sys::rule(@A, OldRid, Pid, R_Name, R_HeadFid, R_P2DL, R_Delete, R_Term_Count, _),
                OldPos == R_Term_Count.  /* If true, we've reached the end. */
 
-  break break(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, NewLocAttr, NewSchema, TableName, ID) :-
-          prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, NewLocAttr, NewSchema, TableName, ID).
+  break break(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, NewLocAttr, NewSchema, TableName, ID, Mat) :-
+          prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, NewLocAttr, NewSchema, TableName, ID, Mat).
   
   /* Have we reached the end? If so trigger one last break so that we update the logical plan state
      for the last rule group. */
   terminate terminate(@A, Pid, OldRid, NewRid, R_HeadFid, NewPos) :-
-               finalize(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
+               finalize(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID, Mat),
                ::sys::rule(@A, OldRid, Pid, R_Name, R_HeadFid, R_P2DL, R_Delete, R_Term_Count, _).
   
   /* If we have not reached the end then restart the iteration process. We must create a new rule 
      identifier for the next rule group. We also need to create a new head identifier for the new
      group, and move the previous head identifier to the correct position. The location attribute
      and position have already been set in rule break1. */
-  restart iterator(@A, Pid, OldRid, OldPos, f_idgen(), 1, HeadFid, f_idgen(), LocAttr, NewSchema, TableName, ID) :-
-              break(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, PrevSchema, TableName, ID),
+  restart iterator(@A, Pid, OldRid, OldPos, f_idgen(), 1, HeadFid, f_idgen(), LocAttr, NewSchema, TableName, ID, Mat) :-
+              break(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, PrevSchema, TableName, ID, Mat),
               NewSchema := f_cons(f_cdr(PrevSchema), f_car(PrevSchema)).
   
   /* Assign the assignment term to the current rule id group. */
-  assign iterator(@A, Pid, OldRid, OldPos+1, NewRid, NewPos+1, PrevHeadFid, HeadFid, LocAttr, Schema, "Assign", Aid) :-
-            iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
+  assign iterator(@A, Pid, OldRid, OldPos+1, NewRid, NewPos+1, PrevHeadFid, HeadFid, LocAttr, Schema, "Assign", Aid, Mat) :-
+            iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID, Mat),
             ::sys::assign(@A, Aid, OldRid, A_Var, A_Value, A_Pos),
             A_Pos == OldPos.
   
   /* Assign the select term to the current rule id group. */
-  select iterator(@A, Pid, OldRid, OldPos+1, NewRid, NewPos+1, PrevHeadFid, HeadFid, LocAttr, Schema, "Select", Sid) :-
-            iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
+  select iterator(@A, Pid, OldRid, OldPos+1, NewRid, NewPos+1, PrevHeadFid, HeadFid, LocAttr, Schema, "Select", Sid, Mat) :-
+            iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID, Mat),
             ::sys::select(@A, Sid, OldRid, S_Bool, S_Pos, S_AM),
             S_Pos == OldPos.
   
@@ -125,16 +137,17 @@ namespace localize {
  
   /* Create the new rule. Could be done multiple times but always the same tuple. */
   g1 ::sys::rule(@A, NewRid, Pid, NewName, HeadFid, null, false, NewPos, false) :-
-        prebreak(@A, Pid, Rid, Pos, NewRid, NewPos, _, HeadFid, _, _, _, _),
+        prebreak(@A, Pid, Rid, Pos, NewRid, NewPos, _, HeadFid, _, _, _, _,_),
         NewName := "intermediateRule_" + f_tostr(NewRid).
 
   /* Create the head predicate for each new rule */
-  g2 ::sys::predicate(@A, HeadFid, NewRid, false, F_Name, null, "SEND", F_Schema, 0, null, 0) :-
-        prebreak(@A, Pid, Rid, Pos, NewRid, _, _, HeadFid, LocAttr, Schema, _, _),
+  g2 ::sys::predicate(@A, HeadFid, NewRid, false, F_Name, Tid, null, F_Schema, 0, null, 0) :-
+        prebreak(@A, Pid, Rid, Pos, NewRid, _, _, HeadFid, LocAttr, Schema, _, _, Mat),
         ::sys::rule(@A, Rid, Pid, Name, _, _, _, _, _),
         F_Name := "intermediateResult_" + f_tostr(Name) + "_" + f_tostr(Pos),
-        F_Schema := f_cons(LocAttr, f_cons(f_tovar(f_car(Schema)), f_cdr(Schema))).
-  
+        F_Schema := f_cons(LocAttr, f_cons(f_tovar(f_car(Schema)), f_cdr(Schema))),
+        Tid := (Mat == true ? f_idgen() : null).
+
   /* Point the original head predicate to its new rule identifier. */
   g4 ::sys::predicate(@A, HeadFid, NewRid, Notin, Name, TID, ECA, Attributes, 0, AM, New) :-
         terminate(@A, Pid, OldRid, NewRid, HeadFid, Terms),  /* We're done, redirect orginal head predicate. */
@@ -154,30 +167,36 @@ namespace localize {
   /* Point predicate to their new rule. I add 1 to the NewPos since we'll move the previous
      rule's head into the event position. */
   g7 ::sys::predicate(@A, Fid, NewRid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM, F_New) :-
-        iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, Fid),
+        iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, Fid, Mat),
         ::sys::predicate(@A, Fid, OldRid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_OldPos, F_AM, F_New),
         TableName == "Predicate",
         F_Pos := NewPos.
   
   /* Point old assignments to the new rule. Adding 1 to the AssinPos for reasons described in g7. */
   g8 ::sys::assign(@A, Aid, NewRid, Var, Value, NewPos) :-
-        iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, Aid),
+        iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, Aid, Mat),
         ::sys::assign(@A, Aid, OldRid, Var, Value, AssignPos),
         TableName == "Assign".
   
   /* Point old selections to the new rule. Adding 1 to the SelectPos for reasons described in g7. */
   g9 ::sys::select(@A, Sid, NewRid, Bool, NewPos, AM) :-
-        iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, Sid),
+        iterator(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, Sid, Mat),
         ::sys::select(@A, Sid, OldRid, Bool, SelectPos, AM),
         TableName == "Select".
   
   /* Place result event from previous location group into next location group. */
-  g10 ::sys::predicate(@A, f_idgen(), NewRid, F_Notin, F_Name, F_TID, "RECV", F_Schema, 1, "EVENT", F_New) :-
-        prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
+  g10 ::sys::predicate(@A, f_idgen(), NewRid, F_Notin, F_Name, F_TID, null, F_Schema, 1, null, F_New) :-
+        prebreak(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID, Mat),
         ::sys::predicate(@A, PrevHeadFid, F_NewRid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM, F_New).
 
-  g11 ::sys::predicate(@A, f_idgen(), NewRid, F_Notin, F_Name, F_TID, "RECV", F_Schema, 1, "EVENT", F_New) :-
-        finalize(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID),
+  g11 ::sys::predicate(@A, f_idgen(), NewRid, F_Notin, F_Name, F_TID, null, F_Schema, 1, null, F_New) :-
+        finalize(@A, Pid, OldRid, OldPos, NewRid, NewPos, PrevHeadFid, HeadFid, LocAttr, Schema, TableName, ID, Mat),
         ::sys::predicate(@A, PrevHeadFid, F_NewRid, F_Notin, F_Name, F_TID, F_ECA, F_Schema, F_Pos, F_AM, F_New).
+
+  g12 ::sys::table(@A, Tid, Name, infinity, infinity, f_createKey(Schema), 0, null, Pid) :-
+        checkFinish(@A, Pid),
+        ::sys::predicate(@A, _, _, _, Name, Tid, _, Schema, _, _, _),
+        notin ::sys::table(@A, _, Name, _, _, _, _, _, _),
+        Tid != null.
 
 } /* END: namespace localiztion */

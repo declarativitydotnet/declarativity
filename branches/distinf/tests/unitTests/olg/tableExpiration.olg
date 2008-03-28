@@ -12,41 +12,71 @@
  * Execute with
  * tests/runOverLog -o unitTests/olg/tableExpiration.olg
  *
- * At the end of the execution (after 8 seconds), there should be 3
+ * At the end of the execution (after 7 seconds), there should be 4
  * printed tuples, two foundTable tuples (indicating there are exactly
- * a maximum of 2 tuples left in table), and one foundOtherTable tuple
- * (indicating that at time 8.5, one tuple from otherTable is still
- * unexpired, the one inserted at time 6 that expires at 6+3=9).
+ * a maximum of 2 tuples left in table), and two foundOtherTable tuples
+ * with lifetimes lower than 4 seconds (indicating that at time 7, two
+ * tuples from otherTable are still
+ * unexpired, the ones inserted at time 4 and 6, expiring at 8 and 10
+ * respectively).
  *
 */
 
+/* No more than 2 tuples in at any time */
 materialize(table, infinity, 2, keys(1,2)).
-materialize(otherTable, 3, infinity, keys(1,2)).
+
+/* Tuples stay for 4 seconds */
+materialize(otherTable, 4, infinity, keys(1,2)).
+
+/* A record of the beginning of time */
+materialize(start, infinity, infinity, keys(1,2)).
 
 
-q0 insertEvent(@NI, E) :-
-	periodic(@NI, E, 1, 6).
+/** Create the triggers */
+t1 insertEvent(@NI, f_now()) :-
+	periodic(@NI, E, 2, 4).
 
-q1 checkEvent(@NI, E) :-
-	periodic(@NI, E, 8.5, 1).
+t2 checkEvent(@NI, f_now()) :-
+	periodic(@NI, E, 7, 1).
 
 
 
-q2 table(@NI, E) :-
-	insertEvent(@NI, E).
+/** Fill the tables */
+f1 table(@NI, T) :-
+	insertEvent(@NI, T).
 
-q4 otherTable(@NI, E) :-
-	insertEvent(@NI, E).
+f2 otherTable(@NI, T) :-
+	insertEvent(@NI, T).
 
-q5 foundOtherTable(@NI, E, L) :-
-	checkEvent(@NI, E),
-	otherTable(@NI, L).
 
-q3 foundTable(@NI, E, L) :-
-	checkEvent(@NI, E), 
-	table(@NI, L).
 
-watchmod(foundTable, "s").
+
+/** Report the results */
+r1 foundOtherTable(@NI, CT - T) :-
+	checkEvent(@NI, CT),
+	otherTable(@NI, T).
+
+r2 foundTable(@NI, CT - T) :-
+	checkEvent(@NI, CT), 
+	table(@NI, T).
+
+
+/* 
+  watchmod(foundTable, "s").
+  watchmod(foundOtherTable, "s").
+*/
+
+/* watch(otherTable). */
+
+/*
+watchmod(insertReport, "c").
+watchmod(deleteReport, "c").
+watchmod(otherTable, "d").
+watchmod(foundOtherTable, "c").
+*/
+
 watchmod(foundOtherTable, "s").
+watchmod(foundTable, "s").
 
-
+/* watch(otherTable_delete). */
+/* watch(otherTable_DELTA_DELETE). */

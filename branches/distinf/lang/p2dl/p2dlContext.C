@@ -526,6 +526,11 @@ namespace compile {
       ValuePtr ruleText = (*rule)[catalog->attribute(RULE, "P2DL")];
 
       if (ruleText != Val_Null::mk()) {
+/*
+        if ((*rule)[catalog->attribute(RULE, "NAME")]->toString() == "dummyInsert_bar") 
+          std::cerr << ruleText->toString() << std::endl;
+*/
+
         std::istringstream p2dl(ruleText->toString(), std::istringstream::in);
         parse_stream(&p2dl);
       }

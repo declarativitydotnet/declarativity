@@ -14,6 +14,7 @@
 #define __Bandwidth_H__
 
 #include <sys/time.h>
+#include<map>
 #include "element.h"
 #include "elementRegistry.h"
 
@@ -57,11 +58,12 @@ private:
 
   unsigned int bytes_;
 
-  unsigned long total_bytes;
+  std::map<string, std::pair<time_t, unsigned int> > *hashtable;
 
   double bw_;
 
-  
+  unsigned long total_bytes;
+ 
   std::string mMarkup_;
 
   DECLARE_PRIVATE_ELEMENT_INITS

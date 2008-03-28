@@ -32,11 +32,13 @@ i1 otherTable(@X, E) :-
 	periodic(@X, E, 2, 1),
 	X == "localhost:10000".
 
-i2 send1(@Y, E) :-
-	node(@X, L, E), otherTable(@X, E1),
+i2 send1(@Y, E2) :-
+	periodic(@X, E, 3, 2),
+	node(@X, L, E2), otherTable(@X, E1),
 	Y := "localhost:10001".
 
 i3 out(@X, E) :- send1(@X, E).
 
 
 watchmod(out, "s").
+watchmod(send1, "sc").

@@ -362,10 +362,10 @@ namespace compile {
       if (epd.inputs && apd.outputs) {
         if (doAggwrap) {
           oss << "\t" << aggwrap.str(); // Create the aggwrap
-          oss << "\tinput -> Queue(\"aggQueue\", 10000) -> PullPush(\"aggInput\", 0) ->";
+          oss << "\tinput -> Queue(\"aggQueue\", 0) -> PullPush(\"aggInput\", 0) ->";
           oss << "\taggwrap[1] -> event -> condition -> ";
           oss << "PullPush(\"aggpp\", 0) -> [1]aggwrap -> ";
-          oss << "Queue(\"actionBuf\", 10000) -> action -> output;\n";
+          oss << "Queue(\"actionBuf\", 0) -> action -> output;\n";
           oss << "\tcondition[1] -> [2]aggwrap;\n};\n"; // End signal
         }
         else {
@@ -527,7 +527,7 @@ namespace compile {
 
       if (eventType == "RECV") {
         oss << indent << "graph event(1, 1, \"h/l\", \"-/-\") {\n";
-        oss << indent << "\tinput -> " << "Queue(\"" << eventName << "\", 5000) -> \n"; 
+        oss << indent << "\tinput -> " << "Queue(\"" << eventName << "\", 0) -> \n"; 
         if (watched(eventName, "c")) {
           oss << indent << "\tPrint(\"RecvEvent: RULE "
               << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 

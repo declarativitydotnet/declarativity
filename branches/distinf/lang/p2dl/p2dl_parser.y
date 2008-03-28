@@ -205,6 +205,9 @@ table: P2DL_TABLE P2DL_LPAR P2DL_VAR P2DL_COMMA
 
 keys: P2DL_KEYS P2DL_LPAR keylist P2DL_RPAR
       { $$ = $3; }
+      |
+      P2DL_KEYS P2DL_LPAR P2DL_RPAR
+      { $$ = new ValueList(); $$->push_back(Val_Int64::mk(0)); }
     ;
 
 keylist: value

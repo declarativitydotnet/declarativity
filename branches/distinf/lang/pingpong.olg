@@ -5,7 +5,7 @@ watch(link).
 watch(ping).
 watch(pong).
 
-link("localhost:10001").
+link("localhost:10000", "localhost:10001").
 
 r1 pong(@J, I) :- ping(@I, J).
 r2 ping(@J, I) :- periodic(@I,E,1,1000), link(@I,J).

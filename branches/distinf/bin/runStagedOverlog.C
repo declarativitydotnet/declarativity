@@ -83,9 +83,11 @@ string stub(string hostname, string port, TransportConf conf, bool tupleCountAnd
   netPlan(stub,hostname,port,conf);
   seaPlan(stub,hostname,port);
 
+  string commitbuf_netOut_string = "\tintExtDemux[1] -> CommitBuf(\"NetCommitBuf\") -> netOut;\n";
   string netOut_udp_string = "\tnetOut -> udp;\n";
   if (tupleCountAndBandwidth) {
-	  netOut_udp_string = "\tnetOut -> Bandwidth(\"bandwidth\") -> TupleCounter(\"counter\", \"anytype\") -> udp;\n";
+	  //netOut_udp_string = "\tnetOut -> Bandwidth(\"bandwidth\") -> TupleCounter(\"counter\", \"anytype\") -> udp;\n";
+          commitbuf_netOut_string = "\tintExtDemux[1] -> CommitBuf(\"NetCommitBuf\") -> Bandwidth(\"Bandwidth\") -> TupleCounter(\"counter\", \"anytype\") -> netOut;\n";
   }
 	  
 	  //UDP element for netin/netout
@@ -118,7 +120,7 @@ string stub(string hostname, string port, TransportConf conf, bool tupleCountAnd
           //start the rule output process
        << "\tintDRR -> PullPush(\"SEAOutputPP\",0) -> intExtDemux;\n"
 	  //External events to commitbuf, to netOut
-       << "\tintExtDemux[1] -> CommitBuf(\"NetCommitBuf\") -> netOut;\n"
+       << commitbuf_netOut_string
           //internal events to internal mux
        << "\tintExtDemux[0] -> [1]intQMux;\n";
 
