@@ -57,7 +57,7 @@ Bandwidth::simple_action(TuplePtr p)
   if ((cur_t - entry.first) > 2) { 
     double bw_ = double(entry.second) / double(cur_t - entry.first);
     entry.first = cur_t;
-    total_bytes = entry.second;
+    total_bytes += entry.second;
     entry.second = 0;
     //std::cerr << "BANDWIDTH " << name << ": " << bandwidth << " bytes/second." << std::endl;
     TELL_OUTPUT << "Bandwidth, " 
