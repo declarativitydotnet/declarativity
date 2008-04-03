@@ -21,6 +21,7 @@
 #include "val_int64.h"
 #include "val_str.h"
 #include "val_null.h"
+#include "val_time.h" /* for time duration */
 
 class OperDouble : public opr::OperCompare<Val_Double> {
   virtual ValuePtr _plus (const ValuePtr& v1, const ValuePtr& v2) const {
@@ -94,6 +95,9 @@ Val_Double::cast(ValuePtr v)
   switch (v->typeCode()) {
   case Value::DOUBLE:
     returnValue = (static_cast<Val_Double *>(v.get()))->d;
+    break;
+  case Value::TIME_DURATION:
+    returnValue = Val_Time_Duration::cast(v).total_nanoseconds() / 1e9;
     break;
   case Value::INT64:
     returnValue = (double)(Val_Int64::cast(v));

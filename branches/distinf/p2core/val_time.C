@@ -256,7 +256,18 @@ class OperTime_Duration : public opr::OperCompare<Val_Time_Duration> {
     boost::posix_time::time_duration t1 = Val_Time_Duration::cast(v1);
     return Val_Time_Duration::mk(-t1);
   };
+  virtual ValuePtr _times (const ValuePtr& v1, const ValuePtr& v2) const {
+    boost::posix_time::time_duration d = Val_Time_Duration::cast(v1);
+    int value = Val_Int64::cast(v2);
+    return Val_Time_Duration::mk(d*value);
+  };
+  virtual ValuePtr _divide (const ValuePtr& v1, const ValuePtr& v2) const {
+    boost::posix_time::time_duration d = Val_Time_Duration::cast(v1);
+    int value = Val_Int64::cast(v2);
+    return Val_Time_Duration::mk(d/value);
+  };
 };
+
 const opr::Oper* Val_Time_Duration::oper_ = new OperTime_Duration();
 
 string Val_Time_Duration::toConfString() const
