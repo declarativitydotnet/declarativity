@@ -17,23 +17,26 @@
 #include "fdbuf.h"
 #include "xdrbuf.h"
 
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+
 DEFINE_ELEMENT_INITS(Bandwidth, "Bandwidth")
 
-Bandwidth::Bandwidth(string name)
-  : Element(name,1, 1), prev_t_(now_s()), bytes_(0), total_bytes(0), bw_(0.)
-{
-}
+Bandwidth::Bandwidth(string name) 
+: Element(name,1, 1), prev_t(now_s()), bytes(0), total_size(0), total_count(0)
+{ }
+
 
 Bandwidth::Bandwidth(TuplePtr args)
   : Element(Val_Str::cast((*args)[2]), 1, 1), 
-    prev_t_(now_s()), bytes_(0), total_bytes(0), bw_(0.) { 
-      hashtable = new std::map<string, std::pair<time_t, unsigned int> >();
-    }
+    prev_t(now_s()), bytes(0), total_size(0), total_count(0) { }
 
 
 TuplePtr
 Bandwidth::simple_action(TuplePtr p)
 {
+  using std::endl;
+
   time_t cur_t = now_s();
   TuplePtr msg = Val_Tuple::cast((*p)[1])->clone();
   string name = (*msg)[0]->toString();
@@ -45,30 +48,45 @@ Bandwidth::simple_action(TuplePtr p)
   msg->xdr_marshal(&xe);
   xdr_destroy(&xe);
 
-  std::cerr << "TUPLE NAME: " << name << " size " << fb->length() << std::endl;
-  std::map<string, std::pair<time_t, unsigned int> >::iterator iter = hashtable->find(name);
-  std::pair<time_t, unsigned int> entry = std::make_pair(cur_t, 0);
-  if (iter != hashtable->end()) {
-    entry = (*iter).second;
-  }
+  // std::cerr << "TUPLE NAME: " << name << " size " << fb->length() << endl;
+  bytes += fb->length();
+
+  tuple_size[name] += fb->length();
+  tuple_count[name]++;
+
+  total_size += fb->length();  
+  total_count++;
   
-  entry.second += fb->length();
 
-  if ((cur_t - entry.first) > 2) { 
-    double bw_ = double(entry.second) / double(cur_t - entry.first);
-    entry.first = cur_t;
-    total_bytes += entry.second;
-    entry.second = 0;
-    //std::cerr << "BANDWIDTH " << name << ": " << bandwidth << " bytes/second." << std::endl;
-    TELL_OUTPUT << "Bandwidth, " 
-                 << bw_ << ", " 
-                 << total_bytes << ", " 
-                 << boost::posix_time::to_simple_string(boost::posix_time::microsec_clock::local_time()) 
-                 << std::endl; 
+  if ((cur_t - prev_t) > 1) { 
+    std::ostream& out = *Reporting::warn();
+    string cur_time = 
+      to_simple_string(boost::posix_time::microsec_clock::local_time());
+
+    // log the instantaneous bandwidth 
+    double bw = double(bytes) / double(cur_t - prev_t);
+    TELL_OUTPUT << "Bandwidth, " << bw << ", " << cur_time << endl;
+
+    // log the sizes of all the tuples
+    TELL_OUTPUT << "TupleSize, " << total_size << ", " << cur_time;
+    foreach(tuple_map::reference p, tuple_size) {
+      out << ", " << p.first << ":" << p.second;
+    }
+    out << endl;
+
+    // log the size of all tuples
+    TELL_OUTPUT << "TupleCount, " << total_count << ", " << cur_time;
+    foreach(tuple_map::reference p, tuple_count) {
+      out << ", " << p.first << ":" << p.second;
+    }
+    out << endl;
+
+    // clear the old information
+    prev_t = cur_t;
+    bytes = 0;
+    tuple_size.clear();
+    tuple_count.clear();
   } 
-
-  hashtable->erase(name);
-  hashtable->insert(std::make_pair(name, entry));
 
   return p;
 }

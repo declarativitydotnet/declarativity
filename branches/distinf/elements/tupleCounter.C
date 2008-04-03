@@ -54,12 +54,14 @@ TuplePtr TupleCounter::simple_action(TuplePtr p)
   }
 */
     _counter++;
-    
+
+    /*    
     TELL_OUTPUT << "TupleCount, "
                 << _counter
                 << ", "
                 << boost::posix_time::to_simple_string(boost::posix_time::microsec_clock::local_time())
     			<< std::endl;
     
+    */
     return p;
 }

@@ -39,31 +39,25 @@ public:
   TuplePtr
   simple_action(TuplePtr p);	// Adds the next sequence num to tuple stream. 
 
-
-  operator double() {return bw_;};
-
-
   void
   setMarkup(std::string m = "unspecified");
 
   DECLARE_PUBLIC_ELEMENT_INITS
 
 private:
-  REMOVABLE_INLINE time_t
-  now_s() const;
+  REMOVABLE_INLINE time_t now_s() const;
 
+  time_t prev_t;
 
-  time_t prev_t_;
+  unsigned int bytes;
 
+  unsigned long total_size;
+  unsigned long total_count;
 
-  unsigned int bytes_;
+  typedef std::map<string, unsigned int> tuple_map;
+  tuple_map tuple_size;
+  tuple_map tuple_count;
 
-  std::map<string, std::pair<time_t, unsigned int> > *hashtable;
-
-  double bw_;
-
-  unsigned long total_bytes;
- 
   std::string mMarkup_;
 
   DECLARE_PRIVATE_ELEMENT_INITS
