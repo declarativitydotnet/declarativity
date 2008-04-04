@@ -59,7 +59,7 @@ ADD_LIBRARY(p2core
             xdrbuf.C 
 )
 
-TARGET_LINK_LIBRARIES(p2core blas lapack boost_regex-mt boost_serialization-mt boost_date_time-mt crypto ssl boost_thread-mt) 
+TARGET_LINK_LIBRARIES(p2core blas lapack boost_regex-mt-1_35 boost_serialization-mt-1_35 boost_date_time-mt-1_35 crypto ssl boost_thread-mt-1_35) 
 
 ADD_DEFINITIONS(-DBOOST_UBLAS_ENABLE_PROXY_SHORTCUTS)
 
