@@ -19,6 +19,7 @@
 #include "val_str.h"
 
 #include <prl/global.hpp>
+#include <pstade/oven/algorithm.hpp>
 
 #include "prl/detail/shortcuts_def.hpp"
 
@@ -116,11 +117,12 @@ ValuePtr Val_Gaussian_Factor::mk(const canonical_gaussian& factor)
 
 ValuePtr Val_Gaussian_Factor::mk(ListPtr args, MatrixPtr mat, VectorPtr vec)
 {
+  using pstade::oven::transform;
   matrix_type lambda(mat->size1(), mat->size2());
   vector_type eta(vec->size());
   assert(lambda.size1()==lambda.size2());
-  boost::transform(mat->data(), lambda.data().begin(), ValuePtr2double());
-  boost::transform(vec->data(), eta.data().begin(), ValuePtr2double());
+  transform(mat->data(), lambda.data().begin(), ValuePtr2double());
+  transform(vec->data(), eta.data().begin(), ValuePtr2double());
   return mk(canonical_gaussian(lookupVars(args), lambda, eta));
 }
 
@@ -131,24 +133,24 @@ prl::domain_t Val_Gaussian_Factor::arguments() const
 
 ValuePtr Val_Gaussian_Factor::mean() const
 {
+  using pstade::oven::transform;
   VectorPtr vector_ptr(new ValPtrVector(factor.size()));
   moment_gaussian mg(factor);
-  boost::transform(mg.mean().data(), vector_ptr->data().begin(),
-                   double2ValuePtr());
+  transform(mg.mean().data(), vector_ptr->data().begin(),
+            double2ValuePtr());
   return Val_Vector::mk(vector_ptr);
 }
 
 ValuePtr Val_Gaussian_Factor::covariance() const
 {
-  //typedef ublas::matrix< ValuePtr > ValPtrMatrix;
-  //typedef boost::shared_ptr< ValPtrMatrix > MatrixPtr;
+  using pstade::oven::transform;
   MatrixPtr matrix_ptr(new ValPtrMatrix(factor.size(), factor.size()));
   moment_gaussian mg(factor);
   // Note that moment_gaussian stores its data in column-major format,
   // whereas ValPtrMatrix stores it in row-major format. Luckily,
   // the covariance matrix is symmetric, so this doesn't matter.
-  boost::transform(mg.covariance().data(), matrix_ptr->data().begin(),
-                   double2ValuePtr());
+  transform(mg.covariance().data(), matrix_ptr->data().begin(),
+            double2ValuePtr());
   return Val_Matrix::mk(matrix_ptr);
 }
 

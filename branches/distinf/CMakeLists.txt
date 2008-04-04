@@ -123,16 +123,14 @@ INCLUDE_DIRECTORIES(
                     ${CMAKE_CURRENT_SOURCE_DIR}/functions
 		    ${CMAKE_CURRENT_SOURCE_DIR}/../prl/include
                     ${CMAKE_CURRENT_SOURCE_DIR}/../libs/boost-custom
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../libs/boost-trunk
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../libs/boost-sandbox
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../libs/boost_1_35_0
                     ${CMAKE_CURRENT_SOURCE_DIR}/../libs/pstade
-		    ${Boost_INCLUDE_DIRS}
 		    ${PYTHON_INCLUDE_PATH} 
 		    /usr/include)
+#		    ${Boost_INCLUDE_DIRS}
 
 # set linker path for this and all subdirs
-LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../libs/boost-trunk/libs
-		${Boost_LIBRARY_DIRS} 
+LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../libs/boost_1_35_0/build/lib
 		${P2_BINARY_DIR}/overlog 
 		${P2_BINARY_DIR}/net 
 		${P2_BINARY_DIR}/stages 
@@ -156,6 +154,8 @@ LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../libs/boost-trunk/libs
 		${P2_BINARY_DIR}/lang/secure
 		${P2_BINARY_DIR}/functions
 				)
+
+#		${Boost_LIBRARY_DIRS} 
 		
 # set up standard link libs for our executables
 SET(COMMON_LIBRARIES1 p2core

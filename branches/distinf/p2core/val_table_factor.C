@@ -21,6 +21,7 @@
 #include "val_vector.h"
 
 #include <prl/global.hpp>
+#include <pstade/oven/algorithm.hpp>
 
 #include "prl/detail/shortcuts_def.hpp"
 
@@ -164,7 +165,8 @@ ValuePtr Val_Table_Factor::normalize() const
 
 ValuePtr Val_Table_Factor::values() const
 {
+  using pstade::oven::transform;
   VectorPtr vector_ptr(new ValPtrVector(factor.size()));
-  boost::transform(factor, vector_ptr->data().begin(), double2ValuePtr());
+  transform(factor, vector_ptr->data().begin(), double2ValuePtr());
   return Val_Vector::mk(vector_ptr);
 }
