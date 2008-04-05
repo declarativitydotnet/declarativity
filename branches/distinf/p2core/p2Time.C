@@ -48,4 +48,17 @@ setDefaultClock(clockT clockDescriptor)
   defaultClockDescriptor = clockDescriptor;
 }
 
+boost::posix_time::ptime globalTimer;
+
+void timerRestart() {
+  globalTimer = boost::posix_time::microsec_clock::universal_time();
+}
+
+double timerElapsed() {
+  if (globalTimer.is_not_a_date_time()) 
+    return std::numeric_limits<double>::quiet_NaN();
+  else
+    return (boost::posix_time::microsec_clock::universal_time() 
+            - globalTimer).total_microseconds() / 1e6;
+}
 

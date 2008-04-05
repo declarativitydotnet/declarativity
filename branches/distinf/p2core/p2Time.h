@@ -48,6 +48,7 @@ setDefaultClock(clockT clockDescriptor);
 extern clockT
 defaultClockDescriptor;
 
-
+void timerRestart();
+double timerElapsed();
 
 #endif // P2TIME

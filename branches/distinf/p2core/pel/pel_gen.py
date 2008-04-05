@@ -202,7 +202,9 @@ for op, ar, va, desc in [
   ("combineMask",2,   "COMBINEMASK",      "Combine a mask (list) with another mask"),
   ("getMask",1,   "GETMASK",      "Calculate the mask from an expression"),
   ("mask",3,   "MASK",      "Apply the mask onto the scheme to get the masked scheme"),
-  ("quit",0, "QUIT", "Exits P2")
+  ("quit",0, "QUIT", "Exits P2"),
+  ("timerRestart", 0, "TIMER_RESTART", "Resets the timer to 0"),
+  ("timerElapsed", 0, "TIMER_ELAPSED", "Returns the number seconds elapsed")
   ]:  emit_opcode(op, ar, va, desc)
 
 for op, ar, va, desc in [

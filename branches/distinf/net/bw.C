@@ -16,6 +16,7 @@
 #include "val_tuple.h"
 #include "fdbuf.h"
 #include "xdrbuf.h"
+#include "p2Time.h"
 
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
@@ -58,24 +59,23 @@ Bandwidth::simple_action(TuplePtr p)
   total_count++;
   
 
-  if ((cur_t - prev_t) > 1) { 
-    std::ostream& out = *Reporting::warn();
-    string cur_time = 
-      to_simple_string(boost::posix_time::microsec_clock::local_time());
+  if ((cur_t - prev_t) >= 1) { 
+    std::ostream& out = *Reporting::output();
+    double elapsed = timerElapsed();
 
     // log the instantaneous bandwidth 
     double bw = double(bytes) / double(cur_t - prev_t);
-    TELL_OUTPUT << "Bandwidth, " << bw << ", " << cur_time << endl;
+    TELL_OUTPUT << "Bandwidth, " << bw << ", " << elapsed << endl;
 
     // log the sizes of all the tuples
-    TELL_OUTPUT << "TupleSize, " << total_size << ", " << cur_time;
+    TELL_OUTPUT << "TupleSize, " << total_size << ", " << elapsed;
     foreach(tuple_map::reference p, tuple_size) {
       out << ", " << p.first << ":" << p.second;
     }
     out << endl;
 
     // log the size of all tuples
-    TELL_OUTPUT << "TupleCount, " << total_count << ", " << cur_time;
+    TELL_OUTPUT << "TupleCount, " << total_count << ", " << elapsed;
     foreach(tuple_map::reference p, tuple_count) {
       out << ", " << p.first << ":" << p.second;
     }

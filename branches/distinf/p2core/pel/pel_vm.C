@@ -25,6 +25,8 @@
 #include <math.h>
 #include <boost/regex.hpp>
 
+#include <boost/date_time/posix_time/posix_time_types.hpp>
+
 #include <openssl/sha.h>
 
 
@@ -56,6 +58,7 @@
 #include <boost/tokenizer.hpp>
 #include <boost/random/lagged_fibonacci.hpp>
 #include <boost/random/exponential_distribution.hpp>
+
 #include <pstade/oven/algorithm.hpp>
 
 #include "prl/detail/shortcuts_def.hpp"
@@ -335,11 +338,6 @@ private:
  * different version of the compiler. 
  *
  */
-
-DEF_OP(QUIT) { 
-  std::cerr << "P2 quitting" << std::endl;
-  exit(0);
-}
 
 //
 // Stack operations
@@ -1218,6 +1216,24 @@ DEF_OP(FACTOR_NORM_INF) {
   const table_factor_type& x = Val_Table_Factor::cast(stackTop()); stackPop();
   const table_factor_type& y = Val_Table_Factor::cast(stackTop()); stackPop();
   stackPush(Val_Double::mk(norm_inf(x, y)));
+}
+
+
+//
+// Experiment control
+//
+DEF_OP(QUIT) { 
+  std::cerr << "P2 quitting" << std::endl;
+  exit(0);
+}
+
+DEF_OP(TIMER_RESTART) {
+  timerRestart();
+  stackPush(Val_Int64::mk(0));
+}
+
+DEF_OP(TIMER_ELAPSED) {
+  stackPush(Val_Double::mk(timerElapsed()));
 }
 
 //
