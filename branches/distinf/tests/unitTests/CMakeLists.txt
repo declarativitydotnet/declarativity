@@ -11,7 +11,7 @@ ADD_EXECUTABLE(p2Test
 				testSets.C 
 				testAggwrap.C)
 #SET_TARGET_PROPERTIES(p2Test PROPERTIES HAS_CXX TRUE)
-TARGET_LINK_LIBRARIES(p2Test ${COMMON_LIBRARIES} boost_unit_test_framework)
+TARGET_LINK_LIBRARIES(p2Test ${COMMON_LIBRARIES} boost_unit_test_framework-mt-1_35)
 
 INCLUDE_DIRECTORIES(${P2_BINARY_DIR}/p2core)
 
