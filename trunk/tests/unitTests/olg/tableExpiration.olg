@@ -61,22 +61,6 @@ r2 foundTable(@NI, CT - T) :-
 	table(@NI, T).
 
 
-/* 
-  watchmod(foundTable, "s").
-  watchmod(foundOtherTable, "s").
-*/
-
-/* watch(otherTable). */
-
-/*
-watchmod(insertReport, "c").
-watchmod(deleteReport, "c").
-watchmod(otherTable, "d").
-watchmod(foundOtherTable, "c").
-*/
-
 watchmod(foundOtherTable, "s").
 watchmod(foundTable, "s").
 
-/* watch(otherTable_delete). */
-/* watch(otherTable_DELTA_DELETE). */

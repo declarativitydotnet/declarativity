@@ -11,13 +11,12 @@
   * 
   * DESCRIPTION: The ponger, as per the UserGuide. Execute as follows:
   *
-  * runOverLog -o doc/tutorial/olg/ponger.olg -p 22222 -n 127.0.0.1
+  * runStagedOverlog -o doc/tutorial/olg/ponger.olg -p 22222 -n 127.0.0.1
   * 
 ***/
-materialize(link, infinity, infinity, keys(1,2)).
-
-link("127.0.0.1:22222", "127.0.0.1:11111").
+materialize(pong, infinity, infinity, keys(1,2)).
 
 r2 pong(@J, I) :- ping(@I, J).
 
 watchmod(ping, "c").
+
