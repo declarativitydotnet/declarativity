@@ -26,12 +26,12 @@
 #include <prl/table_factor.hpp>
 #include <prl/math/bindings/lapack.hpp>
 
-typedef prl::table_factor<double> table_factor_type;
+typedef prl::table_factor<> table_factor_type;
 
 class Val_Table_Factor : public Val_Factor {
 public:
   //! The type of factors stored in this value
-  typedef prl::table_factor<double> factor_type;
+  typedef prl::table_factor<> factor_type;
 
   // Required type information
   const Value::TypeCode typeCode() const { return Value::TABLE_FACTOR; };
