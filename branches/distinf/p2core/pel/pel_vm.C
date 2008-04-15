@@ -529,13 +529,23 @@ DEF_OP(T_IDGEN) {
 DEF_OP(MAX) { 
   ValuePtr v1 = stackTop(); stackPop();
   ValuePtr v2 = stackTop(); stackPop();
-  stackPush((v1 <= v2 ? v2 : v1));
+
+  int comp = v1->compareTo(v2);
+  if (comp < 0) 
+     stackPush(v2);
+  else 
+     stackPush(v1);
 }
 
 DEF_OP(MIN) { 
   ValuePtr v1 = stackTop(); stackPop();
   ValuePtr v2 = stackTop(); stackPop();
-  stackPush((v1 <= v2 ? v1 : v2));
+
+  int comp = v1->compareTo(v2);
+  if (comp < 0)
+     stackPush(v1);
+  else 
+     stackPush(v2);
 }
 
 

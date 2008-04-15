@@ -28,8 +28,8 @@ AggMkSet::~AggMkSet()
   
 void
 AggMkSet::reset()
-{
-  _set->clear();
+{ 
+  _set = Set::mk();
 }
   
 
