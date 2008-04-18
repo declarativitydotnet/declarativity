@@ -122,9 +122,9 @@ INCLUDE_DIRECTORIES(
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/secure
                     ${CMAKE_CURRENT_SOURCE_DIR}/functions
 		    ${CMAKE_CURRENT_SOURCE_DIR}/../prl/include
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../libs/boost-custom
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../prl/libs/boost-custom
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../prl/libs/pstade
                     ${CMAKE_CURRENT_SOURCE_DIR}/../libs/boost_1_35_0
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../libs/pstade
 		    ${PYTHON_INCLUDE_PATH} 
 		    /usr/include)
 #		    ${Boost_INCLUDE_DIRS}
