@@ -126,7 +126,7 @@ ValuePtr Val_Gaussian_Factor::mk(ListPtr args, MatrixPtr mat, VectorPtr vec)
   return mk(canonical_gaussian(lookupVars(args), lambda, eta));
 }
 
-prl::domain_t Val_Gaussian_Factor::arguments() const
+prl::domain Val_Gaussian_Factor::arguments() const
 {
   return factor.arguments();
 }
@@ -161,7 +161,7 @@ ValuePtr Val_Gaussian_Factor::multiply(ValuePtr other) const
 
 ValuePtr Val_Gaussian_Factor::marginal(ListPtr retain) const
 {
-  return mk(factor.marginal(domain_type(lookupVars(retain, true))));
+  return mk(factor.marginal(domain(lookupVars(retain, true))));
 }
 
 ValuePtr Val_Gaussian_Factor::normalize() const

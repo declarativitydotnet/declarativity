@@ -65,7 +65,7 @@ public:
 
   // Accessors
   //! Returns the arguments of this factor
-  domain_type arguments() const;
+  domain arguments() const;
 
   // Factor operations
   //! Multiplies two factors together

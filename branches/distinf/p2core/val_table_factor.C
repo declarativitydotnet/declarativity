@@ -128,7 +128,7 @@ ValuePtr Val_Table_Factor::mk(ListPtr args, MatrixPtr p_values)
   assert(values.size2() == vars.size()+1);
   factor_type f(vars, 0);
 
-  prl::assignment_t a;
+  prl::assignment a;
   for(size_t i = 0; i<values.size1(); i++) {
     // construct the assignment
     for(size_t j = 0; j<vars.size(); j++) {
@@ -143,7 +143,7 @@ ValuePtr Val_Table_Factor::mk(ListPtr args, MatrixPtr p_values)
   return mk(f);
 }
 
-prl::domain_t Val_Table_Factor::arguments() const
+prl::domain Val_Table_Factor::arguments() const
 {
   return factor.arguments();
 }
@@ -155,7 +155,7 @@ ValuePtr Val_Table_Factor::multiply(ValuePtr other) const
 
 ValuePtr Val_Table_Factor::marginal(ListPtr retain) const
 {
-  return mk(factor.marginal(domain_type(lookupVars(retain, true))));
+  return mk(factor.marginal(domain(lookupVars(retain, true))));
 }
 
 ValuePtr Val_Table_Factor::normalize() const
@@ -167,6 +167,6 @@ ValuePtr Val_Table_Factor::values() const
 {
   using pstade::oven::transform;
   VectorPtr vector_ptr(new ValPtrVector(factor.size()));
-  transform(factor, vector_ptr->data().begin(), double2ValuePtr());
+  transform(factor.values(), vector_ptr->data().begin(), double2ValuePtr());
   return Val_Vector::mk(vector_ptr);
 }

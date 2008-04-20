@@ -30,7 +30,7 @@
 class Val_Factor : public Value {
  public:
   //! The type of argument sets used in the factors
-  typedef prl::domain_t domain_type;
+  typedef prl::domain domain;
 
   //! The type of variable handles (pointers)
   typedef prl::variable_h variable_h;
@@ -55,7 +55,7 @@ class Val_Factor : public Value {
   unsigned int size() const;
 
   //! Returns the list of arguments of this factor
-  virtual domain_type arguments() const = 0;
+  virtual domain arguments() const = 0;
   ValuePtr args() const;
 
   //! Multiplies two factors together

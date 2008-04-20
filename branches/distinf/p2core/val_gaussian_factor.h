@@ -73,7 +73,7 @@ public:
 
   // Accessors
   //! Returns the arguments of this factor
-  domain_type arguments() const;
+  domain arguments() const;
 
   /**
    * Returns the mean of the distribution represented by this factor
