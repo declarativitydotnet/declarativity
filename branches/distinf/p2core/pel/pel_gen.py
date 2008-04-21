@@ -160,7 +160,6 @@ for op, ar, va, desc in [
   ("selectivity",3, "O_SELECT", "Compute the selectivity of a join."),
   ("rangeAM",    2, "O_RANGEAM","Determine if a range access method can be used."),
   ("filter",     2, "O_FILTER", "Determine if a filter can be applied to the schema."),
-
   ("tovar",1,   "A_TO_VAR",   "Convert attribute to a variable."),
   ("uniqueSchema",1,   "A_UNIQUE_SCHEMA", "Convert schema into a list of unique variables."),
   ("istheta",1,   "ISTHETA",   "Test the boolean predicate for theta."),

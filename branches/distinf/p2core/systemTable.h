@@ -348,4 +348,5 @@ FUNCTIONDEF("f_timeDuration", 1, "->time_duration")
 FUNCTIONDEF("f_quit", 0, "quit")
 FUNCTIONDEF("f_timerRestart", 0, "timerRestart")
 FUNCTIONDEF("f_timerElapsed", 0, "timerElapsed")
+FUNCTIONDEF("f_toDouble", 1, "->dbl")
 #undef FUNCTIONDEF
