@@ -3,6 +3,7 @@ package lang.parse;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -86,6 +87,11 @@ public final class TypeChecker extends Visitor {
 	public SymbolTable table() {
 		return this.table;
 	}
+	
+	public void prepare() {
+		this.table = Catalog.system().symbolTable();
+		this.ruleNames = new HashSet<String>();
+	}
 
 	/**
 	 * Analyze the specified translation unit.
@@ -93,11 +99,9 @@ public final class TypeChecker extends Visitor {
 	 * @param root The translation unit.
 	 * @return The corresponding symbol table.
 	 */
-	public Node analyze(Node root) {
-		this.table = Catalog.system().symbolTable();
-		this.ruleNames = new HashSet<String>();
-		dispatch(root);
-		return root;
+	public Node analyze(Node node) {
+		dispatch(node);
+		return node;
 	}
 
 	// =========================================================================
@@ -358,6 +362,7 @@ public final class TypeChecker extends Visitor {
 	public Class visitRuleHead(final GNode n) {
 		/* Visit the tuple. */
 		Class type = (Class) dispatch(n.getNode(0));
+		if (type == Error.class) return Error.class;
 		assert(type == Predicate.class);
 		Predicate head = (Predicate) n.getNode(0).getProperty(Constants.TYPE);
 
@@ -418,9 +423,10 @@ public final class TypeChecker extends Visitor {
 		assert(type == List.class);
 		List<Expression> parameters = (List<Expression>) n.getNode(1).getProperty(Constants.TYPE);
 		List<Expression> arguments = new ArrayList<Expression>();
-		int index = 0;
 		/* Type check each tuple argument according to the schema. */
-		for (Expression param : parameters) {
+		for (int index = 0; index < schema.size(); index++) {
+			Expression param = parameters.size() <= index ? 
+					           tmpVariable(schema.get(index)) : parameters.get(index);
 			if (Alias.class.isAssignableFrom(param.getClass())) {
 				Alias alias = (Alias) param;
 				if (alias.field() < index) {
@@ -428,8 +434,8 @@ public final class TypeChecker extends Visitor {
 					return Error.class;
 				}
 				/* Fill in missing variables with tmp variables. */
-				for ( ;index < alias.field(); index++) {
-					arguments.add(tmpVariable(schema.get(index)));
+				while (index < alias.field()) {
+					arguments.add(tmpVariable(schema.get(index++)));
 				}
 			}
 			
@@ -608,15 +614,70 @@ public final class TypeChecker extends Visitor {
 	}
 
 	public Class visitInclusiveExpression(final GNode n) {
-		final Class lhs = (Class) dispatch(n.getNode(0));
-		final Class rhs = (Class) dispatch(n.getNode(2));
+		Class type = (Class) dispatch(n.getNode(0));
+		
+		if (type == Error.class) {
+			return Error.class;
+		}
+		else if (!Variable.class.isAssignableFrom(type)) {
+			runtime.error("Type error: left hand side of IN operator must be a Variable!", n);
+			return Error.class;
+		}
+		Variable variable = (Variable) n.getNode(0).getProperty(Constants.TYPE);
+		
+		type = (Class) dispatch(n.getNode(2));
+		if (type == Error.class) { 
+			return Error.class;
+		}
+		
+		Expression expr = (Expression) n.getNode(2).getProperty(Constants.TYPE);
+		if (Range.class.isAssignableFrom(type) || Collection.class.isAssignableFrom(expr.type())) {
+			n.setProperty(Constants.TYPE, new lang.ast.Boolean(lang.ast.Boolean.IN, variable, expr));
+			return lang.ast.Boolean.class;
+		}
 
-		n.setProperty(Constants.TYPE, Boolean.class);
-		return Boolean.class;
+		runtime.error("Type error: right hand side of IN operator must be " +
+				      "a range expression or implement " + Collection.class, n);
+		return Error.class;
 	}
 
 	public Class visitRangeExpression(final GNode n) {
-		System.err.println("Range expression " + n);
+		Class type = (Class) dispatch(n.getNode(1));
+		assert(Expression.class.isAssignableFrom(type));
+		type = (Class) dispatch(n.getNode(2));
+		assert(Expression.class.isAssignableFrom(type));
+		
+		Expression begin = (Expression) n.getNode(1).getProperty(Constants.TYPE);
+		Expression end   = (Expression) n.getNode(2).getProperty(Constants.TYPE);
+		
+		if (begin.type() != end.type()) {
+			runtime.error("Type error: range begin type " + begin.type() + 
+					      " != range end type" + end.type());
+			return Error.class;
+		}
+		else if (!Number.class.isAssignableFrom(begin.type())) {
+			runtime.error("Type error: range boundaries must be subtype of "  + 
+					       Number.class, n);
+			return Error.class;
+		}
+		
+		String marker  = n.getString(0) + n.getString(3);
+		if ("[]".equals(marker)) {
+			n.setProperty(Constants.TYPE, new Range(Range.Operator.CC, begin, end));
+		}
+		else if ("(]".equals(marker)) {
+			n.setProperty(Constants.TYPE, new Range(Range.Operator.OC, begin, end));
+		}
+		else if ("[)".equals(marker)) {
+			n.setProperty(Constants.TYPE, new Range(Range.Operator.CO, begin, end));
+		}
+		else if ("()".equals(marker)) {
+			n.setProperty(Constants.TYPE, new Range(Range.Operator.OO, begin, end));
+		}
+		else {
+			assert(false);
+		}
+		
 		return Range.class;
 	}
 	

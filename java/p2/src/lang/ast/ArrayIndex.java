@@ -15,5 +15,9 @@ public class ArrayIndex extends Expression {
 	public Class type() {
 		return array.type().getComponentType();
 	}
-
+	
+	@Override
+	public String toString() {
+		return "(" + array.toString() + ")[" + index + "]";
+	}
 }

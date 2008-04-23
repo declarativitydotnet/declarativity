@@ -27,6 +27,16 @@ public class Key implements Comparable {
 		this.attributes = attributes;
 	}
 	
+	@Override
+	public String toString() {
+		if (attributes.length == 0) return "";
+		String value = attributes[0].toString();
+		for (int i = 1; i < attributes.length; i++) {
+			value += ", " + attributes[i].toString();
+		}
+		return value;
+	}
+	
 	public Value value(Tuple tuple) {
 		Vector<Comparable> values = new Vector<Comparable>();
 		for (Integer attr : attributes) {

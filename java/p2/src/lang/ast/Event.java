@@ -13,4 +13,7 @@ public class Event extends Clause {
 		this.schema = schema;
 	}
 
+	public String toString() {
+		return "define " + name + "(" + schema + ").";
+	}
 }

@@ -10,4 +10,8 @@ public class Assignment extends Term {
 		this.variable = variable;
 		this.value = value;
 	}
+	
+	public String toString() {
+		return variable.toString() + " := " + value.toString() + ".";
+	}
 }

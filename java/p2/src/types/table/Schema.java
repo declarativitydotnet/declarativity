@@ -15,6 +15,10 @@ public class Schema implements Comparable {
 			this.type = type;
 		}
 		
+		public String toString() {
+			return name + ":" + type;
+		}
+		
 		public boolean equals(Object obj) {
 			if (!(obj instanceof Entry)) return false;
 			Entry other = (Entry) obj;
@@ -45,6 +49,17 @@ public class Schema implements Comparable {
 		for (Class c : types) {
 			this.schema.add(new Entry(Integer.toString(index++), c));
 		}
+	}
+	
+	@Override
+	public String toString() {
+		if (schema.size() == 0) return "";
+		
+		String value = this.schema.get(0).toString();
+		for (int i = 1; i < this.schema.size(); i++) {
+			value += ", " + this.schema.get(i).toString();
+		}
+		return value;
 	}
 	
 	

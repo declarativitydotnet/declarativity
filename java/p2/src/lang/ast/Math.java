@@ -48,4 +48,9 @@ public class Math extends Expression {
 	public Class type() {
 		return lhs.type();
 	}
+	
+	@Override
+	public String toString() {
+		return "(" + lhs + " " + oper + " " + rhs + ")";
+	}
 }

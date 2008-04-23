@@ -19,4 +19,16 @@ public class NewClass extends Expression {
 		return constructor.getDeclaringClass();
 	}
 
+	@Override
+	public String toString() {
+		String value = "new " + constructor.getName() + "(";
+		if (arguments.size() == 0) {
+			return value + ")";
+		}
+		value += arguments.get(0).toString();
+		for (int i = 1; i < arguments.size(); i++) {
+			value += ", " + arguments.get(i);
+		}
+		return value + ")";
+	}
 }

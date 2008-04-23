@@ -21,5 +21,18 @@ public class MethodCall extends Expression {
 	public Class type() {
 		return method.getReturnType();
 	}
+	
+	@Override
+	public String toString() {
+		String value = method.getName() + "(";
+		if (arguments.size() == 0) {
+			return object == null ? value + ")" : object + "." + value + ")";
+		}
+		value += arguments.get(0).toString();
+		for (int i = 1; i < arguments.size(); i++) {
+			value += ", " + arguments.get(i);
+		}
+		return object == null ? value + ")" : object + "." + value + ")";
+	}
 
 }

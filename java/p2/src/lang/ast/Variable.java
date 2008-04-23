@@ -28,4 +28,5 @@ public class Variable extends Expression {
 	public void type(Class type) {
 		this.type = type;
 	}
+	
 }

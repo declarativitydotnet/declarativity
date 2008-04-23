@@ -3,15 +3,11 @@ package lang.parse;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
-
+import lang.ast.*;
 import core.Catalog;
-
 import xtc.Constants;
 import xtc.parser.ParseException;
 import xtc.tree.Node;
-import xtc.tree.Visitor;
-import xtc.type.TypePrinter;
-import xtc.util.SymbolTable;
 import xtc.util.Tool;
 
 
@@ -21,6 +17,8 @@ import xtc.util.Tool;
 public class Overlog extends Tool {
 	
 	private TypeChecker typeChecker;
+	
+	private Program program;
 
   /** Create a new driver for Overlog. */
   public Overlog() {
@@ -51,29 +49,43 @@ public class Overlog extends Tool {
 
   public Node parse(Reader in, File file) throws IOException, ParseException {
     Parser parser = new Parser(in, file.toString(), (int)file.length());
+    this.program = new Program(file.getName());
     return (Node)parser.value(parser.pProgram(0));
   }
 
   public void process(Node node) {
 	  // Perform type checking.
-	  typeChecker.analyze(node);
-	  // Print the symbol table.
-	  if (runtime.test("printSymbolTable")) {
-		  // Save the registered visitor.
-		  Visitor visitor = runtime.console().visitor();
-		  // Note that the type printer's constructor registers the just
-		  // created printer with the console.
-		  new TypePrinter(runtime.console());
-		  try {
-			  typeChecker.table().root().dump(runtime.console());
-		  } finally {
-			  // Restore the previously registered visitor.
-			  runtime.console().register(visitor);
+	  typeChecker.prepare();
+	  
+	  /* First evaluate all table and event declarations. */ 
+	  for (Node clause : node.<Node>getList(0)) {
+		  if (clause.getName().equals("Table")) {
+			  typeChecker.analyze(clause);
+			  this.program.table((Table)clause.getProperty(Constants.TYPE));
 		  }
-		  runtime.console().flush();
+		  else if (clause.getName().equals("Event")) {
+			  typeChecker.analyze(clause);
+			  this.program.event((Event)clause.getProperty(Constants.TYPE));
+		  }
 	  }
-
-	  // Print AST.
+	  
+	  /* Evaluate all other clauses. */
+	  for (Node clause : node.<Node>getList(0)) {
+		  if (clause.getName().equals("Rule")) {
+			  typeChecker.analyze(clause);
+			  this.program.rule((Rule)clause.getProperty(Constants.TYPE));
+		  }
+		  else if (clause.getName().equals("Fact")) {
+			  typeChecker.analyze(clause);
+			  this.program.fact((Fact)clause.getProperty(Constants.TYPE));
+		  }
+		  else if (clause.getName().equals("Watch")) {
+			  typeChecker.analyze(clause);
+			  this.program.watch((Watch)clause.getProperty(Constants.TYPE));
+		  }
+	  }
+	  System.err.println(program);
+	  
 	  if (runtime.test("printAST")) {
 		  runtime.console().format(node).pln().flush();
 	  }

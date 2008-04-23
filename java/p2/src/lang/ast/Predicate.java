@@ -22,4 +22,17 @@ public class Predicate extends Term implements Iterable<Expression> {
 		return this.arguments.iterator();
 	}
 	
+	@Override
+	public String toString() {
+		String value = name + "(";
+		if (arguments.size() == 0) {
+			return value + ")";
+		}
+		value += arguments.get(0).toString();
+		for (int i = 1; i < arguments.size(); i++) {
+			value += ", " + arguments.get(i);
+		}
+		return value + ")";
+	}
+	
 }

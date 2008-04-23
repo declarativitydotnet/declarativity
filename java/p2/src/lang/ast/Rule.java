@@ -18,4 +18,19 @@ public class Rule extends Clause {
 		this.head = head;
 		this.body = body;
 	}
+	
+	@Override
+	public String toString() {
+		String value = name + (deletion ? " delete " : " ") + head + " :- \n";
+		for (int i = 0; i < body.size(); i++) {
+			value += "\t" + body.get(i);
+			if (i + 1 < body.size()) {
+				value += ",\n";
+			}
+			else {
+				value += ".\n";
+			}
+		}
+		return value;
+	}
 }

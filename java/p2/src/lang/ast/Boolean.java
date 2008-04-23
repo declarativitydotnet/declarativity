@@ -48,4 +48,10 @@ public class Boolean extends Expression {
 	public Class type() {
 		return java.lang.Boolean.class;
 	}
+	
+	@Override
+	public String toString() {
+		return "(" + lhs.toString() + " " + 
+		      oper + " " + rhs.toString() + ")";
+	}
 }

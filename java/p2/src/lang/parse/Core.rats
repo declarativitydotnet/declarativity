@@ -169,7 +169,8 @@ generic LogicalNegationExpression =
   ;
 
 generic InclusiveExpression =
-  PrimaryExpression "in":Word RangeExpression
+    PrimaryExpression "in":Word RangeExpression
+  / PrimaryExpression "in":Word Variable
   ;
 
 generic RangeExpression =

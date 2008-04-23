@@ -10,6 +10,10 @@ public class Alias extends Variable {
 		this.field = field;
 	}
 	
+	public String toString() {
+		return super.toString() + " := $" + this.field;
+	}
+	
 	public Integer field() {
 		return this.field;
 	}

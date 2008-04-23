@@ -10,7 +10,7 @@ public class Aggregate extends Variable {
 		this.function = function;
 	}
 
-	public String function() {
-		return this.function;
+	public String toString() {
+		return this.function + "<" + super.toString() + ">";
 	}
 }

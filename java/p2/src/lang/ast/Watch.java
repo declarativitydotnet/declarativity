@@ -10,4 +10,8 @@ public class Watch extends Clause {
 		this.name = name;
 		this.modifier = modifier;
 	}
+	
+	public String toString() {
+		return "watch(" + name + ", " + modifier + ").";
+	}
 }

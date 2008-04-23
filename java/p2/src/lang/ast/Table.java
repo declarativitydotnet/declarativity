@@ -23,4 +23,9 @@ public class Table extends Clause {
 		this.schema = schema;
 	}
 
+	@Override
+	public String toString() {
+		return "define (" + name + ", " + size + ", " + lifetime + 
+		       ", keys(" + key + "), {" + schema + "}).";
+	}
 }

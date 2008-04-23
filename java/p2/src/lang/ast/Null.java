@@ -6,4 +6,9 @@ public class Null extends Value {
 	public Null(Object value) {
 		super(null);
 	}
+	
+	@Override
+	public String toString() {
+		return "null";
+	}
 }
