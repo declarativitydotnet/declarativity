@@ -1,0 +1,68 @@
+module Identifier(Spacing, Symbol, Reserved);
+
+import Spacing;
+import Symbol;
+import Reserved;
+
+String Name = yyValue:Word &{ ! contains(OVERLOG_KEYWORDS, toText(yyValue)) } ;
+
+String Word = WordCharacters Spacing ;
+
+transient String WordCharacters =
+  start:_ &{ Character.isJavaIdentifierStart(start) }
+    ( part:_ &{ Character.isJavaIdentifierPart(part) } )*
+  ;
+
+generic EventModifier = void:'#' EventType;
+
+String EventType =
+     <Insert> "insert":Word
+   / <Delete> "delete":Word
+   ;
+
+generic TupleName = 
+       Name void:"::":Symbol name:Name &{ name.length() > 0 && Character.isLowerCase(name.charAt(0)) }
+    /  name:Name &{ name.length() > 0 && Character.isLowerCase(name.charAt(0)) }
+    ;
+
+generic Variable = name:Name &{ name.length() > 0 && Character.isUpperCase(name.charAt(0)) };
+
+generic Location = void:'@' Variable;
+
+generic Aggregate = Name void:'<' AggregateVariable void:'>';
+
+String AggregateVariable =
+    <LocationVariable>  Location
+  / <Variable>          Variable
+  / <Star>              '*' Spacing { yyValue = null; }
+  ;
+
+generic AttributePosition = void:'$' [0-9]+ Spacing;
+
+variant generic Type =
+  <Type> TypeName Dimensions? Spacing
+  ;
+
+Node TypeName =
+    <Basic> PrimitiveType
+  / <Class> ClassType
+  ;
+
+generic PrimitiveType =
+    <Byte>    "byte":Word
+  / <Short>   "short":Word
+  / <Char>    "char":Word
+  / <Int>     "int":Word
+  / <Long>    "long":Word
+  / <Float>   "float":Word
+  / <Double>  "double":Word
+  / <Boolean> "boolean":Word
+  ;
+
+generic Dimensions =
+  ( void:'[' [0-9]* void:']' )+
+  ;
+  
+generic ClassType =
+  Name (void:'.' Name) *
+  ;
