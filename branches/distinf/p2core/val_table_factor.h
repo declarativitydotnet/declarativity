@@ -23,7 +23,7 @@
 #include "val_factor.h"
 
 #include <prl/variable.hpp>
-#include <prl/table_factor.hpp>
+#include <prl/factor/table_factor.hpp>
 #include <prl/math/bindings/lapack.hpp>
 
 typedef prl::table_factor<> table_factor_type;

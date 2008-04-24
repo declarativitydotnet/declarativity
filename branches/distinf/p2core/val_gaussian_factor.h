@@ -24,7 +24,7 @@
 #include "val_factor.h"
 
 #include <prl/variable.hpp>
-#include <prl/gaussian_factors.hpp>
+#include <prl/factor/gaussian_factors.hpp>
 #include <prl/math/bindings/lapack.hpp>
 
 class Val_Gaussian_Factor : public Val_Factor {
