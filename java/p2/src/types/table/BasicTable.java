@@ -12,9 +12,9 @@ public class BasicTable extends Table {
 	
 	private Index primary;
 	
-	private Hashtable<Vector<Integer>, Index> secondary;
+	private Hashtable<Key, Index> secondary;
 
-	public BasicTable(String name, Schema schema, Long size, Long lifetime, Key key) {
+	public BasicTable(Table.Name name, Schema schema, Integer size, Number lifetime, Key key) {
 		super(name, schema, size, lifetime, key);
 	}
 	
@@ -28,7 +28,7 @@ public class BasicTable extends Table {
 	}
 
 	@Override
-	public Hashtable<Vector<Integer>, Index> secondary() {
+	public Hashtable<Key, Index> secondary() {
 		return secondary;
 	}
 	

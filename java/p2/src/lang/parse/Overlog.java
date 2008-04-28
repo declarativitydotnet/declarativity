@@ -3,8 +3,8 @@ package lang.parse;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
-import lang.ast.*;
-import core.Catalog;
+
+import lang.plan.*;
 import xtc.Constants;
 import xtc.parser.ParseException;
 import xtc.tree.Node;
@@ -61,7 +61,7 @@ public class Overlog extends Tool {
 	  for (Node clause : node.<Node>getList(0)) {
 		  if (clause.getName().equals("Table")) {
 			  typeChecker.analyze(clause);
-			  this.program.table((Table)clause.getProperty(Constants.TYPE));
+			  this.program.table((lang.plan.Table)clause.getProperty(Constants.TYPE));
 		  }
 		  else if (clause.getName().equals("Event")) {
 			  typeChecker.analyze(clause);
@@ -97,7 +97,7 @@ public class Overlog extends Tool {
    * @param args The command line arguments.
    */
   public static void main(String[] args) {
-	  Catalog.initialize();
+	  p2.core.System.initialize();
       new Overlog().run(args);
   }
 }

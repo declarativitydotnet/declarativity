@@ -2,7 +2,6 @@ package lang.plan;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import types.basic.Tuple;
 import types.exception.UpdateException;
 import types.table.Key;
@@ -12,15 +11,15 @@ import types.table.Schema;
 public class Program {
 	
 	public static class ProgramTable extends ObjectTable {
-		private static final Integer[] PRIMARY_KEY = {0};
+		public static final Key PRIMARY_KEY = new Key(0);
 		
-		private static final Schema schema = 
+		public static final Schema SCHEMA = 
 			new Schema(new Schema.Entry("Name",    String.class),
 					   new Schema.Entry("Owner",   String.class),
 					   new Schema.Entry("Program", Program.class));
 
-		public ProgramTable(String name, Schema schema, Key key) {
-			super(ProgramTable.class.getName(), schema, key);
+		public ProgramTable(Name name, Schema schema, Key key) {
+			super(name, schema, key);
 			// TODO Auto-generated constructor stub
 		}
 		
@@ -34,7 +33,7 @@ public class Program {
 			return super.remove(tuple);
 		}
 	}
-
+	
 	private String name;
 	
 	private List<Table> tables;

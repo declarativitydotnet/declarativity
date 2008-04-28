@@ -1,9 +1,8 @@
-package core;
+package p2.core;
 
 
 import java.lang.reflect.Constructor;
 import java.util.Hashtable;
-
 import types.basic.Tuple;
 import types.basic.TupleSet;
 import types.element.Element;
@@ -20,17 +19,32 @@ public class Plumber extends ObjectTable {
 		return "Element:" + Plumber.identifiers++;
 	}
 	
-	private static final Integer[] PRIMARY_KEY = {1};
+	private static final Key PRIMARY_KEY = new Key(0); 
 	
-	private static final Schema schema = 
+	private static final Schema SCHEMA = 
 		new Schema(new Schema.Entry("ID",       String.class),
 				   new Schema.Entry("RuleID",   String.class),
 				   new Schema.Entry("Name",     String.class),
 				   new Schema.Entry("Type",     String.class),
 				   new Schema.Entry("Object",   Element.class));
 				   
-	public Plumber() {
-		super(Plumber.class.getName(), schema, new Key(PRIMARY_KEY));
+	private static Plumber PLUMBER;
+	
+	public Plumber(Name name, Schema schema, Integer size, Number lifetime, Key key) {
+		super(name, schema, key);
+	}
+	
+	public static void initialize() {
+	if (PLUMBER == null) {
+		try {
+			PLUMBER = (Plumber) 
+			          Table.create(new Table.Name("plumber", Plumber.class.getName()), 
+			        		       Plumber.SCHEMA, Plumber.PRIMARY_KEY);
+		} catch (UpdateException e) {
+			e.printStackTrace();
+			java.lang.System.exit(0);
+		}
+	}
 	}
 	
 	public Element element(String id) {

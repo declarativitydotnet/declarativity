@@ -1,5 +1,6 @@
 package lang.parse;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -10,28 +11,26 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import core.Catalog;
-import lang.ast.Aggregate;
-import lang.ast.Alias;
-import lang.ast.ArrayIndex;
-import lang.ast.Assignment;
-import lang.ast.Event;
-import lang.ast.Expression;
-import lang.ast.Fact;
-import lang.ast.Location;
-import lang.ast.MethodCall;
-import lang.ast.NewClass;
-import lang.ast.Null;
-import lang.ast.Predicate;
-import lang.ast.Range;
-import lang.ast.Rule;
-import lang.ast.Selection;
-import lang.ast.Table;
-import lang.ast.Term;
-import lang.ast.Value;
-import lang.ast.Variable;
-import lang.ast.Watch;
+import lang.plan.Aggregate;
+import lang.plan.Alias;
+import lang.plan.ArrayIndex;
+import lang.plan.Assignment;
+import lang.plan.Event;
+import lang.plan.Expression;
+import lang.plan.Fact;
+import lang.plan.Location;
+import lang.plan.MethodCall;
+import lang.plan.NewClass;
+import lang.plan.Null;
+import lang.plan.Predicate;
+import lang.plan.Range;
+import lang.plan.Rule;
+import lang.plan.Selection;
+import lang.plan.Table;
+import lang.plan.Term;
+import lang.plan.Value;
+import lang.plan.Variable;
+import lang.plan.Watch;
 import types.basic.Tuple;
 import types.table.Key;
 import types.table.Schema;
@@ -39,6 +38,7 @@ import xtc.Constants;
 import xtc.tree.GNode;
 import xtc.tree.Node;
 import xtc.tree.Visitor;
+import xtc.util.Pair;
 import xtc.util.SymbolTable;
 import xtc.util.Runtime;
 
@@ -51,6 +51,7 @@ public final class TypeChecker extends Visitor {
 	static {
 		NAME_TO_BASETYPE.put("boolean", Boolean.class);
 		NAME_TO_BASETYPE.put("byte", Byte.class);
+		NAME_TO_BASETYPE.put("string", String.class);
 		NAME_TO_BASETYPE.put("char", Character.class);
 		NAME_TO_BASETYPE.put("double", Double.class);
 		NAME_TO_BASETYPE.put("float", Float.class);
@@ -89,7 +90,7 @@ public final class TypeChecker extends Visitor {
 	}
 	
 	public void prepare() {
-		this.table = Catalog.system().symbolTable();
+		this.table = types.table.Table.catalog().symbolTable();
 		this.ruleNames = new HashSet<String>();
 	}
 
@@ -123,30 +124,18 @@ public final class TypeChecker extends Visitor {
 
 	// =========================================================================
 
-	/**
-	 * Creates a new temporary variable name by incrementing
-	 * a static counter.
-	 *
-	 * @return the new temp type name
-	 */
-	private Variable tmpVariable(Class type) {
-		return new Variable("TMP" + (tmpNameCount++), type);
-	}
-
-	// =========================================================================
-
 	private Expression ensureBooleanValue(Expression expr) {
 		if (Void.class == expr.type()) {
 			return null; // Can't do it for void expression type
 		}
 		else if (Number.class.isAssignableFrom(expr.type())) {
 			/* expr != 0 */
-			return new lang.ast.Boolean(lang.ast.Boolean.NEQUAL,
+			return new lang.plan.Boolean(lang.plan.Boolean.NEQUAL,
 					                    expr, new Value<Number>(0));
 		}
 		else if (!Boolean.class.isAssignableFrom(expr.type())) {
 			/* expr != null*/
-			return new lang.ast.Boolean(lang.ast.Boolean.NEQUAL,
+			return new lang.plan.Boolean(lang.plan.Boolean.NEQUAL,
 									    expr, Null.NULLV);
 		}
 		return expr;
@@ -177,7 +166,10 @@ public final class TypeChecker extends Visitor {
 				args.add((Value)arg.getProperty(Constants.TYPE));
 			}
 		}
-		n.setProperty(Constants.TYPE, new Fact(name, args));
+		
+		Fact fact = new Fact(name, args);
+		fact.location(n.getLocation());
+		n.setProperty(Constants.TYPE, fact);
 		return Fact.class;
 	}
 	
@@ -191,7 +183,10 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		String modifier = n.size() > 1 ? n.getString(1) : "";
-		n.setProperty(Constants.TYPE, new Watch(name.value(), modifier));
+		
+		Watch watch = new Watch(name.value(), modifier);
+		watch.location(n.getLocation());
+		n.setProperty(Constants.TYPE, watch);
 		return Watch.class;
 	}
 	
@@ -247,7 +242,10 @@ public final class TypeChecker extends Visitor {
 		Schema schema  = (Schema) n.getNode(4).getProperty(Constants.TYPE);
 
 		table.current().define(name.value(), schema.types());
-		n.setProperty(Constants.TYPE, new Table(name, size, lifetime, key, schema));
+		
+		Table create = new Table(name, size, lifetime, key, schema);
+		create.location(n.getLocation());
+		n.setProperty(Constants.TYPE, create);
 		return Table.class;
 	}
 
@@ -270,7 +268,10 @@ public final class TypeChecker extends Visitor {
 		Schema schema  = (Schema) n.getNode(1).getProperty(Constants.TYPE);
 
 		table.current().define(name.value(), schema.types());
-		n.setProperty(Constants.TYPE, new Event(name, schema));
+		
+		Event event = new Event(name, schema);
+		event.location(n.getLocation());
+		n.setProperty(Constants.TYPE, event);
 		return Event.class;
 	}
 	
@@ -348,6 +349,18 @@ public final class TypeChecker extends Visitor {
 				}
 				assert (type == Predicate.class);
 				head = (Predicate) n.getNode(2).getProperty(Constants.TYPE);
+				if (!deletion) {
+					for (Expression arg : head) {
+						if (arg instanceof Variable) {
+							Variable var = (Variable) arg;
+							if (var.isDontCare()) {
+								runtime.error("Head predicate in a non-deletion rule " +
+										      "can't contain don't care variable!", n);
+								return Error.class;
+							}
+						}
+					}
+				}
 			} finally {
 				table.exit();
 			}
@@ -355,7 +368,9 @@ public final class TypeChecker extends Visitor {
 			table.exit();
 		}
 		
-		n.setProperty(Constants.TYPE, new Rule(name, deletion, head, body));
+		Rule rule = new Rule(name, deletion, head, body);
+		rule.location(n.getLocation());
+		n.setProperty(Constants.TYPE, rule);
 		return Rule.class;
 	}
 
@@ -365,25 +380,35 @@ public final class TypeChecker extends Visitor {
 		if (type == Error.class) return Error.class;
 		assert(type == Predicate.class);
 		Predicate head = (Predicate) n.getNode(0).getProperty(Constants.TYPE);
+		
+		if (head.notin()) {
+			runtime.error("Can't apply notin to head predicate!", n);
+			return Error.class;
+		}
+		else if (head.event() != null) {
+			runtime.error("Can't apply event modifier to rule head!", n);
+			return Error.class;
+		}
 
 		/* All variables mentioned in the head must be in the body. 
 		 * The types must also match. */
 		for (Expression argument : head) {
 			if (argument instanceof Variable) {
 				Variable var = (Variable) argument;
-				Class headType = (Class) table.current().lookupLocally(var.name());
-				Class bodyType = (Class) table.current().getParent().lookupLocally(var.name());
-				if (bodyType == null) {
-					runtime.error("Head variable " + var
-							+ " not defined in rule body.");
-					return Error.class;
-				} else if (!headType.isAssignableFrom(bodyType)) {
-					runtime.error("Type mismatch: Head variable " + var
-							+ " type is " + headType + ", but defined as type "
-							+ bodyType + " in rule body.");
-					return Error.class;
+				if (!var.isDontCare()) {
+					Class headType = (Class) table.current().lookupLocally(var.name());
+					Class bodyType = (Class) table.current().getParent().lookupLocally(var.name());
+					if (bodyType == null) {
+						runtime.error("Head variable " + var
+								+ " not defined in rule body.");
+						return Error.class;
+					} else if (!headType.isAssignableFrom(bodyType)) {
+						runtime.error("Type mismatch: Head variable " + var
+								+ " type is " + headType + ", but defined as type "
+								+ bodyType + " in rule body.");
+						return Error.class;
+					}
 				}
-
 			}
 		}
 
@@ -400,7 +425,15 @@ public final class TypeChecker extends Visitor {
 				return type;
 			}
 			assert(Term.class.isAssignableFrom(type));
-			terms.add((Term) term.getProperty(Constants.TYPE));
+			Term t = (Term) term.getProperty(Constants.TYPE);
+			if (t instanceof Predicate) {
+				Predicate p = (Predicate) t;
+				if (p.event() != null && p.notin()) {
+					runtime.error("Can't apply notin to event predicate!",n);
+					return Error.class;
+				}
+			}
+			terms.add(t);
 		}
 
 		n.setProperty(Constants.TYPE, terms);
@@ -408,9 +441,12 @@ public final class TypeChecker extends Visitor {
 	}
 
 	public Class visitPredicate(final GNode n) {
-		Class type = (Class) dispatch(n.getNode(0));
+		boolean notin = n.getString(0) != null;
+		String event = n.getString(2);
+		
+		Class type = (Class) dispatch(n.getNode(1));
 		assert(type == Value.class);
-		Value<String> name = (Value<String>) n.getNode(0).getProperty(Constants.TYPE);
+		Value<String> name = (Value<String>) n.getNode(1).getProperty(Constants.TYPE);
 		
 		/* Lookup the schema for the given tuple name. */
 		List<Class> schema = (List<Class>) table.lookup(name.value());
@@ -419,14 +455,14 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		
-		type = (Class) dispatch(n.getNode(1));
+		type = (Class) dispatch(n.getNode(3));
 		assert(type == List.class);
-		List<Expression> parameters = (List<Expression>) n.getNode(1).getProperty(Constants.TYPE);
+		List<Expression> parameters = (List<Expression>) n.getNode(3).getProperty(Constants.TYPE);
 		List<Expression> arguments = new ArrayList<Expression>();
 		/* Type check each tuple argument according to the schema. */
 		for (int index = 0; index < schema.size(); index++) {
 			Expression param = parameters.size() <= index ? 
-					           tmpVariable(schema.get(index)) : parameters.get(index);
+					           Variable.dontCare(schema.get(index)) : parameters.get(index);
 			if (Alias.class.isAssignableFrom(param.getClass())) {
 				Alias alias = (Alias) param;
 				if (alias.field() < index) {
@@ -435,7 +471,7 @@ public final class TypeChecker extends Visitor {
 				}
 				/* Fill in missing variables with tmp variables. */
 				while (index < alias.field()) {
-					arguments.add(tmpVariable(schema.get(index++)));
+					arguments.add(Variable.dontCare(schema.get(index++)));
 				}
 			}
 			
@@ -463,7 +499,9 @@ public final class TypeChecker extends Visitor {
 			arguments.add(param);
 		}
 
-		n.setProperty(Constants.TYPE, new Predicate(name.value(), arguments));
+		Predicate pred = new Predicate(notin, name.value(), event, arguments);
+		pred.location(n.getLocation());
+		n.setProperty(Constants.TYPE, pred);
 		return Predicate.class;
 	}
 
@@ -499,22 +537,30 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 
-		n.setProperty(Constants.TYPE, new Assignment(var, expr));
+		Assignment assign = new Assignment(var, expr);
+		assign.location(n.getLocation());
+		n.setProperty(Constants.TYPE, assign);
 		return Assignment.class;
 	}
 	
 	public Class visitSelection(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(0));
+		if (type == Error.class) return Error.class;
 		assert (Expression.class.isAssignableFrom(type));
 		Expression expr = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		
-		n.setProperty(Constants.TYPE, new Selection(ensureBooleanValue(expr)));
+		Selection select = new Selection(ensureBooleanValue(expr));
+		select.location(n.getLocation());
+		n.setProperty(Constants.TYPE, select);
 		return Selection.class;
 	}
 
 	//---------------------------- Expressions -------------------------------//
 	public Class visitExpression(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(0));
+		if (type == Error.class) return Error.class;
+		Expression expr = (Expression) n.getNode(0).getProperty(Constants.TYPE);
+		expr.location(n.getLocation()); // Set the location of this expression.
 		n.setProperty(Constants.TYPE, n.getNode(0).getProperty(Constants.TYPE));
 		return type;
 	}
@@ -538,10 +584,10 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		n.setProperty(Constants.TYPE, 
-			new lang.ast.Boolean(lang.ast.Boolean.OR, 
+			new lang.plan.Boolean(lang.plan.Boolean.OR, 
 					ensureBooleanValue(lhs), 
 					ensureBooleanValue(rhs)));
-		return lang.ast.Boolean.class;
+		return lang.plan.Boolean.class;
 	}
 
 	public Class visitLogicalAndExpression(final GNode n) {
@@ -563,10 +609,10 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		n.setProperty(Constants.TYPE, 
-			new lang.ast.Boolean(lang.ast.Boolean.AND, 
+			new lang.plan.Boolean(lang.plan.Boolean.AND, 
 					ensureBooleanValue(lhs), 
 					ensureBooleanValue(rhs)));
-		return lang.ast.Boolean.class;
+		return lang.plan.Boolean.class;
 	}
 
 	public Class visitEqualityExpression(final GNode n) {
@@ -593,8 +639,8 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		n.setProperty(Constants.TYPE, 
-			new lang.ast.Boolean(oper,  lhs,  rhs));
-		return lang.ast.Boolean.class;
+			new lang.plan.Boolean(oper,  lhs,  rhs));
+		return lang.plan.Boolean.class;
 	}
 	
 	public Class visitLogicalNegationExpression(final GNode n) {
@@ -609,8 +655,8 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		} 
 		n.setProperty(Constants.TYPE, 
-				new lang.ast.Boolean(lang.ast.Boolean.NOT, ensureBooleanValue(expr), null));
-		return lang.ast.Boolean.class;
+				new lang.plan.Boolean(lang.plan.Boolean.NOT, ensureBooleanValue(expr), null));
+		return lang.plan.Boolean.class;
 	}
 
 	public Class visitInclusiveExpression(final GNode n) {
@@ -632,8 +678,8 @@ public final class TypeChecker extends Visitor {
 		
 		Expression expr = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 		if (Range.class.isAssignableFrom(type) || Collection.class.isAssignableFrom(expr.type())) {
-			n.setProperty(Constants.TYPE, new lang.ast.Boolean(lang.ast.Boolean.IN, variable, expr));
-			return lang.ast.Boolean.class;
+			n.setProperty(Constants.TYPE, new lang.plan.Boolean(lang.plan.Boolean.IN, variable, expr));
+			return lang.plan.Boolean.class;
 		}
 
 		runtime.error("Type error: right hand side of IN operator must be " +
@@ -694,8 +740,8 @@ public final class TypeChecker extends Visitor {
 		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 		
 		if (lhs.type() == Integer.class && rhs.type() == Integer.class) {
-			n.setProperty(Constants.TYPE, new lang.ast.Math(oper, lhs, rhs));
-			return lang.ast.Math.class;
+			n.setProperty(Constants.TYPE, new lang.plan.Math(oper, lhs, rhs));
+			return lang.plan.Math.class;
 		} else {
 			runtime.error("Cannot shift type " + lhs.type() + 
 					" using type " + rhs.type(), n);
@@ -715,8 +761,8 @@ public final class TypeChecker extends Visitor {
 
 		if (Number.class.isAssignableFrom(lhs.type()) && 
 			Number.class.isAssignableFrom(rhs.type())) {
-			n.setProperty(Constants.TYPE, new lang.ast.Math(oper, lhs, rhs));
-			return lang.ast.Math.class;
+			n.setProperty(Constants.TYPE, new lang.plan.Math(oper, lhs, rhs));
+			return lang.plan.Math.class;
 		}
 		runtime.error("Type mismatch: " + lhs.type() + 
 				" " + oper + " " + rhs.type(), n);
@@ -735,8 +781,8 @@ public final class TypeChecker extends Visitor {
 
 		if (Number.class.isAssignableFrom(lhs.type()) && 
 			Number.class.isAssignableFrom(rhs.type())) {
-			n.setProperty(Constants.TYPE, new lang.ast.Math(oper, lhs, rhs));
-			return lang.ast.Math.class;
+			n.setProperty(Constants.TYPE, new lang.plan.Math(oper, lhs, rhs));
+			return lang.plan.Math.class;
 		}
 		runtime.error("Type mismatch: " + lhs.type() + 
 				" " + oper + " " + rhs.type(), n);
@@ -752,6 +798,7 @@ public final class TypeChecker extends Visitor {
 		Expression object = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		
 		String name = n.getString(1);
+		System.err.println("Method location " + n.getLocation());
 		
 		type = (Class) dispatch(n.getNode(2)); 
 		assert(type == List.class);
@@ -767,14 +814,10 @@ public final class TypeChecker extends Visitor {
 			Method method = object.type().getDeclaredMethod(name, types);
 			n.setProperty(Constants.TYPE, new MethodCall(object, method, arguments));
 		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			runtime.error(e.toString(), n);
+			runtime.error("Method error: " + e.toString(), n);
 			return Error.class;
 		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			runtime.error(e.toString(), n);
+			runtime.error("Method error: " + e.toString(), n);
 			return Error.class;
 		}
 		
@@ -845,8 +888,8 @@ public final class TypeChecker extends Visitor {
 			runtime.error("Expression " + expr + 
 					" type must be numberic in increment expression.");
 		}
-		n.setProperty(Constants.TYPE, new lang.ast.Math(lang.ast.Math.INC, expr, null));
-		return lang.ast.Math.class;
+		n.setProperty(Constants.TYPE, new lang.plan.Math(lang.plan.Math.INC, expr, null));
+		return lang.plan.Math.class;
 	}
 	
 	public Class visitDecrement(final GNode n) {
@@ -863,8 +906,8 @@ public final class TypeChecker extends Visitor {
 			runtime.error("Expression " + expr + 
 					" type must be numberic in decrement expression.");
 		}
-		n.setProperty(Constants.TYPE, new lang.ast.Math(lang.ast.Math.DEC, expr, null));
-		return lang.ast.Math.class;
+		n.setProperty(Constants.TYPE, new lang.plan.Math(lang.plan.Math.DEC, expr, null));
+		return lang.plan.Math.class;
 	}
 	
 	
@@ -890,8 +933,21 @@ public final class TypeChecker extends Visitor {
 
 	public Class visitType(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(0));
+		if (n.getNode(1) != null) {
+			dispatch(n.getNode(1));
+			int[] dim = (int[]) n.getNode(1).getProperty(Constants.TYPE);
+			Object instance = Array.newInstance(type, dim);
+			type = instance.getClass();
+			System.err.println("Class: " + type.getName() );
+		}
 		n.setProperty(Constants.TYPE, type);
 		return type;
+	}
+	
+	public Class visitDimensions(final GNode n) {
+		int[] dims = new int[n.size()];
+		n.setProperty(Constants.TYPE, dims);
+		return int[].class;
 	}
 
 	public Class visitClassType(final GNode n) {
@@ -914,7 +970,13 @@ public final class TypeChecker extends Visitor {
 
 	public Class visitVariable(final GNode n) {
 		Class type =  (Class)  table.current().lookup(n.getString(0));
-		n.setProperty(Constants.TYPE, new Variable(n.getString(0), type));
+		if (Variable.DONTCARE.equals(n.getString(0))) {
+			/* Generate a fake variable for all don't cares. */
+			n.setProperty(Constants.TYPE, Variable.dontCare(null));
+		}
+		else {
+			n.setProperty(Constants.TYPE, new Variable(n.getString(0), type));
+		}
 		return Variable.class;
 	}
 

@@ -1,4 +1,4 @@
-package core;
+package p2.core;
 
 import java.util.HashSet;
 import javax.security.auth.callback.Callback;
@@ -17,9 +17,9 @@ import types.table.Table;
 public class PortTable extends ObjectTable {
 	
 	/* The primary key is (OwnerID, PortKey, Interface) */
-	private static final Integer[] PRIMARY_KEY = {2,3,4};
+	private static final Key PRIMARY_KEY = new Key(1,2,3);
 	
-	private static final Schema schema = 
+	private static final Schema SCHEMA = 
 		new Schema(new Schema.Entry("RuleID",    String.class),
 				   new Schema.Entry("OwnerID",   String.class),
 				   new Schema.Entry("PortKey",   String.class),
@@ -28,8 +28,8 @@ public class PortTable extends ObjectTable {
 				   new Schema.Entry("DestID",    String.class),
 				   new Schema.Entry("Object",    Element.class));
 	
-	public PortTable() {
-		super(PortTable.class.getName(), schema, new Key(PRIMARY_KEY));
+	public PortTable(Name name, Schema schema, Integer size, Number lifetime, Key key) {
+		super(name, schema, key);
 	}
 	
 	@Override

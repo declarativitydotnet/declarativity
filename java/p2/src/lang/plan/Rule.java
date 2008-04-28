@@ -1,8 +1,36 @@
 package lang.plan;
 
 import java.util.List;
+import types.basic.Tuple;
+import types.exception.UpdateException;
+import types.table.Key;
+import types.table.ObjectTable;
+import types.table.Schema;
 
 public class Rule extends Clause {
+	
+	public static class RuleTable extends ObjectTable {
+		public static final Key PRIMARY_KEY = new Key(0,1);
+		
+		public static final Schema SCHEMA = 
+			new Schema(new Schema.Entry("ProgramName", String.class),
+					   new Schema.Entry("RuleName",    String.class),
+					   new Schema.Entry("Rule",        Rule.class));
+
+		public RuleTable(Name name, Schema schema, Integer size, Number lifetime, Key key) {
+			super(name, schema, key);
+		}
+		
+		@Override
+		protected Tuple insert(Tuple tuple) throws UpdateException {
+			return super.insert(tuple);
+		}
+		
+		@Override
+		protected boolean remove(Tuple tuple) throws UpdateException {
+			return super.remove(tuple);
+		}
+	}
 	
 	private String name;
 	

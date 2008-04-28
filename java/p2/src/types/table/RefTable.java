@@ -3,7 +3,6 @@ package types.table;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Vector;
-
 import types.basic.Tuple;
 import types.basic.TupleSet;
 import types.exception.UpdateException;
@@ -12,11 +11,11 @@ public class RefTable extends Table {
 	
 	private Index primary;
 	
-	private Hashtable<Vector<Integer>, Index> secondary;
+	private Hashtable<Key, Index> secondary;
 
-	public RefTable(String name, Schema schema, Key key) {
-		super(name, schema, Long.MAX_VALUE, Long.MAX_VALUE, key);
-		secondary = new Hashtable<Vector<Integer>, Index>();
+	public RefTable(Table.Name name, Schema schema, Integer size, Number lifetime, Key key) {
+		super(name, schema, Catalog.INFINITY, Catalog.INFINITY, key);
+		secondary = new Hashtable<Key, Index>();
 	}
 	
 	public Iterator<Tuple> iterator() {
@@ -29,12 +28,12 @@ public class RefTable extends Table {
 	}
 
 	@Override
-	public Hashtable<Vector<Integer>, Index> secondary() {
+	public Hashtable<Key, Index> secondary() {
 		return secondary;
 	}
 	
 	@Override
-	protected boolean remove(Tuple t) {
+	protected boolean remove(Tuple t) throws UpdateException {
 		TupleSet lookup = primary.lookup(t);
 		assert(lookup.size() <= 1);
 		

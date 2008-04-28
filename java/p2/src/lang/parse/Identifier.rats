@@ -13,7 +13,7 @@ transient String WordCharacters =
     ( part:_ &{ Character.isJavaIdentifierPart(part) } )*
   ;
 
-generic EventModifier = void:'#' EventType;
+String EventModifier = void:'#' EventType;
 
 String EventType =
      <Insert> "insert":Word
@@ -25,7 +25,11 @@ generic TupleName =
     /  name:Name &{ name.length() > 0 && Character.isLowerCase(name.charAt(0)) }
     ;
 
-generic Variable = name:Name &{ name.length() > 0 && Character.isUpperCase(name.charAt(0)) };
+generic Variable = 
+       name:Name &{ name.length() > 0 && Character.isUpperCase(name.charAt(0)) }
+    /  "_":Symbol
+    ;
+				  
 
 generic Location = void:'@' Variable;
 
@@ -39,7 +43,7 @@ String AggregateVariable =
 
 generic AttributePosition = void:'$' [0-9]+ Spacing;
 
-variant generic Type =
+generic Type =
   <Type> TypeName Dimensions? Spacing
   ;
 
@@ -52,6 +56,7 @@ generic PrimitiveType =
     <Byte>    "byte":Word
   / <Short>   "short":Word
   / <Char>    "char":Word
+  / <String>  "string":Word
   / <Int>     "int":Word
   / <Long>    "long":Word
   / <Float>   "float":Word

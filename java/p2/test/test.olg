@@ -1,5 +1,5 @@
 define(t1, infinity, infinity, keys(1), 
- {java.lang.Integer, java.lang.String, java.lang.Integer, java.lang.Integer[5]}).
+ {int, string, int, int[5][6]}).
 
 define(t2, infinity, infinity, keys(), 
  {java.lang.Integer, java.lang.Float, java.lang.Float, java.lang.Float }).
@@ -10,6 +10,9 @@ watchmod(t1, a).
 watchmod(t2, s).
 
 rule1 event(A, B, C) :- t1(@A, F:=$2), t2(@A, B, C, D), 
-                         X:= {{1,2},{3,4}}, B == X[0][0], F.toString() == "foobar".
+                         X:= {{1,2},{3,4}}, B == X[0][0], 
+                         F.toString() == "foobar".
 
-rule2 delete t2(@A, B, C, D) :- event(@A, B, C), D := 2.0, C in [1, 5].
+rule2 delete t2(@A, B, C, 2.0) :- event(@A, B, C), 
+                                notin t2(@A, B, C, 2.0), 
+                                C in [1, 5].

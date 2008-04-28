@@ -50,4 +50,5 @@ transient String SymbolCharacters =
   / <Bar>                 "|"
   / <Question>            "?"
   / <Pound>               "#"
+  / <Underscore>          "_"
   ;

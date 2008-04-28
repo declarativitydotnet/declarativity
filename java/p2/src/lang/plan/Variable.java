@@ -1,6 +1,7 @@
 package lang.plan;
 
 public class Variable extends Expression {
+	public final static String DONTCARE = "_";
 
 	private String name;
 	
@@ -9,6 +10,14 @@ public class Variable extends Expression {
 	public Variable(String name, Class type) {
 		this.name = name;
 		this.type = type;
+	}
+	
+	public static Variable dontCare(Class type) {
+		return new Variable(DONTCARE, type);
+	}
+	
+	public boolean isDontCare() {
+		return DONTCARE.equals(this.name);
 	}
 	
 	@Override

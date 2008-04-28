@@ -23,8 +23,8 @@ public class Key implements Comparable {
 
 	private Integer[] attributes;
 
-	public Key(Integer[] attributes) {
-		this.attributes = attributes;
+	public Key(Integer... attr) {
+		this.attributes = attr;
 	}
 	
 	@Override

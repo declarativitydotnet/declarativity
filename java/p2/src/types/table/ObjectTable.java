@@ -3,10 +3,10 @@ package types.table;
 import types.basic.Tuple;
 import types.exception.UpdateException;
 
-public abstract class ObjectTable extends BasicTable {
+public abstract class ObjectTable extends RefTable {
 	
-	protected ObjectTable(String name, Schema schema, Key key) {
-		super(name, schema, Long.MAX_VALUE, Long.MAX_VALUE, key);
+	protected ObjectTable(Table.Name name, Schema schema, Key key) {
+		super(name, schema, Catalog.INFINITY, Catalog.INFINITY, key);
 	}
 
 	@Override
