@@ -3,16 +3,17 @@ package p2.core;
 import java.util.HashSet;
 import javax.security.auth.callback.Callback;
 
-import types.basic.Tuple;
-import types.basic.TupleSet;
-import types.element.Element;
-import types.element.Port;
-import types.exception.ElementException;
-import types.exception.UpdateException;
-import types.table.Key;
-import types.table.ObjectTable;
-import types.table.Schema;
-import types.table.Table;
+import p2.types.basic.Tuple;
+import p2.types.basic.TupleSet;
+import p2.types.element.Element;
+import p2.types.element.Port;
+import p2.types.exception.ElementException;
+import p2.types.exception.UpdateException;
+import p2.types.table.Key;
+import p2.types.table.ObjectTable;
+import p2.types.table.Schema;
+import p2.types.table.Table;
+
 
 public class PortTable extends ObjectTable {
 	
