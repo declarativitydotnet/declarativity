@@ -3,7 +3,7 @@ package p2.lang.plan;
 import java.util.HashMap;
 import java.util.Map;
 
-import p2.types.basic.Function;
+import p2.types.function.Function;
 
 
 public class Boolean extends Expression {

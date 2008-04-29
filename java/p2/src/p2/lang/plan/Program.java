@@ -1,7 +1,9 @@
 package p2.lang.plan;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import p2.types.basic.Tuple;
 import p2.types.exception.UpdateException;
@@ -75,6 +77,17 @@ public class Program {
 			value += r + "\n";
 		}
 		return value;
+	}
+	
+	public Set<String> plan() {
+		Set<String> tuples = new HashSet<String>();
+		
+		return tuples;
+	}
+	
+	public Tuple evaluate(Tuple eval) {
+		
+		return null;
 	}
 	
 	public void table(Table t) {

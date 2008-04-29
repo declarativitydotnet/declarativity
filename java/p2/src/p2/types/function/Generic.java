@@ -3,7 +3,6 @@ package p2.types.function;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import p2.types.basic.Function;
 import p2.types.basic.Tuple;
 import p2.types.exception.TypeException;
 

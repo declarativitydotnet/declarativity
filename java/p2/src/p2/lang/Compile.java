@@ -5,12 +5,20 @@ import p2.lang.plan.Predicate.PredicateTable;
 import p2.lang.plan.Program.ProgramTable;
 import p2.lang.plan.Rule.RuleTable;
 import p2.lang.plan.Selection.SelectionTable;
-import p2.types.element.Element;
 import p2.types.exception.UpdateException;
+import p2.types.table.Key;
+import p2.types.table.ObjectTable;
+import p2.types.table.Schema;
 import p2.types.table.Table;
 
-public class Compile extends Element {
+public class Compile extends ObjectTable {
 	
+	protected Compile(Name name, Schema schema, Integer size, Number lifetime, Key key) {
+		super(name, schema, key);
+		// TODO Auto-generated constructor stub
+	}
+
+
 	private static ProgramTable program = null;
 	
 	private static RuleTable rule = null;
@@ -22,10 +30,6 @@ public class Compile extends Element {
 	private static AssignmentTable assignment = null;
 	
 
-	public Compile(String id, String name) {
-		super(id, name);
-	}
-	
 	public static void initialize() {
 		try {
 			program = (ProgramTable) 

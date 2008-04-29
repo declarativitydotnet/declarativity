@@ -1,6 +1,5 @@
 package p2.types.function;
 
-import p2.types.basic.Function;
 import p2.types.basic.Tuple;
 import p2.types.exception.TypeException;
 
