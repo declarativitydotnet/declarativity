@@ -3,11 +3,11 @@ package p2.lang.plan;
 import java.util.HashMap;
 import java.util.Map;
 
-import p2.types.function.Function;
+import p2.types.function.TupleFunction;
 
 
 public class Math extends Expression {
-	private static final Map<String, Function> Operator = new HashMap<String, Function>();
+	private static final Map<String, TupleFunction> Operator = new HashMap<String, TupleFunction>();
 	
 	public final static String ADD    = "+";
 	public final static String INC    = "++";

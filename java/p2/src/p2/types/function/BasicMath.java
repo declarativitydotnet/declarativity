@@ -1,26 +1,29 @@
 package p2.types.function;
 
+import java.util.Set;
+
+import p2.lang.plan.Variable;
 import p2.types.basic.Tuple;
 import p2.types.exception.TypeException;
 
-public class BasicMath implements Function<Comparable> {
+public class BasicMath implements TupleFunction<Comparable> {
 	public enum Operator{UPLUS, UMINUS, PLUS, MINUS, TIMES, DIVIDE, MOD, POW, LSHIFT, RSHIFT};
 	
 	private Operator oper;
 	
-	private Function<Comparable> lhs;
+	private TupleFunction<Comparable> lhs;
 	
-	private Function<Comparable> rhs;
+	private TupleFunction<Comparable> rhs;
 	
-	public BasicMath(Operator oper, Function<Comparable> lhs, Function<Comparable> rhs) {
+	public BasicMath(Operator oper, TupleFunction<Comparable> lhs, TupleFunction<Comparable> rhs) {
 		this.oper = oper;
 		this.lhs = lhs;
 		this.rhs = rhs;
 	}
 
-	public Comparable eval(Tuple tuple) {
-		Comparable lhs = this.lhs.eval(tuple);
-		Comparable rhs = this.rhs != null ? this.rhs.eval(tuple) : null;
+	public Comparable evaluate(Tuple tuple) {
+		Comparable lhs = this.lhs.evaluate(tuple);
+		Comparable rhs = this.rhs != null ? this.rhs.evaluate(tuple) : null;
 		
 		try {
 			if (lhs instanceof Double) {
@@ -128,5 +131,10 @@ public class BasicMath implements Function<Comparable> {
 		case PLUS:   return new String(lhs.toString() + rhs.toString());
 		default: throw new TypeException("Operator " + oper + " undefined over type!", Short.TYPE);
 		}
+	}
+
+	public Set<Variable> requires() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

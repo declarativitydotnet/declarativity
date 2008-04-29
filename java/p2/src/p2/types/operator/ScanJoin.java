@@ -1,42 +1,34 @@
 package p2.types.operator;
 
-import p2.types.basic.SimpleTupleSet;
-import p2.types.basic.Tuple;
+import p2.lang.plan.Predicate;
+import p2.lang.plan.Variable;
+import p2.types.basic.Intermediate;
+import p2.types.basic.Simple;
 import p2.types.basic.TupleSet;
-import p2.types.table.Schema;
-import p2.types.table.Table;
+import java.util.Set;
 
 public class ScanJoin extends Operator {
 	
-	/* The table to be scanned. */
-	private Table table;
+	private Predicate predicate;
 	
-	private Integer[] outerKey;
-	
-	private Integer[] innerKey;
-
-	public ScanJoin(String program, String rule, String id, Table table, Integer[] outerKey, Integer[] innerKey) {
-		super(program, rule, id);
-		assert(outerKey.length == innerKey.length);
-		this.table = table;
-		this.outerKey = outerKey;
-		this.innerKey = innerKey;
+	public ScanJoin(String ID, Predicate predicate) {
+		super(ID);
+		this.predicate = predicate;
 	}
 	
 	@Override
-	public TupleSet evaluate(TupleSet outerSet) {
-		TupleSet result = new SimpleTupleSet();
-		for (Tuple inner : table) {
-			for (Tuple outer : outerSet) {
-				result.add(Tuple.join(outer, inner, innerKey));
-			}
-		}
+	public Intermediate evaluate(TupleSet tuples) {
+		TupleSet result = new Simple("Operator " + id(), schema((VariableSchema)tuples.schema()));
 		return result;
 	}
 
 	@Override
-	public Schema schema(Schema input) {
-		// TODO Auto-generated method stub
+	public VariableSchema schema(VariableSchema input) {
+		return predicate.schema().join(input);
+	}
+
+	@Override
+	public Set<Variable> requires() {
 		return null;
 	}
 

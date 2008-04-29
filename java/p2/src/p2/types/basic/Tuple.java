@@ -5,6 +5,8 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
 
+import p2.types.table.Schema;
+
 public class Tuple implements Comparable {
 	
 	public final static class Property {

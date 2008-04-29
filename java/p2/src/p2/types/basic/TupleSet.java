@@ -3,22 +3,44 @@ package p2.types.basic;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
+import p2.lang.plan.Variable;
+import p2.types.table.Schema;
 
-public abstract class TupleSet implements Set<Tuple> {
+
+public abstract class TupleSet implements Set<Tuple>, Intermediate {
+	
+	private String name;
+	
+	private Schema schema;
 	
 	private Set<Tuple> tuples;
-
-	private Integer[] sort;
 	
-	protected TupleSet(Set<Tuple> tuples, Integer[] sort) {
+	private Set<String> operators;
+
+	protected TupleSet(String name, Schema schema, Set<Tuple> tuples) {
+		this.name = name;
+		this.schema = schema;
 		this.tuples = tuples;
-		this.sort = sort;
+		this.operators = new HashSet<String>();
 	}
 	
-	public Integer[] sort() {
-		return this.sort;
+	public String name() {
+		return this.name;
+	}
+	
+	public Schema schema() {
+		return this.schema;
+	}
+	
+	public boolean contains(String operatorID) {
+		return this.operators.contains(operatorID);
+	}
+	
+	public void operator(String operatorID) {
+		this.operators.add(operatorID);
 	}
 	
 	public boolean add(Tuple t) {

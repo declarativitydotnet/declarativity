@@ -5,6 +5,7 @@ import java.util.List;
 
 import p2.types.basic.Tuple;
 import p2.types.exception.UpdateException;
+import p2.types.operator.VariableSchema;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.Schema;
@@ -35,6 +36,8 @@ public class Predicate extends Term implements Iterable<Expression> {
 		}
 	}
 	
+	private Table table;
+	
 	private boolean notin;
 	
 	private String name;
@@ -43,11 +46,26 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	private List<Expression> arguments;
 	
+	private VariableSchema schema;
+	
 	public Predicate(boolean notin, String name, String event, List<Expression> arguments) {
+		this.table = null;
 		this.notin = notin;
 		this.name = name;
 		this.event = event;
 		this.arguments = arguments;
+	}
+	
+	public VariableSchema schema() {
+		return schema;
+	}
+	
+	public void table(Table table) {
+		this.table = table;
+	}
+	
+	public p2.types.table.Table table() {
+		return this.table.object();
 	}
 	
 	public boolean notin() {

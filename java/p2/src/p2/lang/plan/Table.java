@@ -5,6 +5,8 @@ import p2.types.table.Schema;
 
 public class Table extends Clause {
 	
+	private p2.types.table.Table object;
+	
 	private Value name;
 	
 	private Value size;
@@ -27,5 +29,9 @@ public class Table extends Clause {
 	public String toString() {
 		return "define (" + name + ", " + size + ", " + lifetime + 
 		       ", keys(" + key + "), {" + schema + "}).";
+	}
+	
+	public p2.types.table.Table object() {
+		return this.object;
 	}
 }

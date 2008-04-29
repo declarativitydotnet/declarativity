@@ -1,37 +1,40 @@
 package p2.types.operator;
 
-import p2.types.basic.OrderedTupleSet;
-import p2.types.basic.SimpleTupleSet;
-import p2.types.basic.Tuple;
+import java.util.Set;
+
+import p2.lang.plan.Variable;
+import p2.types.basic.Intermediate;
+import p2.types.basic.Simple;
 import p2.types.basic.TupleSet;
-import p2.types.function.BooleanExpression;
-import p2.types.table.Schema;
+import p2.types.function.Filter;
 
 public class Selection extends Operator {
 	
-	private BooleanExpression filter;
+	private Set<Variable> requires;
+	
+	private Filter filter;
 
-	public Selection(String program, String rule, String id, BooleanExpression filter) {
-		super(program, rule, id);
+	public Selection(String ID, Filter filter) {
+		super(ID);
+		this.requires = filter.requires();
 		this.filter = filter;
 	}
 
 	@Override
-	public TupleSet evaluate(TupleSet tuples) {
-		TupleSet result = tuples.sort() == null ? 
-				new SimpleTupleSet() : new OrderedTupleSet(tuples.sort());
+	public Intermediate evaluate(TupleSet tuples) {
+		TupleSet result =  new Simple("Operator " + id(), schema((VariableSchema)tuples.schema()));
 		
-		for (Tuple tuple : tuples) {
-			if (filter.eval(tuple)) {
-				result.add(tuple);
-			}
-		}
 		return result;
 	}
 
 	@Override
-	public Schema schema(Schema input) {
+	public VariableSchema schema(VariableSchema input) {
 		return input;
+	}
+
+	@Override
+	public Set<Variable> requires() {
+		return this.requires;
 	}
 
 }

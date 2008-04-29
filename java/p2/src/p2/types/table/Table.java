@@ -3,7 +3,7 @@ package p2.types.table;
 import java.lang.reflect.Constructor;
 import java.util.*;
 
-import p2.types.basic.SimpleTupleSet;
+import p2.types.basic.Simple;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.BadKeyException;

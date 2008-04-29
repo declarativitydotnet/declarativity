@@ -34,7 +34,7 @@ public class Schema implements Comparable {
 		}
 	}
 	
-	private List<Entry> schema;
+	protected List<Entry> schema;
 
 	public Schema(Entry... schema) {
 		this.schema = new ArrayList<Entry>();
@@ -49,6 +49,15 @@ public class Schema implements Comparable {
 		for (Class c : types) {
 			this.schema.add(new Entry(Integer.toString(index++), c));
 		}
+	}
+	
+	public boolean contains(String name) {
+		for (Entry e : schema) {
+			if (e.name().equals(name)) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	@Override

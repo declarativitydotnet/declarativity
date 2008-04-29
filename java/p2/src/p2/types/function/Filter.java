@@ -1,23 +1,26 @@
 package p2.types.function;
 
+import java.util.Set;
+
+import p2.lang.plan.Variable;
 import p2.types.basic.Tuple;
 
-public class BooleanExpression implements Function<Comparable> {
+public class Filter implements TupleFunction<Comparable> {
 	public enum Operator{NOT, AND, OR, EQ, NEQ, LTHAN, GTHAN, LEQ, GEQ};
 	
 	private Operator oper;
 	
-	private Function<Comparable> lhs;
+	private TupleFunction<Comparable> lhs;
 	
-	private Function<Comparable> rhs;
+	private TupleFunction<Comparable> rhs;
 	
-	public BooleanExpression(Operator oper, Function<Comparable> lhs, Function<Comparable> rhs) {
+	public Filter(Operator oper, TupleFunction<Comparable> lhs, TupleFunction<Comparable> rhs) {
 		this.oper = oper;
 		this.lhs = lhs;
 		this.rhs = rhs;
 	}
 
-	public Boolean eval(Tuple tuple) {
+	public Boolean evaluate(Tuple tuple) {
 		switch (oper) {
 		case NOT:   return not(tuple);
 		case AND:   return and(tuple);
@@ -55,39 +58,44 @@ public class BooleanExpression implements Function<Comparable> {
 	}
 	
 	private Boolean not(Tuple tuple) {
-		return !value(this.lhs.eval(tuple));
+		return !value(this.lhs.evaluate(tuple));
 	}
 	
 	private Boolean and(Tuple tuple) {
-		return value(this.lhs.eval(tuple)) && value(this.rhs.eval(tuple));
+		return value(this.lhs.evaluate(tuple)) && value(this.rhs.evaluate(tuple));
 	}
 	
 	private Boolean or(Tuple tuple) {
-		return value(this.lhs.eval(tuple)) || value(this.rhs.eval(tuple));
+		return value(this.lhs.evaluate(tuple)) || value(this.rhs.evaluate(tuple));
 	}
 	
 	private Boolean eq(Tuple tuple) {
-		return this.lhs.eval(tuple).compareTo(this.rhs.eval(tuple)) == 0;
+		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) == 0;
 	}
 	
 	private Boolean neq(Tuple tuple) {
-		return this.lhs.eval(tuple).compareTo(this.rhs.eval(tuple)) != 0;
+		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) != 0;
 	}
 	
 	private Boolean lthan(Tuple tuple) {
-		return this.lhs.eval(tuple).compareTo(this.rhs.eval(tuple)) < 0;
+		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) < 0;
 	}
 	
 	private Boolean gthan(Tuple tuple) {
-		return this.lhs.eval(tuple).compareTo(this.rhs.eval(tuple)) > 0;
+		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) > 0;
 	}
 	
 	private Boolean leq(Tuple tuple) {
-		return this.lhs.eval(tuple).compareTo(this.rhs.eval(tuple)) <= 0;
+		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) <= 0;
 	}
 	
 	private Boolean geq(Tuple tuple) {
-		return this.lhs.eval(tuple).compareTo(this.rhs.eval(tuple)) >= 0;
+		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) >= 0;
+	}
+
+	public Set<Variable> requires() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 }

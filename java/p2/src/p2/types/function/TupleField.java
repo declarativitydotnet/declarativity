@@ -1,11 +1,14 @@
 package p2.types.function;
 
+import java.util.Set;
+
+import p2.lang.plan.Variable;
 import p2.types.basic.Tuple;
 
 /**
  *  Access method for tuple fields.
  */
-public class TupleField implements Function<Comparable> {
+public class TupleField implements TupleFunction<Comparable> {
 	
 	private int field;
 	
@@ -13,8 +16,13 @@ public class TupleField implements Function<Comparable> {
 		this.field = field;
 	}
 
-	public Comparable eval(Tuple tuple) {
+	public Comparable evaluate(Tuple tuple) {
 		return tuple.value(this.field);
+	}
+
+	public Set<Variable> requires() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
