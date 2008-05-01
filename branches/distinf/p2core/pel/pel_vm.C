@@ -1183,7 +1183,7 @@ DEF_OP(CREATE_TABLE_FACTOR) {
     table_factor_type f(vars, 0);
     std::vector<double> entries(parse_entries(values->toString()));
     assert(entries.size() == f.size());
-    pstade::oven::copy(entries, f.values().begin());
+    pstade::oven::copy(entries, f.values().first);
     stackPush(Val_Table_Factor::mk(f));
     break;
   }
