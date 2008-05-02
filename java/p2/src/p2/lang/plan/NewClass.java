@@ -7,18 +7,19 @@ import java.util.Set;
 
 public class NewClass extends Expression {
 	
+	private Class type;
+	
 	private Constructor constructor;
 	
 	private List<Expression> arguments;
 	
-	public NewClass(Constructor constructor, List<Expression> arguments) {
-		this.constructor = constructor;
-		this.arguments = arguments;
+	public NewClass(Class type) {
+		this.type = type;
 	}
 
 	@Override
 	public Class type() {
-		return constructor.getDeclaringClass();
+		return this.type;
 	}
 
 	@Override
@@ -41,5 +42,13 @@ public class NewClass extends Expression {
 			variables.addAll(arg.variables());
 		}
 		return variables;
+	}
+	
+	public void constructor(Constructor constructor) {
+		this.constructor = constructor;
+	}
+	
+	public void arguments(List<Expression> arguments) {
+		this.arguments = arguments;
 	}
 }

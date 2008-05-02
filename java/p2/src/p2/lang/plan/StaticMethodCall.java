@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class StaticMethod extends Expression {
+public class StaticMethodCall extends Expression {
 	
 	private Class type;
 	
@@ -16,13 +16,13 @@ public class StaticMethod extends Expression {
 	
 	private List<Expression> arguments;
 
-	public StaticMethod(Class type, Method method, List<Expression> arguments) {
+	public StaticMethodCall(Class type, Method method, List<Expression> arguments) {
 		this.type = type;
 		this.method = method;
 		this.arguments = arguments;
 	}
 	
-	public StaticMethod(Field field, Method method, List<Expression> arguments) {
+	public StaticMethodCall(Field field, Method method, List<Expression> arguments) {
 		this.field = field;
 		this.method = method;
 		this.arguments = arguments;

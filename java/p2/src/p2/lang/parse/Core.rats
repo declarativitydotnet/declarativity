@@ -194,7 +194,9 @@ String RightRangeOperator =
   ;
 
 generic PostfixExpression =
-    <Method>     PostfixExpression Arguments
+    <Reference>  PostfixExpression void:".":Symbol Name
+    	         @Reference
+  / <Method>     PostfixExpression Arguments
     		     @Method
   / <ArrayIndex> PostfixExpression void:"[":Symbol Constant void:"]":Symbol
                  @ArrayIndex
@@ -207,12 +209,11 @@ generic PostfixExpression =
 
 Node PrimaryExpression =
    <Alias>        Alias Spacing
- / <VarRef>       VariableReference Spacing
- / <ClassRef>     ClassReference Spacing
  / <Variable>     Variable Spacing
  / <Location>     Location Spacing
  / <NewClass>     NewClass Spacing
  / <Aggregate>    Aggregate Spacing
+ / <Reference>    ReferenceName Spacing
  / <Constant>     Constant Spacing
  / <Context>      void:"(":Symbol Expression void:")":Symbol
  ;
@@ -222,14 +223,9 @@ transient generic Arguments =
   / <NoArguments> void:"(":Symbol void:")":Symbol
   ;
 
-generic NewClass = void:"new":Word TypeName Arguments;
+generic NewClass = void:"new":Word TypeName;
 
-generic VariableReference = 
-	  Variable void:".":Symbol Name
-	/ Location void:".":Symbol Name
-	;
-
-generic ClassReference = Name (void:".":Symbol Name)+;
+generic ReferenceName = Name;
 
 
 //----------------------------  Alias  ----------------------------------/
