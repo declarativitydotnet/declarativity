@@ -9,7 +9,7 @@ import p2.lang.plan.Variable;
 import p2.types.table.Schema;
 
 
-public class Ordered extends TupleSet {
+public class OrderedTupleSet extends TupleSet {
 
 	public static class CompareAttribute implements Comparator<Tuple> {
 		private List<Variable> attributes;
@@ -26,7 +26,7 @@ public class Ordered extends TupleSet {
 	
 	private List<Variable> sort;
 	
-	public Ordered(String name, Schema schema, List<Variable> sort) {
+	public OrderedTupleSet(String name, Schema schema, List<Variable> sort) {
 		super(name, schema, new TreeSet<Tuple>(new CompareAttribute(sort)));
 		this.sort = sort;
 	}

@@ -3,8 +3,9 @@ package p2.types.operator;
 import java.util.Set;
 
 import p2.lang.plan.Variable;
-import p2.types.basic.Ordered;
-import p2.types.basic.Simple;
+import p2.types.basic.Intermediate;
+import p2.types.basic.OrderedTupleSet;
+import p2.types.basic.SimpleTupleSet;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.function.TupleFunction;
@@ -26,7 +27,7 @@ public class Assignment extends Operator {
 	}
 
 	@Override
-	public TupleSet evaluate(TupleSet tuples) {
+	public Intermediate evaluate(Intermediate tuples) {
 		// TODO Auto-generated method stub
 		return null;
 	}

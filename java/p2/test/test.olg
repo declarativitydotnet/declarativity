@@ -1,18 +1,21 @@
 define(t1, infinity, infinity, keys(1), 
- {int, string, int, int[5][6]}).
+ {int, string, int, int[5][6]});
 
 define(t2, infinity, infinity, keys(), 
- {java.lang.Integer, java.lang.Float, java.lang.Float, java.lang.Float }).
+ {java.lang.Integer, java.lang.Float, java.lang.Float, java.lang.Float });
 
-define(event, {java.lang.Integer, java.lang.Float, java.lang.Float}).
+define(event, {java.lang.Integer, java.lang.Float, java.lang.Float});
 
-watchmod(t1, a).
-watchmod(t2, s).
+watchmod(t1, a);
+watchmod(t2, s);
 
 rule1 event(A, B, C) :- t1(@A, F:=$2), t2(@A, B, C, D), 
-                         X:= {{1,2},{3,4}}, B == X[0][0], 
-                         F.toString() == "foobar".
+                        X:= {{1,2},{3,4}}, B == X[0][0], 
+			A > 0,
+			F.toString() == "foobar";
 
-rule2 delete t2(@A, B, C, 2.0) :- event(@A, B, C), 
+rule2 delete t2(@A, B, C, D) :- event(@A, B, C), 
                                 notin t2(@A, B, C, 2.0), 
-                                C in [1, 5].
+				F := p2.types.table.Index.Type.SECONDARY.toString(),
+                                C in [1, 5],
+                                D := C < 2 ? (C < 1 ? 0f : 2.0) : 1.0;

@@ -1,5 +1,7 @@
 package p2.lang.plan;
 
+import java.util.Set;
+
 public abstract class Term  {
 	
 	private xtc.tree.Location location;
@@ -14,5 +16,6 @@ public abstract class Term  {
 	
 	@Override
 	public abstract String toString();
-
+	
+	public abstract Set<Variable> requires();
 }

@@ -49,13 +49,21 @@ public class Overlog extends Tool {
   }
 
   public Node parse(Reader in, File file) throws IOException, ParseException {
-    Parser parser = new Parser(in, file.toString(), (int)file.length());
-    this.program = new Program(file.getName());
-    return (Node)parser.value(parser.pProgram(0));
+	  try {
+		  Parser parser = new Parser(in, file.toString(), (int)file.length());
+		  this.program = new Program(file.getName());
+		  return (Node)parser.value(parser.pProgram(0));
+	  } catch (ParseException e) {
+		  System.err.println(e.getMessage());
+		  e.printStackTrace();
+		  System.exit(0);
+	  }
+	  return null;
   }
 
   public void process(Node node) {
 	  // Perform type checking.
+	  runtime.console().format(node).pln().flush();
 	  typeChecker.prepare();
 	  
 	  /* First evaluate all table and event declarations. */ 
@@ -98,7 +106,7 @@ public class Overlog extends Tool {
    * @param args The command line arguments.
    */
   public static void main(String[] args) {
-	  p2.core.System.initialize();
+	  // p2.core.System.initialize();
       new Overlog().run(args);
   }
 }

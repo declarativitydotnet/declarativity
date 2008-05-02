@@ -1,5 +1,7 @@
 package p2.lang.plan;
 
+import java.util.Set;
+
 import p2.types.basic.Tuple;
 import p2.types.exception.UpdateException;
 import p2.types.table.Key;
@@ -42,6 +44,11 @@ public class Assignment extends Term {
 	}
 	
 	public String toString() {
-		return variable.toString() + " := " + value.toString() + ".";
+		return variable.toString() + " := " + value.toString();
+	}
+
+	@Override
+	public Set<Variable> requires() {
+		return value.variables();
 	}
 }

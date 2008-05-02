@@ -10,7 +10,7 @@ import p2.lang.plan.Variable;
 import p2.types.table.Schema;
 
 
-public abstract class TupleSet implements Set<Tuple>, Intermediate {
+public abstract class TupleSet extends Intermediate implements Set<Tuple> {
 	
 	private String name;
 	
@@ -18,13 +18,10 @@ public abstract class TupleSet implements Set<Tuple>, Intermediate {
 	
 	private Set<Tuple> tuples;
 	
-	private Set<String> operators;
-
 	protected TupleSet(String name, Schema schema, Set<Tuple> tuples) {
 		this.name = name;
 		this.schema = schema;
 		this.tuples = tuples;
-		this.operators = new HashSet<String>();
 	}
 	
 	public String name() {
@@ -35,12 +32,8 @@ public abstract class TupleSet implements Set<Tuple>, Intermediate {
 		return this.schema;
 	}
 	
-	public boolean contains(String operatorID) {
-		return this.operators.contains(operatorID);
-	}
-	
-	public void operator(String operatorID) {
-		this.operators.add(operatorID);
+	public void schema(Schema schema) {
+		this.schema = schema;
 	}
 	
 	public boolean add(Tuple t) {

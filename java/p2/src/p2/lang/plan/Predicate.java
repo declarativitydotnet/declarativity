@@ -1,7 +1,9 @@
 package p2.lang.plan;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import p2.types.basic.Tuple;
 import p2.types.exception.UpdateException;
@@ -95,6 +97,17 @@ public class Predicate extends Term implements Iterable<Expression> {
 			value += ", " + arguments.get(i);
 		}
 		return value + ")";
+	}
+
+	@Override
+	public Set<Variable> requires() {
+		Set<Variable> variables = new HashSet<Variable>();
+		for (Expression arg : arguments) {
+			if (!Variable.class.isAssignableFrom(arg.getClass())) {
+				variables.addAll(arg.variables());
+			}
+		}
+		return variables;
 	}
 	
 }

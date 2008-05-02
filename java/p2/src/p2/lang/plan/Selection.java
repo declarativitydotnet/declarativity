@@ -1,6 +1,6 @@
 package p2.lang.plan;
 
-import p2.lang.plan.Rule.RuleTable;
+import java.util.Set;
 import p2.types.basic.Tuple;
 import p2.types.exception.UpdateException;
 import p2.types.table.Key;
@@ -34,9 +34,9 @@ public class Selection extends Term {
 	}
 	
 	
-	private Expression predicate;
+	private Boolean predicate;
 	
-	public Selection(Expression predicate) {
+	public Selection(Boolean predicate) {
 		this.predicate = predicate;
 		assert(predicate.type() == java.lang.Boolean.class);
 	}
@@ -44,5 +44,10 @@ public class Selection extends Term {
 	@Override
 	public String toString() {
 		return predicate.toString();
+	}
+
+	@Override
+	public Set<Variable> requires() {
+		return predicate.variables();
 	}
 }

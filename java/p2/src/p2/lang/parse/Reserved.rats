@@ -6,16 +6,14 @@ body {
   static {
     add(OVERLOG_KEYWORDS, new String[] {
       "delete",      
+      "true",       
       "false", 
       "in",     
       "infinity",
       "keys",       
-      "table", 
-      "namespace",
+      "define", 
       "null",        
-      "true",       
-      "watch",       
-      "watchmod"
+      "watch"       
     });
   }
 }

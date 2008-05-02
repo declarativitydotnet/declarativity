@@ -57,7 +57,7 @@ public class Rule extends Clause {
 				value += ",\n";
 			}
 			else {
-				value += ".\n";
+				value += ";\n";
 			}
 		}
 		return value;

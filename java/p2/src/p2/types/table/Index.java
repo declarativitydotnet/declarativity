@@ -1,5 +1,6 @@
 package p2.types.table;
 
+import java.lang.reflect.Constructor;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -8,16 +9,17 @@ import p2.types.basic.TupleSet;
 import p2.types.exception.UpdateException;
 
 
-public abstract class Index {
+public abstract class Index implements Comparable {
 	
 	public static class IndexTable extends ObjectTable {
 		private static final Key PRIMARY_KEY = new Key(0,1); 
 		
 		private static final Schema SCHEMA = 
-			new Schema(new Schema.Entry("Name",     String.class),
-					   new Schema.Entry("Key",      Integer[].class),
-					   new Schema.Entry("Type",     Index.Type.class),
-					   new Schema.Entry("Method",   Index.Method.class));
+			new Schema(new Schema.Entry("Table",   String.class),
+					   new Schema.Entry("Key",     Key.class),
+					   new Schema.Entry("Type",    Type.class),
+					   new Schema.Entry("Class",   String.class),
+					   new Schema.Entry("Object",  Index.class));
 		
 		public IndexTable(Table.Name name, Schema schema, Integer size, Number lifetime, Key key) {
 			super(name, schema, key);
@@ -25,7 +27,19 @@ public abstract class Index {
 		
 		@Override
 		public Tuple insert(Tuple tuple) throws UpdateException {
-			// TODO Auto-generated method stub
+			if (tuple.value(SCHEMA.field("Object")) == null) {
+				try {
+					Class ctype = Class.forName((String)tuple.value(SCHEMA.field("Class")));
+					Constructor constructor = ctype.getConstructor(Table.class, Key.class, Type.class);
+					Table table = Table.table((String)tuple.value(SCHEMA.field("Table")));
+					Key key = (Key) tuple.value(SCHEMA.field("Key"));
+					Type type = (Type)tuple.value(SCHEMA.field("Type"));
+					Index index = (Index) constructor.newInstance(table, key, type);
+					tuple.value(SCHEMA.field("Object"), index);
+				} catch (Exception e) {
+					throw new UpdateException(e.toString());
+				}
+			}
 			return super.insert(tuple);
 		}
 
@@ -37,23 +51,21 @@ public abstract class Index {
 
 	}
 	
-	public enum Type {PRIMARY, SECONDARY};
+	public enum Type{PRIMARY, SECONDARY};
 	
-	public enum Method {HASH};
-	
-	private Type type;
-	
-	private Method method;
+	private Table table;
 	
 	/* The index key referencing attribute positions in the indexed table. */
 	private Key key;
 	
+	private Type type;
+	
 	private static IndexTable INDEX = null;
 	
-	public Index(Type type, Method method, Key key) {
-		this.type = type;
-		this.method = method;
+	public Index(Table table, Key key, Type type) {
+		this.table = table;
 		this.key = key;
+		this.type = type;
 	}
 	
 	public static void initialize() {
@@ -67,22 +79,22 @@ public abstract class Index {
 				java.lang.System.exit(0);
 			}
 		}
-		}
+	}
+	
+	public Table table() {
+		return this.table;
+	}
 	
 	public Type type() {
 		return this.type;
-	}
-	
-	public Method method() {
-		return this.method;
 	}
 	
 	public Key key() {
 		return key;
 	}
 	
-	/* The table over which this index is defined. */
-	public abstract Table table();
+	/* An iterator over all tuple values. */
+	public abstract Iterator<Tuple> tuples();
 	
 	/* Uses the index key as the lookup key and
 	 * the values from the given tuple. */
@@ -90,21 +102,10 @@ public abstract class Index {
 	
 	public abstract TupleSet lookup(Key.Value key);
 	
-	public abstract boolean containsKey(Key.Value key);
-	
-	/* Index the given tuples. */
+	/* Index the given tuple. */
 	public abstract Tuple insert(Tuple t);
 	
-	/* Remove this tuple from the index. */
+	/* Remove the tuple from the index. */
 	public abstract void remove(Tuple t);
-	
-	/* Validate this index. */
-	public abstract boolean commit();
-	
-	/* An iterator over all keys in the index. */
-	public abstract Iterator<Key.Value> keys();
-	
-	/* An iterator over all tuple values. */
-	public abstract Iterator<Tuple> tuples();
 	
 }

@@ -1,5 +1,7 @@
 package p2.lang.plan;
 
+import java.util.Set;
+
 public class ArrayIndex extends Expression {
 	
 	private Expression array;
@@ -19,5 +21,10 @@ public class ArrayIndex extends Expression {
 	@Override
 	public String toString() {
 		return "(" + array.toString() + ")[" + index + "]";
+	}
+
+	@Override
+	public Set<Variable> variables() {
+		return array.variables();
 	}
 }

@@ -2,7 +2,9 @@ package p2.lang.parse;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -11,7 +13,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import p2.lang.plan.Aggregate;
 import p2.lang.plan.Alias;
 import p2.lang.plan.ArrayIndex;
@@ -19,18 +20,22 @@ import p2.lang.plan.Assignment;
 import p2.lang.plan.Event;
 import p2.lang.plan.Expression;
 import p2.lang.plan.Fact;
+import p2.lang.plan.IfThenElse;
 import p2.lang.plan.Location;
 import p2.lang.plan.MethodCall;
 import p2.lang.plan.NewClass;
 import p2.lang.plan.Null;
 import p2.lang.plan.Predicate;
 import p2.lang.plan.Range;
+import p2.lang.plan.Reference;
 import p2.lang.plan.Rule;
 import p2.lang.plan.Selection;
+import p2.lang.plan.StaticMethod;
 import p2.lang.plan.Table;
 import p2.lang.plan.Term;
 import p2.lang.plan.Value;
 import p2.lang.plan.Variable;
+import p2.lang.plan.VariableReference;
 import p2.lang.plan.Watch;
 import p2.types.basic.Tuple;
 import p2.types.table.Key;
@@ -91,7 +96,7 @@ public final class TypeChecker extends Visitor {
 	}
 	
 	public void prepare() {
-		this.table = p2.types.table.Table.catalog().symbolTable();
+		this.table = new SymbolTable(); //p2.types.table.Table.catalog().symbolTable();
 		this.ruleNames = new HashSet<String>();
 	}
 
@@ -114,18 +119,18 @@ public final class TypeChecker extends Visitor {
 	 * @param y the second type
 	 */
 	private Class lub(final Class x, final Class y) {
-		if (x.getClass().isAssignableFrom(y)) {
+		if (x.isAssignableFrom(y)) {
 			return x;
-		} else if (y.getClass().isAssignableFrom(x)) {
+		} else if (y.isAssignableFrom(x)) {
 			return y;
 		} else {
-			return lub(x.getClass().getSuperclass(), y);
+			return lub(x.getSuperclass(), y);
 		}
 	}
 
 	// =========================================================================
 
-	private Expression ensureBooleanValue(Expression expr) {
+	private p2.lang.plan.Boolean ensureBooleanValue(Expression expr) {
 		if (Void.class == expr.type()) {
 			return null; // Can't do it for void expression type
 		}
@@ -139,7 +144,7 @@ public final class TypeChecker extends Visitor {
 			return new p2.lang.plan.Boolean(p2.lang.plan.Boolean.NEQUAL,
 									    expr, Null.NULLV);
 		}
-		return expr;
+		return (p2.lang.plan.Boolean) expr;
 	}
 	/**
 	 * Visit all nodes in the AST.
@@ -516,6 +521,7 @@ public final class TypeChecker extends Visitor {
 	public Class visitAssignment(final GNode n) {
 		/* Variable. */
 		Class type = (Class) dispatch(n.getNode(0));
+		if (type == Error.class) return Error.class;
 		if (!(type == Variable.class || type == Location.class)) {
 			runtime.error("Cannot assign to type " + type + 
 					" must be of type Variable or Location variable!");
@@ -524,6 +530,7 @@ public final class TypeChecker extends Visitor {
 		Variable var = (Variable) n.getNode(0).getProperty(Constants.TYPE);
 
 		type = (Class) dispatch(n.getNode(1));
+		if (type == Error.class) return Error.class;
 		assert(Expression.class.isAssignableFrom(type));
 		Expression expr = (Expression) n.getNode(1).getProperty(Constants.TYPE);
 
@@ -564,6 +571,31 @@ public final class TypeChecker extends Visitor {
 		expr.location(n.getLocation()); // Set the location of this expression.
 		n.setProperty(Constants.TYPE, n.getNode(0).getProperty(Constants.TYPE));
 		return type;
+	}
+	
+	public Class visitIfElseExpression(final GNode n) {
+		Class iftype   = (Class) dispatch(n.getNode(0));
+		if (iftype == Error.class) return Error.class;
+		Class thentype = (Class) dispatch(n.getNode(1));
+		if (thentype == Error.class) return Error.class;
+		Class elsetype = (Class) dispatch(n.getNode(2));
+		if (elsetype == Error.class) return Error.class;
+		
+		Expression ifexpr   = (Expression) n.getNode(0).getProperty(Constants.TYPE);
+		Expression thenexpr = (Expression) n.getNode(1).getProperty(Constants.TYPE);
+		Expression elseexpr = (Expression) n.getNode(2).getProperty(Constants.TYPE);
+		
+		if (ensureBooleanValue(ifexpr) == null) {
+			runtime.error("Cannot evaluate type " + ifexpr.type()
+					+ " in a logical or expression", n);
+			return Error.class;
+		}
+		
+		n.setProperty(Constants.TYPE, 
+				      new IfThenElse(lub(thenexpr.type(), elseexpr.type()), 
+				    		         ensureBooleanValue(ifexpr), 
+				    		         thenexpr, elseexpr));
+		return IfThenElse.class;
 	}
 
 	public Class visitLogicalOrExpression(final GNode n) {
@@ -617,6 +649,34 @@ public final class TypeChecker extends Visitor {
 	}
 
 	public Class visitEqualityExpression(final GNode n) {
+		Class ltype = (Class) dispatch(n.getNode(0));
+		Class rtype = (Class) dispatch(n.getNode(2));
+		if (ltype == Error.class || rtype == Error.class) {
+			return Error.class;
+		}
+		
+		assert(Expression.class.isAssignableFrom(ltype) && 
+			   Expression.class.isAssignableFrom(rtype));
+		
+		String oper = n.getString(1);
+		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
+		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
+
+		if (Void.class == lhs.type()) {
+			runtime.error("Cannot evaluate type " + lhs.type()
+					+ " in a logical and expression", n);
+			return Error.class;
+		} else if (Void.class == rhs.type()) {
+			runtime.error("Cannot evaluate void type " + rhs.type()
+					+ " in a logical and expression", n);
+			return Error.class;
+		}
+		n.setProperty(Constants.TYPE, 
+			new p2.lang.plan.Boolean(oper,  lhs,  rhs));
+		return p2.lang.plan.Boolean.class;
+	}
+	
+	public Class visitInequalityExpression(final GNode n) {
 		Class ltype = (Class) dispatch(n.getNode(0));
 		Class rtype = (Class) dispatch(n.getNode(2));
 		if (ltype == Error.class || rtype == Error.class) {
@@ -798,13 +858,10 @@ public final class TypeChecker extends Visitor {
 		assert(Expression.class.isAssignableFrom(type));
 		Expression object = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		
-		String name = n.getString(1);
-		System.err.println("Method location " + n.getLocation());
-		
-		type = (Class) dispatch(n.getNode(2)); 
+		type = (Class) dispatch(n.getNode(1)); 
 		assert(type == List.class);
 		List<Expression> arguments = 
-			(List<Expression>) n.getNode(2).getProperty(Constants.TYPE);
+			(List<Expression>) n.getNode(1).getProperty(Constants.TYPE);
 		List<Class> parameterTypes = new ArrayList<Class>();
 		for (Expression arg : arguments) {
 			parameterTypes.add(arg.type());
@@ -812,8 +869,33 @@ public final class TypeChecker extends Visitor {
 		
 		try {
 			Class [] types = parameterTypes.toArray(new Class[parameterTypes.size()]);
-			Method method = object.type().getDeclaredMethod(name, types);
-			n.setProperty(Constants.TYPE, new MethodCall(object, method, arguments));
+			Method method = null;
+			if (object instanceof VariableReference) {
+				VariableReference reference = (VariableReference) object;
+				method = reference.type().getDeclaredMethod(reference.method(), types);
+				n.setProperty(Constants.TYPE, new MethodCall(reference.variable(), method, arguments));
+				return MethodCall.class;
+			}
+			else if (object instanceof Reference) {
+				Reference reference = (Reference) object;
+				method = reference.type().getDeclaredMethod(reference.method(), types);
+				if (reference.field() != null) {
+					if (!reference.field().isEnumConstant() &&
+							reference.field().getModifiers() != Modifier.STATIC) {
+						runtime.error("Field must be static in static method!", n);
+						return Error.class;
+					}
+					n.setProperty(Constants.TYPE, new StaticMethod(reference.field(), method, arguments));
+				}
+				else if (method.getModifiers() != Modifier.STATIC) {
+					runtime.error("Expected static method!", n);
+					return Error.class;
+				}
+				else {
+					n.setProperty(Constants.TYPE, new StaticMethod(reference.type(), method, arguments));
+				}
+				return StaticMethod.class;
+			}
 		} catch (SecurityException e) {
 			runtime.error("Method error: " + e.toString(), n);
 			return Error.class;
@@ -822,7 +904,16 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		
-		return MethodCall.class;
+		runtime.error("Unkown method reference!", n);
+		return Error.class;
+	}
+	
+	public Class visitStaticMethod(final GNode n) {
+		Class type = (Class) dispatch(n.getNode(0));
+		if (type == Error.class) return Error.class;
+		
+		
+		return StaticMethod.class;
 	}
 	
 	public Class visitNewClass(final GNode n) {
@@ -849,6 +940,104 @@ public final class TypeChecker extends Visitor {
 		}
 		
 		return NewClass.class;
+	}
+	
+	public Class visitVariableReference(final GNode n) {
+		Class type = (Class) dispatch(n.getNode(0));
+		if (type == Error.class) return Error.class;
+		
+		Variable var = (Variable) n.getNode(0).getProperty(Constants.TYPE);
+		type = var.type();
+		if (type == null) {
+			runtime.error("Variable " + var + " type unknown!", n);
+			return Error.class;
+		}
+		
+		String name = n.getString(1);
+		try {
+			Field field = type.getField(name);
+			n.setProperty(Constants.TYPE, new VariableReference(var, field, null));
+			return VariableReference.class;
+		} catch (Exception e) {
+			/* Assume it's a method name and let visitMethod handle it. */
+			n.setProperty(Constants.TYPE, new VariableReference(var, null, name));
+			return VariableReference.class;
+		}
+	}
+	
+	/**
+	 * A class reference consists of a full class name, field, and method.
+	 * We support:
+	 * <ClassName>.<method>  Static method
+	 * <ClassName>.<field>   Static field
+	 * <ClassName>.<field>.<method> Static field method call.
+	 */
+	public Class visitClassReference(final GNode n) {
+		String name = n.getString(0);
+		int index = 0;
+		List names = n.getList(1).list();
+		Class type = null;
+		Field field = null;
+		String method = null;
+		
+		while (index < (names.size() - 1)) {
+			try {
+				type = Class.forName(name);
+			} catch (ClassNotFoundException e) {
+				type = null;
+				name  += "." + names.get(index++).toString();
+				continue;
+			}
+			break;
+		}
+		
+		if (type == null) {
+			runtime.error("Class type not found from reference!", n);
+			return Error.class;
+		}
+		
+		while (index < names.size()) {
+			String attribute = names.get(index).toString();
+			
+			if (field != null) {
+				if (index + 1 != names.size()) {
+					runtime.error("Unknown reference", n);
+					return Error.class;
+				}
+				/* Check if it's a method. */
+				method = attribute;
+				break;
+			}
+			
+			String subname = name + "." + attribute;
+			for (Class sub : type.getClasses()) {
+				if (sub.getCanonicalName().equals(subname)) {
+					type = sub;
+					name = subname;
+					index++;
+					break;
+				}
+			}
+			
+			if (!name.equals(subname)) {
+				/* Check if it's a field. */
+				try {
+					field = type.getField(attribute);
+					index++;
+				} catch (Exception e) { 
+					method = attribute;
+					index++;
+					
+					if (index != names.size()) {
+						runtime.error("Unknown reference", n);
+						return Error.class;
+					}
+				}
+			}
+		}
+		
+		n.setProperty(Constants.TYPE, new Reference(type, field, method));
+		return Reference.class;
 	}
 	
 	public Class visitArrayIndex(final GNode n) {
@@ -939,7 +1128,6 @@ public final class TypeChecker extends Visitor {
 			int[] dim = (int[]) n.getNode(1).getProperty(Constants.TYPE);
 			Object instance = Array.newInstance(type, dim);
 			type = instance.getClass();
-			System.err.println("Class: " + type.getName() );
 		}
 		n.setProperty(Constants.TYPE, type);
 		return type;

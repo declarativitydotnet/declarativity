@@ -1,7 +1,9 @@
 package p2.lang.plan;
 
 import java.lang.reflect.Constructor;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class NewClass extends Expression {
 	
@@ -30,5 +32,14 @@ public class NewClass extends Expression {
 			value += ", " + arguments.get(i);
 		}
 		return value + ")";
+	}
+	
+	@Override
+	public Set<Variable> variables() {
+		Set<Variable> variables = new HashSet<Variable>();
+		for (Expression arg : arguments) {
+			variables.addAll(arg.variables());
+		}
+		return variables;
 	}
 }

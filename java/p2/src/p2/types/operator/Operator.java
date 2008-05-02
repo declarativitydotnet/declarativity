@@ -57,7 +57,7 @@ public abstract class Operator {
 		this.priority = priority;
 	}
 	
-	public abstract Intermediate evaluate(TupleSet tuples);
+	public abstract Intermediate evaluate(Intermediate tuples);
 
 	public abstract VariableSchema schema(VariableSchema input);
 	

@@ -7,8 +7,8 @@ import java.util.Set;
 import p2.lang.plan.Predicate;
 import p2.lang.plan.Variable;
 import p2.types.basic.Intermediate;
-import p2.types.basic.Ordered;
-import p2.types.basic.Simple;
+import p2.types.basic.OrderedTupleSet;
+import p2.types.basic.SimpleTupleSet;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.table.Schema;
@@ -27,8 +27,8 @@ public class Projection extends Operator {
 	}
 
 	@Override
-	public Intermediate evaluate(TupleSet tuples) {
-		TupleSet result = new Simple("Operator " + id(), schema((VariableSchema)tuples.schema()));
+	public Intermediate evaluate(Intermediate tuples) {
+		TupleSet result = new SimpleTupleSet("Operator " + id(), schema((VariableSchema)tuples.schema()));
 		
 		return result;
 	}
@@ -41,6 +41,10 @@ public class Projection extends Operator {
 	@Override
 	public Set<Variable> requires() {
 		return new HashSet<Variable>(variables);
+	}
+	
+	public Predicate predicate() {
+		return this.predicate;
 	}
 
 }

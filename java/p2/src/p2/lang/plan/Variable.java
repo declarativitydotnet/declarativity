@@ -1,5 +1,8 @@
 package p2.lang.plan;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class Variable extends Expression {
 	public final static String DONTCARE = "_";
 
@@ -21,6 +24,11 @@ public class Variable extends Expression {
 	}
 	
 	@Override
+	public int hashCode() {
+		return name().hashCode();
+	}
+	
+	@Override
 	public String toString() {
 		return name();
 	}
@@ -36,6 +44,13 @@ public class Variable extends Expression {
 	
 	public void type(Class type) {
 		this.type = type;
+	}
+
+	@Override
+	public Set<Variable> variables() {
+		Set<Variable> variables = new HashSet<Variable>();
+		variables.add(this);
+		return variables;
 	}
 	
 }

@@ -9,7 +9,6 @@ public class System {
 	
 
 	public static void initialize() {
-		Table.initialize();
 		Compile.initialize();
 	}
 }

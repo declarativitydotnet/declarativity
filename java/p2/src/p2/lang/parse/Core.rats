@@ -13,7 +13,7 @@ import Literal;
 
 public Node Program = Spacing Clauses EndOfFile ;
 
-generic Clauses = (Clause void:".":Symbol)* ;
+generic Clauses = (Clause void:";":Symbol)* ;
 
 Node Clause =
     <Rule>   Rule
@@ -39,7 +39,7 @@ generic RuleBody = TermList;
 
 Pair<Node> TermList =  Term (void:",":Symbol Term)* ;
 
-transient Node Term =
+Node Term =
     Predicate
   / Assignment
   / Selection
@@ -91,9 +91,14 @@ generic Selection = Expression;
 
 //----------------------------  Expressions  ---------------------------------/
 
-generic Expression = LogicalOrExpression;
+generic Expression = IfElseExpression;
   
 Pair<Node> ExpressionList = Expression (void:",":Symbol Expression)* ;
+  
+transient generic IfElseExpression =
+	<IfElse> LogicalOrExpression void:"?":Symbol Expression void:":":Symbol Expression
+  / <Base>   yyValue:LogicalOrExpression
+  ;
   
 transient generic LogicalOrExpression =
      <Or>  LogicalOrExpression void:"||":Symbol LogicalAndExpression
@@ -189,8 +194,8 @@ String RightRangeOperator =
   ;
 
 generic PostfixExpression =
-    <Method>     PostfixExpression void:".":Symbol Name Arguments
-                 @Method
+    <Method>     PostfixExpression Arguments
+    		     @Method
   / <ArrayIndex> PostfixExpression void:"[":Symbol Constant void:"]":Symbol
                  @ArrayIndex
   / <Increment>  PostfixExpression "++":Symbol
@@ -202,6 +207,8 @@ generic PostfixExpression =
 
 Node PrimaryExpression =
    <Alias>        Alias Spacing
+ / <VarRef>       VariableReference Spacing
+ / <ClassRef>     ClassReference Spacing
  / <Variable>     Variable Spacing
  / <Location>     Location Spacing
  / <NewClass>     NewClass Spacing
@@ -216,6 +223,14 @@ transient generic Arguments =
   ;
 
 generic NewClass = void:"new":Word TypeName Arguments;
+
+generic VariableReference = 
+	  Variable void:".":Symbol Name
+	/ Location void:".":Symbol Name
+	;
+
+generic ClassReference = Name (void:".":Symbol Name)+;
+
 
 //----------------------------  Alias  ----------------------------------/
 

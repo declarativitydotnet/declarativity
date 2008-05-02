@@ -1,7 +1,9 @@
 package p2.lang.plan;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import p2.types.function.TupleFunction;
 
@@ -53,5 +55,15 @@ public class Math extends Expression {
 	@Override
 	public String toString() {
 		return "(" + lhs + " " + oper + " " + rhs + ")";
+	}
+
+	@Override
+	public Set<Variable> variables() {
+		Set<Variable> variables = new HashSet<Variable>();
+		variables.addAll(lhs.variables());
+		if (rhs != null) {
+			variables.addAll(rhs.variables());
+		}
+		return variables;
 	}
 }

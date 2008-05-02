@@ -1,5 +1,8 @@
 package p2.lang.plan;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class Value<Type> extends Expression {
 
 	private Type value;
@@ -24,5 +27,10 @@ public class Value<Type> extends Expression {
 			return "infinity";
 		}
 		return value().toString();
+	}
+
+	@Override
+	public Set<Variable> variables() {
+		return new HashSet<Variable>();
 	}
 }

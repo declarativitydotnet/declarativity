@@ -1,5 +1,7 @@
 package p2.lang.plan;
 
+import java.util.Set;
+
 public abstract class Expression {
 	
 	private xtc.tree.Location location;
@@ -19,5 +21,7 @@ public abstract class Expression {
 	 * @return The java type of the expression value.
 	 */
 	public abstract Class type();
+	
+	public abstract Set<Variable> variables();
 	
 }

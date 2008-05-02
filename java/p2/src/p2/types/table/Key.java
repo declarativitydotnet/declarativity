@@ -16,7 +16,7 @@ public class Key implements Comparable {
 		public int hashCode() {
 			String code = "";
 			for (Comparable v : values) {
-				code += v.toString();
+				code += Integer.toString(v.hashCode());
 			}
 			return code.hashCode();
 		}

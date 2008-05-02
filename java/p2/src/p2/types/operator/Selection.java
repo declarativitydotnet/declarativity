@@ -4,7 +4,7 @@ import java.util.Set;
 
 import p2.lang.plan.Variable;
 import p2.types.basic.Intermediate;
-import p2.types.basic.Simple;
+import p2.types.basic.SimpleTupleSet;
 import p2.types.basic.TupleSet;
 import p2.types.function.Filter;
 
@@ -21,8 +21,8 @@ public class Selection extends Operator {
 	}
 
 	@Override
-	public Intermediate evaluate(TupleSet tuples) {
-		TupleSet result =  new Simple("Operator " + id(), schema((VariableSchema)tuples.schema()));
+	public Intermediate evaluate(Intermediate tuples) {
+		TupleSet result =  new SimpleTupleSet("Operator " + id(), schema((VariableSchema)tuples.schema()));
 		
 		return result;
 	}

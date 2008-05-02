@@ -9,12 +9,7 @@ import p2.types.table.Schema;
 
 public class Tuple implements Comparable {
 	
-	public final static class Property {
-		public final static String NAME = "Name";
-		public final static String PROGRAM = "Program";
-	}
-	
-	private final Hashtable<String, Comparable> properties;
+	protected String name;
 	
 	protected List<Comparable> values;
 	
@@ -25,19 +20,17 @@ public class Tuple implements Comparable {
 	protected boolean frozen;
 	
 	public Tuple(String name) {
-		this.properties = new Hashtable<String, Comparable>();
+		this.name = name;
 		this.values = new ArrayList<Comparable>();
 		this.refCount = new Long(1);
 		this.frozen = false;
-		property(Property.NAME, name);
 	}
 	
 	public Tuple(String name, Comparable... values) {
-		this.properties = new Hashtable<String, Comparable>();
+		this.name = name;
 		this.values = new ArrayList<Comparable>();
 		this.refCount = new Long(1);
 		this.frozen = false;
-		property(Property.NAME, name);
 		
 		for (Comparable value : values) {
 			this.values.add(value);
@@ -45,23 +38,23 @@ public class Tuple implements Comparable {
 	}
 	
 	public Tuple(String name, List<Comparable> values) {
-		this.properties = new Hashtable<String, Comparable>();
+		this.name = name;
 		this.values = values;
 		this.refCount = new Long(1);
 		this.frozen = false;
-		property(Property.NAME, name);
+	}
+	
+	public String toString() {
+		String value = "<" + name();
+		for (Comparable element : values) {
+			value += ", " + element.toString();
+		}
+		value += ">";
+		return value;
 	}
 	
 	public String name() {
-		return (String) property(Property.NAME);
-	}
-	
-	public void property(String key, Comparable value) {
-		this.properties.put(key, value);
-	}
-	
-	public Comparable property(String key) {
-		return this.properties.get(key);
+		return this.name;
 	}
 	
 	public int compareTo(Object o) {

@@ -3,7 +3,7 @@ package p2.types.table;
 import java.lang.reflect.Constructor;
 import java.util.*;
 
-import p2.types.basic.Simple;
+import p2.types.basic.SimpleTupleSet;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.BadKeyException;
@@ -24,16 +24,14 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 		}
 
 		public String toString() {
-			return name();
+			return this.name;
 		}
 		
 		public int compareTo(Object o) {
-			return o instanceof Table.Name ? 
-					name.compareTo(((Table.Name)o).name) : -1;
-		}
-
-		public String name() {
-			return this.name;
+			String name = (o instanceof Name) ? 
+					      ((Name)o).toString() : 
+					    	  ((o instanceof String) ? (String) o : "");
+			return name.compareTo(toString());
 		}
 
 		public String object() {
@@ -41,49 +39,7 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 		}
 	}
 	
-	private class ForeignKey {
-		/* The foreign table. */
-		private Table foreign;
-
-		/* The fields of the local tuple that reference
-		 * the remote primary key.  */
-		private Key local;
-
-		public ForeignKey(Table foreign, Key local) {
-			assert(foreign.key().equals(local));
-			this.foreign = foreign;
-			this.local = local;
-			this.foreign.remoteConstraint(this);
-		}
-
-		/**
-		 * The foreign table will call this method
-		 * when tuples from it have been removed.
-		 * @param tuples The set of removed tuples.
-		 */
-		public void remove(TupleSet tuples) {
-
-		}
-
-		/**
-		 * The reference table uses this to check
-		 * for constraint violations.
-		 * @param tuple Tuple to check.
-		 * @return true if constraint is satisfied, false otherwise.
-		 */
-		public boolean check(Tuple tuple) {
-
-			return true;
-		}
-	}
-
-
 	public static class Catalog extends ObjectTable {
-
-		protected Catalog(Name name, Schema schema, Integer size, Number lifetime, Key key) {
-			super(name, schema, key);
-		}
-
 		private static final Key PRIMARY_KEY = new Key(0);
 
 		private static final Schema SCHEMA = 
@@ -94,19 +50,39 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 					new Schema.Entry("Key",      Key.class),
 					new Schema.Entry("Table",    Table.class));
 		
+		private SymbolTable symbolTable;
+
+		private Catalog() {
+			super(new Name("catalog", Catalog.class.getName()), SCHEMA, PRIMARY_KEY);
+			this.symbolTable = new SymbolTable();
+			try {
+				super.insert(new Tuple("catalog", new Name("catalog", Catalog.class.getName()), 
+						              SCHEMA, INFINITY, INFINITY, this));
+			} catch (UpdateException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		public SymbolTable symbolTable() {
+			return this.symbolTable;
+		}
+
 		@Override
 		protected Tuple insert(Tuple tuple) throws UpdateException {
 			Table table = null;
-			Name name = (Name) tuple.value(0);
+			Name   name   = (Name)   tuple.value(SCHEMA.field("Name"));
+			Schema schema = (Schema) tuple.value(SCHEMA.field("Schema"));
 			try {
 				Class eclass = Class.forName(name.object);
 				Constructor constructor = eclass.getConstructor(String.class, Schema.class, Integer.class, Number.class, Key.class);
 				table = (Table) constructor.newInstance(name.object, 
-						                                name.name,
-						                                tuple.value(SCHEMA.field("Schema")),
+						                                name,
+						                                schema,
 						                                tuple.value(SCHEMA.field("Size")),  
 						                                tuple.value(SCHEMA.field("Lifetime")), 
 						                                tuple.value(SCHEMA.field("Key")));
+				symbolTable.root().define(name.toString(), schema.types());
 			} catch (Exception e) {
 				throw new UpdateException(e.toString());
 			}
@@ -118,7 +94,7 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 		
 	}
 
-	private static Catalog CATALOG = null;
+	private final static Catalog CATALOG = new Catalog();
 	
 	/* The table name. */
 	private Name name;
@@ -135,10 +111,9 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	/* The primary key. */
 	private Key key;
 	
-	private Set<ForeignKey> localConstraints;
+	private Index primary;
 	
-	private Set<ForeignKey> remoteConstraints;
-	
+	private Hashtable<Key, Index> secondary;
 	
 	protected Table(Name name, Schema schema, Integer size, Number lifetime, Key key) {
 		this.name = name;
@@ -146,12 +121,19 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 		this.size = size;
 		this.lifetime = lifetime;
 		this.key = key;
-		this.localConstraints = new HashSet<ForeignKey>();
-		this.remoteConstraints = new HashSet<ForeignKey>();
 	}
 	
-	public static void initialize() {
-		
+	public String toString() {
+		String value = "Table: " + name.toString() + ", " + schema.toString() + 
+		        ", " + size + ", " + lifetime + ", " + key + "\n";
+		for (Tuple t : this) {
+			value += t.toString() + "\n";
+		}
+		return value;
+	}
+	
+	public Iterator<Tuple> iterator() {
+		return primary().tuples();
 	}
 	
 	public SymbolTable symbolTable() {
@@ -262,54 +244,63 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	/**
 	 * @return The primary index.
 	 */
-	public abstract Index primary();
+	public final Index primary() {
+		return this.primary;
+	}
 	
 	/**
 	 * @return All defined secondary indices.
 	 */
-	public abstract Hashtable<Key, Index> secondary();
+	public final Hashtable<Key, Index> secondary() {
+		return this.secondary;
+	}
 	
 	/**
-	 * Add the remote foreign key constraint to this table.
-	 * @param constraint The foreign key constraint
+	 * Get all current tuples that have a primary key
+	 * conflict with the tuple set passed argument.
+	 * @param tuples Tuples to test for conflicts
+	 * @return All tuples in the table that conflict.
 	 */
-	private void remoteConstraint(ForeignKey constraint) {
-		this.remoteConstraints.add(constraint);
-	}
-	
-	protected void localConstraint(ForeignKey constraint) {
-		this.localConstraints.add(constraint);
+	public final TupleSet conflict(TupleSet tuples) {
+		TupleSet conflicts = new SimpleTupleSet(name().toString(), schema());
+		for (Tuple t : tuples) {
+			TupleSet conflict = primary().lookup(t);
+			if (conflict != null) {
+				conflicts.addAll(conflict);
+			}
+		}
+		return conflicts;
 	}
 	
 	/**
-	 *  Insert a tuple into this table. 
-	 *  @return The delta set of tuples.
+	 * Insert a tuple into this table. 
+	 * @return The delta set of tuples.
 	 * @throws UpdateException 
 	 **/
-	public final void insert(TupleSet tuples, TupleSet delta, TupleSet conflict) throws UpdateException {
+	public final TupleSet insert(TupleSet tuples) throws UpdateException {
+		TupleSet delta = new SimpleTupleSet(name().toString(), schema());
 		for (Tuple t : tuples) {
 			Tuple previous = insert(t);
-			if (previous != null && previous.equals(t)) {
-					continue;
+			if (previous != null && !previous.equals(t)) {
+				delta.add(t);
 			}
-			else if (previous != null) {
-				conflict.add(t);
-			}
-			delta.add(t);
 		}
+		return delta;
 	}
 	
 	/**
-	 *  Remove this tuple from the table. 
-	 *  Note: This will only schedule the removal of committed tuples.
+	 * Remove this tuple from the table. 
+	 * Note: This will only schedule the removal of committed tuples.
 	 * @throws UpdateException 
 	 **/
-	public final void remove(TupleSet tuples, TupleSet delta) throws UpdateException {
+	public final TupleSet remove(TupleSet tuples) throws UpdateException {
+		TupleSet delta = new SimpleTupleSet(name().toString(), schema());
 		for (Tuple t : tuples) {
 			if (remove(t)) {
 				delta.add(t);
 			}
 		}
+		return delta;
 	}
 	
 	/**

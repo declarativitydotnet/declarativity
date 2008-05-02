@@ -1,5 +1,8 @@
 package p2.lang.plan;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class Range extends Expression {
 	
 	public enum Operator {CC, // [] 
@@ -37,6 +40,14 @@ public class Range extends Expression {
 			return "(" + begin + ", " + end + ")";
 		assert(false);
 		return "RANGE ERROR";
+	}
+
+	@Override
+	public Set<Variable> variables() {
+		Set<Variable> variables = new HashSet<Variable>();
+		variables.addAll(this.begin.variables());
+		variables.addAll(this.end.variables());
+		return variables;
 	}
 
 }
